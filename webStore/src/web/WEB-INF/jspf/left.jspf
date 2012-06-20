@@ -1,0 +1,3 @@
+<cws:infoLink oneLine='N'/>
+<cws:checkOutLink oneLine='N'/>
+<c:out value='${ctx.webParam3}' escapeXml='false'/>

@@ -1,0 +1,24 @@
+<?xml version="1.0"  encoding="UTF-8"?>
+
+<!DOCTYPE application PUBLIC '-//Sun Microsystems, Inc.//DTD 
+J2EE Application 1.2//EN'
+'http://java.sun.com/j2ee/dtds/application_1_2.dtd'>
+<application>
+	<display-name>OXPRoot</display-name>
+	<description>OpenXpertya Root</description>
+	<module>
+		<web>
+			<web-uri>OXPRoot.war</web-uri>
+			<context-root>/</context-root>
+		</web>
+	</module>
+	<module>
+		<ejb>OXPRoot.jar</ejb> 
+	</module>
+	<module>
+		<java>OXP.jar</java>
+	</module>
+	<module>
+		<java>OXPSLib.jar</java>
+	</module>
+</application>

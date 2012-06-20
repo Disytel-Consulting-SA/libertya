@@ -1,0 +1,211 @@
+SQLActions[ ] = {
+	"BEGIN INSTALL		
+	        --CREATE SCHEMA fun;
+	BEGIN PostgreSQL SET search_path TO libertya END PostgreSQL;
+		
+	CREATE OR REPLACE FUNCTION openxpertyaVersion()
+ 	RETURNS VARCHAR
+	AS 'org.openxpertya.sqlj.OpenXpertya.getVersion()'
+ 	LANGUAGE java;
+	
+	CREATE OR REPLACE FUNCTION openxpertyaProperties()
+ 	RETURNS VARCHAR
+	AS 'org.openXpertya.sqlj.OpenXpertya.getProperties()'
+ 	LANGUAGE java;
+	
+	CREATE OR REPLACE FUNCTION openxpertyaProperty(p_key VARCHAR)
+ 	RETURNS VARCHAR
+	AS 'org.openXpertya.sqlj.OpenXpertya.getProperty(java.lang.String)'
+ 	LANGUAGE java; 
+	
+	CREATE OR REPLACE FUNCTION TRUNC(datetime TIMESTAMP WITH TIME ZONE)
+ 	RETURNS TIMESTAMP WITH TIME ZONE
+	AS 'org.openXpertya.sqlj.OpenXpertya.trunc(java.sql.Timestamp)'
+ 	LANGUAGE java;
+	
+	CREATE OR REPLACE FUNCTION firstOf(datetime TIMESTAMP WITH TIME ZONE ,xx VARCHAR)
+ 	RETURNS TIMESTAMP WITH TIME ZONE
+	AS 'org.openXpertya.sqlj.OpenXpertya.firstOf(java.sql.Timestamp,java.lang.String)'
+ 	LANGUAGE java;
+	
+	CREATE OR REPLACE FUNCTION daysBetween(datetime1 TIMESTAMP WITH TIME ZONE , datetime2 TIMESTAMP WITH TIME ZONE)
+ 	RETURNS INTEGER
+	AS 'org.openXpertya.sqlj.OpenXpertya.getDaysBetween(java.sql.Timestamp,java.sql.Timestamp)'
+ 	LANGUAGE java;
+	
+	CREATE OR REPLACE FUNCTION addDays(day TIMESTAMP WITH TIME ZONE, days INTEGER)
+ 	RETURNS TIMESTAMP WITH TIME ZONE
+	AS 'org.openXpertya.sqlj.OpenXpertya.addDays(java.sql.Timestamp,int)'
+ 	LANGUAGE java;
+	
+	
+	CREATE OR REPLACE FUNCTION charAt(source VARCHAR, pos INTEGER)
+ 	RETURNS VARCHAR
+	AS 'org.openXpertya.sqlj.OpenXpertya.charAt (java.lang.String,int)'
+ 	LANGUAGE java;
+ 	    
+	CREATE OR REPLACE FUNCTION nextID(AD_Sequence_ID INTEGER, System VARCHAR)
+ 	RETURNS INTEGER
+ 	AS 'org.openXpertya.sqlj.OpenXpertya.nextID(int,java.lang.String)'
+	LANGUAGE java;
+	
+		
+	/** Product	**/
+	CREATE OR REPLACE FUNCTION productAttribute (M_AttributeSetInstance_ID INTEGER)
+ 	RETURNS VARCHAR
+	AS 'org.openXpertya.sqlj.Product.attributeName(int)'
+ 	LANGUAGE java;
+	
+	CREATE OR REPLACE FUNCTION bomPriceLimit (M_Product_ID INTEGER, M_PriceList_Version_ID INTEGER)
+ 	RETURNS NUMERIC
+	AS 'org.openXpertya.sqlj.Product.bomPriceLimit(int,int)'
+ 	LANGUAGE java;
+	
+	CREATE OR REPLACE FUNCTION bomPriceList (M_Product_ID INTEGER, M_PriceList_Version_ID INTEGER)
+ 	RETURNS NUMERIC
+ 	AS 'org.openXpertya.sqlj.Product.bomPriceList(int,int)'
+	LANGUAGE java;
+	
+	CREATE OR REPLACE FUNCTION bomPriceStd (M_Product_ID INTEGER, M_PriceList_Version_ID INTEGER)
+ 	RETURNS NUMERIC
+ 	AS 'org.openXpertya.sqlj.Product.bomPriceStd(int,int)'
+	LANGUAGE java;
+	
+	CREATE OR REPLACE FUNCTION bomQtyAvailable (M_Product_ID INTEGER, M_Warehouse_ID INTEGER, M_Locator_ID INTEGER)
+ 	RETURNS NUMERIC
+ 	AS 'org.openXpertya.sqlj.Product.bomQtyAvailable(int,int,int)'
+	LANGUAGE java;	
+	
+	CREATE OR REPLACE FUNCTION bomQtyOnHand (M_Product_ID INTEGER, M_Warehouse_ID INTEGER, M_Locator_ID INTEGER)
+ 	RETURNS NUMERIC
+ 	AS 'org.openXpertya.sqlj.Product.bomQtyOnHand(int,int,int)'
+	LANGUAGE java;
+	
+	CREATE OR REPLACE FUNCTION bomQtyOrdered (M_Product_ID INTEGER, M_Warehouse_ID INTEGER, M_Locator_ID INTEGER)
+ 	RETURNS NUMERIC
+ 	AS 'org.openXpertya.sqlj.Product.bomQtyOrdered(int,int,int)'
+	LANGUAGE java;
+	
+	CREATE OR REPLACE FUNCTION bomQtyReserved (M_Product_ID INTEGER, M_Warehouse_ID INTEGER, M_Locator_ID INTEGER)
+ 	RETURNS NUMERIC
+ 	AS 'org.openXpertya.sqlj.Product.bomQtyReserved(int,int,int)'
+	LANGUAGE java;
+	
+	/** Currency: Por ahora se comentan, habria que eliminarlas del archivo, junto con la clase Currency ya que se crearon las funciones plpgsql correspondientes
+	CREATE OR REPLACE FUNCTION currencyBase (Amount NUMERIC, C_CurrencyFrom_ID INTEGER, 
+    	ConversionDate TIMESTAMP WITH TIME ZONE, AD_Client_ID INTEGER, AD_Org_ID INTEGER)
+ 	RETURNS NUMERIC
+ 	AS 'org.openXpertya.sqlj.Currency.base(java.math.BigDecimal,int,java.sql.Timestamp,int,int)'
+	LANGUAGE java; 
+	
+	CREATE OR REPLACE FUNCTION currencyConvert (Amount NUMERIC, C_CurrencyFrom_ID INTEGER, C_CurrencyTo_ID INTEGER,
+        ConversionDate TIMESTAMP WITH TIME ZONE, C_ConversionType_ID INTEGER, AD_Client_ID INTEGER, AD_Org_ID INTEGER)
+ 	RETURNS NUMERIC
+ 	AS 'org.openXpertya.sqlj.Currency.convert(java.math.BigDecimal,int,int,java.sql.Timestamp,int,int,int)'
+	LANGUAGE java;
+	
+	CREATE OR REPLACE FUNCTION currencyRate (C_CurrencyFrom_ID INTEGER, C_CurrencyTo_ID INTEGER,
+        ConversionDate TIMESTAMP WITH TIME ZONE, C_ConversionType_ID INTEGER, AD_Client_ID INTEGER, AD_Org_ID INTEGER)
+ 	RETURNS NUMERIC
+ 	AS 'org.openXpertya.sqlj.Currency.rate(int,int,java.sql.Timestamp,int,int,int)'
+	LANGUAGE java; **/
+	
+	/** BPartner **/
+	CREATE OR REPLACE FUNCTION bpartnerRemitLocation (p_C_BPartner_ID INTEGER)
+ 	RETURNS INTEGER
+ 	AS 'org.openXpertya.sqlj.BPartner.remitLocation(int)'
+	LANGUAGE java;
+	
+	/** Invoice **/
+	CREATE OR REPLACE FUNCTION invoiceOpen (p_C_Invoice_ID INTEGER, p_C_InvoicePaySchedule_ID INTEGER)
+ 	RETURNS NUMERIC
+ 	AS 'org.openXpertya.sqlj.Invoice.open(int,int)'
+	LANGUAGE java;
+	
+	CREATE OR REPLACE FUNCTION invoicePaid (p_C_Invoice_ID INTEGER, p_C_Currency_ID INTEGER, p_MultiplierAP INTEGER)
+ 	RETURNS NUMERIC
+ 	AS 'org.openXpertya.sqlj.Invoice.paid(int,int,int)'
+	LANGUAGE java;
+	
+	CREATE OR REPLACE FUNCTION invoiceDiscount (p_C_Invoice_ID INTEGER, p_PayDate TIMESTAMP WITH TIME ZONE, p_C_InvoicePaySchedule_ID INTEGER)
+ 	RETURNS NUMERIC
+ 	AS 'org.openXpertya.sqlj.Invoice.discount(int,java.sql.Timestamp,int)'
+	LANGUAGE java; 
+	
+	/** Payment Term **/
+	CREATE OR REPLACE FUNCTION paymentTermDueDays (p_C_PaymentTerm_ID INTEGER, p_DocDate TIMESTAMP WITH TIME ZONE, p_PayDate TIMESTAMP WITH TIME ZONE)
+ 	RETURNS INTEGER
+ 	AS 'org.openXpertya.sqlj.PaymentTerm.dueDays(int,java.sql.Timestamp,java.sql.Timestamp)'
+	LANGUAGE java;
+
+	CREATE OR REPLACE FUNCTION paymentTermDueDate (p_C_PaymentTerm_ID INTEGER, p_DocDate TIMESTAMP WITH TIME ZONE)
+ 	RETURNS TIMESTAMP WITH TIME ZONE
+	AS 'org.openXpertya.sqlj.PaymentTerm.dueDate(int,java.sql.Timestamp)'
+ 	LANGUAGE java;
+	
+	CREATE OR REPLACE FUNCTION paymentTermDiscount (p_Amount NUMERIC, p_C_PaymentTerm_ID INTEGER, p_DocDate TIMESTAMP WITH TIME ZONE, p_PayDate TIMESTAMP WITH TIME ZONE)
+ 	RETURNS NUMERIC
+ 	AS 'org.openXpertya.sqlj.PaymentTerm.discount(java.math.BigDecimal,int,java.sql.Timestamp,java.sql.Timestamp)'
+	LANGUAGE java;
+	
+ 	/** Payment **/
+	CREATE OR REPLACE FUNCTION paymentAllocated (p_C_Payment_ID INTEGER, p_C_Currency_ID INTEGER)
+ 	RETURNS NUMERIC
+ 	AS 'org.openXpertya.sqlj.Payment.allocated(int,int)'
+	LANGUAGE java;
+	
+	CREATE OR REPLACE FUNCTION paymentAvailable (p_C_Payment_ID INTEGER)
+ 	RETURNS NUMERIC
+ 	AS 'org.openXpertya.sqlj.Payment.available(int)'
+	LANGUAGE java;
+	
+	/** Account **/
+	CREATE OR REPLACE FUNCTION acctBalance (p_Account_ID INTEGER, p_AmtDr NUMERIC, p_AmtCr NUMERIC)
+ 	RETURNS NUMERIC
+ 	AS 'org.openXpertya.sqlj.Account.balance(int,java.math.BigDecimal,java.math.BigDecimal)'
+	LANGUAGE java;
+	
+	/** Manufacturing e-evolution **/
+	CREATE OR REPLACE FUNCTION documentNo (p_MPC_MRP_ID INTEGER)
+ 	RETURNS VARCHAR
+ 	AS 'org.openXpertya.sqlj.Manufacturing.documentNo(int)'
+	LANGUAGE java;
+	
+	END INSTALL",
+	
+	"BEGIN REMOVE
+		--DROP SCHEMA fun CASCADE;
+		--DROP FUNCTION openxpertyaVersion();
+ 	        --DROP FUNCTION openxpertyaProperties();
+ 	        --DROP FUNCTION openxpertyaProperty(p_key VARCHAR);
+ 		--DROP FUNCTION TRUNC(datetime TIMESTAMP WITH TIME ZONE);
+ 		--DROP FUNCTION firstOf(datetime TIMESTAMP WITH TIME ZONE ,xx VARCHAR);
+ 		--DROP FUNCTION daysBetween(datetime1 TIMESTAMP WITH TIME ZONE , datetime2 TIMESTAMP WITH TIME ZONE);
+ 		--DROP FUNCTION addDays(day TIMESTAMP WITH TIME ZONE, days INTEGER);
+ 		--DROP FUNCTION charAt(source VARCHAR, pos NUMERIC);
+ 		--DROP FUNCTION productAttribute (M_AttributeSetInstance_ID INTEGER);
+ 		--DROP FUNCTION bomPriceLimit (M_Product_ID INTEGER, M_PriceList_Version_ID INTEGER);
+ 		--DROP FUNCTION bomPriceList (M_Product_ID INTEGER, M_PriceList_Version_ID INTEGER);
+ 		--DROP FUNCTION bomPriceStd (M_Product_ID INTEGER, M_PriceList_Version_ID INTEGER);
+ 		--DROP FUNCTION bomQtyAvailable (M_Product_ID INTEGER, M_Warehouse_ID INTEGER, M_Locator_ID INTEGER);
+ 		--DROP FUNCTION bomQtyOnHand (M_Product_ID INTEGER, M_Warehouse_ID INTEGER, M_Locator_ID INTEGER);
+ 		--DROP FUNCTION bomQtyOrdered (M_Product_ID INTEGER, M_Warehouse_ID INTEGER, M_Locator_ID INTEGER);
+ 		--DROP FUNCTION bomQtyReserved (M_Product_ID INTEGER, M_Warehouse_ID INTEGER, M_Locator_ID INTEGER);
+ 		--DROP FUNCTION currencyBase (Amount DECIMAL, C_CurrencyFrom_ID INTEGER, 
+    			      ConversionDate TIMESTAMP WITH TIME ZONE, AD_Client_ID INTEGER, AD_Org_ID INTEGER);
+ 		--DROP FUNCTION currencyConvert (Amount NUMERIC, C_CurrencyFrom_ID INTEGER, C_CurrencyTo_ID INTEGER,
+        		      ConversionDate TIMESTAMP WITH TIME ZONE, C_ConversionType_ID INTEGER, AD_Client_ID NUMERIC, AD_Org_ID INTEGER);
+ 		--DROP FUNCTION currencyRate (C_CurrencyFrom_ID INTEGER, C_CurrencyTo_ID INTEGER,
+        		      ConversionDate TIMESTAMP WITH TIME ZONE, C_ConversionType_ID INTEGER, AD_Client_ID INTEGER, AD_Org_ID INTEGER);
+ 		--DROP FUNCTION bpartnerRemitLocation (p_C_BPartner_ID INTEGER);
+		--DROP FUNCTION invoiceOpen (p_C_Invoice_ID INTEGER, p_C_InvoicePaySchedule_ID INTEGER);
+ 		--DROP FUNCTION invoicePaid (p_C_Invoice_ID INTEGER, p_C_Currency_ID INTEGER, p_MultiplierAP NUMERIC);
+ 		--DROP FUNCTION invoiceDiscount (p_C_Invoice_ID INTEGER, p_PayDate TIMESTAMP WITH TIME ZONE, p_C_InvoicePaySchedule_ID INTEGER);
+ 		--DROP FUNCTION paymentTermDueDays (p_C_PaymentTerm_ID INTEGER, p_DocDate TIMESTAMP WITH TIME ZONE, p_PayDate TIMESTAMP WITH TIME ZONE);
+ 		--DROP FUNCTION paymentTermDiscount (p_Amount NUMERIC, p_C_PaymentTerm_ID INTEGER, p_DocDate TIMESTAMP WITH TIME ZONE, p_PayDate TIMESTAMP WITH TIME ZONE);
+        	--DROP FUNCTION paymentAllocated (p_C_Payment_ID INTEGER, p_C_Currency_ID INTEGER);
+ 		--DROP FUNCTION paymentAvailable (p_C_Payment_ID INTEGER);
+ 		--DROP FUNCTION acctBalance (p_Account_ID INTEGER, p_AmtDr NUMERIC, p_AmtCr NUMERIC);
+	END REMOVE"
+	}
+	

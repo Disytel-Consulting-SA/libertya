@@ -1,0 +1,11 @@
+# This is a list of tools that are available for the iText toolbox
+# $Id: tools.txt,v 1.4 2005/03/31 17:53:58 blowagie Exp $
+
+# Made by Bruno Lowagie:
+
+# Allows you to create a DVD Cover in PDF
+DvdCover: org.openXpertya.print.pdf.tools.plugins.DvdCover
+Encrypt: org.openXpertya.print.pdf.tools.plugins.Encrypt
+Txt2Pdf: org.openXpertya.print.pdf.tools.plugins.Txt2Pdf
+Tiff2Pdf: org.openXpertya.print.pdf.tools.plugins.Tiff2Pdf
+Handouts: org.openXpertya.print.pdf.tools.plugins.Handouts

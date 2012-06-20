@@ -1,0 +1,20 @@
+<shortcuts>
+<skipIfNotSupported/>
+<programGroup defaultName="Fundesle\openXpertya"
+location="Programas||Menú Inicio"/>
+<shortcut
+name="OpenXpertya"
+target="$INSTALL_PATH\OpenXpertya.exe"
+commandLine=""
+workingDirectory="$INSTALL_PATH\"
+description="Iniciar Aplicacion openXpertya"
+iconFile="$INSTALL_PATH\X.ico"
+iconIndex="0"
+initialState="normal"
+programGroup="yes"
+desktop="yes"
+applications="no"
+startMenu="yes"
+startup="yes">
+</shortcut>
+</shortcuts>

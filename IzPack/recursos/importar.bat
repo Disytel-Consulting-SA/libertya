@@ -1,0 +1,1 @@
+%1\bin\psql.exe -d %2 -U %3 -f %4\data\openxpdb_postgresql8.sql 

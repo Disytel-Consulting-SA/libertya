@@ -1,0 +1,232 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+                                                    
+  <link rel="stylesheet" type="text/css" href="style/default.css">
+  <title>CachedRowSet Sample - Documentation</title>
+   
+</head>
+  <body>
+                       
+<h1>CachedRowSet Sample</h1>
+                       
+<h1>README</h1>
+            &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; This document presents
+a  walkthrough      of the CachedRowSet Sample, it explains the CachedRowSet
+ sample provided     using snippets<br>
+            of code.<br>
+            <br>
+            <br>
+                       
+<h3>&nbsp;&nbsp;&nbsp; Overview</h3>
+                       
+<p>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; This is a sample
+      for demonstrating the functionality of CachedRowSet.&nbsp; This example
+    shows  how to get the data into the memory,<br>
+            &nbsp;&nbsp; (i.e into the CachedRowSet) and also the operations
+  that   can  be performed on the&nbsp; data in the memory like updation
+of   values,   inserting<br>
+            &nbsp; &nbsp;new rows, deleting existing rows,etc. Finally when 
+ the   user   is done with all the operations it shows how to sync the data 
+ in memory  back  <br>
+            &nbsp; to the database.<br>
+            </p>
+                       
+<p><br>
+            </p>
+                       
+<h3>&nbsp; &nbsp;Explanation of the sample</h3>
+                        
+<p>&nbsp; &nbsp; &nbsp; &nbsp;</p>
+                 <code>&nbsp; &nbsp; <small>// Setup the properties for the
+CachedRowSet<br>
+<br>
+ &nbsp;&nbsp; &nbsp;&nbsp; <small><big>crs = new CachedRowSetImpl();<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; crs.setUrl(dbUrl);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; crs.setUsername(dbUserId);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; crs.setPassword(dbPasswd);</big></small></small></code><small> 
+        </small><br>
+<br>
+<small><b><br>
+            </b></small>   &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; The above
+ set   of  statements set up  the properties for the CachedRowSet the properties
+   include  setting the Database  URL, Username<br>
+            &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;and password for setting up 
+a  connection.<br>
+               <br>
+               <code>&nbsp; &nbsp; <small>Connection con = DriverManager.getConnection(dbUrl,dbUserId,dbPasswd);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Statement stmt =  con.createStatement();<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; ResultSet rs = stmt.executeQuery("select *
+from employees");&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; crs.populate(rs);</small></code><small>  
+     </small><br>
+<br>
+<b><small><br>
+            </small></b>    &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; This part 
+ populates   a ResultSet from  the database using the specified command, now
+ this populated   ResultSet is  used to populate the <br>
+            &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;CachedRowSet using the populate 
+  command    that take the ResultSet as the parameter.<br>
+                       
+<p>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <br>
+            &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</p>
+             <code>&nbsp; &nbsp;<small>// Now the data from the employee
+table is in memory, operations<br>
+ &nbsp;&nbsp;&nbsp;  // like inserting   a new row, updating the values in
+already <br>
+&nbsp;&nbsp;&nbsp;   // existing rows,   deleting rows etc can now be performed
+in<br>
+&nbsp;&nbsp;&nbsp; //  memory without   having to connect to the DB. Once
+done with <br>
+&nbsp;&nbsp;&nbsp; //  all the operations data can be synced back to the
+DB.<br>
+<br>
+&nbsp;&nbsp; &nbsp;// 1. Inserting  a  new row<br>
+&nbsp;&nbsp;&nbsp;   // First move to  the row where insert operation is
+performed&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;  <br>
+<br>
+&nbsp;&nbsp;&nbsp;   crs.moveToInsertRow();<br>
+<br>
+&nbsp; &nbsp; // use updateXXX  functions to enter values on the insert row<br>
+&nbsp;     &nbsp; // the first paramter   specifying the column for update
+and <br>
+    &nbsp; &nbsp; // the second parameter the value to be updated.    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; &nbsp;<br>
+<br>
+&nbsp;&nbsp;&nbsp; crs.updateInt(1,  1234);<br>
+&nbsp;&nbsp;&nbsp; crs.updateString(2,   "Mr.XYZ");<br>
+&nbsp;&nbsp;&nbsp; crs.updateString(3,   "Hawaii");<br>
+&nbsp;&nbsp;&nbsp; crs.updateInt(4,1001);<br>
+    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;  <br>
+    &nbsp; &nbsp; // now insert the row and move back to where u were earlier
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;  <br>
+<br>
+ &nbsp;&nbsp;&nbsp; crs.insertRow(); &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+&nbsp;<br>
+<br>
+&nbsp; &nbsp; // We are back on  the row before first row.<br>
+<br>
+&nbsp; &nbsp; crs.moveToCurrentRow();</small></code><small>       </small>&nbsp;&nbsp;<b><small>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+      <br>
+<br>
+<br>
+            &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</small></b>
+        &nbsp;&nbsp;&nbsp; &nbsp;&nbsp; &nbsp;The block repreents the code
+ for    insertion  of a new row into the CachedRowSet. The sequence of operations
+     to be followed  are shown in the<br>
+            &nbsp;&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; code where u move 
+to  the   new   row to be inserted and update the values in the columns accordingly
+    and then  insert that row into the <br>
+            &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; CachedRowSet . After completing 
+    these  operations move the cursor back to the current row( row where the
+   cursor was before insertion) .<br>
+                       
+<p>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</p>
+           <code>&nbsp; &nbsp; <small>// 2.Update data in one of the columns
+of an existing row     &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;  <br>
+&nbsp;&nbsp;&nbsp;&nbsp; // Move to the desired  row, letz say where first
+col is 1111&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;      &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+ <br>
+&nbsp;&nbsp;&nbsp;&nbsp; // The first parameter   is the column in the current
+Row and<br>
+&nbsp;&nbsp;&nbsp;&nbsp; // the second parameter is the value with which
+it is to be<br>
+&nbsp;&nbsp;&nbsp;&nbsp; // updated.<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;  <br>
+&nbsp;&nbsp;&nbsp;&nbsp; crs.beforeFirst();<br>
+&nbsp;&nbsp;&nbsp;&nbsp; while(crs.next()) <br>
+&nbsp; &nbsp; &nbsp;{     &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+ <br>
+&nbsp; &nbsp; &nbsp; &nbsp; if(crs.getInt(1) == 1111)<br>
+&nbsp; &nbsp; &nbsp; &nbsp; {&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+     &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+ <br>
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;crs.updateString(2,"Mr.ABC");  
+  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+ <br>
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;crs.updateRow();     &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+ <br>
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;break;     &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+ <br>
+&nbsp; &nbsp; &nbsp; &nbsp; }<br>
+&nbsp; &nbsp;&nbsp; }</small> <b><small><br>
+<br>
+     &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <br>
+<br>
+     </small></b></code>            <b><small>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</small></b><small><big>The       above snippet respresents an update operation
+happening on a column in   a  row of CachedRowSet. Here a particular row
+is selected where<br>
+            &nbsp; &nbsp; &nbsp; &nbsp; the column values are updated. The
+ methods     updateXXX  are to be used depending on the datatype of the column
+ being   updated.  Once  the <br>
+            &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; updates are done the method 
+  updateRow    needs to be called to actually tell the CachedRowSet about 
+the  updates.<br>
+            &nbsp;&nbsp;&nbsp; </big></small><br>
+                       
+<p>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</p>
+         <code>&nbsp; &nbsp; <small>// 3. Delete a row in this CachedRowSet<br>
+&nbsp; &nbsp; &nbsp;// Let us say we want to delete the row in which the
+first column <br>
+ &nbsp;&nbsp;&nbsp;&nbsp; // is 4567.      &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+ <br>
+&nbsp; &nbsp;&nbsp; // We go to the row before the first row and traverse
+the entire<br>
+&nbsp;&nbsp;&nbsp;&nbsp; // CachedRowSet for that row and then delete it.&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;  <br>
+&nbsp;&nbsp;&nbsp;&nbsp; crs.beforeFirst();<br>
+&nbsp;&nbsp;&nbsp;&nbsp; while(crs.next())<br>
+&nbsp; &nbsp; &nbsp;{<br>
+&nbsp; &nbsp; &nbsp; &nbsp; if(crs.getInt(1) == 4567)<br>
+&nbsp; &nbsp; &nbsp; &nbsp; {      &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+&nbsp;<br>
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;crs.deleteRow();      &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+&nbsp;<br>
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;break;      &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+&nbsp;<br>
+&nbsp; &nbsp; &nbsp; &nbsp; }<br>
+&nbsp; &nbsp;&nbsp; }</small></code>     <br>
+<br>
+<br>
+                   &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; The above code
+  depicts the   deletion  of a row from the CachedRowSet. Once a particular
+  row has been  selected for  deletion the method <br>
+            &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; deleteRow is called to
+delete    the   row from the CachedRowSet.<br>
+                       
+<p>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <br>
+            &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</p>
+      <code>&nbsp; &nbsp; <small>// Once all the operations are done the
+CachedRowSet can now be<br>
+      &nbsp; &nbsp; &nbsp;// synced back to  the database.&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;  <br>
+<br>
+&nbsp; &nbsp; &nbsp;crs.acceptChanges();</small></code><small>  </small><br>
+<br>
+<b><small><br>
+   &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;  </small></b><br>
+          <small>&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;<big>The above code
+ shows how  to synchronize changes back to the database. The function acceptChanges 
+ is  to be used to send all the changes<br>
+          &nbsp;&nbsp;&nbsp; &nbsp;&nbsp; done on the CachedRowSet to the 
+database.<br>
+   <br>
+          </big></small>       <br>
+     
+<p><b><small>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </small></b></p>
+   <br>
+                <br>
+     
+<p>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </p>
+   <br>
+          <br>
+   <br>
+              <br>
+   <br>
+              <br>
+      <br>
+ 
+</body>
+</html>

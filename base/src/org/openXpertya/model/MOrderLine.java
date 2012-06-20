@@ -1,0 +1,1563 @@
+/*
+ *    El contenido de este fichero está sujeto a la  Licencia Pública openXpertya versión 1.1 (LPO)
+ * en tanto en cuanto forme parte íntegra del total del producto denominado:  openXpertya, solución 
+ * empresarial global , y siempre según los términos de dicha licencia LPO.
+ *    Una copia  íntegra de dicha  licencia está incluida con todas  las fuentes del producto.
+ *    Partes del código son CopyRight (c) 2002-2007 de Ingeniería Informática Integrada S.L., otras 
+ * partes son  CopyRight (c) 2002-2007 de  Consultoría y  Soporte en  Redes y  Tecnologías  de  la
+ * Información S.L.,  otras partes son  adaptadas, ampliadas,  traducidas, revisadas  y/o mejoradas
+ * a partir de código original de  terceros, recogidos en el  ADDENDUM  A, sección 3 (A.3) de dicha
+ * licencia  LPO,  y si dicho código es extraido como parte del total del producto, estará sujeto a
+ * su respectiva licencia original.  
+ *     Más información en http://www.openxpertya.org/ayuda/Licencia.html
+ */
+
+
+
+package org.openXpertya.model;
+
+import java.math.BigDecimal;
+import java.sql.ResultSet;
+import java.util.Properties;
+import java.util.logging.Level;
+
+import org.openXpertya.model.DiscountCalculator.IDocument;
+import org.openXpertya.model.DiscountCalculator.IDocumentLine;
+import org.openXpertya.util.DB;
+import org.openXpertya.util.DisplayUtil;
+import org.openXpertya.util.Env;
+import org.openXpertya.util.MProductCache;
+import org.openXpertya.util.Msg;
+import org.openXpertya.util.Util;
+
+/**
+ * Descripción de Clase
+ *
+ *
+ * @version    2.2, 12.10.07
+ * @author     Equipo de Desarrollo de openXpertya    
+ */
+
+public class MOrderLine extends X_C_OrderLine {
+
+	/** Especifica si la línea debe actualizar los impuestos 
+	 *  en la cabecera (en caso que esto sea posible) */
+	boolean shouldUpdateHeader = true;
+
+	/**
+	 * Lugar de Retiro. Utilizado para evitar reserva de stock en pedidos que se
+	 * retiran por TPV. Por defecto el lugar de retiro es Almacén lo cual
+	 * implica que para esta línea se hará la reserva de stock normalmente. Si
+	 * el lugar de retiro se setea a TPV entonces no se hará la reserva de
+	 * stock. No se requiere persistir este dato.
+	 */
+	private String checkoutPlace = MProduct.CHECKOUTPLACE_Warehouse;
+	
+    /**
+     * Constructor de la clase ...
+     *
+     *
+     * @param ctx
+     * @param C_OrderLine_ID
+     * @param trxName
+     */
+	
+    public MOrderLine( Properties ctx,int C_OrderLine_ID,String trxName ) {
+        super( ctx,C_OrderLine_ID,trxName );
+
+        if( C_OrderLine_ID == 0 ) {
+
+            // setC_Order_ID (0);
+            // setLine (0);
+            // setM_Warehouse_ID (0);  // @M_Warehouse_ID@
+            // setC_BPartner_ID(0);
+            // setC_BPartner_Location_ID (0);  // @C_BPartner_Location_ID@
+            // setC_Currency_ID (0);   // @C_Currency_ID@
+            // setDateOrdered (new Timestamp(System.currentTimeMillis()));     // @DateOrdered@
+            //
+            // setC_Tax_ID (0);
+            // setC_UOM_ID (0);
+            //
+
+            setFreightAmt( Env.ZERO );
+            setLineNetAmt( Env.ZERO );
+
+            //
+
+            setPriceEntered( Env.ZERO );
+            setPriceActual( Env.ZERO );
+            setPriceLimit( Env.ZERO );
+            setPriceList( Env.ZERO );
+
+            //
+
+            setM_AttributeSetInstance_ID( 0 );
+
+            //
+
+            setQtyEntered( Env.ZERO );
+            setQtyOrdered( Env.ZERO );    // 1
+            setQtyDelivered( Env.ZERO );
+            setQtyInvoiced( Env.ZERO );
+            setQtyReserved( Env.ZERO );
+
+            //
+
+            setIsDescription( false );    // N
+            setProcessed( false );
+        }
+    }                                     // MOrderLine
+
+    /**
+     * Constructor de la clase ...
+     *
+     *
+     * @param order
+     */
+
+    public MOrderLine( MOrder order ) {
+        this( order.getCtx(),0,order.get_TrxName());
+
+        if( order.getID() == 0 ) {
+            throw new IllegalArgumentException( "Header not saved" );
+        }
+
+        setC_Order_ID( order.getC_Order_ID());    // parent
+        setOrder( order );
+
+        // Reset
+
+        setC_Tax_ID( 0 );
+        setLine( 0 );
+        setC_UOM_ID( 0 );
+    }    // MOrderLine
+
+    /**
+     * Constructor de la clase ...
+     *
+     *
+     * @param ctx
+     * @param rs
+     * @param trxName
+     */
+
+    public MOrderLine( Properties ctx,ResultSet rs,String trxName ) {
+        super( ctx,rs,trxName );
+    }    // MOrderLine
+
+    /** Descripción de Campos */
+
+    private int m_M_PriceList_ID = 0;
+
+    //
+
+    /** Descripción de Campos */
+
+    private boolean m_IsSOTrx = true;
+
+    // Product Pricing
+
+    /** Descripción de Campos */
+
+    private MProductPricing m_productPrice = null;
+
+    /** Descripción de Campos */
+
+    private Integer m_precision = null;
+
+    /** Descripción de Campos */
+
+    private MProduct m_product = null;
+    
+    private MOrder m_order = null;
+
+    /**
+     * Descripción de Método
+     *
+     *
+     * @param order
+     */
+
+    public void setOrder( MOrder order ) {
+        setClientOrg( order );
+        setC_BPartner_ID( order.getC_BPartner_ID());
+        setC_BPartner_Location_ID( order.getC_BPartner_Location_ID());
+        setM_Warehouse_ID( order.getM_Warehouse_ID());
+        setDateOrdered( order.getDateOrdered());
+        setDatePromised( order.getDatePromised());
+        setC_Currency_ID( order.getC_Currency_ID());
+        setHeaderInfo( order );
+    }    // setOrder
+
+    /**
+     * Descripción de Método
+     *
+     *
+     * @param order
+     */
+
+    public void setHeaderInfo( MOrder order ) {
+        m_precision      = new Integer( order.getPrecision());
+        m_M_PriceList_ID = order.getM_PriceList_ID();
+        m_IsSOTrx        = order.isSOTrx();
+    }    // setHeaderInfo
+
+    /**
+     * Descripción de Método
+     *
+     *
+     * @param PriceActual
+     */
+
+    public void setPrice( BigDecimal PriceActual ) {
+        setPriceEntered( PriceActual );
+        setPriceActual( PriceActual );
+    }    // setPrice
+
+    /**
+     * Descripción de Método
+     *
+     *
+     * @param PriceActual
+     */
+
+    public void setPriceActual( BigDecimal PriceActual ) {
+        if( PriceActual == null ) {
+            throw new IllegalArgumentException( "PriceActual is mandatory" );
+        }
+
+        set_ValueNoCheck( "PriceActual",PriceActual );
+    }    // setPriceActual
+
+    /**
+     * Descripción de Método
+     *
+     */
+
+    public void setPrice() {
+        if( getM_Product_ID() == 0 ) {
+            return;
+        }
+
+        if( m_M_PriceList_ID == 0 ) {
+            throw new IllegalStateException( "PriceList unknown!" );
+        }
+
+        setPrice( m_M_PriceList_ID );
+    }    // setPrice
+
+    /**
+     * Descripción de Método
+     *
+     *
+     * @param M_PriceList_ID
+     */
+
+    public void setPrice( int M_PriceList_ID ) {
+        if( getM_Product_ID() == 0 ) {
+            return;
+        }
+
+        //
+
+        log.fine( "M_PriceList_ID=" + M_PriceList_ID );
+        getProductPricing( M_PriceList_ID );
+        setPriceActual( m_productPrice.getPriceStd());
+        setPriceList( m_productPrice.getPriceList());
+        setPriceLimit( m_productPrice.getPriceLimit());
+
+        //
+
+        if( getQtyEntered().compareTo( getQtyOrdered()) == 0 ) {
+            //setPriceEntered( getPriceActual()); Original
+            setPriceEntered( getPriceActual());
+        } else {
+            setPriceEntered( getPriceActual().multiply( getQtyOrdered().divide( getQtyEntered(),BigDecimal.ROUND_HALF_UP )));    // no precision
+        }
+
+        // Calculate Discount
+
+        setDiscount( m_productPrice.getDiscount());
+
+        // Set UOM
+
+        setC_UOM_ID( m_productPrice.getC_UOM_ID());
+    }    // setPrice
+
+    /**
+     * Descripción de Método
+     *
+     *
+     * @param M_PriceList_ID
+     *
+     * @return
+     */
+
+    private MProductPricing getProductPricing( int M_PriceList_ID ) {
+        m_productPrice = new MProductPricing( getM_Product_ID(),getC_BPartner_ID(),getQtyOrdered(),m_IsSOTrx );
+        m_productPrice.setM_PriceList_ID( M_PriceList_ID );
+        m_productPrice.setPriceDate( getDateOrdered());
+
+        //
+
+        m_productPrice.calculatePrice();
+
+        return m_productPrice;
+    }    // getProductPrice
+
+    /**
+     * Descripción de Método
+     *
+     *
+     * @return
+     */
+
+    public boolean setTax() {
+        int ii = Tax.get( getCtx(),getM_Product_ID(),getC_Charge_ID(),getDateOrdered(),getDateOrdered(),getAD_Org_ID(),getM_Warehouse_ID(),getC_BPartner_Location_ID(),    // should be bill to
+                          getC_BPartner_Location_ID(),m_IsSOTrx );
+
+        if( ii == 0 ) {
+            log.log( Level.SEVERE,"No Tax found" );
+
+            return false;
+        }
+
+        setC_Tax_ID( ii );
+
+        return true;
+    }    // setTax
+
+    /**
+     * Descripción de Método
+     *
+     */
+
+    public void setLineNetAmt() {
+        BigDecimal bd = getPriceActual().multiply( getQtyOrdered());
+        log.fine("En SetLineNetAmt de MOrderLine, getPriceActual="+getPriceActual()+", getQtyOrdered"+getQtyOrdered());
+        if( bd.scale() > getPrecision()) {
+            bd = bd.setScale( getPrecision(),BigDecimal.ROUND_HALF_UP );
+        }
+
+        super.setLineNetAmt( bd );
+    }    // setLineNetAmt
+
+    /**
+     * Descripción de Método
+     *
+     *
+     * @return
+     */
+
+    public int getPrecision() {
+        if( m_precision != null ) {
+            return m_precision.intValue();
+        }
+
+        //
+
+        if( getC_Currency_ID() == 0 ) {
+            MOrder o = new MOrder( getCtx(),getC_Order_ID(),get_TrxName());
+
+            setOrder( o );
+
+            if( m_precision != null ) {
+                return m_precision.intValue();
+            }
+        }
+
+        if( getC_Currency_ID() != 0 ) {
+            MCurrency cur = MCurrency.get( getCtx(),getC_Currency_ID());
+
+            if( cur.getID() != 0 ) {
+                m_precision = new Integer( cur.getStdPrecision());
+
+                return m_precision.intValue();
+            }
+        }
+
+        // Fallback
+
+        String sql = "SELECT c.StdPrecision " + "FROM C_Currency c INNER JOIN C_Order x ON (x.C_Currency_ID=c.C_Currency_ID) " + "WHERE x.C_Order_ID=?";
+        int i = DB.getSQLValue( get_TrxName(),sql,getC_Order_ID());
+
+        m_precision = new Integer( i );
+
+        return m_precision.intValue();
+    }    // getPrecision
+
+    /**
+     * Descripción de Método
+     *
+     *
+     * @param product
+     */
+
+    public void setProduct( MProduct product ) {
+        m_product = product;
+
+        if( m_product != null ) {
+            setM_Product_ID( m_product.getM_Product_ID());
+            setC_UOM_ID( m_product.getC_UOM_ID());
+        } else {
+            setM_Product_ID( 0 );
+            setC_UOM_ID( 0 );
+        }
+
+        setM_AttributeSetInstance_ID( 0 );
+    }    // setProduct
+
+    /**
+     * Descripción de Método
+     *
+     *
+     * @param M_Product_ID
+     * @param setUOM
+     */
+
+    public void setM_Product_ID( int M_Product_ID,boolean setUOM ) {
+        if( setUOM ) {
+            setProduct( MProduct.get( getCtx(),M_Product_ID ));
+        } else {
+            super.setM_Product_ID( M_Product_ID );
+        }
+
+        setM_AttributeSetInstance_ID( 0 );
+    }    // setM_Product_ID
+
+    /**
+     * Descripción de Método
+     *
+     *
+     * @param M_Product_ID
+     * @param C_UOM_ID
+     */
+
+    public void setM_Product_ID( int M_Product_ID,int C_UOM_ID ) {
+        super.setM_Product_ID( M_Product_ID );
+        super.setC_UOM_ID( C_UOM_ID );
+        setM_AttributeSetInstance_ID( 0 );
+    }    // setM_Product_ID
+
+    /**
+     * Descripción de Método
+     *
+     *
+     * @return
+     */
+
+    public MProduct getProduct() {
+        if( (m_product == null) && (getM_Product_ID() != 0) ) {
+        	//Ader: soporte para caches-multidocumento
+        	if (m_prodCache!= null)
+        		m_product = m_prodCache.get(getM_Product_ID());
+        	else
+        		m_product = MProduct.get( getCtx(),getM_Product_ID());
+        }
+
+        return m_product;
+    }    // getProduct
+
+    /**
+     * Descripción de Método
+     *
+     *
+     * @param M_AttributeSetInstance_ID
+     */
+
+    public void setM_AttributeSetInstance_ID( int M_AttributeSetInstance_ID ) {
+        if( M_AttributeSetInstance_ID == 0 ) {    // 0 is valid ID
+            set_Value( "M_AttributeSetInstance_ID",new Integer( 0 ));
+        } else {
+            super.setM_AttributeSetInstance_ID( M_AttributeSetInstance_ID );
+        }
+    }                                             // setM_AttributeSetInstance_ID
+
+    /**
+     * Descripción de Método
+     *
+     *
+     * @param M_Warehouse_ID
+     */
+
+    public void setM_Warehouse_ID( int M_Warehouse_ID ) {
+        if( (getM_Warehouse_ID() > 0) && (getM_Warehouse_ID() != M_Warehouse_ID) &&!canChangeWarehouse()) {
+            log.severe( "Ignored - Already Delivered/Invoiced/Reserved" );
+        } else {
+            super.setM_Warehouse_ID( M_Warehouse_ID );
+        }
+    }    // setM_Warehouse_ID
+
+    /**
+     * Descripción de Método
+     *
+     *
+     * @return
+     */
+
+    public boolean canChangeWarehouse() {
+        if( getQtyDelivered().signum() != 0 ) {
+            log.saveError( "Error",Msg.translate( getCtx(),"QtyDelivered" ) + "=" + getQtyDelivered());
+
+            return false;
+        }
+
+        if( getQtyInvoiced().signum() != 0 ) {
+            log.saveError( "Error",Msg.translate( getCtx(),"QtyInvoiced" ) + "=" + getQtyInvoiced());
+
+            return false;
+        }
+
+        if( getQtyReserved().signum() != 0 ) {
+            log.saveError( "Error",Msg.translate( getCtx(),"QtyReserved" ) + "=" + getQtyReserved());
+
+            return false;
+        }
+
+        // We can change
+
+        return true;
+    }    // canChangeWarehouse
+
+    /**
+     * Descripción de Método
+     *
+     *
+     * @return
+     */
+
+    public String toString() {
+        StringBuffer sb = new StringBuffer( "MOrderLine[" ).append( getID()).append( ",Line=" ).append( getLine()).append( ",Ordered=" ).append( getQtyOrdered()).append( ",Delivered=" ).append( getQtyDelivered()).append( ",Invoiced=" ).append( getQtyInvoiced()).append( ",Reserved=" ).append( getQtyReserved()).append( "]" );
+
+        return sb.toString();
+    }    // toString
+
+    /**
+     * Descripción de Método
+     *
+     *
+     * @param description
+     */
+
+    public void addDescription( String description ) {
+        String desc = getDescription();
+
+        if( desc == null ) {
+            setDescription( description );
+        } else {
+            setDescription( desc + " | " + description );
+        }
+    }    // addDescription
+
+    /**
+     * Descripción de Método
+     *
+     *
+     * @return
+     */
+
+    public String getDescriptionText() {
+        return super.getDescription();
+    }    // getDescriptionText
+
+    /**
+     * Descripción de Método
+     *
+     *
+     * @return
+     */
+
+    public String getName() {
+        getProduct();
+
+        if( m_product == null ) {
+            return "";
+        }
+
+        return m_product.getName();
+    }    // getName
+
+    /**
+     * Descripción de Método
+     *
+     */
+
+    public void setDiscount() {
+        BigDecimal list = getPriceList();
+
+        // No List Price
+
+        if( Env.ZERO.compareTo( list ) == 0 ) {
+            return;
+        }
+
+        BigDecimal discount = list.subtract( getPriceActual()).multiply( new BigDecimal( 100 )).divide( list,2,BigDecimal.ROUND_HALF_UP );
+
+        setDiscount( discount );
+    }    // setDiscount
+    
+    public BigDecimal calculatePrice(BigDecimal discount) {
+		BigDecimal cPrice = getPriceList();
+		if(discount != null) {
+			cPrice = cPrice.subtract(cPrice.multiply(discount.divide(new BigDecimal(100),10,BigDecimal.ROUND_HALF_UP)));
+		}
+		return cPrice;
+	}
+
+    /**
+     * Descripción de Método
+     *
+     *
+     * @return
+     */
+
+    public boolean isTaxIncluded() {
+        if( m_M_PriceList_ID == 0 ) {
+            m_M_PriceList_ID = DB.getSQLValue( get_TrxName(),"SELECT M_PriceList_ID FROM C_Order WHERE C_Order_ID=?",getC_Order_ID());
+        }
+
+        MPriceList pl = MPriceList.get( getCtx(),m_M_PriceList_ID,get_TrxName());
+
+        return pl.isTaxIncluded();
+    }    // isTaxIncluded
+
+    /**
+     * Descripción de Método
+     *
+     *
+     * @param Qty
+     */
+
+    public void setQty( BigDecimal Qty ) {
+        super.setQtyEntered( Qty );
+        super.setQtyOrdered( Qty );
+    }    // setQty
+
+    /**
+     * Descripción de Método
+     *
+     *
+     * @param newRecord
+     *
+     * @return
+     */
+
+    protected boolean beforeSave( boolean newRecord ) {
+
+        // begin e-evolution vpj 04/11/2004 CMPCS
+
+//        MMPCMRP.C_OrderLine( this,get_TrxName(),false );
+
+        // end e-evolution vpj 04/11/2004 CMPCS
+        // Get Defaults from Parent
+
+        MOrder o = new MOrder( getCtx(),getC_Order_ID(),get_TrxName());
+
+        if( (getC_BPartner_ID() == 0) || (getC_BPartner_Location_ID() == 0) || (getM_Warehouse_ID() == 0) || (getC_Currency_ID() == 0) ) {
+            setOrder( o );
+        }
+
+        if( m_M_PriceList_ID == 0 ) {
+            setHeaderInfo( o );
+        }
+
+        // R/O Check - Product/Warehouse Change
+
+        if( !newRecord && ( is_ValueChanged( "M_Product_ID" ) || is_ValueChanged( "M_Warehouse_ID" ))) {
+            if( !canChangeWarehouse()) {
+                return false;
+            }
+        }    // Product Changed
+
+        // Charge
+
+        if( !o.isSOTrx() && (getC_Charge_ID() != 0) && (getM_Product_ID() != 0) ) {
+        	log.saveError("Error", Msg.getMsg( getCtx(),"ChargeExclusively" ));
+        	return false;
+        }
+        
+        if( (getC_Charge_ID() != 0) && (getM_Product_ID() != 0) ) {
+            setM_Product_ID( 0 );
+        }
+
+        // No Product
+
+        if( getM_Product_ID() == 0 ) {
+            setM_AttributeSetInstance_ID( 0 );
+
+            // Product
+
+        } else    // Set/check Product Price
+        {
+
+        	// Validación de precios positivos.
+        	if(getPriceActual().compareTo(BigDecimal.ZERO) < 0) {
+        		log.saveError( "Error",Msg.getMsg( getCtx(),"PriceUnderZero" ));
+        		return false;
+        	}
+        	
+        	if(getPriceList().compareTo(BigDecimal.ZERO) < 0) {
+        		log.saveError( "Error",Msg.parseTranslation( getCtx(),"@PriceUnderZero@ (@PriceList@)" ));
+        		return false;
+        	}
+            
+        	// Set Price if Actual = 0
+
+            if( (m_productPrice == null) && (Env.ZERO.compareTo( getPriceActual()) == 0) && (Env.ZERO.compareTo( getPriceList()) == 0) ) {
+                setPrice();
+            }
+
+            // Check if on Price list
+
+            if( m_productPrice == null ) {
+                getProductPricing( m_M_PriceList_ID );
+            }
+
+            if( !m_productPrice.isCalculated()) {
+                log.saveError( "Error",Msg.getMsg( getCtx(),"ProductNotOnPriceList" ));
+
+                return false;
+            }
+            
+            // Verificación de restricción del lugar de retiro del artículo según lo indicado
+            // por el tipo de documento.
+            MDocType docType = MDocType.get(Env.getCtx(), o.getC_DocTypeTarget_ID());
+            if(docType.isCheckoutPlaceRestricted()
+            		&& !o.isProcessed() 
+            		&& MProduct.CHECKOUTPLACE_PointOfSale.equals(getProduct().getCheckoutPlace())) {
+                    
+            		log.saveError("SaveError", Msg.translate(Env.getCtx(), "InvalidProductCheckoutPlaceError"));
+                    return false;
+            }
+            
+        }
+
+        // UOM
+
+        if( (getC_UOM_ID() == 0) && ( (getM_Product_ID() != 0) || (getPriceEntered().compareTo( Env.ZERO ) != 0) ) ) {
+            int C_UOM_ID = MUOM.getDefault_UOM_ID( getCtx());
+
+            if( C_UOM_ID > 0 ) {
+                setC_UOM_ID( C_UOM_ID );
+            }
+        }
+
+        // FreightAmt Not used
+
+        if( Env.ZERO.compareTo( getFreightAmt()) != 0 ) {
+            setFreightAmt( Env.ZERO );
+        }
+
+        // Set Tax
+
+        if( getC_Tax_ID() == 0 ) {
+            setTax();
+        }
+
+        // Get Line No
+
+        if( getLine() == 0 ) {
+            String sql = "SELECT COALESCE(MAX(Line),0)+10 FROM C_OrderLine WHERE C_Order_ID=?";
+            int ii = DB.getSQLValue( get_TrxName(),sql,getC_Order_ID());
+
+            setLine( ii );
+        }
+
+        // Calculations & Rounding
+
+        setLineNetAmt();    // extended Amount with or without tax
+        setDiscount();
+        setLineTotalAmt();
+
+        // M_AttributeSetInstance_ID
+        
+        /*
+        if (getM_AttributeSetInstance_ID() == 0 && shouldSetAttrSetInstance()) {
+        	log.saveError("FillMandatory", Msg.translate( getCtx(),"M_AttributeSetInstance_ID" ));
+        	return false;
+        }
+        */
+        
+        /*
+         * Añade una comprobacion en el metodo beforSave 
+         * de las lineas de pedido y albaran, para que en 
+         * las transacciones de venta, no se pueda guardar 
+         * seleccionar un conjunto de atributos cuyo 
+         * stockage sea menor que el indicado en la linea.
+         */
+        if (o.isSOTrx() && getM_AttributeSetInstance_ID() != 0) {
+	        // BigDecimal avQty = (BigDecimal)DB.getSQLObject(get_TrxName(), "SELECT COALESCE(SUM(QtyOnHand-QtyReserved), 0.0) FROM M_Storage INNER JOIN M_Locator ON (M_Locator.M_Warehouse_ID=M_Storage.M_Locator_ID) WHERE ? IN (M_AttributeSetInstance_ID,0) AND M_Product_ID = ? AND M_Locator.M_Warehouse_ID = ? ", new Object[]{getM_AttributeSetInstance_ID(), getM_Product_ID(), getM_Warehouse_ID()});
+        	// BigDecimal avQty = MStorage.get(getCtx(), getM_Locator_ID(), getM_Product_ID(), getM_AttributeSetInstance_ID(), get_TrxName());
+        	BigDecimal avQty = MStorage.getQtyAvailable(getM_Warehouse_ID(), getM_Product_ID(), getM_AttributeSetInstance_ID(), get_TrxName());
+	        if (avQty.compareTo(getQtyEntered()) < 0) {
+	        	log.saveError("NotEnoughStocked", "");
+	        	return false;
+	        }
+        }
+        
+        /* Si el project no está seteado, tomar el de la cabecera */
+        if (getC_Project_ID() == 0)
+        	// setC_Project_ID(DB.getSQLValue(get_TrxName(), " SELECT C_Project_ID FROM C_Order WHERE C_Order_ID = " + getC_Order_ID()));
+        	setC_Project_ID(o.getC_Project_ID());
+        
+        return true;
+    }    // beforeSave
+
+    public boolean shouldSetAttrSetInstance() {
+    	return shouldSetAttrSetInstance(null);
+    }
+    
+    private boolean shouldSetAttrSetInstance(MOrder o) {
+    	int ProductID = getM_Product_ID();
+    	
+    	if (ProductID == 0)
+    		return false;
+    	
+    	/*
+    	 * Modificar C_OrderLine y M_InOutLine para que compruebe que se ha introducido el conjunto de atributos, 
+    	 * antes de permitir grabar si producto tiene configurado conjunto de atributos y se deben establacer.
+    	 */
+    	boolean pnia = MAttributeSet.ProductNeedsInstanceAttribute(ProductID, get_TrxName());
+    	
+    	if (!pnia)
+    		return false;
+    	
+    	/*
+    	int DocTypeID = DB.getSQLValue(get_TrxName(), "SELECT c_doctypetarget_id FROM c_order WHERE c_order_id = ?", getC_Order_ID());
+    	MDocType DocType = MDocType.get(getCtx(), DocTypeID);
+    	
+    	
+    	//  Modificar C_OrderLine para que haga el mismo tratamiento con los atributos en caso de que el pedido 
+    	//  sea �Pedido a Credito� o �Pedido de Almacen�
+    	if (DocType.getDocBaseType().equals(MDocType.DOCBASETYPE_SalesOrder) && 
+    			(DocType.getDocSubTypeSO().equals(MDocType.DOCSUBTYPESO_WarehouseOrder) || DocType.getDocSubTypeSO().equals(MDocType.DOCSUBTYPESO_OnCreditOrder)))
+    		return true;
+    	*/
+    	
+    	if (o == null)
+    		o = new MOrder(getCtx(), getC_Order_ID(), get_TrxName());
+    	
+    	MAttributeSet.CondicionesCasos cc = MAttributeSet.GetCondicionesAtributos(MAttributeSet.GetCasoByTableName(null, this, o.getC_DocTypeTarget_ID(), o.isSOTrx()));
+    	
+    	return cc.isAtributeSetInstenceMandatory();
+    }
+    
+    /**
+     * Descripción de Método
+     *
+     *
+     * @return
+     */
+
+    protected boolean beforeDelete() {
+
+        // R/O Check - Something delivered. etc.
+
+        if( Env.ZERO.compareTo( getQtyDelivered()) != 0 ) {
+            log.saveError( "DeleteError",Msg.translate( getCtx(),"QtyDelivered" ) + "=" + getQtyDelivered());
+
+            return false;
+        }
+
+        if( Env.ZERO.compareTo( getQtyInvoiced()) != 0 ) {
+            log.saveError( "DeleteError",Msg.translate( getCtx(),"QtyInvoiced" ) + "=" + getQtyInvoiced());
+
+            return false;
+        }
+
+        if( Env.ZERO.compareTo( getQtyReserved()) != 0 ) {
+
+            // For PO should be On Order
+
+            log.saveError( "DeleteError",Msg.translate( getCtx(),"QtyReserved" ) + "=" + getQtyReserved());
+
+            return false;
+        }
+
+        return true;
+    }    // beforeDelete
+
+    /**
+     * Descripción de Método
+     *
+     *
+     * @param newRecord
+     * @param success
+     *
+     * @return
+     */
+
+    protected boolean afterSave( boolean newRecord,boolean success ) {
+
+        // begin e-evolution vpj 04/11/2004 CMPCS
+
+//        MMPCMRP.C_OrderLine( this,get_TrxName(),false );
+
+        // end e-evolution vpj 04/11/2004 CMPCS
+
+        if( !success ) {
+            return success;
+        }
+
+        if( !newRecord && is_ValueChanged( "C_Tax_ID" )) {
+
+            // Recalculate Tax for old Tax
+
+            MOrderTax tax = MOrderTax.get( this,getPrecision(),true,get_TrxName());    // old Tax
+
+            if( tax != null ) {
+                if( !tax.calculateTaxFromLines()) {
+                    return false;
+                }
+
+                if( !tax.save( get_TrxName())) {
+                    return false;
+                }
+            }
+        }
+
+        // si a esta instancia le corresponde actualizar el encabezado, pero el
+        // el header se encuentra completado, no es posible modificar la cabecera
+        return !shouldUpdateHeader || (!isHeaderUpdateable(MOrder.Table_Name, getC_Order_ID()) || updateHeader());
+    }    // afterSave
+
+    /**
+     * Descripción de Método
+     *
+     *
+     * @param success
+     *
+     * @return
+     */
+
+    protected boolean afterDelete( boolean success ) {
+        if( !success ) {
+            return success;
+        }
+
+        if( getS_ResourceAssignment_ID() != 0 ) {
+            MResourceAssignment ra = new MResourceAssignment( getCtx(),getS_ResourceAssignment_ID(),get_TrxName());
+
+            ra.delete( true );
+        }
+
+        // begin e-evolution vpj 04/11/2004 CMPCS
+
+//        MMPCMRP.C_OrderLine( this,get_TrxName(),true );
+
+        // end e-evolution vpj 04/11/2004 CMPCS
+
+        // si a esta instancia le corresponde actualizar el encabezado, pero el
+        // el header se encuentra completado, no es posible modificar la cabecera
+        return !shouldUpdateHeader || (!isHeaderUpdateable(MOrder.Table_Name, getC_Order_ID()) || updateHeader());
+    }    // afterDelete
+
+    /**
+     * Descripción de Método
+     *
+     *
+     * @return
+     */
+
+    private boolean updateHeader() {
+
+        // Recalculate Tax for this Tax
+
+        MOrderTax tax = MOrderTax.get( this,getPrecision(),false,get_TrxName());    // current Tax
+
+        if( !tax.calculateTaxFromLines()) {
+            return false;
+        }
+
+        if( !tax.save( get_TrxName())) {
+            return false;
+        }
+        // Recalcula los importes del encabezado del pedido.
+        if (getOrder().updateAmounts()) {
+        	return getOrder().save(); 
+        } else {
+        	return false;
+        }
+        
+    }    // updateHeaderTax
+    
+    public String getProductName()
+    {
+    	if (getM_Product_ID() > 0){
+    		MProduct prod = new MProduct(p_ctx, getM_Product_ID(), null); 
+    		return getDescription() == null?prod.getName():prod.getName()+ " - " + getDescription();
+    	}
+    	return getDescription();
+    }
+    
+    public String getProductValue()
+    {
+    	if (getProduct() != null)
+    		return getProduct().getValue();
+    	return "";
+    }    
+
+    public String getUOMName()
+    {
+    	if (getC_UOM_ID() > 0)
+    		return (new MUOM(p_ctx, getC_UOM_ID(), null)).getName();
+    	return "";
+    }
+    
+    public String getLineStr()
+    {
+    	return "" + getLine();
+    }    
+    
+    public BigDecimal getTotalLineNoDsc()
+    {
+    	return getPriceList().multiply(getQtyEntered());
+    }
+  
+    // redefinido, según sea issotrx o no
+    // si es de venta utiliza el precio de lista
+    // si es de compra utiliza el precio ingresado a mano
+    public BigDecimal getPriceList2()
+    {
+    	if (m_IsSOTrx)
+    		return getPriceList();
+    	else
+    		return getPriceEntered();    		
+    }
+    
+    /**
+     * @return Indica si la línea contiene artículos que aún no han sido entregados.
+     */
+    public boolean hasNotDeliveredProducts() {
+    	return getQtyOrdered().subtract(getQtyDelivered()).compareTo(BigDecimal.ZERO) != 0;
+    }
+
+	/**
+	 * Crea el wrapper de esta línea para ser manipulada por un calculador de
+	 * descuentos.
+	 * 
+	 * @param order
+	 *            Wrapper del pedido que contiene esta línea
+	 * @return Nueva instancia del wrapper
+	 */
+    protected IDocumentLine createDiscountableWrapper(IDocument order) {
+    	return new DiscountableMOrderLineWrapper(order);
+    }
+
+	/**
+	 * Devuelve la instancia del pedido al cual pertenece esta línea
+	 * 
+	 * @param reload
+	 *            <code>true</code> para recargar la instancia desde la BD
+	 * @return {@link MOrder}
+	 */
+    public MOrder getOrder(boolean reload) {
+    	if (m_order == null || reload) {
+    		m_order = new MOrder(getCtx(), getC_Order_ID(), get_TrxName()); 
+    	}
+    	return m_order; 
+    }
+
+	/**
+	 * Devuelve la instancia del pedido al cual pertenece esta línea. No recarga
+	 * la instancia desde la BD en caso de que ya haya sido utilizado este métod
+	 * (devuelve la referencia que tiene actualmente esta línea)
+	 * 
+	 * @return {@link MOrder}
+	 */
+    public MOrder getOrder() {
+    	return getOrder(false);
+    }
+    
+    public BigDecimal setLineTotalAmt() {
+    	if (getLineNetAmt() == null || getLineNetAmt().compareTo(BigDecimal.ZERO) == 0) {
+    		setLineNetAmt();
+    	}
+    	BigDecimal lineTaxAmt = BigDecimal.ZERO;
+    	if (getC_Tax_ID() > 0) {
+    		MTax tax = new MTax( getCtx(),getC_Tax_ID(),get_TrxName());
+    		lineTaxAmt = tax.calculateTax( getLineNetAmt(),isTaxIncluded(),getPrecision());
+    	}
+    	BigDecimal lineTotalAmt = getLineNetAmt().add(lineTaxAmt);
+    	setLineTotalAmt(lineTotalAmt);
+    	return lineTotalAmt;
+    }
+    
+    /**
+     * @return importe de impuesto de la línea actual
+     */
+    public BigDecimal getTaxAmt(){
+    	BigDecimal lineTaxAmt = BigDecimal.ZERO;
+    	if (getC_Tax_ID() > 0) {
+    		MTax tax = new MTax( getCtx(),getC_Tax_ID(),get_TrxName());
+    		lineTaxAmt = tax.calculateTax( getTotalPriceEnteredNet(),isTaxIncluded(),getPrecision());
+    	}
+    	return lineTaxAmt;
+    }
+    
+    /**
+     * Wrapper de {@link MOrderLine} para cálculo de descuentos.
+     */
+    private class DiscountableMOrderLineWrapper extends DiscountableDocumentLine {
+    	
+		public DiscountableMOrderLineWrapper(IDocument document) {
+			super(document);
+		}
+
+		@Override
+		public BigDecimal getPrice() {
+			return MOrderLine.this.getPriceActual();
+		}
+
+		@Override
+		public BigDecimal getPriceList() {
+			return MOrderLine.this.getPriceList();
+		}
+
+		@Override
+		public int getProductID() {
+			return MOrderLine.this.getM_Product_ID();
+		}
+
+		@Override
+		public BigDecimal getQty() {
+			return MOrderLine.this.getQtyEntered();
+		}
+
+		@Override
+		public void setPrice(BigDecimal newPrice) {
+			// FIXME Cuando los descuentos manuales estén dentro del
+			// DiscountCalculator se debe sacar esta distinción entre manual y
+			// automático
+			// Si no tiene algún descuento automático, entonces aplico el manual
+			if(MOrderLine.this.getLineBonusAmt().compareTo(BigDecimal.ZERO) == 0 
+					&& MOrderLine.this.getLineDiscountAmt().compareTo(BigDecimal.ZERO) == 0){
+				newPrice = MOrderLine.this.calculatePrice(MOrderLine.this.getDiscount());
+			}
+			MOrderLine.this.setPrice(newPrice);		
+		}
+		
+		@Override
+		public void setDocumentDiscountAmt(BigDecimal discountAmt) {
+			MOrderLine.this.setDocumentDiscountAmt(discountAmt);
+			if (!MOrderLine.this.save()) {
+				log.severe("Cannot save discounted Order Line");
+			}
+		}
+		
+		@Override
+		public BigDecimal getLineDiscountAmt() {
+			return MOrderLine.this.getLineDiscountAmt();
+		}
+
+		@Override
+		public void setLineDiscountAmt(BigDecimal lineDiscountAmt) {
+			MOrderLine.this.setLineDiscountAmt(lineDiscountAmt);
+		}
+
+		@Override
+		public BigDecimal getLineBonusAmt() {
+			return MOrderLine.this.getLineBonusAmt();
+		}
+
+		@Override
+		public void setLineBonusAmt(BigDecimal lineBonusAmt) {
+			MOrderLine.this.setLineBonusAmt(lineBonusAmt);			
+		}
+		
+		@Override
+		public BigDecimal getTaxRate() {
+			return MOrderLine.this.getTaxRate();
+		}
+		
+		@Override
+		public boolean isTaxIncluded() {
+			return MOrderLine.this.isTaxIncluded();
+		}
+    }
+
+	public boolean isShouldUpdateHeader() {
+		return shouldUpdateHeader;
+	}
+
+	public void setShouldUpdateHeader(boolean shouldUpdateHeader) {
+		this.shouldUpdateHeader = shouldUpdateHeader;
+	}
+	
+	
+    /**
+     * @return la taza de impuesto configurada en esta línea 
+     */
+    public BigDecimal getTaxRate() {
+		BigDecimal rate = BigDecimal.ZERO;
+		if (getC_Tax_ID() > 0) {
+			MTax tax = MTax.get(getCtx(), getC_Tax_ID(), get_TrxName());
+			rate = tax !=  null ? tax.getRate() : rate;
+		}
+		return rate;
+	}
+	
+	/**
+     * @return nombre del cargo relacionado con esta línea
+     * NO MODIFICAR FIRMA, SE USA EN LA IMPRESIÓN DE LA FACTURA
+     */
+    public String getChargeName(){
+    	String changeName = "";
+    	if(!Util.isEmpty(getC_Charge_ID(), true)){
+    		MCharge charge = new MCharge(getCtx(), getC_Charge_ID(), get_TrxName());
+    		changeName = charge.getName();
+    	}
+    	return changeName;
+    }
+    
+    /**
+     * @return nombre del proyecto relacionado con esta línea
+     * NO MODIFICAR FIRMA, SE USA EN LA IMPRESIÓN DE LA FACTURA
+     */
+    public String getProjectName(){
+    	String projectName = "";
+    	if(!Util.isEmpty(getC_Project_ID(), true)){
+    		MProject project = new MProject(getCtx(), getC_Project_ID(), get_TrxName());
+    		projectName = project.getName();
+    	}
+    	return projectName;
+    }
+
+    /**
+     * @return precio ingresado con impuestos
+     * NO MODIFICAR FIRMA, SE USA EN LA IMPRESIÓN DE LA FACTURA
+     */
+    public BigDecimal getPriceEnteredWithTax(){
+    	return amtByTax(getPriceEntered(), getTaxAmt(getPriceEntered()), isTaxIncluded(), true);
+    }
+    
+    /**
+     * @return precio ingresado sin impuestos
+     *  NO MODIFICAR FIRMA, SE USA EN LA IMPRESIÓN DE LA FACTURA
+     */
+    public BigDecimal getPriceEnteredNet(){
+    	return amtByTax(getPriceEntered(), getTaxAmt(getPriceEntered()), isTaxIncluded(), false);
+    }
+    
+    /**
+     * @return precio ingresado con impuestos * cantidad ingresada
+     *  NO MODIFICAR FIRMA, SE USA EN LA IMPRESIÓN DE LA FACTURA
+     */
+    public BigDecimal getTotalPriceEnteredWithTax(){
+    	return getPriceEnteredWithTax().multiply(getQtyEntered());
+    }
+    
+    /**
+     * @return precio ingresado sin impuestos * cantidad ingresada
+     *  NO MODIFICAR FIRMA, SE USA EN LA IMPRESIÓN DE LA FACTURA
+     */
+    public BigDecimal getTotalPriceEnteredNet(){
+    	return getPriceEnteredNet().multiply(getQtyEntered());
+    }
+    
+    /**
+     * @return precio de lista con impuestos
+     *  NO MODIFICAR FIRMA, SE USA EN LA IMPRESIÓN DE LA FACTURA
+     */
+    public BigDecimal getPriceListWithTax(){
+    	return amtByTax(getPriceList(),	getTaxAmt(getPriceList()), isTaxIncluded(), true);
+    }
+    
+    /**
+     * @return precio de lista sin impuestos
+     *  NO MODIFICAR FIRMA, SE USA EN LA IMPRESIÓN DE LA FACTURA
+     */
+    public BigDecimal getPriceListNet(){
+    	return amtByTax(getPriceList(),	getTaxAmt(getPriceList()), isTaxIncluded(), false);
+    }
+    
+    /**
+     * @return precio de lista con impuestos * cantidad ingresada
+     *  NO MODIFICAR FIRMA, SE USA EN LA IMPRESIÓN DE LA FACTURA
+     */
+    public BigDecimal getTotalPriceListWithTax(){
+		return getPriceListWithTax().multiply(getQtyEntered());
+    }
+    
+    /**
+     * @return precio de lista sin impuestos * cantidad ingresada
+     *  NO MODIFICAR FIRMA, SE USA EN LA IMPRESIÓN DE LA FACTURA
+     */
+    public BigDecimal getTotalPriceListNet(){
+    	return getPriceListNet().multiply(getQtyEntered());
+    }
+    
+    /**
+     * @return precio actual con impuestos
+     *  NO MODIFICAR FIRMA, SE USA EN LA IMPRESIÓN DE LA FACTURA
+     */
+    public BigDecimal getPriceActualWithTax(){
+    	return amtByTax(getPriceActual(), getTaxAmt(getPriceActual()), isTaxIncluded(), true);
+    }
+    
+    /**
+     * @return precio actual sin impuestos
+     *  NO MODIFICAR FIRMA, SE USA EN LA IMPRESIÓN DE LA FACTURA
+     */
+    public BigDecimal getPriceActualNet(){
+    	return amtByTax(getPriceActual(), getTaxAmt(getPriceActual()), isTaxIncluded(), false);
+    }
+    
+    /**
+     * @return precio actual con impuestos * cantiada ingresada
+     *  NO MODIFICAR FIRMA, SE USA EN LA IMPRESIÓN DE LA FACTURA
+     */
+    public BigDecimal getTotalPriceActualWithTax(){
+    	return getPriceActualWithTax().multiply(getQtyEntered());
+    }
+    
+    /**
+     * @return precio actual sin impuestos * cantiada ingresada
+     *  NO MODIFICAR FIRMA, SE USA EN LA IMPRESIÓN DE LA FACTURA
+     */
+    public BigDecimal getTotalPriceActualNet(){
+    	return getPriceActualNet().multiply(getQtyEntered());
+    }
+
+	/**
+	 * @return bonificación con impuestos por unidad, o sea, bonificación con
+	 *         impuesto / cantidad ingresada. NO MODIFICAR FIRMA, SE USA EN LA
+	 *         IMPRESIÓN DE LA FACTURA
+	 */
+    public BigDecimal getBonusUnityAmtWithTax(){
+    	BigDecimal unityAmt = getUnityAmt(getLineBonusAmt());
+		return amtByTax(unityAmt, getTaxAmt(unityAmt), isTaxIncluded(), true);
+    }
+    
+    /**
+	 * @return bonificación sin impuestos por unidad, o sea, bonificación sin
+	 *         impuesto / cantidad ingresada. NO MODIFICAR FIRMA, SE USA EN LA
+	 *         IMPRESIÓN DE LA FACTURA
+	 */
+    public BigDecimal getBonusUnityAmtNet(){
+    	BigDecimal unityAmt = getUnityAmt(getLineBonusAmt());
+		return amtByTax(unityAmt, getTaxAmt(unityAmt), isTaxIncluded(), false);
+    }
+    
+    /**
+	 * @return bonificación con impuestos. NO MODIFICAR FIRMA, SE USA EN LA
+	 *         IMPRESIÓN DE LA FACTURA
+	 */
+    public BigDecimal getTotalBonusUnityAmtWithTax(){
+		return amtByTax(getLineBonusAmt(), getTaxAmt(getLineBonusAmt()), isTaxIncluded(), true);
+    }
+    
+    /**
+	 * @return bonificación sin impuestos. NO MODIFICAR FIRMA, SE USA EN LA
+	 *         IMPRESIÓN DE LA FACTURA
+	 */
+    public BigDecimal getTotalBonusUnityAmtNet(){
+    	return amtByTax(getLineBonusAmt(), getTaxAmt(getLineBonusAmt()), isTaxIncluded(), false);
+    }
+
+	/**
+	 * @return descuento de línea con impuestos por unidad, o sea, descuento de
+	 *         línea con impuestos / cantidad ingresada. NO MODIFICAR FIRMA, SE
+	 *         USA EN LA IMPRESIÓN DE LA FACTURA
+	 */
+    public BigDecimal getLineDiscountUnityAmtWithTax(){
+    	BigDecimal unityAmt = getUnityAmt(getLineDiscountAmt());
+		return amtByTax(unityAmt, getTaxAmt(unityAmt), isTaxIncluded(), true);
+    }
+    
+    /**
+	 * @return descuento de línea sin impuestos por unidad, o sea, descuento de
+	 *         línea sin impuestos / cantidad ingresada. NO MODIFICAR FIRMA, SE
+	 *         USA EN LA IMPRESIÓN DE LA FACTURA
+	 */
+    public BigDecimal getLineDiscountUnityAmtNet(){
+    	BigDecimal unityAmt = getUnityAmt(getLineDiscountAmt());
+		return amtByTax(unityAmt, getTaxAmt(unityAmt), isTaxIncluded(), false);
+    }
+    
+    /**
+	 * @return descuento de línea con impuestos. NO MODIFICAR FIRMA, SE USA EN LA
+	 *         IMPRESIÓN DE LA FACTURA
+	 */
+    public BigDecimal getTotalLineDiscountUnityAmtWithTax(){
+		return amtByTax(getLineDiscountAmt(), getTaxAmt(getLineDiscountAmt()),
+				isTaxIncluded(), true);
+    }
+    
+    /**
+	 * @return descuento de línea sin impuestos. NO MODIFICAR FIRMA, SE USA EN LA
+	 *         IMPRESIÓN DE LA FACTURA
+	 */
+    public BigDecimal getTotalLineDiscountUnityAmtNet(){
+		return amtByTax(getLineDiscountAmt(), getTaxAmt(getLineDiscountAmt()),
+				isTaxIncluded(), false);
+    }
+
+	/**
+	 * @return descuento de documento con impuestos por unidad, o sea, descuento
+	 *         de documento con impuestos / cantidad ingresada. NO MODIFICAR
+	 *         FIRMA, SE USA EN LA IMPRESIÓN DE LA FACTURA
+	 */
+    public BigDecimal getDocumentDiscountUnityAmtWithTax(){
+    	BigDecimal unityAmt = getUnityAmt(getDocumentDiscountAmt());
+		return amtByTax(unityAmt, getTaxAmt(unityAmt), isTaxIncluded(), true);
+    }
+    
+    /**
+	 * @return descuento de documento sin impuestos por unidad, o sea, descuento
+	 *         de documento sin impuestos / cantidad ingresada. NO MODIFICAR
+	 *         FIRMA, SE USA EN LA IMPRESIÓN DE LA FACTURA
+	 */
+    public BigDecimal getDocumentDiscountUnityAmtNet(){
+    	BigDecimal unityAmt = getUnityAmt(getDocumentDiscountAmt());
+		return amtByTax(unityAmt, getTaxAmt(unityAmt), isTaxIncluded(), false);
+    }
+    
+    /**
+	 * @return descuento de documento con impuestos. NO MODIFICAR FIRMA, SE USA EN LA
+	 *         IMPRESIÓN DE LA FACTURA
+	 */
+    public BigDecimal getTotalDocumentDiscountUnityAmtWithTax(){
+		return amtByTax(getDocumentDiscountAmt(), getTaxAmt(getDocumentDiscountAmt()),
+				isTaxIncluded(), true);
+    }
+    
+    /**
+	 * @return descuento de documento sin impuestos. NO MODIFICAR FIRMA, SE USA EN LA
+	 *         IMPRESIÓN DE LA FACTURA
+	 */
+    public BigDecimal getTotalDocumentDiscountUnityAmtNet(){
+		return amtByTax(getDocumentDiscountAmt(), getTaxAmt(getDocumentDiscountAmt()),
+				isTaxIncluded(), false);
+    }
+
+	/**
+	 * @return Transportista. NO MODIFICAR FIRMA, SE USA EN LA IMPRESIÓN DE LA
+	 *         FACTURA
+	 */
+    public String getShipperName(){
+    	String shipperName = null;
+    	if(!Util.isEmpty(getM_Shipper_ID(), true)){
+    		shipperName = new MShipper(getCtx(), getM_Shipper_ID(), get_TrxName()).getName();
+    	}
+    	return shipperName;
+    }
+
+	/**
+	 * @return nombre del depósito. NO MODIFICAR FIRMA, SE USA EN LA IMPRESIÓN
+	 *         DE LA FACTURA
+	 */
+    public String getWarehouseName(){
+    	String warehouseName = null;
+    	if(!Util.isEmpty(getM_Warehouse_ID(), true)){
+    		warehouseName = new MWarehouse(getCtx(), getM_Warehouse_ID(), get_TrxName()).getName();
+    	}
+    	return warehouseName;
+    }
+
+	/**
+	 * @return la descripción por identificadores de la ref order line. NO
+	 *         MODIFICAR FIRMA, SE USA EN LA IMPRESIÓN DE LA FACTURA
+	 */
+    public String getRefOrderLineDescription(){
+    	String refOrderLineDescription = null;
+    	if(!Util.isEmpty(getRef_OrderLine_ID(), true)){
+    		MOrderLine refOrderLine = new MOrderLine(getCtx(), getRef_OrderLine_ID(), get_TrxName());
+			refOrderLineDescription = DisplayUtil.getDisplayByIdentifiers(
+					getCtx(), refOrderLine, X_C_OrderLine.Table_ID,
+					get_TrxName());
+    	}
+    	return refOrderLineDescription;
+    }
+
+	/**
+	 * Obtengo el monto por unidad, o sea, se toma el monto parámetro y se
+	 * divide por la cantidad ingresada
+	 * 
+	 * @param amt
+	 *            monto a dividir
+	 * @return monto por unidad
+	 */
+    public BigDecimal getUnityAmt(BigDecimal amt){
+		return amt.divide(getQtyEntered(), amt.scale(),	BigDecimal.ROUND_HALF_EVEN);
+    }
+
+	/**
+	 * Obtengo el monto de impuesto para un importe parámetro, verificando si
+	 * ese importe tiene impuesto incluído o no. Se determina el importe base y
+	 * se retorna el monto del impuesto configurado en la línea, a su vez se
+	 * determina si el impuesto está incluído en el precio a partir de la tarifa
+	 * de la cabecera de la factura.
+	 * 
+	 * @param amt
+	 *            importe con o sin impuestos
+	 * @return monto de impuesto a partir del monto parámetro, determinando su
+	 *         importe base
+	 */
+    public BigDecimal getTaxAmt(BigDecimal amt){
+    	return MTax.calculateTax(amt, isTaxIncluded(), getTaxRate(), amt.scale());
+    }
+
+	/**
+	 * Extraigo o agrego el monto de impuesto parámetro al importe parámetro,
+	 * dependiento si la tasa está incluída en el precio y si se debe obtener el
+	 * precio con impuesto o no.
+	 * 
+	 * @param amt
+	 *            importe
+	 * @param taxAmt
+	 *            monto de impuesto
+	 * @param taxIncluded
+	 *            impuesto incluído en el precio
+	 * @param withTax
+	 *            true si se debe obtener el importe con impuestos, false si el
+	 *            neto
+	 * @return monto neto o con impuestos dependiendo del parámetro withTax
+	 */
+    public BigDecimal amtByTax(BigDecimal amt, BigDecimal taxAmt, boolean taxIncluded, boolean withTax){
+		BigDecimal amtResult = amt;
+		if(taxIncluded){
+			if(!withTax){
+				amtResult = amtResult.subtract(taxAmt);
+			}
+		}
+		else{
+			if(withTax){
+				amtResult = amtResult.add(taxAmt);
+			}
+		}
+		return amtResult;
+	}
+    
+    //ADER soporte para caches multi-documnto
+    private MProductCache m_prodCache;
+    public void setProductCache(MProductCache c)
+    {
+    	m_prodCache = c;
+    }
+
+	/**
+	 * @return el valor de checkoutPlace
+	 */
+	public String getCheckoutPlace() {
+		return checkoutPlace;
+	}
+
+	/**
+	 * @param checkoutPlace el valor de checkoutPlace a asignar
+	 */
+	public void setCheckoutPlace(String checkoutPlace) {
+		this.checkoutPlace = checkoutPlace;
+	}
+}    // MOrderLine
+
+
+
+/*
+ *  @(#)MOrderLine.java   02.07.07
+ * 
+ *  Fin del fichero MOrderLine.java
+ *  
+ *  Versión 2.2
+ *
+ */

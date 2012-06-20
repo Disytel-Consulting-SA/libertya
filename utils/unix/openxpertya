@@ -1,0 +1,135 @@
+#!/bin/bash
+#
+# Nombre del fichero:		openxpertya.init
+# Description:			control del servicio openXpertya v2
+# Author:			FUNDESLE
+#
+# Destino del fichero:		/etc/init.d/openxpertya
+# Grupo/Usuario:		root.root
+# Permisos:			0755
+#
+# chkconfig:			2345 97 06
+# $Id: openxpertya.sh,v 2.1  1-07-2007 $
+
+# inicializaciando
+# ajusta estas variables a tu propio entorno y/o al del usuario del sistema openxp
+EXECDIR=/ServidorOXP
+ENVFILE=/home/openxp/.bash_profile
+
+. /etc/rc.d/init.d/functions
+ 
+RETVAL=0
+OPENXPERTYASTATUS=
+
+getopenxpertyastatus() {
+    OPENXPERTYASTATUSSTRING=$(ps ax | grep -v grep | grep $EXECDIR)
+    echo $OPENXPERTYASTATUSSTRING | grep $EXECDIR &> /dev/null
+    OPENXPERTYASTATUS=$?
+}
+
+start () {
+    getopenxpertyastatus
+    if [ $OPENXPERTYASTATUS -eq 0 ] ; then
+	echo "el servidor de openXpertya ya estaba corriendo"
+	return 1
+    fi
+    echo -n "Arrancando openXpertya v2: "
+    source $ENVFILE 
+    # necesitamos mantenernos como root para que funcione el log
+    # (el usuario openxp no tiene permisos de escritura para acceder a /var/log/...)
+    su -c "cd $EXECDIR/utils;$EXECDIR/utils/IniciarServidor.sh &> /var/log/openxpertya.log &"
+    RETVAL=$?
+    if [ $RETVAL -eq 0 ] ; then
+	# esperar a que el servidor confirme su arranque en el fichero de log
+	STATUSTEST=0
+	while [ $STATUSTEST -eq 0 ] ; do
+	tail -n 1 /var/log/openxpertya.log | grep 'INFO.*\[Server\].*Started in' &> /dev/null && STATUSTEST=1
+	done
+	# evita condiciones y/o fallos debidos a desincronizaciones
+	sleep 5
+	echo_success
+	echo
+    else
+	echo_failure
+	echo
+    fi
+    return $RETVAL
+}
+
+stop () {
+    getopenxpertyastatus
+    if [ $OPENXPERTYASTATUS -ne 0 ] ; then
+	echo "el servidor de openXpertya v2 ya estaba parado"
+	return 1
+    fi
+    echo -n "Parando openXpertya v2: "
+    source $ENVFILE 
+    su -c "cd $EXECDIR/utils;$EXECDIR/utils/DetenerServidor.sh &> /dev/null &"
+    RETVAL=$?
+    if [ $RETVAL -eq 0 ] ; then
+	# esperar a que el servidor confirme que esta parado en el log
+	STATUSTEST=0
+	while [ $STATUSTEST -eq 0 ] ; do
+	tail -n 1 /var/log/openxpertya.log | grep 'Halting VM' &> /dev/null && STATUSTEST=1
+	done
+	# evita condiciones y/o fallos debidos a desincronizaciones
+	sleep 5
+	echo_success
+	echo
+    else
+	echo_failure
+	echo
+    fi
+    return $RETVAL
+}
+
+restart () {
+    stop
+    start
+}
+
+condrestart () {
+    getopenxpertyastatus
+    if [ $OPENXPERTYASTATUS -eq 0 ] ; then
+	restart
+    fi
+}
+
+rhstatus () {
+    getopenxpertyastatus
+    if [ $OPENXPERTYASTATUS -eq 0 ] ; then
+	echo
+	echo "El servidor de openXpertya v2 se encuentra en funcionamiento:"
+	ps ax | grep -v grep | grep $EXECDIR | sed 's/^[[:space:]]*\([[:digit:]]*\).*:[[:digit:]][[:digit:]][[:space:]]\(.*\)/\1 \2/'
+	echo
+    else
+	echo "El servidor de openXpertya v2 se encuentra parado"
+    fi
+}
+
+case "$1" in
+    start)
+	start
+        ;;
+    stop)
+	stop
+        ;;
+    reload)
+	restart
+	;;
+    restart)
+	restart
+	;;
+    condrestart)
+	condrestart
+	;;
+    status)
+	rhstatus
+	;;
+    *)
+        echo $"Usage: $0 {start|stop|reload|restart|condrestart|status}"
+        exit 1
+esac
+ 
+exit 0
+

@@ -1,0 +1,242 @@
+<!-- ================================================== -->
+<!-- Archivo de Construccion del Instalador Libertya    -->
+<!-- ================================================== -->
+
+<project name="install" default="installDistribution" basedir=".">
+
+  <description>
+	Este Fichero sirve para compilar el subproyecto Install independientemente del proyecto Libertya
+  </description>
+
+  <property environment="env"/>
+  <property name="openxpertya.dir" value="../"/>
+  <property name="web.dir" value="${openxpertya.dir}oxpWeb"/>
+  <property name="dbStartup.dir" value="${openxpertya.dir}db/database/Startup"/>
+  <property name="lib.dir" value="${openxpertya.dir}lib"/>
+  <property name="utils.dir" value="${openxpertya.dir}utils"/>
+  <property name="launch.dir" value="${openxpertya.dir}launch"/>
+  <property name="keystore.dir" value="${openxpertya.dir}keystore"/>
+  <property name="data.dir" value="${openxpertya.dir}data"/>
+  <property name="jboss.dir" value="${openxpertya.dir}jboss"/>
+  <property name="client.dir" value="${openxpertya.dir}client"/>
+  <property name="instalacion.dir" value="${openxpertya.dir}../install"/>
+
+  <property name="src" value="src"/>
+  <property name="compile.dir" value="lib"/>
+
+  <property name="src.dir" value="${basedir}/ServidorOXP"/>
+  <property name="build.dir" value="${basedir}/compilacion"/>
+
+  <path id="project.class.path">
+	<pathelement path="${classpath}"/>
+	<pathelement path="${lib.dir}/XOXPTools.jar"/>
+	<pathelement path="${lib.dir}/OXP.jar"/>
+	<pathelement path="${lib.dir}/oracle.jar"/>
+	<pathelement path="${lib.dir}/sybase.jar"/>
+  	<!-- cambios necesarios para PostgreSQL-->
+  	<pathelement path="${lib.dir}/postgresql.jar"/>
+  	<!-- fin de cambios necesarios para PostgreSQL-->
+	<pathelement path="../tools/lib/ant.jar"/>
+	<pathelement path="../tools/lib/ant-launcher.jar"/>
+  </path>
+
+  <!-- ======================================================= -->
+  <!-- Inicializando                                                                                            -->
+  <!-- ======================================================= -->
+  <target name="installInit" description="initialization target">
+	<echo message="=========== Construir Instalacion"/>
+	<tstamp/>
+	<mkdir dir="${build.dir}"/>
+	<mkdir dir="${compile.dir}"/>
+  </target>
+
+  <!-- ======================================================= -->
+  <!-- Compilar y Recoger en un JAR                                                              -->
+  <!-- ======================================================= -->
+  
+  <target name="installCompile" depends="installInit">
+  
+	<!-- Compilar el codigo java de ${src} a ${build.dir} -->
+	
+	<javac srcdir="${src}" destdir="${compile.dir}" deprecation="off" debug="on">
+    
+	  <classpath refid="project.class.path"/>
+	</javac>
+    <!-- Copiar Todas las imagenes y archivos al directorio de compilacion -->
+	<copy todir="${compile.dir}">
+	  <fileset dir="${src}">
+		<include name="**/images/*"/>
+		<include name="**/*.gif"/>
+		<include name="**/*.jpg"/>
+		<include name="**/*.wav"/>
+		<include name="**/*.htm"/>
+		<include name="**/*.html"/>
+		<include name="**/*.properties"/>
+		<exclude name="**/package.html"/>
+	  </fileset>
+	</copy>
+	
+	<!-- Extraer Archivos Ant-->
+	<unjar src="${openxpertya.dir}tools/lib/ant.jar" dest="${compile.dir}" />
+ 	<unjar src="${openxpertya.dir}tools/lib/ant-launcher.jar" dest="${compile.dir}" />
+	<unjar src="${openxpertya.dir}tools/lib/ant-commons-net.jar" dest="${compile.dir}" />
+	<unjar src="${openxpertya.dir}tools/lib/commons-net.jar" dest="${compile.dir}" />
+	<unjar src="${openxpertya.dir}tools/lib/jakarta-oro.jar" dest="${compile.dir}" />
+	<delete file="${compile.dir}/META-INF/MANIFEST.MF" failonerror="false"/>
+
+	<!-- Ponerlo en un archivo jar -->
+	<jar
+	  jarfile="OXPInstall.jar"
+	  basedir="${compile.dir}"
+	  index="yes">
+	  <manifest>
+		<attribute name="Specification-Title" value="OXPInstall"/>
+		<attribute name="Specification-Version" value="${env.VERSION_OXP}"/>
+		<attribute name="Specification-Vendor" value="(c) 2005-2007 FUNDESLE."/>
+		<attribute name="Implementation-Title" value="OXPInstall ${env.VERSION_OXP}"/>
+		<attribute name="Implementation-Version" value="${env.VERSION_OXP} ${DSTAMP}-${TSTAMP}"/>
+		<attribute name="Implementation-Vendor" value="${env.CONSULTORA_OXP}"/>
+		<attribute name="Implementation-URL" value="http://www.openxertya.org"/>
+		<attribute name="Main-Class" value="org.openXpertya.install.Setup"/>
+		<attribute name="Class-Path" value="OXPTools.jar CClient.jar oracle.jar"/>
+	  </manifest>
+	</jar>
+
+  </target>
+
+  <!-- ======================================================= -->
+  <!-- Actualizar desde la web y limpiar scripts                                              -->
+  <!-- ======================================================= -->
+  <target name="installUpdate" depends="installCompile"
+	description="Actualiza el directorio de instalación con copias del sitio web">
+
+	<copy file="${web.dir}/Licencia.xhtml" tofile="${src.dir}/Licencia.xhtml" failonerror="no"/>
+
+	<fixcrlf srcdir="${src.dir}"
+		eol="lf" eof="remove"
+		includes="**/*.sh"/>
+	<fixcrlf srcdir="${utils.dir}"
+		eol="lf" eof="remove"
+		includes="**/*.sh"/>
+	<fixcrlf srcdir="${utils.dir}/unix"
+		eol="lf" eof="remove"
+		includes="*"/>
+	<fixcrlf srcdir="../sqlj/oracle"
+		eol="lf" eof="remove"
+		includes="*.sh"/>
+  </target>
+
+  <!-- ======================================================= -->
+  <!-- Distribuyendo                                                                                         -->
+  <!-- ======================================================= -->
+  <target name="installDistribution" depends="installUpdate">
+	<mkdir dir="${build.dir}"/>
+	<mkdir dir="${build.dir}/ServidorOXP"/>
+
+	<!-- Directorio Base		-->
+	<copy todir="${build.dir}/ServidorOXP">
+	  <fileset dir="${src.dir}"/>
+	</copy>
+
+    <!-- cambios para PostgreSQL-->
+<!--    <copy file="${data.dir}/seed/OXPPostgres.jar" todir="${build.dir}/ServidorOXP/data"/>-->
+<!--    <copy file="${data.dir}/seed/OXPOracle.jar" todir="${build.dir}/ServidorOXP/data"/>-->
+    <!-- fin cambios para PostgreSQL-->
+  	
+	<!-- Directorio Lib			-->
+	<mkdir dir="${build.dir}/ServidorOXP/lib"/>
+	<!-- Crear directorio para plugins -->
+	<mkdir dir="${build.dir}/ServidorOXP/lib/plugins"/>
+	<copy file="${web.dir}/oxp.ico" tofile="${build.dir}/ServidorOXP/lib/oxp.ico"/>
+	<copy file="${web.dir}/oxps.ico" tofile="${build.dir}/ServidorOXP/lib/oxps.ico"/>
+	<copy todir="${build.dir}/ServidorOXP/lib">
+	  <!-- cambios para PostgreSQL-->	
+	  <!-- fileset dir="${lib.dir}" excludes="**/postgresql.jar"/-->
+      <fileset dir="${lib.dir}"/>	
+      <!-- fin cambios para PostgreSQL-->		  
+	</copy>
+	<copy file="${utils.dir}/libertya.exe" todir="${build.dir}/ServidorOXP/lib"/>
+	<copy file="OXPInstall.jar" todir="${build.dir}/ServidorOXP/lib"/>
+	<copy file="${openxpertya.dir}sqlj/sqlj.jar" todir="${build.dir}/ServidorOXP/lib"/>
+	<concat destfile="${build.dir}/ServidorOXP/lib/index.html">OXPHome</concat>
+
+	<!-- Directorio Utils		-->
+	<mkdir dir="${build.dir}/ServidorOXP/utils"/>
+	<copy todir="${build.dir}/ServidorOXP/utils">
+	  <fileset dir="${utils.dir}" excludes="**/pg/**,.project"/>
+	</copy>
+	<copy todir="${build.dir}/ServidorOXP/utils/oracle">
+	  <fileset dir="${dbStartup.dir}/oracle" includes="*.sql"/>
+	  <fileset dir="${openxpertya.dir}sqlj/oracle/"/>
+	</copy>
+	<copy todir="${build.dir}/ServidorOXP/utils/sybase">
+	  <fileset dir="${openxpertya.dir}sqlj/sybase/"/>
+	</copy>
+
+	<!-- Directorio Data		-->
+	<mkdir dir="${build.dir}/ServidorOXP/data"/>
+    <!-- <unjar src="${data.dir}/seed/OXP.jar" dest="${build.dir}/ServidorOXP/data"/>-->
+	<mkdir dir="${build.dir}/ServidorOXP/data/import"/>
+	<mkdir dir="${build.dir}/ServidorOXP/data/facturaElectronica"/>
+	<copy todir="${build.dir}/ServidorOXP/data">
+	  <fileset dir="${data.dir}/" includes="*.sql"/>
+	  <fileset dir="${data.dir}/" includes="*.backup"/>
+	  <fileset dir="${data.dir}/" includes="*.txt"/>
+	</copy>
+	<copy todir="${build.dir}/ServidorOXP/data/import">
+	  <fileset dir="${data.dir}/import">
+	    <include name="**/Cuentas*.*"/>
+	    <include name="*.csv"/>
+	  	<include name="*.ods"/>
+	</fileset>
+	</copy> 
+	<copy todir="${build.dir}/ServidorOXP/data/facturaElectronica">
+	  <fileset dir="${data.dir}/facturaElectronica" includes="*.*"/>
+	</copy> 
+
+	
+	<!-- Directorio JBoss		-->
+	<mkdir dir="${build.dir}/ServidorOXP/jboss"/>
+	<mkdir dir="${build.dir}/ServidorOXP/jboss/bin"/>
+	<copy todir="${build.dir}/ServidorOXP/jboss/bin">
+	  <fileset dir="${jboss.dir}/bin"/>
+	</copy>
+	<mkdir dir="${build.dir}/ServidorOXP/jboss/lib"/>
+	<copy todir="${build.dir}/ServidorOXP/jboss/lib">
+	  <fileset dir="${jboss.dir}/lib"/>
+	</copy>
+	<mkdir dir="${build.dir}/ServidorOXP/jboss/server"/>
+	<copy todir="${build.dir}/ServidorOXP/jboss/server">
+	  <fileset dir="${jboss.dir}/server"/>
+	</copy>
+
+	<!-- Comprimir en Zip	-->
+	<zip zipfile="${instalacion.dir}/ServidorOXP_${env.VERSION_OXP_FILE}.zip"
+	   basedir="${build.dir}"
+	   includes="ServidorOXP/**" />
+
+	<!-- Comprimir en TAR		-->
+	<tar longfile="gnu" tarfile="${instalacion.dir}/ServidorOXP_${env.VERSION_OXP_FILE}.tar"
+	   basedir="${build.dir}"
+	   includes="ServidorOXP/**" />
+	<gzip zipfile="${instalacion.dir}/ServidorOXP_${env.VERSION_OXP_FILE}.tar.gz"
+		  src="${instalacion.dir}/ServidorOXP_${env.VERSION_OXP_FILE}.tar" />
+	<delete file="${instalacion.dir}/ServidorOXP_${env.VERSION_OXP_FILE}.tar" />
+
+	<!-- Creando sumas de comprobacion	-->
+	<checksum file="${instalacion.dir}/ServidorOXP_${env.VERSION_OXP_FILE}.tar.gz"/>
+	<concat destfile="${instalacion.dir}/ServidorOXP_${env.VERSION_OXP_FILE}.tar.gz.MD5" append="yes"> *ServidorOXP_${env.VERSION_OXP_FILE}.tar.gz</concat>
+	<!-- Test con md5sum -c oxp_v2.zip.MD5	-->
+	<checksum file="${instalacion.dir}/ServidorOXP_${env.VERSION_OXP_FILE}.zip"/>
+	<concat destfile="${instalacion.dir}/ServidorOXP_${env.VERSION_OXP_FILE}.zip.MD5" append="yes"> *ServidorOXP_${env.VERSION_OXP_FILE}.zip</concat>
+
+  </target>
+
+  <!-- Limpiando la anterior compilacion -->
+  <target name="clean" description="deletes build">
+	<delete dir="${build.dir}"/>
+	<delete dir="${compile.dir}"/>
+	<delete file="${compile.dir}/OXPInstall.jar" failonerror="false"/>
+  </target>
+
+</project>

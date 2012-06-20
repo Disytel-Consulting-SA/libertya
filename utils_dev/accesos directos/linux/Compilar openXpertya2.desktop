@@ -1,0 +1,11 @@
+[Desktop Entry]
+Version=1.0
+Encoding=UTF-8
+Name=Compilar openXpertya
+Type=Application
+Terminal=true
+Exec=xterm -hold -e /oxp2_2/utils_dev/Compilar.sh
+Icon[es_ES]=/usr/share/pixmaps/apple-green.png
+Name[es_ES]=Compilar openXpertya
+Icon=/usr/share/pixmaps/apple-green.png
+GenericName[es_ES]=

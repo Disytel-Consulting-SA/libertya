@@ -1,0 +1,19 @@
+<!--
+Script para la importación de datos
+-->
+
+<processing>
+	<job name="Instalacion de Base de Datos Postgresql">
+		<executefile name="$INSTALL_PATH/importar.bat">
+		<arg>$PortNbTextInput</arg>
+		<arg>$DBNameTextInput</arg>
+		<arg>$UserNameTextInput</arg>
+		<arg>$INSTALL_PATH</arg>
+		</executefile>
+	</job>
+    <job name="Configuración openXpertya">
+		<executefile name="$INSTALL_PATH/Configurar.exe">
+		</executefile>
+    </job>
+</processing>-->
+

@@ -1,0 +1,19 @@
+[Desktop Entry]
+Comment=
+Comment[es]=
+Encoding=UTF-8
+Exec='/ServidorOXP/utils/IniciarServidor.sh'
+GenericName=Arrancar el servidor de openXpertya
+GenericName[es]=Arrancar el servidor de openXpertya
+Icon=cache
+MimeType=
+Name=Arrancar Servidor de openXpertya
+Name[es]=Arrancar Servidor de openXpertya
+Path=/ServidorOXP/utils/
+StartupNotify=true
+Terminal=false
+TerminalOptions=
+Type=Application
+X-DCOP-ServiceType=
+X-KDE-SubstituteUID=false
+X-KDE-Username=

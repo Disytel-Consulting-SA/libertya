@@ -1,0 +1,251 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- ============================================= -->
+<!-- Inicio del Servidor openXpertya                                         -->
+<!-- ============================================= -->
+
+<project name="OXPRoot" default="main" basedir=".">
+
+  <property environment="env"/>
+  <property name="jboss.home" value="../jboss" />
+  <property name="jboss.configuration" value="openXpertya" />
+
+  <property name="jboss.lib" value="${jboss.home}/lib" />
+  <property name="jboss.client" value="${jboss.home}/client" />
+  <property name="servlet-lib.path" value="../tools/lib/servlet.jar" />
+  <!--property name="xdoclet.home" value="${env.XDOCLET_HOME}" /-->
+  <property name="xdoclet.home" value="../tools" />
+  <property name="xdoclet.force" value="false" />
+  <property name="ejb.version" value="2.0" />
+  <property name="jboss.version" value="3.0" />
+  <property name="type.mapping" value="Oracle9" />
+  <property name="datasource.name" value="java:/OracleDS" />
+
+  <property name="src.dir" value="${basedir}/src"/>
+  <property name="src.main.dir" value="${src.dir}/main"/>
+  <property name="src.ear.dir" value="${src.dir}/ear"/>
+  <property name="src.ejb.dir" value="${src.main.dir}/ejb"/>
+  <property name="src.servlet.dir" value="${src.main.dir}/servlet"/>
+  <property name="src.server.dir" value="${src.main.dir}/server"/>
+  <property name="src.resources.dir" value="${src.dir}/resources"/>
+  <property name="src.web.dir" value="${src.dir}/web"/>
+
+  <property name="build.dir" value="${basedir}/compilacion"/>
+  <property name="build.tmp.dir" value="${build.dir}/tmp"/>
+  <property name="build.deploy.dir" value="${build.dir}/deploy"/>
+  <property name="build.classes.dir" value="${build.dir}/classes"/>
+  <property name="build.war.dir" value="${build.dir}/war"/>
+
+  <property name="interfaces.dir" value="../interfaces"/>
+  <property name="src.interfaces.dir" value="../interfaces/src"/>
+  <property name="build.interfaces.dir" value="../interfaces/classes"/>
+
+
+  <target name="init">
+    <echo message="=========== Construyendo Servidor"/>
+    <echo message="            (${xdoclet.home}"/>
+
+    <uptodate property="interfaces.uptodate"
+		targetfile="${interfaces.dir}/Interfaces.jar">
+      <srcfiles dir="${src.ejb.dir}" includes="**/*.java"/>
+      <srcfiles dir="${src.interfaces.dir}" includes="**/*.java"/>
+    </uptodate>
+  	
+  </target>
+
+
+  <path id="xdoclet.path">
+    <pathelement location="${xdoclet.home}/lib/ant.jar" />
+    <pathelement location="${xdoclet.home}/lib/xdoclet.jar" />
+    <pathelement location="${xdoclet.home}/lib/log4j.jar" />
+  </path>
+
+  <path id="base.path">
+    <path refid="xdoclet.path"/>
+    <pathelement location="../lib/OXP.jar" />
+    <pathelement location="../lib/CSTools.jar" />
+    <pathelement location="../tools/lib/j2ee.jar" />
+
+
+    <pathelement location="${build.classes.dir}" />
+  </path>
+
+
+  <!-- =================================================================== -->
+  <!-- Genera las clases EJB necesarias y  despliega los descriptores      -->
+  <!-- =================================================================== -->
+  <target name="xdoclet-generate" depends="init">
+    <echo message="XDoclet=${xdoclet.home}"/>
+    <echo message="UpToDate=${interfaces.uptodate}"/>
+    
+    <taskdef
+	  name="ejbdoclet"
+	  classname="xdoclet.ejb.EjbDocletTask">
+      <classpath refid="xdoclet.path"/>
+    </taskdef>
+
+    <ejbdoclet
+	  sourcepath="${src.ejb.dir}"
+	  destdir="${src.interfaces.dir}"
+	  classpathref="base.path"
+	  excludedtags="@version,@author"
+	  ejbspec="${ejb.version}"
+	  mergedir="${src.resources.dir}/xdoclet"
+	  force="${xdoclet.force}">
+      <fileset dir="${src.ejb.dir}">
+        <include name="**/*Bean.java"/>
+      </fileset>
+      <packageSubstitution packages="session,entity" substituteWith="interfaces"/>
+      <dataobject/>
+      <remoteinterface/>
+      <homeinterface/>
+      <entitypk/>
+      <entitybmp/>
+      <entitycmp/>
+      <deploymentdescriptor destdir="${build.dir}/META-INF"/>
+      <jboss version="${jboss.version}"
+	    xmlencoding="UTF-8"
+	    typemapping="${type.mapping}"
+	    datasource="${datasource.name}"
+	    destdir="${build.dir}/META-INF"
+	    validateXml="false"/>
+    </ejbdoclet>
+  </target>
+
+
+  <!-- =========================================== -->
+  <!-- Compila el código fuente                                                -->
+  <!-- =========================================== -->
+  <target name="compile" depends="xdoclet-generate">
+    <mkdir dir="${build.classes.dir}"/>
+
+    <!--	Compila todo -->
+    <javac
+	  destdir="${build.classes.dir}"
+	  debug="on"
+	  deprecation="off"
+	  optimize="on"
+	  classpathref="base.path">
+      <src path="${src.ejb.dir}"/>
+      <src path="${src.interfaces.dir}"/>
+      <src path="${src.servlet.dir}"/>
+      <src path="${src.server.dir}"/>
+    </javac>
+
+  </target>
+
+
+  <!-- =========================================== -->
+  <!-- Crea los archivos jar                                                     -->
+  <!-- =========================================== -->
+  <target name="jar" depends="compile">
+    <mkdir dir="${build.deploy.dir}"/>
+
+    <!--	Jar -->
+    <jar
+	  jarfile="${build.deploy.dir}/OXPRoot.jar">
+      <fileset
+	    dir="${build.classes.dir}">
+      </fileset>
+      <fileset
+	    dir="${build.dir}"
+	    includes="META-INF/**">
+      </fileset>
+      <manifest>
+		<attribute name="Specification-Title" value="OXPRoot"/>
+		<attribute name="Specification-Version" value="${env.VERSION_OXP}"/>
+		<attribute name="Specification-Vendor" value="(C) 2005-2006 FUNDESLE"/>
+		<attribute name="Implementation-Title" value="OXPRoot ${env.VERSION_OXP}"/>
+		<attribute name="Implementation-Version" value="${env.VERSION_OXP}  ${DSTAMP}-${TSTAMP}"/>
+		<attribute name="Implementation-Vendor" value="${env.CONSULTORA_OXP}"/>
+		<attribute name="Implementation-URL" value="http://www.openxpertya.org"/>
+		<attribute name="Class-Path" value="OXP.jar OXPSLib.jar"/>
+      </manifest>
+    </jar>
+
+  </target>
+
+  <!-- =========================================== -->
+  <!-- Crea los archivos war                                                   -->
+  <!-- =========================================== -->
+  <target name="war" depends="jar">
+    <war
+	  warfile="${build.deploy.dir}/OXPRootBase.war"
+	  webxml="${src.web.dir}/WEB-INF/web.xml">
+	  <!-- copia de la web		-->
+      <fileset dir="${src.web.dir}" excludes="**/web.xml,**/lib/**,**/classes/**"/>
+      <!-- WEB-INF/lib			-->
+      <lib dir="${src.web.dir}/WEB-INF/lib"/>
+      <lib dir="${build.deploy.dir}" includes="OXPRoot.jar"/>
+      <manifest>
+		<attribute name="Specification-Title" value="OXPRootWar"/>
+		<attribute name="Specification-Version" value="${env.VERSION_OXP}"/>
+		<attribute name="Specification-Vendor" value="(C) 2005-2006 FUNDESLE"/>
+		<attribute name="Implementation-Title" value="OXPRootWar ${env.VERSION_OXP}"/>
+		<attribute name="Implementation-Version" value="${env.VERSION_OXP}  ${DSTAMP}-${TSTAMP}"/>
+		<attribute name="Implementation-Vendor" value="${env.CONSULTORA_OXP}"/>
+		<attribute name="Implementation-URL" value="http://www.openXpertya.org"/>
+		<attribute name="Class-Path" value="OXP.jar OXPSLib.jar"/>
+      </manifest>
+    </war>
+  </target>
+
+
+  <!-- =========================================== -->
+  <!-- Crea el archivo del interface                                          -->
+  <!-- =========================================== -->
+  <target name="interfaces" depends="compile">
+
+    <!-- Copia MBeans a interfaces		-->
+    <copy todir="${src.interfaces.dir}">
+      <fileset dir="${src.server.dir}" includes="**/*MBean.java"/>
+    </copy>
+
+    <!-- Compila  interfaces			-->
+    <mkdir dir="${build.interfaces.dir}"/>
+    <javac
+	  srcdir="${src.interfaces.dir}"
+	  destdir="${build.interfaces.dir}"
+	  debug="off"
+	  deprecation="on"
+	  optimize="on"
+	  classpathref="base.path">
+    </javac>
+    <!-- crea el Jar Interfaces				-->
+    <jar
+	  destfile="${interfaces.dir}/Interfaces.jar"
+	  basedir="${build.interfaces.dir}" />
+  </target>
+
+
+  <!-- =========================================== -->
+  <!-- Despliega los ficheros del servidor         	                   -->
+  <!-- =========================================== -->
+  <target name="deploy-server" depends="jar,war,interfaces">
+	<copy todir="../lib">
+		<fileset dir="${build.deploy.dir}"/>
+	</copy>
+	<copy file="${src.ear.dir}/application.xml" 
+		tofile="../lib/OXPRoot.xml"/>
+  </target>
+
+
+  <!-- =========================================== -->
+  <!-- Crea la estructura binaria                                              -->
+  <!-- =========================================== -->
+  <target name="main" depends="deploy-server">
+  </target>
+
+
+  <!-- =========================================== -->
+  <!-- Limpia la construcción actual                                         -->
+  <!-- =========================================== -->
+  <target name="clean">
+    <delete dir="${build.dir}" failonerror="false"/>
+    <delete>
+      <fileset dir="${src.interfaces.dir}" includes="**/*.java"/>
+    </delete>
+    <delete file="../lib/OXPRoot.jar" failonerror="false"/>
+    <delete file="../lib/OXPRootBase.war" failonerror="false"/>
+   </target>
+
+</project>

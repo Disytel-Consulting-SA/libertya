@@ -1,0 +1,137 @@
+<html>
+<head>
+<title>JavaService - Java NT Service Adaptor</title>
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+<link rel="stylesheet" href="styles.css" type="text/css">
+</head>
+
+<body bgcolor="#FFFFFF">
+<table width="90%" border="0" cellspacing="0" cellpadding="0" align="center">
+  <tr> 
+    <td nowrap class="mainTitle">JavaService - Source Code</td>
+  </tr>
+  <tr>
+    <td>&nbsp;</td>
+  </tr>
+  <tr> 
+    <td> 
+      <p class="mainBold">Contents</p>
+      <blockquote> 
+        <p class="mainNormal"><a href="#Overview">Overview</a> <br>
+          <a href="#Build_Instructions">Build Instructions</a> <br>
+          <a href="#File_Descriptions">File Descriptions</a> </p>
+      </blockquote>
+      <p class="mainBold"><a name="Overview"></a>Overview</p>
+      <p class="mainNormal">This documentation applies to building this product 
+        using Visual C++ 6.0. In addition, you must have the lib file and header 
+        files for a JNI 1.2 compliant Java Virtual Machine, such as Sun's Java 
+        2 SDK version 1.4. This documentation assumes you are using a version 
+        of the Sun Java 2 SDK.</p>
+      <p class="mainNormal">The result of building this product is a Win32 executable 
+        called JavaService.exe.
+		<br>
+		For test purposes, a debug instance is also available (JavaServiceDebug.exe)</p>
+      <p class="mainBold"><a name="Build_Instructions"></a>Build Instructions</p>
+      <ol class="mainNormal">
+        <li>The first step is to configure Visual C++ to be able to find the JNI 
+          lib file and header files. 
+          <ol class="mainNormal">
+            <li>Go to 'Tools-&gt;Options' on the menu.</li>
+            <li>Go to the 'Directories' tab on the dialog.</li>
+            <li>Choose 'Show directories for: Include Files'.</li>
+            <li>Add the directory '{JDK_HOME}\INCLUDE' to the list.</li>
+            <li>Add the directory '{JDK_HOME}\INCLUDE\WIN32' to the list.</li>
+            <li>Choose 'Show directories for: Library Files'.</li>
+            <li>Add the directory '{JDK_HOME}\INCLUDE\LIB' to the list.<br>
+              <br>
+            </li>
+          </ol>
+          <p class="mainNormal">Visual C++ should now be properly configured to 
+            compile binaries using JNI.</p>
+        </li>
+        <li>Either open the project included with the distribution (JavaService.dsp) or create a
+          new one. If you are creating a new project, be sure to choose 'Win32 
+          Console Application' as the project type, and choose 'An Empty Project' 
+          when asked what files to automatically generate.<br>
+          <br>
+        </li>
+        <li>Make sure the project contains the following files: 
+          <ul>
+            <li>Source Files 
+              <ul>
+                <li>JavaInterface.cpp</li>
+                <li>ServiceInterface.cpp</li>
+                <li>JavaService.rc</li>
+              </ul>
+            </li>
+            <li>Header Files 
+              <ul>
+                <li>JavaInterface.h</li>
+                <li>ServiceInterface.h</li>
+                <li>Messages.h</li>
+                <li>VersionNo.h</li>
+              </ul>
+            </li>
+            <li>Resource Files 
+              <ul>
+                <li>Messages.mc (note: see file description for build instructions 
+                  if you change this file)</li>
+                <li>JavaService.rc2</li>
+              </ul>
+            </li>
+          </ul>
+        </li>
+        <li>You should now be able to build the JavaService.exe file by going 
+          to 'Build-&gt;Build JavaService.exe' on the menu.
+		  (note: Release build and Debug build options are defined separately)</li>
+      </ol>
+      <p class="mainBold"><a name="File_Descriptions"></a>File Descriptions</p>
+      <p class="mainNormal"><i class="mainBold">ServiceInterface.cpp</i><br>
+        This file contains the code to interface with the command-line and the NT service subsystem.</p>
+      <p class="mainNormal"><i class="mainBold">ServiceInterface.h</i><br>
+        This file contains prototypes for global functions in the ServiceInterface module.</p>
+      <p class="mainNormal"><i class="mainBold">JavaInterface.cpp</i><br>
+        This file contains the code to create and interface with the Java Virtual Machine.</p>
+      <p class="mainNormal"><i class="mainBold">JavaInterface.h</i><br>
+        This file contains prototypes for global functions in the JavaInterface module.</p>
+      <p class="mainNormal"><i class="mainBold">VersionNo.h</i><br>
+        This file contains constant definitions of the application version number, which are used to
+		generate the built-in VERSIONINFO resources for the program, as well as for <em>-version</em> reports.</p>
+      <p class="mainNormal"><i class="mainBold">Messages.mc</i><br>
+        This file contains the text version of the message resources that get 
+        compiled into the final binary. These resources are used by the Event 
+        Viewer to display formatted messages that are logged to the NT event log. 
+        Messages should be formatted like the following example:</p>
+      <blockquote> 
+        <p class="mainCode">MessageId=0x0000<br>
+          Severity=Informational<br>
+          Facility=Application<br>
+          SymbolicName=EVENT_IDENTIFIER<br>
+          Language=English<br>
+          Example message %1 with two parameters %2.<br>
+          .</p>
+      </blockquote>
+      <p class="mainNormal">If the Messages.mc file has been changed since it 
+        was last compiled, it must be manually recompiled before the final binary 
+        is built. Use the following steps to compile the Messages.mc file:</p>
+      <ol class="mainNormal">
+        <li>Open a command prompt and run the <span class="mainCode">'VCVARS32.BAT'</span> 
+          file that is installed with Visual C.</li>
+        <li>Move to the directory containing the JavaService source code.</li>
+        <li class="mainNormal">Run the command <span class="mainCode">'mc Messages.mc'</span> 
+          to generate the files MSG00001.bin, Messages.h, and Messages.rc.</li>
+      </ol>
+      <p class="mainNormal"><i><span class="mainBold">Messages.h</span><br>
+        </i>This file contains the identifiers used when logging messages to the 
+        event log. It is automatically generated from the Messages.mc file.</p>
+      <p class="mainNormal"><i class="mainBold">Messages.rc</i><br>
+        This file is a resource script for the message resources. It is automatically 
+        generated from the Messages.mc file and gets included by the JavaService.rc file at compile time.</p>
+      <p class="mainNormal"><i class="mainBold">MSG00001.bin</i><br>
+        This file contains the binary version of the message resources. It is 
+        automatically generated from the Messages.mc file. </p>
+    </td>
+  </tr>
+</table>
+</body>
+</html>

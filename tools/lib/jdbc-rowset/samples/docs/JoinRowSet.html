@@ -1,0 +1,103 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+           
+  <link rel="stylesheet" type="text/css" href="style/default.css">
+  <title>JoinRowSet Sample - Documentation</title>
+   
+</head>
+  <body>
+   
+<h1>JoinRowSet Sample</h1>
+   
+<h1>README</h1>
+  <br>
+  &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; This document presents a walkthrough 
+ of the JoinRowSet Sample, it explains the JoinRowSet sample provided using
+ snippets<br>
+   of code.<br>
+  <br>
+  <br>
+   
+<h3>&nbsp;&nbsp;&nbsp; Overview</h3>
+  &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; This is a sample to demonstrate the
+ functionality of a JoinRowSet. This example shows how to perform an in memory
+ join of <br>
+  &nbsp; &nbsp;two already fetched rowsets. The user can set the join columns
+ and just add the pre fetched rowsets to a JoinRowSet which <br>
+  &nbsp; &nbsp;performs the join. This is very useful in cases where data 
+is present in two different datasources and need to be joined to form <br>
+  &nbsp; &nbsp;a relation.<br>
+  <br>
+  <br>
+   
+<h3>&nbsp;&nbsp;&nbsp; Explanation of the Sample</h3>
+  &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <small><code>// Instantiating the
+JoinRowSet<br>
+  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp; jrs = new JoinRowSetImpl();<code></code></code></small><b><small><br>
+  <br>
+  &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp; </small></b><small><big>The
+ above command instantiates a new JoinRowSet that is empty and can be used
+ to perform the join on the RowSets.</big><br>
+  </small><b><small>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+ <br>
+  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </small></b><small><code>// 
+Setup the properties for the CachedRowSet<br>
+  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp; crs1 = new CachedRowSetImpl();<br>
+  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp; crs1.setUrl(dbUrl);<br>
+  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp; crs1.setUsername(dbUserId);<br>
+  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp; crs1.setPassword(dbPasswd);&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+ <br>
+  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <br>
+  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Connection con = DriverManager.getConnection(dbUrl,dbUserId,dbPasswd);<br>
+  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Statement stmt = con.createStatement();<br>
+  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp; ResultSet rs = stmt.executeQuery(dbCommand1);&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+  <br>
+  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <br>
+  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp; // Get the data into  memory ,using populate<br>
+  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp; crs1.populate(rs);</code><br>
+  </small><b><small><br>
+  &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp; </small></b><small><big>The
+ above piece of code is similar to that piece of code in the cachedRowSet
+sample that is used to poulate a <br>
+  &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;CachedRowSet that will participaet in 
+the join. For this populated CachedRowSet the match column needs to <br>
+  &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;be set so that the join is to be performed
+ on this column. Now add this rowset to the JoinRowSet , this is the<br>
+  &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;first RowSet participating in the join.</big><br>
+  </small><b><small>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+ &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+  <br>
+  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </small></b><small><code>&nbsp;crs1.setMatchColumn(4);<br>
+  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; jrs.addRowSet(crs1);<br>
+  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <br>
+  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; // Setup the properties  for the CachedRowSet<br>
+  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; crs2 = new CachedRowSetImpl();<br>
+  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; crs2.setUrl(dbUrl);<br>
+  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; crs2.setUsername(dbUserId);<br>
+  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; crs2.setPassword(dbPasswd);<br>
+  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+ <br>
+  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; ResultSet rs1 = stmt.executeQuery(dbCommand2);&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+  <br>
+  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <br>
+  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; // Get the data into  memory ,using
+populate<br>
+  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; crs2.populate(rs1);&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+  <br>
+  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; crs2.setMatchColumn(2);<br>
+  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; jrs.addRowSet(crs2);</code></small><b><br>
+ </b> <br>
+  &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; The above snippet is similar to the
+ first part except that here the second RowSet that will participate in the
+ join is<br>
+  &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; populated and the macth column set
+ and added to the JoinRowSet so that join has now bwwn formed. <br>
+  <br>
+  &nbsp; &nbsp; &nbsp; &nbsp; <b>Note : </b>JoinRowSet<b> </b>&nbsp;currently
+ supports only <b>INNER_JOIN</b> formation.<br>
+  <br>
+    <br>
+ 
+</body>
+</html>

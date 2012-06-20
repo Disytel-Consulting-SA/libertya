@@ -1,0 +1,82 @@
+/*
+ *    El contenido de este fichero está sujeto a la  Licencia Pública openXpertya versión 1.1 (LPO)
+ * en tanto en cuanto forme parte íntegra del total del producto denominado:  openXpertya, solución 
+ * empresarial global , y siempre según los términos de dicha licencia LPO.
+ *    Una copia  íntegra de dicha  licencia está incluida con todas  las fuentes del producto.
+ *    Partes del código son CopyRight (c) 2002-2005 de Ingeniería Informática Integrada S.L., otras 
+ * partes son  CopyRight (c)  2003-2005 de  Consultoría y  Soporte en  Redes y  Tecnologías  de  la
+ * Información S.L.,  otras partes son  adaptadas, ampliadas,  traducidas, revisadas  y/o mejoradas
+ * a partir de código original de  terceros, recogidos en el  ADDENDUM  A, sección 3 (A.3) de dicha
+ * licencia  LPO,  y si dicho código es extraido como parte del total del producto, estará sujeto a
+ * su respectiva licencia original.  
+ *     Más información en http://www.openxpertya.org/ayuda/Licencia.html
+ */
+
+
+body	{
+	background-color: #EEEEEE; /* #F4F7FF */;
+	color: #151515; /* #000000; */
+	font-size: 12px;
+}
+
+td {
+	font-size: 12px;
+}
+
+.Cerror	{
+	background: #FF4A4A;
+}
+
+.Cmandatory	{
+	background: #9DFFFF;
+}
+
+#imgButton	{
+	border-style: outset;
+	cursor: pointer;
+}
+
+#imgButtonPressed	{
+	border-style: inset;
+	cursor: pointer;
+}
+
+#tab	{
+	background: #E6E6FA; /* Window Tabs */
+	border-style: outset;
+	color: #0000CC;
+	cursor: pointer;
+	margin: 5px 5px 5px 0px;
+	padding: 2px;
+	float: left;
+}
+
+#tabSelected	{
+	background: #E6E6FA; /* Selected Window Tabs */
+	border-style: inset;
+	color: #000066;
+	cursor: pointer;
+	margin: 5px 5px 5px 0px;
+	padding: 2px;
+	float: left;
+}
+
+.windowTable	{
+	margin: 0px;
+	padding: 2px;
+	border-left: none;
+	border-right: none;
+}
+
+.windowHeader	{
+	border-top: none;
+}
+
+.windowCenter	{
+	border-bottom: 1px solid #151515; /* #000000; */
+	border-top: 1px solid #151515; /* #000000; */
+}
+
+.windowFooter	{
+	border-bottom: none;
+}

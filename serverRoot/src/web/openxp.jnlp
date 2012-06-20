@@ -1,0 +1,26 @@
+<?xml version = "1.0" encoding = "UTF-8"?>
+<jnlp spec = "1.0+" version = "V2" 
+	codebase = "$$context/OXPHome" 
+	href = "$$context/OXPHome/openxp.jnlp">  
+	<information>
+		<title>cliente openXpertya v2</title>
+		<vendor>FUNDESLE</vendor>
+		<homepage href = "http://www.openXpertya.org"></homepage>
+		<offline-allowed/>
+		<description>openXpertya, Solución Empresarial Global</description>
+		<description kind = "short">openXpertya</description>
+		<description kind = "one-line">openXpertya, Solución Empresarial Global</description>
+		<description kind = "tooltip">openXpertya Solución Empresarial Global, ERP y CRM, EDI, OLAP, B2B y B2C</description>
+		<icon href = "$$context/OXP32.gif"/>
+	</information>  
+	<resources>
+		<j2se version = "1.6*" href = "http://java.sun.com/products/autodl/j2se" initial-heap-size = "32m" max-heap-size = "512m"/>
+		<jar href = "OXP.jar" main = "true" download = "eager"/>
+		<jar href = "OXPXLib.jar" main = "false" download = "eager"/>
+		<jar href = "JasperReports.jar" main = "false" download = "eager"/>
+	</resources>  
+	<application-desc main-class = "org.openXpertya.OpenXpertya"/>  
+	<security>
+		<all-permissions/>  
+	</security>
+</jnlp>

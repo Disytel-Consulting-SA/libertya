@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- ============================================= -->
+<!-- Extend                                        -->
+<!-- ============================================= -->
+<!-- $Header: openXpertya/extend/build.xml,v 1.0 $ -->
+
+<project name="extend" default="dist" basedir=".">
+
+  <description>
+Este Fichero sirve para compilar el subproyecto Extend sin el proyecto
+openXpertya
+  </description>
+
+  <!-- Establecer Variables Globales para esta compilacion -->
+  <property name="src" value="src"/>
+  <property name="build.dir" value="compilacion"/>
+  <property name="dist.dir" value="."/>
+  <property name="jar.path" value="../lib"/>
+  <property name="jar.name" value="Extend"/>
+
+  <!-- Establecer el path donde residen los Jar Necesarios -->
+  <path id="project.class.path">
+    <pathelement path="${classpath}"/>
+    <pathelement path="${jar.path}/XOXPTools.jar"/>
+    <pathelement path="../dbPort/dbPort.jar"/>
+    <pathelement path="../base/Base.jar"/>
+    <pathelement path="../looks/CLooks.jar"/>
+  </path>
+
+  <target name="init" description="initialization target">
+    <echo message="=========== Construir Extend"/>
+    <tstamp/>
+    <!-- Crear el Directorio de compilacion -->
+    <mkdir dir="${build.dir}"/>
+    <!-- Comprobar el Directorio de Distribucion -->
+    <available file="${dist.dir}" type="dir" property="dist.dir.exists"/>
+  </target>
+
+  <target name="makedir" depends="init" unless="dist.dir.exists">
+    <!-- Crear el Directorio de Distribucion si no existe -->
+    <mkdir dir="${dist}/${dist.dir}"/>
+  </target>
+  
+  <!-- =========================================== -->
+  <!-- Compilar                                    -->
+  <!-- =========================================== -->
+  
+  <target name="compile" depends="makedir">
+    <!-- Compilar el codigo java de ${src} a ${build.dir} -->
+    <javac srcdir="${src}" destdir="${build.dir}" deprecation="off" source="1.6" target="1.6" debug="on" encoding="UTF-8">
+      <classpath refid="project.class.path"/>
+    </javac>
+    <!-- Copiar Todas las imagenes y archivos al directorio de compilacion -->
+    <copy todir="${build.dir}">
+      <fileset dir="${src}">
+        <include name="**/images/*"/>
+        <include name="**/*.gif"/>
+        <include name="**/*.jpg"/>
+        <include name="**/*.wav"/>
+        <include name="**/*.htm"/>
+        <include name="**/*.html"/>
+        <include name="**/*.properties"/>
+        <exclude name="**/package.html"/>
+      </fileset>
+    </copy>
+  </target>
+
+
+  <!-- =========================================== -->
+  <!-- Distribucion                                -->
+  <!-- =========================================== -->
+  
+  <target name="dist" depends="compile">
+    <!-- Hacer un archivo jar con todo lo que exista en la carpeta de compilacion -->
+    <jar jarfile="${dist.dir}/${jar.name}.jar" basedir="${build.dir}"/>
+  </target>
+
+
+  <target name="clean">
+    <!-- Borrar la estructura de directorios de compilacion -->
+    <delete dir="${build.dir}"/>
+    <delete file="${dist.dir}/${jar.name}.jar" failonerror="false"/>
+  </target>
+
+</project>

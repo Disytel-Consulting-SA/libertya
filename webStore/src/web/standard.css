@@ -1,0 +1,282 @@
+/* GENERAL */
+body {
+	margin: 25px 0px 25px 0px;
+	font-family: Verdana, Arial, Helvetica, sans-serif;	
+	color: #000000;
+	text-align: center;
+}
+
+/* ESTRUCTURA */
+#wrap {
+	margin: auto;
+	width: 90%;
+	text-align: justify;
+}
+#header {
+	width: 100%;
+	padding: 0px 0px 25px 0px;
+	font-size: 10px;	
+}
+#left {
+	float: left;
+	width: 150px;
+	font-size: 10px;	
+}
+#right {
+	float: right;
+	width: 0px;
+	font-size: 10px;
+	visibility: hidden;
+}
+#center {
+	float: inherit;
+	margin: 0px 0px 0 160px;
+	font-size: 10px;
+}
+#footer {
+	margin: 0px 0px 0 160px;	
+	padding: 15px 0px 0px 0px;
+	font-size: 12px;	
+}
+#productDetails {
+	width: 100%;
+	margin: 10px 10px 10px 10px;
+	text-align: justify;
+	font-size: 11px;
+}
+
+/* ENLACES */
+a:link, a:visited, a:active {
+	color: #000000;
+	text-decoration: none;
+}
+a:hover {
+	color: #86B4CC;
+	text-decoration: none;
+}
+
+/* MEN�DE USUARIO */
+.loginmenu {
+	padding: 10px 10px 10px 10px;
+	border: 1px solid #C9DDE8;
+	margin: 10px 0px 5px 0px;
+}
+.loginbutton {
+	font-size: 11px;
+	display: inline;
+	margin: 0px 10px 0px 10px;
+}
+
+/* MEN�*/
+#left ul {
+	margin: 0px;
+	padding: 0px;
+	list-style: none;
+}
+#left ul li {
+	width: 150px;
+	margin: 2px 0px;
+	padding: 0px;
+	font-size: 14px;
+}
+#left ul li a:link, #left ul li a:visited, #left ul li a:active {
+	border-bottom: 1px dashed #000000;
+	color: #000000;
+	display: block;
+	text-decoration: none;
+}
+#left ul li a:hover {
+	border-bottom: 1px dashed #86B4CC;
+	color: #86B4CC;
+	display: block;
+	text-decoration: none;	
+}
+#left ul ul li {
+	width: 140px;
+	margin: 2px 0px 2px 10px;
+	padding: 0px;
+	font-size: 10px;
+	text-transform: none;
+}
+#left ul ul li a:link, #left ul ul li a:visited, #left ul ul li a:active {
+	border-bottom: 1px dashed #000000;
+	color: #000000;
+	display: block;
+	text-decoration: none;
+}
+#left ul ul li a:hover {
+	border-bottom: 1px dashed #86B4CC;
+	color: #86B4CC;
+	display: block;
+	text-decoration: none;	
+}
+
+/* CESTA DE LA COMPRA */
+#basketmenu {
+	width: 150px;
+}
+.basketline {
+	font-size: 9px;
+	color: #000000;
+	margin: 5px 0px 5px 0px;
+}
+.basketbutton {
+	padding: 2px 2px 2px 2px;
+	font-size: 10px;
+	width: 146px;
+	border: 1px solid #C9DDE8;
+	margin: 2px 0px 2px 0px;
+}
+
+/* LISTADOS */
+.tablelist {
+	width: 100%;
+	font-size: 10px;
+	border: 1px solid #C9DDE8;
+	border-spacing: 2px;
+	padding: 2px;
+}
+
+/* T�ULOS */
+h1 { font-size: 18px; }
+h2 { font-size: 16px; }
+h3 { font-size: 14px; }
+h4 { font-size: 12px; }
+h5 {}
+h6 {}
+
+/* LISTADO: Filas */
+.row0 { }
+.row0 td {
+	padding: 2px 2px 2px 2px;
+	font-size: 11px;
+	height: 24px;
+}
+.row1 {
+	background-color: #F1F1F1;
+}
+.row1 td {
+	padding: 2px 2px 2px 2px;
+	height: 24px;
+	font-size: 11px;
+}
+
+/* FORMULARIOS */
+.textfield {
+	padding: 1px 2px 1px 2px;
+	font-family: Verdana, Arial, Helvetica, sans-serif;
+	font-size: 10px;	
+	color: #000000;
+	border: 1px solid #000000;
+	background-color: #FFFFFF;	
+}
+.mandatory {
+	padding: 1px 2px 1px 2px;
+	font-family: Verdana, Arial, Helvetica, sans-serif;
+	font-size: 10px;	
+	color: #000000;
+	border: 1px solid #000000;	
+	background-color: #FFFFCC;	
+}
+.optionlist {
+	padding: 1px 2px 1px 2px;
+	font-family: Verdana, Arial, Helvetica, sans-serif;
+	font-size: 10px;
+	color: #000000;
+	border: 1px solid #000000;
+	background-color: #FFFFFF;
+}
+.button {
+	font-family: Verdana, Arial, Helvetica, sans-serif;
+	font-size: 9px;
+	color: #000000;
+	border: 1px solid #000000;	
+	background-color: #FFFFFF;
+}
+
+/* FORMULARIOS (NUEVO) */
+form {
+	font:100% verdana,arial,sans-serif;
+	margin: 0px 0px 0px 0px;
+	padding: 0px 0px 0px 0px;
+}
+form fieldset {
+	border: 1px solid #C9DDE8;
+	padding: 10px;
+	margin: 0px 0px 0px 0px;
+}
+form fieldset legend {
+	font-size: 11px;
+}
+fieldset {
+	border: 1px solid #C9DDE8;
+	padding: 10px;
+	margin: 0px 0px 0px 0px;
+}
+fieldset legend {
+	font-size: 11px;
+}
+form label { 
+	display: block;
+	float: left; 
+	width: 150px; 
+	padding: 0; 
+	margin: 5px 0px 0px 0px;
+	text-align: right; 
+}
+form .labelfix { 
+	display: inline;
+	float: none;
+}
+form input, form textarea, form select {
+	width: auto;
+	margin:5px 0px 0px 10px;
+}
+form input#reset {
+	margin-left: 0px;
+}
+textarea {
+	overflow: auto;
+}
+form small {
+	display: block;
+	margin: 0px 0px 5px 160px;
+	padding: 1px 3px;
+	font-size: 88%;
+}
+form .required{
+	font-weight:bold;
+}
+form .labelrequired{
+	font-weight:bold;
+}
+form br {
+	clear: left;
+}
+
+/* OTROS */
+#submitDiv {
+	text-align: justify;
+	display: inline;
+	font-weight: bold;
+}
+#processingDiv {
+	text-align: justify;
+	display: none;
+	color: #CC0000;
+	font-weight: bold;	
+}
+.pager { }
+.error {
+	color: #CC0000;
+	font-weight: bold;
+}
+.mini { }
+.correct {
+	color: #339933;
+	font-weight: bold;
+}
+.wrong {
+	color: #CC0000;
+	font-weight: bold;
+}

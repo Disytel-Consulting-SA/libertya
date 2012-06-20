@@ -1,0 +1,18 @@
+<%--
+  - openXpertya (r), Tienda en-l�ea, Copyright (c) 2003-2006 ConSerTi S.L.
+  - este fichero esta licenciado bajo los t�minos de la Licencia Pblica openXpertya (LPO)
+  - con aplicaci� directa del ADDENDUM A, secci� 6 (A.6) y posibilidad de relicenciamiento.
+  - Licencia y m� informaci� en http://www.openxpertya.org/ayuda/Licencia.html
+  - Cabecera Tienda en l�ea
+  --%>
+
+<img src="logo.png" width="170" height="100" border="0" alt="openXpertya soluci&oacute;n empresarial global" title="openXpertya soluci&oacute;n empresarial global">
+
+<cws:loginLink/>
+
+<c:if test='${not empty hdrInfo}'>
+	<em><c:out value='${hdrInfo}'/></em>
+</c:if> 
+<c:if test='${not empty hdrMessage}'>
+	** <c:out value='${hdrMessage}'/> **
+</c:if>

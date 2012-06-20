@@ -1,0 +1,205 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+</head>
+<body>
+<div style="text-align: center;">
+<h3><span style="font-weight: bold;">WebRowSet Demo<br>
+</span></h3>
+<div style="text-align: left;"><br>
+<br>
+&nbsp;A simple example to demonstrate the inter operability of
+WebRowSet.<br>
+<br>
+&nbsp;This example has the following sections:<br>
+<ol>
+  <li><a href="#1._An_Intorduction._">An intorduction</a></li>
+  <li><a href="#2._How_a_WebRowSet_is_constructed_and">How a WebRowSet
+is constructed and how the XML is written ?</a></li>
+  <li><a href="#3._Uisng_SAAJ_for_sending_the_XML_file">Using SAAJ for
+sending the XML file representing the WebRowSet.</a></li>
+  <li><a href="#4._Running_the_sample">Running the sample.&nbsp;</a> </li>
+</ol>
+<br>
+<h4><a name="1._An_Intorduction._"></a>&nbsp;&nbsp;&nbsp; 1. An
+Intorduction. <br>
+</h4>
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; This example
+is a brief insight into how a WebRowSet can be used by applications
+that understand<br>
+&nbsp;XML, but the data that needs to presented in XML format is in a
+DataSource. It is also a perfect fit for those<br>
+&nbsp;client-server applications where the client needs to replicate
+data on its end which is similar to the server but<br>
+&nbsp;both the client and server exchange data which is in XML format.<br>
+<br>
+<h4><a name="2._How_a_WebRowSet_is_constructed_and"></a>&nbsp;&nbsp;&nbsp;
+2. How a WebRowSet is constructed and how the XML is written?</h4>
+<br>
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp; &nbsp;&nbsp;&nbsp;&nbsp;&nbsp; This is
+the part where the WebRowSet is constructed. When the sample is built
+the program,<br>
+&nbsp;WriteXmlfromDB is run which will pick up the data from the
+Database and populate the WebRowSet.<br>
+<br>
+&nbsp;The name of the table is WRS_Objects,the structure is as follows:<br>
+&nbsp;(The structure is a comma separated list of field names and their
+datatypes)<br>
+<br>
+&nbsp;i_val integer , f_val float , d_val double , date_val Date ,
+s_val String , b_val BigDecimal , l_val long , bool_val boolean,<br>
+&nbsp;byte_val byte , short_val&nbsp; short .<br>
+<br>
+&nbsp;The following piece of code demonstrates the creation and
+population of WebRowSet.<br>
+<br>
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp; &nbsp;<small style="font-weight: bold;">
+// Create a new WebRowSet object.</small><br>
+&nbsp;&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; WebRowSet wrs = new
+WebRowSetImpl();<br>
+<br>
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp; &nbsp;<small style="font-weight: bold;">
+// Set the properties.</small><br>
+&nbsp;&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; wrs.setUsername(strUserId);<br>
+&nbsp;&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;
+wrs.setPassword(strPassword);<br>
+&nbsp;&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; wrs.setUrl(strUrl);<br>
+<br>
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;<small style="font-weight: bold;">
+// Set the command for populating the rowset.</small><br>
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp; &nbsp; wrs.setCommand("select * from
+WRS_Objects");<br>
+<br>
+&nbsp;&nbsp;&nbsp;&nbsp; &nbsp;&nbsp; <small style="font-weight: bold;">//
+The next command will populate the WebRowSet.</small><br>
+&nbsp;&nbsp;&nbsp;&nbsp; &nbsp;&nbsp; wrs.execute();<br>
+<br>
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <small style="font-weight: bold;">//
+Now write the data to a XML file which will be sen to the receiver. <br>
+</small>&nbsp;&nbsp;&nbsp;&nbsp; &nbsp;&nbsp; FileWriter fWriter = new
+FileWriter("data.xml");<br>
+&nbsp;&nbsp;&nbsp;&nbsp; &nbsp;&nbsp; wrs.writeXml(fWriter);<br>
+<br>
+&nbsp;Now the XML file is written which will be sent to the receiver
+using SAAJ.<br>
+<br>
+<br>
+<h4><a name="3._Uisng_SAAJ_for_sending_the_XML_file"></a>&nbsp; &nbsp;
+3. Using SAAJ for sending the XML file representing the WebRowSet.</h4>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; The next step after the generation
+of the XML file is sending the file over to the receiver who <br>
+&nbsp;will construct a WebRowSet from the XML file. <br>
+<br>
+&nbsp;&nbsp;&nbsp;&nbsp; Soap Attachments with API for Java (SAAJ) is
+an API that allows sending of SOAP messages&nbsp; over the wire.<br>
+&nbsp;This also provides for attaching files that can be sent along
+with SOAP messages. These messages can be <br>
+either XML or non-XML files.<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Here the XML file is being sent as an
+attachment, the following code fragment shows the construction of the <br>
+&nbsp;SOAP message and how to create attachments.<br>
+<br>
+&nbsp;&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <small
+ style="font-weight: bold;">// Create a message factory.</small><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+MessageFactory mf = MessageFactory.newInstance();<br>
+<br>
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;<small style="font-weight: bold;">
+// Create a message from the message factory.</small><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+SOAPMessage msg = mf.createMessage();<br>
+<br>
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <small style="font-weight: bold;">//
+Message creation takes care of creating the SOAPPart - a <br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; &nbsp; &nbsp; // required part of the
+message as per the SOAP 1.1<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; // specification.</small><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+SOAPPart sp = msg.getSOAPPart();<br>
+<br>
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <small style="font-weight: bold;">//
+Retrieve the envelope from the soap part to start building<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; &nbsp; // the soap message.</small><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+SOAPEnvelope envelope = sp.getEnvelope();<br>
+<br>
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;<small style="font-weight: bold;">
+// Get the soap SOAP Header from the message</small><br>
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; SOAPHeader
+header = msg.getSOAPHeader();<br>
+<br>
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <small style="font-weight: bold;">//
+Get the soap SOAP Body from the message</small><br>
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; SOAPBody body = msg.getSOAPBody();<br>
+<br>
+&nbsp;&nbsp;&nbsp;&nbsp; &nbsp; <br>
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp; <small style="font-weight: bold;">//
+Attachment for the SOAP message</small><br>
+&nbsp; &nbsp; &nbsp; &nbsp; AttachmentPart ap =
+msg.createAttachmentPart(new DataHandler(url));<br>
+<br>
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; ap.setContentType("text/plain");<br>
+<br>
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <small style="font-weight: bold;">//
+Add the attachment part to the message.</small><br>
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; msg.addAttachmentPart(ap);<br>
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp; <br>
+&nbsp;&nbsp;&nbsp; &nbsp;<small><span style="font-weight: bold;"> //
+Send the message to the provider using the connection.</span></small><br>
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; SOAPMessage reply = con.call(msg,
+urlEndpoint);<br>
+&nbsp; <br>
+&nbsp; The urlEndpoint specifies the location to where the message
+along with the attachment is to be sent, its data type <br>
+&nbsp; being java.net.URL .<br>
+<br>
+&nbsp;&nbsp;&nbsp;&nbsp; At the receiver's end the attachment is got
+from the SOAP message using the corresponding getter methods<br>
+&nbsp;and the contents of the attachment got and the WebRowSet
+populated.&nbsp; The following piece of code shows the<br>
+processing of the attachment on the receiver's end.<br>
+<br>
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <small style="font-weight: bold;">//
+Get the message header and body</small><br>
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;&nbsp; SOAPHeader header =
+message.getSOAPHeader();<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; SOAPBody body =
+message.getSOAPBody();<br>
+<br>
+&nbsp;&nbsp;&nbsp;&nbsp; &nbsp; <small style="font-weight: bold;">//
+Get the attachments with the message</small><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Iterator attachs
+= message.getAttachments();<br>
+<br>
+&nbsp;&nbsp;&nbsp; &nbsp; <small style="font-weight: bold;">// Process
+each attachment and get the contents<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; // the contents represent the
+WebRowSet in this case.<br>
+<br>
+</small>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+while(attachs.hasNext()) {<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; AttachmentPart
+ap = (AttachmentPart)attachs.next();&nbsp;&nbsp;&nbsp;
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp; <br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; &nbsp;&nbsp; &nbsp;&nbsp;&nbsp;
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp; Object content =
+ap.getContent();<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; }<br>
+&nbsp;&nbsp;&nbsp;&nbsp; <br>
+&nbsp;&nbsp;&nbsp; <br>
+<h4><a name="4._Running_the_sample"></a>&nbsp;&nbsp;&nbsp; 4. Running
+the sample</h4>
+</div>
+</div>
+<p>Now the application is deployed on the application server and we are
+ready to go!!!!!</p>
+<p>Just click on the link below to send the message to the receiver and
+receive a reply from the receiver.<br>
+</p>
+<p>Click <a href="sender">here</a> to send the message
+</p>
+</body>
+</html>

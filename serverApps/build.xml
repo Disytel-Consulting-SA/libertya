@@ -1,0 +1,162 @@
+<?xml version="1.0"?>
+<!-- ============================================= -->
+<!-- Servidor de Aplicaciones openXpertya          -->
+<!-- ============================================= -->
+
+<project name="OXPApps" default="main" basedir=".">
+
+  <property environment="env"/>
+
+  <property name="src.dir" value="${basedir}/src"/>
+  <property name="src.main.dir" value="${src.dir}/main"/>
+  <property name="src.client.dir" value="${src.main.dir}/client"/>
+  <property name="src.ejb.dir" value="${src.main.dir}/ejb"/>
+  <property name="src.servlet.dir" value="${src.main.dir}/servlet"/>
+  <property name="src.resources.dir" value="${src.dir}/resources"/>
+  <property name="src.web.dir" value="${src.dir}/web"/>
+  <property name="src.etc.dir" value="${src.dir}/etc"/>
+  <property name="src.server.dir" value="${src.main.dir}/server"/>
+
+  <property name="build.dir" value="${basedir}/compilacion"/>
+  <property name="build.tmp.dir" value="${build.dir}/tmp"/>
+  <property name="build.deploy.dir" value="${build.dir}/deploy"/>
+  <property name="build.war.dir" value="${build.dir}/war"/>
+  <property name="build.jar.dir" value="${build.dir}/jar"/>
+
+
+  <target name="init">
+    <echo message="=========== Construir Servidor de Aplicaciones"/>
+    <tstamp/>
+  </target>
+
+
+  <path id="base.path">
+    <pathelement location="../lib/OXP.jar" />
+    <pathelement location="../lib/CSTools.jar" />
+    <pathelement location="../tools/lib/j2ee.jar" />
+
+    <pathelement location="${build.classes.dir}" />
+  </path>
+
+
+  <!-- =========================================== -->
+  <!-- Compilar a partir de los fuentes                  -->
+  <!-- =========================================== -->
+  <target name="compile" depends="init">
+
+    <!--	Compilar Web		-->
+    <mkdir dir="${build.war.dir}"/>
+    <path id="web.path">
+      <path refid="base.path"/>
+      <pathelement location="${servlet-lib.path}"/>
+    </path>
+  	
+    <javac
+	  destdir="${build.war.dir}"
+	  debug="on"
+	  deprecation="off"
+	  optimize="on"
+	  classpathref="web.path">
+      <src path="${src.servlet.dir}"/>
+    </javac>
+  	
+    <copy todir="${build.war.dir}">
+      <fileset dir="${src.servlet.dir}">
+        <include name="**/images/*"/>
+        <include name="**/*.gif"/>
+        <include name="**/*.jpg"/>
+	    <include name="**/*.png"/>
+        <include name="**/*.wav"/>
+        <include name="**/*.htm"/>
+        <include name="**/*.html"/>
+        <include name="**/*.properties"/>
+        <exclude name="**/package.html"/>
+      </fileset>
+    </copy>
+
+  </target>
+
+  <!-- =========================================== -->
+  <!-- Crea los Archivos Jar                       -->
+  <!-- =========================================== -->
+  <target name="jar" depends="compile">
+    <mkdir dir="${build.jar.dir}"/>
+
+    <!--	Jar Apps Code			-->
+    <jar
+	  jarfile="${build.jar.dir}/OXPApps.jar">
+      <fileset
+	    dir="${build.war.dir}"
+	    includes="**/*.*">
+      </fileset>
+      <manifest>
+		<attribute name="Specification-Title" value="OXPApps"/>
+		<attribute name="Specification-Version" value="${env.VERSION_OXP}"/>
+		<attribute name="Specification-Vendor" value="(C) 2005-2006 FUNDESLE."/>
+		<attribute name="Implementation-Title" value="OXPApps ${env.VERSION_OXP}"/>
+		<attribute name="Implementation-Version" value="${env.VERSION_OXP}  ${DSTAMP}-${TSTAMP}"/>
+		<attribute name="Implementation-Vendor" value="${env.CONSULTORA_OXP}"/>
+		<attribute name="Implementation-URL" value="http://www.openxpertya.org"/>
+		<attribute name="Class-Path" value="OXP.jar OXPSLib.jar"/>
+      </manifest>
+    </jar>
+
+  </target>
+
+  <!-- =========================================== -->
+  <!-- Crea los Archivos War                       -->
+  <!-- =========================================== -->
+  <target name="war" depends="jar">
+    <mkdir dir="${build.deploy.dir}"/>
+
+    <!--	War Web Descriptor		-->
+    <war
+	  warfile="${build.deploy.dir}/OXPApps.war"
+	  webxml="${src.web.dir}/WEB-INF/web.xml">
+      <fileset dir="${src.web.dir}" excludes="**/web.xml,**/lib/**,**/classes/**"/>
+      <lib dir="${build.jar.dir}"/>
+      <manifest>
+		<attribute name="Specification-Title" value="OXPAppsWar"/>
+		<attribute name="Specification-Version" value="${env.VERSION_OXP}"/>
+		<attribute name="Specification-Vendor" value="(C) 2005-2006 FUNDESLE."/>
+		<attribute name="Implementation-Title" value="OXPAppsWar ${env.VERSION_OXP}"/>
+		<attribute name="Implementation-Version" value="${env.VERSION_OXP}  ${DSTAMP}-${TSTAMP}"/>
+		<attribute name="Implementation-Vendor" value="${env.CONSULTORA_OXP}"/>
+		<attribute name="Implementation-URL" value="http://www.openxpertya.org"/>
+		<attribute name="Class-Path" value="OXP.jar OXPSLib.jar"/>
+      </manifest>
+    </war>
+
+  </target>
+
+  <!-- =========================================== -->
+  <!-- Crea los Binarios del Servidor              -->
+  <!-- =========================================== -->
+  <target name="deploy-server" depends="war">
+    <copy todir="../lib">
+      <fileset dir="${build.deploy.dir}" 
+      	includes="*.jar,*.war,*.ear"/>
+      <fileset dir="${build.jar.dir}" 
+      	includes="*.jar,*.war,*.ear"/>
+    </copy>
+  </target>
+
+
+  <!-- =========================================== -->
+  <!-- Crea la Estructura de Binarios             -->
+  <!-- =========================================== -->
+  <target name="main" depends="deploy-server">
+  	<copy file="src/ear/application.xml" tofile="../lib/OXPApps.xml" />
+  </target>
+
+
+  <!-- =========================================== -->
+  <!-- Limpia la Compilacion Anterior              -->
+  <!-- =========================================== -->
+  <target name="clean">
+    <delete dir="${build.dir}"/>
+    <delete file="../lib/OXPApps.war" failonerror="false"/>
+    <delete file="../lib/OXPApps.jar" failonerror="false"/>
+  </target>
+
+</project>

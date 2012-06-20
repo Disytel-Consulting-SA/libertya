@@ -1,0 +1,37 @@
+<html>
+<head>
+<title>Personalizar su tienda en línea</title>
+<meta name="description" content="openxpertya Web Store Page">
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<meta http-equiv="pragma" content="no-cache">
+<link href="standard.css" rel="stylesheet" type="text/css"/>
+</head>
+<body>
+
+<h1>Personalizar su tienda en línea </h1>
+
+<hr>
+<p>Esta aplicación crea la tienda en línea para el código de cliente (<em>AD_Client_ID</em>) número 11 (<em>GardenWorld</em>) </p>
+<p>Para personalizar la aplicación, necesita: </p>
+<ul>
+  <li>Identifíquese como administrador del cliente:
+    <ul>
+      <li>En la ventana <em>Cliente</em>, cambie el directorio web, por ejemplo a XXX. </li>
+      <li>Haga click en la esquina inferior derecha de la ventana para conseguir su código de cliente (<em>AD_Client_ID</em>), por ejemplo 1000000.</li>
+    </ul>
+  </li>
+  <li> Descomprima el archivo <em>openXpertyaWebStore.war</em></li>
+  <li> En el directorio <em>WEB_INF</em>:
+    <ul>
+      <li> Edite el archivo <em>web.xml</em> para cambiar el código de cliente (AD_Client_ID) que aparece en pantalla por su propio código de cliente, por ejemplo 1000000.</li>
+      <li> Edite el archivo <em>jboss-web.xml</em> y configure su directorio web, por ejemplo XXX. </li>
+    </ul>
+  </li>
+  <li>Cambie el  UI de los archivos HTML y JSP si se requiere.</li>
+  <li> Vuelva a comprimirlo con otro nombre, por ejemplo <em>myStore.war</em> antes de copiarlo a 
+  <em>$OPENXPERTYA_HOME/jboss/server/openXpertya/deploy</em>.</li>
+</ul>
+<hr>
+<div align="right"><a href="index.html">Volver</a></div>
+</body>
+</html>

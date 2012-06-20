@@ -1,0 +1,55 @@
+<%--
+  - openXpertya (r), Tienda en-línea, Copyright (c) 2003-2006 ConSerTi S.L.
+  - este fichero esta licenciado bajo los términos de la Licencia Pública openXpertya (LPO)
+  - con aplicación directa del ADDENDUM A, sección 6 (A.6) y posibilidad de relicenciamiento.
+  - Licencia y más información en http://www.openxpertya.org/ayuda/Licencia.html
+  - Cabecera de Tienda en línea
+--%>
+
+<link href="standard.css" rel="stylesheet" type="text/css">
+<link href="favicon.png" rel="icon" type="image/png">
+
+<script language="Javascript" type="text/JavaScript">
+	function initClock() {
+		var now 	= new Date();
+		var hour 	= now.getHours();
+		var mins	= now.getMinutes();
+		var secs	= now.getSeconds();
+		var year	= now.getFullYear();
+		var mon	= now.getMonth();
+		var day	= now.getDate();
+	
+		// Format seconds
+		if (secs < 10) {
+			var secs = "0" + secs;
+		}
+	
+		// Format minutes
+		if (mins < 10) {
+			var mins = "0" + mins;
+		}
+	
+		// Convert to roman name
+		switch(mon) {
+			case 0: 	var gmon = "enero"; 		break;
+			case 1: 	var gmon = "febrero"; 	break;
+			case 2: 	var gmon = "marzo"; 		break;
+			case 3: 	var gmon = "abril"; 		break;
+			case 4: 	var gmon = "mayo"; 		break;
+			case 5: 	var gmon = "junio"; 		break;
+			case 6: 	var gmon = "julio"; 		break;
+			case 7: 	var gmon = "agosto"; 	break;
+			case 8: 	var gmon = "septiembre"; 	break;
+			case 9: 	var gmon = "octubre"; 	break;
+			case 10: 	var gmon = "noviembre"; 	break;
+			case 11:	var gmon = "diciembre"; 	break;
+		}
+		
+		// Fisplay date and time
+		window.status= "Datos de existencias actualizados en tiempo real a las " + hour + ":" + mins +":" + secs +" del "+ day + " de " + gmon +" de " + year + "  ";
+	
+		// Do it again
+		setTimeout("initClock();",500);
+	}
+</script>
+<noscript>Por favor, active Javascript para continuar.</noscript>

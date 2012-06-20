@@ -1,0 +1,104 @@
+<project name="webrowset" default="zip-sample" basedir=".">
+
+<property name="samples.lib" value="./lib"/>
+
+<path id ="class.path">
+   <fileset dir="${samples.lib}">
+	<include name="**/*.jar"/>
+   </fileset>  
+   <pathelement location="./etc"/> 
+</path>
+
+<property name="src" value="./src"/>
+<property name="dest" value="./build"/>
+<property name="distribute" value="./dist"/>
+<property name="sender-inf" value="${dest}/sender/WEB-INF"/>
+<property name="receiver-inf" value="${dest}/receiver/WEB-INF"/>
+
+
+<target name="check-rundir" unless="RUN_DIR">
+   <echo> Please run the ant command with the following format
+ ant target-name -DRUN_DIR=directory where this sample is installed
+   </echo>
+   <fail message="set RUN_DIR properly"/>
+</target>
+
+<target name="write-xml-fromDB" depends="check-rundir">
+   <javac srcdir="./etc">
+      <classpath refid="class.path"/>
+   </javac>
+   
+   <!-- Now run the program -->
+   <java classname="WriteXmlfromDB" fork="yes">
+      <arg value=""/> <!-- This has to have the URL for the db -->
+      <arg value=""/> <!-- This has to have the corresponding username -->      
+      <arg value=""/> <!-- This has to have the password for the above username -->
+      <arg value=""/> <!-- This has to have the classname of the DB driver -->
+      <arg value="${RUN_DIR}"/>
+      <classpath refid="class.path"/>
+   </java>
+</target>
+
+
+<target name="build-all" depends="write-xml-fromDB">
+   <delete dir="${dest}"/>
+   <delete dir="${distribute}"/>
+   <echo message="Building all components"/>
+   <mkdir dir="${dest}"/>
+   <javac srcdir="${src}/"
+          destdir="${dest}"
+          includes="**/*.java">
+      <classpath refid="class.path"/>
+</javac>
+</target>
+
+<target name="prepare" depends="build-all"> 
+   
+   <mkdir dir="${sender-inf}/classes/book/sender"/>
+   <mkdir dir="${receiver-inf}/classes/book/receiver"/>
+   
+   <copy todir="${sender-inf}/classes/book/sender">
+      <fileset dir="${dest}/book/sender"/>
+   </copy>
+   
+   <copy todir="${receiver-inf}/classes/book/receiver">
+      <fileset dir="${dest}/book/receiver"/>
+   </copy>
+   
+   <copy file="./lib/rowset.jar" todir="${sender-inf}/lib"/>
+   <copy file="./lib/saaj-coms.jar" todir="${sender-inf}/lib"/>
+   
+   <copy file="./lib/rowset.jar" todir="${receiver-inf}/lib"/>
+   <copy file="./lib/saaj-coms.jar" todir="${receiver-inf}/lib"/>
+   
+   <copy file="./web.xml" todir="${sender-inf}"/>
+   <copy file="./data.xml" todir="${dest}/sender"/>
+   <copy file="./index.html" todir="${dest}/sender"/>
+   
+   <copy file="./web1.xml" todir="${receiver-inf}"/>
+   <copy file="./sun-web.xml" todir="${receiver-inf}"/>
+   <move file="${receiver-inf}/web1.xml" tofile="${receiver-inf}/web.xml"/>
+   
+</target>
+
+<target name="produce-war" depends="prepare">
+   <mkdir dir="./dist"/>
+   
+   <jar jarfile="./dist/sender.war">
+      <fileset dir="${dest}/sender" includes="WEB-INF/**"/> 
+      <fileset dir="${dest}/sender" includes="*.xml"/>
+      <fileset dir="${dest}/sender" includes="*.html"/>     
+   </jar>
+   
+   <jar jarfile="./dist/receiver.war">
+      <fileset dir="${dest}/receiver" includes="WEB-INF/**"/>      
+   </jar>
+</target>
+
+<target name="zip-sample" depends="produce-war">
+   <zip destfile="${RUN_DIR}/webrowset-sample.zip"
+        basedir="${RUN_DIR}"/>
+</target>
+
+
+</project>

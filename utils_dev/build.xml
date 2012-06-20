@@ -1,0 +1,97 @@
+﻿<?xml version="1.0" encoding="UTF-8"?>
+<!-- ================================================ -->
+<!-- Construccion de Libertya                         -->
+<!-- ================================================ -->
+
+<project name="openXpertya" default="complete" basedir="../">
+	<description>
+    Este Fichero construye Libertya completo
+  </description>
+	<!-- set global properties for this build -->
+	<property environment="env"/>
+	<property name="src" value="src"/>
+	<property name="build.dir" value="compilacion"/>
+	<target name="init" description="Inicializacion">
+		<echo message="=========== Construir Libertya"/>
+		<tstamp/>
+	</target>
+	<target name="build" depends="init">
+		<ant inheritAll="false" dir="tools"/>
+		<ant inheritAll="false" dir="looks"/>
+    	<ant inheritAll="false" dir="dbPort"/>    
+    	<ant inheritAll="false" dir="print"/>	
+		<ant inheritAll="false" dir="base"/>
+		<ant inheritAll="false" dir="extend"/>
+		<ant inheritAll="false" dir="client"/>
+		<!-- inicio sistema de producción con trazabilidad en pruebas -->
+		<ant inheritAll="false" dir="FreeQueryBuilder"/>
+		<ant inheritAll="false" dir="manufacturing"/>
+		<!-- fin sistema de producción con trazabilidad en pruebas   -->
+		<ant inheritAll="false" dir="serverRoot"/>
+		<ant inheritAll="false" dir="serverApps"/>
+		<ant inheritAll="false" dir="webStore"/>
+		<ant inheritAll="false" dir="sqlj"/>
+		<ant inheritAll="false" dir="install"/>
+	</target>
+	<target name="clean">
+		<ant inheritAll="false" dir="tools" target="clean"/>
+		<ant inheritAll="false" dir="looks" target="clean"/>
+		<ant inheritAll="false" dir="print" target="clean"/>
+		<ant inheritAll="false" dir="dbPort" target="clean"/>
+		<ant inheritAll="false" dir="base" target="clean"/>
+		<ant inheritAll="false" dir="extend" target="clean"/>
+		<ant inheritAll="false" dir="client" target="clean"/>
+		<!-- inicio sistema de produccion con trazabilidad en pruebas -->
+        <ant inheritAll="false" dir="FreeQueryBuilder" target="clean"/>
+		<ant inheritAll="false" dir="manufacturing" target="clean"/>
+		<!-- fin sistema de produccion con trazabilidad en pruebas   -->
+		<ant inheritAll="false" dir="serverRoot" target="clean"/>
+		<ant inheritAll="false" dir="serverApps" target="clean"/>
+		<ant inheritAll="false" dir="webStore" target="clean"/>
+		<ant inheritAll="false" dir="sqlj" target="clean"/>
+		<ant inheritAll="false" dir="install" target="clean"/>
+	</target>
+	<!-- ================================================ -->
+	<!-- Instalacion Local Libertya                    -->
+	<!-- ================================================ -->
+	<target name="install" depends="" description="Dependiente de las Variables">
+		<echo message="=========== Instalar Libertya"/>
+		<copy todir="${env.INSTALACION_OXP}">
+			<fileset dir="/install" includes="ServidorOXP_*"/>
+		</copy>
+		<!-- Borrar todo lo que exista menos data y utils	-->
+		<delete failonerror="false">
+			<fileset dir="${env.OXP_HOME}/lib"/>
+			<fileset dir="${env.OXP_HOME}/jboss"/>
+		</delete>
+		<!-- Descomprimir el Fichero de instalacion		-->
+		<unzip src="/install/ServidorOXP_${env.VERSION_OXP_FILE}.zip" 
+			dest="${env.ROOT_OXP}" 
+			overwrite="yes"/>
+		<!-- Ejecutar la configuracion				-->
+		<ant inheritAll="false" dir="${env.OXP_HOME}" target="setup"/>
+	</target>
+
+	<!-- ================================================ -->
+	<!-- COMPLETAR                                         -->
+	<!-- ================================================ -->
+	<target name="complete" depends="build, install">
+	</target>
+
+	<!-- ================================================ -->
+	<!-- Transferir Instalacion                             -->
+	<!-- ================================================ -->
+	<target name="transfer" depends="complete" description="Transferir la Instalacion">
+		<!-- FTP al repositorio central (si procede)	-->
+		<echo message="=========== transferir a ServidorOXP/documents/download"/>
+		<ftp server="${server}" 
+				remotedir="ServidorOXP/documents/download" 
+				userid="openxp" 
+				password="${ftpPassword}" 
+				verbose="yes" 
+				depends="no" 
+				binary="yes">
+		  	<fileset dir="install/compilacion" includes="ServidorOXP_*"/>
+		</ftp>
+	</target>
+</project>

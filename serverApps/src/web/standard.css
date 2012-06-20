@@ -1,0 +1,157 @@
+/*
+ *    El contenido de este fichero está sujeto a la  Licencia Pública openXpertya versión 1.1 (LPO)
+ * en tanto en cuanto forme parte íntegra del total del producto denominado:  openXpertya, solución 
+ * empresarial global , y siempre según los términos de dicha licencia LPO.
+ *    Una copia  íntegra de dicha  licencia está incluida con todas  las fuentes del producto.
+ *    Partes del código son CopyRight (c) 2002-2007 de Ingeniería Informática Integrada S.L., otras 
+ * partes son  CopyRight (c)  2003-2005 de  Consultoría y  Soporte en  Redes y  Tecnologías  de  la
+ * Información S.L.,  otras partes son  adaptadas, ampliadas,  traducidas, revisadas  y/o mejoradas
+ * a partir de código original de  terceros, recogidos en el  ADDENDUM  A, sección 3 (A.3) de dicha
+ * licencia  LPO,  y si dicho código es extraido como parte del total del producto, estará sujeto a
+ * su respectiva licencia original.  
+ *     Más información en http://www.openxpertya.org/ayuda/Licencia.html
+ */
+
+a {
+	color: #000066;
+	text-decoration: none;
+}
+
+a:hover {
+	text-decoration: underline;
+}
+
+body {
+	font-family: arial, helvetica, sans-serif;
+	font-size: 12px;
+	margin-left: 0;
+	margin-top: 0;
+}
+
+h1 {
+	color: #151515; /* #FF0000; */
+	font-size: 16px !important;
+	margin-bottom: 10px;
+	margin-top: 0;
+}
+
+h2 {
+	color: #333333; /* #000066 */
+	font-size: 14px;
+	font-style: italic;
+	font-weight: bold;
+}
+
+h3 {
+	color: #666666; /* #0000CC */
+	font-size: 14px;
+	font-style: normal;
+	font-weight: bold;
+}
+
+h4 {
+	color: #999999; /* #6600CC */
+	font-size: 14px;
+	font-style: italic;
+}
+
+h5 {
+	color: #CCCCCC; /* #660099 */
+	font-size: 14px;
+	font-weight: normal;
+}
+
+h6 {
+	color: #FF9933;
+	font-size: 12px;
+	font-weight: bold;
+}
+
+hr {
+	color: #000099;
+	padding-bottom: 0;
+	padding-top: 0;
+}
+
+th {
+	background-color: #EEEEEE; /* #E6E6FA */
+	/* text-align: left; */
+}
+
+p {
+	/* text-align:justify; */
+}
+
+.menuDetail{
+	color: #660099;
+	font-family: Arial,Helvetica,sans-serif;
+	font-size: 12px;
+	padding-bottom: 0;
+	padding-left: 20px;
+	padding-top: 0;
+	text-decoration: none;
+}
+
+.menuDetail:hover{
+	background-color: #99FFFF;
+	color: #660099;
+	font-size: 12px;
+	padding-bottom: 0;
+	padding-left: 20px;
+	padding-top: 0;
+	text-decoration: none;
+}
+
+.menuMain{
+	color: #000066;
+	font-size: 14px;
+	text-align: left;
+	text-decoration: none;
+}
+
+.menuMain:hover{
+	background-color: #99FFFF;
+	color: #000066;
+	font-size: 14px;
+	text-align: left;
+	text-decoration: none;
+}
+
+.menuSub{
+	color: #000066;
+	font-size: 12px;
+	padding-left: 10px;
+	text-align: left;
+	text-decoration: none;
+}
+
+.menuSub:hover{
+	background-color: #99FFFF;
+	color: #000066;
+	font-size: 12px;
+	padding-left: 10px;
+	text-align: left;
+	text-decoration: none;
+}
+
+#menuDetail{
+	color: #660099;
+	display: block;
+	font-size: 12px;
+	margin-bottom: 1px;
+	margin-top: 1px;
+	padding-right: 20px;
+	text-align: right;
+	text-decoration: none;
+}
+
+#menuMain{
+	border-top: groove;
+	color: #000066;
+	display: block;
+	font-size: 14px;
+	margin-bottom: 1px;
+	margin-top: 5px;
+	text-align: left;
+	text-decoration: none;
+}

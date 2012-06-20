@@ -1,0 +1,10 @@
+[Desktop Entry]
+Version=1.0
+Encoding=UTF-8
+Name=Limpiar temporales de Compilación
+Type=Application
+Terminal=true
+Exec=xterm  -hold -rightbar -e /oxp2_2/utils_dev/Limpiar.sh
+Name[es_ES]=Limpiar temporales de Compilación
+GenericName[es_ES]=
+Icon=/usr/share/pixmaps/apple-red.png

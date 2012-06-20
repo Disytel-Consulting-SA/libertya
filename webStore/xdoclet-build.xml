@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project default="_generation_" name="XDoclet Generator">
+<path id="xdoclet.classpath">
+<fileset dir="C:/eclipse/eclipse/plugins/com.genuitec.jboss.ide.eclipse.xdoclet.core_3.8.1">
+<include name="*.jar"/>
+</fileset><pathelement location="C:/ServidorOXP/webStore/build"/>
+<pathelement location="C:\java\jdk1.5.0_06/jre/lib/rt.jar"/>
+<pathelement location="C:\java\jdk1.5.0_06/jre/lib/sunrsasign.jar"/>
+<pathelement location="C:\java\jdk1.5.0_06/jre/lib/jsse.jar"/>
+<pathelement location="C:\java\jdk1.5.0_06/jre/lib/jce.jar"/>
+<pathelement location="C:\java\jdk1.5.0_06/jre/lib/charsets.jar"/>
+<pathelement location="C:\java\jdk1.5.0_06/jre/lib/ext/dnsns.jar"/>
+<pathelement location="C:\java\jdk1.5.0_06/jre/lib/ext/ldapsec.jar"/>
+<pathelement location="C:\java\jdk1.5.0_06/jre/lib/ext/localedata.jar"/>
+<pathelement location="C:\java\jdk1.5.0_06/jre/lib/ext/sunjce_provider.jar"/>
+</path>
+<target name="_generation_" depends=""/>
+</project>

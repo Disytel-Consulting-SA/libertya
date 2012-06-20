@@ -1,0 +1,428 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<head>
+	<meta content="text/html; charset=iso-8859-1" http-equiv="Content-Type">
+	<meta content="en" http-equiv="Content-Language">
+
+	<title>JavaService - Version History</title>
+
+	<meta name="Robots" content="index, follow">
+
+	<link type="text/css" href="../resources/javaservice.css" rel="stylesheet" id="stylesheet">
+	<link type="image/x-icon" href="../favicon.ico" rel="icon">
+	<link type="image/x-icon" href="../favicon.ico" rel="shortcut icon">
+</head>
+<body bgcolor="#FFFFFF">
+
+<h2>JavaService - Release History</h2>
+
+<h3>Latest Release</h4>
+
+<h4>Version 2.0.10 - 1st May 2006</h4>
+
+<h5>New Features</h5>
+
+<p>
+No new features included with this release.
+</p>
+
+<h5>Bug Fixes</h5>
+
+<p>
+<i>304733</i>
+<strong>Missing quote characters in install files</strong>
+<br>
+Further errors identified and fixed within supplied sample batch script files.</p>
+</p>
+
+<h5>Known Problems</h5>
+
+<p>
+No further known problems with this release.
+</p>
+
+<h5>Compatibility</h5>
+
+<p>
+Backwards-compatible with V2.0 and V1.2 releases of JavaService.
+</p>
+
+
+<h3>Preceding Releases</h4>
+
+<h4>Version 2.0.9 - 17th January 2006</h4>
+
+<h5>New Features</h5>
+
+<p>
+<i>303995</i>
+<strong>Include service description parameter</strong>
+<br>
+Service installation now supplies (optional) description text for display by Services snap-in.
+<br>
+This feature is only supported for use from Windows NT Version 5 or later (i.e. Windows 2000, Windows XP, etc).
+It is ignored if used on older versions of the Microsoft Windows NT platform (V3.5 or V4).
+</p>
+
+<p>
+<i>304293</i>
+<strong>Provide a simple way to use System.exit() to shutdown</strong>
+If service does not specify an explicit stop function, JavaService invokes the standard System.exit(1)
+function to terminate the JVM.
+<br>
+This results in any registered Exit Handler function(s) being invoked, which can perform clean-up of
+application software if implemented to detect this condition on process termination.
+</p>
+
+<h5>Bug Fixes</h5>
+
+<p>
+There are no specific bug fixes included within this release.
+</p>
+
+<h5>Known Problems</h5>
+
+<p>
+No further known problems with this release.
+</p>
+
+<h5>Compatibility</h5>
+
+<p>
+Backwards-compatible with V2.0 and V1.2 releases of JavaService.
+</p>
+
+
+
+
+
+
+<h4>Version 2.0.8 - 6th January 2006</h4>
+
+<h5>New Features</h5>
+
+<p>
+No new features included in this release - internal changes only.
+</p>
+
+<h5>Bug Fixes</h5>
+
+<p>
+<i>304292</i>
+<strong>Incorrect error message if -Djava.class.path= not supplied</strong>
+<br>
+An incorrect error message may be reported if an install command does not explictly define the classpath.
+This states that the mandatory <code>-start</code> parameter is not present, even when included in the command.
+The error occurs only when the CLASSPATH environment variable is defined and used by the install operation.
+<br>
+The software now handles this condition correctly in command-line parsing.
+<br>
+It also outputs an informational message whenever the CLASSPATH value is used by default for service configuration.
+</p>
+
+<p>
+<i>304575</i>
+<strong>Invalid use of quote characters in sample batch files</strong>
+<br>
+Invalid assignments in the DOS command files caused double quote characters to be included in the
+generate service install commands, which would then fail to execute correctly.
+<br>
+The batch files have been updated to remove erroneous instances of quote characters.
+</p>
+
+<h5>Known Problems</h5>
+
+<p>
+No further known problems with this release.
+</p>
+
+<h5>Compatibility</h5>
+
+<p>
+Backwards-compatible with V2.0 and V1.2 releases of JavaService.
+</p>
+
+
+
+<h4>Version 2.0.7.64 - 6th January 2006</h4>
+
+<p>
+Additional release for use on AMD or Intel 64-bit systems, built by Troy Self from V2.0.7 release sources to run both JBoss and Tomcat on X64 servers.
+</p>
+
+<p>
+Temporarily available for download from http://www.daml.org/people/tself/javaservice64.html and subsequently
+made available from the ObjectWeb Forge for continued availability.</li>
+
+<h5>New Features</h5>
+
+<p>
+No new features included in this release - rebuild for X64 platform only.
+</p>
+
+<p>
+Source and binary downloads are available for this version - note that these sources are not
+currently held within CVS for this release.
+</p>
+
+<h5>Bug Fixes</h5>
+
+<p>
+There are no specific bug fixes included within this release.
+</p>
+
+<h5>Known Problems</h5>
+
+<p>
+<i>304292</i>
+<strong>Incorrect error message if -Djava.class.path= not supplied</strong>
+<br>
+An incorrect error message may be reported if an install command does not explictly define the classpath.
+This states that the mandatory <code>-start</code> parameter is not present, even when included in the command.
+The error occurs only when the CLASSPATH environment variable is defined and used by the install operation.
+</p>
+
+<p>
+<i>304575</i>
+<strong>Invalid use of quote characters in sample batch files</strong>
+<br>
+Invalid assignments in the DOS command files caused double quote characters to be included in the
+generate service install commands, which would then fail to execute correctly.
+</p>
+
+<h5>Compatibility</h5>
+
+<p>
+This release is the only version so far available for the AMD or Intel X64 environment.
+<br>
+It requires the latest C++ run-time libraries, which are included in the .Net 2.0 Framework that can be
+downloaded from the Microsoft web site.
+</p>
+
+
+<h4>Version 2.0.7 - 3rd November 2005</h4>
+
+<p>
+This release of JavaService is based on the new Version 2 code base.
+<br>
+V2.0.7 can now be viewed as stable and is suitable for use in production software environments.
+</p>
+
+<h5>New Features</h5>
+
+<p>
+No new features included in this release - internal changes only.
+</p>
+
+<h5>Bug Fixes</h5>
+
+<p>
+<i>304209</i>
+<strong>StopServiceThread fails</strong>
+<br>
+An error would occur if the stop method was specified, if the start method would return after invocation.
+The code has now been changed to prevent this run-time error.
+</p>
+
+<h5>Known Problems</h5>
+
+<p>
+No further known problems with this release.
+</p>
+
+<h5>Compatibility</h5>
+
+<p>
+Backwards-compatible with V2.0 and V1.2 releases of JavaService.
+</p>
+
+
+<h4>Version 2.0.6 - 29th September 2005</h4>
+
+<h5>New Features</h5>
+
+<p>
+No new features included in this release - internal changes only.
+</p>
+
+<h5>Bug Fixes</h5>
+
+<p>
+<i>303998</i>
+<strong>Overlapped I/O operation in progress</strong>
+<br>
+This problem arose when a service was installed without specifying a shutdown class in the configuration.
+Code changes have been incorporated to treat this correctly as an optional parameter.
+Improvements have also been made to error detection and handling in this area of code.
+</p>
+
+<h5>Known Problems</h5>
+
+<p>
+No further known problems with this release.
+<br>
+If no new reports are received, the Version 2 codebase will be moved to 'stable release' status.
+</p>
+
+<h5>Compatibility</h5>
+
+<p>
+Backwards-compatible with V2.0 and V1.2 releases of JavaService.
+</p>
+
+
+<h4>Version 2.0.5 - 30th August 2005</h4>
+
+<h5>New Features</h5>
+
+<p>
+No new features included in this release - internal changes only.
+</p>
+
+<h5>Bug Fixes</h5>
+
+<p>
+<strong>Error Message Output</strong>
+<br>
+A problem was detected (not reported) with output of error messages when failing to install a service.
+This release fixes this problem so that the correct error message text is displayed on any failure.
+</p>
+
+<p>
+<strong>Overlapped I/O operation in progress</strong>
+<br>
+Some minor code changes have been incorporated towards finding and resolving the cause of this
+intermittent problem.
+</p>
+
+<h5>Known Problems</h5>
+
+<p>
+There has been a single report of a '<i>Overlapped I/O operation in progress</i>' error message when attempting
+to install the CruiseControl service. This does not appear in testing with the SampleService code and
+is being investigated further. Some changes have been included in this release to work towards a fix.
+</p>
+
+<h5>Compatibility</h5>
+
+<p>
+Backwards-compatible with V2.0.4 and V1.2.12 (and earlier) releases of JavaService.
+</p>
+
+
+<h4>Version 2.0.4 - 21st August 2005</h4>
+
+<p>
+This version of JavaService is the first official release to be based on the new Version 2 code base.
+<br>
+Hence it should initially be viewed as 'release candidate' status and not used for production software
+environment until suitable testing and verification has been performed.
+</p>
+
+
+<h5>New Features</h5>
+
+<p>
+This version incorporates refactored code and additional commands, whilst maintaining complete
+backwards compatibility with V1.2 commands and configuration entries. The benefits of the new
+code base are aimed to support easier enhancements with new functionality. There is also a reduction of
+code duplication, which should in turn reduce the possibilities for errors and improve the
+maintainability of the application software.
+</p>
+<p>
+The following new commands are included in this release:-
+</p>
+<dl>
+<dt>-queryconfig servicename</dt>
+<dd>To view the configuration entries for the named Java service</dd>
+<dt>-status servicename</dt>
+<dd>To display the current execution status of the named Java service</dd>
+<dt>-license</dt>
+<dd>To output the LGPL licensing text from JavaService</dd>
+<dt>-help command</dt>
+<dd>Displaying further help details for the specified command</dd>
+</dl>
+<p>
+The software has been tested using the SampleService code and has undergone debug testing to
+verify internal operation. The interface at the Windows Service level has been improved, whilst
+maintaining the same Registry and Java JNI interfaces as used by previous releases of JavaService.
+</p>
+
+<p>
+Additionally, using the JavaServiceDebug executable will generated debug-type output to a log file
+for fault investigation. At present, this filename is fixed internally as <code>C:\javaservice.log</code>
+</p>
+
+<h5>Bug Fixes</h5>
+
+<p>
+There are no specific bug fixes included within this release.
+</p>
+
+<h5>Known Problems</h5>
+
+<p>
+There are no specific bug fixes included within this release.
+</p>
+
+<h5>Compatibility</h5>
+<p>
+Backwards-compatible with V1.2.12 (and earlier) releases of JavaService.
+</p>
+
+
+
+<h3>Previous Stable Release</h3>
+<h4>Version 1.2.12 - 1st August 2005</h4>
+
+<p>
+This is the final planned release of the JavaService utility from the Version 1.x code base.
+</p>
+<p>
+It can be viewed as a 'stable' release, with the code having been used in essentially the
+same form for a number of years, with limited internal changes at each release level.
+</p>
+<p>
+Refer to V1.x documentation for release notes and prior change history.
+</p>
+
+<h3>Version Numbering</h3>
+
+<p>
+Releases of the JavaService product code are given a three-part version number, which is
+incorporated in the binary image of the program as well as being used in the source control system.
+There is a fourth part to the version number, used for internal build release tracking only.
+</p>
+<p>
+The meaning of each part of the version number is explained below, using V2.0.4.0 as an example:
+</p>
+
+<table>
+<tr>
+<td><strong>Version Part</strong></td><td><strong>Description</strong></td>
+</tr>
+<tr>
+<td>First (2)</td><td>Major version number indicating codebase of the software</td>
+</tr>
+<tr>
+<td>Second (0)</td><td>Minor version number for directly-compatible releases</td>
+</tr>
+<tr>
+<td>Third (4)</td><td>Incremental version number for patch releases of software</td>
+</tr>
+<tr>
+<td>Fourth (0)</td><td>Build tracking number, may be used for custom builds</td>
+</tr>
+</table>
+
+<p>
+Compatibility will be maintained between releases of software with the same major version numbers,
+unless there is a particular problem identified and resolved in the later release. Software releases
+with the same major and minor release numbers shall be compatible in all cases (accepting that
+additional functionality may be included in the later release).
+</p>
+
+<p>&nbsp;</p>
+
+</body>
+</html>

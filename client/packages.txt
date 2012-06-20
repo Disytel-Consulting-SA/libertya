@@ -1,0 +1,11 @@
+org.openXpertya.acct
+org.openXpertya.apps
+org.openXpertya.apps.form
+org.openXpertya.apps.search
+org.openXpertya.grid 
+org.openXpertya.grid.ed
+org.openXpertya.grid.tree
+org.openXpertya.images 
+org.openXpertya.install
+org.openXpertya.minigrid
+org.openXpertya.print

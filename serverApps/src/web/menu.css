@@ -1,0 +1,93 @@
+/*
+ *    El contenido de este fichero está sujeto a la  Licencia Pública openXpertya versión 1.1 (LPO)
+ * en tanto en cuanto forme parte íntegra del total del producto denominado:  openXpertya, solución 
+ * empresarial global , y siempre según los términos de dicha licencia LPO.
+ *    Una copia  íntegra de dicha  licencia está incluida con todas  las fuentes del producto.
+ *    Partes del código son CopyRight (c) 2002-2007 de Ingeniería Informática Integrada S.L., otras 
+ * partes son  CopyRight (c)  2003-2005 de  Consultoría y  Soporte en  Redes y  Tecnologías  de  la
+ * Información S.L.,  otras partes son  adaptadas, ampliadas,  traducidas, revisadas  y/o mejoradas
+ * a partir de código original de  terceros, recogidos en el  ADDENDUM  A, sección 3 (A.3) de dicha
+ * licencia  LPO,  y si dicho código es extraido como parte del total del producto, estará sujeto a
+ * su respectiva licencia original.  
+ *     Más información en http://www.openxpertya.org/ayuda/Licencia.html
+ */
+
+body {
+	background-color: #EEEEEE; /* #F4FCFF */
+	color: #151515; /* #000000; */
+	font-size: 12px;
+}
+
+cite {
+	display: block;
+	font-size: 10px;
+	padding-bottom: 0px;
+	padding-top: 0px;
+}
+
+li {
+	font-weight: normal;
+	font-size: 12px;
+	margin-left: 0px;
+	padding-left: 5px;
+	cursor: pointer;
+}
+
+td {
+	font-size: 12px;
+}
+
+ul {
+	margin-left:15px;
+}
+
+.menuTable {
+	border-left: none;
+	border-right: none;
+	margin: 0px;
+	padding: 2px;
+}
+
+.menuHeader	{
+	border-top: none;
+}
+
+.menuCenter {
+	border-bottom: 1px solid #151515; /* #000000; */
+	border-top: 1px solid #151515; /* #000000; */
+}
+
+.menuFooter {
+	border-bottom: none;
+}
+
+
+.menuWindow	{
+	/* list-style-image: url(/compiere/images/mWindow.gif); */ /* Menu Item */
+	list-style-image: url(images/mWindow.gif); /* Menu Item */	
+	list-style-type: circle;
+}
+
+.menuWorkflow {
+	/* list-style-image: url(/compiere/images/mWorkFlow.gif); */ /* Menu Item */
+	list-style-image: url(images/mWorkFlow.gif); /* Menu Item */	
+	list-style-type: disc;
+}
+
+.menuReport {
+	/* list-style-image: url(/compiere/images/mReport.gif); */ /* Menu Item */
+	list-style-image: url(images/mReport.gif); /* Menu Item */	
+	list-style-type: disc;
+}
+
+.menuProcess {
+	/* list-style-image: url(/compiere/images/mProcess.gif); */ /* Menu Item */
+	list-style-image: url(images/mProcess.gif);/* Menu Item */
+	list-style-type: disc;
+}
+
+.menuSummary {
+	font-weight: bold; /* Menu Closed */
+	list-style-image: url(images/mClosed.gif);
+	list-style-type: square;
+}

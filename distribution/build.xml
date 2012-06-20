@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project name="base" default="install" basedir=".">
+  <description>
+    Este Fichero sirve para generar los clientes
+  </description>
+
+  <property environment="env"/>
+  <property name="client" value="client"/>
+  <property name="client_lib" value="client/lib"/>	
+  <property name="dist"  value="../dist"/>
+  <property name="lib"   value="../lib"/>
+  <property name="server_lib"   value="../serverRoot/lib"/>
+  <property name="utils"   value="../utils"/>
+  <property name="jboss_lib"   value="${env.JBOSS_HOME}/server/${env.JBOSS_CONFIGURATION}/lib"/>
+  <property name="jboss_deploy"   value="${env.JBOSS_HOME}/server/${env.JBOSS_CONFIGURATION}/deploy"/>	
+	
+
+  <target name="init" description="Inicializacion">
+    <echo message="=========== Create Client"/>
+    <tstamp/>
+    <mkdir dir="${client}"/>
+  	<mkdir dir="${client_lib}"/>
+  </target>
+	
+  <target name="install" depends="init">
+  	<!-- Borrar Elementos Existentes, Pero no Utilidades y Datos 	-->
+	<delete failonerror="false">
+		<fileset dir="${client_lib}"/>
+	</delete>
+  	<!-- Copiamos las librerias dependientes -->
+  	<!-- TODO: Copiar solo las necesarias -->
+  	<copy todir="${client_lib}">
+      <fileset dir="${lib}">
+        <include name="*.jar"/>
+      </fileset>
+    </copy>
+
+  	<!-- Copiamos las librerias de OpenXpertya -->
+  	<copy file="${dist}/openXpertya.jar" tofile="${client_lib}/openXpertya.jar" failonerror="no"/>
+  	
+  	<!-- las utilidades -->
+  	<copy file="${utils}/openXpertya.sh" tofile="${client}/openXpertya.sh" failonerror="no"/>
+  	
+  	<!-- Instalacion JBOSS -->
+  	<!-- Copiamos las librerias necesarias -->
+  	<copy todir="${jboss_lib}">
+		<fileset dir="${server_lib}">
+	        <include name="*.jar"/>
+		</fileset>
+  	</copy>
+  	<copy file="${lib}/postgresql.jar" tofile="${jboss_lib}/postgresql.jar" failonerror="no"/>
+
+  	<!-- Copiamos las librerias de OpenXpertya -->
+	<!-- TODO: Hay librerias que no hay porque copiarlas aqui, por ejemplo, client -->
+  	<copy file="${dist}/openXpertya.jar" tofile="${jboss_lib}/openXpertya.jar" failonerror="no"/>
+  	
+  	<!-- Y los ear -->
+  	<copy todir="${jboss_deploy}">
+		<fileset dir="${dist}">
+	        <include name="*.ear"/>
+		</fileset>
+  	</copy>
+  </target>
+
+  <target name="clean">
+	<delete failonerror="false">
+		<fileset dir="${server_lib}"/>
+	</delete>
+  </target>
+</project>

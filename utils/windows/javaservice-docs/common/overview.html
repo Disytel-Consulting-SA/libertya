@@ -1,0 +1,105 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<head>
+	<meta content="text/html; charset=iso-8859-1" http-equiv="Content-Type">
+	<meta content="en" http-equiv="Content-Language">
+
+	<title>JavaService - Windows NT Service Adaptor for Java</title>
+
+	<meta name="Robots" content="index, follow">
+
+	<link type="text/css" href="../resources/javaservice.css" rel="stylesheet" id="stylesheet">
+	<link type="image/x-icon" href="../favicon.ico" rel="icon">
+	<link type="image/x-icon" href="../favicon.ico" rel="shortcut icon">
+</head>
+<body bgcolor="#FFFFFF">
+
+<h2>JavaService - Overview</h2>
+
+<h3>Description</h3>
+
+<p>
+JavaService is an adaptor program that allows a cross-platform Java server application to be
+installed and run as a system service in the Microsoft Windows environment, in a similar
+fashion to a UNIX 'daemon' type process that can be invoked at system startup.
+</p>
+<p>
+The JavaService software manages the interface between the Java run-time environmnt and
+the Windows NT Service Handler, using code developed in C++ that invokes the Java JNI mechanism
+from a program that can be installed and executed as a Windows service.
+</p>
+<p>
+Types of program that are most suitable for execution in this way include application servers
+(such as JOnAS, Orion, Tomcat or JBoss) or other processes that provide a network interface.
+</p>
+<p>
+The JavaService software has been available under an Open Source license since 2000, with numerous
+updates being provided to incorporate bug fixes and additional functionality. These releases have
+been distributed in turn by Alexandria Software Consulting, Multiplan Consultants Ltd and ObjectWeb.
+</p>
+
+<h3>Features</h3>
+
+<ul>
+<li>No changes are required to the Java application for it to be run as a service.</li>
+<li>Works with Window NT4, 2000, XP and 2003 and the Java 2 run-time environment</li>
+<li>Services can be configued for automatic or manual start, optionally waiting for other services
+to start first</li>
+<li>Java application output to <em>stdout</em> and <em>stderr</em> can be written to
+log files, either appended to existing files or overwritten each time the service starts</li>
+<li>Integrates with Windows administrative tools (Event Viewer, Service Control Manager, Registry Editor)</li>
+<li>Widely used - over 36,000 downloads provided from the ObjectWeb site</li>
+</ul>
+
+
+<h3>Usage</h3>
+
+<p>
+You may download and use JavaService for execution of your own developed software, or with Java
+application software from another source.
+</p>
+<p>
+If you distribute a Java application, you may also include the JavaService utility software with your
+own distribution, so long as you comply with the terms of the <a href="license.html">LGPL license</a>.
+</p>
+
+<h4>Downloading</h4>
+
+<p>
+JavaService software is available for download as a simple ZIP file from the ObjectWeb project forge,
+which provides basic release notes for each version made available to the publc.
+An MD5 checksum file is also provided for those that wish to verify the contents of the distribution
+when downloaded.
+</p>
+<p>
+When you have obtained the relevant distribution ZIP file (i.e. JavaService-2.0.10.zip),
+you should unzip this into a suitable directory on your Windows system - such as <code>C:\javaservice</code>
+</p>
+<p>
+From this directory, you can view the documentation sets, read the license file and run the program with
+the test SampleService software included in the distribution. From there, the choice is all yours...
+</p>
+
+<h4>Feedback</h4>
+<p>
+If you have experiences - good or bad - with the JavaService software, it would be very much
+appreciated if you would contribute comments to the forums or mailing lists that are provided
+at the ObjectWeb <a href="http://forge.objectweb.org/projects/javaservice/">project forge</a>
+site for this Open Source software.
+</p>
+
+<hr>
+
+<p>
+Thank you for your interest in the JavaService software.
+</p>
+<p>
+Regards,
+<br>
+John Rutter, <a href="http://www.multiplan.co.uk">Multiplan Consultants Ltd</a>
+</p>
+
+<p>&nbsp;</p>
+
+</body>
+</html>

@@ -1,0 +1,36 @@
+	OpenXpertya 2.0, VC1. Notas de instalación automatizada.
+
+Instalación de binarios y base de datos demostrativa de openXpertya versión 2.0,
+en su versión release 2.0
+
+Este paquete de instalación solamente está verificado en los siguientes sistemas
+operativos:
+
+	- Windows XP
+	- Windows 2003
+	- Windows 2000
+	- Centoos
+	- Fedora Core 5
+	- Fedora Core 6
+
+Se irán reportando más sistemas operativos verificados en la medida que nos sea
+enviada dicha información.
+Si el actual procedimiento no funciona correctamente en su sistema, por favor, 
+reporte la configuración y el fallo y proceda a su instalación manual con el 
+procedimiento alternativo.
+Si el actual procedimiento le funciona y su sistema operativo no está entre los
+arriba indicados, por favor, sírvase informar del sistema operativo utilizado y 
+cualquier información adicional sobre el proceso de instalación automatizada que
+considere interesante.
+
+Son necesarios los siguientes prerequisitos para una normal instalación:
+
+
+	- Correcta instalación de Sun Java SDK 1.5 o posterior.
+	- Instalación y Configuración de Postgresql y PLJAVA
+	- Creación de una base de datos vacía, para la importación del sistema.
+
+                                       Gijón, 4 de Mayo del 2.007
+
+                                   El equipo de desarrollo de openXpertya
+                                            info@openxpertya.org

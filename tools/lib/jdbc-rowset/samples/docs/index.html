@@ -1,0 +1,110 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+               
+  <link rel="stylesheet" type="text/css" href="style/default.css">
+  <title>JDBC(TM) RowSet Implementations 1.0</title>
+   
+</head>
+  <body>
+       
+<h1>JDBC<sup>TM</sup> RowSet Implementations -<br>
+    Samples</h1>
+        
+<center>         <b>Java Specification Request </b> <a
+ href="http://www.jcp.org/en/jsr/detail?id=114">JSR-114</a><br>
+       <b>Specification Version:</b> 1.0<br>
+    <b>Reference Implementation (RI) Version:</b> 1.0<br>
+        
+<hr width="50%">   Main: <a href="../../docs/index.html">README</a> |    <a
+ href="../../docs/ReleaseNotes.html">Release Notes</a> |    Samples |   
+<a href="../../docs/tutorial/index.html">Tutorial</a> |    <a
+ href="../WebRowSet-demo/index.html">WebRowSet Demo</a> |   <a
+ href="../../docs/ChangeLog.html">Changelog</a>  <br>
+      JDBC RowSet Community: <a
+ href="https://jwsdp.dev.java.net/rowset/index.html">https://jwsdp.dev.java.net/rowset/index.html</a>
+  <br>
+        
+<hr width="50%"> </center>
+        
+<p> This is JSR is for the implementation of both disconnected and connected 
+ Rowsets. As a part of this JSR new packages are added as per the Specification 
+ and the Reference  Implementation (RI) provides the implementation for these 
+ packages.  The interfaces that are a part of this specification are placed 
+ into packages that are extensions of the existing javax.sql.rowset package.
+  </p>
+     
+<p> This JSR defines two types of RowSets which can be classified as disconnected 
+ and connected RowSets. There are different kinds of RowSets in each category, 
+ they are explained as below </p>
+     
+<p> </p>
+     
+<h2>Disconnected RowSets</h2>
+        
+<h3>1. CachedRowSet</h3>
+    This is a type of disconnected RowSet where the data is fetched from
+the   DataBase and stored in memory, there is no connection to the DataBase
+when  the operations are performed on this RowSet. It connects to the DataBase 
+only to fetch the data and also when it needs to write the data back to the 
+DataBase.    
+<ul>
+    <li><a href="./CachedRowSet.html">Sample CachedRowSet</a> </li>
+     
+</ul>
+        
+<h3>2. WebRowSet</h3>
+     This is a sub-interface of the CachedRowSet interface, hence having
+all  the behaviour of the CachedRowSet. In addition to this it can be used
+to serialize the WebRowSet to an XML file using the API's provided based
+on a specific schema. This can be used for interoperability among applications 
+that understand XML but need data that is present in a DataBase.    
+<ul>
+    <li><a href="./WebRowSet.html">Sample WebRowSet</a> </li>
+     
+</ul>
+        
+<h3>3. FilteredRowSet</h3>
+    This is sub-interface of the WebRowSet interface, hence having all the
+ behaviour  of CachedRowSet and WebRowSet. This type of RowSet allows for
+the filtering of data.  The important thing here is that filtering is performed
+ on data in memory, so if  the filter needs to be removed or  the filtering
+ criteria needs to be changed round trips to the DataBase are avoided as
+the  data is always in memory and filtering happens on this.    
+<ul>
+    <li><a href="./FilteredRowSet.html">Sample FilteredRowSet</a> </li>
+     
+</ul>
+        
+<h3>4. JoinRowSet</h3>
+    This is also a sub-interface of WebRowSet, hence having all the behaviour 
+ of CachedRowSet and WebRowSet. This type of RowSet allows in memory joins 
+ to happen on data which is present in RowSets (either connected or disconnected). 
+ This performs INNER_JOIN on the data participating in the join. Advantage 
+ of having this is that data that needs to be joined can be from multiple 
+DataSources. All interfaces that implement the Joinable interface (one of 
+the interfaces specified as a part of JSR-114) can participate in the join. 
+   
+<ul>
+    <li><a href="./JoinRowSet.html">Sample JoinRowSet</a> </li>
+     
+</ul>
+         
+<h2>Connected RowSets</h2>
+       
+<h3>1. JdbcRowSet</h3>
+    This is the only connected RowSet specified as a part of this JSR. This
+ RowSet is essentially same as the ResultSet except that it exposes the properties
+  with getter and setter methods, i.e it exposes a Java Beans component model. 
+ This is useful in IDE environments where these components' properties can 
+ be set  using a tool.    
+<ul>
+    <li><a href="./JdbcRowSet.html">Sample JdbcRowSet</a> </li>
+     
+</ul>
+      <br>
+   <br>
+  <br>
+ 
+</body>
+</html>

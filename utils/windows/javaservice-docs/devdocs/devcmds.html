@@ -1,0 +1,399 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<head>
+	<meta content="text/html; charset=iso-8859-1" http-equiv="Content-Type">
+	<meta content="en" http-equiv="Content-Language">
+
+	<title>JavaService - Technical Commands and Operations</title>
+
+	<meta name="Robots" content="index, follow">
+
+	<link type="text/css" href="../resources/javaservice.css" rel="stylesheet" id="stylesheet">
+	<link type="image/x-icon" href="../favicon.ico" rel="icon">
+	<link type="image/x-icon" href="../favicon.ico" rel="shortcut icon">
+</head>
+<body bgcolor="#FFFFFF">
+
+<h2>JavaService - Technical Operations</h2>
+
+<p>
+The full set of command and parameters available from JavaService is likely to be of interest
+to more technical users, either when integrating Java applications with this utility, or when
+investigation further options for an existing usage.
+</p>
+
+<h3>Command Summary</h3>
+<p>
+The commands listed below are self-documented within the application, if invoked from a
+Windows command prompt with the <code>JavaService -help</code> command.
+</p>
+
+<dl>
+
+<dt>-help</dt>
+<dd>(or -?) Lists the commands available from JavaService</dd>
+
+<dt>-version</dt>
+<dd>Outputs the built-in version number of the JavaService program</dd>
+
+<dt>-license</dt>
+<dd>(or -licence) Outputs the LGPL licensing text covering the program</dd>
+
+<dt>-install servicename</dt>
+<dd>Installs the named service with specified configuration options</dd>
+
+<dt>-queryconfig servicename</dt>
+<dd>(or -query) Displays confguration details for the installed Java service</dd>
+
+<dt>-status servicename</dt>
+<dd>Displays current execution status of the named Java service</dd>
+
+<dt>-uninstall servicename</dt>
+<dd>Removes definition of the specified Java service</dd>
+
+</dl>
+
+
+<h3>Available Operations</h3>
+
+<h4>Service Installation</h4>
+
+<p>
+The main command function needed from JavaService is the ability to install a Java application as a Windows system service.
+</p>
+
+<p>
+From a Windows command prompt, or a suitably defined script file, enter the command:
+<br>
+<code>JavaService -install</code>
+<br>
+Followed by the relevant parameters as described below. Ensure that quotation marks are
+used around an parameters that contain spaces to avoid run-time failures.
+</p>
+<ul>
+	<li><i>service_name</i> (mandatory) - The name that you want to use 
+	  for this service. This is what the service will show up as in the 
+	  service control manager.<br>
+	  <br>
+	</li>
+	<li><i>jvm_library</i> (mandatory) - The location of the jvm.dll file 
+	  that you want to use as your Java Virtual Machine. For Sun's Java 
+	  2 SDK, this is usually {JDK_HOME}\jre\bin\classic\jvm.dll or {JDK_HOME}\jre\bin\hotspot\jvm.dll.<br>
+	  <br>
+	</li>
+	<li><i>jvm_option</i>* (optional) - To specify any  
+	  parameters to pass to the JVM upon invocation. These may include 
+	  things such as &quot;-Djava.class.path=&quot; to specify a classpath 
+	  or &quot;-Xmx128m&quot; to specify a maximum heap size of 128MB. 
+	  Any parameters that you need to use when invoking the java.exe command 
+	  tool should be specified here. There is no fixed limit to the number of 
+	  parameters specified.<br>
+	  <br>
+	</li>
+	<li>-start <i>start_class</i> (mandatory) - The name of the class 
+	  that you wish to use when starting the service. This must be the 
+	  fully qualified class name.<br>
+	  <br>
+	</li>
+	<li>-method <i>start_method</i> (optional) - The name of the static 
+	  method of the <i>start_class</i> that you wish to call to start 
+	  the service. The method must be <span class="textCode">static</span>, 
+	  must return type <span class="textCode">void</span>, and must take 
+	  a <span class="textCode">String[]</span> as its only parameter. 
+	  If this parameter is not specified it defaults to <span class="textCode">main</span>.<br>
+	  <br>
+	</li>
+	<li>-params <i>start_parameter</i>+ (optional) - Any parameters to 
+	  pass to the <i>start_method</i> when starting the service. These 
+	  will be passed in as the <span class="textCode">String[]</span> 
+	  parameter.<br>
+	  <br>
+	</li>
+	<li>-stop <i>stop_class</i> (optional) - The name of the class that 
+	  you wish to use when stopping the service. This must be the fully 
+	  qualified class name. If no <i>stop_class</i> is specified, the 
+	  process containing the Virtual Machine is simply terminated when 
+	  the service is stopped.<br>
+	  <br>
+	</li>
+	<li>-method <i>stop_method</i> (optional, but only allowed if a <i>stop_class</i> 
+	  was specified) - The name of the static method of the <i>stop_class</i> 
+	  that you wish to call to stop the service. The method must be <span class="textCode">static</span>, 
+	  must return type <span class="textCode">void</span>, and must take 
+	  a <span class="textCode">String[]</span> as its only parameter. 
+	  If this parameter is not specified it defaults to <span class="textCode">main</span>.<br>
+	  <br>
+	</li>
+	<li>-params <i>start_parameter</i>+ (optional, but only allowed if 
+	  a <i>stop_class</i> was specified) - Any parameters to pass to the 
+	  <i>stop_method</i> when stopping the service. These will be passed 
+	  in as the <span class="textCode">String[]</span> parameter.<br>
+	  <br>
+	</li>
+	<li>-out <i>out_log_file</i> (optional) - A file into which System.out 
+	  will be redirected. If this parameter is not specified, System.out 
+	  will not be redirected.<br>
+	  <br>
+	</li>
+	<li>-err<i> err_log_file</i> (optional) - A file into which System.err 
+	  will be redirected. If this parameter is not specified, System.err 
+	  will not be redirected.<br>
+	  <br>
+	</li>
+	<li>-current<i> current_dir</i> (optional) - A directory to use as 
+	  the current working directory for the service. If this parameter 
+	  is specified, all relative paths in the service will be relative 
+	  to relative to the specified directory.<br>
+	  <br>
+	</li>
+	<li>-path<i> extra_path</i> (optional) - An addition to the path for 
+	  the service. The specified path will be appended to the system path 
+	  before the service is started. This can be used to specify where 
+	  additional DLLs that native libraries are dependent upon can be 
+	  found.<br>
+	  <br>
+	</li>
+	<li>-depends<i> other_services</i> (optional) - Another NT service (or multiple services,
+	if specified as a comma-separated list) that
+	must be running before this particular java service can start. Will cause
+	the named service(s) to be started automatically if required when starting
+	the java service. Will also stop the java service if a specified service is stopped
+	(usually with user confirmation first being requested by Windows NT).<br>
+	<br>
+	</li>
+	<li>-auto <i>or</i> -manual - Optional parameter indicating whether service
+	should be run automatically on system startup (default mode), or if it should
+	be started on demand using a manual command (i.e. net start service).<br>
+	<br>
+	</li>
+	<li>-shutdown<i> seconds</i> (optional) - Specify the amount of time that
+	may be taken during processing of your shutdown/stop method. The value here
+	is used as a timeout, so if the method has not completed in this length of time,
+	the JVM process will be terminated to allow the service to shutdown completely.<br>
+	<br>
+	</li>
+	<li>-user<i> user_name</i> (optional) - Specify the Windows domain username to be
+	used when running the service (also requires that the password parameter is specified).<br>
+	Local user accounts are specified as <i>.\user_name</i> whereas domain accounts may be
+	specified as either <i>domain\user_name</i> or <i>user_name@domain</i> (the latter form has
+	been required on some systems to avoid reports of 'I/O Operation in progress' errors).<br>
+	<br>
+	</li>
+	<li>-password<i> password</i> (optional) - Specify the Windows password associated with
+	the domain username specified for use when running the service (required if the user parameter is specified).<br>
+	<br>
+	</li>
+	<li>-append <i>or</i> -overwrite - Optional parameter indicating whether output
+	and error log files are to be appended to, or overwritten, on each service startup.
+	If not specified, the default is to append to existing log files.<br>
+	<br>
+	</li>
+	<li>-description service_desc - Optional parameter indicating descriptive text
+	to be recorded against the service when installed. Use "quote characters" for
+	text that includes spaces. Note that this function is only supported when used
+	from Windows NT Version 5 or later (Windows 2000, Windows XP, etc).<br>
+	<br>
+	</li>
+</ul>
+
+<h5>Example Command</h5>
+      <p >A simple example might look like the following:</p>
+      <blockquote> 
+        <p class="mainCode">JavaService.exe -install &quot;My Service&quot; c:\j2sdk\jre\bin\server\jvm.dll 
+          -Djava.class.path=c:\app\classes.jar -start&nbsp;com.my.ExampleClass -err&nbsp;c:\app\stderr.txt</p>
+      </blockquote>
+      <p >This would create a service that, when started, would 
+        create a JVM from the JDK in c:\j2sdk using a classpath set to be c:\app\classes.jar.
+        It would then call the main method of the com.my.ExampleClass class with 
+        a String array of length 0 (no parameters). Anything written to System.err 
+        would be redirected into the file c:\app\stderr.txt.<br>
+      </p>
+
+
+<h5>Technical Tip</h5>
+<p>
+Especially when running more than one Java application as a service, you may find it useful to
+copy and rename the program file before each use to indicate the application name concerned.
+</p>
+<p>
+In this way, the Windows Task Manager will show the relevant program name in its list of processes,
+where <code>AbcService.exe</code> and <code>XyzService.exe</code>
+would be clearer than two entries for <code>JavaService.exe</code> if renaming is not used.
+</p>
+
+
+<h4>Starting a Service</h4>
+
+<p>
+Once a service has been installed with a given name, there are three ways in which service execution may be started.
+</p>
+
+<h5>Automatic Startup</h5>
+
+<p>
+If a service is specified with <em>automatic</em> startup, it will be executed when the Windows system is booted and started up.
+Automatic startup mode is the default when installing services using JavaService. This can be overridden with the <code>-manual</code>
+option on the install command. It may also be changed using the Windows administrative tools, to switch from <em>automatic</em> to
+<em>manual</em> startup mode.
+</p>
+
+<h5>Net Start Command</h5>
+
+<p>
+The standard Windows command for starting system services is the 'net start' command.
+This can be issued from a Windows prompt, specifying the service name as shown in the following example:
+<br>
+<code>net start myservice</code>
+</p>
+
+<h5>Service Management Tool</h5>
+
+<p>
+Windows provides a system management utility to provide control of system services from a graphical front-end.
+This is available from the Start Menu or Control Panel <em>Administrative Tools</em> list, as the <em>Service</em> utility.
+</p>
+<p>
+This utility lists all configured services, indicating their startup mode and current status.
+Tasks and menu options are available to start or stop service execution, or to disable a service entirely.
+</p>
+
+<h4>Stopping a Service</h4>
+
+<p>
+There are two ways in which a currently executing service may be stopped.
+</p>
+
+<h5>Net Stop Command</h5>
+
+<p>
+The standard Windows command for stopping executiong of system services is the 'net stop' command.
+This can be issued from a Windows prompt, specifying the service name as shown in the following example:
+<br>
+<code>net stop myservice</code>
+</p>
+
+<h5>Service Management Tool</h5>
+
+<p>
+The Windows <em>Services</em> utility is available from the Start Menu or Control Panel.
+It displays the status of all configured services and provides tasks and menu options
+to stop services that are currently running within the system.
+</p>
+
+
+<h4>Removing a Service</h4>
+
+<p>
+JavaService provides a command to enable configuration of a Java service to be correctly removed from the system.
+</p>
+<p>
+From a Windows command prompt, or a suitably defined script file, enter the command:
+<br>
+<code>JavaService -uninstall <i>service_name</i></code>
+<br>
+Where:
+</p>
+<ul>
+	<li><i>service_name</i> (mandatory) - The name of the service that is to be removed.<br>
+	  <br>
+	</li>
+</ul>
+
+
+<h4>Version Number Query</h4>
+
+<p>
+The version number of the JavaService software is available using either of two methods on the Windows platform.
+</p>
+<p>
+One method is to enter the command
+<code>JavaService -version</code>
+<br>
+when the program will display version and copyright information.
+</p>
+
+<p>
+An alternative method is to locate and select the <em>JavaService.exe</em> file in Windows Explorer and select
+the <em>Properties</em> option from the right-click menu, or press <em>Alt+Enter</em> as a shortcut.
+<br>
+The version number and copyright information for the program can then be viewed from the property tabs
+displayed by Windows.
+</p>
+
+
+<h3>Registry Settings</h3>
+
+<p >JavaService stores the configuration information for installed services in the Windows system registry,
+under the location:
+</p>
+<p>
+<code>HKEY_LOCAL_MACHINE\ SYSTEM\ CurrentControlSet\ Services\ {SERVICE_NAME}\ Parameters</code>
+</p>
+<p>
+The following keys are used and may be changed after service installation to modify the behaviour of the service.
+</p>
+<blockquote> 
+        <p >Current Directory - The current working directory 
+          for the service.</p>
+        <p >JVM Library - The location of the jvm.dll library 
+          to use to create the Java Virtual Machine.</p>
+        <p >JVM Option Count - The number of option to pass 
+          to the JVM when creating it.</p>
+        <p >JVM Option Number <i>n</i> - An option to pass to 
+          the JVM. <i>n</i> ranges from 0 to &quot;JVM Option Count&quot; - 1.</p>
+        <p >Path - Extra path information that will be appended 
+          to the system path before the service is started.</p>
+        <p >Start Class - The class to use to start the service.</p>
+        <p >Start Method - The static method to call on the 
+          &quot;Start Class&quot; to start the service.</p>
+        <p >Start Param Count - The number of parameters to 
+          pass to the &quot;Start Method&quot; to start the service.</p>
+        <p >Start Param Number n - A parameter to pass to the 
+          &quot;Start Method&quot; to start the service. n ranges from 0 to &quot;Start 
+          Param Count&quot; - 1.</p>
+        <p >Stop Class - The class to use to stop the service. 
+          If this key is absent, the process containing the JVM will simply be 
+          terminated when the service is stopped.</p>
+        <p >Stop Method - The static method to call on the &quot;Stop 
+          Class&quot; to stop the service.</p>
+        <p >Stop Param Count - The number of parameters to pass 
+          to the &quot;Stop Method&quot; to stop the service.</p>
+        <p >Stop Param Number n - A parameter to pass to the 
+          &quot;Stop Method&quot; to stop the service. n ranges from 0 to &quot;Stop 
+          Param Count&quot; - 1.</p>
+        <p >System.err File - A file into which System.err will 
+          be redirected. If this key is absent, System.err will not be redirected.</p>
+        <p >System.out File - A file into which System.out will 
+          be redirected. If this key is absent, System.out will not be redirected.</p>
+        <p >Shutdown Timeout - The number of milliseconds to allow for
+		the Java Stop method to complete, before timeout and JVM forced termination.</p>
+</blockquote>
+
+<h3>Event Log Messages</h3>
+
+<p>
+JavaService logs both informational events and errors 
+into the Application portion of the Windows Event Log.
+</p>
+<p>
+Informational messages record events when the service is started and one when it is stopped.
+Error messages may be logged because of a configuration problem or other system error.
+</p>
+<p>
+If you are having trouble getting JavaService to run your 
+application, you should first check the Application portion of the Event 
+Log to see if any errors were reported. Additionally you can check the 
+redirected System.err file, as any Java exceptions will be written there 
+by the Virtual Machine of the run-time environment.
+</p>
+<p>
+Note that if the JavaService executable used at service installation is deleted from the system,
+the content of the event log messages cannot be displayed by the Event Viewer. Instead, the
+message id value will be shown with some Microsoft error text, plus any parameter values that
+would normally be included in the formatted message text.
+</p>
+
+<p>&nbsp;</p>	  
+
+</body>
+</html>

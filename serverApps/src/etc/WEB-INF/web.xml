@@ -1,0 +1,197 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- edited with XMLSpy v2006 sp2 U (http://www.altova.com) by berto (inforHouse) -->
+<!DOCTYPE web-app PUBLIC "-//Sun Microsystems, Inc.//DTD Web Application 2.3//EN" "http://java.sun.com/dtd/web-app_2_3.dtd">
+<web-app>
+	<display-name>Cliente ligero openXpertya</display-name>
+	<description>Cliente ligero openXpertya $Id: web.xml,v 2.0 $</description>
+	<context-param>
+		<param-name>OXP_HOME</param-name>
+		<param-value>$USER_INSTALL_DIR$</param-value>
+	</context-param>
+	<context-param>
+		<param-name>LICENCIA_OXP</param-name>
+		<param-value>OpenSource</param-value>
+	</context-param>
+	<context-param>
+		<param-name>COMPIERE_PRODUCT</param-name>
+		<param-value>1</param-value>
+	</context-param>
+	<servlet>
+		<servlet-name>Test</servlet-name>
+		<servlet-class>org.openXpertya.www.Test</servlet-class>
+		<init-param>
+			<param-name>debug</param-name>
+			<param-value>1</param-value>
+		</init-param>
+	</servlet>
+	<servlet>
+		<servlet-name>Test2</servlet-name>
+		<servlet-class>org.openXpertya.www.Test2</servlet-class>
+	</servlet>
+	<servlet>
+		<servlet-name>WAccount</servlet-name>
+		<description>Cuenta openXpertya</description>
+		<servlet-class>org.openXpertya.www.WAccount</servlet-class>
+	</servlet>
+	<servlet>
+		<servlet-name>WCounter</servlet-name>
+		<servlet-class>org.openXpertya.wstore.WCounter</servlet-class>
+		<load-on-startup>15</load-on-startup>
+	</servlet>
+	<servlet>
+		<servlet-name>WFieldUpdate</servlet-name>
+		<display-name>Actualizador de campo openXpertya</display-name>
+		<description>Actualizador de campo openXpertya - Ventana de control</description>
+		<servlet-class>org.openXpertya.www.WFieldUpdate</servlet-class>
+	</servlet>
+	<servlet>
+		<servlet-name>WLocation</servlet-name>
+		<description>Localizador openXpertya</description>
+		<servlet-class>org.openXpertya.www.WLocation</servlet-class>
+	</servlet>
+	<servlet>
+		<servlet-name>WLogin</servlet-name>
+		<description>Entrada al Sistema</description>
+		<servlet-class>org.openXpertya.www.WLogin</servlet-class>
+	</servlet>
+	<servlet>
+		<servlet-name>WLookup</servlet-name>
+		<description>Vista Previa openXpertya</description>
+		<servlet-class>org.openXpertya.www.WLookup</servlet-class>
+	</servlet>
+	<servlet>
+		<servlet-name>WMenu</servlet-name>
+		<description>Menu openXpertya</description>
+		<servlet-class>org.openXpertya.www.WMenu</servlet-class>
+	</servlet>
+	<servlet>
+		<servlet-name>WProcess</servlet-name>
+		<description>Proceso openXpertya</description>
+		<servlet-class>org.openXpertya.www.WProcess</servlet-class>
+	</servlet>
+	<servlet>
+		<servlet-name>WReport</servlet-name>
+		<description>Informe openXpertya</description>
+		<servlet-class>org.openXpertya.www.WReport</servlet-class>
+	</servlet>
+	<servlet>
+		<servlet-name>WRequest</servlet-name>
+		<display-name>Solicitudes openXpertya</display-name>
+		<description>Solicitudes openXpertya</description>
+		<servlet-class>org.openXpertya.wstore.WRequest</servlet-class>
+		<load-on-startup>10</load-on-startup>
+	</servlet>
+	<servlet>
+		<servlet-name>WStart</servlet-name>
+		<display-name>Inicio openXpertya</display-name>
+		<description>Inicio openXpertya - Crea las ventanas necesarias</description>
+		<servlet-class>org.openXpertya.www.WStart</servlet-class>
+		<load-on-startup>10</load-on-startup>
+	</servlet>
+	<servlet>
+		<servlet-name>WStatus</servlet-name>
+		<display-name>Estado openXpertya</display-name>
+		<description>Estado openXpertya - primero en cargar</description>
+		<servlet-class>org.openXpertya.www.WStatus</servlet-class>
+		<init-param>
+			<param-name>StatusInfo</param-name>
+			<param-value>Y</param-value>
+		</init-param>
+		<load-on-startup>5</load-on-startup>
+	</servlet>
+	<servlet>
+		<servlet-name>WTask</servlet-name>
+		<description>Tareas openXpertya</description>
+		<servlet-class>org.openXpertya.www.WTask</servlet-class>
+	</servlet>
+	<servlet>
+		<servlet-name>WWindow</servlet-name>
+		<display-name>Ventana de aplicativo openXpertya</display-name>
+		<description>Ventana de aplicativo openXpertya</description>
+		<servlet-class>org.openXpertya.www.WWindow</servlet-class>
+	</servlet>
+	<servlet>
+		<servlet-name>WWorkflow</servlet-name>
+		<description>Flujo de trabajo openXpertya</description>
+		<servlet-class>org.openXpertya.www.WWorkflow</servlet-class>
+	</servlet>
+	<servlet-mapping>
+		<servlet-name>Test</servlet-name>
+		<url-pattern>/Test</url-pattern>
+	</servlet-mapping>
+	<servlet-mapping>
+		<servlet-name>Test2</servlet-name>
+		<url-pattern>/Test2</url-pattern>
+	</servlet-mapping>
+	<servlet-mapping>
+		<servlet-name>WAccount</servlet-name>
+		<url-pattern>/WAccount</url-pattern>
+	</servlet-mapping>
+	<servlet-mapping>
+		<servlet-name>WCounter</servlet-name>
+		<url-pattern>/WCounter</url-pattern>
+	</servlet-mapping>
+	<servlet-mapping>
+		<servlet-name>WFieldUpdate</servlet-name>
+		<url-pattern>/WFieldUpdate</url-pattern>
+	</servlet-mapping>
+	<servlet-mapping>
+		<servlet-name>WLocation</servlet-name>
+		<url-pattern>/WLocation</url-pattern>
+	</servlet-mapping>
+	<servlet-mapping>
+		<servlet-name>WLogin</servlet-name>
+		<url-pattern>/WLogin</url-pattern>
+	</servlet-mapping>
+	<servlet-mapping>
+		<servlet-name>WLookup</servlet-name>
+		<url-pattern>/WLookup</url-pattern>
+	</servlet-mapping>
+	<servlet-mapping>
+		<servlet-name>WMenu</servlet-name>
+		<url-pattern>/WMenu</url-pattern>
+	</servlet-mapping>
+	<servlet-mapping>
+		<servlet-name>WProcess</servlet-name>
+		<url-pattern>/WProcess</url-pattern>
+	</servlet-mapping>
+	<servlet-mapping>
+		<servlet-name>WReport</servlet-name>
+		<url-pattern>/WReport</url-pattern>
+	</servlet-mapping>
+	<servlet-mapping>
+		<servlet-name>WRequest</servlet-name>
+		<url-pattern>/WRequest</url-pattern>
+	</servlet-mapping>
+	<servlet-mapping>
+		<servlet-name>WStart</servlet-name>
+		<url-pattern>/WStart</url-pattern>
+	</servlet-mapping>
+	<servlet-mapping>
+		<servlet-name>WStatus</servlet-name>
+		<url-pattern>/WStatus</url-pattern>
+	</servlet-mapping>
+	<servlet-mapping>
+		<servlet-name>WTask</servlet-name>
+		<url-pattern>/WTask</url-pattern>
+	</servlet-mapping>
+	<servlet-mapping>
+		<servlet-name>WWindow</servlet-name>
+		<url-pattern>/WWindow</url-pattern>
+	</servlet-mapping>
+	<servlet-mapping>
+		<servlet-name>WWorkflow</servlet-name>
+		<url-pattern>/WWorkflow</url-pattern>
+	</servlet-mapping>
+	<session-config>
+		<session-timeout>15</session-timeout>
+	</session-config>
+	<taglib>
+		<taglib-uri>http://jakarta.apache.org/tomcat/debug-taglib</taglib-uri>
+		<taglib-location>/store/debug-taglib.tld</taglib-location>
+	</taglib>
+	<taglib>
+		<taglib-uri>http://jakarta.apache.org/tomcat/examples-taglib</taglib-uri>
+		<taglib-location>/store/example-taglib.tld</taglib-location>
+	</taglib>
+</web-app>

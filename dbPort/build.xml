@@ -1,0 +1,96 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- ============================================= -->
+<!-- dbPort                                                                                 -->
+<!-- ============================================= -->
+
+<project name="dbPort" default="dist" basedir=".">
+
+  <description>
+Este Fichero sirve para compilar el subproyecto Dbport independientemente del proyecto openXpertya
+  </description>
+
+  <!-- Establecer Variables Globales para esta compilacion -->
+  <property name="src" value="src"/>
+  <property name="build.dir" value="compilacion"/>
+  <property name="dist.dir" value="."/>
+  <property name="lib.dir" value="../lib"/>
+  <property name="toolslib.dir" value="../tools/lib"/>
+
+  <!-- Establecer el path donde residen los Jar Necesarios -->
+  <path id="project.class.path">
+    <pathelement path="${classpath}"/>
+    <pathelement path="${lib.dir}/oracle.jar"/>
+    <pathelement path="${lib.dir}/sybase.jar"/>
+    <pathelement path="${toolslib.dir}/jconn3.jar"/>
+    <pathelement path="${lib.dir}/sqlServer.jar"/>
+    <pathelement path="${lib.dir}/postgresql.jar"/>
+
+    <pathelement path="${lib.dir}/jboss.jar"/>
+
+    <pathelement path="${lib.dir}/XOXPTools.jar"/>
+    <pathelement path="../looks/CLooks.jar"/>
+    <pathelement path="${lib.dir}/jPDF.jar"/>
+    <pathelement path="${toolslib.dir}/junit.jar"/>
+
+    <!-- Relacion Recursiva: Requiere el Servidor de Aplicaciones -->
+    <pathelement path="../base/Base.jar"/>
+    <pathelement path="../interfaces/Interfaces.jar"/>
+    <pathelement path="../tools/lib/j2ee.jar"/>
+  </path>
+
+
+  <target name="init" description="initialization target">
+    <echo message="=========== Construyendo dbPort"/>
+    <tstamp/>
+    <!-- Crear el Directorio de compilacion -->
+    <mkdir dir="${build.dir}"/>
+    <!-- Comprobar el Directorio de Distribucion -->
+    <available file="${dist.dir}" type="dir" property="dist.dir.exists"/>
+  </target>
+
+  <target name="makedir" depends="init" unless="dist.dir.exists">
+    <!-- Crear el Directorio de Distribucion si no existe -->
+    <mkdir dir="${dist}/${dist.dir}"/>
+  </target>
+
+  <!-- =========================================== -->
+  <!-- Compilar                                                                         -->
+  <!-- =========================================== -->
+  
+  <target name="compile" depends="makedir">
+    <!-- Compilar el codigo java de ${src} a ${build.dir} -->
+    <javac srcdir="${src}" destdir="${build.dir}" deprecation="off" source="1.6" target="1.6" debug="on" encoding="UTF-8">
+      <classpath refid="project.class.path"/>
+    </javac>
+    <!-- Copiar Todas las imagenes y archivos al directorio de compilacion -->
+    <copy todir="${build.dir}">
+      <fileset dir="${src}">
+        <include name="**/images/*"/>
+        <include name="**/*.gif"/>
+        <include name="**/*.jpg"/>
+        <include name="**/*.wav"/>
+        <include name="**/*.htm"/>
+        <include name="**/*.html"/>
+        <include name="**/*.properties"/>
+        <exclude name="**/package.html"/>
+      </fileset>
+    </copy>
+  </target>
+
+
+  <!-- =========================================== -->
+  <!-- Distribuyendo                                -->
+  <!-- =========================================== -->
+  <target name="dist" depends="compile">
+    <!-- Hacer un archivo jar con todo lo que exista en la carpeta de compilacion -->
+    <jar jarfile="${dist.dir}/dbPort.jar" basedir="${build.dir}"/>
+  </target>
+
+
+  <target name="clean">
+    <!-- Borrar la estructura de directorios de compilacion -->
+    <delete dir="${build.dir}"/>
+    <delete file="${dist.dir}/dbPort.jar" failonerror="false"/>
+  </target>
+
+</project>

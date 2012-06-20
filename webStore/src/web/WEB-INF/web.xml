@@ -1,0 +1,377 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE web-app PUBLIC "-//Sun Microsystems, Inc.//DTD Web Application 2.3//EN" "http://java.sun.com/dtd/web-app_2_3.dtd">
+<web-app>
+	<icon>
+		<large-icon>/OXP32.gif</large-icon>
+	</icon>
+	<display-name>Tienda En-Linea openXpertya</display-name>
+	<description>$Id: web.xml,v 0.9 $</description>
+	<!-- Standard Parameters - if 0 first non-demo client is used -->
+	<context-param>
+		<param-name>#AD_Client_ID</param-name>
+		<param-value>1000005</param-value>
+	</context-param>
+	<context-param>
+		<param-name>#AD_Language</param-name>
+		<param-value>es_ES</param-value>
+	</context-param>
+	<context-param>
+		<param-name>#AD_Org_ID</param-name>
+		<param-value>1000036</param-value>
+	</context-param>
+	<context-param>
+		<param-name>#AD_User_ID</param-name>
+		<param-value>1000692</param-value>
+	</context-param>
+	<context-param>
+		<param-name>#C_BankAccount_ID</param-name>
+		<param-value>1000025</param-value>
+	</context-param>
+	<context-param>
+		<param-name>#SalesRep_ID</param-name>
+		<param-value>0</param-value>
+	</context-param>
+	<context-param>
+		<param-name>#AD_Role_ID</param-name>
+		<param-value>1000043</param-value>
+	</context-param>
+	<context-param>
+		<param-name>#M_Warehouse_ID</param-name>
+		<param-value>1000031</param-value>
+	</context-param>
+	<!-- Define si se pueden realizar compras en la Web (valor 0) o se utiliza como catálogo (valor 1) -->
+	<context-param>
+		<param-name>isCatalog</param-name>
+		<param-value>0</param-value>
+	</context-param>
+	<filter>
+		<filter-name>WebStoreFilter</filter-name>
+		<display-name>Filtro de tienda  </display-name>
+		<description>Filtro de tienda openXpertya</description>
+		<filter-class>org.openXpertya.wstore.StoreFilter</filter-class>
+	</filter>
+	<filter-mapping>
+		<filter-name>WebStoreFilter</filter-name>
+		<url-pattern>/*</url-pattern>
+	</filter-mapping>
+	<servlet>
+		<servlet-name>AdvertisementServlet</servlet-name>
+		<display-name>Anuncios</display-name>
+		<servlet-class>org.openXpertya.wstore.AdvertisementServlet</servlet-class>
+		<load-on-startup>3</load-on-startup>
+	</servlet>
+	<servlet>
+		<servlet-name>AssetServlet</servlet-name>
+		<display-name>Activos</display-name>
+		<servlet-class>org.openXpertya.wstore.AssetServlet</servlet-class>
+		<load-on-startup>2</load-on-startup>
+	</servlet>
+	<servlet>
+		<servlet-name>BasketServlet</servlet-name>
+		<display-name>Cesta</display-name>
+		<servlet-class>org.openXpertya.wstore.BasketServlet</servlet-class>
+		<load-on-startup>1</load-on-startup>
+	</servlet>
+	<servlet>
+		<servlet-name>CheckOutServlet</servlet-name>
+		<display-name>Web CheckOut Servlet</display-name>
+		<servlet-class>org.openXpertya.wstore.CheckOutServlet</servlet-class>
+		<load-on-startup>1</load-on-startup>
+	</servlet>
+	<servlet>
+		<servlet-name>Click</servlet-name>
+		<display-name>openXpertya Click</display-name>
+		<servlet-class>org.openXpertya.wstore.Click</servlet-class>
+		<load-on-startup>1</load-on-startup>
+	</servlet>
+	<servlet>
+		<servlet-name>ExpenseServlet</servlet-name>
+		<display-name>Web Expense Report</display-name>
+		<servlet-class>org.openXpertya.wstore.ExpenseServlet</servlet-class>
+		<load-on-startup>3</load-on-startup>
+	</servlet>
+	<servlet>
+		<servlet-name>Counter</servlet-name>
+		<display-name>Web Page Counter</display-name>
+		<servlet-class>org.openXpertya.wstore.Counter</servlet-class>
+		<load-on-startup>1</load-on-startup>
+	</servlet>
+	<servlet>
+		<servlet-name>InfoServlet</servlet-name>
+		<display-name>Web Store Interest Area Servlet</display-name>
+		<servlet-class>org.openXpertya.wstore.InfoServlet</servlet-class>
+		<load-on-startup>2</load-on-startup>
+	</servlet>
+	<servlet>
+		<servlet-name>InvoiceServlet</servlet-name>
+		<display-name>Web Store Invoices</display-name>
+		<servlet-class>org.openXpertya.wstore.InvoiceServlet</servlet-class>
+		<load-on-startup>1</load-on-startup>
+	</servlet>
+	<servlet>
+		<servlet-name>InvoicesServlet</servlet-name>
+		<display-name>Web Invoices Search</display-name>
+		<servlet-class>org.openXpertya.wstore.InvoicesServlet</servlet-class>
+		<load-on-startup>1</load-on-startup>
+	</servlet>
+	<servlet>
+		<servlet-name>LoginServlet</servlet-name>
+		<display-name>Web User Login Servlet</display-name>
+		<servlet-class>org.openXpertya.wstore.LoginServlet</servlet-class>
+		<load-on-startup>1</load-on-startup>
+	</servlet>
+	<servlet>
+		<servlet-name>NoteServlet</servlet-name>
+		<display-name>Web Notification</display-name>
+		<servlet-class>org.openXpertya.wstore.NoteServlet</servlet-class>
+		<load-on-startup>3</load-on-startup>
+	</servlet>
+	<servlet>
+		<servlet-name>OrderServlet</servlet-name>
+		<display-name>Web Store Order</display-name>
+		<servlet-class>org.openXpertya.wstore.OrderServlet</servlet-class>
+		<load-on-startup>2</load-on-startup>
+	</servlet>
+	<servlet>
+		<servlet-name>OrdersServlet</servlet-name>
+		<display-name>Web Order Search</display-name>
+		<servlet-class>org.openXpertya.wstore.OrdersServlet</servlet-class>
+		<load-on-startup>1</load-on-startup>
+	</servlet>
+	<servlet>
+		<servlet-name>ProposalServlet</servlet-name>
+		<display-name>Web Store Proposal</display-name>
+		<servlet-class>org.openXpertya.wstore.ProposalServlet</servlet-class>
+		<load-on-startup>2</load-on-startup>
+	</servlet>
+	<servlet>
+		<servlet-name>ProposalsServlet</servlet-name>
+		<display-name>Web Proposal Search</display-name>
+		<servlet-class>org.openXpertya.wstore.ProposalsServlet</servlet-class>
+		<load-on-startup>1</load-on-startup>
+	</servlet>
+	<servlet>
+		<servlet-name>PaymentServlet</servlet-name>
+		<display-name>Web Store Payment Processing</display-name>
+		<servlet-class>org.openXpertya.wstore.PaymentServlet</servlet-class>
+		<load-on-startup>2</load-on-startup>
+	</servlet>
+	<servlet>
+		<servlet-name>ProductServlet</servlet-name>
+		<display-name>Web Product Search</display-name>
+		<servlet-class>org.openXpertya.wstore.ProductServlet</servlet-class>
+		<load-on-startup>1</load-on-startup>
+	</servlet>
+	<servlet>
+		<servlet-name>RegistrationServlet</servlet-name>
+		<display-name>Web Registration Servlet</display-name>
+		<servlet-class>org.openXpertya.wstore.RegistrationServlet</servlet-class>
+		<load-on-startup>1</load-on-startup>
+	</servlet>
+	<servlet>
+		<servlet-name>RequestServlet</servlet-name>
+		<display-name>Web Request Servlet</display-name>
+		<servlet-class>org.openXpertya.wstore.RequestServlet</servlet-class>
+		<load-on-startup>1</load-on-startup>
+	</servlet>
+	<servlet>
+		<servlet-name>RequisitionsServlet</servlet-name>
+		<display-name>Web Requisition Search</display-name>
+		<servlet-class>org.openXpertya.wstore.RequisitionsServlet</servlet-class>
+		<load-on-startup>1</load-on-startup>
+	</servlet>
+	<servlet>
+		<servlet-name>RfQServlet</servlet-name>
+		<display-name>Web RfQ Servlet</display-name>
+		<servlet-class>org.openXpertya.wstore.RfQServlet</servlet-class>
+		<load-on-startup>2</load-on-startup>
+	</servlet>
+	<servlet>
+		<servlet-name>WorkflowServlet</servlet-name>
+		<display-name>Web Workflow Servlet</display-name>
+		<servlet-class>org.openXpertya.wstore.WorkflowServlet</servlet-class>
+		<load-on-startup>1</load-on-startup>
+	</servlet>
+	<servlet>
+		<servlet-name>Index</servlet-name>
+		<display-name>Web Index Page</display-name>
+		<jsp-file>/index.jsp</jsp-file>
+		<load-on-startup>1</load-on-startup>
+	</servlet>
+	<servlet>
+		<servlet-name>Basket</servlet-name>
+		<display-name>Web Basket Page</display-name>
+		<jsp-file>/basket.jsp</jsp-file>
+		<load-on-startup>1</load-on-startup>
+	</servlet>
+	<servlet>
+		<servlet-name>Login</servlet-name>
+		<display-name>Web Login Page</display-name>
+		<jsp-file>/login.jsp</jsp-file>
+		<load-on-startup>1</load-on-startup>
+	</servlet>
+	<servlet>
+		<servlet-name>Request</servlet-name>
+		<display-name>Web Request Page</display-name>
+		<jsp-file>/request.jsp</jsp-file>
+		<load-on-startup>1</load-on-startup>
+	</servlet>
+	<servlet>
+		<servlet-name>Info</servlet-name>
+		<display-name>Web Info Page</display-name>
+		<jsp-file>/info.jsp</jsp-file>
+		<load-on-startup>1</load-on-startup>
+	</servlet>
+	<servlet>
+		<servlet-name>EMailServlet</servlet-name>
+		<display-name>Web EMail Servlet</display-name>
+		<servlet-class>org.openXpertya.wstore.EMailServlet</servlet-class>
+		<load-on-startup>1</load-on-startup>
+	</servlet>
+	<servlet-mapping>
+		<servlet-name>AdvertisementServlet</servlet-name>
+		<url-pattern>/advertisementServlet/*</url-pattern>
+	</servlet-mapping>
+	<servlet-mapping>
+		<servlet-name>AssetServlet</servlet-name>
+		<url-pattern>/assetServlet/*</url-pattern>
+	</servlet-mapping>
+	<servlet-mapping>
+		<servlet-name>BasketServlet</servlet-name>
+		<url-pattern>/basketServlet</url-pattern>
+	</servlet-mapping>
+	<servlet-mapping>
+		<servlet-name>CheckOutServlet</servlet-name>
+		<url-pattern>/checkOutServlet</url-pattern>
+	</servlet-mapping>
+	<servlet-mapping>
+		<servlet-name>Click</servlet-name>
+		<url-pattern>/click/*</url-pattern>
+	</servlet-mapping>
+	<servlet-mapping>
+		<servlet-name>ExpenseServlet</servlet-name>
+		<url-pattern>/expenseServlet</url-pattern>
+	</servlet-mapping>
+	<servlet-mapping>
+		<servlet-name>Counter</servlet-name>
+		<url-pattern>/counter/*</url-pattern>
+	</servlet-mapping>
+	<servlet-mapping>
+		<servlet-name>InfoServlet</servlet-name>
+		<url-pattern>/infoServlet</url-pattern>
+	</servlet-mapping>
+	<servlet-mapping>
+		<servlet-name>InvoiceServlet</servlet-name>
+		<url-pattern>/invoiceServlet/*</url-pattern>
+	</servlet-mapping>
+	<servlet-mapping>
+		<servlet-name>InvoicesServlet</servlet-name>
+		<url-pattern>/invoicesServlet/*</url-pattern>
+	</servlet-mapping>
+	<servlet-mapping>
+		<servlet-name>LoginServlet</servlet-name>
+		<url-pattern>/loginServlet</url-pattern>
+	</servlet-mapping>
+	<servlet-mapping>
+		<servlet-name>NoteServlet</servlet-name>
+		<url-pattern>/noteServlet/*</url-pattern>
+	</servlet-mapping>
+	<servlet-mapping>
+		<servlet-name>OrderServlet</servlet-name>
+		<url-pattern>/orderServlet</url-pattern>
+	</servlet-mapping>
+	<servlet-mapping>
+		<servlet-name>OrdersServlet</servlet-name>
+		<url-pattern>/ordersServlet</url-pattern>
+	</servlet-mapping>
+	<servlet-mapping>
+		<servlet-name>ProposalServlet</servlet-name>
+		<url-pattern>/proposalServlet</url-pattern>
+	</servlet-mapping>
+	<servlet-mapping>
+		<servlet-name>ProposalsServlet</servlet-name>
+		<url-pattern>/proposalsServlet</url-pattern>
+	</servlet-mapping>
+	<servlet-mapping>
+		<servlet-name>PaymentServlet</servlet-name>
+		<url-pattern>/paymentServlet</url-pattern>
+	</servlet-mapping>
+	<servlet-mapping>
+		<servlet-name>ProductServlet</servlet-name>
+		<url-pattern>/productServlet/*</url-pattern>
+	</servlet-mapping>
+	<servlet-mapping>
+		<servlet-name>RegistrationServlet</servlet-name>
+		<url-pattern>/registrationServlet</url-pattern>
+	</servlet-mapping>
+	<servlet-mapping>
+		<servlet-name>RequestServlet</servlet-name>
+		<url-pattern>/requestServlet/*</url-pattern>
+	</servlet-mapping>
+	<servlet-mapping>
+		<servlet-name>RequisitionsServlet</servlet-name>
+		<url-pattern>/requisitionsServlet</url-pattern>
+	</servlet-mapping>
+	<servlet-mapping>
+		<servlet-name>RfQServlet</servlet-name>
+		<url-pattern>/rfqServlet/*</url-pattern>
+	</servlet-mapping>
+	<servlet-mapping>
+		<servlet-name>WorkflowServlet</servlet-name>
+		<url-pattern>/workflowServlet/*</url-pattern>
+	</servlet-mapping>
+	<servlet-mapping>
+		<servlet-name>Index</servlet-name>
+		<url-pattern>/index.jsp/*</url-pattern>
+	</servlet-mapping>
+	<servlet-mapping>
+		<servlet-name>Basket</servlet-name>
+		<url-pattern>/basket.jsp/*</url-pattern>
+	</servlet-mapping>
+	<servlet-mapping>
+		<servlet-name>Login</servlet-name>
+		<url-pattern>/login.jsp/*</url-pattern>
+	</servlet-mapping>
+	<servlet-mapping>
+		<servlet-name>Request</servlet-name>
+		<url-pattern>/request.jsp/*</url-pattern>
+	</servlet-mapping>
+	<servlet-mapping>
+		<servlet-name>Info</servlet-name>
+		<url-pattern>/info.jsp</url-pattern>
+	</servlet-mapping>
+	<servlet-mapping>
+		<servlet-name>EMailServlet</servlet-name>
+		<url-pattern>/emailServlet/*</url-pattern>
+	</servlet-mapping>
+	<session-config>
+		<session-timeout>40</session-timeout>
+	</session-config>
+	<welcome-file-list>
+		<welcome-file>index.jsp</welcome-file>
+	</welcome-file-list>
+	<taglib>
+		<taglib-uri>http://java.sun.com/jsp/jstl/core</taglib-uri>
+		<taglib-location>/WEB-INF/c.tld</taglib-location>
+	</taglib>
+	<taglib>
+		<taglib-uri>http://java.sun.com/jsp/jstl/fmt</taglib-uri>
+		<taglib-location>/WEB-INF/fmt.tld</taglib-location>
+	</taglib>
+	<taglib>
+		<taglib-uri>http://java.sun.com/jsp/jstl/sql</taglib-uri>
+		<taglib-location>/WEB-INF/sql.tld</taglib-location>
+	</taglib>
+	<taglib>
+		<taglib-uri>http://java.sun.com/jsp/jstl/xml</taglib-uri>
+		<taglib-location>/WEB-INF/x.tld</taglib-location>
+	</taglib>
+	<taglib>
+		<taglib-uri>webStore.tld</taglib-uri>
+		<taglib-location>/WEB-INF/webStore.tld</taglib-location>
+	</taglib>
+	<taglib> 
+        <taglib-uri>http://jsptags.com/tags/navigation/pager</taglib-uri> 
+        <taglib-location>/WEB-INF/pager-taglib.tld</taglib-location> 
+    </taglib>
+</web-app>

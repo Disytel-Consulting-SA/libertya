@@ -1,0 +1,151 @@
+<!-- ============================================= -->
+<!-- COMPIERE LOOKS Y LIQUIDLNF                    -->
+<!-- ============================================= -->
+<!-- $Header: /oxp2_2/looks/build.xml,v 1.20 2005/01/22 21:58:31 jjanke Exp $-->
+
+<project name="looks" default="looksDistribution" basedir=".">
+
+  <description>
+    Compila el subproyecto UI dentro del proyecto openXpertya.
+  </description>
+
+  <!-- Definir variables para este proyecto  -->
+  <!-- Looks openXpertya -->
+
+  <property name="src" value="src"/>
+  <property name="build.dir" value="compilacion"/>
+  <property name="dist.dir" value="."/>
+  <property name="jar.path" value="../lib"/>
+  <property name="jar.name" value="CLooks"/>
+  <property name="version" value="_122"/>
+  <property environment="env"/>
+
+  <!-- Look OpenXpertya Liquid -->
+
+    <property name="xdoclet.home" value="${env.XDOCLET_HOME}" />
+
+  <!-- Establecer la ruta para incluir los archivos jar necesarios para el javac -->
+  <!-- Looks Compiere y OpenXpertya Liquid -->
+  <path id="project.class.path">
+    <pathelement path="${classpath}"/>
+  </path>
+
+  <target name="init" description="initialization target">
+    <echo message="=========== Construir Looks para "/>
+    <!-- Crear el  time stamp -->
+    <tstamp/>
+    <!-- Crear la Estructura de Directorios para Compilar -->
+    <mkdir dir="${build.dir}"/>
+    <!-- Testear la Estructura de Directorios para Distribucion -->
+    <available file="${dist.dir}" type="dir" property="dist.dir.exists"/>
+  </target>
+
+  <target name="makedir" depends="init" unless="dist.dir.exists">
+    <!-- Crear la Estructura de Directorios para Distribucion si no existe -->
+    <mkdir dir="${dist}/${dist.dir}"/>
+  </target>
+
+
+  <target name="looksCompile" depends="makedir">
+    <!-- compilar el codigo java de ${src} en ${build.dir} -->
+    <javac srcdir="${src}" destdir="${build.dir}" deprecation="off" source="1.6" target="1.6" debug="on" encoding="UTF-8">
+      <classpath refid="project.class.path"/>
+    </javac>
+    <!-- Copiar todas las imagenes, sonidos de src al directorio compilacion -->
+    <copy todir="${build.dir}">
+      <fileset dir="${src}">
+		<include name="**/images/*"/>
+		<include name="**/*.gif"/>
+		<include name="**/*.jpg"/>
+		<include name="**/*.wav"/>
+		<include name="**/*.png"/>
+		<include name="**/*.htm"/>
+		<include name="**/*.html"/>
+		<include name="**/*.properties"/>
+		<exclude name="**/package.html"/>
+      </fileset>
+    </copy>
+  </target>
+
+
+  <!-- =========================================== -->
+  <!-- Distribucion                                -->
+  <!-- =========================================== -->
+  <target name="looksDistribution" depends="looksCompile" description="Crear CLooks.jar">
+    <!-- Poner todo lo que esta en la carpeta ${build.dir} dentro del archivo ${jar.name}.jar -->
+    <jar jarfile="${dist.dir}/${jar.name}.jar"
+	  excludes="**/*.jbx"
+	  index="yes">
+      <fileset dir="${build.dir}"/>
+      <manifest>
+	<attribute name="Specification-Title" value="Compiere Swing UI"/>
+	<attribute name="Specification-Version" value="${env.VERSION_OPENXPERTYA}${version}"/>
+	<attribute name="Specification-Vendor" value="FUNDESLE"/>
+	<attribute name="Implementation-Title" value="CLooks ${env.VERSION_OPENXPERTYA}${version}"/>
+	<attribute name="Implementation-Version" value="${env.VERSION_OPENXPERTYA}${version} ${DSTAMP}-${TSTAMP}"/>
+	<attribute name="Implementation-Vendor" value="${env.CONSULTORA_OPENXPERTYA}"/>
+	<attribute name="Implementation-URL" value="http://www.openxpertya.org"/>
+	<attribute name="Main-Class" value="org.openXpertya.plaf.CompierePLAF"/>
+      </manifest>
+    </jar>
+
+  </target>
+
+
+  <!-- =========================================== -->
+  <!-- Limpiar                                     -->
+  <!-- =========================================== -->
+  <target name="clean">
+    <!-- Delete the ${build.dir} directory trees -->
+    <delete dir="${build.dir}"/>
+    <!-- Delete the Doc/Source files -->
+    <delete file="${dist.dir}/${jar.name}.jar" failonerror="false"/>
+    <delete file="${dist.dir}/${jar.name}Doc.jar" failonerror="false"/>
+    <delete file="${dist.dir}/${jar.name}Source.jar" failonerror="false"/>
+  </target>
+
+
+  <!-- =========================================== -->
+  <!-- Documentacion                               -->
+  <!-- =========================================== -->
+  <target name="looksDocumentation">
+    <javadoc packageList="packages.txt"
+      sourcepath="src"
+      excludepackagenames=""
+      defaultexcludes="yes"
+      destdir="doc"
+      author="true" version="true" use="true"
+      windowtitle="Compiere Looks API Documentation"
+      overview="overview.html">
+      <doctitle><![CDATA[Compiere<sup>TM</sup> Looks API Documentation]]></doctitle>
+      <header><![CDATA[<b>Compiere Looks 1.2.2</b>]]></header>
+      <bottom><![CDATA[<i>Copyright (c) 1999-2005 ComPiere, Inc. - Author: Jorg Janke</i>]]></bottom>
+      <link href="http://java.sun.com/j2se/1.4.1/docs/api"/>
+    </javadoc>
+  </target>
+
+
+  <!-- =========================================== -->
+  <!-- Release                                     -->
+  <!-- =========================================== -->
+  <target name="looksRelease">
+    <!-- Crear Archivos Jar del Release -->
+    <jar
+	  jarfile="${dist.dir}/${jar.name}Doc${version}.jar"
+	  basedir="doc"/>
+    <jar
+	  jarfile="${dist.dir}/${jar.name}Source${version}.jar"
+	  basedir="src"/>
+    <copy
+	  file="${dist.dir}/${jar.name}.jar"
+	  tofile="${dist.dir}/${jar.name}${version}.jar" />
+
+    <!-- Firmar el Jar -->
+    <signjar
+	  jar="${dist.dir}/${jar.name}${version}.jar"
+	  alias="openXpertya"
+	  storepass="${password}"
+	  keystore="../keystore/myKeystore"/>
+  </target>
+
+</project>

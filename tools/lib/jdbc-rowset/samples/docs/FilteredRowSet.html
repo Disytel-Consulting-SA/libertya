@@ -1,0 +1,105 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+                   
+  <link rel="stylesheet" type="text/css" href="style/default.css">
+  <title>FilteredRowSet Sample - Documentation</title>
+    
+</head>
+  <body>
+       
+<h1>FilteredRowSet Sample</h1>
+       
+<h1>README</h1>
+    &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; This document presents a walkthrough 
+  of the CachedRowSet Sample, it explains the CachedRowSet sample provided 
+ using <br>
+    &nbsp;&nbsp; snippets of code.<br>
+    <br>
+    <br>
+       
+<h3>&nbsp;&nbsp;&nbsp; Overview</h3>
+    &nbsp;&nbsp;&nbsp; &nbsp;&nbsp; &nbsp;&nbsp; &nbsp; This is a sample
+for   demonstrating the functionality of a FilteredRowSet.&nbsp; This example
+shows  how to filter out the data that <br>
+    &nbsp;&nbsp;&nbsp; is populated into a RowSet. The important thing to 
+note  here is that filtering happens on the data in memory. This is a very 
+useful  <br>
+    &nbsp;&nbsp;&nbsp; component, since the filtering is in memory it avoids
+  multiple database fetches in case the filtering criteria changes. The filtering
+  <br>
+    &nbsp;&nbsp;&nbsp; can be set or unset by the user.<br>
+    <br>
+    <br>
+       
+<h3>&nbsp;&nbsp;&nbsp; Explanation of the Sample</h3>
+    &nbsp;&nbsp;&nbsp; &nbsp; <code><small>&nbsp;// Setup the properties
+for the CachedRowSet<br>
+  <br>
+    &nbsp;&nbsp;&nbsp; &nbsp;frs = new FilteredRowSetImpl();<br>
+    &nbsp;&nbsp;&nbsp; &nbsp;frs.setUrl(dbUrl);<br>
+    &nbsp;&nbsp;&nbsp; &nbsp;frs.setUsername(dbUserId);<br>
+    &nbsp;&nbsp;&nbsp; &nbsp;frs.setPassword(dbPasswd);</small></code><b><small><br>
+    <br>
+    &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; </small></b>The above set of statements
+  set up the properties for the FilteredRowSet the properties include setting
+  the Database URL, Username<br>
+     &nbsp; &nbsp; &nbsp;&nbsp; and password for setting up a connection.<br>
+    <b><small>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <br>
+    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </small></b><small><code>Connection
+ con = DriverManager.getConnection(dbUrl,dbUserId,dbPasswd);<br>
+    &nbsp;&nbsp;&nbsp;&nbsp; Statement stmt =  con.createStatement();<br>
+    &nbsp;&nbsp;&nbsp;&nbsp; ResultSet rs = stmt.executeQuery(dbCommand);<br>
+    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+   <br>
+ &nbsp;&nbsp;&nbsp;&nbsp; // Get the data into  memory ,using populate<br>
+ &nbsp;&nbsp; &nbsp; frs.populate(rs);</code><br>
+    </small><b><small><br>
+    <br>
+    &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; </small></b> This part populates
+ a  ResultSet from the database using the specified command, now this populated
+  ResultSet is used to populate the <br>
+     &nbsp; &nbsp; &nbsp; &nbsp;FilteredRowSet using the populate command 
+that  take the ResultSet as the parameter.<br>
+    <b><small>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+   <br>
+    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</small></b><small> 
+</small><small><code>// Once the data  is in memory we can apply filter on
+the <br>
+    &nbsp;&nbsp; &nbsp; &nbsp;// rowset so that   only those records that
+match the given<br>
+    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp; // criteria will  be a part of the rowset.<br>
+    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp; // The function  that  sets the filter
+takes as parameter <br>
+    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp; // an instance of  the class that implements
+the Predicate<br>
+    &nbsp; &nbsp; &nbsp; // interface which   is a part of the javax.sql.rowset
+<br>
+    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp; // package. Using   this implementaion
+class we specify the <br>
+    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp; // filtering criteria.<br>
+    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <br>
+    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp; // Specifying here   that the values for
+the Column 4 should<br>
+    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp; // be between the   specified values.<br>
+    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <br>
+    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Range1 deptid =  new  Range1(lo_depid,hi_depid,4);&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+   <br>
+    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp; frs.setFilter(deptid);</code></small><br>
+    <br>
+    &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; The above part of the code demonstartes
+  the setting of the Filter so that rows in memory that do not match the
+filter   criteria are filtered out. <br>
+    &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; The class Range1 here represents
+ the  calss that implements the Predicate interface. In the constructor the
+ column  on which the filter is to<br>
+    &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; be applied is specified along with
+  the lower and higher limits. Then using the setFilter function the filter
+  is imposed on the FilteredRowSet<br>
+    &nbsp;&nbsp;&nbsp;&nbsp; &nbsp;&nbsp; so that only rows &nbsp;that fulfill
+  the criteria of the filter are allowed through.<br>
+    <br>
+      <br>
+     
+</body>
+</html>

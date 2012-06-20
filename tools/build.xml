@@ -1,0 +1,380 @@
+﻿<!-- ============================================= -->
+<!-- Herramientas                                                                      -->
+<!-- ============================================= -->
+
+<project name="tools" default="toolsDistribution" basedir=".">
+
+  <description>
+	Los Resultantes XOXPTools.jar y OXPTools.jar 
+	reempaquetan todas las librerias de terceros
+	en un jar sencillo para el control de versiones.
+	El servidor resultante OXPTools.jar es añadido a EARs
+  </description>
+
+  <!-- fija las  propiedades globales para esta compilación -->
+  <property name="src" value="Src"/>
+  <property name="build.dir" value="compilacion"/>
+  <property name="buildClient.dir" value="compilacion/Client"/>
+  <property name="buildServer.dir" value="compilacion/Server"/>
+  <property name="buildJBoss.dir" value="compilacion/JBoss"/>
+  <property name="buildOracle.dir" value="compilacion/Oracle"/>
+  <property name="buildSybase.dir" value="compilacion/Sybase"/>
+  <property name="buildTDS.dir" value="compilacion/MSSQL"/>
+  <!-- cambios para PostgreSQL-->
+  <property name="buildPostgreSQL.dir" value="compilacion/PostgreSQL"/>
+  <!-- cambios para PostgreSQL-->		
+  
+  <property name="buildJasper.dir" value="compilacion/Jasper"/>
+  
+  <property name="jboss.dir" value="../jboss"/>
+  <property name="dist.dir" value="../lib"/>
+  <property environment="env"/>
+
+  <!-- fija la ruta de búsqueda para incluir los ficheros jar necesarios para javac -->
+  <path id="project.class.path">
+    <pathelement path="${classpath}"/>
+  </path>
+
+
+  <!-- ============================================= -->
+  <!-- Iniciando                                                                             -->
+  <!-- ============================================= -->
+  <target name="toolsInit"
+	description="initialization target">
+    <echo message="=========== Compilar openXpertya  ${env.VERSION_OXP}"/>
+    <!-- crea la marca de tiempo -->
+    <tstamp/>
+    <!-- crea la estructura de directorios usada para compilar  -->
+    <mkdir dir="${build.dir}"/>
+    <mkdir dir="${buildClient.dir}"/>
+    <mkdir dir="${buildServer.dir}"/>
+    <mkdir dir="${buildJBoss.dir}"/>
+    <mkdir dir="${buildOracle.dir}"/>
+    <mkdir dir="${buildSybase.dir}"/>
+    <mkdir dir="${buildTDS.dir}"/>
+    <!-- cambios para PostgreSQL-->
+    <mkdir dir="${buildPostgreSQL.dir}"/>
+    <!-- fin cambios para PostgreSQL -->
+    
+    <mkdir dir="${buildJasper.dir}"/>
+    
+    <!-- comprueba el directorio de distribución -->
+    <mkdir dir="${dist.dir}"/>
+
+    <uptodate property="jars.uptodate"
+		targetfile="${dist.dir}/XOXPTools.jar">
+      <srcfiles dir="${src}" includes="**/*.java"/>
+    </uptodate>
+  </target>
+
+
+  <!-- ============================================= -->
+  <!-- Compila   ECS                                                                     -->
+  <!-- ============================================= -->
+  <target name="toolsCompile" depends="toolsInit" unless="jars.uptodate">
+    <!-- compila el código java desde ${src} a ${build.dir}S -->
+    <javac srcdir="${src}" 
+    	destdir="${build.dir}" deprecation="off" source="1.6" target="1.6" debug="on">
+      <classpath refid="project.class.path"/>
+    </javac>
+    <!-- copia todos los ficheros de imágenes y sonidos desde las fuentes al directorio de construcción -->
+    <copy todir="${build.dir}">
+      <fileset dir="${src}">
+		<include name="**/images/*"/>
+		<include name="**/*.gif"/>
+		<include name="**/*.jpg"/>
+		<include name="**/*.wav"/>
+		<include name="**/*.htm"/>
+		<include name="**/*.html"/>
+		<include name="**/*.properties"/>
+		<exclude name="**/package.html"/>
+      </fileset>
+    </copy>
+  </target>
+
+
+  <!-- ============================================= -->
+  <!-- Construye el servidor de aplicaciones y los clientes Jar  -->
+  <!-- ============================================= -->
+  <target name="toolsAppsServer" depends="toolsCompile" 
+  	unless="jars.uptodate"
+	description="Create JBoss Client jar">
+
+    <!-- Cliente JBOSS			-->
+    <unjar src="${jboss.dir}/client/jboss-client.jar" dest="${buildJBoss.dir}" overwrite="no"/>
+    <unjar src="${jboss.dir}/client/jboss-common-client.jar" dest="${buildJBoss.dir}" overwrite="no"/>
+    <unjar src="${jboss.dir}/client/jboss-j2ee.jar" dest="${buildJBoss.dir}" overwrite="no"/>
+    <unjar src="${jboss.dir}/client/jbosssx-client.jar" dest="${buildJBoss.dir}" overwrite="no"/>
+    <unjar src="${jboss.dir}/client/jmx-rmi-connector-client.jar" dest="${buildJBoss.dir}" overwrite="no"/>
+    <unjar src="${jboss.dir}/client/jnp-client.jar" dest="${buildJBoss.dir}" overwrite="no"/>
+    <unjar src="${jboss.dir}/client/jboss-transaction-client.jar" dest="${buildJBoss.dir}" overwrite="no"/>
+    <!-- Limpiando			-->
+    <delete>
+      <fileset dir="${buildJBoss.dir}" includes="build.xml"/>
+      <fileset dir="${buildJBoss.dir}/META-INF" casesensitive="no" includes="*.mf,*.sf,*.rsa,*.dsa"/>
+    </delete>
+
+    <!-- Crea el fichero  jboss.jar 	-->
+    <jar jarfile="${dist.dir}/jboss.jar">
+      <fileset dir="${buildJBoss.dir}"/>
+      <manifest>
+		<attribute name="Specification-Title" value="Cliente JBoss openXpertya"/>
+		<attribute name="Specification-Version" value="${env.VERSION_OXP}"/>
+		<attribute name="Specification-Vendor" value="(C) 2005-2006 FUNDESLE."/>
+		<attribute name="Implementation-Title" value="jboss ${env.VERSION_OXP}"/>
+		<attribute name="Implementation-Version" value="${env.VERSION_OXP} ${DSTAMP}-${TSTAMP}"/>
+		<attribute name="Implementation-Vendor" value="${env.CONSULTORA_OXP}"/>
+		<attribute name="Implementation-URL" value="http://www.openxpertya.org"/>
+      </manifest>
+    </jar>
+  	
+  </target>
+
+  <!-- ============================================= -->
+  <!-- Construye los jar para la base de datos                            -->
+  <!-- ============================================= -->
+  <target name="toolsDatabase" depends="toolsCompile" 
+	  	unless="jars.uptodate"
+		description="Create oracle jar">
+
+    <!-- Librerías de Oracle 	-->
+    <unjar src="lib/ojdbc14.jar" dest="${buildOracle.dir}"/>
+    <unjar src="lib/orai18n.jar" dest="${buildOracle.dir}"/>
+    <!-- Limpiando			-->
+    <delete>
+      <fileset dir="${buildOracle.dir}" includes="build.xml"/>
+      <fileset dir="${buildOracle.dir}/META-INF" casesensitive="no" includes="*.mf,*.sf,*.rsa,*.dsa"/>
+    </delete>
+
+    <!-- Crea fichero oracle.jar 	-->
+    <jar jarfile="${dist.dir}/oracle.jar">
+      <fileset dir="${buildOracle.dir}"/>
+      <manifest>
+		<attribute name="Specification-Title" value="Oracle JDBC"/>
+		<attribute name="Specification-Version" value="10g"/>
+		<attribute name="Specification-Vendor" value="Oracle"/>
+		<attribute name="Implementation-Title" value="oracle ${env.VERSION_OXP}"/>
+		<attribute name="Implementation-Version" value="${env.VERSION_OXP} ${DSTAMP}-${TSTAMP}"/>
+		<attribute name="Implementation-Vendor" value="${env.CONSULTORA_OXP}"/>
+		<attribute name="Implementation-URL" value="http://www.openxpertya.org"/>
+      </manifest>
+    </jar>
+	
+
+    <!-- Librería Sybase  -->
+    <unjar src="lib/jtds-1.0.jar" dest="${buildSybase.dir}"/>
+    <!-- unjar src="lib/jconn3.jar" dest="${buildSybase.dir}" -->
+    <!-- unjar src="lib/jTDS3.jar" dest="${buildSybase.dir}" -->
+
+    <!-- Limpiando  -->
+
+    <!-- Crea el fichero sybase.jar 	-->
+    <jar jarfile="${dist.dir}/sybase.jar">
+      <fileset dir="${buildSybase.dir}"/>
+      <manifest>
+		<attribute name="Specification-Title" value="Sybase JDBC from jTDS"/>
+		<attribute name="Specification-Version" value="jTDS"/>
+		<attribute name="Specification-Vendor" value="jTDS"/>
+		<attribute name="Implementation-Title" value="sybase ${env.VERSION_OXP}"/>
+		<attribute name="Implementation-Version" value="${env.VERSION_OXP} ${DSTAMP}-${TSTAMP}"/>
+		<attribute name="Implementation-Vendor" value="${env.CONSULTORA_OXP}"/>
+		<attribute name="Implementation-URL" value="http://www.openxpertya.org"/>
+      </manifest>
+    </jar>
+
+    <!-- Librería Microsoft		-->
+    <unjar src="lib/jtds-1.0.jar" dest="${buildTDS.dir}"/>
+
+    <!-- Limpiando			-->
+
+    <!-- Crea fichero sqlServer 	-->
+    <jar jarfile="${dist.dir}/sqlServer.jar">
+      <fileset dir="${buildTDS.dir}"/>
+      <manifest>
+		<attribute name="Specification-Title" value="jTDS for MS SQL JDBC"/>
+		<attribute name="Specification-Version" value="jTDS 1.0"/>
+		<attribute name="Specification-Vendor" value="jTDS"/>
+		<attribute name="Implementation-Title" value="sqlServer ${env.VERSION_OXP}"/>
+		<attribute name="Implementation-Version" value="${env.VERSION_OXP} ${DSTAMP}-${TSTAMP}"/>
+		<attribute name="Implementation-Vendor" value="${env.CONSULTORA_OXP}"/>
+		<attribute name="Implementation-URL" value="http://www.openxpertya.org"/>
+      </manifest>
+    </jar>
+  	
+
+	<!-- Librerías PostgreSQL  -->
+	<unjar src="lib/postgresql.jar" dest="${buildPostgreSQL.dir}"/>
+
+    <!-- Limpiando    -->
+
+	<!-- Crea fichero PostgreSQL  -->
+	 <jar jarfile="${dist.dir}/postgresql.jar">
+	  <fileset dir="${buildPostgreSQL.dir}"/>
+	   <manifest>
+	    <attribute name="Specification-Title" value="PostgreSQL JDBC"/>
+	    <attribute name="Specification-Version" value="8.0-310.jdbc3"/>
+	    <attribute name="Specification-Vendor" value="PostgreSQL"/>
+	    <attribute name="Implementation-Title" value="sqlServer ${env.VERSION_OXP}"/>
+	    <attribute name="Implementation-Version" value="${env.VERSION_OXP} ${DSTAMP}-${TSTAMP}"/>
+	    <attribute name="Implementation-Vendor" value="${env.CONSULTORA_OXP}"/>
+	    <attribute name="Implementation-URL" value="http://www.openxpertya.org"/>
+	  </manifest>
+	</jar>
+
+
+
+
+
+	<!-- Librerías JasperReports  -->
+	<!-- Se creara el .jar en lib para copiarlo despues -->
+	<unjar src="lib/JasperReports/jasperreports-2.0.1.jar" dest="${buildJasper.dir}" />
+	<unjar src="lib/JasperReports/poi-3.0.1-FINAL-20070705.jar" dest="${buildJasper.dir}" />
+	<unjar src="lib/JasperReports/groovy-all-1.0.jar" dest="${buildJasper.dir}" />
+	<unjar src="lib/JasperReports/commons-beanutils-1.7.jar" dest="${buildJasper.dir}" />
+	<unjar src="lib/JasperReports/hsqldb-1.7.1.jar" dest="${buildJasper.dir}" />
+	<unjar src="lib/JasperReports/commons-logging-1.0.2.jar" dest="${buildJasper.dir}" />
+	<unjar src="lib/JasperReports/hibernate3.jar" dest="${buildJasper.dir}" />
+	<unjar src="lib/JasperReports/jxl-2.6.jar" dest="${buildJasper.dir}" />
+	<unjar src="lib/JasperReports/png-encoder-1.5.jar" dest="${buildJasper.dir}" />
+	<unjar src="lib/JasperReports/commons-collections-2.1.jar" dest="${buildJasper.dir}" />
+	<unjar src="lib/JasperReports/commons-javaflow-20060411.jar" dest="${buildJasper.dir}" />
+	<unjar src="lib/JasperReports/jfreechart-1.0.0.jar" dest="${buildJasper.dir}" />
+	<unjar src="lib/JasperReports/barbecue-1.1.jar" dest="${buildJasper.dir}" />
+	<unjar src="lib/JasperReports/bcimage.jar" dest="${buildJasper.dir}" />
+	<unjar src="lib/JasperReports/mondrian-2.3.2.8944.jar" dest="${buildJasper.dir}" />
+	<unjar src="lib/JasperReports/commons-logging-api-1.0.2.jar" dest="${buildJasper.dir}" />
+	<unjar src="lib/JasperReports/jdt-compiler-3.1.1.jar" dest="${buildJasper.dir}" />
+	<unjar src="lib/JasperReports/commons-digester-1.7.jar" dest="${buildJasper.dir}" />
+	<unjar src="lib/JasperReports/jcommon-1.0.0.jar" dest="${buildJasper.dir}" />	
+
+	<!-- Crea fichero jasper.jar  -->
+	 <jar jarfile="${dist.dir}/JasperReports.jar">
+	  <fileset dir="${buildJasper.dir}"/>
+	   <manifest>
+	    <attribute name="Specification-Title" value="Jasper Reports"/>
+	    <attribute name="Specification-Version" value=""/>
+	    <attribute name="Specification-Vendor" value="JasperReports"/>
+	    <attribute name="Implementation-Title" value="JasperReports para OXP ${env.VERSION_OXP}"/>
+	    <attribute name="Implementation-Version" value="${env.VERSION_OXP} ${DSTAMP}-${TSTAMP}"/>
+	    <attribute name="Implementation-Vendor" value="${env.CONSULTORA_OXP}"/>
+	    <attribute name="Implementation-URL" value="http://www.jasperforge.org"/>
+	  </manifest>
+	</jar>
+
+
+  </target>
+	
+
+  <!-- ============================================= -->
+  <!-- Construye el Jar del servidor                                             -->
+  <!-- ============================================= -->
+  <target name="toolsServer" depends="toolsCompile" 
+  	unless="jars.uptodate"
+	description="Create CSTools.jar">
+
+    <!-- descomprime librerías para CSTools -->
+    <!-- JSTL				-->
+    <unjar src="lib/jstl.jar" dest="${buildServer.dir}" />
+    <unjar src="lib/standard.jar" dest="${buildServer.dir}" />
+    <unjar src="lib/saxpath.jar" dest="${buildServer.dir}" />
+    <!-- VeriSign			-->
+    <unjar src="lib/Verisign.jar" dest="${buildServer.dir}" />
+    <!-- Log4J				-->
+    <unjar src="lib/log4j.jar" dest="${buildServer.dir}"/>
+    <!-- Rowset para JDK 1.4			-->
+    <unjar src="lib/rowset.jar" dest="${buildServer.dir}"/>
+
+    <!-- Limpiando	-->
+    <delete file="${buildServer.dir}/META-INF/MANIFEST.MF" failonerror="false"/>
+
+    <!-- Crea CSTools jar		-->
+    <jar jarfile="${dist.dir}/CSTools.jar">
+      <fileset dir="${build.dir}" includes="**/ecs/**" />
+      <fileset dir="${buildServer.dir}" />
+      <manifest>
+		<attribute name="Specification-Title" value="Herramientas Del Servidor OpenXpertya"/>
+		<attribute name="Specification-Version" value="${env.VERSION_OXP}"/>
+		<attribute name="Specification-Vendor" value="(C) 2005-2006 FUNDESLE"/>
+		<attribute name="Implementation-Title" value="CSTools ${env.VERSION_OXP}"/>
+		<attribute name="Implementation-Version" value="${env.VERSION_OXP}  ${DSTAMP}-${TSTAMP}"/>
+		<attribute name="Implementation-Vendor" value="${env.CONSULTORA_OXP}"/>
+		<attribute name="Implementation-URL" value="http://www.openxpertya.org"/>
+      </manifest>
+    </jar>
+
+  </target>
+
+  <!-- ============================================= -->
+  <!-- Construye Client Jar                               -->
+  <!-- ============================================= -->
+  <target name="toolsClient" depends="toolsCompile" 
+  	unless="jars.uptodate"
+	description="Create XOXPTools.jar">
+
+    <!-- Descomprime librerías para CCTools -->
+    <!-- Mail				-->
+    <unjar src="lib/activation.jar" dest="${buildClient.dir}" />
+    <unjar src="lib/mail.jar" dest="${buildClient.dir}" />
+    <!-- Bean Shell			-->
+    <unjar src="lib/bsh-core-2.0b4.jar" dest="${buildClient.dir}" />
+    <!-- VeriSign			-->
+    <unjar src="lib/Verisign.jar" dest="${buildClient.dir}" />
+    <!-- Log4J				-->
+    <unjar src="lib/log4j.jar" dest="${buildClient.dir}"/>
+    <!-- Rowset para JDK 1.4	-->
+    <unjar src="lib/rowset.jar" dest="${buildClient.dir}"/>
+  	<!-- JFreeChart-->
+  	<unjar src="lib/jcommon-1.0.0.jar" dest="${buildClient.dir}"/>
+  	<unjar src="lib/jfreechart-1.0.1.jar" dest="${buildClient.dir}"/>
+  	<!-- JFreeChart-->
+
+    <!-- Limpiando	-->
+    <delete>
+      <fileset dir="${buildClient.dir}" includes="build.xml"/>
+      <fileset dir="${buildClient.dir}/META-INF" casesensitive="no" includes="*.mf,*.sf,*.rsa,*.dsa"/>
+    </delete>
+
+    <!-- Crea fichero XOXPTools.jar	-->
+    <jar jarfile="${dist.dir}/XOXPTools.jar">
+      <fileset dir="${build.dir}" includes="**/ecs/**" />
+      <fileset dir="${buildClient.dir}"/>
+      <manifest>
+		<attribute name="Specification-Title" value="Herramientas de Cliente oxp"/>
+		<attribute name="Specification-Version" value="${env.VERSION_OXP}"/>
+		<attribute name="Specification-Vendor" value="(C) 2005-2006 FUNDESLE."/>
+		<attribute name="Implementation-Title" value="CCTools ${env.VERSION_OXP}"/>
+		<attribute name="Implementation-Version" value="${env.VERSION_OXP} ${DSTAMP}-${TSTAMP}"/>
+		<attribute name="Implementation-Vendor" value="${env.CONSULTORA_OXP}"/>
+		<attribute name="Implementation-URL" value="http://www.openxpertya.org"/>
+      </manifest>
+    </jar>
+
+  </target>
+	
+  <!-- ============================================= -->
+  <!-- Construye																		   -->
+  <!-- ============================================= -->
+  <target name="toolsDistribution" 
+  	depends="toolsServer, toolsClient, toolsAppsServer, toolsDatabase" 
+  	unless="jars.uptodate"
+	description="Create jars">
+
+  </target>
+
+  <!-- ============================================= -->
+  <!-- Limpiando                                                                           -->
+  <!-- ============================================= -->
+  <target name="clean">
+    <!-- Borra el arbol de directorios ${build.dir}  -->
+    <delete dir="${build.dir}"/>
+    <delete file="${dist.dir}/XOXPTools.jar" failonerror="false"/>
+    <delete file="${dist.dir}/CSTools.jar" failonerror="false"/>
+    <delete file="${dist.dir}/jboss.jar" failonerror="false"/>
+    <delete file="${dist.dir}/oracle.jar" failonerror="false"/>
+    <delete file="${dist.dir}/sybase.jar" failonerror="false"/>
+    <delete file="${dist.dir}/sqlServer.jar" failonerror="false"/>
+    <delete file="${dist.dir}/postgresql.jar" failonerror="false"/>
+    <delete file="${lib.dir}/postgresql.jar" failonerror="false"/>
+  </target>
+
+</project>

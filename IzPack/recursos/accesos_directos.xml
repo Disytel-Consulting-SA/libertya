@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<shortcuts>
+	<skipIfNotSupported/>
+	<programGroup defaultName="openXpertya" location="Programas"/>
+		
+   <shortcut
+     name="Cliente openXpertya v2"
+     programGroup="yes"
+     desktop="yes"
+     applications="no"
+     startMenu="no"
+     startup="no"
+     target="$INSTALL_PATH\utils\openxpertya.exe"
+     workingDirectory="$INSTALL_PATH\utils"
+     initialState="normal"
+     description="Inicia el cliente de openXpertya v2">
+   </shortcut>
+	
+   <shortcut
+     name="Iniciar Servidor openXpertya"
+     programGroup="yes"
+     desktop="yes"
+     applications="no"
+     startMenu="no"
+     startup="no"
+     target="$INSTALL_PATH\utils\IniciarServidor.bat"
+     iconFile="$INSTALL_PATH\lib\oxps.ico"
+     workingDirectory="$INSTALL_PATH\utils"
+     initialState="normal"
+     description="Arranca manualmente el servidor de openXpertya v2">
+   </shortcut>	
+		
+   <shortcut
+     name="Configurar openXpertya v2"
+     programGroup="yes"
+     desktop="yes"
+     applications="no"
+     startMenu="no"
+     startup="no"
+     target="$INSTALL_PATH\Configurar.exe"
+     workingDirectory="$INSTALL_PATH"
+     initialState="normal"
+     description="Configura el servidor de openXpertya v2">
+   </shortcut>		
+		
+</shortcuts>

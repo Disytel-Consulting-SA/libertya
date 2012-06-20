@@ -1,0 +1,100 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+     
+  <link rel="stylesheet" type="text/css" href="style/default.css">
+  <title>JDBC(TM) RowSet Implementations 1.0</title>
+</head>
+     <body>
+        
+<center>     
+<h1>     JDBC<sup>TM</sup> RowSet Implementations <br>
+     Java<sup>TM</sup> Web Services Pack v1.4 Co-Bundle <br>
+     README</h1>
+          <b>Java Specification Request </b> <a
+ href="http://www.jcp.org/en/jsr/detail?id=114">JSR-114</a><br>
+          <b>Specification Version</b> 1.0.1 <br>
+          <b>Reference Implementation (RI) Version:</b> 1.0.1<br>
+                <!--
+ Copyright 2004 Sun Microsystems, Inc. All rights reserved.
+ SUN PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+--> 
+ 
+<hr width="50%">   Main: README | <a href="ReleaseNotes.html">Release Notes</a>
+|    <a href="../samples/docs/index.html">Samples</a> |    <a
+ href="tutorial/index.html">Tutorial</a> |    <a
+ href="../samples/WebRowSet-demo/index.html">WebRowSet Demo</a> |    <a
+ href="ChangeLog.html">Changelog</a>  <br>
+   JDBC RowSet Community: <a
+ href="https://jwsdp.dev.java.net/rowset/index.html">https://jwsdp.dev.java.net/rowset/index.html</a> 
+<br>
+  
+<hr width="50%">      </center>
+  JDBC<sup>TM</sup> RowSet Implementations provides an API and Synchronization
+SPI that standardardize the <code>RowSet</code> interface implementations
+originially introduced in JDBC 3.0 API Specification. 
+<p> The JDBC RowSet specification and reference implementation provides a
+set of <code>RowSet</code> implementation definitions that allow tabular
+datasources such as a SQL Database to be exposed as convenient JavaBeans<sup>TM</sup>
+components.  </p>
+<p> JSR-114, defines RowSet interfaces that provide the following functionality; 
+</p>
+<ul>
+ <li>A continuously connected <code>RowSet</code> for immediately SQL database
+manipulation  </li>
+  <li>The ability for a <code>RowSet</code> to sever a connection from the
+data source and to easily      synchronize it's contents with a persistent
+datastore using pluggable Synchronization Providers. </li>
+  <li>Manage large sets of data efficiently by paging specific tabular rows
+as needed.    </li>
+  <li>Articulate the contents of a <code>RowSet</code> in a standard XML
+format according to the WebRowSet schema. </li>
+  <li>Manipulate the contents of a <code>RowSet</code> using standardized
+    <b>filtering</b> and <b>SQL JOIN</b>     <code>RowSet</code> interface
+definitions and mechanisms.  </li>
+</ul>
+ 
+<p> JDBC RowSets give developers an efficent and standard mechanism to handle
+tabular data structues in both  disconnected and connected environment. By
+providing sufficient tools to mapulate transactional SQL datasources with
+the added convenience of a pluggable SPI to better manage the complexities
+of  disconnected syncrhonization. </p>
+<p> <a name="docs"> </a></p>
+<h3><a name="docs">Documentation</a></h3>
+ 
+<ul>
+ <li><a href="ReleaseNotes.html">Release Notes</a> </li>
+  <li><a href="spec/index.html">JSR-114, JDBC RowSet Implementations Specification
+API</a></li>
+ <li><a href="ri/index.html">JSR-114, JDBC RowSet Implementations Reference
+Implementation Javadoc</a></li>
+ <li><a href="tutorial/index.html">JDBC RowSet Tutorial</a> </li>
+</ul>
+  <a name="licesne"> </a>
+<h3><a name="licesne">Licenses</a></h3>
+ 
+<ul>
+ <li><a href="LICENSE.html">Specification License</a> </li>
+  <li>Binary License </li>
+</ul>
+  <a name="source"> </a>
+<h3><a name="source">Source Code</a></h3>
+ <a name="source">At this time, the source code for the JDBC RowSet Implementations
+is unavailable. However, specification and implementation of JDBC RowSet
+Implementations are part of Java 2 Standard Edition  1.5 (Tiger) which will
+be available under Sun Microsystems  </a><a
+ href="http://java.sun.com/j2se">SCSL</a> release of the Java platform.   
+<a name="q_a"> </a>
+<h3><a name="q_a">Questions &amp; Feedback</a></h3>
+ 
+<ul>
+ <li><a href="https://jwsdp.dev.java.net/rowset/index.html">https://jwsdp.dev.java.net/rowset/index.html</a> 
+  </li>
+  <li><a href="mailto:jsr-114-comments@jcp.org">jsr-114-comments@jcp.org</a> 
+  </li>
+  <li><a href="http://developer.java.sun.com/developer/bugParade/">Bug Parade</a> 
+  </li>
+</ul>
+   <br>
+</body>
+</html>

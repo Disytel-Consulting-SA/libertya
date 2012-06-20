@@ -1,0 +1,424 @@
+<html>
+<head>
+<title>JavaService - Java NT Service Adaptor</title>
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+<link rel="stylesheet" href="styles.css" type="text/css">
+</head>
+
+<body bgcolor="#FFFFFF">
+<table width="90%" border="0" cellspacing="0" cellpadding="0" align="center">
+  <tr> 
+    <td nowrap class="mainTitle">JavaService - Description</td>
+  </tr>
+  <tr>
+    <td>&nbsp;</td>
+  </tr>
+  <tr> 
+    <td> 
+      <p class="mainBold">Contents</p>
+      <blockquote> 
+        <p class="mainNormal"><a href="#Requirements">Requirements</a> <br>
+          <a href="#Overview">Overview</a> <br>
+          <a href="#Installing">Installing</a> <br>
+          <a href="#UnInstalling">UnInstalling</a><br>
+          <a href="#Version_Query">Version Query</a><br>
+          <a href="#Registry_Settings">Registry Settings</a><br>
+          <a href="#Event_Logging">Event Logging</a><br>
+          <a href="#Tomcat_Example">Example (Tomcat)</a><br>
+		  <a href="#Orion_Example">Example (Orion)</a><br>
+		  <a href="#JBoss_Example">Example (JBoss 3.0)</a></p>
+      </blockquote>
+      <p class="mainBold"><a name="Requirements"></a>Requirements</p>
+      <p class="mainNormal">JavaService requires a JNI 1.2 compliant 
+        Java Virtual Machine. This includes the Sun Java 2 SDK versions 1.2, 1.3 and 
+        1.4. It does not support the older JDK 1.1.x.</p>
+      <p class="mainBold"><a name="Overview"></a>Overview</p>
+      <p class="mainNormal">JavaService can be used to run any Java classes as 
+        an NT Service. It can start the service using the standard
+		<span class="textCode">static void main(String[] args)</span> method,
+		or any other static method that 
+        takes a <span class="textCode">String[]</span> as its only parameter. 
+        In its simplest incarnation JavaService will simply terminate the JVM 
+        to stop the service, but you can optionally have it call another static 
+        method inside the JVM. If JavaService calls another method it will wait 
+        either until both the start and the stop methods have returned or until 
+        a 30 second timeout has expired before terminating the JVM. JavaService 
+        can also optionally redirect the System.out and/or the System.err streams 
+        into a file.</p>
+      <p class="mainBold"><a name="Installing"></a>Installing</p>
+      <p class="mainNormal">The JavaService executable has no dependencies on 
+        any files or directories. This was intentional so that it could easily 
+        be used with any Java software. Additionally, it does not have a dependency 
+        on the name JavaService.exe. This means that you can, and probably should, 
+        rename it to something more appropriate. This can be quite useful when 
+        checking the Task Manager to see how much CPU time a particular service 
+        is using, or how many threads it has created. Instead of seeing multiple 
+        entries for JavaService.exe you see a unique entry for each renamed version 
+        of the executable. Follow these instructions to use JavaService with your 
+        Java application:</p>
+      <ol class="mainNormal">
+        <li>Unzip the archive into a directory appropriate for your application. 
+          The following files will be extracted:</li>
+        <ul class="mainNormal">
+          <li>bin/JavaService.exe - The service executable.</li>
+          <li>bin/installTomcat4.bat - A sample usage to install the service for 
+            Tomcat 4.</li>
+          <li>bin/installTomcat32.bat - A sample usage to install the service 
+            for Tomcat 3.2.</li>
+          <li>bin/installTomcat31.bat - A sample usage to install the service 
+            for Tomcat 3.1.</li>
+          <li>bin/installOrion.bat - A sample usage to install the service for Orion.</li>
+          <li>bin/test_install_orion.bat - A test usage to invoke the Orion service installer.</li>
+          <li>bin/test_uninstall_orion.bat - A test usage to remove the installed Orion service.</li>
+          <li>bin/installJBoss.bat - A sample usage to install the service for JBoss 3.x.</li>
+          <li>bin/test_install_jboss.bat - A test usage to invoke the JBoss service installer.</li>
+          <li>bin/test_uninstall_jboss.bat - A test usage to remove the installed JBoss service.</li>
+          <li>docs/documentation.html - This documentation.</li>
+          <li>docs/license.html - The license for distributing this product.</li>
+          <li>docs/overview.html - High-level introductory documentation.</li>
+          <li>docs/history.html - Release notes and change history.</li>
+          <li>docs/faq.html - Frequently-Asked Questions.</li>
+          <li>docs/styles.css - Formatting stylesheet for HTML documentation.<br>
+            <br>
+          </li>
+        </ul>
+        <li>Copy the JavaService.exe file to a directory appropriate for your 
+          application, and optionally rename JavaService.exe to something more 
+          relevant.<br>
+          <br>
+        </li>
+        <li>Start a command prompt and change to the directory where the JavaService.exe 
+          is located.<br>
+          <br>
+        </li>
+        <li>Type <span class="textCode">'JavaService.exe -install'</span> followed 
+          by the proper parameters, as described below. Be sure to use quotation 
+          marks around parameters with spaces (<i>italics signify an application 
+          dependent value</i>):<br>
+          <br>
+          <ul>
+            <li><i>service_name</i> (mandatory) - The name that you want to use 
+              for this service. This is what the service will show up as in the 
+              service control manager.<br>
+              <br>
+            </li>
+            <li><i>jvm_library</i> (mandatory) - The location of the jvm.dll file 
+              that you want to use as your Java Virtual Machine. For Sun's Java 
+              2 SDK, this is usually {JDK_HOME}\jre\bin\classic\jvm.dll or {JDK_HOME}\jre\bin\hotspot\jvm.dll.<br>
+              <br>
+            </li>
+            <li><i>jvm_option</i>* (optional) - Optionally specify any necessary 
+              parameters to pass to the JVM upon invocation. These may include 
+              thing such as &quot;-Djava.class.path=&quot; to specify a classpath 
+              or &quot;-Xmx128m&quot; to specify a maximum heap size of 128MB. 
+              Any parameters that you need to use when invoking the java.exe command 
+              tool should be specified here. There is no limit to the number of 
+              parameters specified.<br>
+              <br>
+            </li>
+            <li>-start <i>start_class</i> (mandatory) - The name of the class 
+              that you wish to use when starting the service. This must be the 
+              fully qualified class name.<br>
+              <br>
+            </li>
+            <li>-method <i>start_method</i> (optional) - The name of the static 
+              method of the <i>start_class</i> that you wish to call to start 
+              the service. The method must be <span class="textCode">static</span>, 
+              must return type <span class="textCode">void</span>, and must take 
+              a <span class="textCode">String[]</span> as its only parameter. 
+              If this parameter is not specified it defaults to <span class="textCode">main</span>.<br>
+              <br>
+            </li>
+            <li>-params <i>start_parameter</i>+ (optional) - Any parameters to 
+              pass to the <i>start_method</i> when starting the service. These 
+              will be passed in as the <span class="textCode">String[]</span> 
+              parameter.<br>
+              <br>
+            </li>
+            <li>-stop <i>stop_class</i> (optional) - The name of the class that 
+              you wish to use when stopping the service. This must be the fully 
+              qualified class name. If no <i>stop_class</i> is specified, the 
+              process containing the Virtual Machine is simply terminated when 
+              the service is stopped.<br>
+              <br>
+            </li>
+            <li>-method <i>stop_method</i> (optional, but only allowed if a <i>stop_class</i> 
+              was specified) - The name of the static method of the <i>stop_class</i> 
+              that you wish to call to stop the service. The method must be <span class="textCode">static</span>, 
+              must return type <span class="textCode">void</span>, and must take 
+              a <span class="textCode">String[]</span> as its only parameter. 
+              If this parameter is not specified it defaults to <span class="textCode">main</span>.<br>
+              <br>
+            </li>
+            <li>-params <i>start_parameter</i>+ (optional, but only allowed if 
+              a <i>stop_class</i> was specified) - Any parameters to pass to the 
+              <i>stop_method</i> when stopping the service. These will be passed 
+              in as the <span class="textCode">String[]</span> parameter.<br>
+              <br>
+            </li>
+            <li>-out <i>out_log_file</i> (optional) - A file into which System.out 
+              will be redirected. If this parameter is not specified, System.out 
+              will not be redirected.<br>
+              <br>
+            </li>
+            <li>-err<i> err_log_file</i> (optional) - A file into which System.err 
+              will be redirected. If this parameter is not specified, System.err 
+              will not be redirected.<br>
+              <br>
+            </li>
+            <li>-current<i> current_dir</i> (optional) - A directory to use as 
+              the current working directory for the service. If this parameter 
+              is specified, all relative paths in the service will be relative 
+              to relative to the specified directory.<br>
+              <br>
+            </li>
+            <li>-path<i> extra_path</i> (optional) - An addition to the path for 
+              the service. The specified path will be appended to the system path 
+              before the service is started. This can be used to specify where 
+              additional DLLs that native libraries are dependent upon can be 
+              found.<br>
+              <br>
+            </li>
+            <li>-depends<i> other_services</i> (optional) - Another NT service (or multiple services,
+			if specified as a comma-separated list) that
+			must be running before this particular java service can start. Will cause
+			the named service(s) to be started automatically if required when starting
+			the java service. Will also stop the java service if a specified service is stopped
+			(usually with user confirmation first being requested by Windows NT).<br>
+			<br>
+			</li>
+            <li>-auto <i>or</i> -manual - Optional parameter indicating whether service
+			should be run automatically on system startup (default mode), or if it should
+			be started on demand using a manual command (i.e. net start service).<br>
+	            <br>
+			</li>
+            <li>-shutdown<i> seconds</i> (optional) - Specify the amount of time that
+			may be taken during processing of your shutdown/stop method. The value here
+			is used as a timeout, so if the method has not completed in this length of time,
+			the JVM process will be terminated to allow the service to shutdown completely.<br>
+			<br>
+			</li>
+            <li>-user<i> user_name</i> (optional) - Specify the Windows domain username to be
+			used when running the service (also requires that the password parameter is specified).<br>
+			Note that this should generally be specified in Windows 2000 Active Directory style (i.e.&nbsp;johndoe@foobar.com)<br>
+			<br>
+			</li>
+            <li>-password<i> password</i> (optional) - Specify the Windows password associated with
+			the domain username specified for use when running the service (specify with user parameter).<br>
+			<br>
+			</li>
+            <li>-append <i>or</i> -overwrite - Optional parameter indicating whether output
+			and error log files are to be appended to, or overwritten, on each service startup.
+			If not specified, the default is to append to existing log files.<br>
+	            <br>
+			</li>
+            <li>-startup<i> seconds</i> (optional) - Specify the amount of time that the main JavaService
+			thread should pause during processing of your startup method. The value here
+			is used as an absolute period of time in which the main process will sleep,
+			allowing the Java startup thread to continue in the background.
+			If the startup thread completes sooner, the main thread will still wait for the specified
+			period of time. Upon completion of this time period, Windows will be notified that
+			the service is now 'Running'.<br>
+			<br>
+			</li>
+          </ul>
+        </li>
+      </ol>
+      <p class="mainNormal">A simple example might look like the following:</p>
+      <blockquote> 
+        <p class="mainCode">JavaService.exe -install &quot;My Service&quot; c:\jdk\jre\bin\classic\jvm.dll 
+          -Djava.class.path=c:\app\classes.jar -start com.my.ExampleClass -err 
+          c:\app\stderr.txt</p>
+      </blockquote>
+      <p class="mainNormal">This would create a service that, when started, would 
+        create a JVM from the JDK in c:\jdk setting the classpath to be c:\app\classes.jar. 
+        It would then call the main method of the com.my.ExampleClass class with 
+        a String array of length 0 (no parameters). Anything written to System.err 
+        would be redirected into the file c:\app\stderr.txt.<br>
+      </p>
+      <p class="mainBold"><a name="UnInstalling"></a>UnInstalling</p>
+      <ol class="mainNormal">
+        <li>Start a command prompt and change to the directory where the JavaService.exe 
+          is located.</li>
+        <li>Type <span class="textCode">'JavaService.exe -uninstall'</span> followed 
+          by the name of the service.</li>
+      </ol>
+      <p class="mainBold"><a name="Version_Query"></a>Version Query</p>
+      <p class="mainNormal">There are two ways to determine the version number of this program.
+	  <br>First:</p>
+      <ol class="mainNormal">
+        <li>Start a command prompt and change to the directory where the JavaService.exe 
+          is located.</li>
+        <li>Type <span class="textCode">'JavaService.exe -version'</span> 
+          and the program will display version and copyright information.</li>
+      </ol>
+      <p class="mainNormal">Alternatively:</p>
+      <ol class="mainNormal">
+	  <li>Locate and select the file <em>JavaService.exe</em> in Windows Explorer.</li>
+      <li>View the properties of this executable file by either pressing <em>Alt+Enter</em>
+		  or by using the right-click menu and selecting <em>Properties</em> from the list.</li>
+	 <li>The version number and copyright information for the program can then be viewed from one of the property tabs
+		  displayed by Windows.</li>
+      </ol>
+      <p class="mainBold"><a name="Registry_Settings"></a>Registry Settings</p>
+      <p class="mainNormal">JavaService stores the configuration information for 
+        installed services in the registry. The location is </p>
+      <blockquote> 
+        <p class="mainNormal">HKEY_LOCAL_MACHINE\ SYSTEM\ CurrentControlSet\ Services\ 
+          {SERVICE_NAME}\ Parameters</p>
+      </blockquote>
+      <p class="mainNormal">The following keys are used and may be changed after 
+        service installation to modify the behavior of the service.</p>
+      <blockquote> 
+        <p class="mainNormal">Current Directory - The current working directory 
+          for the service.</p>
+        <p class="mainNormal">JVM Library - The location of the jvm.dll library 
+          to use to create the Java Virtual Machine.</p>
+        <p class="mainNormal">JVM Option Count - The number of option to pass 
+          to the JVM when creating it.</p>
+        <p class="mainNormal">JVM Option Number <i>n</i> - An option to pass to 
+          the JVM. <i>n</i> ranges from 0 to &quot;JVM Option Count&quot; - 1.</p>
+        <p class="mainNormal">Path - Extra path information that will be appended 
+          to the system path before the service is started.</p>
+        <p class="mainNormal">Start Class - The class to use to start the service.</p>
+        <p class="mainNormal">Start Method - The static method to call on the 
+          &quot;Start Class&quot; to start the service.</p>
+        <p class="mainNormal">Start Param Count - The number of parameters to 
+          pass to the &quot;Start Method&quot; to start the service.</p>
+        <p class="mainNormal">Start Param Number n - A parameter to pass to the 
+          &quot;Start Method&quot; to start the service. n ranges from 0 to &quot;Start 
+          Param Count&quot; - 1.</p>
+        <p class="mainNormal">Stop Class - The class to use to stop the service. 
+          If this key is absent, the process containing the JVM will simply be 
+          terminated when the service is stopped.</p>
+        <p class="mainNormal">Stop Method - The static method to call on the &quot;Stop 
+          Class&quot; to stop the service.</p>
+        <p class="mainNormal">Stop Param Count - The number of parameters to pass 
+          to the &quot;Stop Method&quot; to stop the service.</p>
+        <p class="mainNormal">Stop Param Number n - A parameter to pass to the 
+          &quot;Stop Method&quot; to stop the service. n ranges from 0 to &quot;Stop 
+          Param Count&quot; - 1.</p>
+        <p class="mainNormal">System.err File - A file into which System.err will 
+          be redirected. If this key is absent, System.err will not be redirected.</p>
+        <p class="mainNormal">System.out File - A file into which System.out will 
+          be redirected. If this key is absent, System.out will not be redirected.</p>
+        <p class="mainNormal">Shutdown Timeout - The number of milliseconds to allow for
+		the Java Stop method to complete, before timeout and JVM forced termination.</p>
+      </blockquote>
+      <p class="mainBold"><a name="Event_Logging"></a>Event Logging</p>
+      <p class="mainNormal">JavaService logs both informational events and errors 
+        into the Application portion of the NT Event Log. Informational messages 
+        include a message when the service is started and one when it is stopped. 
+        Error messages may be logged because of a configuration problem or other 
+        system error. If you are having trouble getting JavaService to run your 
+        application, you should first check the Application portion of the Event 
+        Log to see if any errors were reported. Additionally you can check the 
+        redirected System.err file, as any Java exceptions will be written there 
+        by the Virtual Machine.</p>
+      <p class="mainBold"><a name="Tomcat_Example"></a>Example (Tomcat)</p>
+      <p class="mainNormal"><a href="http://jakarta.apache.org">Tomcat</a> is 
+        a JSP engine and was the primary reason that JavaService was created. 
+        It is a pure Java application that is ideally used as a service, but comes 
+        with no native ability to do so. The following example shows how JavaService 
+        can be used to run Tomcat 3.1 as an NT service. The ideas shown here apply 
+        to using JavaService with any Java application that needs to run as an 
+        NT service. {JDK_HOME} is the location of your JDK and {TOMCAT_HOME} is 
+        the location of your Tomcat installation.</p>
+      <ol class="mainNormal">
+        <li>Copy the JavaService.exe file into the {TOMCAT_HOME}\bin directory as tomcat.exe.</li>
+        <li>Start a command prompt and change to the directory {TOMCAT_HOME}\bin.</li>
+        <li>Run the following command:<br>
+          <span class="textCode">tomcat.exe -install Tomcat<br>
+          {JDK_HOME}\jre\bin\{hotspot|server|classic}\jvm.dll<br>
+          -Djava.class.path={TOMCAT_HOME}\bin\bootstrap.jar;{TOMCAT_HOME}\bin\servlet.jar;{JDK_HOME}\lib\tools.jar 
+          <br>
+          -Dcatalina.home={TOMCAT_HOME}<br>
+          -start org.apache.catalina.startup.Bootstrap<br>
+          -params start<br>
+          -stop org.apache.catalina.startup.Bootstrap<br>
+          -params stop<br>
+          -out {TOMCAT_HOME}\logs\stdout.log<br>
+          -err {TOMCAT_HOME}\logs\stderr.log</span> </li>
+      </ol>
+
+      <p class="mainBold"><a name="Orion_Example"></a>Example (Orion)</p>
+      <p class="mainNormal">The <a href="http://www.orionserver.com">Orion</a> Application Server
+	  is a J2EE-compliant product that runs under the Java run-time environment. The JavaService
+	  utility provides a convenient mechanism to run this program as an NT Service.
+	  As the application server requires that an associated database server is already running, there
+	  is a need to add a Windows NT Service dependency to the Orion Java Service. The example below
+	  shows how this can be defined, with a dependency on the MySql database service in this case.
+	  {JDK_HOME} is the location of your JDK and {ORION_HOME} is the location of your Orion
+	  installation. The administrator username and password fields also need to be substituted in this command.
+	  Please note that this has been used successfully against the V1.5.2 OrionServer release,
+	  but is in any case provided 'as is'.</p>
+      <ol class="mainNormal">
+        <li>Copy the JavaService.exe file into the {ORION_HOME} directory as OrionServer.exe.</li>
+        <li>Start a command prompt and change to the directory {ORION_HOME}.</li>
+        <li>Run the following command:<br>
+          <span class="textCode">OrionServer.exe -install Orion<br>
+			{JDK_HOME}\jre\bin\{hotspot|server|classic}\jvm.dll<br>
+			-Djava.class.path={ORION_HOME}\orion.jar;{JDK_HOME}\lib\tools.jar -Xms64M -Xmx256M<br>
+			-start com.evermind.server.ApplicationServer<br>
+			-stop com.evermind.client.orion.OrionConsoleAdmin<br>
+			-params "ormi://localhost admin_username admin_password -shutdown"<br>
+			-out {ORION_HOME}\log\stdout.log<br>
+			-err {ORION_HOME}\log\stderr.log<br>
+			-current {ORION_HOME}<br>
+			-depends mysql<br>
+			-manual<br>
+			-append</span> </li>
+        <li>To remove the registered service, run the following command from the same directory:<br>
+          <span class="textCode">OrionServer.exe -uninstall Orion</span><br> </li>
+      </ol>
+      <p class="mainNormal">The Orion service can then be started by issuing the following command,
+	   which will also start the MySql service beforehand if it is not already running:<br>
+	  <span class="textCode">net start orion</span></p>
+      <p class="mainNormal">The Orion service can then be stopped by issuing the following command:<br>
+	  <span class="textCode">net stop orion</span></p>
+      <p class="mainNormal">The MySql database service may be stopped as normal by issuing the following command:<br>
+	  <span class="textCode">net start mysql</span><br>
+	  This will first stop the Orion service, if it is currently running, following user confirmation.</p>
+	  
+      <p class="mainBold"><a name="JBoss_Example"></a>Example (JBoss 3.0)</p>
+      <p class="mainNormal">The <a href="http://www.jboss.org">JBoss</a> server software provides a Java
+	  run-time environment that can be used for JSP and J2EE applications. In this use, it often needs to
+	  be run as a Windows NT System Service, for which the JavaService utility is designed.
+	  Depending on configuration, JBoss may require that an associated database server is already running, which
+	  should be set up as a Windows NT Service dependency, with the example below set up against the MySql database.
+	  {JDK_HOME} is the location of your JDK and {JBOSS_BIN} is the location of your JBoss binaries installation.
+	  These instructions are based on information in the JBoss 3.0 quick-start guide,
+	  but are in any case provided 'as is'.</p>
+      <ol class="mainNormal">
+        <li>Copy the JavaService.exe file into the {JBOSS_BIN} directory as JBossService.exe.</li>
+        <li>Start a command prompt and change to the directory {JBOSS_BIN}.</li>
+        <li>Run the following command:<br>
+          <span class="textCode">JBossService.exe -install JBoss<br>
+			{JDK_HOME}\jre\bin\{hotspot|server|classic}\jvm.dll<br>
+			-Djava.class.path={JDK_HOME}\lib\tools.jar;{JBOSS_BIN}\run.jar<br>
+			-start org.jboss.Main<br>
+			-stop org.jboss.Main -method systemExit<br>
+			-out {JBOSS_BIN}\stdout.log<br>
+			-err {JBOSS_BIN}\stderr.log<br>
+			-current {JBOSS_BIN}<br>
+			-depends mysql<br>
+			-manual<br>
+			-overwrite<br>
+			-startup 10</span> </li>
+        <li>To remove the registered service, run the following command from the same directory:<br>
+          <span class="textCode">JBossService.exe -uninstall JBoss</span><br> </li>
+      </ol>
+      <p class="mainNormal">The JBoss service can then be started by issuing the following command,
+	   which will also start the MySql service beforehand if it is not already running:<br>
+	  <span class="textCode">net start jboss</span></p>
+      <p class="mainNormal">The service can then be stopped by issuing the following command:<br>
+	  <span class="textCode">net stop jboss</span></p>
+	  
+    </td>
+  </tr>
+  <tr> 
+    <td>&nbsp;</td>
+  </tr>
+</table>
+</body>
+</html>

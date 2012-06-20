@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE attributes PUBLIC "-//NetBeans//DTD DefaultAttributes 1.0//EN" "http://www.netbeans.org/dtds/attributes-1_0.dtd">
+<attributes version="1.0">
+    <fileobject name="C:\oxp2_2\dbPort\src\org\openxpertya\model\X_W_CounterCount.java">
+        <attr name="class_dependency_org.openxpertya.model.PO" stringvalue="X_W_CounterCount"/>
+    </fileobject>
+    <fileobject name="CImportExport.java">
+        <attr name="class_dependency_java.awt.event.ActionListener" stringvalue="CImportExport"/>
+        <attr name="class_dependency_javax.swing.JFrame" stringvalue="CImportExport"/>
+    </fileobject>
+    <fileobject name="DBJDO.java">
+        <attr name="NetBeansAttrArguments" serialvalue="aced0005757200135b4c6a6176612e6c616e672e537472696e673badd256e7e91d7b470200007870000000017400262d446c6f67346a2e636f6e66696775726174696f6e3d66696c653a2e2f6c6f67346a2e6c6366"/>
+    </fileobject>
+</attributes>
