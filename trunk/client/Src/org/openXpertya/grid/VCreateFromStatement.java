@@ -376,6 +376,12 @@ public class VCreateFromStatement extends VCreateFrom implements VetoableChangeL
 			return (Payment)getSourceEntity(rowIndex);
 		}
     }
+
+	@Override
+	protected void customizarPanel() {
+		// TODO Auto-generated method stub
+		
+	}
 }    // VCreateFromStatement
 
 

@@ -26,6 +26,7 @@ import org.openXpertya.plugin.common.PluginConstants;
 import org.openXpertya.plugin.common.PluginUtils;
 import org.openXpertya.plugin.common.PluginUtils.PluginStatusListener;
 import org.openXpertya.process.ProcessInfo;
+import org.openXpertya.replication.ReplicationCache;
 import org.openXpertya.util.ASyncProcess;
 import org.openXpertya.util.Env;
 import org.openXpertya.util.Msg;
@@ -411,6 +412,13 @@ public class VPluginInstaller extends CPanel implements FormPanel, ASyncProcess 
 			m_frame.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
 		} else {
 			m_frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+			// Limpio el dato actual del componentversionID local
+			Env.setContext(m_ctx, PluginConstants.INSTALLED_COMPONENTVERSION_ID, -1);
+			Env.setContext(m_ctx, PluginConstants.PROP_PREFIX, "");
+			Env.setContext(m_ctx, PluginConstants.PROP_COPY_TO_CHANGELOG, "N");
+			Env.setContext(m_ctx, PluginConstants.MAP_TO_COMPONENT, "N");
+			Env.setContext(m_ctx, PluginConstants.COMPONENT_SOURCE_PREFIX, "");
+			ReplicationCache.mappedUIDs = null;
 		}
 		
 	}

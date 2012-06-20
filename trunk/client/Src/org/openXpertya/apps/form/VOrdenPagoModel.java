@@ -858,6 +858,8 @@ public class VOrdenPagoModel implements TableModelListener {
 	protected MBPartner BPartner = null;
     protected int C_Currency_ID = Env.getContextAsInt( Env.getCtx(), "$C_Currency_ID" );
     private MCurrency mCurency = MCurrency.get(m_ctx, C_Currency_ID);
+    private Integer projectID = 0;
+    private Integer campaignID = 0;
     
     protected boolean m_esPagoNormal = true;
     protected BigDecimal m_montoPagoAnticipado = null;
@@ -900,6 +902,7 @@ public class VOrdenPagoModel implements TableModelListener {
 	// Nro de documento seteado en la allocation
 	private String documentNo;
 	
+	private String description="";
 	
 	public VOrdenPagoModel() {
 		getMsgMap().put("TenderType", "TenderType");
@@ -1220,6 +1223,63 @@ public class VOrdenPagoModel implements TableModelListener {
 		
 	}
 	
+	// Added by Lucas Hernandez - Kunan
+	public boolean buscarPagos(Integer bpartner) {
+
+		boolean res=false;
+		int cantidadPagos=0;
+				
+		for(int i=0; i<3;i++){
+		StringBuffer sql = new StringBuffer();
+		if(i==0){
+			sql.append(" SELECT COUNT(*)");				
+			sql.append(" FROM libertya.c_payment i");
+			sql.append(" INNER JOIN libertya.C_DocType AS dt ON (dt.C_DocType_ID=i.C_DocType_ID) ");
+			sql.append(" WHERE i.IsActive = 'Y' AND i.DocStatus IN ('CO', 'CL') ");
+			sql.append(" AND i.C_BPartner_ID = ? ");
+			sql.append(" AND dt.DocTypeKey = 'VP'");
+			sql.append(" AND libertya.paymentavailable(i.c_payment_id) > 0");
+			sql.append(" AND i.ad_org_id = ?  ");
+		}
+		if(i==1){
+			sql.append(" SELECT COUNT(*)");				
+			sql.append(" FROM libertya.c_invoice i");
+			sql.append(" INNER JOIN libertya.C_DocType AS dt ON (dt.C_DocType_ID=i.C_DocType_ID) ");
+			sql.append(" WHERE i.IsActive = 'Y' AND i.DocStatus IN ('CO', 'CL') ");
+			sql.append(" AND i.C_BPartner_ID = ? ");
+			sql.append(" AND dt.DocBaseType = 'APC'");
+			sql.append(" AND libertya.invoiceopen(i.c_invoice_id,null) > 0");
+			sql.append(" AND i.ad_org_id = ?  ");
+			sql.append(" AND dt.signo_issotrx=1 ");
+		}
+		if(i==2){
+			sql.append(" SELECT COUNT(*)");				
+			sql.append(" FROM libertya.c_cashline i");
+			sql.append(" WHERE i.IsActive = 'Y' AND i.DocStatus IN ('CO', 'CL') ");
+			sql.append(" AND i.C_BPartner_ID = ? ");
+			sql.append(" AND SIGN(i.amount)<0 ");
+			sql.append(" AND libertya.cashlineavailable(i.c_cashline_id) <> 0 ");
+			sql.append(" AND i.ad_org_id = ?  ");
+		}
+		try {			
+			CPreparedStatement ps = DB.prepareStatement(sql.toString(), ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_UPDATABLE, getTrxName());			
+			ps.setInt(1, bpartner);			
+			ps.setInt(2, AD_Org_ID);			
+			ResultSet rs = ps.executeQuery();
+			while (rs.next()) {
+				cantidadPagos+=rs.getInt(1);
+			}			
+		} catch (Exception e) {
+			log.log(Level.SEVERE, "", e);
+		}
+		}		
+		
+		if(cantidadPagos>0){
+			res=true;
+		}
+		return res;		
+	}
+	
 	/**
 	 * 
 	 * @return la suma de todas las retenciones
@@ -1314,7 +1374,7 @@ public class VOrdenPagoModel implements TableModelListener {
 		if(!isSOTrx() || m_retenciones == null || m_retenciones.size() == 0){
 			m_retGen = new GeneratorRetenciones(C_BPartner_ID, facturasProcesar, manualAmounts, total, isSOTrx());
 			m_retGen.setTrxName(getTrxName());
-			calculateRetencions();		
+			calculateRetencions();
 			m_retenciones = m_retGen.getRetenciones();
 		}
 		
@@ -1514,6 +1574,8 @@ public class VOrdenPagoModel implements TableModelListener {
 //					line.setC_Invoice_ID(invoiceID); 
 //				}
 
+				if (mp.getProject() != null)
+					line.setC_Project_ID(mp.getProject());				
 				
 				line.setC_BPartner_ID(C_BPartner_ID);
 				
@@ -1605,6 +1667,8 @@ public class VOrdenPagoModel implements TableModelListener {
 					MedioPagoTransferencia mpt = (MedioPagoTransferencia) mp;
 					
 					pay.setTenderType(MPayment.TENDERTYPE_DirectDeposit);
+					
+					pay.setCheckNo(mpt.nroTransf); // Numero de cheque
 					
 					mpt.setPayment(pay);
 				}
@@ -1741,6 +1805,8 @@ public class VOrdenPagoModel implements TableModelListener {
 			}
 			
 			// 4. Guardar Retenciones
+			m_retGen.setProjectID(getProjectID());
+			m_retGen.setCampaignID(getCampaignID());
 			m_retGen.save(hdr);
 			
 			// 5. Agregar retenciones como medio de pago
@@ -1851,7 +1917,8 @@ public class VOrdenPagoModel implements TableModelListener {
 			saveOk = hdr.save();
 
 			// 3. Retenciones
-			
+			m_retGen.setProjectID(getProjectID());
+			m_retGen.setCampaignID(getCampaignID());
 			m_retGen.save(hdr);
 			
 			// 4. Generar los pagos, completos.
@@ -1873,7 +1940,13 @@ public class VOrdenPagoModel implements TableModelListener {
 			
 			if( saveOk && hdr.getID() != 0 ) {
 				saveOk = saveOk && hdr.processIt( DocAction.ACTION_Complete );
+				if(!saveOk){
+					throw new Exception(hdr.getProcessMsg());
+				}
 				saveOk = saveOk && hdr.save( getTrxName());
+				if(!saveOk){
+					throw new Exception(CLogger.retrieveErrorAsString());
+				}
 	        }
 			
 			// 99. Realizar operaciones custom al final del procesamiento
@@ -2216,7 +2289,13 @@ public class VOrdenPagoModel implements TableModelListener {
 		
 		hdr.setAllocationType(getHdrAllocationType());
 
-		String HdrDescription = getAllocHdrDescription();
+		String HdrDescription ="";
+		if(description.compareTo("")==0){
+			HdrDescription= getAllocHdrDescription();
+		}
+		else{
+			HdrDescription=description;
+		}
 
 		hdr.setApprovalAmt(approvalAmt);
 		hdr.setGrandTotal(sumaTotalPagar);
@@ -2905,6 +2984,8 @@ public class VOrdenPagoModel implements TableModelListener {
 		onlineAllocationLines = new ArrayList<AllocationLine>();
 		m_newlyCreatedC_AllocationHeader_ID = -1;
 		retencionIncludedInMedioPago = false;
+		setProjectID(0);
+		setCampaignID(0);
 	}
 
 	/**
@@ -3006,6 +3087,14 @@ public class VOrdenPagoModel implements TableModelListener {
 		this.documentNo = documentNo;
 	}
 	
+	public void setDescription(String description) {
+		this.description = description;
+	}
+	
+	public String getDescription() {
+		return description;
+	}
+	
 	/**
 	 * Valida si el numero de documento especificado ya existe.  En ese caso retorna true
 	 */
@@ -3041,6 +3130,22 @@ public class VOrdenPagoModel implements TableModelListener {
 			"'" + X_C_AllocationHdr.ALLOCATIONTYPE_PaymentFromInvoice + "'," +
 			"'" + X_C_AllocationHdr.ALLOCATIONTYPE_AdvancedPaymentOrder + "'" +
 			")";
+	}
+
+	public void setProjectID(Integer projectID) {
+		this.projectID = projectID;
+	}
+
+	public Integer getProjectID() {
+		return projectID;
+	}
+
+	public void setCampaignID(Integer campaignID) {
+		this.campaignID = campaignID;
+	}
+
+	public Integer getCampaignID() {
+		return campaignID;
 	}
 	
 }

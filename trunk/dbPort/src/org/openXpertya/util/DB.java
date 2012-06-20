@@ -738,7 +738,7 @@ public final class DB {
      */
 
     public static CPreparedStatement prepareStatement( String RO_SQL ) {
-        return prepareStatement( RO_SQL,ResultSet.TYPE_FORWARD_ONLY,ResultSet.CONCUR_READ_ONLY,null );
+        return prepareStatement( RO_SQL,ResultSet.TYPE_FORWARD_ONLY,ResultSet.CONCUR_READ_ONLY,null, false );
     }    // prepareStatement
 
     /**
@@ -752,8 +752,14 @@ public final class DB {
      */
 
     public static CPreparedStatement prepareStatement( String RO_SQL,String trxName ) {
-        return prepareStatement( RO_SQL,ResultSet.TYPE_FORWARD_ONLY,ResultSet.CONCUR_READ_ONLY,trxName );
+        return prepareStatement( RO_SQL,ResultSet.TYPE_FORWARD_ONLY,ResultSet.CONCUR_READ_ONLY,trxName,false );
     }    // prepareStatement
+    
+    
+    /** Sobrecarga con parametro noConvert para evitar intentos de conversion de sentencias */
+    public static CPreparedStatement prepareStatement( String RO_SQL,String trxName, boolean noConvert) {
+    	return prepareStatement( RO_SQL,ResultSet.TYPE_FORWARD_ONLY,ResultSet.CONCUR_READ_ONLY,trxName, noConvert );
+    }
 
     /**
      * Descripción de Método
@@ -767,7 +773,7 @@ public final class DB {
      */
 
     public static CPreparedStatement prepareStatement( String sql,int resultSetType,int resultSetConcurrency ) {
-        return prepareStatement( sql,resultSetType,resultSetConcurrency,null );
+        return prepareStatement( sql,resultSetType,resultSetConcurrency,null,false );
     }    // prepareStatement
 
     /**
@@ -781,16 +787,23 @@ public final class DB {
      *
      * @return
      */
-
-    public static CPreparedStatement prepareStatement( String sql,int resultSetType,int resultSetConcurrency,String trxName ) {
+    public static CPreparedStatement prepareStatement( String sql,int resultSetType,int resultSetConcurrency,String trxName  ) {
+    	return prepareStatement(sql, resultSetType, resultSetConcurrency, trxName, false);
+    }
+    
+    
+    /** Sobrecarga con parametro noConvert para evitar intentos de conversion de sentencias */
+    public static CPreparedStatement prepareStatement( String sql,int resultSetType,int resultSetConcurrency,String trxName, boolean noConvert ) {
         if( (sql == null) || (sql.length() == 0) ) {
             throw new IllegalArgumentException( "DB.prepareStatement - No SQL" );
         }
 
         //
 
-        return new CPreparedStatement( resultSetType,resultSetConcurrency,sql,trxName );
+        return new CPreparedStatement( resultSetType,resultSetConcurrency,sql,trxName, noConvert );
     }    // prepareStatement
+    
+
 
     /**
      * Descripción de Método
@@ -1093,13 +1106,19 @@ public final class DB {
         return retValue;
     }    // getRowSet
 
+       
     
     public static Object getSQLObject( String trxName, String sql, Object[] params ) {
+    	return getSQLObject( trxName, sql, params, false );
+    }
+    
+    /** Sobrecarga con parametro noConvert para evitar intentos de conversion de sentencias */
+    public static Object getSQLObject( String trxName, String sql, Object[] params, boolean noConvert ) {
         Object               retObj = null;
         PreparedStatement pstmt    = null;
 
         try {
-            pstmt = prepareStatement( sql,trxName );
+            pstmt = prepareStatement( sql,trxName, noConvert );
 
             if (params != null) {
             	for (int i=0; i<params.length; i++)
@@ -1134,6 +1153,8 @@ public final class DB {
     }    // getSQLValue
     
     
+    
+    
     /**
      * Descripción de Método
      *
@@ -1143,13 +1164,17 @@ public final class DB {
      *
      * @return
      */
-
     public static int getSQLValue( String trxName,String sql ) {
+    	return getSQLValue( trxName, sql, false );
+    }
+
+    /** Sobrecarga con parametro noConvert para evitar intentos de conversion de sentencias */
+    public static int getSQLValue( String trxName,String sql, boolean noConvert ) {
         int               retValue = -1;
         PreparedStatement pstmt    = null;
 
         try {
-            pstmt = prepareStatement( sql,trxName );
+            pstmt = prepareStatement( sql,trxName, noConvert );
 
             ResultSet rs = pstmt.executeQuery();
 
@@ -1178,6 +1203,8 @@ public final class DB {
         return retValue;
     }    // getSQLValue
 
+    
+    
     /**
      * Descripción de Método
      *
@@ -1188,13 +1215,17 @@ public final class DB {
      *
      * @return
      */
-
     public static int getSQLValue( String trxName,String sql,int int_param1 ) {
+    	return getSQLValue( trxName,sql, int_param1, false );
+    }
+    
+    /** Sobrecarga con parametro noConvert para evitar intentos de conversion de sentencias */
+    public static int getSQLValue( String trxName,String sql,int int_param1, boolean noConvert ) {
         int               retValue = -1;
         PreparedStatement pstmt    = null;
 
         try {
-            pstmt = prepareStatement( sql,trxName );
+            pstmt = prepareStatement( sql,trxName, noConvert );
             pstmt.setInt( 1,int_param1 );
 
             ResultSet rs = pstmt.executeQuery();
@@ -1224,6 +1255,8 @@ public final class DB {
         return retValue;
     }    // getSQLValue
 
+
+    
     /**
      * Descripción de Método
      *
@@ -1235,13 +1268,17 @@ public final class DB {
      *
      * @return
      */
-
     public static int getSQLValue( String trxName,String sql,int int_param1,int int_param2 ) {
+    	return getSQLValue( trxName,sql, int_param1, int_param2, false );
+    }
+    
+    /** Sobrecarga con parametro noConvert para evitar intentos de conversion de sentencias */
+    public static int getSQLValue( String trxName,String sql,int int_param1,int int_param2, boolean noConvert ) {
         int               retValue = -1;
         PreparedStatement pstmt    = null;
 
         try {
-            pstmt = prepareStatement( sql,trxName );
+            pstmt = prepareStatement( sql,trxName, noConvert );
             pstmt.setInt( 1,int_param1 );
             pstmt.setInt( 2,int_param2 );
 
@@ -1272,6 +1309,8 @@ public final class DB {
         return retValue;
     }    // getSQLValue
 
+    	
+    
     /**
      * Descripción de Método
      *
@@ -1282,13 +1321,17 @@ public final class DB {
      *
      * @return
      */
-
     public static int getSQLValue( String trxName,String sql,String str_param1 ) {
+    	return getSQLValue(trxName, sql, str_param1, false );
+    }
+    
+    /** Sobrecarga con parametro noConvert para evitar intentos de conversion de sentencias */
+    public static int getSQLValue( String trxName,String sql,String str_param1, boolean noConvert ) {
         int               retValue = -1;
         PreparedStatement pstmt    = null;
 
         try {
-            pstmt = prepareStatement( sql,trxName );
+            pstmt = prepareStatement( sql,trxName, noConvert );
             pstmt.setString( 1,str_param1 );
 
             ResultSet rs = pstmt.executeQuery();
@@ -1317,6 +1360,9 @@ public final class DB {
 
         return retValue;
     }    // getSQLValue
+    
+    
+
 
     /**
      * Descripción de Método
@@ -1329,13 +1375,17 @@ public final class DB {
      *
      * @return
      */
-
-    public static int getSQLValue( String trxName,String sql,int int_param1,String s_param2 ) {
+    public static int getSQLValue( String trxName,String sql,int int_param1,String s_param2) {
+    	return getSQLValue( trxName, sql, int_param1, s_param2, false );
+    }    
+    
+    /** Sobrecarga con parametro noConvert para evitar intentos de conversion de sentencias */
+    public static int getSQLValue( String trxName,String sql,int int_param1,String s_param2, boolean noConvert ) {
         int               retValue = -1;
         PreparedStatement pstmt    = null;
 
         try {
-            pstmt = prepareStatement( sql,trxName );
+            pstmt = prepareStatement( sql,trxName, noConvert );
             pstmt.setInt( 1,int_param1 );
             pstmt.setString( 2,s_param2 );
 
@@ -1365,6 +1415,8 @@ public final class DB {
 
         return retValue;
     }    // getSQLValue
+    
+
 
     /**
      * Descripción de Método
@@ -1376,13 +1428,17 @@ public final class DB {
      *
      * @return
      */
-
     public static String getSQLValueString( String trxName,String sql,int int_param1 ) {
+    	return getSQLValueString( trxName, sql, int_param1, false );
+    }
+
+    /** Sobrecarga con parametro noConvert para evitar intentos de conversion de sentencias */
+    public static String getSQLValueString( String trxName,String sql,int int_param1, boolean noConvert ) {
         String            retValue = null;
         PreparedStatement pstmt    = null;
 
         try {
-            pstmt = prepareStatement( sql,trxName );
+            pstmt = prepareStatement( sql,trxName, noConvert );
             pstmt.setInt( 1,int_param1 );
 
             ResultSet rs = pstmt.executeQuery();
@@ -1412,13 +1468,20 @@ public final class DB {
         return retValue;
     }    // getSQLValueString
 
+
     
-    public static String getSQLValueString( String trxName,String sql,String str_param1 ) {
+    
+    public static String getSQLValueString( String trxName,String sql,String str_param1) {
+    	return getSQLValueString( trxName, sql, str_param1, false );
+    }
+    
+    /** Sobrecarga con parametro noConvert para evitar intentos de conversion de sentencias */
+    public static String getSQLValueString( String trxName,String sql,String str_param1, boolean noConvert ) {
         String            retValue = null;
         PreparedStatement pstmt    = null;
 
         try {
-            pstmt = prepareStatement( sql,trxName );
+            pstmt = prepareStatement( sql,trxName, noConvert );
             pstmt.setString( 1,str_param1 );
 
             ResultSet rs = pstmt.executeQuery();
@@ -1448,6 +1511,8 @@ public final class DB {
         return retValue;
     }    // getSQLValueString
     
+
+    
     /**
      * Descripción de Método
      *
@@ -1458,13 +1523,17 @@ public final class DB {
      *
      * @return
      */
-
-    public static BigDecimal getSQLValueBD( String trxName,String sql,int int_param1 ) {
+    public static BigDecimal getSQLValueBD( String trxName,String sql,int int_param1) {
+    	return getSQLValueBD( trxName, sql, int_param1, false );
+    }
+    
+    /** Sobrecarga con parametro noConvert para evitar intentos de conversion de sentencias */
+    public static BigDecimal getSQLValueBD( String trxName,String sql,int int_param1, boolean noConvert ) {
         BigDecimal        retValue = null;
         PreparedStatement pstmt    = null;
 
         try {
-            pstmt = prepareStatement( sql,trxName );
+            pstmt = prepareStatement( sql,trxName, noConvert );
             pstmt.setInt( 1,int_param1 );
 
             ResultSet rs = pstmt.executeQuery();
@@ -1495,12 +1564,19 @@ public final class DB {
     }    // getSQLValueBD
     
     
+   
+
     public static Timestamp getSQLValueTimestamp( String trxName,String sql) {
+    	return getSQLValueTimestamp( trxName, sql, false); 
+    }
+
+    /** Sobrecarga con parametro noConvert para evitar intentos de conversion de sentencias */    
+    public static Timestamp getSQLValueTimestamp( String trxName,String sql, boolean noConvert) {
         Timestamp        retValue = null;
         PreparedStatement pstmt    = null;
 
         try {
-            pstmt = prepareStatement( sql,trxName );
+            pstmt = prepareStatement( sql,trxName, noConvert );
 
 
             ResultSet rs = pstmt.executeQuery();
@@ -1530,6 +1606,8 @@ public final class DB {
         return retValue;
     }    // getSQLValueTimestamp
 
+    
+    
     /**
      * Descripción de Método
      *

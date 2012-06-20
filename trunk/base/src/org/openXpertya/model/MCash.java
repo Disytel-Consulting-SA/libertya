@@ -80,14 +80,14 @@ public class MCash extends X_C_Cash implements DocAction {
         // Existing Journal
 
         String sql = "SELECT * FROM C_Cash c " + "WHERE c.AD_Org_ID=?"                                                                                                                               // #1
-                     + " AND TRUNC(c.StatementDate)=?"                                                                                                                                               // #2
+                     + " AND TRUNC(c.StatementDate)=TRUNC(?::timestamp)"                                                                                                                                               // #2
                      + " AND c.Processed='N'" + " AND EXISTS (SELECT * FROM C_CashBook cb " + "WHERE c.C_CashBook_ID=cb.C_CashBook_ID AND cb.AD_Org_ID=c.AD_Org_ID" + " AND cb.C_Currency_ID=?)";    // #3
         PreparedStatement pstmt = null;
 
         try {
             pstmt = DB.prepareStatement( sql,trxName );
             pstmt.setInt( 1,AD_Org_ID );
-            pstmt.setTimestamp( 2,TimeUtil.getDay( dateAcct ));
+            pstmt.setTimestamp( 2,dateAcct );
             pstmt.setInt( 3,C_Currency_ID );
 
             ResultSet rs = pstmt.executeQuery();
@@ -153,14 +153,14 @@ public class MCash extends X_C_Cash implements DocAction {
         // Existing Journal
 
         String            sql   = "SELECT * FROM C_Cash c " + "WHERE c.C_CashBook_ID=?"    // #1
-                                  + " AND TRUNC(c.StatementDate)=?"                        // #2
+                                  + " AND TRUNC(c.StatementDate)=TRUNC(?::timestamp)"                        // #2
                                   + " AND c.Processed='N'";
         PreparedStatement pstmt = null;
 
         try {
             pstmt = DB.prepareStatement( sql,trxName );
             pstmt.setInt( 1,C_CashBook_ID );
-            pstmt.setTimestamp( 2,TimeUtil.getDay( dateAcct ));
+            pstmt.setTimestamp( 2,dateAcct );
 
             ResultSet rs = pstmt.executeQuery();
 
@@ -221,6 +221,21 @@ public class MCash extends X_C_Cash implements DocAction {
 	 */
 	public static void transferCash(int fromCashID, int toCashID,
 			BigDecimal amount, Properties ctx, String trxName) throws Exception {
+		transferCash(fromCashID, toCashID, amount, 0, ctx, trxName);
+    }
+	
+	/**
+	 * 
+	 * @param fromCashID
+	 * @param toCashID
+	 * @param amount
+	 * @param projectID
+	 * @param ctx
+	 * @param trxName
+	 * @throws Exception
+	 */
+	public static void transferCash(int fromCashID, int toCashID,
+			BigDecimal amount, Integer projectID, Properties ctx, String trxName) throws Exception {
 
 		// El importe debe ser diferente a cero.
 		if (amount.compareTo(BigDecimal.ZERO) == 0) {
@@ -242,6 +257,11 @@ public class MCash extends X_C_Cash implements DocAction {
 		fromCashLine.setCashType(MCashLine.CASHTYPE_CashTransfer);
 		fromCashLine.setTransferCash_ID(toCashID);
 		fromCashLine.setAmount(amount.negate());
+		Integer realProjectID = projectID;
+		if(Util.isEmpty(projectID, true)){
+			realProjectID = fromCashLine.getC_Project_ID();
+		}
+		fromCashLine.setC_Project_ID(realProjectID);
 		
 		if (!DocumentEngine.processAndSave(fromCashLine, MCashLine.ACTION_Complete, true)) {
 			throw new Exception("@CashLineCreateError@ (" + fromCash.getName()
@@ -564,10 +584,15 @@ public class MCash extends X_C_Cash implements DocAction {
             if( C_Currency_ID == line.getC_Currency_ID()) {
                 difference = difference.add( line.getAmount());
             } else {
-                BigDecimal amt = MConversionRate.convert( getCtx(),line.getAmount(),line.getC_Currency_ID(),C_Currency_ID,getDateAcct(),0,getAD_Client_ID(),getAD_Org_ID());
-
+                //BigDecimal amt = MConversionRate.convert( getCtx(),line.getAmount(),line.getC_Currency_ID(),C_Currency_ID,getDateAcct(),0,getAD_Client_ID(),getAD_Org_ID());
+            	// Modificado para que soporte la Tasa en cualquier sentido
+            	// (así se hace en facturas).
+            	BigDecimal amt = MCurrency.currencyConvert(line.getAmount(),
+						line.getC_Currency_ID(), C_Currency_ID,
+						getDateAcct(), 0, getCtx());
+            	
                 if( amt == null ) {
-                    m_processMsg = "No Conversion Rate found - @C_CashLine_ID@= " + line.getLine();
+                    m_processMsg = "@NoCurrencyConversion@ - @C_CashLine_ID@= " + line.getLine();
 
                     return DocAction.STATUS_Invalid;
                 }

@@ -44,6 +44,8 @@ import org.openXpertya.apps.ConfirmPanel;
 import org.openXpertya.grid.ed.VComboBox;
 import org.openXpertya.minigrid.IDColumn;
 import org.openXpertya.model.MClient;
+import org.openXpertya.model.MPriceList;
+import org.openXpertya.model.MPriceListVersion;
 import org.openXpertya.model.MQuery;
 import org.openXpertya.model.MRole;
 import org.openXpertya.util.DB;
@@ -124,7 +126,8 @@ public class InfoProduct extends Info implements ActionListener {
     /** Descripci�n de Campos */
     
     
-    private static  String s_productFrom_version = "M_Product p" + " LEFT OUTER JOIN M_ProductPrice pr ON (p.M_Product_ID=pr.M_Product_ID AND pr.IsActive='Y')" + " LEFT OUTER JOIN M_AttributeSet pa ON (p.M_AttributeSet_ID=pa.M_AttributeSet_ID)";
+    //Modificado por Lucas Hernandez - Kunan
+    private static  String s_productFrom_version = "M_Product p" + " LEFT OUTER JOIN M_ProductPrice pr ON (p.M_Product_ID=pr.M_Product_ID AND pr.IsActive='Y')" + " LEFT OUTER JOIN M_AttributeSet pa ON (p.M_AttributeSet_ID=pa.M_AttributeSet_ID)" + " LEFT OUTER JOIN M_Product_Upc_Instance pui ON (p.M_Product_ID=pui.M_Product_ID AND pui.IsActive='Y')";
     private static String s_productFrom= "M_Product p" + "p.IsActive='Y'";
    
     // dREHER, guardo la ultima linea seleccionada
@@ -132,8 +135,10 @@ public class InfoProduct extends Info implements ActionListener {
     
     /** Descripci�n de Campos */
     
+    private boolean check=false;
+    protected boolean validatePriceList=false;
 		
-   protected Info_Column[] s_productLayout = getInfoColumns();
+    protected Info_Column[] s_productLayout = getInfoColumns();
    
    
 	protected Info_Column[] getInfoColumns()
@@ -241,6 +246,11 @@ public class InfoProduct extends Info implements ActionListener {
     /** Descripci�n de Campos */
 
     private int m_C_BPartner_ID = 0;
+    
+    /** Descripci�n de Campos */
+    //By Lucas Hernandez - Kunan
+
+    protected int m_Product_UPC_Instance_ID = -1;
     
  // dREHER, agrego posibilidad de filtrar productos que correspondan al socio de negocios actual
 	private JCheckBox checkBP = new JCheckBox();
@@ -502,19 +512,29 @@ public class InfoProduct extends Info implements ActionListener {
               + " ORDER BY M_PriceList_Version.Name";
 
         try {
-            pickPriceList.addItem( new KeyNamePair( 0,"" ));
-
             PreparedStatement pstmt = DB.prepareStatement( SQL );
             ResultSet         rs    = pstmt.executeQuery();
 
+            if(validateListPrice(0)==true){
+            	pickPriceList.addItem( new KeyNamePair(0,"" ));
+            	validatePriceList=true;
+            }
+            
             while( rs.next()) {
                 KeyNamePair kn = new KeyNamePair( rs.getInt( 1 ),rs.getString( 2 ));
-
-                pickPriceList.addItem( kn );
-            }
+                check=validateListPrice(rs.getInt(1));                
+                if(check==true){
+                	pickPriceList.addItem( kn );
+                	validatePriceList=true;
+                }
+            }            
 
             rs.close();
             pstmt.close();
+            
+            if(pickPriceList.getItemCount()==0){
+            	pickPriceList.setEnabled(false);
+            }
 
             // Warehouse
 
@@ -536,7 +556,7 @@ public class InfoProduct extends Info implements ActionListener {
             setStatusLine( e.getLocalizedMessage(),true );
         }
     }    // fillPicks
-
+    
     /**
      * Descripci�n de M�todo
      *
@@ -648,6 +668,10 @@ public class InfoProduct extends Info implements ActionListener {
         return retValue;
     }    // findPLV
 
+    protected void instanceFound(int msi){
+
+    }
+    
     /**
      * Descripci�n de M�todo
      *
@@ -700,7 +724,8 @@ public class InfoProduct extends Info implements ActionListener {
         String upc = fieldUPC.getText().toUpperCase();
 
         if( !( upc.equals( "" ) || upc.equals( "%" ))) {
-            where.append( " AND UPPER(p.UPC) LIKE ?" );
+        	where.append(" AND ((UPPER(p.UPC) LIKE ?)");
+        	where.append(" OR (UPPER(pui.UPC) LIKE '"+ upc + "'))");
         }
 
         // => SKU
@@ -1033,8 +1058,9 @@ public class InfoProduct extends Info implements ActionListener {
                 :ID.toString());
 
         KeyNamePair kn = ( KeyNamePair )pickPriceList.getSelectedItem();
-
-        Env.setContext( Env.getCtx(),Env.WINDOW_INFO,Env.TAB_INFO,"M_PriceList_Version_ID",kn.getID());
+        if(kn!=null){
+        	Env.setContext( Env.getCtx(),Env.WINDOW_INFO,Env.TAB_INFO,"M_PriceList_Version_ID",kn.getID());
+        }
         kn = ( KeyNamePair )pickWarehouse.getSelectedItem();
         Env.setContext( Env.getCtx(),Env.WINDOW_INFO,Env.TAB_INFO,"M_Warehouse_ID",kn.getID());
         Env.setContext(Env.getCtx(), "M_Warehouse_ID", kn.getID());
@@ -1075,7 +1101,7 @@ public class InfoProduct extends Info implements ActionListener {
                 new Info_Column( Msg.translate( Env.getCtx(),"QtyReserved" ),"bomQtyReserved(p.M_Product_ID,?,0) AS QtyReserved",Double.class ),new Info_Column( Msg.translate( Env.getCtx(),"QtyOrdered" ),"bomQtyOrdered(p.M_Product_ID,?,0) AS QtyOrdered",Double.class ),
                 new Info_Column( Msg.translate( Env.getCtx(),"Discontinued" ).substring( 0,1 ),"p.Discontinued",Boolean.class ),new Info_Column( Msg.translate( Env.getCtx(),"Margin" ),"bomPriceStd(p.M_Product_ID, pr.M_PriceList_Version_ID)-bomPriceLimit(p.M_Product_ID, pr.M_PriceList_Version_ID) AS Margin",BigDecimal.class ),
                 new Info_Column( Msg.translate( Env.getCtx(),"PriceLimit" ),"bomPriceLimit(p.M_Product_ID, pr.M_PriceList_Version_ID) AS PriceLimit",BigDecimal.class ),
-                new Info_Column( Msg.translate( Env.getCtx(),"IsInstanceAttribute" ),"pa.IsInstanceAttribute",Boolean.class )
+                new Info_Column( Msg.translate( Env.getCtx(),"IsInstanceAttribute" ),"pa.IsInstanceAttribute",Boolean.class ),
             };
              
             INDEX_NAME       = 2;
@@ -1113,6 +1139,31 @@ public class InfoProduct extends Info implements ActionListener {
 			return 0;
 		KeyNamePair pair = (KeyNamePair)pickPriceList.getSelectedItem();
 		return Integer.parseInt(pair.getID());
+	}
+	
+	private boolean validateListPrice(int pricelist){
+		boolean res=false;
+		MPriceListVersion plv= new MPriceListVersion(Env.getCtx(),pricelist,null);
+		MRole mrole=new MRole(Env.getCtx(),Env.getAD_Role_ID(Env.getCtx()),null);
+		MPriceList pl =new MPriceList(Env.getCtx(),plv.getM_PriceList_ID(),null);
+		if(pl.isSOPriceList()==true){
+			if(mrole.isviewsalesprice()==true){			
+				res=true;	
+			}
+		}
+		if(pl.isSOPriceList()==false){
+			if(mrole.isviewpurchaseprice()==true){			
+				if(pricelist!=0){
+					res=true;
+				}
+				else{
+					if(mrole.isviewsalesprice()==true){
+						res=true;
+					}
+				}
+			}
+		}
+		return res;
 	}
 }    // InfoProduct
 

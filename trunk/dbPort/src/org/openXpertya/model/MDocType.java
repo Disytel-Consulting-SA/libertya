@@ -173,7 +173,10 @@ public class MDocType extends X_C_DocType {
     
     /** Customer Tender = SOTR (Devolución de Proveedor) */
     public static final String DOCTYPE_CustomerTender = "SOTR";
-        
+    
+    /** Amortization = AMO (Amortización) */
+    public static final String DOCTYPE_Amortization = "AMO";
+    
     /**
      *      Standard Constructor
      *      @param ctx context
@@ -198,7 +201,7 @@ public class MDocType extends X_C_DocType {
             setIsPickQAConfirm(false);
             setIsShipConfirm(false);
             setIsSplitWhenDifference(false);
-
+            
             //
             setIsCreateCounter(true);
             setIsDefaultCounterDoc(false);

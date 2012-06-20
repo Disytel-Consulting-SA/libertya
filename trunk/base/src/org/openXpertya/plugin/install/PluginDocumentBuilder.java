@@ -52,7 +52,7 @@ public abstract class PluginDocumentBuilder {
 	/**
 	 * Constructor basico para compatibilidad con replicacion
 	 */
-	public PluginDocumentBuilder(int array, String trxName)
+	public PluginDocumentBuilder(String trxName)
 	{
 		super();
 		this.trxName = trxName;

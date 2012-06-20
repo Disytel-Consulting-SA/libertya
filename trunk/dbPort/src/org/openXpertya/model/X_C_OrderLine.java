@@ -7,7 +7,7 @@ import java.math.*;
 import org.openXpertya.util.*;
 /** Modelo Generado por C_OrderLine
  *  @author Comunidad de Desarrollo Libertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
- *  @version  - 2011-09-09 10:51:28.652 */
+ *  @version  - 2012-03-30 10:39:30.733 */
 public class X_C_OrderLine extends org.openXpertya.model.PO
 {
 /** Constructor estándar */
@@ -131,6 +131,32 @@ public int getC_Currency_ID()
 Integer ii = (Integer)get_Value("C_Currency_ID");
 if (ii == null) return 0;
 return ii.intValue();
+}
+public static final int CHECKOUTPLACE_AD_Reference_ID = MReference.getReferenceID("M_Product Checkout Place");
+/** Warehouse = W */
+public static final String CHECKOUTPLACE_Warehouse = "W";
+/** Point Of Sale = P */
+public static final String CHECKOUTPLACE_PointOfSale = "P";
+/** Warehouse & POS = B */
+public static final String CHECKOUTPLACE_WarehousePOS = "B";
+/** Set Checkout Place.
+Product Checkout Place */
+public void setCheckoutPlace (String CheckoutPlace)
+{
+if (CheckoutPlace == null || CheckoutPlace.equals("W") || CheckoutPlace.equals("P") || CheckoutPlace.equals("B"));
+ else throw new IllegalArgumentException ("CheckoutPlace Invalid value - Reference = CHECKOUTPLACE_AD_Reference_ID - W - P - B");
+if (CheckoutPlace != null && CheckoutPlace.length() > 1)
+{
+log.warning("Length > 1 - truncated");
+CheckoutPlace = CheckoutPlace.substring(0,1);
+}
+set_Value ("CheckoutPlace", CheckoutPlace);
+}
+/** Get Checkout Place.
+Product Checkout Place */
+public String getCheckoutPlace() 
+{
+return (String)get_Value("CheckoutPlace");
 }
 /** Set Order.
 Order */
@@ -680,7 +706,7 @@ public boolean insertDirect()
 try 
 {
  
- 		 String sql = " INSERT INTO C_OrderLine(AD_Client_ID,AD_Org_ID,C_BPartner_ID,C_BPartner_Location_ID,C_Charge_ID,C_Currency_ID,C_Order_ID,C_OrderLine_ID,C_Project_ID,Created,CreatedBy,C_Tax_ID,C_UOM_ID,DateDelivered,DateInvoiced,DateOrdered,DatePromised,Description,Discount,DocumentDiscountAmt,FreightAmt,IsActive,IsDescription,Line,LineBonusAmt,LineDiscountAmt,LineNetAmt,LineTotalAmt,M_AttributeSetInstance_ID,M_Product_ID,M_Shipper_ID,M_Warehouse_ID,OpenMatrix,PriceActual,PriceEntered,PriceLimit,PriceList,Processed,QtyDelivered,QtyEntered,QtyInvoiced,QtyOrdered,QtyReserved,Ref_OrderLine_ID,S_ResourceAssignment_ID,Updated,UpdatedBy) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?) ";
+ 		 String sql = " INSERT INTO C_OrderLine(AD_Client_ID,AD_Org_ID,C_BPartner_ID,C_BPartner_Location_ID,C_Charge_ID,C_Currency_ID,CheckoutPlace,C_Order_ID,C_OrderLine_ID,C_Project_ID,Created,CreatedBy,C_Tax_ID,C_UOM_ID,DateDelivered,DateInvoiced,DateOrdered,DatePromised,Description,Discount,DocumentDiscountAmt,FreightAmt,IsActive,IsDescription,Line,LineBonusAmt,LineDiscountAmt,LineNetAmt,LineTotalAmt,M_AttributeSetInstance_ID,M_Product_ID,M_Shipper_ID,M_Warehouse_ID,OpenMatrix,PriceActual,PriceEntered,PriceLimit,PriceList,Processed,QtyDelivered,QtyEntered,QtyInvoiced,QtyOrdered,QtyReserved,Ref_OrderLine_ID,S_ResourceAssignment_ID,Updated,UpdatedBy) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?) ";
 
 		 if (getAD_Client_ID() == 0) sql = sql.replaceFirst("AD_Client_ID,","").replaceFirst("\\?,", "");
  		 if (getAD_Org_ID() == 0) sql = sql.replaceFirst("AD_Org_ID,","").replaceFirst("\\?,", "");
@@ -688,6 +714,7 @@ try
  		 if (getC_BPartner_Location_ID() == 0) sql = sql.replaceFirst("C_BPartner_Location_ID,","").replaceFirst("\\?,", "");
  		 if (getC_Charge_ID() == 0) sql = sql.replaceFirst("C_Charge_ID,","").replaceFirst("\\?,", "");
  		 if (getC_Currency_ID() == 0) sql = sql.replaceFirst("C_Currency_ID,","").replaceFirst("\\?,", "");
+ 		 if (getCheckoutPlace() == null) sql = sql.replaceFirst("CheckoutPlace,","").replaceFirst("\\?,", "");
  		 if (getC_Order_ID() == 0) sql = sql.replaceFirst("C_Order_ID,","").replaceFirst("\\?,", "");
  		 if (getC_OrderLine_ID() == 0) sql = sql.replaceFirst("C_OrderLine_ID,","").replaceFirst("\\?,", "");
  		 if (getC_Project_ID() == 0) sql = sql.replaceFirst("C_Project_ID,","").replaceFirst("\\?,", "");
@@ -737,6 +764,7 @@ try
 		 if (getC_BPartner_Location_ID() != 0) pstmt.setInt(col++, getC_BPartner_Location_ID());
 		 if (getC_Charge_ID() != 0) pstmt.setInt(col++, getC_Charge_ID());
 		 if (getC_Currency_ID() != 0) pstmt.setInt(col++, getC_Currency_ID());
+		 if (getCheckoutPlace() != null) pstmt.setString(col++, getCheckoutPlace());
 		 if (getC_Order_ID() != 0) pstmt.setInt(col++, getC_Order_ID());
 		 if (getC_OrderLine_ID() != 0) pstmt.setInt(col++, getC_OrderLine_ID());
 		 if (getC_Project_ID() != 0) pstmt.setInt(col++, getC_Project_ID());

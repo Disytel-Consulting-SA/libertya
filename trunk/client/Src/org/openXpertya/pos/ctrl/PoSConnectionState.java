@@ -103,6 +103,29 @@ public abstract class PoSConnectionState {
 	
 	public abstract void voidDocuments() throws PosException;
 	
+	public abstract Integer getMaxOrderLineQty();
+	
+	public abstract String getNextInvoiceDocumentNo();
+	
+	/**
+	 * @param checkDeadLineToCompare
+	 *            plazo a comparar
+	 * @param checkDeadLineFrom
+	 *            plazo inicial del rango de comparación
+	 * @param checkDeadLineTo
+	 *            plazo final del rango de comparación o null en caso que no
+	 *            posea
+	 * @param checkDeadLineActual
+	 *            este plazo se utiliza cuando el plazo final es null, ese plazo
+	 *            debería ser el plazo del medio de pago y se toma dentro del
+	 *            rango cuando es estrictamente menos a éste
+	 * @return true si el plazo checkDeadLineToCompare se encuentra dentro del
+	 *         rango establecido, false caso contrario
+	 */
+	public abstract boolean isCheckDeadLineInRange(Integer deadline,
+			Integer beforeCheckDeadLineFrom, Integer beforeCheckDeadLineTo,
+			Integer actualCheckDeadLine); 
+	
 	public int getClientCurrencyID() {
 		return getPoSCOnfig().getCurrencyID();
 	}

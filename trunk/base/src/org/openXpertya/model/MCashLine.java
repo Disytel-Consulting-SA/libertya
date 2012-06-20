@@ -163,7 +163,8 @@ public class MCashLine extends X_C_CashLine implements DocAction {
         setC_Invoice_ID( invoice.getC_Invoice_ID());
         setCashType( CASHTYPE_Invoice );
         setC_Currency_ID( invoice.getC_Currency_ID());
-
+        setC_Project_ID(invoice.getC_Project_ID());
+        
         // Amount
 
         MDocType   dt  = MDocType.get( getCtx(),invoice.getC_DocType_ID());
@@ -537,6 +538,31 @@ public class MCashLine extends X_C_CashLine implements DocAction {
 		if (!DOCSTATUS_Drafted.equals(transferCash.getDocStatus())) {
 			m_processMsg = "@TransferCashInvalidStatus@";
 			return STATUS_Invalid;
+		}
+
+		// Asigna la moneda del Libro
+		setC_CashCurrency_ID(getCash().getC_Currency_ID());
+		
+		// Si la moneda del la línea es diferente a la del libro entonces se
+		// valida que haya conversión.
+		if (getC_Currency_ID() != getC_CashCurrency_ID() 
+			 && MCurrency.currencyConvert(getAmount(),
+						getC_Currency_ID(), getC_CashCurrency_ID(),
+						getCash().getDateAcct(), 0, getCtx()) == null) {
+            m_processMsg = "@NoCurrencyConversion@";
+            return DocAction.STATUS_Invalid;
+		}
+		
+		// Validar los montos pendientes de Factura
+		if (CASHTYPE_Invoice.equals(getCashType()) && getC_Invoice_ID() > 0) {
+			BigDecimal open = (BigDecimal)DB.getSQLObject(get_TrxName(), "SELECT invoiceOpen(?,0)", new Object[] {getC_Invoice_ID()});
+			if (getAmount().abs().compareTo(open) > 0) {
+				//FIXME: pasar a ADMessage
+				m_processMsg = "El Importe no puede ser mayor al importe pendiente de la factura. Pendiente: "
+						+ open.setScale(2).toString()
+						+ ". Si la diferencia es una diferencia de cambio debe primero generar una Nota de Débito o Crédito (según corresponda) e imputar el pago correspondiente a la diferencia ese documento.";
+				return STATUS_Invalid;
+			}
 		}
 		
 		setDocAction(DOCACTION_Complete);

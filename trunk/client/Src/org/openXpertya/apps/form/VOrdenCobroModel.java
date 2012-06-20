@@ -50,7 +50,6 @@ import org.openXpertya.util.CPreparedStatement;
 import org.openXpertya.util.DB;
 import org.openXpertya.util.DisplayType;
 import org.openXpertya.util.Env;
-import org.openXpertya.util.KeyNamePair;
 import org.openXpertya.util.Msg;
 import org.openXpertya.util.TimeUtil;
 import org.openXpertya.util.Util;
@@ -142,7 +141,7 @@ public class VOrdenCobroModel extends VOrdenPagoModel {
 	 * @throws Exception En caso de que se produzca un error al intentar cargar los datos
 	 * del esquema de retención.
 	 */
-	public void addRetencion(Integer retencionSchemaID, String retencionNumber, BigDecimal amount, Timestamp retencionDate) throws Exception {
+	public void addRetencion(Integer retencionSchemaID, String retencionNumber, BigDecimal amount, Timestamp retencionDate, Integer projectID, Integer campaignID) throws Exception {
 		if (retencionSchemaID == null || retencionSchemaID == 0)
 			throw new Exception("@FillMandatory@ @C_Withholding_ID@");
 		if (retencionNumber == null || retencionNumber.length() == 0)
@@ -159,6 +158,8 @@ public class VOrdenCobroModel extends VOrdenPagoModel {
 		retProcessor.setDateTrx(retencionDate);
 		retProcessor.setAmount(amount);
 		retProcessor.setRetencionNumber(retencionNumber);
+		retProcessor.setProjectID(projectID == null?0:projectID);
+		retProcessor.setCampaignID(campaignID == null?0:campaignID);
 		
 		addRetencion(retProcessor);
 	}
@@ -332,8 +333,8 @@ public class VOrdenCobroModel extends VOrdenPagoModel {
 		tarjetaCredito.setImporte(amt);
 		tarjetaCredito.setCuotasCount(cuotasCount);
 		tarjetaCredito.setCuotaAmt(cuotaAmt);
-		tarjetaCredito.setCampaign(campaignID);
-		tarjetaCredito.setProject(projectID);
+		tarjetaCredito.setCampaign(campaignID == null?0:campaignID);
+		tarjetaCredito.setProject(projectID == null?0:projectID);
 		tarjetaCredito.setSOTrx(true);
 		tarjetaCredito.setBank(bank);
 		tarjetaCredito.setDiscountSchemaToApply(getCurrentGeneralDiscount());
@@ -388,8 +389,8 @@ public class VOrdenCobroModel extends VOrdenPagoModel {
 		cheque.banco = bankName;
 		cheque.cuitLibrador = CUITLibrador;
 		cheque.descripcion = checkDescription;
-		cheque.setCampaign(campaignID);
-		cheque.setProject(projectID);
+		cheque.setCampaign(campaignID == null?0:campaignID);
+		cheque.setProject(projectID == null?0:projectID);
 		cheque.setSOTrx(true);
 		cheque.setDiscountSchemaToApply(getCurrentGeneralDiscount());
 		addMedioPago(cheque);
@@ -407,6 +408,8 @@ public class VOrdenCobroModel extends VOrdenPagoModel {
 			pay.setCreditCardNumber(tarjeta.getCreditCardNo());
 			pay.setCreditCardType(tarjeta.getCreditCardType());
 			pay.setA_Bank(tarjeta.getBank());
+			pay.setC_Project_ID(tarjeta.getProject() == null?0:tarjeta.getProject());
+			pay.setC_Campaign_ID(tarjeta.getCampaign() == null?0:tarjeta.getCampaign());
 			pay.setM_EntidadFinancieraPlan_ID(tarjeta.getEntidadFinancieraPlan().getID());
 			tarjeta.setPayment(pay);
 		}
@@ -920,7 +923,6 @@ public class VOrdenCobroModel extends VOrdenPagoModel {
 		// Obtener la suma de descuentos/recargos por tipo de descuento
 		Map<String, BigDecimal> discountsPerKind = reciboDeCliente.getDiscountsSumPerKind();
 		Set<String> kinds = discountsPerKind.keySet();
-		// Si no existe descuento o recargo 
 		MInvoice credit = null;
 		MInvoice debit = null;
 		MInvoice inv = null; 
@@ -944,6 +946,8 @@ public class VOrdenCobroModel extends VOrdenPagoModel {
 					// Crear la factura
 					inv = createCreditDebitInvoice(isCredit);
 					inv.setBPartner(getBPartner());
+					inv.setC_Project_ID(getProjectID());
+					inv.setC_Campaign_ID(getCampaignID());
 					if(!inv.save()){
 						throw new Exception("Can't create " + (isCredit ? "credit" : "debit")
 								+ " document for discounts. Original Error: "+CLogger.retrieveErrorAsString());
@@ -1220,6 +1224,7 @@ public class VOrdenCobroModel extends VOrdenPagoModel {
 		invoiceLine.setPriceList(amt);
 		invoiceLine.setC_Tax_ID(tax.getID());
 		invoiceLine.setLineNetAmt();
+		invoiceLine.setC_Project_ID(invoice.getC_Project_ID());
 		// Setear el artículo
 		// Buscar el artículo en la config
 		Integer productID = reciboDeCliente.getConfigProductID(isCredit, discountKind);
@@ -1455,17 +1460,7 @@ public class VOrdenCobroModel extends VOrdenPagoModel {
 		Calendar dueCalendar = Calendar.getInstance();
     	dueCalendar.setTimeInMillis(fechaEmi.getTime());
     	String checkDeadLine = paymentMedium.getCheckDeadLine();
-    	int days = 0;
-    	if(checkDeadLine.equals(MPOSPaymentMedium.CHECKDEADLINE_30)){
-    		days = 30;
-    	}
-    	else if(checkDeadLine.equals(MPOSPaymentMedium.CHECKDEADLINE_60)){
-    		days = 60;
-    	}
-    	else if(checkDeadLine.equals(MPOSPaymentMedium.CHECKDEADLINE_90)){
-    		days = 90;
-    	}
-    	dueCalendar.add(Calendar.DATE, days);
+    	dueCalendar.add(Calendar.DATE, Integer.parseInt(checkDeadLine));
     	return dueCalendar.getTime();
 	}
 

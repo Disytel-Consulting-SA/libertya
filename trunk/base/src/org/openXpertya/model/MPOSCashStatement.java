@@ -42,17 +42,14 @@ public class MPOSCashStatement extends X_C_POSCashStatement {
 	}
 
 	/**
-	 * Calcula el importe que representa una determinada cantidad de una
-	 * denominación de efectivo.
+	 * Determina el valor numérico del valor de efectivo parámetro
 	 * 
 	 * @param cashValue
 	 *            String con la denominación. Debe ser alguno de CASHVALUE_XXX
-	 * @param qty
-	 *            Cantidad de unidades de la denominación indicada.
 	 * @return {@link BigDecimal} con el importe representado.
+	 * @throws NumberFormatException
 	 */
-	public static BigDecimal getCashAmount(String cashValue, int qty) {
-		BigDecimal amount = BigDecimal.ZERO;
+	public static BigDecimal getCashValue(String cashValue) throws NumberFormatException{
 		BigDecimal divisor= null;
 		char type = cashValue.charAt(0);
 		if (type == 'C') {
@@ -64,9 +61,24 @@ public class MPOSCashStatement extends X_C_POSCashStatement {
 			return BigDecimal.ZERO;
 		}
 		
+		return new BigDecimal(cashValue.substring(1, 4)).setScale(2).divide(
+				divisor, 2, RoundingMode.HALF_UP);
+	}
+	
+	/**
+	 * Calcula el importe que representa una determinada cantidad de una
+	 * denominación de efectivo.
+	 * 
+	 * @param cashValue
+	 *            String con la denominación. Debe ser alguno de CASHVALUE_XXX
+	 * @param qty
+	 *            Cantidad de unidades de la denominación indicada.
+	 * @return {@link BigDecimal} con el importe representado.
+	 */
+	public static BigDecimal getCashAmount(String cashValue, int qty) {
+		BigDecimal amount = BigDecimal.ZERO;
 		try {
-			amount = new BigDecimal(cashValue.substring(1, 4)).setScale(2).divide(divisor, 2,
-					RoundingMode.HALF_UP).multiply(new BigDecimal(qty));
+			amount = getCashValue(cashValue).multiply(new BigDecimal(qty));
 		} catch (NumberFormatException e) {
 			s_log.warning("Invalid Cash Value Format. Cannot parse BigDecimal. CashValue="
 					+ cashValue);

@@ -82,14 +82,24 @@ public class PluginConstants {
 	/** Referencia a la entrada AD_ComponentObjectUID en tabla AD_ComponentVersion */
 	public static final String PROP_COMPONENTVERSIONUID = "COMPONENTVERSIONUID";
 	
-	/** Patch */
+	/** Patch (Y/N) */
 	public static final String PROP_PATCH = "PATCH";
+	
+	/** Copiar la instalación al changelog (Y/N) */
+	public static final String PROP_COPY_TO_CHANGELOG = "COPYTOCHANGELOG";
+
+	/** Mapear el changelog copiado a un component especifico (especificando su UID)  */
+	public static final String PROP_MAP_TO_COMPONENT_UID = "MAPTOCOMPONENTUID";
+	
+	/** Mapear el changelog copiado a un component version especifico (especificando su UID)  */
+	public static final String PROP_MAP_TO_COMPONENTVERSION_UID = "MAPTOCOMPONENTVERSIONUID";
 	
 	/** Ultimo changelog exportado */
 	public static final String PROP_LAST_CHANGELOG = "LAST_CHANGELOG";
 	
 	/** Fecha y hora de exportación */
 	public static final String PROP_EXPORT_TIMESTAMP = "EXPORT_TIMESTAMP"; 
+	
 	
 	/** ----------------------- CONSTANTES PARA GENERATE MODEL ----------------------- */
 	
@@ -121,8 +131,20 @@ public class PluginConstants {
 	/** Si es un proceso de postinstall del core, deberá utilizar este nombre package */
 	public static final String POSTINSTALL_BINARIES_DIR = "binarios";
 	
-	/** ----------------------- CONSTANTES PARA PROCESO POSTINSTALL ----------------------- */
+	/** ----------------------- CONSTANTES PARA PROCESO INSTALL ----------------------- */
+
+	/** Debe mapearse la instalación a un componente ya existente */
+	public static final String MAP_TO_COMPONENT = "MAP_TO_COMPONENT";
+	
+	/** Prefijo original del componente a instalar  */
+	public static final String COMPONENT_SOURCE_PREFIX = "SOURCE_PREFIX";
 	
 	/** Proceso generico para la ejecución del plugin postInstall */
 	public static final String PLUGIN_INSTALATION_TRXNAME = "PluginInstallationTrxName";
+	
+	/** AD_ComponentObject_ID registrado localmente durante la instalación */
+	public static final String INSTALLED_COMPONENTVERSION_ID = "COMPONENTVERSIONID";
+	
+
+
 }

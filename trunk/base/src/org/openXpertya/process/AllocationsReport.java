@@ -153,7 +153,7 @@ public class AllocationsReport extends SvrProcess {
 	    sqlView.append("	d.DocTypeName, ");
 	    sqlView.append("	d.DocumentNo, ");
 	    sqlView.append("	d.Dateacct as DateTrx, ");
-	    sqlView.append("	currencyconvert(d.amount, d.c_currency_id, ?, ('now'::text)::timestamp(6) with time zone, COALESCE(d.c_conversiontype_id,0), d.ad_client_id, d.ad_org_id) AS Amount, ");
+	    sqlView.append("	currencyconvert(abs(d.amount), d.c_currency_id, ?, ('now'::text)::timestamp(6) with time zone, COALESCE(d.c_conversiontype_id,0), d.ad_client_id, d.ad_org_id) AS Amount, ");
 	    sqlView.append("	CASE  ");
 	    sqlView.append("		  WHEN d.DocumentTable = 'C_Invoice' THEN ");
 	    sqlView.append("               currencyconvert(ABS(invoiceOpen(d.Document_ID,d.C_InvoicePaySchedule_ID)), d.c_currency_id, ?, ('now'::text)::timestamp(6) with time zone, COALESCE(d.c_conversiontype_id,0), d.ad_client_id, d.ad_org_id) ");

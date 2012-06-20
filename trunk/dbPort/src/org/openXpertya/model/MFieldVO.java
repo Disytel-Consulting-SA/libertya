@@ -539,10 +539,10 @@ public class MFieldVO implements Serializable {
     public static String getSQL(Properties ctx) {
 
         // IsActive is part of View
-        String	sql	= "SELECT * FROM AD_Field_v WHERE AD_Tab_ID=?" + " ORDER BY SeqNo";
+        String	sql	= "SELECT * FROM AD_Field_v WHERE AD_Tab_ID=?" + " ORDER BY ORDER BY iskey desc, SeqNo asc";
 
         if (!Env.isBaseLanguage(ctx, "AD_Tab")) {
-            sql	= "SELECT * FROM AD_Field_vt WHERE AD_Tab_ID=?" + " AND AD_Language='" + Env.getAD_Language(ctx) + "'" + " ORDER BY SeqNo";
+            sql	= "SELECT * FROM AD_Field_vt WHERE AD_Tab_ID=?" + " AND AD_Language='" + Env.getAD_Language(ctx) + "'" + " ORDER BY iskey desc, SeqNo asc";
         }
 
         return sql;

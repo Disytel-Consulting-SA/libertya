@@ -1,13 +1,14 @@
-/** Modelo Generado - NO CAMBIAR MANUALMENTE - Copyright (C) 2006 FUNDESLE */
+/** Modelo Generado - NO CAMBIAR MANUALMENTE - Disytel */
 package org.openXpertya.model;
-import java.util.*;
+import java.util.logging.Level;
+ import java.util.*;
 import java.sql.*;
 import java.math.*;
 import org.openXpertya.util.*;
 /** Modelo Generado por C_AcctSchema
- *  @author Comunidad de Desarrollo openXpertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
- *  @version  - 2008-01-03 10:26:27.234 */
-public class X_C_AcctSchema extends PO
+ *  @author Comunidad de Desarrollo Libertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
+ *  @version  - 2011-12-14 18:45:53.683 */
+public class X_C_AcctSchema extends org.openXpertya.model.PO
 {
 /** Constructor estándar */
 public X_C_AcctSchema (Properties ctx, int C_AcctSchema_ID, String trxName)
@@ -36,13 +37,13 @@ public X_C_AcctSchema (Properties ctx, ResultSet rs, String trxName)
 {
 super (ctx, rs, trxName);
 }
-/** AD_Table_ID=265 */
-public static final int Table_ID=265;
+/** AD_Table_ID */
+public static final int Table_ID = M_Table.getTableID("C_AcctSchema");
 
 /** TableName=C_AcctSchema */
 public static final String Table_Name="C_AcctSchema";
 
-protected static KeyNamePair Model = new KeyNamePair(265,"C_AcctSchema");
+protected static KeyNamePair Model = new KeyNamePair(Table_ID,"C_AcctSchema");
 protected static BigDecimal AccessLevel = new BigDecimal(2);
 
 /** Load Meta Data */
@@ -102,6 +103,37 @@ Integer ii = (Integer)get_Value("C_Currency_ID");
 if (ii == null) return 0;
 return ii.intValue();
 }
+public static final int COSTINGMETHOD_AD_Reference_ID = MReference.getReferenceID("C_AcctSchema Costing Method");
+/** Last PO Price = P */
+public static final String COSTINGMETHOD_LastPOPrice = "P";
+/** Standard Costing = S */
+public static final String COSTINGMETHOD_StandardCosting = "S";
+/** Average = A */
+public static final String COSTINGMETHOD_Average = "A";
+/** Lifo = L */
+public static final String COSTINGMETHOD_Lifo = "L";
+/** Fifo = F */
+public static final String COSTINGMETHOD_Fifo = "F";
+/** Set Costing Method.
+Indicates how Costs will be calculated */
+public void setCostingMethod (String CostingMethod)
+{
+if (CostingMethod.equals("P") || CostingMethod.equals("S") || CostingMethod.equals("A") || CostingMethod.equals("L") || CostingMethod.equals("F"));
+ else throw new IllegalArgumentException ("CostingMethod Invalid value - Reference = COSTINGMETHOD_AD_Reference_ID - P - S - A - L - F");
+if (CostingMethod == null) throw new IllegalArgumentException ("CostingMethod is mandatory");
+if (CostingMethod.length() > 1)
+{
+log.warning("Length > 1 - truncated");
+CostingMethod = CostingMethod.substring(0,1);
+}
+set_Value ("CostingMethod", CostingMethod);
+}
+/** Get Costing Method.
+Indicates how Costs will be calculated */
+public String getCostingMethod() 
+{
+return (String)get_Value("CostingMethod");
+}
 /** Set Period.
 Period of the Calendar */
 public void setC_Period_ID (int C_Period_ID)
@@ -118,37 +150,6 @@ Integer ii = (Integer)get_Value("C_Period_ID");
 if (ii == null) return 0;
 return ii.intValue();
 }
-public static final int COSTINGMETHOD_AD_Reference_ID=122;
-/** Standard Costing = S */
-public static final String COSTINGMETHOD_StandardCosting = "S";
-/** Average = A */
-public static final String COSTINGMETHOD_Average = "A";
-/** Lifo = L */
-public static final String COSTINGMETHOD_Lifo = "L";
-/** Fifo = F */
-public static final String COSTINGMETHOD_Fifo = "F";
-/** Last PO Price = P */
-public static final String COSTINGMETHOD_LastPOPrice = "P";
-/** Set Costing Method.
-Indicates how Costs will be calculated */
-public void setCostingMethod (String CostingMethod)
-{
-if (CostingMethod.equals("S") || CostingMethod.equals("A") || CostingMethod.equals("L") || CostingMethod.equals("F") || CostingMethod.equals("P"));
- else throw new IllegalArgumentException ("CostingMethod Invalid value - Reference_ID=122 - S - A - L - F - P");
-if (CostingMethod == null) throw new IllegalArgumentException ("CostingMethod is mandatory");
-if (CostingMethod.length() > 1)
-{
-log.warning("Length > 1 - truncated");
-CostingMethod = CostingMethod.substring(0,0);
-}
-set_Value ("CostingMethod", CostingMethod);
-}
-/** Get Costing Method.
-Indicates how Costs will be calculated */
-public String getCostingMethod() 
-{
-return (String)get_Value("CostingMethod");
-}
 /** Set Description.
 Optional short description of the record */
 public void setDescription (String Description)
@@ -156,7 +157,7 @@ public void setDescription (String Description)
 if (Description != null && Description.length() > 255)
 {
 log.warning("Length > 255 - truncated");
-Description = Description.substring(0,254);
+Description = Description.substring(0,255);
 }
 set_Value ("Description", Description);
 }
@@ -166,28 +167,28 @@ public String getDescription()
 {
 return (String)get_Value("Description");
 }
-public static final int GAAP_AD_Reference_ID=123;
+public static final int GAAP_AD_Reference_ID = MReference.getReferenceID("C_AcctSchema GAAP");
+/** French Accounting Standard = FR */
+public static final String GAAP_FrenchAccountingStandard = "FR";
+/** Custom Accounting Rules = XX */
+public static final String GAAP_CustomAccountingRules = "XX";
 /** International GAAP = UN */
 public static final String GAAP_InternationalGAAP = "UN";
 /** US GAAP = US */
 public static final String GAAP_USGAAP = "US";
 /** German HGB = DE */
 public static final String GAAP_GermanHGB = "DE";
-/** French Accounting Standard = FR */
-public static final String GAAP_FrenchAccountingStandard = "FR";
-/** Custom Accounting Rules = XX */
-public static final String GAAP_CustomAccountingRules = "XX";
 /** Set GAAP.
 Generally Accepted Accounting Principles */
 public void setGAAP (String GAAP)
 {
-if (GAAP.equals("UN") || GAAP.equals("US") || GAAP.equals("DE") || GAAP.equals("FR") || GAAP.equals("XX"));
- else throw new IllegalArgumentException ("GAAP Invalid value - Reference_ID=123 - UN - US - DE - FR - XX");
+if (GAAP.equals("FR") || GAAP.equals("XX") || GAAP.equals("UN") || GAAP.equals("US") || GAAP.equals("DE"));
+ else throw new IllegalArgumentException ("GAAP Invalid value - Reference = GAAP_AD_Reference_ID - FR - XX - UN - US - DE");
 if (GAAP == null) throw new IllegalArgumentException ("GAAP is mandatory");
 if (GAAP.length() > 2)
 {
 log.warning("Length > 2 - truncated");
-GAAP = GAAP.substring(0,1);
+GAAP = GAAP.substring(0,2);
 }
 set_Value ("GAAP", GAAP);
 }
@@ -287,6 +288,20 @@ if (oo != null)
 }
 return false;
 }
+/** Set Amortization Method */
+public void setM_Amortization_Method_ID (int M_Amortization_Method_ID)
+{
+if (M_Amortization_Method_ID <= 0) set_Value ("M_Amortization_Method_ID", null);
+ else 
+set_Value ("M_Amortization_Method_ID", new Integer(M_Amortization_Method_ID));
+}
+/** Get Amortization Method */
+public int getM_Amortization_Method_ID() 
+{
+Integer ii = (Integer)get_Value("M_Amortization_Method_ID");
+if (ii == null) return 0;
+return ii.intValue();
+}
 /** Set Cost Type.
 Type of Cost (e.g. Current, Plan, Future) */
 public void setM_CostType_ID (int M_CostType_ID)
@@ -309,7 +324,7 @@ if (Name == null) throw new IllegalArgumentException ("Name is mandatory");
 if (Name.length() > 60)
 {
 log.warning("Length > 60 - truncated");
-Name = Name.substring(0,59);
+Name = Name.substring(0,60);
 }
 set_Value ("Name", Name);
 }
@@ -359,7 +374,7 @@ if (Separator == null) throw new IllegalArgumentException ("Separator is mandato
 if (Separator.length() > 1)
 {
 log.warning("Length > 1 - truncated");
-Separator = Separator.substring(0,0);
+Separator = Separator.substring(0,1);
 }
 set_Value ("Separator", Separator);
 }

@@ -298,21 +298,56 @@ public class ImportInventory extends SvrProcess {
         no = DB.executeUpdate( sql.toString());
         log.fine( "Set Product from Value=" + no );
 
-        // ... From UPC
+
+        // ... From UPC Instance
         sql = new StringBuffer( 
         	" UPDATE I_Inventory i " + 
-        	" SET M_Product_ID = " +
-        	"		(SELECT M_Product_ID " +
-        	"		 FROM M_Product p " + 
+        	" SET M_AttributeSetInstance_ID = " +
+        	"		(SELECT M_AttributeSetInstance_ID " +
+        	"		 FROM M_Product_UPC_Instance p " + 
         	"        WHERE i.UPC = p.UPC AND " +
+        	"		 	   i.M_Product_ID = p.M_Product_ID AND " +
         	"              i.AD_Client_ID = p.AD_Client_ID AND " +
         	"              p.IsActive = 'Y' AND " +
         	"              ROWNUM=1) " + 
-        	" WHERE M_Product_ID IS NULL AND " +
+        	" WHERE M_AttributeSetInstance_ID IS NULL AND " +
         	"       UPC IS NOT NULL AND " +
         	"       I_IsImported <> 'Y' ").append( securityCheck );
         no = DB.executeUpdate( sql.toString());
-        log.fine( "Set Product from UPC = " + no );
+        log.fine( "Set AttributeInstance from UPC = " + no );
+        
+        sql = new StringBuffer( 
+            	" UPDATE I_Inventory i " + 
+            	" SET INSTANCE_DESCRIPTION = " +
+            	"		(SELECT Description " +
+            	"		 FROM M_AttributeSetInstance p " + 
+            	"        WHERE i.M_AttributeSetInstance_ID = p.M_AttributeSetInstance_ID AND " +
+            	"              i.AD_Client_ID = p.AD_Client_ID AND " +
+            	"              p.IsActive = 'Y' AND " +
+            	"              ROWNUM=1) " + 
+            	" WHERE INSTANCE_DESCRIPTION IS NULL AND " +
+            	"       M_AttributeSetInstance_ID IS NOT NULL AND " +
+            	"       I_IsImported <> 'Y' ").append( securityCheck );
+        no = DB.executeUpdate( sql.toString());
+        log.fine( "Set Instance_Description from AttributeInstance = " + no );
+        
+        if(no==0){
+	        // ... From UPC
+	        sql = new StringBuffer( 
+	        	" UPDATE I_Inventory i " + 
+	        	" SET M_Product_ID = " +
+	        	"		(SELECT M_Product_ID " +
+	        	"		 FROM M_Product p " + 
+	        	"        WHERE i.UPC = p.UPC AND " +
+	        	"              i.AD_Client_ID = p.AD_Client_ID AND " +
+	        	"              p.IsActive = 'Y' AND " +
+	        	"              ROWNUM=1) " + 
+	        	" WHERE M_Product_ID IS NULL AND " +
+	        	"       UPC IS NOT NULL AND " +
+	        	"       I_IsImported <> 'Y' ").append( securityCheck );
+	        no = DB.executeUpdate( sql.toString());
+	        log.fine( "Set Product from UPC = " + no );
+        }
         
         // No product detection
         sql = new StringBuffer( 
@@ -399,8 +434,9 @@ public class ImportInventory extends SvrProcess {
 
                 // Line
 
-                int            M_AttributeSetInstance_ID = 0;
-                MInventoryLine line                      = new MInventoryLine( inventory,imp.getM_Locator_ID(),imp.getM_Product_ID(),M_AttributeSetInstance_ID,imp.getQtyBook(),imp.getQtyCount());
+                // Added by Lucas Hernandez - Kunan
+                //int            M_AttributeSetInstance_ID = 0;
+                MInventoryLine line                      = new MInventoryLine( inventory,imp.getM_Locator_ID(),imp.getM_Product_ID(),imp.getM_AttributeSetInstance_ID(),imp.getQtyBook(),imp.getQtyCount());
 
                 if( line.save()) {
                     imp.setI_IsImported( true );

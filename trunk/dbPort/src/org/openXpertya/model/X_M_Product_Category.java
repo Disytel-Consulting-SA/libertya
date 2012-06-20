@@ -1,13 +1,14 @@
-/** Modelo Generado - NO CAMBIAR MANUALMENTE - Copyright (C) 2006 FUNDESLE */
+/** Modelo Generado - NO CAMBIAR MANUALMENTE - Disytel */
 package org.openXpertya.model;
-import java.util.*;
+import java.util.logging.Level;
+ import java.util.*;
 import java.sql.*;
 import java.math.*;
 import org.openXpertya.util.*;
 /** Modelo Generado por M_Product_Category
- *  @author Comunidad de Desarrollo openXpertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
- *  @version  - 2009-10-22 14:51:36.924 */
-public class X_M_Product_Category extends PO
+ *  @author Comunidad de Desarrollo Libertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
+ *  @version  - 2011-12-02 16:44:46.089 */
+public class X_M_Product_Category extends org.openXpertya.model.PO
 {
 /** Constructor estándar */
 public X_M_Product_Category (Properties ctx, int M_Product_Category_ID, String trxName)
@@ -15,6 +16,7 @@ public X_M_Product_Category (Properties ctx, int M_Product_Category_ID, String t
 super (ctx, M_Product_Category_ID, trxName);
 /** if (M_Product_Category_ID == 0)
 {
+setAmortizationPerc (Env.ZERO);
 setIsDefault (false);
 setIsSelfService (true);	// Y
 setMMPolicy (null);	// F
@@ -22,6 +24,7 @@ setM_Product_Category_ID (0);
 setName (null);
 setPlannedMargin (Env.ZERO);
 setValue (null);
+setYearLife (0);
 }
  */
 }
@@ -30,13 +33,13 @@ public X_M_Product_Category (Properties ctx, ResultSet rs, String trxName)
 {
 super (ctx, rs, trxName);
 }
-/** AD_Table_ID=209 */
-public static final int Table_ID=209;
+/** AD_Table_ID */
+public static final int Table_ID = M_Table.getTableID("M_Product_Category");
 
 /** TableName=M_Product_Category */
 public static final String Table_Name="M_Product_Category";
 
-protected static KeyNamePair Model = new KeyNamePair(209,"M_Product_Category");
+protected static KeyNamePair Model = new KeyNamePair(Table_ID,"M_Product_Category");
 protected static BigDecimal AccessLevel = new BigDecimal(3);
 
 /** Load Meta Data */
@@ -97,6 +100,21 @@ Integer ii = (Integer)get_Value("AD_PrintColor_ID");
 if (ii == null) return 0;
 return ii.intValue();
 }
+/** Set Amortization Percentage.
+Anual Amortization Percentage */
+public void setAmortizationPerc (BigDecimal AmortizationPerc)
+{
+if (AmortizationPerc == null) throw new IllegalArgumentException ("AmortizationPerc is mandatory");
+set_Value ("AmortizationPerc", AmortizationPerc);
+}
+/** Get Amortization Percentage.
+Anual Amortization Percentage */
+public BigDecimal getAmortizationPerc() 
+{
+BigDecimal bd = (BigDecimal)get_Value("AmortizationPerc");
+if (bd == null) return Env.ZERO;
+return bd;
+}
 /** Set Description.
 Optional short description of the record */
 public void setDescription (String Description)
@@ -150,7 +168,7 @@ if (oo != null)
 }
 return false;
 }
-public static final int MMPOLICY_AD_Reference_ID=335;
+public static final int MMPOLICY_AD_Reference_ID = MReference.getReferenceID("_MMPolicy");
 /** LiFo = L */
 public static final String MMPOLICY_LiFo = "L";
 /** FiFo = F */
@@ -160,7 +178,7 @@ Material Movement Policy */
 public void setMMPolicy (String MMPolicy)
 {
 if (MMPolicy.equals("L") || MMPolicy.equals("F"));
- else throw new IllegalArgumentException ("MMPolicy Invalid value - Reference_ID=335 - L - F");
+ else throw new IllegalArgumentException ("MMPolicy Invalid value - Reference = MMPOLICY_AD_Reference_ID - L - F");
 if (MMPolicy == null) throw new IllegalArgumentException ("MMPolicy is mandatory");
 if (MMPolicy.length() > 1)
 {
@@ -189,15 +207,15 @@ Integer ii = (Integer)get_Value("M_Product_Category_ID");
 if (ii == null) return 0;
 return ii.intValue();
 }
-public static final int M_PRODUCT_GAMAS_ID_AD_Reference_ID=1000040;
-/** Set m_product_gamas_id */
+public static final int M_PRODUCT_GAMAS_ID_AD_Reference_ID = MReference.getReferenceID("m_product_gamas");
+/** Set M_Product_Gamas_ID */
 public void setM_Product_Gamas_ID (int M_Product_Gamas_ID)
 {
 if (M_Product_Gamas_ID <= 0) set_Value ("M_Product_Gamas_ID", null);
  else 
 set_Value ("M_Product_Gamas_ID", new Integer(M_Product_Gamas_ID));
 }
-/** Get m_product_gamas_id */
+/** Get M_Product_Gamas_ID */
 public int getM_Product_Gamas_ID() 
 {
 Integer ii = (Integer)get_Value("M_Product_Gamas_ID");
@@ -258,5 +276,17 @@ Search key for the record in the format required - must be unique */
 public String getValue() 
 {
 return (String)get_Value("Value");
+}
+/** Set Year Life */
+public void setYearLife (int YearLife)
+{
+set_Value ("YearLife", new Integer(YearLife));
+}
+/** Get Year Life */
+public int getYearLife() 
+{
+Integer ii = (Integer)get_Value("YearLife");
+if (ii == null) return 0;
+return ii.intValue();
 }
 }

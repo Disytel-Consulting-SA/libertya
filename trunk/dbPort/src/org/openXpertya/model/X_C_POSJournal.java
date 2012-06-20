@@ -7,7 +7,7 @@ import java.math.*;
 import org.openXpertya.util.*;
 /** Modelo Generado por C_POSJournal
  *  @author Comunidad de Desarrollo Libertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
- *  @version  - 2011-02-16 18:36:33.711 */
+ *  @version  - 2012-03-26 17:12:37.549 */
 public class X_C_POSJournal extends org.openXpertya.model.PO
 {
 /** Constructor estándar */
@@ -173,6 +173,22 @@ POS Journal */
 public int getC_POSJournal_ID() 
 {
 Integer ii = (Integer)get_Value("C_POSJournal_ID");
+if (ii == null) return 0;
+return ii.intValue();
+}
+/** Set Project.
+Financial Project */
+public void setC_Project_ID (int C_Project_ID)
+{
+if (C_Project_ID <= 0) set_Value ("C_Project_ID", null);
+ else 
+set_Value ("C_Project_ID", new Integer(C_Project_ID));
+}
+/** Get Project.
+Financial Project */
+public int getC_Project_ID() 
+{
+Integer ii = (Integer)get_Value("C_Project_ID");
 if (ii == null) return 0;
 return ii.intValue();
 }

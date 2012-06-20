@@ -28,6 +28,7 @@ import java.util.logging.Level;
 
 import javax.swing.DefaultListModel;
 import javax.swing.JList;
+import javax.swing.JOptionPane;
 import javax.swing.JScrollPane;
 import javax.swing.JSplitPane;
 import javax.swing.ListModel;
@@ -41,6 +42,7 @@ import org.compiere.swing.CComboBox;
 import org.compiere.swing.CLabel;
 import org.compiere.swing.CPanel;
 import org.openXpertya.grid.tree.VTreePanel;
+import org.openXpertya.model.MMessage;
 import org.openXpertya.model.MRole;
 import org.openXpertya.model.MTable;
 import org.openXpertya.model.MTree;
@@ -51,6 +53,7 @@ import org.openXpertya.model.MTree_NodeMM;
 import org.openXpertya.model.MTree_NodePR;
 import org.openXpertya.model.M_Table;
 import org.openXpertya.model.POInfo;
+import org.openXpertya.process.AD_Column_Sync;
 import org.openXpertya.util.CLogger;
 import org.openXpertya.util.DB;
 import org.openXpertya.util.Env;
@@ -502,42 +505,53 @@ public class VTreeMaintenance extends CPanel implements FormPanel,ActionListener
         }
     }    // action_treeDelete
 
+    
     /**
      * Descripción de Método
      *
      */
-
+    
+    private boolean confirm(String text)
+ 	{
+ 		return (JOptionPane.showConfirmDialog(this, text, Msg.getMsg( Env.getCtx(),"Confirm" ), JOptionPane.YES_NO_OPTION) == JOptionPane.YES_OPTION);
+ 	}
+    
     private void action_treeAddAll() {
-        log.info( "" );
+    	if (confirm(Msg.getMsg( Env.getCtx(),"MoveAllItems" )))
+		{
+    		log.info( "" );
 
-        ListModel model = centerList.getModel();
-        int       size  = model.getSize();
-        int       index = -1;
+	        ListModel model = centerList.getModel();
+	        int       size  = model.getSize();
+	        int       index = -1;
 
-        for( index = 0;index < size;index++ ) {
-            ListItem item = ( ListItem )model.getElementAt( index );
+	        for( index = 0;index < size;index++ ) {
+	            ListItem item = ( ListItem )model.getElementAt( index );
 
-            action_treeAdd( item );
-        }
+	            action_treeAdd( item );
+    		}
+		}
     }    // action_treeAddAll
 
     /**
      * Descripción de Método
      *
      */
-
+    
     private void action_treeDeleteAll() {
-        log.info( "VTreeMaintenance.action_treeDeleteAll" );
-
-        ListModel model = centerList.getModel();
-        int       size  = model.getSize();
-        int       index = -1;
-
-        for( index = 0;index < size;index++ ) {
-            ListItem item = ( ListItem )model.getElementAt( index );
-
-            action_treeDelete( item );
-        }
+    	if (confirm(Msg.getMsg( Env.getCtx(),"MoveAllItems" )))
+		{
+    		log.info( "VTreeMaintenance.action_treeDeleteAll" );
+    		ListModel model = centerList.getModel();
+    		int       size  = model.getSize();
+    		int       index = -1;
+    		
+    		for( index = 0;index < size;index++ ) {
+    			ListItem item = ( ListItem )model.getElementAt( index );
+    		
+    			action_treeDelete( item );
+    		}
+		}
     }    // action_treeDeleteAll
 
     /**

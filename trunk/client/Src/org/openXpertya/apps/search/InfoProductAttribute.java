@@ -1,6 +1,7 @@
 package org.openXpertya.apps.search;
 
 import java.awt.BorderLayout;
+import java.awt.Font;
 import java.awt.Frame;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -40,13 +41,11 @@ import org.openXpertya.apps.ADialog;
 import org.openXpertya.apps.AEnv;
 import org.openXpertya.apps.form.VPriceInstanceMatrix;
 import org.openXpertya.minigrid.IDColumn;
-import org.openXpertya.model.MProduct;
 import org.openXpertya.util.CLogger;
 import org.openXpertya.util.DB;
 import org.openXpertya.util.Env;
 import org.openXpertya.util.KeyNamePair;
 import org.openXpertya.util.Msg;
-import org.openXpertya.util.Trx;
 
 @SuppressWarnings("serial")
 public class InfoProductAttribute extends InfoProduct {
@@ -67,6 +66,10 @@ public class InfoProductAttribute extends InfoProduct {
 	
 	protected int INDEX_QTY ;
 	
+	protected int INDEX_INSTANCE;
+	
+	protected int INDEX_PRICELIST;
+	
 	public InfoProductAttribute(Frame frame, boolean modal, int WindowNo, int M_Warehouse_ID, int M_PriceList_ID, String value, boolean multiSelection, String whereClause) {
 		super(frame, modal, WindowNo, M_Warehouse_ID, M_PriceList_ID, value, multiSelection, whereClause);
 
@@ -77,7 +80,7 @@ public class InfoProductAttribute extends InfoProduct {
 	@Override
 	protected Info_Column[] getProductLayout() {
 		// return super.getProductLayout();
-		
+		if(validatePriceList==true){
 		Info_Column[] s_productLayout = {
 		        new Info_Column( " ","DISTINCT(p.M_Product_ID)",IDColumn.class ),
 		        //new Info_Column( Msg.translate( Env.getCtx(),"Discontinued" ).substring( 0,1 ),"p.Discontinued",Boolean.class ),
@@ -85,6 +88,9 @@ public class InfoProductAttribute extends InfoProduct {
 		        new Info_Column( Msg.translate( Env.getCtx(),"Name" ),"p.Name",String.class ),
 		        new Info_Column( Msg.translate( Env.getCtx(),"QtyAvailable" ),"bomQtyAvailable(p.M_Product_ID,?,0) AS QtyAvailable",Double.class,true,true,null ),
 		        new Info_Column( Msg.translate( Env.getCtx(),"PriceList" ),"bomPriceList(p.M_Product_ID, pr.M_PriceList_Version_ID) AS PriceList",BigDecimal.class ),
+		        // Added by Lucas Hernandez - Kunan
+		        new Info_Column( Msg.translate( Env.getCtx(),"Instance" ),"pui.M_AttributeSetInstance_ID",Integer.class ),
+		        new Info_Column( Msg.translate( Env.getCtx(),"PriceListVersion" ),"pr.M_PriceList_Version_ID",Integer.class ),
 		        //new Info_Column( Msg.translate( Env.getCtx(),"PriceStd" ),"bomPriceStd(p.M_Product_ID, pr.M_PriceList_Version_ID) AS PriceStd",BigDecimal.class ),
 		        //new Info_Column( Msg.translate( Env.getCtx(),"QtyOnHand" ),"bomQtyOnHand(p.M_Product_ID,?,0) AS QtyOnHand",Double.class ),
 		        //new Info_Column( Msg.translate( Env.getCtx(),"QtyReserved" ),"bomQtyReserved(p.M_Product_ID,?,0) AS QtyReserved",Double.class ),
@@ -96,9 +102,37 @@ public class InfoProductAttribute extends InfoProduct {
 		
 		INDEX_NAME = 3;
 		INDEX_QTY = 3;
+		INDEX_INSTANCE = 5;
+		INDEX_PRICELIST = 6;
 		INDEX_PATTRIBUTE = 1;
 		
 		return s_productLayout;
+		}
+		else{
+			Info_Column[] s_productLayout = {
+			        new Info_Column( " ","DISTINCT(p.M_Product_ID)",IDColumn.class ),
+			        //new Info_Column( Msg.translate( Env.getCtx(),"Discontinued" ).substring( 0,1 ),"p.Discontinued",Boolean.class ),
+			        new Info_Column( Msg.translate( Env.getCtx(),"Value" ),"p.Value",String.class ),
+			        new Info_Column( Msg.translate( Env.getCtx(),"Name" ),"p.Name",String.class ),
+			        new Info_Column( Msg.translate( Env.getCtx(),"QtyAvailable" ),"bomQtyAvailable(p.M_Product_ID,?,0) AS QtyAvailable",Double.class,true,true,null ),
+			        new Info_Column( Msg.translate( Env.getCtx(),"Instance" ),"pui.M_AttributeSetInstance_ID",Integer.class ),
+			        new Info_Column( Msg.translate( Env.getCtx(),"PriceListVersion" ),"pr.M_PriceList_Version_ID",Integer.class ),
+			        //new Info_Column( Msg.translate( Env.getCtx(),"PriceStd" ),"bomPriceStd(p.M_Product_ID, pr.M_PriceList_Version_ID) AS PriceStd",BigDecimal.class ),
+			        //new Info_Column( Msg.translate( Env.getCtx(),"QtyOnHand" ),"bomQtyOnHand(p.M_Product_ID,?,0) AS QtyOnHand",Double.class ),
+			        //new Info_Column( Msg.translate( Env.getCtx(),"QtyReserved" ),"bomQtyReserved(p.M_Product_ID,?,0) AS QtyReserved",Double.class ),
+			        //new Info_Column( Msg.translate( Env.getCtx(),"QtyOrdered" ),"bomQtyOrdered(p.M_Product_ID,?,0) AS QtyOrdered",Double.class ),
+			        //new Info_Column( Msg.translate( Env.getCtx(),"Unconfirmed" ),"(SELECT SUM(c.TargetQty) FROM M_InOutLineConfirm c INNER JOIN M_InOutLine il ON (c.M_InOutLine_ID=il.M_InOutLine_ID) INNER JOIN M_InOut i ON (il.M_InOut_ID=i.M_InOut_ID) WHERE c.Processed='N' AND i.M_Warehouse_ID=? AND il.M_Product_ID=p.M_Product_ID) AS Unconfirmed",Double.class ),
+			        //new Info_Column( Msg.translate( Env.getCtx(),"Margin" ),"bomPriceStd(p.M_Product_ID, pr.M_PriceList_Version_ID)-bomPriceLimit(p.M_Product_ID, pr.M_PriceList_Version_ID) AS Margin",BigDecimal.class ),new Info_Column( Msg.translate( Env.getCtx(),"PriceLimit" ),"bomPriceLimit(p.M_Product_ID, pr.M_PriceList_Version_ID) AS PriceLimit",BigDecimal.class ),
+			        //new Info_Column( Msg.translate( Env.getCtx(),"IsInstanceAttribute" ),"pa.IsInstanceAttribute",Boolean.class )
+			    	};
+			
+			INDEX_NAME = 3;
+			INDEX_QTY = 3;
+			INDEX_INSTANCE = 4;
+			INDEX_PRICELIST = 5;
+			INDEX_PATTRIBUTE = 1;		
+			return s_productLayout;
+		}
 	}
 	
 	
@@ -149,6 +183,8 @@ public class InfoProductAttribute extends InfoProduct {
 		attrTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
 		
 		attrTable.setDefaultRenderer(AttrMatrixItem.class, new AttrMatrixItemRenderer());
+		// Added by Lucas Hernandez - Kunan
+		attrTable.setColumnSelectionAllowed(true);
 		
 		attrTable.addMouseListener(new MouseAdapter(){
 			@Override
@@ -192,11 +228,11 @@ public class InfoProductAttribute extends InfoProduct {
 		if (x != null) {
 			// visualizar la ventana de precios como solo lectura
 //			int priceListVersionID = getPickPriceList().getSelectedItem(); //Env.getContextAsInt(Env.getCtx(),Env.WINDOW_INFO,Env.TAB_INFO,"M_PriceList_Version_ID");
-    		VPriceInstanceMatrix ff = new VPriceInstanceMatrix(p_WindowNo, (Frame)this.getRootPane().getParent().getParent(), getSelectedRowKey(), getSelectedPriceListVersionID(), true);
+			//VPriceInstanceMatrix ff = new VPriceInstanceMatrix(p_WindowNo, (Frame)this.getRootPane().getParent().getParent(), getSelectedRowKey(), getSelectedPriceListVersionID(), true);
+			VPriceInstanceMatrix ff = new VPriceInstanceMatrix(p_WindowNo, (Frame)this.getRootPane().getParent().getParent(), getSelectedRowKey(), getListVersionID(), true);
         	AEnv.showCenterScreen( ff );
 		}
 	}
-
 	
 	@Override
 	void saveSelectionDetail() {
@@ -255,6 +291,100 @@ public class InfoProductAttribute extends InfoProduct {
 	protected String getSqlOrderBy() {
 		return " Value ASC " ;
 	}
+	
+	// Added by Lucas Hernandez - Kunan	
+	public static BigDecimal getPriceValue(int M_Product_ID, int M_PriceList_Version_ID) {
+		BigDecimal price = BigDecimal.ZERO;
+		PreparedStatement ps = null;
+		
+		try {
+			ps = DB.prepareStatement("SELECT pp.pricestd FROM libertya.m_product p JOIN libertya.m_productprice pp ON p.m_product_id=pp.m_product_id WHERE p.m_product_id= ? AND pp.m_pricelist_version_id = ? ", null);
+			
+			int pn = 1;			
+			ps.setInt(pn++, M_Product_ID);
+			ps.setInt(pn++, M_PriceList_Version_ID);
+			
+			ResultSet rs = ps.executeQuery();
+			
+			while (rs.next()) {
+				price=rs.getBigDecimal(1);
+			}
+			
+			rs.close();
+			ps.close();
+		} catch (SQLException e) {
+			s_log.log(Level.SEVERE, "", e);
+		} finally {
+			try {
+				if (ps != null) ps.close();
+			} catch (SQLException e) {}
+		}
+		
+		return price;
+	}
+	
+	// Added by Lucas Hernandez - Kunan
+	private int validateDiffPrices(int M_PriceList_Version_ID, int M_Product_ID) {
+		int instance=0;
+		PreparedStatement ps = null;
+		
+		try {
+			ps = DB.prepareStatement("SELECT COUNT(*) FROM M_ProductPriceInstance WHERE M_PriceList_Version_ID = ? AND M_Product_ID = ?", null);
+			
+			int pn = 1;
+			ps.setInt(pn++, M_PriceList_Version_ID);
+			ps.setInt(pn++, M_Product_ID);
+			
+			ResultSet rs = ps.executeQuery();
+			
+			while (rs.next()) {
+				instance=rs.getInt(1);
+			}
+			
+			rs.close();
+			ps.close();
+		} catch (SQLException e) {
+			s_log.log(Level.SEVERE, "", e);
+		} finally {
+			try {
+				if (ps != null) ps.close();
+			} catch (SQLException e) {}
+		}
+		
+		return instance;
+	}
+		
+	// Added by Lucas Hernandez - Kunan
+	private BigDecimal getPriceInstance(int M_PriceList_Version_ID, int M_Product_ID,int M_AttributeSetInstance_ID) {
+		BigDecimal instance=BigDecimal.ZERO;
+		PreparedStatement ps = null;
+		
+		try {
+			ps = DB.prepareStatement("SELECT pricestd FROM M_ProductPriceInstance WHERE M_PriceList_Version_ID = ? AND M_Product_ID = ? AND M_AttributeSetInstance_ID = ? ", null);
+			
+			int pn = 1;
+			ps.setInt(pn++, M_PriceList_Version_ID);
+			ps.setInt(pn++, M_Product_ID);
+			ps.setInt(pn++, M_AttributeSetInstance_ID);
+			
+			ResultSet rs = ps.executeQuery();
+			
+			while (rs.next()) {
+				instance=rs.getBigDecimal(1);
+			}
+			
+			rs.close();
+			ps.close();
+		} catch (SQLException e) {
+			s_log.log(Level.SEVERE, "", e);
+		} finally {
+			try {
+				if (ps != null) ps.close();
+			} catch (SQLException e) {}
+		}
+		
+		return instance;
+	}	
 	
 	public static Vector<String> getAttrValues(int M_Attribute_ID) {
 		Vector<String> ret = new Vector<String>();
@@ -334,6 +464,9 @@ public class InfoProductAttribute extends InfoProduct {
 		int columnsCount = DB.getSQLValue(null, "select count(*) from m_attributevalue where m_attribute_id = ?", M_Attribute_ID);
 		
 		int w;
+		// Added by Lucas Hernandez - Kunan
+		//int priceList=getSelectedPriceListVersionID();
+		int priceList=getListVersionID();
 		
 		String sql = null;
 		
@@ -368,8 +501,12 @@ public class InfoProductAttribute extends InfoProduct {
 					BigDecimal b = rs.getBigDecimal(1);
 					
 					b = b.setScale(2, BigDecimal.ROUND_HALF_UP);
-					
-					x.add(new AttrMatrixItem(b, rs.getInt(2)));
+					// Added by Lucas Hernandez - Kunan
+					BigDecimal priceInstance=BigDecimal.ZERO;
+					if(validatePriceList==true){
+						priceInstance=getPriceInstance(priceList,M_Product_ID,rs.getInt(2));
+					}
+					x.add(new AttrMatrixItem(b, rs.getInt(2),priceInstance));
 					
 					go = rs.next();
 				}
@@ -917,6 +1054,45 @@ public class InfoProductAttribute extends InfoProduct {
 		 */
 	}
 	
+	// Added by Lucas Hernandez - Kunan
+	protected void instanceFound(int msi){
+		ProductAttrTableModel tm = (ProductAttrTableModel)attrTable.getModel();
+		int cols = tm.getColumnCount();
+		int rows = tm.getRowCount();
+		int y,x;
+		for (y = 0; y < rows; y++) {
+			for (x = 1; x < cols; x++) {
+				AttrMatrixItem item = (AttrMatrixItem)tm.getValueAt(y, x);
+				if(item.getM_AttributeSetInstance_ID()==msi){
+					attrTable.changeSelection(y, x, true,false);
+				}
+			}
+		}
+		
+    }
+	
+	// Added by Lucas Hernandez - Kunan
+	private void validateProductInstance(){
+		if (INDEX_QTY <= 0)
+			return;
+		
+		int x = p_table.getSelectedRow();
+		
+		if (x == -1)
+			return;
+		int pricelistversion = getListVersionID();
+		int instance=validateDiffPrices(pricelistversion,getSelectedRowKey());		
+		if(instance!=0&&validatePriceList==true){
+			btnPricesDetail.setEnabled(true);			
+		}
+		else{
+			btnPricesDetail.setEnabled(false);
+		}
+	}
+	
+	private int getListVersionID(){
+		return ((Integer) p_table.getValueAt(p_table.getSelectedRow(),INDEX_PRICELIST)).intValue();		
+	}
 	
 	protected int getWarehouseID() {
 		int         M_Warehouse_ID = 0;
@@ -942,6 +1118,8 @@ public class InfoProductAttribute extends InfoProduct {
 	
 		updateAttrTable();
 		updateStatusLabel();
+		// Added by Lucas Hernandez - Kunan
+		validateProductInstance();
 	}
 	
 	@SuppressWarnings("serial")
@@ -961,13 +1139,17 @@ public class InfoProductAttribute extends InfoProduct {
 	
 	@SuppressWarnings("serial")
 	private static class AttrMatrixItem {
-		public AttrMatrixItem(BigDecimal qty, int attributeSetInstance_ID) {
+		// Modified by Lucas Hernandez - Kunan
+		public AttrMatrixItem(BigDecimal qty, int attributeSetInstance_ID,BigDecimal priceInstance) {
 			setQty(qty);
 			setM_AttributeSetInstance_ID(attributeSetInstance_ID);
+			setPriceInstance(priceInstance);
 		}
 		
 		private BigDecimal qty;
 		private int M_AttributeSetInstance_ID;
+		// Added by Lucas Hernandez - Kunan
+		private BigDecimal priceInstance;
 		
 		/**
 		 * @return the qty
@@ -994,6 +1176,14 @@ public class InfoProductAttribute extends InfoProduct {
 			M_AttributeSetInstance_ID = attributeSetInstance_ID;
 		}
 		
+		// Added by Lucas Hernandez - Kunan
+		public BigDecimal getPriceInstance() {
+			return priceInstance;
+		}
+		// Added by Lucas Hernandez - Kunan
+		public void setPriceInstance(BigDecimal priceInstance) {
+			this.priceInstance = priceInstance;
+		}
 		
 		@Override
 		public String toString() {
@@ -1012,6 +1202,13 @@ public class InfoProductAttribute extends InfoProduct {
 	    	
 	    	BigDecimal qty = ((AttrMatrixItem)value).getQty();
 	    	
+	    	// Added by Lucas Hernandez - Kunan
+	    	BigDecimal price = ((AttrMatrixItem)value).getPriceInstance();
+	    	
+	    	if(price.signum() > 0){
+	    		setFont(getFont().deriveFont(Font.BOLD));
+	    	}	
+	    	
 	    	if (qty.signum() < 1)
 	    		setForeground(CompierePLAF.getTextColor_Issue());
 	    	else
@@ -1025,5 +1222,19 @@ public class InfoProductAttribute extends InfoProduct {
 	
 	public int getAttributeSetInstanceID() {
 		return m_M_AttributeSetInstance_ID;
+	}
+	
+	public void queryExecute(){		
+		try{
+			p_table.changeSelection(0,0,false,true);
+			int instance = ((Integer) p_table.getValueAt(0,INDEX_INSTANCE)).intValue();
+			instanceFound(instance);
+		}
+		catch(NullPointerException ex){
+			
+		}
+		catch(ArrayIndexOutOfBoundsException ex1){
+			
+		}
 	}
 }

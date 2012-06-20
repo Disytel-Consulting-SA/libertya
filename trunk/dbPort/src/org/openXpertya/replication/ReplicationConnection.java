@@ -1,17 +1,15 @@
 package org.openXpertya.replication;
 
-import java.util.logging.Level;
-
+import javax.jms.ConnectionFactory;
 import javax.naming.Context;
-import javax.naming.InitialContext;
 
 import org.openXpertya.db.CConnection;
-import org.openXpertya.interfaces.Replication;
-import org.openXpertya.interfaces.ReplicationHome;
 import org.openXpertya.model.MReplicationHost;
 
 public class ReplicationConnection extends CConnection {
 
+	public static final String CONN_FACTORY_JNDI_NAME = "ConnectionFactory";
+		
 	protected int m_orgID = -1;
 	protected String m_apps_host = "";
 	protected int m_apps_port = -1;
@@ -31,40 +29,7 @@ public class ReplicationConnection extends CConnection {
 		m_apps_host = MReplicationHost.getHostForOrg(orgID, trxName);
 		m_apps_port = MReplicationHost.getPortForOrg(orgID, trxName);
 	}
-	
-
-	/**
-	 * Recupera el servidor de Replicación específico 
-	 * para la sucursal especificada en el constructor
-	 * @return
-	 */
-    public Replication getReplication() 
-    {
-    	/* Estan correctamente cargados los datos? */
-    	if (m_apps_host.length()==0 || m_apps_port == -1)
-    		return null;
-
-    	/* Recuperar el server */
-    	Replication m_server = null; 
-    	try 
-    	{
-    		InitialContext	ic	= getInitialContext(false);
-    		if (ic != null) 
-    		{
-    	    	m_ic = ic;
-    			ReplicationHome	replicationHome	= (ReplicationHome) ic.lookup(ReplicationHome.JNDI_NAME);
-    			if (replicationHome != null) 
-                        m_server = replicationHome.create();
-    		}
-    	} 
-    	catch (Exception ex) 
-    	{
-    		log.log(Level.SEVERE, "", ex);
-    		exception = ex;
-        }
-        return m_server;
-    }		
-	
+		
     
     /**
      * Redefinición según AD_HostReplication
@@ -100,4 +65,23 @@ public class ReplicationConnection extends CConnection {
 		
 		return m_ic;
 	}
+	
+	/**
+	 * Obtengo el servidor a partir del host y puerto parámetro
+	 * @param m_apps_host host 
+	 * @param m_apps_port puerto
+	 * @return connection factory
+	 * @throws Exception
+	 */
+	public ConnectionFactory getConnectionFactory() throws Exception{
+		Context context = getContext();
+		ConnectionFactory connFactory = null;
+   		if (context != null) {
+			connFactory = (ConnectionFactory) context
+					.lookup(CONN_FACTORY_JNDI_NAME);    		
+    	}
+   		return connFactory;
+	}
+	
+
 }

@@ -15,6 +15,8 @@ public class CheckPayment extends Payment {
 	private int bankAccountID;
 	
 	private String cuitLibrador = null;
+	
+	private Integer checkDeadLine = null;
 
 	public CheckPayment() {
 		super();
@@ -35,6 +37,20 @@ public class CheckPayment extends Payment {
 		this.emissionDate = emissionDate;
 		this.acctDate = acctDate;
 		this.bankAccountID = bankAccountID;
+	}
+	
+	/**
+	 * @param bankId
+	 * @param checkNumber
+	 * @param emissionDate
+	 * @param acctDate
+	 * @param bankAccountID
+	 * @param checkDeadLine
+	 */
+	public CheckPayment(String bankName, String checkNumber, Timestamp emissionDate,
+			Timestamp acctDate, int bankAccountID, Integer checkDeadLine) {
+		this(bankName, checkNumber, emissionDate, acctDate, bankAccountID);
+		this.checkDeadLine = checkDeadLine;
 	}
 
 	/**
@@ -128,6 +144,14 @@ public class CheckPayment extends Payment {
 	 */
 	public void setCuitLibrador(String cuitLibrador) {
 		this.cuitLibrador = cuitLibrador;
+	}
+
+	public void setCheckDeadLine(Integer checkDeadLine) {
+		this.checkDeadLine = checkDeadLine;
+	}
+
+	public Integer getCheckDeadLine() {
+		return checkDeadLine;
 	}
 	
 	

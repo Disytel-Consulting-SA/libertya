@@ -117,9 +117,11 @@ public class CalloutCashJournal extends CalloutEngine {
             return e.getLocalizedMessage();
         }
 
+        String ret = setAmounts(ctx, "Amount", mTab);
+        
         setCalloutActive( false );
 
-        return "";
+        return ret;
     }    // CashJournal_Invoice
 
     /**
@@ -145,13 +147,20 @@ public class CalloutCashJournal extends CalloutEngine {
 
         // Check, if InvTotalAmt exists
 
-        String total = Env.getContext( ctx,WindowNo,"InvTotalAmt" );
+        /*String total = Env.getContext( ctx,WindowNo,"InvTotalAmt" );
 
         if( (total == null) || (total.length() == 0) ) {
             return "";
         }
+       
 
         BigDecimal InvTotalAmt = new BigDecimal( total );
+        */
+        int invoiceID = (Integer) mTab.getValue("C_Invoice_ID");
+        if (invoiceID == 0) {
+        	return "";
+        }
+        BigDecimal InvTotalAmt = (BigDecimal)DB.getSQLObject(null,  "SELECT invoiceOpen(?,0)", new Object[] {invoiceID});
 
         setCalloutActive( true );
 
@@ -173,10 +182,37 @@ public class CalloutCashJournal extends CalloutEngine {
             mTab.setValue( "Amount",PayAmt );
         }
 
+        String ret = setAmounts(ctx, colName.equals("DiscountAmt") ? "Amount" : colName, mTab);
+        
         setCalloutActive( false );
 
-        return "";
+        return ret;
     }    // amounts
+    
+    private String setAmounts(Properties ctx, String colName, MTab mTab) {
+    	
+    	int currencyID = (Integer)mTab.getValue("C_Currency_ID");
+    	int cashCurrencyID = (Integer)mTab.getValue("C_CashCurrency_ID");
+    	
+    	if (currencyID > 0 && cashCurrencyID > 0 && currencyID != cashCurrencyID) {
+			int cashID = (Integer)mTab.getValue("C_Cash_ID");
+			Timestamp cashDate = DB.getSQLValueTimestamp(null, "SELECT DateAcct FROM C_Cash WHERE C_Cash_ID = " + cashID);
+			BigDecimal cashAmount = null;
+			BigDecimal amount = null;
+
+    		if (colName.equals("CashAmount")) {
+    			cashAmount = (BigDecimal)mTab.getValue("CashAmount");
+    			amount = MCurrency.currencyConvert(cashAmount, cashCurrencyID, currencyID, cashDate, 0, ctx);
+    			mTab.setValue("Amount", amount);
+    		} else if (colName.equals("Amount")) {
+    			amount = (BigDecimal)mTab.getValue("Amount");
+    			cashAmount = MCurrency.currencyConvert(amount, currencyID, cashCurrencyID, cashDate, 0, ctx);
+    			mTab.setValue("CashAmount", cashAmount);
+    		}
+    	}
+    	
+    	return "";
+    }
 }    // CalloutCashJournal
 
 

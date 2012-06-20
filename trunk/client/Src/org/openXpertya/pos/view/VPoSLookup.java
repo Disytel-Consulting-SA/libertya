@@ -77,6 +77,10 @@ public class VPoSLookup extends VLookup {
 			}
 			newWhereClause = newWhereClause + ")";
 		}
+		if(newWhereClause != null && newWhereClause.length() > 0 ){
+			newWhereClause += " AND ";
+		}
+		newWhereClause += " p.isSold = 'Y' ";
 		return newWhereClause;
 	}
 

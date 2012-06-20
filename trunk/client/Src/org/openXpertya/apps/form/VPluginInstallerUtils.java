@@ -17,6 +17,7 @@ import org.openXpertya.plugin.common.PluginConstants;
 import org.openXpertya.plugin.install.PluginXMLUpdater;
 import org.openXpertya.process.ProcessInfo;
 import org.openXpertya.process.ProcessInfoParameter;
+import org.openXpertya.replication.ReplicationCache;
 import org.openXpertya.util.DB;
 import org.openXpertya.util.Env;
 import org.openXpertya.util.Trx;
@@ -36,6 +37,14 @@ public class VPluginInstallerUtils  {
 	
 	/**
 	 * Inserta o actualiza las entradas en las tablas: AD_Plugin, AD_Component y AD_ComponentVersion
+	 * 
+	 * En caso de realizar copia al changelog pueden presentarse los siguientes escenarios:
+	 * 		1) Copiar al changelog sobre un componente existente y mapeando los valores acordemente al componente ya existente
+	 * 			En este caso hay que especificar CopyToChangelog = Y y los UIDs del Component y ComponentVersion a mapear.
+	 * 			Con estos datos, los UIDs se mapearan a un nuevo valor (ej. FOO2CORE)
+	 * 		2) Copiar al changelog instalando el plugin especificado en el properties del componente a instalar
+	 * 			Este es un caso mas tradicional donde no se realiza mapeo alguno
+	 * 			En este caso solo hay que especificar CopyToChangelog = Y
 	 */
 	public static void createComponentAndVersion(Properties ctx, String trxName, Properties m_component_props) throws Exception
 	{
@@ -44,39 +53,95 @@ public class VPluginInstallerUtils  {
 		/* Entrada en AD_ComponentVersion: Columna AD_ComponentObjectUID */
 		String componentVersionEntry = (String)m_component_props.get(PluginConstants.PROP_COMPONENTVERSIONUID);
 		
-		/* Registros de cada tabla */
+		/* Redefiniciones especiales en caso que se este instalando un plugin para copia al changelog */
+		boolean copyToChangelog = false;
+		/* Mapear a un componente existente un instalar sobre uno nuevo? */
+		boolean mapToComponent = false;
+		/* Validar que se esten especificando correctamente los valores de mapeo */
+		int countCheck = 0;
+		if ("Y".equals((String)m_component_props.get(PluginConstants.PROP_COPY_TO_CHANGELOG)))
+		{
+			/* Setear en el contexto que hay que copiar al changelog la instalacion */
+			copyToChangelog = true;
+			Env.setContext(ctx, PluginConstants.PROP_COPY_TO_CHANGELOG, "Y");					
+			/* Si hay definido un mapeo del componente en el manifest de la instalacion, utilizar dicho mapeo 
+			 * (tienen que especificarse tanto el UID del component como el UID componentversion) */ 
+			if (m_component_props.get(PluginConstants.PROP_MAP_TO_COMPONENT_UID) != null) { 
+				componentEntry = (String)m_component_props.get(PluginConstants.PROP_MAP_TO_COMPONENT_UID);
+				countCheck++;
+			}
+			if (m_component_props.get(PluginConstants.PROP_MAP_TO_COMPONENTVERSION_UID) != null) {
+				componentVersionEntry = (String)m_component_props.get(PluginConstants.PROP_MAP_TO_COMPONENTVERSION_UID);
+				countCheck++;
+			}
+			/* Si countCheck = 0, no mapear a un componente => instalar uno nuevo de manera tradicional 
+			 * Si countCheck = 2, mapear a un componente => utilizar la info existente del componente
+			 * Si countCheck = 1, se especificó solo un dato (component o version) => ERROR */
+			if (countCheck == 2) {
+				mapToComponent = true;
+				Env.setContext(ctx, PluginConstants.MAP_TO_COMPONENT, "Y");		
+			}
+			if (countCheck == 1)
+				throw new Exception("Para instalar copiando al chenglog mapeando valores a un componente existente, es necesario especificar tanto el UID del Componente como el UID del ComponentVersion a utilizar");
+		}
+		
+		/* Registros de cada tabla (recuperar el ID de ambos) */
 		int componentID = DB.getSQLValue(trxName, " SELECT AD_Component_ID FROM AD_Component WHERE AD_ComponentObjectUID = ?", componentEntry);
 		int componentVersionID = DB.getSQLValue(trxName, " SELECT AD_ComponentVersion_ID FROM AD_ComponentVersion WHERE AD_ComponentObjectUID = ?", componentVersionEntry);
 		
 		/* Insertar/actualizar el Component */ 
 		component = new MComponent(ctx, (componentID==-1?0:componentID), trxName);
-		component.setPublicName((String)m_component_props.get(PluginConstants.PROP_PUBLICNAME));
-		component.setPrefix((String)m_component_props.get(PluginConstants.PROP_PREFIX));
-		component.setAuthor((String)m_component_props.get(PluginConstants.PROP_AUTHOR));
-		component.setPackageName((String)m_component_props.get(PluginConstants.PROP_PACKAGENAME));
-		component.setCoreLevel(Integer.parseInt((String)m_component_props.get(PluginConstants.PROP_CORELEVEL)));
-		component.setAD_ComponentObjectUID(componentEntry);
-		
-		if (!component.save())
-			throw new Exception(" - Error al intentar registrar el componente: " + component.getPublicName());
+		if (!copyToChangelog || !mapToComponent)
+		{
+			component.setPublicName((String)m_component_props.get(PluginConstants.PROP_PUBLICNAME));
+			component.setPrefix((String)m_component_props.get(PluginConstants.PROP_PREFIX));
+			component.setAuthor((String)m_component_props.get(PluginConstants.PROP_AUTHOR));
+			component.setPackageName((String)m_component_props.get(PluginConstants.PROP_PACKAGENAME));
+			component.setCoreLevel(Integer.parseInt((String)m_component_props.get(PluginConstants.PROP_CORELEVEL)));
+			component.setAD_ComponentObjectUID(componentEntry);
+			
+			if (!component.save())
+				throw new Exception(" - Error al intentar registrar el componente: " + component.getPublicName());
+		}
 		
 		/* Insertar/actualizar el ComponentVersion */
 		componentVersion = new MComponentVersion(ctx, (componentVersionID==-1?0:componentVersionID), trxName);
-		componentVersion.setVersion((String)m_component_props.get(PluginConstants.PROP_VERSION));
-		componentVersion.setAD_ComponentObjectUID(componentVersionEntry);
-		componentVersion.setAD_Component_ID(component.getAD_Component_ID());
+		if (!copyToChangelog || !mapToComponent)
+		{
+			componentVersion.setVersion((String)m_component_props.get(PluginConstants.PROP_VERSION));
+			componentVersion.setAD_ComponentObjectUID(componentVersionEntry);
+			componentVersion.setAD_Component_ID(component.getAD_Component_ID());
 
-		if (!componentVersion.save())
-			throw new Exception(" - Error al intentar registrar la version: " + componentVersion.getName());
+			if (!componentVersion.save())
+				throw new Exception(" - Error al intentar registrar la version: " + componentVersion.getName());
+		}
 
 		/* Registrar/actualizar el plugin */
 		POInfo.clearKey(DB.getSQLValue(trxName, " SELECT AD_Table_ID FROM AD_Table WHERE tableName = ?", "AD_Plugin"));
 		int pluginID = DB.getSQLValue(trxName, " SELECT P.AD_Plugin_ID FROM " + getGeneralPluginQuery() + " WHERE C.AD_Component_ID = ?", component.getAD_Component_ID());
 		plugin = new X_AD_Plugin(ctx, (pluginID==-1?0:pluginID), trxName); 
-		plugin.setAD_ComponentVersion_ID(componentVersion.getAD_ComponentVersion_ID());
+		if (!copyToChangelog || !mapToComponent)
+		{
+			plugin.setAD_ComponentVersion_ID(componentVersion.getAD_ComponentVersion_ID());
+			
+			if (!plugin.save())
+				throw new Exception(" - Error al intentar registrar el plugin ");
+		}
 		
-		if (!plugin.save())
-			throw new Exception(" - Error al intentar registrar el plugin ");
+		/* Incorporacion de informacion adicional en caso de copiar al changelog */
+		if (copyToChangelog)
+		{
+			/* Setear en el contexto: el ID local de la version del componente y el prefijo del componente que se utilizara;  */
+			Env.setContext(ctx, PluginConstants.INSTALLED_COMPONENTVERSION_ID, componentVersion.getAD_ComponentVersion_ID());
+			Env.setContext(ctx, PluginConstants.PROP_PREFIX, component.getPrefix());
+
+			/* Si estamos mapeando a otro componente, guardar el prefijo original (para incluirlo como parte del UID) */
+			if (mapToComponent)
+			{
+				Env.setContext(ctx, PluginConstants.COMPONENT_SOURCE_PREFIX, (String)m_component_props.get(PluginConstants.PROP_PREFIX));
+				ReplicationCache.mappedUIDs = new HashMap<String, String>();
+			}
+		}
 	}
 	
 	

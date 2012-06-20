@@ -4,6 +4,7 @@ package org.openXpertya.JasperReport;
 import java.math.BigDecimal;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
+import java.util.Calendar;
 import java.util.Date;
 import java.util.Iterator;
 import java.util.Set;
@@ -141,19 +142,17 @@ public class LaunchInvoice extends SvrProcess {
 				.getDocTypeName(getCtx(), invoice.getC_DocTypeTarget_ID(),
 						"FACTURA", get_TrxName()));
 			jasperwrapper.addParameter("FECHA", invoice.getDateInvoiced());
+			Calendar c = Calendar.getInstance();
+			c.setTimeInMillis(invoice.getDateInvoiced().getTime());
+			jasperwrapper.addParameter("DIA", Integer.toString(c.get(Calendar.DATE)));
+			jasperwrapper.addParameter("MES", Integer.toString(c.get(Calendar.MONTH)) + 1); // Mas 1 porque el Calendar maneja los meses de 0 a 11
+			jasperwrapper.addParameter("ANIO", Integer.toString(c.get(Calendar.YEAR)));		
 			jasperwrapper.addParameter("RAZONSOCIAL", JasperReportsUtil.coalesce(invoice.getNombreCli(), bpartner.getName()) ); 
 			jasperwrapper.addParameter("RAZONSOCIAL2", JasperReportsUtil.coalesce(bpartner.getName2(), "") );
 			jasperwrapper.addParameter("CODIGO", bpartner.getValue());
-			jasperwrapper.addParameter(
-				"DIRECCION",
-				JasperReportsUtil.coalesce(location.getAddress1(), "")
-						+ ". "
-						+ JasperReportsUtil.coalesce(location.getCity(), "")
-						+ ". ("
-						+ JasperReportsUtil.coalesce(location.getPostal(), "")
-						+ "). "
-						+ JasperReportsUtil.coalesce(region == null ? ""
-								: region.getName(), ""));
+			jasperwrapper.addParameter("DIRECCION", JasperReportsUtil
+					.formatLocation(getCtx(), location.getID(), false));
+			jasperwrapper.addParameter("ADDRESS1", JasperReportsUtil.coalesce(location.getAddress1(), ""));
 			jasperwrapper.addParameter("CIUDAD", JasperReportsUtil.coalesce(location.getCity(),""));
 			jasperwrapper.addParameter("PAIS", JasperReportsUtil.coalesce(location.getCountry().getName(),""));
 			if(!Util.isEmpty(bpartner.getC_Categoria_Iva_ID(), true)){

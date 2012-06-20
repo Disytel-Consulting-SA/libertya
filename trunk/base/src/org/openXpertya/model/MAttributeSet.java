@@ -114,7 +114,7 @@ public class MAttributeSet extends X_M_AttributeSet {
 	
 	static {
 		s_condiciones.put(Casos.PedidoProveedor, new CondicionesCasos(true, true, false, false, false));
-		s_condiciones.put(Casos.AlbaranProveedor, new CondicionesCasos(true, false, true, true, false));
+		s_condiciones.put(Casos.AlbaranProveedor, new CondicionesCasos(true, true, false, true, false));
 		s_condiciones.put(Casos.PedidoCliente, new CondicionesCasos(false, true, false, false, false));
 		s_condiciones.put(Casos.AlbaranCliente, new CondicionesCasos(false, true, false, true, true));
 		s_condiciones.put(Casos.Merma, new CondicionesCasos(false, true, false, true, false));
@@ -224,8 +224,10 @@ public class MAttributeSet extends X_M_AttributeSet {
 		String TableName = DB.getSQLValueString(null, "SELECT AD_Table.TableName from AD_Tab INNER JOIN AD_Table ON (AD_Table.AD_Table_ID=AD_Tab.AD_Table_ID) WHERE AD_Tab_ID = ?", TabID);
 		int DocTypeTargetID = 0;
 		
-		if (TableName == null)
-			return null;
+		if (TableName == null){
+			s_casosPorWindow.put(WindowID, Casos.CasoDefault);
+			cc = GetCondicionesAtributos(s_casosPorWindow.get(WindowID));
+		}
 		
 		for (int i = TabNo; DocTypeTargetID == 0 && i >= 0; i--)
 			DocTypeTargetID =  Env.getContextAsInt(Env.getCtx(), WindowNo, i, "C_DocTypeTarget_ID");
@@ -250,10 +252,14 @@ public class MAttributeSet extends X_M_AttributeSet {
 				"SELECT COALESCE(IsInstanceAttribute, 'N') FROM M_Product AS p LEFT JOIN M_AttributeSet AS mas ON (p.M_AttributeSet_ID=mas.M_AttributeSet_ID) WHERE p.M_Product_ID = ?", 
 				new Object[]{M_Product_ID}));
 				*/
-		int M_AttributeSet_ID = DB.getSQLValue(null, "SELECT M_AttributeSet_ID FROM M_Product WHERE M_Product_ID = ? ", M_Product_ID);
+		int M_AttributeSet_ID = DB
+				.getSQLValue(
+						null,
+						"SELECT M_AttributeSet_ID FROM M_Product WHERE M_Product_ID = ? ",
+						M_Product_ID);
 		
 		if (M_AttributeSet_ID > 0) { 
-			MAttributeSet mas = get(Env.getCtx(), M_AttributeSet_ID, trxName);
+			MAttributeSet mas = get(Env.getCtx(), M_AttributeSet_ID);
 			return mas.isMandatory();
 		}
 		
@@ -270,7 +276,7 @@ public class MAttributeSet extends X_M_AttributeSet {
      * @return
      */
 
-    public static MAttributeSet get( Properties ctx,int M_AttributeSet_ID, String trxName ) {
+    public static MAttributeSet get( Properties ctx,int M_AttributeSet_ID) {
         Integer       key      = new Integer( M_AttributeSet_ID );
         MAttributeSet retValue = ( MAttributeSet )s_cache.get( key );
 
@@ -278,7 +284,7 @@ public class MAttributeSet extends X_M_AttributeSet {
             return retValue;
         }
 
-        retValue = new MAttributeSet( ctx,M_AttributeSet_ID, trxName );
+        retValue = new MAttributeSet( ctx,M_AttributeSet_ID, null );
 
         if( retValue.getID() != 0 ) {
             s_cache.put( key,retValue );
@@ -349,14 +355,30 @@ public class MAttributeSet extends X_M_AttributeSet {
      */
 
     public MAttribute[] getMAttributes( boolean instanceAttributes ) {
-        if( ( (m_instanceAttributes == null) && instanceAttributes ) || ((m_productAttributes == null) &&!instanceAttributes) ) {
-            String sql = "SELECT mau.M_Attribute_ID " + "FROM M_AttributeUse mau" + " INNER JOIN M_Attribute ma ON (mau.M_Attribute_ID=ma.M_Attribute_ID) " + "WHERE mau.IsActive='Y' AND ma.IsActive='Y'" + " AND mau.M_AttributeSet_ID=? AND ma.IsInstanceAttribute=? "    // #1,2
-                         + "ORDER BY mau.SeqNo";
+        return getMAttributes(instanceAttributes, false);
+    }    // getMAttributes
+
+    public MAttribute[] getMAttributes( boolean instanceAttributes, boolean forDescription ) {
+        return getMAttributes(instanceAttributes, forDescription, false);
+    }    // getMAttributes
+    
+    public MAttribute[] getMAttributes( boolean instanceAttributes, boolean forDescription, boolean reload ) {
+		if (reload || ((m_instanceAttributes == null) && instanceAttributes)
+				|| ((m_productAttributes == null) && !instanceAttributes)) {
+			StringBuffer sql = new StringBuffer("SELECT mau.M_Attribute_ID "
+					+ "FROM M_AttributeUse mau"
+					+ " INNER JOIN M_Attribute ma ON (mau.M_Attribute_ID=ma.M_Attribute_ID) "
+					+ "WHERE mau.IsActive='Y' AND ma.IsActive='Y'"
+					+ " AND mau.M_AttributeSet_ID=? AND ma.IsInstanceAttribute=? ");
+			if(forDescription){
+				sql.append(" AND mau.isdescription = 'Y' ");
+			}
+			sql.append("ORDER BY mau.SeqNo");
             ArrayList         list  = new ArrayList();
             PreparedStatement pstmt = null;
 
             try {
-                pstmt = DB.prepareStatement( sql,get_TrxName());
+                pstmt = DB.prepareStatement( sql.toString(),get_TrxName());
                 pstmt.setInt( 1,getM_AttributeSet_ID());
                 pstmt.setString( 2,instanceAttributes
                                    ?"Y"
@@ -415,7 +437,7 @@ public class MAttributeSet extends X_M_AttributeSet {
 
         return m_productAttributes;
     }    // getMAttributes
-
+    
     /**
      * Descripción de Método
      *

@@ -584,18 +584,18 @@ public class ProductPriceTemp extends SvrProcess {
             		+ " previouspricelist = (select pp.PriceList FROM M_ProductPrice pp WHERE pp.M_PriceList_Version_ID = " + m_PriceList_Version_Base_ID + " AND M_Product_ID = " + rs1.getInt("m_product_id")  + ")," 
             		+ " previouspricestd = (select pp.PriceStd FROM M_ProductPrice pp WHERE pp.M_PriceList_Version_ID = " + m_PriceList_Version_Base_ID + " AND M_Product_ID = " + rs1.getInt("m_product_id")  + "),"
             		+ " previouspricelimit = (select pp.Pricelimit FROM M_ProductPrice pp WHERE pp.M_PriceList_Version_ID = " + m_PriceList_Version_Base_ID + " AND M_Product_ID = " + rs1.getInt("m_product_id")  + "),"            		
-            		+ " Pricelist=( " +	getSubQuery(rs, rs1, "M_ProductPrice pp", "pp.PriceList", null)  
-            						  + " UNION "
-            						  +	getSubQuery(rs, rs1, "M_ProductPriceInstance pp", "pp.PriceList", rs1.getInt("M_AttributeSetInstance_ID")) + " ), "
-            		+ " PriceStd =( " +	getSubQuery(rs, rs1, "M_ProductPrice pp", "pp.PriceStd", null)  
-              						  + " UNION "
-              						  +	getSubQuery(rs, rs1, "M_ProductPriceInstance pp", "pp.PriceStd", rs1.getInt("M_AttributeSetInstance_ID")) + " ), "            						  
-            		+ " PriceLimit=( "+	getSubQuery(rs, rs1, "M_ProductPrice pp", "pp.PriceLimit", null) 
-            						  + " UNION "
-            						  +	getSubQuery(rs, rs1, "M_ProductPriceInstance pp", "pp.PriceLimit", rs1.getInt("M_AttributeSetInstance_ID")) + " ), "            						  
+            		+ " Pricelist=( select COALESCE((" +	getSubQuery(rs, rs1, "M_ProductPriceInstance pp", "pp.PriceList", rs1.getInt("M_AttributeSetInstance_ID"))  
+            						  + "),("
+            						  +	getSubQuery(rs, rs1, "M_ProductPrice pp", "pp.PriceList", null) + " ))), "
+            		+ " PriceStd =( select COALESCE((" +	getSubQuery(rs, rs1, "M_ProductPriceInstance pp", "pp.PriceStd", rs1.getInt("M_AttributeSetInstance_ID"))  
+              						  + "),("
+              						  +	getSubQuery(rs, rs1, "M_ProductPrice pp", "pp.PriceStd", null) + " ))), "            						  
+            		+ " PriceLimit=( select COALESCE(("+	getSubQuery(rs, rs1, "M_ProductPriceInstance pp", "pp.PriceLimit", rs1.getInt("M_AttributeSetInstance_ID")) 
+            						  + "),("
+            						  +	getSubQuery(rs, rs1, "M_ProductPrice pp", "pp.PriceLimit", null) + " ))), "            						  
 					+ " M_PriceList_Version_ID = " + m_PriceList_Version_ID
             		+ " WHERE I_ProductPrice." + getUserSQLCheck() + " AND M_DiscountSchemaLine_ID=" + rs.getInt( "M_DiscountSchemaLine_ID" )+" AND I_ProductPrice.m_product_id= " + rs1.getInt("m_product_id") 
-            		+ (rs1.getInt("M_AttributeSetInstance_ID") == 0 ? "" : " AND I_ProductPrice.M_AttributeSetInstance_ID = " + rs1.getInt("M_AttributeSetInstance_ID")); 
+            		+ (rs1.getInt("M_AttributeSetInstance_ID") == 0 ? "AND M_AttributeSetInstance_id isnull" : " AND I_ProductPrice.M_AttributeSetInstance_ID = " + rs1.getInt("M_AttributeSetInstance_ID")); 
             	
             	    log.fine("Em execut update con sql= "+ sql);
             	    no = DB.executeUpdate( sql );

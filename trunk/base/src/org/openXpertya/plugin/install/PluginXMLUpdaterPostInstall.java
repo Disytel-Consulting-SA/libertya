@@ -2,6 +2,8 @@ package org.openXpertya.plugin.install;
 
 import java.util.HashMap;
 
+import org.openXpertya.plugin.install.PluginXMLUpdater.ChangeGroup;
+
 
 public class PluginXMLUpdaterPostInstall extends PluginXMLUpdater {
 	
@@ -24,10 +26,11 @@ public class PluginXMLUpdaterPostInstall extends PluginXMLUpdater {
 	/**
 	 * Redefinición de columnas especiales que será necesario cargar con valores específicos, ignorando el valor del XML
 	 */
-	protected boolean appendSpecialValues(StringBuffer query, Column column, String tableName) throws Exception
+	protected boolean appendSpecialValues(StringBuffer query, Column column, String tableName, boolean useQuotes, ChangeGroup changeGroup) throws Exception
 	{
+		String quotes = (useQuotes?"'":"");
 		/* Primeramente contemplar valores especiales de la superclase */
-		boolean retValue = super.appendSpecialValues(query, column, tableName);
+		boolean retValue = false;
 		
 		/* Buscar en los parametros en busca de sustituciones, y redefinir según sea necesario */
 		String aParam = m_parameters.get(column.getName());
@@ -37,14 +40,14 @@ public class PluginXMLUpdaterPostInstall extends PluginXMLUpdater {
 			Boolean requiresQuotes = requiresQuotes(column);
 			
 			if (requiresQuotes)
-				query.append( "'" + aParam + "'," );
+				query.append( quotes + aParam + quotes + "," );
 			else 
 				query.append( aParam + "," );
 
 			retValue = true;
 		}
 		
-		return retValue;
+		return retValue || super.appendSpecialValues(query, column, tableName, useQuotes, changeGroup);
 
 	}
 

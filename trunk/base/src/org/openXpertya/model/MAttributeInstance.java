@@ -18,8 +18,10 @@ package org.openXpertya.model;
 
 import java.math.BigDecimal;
 import java.sql.ResultSet;
+import java.sql.Timestamp;
 import java.util.Properties;
 
+import org.openXpertya.util.DisplayType;
 import org.openXpertya.util.Env;
 
 /**
@@ -62,6 +64,14 @@ public class MAttributeInstance extends X_M_AttributeInstance {
         super( ctx,rs,trxName );
     }    // MAttributeInstance
 
+    
+    public MAttributeInstance( Properties ctx,int M_Attribute_ID,int M_AttributeSetInstance_ID,String trxName ) {
+        super( ctx,0,trxName );
+        setM_Attribute_ID( M_Attribute_ID );
+        setM_AttributeSetInstance_ID( M_AttributeSetInstance_ID );
+    }    // MAttributeInstance
+    
+    
     /**
      * Constructor de la clase ...
      *
@@ -95,10 +105,18 @@ public class MAttributeInstance extends X_M_AttributeInstance {
         super( ctx,0,trxName );
         setM_Attribute_ID( M_Attribute_ID );
         setM_AttributeSetInstance_ID( M_AttributeSetInstance_ID );
-        setValue( Value.toString());    // forDisplay
+        setValue( DisplayType.getNumberFormat(DisplayType.Number).format(Value) );    // forDisplay
         setValueNumber( Value );
     }                                   // MAttributeInstance
 
+    public MAttributeInstance( Properties ctx,int M_Attribute_ID,int M_AttributeSetInstance_ID,Timestamp Value,String trxName ) {
+        super( ctx,0,trxName );
+        setM_Attribute_ID( M_Attribute_ID );
+        setM_AttributeSetInstance_ID( M_AttributeSetInstance_ID );
+        setValue(DisplayType.getDateFormat().format(Value));
+        setValueDate(Value);
+    }    // MAttributeInstance
+    
     /**
      * Constructor de la clase ...
      *
@@ -118,7 +136,7 @@ public class MAttributeInstance extends X_M_AttributeInstance {
         setM_AttributeValue_ID( M_AttributeValue_ID );
         setValue( Value );
     }    // MAttributeInstance
-
+    
     /**
      * Descripción de Método
      *
@@ -146,6 +164,26 @@ public class MAttributeInstance extends X_M_AttributeInstance {
     public String toString() {
         return getValue();
     }    // toString
+
+	/**
+	 * Setear el valor real dependiendo del tipo de dato del valor parámetro
+	 * 
+	 * @param value
+	 *            valor
+	 */
+    public void setRealValue(Object value){
+    	String strValue;
+    	if(value instanceof BigDecimal){
+    		setValueNumber((BigDecimal)value);
+    		strValue = DisplayType.getNumberFormat(DisplayType.Number).format(value);
+    	} else if(value instanceof Timestamp){
+    		setValueDate((Timestamp)value);
+    		strValue = DisplayType.getDateFormat().format(value);
+    	} else{
+    		strValue = (String)value;
+    	}
+    	setValue(strValue);
+    }
 }    // MAttributeInstance
 
 

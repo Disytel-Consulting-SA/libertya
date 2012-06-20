@@ -54,7 +54,10 @@ public class MChangeLog extends X_AD_ChangeLog {
 
     /** NULL Value */
     public static String	NULL	= "NULL";
-
+    
+    /** Insert/Update = X.  Caso especial donde debe intentarse la insercion de no existir el registro, o la actualizacion, en caso de que sí exista */
+    public static final String OPERATIONTYPE_InsertionModification = "X";
+    
     /**
      *      Load Constructor
      *      @param ctx context

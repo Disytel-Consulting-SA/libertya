@@ -142,6 +142,19 @@ public class MAcctSchema extends X_C_AcctSchema {
      */
     protected boolean beforeSave(boolean newRecord) {
 
+    	// No se permite cambiar de método de amortización si se realizaron amortizaciones
+    	if(is_ValueChanged("M_Amortization_Method_ID")){
+			int cant = DB
+					.getSQLValue(
+							get_TrxName(),
+							"SELECT count(*) FROM m_amortization WHERE ad_client_id = ?",
+							getAD_Client_ID());
+        	if(cant > 0){
+        		log.saveError("AcctSchemaAmortizationsAlreadyCreated", "");
+        		return false;
+        	}
+    	}
+    	
         checkCosting();
 
         return true;
@@ -152,7 +165,7 @@ public class MAcctSchema extends X_C_AcctSchema {
      *      Check Costing Setup
      */
     public void checkCosting() {
-
+    	
         // Create Cost Type
         if (getM_CostType_ID() == 0) {
 

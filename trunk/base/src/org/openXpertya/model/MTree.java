@@ -312,7 +312,7 @@ public class MTree extends MTree_Base {
                 if( (parent != null) && parent.getAllowsChildren()) {
                     parent.add( node );
                     checkBuffer( node );
-                    m_buffer.remove( i );
+                    m_buffer.remove( node );
                     i = -1;    // start again with i=0
                 }
             }
@@ -328,7 +328,7 @@ public class MTree extends MTree_Base {
 
                 m_root.add( node );
                 checkBuffer( node );
-                m_buffer.remove( i );
+                m_buffer.remove( node );
                 i = -1;
             }
 

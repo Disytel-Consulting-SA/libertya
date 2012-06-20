@@ -1,12 +1,14 @@
 /** Modelo Generado - NO CAMBIAR MANUALMENTE - Disytel */
 package org.openXpertya.model;
-import java.util.*;
-import java.sql.*;
-import java.math.*;
-import org.openXpertya.util.*;
+import java.math.BigDecimal;
+import java.sql.ResultSet;
+import java.util.Properties;
+
+import org.openXpertya.util.Env;
+import org.openXpertya.util.KeyNamePair;
 /** Modelo Generado por AD_Role
  *  @author Comunidad de Desarrollo Libertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
- *  @version  - 2010-03-18 12:40:30.683 */
+ *  @version  - 2011-12-19 15:33:16.769 */
 public class X_AD_Role extends org.openXpertya.model.PO
 {
 /** Constructor estándar */
@@ -30,6 +32,8 @@ setIsUseUserOrgAccess (false);	// N
 setName (null);
 setOverwritePriceLimit (false);	// N
 setPreferenceType (null);	// O
+setviewpurchaseprice (false);
+setviewsalesprice (false);
 }
  */
 }
@@ -466,5 +470,37 @@ System Client Organization */
 public String getUserLevel() 
 {
 return (String)get_Value("UserLevel");
+}
+/** Set viewpurchaseprice */
+public void setviewpurchaseprice (boolean viewpurchaseprice)
+{
+set_Value ("viewpurchaseprice", new Boolean(viewpurchaseprice));
+}
+/** Get viewpurchaseprice */
+public boolean isviewpurchaseprice() 
+{
+Object oo = get_Value("viewpurchaseprice");
+if (oo != null) 
+{
+ if (oo instanceof Boolean) return ((Boolean)oo).booleanValue();
+ return "Y".equals(oo);
+}
+return false;
+}
+/** Set viewsalesprice */
+public void setviewsalesprice (boolean viewsalesprice)
+{
+set_Value ("viewsalesprice", new Boolean(viewsalesprice));
+}
+/** Get viewsalesprice */
+public boolean isviewsalesprice() 
+{
+Object oo = get_Value("viewsalesprice");
+if (oo != null) 
+{
+ if (oo instanceof Boolean) return ((Boolean)oo).booleanValue();
+ return "Y".equals(oo);
+}
+return false;
 }
 }

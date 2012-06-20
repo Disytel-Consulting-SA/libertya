@@ -10,14 +10,19 @@ package org.openXpertya.replication;
 import java.io.StringReader;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
+import java.sql.ResultSetMetaData;
+import java.util.ArrayList;
+import java.util.List;
 
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 
+import org.openXpertya.model.MChangeLog;
 import org.openXpertya.model.MChangelogReplication;
 import org.openXpertya.plugin.install.ChangeLogElement;
 import org.openXpertya.plugin.install.ChangeLogGroup;
 import org.openXpertya.plugin.install.ChangeLogGroupList;
+import org.openXpertya.process.CreateReplicationTriggerProcess;
 import org.openXpertya.util.DB;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
@@ -26,81 +31,56 @@ import org.xml.sax.InputSource;
 
 public class ChangeLogGroupListReplication extends ChangeLogGroupList {
 
-	
-	/** primer registro del changelog a bitacorear */
-	int m_changelog_initial_id = -1; 
-	int m_changelog_final_id = -1; 
-	
 	DocumentBuilder builder = null;
 	Document doc = null;
+	
+	protected List<ChangeLogGroupReplication> groups;
+	
 	
 	/**
 	 * Instancia los elementos a utilizar para la generación
 	 * del XML definitivo a pasarle al host destino 
-	 * @param replicationArrayPos: criterio de filtrado 
-	 * 		  (sucursal para la cual se generará el XML) 
-	 * 		
-	 * 		La primer posicion es la org numero 1, la segunda es la org numero 2, etc.
-	 * 
-	 *  Si initial_changelog_record_id > 0, entonces iniciar la busqueda desde dicha posicion
-	 *  
-	 *  IMPORTANTE: debido a que el contenido XML generalmente es muy voluminoso,
-	 *  solo recuperará ReplicationBuilder.MAX_LOG_RECORDS tuplas
 	 */
-	public void fillList(int replicationArrayPos, int initial_changelog_record_id, int final_changelog_record_id, String trxName) throws Exception
+	public void fillList(String trxName) throws Exception
 	{
-		/** Filtrar el changelog solo para la sucursal especificada en replicationArrayPos */
-		StringBuffer sql = new StringBuffer(" SELECT log.ad_table_id, log.recorduid, log.operationtype, log.columnvalues, log.ad_changelog_replication_id, t.tableName ");
-								 sql.append(" FROM ad_changelog_replication log ");
-								 sql.append(" INNER JOIN ad_table t ON (log.ad_table_id = t.ad_table_id) ");
-								 sql.append(" WHERE substring(replicationarray, ?,1) = '1' ");
-								 if (initial_changelog_record_id > 0)
-								 	sql.append(" AND log.ad_changelog_replication_id >= " + initial_changelog_record_id);
-								 if (final_changelog_record_id > 0)
-									 	sql.append(" AND log.ad_changelog_replication_id <= " + final_changelog_record_id);
-								 sql.append(" ORDER BY log.ad_changelog_replication_id ASC ");
-								 sql.append(" LIMIT " + ReplicationBuilder.MAX_LOG_RECORDS );
-
-		PreparedStatement ps = null;
-		ResultSet rs = null;
-		ChangeLogGroup group = null; 
+		ReplicationTableManager rtm = new ReplicationTableManager(trxName);
+		rtm.evaluateChanges();
+		
+		ChangeLogGroupReplication group = null; 
 		Integer ad_table_id = null;
 		String operationType = null;
 		String ad_componentObjectUID = null;
 		String columnValues = null;
 		String tableName = null;
+		String tempRepArray = null;
 		builder = DocumentBuilderFactory.newInstance().newDocumentBuilder();
 		try{
-			ps = DB.prepareStatement(sql.toString(), trxName);
-			ps.setInt(1, replicationArrayPos);
-			rs = ps.executeQuery();
-			boolean started = false;
+			
 			int i = 0;
-			while(rs.next()){
-				/* Guardar el registro de inicio de bitacora */ 
-				if (!started)	{
-					m_changelog_initial_id = rs.getInt("ad_changelog_replication_id");
-					started = true;
-				}
-				/* Cargo los valores especificos para replicación */
-				columnValues = rs.getString("columnvalues");
-				ad_table_id = rs.getInt("ad_table_id");
-				operationType = rs.getString("operationtype");
-				ad_componentObjectUID = rs.getString("recorduid");  // <-- usado para el recordUID
-				tableName = rs.getString("tableName");
-				
-				/* Guardar el registro de fin de bitácora (ultima iteración mantiene ultimo ID) */
-				m_changelog_final_id = rs.getInt("ad_changelog_replication_id");
+			// Iterar por todos los registros a replicar
+			while (rtm.getNextChange()) {
+
+				/* Incorporar un nuevo changegroup por cada host destino */
+				// Cargo los valores especificos para replicación 
+				i++;
+				tempRepArray = rtm.getCurrentRecordRepArray();
+				columnValues = rtm.getColumnValuesForReplication();
+				ad_table_id = rtm.getCurrentRecordTableID();
+				operationType = rtm.isDeletionAction()?MChangeLog.OPERATIONTYPE_Deletion:"";  // se determina posteriormente por cada host de manera independiente (salvo para eliminacion)
+				ad_componentObjectUID = rtm.getCurrentRecordRetrieveUID(); 	// <-- usado para el retrieveUID
+				tableName = rtm.getCurrentRecordTableName();
 				
 				/* Crear un grupo por tupla de AD_Changelog_Replication */ 
-				group = new ChangeLogGroup(ad_table_id, ad_componentObjectUID, operationType, tableName);
+				group = new ChangeLogGroupReplication(ad_table_id, ad_componentObjectUID, operationType, tableName, tempRepArray);
 				group.setAd_componentObjectUID(ad_componentObjectUID);
 				group.setOperation(operationType);
+				// El timeout se da solo en los casos en que no haya estados de replicación 
+				// (en ese caso se sabe que se disparó la replicación de este grupo por dicho motivo)
+				group.setTimeOut(!repArrayContainsRepStates(group));
 				
 				/* Insertar los elementos dentro del grupo e incorporarlos al conjunto de grupos */
-				/* Si es una insercion o modificacion, verificar que realmente existan modificaciones, si es borrado insertarla siempre */
-				if ( operationType.equals("D") || ( (operationType.equals("I") || operationType.equals("M")) && insertElementsIntoGroup(group, columnValues, builder) > 0) )
-					getGroups().add(group);
+				if (insertElementsIntoGroup(group, columnValues, builder) > 0)
+					groups.add(group);
 				
 				// Limpiar memoria cada cierto intervalo de iteraciones
 				if (i++ % 1000 == 0)
@@ -109,15 +89,28 @@ public class ChangeLogGroupListReplication extends ChangeLogGroupList {
 		} catch(Exception e){
 			e.printStackTrace();
 			throw e;
-		} finally{
-			try{
-				if(ps != null)ps.close();
-				if(rs != null)rs.close();
-			} catch(Exception e){
-				e.printStackTrace();
-				throw e;
-			}
 		}
+		finally
+		{
+			// Ayudar al garbage collector a liberar memoria
+			rtm.finalize();
+			rtm = null;
+		}
+	}
+	
+	/**
+	 * Retorna true si en alguna de las posiciones del repArray se presenta un estado de replicación 
+	 * (ya sea por Insercion, Modificación, o bien por reintentos luego de presentarse un error).
+	 */
+	protected boolean repArrayContainsRepStates(ChangeLogGroupReplication group)
+	{
+		boolean found = false;
+		String repArray = group.getRepArray();
+		int size = repArray.length();
+		for (int i=0; i < size && !found; i++)
+			if (ReplicationConstants.replicateStates.contains(repArray.charAt(i)))
+				found = true;
+		return found;
 	}
 	
 	
@@ -139,7 +132,7 @@ public class ChangeLogGroupListReplication extends ChangeLogGroupList {
 		String value = null;
 
 		// Parsear el documento
-		doc = builder.parse(new InputSource(new StringReader(columnValuesXML)));
+		doc = builder.parse(new InputSource(new StringReader("<?xml version=\"1.0\" encoding=\"UTF-8\" ?> <columns> "+columnValuesXML+" </columns> ")));
 		
 		/* Leer cada columna e insertar los elementos */
 		NodeList nodes = doc.getElementsByTagName(MChangelogReplication.XML_COLUMN_TAG);
@@ -169,14 +162,13 @@ public class ChangeLogGroupListReplication extends ChangeLogGroupList {
 		return nodes.getLength();
 	}
 
-
-	public int getM_changelog_initial_id() {
-		return m_changelog_initial_id;
+	public ChangeLogGroupListReplication(){
+		groups = new  ArrayList<ChangeLogGroupReplication>(); 
+	}
+	
+	public List<ChangeLogGroupReplication> getGroupsReplication() {
+		return groups;
 	}
 
-
-	public int getM_changelog_final_id() {
-		return m_changelog_final_id;
-	}
 	
 }

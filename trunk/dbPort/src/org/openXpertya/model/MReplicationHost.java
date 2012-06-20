@@ -18,15 +18,7 @@ public class MReplicationHost extends X_AD_ReplicationHost {
 		// TODO Auto-generated constructor stub
 	}
 
-	/**
-	 * Para una organización dada, retorna el ultimo 
-	 * changelog replicado correctamente en este host.
-	 */
-	public static int getLastChangelogID(int orgID, String trxName)
-	{
-		return DB.getSQLValue(trxName, " SELECT lastchangelog_id FROM AD_ReplicationHost WHERE AD_Org_ID = ?", orgID);
-	}
-	
+
 	/**
 	 * Para una organización dada, retorna la posicion de la 
 	 * misma dentro del array de replicación (replicationArray)

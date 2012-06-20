@@ -30,8 +30,12 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.Timestamp;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Set;
 import java.util.logging.Level;
 
+import javax.swing.JComponent;
 import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
 import javax.swing.JPopupMenu;
@@ -165,7 +169,7 @@ public class VPAttributeDialog extends CDialog implements ActionListener {
 
     /** Descripción de Campos */
 
-    private ArrayList m_editors = new ArrayList();
+    private Map<Integer, JComponent> m_editors = new HashMap<Integer, JComponent>();
 
     /** Descripción de Campos */
 
@@ -553,6 +557,7 @@ public class VPAttributeDialog extends CDialog implements ActionListener {
         centerPanel.add( label,new ALayoutConstraint( m_row++,0 ));
 
         //
+        readOnly = readOnly || attribute.isReadOnly();
 
         MAttributeInstance instance = attribute.getMAttributeInstance( m_M_AttributeSetInstance_ID );
 
@@ -587,7 +592,7 @@ public class VPAttributeDialog extends CDialog implements ActionListener {
             if( readOnly ) {
                 editor.setEnabled( false );
             } else {
-                m_editors.add( editor );
+                m_editors.put(attribute.getID(), editor);
             }
         } else if( MAttribute.ATTRIBUTEVALUETYPE_Number.equals( attribute.getAttributeValueType())) {
             VNumber editor = new VNumber( attribute.getName(),attribute.isMandatory(),false,true,DisplayType.Number,Msg.translate( Env.getCtx(),"ValueNumber" ));
@@ -604,10 +609,10 @@ public class VPAttributeDialog extends CDialog implements ActionListener {
             if( readOnly ) {
                 editor.setEnabled( false );
             } else {
-                m_editors.add( editor );
+                m_editors.put(attribute.getID(), editor);
             }
-        } else    // Text Field
-        {
+        } else if( MAttribute.ATTRIBUTEVALUETYPE_StringMax40.equals( attribute.getAttributeValueType())) {
+        	// Text Field
             VString editor = new VString( attribute.getName(),attribute.isMandatory(),false,true,20,INSTANCE_VALUE_LENGTH,null,null );
 
             if( instance != null ) {
@@ -620,9 +625,26 @@ public class VPAttributeDialog extends CDialog implements ActionListener {
             if( readOnly ) {
                 editor.setEnabled( false );
             } else {
-                m_editors.add( editor );
+            	m_editors.put(attribute.getID(), editor);
+            }
+        } else if( MAttribute.ATTRIBUTEVALUETYPE_Date.equals( attribute.getAttributeValueType())) {
+        	// VDate
+			VDate editor = new VDate(attribute.getName(),
+					attribute.isMandatory(), readOnly, true, DisplayType.Date,
+					null);
+
+            if( instance != null ) {
+                editor.setValue(instance.getValueDate());
+            }
+
+            label.setLabelFor( editor );
+            centerPanel.add( editor,null );
+            
+            if( !readOnly ) {
+            	m_editors.put(attribute.getID(), editor);
             }
         }
+
     }    // addAttributeLine
 
     /**
@@ -808,12 +830,11 @@ public class VPAttributeDialog extends CDialog implements ActionListener {
         fieldDueDate.setReadWrite( rw );
         
         //
-
-        for( int i = 0;i < m_editors.size();i++ ) {
-            CEditor editor = ( CEditor )m_editors.get( i );
-
+        Set<Integer> keySet = m_editors.keySet();
+        for (Integer attributeID : keySet) {
+        	CEditor editor = ( CEditor )m_editors.get( attributeID );
             editor.setReadWrite( rw );
-        }
+		}
     }    // cmd_newEdit
 
     /**
@@ -950,42 +971,52 @@ public class VPAttributeDialog extends CDialog implements ActionListener {
         MAttribute[] attributes = as.getMAttributes( !m_productWindow );
 
         for( int i = 0;i < attributes.length;i++ ) {
-            if( MAttribute.ATTRIBUTEVALUETYPE_List.equals( attributes[ i ].getAttributeValueType())) {
-                CComboBox       editor = ( CComboBox )m_editors.get( i );
-                MAttributeValue value  = ( MAttributeValue )editor.getSelectedItem();
+        	if(m_editors.get(attributes[i].getID()) != null){
+                if( MAttribute.ATTRIBUTEVALUETYPE_List.equals( attributes[ i ].getAttributeValueType())) {
+                    CComboBox       editor = ( CComboBox )m_editors.get(attributes[i].getID());
+                    MAttributeValue value  = ( MAttributeValue )editor.getSelectedItem();
 
-                log.fine( "saveSelection - " + attributes[ i ].getName() + "=" + value );
+                    log.fine( "saveSelection - " + attributes[ i ].getName() + "=" + value );
 
-                if( attributes[ i ].isMandatory() && (value == null) ) {
-                    mandatory += " - " + attributes[ i ].getName();
+                    if( attributes[ i ].isMandatory() && (value == null) ) {
+                        mandatory += " - " + attributes[ i ].getName();
+                    }
+
+                    attributes[ i ].setMAttributeInstance( m_M_AttributeSetInstance_ID,value );
+                } else if( MAttribute.ATTRIBUTEVALUETYPE_Number.equals( attributes[ i ].getAttributeValueType())) {
+                    VNumber    editor = ( VNumber )m_editors.get(attributes[i].getID());
+                    BigDecimal value  = ( BigDecimal )editor.getValue();
+
+                    log.fine( "saveSelection - " + attributes[ i ].getName() + "=" + value );
+
+                    if( attributes[ i ].isMandatory() && (value == null) ) {
+                        mandatory += " - " + attributes[ i ].getName();
+                    }
+
+                    attributes[ i ].setMAttributeInstance( m_M_AttributeSetInstance_ID,value );
+                } else if( MAttribute.ATTRIBUTEVALUETYPE_StringMax40.equals( attributes[ i ].getAttributeValueType())) {
+                    VString editor = ( VString )m_editors.get(attributes[i].getID());
+                    String  value  = editor.getText();
+
+                    log.fine( "saveSelection - " + attributes[ i ].getName() + "=" + value );
+
+                    if( attributes[ i ].isMandatory() && ( (value == null) || (value.length() == 0) ) ) {
+                        mandatory += " - " + attributes[ i ].getName();
+                    }
+
+                    attributes[ i ].setMAttributeInstance( m_M_AttributeSetInstance_ID,value );
+                } else if( MAttribute.ATTRIBUTEVALUETYPE_Date.equals( attributes[ i ].getAttributeValueType())) {
+                	VDate editor = ( VDate )m_editors.get(attributes[i].getID());
+                    Timestamp  value  = (Timestamp)editor.getValue();
+
+                    if( attributes[ i ].isMandatory() && (value == null) ) {
+                        mandatory += " - " + attributes[ i ].getName();
+                    }
+
+                    attributes[ i ].setMAttributeInstance( m_M_AttributeSetInstance_ID,value );
                 }
-
-                attributes[ i ].setMAttributeInstance( m_M_AttributeSetInstance_ID,value );
-            } else if( MAttribute.ATTRIBUTEVALUETYPE_Number.equals( attributes[ i ].getAttributeValueType())) {
-                VNumber    editor = ( VNumber )m_editors.get( i );
-                BigDecimal value  = ( BigDecimal )editor.getValue();
-
-                log.fine( "saveSelection - " + attributes[ i ].getName() + "=" + value );
-
-                if( attributes[ i ].isMandatory() && (value == null) ) {
-                    mandatory += " - " + attributes[ i ].getName();
-                }
-
-                attributes[ i ].setMAttributeInstance( m_M_AttributeSetInstance_ID,value );
-            } else {
-                VString editor = ( VString )m_editors.get( i );
-                String  value  = editor.getText();
-
-                log.fine( "saveSelection - " + attributes[ i ].getName() + "=" + value );
-
-                if( attributes[ i ].isMandatory() && ( (value == null) || (value.length() == 0) ) ) {
-                    mandatory += " - " + attributes[ i ].getName();
-                }
-
-                attributes[ i ].setMAttributeInstance( m_M_AttributeSetInstance_ID,value );
-            }
-
-            m_changed = true;
+                m_changed = true;
+        	}
         }    // for all attributes
 
         // Save Model

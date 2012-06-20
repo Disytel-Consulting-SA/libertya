@@ -1,12 +1,13 @@
 /** Modelo Generado - NO CAMBIAR MANUALMENTE - Disytel */
 package org.openXpertya.model;
-import java.util.*;
+import java.util.logging.Level;
+ import java.util.*;
 import java.sql.*;
 import java.math.*;
 import org.openXpertya.util.*;
 /** Modelo Generado por C_CashLine
  *  @author Comunidad de Desarrollo Libertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
- *  @version  - 2010-12-06 17:16:56.226 */
+ *  @version  - 2011-12-12 14:35:17.626 */
 public class X_C_CashLine extends org.openXpertya.model.PO
 {
 /** Constructor estándar */
@@ -16,6 +17,7 @@ super (ctx, C_CashLine_ID, trxName);
 /** if (C_CashLine_ID == 0)
 {
 setAmount (Env.ZERO);
+setCashAmount (Env.ZERO);	// 0
 setCashType (null);	// E
 setC_Cash_ID (0);
 setC_CashLine_ID (0);
@@ -115,6 +117,21 @@ Integer ii = (Integer)get_Value("C_AllocationHdr_ID");
 if (ii == null) return 0;
 return ii.intValue();
 }
+/** Set Cash Amount.
+Cash Amount */
+public void setCashAmount (BigDecimal CashAmount)
+{
+if (CashAmount == null) throw new IllegalArgumentException ("CashAmount is mandatory");
+set_Value ("CashAmount", CashAmount);
+}
+/** Get Cash Amount.
+Cash Amount */
+public BigDecimal getCashAmount() 
+{
+BigDecimal bd = (BigDecimal)get_Value("CashAmount");
+if (bd == null) return Env.ZERO;
+return bd;
+}
 public static final int CASHTYPE_AD_Reference_ID = MReference.getReferenceID("C_Cash Trx Type");
 /** Payment on account = P */
 public static final String CASHTYPE_PaymentOnAccount = "P";
@@ -181,6 +198,23 @@ Identifies a Business Partner */
 public int getC_BPartner_ID() 
 {
 Integer ii = (Integer)get_Value("C_BPartner_ID");
+if (ii == null) return 0;
+return ii.intValue();
+}
+public static final int C_CASHCURRENCY_ID_AD_Reference_ID = MReference.getReferenceID("C_Currency");
+/** Set Cash Currency.
+Cash Currency */
+public void setC_CashCurrency_ID (int C_CashCurrency_ID)
+{
+if (C_CashCurrency_ID <= 0) set_Value ("C_CashCurrency_ID", null);
+ else 
+set_Value ("C_CashCurrency_ID", new Integer(C_CashCurrency_ID));
+}
+/** Get Cash Currency.
+Cash Currency */
+public int getC_CashCurrency_ID() 
+{
+Integer ii = (Integer)get_Value("C_CashCurrency_ID");
 if (ii == null) return 0;
 return ii.intValue();
 }

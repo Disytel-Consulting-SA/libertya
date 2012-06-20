@@ -8,9 +8,9 @@ import java.util.List;
 import java.util.Map;
 
 import org.openXpertya.model.DiscountCalculator;
-import org.openXpertya.model.MBPartner;
 import org.openXpertya.model.DiscountCalculator.GeneralDiscountKind;
 import org.openXpertya.model.DiscountCalculator.IDocument;
+import org.openXpertya.model.MBPartner;
 import org.openXpertya.util.Env;
 
 public class Order  {
@@ -22,9 +22,11 @@ public class Order  {
 	private List<OrderProduct> orderProducts;
 	private List<Payment> payments;
 	private BusinessPartner businessPartner;
+	private int orderRep;
 	private BigDecimal changeAmount;
 	private BigDecimal totalDocumentDiscount = BigDecimal.ZERO;
 	private BigDecimal totalBPartnerDiscount = BigDecimal.ZERO;
+	private BigDecimal totalManualGeneralDiscount = BigDecimal.ZERO;
 	
 	/** Precisión para importes */ 
 	private int stdPrecision = 2;
@@ -119,6 +121,20 @@ public class Order  {
 	 */
 	public void setPayments(List<Payment> payments) {
 		this.payments = payments;
+	}
+	
+	/**
+	 * @return Devuelve vendedor.
+	 */
+	public int getOrderRep() {
+		return orderRep;
+	}
+	
+	/**
+	 * Asigna el vendedor
+	 */
+	public void setOrderRep(int orderRep) {
+		this.orderRep = orderRep;
 	}
 
 	/**
@@ -461,6 +477,10 @@ public class Order  {
 		getDiscountCalculator().applyDocumentHeaderDiscounts();
 	}
 	
+	public void updateManualGeneralDiscount(BigDecimal percentage){
+		getDiscountCalculator().updateManualGeneralDiscount(percentage);
+	}
+	
 	/**
 	 * @return Devuelve changeAmount.
 	 */
@@ -554,7 +574,10 @@ public class Order  {
 		BigDecimal toPay = BigDecimal.ZERO;
 		if (getBalance().compareTo(BigDecimal.ZERO) <= 0) {
 			//toPay = getOrderProductsTotalAmt().subtract(getPaidAmount());
-			toPay = getOrderProductsTotalAmt().subtract(getRealPaidAmount()).subtract(getTotalBPartnerDiscount());
+			toPay = getOrderProductsTotalAmt()
+					.subtract(getTotalManualGeneralDiscount())
+					.subtract(getRealPaidAmount())
+					.subtract(getTotalBPartnerDiscount());
 		}
 		return toPay;
 	}
@@ -865,5 +888,13 @@ public class Order  {
 							.getInvoiceID() == creditNoteID;
 		}
 		return found;
+	}
+
+	public void setTotalManualGeneralDiscount(BigDecimal totalManualGeneralDiscount) {
+		this.totalManualGeneralDiscount = totalManualGeneralDiscount;
+	}
+
+	public BigDecimal getTotalManualGeneralDiscount() {
+		return totalManualGeneralDiscount;
 	}
 }

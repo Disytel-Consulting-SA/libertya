@@ -42,7 +42,7 @@ public class MInOutLine extends X_M_InOutLine {
 	// las cuales no son necesario realizar en caso de ser parte de una venta
 	// TPV
 	protected boolean isTPVInstance = false;
-
+	
 	protected MInvoiceLine invoiceLine = null;
 	protected MOrderLine orderLine = null;
 
@@ -586,6 +586,20 @@ public class MInOutLine extends X_M_InOutLine {
 		 * }
 		 */
 
+		// Si el artículo es bien de uso entonces debe estar relacionado a una
+		// línea de pedido/factura
+		MProduct product = Util.isEmpty(getM_Product_ID(), true) ? null
+				: MProduct.get(getCtx(), getM_Product_ID());
+		if (!isTPVInstance && !isProductionMovement(inout.getMovementType())
+				&& product != null
+				&& product.getProductType().equals(MProduct.PRODUCTTYPE_Assets)
+				&& Util.isEmpty(getC_OrderLine_ID(), true) 
+				&& Util.isEmpty(getC_InvoiceLine_ID(), true)) {
+			log.saveError("DocLineWithAssetProductWithoutDocLine", "");
+			return false;
+		}
+		
+		
 		/*
 		 * Añade una comprobacion en el metodo beforSave de las lineas de pedido
 		 * y albaran, para que en las transacciones de venta, no se pueda

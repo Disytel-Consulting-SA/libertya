@@ -53,8 +53,8 @@ public abstract class ChangeLogXMLBuilder extends PluginXMLBuilder {
 
 	
 	// Constructores
-	public ChangeLogXMLBuilder(int replicationArrayPos, String trxName) {
-		super(replicationArrayPos, trxName);
+	public ChangeLogXMLBuilder(String trxName) {
+		super(trxName);
 		/* No hay columnas a ignorar */
 		List<String> ignoreColumns = new ArrayList<String>();
 		setIgnoresReferenceColumns(ignoreColumns);

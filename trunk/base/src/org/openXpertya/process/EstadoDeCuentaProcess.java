@@ -98,8 +98,7 @@ public class EstadoDeCuentaProcess extends SvrProcess {
 			"	  JOIN c_doctype dt on i.c_doctype_id = dt.c_doctype_id    " +
 			"	  JOIN c_bpartner bp on i.c_bpartner_id = bp.c_bpartner_id    " +
 			"	  WHERE i.ispayschedulevalid <> 'Y'::bpchar AND i.docstatus <> 'DR'::bpchar " +
-			"	  AND i.AD_Client_ID = " + getAD_Client_ID() + 
-			"	  AND dt.doctypekey not in ('RTR', 'RTI', 'RCR', 'RCI') " +
+			"	  AND i.AD_Client_ID = " + getAD_Client_ID() +
 			"	  AND i.docstatus IN ('CO', 'CL', 'RE', 'VO') " +			
 			(isShowOpenBalance() ?
 			"     AND paymenttermduedays(i.c_paymentterm_id, i.dateinvoiced::timestamp with time zone, now()) BETWEEN " + daysfrom + " AND " + daysto +
@@ -121,7 +120,6 @@ public class EstadoDeCuentaProcess extends SvrProcess {
 			"	  JOIN c_bpartner bp on i.c_bpartner_id = bp.c_bpartner_id " +
 			"	  WHERE i.ispayschedulevalid = 'Y'::bpchar AND i.docstatus <> 'DR'::bpchar AND ips.isvalid = 'Y'::bpchar " +
 			"	  AND i.AD_Client_ID = " + getAD_Client_ID() + 
-			"	  AND dt.doctypekey not in ('RTR', 'RTI', 'RCR', 'RCI') " +
 			"	  AND i.docstatus IN ('CO', 'CL', 'RE', 'VO') " +			
 			(isShowOpenBalance() ?
 			"     AND to_days(now()) - to_days(ips.duedate) BETWEEN " + daysfrom + " AND " + daysto +

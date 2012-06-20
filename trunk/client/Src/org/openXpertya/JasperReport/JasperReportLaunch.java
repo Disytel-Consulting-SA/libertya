@@ -3,12 +3,14 @@ package org.openXpertya.JasperReport;
 import java.math.BigDecimal;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Properties;
 
 import org.openXpertya.JasperReport.DataSource.OXPJasperDataSource;
 import org.openXpertya.model.MProcess;
 import org.openXpertya.process.ProcessInfo;
 import org.openXpertya.process.ProcessInfoParameter;
 import org.openXpertya.process.SvrProcess;
+import org.openXpertya.util.DB;
 import org.openXpertya.util.Env;
 import org.openXpertya.util.Util;
 
@@ -239,6 +241,19 @@ public abstract class JasperReportLaunch extends SvrProcess {
 	 */
 	protected String getParameterInfo(String name) {
 		return getParameterInfo(name, null); 
+	}
+	
+	/**
+	 * @return Retorna el MJasperReport con el nombre indicado.
+	 */
+	protected MJasperReport getJasperReport(Properties ctx, String name, String trxName) throws Exception {
+		Integer jasperReport_ID = 
+			(Integer)DB.getSQLObject(get_TrxName(), "SELECT AD_JasperReport_ID FROM AD_JasperReport WHERE Name ilike ?", new Object[] { name });
+		if(jasperReport_ID == null || jasperReport_ID == 0)
+			throw new Exception("Jasper Report "+name+" not found");
+		
+		MJasperReport jasperReport = new MJasperReport(ctx, jasperReport_ID, get_TrxName());
+		return jasperReport;
 	}
 	
 	

@@ -29,6 +29,7 @@ import java.util.logging.Level;
 import org.openXpertya.model.MAccount;
 import org.openXpertya.model.MAcctSchema;
 import org.openXpertya.model.MAllocationHdr;
+import org.openXpertya.model.MAmortization;
 import org.openXpertya.model.MBankStatement;
 import org.openXpertya.model.MCash;
 import org.openXpertya.model.MConversionRate;
@@ -77,7 +78,8 @@ public abstract class Doc {
         MJournal.Table_ID,          // GL_Journal
         MMatchInv.Table_ID,         // M_MatchInv
         MMatchPO.Table_ID,          // M_MatchPO
-        MProjectIssue.Table_ID      // C_ProjectIssue
+        MProjectIssue.Table_ID,     // C_ProjectIssue
+        MAmortization.Table_ID     // MAmortization        
     };
 
     /** Descripción de Campos */
@@ -96,7 +98,8 @@ public abstract class Doc {
         MJournal.Table_Name,          // GL_Journal
         MMatchInv.Table_Name,         // M_MatchInv
         MMatchPO.Table_Name,          // M_MatchPO
-        MProjectIssue.Table_Name      // C_ProjectIssue
+        MProjectIssue.Table_Name,     // C_ProjectIssue
+        MAmortization.Table_Name	      // MAmortization
     };
 
     /** Descripción de Campos */
@@ -258,6 +261,8 @@ public abstract class Doc {
             doc = new Doc_MatchPO( ass,AD_Table_ID,MMatchPO.Table_Name );
        	else if (AD_Table_ID == MProjectIssue.Table_ID)
             doc = new Doc_ProjectIssue( ass,AD_Table_ID,MProjectIssue.Table_Name );
+       	else if (AD_Table_ID == MAmortization.Table_ID)
+            doc = new Doc_Amortization( ass,AD_Table_ID,MAmortization.Table_Name );
 
         if( doc == null ) {
             s_log.log( Level.SEVERE,"get - Unknown AD_Table_ID=" + AD_Table_ID );

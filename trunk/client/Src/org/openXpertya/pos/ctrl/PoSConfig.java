@@ -42,6 +42,8 @@ public class PoSConfig {
 	private boolean searchByUPCLike;
 	private boolean searchByName;
 	private boolean searchByNameLike;
+	private boolean searchToday;
+	private boolean copyEntity;
 	private boolean deliverOrderInWarehouse;
 	private boolean printWarehouseDeliverDocument;
 	private int cashID;
@@ -104,6 +106,9 @@ public class PoSConfig {
 			setPrintWarehouseDeliverDocument(true);
 			setControlCashReturns(pos.isReturnedCashInCNControl());
 			setMaxCashReturnWithoutAuth(pos.getMaxReturnedCashInCN());
+			
+			setSearchToday(pos.isSearchToday());
+			setCopyEntity(pos.isCopyEntity());
 		}	
 	}
 	
@@ -626,5 +631,33 @@ public class PoSConfig {
 
 	public BigDecimal getMaxCashReturnWithoutAuth() {
 		return maxCashReturnWithoutAuth;
+	}
+	
+	/**
+	 * @return the searchToday
+	 */
+	public boolean isSearchToday() {
+		return searchToday;
+	}
+
+	/**
+	 * @param searchToday the searchToday to set
+	 */
+	public void setSearchToday(boolean searchToday) {
+		this.searchToday = searchToday;
+	}
+	
+	/**
+	 * @return the copyEntity
+	 */
+	public boolean isCopyEntity() {
+		return copyEntity;
+	}
+
+	/**
+	 * @param copyEntity the copyEntity to set
+	 */
+	public void setCopyEntity(boolean copyEntity) {
+		this.copyEntity = copyEntity;
 	}
 }

@@ -8,10 +8,8 @@ import org.openXpertya.JasperReport.DataSource.InOutDataSource;
 import org.openXpertya.JasperReport.DataSource.JasperReportsUtil;
 import org.openXpertya.model.MBPartner;
 import org.openXpertya.model.MBPartnerLocation;
-import org.openXpertya.model.MCategoriaIva;
 import org.openXpertya.model.MClient;
 import org.openXpertya.model.MClientInfo;
-import org.openXpertya.model.MCurrency;
 import org.openXpertya.model.MInOut;
 import org.openXpertya.model.MInvoice;
 import org.openXpertya.model.MInvoiceLine;
@@ -19,14 +17,9 @@ import org.openXpertya.model.MInvoicePaySchedule;
 import org.openXpertya.model.MLocation;
 import org.openXpertya.model.MOrder;
 import org.openXpertya.model.MOrderLine;
-import org.openXpertya.model.MOrg;
-import org.openXpertya.model.MPaymentTerm;
 import org.openXpertya.model.MProcess;
-import org.openXpertya.model.MRefList;
 import org.openXpertya.model.MRegion;
-import org.openXpertya.model.MShipper;
 import org.openXpertya.model.MTax;
-import org.openXpertya.model.MUser;
 import org.openXpertya.model.X_C_Invoice;
 import org.openXpertya.model.X_M_InOut;
 import org.openXpertya.process.ProcessInfo;
@@ -158,15 +151,8 @@ public class LaunchInOut extends SvrProcess {
 		jasperwrapper.addParameter("RAZONSOCIAL", bpartner.getName());
 		jasperwrapper.addParameter("RAZONSOCIAL2", bpartner.getName2());
 		jasperwrapper.addParameter("CODIGO", bpartner.getValue());
-		jasperwrapper.addParameter(
-				"DIRECCION",
-				JasperReportsUtil.coalesce(location.getAddress1(), "")
-						+ ". "
-						+ ". ("
-						+ JasperReportsUtil.coalesce(location.getPostal(), "")
-						+ "). "
-						+ (region == null ? "" : JasperReportsUtil.coalesce(
-								region.getName(), "")));
+		jasperwrapper.addParameter("DIRECCION", JasperReportsUtil
+				.formatLocation(getCtx(), location.getID(), false));
 		jasperwrapper.addParameter("CIUDAD",
 				JasperReportsUtil.coalesce(location.getCity(), ""));
 		jasperwrapper

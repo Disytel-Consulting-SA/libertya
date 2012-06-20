@@ -7,7 +7,7 @@ import java.math.*;
 import org.openXpertya.util.*;
 /** Modelo Generado por M_InOutLine
  *  @author Comunidad de Desarrollo Libertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
- *  @version  - 2011-09-09 10:51:34.199 */
+ *  @version  - 2011-12-14 12:26:09.353 */
 public class X_M_InOutLine extends org.openXpertya.model.PO
 {
 /** Constructor estándar */
@@ -86,6 +86,22 @@ Country  */
 public int getC_Country_ID() 
 {
 Integer ii = (Integer)get_Value("C_Country_ID");
+if (ii == null) return 0;
+return ii.intValue();
+}
+/** Set Invoice Line.
+Invoice Detail Line */
+public void setC_InvoiceLine_ID (int C_InvoiceLine_ID)
+{
+if (C_InvoiceLine_ID <= 0) set_Value ("C_InvoiceLine_ID", null);
+ else 
+set_Value ("C_InvoiceLine_ID", new Integer(C_InvoiceLine_ID));
+}
+/** Get Invoice Line.
+Invoice Detail Line */
+public int getC_InvoiceLine_ID() 
+{
+Integer ii = (Integer)get_Value("C_InvoiceLine_ID");
 if (ii == null) return 0;
 return ii.intValue();
 }
@@ -431,12 +447,13 @@ public boolean insertDirect()
 try 
 {
  
- 		 String sql = " INSERT INTO M_InOutLine(AD_Client_ID,AD_Org_ID,C_Charge_ID,C_Country_ID,ConfirmedQty,C_OrderLine_ID,C_Project_ID,Created,CreatedBy,C_UOM_ID,declarationno,Description,IsActive,IsDescription,IsInvoiced,IsSelected,Line,M_AttributeSetInstance_ID,M_InOut_ID,M_InOutLine_ID,M_Locator_ID,MovementQty,M_Product_ID,PickedQty,Processed,QtyEntered,Ref_InOutLine_ID,ScrappedQty,TargetQty,Updated,UpdatedBy) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?) ";
+ 		 String sql = " INSERT INTO M_InOutLine(AD_Client_ID,AD_Org_ID,C_Charge_ID,C_Country_ID,C_InvoiceLine_ID,ConfirmedQty,C_OrderLine_ID,C_Project_ID,Created,CreatedBy,C_UOM_ID,declarationno,Description,IsActive,IsDescription,IsInvoiced,IsSelected,Line,M_AttributeSetInstance_ID,M_InOut_ID,M_InOutLine_ID,M_Locator_ID,MovementQty,M_Product_ID,PickedQty,Processed,QtyEntered,Ref_InOutLine_ID,ScrappedQty,TargetQty,Updated,UpdatedBy) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?) ";
 
 		 if (getAD_Client_ID() == 0) sql = sql.replaceFirst("AD_Client_ID,","").replaceFirst("\\?,", "");
  		 if (getAD_Org_ID() == 0) sql = sql.replaceFirst("AD_Org_ID,","").replaceFirst("\\?,", "");
  		 if (getC_Charge_ID() == 0) sql = sql.replaceFirst("C_Charge_ID,","").replaceFirst("\\?,", "");
  		 if (getC_Country_ID() == 0) sql = sql.replaceFirst("C_Country_ID,","").replaceFirst("\\?,", "");
+ 		 if (getC_InvoiceLine_ID() == 0) sql = sql.replaceFirst("C_InvoiceLine_ID,","").replaceFirst("\\?,", "");
  		 if (getConfirmedQty() == null) sql = sql.replaceFirst("ConfirmedQty,","").replaceFirst("\\?,", "");
  		 if (getC_OrderLine_ID() == 0) sql = sql.replaceFirst("C_OrderLine_ID,","").replaceFirst("\\?,", "");
  		 if (getC_Project_ID() == 0) sql = sql.replaceFirst("C_Project_ID,","").replaceFirst("\\?,", "");
@@ -468,6 +485,7 @@ try
 		 if (getAD_Org_ID() != 0) pstmt.setInt(col++, getAD_Org_ID());
 		 if (getC_Charge_ID() != 0) pstmt.setInt(col++, getC_Charge_ID());
 		 if (getC_Country_ID() != 0) pstmt.setInt(col++, getC_Country_ID());
+		 if (getC_InvoiceLine_ID() != 0) pstmt.setInt(col++, getC_InvoiceLine_ID());
 		 if (getConfirmedQty() != null) pstmt.setBigDecimal(col++, getConfirmedQty());
 		 if (getC_OrderLine_ID() != 0) pstmt.setInt(col++, getC_OrderLine_ID());
 		 if (getC_Project_ID() != 0) pstmt.setInt(col++, getC_Project_ID());

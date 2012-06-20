@@ -32,8 +32,9 @@ public class CreateReplicationTriggerProcess extends SvrProcess {
 	protected StringBuffer retValue = new StringBuffer("");
 	
 	// Columnas reservadas para replicacion, no deberian insertarse en metadatos directamente 
-	protected static final String COLUMN_RETRIEVEUID = "retrieveUID";
-	protected static final String COLUMN_REPARRAY = "repArray";
+	public static final String COLUMN_RETRIEVEUID = "retrieveUID";
+	public static final String COLUMN_REPARRAY = "repArray";
+	public static final String COLUMN_DATELASTSENT = "dateLastSentJMS";
 	
 	// Replication array dummy para relleno unicamente
 	protected static final String DUMMY_REPARRAY = "0";
@@ -102,8 +103,8 @@ public class CreateReplicationTriggerProcess extends SvrProcess {
 					System.out.print(".");
 					X_AD_TableReplication tr = new X_AD_TableReplication(getCtx(), 0, get_TrxName());
 					tr.setClientOrg(getAD_Client_ID(), Env.getAD_Org_ID(getCtx()));
-					tr.setAD_Table_ID(table.getAD_Table_ID());
-					tr.setReplicationArray(DUMMY_REPARRAY); // <- Un valor base que se deberá cambiar segun sea necesario (deberá ser 1 para las tablas que queremos bitacorear)
+					tr.set_ValueNoCheck("AD_Table_ID", table.getAD_Table_ID());
+					tr.setReplicationArray(DUMMY_REPARRAY); // <- Un valor base que se deberá cambiar segun sea necesario
 					tr.save();
 				}
 			}
@@ -168,6 +169,7 @@ public class CreateReplicationTriggerProcess extends SvrProcess {
 		if (!existColumnInTable(COLUMN_RETRIEVEUID, table.getTableName()))
 		{
 			append (sql, " ALTER TABLE " + table.getTableName() + " ADD COLUMN " + COLUMN_RETRIEVEUID + " varchar(100);" );
+			append (sql, " CREATE INDEX " + table.getTableName() + "_" + COLUMN_RETRIEVEUID + " ON " + table.getTableName() +  "(" + COLUMN_RETRIEVEUID +");");
 			retValue.append(" - Creada columna: " + COLUMN_RETRIEVEUID + " \n");
 		}
 		else
@@ -181,6 +183,15 @@ public class CreateReplicationTriggerProcess extends SvrProcess {
 		}
 		else
 			retValue.append(" - Columna " + COLUMN_REPARRAY + " ya existe en la tabla" + " \n");
+		
+		// Columna dateLastSent
+		if (!existColumnInTable(COLUMN_DATELASTSENT, table.getTableName()))
+		{
+			append (sql, " ALTER TABLE " + table.getTableName() + " ADD COLUMN " + COLUMN_DATELASTSENT + " timestamp null;" );
+			retValue.append(" - Creada columna: " + COLUMN_DATELASTSENT + " \n");
+		}
+		else
+			retValue.append(" - Columna " + COLUMN_DATELASTSENT + " ya existe en la tabla" + " \n");
 	}
 	
 	
@@ -283,13 +294,14 @@ public class CreateReplicationTriggerProcess extends SvrProcess {
 														" INNER JOIN ad_table lt ON lower(pt.table_name) = lower(lt.tablename) " +
 														" WHERE pt.table_schema = 'libertya' " +
 														" AND pt.table_type = 'BASE TABLE' ", trxName);
-		
+		StringBuffer query = new StringBuffer("");
 		ResultSet rs = pstmt.executeQuery();
 		while (rs.next())
 		{
-			DB.executeUpdate(" DROP TRIGGER IF EXISTS replication_event on " + rs.getString("tablename"), trxName);
-			DB.executeUpdate(" DROP SEQUENCE IF EXISTS repseq_ " + rs.getString("tablename").toLowerCase(), trxName);
+			query.append(" DROP TRIGGER IF EXISTS replication_event on ").append(rs.getString("tablename")).append(";");
+			query.append(" DROP SEQUENCE IF EXISTS repseq_").append(rs.getString("tablename").toLowerCase()).append(";");
 		}
+		DB.executeUpdate(query.toString(), trxName);
 	}
 
 }

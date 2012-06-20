@@ -83,7 +83,7 @@ public abstract class AUserAuthModel {
 		// entonces error 
 		if(!authorizedUser){
 			resultReturn.setMsg(
-					Msg.translate(ctx, notAuthorizedUserMsg), true);
+					Msg.parseTranslation(ctx, notAuthorizedUserMsg), true);
 			return resultReturn;
 		}
 		// ----------------------------------

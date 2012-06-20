@@ -3,6 +3,7 @@ package org.openXpertya.apps.form;
 import java.awt.BorderLayout;
 import java.awt.Component;
 import java.awt.Dimension;
+import java.awt.Font;
 import java.awt.Frame;
 import java.awt.GridLayout;
 import java.awt.Toolkit;
@@ -285,6 +286,10 @@ public class VPriceInstanceMatrix extends CDialog {
 		
 		PreparedStatement ps = null;
 		
+		// Added by Lucas Hernandez - Kunan
+		// Busco el precio del producto
+		BigDecimal productPrice = InfoProductAttribute.getPriceValue(M_Product_ID, M_PriceList_Version_ID);
+		
 		try {
 			ps = DB.prepareStatement(sql, null);
 			
@@ -317,6 +322,9 @@ public class VPriceInstanceMatrix extends CDialog {
 					b = b.setScale(2, BigDecimal.ROUND_HALF_UP);
 					
 					MatrixItem item = new MatrixItem(rs.getInt(2));
+					
+					// Added by Lucas Hernandez - Kunan
+					item.setProductPrice(productPrice);
 					
 					for (int w = 1; w <= atributos.size(); w++) 
 						item.addValueId(rs.getInt(w + 2));
@@ -663,6 +671,7 @@ public class VPriceInstanceMatrix extends CDialog {
 	
 	private static class MatrixItem {
 		private BigDecimal m_enteredPrice = BigDecimal.ZERO;
+		private BigDecimal m_productPrice = BigDecimal.ZERO;	// Added by Lucas Hernandez - Kunan
 		private int m_masi = 0;
 		private MProductPriceInstance m_ppi = null;
 		private Set<Integer> valuesIds = new HashSet<Integer>();
@@ -677,6 +686,16 @@ public class VPriceInstanceMatrix extends CDialog {
 		
 		public BigDecimal getEnteredPrice() {
 			return this.m_enteredPrice;
+		}
+		
+		// Added by Lucas Hernandez - Kunan
+		public void setProductPrice(BigDecimal p) {
+			this.m_productPrice = p;
+		}
+		
+		// Added by Lucas Hernandez - Kunan
+		public BigDecimal getProductPrice() {
+			return this.m_productPrice;
 		}
 		
 		public int getMasi() {
@@ -738,10 +757,17 @@ public class VPriceInstanceMatrix extends CDialog {
 			if (item != null) {
 				field1.setText(item.getEnteredPrice().toString());
 				
-				if (item.getEnteredPrice().signum() > 0)
+				if (item.getEnteredPrice().signum() > 0){
 					field1.setForeground(CompierePLAF.getTextColor_OK());
-				else 
+					// Added by Lucas Hernandez - Kunan
+					field1.setFont(field1.getFont().deriveFont(Font.BOLD)); 
+				}
+				else{ 
 					field1.setForeground(CompierePLAF.getTextColor_Issue());
+					// Added by Lucas Hernandez - Kunan
+					field1.setText(item.getProductPrice().toString());
+					field1.setFont(field1.getFont().deriveFont(Font.PLAIN)); 
+				}
 			} 
 			
             if (isSelected) {

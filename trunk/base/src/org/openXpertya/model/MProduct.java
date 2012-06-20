@@ -501,6 +501,10 @@ public class MProduct extends X_M_Product {
     public boolean isItem() {
         return PRODUCTTYPE_Item.equals( getProductType());
     }    // isItem
+    
+    public boolean isAsset() {
+        return PRODUCTTYPE_Assets.equals( getProductType());
+    }
 
     /**
      * Descripción de Método
@@ -510,7 +514,7 @@ public class MProduct extends X_M_Product {
      */
 
     public boolean isStocked() {
-        return super.isStocked() && isItem();
+        return super.isStocked() && (isItem() || isAsset());
     }    // isStocked
 
     /**
@@ -641,7 +645,8 @@ public class MProduct extends X_M_Product {
                 (( is_ValueChanged( "IsActive" ) &&!isActive())        // now not active
                 || ( is_ValueChanged( "IsStocked" ) &&!isStocked())    // now not stocked
                 || ( is_ValueChanged( "ProductType" )                  // from Item
-                && PRODUCTTYPE_Item.equals( get_ValueOld( "ProductType" ))))) {
+				&& (PRODUCTTYPE_Item.equals(get_ValueOld("ProductType")) || PRODUCTTYPE_Assets
+						.equals(get_ValueOld("ProductType")))))) {
             MStorage[] storages = MStorage.getOfProduct( getCtx(),getID(),get_TrxName());
             BigDecimal OnHand   = Env.ZERO;
             BigDecimal Ordered  = Env.ZERO;
@@ -682,7 +687,9 @@ public class MProduct extends X_M_Product {
                
         // Reset Stocked if not Item
 
-        if( isStocked() &&!PRODUCTTYPE_Item.equals( getProductType())) {
+		if (isStocked()
+				&& !(PRODUCTTYPE_Item.equals(getProductType()) || PRODUCTTYPE_Assets
+						.equals(getProductType()))) {
             setIsStocked( false );
         }
         
@@ -691,6 +698,13 @@ public class MProduct extends X_M_Product {
         	setUPC(getUPC().trim());
         }
 
+        if( !newRecord && ( is_ValueChanged( "M_AttributeSet_ID" ))){
+        	int count = Integer.parseInt(DB.getSQLObject(get_TrxName(), "SELECT COUNT(*) FROM M_Storage WHERE M_Product_ID = ? ", new Object[]{getM_Product_ID()}).toString());
+        	if (count > 0){
+        		log.saveError("ProductUsed", "");
+    			return false;
+        	}
+    	}
         return true;
     }    // beforeSave
 

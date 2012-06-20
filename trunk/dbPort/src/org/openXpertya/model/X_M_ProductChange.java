@@ -1,12 +1,13 @@
 /** Modelo Generado - NO CAMBIAR MANUALMENTE - Disytel */
 package org.openXpertya.model;
-import java.util.*;
+import java.util.logging.Level;
+ import java.util.*;
 import java.sql.*;
 import java.math.*;
 import org.openXpertya.util.*;
 /** Modelo Generado por M_ProductChange
  *  @author Comunidad de Desarrollo Libertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
- *  @version  - 2010-01-11 10:35:12.678 */
+ *  @version  - 2012-04-18 14:15:33.051 */
 public class X_M_ProductChange extends org.openXpertya.model.PO
 {
 /** Constructor estándar */
@@ -19,14 +20,17 @@ setDateTrx (new Timestamp(System.currentTimeMillis()));	// @#Date@
 setDocAction (null);	// CO
 setDocStatus (null);	// DR
 setDocumentNo (null);
-setM_Locator_ID (0);
-setM_Locator_To_ID (0);
+setMaxPriceVariationPerc (Env.ZERO);
+setM_Locator_ID (0);	// @#M_Locator_ID@
+setM_Locator_To_ID (0);	// @#M_Locator_ID@
 setM_ProductChange_ID (0);
 setM_Product_ID (0);
 setM_Product_To_ID (0);
 setM_Warehouse_ID (0);
 setProcessed (false);
+setProductPrice (Env.ZERO);
 setProductQty (Env.ZERO);
+setProductToPrice (Env.ZERO);
 }
  */
 }
@@ -201,6 +205,51 @@ public KeyNamePair getKeyNamePair()
 {
 return new KeyNamePair(getID(), getDocumentNo());
 }
+/** Set Attribute Set Instance.
+Product Attribute Set Instance */
+public void setM_AttributeSetInstance_ID (int M_AttributeSetInstance_ID)
+{
+if (M_AttributeSetInstance_ID <= 0) set_Value ("M_AttributeSetInstance_ID", null);
+ else 
+set_Value ("M_AttributeSetInstance_ID", new Integer(M_AttributeSetInstance_ID));
+}
+/** Get Attribute Set Instance.
+Product Attribute Set Instance */
+public int getM_AttributeSetInstance_ID() 
+{
+Integer ii = (Integer)get_Value("M_AttributeSetInstance_ID");
+if (ii == null) return 0;
+return ii.intValue();
+}
+/** Set Attribute Set Instance To.
+Target Product Attribute Set Instance */
+public void setM_AttributeSetInstanceTo_ID (int M_AttributeSetInstanceTo_ID)
+{
+if (M_AttributeSetInstanceTo_ID <= 0) set_Value ("M_AttributeSetInstanceTo_ID", null);
+ else 
+set_Value ("M_AttributeSetInstanceTo_ID", new Integer(M_AttributeSetInstanceTo_ID));
+}
+/** Get Attribute Set Instance To.
+Target Product Attribute Set Instance */
+public int getM_AttributeSetInstanceTo_ID() 
+{
+Integer ii = (Integer)get_Value("M_AttributeSetInstanceTo_ID");
+if (ii == null) return 0;
+return ii.intValue();
+}
+/** Set Max Price Variation Percentage */
+public void setMaxPriceVariationPerc (BigDecimal MaxPriceVariationPerc)
+{
+if (MaxPriceVariationPerc == null) throw new IllegalArgumentException ("MaxPriceVariationPerc is mandatory");
+set_Value ("MaxPriceVariationPerc", MaxPriceVariationPerc);
+}
+/** Get Max Price Variation Percentage */
+public BigDecimal getMaxPriceVariationPerc() 
+{
+BigDecimal bd = (BigDecimal)get_Value("MaxPriceVariationPerc");
+if (bd == null) return Env.ZERO;
+return bd;
+}
 /** Set Phys.Inventory.
 Parameters for a Physical Inventory */
 public void setM_Inventory_ID (int M_Inventory_ID)
@@ -320,6 +369,21 @@ if (oo != null)
 }
 return false;
 }
+/** Set Product Price.
+Source ProductPrice */
+public void setProductPrice (BigDecimal ProductPrice)
+{
+if (ProductPrice == null) throw new IllegalArgumentException ("ProductPrice is mandatory");
+set_Value ("ProductPrice", ProductPrice);
+}
+/** Get Product Price.
+Source ProductPrice */
+public BigDecimal getProductPrice() 
+{
+BigDecimal bd = (BigDecimal)get_Value("ProductPrice");
+if (bd == null) return Env.ZERO;
+return bd;
+}
 /** Set Product Quantity.
 Product Quantity */
 public void setProductQty (BigDecimal ProductQty)
@@ -332,6 +396,21 @@ Product Quantity */
 public BigDecimal getProductQty() 
 {
 BigDecimal bd = (BigDecimal)get_Value("ProductQty");
+if (bd == null) return Env.ZERO;
+return bd;
+}
+/** Set Product To Price.
+Destiny Product Price */
+public void setProductToPrice (BigDecimal ProductToPrice)
+{
+if (ProductToPrice == null) throw new IllegalArgumentException ("ProductToPrice is mandatory");
+set_Value ("ProductToPrice", ProductToPrice);
+}
+/** Get Product To Price.
+Destiny Product Price */
+public BigDecimal getProductToPrice() 
+{
+BigDecimal bd = (BigDecimal)get_Value("ProductToPrice");
 if (bd == null) return Env.ZERO;
 return bd;
 }
@@ -352,4 +431,90 @@ Integer ii = (Integer)get_Value("Void_Inventory_ID");
 if (ii == null) return 0;
 return ii.intValue();
 }
+
+public boolean insertDirect() 
+{
+ 
+try 
+{
+ 
+ 		 String sql = " INSERT INTO M_ProductChange(AD_Client_ID,AD_Org_ID,Created,CreatedBy,DateTrx,Description,DocAction,DocStatus,DocumentNo,IsActive,M_AttributeSetInstance_ID,M_AttributeSetInstanceTo_ID,MaxPriceVariationPerc,M_Inventory_ID,M_Locator_ID,M_Locator_To_ID,M_ProductChange_ID,M_Product_ID,M_Product_To_ID,M_Warehouse_ID,Processed,ProductPrice,ProductQty,ProductToPrice,Updated,UpdatedBy,Void_Inventory_ID) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?) ";
+
+		 if (getAD_Client_ID() == 0) sql = sql.replaceFirst("AD_Client_ID,","").replaceFirst("\\?,", "");
+ 		 if (getAD_Org_ID() == 0) sql = sql.replaceFirst("AD_Org_ID,","").replaceFirst("\\?,", "");
+ 		 if (getCreated() == null) sql = sql.replaceFirst("Created,","").replaceFirst("\\?,", "");
+ 		 if (getCreatedBy() == 0) sql = sql.replaceFirst("CreatedBy,","").replaceFirst("\\?,", "");
+ 		 if (getDateTrx() == null) sql = sql.replaceFirst("DateTrx,","").replaceFirst("\\?,", "");
+ 		 if (getDescription() == null) sql = sql.replaceFirst("Description,","").replaceFirst("\\?,", "");
+ 		 if (getDocAction() == null) sql = sql.replaceFirst("DocAction,","").replaceFirst("\\?,", "");
+ 		 if (getDocStatus() == null) sql = sql.replaceFirst("DocStatus,","").replaceFirst("\\?,", "");
+ 		 if (getDocumentNo() == null) sql = sql.replaceFirst("DocumentNo,","").replaceFirst("\\?,", "");
+ 		 if (getM_AttributeSetInstance_ID() == 0) sql = sql.replaceFirst("M_AttributeSetInstance_ID,","").replaceFirst("\\?,", "");
+ 		 if (getM_AttributeSetInstanceTo_ID() == 0) sql = sql.replaceFirst("M_AttributeSetInstanceTo_ID,","").replaceFirst("\\?,", "");
+ 		 if (getMaxPriceVariationPerc() == null) sql = sql.replaceFirst("MaxPriceVariationPerc,","").replaceFirst("\\?,", "");
+ 		 if (getM_Inventory_ID() == 0) sql = sql.replaceFirst("M_Inventory_ID,","").replaceFirst("\\?,", "");
+ 		 if (getM_Locator_ID() == 0) sql = sql.replaceFirst("M_Locator_ID,","").replaceFirst("\\?,", "");
+ 		 if (getM_Locator_To_ID() == 0) sql = sql.replaceFirst("M_Locator_To_ID,","").replaceFirst("\\?,", "");
+ 		 if (getM_ProductChange_ID() == 0) sql = sql.replaceFirst("M_ProductChange_ID,","").replaceFirst("\\?,", "");
+ 		 if (getM_Product_ID() == 0) sql = sql.replaceFirst("M_Product_ID,","").replaceFirst("\\?,", "");
+ 		 if (getM_Product_To_ID() == 0) sql = sql.replaceFirst("M_Product_To_ID,","").replaceFirst("\\?,", "");
+ 		 if (getM_Warehouse_ID() == 0) sql = sql.replaceFirst("M_Warehouse_ID,","").replaceFirst("\\?,", "");
+ 		 if (getProductPrice() == null) sql = sql.replaceFirst("ProductPrice,","").replaceFirst("\\?,", "");
+ 		 if (getProductQty() == null) sql = sql.replaceFirst("ProductQty,","").replaceFirst("\\?,", "");
+ 		 if (getProductToPrice() == null) sql = sql.replaceFirst("ProductToPrice,","").replaceFirst("\\?,", "");
+ 		 if (getUpdated() == null) sql = sql.replaceFirst("Updated,","").replaceFirst("\\?,", "");
+ 		 if (getUpdatedBy() == 0) sql = sql.replaceFirst("UpdatedBy,","").replaceFirst("\\?,", "");
+ 		 if (getVoid_Inventory_ID() == 0) sql = sql.replaceFirst("Void_Inventory_ID,","").replaceFirst("\\?,", "");
+ 
+ 		 int col = 1;
+ 
+		 CPreparedStatement pstmt = new CPreparedStatement( ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_UPDATABLE, sql, get_TrxName(), true);
+ 
+		 if (getAD_Client_ID() != 0) pstmt.setInt(col++, getAD_Client_ID());
+		 if (getAD_Org_ID() != 0) pstmt.setInt(col++, getAD_Org_ID());
+		 if (getCreated() != null) pstmt.setTimestamp(col++, getCreated());
+		 if (getCreatedBy() != 0) pstmt.setInt(col++, getCreatedBy());
+		 if (getDateTrx() != null) pstmt.setTimestamp(col++, getDateTrx());
+		 if (getDescription() != null) pstmt.setString(col++, getDescription());
+		 if (getDocAction() != null) pstmt.setString(col++, getDocAction());
+		 if (getDocStatus() != null) pstmt.setString(col++, getDocStatus());
+		 if (getDocumentNo() != null) pstmt.setString(col++, getDocumentNo());
+		 pstmt.setString(col++, isActive()?"Y":"N");
+		 if (getM_AttributeSetInstance_ID() != 0) pstmt.setInt(col++, getM_AttributeSetInstance_ID());
+		 if (getM_AttributeSetInstanceTo_ID() != 0) pstmt.setInt(col++, getM_AttributeSetInstanceTo_ID());
+		 if (getMaxPriceVariationPerc() != null) pstmt.setBigDecimal(col++, getMaxPriceVariationPerc());
+		 if (getM_Inventory_ID() != 0) pstmt.setInt(col++, getM_Inventory_ID());
+		 if (getM_Locator_ID() != 0) pstmt.setInt(col++, getM_Locator_ID());
+		 if (getM_Locator_To_ID() != 0) pstmt.setInt(col++, getM_Locator_To_ID());
+		 if (getM_ProductChange_ID() != 0) pstmt.setInt(col++, getM_ProductChange_ID());
+		 if (getM_Product_ID() != 0) pstmt.setInt(col++, getM_Product_ID());
+		 if (getM_Product_To_ID() != 0) pstmt.setInt(col++, getM_Product_To_ID());
+		 if (getM_Warehouse_ID() != 0) pstmt.setInt(col++, getM_Warehouse_ID());
+		 pstmt.setString(col++, isProcessed()?"Y":"N");
+		 if (getProductPrice() != null) pstmt.setBigDecimal(col++, getProductPrice());
+		 if (getProductQty() != null) pstmt.setBigDecimal(col++, getProductQty());
+		 if (getProductToPrice() != null) pstmt.setBigDecimal(col++, getProductToPrice());
+		 if (getUpdated() != null) pstmt.setTimestamp(col++, getUpdated());
+		 if (getUpdatedBy() != 0) pstmt.setInt(col++, getUpdatedBy());
+		 if (getVoid_Inventory_ID() != 0) pstmt.setInt(col++, getVoid_Inventory_ID());
+
+		pstmt.executeUpdate();
+
+		return true;
+
+	}
+catch (SQLException e) 
+{
+	log.log(Level.SEVERE, "insertDirect", e);
+	log.saveError("Error", DB.getErrorMsg(e) + " - " + e);
+	return false;
+	}
+catch (Exception e2) 
+{
+	log.log(Level.SEVERE, "insertDirect", e2);
+	return false;
+}
+
+}
+
 }

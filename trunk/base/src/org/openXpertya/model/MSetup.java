@@ -935,10 +935,11 @@ public class MSetup {
         // begin e-evolution vpj-cd 06/03/2005 CMPCS
 
         int GL_M = createGLCategory( "Manufactura ",MGLCategory.CATEGORYTYPE_Document,false );
-
+        int GL_AMO = createGLCategory( "Amortizacion",MGLCategory.CATEGORYTYPE_Document,false );
+        
         //Create all  doc types
         
-        if(!this.createAllDocTypes(GL_None,GL_GL,GL_ARI,GL_ARR,GL_MM,GL_API,GL_APP,GL_CASH,GL_M,1,-1)){
+        if(!this.createAllDocTypes(GL_None,GL_GL,GL_ARI,GL_ARR,GL_MM,GL_API,GL_APP,GL_CASH,GL_M, GL_AMO,1,-1)){
         	return false;
         }
         
@@ -968,7 +969,7 @@ public class MSetup {
      * @param GL_SignoNegativo
      * @return éxito del procedimiento
      */
-    public boolean createAllDocTypes(int GL_None,int GL_GL,int GL_ARI,int GL_ARR,int GL_MM,int GL_API,int GL_APP,int GL_CASH,int GL_M,int GL_SignoPositivo,int GL_SignoNegativo){
+    public boolean createAllDocTypes(int GL_None,int GL_GL,int GL_ARI,int GL_ARR,int GL_MM,int GL_API,int GL_APP,int GL_CASH,int GL_M, int GL_AMO, int GL_SignoPositivo,int GL_SignoNegativo){
     	//Crea los tipos de documento
     	createDocType( "Pedido de Mantenimiento",Msg.getElement( m_ctx,"MPC_Order_ID",false ),MDocType.DOCBASETYPE_MaintenanceOrder,null,0,0,910000,GL_M,GL_SignoPositivo, MDocType.DOCTYPE_MaintenanceOrder);
         createDocType( "Asunto de Pedido de Manufactura",Msg.getElement( m_ctx,"MPC_Order_ID",false ),MDocType.DOCBASETYPE_ManufacturingOrderIssue,null,0,0,920000,GL_M, GL_SignoPositivo, MDocType.DOCTYPE_ManufacturingOrderIssue);
@@ -1063,6 +1064,11 @@ public class MSetup {
 
         // Boleta de Depósito
         createDocType( "Boleta de Deposito", "Boleta de Deposito",MDocType.DOCBASETYPE_ARReceipt,null,0,0,0,GL_ARR,GL_SignoNegativo, MDocType.DOCTYPE_DepositReceipt);
+        
+        // Amortización
+		createDocType("Amortizacion", "Amortizacion",
+				MDocType.DOCBASETYPE_Amortization, null, 0, 0, 0, GL_AMO,
+				GL_SignoPositivo, MDocType.DOCTYPE_Amortization);
 
         // POS As Default for window SO
 

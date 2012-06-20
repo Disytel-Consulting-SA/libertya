@@ -97,7 +97,7 @@ public class FinBalance extends SvrProcess {
         log.fine( "C_AcctSchema_ID=" + p_C_AcctSchema_ID + ", IsRecreate=" + p_IsRecreate );
 
         if( p_C_AcctSchema_ID != 0 ) {
-            updateBalance( p_C_AcctSchema_ID,p_IsRecreate );
+            updateBalance( p_C_AcctSchema_ID,p_IsRecreate,get_TrxName() );
         } else {
             updateBalanceClient( getCtx(),getAD_Client_ID(),p_IsRecreate );
         }
@@ -142,14 +142,18 @@ public class FinBalance extends SvrProcess {
      *
      * @return
      */
-
+    
     public static String updateBalance( int C_AcctSchema_ID,boolean deleteFirst ) {
+    	return updateBalance( C_AcctSchema_ID,deleteFirst,null);
+    }
+
+    public static String updateBalance( int C_AcctSchema_ID,boolean deleteFirst, String trxName) {
         s_log.info( "C_AcctSchema_ID=" + C_AcctSchema_ID + " - DeleteFirst=" + deleteFirst );
 
         long start = System.currentTimeMillis();
 
         if( deleteFirst ) {
-            int no = DB.executeUpdate( "DELETE Fact_Acct_Balance WHERE C_AcctSchema_ID=" + C_AcctSchema_ID );
+            int no = DB.executeUpdate( "DELETE FROM Fact_Acct_Balance WHERE C_AcctSchema_ID=" + C_AcctSchema_ID ,trxName);
 
             s_log.fine( "updateBalance - deleted=" + no );
         }
@@ -159,19 +163,19 @@ public class FinBalance extends SvrProcess {
         String sql = "UPDATE Fact_Acct_Balance ab " + "SET AmtAcctDr= " + "(SELECT COALESCE(SUM(AmtAcctDr),0) " + "FROM Fact_Acct a " + "WHERE a.AD_Client_ID=ab.AD_Client_ID AND a.AD_Org_ID=ab.AD_Org_ID" + " AND a.C_AcctSchema_ID=ab.C_AcctSchema_ID AND TRUNC(a.DateAcct)=TRUNC(ab.DateAcct)" + " AND a.Account_ID=ab.Account_ID AND a.PostingType=ab.PostingType" + " AND COALESCE(a.M_Product_ID,0)=COALESCE(ab.M_Product_ID,0) AND COALESCE(a.C_BPartner_ID,0)=COALESCE(ab.C_BPartner_ID,0)" + " AND COALESCE(a.C_Project_ID,0)=COALESCE(ab.C_Project_ID,0) AND COALESCE(a.AD_OrgTrx_ID,0)=COALESCE(ab.AD_OrgTrx_ID,0)" + " AND COALESCE(a.C_SalesRegion_ID,0)=COALESCE(ab.C_SalesRegion_ID,0) AND COALESCE(a.C_Activity_ID,0)=COALESCE(ab.C_Activity_ID,0)" + " AND COALESCE(a.C_Campaign_ID,0)=COALESCE(ab.C_Campaign_ID,0) AND COALESCE(a.C_LocTo_ID,0)=COALESCE(ab.C_LocTo_ID,0) AND COALESCE(a.C_LocFrom_ID,0)=COALESCE(ab.C_LocFrom_ID,0)" + " AND COALESCE(a.User1_ID,0)=COALESCE(ab.User1_ID,0) AND COALESCE(a.User2_ID,0)=COALESCE(ab.User2_ID,0) AND COALESCE(a.GL_Budget_ID,0)=COALESCE(ab.GL_Budget_ID,0) " + "GROUP BY AD_Client_ID,AD_Org_ID, C_AcctSchema_ID, TRUNC(DateAcct)," + " Account_ID, PostingType, M_Product_ID, C_BPartner_ID," + " C_Project_ID, AD_OrgTrx_ID, C_SalesRegion_ID, C_Activity_ID," + " C_Campaign_ID, C_LocTo_ID, C_LocFrom_ID, User1_ID, User2_ID, GL_Budget_ID) " + "WHERE C_AcctSchema_ID=" + C_AcctSchema_ID + " AND EXISTS (SELECT a.fact_acct_id FROM Fact_Acct a " + "WHERE a.AD_Client_ID=ab.AD_Client_ID AND a.AD_Org_ID=ab.AD_Org_ID" + " AND a.C_AcctSchema_ID=ab.C_AcctSchema_ID AND TRUNC(a.DateAcct)=TRUNC(ab.DateAcct)" + " AND a.Account_ID=ab.Account_ID AND a.PostingType=ab.PostingType" + " AND COALESCE(a.M_Product_ID,0)=COALESCE(ab.M_Product_ID,0) AND COALESCE(a.C_BPartner_ID,0)=COALESCE(ab.C_BPartner_ID,0)" + " AND COALESCE(a.C_Project_ID,0)=COALESCE(ab.C_Project_ID,0) AND COALESCE(a.AD_OrgTrx_ID,0)=COALESCE(ab.AD_OrgTrx_ID,0)" + "     AND COALESCE(a.C_SalesRegion_ID,0)=COALESCE(ab.C_SalesRegion_ID,0) AND COALESCE(a.C_Activity_ID,0)=COALESCE(ab.C_Activity_ID,0)" + " AND COALESCE(a.C_Campaign_ID,0)=COALESCE(ab.C_Campaign_ID,0) AND COALESCE(a.C_LocTo_ID,0)=COALESCE(ab.C_LocTo_ID,0) AND COALESCE(a.C_LocFrom_ID,0)=COALESCE(ab.C_LocFrom_ID,0)" + " AND COALESCE(a.User1_ID,0)=COALESCE(ab.User1_ID,0) AND COALESCE(a.User2_ID,0)=COALESCE(ab.User2_ID,0) AND COALESCE(a.GL_Budget_ID,0)=COALESCE(ab.GL_Budget_ID,0) " + "GROUP BY AD_Client_ID,AD_Org_ID," + " C_AcctSchema_ID, TRUNC(DateAcct)," + " Account_ID, PostingType," + " M_Product_ID, C_BPartner_ID," + " C_Project_ID, AD_OrgTrx_ID," + " C_SalesRegion_ID, C_Activity_ID," + " C_Campaign_ID, C_LocTo_ID, C_LocFrom_ID," + " User1_ID, User2_ID, GL_Budget_ID,a.fact_acct_id)";
 
         if( !deleteFirst ) {
-            int no = DB.executeUpdate( sql );
+            int no = DB.executeUpdate( sql , trxName);
 
             s_log.fine( "updateBalance - updates=" + no );
         }
         sql = "UPDATE Fact_Acct_Balance ab " + "SET AmtAcctCr= " + "(SELECT COALESCE(SUM(AmtAcctCr),0) " + "FROM Fact_Acct a " + "WHERE a.AD_Client_ID=ab.AD_Client_ID AND a.AD_Org_ID=ab.AD_Org_ID" + " AND a.C_AcctSchema_ID=ab.C_AcctSchema_ID AND TRUNC(a.DateAcct)=TRUNC(ab.DateAcct)" + " AND a.Account_ID=ab.Account_ID AND a.PostingType=ab.PostingType" + " AND COALESCE(a.M_Product_ID,0)=COALESCE(ab.M_Product_ID,0) AND COALESCE(a.C_BPartner_ID,0)=COALESCE(ab.C_BPartner_ID,0)" + " AND COALESCE(a.C_Project_ID,0)=COALESCE(ab.C_Project_ID,0) AND COALESCE(a.AD_OrgTrx_ID,0)=COALESCE(ab.AD_OrgTrx_ID,0)" + " AND COALESCE(a.C_SalesRegion_ID,0)=COALESCE(ab.C_SalesRegion_ID,0) AND COALESCE(a.C_Activity_ID,0)=COALESCE(ab.C_Activity_ID,0)" + " AND COALESCE(a.C_Campaign_ID,0)=COALESCE(ab.C_Campaign_ID,0) AND COALESCE(a.C_LocTo_ID,0)=COALESCE(ab.C_LocTo_ID,0) AND COALESCE(a.C_LocFrom_ID,0)=COALESCE(ab.C_LocFrom_ID,0)" + " AND COALESCE(a.User1_ID,0)=COALESCE(ab.User1_ID,0) AND COALESCE(a.User2_ID,0)=COALESCE(ab.User2_ID,0) AND COALESCE(a.GL_Budget_ID,0)=COALESCE(ab.GL_Budget_ID,0) " + "GROUP BY AD_Client_ID,AD_Org_ID, C_AcctSchema_ID, TRUNC(DateAcct)," + " Account_ID, PostingType, M_Product_ID, C_BPartner_ID," + " C_Project_ID, AD_OrgTrx_ID, C_SalesRegion_ID, C_Activity_ID," + " C_Campaign_ID, C_LocTo_ID, C_LocFrom_ID, User1_ID, User2_ID, GL_Budget_ID) " + "WHERE C_AcctSchema_ID=" + C_AcctSchema_ID + " AND EXISTS (SELECT a.fact_acct_id FROM Fact_Acct a " + "WHERE a.AD_Client_ID=ab.AD_Client_ID AND a.AD_Org_ID=ab.AD_Org_ID" + " AND a.C_AcctSchema_ID=ab.C_AcctSchema_ID AND TRUNC(a.DateAcct)=TRUNC(ab.DateAcct)" + " AND a.Account_ID=ab.Account_ID AND a.PostingType=ab.PostingType" + " AND COALESCE(a.M_Product_ID,0)=COALESCE(ab.M_Product_ID,0) AND COALESCE(a.C_BPartner_ID,0)=COALESCE(ab.C_BPartner_ID,0)" + " AND COALESCE(a.C_Project_ID,0)=COALESCE(ab.C_Project_ID,0) AND COALESCE(a.AD_OrgTrx_ID,0)=COALESCE(ab.AD_OrgTrx_ID,0)" + "     AND COALESCE(a.C_SalesRegion_ID,0)=COALESCE(ab.C_SalesRegion_ID,0) AND COALESCE(a.C_Activity_ID,0)=COALESCE(ab.C_Activity_ID,0)" + " AND COALESCE(a.C_Campaign_ID,0)=COALESCE(ab.C_Campaign_ID,0) AND COALESCE(a.C_LocTo_ID,0)=COALESCE(ab.C_LocTo_ID,0) AND COALESCE(a.C_LocFrom_ID,0)=COALESCE(ab.C_LocFrom_ID,0)" + " AND COALESCE(a.User1_ID,0)=COALESCE(ab.User1_ID,0) AND COALESCE(a.User2_ID,0)=COALESCE(ab.User2_ID,0) AND COALESCE(a.GL_Budget_ID,0)=COALESCE(ab.GL_Budget_ID,0) " + "GROUP BY AD_Client_ID,AD_Org_ID," + " C_AcctSchema_ID, TRUNC(DateAcct)," + " Account_ID, PostingType," + " M_Product_ID, C_BPartner_ID," + " C_Project_ID, AD_OrgTrx_ID," + " C_SalesRegion_ID, C_Activity_ID," + " C_Campaign_ID, C_LocTo_ID, C_LocFrom_ID," + " User1_ID, User2_ID, GL_Budget_ID,a.fact_acct_id)";
         if( !deleteFirst ) {
-            int no = DB.executeUpdate( sql );
+            int no = DB.executeUpdate( sql , trxName );
 
             s_log.fine( "updateBalance - updates=" + no );
         }
         sql = "UPDATE Fact_Acct_Balance ab " + "SET Qty= " + "(SELECT COALESCE(SUM(Qty),0) " + "FROM Fact_Acct a " + "WHERE a.AD_Client_ID=ab.AD_Client_ID AND a.AD_Org_ID=ab.AD_Org_ID" + " AND a.C_AcctSchema_ID=ab.C_AcctSchema_ID AND TRUNC(a.DateAcct)=TRUNC(ab.DateAcct)" + " AND a.Account_ID=ab.Account_ID AND a.PostingType=ab.PostingType" + " AND COALESCE(a.M_Product_ID,0)=COALESCE(ab.M_Product_ID,0) AND COALESCE(a.C_BPartner_ID,0)=COALESCE(ab.C_BPartner_ID,0)" + " AND COALESCE(a.C_Project_ID,0)=COALESCE(ab.C_Project_ID,0) AND COALESCE(a.AD_OrgTrx_ID,0)=COALESCE(ab.AD_OrgTrx_ID,0)" + " AND COALESCE(a.C_SalesRegion_ID,0)=COALESCE(ab.C_SalesRegion_ID,0) AND COALESCE(a.C_Activity_ID,0)=COALESCE(ab.C_Activity_ID,0)" + " AND COALESCE(a.C_Campaign_ID,0)=COALESCE(ab.C_Campaign_ID,0) AND COALESCE(a.C_LocTo_ID,0)=COALESCE(ab.C_LocTo_ID,0) AND COALESCE(a.C_LocFrom_ID,0)=COALESCE(ab.C_LocFrom_ID,0)" + " AND COALESCE(a.User1_ID,0)=COALESCE(ab.User1_ID,0) AND COALESCE(a.User2_ID,0)=COALESCE(ab.User2_ID,0) AND COALESCE(a.GL_Budget_ID,0)=COALESCE(ab.GL_Budget_ID,0) " + "GROUP BY AD_Client_ID,AD_Org_ID, C_AcctSchema_ID, TRUNC(DateAcct)," + " Account_ID, PostingType, M_Product_ID, C_BPartner_ID," + " C_Project_ID, AD_OrgTrx_ID, C_SalesRegion_ID, C_Activity_ID," + " C_Campaign_ID, C_LocTo_ID, C_LocFrom_ID, User1_ID, User2_ID, GL_Budget_ID) " + "WHERE C_AcctSchema_ID=" + C_AcctSchema_ID + " AND EXISTS (SELECT a.fact_acct_id FROM Fact_Acct a " + "WHERE a.AD_Client_ID=ab.AD_Client_ID AND a.AD_Org_ID=ab.AD_Org_ID" + " AND a.C_AcctSchema_ID=ab.C_AcctSchema_ID AND TRUNC(a.DateAcct)=TRUNC(ab.DateAcct)" + " AND a.Account_ID=ab.Account_ID AND a.PostingType=ab.PostingType" + " AND COALESCE(a.M_Product_ID,0)=COALESCE(ab.M_Product_ID,0) AND COALESCE(a.C_BPartner_ID,0)=COALESCE(ab.C_BPartner_ID,0)" + " AND COALESCE(a.C_Project_ID,0)=COALESCE(ab.C_Project_ID,0) AND COALESCE(a.AD_OrgTrx_ID,0)=COALESCE(ab.AD_OrgTrx_ID,0)" + "     AND COALESCE(a.C_SalesRegion_ID,0)=COALESCE(ab.C_SalesRegion_ID,0) AND COALESCE(a.C_Activity_ID,0)=COALESCE(ab.C_Activity_ID,0)" + " AND COALESCE(a.C_Campaign_ID,0)=COALESCE(ab.C_Campaign_ID,0) AND COALESCE(a.C_LocTo_ID,0)=COALESCE(ab.C_LocTo_ID,0) AND COALESCE(a.C_LocFrom_ID,0)=COALESCE(ab.C_LocFrom_ID,0)" + " AND COALESCE(a.User1_ID,0)=COALESCE(ab.User1_ID,0) AND COALESCE(a.User2_ID,0)=COALESCE(ab.User2_ID,0) AND COALESCE(a.GL_Budget_ID,0)=COALESCE(ab.GL_Budget_ID,0) " + "GROUP BY AD_Client_ID,AD_Org_ID," + " C_AcctSchema_ID, TRUNC(DateAcct)," + " Account_ID, PostingType," + " M_Product_ID, C_BPartner_ID," + " C_Project_ID, AD_OrgTrx_ID," + " C_SalesRegion_ID, C_Activity_ID," + " C_Campaign_ID, C_LocTo_ID, C_LocFrom_ID," + " User1_ID, User2_ID, GL_Budget_ID,a.fact_acct_id)";
         if( !deleteFirst ) {
-            int no = DB.executeUpdate( sql );
+            int no = DB.executeUpdate( sql , trxName);
 
             s_log.fine( "updateBalance - updates=" + no );
         }
@@ -188,7 +192,7 @@ public class FinBalance extends SvrProcess {
 
         sql += " GROUP BY AD_Client_ID,AD_Org_ID, C_AcctSchema_ID, TRUNC(DateAcct)," + " Account_ID, PostingType, M_Product_ID, C_BPartner_ID," + " C_Project_ID, AD_OrgTrx_ID, C_SalesRegion_ID, C_Activity_ID," + " C_Campaign_ID, C_LocTo_ID, C_LocFrom_ID, User1_ID, User2_ID, GL_Budget_ID";
 
-        int no = DB.executeUpdate( sql );
+        int no = DB.executeUpdate( sql , trxName);
 
         s_log.fine( "inserts=" + no );
         start = System.currentTimeMillis() - start;

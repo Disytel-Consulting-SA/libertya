@@ -1,10 +1,11 @@
 /** Modelo Generado - NO CAMBIAR MANUALMENTE - Disytel */
 package org.openXpertya.model;
-import java.util.logging.Level;
- import java.util.*;
-import java.sql.*;
-import java.math.*;
-import org.openXpertya.util.*;
+import java.math.BigDecimal;
+import java.sql.ResultSet;
+import java.util.Properties;
+
+import org.openXpertya.util.Env;
+import org.openXpertya.util.KeyNamePair;
 /** Modelo Generado por C_POS
  *  @author Comunidad de Desarrollo Libertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
  *  @version  - 2011-11-15 14:38:10.049 */
@@ -327,6 +328,42 @@ set_Value ("IsSaleWithoutStock", new Boolean(IsSaleWithoutStock));
 public boolean isSaleWithoutStock() 
 {
 Object oo = get_Value("IsSaleWithoutStock");
+if (oo != null) 
+{
+ if (oo instanceof Boolean) return ((Boolean)oo).booleanValue();
+ return "Y".equals(oo);
+}
+return false;
+}
+/** Set Copy Entity.
+Copy Entity */
+public void setIsCopyEntity (boolean IsCopyEntity)
+{
+set_Value ("iscopyentity", new Boolean(IsCopyEntity));
+}
+/** Get Copy Entity.
+Copy Entity */
+public boolean isCopyEntity() 
+{
+Object oo = get_Value("iscopyentity");
+if (oo != null) 
+{
+ if (oo instanceof Boolean) return ((Boolean)oo).booleanValue();
+ return "Y".equals(oo);
+}
+return false;
+}
+/** Set Search Today.
+Search Today */
+public void setIsSearchToday (boolean IsSearchToday)
+{
+set_Value ("issearchtoday", new Boolean(IsSearchToday));
+}
+/** Get Search Today.
+Search Today */
+public boolean isSearchToday() 
+{
+Object oo = get_Value("issearchtoday");
 if (oo != null) 
 {
  if (oo instanceof Boolean) return ((Boolean)oo).booleanValue();

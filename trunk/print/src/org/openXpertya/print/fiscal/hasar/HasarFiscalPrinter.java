@@ -747,9 +747,10 @@ public abstract class HasarFiscalPrinter extends BasicFiscalPrinter implements H
 			setDocumentOpened(true);
 			
 			//////////////////////////////////////////////////////////////
-			// Se cargan las observaciones de la factura como texto fiscal.
+			// Se cargan las observaciones de la cabecera de la factura 
+			// como texto fiscal.
 			// Comando: @PrintFiscalText
-			for (String observation : invoice.getObservations()) {
+			for (String observation : invoice.getHeaderObservations()) {
 				execute(cmdPrintFiscalText(observation,null));
 			}
 			
@@ -778,6 +779,14 @@ public abstract class HasarFiscalPrinter extends BasicFiscalPrinter implements H
 					null)
 				);
 				setCancelAllowed(false);
+			}
+			
+			//////////////////////////////////////////////////////////////
+			// Se cargan las observaciones del pie de la factura como 
+			// texto fiscal.
+			// Comando: @PrintFiscalText
+			for (String observation : invoice.getFooterObservations()) {
+				execute(cmdPrintFiscalText(observation,null));
 			}
 			
 			//////////////////////////////////////////////////////////////
@@ -844,10 +853,10 @@ public abstract class HasarFiscalPrinter extends BasicFiscalPrinter implements H
 			setDocumentOpened(true);
 			
 			//////////////////////////////////////////////////////////////
-			// Se cargan las observaciones de la nota de crédito 
-			// como texto fiscal.
+			// Se cargan las observaciones de la cabecera de la nota de  
+			// crédito como texto fiscal.
 			// Comando: @PrintFiscalText
-			for (String observation : creditNote.getObservations()) {
+			for (String observation : creditNote.getHeaderObservations()) {
 				execute(cmdPrintFiscalText(observation,null));
 			}
 
@@ -856,6 +865,14 @@ public abstract class HasarFiscalPrinter extends BasicFiscalPrinter implements H
 			// Comando: @PrintLineItem
 			loadDocumentLineItems(creditNote);
 
+			//////////////////////////////////////////////////////////////
+			// Se cargan las observaciones del pie de la nota de crédito 
+			// como texto fiscal.
+			// Comando: @PrintFiscalText
+			for (String observation : creditNote.getFooterObservations()) {
+				execute(cmdPrintFiscalText(observation,null));
+			}
+			
 			//////////////////////////////////////////////////////////////
 			// Se cierra el comprobante no fiscal homologado.
 			// Comando: @CloseDNFH
@@ -907,10 +924,10 @@ public abstract class HasarFiscalPrinter extends BasicFiscalPrinter implements H
 			setDocumentOpened(true);
 
 			//////////////////////////////////////////////////////////////
-			// Se cargan las observaciones de la nota de débito 
-			// como texto fiscal.
+			// Se cargan las observaciones de la cabecera de la nota de 
+			// débito como texto fiscal.
 			// Comando: @PrintFiscalText
-			for (String observation : debitNote.getObservations()) {
+			for (String observation : debitNote.getHeaderObservations()) {
 				execute(cmdPrintFiscalText(observation,null));
 			}
 
@@ -919,6 +936,14 @@ public abstract class HasarFiscalPrinter extends BasicFiscalPrinter implements H
 			// Comando: @PrintLineItem
 			loadDocumentLineItems(debitNote);
 
+			//////////////////////////////////////////////////////////////
+			// Se cargan las observaciones del pie de la nota de débito 
+			// como texto fiscal.
+			// Comando: @PrintFiscalText
+			for (String observation : debitNote.getFooterObservations()) {
+				execute(cmdPrintFiscalText(observation,null));
+			}
+			
 			//////////////////////////////////////////////////////////////
 			// Se cierra el comprobante fiscal.
 			// Comando: @CloseFiscalReceipt

@@ -1,13 +1,16 @@
-/** Modelo Generado - NO CAMBIAR MANUALMENTE - Copyright (C) 2006 FUNDESLE */
+/** Modelo Generado - NO CAMBIAR MANUALMENTE - Disytel */
 package org.openXpertya.model;
-import java.util.*;
-import java.sql.*;
-import java.math.*;
-import org.openXpertya.util.*;
+import java.math.BigDecimal;
+import java.sql.ResultSet;
+import java.sql.Timestamp;
+import java.util.Properties;
+
+import org.openXpertya.util.Env;
+import org.openXpertya.util.KeyNamePair;
 /** Modelo Generado por I_Inventory
- *  @author Comunidad de Desarrollo openXpertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
- *  @version  - 2009-06-18 14:08:48.484 */
-public class X_I_Inventory extends PO
+ *  @author Comunidad de Desarrollo Libertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
+ *  @version  - 2011-12-23 12:25:33.555 */
+public class X_I_Inventory extends org.openXpertya.model.PO
 {
 /** Constructor estándar */
 public X_I_Inventory (Properties ctx, int I_Inventory_ID, String trxName)
@@ -27,12 +30,12 @@ public X_I_Inventory (Properties ctx, ResultSet rs, String trxName)
 super (ctx, rs, trxName);
 }
 /** AD_Table_ID=572 */
-public static final int Table_ID=572;
+public static final int Table_ID = M_Table.getTableID("I_Inventory");
 
 /** TableName=I_Inventory */
 public static final String Table_Name="I_Inventory";
 
-protected static KeyNamePair Model = new KeyNamePair(572,"I_Inventory");
+protected static KeyNamePair Model = new KeyNamePair(Table_ID,"I_Inventory");
 protected static BigDecimal AccessLevel = new BigDecimal(2);
 
 /** Load Meta Data */
@@ -150,19 +153,19 @@ public String getLot()
 {
 return (String)get_Value("Lot");
 }
-/** Set Phys.Inventory.
-Parameters for a Physical Inventory */
-public void setM_Inventory_ID (int M_Inventory_ID)
+/** Set Attribute Set Instance.
+Product Attribute Set Instance */
+public void setM_AttributeSetInstance_ID (int M_AttributeSetInstance_ID)
 {
-if (M_Inventory_ID <= 0) set_Value ("M_Inventory_ID", null);
+if (M_AttributeSetInstance_ID <= 0) set_Value ("M_AttributeSetInstance_ID", null);
  else 
-set_Value ("M_Inventory_ID", new Integer(M_Inventory_ID));
+set_Value ("M_AttributeSetInstance_ID", new Integer(M_AttributeSetInstance_ID));
 }
-/** Get Phys.Inventory.
-Parameters for a Physical Inventory */
-public int getM_Inventory_ID() 
+/** Get Attribute Set Instance.
+Product Attribute Set Instance */
+public int getM_AttributeSetInstance_ID() 
 {
-Integer ii = (Integer)get_Value("M_Inventory_ID");
+Integer ii = (Integer)get_Value("M_AttributeSetInstance_ID");
 if (ii == null) return 0;
 return ii.intValue();
 }
@@ -182,6 +185,22 @@ Integer ii = (Integer)get_Value("M_InventoryLine_ID");
 if (ii == null) return 0;
 return ii.intValue();
 }
+/** Set Phys.Inventory.
+Parameters for a Physical Inventory */
+public void setM_Inventory_ID (int M_Inventory_ID)
+{
+if (M_Inventory_ID <= 0) set_Value ("M_Inventory_ID", null);
+ else 
+set_Value ("M_Inventory_ID", new Integer(M_Inventory_ID));
+}
+/** Get Phys.Inventory.
+Parameters for a Physical Inventory */
+public int getM_Inventory_ID() 
+{
+Integer ii = (Integer)get_Value("M_Inventory_ID");
+if (ii == null) return 0;
+return ii.intValue();
+}
 /** Set Locator.
 Warehouse Locator */
 public void setM_Locator_ID (int M_Locator_ID)
@@ -197,18 +216,6 @@ public int getM_Locator_ID()
 Integer ii = (Integer)get_Value("M_Locator_ID");
 if (ii == null) return 0;
 return ii.intValue();
-}
-/** Set Movement Date.
-Date a product was moved in or out of inventory */
-public void setMovementDate (Timestamp MovementDate)
-{
-set_Value ("MovementDate", MovementDate);
-}
-/** Get Movement Date.
-Date a product was moved in or out of inventory */
-public Timestamp getMovementDate() 
-{
-return (Timestamp)get_Value("MovementDate");
 }
 /** Set Product.
 Product, Service, Item */
@@ -241,6 +248,18 @@ public int getM_Warehouse_ID()
 Integer ii = (Integer)get_Value("M_Warehouse_ID");
 if (ii == null) return 0;
 return ii.intValue();
+}
+/** Set Movement Date.
+Date a product was moved in or out of inventory */
+public void setMovementDate (Timestamp MovementDate)
+{
+set_Value ("MovementDate", MovementDate);
+}
+/** Get Movement Date.
+Date a product was moved in or out of inventory */
+public Timestamp getMovementDate() 
+{
+return (Timestamp)get_Value("MovementDate");
 }
 /** Set Processed.
 The document has been processed */
