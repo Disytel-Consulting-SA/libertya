@@ -1,0 +1,21 @@
+<?xml version="1.0"  encoding="UTF-8"?>
+
+<!DOCTYPE application PUBLIC '-//Sun Microsystems, Inc.//DTD 
+J2EE Application 1.2//EN'
+'http://java.sun.com/j2ee/dtds/application_1_2.dtd'>
+<application>
+	<display-name>wstore</display-name>
+	<description>Tienda Web OpenXpertya</description>
+	<module>
+		<web>
+			<web-uri>TiendaWebOXP.war</web-uri>
+			<context-root>/wstore</context-root>
+		</web>
+	</module>
+	<module>
+		<java>OXP.jar</java>
+	</module>
+	<module>
+		<java>OXPSLib.jar</java>
+	</module>
+</application>

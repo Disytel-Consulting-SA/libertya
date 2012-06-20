@@ -1,0 +1,69 @@
+<?xml version="1.0"?> 
+
+<!--
+ Copyright 2003 Sun Microsystems, Inc. All rights reserved.
+ SUN PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+-->
+
+<project name="CachedRowSet" default="main" basedir=".">
+
+  <!-- lib points to the directory containing the RowSets API jar file -->
+  <property name="rowsets.lib" value="../../lib"/>
+    
+  <path id="project-classpath">
+    <pathelement location="."/>
+    <pathelement location="../../etc"/>
+    <fileset dir="${rowsets.lib}">
+       <include name="**/*.jar"/>
+    </fileset>
+  </path>
+ 
+  <!-- Initialize the database -->
+  <target name="init">
+     <javac srcdir="../../etc">
+        <classpath refid="project-classpath"/>
+     </javac>
+     
+     <!-- Now run the program -->
+     <java classname="InitDatabase" fork="yes">
+       <!-- <arg value="jdbc:inetora:129.158.229.21:1521:orcl9"/> -->
+       <arg value="jdbc:datadirect:oracle://129.158.229.21:1521;SID=ORCL9"/>
+       <arg value="scott"/>
+       <arg value="tiger"/>
+       <arg value="com.ddtek.jdbc.oracle.OracleDriver"/>
+       <classpath refid="project-classpath"/>
+     </java>
+  </target>
+    
+  <!-- Compile the example program -->
+  <target name="compile" depends="init">
+    <javac  srcdir=".">
+      <classpath refid="project-classpath"/>
+    </javac>
+  </target>
+  
+  <!-- Run the example program with sample input files.  Note, when this
+       target is executed, ant may prefix the output with "[java]".  Run
+       the program with "java" directly to avoid this. -->
+       
+  <target name="run">
+    <echo>JdbcRowSet Sample Program</echo>
+    <java classname="JdbcRowSetSample" fork="yes">      
+       <!-- <arg value="jdbc:inetora:129.158.229.21:1521:orcl9"/> -->
+       <arg value="jdbc:datadirect:oracle://129.158.229.21:1521;SID=ORCL9"/>
+       <arg value="scott"/>
+       <arg value="tiger"/>
+       <arg value="com.ddtek.jdbc.oracle.OracleDriver"/>
+       <classpath refid="project-classpath"/>
+    </java>    
+  </target>
+
+  <target name="clean">
+    <delete>
+      <fileset dir="." includes="*.class"/>
+    </delete>
+  </target>
+
+  <target name="main" depends="compile,run"/>
+
+</project>

@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE jboss PUBLIC "-//JBoss//DTD JBOSS//EN" "http://www.jboss.org/j2ee/dtd/jboss.dtd">
+
+<jboss>
+
+   <enterprise-beans>
+
+      <session>
+         <ejb-name>openXpertya/Server</ejb-name>
+         <jndi-name>ejb/openXpertya/Server</jndi-name>
+      </session>
+      <session>
+         <ejb-name>openXpertya/Status</ejb-name>
+         <jndi-name>ejb/openXpertya/Status</jndi-name>
+      </session>
+
+   </enterprise-beans>
+
+   <resource-managers>
+   </resource-managers>
+
+</jboss>

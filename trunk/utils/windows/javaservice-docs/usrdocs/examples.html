@@ -1,0 +1,168 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<head>
+	<meta content="text/html; charset=iso-8859-1" http-equiv="Content-Type">
+	<meta content="en" http-equiv="Content-Language">
+
+	<title>JavaService - Example Service Installations</title>
+
+	<meta name="Robots" content="index, follow">
+
+	<link type="text/css" href="../resources/javaservice.css" rel="stylesheet" id="stylesheet">
+	<link type="image/x-icon" href="../favicon.ico" rel="icon">
+	<link type="image/x-icon" href="../favicon.ico" rel="shortcut icon">
+</head>
+<body bgcolor="#FFFFFF">
+
+<h2>JavaService - Example Commands</h2>
+
+<p>
+JavaService is known to be used successfully with a number of Java applications, for which some
+example commands are provided below for service installation.
+</p>
+<p>
+The commands given here cannot be guaranteed to be correct and may require changes to account for
+different software versions or environment configurations. They are provided purely as an assistance
+in using the JavaService utility and imply no association with the software described.
+</p>
+
+<h3>Example Scripts</h3>
+
+<p>
+As part of the standard JavaService distribution, a number of example scripts are provided.
+These can be used to install and configure the relevant application software, subject to any
+changes required for your specific environment.
+</p>
+<p>
+These example files are held in the JavaService/scripts sub-directory, according to wherever you
+have unpacked the distribution zip file. The available scripts are as follows:
+</p>
+
+<dl>
+<dt>InstallOrion.bat / UninstallOrion.bat</dt>
+<dd>Orion Application Server scripts</dd>
+<dt>InstallTomcat.bat / UninstallTomcat.bat</dt>
+<dd>Tomcat service scripts</dd>
+<dt>InstallJBoss.bat / UninstallJBoss.bat</dt>
+<dd>JBoss 3.x Application Server scripts</dd>
+</dl>
+
+<p>
+If you have developed software or scripts so that JavaService can work with other applications,
+it would be appreciated if you could submit these for inclusion in future releases of this Open Source software.
+</p>
+
+<h3>Orion Application Server Installation</h3>
+
+      <p>The <a href="http://www.orionserver.com">Orion</a> Application Server
+	  is a J2EE-compliant product that runs under the Java run-time environment. The JavaService
+	  utility provides a convenient mechanism to run this program as an NT Service.
+	</p>
+	<p>
+	  As the application server requires that an associated database server is already running, there
+	  is a need to add a Windows NT Service dependency to the Orion Java Service. The example below
+	  shows how this can be defined, with a dependency on the MySql database service in this case.
+	  {JDK_HOME} is the location of your JDK and {ORION_HOME} is the location of your Orion
+	  installation. The administrator username and password fields also need to be substituted in this command.
+	  Please note that this has been used successfully against the V1.5.2 OrionServer release,
+	  but is in any case provided 'as is'.</p>
+      <ol>
+        <li>Copy the JavaService.exe file into the {ORION_HOME} directory as OrionServer.exe.</li>
+        <li>Start a command prompt and change to the directory {ORION_HOME}.</li>
+        <li>Run the following command:<br>
+          <code>OrionServer.exe -install Orion<br>
+			{JDK_HOME}\jre\bin\{hotspot|server|classic}\jvm.dll<br>
+			-Djava.class.path={ORION_HOME}\orion.jar;{JDK_HOME}\lib\tools.jar -Xms64M -Xmx256M<br>
+			-start com.evermind.server.ApplicationServer<br>
+			-stop com.evermind.client.orion.OrionConsoleAdmin<br>
+			-params "ormi://localhost admin_username admin_password -shutdown"<br>
+			-out {ORION_HOME}\log\stdout.log<br>
+			-err {ORION_HOME}\log\stderr.log<br>
+			-current {ORION_HOME}<br>
+			-depends mysql<br>
+			-manual<br>
+			-append<br>
+			-description "Orion Application Server"</code> </li>
+        <li>To remove the registered service, run the following command from the same directory:<br>
+          <code>OrionServer.exe -uninstall Orion</code><br> </li>
+      </ol>
+      <p>The Orion service can then be started by issuing the following command,
+	   which will also start the MySql service beforehand if it is not already running:<br>
+	  <code>net start orion</code></p>
+      <p>The Orion service can then be stopped by issuing the following command:<br>
+	  <code>net stop orion</code></p>
+      <p>The MySql database service may be stopped as normal by issuing the following command:<br>
+	  <code>net start mysql</code><br>
+	  This will first stop the Orion service, if it is currently running, following user confirmation.</p>
+	  
+
+<h3>Tomcat Server Installation</h3>
+
+      <p><a href="http://jakarta.apache.org">Tomcat</a> is 
+        a JSP engine and was the primary reason that JavaService was created. 
+        It is a pure Java application that is ideally used as a service, but comes 
+        with no native ability to do so.
+	</p>
+	<p>
+	The following example shows how JavaService 
+        can be used to run Tomcat 3.1 as an NT service. The ideas shown here apply 
+        to using JavaService with any Java application that needs to run as an 
+        NT service. {JDK_HOME} is the location of your JDK and {TOMCAT_HOME} is 
+        the location of your Tomcat installation.</p>
+      <ol>
+        <li>Copy the JavaService.exe file into the {TOMCAT_HOME}\bin directory as tomcat.exe.</li>
+        <li>Start a command prompt and change to the directory {TOMCAT_HOME}\bin.</li>
+        <li>Run the following command:<br>
+          <code>tomcat.exe -install Tomcat<br>
+          {JDK_HOME}\jre\bin\{hotspot|server|classic}\jvm.dll<br>
+          -Djava.class.path={TOMCAT_HOME}\bin\bootstrap.jar;{TOMCAT_HOME}\bin\servlet.jar;{JDK_HOME}\lib\tools.jar 
+          <br>
+          -Dcatalina.home={TOMCAT_HOME}<br>
+          -start org.apache.catalina.startup.Bootstrap<br>
+          -params start<br>
+          -stop org.apache.catalina.startup.Bootstrap<br>
+          -params stop<br>
+          -out {TOMCAT_HOME}\logs\stdout.log<br>
+          -err {TOMCAT_HOME}\logs\stderr.log</code> </li>
+      </ol>
+
+<h3>JBoss Server Installation</h3>
+
+      <p>The <a href="http://www.jboss.org">JBoss</a> server software provides a Java
+	  run-time environment that can be used for JSP and J2EE applications. In this use, it often needs to
+	  be run as a Windows NT System Service, for which the JavaService utility is designed.
+	</p>
+	<p>
+	  Depending on configuration, JBoss may require that an associated database server is already running, which
+	  should be set up as a Windows NT Service dependency, with the example below set up against the MySql database.
+	  {JDK_HOME} is the location of your JDK and {JBOSS_BIN} is the location of your JBoss binaries installation.
+	  These instructions are based on information in the JBoss 3.0 quick-start guide,
+	  but are in any case provided 'as is'.</p>
+      <ol>
+        <li>Copy the JavaService.exe file into the {JBOSS_BIN} directory as JBossService.exe.</li>
+        <li>Start a command prompt and change to the directory {JBOSS_BIN}.</li>
+        <li>Run the following command:<br>
+          <code>JBossService.exe -install JBoss<br>
+			{JDK_HOME}\jre\bin\{hotspot|server|classic}\jvm.dll<br>
+			-Djava.class.path={JDK_HOME}\lib\tools.jar;{JBOSS_BIN}\run.jar<br>
+			-start org.jboss.Main<br>
+			-stop org.jboss.Main -method systemExit<br>
+			-out {JBOSS_BIN}\stdout.log<br>
+			-err {JBOSS_BIN}\stderr.log<br>
+			-current {JBOSS_BIN}<br>
+			-depends mysql<br>
+			-manual<br>
+			-overwrite</code> </li>
+        <li>To remove the registered service, run the following command from the same directory:<br>
+          <code>JBossService.exe -uninstall JBoss</code><br> </li>
+      </ol>
+      <p>The JBoss service can then be started by issuing the following command,
+	   which will also start the MySql service beforehand if it is not already running:<br>
+	  <code>net start jboss</code></p>
+      <p>The service can then be stopped by issuing the following command:<br>
+	  <code>net stop jboss</code></p>
+
+<p>&nbsp;</p>
+
+</body>
+</html>

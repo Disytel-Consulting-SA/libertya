@@ -1,0 +1,280 @@
+<HTML>
+<HEAD>
+<TITLE>JavaService - Version History</TITLE>
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=iso-8859-1">
+<LINK REL="stylesheet" HREF="styles.css" TYPE="text/css">
+</HEAD>
+
+<BODY BGCOLOR="#FFFFFF">
+<TABLE WIDTH="90%" BORDER="0" CELLSPACING="0" CELLPADDING="0" ALIGN="center">
+  <TR> 
+    <TD CLASS="mainTitle"><SPAN CLASS="mainHeading">JavaService - Version History</SPAN></TD>
+  </TR>
+  <TR>
+    <TD>&nbsp;</TD>
+  </TR>
+  <TR> 
+    <TD> 
+      <P CLASS="mainBold"><A NAME="Release_Notes"></A>Release Notes</P>
+      <BLOCKQUOTE> 
+
+      <P CLASS="mainBold">Current Version: 1.2.12 (ObjectWeb/Multiplan)<BR>
+        Release Date: August 1, 2005</P>
+        <UL CLASS="mainNormal">
+          <LI>Allow startup delay to be specified with <I>-startup seconds</I> optional parameter.</LI>
+
+		  <LI>Default is for no startup delay to be performed by the process.</LI>
+		  
+		  <LI>If a delay is specified, this begins after the startup thread is invoked, allowing for a period
+			of time to pass between the initial 'Starting' service status notification and the subsequent
+			'Running' notification to Windows. If the startup thread completes sooner, the delay will still
+			continue for the specified amount of time.</LI>
+
+		  <LI>The only expected use for a startup delay is if it is known that the Java application takes a finite
+			amount of time in performing startup operations, and the user wants Windows to return control only
+			after that time period has passed. In this case, specify the number of seconds delay to apply
+			and the JavaService main thread will pause (sleep) for that duration after the Java startup
+			thread has been invoked.</LI>		  
+        </UL>
+		
+      <P CLASS="mainBold">Version: 1.2.11 (ObjectWeb/Multiplan)<BR>
+        Release Date: July 30, 2005</P>
+        <UL CLASS="mainNormal">
+          <LI>Allow output log file mode to be specified as either <I>append</I> or <I>overwrite</I></LI>
+
+		  <LI>Default mode, since V1.2.5 is to append to existing output log files (for both stdout and stderr).</LI>
+		  
+		  <LI>If the optional end parameter is specified as <I>-overwrite</I> then this behaviour is changed
+		  and both output and error log files will be overwritten with new content when the service starts.</LI>
+
+		  <LI>Following on from V1.2.10: If a startup delay is absolutely required from JavaService, the
+		  source distribution should be modified and rebuilt locally to specify a non-zero delay in the C++
+		  code. This is supported by a constant definition within ServiceInterface.cpp (set to zero for release).</LI>		  
+        </UL>
+		
+      <P CLASS="mainBold">Version: 1.2.10 (ObjectWeb/Multiplan)<BR>
+        Release Date: July 29, 2005</P>
+        <UL CLASS="mainNormal">
+          <LI>Correct notification of service startup states to Windows Service Manager.</LI>
+
+		  <LI>Internally, the previous versions of JavaService all reported the service status
+		  to Windows as 'RUNNING' as soon as the startup request was received.
+		  This version now reports the service status as 'STARTING' when first receiving the request,
+		  followed by a subsequent report of service status as 'RUNNING' after firing the startup thread.</LI>
+		  
+		  <LI>The installation and user interface to JavaService is unchanged for this internal update.</LI>
+		  
+		  <LI>A 'hint' is passed to Windows Service Manager to indicate that service startup may take
+		  three seconds before completion. This value is not configurable and is coded within the program.</LI>
+		  
+		  <LI>Note that JavaService does not wait for the startup thread to complete, so it is likely
+		  that the final state transition will be notified shortly after the first report. This is a
+		  limitation in the coding of the JavaService utility and is unlikely to be changed. As a
+		  result, this update to the application meets the rules of Windows Services better, but
+		  is not expected to have any impact on the startup processing of any actual services.</LI>
+
+		  <LI>If a startup delay is absolutely required from JavaService, the recommendation is that
+		  the source distribution is modified locally to include a hard-coded delay in the C++
+		  code. This would be included between creation of the startup thread and notification of
+		  the 'RUNNING' service status.</LI>		  
+        </UL>
+		
+      <P CLASS="mainBold">Version: 1.2.9 (ObjectWeb/Multiplan)<BR>
+        Release Date: July 21, 2005</P>
+        <UL CLASS="mainNormal">
+          <LI>Supported use of multiple service dependencies.</LI>
+		  
+		  <LI>Optional install parameter <I>-depends otherservices</I> now accepts comma-delimited list
+		  of service nams, or single service name as before (name cannot contain a comma, though).</LI>
+		  
+		  <LI>If the dependency parameter is not specified, service will start up as configured (manual or auto).</LI>
+		  
+		  <LI>If the dependency parameter specifies a single service name, the installed service will only start up after the specified
+		  service is also running (will start both services if command issued to start the dependant service).</LI>
+		  
+		  <LI>If the dependency parameter specifies a list of multiple service dependency names (separated by commas), the installed service
+		  will only start up after all the specified services are also running (will start all services if necessary).</LI>
+		  
+        </UL>
+		
+      <P CLASS="mainBold">Version: 1.2.8 (ObjectWeb/Multiplan)<BR>
+        Release Date: July 20, 2005</P>
+        <UL CLASS="mainNormal">
+          <LI>Supported use of <I>-classpath</I> and <I>-cp</I> options, not normally handled by JVM.</LI>
+		  
+		  <LI>Command format now detects the use of either &quot;-classpath=value&quot; or &quot;-cp=value&quot; options.
+		  <BR>If present, this will be replaced with the correct form of option as &quot;-Djava.class.path=value&quot;.</LI>
+		  
+		  <LI>If any of the three explicit methods are used to specify the Java classpath (-cp, -classpath, -Djava.class.path)
+		  then the program does not apply the local CLASSPATH definition, which would otherwise do as a default.</LI>
+		  
+		  <LI>Note that the program works with options <I>-cp=value</I> and <I>-classpath=value</I>
+and this is not the same as the Java command line options <I>-cp value</I> and <I>-classpath value</I>.</LI>
+        </UL>
+		
+      <P CLASS="mainBold">Version: 1.2.7 (ObjectWeb/Multiplan)<BR>
+        Release Date: May 02, 2005</P>
+        <UL CLASS="mainNormal">
+          <LI>Added optional parameters to specify username and password to be used when running the service.</LI>
+		  
+		  <LI>Command format now supports &quot;-user username -password password&quot; parameters.
+		  <BR>Both the user and password values must be specified together, or not at all.</LI>
+		  
+		  <LI><strong>NOTE</strong> The username value should be specified as a Windows-2000 Active Directory style entry
+		  (i.e. <em>johndoe@foobar.com)</em> rather than the usual SMTP-style username; using the incorrect username style may
+		  result in &quot;Overlapped I/O operation&quot; errors being reported. The results of this may be different under
+		  earlier (Windows NT) or later (Windows XP/2003) system installations - please report any problems if experienced.</LI>
+        </UL>
+		
+		
+      <P CLASS="mainBold">Version: 1.2.6 (ObjectWeb/Multiplan)<BR>
+        Release Date: April 30, 2005</P>
+        <UL CLASS="mainNormal">
+          <LI>Added use of <I>CLASSPATH</I> environment variable during service installation, which is added to JVM options
+		  if <I>-Djava.class.path=</I> is not specified in the original command line (and if CLASSPATH is defined).</LI>
+
+		  <LI>This feature has been added to avoid problems where the Windows command-line length is exceeded
+		  for service configurations that have long lists of class path locations.
+		  <BR>
+		  Alternative solutions for earlier versions would require manual editing of Registry entries.</LI>
+
+		  <LI><I>NOTE</I> if the <I>-cp</I> or <I>-classpath</I> Java options are specified, this is detected by the
+		  JavaService installation process, but is not valid for JVM invocations and will be ignored.</LI>
+        </UL>
+		
+      <P CLASS="mainBold">Version: 1.2.5 (ObjectWeb/Multiplan)<BR>
+        Release Date: March 10, 2005</P>
+        <UL CLASS="mainNormal">
+          <LI>Updated code to append to existing files when redirecting stdout/stderr streams.
+		  <BR>
+		  <I>NOTE</I> this functionality is only available when using a recent Java run-time environment (i.e. JDK 1.4).</LI>
+		  <LI>Internal implementation uses a new constructor for FileOutputStream class, which was added for Java 1.4 JRE.
+		  If this new constructor is not available from the run-time environment, the application defaults to the previous
+		  mode and uses the standard constructor, which overwrites any existing log files on service startup.</LI>
+		  <LI>This feature has been tested successfully under JDK 1.4.2_07, which appends to existing log files.
+		  It has also been tested under JDK 1.3.1_07 and appends to existing files in that environment (not as expected).</LI>
+		  <LI><I>
+		  This new release has not yet been tested with an earlier JDK, so the error-handling functionality has not yet
+		  been tested to ensure that overwrite mode will be invoked if the new Java feature is not available at run-time.
+		  </I>
+		  <BR>If problems are found with a JDK prior to 1.3.1_07, then please highlight this through the support forums.</LI>
+        </UL>
+		
+      <P CLASS="mainBold">Version: 1.2.4 (ObjectWeb/Multiplan)<BR>
+        Release Date: January 29, 2005</P>
+        <UL CLASS="mainNormal">
+          <LI>Added the ability to specify the NT service shutdown timeout.<BR>
+            An optional parameter &quot;-shutdown&quot; has been added to the installation command line, allowing the user to specify the
+			length of time (in seconds) to allow for the Java method processing on shutdown, before timeout occurs and JVM is terminated.</LI>
+          <LI>This value is also stored in the registry (milliseconds value) and can be updated using RegEdit.</LI>
+		  <LI>If the value is not found in the registry, the original default of 30 seconds will be used.</LI>
+		  <LI>Decreased the hard-coded value for pause before exit, after JVM has terminated, from 90 to 15 seconds.</LI>
+        </UL>		
+		
+      <P CLASS="mainBold">Version: 1.2.3 (Multiplan Consultants Ltd)<BR>
+        Release Date: July 22, 2003</P>
+        <UL CLASS="mainNormal">
+          <LI>Added an alternative command-line parameter &quot;-version&quot; <BR>
+		  When specified interactively, the program now reports the version number and copyright information.</LI>
+		  <LI>Changes to software build process under Visual Studio:-
+		  	<UL>
+		  	<LI>Additional resource files definitions used, simplifying build of messages resource.</LI>
+			<LI>Version number resource information built into application from source code.</LI>
+			<LI>Debug instance of executable file now renamed to <EM>JavaServiceDebug.exe</EM></LI>
+			<LI>Removed references to unused libraries and include files.</LI>
+		  	</UL>
+		  </LI>
+          <LI>Minor refactoring to the code:-
+		  	<UL>
+			<LI>Local functions and data now restricted to module scope where applicable.</LI>
+			<LI>If/Then/Else statements restructured to meet preferred code-style.</LI>
+			<LI>Some areas of code re-ordered to remove duplication.</LI>
+			</UL>
+		  </LI>
+		  <LI>Product documentation updated:-
+		  	<UL>
+			<LI>All HTML documentation now moved to the <EM>./docs/</EM> sub-directory.</LI>
+			<LI>A new <EM>index.html</EM> page used to reference all other document files.</LI>
+			<LI>Version history information split from the overview document.</LI>
+			<LI>Software build process description updated accordingly.</LI>
+			<LI>Updated Orion sample script to specify initial/maximum heap sizes.</LI>
+			<LI>An initial FAQ has been defined to assist in early fault-finding efforts.</LI>
+			</UL>
+          </li>
+        </UL>
+		
+        <P CLASS="mainBold">Version: 1.2.2 (Multiplan Consultants Ltd)<BR>
+          Release Date: May 17, 2003</P>
+        <UL CLASS="mainNormal">
+          <LI>Added the ability to specify automatic or manual service startup mode.<BR>
+            An optional parameter &quot;-auto&quot; or &quot;-manual&quot; has been added to the command line
+			to allow the service startup to be specified as automatic (the default) or manual. If manual
+			service startup is specified, it will only run when issuing a command of the form 'net start service'.</LI>
+          <LI>Added an example of using the JavaService program to run the JBoss server software.</LI>
+          <LI>Further changes to printf statements to show the service name used.</LI>
+        </UL>
+        <P CLASS="mainBold">Version: 1.2.1 (Multiplan Consultants Ltd)<BR>
+          Release Date: November 03, 2002</P>
+        <UL CLASS="mainNormal">
+          <LI>Added the ability to specify an NT service dependency.<BR>
+            An optional parameter &quot;-depends&quot; has been added to the command line so that the user can specify an
+			additional NT service that must be started before the registered Java service is run.</LI>
+          <LI>Added new-line characters to the end of some printf statements to improve log file output.</LI>
+          <LI>Fixed an unitialised pointer problem that resulted in an occasional memory access error.</LI>
+          <LI>Added an example of using the JavaService program to run the Orion Application Server as a service.</LI>
+        </UL>
+        <P CLASS="mainBold"></P>
+        <P CLASS="mainBold">Version: 1.2.0 (Alexandria Software Consulting)<BR>
+          Release Date: April 12, 2001</P>
+        <UL CLASS="mainNormal">
+          <LI>Added the ability to have registry values greater than 256 characters. 
+            Registry access is now fully dynamic and values can have any length. 
+            A lot of people were having problems with the 256 character limit. 
+            I'm sorry it took so long to fix that, but I've been busy.</LI>
+          <LI>Fixed several printf statements that were missing parameters. Thanks 
+            to Anthony Tagunov for catching this.</LI>
+          <LI>Fixed a problem that prevented registry errors from being displayed 
+            properly. Thanks to Lars Johanson for sending in a fix for this.</LI>
+          <LI>Fixed a missing parameter in the Tomcat 3.2 install batch file. 
+            This is untested as I don't use Tomcat 3.2, so if someone would let 
+            me know if it works or not, I would appreciate it. Thanks to Joe Siebenmann 
+            for pointing out that there was a problem with the old batch file.</LI>
+          <LI>Added a new parameter &quot;-current&quot; to allow the current 
+            working directory to be specified. There were some people having problems 
+            with code that used relative paths, so this should help them out.</LI>
+          <LI>Added a new parameter &quot;-path&quot; to allow for extra path 
+            information to be added for finding dependent DLLs. Thanks to Lars 
+            Johanson for this submission.</LI>
+        </UL>
+        <P CLASS="mainBold"></P>
+        <P CLASS="mainBold">Version: 1.1.1 (Alexandria Software Consulting)<BR>
+          Release Date: December 21, 2000 </P>
+        <UL CLASS="mainNormal">
+          <LI>Added a new batch file to install Tomcat 3.2 that was contributed 
+            by James Bigler.</LI>
+        </UL>
+        <P CLASS="mainBold">Version: 1.1.0 (Alexandria Software Consulting)<BR>
+          Release Date: October 11, 2000 </P>
+        <UL CLASS="mainNormal">
+          <LI>Added an exit handler to the JVM so that a message is logged and 
+            the service is stopped gracefully if the System.exit method is called. 
+          </LI>
+        </UL>
+        <P CLASS="mainBold">Version: 1.0.0 (Alexandria Software Consulting)<BR>
+          Release Date: August 27, 2000 </P>
+        <UL CLASS="mainNormal">
+          <LI>Modified to work around a bug in the Sun J2SE 1.3 that caused the 
+            JVM to exit and the service to stop whenever a user logged off of 
+            the system.</LI>
+        </UL>
+        <P CLASS="mainBold">Version: 0.9.0 (Alexandria Software Consulting)<BR>
+          Release Date: April 14, 2000 </P>
+        <UL CLASS="mainNormal">
+          <LI>Initial Release. </LI>
+        </UL>
+        </BLOCKQUOTE>
+      </TD>
+  </TR>
+</TABLE>
+</BODY>
+</HTML>

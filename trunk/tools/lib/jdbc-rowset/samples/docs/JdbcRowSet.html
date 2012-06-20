@@ -1,0 +1,96 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+           
+  <link rel="stylesheet" type="text/css" href="style/default.css">
+  <title>JdbcRowSet Sample - Documentation</title>
+   
+</head>
+  <body>
+   
+<h1>JdbcRowSet Sample</h1>
+   
+<h1>README</h1>
+  <br>
+  &nbsp;&nbsp;&nbsp;&nbsp;This document presents a walkthrough of the JdbcRowSet
+ Sample, it explains the JdbcRowSet sample provided using snippets<br>
+   of code.  
+<h3>&nbsp;&nbsp;&nbsp; Overview&nbsp;</h3>
+  &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; This is sample to demonstrate the 
+functionality of a JdbcRowSet. This is like a ResultSet but behaves like a
+Java Bean component<br>
+  &nbsp;&nbsp; providing the getters and setters allowing it to be used in
+ cases where Java Beans functionality is required. The example demonstartes
+ <br>
+  &nbsp; &nbsp;the operations that can be performed with this component which
+ is simlar to a ResultSet.<br>
+  &nbsp;&nbsp; <br>
+  &nbsp;&nbsp; Project RAVE is using this as a Java Beans component in their
+ tool.<br>
+  <br>
+  <br>
+   
+<h3>&nbsp;&nbsp;&nbsp; Explanation of the Sample</h3>
+  <br>
+  &nbsp;&nbsp; &nbsp; &nbsp; &nbsp;<small><code>// Get the data into memory
+,using  populate<br>
+  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp; // This JdbcRowSet  behaves exactly like
+the ResultSet<br>
+  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp; // whose handle has  been passed to it.<br>
+  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <br>
+  &nbsp;&nbsp;&nbsp;&nbsp; &nbsp;jdbcrs = new JdbcRowSetImpl(dbUrl,dbUserId,dbPasswd);<br>
+  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp; jdbcrs.setCommand(dbCommand);<br>
+  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp; jdbcrs.execute();</code></small><b><small><br>
+  <br>
+  &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;</small></b><small><big>The 
+above code creates a JdbcRowSet</big></small> using the constructor that takes
+the Database URL, Username and password as the parameters.<br>
+  &nbsp;&nbsp;&nbsp; &nbsp;&nbsp; The setCommand function is sued to sepcify
+ the command that is to be used to poulate the JdbcRowSet. Then the execute
+ method is<br>
+  &nbsp;&nbsp;&nbsp; &nbsp;&nbsp; invoked to populate the JdbcRowSet. <small><br>
+  </small><b><small>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+ <br>
+  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <br>
+  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</small></b><small><code> 
+// Now we have a hnadle to a JdbcRowSet.<br>
+  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp; // This is similar  to a ResultSet but the
+advantage being<br>
+  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp; // it implementation  of the RowSet interface
+making it<br>
+  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp; // behave like a Java Beans component.<br>
+  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp; // We can do all the operations that can
+be performed using<br>
+  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp; // a ResultSet andle.<br>
+  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <br>
+  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp; jdbcrs.next();&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+  <br>
+  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp; jdbcrs.updateInt(1,9999);</code><br>
+  <br>
+  &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp; </small><small><big>The  above
+code shows the updation of a column ona particular row. Once the curosr  is
+on the required row updateXXX functions can be called<br>
+  &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;to update the corresponding columns.
+The  changes need not be synced back to the Database explicitly as this is
+a connected  type of RowSet<br>
+  &nbsp; &nbsp; &nbsp; &nbsp; and has a connection handle to the Database.
+ </big><br>
+  </small><b><small>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+ <br>
+  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</small></b><b><small> 
+</small></b><small><code>// Similarly the values in other columns can also
+be updated <br>
+  &nbsp;&nbsp;&nbsp;&nbsp; &nbsp;// and the values  written back to the DB.&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+ <br>
+  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp; jdbcrs.close();</code></small><br>
+  <br>
+  &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; This will close the JdbcRowSet and
+ release all the resource that were held by this object. This is a necessary
+ operation that is to be done when<br>
+  &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;no further operations are to be performed
+ on that object so that memory leaks are avoided.<br>
+  <br>
+    <br>
+ 
+</body>
+</html>

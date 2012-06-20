@@ -1,0 +1,240 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<head>
+	<meta content="text/html; charset=iso-8859-1" http-equiv="Content-Type">
+	<meta content="en" http-equiv="Content-Language">
+
+	<title>JavaService - Building Source</title>
+
+	<meta name="Robots" content="index, follow">
+
+	<link type="text/css" href="../resources/javaservice.css" rel="stylesheet" id="stylesheet">
+	<link type="image/x-icon" href="../favicon.ico" rel="icon">
+	<link type="image/x-icon" href="../favicon.ico" rel="shortcut icon">
+</head>
+<body bgcolor="#FFFFFF">
+
+<h2>JavaService - Source Code</h2>
+
+<p>
+The JavaService source files may be downloaded from the 
+<a href="http://forge.objectweb.org/projects/javaservice/" target="_top">ObjectWeb Forge</a> project repository,
+according to the terms of the Open Source <a href="../common/license.html">LGPL license</a> that covers this software.
+</p>
+<p>
+Updates to the code can only be checked-in to the repository by development members of the project.
+However, any bug-fixes or enhancements may be sent to the team members so that they can be included
+into the next development release of the software, according to compatibility.
+</p>
+<p>
+In most cases, the JavaService software will be usable for all standard Java applications, so the build instructions
+here are mostly for the benefit of ObjectWeb team members. As the code is provided under an Open Source license,
+these instructions may also prove useful for the wider development community in providing self-support or customised
+developments based on this software.
+</p>
+
+<h3>Development Background</h3>
+
+<p>
+Version 1.x of the JavaService utility was developed by Alexandria Software Consulting to meet the needs
+of running Java application software as a Windows system service. This initial implementation was made
+available as both binary and source distribution downloads. A number of updates were made to this software
+over time, both by Alexandria and Multiplan Consultants. This code base is still available for download
+from the ObjectWeb site, but is not expected to be enhanced or maintained further following release of
+the Version 2 software.
+</p>
+
+<p>
+JavaService Version 2 software has been substantially refactored and enhanced over the earlier V1.x releases, so that it
+now uses some recognised <em>Design Patterns</em> in the C++ source code. In particular, the design now makes use of the
+<em>Command</em> pattern for handling the user interface parsing and processing functionality. There are many more source
+files now, with class definitions and implementations in associated <em>.h header</em> and <em>.cpp source</em> files that
+encapsulate some measure of object oriented programming. Tbis has allowed new features to be incorporated through re-use of
+common code classes, and has reduced the amount of code duplication seen in the source.
+</p>
+
+<p>
+As well as the JavaService program itself, a build process is also defined to create the distribution files that are made
+available from the ObjectWeb download pages. These files include the executable program, the license file, the html documentation set,
+plus some sample scripts and test code for use with the JavaService utility.
+</p>
+
+
+<h3>Program Build Instructions</h3>
+
+<p>
+The software can only be built in the Microsoft Windows environment, using the Microsoft Visual C++ 6.0 product (Visual Studio).
+This is a reasonable limitation for this software, as it is developed in C++ and intended only for use on
+the Microsoft Windows platform.
+</p>
+<p>
+In addition to the Visual Studio product, you must have the library and header files for a JNI 1.2 compliant Java Virtual Machine,
+such as that included as part of the Java 2 SDK Version 1.4 available from Sun. The build process is configured to reference the
+required files from a 'j2sdk' directory at a similar level to the 'javaservice' source directory. You may change these settings to
+refer to your own development environment if required, although it is recommended that you use a similar build structure to avoid
+potential problems in generating the software.
+</p>
+<p>
+The output of the Visual Studio build process is a Win32 executable program, called <code>JavaService.exe</code>.
+<br>
+For test purposes, a debug-enabled copy of the program is also created (called <code>JavaServiceDebug.exe</code>).
+</p>
+
+<h4>Visual Studio Configuration</h4>
+<p>
+An initial step is required to configure your Visual C++ environment so that it is able to locate the
+library and header files of the Java Native Interface (JNI); these are required for the JavaService build.
+</p>
+<p>
+The following steps indicate how this configuration may be specified, where you should substitute
+the relevant directory location (such as '..\j2sdk\') for the value of <em>JDK_HOME</em> shown here.
+</p>
+<ol>
+	<li>Select the 'Tools-&gt;Options' on the menu.</li>
+	<li>Select the 'Directories' tab on the dialog.</li>
+	<li>Choose 'Show directories for: Include Files'.</li>
+	<li>Add the directory '{JDK_HOME}\include' to the list.</li>
+	<li>Add the directory '{JDK_HOME}\include\win32' to the list.</li>
+	<li>Choose 'Show directories for: Library Files'.</li>
+	<li>Add the directory '{JDK_HOME}\include\lib' to the list.<br>
+</ol>
+<p>
+This configuration setting should then allow successful compilation and build of any programs that make use of
+the JNI interface between C and Java program code (as used by JavaService).
+</p>
+
+<h4>Project Build</h4>
+
+<p>
+From Visual Studio, you should open the project file <code>JavaService.dsp</code> (or the associated workspace file
+<code>JavaService.dsw</code>) from the <code>JavaService/src</code> directory.
+This should then display a list of source, header and resource files within that project.
+</p>
+<p>
+There are two build targets available, for <em>Release</em> and <em>Debug</em> executables.
+Although normal use requires the Release build, both versions should always be be built and made available
+within the JavaService distribution.
+</p>
+<p>
+To build the executable program, Visual Studio allows you to select a 'current target' which will be built
+when using main menu options or buttons from the IDE. To build both targets, and to ensure that all latest
+versions of files are incorporated, you should follow these steps:
+</p>
+<ol>
+	<li>Select the 'Build-&gt;Batch Build' on the menu.</li>
+	<li>Ensure that both 'Release' and 'Debug' build targets are selected in the dialog</li>
+	<li>Select the 'Rebuild All' button on the dialog</li>
+</ol>
+<p>
+Verify that the compile and build steps complete successfully for both build targets.
+<br>
+The JavaService software is then available for use...
+</p>
+
+<h4>Important Files</h4>
+
+<p>
+Of course, all the files in the project are 'important', as the software will not build if they aren't all there.
+However, there are some files that are more likely to require changes for individual builds. These are
+highlighted here to explain how they may be modified for certain requirements.
+</p>
+
+<h5>VersionNo.h</h5>
+<p>
+This source file contains constant definitions of the application version number, which are used to
+generate the built-in VERSIONINFO resources for the program, as well as for output from the <em>-version</em> command.
+</p>
+<p>
+There are four entries in this file, which each contain a comma-delimited version number
+(i.e. 2,0,4,0) in either numeric or string format. The version numbers may be modified as applicable,
+although the string/number format should not be changed as that can break the build of the application.
+</p>
+
+
+<h5>Messages.mc</h5>
+<p>
+This file defines the message resource text that will be incorporated within the JavaService program image.
+These entries are used by the Windows Event Viewer to display formatted application messages, using the
+message id value and parameter text recorded by the program.
+</p>
+<p>
+The structure of the entries in the message resource file are formatted as shown below:
+</p>
+<code>
+MessageId=0x0000
+<br>
+Severity=Informational
+<br>
+Facility=Application
+<br>
+SymbolicName=EVENT_IDENTIFIER
+<br>
+Language=English
+<br>
+Example message %1 with two parameters %2.
+</code>
+<p>
+The contents of this file are processed by part of the project to generate the resource file
+section of the program binary.
+</p>
+
+
+<h3>Distribution File Creation</h3>
+
+<p>
+A build process is included to generate the distribution files that are made available for download
+from the JavaService project forge. This distribution consists of a single ZIP archive file, plus an
+associated 'MD5' hash for that file. The hash code is stored in a plain text file and can be used to verify
+that the content of the downloaded ZIP file is complete and correct.
+</p>
+<p>
+The files created by the build process incorporate the software version number in the filenames as follows:
+</p>
+<code>
+JavaService-2.0.4.zip
+<br>
+JavaService-2.0.4.zip.MD5
+</code>
+
+<p>
+An <strong>Ant</strong> build script (<code>build.xml</code>) is used to generate the distribution files,
+for which a suitable Java run-time environment and the Ant utility must be installed for the build.
+The Ant script first verifies that the Visual Studio build has been executed and that the required program
+files are available for use. It also checks that the Sample Service application has been built in the
+associated project directory. An additional step within the build process is to invoke some simple
+'smoke tests', which verifies that the program can be executed with version and help command parameters.
+</p>
+<p>
+Given that the pre-requisites are met, files are copied to a temporary distribution directory and then
+used to created the ZIP archive file and the corresponding MD5 hash code file. It is this pair of files
+that are made available from the ObjectWeb project forge. These files include the following components:
+</p>
+
+<ul>
+<li>JavaService Win32 program files</li>
+<li>JavaService HTML documentation</li>
+<li>Example scripts for known applications</li>
+<li>Sample service code for testing the utility</li>
+</ul></u>
+
+
+<h4>Sample Service Application</h4>
+
+<p>
+The <strong>SampleService</strong> Java application is included for test purposes, and as a reference for developers
+that wish to understand the interface supported by JavaService.
+</p>
+<p>
+This is available from the ObjectWeb forge as a simple Java project and can be built using Ant or Eclipse.
+The output of the build process is a JAR file containing the Java classes that form the sample application,
+plus a JavaDoc set of HTML files that describe the application code.
+</p>
+<p>
+The <code>SampleService.jar</code> file is included within the distribution file of the main JavaService utility, as well
+as being provided as a standalone distribution for use by developers or when testing other JavaService versions.
+</p>
+
+<p>&nbsp;</p>
+
+</body>
+</html>

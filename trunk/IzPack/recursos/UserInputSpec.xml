@@ -1,0 +1,38 @@
+<userInput> 
+	<panel order="0">
+		<field type="title" align="Left" txt="Parametros de Conexion de Base de Datos" bold="true" size="1" id="DBParam"/>
+		<field type="staticText" align="left" txt="La siguiente informacion es requerida para la conexion con la base de datos" id="staticText1.text"/>
+		<field type="staticText" align="left" txt="Atencion: Estos campos discriminan entre mayusculas y minusculas" id="staticText2.text"/>
+		<field type="divider" align="center"/>
+		<field type="divider" align="center"/>
+		<field type="combo" variable="SERVIDORTIPOPOSTGRESQL">
+			<spec txt="Selecciona el Tipo de Base de Datos : " id="ServidorTipoPostgresql.spec">
+			<choice processor="" txt="Oracle" id="SERVIDORTIPOPOSTGRESQL.Oracle" value="Oracle"/>
+			<choice processor="" txt="Postgresql" id="SERVIDORTIPOPOSTGRESQL.Postgresql" value="Postgresql" set="true"/>
+			</spec>
+		</field>
+		<field type="text" variable="ServerNameTextInput">
+			<description align="left" txt="" id="description1.text"/>
+				<spec txt="Introduzca el Nombre del Servidor de Base de Datos:" id="text.label" size="15" set="localhost"/>
+		</field>
+		<field type="divider" align="center"/>
+		<field type="text" variable="PortNbTextInput">
+			<description align="left" txt="-> Introduzca el directorio de instalacion de postgresql" id="description5.text"/>
+				<spec txt="(Normalmente c:\psql)" id="text.label" size="15" set="c:\psql"/>
+		</field>
+		<field type="divider" align="center"/>
+		<field type="text" variable="DBNameTextInput">
+		<description align="left" txt="" id="description3.text"/>
+			<spec txt="Introduzca el Nombre de la Base de Datos:" id="text.label" size="15" set="openxp"/>
+		</field>
+		<field type="divider" align="center"/>
+		<field type="text" variable="UserNameTextInput">
+			<description align="left" txt="" id="description4.text"/>
+				<spec txt="Introduzca el Nombre de Usuario de la Base de Datos:" id="text.label" size="15" set="openxp"/>
+		</field>
+		<field type="text" variable="UserPwdTextInput">
+			<description align="left" txt="" id="description5.text"/>
+				<spec txt="Intoduzca la Contraseña para la Base de Datos:" id="text.label" size="15" set="openxp"/>
+		</field>
+	</panel>
+</userInput>

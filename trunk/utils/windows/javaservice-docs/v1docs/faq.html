@@ -1,0 +1,190 @@
+<html>
+<head>
+<title>JavaService - Java NT Service Adaptor</title>
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+<link rel="stylesheet" href="styles.css" type="text/css">
+</head>
+
+<body bgcolor="#FFFFFF">
+<table width="90%" border="0" cellspacing="0" cellpadding="0" align="center">
+  <tr> 
+    <td nowrap class="mainTitle">JavaService - FAQ</td>
+  </tr>
+  <tr>
+    <td>&nbsp;</td>
+  </tr>
+  <tr> 
+    <td> 
+      <p class="mainBold">Questions</p>
+      <blockquote> 
+        <p class="mainNormal">
+		<a href="#Answers">Answers</a>
+		<br>
+        <a href="#licensing">What are the licensing terms for JavaService?</a>
+		<br>
+        <a href="#needed">Why is JavaService actually needed?</a>
+		<br>
+        <a href="#gui">Can my Java Service display a graphical interface?</a>
+		<br>
+        <a href="#memory">What memory management options are available?</a>
+		<br>
+        <a href="#monitoring">How can I monitor what the program is doing?</a>
+		<br>
+        <a href="#failure">What can I do if my program isn't working?</a>
+		<br>
+        <a href="#support">Is JavaService support available?</a>
+		</p>
+      </blockquote>
+	</td>
+  </tr>
+  <tr>
+    <td>&nbsp;</td>
+  </tr>
+  <tr>
+    <td>
+      <p class="mainBold"><a name="Answers"></a>Answers</p>
+
+	  <h4><a name="licensing">What are the licensing terms for JavaService?</a></h4>
+      <p class="mainNormal">Refer to the <a href="license.html">license file</a> supplied with this software.
+	  Essentially, this is <em>Open Source Software</em> and you are free to use it how you wish, providing
+	  that this license is obeyed.</p>
+
+	  <h4><a name="needed">Why is JavaService actually needed?</a></h4>
+      <p class="mainNormal">Whenever a Java-based application needs to be run in the background on a Windows NT
+	  system, or it must be run automatically on system startup, it must be defined as an <em>NT Service</em>.</p>
+      <p class="mainNormal">This is not something automatically included with the Java run-time environment, which
+	  is intended to be cross-platform. The equivalent on a Linux or Unix-type system is a daemon process and this
+	  is much more easily automated from startup scripts.</p>
+      <p class="mainNormal">A particular use for JavaService is to run an Application Server on startup, within
+	  which your own Java applications will run as EJBs, JSP or whatever. Examples of such Java-based
+	  application servers include Orion, Tomcat, JOnAS and JBoss.</p>
+
+	  <h4><a name="gui">Can my Java Service display a graphical interface?</a></h4>
+      <p class="mainNormal">Windows Services are not intended to provide user interfaces, so Swing or other GUI displays
+	  are not supported from such background processes.</p>
+      <p class="mainNormal">Services can be configured to 'interact with the desktop', but this relates more to putting
+	  popup alerts and simple prompts onto the console. It does not mean that a GUI interface can be provided from the service.</p>
+      <p class="mainNormal">If you do include a JFrame, or similar, in your service application code, then it may well be
+	  displayed to the first user that logs in to the console, but your service will hang when they subsequently log out.</p>
+
+	  <h4><a name="memory">What memory management options are available?</a></h4>
+	  <p class="mainNormal">
+	  JavaService does not provide any specific options of its own to deal with memory management, as all control
+	  of stack size and heap size depends upon the selected JVM or Java run-time.</p>
+	  <p class="mainNormal">The two options that are most likely to be use, for the Sun JVM at least, are:
+	  </p>
+	  <ul>
+	  <li>-Xms64M (to specify an initial heap size of 64MB), and</li>
+	  <li>-Xmx256M (to specify a maximum heap size of 256MB)</li>
+	  </ul>
+	  <p class="mainNormal">There are many articles on tuning of JVM memory allocation, but you will often find that
+	  the default settings are unsuitable for larger system processes and will need to be configured accordingly.
+	  <br>If this is not done, your program may appear to hang, lock up or fail unexpectedly, often with the same
+	  amount of memory allocation shown from the Windows Task Manager. If so, you may well need to specify a larger maximum heap size.</p>
+	  <p class="mainNormal">When these options are used in the parameter list specified on <em>JavaService -install</em>, they
+	  should be included after the classpath definition, for example:
+	  <br>JavaService -install MyService -Djava.class.path=%2\orion.jar;%1\lib\tools.jar -Xms32M -Xmx128M ...</p>
+	  <p class="mainNormal">For more information on these options, try the command <em>java -X</em> from the command line,
+	  although not all JVMs offer these commands. Others may use a different format to that described here.</p>
+
+	  <h4><a name="monitoring">How can I monitor what the program is doing?</a></h4>
+	  <p class="mainNormal">
+	  There are a number of difficulties that may arise in trying monitor server or daemon-type processes running under Windows NT.</p>
+	  <p class="mainNormal">These difficulties may be made worse when using JavaService due to the type of Java
+	  programs that may be run as services. In particular, web containers or application servers such as JBoss provide a further
+	  level of indirection when tracking the chain of control within a program</p>
+	  <p class="mainNormal">It should be appreciated that JavaService does very little as a program in its own right.
+	  <br>
+	  When run from the command line, it deals with registration of the program as a service and then exits.
+	  <br>
+	  When run as a service, it simply invokes the configured JVM and instructs it to run the relevant static
+	  function from the specified class path.
+	  <br>
+	  A further function may be invoked when shutdown is requested, prior to termination of the JVM instance.
+	  </p>
+	  <p class="mainNormal">Given that behaviour of the JavaService code only deals with NT Service interactions
+	  at registration, startup and shutdown, there is not much that it can report to the user.</p>
+	  <p class="mainNormal">A first port of call when investigation operation of any Windows process, but especially
+	  when running as a service, is to run the Windows Task Manager. It can be useful to load this as an iconised
+	  program displayed in the 'system tray' at all times, so that any burst of cpu loading can be seen graphically.
+	  In addition to graphs of cpu and memory usage, Task Manager can display lists of active processes (including
+	  services) and show the amount of memory that each process has used. If this display is monitored as the
+	  service starts up, and then viewed when the system is static and also under load, a good idea of your Java
+	  program requirements can be determined. It can also point to a problem if the program appears to stop
+	  running (perhaps due to heap space limitations) when the memory utilisation is always at the same level.</p>
+	  <p class="mainNormal">Following Task Manager, the next Windows utility that should be invoked is the Event
+	  Viewer (Start Menu/Programs/Administrative Tools/Event Viewer). This will have messages written to it which
+	  indicate when the named service starts up and shuts down. It may also have error messages that show when a
+	  problem has arisen in execution of the service. These may frequently appear unhelpful, but their actual
+	  existence should be a strong pointer to what is going wrong with your software installation. Do take note of
+	  the timestamps against the event logs and compare them to your use of the software.</p>
+	  <p class="mainNormal">A further port of call, possibly the first place to look, is in the redirected output
+	  and error log files. These can be configured to trap stdout/stderr messages and write them to log files. If
+	  you add your own <em>System.out.println</em> program statement for debugging, you should be able to view
+	  the output from the configured log file locations. If these have not been configured, add them now!</p>
+	  <p class="mainNormal">It is not generally recommended to write debug print statements, but they can be
+	  extremely useful when investigating problems within a server-based process. Even if you do not write your
+	  own debug statements, the application server or container program is quite likely to have some output. It
+	  may actually have an error message indicating exactly what is going wrong, if only you can get the text file...</p>
+
+	  <h4><a name="failure">What can I do if my program isn't working?</a></h4>
+      <p class="mainNormal">Besides following the points above, relating to memory management and general
+	  process monitoring options, there is little direct guidance that can be offered from this document.
+	  All users are likely to be running different combinations of JVM, application server, Java software, class-paths,
+	  Operating System versions and service packs. Given all of this, the finger has to be pointed at the
+	  Java software first - both your own and the container being used to run it.</p>
+	  <p class="mainNormal">This does not mean that there are no faults in the JavaServer code.
+	  It is just that problems are more prevalent in the JVM and Java code that it invokes.</p>
+	  <p class="mainNormal">If the process fails when run as a service, you should first try to run
+	  exactly the same software (JVM, classpath, options, etc) as an interactive program. If it fails
+	  in this configuration, then you can discount JavaService as being the problem. More usefully, this
+	  would mean that you could run a normal debug-type environment to investigate the problem</p>
+	  <p class="mainNormal">If the program works when run interactively, but not as a service, one
+	  likely cause of the problem is heap memory allocation, or possible stack size. These issues need to be
+	  resolved according to your own hardware specifications and application requirements.</p>
+	  <p class="mainNormal">To investigate the problem further, you should analyse and be clear about when the
+	  failure arises. It may be during startup of the service, during background or apparently-idle processing,
+	  when handling a particular request or perhaps on shutdown event handling.</p>
+  	  <p class="mainNormal">Startup problems often point to memory management, as described above. Frequent
+	  startup and run-time problems are caused by incorrect classpath definitions and unexpected classloader
+	  operations - especially within a J2EE container that has it's own rules for loading of class files.
+	  You should always ensure that the software runs correctly in an interactive fashion <strong>with the same
+	  JVM and classpath definitions</strong> before looking for problems with JavaService itself.</p>
+  	  <p class="mainNormal">Unfortunately, there are problems that arise with the use of JVM dll's
+	  of certain versions from particular vendors. In some cases, the JVM cannot be run as a service, but
+	  no specific rules or reason can be put forward for this. To find out if this is the cause of any
+	  run-time problems, you should always try and reproduce your fault using at least one other flavour
+	  of JVM - whether that is hotspot, classic, client, server, another version (1.3 vs 1.4, or 1.x.y_aa to 1.x.y_bb),
+	  or perhaps from another vendor (try Sun, IBM, BEA alternatives). This exercise will at least determine
+	  whether or not the problem is JVM-related (it often is), even if the JVM that works is not your
+	  preferred version. If your preferred JVM will not run as a service, you do not really seem to have any choice but
+	  to change JVM versions or implementations.</p>
+
+
+	  <h4><a name="support">Is JavaService support available?</a></h4>
+	  <p class="mainNormal">As a freely-available, Open Source, software product, users of JavaService
+	  do not receive any direct support for investigation and resolution of any problems experienced.</p>
+	  <p class="mainNormal">Since being accepted as an <strong>ObjectWeb</strong> project, the JavaService project pages
+	  (<a href="http://javaservice.objectweb.org">http://javaservice.objectweb.org</a>) provide further information as well
+	  as a place to raise queries. Use of this open source site is highly recommended for JavaService questions.</p>
+	  <p class="mainNormal">However, informal or casual support may be provided by contributors to JavaService development,
+	  as the problems you experience may have been seen before. An email enquiry to one of these
+	  contributors may results in a solution for your problem, often depending on the timing of your
+	  request and the vagueness/complexity of the problem being reported.
+	  If you can provide as much helpful and relevant information as possible when sending your request,
+	  you are more likely to be able to get a useful response, although '<em>your mileage may vary</em>'.</p>
+	  <p class="mainNormal">Before sending requests to source code contributors, you would be advised to try a web
+	  search to see if any similar problems have been reported. This may or may not involve JavaService,
+	  as some JVMs have been known to cause problems when run as a server process. Try a few different
+	  searches with keywords relating to the particular problem that you experience</p>
+	  <p class="mainNormal">If you don't get an answer to your problem, you should try raising your
+	  question on one or more of the relevant software forums. Again, provide as much information as
+	  would be needed to investigate the fault. Indicate what you have already tried as well, since that
+	  can sometimes trigger something in the mind of one of the forum readers.</p>
+	  <p class="mainNormal">Finally, if you do find a solution, that is not specific to coding within your own software,
+	  you should consider sending a summary of it for inclusion in later releases of this FAQ...</p>
+    </td>
+  </tr>
+</table>
+</body>
+</html>

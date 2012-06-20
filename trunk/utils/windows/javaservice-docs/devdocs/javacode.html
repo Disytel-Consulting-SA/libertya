@@ -1,0 +1,78 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<head>
+	<meta content="text/html; charset=iso-8859-1" http-equiv="Content-Type">
+	<meta content="en" http-equiv="Content-Language">
+
+	<title>JavaService - Java Code Integration</title>
+
+	<meta name="Robots" content="index, follow">
+
+	<link type="text/css" href="../resources/javaservice.css" rel="stylesheet" id="stylesheet">
+	<link type="image/x-icon" href="../favicon.ico" rel="icon">
+	<link type="image/x-icon" href="../favicon.ico" rel="shortcut icon">
+</head>
+<body bgcolor="#FFFFFF">
+
+<h2>JavaService - Developing Java Applications</h2>
+
+<p>
+There are no specific requirements for development of a Java application that is to be
+executed as a Windows system service. If the application can be run as a standard
+Java program, and does not provide a direct user interface, it can be installed for
+background execution by the JavaService utility.
+</p>
+
+<h3>Main Program Entry Point</h3>
+
+<p>
+The standard entry point for any Java program is a 'main' method with the following signature:
+</p>
+<p>
+<code>public static void main(String[] args)</code>
+</p>
+<p>
+When the Java program is installed by JavaService, the default mode of execution will invoke
+this same method when the service is started by Windows. If any startup parameters are
+specified in the service configuration, they are passed in as values in the <em>args</em> String array.
+</p>
+
+<h3>Startup Method</h3>
+
+<p>
+An alternative to the standard 'main' method is for the application to provide an additional
+method for use specifically when running the application as a service.
+This function exposes the same signature as the 'main' method, but may have any name
+chosen by the developer. It may also be in a different class if required.
+</p>
+<p>
+The startup method (and class) is specified at service installation time and is invoked in the same
+way as the default 'main' method, with any startup parameters provided in the <em>args</em> String array.
+</p>
+
+
+<h3>Shutdown Method</h3>
+
+<p>
+JavaService doea not require that a shutdown method is defined within the application.
+If one is not present, or not specified, service shutdown is achieved by terminating the
+Java run-time environment thread that executes within the JavaService program.
+</p>
+
+<p>
+The design of most server-type applications generally uses some form of centralised status control
+mechanism. At the time of process startup, one or more threads may be created, with synchronised access
+to some form of notification flag that will indicate when the threads should terminate.
+In this type of design, a shutdown method can be used to change the status of this flag to cause
+clean process shutdown when notified by JavaService.
+</p>
+
+<p>
+The shutdown function used by JavaService must expose the same signature as the 'main' method and
+is specified when the service is installed, along with any parameters that it requires.
+</p>
+
+<p>&nbsp;</p>
+
+</body>
+</html>

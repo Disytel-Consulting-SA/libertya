@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- ============================================= -->
+<!-- FreeQueryBuilder                                        -->
+<!-- ============================================= -->
+<!-- $Header: /oxp2_2/FreeQueryBuilder/build.xml,v 1.0 $ -->
+
+<project name="fqb" default="fqbDist" basedir=".">
+	
+	  <description>
+Este Fichero sirve para compilar el subproyecto FreeQueryBuilder independientemente del proyecto openXpertya
+  </description>
+  
+    <!-- Establecer Variables Globales para esta compilacion -->
+	<property name="src" value="."/>
+	<property name="build.dir" value="compilacion"/>
+	<property name="dist.dir" value="."/>
+	<property environment="env"/>
+
+	
+  <!-- Establecer el path donde residen los Jar Necesarios -->
+  <path id="project.class.path">
+    <pathelement path="${classpath}"/>
+    <pathelement path="../lib/XOXPTools.jar"/>
+    <pathelement path="../lib/CSTools.jar"/>
+    <pathelement path="./lib/it.frb.jar"/>
+    <pathelement path="../lib/OXP.jar"/>
+  </path>
+
+
+
+	<target name="fqbInit" description="initialization target">
+	    <echo message="=========== Construye FreeQueryBuilder"/>
+	    <tstamp/>
+    <!-- Crear el Directorio de compilacion -->
+	    <mkdir dir="${build.dir}"/>
+    <!-- Comprobar el Directorio de Distribucion -->
+    <available file="${dist.dir}" type="dir" property="dist.dir.exists"/>
+  </target>
+
+  <target name="makedir" depends="fqbInit" unless="dist.dir.exists">
+    <!-- Crear el Directorio de Distribucion si no existe -->
+    <mkdir dir="${dist}/${dist.dir}"/>
+  </target>
+	
+
+  <!-- =========================================== -->
+  <!-- Compilar                                    -->
+  <!-- =========================================== -->
+  
+	<target name="fqbCompile" depends="fqbInit">
+	    <!-- Compilar el codigo java de ${src} a ${build.dir} -->
+	    <javac srcdir="${src}" destdir="${build.dir}" 
+	    	deprecation="off" 
+	    	source="1.5" target="1.5" 
+	    	debug="on">
+	      <classpath refid="project.class.path"/>
+	    </javac>
+	</target>
+	
+	<!-- =========================================== -->
+	<!-- Distribucion                                -->
+	<!-- =========================================== -->
+	<target name="fqbDist" depends="fqbCompile">
+	
+	<!-- Hacer un archivo jar con todo lo que exista en la carpeta de compilacion --> 
+	    
+		<unjar src="./lib/it.frb.jar" dest="${build.dir}" />
+		<copy todir="${build.dir}/images">
+					<fileset dir="images" includes="*"/>
+		</copy>
+		<jar jarfile="${dist.dir}/fqb.jar" 
+			basedir="${build.dir}" 
+			compress="no">
+		  <manifest>
+			<attribute name="Specification-Title" value="openXpertya Query Builder "/>
+			<attribute name="Specification-Version" value="2.0"/>
+			<attribute name="Specification-Vendor" value="FUNDESLE"/>
+			<attribute name="Implementation-Title" value="sqlj ${env.VERSION_OXP}"/>
+			<attribute name="Implementation-Version" value="${env.VERSION_OXP} ${DSTAMP}-${TSTAMP}"/>
+			<attribute name="Implementation-Vendor" value="${env.CONSULTORA_OXP}"/>
+			<attribute name="Implementation-URL" value="http://www.openxpertya.org"/>
+		  </manifest>
+		</jar>
+	</target>
+
+	<target name="clean">
+    <!-- Borrar la estructura de directorios de compilacion -->
+	    <delete dir="${build.dir}"/>
+	    <delete file="${dist.dir}/fqb.jar" failonerror="false"/>
+	</target>
+
+</project>

@@ -1,0 +1,47 @@
+<?xml version = '1.0' encoding = 'UTF-8'?>
+<!DOCTYPE server>
+<!-- $Id: jboss-service.xml,v 1.4.6.1 2004/11/29 16:50:50 starksm Exp $ --><server>
+<!-- The HTTP invoker service configration
+  -->  <mbean name="jboss:service=invoker,type=http" code="org.jboss.invocation.http.server.HttpInvoker" >
+<!-- Use a URL of the form http://<hostname>:8080/invoker/EJBInvokerServlet
+      where <hostname> is InetAddress.getHostname value on which the server
+      is running.
+      -->    <attribute name="InvokerURLPrefix" >http://</attribute>
+    <attribute name="InvokerURLSuffix" >:80/invoker/EJBInvokerServlet</attribute>
+    <attribute name="UseHostName" >true</attribute>
+  </mbean>
+<!-- Expose the Naming service interface via HTTP -->  <mbean name="jboss:service=invoker,type=http,target=Naming" code="org.jboss.invocation.http.server.HttpProxyFactory" >
+<!-- The Naming service we are proxying -->    <attribute name="InvokerName" >jboss:service=Naming</attribute>
+<!-- Compose the invoker URL from the cluster node address -->    <attribute name="InvokerURLPrefix" >http://</attribute>
+    <attribute name="InvokerURLSuffix" >:80/invoker/EJBInvokerHAServlet</attribute>
+    <attribute name="UseHostName" >true</attribute>
+    <attribute name="ExportedInterface" >org.jnp.interfaces.Naming</attribute>
+    <attribute name="JndiName" />
+    <attribute name="ClientInterceptors" >
+      <interceptors>
+        <interceptor>org.jboss.proxy.ClientMethodInterceptor</interceptor>
+        <interceptor>org.jboss.proxy.SecurityInterceptor</interceptor>
+        <interceptor>org.jboss.naming.interceptors.ExceptionInterceptor</interceptor>
+        <interceptor>org.jboss.invocation.InvokerInterceptor</interceptor>
+      </interceptors>
+    </attribute>
+  </mbean>
+<!-- Expose the Naming service interface via clustered HTTP. This maps
+   to the ReadOnlyJNDIFactory servlet URL
+   -->  <mbean name="jboss:service=invoker,type=http,target=Naming,readonly=true" code="org.jboss.invocation.http.server.HttpProxyFactory" >
+    <attribute name="InvokerName" >jboss:service=Naming</attribute>
+    <attribute name="InvokerURLPrefix" >http://</attribute>
+    <attribute name="InvokerURLSuffix" >:80/invoker/readonly/JMXInvokerServlet</attribute>
+    <attribute name="UseHostName" >true</attribute>
+    <attribute name="ExportedInterface" >org.jnp.interfaces.Naming</attribute>
+    <attribute name="JndiName" />
+    <attribute name="ClientInterceptors" >
+      <interceptors>
+        <interceptor>org.jboss.proxy.ClientMethodInterceptor</interceptor>
+        <interceptor>org.jboss.proxy.SecurityInterceptor</interceptor>
+        <interceptor>org.jboss.naming.interceptors.ExceptionInterceptor</interceptor>
+        <interceptor>org.jboss.invocation.InvokerInterceptor</interceptor>
+      </interceptors>
+    </attribute>
+  </mbean>
+</server>

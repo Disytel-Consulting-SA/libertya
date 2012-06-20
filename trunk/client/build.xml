@@ -1,0 +1,133 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- ============================================= -->
+<!-- Cliente                                                                                -->
+<!-- ============================================= -->
+
+<project name="client" default="clientDistribute" basedir=".">
+
+  <description>
+    Este fichero sirve para construir el subproyecto Client independientemente del proyecto openXpertya 
+  </description>
+
+  <!-- Establecer Variables Globales para esta compilacion -->
+  <property name="src" value="Src"/>
+  <property name="build.dir" value="compilacion"/>
+  <property name="dist.dir" value="../lib"/>
+  <property name="jar.path" value="../lib"/>
+  <property environment="env"/>
+
+  <!-- Establecer el path donde residen los Jar Necesarios -->
+  <path id="project.class.path">
+  	<pathelement path="../lib/ojdbc14.jar"/>
+  	<pathelement path="../tools/lib/postgresql.jar"/>
+  	<pathelement path="../jboss/lib/webdavlib.jar"/>
+    <pathelement path="${classpath}"/>
+    <pathelement path="${jar.path}/XOXPTools.jar"/>
+    <pathelement path="../base/Base.jar"/>
+    <pathelement path="../print/Print.jar"/>
+    <pathelement path="../dbPort/dbPort.jar"/>
+    <pathelement path="../lib/jPDF.jar"/>
+    <pathelement path="../looks/CLooks.jar"/>
+    <pathelement path="../extend/Extend.jar"/>
+    <pathelement path="../interfaces/Interfaces.jar"/>
+    <pathelement path="../tools/lib/j2ee.jar"/>
+    <pathelement path="../lib/pdfviewer.jar"/>
+	<pathelement path="../lib/swing-layout-1.0.jar" />
+	<pathelement path="../lib/PDFRenderer.jar" />
+	<pathelement path="../tools/lib/JasperReports/jasperreports-2.0.1.jar" />
+	<pathelement path="../lib/iText-1.5.4.jar" />
+  	<pathelement path="../lib/AxisJar.jar" />
+  </path>
+
+
+  <target name="clientInit" description="initialization target">
+    <echo message="=========== Construyendo cliente de openXpertya"/>
+    <tstamp/>
+    <!-- Crear el Directorio de compilacion -->
+    <mkdir dir="${build.dir}"/>
+    <!-- Comprobar el Directorio de Distribucion -->
+    <available file="${dist.dir}" type="dir" property="dist.dir.exists"/>
+
+    <uptodate property="jar.uptodate"
+		targetfile="${dist.dir}/${jar.name}.jar">
+      <srcfiles dir="${src}" includes="**/*.java"/>
+      <srcfiles dir="..\base" includes="Base.jar"/>
+      <srcfiles dir="..\dbPort" includes="dbPort.jar"/>
+      <srcfiles dir="..\looks" includes="CLooks.jar"/>
+      <srcfiles dir="..\print" includes="Print.jar"/>
+      <srcfiles dir="..\extend" includes="Extend.jar"/>
+      <srcfiles dir="..\interfaces" includes="Interfaces.jar"/>
+    </uptodate>
+  </target>
+
+  <target name="clientMakedir" depends="clientInit" unless="dist.dir.exists">
+    <!-- Crear el Directorio de Distribucion si no existe -->
+    <mkdir dir="${dist.dir}"/>
+  </target>
+  
+
+  <!-- =========================================== -->
+  <!-- Compilar                                                                          -->
+  <!-- =========================================== -->
+  <target name="clientCompile" depends="clientMakedir">
+    <!-- Compilar el codigo java de ${src} a ${build.dir} -->
+    <javac srcdir="${src}" destdir="${build.dir}" deprecation="off" source="1.6" target="1.6" debug="on" encoding="UTF-8">
+      <classpath refid="project.class.path"/>
+    </javac>
+    <!-- Copiar Todas las imagenes y archivos al directorio de compilacion -->
+    <copy todir="${build.dir}">
+      <fileset dir="${src}">
+        <include name="**/images/*"/>
+        <include name="**/*.gif"/>
+        <include name="**/*.jpg"/>
+        <include name="**/*.wav"/>
+        <include name="**/*.htm"/>
+        <include name="**/*.html"/>
+        <include name="**/*.properties"/>
+        <exclude name="**/package.html"/>
+      </fileset>
+    </copy>
+  </target>
+
+
+  <!-- =========================================== -->
+  <!-- Distribucion                                                                    -->
+  <!-- =========================================== -->
+  <target name="clientDistribute" depends="clientCompile" unless="jar.uptodate">
+    <!-- Incluir todos los archivos jar-->
+    <unjar src="..\base\Base.jar" dest="${build.dir}" />
+    <unjar src="..\dbPort\dbPort.jar" dest="${build.dir}" />
+    <unjar src="..\looks\CLooks.jar" dest="${build.dir}" />
+    <unjar src="..\print\Print.jar" dest="${build.dir}" />
+    <unjar src="..\extend\Extend.jar" dest="${build.dir}" />
+    <unjar src="..\interfaces\Interfaces.jar" dest="${build.dir}" />
+    <delete dir="${build.dir}/META-INF"/>
+
+    <!-- Poner Todo lo que haya dentro de la carpeta de compilacion dentro de OXP.jar -->
+    <jar
+	  jarfile="${dist.dir}/OXP.jar" 
+	  basedir="${build.dir}" 
+	  index="yes">
+      <manifest>
+        <attribute name="Specification-Title" value="openXpertya"/>
+        <attribute name="Specification-Version" value="${env.VERSION_OXP}"/>
+        <attribute name="Specification-Vendor" value="(C) 2005-2006 FUNDESLE"/>
+        <attribute name="Implementation-Title" value="openXpertya ${env.VERSION_OXP}"/>
+        <attribute name="Implementation-Version" value="${env.VERSION_OXP} ${DSTAMP}-${TSTAMP}"/>
+        <attribute name="Implementation-Vendor" value="${env.CONSULTORA_OXP}"/> 
+        <attribute name="Implementation-URL" value="http://www.openxpertya.org"/>
+        <attribute name="Main-Class" value="org.openXpertya.OpenXpertya"/>
+        <attribute name="Class-Path" value="OXPTools.jar oracle.jar"/>
+      </manifest> 
+    </jar>
+
+  </target>
+
+
+  <target name="clean">
+    <!-- Borrar la Estructura de Carpetas de ${build.dir} -->
+    <delete dir="${build.dir}"/>
+    <delete file="${dist.dir}/OXP.jar" failonerror="false"/>
+  </target>
+
+</project>

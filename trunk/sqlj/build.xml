@@ -1,0 +1,76 @@
+<!-- ============================================= -->
+<!-- Base                                                                                   -->
+<!-- ============================================= -->
+
+
+<project name="sqlj" default="sqljDist" basedir=".">
+	
+	<property name="src" value="src"/>
+	<property name="build.dir" value="compilacion"/>
+	<property name="dist.dir" value="."/>
+	<property environment="env"/>
+
+	
+	<path id="project.class.path">
+	    <pathelement path="${classpath}"/>
+	</path>
+
+
+	<target name="sqljInit" description="initialization target">
+	    <echo message="=========== Construyendo SQLJ"/>
+	    <!-- crea la marca de tiempo -->
+	    <tstamp/>
+	    <!-- crea la estructura del directorio de compilación -->
+	    <mkdir dir="${build.dir}"/>
+		<!-- necesario para PostgreSQL-->
+		<copy file="postgresql/sqlj.ddr" tofile="./${build.dir}/deployment/sqlj.ddr" failonerror="no"/>
+		<!-- necesario para PostgreSQL-->
+	</target>
+	
+
+	<!-- =========================================== -->
+	<!-- Compilando                                	                                 -->
+	<!-- =========================================== -->
+	<target name="sqljCompile" depends="sqljInit">
+	    <javac srcdir="${src}" destdir="${build.dir}" 
+	    	deprecation="off" 
+	    	optimize="off" 
+	    	source="1.6" target="1.6" debug="on" encoding="UTF-8">
+	      <classpath refid="project.class.path"/>
+	    </javac>
+	</target>
+	
+
+	<!-- =========================================== -->
+	<!-- Distribución                                                                    -->
+	<!-- =========================================== -->
+	<target name="sqljDist" depends="sqljCompile">
+		<jar jarfile="${dist.dir}/sqlj.jar" 
+			basedir="${build.dir}" 
+			compress="no">
+		  <manifest>
+			<attribute name="Specification-Title" value="Funciones sqlj"/>
+			<attribute name="Specification-Version" value="sqlj"/>
+			<attribute name="Specification-Vendor" value="(C) 2005-2006 FUNDESLE."/>
+			<attribute name="Implementation-Title" value="sqlj ${env.VERSION_OXP}"/>
+			<attribute name="Implementation-Version" value="${env.VERSION_OXP} ${DSTAMP}-${TSTAMP}"/>
+			<attribute name="Implementation-Vendor" value="${env.CONSULTORA_OXP}"/>
+			<attribute name="Implementation-URL" value="http://www.openxpertya.org"/>
+		  	<!-- necesario para PostgreSQL-->
+		  	<section name="deployment/sqlj.ddr">
+		  	        <attribute name="SQLJDeploymentDescriptor" value="true"/>
+		  	</section>
+		  	<!--necesario para PostgreSQL-->
+		  </manifest>
+		</jar>
+	</target>
+
+	<target name="clean">
+	    <!-- Borra el arbol de directorio que cuelga de ${build.dir}  -->
+	    <echo message="=========== Limpiando la pasada compilación SQLJ"/>
+	    <delete dir="${build.dir}"/>
+	    <delete file="${dist.dir}/sqlj.jar" failonerror="false"/>
+	</target>
+
+
+</project>

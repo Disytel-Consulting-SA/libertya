@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE attributes PUBLIC "-//NetBeans//DTD DefaultAttributes 1.0//EN" "http://www.netbeans.org/dtds/attributes-1_0.dtd">
+<attributes version="1.0">
+    <fileobject name="MPCProfileBOM.java">
+        <attr name="class_dependency_java.awt.event.ActionListener" stringvalue="MPCProfileBOM"/>
+        <attr name="class_dependency_javax.swing.JFrame" stringvalue="MPCProfileBOM"/>
+        <attr name="class_dependency_javax.swing.event.TableModelListener" stringvalue="MPCProfileBOM"/>
+    </fileobject>
+    <fileobject name="ReleaseWO.bak">
+        <attr name="org.netbeans.modules.text.IsTextFile" boolvalue="true"/>
+    </fileobject>
+    <fileobject name="VMRPDetailed.java">
+        <attr name="class_dependency_java.awt.event.ActionListener" stringvalue="VMRPDetailed"/>
+        <attr name="class_dependency_java.beans.VetoableChangeListener" stringvalue="VMRPDetailed"/>
+        <attr name="class_dependency_java.lang.Thread" stringvalue="VMRPDetailed.Worker"/>
+        <attr name="class_dependency_javax.swing.event.ChangeListener" stringvalue="VMRPDetailed"/>
+        <attr name="class_dependency_javax.swing.event.ListSelectionListener" stringvalue="VMRPDetailed"/>
+        <attr name="class_dependency_javax.swing.event.TableModelListener" stringvalue="VMRPDetailed"/>
+        <attr name="class_dependency_org.openxpertya.apps.form.FormPanel" stringvalue="VMRPDetailed"/>
+        <attr name="class_dependency_org.openxpertya.util.ASyncProcess" stringvalue="VMRPDetailed"/>
+    </fileobject>
+    <fileobject name="VOrderCharge.java">
+        <attr name="class_dependency_java.awt.event.ActionListener" stringvalue="VOrderCharge"/>
+        <attr name="class_dependency_java.beans.VetoableChangeListener" stringvalue="VOrderCharge"/>
+        <attr name="class_dependency_java.lang.Thread" stringvalue="VOrderCharge.Worker"/>
+        <attr name="class_dependency_javax.swing.event.ChangeListener" stringvalue="VOrderCharge"/>
+        <attr name="class_dependency_javax.swing.event.ListSelectionListener" stringvalue="VOrderCharge"/>
+        <attr name="class_dependency_javax.swing.event.TableModelListener" stringvalue="VOrderCharge"/>
+    </fileobject>
+    <fileobject name="VOrderLabel.java">
+        <attr name="class_dependency_java.awt.event.ActionListener" stringvalue="VOrderLabel"/>
+        <attr name="class_dependency_java.beans.VetoableChangeListener" stringvalue="VOrderLabel"/>
+        <attr name="class_dependency_javax.swing.event.ChangeListener" stringvalue="VOrderLabel"/>
+        <attr name="class_dependency_javax.swing.event.ListSelectionListener" stringvalue="VOrderLabel"/>
+        <attr name="class_dependency_javax.swing.event.TableModelListener" stringvalue="VOrderLabel"/>
+        <attr name="class_dependency_org.openxpertya.apps.form.FormPanel" stringvalue="VOrderLabel"/>
+        <attr name="class_dependency_org.openxpertya.swing.CPanel" stringvalue="VOrderLabel"/>
+        <attr name="class_dependency_org.openxpertya.util.ASyncProcess" stringvalue="VOrderLabel"/>
+    </fileobject>
+    <fileobject name="VOrderPlanning.java">
+        <attr name="class_dependency_java.awt.event.ActionListener" stringvalue="VOrderPlanning"/>
+        <attr name="class_dependency_java.beans.VetoableChangeListener" stringvalue="VOrderPlanning"/>
+        <attr name="class_dependency_java.lang.Thread" stringvalue="VOrderPlanning.Worker"/>
+        <attr name="class_dependency_javax.swing.event.ChangeListener" stringvalue="VOrderPlanning"/>
+        <attr name="class_dependency_javax.swing.event.ListSelectionListener" stringvalue="VOrderPlanning"/>
+        <attr name="class_dependency_javax.swing.event.TableModelListener" stringvalue="VOrderPlanning"/>
+        <attr name="class_dependency_org.openxpertya.apps.form.FormPanel" stringvalue="VOrderPlanning"/>
+        <attr name="class_dependency_org.openxpertya.util.ASyncProcess" stringvalue="VOrderPlanning"/>
+    </fileobject>
+    <fileobject name="VOrderReceiptIssue.java">
+        <attr name="class_dependency_java.awt.event.ActionListener" stringvalue="VOrderReceiptIssue"/>
+        <attr name="class_dependency_java.beans.VetoableChangeListener" stringvalue="VOrderReceiptIssue"/>
+        <attr name="class_dependency_javax.swing.event.ChangeListener" stringvalue="VOrderReceiptIssue"/>
+        <attr name="class_dependency_javax.swing.event.ListSelectionListener" stringvalue="VOrderReceiptIssue"/>
+        <attr name="class_dependency_javax.swing.event.TableModelListener" stringvalue="VOrderReceiptIssue"/>
+        <attr name="class_dependency_org.openxpertya.apps.form.FormPanel" stringvalue="VOrderReceiptIssue"/>
+        <attr name="class_dependency_org.openxpertya.util.ASyncProcess" stringvalue="VOrderReceiptIssue"/>
+    </fileobject>
+    <fileobject name="VOrderSimulation.java">
+        <attr name="class_dependency_java.awt.event.ActionListener" stringvalue="VOrderSimulation"/>
+        <attr name="class_dependency_java.beans.VetoableChangeListener" stringvalue="VOrderSimulation"/>
+        <attr name="class_dependency_java.lang.Thread" stringvalue="VOrderSimulation.Worker"/>
+        <attr name="class_dependency_javax.swing.event.ChangeListener" stringvalue="VOrderSimulation"/>
+        <attr name="class_dependency_javax.swing.event.ListSelectionListener" stringvalue="VOrderSimulation"/>
+        <attr name="class_dependency_javax.swing.event.TableModelListener" stringvalue="VOrderSimulation"/>
+    </fileobject>
+    <fileobject name="VTreeBOM.java">
+        <attr name="class_dependency_java.awt.event.ActionListener" stringvalue="VTreeBOM"/>
+        <attr name="class_dependency_java.beans.PropertyChangeListener" stringvalue="VTreeBOM"/>
+        <attr name="class_dependency_java.beans.VetoableChangeListener" stringvalue="VTreeBOM"/>
+        <attr name="class_dependency_javax.swing.event.ListSelectionListener" stringvalue="VTreeBOM"/>
+        <attr name="class_dependency_javax.swing.event.TableModelListener" stringvalue="VTreeBOM"/>
+        <attr name="class_dependency_javax.swing.event.TreeSelectionListener" stringvalue="VTreeBOM"/>
+        <attr name="class_dependency_org.openxpertya.apps.form.FormPanel" stringvalue="VTreeBOM"/>
+    </fileobject>
+</attributes>

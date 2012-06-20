@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<classpath>
+    <classpathentry kind="src" path="src"/>
+    <classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
+    <classpathentry kind="src" path="/base"/>
+    <classpathentry kind="src" path="/client"/>
+    <classpathentry kind="src" path="/dbPort"/>
+    <classpathentry kind="src" path="/extend"/>
+    <classpathentry kind="src" path="/install"/>
+    <classpathentry kind="src" path="/interfaces"/>
+    <classpathentry kind="src" path="/Looks"/>
+    <classpathentry kind="src" path="/print"/>
+    <classpathentry kind="src" path="/server"/>
+    <classpathentry kind="src" path="/serverApps"/>
+    <classpathentry kind="src" path="/serverRoot"/>
+    <classpathentry kind="src" path="/tools"/>
+    <classpathentry kind="src" path="/webStore"/>
+    <classpathentry kind="output" path="lib"/>
+</classpath>

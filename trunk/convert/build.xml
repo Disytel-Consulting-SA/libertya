@@ -1,0 +1,99 @@
+<!-- ============================================= -->
+<!-- Base                                          -->
+<!-- ============================================= -->
+<!-- $Header: /openXpertya/base/build.xml,v 0.9 $ -->
+
+<project name="convert" default="dist" basedir=".">
+
+  <description>
+    Este fichero sirve para construir el subproyecto convert
+    dentro del proyecto openXpertya
+  </description>
+
+  <!-- Definir variables para este proyecto -->
+  <property name="src" value="src"/>
+  <property name="build.dir" value="compilacion"/>
+  <property name="dist.dir" value="."/>
+  <property name="jar.path" value="../lib"/>
+  <property name="jar.name" value="Convert"/>
+  <property environment="env"/>
+	
+  <property name="keystore.dir" value="../keystore"/>
+
+  
+  <!-- Establecer carpetas para incluir los jar necesarios para la compilacion -->
+  <path id="project.class.path">
+    <pathelement path="${classpath}"/>
+    <pathelement path="${jar.path}/CTools.jar"/>
+    <pathelement path="${jar.path}/oracle.jar"/>
+    <pathelement path="../dbPort/dbPort.jar"/>
+    <pathelement path="../base/Base.jar"/>
+    <pathelement path="../tools/lib/junit.jar"/>
+    <pathelement path="lib/xstream-1.2.1.jar"/>
+    <pathelement path="../interfaces/Interfaces.jar"/>
+  </path>
+
+
+  <target name="init" description="initialization target">
+    <echo message="=========== Construir Base para  ${env.VERSION_IMPLEMENTACION} ${env.VERSION_OPENXPERTYA} por ${env.CONSULTORA_OPENXPERTYA}"/>
+    <!-- crear el time stamp -->
+    <tstamp/>
+    <!-- Crear el directorio compilacion creado para compilar -->
+    <mkdir dir="${build.dir}"/>
+    <!-- Testeo del directorio de distribucion -->
+    <available file="${dist.dir}" type="dir" property="dist.dir.exists"/>
+  </target>
+
+  <target name="makedir" depends="init" unless="dist.dir.exists">
+    <!-- Crear el Directorio de Distribucion si no existe -->
+    <mkdir dir="${dist.dir}"/>
+  </target>
+
+  <!-- =========================================== -->
+  <!-- Compilar                                    -->
+  <!-- =========================================== -->
+  
+  <target name="compile" depends="makedir">
+    <!-- Compilar el codigo java de ${src} a ${build.dir} -->
+    <javac srcdir="${src}" destdir="${build.dir}" deprecation="off" source="1.6" target="1.6" debug="on" encoding="UTF-8">
+      <classpath refid="project.class.path"/>
+    </javac>
+  	
+    <!-- Copiar todas las imagenes, sonidos y paginas web de los fuentes al directorio compilacion -->
+    <copy todir="${build.dir}">
+      <fileset dir="${src}">
+        <include name="**/images/*"/>
+        <include name="**/*.gif"/>
+        <include name="**/*.jpg"/>
+        <include name="**/*.wav"/>
+        <include name="**/*.htm"/>
+        <include name="**/*.html"/>
+        <include name="**/*.properties"/>
+        <exclude name="**/package.html"/>
+      </fileset>
+    </copy>
+  </target>
+
+
+  <!-- =========================================== -->
+  <!-- Distribucion                                -->
+  <!-- =========================================== -->
+  <target name="dist" depends="compile">
+    <!-- Poner todo lo que esta en la carpeta ${build.dir} dentro del archivo ${jar.name}.jar  -->
+   
+    <jar jarfile="${dist.dir}/${jar.name}.jar" basedir="${build.dir}"/>
+	<!--
+	<signjar jar="${dist.dir}/${jar.name}.jar"
+		alias="openxpertya" storepass="indeosPass"
+		keystore="${keystore.dir}/myKeystore"/>
+	-->
+  </target>
+
+
+  <target name="clean">
+    <!-- Borrar la estructura de directorio de ${build.dir} -->
+    <delete dir="${build.dir}"/>
+    <delete file="${dist.dir}/${jar.name}.jar" failonerror="false"/>
+  </target>
+
+</project>

@@ -1,0 +1,47 @@
+<html>
+<head>
+<title>openXpertya</title>
+</head>
+<body>
+<p> <a href="http://www.openxpertya.org/"> <img align="right" src="http://www.openXpertya.org/" width="120" height="60" alt="Compiere Looks" border="0"> 
+  </a> OPENXPERTYA ES UN COMPENDIO DE DISTINTOS JAVA LOOK AND FEEL INCLUIDOS EN EL ANEXO A DE LA LPO. </p>
+<p>For updates 
+  check <a href="http://www.openxpertya.org">http://www.openXpertya.org/</a>.</p>
+<h2>Overview</h2>
+<p>OPENXPERTYA LOOKS ESTA BASADO EN Java 1.4.0.</p>
+<p>LAS UTILIDADES INCLUIDAS PERMITEN CAMBIAR LOS LOOK AND FEEL
+  POR LOS USUARIOS PARTICULARES. NO ESTA RESTRINGIDO A LOS LOOK AND FEEL
+  INCLUIDOS, SE PODRIA INCLUIR CUALQUIER OTRO</a>. 
+  INCLUSO PUEDE HACER SU PROPIO TEMA</p>
+<p><b><a href="constant-values.html">Constantes</a></b></p>
+<h2>Opciones de Arranque</h2>
+<h3>Cambiar el Look &amp; Feel por defecto</h3>
+<p>Puede Cambiar el Look &amp; Feel por defecto editando o añadiendo al archivo <a href="/looks/swing.properties">swing.properties</a> 
+  en la carpeta $JAVA_HOME/jre/lib</p>
+<h3>Arrancando via utilidades</h3>
+<p>You can change the Look &amp; Feel to the one selected by starting via CompmierePLAF. 
+  Example:</p>
+<pre>  java -cp CompiereLooks.jar;SwingSet2.jar 
+    org.openXpertya.plaf.CompierePLAF SwingSet2</pre>
+<p>This tries to invoke the <i>main</i> method of the class of if not found the 
+  constructor without parameters.</p>
+<h3>Modify <i>main</i> Method</h3>
+<p>Just add the line:</p>
+<pre>  CompierePLAF.setPLAF();</pre>
+<h3>Change the Look &amp; Feel</h3>
+<p>You set the Look &amp; Feel by invoking the Compiere PLAF Editor:</p>
+<p>Stand alone:</p>
+<pre>  java -jar CompiereLooks.jar
+  java -cp CompiereLooks.jar org.openXpertya.plaf.CompierePLAF</pre>
+<p>or within your program by</p>
+<pre>  new CompierePLAFEditor ();</pre>
+<p>and from a Dialog or Frame to change the Look and Feel of your current windows 
+  via</p>
+<pre>  new CompierePLAFEditor (this);
+</pre>
+<p>You can also set the Compiere Look directly:</p>
+<pre>  UIManager.setLookAndFeel
+    (new org.openXpertya.plaf.CompiereLookAndFeel());</pre>
+<p>&nbsp;</p>
+</body>
+</html>

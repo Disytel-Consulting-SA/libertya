@@ -1,0 +1,119 @@
+<?xml version="1.0" encoding="iso-8859-1" standalone="yes" ?>
+<!-- 
+					- openXpertya, solución empresarial global -
+        Fichero de instalación de openXpertya v2 bajo Windows o Linux
+-->
+<installation version="1.0">
+
+    <info>
+        <appname>OpenXpertya</appname>
+        <appversion>2.0</appversion>
+        <authors>
+            <author name="FUNDESLE" email="desarrollo@openxpertya.org"/>
+        </authors>
+        <url>http://www.openxpertya.org/</url>
+    </info>
+   	<!-- Definimos el interfaz gráfico liquid por compatibilidad con el look de openXpertya v2 -->
+	<guiprefs width="640" height="480" resizable="yes">
+		<laf name="liquid">
+			<os family="unix"/>
+			<param name="decorate.frames" value="yes"/>
+			<param name="decorate.dialogs" value="yes"/>
+		</laf>
+		<laf name="liquid">
+			<os family="windows"/>
+			<param name="decorate.frames" value="yes"/>
+			<param name="decorate.dialogs" value="yes"/>
+		</laf> 
+		<modifier key="useButtonIcons" value="yes"/>
+		<modifier key="useLabelIcons" value="yes"/>
+		<!--  <modifier key="labelGap" value="2"/>    
+		<modifier key="layoutAnchor" value="NORTHWEST"/>    --> 
+		<modifier key="useHeadingPanel" value="yes"/>
+		<modifier key="headingLineCount" value="1"/>
+		<modifier key="headingFontSize" value="1.5"/>
+		<modifier key="headingBackgroundColor" value="0x00ffffff"/>
+	    <modifier key="headingPanelCounter" value="progressbar"/>
+		<modifier key="headingPanelCounterPos" value="inNavigationPanel"/>
+	</guiprefs> 
+    <locale>
+        <langpack iso3="spa"/>
+        <langpack iso3="por"/>
+        <langpack iso3="cat"/>
+		<langpack iso3="eng"/>
+    </locale>
+    <native type="izpack" name="ShellLink.dll"/>
+    
+    <resources>
+        <res id="LicencePanel.licence" src="recursos/Licencia.txt"/>
+        <res id="InfoPanel.info" src="recursos/Leeme.txt"/>
+		<res id="Installer.image" src="recursos/X.png" />
+		<res id="userInputSpec.xml" src="recursos/UserInputSpec.xml"/>
+		<res id="ProcessPanel.Spec.xml"src="recursos/processpanel.xml"/>
+		<!-- Las imagenes de la izquierda del instalador las definimos en la siguiente línea  -->
+        <res src="recursos/paso1.png" id="Installer.image.0"/>
+		<res src="recursos/paso2.png" id="Installer.image.1"/>
+		<res src="recursos/paso3.png" id="Installer.image.2"/>
+		<res src="recursos/paso4.png" id="Installer.image.3"/>
+		<res src="recursos/paso5.png" id="Installer.image.4"/>
+		<res src="recursos/paso5.png" id="Installer.image.5"/>
+		<res src="recursos/paso6.png" id="Installer.image.6"/>
+		<res src="recursos/paso7.png" id="Installer.image.7"/>
+		<res src="recursos/paso8.png" id="Installer.image.8"/>
+	<!-- La imagen superior del selector de idioma inicial la definimos en la siguiente línea  -->
+		<res src="recursos/superior.png" id="installer.langsel.img"/> 
+    </resources>
+    
+    <panels>
+        <panel classname="HelloPanel"/>
+        <panel classname="InfoPanel"/>
+        <panel classname="LicencePanel"/>
+        <panel classname="TargetPanel"/> 
+        <panel classname="PacksPanel"/>
+        <panel classname="InstallPanel"/>
+		<panel classname="UserInputPanel"/>
+		<panel classname="ProcessPanel"/>
+		<panel classname="ShortcutPanel"/>
+        <panel classname="FinishPanel"/>
+    </panels>
+    
+    
+    <packs>
+        <pack name="Base Windows" required="yes">
+			<os family="Windows" />
+            <description>Servidor openXpertya en Entorno Windows</description>
+            <file src="recursos/Leeme.txt" targetdir="$INSTALL_PATH"/>
+            <file src="recursos/Licencia.txt" targetdir="$INSTALL_PATH"/>
+            <file src="../utils/Configurar.exe" targetdir="$INSTALL_PATH"/>
+			<file src="../../ServidorOXP/lib" targetdir="$INSTALL_PATH"/>
+			<file src="../../ServidorOXP/jboss" targetdir="$INSTALL_PATH"/>
+			<file src="../../ServidorOXP/utils" targetdir="$INSTALL_PATH"/>
+			<file src="../../ServidorOXP/data" targetdir="$INSTALL_PATH"/>
+			<file src="recursos/importar.bat" targetdir="$INSTALL_PATH"/>
+			<file src="recursos/X.ico" targetdir="$INSTALL_PATH"/>
+			<file src="../dbscripts/openxp_estandar_04_05_07.sql" targetdir="$INSTALL_PATH/data/"/>
+			<file src="../../ServidorOXP/Configurar.exe" targetdir="$INSTALL_PATH"/>
+			<file src="../../ServidorOXP/OpenXpertya.exe" targetdir="$INSTALL_PATH"/>
+			<file src="../../ServidorOXP/build.xml" targetdir="$INSTALL_PATH"/>
+			<file src="../../ServidorOXP/Licencia.xhtml" targetdir="$INSTALL_PATH"/>
+        </pack>
+        <pack name="Base Linux" required="yes">
+			<os family="Unix" />
+            <description>Servidor openXpertya en Entorno Linux</description>
+            <file src="recursos/Leeme.txt" targetdir="$INSTALL_PATH"/>
+            <file src="recursos/Licencia.txt" targetdir="$INSTALL_PATH"/>
+            <file src="../utils/Configurar.sh" targetdir="$INSTALL_PATH"/>
+			<file src="../../ServidorOXP/lib" targetdir="$INSTALL_PATH"/>
+			<file src="../../ServidorOXP/jboss" targetdir="$INSTALL_PATH"/>
+			<file src="../../ServidorOXP/utils" targetdir="$INSTALL_PATH"/>
+			<file src="../../ServidorOXP/data" targetdir="$INSTALL_PATH"/>
+			<file src="recursos/importar.sh" targetdir="$INSTALL_PATH"/>
+			<file src="../utils/Openxp.sh" targetdir="$INSTALL_PATH"/>
+			<file src="../../ServidorOXP/build.xml" targetdir="$INSTALL_PATH"/>
+			<file src="../../ServidorOXP/Licencia.xhtml" targetdir="$INSTALL_PATH"/>
+			           <parsable targetfile="$INSTALL_PATH/Importar.sh"/> 
+            <parsable targetfile="$INSTALL_PATH/Configurar.sh"/> 
+        </pack>
+    </packs>
+    
+</installation>

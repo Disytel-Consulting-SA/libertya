@@ -1,0 +1,55 @@
+<?xml version="1.0"?>
+<!-- ======================================================== -->
+<!-- Sistema de comercio electrónico                                                             -->
+<!-- ======================================================== -->
+<project name="TiendaWebOXP" default="main" basedir=".">
+	<property name="src.dir" value="${basedir}/src"/>
+	<property name="src.main.dir" value="${src.dir}/main"/>
+	<property name="src.web.dir" value="${src.dir}/web"/>
+	<property name="build.dir" value="${basedir}/compilacion"/>
+	<property name="build.deploy.dir" value="${build.dir}/deploy"/>
+	<target name="init">
+		<echo message="=========== Construyendo el Sistema de Comercio Electrónico"/>
+		<tstamp/>
+		<mkdir dir="${build.deploy.dir}"/>
+	</target>
+	<!-- =================================================================== -->
+	<!-- Crea los archivos war                                                                                                   -->
+	<!-- =================================================================== -->
+	<target name="war" depends="init">
+		<war warfile="${build.deploy.dir}/TiendaWebOXP.war" webxml="${src.web.dir}/WEB-INF/web.xml">
+			<fileset dir="${src.web.dir}" excludes="**/web.xml,**/lib/**,**/classes/**"/>
+			<manifest>
+				<attribute name="Specification-Title" value="TiendaWebOXP"/>
+				<attribute name="Specification-Version" value="${env.VERSION_OXP}"/>
+				<attribute name="Specification-Vendor" value="(C) 2006 Fundesle."/>
+				<attribute name="Implementation-Title" value="TiendaWebOXP ${env.VERSION_OXP}"/>
+				<attribute name="Implementation-Version" value="${env.VERSION_OXP}  ${DSTAMP}-${TSTAMP}"/>
+				<attribute name="Implementation-Vendor" value="${env.CONSULTORA_OXP}"/>
+				<attribute name="Implementation-URL" value="http://www.openxpertya.org"/>
+				<attribute name="Class-Path" value="OXP.jar OXPSLib.jar OXPApps.jar"/>
+			</manifest>
+		</war>
+	</target>
+	<!-- =================================================================== -->
+	<!-- Crea el binario del servidor                                                                                            -->
+	<!-- =================================================================== -->
+	<target name="deploy-server" depends="war">
+		<copy file="src/ear/application.xml" tofile="../lib/TiendaWebOXP.xml"/>
+		<copy todir="../lib">
+			<fileset dir="${build.deploy.dir}" includes="*.jar,*.war,*.ear"/>
+		</copy>
+	</target>
+	<!-- =================================================================== -->
+	<!-- Crea la estructura del binario				                                                                           -->
+	<!-- =================================================================== -->
+	<target name="main" depends="deploy-server">
+  </target>
+	<!-- =================================================================== -->
+	<!-- Limpia la última compilación                                                                                            -->
+	<!-- =================================================================== -->
+	<target name="clean">
+		<delete dir="${build.dir}"/>
+		<delete file="../lib/TiendaWebOXP.war" failonerror="false"/>
+	</target>
+</project>

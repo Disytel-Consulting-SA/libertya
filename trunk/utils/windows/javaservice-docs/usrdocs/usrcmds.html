@@ -1,0 +1,136 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<head>
+	<meta content="text/html; charset=iso-8859-1" http-equiv="Content-Type">
+	<meta content="en" http-equiv="Content-Language">
+
+	<title>JavaService - Basic User Commands</title>
+
+	<meta name="Robots" content="index, follow">
+
+	<link type="text/css" href="../resources/javaservice.css" rel="stylesheet" id="stylesheet">
+	<link type="image/x-icon" href="../favicon.ico" rel="icon">
+	<link type="image/x-icon" href="../favicon.ico" rel="shortcut icon">
+</head>
+<body bgcolor="#FFFFFF">
+
+<h2>JavaService - User Commands</h2>
+
+<p>
+The basic commands available to users of the JavaService utility are described below.
+Extended commands are available for more technical users, as described in the developer documentation set.
+Particular applications that make use of JavaService should provide explicit details that apply to
+those products.
+</p>
+
+<h3>JavaService Command Format</h3>
+<p>
+JavaService is a Windows executable program, which can be invoked from the command line with a range of parameters and options.
+The order of the command line parameters is fixed by the JavaService program for each command and will lead to unexpected errors if they
+are not entered in the specified order.
+</p>
+<p>
+The general format of all commands issued to JavaService is as follows:
+</p>
+<code>JavaService -command</code>
+<p>
+or
+</p>
+<code>JavaService -command -option_1 value_1 -option_2 value_2 -option_3 ...</code>
+<p>
+Where <em>-command</em> indicates the command type required, followed by any command-specific options and values.
+</p>
+<p>
+<strong>NOTE:</strong> Any parameters that include spaces (such as many Windows directory names) should be enclosed in quote characters so that they
+are seen as a single parameter when passed to JavaService (for example "C:\Program Files\MyDirectory");
+</p>
+<p>
+Also note that if the program is run without any command line parameters, it will not generate any console output as this is the mode
+used when the service is run in the background.
+</p>
+
+<h3>Main JavaService Commands</h3>
+
+<p>
+The main commands entered by users of the JavaService utility are to <strong>install</strong> and <strong>uninstall</strong> a
+Java application as a Windows service. The utility may also be used to query the <strong>status</strong> of an installed
+Java service, or to check the <strong>version</strong> number of the JavaService software in use.
+These commands, plus the help facility, are described below.
+</p>
+
+<h4>JavaService Help</h4>
+</p>
+For a list of the commands available from JavaService, enter the following command from a Windows prompt:
+</p>
+<code>JavaService -help</code>
+</p>
+For expanded help on any paricular command, enter the following:
+</p>
+<code>JavaService -help command</code>
+
+
+<h4>Service Installation</h4>
+</p>
+To install a Java application as a Windows service, you need the following information:
+</p>
+<dl>
+<dt>service_name</dt>
+<dd>Service name to be used for the installed application (i.e. MyJavaService)</dd>
+<dt>jvm_location</dt>
+<dd>Java Run-Time Environment location (reference to <em>jvm.dll</em>)</dd>
+<dt>start_class</dt>
+<dd>Java Application program entry point class name (i.e. mypackage.MyClass)</dd>
+<dt>start_method</dt>
+<dd>(optional, default main) Java Application program entry point method name (i.e. startservice)</dd>
+<dt>start_params</dt>
+<dd>(optional, no defaults) Java Application program startup parameters</dd>
+</dl>
+
+
+<p>
+Given this information, the application can be installed as a service using the following command:
+</p>
+<code>JavaService -install service_name jvm_location -start start_class [-method start_method] [-params start_params]</code>
+<p>
+For example:
+</p>
+<code>JavaService -install MyService C:\J2SDK1.4.2_07\jre\bin\server\jvm.dll -start MyService</code>
+
+<p>
+There are many more options available for this command, but this is the minimum needed for any Java service installation.
+The command options required for particular Java applications should ideally be held in a script file for use in Windows,
+creation of which is to be the responsibility of the relevant application developers or distributors. If you are setting
+up JavaService for an application yourself, you should refer to the developer documentation for full details of the install options.
+</p>
+
+<h4>Service Removal</h4>
+</p>
+To remove a Java application that had previously been installed as a Windows service,
+use the following command:
+</p>
+<code>JavaService -uninstall service_name</code>
+<p>
+For example:
+</p>
+<code>JavaService -uninstall MyService</code>
+
+<p>
+This command does not delete any of the application files; it merely removes the service definition and configuration parameters
+as recorded by JavaService.
+</p>
+
+<h4>JavaService Version Enquiry</h4>
+</p>
+To determine the version number of the JavaService software, enter the following command:
+</p>
+
+<code>JavaService -version</code>
+<p>
+This information is required if investigating or reporting potential problems with the software, and also allows the user
+to determine if a newer version of the software is available for download.
+</p>
+
+<p>&nbsp;</p>
+
+</body>
+</html>

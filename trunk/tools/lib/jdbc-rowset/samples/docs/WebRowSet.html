@@ -1,0 +1,124 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+                       
+  <link rel="stylesheet" type="text/css" href="style/default.css">
+  <title>WebRowSet Sample - Documentation</title>
+    
+</head>
+  <body>
+         
+<h1>WebRowSet Sample</h1>
+         
+<h1>README</h1>
+     &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; This document presents a walkthrough
+   of the WebRowSet Sample, it explains the WebRowSet sample provided using 
+  snippets<br>
+      of code.<br>
+     <br>
+     <br>
+         
+<h3>&nbsp;&nbsp;&nbsp; Overview</h3>
+     &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; This is a sample for demonstrating 
+  the functionality of a WebRowSet. It shows how to serialize data in the 
+WebRowSet  to an XML<br>
+     &nbsp;&nbsp; file once the WebRowSet has been populated with data in 
+the   database. This data in XML format is interoperable. It also shows how 
+<br>
+     &nbsp; &nbsp;to populate a WebRowSet by reading an XML file, this can
+ be  used in scenarios where data is received from a remote sender in XML
+<br>
+     &nbsp; &nbsp;format and needs to be written to a database.<br>
+     <br>
+     <br>
+         
+<h3>&nbsp;&nbsp;&nbsp; Explanation of the Sample</h3>
+     <br>
+     &nbsp;&nbsp; &nbsp; &nbsp; &nbsp;<small><code>// Setup the properties
+ for the CachedRowSet<br>
+     &nbsp;&nbsp;&nbsp;&nbsp;&nbsp; wrs = new WebRowSetImpl();<br>
+     &nbsp;&nbsp;&nbsp;&nbsp;&nbsp; wrs.setUrl(dbUrl);<br>
+     &nbsp;&nbsp;&nbsp;&nbsp;&nbsp; wrs.setUsername(dbUserId);<br>
+     &nbsp;&nbsp;&nbsp;&nbsp;&nbsp; wrs.setPassword(dbPasswd);&nbsp;&nbsp;&nbsp;&nbsp;</code></small><b><small>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+  <br>
+     <br>
+     &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp; </small></b><small><big>The 
+  above piece of code sets the properties for the WebRowSet like the Database 
+  URL, Username and password after creating the<br>
+     &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;WebRowSet object.</big><br>
+     </small><b><small>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+  <br>
+     &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </small></b><small><code>Connection
+  con = DriverManager.getConnection(dbUrl,dbUserId,dbPasswd);<br>
+     &nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Statement stmt  =  con.createStatement();<br>
+     &nbsp;&nbsp;&nbsp;&nbsp;&nbsp; ResultSet rs =  stmt.executeQuery(dbCommand);&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+   <br>
+     &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <br>
+     &nbsp;&nbsp;&nbsp;&nbsp;&nbsp; // Get the data  into  memory ,using
+populate<br>
+     &nbsp;&nbsp;&nbsp;&nbsp;&nbsp; wrs.populate(rs);<br>
+     <br>
+     &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp; &nbsp;</code></small><small><big>This 
+  code populates a ResultSet from the specified command and this ResultSet 
+ is inturn used to populate the WebRowSet using the <br>
+     &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; populate command.</big><br>
+     </small><b><small>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;  <br>
+     &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </small></b><small><code>//
+  Now the WebRowSet is populated with data from the <br>
+     &nbsp;&nbsp;&nbsp;&nbsp; // employee table   and the operations that
+can be done on<br>
+     &nbsp;&nbsp;&nbsp;&nbsp; // CachedRowSet  can  be done as this class
+is a sub class<br>
+     &nbsp;&nbsp;&nbsp; &nbsp;// of CachedRowSet   and in addition to that
+can serialize<br>
+     &nbsp;&nbsp;&nbsp;&nbsp; // to an XML file   and deserialize from an
+XML file.<br>
+     &nbsp;&nbsp;&nbsp;&nbsp; // All the operations   like insertRow,updateRow,<br>
+     &nbsp;&nbsp;&nbsp;&nbsp; // deletRow, etc   will be take care while
+serializing, <br>
+     &nbsp;&nbsp;&nbsp;&nbsp; // that the WebRowSet   got after serializing
+will be the <br>
+     &nbsp;&nbsp;&nbsp;&nbsp; // same as that  was  serialized.<br>
+     &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+   <br>
+     &nbsp;&nbsp;&nbsp;&nbsp; // Get handle to  a FileWriter and pass that
+as the parameter to<br>
+     &nbsp;&nbsp;&nbsp;&nbsp; // the function  that  will serialize this
+into an XML file.<br>
+     &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <br>
+     &nbsp;&nbsp;&nbsp;&nbsp; fWriter = new FileWriter("WRS_Serialize.xml");<br>
+     &nbsp;&nbsp;&nbsp;&nbsp; wrs.writeXml(fWriter);<br>
+     <br>
+     &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;</code> </small><small><big>The 
+ WebRowSet allows the contents and properties of the RowSet to be serialized
+  into an XML file based on a particular schema. This <br>
+     &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;is done using the writeXml method
+that   takes a Writer as argument. As the above code demonstrates the WebRowSet 
+ is serialized into <br>
+     &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;an XML file.</big><br>
+     </small><b><small>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+  <br>
+     &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </small></b><small><code>//
+  Now the deserializing part where we get a handle to the <br>
+     &nbsp;&nbsp;&nbsp;&nbsp;&nbsp; // FileReader and   pass it as a parameter
+to the function <br>
+     &nbsp;&nbsp;&nbsp;&nbsp;&nbsp; // that deserializes   the data from
+the XML file into a <br>
+     &nbsp;&nbsp;&nbsp;&nbsp;&nbsp; // WebRowSet.<br>
+     &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <br>
+     &nbsp;&nbsp;&nbsp;&nbsp;&nbsp; fReader = new FileReader("WRS_Serialize.xml");<br>
+     &nbsp;&nbsp;&nbsp;&nbsp;&nbsp; wrsSecond = new  WebRowSetImpl();&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+ &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;   <br>
+     &nbsp;&nbsp;&nbsp;&nbsp;&nbsp; wrsSecond.readXml(fReader);<br>
+     </code></small><b><small><br>
+     &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp; </small></b><small><big>As
+  a complement to the writing to a XML file the WebRowSet also reads from
+a  XML file , so the above code demonstrates how to populate<br>
+     &nbsp; &nbsp; &nbsp; &nbsp; a WebRowSet from a XML file. The readXml 
+function   is used that takes a Reader as parameter and populates the WebRowSet.</big><br>
+     </small><br>
+         <br>
+       
+</body>
+</html>

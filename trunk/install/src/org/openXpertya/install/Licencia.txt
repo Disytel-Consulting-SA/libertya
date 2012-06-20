@@ -1,0 +1,166 @@
+LICENCIA PÚBLICA DE LIBERTYA (LPLY) Versión 1.0
+0. PRÓLOGO
+	La Licencia Pública de Libertya (LPLY) está derivada literalmente de la traducción al español de la licencia pública CDDL, aprobada por la OSI (Open Source Iniciative) el 14 de Enero del 2.005 (lo que la convierte en una de las licencias de software libre más modernas) derivada a su vez de la licencia pública MPL 1.1. 
+1. DEFINICIONES
+
+1.1 "COLABORADOR"
+Se entiende por colaborador a todo individuo o entidad que crea o contribuye a la creación de modificaciones.
+
+1.2. "VERSIÓN DEL COLABORADOR"
+Se entiende por versión del colaborador la combinación del software original, modificaciones previas usadas por un colaborador (si las hubiera), y las modificaciones hechas por ese colaborador en concreto.
+
+1.3. "CÓDIGO AMPARADO"
+Se entiende por código amparado el:
+
+1.software original o
+
+2.las modificaciones realizadas en el mismo o
+
+3.la combinación de archivos que contienen software original y archivos que contienen modificaciones, en cada caso incluyendo sus partes correspondientes.
+	1.4 "EJECUTABLE"
+Se entiende por ejecutable el código amparado en cualquier forma distinta de código fuente.
+
+1.5. "DESARROLLADOR INICIAL"
+Se entiende por desarrollador inicial al individuo o entidad que ofrece en primera instancia el software original a disposición del público bajo esta licencia.
+
+1.6. "PRODUCTO EXTENDIDO"
+Se entiende por producto extendido un trabajo que combina código amparado o partes correspondientes al mismo con código no regido por los términos de esta licencia.
+
+1.7. "LICENCIA"
+Se entiende por licencia el presente documento.
+
+1.8 "LICENCIABLE"
+Se entiende por licenciable todo aquel código del que se ostenta el derecho a garantizar, en la máxima medida posible, bien en el momento de la garantía inicial o mediante adquisición subsiguiente, todos y cada uno de los derechos garantizados por la presente.
+
+1.9. "MODIFICACIONES"
+Se entienden por modificaciones el código fuente y la versión ejecutable de cualquiera de los siguientes:
+1.Cualquier archivo que resulte de la adición, borrado, o modificación de los contenidos de un archivo que contuviera software original o modificaciones previas.
+2.Cualquier nuevo archivo que contenga cualquier parte del software original o modificaciones previas o;
+3.Cualquier archivo nuevo con el que se haya contribuido o que de cualquier otra manera se haya puesto a disposición del público bajo los términos de esta licencia.
+
+1.10 "SOFTWARE ORIGINAL"
+Se entiende por software original, tanto el código fuente como su forma ejecutable que se publican originalmente bajo esta licencia.
+1.11 "RECLAMACIONES DE DERECHOS DE PATENTE"
+Se entiende por reclamaciones de derechos de patente,  aquellas reclamaciones por derechos de patente detentados ahora o adquiridos a posteriori, incluyendo, sin límite, reclamaciones por derechos de patente de método, derechos de patente de proceso y derechos de patente de aparato, sobre cualquier  patente licenciable por el garante.
+1.12 "CÓDIGO FUENTE"
+ Se entiende por código fuente, ambos dos:
+1.la forma común del código de software informático en la cual se realizan modificaciones y 
+
+2.la documentación asociada incluida en o con dicho código originalmente. 
+1.13 "USTED" (O "SU", "SUS")
+Señala a un individuo o entidad legal que ejerce sus derechos, bajo, y  siempre cumpliendo con todos sus términos de esta licencia. Para las entidades legales "usted" incluye cualquier entidad que controla o esta controlada, o está bajo control común de dicha entidad legal referenciada como "usted". Para los propósitos de esta definición, "control" se entiende por:
+1.la capacidad, directa o indirecta, de regir la dirección o gestión de dicha entidad, tanto medio contrato como de cualquier otra manera, o 
+2.la propiedad de mas del  cincuenta por ciento (50%) de las acciones actuales, participaciones, o la propiedad de plusvalías de dicha entidad.
+
+2. GARANTÍAS DE LA LICENCIA
+===========================
+
+2.1 GARANTÍA DEL DESARROLLADOR INICIAL
+Condicionado al cumplimiento de la sección 3.1 posterior, y sujeta a las reclamaciones de propiedad intelectual de terceros, el desarrollador inicial por la presente le garantiza una licencia, mundial, libre de cargas y no exclusiva:
+1.bajo los derechos de propiedad intelectual (distintos de los de patente o de marca registrada) licenciable por el desarrollador inicial  para usar, reproducir, mostrar, ejecutar, relicenciar y distribuir el software original (o partes correspondientes al mismo) con o sin modificaciones, y/o como parte de un producto extendido; y
+2.bajo reclamaciones de derechos de patentes infringidas por la creación, uso o venta del software original, para crear, haber creado, usar, practicar, vender, y ofrecer para la venta y/o disponer de cualquier otra manera del software original (o partes correspondientes al mismo).
+3.las licencias garantizadas en esta sección 2.1 (a) y (b) son efectivas desde la fecha que el desarrollador inicial distribuya inicialmente o de cualquier otra manera haga disponible a terceros el código original bajo los términos de esta licencia.
+4.no obstante lo establecido en la sección 2.1 (b), no se garantiza licencia expresa:
+para el código que usted borre del código original;  o
+para el código que usted  separe del código original;  o 
+por infracciones causadas por: 
+la modificación del código original,  o 
+la combinación del código original con otro software o dispositivos cualesquiera.
+
+
+2.2 GARANTÍA DEL COLABORADOR
+Condicionado al cumplimiento de la sección 3.1 posterior, y sujeta a las reclamaciones de propiedad intelectual de terceros, cada colaborador por la presente le garantiza una licencia, mundial, libre de cargas y no exclusiva:
+1.bajo los derechos de propiedad intelectual (distintos de patente o marca registrada) licenciable por colaborador para usar, reproducir, modificar, mostrar, ejecutar, relicenciar y distribuir las modificaciones realizadas por dicho colaborador (o partes correspondientes) bien en su estado original, con otras modificaciones, como software amparado,  y/o como parte de un producto extendido; y
+2.bajo reclamaciones de derechos de patentes infringidas por la creación, uso o venta de las modificaciones realizadas por dicho colaborador bien por separado y/o en combinación con su versión del colaborador (o partes de dicha combinación), para crear, usar, vender,  ofrecer para la venta, haber creado y/o disponer de cualquier otra  manera de:
+modificaciones hechas por ese colaborador  (o partes correspondientes a la misma); o
+la combinación de  modificaciones hechas por ese colaborador con su versión de colaborador (o partes de dicha combinación). 
+3.las licencias garantizadas en las secciones 2.2(a) y 2.2 (b) son efectivas en la fecha en que el colaborador distribuya inicialmente o ponga de cualquier otra manera las modificaciones a disposición de un tercero.
+4.no obstante lo establecido en  la sección 2.2(b), no se garantiza licencia patente:
+por cualquier código que el colaborador haya borrado de la versión del colaborador;
+por infracciones causadas por:
+modificaciones de terceros de la versión del colaborador o
+la combinación de modificaciones hechas por dicho colaborador con otro software  (excepto como parte de la versión del colaborador) o otros aparatos; o
+bajo reclamaciones de derechos de patente infringidas por el código amparado en ausencia de modificaciones hechas por este colaborador. 
+
+
+3. OBLIGACIONES DE DISTRIBUCIÓN
+===============================
+
+3.1. DISPONIBILIDAD DEL CÓDIGO FUENTE.
+Cualquier código amparado que usted distribuya o haga accesible de cualquier otra manera en forma ejecutable, debe de hacerse también accesible en forma de código fuente y dicho código fuente debe distribuirse sólo bajo los términos de esta licencia. Usted está obligado a incluir una copia de esta licencia con todas y cada una de las copias de la forma de código fuente del código amparado que usted distribuya o ponga a disposición del público de cualquier otra manera. 
+Adicionalmente, usted debe informar a los destinatarios de dicho código amparado en forma ejecutable sobre la manera o forma de obtener la forma de código fuente de dicho código amparado de una manera razonable o mediante un medio tradicionalmente establecido o estándar para el intercambio de software. 
+3.2. MODIFICACIONES
+Las modificaciones que usted cree, o con las que usted contribuya están regidas bajo los términos de esta licencia. Usted afirma de buena fe que considera que sus modificaciones son sus creaciones originales y/o que usted ostenta derechos suficientes para garantizar los derechos contenidos y detallados en esta licencia.
+3.3. AVISOS REQUERIDOS
+Usted debe incluir un aviso o nota en cada una de sus modificaciones de tal manera que le identifique a usted como el colaborador de esa modificación. Usted no debe eliminar o alterar ningún copyright o aviso de patente o marca registrada que este contenida en el software amparado, o cualquier aviso de licenciamiento o texto descriptivo de alguna clase que establezca atribuciones o derechos de cualquier tipo de cualquier otro colaborador o del propio desarrollador inicial. 
+3.4 APLICACION DE TÉRMINOS ADICIONALES
+Usted no debe ofrecer o imponer ninguna clase de términos a cualquier código amparado en forma de código fuente, que altere o restrinja la versión aplicable de los términos de esta licencia o los derechos subsiguientes de los destinatarios. Usted puede, legítimamente, elegir ofrecer, y cobrar una cantidad por garantía, soporte, indemnización u obligaciones de responsabilidad a uno o más destinatarios del software amparado. Sin embargo, usted puede hacer esto sólo en su propio nombre y sólo bajo  su propia responsabilidad, nunca en nombre del desarrollador inicial  o de cualquiera de los colaboradores. Usted está obligado a especificar con total claridad que cualquiera de las mencionadas garantía, soporte, indemnización u obligaciones de responsabilidad, es ofrecida solamente por usted, y por la presente acepta indemnizar al desarrollador inicial  y a todos y cada uno de los colaboradores por cualquier responsabilidad en la que incurran o pudieran incurrir en el futuro, el desarrollador inicial  o cualquiera de dichos colaboradores a resultas de los términos cualesquiera de garantía, soporte, indemnización o responsabilidad que usted ofrezca  unilateralmente.
+3.5. DISTRIBUCIÓN DE VERSIONES EJECUTABLES
+Usted puede distribuir código amparado en forma ejecutable bajo los términos de esta licencia o bajo los términos de una licencia cualquiera de su elección, la cual puede contener términos diferentes a los de esta licencia, en tanto en cuanto usted cumpla los términos de esta licencia y que la licencia para la forma ejecutable no intente limitar o alterar los derechos de los destinatarios  para la forma de código fuente, de los términos ofrecidos en esta licencia. Si usted distribuye código amparado en forma ejecutable bajo una licencia diferente, usted debe establecer con total claridad que cualquiera de los términos que difieran con los de esta licencia solo se ofrece por usted y bajo su responsabilidad, no por el desarrollador inicial  u otro colaborador. Usted  por la presente acepta indemnizar al desarrollador inicial  y a todos y cada uno de los colaboradores por cualquier responsabilidad en la que incurran el desarrollador inicial  o cualquiera de dichos colaboradores a resultas de los términos que usted ofrezca.
+3.6. PRODUCTO EXTENDIDO
+Usted puede crear un producto extendido combinando código amparado con código adicional no regido por los términos de esta licencia y distribuir el producto extendido como un único producto. En este caso, debe usted asegurarse que los requisitos de ésta licencia se cumplen para el código amparado.
+
+
+
+4. VERSIONES DE LA LICENCIA
+===========================
+4.1. NUEVAS VERSIONES Y CUSTODIO INICIAL
+Servicios Digitales S.A. es el custodio inicial de esta licencia y puede publicar versiones revisadas y/o nuevas de la licencia LPLY cada cierto tiempo. Cada versión llevará asignada un número o código unívoco de identificación de versión. Excepto en lo establecido en la sección 4.3, nadie excepto el custodio original tiene el derecho a modificar esta licencia. 
+El custodio original podrá, si así lo considera, transferir la custodia de esta licencia y todos los derechos asociados a ella, a otra organización sin ánimo de lucro, que pueda cuidar, promocionar o mantener el uso de la misma y de su software asociado.
+4.2 EFECTO DE LAS NUEVAS VERSIONES
+Usted siempre puede continuar usando, distribuyendo o poniendo a disposición del público de cualquier otra manera el código amparado, bajo los términos de la versión de la licencia bajo los cuales usted recibió originalmente el código amparado. Si el desarrollador inicial incluyese por cualquier causa un aviso en el software original prohibiendo que éste se distribuya o sea puesto a disposición del público de cualquier otra manera bajo ninguna versión subsiguiente de la licencia, usted debe distribuir y poner el código amparado a disposición del publico bajo los términos de la versión bajo la cual usted recibió originalmente el código amparado. En cualquier otro caso, usted puede también elegir usar, distribuir o poner a disposición del público de, cualquier otra manera, el código amparado bajo los términos de cualquier versión subsiguiente de la licencia publicada por el custodio inicial de la licencia.
+4.3. VERSIONES MODIFICADAS
+Cuando usted sea el desarrollador inicial de un producto nuevo o de un producto extendido, y usted quiera crear una nueva licencia para su software original, usted puede crear y utilizar una versión modificada de esta licencia si usted:
+1.renombra la licencia y elimina cualquier referencia al nombre del custodio de la licencia (excepto para señalar que la licencia difiere de la presente licencia)   y 
+2.hacer patente de cualquier otra manera que la licencia contiene términos que difieren de los de la presente licencia, y 
+3.respeta todos y cada uno de los términos actualmente existentes en esta licencia si se trata de un producto extendido basado en el software original Libertya.
+5. AUSENCIA DE GARANTÍA
+EL CÓDIGO AMPARADO SE OFRECE BAJO ESTA LICENCIA "TAL CUAL", SIN GARANTÍA DE NINGUNA CLASE, NI EXPRESA NI IMPLÍCITA, INCLUYENDO, SIN LIMITACIÓN, GARANTÍAS DE QUE EL CÓDIGO AMPARADO ESTÁ LIBRE DE FALLOS, ES SUSCEPTIBLE DE SER VENDIDO, ESTA DISEÑADO PARA UN PROPÓSITO CONCRETO O LIBRE DE INFRACCIONES. CUALQUIER TIPO DE RIESGO SOBRE LA CALIDAD Y EL FUNCIONAMIENTO DEL CÓDIGO AMPARADO ES ASUMIDO ÚNICAMENTE POR USTED. EN CASO DE QUE EL CÓDIGO AMPARADO PUDIERA SER DEFECTUOSO EN CUALQUIER EXTREMO, USTED (Y NUNCA EL DESARROLLADOR INICIAL O CUALQUIER OTRO COLABORADOR) ASUMIRÁ EL COSTE DE CUALQUIER SERVICIO NECESARIO, REPARACIÓN O CORRECCIÓN. ESTE AVISO DE AUSENCIA DE GARANTÍA CONSTITUYE UNA PARTE ESENCIAL DE ESTA LICENCIA. NO SE PERMITE NINGÚN TIPO DE USO DEL CÓDIGO AMPARADO EN LO SUCESIVO SI NO ES BAJO ESTE AVISO.
+6. TERMINACIÓN
+6.1. Esta licencia y los derechos garantizados por la misma terminarán automáticamente si usted no cumple los términos de esta licencia o no pasa a cumplirlos treinta días después de comprobar la falta de cumplimiento de la misma. Aquellas disposiciones que por su naturaleza deban permanecer efectivas tras la terminación de la licencia seguirán en vigor tras la terminación.
+6.2. Si realiza una reclamación por infracción de patente (excluyendo acciones de declaración judicial, que legalmente siguen otra vía) contra el desarrollador inicial o un colaborador ( se denominará "participante" a aquel desarrollador inicial o colaborador al que usted dirija dicha reclamación) alegando que el software del participante (entendiendo por software del participante la versión del colaborador donde el participante es un colaborador o el software original, donde el participante es el desarrollador inicial) directamente o  indirectamente infringe cualquier patente, entonces todos y cada uno de los derechos garantizados directa o indirectamente a usted por dicho participante, desarrollador inicial (si el desarrollador inicial no es el participante) y todos los colaboradores en las secciones 2.1 y/o 2.2 de esta licencia se terminarán prospectiva y automáticamente tras 60 días desde el aviso del participante, a menos que tras ese periodo de 60 días usted retire su reclamación con respecto al software del participante contra dicho participante bien de manera unilateral o tras llegar a acuerdo escrito con el participante.
+6.3. En el caso de terminación bajo las secciones 6.1 ó 6.2.,  todas las licencias de usuario final que hayan sido debidamente garantizadas por usted o cualquier distribuidor, con carácter previo a la terminación (excluyendo las licencias garantizadas a usted por cualquier distribuidor) seguirán en vigor tras la terminación.
+
+7. LIMITACIÓN DE RESPONSABILIDAD
+================================
+EN NINGÚN CASO, Y BAJO NINGUNA TEORÍA LEGAL, BIEN POR AGRAVIO, (INCLUYENDO NEGLIGENCIA), CONTRATO, O CUALQUIER OTRA FORMA, USTED, EL DESARROLLADOR INICIAL,  CUALQUIER OTRO COLABORADOR, O CUALQUIER DISTRIBUIDOR DEL CÓDIGO AMPARADO, O CUALQUIER PROVEEDOR O CUALQUIERA DE DICHAS PARTES, SERÁ RESPONSABLE ANTE NINGÚN SUJETO POR NINGÚN TIPO DE DAÑO INDIRECTO, ESPECIAL, INCIDENTAL O DERIVADO DE NINGUNA CLASE, INCLUYENDO, SIN LIMITACIÓN,  DAÑOS POR PERDIDA DE BENEFICIOS, PÉRDIDAS DE FONDO DE COMERCIO, PARO DE LA ACTIVIDAD, FALLO O MALFUNCIONAMIENTO DE DISPOSITIVOS O APARATOS, Y TODOS Y CADA UNO DE LOS DAÑOS O PÉRDIDAS COMERCIALES, INCLUSO SI DICHA PARTE HA SIDO INFORMADA DE LA POSIBILIDAD DE DICHOS DAÑOS. ESTA LIMITACIÓN DE RESPONSABILIDAD NO SE APLICARÁ A LA RESPONSABILIDAD POR FALLECIMIENTO O DAÑO PERSONAL RESULTANTE DE LA NEGLIGENCIA DE DICHA PARTE EN CUANTO LA LEY APLICABLE PROHÍBA DICHA LIMITACIÓN.
+ALGUNAS REGULACIONES LEGALES NO PERMITEN LA EXCLUSIÓN O LIMITACIÓN DE CIERTOS DAÑOS INCIDENTALES O DERIVADOS, POR LO TANTO ESTA EXCLUSIÓN Y LIMITACIÓN PUEDE NO APLICARSELE A USTED.
+8. VARIOS
+Ésta licencia representa el acuerdo total en lo que concierne al objeto de este contrato. Si cualquier provisión de esta licencia se demuestra inaplicable, dicha provisión se reformara solo hasta el punto necesario para hacerla aplicable. Esta licencia se regirá por la legislación aplicable en el estado español (excepto hasta el punto en que la legislación adicional, si la hubiera, lo disponga de otra manera), excluyendo las provisiones que entren en conflicto con la ley. Con respecto a las disputas en las que al menos una de las partes sea legalmente residente, o una entidad u organización documentada o registrada legalmente en España, cualquier litigio relacionado con esta licencia estará bajo jurisdicción de los juzgados locales de Gijón (Principado de Asturias, España, UE), siendo la parte culpable de las costas, incluyendo sin limitación, costas procesales y costes y gastos razonables de abogados y procuradores. La aplicación de la convención de las naciones unidas para los contratos para la venta internacional de bienes esta expresamente excluida. Cualquier ley o disposición que establezca que el idioma de un contrato debe ser interpretado contra el redactor del mismo no se aplicará a esta licencia.
+9. RESPONSABILIDAD POR RECLAMOS
+Como en el caso del desarrollador inicial y los colaboradores, cada parte es responsable de los reclamos y daños que pudieran surgir, directa o indirectamente, por causa de su utilización de derechos bajo esta licencia y usted está de acuerdo en trabajar junto con el desarrollador inicial y los colaboradores para distribuir dicha responsabilidad de manera equitativa. Nada de lo manifestado pretende o está manifestado para constituir admisión de responsabilidad de clase alguna.
+ADDENDUM A. TÉRMINOS ADICIONALES APLICABLES PARA LIBERTYA
+A.1. El desarrollador inicial del software original denominado LIBERTYA SOFTWARE LIBRE DE GESTIÓN es Servicios Digitales S.A., con domicilio en Urquiza 661, Rio Gallegos, Santa Cruz, Argentina. El desarrollador inicial podrá, si así lo considera, transferir los derechos contenidos en esta licencia y todos los demás derechos asociados al software original denominado LIBERTYA SOFTWARE LIBRE DE GESTIÓN, a otra organización sin ánimo de lucro, que pueda cuidar, promocionar o mantener el uso del misma y de su comunidad de desarrollo.
+A.2. LIBERTYA SOFTWARE LIBRE DE GESTIÓN ® es una marca registrada del desarrollador inicial, quien ejerce su derecho al registro de la misma con el fin de mantener la marca, como denominación del software original denominado LIBERTYA SOFTWARE LIBRE DE GESTIÓN, exclusivamente bajo los términos de ésta licencia pública LPLY, imposibilitando así la utilización exclusiva del nombre y la marca por parte de terceros con carácter privativo, y permitiendo en todo momento el uso público de la misma bajo los términos exclusivos de la LPLY y únicamente para su utilización junto con el software original objeto de la presente licencia LPLY.
+A.3. El software original denominado LIBERTYA incluye junto con código nuevo, partes de código, librerías, modificaciones y extensiones sobre las mismas, cuyos respectivos términos de licencia son respetados por la presente licencia LPLY, de los siguientes proyectos de software libre que potencian el software original LIBERTYA:
+openXpertya, solución empresarial global
+Open Business Solution.
+Xpertya, solución empresarial global.
+Liquid Look and Feel by Birosoft ®.
+SATPEL, sistema de actualización tecnológica de precios en lineal.
+Librería de Tags JSP, JSPTAGS ®.
+OpenTASSEL.
+Librería Java  PDF  iTEXT por Bruno Lowagie y Paulo Soares.
+Tangrim ERP & CRM business solution.
+Librerías de Código Abierto de Adobe ® Acrobat.
+Compiere ®, ERP & CRM business solution.
+Open ERP solution. miCRM.
+JBOSS ®.
+Compiere Business Intelligence.
+Librerías JasperReports de JasperSoft
+IconLib.info 
+
+Todas las marcas registradas aquí mencionadas son propiedad de sus respectivos propietarios y la presente licencia LPLY no otorga ni quita derecho alguno en relación con las mismas.
+A.4. Todas las imágenes obtenidas o provenientes del logotipo original de LIBERTYA, e incluidas con el software original, cuando sean separadas del software original, quedan bajo la licencia Creative Commons Reconocimiento-NoComercial-SinObraDerivada-2.5. Usted es libre de copiar, distribuir y comunicar públicamente la obra, bajo las condiciones siguientes:
+1.Reconocimiento. Debe reconocer los créditos de la obra indicando siempre su origen en cualquier caso de publicación.
+2.No comercial. No puede utilizar esta obra para fines comerciales, fuera de la propia licencia LPLY o su utilización junto con el software original o para promoción del mismo. No se puede utilizar estas imágenes en obra comercial alguna sin el permiso del desarrollador inicial del software original.
+3.Sin obras derivadas. No se puede alterar, transformar o generar una obra derivada a partir de esta obra.
+El logotipo original de LIBERTYA está registrado junto con la marca LIBERTYA ® según los términos del Addendum A.2, y su uso fuera de las condiciones anteriormente expuestas está expresamente prohibido. Alguna de estas condiciones podrían no aplicarse si se obtiene el permiso del titular de los derechos de autor, el desarrollador inicial del software original.
+Los derechos derivados de usos legítimos u otras limitaciones reconocidas por ley no se ven afectados por lo anterior.
+A.5. Toda la documentación incluida originalmente con el software original, cuando sea separadas del software original, queda bajo la licencia Creative Commons Reconocimiento-NoComercial-SinObraDerivada-2.5. Usted es libre de copiar, distribuir y comunicar públicamente la obra, bajo las condiciones siguientes:
+1.Reconocimiento. Debe reconocer los créditos de la obra indicando siempre su origen en cualquier caso de publicación.
+2.No comercial. No puede utilizar esta obra para fines comerciales, fuera de la propia licencia LPLY o su utilización junto con el software original o para formación sobre el mismo. No se puede utilizar esta documentación en obra comercial alguna sin el permiso del autor, sea el desarrollador inicial del software original o un colaborador cualquiera.
+3.Sin obras derivadas. No se puede alterar, transformar o generar una obra derivada a partir de esta obra.
+Alguna de estas condiciones podrían no aplicarse si se obtiene el permiso del titular de los derechos de autor, sea el desarrollador inicial del software original o un colaborador cualquiera.
+Los derechos derivados de usos legítimos u otras limitaciones reconocidas por ley no se ven afectados por lo anterior. Adicionalmente podrá existir documentación externa, no incluida con el software original, bajo cualquier otro tipo de licencia extendida por el correspondiente autor.
+A.6. Todo aquel código fuente del software original, no derivado, extendido ni modificado en modo alguno de ningún otro proyecto de software libre anteriormente mencionado en el Addendum A.2., ni mencionado en el Addendum A.4. es declarado por el desarrollador inicial directamente relicenciable bajo la licencia GNU LGPL (GNU Lesser General Public License), y por extensión de la propia licencia LPLY a cualquier otra licencia reconocida por la OSI (Open Source Initiative) que no vulnere ninguna de las condiciones de la presente licencia LPLY, PARA EL CÓDIGO FUENTE OBJETO DE RELICENCIAMIENTO.

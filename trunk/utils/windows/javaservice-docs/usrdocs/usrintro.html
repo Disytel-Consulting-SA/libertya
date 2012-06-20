@@ -1,0 +1,93 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<head>
+	<meta content="text/html; charset=iso-8859-1" http-equiv="Content-Type">
+	<meta content="en" http-equiv="Content-Language">
+
+	<title>JavaService - Windows Service adaptor - User Introduction</title>
+
+	<meta name="Robots" content="index, follow">
+
+	<link type="text/css" href="../resources/javaservice.css" rel="stylesheet" id="stylesheet">
+	<link type="image/x-icon" href="../favicon.ico" rel="icon">
+	<link type="image/x-icon" href="../favicon.ico" rel="shortcut icon">
+</head>
+<body bgcolor="#FFFFFF">
+
+<h2>JavaService - User Introduction</h2>
+
+<h3>Summary</h3>
+
+<p>
+JavaService is a software utility for the Windows NT environment, allowing a
+Java application to be installed and run in the background as a system service.
+Once the application is installed using JavaService, it can be run automatically on system
+startup and may be controlled using the standard Windows system administration tools.
+</p>
+<p>
+The JavaService software is bundled with a number of Java applications, and may be downloaded
+and used with many utilities and programs that need this functionality in a Windows system
+for continuous execution of Java server processes.
+</p>
+
+<h3>Functionality</h3>
+<p>
+The JavaService software provides the link between the cross-platform Java environment and
+the system service handling of Microsoft Windows. It achieves this without requiring any
+changes to the underlying Java application code of the server application.
+</p>
+
+<p>
+JavaService itself is Windows application software, that provides a number of functions.
+<br>
+Those of most interest to users of this software are listed below:
+</p>
+
+<dl>
+<dt>Service Installation</dt>
+<dd>Allowing a Java application to be installed and configured as a system service</dd>
+
+<dt>Service Execution</dt>
+<dd>Runs the Java code in the background, under control of the Windows Service Handler</dd>
+
+<dt>Service Removal</dt>
+<dd>Perform cleanup and un-installation of a service previously installed by JavaService</dd>
+</dl>
+
+<p>
+An application may be installed as a service for automatic or manual execution using the
+JavaService <em>install</em> command, and can be removed using the JavaService <em>uninstall</em> command.
+The installed service may be stopped and started with the Windows <em>net start</em>
+and <em>net stop</em> commands, or execution status may be changed using Windows Administration Tools.
+</p>
+
+<h3>Requirements</h3>
+<p>
+The following items are required so that a Java application can be executed as a Windows system service:
+</p>
+
+<ul>
+<li>JavaService executable (which should be accompanied by the relevant license text file).</li>
+<li>Java application classes available in a correct classpath directory or JAR file.</li>
+<li>Details of the main program entry point class name to be used for the server process.</li>
+<li>Java 2 run-time environment installed into the Windows system.</li>
+<li>Windows user login with administrative rights.</li>
+</ul>
+
+
+<h3>Restrictions</h3>
+<p>
+The following limitations apply to the use of JavaService in running Java applications
+as Windows system services:
+</p>
+
+<ul>
+<li>Design of application to operate in server mode, with no console or GUI interaction.</li>
+<li>Windows NT, 2000, XP or 2003 are supported - not Windows 95, 98 or Me.</li>
+<li>64-bit Windows architecture is not supported - JavaService is not built for this platform.</li>
+</ul>
+
+<p>&nbsp;</p>
+
+</body>
+</html>

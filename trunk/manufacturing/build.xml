@@ -1,0 +1,105 @@
+<!-- ============================================= -->
+<!-- Cliente                                                                                -->
+<!-- ============================================= -->
+<project name="mfg" default="dist" basedir=".">
+	<description>
+    Este Archivo es usado para contruir el proyecto de producción independientemente de openXpertya 
+  </description>
+	<!-- Establecer Propiedades Globales para la Compilacion -->
+	<property name="src" value="src"/>
+	<property name="build.dir" value="compilacion"/>
+	<property name="dist.dir" value="../lib"/>
+	<property name="jar.path" value="../lib"/>
+	<property name="jar.name" value="CMPCS"/>
+	<property environment="env"/>
+	<!-- set path to include the necessary jar files for javac -->
+	<path id="project.class.path">
+		<pathelement path="${classpath}"/>
+		<pathelement path="../FreeQueryBuilder"/>
+		<pathelement path="../lib/XOXPTools.jar"/>
+		<pathelement path="../lib/CSTools.jar"/>
+		<pathelement path="../FreeQueryBuilder/fqb.jar"/>
+		<!--pathelement path="${jar.path}/oracle.jar"/-->
+		<pathelement path="../lib/OXP.jar"/>
+		<!--pathelement path="../jboss/client/jboss-j2ee.jar"/-->
+	</path>
+	<target name="init" description="initialization target">
+		<echo message="=========== Construyendo Sistema de Producción"/>
+		<!-- crea la marca de tiempo -->
+		<tstamp/>
+		<!-- crea la estructura de directorios de temporales usados para compilar -->
+		<mkdir dir="${build.dir}"/>
+		<!-- check for the distribution directory -->
+		<available file="${dist.dir}" type="dir" property="dist.dir.exists"/>
+		<uptodate property="jar.uptodate" targetfile="${dist.dir}/${jar.name}.jar">
+			<srcfiles dir="${src}" includes="**/*.java"/>
+			<!--srcfiles dir="..\base" includes="Base.jar"/-->
+			<!--srcfiles dir="..\dbPort" includes="dbPort.jar"/-->
+			<!--srcfiles dir="..\looks" includes="CLooks.jar"/-->
+			<!--srcfiles dir="..\print" includes="Print.jar"/-->
+			<!--srcfiles dir="..\extend" includes="Extend.jar"/-->
+			<!--srcfiles dir="..\interfaces" includes="Interfaces.jar"/-->
+		</uptodate>
+	</target>
+	<target name="makedir" depends="init" unless="dist.dir.exists">
+		<!-- crea el directorio de distribución si no está disponible -->
+		<mkdir dir="${dist.dir}"/>
+	</target>
+	<!-- =========================================== -->
+	<!-- Compilando                                                                     -->
+	<!-- =========================================== -->
+	<target name="compile" depends="makedir">
+		<!-- compila el código java desde ${src} a ${build.dir} -->
+		<javac srcdir="${src}" destdir="${build.dir}" deprecation="off" source="1.6" target="1.6" debug="on" encoding="UTF-8">
+			<classpath refid="project.class.path"/>
+		</javac>
+		<!-- copia todos los ficheros de imagen y sonido desde los fuentes al directorio de construcción -->
+		<copy todir="${build.dir}">
+			<fileset dir="${src}">
+				<!--include name="**/images/*"/-->
+				<!--include name="**/*.gif"/-->
+				<!--include name="**/*.jpg"/-->
+				<!--include name="**/*.wav"/-->
+				<!--include name="**/*.htm"/-->
+				<!--include name="**/*.html"/-->
+				<!--include name="**/*.properties"/-->
+				<!--exclude name="**/package.html"/-->
+			</fileset>
+		</copy>
+	</target>
+	<!-- =========================================== -->
+	<!-- Distribuyendo                                -->
+	<!-- =========================================== -->
+	<target name="dist" depends="compile" unless="jar.uptodate">
+		<!-- get included jars -->
+		<!--unjar src="..\base\Base.jar" dest="${build.dir}" /-->
+		<!--unjar src="..\dbPort\dbPort.jar" dest="${build.dir}" /-->
+		<!--unjar src="..\looks\CLooks.jar" dest="${build.dir}" /-->
+		<!--unjar src="..\print\Print.jar" dest="${build.dir}" /-->
+		<!--unjar src="..\extend\Extend.jar" dest="${build.dir}" /-->
+		<!--unjar src="..\interfaces\Interfaces.jar" dest="${build.dir}" /-->
+		<!--delete dir="${build.dir}/META-INF"/-->
+		<!--unjar src="..\lib\qsopt.jar" dest="${build.dir}" /-->
+		<unjar src="../FreeQueryBuilder/fqb.jar" dest="${build.dir}"/>
+		<!-- put everything from ${build.dir} into the ${jar.name}.jar file -->
+		<jar jarfile="${dist.dir}/${jar.name}.jar" basedir="${build.dir}" excludes="**/*.jbx" index="yes">
+			<manifest>
+				<attribute name="Specification-Title" value="CMPCS"/>
+				<attribute name="Specification-Version" value="${env.VERSION_OXP}"/>
+				<attribute name="Specification-Vendor" value="(C) 2005-2006 FUNDESLE."/>
+				<attribute name="Implementation-Title" value="CMPCS ${env.VERSION_OXP}"/>
+				<attribute name="Implementation-Version" value="${env.VERSION_OXP} ${DSTAMP}-${TSTAMP}"/>
+				<attribute name="Implementation-Vendor" value="${env.CONSULTORA_OXP}"/>
+				<attribute name="Implementation-URL" value="http://www.openxpertya.org"/>
+				<attribute name="Main-Class" value="org.openXpertya.OpenXpertya"/>
+				<attribute name="Class-Path" value="XOXPTools.jar oracle.jar postgresql.jar"/>
+			</manifest>
+		</jar>
+	</target>
+	<target name="clean">
+		<!-- Borra el arbol de directorios ${build.dir}                -->
+		<delete dir="${build.dir}"/>
+		<delete file="${dist.dir}/${jar.name}.jar" failonerror="false"/>
+		<delete file="../jboss/server/openXpertya/deploy/${jar.name}.jar" failonerror="false"/>
+	</target>
+</project>

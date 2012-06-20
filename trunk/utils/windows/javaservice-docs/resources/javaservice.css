@@ -1,0 +1,233 @@
+/*
+HTML stylesheet used for JavaService documentation pages.
+Adapted from common stylesheet used on ObjectWeb site.
+(it is an ObjectWeb project, after all)
+*/
+
+body
+{
+	background-color: #FFFFFF;
+	margin: 0px 12px;
+	padding: 0px;
+}
+
+.headerBody
+{
+	background-color: #FFFFFF;
+	margin: 0px 0px;
+	padding: 0px;
+}
+
+select, input { font-size: 10px; }
+
+form
+{
+	padding: 0px 0px 0px 0px;
+	margin: 0px 0px 3px 0px;
+}
+
+h1
+{
+	color: #E06611;
+	font-family: Arial, Helvetica, sans-serif;
+	font-size: 22px;
+	line-height: 27px;
+	font-weight: bold;
+	border-color: #99C;
+	border-width: 0 0 4px 0;
+	border-style: none none solid none;
+	margin: 10px 0px 5px 0px;
+}
+
+h2
+{
+	color: #99C;
+	font-family: Arial, Helvetica, sans-serif;
+	font-size: 20px;
+	line-height: 27px;
+	font-weight: normal;
+	border-color: #E06611;
+	border-width: 0 0 4px 0;
+	border-style: none none solid none;
+	margin: 10px 0px 5px 0px;
+}
+
+h3
+{
+	color: #E06611;
+	font-family: Arial, Helvetica, sans-serif;
+	font-size: 16px;
+	line-height: 27px;
+	font-weight: bold;
+	border-color: #E8EAF0;
+	border-width: 0 0 2px 0;
+	border-style: none none solid none;
+	margin: 10px 0px 5px 0px;
+}
+
+h4
+{
+	color: #99C;
+	font-family: Arial, Helvetica, sans-serif;
+	font-size: 16px;
+	line-height: 24px;
+	font-weight: normal;
+	border-color: #E8EAF0;
+	border-width: 0 0 2px 0;
+	border-style: none none solid none;
+	margin: 10px 0px 5px 0px;
+}
+
+h5
+{
+	color: #E06611;
+	font-family: Arial, Helvetica, sans-serif;
+	font-size: 14px;
+	line-height: 24px;
+	font-weight: normal;
+	border-color: #E8EAF0;
+	border-width: 0 0 2px 0;
+	border-style: none none solid none;
+	margin: 10px 0px 5px 0px;
+}
+
+h6
+{
+	color: #99C;
+	font-family: Arial, Helvetica, sans-serif;
+	font-size: 14px;
+	line-height: 22px;
+	font-weight: normal;
+	border-color: #E8EAF0;
+	border-width: 0 0 2px 0;
+	border-style: none none solid none;
+	margin: 10px 0px 5px 0px;
+}
+
+td
+{
+	color: black;
+	font-family: Arial,Helvetica, sans-serif;
+	font-size: 12px;
+	font-weight: normal;
+}
+
+p
+{
+	color: black;
+	font-family: Arial,Helvetica, sans-serif;
+	font-size: 12px;
+	line-height: 16px;
+	font-weight: normal;
+	margin: 10px 10px 5px 0px;
+}
+
+a
+{
+	color: #3F3975;
+	background-color: transparent;
+	text-decoration: underline;
+}
+
+a:visited
+{
+	color: #9898CB;
+	background-color: transparent;
+	text-decoration: underline;
+}
+
+a:hover
+{
+	color: #E06611;
+	background-color: transparent;
+	text-decoration: underline;
+}
+
+a:active
+{
+	color: black;
+	background-color: transparent;
+	text-decoration: underline;
+}
+
+blockquote
+{
+	color: black;
+	font-family: Arial,Helvetica, sans-serif;
+	font-size: 11px;
+	line-height: 15px;
+	font-weight: normal;
+	margin: 20px 0px 5px 0px;
+}
+
+.note
+{
+	color: black;
+	font-family: Arial,Helvetica, sans-serif;
+	font-size: 11px;
+	line-height: 15px;
+	font-weight: normal;
+	background-color: #E8EAF0;
+	border-color: #99C;
+	border-width: 1px;
+	border-style: solid;
+	padding: 5px;
+}
+
+ul, ol, dl
+{
+	color: black;
+	font-family: Arial,Helvetica, sans-serif;
+	font-size: 12px;
+	line-height: 16px;
+	font-weight: normal;
+}
+
+dt
+{
+	color: black;
+	font-family: Arial,Helvetica, sans-serif;
+	font-size: 12px;
+	line-height: 16px;
+	font-weight: bold;
+}
+
+dd
+{
+	color: black;
+	font-family: Arial,Helvetica, sans-serif;
+	font-size: 11px;
+	line-height: 16px;
+	font-weight: normal;
+	margin: 0px 0px 0px 20px
+}
+
+address
+{
+	color: black;
+	font-family: Arial, Helvetica, sans-serif;
+	font-style: normal;
+	font-size: 10px;
+	line-height: 16px;
+	border-width: 4px 0 0 0;
+	border-style: solid none none none;
+	border-color: #E06611;
+	margin: 30px 0px 20px 0px;
+	padding: 10px 0px 0px 0px;
+}
+
+code, pre
+{
+	color: #433C7B;
+}
+
+th
+{
+	font-family: Arial,Helvetica, sans-serif;
+	font-size: 14px;
+	line-height: 15px;
+	color: #433C7B;
+	font-weight: bold;
+	background-color: #E8EAF0;
+	padding: 2px;
+}

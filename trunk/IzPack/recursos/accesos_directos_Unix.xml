@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes" ?>
+
+<!-- 
+	Notes: 
+	Since there is no dtd (yet), here is a short explanation
+	of the last change.
+	- Each Shortcut has now a optional attribute
+
+	createForAll 
+	 
+	As root you can create Shortcuts for all users or even only for yourself.
+	This can be the case i.e. for the uninstaller.
+	If you whant to do so, set createForAll to true otherwise to false, which is the default.
+	
+	! If not explicite set or present the default is false.	
+-->
+
+<shortcuts>
+
+<programGroup defaultName="openXpertya" location="Programas"/>
+
+   <shortcut
+     name="Configurar openXpertya"
+     programGroup="yes"
+     desktop="yes"
+     applications="no"
+     startMenu="yes"
+     startup="no"
+     target="$INSTALL_PATH/utils/configura.sh"
+     workingDirectory=""
+     commandLine="$INSTALL_PATH/utils/configura.sh"
+     initialState="noShow"
+     iconFile="help"
+     iconIndex="0" 
+     type="Application"
+     encoding="UTF-8" 
+     createForAll="true"  
+     description="Configura el entorno de openXpertya v2">
+     
+     <createForPack name="openXpertya v2.0"/>
+   </shortcut>
+  
+     <shortcut
+     name="Cliente openXpertya"
+     programGroup="yes"
+     desktop="yes"
+     applications="no"
+     startMenu="yes"
+     startup="no"
+     target="$INSTALL_PATH/utils/openxpertya.sh"
+     workingDirectory="$INSTALL_PATH/utils/"
+     commandLine="$INSTALL_PATH/utils/openxpertya.sh"
+     initialState="noShow"
+     iconFile="help"
+     iconIndex="0" 
+     type="Application"
+     encoding="UTF-8" 
+    createForAll="true"  
+     description="Inicia el cliente local java de openXpertya v2">
+     
+     <createForPack name="openXpertya v2.0"/>
+   </shortcut>
+  
+   <shortcut
+     name="Iniciar servidor openXpertya"
+     programGroup="yes"
+     desktop="yes"
+     applications="no"
+     startMenu="yes"
+     startup="no"
+     target="acroread"
+     workingDirectory="$INSTALL_PATH/utils/"
+     commandLine="$INSTALL_PATH/utils/iniciar_servidor.sh"
+     initialState="noShow"
+     iconFile="acroread"
+     iconIndex="0"                                      
+     type="Application"
+     encoding="UTF-8"   
+     createForAll="true"
+     description="Arranca el servidor de openXpertya v2">
+     
+     <createForPack name="openXpertya v2.0"/>
+   </shortcut>
+   
+</shortcuts>

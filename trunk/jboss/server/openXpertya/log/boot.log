@@ -1,0 +1,174 @@
+00:27:41,546 INFO  [Server] Starting JBoss (MX MicroKernel)...
+00:27:41,546 INFO  [Server] Release ID: JBoss [Zion] 4.0.2 (build: CVSTag=JBoss_4_0_2 date=200505022023)
+00:27:41,546 DEBUG [Server] Using config: org.jboss.system.server.ServerConfigImpl@6f7ce9
+00:27:41,546 DEBUG [Server] Server type: class org.jboss.system.server.ServerImpl
+00:27:41,546 INFO  [Server] Home Dir: C:\oxp2_2_svn\jboss
+00:27:41,546 INFO  [Server] Home URL: file:/C:/oxp2_2_svn/jboss/
+00:27:41,546 INFO  [Server] Library URL: file:/C:/oxp2_2_svn/jboss/lib/
+00:27:41,546 INFO  [Server] Patch URL: null
+00:27:41,556 INFO  [Server] Server Name: openXpertya
+00:27:41,556 INFO  [Server] Server Home Dir: C:\oxp2_2_svn\jboss\server\openXpertya
+00:27:41,556 INFO  [Server] Server Home URL: file:/C:/oxp2_2_svn/jboss/server/openXpertya/
+00:27:41,556 INFO  [Server] Server Data Dir: C:\oxp2_2_svn\jboss\server\openXpertya\data
+00:27:41,556 INFO  [Server] Server Temp Dir: C:\oxp2_2_svn\jboss\server\openXpertya\tmp
+00:27:41,556 INFO  [Server] Server Config URL: file:/C:/oxp2_2_svn/jboss/server/openXpertya/conf/
+00:27:41,556 INFO  [Server] Server Library URL: file:/C:/oxp2_2_svn/jboss/server/openXpertya/lib/
+00:27:41,556 INFO  [Server] Root Deployment Filename: jboss-service.xml
+00:27:41,556 INFO  [Server] Starting General Purpose Architecture (GPA)...
+00:27:41,796 DEBUG [Server] Created MBeanServer: org.jboss.mx.server.MBeanServerImpl@1b9ce4b[ defaultDomain='jboss' ]
+00:27:41,846 DEBUG [Server] Boot url list: [file:/C:/oxp2_2_svn/jboss/server/openXpertya/conf/]
+00:27:41,846 DEBUG [Server] Creating loader for URL: file:/C:/oxp2_2_svn/jboss/server/openXpertya/conf/
+00:27:41,846 DEBUG [UnifiedClassLoader] New jmx UCL with url file:/C:/oxp2_2_svn/jboss/server/openXpertya/conf/
+00:27:41,846 DEBUG [RepositoryClassLoader] setRepository, repository=org.jboss.mx.loading.UnifiedLoaderRepository3@78a212, cl=org.jboss.mx.loading.UnifiedClassLoader3@1d85f79{ url=file:/C:/oxp2_2_svn/jboss/server/openXpertya/conf/ ,addedOrder=0}
+00:27:41,846 DEBUG [RepositoryClassLoader] setRepository, repository=org.jboss.mx.loading.UnifiedLoaderRepository3@78a212, cl=org.jboss.mx.loading.UnifiedClassLoader3@1d85f79{ url=file:/C:/oxp2_2_svn/jboss/server/openXpertya/conf/ ,addedOrder=0}
+00:27:41,846 DEBUG [UnifiedLoaderRepository3] Adding org.jboss.mx.loading.UnifiedClassLoader3@1d85f79{ url=file:/C:/oxp2_2_svn/jboss/server/openXpertya/conf/ ,addedOrder=0}
+00:27:42,337 DEBUG [Server] Failed to create xmbean for: org.jboss.system.server.ServerInfo
+00:27:42,367 INFO  [ServerInfo] Java version: 1.5.0_06,Sun Microsystems Inc.
+00:27:42,367 INFO  [ServerInfo] Java VM: Java HotSpot(TM) Server VM 1.5.0_06-b05,Sun Microsystems Inc.
+00:27:42,367 INFO  [ServerInfo] OS-System: Windows XP 5.1,x86
+00:27:42,367 DEBUG [ServerInfo] Full System Properties Dump
+00:27:42,367 DEBUG [ServerInfo]     java.runtime.name: Java(TM) 2 Runtime Environment, Standard Edition
+00:27:42,367 DEBUG [ServerInfo]     jboss.server.base.dir: C:\oxp2_2_svn\jboss\server
+00:27:42,367 DEBUG [ServerInfo]     java.protocol.handler.pkgs: org.jboss.net.protocol
+00:27:42,367 DEBUG [ServerInfo]     sun.boot.library.path: C:\Java\jdk1.5.0_06\jre\bin
+00:27:42,367 DEBUG [ServerInfo]     jboss.server.lib.url: file:/C:/oxp2_2_svn/jboss/server/openXpertya/lib/
+00:27:42,367 DEBUG [ServerInfo]     java.vm.version: 1.5.0_06-b05
+00:27:42,367 DEBUG [ServerInfo]     javax.management.builder.initial: org.jboss.mx.server.MBeanServerBuilderImpl
+00:27:42,367 DEBUG [ServerInfo]     java.vm.vendor: Sun Microsystems Inc.
+00:27:42,367 DEBUG [ServerInfo]     java.vendor.url: http://java.sun.com/
+00:27:42,367 DEBUG [ServerInfo]     path.separator: ;
+00:27:42,367 DEBUG [ServerInfo]     java.vm.name: Java HotSpot(TM) Server VM
+00:27:42,367 DEBUG [ServerInfo]     file.encoding.pkg: sun.io
+00:27:42,367 DEBUG [ServerInfo]     user.country: ES
+00:27:42,367 DEBUG [ServerInfo]     sun.os.patch.level: Service Pack 2
+00:27:42,367 DEBUG [ServerInfo]     program.name: run.bat
+00:27:42,367 DEBUG [ServerInfo]     java.vm.specification.name: Java Virtual Machine Specification
+00:27:42,367 DEBUG [ServerInfo]     user.dir: C:\ServidorOXP\utils
+00:27:42,367 DEBUG [ServerInfo]     jboss.server.base.url: file:/C:/oxp2_2_svn/jboss/server/
+00:27:42,367 DEBUG [ServerInfo]     java.runtime.version: 1.5.0_06-b05
+00:27:42,367 DEBUG [ServerInfo]     java.awt.graphicsenv: sun.awt.Win32GraphicsEnvironment
+00:27:42,367 DEBUG [ServerInfo]     java.endorsed.dirs: c:\oxp2_2_svn\jboss\bin\\..\lib\endorsed
+00:27:42,367 DEBUG [ServerInfo]     os.arch: x86
+00:27:42,367 DEBUG [ServerInfo]     java.io.tmpdir: C:\DOCUME~1\MrBrown\CONFIG~1\Temp\
+00:27:42,367 DEBUG [ServerInfo]     line.separator: 
+
+00:27:42,367 DEBUG [ServerInfo]     jbossmx.loader.repository.class: org.jboss.mx.loading.UnifiedLoaderRepository3
+00:27:42,367 DEBUG [ServerInfo]     java.vm.specification.vendor: Sun Microsystems Inc.
+00:27:42,367 DEBUG [ServerInfo]     user.variant: 
+00:27:42,367 DEBUG [ServerInfo]     os.name: Windows XP
+00:27:42,367 DEBUG [ServerInfo]     jboss.bind.address: 0.0.0.0
+00:27:42,367 DEBUG [ServerInfo]     jboss.server.temp.dir: C:\oxp2_2_svn\jboss\server\openXpertya\tmp
+00:27:42,367 DEBUG [ServerInfo]     jboss.home.dir: C:\oxp2_2_svn\jboss
+00:27:42,367 DEBUG [ServerInfo]     sun.jnu.encoding: Cp1252
+00:27:42,367 DEBUG [ServerInfo]     java.library.path: C:\Java\jdk1.5.0_06\bin;.;C:\WINDOWS\system32;C:\WINDOWS;C:\WINDOWS\system32;C:\WINDOWS;C:\WINDOWS\System32\Wbem;C:\Archivos de programa\ATI Technologies\ATI Control Panel;C:\Archivos de programa\Archivos comunes\Ulead Systems\MPEG;C:\Archivos de programa\Java\jdk1.5.0_06\bin;C:\Archivos de programa\Java\jdk1.5.0_06;C:\Archivos de programa\PostgreSQL\8.1\bin;C:\Archivos de programa\PostgreSQL\8.1\share\pljava;C:\Java\jdk1.5.0_06\bin;C:\Java\jre1.5.0_06\bin;C:\Java\jdk1.5.0_06\lib;C:\Java\jre1.5.0_06\lib;C:\Java\jre1.5.0_06\bin\client;C:\pgsql81\jdbc\postgresql-8.1-404.jdbc3.jar;C:\Archivos de programa\QuickTime\QTSystem\;c:\ant\bin;;c:\Fiji\bin
+00:27:42,367 DEBUG [ServerInfo]     jboss.server.home.dir: C:\oxp2_2_svn\jboss\server\openXpertya
+00:27:42,367 DEBUG [ServerInfo]     java.class.version: 49.0
+00:27:42,367 DEBUG [ServerInfo]     java.specification.name: Java Platform API Specification
+00:27:42,367 DEBUG [ServerInfo]     sun.management.compiler: HotSpot Server Compiler
+00:27:42,367 DEBUG [ServerInfo]     jboss.server.config.url: file:/C:/oxp2_2_svn/jboss/server/openXpertya/conf/
+00:27:42,367 DEBUG [ServerInfo]     os.version: 5.1
+00:27:42,367 DEBUG [ServerInfo]     jboss.home.url: file:/C:/oxp2_2_svn/jboss/
+00:27:42,367 DEBUG [ServerInfo]     user.home: C:\Documents and Settings\MrBrown
+00:27:42,367 DEBUG [ServerInfo]     user.timezone: Europe/Paris
+00:27:42,367 DEBUG [ServerInfo]     java.awt.printerjob: sun.awt.windows.WPrinterJob
+00:27:42,367 DEBUG [ServerInfo]     java.specification.version: 1.5
+00:27:42,407 DEBUG [ServerInfo]     file.encoding: Cp1252
+00:27:42,407 DEBUG [ServerInfo]     jboss.server.home.url: file:/C:/oxp2_2_svn/jboss/server/openXpertya/
+00:27:42,407 DEBUG [ServerInfo]     user.name: MrBrown
+00:27:42,407 DEBUG [ServerInfo]     java.class.path: C:\Java\jdk1.5.0_06\lib\tools.jar;c:\oxp2_2_svn\jboss\bin\\run.jar
+00:27:42,407 DEBUG [ServerInfo]     jboss.lib.url: file:/C:/oxp2_2_svn/jboss/lib/
+00:27:42,407 DEBUG [ServerInfo]     jboss.server.name: openXpertya
+00:27:42,407 DEBUG [ServerInfo]     java.vm.specification.version: 1.0
+00:27:42,407 DEBUG [ServerInfo]     sun.arch.data.model: 32
+00:27:42,407 DEBUG [ServerInfo]     java.home: C:\Java\jdk1.5.0_06\jre
+00:27:42,407 DEBUG [ServerInfo]     java.specification.vendor: Sun Microsystems Inc.
+00:27:42,407 DEBUG [ServerInfo]     user.language: es
+00:27:42,407 DEBUG [ServerInfo]     awt.toolkit: sun.awt.windows.WToolkit
+00:27:42,407 DEBUG [ServerInfo]     java.vm.info: mixed mode
+00:27:42,407 DEBUG [ServerInfo]     java.version: 1.5.0_06
+00:27:42,407 DEBUG [ServerInfo]     java.ext.dirs: C:\Java\jdk1.5.0_06\jre\lib\ext
+00:27:42,407 DEBUG [ServerInfo]     jboss.server.data.dir: C:\oxp2_2_svn\jboss\server\openXpertya\data
+00:27:42,407 DEBUG [ServerInfo]     sun.boot.class.path: c:\oxp2_2_svn\jboss\bin\\..\lib\endorsed\resolver.jar;c:\oxp2_2_svn\jboss\bin\\..\lib\endorsed\xalan.jar;c:\oxp2_2_svn\jboss\bin\\..\lib\endorsed\xercesImpl.jar;c:\oxp2_2_svn\jboss\bin\\..\lib\endorsed\xml-apis.jar;C:\Java\jdk1.5.0_06\jre\lib\rt.jar;C:\Java\jdk1.5.0_06\jre\lib\i18n.jar;C:\Java\jdk1.5.0_06\jre\lib\sunrsasign.jar;C:\Java\jdk1.5.0_06\jre\lib\jsse.jar;C:\Java\jdk1.5.0_06\jre\lib\jce.jar;C:\Java\jdk1.5.0_06\jre\lib\charsets.jar;C:\Java\jdk1.5.0_06\jre\classes
+00:27:42,407 DEBUG [ServerInfo]     java.vendor: Sun Microsystems Inc.
+00:27:42,407 DEBUG [ServerInfo]     file.separator: \
+00:27:42,407 DEBUG [ServerInfo]     java.vendor.url.bug: http://java.sun.com/cgi-bin/bugreport.cgi
+00:27:42,407 DEBUG [ServerInfo]     sun.cpu.endian: little
+00:27:42,407 DEBUG [ServerInfo]     sun.io.unicode.encoding: UnicodeLittle
+00:27:42,407 DEBUG [ServerInfo]     sun.desktop: windows
+00:27:42,407 DEBUG [ServerInfo]     sun.cpu.isalist: pentium_pro+mmx pentium_pro pentium+mmx pentium i486 i386 i86
+00:27:42,417 DEBUG [Server] Created system MBean: jboss.system:type=ServerInfo
+00:27:42,447 DEBUG [Server] Failed to create xmbean for: org.jboss.system.ServiceController
+00:27:42,477 DEBUG [ServiceController] Controller MBean online
+00:27:42,477 DEBUG [Server] Created system MBean: jboss.system:service=ServiceController
+00:27:42,787 DEBUG [Server] Created system XMBean: jboss.system:service=MainDeployer
+00:27:42,787 DEBUG [ServiceController] Creating service jboss.system:service=MainDeployer
+00:27:42,797 DEBUG [MainDeployer] Creating jboss.system:service=MainDeployer
+00:27:42,857 DEBUG [Files] Failed to delete dir: C:\oxp2_2_svn\jboss\server\openXpertya\tmp\deploy
+00:27:42,857 DEBUG [MainDeployer] Created jboss.system:service=MainDeployer
+00:27:42,857 DEBUG [ServiceController] Creating dependent components for: jboss.system:service=MainDeployer dependents are: []
+00:27:42,857 DEBUG [ServiceController] starting service jboss.system:service=MainDeployer
+00:27:42,867 DEBUG [MainDeployer] Starting jboss.system:service=MainDeployer
+00:27:42,867 DEBUG [MainDeployer] Started jboss.system:service=MainDeployer
+00:27:42,867 DEBUG [ServiceController] Starting dependent components for: jboss.system:service=MainDeployer dependent components: []
+00:27:42,867 DEBUG [Server] Shutdown hook added
+00:27:43,038 DEBUG [Server] Created system XMBean: jboss.system:service=JARDeployer
+00:27:43,038 DEBUG [ServiceController] Creating service jboss.system:service=JARDeployer
+00:27:43,038 DEBUG [JARDeployer] Creating jboss.system:service=JARDeployer
+00:27:43,088 DEBUG [JARDeployer] Created jboss.system:service=JARDeployer
+00:27:43,088 DEBUG [ServiceController] Creating dependent components for: jboss.system:service=JARDeployer dependents are: []
+00:27:43,088 DEBUG [ServiceController] starting service jboss.system:service=JARDeployer
+00:27:43,088 DEBUG [JARDeployer] Starting jboss.system:service=JARDeployer
+00:27:43,088 DEBUG [MainDeployer] Adding deployer: org.jboss.deployment.JARDeployer@79ed7f
+00:27:43,088 DEBUG [JARDeployer] Started jboss.system:service=JARDeployer
+00:27:43,088 DEBUG [ServiceController] Starting dependent components for: jboss.system:service=JARDeployer dependent components: []
+00:27:43,278 DEBUG [Server] Created system XMBean: jboss.system:service=ServiceDeployer
+00:27:43,278 DEBUG [ServiceController] Creating service jboss.system:service=ServiceDeployer
+00:27:43,278 DEBUG [SARDeployer] Creating jboss.system:service=ServiceDeployer
+00:27:43,298 DEBUG [SARDeployer] Created jboss.system:service=ServiceDeployer
+00:27:43,298 DEBUG [ServiceController] Creating dependent components for: jboss.system:service=ServiceDeployer dependents are: []
+00:27:43,328 DEBUG [ServiceController] starting service jboss.system:service=ServiceDeployer
+00:27:43,328 DEBUG [SARDeployer] Starting jboss.system:service=ServiceDeployer
+00:27:43,328 DEBUG [MainDeployer] Adding deployer: org.jboss.deployment.SARDeployer@a613f8
+00:27:43,338 DEBUG [SARDeployer] Started jboss.system:service=ServiceDeployer
+00:27:43,338 DEBUG [ServiceController] Starting dependent components for: jboss.system:service=ServiceDeployer dependent components: []
+00:27:43,338 INFO  [Server] Core system initialized
+00:27:50,859 DEBUG [Server] Failed to start
+00:27:50,859 DEBUG [NestedThrowable] org.jboss.util.NestedThrowable.parentTraceEnabled=true
+00:27:50,859 DEBUG [NestedThrowable] org.jboss.util.NestedThrowable.nestedTraceEnabled=false
+00:27:50,859 DEBUG [NestedThrowable] org.jboss.util.NestedThrowable.detectDuplicateNesting=true
+org.jboss.deployment.DeploymentException: url file:/C:/oxp2_2_svn/jboss/server/openXpertya/conf/jboss-service.xml could not be opened, does it exist?
+	at org.jboss.deployment.DeploymentInfo.<init>(DeploymentInfo.java:175)
+	at org.jboss.deployment.MainDeployer.deploy(MainDeployer.java:737)
+	at org.jboss.deployment.MainDeployer.deploy(MainDeployer.java:722)
+	at sun.reflect.NativeMethodAccessorImpl.invoke0(Native Method)
+	at sun.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:39)
+	at sun.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:25)
+	at java.lang.reflect.Method.invoke(Method.java:585)
+	at org.jboss.mx.interceptor.ReflectedDispatcher.invoke(ReflectedDispatcher.java:141)
+	at org.jboss.mx.server.Invocation.dispatch(Invocation.java:80)
+	at org.jboss.mx.interceptor.AbstractInterceptor.invoke(AbstractInterceptor.java:121)
+	at org.jboss.mx.server.Invocation.invoke(Invocation.java:74)
+	at org.jboss.mx.interceptor.ModelMBeanOperationInterceptor.invoke(ModelMBeanOperationInterceptor.java:127)
+	at org.jboss.mx.server.Invocation.invoke(Invocation.java:74)
+	at org.jboss.mx.server.AbstractMBeanInvoker.invoke(AbstractMBeanInvoker.java:249)
+	at org.jboss.mx.server.MBeanServerImpl.invoke(MBeanServerImpl.java:644)
+	at org.jboss.mx.util.MBeanProxyExt.invoke(MBeanProxyExt.java:177)
+	at $Proxy5.deploy(Unknown Source)
+	at org.jboss.system.server.ServerImpl.doStart(ServerImpl.java:434)
+	at org.jboss.system.server.ServerImpl.start(ServerImpl.java:315)
+	at org.jboss.Main.boot(Main.java:195)
+	at org.jboss.Main$1.run(Main.java:463)
+	at java.lang.Thread.run(Thread.java:595)
+00:27:50,859 INFO  [Server] JBoss SHUTDOWN: Undeploying all packages
+00:27:50,859 DEBUG [MainDeployer] Undeployed 0 deployed packages
+00:27:50,859 DEBUG [Server] Shutting down all services
+00:27:50,859 DEBUG [ServiceController] Stopping 4 services
+00:27:50,859 DEBUG [ServiceController] removing service: jboss.system:service=ServiceDeployer
+00:27:50,859 DEBUG [ServiceController] removing jboss.system:service=ServiceDeployer from server
+00:27:50,859 DEBUG [ServiceController] removing service: jboss.system:service=JARDeployer
+00:27:50,859 DEBUG [ServiceController] removing jboss.system:service=JARDeployer from server
+00:27:50,859 DEBUG [ServiceController] removing service: jboss.system:service=MainDeployer
+00:27:50,859 DEBUG [ServiceController] removing jboss.system:service=MainDeployer from server
+00:27:50,859 DEBUG [ServiceController] Stopped 3 services
+00:27:50,859 DEBUG [Server] Deleting server tmp/deploy directory
+00:27:50,869 INFO  [Server] Shutdown complete

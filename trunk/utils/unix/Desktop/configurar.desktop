@@ -1,0 +1,23 @@
+[Desktop Entry]
+Categories=Qt;KDE;System;TerminalEmulator;X-KDE-More
+Comment=
+Comment[es]=
+DocPath=konsole/index.html
+Encoding=UTF-8
+Exec='/ServidorOXP/Configurar.sh'
+GenericName=Configurar el ERP openXpertya v2
+GenericName[es]=Configurar el ERP openXpertya v2
+Icon=/ServidorOXP/lib/oxps.ico
+MimeType=application/x-konsole
+Name=Configurar openXpertya
+Name[es]=Configurar openXpertya
+OnlyShowIn=KDE;
+Path=/ServidorOXP/
+StartupNotify=true
+Terminal=false
+TerminalOptions=
+Type=Application
+X-DCOP-ServiceType=
+X-KDE-AuthorizeAction=shell_access
+X-KDE-SubstituteUID=false
+X-KDE-Username=

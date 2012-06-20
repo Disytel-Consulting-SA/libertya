@@ -1,0 +1,127 @@
+body {
+	margin: 0px;
+	font-family: Verdana, Arial, Helvetica, sans-serif;
+	font-size: 11px;
+	color: #333333;
+	background-color: #747B84;
+}
+h1 {
+	font-size: 14px;
+	font-weight: bold;
+	text-align: right;
+	margin-top: 45px;
+	margin-bottom: 37px;
+}
+ul {
+	padding: 5px 0px;
+	list-style: none;
+}
+ul li {
+	width: 100%;
+	padding: 5px 5px;
+}
+ul li a:link, ul li a:visited, ul li a:active {
+	color: #333333;
+	display: block;
+	text-decoration: none;
+}
+ul li a:hover {
+	color: #86B4CC;
+	display: block;
+	text-decoration: none;	
+}
+#wrap {
+	position: absolute;
+	top: 50%;
+	left: 50%;
+	height: 400px;
+	width: 740px;
+	margin-top: -200px;
+	margin-left: -370px;
+	border: 8px solid #454851;
+	background: #FFFFFF;
+}
+#logo {
+	position: absolute;
+	margin-top: -143px;
+	margin-left: -10px;
+}
+#left {
+	float: left;
+	width: 170px;
+	height: 300px;
+	margin: 0px;
+	padding-top:80px;
+	padding-left: 10px;
+	background: url(images/menu_background.gif) repeat-x #FFFFFF;
+}
+
+#content {
+	float: inherit;
+	margin: 10px 20px 10px 190px;
+}
+#button_wrap {
+	margin-left: 0px;
+	margin-top: 10px;
+	display: block;
+}
+.button {
+	background: no-repeat center #FFFFFF;
+	background-position: 0px 0px;
+	width: 524px;
+	margin: 0px 0px;
+	padding: 0px;
+	height: 100px;
+}
+.button p {
+	width: 400px;
+	margin-top: -32px;
+	margin-left: 110px;
+	margin-right: 5px;
+	text-align: justify;	
+	vertical-align: center;	
+}
+#webstart {
+	background-image: url(images/boton_java.jpg);
+}
+#zipclient {
+	background-image: url(images/boton_download.jpg);
+}
+#button_htmlclient {
+	width: 64px;
+	height: 64px;
+	padding: 10px;
+	margin: 0px 5px;	
+	border: 1px solid #C9DDE8;
+	background: url(button_htmlclient.png) no-repeat center #FFFFFF;
+	float: left;	
+}
+#button_wstore {
+	width: 64px;
+	height: 64px;
+	padding: 10px;
+	margin: 0px 5px;	
+	border: 1px solid #C9DDE8;
+	background: url(button_wstore.png) no-repeat center #FFFFFF;
+	float: left;	
+}
+#message {
+	width: 550px;
+	height: 60px;
+	background: url(message_background.png) no-repeat center #FFFFFF;
+	float: left;
+}
+#message_arrow {
+	width: 550px;
+	height: 24px;
+	background: url(message_arrow.png) no-repeat 118px #FFFFFF;
+	float: left;
+}
+#button_wrap a{
+	color: #000000;
+	text-decoration: none;
+}
+.button:hover, .button p:hover, .button div:hover, .button p div{
+	background-color: #E5F1FF;
+	cursor: pointer;
+}
