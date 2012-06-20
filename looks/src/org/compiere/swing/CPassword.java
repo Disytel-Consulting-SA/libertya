@@ -25,6 +25,8 @@ import org.compiere.plaf.CompierePLAF;
 //~--- Importaciones JDK ------------------------------------------------------
 
 import java.awt.Color;
+import java.awt.event.KeyEvent;
+import java.awt.event.KeyListener;
 
 import javax.swing.JPasswordField;
 import javax.swing.text.Document;
@@ -37,7 +39,7 @@ import javax.swing.text.Document;
  *         *     Jorg Janke
  *  @version    $Id: CPassword.java,v 1.7 2005/03/11 20:34:38 jjanke Exp $
  */
-public class CPassword extends JPasswordField implements CEditor {
+public class CPassword extends JPasswordField implements CEditor, KeyListener {
 
     /** ********************************************************************* */
 
@@ -231,6 +233,24 @@ public class CPassword extends JPasswordField implements CEditor {
         }
 
     }		// setValue
+
+	@Override
+	public void keyPressed(KeyEvent e) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void keyReleased(KeyEvent e) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void keyTyped(KeyEvent e) {
+		// TODO Auto-generated method stub
+		
+	}
 }
 
 

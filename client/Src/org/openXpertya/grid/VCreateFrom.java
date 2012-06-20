@@ -29,7 +29,9 @@ import java.math.BigDecimal;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
@@ -50,6 +52,7 @@ import org.openXpertya.apps.AEnv;
 import org.openXpertya.apps.ConfirmPanel;
 import org.openXpertya.apps.StatusBar;
 import org.openXpertya.apps.form.VComponentsFactory;
+import org.openXpertya.grid.VCreateFromShipment.DocumentLineTableModelFromShipment;
 import org.openXpertya.grid.ed.VLocator;
 import org.openXpertya.grid.ed.VLookup;
 import org.openXpertya.minigrid.MiniTable;
@@ -129,7 +132,7 @@ public abstract class VCreateFrom extends JDialog implements ActionListener,Tabl
 
         try {
         	initOrderLookup();
-        	initDataTable();
+        	
             
         	if( !dynInit()) {
                 return;
@@ -138,6 +141,7 @@ public abstract class VCreateFrom extends JDialog implements ActionListener,Tabl
             jbInit();
             confirmPanel.addActionListener( this );
 
+            initDataTable();
             // Set status
 
             statusBar.setStatusDB( "" );
@@ -202,7 +206,7 @@ public abstract class VCreateFrom extends JDialog implements ActionListener,Tabl
     protected VLookup bankAccountField;
 
     protected CCheckBox automatico = new CCheckBox();
-
+    
     /** Descripción de Campos */
 
     private GridBagLayout parameterStdLayout = new GridBagLayout();
@@ -303,8 +307,9 @@ public abstract class VCreateFrom extends JDialog implements ActionListener,Tabl
         locatorLabel.setText( Msg.translate( Env.getCtx(),"M_Locator_ID" ));
         automatico.setText("Seleccionar todos");
 		automatico.addActionListener(this);
+		
 		invoiceOrderLabel.setText(Msg.translate(getCtx(), "InvoiceOrder"));
-        
+        	
 		//
 
         this.getContentPane().add( parameterPanel,BorderLayout.NORTH );
@@ -344,18 +349,23 @@ public abstract class VCreateFrom extends JDialog implements ActionListener,Tabl
         }
 	    parameterStdPanel.add(automatico, new GridBagConstraints(1, y2, 1, 1, 0.0, 0.0
     			,GridBagConstraints.EAST, GridBagConstraints.NONE, new Insets(5, 5, 5, 5), 0, 0));
+	    
         this.getContentPane().add( dataPane,BorderLayout.CENTER );
         dataPane.getViewport().add( dataTable,null );
-
+        
         //
 
         this.getContentPane().add( southPanel,BorderLayout.SOUTH );
         southPanel.setLayout( southLayout );
         southPanel.add( confirmPanel,BorderLayout.CENTER );
         southPanel.add( statusBar,BorderLayout.SOUTH );
+        customizarPanel();
     }    // jbInit
 
-    /**
+    // El siguiente método permite customizar el panel en las correspondientes subclases.
+    protected abstract void customizarPanel();
+
+	/**
      * Descripción de Método
      *
      *
@@ -417,6 +427,7 @@ public abstract class VCreateFrom extends JDialog implements ActionListener,Tabl
 		}
 		dataTable.repaint();
 	}
+    
     public void actionPerformed( ActionEvent e ) {
         log.config( "Action=" + e.getActionCommand());
 
@@ -594,8 +605,11 @@ public abstract class VCreateFrom extends JDialog implements ActionListener,Tabl
      * @param forInvoice
      */
 
-    protected void loadOrder( int C_Order_ID,boolean forInvoice ) {
+    protected void loadOrder( int C_Order_ID,boolean forInvoice, boolean filter ) {
     	log.config( "C_Order_ID=" + C_Order_ID );
+    	
+    	initDataTable();
+    	
     	if (C_Order_ID > 0) {
     		p_order = new MOrder( Env.getCtx(),C_Order_ID,null );    // save
     		// Se carga la EC del pedido.
@@ -617,7 +631,9 @@ public abstract class VCreateFrom extends JDialog implements ActionListener,Tabl
     	// las cantidades en las líneas de pedido tal como se hace para IsSOTrx = Y.
 		sql = new StringBuffer();
 		sql.append("SELECT ")
+		   .append(   "l.C_Order_ID, ")
 		   .append(   "l.C_OrderLine_ID, ")
+		   .append(   "l.DateOrdered, ")
 		   .append(   "l.Line, ")
 		   .append(   "COALESCE(l.M_Product_ID,0) AS M_Product_ID, ")
 		   .append(   "COALESCE(p.Name,c.Name) AS ProductName, ")
@@ -627,7 +643,10 @@ public abstract class VCreateFrom extends JDialog implements ActionListener,Tabl
 		   .append(   "l.QtyInvoiced, " )
 		   .append(   "l.QtyDelivered, " )
 		   .append(   "l.QtyOrdered-NVL(l.").append(compareColumn).append(",0) AS RemainingQty, ")
-		   .append(   "l.QtyEntered/l.QtyOrdered AS Multiplier ")
+		   .append(   "l.QtyEntered/l.QtyOrdered AS Multiplier, ")
+		   .append(   "p.value AS ItemCode, ")
+		   .append(   "p.producttype AS ProductType, ")
+		   .append(   "l.M_AttributeSetInstance_ID AS AttributeSetInstance_ID ")
 
 		   .append("FROM C_OrderLine l ")
 		   .append("LEFT OUTER JOIN M_Product p ON (l.M_Product_ID=p.M_Product_ID) ") 
@@ -636,7 +655,7 @@ public abstract class VCreateFrom extends JDialog implements ActionListener,Tabl
 		   //Añadido por Conserti, para que no saque los cargos en los albaranes. // and l.c_charge_id is null
 		   //
 		   .append("WHERE l.C_Order_ID=? and l.C_Charge_ID is NULL ")
-		   .append("ORDER BY l.Line");
+		   .append("ORDER BY l.DateOrdered,l.C_Order_ID,l.Line,ItemCode");
 
     	log.finer( sql.toString());
 
@@ -653,6 +672,12 @@ public abstract class VCreateFrom extends JDialog implements ActionListener,Tabl
     			
     			// Por defecto no está seleccionada para ser procesada	
     			orderLine.selected = false;
+    			
+    			// ID del pedido
+    			orderLine.orderID = rs.getInt("C_Order_ID");
+    			
+    			// Fecha del pedido
+    			orderLine.dateOrderLine = rs.getDate("DateOrdered");
 				
     			// ID de la línea del pedido
     			orderLine.orderLineID = rs.getInt("C_OrderLine_ID");
@@ -675,14 +700,17 @@ public abstract class VCreateFrom extends JDialog implements ActionListener,Tabl
     			// Artículo
     			orderLine.productID = rs.getInt("M_Product_ID");
 				orderLine.productName = rs.getString("ProductName");
+				orderLine.itemCode = rs.getString("ItemCode");
+				orderLine.instanceName = getInstanceName(rs.getInt("AttributeSetInstance_ID"));
+				orderLine.productType = rs.getString("ProductType");
 
     			// Unidad de Medida
     			orderLine.uomID = rs.getInt("C_UOM_ID");
     			orderLine.uomName = getUOMName(orderLine.uomID);
     			
-    			// Agrega la línea a la lista solo si tiene cantidad pendiente.
+    			// Agrega la línea a la lista solo si tiene cantidad pendiente o tiene asociado un producto de tipo Gasto.
     			if (beforeAddOrderLine(orderLine) 
-    					&& orderLine.remainingQty.compareTo(BigDecimal.ZERO) > 0) {
+    					&& (orderLine.remainingQty.compareTo(BigDecimal.ZERO) > 0 || orderLine.productType.equals("E"))) {
     				data.add(orderLine);
     			}
     		}
@@ -695,7 +723,11 @@ public abstract class VCreateFrom extends JDialog implements ActionListener,Tabl
 	    		if (pstmt != null) pstmt.close();
     		}	catch (Exception e) {}
     	}
-
+    	
+    	if(filter){
+    		filtrarColumnaInstanceName(data);
+    	}
+    	
     	loadTable(data);
     }    // LoadOrder
 
@@ -705,8 +737,8 @@ public abstract class VCreateFrom extends JDialog implements ActionListener,Tabl
      *
      * @param data
      */
-
-    protected void loadTable(List<? extends SourceEntity> data) {
+    
+     protected void loadTable(List<? extends SourceEntity> data) {
         // Se obtiene el modelo de la tabla y se asigna la nueva lista de líneas de documento.
     	((CreateFromTableModel)dataTable.getModel()).setSourceEntities(data);
         dataTable.autoSize();
@@ -747,7 +779,7 @@ public abstract class VCreateFrom extends JDialog implements ActionListener,Tabl
     /**
      * Inicializa la grilla que muestra las líneas del documento origen
      */
-    private void initDataTable() {
+    protected void initDataTable() {
         // Crea el modelo de la tabla y asigna este objeto como listener
     	// de sus eventos.
     	CreateFromTableModel model = createTableModelInstance();
@@ -769,6 +801,12 @@ public abstract class VCreateFrom extends JDialog implements ActionListener,Tabl
         // tabla no tiene un DefaultTableModel, se desactiva al posibilidad de ordenar para
         // que no se disparen errores (además no es tan requerida esa funcionalidad aquí).
         dataTable.setSorted(false);
+        
+     // Si es Perfil Ventas no se muestra la columna COL_IDX_INSTANCE_NAME
+    	if (isSOTrx()) {
+    		dataTable.getColumnModel().removeColumn(dataTable.getColumnModel().getColumn(DocumentLineTableModel.COL_IDX_INSTANCE_NAME));
+    		((DocumentLineTableModel)dataTable.getModel()).visibles = ((DocumentLineTableModel) dataTable.getModel()).visibles - 1; 
+    	}
     }
     
     /**
@@ -823,7 +861,7 @@ public abstract class VCreateFrom extends JDialog implements ActionListener,Tabl
      * @param orderID ID del nuevo pedido seleccionado.
      */
     protected void orderChanged(int orderID) {
-    	loadOrder(orderID, isForInvoice());
+    	loadOrder(orderID, isForInvoice(),true);
     }
     
     /**
@@ -919,8 +957,14 @@ public abstract class VCreateFrom extends JDialog implements ActionListener,Tabl
     protected abstract class DocumentLine extends SourceEntity {
     	/** Número de línea en el documento original (Columna Line) */
     	protected Integer lineNo = 0;
+		/** Código del artículo asociado a la línea */
+		protected String itemCode = null;
+		/** Nombre de la instancia */
+		protected String instanceName = null;
     	/** Nombre del artículo o cargo asociado a la línea */
     	protected String productName = null;
+    	/** Tipo del artículo o cargo asociado a la línea */
+    	protected String productType = null;
     	/** ID del artículo o cargo asociado a la línea */
     	protected Integer productID = 0;
     	/** Nombre o Descripción de la UM indicada en la línea */
@@ -972,6 +1016,12 @@ public abstract class VCreateFrom extends JDialog implements ActionListener,Tabl
     	protected BigDecimal qtyDelivered = BigDecimal.ZERO;
     	/** Cantidad entregada/recibida de la línea */
     	protected BigDecimal qtyInvoiced = BigDecimal.ZERO;
+    	
+    	/** ID del pedido */
+		protected int orderID = 0;
+		
+		/** Fecha de la línea de pedido */
+		protected Date dateOrderLine = null;
 
 		@Override
 		public boolean isOrderLine() {
@@ -1237,27 +1287,37 @@ public abstract class VCreateFrom extends JDialog implements ActionListener,Tabl
 
 		// Constantes de índices de las columnas en la grilla.
     	public static final int COL_IDX_LINE      = 1;
-    	public static final int COL_IDX_PRODUCT   = 2;
-    	public static final int COL_IDX_UOM       = 3;
-    	public static final int COL_IDX_QTY       = 4;
-    	public static final int COL_IDX_REMAINING = 5;
+    	public static final int COL_IDX_ITEM_CODE = 2;
+    	public static final int COL_IDX_PRODUCT   = 3;
+    	public static final int COL_IDX_UOM       = 5;
+    	public static final int COL_IDX_QTY       = 6;
+    	public static final int COL_IDX_REMAINING = 7;
+    	
+    	public static final int COL_IDX_INSTANCE_NAME = 4;
+    	public int visibles = 8;
 
 		@Override
 		protected void setColumnNames() {
             setColumnName(COL_IDX_LINE, Msg.getElement(getCtx(),"Line"));
+            setColumnName(COL_IDX_ITEM_CODE, Msg.translate( Env.getCtx(),"Value" ));
             setColumnName(COL_IDX_PRODUCT, Msg.translate( Env.getCtx(),"M_Product_ID" ));
             setColumnName(COL_IDX_UOM, Msg.translate( Env.getCtx(),"C_UOM_ID" ));
             setColumnName(COL_IDX_QTY, Msg.translate( Env.getCtx(),"Quantity" ));
             setColumnName(COL_IDX_REMAINING, Msg.translate( Env.getCtx(),"RemainingQty" ));
+            
+            setColumnName(COL_IDX_INSTANCE_NAME, Msg.translate( Env.getCtx(),"Description" ));
 		}
 		
 		@Override
 		protected void setColumnClasses() {
 			setColumnClass(COL_IDX_LINE, Integer.class);
+			setColumnClass(COL_IDX_ITEM_CODE, String.class);
 			setColumnClass(COL_IDX_PRODUCT, String.class);
 			setColumnClass(COL_IDX_UOM, String.class);
 			setColumnClass(COL_IDX_QTY, BigDecimal.class);
 			setColumnClass(COL_IDX_REMAINING, BigDecimal.class);
+			
+			setColumnClass(COL_IDX_INSTANCE_NAME, String.class);
 		}
 
 		@Override
@@ -1267,6 +1327,8 @@ public abstract class VCreateFrom extends JDialog implements ActionListener,Tabl
 			switch (colIndex) {
 				case COL_IDX_LINE:
 					value = docLine.lineNo; break;
+				case COL_IDX_ITEM_CODE:
+					value = docLine.itemCode; break;
 				case COL_IDX_PRODUCT:
 					value = docLine.productName; break;
 				case COL_IDX_UOM:
@@ -1275,10 +1337,17 @@ public abstract class VCreateFrom extends JDialog implements ActionListener,Tabl
 					value = docLine.lineQty; break;
 				case COL_IDX_REMAINING:
 					value = docLine.remainingQty; break;
+				case COL_IDX_INSTANCE_NAME:
+					value = docLine.instanceName; break;
 				default:
 					value = super.getValueAt(rowIndex, colIndex); break;
 			}
 			return value;
+		}
+		
+		@Override
+		public int getColumnCount() {
+			return visibles;
 		}
 
 		/**
@@ -1309,6 +1378,87 @@ public abstract class VCreateFrom extends JDialog implements ActionListener,Tabl
 			super(message);
 		}
     }
+    
+    // Dado un attributeSetInstance_ID retorna:
+    // El nombre de la instacia completo. Ejemplo: Para una remera con Talle: S y Color: B retorna S - B
+    // La descripcion de M_AttributeSetInstance en caso que que la consulta no obtenga resultados. 
+    // null si M_AttributeSetInstance_ID es 0
+    protected String getInstanceName(int attributeSetInstance_ID){
+		StringBuffer sql;
+		String instanceName = null;
+
+	    sql = new StringBuffer();
+		sql.append("select t.value, u.seqno from M_AttributeSetInstance i ")
+		.append("INNER JOIN M_AttributeSet s ON (s.M_AttributeSet_ID = i.M_AttributeSet_ID) ") 
+		.append("LEFT JOIN M_AttributeUse u ON (u.M_AttributeSet_ID = s.M_AttributeSet_ID) ")
+		.append("LEFT JOIN M_AttributeInstance t ON (t.M_Attribute_ID = u.M_Attribute_ID) ")
+		.append("where (t.M_AttributeSetInstance_ID = "+ attributeSetInstance_ID +") ")
+		.append("group by t.value, u.seqno ")
+		.append("order by u.seqno");
+		   
+		log.finer( sql.toString());
+
+    	PreparedStatement pstmt = null;
+    	ResultSet rs 			= null;
+    	
+    	try {
+    		pstmt = DB.prepareStatement( sql.toString());
+    		rs = pstmt.executeQuery();
+    		
+    		if(rs.next()){
+    			instanceName = rs.getString("Value");
+    			while( rs.next()) {
+    				instanceName = instanceName + " - " + rs.getString("Value");
+        		}
+    			return instanceName;
+    		}
+    		else{
+    			StringBuffer sql2;
+    			sql2 = new StringBuffer();
+    			sql2.append("select Description from M_AttributeSetInstance where (M_AttributeSetInstance_ID <> 0) AND (M_AttributeSetInstance_ID = "+ attributeSetInstance_ID +")");
+    			pstmt = DB.prepareStatement( sql2.toString());
+        		rs = pstmt.executeQuery();
+        		if(rs.next()){
+        			return rs.getString("Description");
+        		}			
+    		}
+    	} catch( Exception e ) {
+    		log.log( Level.SEVERE,sql.toString(),e );
+    	} finally {
+    		try {
+	    		if (rs != null) rs.close();
+	    		if (pstmt != null) pstmt.close();
+    		}	catch (Exception e) {}
+    	}
+		
+		return instanceName;
+	}
+    
+    protected void filtrarColumnaInstanceName(List<? extends SourceEntity> dataAux){
+    	// Si es Perfil Compras
+    	if (!isSOTrx()) {
+    		Iterator<? extends SourceEntity> it = dataAux.iterator();
+    		boolean mostrarColumna = false;
+    		// Itero por la columna instanceName buscando una celda con algun valor.
+    		while( (it.hasNext()) && !mostrarColumna){
+    			DocumentLine element = (DocumentLine) it.next(); 
+    			mostrarColumna = (element.instanceName != null);
+    		}
+    		// Si en el recorrido anterior ninguna celda de la columna tenia un valor para la columna
+    		// Descripcion (nombre de la instacia) se elimina la columna de la tabla y no se visualiza.
+    		if(!mostrarColumna){
+    			if( (dataTable.getModel()) instanceof DocumentLineTableModelFromShipment ){
+    				((DocumentLineTableModelFromShipment)dataTable.getModel()).visibles = ((DocumentLineTableModelFromShipment) dataTable.getModel()).visibles - 1; 
+        			dataTable.getColumnModel().removeColumn(dataTable.getColumnModel().getColumn(DocumentLineTableModelFromShipment.COL_IDX_INSTANCE_NAME));	
+    			}
+    			else{
+    				((DocumentLineTableModel)dataTable.getModel()).visibles = ((DocumentLineTableModel) dataTable.getModel()).visibles - 1; 
+        			dataTable.getColumnModel().removeColumn(dataTable.getColumnModel().getColumn(DocumentLineTableModel.COL_IDX_INSTANCE_NAME));	
+    			}
+    		}
+    	}
+    }
+ 
 }    // VCreateFrom
 
 

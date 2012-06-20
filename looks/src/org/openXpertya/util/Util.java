@@ -53,10 +53,7 @@ public class Util {
     // dREHER, por si llega un integer
     public static boolean isEmpty (Integer numb)
     {
-    	boolean isEmpty = false;
-    	if(numb!= null)
-    		isEmpty = true;
-        return isEmpty;
+    	return numb == null;
     }   //  isEmpty
     
    
@@ -641,6 +638,24 @@ public class Util {
     public static String getHTMLListElement(String pdata){
     	return "<li>"+pdata+"</li>";
     }
+    
+    public static String removeInitialAND(String str){
+    	// Si el índice del AND es al principio, entonces lo saco
+    	int andIndex = str.indexOf("AND");
+		if(andIndex > 0 && andIndex < 2){
+			str = str.substring(andIndex + 2);
+		}
+		return str;
+    }
+    
+    
+	public static String replaceCharAt(String s, int pos, char c) 
+	{
+		StringBuffer buf = new StringBuffer( s );
+		buf.setCharAt( pos, c );
+		return buf.toString( );
+	}
+	
 }	// Util
 
 

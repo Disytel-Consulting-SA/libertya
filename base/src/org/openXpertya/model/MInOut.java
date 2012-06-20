@@ -24,6 +24,7 @@ import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Calendar;
+import java.util.List;
 import java.util.Properties;
 import java.util.Vector;
 import java.util.logging.Level;
@@ -33,6 +34,9 @@ import javax.swing.JOptionPane;
 import org.openXpertya.model.attribute.RecommendedAtributeInstance;
 import org.openXpertya.process.DocAction;
 import org.openXpertya.process.DocumentEngine;
+import org.openXpertya.reflection.CallResult;
+import org.openXpertya.util.AssetDTO;
+import org.openXpertya.util.CLogger;
 import org.openXpertya.util.CPreparedStatement;
 import org.openXpertya.util.DB;
 import org.openXpertya.util.Env;
@@ -1318,6 +1322,20 @@ public class MInOut extends X_M_InOut implements DocAction {
         	}
         }
 
+        // -----------------------------------------------------------------------
+		// IMPORTANTE: Estas porciones de código se deben dejar antes de las
+		// validaciones de stock y cantidades en las líneas del pedido
+        // -----------------------------------------------------------------------
+		// Para artículos bienes de uso que posean conjunto de atributos
+		// asignado y la línea no tenga una instancia del conjunto de atributos,
+		// se debe eliminar esa línea y crear tantas líneas como cantidad se
+		// haya ingresado, asignarle una instancia de conjunto de atributos y
+		// la referencia a la línea de pedido/factura
+        // -----------------------------------------------------------------------
+        if(!isTPVInstance && !isSOTrx()){
+        	manageAssetLines();
+        }
+        // -----------------------------------------------------------------------
         
         // Verificar que la cantidad de las líneas de la devolución del cliente 
         // no sobrepasen la cantidad entregada (delivered) de cada línea de pedido
@@ -1404,7 +1422,7 @@ public class MInOut extends X_M_InOut implements DocAction {
                 int M_AttributeSet_ID = product.getM_AttributeSet_ID();
 
                 if( M_AttributeSet_ID != 0 ) {
-                    MAttributeSet mas = MAttributeSet.get( getCtx(),M_AttributeSet_ID, get_TrxName());
+                    MAttributeSet mas = MAttributeSet.get( getCtx(),M_AttributeSet_ID);
 
                     if( (mas != null) && (( isSOTrx() && mas.isMandatory()) || ( !isSOTrx() && mas.isMandatoryAlways()))) {
                         m_processMsg = "@M_AttributeSet_ID@ @IsMandatory@";
@@ -1429,6 +1447,86 @@ public class MInOut extends X_M_InOut implements DocAction {
         return DocAction.STATUS_InProgress;
     }    // prepareIt
 
+	/**
+	 * Gestiona las líneas de bienes de uso, eliminando las líneas que poseen
+	 * artículos bienes de uso que no tengan instancia de conjunto de atributos
+	 * seteada y además que el artículo propio contenga un conjunto de atributos
+	 * seteado. De esa manera, se crea la cantidad de líneas automáticamente con
+	 * cada instancia del artículo por la cantidad agregada en cada línea,
+	 * eliminando la línea original sin instancia de conjunto de atributos.
+	 * 
+	 * @return resultado de la operación
+	 */
+    private CallResult manageAssetLines(){
+    	CallResult result = new CallResult();
+		List<PO> assetLines = PO
+				.find(getCtx(),
+						X_M_InOutLine.Table_Name,
+						"(m_attributesetinstance_id is null OR m_attributesetinstance_id = 0) AND m_product_id IN (select m_product_id from m_product where producttype = 'A' and m_attributeset_id is not null and m_attributeset_id <> 0) AND m_inout_id = ?",
+						new Object[]{getID()}, null, get_TrxName());
+		MInOutLine inOutLine = null, newInOutLine = null;
+		MAttributeSetInstance instance = null;
+		MOrderLine orderLine = null;
+		MInvoiceLine invoiceLine = null;
+		AssetDTO assetDTO = null;
+		Integer productID;
+		BigDecimal cost;
+		for (PO line : assetLines) {
+			List<MInOutLine> newLines = new ArrayList<MInOutLine>();
+			inOutLine = (MInOutLine)line;
+			int cant = inOutLine.getMovementQty().abs().intValue();
+			for (int i = 0; i < cant; i++) {
+				newInOutLine = new MInOutLine(this);
+				PO.copyValues(inOutLine, newInOutLine);
+				newInOutLine.setQty(new BigDecimal(newInOutLine
+						.getMovementQty().signum()));
+				// Crear la clase con los datos necesarios para crear la instancia
+				assetDTO = new AssetDTO();
+				// Obtener la línea de pedido relacionada
+				if(!Util.isEmpty(inOutLine.getC_OrderLine_ID(), true)){
+					orderLine = new MOrderLine(getCtx(), inOutLine.getC_OrderLine_ID(), get_TrxName());
+					productID = orderLine.getM_Product_ID();
+					cost = orderLine.getPriceEntered();
+				}
+				else {
+					invoiceLine = new MInvoiceLine(getCtx(), inOutLine.getC_InvoiceLine_ID(), get_TrxName());
+					productID = invoiceLine.getM_Product_ID();
+					cost = invoiceLine.getPriceEntered();
+				}
+
+				assetDTO.setCost(cost);
+				assetDTO.setDateFrom(getMovementDate());
+				assetDTO.setProductID(productID);
+				assetDTO.setCtx(getCtx());
+				assetDTO.setTrxName(get_TrxName());
+				try{
+					// Crear la instancia de atributos
+					instance = MAttributeSetInstance.createAssetAttributeInstance(assetDTO);
+				} catch(Exception e){
+					result.setMsg(e.getMessage(), true);
+					return result;
+				}
+				// Asociarla a la línea de remito
+				newInOutLine.setM_AttributeSetInstance_ID(instance.getID());
+				newLines.add(newInOutLine);
+			}
+			// Eliminar la línea anterior
+			if(!inOutLine.delete(true, get_TrxName())){
+				result.setMsg(CLogger.retrieveErrorAsString(), true);
+				return result;
+			}
+			// Guardar todas las líneas nuevas
+			for (MInOutLine mInOutLine : newLines) {
+				if(!mInOutLine.save()){
+					result.setMsg(CLogger.retrieveErrorAsString(), true);
+					return result;
+				}
+			}
+		}
+		return result;
+    }
+    
+    
     private boolean existsDocNumber(boolean completed) {
 		String sql = "SELECT * FROM " + Table_Name + " WHERE AD_Client_ID = ? ";
 		if (completed) {
@@ -1529,7 +1627,8 @@ public class MInOut extends X_M_InOut implements DocAction {
     			if (attributeSetInstanceID == 0 || !isInstanceAttr) {
     				setInstanceReusable = true;
     			} else {
-   					MAttributeSet mas = MAttributeSet.get(getCtx(), DB.getSQLValue(get_TrxName(), "SELECT M_AttributeSet_ID FROM M_AttributeSetInstance WHERE M_AttributeSetInstance_ID = " + attributeSetInstanceID), get_TrxName());
+   					MAttributeSet mas = MAttributeSet.get(getCtx(), DB.getSQLValue(get_TrxName(), "SELECT M_AttributeSet_ID FROM M_AttributeSetInstance WHERE M_AttributeSetInstance_ID = " + attributeSetInstanceID));
+   					mas.set_TrxName(get_TrxName());
    					instanceUniquePerUnit = mas.isInstanceUniquePerUnit();
    					setInstanceReusable = !instanceUniquePerUnit;
     			}
@@ -2345,16 +2444,18 @@ public class MInOut extends X_M_InOut implements DocAction {
 
             if( (product != null) && (line.getM_AttributeSetInstance_ID() == 0) ) {
                 if( inTrx ) {
-                    MAttributeSetInstance asi = new MAttributeSetInstance( getCtx(),0,get_TrxName());
-
-                    asi.setClientOrg( getAD_Client_ID(),0 );
-                    asi.setM_AttributeSet_ID( product.getM_AttributeSet_ID());
-
-                    if( asi.save()) {
-                        line.setM_AttributeSetInstance_ID( asi.getM_AttributeSetInstance_ID());
-                        log.config( "New ASI=" + line );
-                        needSave = true;
-                    }
+                	// FIXME Se asignaba un attributesetInstance nuevo cada vez que se completaba un remito de Compras.
+                	// Modificar cuando se verifique si esto es correcto.
+//                    MAttributeSetInstance asi = new MAttributeSetInstance( getCtx(),0,get_TrxName());
+//
+//                    asi.setClientOrg( getAD_Client_ID(),0 );
+//                    asi.setM_AttributeSet_ID( product.getM_AttributeSet_ID());
+//
+//                    if( asi.save()) {
+//                        line.setM_AttributeSetInstance_ID( asi.getM_AttributeSetInstance_ID());
+//                        log.config( "New ASI=" + line );
+//                        needSave = true;
+//                    }
                 } else    // Outgoing Trx
                 {
                     MProductCategory pc = MProductCategory.get( getCtx(),product.getM_Product_Category_ID(), get_TrxName());
@@ -2806,7 +2907,8 @@ public class MInOut extends X_M_InOut implements DocAction {
     	int diasDeDiferencia = 7;
     	
     	if ( !getPriorityRule().equals(MInOut.PRIORITYRULE_High) && line.getM_AttributeSetInstance_ID() != 0 ) {
-            MAttributeSetInstance masi = MAttributeSetInstance.get(getCtx(), line.getM_AttributeSetInstance_ID(), 0);
+			MAttributeSetInstance masi = MAttributeSetInstance.get(getCtx(),
+					line.getM_AttributeSetInstance_ID(), 0, get_TrxName());
             Timestamp mdd = masi.getDueDate();
             
             if (mdd != null) {

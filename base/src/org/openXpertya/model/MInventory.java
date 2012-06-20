@@ -21,11 +21,15 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.Timestamp;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Properties;
 import java.util.logging.Level;
 
 import org.openXpertya.process.DocAction;
 import org.openXpertya.process.DocumentEngine;
+import org.openXpertya.reflection.CallResult;
+import org.openXpertya.util.AssetDTO;
+import org.openXpertya.util.CLogger;
 import org.openXpertya.util.DB;
 import org.openXpertya.util.Env;
 import org.openXpertya.util.Msg;
@@ -402,7 +406,22 @@ public class MInventory extends X_M_Inventory implements DocAction {
             return DocAction.STATUS_Invalid;
         }
 
-        MInventoryLine[] lines = getLines( false );
+        // -----------------------------------------------------------------------
+		// IMPORTANTE: Estas porciones de código se deben dejar antes de las
+		// validaciones de stock 
+        // -----------------------------------------------------------------------
+		// Para artículos bienes de uso que posean conjunto de atributos
+		// asignado y la línea no tenga una instancia del conjunto de atributos,
+		// se debe eliminar esa línea y crear tantas líneas como cantidad se
+		// haya ingresado, asignarle una instancia de conjunto de atributos 
+        // -----------------------------------------------------------------------
+        if(getInventoryKind().equals(INVENTORYKIND_SimpleInOut)){
+        	manageAssetLines();
+        }
+        // -----------------------------------------------------------------------
+        
+        
+        MInventoryLine[] lines = getLines( true );
 
         if( lines.length == 0 ) {
             m_processMsg = "@NoLines@";
@@ -422,6 +441,81 @@ public class MInventory extends X_M_Inventory implements DocAction {
         return DocAction.STATUS_InProgress;
     }    // prepareIt
 
+    
+    /**
+	 * Gestiona las líneas de bienes de uso, eliminando las líneas que poseen
+	 * artículos bienes de uso que no tengan instancia de conjunto de atributos
+	 * seteada y además que el artículo propio contenga un conjunto de atributos
+	 * seteado. De esa manera, se crea la cantidad de líneas automáticamente con
+	 * cada instancia del artículo por la cantidad agregada en cada línea,
+	 * eliminando la línea original sin instancia de conjunto de atributos.
+	 * 
+	 * @return resultado de la operación
+	 */
+    private CallResult manageAssetLines(){
+    	CallResult result = new CallResult();
+		List<PO> assetLines = PO
+				.find(getCtx(),
+						X_M_InventoryLine.Table_Name,
+						"m_product_id IN (select m_product_id from m_product where producttype = 'A' and m_attributeset_id is not null and m_attributeset_id <> 0) AND m_inventory_id = ?",
+						new Object[]{getID()}, null, get_TrxName());
+		MInventoryLine inventoryLine = null, newInventoryLine = null;
+		MAttributeSetInstance instance = null;
+		AssetDTO assetDTO = null;
+		Integer sign;
+		for (PO line : assetLines) {
+			List<MInventoryLine> newLines = new ArrayList<MInventoryLine>();
+			inventoryLine = (MInventoryLine)line;
+			int cant = inventoryLine.getQtyCount().abs().intValue();
+			for (int i = 0; i < cant; i++) {
+				newInventoryLine = new MInventoryLine(getCtx(), 0, get_TrxName());
+				PO.copyValues(inventoryLine, newInventoryLine);
+				sign = newInventoryLine.getQtyCount().signum();
+				newInventoryLine.setQtyCount(new BigDecimal(sign));
+				// Crear la clase con los datos necesarios para crear la instancia
+				assetDTO = new AssetDTO();
+				assetDTO.setAttributeSetInstanceID(!Util.isEmpty(
+						inventoryLine.getM_AttributeSetInstance_ID(), true) ? inventoryLine
+						.getM_AttributeSetInstance_ID() : 0);
+				// En caso de entrada de mercadería, agregar la fecha de alta y el costo
+				if(sign >= 0){
+					assetDTO.setCost(newInventoryLine.getCost());
+					assetDTO.setDateFrom(getMovementDate());
+				}
+				// En caso de salida, la fecha de baja
+				else{
+					assetDTO.setDateTo(getMovementDate());
+				}
+				assetDTO.setProductID(inventoryLine.getM_Product_ID());
+				assetDTO.setCtx(getCtx());
+				assetDTO.setTrxName(get_TrxName());
+				try{
+					// Crear la instancia de atributos
+					instance = MAttributeSetInstance.createAssetAttributeInstance(assetDTO);
+				} catch(Exception e){
+					result.setMsg(e.getMessage(), true);
+					return result;
+				}
+				newInventoryLine.setM_AttributeSetInstance_ID(instance.getID());
+				newLines.add(newInventoryLine);
+			}
+			// Eliminar la línea anterior
+			if(!inventoryLine.delete(true, get_TrxName())){
+				result.setMsg(CLogger.retrieveErrorAsString(), true);
+				return result;
+			}
+			// Guardar todas las líneas nuevas
+			for (MInventoryLine mInventoryLine : newLines) {
+				if(!mInventoryLine.save()){
+					result.setMsg(CLogger.retrieveErrorAsString(), true);
+					return result;
+				}
+			}
+		}
+		return result;
+    }
+    
+    
     /**
      * Descripción de Método
      *

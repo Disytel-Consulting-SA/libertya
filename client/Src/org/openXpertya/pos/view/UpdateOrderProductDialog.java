@@ -101,6 +101,7 @@ public class UpdateOrderProductDialog extends JDialog {
 	private String MSG_MANUAL_DISCOUNT;
 	private String MSG_AMOUNT;
 	private String MSG_SUPERVISOR_AUTH;
+	private String MSG_SURPASS_MAX_QTY;
 	
 	private final String CHANGE_FOCUS_USER_AUTH = "changeFocusUserAuth";
 	
@@ -158,6 +159,7 @@ public class UpdateOrderProductDialog extends JDialog {
 		MSG_MANUAL_DISCOUNT = getMsg("ManualDiscount");
 		MSG_AMOUNT = getMsg("Amt");
 		MSG_SUPERVISOR_AUTH = getMsg("SupervisorAuth");
+		MSG_SURPASS_MAX_QTY = getMsg("SurpassMaxOrderLineQty");
 	}
 
 	private void keyBindingsInit(){
@@ -880,6 +882,11 @@ public class UpdateOrderProductDialog extends JDialog {
 					 append(MSG_INVALID_PRODUCT_COUNT);
 		}
 
+		// Cantidad supera el máximo
+		if(getPoS().getModel().countSurpassMax(count)){
+			error = true;
+			errorMsg.append("").append(MSG_SURPASS_MAX_QTY);
+		}
 		
 		if(error) {
 			errorMsg(errorMsg.toString());

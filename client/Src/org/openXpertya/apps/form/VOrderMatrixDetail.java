@@ -117,6 +117,8 @@ public class VOrderMatrixDetail extends CDialog {
 		table.setDefaultRenderer(MatrixItem.class, new MatrixCellRenderer());
 		table.setDefaultEditor(MatrixItem.class, mce);
 		table.putClientProperty("terminateEditOnFocusLost", Boolean.TRUE);
+		// Added by Lucas Hernandez - Kunan
+		table.setColumnSelectionAllowed(true);
 		
 		table.addFocusListener(new FocusListener() {
 			public void focusGained(FocusEvent e) {
@@ -646,12 +648,12 @@ public class VOrderMatrixDetail extends CDialog {
 			
             if (isSelected) {
                 if (selectedBorder == null)
-                    selectedBorder = BorderFactory.createMatteBorder(2,2,2,2,table.getSelectionBackground());
+                    selectedBorder = BorderFactory.createMatteBorder(3,3,3,3,table.getSelectionBackground());
                 
                 setBorder(selectedBorder);
             } else {
                 if (unselectedBorder == null)
-                    unselectedBorder = BorderFactory.createMatteBorder(2,2,2,2,table.getBackground());
+                    unselectedBorder = BorderFactory.createMatteBorder(1,1,1,1,table.getBackground());
                 
                 setBorder(unselectedBorder);
             }

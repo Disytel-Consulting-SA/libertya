@@ -1,10 +1,6 @@
 package org.openXpertya.plugin.install;
 
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.util.HashMap;
-
-import org.openXpertya.util.DB;
+import org.openXpertya.replication.ReplicationCache;
 import org.openXpertya.util.DisplayType;
 
 public class ChangeLogElement {
@@ -33,44 +29,7 @@ public class ChangeLogElement {
 	
 	private int AD_Changelog_ID;
 	
-	/** Datos actuales de todas las columnas en base de datos */
-	private static HashMap<Integer, Object[]> columnsData = null; 
-	
-	/**
-	 * Carga inicial de todas las entradas relacionadas con las columnas
-	 * De esta manera evitamos realizar consultas SQL durante 
-	 * cada invocación al constructor ChangeLogElement 
-	 * @return
-	 */
-	public static HashMap<Integer, Object[]> loadColumnData(String trxName) throws Exception
-	{
-		if (columnsData != null)
-			return columnsData;
-	
-		columnsData = new HashMap<Integer, Object[]>();
-		String sql = new String( " SELECT columnname, AD_Reference_ID, AD_Reference_Value_ID, isKey, ad_column_id FROM AD_Column ");
-		PreparedStatement pstmt = DB.prepareStatement(sql, trxName);
-		ResultSet rs = pstmt.executeQuery();
-		while (rs.next())
-		{
-			Object[] data =  {rs.getString(1), rs.getInt(2), rs.getInt(3), ("Y".equals(rs.getString(4))) };
-			columnsData.put(rs.getInt(5), data);
-		}
-		rs.close();
-		rs =null;
-		pstmt = null;		
-		
-		return columnsData;
-	}
-	
-	
-	public static void freeColumnData()
-	{
-		columnsData = null;
-		System.gc();
-	}
-	
-	// Constructores
+ 	// Constructores
 	
 	public ChangeLogElement(Integer ad_column_id, String oldValue, String newValue, Object binaryValue, int changelogID){
 		setColumnData(ad_column_id);
@@ -80,14 +39,12 @@ public class ChangeLogElement {
 		setAD_Changelog_ID(changelogID);
 	}
 	
-
-	
 	private void setColumnData(int ad_column_id)
 	{
-		columnName = 	  		(String)(columnsData.get(ad_column_id)[0]);
-		AD_Reference_ID = 		(Integer)(columnsData.get(ad_column_id)[1]);
-		AD_Reference_Value_ID = (Integer)(columnsData.get(ad_column_id)[2]);
-		isKey 				  = (Boolean)(columnsData.get(ad_column_id)[3]);
+		columnName = 	  		(String)(ReplicationCache.columnsData.get(ad_column_id)[0]);
+		AD_Reference_ID = 		(Integer)(ReplicationCache.columnsData.get(ad_column_id)[1]);
+		AD_Reference_Value_ID = (Integer)(ReplicationCache.columnsData.get(ad_column_id)[2]);
+		isKey 				  = (Boolean)(ReplicationCache.columnsData.get(ad_column_id)[3]);
 	}
 	
 	// Varios

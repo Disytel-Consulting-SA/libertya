@@ -6,6 +6,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
+import java.awt.event.KeyEvent;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyVetoException;
 import java.beans.VetoableChangeListener;
@@ -18,6 +19,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import javax.swing.AbstractAction;
 import javax.swing.BorderFactory;
 import javax.swing.JComponent;
 import javax.swing.JFormattedTextField;
@@ -25,6 +27,7 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JTabbedPane;
 import javax.swing.JTextField;
+import javax.swing.KeyStroke;
 
 import org.compiere.swing.CComboBox;
 import org.openXpertya.apps.form.VOrdenCobroModel.OpenInvoicesCustomerReceiptsTableModel;
@@ -43,6 +46,7 @@ import org.openXpertya.model.MDiscountSchema;
 import org.openXpertya.model.MEntidadFinancieraPlan;
 import org.openXpertya.model.MPOSPaymentMedium;
 import org.openXpertya.model.RetencionProcessor;
+import org.openXpertya.pos.view.KeyUtils;
 import org.openXpertya.util.DisplayType;
 import org.openXpertya.util.Env;
 import org.openXpertya.util.Msg;
@@ -54,6 +58,8 @@ public class VOrdenCobro extends VOrdenPago {
     // Secuencia a utilizar en OP (VOrdenCobro para RC deberá refinir acordemente)
     protected static final String SEQ_RC = "DocumentNo_C_AllocationHdr_RC";
 	
+    protected static final String GOTO_TENDER_TYPE = "GOTO_TENDER_TYPE";
+    
 	private static Map<String, String> msgChanges;
 	static {
 		msgChanges = new HashMap<String, String>();
@@ -186,6 +192,9 @@ public class VOrdenCobro extends VOrdenPago {
 	    lblTransferReceiptMedium.setText(msgReceiptMedium);
 	    lblRetencionReceiptMedium.setText(msgReceiptMedium);
 	    lblPagoAdelantadoReceiptMedium.setText(msgReceiptMedium);
+		lblTenderType.setText(lblTenderType.getText() + " "
+				+ KeyUtils.getKeyStr(getActionKeys().get(GOTO_TENDER_TYPE)));
+	    
 	}
 	
 	@Override
@@ -199,8 +208,7 @@ public class VOrdenCobro extends VOrdenPago {
 						new MyNumberTableCellRenderer(getModel()
 								.getNumberFormat()));
 		
-		initFormattedTextField((JFormattedTextField)txtRetencImporte);  
-		m_frame.setMaximize(true);
+		initFormattedTextField((JFormattedTextField)txtRetencImporte);
   	}
 
 	@Override
@@ -310,7 +318,7 @@ public class VOrdenCobro extends VOrdenPago {
                     .add(lblPOS)
                     .add(txtPOS, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                .add(jScrollPane1, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 260, Short.MAX_VALUE)
+                .add(jScrollPane1, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 260, 440)
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                 .add(jPanel3Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
                     .add(lblTotalPagar1)
@@ -319,13 +327,49 @@ public class VOrdenCobro extends VOrdenPago {
                     .add(lblOrgCharge, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                     .add(txtOrgCharge, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                     .add(txtTotalPagar1, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                    .add(invoiceDatePick, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
-                .addContainerGap())
+                    .add(invoiceDatePick, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)))
         );
         return jPanel3;
 	}
 	
-	
+	@Override
+	protected void createLeftUpStaticPanel()
+    {
+    	org.jdesktop.layout.GroupLayout jPanel9Layout = new org.jdesktop.layout.GroupLayout(jPanel9);
+        jPanel9.setLayout(jPanel9Layout);
+        jPanel9Layout.setHorizontalGroup(
+            jPanel9Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+            .add(jPanel9Layout.createSequentialGroup()
+                .addContainerGap()
+                .add(jPanel9Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+                    .add(lblBPartner)
+                    .add(lblClient)
+                    .add(lblDocumentNo))
+                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                .add(jPanel9Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.TRAILING)
+                    .add(cboClient, 0, 234, Short.MAX_VALUE)
+                    .add(BPartnerSel, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 234, Short.MAX_VALUE)
+                    .add(fldDocumentNo, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 234, Short.MAX_VALUE))
+                .addContainerGap())
+        );
+        jPanel9Layout.setVerticalGroup(
+            jPanel9Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+            .add(jPanel9Layout.createSequentialGroup()
+                .addContainerGap()
+                .add(jPanel9Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
+                    .add(lblClient)
+                    .add(cboClient, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
+                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                .add(jPanel9Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
+                    .add(lblBPartner)
+                    .add(BPartnerSel, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
+                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                .add(jPanel9Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
+                    .add(lblDocumentNo)
+                    .add(fldDocumentNo, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
+                .addContainerGap())
+        );
+    }
 	
 	@Override
     protected void createRightUpStaticPanel(){
@@ -574,7 +618,8 @@ public class VOrdenCobro extends VOrdenPago {
                 .add(jPanel7Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
                     .add(lblChequeDescripcion)
                     .add(txtChequeDescripcion, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
-                .addContainerGap(25, Short.MAX_VALUE))
+                //.addContainerGap(25, Short.MAX_VALUE)
+                .addContainerGap())
         );
         return jPanel7;
     }
@@ -947,8 +992,7 @@ public class VOrdenCobro extends VOrdenPago {
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                 .add(panelCamProyLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
                     .add(lblProject)
-                    .add(cboProject, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
-                .addContainerGap(org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                    .add(cboProject, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)))
         );
     }
 
@@ -983,12 +1027,12 @@ public class VOrdenCobro extends VOrdenPago {
                                 .add(cmdEliminar)
                                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                                 .add(cmdEditar)
-                                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED, 72, Short.MAX_VALUE)
+                                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED, org.jdesktop.layout.LayoutStyle.RELATED,Short.MAX_VALUE)
                                 .add(lblTotalPagar2)
                                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                                .add(txtTotalPagar2, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 100, Short.MAX_VALUE))
+                                .add(txtTotalPagar2, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 100, Short.MAX_VALUE))
                     .add(panelSummary, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .add(jScrollPane2, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 200, Short.MAX_VALUE))
+                    .add(jScrollPane2, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 100, Short.MAX_VALUE))
                 .addContainerGap())
         );
         jPanel4Layout.setVerticalGroup(
@@ -997,7 +1041,7 @@ public class VOrdenCobro extends VOrdenPago {
                 .addContainerGap()
                 .add(jPanel4Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.TRAILING)
                     .add(jPanel4Layout.createSequentialGroup()
-                        .add(jScrollPane2, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 100, Short.MAX_VALUE)
+                        .add(jScrollPane2, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                         .add(jPanel4Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.VERTICAL)
                             .add(cmdGrabar)
@@ -1010,9 +1054,8 @@ public class VOrdenCobro extends VOrdenPago {
                     .add(org.jdesktop.layout.GroupLayout.LEADING, jPanel4Layout.createSequentialGroup()
                         .add(panelCamProy, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                         .add(panelTenderType, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                        .add(jTabbedPane2, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                        .add(panelPaymentDiscount, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)))
-                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED))
+                        .add(jTabbedPane2, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 330, 330)
+                        .add(panelPaymentDiscount, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))))
         );
     }
 	
@@ -1064,7 +1107,7 @@ public class VOrdenCobro extends VOrdenPago {
                 .add(jPanel7Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
                     .add(lblTenderType)
                     .add(cboTenderType, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
-                    .addContainerGap())
+                    .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED))
         );
     }
     
@@ -1086,8 +1129,7 @@ public class VOrdenCobro extends VOrdenPago {
             .add(jPanel2Layout.createSequentialGroup()
                 .add(jPanel2Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
                     .add(cmdProcess)
-                    .add(cmdCancel))                
-                .addContainerGap())
+                    .add(cmdCancel)))
         );
     }
     
@@ -1105,7 +1147,7 @@ public class VOrdenCobro extends VOrdenPago {
             layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
             .add(org.jdesktop.layout.GroupLayout.TRAILING, layout.createSequentialGroup()
                 .add(jPanel1, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                .add(jTabbedPane1, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 354, Short.MAX_VALUE)
+                .add(jTabbedPane1, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                 .add(jPanel2, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
         );
@@ -1410,7 +1452,8 @@ public class VOrdenCobro extends VOrdenPago {
 		}
 		Timestamp retencionDate = retencFecha.getTimestamp();
 		// Se agrega la retención como medio de cobro.
-		getCobroModel().addRetencion(retencionSchemaID, retencionNumber, amount, retencionDate);
+		getCobroModel().addRetencion(retencionSchemaID, retencionNumber,
+				amount, retencionDate, getC_Campaign_ID(), getC_Project_ID());
 	}
 
 	
@@ -1426,8 +1469,8 @@ public class VOrdenCobro extends VOrdenPago {
 				Util.isEmpty(txtCuotasCount.getText()) ? 0 : Integer
 						.parseInt(txtCuotasCount.getText()),
 				(BigDecimal) txtCuotaAmt.getValue(),
-				(Integer) cboCampaign.getValue(),
-				(Integer) cboProject.getValue());
+				getC_Campaign_ID(),
+				getC_Project_ID());
 	}
 	
 	@Override
@@ -1448,8 +1491,8 @@ public class VOrdenCobro extends VOrdenPago {
 				chequeFechaPago.getTimestamp(), txtChequeALaOrden.getText(),
 				txtChequeBanco.getText(), txtChequeCUITLibrador.getText(),
 				txtChequeDescripcion.getText(),
-				(Integer) cboCampaign.getValue(),
-				(Integer) cboProject.getValue());
+				getC_Campaign_ID(),
+				getC_Project_ID());
 		return null;
 	}
 	
@@ -2069,5 +2112,30 @@ public class VOrdenCobro extends VOrdenPago {
 	protected String getSeqName()
 	{
 		return SEQ_RC;
+	}
+	
+	@Override
+	protected void customKeyBindingsInit(){
+		getActionKeys().put(GOTO_TENDER_TYPE, KeyStroke.getKeyStroke(KeyEvent.VK_F3, 0));
+		
+		// Accion: Seleccionar el combo de tipo de pago
+		m_frame.getRootPane().getActionMap().put(GOTO_TENDER_TYPE,
+        	new AbstractAction() {
+        		public void actionPerformed(ActionEvent e) {
+					cboTenderType.requestFocus();
+				}
+        	}
+        );
+	}
+	
+	@Override
+	protected void customUpdateCaptions(){
+		if (jTabbedPane1.getSelectedIndex() == 0){
+			setActionEnabled(GOTO_TENDER_TYPE, false);
+			setActionEnabled(GOTO_BPARTNER, true);
+		}
+		else if (jTabbedPane1.getSelectedIndex() == 1){
+			setActionEnabled(GOTO_TENDER_TYPE, true);
+		}
 	}
 }

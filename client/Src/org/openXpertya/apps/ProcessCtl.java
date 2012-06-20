@@ -360,11 +360,14 @@ public class ProcessCtl extends Thread {
      */
     private void initilizeProcessInfoAditionals(){
 		if (!Util.isEmpty(m_pi.getTable_ID(), true)
-				&& !Util.isEmpty(m_pi.getRecord_ID(), true)) {
+				&& m_pi.getRecord_ID() > 0) {
 			Integer docTypeID = null;
 			String documentNo = null;
 			M_Table table = M_Table.get(Env.getCtx(), m_pi.getTable_ID());
 			PO po = table.getPO(m_pi.getRecord_ID(), table.get_TrxName());
+			// Si no se obtiene un PO, no resta nada por hacer
+			if (po == null)
+				return;
 			// Verifico si en la tabla actual existe la columna C_DocTypeTarget_ID o
 			// C_DocType_ID, si es así entonces obtengo su valor
 			String docTypeColumnName = "C_DocTypeTarget_ID";

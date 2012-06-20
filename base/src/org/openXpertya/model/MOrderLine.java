@@ -49,9 +49,12 @@ public class MOrderLine extends X_C_OrderLine {
 	 * retiran por TPV. Por defecto el lugar de retiro es Almacén lo cual
 	 * implica que para esta línea se hará la reserva de stock normalmente. Si
 	 * el lugar de retiro se setea a TPV entonces no se hará la reserva de
-	 * stock. No se requiere persistir este dato.
+	 * stock. No se requiere persistir este dato. <br>
+	 * Modificado por Matías Cap 20120328 - Ahora sí se requiere persistir el
+	 * dato por el tema de la impresión de salida de depósito, ya que en el
+	 * framework de impresión fiscal no tenemos el lugar de salida en el PO
 	 */
-	private String checkoutPlace = MProduct.CHECKOUTPLACE_Warehouse;
+	// private String checkoutPlace = MProduct.CHECKOUTPLACE_Warehouse;
 	
     /**
      * Constructor de la clase ...
@@ -105,6 +108,8 @@ public class MOrderLine extends X_C_OrderLine {
 
             setIsDescription( false );    // N
             setProcessed( false );
+            
+            setCheckoutPlace(CHECKOUTPLACE_Warehouse);
         }
     }                                     // MOrderLine
 
@@ -1029,7 +1034,25 @@ public class MOrderLine extends X_C_OrderLine {
      * @return Indica si la línea contiene artículos que aún no han sido entregados.
      */
     public boolean hasNotDeliveredProducts() {
-    	return getQtyOrdered().subtract(getQtyDelivered()).compareTo(BigDecimal.ZERO) != 0;
+    	return getPendingDeliveredQty().compareTo(BigDecimal.ZERO) != 0;
+    }
+
+	/**
+	 * @return la diferencia entre la cantidad pedida y la cantidad entregada
+	 */
+    public BigDecimal getPendingDeliveredQty(){
+    	return getQtyOrdered().subtract(getQtyDelivered());
+    }
+
+	/**
+	 * @return true si esta línea es imprimible por el retiro de depósito, false
+	 *         caso contrario
+	 */
+    public boolean isDeliverDocumentPrintable(){
+		return getCheckoutPlace() != null
+				&& getCheckoutPlace()
+						.equals(MOrderLine.CHECKOUTPLACE_Warehouse)
+				&& hasNotDeliveredProducts();
     }
 
 	/**
@@ -1535,20 +1558,6 @@ public class MOrderLine extends X_C_OrderLine {
     {
     	m_prodCache = c;
     }
-
-	/**
-	 * @return el valor de checkoutPlace
-	 */
-	public String getCheckoutPlace() {
-		return checkoutPlace;
-	}
-
-	/**
-	 * @param checkoutPlace el valor de checkoutPlace a asignar
-	 */
-	public void setCheckoutPlace(String checkoutPlace) {
-		this.checkoutPlace = checkoutPlace;
-	}
 }    // MOrderLine
 
 

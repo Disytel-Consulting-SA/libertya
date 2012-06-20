@@ -54,6 +54,7 @@ public class CalloutInventory extends CalloutEngine {
         Integer M_Product_ID = ( Integer )value;
 
         if( (M_Product_ID == null) || (M_Product_ID.intValue() == 0) ) {
+            Env.setContext(ctx, WindowNo, "ProductType", "");
             return "";
         }
 
@@ -61,9 +62,7 @@ public class CalloutInventory extends CalloutEngine {
 
         if( (Env.getContextAsInt( ctx,Env.WINDOW_INFO,Env.TAB_INFO,"M_Product_ID" ) == M_Product_ID.intValue()) && (Env.getContextAsInt( ctx,Env.WINDOW_INFO,Env.TAB_INFO,"M_AttributeSetInstance_ID" ) != 0) ) {
             mTab.setValue( "M_AttributeSetInstance_ID",new Integer( Env.getContextAsInt( ctx,Env.WINDOW_INFO,Env.TAB_INFO,"M_AttributeSetInstance_ID" )));
-        } else {
-            mTab.setValue( "M_AttributeSetInstance_ID",null );
-        }
+        } 
 
         Integer inventoryID = (Integer)mTab.getValue("M_Inventory_ID");
         boolean calculateQtyBook = true;
@@ -111,6 +110,10 @@ public class CalloutInventory extends CalloutEngine {
                 return e.getLocalizedMessage();
             }
         }
+        
+        // Seteo en el contexto el tipo del artículo
+        MProduct product = MProduct.get(ctx, M_Product_ID);
+        Env.setContext(ctx, WindowNo, "ProductType", product.getProductType());
 
         return "";
     }    // product

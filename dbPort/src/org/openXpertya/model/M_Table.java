@@ -65,7 +65,7 @@ public class M_Table extends X_AD_Table {
     /** Special Classes */
     private static final String[]	s_special	= new String[] {
 
-        "AD_Table", "org.openXpertya.model.M_Table", "AD_Column", "org.openXpertya.model.M_Column", "AD_Element", "org.openXpertya.model.M_Element", "AD_Window", "org.openXpertya.model.M_Window", "AD_Tab", "org.openXpertya.model.M_Tab", "AD_Field", "org.openXpertya.model.M_Field", "AD_Registration", "org.openXpertya.model.M_Registration", "AD_Tree", "org.openXpertya.model.MTree_Base", "C_ValidCombination", "org.openXpertya.model.MAccount"
+        "AD_Table", "org.openXpertya.model.M_Table", "AD_Column", "org.openXpertya.model.M_Column", "AD_Element", "org.openXpertya.model.M_Element", "AD_Window", "org.openXpertya.model.M_Window", "AD_Tab", "org.openXpertya.model.M_Tab", "AD_Field", "org.openXpertya.model.M_Field", "AD_Registration", "org.openXpertya.model.M_Registration", "AD_Tree", "org.openXpertya.model.MTree_Base", "C_ValidCombination", "org.openXpertya.model.MAccount", "GL_Category", "org.openXpertya.model.MGLCategory"
 
         // AD_Attribute_Value, AD_TreeNode
     };
@@ -251,7 +251,7 @@ public class M_Table extends X_AD_Table {
         } else if (className.startsWith("M_")) {
             className	= className.substring(2);
         } else if (className.startsWith("GL_")){
-            className = className.substring(3);
+    		className = className.substring(3);
         } else if (className.startsWith("K_")) {
             className	= className.substring(2);
         } else if (className.startsWith("PA_")) {

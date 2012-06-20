@@ -19,9 +19,7 @@ package org.openXpertya.grid.ed;
 import java.util.logging.Level;
 
 import org.compiere.swing.CLabel;
-import org.openXpertya.apps.Attachment;
 import org.openXpertya.model.MAccountLookup;
-import org.openXpertya.model.MArchive;
 import org.openXpertya.model.MField;
 import org.openXpertya.model.MLocationLookup;
 import org.openXpertya.model.MLocatorLookup;
@@ -29,7 +27,6 @@ import org.openXpertya.model.MPAttributeLookup;
 import org.openXpertya.model.MTab;
 import org.openXpertya.util.CLogger;
 import org.openXpertya.util.DisplayType;
-import org.openXpertya.util.Env;
 
 /**
  * Descripción de Clase
@@ -107,7 +104,13 @@ public class VEditorFactory {
         // Lookup
 
         else if( DisplayType.isLookup( displayType ) || (displayType == DisplayType.ID) ) {
-            VLookup vl = new VLookup( columnName,mandatory,readOnly,updateable,mField.getLookup());
+        	VLookup vl=null;
+        	if(columnName.compareTo("M_Product_ID")==0){
+        		vl = new VLookup( columnName,mandatory,readOnly,updateable,mField.getLookup(),mTab);
+        	}
+        	else{
+        		vl = new VLookup( columnName,mandatory,readOnly,updateable,mField.getLookup());
+        	}
 
             vl.setName( columnName );
             vl.setField( mField );
@@ -267,7 +270,7 @@ public class VEditorFactory {
         // PAttribute
 
         else if( displayType == DisplayType.PAttribute ) {
-            VPAttribute attrib = new VPAttribute( mandatory,readOnly,updateable,WindowNo,( MPAttributeLookup )mField.getLookup(),mTab != null ? mTab.getTabNo() : 0);
+            VPAttribute attrib = new VPAttribute( mandatory,readOnly,updateable,WindowNo,( MPAttributeLookup )mField.getLookup(),mTab != null ? mTab.getTabNo() : 0,columnName);
 
             attrib.setName( columnName );
             attrib.setField( mField );

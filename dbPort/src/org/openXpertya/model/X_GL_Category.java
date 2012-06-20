@@ -1,13 +1,14 @@
-/** Modelo Generado - NO CAMBIAR MANUALMENTE - Copyright (C) 2006 FUNDESLE */
+/** Modelo Generado - NO CAMBIAR MANUALMENTE - Disytel */
 package org.openXpertya.model;
-import java.util.*;
+import java.util.logging.Level;
+ import java.util.*;
 import java.sql.*;
 import java.math.*;
 import org.openXpertya.util.*;
 /** Modelo Generado por GL_Category
- *  @author Comunidad de Desarrollo openXpertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
- *  @version  - 2009-10-22 14:51:33.857 */
-public class X_GL_Category extends PO
+ *  @author Comunidad de Desarrollo Libertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
+ *  @version  - 2012-01-09 10:57:08.014 */
+public class X_GL_Category extends org.openXpertya.model.PO
 {
 /** Constructor estándar */
 public X_GL_Category (Properties ctx, int GL_Category_ID, String trxName)
@@ -27,13 +28,13 @@ public X_GL_Category (Properties ctx, ResultSet rs, String trxName)
 {
 super (ctx, rs, trxName);
 }
-/** AD_Table_ID=218 */
-public static final int Table_ID=218;
+/** AD_Table_ID */
+public static final int Table_ID = M_Table.getTableID("GL_Category");
 
 /** TableName=GL_Category */
 public static final String Table_Name="GL_Category";
 
-protected static KeyNamePair Model = new KeyNamePair(218,"GL_Category");
+protected static KeyNamePair Model = new KeyNamePair(Table_ID,"GL_Category");
 protected static BigDecimal AccessLevel = new BigDecimal(2);
 
 /** Load Meta Data */
@@ -62,7 +63,7 @@ public String getAD_ComponentObjectUID()
 {
 return (String)get_Value("AD_ComponentObjectUID");
 }
-public static final int CATEGORYTYPE_AD_Reference_ID=207;
+public static final int CATEGORYTYPE_AD_Reference_ID = MReference.getReferenceID("GL Category Type");
 /** Manual = M */
 public static final String CATEGORYTYPE_Manual = "M";
 /** Import = I */
@@ -74,7 +75,7 @@ Source of the Journal with this category */
 public void setCategoryType (String CategoryType)
 {
 if (CategoryType.equals("M") || CategoryType.equals("I") || CategoryType.equals("D"));
- else throw new IllegalArgumentException ("CategoryType Invalid value - Reference_ID=207 - M - I - D");
+ else throw new IllegalArgumentException ("CategoryType Invalid value - Reference = CATEGORYTYPE_AD_Reference_ID - M - I - D");
 if (CategoryType == null) throw new IllegalArgumentException ("CategoryType is mandatory");
 if (CategoryType.length() > 1)
 {
@@ -106,7 +107,7 @@ public String getDescription()
 {
 return (String)get_Value("Description");
 }
-public static final int DOCBASETYPE_AD_Reference_ID=183;
+public static final int DOCBASETYPE_AD_Reference_ID = MReference.getReferenceID("C_DocType DocBaseType");
 /** Material Production = MMP */
 public static final String DOCBASETYPE_MaterialProduction = "MMP";
 /** Match Invoice = MXI */
@@ -167,12 +168,14 @@ public static final String DOCBASETYPE_APCreditMemo = "APC";
 public static final String DOCBASETYPE_ARCreditMemo = "ARC";
 /** Project Issue = PJI */
 public static final String DOCBASETYPE_ProjectIssue = "PJI";
+/** Amortization = AMO */
+public static final String DOCBASETYPE_Amortization = "AMO";
 /** Set Document BaseType.
 Logical type of document */
 public void setDocBaseType (String DocBaseType)
 {
-if (DocBaseType == null || DocBaseType.equals("MMP") || DocBaseType.equals("MXI") || DocBaseType.equals("MXP") || DocBaseType.equals("ARF") || DocBaseType.equals("MMS") || DocBaseType.equals("MMR") || DocBaseType.equals("MMM") || DocBaseType.equals("POO") || DocBaseType.equals("POR") || DocBaseType.equals("MMI") || DocBaseType.equals("MOR") || DocBaseType.equals("MOU") || DocBaseType.equals("MOM") || DocBaseType.equals("MOV") || DocBaseType.equals("MOP") || DocBaseType.equals("MOF") || DocBaseType.equals("GLJ") || DocBaseType.equals("GLD") || DocBaseType.equals("API") || DocBaseType.equals("APP") || DocBaseType.equals("ARI") || DocBaseType.equals("ARR") || DocBaseType.equals("SOO") || DocBaseType.equals("MOI") || DocBaseType.equals("CMB") || DocBaseType.equals("CMC") || DocBaseType.equals("CMA") || DocBaseType.equals("APC") || DocBaseType.equals("ARC") || DocBaseType.equals("PJI"));
- else throw new IllegalArgumentException ("DocBaseType Invalid value - Reference_ID=183 - MMP - MXI - MXP - ARF - MMS - MMR - MMM - POO - POR - MMI - MOR - MOU - MOM - MOV - MOP - MOF - GLJ - GLD - API - APP - ARI - ARR - SOO - MOI - CMB - CMC - CMA - APC - ARC - PJI");
+if (DocBaseType == null || DocBaseType.equals("MMP") || DocBaseType.equals("MXI") || DocBaseType.equals("MXP") || DocBaseType.equals("ARF") || DocBaseType.equals("MMS") || DocBaseType.equals("MMR") || DocBaseType.equals("MMM") || DocBaseType.equals("POO") || DocBaseType.equals("POR") || DocBaseType.equals("MMI") || DocBaseType.equals("MOR") || DocBaseType.equals("MOU") || DocBaseType.equals("MOM") || DocBaseType.equals("MOV") || DocBaseType.equals("MOP") || DocBaseType.equals("MOF") || DocBaseType.equals("GLJ") || DocBaseType.equals("GLD") || DocBaseType.equals("API") || DocBaseType.equals("APP") || DocBaseType.equals("ARI") || DocBaseType.equals("ARR") || DocBaseType.equals("SOO") || DocBaseType.equals("MOI") || DocBaseType.equals("CMB") || DocBaseType.equals("CMC") || DocBaseType.equals("CMA") || DocBaseType.equals("APC") || DocBaseType.equals("ARC") || DocBaseType.equals("PJI") || DocBaseType.equals("AMO"));
+ else throw new IllegalArgumentException ("DocBaseType Invalid value - Reference = DOCBASETYPE_AD_Reference_ID - MMP - MXI - MXP - ARF - MMS - MMR - MMM - POO - POR - MMI - MOR - MOU - MOM - MOV - MOP - MOF - GLJ - GLD - API - APP - ARI - ARR - SOO - MOI - CMB - CMC - CMA - APC - ARC - PJI - AMO");
 if (DocBaseType != null && DocBaseType.length() > 3)
 {
 log.warning("Length > 3 - truncated");

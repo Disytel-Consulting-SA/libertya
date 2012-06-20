@@ -25,6 +25,7 @@ import java.util.logging.Level;
 import org.openXpertya.util.CLogger;
 import org.openXpertya.util.DB;
 import org.openXpertya.util.Env;
+import org.openXpertya.util.Util;
 
 /**
  * Descripción de Clase
@@ -231,6 +232,27 @@ public class MInventoryLine extends X_M_InventoryLine {
         	setQtyInternalUse(BigDecimal.ZERO);
         	setInventoryType(INVENTORYTYPE_ChargeAccount);
         	setC_Charge_ID(getInventory().getC_Charge_ID());
+        	MProduct product = MProduct.get(getCtx(), getM_Product_ID());
+        	if(!product.getProductType().equals(MProduct.PRODUCTTYPE_Assets)){
+            	setCost(BigDecimal.ZERO);
+        	}
+        	else{
+				// Si es un producto bien de uso, se debe verificar que si es
+				// salida y tiene una instancia asignada, entonces sea de -1 y
+				// no mas
+				if (!Util.isEmpty(getM_AttributeSetInstance_ID(), true)
+						&& getQtyCount().signum() < 0) {
+        			setQtyCount(new BigDecimal(-1));
+        		}
+				// Si la cantidad es mayor a 0 y no existe costo configurado,
+				// entonces error
+				if (Util.isEmpty(getM_AttributeSetInstance_ID(), true)
+						&& getQtyCount().signum() > 0
+						&& getCost().compareTo(BigDecimal.ZERO) <= 0) {
+					log.saveError( "CostMustBeGreaterThanZero","" );
+	                return false;
+				}
+        	}
         }
 
         // InternalUse Inventory

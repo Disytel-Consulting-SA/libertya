@@ -190,7 +190,8 @@ public class RetencionFacturasMGanancias extends AbstractRetencionProcessor {
 			recaudador_fac.setC_DocTypeTarget_ID(MDocType.DOCBASETYPE_APInvoice);		
 
 		recaudador_fac.setC_BPartner_ID(getRetencionSchema().getC_BPartner_Recaudador_ID());
-		recaudador_fac.setDateInvoiced(Env.getContextAsDate(Env.getCtx(), "#Date"));
+		recaudador_fac.setDateInvoiced(getDateTrx());
+		recaudador_fac.setDateAcct(getDateTrx());
 		recaudador_fac.setC_Currency_ID(getCurrency().getC_Currency_ID());
 		recaudador_fac.setIsSOTrx(isSOTrx());
 		recaudador_fac.setDocStatus(MInvoice.DOCSTATUS_Drafted);
@@ -198,6 +199,8 @@ public class RetencionFacturasMGanancias extends AbstractRetencionProcessor {
 		recaudador_fac.setC_BPartner_Location_ID(locationID);
 		recaudador_fac.setCUIT(null);
 		recaudador_fac.setPaymentRule(MInvoice.PAYMENTRULE_Check);
+		recaudador_fac.setC_Project_ID(getProjectID());
+		recaudador_fac.setC_Campaign_ID(getCampaignID());
 		
 		if (!recaudador_fac.save())  
 			 throw new Exception( "@CollectorInvoiceSaveError@");
@@ -212,6 +215,8 @@ public class RetencionFacturasMGanancias extends AbstractRetencionProcessor {
 		fac_linea.setQty(1);
 		fac_linea.setPriceEntered(getAmount());
 		fac_linea.setPriceActual(getAmount());
+		fac_linea.setC_Project_ID(recaudador_fac.getC_Project_ID());
+		
 		if(! fac_linea.save())  
 			 throw new Exception( "@CollectorInvoiceLineSaveError@");
 		
@@ -242,7 +247,8 @@ public class RetencionFacturasMGanancias extends AbstractRetencionProcessor {
 			credito_prov.setC_DocTypeTarget_ID(MDocType.DOCBASETYPE_APCreditMemo);		
 		
 		credito_prov.setC_BPartner_ID(getBPartner().getC_BPartner_ID());
-		credito_prov.setDateInvoiced(Env.getContextAsDate(Env.getCtx(), "#Date"));
+		credito_prov.setDateInvoiced(getDateTrx());
+		credito_prov.setDateAcct(getDateTrx());
 		credito_prov.setC_Currency_ID(getCurrency().getC_Currency_ID());
 		credito_prov.setIsSOTrx(isSOTrx());
 		credito_prov.setDocStatus(MInvoice.DOCSTATUS_Drafted);
@@ -250,6 +256,8 @@ public class RetencionFacturasMGanancias extends AbstractRetencionProcessor {
 		credito_prov.setC_BPartner_Location_ID(locationID);
 		credito_prov.setCUIT(getBPartner().getTaxID());
 		credito_prov.setPaymentRule(MInvoice.PAYMENTRULE_Check);
+		credito_prov.setC_Project_ID(getProjectID());
+		credito_prov.setC_Campaign_ID(getCampaignID());
 		
 		if (getRetencionNumber() != null &&  !getRetencionNumber().trim().equals(""))
 			credito_prov.setDocumentNo(getRetencionNumber());
@@ -267,6 +275,8 @@ public class RetencionFacturasMGanancias extends AbstractRetencionProcessor {
 		cred_linea.setQty(1);
 		cred_linea.setPriceEntered(getAmount());
 		cred_linea.setPriceActual(getAmount());
+		cred_linea.setC_Project_ID(credito_prov.getC_Project_ID());
+		
 		if(!cred_linea.save())		   
 			 throw new Exception( "@VendorRetencionDocLineSaveError@");
 		

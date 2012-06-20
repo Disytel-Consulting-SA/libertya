@@ -45,8 +45,16 @@ public abstract class Document implements Serializable{
 	private List<DocumentLine> lines;
 	/** Descuento general */
 	private DiscountLine generalDiscount;
-	/** Observaciones o descripciónes del documento */
-	private List<String> observations;
+	/**
+	 * Observaciones o descripciones del documento para la cabecera de la
+	 * impresión
+	 */
+	private List<String> headerObservations;
+	/**
+	 * Observaciones o descripciones del documento para el pie de la
+	 * impresión
+	 */
+	private List<String> footerObservations;
 	/** Letra del documento. */ 
 	private String letter;
 	/** Descuentos a nivel documento */
@@ -56,7 +64,8 @@ public abstract class Document implements Serializable{
 		super();
 		customer = new Customer();
 		lines = new ArrayList<DocumentLine>();
-		observations = new ArrayList<String>();
+		headerObservations = new ArrayList<String>();
+		footerObservations = new ArrayList<String>();
 		documentDiscounts = new ArrayList<DiscountLine>();
 	}
 	
@@ -126,26 +135,26 @@ public abstract class Document implements Serializable{
 	}
 
 	/**
-	 * @return Returns the observations.
+	 * @return Returns the header observations.
 	 */
-	public List<String> getObservations() {
-		return observations;
+	public List<String> getHeaderObservations() {
+		return headerObservations;
 	}
 	
 	/**
-	 * Agrega una observación al documento.
+	 * Agrega una observación de la cabecera del documento.
 	 * @param observation Texto de la observación.
 	 */
-	public void addObservation(String observation) {
-		observations.add(observation);
+	public void addHeaderObservation(String observation) {
+		headerObservations.add(observation);
 	}
 
 	/**
-	 * Elimina una observación del documento
-	 * @param observation Observación a eliminar.
+	 * Elimina una observación de la cabecera del documento
+	 * @param observation Observación de la cabecera a eliminar.
 	 */
-	public void removeObservation(Object observation) {
-		observations.remove(observation);
+	public void removeHeaderObservation(Object observation) {
+		headerObservations.remove(observation);
 	}
 
 
@@ -317,5 +326,25 @@ public abstract class Document implements Serializable{
 	 */
 	public void addDocumentDiscount(DiscountLine discount) {
 		getDocumentDiscounts().add(discount);
+	}
+
+	public List<String> getFooterObservations() {
+		return footerObservations;
+	}
+	
+	/**
+	 * Agrega una observación del pie del documento.
+	 * @param observation Texto de la observación.
+	 */
+	public void addFooterObservation(String observation) {
+		footerObservations.add(observation);
+	}
+
+	/**
+	 * Elimina una observación del pie del documento
+	 * @param observation Observación del pie a eliminar.
+	 */
+	public void removeFooterObservation(Object observation) {
+		footerObservations.remove(observation);
 	}
 }

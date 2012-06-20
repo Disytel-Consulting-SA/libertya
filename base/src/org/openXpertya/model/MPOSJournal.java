@@ -278,6 +278,7 @@ public class MPOSJournal extends X_C_POSJournal implements DocAction {
 		// Se crea el Libro de Caja diario para esta Caja
 		MCash cash = new MCash(getCashBook(), getDateTrx());
 		cash.setC_POSJournal_ID(getC_POSJournal_ID());
+		cash.setC_Project_ID(getC_Project_ID());
 		if (!cash.save()) {
 			m_processMsg = "@CashSaveError@: " + CLogger.retrieveErrorAsString();
 			return false;
@@ -357,7 +358,7 @@ public class MPOSJournal extends X_C_POSJournal implements DocAction {
 		// libro de caja destino.
 		try {
 			MCash.transferCash(getC_Cash_ID(), getC_CashTarget_ID(),
-					getCashBalance(), getCtx(), get_TrxName());
+					getCashBalance(), getC_Project_ID(), getCtx(), get_TrxName());
 		} catch (Exception e) {
 			m_processMsg = "@TargetCashTransferError@: " + e.getMessage();
 			return false;

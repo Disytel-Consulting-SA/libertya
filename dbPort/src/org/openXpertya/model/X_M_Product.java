@@ -1,12 +1,13 @@
 /** Modelo Generado - NO CAMBIAR MANUALMENTE - Disytel */
 package org.openXpertya.model;
-import java.util.*;
+import java.util.logging.Level;
+ import java.util.*;
 import java.sql.*;
 import java.math.*;
 import org.openXpertya.util.*;
 /** Modelo Generado por M_Product
  *  @author Comunidad de Desarrollo Libertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
- *  @version  - 2010-03-30 12:28:16.886 */
+ *  @version  - 2011-12-02 16:44:45.978 */
 public class X_M_Product extends org.openXpertya.model.PO
 {
 /** Constructor estándar */
@@ -15,6 +16,7 @@ public X_M_Product (Properties ctx, int M_Product_ID, String trxName)
 super (ctx, M_Product_ID, trxName);
 /** if (M_Product_ID == 0)
 {
+setAmortizationPerc (Env.ZERO);
 setCheckoutPlace (null);	// B
 setC_TaxCategory_ID (0);
 setC_UOM_ID (0);
@@ -35,6 +37,7 @@ setM_Product_ID (0);
 setName (null);
 setProductType (null);	// I
 setValue (null);
+setYearLife (0);
 }
  */
 }
@@ -77,6 +80,21 @@ set_Value ("AD_ComponentObjectUID", AD_ComponentObjectUID);
 public String getAD_ComponentObjectUID() 
 {
 return (String)get_Value("AD_ComponentObjectUID");
+}
+/** Set Amortization Percentage.
+Anual Amortization Percentage */
+public void setAmortizationPerc (BigDecimal AmortizationPerc)
+{
+if (AmortizationPerc == null) throw new IllegalArgumentException ("AmortizationPerc is mandatory");
+set_Value ("AmortizationPerc", AmortizationPerc);
+}
+/** Get Amortization Percentage.
+Anual Amortization Percentage */
+public BigDecimal getAmortizationPerc() 
+{
+BigDecimal bd = (BigDecimal)get_Value("AmortizationPerc");
+if (bd == null) return Env.ZERO;
+return bd;
 }
 public static final int CHECKOUTPLACE_AD_Reference_ID = MReference.getReferenceID("M_Product Checkout Place");
 /** Warehouse = W */
@@ -732,10 +750,6 @@ public String getName()
 {
 return (String)get_Value("Name");
 }
-public KeyNamePair getKeyNamePair() 
-{
-return new KeyNamePair(getID(), getName());
-}
 /** Set Process Now */
 public void setProcessing (boolean Processing)
 {
@@ -763,12 +777,14 @@ public static final String PRODUCTTYPE_ExpenseType = "E";
 public static final String PRODUCTTYPE_Online = "O";
 /** Resource = R */
 public static final String PRODUCTTYPE_Resource = "R";
+/** Assets = A */
+public static final String PRODUCTTYPE_Assets = "A";
 /** Set Product Type.
 Type of product */
 public void setProductType (String ProductType)
 {
-if (ProductType.equals("I") || ProductType.equals("S") || ProductType.equals("E") || ProductType.equals("O") || ProductType.equals("R"));
- else throw new IllegalArgumentException ("ProductType Invalid value - Reference = PRODUCTTYPE_AD_Reference_ID - I - S - E - O - R");
+if (ProductType.equals("I") || ProductType.equals("S") || ProductType.equals("E") || ProductType.equals("O") || ProductType.equals("R") || ProductType.equals("A"));
+ else throw new IllegalArgumentException ("ProductType Invalid value - Reference = PRODUCTTYPE_AD_Reference_ID - I - S - E - O - R - A");
 if (ProductType == null) throw new IllegalArgumentException ("ProductType is mandatory");
 if (ProductType.length() > 1)
 {
@@ -956,6 +972,10 @@ public String getValue()
 {
 return (String)get_Value("Value");
 }
+public KeyNamePair getKeyNamePair() 
+{
+return new KeyNamePair(getID(), getValue());
+}
 /** Set Version No.
 Version Number */
 public void setVersionNo (String VersionNo)
@@ -1000,5 +1020,17 @@ public BigDecimal getWeight()
 BigDecimal bd = (BigDecimal)get_Value("Weight");
 if (bd == null) return Env.ZERO;
 return bd;
+}
+/** Set Year Life */
+public void setYearLife (int YearLife)
+{
+set_Value ("YearLife", new Integer(YearLife));
+}
+/** Get Year Life */
+public int getYearLife() 
+{
+Integer ii = (Integer)get_Value("YearLife");
+if (ii == null) return 0;
+return ii.intValue();
 }
 }

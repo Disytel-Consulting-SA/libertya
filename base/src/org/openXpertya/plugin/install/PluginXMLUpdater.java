@@ -1,25 +1,30 @@
 package org.openXpertya.plugin.install;
 
-import java.io.*;
+import java.io.StringReader;
 import java.sql.Connection;
-import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.Savepoint;
-import java.sql.Timestamp;
 import java.util.HashMap;
 import java.util.Vector;
 
-import javax.xml.parsers.*;
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
 
 import org.openXpertya.model.MChangeLog;
 import org.openXpertya.model.MSequence;
+import org.openXpertya.model.M_Column;
+import org.openXpertya.model.M_Table;
+import org.openXpertya.plugin.common.PluginConstants;
 import org.openXpertya.plugin.common.PluginUtils;
+import org.openXpertya.replication.ReplicationCache;
 import org.openXpertya.util.CPreparedStatement;
 import org.openXpertya.util.DB;
 import org.openXpertya.util.DisplayType;
 import org.openXpertya.util.Env;
 import org.openXpertya.util.Trx;
-import org.w3c.dom.*;
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
+import org.w3c.dom.NodeList;
 import org.xml.sax.InputSource;
 
 public class PluginXMLUpdater {
@@ -40,8 +45,14 @@ public class PluginXMLUpdater {
 	private static String AD_ORG_REL1003 = "1010053";
 	private static Boolean isLibertyaRelease0910 = null;
 	
-	/** Cache-variables para reducir tiempos de busqueda en base de datos */
-	protected static HashMap<String, String> keyColumns = null; 
+	/** Warnings */
+	protected static final String WARNING_UID_ALREADY_EXISTS 		= "WARNING: - Sin inserción - referencia universal ya existente.";
+	protected static final String WARNING_UID_NOT_EXISTS_UPDATE		= "WARNING: - Imposible actualizar - referencia inexistente en tabla.";
+	protected static final String WARNING_UID_NOT_EXISTS_DELETE 	= "WARNING: - Imposible eliminar - referencia inexistente en tabla.";
+	protected static final String WARNING_CHANGEGROUP_HAS_NO_UID 	= "WARNING: - changeGroup sin refencia Universal.";
+	protected static final String WARNING_STRUCTURE_MISSING		 	= "WARNING: - Error general. Sin  estructura adecuada para este procesamiento.";
+	protected static final String WARNING_CANNOT_RESOLVE_UID	 	= "WARNING: - imposible determinar referencia";
+	protected static final String WARNING_DISPLAY_TYPE_UNKNOWN	 	= "WARNING: - displayType no reconocido en sentencia de insercion";
 	
 	/** Almacena los errores que va presentando la instalación */
 	protected static int errorCount = 0;
@@ -55,32 +66,21 @@ public class PluginXMLUpdater {
 	/** Indicador de actividad */
 	protected String[] animation = {".", "..", "...", "....", ".....", "......", ".......", "........", ".........", ".........."}; // {"-", "\\", "|", "/"};
 	
-	protected static void loadCacheData() throws Exception
-	{
-		/* Tablas: identificador y nombre */
-		keyColumns = new HashMap<String, String>();
-		String sql = new String( " SELECT t.tablename, c.columnname " +
-								 " FROM ad_table t " +
-								 " INNER join ad_column c ON t.ad_table_id = c.ad_table_id " +
-								 " WHERE c.iskey = 'Y'");
-		PreparedStatement pstmt = DB.prepareStatement(sql, m_trxName);
-		ResultSet rs = pstmt.executeQuery();
-		while (rs.next())
-			keyColumns.put(rs.getString(1), rs.getString(2));
-	}
+	/** Si esta activado, la instalacion de un componente implicará no solo impactar en las tablas, sino que tambien copiará 
+	 *  la instalación en el changelog, quedando la base de datos destino como lista a exportar dicho componente */
+	protected boolean copyToChangelog = false;
 	
+	/** Si esta activado, mapeara la instalación a un componente ya existente, en lugar de utilizar el especificado en las 
+	 *  propiedades del componente a instalar.  Esto permite "emular" el desarrollo de un componente en un host diferente al destino */
+	protected boolean mapToComponent = false;
 	
-	protected static void freeCacheData() throws Exception
-	{
-		keyColumns = null;
-	}
+	/** Valor a propagar hacia persistInChangelog */
+	int keyColumnValue = -1;
 	
-		
 	/** Getter: devuelve el documento entero a procesar */
 	public XMLUpdateDocument getUpdateDocument() {
 		return updateDocument;
 	}
-	
 	
 	/**
 	 * Crear un parser de update y rellena el contenido estructural según el XML
@@ -91,7 +91,7 @@ public class PluginXMLUpdater {
 		// Guardar transaccion
 		m_trxName = trxName;
 		this.stopOnError = stopOnError;
-		
+
 		// Parsear el documento
 		DocumentBuilder builder = DocumentBuilderFactory.newInstance().newDocumentBuilder();
 		Document doc = builder.parse(new InputSource(new StringReader(xml)));
@@ -121,15 +121,23 @@ public class PluginXMLUpdater {
 		/* Sentencia a ejecutar */
 		String sentence = "";
 		
-		/* Cargar informacion en cache para agilizar el tiempo de respuesta */
-		loadCacheData();
+		/* Recargar la caché si asi corresponde */
+		ReplicationCache.reloadCacheData();
+		
 		int iter = 0;
+		/* Verificar la preferencia.  */
+		copyToChangelog = shouldCopyToChangelog();
+		mapToComponent = shouldMapToComponent();
 		
 		/* Iterar el documento completo y generar las sentencias sql correspondientes */  
 		for (ChangeGroup changeGroup : getUpdateDocument().getChageGroupList())
 		{
 			try
 			{
+				// Verificar si por alguna condicion hay que omitir el procesamiento del changelogActual
+				if (shouldSkipCurrentChangeGroup(changeGroup))
+					continue;
+				
 				sentence = "";
 				currentChangeGroup = changeGroup;
 				PluginUtils.appendStatus(animation[iter++%animation.length], true, false, false, false);
@@ -139,23 +147,70 @@ public class PluginXMLUpdater {
 					sentence = processModify(changeGroup).toString();
 				else if (MChangeLog.OPERATIONTYPE_Deletion.equals(changeGroup.getOperation()))
 					sentence = processDelete(changeGroup).toString();
+				else if (MChangeLog.OPERATIONTYPE_InsertionModification.equals(""+changeGroup.getOperation().charAt(0)))
+					sentence = processInsertModify(changeGroup).toString();				
 				
-				/* Impactar en la bitácora */
-				PluginUtils.appendStatus(" SQL: " + sentence, false, false, true, true);
+				/* Si no hay sentencia de ejecucion, omitirs */
 				if (sentence != null && sentence.length() > 0)
+				{
+					/* Impactar la bitácora */
+					appendStatus(" SQL: " + sentence);
 					executeUpdate(sentence, m_trxName);
+					
+					/* Impactar en el changelog */ 
+					if (copyToChangelog)		
+						persistInChangelog(changeGroup);
+				}
+				
+				/* Si hubo exito (ejecutando sentencia u omitiendo por ser vacia) realizar acciones adicionales en caso de ser necesario */
+				handleSuccess(sentence, changeGroup);
 			}
 			catch (Exception e)
 			{
-				// elevar excepción solo en caso de tener que detenerse ante un error
-				if (stopOnError)
-					throw new Exception(e);
+				handleException(e, changeGroup);
 			}
 		}
-		
-		/* Liberar memoria */
-		freeCacheData();
-		System.gc();
+	}
+	
+	/* En esta clase actualmente se deben procesar todos los registros.
+	 * Se deja la posibilidad de redefinicion para las subclases */
+	protected boolean shouldSkipCurrentChangeGroup(ChangeGroup changeGroup)
+	{
+		return false;
+	}
+	
+	
+	/**
+	 * Envia al log correspondiente la sentencia a ejecutar
+	 * @param sentence sentencia a ejecutar
+	 */
+	protected void appendStatus(String sentence)
+	{
+		PluginUtils.appendStatus(" SQL: " + sentence, false, false, true, true);
+	}
+	
+	/**
+	 * En caso de ser necesario, ejecutar acciones adicionales luego del
+	 * exito en la ejecucion de la sentencia SQL generada e impactada en BBDD
+	 * Este metodo puede ser redefinido por subclases según sea necesario
+	 */
+	protected void handleSuccess(String sentence, ChangeGroup changeGroup) throws Exception
+	{
+		// Implemented by subclass
+	}
+	
+	/**
+	 * Ignora la excepción o no según las condiciones del caso
+	 * Este metodo puede ser redefinido por subclases según sea necesario
+	 * @param e excepcion generada al ejecutar la actualización
+	 * @param changeGroup datos que originalmente generaron la excepcion
+	 */
+	protected void handleException(Exception e, ChangeGroup changeGroup) throws Exception
+	{
+		// elevar excepción solo en caso de tener que detenerse ante un error
+		// (si stopOnError es True, o bien se esta generando entradas en AD_Changelog)
+		if (stopOnError || copyToChangelog)
+			throw new Exception(e);
 	}
 	
 	/**
@@ -169,7 +224,7 @@ public class PluginXMLUpdater {
 
 		/* Si el registro ya existe, no insertarlo nuevamente */
 		if ( recordExists(changeGroup) ) {
-			raiseException("WARNING: - Sin inserción - referencia universal (" + getUniversalReference(changeGroup) + ") ya existente en tabla: " + changeGroup.getTableName() );
+			handleRecordExistsOnInsert(changeGroup);
 			return sql;
 		}
 		
@@ -179,8 +234,9 @@ public class PluginXMLUpdater {
 		/* Rellenar stringbuffers nombres-datos de las columnas */
 		StringBuffer columnNames = new StringBuffer();
 		StringBuffer columnValues = new StringBuffer();
+
 		for (Column column : changeGroup.getColumns())
-			insertColumnSQLSentence(columnNames, columnValues, column, keyColumnName, changeGroup.getTableName());
+			insertColumnSQLSentence(columnNames, columnValues, column, keyColumnName, changeGroup.getTableName(), changeGroup);
 		
 		/* Quitar ultima coma */
 		columnNames.setCharAt(columnNames.length()-1, ' ');
@@ -204,19 +260,23 @@ public class PluginXMLUpdater {
 		/* Creación del sql para el update */
 		StringBuffer sql = new StringBuffer("");
 		
-		/* Si el regitro no existe, presentar el error correspondiente  */		
+		/* Si el regitro no existe, presentar el error correspondiente  */
 		if ( !recordExists(changeGroup) ) {
-			raiseException("WARNING: - imposible actualizar - referencia: " + getUniversalReference(changeGroup) + " inexistente en tabla: " + changeGroup.getTableName());
+			handleRecordNotExistsOnModify(changeGroup);
 			return sql;
 		}
+		
+		/* Obtener la columna clave de la tabla */
+		String keyColumnName = getKeyColumnName(changeGroup.getTableName());
 		
 		/* Inicio de sentencia sql */
 		sql.append(" UPDATE " + changeGroup.getTableName() + " SET ");
 		
-		/* Columnas a modificar de sentencia sql */
+		/* Columnas a modificar de sentencia sql (el ID de la columna debe ser omitido en cualquier modificación dado que varia en cada instancia */
 		for (Column column : changeGroup.getColumns())
-			updateColumnSQLSentence(sql, column, changeGroup.getTableName());
-		
+			if (!column.getName().equalsIgnoreCase(keyColumnName))
+				updateColumnSQLSentence(sql, column, changeGroup.getTableName(), changeGroup);
+			
 		/* Quitar ultima coma */
 		sql.setCharAt(sql.length()-1, ' ');
 		
@@ -240,7 +300,7 @@ public class PluginXMLUpdater {
 		
 		/* Si el registro no existe, no intentar eliminarlo */
 		if ( !recordExists(changeGroup) ) {
-			raiseException("WARNING: - Sin eliminación - referencia a eliminar (" + getUniversalReference(changeGroup) + ") inexistente en tabla: " + changeGroup.getTableName() );
+			handleRecordNotExistsOnDelete(changeGroup);
 			return sql;
 		}
 
@@ -252,7 +312,33 @@ public class PluginXMLUpdater {
 		
 		return sql;
 	}
+
+	/**
+	 * Funcionalidad especial.  Verifica si el registro existe en la tabla a traves de su UID.
+	 * 	En caso de existir, ejecutará una sentencia de actualización.  
+	 * 	En caso de no existir, ejecutará una sentencia de inserción.
+	 */
+	private StringBuffer processInsertModify(ChangeGroup changeGroup)  throws Exception
+	{
+		if (recordExists(changeGroup))
+			return processModify(changeGroup);
+		return processInsert(changeGroup);
+	}
 	
+	/** Eleva una excepcion a fin de notificar que el intento de inserción no fue llevado a cabo dado que el registro en cuestion ya existía */
+	protected void handleRecordExistsOnInsert(ChangeGroup changeGroup) throws Exception	{
+		raiseException(WARNING_UID_ALREADY_EXISTS + " Referencia: (" + getUniversalReference(changeGroup) + ") en tabla: " + changeGroup.getTableName() );
+	}
+
+	/** Eleva una excepcion a fin de notificar que el intento de modificación no fue llevado a cabo dado que el registro en cuestion no existía */
+	protected void handleRecordNotExistsOnModify(ChangeGroup changeGroup) throws Exception	{
+		raiseException(WARNING_UID_NOT_EXISTS_UPDATE + " Referencia: " + getUniversalReference(changeGroup) + ". Tabla:" + changeGroup.getTableName());
+	}
+	
+	/** Eleva una excepcion a fin de notificar que el intento de eliminaciòn no fue llevado a cabo dado que el registro en cuestion no existía */
+	protected void handleRecordNotExistsOnDelete(ChangeGroup changeGroup) throws Exception	{
+		raiseException(WARNING_UID_NOT_EXISTS_DELETE + " Referencia: (" + getUniversalReference(changeGroup) + ") .Tabla: " + changeGroup.getTableName() );
+	}
 	
 	/**
 	 * Verifica la existencia del registro en la tabla dada
@@ -272,16 +358,16 @@ public class PluginXMLUpdater {
 		
 		/* Si no existe la referenciaUniversal es imposible eliminar/modificar algo */
 		if (!validateUniversalReference(changeGroup)) { 
-			raiseException("WARNING: - changeGroup sin refencia Universal. Operacion: " + changeGroup.getOperation() + "  (valor en null) - tabla: " + tableName );
+			raiseException(WARNING_CHANGEGROUP_HAS_NO_UID + " Operacion: " + changeGroup.getOperation() + "  (valor en null) - tabla: " + tableName );
 			return false;
 		}
 		
 		/* Buscar el registro por su UID */
-		int recordExists = DB.getSQLValue(m_trxName, " SELECT COUNT(1) FROM " + tableName  + " WHERE " + refUIDwhereClause);
+		int recordExists = DB.getSQLValue(m_trxName, " SELECT COUNT(1) FROM " + tableName  + " WHERE " + refUIDwhereClause, true);
 		
 		/* Si recordExists devuelve -1 entonces la tabla no contiene la estructura adecuada para el procesamiento */
 		if ( recordExists == -1 )
-			raiseException("WARNING: - Error general. Operacion: " + changeGroup.getOperation() + " - tabla: " + tableName + " no posee la estructura adecuada para este procesamiento " );
+			raiseException(WARNING_STRUCTURE_MISSING + " Operacion: " + changeGroup.getOperation() + " - tabla: " + tableName );
 		
 		/* Retornar true si al menos hay un registro con dicho UID */
 		return recordExists > 0;
@@ -351,7 +437,7 @@ public class PluginXMLUpdater {
 	 */
 	protected String getUniversalReference(ChangeGroup changeGroup)
 	{
-		return changeGroup.getUid();	
+		return ReplicationCache.mappedUIDs.get(changeGroup.getUid()) != null ? ReplicationCache.mappedUIDs.get(changeGroup.getUid()) : changeGroup.getUid();
 	}
 	
 	
@@ -363,7 +449,7 @@ public class PluginXMLUpdater {
 	 * @param columnType
 	 * @param newValue
 	 */
-	private void insertColumnSQLSentence(StringBuffer columnNames, StringBuffer columnValues, Column column, String keyColumnName, String tableName) throws Exception
+	private void insertColumnSQLSentence(StringBuffer columnNames, StringBuffer columnValues, Column column, String keyColumnName, String tableName, ChangeGroup changeGroup) throws Exception
 	{
 		try
 		{
@@ -374,7 +460,7 @@ public class PluginXMLUpdater {
 			columnNames.append( column.getName() + "," );
 			
 			/* ¿Columnas especiales? */
-			if (appendSpecialValues(columnValues, column, tableName))
+			if (appendSpecialValues(columnValues, column, tableName, true, changeGroup))
 				return;
 			
 			/* Incorporar comillas a la sentencia SQL o no según sea necesario */
@@ -383,7 +469,7 @@ public class PluginXMLUpdater {
 			else
 			{
 				/* Si es la columna clave, buscar el siguiente ID de la tabla, ya que no utiliza el ID del XML original */
-				if (column.getName().equals(keyColumnName))
+				if (column.getName().toLowerCase().equals(keyColumnName))
 					appendKeyColumnValue(columnNames, columnValues, tableName, column.getNewValue());
 				else 
 					appendNotQuotedValue(columnValues, column);
@@ -404,7 +490,8 @@ public class PluginXMLUpdater {
 	 */
 	protected void appendKeyColumnValue(StringBuffer columnNames, StringBuffer columnValues, String tableName, String valueID)
 	{
-		columnValues.append( MSequence.getNextID(Env.getAD_Client_ID(Env.getCtx()), tableName, m_trxName) + "," );	
+		keyColumnValue = MSequence.getNextID(Env.getAD_Client_ID(Env.getCtx()), tableName, m_trxName);
+		columnValues.append( keyColumnValue + "," );	
 	}
 	
 	
@@ -415,7 +502,7 @@ public class PluginXMLUpdater {
 	 * @param columnType
 	 * @param newValue
 	 */
-	private void updateColumnSQLSentence(StringBuffer sql, Column column, String tableName) throws Exception
+	private void updateColumnSQLSentence(StringBuffer sql, Column column, String tableName, ChangeGroup changeGroup) throws Exception
 	{
 		try
 		{
@@ -426,7 +513,7 @@ public class PluginXMLUpdater {
 			sql.append( column.getName() + "=" );
 			
 			/* ¿Columnas especiales? */
-			if (appendSpecialValues(sql, column, tableName))
+			if (appendSpecialValues(sql, column, tableName, true, changeGroup))
 				return;
 			
 			/* Incorporar comillas a la sentencia SQL o no según sea necesario */	
@@ -471,7 +558,7 @@ public class PluginXMLUpdater {
 		{
 			/* Determinar columna ID y registro al cual referenciar */
 			String refKeyColumnName = getKeyColumnName(column.getRefTable());
-			int refRecordID = getReferenceRecordID(query, refKeyColumnName, column);
+			int refRecordID = getReferenceRecordID(refKeyColumnName, column);
 			
 			/* Insertar la referencia basandose en los valores de identificadores de la nueva base de datos */
 			query.append( (refRecordID==-1?"null":refRecordID) ).append( "," );
@@ -493,21 +580,22 @@ public class PluginXMLUpdater {
 	/**
 	 * Recupera el ID referencial a partir del ObjectComponentUID
 	 * (Outline a método de recuperación para redefinición en subclases) 
-	 * @param query es la concatenación actual de valores para generar la sentencias
 	 * @param refKeyColumnName columna ID de la tabla donde hay que buscar la referencia
 	 * @param column columna con la información relacionada a la busqueda
 	 * @return el ID a utilizar para la foreign-key
 	 * @throws Exception en caso de error
 	 */
-	protected int getReferenceRecordID(StringBuffer query, String refKeyColumnName, Column column) throws Exception
+	protected int getReferenceRecordID(String refKeyColumnName, Column column) throws Exception
 	{
-		/* valor a retornar */
-		String refRecordIDSQL = " SELECT " + refKeyColumnName + " FROM " + column.getRefTable() + " WHERE " + getUIDWhereClause(column.getRefUID());
-		int retValue = DB.getSQLValue(m_trxName, refRecordIDSQL );
+		/* Verificar si el refUID apunta a un registro mapeado insertado en esta ejecución (de ser así, mapear al nuevo UID generado) */
+		String uid = ReplicationCache.mappedUIDs.get(column.getRefUID())!=null ? ReplicationCache.mappedUIDs.get(column.getRefUID()) : column.getRefUID();
+		/* Valor a retornar */
+		String refRecordIDSQL = " SELECT " + refKeyColumnName + " FROM " + column.getRefTable() + " WHERE " + getUIDWhereClause(uid);
+		int retValue = DB.getSQLValue(m_trxName, refRecordIDSQL, true );
 		
 		/* Elevar una excepción si no pudieron mapearse correctamente las referencias se dispara la excepción correspondiente */
 		if (refKeyColumnName == null || retValue == -1)
-			raiseException("WARNING: - imposible determinar referencia (" + refRecordIDSQL + ")");
+			throw new Exception(WARNING_CANNOT_RESOLVE_UID + ": (" + refRecordIDSQL + ")");
 	
 		return retValue;
 	}
@@ -526,15 +614,16 @@ public class PluginXMLUpdater {
 	protected String getKeyColumnName(String tableName)
 	{
 		/* Caso general */
-		return keyColumns.get(tableName); // DB.getSQLValueString(m_trxName, " SELECT c.columnname FROM ad_table t INNER join ad_column c ON t.ad_table_id = c.ad_table_id WHERE c.iskey = 'Y' AND t.tablename = '" + tableName + "' AND 0 = ? ", 0);
+		return ReplicationCache.keyColumns.get(tableName.toLowerCase()); 
 	}
 	
 	/**
 	 * Columnas especiales que será necesario cargar con valores específicos, ignorando el valor del XML
 	 */
-	protected boolean appendSpecialValues(StringBuffer query, Column column, String tableName) throws Exception
+	protected boolean appendSpecialValues(StringBuffer query, Column column, String tableName, boolean useQuotes, ChangeGroup changeGroup) throws Exception
 	{
 		boolean retValue = false;
+		String quotes = (useQuotes?"'":"");
 		
 		/* Valores en null deben ser pasados tal como null */
 		if ("null".equalsIgnoreCase(column.getNewValue()))
@@ -569,14 +658,14 @@ public class PluginXMLUpdater {
 		/* Columna de tablas de traduccion que referencian a AD_Language */
 		else if ((tableName.toLowerCase().endsWith("_trl") || tableName.equalsIgnoreCase("C_Bpartner") )&& "AD_Language".equalsIgnoreCase(column.getName()) && column.getRefUID() != null && column.getRefUID().length()>0)
 		{
-				String adLanguage = DB.getSQLValueString(m_trxName, " SELECT AD_Language FROM AD_Language WHERE " + getUIDWhereClause(column.getRefUID()) + " AND 0 = ?", 0);
-				query.append( "'" + adLanguage + "'");
+				String adLanguage = DB.getSQLValueString(m_trxName, " SELECT AD_Language FROM AD_Language WHERE " + getUIDWhereClause(column.getRefUID()) + " AND 0 = ?", 0, true);
+				query.append( quotes + adLanguage + quotes);
 				retValue = true;
 		}
 		/* Para los tipos boton, convertir true o false a Y o N */
 		else if (DisplayType.Button == Integer.parseInt(column.getType()) && (column.getNewValue().equalsIgnoreCase("true") ||  column.getNewValue().equalsIgnoreCase("false")))
 		{
-				query.append( "'" + (column.getNewValue().equalsIgnoreCase("true")?"Y":"N") + "'" );
+				query.append( quotes + (column.getNewValue().equalsIgnoreCase("true")?"Y":"N") + quotes );
 				retValue = true;
 		}
 		/* Si estamos insertando en un nodo del arbol, inicialmente se guarda con cero, ignorar la referencia y guardar 0 */
@@ -601,7 +690,47 @@ public class PluginXMLUpdater {
 			query.append("null");
 			retValue = true;
 		}	
-		
+		/* Overrides especiales por mapeo del componente */
+		else if (mapToComponent)
+		{
+			/* Si estoy insertando un nuevo registro... */
+			if (MChangeLog.OPERATIONTYPE_Insertion.equals(changeGroup.getOperation()))
+			{
+				/* Debo mapear y actualizar el UID del changeGroup */
+				if (!changeGroup.isMapped())
+				{
+					changeGroup.setMapped(true);
+					newMapUID(changeGroup);
+					changeGroup.setUid(ReplicationCache.mappedUIDs.get(changeGroup.getUid()));
+				}
+				
+				/* ...el UID debe ser mapeado */
+				if (column.getName().equalsIgnoreCase("AD_ComponentObjectUID"))
+				{
+					query.append(quotes + changeGroup.getUid() + quotes);
+					retValue = true;
+				}
+				/* ...el ComponentVersion debe ser reasignado */
+				if (column.getName().equalsIgnoreCase("AD_ComponentVersion_ID"))
+				{
+					query.append(Env.getContext(Env.getCtx(), PluginConstants.INSTALLED_COMPONENTVERSION_ID));
+					retValue = true;			
+				}
+			}
+			/* En caso de modificacion debo determinar si hay que mapear o no (si es un registro insertado en este proceso o uno ya existente) */
+			else
+			{
+				/* Todavia no se mapeo? */
+				if (!changeGroup.isMapped())
+				{
+					/* Indicar como mapeado (se mapee o no, simplemente es para no volver a ejecutar en todas las columnas */
+					changeGroup.setMapped(true);
+					// Actualizar el UID del changeGroup si corresponde
+					if (ReplicationCache.mappedUIDs.get(changeGroup.getUid()) != null)
+						changeGroup.setUid(ReplicationCache.mappedUIDs.get(changeGroup.getUid()));
+				}
+			}
+		}
 		/* Si es una columna especial, concatenar la coma final */
 		if (retValue)
 			query.append(",");
@@ -610,11 +739,33 @@ public class PluginXMLUpdater {
 				
 	}
 	
+	/**
+	 * Incorpora una nueva asociación a la map
+	 * Ej: 
+	 * 		Original: ASET-AD_Message-2348733
+	 * 		Nuevo:    ASET2CORE-AD_Message-2348733-20120319113805
+	 */
+	protected void newMapUID(ChangeGroup changeGroup)
+	{
+		// Guardar viejo prefix. Ej. ASET
+		String oldPrefix = Env.getContext(Env.getCtx(), PluginConstants.COMPONENT_SOURCE_PREFIX);
+		
+		// Generar nuevo prefix. Ej. ASET2CORE
+		String newPrefix = oldPrefix + "2" + Env.getContext(Env.getCtx(), PluginConstants.PROP_PREFIX); 
+		
+		// Guardar viejo y nuevo UID 
+		String oldUID = changeGroup.getUid();
+		String newUID = changeGroup.getUid().replace(oldPrefix, newPrefix) + "-" + Env.getDateTime("yyyyMMddHHmmss");
+		
+		// Incluir el nuevo UID en la nomina de UIDs mapeados
+		ReplicationCache.mappedUIDs.put(oldUID, newUID);
+	}
+	
 	protected Boolean requiresQuotes(Column column) throws Exception
 	{
 		Boolean requiresQuotes = DisplayType.requiresQuotes(Integer.parseInt(column.getType()));
 		if (requiresQuotes == null)
-			raiseException("WARNING: - displayType no reconocido en sentencia de insercion: " + column.getType());
+			raiseException(WARNING_DISPLAY_TYPE_UNKNOWN + ": " + column.getType());
 		return requiresQuotes;
 	}
 	
@@ -677,6 +828,8 @@ public class PluginXMLUpdater {
 		private String tableName = null;
 		private String operation = null;
 		private String uid = null;
+		private boolean mapped = false;
+		private boolean processed = false;
 		
 		/* Constructor */
 		public ChangeGroup(String tableName, String operation, String uid, Vector<Column> columns)
@@ -685,6 +838,7 @@ public class PluginXMLUpdater {
 			this.columns = columns;
 			this.tableName = tableName;
 			this.operation = operation;
+			this.processed = false;
 		}
 		
 		/* Retorna una columna a partir del nombre la misma */
@@ -707,9 +861,12 @@ public class PluginXMLUpdater {
 		public void setOperation(String operation) 		{			this.operation = operation;		}
 		public String getUid() 							{			return uid;						}
 		public void setUid(String uid) 					{			this.uid = uid;					}
+		public boolean isMapped() 						{			return mapped;					}
+		public void setMapped(boolean mapped) 			{			this.mapped = mapped;			}
+		public boolean isProcessed()					{			return processed;				}
+		public void setProcessed(boolean processed)		{			this.processed = processed;		}
+		
 	}
-	
-
 	
 	
 	/**
@@ -818,8 +975,8 @@ public class PluginXMLUpdater {
 	public static void executeUpdate(String sql, String trxName) throws Exception
 	{
 		// guardar savepoint en caso de error
-		Connection conn = Trx.getTrx(trxName).getConnection();
-		Savepoint savePoint = conn.setSavepoint(savePointName);
+		Connection conn = (trxName != null ? Trx.getTrx(trxName).getConnection() : null);
+		Savepoint savePoint = (conn != null ? conn.setSavepoint(savePointName) : null);
 		try 
 		{
 			   
@@ -833,12 +990,14 @@ public class PluginXMLUpdater {
 		catch (Exception e)
 		{
 			// rollbackear a ultimo savepoint
-			conn.rollback(savePoint);
+			if (trxName != null)
+				conn.rollback(savePoint);
 			raiseException("ERROR: Error en ejecución de sentencia SQL. " + e.getMessage() + " - SQL: " + sql);
 		}
 		finally
 		{
-			conn.releaseSavepoint(savePoint);
+			if (trxName != null)
+				conn.releaseSavepoint(savePoint);
 		}
 	}
 	
@@ -856,4 +1015,93 @@ public class PluginXMLUpdater {
 		return isLibertyaRelease0910;
 		
 	}
+	
+	/**
+	 * Impacta la inserción/modificación/cambio en el changelog 
+	 * @param column
+	 * @param changeGroup
+	 */
+	protected void persistInChangelog(ChangeGroup changeGroup) throws Exception
+	{
+		int changelogGroupID = -1;
+		int componentVersion = -1;
+		int recordID = -1;
+		String newValue = "";
+		try
+		{
+			// Crear un nuevo changegroup
+			changelogGroupID = MSequence.getNextSequenceID(Env.getAD_Client_ID(Env.getCtx()), "seq_ad_changelog_group", m_trxName);
+	
+			// Obtener el componentversion
+			componentVersion = Integer.parseInt(Env.getContext(Env.getCtx(), PluginConstants.INSTALLED_COMPONENTVERSION_ID));
+			if (componentVersion <= 0)
+				throw new Exception("Version de componente incorrecta: " + componentVersion);
+
+			// Si estoy insertando, utilizar el nextValue correspondiente a la tabla, en caso contrario usar el UID
+			if (MChangeLog.OPERATIONTYPE_Insertion.equals(changeGroup.getOperation()))
+				recordID = keyColumnValue;
+			else
+				recordID = resolveKeyFromUID(m_trxName, changeGroup.getTableName(), getUniversalReference(changeGroup));
+		
+			// Iterar por las columnas y persistir en el changelog
+			for (Column column : changeGroup.getColumns())
+			{
+				// Si es una columna especial, procesarla acordemente (ignorando XML)
+				StringBuffer query = new StringBuffer();
+				if (appendSpecialValues(query, column, changeGroup.getTableName(), false, changeGroup))
+					newValue = query.toString().substring(0, query.length()-1);
+				else
+				{
+					// Inicialmente el valor por defecto
+					newValue = column.getNewValue();
+
+					// Si la columna referencia a otra columna, usar su UID para resolver el ID						
+					if (isReferenceColumn(column))
+					{
+						String refKeyColumnName = getKeyColumnName(column.getRefTable());
+						int refRecordID = getReferenceRecordID(refKeyColumnName, column);
+						newValue = (refRecordID == -1 ? "null" : Integer.toString(refRecordID));
+					}
+				}
+				// Instanciar y persistir en el changelog
+				MChangeLog aChangeLog = null;
+				/* DisplayType: usamos siempre String dado que asi esta en el XML. */
+				aChangeLog = new MChangeLog(Env.getCtx(), 0, m_trxName, 666, M_Table.getID(changeGroup.getTableName()), M_Column.getColumnID(m_trxName, column.getName(), changeGroup.getTableName()), recordID, Env.getAD_Client_ID(Env.getCtx()), Env.getAD_Org_ID(Env.getCtx()), column.getOldValue(), newValue, changeGroup.getUid(), componentVersion, changeGroup.getOperation(), DisplayType.String, changelogGroupID);
+				if (!aChangeLog.insertDirect())
+					throw new Exception(" Error al guardar el changelog: UID:" + changeGroup.getTableName() + " - OP:" + changeGroup.getOperation() + " - NewValue:" + column.getNewValue());
+			}
+		}
+		catch (Exception e)	{
+			throw new Exception(" Imposible replicar instalacion en Changelog: " + e.getMessage());
+		}
+	}
+	
+	/**
+	 * A partir de una referencia universal, devuelve el ID local
+	 */
+	protected int resolveKeyFromUID(String trxName, String tableName, String reference)
+	{
+		return DB.getSQLValue(trxName, 
+								" SELECT " + getKeyColumnName(tableName) + 
+								" FROM " + tableName + 
+								" WHERE " + appendUniversalRefenceWhereClause(reference), true);
+	
+	}
+
+	/**
+	 * Verifica si debe copiar a la tabla AD_Changelog, el changelog recibido a ser procesado
+	 */
+	protected boolean shouldCopyToChangelog()
+	{
+		return "Y".equals(Env.getContext(Env.getCtx(), PluginConstants.PROP_COPY_TO_CHANGELOG));	
+	}
+	
+	/**
+	 * Verifica si debe mapear el component
+	 */
+	protected boolean shouldMapToComponent()
+	{
+		return "Y".equals(Env.getContext(Env.getCtx(), PluginConstants.MAP_TO_COMPONENT));	
+	}
+
 }

@@ -21,13 +21,28 @@ public class PaymentMedium implements IPaymentMediumInfo {
 	/** ID utilizado para el Calculador de Descuentos */
 	private Integer internalID = null;
 	
-	/** ID de Entidad Financiera. Solo para TenderType = Tarjeta */
-	private Integer entidadFinancieraID = null;
+	/** Entidad Financiera. Solo para TenderType = Tarjeta */
+	private EntidadFinanciera entidadFinanciera = null;
 	/** Lista de planes de tarjeta de crédito. Solo para TenderType = Tarjeta */
 	private List<EntidadFinancieraPlan> creditCardPlans;
 	
 	/** Plazo de cobro de un cheque. Solo para TenderType = Cheque */
 	private Integer checkDeadLine = null;
+	
+	/** Validación para cheques anteriores al plazo. Solo para TenderType = Cheque */
+	private boolean validationBeforeCheckDeadLines = false;
+	
+	/** Valor inicial del rango de validación. Solo para TenderType = Cheque */
+	private Integer beforeCheckDeadLineFrom = null;
+		
+	/** Valor final del rango de validación. Solo para TenderType = Cheque */
+	private Integer beforeCheckDeadLineTo = null;
+	
+	/**
+	 * Lista de plazos que deben existir en la compra para que pueda agregarse
+	 * un pago con este medio de pago. Solo para TenderType = Cheque
+	 */
+	private List<Integer> beforeCheckDeadLinesToValidate = null;
 	
 	/** Banco del medio de Pago (campo Bank, lista de validación). Este 
 	 * atributo guarda el Value de la lista */
@@ -114,22 +129,7 @@ public class PaymentMedium implements IPaymentMediumInfo {
 	 */
 	public void setCreditCardPlans(List<EntidadFinancieraPlan> creditCardPlans) {
 		this.creditCardPlans = creditCardPlans;
-	}
-
-	/**
-	 * @return the entidadFinancieraID
-	 */
-	public Integer getEntidadFinancieraID() {
-		return entidadFinancieraID;
-	}
-
-	/**
-	 * @param entidadFinancieraID the entidadFinancieraID to set
-	 */
-	public void setEntidadFinancieraID(Integer entidadFinancieraID) {
-		this.entidadFinancieraID = entidadFinancieraID;
-	}
-	
+	}	
 	
 	/**
 	 * @return Indica si este medio de pago es de tipo Tarjeta de Crédito. 
@@ -242,6 +242,48 @@ public class PaymentMedium implements IPaymentMediumInfo {
 	 */
 	public void setInternalID(Integer internalID) {
 		this.internalID = internalID;
+	}
+
+	public void setValidationBeforeCheckDeadLines(
+			boolean validationBeforeCheckDeadLines) {
+		this.validationBeforeCheckDeadLines = validationBeforeCheckDeadLines;
+	}
+
+	public boolean isValidationBeforeCheckDeadLines() {
+		return validationBeforeCheckDeadLines;
+	}
+
+	public void setBeforeCheckDeadLineFrom(Integer beforeCheckDeadLineFrom) {
+		this.beforeCheckDeadLineFrom = beforeCheckDeadLineFrom;
+	}
+
+	public Integer getBeforeCheckDeadLineFrom() {
+		return beforeCheckDeadLineFrom;
+	}
+
+	public void setBeforeCheckDeadLineTo(Integer beforeCheckDeadLineTo) {
+		this.beforeCheckDeadLineTo = beforeCheckDeadLineTo;
+	}
+
+	public Integer getBeforeCheckDeadLineTo() {
+		return beforeCheckDeadLineTo;
+	}
+
+	public void setBeforeCheckDeadLinesToValidate(
+			List<Integer> beforeCheckDeadLinesToValidate) {
+		this.beforeCheckDeadLinesToValidate = beforeCheckDeadLinesToValidate;
+	}
+
+	public List<Integer> getBeforeCheckDeadLinesToValidate() {
+		return beforeCheckDeadLinesToValidate;
+	}
+
+	public void setEntidadFinanciera(EntidadFinanciera entidadFinanciera) {
+		this.entidadFinanciera = entidadFinanciera;
+	}
+
+	public EntidadFinanciera getEntidadFinanciera() {
+		return entidadFinanciera;
 	}
 	
 }

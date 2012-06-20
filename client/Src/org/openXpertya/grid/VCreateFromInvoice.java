@@ -26,7 +26,6 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Level;
-
 import org.openXpertya.apps.form.VComponentsFactory;
 import org.openXpertya.model.MDocType;
 import org.openXpertya.model.MInOut;
@@ -235,11 +234,13 @@ public class VCreateFromInvoice extends VCreateFrom {
            .append(   "l.Line, ")
            .append(   "l.M_Product_ID, ")
            .append(   "p.Name AS ProductName, ")
+           .append("p.value AS ItemCode, ")
            .append(   "l.C_UOM_ID, ")
            .append(   "l.MovementQty, ")
            .append(   "l.MovementQty-SUM(NVL(mi.Qty,0)) AS RemainingQty, ")
            .append(   "l.QtyEntered/l.MovementQty AS Multiplier, ")
-           .append(   "COALESCE(l.C_OrderLine_ID,0) AS C_OrderLine_ID ")                          
+           .append(   "COALESCE(l.C_OrderLine_ID,0) AS C_OrderLine_ID, ")  
+           .append("l.M_AttributeSetInstance_ID AS AttributeSetInstance_ID ")
            
            .append("FROM M_InOutLine l, M_Product p, M_MatchInv mi " )
            .append("WHERE l.M_Product_ID=p.M_Product_ID " )
@@ -248,7 +249,7 @@ public class VCreateFromInvoice extends VCreateFrom {
 	       .append(  "AND l.M_InOutLine_ID=mi.M_InOutLine_ID(+) " )
 	       // end vpj-cd e-evolution 03/15/2005
 	       .append(  "AND l.M_InOut_ID=? " )    // #1
-           .append("GROUP BY l.MovementQty, l.QtyEntered/l.MovementQty, l.C_UOM_ID, l.M_Product_ID, p.Name, l.M_InOutLine_ID, l.Line, l.C_OrderLine_ID " )
+           .append("GROUP BY l.MovementQty, l.QtyEntered/l.MovementQty, l.C_UOM_ID, l.M_Product_ID, p.Name, l.M_InOutLine_ID, l.Line, l.C_OrderLine_ID, p.value,l.M_AttributeSetInstance_ID " )
            .append("ORDER BY l.Line" );
 
         PreparedStatement pstmt = null;
@@ -281,6 +282,8 @@ public class VCreateFromInvoice extends VCreateFrom {
                 // Artículo
     			docLine.productID = rs.getInt("M_Product_ID");
 				docLine.productName = rs.getString("ProductName");
+				docLine.itemCode = rs.getString("ItemCode");
+				docLine.instanceName = getInstanceName(rs.getInt("AttributeSetInstance_ID"));
 
 				// Unidad de Medida
 				docLine.uomID = rs.getInt("C_UOM_ID");
@@ -300,7 +303,7 @@ public class VCreateFromInvoice extends VCreateFrom {
 	    		if (pstmt != null) pstmt.close();
     		}	catch (Exception e) {}
     	}
-
+        filtrarColumnaInstanceName(data);
         loadTable(data);
     }    // loadShipment
 
@@ -487,7 +490,7 @@ public class VCreateFromInvoice extends VCreateFrom {
 		// set Shipment to Null
 		shipmentField.setValue(null);
 		invoiceOrderField.setValue(null);
-		loadOrder( orderID,isForInvoice() );
+		loadOrder( orderID,isForInvoice(),true );
 	}
 	
 	/**
@@ -563,7 +566,7 @@ public class VCreateFromInvoice extends VCreateFrom {
         	MInvoice invoice = new MInvoice(getCtx(), invoiceID, getTrxName());
         	relatedOrderID = invoice.getC_Order_ID();
         }
-        loadOrder(relatedOrderID, false);
+        loadOrder(relatedOrderID, false, true);
         if (relatedOrderID > 0) {
         	orderField.setValue(relatedOrderID);
         }
@@ -635,6 +638,13 @@ public class VCreateFromInvoice extends VCreateFrom {
 			return true;
 		}
 	}
+
+	@Override
+	protected void customizarPanel() {
+		// TODO Auto-generated method stub
+		
+	}
+
 }    // VCreateFromInvoice
 
 

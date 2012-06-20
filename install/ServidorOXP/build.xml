@@ -151,7 +151,7 @@
       <manifest>
 		<attribute name="Specification-Title" value="Librerias_Cliente_Libertya"/>
 		<attribute name="Specification-Version" value="${VERSION_PRINCIPAL_OXP}"/>
-		<attribute name="Specification-Vendor" value="(C) 2011 DISYTEL."/>
+		<attribute name="Specification-Vendor" value="(C) 2012 DISYTEL."/>
 		<attribute name="Implementation-Title" value="OXPXLib ${VERSION_PRINCIPAL_OXP}"/>
 		<attribute name="Implementation-Version" value="${VERSION_PRINCIPAL_OXP} ${DSTAMP}-${TSTAMP}"/>
 		<attribute name="Implementation-Vendor" value="${env.CONSULTORA_OXP}"/>
@@ -159,34 +159,55 @@
       </manifest>
     </jar>
   	
-    <!-- ============================ Incorporar plugins a OXP.jar ================================	-->
+    <!-- ======================== Incorporar plugins a OXP.jar, OXPRoot.jar ============================ -->
 
 	<!-- Crear directorio temporal para generar el OXP.jar definitivo con plugins -->
-    <mkdir dir="nuevoOXP"/>
+  	<mkdir dir="nuevosComponents"/>
+  	<mkdir dir="nuevoOXP"/>
+  	<mkdir dir="nuevoOXPRoot"/>
 
-	<!-- Descomprimir el actual OXP.jar -->	
+	<!-- Descomprimir los actuales OXP.jar y OXPRoot.jar -->	
     <unjar src="lib/OXP.jar" dest="nuevoOXP" />
-
+  	<unjar src="lib/OXPRoot.jar" dest="nuevoOXPRoot" />
+  	
 	<!-- Descomprimir todos los plugins -->	
-	<unzip dest="nuevoOXP">
+	<unzip dest="nuevosComponents">
 	    <fileset dir="lib/plugins">
 	        <include name="**/*.jar" />
 	    </fileset>    
 	</unzip> 
 
 	<!-- Eliminar la informacion de metadatos del ultimo plugin descomprimido -->
-    <delete file="nuevoOXP/preinstall.sql" failonerror="no"/>
-    <delete file="nuevoOXP/install.xml" failonerror="no"/>
-    <delete file="nuevoOXP/postinstall.xml" failonerror="no"/>
-    <delete file="nuevoOXP/manifest.properties" failonerror="no"/>
+    <delete file="nuevosComponents/preinstall.sql" failonerror="no"/>
+    <delete file="nuevosComponents/install.xml" failonerror="no"/>
+    <delete file="nuevosComponents/postinstall.xml" failonerror="no"/>
+    <delete file="nuevosComponents/manifest.properties" failonerror="no"/>
 
+  	<!-- Mover las clases especificas de serverRoot a OXPRoot -->
+    <move todir="nuevoOXPRoot" failonerror="no">
+      <fileset dir="nuevosComponents/serverRoot">
+        <include name="**/*.class"/>
+      </fileset>
+    </move>
+  	
+  	<!-- Las clases de serverRoot ya fueron copiadas, no se requieren --> 
+  	<delete dir="nuevosComponents/serverRoot" failonerror="no"/>
+  	
+  	<!-- Mover las clases especificas de cliente a OXP -->
+    <move todir="nuevoOXP" failonerror="no">
+      <fileset dir="nuevosComponents">
+        <include name="**/*.class"/>
+      </fileset>
+    </move>
+
+  	
 	<!-- Generar el OXP.jar definitivo con plugins incluidos -->	
     <jar jarfile="lib/OXP.jar" index="yes">
       <fileset dir="nuevoOXP"/>
       <manifest>
 		<attribute name="Specification-Title" value="Cliente_Libertya"/>
 		<attribute name="Specification-Version" value="${VERSION_PRINCIPAL_OXP}"/>
-		<attribute name="Specification-Vendor" value="(C) 2011 DISYTEL."/>
+		<attribute name="Specification-Vendor" value="(C) 2012 DISYTEL."/>
 		<attribute name="Implementation-Title" value="OXP ${VERSION_PRINCIPAL_OXP}"/>
 		<attribute name="Implementation-Version" value="${VERSION_PRINCIPAL_OXP} ${DSTAMP}-${TSTAMP}"/>
 		<attribute name="Implementation-Vendor" value="${env.CONSULTORA_OXP}"/>
@@ -194,11 +215,28 @@
       </manifest>
     </jar>
 
-	<!-- Eliminar directorio temporal  -->
+  	<!-- Generar el OXPRoot.jar definitivo con plugins incluidos -->
+  	<jar jarfile="lib/OXPRoot.jar">
+		<fileset dir="nuevoOXPRoot"/>
+			<manifest>
+	  			<attribute name="Specification-Title" value="OXPRoot"/>
+				<attribute name="Specification-Version" value="${VERSION_PRINCIPAL_OXP}"/>
+				<attribute name="Specification-Vendor" value="(C) 2012 DISYTEL."/>
+				<attribute name="Implementation-Title" value="OXP ${VERSION_PRINCIPAL_OXP}"/>
+				<attribute name="Implementation-Version" value="${VERSION_PRINCIPAL_OXP} ${DSTAMP}-${TSTAMP}"/>
+				<attribute name="Implementation-Vendor" value="${env.CONSULTORA_OXP}"/>
+				<attribute name="Implementation-URL" value="http://www.libertya.org"/>
+  	      </manifest>
+	</jar>
+  	
+	<!-- Eliminar directorios temporales  -->
     <delete dir="nuevoOXP" failonerror="no"/>
+  	<delete dir="nuevoOXPRoot" failonerror="no"/>
+  	<delete dir="nuevosComponents" failonerror="no"/>
 
-    <!-- =========================FIN Incorporar plugins a OXP.jar ================================	-->
-
+    <!-- ===================== FIN Incorporar plugins a OXP.jar, OXPRoot.jar ===========================	-->
+  	
+  	
     <echo message="KeyStore=${KEYSTORE_OXP} - Alias=${CODIGOALIASKEYSTORE_OXP}"/>
     <!-- Firmar OXPXLib Jar 		-->
     <signjar jar="lib/OXPXLib.jar"
@@ -331,8 +369,8 @@
 		includes="OXPRoot.jar,OXPRoot.war,OXP.jar,OXPSLib.jar"/>
 	  <manifest>
 		<attribute name="Specification-Title" value="Libertya"/>
-		<attribute name="Specification-Version" value="V11.10"/>
-		<attribute name="Specification-Vendor" value="(C) 2011 DISYTEL."/>
+		<attribute name="Specification-Version" value="V12.04"/>
+		<attribute name="Specification-Vendor" value="(C) 2012 DISYTEL."/>
 		<attribute name="Implementation-Title" value="libertya"/>
 		<attribute name="Implementation-Version" value="V2 ${DSTAMP}-${TSTAMP}"/>
 		<attribute name="Implementation-URL" value="http://www.libertya.org"/>
@@ -372,7 +410,7 @@
 	  <manifest>
 		<attribute name="Specification-Title" value="TiendaWebLibertya"/>
 		<attribute name="Specification-Version" value="v2"/>
-		<attribute name="Specification-Vendor" value="(C) 2011 DISYTEL."/>
+		<attribute name="Specification-Vendor" value="(C) 2012 DISYTEL."/>
 		<attribute name="Implementation-Title" value="TiendaWebLibertya"/>
 		<attribute name="Implementation-Version" value="V2 ${DSTAMP}-${TSTAMP}"/>
 		<attribute name="Implementation-URL" value="http://www.libertya.org"/>

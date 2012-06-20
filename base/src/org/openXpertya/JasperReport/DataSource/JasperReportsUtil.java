@@ -34,15 +34,18 @@ import org.openXpertya.model.MOrder;
 import org.openXpertya.model.MOrg;
 import org.openXpertya.model.MPaymentTerm;
 import org.openXpertya.model.MPriceList;
+import org.openXpertya.model.MProduct;
 import org.openXpertya.model.MProject;
 import org.openXpertya.model.MRefList;
 import org.openXpertya.model.MRegion;
 import org.openXpertya.model.MShipper;
 import org.openXpertya.model.MUser;
 import org.openXpertya.model.MWarehouse;
+import org.openXpertya.model.M_Table;
 import org.openXpertya.model.PO;
 import org.openXpertya.model.X_C_Invoice;
 import org.openXpertya.model.X_C_Order;
+import org.openXpertya.model.X_M_Product;
 import org.openXpertya.print.CPrinter;
 import org.openXpertya.process.ProcessInfo;
 import org.openXpertya.process.ProcessInfo.JasperReportDTO;
@@ -371,6 +374,26 @@ public class JasperReportsUtil {
 	public static String getPODisplayByIdentifiers(Properties ctx, PO po, Integer tableID, String trxName){
 		return DisplayUtil.getDisplayByIdentifiers(ctx, po, tableID, trxName);
 	}
+
+	/**
+	 * Retorna la descripción del PO parámetro a partir de las columnas
+	 * identificadoras
+	 * 
+	 * @param ctx
+	 *            contexto
+	 * @param recordID
+	 *            registro de la tabla
+	 * @param tableID
+	 *            id de la tabla del PO
+	 * @param trxName
+	 *            nombre de la transacción
+	 * @return display del PO con los valores de las columnas identificadoras
+	 */
+	public static String getPODisplayByIdentifiers(Properties ctx, Integer recordID, Integer tableID, String trxName){
+		M_Table table = M_Table.get(ctx, tableID);
+		PO po = table.getPO(recordID, trxName);
+		return DisplayUtil.getDisplayByIdentifiers(ctx, po, tableID, trxName);
+	}
 	
 	/**
 	 * Obtengo el display de la factura a partir de las columnas identificadoras
@@ -402,6 +425,22 @@ public class JasperReportsUtil {
 	public static String getOrderDisplay(Properties ctx, Integer orderID, String trxName){
 		return getPODisplayByIdentifiers(ctx, new MOrder(ctx, orderID,
 				trxName), X_C_Order.Table_ID, trxName);
+	}
+	
+	/**
+	 * Obtengo el display del producto a partir de las columnas identificadoras
+	 * 
+	 * @param ctx
+	 *            contexto
+	 * @param productID
+	 *            id del producto
+	 * @param trxName
+	 *            nombre de transacción
+	 * @return descripción del producto a partir de los identificadores
+	 */
+	public static String getProductDisplay(Properties ctx, Integer productID, String trxName){
+		return getPODisplayByIdentifiers(ctx, MProduct.get(ctx, productID),
+				X_M_Product.Table_ID, trxName);
 	}
 	
 	/**
@@ -758,5 +797,30 @@ public class JasperReportsUtil {
 			loc.append(", ").append(country);
 		
 		return loc.toString();
+	}
+
+	/**
+	 * En el caso que el id de producto parámetro sea null o 0, entonces se
+	 * retorna la descripción pasada como parámetro
+	 * 
+	 * @param ctx
+	 *            contexto
+	 * @param productID
+	 *            id de producto
+	 * @param description
+	 *            decripción eventual en caso que el id de producto parámetro
+	 *            sea null o 0
+	 * @param trxName
+	 *            transacción actual
+	 * @return nombre del producto o la descripción parámetro en caso que no
+	 *         exista el producto
+	 */
+	public static String getProductName(Properties ctx, Integer productID, String description, String trxName){
+		String name = description;
+		if(!Util.isEmpty(productID, true)){
+			MProduct product = MProduct.get(ctx, productID);
+			name = product.getName();
+		}
+		return name;
 	}
 }

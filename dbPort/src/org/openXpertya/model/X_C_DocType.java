@@ -7,7 +7,7 @@ import java.math.*;
 import org.openXpertya.util.*;
 /** Modelo Generado por C_DocType
  *  @author Comunidad de Desarrollo Libertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
- *  @version  - 2011-10-19 15:37:10.77 */
+ *  @version  - 2012-02-01 13:20:55.188 */
 public class X_C_DocType extends org.openXpertya.model.PO
 {
 /** Constructor estándar */
@@ -33,6 +33,7 @@ setIsFiscal (false);
 setIsFiscalDocument (false);	// N
 setIsInTransit (false);
 setIsPickQAConfirm (false);
+setIsPrintAtCompleting (false);
 setIsPrintPreview (true);	// Y
 setIsShipConfirm (false);
 setIsSOTrx (false);
@@ -291,12 +292,14 @@ public static final String DOCBASETYPE_APCreditMemo = "APC";
 public static final String DOCBASETYPE_ARCreditMemo = "ARC";
 /** Project Issue = PJI */
 public static final String DOCBASETYPE_ProjectIssue = "PJI";
+/** Amortization = AMO */
+public static final String DOCBASETYPE_Amortization = "AMO";
 /** Set Document BaseType.
 Logical type of document */
 public void setDocBaseType (String DocBaseType)
 {
-if (DocBaseType.equals("MMP") || DocBaseType.equals("MXI") || DocBaseType.equals("MXP") || DocBaseType.equals("ARF") || DocBaseType.equals("MMS") || DocBaseType.equals("MMR") || DocBaseType.equals("MMM") || DocBaseType.equals("POO") || DocBaseType.equals("POR") || DocBaseType.equals("MMI") || DocBaseType.equals("MOR") || DocBaseType.equals("MOU") || DocBaseType.equals("MOM") || DocBaseType.equals("MOV") || DocBaseType.equals("MOP") || DocBaseType.equals("MOF") || DocBaseType.equals("GLJ") || DocBaseType.equals("GLD") || DocBaseType.equals("API") || DocBaseType.equals("APP") || DocBaseType.equals("ARI") || DocBaseType.equals("ARR") || DocBaseType.equals("SOO") || DocBaseType.equals("MOI") || DocBaseType.equals("CMB") || DocBaseType.equals("CMC") || DocBaseType.equals("CMA") || DocBaseType.equals("APC") || DocBaseType.equals("ARC") || DocBaseType.equals("PJI"));
- else throw new IllegalArgumentException ("DocBaseType Invalid value - Reference = DOCBASETYPE_AD_Reference_ID - MMP - MXI - MXP - ARF - MMS - MMR - MMM - POO - POR - MMI - MOR - MOU - MOM - MOV - MOP - MOF - GLJ - GLD - API - APP - ARI - ARR - SOO - MOI - CMB - CMC - CMA - APC - ARC - PJI");
+if (DocBaseType.equals("MMP") || DocBaseType.equals("MXI") || DocBaseType.equals("MXP") || DocBaseType.equals("ARF") || DocBaseType.equals("MMS") || DocBaseType.equals("MMR") || DocBaseType.equals("MMM") || DocBaseType.equals("POO") || DocBaseType.equals("POR") || DocBaseType.equals("MMI") || DocBaseType.equals("MOR") || DocBaseType.equals("MOU") || DocBaseType.equals("MOM") || DocBaseType.equals("MOV") || DocBaseType.equals("MOP") || DocBaseType.equals("MOF") || DocBaseType.equals("GLJ") || DocBaseType.equals("GLD") || DocBaseType.equals("API") || DocBaseType.equals("APP") || DocBaseType.equals("ARI") || DocBaseType.equals("ARR") || DocBaseType.equals("SOO") || DocBaseType.equals("MOI") || DocBaseType.equals("CMB") || DocBaseType.equals("CMC") || DocBaseType.equals("CMA") || DocBaseType.equals("APC") || DocBaseType.equals("ARC") || DocBaseType.equals("PJI") || DocBaseType.equals("AMO"));
+ else throw new IllegalArgumentException ("DocBaseType Invalid value - Reference = DOCBASETYPE_AD_Reference_ID - MMP - MXI - MXP - ARF - MMS - MMR - MMM - POO - POR - MMI - MOR - MOU - MOM - MOV - MOP - MOF - GLJ - GLD - API - APP - ARI - ARR - SOO - MOI - CMB - CMC - CMA - APC - ARC - PJI - AMO");
 if (DocBaseType == null) throw new IllegalArgumentException ("DocBaseType is mandatory");
 if (DocBaseType.length() > 3)
 {
@@ -739,6 +742,24 @@ Require Pick or QA Confirmation before processing */
 public boolean isPickQAConfirm() 
 {
 Object oo = get_Value("IsPickQAConfirm");
+if (oo != null) 
+{
+ if (oo instanceof Boolean) return ((Boolean)oo).booleanValue();
+ return "Y".equals(oo);
+}
+return false;
+}
+/** Set Is Print At Completing.
+The document will be printed when is completed. */
+public void setIsPrintAtCompleting (boolean IsPrintAtCompleting)
+{
+set_Value ("IsPrintAtCompleting", new Boolean(IsPrintAtCompleting));
+}
+/** Get Is Print At Completing.
+The document will be printed when is completed. */
+public boolean isPrintAtCompleting() 
+{
+Object oo = get_Value("IsPrintAtCompleting");
 if (oo != null) 
 {
  if (oo instanceof Boolean) return ((Boolean)oo).booleanValue();

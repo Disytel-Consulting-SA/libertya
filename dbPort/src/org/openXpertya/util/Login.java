@@ -780,6 +780,17 @@ public class Login {
             Env.setContext( ctx,"$C_AcctSchema_ID",C_AcctSchema_ID );
             Env.setContext( ctx,"$C_Currency_ID",rs.getInt( "C_Currency_ID" ));
             Env.setContext( ctx,"$HasAlias",rs.getString( "HasAlias" ));
+            Integer amortizationMethodID = rs.getInt( "M_Amortization_Method_ID" );
+            if(!Util.isEmpty(amortizationMethodID, true)){
+            	Env.setContext( ctx,"$M_Amortization_Method_ID", amortizationMethodID);
+				Env.setContext(
+						ctx,
+						"$AmortizationAppPeriod",
+						DB.getSQLValueString(
+								null,
+								"SELECT amortizationappperiod FROM m_amortization_method WHERE m_amortization_method_id = ?",
+								amortizationMethodID));
+            }
         }
 
         rs.close();

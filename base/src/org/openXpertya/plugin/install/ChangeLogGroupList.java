@@ -5,6 +5,7 @@ import java.sql.ResultSet;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.openXpertya.replication.ReplicationCache;
 import org.openXpertya.util.DB;
 
 public class ChangeLogGroupList {
@@ -63,9 +64,9 @@ public class ChangeLogGroupList {
 	// Varios
 	
 	public void fillList(String trxName) throws Exception{
-		
-		/* Cargar la informacion de las columnas */
-		ChangeLogElement.loadColumnData(trxName);
+
+		/* Recargar la caché si asi corresponde */
+		ReplicationCache.reloadCacheData();
 		
 		boolean existTableSchema = getTableSchemaID() != null;
 		if(getComponentVersionID() == null){
@@ -143,7 +144,6 @@ public class ChangeLogGroupList {
 				element = new ChangeLogElement(rs.getInt("ad_column_id"), rs.getString("oldvalue"), rs.getString("newvalue"), rs.getBytes("binaryvalue"), rs.getInt("ad_changelog_id"));
 				group.addElement(element);
 			}
-			ChangeLogElement.freeColumnData();
 		} catch(Exception e){
 			e.printStackTrace();
 			// TODO: Modificar el mensaje de error pasado

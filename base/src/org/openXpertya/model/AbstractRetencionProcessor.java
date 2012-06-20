@@ -30,8 +30,7 @@ public abstract class AbstractRetencionProcessor implements RetencionProcessor {
 	/** Compañía actual */
 	private int m_AD_Client_ID = Env.getAD_Client_ID(Env.getCtx());
 	/** Fecha de la transacción. Utilizada para el cálculo de excepciones. */
-	private Timestamp dateTrx = Timestamp.valueOf(Env.getContextAsDate(
-			Env.getCtx(), "#Date").toString());
+	private Timestamp dateTrx = Env.getContextAsDate(Env.getCtx(), "#Date");
 	/** Orden de Pago */
 	private MAllocationHdr m_Alloc = null;
 	/** Entidad Comercial a la que se le aplica la retención */
@@ -44,7 +43,11 @@ public abstract class AbstractRetencionProcessor implements RetencionProcessor {
 	private BigDecimal payTotalAmount = Env.ZERO;
 	/** Nro. de Retención manual */
 	private String retencionNumber;
-
+	/** Proyecto */
+	private Integer projectID = 0;
+	/** Campaña */
+	private Integer campaignID = 0;
+	
 	/** Lista de facturas pagadas */
 	private List<MInvoice> m_List_Invoice = new ArrayList<MInvoice>();
 	/** Lista de importes pagados de cada factura */
@@ -1177,5 +1180,21 @@ public abstract class AbstractRetencionProcessor implements RetencionProcessor {
 			ex.printStackTrace();
 		}
 		return total;
+	}
+
+	public void setProjectID(Integer projectID) {
+		this.projectID = projectID;
+	}
+
+	public Integer getProjectID() {
+		return projectID;
+	}
+
+	public void setCampaignID(Integer campaignID) {
+		this.campaignID = campaignID;
+	}
+
+	public Integer getCampaignID() {
+		return campaignID;
 	}
 }

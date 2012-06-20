@@ -294,7 +294,7 @@ public class InventoryCountCreate extends SvrProcess {
         if( M_AttributeSet_ID == 0 ) {
             asi = 0;
         } else {
-            MAttributeSet mas = MAttributeSet.get( getCtx(),M_AttributeSet_ID, null );
+            MAttributeSet mas = MAttributeSet.get( getCtx(),M_AttributeSet_ID );
 
             if( !mas.isInstanceAttribute()) {
                 asi = 0;

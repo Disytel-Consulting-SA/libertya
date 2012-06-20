@@ -124,10 +124,12 @@ public class OnlinePoSComponentFactory extends PoSComponentFactory {
 						"C_Order",
 						getWindowNo(),
 						DisplayType.Search,
-						"C_Order.DocStatus IN ('CO','CL') AND C_Order.C_DocType_ID IN (SELECT C_DocType_ID FROM C_DocType WHERE ad_client_id = "
-								+ Env.getAD_Client_ID(Env.getCtx())
-								+ " AND enabledinpos = 'Y' "
-								+ " AND (posenabledue = 'N' OR (posenabledue = 'Y' AND (current_date <= (date_trunc('day',C_Order.dateordered) + cast(posenableduedays||' days' as interval))))))");
+						"C_Order.DocStatus IN ('CO','CL')"
+						+ getPoSModel().validateSearchToday() 
+						+ " AND C_Order.C_DocType_ID IN (SELECT C_DocType_ID FROM C_DocType WHERE ad_client_id = "
+							+ Env.getAD_Client_ID(Env.getCtx())+")");
+							//+ " AND enabledinpos = 'Y' "
+							//+ " AND (posenabledue = 'N' OR (posenabledue = 'Y' AND (current_date <= (date_trunc('day',C_Order.dateordered) + cast(posenableduedays||' days' as interval))))))");			
 		return orderLookup;
 	}
 

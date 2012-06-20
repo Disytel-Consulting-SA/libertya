@@ -4,6 +4,7 @@ import java.sql.ResultSet;
 import java.util.Properties;
 
 import org.openXpertya.util.DB;
+import org.openXpertya.util.Msg;
 
 public class MProductUpcInstance extends X_M_Product_Upc_Instance {
 
@@ -15,6 +16,27 @@ public class MProductUpcInstance extends X_M_Product_Upc_Instance {
 		super(ctx, rs, trxName);
 	}
 	
+	/**
+     * Constructor de la clase ...
+     *
+     *
+     * @param impPI
+     */
+
+    public MProductUpcInstance( X_I_ProductInstance impPI ) {
+        this( impPI.getCtx(),0,impPI.get_TrxName());
+        setClientOrg( impPI );
+        setUpdatedBy( impPI.getUpdatedBy());       
+
+        //
+        setM_Product_ID(impPI.getM_Product_ID());
+        setM_AttributeSetInstance_ID(impPI.getM_AttributeSetInstance_ID());
+        setUPC(impPI.getUPC());
+        setName(impPI.getInstance_Description());
+        
+        
+    }  
+    
 	@Override
 	protected boolean beforeSave(boolean newRecord) {
 		
@@ -22,6 +44,10 @@ public class MProductUpcInstance extends X_M_Product_Upc_Instance {
 
 		if (newRecord && count > 0) {
 			log.saveError("DuplicatedRecord", "");
+			return false;
+		}
+		
+		if (!validateUniqueUPCInstance()) {
 			return false;
 		}
 			
@@ -38,6 +64,21 @@ public class MProductUpcInstance extends X_M_Product_Upc_Instance {
 		}
 		
 		return super.beforeSave(newRecord);
+	}
+	
+	private boolean validateUniqueUPCInstance() {
+		String sql = 
+			"SELECT M_Product_ID FROM M_Product_Upc_Instance " +
+			"WHERE AD_Client_ID = ? AND UPC = ? AND M_Product_UPC_INSTANCE_ID <> ? ";
+		Integer productID = (Integer)DB.getSQLObject(get_TrxName(), sql, 
+				new Object[] { getAD_Client_ID(), getUPC(), getM_Product_Upc_Instance_ID()});
+		if (productID != null && productID > 0) {
+			MProduct product = MProduct.get(getCtx(), productID);
+			String productStr = "'" + product.getValue() + " " + product.getName() + "'";
+			log.saveError("SaveError", 
+					Msg.translate(getCtx(), "DuplicateUPCError") + " " + productStr);
+		}
+		return productID == null || productID == 0;
 	}
 }
 

@@ -13,10 +13,12 @@ import java.math.BigDecimal;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.Timestamp;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Properties;
 import java.util.Vector;
 import java.util.logging.Level;
@@ -26,6 +28,7 @@ import javax.swing.table.TableModel;
 
 import org.openXpertya.apps.form.VModelHelper.ResultItem;
 import org.openXpertya.apps.form.VModelHelper.ResultItemTableModel;
+import org.openXpertya.model.MBankAccount;
 import org.openXpertya.model.MBankStatement;
 import org.openXpertya.model.MBankStatementLine;
 import org.openXpertya.model.MBoletaDeposito;
@@ -37,6 +40,7 @@ import org.openXpertya.util.CLogger;
 import org.openXpertya.util.DB;
 import org.openXpertya.util.Env;
 import org.openXpertya.util.Msg;
+import org.openXpertya.util.Util;
 
 /**
  *
@@ -193,8 +197,16 @@ public class VConciliacionTableModel {
 
 		public boolean conciliarLinea(int i, boolean lineaValid, boolean pagoValid, ResultItem riLinea, ResultItem riPago, ConciliacionColumnsData pago) throws Exception {
 			int linea_ID = lineaValid ? ((Integer)riLinea.getItem(getRowIdxID())) : -1;
-			MBankStatementLine line = lineaValid ? new MBankStatementLine(m_ctx, linea_ID, m_trxName) : null;
-			
+			// Si la línea de extracto ya está asociada a otro pago
+			// anteriormente, entonces se debe crear una nueva línea porque cada
+			// línea posee asociación a 1 solo pago, no a varios
+			MBankAccount bankAcct = MBankAccount.get(m_ctx, getBankAccountID());
+			Integer currencyID = bankAcct != null ? bankAcct.getC_Currency_ID()
+					: Env.getContextAsInt(m_ctx, "$C_Currency_ID");
+			MBankStatementLine line = lineaValid ? (usedLines
+					.contains(linea_ID) ? crearNuevaLinea(currencyID)
+					: new MBankStatementLine(m_ctx, linea_ID, m_trxName))
+					: null;
 			return pago.conciliarPago(i, lineaValid, pagoValid, line, riPago);
 			
 			// return crearConciliacion_LowLevel(i, lineaValid, pagoValid, line, null, null);
@@ -390,6 +402,8 @@ public class VConciliacionTableModel {
     	m_modoLineas = modoLineas;
     	m_modoPagos = modoPagos;
     	
+    	usedLines = new ArrayList<Integer>();
+    	
     	m_lineas = instanciaLineasTableModel();
     	m_pagos = instanciaPagosTableModel();
     	
@@ -567,6 +581,20 @@ public class VConciliacionTableModel {
     		throw new Exception(e);
     	}
 		return null;
+    }
+    
+    private MBankStatementLine crearNuevaLinea(Integer currencyID) throws Exception{
+		MBankStatementLine	line = new MBankStatementLine(m_bankStatement); 
+		line.setStatementLineDate(m_statementDate);
+		// Seteo una moneda inicial ya que en este punto no tengo una moneda
+		// para asociar, luego se asociará la moneda del pago que se va a
+		// conciliar, si es que hay alguno
+		line.setC_Currency_ID(Util.isEmpty(currencyID, true) ? Env
+				.getContextAsInt(m_ctx, "$C_Currency_ID") : currencyID);
+		if(!line.save()){
+			throw new Exception(CLogger.retrieveErrorAsString());
+		}
+		return line;
     }
     
     /*
@@ -762,6 +790,9 @@ public class VConciliacionTableModel {
 		boolean saveok = true;
 		
 		if (pagoValid && lineaValid) {
+			// Se setea la moneda a 0 para que se asigne la moneda del pago en
+			// la línea de la conciliación
+			line.setC_Currency_ID(0);
 			line.setPayment(pay);
 			saveok = line.save();
 		}
@@ -872,6 +903,12 @@ public class VConciliacionTableModel {
 		if (!saveOk) {
             log.log( Level.SEVERE, "C_BankStatLine_Reconcil not created #" + i );
 		}
+		else{
+			// Esta línea ya fue usada, para pagos multiselect
+			if(line != null){
+				usedLines.add(line.getID());
+			}
+		}
 		
 		return saveOk;
     }
@@ -977,7 +1014,7 @@ public class VConciliacionTableModel {
         " INNER JOIN C_Payment_v p ON (p.C_BankAccount_ID=ba.C_BankAccount_ID)" + 
         " INNER JOIN C_Currency c ON (p.C_Currency_ID=c.C_Currency_ID)" + 
         " INNER JOIN C_BPartner bp ON (p.C_BPartner_ID=bp.C_BPartner_ID) " + 
-        " WHERE p.Processed='Y' AND p.IsReconciled='N'" + " AND p.DocStatus IN ('CO','CL','RE') AND p.PayAmt<>0" + 
+        " WHERE p.Processed='Y' AND p.IsReconciled='N'" + " AND p.DocStatus IN ('CO','CL','RE', 'VO') AND p.PayAmt<>0" + 
         " AND p.C_BankAccount_ID = ? " );
 
         ResultItem[] items = getToConcilNotNullResultItems(1);
@@ -1133,6 +1170,8 @@ public class VConciliacionTableModel {
     		log.log( Level.SEVERE, sql.toString(), e );
     	}
     	
+    	usedLines = null;
+    	usedLines = new ArrayList<Integer>();
    		m_lineas.fireChanged(clean);
     }
     
@@ -1147,7 +1186,7 @@ public class VConciliacionTableModel {
         sql.append("  SELECT b.M_BoletaDeposito_ID, b.FechaDeposito, b.FechaAcreditacion, b.DocumentNo, currencyConvert(b.GrandTotal, b.C_Currency_ID, ?, ?, null, b.AD_Client_ID, b.AD_Org_ID) AS ConvertedGrandTotal " ); 
     	sql.append(" FROM M_BoletaDeposito b " );   
     	sql.append(" WHERE b.Processed='Y' AND b.IsReconciled <> 'Y' " );  
-    	sql.append(" AND b.DocStatus IN ('CO','CL','RE') AND b.GrandTotal <> 0  AND b.C_BankAccount_ID = ? " );  
+    	sql.append(" AND b.DocStatus IN ('CO','CL','RE', 'VO') AND b.GrandTotal <> 0  AND b.C_BankAccount_ID = ? " );  
     	sql.append("  ");
         // sql.append("  ");
         
@@ -1218,7 +1257,7 @@ public class VConciliacionTableModel {
         " INNER JOIN C_Payment ppr ON (p.C_Payment_ID = ppr.C_Payment_ID) " +
         " INNER JOIN C_Currency c ON (p.C_Currency_ID=c.C_Currency_ID)" + 
         " INNER JOIN C_BPartner bp ON (p.C_BPartner_ID=bp.C_BPartner_ID) " + 
-        " WHERE p.Processed='Y' AND p.IsReconciled='N'" + " AND p.DocStatus IN ('CO','CL','RE') AND p.PayAmt <> 0 " +
+        " WHERE p.Processed='Y' AND p.IsReconciled='N'" + " AND p.DocStatus IN ('CO','CL','RE', 'VO') AND p.PayAmt <> 0 " +
         " AND (ppr.M_BoletaDeposito_ID = 0 OR ppr.M_BoletaDeposito_ID IS NULL) " +
         " AND p.C_BankAccount_ID = ? " );
         
@@ -1459,6 +1498,9 @@ Fin Comentario: Incidencia 4250 */
 	Properties m_ctx ;
 	String m_trxName ;
 
+	/** Líneas usadas (para dar soporte pagos multiselect) */
+	private List<Integer> usedLines;
+	
     //
     private int m_modoLineas ;
     private int m_modoPagos ;

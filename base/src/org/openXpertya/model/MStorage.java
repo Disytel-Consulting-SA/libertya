@@ -225,7 +225,7 @@ public class MStorage extends X_M_Storage {
         if( M_AttributeSet_ID == 0 ) {
             allAttributeInstances = true;
         } else {
-            MAttributeSet mas = MAttributeSet.get( ctx,M_AttributeSet_ID, trxName );
+            MAttributeSet mas = MAttributeSet.get( ctx,M_AttributeSet_ID );
 
             if( !mas.isInstanceAttribute()) {
                 allAttributeInstances = true;

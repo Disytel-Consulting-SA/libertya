@@ -1,13 +1,14 @@
-/** Modelo Generado - NO CAMBIAR MANUALMENTE - Copyright (C) 2006 FUNDESLE */
+/** Modelo Generado - NO CAMBIAR MANUALMENTE - Disytel */
 package org.openXpertya.model;
-import java.util.*;
+import java.util.logging.Level;
+ import java.util.*;
 import java.sql.*;
 import java.math.*;
 import org.openXpertya.util.*;
 /** Modelo Generado por M_InventoryLine
- *  @author Comunidad de Desarrollo openXpertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
- *  @version  - 2008-01-03 10:26:38.312 */
-public class X_M_InventoryLine extends PO
+ *  @author Comunidad de Desarrollo Libertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
+ *  @version  - 2011-12-14 12:26:09.475 */
+public class X_M_InventoryLine extends org.openXpertya.model.PO
 {
 /** Constructor estándar */
 public X_M_InventoryLine (Properties ctx, int M_InventoryLine_ID, String trxName)
@@ -15,10 +16,11 @@ public X_M_InventoryLine (Properties ctx, int M_InventoryLine_ID, String trxName
 super (ctx, M_InventoryLine_ID, trxName);
 /** if (M_InventoryLine_ID == 0)
 {
+setCost (Env.ZERO);
 setInventoryType (null);	// D
 setM_AttributeSetInstance_ID (0);
-setM_InventoryLine_ID (0);
 setM_Inventory_ID (0);
+setM_InventoryLine_ID (0);
 setM_Locator_ID (0);	// @M_Locator_ID@
 setM_Product_ID (0);
 setProcessed (false);
@@ -32,13 +34,13 @@ public X_M_InventoryLine (Properties ctx, ResultSet rs, String trxName)
 {
 super (ctx, rs, trxName);
 }
-/** AD_Table_ID=322 */
-public static final int Table_ID=322;
+/** AD_Table_ID */
+public static final int Table_ID = M_Table.getTableID("M_InventoryLine");
 
 /** TableName=M_InventoryLine */
 public static final String Table_Name="M_InventoryLine";
 
-protected static KeyNamePair Model = new KeyNamePair(322,"M_InventoryLine");
+protected static KeyNamePair Model = new KeyNamePair(Table_ID,"M_InventoryLine");
 protected static BigDecimal AccessLevel = new BigDecimal(1);
 
 /** Load Meta Data */
@@ -68,6 +70,21 @@ Integer ii = (Integer)get_Value("C_Charge_ID");
 if (ii == null) return 0;
 return ii.intValue();
 }
+/** Set Cost.
+Cost information */
+public void setCost (BigDecimal Cost)
+{
+if (Cost == null) throw new IllegalArgumentException ("Cost is mandatory");
+set_Value ("Cost", Cost);
+}
+/** Get Cost.
+Cost information */
+public BigDecimal getCost() 
+{
+BigDecimal bd = (BigDecimal)get_Value("Cost");
+if (bd == null) return Env.ZERO;
+return bd;
+}
 /** Set Description.
 Optional short description of the record */
 public void setDescription (String Description)
@@ -75,7 +92,7 @@ public void setDescription (String Description)
 if (Description != null && Description.length() > 255)
 {
 log.warning("Length > 255 - truncated");
-Description = Description.substring(0,254);
+Description = Description.substring(0,255);
 }
 set_Value ("Description", Description);
 }
@@ -85,7 +102,7 @@ public String getDescription()
 {
 return (String)get_Value("Description");
 }
-public static final int INVENTORYTYPE_AD_Reference_ID=292;
+public static final int INVENTORYTYPE_AD_Reference_ID = MReference.getReferenceID("M_Inventory Type");
 /** Inventory Difference = D */
 public static final String INVENTORYTYPE_InventoryDifference = "D";
 /** Charge Account = C */
@@ -95,12 +112,12 @@ Type of inventory difference */
 public void setInventoryType (String InventoryType)
 {
 if (InventoryType.equals("D") || InventoryType.equals("C"));
- else throw new IllegalArgumentException ("InventoryType Invalid value - Reference_ID=292 - D - C");
+ else throw new IllegalArgumentException ("InventoryType Invalid value - Reference = INVENTORYTYPE_AD_Reference_ID - D - C");
 if (InventoryType == null) throw new IllegalArgumentException ("InventoryType is mandatory");
 if (InventoryType.length() > 1)
 {
 log.warning("Length > 1 - truncated");
-InventoryType = InventoryType.substring(0,0);
+InventoryType = InventoryType.substring(0,1);
 }
 set_Value ("InventoryType", InventoryType);
 }
@@ -142,20 +159,6 @@ Integer ii = (Integer)get_Value("M_AttributeSetInstance_ID");
 if (ii == null) return 0;
 return ii.intValue();
 }
-/** Set Phys.Inventory Line.
-Unique line in an Inventory document */
-public void setM_InventoryLine_ID (int M_InventoryLine_ID)
-{
-set_ValueNoCheck ("M_InventoryLine_ID", new Integer(M_InventoryLine_ID));
-}
-/** Get Phys.Inventory Line.
-Unique line in an Inventory document */
-public int getM_InventoryLine_ID() 
-{
-Integer ii = (Integer)get_Value("M_InventoryLine_ID");
-if (ii == null) return 0;
-return ii.intValue();
-}
 /** Set Phys.Inventory.
 Parameters for a Physical Inventory */
 public void setM_Inventory_ID (int M_Inventory_ID)
@@ -167,6 +170,20 @@ Parameters for a Physical Inventory */
 public int getM_Inventory_ID() 
 {
 Integer ii = (Integer)get_Value("M_Inventory_ID");
+if (ii == null) return 0;
+return ii.intValue();
+}
+/** Set Phys.Inventory Line.
+Unique line in an Inventory document */
+public void setM_InventoryLine_ID (int M_InventoryLine_ID)
+{
+set_ValueNoCheck ("M_InventoryLine_ID", new Integer(M_InventoryLine_ID));
+}
+/** Get Phys.Inventory Line.
+Unique line in an Inventory document */
+public int getM_InventoryLine_ID() 
+{
+Integer ii = (Integer)get_Value("M_InventoryLine_ID");
 if (ii == null) return 0;
 return ii.intValue();
 }
@@ -184,7 +201,7 @@ Integer ii = (Integer)get_Value("M_Locator_ID");
 if (ii == null) return 0;
 return ii.intValue();
 }
-public static final int M_PRODUCT_ID_AD_Reference_ID=171;
+public static final int M_PRODUCT_ID_AD_Reference_ID = MReference.getReferenceID("M_Product (stocked)");
 /** Set Product.
 Product, Service, Item */
 public void setM_Product_ID (int M_Product_ID)

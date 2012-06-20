@@ -460,9 +460,9 @@ public class FiscalDocumentPrint {
 		String line = null;
 		for (MOrderLine orderLine : orderLines) {
 			// Por cada línea, si tiene artículos pendientes de entrega
-			if (orderLine.hasNotDeliveredProducts()) {
+			if (orderLine.isDeliverDocumentPrintable()) {
 				// Obtiene la cantidad que falta entregar
-				BigDecimal qtyToDeliver = orderLine.getQtyOrdered().subtract(orderLine.getQtyDelivered());
+				BigDecimal qtyToDeliver = orderLine.getPendingDeliveredQty();
 				MProduct product = orderLine.getProduct();
 				// Crea la descripción que se mostrará en la línea del documento
 				line = 
@@ -538,6 +538,30 @@ public class FiscalDocumentPrint {
 		// Se asigna la letra de la factura.
 		invoice.setLetter(mInvoice.getLetra());
 
+		// Verificar si esta factura tiene salida por depósito, en ese caso
+		// imprimir leyenda al final de la factura
+		// FIXME cuando la config del TPV no debe imprimir el documento de
+		// retiro por depósito, hay que imprimir esta leyenda en el ticket?
+		// En el caso que no haya que hacerlo se debe agregar una variable de
+		// instancia boolean en esta clase con ese flag, luego en la factura
+		// para setearla desde afuera y que al completar se la setee a esta
+		// clase. Luego se debe modificar este if contemplando ese flag  
+		if(!Util.isEmpty(mInvoice.getC_Order_ID(), true)){
+			MOrder order = new MOrder(mInvoice.getCtx(),
+					mInvoice.getC_Order_ID(), mInvoice.get_TrxName());
+			int total_lines = order.getLines().length;
+			boolean found = false;
+			// Itero por todas las líneas del pedido y verifico si existe alguna
+			// imprimible por retiro por depósito
+			for (int i = 0; i < total_lines
+					&& !(found = order.getLines()[i]
+							.isDeliverDocumentPrintable()); i++);
+			if(found){
+				invoice.addFooterObservation(Msg.getMsg(mInvoice.getCtx(),
+						"InvoiceWithDeliverDocument"));
+			}
+		}
+		
 		// TODO: Se asigna el número de remito en caso de existir.
 		
 		// Se agregan las líneas de la factura al documento.

@@ -14,6 +14,7 @@ import org.openXpertya.util.CLogger;
 import org.openXpertya.util.DB;
 import org.openXpertya.util.Env;
 import org.openXpertya.util.Msg;
+import org.openXpertya.util.Util;
 import org.openXpertya.util.ValueNamePair;
 
 public class MPOSPaymentMedium extends X_C_POSPaymentMedium {
@@ -285,12 +286,39 @@ public class MPOSPaymentMedium extends X_C_POSPaymentMedium {
 		if (TENDERTYPE_CreditCard.equals(getTenderType()) 
 				&& getM_EntidadFinanciera_ID() == 0) {
 			log.saveError("SaveError", Msg.translate(getCtx(), "CreditCardNeedEntidadFinanciera"));
+			return false;
 		}
 		
-		// El MP Cheque requiere el plazo de cobro
-		if (TENDERTYPE_Check.equals(getTenderType())
-				&& getCheckDeadLine() == null) {
-			log.saveError("FillMandatory", Msg.translate(getCtx(), "CheckDeadLine"));
+		// Validaciones a nivel de cheque
+		if (TENDERTYPE_Check.equals(getTenderType())) {
+			// El MP Cheque requiere el plazo de cobro
+			if(getCheckDeadLine() == null){
+				log.saveError("FillMandatory", Msg.translate(getCtx(), "CheckDeadLine"));
+				return false;
+			}
+			// Si se deben validar los plazos anteriores entonces verifico que
+			// esté bien formado el rango
+			if(isValidateBeforeCheckDeadLines()){
+				// El plazo inicial del rango no puede ser igual o mayor al plazo del cheque
+				if (Integer.parseInt(getBeforeCheckDeadLineFrom()) >= Integer
+						.parseInt(getCheckDeadLine())) {
+					log.saveError("InitialValueGreaterThanCheckDeadLine", "");
+					return false;
+				}
+				// El valor final no debe ser mayor al valor inicial
+				if (!Util.isEmpty(getBeforeCheckDeadLineTo(), true)
+						&& Integer.parseInt(getBeforeCheckDeadLineFrom()) > Integer
+								.parseInt(getBeforeCheckDeadLineTo())) {
+					log.saveError("InitialValueGreaterThanEndValue", "");
+					return false;
+				}
+			}
+			// Seteo a null el valor final
+			if (!isValidateBeforeCheckDeadLines()
+					|| (isValidateBeforeCheckDeadLines() && Util.isEmpty(
+							getBeforeCheckDeadLineTo(), true))) {
+				setBeforeCheckDeadLineTo(null);
+			}
 		}
 		
 		// Borrado de valores que no se corresponden con el tipo de medio de pago
@@ -303,6 +331,7 @@ public class MPOSPaymentMedium extends X_C_POSPaymentMedium {
 		// Plazo de Cobro del Cheque (MP Cheque)
 		if (!TENDERTYPE_Check.equals(getTenderType())) {
 			setCheckDeadLine(null);
+			setValidateBeforeCheckDeadLines(false);
 		}
 
 		// Banco (MP Cheque & Tarjeta)

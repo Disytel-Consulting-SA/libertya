@@ -50,6 +50,10 @@ public class InventoryValue extends SvrProcess {
 
     private boolean showProdsWithoutPrice = true;
     
+    private BigDecimal priceVariationPercent;
+    
+   //private float priceVariationPercent;
+    
     /**
      * Descripción de Método
      *
@@ -73,7 +77,9 @@ public class InventoryValue extends SvrProcess {
                 m_C_Currency_ID = (( BigDecimal )para[ i ].getParameter()).intValue();
             } else if( name.equals( "ShowNoPrice" )) {
             	showProdsWithoutPrice = "Y".equals((String)para[i].getParameter());
-            }
+            } else if( name.equals( "PriceVariationPercent" )) {
+	        	priceVariationPercent = (( BigDecimal )para[ i ].getParameter());
+	        }
             
         }
 
@@ -97,11 +103,11 @@ public class InventoryValue extends SvrProcess {
 
 		deleteOldRecords(X_T_InventoryValue.Table_Name, "DateValue",
 				getAD_PInstance_ID(), get_TrxName());
-    	
-        // Insert Products
+		
 
-        StringBuffer sql = new StringBuffer( "INSERT INTO T_InventoryValue " + "(AD_PInstance_ID,AD_Client_ID,AD_Org_ID,M_Warehouse_ID,M_Product_ID, M_Product_Category_ID, M_Product_Family_ID, ShowNoPrice)" );
-        sql.append( "SELECT "+getAD_PInstance_ID()+", AD_Client_ID,AD_Org_ID," ).append( m_M_Warehouse_ID ).append( ",M_Product_ID, M_Product_Category_ID, M_Product_Family_ID, " ).append(showProdsWithoutPrice?"'Y'":"'N'").append( " FROM M_Product WHERE IsStocked='Y'" );
+		// Insert Products-
+		StringBuffer sql = new StringBuffer( "INSERT INTO T_InventoryValue " + "(AD_PInstance_ID,AD_Client_ID,AD_Org_ID,M_Warehouse_ID,M_Product_ID,M_AttributeSetInstance_ID, M_Product_Category_ID, M_Product_Family_ID, ShowNoPrice, PriceVariationPercent)" );
+        sql.append( "SELECT "+getAD_PInstance_ID()+", p.AD_Client_ID,p.AD_Org_ID," ).append( m_M_Warehouse_ID ).append( ", p.M_Product_ID, pai.M_AttributeSetInstance_ID, p.M_Product_Category_ID, p.M_Product_Family_ID, " ).append(showProdsWithoutPrice?"'Y'":"'N'").append(", '"+priceVariationPercent).append( "' FROM M_Product p LEFT OUTER JOIN M_AttributeSet pa ON (p.M_AttributeSet_ID=pa.M_AttributeSet_ID) LEFT OUTER JOIN M_AttributeSetInstance pai ON (pa.M_AttributeSet_ID=pai.M_AttributeSet_ID) WHERE p.IsStocked='Y'" );
 
         int noPrd = DB.executeUpdate( sql.toString(),get_TrxName());
 
@@ -111,7 +117,7 @@ public class InventoryValue extends SvrProcess {
             return "No Products";
         }
 
-        // Update Constants
+      // Update Constants
 
         sql = new StringBuffer( "UPDATE T_InventoryValue SET " );
 
@@ -121,14 +127,17 @@ public class InventoryValue extends SvrProcess {
 
         sql.append( "DateValue=TO_DATE('" ).append( myDate.substring( 0,10 )).append( " 23:59:59','YYYY-MM-DD HH24:MI:SS')," ).append( "M_PriceList_Version_ID=" ).append( m_M_PriceList_Version_ID ).append( "," ).append( "C_Currency_ID=" ).append( m_C_Currency_ID );
         int no = DB.executeUpdate( sql.toString(),get_TrxName());
+                
+        no=DB.executeUpdate( "UPDATE T_InventoryValue " + "SET M_AttributeSetInstance_ID = 0 WHERE M_AttributeSetInstance_ID IS NULL AND "+ " AD_PInstance_ID = "+getAD_PInstance_ID(),get_TrxName());
 
+        
         // Get current QtyOnHand
 
-        no = DB.executeUpdate( "UPDATE T_InventoryValue iv " + "SET QtyOnHand = (SELECT SUM(QtyOnHand) FROM M_Storage s, M_Locator l" + " WHERE iv.M_Product_ID=s.M_Product_ID" + " AND l.M_Locator_ID=s.M_Locator_ID" + " AND l.M_Warehouse_ID=iv.M_Warehouse_ID)" + " WHERE AD_PInstance_ID = "+getAD_PInstance_ID(),get_TrxName());
-
+        no = DB.executeUpdate( "UPDATE T_InventoryValue iv " + "SET QtyOnHand = (SELECT SUM(QtyOnHand) FROM M_Storage s, M_Locator l" + " WHERE iv.M_Product_ID=s.M_Product_ID "+ " AND iv.M_AttributeSetInstance_ID=s.M_AttributeSetInstance_ID "+ " AND l.M_Locator_ID=s.M_Locator_ID" + " AND l.M_Warehouse_ID=iv.M_Warehouse_ID GROUP BY iv.m_product_id, iv.m_attributesetinstance_id)" + " WHERE AD_PInstance_ID = "+getAD_PInstance_ID(),get_TrxName());
+                
         // Adjust for Valuation Date
 
-        no = DB.executeUpdate( "UPDATE T_InventoryValue iv SET QtyOnHand = " + "(SELECT iv.QtyOnHand - NVL(SUM(t.MovementQty), 0) FROM M_Transaction t, M_Locator l" + " WHERE t.M_Product_ID=iv.M_Product_ID AND t.MovementDate > iv.DateValue" + " AND t.M_Locator_ID=l.M_Locator_ID AND l.M_Warehouse_ID=iv.M_Warehouse_ID)" + " WHERE AD_PInstance_ID = "+getAD_PInstance_ID(),get_TrxName());
+        no = DB.executeUpdate( "UPDATE T_InventoryValue iv SET QtyOnHand = " + "(SELECT iv.QtyOnHand - NVL(SUM(t.MovementQty), 0) FROM M_Transaction t, M_Locator l " + " WHERE t.M_Product_ID=iv.M_Product_ID AND iv.M_AttributeSetInstance_ID=t.M_AttributeSetInstance_ID AND t.MovementDate > iv.DateValue" + " AND t.M_Locator_ID=l.M_Locator_ID AND l.M_Warehouse_ID=iv.M_Warehouse_ID)" + " WHERE AD_PInstance_ID = "+getAD_PInstance_ID(),get_TrxName());
 
         // Delete Recotds w/o OnHand Qty
 
@@ -141,27 +150,40 @@ public class InventoryValue extends SvrProcess {
         }
         
         // Update Prices
-                
-        no = DB.executeUpdate( "UPDATE T_InventoryValue iv " + "SET PricePO = " + "(SELECT currencyConvert (po.PriceList,po.C_Currency_ID,iv.C_Currency_ID,iv.DateValue,null, po.AD_Client_ID,po.AD_Org_ID)" + " FROM M_Product_PO po WHERE po.M_Product_ID=iv.M_Product_ID" + " AND po.IsCurrentVendor='Y' LIMIT 1), " + "PriceList = " + "(SELECT currencyConvert(pp.PriceList,pl.C_Currency_ID,iv.C_Currency_ID,iv.DateValue,null, pl.AD_Client_ID,pl.AD_Org_ID)" + " FROM M_PriceList pl, M_PriceList_Version plv, M_ProductPrice pp" + " WHERE pp.M_Product_ID=iv.M_Product_ID AND pp.M_PriceList_Version_ID=iv.M_PriceList_Version_ID" + " AND pp.M_PriceList_Version_ID=plv.M_PriceList_Version_ID" + " AND plv.M_PriceList_ID=pl.M_PriceList_ID), " + "PriceStd = " + "(SELECT currencyConvert(pp.PriceStd,pl.C_Currency_ID,iv.C_Currency_ID,iv.DateValue,null, pl.AD_Client_ID,pl.AD_Org_ID)" + " FROM M_PriceList pl, M_PriceList_Version plv, M_ProductPrice pp" + " WHERE pp.M_Product_ID=iv.M_Product_ID AND pp.M_PriceList_Version_ID=iv.M_PriceList_Version_ID" + " AND pp.M_PriceList_Version_ID=plv.M_PriceList_Version_ID" + " AND plv.M_PriceList_ID=pl.M_PriceList_ID), " + "PriceLimit = " + "(SELECT currencyConvert(pp.PriceLimit,pl.C_Currency_ID,iv.C_Currency_ID,iv.DateValue,null, pl.AD_Client_ID,pl.AD_Org_ID)" + " FROM M_PriceList pl, M_PriceList_Version plv, M_ProductPrice pp" + " WHERE pp.M_Product_ID=iv.M_Product_ID AND pp.M_PriceList_Version_ID=iv.M_PriceList_Version_ID" + " AND pp.M_PriceList_Version_ID=plv.M_PriceList_Version_ID" + " AND plv.M_PriceList_ID=pl.M_PriceList_ID), " + "CostStandard = " + "(SELECT currencyConvert(pc.CurrentCostPrice,acs.C_Currency_ID,iv.C_Currency_ID,iv.DateValue,null, pc.AD_Client_ID,pc.AD_Org_ID)" + " FROM AD_ClientInfo ci, C_AcctSchema acs, M_Product_Costing pc" + " WHERE iv.AD_Client_ID=ci.AD_Client_ID AND ci.C_AcctSchema1_ID=acs.C_AcctSchema_ID" + " AND acs.C_AcctSchema_ID=pc.C_AcctSchema_ID" + " AND iv.M_Product_ID=pc.M_Product_ID)" + " WHERE AD_PInstance_ID = "+getAD_PInstance_ID(),get_TrxName());
-
+        // Modified by Lucas Hernandez - Kunan	
+        no = DB.executeUpdate( "UPDATE T_InventoryValue iv " + "SET PricePO = " + "(SELECT currencyConvert (po.PriceList,po.C_Currency_ID,iv.C_Currency_ID,iv.DateValue,null, po.AD_Client_ID,po.AD_Org_ID)" + " FROM M_Product_PO po WHERE po.M_Product_ID=iv.M_Product_ID" + " AND po.IsCurrentVendor='Y' LIMIT 1), " + "PriceList = " + "(SELECT currencyConvert(pp.PriceList,pl.C_Currency_ID,iv.C_Currency_ID,iv.DateValue,null, pl.AD_Client_ID,pl.AD_Org_ID)" + " FROM M_PriceList pl, M_PriceList_Version plv, M_ProductPrice pp" + " WHERE pp.M_Product_ID=iv.M_Product_ID AND pp.M_PriceList_Version_ID=iv.M_PriceList_Version_ID" + " AND pp.M_PriceList_Version_ID=plv.M_PriceList_Version_ID" + " AND plv.M_PriceList_ID=pl.M_PriceList_ID), " + "PriceStd = " + "(SELECT currencyConvert(pp.PriceStd,pl.C_Currency_ID,iv.C_Currency_ID,iv.DateValue,null, pl.AD_Client_ID,pl.AD_Org_ID)" + " FROM M_PriceList pl, M_PriceList_Version plv, M_ProductPrice pp" + " WHERE pp.M_Product_ID=iv.M_Product_ID AND pp.M_PriceList_Version_ID=iv.M_PriceList_Version_ID" + " AND pp.M_PriceList_Version_ID=plv.M_PriceList_Version_ID" + " AND plv.M_PriceList_ID=pl.M_PriceList_ID), " + "PriceLimit = " + "(SELECT currencyConvert(pp.PriceLimit,pl.C_Currency_ID,iv.C_Currency_ID,iv.DateValue,null, pl.AD_Client_ID,pl.AD_Org_ID)" + " FROM M_PriceList pl, M_PriceList_Version plv, M_ProductPrice pp" + " WHERE pp.M_Product_ID=iv.M_Product_ID AND pp.M_PriceList_Version_ID=iv.M_PriceList_Version_ID" + " AND pp.M_PriceList_Version_ID=plv.M_PriceList_Version_ID" + " AND plv.M_PriceList_ID=pl.M_PriceList_ID), " + "CostStandard = " + "(SELECT currencyConvert(pc.CurrentCostPrice,acs.C_Currency_ID,iv.C_Currency_ID,iv.DateValue,null, pc.AD_Client_ID,pc.AD_Org_ID)" + " FROM AD_ClientInfo ci, C_AcctSchema acs, M_Product_Costing pc" + " WHERE iv.AD_Client_ID=ci.AD_Client_ID AND ci.C_AcctSchema1_ID=acs.C_AcctSchema_ID" + " AND acs.C_AcctSchema_ID=pc.C_AcctSchema_ID" + " AND iv.M_Product_ID=pc.M_Product_ID)" + " WHERE iv.m_attributesetinstance_id=0 AND AD_PInstance_ID = "+getAD_PInstance_ID(),get_TrxName());
+        no = DB.executeUpdate( "UPDATE T_InventoryValue iv " + "SET PricePO = " + "(SELECT currencyConvert (po.PriceList,po.C_Currency_ID,iv.C_Currency_ID,iv.DateValue,null, po.AD_Client_ID,po.AD_Org_ID)" + " FROM M_Product_PO po WHERE po.M_Product_ID=iv.M_Product_ID" + " AND po.IsCurrentVendor='Y' LIMIT 1), " + "PriceList = " + "(SELECT currencyConvert(pp.PriceList,pl.C_Currency_ID,iv.C_Currency_ID,iv.DateValue,null, pl.AD_Client_ID,pl.AD_Org_ID)" + " FROM M_PriceList pl, M_PriceList_Version plv, M_ProductPriceInstance pp" + " WHERE pp.M_Product_ID=iv.M_Product_ID AND pp.M_AttributeSetInstance_ID=iv.M_AttributeSetInstance_ID AND pp.M_PriceList_Version_ID=iv.M_PriceList_Version_ID" + " AND pp.M_PriceList_Version_ID=plv.M_PriceList_Version_ID" + " AND plv.M_PriceList_ID=pl.M_PriceList_ID), " + "PriceStd = " + "(SELECT currencyConvert(pp.PriceStd,pl.C_Currency_ID,iv.C_Currency_ID,iv.DateValue,null, pl.AD_Client_ID,pl.AD_Org_ID)" + " FROM M_PriceList pl, M_PriceList_Version plv, M_ProductPriceInstance pp" + " WHERE pp.M_Product_ID=iv.M_Product_ID AND pp.M_AttributeSetInstance_ID=iv.M_AttributeSetInstance_ID AND pp.M_PriceList_Version_ID=iv.M_PriceList_Version_ID" + " AND pp.M_PriceList_Version_ID=plv.M_PriceList_Version_ID" + " AND plv.M_PriceList_ID=pl.M_PriceList_ID), " + "PriceLimit = " + "(SELECT currencyConvert(pp.PriceLimit,pl.C_Currency_ID,iv.C_Currency_ID,iv.DateValue,null, pl.AD_Client_ID,pl.AD_Org_ID)" + " FROM M_PriceList pl, M_PriceList_Version plv, M_ProductPriceInstance pp" + " WHERE pp.M_Product_ID=iv.M_Product_ID AND pp.M_AttributeSetInstance_ID=iv.M_AttributeSetInstance_ID AND pp.M_PriceList_Version_ID=iv.M_PriceList_Version_ID" + " AND pp.M_PriceList_Version_ID=plv.M_PriceList_Version_ID" + " AND plv.M_PriceList_ID=pl.M_PriceList_ID), " + "CostStandard = " + "(SELECT currencyConvert(pc.CurrentCostPrice,acs.C_Currency_ID,iv.C_Currency_ID,iv.DateValue,null, pc.AD_Client_ID,pc.AD_Org_ID)" + " FROM AD_ClientInfo ci, C_AcctSchema acs, M_Product_Costing pc" + " WHERE iv.AD_Client_ID=ci.AD_Client_ID AND ci.C_AcctSchema1_ID=acs.C_AcctSchema_ID" + " AND acs.C_AcctSchema_ID=pc.C_AcctSchema_ID" + " AND iv.M_Product_ID=pc.M_Product_ID)" + " WHERE iv.m_attributesetinstance_id<>0 AND AD_PInstance_ID = "+getAD_PInstance_ID(),get_TrxName());
+        no = DB.executeUpdate( "UPDATE T_InventoryValue iv " + "SET PricePO = " + "(SELECT currencyConvert (po.PriceList,po.C_Currency_ID,iv.C_Currency_ID,iv.DateValue,null, po.AD_Client_ID,po.AD_Org_ID)" + " FROM M_Product_PO po WHERE po.M_Product_ID=iv.M_Product_ID" + " AND po.IsCurrentVendor='Y' LIMIT 1), " + "PriceList = " + "(SELECT currencyConvert(pp.PriceList,pl.C_Currency_ID,iv.C_Currency_ID,iv.DateValue,null, pl.AD_Client_ID,pl.AD_Org_ID)" + " FROM M_PriceList pl, M_PriceList_Version plv, M_ProductPrice pp" + " WHERE pp.M_Product_ID=iv.M_Product_ID AND pp.M_PriceList_Version_ID=iv.M_PriceList_Version_ID" + " AND pp.M_PriceList_Version_ID=plv.M_PriceList_Version_ID" + " AND plv.M_PriceList_ID=pl.M_PriceList_ID), " + "PriceStd = " + "(SELECT currencyConvert(pp.PriceStd,pl.C_Currency_ID,iv.C_Currency_ID,iv.DateValue,null, pl.AD_Client_ID,pl.AD_Org_ID)" + " FROM M_PriceList pl, M_PriceList_Version plv, M_ProductPrice pp" + " WHERE pp.M_Product_ID=iv.M_Product_ID AND pp.M_PriceList_Version_ID=iv.M_PriceList_Version_ID" + " AND pp.M_PriceList_Version_ID=plv.M_PriceList_Version_ID" + " AND plv.M_PriceList_ID=pl.M_PriceList_ID), " + "PriceLimit = " + "(SELECT currencyConvert(pp.PriceLimit,pl.C_Currency_ID,iv.C_Currency_ID,iv.DateValue,null, pl.AD_Client_ID,pl.AD_Org_ID)" + " FROM M_PriceList pl, M_PriceList_Version plv, M_ProductPrice pp" + " WHERE pp.M_Product_ID=iv.M_Product_ID AND pp.M_PriceList_Version_ID=iv.M_PriceList_Version_ID" + " AND pp.M_PriceList_Version_ID=plv.M_PriceList_Version_ID" + " AND plv.M_PriceList_ID=pl.M_PriceList_ID), " + "CostStandard = " + "(SELECT currencyConvert(pc.CurrentCostPrice,acs.C_Currency_ID,iv.C_Currency_ID,iv.DateValue,null, pc.AD_Client_ID,pc.AD_Org_ID)" + " FROM AD_ClientInfo ci, C_AcctSchema acs, M_Product_Costing pc" + " WHERE iv.AD_Client_ID=ci.AD_Client_ID AND ci.C_AcctSchema1_ID=acs.C_AcctSchema_ID" + " AND acs.C_AcctSchema_ID=pc.C_AcctSchema_ID" + " AND iv.M_Product_ID=pc.M_Product_ID)" + " WHERE iv.PriceList IS NULL AND iv.PriceStd IS NULL AND iv.PriceLimit IS NULL AND iv.AD_PInstance_ID = "+getAD_PInstance_ID(),get_TrxName());
+        
         String msg = "";
 
         if( no == 0 ) {
             msg = "No Prices";
         }
+        
+        // Update UPC
+        
+        no = DB.executeUpdate( "UPDATE T_InventoryValue iv " + "SET UPC = " + "(SELECT p.upc FROM M_Product p WHERE p.M_Product_ID=iv.M_Product_ID)" + " WHERE iv.m_attributesetinstance_id=0 AND AD_PInstance_ID = "+getAD_PInstance_ID(),get_TrxName());
+        no = DB.executeUpdate( "UPDATE T_InventoryValue iv " + "SET UPC = " + "(SELECT pi.upc FROM M_Product_Upc_Instance pi WHERE pi.M_Product_ID=iv.M_Product_ID" + " AND pi.M_AttributeSetInstance_ID = iv.M_AttributeSetInstance_ID )" + " WHERE iv.m_attributesetinstance_id<>0 AND AD_PInstance_ID = "+getAD_PInstance_ID(),get_TrxName());
+
+        if( no == 0 ) {
+            msg = "No UPC";
+        }
 
         // Update Values
-
-        no = DB.executeUpdate( "UPDATE T_InventoryValue SET " + "PricePOAmt = QtyOnHand * PricePO, " + "PriceListAmt = QtyOnHand * PriceList, " + "PriceStdAmt = QtyOnHand * PriceStd, " + "PriceLimitAmt = QtyOnHand * PriceLimit, " + "CostStandardAmt = QtyOnHand * CostStandard " + " WHERE AD_PInstance_ID = "+getAD_PInstance_ID(),get_TrxName());
+        no = DB.executeUpdate( "UPDATE T_InventoryValue SET " + "PricePOAmt = QtyOnHand * (PricePO + (PricePO * '"+priceVariationPercent+"')/100), " + "PriceListAmt = QtyOnHand * (PriceList + (PriceList * '"+priceVariationPercent+"')/100), " + "PriceStdAmt = QtyOnHand * (PriceStd + (PriceStd * '"+priceVariationPercent+"')/100), " + "PriceLimitAmt = QtyOnHand * (PriceLimit + (PriceLimit * '"+priceVariationPercent+"')/100), " + "CostStandardAmt = QtyOnHand * (CostStandard + (CostStandard * '"+priceVariationPercent+"')/100)" + " WHERE AD_PInstance_ID = "+getAD_PInstance_ID(),get_TrxName());
         log.fine( "Valued=" + no );
 
         //
         if(!showProdsWithoutPrice){
         	noQty = DB.executeUpdate( "DELETE FROM T_InventoryValue WHERE pricelist IS NULL AND AD_PInstance_ID = "+getAD_PInstance_ID(),get_TrxName());
         }
+      
+        no=DB.executeUpdate( "UPDATE T_InventoryValue iv " + "SET M_AttributeSetInstance_ID = NULL WHERE M_AttributeSetInstance_ID = 0 AND "+ " AD_PInstance_ID = "+getAD_PInstance_ID(),get_TrxName());
 
         return msg;
     }    // doIt
+      
 }    // InventoryValue
 
 

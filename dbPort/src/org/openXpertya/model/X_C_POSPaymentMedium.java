@@ -1,12 +1,13 @@
 /** Modelo Generado - NO CAMBIAR MANUALMENTE - Disytel */
 package org.openXpertya.model;
-import java.util.*;
+import java.util.logging.Level;
+ import java.util.*;
 import java.sql.*;
 import java.math.*;
 import org.openXpertya.util.*;
 /** Modelo Generado por C_POSPaymentMedium
  *  @author Comunidad de Desarrollo Libertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
- *  @version  - 2010-12-13 16:49:22.809 */
+ *  @version  - 2012-04-11 14:34:38.793 */
 public class X_C_POSPaymentMedium extends org.openXpertya.model.PO
 {
 /** Constructor estándar */
@@ -15,6 +16,7 @@ public X_C_POSPaymentMedium (Properties ctx, int C_POSPaymentMedium_ID, String t
 super (ctx, C_POSPaymentMedium_ID, trxName);
 /** if (C_POSPaymentMedium_ID == 0)
 {
+setBeforeCheckDeadLineFrom (null);
 setC_Currency_ID (0);	// @$C_Currency_ID@
 setCheckDeadLine (null);
 setContext (null);	// B
@@ -24,6 +26,7 @@ setDateTo (new Timestamp(System.currentTimeMillis()));
 setM_EntidadFinanciera_ID (0);
 setName (null);
 setTenderType (null);	// 'CA'
+setValidateBeforeCheckDeadLines (false);	// N
 }
  */
 }
@@ -85,6 +88,59 @@ Bank */
 public String getBank() 
 {
 return (String)get_Value("Bank");
+}
+public static final int BEFORECHECKDEADLINEFROM_AD_Reference_ID = MReference.getReferenceID("C_POSPaymentMedium Check Dead Line");
+/** 30 = 30 */
+public static final String BEFORECHECKDEADLINEFROM_30 = "30";
+/** 60 = 60 */
+public static final String BEFORECHECKDEADLINEFROM_60 = "60";
+/** 90 = 90 */
+public static final String BEFORECHECKDEADLINEFROM_90 = "90";
+/** Today = 0 */
+public static final String BEFORECHECKDEADLINEFROM_Today = "0";
+/** Set Before Check DeadLine From */
+public void setBeforeCheckDeadLineFrom (String BeforeCheckDeadLineFrom)
+{
+if (BeforeCheckDeadLineFrom.equals("30") || BeforeCheckDeadLineFrom.equals("60") || BeforeCheckDeadLineFrom.equals("90") || BeforeCheckDeadLineFrom.equals("0"));
+ else throw new IllegalArgumentException ("BeforeCheckDeadLineFrom Invalid value - Reference = BEFORECHECKDEADLINEFROM_AD_Reference_ID - 30 - 60 - 90 - 0");
+if (BeforeCheckDeadLineFrom == null) throw new IllegalArgumentException ("BeforeCheckDeadLineFrom is mandatory");
+if (BeforeCheckDeadLineFrom.length() > 10)
+{
+log.warning("Length > 10 - truncated");
+BeforeCheckDeadLineFrom = BeforeCheckDeadLineFrom.substring(0,10);
+}
+set_Value ("BeforeCheckDeadLineFrom", BeforeCheckDeadLineFrom);
+}
+/** Get Before Check DeadLine From */
+public String getBeforeCheckDeadLineFrom() 
+{
+return (String)get_Value("BeforeCheckDeadLineFrom");
+}
+public static final int BEFORECHECKDEADLINETO_AD_Reference_ID = MReference.getReferenceID("C_POSPaymentMedium Check Dead Line");
+/** 30 = 30 */
+public static final String BEFORECHECKDEADLINETO_30 = "30";
+/** 60 = 60 */
+public static final String BEFORECHECKDEADLINETO_60 = "60";
+/** 90 = 90 */
+public static final String BEFORECHECKDEADLINETO_90 = "90";
+/** Today = 0 */
+public static final String BEFORECHECKDEADLINETO_Today = "0";
+/** Set Before Check DeadLine To */
+public void setBeforeCheckDeadLineTo (String BeforeCheckDeadLineTo)
+{
+if (BeforeCheckDeadLineTo == null || BeforeCheckDeadLineTo.equals("30") || BeforeCheckDeadLineTo.equals("60") || BeforeCheckDeadLineTo.equals("90") || BeforeCheckDeadLineTo.equals("0"));
+ else throw new IllegalArgumentException ("BeforeCheckDeadLineTo Invalid value - Reference = BEFORECHECKDEADLINETO_AD_Reference_ID - 30 - 60 - 90 - 0");
+if (BeforeCheckDeadLineTo != null && BeforeCheckDeadLineTo.length() > 10)
+{
+log.warning("Length > 10 - truncated");
+BeforeCheckDeadLineTo = BeforeCheckDeadLineTo.substring(0,10);
+}
+set_Value ("BeforeCheckDeadLineTo", BeforeCheckDeadLineTo);
+}
+/** Get Before Check DeadLine To */
+public String getBeforeCheckDeadLineTo() 
+{
+return (String)get_Value("BeforeCheckDeadLineTo");
 }
 /** Set Currency.
 The Currency for this record */
@@ -297,5 +353,21 @@ Method of Payment */
 public String getTenderType() 
 {
 return (String)get_Value("TenderType");
+}
+/** Set Validate Before CheckDead Lines */
+public void setValidateBeforeCheckDeadLines (boolean ValidateBeforeCheckDeadLines)
+{
+set_Value ("ValidateBeforeCheckDeadLines", new Boolean(ValidateBeforeCheckDeadLines));
+}
+/** Get Validate Before CheckDead Lines */
+public boolean isValidateBeforeCheckDeadLines() 
+{
+Object oo = get_Value("ValidateBeforeCheckDeadLines");
+if (oo != null) 
+{
+ if (oo instanceof Boolean) return ((Boolean)oo).booleanValue();
+ return "Y".equals(oo);
+}
+return false;
 }
 }

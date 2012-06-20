@@ -6,6 +6,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -48,8 +49,10 @@ import org.openXpertya.model.MPOS;
 import org.openXpertya.model.MPOSJournal;
 import org.openXpertya.model.MPOSPaymentMedium;
 import org.openXpertya.model.MPayment;
+import org.openXpertya.model.MPreference;
 import org.openXpertya.model.MPriceList;
 import org.openXpertya.model.MPriceListVersion;
+import org.openXpertya.model.MProcess;
 import org.openXpertya.model.MProduct;
 import org.openXpertya.model.MProductPO;
 import org.openXpertya.model.MProductPrice;
@@ -117,6 +120,8 @@ public class PoSOnline extends PoSConnectionState {
 
 	private final boolean LOCAL_AR_ACTIVE = CalloutInvoiceExt.ComprobantesFiscalesActivos();
 	
+	private final String MAX_ORDER_LINE_QTY_PREFERENCE_NAME = "L_AR_MaxOrderLineQty";
+	
 	// ID de pestañas utilizadas para obtener los reportes de impresión.
 	private final int ORDER_TAB_ID = 186;
 	private final int INVOICE_TAB_ID = 263;
@@ -164,6 +169,9 @@ public class PoSOnline extends PoSConnectionState {
 	private Map<PO, Object> aditionalWorkResults = new HashMap<PO, Object>();
 	
 	private Map<Integer, PaymentTerm> paymentTerms = new HashMap<Integer, PaymentTerm>();
+	
+	private List<Integer> checkDeadLines = null;
+	private List<EntidadFinanciera> entidadesFinancieras = null;
 	
 	public PoSOnline() {
 		super();
@@ -795,6 +803,7 @@ public class PoSOnline extends PoSConnectionState {
           .append("WHERE u.M_Product_ID = pp.M_Product_ID ")
           .append(  "AND u.M_Product_ID = p.M_Product_ID ")
           .append(  "AND p.IsActive = 'Y' ")
+          .append(  "AND p.isSold = 'Y' ")
           .append("ORDER BY u.MatchType ASC ");
 
 		try {
@@ -905,26 +914,30 @@ public class PoSOnline extends PoSConnectionState {
 		// convertidos correspondientes
 		Map<String, BigDecimal> pays = new HashMap<String, BigDecimal>();
 		BigDecimal convertedPayAmt;
+		String paymentRule;
 		for (Payment pay : order.getPayments()) {
 			// Verificar por el manager de cuentas corrientes si debo verificar
 			// el estado de crédito en base a los tipos de pago obtenidos
-			if (tenderTypesAllowed != null
-					&& tenderTypesAllowed.contains(pay.getTenderType())) {
-				shouldUpdateBPBalance = true;
-				// Verificar la situación de crédito de la entidad comercial
-				result = manager.validateCurrentAccountStatus(getCtx(),
-						creditStatus, getTrxName());
-				// Si hubo error, obtengo el mensaje y tiro la excepción
-				if (result.isError()) {
-					throw new InsufficientCreditException(result.getMsg());
+			paymentRule = CurrentAccountBalanceStrategy
+					.getPaymentRuleEquivalent(pay.getTenderType());
+			if(!Util.isEmpty(paymentRule, true)){
+				if (tenderTypesAllowed != null
+						&& tenderTypesAllowed.contains(pay.getTenderType())) {
+					shouldUpdateBPBalance = true;
+					// Verificar la situación de crédito de la entidad comercial
+					result = manager.validateCurrentAccountStatus(getCtx(),
+							creditStatus, getTrxName());
+					// Si hubo error, obtengo el mensaje y tiro la excepción
+					if (result.isError()) {
+						throw new InsufficientCreditException(result.getMsg());
+					}
 				}
+				// Convierto el monto del pago a partir de su moneda
+				convertedPayAmt = MConversionRate.convertBase(getCtx(), pay
+						.getAmount(), pay.getCurrencyId(), order.getDate(), 0, Env
+						.getAD_Client_ID(getCtx()), Env.getAD_Org_ID(getCtx()));
+				pays.put(paymentRule, convertedPayAmt);
 			}
-			// Convierto el monto del pago a partir de su moneda
-			convertedPayAmt = MConversionRate.convertBase(getCtx(), pay
-					.getAmount(), pay.getCurrencyId(), order.getDate(), 0, Env
-					.getAD_Client_ID(getCtx()), Env.getAD_Org_ID(getCtx()));
-			pays.put(CurrentAccountBalanceStrategy.getPaymentRuleEquivalent(pay
-					.getTenderType()), convertedPayAmt);
 		}		
 		// Verificar el crédito con la factura
 		result = manager.checkInvoicePaymentRulesBalance(getCtx(), bp, org,
@@ -1046,7 +1059,9 @@ public class PoSOnline extends PoSConnectionState {
 		mo.setAD_User_ID(Env.getAD_User_ID(ctx));
 		mo.setM_PriceList_ID(getPoSCOnfig().getPriceListID());
 		mo.setM_Warehouse_ID(getPoSCOnfig().getWarehouseID());
-		mo.setSalesRep_ID(Env.getContextAsInt(ctx, "#SalesRep_ID"));
+		//RESP
+		mo.setSalesRep_ID(order.getOrderRep());
+		//mo.setSalesRep_ID(Env.getContextAsInt(ctx, "#SalesRep_ID"));
         
 		// Si el pedido tiene asociado un esquema de vencimientos entonces le
 		// seteo ese al original, sino busco el de la config
@@ -1061,10 +1076,6 @@ public class PoSOnline extends PoSConnectionState {
 		int currentProduct = 0;
 		int productCount = products.size();
 		int numOrderLine = 0; //ADER: mejora de performance (y arreglo de bug), al setearse explicitamente 
-	
-		// Lugar de retiro de cada línea. (ID, CheckoutPlace)
-		Map<Integer, String> lineCheckoutPlace = new HashMap<Integer, String>();
-		String checkoutPlace;
 		
 		for (OrderProduct op : products) {
 			currentProduct++;
@@ -1091,13 +1102,6 @@ public class PoSOnline extends PoSConnectionState {
 	        line.setLineNetAmt();
 	        line.setLineBonusAmt(op.getLineBonusAmt());
 	        line.setLineDiscountAmt(op.getLineDiscountAmt());
-	       
-	        // unicamente la ultima linea actualizará el encabezado con información de impuestos
-	        line.setShouldUpdateHeader(currentProduct==productCount);
-	        debug("Guardando línea #" + currentProduct);
-	        throwIfFalse(line.save());
-	        
-	        op.setOrderLineID(line.getC_OrderLine_ID());
 			// Guarda el lugar de retiro de la línea para luego determinar si se
 			// reserva o no el stock en pedido según el lugar de retiro.
 	        // Los artículos retirados por almacén requieren que se haga la
@@ -1111,8 +1115,17 @@ public class PoSOnline extends PoSConnectionState {
 			// Esto implica que en este punto ya está definido si la línea se
 			// retira por Almacén o por TPV (habiendo contemplado que si el TPV
 			// no hace remito, todos los artículos van a estar con lugar de
-			// retiro Almacén) -> ver métodos createOrderProduct(...).
-	        lineCheckoutPlace.put(line.getC_OrderLine_ID(), op.getCheckoutPlace());
+			// retiro Almacén) -> ver métodos createOrderProduct(...).	 
+			// Matías Cap 20120329 - Se modificó esta lógica ya que ahora se
+			// debe persistir ese dato en al base de datos
+	        line.setCheckoutPlace(op.getCheckoutPlace());
+	       
+	        // unicamente la ultima linea actualizará el encabezado con información de impuestos
+	        line.setShouldUpdateHeader(currentProduct==productCount);
+	        debug("Guardando línea #" + currentProduct);
+	        throwIfFalse(line.save());
+	        
+	        op.setOrderLineID(line.getC_OrderLine_ID());
 		}
 		debug("Guardando el Pedido (Encabezado, con líneas ya creadas)");
 		throwIfFalse(mo.save(), mo);
@@ -1139,17 +1152,6 @@ public class PoSOnline extends PoSConnectionState {
 		
 		mo = new MOrder(ctx, mo.getID(), getTrxName());
 		setCaches(mo); //caches
-
-		// Reservas de Stock: a las líneas del pedido se les setea el lugar de 
-		// retiro para el manejo de las reservas de stock. Se debe hacer aquí
-		// (luego de recargar el pedido) ya que el valor se usa en el prepareIt
-		// y el dato de lugar de retiro es una variable de instancia que no se
-		// persiste en la base de datos.
-		// Con esta iteración las líneas quedan cacheadas en el arreglo interno
-		// de MOrder.
-		for (MOrderLine orderLine : mo.getLines()) {
-			orderLine.setCheckoutPlace(lineCheckoutPlace.get(orderLine.getC_OrderLine_ID()));
-		} 
 		
 		// Completar Orden
 		debug("Completando el pedido");
@@ -1276,24 +1278,8 @@ public class PoSOnline extends PoSConnectionState {
 	}
 	
 	private MInvoice createLocaleInvoice(Order order) throws PosException {
-		Integer categoriaIVAclient = CalloutInvoiceExt.darCategoriaIvaClient();
-		Integer categoriaIVACustomer = partner.getC_Categoria_Iva_ID();
-		BusinessPartner bPartner = order.getBusinessPartner();
-		
-		// Se validan las categorias de IVA de la compañia y el cliente.
-		if (categoriaIVAclient == null || categoriaIVAclient == 0) {
-			throw new InvoiceCreateException("ClientWithoutIVAError");
-		} else if (categoriaIVACustomer == null || categoriaIVACustomer == 0) {
-			throw new InvoiceCreateException("BPartnerWithoutIVAError");
-		}
-		
-		// Se obtiene el ID de la letra del comprobante a partir de las categorias de IVA.
-		Integer letraID = CalloutInvoiceExt.darLetraComprobante(categoriaIVACustomer, categoriaIVAclient);
-		if (letraID == null || letraID == 0)
-			throw new InvoiceCreateException("LetraCalculationError");
-		
-		// Se obtiene el PO de letra del comprobante.
-		MLetraComprobante mLetraComprobante = new MLetraComprobante(ctx, letraID, getTrxName());
+		// Se obtiene la letra del comprobante
+		MLetraComprobante mLetraComprobante = getLocaleArLetraComprobante();
 		
 		// Se obtiene la letra y el nro de punto de venta para determinar el tipo
 		// de documento de la factura.
@@ -1301,7 +1287,9 @@ public class PoSOnline extends PoSConnectionState {
 		int posNumber = getPoSCOnfig().getPosNumber();
 		
 		// Se obtiene el tipo de documento para la factura.
-		MDocType mDocType = MDocType.getDocType(ctx, MDocType.DOCTYPE_CustomerInvoice, letra, posNumber, getTrxName());
+		MDocType mDocType = MDocType.getDocType(ctx,
+				MDocType.DOCTYPE_CustomerInvoice, letra, posNumber,
+				getTrxName());
 		if (mDocType == null) 
 			throw new InvoiceCreateException(Msg.getMsg(ctx, "NonexistentPOSDocType", new Object[] {letra, posNumber}));
 		
@@ -1309,7 +1297,7 @@ public class PoSOnline extends PoSConnectionState {
 		
 		// Se asigna la letra de comprobante, punto de venta y número de comprobante
 		// a la factura creada.
-		inv.setC_Letra_Comprobante_ID(letraID);
+		inv.setC_Letra_Comprobante_ID(mLetraComprobante.getID());
 		inv.setPuntoDeVenta(posNumber);
 		// Nro de comprobante.
 		//String documentNo = MSequence.getDocumentNo(mDocType.getID(), getTrxName());
@@ -1318,7 +1306,7 @@ public class PoSOnline extends PoSConnectionState {
 			inv.setNumeroComprobante(nroComprobante);
 		
 		// Asignación de CUIT en caso de que se requiera.
-		MCategoriaIva mCategoriaIvaCus = new MCategoriaIva(ctx, categoriaIVACustomer, getTrxName());
+		MCategoriaIva mCategoriaIvaCus = new MCategoriaIva(ctx, partner.getC_Categoria_Iva_ID(), getTrxName());
 		String cuit = partner.getTaxID();
 		inv.setCUIT(cuit);
 
@@ -1326,9 +1314,9 @@ public class PoSOnline extends PoSConnectionState {
 		// Nombre, dirección e identificación para los casos en que el monto de la factura
 		// sea mayor que el permitido a consumidor final.
 		if (mCategoriaIvaCus.getCodigo() == MCategoriaIva.CONSUMIDOR_FINAL) {
-			inv.setNombreCli(bPartner.getCustomerName());
-			inv.setInvoice_Adress(bPartner.getCustomerAddress());
-			inv.setNroIdentificCliente(bPartner.getCustomerIdentification());
+			inv.setNombreCli(order.getBusinessPartner().getCustomerName());
+			inv.setInvoice_Adress(order.getBusinessPartner().getCustomerAddress());
+			inv.setNroIdentificCliente(order.getBusinessPartner().getCustomerIdentification());
 		}
 		
 		return inv;
@@ -1868,8 +1856,18 @@ public class PoSOnline extends PoSConnectionState {
 
 	@Override
 	public List<EntidadFinanciera> getEntidadesFinancieras() {
+		if(entidadesFinancieras == null){
+			loadEntidadesFinancieras();
+		}
+		return entidadesFinancieras;
+	}
+	
+	/**
+	 * Cargo las entidades financieras
+	 */
+	public void loadEntidadesFinancieras(){
 		List<EntidadFinanciera> entidades = new ArrayList<EntidadFinanciera>();
-		String sql = "SELECT M_EntidadFinanciera_ID, Name " +
+		String sql = "SELECT M_EntidadFinanciera_ID, Name, CardMask " +
 			 	     "FROM M_EntidadFinanciera " + 
 			 	     "WHERE ((C_City_ID IS NULL) OR (C_City_ID = ?)) AND IsActive = 'Y' ";
 		
@@ -1884,7 +1882,8 @@ public class PoSOnline extends PoSConnectionState {
 				int c_EntidadFinanciera_ID = rs.getInt(1);
 				String name = rs.getString(2);
 				
-				EntidadFinanciera entidad = new EntidadFinanciera(c_EntidadFinanciera_ID,name);
+				EntidadFinanciera entidad = new EntidadFinanciera(
+						c_EntidadFinanciera_ID, name, rs.getString("CardMask"));
 				entidades.add(entidad);
 			}
 
@@ -1892,7 +1891,7 @@ public class PoSOnline extends PoSConnectionState {
 			e.printStackTrace();
 		}
 		
-		return entidades;
+		setEntidadesFinancieras(entidades);
 	}
 
 	@Override
@@ -1935,7 +1934,7 @@ public class PoSOnline extends PoSConnectionState {
 	/**
 	 * 
 	 */
-	public void printTicket() {
+	public void printTicket() throws Exception{
 		// Salimos si ya se imprimió mediante controlador fiscal
 		if (invoice != null && invoice.requireFiscalPrint()) {
 			return;
@@ -2194,6 +2193,7 @@ public class PoSOnline extends PoSConnectionState {
 		order.setId(orderId);
 		order.setBusinessPartner(bPartner);
 		order.setDate(mOrder.getDateOrdered());
+		order.setOrderRep(mOrder.getSalesRep_ID());
 		
 		// Carga las líneas si así se indicó 
 		if (loadLines) {
@@ -2629,7 +2629,7 @@ public class PoSOnline extends PoSConnectionState {
 	 * Imprime el comprobante para retiro de artículos por almacén en caso de estar
 	 * indicada esta opción en la configuración del TPV.
 	 */
-	private void printWarehouseDeliveryTicket(Order order) {
+	private void printWarehouseDeliveryTicket(Order order) throws Exception{
 		/*
 		 * Por el momento SOLO se imprime el comprobante mediante una Impresora Fiscal, con
 		 * lo cual se deben cumplir estas condiciones:
@@ -2658,18 +2658,34 @@ public class PoSOnline extends PoSConnectionState {
 				FiscalDocumentPrint fdp = new FiscalDocumentPrint();
 				fdp.addDocumentPrintListener(getFiscalDocumentPrintListener());
 				fdp.setPrinterEventListener(getFiscalPrinterEventListener());
-
 				if(!fdp.printDeliveryDocument(docType.getC_Controlador_Fiscal_ID(), morder)) {
 					
 				}
-
+			}
+			// Impresión del comprobante Jasper que muestra los artículos que 
+			// se deben retirar por almacén
+			else{
+				Map<String, Object> params = new HashMap<String, Object>();
+				params.put("C_Order_ID", morder.getID());
+				params.put("C_Invoice_ID", invoice.getID());
+				ProcessInfo info = MProcess.execute(getCtx(),
+						getWarehouseDeliverDocumentProcessID(), params,
+						getTrxName());
+				if(info.isError()){
+					
+				}
 			}
 		}
-		
-		// TODO: Codificar la impresión de comprobante mediante un informe común
-		// es decir, un informe jasper o Libertya que muestre los artículos que 
-		// se deben retirar por almacén. En este caso no es requerido que esté
-		// habilitada la localización Argentina.
+	}
+
+	/**
+	 * @return el id de proceso que corresponde con la impresión de la salida
+	 *         por depósito
+	 */
+	public Integer getWarehouseDeliverDocumentProcessID(){
+		return DB
+				.getSQLValue(getTrxName(),
+						"SELECT ad_process_id FROM ad_process WHERE ad_componentobjectuid = 'CORE-AD_Process-1010274'");
 	}
 
 	@Override
@@ -2699,14 +2715,31 @@ public class PoSOnline extends PoSConnectionState {
 			// la entidad financiera y se cargan los planes de tarjeta disponibles
 			// para la misma
 			if (paymentMedium.isCreditCard()) {
-				paymentMedium.setEntidadFinancieraID(mposPaymentMedium.getM_EntidadFinanciera_ID());
-				paymentMedium.setCreditCardPlans(getCreditCardPlans(paymentMedium.getEntidadFinancieraID()));
+				paymentMedium
+						.setEntidadFinanciera(getEntidadFinanciera(mposPaymentMedium
+								.getM_EntidadFinanciera_ID()));
+				paymentMedium
+						.setCreditCardPlans(getCreditCardPlans(paymentMedium
+								.getEntidadFinanciera().getId()));
 			}
 			
 			// Si es un medio de pago de tipo Cheque se guarda el plazo de cobro
 			if (paymentMedium.isCheck()) {
 				paymentMedium.setCheckDeadLine(Integer
 						.parseInt(mposPaymentMedium.getCheckDeadLine()));
+				paymentMedium
+						.setValidationBeforeCheckDeadLines(mposPaymentMedium
+								.isValidateBeforeCheckDeadLines());
+				paymentMedium.setBeforeCheckDeadLineFrom(mposPaymentMedium
+						.getBeforeCheckDeadLineFrom() != null ? Integer
+						.parseInt(mposPaymentMedium
+								.getBeforeCheckDeadLineFrom()) : null);
+				paymentMedium.setBeforeCheckDeadLineTo(mposPaymentMedium
+						.getBeforeCheckDeadLineTo() != null ? Integer
+						.parseInt(mposPaymentMedium.getBeforeCheckDeadLineTo())
+						: null);
+				paymentMedium
+						.setBeforeCheckDeadLinesToValidate(getBeforeCheckDeadLinesToValidate(mposPaymentMedium));
 			}
 			
 			// Cheques y Tarjetas pueden contener un banco (lista de referencia)
@@ -2730,6 +2763,23 @@ public class PoSOnline extends PoSConnectionState {
 		return paymentMediums;
 	}
 
+	/**
+	 * @param entidadFinancieraID
+	 *            id de entidad financiera
+	 * @return la entidad financiera con el id parámetro
+	 */
+	protected EntidadFinanciera getEntidadFinanciera(int entidadFinancieraID){
+		EntidadFinanciera financiera = null;
+		boolean found = false;
+		for (int i = 0; i < getEntidadesFinancieras().size() && !found; i++){
+			if(getEntidadesFinancieras().get(i).getId() == entidadFinancieraID){
+				found = true;
+				financiera = getEntidadesFinancieras().get(i); 
+			}
+		}
+		return financiera;
+	}
+	
 	/**
 	 * Devuelve una lista con todos los planes válidos para la fecha actual de una
 	 * Entidad Financiera.
@@ -3026,5 +3076,170 @@ public class PoSOnline extends PoSConnectionState {
     		return null;
     	MProduct p = m_prodCache.get(M_Product_ID);
     	return p;
+	}
+
+	@Override
+	public Integer getMaxOrderLineQty() {
+		Integer maxQty = null;
+		// Para locale ar verificamos la cantidad máxima de la preferencia
+		// configurada
+		if(LOCAL_AR_ACTIVE){
+			// Obtenerlo desde las preferencias
+			String maxQtyValue = MPreference.GetCustomPreferenceValue(
+					MAX_ORDER_LINE_QTY_PREFERENCE_NAME,
+					Env.getAD_Client_ID(getCtx()));
+			maxQty = Util.isEmpty(maxQtyValue, true) ? null : Integer
+					.valueOf(maxQtyValue);
+		}
+		return maxQty;
+	}
+
+	@Override
+	public String getNextInvoiceDocumentNo() {
+		String documentNo = null;
+		Integer docTypeID = 0;
+		if(getShouldCreateInvoice()){
+			// Si locale ar está activo, entonces hay que obtenerlo desde la
+			// conjunción de la categoría de IVA de la entidad comercial y de la
+			// Compañía 
+			if(LOCAL_AR_ACTIVE){
+				MDocType docType = null;
+				try{
+					docType = getLocaleArDocType();
+					docTypeID = docType.getID();
+				} catch(PosException pose){
+					log.severe(Msg.getMsg(getCtx(), pose.getMessage()));
+				}
+			}
+			// Si no es L_AR, obtenerlo desde el tipo de doc de factura
+			// configurado dentro de la config del TPV
+			else{
+				docTypeID = getPoSCOnfig().getInvoiceDocTypeID();
+			}
+			
+			// Se obtiene el próximo nro de doc, si es que tengo tipo de doc
+			if(!Util.isEmpty(docTypeID, true)){
+				documentNo = CalloutInvoiceExt.getNextDocumentNo(getCtx(), docTypeID, getTrxName());
+			}
+		}
+		return documentNo;
+	}
+
+	/**
+	 * Obtener el tipo de documento de la localización argentina
+	 * 
+	 * @return tipo de documento obtenido a partir de la categoría de iva de la
+	 *         entidad comercial y de la compañía
+	 * @throws PosException
+	 *             en caso de error en la obtención
+	 */
+	public MDocType getLocaleArDocType() throws PosException{
+		// Se obtiene la letra del comprobante
+		MLetraComprobante mLetraComprobante = getLocaleArLetraComprobante();
+		
+		// Se obtiene el tipo de documento para la factura.
+		return MDocType.getDocType(ctx, MDocType.DOCTYPE_CustomerInvoice,
+				mLetraComprobante.getLetra(), getPoSCOnfig().getPosNumber(),
+				getTrxName());
+	}
+
+	/**
+	 * Obtener la letra del comprobante para esta transacción de la localización
+	 * argentina
+	 * 
+	 * @return letra de comprobante obtenido a partir de la categoría de iva de
+	 *         la entidad comercial y de la compañía
+	 * @throws PosException
+	 *             en caso de error en la obtención
+	 */
+	public MLetraComprobante getLocaleArLetraComprobante() throws PosException{
+		Integer categoriaIVAclient = CalloutInvoiceExt.darCategoriaIvaClient();
+		Integer categoriaIVACustomer = partner == null ? 0 : partner
+				.getC_Categoria_Iva_ID();
+		
+		// Se validan las categorias de IVA de la compañia y el cliente.
+		if (categoriaIVAclient == null || categoriaIVAclient == 0) {
+			throw new InvoiceCreateException("ClientWithoutIVAError");
+		} else if (categoriaIVACustomer == null || categoriaIVACustomer == 0) {
+			throw new InvoiceCreateException("BPartnerWithoutIVAError");
+		}
+		
+		// Se obtiene el ID de la letra del comprobante a partir de las categorias de IVA.
+		Integer letraID = CalloutInvoiceExt.darLetraComprobante(categoriaIVACustomer, categoriaIVAclient);
+		if (letraID == null || letraID == 0)
+			throw new InvoiceCreateException("LetraCalculationError");
+		
+		// Se obtiene el PO de letra del comprobante.
+		return new MLetraComprobante(ctx, letraID, getTrxName());
+	}
+
+	/**
+	 * Obtengo los plazos de pagos de cheques existentes
+	 */
+	private void loadCheckDeadLines(){
+		List<String> values = MRefList.getValueList(getCtx(),
+				MPOSPaymentMedium.CHECKDEADLINE_AD_Reference_ID, getTrxName());
+		List<Integer> intValues = new ArrayList<Integer>(); 
+		for (String deadline : values) {
+			try {
+				intValues.add(Integer.parseInt(deadline));
+			} catch(NumberFormatException nfe){
+				log.severe(nfe.getMessage());
+			}
+		}
+		setCheckDeadLines(intValues);
+		Collections.sort(getCheckDeadLines());
+	}
+	
+	public void setCheckDeadLines(List<Integer> checkDeadLines) {
+		this.checkDeadLines = checkDeadLines;
+	}
+
+	public List<Integer> getCheckDeadLines() {
+		if(checkDeadLines == null){
+			loadCheckDeadLines();
+		}
+		return checkDeadLines;
+	}
+
+	@Override
+	public boolean isCheckDeadLineInRange(Integer checkDeadLineToCompare,
+			Integer checkDeadLineFrom, Integer checkDeadLineTo,
+			Integer checkDeadLineActual) {
+		return checkDeadLineFrom <= checkDeadLineToCompare
+				&& (checkDeadLineTo != null ? (checkDeadLineTo >= checkDeadLineToCompare)
+						: (checkDeadLineActual > checkDeadLineToCompare));
+	}
+
+	/**
+	 * @param posPaymentMedium
+	 *            medio de pago
+	 * @return la lista de plazos anteriores de cheques que se deben validar
+	 *         sobre el medio de pago cheque parámetro
+	 */
+	protected List<Integer> getBeforeCheckDeadLinesToValidate(MPOSPaymentMedium posPaymentMedium){
+		List<Integer> befores = new ArrayList<Integer>();
+		// Si el medio de pago necesita validar los plazos anteriores
+		if(posPaymentMedium.isValidateBeforeCheckDeadLines()){
+			// Itero por los plazos existentes de los cheques y cargo la lista
+			// con cada uno de ellos. Si el final del rango es null, entonces se
+			// toma el plazo anterior al actual
+			for (Integer deadline : getCheckDeadLines()) {
+				if (isCheckDeadLineInRange(deadline,
+						Integer.parseInt(posPaymentMedium.getBeforeCheckDeadLineFrom()),
+						!Util.isEmpty(
+								posPaymentMedium.getBeforeCheckDeadLineTo(),
+								true) ? Integer.parseInt(posPaymentMedium
+								.getBeforeCheckDeadLineTo()) : null,
+						Integer.parseInt(posPaymentMedium.getCheckDeadLine()))) {
+					befores.add(deadline);
+				}
+			}
+		}
+		return befores;
+	}
+
+	public void setEntidadesFinancieras(List<EntidadFinanciera> entidadesFinancieras) {
+		this.entidadesFinancieras = entidadesFinancieras;
 	}
 }

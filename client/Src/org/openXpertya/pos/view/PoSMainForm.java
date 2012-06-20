@@ -43,7 +43,9 @@ import javax.swing.JComponent;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
+import javax.swing.JSeparator;
 import javax.swing.JTable;
+import javax.swing.JTextField;
 import javax.swing.KeyStroke;
 import javax.swing.SwingUtilities;
 import javax.swing.border.EtchedBorder;
@@ -71,6 +73,9 @@ import org.openXpertya.grid.ed.VCheckBox;
 import org.openXpertya.grid.ed.VDate;
 import org.openXpertya.grid.ed.VLookup;
 import org.openXpertya.grid.ed.VNumber;
+import org.openXpertya.grid.ed.VPassword;
+import org.openXpertya.grid.ed.VPasswordSimple;
+import org.openXpertya.grid.ed.VTextField;
 import org.openXpertya.images.ImageFactory;
 import org.openXpertya.minigrid.MiniTable;
 import org.openXpertya.model.CalloutInvoiceExt;
@@ -93,10 +98,13 @@ import org.openXpertya.pos.model.BankTransferPayment;
 import org.openXpertya.pos.model.BusinessPartner;
 import org.openXpertya.pos.model.CashPayment;
 import org.openXpertya.pos.model.CheckPayment;
+import org.openXpertya.pos.model.CreditCard;
+import org.openXpertya.pos.model.CreditCardMaskManager;
 import org.openXpertya.pos.model.CreditCardPayment;
 import org.openXpertya.pos.model.CreditNotePayment;
 import org.openXpertya.pos.model.CreditPayment;
 import org.openXpertya.pos.model.DiscountSchema;
+import org.openXpertya.pos.model.EntidadFinanciera;
 import org.openXpertya.pos.model.EntidadFinancieraPlan;
 import org.openXpertya.pos.model.IPaymentMediumInfo;
 import org.openXpertya.pos.model.Location;
@@ -146,6 +154,7 @@ public class PoSMainForm extends CPanel implements FormPanel, ASyncProcess {
 	
 
 	private final Date TODAY = new Date(System.currentTimeMillis());
+	private final String STATUS_DB_SEPARATOR = " | ";
 
 	private String MSG_NO_POS_CONFIG = null;
 	
@@ -170,6 +179,9 @@ public class PoSMainForm extends CPanel implements FormPanel, ASyncProcess {
 	private final String MOVE_PAYMENT_BACKWARD = "movePaymentBackward";
 	private final String REMOVE_PAYMENT_ACTION = "removePaymentAction";
 	private final String CHANGE_FOCUS_CUSTOMER_AMOUNT = "changeFocusCustomerAmount";
+	private final String CHANGE_FOCUS_GENERAL_DISCOUNT = "changeFocusGeneralDiscount";
+	private final String CANCEL_ORDER = "cancelOrder";
+	private final String GOTO_INSERT_CARD = "gotoInsertCard";
 	
 	private PoSModel model;
 	
@@ -296,6 +308,9 @@ public class PoSMainForm extends CPanel implements FormPanel, ASyncProcess {
 	private CLabel cPaymentMediumLabel = null;
 	private CComboBox cCreditCardPlanCombo = null;
 	private CLabel cCreditCardPlanLabel = null;
+	private CLabel cCardLabel = null;
+	private VPasswordSimple cCardText = null;
+	private JSeparator cCardSeparator = null;
 	private VLookup cBankAccountCombo = null;
 	private CLabel cBankAccountLabel = null;
 	private CTextField cCheckBankText = null;
@@ -336,6 +351,9 @@ public class PoSMainForm extends CPanel implements FormPanel, ASyncProcess {
 	private VNumber cOrderTotalAmt = null;
 	private CLabel cDocumentDiscountLabel = null;
 	private VNumber cDocumentDiscountAmt = null;
+	private CLabel cGeneralDiscountLabel = null;
+	private VNumber cGeneralDiscountPercText = null;
+	
 //	private AUserAuth cCashRetunAuthPanel = null;
 	private AuthorizationDialog authDialog = null;
 
@@ -443,6 +461,13 @@ public class PoSMainForm extends CPanel implements FormPanel, ASyncProcess {
 	private String MSG_RETRY_VOID_INVOICE_INFO_POS_JOURNAL;
 	private String MSG_VOID_INVOICE_OK;
 	private String MSG_SUPERVISOR_AUTH;
+	private String MSG_DISCOUNT_GENERAL;
+	private String MSG_CONFIRM_CANCEL_ORDER;
+	private String MSG_CANCEL_ORDER;
+	private String MSG_NEXT_INVOICE_DOCUMENTNO;
+	private String MSG_NO_BEFORE_CHECK_DEADLINES;
+	private String MSG_CHECK_DEADLINE_REQUIRED;
+	private String MSG_INSERT_CARD;
 		
 	/**
 	 * This method initializes 
@@ -557,7 +582,17 @@ public class PoSMainForm extends CPanel implements FormPanel, ASyncProcess {
 	}
 	
 	public void updateStatusDB(){
-		getStatusBar().setStatusDB(MSG_PRICE_LIST+" : "+getModel().getPriceList().getName());
+		StringBuffer status = new StringBuffer();
+		String documentNo = getModel().getNextInvoiceDocumentNo(); 
+		if(!Util.isEmpty(documentNo, true)){
+			// Siguiente nro de factura
+			status.append(MSG_NEXT_INVOICE_DOCUMENTNO+" : "+documentNo);
+			// Separador
+			status.append(STATUS_DB_SEPARATOR);
+		}
+		// Tarifa
+		status.append(MSG_PRICE_LIST+" : "+getModel().getPriceList().getName());
+		getStatusBar().setStatusDB(status.toString());
 	}
 	
 	private void initBusinessLogic() {
@@ -671,6 +706,13 @@ public class PoSMainForm extends CPanel implements FormPanel, ASyncProcess {
 		MSG_RETRY_VOID_INVOICE_INFO_POS_JOURNAL = getMsg("RetryVoidInvoiceInfoPosJournal");
 		MSG_VOID_INVOICE_OK = getMsg("InvoiceVoidOK");
 		MSG_SUPERVISOR_AUTH = getMsg("SupervisorAuth");
+		MSG_DISCOUNT_GENERAL = getMsg("GeneralDiscountChargeShort");
+		MSG_CONFIRM_CANCEL_ORDER = getMsg("ConfirmCancelOrder");
+		MSG_CANCEL_ORDER = getMsg("POSCancelOrder");
+		MSG_NEXT_INVOICE_DOCUMENTNO = getMsg("NextInvoiceDocumentNoShort");
+		MSG_NO_BEFORE_CHECK_DEADLINES = getMsg("NoBeforeCheckDeadLines");
+		MSG_CHECK_DEADLINE_REQUIRED = getMsg("DeletingPaymentCheckDeadLineRequired");
+		MSG_INSERT_CARD = getMsg("InsertCard");
 		
 		// Estos mensajes no se asignan a variables de instancias dado que son mensajes
 		// devueltos por el modelo del TPV, pero se realiza la invocación a getMsg(...) para
@@ -732,6 +774,9 @@ public class PoSMainForm extends CPanel implements FormPanel, ASyncProcess {
 		getActionKeys().put(MOVE_PAYMENT_BACKWARD, KeyStroke.getKeyStroke(KeyEvent.VK_UP, 0));
 		getActionKeys().put(REMOVE_PAYMENT_ACTION, KeyStroke.getKeyStroke(KeyEvent.VK_F10, 0));
 		getActionKeys().put(CHANGE_FOCUS_CUSTOMER_AMOUNT, KeyStroke.getKeyStroke(KeyEvent.VK_F4, 0));
+		getActionKeys().put(CHANGE_FOCUS_GENERAL_DISCOUNT,KeyStroke.getKeyStroke(KeyEvent.VK_F5, 0));
+		getActionKeys().put(CANCEL_ORDER,KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0));
+		getActionKeys().put(GOTO_INSERT_CARD, KeyStroke.getKeyStroke(KeyEvent.VK_F6, 0));
 		
 		// Accion: Abrir el dialogo para modificar el producto del pedido.
         getActionMap().put(UPDATE_ORDER_PRODUCT_ACTION,
@@ -867,6 +912,27 @@ public class PoSMainForm extends CPanel implements FormPanel, ASyncProcess {
 			}
 		});
 		
+		// Accion: Cambiar el foco para ingreso de Descuento/Recargo general
+		getActionMap().put(CHANGE_FOCUS_GENERAL_DISCOUNT, new AbstractAction() {
+			public void actionPerformed(ActionEvent e) {
+				getCGeneralDiscountPercText().requestFocus();
+			}
+		});
+		
+		// Accion: Cancelar el pedido, eliminar todas las líneas
+		getActionMap().put(CANCEL_ORDER, new AbstractAction() {
+			public void actionPerformed(ActionEvent e) {
+				cancelOrder();
+			}
+		});
+		
+		// Accion: Cambiar el foco para ingreso de tarjeta de crédito
+		getActionMap().put(GOTO_INSERT_CARD, new AbstractAction() {
+			public void actionPerformed(ActionEvent e) {
+				getCCardText().requestFocus();
+			}
+		});
+		
 		// Acciones habilitadas al inicio.
 		setActionEnabled(UPDATE_ORDER_PRODUCT_ACTION,true);
 		setActionEnabled(GOTO_PAYMENTS_ACTION,true);
@@ -874,6 +940,7 @@ public class PoSMainForm extends CPanel implements FormPanel, ASyncProcess {
 		setActionEnabled(ADD_PAYMENT_ACTION,false);
 		setActionEnabled(SET_CUSTOMER_DATA_ACTION,false);
 		setActionEnabled(SET_BPARTNER_INFO_ACTION,true);
+		setActionEnabled(CHANGE_FOCUS_CUSTOMER_AMOUNT, false);
 		setActionEnabled(GOTO_ORDER,false);
 		setActionEnabled(ADD_ORDER_ACTION,true);
 		setActionEnabled(MOVE_PAYMENT_FORWARD, false);
@@ -881,8 +948,9 @@ public class PoSMainForm extends CPanel implements FormPanel, ASyncProcess {
 		setActionEnabled(MOVE_ORDER_PRODUCT_FORWARD, true);
 		setActionEnabled(MOVE_ORDER_PRODUCT_BACKWARD, true);
 		setActionEnabled(CHANGE_FOCUS_PRODUCT_ORDER, true);
-		setActionEnabled(CHANGE_FOCUS_CUSTOMER_AMOUNT, false);
-
+		setActionEnabled(CHANGE_FOCUS_GENERAL_DISCOUNT, false);
+		setActionEnabled(CANCEL_ORDER, true);
+		setActionEnabled(GOTO_INSERT_CARD, false);
 	}
 
 	private void setActionEnabled(String action, boolean enabled) {
@@ -1363,6 +1431,15 @@ public class PoSMainForm extends CPanel implements FormPanel, ASyncProcess {
 			gridBagConstraints4.anchor = GridBagConstraints.WEST;
 			JLabel cCmdChangeProductOrderLabel = new CLabel();
 			cCmdChangeProductOrderLabel.setText(KeyUtils.getKeyStr(getActionKeys().get(CHANGE_FOCUS_PRODUCT_ORDER)) + " = " + MSG_CHANGE_PRODUCT_ORDER);
+			GridBagConstraints gridBagConstraints5 = new GridBagConstraints();
+			gridBagConstraints5.gridx = 0;
+			gridBagConstraints5.weightx = 0.0D;
+			gridBagConstraints5.weighty = 0.0D;
+			gridBagConstraints5.gridy = 4;
+			gridBagConstraints5.anchor = GridBagConstraints.WEST;
+			JLabel cCmdCancelOrderInfoLabel = new CLabel();
+			cCmdCancelOrderInfoLabel.setText(KeyUtils.getKeyStr(getActionKeys().get(CANCEL_ORDER)) + " = " + MSG_CANCEL_ORDER);
+			
 			
 			cCommandInfoPanel = new CPanel();
 			cCommandInfoPanel.setLayout(new GridBagLayout());
@@ -1373,6 +1450,7 @@ public class PoSMainForm extends CPanel implements FormPanel, ASyncProcess {
 			cCommandInfoPanel.add(cCmdUpdateOrderProductLabel, gridBagConstraints2);
 			cCommandInfoPanel.add(cCmdSetBpartnerInfoLabel, gridBagConstraints3);
 			cCommandInfoPanel.add(cCmdGotoPaymentsLabel, gridBagConstraints4);
+			cCommandInfoPanel.add(cCmdCancelOrderInfoLabel, gridBagConstraints5);
 		}
 		return cCommandInfoPanel;
 	}
@@ -1645,6 +1723,27 @@ public class PoSMainForm extends CPanel implements FormPanel, ASyncProcess {
 			gridBagConstraints3.gridx = 0;
 			gridBagConstraints3.anchor = java.awt.GridBagConstraints.WEST;
 			gridBagConstraints3.gridy = 0;
+			GridBagConstraints gridBagConstraints18 = new GridBagConstraints();
+			gridBagConstraints18.gridy = 0;
+			gridBagConstraints18.weightx = 1.0;
+			gridBagConstraints18.insets = new java.awt.Insets(0,10,0,0);
+			gridBagConstraints18.gridwidth = 1;
+			gridBagConstraints18.anchor = java.awt.GridBagConstraints.EAST;
+			gridBagConstraints18.gridx = 4;
+			cGeneralDiscountLabel = new CLabel();
+			cGeneralDiscountLabel.setText("%"
+					+ " "
+					+ MSG_DISCOUNT_GENERAL
+					+ " "
+					+ KeyUtils.getKeyStr(getActionKeys().get(
+							CHANGE_FOCUS_GENERAL_DISCOUNT)));
+			GridBagConstraints gridBagConstraints19 = new GridBagConstraints();
+			gridBagConstraints19.gridy = 0;
+			gridBagConstraints19.weightx = 1.0;
+			gridBagConstraints19.insets = new java.awt.Insets(0,10,0,0);
+			gridBagConstraints19.gridwidth = 1;
+			gridBagConstraints19.anchor = java.awt.GridBagConstraints.WEST;
+			gridBagConstraints19.gridx = 5;
 			cClientNameLabel = new CLabel();
 			cClientNameLabel.setText(MSG_CLIENT + " " + KeyUtils.getKeyStr(getActionKeys().get(CHANGE_FOCUS_CUSTOMER_AMOUNT)));
 			cClientPanel = new CPanel();
@@ -1653,6 +1752,8 @@ public class PoSMainForm extends CPanel implements FormPanel, ASyncProcess {
 			cClientPanel.add(getCClientText(), gridBagConstraints7);
 			cClientPanel.add(cBPartnerDiscountLabel, gridBagConstraints16);
 			cClientPanel.add(getCBPartnerDiscountText(), gridBagConstraints17);
+			cClientPanel.add(cGeneralDiscountLabel, gridBagConstraints18);
+			cClientPanel.add(getCGeneralDiscountPercText(), gridBagConstraints19);
 			cClientPanel.add(cClientLocationLabel, gridBagConstraints8);
 			cClientPanel.add(getCClientLocationCombo(), gridBagConstraints9);
 			cClientPanel.add(cClientTaxId, gridBagConstraints10);
@@ -1819,6 +1920,46 @@ public class PoSMainForm extends CPanel implements FormPanel, ASyncProcess {
 			cCustomerDescriptionText.setReadWrite(false);
 		}
 		return cCustomerDescriptionText;
+	}
+	
+	
+	protected VNumber getCGeneralDiscountPercText(){
+		if (cGeneralDiscountPercText == null) {
+			cGeneralDiscountPercText = new VNumber();
+			cGeneralDiscountPercText.setDisplayType(DisplayType.Number);
+			cGeneralDiscountPercText.setPreferredSize(new java.awt.Dimension(S_PAYMENT_FIELD_WIDTH,20));
+			cGeneralDiscountPercText.setValue(0);
+			cGeneralDiscountPercText.setMandatory(true);
+			cGeneralDiscountPercText.addVetoableChangeListener(new VetoableChangeListener() {
+
+				public void vetoableChange(PropertyChangeEvent event) throws PropertyVetoException {
+					// Agregar o Actualizar el descuento manual general por el valor del porcentaje del monto
+					getOrder()
+							.updateManualGeneralDiscount(
+									(BigDecimal) event.getNewValue() == null ? BigDecimal.ZERO
+											: (BigDecimal) event
+													.getNewValue());
+					// Actualizar descuentos
+					getOrder().updateDiscounts();
+					// Refrescar los medios de pago
+					refreshPaymentMediumInfo();
+					// Actualizar el estado de la factura
+					updatePaymentsStatus();
+				}
+				
+			});
+//			cGeneralDiscountPercText.addAction("updateAmount", KeyStroke.getKeyStroke(
+//					KeyEvent.VK_ENTER, 0), new AbstractAction() {
+//				@Override
+//				public void actionPerformed(ActionEvent arg0) {
+//					if (getCCreditNoteCashReturnAmtText().getValue() == null) {
+//						getCCreditNoteCashReturnAmtText().setValue(getCCreditNoteBalanceText().getValue());
+//					}
+//				}
+//			});
+			FocusUtils.addFocusHighlight(cGeneralDiscountPercText);
+		}
+		return cGeneralDiscountPercText;
 	}
 
 	/**
@@ -2260,6 +2401,32 @@ public class PoSMainForm extends CPanel implements FormPanel, ASyncProcess {
 			gridBagConstraints19.gridy = 0;
 			cCreditCardPlanLabel = new CLabel();
 			cCreditCardPlanLabel.setText(MSG_CREDIT_CARD_PLAN);
+			GridBagConstraints gridBagConstraints30 = new GridBagConstraints();
+			gridBagConstraints30.fill = java.awt.GridBagConstraints.NONE;
+			gridBagConstraints30.gridy = 5;
+			gridBagConstraints30.weightx = 1.0;
+			gridBagConstraints30.insets = new java.awt.Insets(7,10,0,0);
+			gridBagConstraints30.anchor = java.awt.GridBagConstraints.EAST;
+			gridBagConstraints30.gridx = 1;
+			GridBagConstraints gridBagConstraints29 = new GridBagConstraints();
+			gridBagConstraints29.gridx = 0;
+			gridBagConstraints29.insets = new java.awt.Insets(7,0,0,0);
+			gridBagConstraints29.anchor = java.awt.GridBagConstraints.WEST;
+			gridBagConstraints29.gridy = 5;
+			cCardLabel = new CLabel();
+			cCardLabel
+					.setText(MSG_INSERT_CARD
+							+ " "
+							+ KeyUtils.getKeyStr(getActionKeys().get(
+									GOTO_INSERT_CARD)));
+			GridBagConstraints gridBagConstraints31 = new GridBagConstraints();
+			gridBagConstraints31.gridx = 0;
+			gridBagConstraints31.gridwidth = 2;
+			gridBagConstraints31.insets = new java.awt.Insets(7,0,0,0);
+			gridBagConstraints31.anchor = java.awt.GridBagConstraints.WEST;
+			gridBagConstraints31.gridy = 4;
+			cCardSeparator = new JSeparator();
+			cCardSeparator.setPreferredSize(new Dimension(S_TENDERTYPE_PANEL_WIDTH,5));
 			cCreditCardParamsPanel = new CPanel();
 			cCreditCardParamsPanel.setLayout(new GridBagLayout());
 			//cCreditCardParamsPanel.setPreferredSize(new java.awt.Dimension(S_TENDERTYPE_PANEL_WIDTH,155)); //107
@@ -2271,6 +2438,9 @@ public class PoSMainForm extends CPanel implements FormPanel, ASyncProcess {
 			cCreditCardParamsPanel.add(getCCreditCardNumberText(), gridBagConstraints26);
 			cCreditCardParamsPanel.add(cCouponNumberLabel, gridBagConstraints27);
 			cCreditCardParamsPanel.add(getCCouponNumberText(), gridBagConstraints28);
+			cCreditCardParamsPanel.add(cCardSeparator, gridBagConstraints31);
+			cCreditCardParamsPanel.add(cCardLabel, gridBagConstraints29);
+			cCreditCardParamsPanel.add(getCCardText(), gridBagConstraints30);
 		}
 		// El combo de banco siempre se agrega fuera del If ya que el combo
 		// es compartido con el panel de Cheques. Un componente solo puede estar
@@ -2668,6 +2838,56 @@ public class PoSMainForm extends CPanel implements FormPanel, ASyncProcess {
 			FocusUtils.addFocusHighlight(cCouponNumberText);
 		}
 		return cCouponNumberText;
+	}
+	
+	/**
+	 * This method initializes cCardText
+	 * 	
+	 * @return org.compiere.swing.CTextField	
+	 */
+	private JTextField getCCardText(){
+		if (cCardText == null) {
+			cCardText = new VPasswordSimple();
+			cCardText.setPreferredSize(new java.awt.Dimension(S_PAYMENT_FIELD_WIDTH,20));
+			cCardText.setMinimumSize(new java.awt.Dimension(S_PAYMENT_FIELD_WIDTH,20));
+			cCardText.addVetoableChangeListener(new VetoableChangeListener() {
+
+				public void vetoableChange(PropertyChangeEvent event) throws PropertyVetoException {
+					String creditCardStr = (String)event.getNewValue();
+					Object selectedOld = getCPaymentMediumCombo().getSelectedItem();
+					// Obtener la clase para parsear el nombre y el nro de
+					// tarjeta a partir del string devuelto por el lector de
+					// tarjetas
+					CreditCard creditCard = CreditCardMaskManager.getCreditCard(creditCardStr);
+					// Setear el nombre del cliente y el nro de tarjeta a partir
+					// del string del lector
+					String customerName = null;
+					String creditCardNo = null;
+					if(creditCard != null){
+						creditCard.loadFields();
+						customerName = creditCard.getCustomerName();
+						creditCardNo = creditCard.getCreditCardNo();
+					}
+					getCCreditCardNumberText().setText(creditCardNo);
+					getOrder().getBusinessPartner().setCustomerName(customerName);
+					// Obtener las entidades financieras que respetan el
+					// patrón de máscara ingresado
+					List<EntidadFinanciera> financieras = getModel()
+							.getEntidadesFinancieras(creditCardStr);
+					loadTenderTypePaymentMediums(
+							MPOSPaymentMedium.TENDERTYPE_CreditCard,
+							financieras);
+					if(financieras.isEmpty()){
+						selectedOld = selectedOld == null ? getCPaymentMediumCombo()
+								.getItemAt(0) : selectedOld;
+						getCPaymentMediumCombo().setSelectedItem(selectedOld);
+					}
+					setCustomerDataDescriptionText();
+				}
+			});
+			FocusUtils.addFocusHighlight(cCardText);
+		}
+		return cCardText;
 	}
 
 	/**
@@ -3526,7 +3746,7 @@ public class PoSMainForm extends CPanel implements FormPanel, ASyncProcess {
 			cPaymentMediumCombo.setPreferredSize(new java.awt.Dimension(S_PAYMENT_FIELD_WIDTH,20));
 			cPaymentMediumCombo.addItemListener(new ItemListener() {
 				public void itemStateChanged(ItemEvent e) {
-					loadPaymentMedium();
+					loadPaymentMedium(false);
 				}
 
 			});
@@ -4020,6 +4240,32 @@ public class PoSMainForm extends CPanel implements FormPanel, ASyncProcess {
 		}
 	}
 
+	protected void cancelOrder(){
+		if(hasOrderProducts() && askMsg(MSG_CONFIRM_CANCEL_ORDER)){
+			// Si el TPV está configurado para permitir modificaciones de precios
+			// entonces no se validan los datos de usuario.
+			if (!getModel().priceModifyAllowed()) {
+				// Validar permisos de usuario
+				AuthOperation authOperation = new AuthOperation(
+						UserAuthConstants.POS_CANCEL_ORDER_UID,
+						MSG_CANCEL_ORDER,
+						UserAuthConstants.POS_CANCEL_ORDER_MOMENT);
+				getAuthDialog().addAuthOperation(authOperation);
+				getAuthDialog().authorizeOperation(UserAuthConstants.POS_CANCEL_ORDER_MOMENT);
+				CallResult result = getAuthDialog().getAuthorizeResult(true);
+				if(result == null){
+					return;
+				}
+				if(result.isError()){
+					errorMsg(result.getMsg());
+					return;
+				}
+			}
+			// Nuevo pedido
+			newOrder();
+		}
+	}	
+	
 	/**
 	 * @return Devuelve actionKeys.
 	 */
@@ -4087,6 +4333,7 @@ public class PoSMainForm extends CPanel implements FormPanel, ASyncProcess {
 		 	updatePaymentsTable();
 		}
 		setCustomerDataDescriptionText();
+		updateStatusDB();
 		return load;
 	}
 	
@@ -4212,12 +4459,21 @@ public class PoSMainForm extends CPanel implements FormPanel, ASyncProcess {
 			} else if (!validateCheckAcctDate(acctDate, paymentMedium)) {
 				return;
 			}
+			// Si el cheque debe validar los plazos anteriores, se debe
+			// verificar que existan los cheques con los plazos anteriores
+			// agregados actualmente a la compra
+			else if (paymentMedium.isValidationBeforeCheckDeadLines()
+					&& !getModel().existsBeforeCheckDeadLinesFor(paymentMedium)) {
+				errorMsg(MSG_NO_BEFORE_CHECK_DEADLINES);
+				return;
+			}
 			
 			//emissionDate = (emissionDate == null? now : emissionDate);
 			//acctDate = (acctDate == null? now : acctDate);
 			cuitLibrador = (cuitLibrador.length() == 0 ? null : cuitLibrador);
 			
-			payment = new CheckPayment(bankName,checkNumber,emissionDate,acctDate, bankAccountID);
+			payment = new CheckPayment(bankName, checkNumber, emissionDate,
+					acctDate, bankAccountID, paymentMedium.getCheckDeadLine());
 			payment.setTypeName(MSG_CHECK);
 			((CheckPayment)payment).setCuitLibrador(cuitLibrador); // Si locale AR no está activo esto es null;
 			
@@ -4420,8 +4676,25 @@ public class PoSMainForm extends CPanel implements FormPanel, ASyncProcess {
 	}
 	
 	private void removePayment() {
-		Payment payment = (Payment)getPaymentsTableUtils().getSelection();
+		removePayment((Payment)getPaymentsTableUtils().getSelection());
+	}
+	
+	private void removePayment(Payment payment) {
 		if(payment != null) {
+			// Validaciones para eliminación de cheques
+			if(MPOSPaymentMedium.TENDERTYPE_Check.equals(payment.getTenderType())){
+				// Es posible eliminar el cheque si existe más de uno con
+				// el mismo plazo
+				if(getModel().getCheckDeadLineCount((CheckPayment)payment, false) <= 0){
+					// Si es el único cheque con ese plazo, no es posible
+					// eliminar este cheque si su plazo es requerido
+					// obligatoriamente para otro cheque cargado
+					if(getModel().isCheckDeadLineRequired((CheckPayment)payment)){
+						errorMsg(MSG_CHECK_DEADLINE_REQUIRED);
+						return;
+					}
+				}	
+			}
 			getOrder().removePayment(payment);
 			getPaymentTableModel().fireTableDataChanged();
 			getPaymentsTableUtils().refreshTable();
@@ -4449,7 +4722,6 @@ public class PoSMainForm extends CPanel implements FormPanel, ASyncProcess {
 			errorMsg(MSG_NO_LOCATION_ERROR);
 			return;
 		}
-	
 		
 		//final Waiting waitingDialog = new Waiting(getFrame(),waitMsg + "...",false,60);
 		
@@ -4530,7 +4802,7 @@ public class PoSMainForm extends CPanel implements FormPanel, ASyncProcess {
 		
 
 		worker.start();
-	}
+	}	
 	
 	private void newOrder() {
 		if (infoFiscalPrinter != null) {
@@ -4554,6 +4826,8 @@ public class PoSMainForm extends CPanel implements FormPanel, ASyncProcess {
 		getCOrderLookup().setValue(null);
 		getCOrderCustomerText().setText("");
 		getCOrderDateText().setText("");
+		getCGeneralDiscountPercText().setValue(BigDecimal.ZERO);
+		updateStatusDB();
 		TimeStatsLogger.endTask(MeasurableTask.POS_COMPLETE_ORDER);
 	}
 	
@@ -4585,6 +4859,7 @@ public class PoSMainForm extends CPanel implements FormPanel, ASyncProcess {
 		updateTotalAmount();
 		
 		getCFinishPayButton().setEnabled(getModel().balanceValidate());
+		updateStatusDB();
 		setActionEnabled(PAY_ORDER_ACTION,true);
 	}
 	
@@ -4609,12 +4884,15 @@ public class PoSMainForm extends CPanel implements FormPanel, ASyncProcess {
 			setActionEnabled(SET_CUSTOMER_DATA_ACTION,false);
 			setActionEnabled(SET_BPARTNER_INFO_ACTION,true);
 			setActionEnabled(GOTO_ORDER,false);
+			setActionEnabled(CHANGE_FOCUS_GENERAL_DISCOUNT, false);
 			setActionEnabled(ADD_ORDER_ACTION,true);
 			setActionEnabled(MOVE_ORDER_PRODUCT_FORWARD, true);
 			setActionEnabled(MOVE_ORDER_PRODUCT_BACKWARD, true);
 			setActionEnabled(CHANGE_FOCUS_PRODUCT_ORDER, true);
 			setActionEnabled(REMOVE_PAYMENT_ACTION, false);
 			setActionEnabled(CHANGE_FOCUS_CUSTOMER_AMOUNT, false);
+			setActionEnabled(CANCEL_ORDER, true);
+			setActionEnabled(GOTO_INSERT_CARD, false);
 			getStatusBar().setStatusLine(MSG_POS_ORDER_STATUS);
 			getCPosTab().setTitleAt(0, MSG_ORDER);
 			// Muestra el panel de total dentro del panel superior del pedido.
@@ -4637,6 +4915,9 @@ public class PoSMainForm extends CPanel implements FormPanel, ASyncProcess {
 			setActionEnabled(MOVE_PAYMENT_BACKWARD, true);
 			setActionEnabled(REMOVE_PAYMENT_ACTION, true);
 			setActionEnabled(CHANGE_FOCUS_CUSTOMER_AMOUNT, true);
+			setActionEnabled(CHANGE_FOCUS_GENERAL_DISCOUNT, true);
+			setActionEnabled(CANCEL_ORDER, true);
+			setActionEnabled(GOTO_INSERT_CARD, true);
 			getStatusBar().setStatusLine(MSG_POS_PAYMENT_STATUS);
 			// Se carga el cliente que tenga asignado el pedido. (pedidos pre creados)
 			if(getOrder().getBusinessPartner() != null) {
@@ -4847,6 +5128,10 @@ public class PoSMainForm extends CPanel implements FormPanel, ASyncProcess {
 				newBPartnerID = getModel().getCustomerOrder()
 						.getBusinessPartner().getId(); 
     		}
+    		if (getModel().isCopyRep()==true&&getModel().validateCopyEntity()==true) {
+    			getOrder().setOrderRep(getModel().getCustomerOrder().getOrderRep());    			
+    			getModel().setCopyRep(false);
+    		}
 			getModel().addCustomerOrder();
     		if (newBPartnerID != null) {
     			loadBPartner(newBPartnerID);
@@ -4929,23 +5214,61 @@ public class PoSMainForm extends CPanel implements FormPanel, ASyncProcess {
 		setCurrencySelectionEnabled(false);
 
 		// Carga todos los medios de pago que sean del tipo de pago seleccionado	
-    	getCPaymentMediumCombo().removeAllItems();
-    	List<PaymentMedium> paymentMediums = getModel().getPaymentMediums();
-    	for (PaymentMedium paymentMedium : paymentMediums) {
-			if (paymentMedium.getTenderType().equals(tenderType)) {
-				getCPaymentMediumCombo().addItem(paymentMedium);	
-			}
-		}
+    	loadTenderTypePaymentMediums(tenderType);
 		
     	// Realiza la carga del medio de pago seleccionado por defecto en el combo (siempre
     	// se selecciona el primero automáticamente si la lista contiene alguno)
-    	loadPaymentMedium();
+    	loadPaymentMedium(true);
 
     	Env.setContext(Env.getCtx(), windowNo, "TenderType", tenderType);
     	
 		// Refresca la interfaz gráfica.
 		paramsPanel.repaint();
 		paramsPanel.revalidate();
+    }
+    
+    /**
+     * Carga todos los medios de pago que sean del tipo de pago parámetro
+     * @param tenderType tipo de pago
+     */
+    private void loadTenderTypePaymentMediums(String tenderType){
+    	// Carga todos los medios de pago que sean del tipo de pago seleccionado	
+    	getCPaymentMediumCombo().removeAllItems();
+    	List<PaymentMedium> paymentMediums = getModel().getPaymentMediums();
+    	for (PaymentMedium paymentMedium : paymentMediums) {
+			if (paymentMedium.getTenderType().equals(tenderType)) {
+				getCPaymentMediumCombo().addItem(paymentMedium);
+			}
+		}
+    }
+
+	/**
+	 * Carga todos los medios de pago que sean del tipo de pago parámetro y
+	 * posean alguna de las entidades financieras de la lista parámetro
+	 * 
+	 * @param tenderType
+	 *            tipo de pago
+	 * @param entidadesFinancieras
+	 *            entidades financieras a verificar, si la lista está vacía,
+	 *            carga los del tipo de pago parámetro
+	 */
+    private void loadTenderTypePaymentMediums(String tenderType, List<EntidadFinanciera> entidadesFinancieras){
+    	if(entidadesFinancieras.isEmpty()){
+    		loadTenderTypePaymentMediums(tenderType);
+    	}
+    	else{
+	    	getCPaymentMediumCombo().removeAllItems();
+	    	List<PaymentMedium> paymentMediums = getModel().getPaymentMediums();
+	    	for (PaymentMedium paymentMedium : paymentMediums) {
+				// El medio de pago tiene el mismo tipo de pago y la entidad
+				// financiera que contiene existe en la lista parámetro
+				if (paymentMedium.getTenderType().equals(tenderType)
+						&& paymentMedium.getEntidadFinanciera() != null
+						&& entidadesFinancieras.contains(paymentMedium.getEntidadFinanciera())) {
+					getCPaymentMediumCombo().addItem(paymentMedium);
+				}
+			}
+    	}
     }
     
     /**
@@ -4974,10 +5297,10 @@ public class PoSMainForm extends CPanel implements FormPanel, ASyncProcess {
      * Carga los parámetros del medio de pago seleccionado. Si no hay ningún medio
      * de pago seleccionado en el combo el método no realiza ningún cambio.
      */
-    private void loadPaymentMedium() {
+    private void loadPaymentMedium(boolean updateComponents) {
     	PaymentMedium paymentMedium = getSelectedPaymentMedium();
     	getCAmountText().setReadWrite(paymentMedium != null);
-    	clearPaymentMediumInfo();
+    	clearPaymentMediumInfo(updateComponents);
     	
     	// Nada que cargar
     	if (paymentMedium == null) {
@@ -5018,19 +5341,23 @@ public class PoSMainForm extends CPanel implements FormPanel, ASyncProcess {
     	
     	// Actualiza los parámetros específicos del tipo de pago que tiene
     	// el medio de pago seleccionado.
-    	updateTenderTypeComponents(paymentMedium.getTenderType());
+    	if(updateComponents){
+    		updateTenderTypeComponents(paymentMedium.getTenderType());
+    	}
     }
     
     /**
      * Borra el contenido de los controles que muestran la información
      * adicional de los medios de pago.
      */
-    private void clearPaymentMediumInfo() {
+    private void clearPaymentMediumInfo(boolean updateComponents) {
     	getCPaymentDiscountText().setText("");
     	getCPaymentToPayAmt().setValue(null);
     	getCCreditCardCuotas().setValue(null);
     	getCCreditCardCuotaAmt().setValue(null);
-    	getCCreditCardInfoPanel().setVisible(false);
+    	if(updateComponents){
+    		getCCreditCardInfoPanel().setVisible(false);
+    	}
     }
 
 	/**

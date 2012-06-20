@@ -32,7 +32,6 @@ import java.awt.event.KeyEvent;
 import java.util.HashMap;
 import java.util.Properties;
 import java.util.logging.Level;
-
 import javax.swing.JComponent;
 import javax.swing.JFrame;
 import javax.swing.JMenu;
@@ -44,7 +43,6 @@ import javax.swing.KeyStroke;
 import javax.swing.SwingUtilities;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
-
 import org.compiere.plaf.CompiereColor;
 import org.compiere.swing.CDialog;
 import org.compiere.swing.CPanel;
@@ -81,7 +79,6 @@ import org.openXpertya.model.MWorkbench;
 import org.openXpertya.model.M_Window;
 import org.openXpertya.model.X_C_OrderLine;
 import org.openXpertya.model.X_M_InOutLine;
-import org.openXpertya.model.X_M_ProductPriceInstance;
 import org.openXpertya.print.AReport;
 import org.openXpertya.process.ProcessInfo;
 import org.openXpertya.process.ProcessInfoUtil;
@@ -2304,7 +2301,7 @@ public final class APanel extends CPanel implements DataStatusListener,ChangeLis
         	processOpenMatrixButton(getCurrentTab().getTableName());
         	return;
         }
-        else if( col.equalsIgnoreCase( "CreateMatrix" ) && getCurrentTab().getTableName().equalsIgnoreCase(X_M_ProductPriceInstance.Table_Name))
+        else if( col.equalsIgnoreCase( "CreateMatrix" ) )
         {
         	if (m_curTab.needSave( true,false )) {
         		ADialog.error(m_curWindowNo, this, "SaveErrorRowNotFound");

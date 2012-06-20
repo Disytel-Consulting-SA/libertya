@@ -1,10 +1,9 @@
 package org.openXpertya.process;
 
 import java.math.BigDecimal;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
 import java.util.Properties;
 import java.util.Vector;
+
 import org.openXpertya.model.MAllocationHdr;
 import org.openXpertya.model.MBPartner;
 import org.openXpertya.model.MCurrency;
@@ -13,7 +12,6 @@ import org.openXpertya.model.MRetencionSchema;
 import org.openXpertya.model.RetencionProcessor;
 import org.openXpertya.model.X_M_Retencion_Invoice;
 import org.openXpertya.util.CLogger;
-import org.openXpertya.util.DB;
 import org.openXpertya.util.Env;
 
 
@@ -37,6 +35,8 @@ public class GeneratorRetenciones {
 	private boolean pago_anticipado;
 	private java.sql.Timestamp vfechaPago;
 	private boolean isSOTrx;
+	private Integer projectID = 0;
+	private Integer campaignID = 0;
 	/* Listado de retenciones */
 	
 	Vector<RetencionProcessor> lista_retenciones = new Vector<RetencionProcessor>();
@@ -165,6 +165,8 @@ public class GeneratorRetenciones {
 		// guarda todas las retenciones
 		
 		for(int i=0; i<= lista_retenciones.size()-1; i++){
+			lista_retenciones.get(i).setProjectID(getProjectID());
+			lista_retenciones.get(i).setCampaignID(getCampaignID());
 			lista_retenciones.get(i).save(alloc);
 		}
 	}
@@ -225,5 +227,21 @@ public class GeneratorRetenciones {
 	 */
 	public boolean isSOTrx() {
 		return isSOTrx;
+	}
+
+	public void setProjectID(Integer projectID) {
+		this.projectID = projectID;
+	}
+
+	public Integer getProjectID() {
+		return projectID;
+	}
+
+	public void setCampaignID(Integer campaignID) {
+		this.campaignID = campaignID;
+	}
+
+	public Integer getCampaignID() {
+		return campaignID;
 	}
 }

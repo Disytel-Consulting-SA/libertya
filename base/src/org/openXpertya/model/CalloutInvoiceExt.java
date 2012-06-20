@@ -31,6 +31,7 @@ import org.openXpertya.util.CPreparedStatement;
 import org.openXpertya.util.DB;
 import org.openXpertya.util.DisplayType;
 import org.openXpertya.util.Env;
+import org.openXpertya.util.Util;
 
 public class CalloutInvoiceExt extends CalloutInvoice {
 
@@ -229,6 +230,29 @@ public class CalloutInvoiceExt extends CalloutInvoice {
 
         return "";
     }    // docType
+
+	/**
+	 * Obtiene el próximo nro del tipo de documento parámetro
+	 * 
+	 * @param ctx
+	 *            contexto
+	 * @param docTypeID
+	 *            id del tipo de documento
+	 * @param trxName
+	 *            transacción actual
+	 * @return el nro de documento siguiente para este tipo de documento, null
+	 *         caso contrario
+	 */
+	public static String getNextDocumentNo(Properties ctx, Integer docTypeID, String trxName){
+		String documentNo = null;
+		if(!Util.isEmpty(docTypeID, true)){
+			String sql = "SELECT coalesce(s.prefix,'') || s.CurrentNext || coalesce(s.suffix,'') " +
+						 "FROM C_DocType d, AD_Sequence s " +
+						 "WHERE C_DocType_ID=? AND d.DocNoSequence_ID=s.AD_Sequence_ID(+)";
+			documentNo = DB.getSQLValueString(trxName, sql, docTypeID);
+		}
+		return documentNo;
+	}
 	
 	@Override
 	public String docType(Properties ctx, int WindowNo, MTab tab, MField field,

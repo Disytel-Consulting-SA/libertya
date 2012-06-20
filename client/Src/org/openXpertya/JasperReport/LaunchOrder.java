@@ -2,6 +2,8 @@ package org.openXpertya.JasperReport;
 
 
 import java.math.BigDecimal;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.Iterator;
 import java.util.Set;
 
@@ -11,13 +13,17 @@ import org.openXpertya.model.MBPartner;
 import org.openXpertya.model.MBPartnerLocation;
 import org.openXpertya.model.MClient;
 import org.openXpertya.model.MClientInfo;
+import org.openXpertya.model.MLocation;
 import org.openXpertya.model.MOrder;
 import org.openXpertya.model.MOrderLine;
 import org.openXpertya.model.MProcess;
+import org.openXpertya.model.MRegion;
 import org.openXpertya.model.MTax;
 import org.openXpertya.model.X_C_Invoice;
 import org.openXpertya.model.X_C_Order;
 import org.openXpertya.process.ProcessInfo;
+import org.openXpertya.process.ProcessInfo.JasperReportDTO;
+import org.openXpertya.process.ProcessInfoParameter;
 import org.openXpertya.process.SvrProcess;
 import org.openXpertya.report.NumeroCastellano;
 import org.openXpertya.util.Env;
@@ -60,6 +66,18 @@ public class LaunchOrder extends SvrProcess {
 	
 	@Override
 	protected void prepare() {
+		// Se toma el parametro C_Order_ID. Este parametro es necesario cuando se invoca el proceso 
+		// imprimir desde codigo.
+		// En el caso de ser necesario también se podria pasar como parámetro AD_Table_ID
+		Integer c_Order_ID = null;
+		ProcessInfoParameter[] para = getParameter();
+        for( int i = 0;i < para.length;i++ ) {
+            String name = para[ i ].getParameterName();
+            if( para[ i ].getParameter() == null ) ;
+            else if( name.equalsIgnoreCase( "C_Order_ID" )) {
+            	c_Order_ID = para[ i ].getParameterAsInt();
+        	} 
+        }
 
 		// Determinar JasperReport para wrapper, tabla y registro actual
 		ProcessInfo base_pi = getProcessInfo();
@@ -70,7 +88,13 @@ public class LaunchOrder extends SvrProcess {
 
 		AD_JasperReport_ID = proceso.getAD_JasperReport_ID();
 		AD_Table_ID = getTable_ID();
-		AD_Record_ID = getRecord_ID();	
+		
+		if(getRecord_ID()==0){
+			AD_Record_ID = c_Order_ID;
+		}
+		else{
+			AD_Record_ID = getRecord_ID();	
+		}
 	}
 	
 	@Override
@@ -81,6 +105,14 @@ public class LaunchOrder extends SvrProcess {
 	private String createReport() throws Exception {
 		
 		MOrder order = new MOrder(getCtx(), AD_Record_ID, null);
+		
+		if(getProcessInfo().getJasperReportDTO() == null){
+			JasperReportDTO jasperDTO = getProcessInfo().new JasperReportDTO();
+	    	jasperDTO.setDocTypeID(order.getC_DocTypeTarget_ID());
+	    	jasperDTO.setDocumentNo(order.getDocumentNo());
+	    	getProcessInfo().setJasperReportDTO(jasperDTO);	
+		}
+		
 		MBPartner bpartner = new MBPartner(getCtx(), order.getC_BPartner_ID(), null);
 		
 		MJasperReport jasperwrapper = new MJasperReport(getCtx(), AD_JasperReport_ID, get_TrxName());
@@ -105,9 +137,12 @@ public class LaunchOrder extends SvrProcess {
 				order.getC_PaymentTerm_ID(), get_TrxName());
 			String salesUserName = JasperReportsUtil.getUserName(getCtx(),
 				order.getSalesRep_ID(), get_TrxName());
-			MBPartnerLocation location = new MBPartnerLocation(getCtx(),
+			MBPartnerLocation bpLocation = new MBPartnerLocation(getCtx(),
 				order.getC_BPartner_Location_ID(), null);
-			
+			MLocation location = new MLocation(getCtx(), bpLocation.getC_Location_ID(), null);
+			MRegion region = null;
+			if (location.getC_Region_ID() > 0)
+				region = new MRegion(getCtx(), location.getC_Region_ID(), null);
 			BigDecimal totalNetLineDiscounts = linesTotalBonusNetAmt.add(
 					linesTotalDocumentDiscountsNetAmt).add(
 					linesTotalLineDiscountsNetAmt);
@@ -123,8 +158,9 @@ public class LaunchOrder extends SvrProcess {
 			jasperwrapper.addParameter("RAZONSOCIAL", bpartner.getName()); 
 			jasperwrapper.addParameter("RAZONSOCIAL2", JasperReportsUtil.coalesce(bpartner.getName2(), "") );
 			jasperwrapper.addParameter("CODIGO", bpartner.getValue());
-			jasperwrapper.addParameter("DIRECCION", location.getName() );
-			jasperwrapper.addParameter("TELEFONO", location.getPhone() );
+			jasperwrapper.addParameter("DIRECCION", JasperReportsUtil
+					.formatLocation(getCtx(), location.getID(), false));
+			jasperwrapper.addParameter("TELEFONO", bpLocation.getPhone() );
 			if(!Util.isEmpty(bpartner.getC_Categoria_Iva_ID(), true)){
 				jasperwrapper.addParameter(
 					"TIPO_IVA",
@@ -133,11 +169,10 @@ public class LaunchOrder extends SvrProcess {
 			}
 			jasperwrapper.addParameter("DNI_CUIT", bpartner.getTaxID());
 			jasperwrapper.addParameter("INGBRUTO", bpartner.getIIBB());
-			jasperwrapper.addParameter("LOCALIDAD", location.getLocation(false).getCity() );
+			jasperwrapper.addParameter("LOCALIDAD", location.getCity() );
 			jasperwrapper.addParameter(
 				"PAIS",
-				JasperReportsUtil.coalesce(location.getLocation(false)
-						.getCountry().getName(), ""));
+				JasperReportsUtil.coalesce(location.getCountry().getName(), ""));
 			jasperwrapper.addParameter("REFERENCIA", ""  ); // FIXME: ver que campo es
 			jasperwrapper.addParameter("VENDEDOR", salesUserName);
 			jasperwrapper.addParameter("NRODOCORIG", JasperReportsUtil.coalesce(order.getPOReference(), "") );
@@ -186,12 +221,12 @@ public class LaunchOrder extends SvrProcess {
 								order.getC_PaymentTerm_ID(), get_TrxName())
 								+ " - " + JasperReportsUtil.coalesce(
 								order.getDescription(), "")));
-			jasperwrapper.addParameter("RESPONSABLE", salesUserName);
+			jasperwrapper.addParameter("RESPONSABLE", getInitials(salesUserName));
 			if(!Util.isEmpty(order.getM_Shipper_ID(), true)){
 				jasperwrapper.addParameter(
 					"TRANSPORTE",
-					JasperReportsUtil.getShipperName(getCtx(),
-							order.getM_Shipper_ID(), get_TrxName()));
+					JasperReportsUtil.getShipperName(getCtx(), order.getM_Shipper_ID(),
+							get_TrxName()));
 			}
 			jasperwrapper.addParameter("COMPANIA",client.getName());
 			jasperwrapper.addParameter("CLIENT_CUIT",clientInfo.getCUIT());
@@ -293,6 +328,8 @@ public class LaunchOrder extends SvrProcess {
 			}
 			jasperwrapper.addParameter("CHARGE_AMT", order.getChargeAmt());
 			jasperwrapper.addParameter("DATE_ACCT", order.getDateAcct());
+			SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy HH:mm");
+			jasperwrapper.addParameter("FECHA_UPDATED", sdf.format(new Date()));
 			jasperwrapper.addParameter("DELIVERY_RULE", JasperReportsUtil
 				.getListName(getCtx(), X_C_Order.DELIVERYRULE_AD_Reference_ID,
 						order.getDeliveryRule()));
@@ -408,6 +445,26 @@ public class LaunchOrder extends SvrProcess {
 			// Total de descuento de documento sin impuestos
 			linesTotalDocumentDiscountsNetAmt = linesTotalDocumentDiscountsNetAmt.add(orderLine.getTotalDocumentDiscountUnityAmtNet());
 		}
+	}
+	
+	protected String getInitials(String name) {
+		String initials = "";
+		String letter = "";
+		String letter2 = "";
+		for (int i = 0; i < name.length(); i++) {
+			letter = name.charAt(i) + "";
+			if (letter.compareTo(" ") == 0 && i != name.length()) {
+				letter2 = name.charAt(i + 1) + "";
+				if (letter2.compareTo(" ") != 0) {
+					initials += letter2;
+				}
+			} else {
+				if (i == 0) {
+					initials += letter;
+				}
+			}
+		}
+		return initials;
 	}
 
 }

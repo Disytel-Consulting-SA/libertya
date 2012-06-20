@@ -119,6 +119,9 @@ public class DiscountCalculator {
 	/** Transacción utilizada para las operaciones de actualización en la BD */
 	private String trxName = null;
 	
+	/** Descuento manual general */
+	private Discount manualGeneralDiscount = null;
+	
 	/**
 	 * Indica si los métodos que realizan el escalado de importes debe o no
 	 * realizar dicha operación. Este atributo es utilizado internamente para
@@ -192,6 +195,7 @@ public class DiscountCalculator {
 		DiscountCalculator ndc = create(document, discountCalculator.getContext());
 		ndc.bPartnerDiscount = discountCalculator.bPartnerDiscount;
 		ndc.bPartnerFlatDiscount = discountCalculator.bPartnerFlatDiscount;
+		ndc.manualGeneralDiscount = discountCalculator.manualGeneralDiscount;
 		ndc.ctx = discountCalculator.ctx;
 		ndc.currencyID = discountCalculator.currencyID;
 		ndc.nextDiscountID = discountCalculator.nextDiscountID;
@@ -593,6 +597,7 @@ public class DiscountCalculator {
 	private void applyDocumentLevelDiscounts() {
 		BigDecimal totalDocumentDiscount = BigDecimal.ZERO;
 		BigDecimal totalBPartnerDiscount = BigDecimal.ZERO;
+		BigDecimal totalManualDiscount = BigDecimal.ZERO;
 		BigDecimal netDiscountAmt  = null;
 		BigDecimal discountBaseAmt = null;
 		BigDecimal discountAmt     = null;
@@ -661,6 +666,15 @@ public class DiscountCalculator {
 						totalBPartnerDiscount = totalBPartnerDiscount.add(discountAmt);
 						getDocument().setTotalBPartnerDiscount(totalBPartnerDiscount);
 					}
+					
+					// Asigna el importe de descuento manual general si es un
+					// descuento manual general
+					// (solo puede haber uno así que el descuento calculado aquí es
+					// el total de descuento manual general).
+					if(discount.isManualGeneralDiscount()){
+						totalManualDiscount = totalManualDiscount.add(discountAmt);
+						getDocument().setTotalManualGeneralDiscount(discountAmt);
+					}
 				}
 				
 			}
@@ -675,6 +689,7 @@ public class DiscountCalculator {
 		// que cuando quedaba remanente el descuento de la entidad comercial
 		// anterior, porque al for de Discounts no entra si no hay ninguno. 
 		getDocument().setTotalBPartnerDiscount(totalBPartnerDiscount);
+		getDocument().setTotalManualGeneralDiscount(totalManualDiscount);
 		// Si hubo un descuento/recargo se asigna el ID del cargo para
 		// descuentos a nivel de documento.
 		if (totalDocumentDiscount.compareTo(BigDecimal.ZERO) != 0) {
@@ -1496,6 +1511,12 @@ public class DiscountCalculator {
 			return discounts;
 		}
 		
+		// Agrega el descuento manual general en caso que exista
+		if (hasManualGeneralDiscount()
+				&& level.equals(MDiscountSchema.CUMULATIVELEVEL_Document)) {
+			discounts.add(getManualGeneralDiscount());
+		}
+		
 		// Agrega el descuento de la EC si es aplicable y si es un
 		// descuento cuyo nivel es igual al nivel parámetro
 		if (hasBPartnerDiscount() && (!level.equals(MDiscountSchema.CUMULATIVELEVEL_Document) 
@@ -1721,6 +1742,13 @@ public class DiscountCalculator {
 	public boolean hasBPartnerDiscount() {
 		return getBPartnerDiscount() != null;
 	}
+	
+	/**
+	 * @return Indica si este calculador tiene o no un descuento manual general
+	 */
+	public boolean hasManualGeneralDiscount() {
+		return getManualGeneralDiscount() != null;
+	}
 
 	/**
 	 * Redondea un precio o costo tomando la precisión de costeo de la moneda
@@ -1788,6 +1816,7 @@ public class DiscountCalculator {
 		setCurrencyID(Env.getContextAsInt(Env.getCtx(), "$C_Currency_ID"));
 		setCtx(Env.getCtx());
 		getGeneralDiscounts().clear();
+		setManualGeneralDiscount(null);
 	}
 
 	/**
@@ -1886,6 +1915,16 @@ public class DiscountCalculator {
 	 */
 	private List<Discount> getAppliedDiscounts() {
 		List<Discount> appliedDiscounts = new ArrayList<Discount>();
+
+		// Agrega el descuento manual general si es que el mismo ha sido aplicado
+		if (hasManualGeneralDiscount() 
+				&& getManualGeneralDiscount().amount.compareTo(BigDecimal.ZERO) != 0) {
+			// Asigna una descripción por defecto si no tiene una asignada.
+			if (getManualGeneralDiscount().getDescription() == null) {
+				getManualGeneralDiscount().setDescription(Msg.translate(getCtx(), "GeneralDiscountCharge"));
+			}
+			appliedDiscounts.add(getManualGeneralDiscount());
+		}
 		
 		// Agrega el descuento de EC si es que el mismo ha sido aplicado
 		if (getBPartnerDiscount() != null 
@@ -1922,6 +1961,39 @@ public class DiscountCalculator {
 		return appliedDiscounts;
 	}
 
+	public void updateManualGeneralDiscount(BigDecimal percentage){
+		// Si el porcentaje es 0 no se crea ningun descuento de tipo general, si
+		// existe uno seteado, se elimina
+		if(percentage.compareTo(BigDecimal.ZERO) == 0 && getManualGeneralDiscount() != null){
+			setManualGeneralDiscount(null);
+		}
+		else{
+			// Si no existe ninguno se crea
+			if(getManualGeneralDiscount() == null){
+				setManualGeneralDiscount(createManualGeneralDiscount());
+			}
+			// Se setea el porcentaje pasado como parámetro
+			getManualGeneralDiscount().getDiscountSchema().setFlatDiscount(percentage);
+		}
+	}
+	
+	
+	public Discount createManualGeneralDiscount() {
+		// Creo el esquema de descuento dummy (sin guardar) para el descuento manual general
+		MDiscountSchema discountGeneral = new MDiscountSchema(getCtx(), 0, null);
+		discountGeneral.setDiscountType(MDiscountSchema.DISCOUNTTYPE_FlatPercent);
+		discountGeneral.setDiscountContextType(MDiscountSchema.DISCOUNTCONTEXTTYPE_Commercial);
+		discountGeneral.setFlatDiscount(BigDecimal.ZERO);
+		discountGeneral.setIsGeneralScope(true);
+		Integer discountID = null;
+		synchronized (this) {
+			discountID = nextDiscountID;
+			nextDiscountID++;
+		}
+		return new Discount(discountID, null,
+				discountGeneral, null, DiscountKind.ManualGeneralDiscount);
+	}
+	
 	/**
 	 * Guarda en la Base de Datos los descuentos que fueron aplicados al
 	 * documento asociado a este calculador.
@@ -2119,6 +2191,14 @@ public class DiscountCalculator {
 		this.assumeGeneralDiscountAdded = assumeGeneralDiscountAdded;
 	}
 
+	public void setManualGeneralDiscount(Discount manualGeneralDiscount) {
+		this.manualGeneralDiscount = manualGeneralDiscount;
+	}
+
+	public Discount getManualGeneralDiscount() {
+		return manualGeneralDiscount;
+	}
+
 	/**
 	 * Interfaz que debe implementar cualquier clase que requiera ser manipulada
 	 * por un calculador de descuentos. Esta interfaz representa el encabezado
@@ -2172,6 +2252,24 @@ public class DiscountCalculator {
 		 *            asociado a la Entidad Comercial del documento.
 		 */
 		public void setTotalBPartnerDiscount(BigDecimal discountAmount);
+
+		/**
+		 * Asigna el importe de descuento manual general para el documento
+		 * <p>
+		 * NOTA: el importe que aquí se setea está incluído dentro del importe
+		 * que se asigna mediante {@link #setTotalDocumentDiscount(BigDecimal)}.
+		 * Este método solo es necesario que tenga lógica si el cliente requiere
+		 * diferenciar cual fue el importe total de descuento manual general,
+		 * del importe total de descuento por otros esquemas generales. En caso
+		 * de no ser necesaria esta diferenciación, simplemente implementar este
+		 * método vacío.
+		 * </p>
+		 * 
+		 * @param discountAmount
+		 *            Importe de descuento calculado a partir de un esquema
+		 *            manual general dummy creado
+		 */
+		public void setTotalManualGeneralDiscount(BigDecimal discountAmount);
 		
 		/**
 		 * Asigna el ID del Cargo indicado para el importe total de descuento
@@ -2495,6 +2593,13 @@ public class DiscountCalculator {
 		public boolean isBPartnerDiscount() {
 			return this == getBPartnerDiscount();
 		}
+		
+		/**
+		 * @return Indica si este es un descuento de Entidad Comercial.
+		 */
+		public boolean isManualGeneralDiscount() {
+			return this == getManualGeneralDiscount();
+		}
 
 		/**
 		 * @return El ID del esquema de descuento asociado a este descuento o
@@ -2572,7 +2677,7 @@ public class DiscountCalculator {
 			return appBaseAmt.divide(documentTotalAmt, 20,
 					BigDecimal.ROUND_HALF_EVEN);
 		}
-
+		
 		/**
 		 * Guarda este descuento en la BD como un C_DocumentDiscount.
 		 * 
@@ -2593,7 +2698,9 @@ public class DiscountCalculator {
 			documentDiscount.setDiscountAmt(scaleAmount(getAmount()));
 			documentDiscount.setCumulativeLevel(getLevel());
 			documentDiscount.setDescription(getDescription());
-			documentDiscount.setM_DiscountSchema_ID(getDiscountSchemaID());
+			if(getDiscountSchemaID() > 0){
+				documentDiscount.setM_DiscountSchema_ID(getDiscountSchemaID());
+			}
 			documentDiscount.setDiscountApplication(getApplication());
 			documentDiscount.setTaxRate(null);
 			documentDiscount.setDiscountKind(getKind().toDocumentDiscountKind());

@@ -143,4 +143,14 @@ public interface RetencionProcessor {
 	 * @return Devuelve el valor de IsSOTrx asociado a este procesador
 	 */
 	public boolean isSOTrx();
+	
+	/**
+	 * @return Setea el proyecto
+	 */
+	public void setProjectID(Integer projectID);
+	
+	/**
+	 * @return Setea la campaña
+	 */
+	public void setCampaignID(Integer campaignID);
 }

@@ -24,17 +24,18 @@ import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Properties;
 import java.util.logging.Level;
 
 import javax.swing.JOptionPane;
-import javax.swing.event.ListSelectionEvent;
 
 import org.openXpertya.model.DiscountCalculator.IDocument;
 import org.openXpertya.model.DiscountCalculator.IDocumentLine;
 import org.openXpertya.process.DocAction;
 import org.openXpertya.process.DocumentEngine;
+import org.openXpertya.process.ProcessInfo;
 import org.openXpertya.util.DB;
 import org.openXpertya.util.Env;
 import org.openXpertya.util.MProductCache;
@@ -428,9 +429,18 @@ public class MOrder extends X_C_Order implements DocAction {
      * Descripción de Método
      *
      *
+     * @param SalesRep_ID
+     */
+    public void setSalesRep_ID( int SalesRep_ID ) {
+        super.setSalesRep_ID( SalesRep_ID );
+    }    // setSalesRep_ID
+
+    /**
+     * Descripción de Método
+     *
+     *
      * @param IsDropShip
      */
-
     public void setIsDropShip( boolean IsDropShip ) {
         super.setIsDropShip( IsDropShip );
     }    // setIsDropShip
@@ -2096,7 +2106,7 @@ public class MOrder extends X_C_Order implements DocAction {
     	for (int i =0; i< lines.length ;i++)
     	{
     		MOrderLine ol = lines[i];
-    		if (ol.getQtyOrdered().compareTo(BigDecimal.ZERO)<= 0 )
+    		if (ol.getQtyOrdered().compareTo(BigDecimal.ZERO)<= 0 && !ol.getProduct().getProductType().equals("E"))
     			idsToRemove.add(ol.getC_OrderLine_ID());
     		else
     			linesNotCero.add(ol);
@@ -2410,7 +2420,9 @@ public class MOrder extends X_C_Order implements DocAction {
 			// se retira por TPV. Si el TPV no se encarga de emitir el remito
 			// entonces setea que se retira por Almacén (lo cual es lógico)
     		MOrderLine ol = lines[i];
-    		if (MProduct.CHECKOUTPLACE_PointOfSale.equals(ol.getCheckoutPlace())) { 
+			if (ol.getCheckoutPlace() != null
+					&& MProduct.CHECKOUTPLACE_PointOfSale.equals(ol
+							.getCheckoutPlace())) { 
     			continue;
     		}
     		
@@ -2497,7 +2509,8 @@ public class MOrder extends X_C_Order implements DocAction {
 					//se mantiene stock si el producto es un item (vs por ej, un servicio)
 					//y ademas esta marcado explicitamente como isStocked
 					if (item.M_Product_IsStocked &&
-						MProduct.PRODUCTTYPE_Item.equals(item.M_Product_ProductType)
+						(MProduct.PRODUCTTYPE_Item.equals(item.M_Product_ProductType) ||
+								MProduct.PRODUCTTYPE_Assets.equals(item.M_Product_ProductType))
 					)
 					{
 						item.IsStocked = true;
@@ -3227,9 +3240,22 @@ public class MOrder extends X_C_Order implements DocAction {
 
         setDocAction( DOCACTION_Close );
 
+        // Si el Tipo de Documento Base es Pedido de Cliente y el Tipo de Documento tiene seteado el 
+        // check box llamado “Imprimir al Completar”, entonces se ejecuta el proceso "Nota de Pedido (Impresión)"
+        if( (MDocType.DOCSUBTYPESO_StandardOrder.equals(DocSubTypeSO)) && (dt.isPrintAtCompleting()) ){ 
+        	HashMap<String,Object> parameters = new HashMap<String,Object>();
+            parameters.put("C_Order_ID", getID());
+        	int processID = DB.getSQLValue( null, "SELECT AD_Process_ID FROM AD_Process WHERE value='" + getNotaPedidoValue()+ "' " );
+            ProcessInfo pi = MProcess.execute(getCtx(), processID, parameters, get_TrxName()); 
+        }
+        
         return DocAction.STATUS_Completed;
     }    // completeIt
-
+    
+    protected String getNotaPedidoValue(){
+		return "Nota de Pedido (Impresión)";
+	}
+    
     /**
      * Descripción de Método
      *
@@ -4167,6 +4193,11 @@ public class MOrder extends X_C_Order implements DocAction {
 		@Override
 		public void setTotalBPartnerDiscount(BigDecimal discountAmount) {
 			// No es necesario discriminar el importe de descuento de EC aquí.
+		}
+
+		@Override
+		public void setTotalManualGeneralDiscount(BigDecimal discountAmount) {
+			// No es necesario discriminar el importe de descuento de EC aquí.			
 		}
 
 	}

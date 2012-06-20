@@ -314,6 +314,10 @@ public class ProductInfo {
     /** Descripción de Campos */
 
     public static final int ACCTTYPE_P_TDiscountGrant = 8;
+    
+    public static final int ACCTTYPE_P_Amortization = 9;
+    
+    public static final int ACCTTYPE_P_Amortization_Realized = 10;
 
     /**
      * Descripción de Método
@@ -326,7 +330,7 @@ public class ProductInfo {
      */
 
     public MAccount getAccount( int AcctType,MAcctSchema as ) {
-        if( (AcctType < 1) || (AcctType > 8) ) {
+        if( (AcctType < 1) || (AcctType > 10) ) {
             return null;
         }
 
@@ -338,7 +342,8 @@ public class ProductInfo {
 
         String sql = "SELECT P_Revenue_Acct, P_Expense_Acct, P_Asset_Acct, P_Cogs_Acct, "    // 1..4
                      + "P_PurchasePriceVariance_Acct, P_InvoicePriceVariance_Acct, "    // 5..6
-                     + "P_TradeDiscountRec_Acct, P_TradeDiscountGrant_Acct "            // 7..8
+                     + "P_TradeDiscountRec_Acct, P_TradeDiscountGrant_Acct , "            // 7..8
+                     + "P_Amortization_Acct, P_Amortization_Realized_Acct "            // 9..10
                      + "FROM M_Product_Acct " + "WHERE M_Product_ID=? AND C_AcctSchema_ID=?";
 
         //
@@ -1013,7 +1018,7 @@ public class ProductInfo {
 
         BigDecimal cost = getProductItemCost( as,null,M_Warehouse_ID );
 
-        System.out.println( "COSTO que regresa el metodo getProductItemCost *******" + cost + " cantidad " + m_qty );
+//         System.out.println( "COSTO que regresa el metodo getProductItemCost *******" + cost + " cantidad " + m_qty );
 
         if( cost == null ) {
             log.fine( "getProductCosts - No Costs" );

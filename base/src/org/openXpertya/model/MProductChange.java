@@ -69,8 +69,16 @@ public class MProductChange extends X_M_ProductChange implements DocAction {
 		
 		// Los artículo origen y destino deben ser diferentes.
 		if (getM_Product_ID() == getM_Product_To_ID()) {
-			log.saveError("SaveError", Msg.translate(getCtx(), "SameSourceTargetProductsError"));
-			return false;
+			if(getM_AttributeSetInstance_ID()==0&&getM_AttributeSetInstanceTo_ID()==0){
+				log.saveError("SaveError", Msg.translate(getCtx(), "SameSourceTargetProductsError"));
+				return false;
+			}
+			else{
+				if(getM_AttributeSetInstance_ID()==getM_AttributeSetInstanceTo_ID()){
+					//log.saveError("SaveError", Msg.translate(getCtx(), "SameSourceTargetInstancesProductsError"));
+					return false;
+				}
+			}
 		}
 		
 		return true; 
@@ -88,6 +96,17 @@ public class MProductChange extends X_M_ProductChange implements DocAction {
 	}
 	
 	/**
+	 * @return Devuelve la instancia origen del cambio.
+	 */
+	public MAttributeSetInstance getInstance() {
+		MAttributeSetInstance instance = null;
+		if (getM_AttributeSetInstance_ID() > 0) {
+			instance = new MAttributeSetInstance(getCtx(), getM_AttributeSetInstance_ID(),null);
+		}
+		return instance;
+	}
+	
+	/**
 	 * @return Devuelve el artículo destino del cambio.
 	 */
 	public MProduct getProductTo() {
@@ -96,6 +115,17 @@ public class MProductChange extends X_M_ProductChange implements DocAction {
 			product = MProduct.get(getCtx(), getM_Product_To_ID());
 		}
 		return product;
+	}
+	
+	/**
+	 * @return Devuelve la instancia destino del cambio.
+	 */
+	public MAttributeSetInstance getInstanceTo() {
+		MAttributeSetInstance instanceTo = null;
+		if (getM_AttributeSetInstanceTo_ID() > 0) {
+			instanceTo = new MAttributeSetInstance(getCtx(), getM_AttributeSetInstanceTo_ID(),null);
+		}
+		return instanceTo;
 	}
 
 	/**
@@ -141,8 +171,9 @@ public class MProductChange extends X_M_ProductChange implements DocAction {
 		log.fine("Product Price = " + productPrice + ", Product_To Price = " + productToPrice + 
 				", Allowed Difference = " + allowedDif + ", Real Difference = " + realDif);
 		
+		BigDecimal variationPercent = scaleAmount(getPriceVariationRate().multiply(new BigDecimal(100)));
+		
 		if (realDif.compareTo(allowedDif) > 0) {
-			BigDecimal variationPercent = scaleAmount(getPriceVariationRate().multiply(new BigDecimal(100)));
 			m_processMsg = Msg.getMsg(getCtx(), "NotAllowedPriceDifference", 
 				new Object[] { 
 					variationPercent,
@@ -154,6 +185,10 @@ public class MProductChange extends X_M_ProductChange implements DocAction {
 			);
 			return false;
 		}
+		
+		setProductPrice(productPrice);
+		setProductToPrice(productToPrice);
+		setMaxPriceVariationPerc(variationPercent);
 		
 		return true;
 	}
@@ -558,6 +593,7 @@ public class MProductChange extends X_M_ProductChange implements DocAction {
 		createInventoryLine(
 				inventory, 
 				getProduct(), 
+				getInstance(),
 				getM_Locator_ID(), 
 				getProductQty(),
 				warehouse.getProductChangeCharge_ID(),
@@ -569,6 +605,7 @@ public class MProductChange extends X_M_ProductChange implements DocAction {
 		createInventoryLine(
 				inventory, 
 				getProductTo(), 
+				getInstanceTo(),
 				getM_Locator_To_ID(), 
 				getProductQty().negate(), 
 				warehouse.getProductChangeCharge_ID(),
@@ -608,7 +645,7 @@ public class MProductChange extends X_M_ProductChange implements DocAction {
 	 * líneas creadas para el inventario generado al completar el documento.
 	 * @throws Exception Cuando se produce un error en el guardado de la línea.
 	 */
-	private void createInventoryLine(MInventory inventory, MProduct product, 
+	private void createInventoryLine(MInventory inventory, MProduct product, MAttributeSetInstance instance, 
 			Integer locatorID, BigDecimal qty, Integer chargeID, boolean productChangeVoid) throws Exception {
 		
 		// Crea la nueva línea de inventario. Cantidad Contada y del Sistema se asignan
@@ -619,6 +656,12 @@ public class MProductChange extends X_M_ProductChange implements DocAction {
 		
 		inventoryLine.setInventoryType(MInventoryLine.INVENTORYTYPE_ChargeAccount);
 		inventoryLine.setC_Charge_ID(chargeID);
+		try{
+			inventoryLine.setM_AttributeSetInstance_ID(instance.getM_AttributeSetInstance_ID());
+		}
+		catch(NullPointerException ex){
+			
+		}
 		// Por definición en MInventory, si QtyInternalUse es positivo entonces
 		// resta el stock, y si es negativo suma. Dado que este método recibe la cantidad
 		// en sentido común (positivo suma y negativo resta), aquí se debe invertir el

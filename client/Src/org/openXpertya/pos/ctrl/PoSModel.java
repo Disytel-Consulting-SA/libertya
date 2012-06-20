@@ -1,10 +1,14 @@
 package org.openXpertya.pos.ctrl;
 
 import java.math.BigDecimal;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import org.openXpertya.model.FiscalDocumentPrintListener;
 import org.openXpertya.model.MPOSJournal;
@@ -18,10 +22,12 @@ import org.openXpertya.pos.exceptions.PosException;
 import org.openXpertya.pos.exceptions.ProductAddValidationFailed;
 import org.openXpertya.pos.exceptions.UserException;
 import org.openXpertya.pos.model.BusinessPartner;
+import org.openXpertya.pos.model.CheckPayment;
 import org.openXpertya.pos.model.EntidadFinanciera;
 import org.openXpertya.pos.model.Location;
 import org.openXpertya.pos.model.Order;
 import org.openXpertya.pos.model.OrderProduct;
+import org.openXpertya.pos.model.Payment;
 import org.openXpertya.pos.model.PaymentMedium;
 import org.openXpertya.pos.model.PaymentTerm;
 import org.openXpertya.pos.model.PriceList;
@@ -62,11 +68,18 @@ public class PoSModel {
 	/** Lista de Esquemas de Vencimiento */
 	private List<PaymentTerm> paymentTerms = null;
 	
+	/** Cantidad máxima en una línea de pedido */
+	private Integer maxOrderLineQty;
+	
+	private boolean isCopyRep;
+	
 	public PoSModel() {
 		super();
 		addedCustomerOrders = new HashMap<Integer, Order>();
 		setIntoOnlineMode();
 		newOrder();
+		getMaxOrderLineQty();
+		isCopyRep=true;
 	}
 
 	public void completeOrder() throws PosException, InsufficientCreditException, InsufficientBalanceException, InvalidPaymentException, InvalidProductException {
@@ -91,6 +104,7 @@ public class PoSModel {
 		}
 		
 		getOrder().clear();
+		isCopyRep=true;
 		getAddedCustomerOrders().clear();
 	}
 	
@@ -169,6 +183,24 @@ public class PoSModel {
 					product.getId(), count, product.getAttributeSetInstanceID());
 		
 		return valid;
+	}
+	
+	public String validateSearchToday(){		
+		String where = "";		
+		if (getConnectionState().getPoSCOnfig().isSearchToday()==true){
+			Date TODAY = new Date(System.currentTimeMillis());
+			SimpleDateFormat sdf = new SimpleDateFormat("yyyy/MM/dd");
+			where = " AND C_Order.DateOrdered = '"+sdf.format(TODAY)+"' ";
+		}
+		return where;
+	}
+	
+	public boolean validateCopyEntity(){
+		boolean res=false;
+		if (getConnectionState().getPoSCOnfig().isCopyEntity()==true){
+			res=true;
+		}
+		return res;
 	}
 	
 	private OrderProduct createOrderProduct(Product product) {
@@ -349,6 +381,11 @@ public class PoSModel {
 			throw new ProductAddValidationFailed(product, "PriceUnderZero");
 		}
 		
+		// La cantidad de la línea no debe superar el máximo configurado
+		if(countSurpassMax(count)){
+			throw new ProductAddValidationFailed(product, "SurpassMaxOrderLineQty");
+		}
+		
 		// Crea el artículo del pedido con la cantidad indicada y lo agrega al pedido
 		// actual del TPV
 		OrderProduct newOrderProduct = createOrderProduct(product);
@@ -415,6 +452,8 @@ public class PoSModel {
 		// Agrega el pedido a la map que contiene los pedidos de clientes actualmente
 		// asociados al pedido TPV
 		getAddedCustomerOrders().put(getCustomerOrder().getId(), getCustomerOrder());
+		//RESP
+		//getOrder().setOrderRep(getCustomerOrder().getOrderRep());		
 		// Se quita la referencia al pedido de cliente cargado
 		clearCustomerOrder();		
 	}
@@ -465,6 +504,14 @@ public class PoSModel {
 			loadPaymentMediums();
 		}
 		return paymentMediums;
+	}
+	
+	public boolean isCopyRep() {
+		return isCopyRep;
+	}
+
+	public void setCopyRep(boolean isCopyRep) {
+		this.isCopyRep = isCopyRep;
 	}
 	
 	/**
@@ -573,5 +620,126 @@ public class PoSModel {
 				&& amt.compareTo(getConnectionState().getPoSCOnfig()
 						.getMaxCashReturnWithoutAuth()) > 0;
 	}
+
+	public Integer getMaxOrderLineQty() {
+		if(maxOrderLineQty == null){
+			maxOrderLineQty = getConnectionState().getMaxOrderLineQty();
+		}
+		return maxOrderLineQty;
+	}
 	
+	/**
+	 * @param count cantidad
+	 * @return si la cantidad supera el máximo configurado
+	 */
+	public boolean countSurpassMax(Integer count){
+		return getMaxOrderLineQty() != null && getMaxOrderLineQty() < count;
+	}
+
+	/**
+	 * @return obtener el próximo nro de factura en caso que se deba crear una
+	 *         factura, dependiendo de la configuración de TPV
+	 */
+	public String getNextInvoiceDocumentNo(){
+		return getConnectionState().getNextInvoiceDocumentNo();
+	}
+
+	/**
+	 * @param paymentMedium
+	 *            medio de pago cheque a agregar
+	 * @return true si existen todos los cheques con los plazos requeridos por
+	 *         el medio de pago parámetro, false caso contrario
+	 */
+	public boolean existsBeforeCheckDeadLinesFor(PaymentMedium paymentMedium){
+		boolean existsAllBefores = true;
+		// Armamos una lista con todos los plazos de los cheques existentes actualmente agregados a la compra y luego iteramos por los plazos a verificar por el medio de pago nuevo y validamos que existan todos ellos 
+		Set<Integer> deadLinesControl = new HashSet<Integer>();
+		List<Payment> payments = getOrder().getPayments();
+		// Itero por todos los payments, me quedo con los plazos actuales
+		for (Payment payment : payments) {
+			// Si el payment es un cheque y su plazo se encuentre dentro de los
+			// posibles a verificar, entonces lo agrego a la map y  
+			if (payment.isCheckPayment()){
+				deadLinesControl.add(((CheckPayment) payment).getCheckDeadLine());				
+			}
+		}
+		// Itero por los plazos a verificar por el medio de pago nuevo y
+		// verifico si los tengo a todos ingresados
+		for (int i = 0; i < paymentMedium.getBeforeCheckDeadLinesToValidate()
+				.size()
+				&& (existsAllBefores = deadLinesControl.contains(paymentMedium
+						.getBeforeCheckDeadLinesToValidate().get(i))); i++);
+		return existsAllBefores;
+	}
+	
+	/**
+	 * Cuenta la cantidad de cheques que existen en el pedido agregados con el
+	 * mismo plazo que el plazo del pago parámetro. Se incluye a si mismo en
+	 * caso que el parámetro includeInCount así lo requiera, sea true.
+	 * 
+	 * @param checkPayment
+	 *            pago parámetro
+	 * @param includeInCount
+	 *            true si se debe incluir al pago parámetro en la cuenta, false
+	 *            caso contrario
+	 * @return la cantidad de cheques con el mismo plazo parámetro
+	 */
+	public int getCheckDeadLineCount(CheckPayment checkPayment, boolean includeInCount){
+		// Itero por los pagos y determino la cantidad de cheques que contienen
+		// el mismo plazo que el plazo del cheque parámetro, contandose a si
+		// mismo o no dependiendo el parámetro de inclusión
+		int count = 0;
+		for (Payment pay : getOrder().getPayments()) {
+			// 1) Si el tipo de pago es del mismo al pago parámetro
+			// 2) Si el pago no es el mismo al parámetro ó el pago es el mismo pero
+			// de todas formas hay que contarlo como determina el parámetro de
+			// inclusión
+			// 3) Si el plazo es el mismo al plazo del pago parámetro
+			// -> Si ocurren estas condiciones presentadas en los puntos, se suma 1
+			// pago a la cuenta, sino 0
+			count += pay.getTenderType().equals(checkPayment.getTenderType())
+					&& ((pay != checkPayment) || ((pay == checkPayment) && includeInCount))
+					&& ((CheckPayment) pay).getCheckDeadLine().equals(
+							checkPayment.getCheckDeadLine()) ? 1 : 0;
+		}
+		return count;
+	}
+
+	/**
+	 * @param checkPayment
+	 *            pago de tipo cheque
+	 * @return true si el plazo de este cheque es requerido obligatoriamente por
+	 *         otro pago agregado al pedido, false caso contrario
+	 */
+	public boolean isCheckDeadLineRequired(CheckPayment checkPayment){
+		// Itero por los 
+		boolean isRequired = false;
+		for (int i = 0; i < getOrder().getPayments().size()
+				&& !(isRequired = getOrder().getPayments().get(i)
+						.getPaymentMedium().getBeforeCheckDeadLinesToValidate()
+						.contains(checkPayment.getCheckDeadLine())); i++);
+		return isRequired;
+	}
+
+	/**
+	 * @param creditCardStr
+	 *            string devuelto por el lector de tarjetas
+	 * @return las entidades financieras en las cuales su máscara matchea con el
+	 *         string devuelto
+	 */
+	public List<EntidadFinanciera> getEntidadesFinancieras(String creditCardStr){
+		List<EntidadFinanciera> financieras = new ArrayList<EntidadFinanciera>();
+		// Itero por las entidades financieras y me quedo con las que su máscara
+		// respete el string parámetro devuelto por el lector 
+		for (EntidadFinanciera entidadFinanciera : getConnectionState().getEntidadesFinancieras()) {
+			// Si la máscara de la entidad financiera responde al string
+			// devuelto por el lector entonces lo agrego a la lista 
+			if (!Util.isEmpty(entidadFinanciera.getCardMask(), true)
+					&& creditCardStr
+							.startsWith(entidadFinanciera.getCardMask())) {
+				financieras.add(entidadFinanciera);
+			}
+		}
+		return financieras;
+	}
 }

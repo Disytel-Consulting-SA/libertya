@@ -33,6 +33,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Properties;
 import java.util.logging.Level;
 
@@ -287,6 +288,43 @@ public class MRefList extends X_AD_Ref_List {
         return retValue;
 
     }		// getListName
+
+	/**
+	 * @param ctx
+	 *            contexto
+	 * @param referenceID
+	 *            id de la referencia
+	 * @param trxName
+	 *            nombre de la transacción
+	 * @return lista con todos los values de la lista
+	 */
+    public static List<String> getValueList(Properties ctx, Integer referenceID, String trxName){
+    	String sql = "SELECT value " +
+    				 "FROM ad_ref_list " +
+    				 "WHERE ad_reference_id = ? " +
+    				 "ORDER BY value";
+    	List<String> values = new ArrayList<String>();
+    	PreparedStatement ps = null;
+    	ResultSet rs = null;
+    	try {
+			ps = DB.prepareStatement(sql, trxName);
+			ps.setInt(1, referenceID);
+			rs = ps.executeQuery();
+			while (rs.next()) {
+				values.add(rs.getString("value"));
+			}
+		} catch (Exception e) {
+			s_log.severe(e.getMessage());
+		} finally {
+			try{
+				if(ps != null)ps.close();
+				if(rs != null)rs.close();
+			} catch(Exception e2){
+				s_log.severe(e2.getMessage());
+			}
+		}
+		return values;
+    }
 }	// MRef_List
 
 

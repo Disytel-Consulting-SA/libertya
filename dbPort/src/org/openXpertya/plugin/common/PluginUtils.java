@@ -7,6 +7,7 @@ import java.io.IOException;
 
 import org.openXpertya.OpenXpertya;
 import org.openXpertya.util.CLogger;
+import org.openXpertya.util.DB;
 import org.openXpertya.util.Env;
 
 
@@ -38,6 +39,9 @@ public class PluginUtils {
 	 */
 	public static void startInstalation(String trxName) {
 		instalationTrxName = trxName;
+		// Deshabilitar los triggers de replicacion para las modificaciones que comprenden la instalacion
+		// Debería usar trx, pero se usa null dado que los triggers no esperan la misma y leen el dato viejo.. ¿?
+		DB.executeUpdate("UPDATE AD_Preference SET Value = 'N' WHERE Attribute = 'ReplicationEventsActive'", null);
 		resetStatus();
 	}
 
@@ -45,6 +49,8 @@ public class PluginUtils {
 	 * Resetea el nombre de la transaccion utilizada durante la instalacion
 	 */
 	public static void stopInstalation() {
+		// Rehabilitar los triggers de replicacion para las modificaciones que comprenden la instalacion
+		DB.executeUpdate("UPDATE AD_Preference SET Value = 'Y' WHERE Attribute = 'ReplicationEventsActive'", null);
 		instalationTrxName = null;
 	}
 	

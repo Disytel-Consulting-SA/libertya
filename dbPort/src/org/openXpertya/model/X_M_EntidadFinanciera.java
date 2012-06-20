@@ -1,13 +1,14 @@
-/** Modelo Generado - NO CAMBIAR MANUALMENTE - Copyright (C) 2006 FUNDESLE */
+/** Modelo Generado - NO CAMBIAR MANUALMENTE - Disytel */
 package org.openXpertya.model;
-import java.util.*;
+import java.util.logging.Level;
+ import java.util.*;
 import java.sql.*;
 import java.math.*;
 import org.openXpertya.util.*;
 /** Modelo Generado por M_EntidadFinanciera
- *  @author Comunidad de Desarrollo openXpertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
- *  @version  - 2009-10-22 14:51:35.424 */
-public class X_M_EntidadFinanciera extends PO
+ *  @author Comunidad de Desarrollo Libertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
+ *  @version  - 2012-04-13 14:36:47.483 */
+public class X_M_EntidadFinanciera extends org.openXpertya.model.PO
 {
 /** Constructor estándar */
 public X_M_EntidadFinanciera (Properties ctx, int M_EntidadFinanciera_ID, String trxName)
@@ -29,13 +30,13 @@ public X_M_EntidadFinanciera (Properties ctx, ResultSet rs, String trxName)
 {
 super (ctx, rs, trxName);
 }
-/** AD_Table_ID=1000148 */
-public static final int Table_ID=1000148;
+/** AD_Table_ID */
+public static final int Table_ID = M_Table.getTableID("M_EntidadFinanciera");
 
 /** TableName=M_EntidadFinanciera */
 public static final String Table_Name="M_EntidadFinanciera";
 
-protected static KeyNamePair Model = new KeyNamePair(1000148,"M_EntidadFinanciera");
+protected static KeyNamePair Model = new KeyNamePair(Table_ID,"M_EntidadFinanciera");
 protected static BigDecimal AccessLevel = new BigDecimal(2);
 
 /** Load Meta Data */
@@ -64,6 +65,21 @@ public String getAD_ComponentObjectUID()
 {
 return (String)get_Value("AD_ComponentObjectUID");
 }
+/** Set Card Mask */
+public void setCardMask (String CardMask)
+{
+if (CardMask != null && CardMask.length() > 100)
+{
+log.warning("Length > 100 - truncated");
+CardMask = CardMask.substring(0,100);
+}
+set_Value ("CardMask", CardMask);
+}
+/** Get Card Mask */
+public String getCardMask() 
+{
+return (String)get_Value("CardMask");
+}
 /** Set Bank Account.
 Account at the Bank */
 public void setC_BankAccount_ID (int C_BankAccount_ID)
@@ -78,7 +94,7 @@ Integer ii = (Integer)get_Value("C_BankAccount_ID");
 if (ii == null) return 0;
 return ii.intValue();
 }
-public static final int C_BPARTNER_ID_AD_Reference_ID=138;
+public static final int C_BPARTNER_ID_AD_Reference_ID = MReference.getReferenceID("C_BPartner (No Summary)");
 /** Set Business Partner .
 Identifies a Business Partner */
 public void setC_BPartner_ID (int C_BPartner_ID)
@@ -109,7 +125,7 @@ Integer ii = (Integer)get_Value("C_City_ID");
 if (ii == null) return 0;
 return ii.intValue();
 }
-public static final int CREDITCARDTYPE_AD_Reference_ID=149;
+public static final int CREDITCARDTYPE_AD_Reference_ID = MReference.getReferenceID("C_Payment CreditCard Type");
 /** Diners = D */
 public static final String CREDITCARDTYPE_Diners = "D";
 /** ATM = C */
@@ -129,7 +145,7 @@ Credit Card (Visa, MC, AmEx) */
 public void setCreditCardType (String CreditCardType)
 {
 if (CreditCardType.equals("D") || CreditCardType.equals("C") || CreditCardType.equals("P") || CreditCardType.equals("M") || CreditCardType.equals("V") || CreditCardType.equals("A") || CreditCardType.equals("N"));
- else throw new IllegalArgumentException ("CreditCardType Invalid value - Reference_ID=149 - D - C - P - M - V - A - N");
+ else throw new IllegalArgumentException ("CreditCardType Invalid value - Reference = CREDITCARDTYPE_AD_Reference_ID - D - C - P - M - V - A - N");
 if (CreditCardType == null) throw new IllegalArgumentException ("CreditCardType is mandatory");
 if (CreditCardType.length() > 20)
 {

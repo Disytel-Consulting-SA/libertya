@@ -38,8 +38,8 @@ public abstract class PluginXMLBuilder extends PluginDocumentBuilder{
 	private Node rootNode;
 		
 	// Constructores
-	public PluginXMLBuilder(int replicationArrayPos, String trxName) {
-		super(replicationArrayPos, trxName);
+	public PluginXMLBuilder(String trxName) {
+		super(trxName);
 	}
 	
 	public PluginXMLBuilder(String path, String fileName, Integer componentVersionID, String trxName){

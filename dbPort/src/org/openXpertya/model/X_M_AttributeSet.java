@@ -1,13 +1,14 @@
-/** Modelo Generado - NO CAMBIAR MANUALMENTE - Copyright (C) 2006 FUNDESLE */
+/** Modelo Generado - NO CAMBIAR MANUALMENTE - Disytel */
 package org.openXpertya.model;
-import java.util.*;
+import java.util.logging.Level;
+ import java.util.*;
 import java.sql.*;
 import java.math.*;
 import org.openXpertya.util.*;
 /** Modelo Generado por M_AttributeSet
- *  @author Comunidad de Desarrollo openXpertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
- *  @version  - 2009-06-18 14:08:49.765 */
-public class X_M_AttributeSet extends PO
+ *  @author Comunidad de Desarrollo Libertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
+ *  @version  - 2011-12-14 12:26:08.403 */
+public class X_M_AttributeSet extends org.openXpertya.model.PO
 {
 /** Constructor estándar */
 public X_M_AttributeSet (Properties ctx, int M_AttributeSet_ID, String trxName)
@@ -26,6 +27,7 @@ setIsSerNoMandatory (false);
 setMandatoryType (null);
 setM_AttributeSet_ID (0);
 setName (null);
+setUseProductRelationsLikeSerNoPrefix (false);
 }
  */
 }
@@ -34,13 +36,13 @@ public X_M_AttributeSet (Properties ctx, ResultSet rs, String trxName)
 {
 super (ctx, rs, trxName);
 }
-/** AD_Table_ID=560 */
-public static final int Table_ID=560;
+/** AD_Table_ID */
+public static final int Table_ID = M_Table.getTableID("M_AttributeSet");
 
 /** TableName=M_AttributeSet */
 public static final String Table_Name="M_AttributeSet";
 
-protected static KeyNamePair Model = new KeyNamePair(560,"M_AttributeSet");
+protected static KeyNamePair Model = new KeyNamePair(Table_ID,"M_AttributeSet");
 protected static BigDecimal AccessLevel = new BigDecimal(3);
 
 /** Load Meta Data */
@@ -255,7 +257,7 @@ if (oo != null)
 }
 return false;
 }
-public static final int MANDATORYTYPE_AD_Reference_ID=324;
+public static final int MANDATORYTYPE_AD_Reference_ID = MReference.getReferenceID("M_AttributeSet MandatoryType");
 /** Not Mandatary = N */
 public static final String MANDATORYTYPE_NotMandatary = "N";
 /** Always Mandatory = Y */
@@ -267,7 +269,7 @@ The specification of a Product Attribute Instance is mandatory */
 public void setMandatoryType (String MandatoryType)
 {
 if (MandatoryType.equals("N") || MandatoryType.equals("Y") || MandatoryType.equals("S"));
- else throw new IllegalArgumentException ("MandatoryType Invalid value - Reference_ID=324 - N - Y - S");
+ else throw new IllegalArgumentException ("MandatoryType Invalid value - Reference = MANDATORYTYPE_AD_Reference_ID - N - Y - S");
 if (MandatoryType == null) throw new IllegalArgumentException ("MandatoryType is mandatory");
 if (MandatoryType.length() > 1)
 {
@@ -349,5 +351,23 @@ return (String)get_Value("Name");
 public KeyNamePair getKeyNamePair() 
 {
 return new KeyNamePair(getID(), getName());
+}
+/** Set Use Product Relations Like SerNo Prefix.
+Use Product Relations Value Like SerNo Prefix */
+public void setUseProductRelationsLikeSerNoPrefix (boolean UseProductRelationsLikeSerNoPrefix)
+{
+set_Value ("UseProductRelationsLikeSerNoPrefix", new Boolean(UseProductRelationsLikeSerNoPrefix));
+}
+/** Get Use Product Relations Like SerNo Prefix.
+Use Product Relations Value Like SerNo Prefix */
+public boolean isUseProductRelationsLikeSerNoPrefix() 
+{
+Object oo = get_Value("UseProductRelationsLikeSerNoPrefix");
+if (oo != null) 
+{
+ if (oo instanceof Boolean) return ((Boolean)oo).booleanValue();
+ return "Y".equals(oo);
+}
+return false;
 }
 }

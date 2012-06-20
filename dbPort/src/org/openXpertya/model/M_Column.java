@@ -210,6 +210,19 @@ public class M_Column extends X_AD_Column {
     }		// getColumnName
 
     /**
+     * Retorna el ID de una columna a partir del nombre de la tabla y columna correspondientes
+     */
+    public static int getColumnID(String trxName, String columnName, String tableName)
+    {
+        return DB.getSQLValue(trxName, 
+        		" SELECT ad_column_ID " +
+        		" FROM AD_Column c, AD_Table t " +
+        		" WHERE t.AD_Table_ID = c.AD_Table_ID " +
+        		" AND upper(c.columnname) = upper('" + columnName + "') " +
+        		" AND upper(t.tablename)  = upper('" + tableName + "') ");
+    }
+    
+    /**
      *      Get Table Constraint
      *      @param tableName table name
      *      @return table constraint

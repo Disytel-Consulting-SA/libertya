@@ -47,10 +47,8 @@ import javax.swing.SwingUtilities;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 
-import org.compiere.swing.CButton;
 import org.compiere.swing.CDialog;
 import org.compiere.swing.CPanel;
-import org.openXpertya.apps.ADialog;
 import org.openXpertya.apps.AEnv;
 import org.openXpertya.apps.AWindow;
 import org.openXpertya.apps.ConfirmPanel;
@@ -62,13 +60,11 @@ import org.openXpertya.minigrid.MiniTable;
 import org.openXpertya.model.MPreference;
 import org.openXpertya.model.MQuery;
 import org.openXpertya.model.MRole;
-import org.openXpertya.model.M_Window;
 import org.openXpertya.plugin.common.PluginInfoUtils;
 import org.openXpertya.plugin.common.PluginUtils;
 import org.openXpertya.pos.view.PoSInfoProduct;
 import org.openXpertya.pos.view.PoSInfoProductAttribute;
 import org.openXpertya.process.ComponentActivation;
-import org.openXpertya.report.core.ResultTable;
 import org.openXpertya.util.CLogger;
 import org.openXpertya.util.DB;
 import org.openXpertya.util.Env;
@@ -1289,6 +1285,10 @@ public abstract class Info extends CDialog implements ListSelectionListener {
         }
     }                           // mouseClicked
 
+    public void queryExecute(){
+    	
+    }
+ 
     /**
      * Descripción de Clase
      *
@@ -1459,7 +1459,17 @@ public abstract class Info extends CDialog implements ListSelectionListener {
                         // store
 
                         p_table.setValueAt( data,row,col );
-
+                        if( p_layout[col].getColHeader().compareTo("Instance")==0){
+                        	p_table.getColumnModel().getColumn(col).setPreferredWidth(0);
+                            p_table.getColumnModel().getColumn(col).setMinWidth(0);
+                            p_table.getColumnModel().getColumn(col).setMaxWidth(0);                            
+                        }
+                        
+                        if( p_layout[col].getColHeader().compareTo(Msg.translate(Env.getCtx(),"PriceListVersion"))==0){
+                        	p_table.getColumnModel().getColumn(col).setPreferredWidth(0);
+                            p_table.getColumnModel().getColumn(col).setMinWidth(0);
+                            p_table.getColumnModel().getColumn(col).setMaxWidth(0);                            
+                        }
                         // log.fine( "r=" + row + ", c=" + col + " " + m_layout[col].getColHeader(),
                         // "data=" + data.toString() + " " + data.getClass().getName() + " * " + m_table.getCellRenderer(row, col));
 
@@ -1474,6 +1484,13 @@ public abstract class Info extends CDialog implements ListSelectionListener {
             }
 
             p_table.autoSize();
+            
+            SwingUtilities.invokeLater(new Runnable() {
+				@Override
+				public void run() {								
+					queryExecute();
+				}
+			}); 
 
             //
 

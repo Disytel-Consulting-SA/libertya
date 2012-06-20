@@ -26,9 +26,7 @@ import java.sql.Clob;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.sql.Timestamp;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
@@ -36,11 +34,9 @@ import java.util.Properties;
 import java.util.Vector;
 import java.util.logging.Level;
 
-import javax.swing.JOptionPane;
 import javax.swing.event.TableModelListener;
 import javax.swing.table.AbstractTableModel;
 
-import org.openXpertya.util.CLogMgt;
 import org.openXpertya.util.CLogger;
 import org.openXpertya.util.DB;
 import org.openXpertya.util.DisplayType;
@@ -2381,6 +2377,9 @@ public final class MTable extends AbstractTableModel implements Serializable {
      */
 
     private String getWhereClause( Object[] rowData ) {
+    	if(rowData == null){
+    		return null;
+    	}
         int          size           = m_fields.size();
         StringBuffer singleRowWHERE = null;
         StringBuffer multiRowWHERE  = null;

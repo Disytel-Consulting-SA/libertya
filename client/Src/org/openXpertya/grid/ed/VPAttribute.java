@@ -138,6 +138,75 @@ public class VPAttribute extends JComponent implements VEditor,ActionListener {
         popupMenu.add( menuEditor );
     }    // VPAttribute
 
+    /**
+     * Constructor de la clase ...
+     *
+     *
+     * @param mandatory
+     * @param isReadOnly
+     * @param isUpdateable
+     * @param WindowNo
+     * @param lookup
+     * @param columnName
+     */
+
+    public VPAttribute( boolean mandatory,boolean isReadOnly,boolean isUpdateable,int WindowNo,MPAttributeLookup lookup, int tabNo,String columnName ) {
+        super.setName( "M_AttributeSetInstance_ID" );
+        m_WindowNo      = WindowNo;
+        m_TabNo = tabNo;
+        m_mPAttribute   = lookup;
+        m_C_BPartner_ID = Env.getContextAsInt( Env.getCtx(),WindowNo,"C_BPartner_ID" );
+        this.columnName = columnName;        
+        LookAndFeel.installBorder( this,"TextField.border" );
+        this.setLayout( new BorderLayout());
+
+        // Size
+
+        this.setPreferredSize( m_text.getPreferredSize());
+
+        int height = m_text.getPreferredSize().height;
+
+        // ***     Text    ***
+
+        m_text.setEditable( false );
+        m_text.setFocusable( false );
+        m_text.setBorder( null );
+        m_text.setHorizontalAlignment( JTextField.LEADING );
+
+        // Background
+
+        setMandatory( mandatory );
+        this.add( m_text,BorderLayout.CENTER );
+
+        // ***     Button  ***
+
+        m_button.setIcon( Env.getImageIcon( "PAttribute10.gif" ));
+        m_button.setMargin( new Insets( 0,0,0,0 ));
+        m_button.setPreferredSize( new Dimension( height,height ));
+        m_button.addActionListener( this );
+        m_button.setFocusable( true );
+        this.add( m_button,BorderLayout.EAST );
+
+        // Prefereed Size
+
+        this.setPreferredSize( this.getPreferredSize());    // causes r/o to be the same length
+
+        // ReadWrite
+
+        if( isReadOnly ||!isUpdateable ) {
+            setReadWrite( false );
+        } else {
+            setReadWrite( true );
+        }
+
+        // Popup
+
+        m_text.addMouseListener( new VPAttribute_mouseAdapter( this ));
+        menuEditor = new JMenuItem( Msg.getMsg( Env.getCtx(),"PAttribute" ),Env.getImageIcon( "Zoom16.gif" ));
+        menuEditor.addActionListener( this );
+        popupMenu.add( menuEditor );
+    }    // VPAttribute
+    
     /** Descripción de Campos */
 
     private Object m_value = new Object();
@@ -173,6 +242,8 @@ public class VPAttribute extends JComponent implements VEditor,ActionListener {
     /** Descripción de Campos */
 
     private int m_WindowNo;
+    
+    private String columnName;
 
     /** */
     
@@ -388,7 +459,12 @@ public class VPAttribute extends JComponent implements VEditor,ActionListener {
         int     M_AttributeSetInstance_ID = (oldValue == null)
                 ?0
                 :oldValue.intValue();
-        int     M_Product_ID              = Env.getContextAsInt( Env.getCtx(),m_WindowNo,"M_Product_ID" );
+        String productColumnName = "M_Product_ID";
+
+        if (columnName.equalsIgnoreCase("M_AttributeSetInstanceTo_ID")) {
+            productColumnName = "M_Product_To_ID";
+        }
+        int M_Product_ID = Env.getContextAsInt( Env.getCtx(),m_WindowNo,productColumnName );
         int M_ProductBOM_ID = Env.getContextAsInt( Env.getCtx(),m_WindowNo,"M_ProductBOM_ID" );
 
         log.config( "M_Product_ID=" + M_Product_ID + "/" + M_ProductBOM_ID + ",M_AttributeSetInstance_ID=" + M_AttributeSetInstance_ID + ", AD_Column_ID=" + m_AD_Column_ID );
@@ -478,7 +554,8 @@ public class VPAttribute extends JComponent implements VEditor,ActionListener {
             }
 
             try {
-                fireVetoableChange( "M_AttributeSetInstance_ID",null,getValue());
+            	//fireVetoableChange( "M_AttributeSetInstance_ID",null,getValue());
+            	fireVetoableChange( columnName,null,getValue());
             } catch( PropertyVetoException pve ) {
                 log.log( Level.SEVERE,"",pve );
             }

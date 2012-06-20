@@ -20,11 +20,13 @@ import java.math.BigDecimal;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Properties;
 import java.util.logging.Level;
 
 import org.openXpertya.util.DB;
+import org.openXpertya.util.DisplayType;
 
 /**
  * Descripción de Clase
@@ -233,12 +235,25 @@ public class MAttribute extends X_M_Attribute {
             instance = new MAttributeInstance( getCtx(),getM_Attribute_ID(),M_AttributeSetInstance_ID,value,get_TrxName());
         } else {
             instance.setValueNumber( value );
-            instance.setValue( value.toString());    // for display
+            instance.setValue( DisplayType.getNumberFormat(DisplayType.Number).format(value));    // for display
         }
 
         instance.save();
     }    // setAttributeInstance
 
+    public void setMAttributeInstance( int M_AttributeSetInstance_ID,Timestamp value ) {
+        MAttributeInstance instance = getMAttributeInstance( M_AttributeSetInstance_ID );
+
+        if( instance == null ) {
+            instance = new MAttributeInstance( getCtx(),getM_Attribute_ID(),M_AttributeSetInstance_ID, value,get_TrxName());
+        } else {
+        	instance.setValueDate( value );
+            instance.setValue( DisplayType.getDateFormat().format(value));
+        }
+
+        instance.save();
+    }    // setAttributeInstance
+    
     /**
      * Descripción de Método
      *

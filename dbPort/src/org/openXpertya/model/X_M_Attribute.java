@@ -1,13 +1,14 @@
-/** Modelo Generado - NO CAMBIAR MANUALMENTE - Copyright (C) 2006 FUNDESLE */
+/** Modelo Generado - NO CAMBIAR MANUALMENTE - Disytel */
 package org.openXpertya.model;
-import java.util.*;
+import java.util.logging.Level;
+ import java.util.*;
 import java.sql.*;
 import java.math.*;
 import org.openXpertya.util.*;
 /** Modelo Generado por M_Attribute
- *  @author Comunidad de Desarrollo openXpertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
- *  @version  - 2008-01-03 10:26:36.906 */
-public class X_M_Attribute extends PO
+ *  @author Comunidad de Desarrollo Libertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
+ *  @version  - 2011-12-02 16:44:43.532 */
+public class X_M_Attribute extends org.openXpertya.model.PO
 {
 /** Constructor estándar */
 public X_M_Attribute (Properties ctx, int M_Attribute_ID, String trxName)
@@ -18,6 +19,7 @@ super (ctx, M_Attribute_ID, trxName);
 setAttributeValueType (null);	// S
 setIsInstanceAttribute (false);
 setIsMandatory (false);
+setIsReadOnly (false);
 setM_Attribute_ID (0);
 setName (null);
 }
@@ -28,13 +30,13 @@ public X_M_Attribute (Properties ctx, ResultSet rs, String trxName)
 {
 super (ctx, rs, trxName);
 }
-/** AD_Table_ID=562 */
-public static final int Table_ID=562;
+/** AD_Table_ID */
+public static final int Table_ID = M_Table.getTableID("M_Attribute");
 
 /** TableName=M_Attribute */
 public static final String Table_Name="M_Attribute";
 
-protected static KeyNamePair Model = new KeyNamePair(562,"M_Attribute");
+protected static KeyNamePair Model = new KeyNamePair(Table_ID,"M_Attribute");
 protected static BigDecimal AccessLevel = new BigDecimal(3);
 
 /** Load Meta Data */
@@ -48,24 +50,26 @@ public String toString()
 StringBuffer sb = new StringBuffer ("X_M_Attribute[").append(getID()).append("]");
 return sb.toString();
 }
-public static final int ATTRIBUTEVALUETYPE_AD_Reference_ID=326;
+public static final int ATTRIBUTEVALUETYPE_AD_Reference_ID = MReference.getReferenceID("M_Attribute Value Type");
 /** String (max 40) = S */
 public static final String ATTRIBUTEVALUETYPE_StringMax40 = "S";
 /** Number = N */
 public static final String ATTRIBUTEVALUETYPE_Number = "N";
 /** List = L */
 public static final String ATTRIBUTEVALUETYPE_List = "L";
+/** Date = D */
+public static final String ATTRIBUTEVALUETYPE_Date = "D";
 /** Set Attribute Value Type.
 Type of Attribute Value */
 public void setAttributeValueType (String AttributeValueType)
 {
-if (AttributeValueType.equals("S") || AttributeValueType.equals("N") || AttributeValueType.equals("L"));
- else throw new IllegalArgumentException ("AttributeValueType Invalid value - Reference_ID=326 - S - N - L");
+if (AttributeValueType.equals("S") || AttributeValueType.equals("N") || AttributeValueType.equals("L") || AttributeValueType.equals("D"));
+ else throw new IllegalArgumentException ("AttributeValueType Invalid value - Reference = ATTRIBUTEVALUETYPE_AD_Reference_ID - S - N - L - D");
 if (AttributeValueType == null) throw new IllegalArgumentException ("AttributeValueType is mandatory");
 if (AttributeValueType.length() > 1)
 {
 log.warning("Length > 1 - truncated");
-AttributeValueType = AttributeValueType.substring(0,0);
+AttributeValueType = AttributeValueType.substring(0,1);
 }
 set_Value ("AttributeValueType", AttributeValueType);
 }
@@ -98,7 +102,7 @@ public void setDescription (String Description)
 if (Description != null && Description.length() > 255)
 {
 log.warning("Length > 255 - truncated");
-Description = Description.substring(0,254);
+Description = Description.substring(0,255);
 }
 set_Value ("Description", Description);
 }
@@ -144,6 +148,38 @@ if (oo != null)
 }
 return false;
 }
+/** Set Read Only.
+Field is read only */
+public void setIsReadOnly (boolean IsReadOnly)
+{
+set_Value ("IsReadOnly", new Boolean(IsReadOnly));
+}
+/** Get Read Only.
+Field is read only */
+public boolean isReadOnly() 
+{
+Object oo = get_Value("IsReadOnly");
+if (oo != null) 
+{
+ if (oo instanceof Boolean) return ((Boolean)oo).booleanValue();
+ return "Y".equals(oo);
+}
+return false;
+}
+/** Set Attribute.
+Product Attribute */
+public void setM_Attribute_ID (int M_Attribute_ID)
+{
+set_ValueNoCheck ("M_Attribute_ID", new Integer(M_Attribute_ID));
+}
+/** Get Attribute.
+Product Attribute */
+public int getM_Attribute_ID() 
+{
+Integer ii = (Integer)get_Value("M_Attribute_ID");
+if (ii == null) return 0;
+return ii.intValue();
+}
 /** Set Attribute Search.
 Common Search Attribute  */
 public void setM_AttributeSearch_ID (int M_AttributeSearch_ID)
@@ -160,20 +196,6 @@ Integer ii = (Integer)get_Value("M_AttributeSearch_ID");
 if (ii == null) return 0;
 return ii.intValue();
 }
-/** Set Attribute.
-Product Attribute */
-public void setM_Attribute_ID (int M_Attribute_ID)
-{
-set_ValueNoCheck ("M_Attribute_ID", new Integer(M_Attribute_ID));
-}
-/** Get Attribute.
-Product Attribute */
-public int getM_Attribute_ID() 
-{
-Integer ii = (Integer)get_Value("M_Attribute_ID");
-if (ii == null) return 0;
-return ii.intValue();
-}
 /** Set Name.
 Alphanumeric identifier of the entity */
 public void setName (String Name)
@@ -182,7 +204,7 @@ if (Name == null) throw new IllegalArgumentException ("Name is mandatory");
 if (Name.length() > 60)
 {
 log.warning("Length > 60 - truncated");
-Name = Name.substring(0,59);
+Name = Name.substring(0,60);
 }
 set_Value ("Name", Name);
 }

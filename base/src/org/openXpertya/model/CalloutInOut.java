@@ -547,13 +547,18 @@ public class CalloutInOut extends CalloutEngine {
 
             QtyEntered  = ( BigDecimal )value;
             boolean isSOTrx = "Y".equals(Env.getContext(ctx, WindowNo, "IsSOTrx"));
+
+            //Se quito la siguiente validación ya que ahora es necesario pode tener cantidades menores a 0, para poder
+            //manejar los descuentos a proveedores.      
+
+            /*
             // En remitos de compra no se permiten cantidades menores o iguales que cero
             if (!isSOTrx && QtyEntered.compareTo(Env.ZERO) < 0) {
             	mTab.setValue("QtyEntered", null);
             	setCalloutActive(false);
             	return Msg.getMsg(ctx,"FieldUnderZeroError", new Object[] {Msg.translate(ctx,"QtyEntered")});
             }
-
+			*/
             MovementQty = MUOMConversion.convertProductFrom( ctx,M_Product_ID,C_UOM_To_ID,QtyEntered );
 
             if( MovementQty == null ) {

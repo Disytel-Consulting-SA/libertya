@@ -49,6 +49,8 @@ public class Invoice extends DiscountableDocument implements Serializable{
 	/** Monto total de descuento de esquema de vencimientos */
 	private BigDecimal totalPaymentTermDiscount = BigDecimal.ZERO;
 	
+	private BigDecimal totalManualGeneralDiscount = BigDecimal.ZERO;
+	
 	/**
 	 * Monto pagado para esta factura (si se paga completamente, entonces
 	 * debería ser igual a {@link #manualAmt} )
@@ -307,5 +309,13 @@ public class Invoice extends DiscountableDocument implements Serializable{
 
 	public BigDecimal getTotalPaymentTermDiscount() {
 		return totalPaymentTermDiscount;
+	}
+	
+	public void setTotalManualGeneralDiscount(BigDecimal discountAmount) {
+		this.totalManualGeneralDiscount = discountAmount;		
+	}
+	
+	public BigDecimal getTotalManualGeneralDiscount() {
+		return this.totalManualGeneralDiscount;		
 	}
 }

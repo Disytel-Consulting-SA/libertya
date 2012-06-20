@@ -229,5 +229,25 @@ public class PoSOffline extends PoSConnectionState {
 		// TODO Auto-generated method stub
 		return null;
 	}
+
+	@Override
+	public Integer getMaxOrderLineQty() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public String getNextInvoiceDocumentNo() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public boolean isCheckDeadLineInRange(Integer deadline,
+			Integer beforeCheckDeadLineFrom, Integer beforeCheckDeadLineTo,
+			Integer actualCheckDeadLine) {
+		// TODO Auto-generated method stub
+		return false;
+	}
 	
 }

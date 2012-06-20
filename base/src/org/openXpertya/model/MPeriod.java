@@ -21,20 +21,19 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.GregorianCalendar;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Properties;
-import java.util.Set;
 import java.util.logging.Level;
 
 import org.openXpertya.util.CCache;
 import org.openXpertya.util.CLogger;
 import org.openXpertya.util.DB;
 import org.openXpertya.util.Env;
+import org.openXpertya.util.ITime;
 import org.openXpertya.util.TimeUtil;
 
 /**
@@ -45,7 +44,7 @@ import org.openXpertya.util.TimeUtil;
  * @author     Equipo de Desarrollo de openXpertya    
  */
 
-public class MPeriod extends X_C_Period {
+public class MPeriod extends X_C_Period implements ITime{
 
     /**
      * Descripción de Método
@@ -719,6 +718,45 @@ public class MPeriod extends X_C_Period {
 
         log.fine( "PeriodControl #" + count );
     }
+
+	@Override
+	public Date getDateFrom() {
+		return new Date(getStartDate().getTime());
+	}
+
+	@Override
+	public int getDateField() {
+		return Calendar.MONTH;
+	}
+
+	@Override
+	public Date getDateTo() {
+		return new Date(getEndDate().getTime());
+	}
+
+	@Override
+	public String getITimeDescription() {
+		return getName();
+	}
+
+	@Override
+	public boolean isIncludedInPeriod(Timestamp date) {
+		// Si la fecha de inicio del periodo es menor o igual que la fecha actual y si la fecha de fin es mayor o igual 
+		// que la fecha actual retorna true, en caso contrario retorna false.
+		return ( (getDateFrom().compareTo(date) <= 0) && (date.compareTo(getDateTo()) <= 0) );
+	}
+
+	@Override
+	public Integer getDaysCount() {
+		// FIXME: Está bien que se tome mensualmente la cantidad de días a 30
+		// días o tiene que ser la cantidad de días del mes actual?
+		return 30;
+	}
+
+	@Override
+	public int getDayField() {
+		return Calendar.DAY_OF_MONTH;
+	}
 }    // MPeriod
 
 

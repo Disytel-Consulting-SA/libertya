@@ -23,15 +23,16 @@ import java.sql.Timestamp;
 import java.text.DateFormatSymbols;
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.Date;
 import java.util.GregorianCalendar;
 import java.util.List;
 import java.util.Locale;
 import java.util.Properties;
 import java.util.logging.Level;
 
-import org.openXpertya.util.CLogger;
 import org.openXpertya.util.DB;
 import org.openXpertya.util.Env;
+import org.openXpertya.util.ITime;
 import org.openXpertya.util.Language;
 import org.openXpertya.util.Msg;
 
@@ -43,8 +44,25 @@ import org.openXpertya.util.Msg;
  * @author     Equipo de Desarrollo de openXpertya    
  */
 
-public class MYear extends X_C_Year {
+public class MYear extends X_C_Year implements ITime{
 
+	/**
+	 * @param ctx
+	 *            contexto
+	 * @param date
+	 *            fecha
+	 * @param trxName
+	 *            transacción actual
+	 * @return la instancia a partir del año de la fecha parámetro
+	 */
+	public static MYear get(Properties ctx, Timestamp date, String trxName){
+		Calendar calendar = Calendar.getInstance();
+		calendar.setTimeInMillis(date.getTime());
+		return (MYear) PO.findFirst(ctx, X_C_Year.Table_Name, "year = '"
+				+ calendar.get(Calendar.YEAR) + "' AND ad_client_id = ?",
+				new Object[] { Env.getAD_Client_ID(ctx) }, null, trxName);
+	}
+	
 	/** Períodos de este año */
 	private List<MPeriod> m_periods = null;
 	
@@ -305,6 +323,58 @@ public class MYear extends X_C_Year {
     	return getPeriods(false);
     }
 
+	@Override
+	public Date getDateFrom() {
+		Calendar calendar = Calendar.getInstance();
+		calendar.set(Calendar.DATE, 1);
+		calendar.set(Calendar.MONTH, 0);
+		calendar.set(Calendar.YEAR, getYearAsInt());
+		calendar.set(Calendar.HOUR_OF_DAY, 0);
+		calendar.set(Calendar.SECOND, 0);
+		calendar.set(Calendar.MILLISECOND, 0);
+		return new Timestamp(calendar.getTimeInMillis());
+	}
+
+	@Override
+	public int getDateField() {
+		return Calendar.YEAR;
+	}
+
+	@Override
+	public Date getDateTo() {
+		Calendar calendar = Calendar.getInstance();
+		calendar.set(Calendar.DATE, 31);
+		calendar.set(Calendar.MONTH, 11);
+		calendar.set(Calendar.YEAR, getYearAsInt());
+		calendar.set(Calendar.HOUR_OF_DAY, 0);
+		calendar.set(Calendar.SECOND, 0);
+		calendar.set(Calendar.MILLISECOND, 0);
+		return calendar.getTime();
+	}
+
+	@Override
+	public String getITimeDescription() {
+		return getYear();
+	}
+
+	@Override
+	public boolean isIncludedInPeriod(Timestamp date) {
+		// Si la fecha de inicio del periodo es menor o igual que la fecha actual y si la fecha de fin es mayor o igual 
+		// que la fecha actual retorna true, en caso contrario retorna false.  
+		return ( (getDateFrom().compareTo(date) <= 0) && (date.compareTo(getDateTo()) <= 0) );
+	}
+
+	@Override
+	public Integer getDaysCount() {
+		// FIXME: Está bien que se tome siempre 365 días para cada año? Y para
+		// bisiestos?
+		return 365;
+	}
+
+	@Override
+	public int getDayField() {
+		return Calendar.DAY_OF_YEAR;
+	}
 }    // MYear
 
 

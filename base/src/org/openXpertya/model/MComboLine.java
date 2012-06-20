@@ -40,4 +40,15 @@ public class MComboLine extends X_C_ComboLine {
 		
 		return true;
 	}
+	
+	@Override
+	protected boolean beforeDelete() {
+		// No se puede eliminar una línea cuando el combo está publicado
+		MCombo combo = new MCombo(getCtx(), getC_Combo_ID(), get_TrxName());
+		if(combo.isPublished()){
+			log.saveError("DeleteComboLinePublished", "");
+			return false;
+		}
+		return true;
+	}
 }

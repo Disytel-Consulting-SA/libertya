@@ -10,20 +10,20 @@ public class ChangeLogGroup {
 	
 	/** Tabla */
 	
-	private String tableName;
+	protected String tableName;
 	
 	
 	/** UID */
 	
-	private String ad_componentObjectUID;
+	protected String ad_componentObjectUID;
 	
 	/** Operación del grupo de log */
 	
-	private String operation;
+	protected String operation;
 	
 	/** Elementos del grupo */
 	
-	private List<ChangeLogElement> elements;
+	protected List<ChangeLogElement> elements;
 	
 	
 	// Constructores

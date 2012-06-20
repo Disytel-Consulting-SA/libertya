@@ -1643,6 +1643,12 @@ public final class Env {
     /** Descripción de Campos */
 
     public static final String NL = "\n"; // System.getProperty( "line.separator" );
+    
+    public static final String BLANK = " ";
+    public static final String COMMA = ",";
+    
+    public static final String PARENTHESIS_OPEN = "(";
+    public static final String PARENTHESIS_CLOSE = ")";
 
     static {
 

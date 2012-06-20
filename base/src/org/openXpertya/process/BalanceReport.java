@@ -3,6 +3,7 @@ package org.openXpertya.process;
 import java.math.BigDecimal;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
+import java.sql.Timestamp;
 
 import org.openXpertya.util.DB;
 import org.openXpertya.util.Env;
@@ -17,6 +18,8 @@ public class BalanceReport extends SvrProcess {
 	private String     p_Sort_Criteria;
 	/** Grupo de entidad comercial */
 	private int    p_C_BP_Group_ID;
+	/** Fecha hasta de la transacción */
+	private Timestamp  p_DateTrx_To;
 	
 	/** Moneda en la que trabaja la compañía */
 	private int client_Currency_ID;
@@ -38,6 +41,8 @@ public class BalanceReport extends SvrProcess {
         		p_AD_Org_ID = tmp == null ? null : tmp.intValue();
         	} else if( name.equalsIgnoreCase( "C_BP_Group_ID" )) {
         		p_C_BP_Group_ID = para[ i ].getParameterAsInt();
+        	} else if( name.equalsIgnoreCase( "TrueDateTrx" )) {
+        		p_DateTrx_To = ( Timestamp )para[ i ].getParameter();
         	}
         }
         
@@ -88,6 +93,7 @@ public class BalanceReport extends SvrProcess {
 		}
 		sqlDoc.append(" 	AND d.AD_Client_ID = ").append(getAD_Client_ID()); 
 		sqlDoc.append(" 	AND bp.isactive = 'Y' ");
+		sqlDoc.append(" 	AND d.truedatetrx <= ?");
 		sqlDoc.append(" ) AS T ");
 		sqlDoc.append(" GROUP BY T.c_bpartner_id, T.name, T.C_BP_Group_ID, T.so_description ");
 		sqlDoc.append(" ORDER BY ");
@@ -100,6 +106,9 @@ public class BalanceReport extends SvrProcess {
 		
 		// ejecutar la consulta y cargar la tabla temporal
 		PreparedStatement pstmt = DB.prepareStatement(sqlDoc.toString(), get_TrxName());
+		int i = 1;
+		// Parámetros de sqlDoc
+		pstmt.setTimestamp(i++, p_DateTrx_To);
 		ResultSet rs = pstmt.executeQuery();
 		
 		int subindice=0;
@@ -108,7 +117,7 @@ public class BalanceReport extends SvrProcess {
 		{
 			subindice++;
 			usql.append(" INSERT INTO T_BALANCEREPORT (ad_pinstance_id, ad_client_id, ad_org_id, subindice, c_bpartner_id, observaciones, ");
-			usql.append("								credit, debit, balance, date_oldest_open_invoice, date_newest_open_invoice, sortcriteria, scope, c_bp_group_id ) ");
+			usql.append("								credit, debit, balance, date_oldest_open_invoice, date_newest_open_invoice, sortcriteria, scope, c_bp_group_id, truedatetrx ) ");
 			usql.append(" VALUES ( ")	.append(getAD_PInstance_ID()).append(",")
 										.append(getAD_Client_ID()).append(",")
 										.append(p_AD_Org_ID).append(",")
@@ -128,8 +137,12 @@ public class BalanceReport extends SvrProcess {
 				usql.append("null, ");
 			usql.append(" '").append(p_Sort_Criteria).append("', ")
 				.append(" '").append(p_Scope).append("', ")
-				.append(rs.getInt("C_BP_Group_ID"))
-				.append(" ); ");
+				.append(rs.getInt("C_BP_Group_ID")).append(", ");
+			if (p_DateTrx_To!=null)
+				usql.append(" '").append(p_DateTrx_To).append("' ");
+			else
+				usql.append("null ");
+			usql.append(" ); ");
 		}
 		
 		// si no hubo entradas directamente no se ejecuta sentencia de insercion alguna

@@ -79,4 +79,9 @@ public class DiscountableOrderWrapper extends DiscountableDocument {
 	public Order getOrder() {
 		return order;
 	}
+
+	@Override
+	public void setTotalManualGeneralDiscount(BigDecimal discountAmount) {
+		getOrder().setTotalManualGeneralDiscount(discountAmount);		
+	}
 }
