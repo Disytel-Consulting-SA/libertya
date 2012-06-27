@@ -1,14 +1,13 @@
 /** Modelo Generado - NO CAMBIAR MANUALMENTE - Disytel */
 package org.openXpertya.model;
-import java.math.BigDecimal;
-import java.sql.ResultSet;
-import java.util.Properties;
-
-import org.openXpertya.util.Env;
-import org.openXpertya.util.KeyNamePair;
+import java.util.logging.Level;
+ import java.util.*;
+import java.sql.*;
+import java.math.*;
+import org.openXpertya.util.*;
 /** Modelo Generado por C_POS
  *  @author Comunidad de Desarrollo Libertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
- *  @version  - 2011-11-15 14:38:10.049 */
+ *  @version  - 2012-05-24 15:11:19.371 */
 public class X_C_POS extends org.openXpertya.model.PO
 {
 /** Constructor estándar */
@@ -24,9 +23,11 @@ setC_CashBook_ID (0);
 setC_InvoiceDocType_ID (0);
 setC_OrderDocType_ID (0);
 setC_POS_ID (0);
+setInitialPOSAuthorization (false);
 setIsCreateInvoice (false);
 setIsDeliverOrderInWarehouse (false);	// N
 setIsModifyPrice (false);	// N
+setIsPrintCurrentAccountDocument (false);
 setIsPrintWarehouseDeliverDocument (false);	// N
 setIsSaleWithoutStock (false);
 setIsSearchByName (false);
@@ -35,6 +36,7 @@ setIsSearchByUPC (false);
 setIsSearchByUPCLike (false);
 setIsSearchByValue (true);	// Y
 setIsSearchByValueLike (false);
+setLockedClosed (false);
 setMaxReturnedCashInCN (Env.ZERO);
 setM_PriceList_ID (0);
 setM_Warehouse_ID (0);
@@ -249,6 +251,40 @@ public String getHelp()
 {
 return (String)get_Value("Help");
 }
+/** Set Initial Authorization */
+public void setInitialPOSAuthorization (boolean InitialPOSAuthorization)
+{
+set_Value ("InitialPOSAuthorization", new Boolean(InitialPOSAuthorization));
+}
+/** Get Initial Authorization */
+public boolean isInitialPOSAuthorization() 
+{
+Object oo = get_Value("InitialPOSAuthorization");
+if (oo != null) 
+{
+ if (oo instanceof Boolean) return ((Boolean)oo).booleanValue();
+ return "Y".equals(oo);
+}
+return false;
+}
+/** Set Copy Entity.
+Copy Entity From Order */
+public void setIsCopyEntity (boolean IsCopyEntity)
+{
+set_Value ("IsCopyEntity", new Boolean(IsCopyEntity));
+}
+/** Get Copy Entity.
+Copy Entity From Order */
+public boolean isCopyEntity() 
+{
+Object oo = get_Value("IsCopyEntity");
+if (oo != null) 
+{
+ if (oo instanceof Boolean) return ((Boolean)oo).booleanValue();
+ return "Y".equals(oo);
+}
+return false;
+}
 /** Set Create Invoice */
 public void setIsCreateInvoice (boolean IsCreateInvoice)
 {
@@ -301,6 +337,22 @@ if (oo != null)
 }
 return false;
 }
+/** Set Print Current Account Document */
+public void setIsPrintCurrentAccountDocument (boolean IsPrintCurrentAccountDocument)
+{
+set_Value ("IsPrintCurrentAccountDocument", new Boolean(IsPrintCurrentAccountDocument));
+}
+/** Get Print Current Account Document */
+public boolean isPrintCurrentAccountDocument() 
+{
+Object oo = get_Value("IsPrintCurrentAccountDocument");
+if (oo != null) 
+{
+ if (oo instanceof Boolean) return ((Boolean)oo).booleanValue();
+ return "Y".equals(oo);
+}
+return false;
+}
 /** Set Print Warehouse Deliver Document.
 Print Warehouse Deliver Document */
 public void setIsPrintWarehouseDeliverDocument (boolean IsPrintWarehouseDeliverDocument)
@@ -328,42 +380,6 @@ set_Value ("IsSaleWithoutStock", new Boolean(IsSaleWithoutStock));
 public boolean isSaleWithoutStock() 
 {
 Object oo = get_Value("IsSaleWithoutStock");
-if (oo != null) 
-{
- if (oo instanceof Boolean) return ((Boolean)oo).booleanValue();
- return "Y".equals(oo);
-}
-return false;
-}
-/** Set Copy Entity.
-Copy Entity */
-public void setIsCopyEntity (boolean IsCopyEntity)
-{
-set_Value ("iscopyentity", new Boolean(IsCopyEntity));
-}
-/** Get Copy Entity.
-Copy Entity */
-public boolean isCopyEntity() 
-{
-Object oo = get_Value("iscopyentity");
-if (oo != null) 
-{
- if (oo instanceof Boolean) return ((Boolean)oo).booleanValue();
- return "Y".equals(oo);
-}
-return false;
-}
-/** Set Search Today.
-Search Today */
-public void setIsSearchToday (boolean IsSearchToday)
-{
-set_Value ("issearchtoday", new Boolean(IsSearchToday));
-}
-/** Get Search Today.
-Search Today */
-public boolean isSearchToday() 
-{
-Object oo = get_Value("issearchtoday");
 if (oo != null) 
 {
  if (oo instanceof Boolean) return ((Boolean)oo).booleanValue();
@@ -479,6 +495,42 @@ if (oo != null)
 }
 return false;
 }
+/** Set Is Search Today.
+Search Today Orders */
+public void setIsSearchToday (boolean IsSearchToday)
+{
+set_Value ("IsSearchToday", new Boolean(IsSearchToday));
+}
+/** Get Is Search Today.
+Search Today Orders */
+public boolean isSearchToday() 
+{
+Object oo = get_Value("IsSearchToday");
+if (oo != null) 
+{
+ if (oo instanceof Boolean) return ((Boolean)oo).booleanValue();
+ return "Y".equals(oo);
+}
+return false;
+}
+/** Set Locked Closed.
+Locked Closed */
+public void setLockedClosed (boolean LockedClosed)
+{
+set_Value ("LockedClosed", new Boolean(LockedClosed));
+}
+/** Get Locked Closed.
+Locked Closed */
+public boolean isLockedClosed() 
+{
+Object oo = get_Value("LockedClosed");
+if (oo != null) 
+{
+ if (oo instanceof Boolean) return ((Boolean)oo).booleanValue();
+ return "Y".equals(oo);
+}
+return false;
+}
 /** Set Max Returned Cash In Credit Note.
 Maximum returned cash in credit note without authorization */
 public void setMaxReturnedCashInCN (BigDecimal MaxReturnedCashInCN)
@@ -568,6 +620,21 @@ Operation Mode */
 public String getOperationMode() 
 {
 return (String)get_Value("OperationMode");
+}
+/** Set Posnet */
+public void setPosnet (String Posnet)
+{
+if (Posnet != null && Posnet.length() > 40)
+{
+log.warning("Length > 40 - truncated");
+Posnet = Posnet.substring(0,40);
+}
+set_Value ("Posnet", Posnet);
+}
+/** Get Posnet */
+public String getPosnet() 
+{
+return (String)get_Value("Posnet");
 }
 /** Set POS Number */
 public void setPOSNumber (int POSNumber)

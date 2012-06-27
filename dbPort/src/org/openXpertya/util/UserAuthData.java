@@ -24,9 +24,16 @@ public class UserAuthData {
 	/** ID de usuario */
 	private Integer userID;
 	
+	/**
+	 * Flag que permite mostrar o no la descripción adicional del error de no
+	 * autorización para que agregue permisos al proceso o autorización al TPV
+	 */
+	private boolean showAditionalNoAccessErrorMsg;
+	
 	public UserAuthData(){
 		setForPOS(false);
 		setPosSupervisor(false);
+		setShowAditionalNoAccessErrorMsg(true);
 	}
 	
 	public UserAuthData(Integer userID) {
@@ -88,6 +95,15 @@ public class UserAuthData {
 
 	public Integer getUserID() {
 		return userID;
+	}
+
+	public void setShowAditionalNoAccessErrorMsg(
+			boolean showAditionalNoAccessErrorMsg) {
+		this.showAditionalNoAccessErrorMsg = showAditionalNoAccessErrorMsg;
+	}
+
+	public boolean isShowAditionalNoAccessErrorMsg() {
+		return showAditionalNoAccessErrorMsg;
 	}
 
 }

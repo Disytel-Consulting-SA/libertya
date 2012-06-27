@@ -23,6 +23,7 @@ import org.openXpertya.cc.CurrentAccountManagerFactory;
 import org.openXpertya.model.CalloutInvoiceExt;
 import org.openXpertya.model.DiscountCalculator;
 import org.openXpertya.model.FiscalDocumentPrint;
+import org.openXpertya.model.GeneratorPercepciones;
 import org.openXpertya.model.MAllocationHdr;
 import org.openXpertya.model.MAllocationLine;
 import org.openXpertya.model.MAttributeSet;
@@ -39,10 +40,12 @@ import org.openXpertya.model.MInOut;
 import org.openXpertya.model.MInOutLine;
 import org.openXpertya.model.MInvoice;
 import org.openXpertya.model.MInvoiceLine;
+import org.openXpertya.model.MInvoiceTax;
 import org.openXpertya.model.MLetraComprobante;
 import org.openXpertya.model.MLocation;
 import org.openXpertya.model.MOrder;
 import org.openXpertya.model.MOrderLine;
+import org.openXpertya.model.MOrderTax;
 import org.openXpertya.model.MOrg;
 import org.openXpertya.model.MOrgInfo;
 import org.openXpertya.model.MPOS;
@@ -99,6 +102,7 @@ import org.openXpertya.pos.model.User;
 import org.openXpertya.print.MPrintFormat;
 import org.openXpertya.print.ReportEngine;
 import org.openXpertya.print.View;
+import org.openXpertya.print.fiscal.document.CurrentAccountInfo;
 import org.openXpertya.process.DocAction;
 import org.openXpertya.process.InvoiceGlobalVoiding;
 import org.openXpertya.process.ProcessInfo;
@@ -172,6 +176,10 @@ public class PoSOnline extends PoSConnectionState {
 	
 	private List<Integer> checkDeadLines = null;
 	private List<EntidadFinanciera> entidadesFinancieras = null;
+	
+	private DiscountCalculator discountCalculator = null;
+	
+	private Map<String, BigDecimal> currentAccountSalesConditions;
 	
 	public PoSOnline() {
 		super();
@@ -425,6 +433,8 @@ public class PoSOnline extends PoSConnectionState {
 			printTicket();
 			// Impresión del documento de artículos a retirar por almacén
 			printWarehouseDeliveryTicket(order);
+			// Impresión del documento con datos del cliente en cuenta corriente
+			printCurrentAccountTicket(order);
 		} catch (Exception e) {
 			
 		}
@@ -452,7 +462,7 @@ public class PoSOnline extends PoSConnectionState {
 	 */
 	private void adjustPayments(Order order) {
 		
-		BigDecimal change = order.getChangeAmount();
+		BigDecimal change = order.getTotalChangeCashAmt();
 		
 		for (int i = 0; i<cashPayments.size(); i++) {
 			CashPayment p = cashPayments.get(i);
@@ -515,6 +525,8 @@ public class PoSOnline extends PoSConnectionState {
 		shouldCreateInvoice = getPoSCOnfig().isCreateInvoice() && !isPoSOrder;
 		shouldCreateInout = getPoSCOnfig().isCreateInOut() &&  !isPoSOrder;
 		shouldUpdateBPBalance = false;
+		
+		discountCalculator = null;
 		
 		morder = null;
 		invoice = null;
@@ -646,8 +658,6 @@ public class PoSOnline extends PoSConnectionState {
 		BigDecimal cashChange = BigDecimal.ZERO;
 		boolean invalidPayment = false;
 		
-		order.setChangeAmount(cashChange);
-		
 		clearState(order);
 		
 		sumaProductos = BigDecimal.ZERO;
@@ -729,8 +739,6 @@ public class PoSOnline extends PoSConnectionState {
 				cashChange = sumaCashPayments.subtract(sumaProductos.subtract(x).abs());
 			}
 		}
-
-		order.setChangeAmount(cashChange);
 		
 		if (invalidPayment)
 			throw new InvalidPaymentException();
@@ -887,6 +895,7 @@ public class PoSOnline extends PoSConnectionState {
 	 * @throws InsufficientCreditException
 	 */
 	private void checkCredit(Order order) throws InsufficientCreditException, Exception {
+		currentAccountSalesConditions = new HashMap<String, BigDecimal>();
 		MBPartner bp = new MBPartner(getCtx(), order.getBusinessPartner().getId(), getTrxName());
 		MOrg org = new MOrg(getCtx(), Env.getAD_Org_ID(getCtx()), getTrxName());
 		// Obtengo el manager actual
@@ -910,8 +919,6 @@ public class PoSOnline extends PoSConnectionState {
 		}
 		// Me guardo la lista de tipos de pago a verificar
 		Set<String> tenderTypesAllowed = (Set<String>)result.getResult();
-		// Armo la lista de payments por tipo de medio de pago con los montos
-		// convertidos correspondientes
 		Map<String, BigDecimal> pays = new HashMap<String, BigDecimal>();
 		BigDecimal convertedPayAmt;
 		String paymentRule;
@@ -931,12 +938,18 @@ public class PoSOnline extends PoSConnectionState {
 					if (result.isError()) {
 						throw new InsufficientCreditException(result.getMsg());
 					}
+					currentAccountSalesConditions.put(paymentRule, BigDecimal.ZERO);
 				}
 				// Convierto el monto del pago a partir de su moneda
 				convertedPayAmt = MConversionRate.convertBase(getCtx(), pay
 						.getAmount(), pay.getCurrencyId(), order.getDate(), 0, Env
 						.getAD_Client_ID(getCtx()), Env.getAD_Org_ID(getCtx()));
 				pays.put(paymentRule, convertedPayAmt);
+				// Si existe el payment rule significa que se agregó porque es
+				// paymentrule de cuenta corriente, entonces actualizar su monto
+				if(currentAccountSalesConditions.get(paymentRule) != null){
+					currentAccountSalesConditions.put(paymentRule, convertedPayAmt);
+				}
 			}
 		}		
 		// Verificar el crédito con la factura
@@ -1076,6 +1089,7 @@ public class PoSOnline extends PoSConnectionState {
 		int currentProduct = 0;
 		int productCount = products.size();
 		int numOrderLine = 0; //ADER: mejora de performance (y arreglo de bug), al setearse explicitamente 
+		Map<Integer, Integer> manualLinesDiscounts = new HashMap<Integer, Integer>();
 		
 		for (OrderProduct op : products) {
 			currentProduct++;
@@ -1096,7 +1110,7 @@ public class PoSOnline extends PoSConnectionState {
 	        line.setLine(numOrderLine); //ADER: mejora de seteo explicito
 	        line.setPrice(op.getPrice());
 	        line.setPriceList(op.getPriceList());
-
+	        
 	        line.setC_Tax_ID(op.getTax().getId());
 	        line.setDiscount();
 	        line.setLineNetAmt();
@@ -1126,6 +1140,8 @@ public class PoSOnline extends PoSConnectionState {
 	        throwIfFalse(line.save());
 	        
 	        op.setOrderLineID(line.getC_OrderLine_ID());
+	        // Guardar el id de descuento interno manual de la línea
+	        manualLinesDiscounts.put(line.getID(), op.getLineManualDiscountID());
 		}
 		debug("Guardando el Pedido (Encabezado, con líneas ya creadas)");
 		throwIfFalse(mo.save(), mo);
@@ -1136,21 +1152,27 @@ public class PoSOnline extends PoSConnectionState {
 		for (MOrderLine orderLine : mo.getLines()) 
 		{ 
 			currentProduct++;
+			// Seteo el id interno de descuento manual de línea
+			orderLine.setLineManualDiscountID(manualLinesDiscounts.get(orderLine.getID()));
 			orderLine.setShouldUpdateHeader(currentProduct==productCount);
 		}
 		
 		// Crea un calculador de descuentos a partir del calculador de
 		// descuentos asociado al pedido de TPV, asociando al nuevo calculador
 		// el pedido MOrder creado (wrapper). Luego aplica los descuentos.
-		DiscountCalculator discountCalculator = DiscountCalculator.create(mo.getDiscountableWrapper(), order.getDiscountCalculator());
+		discountCalculator = DiscountCalculator.create(mo.getDiscountableWrapper(), order.getDiscountCalculator());
 		debug("Aplicando descuentos al Pedido (DiscountCalculator)");
 		discountCalculator.applyDiscounts();
 		debug("Guardando el Pedido nuevamente (luego de aplicar descuentos)");
 		throwIfFalse(mo.save(), mo);
 		
+		// Cargar los impuestos adicionales en C_Order_Tax
+		createOXPOrderTaxes(mo, order);
+		
 		// Reload Order
 		
 		mo = new MOrder(ctx, mo.getID(), getTrxName());
+		
 		setCaches(mo); //caches
 		
 		// Completar Orden
@@ -1159,8 +1181,28 @@ public class PoSOnline extends PoSConnectionState {
 		debug("Guardando el pedido (luego de completar)");
 		throwIfFalse(mo.save(), mo);
 		
+		// Actualizo la instancia del documento del discount calculator, ya que
+		// son instancias diferentes
+		discountCalculator.setDocument(mo.getDiscountableWrapper());
 		order.setGeneratedOrderID(mo.getC_Order_ID());
 		return mo;
+	}
+	
+	private void createOXPOrderTaxes(MOrder mo, Order order) throws PosException{
+		BigDecimal totalNet = order.getOtherTaxes() != null
+				&& order.getOtherTaxes().size() > 0 ? mo.getTotalLinesNetWithoutDocumentDiscount()
+				: BigDecimal.ZERO;
+		MOrderTax orderTax;
+		for (Tax tax : order.getOtherTaxes()) {
+			// FIXME Cuando se pasen las percepciones a las M, se debe colocar
+			// bypass para aquellos impuestos que son percepciones
+			orderTax = new MOrderTax(getCtx(), 0, getTrxName());
+			orderTax.setC_Order_ID(mo.getID());
+			orderTax.setC_Tax_ID(tax.getId());
+			orderTax.setTaxAmt(totalNet.multiply(tax.getTaxRateMultiplier()));
+			orderTax.setTaxBaseAmt(totalNet);
+			throwIfFalse(orderTax.save(), mo);
+		}
 	}
 	
 	private MInvoice createOxpInvoice(Order order) throws PosException {
@@ -1184,6 +1226,8 @@ public class PoSOnline extends PoSConnectionState {
 		// cabecera para la ventana de facturas 
 		inv.setSkipManualGeneralDiscount(true);
 		
+		inv.setTPVInstance(true);
+		
 		inv.setDocAction(MInvoice.DOCACTION_Complete);
 		inv.setDocStatus(MInvoice.DOCSTATUS_Drafted);
 		
@@ -1193,6 +1237,9 @@ public class PoSOnline extends PoSConnectionState {
 		// Se copia el importe de descuento/recargo
 		inv.setChargeAmt(morder.getChargeAmt());
 		inv.setC_Charge_ID(morder.getC_Charge_ID());
+		
+		// Monto a crédito inicial
+		inv.setInitialCurrentAccountAmt(sumaCreditPayments);
 		
 		throwIfFalse(inv.save(), inv, InvoiceCreateException.class);
 		
@@ -1236,6 +1283,10 @@ public class PoSOnline extends PoSConnectionState {
 			
 			lineNumber += 10;
 		}
+		
+		// Crear los impuestos adicionales a la factura
+		createOXPInvoiceTaxes(inv, order);
+		
 		// Recargar la factura
 		
 		inv = new MInvoice(ctx, inv.getID(), getTrxName());
@@ -1249,7 +1300,7 @@ public class PoSOnline extends PoSConnectionState {
 		// Se skippea la actualización del descuento manual general de la
 		// cabecera para la ventana de facturas 
 		inv.setSkipManualGeneralDiscount(true);
-		
+		inv.setTPVInstance(true);
 		//
 		// FB - Comentado a partir del quitado de la impresión fiscal de 
 		// la transacción principal
@@ -1273,8 +1324,27 @@ public class PoSOnline extends PoSConnectionState {
 		throwIfFalse(inv.save(), inv, InvoiceCreateException.class);
 		
 		order.setGeneratedInvoiceID(inv.getC_Invoice_ID());
+		morder.setTpvGeneratedInvoiceID(inv.getC_Invoice_ID());
 		
 		return inv;
+	}
+	
+	private void createOXPInvoiceTaxes(MInvoice mi, Order order) throws PosException{
+		BigDecimal totalNet = order.getOtherTaxes() != null
+				&& order.getOtherTaxes().size() > 0 ? mi.getTotalLinesNet()
+				: BigDecimal.ZERO;
+		MInvoiceTax invoiceTax;
+		for (Tax tax : order.getOtherTaxes()) {
+			// Se hace un bypass de las percepciones ya que ya se deberían haber creado
+			if(!tax.isPercepcion()){
+				invoiceTax = new MInvoiceTax(mi.getCtx(), 0, mi.get_TrxName());
+				invoiceTax.setC_Invoice_ID(mi.getID());
+				invoiceTax.setC_Tax_ID(tax.getId());
+				invoiceTax.setTaxAmt(totalNet.multiply(tax.getTaxRateMultiplier()));
+				invoiceTax.setTaxBaseAmt(totalNet);
+				throwIfFalse(invoiceTax.save(), mi);
+			}
+		}
 	}
 	
 	private MInvoice createLocaleInvoice(Order order) throws PosException {
@@ -1489,7 +1559,8 @@ public class PoSOnline extends PoSConnectionState {
 	 */
 	private MAllocationLine createOxpMAllocationLine(Integer debitInvoiceID, Payment p, MPayment pay, MCashLine cashLine, Integer creditInvoiceID) throws PosException {
 		
-		BigDecimal allocLineAmt = currencyConvert(p.getAmount(), p.getCurrencyId(), allocHdr.getC_Currency_ID());
+		BigDecimal allocLineAmt = currencyConvert(p.getAmount().abs(), p.getCurrencyId(), allocHdr.getC_Currency_ID());
+		BigDecimal changeAmt = currencyConvert(p.getChangeAmt().abs(), p.getCurrencyId(), allocHdr.getC_Currency_ID());
 		BigDecimal writeOffAmt = BigDecimal.ZERO;
 		
 		if (faltantePorRedondeo != null) {
@@ -1498,6 +1569,7 @@ public class PoSOnline extends PoSConnectionState {
 		}
 		
 		MAllocationLine allocLine = new MAllocationLine(allocHdr, allocLineAmt, BigDecimal.ZERO, writeOffAmt, BigDecimal.ZERO);
+		allocLine.setChangeAmt(changeAmt);
 		
 		if(!Util.isEmpty(debitInvoiceID, true)){
 			allocLine.setC_Invoice_ID(debitInvoiceID);
@@ -1529,7 +1601,7 @@ public class PoSOnline extends PoSConnectionState {
 			createOxpCheckPayment(p);
 
 		for (CreditCardPayment p : creditCardPayments)
-			createOxpCreditCardPayment(p);
+			createOxpCreditCardPayment(p, order);
 
 		for (CreditPayment p : creditPayments)
 			createOxpCreditPayment(p);
@@ -1553,7 +1625,9 @@ public class PoSOnline extends PoSConnectionState {
 		}
 		// Ajustar el cambio a entregar al cliente dependiendo del remanente en
 		// efectivo existente y las devoluciones de efectivo de las NC
-		adjustChange(order);
+		// Por ahora no se ajusta el cambio y se deja sólo el cambio de efectivo
+		// para setearse en la factura
+//		adjustChange(order);
 	}
 	
 	private void createOxpCashPayment(CashPayment p) throws PosException {
@@ -1598,6 +1672,7 @@ public class PoSOnline extends PoSConnectionState {
 		cashLine.setIsGenerated(true);
 		cashLine.setIgnoreAllocCreate(true);
 		cashLine.setDescription(p.getDescription());
+		cashLine.setC_POSPaymentMedium_ID(p.getPaymentMedium().getId());
 		
 		throwIfFalse(cashLine.save()); // Necesario para que se asigne el C_CashLine_ID
 		throwIfFalse(cashLine.processIt(MCashLine.ACTION_Complete));
@@ -1628,6 +1703,7 @@ public class PoSOnline extends PoSConnectionState {
 		pay.setA_CUIT(p.getCuitLibrador());
 		pay.setDueDate(p.getAcctDate());
 		pay.setDescription(p.getDescription());
+		pay.setC_POSPaymentMedium_ID(p.getPaymentMedium().getId());
 		
 		throwIfFalse(pay.save(), pay);
 		mpayments.put(pay.getC_Payment_ID(), pay);
@@ -1640,7 +1716,7 @@ public class PoSOnline extends PoSConnectionState {
 		}
 	}
 	
-	private void createOxpCreditCardPayment(CreditCardPayment p) throws PosException {
+	private void createOxpCreditCardPayment(CreditCardPayment p, Order order) throws PosException {
 		
 		MPayment pay = createOxpMPayment(MPayment.TENDERTYPE_CreditCard, getClientCurrencyID(), p.getAmount(), p.getCouponNumber());
 		MEntidadFinanciera entidadFinanciera = new MEntidadFinanciera(ctx, p.getEntidadFinancieraID(), null);  
@@ -1652,7 +1728,14 @@ public class PoSOnline extends PoSConnectionState {
 		pay.setM_EntidadFinancieraPlan_ID(p.getPlan().getEntidadFinancieraPlanID());
 		pay.setCouponNumber(p.getCouponNumber());
 		pay.setA_Bank(p.getBankName());
+		// Setea el nombre del cliente o de la entidad comercial al responsable
+		// del cobro con tarjeta de crédito
+		pay.setA_Name(!Util.isEmpty(order.getBusinessPartner()
+				.getCustomerName(), true) ? order.getBusinessPartner()
+				.getCustomerName() : order.getBusinessPartner().getName());
 		pay.setDescription(p.getDescription());
+		pay.setPosnet(p.getPosnet());
+		pay.setC_POSPaymentMedium_ID(p.getPaymentMedium().getId());
 		
 		throwIfFalse(pay.save(), pay);
 		mpayments.put(pay.getC_Payment_ID(), pay);
@@ -1669,14 +1752,14 @@ public class PoSOnline extends PoSConnectionState {
 		createOxpMAllocationLine(p, p.getInvoiceID());
 		// Se deben crear los pagos en efectivo para las devoluciones en
 		// efectivo e imputarlo a la NC
-		if (p.isReturnCash() && p.getReturnCashAmt() != null
-				&& p.getReturnCashAmt().compareTo(BigDecimal.ZERO) > 0) {
-			CashPayment cashPayment = new CashPayment(p.getReturnCashAmt().negate());
+		if (p.isReturnCash() && p.getChangeAmt() != null
+				&& p.getChangeAmt().compareTo(BigDecimal.ZERO) > 0) {
+			CashPayment cashPayment = new CashPayment(p.getChangeAmt().negate());
 			cashPayment.setCashType(MCashLine.CASHTYPE_Invoice);
 			cashPayment.setCurrencyId(p.getCurrencyId());
-			cashPayment.setAmount(p.getReturnCashAmt());
+			cashPayment.setAmount(p.getChangeAmt().negate());
 			cashPayment.setDescription(Msg.translate(getCtx(), "CNCashReturning"));
-			MCashLine cashLine = createOxpCashPayment(p.getInvoiceID(), cashPayment, true, false);
+			MCashLine cashLine = createOxpCashPayment(p.getInvoiceID(), cashPayment, false, false);
 			createOxpMAllocationLine(p.getInvoiceID(), cashPayment, null, cashLine, null);
 		}
 	}
@@ -1689,6 +1772,7 @@ public class PoSOnline extends PoSConnectionState {
 		pay.setC_BankAccount_ID(p.getBankAccountID());
 		pay.setCheckNo(p.getTransferNumber());
 		pay.setDescription(p.getDescription());
+		pay.setC_POSPaymentMedium_ID(p.getPaymentMedium().getId());
 		throwIfFalse(pay.save(), pay);
 		mpayments.put(pay.getC_Payment_ID(), pay);
 		createOxpMAllocationLine(p, pay);
@@ -1761,7 +1845,7 @@ public class PoSOnline extends PoSConnectionState {
 	 *            pedido actual
 	 */
 	protected void adjustChange(Order order){
-		order.setChangeAmount(order.getChangeAmount().add(order.getCreditNoteChangeAmount()));
+		order.getTotalChangeAmt();
 	}
 	
 	@Override
@@ -1788,8 +1872,15 @@ public class PoSOnline extends PoSConnectionState {
 						.getM_PriceList_ID(), discountSchema, mBPartner
 						.getFlatDiscount(), paymentTerm, paymentMedium);
 		rBPartner.setDiscountSchemaContext(mBPartner.getDiscountContext());
-		int codigoIVA = MCategoriaIva.getCodigo(mBPartner.getC_Categoria_Iva_ID(), null);
+		int codigoIVA = 0;
+		boolean isPercepcionLiable = false;
+		if(mBPartner.getC_Categoria_Iva_ID() > 0){
+			MCategoriaIva catIva = new MCategoriaIva(getCtx(), mBPartner.getC_Categoria_Iva_ID(), null);
+			codigoIVA = catIva.getCodigo();
+			isPercepcionLiable = catIva.isPercepcionLiable();
+		}
 		rBPartner.setIVACategory(codigoIVA);
+		rBPartner.setPercepcionLiable(isPercepcionLiable);
 		
 		rBPartner.setCustomerName(mBPartner.getName());
 		// Si no es la misma EC que la por defecto en la config, se cargan los datos
@@ -2157,12 +2248,16 @@ public class PoSOnline extends PoSConnectionState {
 		
 		// Se obtiene el Tax del producto.
 		int taxId = org.openXpertya.model.Tax.get( ctx,productId, 0, now, now, Env.getAD_Org_ID(ctx),getPoSCOnfig().getWarehouseID(), locationID,locationID,true);
+		boolean isPercepcion = false;
 		MTax mTax = MTax.get(ctx,taxId,null);
-		if(mTax != null)
+		if(mTax != null){
 			taxRate = mTax.getRate();
-		else
+			isPercepcion = mTax.isPercepcion();
+		}
+		else{
 			taxRate = BigDecimal.ZERO;
-		return new org.openXpertya.pos.model.Tax(taxId, taxRate);
+		}
+		return new org.openXpertya.pos.model.Tax(taxId, taxRate, isPercepcion);
 	}
 	
 	public Tax getProductTax(int productID) {
@@ -2191,6 +2286,7 @@ public class PoSOnline extends PoSConnectionState {
 		BusinessPartner bPartner = getBPartner(mOrder.getC_BPartner_ID());
 		
 		order.setId(orderId);
+		order.setOtherTaxes(getOtherTaxes(bPartner));
 		order.setBusinessPartner(bPartner);
 		order.setDate(mOrder.getDateOrdered());
 		order.setOrderRep(mOrder.getSalesRep_ID());
@@ -2254,7 +2350,7 @@ public class PoSOnline extends PoSConnectionState {
 		orderProduct = 
 			new OrderProduct(line.getQtyEntered().intValue(), 
 					         line.getDiscount(),
-					         new Tax(mTax.getID(), mTax.getRate()),
+					         new Tax(mTax.getID(), mTax.getRate(), mTax.isPercepcion()),
 					         product, checkoutPlace);
 		
 		orderProduct.setPrice(line.getPriceActual());
@@ -2647,13 +2743,13 @@ public class PoSOnline extends PoSConnectionState {
 		// El pedido tiene al menos un artículo que se retira por almacén, 
 		// además se creó la factura y el TPV está configurado para emitir el 
 		// documento de retiro 		
-		if (order.getWarehouseCheckoutProductsCount() > 0 
+		if (getPoSCOnfig().isPrintWarehouseDeliverDocument()  
 				&& invoice != null 
-				&& getPoSCOnfig().isPrintWarehouseDeliverDocument()) {
+				&& order.getWarehouseCheckoutProductsCount() > 0) {
 			// El tipo de documento de la factura debe ser fiscal y tener asociado
 			// un controlador fiscal.
 			MDocType docType = MDocType.get(ctx, invoice.getC_DocType_ID());
-			if (docType.isFiscal() && docType.getC_Controlador_Fiscal_ID() > 0) {
+			if (docType.getC_Controlador_Fiscal_ID() > 0) {
 				// Impresor de comprobantes.
 				FiscalDocumentPrint fdp = new FiscalDocumentPrint();
 				fdp.addDocumentPrintListener(getFiscalDocumentPrintListener());
@@ -2688,6 +2784,73 @@ public class PoSOnline extends PoSConnectionState {
 						"SELECT ad_process_id FROM ad_process WHERE ad_componentobjectuid = 'CORE-AD_Process-1010274'");
 	}
 
+	/**
+	 * Imprime el comprobante con datos del cliente en cuenta corriente si así
+	 * lo indica esta opción en la configuración del TPV.
+	 */
+	private void printCurrentAccountTicket(Order order) throws Exception{
+		// Se imprime este comprobante cuando existe una condición de venta de
+		// la cual es cuenta corriente. Además, existe un flag en la config del
+		// TPV que permite imprimir o no este documento
+		CurrentAccountInfo currentAccountInfo;
+		List<CurrentAccountInfo> infos = new ArrayList<CurrentAccountInfo>();
+		if (getPoSCOnfig().isPrintCurrentAccountDocument() && invoice != null
+				&& !Util.isEmpty(currentAccountSalesConditions.keySet())) {
+			MBPartner partner = new MBPartner(getCtx(), order
+					.getBusinessPartner().getId(), getTrxName());
+			// Itero por las condiciones de venta de cuenta corriente
+			for (String paymentRule : currentAccountSalesConditions.keySet()) {
+				currentAccountInfo = new CurrentAccountInfo(null,
+						MRefList.getListName(getCtx(),
+								MInvoice.PAYMENTRULE_AD_Reference_ID,
+								paymentRule),
+						currentAccountSalesConditions.get(paymentRule));
+				infos.add(currentAccountInfo);
+			}
+			// Imprimo el ticket no fiscal de cuenta corriente, en caso que no
+			// se imprima por la fiscal, entonces va al formato jasper
+			MDocType docType = MDocType.get(ctx, invoice.getC_DocType_ID());
+			if (docType.getC_Controlador_Fiscal_ID() > 0) {
+				// Impresor de comprobantes.
+				FiscalDocumentPrint fdp = new FiscalDocumentPrint();
+				fdp.addDocumentPrintListener(getFiscalDocumentPrintListener());
+				fdp.setPrinterEventListener(getFiscalPrinterEventListener());
+				if (!fdp.printCurrentAccountDocument(
+						docType.getC_Controlador_Fiscal_ID(), partner, infos)) {
+					
+				}
+			}
+			else{
+				Map<String, Object> params = new HashMap<String, Object>();
+				// FIXME Por ahora hay un sólo medio de pago de cuenta corriente
+				// (A Crédito). Si existen otros medios de pago con esas
+				// condiciones, se debe dar soporte para ellos dentro de este
+				// bloque, además de pasarlos como parámetro al reporte
+				params.put("AD_Org_ID", Env.getAD_Org_ID(getCtx()));
+				params.put("C_BPartner_ID", partner.getID());
+				params.put("PaymentRule_1", MInvoice.PAYMENTRULE_OnCredit);
+				params.put("PaymentRule_Amt_1", currentAccountSalesConditions
+						.get(MInvoice.PAYMENTRULE_OnCredit));
+				ProcessInfo info = MProcess.execute(getCtx(),
+						getCurrentAccountDocumentProcessID(), params,
+						getTrxName());
+				if(info.isError()){
+					
+				}
+			}
+		}
+	}
+
+	/**
+	 * @return el id de proceso que corresponde con la impresión cliente en
+	 *         cuenta corriente
+	 */
+	public Integer getCurrentAccountDocumentProcessID(){
+		return DB
+				.getSQLValue(getTrxName(),
+						"SELECT ad_process_id FROM ad_process WHERE ad_componentobjectuid = 'CORE-AD_Process-1010286'");
+	}
+	
 	@Override
 	public List<PaymentMedium> getPaymentMediums() {
 		List<PaymentMedium> paymentMediums = new ArrayList<PaymentMedium>();
@@ -2835,7 +2998,11 @@ public class PoSOnline extends PoSConnectionState {
 	 * @param order Pedido TPV.
 	 */
 	private void saveDiscounts(Order order) throws PosException {
-		throwIfFalse(order.getDiscountCalculator().saveDiscounts(getTrxName()));
+		// Los descuentos a guardar son del discountcalculator creado a partir
+		// del MOrder creado, no este ya que puede tener distintas tasas de IVA
+		// de impuestos adicionales
+//		throwIfFalse(order.getDiscountCalculator().saveDiscounts(getTrxName()));
+		throwIfFalse(discountCalculator.saveDiscounts(getTrxName()));
 	}
 	
 	/**
@@ -3241,5 +3408,55 @@ public class PoSOnline extends PoSConnectionState {
 
 	public void setEntidadesFinancieras(List<EntidadFinanciera> entidadesFinancieras) {
 		this.entidadesFinancieras = entidadesFinancieras;
+	}
+
+	@Override
+	public List<Tax> getOtherTaxes(BusinessPartner bp) {
+		List<Tax> otherTaxes = new ArrayList<Tax>();
+		List<MTax> mOtherTaxes = new ArrayList<MTax>();
+		Tax otherTax;
+		// Percepciones
+		try{
+			mOtherTaxes.addAll(GeneratorPercepciones.getApplyPercepciones(
+					getCtx(), Env.getAD_Org_ID(getCtx()), getTrxName()));
+		} catch(Exception e){
+			e.printStackTrace();
+		}
+		// Itero por los impuestos adicionales
+		BigDecimal rate;
+		for (MTax mTax : mOtherTaxes) {
+			otherTax = new Tax(mTax.getID(), mTax.getRate(), mTax.isPercepcion());
+			rate = mTax.getRate();
+			// Si es percepción debo determinar el porcentaje de exención y 
+			// verificar si esta entidad comercial es pasible de percepciones 
+			if(otherTax.isPercepcion() && LOCAL_AR_ACTIVE){
+				if(!bp.isPercepcionLiable()){
+					rate = BigDecimal.ZERO;
+				}
+				else{
+					rate = mTax.getRate().multiply(
+							MBPartner.getPercepcionExencionMultiplierRate(
+									bp.getId(), otherTax.getId(),
+									Env.getDate(), 2, getTrxName()));
+				}
+			}
+			otherTax.setRate(rate);
+			if(otherTax.getRate().compareTo(BigDecimal.ZERO) != 0){
+				otherTaxes.add(otherTax);
+			}
+		}		
+		return otherTaxes;
+	}
+
+	@Override
+	public Tax getTax(Integer taxID) {
+		MTax mTax = MTax.get(ctx,taxID,null);
+		boolean isPercepcion = false;
+		BigDecimal taxRate = BigDecimal.ZERO; 
+		if(mTax != null){
+			taxRate = mTax.getRate();
+			isPercepcion = mTax.isPercepcion();
+		}
+		return new org.openXpertya.pos.model.Tax(taxID, taxRate, isPercepcion);
 	}
 }

@@ -5,6 +5,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -13,11 +14,14 @@ import java.util.Properties;
 import java.util.logging.Level;
 
 import org.apache.ecs.xhtml.code;
+import org.apache.ecs.xhtml.param;
+import org.openXpertya.model.DiscountCalculator.IDocumentLine.DiscountApplication;
 import org.openXpertya.model.ProductMatching.MatchingCompareType;
 import org.openXpertya.util.CLogger;
 import org.openXpertya.util.DB;
 import org.openXpertya.util.Env;
 import org.openXpertya.util.Msg;
+import org.openXpertya.util.Util;
 
 /**
  * <p>
@@ -140,6 +144,12 @@ public class DiscountCalculator {
 	private List<Discount> comboDiscounts = null;
 	
 	/**
+	 * Lista de descuentos manuales por línea. Clave: ID del descuento, Valor:
+	 * Estructura que contiene los datos del descuento
+	 */
+	private Map<Integer, Discount> lineManualDiscounts = null;
+	
+	/**
 	 * Fecha del documento asociado. Utilizada para determinar si la fecha
 	 * devuelta por {@link IDocument#getDate()} ha cambiado en cuyo caso se
 	 * deben recargar los combos y promociones válidos para esa nueva fecha
@@ -201,6 +211,7 @@ public class DiscountCalculator {
 		ndc.nextDiscountID = discountCalculator.nextDiscountID;
 		ndc.trxName = discountCalculator.trxName;
 		ndc.getGeneralDiscounts().putAll(discountCalculator.getGeneralDiscounts());
+		ndc.getLineManualDiscounts().putAll(discountCalculator.getLineManualDiscounts());
 		if (discountCalculator.getValidCombos() != null) {
 			ndc.validCombos = new ArrayList<MCombo>();
 			ndc.getValidCombos().addAll(discountCalculator.getValidCombos());
@@ -294,6 +305,7 @@ public class DiscountCalculator {
 		this.generalDiscounts = new HashMap<Integer, Discount>();
 		this.promotionDiscounts = new ArrayList<Discount>();
 		this.comboDiscounts = new ArrayList<Discount>();
+		this.lineManualDiscounts = new HashMap<Integer, Discount>();
 		this.context = context;
 	}
 	
@@ -774,6 +786,9 @@ public class DiscountCalculator {
 					// total de unidades que tiene esta línea.
 					documentLine.setDiscountedQty(documentLine.getQty());
 
+					// Seteo a 0 el descuento manual ya que este es automático
+					documentLine.setDiscount(BigDecimal.ZERO);
+					
 					// Dependiendo del tipo de aplicación del descuento se acumula
 					// el descuento calculado para la línea en la variable de
 					// bonificaciones o descuentos al precio.
@@ -929,6 +944,9 @@ public class DiscountCalculator {
 							documentLine.getTaxedAmount(discountBaseAmt));
 				}
 
+				// Seteo a 0 el descuento manual ya que este es automático
+				documentLine.setDiscount(BigDecimal.ZERO);
+				
 				// Calcula el nuevo precio unitario de la línea (precio promedio).
 				calculateDocumentLinePrice(documentLine);
 				
@@ -965,6 +983,88 @@ public class DiscountCalculator {
 		
 		// Aplica los descuentos por promociones.
 		applyLineDiscounts(getPromotionDiscounts());
+	}
+
+	/**
+	 * Aplica descuentos manuales a las líneas de los documentos que posean
+	 * descuento manual cargado
+	 */
+	private void applyManualDiscounts(){
+		BigDecimal netDiscountAmt   = null;  // Importe temporal de descuento NETO de una línea 
+		BigDecimal lineDiscountAmt  = null;  // Importe de descuento neto
+											 // (sin impuestos) de una línea. 
+		BigDecimal discountBaseAmt  = null;  // Importe base del descuento calculado.
+		BigDecimal lineBonusAmt     = null;  // Importe de descuento aplicado como bonificación.
+		BigDecimal lineToPriceAmt   = null;  // Importe de descuento aplicado como dto. al precio.
+		BigDecimal discountedQty 	= null;
+		Discount manualDiscount = null;
+		
+		// Resetear los montos de los descuentos manuales
+		clearDiscountAmounts(getLineManualDiscounts().values());
+		
+		// Itero por las líneas del documento y obtengo los descuentos que están
+		// en cada línea y los aplico
+		for (IDocumentLine documentLine : getDocument().getDocumentLines()) {
+			lineDiscountAmt = BigDecimal.ZERO;
+			lineBonusAmt    = BigDecimal.ZERO;
+			lineToPriceAmt  = BigDecimal.ZERO;
+			setApplyScale(false);
+			// Si posee un descuento, lo obtengo
+			if(!Util.isEmpty(documentLine.getLineManualDiscountID(), true)){
+				manualDiscount = getLineManualDiscounts().get(
+						documentLine.getLineManualDiscountID());
+				// Si se aplicaron descuentos automáticos, no se aplican manuales. 
+				// El descuento manual de la línea se setea a 0 y se eliminar el
+				// descuento manual de la map de descuentos manuales
+				if (documentLine.getDiscountedQty()
+						.compareTo(BigDecimal.ZERO) != 0) {
+					documentLine.setDiscount(BigDecimal.ZERO);
+					continue;
+				} 
+				// La cantidad a descontar es el total de la cantidad de la línea
+				discountedQty = documentLine.getQty();
+				
+				// Calcula el importe de descuento unitario NETO
+				netDiscountAmt = calculateDiscount(
+						documentLine.getPriceList(),
+						manualDiscount.getDiscountSchema().getFlatDiscount());
+				// Obtiene el importe de descuento de la línea
+				lineDiscountAmt = netDiscountAmt.multiply(discountedQty);
+				// Obtiene el importe base de cálculo del descuento
+				discountBaseAmt = documentLine.getPriceList().multiply(discountedQty);
+
+				// Dependiendo del tipo de aplicación del descuento se acumula
+				// el descuento calculado para la línea en la variable de
+				// bonificaciones o descuentos al precio.
+				if (manualDiscount.isBonusApplication()) {
+					lineBonusAmt = lineBonusAmt.add(lineDiscountAmt);
+				} else if (manualDiscount.isToPriceApplication()) {
+					lineToPriceAmt = lineToPriceAmt.add(lineDiscountAmt);
+				}
+				
+				// Suma el importe de descuento calculado (con impuestos) al importe total
+				// acumulado del descuento.
+				manualDiscount.addAmount(
+						documentLine.getTaxedAmount(netDiscountAmt), 
+						documentLine.getTaxRate(),
+						documentLine.getTaxedAmount(discountBaseAmt));
+				
+				// Montos de descuentos
+				documentLine.setLineBonusAmt(documentLine.getLineBonusAmt()
+						.add(lineBonusAmt));
+				documentLine.setLineDiscountAmt(documentLine
+						.getLineDiscountAmt().add(lineToPriceAmt));
+				// Los descuentos de este tipo se
+				// aplican sobre el total de unidades disponibles o no se
+				// aplican, por eso se asigna como cantidad descontada el
+				// total de unidades que tiene esta línea.
+				documentLine.setDiscountedQty(discountedQty);
+				
+				// Calcula el nuevo precio unitario de la línea (precio promedio).
+				calculateDocumentLinePrice(documentLine);
+			}
+			setApplyScale(true);
+		}
 	}
 
 	/**
@@ -1073,6 +1173,9 @@ public class DiscountCalculator {
 			} else if (MDiscountConfig.DISCOUNT_BPartnerDiscountSchema.equals(discountKind)) {
 				// Aplicación de descuentos (esquemas) a nivel de línea.
 				applyLineDiscounts(getLineLevelDiscounts());
+			} else if (MDiscountConfig.DISCOUNT_ManualDiscount.equals(discountKind)){
+				// Aplicación de descuentos manuales a nivel de línea
+				applyManualDiscounts();
 			}
 		}
 	}
@@ -1339,6 +1442,21 @@ public class DiscountCalculator {
 			discountContextTypeValidation(discountContextType);
 	}
 
+	public boolean isManualDiscountApplicable(IDocumentLine docLine){
+		return hasDiscountConfig()
+				// Existe monto de bonus o descuento en línea y el descuento es manual
+				&& (((docLine.getLineBonusAmt().compareTo(BigDecimal.ZERO) != 0 || docLine
+						.getLineDiscountAmt().compareTo(BigDecimal.ZERO) != 0) && (docLine
+						.getDiscount() != null && docLine.getDiscount()
+						.compareTo(BigDecimal.ZERO) != 0))
+				// ó 
+				// No existe bonus ni descuento de línea y el descuento manual es null o 0
+				|| ((docLine.getLineBonusAmt().compareTo(BigDecimal.ZERO) == 0 && docLine
+						.getLineDiscountAmt().compareTo(BigDecimal.ZERO) == 0) && (docLine
+						.getDiscount() == null || docLine.getDiscount()
+						.compareTo(BigDecimal.ZERO) == 0)));
+	}
+	
 	/**
 	 * @param discountContextType
 	 *            tipo de contexto de descuento
@@ -1558,6 +1676,10 @@ public class DiscountCalculator {
 		return getLevelDiscounts(MDiscountSchema.CUMULATIVELEVEL_Document);
 	}
 
+	private Map<Integer, Discount> getLineManualDiscounts(){
+		return lineManualDiscounts;
+	}
+	
 	/**
 	 * Devuelve los esquemas de descuento (EC y Generales) que son aplicables
 	 * según la configuración actual de descuentos y son a nivel de línea de
@@ -1797,7 +1919,7 @@ public class DiscountCalculator {
 	 *            <code>true</code> para que los métodos de escalado surtan
 	 *            efecto, <code>false</code> caso contrario
 	 */
-	private void setApplyScale(boolean applyScale) {
+	public void setApplyScale(boolean applyScale) {
 		this.applyScale = applyScale;
 	}
 
@@ -1817,6 +1939,7 @@ public class DiscountCalculator {
 		setCtx(Env.getCtx());
 		getGeneralDiscounts().clear();
 		setManualGeneralDiscount(null);
+		getLineManualDiscounts().clear();
 	}
 
 	/**
@@ -1871,6 +1994,9 @@ public class DiscountCalculator {
 				discount = getBPartnerDiscount();
 			} else if (getGeneralDiscounts().containsKey(discountID)) {
 				discount = getGeneralDiscounts().get(discountID);
+			} else if (getManualGeneralDiscount() != null
+					&& getManualGeneralDiscount().getId().equals(discountID)) {
+				discount = getManualGeneralDiscount();
 			}
 		}
 		return discount;
@@ -1883,7 +2009,7 @@ public class DiscountCalculator {
 	 * @param discounts
 	 *            Lista de descuentos a resetear
 	 */
-	private void clearDiscountAmounts(List<Discount> discounts) {
+	private void clearDiscountAmounts(Collection<Discount> discounts) {
 		for (Discount discount : discounts) {
 			discount.resetAmount();
 		}
@@ -1958,6 +2084,36 @@ public class DiscountCalculator {
 			}
 		}
 		
+		// Agrega los descuentos manuales de líneas, agrupados por tipo de
+		// aplicación y porcentaje
+		Map<String, Discount> manualLineDiscounts = new HashMap<String, Discount>();
+		String key;
+		Discount manualLineDiscount;
+		for (Discount lineManualDiscount : getLineManualDiscounts().values()) {
+			// Se agregar siempre y cuando tenga el monto distino de 0
+			if (lineManualDiscount.amount.compareTo(BigDecimal.ZERO) != 0) {
+				// Armo la key que es la concatenación de tipo de aplicación y porcentaje
+				key = lineManualDiscount.getApplication()+"_"+lineManualDiscount.getDiscountSchema().getFlatDiscount();
+				manualLineDiscount = manualLineDiscounts.get(key);
+				// Si no existe en la map, entonces es el actual
+				if(manualLineDiscount == null){
+					manualLineDiscount = lineManualDiscount;
+				}
+				// Si existe, se debe actualizar el ya existente sumando el monto
+				else{
+					manualLineDiscount
+							.addAmount(
+									lineManualDiscount.amount,
+									((BigDecimal) (lineManualDiscount.amountsByTax
+											.keySet().size() == 1 ? lineManualDiscount.amountsByTax
+											.keySet().toArray()[0] : null)),
+									lineManualDiscount.discountBaseAmt);
+				}
+				manualLineDiscounts.put(key, manualLineDiscount);
+			}
+		}
+		appliedDiscounts.addAll(manualLineDiscounts.values());
+		
 		return appliedDiscounts;
 	}
 
@@ -1970,7 +2126,9 @@ public class DiscountCalculator {
 		else{
 			// Si no existe ninguno se crea
 			if(getManualGeneralDiscount() == null){
-				setManualGeneralDiscount(createManualGeneralDiscount());
+				setManualGeneralDiscount(createManualDiscount(
+						DiscountKind.ManualGeneralDiscount, null, percentage, null,
+						MDiscountSchema.CUMULATIVELEVEL_Document));
 			}
 			// Se setea el porcentaje pasado como parámetro
 			getManualGeneralDiscount().getDiscountSchema().setFlatDiscount(percentage);
@@ -1978,20 +2136,24 @@ public class DiscountCalculator {
 	}
 	
 	
-	public Discount createManualGeneralDiscount() {
-		// Creo el esquema de descuento dummy (sin guardar) para el descuento manual general
+	public Discount createManualDiscount(DiscountKind discountKind, String description, BigDecimal flatDiscount, DiscountApplication discountApplication, String cumulativeLevel) {
+		// Creo el esquema de descuento dummy (sin guardar) para el descuento manual
 		MDiscountSchema discountGeneral = new MDiscountSchema(getCtx(), 0, null);
 		discountGeneral.setDiscountType(MDiscountSchema.DISCOUNTTYPE_FlatPercent);
 		discountGeneral.setDiscountContextType(MDiscountSchema.DISCOUNTCONTEXTTYPE_Commercial);
-		discountGeneral.setFlatDiscount(BigDecimal.ZERO);
+		discountGeneral.setCumulativeLevel(cumulativeLevel);
+		discountGeneral
+				.setDiscountApplication(discountApplication == null ? null
+						: discountApplication.toDiscountApplication());
+		discountGeneral.setFlatDiscount(flatDiscount);
 		discountGeneral.setIsGeneralScope(true);
 		Integer discountID = null;
 		synchronized (this) {
 			discountID = nextDiscountID;
 			nextDiscountID++;
 		}
-		return new Discount(discountID, null,
-				discountGeneral, null, DiscountKind.ManualGeneralDiscount);
+		return new Discount(discountID, description,
+				discountGeneral, null, discountKind);
 	}
 	
 	/**
@@ -2199,6 +2361,58 @@ public class DiscountCalculator {
 		return manualGeneralDiscount;
 	}
 
+	private void setLineManualDiscounts(Map<Integer, Discount> lineManualDiscounts) {
+		this.lineManualDiscounts = lineManualDiscounts;
+	}
+
+	/**
+	 * Agrega un descuento manual a la lista si el descuento de la línea es
+	 * distinto de 0. Elimina un descuento manual de la lista en el caso que el
+	 * descuento de la línea sea 0 y la línea haya tenido uno seteado
+	 * 
+	 * @param docLine
+	 * @param kind
+	 * @return id del descuento de línea manual relacionado con esta línea, null
+	 *         caso que el descuento parámetro sea 0
+	 */
+	public Integer addLineManualDiscount(IDocumentLine docLine, DiscountApplication discountApplication){
+		// Si no posee descuento y tenía un descuento, entonces le saco el
+		// descuento de la línea
+		Integer discountID = null;
+		if(Util.isEmpty(docLine.getDiscount(), true)){
+			// Si existe un descuento asignado anteriomente, se elimina
+			if (docLine.getLineManualDiscountID() != null
+					&& getLineManualDiscounts().containsKey(
+							docLine.getLineManualDiscountID())) {
+				getLineManualDiscounts().remove(docLine.getLineManualDiscountID());
+			}
+		}
+		// Si tiene un monto distino de 0 significa que existe descuento/recargo
+		else{
+			// Si posee ya un descuento manual asignado, entonces actualizo ese,
+			// sino creo uno nuevo
+			Discount lineManualDiscount = docLine.getLineManualDiscountID() == null ? null
+					: getLineManualDiscounts().get(
+							docLine.getLineManualDiscountID());
+			if(lineManualDiscount == null){
+				lineManualDiscount = createManualDiscount(
+						DiscountKind.ManualDiscount,
+						Msg.getMsg(getCtx(), "LineManualDiscount"),
+						docLine.getDiscount(), discountApplication,
+						MDiscountSchema.CUMULATIVELEVEL_Line);
+			}
+			lineManualDiscount.setApplication(discountApplication
+					.toDiscountApplication());
+			lineManualDiscount.getDiscountSchema().setFlatDiscount(
+					docLine.getDiscount());
+			getLineManualDiscounts().put(lineManualDiscount.getId(),
+					lineManualDiscount);
+			discountID = lineManualDiscount.getId();
+		}
+		docLine.setLineManualDiscountID(discountID);
+		return discountID;
+	}
+	
 	/**
 	 * Interfaz que debe implementar cualquier clase que requiera ser manipulada
 	 * por un calculador de descuentos. Esta interfaz representa el encabezado
@@ -2326,6 +2540,24 @@ public class DiscountCalculator {
 	 */
 	public interface IDocumentLine {
 
+		public enum DiscountApplication {
+			ToPrice,
+			Bonus;
+			
+			public String toDiscountApplication() {
+				String documentApplication = null;
+				switch (this) {
+				case Bonus:
+					documentApplication = MDiscountSchema.DISCOUNTAPPLICATION_Bonus;
+					break;
+				case ToPrice:
+					documentApplication = MDiscountSchema.DISCOUNTAPPLICATION_DiscountToPrice;
+					break;
+				}
+				return documentApplication;
+			}
+		}
+		
 		/**
 		 * @return El importe total de esta línea de documento <b>incluyendo
 		 *         impuestos y descuentos de línea</b>.
@@ -2446,6 +2678,30 @@ public class DiscountCalculator {
 		 *         en el mismo o no.
 		 */
 		public boolean isTaxIncluded();
+		
+		/**
+		 * Setea el descuento manual de esta línea
+		 * @param discount descuento
+		 */
+		public void setDiscount(BigDecimal discount);
+		
+		/**
+		 * @return descuento manual de la línea
+		 */
+		public BigDecimal getDiscount();
+
+		/**
+		 * @return el id del descuento manual aplicado en esta línea
+		 */
+		public Integer getLineManualDiscountID();
+
+		/**
+		 * Setea el id del descuento manual aplicado a esta línea
+		 * 
+		 * @param lineManualDiscountID
+		 *            id del descuento aplicado
+		 */
+		public void setLineManualDiscountID(Integer lineManualDiscountID);
 	}
 
 	/**
@@ -2588,6 +2844,16 @@ public class DiscountCalculator {
 		}
 		
 		/**
+		 * @return Indica si este descuento se aplica a nivel de línea y es manual.
+		 */
+		public boolean isManualDiscountLine(){
+			return getDiscountSchema() != null
+					&& getDiscountSchema().getCumulativeLevel().equals(
+							MDiscountSchema.CUMULATIVELEVEL_Line)
+					&& getKind().equals(DiscountKind.ManualDiscount);
+		}
+		
+		/**
 		 * @return Indica si este es un descuento de Entidad Comercial.
 		 */
 		public boolean isBPartnerDiscount() {
@@ -2595,7 +2861,7 @@ public class DiscountCalculator {
 		}
 		
 		/**
-		 * @return Indica si este es un descuento de Entidad Comercial.
+		 * @return Indica si este es un descuento manual general.
 		 */
 		public boolean isManualGeneralDiscount() {
 			return this == getManualGeneralDiscount();
@@ -2799,6 +3065,14 @@ public class DiscountCalculator {
 		public String getApplication() {
 			return application;
 		}
+		
+		/**
+		 * 
+		 * @param application
+		 */
+		public void setApplication(String application) {
+			this.application = application;
+		}
 	}
 	
 	/**
@@ -2810,7 +3084,8 @@ public class DiscountCalculator {
 		BPartnerDiscountSchema,
 		GeneralDiscountSchema,
 		ManualGeneralDiscount,
-		PaymentMedium;
+		PaymentMedium,
+		ManualDiscount;
 		
 		private String toDocumentDiscountKind() {
 			String documentDiscountKind = null;
@@ -2832,6 +3107,9 @@ public class DiscountCalculator {
 				break;
 			case PaymentMedium:
 				documentDiscountKind = MDocumentDiscount.DISCOUNTKIND_PaymentMedium;
+				break;
+			case ManualDiscount:
+				documentDiscountKind = MDocumentDiscount.DISCOUNTKIND_ManualDiscount;
 				break;
 			}
 			return documentDiscountKind;

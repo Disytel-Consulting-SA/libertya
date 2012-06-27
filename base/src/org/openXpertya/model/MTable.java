@@ -1272,6 +1272,8 @@ public final class MTable extends AbstractTableModel implements Serializable {
 
         DataStatusEvent evt = createDSE();
 
+        field.setChanged(evt.isChanged());
+        
         evt.setChangedColumn( col );
         fireDataStatusChanged( evt );
         
@@ -2289,6 +2291,11 @@ public final class MTable extends AbstractTableModel implements Serializable {
             }    // Data changed
         }        // for every column
 
+		// Este nuevo flag se setea a true para denotar que estamos modificando
+		// un registro desde la interfaz gráfica y no instanciado en otra parte
+		// del código
+        po.setFromTab(true);
+        
         if( !po.save()) {
             String        msg  = "SaveError";
             String        info = "";
@@ -3456,7 +3463,7 @@ public final class MTable extends AbstractTableModel implements Serializable {
         if( m_rowChanged != -1 ) {
             changed = true;
         }
-
+        
         DataStatusEvent dse = new DataStatusEvent( this,m_rowCount,changed,Env.isAutoCommit( m_ctx,m_WindowNo ),m_inserting );
 
         dse.AD_Table_ID = m_AD_Table_ID;

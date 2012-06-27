@@ -104,6 +104,41 @@ public class MPreference extends X_AD_Preference {
 		return Value;
 	}
 	
+	/**
+	 * Este método busca la preferencia con la clave parámetro en el siguiente orden:
+	 * <ol>
+	 * <li>Usuario</li>
+	 * <li>Organización</li>
+	 * <li>Organización 0</li>
+	 * </ol>
+	 * @param Key
+	 * @param clientID
+	 * @param orgID
+	 * @param userID
+	 * @param ignoreCache
+	 * @return
+	 */
+	public static String searchCustomPreferenceValue(String Key,
+			Integer clientID, Integer orgID, Integer userID, boolean ignoreCache) {
+		// Se obtiene el valor de la preferencia que contiene el % de variación permitida
+		// 1) Por Usuario; 2) Por Organización; 3) Por Compañía y Organización *
+		// 1)
+		String value = MPreference.GetCustomPreferenceValue(Key, null,
+				null, userID, ignoreCache);
+		// 2) 
+		if(Util.isEmpty(value, true)){
+			value = MPreference.GetCustomPreferenceValue(Key, null, orgID,
+					null, ignoreCache);
+		}
+		// 3)
+		if(Util.isEmpty(value, true)){
+			value = MPreference.GetCustomPreferenceValue(Key, clientID, 0,
+					null, ignoreCache);
+		}
+		return value;
+	}
+	
+	
 	public static void SetCustomPreferenceValue(String Key, String Value) {
 		s_CustomPreferences.clear();
 		

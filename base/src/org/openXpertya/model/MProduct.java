@@ -697,9 +697,10 @@ public class MProduct extends X_M_Product {
         if (getUPC() != null) {
         	setUPC(getUPC().trim());
         }
-
+        
+        // Se valida que si el Articulo tiene movimientos de Stock no se pueda cambiar el Conjunto de atributos        
         if( !newRecord && ( is_ValueChanged( "M_AttributeSet_ID" ))){
-        	int count = Integer.parseInt(DB.getSQLObject(get_TrxName(), "SELECT COUNT(*) FROM M_Storage WHERE M_Product_ID = ? ", new Object[]{getM_Product_ID()}).toString());
+        	int count = Integer.parseInt(DB.getSQLObject(get_TrxName(), "SELECT COUNT(*) FROM M_Product p INNER JOIN M_InoutLine i ON (p.M_Product_ID = i.M_Product_ID) INNER JOIN M_InventoryLine il ON (p.M_Product_ID = il.M_Product_ID) INNER JOIN M_MovementLine m ON (p.M_Product_ID = m.M_Product_ID) INNER JOIN M_TransferLine t ON (p.M_Product_ID = t.M_Product_ID) WHERE p.M_Product_ID = ? ", new Object[]{getM_Product_ID()}).toString());
         	if (count > 0){
         		log.saveError("ProductUsed", "");
     			return false;

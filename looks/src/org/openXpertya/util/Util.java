@@ -23,9 +23,11 @@ package org.openXpertya.util;
 import java.awt.Color;
 import java.awt.font.TextAttribute;
 
+import java.math.BigDecimal;
 import java.text.AttributedCharacterIterator;
 import java.text.AttributedString;
 
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
@@ -633,7 +635,29 @@ public class Util {
     public static boolean isEmpty(Integer intValue, boolean withZeroCheck) {
     	return (intValue == null) || (withZeroCheck?intValue.intValue() == 0:false) ;
     }		// isEmpty
+
+	/**
+	 * Verifica si el parámetro numérico es null y si el flag withZeroCheck es
+	 * verdadero, entonces también verifico si es igual a BigDecimal.ZERO en
+	 * caso que no sea null el parámetro.
+	 * 
+	 * @param numValue
+	 *            valor numérico a verificar
+	 * @param withZeroCheck
+	 *            si es true verifico también que sea BigDecimal.ZERO, false no
+	 *            verifico
+	 * @return true si numValue es igual a null y si el flag withZeroCheck está
+	 *         seteado en true también verifico que sea BigDecimal.ZERO
+	 */
+	public static boolean isEmpty(BigDecimal numValue, boolean withZeroCheck) {
+		return (numValue == null)
+				|| (withZeroCheck ? numValue.compareTo(BigDecimal.ZERO) == 0
+						: false);
+	} // isEmpty
     
+	public static boolean isEmpty(Collection<?> col){
+		return col == null || col.size() == 0;
+	}
     
     public static String getHTMLListElement(String pdata){
     	return "<li>"+pdata+"</li>";
@@ -643,7 +667,7 @@ public class Util {
     	// Si el índice del AND es al principio, entonces lo saco
     	int andIndex = str.indexOf("AND");
 		if(andIndex > 0 && andIndex < 2){
-			str = str.substring(andIndex + 2);
+			str = str.substring(andIndex + 3);
 		}
 		return str;
     }
@@ -654,6 +678,14 @@ public class Util {
 		StringBuffer buf = new StringBuffer( s );
 		buf.setCharAt( pos, c );
 		return buf.toString( );
+	}
+	
+	public static BigDecimal getProportionalAmt(BigDecimal amt, BigDecimal baseQty, BigDecimal realQty){
+		return amt.multiply(realQty.divide(baseQty, 2, BigDecimal.ROUND_HALF_UP));
+	} 
+	
+	public static BigDecimal getDiscountRate(BigDecimal amt, BigDecimal discountAmt, Integer scale){
+		return discountAmt.divide(amt, scale, BigDecimal.ROUND_HALF_UP);
 	}
 	
 }	// Util

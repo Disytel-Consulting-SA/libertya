@@ -7,6 +7,7 @@ import java.awt.FlowLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Properties;
 
 import javax.swing.JFrame;
@@ -187,6 +188,7 @@ public class VPluginInstaller extends CPanel implements FormPanel, ASyncProcess 
 				public Object construct() {
 					try {
 						/* Iniciar la transacción y setear componente global */
+						m_trx = Trx.createTrxName();
 						Trx.getTrx(m_trx).start();
 						PluginUtils.startInstalation(m_trx);
 										
@@ -281,6 +283,7 @@ public class VPluginInstaller extends CPanel implements FormPanel, ASyncProcess 
 			
 			/* Finalizar la transacción y resetear componente global */
 			Trx.getTrx(m_trx).commit();
+			Trx.getTrx(m_trx).close();
 			PluginUtils.stopInstalation();
 		
 			/* Informar todo OK */
@@ -346,6 +349,7 @@ public class VPluginInstaller extends CPanel implements FormPanel, ASyncProcess 
 	{
 		/* Error en algún punto, rollback e informar al usuario */
 		Trx.getTrx(m_trx).rollback();
+		Trx.getTrx(m_trx).close();
 		PluginUtils.stopInstalation();
 		PluginUtils.appendStatus(msg + e.getMessage());
 		// detailsTextPane.setText(PluginUtils.getInstallStatus()); <-- comentado, el componente visual se colgaba con el volumen de datos a mostrar
@@ -418,7 +422,7 @@ public class VPluginInstaller extends CPanel implements FormPanel, ASyncProcess 
 			Env.setContext(m_ctx, PluginConstants.PROP_COPY_TO_CHANGELOG, "N");
 			Env.setContext(m_ctx, PluginConstants.MAP_TO_COMPONENT, "N");
 			Env.setContext(m_ctx, PluginConstants.COMPONENT_SOURCE_PREFIX, "");
-			ReplicationCache.mappedUIDs = null;
+			ReplicationCache.mappedUIDs = new HashMap<String, String>();;
 		}
 		
 	}

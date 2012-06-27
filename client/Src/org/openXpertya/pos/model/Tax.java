@@ -6,15 +6,17 @@ public class Tax {
 
 	private int id;
 	private BigDecimal rate;
-
+	private boolean isPercepcion = false;
+	
 	/**
 	 * @param id
 	 * @param rate
 	 */
-	public Tax(int id, BigDecimal rate) {
+	public Tax(int id, BigDecimal rate, boolean isPercepcion) {
 		super();
 		this.id = id;
 		this.rate = rate;
+		this.setPercepcion(isPercepcion);
 	}
 
 	/**
@@ -64,6 +66,14 @@ public class Tax {
 	@Override
 	public int hashCode() {
 		return id;
+	}
+
+	public void setPercepcion(boolean isPercepcion) {
+		this.isPercepcion = isPercepcion;
+	}
+
+	public boolean isPercepcion() {
+		return isPercepcion;
 	}
 	
 	

@@ -93,7 +93,9 @@ public class BalanceReport extends SvrProcess {
 		}
 		sqlDoc.append(" 	AND d.AD_Client_ID = ").append(getAD_Client_ID()); 
 		sqlDoc.append(" 	AND bp.isactive = 'Y' ");
-		sqlDoc.append(" 	AND d.truedatetrx <= ?");
+		if(p_DateTrx_To != null){
+			sqlDoc.append(" 	AND d.truedatetrx <= ?::timestamp");
+		}
 		sqlDoc.append(" ) AS T ");
 		sqlDoc.append(" GROUP BY T.c_bpartner_id, T.name, T.C_BP_Group_ID, T.so_description ");
 		sqlDoc.append(" ORDER BY ");
@@ -108,9 +110,10 @@ public class BalanceReport extends SvrProcess {
 		PreparedStatement pstmt = DB.prepareStatement(sqlDoc.toString(), get_TrxName());
 		int i = 1;
 		// Parámetros de sqlDoc
-		pstmt.setTimestamp(i++, p_DateTrx_To);
+		if(p_DateTrx_To != null){
+			pstmt.setTimestamp(i++, p_DateTrx_To);
+		}
 		ResultSet rs = pstmt.executeQuery();
-		
 		int subindice=0;
 		StringBuffer usql = new StringBuffer();
 		while (rs.next())
@@ -139,7 +142,7 @@ public class BalanceReport extends SvrProcess {
 				.append(" '").append(p_Scope).append("', ")
 				.append(rs.getInt("C_BP_Group_ID")).append(", ");
 			if (p_DateTrx_To!=null)
-				usql.append(" '").append(p_DateTrx_To).append("' ");
+				usql.append(" '").append(p_DateTrx_To).append("'::timestamp ");
 			else
 				usql.append("null ");
 			usql.append(" ); ");

@@ -26,6 +26,9 @@ public class MDiscountConfig extends X_M_DiscountConfig {
 	public static final String DISCOUNT_ProductsCombo = DOCUMENTDISCOUNT1_ProductsCombo;
 	/** Promotion = P */
 	public static final String DISCOUNT_Promotion = DOCUMENTDISCOUNT1_Promotion;
+	/** Descuento Manual por Línea = D */
+	public static final String DISCOUNT_ManualDiscount = DOCUMENTDISCOUNT1_ManualDiscount;
+	
 	
 	/** Logger para métodos static */
 	private static CLogger s_log = CLogger.getCLogger(MDiscountConfig.class);
@@ -164,21 +167,27 @@ public class MDiscountConfig extends X_M_DiscountConfig {
 	 *         incorrecta y guarda en el log el mensaje de error.
 	 */
 	private boolean validateLineDiscountConfig() {
-		// Si no se configura el descuento 1, entonces el 2 y 3 tampoco deben
+		// Si no se configura el descuento 1, entonces el 2, 3 y 4 tampoco deben
 		// estar configurados.
 		if (getLineDiscount1() == null) {
 			setLineDiscount2(null);
 			setLineDiscount3(null);
-		// Si no se configura el descuento 2, entonces el  3 tampoco debe
+			setLineDiscount4(null);
+		// Si no se configura el descuento 2, entonces el 3 y 4 tampoco debe
 		// estar configurado.
 		} else if (getLineDiscount2() == null) {
 			setLineDiscount3(null);
-		}
+			setLineDiscount4(null);
+		// Si no se configura el descuento 3, entonces el 4 tampoco debe
+		// estar configurado.
+		} else if (getLineDiscount3() == null) {
+			setLineDiscount4(null);
+		} 
 
 		// Se buscan clases de descuento repetidas en los 3 campos de prioridad. Si hay
 		// repetición devuelve error.
 		String[] discounts = new String[] { getLineDiscount1(),
-				getLineDiscount2(), getLineDiscount3() };
+				getLineDiscount2(), getLineDiscount3(), getLineDiscount4() };
 		List<String> discountsList = new ArrayList<String>();
 		Set<String> discountsSet = new HashSet<String>();
 		for (String discount : discounts) {
@@ -226,6 +235,9 @@ public class MDiscountConfig extends X_M_DiscountConfig {
 				list.add(getLineDiscount2());
 				if (getLineDiscount3() != null) {
 					list.add(getLineDiscount3());
+					if (getLineDiscount4() != null) {
+						list.add(getLineDiscount4());
+					}
 				}
 			}
 		}
@@ -269,4 +281,9 @@ public class MDiscountConfig extends X_M_DiscountConfig {
 		return empty2null(super.getLineDiscount3());
 	}
 
+	@Override
+	public String getLineDiscount4() {
+		return empty2null(super.getLineDiscount4());
+	}
+	
 }

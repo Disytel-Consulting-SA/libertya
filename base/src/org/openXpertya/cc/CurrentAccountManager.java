@@ -405,6 +405,76 @@ public abstract class CurrentAccountManager {
 	}
 
 	/**
+	 * Obtengo el límite de crédito para el paymentRule pasado como parámetro.
+	 * Si el paymentRule es null, se obtiene el límite global
+	 * 
+	 * @param ctx
+	 * @param org
+	 * @param bpartner
+	 * @param paymentRule
+	 * @param trxName
+	 * @return
+	 */
+	public CallResult getCreditLimit(Properties ctx, MOrg org, MBPartner bpartner, String paymentRule, String trxName){
+		CallResult result = new CallResult();
+		result.setResult(BigDecimal.ZERO);
+		if(basicValidation(bpartner)){
+			result = getBalanceStrategy().getCreditLimit(ctx,
+					getUIDColumnName(bpartner), getUIDColumnValue(bpartner),
+					getUIDColumnName(org), getUIDColumnValue(org), paymentRule,
+					trxName);
+		}
+		return result;
+	}
+
+	/**
+	 * Obtengo el saldo para el payment rule parámetro. Si paymentRule es null,
+	 * entonces se devuelve el saldo global
+	 * 
+	 * @param ctx
+	 * @param org
+	 * @param bpartner
+	 * @param paymentRule
+	 * @param trxName
+	 * @return
+	 */
+	public CallResult getTotalOpenBalance(Properties ctx, MOrg org, MBPartner bpartner, String paymentRule, String trxName){
+		CallResult result = new CallResult();
+		result.setResult(BigDecimal.ZERO);
+		if(basicValidation(bpartner)){
+			result = getBalanceStrategy().getTotalOpenBalance(ctx,
+					getUIDColumnName(bpartner), getUIDColumnValue(bpartner),
+					getUIDColumnName(org), getUIDColumnValue(org), paymentRule,
+					trxName);
+		}
+		return result;
+	}
+
+	/**
+	 * Obtengo el estado de crédito para el payment rule parámetro. Si
+	 * paymentRule es null, entonces se devuelve el estado de crédito de la
+	 * entidad comercial
+	 * 
+	 * @param ctx
+	 * @param org
+	 * @param bpartner
+	 * @param paymentRule
+	 * @param trxName
+	 * @return
+	 */
+	public CallResult getCreditStatus(Properties ctx, MOrg org, MBPartner bpartner, String paymentRule, String trxName){
+		CallResult result = new CallResult();
+		result.setResult(BigDecimal.ZERO);
+		if(basicValidation(bpartner)){
+			result = getBalanceStrategy().getCreditStatus(ctx,
+					getUIDColumnName(bpartner), getUIDColumnValue(bpartner),
+					getUIDColumnName(org), getUIDColumnValue(org), paymentRule,
+					trxName);
+		}
+		return result;
+	}
+	
+	/**
 	 * Setea el matching de autorización dependiendo la estrategia de gestión de
 	 * cuentas corrientes
 	 * 

@@ -232,6 +232,60 @@ public class MBPartner extends X_C_BPartner {
         return retValue;
     }    // getNotInvoicedAmt
 
+	/**
+	 * @param bpartnerID
+	 * @param taxID
+	 * @param dateInvoiced
+	 * @param trxName
+	 * @return el porcentaje de exención de la entidad comercial en la
+	 *         percepcion parámetro para esa fecha. Si no posee exenciones para
+	 *         esa fecha, entonces se retorna 0
+	 */
+    public static BigDecimal getPercepcionExencionPerc(Integer bpartnerID, Integer taxID, Timestamp dateInvoiced, String trxName){
+		String sql = "SELECT coalesce(percent,0) as porcexent FROM c_bpartner_percexenc WHERE (?::date between date_from and date_to) AND (c_bpartner_id = ?) AND (c_tax_id = ?) AND (isactive = 'Y') LIMIT 1";
+		PreparedStatement ps = null;
+		ResultSet rs = null;
+		BigDecimal exencionPerc = BigDecimal.ZERO;
+		try {
+			int i = 1;
+			ps = DB.prepareStatement(sql, trxName);
+			ps.setTimestamp(i++, dateInvoiced);
+			ps.setInt(i++, bpartnerID);
+			ps.setInt(i++, taxID);
+			rs = ps.executeQuery();
+			if(rs.next()){
+				exencionPerc = rs.getBigDecimal(1);
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
+		} finally{
+			try {
+				if(ps != null) ps = null;
+				if(rs != null) rs = null;
+			} catch (Exception e2) {
+				e2.printStackTrace();
+			}
+		}
+		return exencionPerc;
+    }
+
+	/**
+	 * @param bpartnerID
+	 * @param taxID
+	 * @param dateInvoiced
+	 * @param scale 
+	 * @param trxName
+	 * @return la tasa de exención de la entidad comercial en la percepcion
+	 *         parámetro para esa fecha. Si no posee exenciones para esa fecha,
+	 *         entonces se retorna 0. La tasa de exención es 1 - porcentaje de
+	 *         exención/100
+	 */
+    public static BigDecimal getPercepcionExencionMultiplierRate(Integer bpartnerID, Integer taxID, Timestamp dateInvoiced, Integer scale, String trxName){
+		return new BigDecimal(1).subtract((MBPartner.getPercepcionExencionPerc(
+				bpartnerID, taxID, dateInvoiced, trxName).divide(
+				new BigDecimal(100), scale, BigDecimal.ROUND_HALF_UP)));
+    } 
+    
     /** Descripción de Campos */
 
     private static CLogger s_log = CLogger.getCLogger( MBPartner.class );

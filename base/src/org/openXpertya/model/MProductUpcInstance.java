@@ -50,6 +50,10 @@ public class MProductUpcInstance extends X_M_Product_Upc_Instance {
 		if (!validateUniqueUPCInstance()) {
 			return false;
 		}
+		
+		if (!validateUniqueUPCInstanceProduct()) {
+			return false;
+		}
 			
 		if (getM_AttributeSetInstance_ID() < 1) {
 			log.saveError("InvalidAttributeSetInstance", "");
@@ -72,6 +76,21 @@ public class MProductUpcInstance extends X_M_Product_Upc_Instance {
 			"WHERE AD_Client_ID = ? AND UPC = ? AND M_Product_UPC_INSTANCE_ID <> ? ";
 		Integer productID = (Integer)DB.getSQLObject(get_TrxName(), sql, 
 				new Object[] { getAD_Client_ID(), getUPC(), getM_Product_Upc_Instance_ID()});
+		if (productID != null && productID > 0) {
+			MProduct product = MProduct.get(getCtx(), productID);
+			String productStr = "'" + product.getValue() + " " + product.getName() + "'";
+			log.saveError("SaveError", 
+					Msg.translate(getCtx(), "DuplicateUPCError") + " " + productStr);
+		}
+		return productID == null || productID == 0;
+	}
+	
+	private boolean validateUniqueUPCInstanceProduct() {
+		String sql = 
+				"SELECT M_Product_ID FROM M_Product " +
+				"WHERE AD_Client_ID = ? AND UPC = ? ";
+		Integer	productID = (Integer)DB.getSQLObject(get_TrxName(), sql, 
+					new Object[] { getAD_Client_ID(), getUPC()});
 		if (productID != null && productID > 0) {
 			MProduct product = MProduct.get(getCtx(), productID);
 			String productStr = "'" + product.getValue() + " " + product.getName() + "'";

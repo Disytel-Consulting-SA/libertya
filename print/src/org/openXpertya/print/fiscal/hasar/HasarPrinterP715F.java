@@ -155,4 +155,10 @@ public class HasarPrinterP715F extends HasarFiscalPrinter {
 		cmd.setText(1, text, 40, false);
 		return cmd;
 	}
+
+	@Override
+	public FiscalPacket cmdCloseNonFiscalReceipt(Integer copies) {
+		FiscalPacket cmd = createFiscalPacket(CMD_CLOSE_NON_FISCAL_RECEIPT);
+		return cmd;
+	}
 }

@@ -54,7 +54,7 @@ public class CalloutInvoice extends CalloutEngine {
 
     public String docType( Properties ctx,int WindowNo,MTab mTab,MField mField,Object value ) {
         Integer C_DocType_ID = ( Integer )value;
-
+        
         if( (C_DocType_ID == null) || (C_DocType_ID.intValue() == 0) ) {
             return "";
         }
@@ -77,7 +77,9 @@ public class CalloutInvoice extends CalloutEngine {
                 // DocumentNo
 
                 if( rs.getString( 3 ).equals( "Y" )) {
-                    mTab.setValue( "DocumentNo","<" + rs.getString( 4 ) + ">" );
+                	if(mTab.isInserting() || mField.isChanged()){
+                		mTab.setValue( "DocumentNo","<" + rs.getString( 4 ) + ">" );
+                	}
                 }
 
                 // DocBaseType - Set Context
@@ -89,9 +91,13 @@ public class CalloutInvoice extends CalloutEngine {
                 // AP Check & AR Credit Memo
 
                 if( s.startsWith( "AP" )) {
-                    mTab.setValue( "PaymentRule","S" );    // Check
+                	if(mTab.isInserting() || mField.isChanged()){
+                		mTab.setValue( "PaymentRule","S" );    // Check
+                	}
                 } else if( s.endsWith( "C" )) {
-                    mTab.setValue( "PaymentRule","P" );    // OnCredit
+                	if(mTab.isInserting() || mField.isChanged()){
+                		mTab.setValue( "PaymentRule","P" );    // OnCredit
+                	}
                 }
             }
 
@@ -647,9 +653,12 @@ public class CalloutInvoice extends CalloutEngine {
 
         // Qty changed - recalc price
 
+        Integer invoiceID = (Integer)mTab.getValue("C_Invoice_ID");
+        MInvoice invoice = new MInvoice(ctx, invoiceID, null);
+        
         if(( mField.getColumnName().equals( "QtyInvoiced" ) || mField.getColumnName().equals( "QtyEntered" ) || mField.getColumnName().equals( "M_Product_ID" )) &&!"N".equals( Env.getContext( ctx,WindowNo,"DiscountSchema" ))) {
             int C_BPartner_ID = Env.getContextAsInt( ctx,WindowNo,"C_BPartner_ID" );
-
+            
             if( mField.getColumnName().equals( "QtyEntered" )) {
                 QtyInvoiced = MUOMConversion.convertProductTo( ctx,M_Product_ID,C_UOM_To_ID,QtyEntered );
             }
@@ -658,43 +667,48 @@ public class CalloutInvoice extends CalloutEngine {
                 QtyInvoiced = QtyEntered;
             }
 
-            boolean IsSOTrx = Env.getContext( ctx,WindowNo,"IsSOTrx" ).equals( "Y" );
-            
-            Integer M_AttributeSetInstance_ID = (Integer)mTab.getValue("M_AttributeSetInstance_ID");
-            if (M_AttributeSetInstance_ID == null)
-            	M_AttributeSetInstance_ID = new Integer(0);
-            
-            MProductPricing pp = new MProductPricing( M_Product_ID,C_BPartner_ID,QtyInvoiced,IsSOTrx,M_AttributeSetInstance_ID );
-
-            pp.setM_PriceList_ID( M_PriceList_ID );
-
-            int M_PriceList_Version_ID = Env.getContextAsInt( ctx,WindowNo,"M_PriceList_Version_ID" );
-
-            pp.setM_PriceList_Version_ID( M_PriceList_Version_ID );
-
-            Timestamp date = ( Timestamp )mTab.getValue( "DateInvoiced" );
-
-            pp.setPriceDate( date );
-
-            //
-
-            PriceEntered = MUOMConversion.convertProductFrom( ctx,M_Product_ID,C_UOM_To_ID,pp.getPriceStd());
-
-            if( PriceEntered == null ) {
-                PriceEntered = pp.getPriceStd();
+            if(!invoice.isManageDragOrderDiscounts()){
+	            boolean IsSOTrx = Env.getContext( ctx,WindowNo,"IsSOTrx" ).equals( "Y" );
+	            
+	            Integer M_AttributeSetInstance_ID = (Integer)mTab.getValue("M_AttributeSetInstance_ID");
+	            if (M_AttributeSetInstance_ID == null)
+	            	M_AttributeSetInstance_ID = new Integer(0);
+	            
+	            MProductPricing pp = new MProductPricing( M_Product_ID,C_BPartner_ID,QtyInvoiced,IsSOTrx,M_AttributeSetInstance_ID );
+	
+	            pp.setM_PriceList_ID( M_PriceList_ID );
+	
+	            int M_PriceList_Version_ID = Env.getContextAsInt( ctx,WindowNo,"M_PriceList_Version_ID" );
+	
+	            pp.setM_PriceList_Version_ID( M_PriceList_Version_ID );
+	
+	            Timestamp date = ( Timestamp )mTab.getValue( "DateInvoiced" );
+	
+	            pp.setPriceDate( date );
+	
+	            //
+	
+	            PriceEntered = MUOMConversion.convertProductFrom( ctx,M_Product_ID,C_UOM_To_ID,pp.getPriceStd());
+	
+	            if( PriceEntered == null ) {
+	                PriceEntered = pp.getPriceStd();
+	            }
+	
+	            //
+	
+	            log.fine( "amt - QtyChanged -> PriceActual=" + pp.getPriceStd() + ", PriceEntered=" + PriceEntered + ", Discount=" + pp.getDiscount());
+	            mTab.setValue( "PriceActual",pp.getPriceStd());
+	
+	            // mTab.setValue("Discount", pp.getDiscount());
+	
+	            mTab.setValue( "PriceEntered",PriceEntered );
+	            Env.setContext( ctx,WindowNo,"DiscountSchema",pp.isDiscountSchema()
+	                    ?"Y"
+	                    :"N" );
             }
-
-            //
-
-            log.fine( "amt - QtyChanged -> PriceActual=" + pp.getPriceStd() + ", PriceEntered=" + PriceEntered + ", Discount=" + pp.getDiscount());
-            mTab.setValue( "PriceActual",pp.getPriceStd());
-
-            // mTab.setValue("Discount", pp.getDiscount());
-
-            mTab.setValue( "PriceEntered",PriceEntered );
-            Env.setContext( ctx,WindowNo,"DiscountSchema",pp.isDiscountSchema()
-                    ?"Y"
-                    :"N" );
+            else{
+            	mTab.setValue( "PriceActual",PriceEntered);
+            }
         } else if( mField.getColumnName().equals( "PriceActual" )) {
             PriceActual  = ( BigDecimal )value;
             PriceEntered = MUOMConversion.convertProductFrom( ctx,M_Product_ID,C_UOM_To_ID,PriceActual );

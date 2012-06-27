@@ -554,9 +554,15 @@ public class ProcessParameter extends CDialog implements ActionListener,Vetoable
 
         // log.fine( "ProcessParameter.vetoableChange");
 
-        String value = (evt.getNewValue() == null)
-                       ?""
-                       :evt.getNewValue().toString();
+	 String value = (evt.getNewValue() == null)
+            ?""
+            :evt.getNewValue().toString();
+ 
+	 if (evt.getNewValue() instanceof Boolean) {
+	 	value = ((Boolean) evt.getNewValue() == false)
+	             ?"N"
+	             :"Y";
+	 }
 
         Env.setContext( Env.getCtx(),m_WindowNo,evt.getPropertyName(),value );
         updateComponents();

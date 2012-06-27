@@ -1,6 +1,7 @@
 package org.openXpertya.JasperReport.DataSource;
 
 import java.math.BigDecimal;
+import java.util.Properties;
 
 import net.sf.jasperreports.engine.JRException;
 import net.sf.jasperreports.engine.JRField;
@@ -17,8 +18,9 @@ public class ValoresDataSource extends DeclaracionValoresDataSource {
 		// TODO Auto-generated constructor stub
 	}
 	
-	public ValoresDataSource(DeclaracionValoresDTO valoresDTO, String trxName) {
-		super(valoresDTO, trxName);
+	public ValoresDataSource(Properties ctx, DeclaracionValoresDTO valoresDTO,
+			String trxName) {
+		super(ctx, valoresDTO, trxName);
 		// TODO Auto-generated constructor stub
 	}
 
@@ -28,8 +30,11 @@ public class ValoresDataSource extends DeclaracionValoresDataSource {
 					 "from C_POSCashStatement as cs " +
 					 "inner join c_posjournal as pj on pj.c_posjournal_id = cs.c_posjournal_id " +
 					 "inner join c_currency as c on c.c_currency_id = cs.c_currency_id");
-		sql.append(" WHERE ");
-		sql.append(getStdWhereClause(false, "pj"));
+		String where = " WHERE ";
+		String whereClause = getStdWhereClause(false, "pj");
+		if(!Util.isEmpty(whereClause, true)){
+			sql.append(where).append(whereClause);
+		}
 		return sql.toString();
 	}
 

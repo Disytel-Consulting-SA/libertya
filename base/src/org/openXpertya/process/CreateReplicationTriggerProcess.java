@@ -37,7 +37,7 @@ public class CreateReplicationTriggerProcess extends SvrProcess {
 	public static final String COLUMN_DATELASTSENT = "dateLastSentJMS";
 	
 	// Replication array dummy para relleno unicamente
-	protected static final String DUMMY_REPARRAY = "0";
+	public static final String DUMMY_REPARRAY = "0";
 	
 	
 	@Override
@@ -198,28 +198,38 @@ public class CreateReplicationTriggerProcess extends SvrProcess {
 	/**
 	 * Rellena el campo retrieveUID para las entradas ya existentes en la tabla (se suponen valores comunes a todas las sucursales)
 	 * Para determinar esto, nos fijamos si existe en columna AD_ComponentObjectUID.  Todo registro que sea parte de un componente
-	 * (o del core) debe contar con la información de esta columna para futuras referencias.  Todo registro generado durante el uso
-	 * cotidiano el sistema, no tendrá seteado este dato.  De esta manera podemos distinguir registros del core de los que no lo son.
+	 * (o del core) debe contar con la información de esta columna (o debería) para futuras referencias.  
 	 * @param sql
 	 */
 	protected void appendSQLFillRetrieveUID(StringBuffer sql)
 	{
 		// existe la column AD_ComponentObjectUID? (ciertas tablas lo tienen, pero otras como C_Invoice no lo tienen)
-		String tmpSQL = " select count(1) " +
-						" from information_schema.columns " + 
-						" where lower(table_name) = lower('" + table.getTableName() + "') " + 
-						" and lower(column_name) = lower('AD_ComponentObjectUID') ";	 
-
 		// si existe, entonces es probable que exista información de core preexistente comun a todos los LY,
 		// setearlo con el mismo valor que el AD_ComponentObjectUID (el cual se sabe es comun en todas las distribuciones)
-		if (DB.getSQLValue(get_TrxName(), tmpSQL) == 1)
+		if (existColumnInTable("AD_ComponentObjectUID", table.getTableName()))
 		{
 			append (sql, " UPDATE " + table.getTableName() + " SET " + COLUMN_RETRIEVEUID + " = AD_ComponentObjectUID ");
 			append (sql, " WHERE " + COLUMN_RETRIEVEUID + " IS NULL AND (AD_Client_ID = " + getAD_Client_ID() + " OR AD_Client_ID = 0) ");
 			append (sql, " AND AD_ComponentObjectUID IS NOT NULL; ");
 			
-			retValue.append(" - Actualizadas entradas ya existentes en tabla: " + table.getTableName() + " \n");
+			retValue.append(" - Actualizadas entradas ya existentes en tabla (via AD_ComponentObjectUID): " + table.getTableName() + " \n");
 		}
+		else
+		// En algunos casos esta columna puede no llegar a existir, por ejemplo en C_CashBook no está seteado.  Aunque podría
+		// solucionarse simplemente para ese caso agregando la columna, puede presentarse en otras ocasiones, con lo cual
+		// la solucion pasa simplemente en normalizar los registros preexistentes de manera similar que ad_componentobjectuid
+		{
+			// Verificamos si existe la columna NombreDeTabla_ID (ejemplo C_Invoice => C_Invoice_ID)
+			if (existColumnInTable(table.getTableName()+"_ID", table.getTableName()))
+				append (sql, " UPDATE " + table.getTableName() + " SET " + COLUMN_RETRIEVEUID + " = '" + table.getTableName() + "-' || " + table.getTableName() + "_ID::varchar ");
+			else
+				// No hay forma de generar un UID de manera sencilla sin NombreDeTabla_ID (ejemplo: c_acctschema_gl). Utilizar Tabla-AD_Client-AD_Org-Created
+				append (sql, " UPDATE " + table.getTableName() + " SET " + COLUMN_RETRIEVEUID + " = '" + table.getTableName() + "-' || AD_Client_ID::varchar || '-' || AD_Org_ID::varchar || '-' || Created::varchar ");
+
+			append (sql, " WHERE " + COLUMN_RETRIEVEUID + " IS NULL AND (AD_Client_ID = " + getAD_Client_ID() + " OR AD_Client_ID = 0); ");
+			retValue.append(" - Actualizadas entradas ya existentes en tabla (via Tabla_RecordID): " + table.getTableName() + " \n");	
+		}
+			
 	}
 	
 

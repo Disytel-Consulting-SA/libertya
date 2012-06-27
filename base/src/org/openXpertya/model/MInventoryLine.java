@@ -228,6 +228,18 @@ public class MInventoryLine extends X_M_InventoryLine {
         // e interna, y se asigna el tipo Cargo a Cuenta seteando el cargo configurado
         // en el inventario encabezado.
         if (MInventory.INVENTORYKIND_SimpleInOut.equals(getInventory().getInventoryKind())) {
+			// Si la cantidad sin signo es menor a 0 debería seguir el signo del cargo
+			if (getQtyCountWithoutChargeSign().compareTo(BigDecimal.ZERO) < 0) {
+        		log.saveError("MustFollowChargeSign", "");
+        		return false;
+        	}
+        	// Actualizar la cantidad contada (qtycount) con la cantidad sin signo.
+			// Por ahora sirve para entradas/salidas simples, se debe cambiar de
+			// lugar esta porción de código cuando se tome para otros tipos de
+			// cargos.
+			MCharge charge = new MCharge(getCtx(), getInventory().getC_Charge_ID(), get_TrxName());
+        	Integer sign = Integer.parseInt(charge.getSign());
+        	setQtyCount(getQtyCountWithoutChargeSign().multiply(new BigDecimal(sign)));
         	setQtyBook(BigDecimal.ZERO);
         	setQtyInternalUse(BigDecimal.ZERO);
         	setInventoryType(INVENTORYTYPE_ChargeAccount);

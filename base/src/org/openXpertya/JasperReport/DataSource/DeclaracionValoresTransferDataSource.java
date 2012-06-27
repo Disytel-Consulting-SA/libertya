@@ -1,5 +1,7 @@
 package org.openXpertya.JasperReport.DataSource;
 
+import java.util.Properties;
+
 public class DeclaracionValoresTransferDataSource extends
 		DeclaracionValoresDataSource {
 
@@ -8,9 +10,9 @@ public class DeclaracionValoresTransferDataSource extends
 		// TODO Auto-generated constructor stub
 	}
 
-	public DeclaracionValoresTransferDataSource(
+	public DeclaracionValoresTransferDataSource(Properties ctx,
 			DeclaracionValoresDTO valoresDTO, String trxName) {
-		super(valoresDTO, trxName);
+		super(ctx, valoresDTO, trxName);
 		// TODO Auto-generated constructor stub
 	}
 
@@ -26,7 +28,7 @@ public class DeclaracionValoresTransferDataSource extends
 
 	@Override
 	protected String getTenderType() {
-		return "A";
+		return "'A'";
 	}
 
 }

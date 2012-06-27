@@ -123,6 +123,7 @@
 	<parameter name="DESCRIPTION" isForPrompting="false" class="java.lang.String"/>
 	<parameter name="NROREMITO_2" isForPrompting="false" class="java.lang.String"/>
 	<parameter name="NROREMITO_3" isForPrompting="false" class="java.lang.String"/>
+	<parameter name="PERCEPCION_TOTAL_AMT" isForPrompting="false" class="java.math.BigDecimal"/>
 
 	<field name="FECHA_ENTREGA" class="java.util.Date"/>
 	<field name="CODARTICULO" class="java.lang.String"/>
@@ -805,7 +806,7 @@
 			</band>
 		</detail>
 		<columnFooter>
-			<band height="99"  isSplitAllowed="true" >
+			<band height="98"  isSplitAllowed="true" >
 				<staticText>
 					<reportElement
 						x="1"
@@ -953,7 +954,7 @@
 					<reportElement
 						mode="Transparent"
 						x="462"
-						y="18"
+						y="21"
 						width="70"
 						height="15"
 						forecolor="#000000"
@@ -971,7 +972,7 @@
 				<textField isStretchWithOverflow="false" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
 						x="417"
-						y="18"
+						y="21"
 						width="44"
 						height="15"
 						key="textField-36"
@@ -979,7 +980,7 @@
 						isPrintInFirstWholeBand="true"
 						isPrintWhenDetailOverflows="true"/>
 					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
-					<textElement>
+					<textElement textAlignment="Right">
 						<font pdfFontName="Helvetica-Bold" size="8" isBold="true"/>
 					</textElement>
 				<textFieldExpression   class="java.lang.String"><![CDATA["Total:"]]></textFieldExpression>
@@ -987,12 +988,42 @@
 				<line direction="TopDown">
 					<reportElement
 						x="4"
-						y="17"
+						y="4"
 						width="525"
 						height="0"
 						key="line-1"/>
 					<graphicElement stretchType="NoStretch"/>
 				</line>
+				<staticText>
+					<reportElement
+						x="382"
+						y="6"
+						width="79"
+						height="12"
+						key="staticText-35">
+							<printWhenExpression><![CDATA[new Boolean($P{PERCEPCION_TOTAL_AMT}.compareTo(BigDecimal.ZERO) > 0)]]></printWhenExpression>
+						</reportElement>
+					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
+					<textElement textAlignment="Right">
+						<font size="8"/>
+					</textElement>
+				<text><![CDATA[Percepciones]]></text>
+				</staticText>
+				<textField isStretchWithOverflow="false" pattern="##0.00" isBlankWhenNull="false" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
+					<reportElement
+						x="462"
+						y="6"
+						width="70"
+						height="12"
+						key="textField-45">
+							<printWhenExpression><![CDATA[new Boolean($P{PERCEPCION_TOTAL_AMT}.compareTo(BigDecimal.ZERO) > 0)]]></printWhenExpression>
+						</reportElement>
+					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
+					<textElement textAlignment="Right">
+						<font size="8"/>
+					</textElement>
+				<textFieldExpression   class="java.math.BigDecimal"><![CDATA[$P{PERCEPCION_TOTAL_AMT}]]></textFieldExpression>
+				</textField>
 			</band>
 		</columnFooter>
 		<pageFooter>

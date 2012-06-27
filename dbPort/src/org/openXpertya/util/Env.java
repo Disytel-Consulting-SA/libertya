@@ -192,6 +192,8 @@ public final class Env {
     /** Descripción de Campos */
 
     public static final int TAB_INFO = 1113;
+    
+    public static final String CLOSE_APPS_PROP_NAME = "#CLOSE_APP";
 
     /**
      * Descripción de Método
@@ -1752,6 +1754,11 @@ public final class Env {
     		setContext(ctx, "#Date", today);
     		dateContextUpdatedTime = System.currentTimeMillis();
     	}
+    }
+    
+    public static boolean closeApp(Properties ctx){
+    	String close = Env.getContext(ctx, CLOSE_APPS_PROP_NAME);
+    	return Util.isEmpty(close, true) || close.equals("Y"); 
     }
     
 }    // Env

@@ -1,12 +1,13 @@
 /** Modelo Generado - NO CAMBIAR MANUALMENTE - Disytel */
 package org.openXpertya.model;
-import java.util.*;
+import java.util.logging.Level;
+ import java.util.*;
 import java.sql.*;
 import java.math.*;
 import org.openXpertya.util.*;
 /** Modelo Generado por AD_TableReplication
  *  @author Comunidad de Desarrollo Libertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
- *  @version  - 2010-07-21 16:24:30.408 */
+ *  @version  - 2012-05-02 11:47:56.023 */
 public class X_AD_TableReplication extends org.openXpertya.model.PO
 {
 /** Constructor estándar */
@@ -79,7 +80,7 @@ return ii.intValue();
 Table for the Fields */
 public void setAD_Table_ID (int AD_Table_ID)
 {
-set_Value ("AD_Table_ID", new Integer(AD_Table_ID));
+set_ValueNoCheck ("AD_Table_ID", new Integer(AD_Table_ID));
 }
 /** Get Table.
 Table for the Fields */
@@ -115,6 +116,21 @@ set_Value ("CreateReplicationTrigger", CreateReplicationTrigger);
 public String getCreateReplicationTrigger() 
 {
 return (String)get_Value("CreateReplicationTrigger");
+}
+/** Set Filters */
+public void setFilters (String Filters)
+{
+if (Filters != null && Filters.length() > 1000)
+{
+log.warning("Length > 1000 - truncated");
+Filters = Filters.substring(0,1000);
+}
+set_Value ("Filters", Filters);
+}
+/** Get Filters */
+public String getFilters() 
+{
+return (String)get_Value("Filters");
 }
 /** Set ReplicationArray */
 public void setReplicationArray (String ReplicationArray)

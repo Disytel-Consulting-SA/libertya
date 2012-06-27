@@ -107,6 +107,10 @@ public abstract class PoSConnectionState {
 	
 	public abstract String getNextInvoiceDocumentNo();
 	
+	public abstract List<Tax> getOtherTaxes(BusinessPartner bp);
+	
+	public abstract Tax getTax(Integer taxID);
+	
 	/**
 	 * @param checkDeadLineToCompare
 	 *            plazo a comparar

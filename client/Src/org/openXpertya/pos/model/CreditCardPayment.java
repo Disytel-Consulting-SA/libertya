@@ -11,6 +11,8 @@ public class CreditCardPayment extends Payment {
 
 	private String bankName;
 	
+	private String posnet;
+	
 	public CreditCardPayment() {
 		super();
 	}
@@ -21,12 +23,13 @@ public class CreditCardPayment extends Payment {
 	 * @param couponNumber
 	 */
 	public CreditCardPayment(EntidadFinancieraPlan plan, String creditCardNumber,
-			String couponNumber, String bankName) {
+			String couponNumber, String bankName, String posnet) {
 		this();
 		this.plan = plan;
 		this.creditCardNumber = creditCardNumber;
 		this.couponNumber = couponNumber;
 		this.bankName = bankName;
+		this.posnet = posnet;
 	}
 
 	/**
@@ -98,5 +101,13 @@ public class CreditCardPayment extends Payment {
 	@Override
 	public IPaymentMediumInfo getPaymentMediumInfo() {
 		return getPlan();
+	}
+
+	public void setPosnet(String posnet) {
+		this.posnet = posnet;
+	}
+
+	public String getPosnet() {
+		return posnet;
 	}
 }

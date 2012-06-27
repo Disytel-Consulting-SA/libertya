@@ -1,12 +1,13 @@
 /** Modelo Generado - NO CAMBIAR MANUALMENTE - Disytel */
 package org.openXpertya.model;
-import java.util.*;
+import java.util.logging.Level;
+ import java.util.*;
 import java.sql.*;
 import java.math.*;
 import org.openXpertya.util.*;
 /** Modelo Generado por M_EntidadFinancieraPlan
  *  @author Comunidad de Desarrollo Libertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
- *  @version  - 2010-04-21 12:28:58.352 */
+ *  @version  - 2012-06-26 15:31:34.114 */
 public class X_M_EntidadFinancieraPlan extends org.openXpertya.model.PO
 {
 /** Constructor estándar */
@@ -23,6 +24,7 @@ setDateTo (new Timestamp(System.currentTimeMillis()));
 setM_EntidadFinanciera_ID (0);	// @M_EntidadFinanciera_ID@
 setM_EntidadFinancieraPlan_ID (0);
 setName (null);
+setValue (null);
 }
  */
 }
@@ -199,5 +201,23 @@ return (String)get_Value("Name");
 public KeyNamePair getKeyNamePair() 
 {
 return new KeyNamePair(getID(), getName());
+}
+/** Set Search Key.
+Search key for the record in the format required - must be unique */
+public void setValue (String Value)
+{
+if (Value == null) throw new IllegalArgumentException ("Value is mandatory");
+if (Value.length() > 60)
+{
+log.warning("Length > 60 - truncated");
+Value = Value.substring(0,60);
+}
+set_Value ("Value", Value);
+}
+/** Get Search Key.
+Search key for the record in the format required - must be unique */
+public String getValue() 
+{
+return (String)get_Value("Value");
 }
 }

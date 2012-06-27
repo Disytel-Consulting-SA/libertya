@@ -104,7 +104,7 @@ public class LaunchOrder extends SvrProcess {
 
 	private String createReport() throws Exception {
 		
-		MOrder order = new MOrder(getCtx(), AD_Record_ID, null);
+		MOrder order = new MOrder(getCtx(), AD_Record_ID, get_TrxName());
 		
 		if(getProcessInfo().getJasperReportDTO() == null){
 			JasperReportDTO jasperDTO = getProcessInfo().new JasperReportDTO();
@@ -393,6 +393,8 @@ public class LaunchOrder extends SvrProcess {
 			jasperwrapper.addParameter("ISSOTRX", order.isSOTrx());
 			jasperwrapper.addParameter("IS_TAXINCLUDED", order.isTaxIncluded());
 			jasperwrapper.addParameter("IS_TRANSFERRED", order.isTransferred());
+			
+			jasperwrapper.addParameter("PERCEPCION_TOTAL_AMT", order.getPercepcionesTotalAmt());
 			
 			try {
 				jasperwrapper.fillReport(ds);

@@ -305,6 +305,8 @@ public class MOrder extends X_C_Order implements DocAction {
     private boolean voidInOuts = true;
     private boolean voidInvoices = true;
     
+    private Integer tpvGeneratedInvoiceID = 0;
+    
     /**
      * Descripción de Método
      *
@@ -1995,6 +1997,8 @@ public class MOrder extends X_C_Order implements DocAction {
                                     ?ol_QtyOrdered
                                     :Env.ZERO;
             BigDecimal difference = target.subtract( ol_QtyReserved).subtract( ol_QtyDelivered);
+            
+            
 
             if( difference.compareTo( Env.ZERO ) == 0 ) {
                 continue;
@@ -2777,7 +2781,14 @@ public class MOrder extends X_C_Order implements DocAction {
 
         // Delete Taxes
 
-        DB.executeUpdate( "DELETE FROM C_OrderTax WHERE C_Order_ID=" + getC_Order_ID(),get_TrxName());
+		// FIXME Se agregó una condición para que si la tasa es de percepción que
+		// no la elimine ya que se agrega manualmente en el TPV, sacar esa
+		// condición cuando se pase la lógica de percepciones también a pedidos 
+		DB.executeUpdate(
+				"DELETE FROM C_OrderTax WHERE C_Order_ID="
+						+ getC_Order_ID()
+						+ " AND c_tax_id NOT IN (SELECT c_tax_id FROM c_tax WHERE ispercepcion = 'Y')",
+				get_TrxName());
         m_taxes = null;
 
         // Lines
@@ -3775,8 +3786,9 @@ public class MOrder extends X_C_Order implements DocAction {
 
             	//Modificado por ConSerTi por el fallo de linea a 0 al cerrar un pedido
                log.fine("Estoy en MOrder y entro en el if, para poner el valor..:"+line.getQtyDelivered()+", old="+old);
-            	//line.setQtyOrdered( line.getQtyDelivered());
-            	line.setQtyOrdered(old);
+            	line.setQtyOrdered( line.getQtyDelivered());
+//            	line.setQtyOrdered(old);
+
 //            	Fin modificacion
             	// QtyEntered unchanged	
                 line.addDescription( "Close (" + old + ")" );
@@ -4144,6 +4156,40 @@ public class MOrder extends X_C_Order implements DocAction {
 		return voidInvoices;
 	}
 
+	public BigDecimal getTotalLinesNet() {
+		BigDecimal total = Env.ZERO;
+		for (MOrderLine orderLine : getLines()) {
+			// Total de líneas sin impuestos
+			total = total.add(orderLine.getTotalPriceEnteredNet());
+		}
+		return total;
+	}
+	
+	public BigDecimal getTotalLinesNetWithoutDocumentDiscount() {
+		BigDecimal total = Env.ZERO;
+		for (MOrderLine orderLine : getLines()) {
+			// Total de líneas sin impuestos
+			total = total.add(orderLine.getTotalPriceEnteredNet()).subtract(
+					orderLine.getTotalDocumentDiscountUnityAmtNet());
+		}
+		return total;
+	}
+	
+	public void setTpvGeneratedInvoiceID(Integer tpvGeneratedInvoiceID) {
+		this.tpvGeneratedInvoiceID = tpvGeneratedInvoiceID;
+	}
+
+	public Integer getTpvGeneratedInvoiceID() {
+		return tpvGeneratedInvoiceID;
+	}
+	
+	public BigDecimal getPercepcionesTotalAmt(){
+		String sql = "SELECT sum(taxamt) FROM c_ordertax WHERE c_order_id = ? AND c_tax_id IN (SELECT distinct c_tax_id FROM ad_org_percepcion WHERE ad_org_id = "
+				+ getAD_Org_ID() + ")";
+		BigDecimal percepcionAmt = DB.getSQLValueBD(get_TrxName(), sql, getID());
+		return percepcionAmt == null ? BigDecimal.ZERO : percepcionAmt;
+	}
+	
 	/**
      * Wrapper de {@link MOrder} para cálculo de descuentos.
      */
@@ -4183,6 +4229,7 @@ public class MOrder extends X_C_Order implements DocAction {
 		@Override
 		public void setDocumentReferences(MDocumentDiscount documentDiscount) {
 			documentDiscount.setC_Order_ID(getC_Order_ID());
+			documentDiscount.setC_Invoice_ID(getTpvGeneratedInvoiceID());
 		}
 
 		@Override

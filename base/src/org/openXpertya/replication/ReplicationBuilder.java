@@ -141,18 +141,18 @@ public class ReplicationBuilder extends ChangeLogXMLBuilder {
 				
 				// Textos del nodo, old y new values
 			    newValue = useRetrieveUID ? (UID_REFERENCE_PREFIX+retrieveUIDValue) : String.valueOf(element.getNewValue());
-				if(element.getBinaryValue() != null){
-					/** TODO: VER QUE HACER ACA CON LOS BINARIOS EN REPLICACIÓN! */
-				}
+//				if(element.getBinaryValue() != null){
+//					/** TODO: VER QUE HACER ACA CON LOS BINARIOS EN REPLICACIÓN! */
+//				}
 				// En el AD_Org_ID en realidad no se envia el AD_Org_ID sino el host asociado (replicationArrayPos) cargado, 
 				// dado que este es el único valor en común.  Para AD_Org_ID = 0, pasamos directamente ese valor sin mapear 
-				if ("AD_Org_ID".equalsIgnoreCase(element.getColumnName()) && !"UID=o0_0".equals(newValue))
+				if ("AD_Org_ID".equalsIgnoreCase(element.getColumnName()) && !"UID=AD_Org-0".equals(newValue))
 				{
 					// Si useRetrieveUID es false, entonces UID no estará seteado.  Sin embargo, AD_Org_ID podrìa ser 0 en este caso
 					// el cual tambien es necesario omitir, dejando también 0 como valor.
 					if (!"0".equals(newValue)) 
 					{
-						Integer orgPos = ReplicationCache.map_RepArrayPos_OrgID.get(newValue.replace("UID=", ""));
+						Integer orgPos = ReplicationCache.map_RepArrayPos_OrgID.get(newValue.replace("UID=AD_Org-", ""));
 						if (orgPos == null)
 							throw new Exception ("No hay mapeo posible para la organización " + newValue + " en la tabla de hosts de replicación ");
 						newValue = orgPos.toString();
@@ -169,9 +169,12 @@ public class ReplicationBuilder extends ChangeLogXMLBuilder {
 			
 			// Enviar a replicacion, una vez por cada destino a replicar
 			for (int arrayPos = 0; arrayPos < group.getRepArray().length(); arrayPos++)
-				// En las posiciones que corresponde, se envia a replicacion (cola de eventos).  Si hubo timeOut, tambièn se reenvia donde corresponda
+				// En las posiciones que corresponde, se envia a replicacion (cola de eventos).  
+				// Si hubo timeOut, tambièn se reenvia donde corresponda
+				// En caso de estar reenviando todos los registros, se envia a todo el repArray (menos donde se indique sin accion)
 				if (ReplicationConstants.replicateStates.contains(group.getRepArray().charAt(arrayPos)) || 
-					  (group.isTimeOut() && ReplicationConstants.timeOutStates.contains(group.getRepArray().charAt(arrayPos)) ))
+					  (group.isTimeOut() && ReplicationConstants.timeOutStates.contains(group.getRepArray().charAt(arrayPos))) ||
+					  (ReplicationConstants.RESEND_ALL_RECORDS && ReplicationConstants.REPLICATION_CONFIGURATION_NO_ACTION!=group.getRepArray().charAt(arrayPos)) )
 						sendToEventQueue(group, arrayPos);
 			
 			// Limpiar memoria cada cierto intervalo de iteraciones
@@ -223,8 +226,8 @@ public class ReplicationBuilder extends ChangeLogXMLBuilder {
 			// Si en la posición tiene marca de modificación... UPDATE
 			else if (ReplicationConstants.REPARRAY_REPLICATE_MODIFICATION == state)
 				replicationHndler.appendToEventQueue(arrayPos+1, m_replicationXMLData.toString(), MChangeLog.OPERATIONTYPE_Modification);
-			// Si está esperando ack, y se llega a este punto, es por timeOut de la espera. Manejarlo como caso de error 
-			else if (ReplicationConstants.timeOutStates.contains(state))
+			// Si está esperando ack, y se llega a este punto, es por timeOut de la espera. Manejarlo como caso de error. Tambien valido para reenvio completo
+			else if (ReplicationConstants.timeOutStates.contains(state) || ReplicationConstants.RESEND_ALL_RECORDS)
 				replicationHndler.appendToEventQueue(arrayPos+1, m_replicationXMLData.toString(), MChangeLog.OPERATIONTYPE_InsertionModification + ReplicationConstants.REPARRAY_RETRY1);
 			else
 				// En caso contrario, elevar excepcion
@@ -250,9 +253,15 @@ public class ReplicationBuilder extends ChangeLogXMLBuilder {
 		// Ampliar el query 
 		if (toWaitingAckQuery==null)
 			toWaitingAckQuery = new StringBuffer();
-		toWaitingAckQuery.append(" UPDATE ").append(MChangeLog.OPERATIONTYPE_Deletion.equals(group.getOperation()) ? ReplicationConstants.DELETIONS_TABLE : group.getTableName())
-						.append(" SET repArray = '").append(group.getRepArray()).append("', " + CreateReplicationTriggerProcess.COLUMN_DATELASTSENT + " = NOW() ")
-						.append(" WHERE retrieveUID = '").append(group.getAd_componentObjectUID())	.append("';");
+		boolean isDeletion = MChangeLog.OPERATIONTYPE_Deletion.equals(group.getOperation());
+		// El uso de prefijo SET para el repArray solo es para tablas con triggerEvent.  La tabla AD_Changelog_Replication obviamente no lo tiene seteado
+		String set = isDeletion ? "" : "SET";
+		// Tabla a actualizar
+		String table = isDeletion ? ReplicationConstants.DELETIONS_TABLE : group.getTableName();
+		// Armar el query de actualizacion del repArray
+		toWaitingAckQuery.append(" UPDATE ").append(table)
+						.append(" SET repArray = '"+set).append(group.getRepArray()).append("', " + CreateReplicationTriggerProcess.COLUMN_DATELASTSENT + " = NOW() ")
+						.append(" WHERE retrieveUID = '").append(group.getAd_componentObjectUID()).append("'; ");
 		
 		count++;
 		// Ejecutar la actualización, si corresponde

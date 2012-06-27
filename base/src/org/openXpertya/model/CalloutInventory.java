@@ -25,7 +25,7 @@ import java.util.logging.Level;
 
 import org.openXpertya.util.DB;
 import org.openXpertya.util.Env;
-import org.openXpertya.util.Msg;
+import org.openXpertya.util.Util;
 
 /**
  * Descripción de Clase
@@ -115,6 +115,14 @@ public class CalloutInventory extends CalloutEngine {
         MProduct product = MProduct.get(ctx, M_Product_ID);
         Env.setContext(ctx, WindowNo, "ProductType", product.getProductType());
 
+        Integer chargeID = Env.getContextAsInt(ctx, WindowNo, "C_Charge_ID");
+        if(Util.isEmpty(chargeID, true)){
+			MInventory inventory = new MInventory(ctx,
+					(Integer) mTab.getValue("M_Inventory_ID"), null); 
+			Env.setContext(ctx, WindowNo, "C_Charge_ID",
+					inventory.getC_Charge_ID());	
+        }
+        
         return "";
     }    // product
     
@@ -163,6 +171,24 @@ public class CalloutInventory extends CalloutEngine {
 		setCalloutActive( false );
 		return "";
 	}
+    
+    public String qtycountwithoutchargesign( Properties ctx,int WindowNo,MTab mTab,MField mField,Object value ) {
+    	BigDecimal qtyWithoutSign = (BigDecimal)value;
+    	Integer chargeID = Env.getContextAsInt(ctx, WindowNo, "C_Charge_ID");
+    	if(qtyWithoutSign == null || chargeID == 0){
+    		return "";
+    	}
+    	
+		setCalloutActive( true );
+		// Setea la cantidad contada con el signo del cargo * la cantidad sin signo
+		MCharge charge = new MCharge(ctx, chargeID, null);
+		Integer sign = Integer.parseInt(charge.getSign());
+		mTab.setValue("QtyCount", qtyWithoutSign.multiply(new BigDecimal(sign)));
+		
+    	setCalloutActive( false );
+    	
+		return "";
+    }
 }    // CalloutInventory
 
 

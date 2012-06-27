@@ -452,8 +452,11 @@ public class ReciboDeCliente {
 				&& discountSchema != null
 				&& getDiscountCalculator().isGeneralDocumentDiscountApplicable(
 						discountSchema.getDiscountContextType())) {
+			getDiscountCalculator().setApplyScale(false);
 			discountAmt = getDiscountCalculator().calculateDiscount(discountSchema,
 					openAmt);
+			getDiscountCalculator().setApplyScale(true);
+			discountAmt = getDiscountCalculator().scaleAmount(discountAmt);
 		}
 		// Al pendiente se le resta el descuento parámetro y se le
 		// quita también el descuento total del pedido ya que ese importe no se

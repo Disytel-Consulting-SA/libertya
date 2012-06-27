@@ -18,6 +18,7 @@ import org.openXpertya.print.fiscal.document.DocumentLine;
 import org.openXpertya.print.fiscal.document.Invoice;
 import org.openXpertya.print.fiscal.document.NonFiscalDocument;
 import org.openXpertya.print.fiscal.document.Payment;
+import org.openXpertya.print.fiscal.document.Tax;
 import org.openXpertya.print.fiscal.exception.DocumentException;
 import org.openXpertya.print.fiscal.exception.FiscalPrinterIOException;
 import org.openXpertya.print.fiscal.exception.FiscalPrinterStatusError;
@@ -272,7 +273,7 @@ public abstract class HasarFiscalPrinter extends BasicFiscalPrinter implements H
 		FiscalPacket cmd = createFiscalPacket(CMD_LAST_ITEM_DISCOUNT);
 		int i = 1;
 		cmd.setText(i++, description, 50, false);
-		cmd.setAmount(i++, amount, false);
+		cmd.setAmount(i++, amount, false, true);
 		cmd.setBoolean(i++, substract, "m", "M", false);
 		cmd.setNumber(i++, display, true);
 		cmd.setBoolean(i++, baseAmount, "x", "T", false);
@@ -309,7 +310,7 @@ public abstract class HasarFiscalPrinter extends BasicFiscalPrinter implements H
 		else
 			cmd.setNumber(i++, alicuotaIVA, 2, 2, false);
 		cmd.setText(i++, description, 20,false);
-		cmd.setAmount(i++, amount, false);
+		cmd.setAmount(i++, amount, false, false);
 		return cmd;
 	}
 
@@ -354,7 +355,7 @@ public abstract class HasarFiscalPrinter extends BasicFiscalPrinter implements H
 		int i = 1;
 		cmd.setText(i++, description, descMaxLength, false);
 		cmd.setQuantity(i++, quantity, false);
-		cmd.setAmount(i++, price, false);
+		cmd.setAmount(i++, price, false, true);
 		if(ivaPercent == null)
 			cmd.setText(i++, "**.**", false);
 		else
@@ -758,7 +759,7 @@ public abstract class HasarFiscalPrinter extends BasicFiscalPrinter implements H
 			// Se cargan los ítems de la factura.
 			// Comando: @PrintLineItem
 			loadDocumentLineItems(invoice);
-
+			
 			//////////////////////////////////////////////////////////////
 			// Se cargan los descuentos de la factura.
 			loadDocumentDiscounts(invoice);
@@ -767,6 +768,10 @@ public abstract class HasarFiscalPrinter extends BasicFiscalPrinter implements H
 			// Se calcula el subtotal.
 			// Comando: @Subtotal
 			execute(cmdSubtotal(true, null));
+			
+			//////////////////////////////////////////////////////////////
+			// Se cargan los impuestos adicionales de la factura
+			loadOtherTaxes(invoice);
 			
 			//////////////////////////////////////////////////////////////
 			// Se ingresan los pagos realizados por el comprador.
@@ -866,6 +871,10 @@ public abstract class HasarFiscalPrinter extends BasicFiscalPrinter implements H
 			loadDocumentLineItems(creditNote);
 
 			//////////////////////////////////////////////////////////////
+			// Se cargan los impuestos adicionales de la factura
+			loadOtherTaxes(creditNote);
+			
+			//////////////////////////////////////////////////////////////
 			// Se cargan las observaciones del pie de la nota de crédito 
 			// como texto fiscal.
 			// Comando: @PrintFiscalText
@@ -936,6 +945,10 @@ public abstract class HasarFiscalPrinter extends BasicFiscalPrinter implements H
 			// Comando: @PrintLineItem
 			loadDocumentLineItems(debitNote);
 
+			//////////////////////////////////////////////////////////////
+			// Se cargan los impuestos adicionales de la factura
+			loadOtherTaxes(debitNote);
+			
 			//////////////////////////////////////////////////////////////
 			// Se cargan las observaciones del pie de la nota de débito 
 			// como texto fiscal.
@@ -1244,6 +1257,22 @@ public abstract class HasarFiscalPrinter extends BasicFiscalPrinter implements H
 				false, 
 				!generalDiscount.isAmountIncludeIva(),
 				null));		
+		}
+	}
+
+	/**
+	 * Ejecuta los comandos necesarios para cargar los impuestos adicionales del
+	 * documento en la impresora fiscal.
+	 */
+	private void loadOtherTaxes(Document document) throws FiscalPrinterStatusError, FiscalPrinterIOException {
+		// Se cargan los impuestos adicionales del documento.
+		// Comando: @PrintLineItem
+		for (Tax otherTax : document.getOtherTaxes()) {
+			// FIXME por ahora se imprimen solamente las percepciones
+			if(otherTax.isPercepcion()){
+				execute(cmdPerceptions(otherTax.getName(), otherTax.getAmt(),
+						null));
+			}
 		}
 	}
 

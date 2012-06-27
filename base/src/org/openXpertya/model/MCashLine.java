@@ -181,6 +181,7 @@ public class MCashLine extends X_C_CashLine implements DocAction {
         setDiscountAmt( Env.ZERO );
         setWriteOffAmt( Env.ZERO );
         setIsGenerated( true );
+        setC_POSPaymentMedium_ID(invoice.getC_POSPaymentMedium_ID());
     }    // setInvoiceLine
 
     /**
@@ -556,7 +557,7 @@ public class MCashLine extends X_C_CashLine implements DocAction {
 		// Validar los montos pendientes de Factura
 		if (CASHTYPE_Invoice.equals(getCashType()) && getC_Invoice_ID() > 0) {
 			BigDecimal open = (BigDecimal)DB.getSQLObject(get_TrxName(), "SELECT invoiceOpen(?,0)", new Object[] {getC_Invoice_ID()});
-			if (getAmount().abs().compareTo(open) > 0) {
+			if (getAmount().compareTo(open) > 0) {
 				//FIXME: pasar a ADMessage
 				m_processMsg = "El Importe no puede ser mayor al importe pendiente de la factura. Pendiente: "
 						+ open.setScale(2).toString()
@@ -719,6 +720,7 @@ public class MCashLine extends X_C_CashLine implements DocAction {
         pay.setIsAllocated( true );    // Has No Allocation!
         pay.setProcessed( true );
         pay.setUpdateBPBalance(false);
+        pay.setC_Project_ID(getC_Project_ID());
 
         if (!pay.save( get_TrxName())) {
         	throw new Exception("@PaymentError@: " + CLogger.retrieveErrorAsString());
@@ -765,6 +767,7 @@ public class MCashLine extends X_C_CashLine implements DocAction {
 		targetCashLine.setDescription(Msg.parseTranslation(getCtx(),
 				"@CashTransferGeneratedLine@: " + getCash().getName()));
 		targetCashLine.setUpdateBPBalance(false);
+		targetCashLine.setC_Project_ID(getC_Project_ID());
 		// Completa y guarda la línea de caja destino.
 		if (!DocumentEngine.processAndSave(targetCashLine, ACTION_Complete, true)) {
 			throw new Exception("@CashTransferLineGenerateError@: " + targetCashLine.getProcessMsg());

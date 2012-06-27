@@ -7,7 +7,7 @@ import java.math.*;
 import org.openXpertya.util.*;
 /** Modelo Generado por C_Invoice
  *  @author Comunidad de Desarrollo Libertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
- *  @version  - 2011-09-13 17:35:41.389 */
+ *  @version  - 2012-06-10 15:34:33.414 */
 public class X_C_Invoice extends org.openXpertya.model.PO
 {
 /** Constructor estándar */
@@ -31,7 +31,8 @@ setDocStatus (null);	// DR
 setDocumentNo (null);
 setFiscalAlreadyPrinted (false);
 setGrandTotal (Env.ZERO);
-setIsApproved (false);	// @IsApproved@
+setInitialCurrentAccountAmt (Env.ZERO);
+setIsApproved (false);	// N
 setIsCopy (false);
 setIsDiscountPrinted (false);
 setIsInDispute (false);	// N
@@ -42,8 +43,10 @@ setIsSelfService (false);
 setIsSOTrx (false);	// @IsSOTrx@
 setIsTaxIncluded (false);
 setIsTransferred (false);
+setManageDragOrderDiscounts (false);
 setManualGeneralDiscount (Env.ZERO);
 setM_PriceList_ID (0);
+setNotExchangeableCredit (false);
 setNumeroComprobante (0);
 setPaymentRule (null);	// P
 setPosted (false);	// N
@@ -515,6 +518,22 @@ Integer ii = (Integer)get_Value("C_POSJournal_ID");
 if (ii == null) return 0;
 return ii.intValue();
 }
+/** Set POS Payment Medium.
+POS Terminal Payment Medium */
+public void setC_POSPaymentMedium_ID (int C_POSPaymentMedium_ID)
+{
+if (C_POSPaymentMedium_ID <= 0) set_Value ("C_POSPaymentMedium_ID", null);
+ else 
+set_Value ("C_POSPaymentMedium_ID", new Integer(C_POSPaymentMedium_ID));
+}
+/** Get POS Payment Medium.
+POS Terminal Payment Medium */
+public int getC_POSPaymentMedium_ID() 
+{
+Integer ii = (Integer)get_Value("C_POSPaymentMedium_ID");
+if (ii == null) return 0;
+return ii.intValue();
+}
 /** Set Project.
 Financial Project */
 public void setC_Project_ID (int C_Project_ID)
@@ -853,6 +872,19 @@ public String getidcae()
 {
 return (String)get_Value("idcae");
 }
+/** Set Initial Current Account Amt */
+public void setInitialCurrentAccountAmt (BigDecimal InitialCurrentAccountAmt)
+{
+if (InitialCurrentAccountAmt == null) throw new IllegalArgumentException ("InitialCurrentAccountAmt is mandatory");
+set_Value ("InitialCurrentAccountAmt", InitialCurrentAccountAmt);
+}
+/** Get Initial Current Account Amt */
+public BigDecimal getInitialCurrentAccountAmt() 
+{
+BigDecimal bd = (BigDecimal)get_Value("InitialCurrentAccountAmt");
+if (bd == null) return Env.ZERO;
+return bd;
+}
 /** Set Invoice Adress */
 public void setInvoice_Adress (String Invoice_Adress)
 {
@@ -1066,6 +1098,22 @@ if (oo != null)
 }
 return false;
 }
+/** Set Manage Drag Order Discounts */
+public void setManageDragOrderDiscounts (boolean ManageDragOrderDiscounts)
+{
+set_Value ("ManageDragOrderDiscounts", new Boolean(ManageDragOrderDiscounts));
+}
+/** Get Manage Drag Order Discounts */
+public boolean isManageDragOrderDiscounts() 
+{
+Object oo = get_Value("ManageDragOrderDiscounts");
+if (oo != null) 
+{
+ if (oo instanceof Boolean) return ((Boolean)oo).booleanValue();
+ return "Y".equals(oo);
+}
+return false;
+}
 /** Set Manual General Discount */
 public void setManualGeneralDiscount (BigDecimal ManualGeneralDiscount)
 {
@@ -1107,6 +1155,22 @@ set_Value ("NombreCli", NombreCli);
 public String getNombreCli() 
 {
 return (String)get_Value("NombreCli");
+}
+/** Set Not Exchangeable Credit */
+public void setNotExchangeableCredit (boolean NotExchangeableCredit)
+{
+set_Value ("NotExchangeableCredit", new Boolean(NotExchangeableCredit));
+}
+/** Get Not Exchangeable Credit */
+public boolean isNotExchangeableCredit() 
+{
+Object oo = get_Value("NotExchangeableCredit");
+if (oo != null) 
+{
+ if (oo instanceof Boolean) return ((Boolean)oo).booleanValue();
+ return "Y".equals(oo);
+}
+return false;
 }
 /** Set Nro Identificacion del Cliente.
 Número de DNI, Cédula, Libreta de Enrolamiento, Pasaporte o Libreta Cívica del cliente. */

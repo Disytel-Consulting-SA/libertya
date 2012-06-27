@@ -629,7 +629,7 @@ public interface HasarCommands {
 	 * @return <code>FiscalPacket</code> que representa el comando para la impresora.
 	 */
 	public FiscalPacket cmdGetEmbarkNumber(int line);
-
+	
 	///////////////////////////////////////////////////////////////////////
 	// Comandos para tipos de letra
 	///////////////////////////////////////////////////////////////////////

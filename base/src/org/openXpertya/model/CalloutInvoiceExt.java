@@ -168,7 +168,7 @@ public class CalloutInvoiceExt extends CalloutInvoice {
 	
 	private String docTypeStd( Properties ctx,int WindowNo,MTab mTab,MField mField,Object value ) {
         Integer C_DocType_ID = ( Integer )value;
-
+        
         if( (C_DocType_ID == null) || (C_DocType_ID.intValue() == 0) ) {
             return "";
         }
@@ -202,21 +202,27 @@ public class CalloutInvoiceExt extends CalloutInvoice {
                 	suf = "";
                 
                 if( rs.getString( 3 ).equals( "Y" )) {
-                    mTab.setValue( "DocumentNo","<" + pre + rs.getString( 4 ) + suf + ">" );
+                	if(mTab.isInserting() || mField.isChanged()){
+                		mTab.setValue( "DocumentNo","<" + pre + rs.getString( 4 ) + suf + ">" );
+                	}
                 }
 
                 // DocBaseType - Set Context
 
                 String s = rs.getString( 5 );
-
+                
                 Env.setContext( ctx,WindowNo,"DocBaseType",s );
 
                 // AP Check & AR Credit Memo
 
                 if( s.startsWith( "AP" )) {
-                    mTab.setValue( "PaymentRule","S" );    // Check
+                	if(mTab.isInserting() || mField.isChanged()){
+                		mTab.setValue( "PaymentRule","S" );    // Check
+                	}
                 } else if( s.endsWith( "C" )) {
-                    mTab.setValue( "PaymentRule","P" );    // OnCredit
+                	if(mTab.isInserting() || mField.isChanged()){
+                		mTab.setValue( "PaymentRule","P" );    // OnCredit
+                	}
                 }
             }
 
@@ -257,30 +263,33 @@ public class CalloutInvoiceExt extends CalloutInvoice {
 	@Override
 	public String docType(Properties ctx, int WindowNo, MTab tab, MField field,
 			Object value) {
+		
 		String ret = docTypeStd(ctx, WindowNo, tab, field, value);
 		
-		try {
-			String docNo = ((String)tab.getValue("DocumentNo"));
-			
-			// <A000100000001>
-			// 012345678901234
-			
-			// A000100000001
-			// 0123456789012
-			
-			HashMap<String, Object> hm = DividirDocumentNo(docNo);
-			Integer bPartnerID = (Integer)tab.getValue("C_BPartner_ID");
-			for (String k : hm.keySet()) { 
-				// Solo asigna la letra del comprobante si no se ha ingresado
-				// la entidad comercial. Si se ingreso la entidad comercial
-				// la letra se calcula a partir de las categorias de iva
-				// de la EC y la Compañia.
-				if(bPartnerID == null || !k.equals("C_Letra_Comprobante_ID") )
-					tab.setValue(k, hm.get(k));
+		if(tab.isInserting() || field.isChanged()){
+			try {
+				String docNo = ((String)tab.getValue("DocumentNo"));
+				
+				// <A000100000001>
+				// 012345678901234
+				
+				// A000100000001
+				// 0123456789012
+				
+				HashMap<String, Object> hm = DividirDocumentNo(docNo);
+				Integer bPartnerID = (Integer)tab.getValue("C_BPartner_ID");
+				for (String k : hm.keySet()) { 
+					// Solo asigna la letra del comprobante si no se ha ingresado
+					// la entidad comercial. Si se ingreso la entidad comercial
+					// la letra se calcula a partir de las categorias de iva
+					// de la EC y la Compañia.
+					if(bPartnerID == null || !k.equals("C_Letra_Comprobante_ID") )
+						tab.setValue(k, hm.get(k));
+				}
+				
+			} catch (Exception e) {
+				
 			}
-			
-		} catch (Exception e) {
-			
 		}
 		return ret;
 	}

@@ -17,10 +17,13 @@ import java.util.Properties;
 import java.util.Vector;
 import java.util.logging.Level;
 
+import org.openXpertya.cc.CurrentAccountManager;
+import org.openXpertya.cc.CurrentAccountManagerFactory;
 import org.openXpertya.print.OXPFiscalMsgSource;
 import org.openXpertya.print.fiscal.FiscalPrinter;
 import org.openXpertya.print.fiscal.FiscalPrinterEventListener;
 import org.openXpertya.print.fiscal.document.CreditNote;
+import org.openXpertya.print.fiscal.document.CurrentAccountInfo;
 import org.openXpertya.print.fiscal.document.Customer;
 import org.openXpertya.print.fiscal.document.DebitNote;
 import org.openXpertya.print.fiscal.document.DiscountLine;
@@ -29,11 +32,13 @@ import org.openXpertya.print.fiscal.document.DocumentLine;
 import org.openXpertya.print.fiscal.document.Invoice;
 import org.openXpertya.print.fiscal.document.NonFiscalDocument;
 import org.openXpertya.print.fiscal.document.Payment;
+import org.openXpertya.print.fiscal.document.Tax;
 import org.openXpertya.print.fiscal.exception.DocumentException;
 import org.openXpertya.print.fiscal.exception.FiscalPrinterIOException;
 import org.openXpertya.print.fiscal.exception.FiscalPrinterStatusError;
 import org.openXpertya.print.fiscal.msg.FiscalMessages;
 import org.openXpertya.print.fiscal.msg.MsgRepository;
+import org.openXpertya.reflection.CallResult;
 import org.openXpertya.util.CLogger;
 import org.openXpertya.util.DB;
 import org.openXpertya.util.Env;
@@ -54,7 +59,8 @@ public class FiscalDocumentPrint {
 	public enum Actions { 
 		ACTION_PRINT_DOCUMENT, 
 		ACTION_FISCAL_CLOSE,
-		ACTION_PRINT_DELIVERY_DOCUMENT
+		ACTION_PRINT_DELIVERY_DOCUMENT,
+		ACTION_PRINT_CURRENT_ACCOUNT_DOCUMENT
 	};
 
 	static {
@@ -266,9 +272,10 @@ public class FiscalDocumentPrint {
 	 */
 	private void doAction(Actions action, Object[] args) throws Exception{
 		switch(action){
-			case ACTION_PRINT_DOCUMENT:		     doPrintDocument(args); break;
-			case ACTION_FISCAL_CLOSE:		     doFiscalClose(args); break;
-			case ACTION_PRINT_DELIVERY_DOCUMENT: doPrintDeliveryDocument(args); break;
+			case ACTION_PRINT_DOCUMENT:		     		doPrintDocument(args); break;
+			case ACTION_FISCAL_CLOSE:		     		doFiscalClose(args); break;
+			case ACTION_PRINT_DELIVERY_DOCUMENT: 		doPrintDeliveryDocument(args); break;
+			case ACTION_PRINT_CURRENT_ACCOUNT_DOCUMENT:	doPrintCurrentAccountDocument(args); break;
 			default:						throw new Exception(Msg.getMsg(ctx, "InvalidAction"));
 		}
 	}
@@ -478,7 +485,104 @@ public class FiscalDocumentPrint {
 		fireDocumentPrintEndedOk();
 	}
 	
-	// **************************************************
+	// **************************************************************
+	//   IMPRESION DE DOCUMENTO CON DATOS DE CUENTA CORRIENTE		
+	// **************************************************************
+
+	/**
+	 * Manda a imprimir un documento NO fiscal que posee la información del
+	 * cliente en cuenta corriente
+	 * 
+	 * @param cFiscalID
+	 *            Impresora que emite el documento
+	 * @param bpartner
+	 *            cliente cuenta corriente
+	 * @param infos
+	 *            datos de las condiciones de venta de cuenta corriente
+	 * @return <code>true</code> en caso de que el documento se haya emitido
+	 *         correctamente, <code>false</false> en caso contrario.
+	 */
+	public boolean printCurrentAccountDocument(Integer cFiscalID, MBPartner bpartner, List<CurrentAccountInfo> infos) {
+		// Creo el customer
+		Customer customer = getCustomer(bpartner.getID());
+		MOrg org = MOrg.get(ctx, Env.getAD_Org_ID(ctx));
+		CurrentAccountManager manager = CurrentAccountManagerFactory.getManager();
+		// Estado de crédito
+		CallResult result = manager.getCreditStatus(ctx, org, bpartner, null, getTrxName());
+		customer.setCreditStatus((String) result.getResult());
+		
+		// Límite
+		result = manager.getCreditLimit(ctx, org, bpartner, null, getTrxName());
+		customer.setCreditLimit((BigDecimal)result.getResult());
+		
+		// Saldo
+		result = manager.getTotalOpenBalance(ctx, org, bpartner, null, getTrxName());
+		customer.setCreditBalance((BigDecimal)result.getResult());
+		
+		// Itero por los datos de cuenta corriente y le asigno el cliente
+		for (CurrentAccountInfo currentAccountInfo : infos) {
+			currentAccountInfo.setCustomer(customer);
+		}
+		return execute(Actions.ACTION_PRINT_CURRENT_ACCOUNT_DOCUMENT,
+				cFiscalID, new Object[] { infos });
+	}
+
+	/**
+	 * Realiza la impresión del documento no fiscal con los datos del cliente de
+	 * cuenta corriente
+	 * 
+	 * @param args
+	 *            Arreglo con los argumentos requeridos por esta funcionalidad
+	 * @throws Exception
+	 */
+	private void doPrintCurrentAccountDocument(Object[] args) throws Exception{
+		List<CurrentAccountInfo> infos = (List<CurrentAccountInfo>)args[0];
+		// Si no existen datos de cuenta corriente no se imprime nada
+		if(infos == null || infos.size() == 0){
+			return;
+		}
+		// Informa el inicio de la impresión
+		fireActionStarted(FiscalDocumentPrintListener.AC_PRINT_DOCUMENT);
+		// Crea el documento no fiscal y luego obtiene todas las líneas del pedido
+		NonFiscalDocument nonFiscalDocument = new NonFiscalDocument();
+		// Cargar datos del cliente que se obtiene de por lo menos el primer
+		// registro de los balances. Se sabe que para todos es el mismo cliente
+		Customer customer = infos.get(0).getCustomer();
+		MOrg org = MOrg.get(ctx, Env.getAD_Org_ID(ctx));
+		nonFiscalDocument.addLine(Msg.getMsg(ctx, "CurrentAccount")+":"+customer.getName());
+		// Imprimir las condiciones de esta venta de cuenta corriente
+		nonFiscalDocument.addLine(Msg.getMsg(ctx, "CurrentSalesConditions"));
+		MCurrency currency = MCurrency.get(ctx, Env.getContextAsInt(ctx, "$C_Currency_ID"), getTrxName());
+		for (CurrentAccountInfo currentAccountInfo : infos) {
+			nonFiscalDocument.addLine(currentAccountInfo.getPaymentRule()
+					+ "  " + currency.getCurSymbol()
+					+ currentAccountInfo.getAmount());
+		}
+		// Imprimir estado de crédito
+		nonFiscalDocument.addLine(Msg.getMsg(ctx, "Status")
+				+ ": "
+				+ MRefList.getListName(ctx,
+						MBPartner.SOCREDITSTATUS_AD_Reference_ID,
+						customer.getCreditStatus()));
+		// Imprimir límite
+		nonFiscalDocument.addLine(Msg.getMsg(ctx, "Limit") + ": "
+				+ currency.getCurSymbol() + customer.getCreditLimit());
+		// Imprimir saldo
+		nonFiscalDocument.addLine(Msg.getMsg(ctx, "Balance") + ": "
+				+ currency.getCurSymbol() + customer.getCreditBalance());
+		// Imprimir línea para firma del cliente
+		nonFiscalDocument.addLine(" ");
+		nonFiscalDocument.addLine(" ");
+		nonFiscalDocument.addLine("--------------------------");
+		nonFiscalDocument.addLine(Msg.getMsg(ctx, "CustomerSignature"));
+		// FIXME Excepciones de crédito?
+		// Manda a imprimir el documento en la impresora fiscal
+		getFiscalPrinter().printDocument(nonFiscalDocument);
+		// Se dispara el evento de impresión finalizada.
+		fireDocumentPrintEndedOk();
+	}
+	
+	// **************************************************	
 	
 	/**
 	 * @return Returns the fiscalPrinter.
@@ -537,7 +641,7 @@ public class FiscalDocumentPrint {
 		invoice.setCustomer(getCustomer(mInvoice.getC_BPartner_ID()));
 		// Se asigna la letra de la factura.
 		invoice.setLetter(mInvoice.getLetra());
-
+		
 		// Verificar si esta factura tiene salida por depósito, en ese caso
 		// imprimir leyenda al final de la factura
 		// FIXME cuando la config del TPV no debe imprimir el documento de
@@ -571,6 +675,10 @@ public class FiscalDocumentPrint {
 		
 		// Se asignan los descuentos de la factura
 		loadDocumentDiscounts(invoice, mInvoice.getDiscounts());
+		
+		// Cargar impuestos adicionales 
+		loadOtherTaxes(invoice,mInvoice);
+		
 		return invoice;
 	}
 
@@ -593,6 +701,10 @@ public class FiscalDocumentPrint {
 		
 		// Se agregan las líneas de la nota de débito al documento.
 		loadDocumentLines(mInvoice, debitNote);
+		
+		// Cargar impuestos adicionales 
+		loadOtherTaxes(debitNote,mInvoice);
+		
 		return debitNote;
 	}
 
@@ -640,6 +752,10 @@ public class FiscalDocumentPrint {
 		
 		// Se agregan las líneas de la nota de crédito al documento.
 		loadDocumentLines(mInvoice, creditNote);
+		
+		// Cargar impuestos adicionales 
+		loadOtherTaxes(creditNote,mInvoice);
+		
 		return creditNote;
 	}
 
@@ -839,6 +955,13 @@ public class FiscalDocumentPrint {
 							mDiscountByTax.getDiscountAmt().negate(), 
 							true, // Los importes en DocumentDiscount incluyen siempre el impuesto
 							mDiscountByTax.getTaxRate());
+					// Si el descuento es manual, entonces le cambio la
+					// descripción a uno más corto
+					if (mDiscountByTax.getDiscountKind().equals(
+							MDocumentDiscount.DISCOUNTKIND_ManualDiscount)) {
+						discountLine.setDescription(Msg.getMsg(Env.getCtx(),
+								"FiscalTicketLineManualDiscount"));
+					}
 					// Agrega el descuento al documento.
 					document.addDocumentDiscount(discountLine);
 				}
@@ -875,7 +998,8 @@ public class FiscalDocumentPrint {
 			"SELECT C_Payment_ID, " +
 			       "C_CashLine_ID, " +
 			       "C_Invoice_Credit_ID, " +
-			       "SUM(Amount + DiscountAmt + WriteoffAmt) AS PaidAmount " +
+			       "SUM(Amount + DiscountAmt + WriteoffAmt) AS PaidAmount, " +
+			       "SUM(ChangeAmt) AS ChangeAmt " +
 			"FROM C_AllocationLine " +
 			"WHERE C_Invoice_ID = ? " +
 			"GROUP BY C_Payment_ID, C_CashLine_ID, C_Invoice_Credit_ID " +
@@ -898,6 +1022,7 @@ public class FiscalDocumentPrint {
 			int invoiceCreditID;
 			BigDecimal paidAmt = null;
 			String description = null;
+			BigDecimal changeAmt = BigDecimal.ZERO;
 			// Pago que se crea en caso de que la imputación no entre en la clase
 			// Efectivo u Otros Pagos.
 			Payment payment = null;
@@ -908,6 +1033,7 @@ public class FiscalDocumentPrint {
 				cashLineID = rs.getInt("C_CashLine_ID");
 				invoiceCreditID = rs.getInt("C_Invoice_Credit_ID");
 				paidAmt = rs.getBigDecimal("PaidAmount");
+				changeAmt = rs.getBigDecimal("ChangeAmt");
 				description = null;
 				payment = null;
 				
@@ -921,7 +1047,7 @@ public class FiscalDocumentPrint {
 					// Todas las imputaciones con líneas de caja se suman al pago
 					// global en Efectivo para imprimir una única línea que diga
 					// "Efectivo".
-					cashPayment.setAmount(cashPayment.getAmount().add(paidAmt));
+					cashPayment.setAmount(cashPayment.getAmount().add(paidAmt).add(changeAmt));
 				// 3. Imputación con Factura de Crédito (NC)
 				} else if (invoiceCreditID > 0) {
 					// Obtiene la descripción.
@@ -932,11 +1058,11 @@ public class FiscalDocumentPrint {
 				// Si es un tipo que entra dentro de "Otros Pagos", se suma el importe
 				// al payment de "Otros Pagos".
 				if (OTHERS_DESC.equals(description)) {
-					othersPayment.setAmount(othersPayment.getAmount().add(paidAmt));
+					othersPayment.setAmount(othersPayment.getAmount().add(paidAmt).add(changeAmt));
 				// Caso Contrario (Tarjeta, Cheque, Transferencia, NC, etc), se crea el pago
 				// con la descripción.
 				} else if (description != null) {
-					payment = new Payment(paidAmt, description);
+					payment = new Payment(paidAmt.add(changeAmt), description);
 				}
 				
 				// Si se creó un nuevo pago se agrega a la lista ordenada de pagos
@@ -945,7 +1071,7 @@ public class FiscalDocumentPrint {
 					payments.add(payment);
 				}
 				
-				totalPaidAmt = totalPaidAmt.add(paidAmt);
+				totalPaidAmt = totalPaidAmt.add(paidAmt).add(changeAmt);
 			} // while
 			
 		} catch (SQLException e) {
@@ -1010,6 +1136,40 @@ public class FiscalDocumentPrint {
 			}
 		}
 		
+	}
+	
+	/**
+	 * Carga los impuestos adicionales
+	 * @param doc
+	 * @param mInvoice
+	 */
+	private void loadOtherTaxes(Document doc, MInvoice mInvoice){
+		String sql = "SELECT t.c_tax_id, t.name, t.rate, it.taxbaseamt, it.taxamt, t.ispercepcion FROM c_invoicetax as it INNER JOIN c_tax as t ON it.c_tax_id = t.c_tax_id INNER JOIN c_taxcategory as tc ON t.c_taxcategory_id = tc.c_taxcategory_id WHERE (c_invoice_id = ?) AND (ismanual = 'Y')";
+		PreparedStatement ps = null;
+		ResultSet rs = null;
+		List<org.openXpertya.print.fiscal.document.Tax> otherTaxes = new ArrayList<Tax>();
+		org.openXpertya.print.fiscal.document.Tax otherTax = null;
+		try{
+			ps = DB.prepareStatement(sql, getTrxName());
+			ps.setInt(1, mInvoice.getID());
+			rs = ps.executeQuery();
+			while (rs.next()) {
+				otherTax = new Tax(rs.getInt("c_tax_id"), rs.getString("name"),
+						rs.getBigDecimal("rate"),
+						rs.getBigDecimal("taxbaseamt"),
+						rs.getBigDecimal("taxamt"), rs
+								.getString("ispercepcion").equals("Y"));
+				otherTaxes.add(otherTax);
+			}
+		} catch (SQLException e) {
+			log.log(Level.SEVERE, "Error getting invoice taxes", e);
+		} finally {
+			try {
+				if (rs != null) rs.close();
+				if (ps != null) ps.close();
+			} catch (Exception e) {}
+		}
+		doc.setOtherTaxes(otherTaxes);
 	}
 	
 	/**

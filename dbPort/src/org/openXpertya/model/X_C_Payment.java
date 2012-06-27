@@ -7,7 +7,7 @@ import java.math.*;
 import org.openXpertya.util.*;
 /** Modelo Generado por C_Payment
  *  @author Comunidad de Desarrollo Libertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
- *  @version  - 2011-01-24 17:44:47.847 */
+ *  @version  - 2012-06-07 23:17:15.102 */
 public class X_C_Payment extends org.openXpertya.model.PO
 {
 /** Constructor estándar */
@@ -593,6 +593,22 @@ POS Journal */
 public int getC_POSJournal_ID() 
 {
 Integer ii = (Integer)get_Value("C_POSJournal_ID");
+if (ii == null) return 0;
+return ii.intValue();
+}
+/** Set POS Payment Medium.
+POS Terminal Payment Medium */
+public void setC_POSPaymentMedium_ID (int C_POSPaymentMedium_ID)
+{
+if (C_POSPaymentMedium_ID <= 0) set_Value ("C_POSPaymentMedium_ID", null);
+ else 
+set_Value ("C_POSPaymentMedium_ID", new Integer(C_POSPaymentMedium_ID));
+}
+/** Get POS Payment Medium.
+POS Terminal Payment Medium */
+public int getC_POSPaymentMedium_ID() 
+{
+Integer ii = (Integer)get_Value("C_POSPaymentMedium_ID");
 if (ii == null) return 0;
 return ii.intValue();
 }
@@ -1206,6 +1222,21 @@ Purchase Order Number */
 public String getPONum() 
 {
 return (String)get_Value("PONum");
+}
+/** Set Posnet */
+public void setPosnet (String Posnet)
+{
+if (Posnet != null && Posnet.length() > 40)
+{
+log.warning("Length > 40 - truncated");
+Posnet = Posnet.substring(0,40);
+}
+set_Value ("Posnet", Posnet);
+}
+/** Get Posnet */
+public String getPosnet() 
+{
+return (String)get_Value("Posnet");
 }
 /** Set Posted.
 Posting status */

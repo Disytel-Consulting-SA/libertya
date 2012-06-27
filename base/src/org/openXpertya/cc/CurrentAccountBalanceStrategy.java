@@ -17,20 +17,6 @@ import org.openXpertya.reflection.CallResult;
 
 public abstract class CurrentAccountBalanceStrategy extends
 		CurrentAccountStrategy {
-
-	// Constantes
-	
-	/**
-	 * Cantidad de días de mora de pago de facturas relacionadas con el estado
-	 * de crédito secundario
-	 */
-	public static final int BLOQUEO_AUTOMATICO = 15;
-	public static final int PRIMERA_NOTA = 15;
-	public static final int A_LLAMAR = 25;
-	public static final int SEGUNDA_NOTA = 40;
-	public static final int A_COBRADOR = 55;
-	public static final int A_INHABILITAR = 70;
-	public static final int INHABILITACION_AUTOMATICA = 120;
 	
 	// Variables de clase
 
@@ -423,6 +409,61 @@ public abstract class CurrentAccountBalanceStrategy extends
 	public abstract CallResult hasZeroBalance(Properties ctx,
 			String bPartnerColumnNameUID, Object bPartnerColumnValueUID,
 			String orgColumnNameUID, Object orgColumnValueUID, boolean underMinimumCreditAmt, String trxName);
+
+	/**
+	 * Obtiene el límite de crédito para el paymentRule pasado como parámetro.
+	 * Si el paymentRule es null, se devuelve el límite global
+	 * 
+	 * @param ctx
+	 * @param bPartnerColumnNameUID
+	 * @param bPartnerColumnValueUID
+	 * @param orgColumnNameUID
+	 * @param orgColumnValueUID
+	 * @param paymentRule
+	 * @param trxName
+	 * @return
+	 */
+	public abstract CallResult getCreditLimit(Properties ctx,
+			String bPartnerColumnNameUID, Object bPartnerColumnValueUID,
+			String orgColumnNameUID, Object orgColumnValueUID,
+			String paymentRule, String trxName);
+
+	/**
+	 * Obtengo el saldo para el payment rule parámetro. Si paymentRule es null,
+	 * entonces se devuelve el saldo global
+	 * 
+	 * @param ctx
+	 * @param bPartnerColumnNameUID
+	 * @param bPartnerColumnValueUID
+	 * @param orgColumnNameUID
+	 * @param orgColumnValueUID
+	 * @param paymentRule
+	 * @param trxName
+	 * @return
+	 */
+	public abstract CallResult getTotalOpenBalance(Properties ctx,
+			String bPartnerColumnNameUID, Object bPartnerColumnValueUID,
+			String orgColumnNameUID, Object orgColumnValueUID,
+			String paymentRule, String trxName);
+
+	/**
+	 * Obtengo el estado de crédito para el payment rule parámetro. Si
+	 * paymentRule es null, entonces se devuelve el estado de crédito de la
+	 * entidad comercial
+	 * 
+	 * @param ctx
+	 * @param bPartnerColumnNameUID
+	 * @param bPartnerColumnValueUID
+	 * @param orgColumnNameUID
+	 * @param orgColumnValueUID
+	 * @param paymentRule
+	 * @param trxName
+	 * @return
+	 */
+	public abstract CallResult getCreditStatus(Properties ctx,
+			String bPartnerColumnNameUID, Object bPartnerColumnValueUID,
+			String orgColumnNameUID, Object orgColumnValueUID,
+			String paymentRule, String trxName);
 	
 	// ****************************************************************
 }

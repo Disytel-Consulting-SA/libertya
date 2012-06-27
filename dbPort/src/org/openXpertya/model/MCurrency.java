@@ -137,6 +137,19 @@ public class MCurrency extends X_C_Currency {
     }		// get
     
     /**
+     * @param ctx
+     * @param ISO_Code
+     * @return 
+     */
+    public static MCurrency get(Properties ctx, String ISO_Code) {
+		return MCurrency.get(
+				ctx,
+				DB.getSQLValue(null, "SELECT c_currency_id FROM " + Table_Name
+						+ " WHERE upper(trim(ISO_Code)) = upper(trim('"
+						+ ISO_Code + "'))"));
+    }
+    
+    /**
      *      Get Currency Iso Code.
      *      @param ctx Context
      *      @param C_Currency_ID currency
@@ -161,6 +174,8 @@ public class MCurrency extends X_C_Currency {
 
     }		// getISO
 
+    
+    
     /**
      *      Get Standard Precision.
      *      @param ctx Context

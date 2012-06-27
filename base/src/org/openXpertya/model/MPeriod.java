@@ -207,6 +207,10 @@ public class MPeriod extends X_C_Period implements ITime{
     
     
     public static boolean isOpen( Properties ctx,Timestamp DateAcct,String DocBaseType, Integer warehouseID ) {
+        return isOpen(ctx, DateAcct, DocBaseType, warehouseID, false);
+    }    // isOpen
+
+    public static boolean isOpen( Properties ctx,Timestamp DateAcct,String DocBaseType, Integer warehouseID, boolean bypassWarehouseCloseValidation ) {
         if( DateAcct == null ) {
             s_log.warning( "No DateAcct" );
 
@@ -229,7 +233,9 @@ public class MPeriod extends X_C_Period implements ITime{
 
         Calendar calendarAcct = new GregorianCalendar();
         calendarAcct.setTimeInMillis(DateAcct.getTime());
-        boolean open = period.isOpen( DocBaseType, calendarAcct.get(Calendar.DAY_OF_MONTH), warehouseID );
+		boolean open = period.isOpen(DocBaseType,
+				calendarAcct.get(Calendar.DAY_OF_MONTH), warehouseID,
+				bypassWarehouseCloseValidation);
 
         if( !open ) {
             s_log.warning( period.getName() + ": Not open for " + DocBaseType + " (" + DateAcct + ")" );
@@ -237,6 +243,8 @@ public class MPeriod extends X_C_Period implements ITime{
 
         return open;
     }    // isOpen
+
+    
     /**
      * Descripción de Método
      *
@@ -525,8 +533,14 @@ public class MPeriod extends X_C_Period implements ITime{
 
     
     public boolean isOpen( String DocBaseType, Integer dayOfMonth, Integer warehouseID ) {
+    	return isOpen(DocBaseType, dayOfMonth, warehouseID, false);
+    }    // isOpen
+    
+
+    public boolean isOpen( String DocBaseType, Integer dayOfMonth, Integer warehouseID, boolean bypassWarehouseCloseValidation ) {
     	// Control de cierres de almacenes
-        if(!isOpenWarehouseClosePeriod(DocBaseType, dayOfMonth, warehouseID )){
+		if (!isOpenWarehouseClosePeriod(DocBaseType, dayOfMonth, warehouseID,
+				bypassWarehouseCloseValidation)) {
         	log.warning("Period closed for warehouse close control");
         	return false;
         }
@@ -586,7 +600,7 @@ public class MPeriod extends X_C_Period implements ITime{
 
         return pc.isOpen();
     }    // isOpen
-    
+
     
     /**
      * Período de control de cierres de depósito.
@@ -596,6 +610,19 @@ public class MPeriod extends X_C_Period implements ITime{
      * @return
      */
     private boolean isOpenWarehouseClosePeriod(String DocBaseType, Integer dayOfMonth, Integer warehouseID ){
+    	return isOpenWarehouseClosePeriod(DocBaseType, dayOfMonth, warehouseID, false);
+    }
+    
+    
+    /**
+     * Período de control de cierres de depósito.
+     * @param DocBaseType
+     * @param dayOfMonth
+     * @param warehouseID
+     * @param bypassValidation
+     * @return
+     */
+    private boolean isOpenWarehouseClosePeriod(String DocBaseType, Integer dayOfMonth, Integer warehouseID, boolean bypassValidation ){
     	GregorianCalendar closeDate = new GregorianCalendar();
         closeDate.setTimeInMillis(getStartDate().getTime());
         try{
@@ -605,13 +632,12 @@ public class MPeriod extends X_C_Period implements ITime{
         	return false;
         }
         // Control de cierre de almacén 
-        if(MWarehouseClose.isClosed(DocBaseType, new Date(closeDate.getTimeInMillis()), warehouseID)){
+        if(MWarehouseClose.isClosed(DocBaseType, new Date(closeDate.getTimeInMillis()), warehouseID, bypassValidation)){
         	log.severe("Control de periodo de cierres de almacen: No existe periodo abierto del almacen para la fecha "+closeDate.getTime());
         	return false;
         }
         return true;
     }
-    
     
     /**
      * Descripción de Método

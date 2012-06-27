@@ -7,7 +7,7 @@ import java.math.*;
 import org.openXpertya.util.*;
 /** Modelo Generado por C_Tax
  *  @author Comunidad de Desarrollo Libertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
- *  @version  - 2011-06-28 17:00:47.6 */
+ *  @version  - 2012-05-17 17:56:59.326 */
 public class X_C_Tax extends org.openXpertya.model.PO
 {
 /** Constructor estándar */
@@ -20,6 +20,7 @@ setC_TaxCategory_ID (0);
 setC_Tax_ID (0);
 setIsDefault (false);
 setIsDocumentLevel (false);
+setIsPercepcion (false);
 setIsSummary (false);
 setIsTaxExempt (false);
 setName (null);
@@ -195,6 +196,22 @@ Tax is calculated on document level (rather than line by line) */
 public boolean isDocumentLevel() 
 {
 Object oo = get_Value("IsDocumentLevel");
+if (oo != null) 
+{
+ if (oo instanceof Boolean) return ((Boolean)oo).booleanValue();
+ return "Y".equals(oo);
+}
+return false;
+}
+/** Set Is Percepcion */
+public void setIsPercepcion (boolean IsPercepcion)
+{
+set_Value ("IsPercepcion", new Boolean(IsPercepcion));
+}
+/** Get Is Percepcion */
+public boolean isPercepcion() 
+{
+Object oo = get_Value("IsPercepcion");
 if (oo != null) 
 {
  if (oo instanceof Boolean) return ((Boolean)oo).booleanValue();

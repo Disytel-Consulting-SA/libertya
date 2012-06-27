@@ -146,6 +146,7 @@
 	<parameter name="CURRENCY_SIMBOL" isForPrompting="false" class="java.lang.String"/>
 	<parameter name="NROREMITO_2" isForPrompting="false" class="java.lang.String"/>
 	<parameter name="NROREMITO_3" isForPrompting="false" class="java.lang.String"/>
+	<parameter name="PERCEPCION_TOTAL_AMT" isForPrompting="false" class="java.math.BigDecimal"/>
 
 	<field name="ITEM" class="java.lang.String"/>
 	<field name="CODARTICULO" class="java.lang.String"/>
@@ -633,7 +634,7 @@
 				<textField isStretchWithOverflow="false" pattern="#,##0.00" isBlankWhenNull="false" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
 						x="462"
-						y="93"
+						y="103"
 						width="120"
 						height="19"
 						key="textField-31"/>
@@ -720,6 +721,36 @@
 						<font size="9"/>
 					</textElement>
 				<textFieldExpression   class="java.math.BigDecimal"><![CDATA[$P{SUBTOTAL2}]]></textFieldExpression>
+				</textField>
+				<staticText>
+					<reportElement
+						x="452"
+						y="85"
+						width="79"
+						height="12"
+						key="staticText-5">
+							<printWhenExpression><![CDATA[new Boolean($P{PERCEPCION_TOTAL_AMT}.compareTo(BigDecimal.ZERO) > 0)]]></printWhenExpression>
+						</reportElement>
+					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
+					<textElement>
+						<font size="9"/>
+					</textElement>
+				<text><![CDATA[Percepciones]]></text>
+				</staticText>
+				<textField isStretchWithOverflow="false" pattern="##0.00" isBlankWhenNull="false" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
+					<reportElement
+						x="531"
+						y="85"
+						width="55"
+						height="12"
+						key="textField-36">
+							<printWhenExpression><![CDATA[new Boolean($P{PERCEPCION_TOTAL_AMT}.compareTo(BigDecimal.ZERO) > 0)]]></printWhenExpression>
+						</reportElement>
+					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
+					<textElement textAlignment="Right">
+						<font size="9"/>
+					</textElement>
+				<textFieldExpression   class="java.math.BigDecimal"><![CDATA[$P{PERCEPCION_TOTAL_AMT}]]></textFieldExpression>
 				</textField>
 			</band>
 		</lastPageFooter>

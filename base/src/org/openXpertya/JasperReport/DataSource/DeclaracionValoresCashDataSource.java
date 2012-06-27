@@ -1,5 +1,7 @@
 package org.openXpertya.JasperReport.DataSource;
 
+import java.util.Properties;
+
 import org.openXpertya.model.X_C_CashLine;
 import org.openXpertya.util.Env;
 
@@ -14,9 +16,9 @@ public class DeclaracionValoresCashDataSource extends DeclaracionValoresDataSour
 		// TODO Auto-generated constructor stub
 	}
 
-	public DeclaracionValoresCashDataSource(
+	public DeclaracionValoresCashDataSource(Properties ctx,
 			DeclaracionValoresDTO valoresDTO, String trxName) {
-		super(valoresDTO, trxName);
+		super(ctx, valoresDTO, trxName);
 		// TODO Auto-generated constructor stub
 	}
 	
@@ -32,7 +34,7 @@ public class DeclaracionValoresCashDataSource extends DeclaracionValoresDataSour
 
 	@Override
 	protected String getTenderType() {
-		return "CA";
+		return "'CA'";
 	}
 	
 	@Override

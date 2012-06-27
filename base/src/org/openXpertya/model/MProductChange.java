@@ -208,21 +208,9 @@ public class MProductChange extends X_M_ProductChange implements DocAction {
 		// Se obtiene el valor de la preferencia que contiene el % de variación permitida
 		// 1) Por Usuario; 2) Por Organización; 3) Por Compañía
 		// 1)
-		String variation = MPreference.GetCustomPreferenceValue(
-				PRICE_VARIATION_PREFERENCE, null, null,
+		String variation = MPreference.searchCustomPreferenceValue(
+				PRICE_VARIATION_PREFERENCE, getAD_Client_ID(), getAD_Org_ID(),
 				Env.getAD_User_ID(getCtx()), true);
-		// 2) 
-		if(Util.isEmpty(variation, true)){
-			variation = MPreference.GetCustomPreferenceValue(
-					PRICE_VARIATION_PREFERENCE, null, getAD_Org_ID(), null,
-					true);
-		}
-		// 3)
-		if(Util.isEmpty(variation, true)){
-			variation = MPreference.GetCustomPreferenceValue(
-					PRICE_VARIATION_PREFERENCE, getAD_Client_ID(), 0, null,
-					true);
-		}
 		// La preferencia no existe... 
 		if (Util.isEmpty(variation, true)) {
 			m_processMsg = getPriceVariationErrorMsg("PriceVariationPreferenceNotConfigured");

@@ -14,6 +14,7 @@ import org.openXpertya.JasperReport.DataSource.DeclaracionValoresDTO;
 import org.openXpertya.JasperReport.DataSource.DeclaracionValoresDataSource;
 import org.openXpertya.JasperReport.DataSource.DeclaracionValoresTransferDataSource;
 import org.openXpertya.JasperReport.DataSource.DeclaracionValoresVentasDataSource;
+import org.openXpertya.JasperReport.DataSource.DeclaracionValoresVentasReceiptDataSource;
 import org.openXpertya.JasperReport.DataSource.JasperReportsUtil;
 import org.openXpertya.JasperReport.DataSource.OXPJasperDataSource;
 import org.openXpertya.JasperReport.DataSource.OXPJasperEmptyDataSource;
@@ -44,52 +45,15 @@ public class LaunchDeclaracionValores extends JasperReportLaunch {
 		// Crear el dto para enviar los datos a los datasources
 		Integer userID = getUserID();
 		List<Integer> journalIDs = getJournalIDs();
+		if(Util.isEmpty(journalIDs)){
+			throw new Exception(Msg.getMsg(getCtx(), "POSJournalInexistent"));
+		}
 		DeclaracionValoresDTO valoresDTO = new DeclaracionValoresDTO();
 		valoresDTO.setJournalIDs(journalIDs);
 		valoresDTO.setUserID(userID);
 		setValoresDTO(valoresDTO);
-		// Obtener los subreportes junto con sus datasources
-		// Datasources
-		//////////////////////////////////////
-		// Data Source de Ventas
-		DeclaracionValoresVentasDataSource ventaDS = getVentaDataSource();
-		// Data Source de Efectivo
-		DeclaracionValoresCashDataSource cashDS = getCashDataSource();
-		// Data Source de Cheque
-		DeclaracionValoresCheckDataSource checkDS = getCheckDataSource();
-		// Data Source de Transferencia
-		DeclaracionValoresTransferDataSource transferDS = getTransferDataSource();
-		// Data Source de Cupon
-		DeclaracionValoresCuponDataSource cuponDS = getCuponDataSource();
-		// Data Source de NC
-		DeclaracionValoresCreditNoteDataSource creditNoteDS = getCreditNoteDataSource();
-		// Data Source de Cuenta corriente
-		DeclaracionValoresCuentaCorrienteDataSource ccDS = getCuentaCorrienteDataSource();
-		// Data Source de Valores
-		ValoresDataSource valoresDS = getValoresDataSource();
-		//////////////////////////////////////
-		// Subreporte de totales por tipo de transacción
-		MJasperReport trxSubreport = getDeclaracionValoresSubreport(); 
-		// Se agrega el informe compilado como parámetro.
-		addReportParameter("COMPILED_SUBREPORT_TYPE_VALUES", new ByteArrayInputStream(trxSubreport.getBinaryData()));
-		// Se agregan los datasources de los subreportes
-		addReportParameter("SUBREPORT_SALE_DATASOURCE", ventaDS);
-		addReportParameter("SUBREPORT_CASH_DATASOURCE", cashDS);
-		addReportParameter("SUBREPORT_CHECKS_DATASOURCE", checkDS);
-		addReportParameter("SUBREPORT_TRANSFER_DATASOURCE", transferDS);
-		addReportParameter("SUBREPORT_CUPON_DATASOURCE", cuponDS);
-		addReportParameter("SUBREPORT_CREDIT_NOTE_DATASOURCE", creditNoteDS);
-		addReportParameter("SUBREPORT_CURRENTACCOUNT_DATASOURCE", ccDS);
-		//////////////////////////////////////
-		// Subreporte de valores
-		MJasperReport valoresSubreport = getValoresSubreport(); 
-		// Se agrega el informe compilado como parámetro.
-		addReportParameter("COMPILED_SUBREPORT_VALORES", new ByteArrayInputStream(valoresSubreport.getBinaryData()));
-		// Se agregan los datasources de los subreportes
-		addReportParameter("SUBREPORT_VALORES_DATASOURCE", valoresDS);
-		//////////////////////////////////////
 		// Parámetros adicionales
-		addReportParameter("TITLE", "Declaracion de Valores");
+		addReportParameter("TITLE", getTitle());
 		addReportParameter("DATE_FROM", getDateFrom());
 		addReportParameter("DATE_TO", getDateTo());
 		if(!Util.isEmpty(userID, true)){
@@ -108,6 +72,8 @@ public class LaunchDeclaracionValores extends JasperReportLaunch {
 		addReportParameter("SHOW_DETAILS", isShowDetail());
 		addReportParameter("SHOW_DETAILS_TRUE_DESCRIPTION", Msg.getMsg(getCtx(), "ShowDetails"));
 		addReportParameter("SHOW_DETAILS_FALSE_DESCRIPTION", Msg.getMsg(getCtx(), "DoNotShowDetails"));
+		// Agrego los subreportes
+		addSubreports();
 	}
 
 	
@@ -118,6 +84,63 @@ public class LaunchDeclaracionValores extends JasperReportLaunch {
 			setPosJournal((MPOSJournal)table.getPO(getRecord_ID(), get_TrxName()));
 		}
 	}
+	
+	/**
+	 * Agrega los subreportes al reporte
+	 * @throws Exception
+	 */
+	protected void addSubreports() throws Exception{
+		// Obtener los subreportes junto con sus datasources
+		// Datasources
+		//////////////////////////////////////
+		// Data Source de Ventas
+		DeclaracionValoresVentasDataSource ventaDS = getVentaDataSource();
+		// Data Source de Efectivo
+		DeclaracionValoresCashDataSource cashDS = getCashDataSource();
+		// Data Source de Cheque
+		DeclaracionValoresCheckDataSource checkDS = getCheckDataSource();
+		// Data Source de Transferencia
+		DeclaracionValoresTransferDataSource transferDS = getTransferDataSource();
+		// Data Source de Cupon
+		DeclaracionValoresCuponDataSource cuponDS = getCuponDataSource();
+		// Data Source de NC
+		DeclaracionValoresCreditNoteDataSource creditNoteDS = getCreditNoteDataSource();
+		// Data Source de Cuenta corriente
+		DeclaracionValoresCuentaCorrienteDataSource ccDS = getCuentaCorrienteDataSource();
+		// Data Source de Facturas y sus medios de cobro
+		DeclaracionValoresVentasReceiptDataSource ventaReceiptDS = getVentasReceiptDataSource();
+		// Data Source de Valores
+		ValoresDataSource valoresDS = getValoresDataSource();
+		//////////////////////////////////////
+		// Subreporte de totales por tipo de transacción
+		MJasperReport trxSubreport = getDeclaracionValoresSubreport(); 
+		// Se agrega el informe compilado como parámetro.
+		addReportParameter("COMPILED_SUBREPORT_TYPE_VALUES", new ByteArrayInputStream(trxSubreport.getBinaryData()));
+		// Se agregan los datasources de los subreportes
+		addReportParameter("SUBREPORT_SALE_DATASOURCE", ventaDS);
+		addReportParameter("SUBREPORT_CASH_DATASOURCE", cashDS);
+		addReportParameter("SUBREPORT_CHECKS_DATASOURCE", checkDS);
+		addReportParameter("SUBREPORT_TRANSFER_DATASOURCE", transferDS);
+		addReportParameter("SUBREPORT_CUPON_DATASOURCE", cuponDS);
+		addReportParameter("SUBREPORT_CREDIT_NOTE_DATASOURCE", creditNoteDS);
+		addReportParameter("SUBREPORT_CURRENTACCOUNT_DATASOURCE", ccDS);
+		//////////////////////////////////////
+		// Subreporte de venta y sus medios de cobro
+		MJasperReport ventaReceiptSubreport = getVentasReceiptSubreport();
+		// Se agrega los datasource del subreporte
+		addReportParameter("SUBREPORT_SALES_RECEIPT_DATASOURCE", ventaReceiptDS);
+		// Se agrega el informe compilado como parámetro.
+		addReportParameter("COMPILED_SUBREPORT_SALES_RECEIPT", new ByteArrayInputStream(ventaReceiptSubreport.getBinaryData()));
+		//////////////////////////////////////
+		// Subreporte de valores
+		MJasperReport valoresSubreport = getValoresSubreport(); 
+		// Se agrega el informe compilado como parámetro.
+		addReportParameter("COMPILED_SUBREPORT_VALORES", new ByteArrayInputStream(valoresSubreport.getBinaryData()));
+		// Se agregan los datasources de los subreportes
+		addReportParameter("SUBREPORT_VALORES_DATASOURCE", valoresDS);
+		//////////////////////////////////////
+	}
+	
 	
 	protected Boolean isShowDetail(){
 		Boolean showDetail = false;
@@ -237,51 +260,84 @@ public class LaunchDeclaracionValores extends JasperReportLaunch {
 	}
 	
 	protected DeclaracionValoresVentasDataSource getVentaDataSource() throws Exception{
-		DeclaracionValoresVentasDataSource ventaDS = new DeclaracionValoresVentasDataSource(
-				getValoresDTO(), get_TrxName());
-		return (DeclaracionValoresVentasDataSource)loadDSData(ventaDS);
+		DeclaracionValoresVentasDataSource ventaDS = null;
+		if(isLoadVentasDataSource()){
+			ventaDS = new DeclaracionValoresVentasDataSource(getCtx(), getValoresDTO(), get_TrxName());
+			ventaDS = (DeclaracionValoresVentasDataSource)loadDSData(ventaDS);
+		}
+		return ventaDS;
 	}
 	
 	protected DeclaracionValoresCashDataSource getCashDataSource() throws Exception{
-		DeclaracionValoresCashDataSource cashDS = new DeclaracionValoresCashDataSource(
-				getValoresDTO(), get_TrxName());
-		return (DeclaracionValoresCashDataSource)loadDSData(cashDS);
+		DeclaracionValoresCashDataSource cashDS = null;
+		if(isLoadCashDataSource()){
+			cashDS = new DeclaracionValoresCashDataSource(getCtx(), getValoresDTO(), get_TrxName());
+			cashDS = (DeclaracionValoresCashDataSource)loadDSData(cashDS);
+		}
+		return cashDS;
 	}
 	
 	protected DeclaracionValoresCheckDataSource getCheckDataSource() throws Exception{
-		DeclaracionValoresCheckDataSource checkDS = new DeclaracionValoresCheckDataSource(
-				getValoresDTO(), get_TrxName());
-		return (DeclaracionValoresCheckDataSource)loadDSData(checkDS);
+		DeclaracionValoresCheckDataSource checkDS = null;
+		if(isLoadCheckDataSource()){
+			checkDS = new DeclaracionValoresCheckDataSource(getCtx(), getValoresDTO(), get_TrxName());
+			checkDS = (DeclaracionValoresCheckDataSource)loadDSData(checkDS);
+		}
+		return checkDS;
 	}
 	
 	protected DeclaracionValoresTransferDataSource getTransferDataSource() throws Exception{
-		DeclaracionValoresTransferDataSource transferDS = new DeclaracionValoresTransferDataSource(
-				getValoresDTO(), get_TrxName());
-		return (DeclaracionValoresTransferDataSource)loadDSData(transferDS);
+		DeclaracionValoresTransferDataSource transferDS = null;
+		if(isLoadTransferDataSource()){
+			transferDS = new DeclaracionValoresTransferDataSource(getCtx(), getValoresDTO(), get_TrxName());
+			transferDS = (DeclaracionValoresTransferDataSource)loadDSData(transferDS);
+		}
+		return transferDS;
 	}
 	
 	protected DeclaracionValoresCuponDataSource getCuponDataSource() throws Exception{
-		DeclaracionValoresCuponDataSource cuponDS = new DeclaracionValoresCuponDataSource(
-				getValoresDTO(), get_TrxName());
-		return (DeclaracionValoresCuponDataSource)loadDSData(cuponDS);
+		DeclaracionValoresCuponDataSource cuponDS = null;
+		if(isLoadCuponDataSource()){
+			cuponDS = new DeclaracionValoresCuponDataSource(getCtx(), getValoresDTO(), get_TrxName());
+			cuponDS = (DeclaracionValoresCuponDataSource)loadDSData(cuponDS);
+		}
+		return cuponDS;
 	}
 	
 	protected DeclaracionValoresCreditNoteDataSource getCreditNoteDataSource() throws Exception{
-		DeclaracionValoresCreditNoteDataSource creditNoteDS = new DeclaracionValoresCreditNoteDataSource(
-				getValoresDTO(), get_TrxName());
-		return (DeclaracionValoresCreditNoteDataSource)loadDSData(creditNoteDS);
+		DeclaracionValoresCreditNoteDataSource creditNoteDS = null;
+		if(isLoadCreditNoteDataSource()){
+			creditNoteDS = new DeclaracionValoresCreditNoteDataSource(getCtx(), getValoresDTO(), get_TrxName());
+			creditNoteDS = (DeclaracionValoresCreditNoteDataSource)loadDSData(creditNoteDS);
+		}
+		return creditNoteDS;
 	}
 	
 	protected DeclaracionValoresCuentaCorrienteDataSource getCuentaCorrienteDataSource() throws Exception{
-		DeclaracionValoresCuentaCorrienteDataSource ccDS = new DeclaracionValoresCuentaCorrienteDataSource(
-				getValoresDTO(), get_TrxName());
-		return (DeclaracionValoresCuentaCorrienteDataSource)loadDSData(ccDS);
+		DeclaracionValoresCuentaCorrienteDataSource ccDS = null;
+		if(isLoadCuentaCorrienteDataSource()){
+			ccDS = new DeclaracionValoresCuentaCorrienteDataSource(getCtx(), getValoresDTO(), get_TrxName());
+			ccDS = (DeclaracionValoresCuentaCorrienteDataSource)loadDSData(ccDS);
+		}
+		return ccDS;
+	}
+	
+	protected DeclaracionValoresVentasReceiptDataSource getVentasReceiptDataSource() throws Exception{
+		DeclaracionValoresVentasReceiptDataSource ventasReceiptDS = null;
+		if(isLoadVentasReceiptDataSource()){
+			ventasReceiptDS = new DeclaracionValoresVentasReceiptDataSource(getCtx(), getValoresDTO(), get_TrxName());
+			ventasReceiptDS = (DeclaracionValoresVentasReceiptDataSource)loadDSData(ventasReceiptDS);
+		}
+		return ventasReceiptDS;
 	}
 	
 	protected ValoresDataSource getValoresDataSource() throws Exception{
-		ValoresDataSource valoresDS = new ValoresDataSource(
-				getValoresDTO(), get_TrxName());
-		return (ValoresDataSource)loadDSData(valoresDS);
+		ValoresDataSource valoresDS = null;
+		if(isLoadValoresDataSource()){
+			valoresDS = new ValoresDataSource(getCtx(), getValoresDTO(), get_TrxName());
+			valoresDS = (ValoresDataSource)loadDSData(valoresDS);
+		}
+		return valoresDS;
 	}
 	
 	protected DeclaracionValoresDataSource loadDSData(DeclaracionValoresDataSource ds) throws Exception{
@@ -303,6 +359,58 @@ public class LaunchDeclaracionValores extends JasperReportLaunch {
 		return getJasperReport(getCtx(), "Valores-Subreporte", get_TrxName());
 	}
 
+	/**
+	 * @return el subreporte de facturas y sus medios de cobro
+	 */
+	protected MJasperReport getVentasReceiptSubreport() throws Exception{
+		return getJasperReport(getCtx(), "DeclaracionValores-Subreporte-VentasReceipt", get_TrxName());
+	}
+	
+	/**
+	 * @return título del reporte
+	 */
+	protected String getTitle(){
+		return "Declaracion de Valores";
+	}
+	
+	// Métodos flags para la carga de data sources
+	
+	protected boolean isLoadVentasDataSource(){
+		return true;
+	}
+	
+	protected boolean isLoadCashDataSource(){
+		return true;
+	}
+	
+	protected boolean isLoadCheckDataSource(){
+		return true;
+	}
+	
+	protected boolean isLoadTransferDataSource(){
+		return true;
+	}
+	
+	protected boolean isLoadCuponDataSource(){
+		return true;
+	}
+	
+	protected boolean isLoadCreditNoteDataSource(){
+		return true;
+	}
+	
+	protected boolean isLoadCuentaCorrienteDataSource(){
+		return true;
+	}
+	
+	protected boolean isLoadValoresDataSource(){
+		return true;
+	}
+	
+	protected boolean isLoadVentasReceiptDataSource(){
+		return false;
+	}
+	
 	protected void setPosJournal(MPOSJournal posJournal) {
 		this.posJournal = posJournal;
 	}

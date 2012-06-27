@@ -207,14 +207,21 @@ public interface FiscalPacket extends Serializable
 	 * @param optional: the field is optional.
 	 */
 	public void setQuantity(int field, BigDecimal quantity, boolean optional);
-	
+
 	/**
 	 * Set an amount field.
-	 * @param field: field number to set.
-	 * @param amount: amount value.
-	 * @param optional: the field is optional.
+	 * 
+	 * @param field
+	 *            : field number to set.
+	 * @param amount
+	 *            : amount value.
+	 * @param optional
+	 *            : the field is optional.
+	 * @param format
+	 *            true si se debe formatear el monto dependiendo la impresora,
+	 *            false caso contrario
 	 */
-	public void setAmount(int field, BigDecimal amount, boolean optional);
+	public void setAmount(int field, BigDecimal amount, boolean optional, boolean format);
 
 	/**
 	 * Set a text field.

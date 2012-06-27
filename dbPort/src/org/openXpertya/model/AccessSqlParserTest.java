@@ -50,7 +50,7 @@ public class AccessSqlParserTest extends TestCase {
      * @param args String[]
      */
     public static void main(String[] args) {
-        junit.swingui.TestRunner.run(AccessSqlParserTest.class);
+        junit.textui.TestRunner.run(AccessSqlParserTest.class);
     }
 
     /**

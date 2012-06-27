@@ -7,7 +7,7 @@ import java.math.*;
 import org.openXpertya.util.*;
 /** Modelo Generado por M_InOut
  *  @author Comunidad de Desarrollo Libertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
- *  @version  - 2011-10-14 18:12:51.32 */
+ *  @version  - 2012-04-20 16:58:06.932 */
 public class X_M_InOut extends org.openXpertya.model.PO
 {
 /** Constructor estándar */
@@ -362,12 +362,14 @@ public static final String DELIVERYRULE_AfterReceipt = "R";
 public static final String DELIVERYRULE_CompleteLine = "L";
 /** Force = F */
 public static final String DELIVERYRULE_Force = "F";
+/** After Invoicing = I */
+public static final String DELIVERYRULE_AfterInvoicing = "I";
 /** Set Delivery Rule.
 Defines the timing of Delivery */
 public void setDeliveryRule (String DeliveryRule)
 {
-if (DeliveryRule.equals("A") || DeliveryRule.equals("O") || DeliveryRule.equals("R") || DeliveryRule.equals("L") || DeliveryRule.equals("F"));
- else throw new IllegalArgumentException ("DeliveryRule Invalid value - Reference = DELIVERYRULE_AD_Reference_ID - A - O - R - L - F");
+if (DeliveryRule.equals("A") || DeliveryRule.equals("O") || DeliveryRule.equals("R") || DeliveryRule.equals("L") || DeliveryRule.equals("F") || DeliveryRule.equals("I"));
+ else throw new IllegalArgumentException ("DeliveryRule Invalid value - Reference = DELIVERYRULE_AD_Reference_ID - A - O - R - L - F - I");
 if (DeliveryRule == null) throw new IllegalArgumentException ("DeliveryRule is mandatory");
 if (DeliveryRule.length() > 1)
 {

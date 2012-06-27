@@ -7,7 +7,7 @@ import java.math.*;
 import org.openXpertya.util.*;
 /** Modelo Generado por M_DiscountConfig
  *  @author Comunidad de Desarrollo Libertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
- *  @version  - 2011-01-19 17:17:34.386 */
+ *  @version  - 2012-06-10 15:35:41.983 */
 public class X_M_DiscountConfig extends org.openXpertya.model.PO
 {
 /** Constructor estándar */
@@ -201,12 +201,18 @@ public static final String DOCUMENTDISCOUNT1_Promotion = "P";
 public static final String DOCUMENTDISCOUNT1_PaymentMedium = "M";
 /** Manual General Discount = Z */
 public static final String DOCUMENTDISCOUNT1_ManualGeneralDiscount = "Z";
+/** Manual Discount = D */
+public static final String DOCUMENTDISCOUNT1_ManualDiscount = "D";
+/** Discount Line = L */
+public static final String DOCUMENTDISCOUNT1_DiscountLine = "L";
+/** Document Discount = X */
+public static final String DOCUMENTDISCOUNT1_DocumentDiscount = "X";
 /** Set Document Discount Priority 1.
 Document Discount Priority 1 */
 public void setDocumentDiscount1 (String DocumentDiscount1)
 {
-if (DocumentDiscount1 == null || DocumentDiscount1.equals("G") || DocumentDiscount1.equals("B") || DocumentDiscount1.equals("C") || DocumentDiscount1.equals("P") || DocumentDiscount1.equals("M") || DocumentDiscount1.equals("Z"));
- else throw new IllegalArgumentException ("DocumentDiscount1 Invalid value - Reference = DOCUMENTDISCOUNT1_AD_Reference_ID - G - B - C - P - M - Z");
+if (DocumentDiscount1 == null || DocumentDiscount1.equals("G") || DocumentDiscount1.equals("B") || DocumentDiscount1.equals("C") || DocumentDiscount1.equals("P") || DocumentDiscount1.equals("M") || DocumentDiscount1.equals("Z") || DocumentDiscount1.equals("D") || DocumentDiscount1.equals("L") || DocumentDiscount1.equals("X"));
+ else throw new IllegalArgumentException ("DocumentDiscount1 Invalid value - Reference = DOCUMENTDISCOUNT1_AD_Reference_ID - G - B - C - P - M - Z - D - L - X");
 if (DocumentDiscount1 != null && DocumentDiscount1.length() > 1)
 {
 log.warning("Length > 1 - truncated");
@@ -233,12 +239,18 @@ public static final String DOCUMENTDISCOUNT2_Promotion = "P";
 public static final String DOCUMENTDISCOUNT2_PaymentMedium = "M";
 /** Manual General Discount = Z */
 public static final String DOCUMENTDISCOUNT2_ManualGeneralDiscount = "Z";
+/** Manual Discount = D */
+public static final String DOCUMENTDISCOUNT2_ManualDiscount = "D";
+/** Discount Line = L */
+public static final String DOCUMENTDISCOUNT2_DiscountLine = "L";
+/** Document Discount = X */
+public static final String DOCUMENTDISCOUNT2_DocumentDiscount = "X";
 /** Set Document Discount Priority 2.
 Document Discount Priority 2 */
 public void setDocumentDiscount2 (String DocumentDiscount2)
 {
-if (DocumentDiscount2 == null || DocumentDiscount2.equals("G") || DocumentDiscount2.equals("B") || DocumentDiscount2.equals("C") || DocumentDiscount2.equals("P") || DocumentDiscount2.equals("M") || DocumentDiscount2.equals("Z"));
- else throw new IllegalArgumentException ("DocumentDiscount2 Invalid value - Reference = DOCUMENTDISCOUNT2_AD_Reference_ID - G - B - C - P - M - Z");
+if (DocumentDiscount2 == null || DocumentDiscount2.equals("G") || DocumentDiscount2.equals("B") || DocumentDiscount2.equals("C") || DocumentDiscount2.equals("P") || DocumentDiscount2.equals("M") || DocumentDiscount2.equals("Z") || DocumentDiscount2.equals("D") || DocumentDiscount2.equals("L") || DocumentDiscount2.equals("X"));
+ else throw new IllegalArgumentException ("DocumentDiscount2 Invalid value - Reference = DOCUMENTDISCOUNT2_AD_Reference_ID - G - B - C - P - M - Z - D - L - X");
 if (DocumentDiscount2 != null && DocumentDiscount2.length() > 1)
 {
 log.warning("Length > 1 - truncated");
@@ -300,12 +312,18 @@ public static final String LINEDISCOUNT1_Promotion = "P";
 public static final String LINEDISCOUNT1_PaymentMedium = "M";
 /** Manual General Discount = Z */
 public static final String LINEDISCOUNT1_ManualGeneralDiscount = "Z";
+/** Manual Discount = D */
+public static final String LINEDISCOUNT1_ManualDiscount = "D";
+/** Discount Line = L */
+public static final String LINEDISCOUNT1_DiscountLine = "L";
+/** Document Discount = X */
+public static final String LINEDISCOUNT1_DocumentDiscount = "X";
 /** Set Line Discount Priority 1.
 Line Discount Priority 1 */
 public void setLineDiscount1 (String LineDiscount1)
 {
-if (LineDiscount1 == null || LineDiscount1.equals("G") || LineDiscount1.equals("B") || LineDiscount1.equals("C") || LineDiscount1.equals("P") || LineDiscount1.equals("M") || LineDiscount1.equals("Z"));
- else throw new IllegalArgumentException ("LineDiscount1 Invalid value - Reference = LINEDISCOUNT1_AD_Reference_ID - G - B - C - P - M - Z");
+if (LineDiscount1 == null || LineDiscount1.equals("G") || LineDiscount1.equals("B") || LineDiscount1.equals("C") || LineDiscount1.equals("P") || LineDiscount1.equals("M") || LineDiscount1.equals("Z") || LineDiscount1.equals("D") || LineDiscount1.equals("L") || LineDiscount1.equals("X"));
+ else throw new IllegalArgumentException ("LineDiscount1 Invalid value - Reference = LINEDISCOUNT1_AD_Reference_ID - G - B - C - P - M - Z - D - L - X");
 if (LineDiscount1 != null && LineDiscount1.length() > 1)
 {
 log.warning("Length > 1 - truncated");
@@ -332,12 +350,18 @@ public static final String LINEDISCOUNT2_Promotion = "P";
 public static final String LINEDISCOUNT2_PaymentMedium = "M";
 /** Manual General Discount = Z */
 public static final String LINEDISCOUNT2_ManualGeneralDiscount = "Z";
+/** Manual Discount = D */
+public static final String LINEDISCOUNT2_ManualDiscount = "D";
+/** Discount Line = L */
+public static final String LINEDISCOUNT2_DiscountLine = "L";
+/** Document Discount = X */
+public static final String LINEDISCOUNT2_DocumentDiscount = "X";
 /** Set Line Discount Priority 2.
 Line Discount Priority 2 */
 public void setLineDiscount2 (String LineDiscount2)
 {
-if (LineDiscount2 == null || LineDiscount2.equals("G") || LineDiscount2.equals("B") || LineDiscount2.equals("C") || LineDiscount2.equals("P") || LineDiscount2.equals("M") || LineDiscount2.equals("Z"));
- else throw new IllegalArgumentException ("LineDiscount2 Invalid value - Reference = LINEDISCOUNT2_AD_Reference_ID - G - B - C - P - M - Z");
+if (LineDiscount2 == null || LineDiscount2.equals("G") || LineDiscount2.equals("B") || LineDiscount2.equals("C") || LineDiscount2.equals("P") || LineDiscount2.equals("M") || LineDiscount2.equals("Z") || LineDiscount2.equals("D") || LineDiscount2.equals("L") || LineDiscount2.equals("X"));
+ else throw new IllegalArgumentException ("LineDiscount2 Invalid value - Reference = LINEDISCOUNT2_AD_Reference_ID - G - B - C - P - M - Z - D - L - X");
 if (LineDiscount2 != null && LineDiscount2.length() > 1)
 {
 log.warning("Length > 1 - truncated");
@@ -364,12 +388,18 @@ public static final String LINEDISCOUNT3_Promotion = "P";
 public static final String LINEDISCOUNT3_PaymentMedium = "M";
 /** Manual General Discount = Z */
 public static final String LINEDISCOUNT3_ManualGeneralDiscount = "Z";
+/** Manual Discount = D */
+public static final String LINEDISCOUNT3_ManualDiscount = "D";
+/** Discount Line = L */
+public static final String LINEDISCOUNT3_DiscountLine = "L";
+/** Document Discount = X */
+public static final String LINEDISCOUNT3_DocumentDiscount = "X";
 /** Set Line Discount Priority 3.
 Line Discount Priority 3 */
 public void setLineDiscount3 (String LineDiscount3)
 {
-if (LineDiscount3 == null || LineDiscount3.equals("G") || LineDiscount3.equals("B") || LineDiscount3.equals("C") || LineDiscount3.equals("P") || LineDiscount3.equals("M") || LineDiscount3.equals("Z"));
- else throw new IllegalArgumentException ("LineDiscount3 Invalid value - Reference = LINEDISCOUNT3_AD_Reference_ID - G - B - C - P - M - Z");
+if (LineDiscount3 == null || LineDiscount3.equals("G") || LineDiscount3.equals("B") || LineDiscount3.equals("C") || LineDiscount3.equals("P") || LineDiscount3.equals("M") || LineDiscount3.equals("Z") || LineDiscount3.equals("D") || LineDiscount3.equals("L") || LineDiscount3.equals("X"));
+ else throw new IllegalArgumentException ("LineDiscount3 Invalid value - Reference = LINEDISCOUNT3_AD_Reference_ID - G - B - C - P - M - Z - D - L - X");
 if (LineDiscount3 != null && LineDiscount3.length() > 1)
 {
 log.warning("Length > 1 - truncated");
@@ -382,6 +412,44 @@ Line Discount Priority 3 */
 public String getLineDiscount3() 
 {
 return (String)get_Value("LineDiscount3");
+}
+public static final int LINEDISCOUNT4_AD_Reference_ID = MReference.getReferenceID("Discount Kind");
+/** General Discount Schema = G */
+public static final String LINEDISCOUNT4_GeneralDiscountSchema = "G";
+/** BPartner Discount Schema = B */
+public static final String LINEDISCOUNT4_BPartnerDiscountSchema = "B";
+/** Products Combo = C */
+public static final String LINEDISCOUNT4_ProductsCombo = "C";
+/** Promotion = P */
+public static final String LINEDISCOUNT4_Promotion = "P";
+/** Payment Medium = M */
+public static final String LINEDISCOUNT4_PaymentMedium = "M";
+/** Manual General Discount = Z */
+public static final String LINEDISCOUNT4_ManualGeneralDiscount = "Z";
+/** Manual Discount = D */
+public static final String LINEDISCOUNT4_ManualDiscount = "D";
+/** Discount Line = L */
+public static final String LINEDISCOUNT4_DiscountLine = "L";
+/** Document Discount = X */
+public static final String LINEDISCOUNT4_DocumentDiscount = "X";
+/** Set Line Discount Priority 4.
+Line Discount Priority 4 */
+public void setLineDiscount4 (String LineDiscount4)
+{
+if (LineDiscount4 == null || LineDiscount4.equals("G") || LineDiscount4.equals("B") || LineDiscount4.equals("C") || LineDiscount4.equals("P") || LineDiscount4.equals("M") || LineDiscount4.equals("Z") || LineDiscount4.equals("D") || LineDiscount4.equals("L") || LineDiscount4.equals("X"));
+ else throw new IllegalArgumentException ("LineDiscount4 Invalid value - Reference = LINEDISCOUNT4_AD_Reference_ID - G - B - C - P - M - Z - D - L - X");
+if (LineDiscount4 != null && LineDiscount4.length() > 1)
+{
+log.warning("Length > 1 - truncated");
+LineDiscount4 = LineDiscount4.substring(0,1);
+}
+set_Value ("LineDiscount4", LineDiscount4);
+}
+/** Get Line Discount Priority 4.
+Line Discount Priority 4 */
+public String getLineDiscount4() 
+{
+return (String)get_Value("LineDiscount4");
 }
 /** Set Discount Configuration.
 Discount Configuration */

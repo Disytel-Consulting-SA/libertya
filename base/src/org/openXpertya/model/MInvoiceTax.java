@@ -42,6 +42,36 @@ public class MInvoiceTax extends X_C_InvoiceTax {
 	 */
 	private static final long serialVersionUID = 1L;
 
+	
+	public static MInvoiceTax get(Properties ctx, Integer invoiceID, Integer taxID, String trxName){
+		if(invoiceID == 0){
+			return null;
+		}
+		String sql = "SELECT * FROM c_invoicetax WHERE c_invoice_id = ? AND c_tax_id = ?";
+		MInvoiceTax invoiceTax = null;
+		PreparedStatement ps = null;
+		ResultSet rs = null;
+		try {
+			ps = DB.prepareStatement(sql, trxName);
+			ps.setInt(1, invoiceID);
+			ps.setInt(2, taxID);
+			rs = ps.executeQuery();
+			if(rs.next()){
+				invoiceTax = new MInvoiceTax(ctx, rs, trxName);
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
+		} finally{
+			try {
+				if(ps != null) ps = null;
+				if(rs != null) rs = null;
+			} catch (Exception e2) {
+				e2.printStackTrace();
+			}
+		}
+		return invoiceTax;
+	}
+	
 	/**
      * Descripción de Método
      *

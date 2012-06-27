@@ -85,10 +85,31 @@ public class MWarehouseClose extends X_M_Warehouse_Close implements DocAction{
 	 * de que el almacén esté abierto.
 	 */
 	public static boolean isClosed(String docBaseType, Date dateTrx, Integer warehouseID){
+		return isClosed(docBaseType, dateTrx, warehouseID, false);
+	}
+
+	/**
+	 * Chequea s un almacén está cerrado para una determinada fecha y tipo de
+	 * documento base.
+	 * 
+	 * @param docBaseType
+	 *            Tipo de documento base a consultar
+	 * @param dateTrx
+	 *            Fecha de consulta
+	 * @param warehouseID
+	 *            ID del almacén
+	 * @param bypassValidation
+	 *            true si se deben bypassear las validaciones de cierre de
+	 *            almacén, false caso contrario
+	 * @return <code>true</code> si el almacén está cerrado para esa fecha y no
+	 *         se pueden procesaro documentos con el <code>docBaseType</code>, o
+	 *         <code>false</code> en caso de que el almacén esté abierto.
+	 */
+	public static boolean isClosed(String docBaseType, Date dateTrx, Integer warehouseID, boolean bypassValidation){
 		Properties ctx = Env.getCtx();
 		// El control de cierre de almacén está activo y el docbase requiere validación
 		// de cierre de almacén...
-		if (isWarehouseCloseControlActivated() 
+		if (!bypassValidation && isWarehouseCloseControlActivated()
 				&& docBaseTypes.contains(docBaseType)) {
 			// Si no existe almacén, error
 			if(warehouseID == null || warehouseID == 0){

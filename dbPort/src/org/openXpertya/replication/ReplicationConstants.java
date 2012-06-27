@@ -11,8 +11,16 @@ public class ReplicationConstants {
 	public static int REPLICATION_TARGET_MESSAGES_PER_TRX = 100;
 	/** Cantidad de queries a agrupar por acceso a BBDD al setear estado de un registro en el origen al enviar */
 	public static int REPLICATION_SOURCE_QUERIES_PER_GROUP = 100;
+	/** Numero maximo de registros a enviar en esta ejecución (0 = todos) */
+	public static int REPLICATION_SOURCE_MAX_RECORDS = 0;
+	/** Numero maximo de registros a procesar en esta ejecución (0 = todos) */
+	public static int REPLICATION_TARGET_MAX_RECORDS = 0;	
+	/** Replicar registros solo desde el host origen dado (0 = todos los que correspondan) */
+	public static int REPLICATION_TARGET_REPLICATE_FROM_HOST = 0;
 	/** Tiempo de espera para considerar una espera de acknowledge perdida */
 	public static String ACK_TIME_OUT = null;	
+	/** Fuerza el reenvio de todos los registros (incluso los marcados como confirmados).  Solo en conjunto con ACK_TIME_OUT */
+	public static boolean RESEND_ALL_RECORDS = false;
 	/** Tabla utilizada para replicar eliminaciones */
 	public static final String DELETIONS_TABLE = "AD_Changelog_Replication";	
 	
@@ -65,8 +73,10 @@ public class ReplicationConstants {
 	public static Character REPLICATION_CONFIGURATION_SENDRECEIVE	= '3';
 
 	/** ============= CONSTANTES RELACIONADAS CON EL USO DE JMS ============= */
-	/** Organizacion destino para un mensaje */
+	/** Organizacion destino para un mensaje de evento */
 	public static String JMS_EVT_ORG_TARGET 					= "JMSEVTORGTARGET";
+	/** Organizacion destino de un evento que origina un ack en el origen */
+	public static String JMS_ACK_ORG_TARGET 					= "JMSACKORGTARGET";
 	/** Clave del map que contiene la organizacion de origen (repArrayPos) para un mensaje en la ack queue */
 	public static String JMS_ACK_ORG_SOURCE 					= "JMSACKORGSOURCE";
 	/** Clave del map que contiene los OK/ERR para un mensaje en la ack queue */	

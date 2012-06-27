@@ -8,9 +8,6 @@ package org.openXpertya.replication;
  */
 
 import java.io.StringReader;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.ResultSetMetaData;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -22,8 +19,6 @@ import org.openXpertya.model.MChangelogReplication;
 import org.openXpertya.plugin.install.ChangeLogElement;
 import org.openXpertya.plugin.install.ChangeLogGroup;
 import org.openXpertya.plugin.install.ChangeLogGroupList;
-import org.openXpertya.process.CreateReplicationTriggerProcess;
-import org.openXpertya.util.DB;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
@@ -80,8 +75,12 @@ public class ChangeLogGroupListReplication extends ChangeLogGroupList {
 				
 				/* Insertar los elementos dentro del grupo e incorporarlos al conjunto de grupos */
 				if (insertElementsIntoGroup(group, columnValues, builder) > 0)
+				{
+					// Aplicar filtrados adicionales de replicaciòn por registro
+					ReplicationFilterFactory.applyFilters(trxName, group);
+					// Incorporar a la nomina de grupos
 					groups.add(group);
-				
+				}
 				// Limpiar memoria cada cierto intervalo de iteraciones
 				if (i++ % 1000 == 0)
 					System.gc();

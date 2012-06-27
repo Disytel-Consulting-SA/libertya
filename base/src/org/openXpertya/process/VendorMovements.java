@@ -77,8 +77,8 @@ public class VendorMovements extends SvrProcess {
 				    			  rs.getInt("CreatedBy") + ", '" + 
 				    			  rs.getTimestamp("Updated") + "'::timestamp, " +
 				    			  rs.getInt("UpdatedBy") + ", '" + 
-				    			  rs.getString("issotrx") +  "' , " + 
-				                  rs.getString("DocumentNo") + " , " + 
+				    			  rs.getString("issotrx") +  "' , '" + 
+				                  rs.getString("DocumentNo") + "' , " + 
 				                  rs.getInt("C_DocType_ID") + ", " +
 				                  (rs.getTimestamp("DateAcct") == null? null : "'"+ rs.getTimestamp("DateAcct") + "'::timestamp")+ ", " +		
 				                  (rs.getTimestamp("DueDate") == null? null : "'"+ rs.getTimestamp("DueDate") + "'::timestamp")+ ", " +

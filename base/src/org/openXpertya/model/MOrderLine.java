@@ -45,6 +45,12 @@ public class MOrderLine extends X_C_OrderLine {
 	boolean shouldUpdateHeader = true;
 
 	/**
+	 * Id de descuento interno de línea manual del discount calculator, aplicado
+	 * en esta línea. Sólo para TPV
+	 */
+	private Integer lineManualDiscountID;
+	
+	/**
 	 * Lugar de Retiro. Utilizado para evitar reserva de stock en pedidos que se
 	 * retiran por TPV. Por defecto el lugar de retiro es Almacén lo cual
 	 * implica que para esta línea se hará la reserva de stock normalmente. Si
@@ -1149,14 +1155,6 @@ public class MOrderLine extends X_C_OrderLine {
 
 		@Override
 		public void setPrice(BigDecimal newPrice) {
-			// FIXME Cuando los descuentos manuales estén dentro del
-			// DiscountCalculator se debe sacar esta distinción entre manual y
-			// automático
-			// Si no tiene algún descuento automático, entonces aplico el manual
-			if(MOrderLine.this.getLineBonusAmt().compareTo(BigDecimal.ZERO) == 0 
-					&& MOrderLine.this.getLineDiscountAmt().compareTo(BigDecimal.ZERO) == 0){
-				newPrice = MOrderLine.this.calculatePrice(MOrderLine.this.getDiscount());
-			}
 			MOrderLine.this.setPrice(newPrice);		
 		}
 		
@@ -1196,6 +1194,26 @@ public class MOrderLine extends X_C_OrderLine {
 		@Override
 		public boolean isTaxIncluded() {
 			return MOrderLine.this.isTaxIncluded();
+		}
+
+		@Override
+		public void setDiscount(BigDecimal discount) {
+			MOrderLine.this.setDiscount(discount);
+		}
+
+		@Override
+		public BigDecimal getDiscount() {
+			return MOrderLine.this.getDiscount();
+		}
+
+		@Override
+		public Integer getLineManualDiscountID() {
+			return MOrderLine.this.getLineManualDiscountID();
+		}
+
+		@Override
+		public void setLineManualDiscountID(Integer lineManualDiscountID) {	
+			MOrderLine.this.setLineManualDiscountID(lineManualDiscountID);
 		}
     }
 
@@ -1558,6 +1576,14 @@ public class MOrderLine extends X_C_OrderLine {
     {
     	m_prodCache = c;
     }
+
+	public void setLineManualDiscountID(Integer lineManualDiscountID) {
+		this.lineManualDiscountID = lineManualDiscountID;
+	}
+
+	public Integer getLineManualDiscountID() {
+		return lineManualDiscountID;
+	}
 }    // MOrderLine
 
 

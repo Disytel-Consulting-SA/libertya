@@ -1,12 +1,13 @@
 /** Modelo Generado - NO CAMBIAR MANUALMENTE - Disytel */
 package org.openXpertya.model;
-import java.util.*;
+import java.util.logging.Level;
+ import java.util.*;
 import java.sql.*;
 import java.math.*;
 import org.openXpertya.util.*;
 /** Modelo Generado por C_DocumentDiscount
  *  @author Comunidad de Desarrollo Libertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
- *  @version  - 2010-09-09 10:31:47.628 */
+ *  @version  - 2012-06-10 15:34:28.89 */
 public class X_C_DocumentDiscount extends org.openXpertya.model.PO
 {
 /** Constructor estándar */
@@ -217,12 +218,18 @@ public static final String DISCOUNTKIND_Promotion = "P";
 public static final String DISCOUNTKIND_PaymentMedium = "M";
 /** Manual General Discount = Z */
 public static final String DISCOUNTKIND_ManualGeneralDiscount = "Z";
+/** Manual Discount = D */
+public static final String DISCOUNTKIND_ManualDiscount = "D";
+/** Discount Line = L */
+public static final String DISCOUNTKIND_DiscountLine = "L";
+/** Document Discount = X */
+public static final String DISCOUNTKIND_DocumentDiscount = "X";
 /** Set Discount Kind.
 Discount Kind */
 public void setDiscountKind (String DiscountKind)
 {
-if (DiscountKind == null || DiscountKind.equals("G") || DiscountKind.equals("B") || DiscountKind.equals("C") || DiscountKind.equals("P") || DiscountKind.equals("M") || DiscountKind.equals("Z"));
- else throw new IllegalArgumentException ("DiscountKind Invalid value - Reference = DISCOUNTKIND_AD_Reference_ID - G - B - C - P - M - Z");
+if (DiscountKind == null || DiscountKind.equals("G") || DiscountKind.equals("B") || DiscountKind.equals("C") || DiscountKind.equals("P") || DiscountKind.equals("M") || DiscountKind.equals("Z") || DiscountKind.equals("D") || DiscountKind.equals("L") || DiscountKind.equals("X"));
+ else throw new IllegalArgumentException ("DiscountKind Invalid value - Reference = DISCOUNTKIND_AD_Reference_ID - G - B - C - P - M - Z - D - L - X");
 if (DiscountKind != null && DiscountKind.length() > 1)
 {
 log.warning("Length > 1 - truncated");

@@ -14,6 +14,9 @@ public abstract class Payment {
 	/** Importe real (bruto) del pago */
 	private BigDecimal realAmount;
 	
+	/** Cambio de este pago */
+	private BigDecimal changeAmt = BigDecimal.ZERO;	
+	
 	/**
 	 * @return Devuelve amount.
 	 */
@@ -168,6 +171,14 @@ public abstract class Payment {
 
 	public String getDescription() {
 		return description;
+	}
+
+	public void setChangeAmt(BigDecimal changeAmt) {
+		this.changeAmt = changeAmt;
+	}
+
+	public BigDecimal getChangeAmt() {
+		return changeAmt;
 	}
 
 	

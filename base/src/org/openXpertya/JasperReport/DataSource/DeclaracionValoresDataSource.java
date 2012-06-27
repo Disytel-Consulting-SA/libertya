@@ -2,6 +2,7 @@ package org.openXpertya.JasperReport.DataSource;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Properties;
 
 import org.openXpertya.util.Util;
 
@@ -11,12 +12,17 @@ public abstract class DeclaracionValoresDataSource extends QueryDataSource {
 	/** Datos necesarios para los datos */
 	private DeclaracionValoresDTO valoresDTO;
 	
+	/** Contexto */
+	private Properties ctx;
+	
 	public DeclaracionValoresDataSource(String trxName) {
 		super(trxName);
 	}
 	
-	public DeclaracionValoresDataSource(DeclaracionValoresDTO valoresDTO, String trxName) {
+	public DeclaracionValoresDataSource(Properties ctx,
+			DeclaracionValoresDTO valoresDTO, String trxName) {
 		super(trxName);
+		setCtx(ctx);
 		setValoresDTO(valoresDTO);
 	}
 	
@@ -40,6 +46,7 @@ public abstract class DeclaracionValoresDataSource extends QueryDataSource {
 		else{
 			tableAlias = "";
 		}
+		stdWhere.append(tableAlias).append("docstatus <> 'DR' AND ");
 		if(!getValoresDTO().getJournalIDs().isEmpty()){
 			stdWhere.append(tableAlias).append("c_posjournal_id IN ").append(getValoresDTO().getJournalIDs().toString()
 					.replaceAll("]", ")").replaceAll("\\[", "("));
@@ -48,7 +55,7 @@ public abstract class DeclaracionValoresDataSource extends QueryDataSource {
 			stdWhere.append(" AND ("+tableAlias+"ad_user_id = ?) ");
 		}
 		if(withTenderType){
-			stdWhere.append(" AND ("+tableAlias+"tendertype = '").append(getTenderType()).append("') ");
+			stdWhere.append(" AND ("+tableAlias+"tendertype IN (").append(getTenderType()).append(")) ");
 		}
 		return Util.removeInitialAND(stdWhere.toString());
 	}
@@ -78,5 +85,13 @@ public abstract class DeclaracionValoresDataSource extends QueryDataSource {
 
 	protected DeclaracionValoresDTO getValoresDTO() {
 		return valoresDTO;
+	}
+
+	public void setCtx(Properties ctx) {
+		this.ctx = ctx;
+	}
+
+	public Properties getCtx() {
+		return ctx;
 	}
 }

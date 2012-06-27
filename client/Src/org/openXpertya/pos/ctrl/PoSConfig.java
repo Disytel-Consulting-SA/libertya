@@ -49,6 +49,10 @@ public class PoSConfig {
 	private int cashID;
 	private boolean controlCashReturns;
 	private BigDecimal maxCashReturnWithoutAuth;
+	private boolean initialAuthorization;
+	private boolean lockedClosed;
+	private boolean printCurrentAccountDocument;
+	private String posnet;
 	
 	// Del sistema
 	private int currencyID;
@@ -102,13 +106,16 @@ public class PoSConfig {
 			setSearchByNameLike(pos.isSearchByNameLike());
 			
 			setDeliverOrderInWarehouse(pos.isDeliverOrderInWarehouse());
-			//setPrintWarehouseDeliverDocument(pos.isPrintWarehouseDeliverDocument());
-			setPrintWarehouseDeliverDocument(true);
+			setPrintWarehouseDeliverDocument(pos.isPrintWarehouseDeliverDocument());
+			setPrintCurrentAccountDocument(pos.isPrintCurrentAccountDocument());
 			setControlCashReturns(pos.isReturnedCashInCNControl());
 			setMaxCashReturnWithoutAuth(pos.getMaxReturnedCashInCN());
 			
 			setSearchToday(pos.isSearchToday());
 			setCopyEntity(pos.isCopyEntity());
+			setInitialAuthorization(pos.isInitialPOSAuthorization());
+			setLockedClosed(pos.isLockedClosed());
+			setPosnet(pos.getPosnet());
 		}	
 	}
 	
@@ -659,5 +666,37 @@ public class PoSConfig {
 	 */
 	public void setCopyEntity(boolean copyEntity) {
 		this.copyEntity = copyEntity;
+	}
+
+	public void setInitialAuthorization(boolean initialAuthorization) {
+		this.initialAuthorization = initialAuthorization;
+	}
+
+	public boolean isInitialAuthorization() {
+		return initialAuthorization;
+	}
+
+	public void setLockedClosed(boolean lockedClosed) {
+		this.lockedClosed = lockedClosed;
+	}
+
+	public boolean isLockedClosed() {
+		return lockedClosed;
+	}
+
+	public void setPrintCurrentAccountDocument(boolean printCurrentAccountDocument) {
+		this.printCurrentAccountDocument = printCurrentAccountDocument;
+	}
+
+	public boolean isPrintCurrentAccountDocument() {
+		return printCurrentAccountDocument;
+	}
+
+	public void setPosnet(String posnet) {
+		this.posnet = posnet;
+	}
+
+	public String getPosnet() {
+		return posnet;
 	}
 }
