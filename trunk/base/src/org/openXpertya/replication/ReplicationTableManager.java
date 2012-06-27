@@ -9,6 +9,7 @@ import java.util.Vector;
 import org.openXpertya.model.M_Column;
 import org.openXpertya.process.CreateReplicationTriggerProcess;
 import org.openXpertya.util.DB;
+import org.openXpertya.util.Env;
 
 public class ReplicationTableManager {
 
@@ -51,8 +52,10 @@ public class ReplicationTableManager {
 	 */
 	public void evaluateChanges() throws Exception
 	{
-		// Recuperar todos los registros a replicar
-		pstmt = DB.prepareStatement(getRecordsForReplicationQuery().toString(), trxName, true);
+		// Recuperar todos los registros a replicar (inlcuir el limite indicado por parametro si el mismo es mayor a cero)
+		// Esta parte queda fuera del query cacheado debido a que en distintas ejecuciones el parametro puede varias
+		String limitRecords = ReplicationConstants.REPLICATION_SOURCE_MAX_RECORDS > 0 ? " LIMIT " + ReplicationConstants.REPLICATION_SOURCE_MAX_RECORDS : "";
+		pstmt = DB.prepareStatement(getRecordsForReplicationQuery() + limitRecords, trxName, true);
 		rs = pstmt.executeQuery();	
 	}
 	
@@ -137,7 +140,7 @@ public class ReplicationTableManager {
 		String queryTail = " FROM " + rs.getString("tablename") + " WHERE retrieveUID = '" + rs.getString("retrieveUID")+ "'";
 		// Si estoy tomando un registro de la tabla de eliminaciones, entonces solo obtener la columna que apunta a la tabla donde hay que eliminar el registro
 		if (ReplicationConstants.DELETIONS_TABLE.equalsIgnoreCase(rs.getString("tablename")))
-			return " SELECT ad_table_id " + queryTail;
+			return " SELECT ad_table_id, ad_org_id " + queryTail;
 		return " SELECT * " + queryTail;
 
 	}
@@ -171,41 +174,29 @@ public class ReplicationTableManager {
 	{
 		if (recordsForReplicationQuery == null)
 		{
-			// Obtengo las tuplas a replicar (Inserciones o Modificaciones)
+			// Obtengo las tuplas a replicar. Todos los registros con marcas de replicacion (Inserciones, Modificaciones o Eliminaciones).  
 			StringBuffer query = new StringBuffer(" SELECT * FROM ( ");
 			for (String aTable : getTablesForReplication())
 			{
 				query.append(" SELECT '").append(aTable).append("' as tablename, retrieveUID, reparray, created ");
 				query.append(" FROM ").append(aTable);
-				query.append(" WHERE ( reparray ilike '%"+ReplicationConstants.REPARRAY_REPLICATE_INSERT +"%' OR reparray ilike '%"+ReplicationConstants.REPARRAY_REPLICATE_MODIFICATION 		+"%' ");
-				query.append(" 		OR reparray ilike '%"+ReplicationConstants.REPARRAY_REPLICATE_AFTER_RETRY1 +"%' OR reparray ilike '%"+ReplicationConstants.REPARRAY_REPLICATE_AFTER_RETRY2 	+"%' ");
-				query.append(" 		OR reparray ilike '%"+ReplicationConstants.REPARRAY_REPLICATE_AFTER_RETRY3 +"%' OR reparray ilike '%"+ReplicationConstants.REPARRAY_REPLICATE_AFTER_RETRY4 	+"%' ");
-				query.append(" 		OR reparray ilike '%"+ReplicationConstants.REPARRAY_REPLICATE_AFTER_RETRY5 +"%' OR reparray ilike '%"+ReplicationConstants.REPARRAY_REPLICATE_AFTER_RETRY6 	+"%' ");
-				query.append(" 		OR reparray ilike '%"+ReplicationConstants.REPARRAY_REPLICATE_AFTER_RETRY7 +"%' OR reparray ilike '%"+ReplicationConstants.REPARRAY_REPLICATE_AFTER_RETRY8 	+"%' ");
-				query.append(" 		OR reparray ilike '%"+ReplicationConstants.REPARRAY_REPLICATE_AFTER_RETRY9 +"%' OR reparray ilike '%"+ReplicationConstants.REPARRAY_REPLICATE_AFTER_RETRY10 +"%' ");
-				// incluir registros por timeout sin ack.  si no recibo ack luego de un tiempo, reenviarlos (solo en caso de estar definido)
+				query.append(" WHERE ( ");
+				query.append(" 		   reparray similar to ('").append(getReplicationStates(true)).append("') ");
+				// incluir registros por timeout sin ack.  si no recibo ack luego de un tiempo, reenviarlos (solo en caso de estar definido el parametro)
 				if (ReplicationConstants.ACK_TIME_OUT != null )
-					query.append(" 	OR ((reparray ilike '%"+ReplicationConstants.REPARRAY_ACK_WAITING+"%' OR reparray ilike '%"+ReplicationConstants.REPARRAY_REPLICATE_AFTER_ACK +"%') ")
-						 .append("		AND NOW() - " + CreateReplicationTriggerProcess.COLUMN_DATELASTSENT +  "  > '" + ReplicationConstants.ACK_TIME_OUT + "') 	");
+				{
+					// reenviar TODOS los registros dentro del período especificado? incluso los ya confirmados?
+					if (ReplicationConstants.RESEND_ALL_RECORDS)
+						query.append(" 	OR ( (reparray similar to ('").append(getReplicationStates(false)).append("') ) ");
+					else
+						query.append(" 	OR ( (reparray similar to ('%").append(ReplicationConstants.REPARRAY_ACK_WAITING).append("%|%").append(ReplicationConstants.REPARRAY_REPLICATE_AFTER_ACK).append("%') ) ");
+					// limitar al periodo especificado
+					query.append("		AND NOW() - " + CreateReplicationTriggerProcess.COLUMN_DATELASTSENT +  "  > '" + ReplicationConstants.ACK_TIME_OUT + "') 	");
+				}
 				query.append(" 		) ");				
-				query.append(" AND AD_Client_ID = (SELECT AD_Client_ID FROM AD_ReplicationHost WHERE thishost = 'Y') ");
+				query.append(" AND AD_Client_ID = " + Env.getContext(Env.getCtx(), "#AD_Client_ID") );
 				query.append(" UNION ");
 			}
-			// Eliminaciones
-			query.append(" SELECT '"+ReplicationConstants.DELETIONS_TABLE+"' as tablename, retrieveUID, reparray, created FROM " + ReplicationConstants.DELETIONS_TABLE);
-			query.append(" WHERE ( reparray ilike '%"+ReplicationConstants.REPARRAY_REPLICATE_INSERT +"%' OR reparray ilike '%"+ReplicationConstants.REPARRAY_REPLICATE_MODIFICATION 		+"%' ");
-			query.append(" 		OR reparray ilike '%"+ReplicationConstants.REPARRAY_REPLICATE_AFTER_RETRY1 +"%' OR reparray ilike '%"+ReplicationConstants.REPARRAY_REPLICATE_AFTER_RETRY2 	+"%' ");
-			query.append(" 		OR reparray ilike '%"+ReplicationConstants.REPARRAY_REPLICATE_AFTER_RETRY3 +"%' OR reparray ilike '%"+ReplicationConstants.REPARRAY_REPLICATE_AFTER_RETRY4 	+"%' ");
-			query.append(" 		OR reparray ilike '%"+ReplicationConstants.REPARRAY_REPLICATE_AFTER_RETRY5 +"%' OR reparray ilike '%"+ReplicationConstants.REPARRAY_REPLICATE_AFTER_RETRY6 	+"%' ");
-			query.append(" 		OR reparray ilike '%"+ReplicationConstants.REPARRAY_REPLICATE_AFTER_RETRY7 +"%' OR reparray ilike '%"+ReplicationConstants.REPARRAY_REPLICATE_AFTER_RETRY8 	+"%' ");
-			query.append(" 		OR reparray ilike '%"+ReplicationConstants.REPARRAY_REPLICATE_AFTER_RETRY9 +"%' OR reparray ilike '%"+ReplicationConstants.REPARRAY_REPLICATE_AFTER_RETRY10 +"%' ");
-			// incluir registros por timeout sin ack.  si no recibo ack luego de un tiempo, reenviarlos (solo en caso de estar definido)
-			if (ReplicationConstants.ACK_TIME_OUT != null )
-				query.append(" 	OR ((reparray ilike '%"+ReplicationConstants.REPARRAY_ACK_WAITING+"%' OR reparray ilike '%"+ReplicationConstants.REPARRAY_REPLICATE_AFTER_ACK +"%') ")
-				 	 .append("		AND NOW() - " + CreateReplicationTriggerProcess.COLUMN_DATELASTSENT + " > '" + ReplicationConstants.ACK_TIME_OUT + "') ");
-			query.append(" 		) ");			
-			query.append(" AND AD_Client_ID = (SELECT AD_Client_ID FROM AD_ReplicationHost WHERE thishost = 'Y') ");			
-			query.append(" UNION ");
 			// Finalizacion del query
 			query.append(" SELECT NULL, NULL, NULL, NULL ");							// por el ultimo union...
 			query.append(" ) AS foo WHERE tablename IS NOT NULL ORDER BY CREATED ");	// (se ignora en este where)
@@ -214,6 +205,50 @@ public class ReplicationTableManager {
 		}
 		return recordsForReplicationQuery;
 	}
+	
+	/** Si hay cambios en parametros, la cache de la query deberá invalidarse */
+	public static void invalidateCache()
+	{
+		recordsForReplicationQuery = null;
+	}
+	
+	/**
+	 * Carga como parte del query los posibles estados basicos para replicación
+	 * Ejemplo: (1|3|A|B...| )
+	 * @param standardRepStates si es true devuelve los estados tradicinoales de replicacion
+	 * 							(ignorando los de replicado, por timeout y los de fin de reintentos)
+	 * 							si es false devuelve los estados no tradicionals de replicación
+	 * 							(los de replicado, por timeout y los de fin de reintentos) 
+	 */
+	StringBuffer standardRepStateList = null;
+	StringBuffer extrasRepStatesList = null;
+	protected StringBuffer getReplicationStates(boolean standardRepStates)
+	{
+		/* Caso por estados tradicionales */
+		if (standardRepStates) {
+			// Usar cache
+			if (standardRepStateList == null) {
+				standardRepStateList = new StringBuffer();
+				for (Character aRepState : ReplicationConstants.replicateStates)
+					standardRepStateList.append("%").append(aRepState).append("%|");
+			}
+			return standardRepStateList;
+		}
+
+		/* Caso por estados extras  */
+		// Usar cache
+		if (extrasRepStatesList == null) {
+			extrasRepStatesList = new StringBuffer();
+			for (Character aRepState : ReplicationConstants.timeOutStates)
+				extrasRepStatesList.append("%").append(aRepState).append("%|");
+			extrasRepStatesList.append("%").append(ReplicationConstants.REPARRAY_REPLICATED).append("%|");
+			extrasRepStatesList.append("%").append(ReplicationConstants.REPARRAY_NO_RETRY).append("%|");
+			extrasRepStatesList.append("%").append(ReplicationConstants.REPARRAY_REPLICATE_NO_RETRY).append("%|");
+		}
+		return extrasRepStatesList;
+
+	}
+	
 	
 	/**
 	 * Liberar memoria

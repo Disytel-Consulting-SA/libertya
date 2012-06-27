@@ -372,9 +372,9 @@ public abstract class AbstractFiscalPacket implements FiscalPacket
 			setString(field, qtyStr);
 	}
 
-	public void setAmount(int field, BigDecimal amount, boolean optional) {
+	public void setAmount(int field, BigDecimal amount, boolean optional, boolean format) {
 		String amtStr = amount.toString(); 
-		if(getFiscalPrinter() != null)
+		if(getFiscalPrinter() != null && format)
 			amtStr = getFiscalPrinter().formatAmount(amount);
 		if(optional)
 			setOptionalField(field,amtStr);

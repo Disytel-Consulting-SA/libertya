@@ -17,6 +17,7 @@ import java.util.List;
 import java.util.Map;
 
 import javax.swing.AbstractAction;
+import javax.swing.Action;
 import javax.swing.BorderFactory;
 import javax.swing.ButtonGroup;
 import javax.swing.ImageIcon;
@@ -31,10 +32,11 @@ import org.compiere.swing.CLabel;
 import org.compiere.swing.CPanel;
 import org.compiere.swing.CTextField;
 import org.openXpertya.apps.AUserAuth;
+import org.openXpertya.grid.ed.VCheckBox;
 import org.openXpertya.grid.ed.VNumber;
+import org.openXpertya.model.DiscountCalculator.IDocumentLine.DiscountApplication;
 import org.openXpertya.pos.ctrl.PoSModel;
 import org.openXpertya.pos.model.OrderProduct;
-import org.openXpertya.pos.model.OrderProduct.DiscountApplication;
 import org.openXpertya.pos.model.User;
 import org.openXpertya.reflection.CallResult;
 import org.openXpertya.swing.util.FocusUtils;
@@ -466,7 +468,8 @@ public class UpdateOrderProductDialog extends JDialog {
 			cItemPanel.add(userAuthPanel.getAuthPanel(), userAuthConstraints);
 			
 			//cItemPanel.add(cApplicationLabel, gridBagConstraints18);
-			
+			updateDiscountComponents();
+			updateDiscountAmtText();
 		}
 		return cItemPanel;
 	}
@@ -533,14 +536,12 @@ public class UpdateOrderProductDialog extends JDialog {
 						BigDecimal discount = op.scalePrice(op.calculateDiscount(price));
 						
 						getCDiscountText().setValue(discount); 
+						updateDiscountAmtText();
 					}
 				}
 				
 			});
 			FocusUtils.addFocusHighlight(cProductTaxedPriceText);
-			// Solo se puede editar el descuento si la línea no tiene descuentos
-			// automáticos asignados
-			cProductTaxedPriceText.setReadWrite(!getOrderProduct().hasAutomaticDiscount());
 		}
 		return cProductTaxedPriceText;
 	}
@@ -566,16 +567,13 @@ public class UpdateOrderProductDialog extends JDialog {
 						BigDecimal taxedPriceList = op.getTaxedPrice(op.getPriceList());
 						BigDecimal taxedPrice = op.scalePrice(taxedPriceList.subtract(taxedPriceList.multiply(discount.divide(new BigDecimal(100),10,BigDecimal.ROUND_HALF_UP))));
 						getCProductTaxedPriceText().setValue(taxedPrice);
+						updateDiscountAmtText();
 					}
 				}
 				
 			});
 			cDiscountText.setValue(getOrderProduct().getDiscount());
 			FocusUtils.addFocusHighlight(cDiscountText);
-			// Solo se puede editar el descuento manual si la línea no tiene descuentos
-			// automáticos asignados
-			// FIXME: se debe poder hacer un dto manual a pesar de tener automáticos.
-			cDiscountText.setReadWrite(!getOrderProduct().hasAutomaticDiscount());
 		}
 		return cDiscountText;
 	}
@@ -714,14 +712,18 @@ public class UpdateOrderProductDialog extends JDialog {
 			applicationGroup = new ButtonGroup();
 			applicationGroup.add(getCToPriceRadio());
 			applicationGroup.add(getCBonusRadio());
-			if (!getOrderProduct().hasAutomaticDiscount()) {
-				// FIXME: este es otro punto de fix cuando se habiliten los
-				// descuentos manuales con los automáticos.
+			if (getOrderProduct().getDiscount() != null
+					&& getOrderProduct().getDiscount().compareTo(
+							BigDecimal.ZERO) != 0) {
 				if (getOrderProduct().getLineBonusAmt().compareTo(BigDecimal.ZERO) > 0) {
 					applicationGroup.setSelected(getCBonusRadio().getModel(), true);
 				} else {
 					applicationGroup.setSelected(getCToPriceRadio().getModel(), true);				
 				}
+			}
+			// Seleccionar uno por defecto
+			if(applicationGroup.getSelection() == null){
+				applicationGroup.setSelected(getCToPriceRadio().getModel(), true);
 			}
 		}
 		return cApplicationPanel;
@@ -737,10 +739,17 @@ public class UpdateOrderProductDialog extends JDialog {
 			cToPriceRadio = new JRadioButton();
 			cToPriceRadio.setText(MSG_TO_PRICE);
 			FocusUtils.addFocusHighlight(cToPriceRadio);
-			// FIXME: a pesar de tener descuentos automáticos es necesario que
-			// se pueda aplicar un descuento manual y por ende este radio debe
-			// estar habilitado
-			cToPriceRadio.setEnabled(!getOrderProduct().hasAutomaticDiscount());
+			KeyStroke keyStroke = KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0);
+			String actionName = "setSelectedToPriceRadio";
+			Action action = new AbstractAction() {
+				@Override
+				public void actionPerformed(ActionEvent arg0) {
+					cToPriceRadio.setSelected(true);
+					fireActionPerformed(cToPriceRadio.getActionListeners(), null);
+				}
+			};
+			cToPriceRadio.getInputMap().put(keyStroke, actionName);
+			cToPriceRadio.getActionMap().put(actionName, action);
 		}
 		return cToPriceRadio;
 	}
@@ -755,12 +764,32 @@ public class UpdateOrderProductDialog extends JDialog {
 			cBonusRadio = new JRadioButton();
 			cBonusRadio.setText(MSG_BONUS);
 			FocusUtils.addFocusHighlight(cBonusRadio);
-			// FIXME: Deshabilitado temporalmente ya que las bonificaciones
-			// manuales no se están imprimiendo correctamente en el comprobante
-			// fiscal
-			cBonusRadio.setEnabled(false);
+			KeyStroke keyStroke = KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0);
+			String actionName = "setSelectedBonusRadio";
+			Action action = new AbstractAction() {
+				@Override
+				public void actionPerformed(ActionEvent arg0) {
+					cBonusRadio.setSelected(true);
+					fireActionPerformed(cBonusRadio.getActionListeners(), null);
+				}
+			};
+			cBonusRadio.getInputMap().put(keyStroke, actionName);
+			cBonusRadio.getActionMap().put(actionName, action);
 		}
 		return cBonusRadio;
+	}
+	
+	/**
+	 * Dispara el evento action performed con el evento parámetro a todos los
+	 * listeners parámetro
+	 * 
+	 * @param listeners
+	 * @param event
+	 */
+	protected void fireActionPerformed(ActionListener[] listeners, ActionEvent event){
+		for (ActionListener actionListener : listeners) {
+			actionListener.actionPerformed(event);
+		}
 	}
 	
 	private CPanel getCDiscountTitlePanel() {
@@ -770,6 +799,15 @@ public class UpdateOrderProductDialog extends JDialog {
 		return panel;
 	}
 
+	private void updateDiscountComponents(){
+		boolean isManualDiscountApplicable = getOrderProduct().getOrder()
+				.isManualDiscountApplicable(getOrderProduct());
+		getCBonusRadio().setEnabled(isManualDiscountApplicable);
+		getCToPriceRadio().setEnabled(isManualDiscountApplicable);
+		getCDiscountText().setReadWrite(isManualDiscountApplicable);
+		getCProductTaxedPriceText().setReadWrite(isManualDiscountApplicable);
+	}
+	
 	/**
 	 * @return Devuelve orderProduct.
 	 */
@@ -807,6 +845,19 @@ public class UpdateOrderProductDialog extends JDialog {
 
 	private boolean validateUpdate() {
 		return true;
+	}
+	
+	private void updateDiscountAmtText(){
+		BigDecimal manualDiscount = (BigDecimal) (getCDiscountText().getValue() == null ? BigDecimal.ZERO
+				: getCDiscountText().getValue());
+		BigDecimal priceList = (BigDecimal)getCPriceListText().getValue();
+		priceList = priceList == null
+				|| manualDiscount.compareTo(BigDecimal.ZERO) == 0 ? BigDecimal.ZERO
+				: priceList;
+		BigDecimal price = (BigDecimal)getCProductTaxedPriceText().getValue();
+		price = price == null || manualDiscount.compareTo(BigDecimal.ZERO) == 0 ? BigDecimal.ZERO: price;
+		getCDiscountAmtText().setValue(
+				getOrderProduct().getPricesDiff(priceList, price));
 	}
 	
 	private boolean validateUserAccess() {

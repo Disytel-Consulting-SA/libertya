@@ -26,6 +26,7 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Level;
+
 import org.openXpertya.apps.form.VComponentsFactory;
 import org.openXpertya.model.MDocType;
 import org.openXpertya.model.MInOut;
@@ -40,6 +41,7 @@ import org.openXpertya.util.DB;
 import org.openXpertya.util.DisplayType;
 import org.openXpertya.util.Env;
 import org.openXpertya.util.Msg;
+import org.openXpertya.util.Util;
 
 /**
  * Descripción de Clase
@@ -76,6 +78,9 @@ public class VCreateFromInvoice extends VCreateFrom {
     
 	/** Este crear desde lleva la lógica de facturas o la lógica de remitos? */
     private Boolean isForInvoice = null;
+    
+    /** Tipo de Documento a crear */
+    private MDocType docType;
     
     /**
      * Descripción de Método
@@ -333,10 +338,15 @@ public class VCreateFromInvoice extends VCreateFrom {
 
     	// Actualiza el encabezado de la factura
         MInvoice invoice = getInvoice();
+		invoice.setDragDocumentDiscountAmts(getDocType()
+				.isDragOrderDocumentDiscounts());
         log.config( invoice.toString());
         // Asociación con el pedido
         if( p_order != null ) {
             invoice.setOrder( p_order, true );    // overwrite header values
+			invoice.setManageDragOrderDiscounts(getDocType()
+					.isDragOrderDocumentDiscounts()
+					|| getDocType().isDragOrderLineDiscounts());
             if (!invoice.save()) {
             	throw new CreateFromSaveException(CLogger.retrieveErrorAsString());
             }
@@ -378,7 +388,12 @@ public class VCreateFromInvoice extends VCreateFrom {
             invoiceLine.setM_Product_ID(M_Product_ID, C_UOM_ID);    // Line UOM
             invoiceLine.setQty(QtyEntered);    // Invoiced/Entered
             invoiceLine.setDescription(docLine.description);
-            
+			invoiceLine.setDragDocumentDiscountAmts(getDocType()
+					.isDragOrderDocumentDiscounts());
+			invoiceLine.setDragLineDiscountAmts(getDocType()
+					.isDragOrderLineDiscounts());
+			invoiceLine.setDragOrderPrice(getDocType().isDragOrderPrice());
+			
             // Info
             MOrderLine orderLine = null;
 
@@ -433,7 +448,7 @@ public class VCreateFromInvoice extends VCreateFrom {
 
             // Order Info
 
-            if( orderLine != null ) {
+            if( orderLine != null) {
                 invoiceLine.setOrderLine( orderLine );    // overwrites
 
                 if( orderLine.getQtyEntered().compareTo( orderLine.getQtyOrdered()) != 0 ) {
@@ -452,8 +467,27 @@ public class VCreateFromInvoice extends VCreateFrom {
              	);
             }
         }        // for all rows
+        
+		// Actualización de la cabecera por totales de descuentos e impuestos
+		// siempre y cuando el tipo de documento lo permita
+        if(getDocType().isDragOrderDocumentDiscounts() && p_order != null){
+			try{
+				invoice.updateTotalDocumentDiscount();	
+			} catch(Exception e){
+				throw new CreateFromSaveException(e.getMessage());
+			}
+        }
     }    // saveInvoice
 
+    @Override
+    protected String getRemainingQtySQLLine(boolean forInvoice){
+    	String sqlLine = super.getRemainingQtySQLLine(forInvoice);
+    	if(!forInvoice){
+    		sqlLine = " (CASE WHEN (l.QtyOrdered - l.QtyDelivered) > l.QtyInvoiced THEN l.QtyInvoiced ELSE (l.QtyOrdered - l.QtyDelivered) END) ";
+    	}
+    	return sqlLine;
+    }
+    
 	/**
 	 * Inicializa la condición que determina si es para una factura o no. En
 	 * realidad es para una factura, pero esto también determina algunos filtros
@@ -470,11 +504,11 @@ public class VCreateFromInvoice extends VCreateFrom {
 		// configurado en la factura. El tipo de doc. base debe ser Abono de
 		// Cliente o Abono de Proveedor
     	MInvoice invoice = getInvoice();
-		MDocType docType = new MDocType(getCtx(), invoice
-				.getC_DocTypeTarget_ID(), getTrxName());
-		isForInvoice = !docType.getDocBaseType().equals(
+		setDocType(new MDocType(getCtx(), invoice.getC_DocTypeTarget_ID(),
+				getTrxName()));
+		isForInvoice = !getDocType().getDocBaseType().equals(
 				MDocType.DOCBASETYPE_ARCreditMemo)
-				&& !docType.getDocBaseType().equals(
+				&& !getDocType().getDocBaseType().equals(
 						MDocType.DOCBASETYPE_APCreditMemo);
     }
     
@@ -643,6 +677,14 @@ public class VCreateFromInvoice extends VCreateFrom {
 	protected void customizarPanel() {
 		// TODO Auto-generated method stub
 		
+	}
+
+	protected void setDocType(MDocType docType) {
+		this.docType = docType;
+	}
+
+	protected MDocType getDocType() {
+		return docType;
 	}
 
 }    // VCreateFromInvoice

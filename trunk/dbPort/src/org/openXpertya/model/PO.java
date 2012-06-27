@@ -278,6 +278,8 @@ public abstract class PO implements Serializable, Comparator, Evaluatee {
 
 	/** Generalizacion de variable para documentos */
 	protected String m_processMsg = "";
+	
+	private boolean isFromTab = false;
 
 	/**
 	 * Initialize and return PO_Info
@@ -4641,5 +4643,13 @@ public abstract class PO implements Serializable, Comparator, Evaluatee {
 					"@" + fieldName + "@"
 			})
 		);
+	}
+
+	public void setFromTab(boolean isFromTab) {
+		this.isFromTab = isFromTab;
+	}
+
+	public boolean isFromTab() {
+		return isFromTab;
 	}
 } // PO

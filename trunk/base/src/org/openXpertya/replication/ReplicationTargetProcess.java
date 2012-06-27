@@ -3,7 +3,6 @@ package org.openXpertya.replication;
 import java.util.HashMap;
 import java.util.Vector;
 import java.util.logging.Level;
-import java.util.logging.Logger;
 
 import javax.jms.JMSException;
 import javax.jms.Message;
@@ -12,7 +11,6 @@ import javax.jms.TextMessage;
 
 import org.openXpertya.model.MReplicationHost;
 import org.openXpertya.model.PO;
-import org.openXpertya.model.X_AD_ReplicationError;
 import org.openXpertya.util.DB;
 import org.openXpertya.util.Trx;
 
@@ -39,7 +37,7 @@ public class ReplicationTargetProcess extends AbstractReplicationProcess {
 			}
 			catch (Exception e)
 			{
-				saveLog(Level.SEVERE, false, "Imposible conectar a host origen (" + replicationArrayPos + "): " + e.getMessage(), null);
+				saveLog(Level.SEVERE, true, "Imposible conectar a host origen (" + replicationArrayPos + "): " + e.toString(), null);
 			}
 		}
 		
@@ -56,6 +54,11 @@ public class ReplicationTargetProcess extends AbstractReplicationProcess {
 	 */
 	protected boolean shouldReplicateFromHost(int position)
 	{
+		// Si en los parametros se especificó un host en especial, verificar si es el correcto
+		if (ReplicationConstants.REPLICATION_TARGET_REPLICATE_FROM_HOST > 0) 
+			return position == ReplicationConstants.REPLICATION_TARGET_REPLICATE_FROM_HOST;
+		
+		// Si no se especificó un host en especial, revisar cuales son a los que deberá conectarse 
 		String sql = " SELECT count(distinct(1)) " +
 					 " FROM ad_tablereplication " +
 					 " WHERE ad_client_Id = " + getAD_Client_ID() + 
@@ -85,12 +88,14 @@ public class ReplicationTargetProcess extends AbstractReplicationProcess {
 	        TextMessage message = null;        
 	        getConsumerConnection().start();
         	int messagesPerTrx = getMessagesPerTrx();
-	        while (ok) 
-	        {
-	        	// Procesar hasta un quantum dentro de esta transacción
+        	int totalMsgCount = 0;
+        	// Finalizar procesamiento si se llego al limite de registros indicado como parametro (si es 0 no hay limite) o si no hay nada en la cola
+        	while (ok && (ReplicationConstants.REPLICATION_TARGET_MAX_RECORDS == 0 || totalMsgCount < ReplicationConstants.REPLICATION_TARGET_MAX_RECORDS))
+        	{
+    			// Procesar hasta un quantum dentro de esta transacción, por limite de registros (si es 0 no hay limite), o si no hay nada en la cola
 	        	int msgCount = 0;
 	        	StringBuffer completeXML = new StringBuffer();
-	        	while (ok && msgCount < messagesPerTrx)
+	        	while (ok && (ReplicationConstants.REPLICATION_TARGET_MAX_RECORDS == 0 || totalMsgCount < ReplicationConstants.REPLICATION_TARGET_MAX_RECORDS) && msgCount < messagesPerTrx)
 	        	{
 	            	Message m = null;
 	            	int attempts = 0;
@@ -110,6 +115,7 @@ public class ReplicationTargetProcess extends AbstractReplicationProcess {
 		            	message = (TextMessage) m;
 		                completeXML.append(message.getText());
 		                msgCount++;
+		                totalMsgCount++;
 		            }
 		            else ok = false;
 	        	}
@@ -171,6 +177,7 @@ public class ReplicationTargetProcess extends AbstractReplicationProcess {
 
         /* Enviar el mensaje Ack */
         ObjectMessage message = getProducerSession().createObjectMessage();
+        message.setStringProperty(ReplicationConstants.JMS_ACK_ORG_TARGET, ""+thisOrgPos);
         message.setObject(map);
         getProducer().send(message);
 	}

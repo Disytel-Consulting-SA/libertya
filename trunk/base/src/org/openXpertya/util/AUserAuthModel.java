@@ -69,6 +69,8 @@ public abstract class AUserAuthModel {
 				new Object[] { UserAuthConstants.getProcessValue(userAuthData
 						.getAuthOperations().toString().replaceAll("]", "")
 						.replaceAll("\\[", "")) });
+		String notAuthorizedUserShortMsg = Msg.getMsg(ctx,
+				"NotAllowedUserToCompleteOperationShort");
 		// La validación de perfil de Supervidor en el TPV pisa el permiso por
 		// proceso, por lo tanto si el usuario posee permiso a nivel perfil de
 		// supervisor de TPV pero no a nivel proceso (operación a autorizar)
@@ -83,7 +85,9 @@ public abstract class AUserAuthModel {
 		// entonces error 
 		if(!authorizedUser){
 			resultReturn.setMsg(
-					Msg.parseTranslation(ctx, notAuthorizedUserMsg), true);
+					userAuthData.isShowAditionalNoAccessErrorMsg() ? Msg
+							.parseTranslation(ctx, notAuthorizedUserMsg) : Msg
+							.getMsg(ctx, notAuthorizedUserShortMsg), true);
 			return resultReturn;
 		}
 		// ----------------------------------

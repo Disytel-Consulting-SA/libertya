@@ -93,7 +93,7 @@ public class PosMainFormEmulator extends PoSMainForm {
 			// Entidad Comercial
 			BusinessPartner aBP = new BusinessPartner(TPV_BPARTNER_CUSTOMER_ID, TPV_BPARTNER_CUSTOMER_LOCATION_ID, TPV_BPARTNER_TAX_ID, TPV_BPARTNER_NAME);
 			// Impuesto
-			Tax aTax = new Tax(1010085, Env.ZERO);
+			Tax aTax = new Tax(1010085, Env.ZERO, false);
 			// Articulos
 			ArrayList<OrderProduct> productsList = new ArrayList<OrderProduct>();
 			for (int j = 0; j < TPV_LINES_PER_SIMULATION; j++)
@@ -120,7 +120,6 @@ public class PosMainFormEmulator extends PoSMainForm {
 			// Setear todo al pedido
 			mainForm.getOrder().setPaymentTerm(aPaymentTerm);
 			mainForm.getOrder().setBusinessPartner(aBP);
-			mainForm.getOrder().setChangeAmount(BigDecimal.ZERO);
 			mainForm.getOrder().setDate(new Timestamp(new Date().getTime()));
 			mainForm.getOrder().setPayments(paymentsList);
 			mainForm.getOrder().setOrderProducts(productsList);

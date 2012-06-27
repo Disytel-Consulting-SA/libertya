@@ -1,6 +1,6 @@
 package org.openXpertya.replication;
 
-import java.math.BigDecimal;
+import java.util.HashMap;
 import java.util.logging.Level;
 
 import javax.jms.Connection;
@@ -11,13 +11,16 @@ import javax.jms.MessageProducer;
 import javax.jms.Session;
 import javax.naming.Context;
 
+import org.openXpertya.model.MProcess;
 import org.openXpertya.model.MReplicationHost;
 import org.openXpertya.model.X_AD_ReplicationError;
+import org.openXpertya.process.ProcessInfo;
 import org.openXpertya.process.ProcessInfoParameter;
 import org.openXpertya.process.SvrProcess;
 import org.openXpertya.util.CLogger;
 import org.openXpertya.util.DB;
 import org.openXpertya.util.Env;
+import org.openXpertya.util.Trx;
 
 public abstract class AbstractReplicationProcess extends SvrProcess {
 
@@ -85,21 +88,62 @@ public abstract class AbstractReplicationProcess extends SvrProcess {
         for( int i = 0;i < para.length;i++ ) {
 	        String name = para[ i ].getParameterName();
 	        if( para[ i ].getParameter() == null ) ;
+	        // Source: Cantidad de timeout
 	        else if( name.equalsIgnoreCase( "TimeOutNro" ))
 	        	timeOutNro = para[ i ].getParameterAsInt();
+	        // Source: Unidad de timeout	        
 	        else if( name.equalsIgnoreCase( "TimeOutType" ))
 	            timeOutType = (String)para[ i ].getParameter();
+	        // Source: Numero de registros a actualizar por lote su repArray al enviar (cambiar a waiting ack). La modificacion invalida cache del gestor de tablas.
 	        else if( name.equalsIgnoreCase( "SourceAckQueryesPerGroup" ))
-	        	ReplicationConstants.REPLICATION_SOURCE_QUERIES_PER_GROUP = para[ i ].getParameterAsInt();	        
+	        {
+	        	int tempo = para[ i ].getParameterAsInt();
+	        	if (tempo != ReplicationConstants.REPLICATION_SOURCE_QUERIES_PER_GROUP) {
+	        		ReplicationConstants.REPLICATION_SOURCE_QUERIES_PER_GROUP = tempo;
+	        		ReplicationTableManager.invalidateCache();
+	        	}
+	        }
+	        // Target: Numero de mensajes por transaccion
 	        else if( name.equalsIgnoreCase( "TargetMessagesPerTrx" ))
 	        	ReplicationConstants.REPLICATION_TARGET_MESSAGES_PER_TRX = para[ i ].getParameterAsInt();
+	        // Source: Numero maximo de registros a enviar. Modificacion NO invalida cache del gestor de tablas	        
+	        else if( name.equalsIgnoreCase( "SourceMaxRecords" ))
+	        	ReplicationConstants.REPLICATION_SOURCE_MAX_RECORDS = para[ i ].getParameterAsInt();
+	        // Si el check LimitRecords esta desactivado, entonces setear a 0 el parametro TargetMaxRecords
+	        else if( name.equalsIgnoreCase( "LimitRecords" ))
+	        {
+	        	if ("N".equals((String)para[ i ].getParameter()))
+	        		ReplicationConstants.REPLICATION_TARGET_MAX_RECORDS = 0;
+	        }
+	        // Target: Numero maximo de registros a procesar	        
+	        else if( name.equalsIgnoreCase( "TargetMaxRecords" ))
+	        	ReplicationConstants.REPLICATION_TARGET_MAX_RECORDS = para[ i ].getParameterAsInt();
+	        // Target: Replicar solo desde un host
+	        else if( name.equalsIgnoreCase( "ReplicateFromHost" ))
+	        	ReplicationConstants.REPLICATION_TARGET_REPLICATE_FROM_HOST = para[ i ].getParameterAsInt();
+	        // Source: Reenvio completo de registros dentro de un periodo dado. La modificacion invalida cache del gestor de tablas
+	        else if( name.equalsIgnoreCase( "ResendAllRecords" ))
+	        {
+	        	boolean tempo = "Y".equals((String)para[ i ].getParameter());
+	        	if (tempo != ReplicationConstants.RESEND_ALL_RECORDS) {
+	        		ReplicationConstants.RESEND_ALL_RECORDS = tempo;
+	        		ReplicationTableManager.invalidateCache();
+	        	}
+	        }
         }
             
-        // Setear valor de TimeOut. Conjuncion entre ambos datos
+        // Setear valor de TimeOut. Conjuncion entre ambos datos.  La modificacion invalida la cache del gestor de tablas
         if (timeOutNro != null && timeOutNro != 0 && timeOutType != null && timeOutType.length() > 0)
-        	ReplicationConstants.ACK_TIME_OUT = "" + timeOutNro + " " + timeOutType;
+        {
+        	String tempo = "" + timeOutNro + " " + timeOutType;
+        	if (!tempo.equals(ReplicationConstants.ACK_TIME_OUT)) {
+        		ReplicationConstants.ACK_TIME_OUT = tempo;
+        		ReplicationTableManager.invalidateCache();
+        	}
+        }
 	}
 
+	
 	
 	/**
 	 * Metodo que inicia la conexion JMS de tipo productor.
@@ -257,5 +301,122 @@ public abstract class AbstractReplicationProcess extends SvrProcess {
 	
 	
 	protected abstract String getProcessName();
+
+	
+	public static void main(String args[])
+	{
+		// UIDs de proceso origen y destino
+		final String sourceUID = "CORE-AD_Process-1010246";
+		final String targetUID = "CORE-AD_Process-1010247";
+						
+		/* Posibles parametros desde consola */
+		final String PARAM_PROCESS = 				"-p";
+		final String PARAM_LIMIT = 					"-l";
+		final String PARAM_QUERY_GROUP = 			"-q";
+		final String PARAM_SOURCE_TIMEOUT_NUMBER = 	"-tn";
+		final String PARAM_SOURCE_TIMEOUT_TYPE = 	"-tt";
+		final String PARAM_SOURCE_ALL_RECORDS = 	"-ta";
+		final String PARAM_TARGET_FROM_HOST = 		"-h";
+		// Invocar a proceso Source o Target?
+		String processType = null;
+		
+		// Parsear los parametros y validar
+	  	HashMap<String, Object> params = new HashMap<String, Object>();
+	  	
+	  	// Parametro P obligatorio para ambos casos
+	  	for (String arg : args)
+	  		if (arg.toLowerCase().startsWith(PARAM_PROCESS))
+	  			processType = arg.substring(PARAM_PROCESS.length());
+	  	if (!"Source".equals(processType) && !"Target".equals(processType))
+	  		showHelp("ERROR: No se especifico el parametro " + PARAM_PROCESS); 		
+	  	
+	  	// Parametros L y Q optativos para ambos casos, TN y TT optativos solo para origen, H optativos solo para destino
+	  	for (String arg : args)
+	  	{
+	  		if (arg.toLowerCase().startsWith(PARAM_LIMIT))
+	  			params.put(processType+"MaxRecords", arg.substring(PARAM_LIMIT.length()));
+	  		else if ("Source".equals(processType))
+	  		{
+		  		if (arg.toLowerCase().startsWith(PARAM_QUERY_GROUP))
+		  			params.put("SourceAckQueryesPerGroup", arg.substring(PARAM_QUERY_GROUP.length()));
+		  		else if (arg.toLowerCase().startsWith(PARAM_SOURCE_TIMEOUT_NUMBER))
+		  			params.put("TimeOutNro", arg.substring(PARAM_SOURCE_TIMEOUT_NUMBER.length()));
+		  		else if (arg.toLowerCase().startsWith(PARAM_SOURCE_TIMEOUT_TYPE))
+		  			params.put("TimeOutType", arg.substring(PARAM_SOURCE_TIMEOUT_TYPE.length()));
+		  		else if (arg.toLowerCase().startsWith(PARAM_SOURCE_ALL_RECORDS))
+		  			params.put("ResendAllRecords", arg.substring(PARAM_SOURCE_ALL_RECORDS.length()));
+	  		}
+	  		else if ("Target".equals(processType))
+	  		{
+	  			if (arg.toLowerCase().startsWith(PARAM_QUERY_GROUP))
+		  			params.put("TargetMessagesPerTrx", arg.substring(PARAM_QUERY_GROUP.length()));
+	  			else if (arg.toLowerCase().startsWith(PARAM_TARGET_FROM_HOST))
+		  			params.put("ReplicateFromHost", arg.substring(PARAM_TARGET_FROM_HOST.length()));	  			
+	  		}
+	  	}
+
+	  	// OXP_HOME seteada?
+	  	String oxpHomeDir = System.getenv("OXP_HOME"); 
+	  	if (oxpHomeDir == null)
+	  		showHelp("ERROR: La variable de entorno OXP_HOME no está seteada ");
+	
+	  	// Cargar el entorno basico
+	  	System.setProperty("OXP_HOME", oxpHomeDir);
+	  	if (!org.openXpertya.OpenXpertya.startupEnvironment( false ))
+	  		showHelp("ERROR: Error al iniciar la configuracion de replicacion ");
+
+	  	// Configuracion 
+	  	Env.setContext(Env.getCtx(), "#AD_Client_ID", DB.getSQLValue(null, " SELECT AD_Client_ID FROM AD_ReplicationHost WHERE thisHost = 'Y' "));
+	  	Env.setContext(Env.getCtx(), "#AD_Org_ID", DB.getSQLValue(null, " SELECT AD_Org_ID FROM AD_ReplicationHost WHERE thisHost = 'Y' "));
+	      
+	  	if (Env.getContext(Env.getCtx(), "#AD_Client_ID") == null || Env.getContext(Env.getCtx(), "#AD_Client_ID") == null)
+	  		showHelp("ERROR: Sin marca de host.  Debe realizar la configuración correspondiente en la ventana Hosts de Replicación. ");
+
+	  	// Iniciar la transacción
+		String m_trxName = Trx.createTrxName();
+		Trx.getTrx(m_trxName).start();
+		
+		
+		// Recuperar el proceso de replicación cliente
+		int processId = DB.getSQLValue(m_trxName, " SELECT AD_PROCESS_ID FROM AD_PROCESS WHERE AD_COMPONENTOBJECTUID = '" + 
+													("Source".equals(processType)?sourceUID:targetUID) + "' ");
+		ProcessInfo pi = MProcess.execute(Env.getCtx(), processId, params, m_trxName);
+
+		// En caso de error, presentar en consola
+		if (pi.isError())
+			System.err.println("Error en replicacion: " + pi.getSummary());
+			
+	}
+	
+	
+	private static final void showHelp(String message)
+	{
+		String help = " [[ " + message + " ]] " + 
+				"\n" + 	
+				" ------------ FRAMEWORK DE REPLICACION. MODO DE INSTANCIACION DE LOS PROCESOS ORIGEN Y DESTINO. --------------- " +
+				" Ejemplos de uso de proceso origen (caso tipico de uso y parametros completos): \n" +
+				" java -classpath lib/OXP.jar:lib/OXPLib.jar:lib/OXPXLib.jar org.openXpertya.replication.AbstractReplicationProcess -pSource \n" +
+				" java -classpath lib/OXP.jar:lib/OXPLib.jar:lib/OXPXLib.jar org.openXpertya.replication.AbstractReplicationProcess -pSource -q1000 -tn2 -ttDAYS -taY -l5000 \n" +						
+				" donde \n" +
+				" -p    es el proceso a ejecutar.  En este caso se debera definir Source (Origen). Parametro obligatorio. \n" +
+				" -q    es la cantidad de registros a actualizar a waitingAck de manera agrupada (por performance). Si no se especifica, el valor por defecto es 100. \n" +
+				" -tn 	en reenvio de registros por timeout sin ack, indica la cantidad (ver tt). Si no se especifican, no se reenviarán registros en espera de ack. \n" +
+				" -tt 	en reenvio de registros por timeout sin ack, indica la unidad   (ver tn). Opciones: [SECONDS, MINUTES, HOURS, DAYS]  \n" +
+				" -ta 	además del reenvio de registros por timeout sin ack, se reenvian todos los registros dentro del periodo especificado (ver tn). Opciones: [Y, N] \n" +				
+				" -l    limita la cantidad de registros a enviar.  Si no se especifica enviará todos los registros marcados para replicación. \n" +
+				" \n" +
+				" Ejemplo de uso de proceso destino (caso tipico de uso y parametros completos): \n" +
+				" java -classpath lib/OXP.jar:lib/OXPLib.jar:lib/OXPXLib.jar org.openXpertya.replication.AbstractReplicationProcess -pTarget \n" +						
+				" java -classpath lib/OXP.jar:lib/OXPLib.jar:lib/OXPXLib.jar org.openXpertya.replication.AbstractReplicationProcess -pTarget -h1 -q1000 -l5000  \n" +
+				" donde \n" +
+				" -p    es el proceso a ejecutar.  En este caso se debera definir Target (Destino). Parametro obligatorio. \n" +
+				" -q    es la cantidad de registros a procesar en una misma transacción (por performance). Si no se especifica, el valor por defecto es 100. \n" +						
+				" -h    es el host origen del cual se desea replicar (limitado solo a éste). Si no se especifica, replicará de todos los hosts según la configuración \n" +
+				" -l    limita la cantidad de registros a procesar por host origen.  Si no se especifica procesará todos los registros. \n" +
+				" donde \n" +
+				" ------------ IMPORTANTE: NO DEBEN DEJARSE ESPACIOS ENTRE EL PARAMETRO Y EL VALOR DEL PARAMETRO! --------------- ";
+  		System.out.println(help);
+  		System.exit(1);		
+	}
 	
 }

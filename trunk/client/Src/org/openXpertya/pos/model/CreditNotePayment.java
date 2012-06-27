@@ -8,7 +8,6 @@ public class CreditNotePayment extends Payment {
 	private BigDecimal availableAmt = null;
 	private BigDecimal balanceAmt = null;
 	private boolean returnCash = false;
-	private BigDecimal returnCashAmt = null;
 
 	/**
 	 * Constructor de la clase
@@ -22,7 +21,7 @@ public class CreditNotePayment extends Payment {
 		this.availableAmt = availableAmt;
 		setBalanceAmt(balanceAmt);
 		setReturnCash(returnCash);
-		setReturnCashAmt(returnCashAmt);
+		setChangeAmt(returnCashAmt);
 	}
 
 	/**
@@ -72,14 +71,5 @@ public class CreditNotePayment extends Payment {
 
 	public boolean isReturnCash() {
 		return returnCash;
-	}
-
-	public void setReturnCashAmt(BigDecimal returnCashAmt) {
-		this.returnCashAmt = returnCashAmt;
-	}
-
-	public BigDecimal getReturnCashAmt() {
-		return returnCashAmt;
-	}
-	
+	}	
 }

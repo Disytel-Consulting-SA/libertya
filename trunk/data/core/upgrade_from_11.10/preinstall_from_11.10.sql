@@ -1259,6 +1259,9 @@ CREATE SEQUENCE libertya.seq_t_inventoryvalue
   CACHE 1;
 ALTER TABLE libertya.seq_t_inventoryvalue OWNER TO libertya;
 
+-- 20120506-1920 R11 - Kunan - Se eliminan los datos de la tabla temporal t_inventoryvalue antes de modificarla
+DELETE FROM libertya.t_inventoryvalue;
+
 --20120329-1920 Preinstall R11 - Kunan - Informe Existencias Valorizadas
 ALTER TABLE libertya.t_inventoryvalue ADD COLUMN t_inventoryvalue_id integer;
 ALTER TABLE libertya.t_inventoryvalue ALTER COLUMN t_inventoryvalue_id SET STORAGE PLAIN;
@@ -1548,7 +1551,7 @@ ALTER FUNCTION replication_event() OWNER TO libertya;
 ALTER TABLE M_EntidadFinanciera ADD COLUMN cardmask character varying(100);
 
 -- 20120416-1240 Nueva columna en el reporte Informe de Saldos para poder filtrar por fecha hasta
-ALTER TABLE T_BalanceReport ADD COLUMN truedatetrx timestamp without time zone NOT NULL DEFAULT ('now'::text)::timestamp(6) WITH time zone;
+update ad_system set dummy = (SELECT addcolumnifnotexists('T_BalanceReport','truedatetrx','timestamp without time zone'));
 
 -- 20120416-1245 Eliminación de la vista v_projectedpayments por ser dependiente de v_documents
 DROP VIEW v_projectedpayments;
@@ -1632,3 +1635,952 @@ SELECT m_productchange_id, ad_client_id, ad_org_id, isactive, created,
        (((CASE coalesce(productprice,0) WHEN 0 THEN 0 ELSE abs(productprice - producttoprice) / productprice END))::numeric(11,2) * 100)::numeric(11,2) as pricevariationperc
   FROM m_productchange;
 ALTER TABLE v_productchange OWNER TO libertya;
+
+-- 20120419-1434 Modificación de la columna ingresada para la fecha real en la tabla temporal para que permita null y sin default
+ALTER TABLE T_BalanceReport ALTER COLUMN truedatetrx DROP NOT NULL;
+ALTER TABLE T_BalanceReport ALTER COLUMN truedatetrx DROP DEFAULT;
+
+-- 20120419-1554 Eliminación de registros existentes por instalación de patch de modificaciones al informe de saldos a Enrique Correa
+DELETE FROM AD_Element WHERE ad_componentobjectUID = 'CORE-AD_Element-1011145';
+DELETE FROM AD_Element_Trl WHERE ad_componentobjectUID = 'CORE-AD_Element_Trl-1011145-es_ES';
+DELETE FROM AD_Element_Trl WHERE ad_componentobjectUID = 'CORE-AD_Element_Trl-1011145-es_AR';
+DELETE FROM AD_Element_Trl WHERE ad_componentobjectUID = 'CORE-AD_Element_Trl-1011145-es_MX';
+DELETE FROM AD_Element_Trl WHERE ad_componentobjectUID = 'CORE-AD_Element_Trl-1011145-es_PY';
+DELETE FROM AD_Column WHERE ad_componentobjectUID = 'CORE-AD_Column-1015515';
+DELETE FROM AD_Column_Trl WHERE ad_componentobjectUID = 'CORE-AD_Column_Trl-1015515-es_ES';
+DELETE FROM AD_Column_Trl WHERE ad_componentobjectUID = 'CORE-AD_Column_Trl-1015515-es_AR';
+DELETE FROM AD_Column_Trl WHERE ad_componentobjectUID = 'CORE-AD_Column_Trl-1015515-es_MX';
+DELETE FROM AD_Column_Trl WHERE ad_componentobjectUID = 'CORE-AD_Column_Trl-1015515-es_PY';
+DELETE FROM AD_Process_Para WHERE ad_componentobjectUID = 'CORE-AD_Process_Para-1010554';
+DELETE FROM AD_Process_Para_Trl WHERE ad_componentobjectUID = 'CORE-AD_Process_Para_Trl-es_ES-1010554';
+DELETE FROM AD_Process_Para_Trl WHERE ad_componentobjectUID = 'CORE-AD_Process_Para_Trl-es_AR-1010554';
+DELETE FROM AD_Process_Para_Trl WHERE ad_componentobjectUID = 'CORE-AD_Process_Para_Trl-es_MX-1010554';
+DELETE FROM AD_Process_Para_Trl WHERE ad_componentobjectUID = 'CORE-AD_Process_Para_Trl-es_PY-1010554';
+
+-- 20120419-1722 Incorporación de nueva columna que determina el signo del cargo 
+ALTER TABLE c_charge ADD COLUMN sign integer NOT NULL DEFAULT 1;
+-- 20120419-1722 Incorporación de nueva columna a la línea de inventario para ingresar la cantidad de la línea sin signo
+ALTER TABLE m_inventoryline ADD COLUMN qtycountwithoutchargesign numeric(22,2);
+-- 20120419-1723 Actualización de la cantidad sin signo con la cantidad contada para las instancias ya instaladas
+UPDATE m_inventoryline
+SET qtycountwithoutchargesign = qtycount;
+-- 20120419-1723 Actualización de la cantidad sin signo no nula y con default 0
+ALTER TABLE m_inventoryline ALTER COLUMN qtycountwithoutchargesign SET NOT NULL;
+ALTER TABLE m_inventoryline ALTER COLUMN qtycountwithoutchargesign SET DEFAULT 0;
+
+-- 20120424-1756 Incorporación de nueva config al TPV para pedir autorización al iniciar la ventana
+ALTER TABLE c_pos ADD COLUMN initialposauthorization character(1) NOT NULL DEFAULT 'N'::bpchar;
+
+-- 20120426-1020 Incorporación de nueva config al TPV para bloquear el cierre de la ventana y de la aplicación si existen líneas cargadas
+ALTER TABLE c_pos ADD COLUMN lockedclosed character(1) NOT NULL DEFAULT 'N'::bpchar;
+
+-- 20120502-1800 Incorporación de nueva columna para el tipo de documento con la posibilidad de agregar un límite de cantidad de líneas para los documentos
+ALTER TABLE c_doctype ADD COLUMN linescountmax integer NOT NULL DEFAULT 0;
+
+-- Replicacion: Filtros por tabla
+alter table AD_TableReplication add column filters varchar(1000) null;
+
+-- Replication: referencia a fecha de ultimo envio
+ALTER TABLE ad_changelog_replication ADD COLUMN dateLastSentJMS timestamp null;
+
+-- 20120515-0930 Creación de la Vista rv_cash_balance_begin_end con las nuevas columnas
+CREATE OR REPLACE VIEW rv_cash_balance_begin_end AS 
+( SELECT c.c_cash_id, 0 AS c_cashline_id, c.ad_client_id, c.ad_org_id, c.isactive, c.created, c.createdby, c.updated, c.updatedby, c.c_cashbook_id, c.name, c.statementdate, c.dateacct, c.processed, 0 AS line, 'Saldo Inicial' AS description, NULL::unknown AS cashtype, NULL::unknown AS c_charge_id, c.beginningbalance as amount, cb.c_currency_id, c.c_project_id
+   FROM c_cash c
+   JOIN c_cashbook cb ON c.c_cashbook_id = cb.c_cashbook_id
+UNION 
+ SELECT cl.c_cash_id, cl.c_cashline_id, c.ad_client_id, c.ad_org_id, cl.isactive, cl.created, cl.createdby, cl.updated, cl.updatedby, c.c_cashbook_id, c.name, c.statementdate, c.dateacct, c.processed, cl.line, cl.description, cl.cashtype, cl.c_charge_id, cl.amount, cl.c_currency_id, cl.c_project_id
+   FROM c_cash c
+   JOIN c_cashline cl ON c.c_cash_id = cl.c_cash_id);
+ALTER TABLE rv_cash_balance_begin_end OWNER TO libertya;
+
+-- 20120515-1000 Eliminación de la Vista 
+DROP VIEW m_retencion_invoice_v;
+
+-- 20120515-1000 Creación de la Vista m_retencion_invoice_v con las nuevas columnas
+CREATE OR REPLACE VIEW m_retencion_invoice_v AS 
+ SELECT DISTINCT ri.m_retencion_invoice_id, ri.ad_client_id, ri.ad_org_id, ri.c_retencionschema_id, ri.c_invoice_id, ri.c_allocationhdr_id, ri.c_invoiceline_id, ri.c_invoice_retenc_id, ri.amt_retenc, ri.c_currency_id, ri.pagos_ant_acumulados_amt, ri.retenciones_ant_acumuladas_amt, ri.pago_actual_amt, ri.retencion_percent, ri.importe_no_imponible_amt, ri.base_calculo_percent, ri.issotrx, ri.baseimponible_amt, ri.importe_determinado_amt, rs.c_retenciontype_id, i.c_bpartner_id, rs.retencionapplication, bp.taxid, i.dateinvoiced, iv.documentno, iv.dateinvoiced as fecha, iv.grandtotal, iv.c_project_id, iv.totallines 
+   FROM c_retencionschema rs
+   JOIN c_retenciontype rt ON rs.c_retenciontype_id = rt.c_retenciontype_id
+   JOIN m_retencion_invoice ri ON rs.c_retencionschema_id = ri.c_retencionschema_id
+   JOIN c_invoice i ON ri.c_invoice_id = i.c_invoice_id
+   JOIN c_bpartner bp ON i.c_bpartner_id = bp.c_bpartner_id
+   JOIN c_allocationhdr a ON ri.c_allocationhdr_id = a.c_allocationhdr_id
+   JOIN c_allocation_detail_v ad ON a.c_allocationhdr_id = ad.c_allocationhdr_id
+   LEFT JOIN c_invoice iv ON ad.factura = iv.documentno;
+ALTER TABLE m_retencion_invoice_v OWNER TO libertya;
+
+-- 20120517-1630 Incorporación de nueva columna al impuesto para indicar que es impuesto de percepción
+ALTER TABLE c_tax ADD COLUMN ispercepcion character(1) NOT NULL DEFAULT 'N'::bpchar;
+
+-- 20120517-1630 Incorporación de nueva columna a la categoria de iva indicando que es pasible de percepciones
+ALTER TABLE c_categoria_iva ADD COLUMN ispercepcionliable character(1) NOT NULL DEFAULT 'N'::bpchar;
+
+-- 20120517-1640 Percepciones que aplica la organización
+CREATE TABLE ad_org_percepcion
+(
+  ad_org_percepcion_id integer NOT NULL,
+  ad_client_id integer NOT NULL,
+  ad_org_id integer NOT NULL,
+  isactive character(1) NOT NULL DEFAULT 'Y'::bpchar,
+  created timestamp without time zone NOT NULL DEFAULT ('now'::text)::timestamp(6) with time zone,
+  createdby integer NOT NULL,
+  updated timestamp without time zone NOT NULL DEFAULT ('now'::text)::timestamp(6) with time zone,
+  updatedby integer NOT NULL,
+  "name" character varying(60) NOT NULL,
+  description character varying(255),
+  c_tax_id integer NOT NULL,
+  CONSTRAINT ad_org_percepcion_key PRIMARY KEY (ad_org_percepcion_id),
+  CONSTRAINT ad_org_percepcion_client FOREIGN KEY (ad_client_id)
+      REFERENCES ad_client (ad_client_id) MATCH SIMPLE
+      ON UPDATE NO ACTION ON DELETE NO ACTION,
+  CONSTRAINT ad_org_percepcion_org FOREIGN KEY (ad_org_id)
+      REFERENCES ad_org (ad_org_id) MATCH SIMPLE
+      ON UPDATE NO ACTION ON DELETE NO ACTION,
+  CONSTRAINT ad_org_percepcion_tax FOREIGN KEY (c_tax_id)
+      REFERENCES c_tax (c_tax_id) MATCH SIMPLE
+      ON UPDATE NO ACTION ON DELETE NO ACTION
+);
+ALTER TABLE ad_org_percepcion OWNER TO libertya;
+
+-- 20120517-1640 Configuración de Percepciones de la entidad comercial
+CREATE TABLE c_bpartner_percepcion
+(
+  c_bpartner_percepcion_id integer NOT NULL,
+  ad_client_id integer NOT NULL,
+  ad_org_id integer NOT NULL,
+  isactive character(1) NOT NULL DEFAULT 'Y'::bpchar,
+  created timestamp without time zone NOT NULL DEFAULT ('now'::text)::timestamp(6) with time zone,
+  createdby integer NOT NULL,
+  updated timestamp without time zone NOT NULL DEFAULT ('now'::text)::timestamp(6) with time zone,
+  updatedby integer NOT NULL,
+  c_bpartner_id integer NOT NULL,
+  registrationno character varying(60),
+  c_region_id integer NOT NULL,
+  CONSTRAINT c_bpartner_percepcion_key PRIMARY KEY (c_bpartner_percepcion_id),
+  CONSTRAINT c_bpartner_percepcion_bpartner FOREIGN KEY (c_bpartner_id)
+      REFERENCES c_bpartner (c_bpartner_id) MATCH SIMPLE
+      ON UPDATE NO ACTION ON DELETE NO ACTION,
+  CONSTRAINT c_bpartner_percepcion_client FOREIGN KEY (ad_client_id)
+      REFERENCES ad_client (ad_client_id) MATCH SIMPLE
+      ON UPDATE NO ACTION ON DELETE NO ACTION,
+  CONSTRAINT c_bpartner_percepcion_org FOREIGN KEY (ad_org_id)
+      REFERENCES ad_org (ad_org_id) MATCH SIMPLE
+      ON UPDATE NO ACTION ON DELETE NO ACTION,
+  CONSTRAINT c_bpartner_percepcion_region FOREIGN KEY (c_region_id)
+      REFERENCES c_region (c_region_id) MATCH SIMPLE
+      ON UPDATE NO ACTION ON DELETE NO ACTION
+);
+ALTER TABLE c_bpartner_percepcion OWNER TO libertya;
+
+-- 20120517-1640 Excenciones de percepción de la entidad comercial
+CREATE TABLE c_bpartner_percexenc
+(
+  c_bpartner_percexenc_id integer NOT NULL,
+  ad_client_id integer NOT NULL,
+  ad_org_id integer NOT NULL,
+  isactive character(1) NOT NULL DEFAULT 'Y'::bpchar,
+  created timestamp without time zone NOT NULL DEFAULT ('now'::text)::timestamp(6) with time zone,
+  createdby integer NOT NULL,
+  updated timestamp without time zone NOT NULL DEFAULT ('now'::text)::timestamp(6) with time zone,
+  updatedby integer NOT NULL,
+  c_bpartner_id integer NOT NULL,
+  date_from timestamp without time zone NOT NULL DEFAULT ('now'::text)::timestamp(6) with time zone,
+  date_to timestamp without time zone NOT NULL DEFAULT ('now'::text)::timestamp(6) with time zone,
+  percent numeric(24,2),
+  c_tax_id integer NOT NULL,
+  CONSTRAINT c_bpartner_percexenc_key PRIMARY KEY (c_bpartner_percexenc_id),
+  CONSTRAINT c_bpartner_percexenc_bpartner FOREIGN KEY (c_bpartner_id)
+      REFERENCES c_bpartner (c_bpartner_id) MATCH SIMPLE
+      ON UPDATE NO ACTION ON DELETE NO ACTION,
+  CONSTRAINT c_bpartner_percexenc_client FOREIGN KEY (ad_client_id)
+      REFERENCES ad_client (ad_client_id) MATCH SIMPLE
+      ON UPDATE NO ACTION ON DELETE NO ACTION,
+  CONSTRAINT c_bpartner_percexenc_org FOREIGN KEY (ad_org_id)
+      REFERENCES ad_org (ad_org_id) MATCH SIMPLE
+      ON UPDATE NO ACTION ON DELETE NO ACTION,
+  CONSTRAINT c_bpartner_percexenc_tax FOREIGN KEY (c_tax_id)
+      REFERENCES c_tax (c_tax_id) MATCH SIMPLE
+      ON UPDATE NO ACTION ON DELETE NO ACTION
+);
+ALTER TABLE c_bpartner_percexenc OWNER TO libertya;
+
+-- 20120517-1740 Cambio o vuelto de esta asignación (usado en TPV para la impresión fiscal)
+ALTER TABLE c_allocationline ADD COLUMN changeamt numeric(9,2) DEFAULT 0;
+
+-- 20120517-1741 Prioridad 4 de descuento de línea
+ALTER TABLE m_discountconfig ADD COLUMN linediscount4 character varying(1);
+
+-- 20120521-1654 Parámetro de configuración de impresión de documento de cuenta corriente en TPV
+ALTER TABLE c_pos ADD COLUMN isprintcurrentaccountdocument character(1) NOT NULL DEFAULT 'N'::bpchar;
+
+-- 20120523-1457 Modificación de vista c_allocation_detail_v con nuevos campos
+DROP VIEW m_retencion_invoice_v;
+DROP VIEW c_allocation_detail_v;
+
+CREATE OR REPLACE VIEW c_allocation_detail_v AS 
+ SELECT ah.c_allocationhdr_id AS c_allocation_detail_v_id, ah.c_allocationhdr_id, ah.ad_client_id, ah.ad_org_id, ah.isactive, ah.created, ah.createdby, ah.updated, ah.updatedby, ah.datetrx AS fecha, i.documentno AS factura, COALESCE(i.c_currency_id, p.c_currency_id, cl.c_currency_id, credit.c_currency_id) AS c_currency_id, i.grandtotal AS montofactura, 
+        CASE
+            WHEN p.documentno IS NOT NULL THEN p.documentno
+            ELSE 
+            CASE
+                WHEN al.c_invoice_credit_id IS NOT NULL THEN ((dt.printname::text || ' :'::text) || credit.documentno::text)::character varying
+                ELSE NULL::character varying
+            END
+        END AS pagonro, 
+        CASE
+            WHEN p.tendertype IS NOT NULL THEN p.tendertype
+            WHEN p.tendertype IS NULL THEN 'CA'::bpchar
+            ELSE NULL::bpchar
+        END AS tipo, 
+        CASE
+            WHEN cl.c_cashline_id IS NOT NULL THEN 'Y'::text
+            WHEN cl.c_cashline_id IS NULL THEN 'N'::text
+            ELSE NULL::text
+        END AS cash, COALESCE(currencyconvert(al.amount + al.discountamt + al.writeoffamt, ah.c_currency_id, i.c_currency_id, NULL::timestamp with time zone, NULL::integer, ah.ad_client_id, ah.ad_org_id), 0::numeric(20,2)) AS montosaldado, abs(COALESCE(p.payamt, cl.amount, credit.grandtotal, 0::numeric(20,2))) AS payamt, al.c_allocationline_id, i.c_invoice_id, CASE
+            WHEN p.documentno IS NOT NULL THEN p.documentno
+            ELSE 
+            CASE
+                WHEN al.c_invoice_credit_id IS NOT NULL THEN ((dt.printname::text || ' :'::text) || credit.documentno::text)::character varying
+                WHEN al.c_cashline_id IS NOT NULL THEN cl.description::character varying
+                ELSE NULL::character varying
+            END
+        END AS paydescription
+   FROM c_allocationhdr ah
+   JOIN c_allocationline al ON ah.c_allocationhdr_id = al.c_allocationhdr_id
+   LEFT JOIN c_invoice i ON al.c_invoice_id = i.c_invoice_id
+   LEFT JOIN c_payment p ON al.c_payment_id = p.c_payment_id
+   LEFT JOIN c_cashline cl ON al.c_cashline_id = cl.c_cashline_id
+   LEFT JOIN c_invoice credit ON al.c_invoice_credit_id = credit.c_invoice_id
+   LEFT JOIN c_doctype dt ON credit.c_doctype_id = dt.c_doctype_id
+  ORDER BY ah.c_allocationhdr_id, al.c_allocationline_id;
+
+ALTER TABLE c_allocation_detail_v OWNER TO libertya;
+
+CREATE OR REPLACE VIEW m_retencion_invoice_v AS 
+ SELECT DISTINCT ri.m_retencion_invoice_id, ri.ad_client_id, ri.ad_org_id, ri.c_retencionschema_id, ri.c_invoice_id, ri.c_allocationhdr_id, ri.c_invoiceline_id, ri.c_invoice_retenc_id, ri.amt_retenc, ri.c_currency_id, ri.pagos_ant_acumulados_amt, ri.retenciones_ant_acumuladas_amt, ri.pago_actual_amt, ri.retencion_percent, ri.importe_no_imponible_amt, ri.base_calculo_percent, ri.issotrx, ri.baseimponible_amt, ri.importe_determinado_amt, rs.c_retenciontype_id, i.c_bpartner_id, rs.retencionapplication, bp.taxid, i.dateinvoiced, iv.documentno, iv.dateinvoiced AS fecha, iv.grandtotal, iv.c_project_id, iv.totallines
+   FROM c_retencionschema rs
+   JOIN c_retenciontype rt ON rs.c_retenciontype_id = rt.c_retenciontype_id
+   JOIN m_retencion_invoice ri ON rs.c_retencionschema_id = ri.c_retencionschema_id
+   JOIN c_invoice i ON ri.c_invoice_id = i.c_invoice_id
+   JOIN c_bpartner bp ON i.c_bpartner_id = bp.c_bpartner_id
+   JOIN c_allocationhdr a ON ri.c_allocationhdr_id = a.c_allocationhdr_id
+   JOIN c_allocation_detail_v ad ON a.c_allocationhdr_id = ad.c_allocationhdr_id
+   LEFT JOIN c_invoice iv ON ad.factura::text = iv.documentno::text
+  ORDER BY ri.m_retencion_invoice_id, ri.ad_client_id, ri.ad_org_id, ri.c_retencionschema_id, ri.c_invoice_id, ri.c_allocationhdr_id, ri.c_invoiceline_id, ri.c_invoice_retenc_id, ri.amt_retenc, ri.c_currency_id, ri.pagos_ant_acumulados_amt, ri.retenciones_ant_acumuladas_amt, ri.pago_actual_amt, ri.retencion_percent, ri.importe_no_imponible_amt, ri.base_calculo_percent, ri.issotrx, ri.baseimponible_amt, ri.importe_determinado_amt, rs.c_retenciontype_id, i.c_bpartner_id, rs.retencionapplication, bp.taxid, i.dateinvoiced, iv.documentno, iv.dateinvoiced, iv.grandtotal, iv.c_project_id, iv.totallines;
+
+ALTER TABLE m_retencion_invoice_v OWNER TO libertya;
+
+-- 20120523-1945 Modificación de la función bompricelimit para que en el caso que no tenga un precio de instancia tome el del producto
+CREATE OR REPLACE FUNCTION bompricelimit(m_product_id integer, m_pricelist_version_id integer, m_attributesetinstance_id integer)
+  RETURNS numeric AS
+$BODY$
+DECLARE
+    i_price NUMERIC;
+BEGIN
+    IF (m_attributesetinstance_id = 0) THEN
+	select bomPriceLimit(M_Product_ID,M_PriceList_Version_ID) into i_price;
+    else	
+	SELECT pricelimit into i_price FROM M_ProductPriceInstance pi WHERE pi.M_PriceList_Version_ID=M_PriceList_Version_ID AND pi.M_Product_ID=M_Product_ID AND pi.M_AttributeSetInstance_ID=M_AttributeSetInstance_ID;
+	IF (i_price ISNULL) THEN
+		select bomPriceLimit(M_Product_ID,M_PriceList_Version_ID) into i_price;
+	END IF;	
+    END IF;
+    return i_price;
+END;
+$BODY$
+  LANGUAGE 'plpgsql' VOLATILE
+  COST 100;
+ALTER FUNCTION bompricelimit(integer, integer, integer) OWNER TO libertya;
+
+-- 20120523-1945 Modificación de la función bompricelist para que en el caso que no tenga un precio de instancia tome el del producto
+CREATE OR REPLACE FUNCTION bompricelist(m_product_id integer, m_pricelist_version_id integer, m_attributesetinstance_id integer)
+  RETURNS numeric AS
+$BODY$
+DECLARE
+    i_price NUMERIC;
+BEGIN
+    IF (m_attributesetinstance_id = 0) THEN
+	select bomPriceList(M_Product_ID,M_PriceList_Version_ID) into i_price;
+    else	
+	SELECT pricelist into i_price FROM M_ProductPriceInstance pi WHERE pi.M_PriceList_Version_ID=M_PriceList_Version_ID AND pi.M_Product_ID=M_Product_ID AND pi.M_AttributeSetInstance_ID=M_AttributeSetInstance_ID;
+	IF (i_price ISNULL) THEN
+		select bomPriceList(M_Product_ID,M_PriceList_Version_ID) into i_price;
+	END IF;	
+    END IF;
+    return i_price;
+END;
+$BODY$
+  LANGUAGE 'plpgsql' VOLATILE
+  COST 100;
+ALTER FUNCTION bompricelist(integer, integer, integer) OWNER TO libertya;
+
+-- 20120523-1945 Modificación de la función bompricestd para que en el caso que no tenga un precio de instancia tome el del producto
+CREATE OR REPLACE FUNCTION bompricestd(m_product_id integer, m_pricelist_version_id integer, m_attributesetinstance_id integer)
+  RETURNS numeric AS
+$BODY$
+DECLARE
+    i_price NUMERIC;
+BEGIN
+    
+    IF (m_attributesetinstance_id = 0) THEN
+	select bomPriceStd(M_Product_ID,M_PriceList_Version_ID) into i_price;
+    else	
+	SELECT pricestd into i_price FROM M_ProductPriceInstance pi WHERE pi.M_PriceList_Version_ID=M_PriceList_Version_ID AND pi.M_Product_ID=M_Product_ID AND pi.M_AttributeSetInstance_ID=M_AttributeSetInstance_ID;
+	IF (i_price ISNULL) THEN
+		select bomPriceStd(M_Product_ID,M_PriceList_Version_ID) into i_price;
+	END IF;	
+    END IF;
+    return i_price;
+END;
+$BODY$
+  LANGUAGE 'plpgsql' VOLATILE
+  COST 100;
+ALTER FUNCTION bompricestd(integer, integer, integer) OWNER TO libertya;
+
+-- 20120524-1456 Incorporación de columnas para registrar el posnet en la config del TPV y en el cobro de tarjeta de crédito
+ALTER TABLE c_pos ADD COLUMN posnet character varying(40);
+ALTER TABLE c_payment ADD COLUMN posnet character varying(40);
+
+-- 20120529-1610 Incorporación de nueva columna para no permitir la utilización de la Nota de Crédito
+ALTER TABLE c_invoice ADD COLUMN notexchangeablecredit character(1) NOT NULL DEFAULT 'N'::bpchar;
+
+-- 20120529-1610 Modificación de la view c_invoice_v agregando dicha columna, eliminación y creación de las vistas dependientes
+DROP VIEW rv_bpartneropen;
+DROP VIEW v_projectedpayments;
+DROP VIEW v_documents;
+DROP VIEW c_invoiceline_v;
+DROP VIEW c_invoice_v;
+
+CREATE OR REPLACE VIEW c_invoice_v AS 
+ SELECT i.c_invoice_id, i.ad_client_id, i.ad_org_id, i.isactive, i.created, i.createdby, i.updated, i.updatedby, i.issotrx, i.documentno, i.docstatus, i.docaction, i.processing, i.processed, i.c_doctype_id, i.c_doctypetarget_id, i.c_order_id, i.description, i.isapproved, i.istransferred, i.salesrep_id, i.dateinvoiced, i.dateprinted, i.dateacct, i.c_bpartner_id, i.c_bpartner_location_id, i.ad_user_id, i.poreference, i.dateordered, i.c_currency_id, i.c_conversiontype_id, i.paymentrule, i.c_paymentterm_id, i.c_charge_id, i.m_pricelist_id, i.c_campaign_id, i.c_project_id, i.c_activity_id, i.isprinted, i.isdiscountprinted, i.ispaid, i.isindispute, i.ispayschedulevalid, NULL::unknown AS c_invoicepayschedule_id, i.chargeamt * d.signo_issotrx::numeric AS chargeamt, i.totallines, i.grandtotal * d.signo_issotrx::numeric * d.signo_issotrx::numeric AS grandtotal, d.signo_issotrx::numeric AS multiplier, 
+        CASE
+            WHEN "substring"(d.docbasetype::text, 2, 2) = 'P'::text THEN - 1::numeric
+            ELSE 1::numeric
+        END AS multiplierap, d.docbasetype, notexchangeablecredit
+   FROM c_invoice i
+   JOIN c_doctype d ON i.c_doctypetarget_id = d.c_doctype_id
+  WHERE i.ispayschedulevalid <> 'Y'::bpchar
+UNION ALL 
+ SELECT i.c_invoice_id, i.ad_client_id, i.ad_org_id, i.isactive, i.created, i.createdby, i.updated, i.updatedby, i.issotrx, i.documentno, i.docstatus, i.docaction, i.processing, i.processed, i.c_doctype_id, i.c_doctypetarget_id, i.c_order_id, i.description, i.isapproved, i.istransferred, i.salesrep_id, i.dateinvoiced, i.dateprinted, i.dateacct, i.c_bpartner_id, i.c_bpartner_location_id, i.ad_user_id, i.poreference, i.dateordered, i.c_currency_id, i.c_conversiontype_id, i.paymentrule, i.c_paymentterm_id, i.c_charge_id, i.m_pricelist_id, i.c_campaign_id, i.c_project_id, i.c_activity_id, i.isprinted, i.isdiscountprinted, i.ispaid, i.isindispute, i.ispayschedulevalid, ips.c_invoicepayschedule_id, NULL::unknown AS chargeamt, NULL::unknown AS totallines, ips.dueamt AS grandtotal, d.signo_issotrx AS multiplier, 
+        CASE
+            WHEN "substring"(d.docbasetype::text, 2, 2) = 'P'::text THEN - 1::numeric
+            ELSE 1::numeric
+        END AS multiplierap, d.docbasetype, notexchangeablecredit
+   FROM c_invoice i
+   JOIN c_doctype d ON i.c_doctypetarget_id = d.c_doctype_id
+   JOIN c_invoicepayschedule ips ON i.c_invoice_id = ips.c_invoice_id
+  WHERE i.ispayschedulevalid = 'Y'::bpchar AND ips.isvalid = 'Y'::bpchar;
+
+ALTER TABLE c_invoice_v OWNER TO libertya;
+
+CREATE OR REPLACE VIEW c_invoiceline_v AS 
+ SELECT il.ad_client_id, il.ad_org_id, il.c_invoiceline_id, i.c_invoice_id, i.salesrep_id, i.c_bpartner_id, il.m_product_id, i.documentno, i.dateinvoiced, i.dateacct, i.issotrx, i.docstatus, round(i.multiplier * il.linenetamt, 2) AS linenetamt, round(i.multiplier * il.pricelist * il.qtyinvoiced, 2) AS linelistamt, 
+        CASE
+            WHEN COALESCE(il.pricelimit, 0::numeric) = 0::numeric THEN round(i.multiplier * il.linenetamt, 2)
+            ELSE round(i.multiplier * il.pricelimit * il.qtyinvoiced, 2)
+        END AS linelimitamt, round(i.multiplier * il.pricelist * il.qtyinvoiced - il.linenetamt, 2) AS linediscountamt, 
+        CASE
+            WHEN COALESCE(il.pricelimit, 0::numeric) = 0::numeric THEN 0::numeric
+            ELSE round(i.multiplier * il.linenetamt - il.pricelimit * il.qtyinvoiced, 2)
+        END AS lineoverlimitamt, il.qtyinvoiced, il.qtyentered, il.line, il.c_orderline_id, il.c_uom_id
+   FROM c_invoice_v i, c_invoiceline il
+  WHERE i.c_invoice_id = il.c_invoice_id;
+
+ALTER TABLE c_invoiceline_v OWNER TO libertya;
+
+CREATE OR REPLACE VIEW v_documents AS 
+( SELECT 'C_Invoice' AS documenttable, i.c_invoice_id AS document_id, i.ad_client_id, i.ad_org_id, i.isactive, i.created, i.createdby, i.updated, i.updatedby, i.c_bpartner_id, i.c_doctype_id, dt.signo_issotrx, dt.name AS doctypename, dt.printname AS doctypeprintname, i.documentno, i.issotrx, i.docstatus, 
+        CASE
+            WHEN i.c_invoicepayschedule_id IS NOT NULL THEN ips.duedate
+            ELSE i.dateinvoiced
+        END AS datetrx, i.dateacct, i.c_currency_id, i.c_conversiontype_id, i.grandtotal AS amount, i.c_invoicepayschedule_id, ips.duedate, i.dateinvoiced AS truedatetrx
+   FROM c_invoice_v i
+   JOIN c_doctype dt ON i.c_doctypetarget_id = dt.c_doctype_id
+   LEFT JOIN c_invoicepayschedule ips ON i.c_invoicepayschedule_id = ips.c_invoicepayschedule_id
+UNION ALL 
+ SELECT 'C_Payment' AS documenttable, p.c_payment_id AS document_id, p.ad_client_id, p.ad_org_id, p.isactive, p.created, p.createdby, p.updated, p.updatedby, p.c_bpartner_id, p.c_doctype_id, dt.signo_issotrx, dt.name AS doctypename, dt.printname AS doctypeprintname, p.documentno, p.issotrx, p.docstatus, p.datetrx, p.dateacct, p.c_currency_id, p.c_conversiontype_id, p.payamt AS amount, NULL::integer AS c_invoicepayschedule_id, p.duedate, p.datetrx AS truedatetrx
+   FROM c_payment p
+   JOIN c_doctype dt ON p.c_doctype_id = dt.c_doctype_id)
+UNION ALL 
+ SELECT 'C_CashLine' AS documenttable, cl.c_cashline_id AS document_id, cl.ad_client_id, cl.ad_org_id, cl.isactive, cl.created, cl.createdby, cl.updated, cl.updatedby, 
+        CASE
+            WHEN cl.c_bpartner_id IS NOT NULL THEN cl.c_bpartner_id
+            ELSE i.c_bpartner_id
+        END AS c_bpartner_id, dt.c_doctype_id, 
+        CASE
+            WHEN cl.amount < 0.0 THEN 1
+            ELSE (-1)
+        END AS signo_issotrx, dt.name AS doctypename, dt.printname AS doctypeprintname, '@line@'::text || cl.line::character varying::text AS documentno, 
+        CASE
+            WHEN cl.amount < 0.0 THEN 'N'::bpchar
+            ELSE 'Y'::bpchar
+        END AS issotrx, cl.docstatus, c.statementdate AS datetrx, c.dateacct, cl.c_currency_id, NULL::integer AS c_conversiontype_id, abs(cl.amount) AS amount, NULL::integer AS c_invoicepayschedule_id, NULL::timestamp without time zone AS duedate, c.statementdate AS truedatetrx
+   FROM c_cashline cl
+   JOIN c_cash c ON cl.c_cash_id = c.c_cash_id
+   JOIN ( SELECT d.ad_client_id, d.c_doctype_id, d.name, d.printname
+      FROM c_doctype d
+     WHERE d.doctypekey::text = 'CMC'::text) dt ON cl.ad_client_id = dt.ad_client_id
+   LEFT JOIN c_invoice i ON cl.c_invoice_id = i.c_invoice_id;
+
+ALTER TABLE v_documents OWNER TO libertya;
+
+CREATE OR REPLACE VIEW rv_bpartneropen AS 
+ SELECT i.ad_client_id, i.ad_org_id, i.isactive, i.created, i.createdby, i.updated, i.updatedby, i.c_bpartner_id, i.c_currency_id, i.grandtotal * i.multiplierap AS amt, invoiceopen(i.c_invoice_id, i.c_invoicepayschedule_id) * i.multiplierap AS openamt, i.dateinvoiced AS datedoc, COALESCE(daysbetween(now(), ips.duedate::timestamp with time zone), paymenttermduedays(i.c_paymentterm_id, i.dateinvoiced::timestamp with time zone, now())) AS daysdue
+   FROM c_invoice_v i
+   LEFT JOIN c_invoicepayschedule ips ON i.c_invoicepayschedule_id = ips.c_invoicepayschedule_id
+  WHERE i.ispaid = 'N'::bpchar AND (i.docstatus = 'CO'::bpchar OR i.docstatus = 'CL'::bpchar)
+UNION 
+ SELECT p.ad_client_id, p.ad_org_id, p.isactive, p.created, p.createdby, p.updated, p.updatedby, p.c_bpartner_id, p.c_currency_id, p.payamt * p.multiplierap * (- 1::numeric) AS amt, paymentavailable(p.c_payment_id) * p.multiplierap * (- 1::numeric) AS openamt, p.datetrx AS datedoc, NULL::unknown AS daysdue
+   FROM c_payment_v p
+  WHERE p.isallocated = 'N'::bpchar AND p.c_bpartner_id IS NOT NULL AND (p.docstatus = 'CO'::bpchar OR p.docstatus = 'CL'::bpchar);
+
+ALTER TABLE rv_bpartneropen OWNER TO libertya;
+
+CREATE OR REPLACE VIEW v_projectedpayments AS 
+ SELECT v.documenttable, v.document_id, v.ad_client_id, v.ad_org_id, v.isactive, v.created, v.createdby, v.updated, v.updatedby, v.c_bpartner_id, v.c_doctype_id, v.signo_issotrx, v.doctypename, v.doctypeprintname, v.documentno, v.issotrx, v.docstatus, v.datetrx, v.dateacct, v.c_currency_id, v.c_conversiontype_id, v.amount, v.c_invoicepayschedule_id, v.duedate, i.ispaid, NULL::character varying(20) AS checkno
+   FROM v_documents v
+   JOIN c_invoice i ON i.c_invoice_id = v.document_id
+  WHERE i.issotrx = 'N'::bpchar AND v.documenttable = 'C_Invoice'::text
+UNION ALL 
+ SELECT v.documenttable, v.document_id, v.ad_client_id, v.ad_org_id, v.isactive, v.created, v.createdby, v.updated, v.updatedby, v.c_bpartner_id, v.c_doctype_id, v.signo_issotrx, 'Cheque' AS doctypename, v.doctypeprintname, v.documentno, v.issotrx, v.docstatus, v.datetrx, v.dateacct, v.c_currency_id, v.c_conversiontype_id, v.amount, v.c_invoicepayschedule_id, v.duedate, NULL::character(1) AS ispaid, p.checkno
+   FROM v_documents v
+   JOIN c_payment p ON p.c_payment_id = v.document_id
+  WHERE p.issotrx = 'N'::bpchar AND p.tendertype = 'K'::bpchar AND p.datetrx < p.duedate;
+
+ALTER TABLE v_projectedpayments OWNER TO libertya;
+
+-- 20120606-1145 Modificación de vista m_retencion_invoice_v con nuevos campos
+CREATE OR REPLACE VIEW m_retencion_invoice_v AS 
+ SELECT DISTINCT ri.m_retencion_invoice_id, ri.ad_client_id, ri.ad_org_id, ri.c_retencionschema_id, ri.c_invoice_id, ri.c_allocationhdr_id, ri.c_invoiceline_id, ri.c_invoice_retenc_id, ri.amt_retenc, ri.c_currency_id, ri.pagos_ant_acumulados_amt, ri.retenciones_ant_acumuladas_amt, ri.pago_actual_amt, ri.retencion_percent, ri.importe_no_imponible_amt, ri.base_calculo_percent, ri.issotrx, ri.baseimponible_amt, ri.importe_determinado_amt, rs.c_retenciontype_id, i.c_bpartner_id, rs.retencionapplication, bp.taxid, i.dateinvoiced, iv.documentno, iv.dateinvoiced AS fecha, iv.grandtotal, iv.c_project_id, iv.totallines
+   FROM c_retencionschema rs
+   JOIN c_retenciontype rt ON rs.c_retenciontype_id = rt.c_retenciontype_id
+   JOIN m_retencion_invoice ri ON rs.c_retencionschema_id = ri.c_retencionschema_id
+   JOIN c_invoice i ON ri.c_invoice_id = i.c_invoice_id
+   JOIN c_bpartner bp ON i.c_bpartner_id = bp.c_bpartner_id
+   JOIN c_allocationhdr a ON ri.c_allocationhdr_id = a.c_allocationhdr_id
+   JOIN c_allocationline al ON a.c_allocationhdr_id = al.c_allocationhdr_id
+   LEFT JOIN c_invoice iv ON iv.c_invoice_id = (SELECT c_invoice_id FROM c_allocationline allo WHERE allo.c_allocationhdr_id = al.c_allocationhdr_id ORDER BY c_invoice_id DESC LIMIT 1)
+  ORDER BY ri.m_retencion_invoice_id, ri.ad_client_id, ri.ad_org_id, ri.c_retencionschema_id, ri.c_invoice_id, ri.c_allocationhdr_id, ri.c_invoiceline_id, ri.c_invoice_retenc_id, ri.amt_retenc, ri.c_currency_id, ri.pagos_ant_acumulados_amt, ri.retenciones_ant_acumuladas_amt, ri.pago_actual_amt, ri.retencion_percent, ri.importe_no_imponible_amt, ri.base_calculo_percent, ri.issotrx, ri.baseimponible_amt, ri.importe_determinado_amt, rs.c_retenciontype_id, i.c_bpartner_id, rs.retencionapplication, bp.taxid, i.dateinvoiced, iv.documentno, iv.dateinvoiced, iv.grandtotal, iv.c_project_id, iv.totallines;
+
+ALTER TABLE m_retencion_invoice_v OWNER TO libertya;
+
+-- 20120606-1855 Adicionales para el reporte de Resumen de Ventas
+ALTER TABLE c_invoice ADD COLUMN initialcurrentaccountamt numeric(20,2) NOT NULL DEFAULT 0;
+ALTER TABLE c_invoice ADD COLUMN c_pospaymentmedium_id integer;
+ALTER TABLE c_payment ADD COLUMN c_pospaymentmedium_id integer;
+ALTER TABLE c_cashline ADD COLUMN c_pospaymentmedium_id integer;
+
+DROP VIEW c_pos_declaracionvalores_v;
+DROP VIEW c_posjournalpayments_v;
+
+CREATE OR REPLACE VIEW c_posjournalpayments_v AS 
+ SELECT al.c_allocationhdr_id, al.c_allocationline_id, al.ad_client_id, al.ad_org_id, al.isactive, al.created, al.createdby, al.updated, al.updatedby, al.c_invoice_id, al.c_payment_id, al.c_cashline_id, al.c_invoice_credit_id, 
+        CASE
+            WHEN al.c_payment_id IS NOT NULL THEN p.tendertype::character varying
+            WHEN al.c_cashline_id IS NOT NULL THEN 'CA'::character varying
+            WHEN al.c_invoice_credit_id IS NOT NULL THEN 'CR'::character varying
+            ELSE NULL::character varying
+        END::character varying(2) AS tendertype, 
+        CASE
+            WHEN al.c_payment_id IS NOT NULL THEN p.documentno
+            WHEN al.c_invoice_credit_id IS NOT NULL THEN ic.documentno
+            ELSE NULL::character varying
+        END::character varying(30) AS documentno, 
+        CASE
+            WHEN al.c_payment_id IS NOT NULL THEN p.description
+            WHEN al.c_cashline_id IS NOT NULL THEN cl.description
+            WHEN al.c_invoice_credit_id IS NOT NULL THEN ic.description
+            ELSE NULL::character varying
+        END::character varying(255) AS description, 
+        CASE
+            WHEN al.c_payment_id IS NOT NULL THEN ((p.documentno::text || '_'::text) || to_char(p.datetrx, 'DD/MM/YYYY'::text))::character varying
+            WHEN al.c_cashline_id IS NOT NULL THEN ((c.name::text || '_#'::text) || cl.line::text)::character varying
+            WHEN al.c_invoice_credit_id IS NOT NULL THEN ic.documentno
+            ELSE NULL::character varying
+        END::character varying(255) AS info, COALESCE(currencyconvert(al.amount + al.discountamt + al.writeoffamt, ah.c_currency_id, i.c_currency_id, NULL::timestamp with time zone, NULL::integer, ah.ad_client_id, ah.ad_org_id), 0::numeric)::numeric(20,2) AS amount, cl.c_cash_id, cl.line, ic.c_doctype_id, p.checkno, p.a_bank, p.checkno AS transferno, p.creditcardtype, p.m_entidadfinancieraplan_id, ep.m_entidadfinanciera_id, p.couponnumber, date_trunc('day'::text, ah.datetrx) AS allocationdate,
+        CASE
+            WHEN al.c_payment_id IS NOT NULL THEN p.docstatus
+            WHEN al.c_cashline_id IS NOT NULL THEN cl.docstatus
+            WHEN al.c_invoice_credit_id IS NOT NULL THEN ic.docstatus
+            ELSE NULL::character(2)
+        END AS docstatus
+   FROM c_allocationline al
+   LEFT JOIN c_allocationhdr ah ON al.c_allocationhdr_id = ah.c_allocationhdr_id
+   LEFT JOIN c_invoice i ON al.c_invoice_id = i.c_invoice_id
+   LEFT JOIN c_payment p ON al.c_payment_id = p.c_payment_id
+   LEFT JOIN m_entidadfinancieraplan ep ON p.m_entidadfinancieraplan_id = ep.m_entidadfinancieraplan_id
+   LEFT JOIN c_cashline cl ON al.c_cashline_id = cl.c_cashline_id
+   LEFT JOIN c_cash c ON cl.c_cash_id = c.c_cash_id
+   LEFT JOIN c_invoice ic ON al.c_invoice_credit_id = ic.c_invoice_id
+  ORDER BY 
+CASE
+    WHEN al.c_payment_id IS NOT NULL THEN p.tendertype::character varying
+    WHEN al.c_cashline_id IS NOT NULL THEN 'CA'::character varying
+    WHEN al.c_invoice_credit_id IS NOT NULL THEN 'CR'::character varying
+    ELSE NULL::character varying
+END::character varying(2), 
+CASE
+    WHEN al.c_payment_id IS NOT NULL THEN p.documentno
+    WHEN al.c_invoice_credit_id IS NOT NULL THEN ic.documentno
+    ELSE NULL::character varying
+END::character varying(30);
+
+ALTER TABLE c_posjournalpayments_v OWNER TO libertya;
+
+CREATE OR REPLACE VIEW c_pos_declaracionvalores_v AS 
+        (        (         SELECT i.ad_client_id, i.ad_org_id, i.c_posjournal_id, i.ad_user_id, i.c_currency_id, i.dateinvoiced AS datetrx, i.docstatus, NULL::unknown AS category, dt.docbasetype AS tendertype, (i.documentno::text || ' '::text) || COALESCE(i.description, ''::character varying)::text AS description, i.c_charge_id, i.chargename, i.c_invoice_id AS doc_id, 
+                                CASE dt.signo_issotrx
+                                    WHEN 1 THEN i.total - i.open
+                                    WHEN (-1) THEN 0::numeric
+                                    ELSE NULL::numeric
+                                END::numeric(22,2) AS ingreso, 
+                                CASE dt.signo_issotrx
+                                    WHEN 1 THEN 0::numeric
+                                    WHEN (-1) THEN i.total - i.open
+                                    ELSE NULL::numeric
+                                END::numeric(22,2) AS egreso
+                           FROM ( SELECT DISTINCT i.ad_client_id, i.ad_org_id, i.documentno, inv.description, i.c_posjournal_id, pj.ad_user_id, i.c_invoice_id, i.c_currency_id, i.docstatus, i.dateinvoiced::date AS dateinvoiced, i.c_bpartner_id, i.c_doctype_id, ch.c_charge_id, ch.name AS chargename, currencybase(i.grandtotal, i.c_currency_id, i.dateinvoiced::timestamp with time zone, i.ad_client_id, i.ad_org_id)::numeric(22,2) AS total, currencybase(initialcurrentaccountamt, i.c_currency_id, i.dateinvoiced::timestamp with time zone, i.ad_client_id, i.ad_org_id)::numeric(22,2) AS open
+                                   FROM c_posjournalinvoices_v i
+                              JOIN c_posjournal pj ON pj.c_posjournal_id = i.c_posjournal_id
+                         JOIN c_invoice inv ON i.c_invoice_id = inv.c_invoice_id
+                    LEFT JOIN c_charge ch ON ch.c_charge_id = inv.c_charge_id
+                   ORDER BY i.ad_client_id, i.ad_org_id, i.documentno, inv.description, i.c_posjournal_id, pj.ad_user_id, i.c_invoice_id, i.c_currency_id, i.docstatus, i.dateinvoiced::date, i.c_bpartner_id, i.c_doctype_id, ch.c_charge_id, ch.name, currencybase(i.grandtotal, i.c_currency_id, i.dateinvoiced::timestamp with time zone, i.ad_client_id, i.ad_org_id)::numeric(22,2), currencybase(initialcurrentaccountamt, i.c_currency_id, i.dateinvoiced::timestamp with time zone, i.ad_client_id, i.ad_org_id)::numeric(22,2)) i
+                      JOIN c_doctype dt ON i.c_doctype_id = dt.c_doctype_id
+                UNION ALL 
+                         SELECT p.ad_client_id, p.ad_org_id, p.c_posjournal_id, p.ad_user_id, p.c_currency_id, p.datetrx, p.docstatus, NULL::unknown AS category, p.tendertype, (p.documentno::text || ' '::text) || COALESCE(p.description, ''::character varying)::text AS description, p.c_charge_id, p.chargename, p.c_payment_id AS doc_id, 
+                                CASE p.isreceipt
+                                    WHEN 'Y'::bpchar THEN p.total
+                                    ELSE 0::numeric
+                                END::numeric(22,2) AS ingreso, 
+                                CASE p.isreceipt
+                                    WHEN 'N'::bpchar THEN p.total
+                                    ELSE 0::numeric
+                                END::numeric(22,2) AS egreso
+                           FROM ( SELECT p.ad_client_id, p.ad_org_id, p.c_payment_id, p.c_posjournal_id, pj.ad_user_id, p.c_currency_id, p.datetrx::date AS datetrx, p.docstatus, p.documentno, p.description, p.isreceipt, p.tendertype, ch.c_charge_id, ch.name AS chargename, sum(currencybase(pjp.amount, p.c_currency_id, p.datetrx::timestamp with time zone, p.ad_client_id, p.ad_org_id)::numeric(22,2))::numeric(22,2) AS total
+                                   FROM c_payment p
+                              JOIN c_posjournalpayments_v pjp ON pjp.c_payment_id = p.c_payment_id
+                         JOIN c_posjournal pj ON pj.c_posjournal_id = p.c_posjournal_id
+                    LEFT JOIN c_charge ch ON ch.c_charge_id = p.c_charge_id
+                   GROUP BY p.ad_client_id, p.ad_org_id, p.c_payment_id, p.c_posjournal_id, pj.ad_user_id, p.c_currency_id, p.datetrx::date, p.docstatus, p.documentno, p.description, p.isreceipt, p.tendertype, ch.c_charge_id, ch.name) p)
+        UNION ALL 
+                 SELECT c.ad_client_id, c.ad_org_id, c.c_posjournal_id, c.ad_user_id, c.c_currency_id, c.datetrx, c.docstatus, c.cashtype AS category, c.tendertype, 
+                        CASE
+                            WHEN length(c.description::text) > 0 THEN c.description
+                            ELSE c.info
+                        END AS description, c.c_charge_id, c.chargename, c.c_cashline_id AS doc_id, 
+                        CASE sign(c.total)
+                            WHEN (-1) THEN 0::numeric
+                            ELSE c.total
+                        END::numeric(22,2) AS ingreso, 
+                        CASE sign(c.total)
+                            WHEN (-1) THEN c.total
+                            ELSE 0::numeric
+                        END::numeric(22,2) AS egreso
+                   FROM ( SELECT cl.ad_client_id, cl.ad_org_id, cl.c_cashline_id, c.c_posjournal_id, pj.ad_user_id, cl.c_currency_id, c.statementdate::date AS datetrx, cl.docstatus, cl.description, pjp.info, pjp.tendertype, cl.cashtype, ch.c_charge_id, ch.name AS chargename, sum(currencybase(pjp.amount, cl.c_currency_id, c.statementdate::timestamp with time zone, cl.ad_client_id, cl.ad_org_id)::numeric(22,2))::numeric(22,2) AS total
+                           FROM c_cashline cl
+                      JOIN c_cash c ON c.c_cash_id = cl.c_cash_id
+                 JOIN c_posjournalpayments_v pjp ON pjp.c_cashline_id = cl.c_cashline_id
+            JOIN c_posjournal pj ON pj.c_posjournal_id = c.c_posjournal_id
+       LEFT JOIN c_charge ch ON ch.c_charge_id = cl.c_charge_id
+      GROUP BY cl.ad_client_id, cl.ad_org_id, cl.c_cashline_id, c.c_posjournal_id, pj.ad_user_id, cl.c_currency_id, c.statementdate::date, cl.docstatus, cl.description, pjp.info, pjp.tendertype, cl.cashtype, ch.c_charge_id, ch.name) c)
+UNION ALL 
+         SELECT i.ad_client_id, i.ad_org_id, i.c_posjournal_id, i.ad_user_id, i.c_currency_id, i.dateinvoiced AS datetrx, i.docstatus, NULL::unknown AS category, i.tendertype, (i.documentno::text || ' '::text) || COALESCE(i.description, ''::character varying)::text AS description, i.c_charge_id, i.chargename, i.c_invoice_id AS doc_id, i.total AS ingreso, 0 AS egreso
+           FROM ( SELECT i.ad_client_id, i.ad_org_id, i.documentno, i.description, ah.c_posjournal_id, pj.ad_user_id, i.c_invoice_id, i.c_currency_id, i.docstatus, pjp.tendertype, i.dateinvoiced::date AS dateinvoiced, i.c_bpartner_id, i.c_doctype_id, ch.c_charge_id, ch.name AS chargename, sum(currencybase(pjp.amount, i.c_currency_id, i.dateinvoiced::timestamp with time zone, i.ad_client_id, i.ad_org_id)::numeric(22,2))::numeric(22,2) AS total
+                   FROM c_invoice i
+              JOIN c_posjournalpayments_v pjp ON pjp.c_invoice_credit_id = i.c_invoice_id
+              INNER JOIN c_allocationhdr as ah ON ah.c_allocationhdr_id = pjp.c_allocationhdr_id
+         JOIN c_posjournal pj ON pj.c_posjournal_id = ah.c_posjournal_id
+    LEFT JOIN c_charge ch ON ch.c_charge_id = i.c_charge_id
+   GROUP BY i.ad_client_id, i.ad_org_id, i.documentno, i.description, ah.c_posjournal_id, pj.ad_user_id, i.c_invoice_id, i.c_currency_id, i.docstatus, pjp.tendertype, i.dateinvoiced::date, i.c_bpartner_id, i.c_doctype_id, ch.c_charge_id, ch.name) i
+      JOIN c_doctype dt ON i.c_doctype_id = dt.c_doctype_id;
+
+ALTER TABLE c_pos_declaracionvalores_v OWNER TO libertya;
+
+CREATE OR REPLACE VIEW v_dailysales AS 
+
+select 'P' as trxtype, pjp.ad_client_id, pjp.ad_org_id, i.c_invoice_id, pjp.allocationdate as datetrx, pjp.c_payment_id, pjp.c_cashline_id, pjp.c_invoice_credit_id, pjp.tendertype, pjp.documentno, pjp.description, pjp.info, pjp.amount, bp.c_bpartner_id, bp.name, bp.c_bp_group_id, bpg.name as groupname, bp.c_categoria_iva_id, ci.name as categorianame, (CASE WHEN pjp.c_invoice_credit_id IS NOT NULL THEN dt.c_doctype_id WHEN pjp.c_cashline_id IS NOT NULL THEN ppmc.c_pospaymentmedium_id ELSE p.c_pospaymentmedium_id END) as c_pospaymentmedium_id, (CASE WHEN pjp.c_invoice_credit_id IS NOT NULL THEN dt.docbasetype WHEN pjp.c_cashline_id IS NOT NULL THEN ppmc.name ELSE ppm.name END) as pospaymentmediumname, pjp.m_entidadfinanciera_id, ef.name as entidadfinancieraname, pjp.m_entidadfinancieraplan_id, efp.name as planname, pjp.docstatus, i.issotrx
+from c_posjournalpayments_v as pjp 
+inner join c_invoice as i on i.c_invoice_id = pjp.c_invoice_id
+inner join c_bpartner as bp on bp.c_bpartner_id = i.c_bpartner_id
+inner join c_bp_group as bpg on bpg.c_bp_group_id = bp.c_bp_group_id
+left join c_categoria_iva as ci on ci.c_categoria_iva_id = bp.c_categoria_iva_id
+left join c_payment as p on p.c_payment_id = pjp.c_payment_id
+left join c_pospaymentmedium as ppm on ppm.c_pospaymentmedium_id = p.c_pospaymentmedium_id
+left join c_cashline as c on c.c_cashline_id = pjp.c_cashline_id
+left join c_pospaymentmedium as ppmc on ppmc.c_pospaymentmedium_id = c.c_pospaymentmedium_id
+left join m_entidadfinanciera as ef on ef.m_entidadfinanciera_id = pjp.m_entidadfinanciera_id
+left join m_entidadfinancieraplan as efp on efp.m_entidadfinancieraplan_id = pjp.m_entidadfinancieraplan_id
+left join c_invoice as cc on cc.c_invoice_id = pjp.c_invoice_credit_id
+left join c_doctype as dt on cc.c_doctypetarget_id = dt.c_doctype_id
+UNION ALL
+select 'CAI' as trxtype, i.ad_client_id, i.ad_org_id, i.c_invoice_id, date_trunc('day',i.dateinvoiced) as datetrx, null as c_payment_id, null as c_cashline_id, null as c_invoice_credit_id, 'CC' as tendertype, i.documentno, i.description, null as info, i.initialcurrentaccountamt as amount, bp.c_bpartner_id, bp.name, bp.c_bp_group_id, bpg.name as groupname, bp.c_categoria_iva_id, ci.name as categorianame, null as c_pospaymentmedium_id, null as pospaymentmediumname, null as m_entidadfinanciera_id, null as entidadfinancieraname, null as m_entidadfinancieraplan_id, null as planname, i.docstatus, i.issotrx
+from c_invoice as i 
+inner join c_bpartner as bp on bp.c_bpartner_id = i.c_bpartner_id
+inner join c_bp_group as bpg on bpg.c_bp_group_id = bp.c_bp_group_id
+left join c_categoria_iva as ci on ci.c_categoria_iva_id = bp.c_categoria_iva_id
+where i.initialcurrentaccountamt > 0
+UNION ALL
+select 'I' as trxtype, i.ad_client_id, i.ad_org_id, i.c_invoice_id, date_trunc('day',i.dateinvoiced) as datetrx, null as c_payment_id, null as c_cashline_id, null as c_invoice_credit_id, dt.docbasetype as tendertype, i.documentno, i.description, null as info, i.grandtotal as amount, bp.c_bpartner_id, bp.name, bp.c_bp_group_id, bpg.name as groupname, bp.c_categoria_iva_id, ci.name as categorianame, dt.c_doctype_id as c_pospaymentmedium_id, dt.name as pospaymentmediumname, null as m_entidadfinanciera_id, null as entidadfinancieraname, null as m_entidadfinancieraplan_id, null as planname, i.docstatus, i.issotrx
+from c_invoice as i 
+inner join c_doctype as dt on i.c_doctypetarget_id = dt.c_doctype_id
+inner join c_bpartner as bp on bp.c_bpartner_id = i.c_bpartner_id
+inner join c_bp_group as bpg on bpg.c_bp_group_id = bp.c_bp_group_id
+left join c_categoria_iva as ci on ci.c_categoria_iva_id = bp.c_categoria_iva_id;
+
+ALTER TABLE v_dailysales OWNER TO libertya;
+
+-- 20120610-1510 Nuevas columnas en el tipo de documento para arrastrar los descuentos del pedido en el Crear Desde, además del precio. Nueva columna en la factura para marcar aquellos documentos que tienen arrastre de descuento del pedido y así poder gestionarlos
+ALTER TABLE c_doctype ADD COLUMN dragorderprice character(1) NOT NULL DEFAULT 'Y'::bpchar;
+ALTER TABLE c_doctype ADD COLUMN dragorderlinediscounts character(1) NOT NULL DEFAULT 'N'::bpchar;
+ALTER TABLE c_doctype ADD COLUMN dragorderdocumentdiscounts character(1) NOT NULL DEFAULT 'N'::bpchar;
+ALTER TABLE c_invoice ADD COLUMN managedragorderdiscounts character(1) NOT NULL DEFAULT 'N'::bpchar;
+
+
+-- 20120611-11:26.  Replicacion: usar SET como prefijo en repArray para indicar forzado de dicho campo
+CREATE OR REPLACE FUNCTION replication_event()
+  RETURNS trigger AS
+$BODY$
+DECLARE 
+	found integer; 
+	replicationPos integer;
+	v_newRepArray varchar; 
+	aKeyColumn varchar;
+	repSeq bigint;
+	shouldReplicate varchar;
+BEGIN 
+	
+	IF (TG_OP = 'DELETE') THEN
+		
+		SELECT INTO shouldReplicate VALUE FROM AD_PREFERENCE WHERE ATTRIBUTE = 'ReplicationEventsActive';
+		IF (shouldReplicate <> 'Y') THEN
+			RETURN OLD;
+		END IF;
+		
+		
+		IF (OLD.repArray IS NULL OR OLD.repArray = '') THEN
+			RETURN OLD;
+		END IF;
+		
+		IF replication_is_record_replicated(OLD.repArray) = 1 THEN
+			
+			SELECT INTO v_newRepArray replicationArray 
+			FROM ad_tablereplication 
+			WHERE ad_table_ID = TG_ARGV[0]::int;
+			IF v_newRepArray IS NOT NULL AND v_newRepArray <> '' THEN
+				INSERT INTO ad_changelog_replication (AD_Changelog_Replication_ID, AD_Client_ID, AD_Org_ID, isActive, Created, CreatedBy, Updated, UpdatedBy, AD_Table_ID, retrieveUID, operationtype, binaryvalue, reparray, columnvalues)
+				SELECT nextval('seq_ad_changelog_replication'),OLD.AD_Client_ID,OLD.AD_Org_ID,'Y',OLD.Created,OLD.CreatedBy,OLD.Updated,OLD.UpdatedBy,TG_ARGV[0]::int,OLD.retrieveUID,'I',null,v_newRepArray,null;
+			END IF;
+		END IF;	
+		
+		RETURN OLD;
+	END IF;
+	
+	IF (TG_OP = 'INSERT' OR TG_OP = 'UPDATE') THEN
+		
+		SELECT INTO shouldReplicate VALUE FROM AD_PREFERENCE WHERE ATTRIBUTE = 'ReplicationEventsActive';
+		IF (shouldReplicate <> 'Y') THEN
+			RETURN NEW;
+		END IF;
+		
+
+		 IF (NEW.repArray = 'SKIP') THEN
+			NEW.repArray := NULL;
+			return NEW;
+		 END IF;
+		 
+		 
+		 IF NEW.retrieveUID IS NULL OR NEW.retrieveUID = '' THEN 
+			SELECT INTO replicationPos replicationArrayPos FROM AD_ReplicationHost WHERE thisHost = 'Y'; 
+			IF replicationPos IS NULL THEN RAISE EXCEPTION 'Configuracion de Hosts incompleta: Ninguna sucursal tiene marca de Este Host'; END IF; 
+			
+			SELECT INTO repseq nextVal('repseq_' || TG_ARGV[1]);
+			IF repseq IS NULL THEN RAISE EXCEPTION 'No hay definida una secuencia de replicacion para la tabla %', TG_ARGV[1]; END IF;
+			NEW.retrieveUID := 'h'::varchar || replicationPos::varchar || '_' || repseq;
+		END IF;
+		 
+		
+		SELECT INTO found replication_is_valid_table(NEW.AD_Client_ID, TG_ARGV[0]::int, NEW.retrieveUID); 
+		IF found = 0 THEN RETURN NEW; END IF; 
+		
+		
+		IF (TG_OP = 'INSERT') THEN
+			
+			SELECT INTO v_newRepArray replicationArray 
+			FROM ad_tablereplication 
+			WHERE ad_table_ID = TG_ARGV[0]::int;
+			
+			IF v_newRepArray IS NULL OR v_newRepArray = '' THEN
+				RETURN NEW;
+			END IF;
+			
+			
+			NEW.repArray := replace(v_newRepArray, '3', '1');
+			RETURN NEW;
+		
+		
+		ELSEIF (TG_OP = 'UPDATE') THEN 
+		
+				 IF (substr(NEW.repArray, 1, 3) = 'SET') THEN
+					NEW.repArray := substr(NEW.repArray, 4, length(NEW.repArray)-3);
+				ELSE
+					v_newRepArray := replace(OLD.repArray, '2', '3');
+					NEW.repArray := replace(v_newRepArray, '4', '5');
+				END IF;
+				RETURN NEW;
+		END IF;
+	END IF;
+END; 
+$BODY$
+  LANGUAGE 'plpgsql' VOLATILE
+  COST 100;
+ALTER FUNCTION replication_event() OWNER TO libertya;
+
+
+-- 20120611-11:26.  Funcion para simplificar el forzado del repArray
+CREATE OR REPLACE FUNCTION replicationSetRepArray(tablename varchar, retrieveuid varchar , reparray varchar )
+RETURNS NUMERIC AS
+$BODY$
+BEGIN
+	EXECUTE 'UPDATE ' || tablename || ' SET repArray = ''SET' || reparray || ''' WHERE retrieveUID = ''' || retrieveuid || '''';
+	RETURN 1;
+END;
+$BODY$
+  LANGUAGE 'plpgsql' VOLATILE;
+  
+-- 20120611-11:57.  Replicacion Setear valor por defecto de la columna thishost 
+ALTER TABLE ad_replicationhost ALTER COLUMN thishost SET DEFAULT 'N';
+
+-- 20120611-1800 Eliminación de registros existentes por creación de informe de caja para FOCOS
+DELETE FROM AD_Column WHERE ad_componentobjectuid = 'CORE-AD_Column-1015556';
+DELETE FROM AD_Column_Trl WHERE ad_componentobjectuid like 'CORE-AD_Column_Trl-1015556-es_%';
+DELETE FROM AD_Column WHERE ad_componentobjectuid = 'CORE-AD_Column-1015557';
+DELETE FROM AD_Column_Trl WHERE ad_componentobjectuid like 'CORE-AD_Column_Trl-1015557-es_%';
+DELETE FROM AD_Column WHERE ad_componentobjectuid = 'CORE-AD_Column-1015558';
+DELETE FROM AD_Column_Trl WHERE ad_componentobjectuid like 'CORE-AD_Column_Trl-1015558-es_%';
+DELETE FROM AD_Column WHERE ad_componentobjectuid = 'CORE-AD_Column-1015559';
+DELETE FROM AD_Column_Trl WHERE ad_componentobjectuid like 'CORE-AD_Column_Trl-1015559-es_%';
+DELETE FROM AD_Column WHERE ad_componentobjectuid = 'CORE-AD_Column-1015560';
+DELETE FROM AD_Column_Trl WHERE ad_componentobjectuid like 'CORE-AD_Column_Trl-1015560-es_%';
+DELETE FROM AD_Column WHERE ad_componentobjectuid = 'CORE-AD_Column-1015561';
+DELETE FROM AD_Column_Trl WHERE ad_componentobjectuid like 'CORE-AD_Column_Trl-1015561-es_%';
+DELETE FROM AD_Column WHERE ad_componentobjectuid = 'CORE-AD_Column-1015562';
+DELETE FROM AD_Column_Trl WHERE ad_componentobjectuid like 'CORE-AD_Column_Trl-1015562-es_%';
+DELETE FROM AD_Column WHERE ad_componentobjectuid = 'CORE-AD_Column-1015563';
+DELETE FROM AD_Column_Trl WHERE ad_componentobjectuid like 'CORE-AD_Column_Trl-1015563-es_%';
+DELETE FROM AD_Column WHERE ad_componentobjectuid = 'CORE-AD_Column-1015564';
+DELETE FROM AD_Column_Trl WHERE ad_componentobjectuid like 'CORE-AD_Column_Trl-1015564-es_%';
+DELETE FROM AD_Column WHERE ad_componentobjectuid = 'CORE-AD_Column-1015565';
+DELETE FROM AD_Column_Trl WHERE ad_componentobjectuid like 'CORE-AD_Column_Trl-1015565-es_%';
+DELETE FROM AD_Column WHERE ad_componentobjectuid = 'CORE-AD_Column-1015566';
+DELETE FROM AD_Column_Trl WHERE ad_componentobjectuid like 'CORE-AD_Column_Trl-1015566-es_%';
+DELETE FROM AD_Column WHERE ad_componentobjectuid = 'CORE-AD_Column-1015567';
+DELETE FROM AD_Column_Trl WHERE ad_componentobjectuid like 'CORE-AD_Column_Trl-1015567-es_%';
+DELETE FROM AD_Column WHERE ad_componentobjectuid = 'CORE-AD_Column-1015568';
+DELETE FROM AD_Column_Trl WHERE ad_componentobjectuid like 'CORE-AD_Column_Trl-1015568-es_%';
+DELETE FROM AD_Column WHERE ad_componentobjectuid = 'CORE-AD_Column-1015569';
+DELETE FROM AD_Column_Trl WHERE ad_componentobjectuid like 'CORE-AD_Column_Trl-1015569-es_%';
+DELETE FROM AD_Column WHERE ad_componentobjectuid = 'CORE-AD_Column-1015570';
+DELETE FROM AD_Column_Trl WHERE ad_componentobjectuid like 'CORE-AD_Column_Trl-1015570-es_%';
+DELETE FROM AD_Column WHERE ad_componentobjectuid = 'CORE-AD_Column-1015571';
+DELETE FROM AD_Column_Trl WHERE ad_componentobjectuid like 'CORE-AD_Column_Trl-1015571-es_%';
+DELETE FROM AD_Column WHERE ad_componentobjectuid = 'CORE-AD_Column-1015572';
+DELETE FROM AD_Column_Trl WHERE ad_componentobjectuid like 'CORE-AD_Column_Trl-1015572-es_%';
+DELETE FROM AD_Column WHERE ad_componentobjectuid = 'CORE-AD_Column-1015573';
+DELETE FROM AD_Column_Trl WHERE ad_componentobjectuid like 'CORE-AD_Column_Trl-1015573-es_%';
+DELETE FROM AD_Column WHERE ad_componentobjectuid = 'CORE-AD_Column-1015574';
+DELETE FROM AD_Column_Trl WHERE ad_componentobjectuid like 'CORE-AD_Column_Trl-1015574-es_%';
+DELETE FROM AD_Column WHERE ad_componentobjectuid = 'CORE-AD_Column-1015575';
+DELETE FROM AD_Column_Trl WHERE ad_componentobjectuid like 'CORE-AD_Column_Trl-1015575-es_%';
+DELETE FROM AD_Column WHERE ad_componentobjectuid = 'CORE-AD_Column-1015576';
+DELETE FROM AD_Column_Trl WHERE ad_componentobjectuid like 'CORE-AD_Column_Trl-1015576-es_%';
+DELETE FROM AD_PrintFormatItem WHERE ad_componentobjectuid = 'CORE-AD_PrintFormatItem-1038299';
+DELETE FROM AD_PrintFormatItem_Trl WHERE ad_componentobjectuid like 'CORE-AD_PrintFormatItem_Trl-es_%-1038299';
+DELETE FROM AD_PrintFormatItem WHERE ad_componentobjectuid = 'CORE-AD_PrintFormatItem-1038300';
+DELETE FROM AD_PrintFormatItem_Trl WHERE ad_componentobjectuid like 'CORE-AD_PrintFormatItem_Trl-es_%-1038300';
+DELETE FROM AD_PrintFormatItem WHERE ad_componentobjectuid = 'CORE-AD_PrintFormatItem-1038301';
+DELETE FROM AD_PrintFormatItem_Trl WHERE ad_componentobjectuid like 'CORE-AD_PrintFormatItem_Trl-es_%-1038301';
+DELETE FROM AD_PrintFormatItem WHERE ad_componentobjectuid = 'CORE-AD_PrintFormatItem-1038302';
+DELETE FROM AD_PrintFormatItem_Trl WHERE ad_componentobjectuid like 'CORE-AD_PrintFormatItem_Trl-es_%-1038302';
+DELETE FROM AD_PrintFormatItem WHERE ad_componentobjectuid = 'CORE-AD_PrintFormatItem-1038303';
+DELETE FROM AD_PrintFormatItem_Trl WHERE ad_componentobjectuid like 'CORE-AD_PrintFormatItem_Trl-es_%-1038303';
+DELETE FROM AD_PrintFormatItem WHERE ad_componentobjectuid = 'CORE-AD_PrintFormatItem-1038304';
+DELETE FROM AD_PrintFormatItem_Trl WHERE ad_componentobjectuid like 'CORE-AD_PrintFormatItem_Trl-es_%-1038304';
+DELETE FROM AD_PrintFormatItem WHERE ad_componentobjectuid = 'CORE-AD_PrintFormatItem-1038305';
+DELETE FROM AD_PrintFormatItem_Trl WHERE ad_componentobjectuid like 'CORE-AD_PrintFormatItem_Trl-es_%-1038305';
+DELETE FROM AD_PrintFormatItem WHERE ad_componentobjectuid = 'CORE-AD_PrintFormatItem-1038306';
+DELETE FROM AD_PrintFormatItem_Trl WHERE ad_componentobjectuid like 'CORE-AD_PrintFormatItem_Trl-es_%-1038306';
+DELETE FROM AD_PrintFormatItem WHERE ad_componentobjectuid = 'CORE-AD_PrintFormatItem-1038307';
+DELETE FROM AD_PrintFormatItem_Trl WHERE ad_componentobjectuid like 'CORE-AD_PrintFormatItem_Trl-es_%-1038307';
+DELETE FROM AD_PrintFormatItem WHERE ad_componentobjectuid = 'CORE-AD_PrintFormatItem-1038308';
+DELETE FROM AD_PrintFormatItem_Trl WHERE ad_componentobjectuid like 'CORE-AD_PrintFormatItem_Trl-es_%-1038308';
+DELETE FROM AD_PrintFormatItem WHERE ad_componentobjectuid = 'CORE-AD_PrintFormatItem-1038309';
+DELETE FROM AD_PrintFormatItem_Trl WHERE ad_componentobjectuid like 'CORE-AD_PrintFormatItem_Trl-es_%-1038309';
+DELETE FROM AD_PrintFormatItem WHERE ad_componentobjectuid = 'CORE-AD_PrintFormatItem-1038310';
+DELETE FROM AD_PrintFormatItem_Trl WHERE ad_componentobjectuid like 'CORE-AD_PrintFormatItem_Trl-es_%-1038310';
+DELETE FROM AD_PrintFormatItem WHERE ad_componentobjectuid = 'CORE-AD_PrintFormatItem-1038311';
+DELETE FROM AD_PrintFormatItem_Trl WHERE ad_componentobjectuid like 'CORE-AD_PrintFormatItem_Trl-es_%-1038311';
+DELETE FROM AD_PrintFormatItem WHERE ad_componentobjectuid = 'CORE-AD_PrintFormatItem-1038312';
+DELETE FROM AD_PrintFormatItem_Trl WHERE ad_componentobjectuid like 'CORE-AD_PrintFormatItem_Trl-es_%-1038312';
+DELETE FROM AD_PrintFormatItem WHERE ad_componentobjectuid = 'CORE-AD_PrintFormatItem-1038313';
+DELETE FROM AD_PrintFormatItem_Trl WHERE ad_componentobjectuid like 'CORE-AD_PrintFormatItem_Trl-es_%-1038313';
+DELETE FROM AD_PrintFormatItem WHERE ad_componentobjectuid = 'CORE-AD_PrintFormatItem-1038314';
+DELETE FROM AD_PrintFormatItem_Trl WHERE ad_componentobjectuid like 'CORE-AD_PrintFormatItem_Trl-es_%-1038314';
+DELETE FROM AD_PrintFormatItem WHERE ad_componentobjectuid = 'CORE-AD_PrintFormatItem-1038315';
+DELETE FROM AD_PrintFormatItem_Trl WHERE ad_componentobjectuid like 'CORE-AD_PrintFormatItem_Trl-es_%-1038315';
+DELETE FROM AD_PrintFormatItem WHERE ad_componentobjectuid = 'CORE-AD_PrintFormatItem-1038316';
+DELETE FROM AD_PrintFormatItem_Trl WHERE ad_componentobjectuid like 'CORE-AD_PrintFormatItem_Trl-es_%-1038316';
+DELETE FROM AD_PrintFormatItem WHERE ad_componentobjectuid = 'CORE-AD_PrintFormatItem-1038317';
+DELETE FROM AD_PrintFormatItem_Trl WHERE ad_componentobjectuid like 'CORE-AD_PrintFormatItem_Trl-es_%-1038317';
+DELETE FROM AD_PrintFormatItem WHERE ad_componentobjectuid = 'CORE-AD_PrintFormatItem-1038318';
+DELETE FROM AD_PrintFormatItem_Trl WHERE ad_componentobjectuid like 'CORE-AD_PrintFormatItem_Trl-es_%-1038318';
+DELETE FROM AD_PrintFormatItem WHERE ad_componentobjectuid = 'CORE-AD_PrintFormatItem-1038319';
+DELETE FROM AD_PrintFormatItem_Trl WHERE ad_componentobjectuid like 'CORE-AD_PrintFormatItem_Trl-es_%-1038319';
+DELETE FROM AD_Process_Trl WHERE ad_componentobjectuid like 'CORE-AD_Process_Trl-es_%-1010285';
+DELETE FROM AD_Process_Access WHERE ad_componentobjectuid = 'CORE-AD_Process_Access-1010285-0';
+DELETE FROM AD_Process_Para WHERE ad_componentobjectuid = 'CORE-AD_Process_Para-1010569';
+DELETE FROM AD_Process_Para_Trl WHERE ad_componentobjectuid like 'CORE-AD_Process_Para_Trl-es_%-1010569';
+DELETE FROM AD_Menu WHERE ad_componentobjectuid = 'CORE-AD_Menu-1010417';
+DELETE FROM AD_Menu_Trl WHERE ad_componentobjectuid like 'CORE-AD_Menu_Trl-es_%-1010417';
+DELETE FROM AD_TreeNodeMM WHERE ad_componentobjectuid = 'CORE-AD_TreeNodeMM-10-1010417';
+DELETE FROM AD_Process_Access WHERE ad_componentobjectuid = 'CORE-AD_Process_Access-1010285-1010076';
+DELETE FROM AD_TreeNodeMM WHERE ad_componentobjectuid = 'CORE-AD_TreeNodeMM-1010115-1010417';
+DELETE FROM AD_Table_Trl WHERE ad_componentobjectuid like 'CORE-AD_Table_Trl-es%1010285';
+DELETE FROM AD_Process WHERE ad_componentobjectuid = 'CORE-AD_Process-1010285';
+DELETE FROM AD_PrintFormat WHERE ad_componentobjectuid = 'CORE-AD_PrintFormat-1010920';
+DELETE FROM AD_Table WHERE ad_componentobjectuid = 'CORE-AD_Table-1010285';
+
+-- 20120622 - Funcion que valida si un registro ya fue replicado
+CREATE OR REPLACE FUNCTION replication_is_record_replicated(p_reparray character varying)
+  RETURNS integer AS
+$BODY$
+DECLARE 
+unChar char;
+	
+BEGIN 
+	
+	FOR i IN 1..length(p_repArray) LOOP
+		IF substring(p_repArray, i, 1) <> '0' AND substring(p_repArray, i, 1) <> '1' THEN
+			return 1;
+		END IF;
+	END LOOP;
+	RETURN 0;
+END;
+$BODY$
+  LANGUAGE 'plpgsql' VOLATILE
+  COST 100;
+
+-- 20120625-10:42:59 Correccion en caso de eliminacion.  Ampliacion de retrieveUID
+CREATE OR REPLACE FUNCTION replication_event()
+  RETURNS trigger AS
+$BODY$
+DECLARE 
+	found integer; 
+	replicationPos integer;
+	v_newRepArray varchar; 
+	aKeyColumn varchar;
+	repSeq bigint;
+	shouldReplicate varchar;
+BEGIN 
+	
+	IF (TG_OP = 'DELETE') THEN
+		
+		SELECT INTO shouldReplicate VALUE FROM AD_PREFERENCE WHERE ATTRIBUTE = 'ReplicationEventsActive';
+		IF (shouldReplicate <> 'Y') THEN
+			RETURN OLD;
+		END IF;
+		
+		
+		IF (OLD.repArray IS NULL OR OLD.repArray = '') THEN
+			RETURN OLD;
+		END IF;
+		
+		IF replication_is_record_replicated(OLD.repArray) = 1 THEN
+			
+			SELECT INTO v_newRepArray replicationArray 
+			FROM ad_tablereplication 
+			WHERE ad_table_ID = TG_ARGV[0]::int;
+
+			v_newRepArray := replace(v_newRepArray, '3', '1');
+			
+			IF v_newRepArray IS NOT NULL AND v_newRepArray <> '' THEN
+				INSERT INTO ad_changelog_replication (AD_Changelog_Replication_ID, AD_Client_ID, AD_Org_ID, isActive, Created, CreatedBy, Updated, UpdatedBy, AD_Table_ID, retrieveUID, operationtype, binaryvalue, reparray, columnvalues)
+				SELECT nextval('seq_ad_changelog_replication'),OLD.AD_Client_ID,OLD.AD_Org_ID,'Y',now(),OLD.CreatedBy,now(),OLD.UpdatedBy,TG_ARGV[0]::int,OLD.retrieveUID,'I',null,v_newRepArray,null;
+			END IF;
+		END IF;	
+		
+		RETURN OLD;
+	END IF;
+	
+	IF (TG_OP = 'INSERT' OR TG_OP = 'UPDATE') THEN
+		
+		SELECT INTO shouldReplicate VALUE FROM AD_PREFERENCE WHERE ATTRIBUTE = 'ReplicationEventsActive';
+		IF (shouldReplicate <> 'Y') THEN
+			RETURN NEW;
+		END IF;
+		
+
+		 IF (NEW.repArray = 'SKIP') THEN
+			NEW.repArray := NULL;
+			return NEW;
+		 END IF;
+		 
+		 
+		 IF NEW.retrieveUID IS NULL OR NEW.retrieveUID = '' THEN 
+			SELECT INTO replicationPos replicationArrayPos FROM AD_ReplicationHost WHERE thisHost = 'Y'; 
+			IF replicationPos IS NULL THEN RAISE EXCEPTION 'Configuracion de Hosts incompleta: Ninguna sucursal tiene marca de Este Host'; END IF; 
+			
+			SELECT INTO repseq nextVal('repseq_' || TG_ARGV[1]);
+			IF repseq IS NULL THEN RAISE EXCEPTION 'No hay definida una secuencia de replicacion para la tabla %', TG_ARGV[1]; END IF;
+			NEW.retrieveUID := 'h'::varchar || replicationPos::varchar || '_' || repseq || '_' || lower(TG_ARGV[1]);
+		END IF;
+		 
+	
+--		SELECT INTO found replication_is_valid_table(NEW.AD_Client_ID, TG_ARGV[0]::int, NEW.retrieveUID); 
+--		IF found = 0 THEN RETURN NEW; END IF; 
+		
+		
+		IF (TG_OP = 'INSERT') THEN
+			
+
+			IF (substr(NEW.repArray, 1, 3) = 'SET') THEN
+				NEW.repArray := substr(NEW.repArray, 4, length(NEW.repArray)-3);
+			ELSE
+
+				SELECT INTO v_newRepArray replicationArray 
+				FROM ad_tablereplication 
+				WHERE ad_table_ID = TG_ARGV[0]::int;
+			
+				IF v_newRepArray IS NULL OR v_newRepArray = '' THEN
+					RETURN NEW;
+				END IF;
+
+				NEW.repArray := replace(v_newRepArray, '3', '1');
+			END IF;
+			RETURN NEW;
+		
+		
+		ELSEIF (TG_OP = 'UPDATE') THEN 
+		
+				 IF (substr(NEW.repArray, 1, 3) = 'SET') THEN
+					NEW.repArray := substr(NEW.repArray, 4, length(NEW.repArray)-3);
+				ELSE
+					v_newRepArray := replace(OLD.repArray, '2', '3');
+					NEW.repArray := replace(v_newRepArray, '4', '5');
+				END IF;
+				RETURN NEW;
+		END IF;
+	END IF;
+END; 
+$BODY$
+  LANGUAGE 'plpgsql' VOLATILE
+  COST 100;
+ALTER FUNCTION replication_event() OWNER TO libertya;
+
+-- 20120626-1530 Incorporación de campo value a plan de entidades financieras
+ALTER TABLE m_entidadfinancieraplan ADD COLUMN value character varying(60);
+
+UPDATE m_entidadfinancieraplan
+SET value = name;
+
+ALTER TABLE m_entidadfinancieraplan ALTER COLUMN value SET NOT NULL;

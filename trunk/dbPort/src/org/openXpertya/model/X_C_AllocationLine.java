@@ -1,13 +1,14 @@
-/** Modelo Generado - NO CAMBIAR MANUALMENTE - Copyright (C) 2006 FUNDESLE */
+/** Modelo Generado - NO CAMBIAR MANUALMENTE - Disytel */
 package org.openXpertya.model;
-import java.util.*;
+import java.util.logging.Level;
+ import java.util.*;
 import java.sql.*;
 import java.math.*;
 import org.openXpertya.util.*;
 /** Modelo Generado por C_AllocationLine
- *  @author Comunidad de Desarrollo openXpertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
- *  @version  - 2008-01-03 10:26:27.531 */
-public class X_C_AllocationLine extends PO
+ *  @author Comunidad de Desarrollo Libertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
+ *  @version  - 2012-05-17 17:47:26.748 */
+public class X_C_AllocationLine extends org.openXpertya.model.PO
 {
 /** Constructor estándar */
 public X_C_AllocationLine (Properties ctx, int C_AllocationLine_ID, String trxName)
@@ -28,13 +29,13 @@ public X_C_AllocationLine (Properties ctx, ResultSet rs, String trxName)
 {
 super (ctx, rs, trxName);
 }
-/** AD_Table_ID=390 */
-public static final int Table_ID=390;
+/** AD_Table_ID */
+public static final int Table_ID = M_Table.getTableID("C_AllocationLine");
 
 /** TableName=C_AllocationLine */
 public static final String Table_Name="C_AllocationLine";
 
-protected static KeyNamePair Model = new KeyNamePair(390,"C_AllocationLine");
+protected static KeyNamePair Model = new KeyNamePair(Table_ID,"C_AllocationLine");
 protected static BigDecimal AccessLevel = new BigDecimal(1);
 
 /** Load Meta Data */
@@ -153,7 +154,19 @@ Integer ii = (Integer)get_Value("C_Currency_ID");
 if (ii == null) return 0;
 return ii.intValue();
 }
-public static final int C_INVOICE_CREDIT_ID_AD_Reference_ID=336;
+/** Set Change Amount */
+public void setChangeAmt (BigDecimal ChangeAmt)
+{
+set_Value ("ChangeAmt", ChangeAmt);
+}
+/** Get Change Amount */
+public BigDecimal getChangeAmt() 
+{
+BigDecimal bd = (BigDecimal)get_Value("ChangeAmt");
+if (bd == null) return Env.ZERO;
+return bd;
+}
+public static final int C_INVOICE_CREDIT_ID_AD_Reference_ID = MReference.getReferenceID("C_Invoice");
 /** Set Credit Invoice */
 public void setC_Invoice_Credit_ID (int C_Invoice_Credit_ID)
 {

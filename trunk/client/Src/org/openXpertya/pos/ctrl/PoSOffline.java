@@ -249,5 +249,17 @@ public class PoSOffline extends PoSConnectionState {
 		// TODO Auto-generated method stub
 		return false;
 	}
+
+	@Override
+	public List<Tax> getOtherTaxes(BusinessPartner bp) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public Tax getTax(Integer taxID) {
+		// TODO Auto-generated method stub
+		return null;
+	}
 	
 }

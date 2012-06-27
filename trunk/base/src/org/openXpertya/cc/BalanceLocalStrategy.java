@@ -246,31 +246,31 @@ public class BalanceLocalStrategy extends CurrentAccountBalanceStrategy {
 		// Actualizar el crédito secundario
 		String secondaryCreditStatus = MBPartner.SECONDARYCREDITSTATUS_OK;
 		String primaryCreditStatus = MBPartner.SOCREDITSTATUS_CreditOK;
-		if(validateSecondaryCreditStatusDiffDays(dueDays, BLOQUEO_AUTOMATICO, PRIMERA_NOTA)){
+		if(validateSecondaryCreditStatusDiffDays(dueDays, CurrentAccountConstants.BLOQUEO_AUTOMATICO, CurrentAccountConstants.PRIMERA_NOTA)){
 			secondaryCreditStatus = MBPartner.SECONDARYCREDITSTATUS_AutomaticStop;
 			primaryCreditStatus = MBPartner.SOCREDITSTATUS_CreditStop;
 		}
-		else if(validateSecondaryCreditStatusDiffDays(dueDays, PRIMERA_NOTA, A_LLAMAR)){
+		else if(validateSecondaryCreditStatusDiffDays(dueDays, CurrentAccountConstants.PRIMERA_NOTA, CurrentAccountConstants.A_LLAMAR)){
 			secondaryCreditStatus = MBPartner.SECONDARYCREDITSTATUS_FirstNote;
 			primaryCreditStatus = MBPartner.SOCREDITSTATUS_CreditStop;
 		}
-		else if(validateSecondaryCreditStatusDiffDays(dueDays, A_LLAMAR, SEGUNDA_NOTA)){
+		else if(validateSecondaryCreditStatusDiffDays(dueDays, CurrentAccountConstants.A_LLAMAR, CurrentAccountConstants.SEGUNDA_NOTA)){
 			secondaryCreditStatus = MBPartner.SECONDARYCREDITSTATUS_ToCall;
 			primaryCreditStatus = MBPartner.SOCREDITSTATUS_CreditStop;
 		}
-		else if(validateSecondaryCreditStatusDiffDays(dueDays, SEGUNDA_NOTA, A_COBRADOR)){
+		else if(validateSecondaryCreditStatusDiffDays(dueDays, CurrentAccountConstants.SEGUNDA_NOTA, CurrentAccountConstants.A_COBRADOR)){
 			secondaryCreditStatus = MBPartner.SECONDARYCREDITSTATUS_SecondNote;
 			primaryCreditStatus = MBPartner.SOCREDITSTATUS_CreditStop;
 		}
-		else if(validateSecondaryCreditStatusDiffDays(dueDays, A_COBRADOR, A_INHABILITAR)){
+		else if(validateSecondaryCreditStatusDiffDays(dueDays, CurrentAccountConstants.A_COBRADOR, CurrentAccountConstants.A_INHABILITAR)){
 			secondaryCreditStatus = MBPartner.SECONDARYCREDITSTATUS_ToCollector;
 			primaryCreditStatus = MBPartner.SOCREDITSTATUS_CreditStop;
 		}
-		else if(validateSecondaryCreditStatusDiffDays(dueDays, A_INHABILITAR, INHABILITACION_AUTOMATICA)){
+		else if(validateSecondaryCreditStatusDiffDays(dueDays, CurrentAccountConstants.A_INHABILITAR, CurrentAccountConstants.INHABILITACION_AUTOMATICA)){
 			secondaryCreditStatus = MBPartner.SECONDARYCREDITSTATUS_ToDisable;
 			primaryCreditStatus = MBPartner.SOCREDITSTATUS_CreditStop;
 		}
-		else if(dueDays >= INHABILITACION_AUTOMATICA){
+		else if(dueDays >= CurrentAccountConstants.INHABILITACION_AUTOMATICA){
 			secondaryCreditStatus = MBPartner.SECONDARYCREDITSTATUS_AutomaticDisabling;
 			primaryCreditStatus = MBPartner.SOCREDITSTATUS_CreditDisabled;
 		}
@@ -390,6 +390,51 @@ public class BalanceLocalStrategy extends CurrentAccountBalanceStrategy {
 		BigDecimal amtToCompare = underMinimumCreditAmt?bp.getCreditMinimumAmt():BigDecimal.ZERO;
 		Boolean under = bp.getTotalOpenBalance().compareTo(amtToCompare) <= 0;
 		result.setResult(under);
+		return result;
+	}
+
+	@Override
+	public CallResult getCreditLimit(Properties ctx,
+			String bPartnerColumnNameUID, Object bPartnerColumnValueUID,
+			String orgColumnNameUID, Object orgColumnValueUID,
+			String paymentRule, String trxName) {
+		CallResult result = new CallResult();
+		// Obtengo la entidad comercial
+		MBPartner bp = getBPartner(ctx, bPartnerColumnNameUID, bPartnerColumnValueUID, trxName);
+		// FIXME Por ahora se obtiene el límite global, en el caso que existan
+		// límites por paymentRule, se debe determinar cada uno
+		// independientemente
+		result.setResult(bp.getSO_CreditLimit());
+		return result;
+	}
+
+	@Override
+	public CallResult getTotalOpenBalance(Properties ctx,
+			String bPartnerColumnNameUID, Object bPartnerColumnValueUID,
+			String orgColumnNameUID, Object orgColumnValueUID,
+			String paymentRule, String trxName) {
+		CallResult result = new CallResult();
+		// Obtengo la entidad comercial
+		MBPartner bp = getBPartner(ctx, bPartnerColumnNameUID, bPartnerColumnValueUID, trxName);
+		// FIXME Por ahora se obtiene el saldo global, en el caso que existan
+		// saldos por paymentRule, se debe determinar cada uno
+		// independientemente
+		result.setResult(bp.getTotalOpenBalance());
+		return result;
+	}
+
+	@Override
+	public CallResult getCreditStatus(Properties ctx,
+			String bPartnerColumnNameUID, Object bPartnerColumnValueUID,
+			String orgColumnNameUID, Object orgColumnValueUID,
+			String paymentRule, String trxName) {
+		CallResult result = new CallResult();
+		// Obtengo la entidad comercial
+		MBPartner bp = getBPartner(ctx, bPartnerColumnNameUID, bPartnerColumnValueUID, trxName);
+		// FIXME Por ahora se obtiene el crédito, en el caso que existan
+		// estado de crédito por paymentRule, se debe determinar cada uno
+		// independientemente
+		result.setResult(bp.getSOCreditStatus());
 		return result;
 	}
 }

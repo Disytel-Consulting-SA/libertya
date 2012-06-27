@@ -13,10 +13,12 @@ package org.openXpertya.replication;
 
 import java.util.Vector;
 
+import org.openXpertya.model.MTableReplication;
 import org.openXpertya.model.X_C_Invoice;
 import org.openXpertya.plugin.common.PluginUtils;
 import org.openXpertya.plugin.install.PluginXMLUpdater;
 import org.openXpertya.plugin.install.PluginXMLUpdater.ChangeGroup;
+import org.openXpertya.process.CreateReplicationTriggerProcess;
 import org.openXpertya.util.DB;
 
 
@@ -192,6 +194,7 @@ public class ReplicationXMLUpdater extends PluginXMLUpdater {
 	/**
 	 * Redefinicion: Es necesario incorporar una columna mas: el retrieveUID!
 	 * 				 Tambien hay que poner SKIP en repArray para que el trigger replication_event() no procese la sentencia
+	 * 				Para los registros de tablas bidireccionales se requiere un procesamiento adicional
 	 */
 	protected void customizeInsertionQuery(StringBuffer sql, ChangeGroup changeGroup)
 	{
@@ -200,24 +203,40 @@ public class ReplicationXMLUpdater extends PluginXMLUpdater {
 		sql.insert(lastColumnPos, ",retrieveUID,repArray");
 		// Insertar en el query los valores de las columnas
 		int lastValuePos =  sql.lastIndexOf(")");
-		sql.insert(lastValuePos, ",'" + changeGroup.getUid() + "','SKIP'");
+		
+		int tableID = ReplicationCache.tablesIDs.get(changeGroup.getTableName().toLowerCase());
+		String newRepArray = MTableReplication.getReplicationArray(tableID, m_trxName);
+		// Es bidireccional? (algún 3 en alguna posicion).  Marcar el registro como "replicado", pero esto permite reenviarlo al origen si es modificado
+		if (newRepArray.indexOf(ReplicationConstants.REPLICATION_CONFIGURATION_SENDRECEIVE) >= 0)
+			newRepArray = "'SET" + newRepArray.replace(ReplicationConstants.REPLICATION_CONFIGURATION_SENDRECEIVE, ReplicationConstants.REPARRAY_REPLICATED) + "'";
+		else
+			newRepArray = "'SKIP'";
+		sql.insert(lastValuePos, ",'" + changeGroup.getUid() + "',"+newRepArray);
 	}
 	
 	/**
-	 *	Se incorpora al final del query el campo nochangelog a fin de no bitacorear entradas por replicacion
-	 *  En este caso, luego de no bitacorear la entrada, debo poner el registro como bitacoreable nuevamente
+	 *	Se incorpora al final del query el campo repArray = SKIP a fin de no bitacorear entradas por replicacion
+	 *  En este caso, luego debo poner el registro como replicable nuevamente
 	 */
 	protected void customizeModificationQuery(StringBuffer sql, ChangeGroup changeGroup)
 	{
 		// Insertar el campo repArray antes del where
 		sql.insert(sql.indexOf("WHERE"), ",repArray='SKIP' ");
-		// Concatenar el UPDATE para repArray=0 luego del UPDATE principal
-		sql.append(" UPDATE " + changeGroup.getTableName() + " SET repArray = '0' " + sql.substring(sql.indexOf("WHERE"), sql.length()-1) + ";" );
+		// Concatenar el UPDATE para repArray=0 (o uno diferente en caso de rep. bidireccional) luego del UPDATE principal
+		int tableID = ReplicationCache.tablesIDs.get(changeGroup.getTableName().toLowerCase());
+		String newRepArray = MTableReplication.getReplicationArray(tableID, m_trxName);
+		// Es bidireccional? (algún 3 en alguna posicion).  Marcar el registro como "replicado", pero esto permite reenviarlo al origen si es modificado
+		if (newRepArray.indexOf(ReplicationConstants.REPLICATION_CONFIGURATION_SENDRECEIVE) >= 0)
+			newRepArray = newRepArray.replace(ReplicationConstants.REPLICATION_CONFIGURATION_SENDRECEIVE, ReplicationConstants.REPARRAY_REPLICATED);
+		else
+		// En caso contrario (no es bidireccional), simplemente dejarlo como un registro sin nueva posibilidad de reenvio
+			newRepArray = CreateReplicationTriggerProcess.DUMMY_REPARRAY;
+		sql.append(" UPDATE " + changeGroup.getTableName() + " SET repArray = 'SET" + newRepArray + "' " + sql.substring(sql.indexOf("WHERE"), sql.length()-1) + ";" );
 		
 	}
 	
 	/**
-	 *	Se incorpora al final del query el dato repArray = 'SKIP' a fin de no replicar nuevamente entradas por replicacion
+	 *	Se incorpora al inicio del query el dato repArray = 'SKIP' a fin de no replicar nuevamente entradas por replicacion
 	 *  En este caso, primeramente debo setear al registro como SKIP y recien despues borrarlo
 	 */
 	protected void customizeDeletionQuery(StringBuffer sql, ChangeGroup changeGroup)
@@ -257,8 +276,8 @@ public class ReplicationXMLUpdater extends PluginXMLUpdater {
 		/* Dado que una misma sucursal puede tener un AD_Org_ID distinto en cada host, se debe realiza el mapeo correspondiente 
 		 * (siempre y cuando sea una organizacion con valor distinto de cero, en este caso no es necesario realizar mapeo alguno
 		 * 	Para el caso en que la tabla AD_Org se encuentra marcada para replicación, el registro "0"
-		 * 	en realidad llegará como UID=o0_0, con lo cual hay que tener en cuenta este caso adicional */
-		else if ("AD_Org_ID".equals(column.getName()) && (!"0".equals(column.getNewValue())) && (!"UID=o0_0".equals(column.getNewValue())))
+		 * 	en realidad llegará como UID=AD_Org-0, con lo cual hay que tener en cuenta este caso adicional */
+		else if ("AD_Org_ID".equals(column.getName()) && (!"0".equals(column.getNewValue())) && (!(ReplicationBuilder.UID_REFERENCE_PREFIX+"AD_Org-0").equals(column.getNewValue())))
 		{
 			// En el AD_Org_ID en realidad no me llega el AD_Org_ID sino que me llega el host (replicationArrayPos) cargado,
 			// dado que este es el único valor en común que comparten todas las organizaciones

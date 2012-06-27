@@ -1,5 +1,7 @@
 package org.openXpertya.JasperReport.DataSource;
 
+import java.util.Properties;
+
 public class DeclaracionValoresVentasDataSource extends
 		DeclaracionValoresDataSource {
 
@@ -8,15 +10,14 @@ public class DeclaracionValoresVentasDataSource extends
 		// TODO Auto-generated constructor stub
 	}
 	
-	public DeclaracionValoresVentasDataSource(DeclaracionValoresDTO valoresDTO,
-			String trxName) {
-		super(valoresDTO, trxName);
+	public DeclaracionValoresVentasDataSource(Properties ctx,
+			DeclaracionValoresDTO valoresDTO, String trxName) {
+		super(ctx, valoresDTO, trxName);
 		// TODO Auto-generated constructor stub
 	}
 
 	@Override
 	protected String getQuery() {
-		// TODO DOCSTATUS?
 		return getStdQuery(true);
 	}
 
@@ -27,7 +28,7 @@ public class DeclaracionValoresVentasDataSource extends
 
 	@Override
 	protected String getTenderType() {
-		return "ARI";
+		return "'ARI'";
 	}
 
 }

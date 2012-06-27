@@ -1,17 +1,13 @@
 package org.openXpertya.pos.model;
 
 import java.math.BigDecimal;
+import java.util.ArrayList;
+import java.util.List;
 
+import org.openXpertya.model.DiscountCalculator.IDocumentLine.DiscountApplication;
 import org.openXpertya.model.MProduct;
 
 public class OrderProduct {
-
-	
-	
-	public enum DiscountApplication {
-		ToPrice,
-		Bonus
-	}
 	
 	private Order order;
 	
@@ -36,7 +32,11 @@ public class OrderProduct {
 	
 	private BigDecimal lineBonusAmt = BigDecimal.ZERO;
 	
-	private boolean manualDiscount = false;
+	private List<Tax> otherTaxes = new ArrayList<Tax>();
+	
+	private DiscountApplication discountApplication;
+	
+	private Integer lineManualDiscountID;
 	
 	public OrderProduct() {
 		super();
@@ -91,17 +91,13 @@ public class OrderProduct {
 	 */
 	public void setDiscount(BigDecimal discount, DiscountApplication discountApplication) {
 		this.discount = discount;
-
-		calculatePrice();
-		setLineBonusAmt(BigDecimal.ZERO);
-		setLineDiscountAmt(BigDecimal.ZERO);
-		BigDecimal lineDiscountAmt = getDiscountAmt().multiply(getQty());
-		if (discountApplication == DiscountApplication.Bonus) {
-			setLineBonusAmt(lineDiscountAmt);
-		} else {
-			setLineDiscountAmt(lineDiscountAmt);
+		this.setDiscountApplication(discountApplication);
+		
+		if(getOrder() != null){
+			getOrder().addLineManualDiscount(this);
 		}
-		manualDiscount = true;
+		
+		calculatePrice();
 	}
 
 	/**
@@ -128,34 +124,18 @@ public class OrderProduct {
 	 *            Fija o asigna price.
 	 */
 	public void setPrice(BigDecimal price) {
-		// FIXME: Actualmente los descuentos automáticos no son compatibles con
-		// los manuales. Si hay un descuento automático entonces no se pueden
-		// realizar descuentos manuales. Esto se debe corregir, permitiendo
-		// realizar descuentos manuales aún cuando la línea tenga automáticos.
-		// Por esta restricción actual, si hay automáticos el descuento manual se
-		// setea a cero, sino se calcula el descuento manual.
-		if (hasAutomaticDiscount()) {
-			this.price = price;
-			discount = BigDecimal.ZERO;
-		} else {
-			this.price = price;
-			// Tiene prioridad el descuento manual. Se calcula el precio a partir del descuento.
-			// Esto fixea el problema de que el DiscountCalculator pisa el Price
-			// ya que no "sabe" que aquí se usan descuentos manuales. Esto da a pensar
-			// de que los descuentos manuales deben ser administrados por el DiscountCalculator.
-			if (hasManualDiscount()) {
-				this.price = calculatePrice(getDiscount());
-			} else {
-				calculateDiscount();
-			}
-		}
+		this.price = price;
 	}
 
 	/**
 	 * @return Devuelve taxAmount.
 	 */
 	public BigDecimal getTaxRate() {
-		return getTax().getRate();
+		BigDecimal taxRate = getTax().getRate();
+		for (Tax otherTax : getOtherTaxes()) {
+			taxRate = taxRate.add(otherTax.getRate());
+		}
+		return taxRate;
 	}
 	
 	/**
@@ -228,8 +208,12 @@ public class OrderProduct {
 
 		// Sino, se calcula el nuevo precio sumando el monto implicado por la tasa
 		// del impuesto del producto.
-		if (!getProduct().isTaxIncludedInPrice())
+		if (!getProduct().isTaxIncludedInPrice()){
 			taxedPrice = price.add(price.multiply(getTax().getTaxRateMultiplier()));
+		}
+		
+		// Sumo el monto con los otros impuestos
+		taxedPrice = taxedPrice.add(getOtherTaxesAmt(getNetPrice(taxedPrice)));
 		
 		return scalePrice(taxedPrice);
 	}
@@ -242,11 +226,87 @@ public class OrderProduct {
 	 */
 	public BigDecimal getPrice(BigDecimal taxedPrice) {
 		BigDecimal price = taxedPrice;
-		if (!getProduct().isTaxIncludedInPrice())
-			price = price.divide(getTax().getTaxRateDivisor(),20, BigDecimal.ROUND_HALF_UP);
+		
+		// Suma los multiplicadores de todos los impuestos
+		BigDecimal rateMultipliers = getSumOtherTaxesRateMultipliers();
+		
+		if (!getProduct().isTaxIncludedInPrice()){
+			rateMultipliers = rateMultipliers.add(getTax().getTaxRateMultiplier());
+			price = price.divide(BigDecimal.ONE.add(rateMultipliers),20, BigDecimal.ROUND_HALF_UP);
+		}
+		else{
+			// Determino el neto
+			BigDecimal rateMultipliersAux = rateMultipliers.add(getTax().getTaxRateMultiplier());
+			BigDecimal priceAux = price.divide(BigDecimal.ONE.add(rateMultipliersAux),20, BigDecimal.ROUND_HALF_UP);
+			// Le aplico las tasas de los impuestos adicionales para saber qué
+			// parte del precio es de impuesto adicional, luego se lo resto al
+			// precio parámetro
+			price = price.subtract(priceAux.multiply(rateMultipliers));
+		}
+		
 		return scalePrice(price);
 	}
 
+	/**
+	 * @param price
+	 *            precio con impuesto, incluído en la tarifa o no
+	 * @return Precio neto
+	 */
+	public BigDecimal getNetPrice(BigDecimal taxedPrice){
+		BigDecimal netPrice = taxedPrice.divide(getTax().getTaxRateDivisor(),
+				20, BigDecimal.ROUND_HALF_UP);		
+		
+		return scalePrice(netPrice);
+	}
+	
+	public BigDecimal getOtherTaxesAmt(BigDecimal netPrice){
+		BigDecimal otherTaxesAmt = BigDecimal.ZERO;
+		for (Tax otherTax : getOtherTaxes()) {
+			otherTaxesAmt = otherTaxesAmt.add(netPrice.multiply(otherTax.getTaxRateMultiplier())); 
+		}
+		return scaleAmount(otherTaxesAmt);
+	}
+	
+	public BigDecimal getSumOtherTaxesRateMultipliers(){
+		BigDecimal otherTaxesrates = BigDecimal.ZERO;
+		for (Tax otherTax : getOtherTaxes()) {
+			otherTaxesrates = otherTaxesrates.add(otherTax.getTaxRateMultiplier());
+		}
+		return scaleAmount(otherTaxesrates);
+	}
+	
+	public BigDecimal getSumOtherTaxesRateDivisors(){
+		BigDecimal otherTaxesRates = BigDecimal.ZERO;
+		for (Tax otherTax : getOtherTaxes()) {
+			otherTaxesRates = otherTaxesRates.add(otherTax.getTaxRateDivisor());
+		}
+		return scaleAmount(otherTaxesRates);
+	}
+
+	/**
+	 * Determina los montos de impuestos adicionales que se agregaron en
+	 * principio al neto del precio con impuesto parámetro. El monto de
+	 * impuestos adicionales agregado al precio se determina en
+	 * base al siguiente cálculo: <br>
+	 * PSIA = PCIA / (1 + STIA)<br>
+	 * donde:
+	 * <ul>
+	 * <li>PSIA = Precio Sin Impuestos Adicionales</li>
+	 * <li>PCIA = Precio Con Impuestos Adicionales</li>
+	 * <li>STIA = Suma de las Tasas de Impuestos Adicionales</li>
+	 * </ul>
+	 * 
+	 * @param taxedPrice
+	 * @return PSIA
+	 */
+	public BigDecimal getPriceWithoutOtherTaxesAmt(BigDecimal taxedPrice){
+		BigDecimal psia = BigDecimal.ZERO;
+		psia = taxedPrice.divide(
+				BigDecimal.ONE.add(getSumOtherTaxesRateMultipliers()), 20,
+				BigDecimal.ROUND_HALF_UP);
+		return scaleAmount(psia);
+	}
+	
 	/**
 	 * @return El importe total final de la línea incluyendo bonificaciones
 	 *         aplicadas.
@@ -266,10 +326,14 @@ public class OrderProduct {
 	public BigDecimal calculateDiscount(BigDecimal price) {
 		BigDecimal cDiscount = BigDecimal.ZERO;
 		if(getPriceList().compareTo(BigDecimal.ZERO) != 0) {
-			BigDecimal diff = getPriceList().subtract(price);
+			BigDecimal diff = getPricesDiff(getPriceList(), price);
 			cDiscount = diff.multiply(new BigDecimal(100)).divide(getPriceList(),10,BigDecimal.ROUND_HALF_UP);
 		}
 		return cDiscount;
+	}
+	
+	public BigDecimal getPricesDiff(BigDecimal priceList, BigDecimal price) {
+		return priceList.subtract(price);
 	}
 
 	public BigDecimal calculatePrice(BigDecimal discount) {
@@ -372,12 +436,6 @@ public class OrderProduct {
 	 */
 	public void setLineDiscountAmt(BigDecimal lineDiscountAmt) {
 		this.lineDiscountAmt = lineDiscountAmt;
-		// Si el descuento NO es cero, se asume que es un descuento automático.
-		// Luego si es manual, el método lo que asigne se encargará de setear la
-		// marca a manual = true (setDiscount(...))
-		if (lineDiscountAmt.compareTo(BigDecimal.ZERO) != 0) {
-			manualDiscount = false;
-		}
 	}
 
 
@@ -394,12 +452,6 @@ public class OrderProduct {
 	 */
 	public void setLineBonusAmt(BigDecimal lineBonusAmt) {
 		this.lineBonusAmt = lineBonusAmt;
-		// Si el descuento NO es cero, se asume que es un descuento automático.
-		// Luego si es manual, el método lo que asigne se encargará de setear la
-		// marca a manual = true (setDiscount(...))
-		if (lineBonusAmt.compareTo(BigDecimal.ZERO) != 0) {
-			manualDiscount = false;
-		}
 	}
 
 	/**
@@ -414,32 +466,6 @@ public class OrderProduct {
 	@Override
 	public String toString() {
 		return "("+ getProduct().getId() + "," + getQty() + ")";
-	}
-
-
-	/**
-	 * @return Indica si el descuento realizado a esta línea es manual o no.
-	 */
-	public boolean isManualDiscount() {
-		return manualDiscount;
-	}
-
-	/**
-	 * @return Indica si esta línea tiene aplicados descuentos automáticos
-	 *         (promociones,combos, EC).
-	 */
-	public boolean hasAutomaticDiscount() {
-		return 
-			(getLineBonusAmt().compareTo(BigDecimal.ZERO) != 0 
-				|| getLineDiscountAmt().compareTo(BigDecimal.ZERO) != 0)
-			&& !manualDiscount;	
-	}
-
-	/**
-	 * @return Indica si esta línea tiene aplicado un descuento manual
-	 */
-	public boolean hasManualDiscount() {
-		return getDiscount() != null && getDiscount().compareTo(BigDecimal.ZERO) != 0;
 	}
 	
 	/**
@@ -462,6 +488,8 @@ public class OrderProduct {
 	 */
 	protected void setOrder(Order order) {
 		this.order = order;
+		// Actualiza los otros impuestos
+		updateOtherTaxes();
 	}
 
 	/**
@@ -508,5 +536,44 @@ public class OrderProduct {
 					.divide(getQty(), price.scale(), BigDecimal.ROUND_HALF_EVEN);
 		}
 		return price;
+	}
+	
+	public void updateOtherTaxes(){
+		// Actualizar los impuestos adicionales
+		List<Tax> taxes = new ArrayList<Tax>();
+		if(getOrder() != null){
+			taxes = getOrder().getOtherTaxes();
+		}
+		setOtherTaxes(taxes);
+	}
+
+
+	public void setOtherTaxes(List<Tax> otherTaxes) {
+		this.otherTaxes = otherTaxes;
+	}
+
+
+	public List<Tax> getOtherTaxes() {
+		return otherTaxes;
+	}
+
+
+	public void setDiscountApplication(DiscountApplication discountApplication) {
+		this.discountApplication = discountApplication;
+	}
+
+
+	public DiscountApplication getDiscountApplication() {
+		return discountApplication;
+	}
+
+	
+	public void setLineManualDiscountID(Integer lineManualDiscountID) {
+		this.lineManualDiscountID = lineManualDiscountID;
+	}
+
+
+	public Integer getLineManualDiscountID() {
+		return lineManualDiscountID;
 	}
 }

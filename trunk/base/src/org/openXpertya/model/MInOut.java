@@ -1187,6 +1187,30 @@ public class MInOut extends X_M_InOut implements DocAction {
 //        }
 		// ------------------------------------------------------------------------
 
+        // No permitir guardar un remito que posee un pedido no facturado cuando
+		// la regla de envío de mercadería es Después de Facturación
+        MBPartner bpartner = new MBPartner(getCtx(), getC_BPartner_ID(), get_TrxName());
+		if (isSOTrx() 
+				&& getMovementType().endsWith("-")
+				&& !Util.isEmpty(getC_Order_ID(), true)
+				&& bpartner.getDeliveryRule() != null
+				&& bpartner.getDeliveryRule().equals(
+						MBPartner.DELIVERYRULE_AfterInvoicing)
+				&& (getDocStatus().equals(DOCSTATUS_Drafted) || getDocStatus()
+						.equals(DOCSTATUS_InProgress))) {
+			// Verificar si el pedido cargado se encuentra dentro de la consulta
+			// de pedidos de facturas
+			String sql = "SELECT coalesce(count(*),0) as exist FROM (SELECT c_order_id FROM C_Invoice WHERE c_bpartner_id = ? AND "
+					+ getInvoiceOrderFilter(this)
+					+ ") as orders WHERE orders.c_order_id = ?";
+			Integer exist = DB.getSQLValue(get_TrxName(), sql,
+					bpartner.getID(), getC_Order_ID());
+			if(exist <= 0){
+				log.saveError( "InOutDeliveryRuleOrder","" );
+                return false;
+			}
+        }
+        
         return true;
     }    // beforeSave
 
@@ -1302,7 +1326,9 @@ public class MInOut extends X_M_InOut implements DocAction {
 
         // Std Period open?
 
-        if( !MPeriod.isOpen( getCtx(),getDateAcct(),dt.getDocBaseType(),getM_Warehouse_ID())) {
+		if (!MPeriod.isOpen(getCtx(), getDateAcct(), dt.getDocBaseType(),
+				getM_Warehouse_ID(), 
+				isTPVInstance())) {
             if (MWarehouseClose.isWarehouseCloseControlActivated()) {
             	m_processMsg = "@PeriodClosedOrWarehouseClosed@";
             } else {
@@ -2958,6 +2984,78 @@ public class MInOut extends X_M_InOut implements DocAction {
 
 	public void setTPVInstance(boolean isTPVInstance) {
 		this.isTPVInstance = isTPVInstance;
+	}
+	
+	/**
+	 * 
+	 * @return el filtro de pedidos que se aplica al crear un remito a partir
+	 *         de un pedido
+	 */
+	public static String getOrderFilter(MInOut inout) {
+    	StringBuffer filter = new StringBuffer();
+		// Si es un remito de ventas, solo se pueden elegir pedidos
+		// que tengan al menos una línea cuya cantidad ordenada sea mayor
+		// a la cantidad entregada. Es decir, pedidos que tienen algún
+		// pendiente de entrega de mercadería o cualquier pedido en caso
+		// de que el remito se trate de una devolución de cliente (en este caso
+		// entra mercadería, con lo cual no se deben validar pendientes de
+		// entrega).
+		filter.append("C_Order.IsSOTrx='").append(inout.isSOTrx()?"Y":"N")
+				.append("' AND ")
+				.append("C_Order.DocStatus IN ('CL','CO') AND ")
+				.append("(C_Order.C_Order_ID IN ")
+				.append("(SELECT ol.C_Order_ID ")
+				.append("FROM C_OrderLine ol ")
+				.append("WHERE ol.QtyOrdered > ol.QtyDelivered) ")
+				.append("OR ")
+				.append("(C_Order.IsSOTrx='Y' AND POSITION('+' IN '")
+				.append(inout.getMovementType()).append("') > 0)")
+				.append("OR ")
+				.append("(C_Order.IsSOTrx='N' AND POSITION('-' IN '")
+				.append(inout.getMovementType()).append("') > 0)")
+				.append(")");
+		return filter.toString();
+	}
+
+	/**
+	 * @return el filtro de facturas que se aplica al crear un remito a partir
+	 *         de una factura
+	 */
+	public static String getInvoiceFilter(MInOut inout) {
+		StringBuffer filter = new StringBuffer();
+
+		filter.append("C_Invoice.IsSOTrx='")
+				.append(inout.isSOTrx()?"Y":"N")
+				.append("' AND ")
+				.append("C_Invoice.DocStatus IN ('CL','CO') AND ")
+				.append("C_Invoice.C_Invoice_ID IN (")
+				.append("SELECT il.C_Invoice_ID ")
+				.append("FROM C_InvoiceLine il ")
+				.append("LEFT OUTER JOIN M_MatchInv mi ON (il.C_InvoiceLine_ID=mi.C_InvoiceLine_ID) ")
+				.append("GROUP BY il.C_Invoice_ID,mi.C_InvoiceLine_ID,il.QtyInvoiced ")
+				.append("HAVING (il.QtyInvoiced<>SUM(mi.Qty) AND mi.C_InvoiceLine_ID IS NOT NULL) OR mi.C_InvoiceLine_ID IS NULL) ");
+
+		return filter.toString();
+	}
+	
+	
+	/**
+	 * @return el filtro de facturas que se aplica al crear un remito a partir
+	 *         de pedidos asociados a facturas
+	 */
+	public static String getInvoiceOrderFilter(MInOut inout) {
+		StringBuffer filter = new StringBuffer();
+
+		filter.append("C_Invoice.IsSOTrx='").append(inout.isSOTrx()?"Y":"N")
+				.append("' AND ")
+				.append("C_Invoice.DocStatus IN ('CL','CO') AND ")
+				.append("C_Invoice.C_Order_ID IS NOT NULL AND ")
+				.append("C_Invoice.C_Order_ID IN (")
+				.append("SELECT C_Order.C_Order_ID ").append("FROM C_Order ")
+				.append("WHERE (").append(getOrderFilter(inout)).append(")")
+				.append(")");
+
+		return filter.toString();
 	}
 	
 }    // MInOut

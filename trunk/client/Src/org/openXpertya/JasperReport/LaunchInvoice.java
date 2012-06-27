@@ -329,6 +329,8 @@ public class LaunchInvoice extends SvrProcess {
 					JasperReportsUtil.getLocalizacion(getCtx(),
 						invoice.getAD_Client_ID(), invoice.getAD_Org_ID(),
 						get_TrxName()));
+			jasperwrapper.addParameter("PERCEPCION_TOTAL_AMT",
+				invoice.getPercepcionesTotalAmt());
 			
 			try {
 				jasperwrapper.fillReport(ds);

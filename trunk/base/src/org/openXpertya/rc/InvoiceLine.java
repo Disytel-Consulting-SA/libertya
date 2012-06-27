@@ -263,4 +263,28 @@ public class InvoiceLine extends DiscountableDocumentLine implements Cloneable, 
 	public Object clone() throws CloneNotSupportedException{
 		return super.clone();
 	}
+
+	@Override
+	public void setDiscount(BigDecimal discount) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public BigDecimal getDiscount() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public Integer getLineManualDiscountID() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public void setLineManualDiscountID(Integer lineManualDiscountID) {
+		// TODO Auto-generated method stub
+		
+	}
 }

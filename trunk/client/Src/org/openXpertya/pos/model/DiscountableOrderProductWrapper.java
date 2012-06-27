@@ -105,4 +105,25 @@ public class DiscountableOrderProductWrapper extends DiscountableDocumentLine {
 				+ getOrderProduct().getQty() + ", QtyAvl=" + getAvailableQty()
 				+ "]";
 	}
+
+	@Override
+	public void setDiscount(BigDecimal discount) {
+		getOrderProduct().setDiscount(discount,
+				getOrderProduct().getDiscountApplication());
+	}
+
+	@Override
+	public BigDecimal getDiscount() {
+		return getOrderProduct().getDiscount();
+	}
+
+	@Override
+	public Integer getLineManualDiscountID() {
+		return getOrderProduct().getLineManualDiscountID();
+	}
+
+	@Override
+	public void setLineManualDiscountID(Integer lineManualDiscountID) {
+		getOrderProduct().setLineManualDiscountID(lineManualDiscountID);
+	}
 }

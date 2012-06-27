@@ -7,7 +7,7 @@ import java.math.*;
 import org.openXpertya.util.*;
 /** Modelo Generado por C_DocType
  *  @author Comunidad de Desarrollo Libertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
- *  @version  - 2012-02-01 13:20:55.188 */
+ *  @version  - 2012-06-10 15:34:26.953 */
 public class X_C_DocType extends org.openXpertya.model.PO
 {
 /** Constructor estándar */
@@ -20,6 +20,9 @@ setC_DocType_ID (0);
 setDocBaseType (null);
 setDocTypeKey (null);
 setDocumentCopies (0);	// 1
+setDragOrderDocumentDiscounts (false);
+setDragOrderLineDiscounts (false);
+setDragOrderPrice (false);
 setEnabledInPOS (false);
 setFiscalDocument (null);
 setGL_Category_ID (0);
@@ -38,6 +41,7 @@ setIsPrintPreview (true);	// Y
 setIsShipConfirm (false);
 setIsSOTrx (false);
 setIsSplitWhenDifference (false);	// N
+setLinesCountMax (0);
 setName (null);
 setPOSEnableDue (false);
 setPOSEnableDueDays (0);
@@ -482,6 +486,54 @@ public String getDocumentNote()
 {
 return (String)get_Value("DocumentNote");
 }
+/** Set Drag Order Document Discounts */
+public void setDragOrderDocumentDiscounts (boolean DragOrderDocumentDiscounts)
+{
+set_Value ("DragOrderDocumentDiscounts", new Boolean(DragOrderDocumentDiscounts));
+}
+/** Get Drag Order Document Discounts */
+public boolean isDragOrderDocumentDiscounts() 
+{
+Object oo = get_Value("DragOrderDocumentDiscounts");
+if (oo != null) 
+{
+ if (oo instanceof Boolean) return ((Boolean)oo).booleanValue();
+ return "Y".equals(oo);
+}
+return false;
+}
+/** Set Drag Order Line Discounts */
+public void setDragOrderLineDiscounts (boolean DragOrderLineDiscounts)
+{
+set_Value ("DragOrderLineDiscounts", new Boolean(DragOrderLineDiscounts));
+}
+/** Get Drag Order Line Discounts */
+public boolean isDragOrderLineDiscounts() 
+{
+Object oo = get_Value("DragOrderLineDiscounts");
+if (oo != null) 
+{
+ if (oo instanceof Boolean) return ((Boolean)oo).booleanValue();
+ return "Y".equals(oo);
+}
+return false;
+}
+/** Set Drag Order Price */
+public void setDragOrderPrice (boolean DragOrderPrice)
+{
+set_Value ("DragOrderPrice", new Boolean(DragOrderPrice));
+}
+/** Get Drag Order Price */
+public boolean isDragOrderPrice() 
+{
+Object oo = get_Value("DragOrderPrice");
+if (oo != null) 
+{
+ if (oo instanceof Boolean) return ((Boolean)oo).booleanValue();
+ return "Y".equals(oo);
+}
+return false;
+}
 /** Set Enabled In POS.
 Document enable to use in POS */
 public void setEnabledInPOS (boolean EnabledInPOS)
@@ -836,6 +888,18 @@ if (oo != null)
  return "Y".equals(oo);
 }
 return false;
+}
+/** Set Lines Count Max */
+public void setLinesCountMax (int LinesCountMax)
+{
+set_Value ("LinesCountMax", new Integer(LinesCountMax));
+}
+/** Get Lines Count Max */
+public int getLinesCountMax() 
+{
+Integer ii = (Integer)get_Value("LinesCountMax");
+if (ii == null) return 0;
+return ii.intValue();
 }
 /** Set m_trannaturecodea_id */
 public void setm_trannaturecodea_id (BigDecimal m_trannaturecodea_id)

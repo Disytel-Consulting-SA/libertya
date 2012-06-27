@@ -338,6 +338,7 @@ public class VOrdenCobroModel extends VOrdenPagoModel {
 		tarjetaCredito.setSOTrx(true);
 		tarjetaCredito.setBank(bank);
 		tarjetaCredito.setDiscountSchemaToApply(getCurrentGeneralDiscount());
+		tarjetaCredito.setAccountName(getBPartner().getName());
 		addMedioPago(tarjetaCredito);
 	}
 
@@ -408,6 +409,7 @@ public class VOrdenCobroModel extends VOrdenPagoModel {
 			pay.setCreditCardNumber(tarjeta.getCreditCardNo());
 			pay.setCreditCardType(tarjeta.getCreditCardType());
 			pay.setA_Bank(tarjeta.getBank());
+			pay.setA_Name(tarjeta.getAccountName());
 			pay.setC_Project_ID(tarjeta.getProject() == null?0:tarjeta.getProject());
 			pay.setC_Campaign_ID(tarjeta.getCampaign() == null?0:tarjeta.getCampaign());
 			pay.setM_EntidadFinancieraPlan_ID(tarjeta.getEntidadFinancieraPlan().getID());

@@ -1243,7 +1243,7 @@ public class VLookup extends JComponent implements VEditor,ActionListener,FocusL
             }
 
             m_value = null;    // force re-display
-            //actionButton( m_text.getText());
+            actionButton( m_text.getText());
 
             return;
         }

@@ -9,6 +9,8 @@ public class UserAuthConstants {
 	public static final String POS_ADD_PAYMENT_MOMENT = "POS_ADD_PAYMENT_MOMENT";
 	/** Momento de cancelar el pedido en el TPV */
 	public static final String POS_CANCEL_ORDER_MOMENT = "POS_CANCEL_ORDER_MOMENT";
+	/** Momento de iniciar el TPV */
+	public static final String POS_INIT_MOMENT = "POS_INIT_MOMENT";
 	
 	/*
 	 * Claves de búsqueda de los procesos que hacen las veces de operaciones a
@@ -21,6 +23,8 @@ public class UserAuthConstants {
 	public static final String POS_CN_MAX_CASH_RETURN_UID = "CORE-AD_Process-1010252";
 	/** Autorización de cancelación de pedido */
 	public static final String POS_CANCEL_ORDER_UID = "CORE-AD_Process-1010253";
+	/** Autorización de inicialización de TPV */
+	public static final String POS_INIT_UID = "CORE-AD_Process-1010284";
 	
 	/** Asociación de uids de procesos con sus values */
 	public static Map<String, String> processValues = new HashMap<String, String>(); 
@@ -29,6 +33,7 @@ public class UserAuthConstants {
 		processValues.put(POS_MODIFY_PRICE_ORDER_PRODUCT_UID, "POSModifyOrderProductPrice");
 		processValues.put(POS_CN_MAX_CASH_RETURN_UID, "POSSurpassMaxReturnCashInCN");
 		processValues.put(POS_CANCEL_ORDER_UID, "POSCancelOrder");
+		processValues.put(POS_INIT_UID, "POSInitAuthorization");
 	}
 	
 	public static String getProcessValue(String key){

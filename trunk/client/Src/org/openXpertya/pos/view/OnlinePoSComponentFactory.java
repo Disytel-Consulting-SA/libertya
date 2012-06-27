@@ -127,9 +127,9 @@ public class OnlinePoSComponentFactory extends PoSComponentFactory {
 						"C_Order.DocStatus IN ('CO','CL')"
 						+ getPoSModel().validateSearchToday() 
 						+ " AND C_Order.C_DocType_ID IN (SELECT C_DocType_ID FROM C_DocType WHERE ad_client_id = "
-							+ Env.getAD_Client_ID(Env.getCtx())+")");
-							//+ " AND enabledinpos = 'Y' "
-							//+ " AND (posenabledue = 'N' OR (posenabledue = 'Y' AND (current_date <= (date_trunc('day',C_Order.dateordered) + cast(posenableduedays||' days' as interval))))))");			
+							+ Env.getAD_Client_ID(Env.getCtx())
+							+ " AND enabledinpos = 'Y' "
+							+ " AND (posenabledue = 'N' OR (posenabledue = 'Y' AND (current_date <= (date_trunc('day',C_Order.dateordered) + cast(posenableduedays||' days' as interval))))))");			
 		return orderLookup;
 	}
 
@@ -211,6 +211,8 @@ public class OnlinePoSComponentFactory extends PoSComponentFactory {
 					// Por el momento solo notas de crédito cuya moneda sea igual a la
 					// del sistema
 					"AND C_Invoice.C_Currency_ID = @$C_Currency_ID@ "+
+					// Notas de Crédito canjeables
+					"AND C_Invoice.NotExchangeableCredit = 'N' "+
 				    // Tipo de documento con signo -1 (débito para la compañía)
 					"AND EXISTS (SELECT C_DocType_ID " +
 				                 "FROM C_DocType dt " +

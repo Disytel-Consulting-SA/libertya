@@ -149,6 +149,8 @@ public final class MField implements Serializable,Evaluatee {
     /** Descripción de Campos */
 
     private static CLogger log = CLogger.getCLogger( MField.class );
+    
+    private boolean changed = false;
 
     /**
      * Descripción de Método
@@ -1388,7 +1390,8 @@ public final class MField implements Serializable,Evaluatee {
         m_value     = newValue;
         m_inserting = inserting;
         m_error     = false;    // reset error
-
+        setChanged(false);
+        
         // Set Context
 
         if( (m_vo.displayType == DisplayType.Text) || 
@@ -1678,6 +1681,14 @@ public final class MField implements Serializable,Evaluatee {
     	}
     	return columnName;
     }
+
+	public void setChanged(boolean changed) {
+		this.changed = changed;
+	}
+
+	public boolean isChanged() {
+		return changed;
+	}
 }    // MField
 
 

@@ -1,6 +1,7 @@
 package org.openXpertya.print.fiscal.document;
 
 import java.io.Serializable;
+import java.math.BigDecimal;
 
 import org.openXpertya.print.fiscal.exception.DocumentException;
 
@@ -66,6 +67,12 @@ public class Customer implements Serializable{
 	private int ivaResponsibility = NO_CATEGORIZADO;
 	/** Domicilio legal del cliente */
 	private String location = null;
+	/** Estado de Crédito */
+	private String creditStatus = null; 
+	/** Límite de Crédito */
+	private BigDecimal creditLimit = BigDecimal.ZERO;
+	/** Saldo */
+	private BigDecimal creditBalance = BigDecimal.ZERO;
 
 	public Customer(){
 		super();
@@ -238,5 +245,29 @@ public class Customer implements Serializable{
 		}
 		if(!res)
 			throw Document.createDocumentException("InvalidCustomerCUIT");
+	}
+
+	public void setCreditStatus(String creditStatus) {
+		this.creditStatus = creditStatus;
+	}
+
+	public String getCreditStatus() {
+		return creditStatus;
+	}
+
+	public void setCreditLimit(BigDecimal creditLimit) {
+		this.creditLimit = creditLimit;
+	}
+
+	public BigDecimal getCreditLimit() {
+		return creditLimit;
+	}
+
+	public void setCreditBalance(BigDecimal creditBalance) {
+		this.creditBalance = creditBalance;
+	}
+
+	public BigDecimal getCreditBalance() {
+		return creditBalance;
 	}
 }

@@ -27,6 +27,7 @@ public class Order  {
 	private BigDecimal totalDocumentDiscount = BigDecimal.ZERO;
 	private BigDecimal totalBPartnerDiscount = BigDecimal.ZERO;
 	private BigDecimal totalManualGeneralDiscount = BigDecimal.ZERO;
+	private List<Tax> otherTaxes = new ArrayList<Tax>();
 	
 	/** Precisión para importes */ 
 	private int stdPrecision = 2;
@@ -161,13 +162,25 @@ public class Order  {
 			flatDiscount = businessPartner.getFlatDiscount();
 			discountContext = businessPartner.getDiscountSchemaContext();
 		}
+		else{
+			setOtherTaxes(new ArrayList<Tax>());
+		}
 		// Se asigna el descuento de EC al 
 		getDiscountCalculator().loadBPartnerDiscount(discountSchema,
 				flatDiscount, discountContext);
 		// Actualiza los descuentos
 		updateDiscounts();
 	}
-
+	
+	/**
+	 * Actualiza los impuestos adicionales a cada línea
+	 */
+	public void updateOtherTaxesInLines(){
+		for (OrderProduct op : getOrderProducts()) {
+			op.updateOtherTaxes();
+		}
+	}
+	
 	/**
 	 * @return El importe total del pedido, incluyendo impuestos y descuentos a
 	 *         nivel de documento.
@@ -188,11 +201,13 @@ public class Order  {
 		// Suma el importe total con impuestos de cada artículo en el pedido
 		Map<Tax, BigDecimal> taxBaseAmt = new HashMap<Tax, BigDecimal>();
 		BigDecimal baseAmt = null;
+		BigDecimal totalNetAmt = BigDecimal.ZERO;
 		for (OrderProduct orderProduct : getOrderProducts()) {
 			//amount = amount.add(orderProduct.getTotalTaxedPrice());
 			BigDecimal lineAmt = orderProduct.getPrice().multiply(orderProduct.getQty());
 			if (orderProduct.getProduct().isTaxIncludedInPrice()) {
 				amount = amount.add(lineAmt);
+				lineAmt = orderProduct.getNetPrice(lineAmt);
 			} else {
 				Tax tax = orderProduct.getTax();
 				baseAmt = lineAmt;
@@ -201,12 +216,20 @@ public class Order  {
 				}
 				taxBaseAmt.put(tax, baseAmt);
 			}
+			totalNetAmt = totalNetAmt.add(lineAmt);
 		}
 		
 		for (Tax tax : taxBaseAmt.keySet()) {
 			baseAmt = scaleAmount(taxBaseAmt.get(tax));
 			amount = amount.add(baseAmt).add(baseAmt.multiply(tax.getTaxRateMultiplier()));
 		}
+		
+		// Impuestos adicionales
+		for (Tax otherTax : getOtherTaxes()) {
+			baseAmt = scaleAmount(totalNetAmt);
+			amount = amount.add(baseAmt.multiply(otherTax.getTaxRateMultiplier()));
+		}
+		
 		// return AmountHelper.scale(amount);
 		return scaleAmount(amount);
 	}
@@ -278,6 +301,16 @@ public class Order  {
 
 		// Se aplican los descuentos generales al pedido
 		getDiscountCalculator().applyDocumentHeaderDiscounts();
+		
+		// Si es un pago en efectivo y supera lo que resta pagar del pedido,
+		// entonces la diferencia entre el efectivo y el pendiente es el cambio
+		// del pago
+		if(payment.isCashPayment()){
+			BigDecimal pendingAmt = getTotalAmount().subtract(getPaidAmount());
+			if(pendingAmt.compareTo(payment.getConvertedAmount()) < 0){
+				payment.setChangeAmt(payment.getConvertedAmount().subtract(pendingAmt));
+			}
+		}
 		
 		// Se agrega el pago a la lista. Si era un pago existente, anteriormente
 		// se había eliminado para el recálculo de descuentos y ahora se vuelve
@@ -481,24 +514,27 @@ public class Order  {
 		getDiscountCalculator().updateManualGeneralDiscount(percentage);
 	}
 	
-	/**
-	 * @return Devuelve changeAmount.
-	 */
-	public BigDecimal getChangeAmount() {
-		return changeAmount;
+	public BigDecimal getTotalChangeAmt(){
+		BigDecimal changeAmt = BigDecimal.ZERO;
+		for (Payment payment : getPayments()) {
+			changeAmt = changeAmt.add(payment.getChangeAmt()); 
+		}
+		return changeAmt;
 	}
-
-	/**
-	 * @param changeAmount Fija o asigna changeAmount.
-	 */
-	public void setChangeAmount(BigDecimal changeAmount) {
-		this.changeAmount = changeAmount;
+	
+	public BigDecimal getTotalChangeCashAmt(){
+		BigDecimal changeAmt = BigDecimal.ZERO;
+		for (Payment payment : getPayments()) {
+			if(payment.isCashPayment()){
+				changeAmt = changeAmt.add(payment.getChangeAmt()); 
+			}
+		}
+		return changeAmt;
 	}
 	
 	public void clear() {
 		setId(0);
 		this.businessPartner = null;
-		setChangeAmount(BigDecimal.ZERO);
 		getOrderProducts().clear();
 		getPayments().clear();
 		setTotalDocumentDiscount(BigDecimal.ZERO);
@@ -611,8 +647,11 @@ public class Order  {
 							.isGeneralDocumentDiscountApplicable(
 									paymentMediumInfo.getDiscountSchema()
 											.getDiscountContextType())) {
+				getDiscountCalculator().setApplyScale(false);
 				discountAmt = getDiscountCalculator().calculateDiscount(
 						paymentMediumInfo.getDiscountSchema(), openAmt);
+				getDiscountCalculator().setApplyScale(true);
+				discountAmt = getDiscountCalculator().scaleAmount(discountAmt);
 			}
 			
 		}
@@ -869,7 +908,7 @@ public class Order  {
 		BigDecimal returnAmt = BigDecimal.ZERO;
 		for (Payment payment : getPayments()) {
 			if(payment.isCreditNotePayment())
-				returnAmt = returnAmt.add(((CreditNotePayment)payment).getReturnCashAmt());
+				returnAmt = returnAmt.add(payment.getChangeAmt());
 		}
 		return AmountHelper.scale(returnAmt);
 	}
@@ -896,5 +935,28 @@ public class Order  {
 
 	public BigDecimal getTotalManualGeneralDiscount() {
 		return totalManualGeneralDiscount;
+	}
+
+	public void setOtherTaxes(List<Tax> otherTaxes) {
+		this.otherTaxes = otherTaxes;
+		updateOtherTaxesInLines();
+	}
+
+	public List<Tax> getOtherTaxes() {
+		return otherTaxes;
+	}
+	
+	public boolean isManualDiscountApplicable(OrderProduct orderProduct){
+		return getDiscountCalculator().isManualDiscountApplicable(
+				((DiscountableOrderWrapper) getDiscountCalculator()
+						.getDocument()).createDocumentLine(orderProduct));
+	}
+	
+	
+	public Integer addLineManualDiscount(OrderProduct op){
+		return getDiscountCalculator().addLineManualDiscount(
+				((DiscountableOrderWrapper) getDiscountCalculator()
+						.getDocument()).createDocumentLine(op),
+				op.getDiscountApplication());
 	}
 }

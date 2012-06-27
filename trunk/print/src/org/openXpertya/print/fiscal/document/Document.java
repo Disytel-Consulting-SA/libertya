@@ -59,7 +59,10 @@ public abstract class Document implements Serializable{
 	private String letter;
 	/** Descuentos a nivel documento */
 	private List<DiscountLine> documentDiscounts = null;
-		
+	/** Impuestos adicionales */
+	private List<Tax> otherTaxes = null;
+	
+	
 	public Document() {
 		super();
 		customer = new Customer();
@@ -67,6 +70,7 @@ public abstract class Document implements Serializable{
 		headerObservations = new ArrayList<String>();
 		footerObservations = new ArrayList<String>();
 		documentDiscounts = new ArrayList<DiscountLine>();
+		otherTaxes = new ArrayList<Tax>();
 	}
 	
 	/**
@@ -346,5 +350,13 @@ public abstract class Document implements Serializable{
 	 */
 	public void removeFooterObservation(Object observation) {
 		footerObservations.remove(observation);
+	}
+
+	public void setOtherTaxes(List<Tax> otherTaxes) {
+		this.otherTaxes = otherTaxes;
+	}
+
+	public List<Tax> getOtherTaxes() {
+		return otherTaxes;
 	}
 }

@@ -22,6 +22,7 @@ package org.openXpertya.model;
 
 import org.openXpertya.reflection.CallResult;
 import org.openXpertya.util.CLogger;
+import org.openXpertya.util.Env;
 
 //~--- Importaciones JDK ------------------------------------------------------
 
@@ -40,6 +41,12 @@ import java.util.logging.Level;
  *         *Basado en Codigo Original Modificado, Revisado y Optimizado de:
  *         * Jorg Janke
  *  @version $Id: ModelValidationEngine.java,v 1.3 2005/03/11 20:28:38 jjanke Exp $
+ *  
+ *  
+ *  Modificaciones por Jorge A. Dreher, jorge.dreher@gmail.com 18/04/2012
+ *  Agregado de validacion de la obtencion del AD_Client_ID para agregar los listeners, 
+ *  
+ *  
  */
 public class ModelValidationEngine {
 
@@ -126,9 +133,16 @@ public class ModelValidationEngine {
         if ((tableName == null) || (listener == null)) {
             return;
         }
+        
+        // System.out.println("addDocValidate post in");
 
+        // dREHER, jorge.dreher@gmail.com
+        // aseguro que agregue el AD_Client_ID correspondiente, para luego poder recuperarlo en la captura de eventos
+        int AD_Client_ID = listener.getAD_Client_ID();
+        if(AD_Client_ID <= 0)
+        	AD_Client_ID = Env.getAD_Client_ID(Env.getCtx());
         //
-        String		propertyName	= tableName + listener.getAD_Client_ID();
+        String		propertyName	= tableName + AD_Client_ID;
         ArrayList	list		= (ArrayList) m_docValidateListeners.get(propertyName);
 
         if (list == null) {
@@ -154,8 +168,13 @@ public class ModelValidationEngine {
             return;
         }
 
+        // dREHER, jorge.dreher@gmail.com
+        // aseguro que agregue el AD_Client_ID correspondiente, para luego poder recuperarlo en la captura de eventos
+        int AD_Client_ID = listener.getAD_Client_ID();
+        if(AD_Client_ID <= 0)
+        	AD_Client_ID = Env.getAD_Client_ID(Env.getCtx());
         //
-        String		propertyName	= tableName + listener.getAD_Client_ID();
+        String		propertyName	= tableName + AD_Client_ID;
         ArrayList	list		= (ArrayList) m_modelChangeListeners.get(propertyName);
 
         if (list == null) {
@@ -228,8 +247,13 @@ public class ModelValidationEngine {
             return null;
         }
 
+        // 	dREHER, jorge.dreher@gmail.com
+        // aseguro que agregue el AD_Client_ID correspondiente, para luego poder recuperarlo en la captura de eventos
+        int AD_Client_ID = po.getAD_Client_ID();
+        if(AD_Client_ID <= 0)
+        	AD_Client_ID = Env.getAD_Client_ID(Env.getCtx());
         //
-        String		propertyName	= po.get_TableName() + po.getAD_Client_ID();
+        String		propertyName	= po.get_TableName() + AD_Client_ID;
         ArrayList	list		= (ArrayList) m_modelChangeListeners.get(propertyName);
 
         if (list == null) {
@@ -314,8 +338,14 @@ public class ModelValidationEngine {
         if ((tableName == null) || (listener == null)) {
             return;
         }
-
-        String		propertyName	= tableName + listener.getAD_Client_ID();
+        
+//     	dREHER, jorge.dreher@gmail.com
+        // aseguro que agregue el AD_Client_ID correspondiente, para luego poder recuperarlo en la captura de eventos
+        int AD_Client_ID = listener.getAD_Client_ID();
+        if(AD_Client_ID <= 0)
+        	AD_Client_ID = Env.getAD_Client_ID(Env.getCtx());
+        //
+        String		propertyName	= tableName + AD_Client_ID;
         ArrayList	list		= (ArrayList) m_docValidateListeners.get(propertyName);
 
         if (list == null) {
@@ -340,8 +370,15 @@ public class ModelValidationEngine {
         if ((tableName == null) || (listener == null)) {
             return;
         }
+        
+        // dREHER, jorge.dreher@gmail.com
+        // aseguro que agregue el AD_Client_ID correspondiente, para luego poder recuperarlo en la captura de eventos
+        int AD_Client_ID = listener.getAD_Client_ID();
+        if(AD_Client_ID <= 0)
+        	AD_Client_ID = Env.getAD_Client_ID(Env.getCtx());
+        //
+        String		propertyName	= tableName + AD_Client_ID;
 
-        String		propertyName	= tableName + listener.getAD_Client_ID();
         ArrayList	list		= (ArrayList) m_modelChangeListeners.get(propertyName);
 
         if (list == null) {

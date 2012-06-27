@@ -1,12 +1,13 @@
 /** Modelo Generado - NO CAMBIAR MANUALMENTE - Disytel */
 package org.openXpertya.model;
-import java.util.*;
+import java.util.logging.Level;
+ import java.util.*;
 import java.sql.*;
 import java.math.*;
 import org.openXpertya.util.*;
 /** Modelo Generado por C_Charge
  *  @author Comunidad de Desarrollo Libertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
- *  @version  - 2010-01-13 14:26:07.709 */
+ *  @version  - 2012-04-19 17:46:14.731 */
 public class X_C_Charge extends org.openXpertya.model.PO
 {
 /** Constructor estándar */
@@ -23,6 +24,7 @@ setIsSameCurrency (false);
 setIsSameTax (false);
 setIsTaxIncluded (false);	// N
 setName (null);
+setSign (null);
 }
  */
 }
@@ -230,5 +232,28 @@ return (String)get_Value("Name");
 public KeyNamePair getKeyNamePair() 
 {
 return new KeyNamePair(getID(), getName());
+}
+public static final int SIGN_AD_Reference_ID = MReference.getReferenceID("C_DocType_Signo_Issotrx");
+/** -1 = -1 */
+public static final String SIGN__1 = "-1";
+/** 1 = 1 */
+public static final String SIGN_1 = "1";
+/** Set Sign */
+public void setSign (String Sign)
+{
+if (Sign.equals("-1") || Sign.equals("1"));
+ else throw new IllegalArgumentException ("Sign Invalid value - Reference = SIGN_AD_Reference_ID - -1 - 1");
+if (Sign == null) throw new IllegalArgumentException ("Sign is mandatory");
+if (Sign.length() > 10)
+{
+log.warning("Length > 10 - truncated");
+Sign = Sign.substring(0,10);
+}
+set_Value ("Sign", Sign);
+}
+/** Get Sign */
+public String getSign() 
+{
+return (String)get_Value("Sign");
 }
 }

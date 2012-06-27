@@ -17,6 +17,7 @@
 package org.openXpertya.apps;
 
 import java.awt.BorderLayout;
+import java.awt.Container;
 import java.awt.Cursor;
 import java.awt.Dimension;
 import java.awt.Event;
@@ -70,8 +71,10 @@ import org.openXpertya.reflection.CallResult;
 import org.openXpertya.util.CLogger;
 import org.openXpertya.util.DB;
 import org.openXpertya.util.DisplayType;
+import org.openXpertya.utils.Disposable;
 import org.openXpertya.util.Env;
 import org.openXpertya.util.Ini;
+import org.openXpertya.utils.LYCloseWindowAdapter;
 import org.openXpertya.util.Language;
 import org.openXpertya.util.Msg;
 import org.openXpertya.util.Splash;
@@ -84,7 +87,7 @@ import org.openXpertya.util.Splash;
  * @author     Equipo de Desarrollo de openXpertya    
  */
 
-public final class AMenu extends JFrame implements ActionListener,PropertyChangeListener,ChangeListener {
+public final class AMenu extends JFrame implements ActionListener,PropertyChangeListener,ChangeListener, Disposable {
 
     /**
      * Constructor de la clase ...
@@ -110,7 +113,8 @@ public final class AMenu extends JFrame implements ActionListener,PropertyChange
 
         // Preparation
 
-        setDefaultCloseOperation( JFrame.DISPOSE_ON_CLOSE );
+        setDefaultCloseOperation( JFrame.DO_NOTHING_ON_CLOSE );
+        addWindowListener(new LYCloseWindowAdapter(this, true));
         wfActivity = new WFActivity( this );
         wfPanel    = new WFPanel( this );
         treePanel  = new VTreePanel( m_WindowNo,true,false );    // !editable & hasBar
@@ -906,6 +910,18 @@ public final class AMenu extends JFrame implements ActionListener,PropertyChange
 
         AMenu menu = new AMenu();
     }    // main
+
+
+	@Override
+	public int getWindowNo() {
+		return m_WindowNo;
+	}
+
+
+	@Override
+	public Container getContainerForMsg() {
+		return this;
+	}
 }    // AMenu
 
 

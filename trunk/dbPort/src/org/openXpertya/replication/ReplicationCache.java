@@ -56,6 +56,8 @@ public class ReplicationCache {
 	{
 		try
 		{
+			trxName = PluginUtils.getPluginInstallerTrxName();
+			
 			if (tablesData == null)	{
 				tablesData = new HashMap<Integer, String>();
 				tablesIDs = new HashMap<String, Integer>();

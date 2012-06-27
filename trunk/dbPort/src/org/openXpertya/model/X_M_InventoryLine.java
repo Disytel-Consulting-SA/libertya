@@ -7,7 +7,7 @@ import java.math.*;
 import org.openXpertya.util.*;
 /** Modelo Generado por M_InventoryLine
  *  @author Comunidad de Desarrollo Libertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
- *  @version  - 2011-12-14 12:26:09.475 */
+ *  @version  - 2012-04-19 17:46:21.046 */
 public class X_M_InventoryLine extends org.openXpertya.model.PO
 {
 /** Constructor estándar */
@@ -26,6 +26,7 @@ setM_Product_ID (0);
 setProcessed (false);
 setQtyBook (Env.ZERO);
 setQtyCount (Env.ZERO);
+setQtyCountWithoutChargeSign (Env.ZERO);
 }
  */
 }
@@ -261,6 +262,19 @@ Counted Quantity */
 public BigDecimal getQtyCount() 
 {
 BigDecimal bd = (BigDecimal)get_Value("QtyCount");
+if (bd == null) return Env.ZERO;
+return bd;
+}
+/** Set Qty Count Without Charge Sign */
+public void setQtyCountWithoutChargeSign (BigDecimal QtyCountWithoutChargeSign)
+{
+if (QtyCountWithoutChargeSign == null) throw new IllegalArgumentException ("QtyCountWithoutChargeSign is mandatory");
+set_Value ("QtyCountWithoutChargeSign", QtyCountWithoutChargeSign);
+}
+/** Get Qty Count Without Charge Sign */
+public BigDecimal getQtyCountWithoutChargeSign() 
+{
+BigDecimal bd = (BigDecimal)get_Value("QtyCountWithoutChargeSign");
 if (bd == null) return Env.ZERO;
 return bd;
 }

@@ -1,5 +1,6 @@
 package org.openXpertya.print.fiscal.document;
 
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -21,7 +22,9 @@ public class Invoice extends Document {
 	/** Indica si la factura a consumidor final no supera el monto
 	 * máximo permitido sin identificación del cliente */
 	private boolean validCFInvoice;
-
+	/** Cambio o vuelto de la factura */
+	private BigDecimal changeAmt;
+	
 	public Invoice() {
 		super();
 		payments = new ArrayList<Payment>();
@@ -137,5 +140,13 @@ public class Invoice extends Document {
 	 */
 	protected void setValidCFInvoice(boolean validCFInvoice) {
 		this.validCFInvoice = validCFInvoice;
+	}
+
+	public void setChangeAmt(BigDecimal changeAmt) {
+		this.changeAmt = changeAmt;
+	}
+
+	public BigDecimal getChangeAmt() {
+		return changeAmt;
 	}
 }

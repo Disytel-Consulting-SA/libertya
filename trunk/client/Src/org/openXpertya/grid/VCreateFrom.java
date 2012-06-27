@@ -517,6 +517,9 @@ public abstract class VCreateFrom extends JDialog implements ActionListener,Tabl
 				// Se borra la selección de pedido.
 				orderField.setValue(null);
 				orderChanged(0);
+				// Actualiza información y componentes relacionados a la entidad
+				// comercial
+				updateBPDetails(bPartnerID, true);
 			}
 		});
         // initial loading
@@ -612,15 +615,10 @@ public abstract class VCreateFrom extends JDialog implements ActionListener,Tabl
     	
     	if (C_Order_ID > 0) {
     		p_order = new MOrder( Env.getCtx(),C_Order_ID,null );    // save
-    		// Se carga la EC del pedido.
-    		if (bPartnerField != null) {
-    			bPartnerField.setValue(p_order.getC_BPartner_ID());
-    		}
     	}
-
-    	// Para facturas se compara la cantidad facturada, para remitos la cantidad
-    	// entregada/recibida.
-    	String compareColumn = forInvoice ? "QtyInvoiced" : "QtyDelivered";
+    	else{
+    		p_order = null;
+    	}
     	
     	StringBuffer sql;
 
@@ -642,8 +640,9 @@ public abstract class VCreateFrom extends JDialog implements ActionListener,Tabl
 		   .append(   "l.QtyOrdered, " )
 		   .append(   "l.QtyInvoiced, " )
 		   .append(   "l.QtyDelivered, " )
-		   .append(   "l.QtyOrdered-NVL(l.").append(compareColumn).append(",0) AS RemainingQty, ")
-		   .append(   "l.QtyEntered/l.QtyOrdered AS Multiplier, ")
+		   .append(   getRemainingQtySQLLine(forInvoice) )
+		   .append(   " AS RemainingQty, ")
+		   .append(   "(CASE l.QtyOrdered WHEN 0 THEN 0 ELSE l.QtyEntered/l.QtyOrdered END) AS Multiplier, ")
 		   .append(   "p.value AS ItemCode, ")
 		   .append(   "p.producttype AS ProductType, ")
 		   .append(   "l.M_AttributeSetInstance_ID AS AttributeSetInstance_ID ")
@@ -674,7 +673,7 @@ public abstract class VCreateFrom extends JDialog implements ActionListener,Tabl
     			orderLine.selected = false;
     			
     			// ID del pedido
-    			orderLine.orderID = rs.getInt("C_Order_ID");
+    			orderLine.documentNo = p_order.getDocumentNo();
     			
     			// Fecha del pedido
     			orderLine.dateOrderLine = rs.getDate("DateOrdered");
@@ -729,8 +728,27 @@ public abstract class VCreateFrom extends JDialog implements ActionListener,Tabl
     	}
     	
     	loadTable(data);
+    	// Se carga la EC del pedido.
+		if (bPartnerField != null && p_order != null) {
+			if(bPartnerField.getValue() == null 
+					|| (Integer)bPartnerField.getValue() != p_order.getC_BPartner_ID()){
+				bPartnerField.setValue(p_order.getC_BPartner_ID());
+				updateBPDetails(p_order.getC_BPartner_ID(), true);
+			}
+		}
     }    // LoadOrder
 
+	/**
+	 * @param forInvoice
+	 * @return la línea del sql que determina la cantidad a facturar
+	 */
+    protected String getRemainingQtySQLLine(boolean forInvoice){
+    	// Para facturas se compara la cantidad facturada, para remitos la cantidad
+    	// entregada/recibida.
+    	String compareColumn = forInvoice ? "QtyInvoiced" : "QtyDelivered";
+    	return "l.QtyOrdered-NVL(l."+compareColumn+",0)";
+    }
+    
     /**
      * Descripción de Método
      *
@@ -921,6 +939,18 @@ public abstract class VCreateFrom extends JDialog implements ActionListener,Tabl
     protected boolean beforeAddOrderLine(OrderLine orderLine) {
     	return true;
     }
+    
+    /**
+	 * Actualización de información cuando se modifica la entidad comercial
+	 * 
+	 * @param bpartnerID
+	 *            id de entidad comercial
+	 * @param resetDocument
+	 *            elimina la selección del documento en caso que se deba
+	 */
+    protected void updateBPDetails(Integer bpartnerID, boolean resetDocument){
+    	
+    }
         
     /**
      * Esta es la superclase abstracta de todas las entidades que pueden ser origen
@@ -1017,8 +1047,8 @@ public abstract class VCreateFrom extends JDialog implements ActionListener,Tabl
     	/** Cantidad entregada/recibida de la línea */
     	protected BigDecimal qtyInvoiced = BigDecimal.ZERO;
     	
-    	/** ID del pedido */
-		protected int orderID = 0;
+    	/** DocumentNo del pedido */
+		protected String documentNo = null;
 		
 		/** Fecha de la línea de pedido */
 		protected Date dateOrderLine = null;

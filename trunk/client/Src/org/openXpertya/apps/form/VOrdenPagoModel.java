@@ -634,6 +634,7 @@ public class VOrdenPagoModel implements TableModelListener {
 		private Timestamp today = new Timestamp(System.currentTimeMillis());
 		private MPayment payment;
 		private String bank;
+		private String accountName;
 		
 		@Override
 		public int getBankAccountID() {
@@ -742,6 +743,14 @@ public class VOrdenPagoModel implements TableModelListener {
 
 		public String getBank() {
 			return bank;
+		}
+
+		public void setAccountName(String accountName) {
+			this.accountName = accountName;
+		}
+
+		public String getAccountName() {
+			return accountName;
 		}
 	}
 	
@@ -1064,6 +1073,7 @@ public class VOrdenPagoModel implements TableModelListener {
 	
 	public String getCreditSqlValidation() {
 		return " C_Invoice.DocStatus IN ('CO','CL') " +
+			   " AND C_Invoice.NotExchangeableCredit = 'N' " +
 			   " AND EXISTS (SELECT C_DocType_ID FROM C_DocType dt WHERE C_Invoice.C_DocType_ID = dt.C_DocType_ID AND dt.Signo_IsSOTrx = " + (getSignoIsSOTrx() * -1) + ") " +
 			   " AND C_Invoice.C_BPartner_ID = @C_BPartner_ID@ ";
 	}
@@ -1587,6 +1597,7 @@ public class VOrdenPagoModel implements TableModelListener {
 				line.setIgnoreAllocCreate(true); // Evita la creación del allocation al completar la línea.
 				// No actualizo el saldo de la entidad comercial
 				line.setUpdateBPBalance(false);
+				line.setC_POSPaymentMedium_ID(mp.getPaymentMedium().getID());
 				// Guarda la linea de caja
 				if (!line.save()) {
 					errorMsg = CLogger.retrieveErrorAsString();
@@ -1716,7 +1727,7 @@ public class VOrdenPagoModel implements TableModelListener {
 				
 				// No actualizo el saldo de la entidad comercial
 				pay.setUpdateBPBalance(false);
-				
+				pay.setC_POSPaymentMedium_ID(mp.getPaymentMedium().getID());
 				// Guarda el pago
 				if (!pay.save()) {
 					errorMsg = CLogger.retrieveErrorAsString();

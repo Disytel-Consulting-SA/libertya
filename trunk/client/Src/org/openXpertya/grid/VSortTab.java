@@ -210,12 +210,12 @@ public class VSortTab extends CPanel implements APanelTab,ActionListener {
         //
         // yesList.setBorder(BorderFactory.createLoweredBevelBorder());
 
-        yesPane.setPreferredSize( new Dimension( 200,300 ));
+        yesPane.setPreferredSize( new Dimension( 300,400 ));
         yesList.setSelectionMode( ListSelectionModel.MULTIPLE_INTERVAL_SELECTION );
 
         // noList.setBorder(BorderFactory.createLoweredBevelBorder());
 
-        noPane.setPreferredSize( new Dimension( 200,300 ));
+        noPane.setPreferredSize( new Dimension( 300,400 ));
         noList.setSelectionMode( ListSelectionModel.MULTIPLE_INTERVAL_SELECTION );
 
         //

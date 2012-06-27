@@ -1,13 +1,14 @@
-/** Modelo Generado - NO CAMBIAR MANUALMENTE - Copyright (C) 2006 FUNDESLE */
+/** Modelo Generado - NO CAMBIAR MANUALMENTE - Disytel */
 package org.openXpertya.model;
-import java.util.*;
+import java.util.logging.Level;
+ import java.util.*;
 import java.sql.*;
 import java.math.*;
 import org.openXpertya.util.*;
 /** Modelo Generado por C_Categoria_Iva
- *  @author Comunidad de Desarrollo openXpertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
- *  @version  - 2009-10-22 14:51:30.793 */
-public class X_C_Categoria_Iva extends PO
+ *  @author Comunidad de Desarrollo Libertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
+ *  @version  - 2012-05-17 17:47:27.761 */
+public class X_C_Categoria_Iva extends org.openXpertya.model.PO
 {
 /** Constructor estándar */
 public X_C_Categoria_Iva (Properties ctx, int C_Categoria_Iva_ID, String trxName)
@@ -16,6 +17,7 @@ super (ctx, C_Categoria_Iva_ID, trxName);
 /** if (C_Categoria_Iva_ID == 0)
 {
 setC_Categoria_Iva_ID (0);
+setIsPercepcionLiable (false);
 setName (null);
 setRequiereCUIT (false);
 }
@@ -26,13 +28,13 @@ public X_C_Categoria_Iva (Properties ctx, ResultSet rs, String trxName)
 {
 super (ctx, rs, trxName);
 }
-/** AD_Table_ID=1000151 */
-public static final int Table_ID=1000151;
+/** AD_Table_ID */
+public static final int Table_ID = M_Table.getTableID("C_Categoria_Iva");
 
 /** TableName=C_Categoria_Iva */
 public static final String Table_Name="C_Categoria_Iva";
 
-protected static KeyNamePair Model = new KeyNamePair(1000151,"C_Categoria_Iva");
+protected static KeyNamePair Model = new KeyNamePair(Table_ID,"C_Categoria_Iva");
 protected static BigDecimal AccessLevel = new BigDecimal(3);
 
 /** Load Meta Data */
@@ -99,6 +101,22 @@ set_Value ("c_sicore", c_sicore);
 public String getc_sicore() 
 {
 return (String)get_Value("c_sicore");
+}
+/** Set Is Percepcion Liable */
+public void setIsPercepcionLiable (boolean IsPercepcionLiable)
+{
+set_Value ("IsPercepcionLiable", new Boolean(IsPercepcionLiable));
+}
+/** Get Is Percepcion Liable */
+public boolean isPercepcionLiable() 
+{
+Object oo = get_Value("IsPercepcionLiable");
+if (oo != null) 
+{
+ if (oo instanceof Boolean) return ((Boolean)oo).booleanValue();
+ return "Y".equals(oo);
+}
+return false;
 }
 /** Set Name.
 Alphanumeric identifier of the entity */

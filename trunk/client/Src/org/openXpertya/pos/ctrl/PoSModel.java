@@ -742,4 +742,8 @@ public class PoSModel {
 		}
 		return financieras;
 	}
+	
+	public List<Tax> getOtherTaxes(BusinessPartner bp){
+		return getConnectionState().getOtherTaxes(bp);
+	}
 }

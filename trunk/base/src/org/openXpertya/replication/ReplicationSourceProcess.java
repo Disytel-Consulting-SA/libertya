@@ -58,7 +58,7 @@ public class ReplicationSourceProcess extends AbstractReplicationProcess {
 		}
 		catch (Exception e)
 		{
-			saveLog(Level.SEVERE, false, "Error en replicación: " + e.getMessage(), null);
+			saveLog(Level.SEVERE, true, "Error en replicación: " + e.getMessage(), null);
 			throw new Exception(e);
 		}
 		
@@ -270,11 +270,13 @@ public class ReplicationSourceProcess extends AbstractReplicationProcess {
 	 */
 	protected void repArrayUpdateQuery(int pos, String tableName, String uid, Character fromState, Character toState, String trxName, String opType)
 	{
-		DB.executeUpdate(" UPDATE " + (MChangeLog.OPERATIONTYPE_Deletion.equals(opType)?ReplicationConstants.DELETIONS_TABLE:tableName) +
-				 			" SET repArray = OVERLAY(repArray placing '" + toState + "' FROM "+(pos) + " for 1) " +
+		boolean isDeletion = MChangeLog.OPERATIONTYPE_Deletion.equals(opType);
+		// El uso de prefijo SET para el repArray solo es para tablas con triggerEvent.  La tabla AD_Changelog_Replication obviamente no lo tiene seteado
+		String set = isDeletion ? "" : "SET";
+		String tableNameQuery = MChangeLog.OPERATIONTYPE_Deletion.equals(opType)?ReplicationConstants.DELETIONS_TABLE:tableName;
+		DB.executeUpdate(" UPDATE " + (tableNameQuery) +
+				 			" SET repArray = '"+set+"' || OVERLAY(repArray placing '" + toState + "' FROM "+(pos) + " for 1) " +
 				 			" WHERE retrieveUID = '" + uid + "'" +
-// TODO: Ver si esta condicion adicional no seria necesaria (consume tiempo)				 			
-//				 			" AND substring(repArray, "+(pos)+", 1) = '" + fromState + "' " +
 				 			" AND AD_Client_ID = " + getAD_Client_ID(), false, trxName, true);
 
 		// Si es una eliminacion quedan tareas adicionales pendientes

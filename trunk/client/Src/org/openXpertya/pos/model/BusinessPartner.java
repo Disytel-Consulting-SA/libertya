@@ -36,6 +36,8 @@ public class BusinessPartner {
 	
 	private PaymentMedium paymentMedium;
 	
+	private boolean percepcionLiable;
+	
 	public BusinessPartner() {
 		super();
 	}
@@ -290,6 +292,12 @@ public class BusinessPartner {
 	public PaymentMedium getPaymentMedium() {
 		return paymentMedium;
 	}
-	
 
+	public void setPercepcionLiable(boolean percepcionLiable) {
+		this.percepcionLiable = percepcionLiable;
+	}
+
+	public boolean isPercepcionLiable() {
+		return percepcionLiable;
+	}
 }

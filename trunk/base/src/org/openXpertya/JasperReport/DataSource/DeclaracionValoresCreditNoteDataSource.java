@@ -1,5 +1,7 @@
 package org.openXpertya.JasperReport.DataSource;
 
+import java.util.Properties;
+
 public class DeclaracionValoresCreditNoteDataSource extends
 		DeclaracionValoresDataSource {
 
@@ -8,9 +10,9 @@ public class DeclaracionValoresCreditNoteDataSource extends
 		// TODO Auto-generated constructor stub
 	}
 
-	public DeclaracionValoresCreditNoteDataSource(
+	public DeclaracionValoresCreditNoteDataSource(Properties ctx,
 			DeclaracionValoresDTO valoresDTO, String trxName) {
-		super(valoresDTO, trxName);
+		super(ctx, valoresDTO, trxName);
 		// TODO Auto-generated constructor stub
 	}
 
@@ -26,7 +28,7 @@ public class DeclaracionValoresCreditNoteDataSource extends
 
 	@Override
 	protected String getTenderType() {
-		return "CR";
+		return "'CR','ARC'";
 	}
 
 }

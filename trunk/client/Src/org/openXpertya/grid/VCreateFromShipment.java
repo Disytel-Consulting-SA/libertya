@@ -33,6 +33,7 @@ import org.compiere.plaf.CompierePLAF;
 import org.compiere.swing.CCheckBox;
 import org.openXpertya.apps.form.VComponentsFactory;
 import org.openXpertya.grid.ed.VLocator;
+import org.openXpertya.model.MBPartner;
 import org.openXpertya.model.MInOut;
 import org.openXpertya.model.MInOutLine;
 import org.openXpertya.model.MInvoice;
@@ -47,6 +48,7 @@ import org.openXpertya.util.DB;
 import org.openXpertya.util.DisplayType;
 import org.openXpertya.util.Env;
 import org.openXpertya.util.Msg;
+import org.openXpertya.util.Util;
 
 /**
  * Descripción de Clase
@@ -81,6 +83,10 @@ public class VCreateFromShipment extends VCreateFrom {
 	/** Remito que invoca este Crear Desde */
 	private MInOut inOut = null;
 
+	private String bpDeliveryRule = null;
+    
+    private MBPartner bpartner = null;
+	
 	/**
 	 * Descripción de Método
 	 * 
@@ -230,8 +236,44 @@ public class VCreateFromShipment extends VCreateFrom {
 		 * invoiceField.setSelectedIndex( 0 ); invoiceField.addActionListener(
 		 * this );
 		 */
+		updateBPDetails(C_BPartner_ID, true);
 	} // initBPDetails
 
+	@Override
+    protected void updateBPDetails(Integer bpartnerID, boolean resetDocument){
+    	 String deliveryRule = null;
+         if(!Util.isEmpty(bpartnerID,true)){
+         	setBpartner(new MBPartner(getCtx(), bpartnerID, getTrxName()));
+         	deliveryRule = getBpartner().getDeliveryRule();
+         }
+         else{
+        	 setBpartner(null);
+         }
+         setBpDeliveryRule(deliveryRule);
+         
+ 		// Si la regla de envío de mercadería de la entidad comercial es Después
+ 		// de la Facturación entonces se debe ocultar el campo para crear remito
+ 		// a partir del pedido
+ 		if (getBpDeliveryRule() != null
+ 				&& getBpDeliveryRule().equals(
+ 						MBPartner.DELIVERYRULE_AfterInvoicing)) {
+ 			orderLabel.setVisible(false);
+ 			orderField.setVisible(false);
+ 			if(resetDocument){
+ 				// Se borra la selección de pedido.
+ 				orderField.setValue(null);
+ 				orderChanged(0);
+ 	 			// Se limpia la selección de factura
+ 				invoiceField.setValue(null);
+ 				invoiceChanged(0); 				
+ 	 		}	
+         }
+ 		else{
+ 			orderLabel.setVisible(true);
+ 			orderField.setVisible(true);
+ 		}
+    }
+	
 	/**
 	 * Descripción de Método
 	 * 
@@ -246,11 +288,11 @@ public class VCreateFromShipment extends VCreateFrom {
 		
 		if (C_Invoice_ID > 0) {
 			m_invoice = new MInvoice(Env.getCtx(), C_Invoice_ID, null); // save
-			// Se carga la EC de la factura.
-			if (bPartnerField != null) {
-				bPartnerField.setValue(m_invoice.getC_BPartner_ID());
-			}
 		}
+		else{
+    		m_invoice = null;
+    	}
+		
 		p_order = null;
 
 		List<InvoiceLine> data = new ArrayList<InvoiceLine>();
@@ -349,6 +391,14 @@ public class VCreateFromShipment extends VCreateFrom {
 		filtrarColumnaInstanceName(data);
 		
 		loadTable(data);
+		// Se carga la EC de la factura.
+		if (bPartnerField != null && m_invoice != null) {
+			if(bPartnerField.getValue() == null 
+					|| (Integer)bPartnerField.getValue() != m_invoice.getC_BPartner_ID()){
+				bPartnerField.setValue(m_invoice.getC_BPartner_ID());
+				updateBPDetails(m_invoice.getC_BPartner_ID(), true);
+			}
+		}
 	} // loadInvoice
 
 	/**
@@ -501,29 +551,7 @@ public class VCreateFromShipment extends VCreateFrom {
 
 	@Override
 	protected String getOrderFilter() {
-		StringBuffer filter = new StringBuffer();
-		// Si es un remito de ventas, solo se pueden elegir pedidos
-		// que tengan al menos una línea cuya cantidad ordenada sea mayor
-		// a la cantidad entregada. Es decir, pedidos que tienen algún
-		// pendiente de entrega de mercadería o cualquier pedido en caso
-		// de que el remito se trate de una devolución de cliente (en este caso
-		// entra mercadería, con lo cual no se deben validar pendientes de
-		// entrega).
-		filter.append("C_Order.IsSOTrx='").append(getIsSOTrx())
-				.append("' AND ")
-				.append("C_Order.DocStatus IN ('CL','CO') AND ")
-				.append("(C_Order.C_Order_ID IN ")
-				.append("(SELECT ol.C_Order_ID ")
-				.append("FROM C_OrderLine ol ")
-				.append("WHERE ol.QtyOrdered > ol.QtyDelivered) ")
-				.append("OR ")
-				.append("(C_Order.IsSOTrx='Y' AND POSITION('+' IN '")
-				.append(getInOut().getMovementType()).append("') > 0)")
-				.append("OR ")
-				.append("(C_Order.IsSOTrx='N' AND POSITION('-' IN '")
-				.append(getInOut().getMovementType()).append("') > 0)")
-				.append(")");
-		return filter.toString();
+		return MInOut.getOrderFilter(getInOut());
 	}
 
 	@Override
@@ -629,20 +657,7 @@ public class VCreateFromShipment extends VCreateFrom {
 	 * @return Devuelve el filtro que se aplica al Lookup de Facturas.
 	 */
 	protected String getInvoiceFilter() {
-		StringBuffer filter = new StringBuffer();
-
-		filter.append("C_Invoice.IsSOTrx='")
-				.append(getIsSOTrx())
-				.append("' AND ")
-				.append("C_Invoice.DocStatus IN ('CL','CO') AND ")
-				.append("C_Invoice.C_Invoice_ID IN (")
-				.append("SELECT il.C_Invoice_ID ")
-				.append("FROM C_InvoiceLine il ")
-				.append("LEFT OUTER JOIN M_MatchInv mi ON (il.C_InvoiceLine_ID=mi.C_InvoiceLine_ID) ")
-				.append("GROUP BY il.C_Invoice_ID,mi.C_InvoiceLine_ID,il.QtyInvoiced ")
-				.append("HAVING (il.QtyInvoiced<>SUM(mi.Qty) AND mi.C_InvoiceLine_ID IS NOT NULL) OR mi.C_InvoiceLine_ID IS NULL) ");
-
-		return filter.toString();
+		return MInOut.getInvoiceFilter(getInOut());
 	}
 
 	/**
@@ -670,20 +685,31 @@ public class VCreateFromShipment extends VCreateFrom {
 	 *         a pedidos.
 	 */
 	protected String getInvoiceOrderFilter() {
-		StringBuffer filter = new StringBuffer();
-
-		filter.append("C_Invoice.IsSOTrx='").append(getIsSOTrx())
-				.append("' AND ")
-				.append("C_Invoice.DocStatus IN ('CL','CO') AND ")
-				.append("C_Invoice.C_Order_ID IS NOT NULL AND ")
-				.append("C_Invoice.C_Order_ID IN (")
-				.append("SELECT C_Order.C_Order_ID ").append("FROM C_Order ")
-				.append("WHERE (").append(getOrderFilter()).append(")")
-				.append(")");
-
-		return filter.toString();
+		return MInOut.getInvoiceOrderFilter(getInOut());
 	}
 
+	public void setBpDeliveryRule(String bpDeliveryRule) {
+		// TODO Sólo para ventas y movimiento de salida es necesario verificar
+		// la regla de envío y el comportamiento relacionado sobre los
+		// componentes e información. Cuando para proveedores también deba
+		// seguir el mismo comportamiento, eliminar la condición del if de issotrx
+		if (isSOTrx() && getInOut().getMovementType().endsWith("-")) {
+			this.bpDeliveryRule = bpDeliveryRule;
+		}
+	}
+
+	public String getBpDeliveryRule() {
+		return bpDeliveryRule;
+	}
+
+	protected void setBpartner(MBPartner bpartner) {
+		this.bpartner = bpartner;
+	}
+
+	protected MBPartner getBpartner() {
+		return bpartner;
+	}
+	
 	/**
 	 * Entidad Orígen: Línea de Factura
 	 */
@@ -842,7 +868,7 @@ public class VCreateFromShipment extends VCreateFrom {
 
 			setColumnName(COL_IDX_ORDER, Msg.getElement(getCtx(), "C_Order_ID"));
 			setColumnName(COL_IDX_INSTANCE_NAME,
-					Msg.translate(Env.getCtx(), "Description"));
+					Msg.translate(Env.getCtx(), "Attributes"));
 			setColumnName(COL_IDX_DATE,
 					Msg.translate(Env.getCtx(), "DateOrdered"));
 		}
@@ -856,7 +882,7 @@ public class VCreateFromShipment extends VCreateFrom {
 			setColumnClass(COL_IDX_QTY, BigDecimal.class);
 			setColumnClass(COL_IDX_REMAINING, BigDecimal.class);
 
-			setColumnClass(COL_IDX_ORDER, Integer.class);
+			setColumnClass(COL_IDX_ORDER, String.class);
 			setColumnClass(COL_IDX_INSTANCE_NAME, String.class);
 			setColumnClass(COL_IDX_DATE, Date.class);
 		}
@@ -885,7 +911,7 @@ public class VCreateFromShipment extends VCreateFrom {
 				value = docLine.remainingQty;
 				break;
 			case COL_IDX_ORDER:
-				value = docLine.orderID;
+				value = docLine.documentNo;
 				break;
 			case COL_IDX_INSTANCE_NAME:
 				value = docLine.instanceName;

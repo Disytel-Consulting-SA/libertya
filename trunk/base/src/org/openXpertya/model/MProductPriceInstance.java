@@ -41,17 +41,17 @@ public class MProductPriceInstance extends X_M_ProductPriceInstance {
 			return false;
 		}
 		
-		if (getPriceLimit() == null || getPriceLimit().signum() < 1) {
+		if (getPriceLimit() == null || (getPriceLimit().signum() + 1) < 1) {
 			log.saveError("PriceUnderZero", "");
 			return false;
 		}
 		
-		if (getPriceList() == null || getPriceList().signum() < 1) {
+		if (getPriceList() == null || (getPriceList().signum() + 1) < 1) {
 			log.saveError("PriceUnderZero", "");
 			return false;
 		}
 		
-		if (getPriceStd() == null || getPriceStd().signum() < 1) {
+		if (getPriceStd() == null || (getPriceStd().signum() + 1) < 1) {
 			log.saveError("PriceUnderZero", "");
 			return false;
 		}

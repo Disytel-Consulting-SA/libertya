@@ -498,7 +498,7 @@
 					<textElement textAlignment="Center">
 						<font pdfFontName="Helvetica-Bold" size="8" isBold="true"/>
 					</textElement>
-				<text><![CDATA[Origen]]></text>
+				<text><![CDATA[Ingreso]]></text>
 				</staticText>
 				<staticText>
 					<reportElement
@@ -511,7 +511,7 @@
 					<textElement textAlignment="Center">
 						<font pdfFontName="Helvetica-Bold" size="8" isBold="true"/>
 					</textElement>
-				<text><![CDATA[Destino]]></text>
+				<text><![CDATA[Egreso]]></text>
 				</staticText>
 				<staticText>
 					<reportElement
