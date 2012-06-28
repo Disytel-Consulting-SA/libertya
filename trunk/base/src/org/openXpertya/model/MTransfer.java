@@ -479,7 +479,7 @@ public class MTransfer extends X_M_Transfer implements DocAction {
 	 * @throws Exception Cuando se produce algún error al guardar o procesar el encabezado
 	 * o líneas del inventario.
 	 */
-	private void createInventory() throws Exception {
+	public void createInventory() throws Exception {
 		// El almacén del inventario depende de si la transferencia es
 		// entrante o saliente.
 		MWarehouse warehouse = null;
@@ -700,4 +700,7 @@ public class MTransfer extends X_M_Transfer implements DocAction {
 		return false;
 	}
 
+	public void setAD_Org_ID(int AD_Org_ID) {
+		super.setAD_Org_ID(AD_Org_ID);
+	} // setAD_Org_ID
 }

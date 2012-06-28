@@ -825,6 +825,7 @@ public class VOrdenPagoModel implements TableModelListener {
 		
 		private BigDecimal manualAmount = new BigDecimal(0);
 		private BigDecimal paymentTermDiscount = new BigDecimal(0);
+		private String isexchange = "N";
 		
 		public ResultItemFactura(ResultSet rs) throws Exception {
 			VModelHelper.GetInstance().super(rs);
@@ -844,6 +845,14 @@ public class VOrdenPagoModel implements TableModelListener {
 
 		public BigDecimal getPaymentTermDiscount() {
 			return paymentTermDiscount;
+		}
+		
+		public String getIsexchange() {
+			return isexchange;
+		}
+
+		public void setIsexchange(String isexchange) {
+			this.isexchange = isexchange;
 		}
 		
 		public BigDecimal getToPayAmt(boolean withPaymentTermDiscount){
@@ -1176,9 +1185,9 @@ public class VOrdenPagoModel implements TableModelListener {
 		
 		StringBuffer sql = new StringBuffer();
 		
-		sql.append(" SELECT c_invoice_id, 0, orgname, documentno,max(duedate) as duedatemax, sum(convertedamt) as convertedamtsum, sum(openamt) as openAmtSum FROM ");
+		sql.append(" SELECT c_invoice_id, 0, orgname, documentno,max(duedate) as duedatemax, sum(convertedamt) as convertedamtsum, isexchange, sum(openamt) as openAmtSum FROM ");
 		sql.append("  (SELECT i.C_Invoice_ID, i.C_InvoicePaySchedule_ID, org.name as orgname, i.DocumentNo, coalesce(duedate,dateinvoiced) as DueDate, "); // ips.duedate
-		sql.append("    abs(currencyConvert( i.GrandTotal, i.C_Currency_ID, ?, i.DateAcct, null, i.AD_Client_ID, i.AD_Org_ID)) as ConvertedAmt, ");
+		sql.append("    abs(currencyConvert( i.GrandTotal, i.C_Currency_ID, ?, i.DateAcct, null, i.AD_Client_ID, i.AD_Org_ID)) as ConvertedAmt, isexchange, ");
 		sql.append("    currencyConvert( invoiceOpen(i.C_Invoice_ID, COALESCE(i.C_InvoicePaySchedule_ID, 0)), i.C_Currency_ID, ?, i.DateAcct, null, i.AD_Client_ID, i.AD_Org_ID) AS openAmt ");
 		sql.append("  FROM c_invoice_v AS i ");
 		sql.append("  LEFT JOIN ad_org org ON (org.ad_org_id=i.ad_org_id) ");
@@ -1192,7 +1201,7 @@ public class VOrdenPagoModel implements TableModelListener {
 			sql.append("  AND i.ad_org_id = ?  ");
 		
 		sql.append("  ORDER BY org.name ASC, i.c_invoice_id, i.DocumentNo ASC, DueDate ASC ) as openInvoices ");
-		sql.append(" GROUP BY c_invoice_id, orgname, documentno,c_invoicepayschedule_id ");
+		sql.append(" GROUP BY c_invoice_id, orgname, documentno,c_invoicepayschedule_id, isexchange ");
 		sql.append(" HAVING sum(openamt) > 0.0 ");
 		if (!m_allInvoices)
 			sql.append("  AND ( max(duedate) IS NULL OR max(duedate) <= ? ) ");

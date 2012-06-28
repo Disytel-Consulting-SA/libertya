@@ -7,7 +7,7 @@ import java.math.*;
 import org.openXpertya.util.*;
 /** Modelo Generado por C_Invoice
  *  @author Comunidad de Desarrollo Libertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
- *  @version  - 2012-06-10 15:34:33.414 */
+ *  @version  - 2012-06-28 18:37:50.884 */
 public class X_C_Invoice extends org.openXpertya.model.PO
 {
 /** Constructor estándar */
@@ -35,6 +35,7 @@ setInitialCurrentAccountAmt (Env.ZERO);
 setIsApproved (false);	// N
 setIsCopy (false);
 setIsDiscountPrinted (false);
+setIsExchange (false);
 setIsInDispute (false);	// N
 setIsPaid (false);
 setIsPayScheduleValid (false);
@@ -947,6 +948,22 @@ Print Discount on Invoice and Order */
 public boolean isDiscountPrinted() 
 {
 Object oo = get_Value("IsDiscountPrinted");
+if (oo != null) 
+{
+ if (oo instanceof Boolean) return ((Boolean)oo).booleanValue();
+ return "Y".equals(oo);
+}
+return false;
+}
+/** Set Is Exchange */
+public void setIsExchange (boolean IsExchange)
+{
+set_Value ("IsExchange", new Boolean(IsExchange));
+}
+/** Get Is Exchange */
+public boolean isExchange() 
+{
+Object oo = get_Value("IsExchange");
 if (oo != null) 
 {
  if (oo instanceof Boolean) return ((Boolean)oo).booleanValue();
