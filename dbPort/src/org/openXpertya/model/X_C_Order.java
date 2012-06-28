@@ -7,7 +7,7 @@ import java.math.*;
 import org.openXpertya.util.*;
 /** Modelo Generado por C_Order
  *  @author Comunidad de Desarrollo Libertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
- *  @version  - 2012-04-20 16:58:02.148 */
+ *  @version  - 2012-06-28 18:37:51.738 */
 public class X_C_Order extends org.openXpertya.model.PO
 {
 /** Constructor estándar */
@@ -40,6 +40,7 @@ setIsCreditApproved (false);
 setIsDelivered (false);
 setIsDiscountPrinted (false);
 setIsDropShip (false);	// N
+setIsExchange (false);
 setIsInvoiced (false);
 setIsPrinted (false);
 setIsSelected (false);
@@ -887,6 +888,22 @@ Drop Shipments are sent from the Vendor directly to the Customer */
 public boolean isDropShip() 
 {
 Object oo = get_Value("IsDropShip");
+if (oo != null) 
+{
+ if (oo instanceof Boolean) return ((Boolean)oo).booleanValue();
+ return "Y".equals(oo);
+}
+return false;
+}
+/** Set Is Exchange */
+public void setIsExchange (boolean IsExchange)
+{
+set_Value ("IsExchange", new Boolean(IsExchange));
+}
+/** Get Is Exchange */
+public boolean isExchange() 
+{
+Object oo = get_Value("IsExchange");
 if (oo != null) 
 {
  if (oo instanceof Boolean) return ((Boolean)oo).booleanValue();

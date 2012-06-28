@@ -393,6 +393,8 @@ public class Doc_Invoice extends Doc implements DocProjectSplitterInterface {
         }
 
         // ARI, ARF
+        
+        int accttypeIsChange = getIsExtrangeQuery();
 
         if( p_vo.DocumentType.equals( DOCTYPE_ARInvoice ) || p_vo.DocumentType.equals( DOCTYPE_ARProForma )) {
 
@@ -417,7 +419,7 @@ public class Doc_Invoice extends Doc implements DocProjectSplitterInterface {
             // Revenue                 CR
 
             for( int i = 0;i < p_lines.length;i++ ) {
-                fact.createLine( p_lines[ i ],(( DocLine_Invoice )p_lines[ i ] ).getAccount( ProductInfo.ACCTTYPE_P_Revenue,as ),p_vo.C_Currency_ID,null,p_lines[ i ].getAmount());
+            	fact.createLine( p_lines[ i ],(( DocLine_Invoice )p_lines[ i ] ).getAccount( accttypeIsChange,as ),p_vo.C_Currency_ID,null,p_lines[ i ].getAmount());
             }
 
             // Set Locations
@@ -457,7 +459,7 @@ public class Doc_Invoice extends Doc implements DocProjectSplitterInterface {
             // Revenue         CR
 
             for( int i = 0;i < p_lines.length;i++ ) {
-                fact.createLine( p_lines[ i ],(( DocLine_Invoice )p_lines[ i ] ).getAccount( ProductInfo.ACCTTYPE_P_Revenue,as ),p_vo.C_Currency_ID,p_lines[ i ].getAmount(),null );
+                fact.createLine( p_lines[ i ],(( DocLine_Invoice )p_lines[ i ] ).getAccount( accttypeIsChange,as ),p_vo.C_Currency_ID,p_lines[ i ].getAmount(),null );
             }
 
             // Set Locations
@@ -703,6 +705,28 @@ public class Doc_Invoice extends Doc implements DocProjectSplitterInterface {
     	}
     	
     	return map;
+	}
+	
+	/** Retorna la constante ACCTTYPE_P_RevenueExchange cuando el campo Canje de C_Invoice es true y ACCTTYPE_P_Revenue en caso contrario */
+	public int getIsExtrangeQuery() {
+		String sql = "SELECT IsExchange FROM C_Invoice WHERE C_Invoice_ID=?";
+
+		try {
+			PreparedStatement pstmt = DB.prepareStatement(sql, m_trxName);
+			pstmt.setInt(1, getRecord_ID());
+			ResultSet rs = pstmt.executeQuery();
+			//
+			if (rs.next()) {
+				String isExchange = rs.getString("IsExchange");
+				return (isExchange.equalsIgnoreCase("Y") ? ProductInfo.ACCTTYPE_P_RevenueExchange
+						: ProductInfo.ACCTTYPE_P_Revenue);
+			}
+			rs.close();
+			pstmt.close();
+		} catch (SQLException e) {
+			log.log(Level.SEVERE, "isExchange", e);
+		}
+		return 0;
 	}
 	
 }    // Doc_Invoice

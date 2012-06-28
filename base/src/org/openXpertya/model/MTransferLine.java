@@ -108,4 +108,8 @@ public class MTransferLine extends X_M_TransferLine {
 		return MProduct.get(getCtx(), getM_Product_ID());
 	}
 
+	public void setClientOrg(int AD_Client_ID, int AD_Org_ID){
+		super.setClientOrg(AD_Client_ID, AD_Org_ID);
+	} // setClientOrg
+
 }

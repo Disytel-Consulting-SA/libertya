@@ -1623,6 +1623,31 @@ public class MInvoice extends X_C_Invoice implements DocAction {
 				return false;
 			}
 		}
+		
+		// Canje
+		if ( (this.isSOTrx()) && (this.getC_Order_ID() != 0) ) {
+			MOrder order = new MOrder(getCtx(), this.getC_Order_ID(), get_TrxName());
+			/*
+			 * Valido que si el pedido asociado a la factura no tenia el check Canje marcado
+			 * la factura tampoco lo tenga.
+			 */
+			if ( (!order.isExchange()) && (this.isExchange()) ) {
+				log.saveError("OrderWithoutExchange", Msg
+						.translate(getCtx(), "OrderWithoutExchange"));
+				return false;
+			}
+			else{
+				/*
+				 * Valido que si el pedido asociado a la factura tenia el check Canje marcado
+				 * la factura tambien lo tenga.
+				 */
+				if ( (order.isExchange()) && (!this.isExchange()) ) {
+					log.saveError("InvoiceWithoutExchange", Msg
+							.translate(getCtx(), "InvoiceWithoutExchange"));
+					return false;
+				}
+			}
+		}
 
 		return true;
 	} // beforeSave

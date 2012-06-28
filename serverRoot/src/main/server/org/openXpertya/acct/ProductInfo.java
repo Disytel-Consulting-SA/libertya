@@ -318,6 +318,8 @@ public class ProductInfo {
     public static final int ACCTTYPE_P_Amortization = 9;
     
     public static final int ACCTTYPE_P_Amortization_Realized = 10;
+    
+    public static final int ACCTTYPE_P_RevenueExchange = 11;
 
     /**
      * Descripción de Método
@@ -330,7 +332,7 @@ public class ProductInfo {
      */
 
     public MAccount getAccount( int AcctType,MAcctSchema as ) {
-        if( (AcctType < 1) || (AcctType > 10) ) {
+        if( (AcctType < 1) || (AcctType > 11) ) {
             return null;
         }
 
@@ -343,7 +345,8 @@ public class ProductInfo {
         String sql = "SELECT P_Revenue_Acct, P_Expense_Acct, P_Asset_Acct, P_Cogs_Acct, "    // 1..4
                      + "P_PurchasePriceVariance_Acct, P_InvoicePriceVariance_Acct, "    // 5..6
                      + "P_TradeDiscountRec_Acct, P_TradeDiscountGrant_Acct , "            // 7..8
-                     + "P_Amortization_Acct, P_Amortization_Realized_Acct "            // 9..10
+                     + "P_Amortization_Acct, P_Amortization_Realized_Acct, "            // 9..10
+                     + "P_RevenueExchange_Acct "            // 11
                      + "FROM M_Product_Acct " + "WHERE M_Product_ID=? AND C_AcctSchema_ID=?";
 
         //

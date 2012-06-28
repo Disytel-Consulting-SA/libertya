@@ -2446,6 +2446,7 @@ DELETE FROM AD_TreeNodeMM WHERE ad_componentobjectuid = 'CORE-AD_TreeNodeMM-10-1
 DELETE FROM AD_Process_Access WHERE ad_componentobjectuid = 'CORE-AD_Process_Access-1010285-1010076';
 DELETE FROM AD_TreeNodeMM WHERE ad_componentobjectuid = 'CORE-AD_TreeNodeMM-1010115-1010417';
 DELETE FROM AD_Table_Trl WHERE ad_componentobjectuid like 'CORE-AD_Table_Trl-es%1010285';
+DELETE FROM AD_Pinstance WHERE (Ad_Process_ID = 1010285);
 DELETE FROM AD_Process WHERE ad_componentobjectuid = 'CORE-AD_Process-1010285';
 DELETE FROM AD_PrintFormat WHERE ad_componentobjectuid = 'CORE-AD_PrintFormat-1010920';
 DELETE FROM AD_Table WHERE ad_componentobjectuid = 'CORE-AD_Table-1010285';
@@ -2584,3 +2585,141 @@ UPDATE m_entidadfinancieraplan
 SET value = name;
 
 ALTER TABLE m_entidadfinancieraplan ALTER COLUMN value SET NOT NULL;
+
+-- 20120628-1735 Se insertó la columna P_RevenueExchange_Acct en la tabla C_AcctSchema_Default
+ALTER TABLE libertya.C_AcctSchema_Default ADD COLUMN P_RevenueExchange_Acct integer;
+
+-- 20120628-1735 Se actualizó la columna P_RevenueExchange_Acct en la tabla C_AcctSchema_Default, poniendo el valor que tiene el campo P_Revenue_Acct
+UPDATE libertya.C_AcctSchema_Default SET P_RevenueExchange_Acct = P_Revenue_Acct WHERE P_RevenueExchange_Acct IS NULL;
+
+-- 20120628-1735 Se actualizó la columna P_RevenueExchange_Acct en la tabla C_AcctSchema_Default, indicando que su valor no puede ser null
+ALTER TABLE libertya.C_AcctSchema_Default ALTER COLUMN P_RevenueExchange_Acct SET NOT NULL;
+
+-- 20120628-1745 Se insertó la columna P_RevenueExchange_Acct en la tabla M_Product_Category_Acct
+ALTER TABLE libertya.M_Product_Category_Acct ADD COLUMN P_RevenueExchange_Acct integer;
+
+-- 20120628-1745 Se actualizó la columna P_RevenueExchange_Acct en la tabla M_Product_Category_Acct, poniendo el valor que tiene el campo P_Revenue_Acct
+UPDATE libertya.M_Product_Category_Acct SET P_RevenueExchange_Acct = P_Revenue_Acct WHERE P_RevenueExchange_Acct IS NULL;
+
+-- 20120628-1745 Se actualizó la columna P_RevenueExchange_Acct en la tabla M_Product_Category_Acct, indicando que su valor no puede ser null
+ALTER TABLE libertya.M_Product_Category_Acct ALTER COLUMN P_RevenueExchange_Acct SET NOT NULL;
+
+-- 20120628-1750 Se insertó la columna P_RevenueExchange_Acct en la tabla M_Product_Acct
+ALTER TABLE libertya.M_Product_Acct ADD COLUMN P_RevenueExchange_Acct integer;
+
+-- 20120628-1750 Se actualizó la columna P_RevenueExchange_Acct en la tabla M_Product_Acct, poniendo el valor que tiene el campo P_Revenue_Acct
+UPDATE libertya.M_Product_Acct SET P_RevenueExchange_Acct = P_Revenue_Acct WHERE P_RevenueExchange_Acct IS NULL;
+
+-- 20120628-1750 Se actualizó la columna P_RevenueExchange_Acct en la tabla M_Product_Acct, indicando que su valor no puede ser null
+ALTER TABLE libertya.M_Product_Acct ALTER COLUMN P_RevenueExchange_Acct SET NOT NULL;
+
+-- 20120628-1755 Se insertó la columna IsExchange en la tabla C_Order
+ALTER TABLE libertya.C_Order ADD COLUMN IsExchange character(1) NOT NULL DEFAULT 'N'::bpchar;
+
+-- 20120628-1800 Se insertó la columna IsExchange en la tabla C_Invoice
+ALTER TABLE libertya.C_Invoice ADD COLUMN IsExchange character(1) NOT NULL DEFAULT 'N'::bpchar;
+
+-- 20120529-1610 Modificación de la view c_invoice_v agregando la columna isexchange, eliminación y creación de las vistas dependientes
+DROP VIEW rv_bpartneropen;
+DROP VIEW v_projectedpayments;
+DROP VIEW v_documents;
+DROP VIEW c_invoiceline_v;
+DROP VIEW c_invoice_v;
+
+CREATE OR REPLACE VIEW c_invoice_v AS 
+ SELECT i.c_invoice_id, i.ad_client_id, i.ad_org_id, i.isactive, i.created, i.createdby, i.updated, i.updatedby, i.issotrx, i.documentno, i.docstatus, i.docaction, i.processing, i.processed, i.c_doctype_id, i.c_doctypetarget_id, i.c_order_id, i.description, i.isapproved, i.istransferred, i.salesrep_id, i.dateinvoiced, i.dateprinted, i.dateacct, i.c_bpartner_id, i.c_bpartner_location_id, i.ad_user_id, i.poreference, i.dateordered, i.c_currency_id, i.c_conversiontype_id, i.paymentrule, i.c_paymentterm_id, i.c_charge_id, i.m_pricelist_id, i.c_campaign_id, i.c_project_id, i.c_activity_id, i.isprinted, i.isdiscountprinted, i.ispaid, i.isindispute, i.ispayschedulevalid, NULL::unknown AS c_invoicepayschedule_id, i.chargeamt * d.signo_issotrx::numeric AS chargeamt, i.totallines, i.grandtotal * d.signo_issotrx::numeric * d.signo_issotrx::numeric AS grandtotal, d.signo_issotrx::numeric AS multiplier, 
+        CASE
+            WHEN "substring"(d.docbasetype::text, 2, 2) = 'P'::text THEN - 1::numeric
+            ELSE 1::numeric
+        END AS multiplierap, d.docbasetype, i.notexchangeablecredit, i.isexchange
+   FROM c_invoice i
+   JOIN c_doctype d ON i.c_doctypetarget_id = d.c_doctype_id
+  WHERE i.ispayschedulevalid <> 'Y'::bpchar
+UNION ALL 
+ SELECT i.c_invoice_id, i.ad_client_id, i.ad_org_id, i.isactive, i.created, i.createdby, i.updated, i.updatedby, i.issotrx, i.documentno, i.docstatus, i.docaction, i.processing, i.processed, i.c_doctype_id, i.c_doctypetarget_id, i.c_order_id, i.description, i.isapproved, i.istransferred, i.salesrep_id, i.dateinvoiced, i.dateprinted, i.dateacct, i.c_bpartner_id, i.c_bpartner_location_id, i.ad_user_id, i.poreference, i.dateordered, i.c_currency_id, i.c_conversiontype_id, i.paymentrule, i.c_paymentterm_id, i.c_charge_id, i.m_pricelist_id, i.c_campaign_id, i.c_project_id, i.c_activity_id, i.isprinted, i.isdiscountprinted, i.ispaid, i.isindispute, i.ispayschedulevalid, ips.c_invoicepayschedule_id, NULL::unknown AS chargeamt, NULL::unknown AS totallines, ips.dueamt AS grandtotal, d.signo_issotrx AS multiplier, 
+        CASE
+            WHEN "substring"(d.docbasetype::text, 2, 2) = 'P'::text THEN - 1::numeric
+            ELSE 1::numeric
+        END AS multiplierap, d.docbasetype, i.notexchangeablecredit, i.isexchange
+   FROM c_invoice i
+   JOIN c_doctype d ON i.c_doctypetarget_id = d.c_doctype_id
+   JOIN c_invoicepayschedule ips ON i.c_invoice_id = ips.c_invoice_id
+  WHERE i.ispayschedulevalid = 'Y'::bpchar AND ips.isvalid = 'Y'::bpchar;
+
+ALTER TABLE c_invoice_v OWNER TO libertya;
+
+CREATE OR REPLACE VIEW c_invoiceline_v AS 
+ SELECT il.ad_client_id, il.ad_org_id, il.c_invoiceline_id, i.c_invoice_id, i.salesrep_id, i.c_bpartner_id, il.m_product_id, i.documentno, i.dateinvoiced, i.dateacct, i.issotrx, i.docstatus, round(i.multiplier * il.linenetamt, 2) AS linenetamt, round(i.multiplier * il.pricelist * il.qtyinvoiced, 2) AS linelistamt, 
+        CASE
+            WHEN COALESCE(il.pricelimit, 0::numeric) = 0::numeric THEN round(i.multiplier * il.linenetamt, 2)
+            ELSE round(i.multiplier * il.pricelimit * il.qtyinvoiced, 2)
+        END AS linelimitamt, round(i.multiplier * il.pricelist * il.qtyinvoiced - il.linenetamt, 2) AS linediscountamt, 
+        CASE
+            WHEN COALESCE(il.pricelimit, 0::numeric) = 0::numeric THEN 0::numeric
+            ELSE round(i.multiplier * il.linenetamt - il.pricelimit * il.qtyinvoiced, 2)
+        END AS lineoverlimitamt, il.qtyinvoiced, il.qtyentered, il.line, il.c_orderline_id, il.c_uom_id
+   FROM c_invoice_v i, c_invoiceline il
+  WHERE i.c_invoice_id = il.c_invoice_id;
+
+ALTER TABLE c_invoiceline_v OWNER TO libertya;
+
+CREATE OR REPLACE VIEW v_documents AS 
+( SELECT 'C_Invoice' AS documenttable, i.c_invoice_id AS document_id, i.ad_client_id, i.ad_org_id, i.isactive, i.created, i.createdby, i.updated, i.updatedby, i.c_bpartner_id, i.c_doctype_id, dt.signo_issotrx, dt.name AS doctypename, dt.printname AS doctypeprintname, i.documentno, i.issotrx, i.docstatus, 
+        CASE
+            WHEN i.c_invoicepayschedule_id IS NOT NULL THEN ips.duedate
+            ELSE i.dateinvoiced
+        END AS datetrx, i.dateacct, i.c_currency_id, i.c_conversiontype_id, i.grandtotal AS amount, i.c_invoicepayschedule_id, ips.duedate, i.dateinvoiced AS truedatetrx
+   FROM c_invoice_v i
+   JOIN c_doctype dt ON i.c_doctypetarget_id = dt.c_doctype_id
+   LEFT JOIN c_invoicepayschedule ips ON i.c_invoicepayschedule_id = ips.c_invoicepayschedule_id
+UNION ALL 
+ SELECT 'C_Payment' AS documenttable, p.c_payment_id AS document_id, p.ad_client_id, p.ad_org_id, p.isactive, p.created, p.createdby, p.updated, p.updatedby, p.c_bpartner_id, p.c_doctype_id, dt.signo_issotrx, dt.name AS doctypename, dt.printname AS doctypeprintname, p.documentno, p.issotrx, p.docstatus, p.datetrx, p.dateacct, p.c_currency_id, p.c_conversiontype_id, p.payamt AS amount, NULL::integer AS c_invoicepayschedule_id, p.duedate, p.datetrx AS truedatetrx
+   FROM c_payment p
+   JOIN c_doctype dt ON p.c_doctype_id = dt.c_doctype_id)
+UNION ALL 
+ SELECT 'C_CashLine' AS documenttable, cl.c_cashline_id AS document_id, cl.ad_client_id, cl.ad_org_id, cl.isactive, cl.created, cl.createdby, cl.updated, cl.updatedby, 
+        CASE
+            WHEN cl.c_bpartner_id IS NOT NULL THEN cl.c_bpartner_id
+            ELSE i.c_bpartner_id
+        END AS c_bpartner_id, dt.c_doctype_id, 
+        CASE
+            WHEN cl.amount < 0.0 THEN 1
+            ELSE (-1)
+        END AS signo_issotrx, dt.name AS doctypename, dt.printname AS doctypeprintname, '@line@'::text || cl.line::character varying::text AS documentno, 
+        CASE
+            WHEN cl.amount < 0.0 THEN 'N'::bpchar
+            ELSE 'Y'::bpchar
+        END AS issotrx, cl.docstatus, c.statementdate AS datetrx, c.dateacct, cl.c_currency_id, NULL::integer AS c_conversiontype_id, abs(cl.amount) AS amount, NULL::integer AS c_invoicepayschedule_id, NULL::timestamp without time zone AS duedate, c.statementdate AS truedatetrx
+   FROM c_cashline cl
+   JOIN c_cash c ON cl.c_cash_id = c.c_cash_id
+   JOIN ( SELECT d.ad_client_id, d.c_doctype_id, d.name, d.printname
+      FROM c_doctype d
+     WHERE d.doctypekey::text = 'CMC'::text) dt ON cl.ad_client_id = dt.ad_client_id
+   LEFT JOIN c_invoice i ON cl.c_invoice_id = i.c_invoice_id;
+
+ALTER TABLE v_documents OWNER TO libertya;
+
+CREATE OR REPLACE VIEW rv_bpartneropen AS 
+ SELECT i.ad_client_id, i.ad_org_id, i.isactive, i.created, i.createdby, i.updated, i.updatedby, i.c_bpartner_id, i.c_currency_id, i.grandtotal * i.multiplierap AS amt, invoiceopen(i.c_invoice_id, i.c_invoicepayschedule_id) * i.multiplierap AS openamt, i.dateinvoiced AS datedoc, COALESCE(daysbetween(now(), ips.duedate::timestamp with time zone), paymenttermduedays(i.c_paymentterm_id, i.dateinvoiced::timestamp with time zone, now())) AS daysdue
+   FROM c_invoice_v i
+   LEFT JOIN c_invoicepayschedule ips ON i.c_invoicepayschedule_id = ips.c_invoicepayschedule_id
+  WHERE i.ispaid = 'N'::bpchar AND (i.docstatus = 'CO'::bpchar OR i.docstatus = 'CL'::bpchar)
+UNION 
+ SELECT p.ad_client_id, p.ad_org_id, p.isactive, p.created, p.createdby, p.updated, p.updatedby, p.c_bpartner_id, p.c_currency_id, p.payamt * p.multiplierap * (- 1::numeric) AS amt, paymentavailable(p.c_payment_id) * p.multiplierap * (- 1::numeric) AS openamt, p.datetrx AS datedoc, NULL::unknown AS daysdue
+   FROM c_payment_v p
+  WHERE p.isallocated = 'N'::bpchar AND p.c_bpartner_id IS NOT NULL AND (p.docstatus = 'CO'::bpchar OR p.docstatus = 'CL'::bpchar);
+
+ALTER TABLE rv_bpartneropen OWNER TO libertya;
+
+CREATE OR REPLACE VIEW v_projectedpayments AS 
+ SELECT v.documenttable, v.document_id, v.ad_client_id, v.ad_org_id, v.isactive, v.created, v.createdby, v.updated, v.updatedby, v.c_bpartner_id, v.c_doctype_id, v.signo_issotrx, v.doctypename, v.doctypeprintname, v.documentno, v.issotrx, v.docstatus, v.datetrx, v.dateacct, v.c_currency_id, v.c_conversiontype_id, v.amount, v.c_invoicepayschedule_id, v.duedate, i.ispaid, NULL::character varying(20) AS checkno
+   FROM v_documents v
+   JOIN c_invoice i ON i.c_invoice_id = v.document_id
+  WHERE i.issotrx = 'N'::bpchar AND v.documenttable = 'C_Invoice'::text
+UNION ALL 
+ SELECT v.documenttable, v.document_id, v.ad_client_id, v.ad_org_id, v.isactive, v.created, v.createdby, v.updated, v.updatedby, v.c_bpartner_id, v.c_doctype_id, v.signo_issotrx, 'Cheque' AS doctypename, v.doctypeprintname, v.documentno, v.issotrx, v.docstatus, v.datetrx, v.dateacct, v.c_currency_id, v.c_conversiontype_id, v.amount, v.c_invoicepayschedule_id, v.duedate, NULL::character(1) AS ispaid, p.checkno
+   FROM v_documents v
+   JOIN c_payment p ON p.c_payment_id = v.document_id
+  WHERE p.issotrx = 'N'::bpchar AND p.tendertype = 'K'::bpchar AND p.datetrx < p.duedate;
+
+ALTER TABLE v_projectedpayments OWNER TO libertya;

@@ -347,6 +347,7 @@ public class VCreateFromInvoice extends VCreateFrom {
 			invoice.setManageDragOrderDiscounts(getDocType()
 					.isDragOrderDocumentDiscounts()
 					|| getDocType().isDragOrderLineDiscounts());
+			invoice.setIsExchange(p_order.isExchange());
             if (!invoice.save()) {
             	throw new CreateFromSaveException(CLogger.retrieveErrorAsString());
             }

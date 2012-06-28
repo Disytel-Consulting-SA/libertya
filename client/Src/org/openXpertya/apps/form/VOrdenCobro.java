@@ -38,6 +38,7 @@ import org.openXpertya.apps.form.VOrdenPagoModel.MedioPagoEfectivo;
 import org.openXpertya.apps.form.VOrdenPagoModel.MedioPagoTarjetaCredito;
 import org.openXpertya.apps.form.VOrdenPagoModel.MedioPagoTransferencia;
 import org.openXpertya.apps.form.VOrdenPagoModel.MyTreeNode;
+import org.openXpertya.grid.ed.VCellRenderer;
 import org.openXpertya.grid.ed.VComboBox;
 import org.openXpertya.grid.ed.VDate;
 import org.openXpertya.grid.ed.VLookup;
@@ -203,10 +204,18 @@ public class VOrdenCobro extends VOrdenPago {
 		
 		//
 		tblFacturas.getColumnModel().getColumn(
-				tblFacturas.getColumnModel().getColumnCount() - 2)
+				tblFacturas.getColumnModel().getColumnCount() - 3)
 				.setCellRenderer(
 						new MyNumberTableCellRenderer(getModel()
 								.getNumberFormat()));
+		
+		tblFacturas.getColumnModel().getColumn(
+				tblFacturas.getColumnModel().getColumnCount() - 2)
+				.setCellRenderer(
+						new VCellRenderer(DisplayType.YesNo));
+		if (!getCobroModel().showColumnChange()){
+			tblFacturas.getColumnModel().removeColumn(tblFacturas.getColumnModel().getColumn(tblFacturas.getColumnModel().getColumnCount() - 2));
+		}
 		
 		initFormattedTextField((JFormattedTextField)txtRetencImporte);
   	}
