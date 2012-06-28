@@ -73,6 +73,9 @@ public class LaunchInvoice extends SvrProcess {
 	/** Total de descuento de documento de líneas sin impuestos */
 	private BigDecimal linesTotalDocumentDiscountsNetAmt = BigDecimal.ZERO;
 	
+	/** Jasper Report Wrapper*/
+	MJasperReport jasperwrapper;
+	
 	@Override
 	protected void prepare() {
 
@@ -96,7 +99,7 @@ public class LaunchInvoice extends SvrProcess {
             	printType = (String)para[ i ].getParameter();
             }
         }
-		
+        jasperwrapper = new MJasperReport(getCtx(), AD_JasperReport_ID, get_TrxName());
 	}
 	
 	@Override
@@ -404,5 +407,21 @@ public class LaunchInvoice extends SvrProcess {
 			// Total de descuento de documento sin impuestos
 			linesTotalDocumentDiscountsNetAmt = linesTotalDocumentDiscountsNetAmt.add(invoiceLine.getTotalDocumentDiscountUnityAmtNet());
 		}
+	}
+	
+	public MJasperReport getJasperwrapper() {
+		return jasperwrapper;
+	}
+
+	public void setJasperwrapper(MJasperReport jasperwrapper) {
+		this.jasperwrapper = jasperwrapper;
+	}
+
+	public int getAD_Record_ID() {
+		return AD_Record_ID;
+	}
+
+	public void setAD_Record_ID(int aD_Record_ID) {
+		AD_Record_ID = aD_Record_ID;
 	}
 }

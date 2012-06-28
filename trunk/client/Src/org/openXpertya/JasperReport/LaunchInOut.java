@@ -70,6 +70,9 @@ public class LaunchInOut extends SvrProcess {
 
 	/** Total */
 	private BigDecimal grandTotal = BigDecimal.ZERO;
+	
+	/** Jasper Report Wrapper*/
+	MJasperReport jasperwrapper;
 
 	@Override
 	protected void prepare() {
@@ -94,6 +97,7 @@ public class LaunchInOut extends SvrProcess {
 				printType = (String) para[i].getParameter();
 			}
 		}
+		jasperwrapper = new MJasperReport(getCtx(),AD_JasperReport_ID, get_TrxName());
 	}
 
 	@Override
@@ -105,8 +109,6 @@ public class LaunchInOut extends SvrProcess {
 		MInOut inout = new MInOut(getCtx(), AD_Record_ID, null);
 		MBPartner bpartner = new MBPartner(getCtx(), inout.getC_BPartner_ID(),
 				null);
-		MJasperReport jasperwrapper = new MJasperReport(getCtx(),
-				AD_JasperReport_ID, get_TrxName());
 		InOutDataSource ds = new InOutDataSource(getCtx(), inout);
 
 		try {
@@ -512,4 +514,20 @@ public class LaunchInOut extends SvrProcess {
 			return null;
 		}
 	}	
+	
+	public MJasperReport getJasperwrapper() {
+		return jasperwrapper;
+	}
+
+	public void setJasperwrapper(MJasperReport jasperwrapper) {
+		this.jasperwrapper = jasperwrapper;
+	}
+
+	public int getAD_Record_ID() {
+		return AD_Record_ID;
+	}
+
+	public void setAD_Record_ID(int aD_Record_ID) {
+		AD_Record_ID = aD_Record_ID;
+	}
 }
