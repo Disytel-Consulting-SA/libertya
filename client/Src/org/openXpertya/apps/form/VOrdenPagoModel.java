@@ -1727,7 +1727,6 @@ public class VOrdenPagoModel implements TableModelListener {
 				
 				// No actualizo el saldo de la entidad comercial
 				pay.setUpdateBPBalance(false);
-				pay.setC_POSPaymentMedium_ID(mp.getPaymentMedium().getID());
 				// Guarda el pago
 				if (!pay.save()) {
 					errorMsg = CLogger.retrieveErrorAsString();
