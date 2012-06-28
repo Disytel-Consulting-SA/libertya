@@ -48,7 +48,7 @@ import org.openXpertya.util.Util;
  * @author     Equipo de Desarrollo de openXpertya    
  */
 
-public final class MAllocationHdr extends X_C_AllocationHdr implements DocAction {
+public class MAllocationHdr extends X_C_AllocationHdr implements DocAction {
 
 	// -------------------------------------------------------------------------------
 	// Matías Cap - Disytel - 2010/02 
