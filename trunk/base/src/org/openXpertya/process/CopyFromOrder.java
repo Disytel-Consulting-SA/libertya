@@ -93,6 +93,14 @@ public class CopyFromOrder extends SvrProcess {
 
         return "@Copied@=" + no;
     }    // doIt
+    
+    public int getP_C_Order_ID() {
+		return p_C_Order_ID;
+	}
+
+	public void setP_C_Order_ID(int p_C_Order_ID) {
+		this.p_C_Order_ID = p_C_Order_ID;
+	}
 }    // CopyFromOrder
 
 

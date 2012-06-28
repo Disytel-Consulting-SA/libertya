@@ -29,6 +29,7 @@ import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
 import java.util.logging.Level;
+
 import org.compiere.plaf.CompierePLAF;
 import org.compiere.swing.CCheckBox;
 import org.openXpertya.apps.form.VComponentsFactory;
@@ -43,6 +44,7 @@ import org.openXpertya.model.MLocatorLookup;
 import org.openXpertya.model.MOrderLine;
 import org.openXpertya.model.MTab;
 import org.openXpertya.model.MWarehouse;
+import org.openXpertya.model.PO;
 import org.openXpertya.util.CLogger;
 import org.openXpertya.util.DB;
 import org.openXpertya.util.DisplayType;
@@ -496,6 +498,9 @@ public class VCreateFromShipment extends VCreateFrom {
 				if (M_Product_ID == 0 && ol.getC_Charge_ID() != 0) {
 					iol.setC_Charge_ID(ol.getC_Charge_ID());
 				}
+				
+				// Este metodo es redefinido por un plugin
+				customMethod(ol,iol);
 
 				// La línea del remito se crea a partir de una línea de factura
 			} else if (docLine.isInvoiceLine()) {
@@ -931,6 +936,11 @@ public class VCreateFromShipment extends VCreateFrom {
 			return visibles;
 		}
 	}
+	
+	// El siguiente metodo podrá ser redefinido por un plugin para agregar una funcionalidad particular.
+	// El metodo es invocado antes de hacer el save de la linea
+	protected void customMethod(PO ol, PO iol) {
+	} 
 
 } // VCreateFromShipment
 
