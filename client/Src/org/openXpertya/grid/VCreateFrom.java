@@ -1031,6 +1031,38 @@ public abstract class VCreateFrom extends JDialog implements ActionListener,Tabl
     	public boolean isInvoiceLine() {
     		return false;
     	}
+    	
+    	public Integer getLineNo() {
+			return lineNo;
+		}
+
+		public void setLineNo(Integer lineNo) {
+			this.lineNo = lineNo;
+		}
+
+		public Integer getProductID() {
+			return productID;
+		}
+
+		public void setProductID(Integer productID) {
+			this.productID = productID;
+		}
+
+		public Integer getUomID() {
+			return uomID;
+		}
+
+		public void setUomID(Integer uomID) {
+			this.uomID = uomID;
+		}
+
+		public BigDecimal getRemainingQty() {
+			return remainingQty;
+		}
+
+		public void setRemainingQty(BigDecimal remainingQty) {
+			this.remainingQty = remainingQty;
+		}
     }
     
     /**

@@ -36,12 +36,12 @@ import org.openXpertya.model.MInvoiceLine;
 import org.openXpertya.model.MOrder;
 import org.openXpertya.model.MOrderLine;
 import org.openXpertya.model.MTab;
+import org.openXpertya.model.PO;
 import org.openXpertya.util.CLogger;
 import org.openXpertya.util.DB;
 import org.openXpertya.util.DisplayType;
 import org.openXpertya.util.Env;
 import org.openXpertya.util.Msg;
-import org.openXpertya.util.Util;
 
 /**
  * Descripción de Clase
@@ -439,6 +439,9 @@ public class VCreateFromInvoice extends VCreateFrom {
             if( inoutLine != null ) {
                 invoiceLine.setShipLine( inoutLine );    // overwrites
 
+                // Este metodo es redefinido por un plugin
+                customMethod(inoutLine,invoiceLine);
+                
                 if( inoutLine.getQtyEntered().compareTo( inoutLine.getMovementQty()) != 0 ) {
                     invoiceLine.setQtyInvoiced( QtyEntered.multiply( inoutLine.getMovementQty()).divide( inoutLine.getQtyEntered(),BigDecimal.ROUND_HALF_UP ));
                 }
@@ -450,6 +453,9 @@ public class VCreateFromInvoice extends VCreateFrom {
 
             if( orderLine != null) {
                 invoiceLine.setOrderLine( orderLine );    // overwrites
+                
+                // Este metodo es redefinido por un plugin
+                customMethod(orderLine,invoiceLine);
 
                 if( orderLine.getQtyEntered().compareTo( orderLine.getQtyOrdered()) != 0 ) {
                     invoiceLine.setQtyInvoiced( QtyEntered.multiply( orderLine.getQtyOrdered()).divide( orderLine.getQtyEntered(),BigDecimal.ROUND_HALF_UP ));
@@ -685,6 +691,19 @@ public class VCreateFromInvoice extends VCreateFrom {
 
 	protected MDocType getDocType() {
 		return docType;
+	}
+	
+	public MInOut getM_inout() {
+		return m_inout;
+	}
+
+	public void setM_inout(MInOut m_inout) {
+		this.m_inout = m_inout;
+	}
+	
+	// El siguiente metodo podrá ser redefinido por un plugin para agregar una funcionalidad particular.
+	// El metodo es invocado antes de hacer el save de la linea
+	protected void customMethod(PO ol, PO iol) {
 	}
 
 }    // VCreateFromInvoice
