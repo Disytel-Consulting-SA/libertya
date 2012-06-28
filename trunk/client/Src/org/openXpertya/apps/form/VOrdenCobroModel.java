@@ -415,6 +415,7 @@ public class VOrdenCobroModel extends VOrdenPagoModel {
 			pay.setM_EntidadFinancieraPlan_ID(tarjeta.getEntidadFinancieraPlan().getID());
 			tarjeta.setPayment(pay);
 		}
+		pay.setC_POSPaymentMedium_ID(mp.getPaymentMedium().getID());
 	}
 	
 	
