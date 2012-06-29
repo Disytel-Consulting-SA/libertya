@@ -215,8 +215,8 @@ public class ReplicationXMLUpdater extends PluginXMLUpdater {
 	}
 	
 	/**
-	 *	Se incorpora al final del query el campo repArray = SKIP a fin de no bitacorear entradas por replicacion
-	 *  En este caso, luego debo poner el registro como replicable nuevamente
+	 *	Se incorpora al query el campo repArray = SKIP a fin de no bitacorear entradas por replicacion
+	 *  En este caso, luego debo poner el registro como replicable nuevamente (si corresponde)
 	 */
 	protected void customizeModificationQuery(StringBuffer sql, ChangeGroup changeGroup)
 	{

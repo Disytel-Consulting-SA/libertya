@@ -279,21 +279,28 @@ public class ReplicationSourceProcess extends AbstractReplicationProcess {
 				 			" WHERE retrieveUID = '" + uid + "'" +
 				 			" AND AD_Client_ID = " + getAD_Client_ID(), false, trxName, true);
 
-		// Si es una eliminacion quedan tareas adicionales pendientes
-		if (MChangeLog.OPERATIONTYPE_Deletion.equals(opType))
-		{
-			// Verificar si el registro tiene hosts pendientes de replicacion 
-			String repArray = DB.getSQLValueString(trxName, " SELECT repArray FROM " + ReplicationConstants.DELETIONS_TABLE + " WHERE retrieveUID = '" + uid + "' AND AD_Client_ID = ? ",  getAD_Client_ID(), true);
-			boolean ok = true;
-			for (int i=0; i < repArray.length() && ok; i++)
-				if (ReplicationConstants.REPLICATION_CONFIGURATION_NO_ACTION != repArray.charAt(i) && ReplicationConstants.REPARRAY_REPLICATED != repArray.charAt(i))
-					ok = false;
-				
-			// Si no quedan pendientes, entonces eliminar la entrada
-			if (ok)
-				DB.executeUpdate(" DELETE FROM " + ReplicationConstants.DELETIONS_TABLE + " WHERE retrieveUID = '" + uid + "' AND AD_Client_ID = " + getAD_Client_ID(), false, trxName, true);
-				
-		}
+//		Comentado: 	En realidad aunque una vez replicadas las eliminaciones podrían eliminarse,
+//					las mismas se mantienen en caso que deba utilizarse la funcion de reenvio
+//					de eventos de replicación, en donde dichas eliminaciones deberían ser contempladas
+//
+//					En caso de necesitar eliminar entradas en esta tabla, se deberá verificar que el
+//					repArray de cada registro contenga únicamente en sus posiciones los valores:
+//					ReplicationConstants.REPLICATION_CONFIGURATION_NO_ACTION o ReplicationConstants.REPARRAY_REPLICATED
+//
+//		// Si es una eliminacion quedan tareas adicionales pendientes
+//		if (MChangeLog.OPERATIONTYPE_Deletion.equals(opType))
+//		{
+//			// Verificar si el registro tiene hosts pendientes de replicacion 
+//			String repArray = DB.getSQLValueString(trxName, " SELECT repArray FROM " + ReplicationConstants.DELETIONS_TABLE + " WHERE retrieveUID = '" + uid + "' AND AD_Client_ID = ? ",  getAD_Client_ID(), true);
+//			boolean ok = true;
+//			for (int i=0; i < repArray.length() && ok; i++)
+//				if (ReplicationConstants.REPLICATION_CONFIGURATION_NO_ACTION != repArray.charAt(i) && ReplicationConstants.REPARRAY_REPLICATED != repArray.charAt(i))
+//					ok = false;
+//				
+//			// Si no quedan pendientes, entonces eliminar la entrada
+//			if (ok)
+//				DB.executeUpdate(" DELETE FROM " + ReplicationConstants.DELETIONS_TABLE + " WHERE retrieveUID = '" + uid + "' AND AD_Client_ID = " + getAD_Client_ID(), false, trxName, true);
+//		}
 	}
 	
 	/**

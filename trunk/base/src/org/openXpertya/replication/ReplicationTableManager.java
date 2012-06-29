@@ -190,7 +190,7 @@ public class ReplicationTableManager {
 						query.append(" 	OR ( (reparray similar to ('").append(getReplicationStates(false)).append("') ) ");
 					else
 						query.append(" 	OR ( (reparray similar to ('%").append(ReplicationConstants.REPARRAY_ACK_WAITING).append("%|%").append(ReplicationConstants.REPARRAY_REPLICATE_AFTER_ACK).append("%') ) ");
-					// limitar al periodo especificado
+					// limitar al periodo especificado (registros cuya fecha de envioJMS supere el ACK_TIME_OUT indicado)
 					query.append("		AND NOW() - " + CreateReplicationTriggerProcess.COLUMN_DATELASTSENT +  "  > '" + ReplicationConstants.ACK_TIME_OUT + "') 	");
 				}
 				query.append(" 		) ");				

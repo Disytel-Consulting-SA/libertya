@@ -11,6 +11,7 @@ import javax.jms.MessageProducer;
 import javax.jms.Session;
 import javax.naming.Context;
 
+import org.openXpertya.OpenXpertya;
 import org.openXpertya.model.MProcess;
 import org.openXpertya.model.MReplicationHost;
 import org.openXpertya.model.X_AD_ReplicationError;
@@ -303,6 +304,11 @@ public abstract class AbstractReplicationProcess extends SvrProcess {
 	protected abstract String getProcessName();
 
 	
+	/**
+	 * Acceso desde terminal a los procesos de replicación origen y destino
+	 * ReplicationSourceProcess y ReplicationTargetProcess 
+	 * @param args (ver showHelp())
+	 */
 	public static void main(String args[])
 	{
 		// UIDs de proceso origen y destino
@@ -334,13 +340,13 @@ public abstract class AbstractReplicationProcess extends SvrProcess {
 	  	for (String arg : args)
 	  	{
 	  		if (arg.toLowerCase().startsWith(PARAM_LIMIT))
-	  			params.put(processType+"MaxRecords", arg.substring(PARAM_LIMIT.length()));
+	  			params.put(processType+"MaxRecords", Integer.parseInt(arg.substring(PARAM_LIMIT.length())));
 	  		else if ("Source".equals(processType))
 	  		{
 		  		if (arg.toLowerCase().startsWith(PARAM_QUERY_GROUP))
-		  			params.put("SourceAckQueryesPerGroup", arg.substring(PARAM_QUERY_GROUP.length()));
+		  			params.put("SourceAckQueryesPerGroup", Integer.parseInt(arg.substring(PARAM_QUERY_GROUP.length())));
 		  		else if (arg.toLowerCase().startsWith(PARAM_SOURCE_TIMEOUT_NUMBER))
-		  			params.put("TimeOutNro", arg.substring(PARAM_SOURCE_TIMEOUT_NUMBER.length()));
+		  			params.put("TimeOutNro", Integer.parseInt(arg.substring(PARAM_SOURCE_TIMEOUT_NUMBER.length())));
 		  		else if (arg.toLowerCase().startsWith(PARAM_SOURCE_TIMEOUT_TYPE))
 		  			params.put("TimeOutType", arg.substring(PARAM_SOURCE_TIMEOUT_TYPE.length()));
 		  		else if (arg.toLowerCase().startsWith(PARAM_SOURCE_ALL_RECORDS))
@@ -349,9 +355,9 @@ public abstract class AbstractReplicationProcess extends SvrProcess {
 	  		else if ("Target".equals(processType))
 	  		{
 	  			if (arg.toLowerCase().startsWith(PARAM_QUERY_GROUP))
-		  			params.put("TargetMessagesPerTrx", arg.substring(PARAM_QUERY_GROUP.length()));
+		  			params.put("TargetMessagesPerTrx", Integer.parseInt(arg.substring(PARAM_QUERY_GROUP.length())));
 	  			else if (arg.toLowerCase().startsWith(PARAM_TARGET_FROM_HOST))
-		  			params.put("ReplicateFromHost", arg.substring(PARAM_TARGET_FROM_HOST.length()));	  			
+		  			params.put("ReplicateFromHost", Integer.parseInt(arg.substring(PARAM_TARGET_FROM_HOST.length())));	  			
 	  		}
 	  	}
 
@@ -362,9 +368,9 @@ public abstract class AbstractReplicationProcess extends SvrProcess {
 	
 	  	// Cargar el entorno basico
 	  	System.setProperty("OXP_HOME", oxpHomeDir);
-	  	if (!org.openXpertya.OpenXpertya.startupEnvironment( false ))
+	  	if (!OpenXpertya.startupEnvironment( false ))
 	  		showHelp("ERROR: Error al iniciar la configuracion de replicacion ");
-
+	  	
 	  	// Configuracion 
 	  	Env.setContext(Env.getCtx(), "#AD_Client_ID", DB.getSQLValue(null, " SELECT AD_Client_ID FROM AD_ReplicationHost WHERE thisHost = 'Y' "));
 	  	Env.setContext(Env.getCtx(), "#AD_Org_ID", DB.getSQLValue(null, " SELECT AD_Org_ID FROM AD_ReplicationHost WHERE thisHost = 'Y' "));
@@ -372,19 +378,28 @@ public abstract class AbstractReplicationProcess extends SvrProcess {
 	  	if (Env.getContext(Env.getCtx(), "#AD_Client_ID") == null || Env.getContext(Env.getCtx(), "#AD_Client_ID") == null)
 	  		showHelp("ERROR: Sin marca de host.  Debe realizar la configuración correspondiente en la ventana Hosts de Replicación. ");
 
-	  	// Iniciar la transacción
+	  	// Informar a usuario e Iniciar la transacción
+		String message = ("Source".equals(processType)?"[Source]":"[Target]")+" Iniciando proceso. ";
+	  	System.out.println(message + "(" + DB.getDatabaseInfo() + ")");
 		String m_trxName = Trx.createTrxName();
 		Trx.getTrx(m_trxName).start();
-		
-		
+				
 		// Recuperar el proceso de replicación cliente
 		int processId = DB.getSQLValue(m_trxName, " SELECT AD_PROCESS_ID FROM AD_PROCESS WHERE AD_COMPONENTOBJECTUID = '" + 
 													("Source".equals(processType)?sourceUID:targetUID) + "' ");
 		ProcessInfo pi = MProcess.execute(Env.getCtx(), processId, params, m_trxName);
 
 		// En caso de error, presentar en consola
-		if (pi.isError())
+		if (pi.isError())	{
+			Trx.getTrx(m_trxName).rollback();
 			System.err.println("Error en replicacion: " + pi.getSummary());
+		}
+		// Todo OK, commitear transacción
+		else
+			Trx.getTrx(m_trxName).commit();
+
+		// Cerrar la transacción
+		Trx.getTrx(m_trxName).close();
 			
 	}
 	
