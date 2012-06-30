@@ -7,7 +7,7 @@ import java.math.*;
 import org.openXpertya.util.*;
 /** Modelo Generado por C_Charge
  *  @author Comunidad de Desarrollo Libertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
- *  @version  - 2012-04-19 17:46:14.731 */
+ *  @version  - 2012-06-30 15:44:43.804 */
 public class X_C_Charge extends org.openXpertya.model.PO
 {
 /** Constructor estándar */
@@ -25,6 +25,7 @@ setIsSameTax (false);
 setIsTaxIncluded (false);	// N
 setName (null);
 setSign (null);
+setValue (null);
 }
  */
 }
@@ -255,5 +256,23 @@ set_Value ("Sign", Sign);
 public String getSign() 
 {
 return (String)get_Value("Sign");
+}
+/** Set Search Key.
+Search key for the record in the format required - must be unique */
+public void setValue (String Value)
+{
+if (Value == null) throw new IllegalArgumentException ("Value is mandatory");
+if (Value.length() > 60)
+{
+log.warning("Length > 60 - truncated");
+Value = Value.substring(0,60);
+}
+set_Value ("Value", Value);
+}
+/** Get Search Key.
+Search key for the record in the format required - must be unique */
+public String getValue() 
+{
+return (String)get_Value("Value");
 }
 }
