@@ -324,8 +324,16 @@ public class MOrderLine extends X_C_OrderLine {
      */
 
     public boolean setTax() {
-        int ii = Tax.get( getCtx(),getM_Product_ID(),getC_Charge_ID(),getDateOrdered(),getDateOrdered(),getAD_Org_ID(),getM_Warehouse_ID(),getC_BPartner_Location_ID(),    // should be bill to
-                          getC_BPartner_Location_ID(),m_IsSOTrx );
+    	int ii  = 0;
+        // Si los Comprobantes fiscales están activos se busca la tasa de impuesto a partir de la categoría de IVA debe estar condicionado 
+        if (CalloutInvoiceExt.ComprobantesFiscalesActivos()) {
+        	ii = DB.getSQLValue( null,"SELECT C_Tax_ID FROM C_Categoria_Iva ci INNER JOIN C_BPartner bp ON (ci.C_Categoria_Iva_ID = bp.C_Categoria_Iva_ID) WHERE bp.C_BPartner_ID = ?",getC_BPartner_ID() );
+        }
+        
+        if( ii == 0 ) {
+        	ii = Tax.get( getCtx(),getM_Product_ID(),getC_Charge_ID(),getDateOrdered(),getDateOrdered(),getAD_Org_ID(),getM_Warehouse_ID(),getC_BPartner_Location_ID(),    // should be bill to
+                    getC_BPartner_Location_ID(),m_IsSOTrx );
+        }
 
         if( ii == 0 ) {
             log.log( Level.SEVERE,"No Tax found" );
