@@ -2731,3 +2731,6 @@ UPDATE c_charge
 SET value = name;
 
 ALTER TABLE c_charge ALTER COLUMN value SET NOT NULL;
+
+-- 20120630-1840 Incorporación de columna C_Tax_ID a la tabla C_Categoria_IVA
+ALTER TABLE libertya.C_Categoria_IVA ADD COLUMN C_Tax_ID INTEGER;

@@ -597,9 +597,17 @@ public class MInvoiceLine extends X_C_InvoiceLine {
         int M_Warehouse_ID = Env.getContextAsInt( getCtx(),"#M_Warehouse_ID" );
 
         //
-
-        int C_Tax_ID = Tax.get( getCtx(),getM_Product_ID(),getC_Charge_ID(),m_DateInvoiced,m_DateInvoiced,getAD_Org_ID(),M_Warehouse_ID,m_C_BPartner_Location_ID,    // should be bill to
-                                m_C_BPartner_Location_ID,m_IsSOTrx );
+        
+        int C_Tax_ID  = 0;
+        // Si los Comprobantes fiscales están activos se busca la tasa de impuesto a partir de la categoría de IVA debe estar condicionado 
+        if (CalloutInvoiceExt.ComprobantesFiscalesActivos()) {
+        	C_Tax_ID = DB.getSQLValue( null,"SELECT C_Tax_ID FROM C_Categoria_Iva ci INNER JOIN C_BPartner bp ON (ci.C_Categoria_Iva_ID = bp.C_Categoria_Iva_ID) WHERE bp.C_BPartner_ID = ?",m_C_BPartner_ID );
+        }
+        
+        if( C_Tax_ID == 0 ) {
+        	C_Tax_ID = Tax.get( getCtx(),getM_Product_ID(),getC_Charge_ID(),m_DateInvoiced,m_DateInvoiced,getAD_Org_ID(),M_Warehouse_ID,m_C_BPartner_Location_ID,    // should be bill to
+                    m_C_BPartner_Location_ID,m_IsSOTrx );
+        }
 
         if( C_Tax_ID == 0 ) {
             log.log( Level.SEVERE,"No Tax found" );
