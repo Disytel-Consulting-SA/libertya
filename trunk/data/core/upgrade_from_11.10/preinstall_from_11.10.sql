@@ -2723,3 +2723,11 @@ UNION ALL
   WHERE p.issotrx = 'N'::bpchar AND p.tendertype = 'K'::bpchar AND p.datetrx < p.duedate;
 
 ALTER TABLE v_projectedpayments OWNER TO libertya;
+
+-- 20120630-1540 Incorporación de columna value a la tabla C_Charge
+ALTER TABLE c_charge ADD COLUMN value character varying(60);
+
+UPDATE c_charge
+SET value = name;
+
+ALTER TABLE c_charge ALTER COLUMN value SET NOT NULL;
