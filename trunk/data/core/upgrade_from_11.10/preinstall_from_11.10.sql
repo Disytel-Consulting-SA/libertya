@@ -2734,3 +2734,30 @@ ALTER TABLE c_charge ALTER COLUMN value SET NOT NULL;
 
 -- 20120630-1840 Incorporación de columna C_Tax_ID a la tabla C_Categoria_IVA
 ALTER TABLE libertya.C_Categoria_IVA ADD COLUMN C_Tax_ID INTEGER;
+
+-- 20120701-1200 Procedure base para validacion de estado de los registros en replicación
+CREATE TYPE rep_status AS (tablename varchar, retrieveuid varchar, reparray varchar, created timestamp); 
+CREATE OR REPLACE FUNCTION replication_record_status(p_clientid int, p_xtraclause varchar)
+  RETURNS setof rep_status AS
+$BODY$
+DECLARE
+	atable varchar;
+	tablenames varchar;
+	astatus rep_status;
+	statuses record;
+	xtraclause varchar;
+BEGIN
+	xtraclause := ' 1 = 1 ';
+	IF p_xtraclause is not null THEN
+		xtraclause := p_xtraclause;
+	END IF;
+
+	tablenames := '';
+	FOR atable IN (select table_name from information_schema.columns where lower(column_name) = 'reparray' and table_schema = 'libertya' order by table_name)  LOOP
+		FOR astatus IN EXECUTE 'SELECT ''' || atable || ''' as tablename, retrieveuid, reparray, created FROM ' || atable || ' WHERE ad_client_id = ' || p_clientid || '  AND ' || xtraclause LOOP
+			return next astatus;
+		END LOOP;
+	END LOOP;
+END
+$BODY$
+LANGUAGE 'plpgsql' VOLATILE;
