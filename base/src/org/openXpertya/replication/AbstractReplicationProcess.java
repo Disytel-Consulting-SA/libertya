@@ -116,10 +116,10 @@ public abstract class AbstractReplicationProcess extends SvrProcess {
 	        	if ("N".equals((String)para[ i ].getParameter()))
 	        		ReplicationConstants.REPLICATION_TARGET_MAX_RECORDS = 0;
 	        }
-	        // Target: Numero maximo de registros a procesar	        
+	        // Target: Numero maximo de registros a procesar (0 = todos, -1 = ninguno)        
 	        else if( name.equalsIgnoreCase( "TargetMaxRecords" ))
 	        	ReplicationConstants.REPLICATION_TARGET_MAX_RECORDS = para[ i ].getParameterAsInt();
-	        // Target: Replicar solo desde un host
+	        // Target: Replicar solo desde un host (0 = todos)
 	        else if( name.equalsIgnoreCase( "ReplicateFromHost" ))
 	        	ReplicationConstants.REPLICATION_TARGET_REPLICATE_FROM_HOST = para[ i ].getParameterAsInt();
 	        // Source: Reenvio completo de registros dentro de un periodo dado. La modificacion invalida cache del gestor de tablas

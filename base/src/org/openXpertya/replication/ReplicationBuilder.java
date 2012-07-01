@@ -9,6 +9,8 @@ package org.openXpertya.replication;
  * @author fcristina
  */
 
+import java.util.logging.Level;
+
 import org.openXpertya.model.MChangeLog;
 import org.openXpertya.plugin.install.ChangeLogElement;
 import org.openXpertya.plugin.install.ChangeLogXMLBuilder;
@@ -181,8 +183,7 @@ public class ReplicationBuilder extends ChangeLogXMLBuilder {
 							sendToEventQueue(group, arrayPos);
 			}
 			catch (Exception e) 	{
-				// TODO: esto deberia incluirse en el log de base de datos				
-				System.err.println("Error en ReplicationBuilder: " + e.getMessage());
+				replicationHndler.saveLog(Level.SEVERE, true, "Error en ReplicationBuilder: " + e.getMessage(), null);
 			}
 		
 			// Limpiar memoria cada cierto intervalo de iteraciones
