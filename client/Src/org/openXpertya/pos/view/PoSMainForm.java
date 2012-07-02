@@ -6,6 +6,7 @@ import java.awt.Component;
 import java.awt.Container;
 import java.awt.Cursor;
 import java.awt.Dimension;
+import java.awt.Event;
 import java.awt.FlowLayout;
 import java.awt.FocusTraversalPolicy;
 import java.awt.Font;
@@ -790,7 +791,7 @@ public class PoSMainForm extends CPanel implements FormPanel, ASyncProcess, Disp
         getFrame().setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
 		updateCloseApp("Y");
 		closeWindowAdapter = new LYCloseWindowAdapter(this, true);
-		closeWindowAdapter.setMsg(MSG_CLOSE_POS_ORDERLINES);
+		LYCloseWindowAdapter.setMsg(MSG_CLOSE_POS_ORDERLINES);
 		getFrame().addWindowListener(closeWindowAdapter);
 	}
 	
@@ -4935,6 +4936,7 @@ public class PoSMainForm extends CPanel implements FormPanel, ASyncProcess, Disp
 		getCOrderCustomerText().setText("");
 		getCOrderDateText().setText("");
 		getCGeneralDiscountPercText().setValue(BigDecimal.ZERO);
+		updateAllowClose();
 		updateStatusDB();
 		TimeStatsLogger.endTask(MeasurableTask.POS_COMPLETE_ORDER);
 	}
@@ -5981,6 +5983,12 @@ public class PoSMainForm extends CPanel implements FormPanel, ASyncProcess, Disp
 				&& getModel().getConfig().isLockedClosed()) {
 			// Setear el valor para poder cerrar la aplicación y esta ventana
 			Env.setContext(Env.getCtx(), Env.CLOSE_APPS_PROP_NAME, value);
+			// Actualizar el menú habilitando o no la opción para cerrar la
+			// ventana y la aplicación
+//			getFrame().getJMenuBar().getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(
+//		              KeyStroke.getKeyStroke(KeyEvent.VK_X,Event.ALT_MASK), (value.equals("N")?"none":"End"));
+//			getFrame().getJMenuBar().getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(
+//		              KeyStroke.getKeyStroke(KeyEvent.VK_X,Event.SHIFT_MASK + Event.ALT_MASK), (value.equals("N")?"none":"Exit"));
 		}
 	}
 

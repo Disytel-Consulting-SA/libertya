@@ -49,11 +49,11 @@ public class LYCloseWindowAdapter extends WindowAdapter {
 		return showMsg;
 	}
 
-	public void setMsg(String msg) {
+	public static void setMsg(String msg) {
 		LYCloseWindowAdapter.msg = msg;
 	}
 
-	public String getMsg() {
+	public static String getMsg() {
 		return msg;
 	}
 }

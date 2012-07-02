@@ -21,6 +21,7 @@ import java.awt.Event;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
+import java.awt.event.WindowListener;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -344,7 +345,7 @@ public class FormFrame extends JFrame implements ActionListener {
         String cmd = e.getActionCommand();
 
         if( cmd.equals( "End" )) {
-            dispose();
+    		fireWindowClosing();
         } else if( cmd.equals( "Help" )) {
             actionHelp();
         } else if( !AEnv.actionPerformed( cmd,m_WindowNo,this )) {
@@ -352,6 +353,13 @@ public class FormFrame extends JFrame implements ActionListener {
         }
     }    // actionPerformed
 
+    
+    protected void fireWindowClosing(){
+    	for (WindowListener listener : getWindowListeners()) {
+			listener.windowClosing(null);
+		}
+    }
+    
     /**
      * Descripción de Método
      *
