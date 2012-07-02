@@ -707,6 +707,11 @@ public class VCreateFromInvoice extends VCreateFrom {
 	protected void customMethod(PO ol, PO iol) {
 	}
 
+	@Override
+	protected boolean lazyEvaluation() {
+		return false;
+	}
+
 }    // VCreateFromInvoice
 
 

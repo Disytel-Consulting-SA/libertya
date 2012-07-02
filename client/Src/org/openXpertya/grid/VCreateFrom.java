@@ -133,7 +133,10 @@ public abstract class VCreateFrom extends JDialog implements ActionListener,Tabl
         try {
         	initOrderLookup();
         	
-            
+        	if(lazyEvaluation()){
+        		initDataTable();
+        	}
+        	
         	if( !dynInit()) {
                 return;
             }
@@ -141,7 +144,10 @@ public abstract class VCreateFrom extends JDialog implements ActionListener,Tabl
             jbInit();
             confirmPanel.addActionListener( this );
 
-            initDataTable();
+            if(!lazyEvaluation()){
+            	initDataTable();
+            }
+            
             // Set status
 
             statusBar.setStatusDB( "" );
@@ -155,7 +161,7 @@ public abstract class VCreateFrom extends JDialog implements ActionListener,Tabl
         AEnv.positionCenterWindow( Env.getWindow( p_WindowNo ),this );
     }    // VCreateFrom
 
-    /** Descripción de Campos */
+	/** Descripción de Campos */
 
     protected int p_WindowNo;
 
@@ -821,9 +827,8 @@ public abstract class VCreateFrom extends JDialog implements ActionListener,Tabl
         dataTable.setSorted(false);
         
      // Si es Perfil Ventas no se muestra la columna COL_IDX_INSTANCE_NAME
-    	if (isSOTrx()) {
-    		dataTable.getColumnModel().removeColumn(dataTable.getColumnModel().getColumn(DocumentLineTableModel.COL_IDX_INSTANCE_NAME));
-    		((DocumentLineTableModel)dataTable.getModel()).visibles = ((DocumentLineTableModel) dataTable.getModel()).visibles - 1; 
+        if (isSOTrx()) {
+    		((CreateFromTableModel) dataTable.getModel()).updateColumns();
     	}
     }
     
@@ -1338,6 +1343,8 @@ public abstract class VCreateFrom extends JDialog implements ActionListener,Tabl
 		public SourceEntity getSourceEntity(int rowIndex) {
 			return getSourceEntities().get(rowIndex);
 		}
+		
+		protected abstract void updateColumns();
     }
     
     /**
@@ -1419,6 +1426,12 @@ public abstract class VCreateFrom extends JDialog implements ActionListener,Tabl
 		 */
 		public DocumentLine getDocumentLine(int rowIndex) {
 			return (DocumentLine)getSourceEntity(rowIndex);
+		}
+		
+		@Override
+		protected void updateColumns() {
+			dataTable.getColumnModel().removeColumn(dataTable.getColumnModel().getColumn(DocumentLineTableModel.COL_IDX_INSTANCE_NAME));
+			((DocumentLineTableModel)dataTable.getModel()).visibles = ((DocumentLineTableModel) dataTable.getModel()).visibles - 1; 
 		}
     }
     
@@ -1520,6 +1533,8 @@ public abstract class VCreateFrom extends JDialog implements ActionListener,Tabl
     		}
     	}
     }
+    
+    protected abstract boolean lazyEvaluation();
  
 }    // VCreateFrom
 
