@@ -29,6 +29,7 @@ import java.util.List;
 import java.util.logging.Level;
 
 import org.openXpertya.apps.ADialog;
+import org.openXpertya.grid.VCreateFrom.DocumentLineTableModel;
 import org.openXpertya.grid.ed.VLookup;
 import org.openXpertya.model.MBankStatement;
 import org.openXpertya.model.MBankStatementLine;
@@ -375,12 +376,20 @@ public class VCreateFromStatement extends VCreateFrom implements VetoableChangeL
 		public Payment getPayment(int rowIndex) {
 			return (Payment)getSourceEntity(rowIndex);
 		}
+		
+		@Override
+		protected void updateColumns() {
+		}
     }
 
 	@Override
 	protected void customizarPanel() {
 		// TODO Auto-generated method stub
-		
+	}
+	
+	@Override
+	protected boolean lazyEvaluation() {
+		return true;
 	}
 }    // VCreateFromStatement
 

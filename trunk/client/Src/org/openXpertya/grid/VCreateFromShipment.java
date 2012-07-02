@@ -941,6 +941,11 @@ public class VCreateFromShipment extends VCreateFrom {
 	// El metodo es invocado antes de hacer el save de la linea
 	protected void customMethod(PO ol, PO iol) {
 	} 
+	
+	@Override
+	protected boolean lazyEvaluation() {
+		return false;
+	}
 
 } // VCreateFromShipment
 
