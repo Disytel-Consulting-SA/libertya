@@ -89,6 +89,7 @@ import org.openXpertya.util.Env;
 import org.openXpertya.util.Language;
 import org.openXpertya.util.Msg;
 import org.openXpertya.util.Util;
+import org.openXpertya.utils.LYCloseWindowAdapter;
 
 /**
  * Descripción de Clase
@@ -2066,8 +2067,16 @@ public final class APanel extends CPanel implements DataStatusListener,ChangeLis
             m_curAPanelTab = null;
         }
 
-        if( exit && ADialog.ask( m_curWindowNo,this,"ExitApplication?" )) {
-            exitSystem = true;
+        if( exit ) {
+        	if(Env.closeApp(Env.getCtx())){
+        		if(ADialog.ask( m_curWindowNo,this,"ExitApplication?" )){
+                    exitSystem = true;
+        		}
+        	}
+        	else{
+        		ADialog.info(m_curWindowNo, this, LYCloseWindowAdapter.getMsg());
+        		return;
+        	}
         }
 
         Env.getFrame( this ).dispose();    // calls this dispose

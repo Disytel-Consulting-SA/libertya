@@ -47,9 +47,9 @@ import org.openXpertya.model.MWindowVO;
 import org.openXpertya.util.CLogMgt;
 import org.openXpertya.util.CLogger;
 import org.openXpertya.util.DB;
-import org.openXpertya.util.DisplayType;
 import org.openXpertya.util.Env;
 import org.openXpertya.util.Msg;
+import org.openXpertya.utils.LYCloseWindowAdapter;
 
 /**
  * Descripción de Clase
@@ -368,13 +368,23 @@ public final class AEnv {
         // }
 
         else if( actionCommand.equals( "Exit" )) {
-            if( ADialog.ask( WindowNo,c,"ExitApplication?" )) {
-                Env.exitEnv( 0 );
-            }
+        	if(Env.closeApp(Env.getCtx())){
+        		if( ADialog.ask( WindowNo,c,"ExitApplication?" )) {
+                    Env.exitEnv( 0 );
+                }
+        	}
+        	else{
+        		ADialog.info(WindowNo, c, LYCloseWindowAdapter.getMsg());
+        	}
         }else if (actionCommand.equals("Logout")) // dREHER
 		{
-			org.openXpertya.apps.AMenu aMenu = (org.openXpertya.apps.AMenu)Env.getWindow(0); 
-			aMenu.logout();
+        	if(Env.closeApp(Env.getCtx())){
+        		org.openXpertya.apps.AMenu aMenu = (org.openXpertya.apps.AMenu)Env.getWindow(0); 
+    			aMenu.logout();
+        	}
+        	else{
+        		ADialog.info(WindowNo, c, LYCloseWindowAdapter.getMsg());
+        	}
 		}
 
         // View Menu   ------------------------
