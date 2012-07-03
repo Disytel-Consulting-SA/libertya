@@ -19,6 +19,7 @@ import java.util.logging.Level;
 
 import org.openXpertya.apps.ProcessCtl;
 import org.openXpertya.apps.form.VModelHelper.ResultItem;
+import org.openXpertya.apps.form.VOrdenPagoModel.ResultItemFactura;
 import org.openXpertya.cc.CurrentAccountManager;
 import org.openXpertya.model.CalloutInvoiceExt;
 import org.openXpertya.model.MAllocationHdr;

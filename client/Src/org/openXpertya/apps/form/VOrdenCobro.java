@@ -39,6 +39,7 @@ import org.openXpertya.apps.form.VOrdenPagoModel.MedioPagoTarjetaCredito;
 import org.openXpertya.apps.form.VOrdenPagoModel.MedioPagoTransferencia;
 import org.openXpertya.apps.form.VOrdenPagoModel.MyTreeNode;
 import org.openXpertya.grid.ed.VCellRenderer;
+import org.openXpertya.grid.ed.VCheckBox;
 import org.openXpertya.grid.ed.VComboBox;
 import org.openXpertya.grid.ed.VDate;
 import org.openXpertya.grid.ed.VLookup;
@@ -176,6 +177,9 @@ public class VOrdenCobro extends VOrdenPago {
 		radPayTypeAdv.setText(Msg.translate(m_ctx, "AdvancedCustomerPayment"));
 		lblMedioPago2.setText(Msg.translate(m_ctx, "CustomerTenderType"));
 		
+		checkPayAll.setText(Msg.getMsg(m_ctx, "ReceiptAll") + " "
+				+ KeyUtils.getKeyStr(getActionKeys().get(GOTO_PAYALL)));
+		
 		//
 		jTabbedPane1.setTitleAt(0, Msg.translate(m_ctx, "CustomerPaymentSelection"));
 		jTabbedPane1.setTitleAt(1, Msg.translate(m_ctx, "CustomerPaymentRule"));
@@ -290,14 +294,16 @@ public class VOrdenCobro extends VOrdenPago {
                         .add(radPayTypeStd)
                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                         .add(radPayTypeAdv)
-                        .addContainerGap(50, Short.MAX_VALUE)
+                        .addContainerGap(20, Short.MAX_VALUE)
                         .add(lblGroupingAmt)
                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                         .add(txtGroupingAmt, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 110, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                        .addContainerGap(50, Short.MAX_VALUE)
+                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                         .add(lblPOS)
                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                        .add(txtPOS, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 100, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
+                        .add(txtPOS, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 100, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                        .addContainerGap(20, Short.MAX_VALUE)
+                        .add(checkPayAll, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 135, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
                     .add(org.jdesktop.layout.GroupLayout.TRAILING, jPanel3Layout.createSequentialGroup()
                         .add(rInvoiceAll)
                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
@@ -325,7 +331,8 @@ public class VOrdenCobro extends VOrdenPago {
                     .add(lblGroupingAmt)
                     .add(txtGroupingAmt, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                     .add(lblPOS)
-                    .add(txtPOS, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
+                    .add(txtPOS, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                    .add(checkPayAll))
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                 .add(jScrollPane1, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 260, 440)
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
@@ -1753,6 +1760,8 @@ public class VOrdenCobro extends VOrdenPago {
 				txtCuotaAmt.setValue(cuotaAmt);
 			}
 		}
+		// Refrescar el monto de la pestaña con el total a pagar
+		updatePayAmt(paymentToPayAmt);
     }
     
     /**
@@ -2007,7 +2016,11 @@ public class VOrdenCobro extends VOrdenPago {
     
     
     protected void setDefaultGroupAmtValue(){
-    	txtGroupingAmt.setValue(getCobroModel().getDefaultGroupingValue());
+    	setGroupingAmt(getCobroModel().getDefaultGroupingValue());
+    }
+    
+    protected void setGroupingAmt(BigDecimal groupingAmt){
+    	txtGroupingAmt.setValue(groupingAmt);
     }
     
     protected void loadPaymentMediumInfo(MPOSPaymentMedium paymentMedium){
@@ -2088,6 +2101,35 @@ public class VOrdenCobro extends VOrdenPago {
     protected void updateOverdueInvoicesCharge(){
 	    getCobroModel().updateOverdueInvoicesCharge();
 	    txtOrgCharge.setValue(getCobroModel().getOrgCharge());
+    }
+    
+    @Override
+    protected void updatePayAllInvoices(boolean toPayMoment){
+    	boolean isSelected = checkPayAll.isSelected();
+    	BigDecimal amt = getModel().updatePayAllInvoices(isSelected, toPayMoment);
+    	if(isSelected){
+    		setGroupingAmt(amt);
+    	}
+    	else{
+    		updateGroupingAmt(false);
+    	}
+    	// Actualización del cargo si es necesario
+    	updateOverdueInvoicesCharge();
+    	// Actualizar el total a pagar
+    	updateTotalAPagar1();
+		txtGroupingAmt.setReadWrite(!isSelected);
+		tblFacturas.repaint();
+    }
+    
+    @Override
+    protected void updateCustomPayAmt(BigDecimal amt){
+    	Integer tabIndexSelected = jTabbedPane2.getSelectedIndex();
+    	if(tabIndexSelected.equals(m_retencTabIndex)){
+    		txtRetencImporte.setValue(amt);
+    	}
+    	else if(tabIndexSelected.equals(m_creditCardTabIndex)){
+    		txtCreditCardAmt.setValue(amt);
+    	}
     }
     
     @Override
