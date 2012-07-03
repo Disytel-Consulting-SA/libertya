@@ -64,6 +64,7 @@ import org.openXpertya.apps.form.VOrdenPagoModel.MedioPagoCheque;
 import org.openXpertya.apps.form.VOrdenPagoModel.MedioPagoCredito;
 import org.openXpertya.apps.form.VOrdenPagoModel.MedioPagoEfectivo;
 import org.openXpertya.apps.form.VOrdenPagoModel.MedioPagoTransferencia;
+import org.openXpertya.grid.ed.VCheckBox;
 import org.openXpertya.grid.ed.VComboBox;
 import org.openXpertya.grid.ed.VDate;
 import org.openXpertya.grid.ed.VLookup;
@@ -379,6 +380,26 @@ public class VOrdenPago extends CPanel implements FormPanel,ActionListener,Table
         lblCreditImporte = new javax.swing.JLabel();
         txtCreditImporte = new JFormattedTextField();
         
+        checkPayAll = new VCheckBox();
+        checkPayAll.setText("Pagar Todo");
+        checkPayAll.addActionListener(new ActionListener() {
+			
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				updatePayAllInvoices(false);
+			}
+		});
+        
+        checkPayAll.addAction("setSelected",
+				KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0),
+				new AbstractAction() {
+					@Override
+					public void actionPerformed(ActionEvent arg0) {
+						checkPayAll.setSelected(!((VCheckBox) arg0.getSource()).isSelected());
+						fireActionPerformed(checkPayAll.getActionListeners(), null);
+					}
+				});
+        
         m_frame.setMinimumSize(new java.awt.Dimension(800, 400));
         // m_frame.setOpaque(false);
         jPanel1.setOpaque(false);
@@ -417,14 +438,14 @@ public class VOrdenPago extends CPanel implements FormPanel,ActionListener,Table
         radPayTypeStd.setOpaque(false);
         radPayTypeStd.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                onTipoPagoChange();
+                onTipoPagoChange(false);
             }
         });
         radPayTypeStd.addChangeListener(new ChangeListener() {
 			
 			@Override
 			public void stateChanged(ChangeEvent arg0) {
-				onTipoPagoChange();
+				onTipoPagoChange(false);
 				
 			}
 		});
@@ -436,7 +457,7 @@ public class VOrdenPago extends CPanel implements FormPanel,ActionListener,Table
         radPayTypeAdv.setOpaque(false);
         radPayTypeAdv.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                onTipoPagoChange();
+                onTipoPagoChange(false);
             }
         });
         
@@ -444,7 +465,7 @@ public class VOrdenPago extends CPanel implements FormPanel,ActionListener,Table
 			
 			@Override
 			public void stateChanged(ChangeEvent arg0) {
-				onTipoPagoChange();
+				onTipoPagoChange(false);
 				
 			}
 		});
@@ -464,7 +485,7 @@ public class VOrdenPago extends CPanel implements FormPanel,ActionListener,Table
         rInvoiceAll.setOpaque(false);
         rInvoiceAll.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                onFechaChange();
+                onFechaChange(false);
             }
         });
 
@@ -475,7 +496,7 @@ public class VOrdenPago extends CPanel implements FormPanel,ActionListener,Table
         rInvoiceDate.setOpaque(false);
         rInvoiceDate.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                onFechaChange();
+                onFechaChange(false);
             }
         });
 
@@ -590,7 +611,8 @@ public class VOrdenPago extends CPanel implements FormPanel,ActionListener,Table
 		getActionKeys().put(GO_BACK, KeyStroke.getKeyStroke(KeyEvent.VK_F2, 0));
 		getActionKeys().put(MOVE_PAYMENT_FORWARD, KeyStroke.getKeyStroke(KeyEvent.VK_DOWN, 0));
 		getActionKeys().put(MOVE_PAYMENT_BACKWARD, KeyStroke.getKeyStroke(KeyEvent.VK_UP, 0));
-	    
+		getActionKeys().put(GOTO_PAYALL, KeyStroke.getKeyStroke(KeyEvent.VK_F5, 0));
+		
 		// Accion: Foco en Entidad Comercial
 		m_frame.getRootPane().getActionMap().put(GOTO_BPARTNER,
         	new AbstractAction() {
@@ -696,6 +718,15 @@ public class VOrdenPago extends CPanel implements FormPanel,ActionListener,Table
         	}
         );
         
+        // Accion: Foco en el check para pagar todas las facturas
+		m_frame.getRootPane().getActionMap().put(GOTO_PAYALL,
+        	new AbstractAction() {
+        		public void actionPerformed(ActionEvent e) {
+					checkPayAll.requestFocus();
+				}
+        	}
+        );
+        
         // Iniciales
         setActionEnabled(GOTO_BPARTNER, true);
 		setActionEnabled(GOTO_PROCESS, true);
@@ -708,7 +739,8 @@ public class VOrdenPago extends CPanel implements FormPanel,ActionListener,Table
 		setActionEnabled(MOVE_PAYMENT_BACKWARD, false);
 		setActionEnabled(MOVE_INVOICE_FORWARD, true);
 		setActionEnabled(MOVE_INVOICE_BACKWARD, true);
-        
+		setActionEnabled(GOTO_PAYALL, true);
+		
         // Las subclases también deben definir las suyas
         customKeyBindingsInit();
     }
@@ -736,7 +768,9 @@ public class VOrdenPago extends CPanel implements FormPanel,ActionListener,Table
                     .add(jPanel3Layout.createSequentialGroup()
                         .add(radPayTypeStd)
                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                        .add(radPayTypeAdv))
+                        .add(radPayTypeAdv)
+                        .addContainerGap(50, Short.MAX_VALUE)
+                        .add(checkPayAll, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 130, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
                     .add(org.jdesktop.layout.GroupLayout.TRAILING, jPanel3Layout.createSequentialGroup()
                         .add(rInvoiceAll)
                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
@@ -756,7 +790,8 @@ public class VOrdenPago extends CPanel implements FormPanel,ActionListener,Table
                 .addContainerGap()
                 .add(jPanel3Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
                     .add(radPayTypeStd)
-                    .add(radPayTypeAdv))
+                    .add(radPayTypeAdv)
+                    .add(checkPayAll))
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                 .add(jScrollPane1, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 260, Short.MAX_VALUE)
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
@@ -1574,7 +1609,7 @@ public class VOrdenPago extends CPanel implements FormPanel,ActionListener,Table
     	}
     }//GEN-LAST:event_cmdEliminarActionPerformed
 
-    private void onFechaChange() {//GEN-FIRST:event_onFechaChange
+    private void onFechaChange(boolean toPayMoment) {//GEN-FIRST:event_onFechaChange
     	if (rInvoiceAll.isSelected()) {
     		invoiceDatePick.setValue(new Date());
     		invoiceDatePick.setReadWrite(false);
@@ -1583,9 +1618,10 @@ public class VOrdenPago extends CPanel implements FormPanel,ActionListener,Table
     	}
     	
     	m_model.setFechaTablaFacturas(invoiceDatePick.getTimestamp(),rInvoiceAll.isSelected());
+    	updatePayAllInvoices(toPayMoment);
     }//GEN-LAST:event_onFechaChange
 
-    private void onTipoPagoChange() {//GEN-FIRST:event_onTipoPagoChange
+    private void onTipoPagoChange(boolean toPayMoment) {//GEN-FIRST:event_onTipoPagoChange
     	if (radPayTypeStd.isSelected()) {
     		tblFacturas.setEnabled(true);
     		txtTotalPagar1.setEditable(false);
@@ -1606,11 +1642,17 @@ public class VOrdenPago extends CPanel implements FormPanel,ActionListener,Table
 
     	m_model.setPagoNormal(radPayTypeStd.isSelected(), null);
     	
-    	onFechaChange();
+    	onFechaChange(toPayMoment);
     	// Actualizar custom de las subclases
     	updateCustomTipoPagoChange();
     }//GEN-LAST:event_onTipoPagoChange
 
+    
+    protected void updatePayAllInvoices(boolean toPayMoment){
+    	getModel().updatePayAllInvoices(checkPayAll.isSelected(), toPayMoment);
+		tblFacturas.repaint();
+    }
+    
     private void cmdCancelActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdCancelActionPerformed
 
     	dispose();
@@ -1660,7 +1702,7 @@ public class VOrdenPago extends CPanel implements FormPanel,ActionListener,Table
     		
     		m_model.setActualizarFacturasAuto(false);
     		// Fuerzo la actualizacion de los valores de la interfaz
-    		onTipoPagoChange();
+    		onTipoPagoChange(true);
     		m_model.setPagoNormal(radPayTypeStd.isSelected(), monto);
     		m_model.setActualizarFacturasAuto(true);
     		m_model.setDocumentNo(fldDocumentNo.getText());
@@ -1837,6 +1879,7 @@ public class VOrdenPago extends CPanel implements FormPanel,ActionListener,Table
     protected javax.swing.JRadioButton rInvoiceDate;
     protected javax.swing.JRadioButton radPayTypeAdv;
     protected javax.swing.JRadioButton radPayTypeStd;
+    protected VCheckBox checkPayAll;
     protected javax.swing.JTable tblFacturas;
     protected VDate transFecha;
     protected VLookup transfCtaBancaria;
@@ -1924,6 +1967,7 @@ public class VOrdenPago extends CPanel implements FormPanel,ActionListener,Table
     protected static final String GO_BACK = "GO_BACK";
     protected static final String MOVE_PAYMENT_FORWARD = "MOVE_PAYMENT_FORWARD";
     protected static final String MOVE_PAYMENT_BACKWARD = "MOVE_PAYMENT_BACKWARD";
+    protected static final String GOTO_PAYALL = "GOTO_PAYALL";
     
     protected static final Integer TAB_INDEX_EFECTIVO = 0;
     protected static final Integer TAB_INDEX_TRANSFERENCIA = 1;
@@ -1959,7 +2003,7 @@ public class VOrdenPago extends CPanel implements FormPanel,ActionListener,Table
         
         m_frame.pack();
         
-        onTipoPagoChange();
+        onTipoPagoChange(false);
 	}
 	
 	protected void customInitComponents() {
@@ -2181,6 +2225,9 @@ public class VOrdenPago extends CPanel implements FormPanel,ActionListener,Table
 		//rInvoiceDate.setText(Msg.translate(m_ctx, "DueStart"));
 		rInvoiceDate.setText(Msg.translate(m_ctx, "BeforeDueDate"));
 		
+		checkPayAll.setText(Msg.getMsg(m_ctx, "PayAll") + " "
+				+ KeyUtils.getKeyStr(getActionKeys().get(GOTO_PAYALL)));
+		
 		// Saldo Total
 		name = VModelHelper.GetReferenceValueTrlFromColumn("I_ReportLine", "AmountType", "BT", "name");
 		lblSaldo.setText(name != null ? name : "");
@@ -2252,6 +2299,7 @@ public class VOrdenPago extends CPanel implements FormPanel,ActionListener,Table
 			setActionEnabled(MOVE_PAYMENT_BACKWARD, false);
 			setActionEnabled(MOVE_INVOICE_FORWARD, true);
 			setActionEnabled(MOVE_INVOICE_BACKWARD, true);
+			setActionEnabled(GOTO_BPARTNER, true);
 		}
 		else if (jTabbedPane1.getSelectedIndex() == 1){
 			cmdProcess.setText(getMsg("EmitPayment")+" "+KeyUtils.getKeyStr(getActionKeys().get(GOTO_PROCESS)));
@@ -2269,6 +2317,7 @@ public class VOrdenPago extends CPanel implements FormPanel,ActionListener,Table
 			setActionEnabled(GO_BACK, true);
 			setActionEnabled(MOVE_PAYMENT_FORWARD, true);
 			setActionEnabled(MOVE_PAYMENT_BACKWARD, true);
+			setActionEnabled(GOTO_BPARTNER, false);
 		}
 		
 		// Las subclases también deben realizar las operaciones necesarias
@@ -2338,6 +2387,7 @@ public class VOrdenPago extends CPanel implements FormPanel,ActionListener,Table
 			txtChequeTerceroImporte.setText("");
 			txtChequeTerceroDescripcion.setText("");
 		}
+		updatePaymentsTabsState();
 	}
 	
 	protected void loadMedioPago(VOrdenPagoModel.MedioPago mp) {
@@ -2448,6 +2498,7 @@ public class VOrdenPago extends CPanel implements FormPanel,ActionListener,Table
 	            	// Actualizar interfaz grafica para null value
 					if (BPartnerSel.getValue() == null)
 						cmdBPartnerSelActionPerformed(null);
+	            	updatePayAllInvoices(false);
 	            }
 	        } );			
 			
@@ -2459,7 +2510,7 @@ public class VOrdenPago extends CPanel implements FormPanel,ActionListener,Table
 			chequeraChange(e);
 		} else if (e.getSource() == invoiceDatePick) {
 			
-			onFechaChange();
+			onFechaChange(false);
 			
 		} else if (e.getSource() == cboOrg) {
 			int AD_Org_ID = (Integer)e.getNewValue();
@@ -2509,6 +2560,7 @@ public class VOrdenPago extends CPanel implements FormPanel,ActionListener,Table
 	 */
 	protected void updateOrg(Integer AD_Org_ID){
 		getModel().updateOrg(AD_Org_ID);
+    	updatePayAllInvoices(false);
 	}
 	
 	
@@ -2724,6 +2776,8 @@ public class VOrdenPago extends CPanel implements FormPanel,ActionListener,Table
 	protected void updatePaymentsTabsState() {
 		jTabbedPane2.setEnabledAt(TAB_INDEX_CREDITO, m_model.isNormalPayment());
 		jTabbedPane2.setEnabledAt(TAB_INDEX_PAGO_ADELANTADO, m_model.isNormalPayment());
+		// Refrescar el monto de la pestaña con el total a pagar
+		updatePayAmt(getModel().getSaldoMediosPago());
 //		jTabbedPane2.setSelectedIndex(TAB_INDEX_EFECTIVO);
 	}
 	
@@ -2930,6 +2984,33 @@ public class VOrdenPago extends CPanel implements FormPanel,ActionListener,Table
 		// Por ahora aca no se hace nada, verificar subclases
 	}
 	
+	protected void updatePayAmt(BigDecimal amt){
+		Integer tabIndexSelected = jTabbedPane2.getSelectedIndex();
+		if(tabIndexSelected.equals(TAB_INDEX_CHEQUE)){
+			txtChequeImporte.setValue(amt);
+		}
+		else if(tabIndexSelected.equals(TAB_INDEX_CREDITO)){
+			txtCreditImporte.setValue(amt);
+		}
+		else if(tabIndexSelected.equals(TAB_INDEX_EFECTIVO)){
+			txtEfectivoImporte.setValue(amt);
+		}
+		else if(tabIndexSelected.equals(TAB_INDEX_PAGO_ADELANTADO)){
+			txtPagoAdelantadoImporte.setValue(amt);
+		}
+		else if(tabIndexSelected.equals(TAB_INDEX_TRANSFERENCIA)){
+			txtTransfImporte.setValue(amt);
+		}
+		else {
+			updateCustomPayAmt(amt);
+		}
+	}
+	
+	protected void updateCustomPayAmt(BigDecimal amt){
+		// Por ahora aca no se hace nada, verificar subclases
+	}
+	
+	
 	/**
 	 * Actualizo componentes luego del preprocesar y antes de procesar.
 	 */
@@ -2997,7 +3078,7 @@ public class VOrdenPago extends CPanel implements FormPanel,ActionListener,Table
 		m_cambioTab = false;
 		txtDescription.setText("");
 		m_model.setDescription("");
-		
+		checkPayAll.setSelected(false);
 		// actualizar secuencia
 		seq.setCurrentNext(seq.getCurrentNext()+1);
 		seq.save();
@@ -3064,5 +3145,18 @@ public class VOrdenPago extends CPanel implements FormPanel,ActionListener,Table
 		table.requestFocus();
 		table.setRowSelectionInterval(srow, srow);
 		table.setColumnSelectionInterval(table.getColumnCount()-1, table.getColumnCount()-1);
+	}
+	
+	/**
+	 * Dispara el evento action performed con el evento parámetro a todos los
+	 * listeners parámetro
+	 * 
+	 * @param listeners
+	 * @param event
+	 */
+	protected void fireActionPerformed(ActionListener[] listeners, ActionEvent event){
+		for (ActionListener actionListener : listeners) {
+			actionListener.actionPerformed(event);
+		}
 	}
 }

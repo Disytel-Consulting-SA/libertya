@@ -3033,6 +3033,28 @@ public class VOrdenPagoModel implements TableModelListener {
 	}
 	
 	
+	public BigDecimal updatePayAllInvoices(boolean payAll, boolean toPayMoment){
+		if(m_facturas == null){
+			return BigDecimal.ZERO;
+		}
+		int totalInvoices = m_facturas.size();
+    	ResultItemFactura fac;
+    	BigDecimal amt;
+    	BigDecimal totalAmt = BigDecimal.ZERO;
+    	int i = 0;
+		for (; i < totalInvoices; i++) {
+			fac = (ResultItemFactura) m_facturas.get(i);
+			amt = payAll?fac.getToPayAmt(true):BigDecimal.ZERO;
+			// Solamente cambio el valor cuando no estamos en el momento de
+			// pagar
+			if(!toPayMoment){
+				fac.setManualAmount(amt);
+				totalAmt = totalAmt.add(amt);
+			}
+		}
+		return totalAmt;
+	}
+	
 	/**
 	 * Clase que permite tener creados allocation lines online para la OP/RC
 	 * actual
