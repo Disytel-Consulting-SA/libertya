@@ -17,10 +17,10 @@
 package org.openXpertya.model;
 
 import java.math.BigDecimal;
+import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.util.Properties;
 import java.util.logging.Level;
-
 import org.openXpertya.model.DiscountCalculator.IDocument;
 import org.openXpertya.model.DiscountCalculator.IDocumentLine;
 import org.openXpertya.util.DB;
@@ -1591,6 +1591,42 @@ public class MOrderLine extends X_C_OrderLine {
 
 	public Integer getLineManualDiscountID() {
 		return lineManualDiscountID;
+	}
+	
+
+	/**
+     * @return upc de la pestaña Compras en la ventana de Artículos
+     * NO MODIFICAR FIRMA, SE USA EN LA IMPRESIÓN DE ETIQUETAS DE ARTICULOS (CMD)
+     */    
+	public String getVendorUpc(){
+		StringBuffer sql = new StringBuffer();
+		sql.append("SELECT upc FROM M_Product_PO WHERE M_Product_ID = ? AND C_BPartner_ID = ? ");
+		  
+    	log.finer( sql.toString());
+
+    	PreparedStatement pstmt = null;
+    	ResultSet rs 			= null;
+    	
+    	try {
+    		pstmt = DB.prepareStatement( sql.toString());
+    		pstmt.setInt( 1, getProduct().getID() );
+    		pstmt.setInt( 2, getC_BPartner_ID() );
+    		rs = pstmt.executeQuery();
+
+    		if( rs.next()) {
+    			return rs.getString("upc");
+    		}
+
+    	} catch( Exception e ) {
+    		log.log( Level.SEVERE,sql.toString(),e );
+    	} finally {
+    		try {
+	    		if (rs != null) rs.close();
+	    		if (pstmt != null) pstmt.close();
+    		}	catch (Exception e) {}
+    	}
+    	return "";
+
 	}
 }    // MOrderLine
 
