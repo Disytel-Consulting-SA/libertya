@@ -2808,3 +2808,6 @@ CREATE OR REPLACE VIEW v_product_movements AS
    JOIN ad_org o ON o.ad_org_id = m.ad_org_id;
 
 ALTER TABLE v_product_movements OWNER TO libertya;
+
+-- 20120705-1719 Incorporación de columna Proyecto a Transferencias Bancarias para luego asignarselas a las transferencias
+ALTER TABLE C_BankTransfer ADD COLUMN c_project_id integer;

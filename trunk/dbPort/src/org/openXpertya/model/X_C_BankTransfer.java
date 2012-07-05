@@ -1,13 +1,14 @@
-/** Modelo Generado - NO CAMBIAR MANUALMENTE - Copyright (C) 2006 FUNDESLE */
+/** Modelo Generado - NO CAMBIAR MANUALMENTE - Disytel */
 package org.openXpertya.model;
-import java.util.*;
+import java.util.logging.Level;
+ import java.util.*;
 import java.sql.*;
 import java.math.*;
 import org.openXpertya.util.*;
 /** Modelo Generado por C_BankTransfer
- *  @author Comunidad de Desarrollo openXpertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
- *  @version  - 2009-06-18 14:08:45.281 */
-public class X_C_BankTransfer extends PO
+ *  @author Comunidad de Desarrollo Libertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
+ *  @version  - 2012-07-05 17:21:26.25 */
+public class X_C_BankTransfer extends org.openXpertya.model.PO
 {
 /** Constructor estándar */
 public X_C_BankTransfer (Properties ctx, int C_BankTransfer_ID, String trxName)
@@ -36,13 +37,13 @@ public X_C_BankTransfer (Properties ctx, ResultSet rs, String trxName)
 {
 super (ctx, rs, trxName);
 }
-/** AD_Table_ID=1000128 */
-public static final int Table_ID=1000128;
+/** AD_Table_ID */
+public static final int Table_ID = M_Table.getTableID("C_BankTransfer");
 
 /** TableName=C_BankTransfer */
 public static final String Table_Name="C_BankTransfer";
 
-protected static KeyNamePair Model = new KeyNamePair(1000128,"C_BankTransfer");
+protected static KeyNamePair Model = new KeyNamePair(Table_ID,"C_BankTransfer");
 protected static BigDecimal AccessLevel = new BigDecimal(3);
 
 /** Load Meta Data */
@@ -82,7 +83,7 @@ BigDecimal bd = (BigDecimal)get_Value("ammount_to");
 if (bd == null) return Env.ZERO;
 return bd;
 }
-public static final int C_BANKACCOUNT_FROM_ID_AD_Reference_ID=1000064;
+public static final int C_BANKACCOUNT_FROM_ID_AD_Reference_ID = MReference.getReferenceID("C_BankAccount");
 /** Set Source Bank Account  */
 public void setC_bankaccount_from_ID (int C_bankaccount_from_ID)
 {
@@ -95,7 +96,7 @@ Integer ii = (Integer)get_Value("C_bankaccount_from_ID");
 if (ii == null) return 0;
 return ii.intValue();
 }
-public static final int C_BANKACCOUNT_TO_ID_AD_Reference_ID=1000064;
+public static final int C_BANKACCOUNT_TO_ID_AD_Reference_ID = MReference.getReferenceID("C_BankAccount");
 /** Set Target Bank Account */
 public void setC_bankaccount_to_ID (int C_bankaccount_to_ID)
 {
@@ -134,7 +135,7 @@ Integer ii = (Integer)get_Value("C_BPartner_ID");
 if (ii == null) return 0;
 return ii.intValue();
 }
-public static final int C_CURRENCY_FROM_ID_AD_Reference_ID=112;
+public static final int C_CURRENCY_FROM_ID_AD_Reference_ID = MReference.getReferenceID("C_Currencies");
 /** Set Source Bank Account Currency */
 public void setC_currency_from_ID (int C_currency_from_ID)
 {
@@ -147,7 +148,7 @@ Integer ii = (Integer)get_Value("C_currency_from_ID");
 if (ii == null) return 0;
 return ii.intValue();
 }
-public static final int C_CURRENCY_TO_ID_AD_Reference_ID=112;
+public static final int C_CURRENCY_TO_ID_AD_Reference_ID = MReference.getReferenceID("C_Currencies");
 /** Set Target Bank Account Currency */
 public void setC_currency_to_ID (int C_currency_to_ID)
 {
@@ -188,7 +189,7 @@ BigDecimal bd = (BigDecimal)get_Value("charge_amt_from");
 if (bd == null) return Env.ZERO;
 return bd;
 }
-public static final int CHARGE_FROM_ID_AD_Reference_ID=200;
+public static final int CHARGE_FROM_ID_AD_Reference_ID = MReference.getReferenceID("C_Charge");
 /** Set charge_from_id */
 public void setcharge_from_ID (int charge_from_ID)
 {
@@ -203,7 +204,7 @@ Integer ii = (Integer)get_Value("charge_from_ID");
 if (ii == null) return 0;
 return ii.intValue();
 }
-public static final int CHARGE_TO_ID_AD_Reference_ID=200;
+public static final int CHARGE_TO_ID_AD_Reference_ID = MReference.getReferenceID("C_Charge");
 /** Set charge_to_id */
 public void setcharge_to_ID (int charge_to_ID)
 {
@@ -218,7 +219,7 @@ Integer ii = (Integer)get_Value("charge_to_ID");
 if (ii == null) return 0;
 return ii.intValue();
 }
-public static final int C_PAYMENT_FROM_ID_AD_Reference_ID=343;
+public static final int C_PAYMENT_FROM_ID_AD_Reference_ID = MReference.getReferenceID("C_Payment");
 /** Set c_payment_from_id */
 public void setC_payment_from_ID (int C_payment_from_ID)
 {
@@ -233,7 +234,7 @@ Integer ii = (Integer)get_Value("C_payment_from_ID");
 if (ii == null) return 0;
 return ii.intValue();
 }
-public static final int C_PAYMENT_TO_ID_AD_Reference_ID=343;
+public static final int C_PAYMENT_TO_ID_AD_Reference_ID = MReference.getReferenceID("C_Payment");
 /** Set c_payment_to_id */
 public void setC_payment_to_ID (int C_payment_to_ID)
 {
@@ -245,6 +246,22 @@ set_Value ("C_payment_to_ID", new Integer(C_payment_to_ID));
 public int getC_payment_to_ID() 
 {
 Integer ii = (Integer)get_Value("C_payment_to_ID");
+if (ii == null) return 0;
+return ii.intValue();
+}
+/** Set Project.
+Financial Project */
+public void setC_Project_ID (int C_Project_ID)
+{
+if (C_Project_ID <= 0) set_Value ("C_Project_ID", null);
+ else 
+set_Value ("C_Project_ID", new Integer(C_Project_ID));
+}
+/** Get Project.
+Financial Project */
+public int getC_Project_ID() 
+{
+Integer ii = (Integer)get_Value("C_Project_ID");
 if (ii == null) return 0;
 return ii.intValue();
 }
@@ -278,7 +295,7 @@ public String getDescription()
 {
 return (String)get_Value("Description");
 }
-public static final int DOCACTION_AD_Reference_ID=135;
+public static final int DOCACTION_AD_Reference_ID = MReference.getReferenceID("_Document Action");
 /** Approve = AP */
 public static final String DOCACTION_Approve = "AP";
 /** Close = CL */
@@ -312,7 +329,7 @@ The targeted status of the document */
 public void setDocAction (String DocAction)
 {
 if (DocAction.equals("AP") || DocAction.equals("CL") || DocAction.equals("PR") || DocAction.equals("IN") || DocAction.equals("CO") || DocAction.equals("--") || DocAction.equals("RC") || DocAction.equals("RJ") || DocAction.equals("RA") || DocAction.equals("WC") || DocAction.equals("XL") || DocAction.equals("RE") || DocAction.equals("PO") || DocAction.equals("VO"));
- else throw new IllegalArgumentException ("DocAction Invalid value - Reference_ID=135 - AP - CL - PR - IN - CO - -- - RC - RJ - RA - WC - XL - RE - PO - VO");
+ else throw new IllegalArgumentException ("DocAction Invalid value - Reference = DOCACTION_AD_Reference_ID - AP - CL - PR - IN - CO - -- - RC - RJ - RA - WC - XL - RE - PO - VO");
 if (DocAction == null) throw new IllegalArgumentException ("DocAction is mandatory");
 if (DocAction.length() > 2)
 {
@@ -327,9 +344,7 @@ public String getDocAction()
 {
 return (String)get_Value("DocAction");
 }
-public static final int DOCSTATUS_AD_Reference_ID=131;
-/** Reversed = RE */
-public static final String DOCSTATUS_Reversed = "RE";
+public static final int DOCSTATUS_AD_Reference_ID = MReference.getReferenceID("_Document Status");
 /** Voided = VO */
 public static final String DOCSTATUS_Voided = "VO";
 /** Not Approved = NA */
@@ -352,12 +367,14 @@ public static final String DOCSTATUS_Unknown = "??";
 public static final String DOCSTATUS_Drafted = "DR";
 /** Invalid = IN */
 public static final String DOCSTATUS_Invalid = "IN";
+/** Reversed = RE */
+public static final String DOCSTATUS_Reversed = "RE";
 /** Set Document Status.
 The current status of the document */
 public void setDocStatus (String DocStatus)
 {
-if (DocStatus.equals("RE") || DocStatus.equals("VO") || DocStatus.equals("NA") || DocStatus.equals("IP") || DocStatus.equals("CO") || DocStatus.equals("AP") || DocStatus.equals("CL") || DocStatus.equals("WC") || DocStatus.equals("WP") || DocStatus.equals("??") || DocStatus.equals("DR") || DocStatus.equals("IN"));
- else throw new IllegalArgumentException ("DocStatus Invalid value - Reference_ID=131 - RE - VO - NA - IP - CO - AP - CL - WC - WP - ?? - DR - IN");
+if (DocStatus.equals("VO") || DocStatus.equals("NA") || DocStatus.equals("IP") || DocStatus.equals("CO") || DocStatus.equals("AP") || DocStatus.equals("CL") || DocStatus.equals("WC") || DocStatus.equals("WP") || DocStatus.equals("??") || DocStatus.equals("DR") || DocStatus.equals("IN") || DocStatus.equals("RE"));
+ else throw new IllegalArgumentException ("DocStatus Invalid value - Reference = DOCSTATUS_AD_Reference_ID - VO - NA - IP - CO - AP - CL - WC - WP - ?? - DR - IN - RE");
 if (DocStatus == null) throw new IllegalArgumentException ("DocStatus is mandatory");
 if (DocStatus.length() > 2)
 {

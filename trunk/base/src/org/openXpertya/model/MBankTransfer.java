@@ -93,6 +93,7 @@ public class MBankTransfer extends X_C_BankTransfer implements DocAction {
 			pagoOrigen.setDateAcct(getDateTrx());
 			pagoOrigen.setC_BPartner_ID(getC_BPartner_ID());
 			pagoOrigen.setIsReceipt(anular);
+			pagoOrigen.setC_Project_ID(getC_Project_ID());
 			// Se toma el tipo de documento para transferencias salientes configurado
 			// para la compañía.
 			if (clientInfo.getC_OutgoingTransfer_DT_ID() != 0)
@@ -140,6 +141,7 @@ public class MBankTransfer extends X_C_BankTransfer implements DocAction {
 			pagoDestino.setDateAcct(getDateTrx());
 			pagoDestino.setC_BPartner_ID(getC_BPartner_ID());
 			pagoDestino.setIsReceipt(!anular);
+			pagoDestino.setC_Project_ID(getC_Project_ID());
 			// Se toma el tipo de documento para transferencias salientes configurado
 			// para la compañía.
 			if (clientInfo.getC_IncomingTransfer_DT_ID() != 0)
