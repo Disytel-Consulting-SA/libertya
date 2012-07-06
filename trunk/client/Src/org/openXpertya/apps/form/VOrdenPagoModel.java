@@ -70,6 +70,7 @@ public class VOrdenPagoModel implements TableModelListener {
 	public static final int PROCERROR_NOT_SELECTED_BPARTNER = 4;
 	public static final int PROCERROR_DOCUMENTNO_NOT_SET = 5;
 	public static final int PROCERROR_DOCUMENTNO_ALREADY_EXISTS = 6;
+	public static final int PROCERROR_DOCUMENTTYPE_NOT_SET = 7;
 	public static final int PROCERROR_UNKNOWN = -1;
 	
 	protected static CLogger log = CLogger.getCLogger(VOrdenPagoModel.class);
@@ -920,6 +921,9 @@ public class VOrdenPagoModel implements TableModelListener {
 	// Nro de documento seteado en la allocation
 	private String documentNo;
 	
+	// Tipo de documento seteado en la allocation
+	private Integer documentType;
+	
 	private String description="";
 	
 	public VOrdenPagoModel() {
@@ -1371,6 +1375,9 @@ public class VOrdenPagoModel implements TableModelListener {
 			return PROCERROR_DOCUMENTNO_ALREADY_EXISTS;
 		}
 		
+		if (documentType == null){
+			return PROCERROR_DOCUMENTTYPE_NOT_SET;
+		}
 			
 		Vector<BigDecimal> manualAmounts = new Vector<BigDecimal>();
 		Vector<Integer> facturasProcesar = new Vector<Integer>();
@@ -3136,6 +3143,14 @@ public class VOrdenPagoModel implements TableModelListener {
 		return description;
 	}
 	
+	public Integer getDocumentType() {
+		return documentType;
+	}
+
+	public void setDocumentType(Integer documentType) {
+		this.documentType = documentType;
+	}
+
 	/**
 	 * Valida si el numero de documento especificado ya existe.  En ese caso retorna true
 	 */
@@ -3144,6 +3159,7 @@ public class VOrdenPagoModel implements TableModelListener {
 		// OP/RC Automaticas
 		int count = DB.getSQLValue(null, " SELECT count(1) FROM C_AllocationHdr " +
 											" WHERE documentNo = '" + Integer.parseInt(documentNo) + "'" +
+											" AND C_DocType_ID = " + getDocumentType() + 
 											" AND AD_Client_ID = " + Env.getAD_Client_ID(m_ctx) +
 											" AND allocationtype IN " + getAllocTypes());
 
@@ -3156,6 +3172,7 @@ public class VOrdenPagoModel implements TableModelListener {
 										" INNER JOIN C_AllocationHdr ah ON al.C_AllocationHdr_ID = ah.C_AllocationHdr_ID" +
 										" INNER JOIN C_Invoice i ON al.C_Invoice_ID = i.C_Invoice_ID" +
 										" WHERE ah.documentNo = '" + Integer.parseInt(documentNo) + "'" +
+										" AND ah.C_DocType_ID = " + getDocumentType() + 
 										" AND ah.AD_Client_ID = " + Env.getAD_Client_ID(m_ctx) +
 										" AND ah.allocationtype = '" + X_C_AllocationHdr.ALLOCATIONTYPE_Manual + "'" +
 										" AND i.issotrx = " + (isSOTrx()?"'Y'":"'N'"));
@@ -3187,6 +3204,15 @@ public class VOrdenPagoModel implements TableModelListener {
 
 	public Integer getCampaignID() {
 		return campaignID;
+	}
+	
+	/**
+	 * Validación utilizada para valores mostrados por el combo DocumentType de la Ventana Orden de Pago
+	 */
+	public String getDocumentTypeSqlValidation() {
+		return " ((C_Doctype.ad_Org_ID = 0) OR (C_Doctype.ad_Org_ID = " + Env.getAD_Org_ID(m_ctx) + "))" + 
+			   " AND (C_Doctype.IsReceiptSeq = 'N') " +
+			   " AND (C_Doctype.DocBaseType = 'APP') ";
 	}
 	
 }

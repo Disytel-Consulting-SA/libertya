@@ -2811,3 +2811,12 @@ ALTER TABLE v_product_movements OWNER TO libertya;
 
 -- 20120705-1719 Incorporación de columna Proyecto a Transferencias Bancarias para luego asignarselas a las transferencias
 ALTER TABLE C_BankTransfer ADD COLUMN c_project_id integer;
+
+-- 20120706-1900 Se inserto la columna IsReceiptSeq en la tabla C_DocType
+ALTER TABLE libertya.C_DocType ADD COLUMN IsReceiptSeq character(1); 
+
+-- 20120706-1900 Se inserto la columna IsPaymentOrderSeq en la tabla C_DocType
+ALTER TABLE libertya.C_DocType ADD COLUMN IsPaymentOrderSeq character(1); 
+
+-- 20120706-1930 Se inserto la columna C_DocType_ID en la tabla C_AllocationHdr
+ALTER TABLE libertya.C_AllocationHdr ADD COLUMN C_DocType_ID integer; 
