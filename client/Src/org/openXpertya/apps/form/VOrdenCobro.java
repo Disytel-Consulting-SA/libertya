@@ -39,7 +39,6 @@ import org.openXpertya.apps.form.VOrdenPagoModel.MedioPagoTarjetaCredito;
 import org.openXpertya.apps.form.VOrdenPagoModel.MedioPagoTransferencia;
 import org.openXpertya.apps.form.VOrdenPagoModel.MyTreeNode;
 import org.openXpertya.grid.ed.VCellRenderer;
-import org.openXpertya.grid.ed.VCheckBox;
 import org.openXpertya.grid.ed.VComboBox;
 import org.openXpertya.grid.ed.VDate;
 import org.openXpertya.grid.ed.VLookup;
@@ -56,9 +55,6 @@ import org.openXpertya.util.Util;
 import org.openXpertya.util.ValueNamePair;
 
 public class VOrdenCobro extends VOrdenPago {
-
-    // Secuencia a utilizar en OP (VOrdenCobro para RC deberá refinir acordemente)
-    protected static final String SEQ_RC = "DocumentNo_C_AllocationHdr_RC";
 	
     protected static final String GOTO_TENDER_TYPE = "GOTO_TENDER_TYPE";
     
@@ -405,11 +401,13 @@ public class VOrdenCobro extends VOrdenPago {
                 .addContainerGap()
                 .add(jPanel10Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
                     .add(lblOrg)
-                    .add(lblBPartnerDiscount))
+                    .add(lblBPartnerDiscount)
+                    .add(lblDocumentType))
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                 .add(jPanel10Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.TRAILING)
                     .add(cboOrg, 0, 234, Short.MAX_VALUE)
-                    .add(bPartnerDiscount, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 234, Short.MAX_VALUE))
+                    .add(bPartnerDiscount, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 234, Short.MAX_VALUE)
+                    .add(cboDocumentType, 0, 234, Short.MAX_VALUE))
                 .addContainerGap())
         );
         jPanel10Layout.setVerticalGroup(
@@ -423,7 +421,10 @@ public class VOrdenCobro extends VOrdenPago {
                 .add(jPanel10Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
                     .add(lblBPartnerDiscount)
                     .add(bPartnerDiscount, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
-                .addContainerGap())
+                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                .add(jPanel10Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
+                    .add(lblDocumentType)
+                    .add(cboDocumentType, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)))
         );
     }
 	
@@ -2158,12 +2159,6 @@ public class VOrdenCobro extends VOrdenPago {
 			updateDiscount(paymentMedium);
 		}    	
     }
-
-	@Override
-	protected String getSeqName()
-	{
-		return SEQ_RC;
-	}
 	
 	@Override
 	protected void customKeyBindingsInit(){

@@ -19,7 +19,6 @@ import java.util.logging.Level;
 
 import org.openXpertya.apps.ProcessCtl;
 import org.openXpertya.apps.form.VModelHelper.ResultItem;
-import org.openXpertya.apps.form.VOrdenPagoModel.ResultItemFactura;
 import org.openXpertya.cc.CurrentAccountManager;
 import org.openXpertya.model.CalloutInvoiceExt;
 import org.openXpertya.model.MAllocationHdr;
@@ -1715,6 +1714,15 @@ public class VOrdenCobroModel extends VOrdenPagoModel {
 			log.log(Level.SEVERE, sql.toString(), e);
 		}
 		return false;
+	}
+	
+	/**
+	 * Validación utilizada para valores mostrados por el combo DocumentType de la Ventana Recibo de Cliente
+	 */
+	public String getDocumentTypeSqlValidation() {
+		return " ((C_Doctype.ad_Org_ID = 0) OR (C_Doctype.ad_Org_ID = " + Env.getAD_Org_ID(m_ctx) + "))" + 
+			   " AND (C_Doctype.IsReceiptSeq = 'Y') " +
+			   " AND (C_Doctype.DocBaseType = 'ARR') ";
 	}
 	
 }

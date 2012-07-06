@@ -76,6 +76,7 @@ import org.openXpertya.pos.view.KeyUtils;
 import org.openXpertya.process.ProcessInfo;
 import org.openXpertya.util.ASyncProcess;
 import org.openXpertya.util.CLogger;
+import org.openXpertya.util.DB;
 import org.openXpertya.util.DisplayType;
 import org.openXpertya.util.Env;
 import org.openXpertya.util.Msg;
@@ -306,7 +307,9 @@ public class VOrdenPago extends CPanel implements FormPanel,ActionListener,Table
         radPayTypeAdv = new javax.swing.JRadioButton();
         jScrollPane1 = new javax.swing.JScrollPane();
         txtDescription = new javax.swing.JTextField();
-		txtDescription.setEditable(true);
+		txtDescription.setEditable(true);		
+		lblDocumentType = new javax.swing.JLabel();
+		cboDocumentType = VComponentsFactory.VLookupFactory("C_DOCTYPE_ID", "C_DOCTYPE", m_WindowNo, DisplayType.Table,m_model.getDocumentTypeSqlValidation(),false);
         tblFacturas = new javax.swing.JTable(m_model.getFacturasTableModel());
         txtTotalPagar1 = new JFormattedTextField();
         lblTotalPagar1 = new javax.swing.JLabel();
@@ -820,11 +823,13 @@ public class VOrdenPago extends CPanel implements FormPanel,ActionListener,Table
                 .addContainerGap()
                 .add(jPanel10Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
                     .add(lblOrg)
-                    .add(lblDocumentNo))
+                    .add(lblDocumentNo)
+                    .add(lblDocumentType))
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                 .add(jPanel10Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.TRAILING)
                     .add(cboOrg, 0, 234, Short.MAX_VALUE)
-                    .add(fldDocumentNo, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 234, Short.MAX_VALUE))
+                    .add(fldDocumentNo, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 234, Short.MAX_VALUE)
+                    .add(cboDocumentType, 0, 234, Short.MAX_VALUE))
                 .addContainerGap())
         );
         jPanel10Layout.setVerticalGroup(
@@ -838,7 +843,10 @@ public class VOrdenPago extends CPanel implements FormPanel,ActionListener,Table
                 .add(jPanel10Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
                     .add(lblDocumentNo)
                     .add(fldDocumentNo, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
-                .addContainerGap())
+                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                .add(jPanel10Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
+                    .add(lblDocumentType)
+                    .add(cboDocumentType, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)))
         );
     }
 
@@ -1736,6 +1744,10 @@ public class VOrdenPago extends CPanel implements FormPanel,ActionListener,Table
     		case VOrdenPagoModel.PROCERROR_DOCUMENTNO_ALREADY_EXISTS:
     			showError("Número de documento ya existente");
     			return;
+    		
+    		case VOrdenPagoModel.PROCERROR_DOCUMENTTYPE_NOT_SET:
+    			showError("Debe indicar el tipo de documento");
+    			return;
     			
     		default:
     			showError("@ValidationError@");
@@ -1813,9 +1825,6 @@ public class VOrdenPago extends CPanel implements FormPanel,ActionListener,Table
     
     // Declaración de varibales -no modificar//GEN-BEGIN:variables
     
-    // Secuencia a utilizar en OP (VOrdenCobro para RC deberá refinir acordemente)
-    protected static final String SEQ_OP = "DocumentNo_C_AllocationHdr";
-    
     protected VLookup BPartnerSel;
     protected org.compiere.swing.CTextField fldDocumentNo;
     private javax.swing.ButtonGroup buttonGroup1;
@@ -1861,6 +1870,10 @@ public class VOrdenPago extends CPanel implements FormPanel,ActionListener,Table
     protected javax.swing.JLabel lblClient;
     protected javax.swing.JLabel lblDocumentNo;
     private javax.swing.JLabel lblDescription;
+    
+    protected javax.swing.JLabel lblDocumentType;
+    protected VLookup cboDocumentType;
+    
     protected javax.swing.JLabel lblEfectivoImporte;
     protected javax.swing.JLabel lblEfectivoLibroCaja;
     protected javax.swing.JLabel lblMedioPago2;
@@ -1948,7 +1961,7 @@ public class VOrdenPago extends CPanel implements FormPanel,ActionListener,Table
     private int m_C_Currency_ID = Env.getContextAsInt( Env.getCtx(), "$C_Currency_ID" );
 
     private static CLogger log = CLogger.getCLogger( VAllocation.class );
-    private VOrdenPagoModel m_model = new VOrdenPagoModel();
+    protected VOrdenPagoModel m_model = new VOrdenPagoModel();
     protected Properties m_ctx = Env.getCtx();
     private String m_trxName = m_model.getTrxName();
     
@@ -2099,13 +2112,12 @@ public class VOrdenPago extends CPanel implements FormPanel,ActionListener,Table
         cboOrg.setMandatory(true);
         cboOrg.addVetoableChangeListener(this);
         cboOrg.setValue(Env.getAD_Org_ID(m_ctx));
+        
+        cboDocumentType.setMandatory(true);
+        cboDocumentType.addVetoableChangeListener(this);
 
         // campo para numero de documento
         fldDocumentNo.setMandatory(true);
-        seq = MSequence.get(m_ctx, getSeqName(), false, Env.getAD_Client_ID(m_ctx));
-        if (seq == null)
-        	seq = createDocNoSeq();
-        fldDocumentNo.setValue(seq.getCurrentNext());
         
         updateOrg((Integer)cboOrg.getValue());
 		
@@ -2266,6 +2278,7 @@ public class VOrdenPago extends CPanel implements FormPanel,ActionListener,Table
 		lblClient.setText(Msg.translate(m_ctx,"AD_Client_ID"));
 		lblDocumentNo.setText("Nro. Documento");
         lblOrg.setText(Msg.translate(m_ctx,"AD_Org_ID"));
+        lblDocumentType.setText(Msg.translate(m_ctx,"C_DOCTYPE_ID"));
 		lblProject.setText(Msg.translate(m_ctx,"C_Project_ID"));
 		lblCampaign.setText(Msg.translate(m_ctx,"C_Campaign_ID"));
 		lblPagoAdelantadoType.setText(getMsg("Type"));
@@ -2515,7 +2528,18 @@ public class VOrdenPago extends CPanel implements FormPanel,ActionListener,Table
 		} else if (e.getSource() == cboOrg) {
 			int AD_Org_ID = (Integer)e.getNewValue();
 			updateOrg(AD_Org_ID);
-		}
+		
+		} else if (e.getSource() == cboDocumentType) {
+			if(e.getNewValue() != null){
+				m_model.setDocumentType((Integer)e.getNewValue());
+				seq = MSequence.get(m_ctx, getSeqName(), false, Env.getAD_Client_ID(m_ctx));
+				fldDocumentNo.setValue(seq.getCurrentNext());
+			}
+			else{
+				fldDocumentNo.setValue(null);
+				m_model.setDocumentType(null);
+			}
+		} 
 	}
 
 	public void stateChanged(ChangeEvent arg0) {
@@ -2529,6 +2553,7 @@ public class VOrdenPago extends CPanel implements FormPanel,ActionListener,Table
 				
 			BPartnerSel.setReadWrite(jTabbedPane1.getSelectedIndex() == 0);
 			cboOrg.setReadWrite(jTabbedPane1.getSelectedIndex() == 0);
+			cboDocumentType.setReadWrite(jTabbedPane1.getSelectedIndex() == 0);
 			fldDocumentNo.setReadWrite(jTabbedPane1.getSelectedIndex() == 0);
 			
 		} else if (arg0.getSource() == jTabbedPane2) {
@@ -3090,25 +3115,11 @@ public class VOrdenPago extends CPanel implements FormPanel,ActionListener,Table
 	
 	protected String getSeqName()
 	{
-		return SEQ_OP;
-	}
-	
-	/**
-	 * Gestión especial de secuencias (debido a que C_AlloctionHdr se utiliza tanto para OP como RC)
-	 * @return
-	 */
-	protected MSequence createDocNoSeq()
-	{
-		MSequence aSequence = new MSequence(m_ctx, 0, null);
-		aSequence.setName(getSeqName());
-		aSequence.setClientOrg(Env.getAD_Client_ID(m_ctx), 0);
-		aSequence.setIsTableID(false);
-		aSequence.setIncrementNo(1);
-		aSequence.setCurrentNextSys(100);
-		aSequence.setStartNo(1000000);
-		aSequence.setIsAutoSequence(true);
-		aSequence.save();
-		return aSequence;
+		if (m_model.getDocumentType() != null){
+			return DB.getSQLValueString( null,"SELECT s.name FROM AD_Sequence s INNER JOIN C_DocType d ON (s.AD_Sequence_ID = d.docnosequence_ID) WHERE C_DocType_ID =?",m_model.getDocumentType());
+		}
+		return null;
+		
 	}
 
 	protected void setActionKeys(Map<String, KeyStroke> actionKeys) {
