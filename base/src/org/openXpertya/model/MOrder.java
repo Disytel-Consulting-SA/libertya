@@ -3707,7 +3707,7 @@ public class MOrder extends X_C_Order implements DocAction {
 	                ship.setDocStatus( MInOut.DOCSTATUS_Reversed );
 	                info.append( " " ).append( ship.getDocumentNo());
 	            } else {
-	                m_processMsg = "Could not reverse Shipment " + ship;
+	                m_processMsg = "@CouldNotReverseShipment@ " + ship;
 	
 	                return false;
 	            }
@@ -3749,7 +3749,7 @@ public class MOrder extends X_C_Order implements DocAction {
 	                invoice.setDocStatus( MInvoice.DOCSTATUS_Reversed );
 	                info.append( " " ).append( invoice.getDocumentNo());
 	            } else {
-	                m_processMsg = "Could not reverse Invoice " + invoice;
+	                m_processMsg = "@CouldNotReverseInvoice@ " + invoice;
 	
 	                return false;
 	            }

@@ -2802,7 +2802,7 @@ public class MInOut extends X_M_InOut implements DocAction {
         //
 
         if( !reversal.processIt( DocAction.ACTION_Complete )) {
-            m_processMsg = "Reversal ERROR: " + reversal.getProcessMsg();
+            m_processMsg = "@ReversalError@: " + reversal.getProcessMsg();
 
             return false;
         }

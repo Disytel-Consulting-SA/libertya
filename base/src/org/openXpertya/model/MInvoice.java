@@ -3633,7 +3633,7 @@ public class MInvoice extends X_C_Invoice implements DocAction {
 		//
 
 		if (!reversal.processIt(DocAction.ACTION_Complete)) {
-			m_processMsg = "Reversal ERROR: " + reversal.getProcessMsg();
+			m_processMsg = "@ReversalError@: " + reversal.getProcessMsg();
 
 			return false;
 		}

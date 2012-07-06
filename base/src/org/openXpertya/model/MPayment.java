@@ -2567,7 +2567,7 @@ public final class MPayment extends X_C_Payment implements DocAction,ProcessCall
         // Post Reversal
 
         if( !reversal.processIt( DocAction.ACTION_Complete )) {
-            m_processMsg = "Reversal ERROR: " + reversal.getProcessMsg();
+            m_processMsg = "@ReversalError@: " + reversal.getProcessMsg();
 
             return false;
         }
