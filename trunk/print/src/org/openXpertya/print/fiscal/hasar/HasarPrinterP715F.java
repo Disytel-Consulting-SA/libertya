@@ -75,15 +75,15 @@ public class HasarPrinterP715F extends HasarFiscalPrinter {
 		
 		
 		return st;
-	}
-
-	
+	}	
 	
 	@Override
 	public FiscalPacket cmdPrintFiscalText(String text, Integer display) {
-		// El parámetro display no tiene utilidad en este modelo.
-		// Siempre se asigna a 0.
-		return super.cmdPrintFiscalText(text, 0);
+		FiscalPacket cmd = createFiscalPacket(CMD_PRINT_FISCAL_TEXT);
+		int i = 1;
+		cmd.setText(i++, text, 30, false);
+		cmd.setNumber(i++, display == null?0:display, true);
+		return cmd;
 	}
 
 	@Override
