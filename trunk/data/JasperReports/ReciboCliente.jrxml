@@ -104,7 +104,7 @@
 					<textElement>
 						<font size="12"/>
 					</textElement>
-				<textFieldExpression   class="java.lang.String"><![CDATA[$P{CITY_NAME} + ", "]]></textFieldExpression>
+				<textFieldExpression   class="java.lang.String"><![CDATA[($P{CITY_NAME} == null?"":$P{CITY_NAME}) + ", "]]></textFieldExpression>
 				</textField>
 				<textField isStretchWithOverflow="false" isBlankWhenNull="false" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
