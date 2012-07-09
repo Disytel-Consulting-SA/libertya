@@ -1604,6 +1604,7 @@ public class VOrdenCobro extends VOrdenPago {
 	protected void updatePaymentsTabsState() {
 		removeTenderTypesValuesByCustomConditions();
 		updateCustomPaymentsTabsState();
+		updatePayAmt(getModel().getSaldoMediosPago());
 	}
 	
 	@Override
