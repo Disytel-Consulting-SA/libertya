@@ -660,7 +660,13 @@ public class VOrdenCobroModel extends VOrdenPagoModel {
 	
 	
 	public BigDecimal getToPayAmount(MDiscountSchema discountSchema){
-		BigDecimal toPay = reciboDeCliente.getToPayAmt(discountSchema);
+		BigDecimal toPay = BigDecimal.ZERO;
+		if(m_esPagoNormal){
+			toPay = reciboDeCliente.getToPayAmt(discountSchema);
+		}
+		else{
+			toPay = getSaldoMediosPago();
+		}
 		return toPay;
 	}
 	
@@ -1307,7 +1313,14 @@ public class VOrdenCobroModel extends VOrdenPagoModel {
 	
 	@Override
 	public BigDecimal getAllocationHdrTotalAmt(){
-		return reciboDeCliente.getTotalAPagar();
+		BigDecimal hdrAmt = BigDecimal.ZERO; 
+		if(m_esPagoNormal){
+			hdrAmt = reciboDeCliente.getTotalAPagar();
+		}
+		else{
+			hdrAmt = m_montoPagoAnticipado;
+		}
+		return hdrAmt; 
 	}
 	
 	@Override
