@@ -420,6 +420,11 @@ public class VOrdenCobroModel extends VOrdenPagoModel {
 		pay.setC_POSPaymentMedium_ID(mp.getPaymentMedium().getID());
 	}
 	
+	@Override
+	protected void addCustomCashLineInfo(MCashLine cashLine, MedioPago mp){
+		cashLine.setC_POSPaymentMedium_ID(mp.getPaymentMedium().getID());		
+	}
+	
 	
 	/** Actualiza el modelo de la tabla de facturas
 	 * 
