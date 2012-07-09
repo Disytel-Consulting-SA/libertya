@@ -7,7 +7,7 @@ import java.math.*;
 import org.openXpertya.util.*;
 /** Modelo Generado por C_DocType
  *  @author Comunidad de Desarrollo Libertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
- *  @version  - 2012-06-10 15:34:26.953 */
+ *  @version  - 2012-07-09 20:10:41.06 */
 public class X_C_DocType extends org.openXpertya.model.PO
 {
 /** Constructor estándar */
@@ -783,6 +783,22 @@ if (oo != null)
 }
 return false;
 }
+/** Set Is Payment Order Seq */
+public void setIsPaymentOrderSeq (boolean IsPaymentOrderSeq)
+{
+set_Value ("IsPaymentOrderSeq", new Boolean(IsPaymentOrderSeq));
+}
+/** Get Is Payment Order Seq */
+public boolean isPaymentOrderSeq() 
+{
+Object oo = get_Value("IsPaymentOrderSeq");
+if (oo != null) 
+{
+ if (oo instanceof Boolean) return ((Boolean)oo).booleanValue();
+ return "Y".equals(oo);
+}
+return false;
+}
 /** Set Pick/QA Confirmation.
 Require Pick or QA Confirmation before processing */
 public void setIsPickQAConfirm (boolean IsPickQAConfirm)
@@ -828,6 +844,22 @@ set_Value ("IsPrintPreview", new Boolean(IsPrintPreview));
 public boolean isPrintPreview() 
 {
 Object oo = get_Value("IsPrintPreview");
+if (oo != null) 
+{
+ if (oo instanceof Boolean) return ((Boolean)oo).booleanValue();
+ return "Y".equals(oo);
+}
+return false;
+}
+/** Set Is Receipt Seq */
+public void setIsReceiptSeq (boolean IsReceiptSeq)
+{
+set_Value ("IsReceiptSeq", new Boolean(IsReceiptSeq));
+}
+/** Get Is Receipt Seq */
+public boolean isReceiptSeq() 
+{
+Object oo = get_Value("IsReceiptSeq");
 if (oo != null) 
 {
  if (oo instanceof Boolean) return ((Boolean)oo).booleanValue();

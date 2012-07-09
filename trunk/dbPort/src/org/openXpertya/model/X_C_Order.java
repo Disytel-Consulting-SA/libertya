@@ -7,7 +7,7 @@ import java.math.*;
 import org.openXpertya.util.*;
 /** Modelo Generado por C_Order
  *  @author Comunidad de Desarrollo Libertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
- *  @version  - 2012-06-28 18:37:51.738 */
+ *  @version  - 2012-07-09 20:10:42.874 */
 public class X_C_Order extends org.openXpertya.model.PO
 {
 /** Constructor estándar */

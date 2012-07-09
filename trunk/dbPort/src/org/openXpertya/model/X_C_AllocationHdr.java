@@ -7,7 +7,7 @@ import java.math.*;
 import org.openXpertya.util.*;
 /** Modelo Generado por C_AllocationHdr
  *  @author Comunidad de Desarrollo Libertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
- *  @version  - 2011-01-24 17:44:43.59 */
+ *  @version  - 2012-07-09 20:10:37.745 */
 public class X_C_AllocationHdr extends org.openXpertya.model.PO
 {
 /** Constructor estándar */
@@ -187,6 +187,22 @@ The Currency for this record */
 public int getC_Currency_ID() 
 {
 Integer ii = (Integer)get_Value("C_Currency_ID");
+if (ii == null) return 0;
+return ii.intValue();
+}
+/** Set Document Type.
+Document type or rules */
+public void setC_DocType_ID (int C_DocType_ID)
+{
+if (C_DocType_ID <= 0) set_Value ("C_DocType_ID", null);
+ else 
+set_Value ("C_DocType_ID", new Integer(C_DocType_ID));
+}
+/** Get Document Type.
+Document type or rules */
+public int getC_DocType_ID() 
+{
+Integer ii = (Integer)get_Value("C_DocType_ID");
 if (ii == null) return 0;
 return ii.intValue();
 }

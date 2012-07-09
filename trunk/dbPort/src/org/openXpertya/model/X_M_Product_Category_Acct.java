@@ -1,13 +1,14 @@
-/** Modelo Generado - NO CAMBIAR MANUALMENTE - Copyright (C) 2006 FUNDESLE */
+/** Modelo Generado - NO CAMBIAR MANUALMENTE - Disytel */
 package org.openXpertya.model;
-import java.util.*;
+import java.util.logging.Level;
+ import java.util.*;
 import java.sql.*;
 import java.math.*;
 import org.openXpertya.util.*;
 /** Modelo Generado por M_Product_Category_Acct
- *  @author Comunidad de Desarrollo openXpertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
- *  @version  - 2008-01-03 10:26:39.187 */
-public class X_M_Product_Category_Acct extends PO
+ *  @author Comunidad de Desarrollo Libertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
+ *  @version  - 2012-07-09 20:10:56.668 */
+public class X_M_Product_Category_Acct extends org.openXpertya.model.PO
 {
 /** Constructor estándar */
 public X_M_Product_Category_Acct (Properties ctx, int M_Product_Category_Acct_ID, String trxName)
@@ -23,6 +24,7 @@ setP_Expense_Acct (0);
 setP_InvoicePriceVariance_Acct (0);
 setP_PurchasePriceVariance_Acct (0);
 setP_Revenue_Acct (0);
+setP_RevenueExchange_Acct (0);
 setP_TradeDiscountGrant_Acct (0);
 setP_TradeDiscountRec_Acct (0);
 }
@@ -33,13 +35,13 @@ public X_M_Product_Category_Acct (Properties ctx, ResultSet rs, String trxName)
 {
 super (ctx, rs, trxName);
 }
-/** AD_Table_ID=401 */
-public static final int Table_ID=401;
+/** AD_Table_ID */
+public static final int Table_ID = M_Table.getTableID("M_Product_Category_Acct");
 
 /** TableName=M_Product_Category_Acct */
 public static final String Table_Name="M_Product_Category_Acct";
 
-protected static KeyNamePair Model = new KeyNamePair(401,"M_Product_Category_Acct");
+protected static KeyNamePair Model = new KeyNamePair(Table_ID,"M_Product_Category_Acct");
 protected static BigDecimal AccessLevel = new BigDecimal(3);
 
 /** Load Meta Data */
@@ -67,7 +69,9 @@ Integer ii = (Integer)get_Value("C_AcctSchema_ID");
 if (ii == null) return 0;
 return ii.intValue();
 }
-public static final int COSTINGMETHOD_AD_Reference_ID=122;
+public static final int COSTINGMETHOD_AD_Reference_ID = MReference.getReferenceID("C_AcctSchema Costing Method");
+/** Last PO Price = P */
+public static final String COSTINGMETHOD_LastPOPrice = "P";
 /** Standard Costing = S */
 public static final String COSTINGMETHOD_StandardCosting = "S";
 /** Average = A */
@@ -76,18 +80,16 @@ public static final String COSTINGMETHOD_Average = "A";
 public static final String COSTINGMETHOD_Lifo = "L";
 /** Fifo = F */
 public static final String COSTINGMETHOD_Fifo = "F";
-/** Last PO Price = P */
-public static final String COSTINGMETHOD_LastPOPrice = "P";
 /** Set Costing Method.
 Indicates how Costs will be calculated */
 public void setCostingMethod (String CostingMethod)
 {
-if (CostingMethod == null || CostingMethod.equals("S") || CostingMethod.equals("A") || CostingMethod.equals("L") || CostingMethod.equals("F") || CostingMethod.equals("P"));
- else throw new IllegalArgumentException ("CostingMethod Invalid value - Reference_ID=122 - S - A - L - F - P");
+if (CostingMethod == null || CostingMethod.equals("P") || CostingMethod.equals("S") || CostingMethod.equals("A") || CostingMethod.equals("L") || CostingMethod.equals("F"));
+ else throw new IllegalArgumentException ("CostingMethod Invalid value - Reference = COSTINGMETHOD_AD_Reference_ID - P - S - A - L - F");
 if (CostingMethod != null && CostingMethod.length() > 1)
 {
 log.warning("Length > 1 - truncated");
-CostingMethod = CostingMethod.substring(0,0);
+CostingMethod = CostingMethod.substring(0,1);
 }
 set_Value ("CostingMethod", CostingMethod);
 }
@@ -108,6 +110,30 @@ Category of a Product */
 public int getM_Product_Category_ID() 
 {
 Integer ii = (Integer)get_Value("M_Product_Category_ID");
+if (ii == null) return 0;
+return ii.intValue();
+}
+/** Set Amortization Account */
+public void setP_Amortization_Acct (int P_Amortization_Acct)
+{
+set_Value ("P_Amortization_Acct", new Integer(P_Amortization_Acct));
+}
+/** Get Amortization Account */
+public int getP_Amortization_Acct() 
+{
+Integer ii = (Integer)get_Value("P_Amortization_Acct");
+if (ii == null) return 0;
+return ii.intValue();
+}
+/** Set Amortization Realized Account */
+public void setP_Amortization_Realized_Acct (int P_Amortization_Realized_Acct)
+{
+set_Value ("P_Amortization_Realized_Acct", new Integer(P_Amortization_Realized_Acct));
+}
+/** Get Amortization Realized Account */
+public int getP_Amortization_Realized_Acct() 
+{
+Integer ii = (Integer)get_Value("P_Amortization_Realized_Acct");
 if (ii == null) return 0;
 return ii.intValue();
 }
@@ -195,6 +221,34 @@ Integer ii = (Integer)get_Value("P_Revenue_Acct");
 if (ii == null) return 0;
 return ii.intValue();
 }
+/** Set Revenue Exchange */
+public void setP_RevenueExchange_Acct (int P_RevenueExchange_Acct)
+{
+set_Value ("P_RevenueExchange_Acct", new Integer(P_RevenueExchange_Acct));
+}
+/** Get Revenue Exchange */
+public int getP_RevenueExchange_Acct() 
+{
+Integer ii = (Integer)get_Value("P_RevenueExchange_Acct");
+if (ii == null) return 0;
+return ii.intValue();
+}
+/** Set Process Now */
+public void setProcessing (boolean Processing)
+{
+set_Value ("Processing", new Boolean(Processing));
+}
+/** Get Process Now */
+public boolean isProcessing() 
+{
+Object oo = get_Value("Processing");
+if (oo != null) 
+{
+ if (oo instanceof Boolean) return ((Boolean)oo).booleanValue();
+ return "Y".equals(oo);
+}
+return false;
+}
 /** Set Trade Discount Granted.
 Trade Discount Granted Account */
 public void setP_TradeDiscountGrant_Acct (int P_TradeDiscountGrant_Acct)
@@ -222,21 +276,5 @@ public int getP_TradeDiscountRec_Acct()
 Integer ii = (Integer)get_Value("P_TradeDiscountRec_Acct");
 if (ii == null) return 0;
 return ii.intValue();
-}
-/** Set Process Now */
-public void setProcessing (boolean Processing)
-{
-set_Value ("Processing", new Boolean(Processing));
-}
-/** Get Process Now */
-public boolean isProcessing() 
-{
-Object oo = get_Value("Processing");
-if (oo != null) 
-{
- if (oo instanceof Boolean) return ((Boolean)oo).booleanValue();
- return "Y".equals(oo);
-}
-return false;
 }
 }

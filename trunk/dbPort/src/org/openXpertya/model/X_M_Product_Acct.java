@@ -1,13 +1,14 @@
-/** Modelo Generado - NO CAMBIAR MANUALMENTE - Copyright (C) 2006 FUNDESLE */
+/** Modelo Generado - NO CAMBIAR MANUALMENTE - Disytel */
 package org.openXpertya.model;
-import java.util.*;
+import java.util.logging.Level;
+ import java.util.*;
 import java.sql.*;
 import java.math.*;
 import org.openXpertya.util.*;
 /** Modelo Generado por M_Product_Acct
- *  @author Comunidad de Desarrollo openXpertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
- *  @version  - 2009-03-11 09:47:03.14 */
-public class X_M_Product_Acct extends PO
+ *  @author Comunidad de Desarrollo Libertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
+ *  @version  - 2012-07-09 20:10:56.54 */
+public class X_M_Product_Acct extends org.openXpertya.model.PO
 {
 /** Constructor estándar */
 public X_M_Product_Acct (Properties ctx, int M_Product_Acct_ID, String trxName)
@@ -24,6 +25,7 @@ setP_Expense_Acct (0);
 setP_InvoicePriceVariance_Acct (0);
 setP_PurchasePriceVariance_Acct (0);
 setP_Revenue_Acct (0);
+setP_RevenueExchange_Acct (0);
 setP_TradeDiscountGrant_Acct (0);
 setP_TradeDiscountRec_Acct (0);
 }
@@ -34,13 +36,13 @@ public X_M_Product_Acct (Properties ctx, ResultSet rs, String trxName)
 {
 super (ctx, rs, trxName);
 }
-/** AD_Table_ID=273 */
-public static final int Table_ID=273;
+/** AD_Table_ID */
+public static final int Table_ID = M_Table.getTableID("M_Product_Acct");
 
 /** TableName=M_Product_Acct */
 public static final String Table_Name="M_Product_Acct";
 
-protected static KeyNamePair Model = new KeyNamePair(273,"M_Product_Acct");
+protected static KeyNamePair Model = new KeyNamePair(Table_ID,"M_Product_Acct");
 protected static BigDecimal AccessLevel = new BigDecimal(3);
 
 /** Load Meta Data */
@@ -97,6 +99,30 @@ Product, Service, Item */
 public int getM_Product_ID() 
 {
 Integer ii = (Integer)get_Value("M_Product_ID");
+if (ii == null) return 0;
+return ii.intValue();
+}
+/** Set Amortization Account */
+public void setP_Amortization_Acct (int P_Amortization_Acct)
+{
+set_Value ("P_Amortization_Acct", new Integer(P_Amortization_Acct));
+}
+/** Get Amortization Account */
+public int getP_Amortization_Acct() 
+{
+Integer ii = (Integer)get_Value("P_Amortization_Acct");
+if (ii == null) return 0;
+return ii.intValue();
+}
+/** Set Amortization Realized Account */
+public void setP_Amortization_Realized_Acct (int P_Amortization_Realized_Acct)
+{
+set_Value ("P_Amortization_Realized_Acct", new Integer(P_Amortization_Realized_Acct));
+}
+/** Get Amortization Realized Account */
+public int getP_Amortization_Realized_Acct() 
+{
+Integer ii = (Integer)get_Value("P_Amortization_Realized_Acct");
 if (ii == null) return 0;
 return ii.intValue();
 }
@@ -181,6 +207,18 @@ Account for Product Revenue (Sales Account) */
 public int getP_Revenue_Acct() 
 {
 Integer ii = (Integer)get_Value("P_Revenue_Acct");
+if (ii == null) return 0;
+return ii.intValue();
+}
+/** Set Revenue Exchange */
+public void setP_RevenueExchange_Acct (int P_RevenueExchange_Acct)
+{
+set_Value ("P_RevenueExchange_Acct", new Integer(P_RevenueExchange_Acct));
+}
+/** Get Revenue Exchange */
+public int getP_RevenueExchange_Acct() 
+{
+Integer ii = (Integer)get_Value("P_RevenueExchange_Acct");
 if (ii == null) return 0;
 return ii.intValue();
 }

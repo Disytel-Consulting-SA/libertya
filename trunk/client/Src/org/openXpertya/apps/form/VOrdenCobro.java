@@ -561,6 +561,7 @@ public class VOrdenCobro extends VOrdenPago {
 			}
 		});
         tenderTypeIndexsCombos.put(TAB_INDEX_CHEQUE, cboCheckReceiptMedium);
+        updateBank((MPOSPaymentMedium) cboCheckReceiptMedium.getValue());
         org.jdesktop.layout.GroupLayout jPanel7Layout = new org.jdesktop.layout.GroupLayout(jPanel7);
         jPanel7.setLayout(jPanel7Layout);
         jPanel7Layout.setHorizontalGroup(
@@ -582,6 +583,7 @@ public class VOrdenCobro extends VOrdenPago {
                 .add(jPanel7Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
                 	.add(txtChequeCUITLibrador, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 165, Short.MAX_VALUE)
                 	.add(txtChequeBanco, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 165, Short.MAX_VALUE)
+                	.add(cboChequeBancoID, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 165, Short.MAX_VALUE)
                     .add(txtChequeNroCheque, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 165, Short.MAX_VALUE)
                     .add(txtChequeALaOrden, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 165, Short.MAX_VALUE)
                     .add(txtChequeImporte, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 165, Short.MAX_VALUE)
@@ -626,7 +628,8 @@ public class VOrdenCobro extends VOrdenPago {
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                 .add(jPanel7Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
                     .add(lblChequeBanco)
-                    .add(txtChequeBanco, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
+                    .add(txtChequeBanco, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                    .add(cboChequeBancoID, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                 .add(jPanel7Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
                     .add(lblChequeCUITLibrador)
@@ -640,7 +643,7 @@ public class VOrdenCobro extends VOrdenPago {
         );
         return jPanel7;
     }
-	
+
 	@Override
 	protected JComponent createCreditTab(){
     	jPanel11.setOpaque(false);
@@ -1506,7 +1509,7 @@ public class VOrdenCobro extends VOrdenPago {
 				txtChequeNroCheque.getText(), amount,
 				chequeFechaEmision.getTimestamp(),
 				chequeFechaPago.getTimestamp(), txtChequeALaOrden.getText(),
-				txtChequeBanco.getText(), txtChequeCUITLibrador.getText(),
+				getBankName(), txtChequeCUITLibrador.getText(),
 				txtChequeDescripcion.getText(),
 				getC_Campaign_ID(),
 				getC_Project_ID());
@@ -1799,6 +1802,11 @@ public class VOrdenCobro extends VOrdenPago {
 		// Obtengo la configuración de días del medio de pago para la fecha de
 		// vencimiento pago del cheque
     	updateFechaPagoCheque(paymentMedium);
+    }
+    
+    protected void updateBank(MPOSPaymentMedium paymentMedium){
+    	cboChequeBancoID.setVisible(paymentMedium.isNormalizedBank());	
+    	txtChequeBanco.setVisible(!paymentMedium.isNormalizedBank());
     }
 
     @Override
@@ -2158,6 +2166,7 @@ public class VOrdenCobro extends VOrdenPago {
 			MPOSPaymentMedium paymentMedium = (MPOSPaymentMedium)e.getItem();
 			loadPaymentMediumInfo(paymentMedium);
 			updateDiscount(paymentMedium);
+			updateBank(paymentMedium);
 		}    	
     }
 	
@@ -2184,5 +2193,9 @@ public class VOrdenCobro extends VOrdenPago {
 		else if (jTabbedPane1.getSelectedIndex() == 1){
 			setActionEnabled(GOTO_TENDER_TYPE, true);
 		}
+	}
+	
+	public String getBankName(){
+		return (txtChequeBanco.isVisible() ? txtChequeBanco.getText() : getModel().getBank((Integer) cboChequeBancoID.getValue()));
 	}
 }

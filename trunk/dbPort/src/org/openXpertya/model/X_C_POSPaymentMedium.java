@@ -7,7 +7,7 @@ import java.math.*;
 import org.openXpertya.util.*;
 /** Modelo Generado por C_POSPaymentMedium
  *  @author Comunidad de Desarrollo Libertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
- *  @version  - 2012-04-11 14:34:38.793 */
+ *  @version  - 2012-07-09 20:10:44.562 */
 public class X_C_POSPaymentMedium extends org.openXpertya.model.PO
 {
 /** Constructor estándar */
@@ -23,6 +23,7 @@ setContext (null);	// B
 setC_POSPaymentMedium_ID (0);
 setDateFrom (new Timestamp(System.currentTimeMillis()));	// @#Date@
 setDateTo (new Timestamp(System.currentTimeMillis()));
+setIsNormalizedBank (false);
 setM_EntidadFinanciera_ID (0);
 setName (null);
 setTenderType (null);	// 'CA'
@@ -141,6 +142,22 @@ set_Value ("BeforeCheckDeadLineTo", BeforeCheckDeadLineTo);
 public String getBeforeCheckDeadLineTo() 
 {
 return (String)get_Value("BeforeCheckDeadLineTo");
+}
+/** Set Bank.
+Bank */
+public void setC_Bank_ID (int C_Bank_ID)
+{
+if (C_Bank_ID <= 0) set_Value ("C_Bank_ID", null);
+ else 
+set_Value ("C_Bank_ID", new Integer(C_Bank_ID));
+}
+/** Get Bank.
+Bank */
+public int getC_Bank_ID() 
+{
+Integer ii = (Integer)get_Value("C_Bank_ID");
+if (ii == null) return 0;
+return ii.intValue();
 }
 /** Set Currency.
 The Currency for this record */
@@ -266,6 +283,22 @@ Optional short description of the record */
 public String getDescription() 
 {
 return (String)get_Value("Description");
+}
+/** Set Is Normalized Bank */
+public void setIsNormalizedBank (boolean IsNormalizedBank)
+{
+set_Value ("IsNormalizedBank", new Boolean(IsNormalizedBank));
+}
+/** Get Is Normalized Bank */
+public boolean isNormalizedBank() 
+{
+Object oo = get_Value("IsNormalizedBank");
+if (oo != null) 
+{
+ if (oo instanceof Boolean) return ((Boolean)oo).booleanValue();
+ return "Y".equals(oo);
+}
+return false;
 }
 /** Set Discount Schema.
 Schema to calculate the trade discount percentage */

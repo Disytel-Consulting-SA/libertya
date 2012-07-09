@@ -1,13 +1,14 @@
-/** Modelo Generado - NO CAMBIAR MANUALMENTE - Copyright (C) 2006 FUNDESLE */
+/** Modelo Generado - NO CAMBIAR MANUALMENTE - Disytel */
 package org.openXpertya.model;
-import java.util.*;
+import java.util.logging.Level;
+ import java.util.*;
 import java.sql.*;
 import java.math.*;
 import org.openXpertya.util.*;
 /** Modelo Generado por C_AcctSchema_Default
- *  @author Comunidad de Desarrollo openXpertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
- *  @version  - 2008-01-03 10:26:27.312 */
-public class X_C_AcctSchema_Default extends PO
+ *  @author Comunidad de Desarrollo Libertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
+ *  @version  - 2012-07-09 20:10:37.405 */
+public class X_C_AcctSchema_Default extends org.openXpertya.model.PO
 {
 /** Constructor estándar */
 public X_C_AcctSchema_Default (Properties ctx, int C_AcctSchema_Default_ID, String trxName)
@@ -17,9 +18,9 @@ super (ctx, C_AcctSchema_Default_ID, trxName);
 {
 setB_Asset_Acct (0);
 setB_Expense_Acct (0);
-setB_InTransit_Acct (0);
 setB_InterestExp_Acct (0);
 setB_InterestRev_Acct (0);
+setB_InTransit_Acct (0);
 setB_PaymentSelect_Acct (0);
 setB_RevaluationGain_Acct (0);
 setB_RevaluationLoss_Acct (0);
@@ -27,33 +28,34 @@ setB_SettlementGain_Acct (0);
 setB_SettlementLoss_Acct (0);
 setB_UnallocatedCash_Acct (0);
 setB_Unidentified_Acct (0);
+setC_AcctSchema_ID (0);
 setCB_Asset_Acct (0);
 setCB_CashTransfer_Acct (0);
 setCB_Differences_Acct (0);
 setCB_Expense_Acct (0);
 setCB_Receipt_Acct (0);
-setC_AcctSchema_ID (0);
-setC_Prepayment_Acct (0);
-setC_Receivable_Acct (0);
 setCh_Expense_Acct (0);
 setCh_Revenue_Acct (0);
+setC_Prepayment_Acct (0);
+setC_Receivable_Acct (0);
 setE_Expense_Acct (0);
 setE_Prepayment_Acct (0);
 setNotInvoicedReceipts_Acct (0);
 setNotInvoicedReceivables_Acct (0);
 setNotInvoicedRevenue_Acct (0);
-setPJ_Asset_Acct (0);
-setPJ_WIP_Acct (0);
 setP_Asset_Acct (0);
+setPayDiscount_Exp_Acct (0);
+setPayDiscount_Rev_Acct (0);
 setP_Cogs_Acct (0);
 setP_Expense_Acct (0);
 setP_InvoicePriceVariance_Acct (0);
+setPJ_Asset_Acct (0);
+setPJ_WIP_Acct (0);
 setP_PurchasePriceVariance_Acct (0);
 setP_Revenue_Acct (0);
+setP_RevenueExchange_Acct (0);
 setP_TradeDiscountGrant_Acct (0);
 setP_TradeDiscountRec_Acct (0);
-setPayDiscount_Exp_Acct (0);
-setPayDiscount_Rev_Acct (0);
 setRealizedGain_Acct (0);
 setRealizedLoss_Acct (0);
 setT_Credit_Acct (0);
@@ -70,8 +72,8 @@ setV_Prepayment_Acct (0);
 setW_Differences_Acct (0);
 setW_InvActualAdjust_Acct (0);
 setW_Inventory_Acct (0);
-setW_Revaluation_Acct (0);
 setWithholding_Acct (0);
+setW_Revaluation_Acct (0);
 setWriteOff_Acct (0);
 }
  */
@@ -81,13 +83,13 @@ public X_C_AcctSchema_Default (Properties ctx, ResultSet rs, String trxName)
 {
 super (ctx, rs, trxName);
 }
-/** AD_Table_ID=315 */
-public static final int Table_ID=315;
+/** AD_Table_ID */
+public static final int Table_ID = M_Table.getTableID("C_AcctSchema_Default");
 
 /** TableName=C_AcctSchema_Default */
 public static final String Table_Name="C_AcctSchema_Default";
 
-protected static KeyNamePair Model = new KeyNamePair(315,"C_AcctSchema_Default");
+protected static KeyNamePair Model = new KeyNamePair(Table_ID,"C_AcctSchema_Default");
 protected static BigDecimal AccessLevel = new BigDecimal(2);
 
 /** Load Meta Data */
@@ -129,20 +131,6 @@ Integer ii = (Integer)get_Value("B_Expense_Acct");
 if (ii == null) return 0;
 return ii.intValue();
 }
-/** Set Bank In Transit.
-Bank In Transit Account */
-public void setB_InTransit_Acct (int B_InTransit_Acct)
-{
-set_Value ("B_InTransit_Acct", new Integer(B_InTransit_Acct));
-}
-/** Get Bank In Transit.
-Bank In Transit Account */
-public int getB_InTransit_Acct() 
-{
-Integer ii = (Integer)get_Value("B_InTransit_Acct");
-if (ii == null) return 0;
-return ii.intValue();
-}
 /** Set Bank Interest Expense.
 Bank Interest Expense Account */
 public void setB_InterestExp_Acct (int B_InterestExp_Acct)
@@ -168,6 +156,20 @@ Bank Interest Revenue Account */
 public int getB_InterestRev_Acct() 
 {
 Integer ii = (Integer)get_Value("B_InterestRev_Acct");
+if (ii == null) return 0;
+return ii.intValue();
+}
+/** Set Bank In Transit.
+Bank In Transit Account */
+public void setB_InTransit_Acct (int B_InTransit_Acct)
+{
+set_Value ("B_InTransit_Acct", new Integer(B_InTransit_Acct));
+}
+/** Get Bank In Transit.
+Bank In Transit Account */
+public int getB_InTransit_Acct() 
+{
+Integer ii = (Integer)get_Value("B_InTransit_Acct");
 if (ii == null) return 0;
 return ii.intValue();
 }
@@ -269,6 +271,24 @@ Integer ii = (Integer)get_Value("B_Unidentified_Acct");
 if (ii == null) return 0;
 return ii.intValue();
 }
+/** Set Accounting Schema.
+Rules for accounting */
+public void setC_AcctSchema_ID (int C_AcctSchema_ID)
+{
+set_ValueNoCheck ("C_AcctSchema_ID", new Integer(C_AcctSchema_ID));
+}
+/** Get Accounting Schema.
+Rules for accounting */
+public int getC_AcctSchema_ID() 
+{
+Integer ii = (Integer)get_Value("C_AcctSchema_ID");
+if (ii == null) return 0;
+return ii.intValue();
+}
+public KeyNamePair getKeyNamePair() 
+{
+return new KeyNamePair(getID(), String.valueOf(getC_AcctSchema_ID()));
+}
 /** Set Cash Book Asset.
 Cash Book Asset Account */
 public void setCB_Asset_Acct (int CB_Asset_Acct)
@@ -339,23 +359,33 @@ Integer ii = (Integer)get_Value("CB_Receipt_Acct");
 if (ii == null) return 0;
 return ii.intValue();
 }
-/** Set Accounting Schema.
-Rules for accounting */
-public void setC_AcctSchema_ID (int C_AcctSchema_ID)
+/** Set Charge Expense.
+Charge Expense Account */
+public void setCh_Expense_Acct (int Ch_Expense_Acct)
 {
-set_ValueNoCheck ("C_AcctSchema_ID", new Integer(C_AcctSchema_ID));
+set_Value ("Ch_Expense_Acct", new Integer(Ch_Expense_Acct));
 }
-/** Get Accounting Schema.
-Rules for accounting */
-public int getC_AcctSchema_ID() 
+/** Get Charge Expense.
+Charge Expense Account */
+public int getCh_Expense_Acct() 
 {
-Integer ii = (Integer)get_Value("C_AcctSchema_ID");
+Integer ii = (Integer)get_Value("Ch_Expense_Acct");
 if (ii == null) return 0;
 return ii.intValue();
 }
-public KeyNamePair getKeyNamePair() 
+/** Set Charge Revenue.
+Charge Revenue Account */
+public void setCh_Revenue_Acct (int Ch_Revenue_Acct)
 {
-return new KeyNamePair(getID(), String.valueOf(getC_AcctSchema_ID()));
+set_Value ("Ch_Revenue_Acct", new Integer(Ch_Revenue_Acct));
+}
+/** Get Charge Revenue.
+Charge Revenue Account */
+public int getCh_Revenue_Acct() 
+{
+Integer ii = (Integer)get_Value("Ch_Revenue_Acct");
+if (ii == null) return 0;
+return ii.intValue();
 }
 /** Set Customer Prepayment.
 Account for customer prepayments */
@@ -382,34 +412,6 @@ Account for Customer Receivables */
 public int getC_Receivable_Acct() 
 {
 Integer ii = (Integer)get_Value("C_Receivable_Acct");
-if (ii == null) return 0;
-return ii.intValue();
-}
-/** Set Charge Expense.
-Charge Expense Account */
-public void setCh_Expense_Acct (int Ch_Expense_Acct)
-{
-set_Value ("Ch_Expense_Acct", new Integer(Ch_Expense_Acct));
-}
-/** Get Charge Expense.
-Charge Expense Account */
-public int getCh_Expense_Acct() 
-{
-Integer ii = (Integer)get_Value("Ch_Expense_Acct");
-if (ii == null) return 0;
-return ii.intValue();
-}
-/** Set Charge Revenue.
-Charge Revenue Account */
-public void setCh_Revenue_Acct (int Ch_Revenue_Acct)
-{
-set_Value ("Ch_Revenue_Acct", new Integer(Ch_Revenue_Acct));
-}
-/** Get Charge Revenue.
-Charge Revenue Account */
-public int getCh_Revenue_Acct() 
-{
-Integer ii = (Integer)get_Value("Ch_Revenue_Acct");
 if (ii == null) return 0;
 return ii.intValue();
 }
@@ -483,31 +485,27 @@ Integer ii = (Integer)get_Value("NotInvoicedRevenue_Acct");
 if (ii == null) return 0;
 return ii.intValue();
 }
-/** Set Project Asset.
-Project Asset Account */
-public void setPJ_Asset_Acct (int PJ_Asset_Acct)
+/** Set Amortization Account */
+public void setP_Amortization_Acct (int P_Amortization_Acct)
 {
-set_Value ("PJ_Asset_Acct", new Integer(PJ_Asset_Acct));
+set_Value ("P_Amortization_Acct", new Integer(P_Amortization_Acct));
 }
-/** Get Project Asset.
-Project Asset Account */
-public int getPJ_Asset_Acct() 
+/** Get Amortization Account */
+public int getP_Amortization_Acct() 
 {
-Integer ii = (Integer)get_Value("PJ_Asset_Acct");
+Integer ii = (Integer)get_Value("P_Amortization_Acct");
 if (ii == null) return 0;
 return ii.intValue();
 }
-/** Set Work In Progress.
-Account for Work in Progress */
-public void setPJ_WIP_Acct (int PJ_WIP_Acct)
+/** Set Amortization Realized Account */
+public void setP_Amortization_Realized_Acct (int P_Amortization_Realized_Acct)
 {
-set_Value ("PJ_WIP_Acct", new Integer(PJ_WIP_Acct));
+set_Value ("P_Amortization_Realized_Acct", new Integer(P_Amortization_Realized_Acct));
 }
-/** Get Work In Progress.
-Account for Work in Progress */
-public int getPJ_WIP_Acct() 
+/** Get Amortization Realized Account */
+public int getP_Amortization_Realized_Acct() 
 {
-Integer ii = (Integer)get_Value("PJ_WIP_Acct");
+Integer ii = (Integer)get_Value("P_Amortization_Realized_Acct");
 if (ii == null) return 0;
 return ii.intValue();
 }
@@ -522,6 +520,34 @@ Account for Product Asset (Inventory) */
 public int getP_Asset_Acct() 
 {
 Integer ii = (Integer)get_Value("P_Asset_Acct");
+if (ii == null) return 0;
+return ii.intValue();
+}
+/** Set Payment Discount Expense.
+Payment Discount Expense Account */
+public void setPayDiscount_Exp_Acct (int PayDiscount_Exp_Acct)
+{
+set_Value ("PayDiscount_Exp_Acct", new Integer(PayDiscount_Exp_Acct));
+}
+/** Get Payment Discount Expense.
+Payment Discount Expense Account */
+public int getPayDiscount_Exp_Acct() 
+{
+Integer ii = (Integer)get_Value("PayDiscount_Exp_Acct");
+if (ii == null) return 0;
+return ii.intValue();
+}
+/** Set Payment Discount Revenue.
+Payment Discount Revenue Account */
+public void setPayDiscount_Rev_Acct (int PayDiscount_Rev_Acct)
+{
+set_Value ("PayDiscount_Rev_Acct", new Integer(PayDiscount_Rev_Acct));
+}
+/** Get Payment Discount Revenue.
+Payment Discount Revenue Account */
+public int getPayDiscount_Rev_Acct() 
+{
+Integer ii = (Integer)get_Value("PayDiscount_Rev_Acct");
 if (ii == null) return 0;
 return ii.intValue();
 }
@@ -567,6 +593,34 @@ Integer ii = (Integer)get_Value("P_InvoicePriceVariance_Acct");
 if (ii == null) return 0;
 return ii.intValue();
 }
+/** Set Project Asset.
+Project Asset Account */
+public void setPJ_Asset_Acct (int PJ_Asset_Acct)
+{
+set_Value ("PJ_Asset_Acct", new Integer(PJ_Asset_Acct));
+}
+/** Get Project Asset.
+Project Asset Account */
+public int getPJ_Asset_Acct() 
+{
+Integer ii = (Integer)get_Value("PJ_Asset_Acct");
+if (ii == null) return 0;
+return ii.intValue();
+}
+/** Set Work In Progress.
+Account for Work in Progress */
+public void setPJ_WIP_Acct (int PJ_WIP_Acct)
+{
+set_Value ("PJ_WIP_Acct", new Integer(PJ_WIP_Acct));
+}
+/** Get Work In Progress.
+Account for Work in Progress */
+public int getPJ_WIP_Acct() 
+{
+Integer ii = (Integer)get_Value("PJ_WIP_Acct");
+if (ii == null) return 0;
+return ii.intValue();
+}
 /** Set Purchase Price Variance.
 Difference between Standard Cost and Purchase Price (PPV) */
 public void setP_PurchasePriceVariance_Acct (int P_PurchasePriceVariance_Acct)
@@ -595,6 +649,34 @@ Integer ii = (Integer)get_Value("P_Revenue_Acct");
 if (ii == null) return 0;
 return ii.intValue();
 }
+/** Set Revenue Exchange */
+public void setP_RevenueExchange_Acct (int P_RevenueExchange_Acct)
+{
+set_Value ("P_RevenueExchange_Acct", new Integer(P_RevenueExchange_Acct));
+}
+/** Get Revenue Exchange */
+public int getP_RevenueExchange_Acct() 
+{
+Integer ii = (Integer)get_Value("P_RevenueExchange_Acct");
+if (ii == null) return 0;
+return ii.intValue();
+}
+/** Set Process Now */
+public void setProcessing (boolean Processing)
+{
+set_Value ("Processing", new Boolean(Processing));
+}
+/** Get Process Now */
+public boolean isProcessing() 
+{
+Object oo = get_Value("Processing");
+if (oo != null) 
+{
+ if (oo instanceof Boolean) return ((Boolean)oo).booleanValue();
+ return "Y".equals(oo);
+}
+return false;
+}
 /** Set Trade Discount Granted.
 Trade Discount Granted Account */
 public void setP_TradeDiscountGrant_Acct (int P_TradeDiscountGrant_Acct)
@@ -622,50 +704,6 @@ public int getP_TradeDiscountRec_Acct()
 Integer ii = (Integer)get_Value("P_TradeDiscountRec_Acct");
 if (ii == null) return 0;
 return ii.intValue();
-}
-/** Set Payment Discount Expense.
-Payment Discount Expense Account */
-public void setPayDiscount_Exp_Acct (int PayDiscount_Exp_Acct)
-{
-set_Value ("PayDiscount_Exp_Acct", new Integer(PayDiscount_Exp_Acct));
-}
-/** Get Payment Discount Expense.
-Payment Discount Expense Account */
-public int getPayDiscount_Exp_Acct() 
-{
-Integer ii = (Integer)get_Value("PayDiscount_Exp_Acct");
-if (ii == null) return 0;
-return ii.intValue();
-}
-/** Set Payment Discount Revenue.
-Payment Discount Revenue Account */
-public void setPayDiscount_Rev_Acct (int PayDiscount_Rev_Acct)
-{
-set_Value ("PayDiscount_Rev_Acct", new Integer(PayDiscount_Rev_Acct));
-}
-/** Get Payment Discount Revenue.
-Payment Discount Revenue Account */
-public int getPayDiscount_Rev_Acct() 
-{
-Integer ii = (Integer)get_Value("PayDiscount_Rev_Acct");
-if (ii == null) return 0;
-return ii.intValue();
-}
-/** Set Process Now */
-public void setProcessing (boolean Processing)
-{
-set_Value ("Processing", new Boolean(Processing));
-}
-/** Get Process Now */
-public boolean isProcessing() 
-{
-Object oo = get_Value("Processing");
-if (oo != null) 
-{
- if (oo instanceof Boolean) return ((Boolean)oo).booleanValue();
- return "Y".equals(oo);
-}
-return false;
 }
 /** Set Realized Gain Acct.
 Realized Gain Account */
@@ -891,20 +929,6 @@ Integer ii = (Integer)get_Value("W_Inventory_Acct");
 if (ii == null) return 0;
 return ii.intValue();
 }
-/** Set Inventory Revaluation.
-Account for Inventory Revaluation */
-public void setW_Revaluation_Acct (int W_Revaluation_Acct)
-{
-set_Value ("W_Revaluation_Acct", new Integer(W_Revaluation_Acct));
-}
-/** Get Inventory Revaluation.
-Account for Inventory Revaluation */
-public int getW_Revaluation_Acct() 
-{
-Integer ii = (Integer)get_Value("W_Revaluation_Acct");
-if (ii == null) return 0;
-return ii.intValue();
-}
 /** Set Withholding.
 Account for Withholdings */
 public void setWithholding_Acct (int Withholding_Acct)
@@ -916,6 +940,20 @@ Account for Withholdings */
 public int getWithholding_Acct() 
 {
 Integer ii = (Integer)get_Value("Withholding_Acct");
+if (ii == null) return 0;
+return ii.intValue();
+}
+/** Set Inventory Revaluation.
+Account for Inventory Revaluation */
+public void setW_Revaluation_Acct (int W_Revaluation_Acct)
+{
+set_Value ("W_Revaluation_Acct", new Integer(W_Revaluation_Acct));
+}
+/** Get Inventory Revaluation.
+Account for Inventory Revaluation */
+public int getW_Revaluation_Acct() 
+{
+Integer ii = (Integer)get_Value("W_Revaluation_Acct");
 if (ii == null) return 0;
 return ii.intValue();
 }
