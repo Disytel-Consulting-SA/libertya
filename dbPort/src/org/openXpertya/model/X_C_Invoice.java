@@ -7,7 +7,7 @@ import java.math.*;
 import org.openXpertya.util.*;
 /** Modelo Generado por C_Invoice
  *  @author Comunidad de Desarrollo Libertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
- *  @version  - 2012-06-28 18:37:50.884 */
+ *  @version  - 2012-07-09 20:10:41.838 */
 public class X_C_Invoice extends org.openXpertya.model.PO
 {
 /** Constructor estándar */

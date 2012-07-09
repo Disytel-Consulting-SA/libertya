@@ -2820,3 +2820,12 @@ ALTER TABLE libertya.C_DocType ADD COLUMN IsPaymentOrderSeq character(1);
 
 -- 20120706-1930 Se inserto la columna C_DocType_ID en la tabla C_AllocationHdr
 ALTER TABLE libertya.C_AllocationHdr ADD COLUMN C_DocType_ID integer; 
+
+-- 20120709-1945 Inserción de la columna IsNormalizedBank a la tabla C_POSPaymentMedium 
+ALTER TABLE libertya.C_POSPaymentMedium ADD COLUMN IsNormalizedBank character(1) NOT NULL DEFAULT 'N'::bpchar;
+
+-- 20120709-1945 Inserción de la columna C_Bank_ID a la tabla C_POSPaymentMedium 
+ALTER TABLE libertya.C_POSPaymentMedium ADD COLUMN C_Bank_ID integer;
+
+-- 20120709-1955 Inserción de la columna C_Bank_ID a la tabla C_Payment
+ALTER TABLE libertya.C_Payment ADD COLUMN C_Bank_ID integer;

@@ -7,7 +7,7 @@ import java.math.*;
 import org.openXpertya.util.*;
 /** Modelo Generado por C_Payment
  *  @author Comunidad de Desarrollo Libertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
- *  @version  - 2012-06-07 23:17:15.102 */
+ *  @version  - 2012-07-09 20:10:43.383 */
 public class X_C_Payment extends org.openXpertya.model.PO
 {
 /** Constructor estándar */
@@ -345,6 +345,22 @@ Account at the Bank */
 public int getC_BankAccount_ID() 
 {
 Integer ii = (Integer)get_Value("C_BankAccount_ID");
+if (ii == null) return 0;
+return ii.intValue();
+}
+/** Set Bank.
+Bank */
+public void setC_Bank_ID (int C_Bank_ID)
+{
+if (C_Bank_ID <= 0) set_Value ("C_Bank_ID", null);
+ else 
+set_Value ("C_Bank_ID", new Integer(C_Bank_ID));
+}
+/** Get Bank.
+Bank */
+public int getC_Bank_ID() 
+{
+Integer ii = (Integer)get_Value("C_Bank_ID");
 if (ii == null) return 0;
 return ii.intValue();
 }

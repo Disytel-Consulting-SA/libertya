@@ -3230,6 +3230,11 @@ public class VOrdenPagoModel implements TableModelListener {
 			   " AND (C_Doctype.IsReceiptSeq = 'N') " +
 			   " AND (C_Doctype.DocBaseType = 'APP') ";
 	}
+
+	public String getBank(Integer value) {
+		// TODO Auto-generated method stub
+		return null;
+	}
 	
 }
 

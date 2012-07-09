@@ -363,6 +363,7 @@ public class VOrdenPago extends CPanel implements FormPanel,ActionListener,Table
         txtChequeALaOrden = new javax.swing.JTextField();
         txtChequeNroCheque = new javax.swing.JTextField();
         txtChequeBanco = new javax.swing.JTextField();
+        cboChequeBancoID = createChequeBancoIDLookup();
         txtChequeCUITLibrador = new javax.swing.JTextField();
         txtChequeDescripcion = new javax.swing.JTextField();
         panelCamProy = new javax.swing.JPanel();
@@ -1919,6 +1920,7 @@ public class VOrdenPago extends CPanel implements FormPanel,ActionListener,Table
 	protected javax.swing.JLabel lblChequeBanco;
 	protected javax.swing.JLabel lblChequeCUITLibrador;
 	protected javax.swing.JTextField txtChequeBanco;
+	protected VLookup cboChequeBancoID;
 	protected javax.swing.JTextField txtChequeCUITLibrador;
 	
     protected javax.swing.JPanel panelPagoAdelantado;
@@ -2686,6 +2688,10 @@ public class VOrdenPago extends CPanel implements FormPanel,ActionListener,Table
 	
 	protected VLookup createChequeChequeraLookup() {
 		return VComponentsFactory.VLookupFactory("C_BankAccountDoc_ID", "C_BankAccountDoc", m_WindowNo, DisplayType.TableDir , getModel().getChequeChequeraSqlValidation() );
+	}
+
+	protected VLookup createChequeBancoIDLookup() {
+		return VComponentsFactory.VLookupFactory("C_Bank_ID", "C_Bank", m_WindowNo, DisplayType.TableDir);
 	}
 	
 	protected void chequeraChange(PropertyChangeEvent e) {

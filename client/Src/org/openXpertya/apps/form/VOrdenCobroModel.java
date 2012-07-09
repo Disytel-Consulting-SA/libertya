@@ -43,6 +43,7 @@ import org.openXpertya.model.MRefList;
 import org.openXpertya.model.MTax;
 import org.openXpertya.model.RetencionProcessor;
 import org.openXpertya.model.X_C_AllocationHdr;
+import org.openXpertya.model.X_C_Bank;
 import org.openXpertya.process.ProcessInfo;
 import org.openXpertya.rc.Invoice;
 import org.openXpertya.rc.ReciboDeCliente;
@@ -1741,6 +1742,11 @@ public class VOrdenCobroModel extends VOrdenPagoModel {
 		return " ((C_Doctype.ad_Org_ID = 0) OR (C_Doctype.ad_Org_ID = " + Env.getAD_Org_ID(m_ctx) + "))" + 
 			   " AND (C_Doctype.IsReceiptSeq = 'Y') " +
 			   " AND (C_Doctype.DocBaseType = 'ARR') ";
+	}
+	
+
+	public String getBank(Integer value) {
+		return ((new X_C_Bank(getCtx(), value, getTrxName())).getName()); 
 	}
 	
 }
