@@ -1335,6 +1335,7 @@ public class VOrdenPagoModel implements TableModelListener {
 	 */
 	public BigDecimal getSaldoMediosPago() {
 		BigDecimal suma = getSumaTotalPagarFacturas();
+		suma = suma == null?BigDecimal.ZERO:suma;
 		
 		//suma = suma.subtract(getSumaRetenciones()).subtract(getSumaMediosPago());
 		suma = suma.subtract(getSumaMediosPago());
@@ -1613,7 +1614,9 @@ public class VOrdenPagoModel implements TableModelListener {
 				line.setIgnoreAllocCreate(true); // Evita la creación del allocation al completar la línea.
 				// No actualizo el saldo de la entidad comercial
 				line.setUpdateBPBalance(false);
-				line.setC_POSPaymentMedium_ID(mp.getPaymentMedium().getID());
+				
+				addCustomCashLineInfo(line, mpe);
+				
 				// Guarda la linea de caja
 				if (!line.save()) {
 					errorMsg = CLogger.retrieveErrorAsString();
@@ -2693,6 +2696,19 @@ public class VOrdenPagoModel implements TableModelListener {
 	 *            medio de pago actual relacionado
 	 */
 	protected void addCustomPaymentInfo(MPayment pay, MedioPago mp){
+		// Por ahora no realiza nada		
+	}
+	
+	/**
+	 * Realizar tareas custom a medida que vamos creando los medios de pago.
+	 * Deben implementar las subclases
+	 * 
+	 * @param cashLine
+	 *            línea de caja en creación
+	 * @param mp
+	 *            medio de pago actual relacionado
+	 */
+	protected void addCustomCashLineInfo(MCashLine cashLine, MedioPago mp){
 		// Por ahora no realiza nada		
 	}
 
