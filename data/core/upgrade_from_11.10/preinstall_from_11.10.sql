@@ -2818,6 +2818,18 @@ ALTER TABLE libertya.C_DocType ADD COLUMN IsReceiptSeq character(1);
 -- 20120706-1900 Se inserto la columna IsPaymentOrderSeq en la tabla C_DocType
 ALTER TABLE libertya.C_DocType ADD COLUMN IsPaymentOrderSeq character(1); 
 
+-- 20120710-1130 Se asigno el valor N a la columna IsReceiptSeq para todos los registros previos de C_Doctype
+UPDATE libertya.C_DocType SET IsReceiptSeq = 'N' WHERE IsReceiptSeq IS NULL;
+
+-- 20120710-1130 Se asigno el valor N a la columna IsPaymentOrderSeq para todos los registros previos de C_Doctype
+UPDATE libertya.C_DocType SET IsPaymentOrderSeq = 'N' WHERE IsPaymentOrderSeq IS NULL; 
+
+-- 20120710-1130 Se asigno el valor N por defecto para la columna IsReceiptSeq de C_Doctype
+ALTER TABLE libertya.C_DocType ALTER COLUMN IsReceiptSeq SET DEFAULT 'N'::bpchar;
+
+-- 20120710-1130 Se asigno el valor N por defecto para la columna IsPaymentOrderSeq de C_Doctype
+ALTER TABLE libertya.C_DocType ALTER COLUMN IsPaymentOrderSeq SET DEFAULT 'N'::bpchar;
+
 -- 20120706-1930 Se inserto la columna C_DocType_ID en la tabla C_AllocationHdr
 ALTER TABLE libertya.C_AllocationHdr ADD COLUMN C_DocType_ID integer; 
 
