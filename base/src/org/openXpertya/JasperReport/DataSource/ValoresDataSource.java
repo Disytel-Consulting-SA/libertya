@@ -1,6 +1,8 @@
 package org.openXpertya.JasperReport.DataSource;
 
 import java.math.BigDecimal;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 import java.util.Properties;
 
 import net.sf.jasperreports.engine.JRException;
@@ -8,6 +10,7 @@ import net.sf.jasperreports.engine.JRField;
 
 import org.openXpertya.model.MPOSCashStatement;
 import org.openXpertya.report.NumeroCastellano;
+import org.openXpertya.util.DB;
 import org.openXpertya.util.Util;
 
 
@@ -43,6 +46,25 @@ public class ValoresDataSource extends DeclaracionValoresDataSource {
 		return getStdWhereClauseParams();
 	}
 
+	public BigDecimal getDeclaracionValoresTotalAmt() throws Exception{
+		StringBuffer sql = new StringBuffer("SELECT sum(amount_converted) FROM ( ");
+		sql.append(getQuery());
+		sql.append(" ) as todo ");
+		PreparedStatement ps = null;
+		ResultSet rs = null;
+		ps = DB.prepareStatement(sql.toString(), getTrxName());
+		BigDecimal total = BigDecimal.ZERO;
+		int i = 1;
+		for (Object param : getParameters()) {
+			ps.setObject(i++, param);
+		}
+		rs = ps.executeQuery();
+		if(rs.next()){
+			total = rs.getBigDecimal(1);
+		}
+		return total;
+	}
+	
 	@Override
 	protected String getTenderType() {
 		// TODO Auto-generated method stub

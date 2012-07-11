@@ -19,6 +19,7 @@ import org.openXpertya.JasperReport.DataSource.JasperReportsUtil;
 import org.openXpertya.JasperReport.DataSource.OXPJasperDataSource;
 import org.openXpertya.JasperReport.DataSource.OXPJasperEmptyDataSource;
 import org.openXpertya.JasperReport.DataSource.ValoresDataSource;
+import org.openXpertya.model.MCash;
 import org.openXpertya.model.MPOSJournal;
 import org.openXpertya.model.M_Table;
 import org.openXpertya.model.PO;
@@ -65,6 +66,12 @@ public class LaunchDeclaracionValores extends JasperReportLaunch {
 					JasperReportsUtil.getPODisplayByIdentifiers(getCtx(),
 							journalIDs.get(0), X_C_POSJournal.Table_ID,
 							get_TrxName()));
+			// Obtener la caja relacionada a esta caja diaria
+			MPOSJournal journal = new MPOSJournal(getCtx(), journalIDs.get(0), get_TrxName());
+			if(!Util.isEmpty(journal.getC_Cash_ID(), true)){
+				MCash cash = new MCash(getCtx(), journal.getC_Cash_ID(), get_TrxName());
+				addReportParameter("CASH_BALANCE", cash.getEndingBalance());
+			}
 		}
 		addReportParameter("SHOW_CURRENT_ACCOUNT", isShowCurrentAccount());
 		addReportParameter("SHOW_CURRENT_ACCOUNT_TRUE_DESCRIPTION", Msg.getMsg(getCtx(), "ShowCurrentAccount"));
@@ -139,6 +146,11 @@ public class LaunchDeclaracionValores extends JasperReportLaunch {
 		// Se agregan los datasources de los subreportes
 		addReportParameter("SUBREPORT_VALORES_DATASOURCE", valoresDS);
 		//////////////////////////////////////
+		// FIXME Cargar el total de la declaración de valores como parámetro ya
+		// que no está funcionando el valor de retorno del subreporte. Sacar
+		// esto y modificar el reporte para tomar ese valor cuando se actualice
+		// la librería de jasper, quizás venga por ahí el problema.
+		addReportParameter("DECLARACION_VALORES_TOTAL", valoresDS.getDeclaracionValoresTotalAmt());
 	}
 	
 	

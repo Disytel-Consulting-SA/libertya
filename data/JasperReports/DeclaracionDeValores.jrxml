@@ -44,6 +44,8 @@
 	<parameter name="SUBREPORT_VALORES_DATASOURCE" isForPrompting="false" class="net.sf.jasperreports.engine.JRDataSource"/>
 	<parameter name="COMPILED_SUBREPORT_VALORES" isForPrompting="false" class="java.io.InputStream"/>
 	<parameter name="SUBREPORT_CURRENTACCOUNT_DATASOURCE" isForPrompting="false" class="net.sf.jasperreports.engine.JRDataSource"/>
+	<parameter name="CASH_BALANCE" isForPrompting="false" class="java.math.BigDecimal"/>
+	<parameter name="DECLARACION_VALORES_TOTAL" isForPrompting="false" class="java.math.BigDecimal"/>
 
 	<variable name="total_efectivo" class="java.math.BigDecimal" resetType="Report" calculation="Nothing">
 	</variable>
@@ -224,7 +226,7 @@
 			</band>
 		</pageFooter>
 		<summary>
-			<band height="376"  isSplitAllowed="true" >
+			<band height="377"  isSplitAllowed="true" >
 				<subreport  isUsingCache="true">
 					<reportElement
 						x="0"
@@ -234,7 +236,7 @@
 						key="subreport-1"
 						positionType="Float"/>
 					<subreportParameter  name="TITLE">
-						<subreportParameterExpression><![CDATA["VALORES"]]></subreportParameterExpression>
+						<subreportParameterExpression><![CDATA["DECLARACIÓN DE EFECTIVO"]]></subreportParameterExpression>
 					</subreportParameter>
 					<dataSourceExpression><![CDATA[$P{SUBREPORT_VALORES_DATASOURCE}]]></dataSourceExpression>
 					<returnValue subreportVariable="total" toVariable="total_valores"/>
@@ -245,7 +247,7 @@
 						mode="Opaque"
 						x="0"
 						y="259"
-						width="470"
+						width="535"
 						height="20"
 						forecolor="#505050"
 						backcolor="#E8E8E8"
@@ -409,7 +411,7 @@
 					<textElement>
 						<font/>
 					</textElement>
-				<text><![CDATA[Total Valores:]]></text>
+				<text><![CDATA[Total Ventas:]]></text>
 				</staticText>
 				<textField isStretchWithOverflow="false" pattern="##0.00" isBlankWhenNull="true" evaluationTime="Band" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
@@ -423,13 +425,13 @@
 					<textElement textAlignment="Right">
 						<font/>
 					</textElement>
-				<textFieldExpression   class="java.math.BigDecimal"><![CDATA[$V{total_valores} != null? $V{total_valores}:java.math.BigDecimal.ZERO]]></textFieldExpression>
+				<textFieldExpression   class="java.math.BigDecimal"><![CDATA[$V{total_venta} != null? $V{total_venta}:java.math.BigDecimal.ZERO]]></textFieldExpression>
 				</textField>
 				<staticText>
 					<reportElement
 						x="246"
-						y="330"
-						width="120"
+						y="345"
+						width="182"
 						height="15"
 						key="staticText-13"
 						positionType="Float"/>
@@ -437,11 +439,11 @@
 					<textElement>
 						<font pdfFontName="Helvetica" size="12" isBold="false"/>
 					</textElement>
-				<text><![CDATA[Total Venta:]]></text>
+				<text><![CDATA[Saldo del Libro de Caja:]]></text>
 				</staticText>
 				<textField isStretchWithOverflow="false" pattern="##0.00" isBlankWhenNull="true" evaluationTime="Band" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
-						x="366"
+						x="428"
 						y="360"
 						width="100"
 						height="15"
@@ -451,12 +453,12 @@
 					<textElement textAlignment="Right">
 						<font pdfFontName="Helvetica-Bold" size="12" isBold="true" isItalic="false"/>
 					</textElement>
-				<textFieldExpression   class="java.math.BigDecimal"><![CDATA[($V{total_venta} == null?java.math.BigDecimal.ZERO:$V{total_venta}).subtract( (($V{total_efectivo} == null?java.math.BigDecimal.ZERO:$V{total_efectivo}).add( ($V{total_cheque} == null?java.math.BigDecimal.ZERO:$V{total_cheque}).add( ($V{total_transferencia} == null?java.math.BigDecimal.ZERO:$V{total_transferencia}).add( ($V{total_cupon} == null?java.math.BigDecimal.ZERO:$V{total_cupon}).add( ($V{total_nota_credito} == null?java.math.BigDecimal.ZERO:$V{total_nota_credito}).add( $V{total_valores} == null?java.math.BigDecimal.ZERO:$V{total_valores} ) ) ) ) )) )]]></textFieldExpression>
+				<textFieldExpression   class="java.math.BigDecimal"><![CDATA[$P{DECLARACION_VALORES_TOTAL}.subtract($P{CASH_BALANCE} == null?java.math.BigDecimal.ZERO:$P{CASH_BALANCE})]]></textFieldExpression>
 				</textField>
 				<textField isStretchWithOverflow="false" pattern="##0.00" isBlankWhenNull="true" evaluationTime="Band" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
-						x="366"
-						y="330"
+						x="428"
+						y="345"
 						width="100"
 						height="15"
 						key="textField-13"
@@ -465,32 +467,18 @@
 					<textElement textAlignment="Right">
 						<font pdfFontName="Helvetica" size="12" isBold="false"/>
 					</textElement>
-				<textFieldExpression   class="java.math.BigDecimal"><![CDATA[$V{total_venta} != null?$V{total_venta}:java.math.BigDecimal.ZERO]]></textFieldExpression>
-				</textField>
-				<textField isStretchWithOverflow="false" pattern="##0.00" isBlankWhenNull="true" evaluationTime="Band" hyperlinkType="None"  hyperlinkTarget="Self" >
-					<reportElement
-						x="366"
-						y="345"
-						width="100"
-						height="15"
-						key="textField-14"
-						positionType="Float"/>
-					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
-					<textElement textAlignment="Right">
-						<font pdfFontName="Helvetica" size="12" isBold="false"/>
-					</textElement>
-				<textFieldExpression   class="java.math.BigDecimal"><![CDATA[($V{total_efectivo} == null?java.math.BigDecimal.ZERO:$V{total_efectivo}).add( ($V{total_cheque} == null?java.math.BigDecimal.ZERO:$V{total_cheque}).add( ($V{total_transferencia} == null?java.math.BigDecimal.ZERO:$V{total_transferencia}).add( ($V{total_cupon} == null?java.math.BigDecimal.ZERO:$V{total_cupon}).add( ($V{total_nota_credito} == null?java.math.BigDecimal.ZERO:$V{total_nota_credito}).add( $V{total_valores} == null?java.math.BigDecimal.ZERO:$V{total_valores} ) ) ) ) )]]></textFieldExpression>
+				<textFieldExpression   class="java.math.BigDecimal"><![CDATA[$P{CASH_BALANCE} != null?$P{CASH_BALANCE}:java.math.BigDecimal.ZERO]]></textFieldExpression>
 				</textField>
 				<staticText>
 					<reportElement
 						x="246"
-						y="345"
-						width="120"
+						y="330"
+						width="182"
 						height="15"
 						key="staticText-14"
 						positionType="Float"/>
 					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
-					<textElement>
+					<textElement textAlignment="Left" verticalAlignment="Top">
 						<font pdfFontName="Helvetica" size="12" isBold="false"/>
 					</textElement>
 				<text><![CDATA[Total Declarado:]]></text>
@@ -499,7 +487,7 @@
 					<reportElement
 						x="246"
 						y="360"
-						width="120"
+						width="182"
 						height="15"
 						key="staticText-15"
 						positionType="Float"/>
@@ -637,6 +625,20 @@
 					<returnValue subreportVariable="total" toVariable="total_cuentacorriente"/>
 					<subreportExpression  class="java.io.InputStream"><![CDATA[$P{COMPILED_SUBREPORT_TYPE_VALUES}]]></subreportExpression>
 				</subreport>
+				<textField isStretchWithOverflow="false" pattern="##0.00" isBlankWhenNull="true" evaluationTime="Band" hyperlinkType="None"  hyperlinkTarget="Self" >
+					<reportElement
+						x="428"
+						y="330"
+						width="100"
+						height="15"
+						key="textField"
+						positionType="Float"/>
+					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
+					<textElement textAlignment="Right" verticalAlignment="Top">
+						<font size="12"/>
+					</textElement>
+				<textFieldExpression   class="java.math.BigDecimal"><![CDATA[$P{DECLARACION_VALORES_TOTAL}]]></textFieldExpression>
+				</textField>
 			</band>
 		</summary>
 </jasperReport>
