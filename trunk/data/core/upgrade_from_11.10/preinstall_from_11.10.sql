@@ -2841,3 +2841,8 @@ ALTER TABLE libertya.C_POSPaymentMedium ADD COLUMN C_Bank_ID integer;
 
 -- 20120709-1955 Inserción de la columna C_Bank_ID a la tabla C_Payment
 ALTER TABLE libertya.C_Payment ADD COLUMN C_Bank_ID integer;
+
+-- 20120711-1830 Inserción de la columna c_doctype_id a la tabla M_Transfer. Se pone el valor 0 para todos los registros existentes. Se marca la columna como obligatoria.
+ALTER TABLE libertya.M_Transfer ADD COLUMN c_doctype_id integer;
+UPDATE libertya.M_Transfer SET C_Doctype_ID = 0 WHERE C_Doctype_ID IS NULL;
+ALTER TABLE libertya.M_Transfer ALTER COLUMN c_doctype_id SET NOT NULL;
