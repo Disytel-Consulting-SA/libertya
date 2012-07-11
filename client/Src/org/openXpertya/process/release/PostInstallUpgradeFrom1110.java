@@ -1,5 +1,7 @@
 package org.openXpertya.process.release;
 
+import java.sql.PreparedStatement;
+
 import org.openXpertya.JasperReport.MJasperReport;
 import org.openXpertya.process.PluginPostInstallProcess;
 import org.openXpertya.util.DB;
@@ -7,6 +9,9 @@ import org.openXpertya.utils.JarHelper;
 
 public class PostInstallUpgradeFrom1110 extends PluginPostInstallProcess {
 
+	/** Ad_Client_ID */
+	protected static final int Ad_Client_ID=1010016;
+	
 	/** UID de la impresión de Transferencia de Mercadería */
 	protected final static String MATERIAL_TRANSFER_JASPER_REPORT_UID = "CORE-AD_JasperReport-1010044";
 	protected final static String MATERIAL_TRANSFER_JASPER_REPORT_FILENAME = "MaterialTransfer.jasper";
@@ -185,7 +190,7 @@ public class PostInstallUpgradeFrom1110 extends PluginPostInstallProcess {
 		
 		// Incorporar la clase validator nueva
 		DB.executeUpdate(
-				"UPDATE ad_client SET modelvalidationclasses = (CASE WHEN modelvalidationclasses is null THEN 'org.openXpertya.model.DocMaxLinesValidator;' ELSE 'org.openXpertya.model.DocMaxLinesValidator;' || modelvalidationclasses END) WHERE ad_client_id = 1010016",
+				"UPDATE ad_client SET modelvalidationclasses = (CASE WHEN modelvalidationclasses is null THEN 'org.openXpertya.model.DocMaxLinesValidator;' ELSE 'org.openXpertya.model.DocMaxLinesValidator;' || modelvalidationclasses END) WHERE ad_client_id = " + Ad_Client_ID,
 				get_TrxName());
 		
 		// Impresión de Documento de Cuenta Corriente
@@ -298,7 +303,19 @@ public class PostInstallUpgradeFrom1110 extends PluginPostInstallProcess {
 								jarFileURL,
 								getBinaryFileURL(PRODUCT_MOVEMENTS_JASPER_REPORT_FILENAME)));
 		
+		updateTransfer();
 		return " ";
+	}
+	
+	/** El metodo actualiza todos los registros de MTransfer existentes.*/
+	private void updateTransfer()  throws Exception{
+		String sql = 
+				/** Se pone en C_DocType_ID el ID de Transferencia Interna*/
+				"UPDATE libertya.M_Transfer SET C_Doctype_ID = (SELECT C_Doctype_ID FROM C_Doctype WHERE doctypekey = 'MMTRFI') WHERE C_Doctype_ID = 0; " +
+				/** Se pone en currentnext de la secuencia Transferencia Interna el valor que tiene actualmente la secuencia que se está usando (DocumentNo_M_Transfer) */
+				"UPDATE libertya.AD_Sequence SET currentnext = (SELECT currentnext FROM AD_Sequence WHERE (name = 'DocumentNo_M_Transfer') AND (AD_Client_ID = "+Ad_Client_ID +") AND (isactive = 'Y')) WHERE ( (name = 'Transferencia Interna') AND (AD_Client_ID = "+Ad_Client_ID +") AND (isactive = 'Y') );";
+				PreparedStatement ps = DB.prepareStatement(sql, get_TrxName());
+				ps.executeUpdate();
 	}
 	
 }
