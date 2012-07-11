@@ -1,5 +1,7 @@
 package org.openXpertya.JasperReport.DataSource;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Properties;
 
 public abstract class AuditoriaDataSource extends DeclaracionValoresDataSource {
@@ -44,7 +46,12 @@ public abstract class AuditoriaDataSource extends DeclaracionValoresDataSource {
 
 	@Override
 	protected Object[] getParameters() {
-		return new Object[]{getCurrencyReferenceID()};
+		List<Object> params = new ArrayList<Object>();
+		params.add(getCurrencyReferenceID());
+		for (Object param : getStdWhereClauseParams()) {
+			params.add(param);
+		}
+		return params.toArray();
 	}
 
 	/**
