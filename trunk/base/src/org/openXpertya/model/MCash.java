@@ -80,7 +80,9 @@ public class MCash extends X_C_Cash implements DocAction {
         // Existing Journal
 
         String sql = "SELECT * FROM C_Cash c " + "WHERE c.AD_Org_ID=?"                                                                                                                               // #1
-                     + " AND TRUNC(c.StatementDate)=TRUNC(?::timestamp)"                                                                                                                                               // #2
+                     + " AND extract('day' from c.StatementDate::date) = extract('day' from ?::date) " 
+                 	+ " AND extract('month' from c.StatementDate::date) = extract('month' from ?::date) " 
+                	+ " AND extract('year' from c.StatementDate::date) = extract('year' from ?::date) "
                      + " AND c.Processed='N'" + " AND EXISTS (SELECT * FROM C_CashBook cb " + "WHERE c.C_CashBook_ID=cb.C_CashBook_ID AND cb.AD_Org_ID=c.AD_Org_ID" + " AND cb.C_Currency_ID=?)";    // #3
         PreparedStatement pstmt = null;
 
@@ -88,7 +90,9 @@ public class MCash extends X_C_Cash implements DocAction {
             pstmt = DB.prepareStatement( sql,trxName );
             pstmt.setInt( 1,AD_Org_ID );
             pstmt.setTimestamp( 2,dateAcct );
-            pstmt.setInt( 3,C_Currency_ID );
+            pstmt.setTimestamp( 3,dateAcct );
+            pstmt.setTimestamp( 4,dateAcct );
+            pstmt.setInt( 5,C_Currency_ID );
 
             ResultSet rs = pstmt.executeQuery();
 
