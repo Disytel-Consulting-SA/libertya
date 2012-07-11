@@ -433,9 +433,16 @@ public class ProcessorWSFE {
 	 * @return: Devuelve el path donde se encuentra alojado el proceso wsfe.py en el
 	 * sistema de archvos local. Este path se guarda en la tabla AD_Preference (Valores Predeterminados)
 	 */
-	
 	private String getPath(){
-		MPreference preference = MPreference.getUserPreference(Env.getCtx(), "WSFE", getTrxName());
+		MDocType docType = new MDocType(Env.getCtx(),invoice.getC_DocTypeTarget_ID(),getTrxName());
+		/**
+		 * El nombre de AD_Preference a consultar se forma concatenando el valor WSFE_PV y el Nro de Punto de Venta
+		 */
+		MPreference preference = MPreference.getUserPreference(Env.getCtx(), "WSFE_PV"+docType.getPosNumber(), getTrxName());
+		if(preference == null){
+			// En el caso que no se haya encontrado ninguna preferencia a partir del Nro de Punto de Venta se busca utilizando el valor por defecto que es: WSFE
+			preference = MPreference.getUserPreference(Env.getCtx(), "WSFE", getTrxName());
+		}
 		return preference.getValue();
 	}
 	
