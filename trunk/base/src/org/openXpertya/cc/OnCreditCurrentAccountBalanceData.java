@@ -18,7 +18,7 @@ public class OnCreditCurrentAccountBalanceData extends
 		// Actualizar el saldo global de la entidad 
 		String     sql                 = "SELECT " +
 		
-		"COALESCE((SELECT SUM(currencyBase(i.grandtotal,i.C_Currency_ID,i.DateOrdered, i.AD_Client_ID,i.AD_Org_ID)* cast(dt.signo_issotrx as numeric) )" +
+		"COALESCE((SELECT SUM(currencyBase(i.grandtotal,i.C_Currency_ID,i.DateInvoiced, i.AD_Client_ID,i.AD_Org_ID)* cast(dt.signo_issotrx as numeric) )" +
 		"			FROM C_Invoice i " +
 		"			INNER JOIN c_doctype AS dt ON dt.c_doctype_id = i.c_doctypetarget_id " +
 		"			WHERE i.C_BPartner_ID=? and (docstatus IN ('CO','CL'))),0) " +
