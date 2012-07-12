@@ -109,7 +109,7 @@ public class LaunchInvoice extends SvrProcess {
 
 	private String createReport()	throws Exception{
 		
-		MInvoice invoice = new MInvoice(getCtx(), AD_Record_ID, null);
+		MInvoice invoice = new MInvoice(getCtx(), getInvoiceID(), null);
 		MBPartner bpartner = new MBPartner(getCtx(), invoice.getC_BPartner_ID(), null);
 		
 		//Ader mejora de caches
@@ -126,214 +126,8 @@ public class LaunchInvoice extends SvrProcess {
 				throw new RuntimeException("No se pueden cargar los datos del informe", e);
 			}
 			
-			// Establecemos parametros
-			// Total de líneas con impuestos
-			initializeAmts(invoice);
-			
-			MClient client = JasperReportsUtil.getClient(getCtx(), invoice.getAD_Client_ID());
-			MClientInfo clientInfo = JasperReportsUtil.getClientInfo(getCtx(), invoice.getAD_Client_ID(), get_TrxName());
-			MBPartnerLocation BPLocation = new MBPartnerLocation(getCtx(), invoice.getC_BPartner_Location_ID(), null);
-			MLocation location = new MLocation(getCtx(), BPLocation.getC_Location_ID(), null);
-			MRegion region = null;
-			if (location.getC_Region_ID() > 0)
-				region = new MRegion(getCtx(), location.getC_Region_ID(), null);
-
-
-			// Descuentos aplicados totales
-			jasperwrapper.addParameter("NROCOMPROBANTE", invoice.getNumeroDeDocumento());
-			jasperwrapper.addParameter("TIPOCOMPROBANTE", JasperReportsUtil
-				.getDocTypeName(getCtx(), invoice.getC_DocTypeTarget_ID(),
-						"FACTURA", get_TrxName()));
-			jasperwrapper.addParameter("FECHA", invoice.getDateInvoiced());
-			Calendar c = Calendar.getInstance();
-			c.setTimeInMillis(invoice.getDateInvoiced().getTime());
-			jasperwrapper.addParameter("DIA", Integer.toString(c.get(Calendar.DATE)));
-			jasperwrapper.addParameter("MES", Integer.toString(c.get(Calendar.MONTH)) + 1); // Mas 1 porque el Calendar maneja los meses de 0 a 11
-			jasperwrapper.addParameter("ANIO", Integer.toString(c.get(Calendar.YEAR)));		
-			jasperwrapper.addParameter("RAZONSOCIAL", JasperReportsUtil.coalesce(invoice.getNombreCli(), bpartner.getName()) ); 
-			jasperwrapper.addParameter("RAZONSOCIAL2", JasperReportsUtil.coalesce(bpartner.getName2(), "") );
-			jasperwrapper.addParameter("CODIGO", bpartner.getValue());
-			jasperwrapper.addParameter("DIRECCION", JasperReportsUtil
-					.formatLocation(getCtx(), location.getID(), false));
-			jasperwrapper.addParameter("ADDRESS1", JasperReportsUtil.coalesce(location.getAddress1(), ""));
-			jasperwrapper.addParameter("CIUDAD", JasperReportsUtil.coalesce(location.getCity(),""));
-			jasperwrapper.addParameter("PAIS", JasperReportsUtil.coalesce(location.getCountry().getName(),""));
-			if(!Util.isEmpty(bpartner.getC_Categoria_Iva_ID(), true)){
-				jasperwrapper.addParameter(
-					"TIPO_IVA",
-					JasperReportsUtil.getCategoriaIVAName(getCtx(),
-							bpartner.getC_Categoria_Iva_ID(), get_TrxName()));
-			}			
-			jasperwrapper.addParameter("CUIT", JasperReportsUtil.coalesce(bpartner.getTaxID(),""));
-			jasperwrapper.addParameter("INGBRUTO", bpartner.getIIBB());
-			jasperwrapper.addParameter("VENDEDOR", (new MUser(getCtx(), invoice.getSalesRep_ID(), null).getName()) );
-			jasperwrapper.addParameter("NRODOCORIG", JasperReportsUtil.coalesce(invoice.getPOReference(), "") );
-			if(!Util.isEmpty(invoice.getC_Order_ID(), true)){
-				jasperwrapper.addParameter("NRO_OC", JasperReportsUtil.coalesce(
-					(new MOrder(getCtx(), invoice.getC_Order_ID(),
-							get_TrxName())).getDocumentNo(), ""));
-			} 
-			String fechaVto = (String)JasperReportsUtil.coalesce(getFechaVto(invoice), invoice.getDateInvoiced().toString());
-			fechaVto = fechaVto.substring(0, 11); // quitamos la hora del string
-			jasperwrapper.addParameter("VCTO", "Vencimiento: " +  fechaVto);			
-			jasperwrapper.addParameter("CODVTA", JasperReportsUtil.getListName(
-				getCtx(), X_C_Invoice.PAYMENTRULE_AD_Reference_ID,
-				invoice.getPaymentRule()));
-			try{
-				Set<String> inouts = JasperReportsUtil.getInOutsDocumentsNo(
-					getCtx(), invoice, get_TrxName());
-				Iterator<String> inoutsIt = inouts.iterator();
-				int i = 1;
-				while (inoutsIt.hasNext()) {
-					jasperwrapper.addParameter("NROREMITO_"+i, inoutsIt.next());
-				}
-			} catch(Exception e){
-				log.severe("Error loading invoice in outs");
-			}
-			jasperwrapper.addParameter("LETRA_PESOS", NumeroCastellano.numeroACastellano(invoice.getGrandTotal()) );
-			jasperwrapper.addParameter("SUBTOTAL", linesTotalNetAmt);
-			jasperwrapper.addParameter("SUBTOTAL_WITHTAX", linesTotalAmt);
-			BigDecimal totalNetLineDiscounts = linesTotalBonusNetAmt.add(
-				linesTotalDocumentDiscountsNetAmt).add(
-				linesTotalLineDiscountsNetAmt);
-			BigDecimal totalLineDiscounts = linesTotalBonusAmt.add(
-					linesTotalDocumentDiscountsAmt).add(
-					linesTotalLineDiscountsAmt);
-			jasperwrapper.addParameter("DESCUENTO", totalNetLineDiscounts);
-			jasperwrapper.addParameter("DESCUENTO_NETO",totalNetLineDiscounts);
-			jasperwrapper.addParameter("SUBTOTAL2", linesTotalNetAmt.subtract(totalNetLineDiscounts));
-			jasperwrapper.addParameter("SUBTOTAL2_WITHTAX",  linesTotalAmt.subtract(totalLineDiscounts));
-			jasperwrapper.addParameter("IVA_105", new BigDecimal(10.5) );
-			jasperwrapper.addParameter("IVA_21", new BigDecimal(21) );
-			jasperwrapper.addParameter("SUBIVA_105", getTaxAmt(invoice, new BigDecimal(10.5)) );
-			jasperwrapper.addParameter("SUBIVA_21", getTaxAmt(invoice, new BigDecimal(21)) );
-			jasperwrapper.addParameter("SUBDESC", invoice.getDiscountsAmt());
-			jasperwrapper.addParameter("TOTAL", invoice.getGrandTotal() );
-			jasperwrapper.addParameter("TIPOORIGEN", printType );
-			
-			jasperwrapper.addParameter("ALLOCATED_AMT", invoice.getAllocatedAmt() );
-			jasperwrapper.addParameter("APPROVAL_AMT", invoice.getApprovalAmt() );
-			jasperwrapper.addParameter("AUTH_CODE", invoice.getAuthCode() );
-			// Actividad
-			if(!Util.isEmpty(invoice.getC_Activity_ID(),true)){
-				jasperwrapper.addParameter(
-					"ACTIVITY",
-					JasperReportsUtil.getActivityName(getCtx(),
-							invoice.getC_Activity_ID(), get_TrxName()));
-			}
-			// Campaña
-			if(!Util.isEmpty(invoice.getC_Campaign_ID(),true)){
-				jasperwrapper.addParameter(
-					"CAMPAIGN",
-					JasperReportsUtil.getCampaignName(getCtx(),
-							invoice.getC_Campaign_ID(), get_TrxName()));
-			}
-			// Proyecto
-			if(!Util.isEmpty(invoice.getC_Project_ID(),true)){
-				jasperwrapper.addParameter(
-					"PROJECT",
-					JasperReportsUtil.getProjectName(getCtx(),
-							invoice.getC_Project_ID(), get_TrxName()));
-			}
-			// Cargo
-			if(!Util.isEmpty(invoice.getC_Charge_ID(),true)){
-				jasperwrapper.addParameter(
-					"CHARGE",
-					JasperReportsUtil.getChargeName(getCtx(),
-							invoice.getC_Charge_ID(), get_TrxName()));
-			}
-			// Moneda
-			if(!Util.isEmpty(invoice.getC_Currency_ID(),true)){
-				jasperwrapper.addParameter(
-					"CURRENCY",
-					JasperReportsUtil.getCurrencyDescription(getCtx(),
-							invoice.getC_Currency_ID(), get_TrxName()));
-				jasperwrapper.addParameter(
-						"CURRENCY_SIMBOL",
-						JasperReportsUtil.getCurrencySymbol(getCtx(),
-							invoice.getC_Currency_ID(), get_TrxName()));
-			}
-			// Factura original
-			if(!Util.isEmpty(invoice.getC_Invoice_Orig_ID(),true)){
-				jasperwrapper.addParameter(
-					"ORIGINAL_INVOICE",
-					JasperReportsUtil.getInvoiceDisplay(getCtx(),
-							invoice.getC_Invoice_Orig_ID(), get_TrxName()));
-			}
-			// Caja diaria
-			if(!Util.isEmpty(invoice.getC_POSJournal_ID(),true)){
-				MPOSJournal posJournal = new MPOSJournal(getCtx(),
-					invoice.getC_POSJournal_ID(), get_TrxName());
-				jasperwrapper.addParameter("POS_JOURNAL", JasperReportsUtil
-					.getPODisplayByIdentifiers(getCtx(), posJournal,
-							X_C_POSJournal.Table_ID, get_TrxName()));
-			}
-			// Región
-			if(!Util.isEmpty(invoice.getC_Region_ID(),true)){
-				jasperwrapper.addParameter(
-					"INVOICE_REGION",
-					JasperReportsUtil.getRegionName(getCtx(),
-							invoice.getC_Region_ID(), get_TrxName()));
-			}
-			jasperwrapper.addParameter("CAE", invoice.getcae());
-			jasperwrapper.addParameter("CAECBTE", invoice.getcaecbte());
-			jasperwrapper.addParameter("CAEERROR", invoice.getcaeerror());
-			jasperwrapper.addParameter("CAI", invoice.getCAI());
-			jasperwrapper.addParameter("CHARGE_AMT", invoice.getChargeAmt());
-			jasperwrapper.addParameter("DATE_CAI", invoice.getDateCAI());
-			jasperwrapper.addParameter("INVOICE_DESCRIPTION", invoice.getDescription());
-			jasperwrapper.addParameter("DOC_STATUS", invoice.getDocStatusName());
-			jasperwrapper.addParameter("ID_CAE", invoice.getidcae());
-			jasperwrapper.addParameter(
-				"PRICE_LIST",
-				JasperReportsUtil.getPriceListName(getCtx(),
-						invoice.getM_PriceList_ID(), get_TrxName()));
-			jasperwrapper.addParameter("OPEN_AMT", invoice.getOpenAmt());
-			jasperwrapper.addParameter("TAXES_AMT", invoice.getTaxesAmt());
-			// Usuario 1
-			if(!Util.isEmpty(invoice.getUser1_ID(),true)){
-				jasperwrapper.addParameter(
-					"USER1",
-					JasperReportsUtil.getUserName(getCtx(),
-							invoice.getUser1_ID(), get_TrxName()));
-			}
-			// Usuario 2
-			if(!Util.isEmpty(invoice.getUser2_ID(),true)){
-				jasperwrapper.addParameter(
-						"USER2",
-						JasperReportsUtil.getUserName(getCtx(),
-								invoice.getUser2_ID(), get_TrxName()));
-			}
-			jasperwrapper.addParameter("VTO_CAE", invoice.getvtocae());
-			jasperwrapper.addParameter("IS_APPROVED", invoice.isApproved());
-			jasperwrapper.addParameter("AUTH_MATCH", invoice.isAuthMatch());
-			jasperwrapper.addParameter("IS_CONFIRMED_ADDWORKS", invoice.isConfirmAditionalWorks());
-			jasperwrapper.addParameter("IS_PAID", invoice.isPaid());
-			jasperwrapper.addParameter("IS_PAY_SCHEDULE_VALID", invoice.isPayScheduleValid());
-			jasperwrapper.addParameter("IS_POSTED", invoice.isPosted());
-			jasperwrapper.addParameter("ISSOTRX", invoice.isSOTrx());
-			jasperwrapper.addParameter("IS_TAX_INCLUDED", invoice.isTaxIncluded());
-			jasperwrapper.addParameter("IS_TRANSFERRED", invoice.isTransferred());
-			jasperwrapper.addParameter("PAST_DUE", MInvoice.isPastDue(getCtx(),
-				invoice, new Date(), false, get_TrxName()) > 0);
-			jasperwrapper.addParameter("PAST_DUE_AND_UNPAIDED", MInvoice.isPastDue(
-				getCtx(), invoice, new Date(), true, get_TrxName()) > 0);
-			jasperwrapper.addParameter("CLIENT",client.getName());
-			jasperwrapper.addParameter("CLIENT_CUIT",clientInfo.getCUIT());
-			jasperwrapper.addParameter(
-				"CLIENT_CATEGORIA_IVA",
-				JasperReportsUtil.getCategoriaIVAName(getCtx(),
-						clientInfo.getC_Categoria_Iva_ID(), get_TrxName()));
-			jasperwrapper.addParameter(
-					"ORG",
-					JasperReportsUtil.getOrgName(getCtx(), invoice.getAD_Org_ID()));
-			jasperwrapper.addParameter(
-					"ORG_LOCATION_DESCRIPTION",
-					JasperReportsUtil.getLocalizacion(getCtx(),
-						invoice.getAD_Client_ID(), invoice.getAD_Org_ID(),
-						get_TrxName()));
-			jasperwrapper.addParameter("PERCEPCION_TOTAL_AMT",
-				invoice.getPercepcionesTotalAmt());
+			// Agrego los parámetros al reporte
+			addReportParameter(jasperwrapper, invoice, bpartner);
 			
 			try {
 				jasperwrapper.fillReport(ds);
@@ -344,8 +138,224 @@ public class LaunchInvoice extends SvrProcess {
 				throw new RuntimeException ("No se ha podido rellenar el informe.", e);
 			}
 			
-			return "doIt";
+			return "";
 	}
+	
+	protected Integer getInvoiceID(){
+		return AD_Record_ID;
+	}
+	
+	protected void addReportParameter(MJasperReport jasperwrapper, MInvoice invoice, MBPartner bpartner) throws Exception{
+		// Establecemos parametros
+		// Total de líneas con impuestos
+		initializeAmts(invoice);
+		
+		MClient client = JasperReportsUtil.getClient(getCtx(), invoice.getAD_Client_ID());
+		MClientInfo clientInfo = JasperReportsUtil.getClientInfo(getCtx(), invoice.getAD_Client_ID(), get_TrxName());
+		MBPartnerLocation BPLocation = new MBPartnerLocation(getCtx(), invoice.getC_BPartner_Location_ID(), null);
+		MLocation location = new MLocation(getCtx(), BPLocation.getC_Location_ID(), null);
+		MRegion region = null;
+		if (location.getC_Region_ID() > 0)
+			region = new MRegion(getCtx(), location.getC_Region_ID(), null);
+
+
+		// Descuentos aplicados totales
+		jasperwrapper.addParameter("NROCOMPROBANTE", invoice.getNumeroDeDocumento());
+		jasperwrapper.addParameter("TIPOCOMPROBANTE", JasperReportsUtil
+			.getDocTypeName(getCtx(), invoice.getC_DocTypeTarget_ID(),
+					"FACTURA", get_TrxName()));
+		jasperwrapper.addParameter("FECHA", invoice.getDateInvoiced());
+		Calendar c = Calendar.getInstance();
+		c.setTimeInMillis(invoice.getDateInvoiced().getTime());
+		jasperwrapper.addParameter("DIA", Integer.toString(c.get(Calendar.DATE)));
+		jasperwrapper.addParameter("MES", Integer.toString(c.get(Calendar.MONTH)) + 1); // Mas 1 porque el Calendar maneja los meses de 0 a 11
+		jasperwrapper.addParameter("ANIO", Integer.toString(c.get(Calendar.YEAR)));		
+		jasperwrapper.addParameter("RAZONSOCIAL", JasperReportsUtil.coalesce(invoice.getNombreCli(), bpartner.getName()) ); 
+		jasperwrapper.addParameter("RAZONSOCIAL2", JasperReportsUtil.coalesce(bpartner.getName2(), "") );
+		jasperwrapper.addParameter("CODIGO", bpartner.getValue());
+		jasperwrapper.addParameter("DIRECCION", JasperReportsUtil
+				.formatLocation(getCtx(), location.getID(), false));
+		jasperwrapper.addParameter("ADDRESS1", JasperReportsUtil.coalesce(location.getAddress1(), ""));
+		jasperwrapper.addParameter("CIUDAD", JasperReportsUtil.coalesce(location.getCity(),""));
+		jasperwrapper.addParameter("PAIS", JasperReportsUtil.coalesce(location.getCountry().getName(),""));
+		if(!Util.isEmpty(bpartner.getC_Categoria_Iva_ID(), true)){
+			jasperwrapper.addParameter(
+				"TIPO_IVA",
+				JasperReportsUtil.getCategoriaIVAName(getCtx(),
+						bpartner.getC_Categoria_Iva_ID(), get_TrxName()));
+		}			
+		jasperwrapper.addParameter("CUIT", JasperReportsUtil.coalesce(bpartner.getTaxID(),""));
+		jasperwrapper.addParameter("INGBRUTO", bpartner.getIIBB());
+		jasperwrapper.addParameter("VENDEDOR", (new MUser(getCtx(), invoice.getSalesRep_ID(), null).getName()) );
+		jasperwrapper.addParameter("NRODOCORIG", JasperReportsUtil.coalesce(invoice.getPOReference(), "") );
+		if(!Util.isEmpty(invoice.getC_Order_ID(), true)){
+			jasperwrapper.addParameter("NRO_OC", JasperReportsUtil.coalesce(
+				(new MOrder(getCtx(), invoice.getC_Order_ID(),
+						get_TrxName())).getDocumentNo(), ""));
+		} 
+		String fechaVto = (String)JasperReportsUtil.coalesce(getFechaVto(invoice), invoice.getDateInvoiced().toString());
+		fechaVto = fechaVto.substring(0, 11); // quitamos la hora del string
+		jasperwrapper.addParameter("VCTO", "Vencimiento: " +  fechaVto);			
+		jasperwrapper.addParameter("CODVTA", JasperReportsUtil.getListName(
+			getCtx(), X_C_Invoice.PAYMENTRULE_AD_Reference_ID,
+			invoice.getPaymentRule()));
+		try{
+			Set<String> inouts = JasperReportsUtil.getInOutsDocumentsNo(
+				getCtx(), invoice, get_TrxName());
+			Iterator<String> inoutsIt = inouts.iterator();
+			int i = 1;
+			while (inoutsIt.hasNext()) {
+				jasperwrapper.addParameter("NROREMITO_"+i, inoutsIt.next());
+			}
+		} catch(Exception e){
+			log.severe("Error loading invoice in outs");
+		}
+		jasperwrapper.addParameter("LETRA_PESOS", NumeroCastellano.numeroACastellano(invoice.getGrandTotal()) );
+		jasperwrapper.addParameter("SUBTOTAL", linesTotalNetAmt);
+		jasperwrapper.addParameter("SUBTOTAL_WITHTAX", linesTotalAmt);
+		BigDecimal totalNetLineDiscounts = linesTotalBonusNetAmt.add(
+			linesTotalDocumentDiscountsNetAmt).add(
+			linesTotalLineDiscountsNetAmt);
+		BigDecimal totalLineDiscounts = linesTotalBonusAmt.add(
+				linesTotalDocumentDiscountsAmt).add(
+				linesTotalLineDiscountsAmt);
+		jasperwrapper.addParameter("DESCUENTO", totalNetLineDiscounts);
+		jasperwrapper.addParameter("DESCUENTO_NETO",totalNetLineDiscounts);
+		jasperwrapper.addParameter("SUBTOTAL2", linesTotalNetAmt.subtract(totalNetLineDiscounts));
+		jasperwrapper.addParameter("SUBTOTAL2_WITHTAX",  linesTotalAmt.subtract(totalLineDiscounts));
+		jasperwrapper.addParameter("IVA_105", new BigDecimal(10.5) );
+		jasperwrapper.addParameter("IVA_21", new BigDecimal(21) );
+		jasperwrapper.addParameter("SUBIVA_105", getTaxAmt(invoice, new BigDecimal(10.5)) );
+		jasperwrapper.addParameter("SUBIVA_21", getTaxAmt(invoice, new BigDecimal(21)) );
+		jasperwrapper.addParameter("SUBDESC", invoice.getDiscountsAmt());
+		jasperwrapper.addParameter("TOTAL", invoice.getGrandTotal() );
+		jasperwrapper.addParameter("TIPOORIGEN", printType );
+		
+		jasperwrapper.addParameter("ALLOCATED_AMT", invoice.getAllocatedAmt() );
+		jasperwrapper.addParameter("APPROVAL_AMT", invoice.getApprovalAmt() );
+		jasperwrapper.addParameter("AUTH_CODE", invoice.getAuthCode() );
+		// Actividad
+		if(!Util.isEmpty(invoice.getC_Activity_ID(),true)){
+			jasperwrapper.addParameter(
+				"ACTIVITY",
+				JasperReportsUtil.getActivityName(getCtx(),
+						invoice.getC_Activity_ID(), get_TrxName()));
+		}
+		// Campaña
+		if(!Util.isEmpty(invoice.getC_Campaign_ID(),true)){
+			jasperwrapper.addParameter(
+				"CAMPAIGN",
+				JasperReportsUtil.getCampaignName(getCtx(),
+						invoice.getC_Campaign_ID(), get_TrxName()));
+		}
+		// Proyecto
+		if(!Util.isEmpty(invoice.getC_Project_ID(),true)){
+			jasperwrapper.addParameter(
+				"PROJECT",
+				JasperReportsUtil.getProjectName(getCtx(),
+						invoice.getC_Project_ID(), get_TrxName()));
+		}
+		// Cargo
+		if(!Util.isEmpty(invoice.getC_Charge_ID(),true)){
+			jasperwrapper.addParameter(
+				"CHARGE",
+				JasperReportsUtil.getChargeName(getCtx(),
+						invoice.getC_Charge_ID(), get_TrxName()));
+		}
+		// Moneda
+		if(!Util.isEmpty(invoice.getC_Currency_ID(),true)){
+			jasperwrapper.addParameter(
+				"CURRENCY",
+				JasperReportsUtil.getCurrencyDescription(getCtx(),
+						invoice.getC_Currency_ID(), get_TrxName()));
+			jasperwrapper.addParameter(
+					"CURRENCY_SIMBOL",
+					JasperReportsUtil.getCurrencySymbol(getCtx(),
+						invoice.getC_Currency_ID(), get_TrxName()));
+		}
+		// Factura original
+		if(!Util.isEmpty(invoice.getC_Invoice_Orig_ID(),true)){
+			jasperwrapper.addParameter(
+				"ORIGINAL_INVOICE",
+				JasperReportsUtil.getInvoiceDisplay(getCtx(),
+						invoice.getC_Invoice_Orig_ID(), get_TrxName()));
+		}
+		// Caja diaria
+		if(!Util.isEmpty(invoice.getC_POSJournal_ID(),true)){
+			MPOSJournal posJournal = new MPOSJournal(getCtx(),
+				invoice.getC_POSJournal_ID(), get_TrxName());
+			jasperwrapper.addParameter("POS_JOURNAL", JasperReportsUtil
+				.getPODisplayByIdentifiers(getCtx(), posJournal,
+						X_C_POSJournal.Table_ID, get_TrxName()));
+		}
+		// Región
+		if(!Util.isEmpty(invoice.getC_Region_ID(),true)){
+			jasperwrapper.addParameter(
+				"INVOICE_REGION",
+				JasperReportsUtil.getRegionName(getCtx(),
+						invoice.getC_Region_ID(), get_TrxName()));
+		}
+		jasperwrapper.addParameter("CAE", invoice.getcae());
+		jasperwrapper.addParameter("CAECBTE", invoice.getcaecbte());
+		jasperwrapper.addParameter("CAEERROR", invoice.getcaeerror());
+		jasperwrapper.addParameter("CAI", invoice.getCAI());
+		jasperwrapper.addParameter("CHARGE_AMT", invoice.getChargeAmt());
+		jasperwrapper.addParameter("DATE_CAI", invoice.getDateCAI());
+		jasperwrapper.addParameter("INVOICE_DESCRIPTION", invoice.getDescription());
+		jasperwrapper.addParameter("DOC_STATUS", invoice.getDocStatusName());
+		jasperwrapper.addParameter("ID_CAE", invoice.getidcae());
+		jasperwrapper.addParameter(
+			"PRICE_LIST",
+			JasperReportsUtil.getPriceListName(getCtx(),
+					invoice.getM_PriceList_ID(), get_TrxName()));
+		jasperwrapper.addParameter("OPEN_AMT", invoice.getOpenAmt());
+		jasperwrapper.addParameter("TAXES_AMT", invoice.getTaxesAmt());
+		// Usuario 1
+		if(!Util.isEmpty(invoice.getUser1_ID(),true)){
+			jasperwrapper.addParameter(
+				"USER1",
+				JasperReportsUtil.getUserName(getCtx(),
+						invoice.getUser1_ID(), get_TrxName()));
+		}
+		// Usuario 2
+		if(!Util.isEmpty(invoice.getUser2_ID(),true)){
+			jasperwrapper.addParameter(
+					"USER2",
+					JasperReportsUtil.getUserName(getCtx(),
+							invoice.getUser2_ID(), get_TrxName()));
+		}
+		jasperwrapper.addParameter("VTO_CAE", invoice.getvtocae());
+		jasperwrapper.addParameter("IS_APPROVED", invoice.isApproved());
+		jasperwrapper.addParameter("AUTH_MATCH", invoice.isAuthMatch());
+		jasperwrapper.addParameter("IS_CONFIRMED_ADDWORKS", invoice.isConfirmAditionalWorks());
+		jasperwrapper.addParameter("IS_PAID", invoice.isPaid());
+		jasperwrapper.addParameter("IS_PAY_SCHEDULE_VALID", invoice.isPayScheduleValid());
+		jasperwrapper.addParameter("IS_POSTED", invoice.isPosted());
+		jasperwrapper.addParameter("ISSOTRX", invoice.isSOTrx());
+		jasperwrapper.addParameter("IS_TAX_INCLUDED", invoice.isTaxIncluded());
+		jasperwrapper.addParameter("IS_TRANSFERRED", invoice.isTransferred());
+		jasperwrapper.addParameter("PAST_DUE", MInvoice.isPastDue(getCtx(),
+			invoice, new Date(), false, get_TrxName()) > 0);
+		jasperwrapper.addParameter("PAST_DUE_AND_UNPAIDED", MInvoice.isPastDue(
+			getCtx(), invoice, new Date(), true, get_TrxName()) > 0);
+		jasperwrapper.addParameter("CLIENT",client.getName());
+		jasperwrapper.addParameter("CLIENT_CUIT",clientInfo.getCUIT());
+		jasperwrapper.addParameter(
+			"CLIENT_CATEGORIA_IVA",
+			JasperReportsUtil.getCategoriaIVAName(getCtx(),
+					clientInfo.getC_Categoria_Iva_ID(), get_TrxName()));
+		jasperwrapper.addParameter(
+				"ORG",
+				JasperReportsUtil.getOrgName(getCtx(), invoice.getAD_Org_ID()));
+		jasperwrapper.addParameter(
+				"ORG_LOCATION_DESCRIPTION",
+				JasperReportsUtil.getLocalizacion(getCtx(),
+					invoice.getAD_Client_ID(), invoice.getAD_Org_ID(),
+					get_TrxName()));
+		jasperwrapper.addParameter("PERCEPCION_TOTAL_AMT",
+			invoice.getPercepcionesTotalAmt());
+	}
+	
 	
 	private BigDecimal getTaxAmt(MInvoice invoice, BigDecimal rate)
 	{
