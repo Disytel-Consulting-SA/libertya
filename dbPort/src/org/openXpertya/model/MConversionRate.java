@@ -399,18 +399,25 @@ public class MConversionRate extends X_C_Conversion_Rate {
     {
     	try
     	{
-    		String sql 	= " SELECT 1 FROM C_Conversion_Rate WHERE C_Currency_ID=? AND C_Currency_ID_To=? "    
-				+ " AND C_ConversionType_ID=?" + " AND TRUNC(ValidFrom) <= ?" + " AND TRUNC(ValidTo) >= ?" 
-				+ " AND AD_Client_ID IN (0,?) AND AD_Org_ID IN (0,?) AND ISACTIVE = 'Y' " 
-				+ " ORDER BY AD_Client_ID DESC, AD_Org_ID DESC, ValidFrom DESC";
-    		PreparedStatement pstmt = DB.prepareStatement( sql );
+    		String sql = 
+    				" SELECT 1 FROM C_Conversion_Rate WHERE (C_Currency_ID=? AND C_Currency_ID_To=? OR C_Currency_ID = ? AND C_Currency_ID_To = ?) "    
+    				+ " AND C_ConversionType_ID=?"
+    				+ " AND TRUNC(ValidFrom) <= ?" 
+    				+ " AND TRUNC(ValidTo) >= ?" 
+    				+ " AND AD_Client_ID IN (0,?) AND AD_Org_ID = ? AND ISACTIVE = 'Y' "
+    				+ " AND C_Conversion_Rate_ID <> ? "
+    				+ " ORDER BY AD_Client_ID DESC, AD_Org_ID DESC, ValidFrom DESC";
+	    	PreparedStatement pstmt = DB.prepareStatement( sql );
     		pstmt.setInt(1, getC_Currency_ID_To() );
     		pstmt.setInt(2, getC_Currency_ID() );    		
-    		pstmt.setInt(3, getC_ConversionType_ID() );
-    		pstmt.setTimestamp(4, getValidFrom() );
-    		pstmt.setTimestamp(5, getValidTo() );
-    		pstmt.setInt(6, getAD_Client_ID());
-    		pstmt.setInt(7, getAD_Org_ID());
+    		pstmt.setInt(3, getC_Currency_ID() );
+    		pstmt.setInt(4, getC_Currency_ID_To() );
+    		pstmt.setInt(5, getC_ConversionType_ID() );
+    		pstmt.setTimestamp(6, getValidFrom() );
+    		pstmt.setTimestamp(7, getValidTo() );
+    		pstmt.setInt(8, getAD_Client_ID());
+    		pstmt.setInt(9, getAD_Org_ID());
+    		pstmt.setInt(10, getC_Conversion_Rate_ID());
     		
     		ResultSet rs = pstmt.executeQuery();
     		if (rs.next())
