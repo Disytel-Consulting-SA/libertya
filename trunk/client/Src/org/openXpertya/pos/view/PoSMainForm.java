@@ -1969,7 +1969,7 @@ public class PoSMainForm extends CPanel implements FormPanel, ASyncProcess, Disp
 		if (cGeneralDiscountPercText == null) {
 			cGeneralDiscountPercText = new VNumber();
 			cGeneralDiscountPercText.setDisplayType(DisplayType.Number);
-			cGeneralDiscountPercText.setPreferredSize(new java.awt.Dimension(S_PAYMENT_FIELD_WIDTH,20));
+			cGeneralDiscountPercText.setPreferredSize(new java.awt.Dimension(70,20));
 			cGeneralDiscountPercText.setValue(0);
 			cGeneralDiscountPercText.setMandatory(true);
 			cGeneralDiscountPercText.addVetoableChangeListener(new VetoableChangeListener() {
