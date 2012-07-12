@@ -741,36 +741,36 @@ public class ReciboDeCliente {
 	 * @return el tipo de documento general configurado para créditos
 	 */
 	public String getGeneralCreditDocType(){
-		return getDiscountCalculator() != null ? getDiscountCalculator()
-				.getDiscountConfig().getCreditDocumentType()
-				: getDiscountConfig().getCreditDocumentType();
+		MDiscountConfig config = getDiscountCalculator() != null ? getDiscountCalculator()
+				.getDiscountConfig() : getDiscountConfig();
+		return config != null ? config.getCreditDocumentType() : null;
 	}
 	
 	/**
 	 * @return el tipo de documento general configurado para débitos
 	 */
 	public String getGeneralDebitDocType(){
-		return getDiscountCalculator() != null ? getDiscountCalculator()
-				.getDiscountConfig().getDebitDocumentType()
-				: getDiscountConfig().getDebitDocumentType();
+		MDiscountConfig config = getDiscountCalculator() != null ? getDiscountCalculator()
+				.getDiscountConfig() : getDiscountConfig();
+		return config != null ? config.getDebitDocumentType() : null;
 	}
 	
 	/**
 	 * @return el tipo de documento configurado para crédito
 	 */
 	public Integer getCreditDocType(){
-		return getDiscountCalculator() != null ? getDiscountCalculator()
-				.getDiscountConfig().getCredit_DocType_ID()
-				: getDiscountConfig().getCredit_DocType_ID();
+		MDiscountConfig config = getDiscountCalculator() != null ? getDiscountCalculator()
+				.getDiscountConfig() : getDiscountConfig();
+		return config != null ? config.getCredit_DocType_ID() : null;
 	}
 	
 	/**
 	 * @return el tipo de documento configurado para débito
 	 */
 	public Integer getDebitDocType(){
-		return getDiscountCalculator() != null ? getDiscountCalculator()
-				.getDiscountConfig().getDebit_DocType_ID()
-				: getDiscountConfig().getDebit_DocType_ID();
+		MDiscountConfig config = getDiscountCalculator() != null ? getDiscountCalculator()
+				.getDiscountConfig() : getDiscountConfig();
+		return config != null ? config.getDebit_DocType_ID() : null;
 	}
 
 	/**
