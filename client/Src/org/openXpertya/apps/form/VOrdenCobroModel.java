@@ -1075,15 +1075,19 @@ public class VOrdenCobroModel extends VOrdenPagoModel {
 		String generalDocType = null;
 		if(isCredit){
 			generalDocType = reciboDeCliente.getGeneralCreditDocType();
-			if(generalDocType.equals(MDiscountConfig.CREDITDOCUMENTTYPE_Other)){
+			if(generalDocType != null && generalDocType.equals(MDiscountConfig.CREDITDOCUMENTTYPE_Other)){
 				docType = reciboDeCliente.getCreditDocType();
 			}
 		}
 		else{
 			generalDocType = reciboDeCliente.getGeneralDebitDocType();
-			if(generalDocType.equals(MDiscountConfig.DEBITDOCUMENTTYPE_Other)){
+			if(generalDocType != null && generalDocType.equals(MDiscountConfig.DEBITDOCUMENTTYPE_Other)){
 				docType = reciboDeCliente.getDebitDocType();
 			}
+		}
+		// Si el tipo de documento general es null, entonces error
+		if(generalDocType == null){
+			throw new Exception(Msg.getMsg(getCtx(), "DocTypeNotConfiguredForDiscountRecharge"));
 		}
 		MDocType documentType = null;
 		// Si tengo un tipo de documento real configurado, entonces obtengo ese
