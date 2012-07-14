@@ -1,13 +1,14 @@
-/** Modelo Generado - NO CAMBIAR MANUALMENTE - Copyright (C) 2006 FUNDESLE */
+/** Modelo Generado - NO CAMBIAR MANUALMENTE - Disytel */
 package org.openXpertya.model;
-import java.util.*;
+import java.util.logging.Level;
+ import java.util.*;
 import java.sql.*;
 import java.math.*;
 import org.openXpertya.util.*;
 /** Modelo Generado por M_Product_Lines
- *  @author Comunidad de Desarrollo openXpertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
- *  @version  - 2009-10-22 14:51:37.165 */
-public class X_M_Product_Lines extends PO
+ *  @author Comunidad de Desarrollo Libertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
+ *  @version  - 2012-07-13 13:55:53.037 */
+public class X_M_Product_Lines extends org.openXpertya.model.PO
 {
 /** Constructor estándar */
 public X_M_Product_Lines (Properties ctx, int M_Product_Lines_ID, String trxName)
@@ -19,6 +20,7 @@ setIsDefault (false);
 setIsSelfService (false);
 setM_Product_Lines_ID (0);
 setName (null);
+setValue (null);
 }
  */
 }
@@ -27,13 +29,13 @@ public X_M_Product_Lines (Properties ctx, ResultSet rs, String trxName)
 {
 super (ctx, rs, trxName);
 }
-/** AD_Table_ID=1000117 */
-public static final int Table_ID=1000117;
+/** AD_Table_ID */
+public static final int Table_ID = M_Table.getTableID("M_Product_Lines");
 
 /** TableName=M_Product_Lines */
 public static final String Table_Name="M_Product_Lines";
 
-protected static KeyNamePair Model = new KeyNamePair(1000117,"M_Product_Lines");
+protected static KeyNamePair Model = new KeyNamePair(Table_ID,"M_Product_Lines");
 protected static BigDecimal AccessLevel = new BigDecimal(3);
 
 /** Load Meta Data */
@@ -166,5 +168,23 @@ if (oo != null)
  return "Y".equals(oo);
 }
 return false;
+}
+/** Set Search Key.
+Search key for the record in the format required - must be unique */
+public void setValue (String Value)
+{
+if (Value == null) throw new IllegalArgumentException ("Value is mandatory");
+if (Value.length() > 40)
+{
+log.warning("Length > 40 - truncated");
+Value = Value.substring(0,40);
+}
+set_Value ("Value", Value);
+}
+/** Get Search Key.
+Search key for the record in the format required - must be unique */
+public String getValue() 
+{
+return (String)get_Value("Value");
 }
 }

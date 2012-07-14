@@ -87,6 +87,10 @@ public class PostInstallUpgradeFrom1110 extends PluginPostInstallProcess {
 	/** UID del reporte de Movimientos por Artículo */
 	protected final static String PRODUCT_MOVEMENTS_JASPER_REPORT_UID = "CORE-AD_JasperReport-1010079";
 	protected final static String PRODUCT_MOVEMENTS_JASPER_REPORT_FILENAME = "ProductMovements.jasper";
+
+	/** UID del reporte de Existencias negativas */
+	protected final static String NEGATIVE_ONHAND_JASPER_REPORT_UID = "CORE-AD_JasperReport-1010080";
+	protected final static String NEGATIVE_ONHAND_JASPER_REPORT_FILENAME = "NegativeOnHand.jasper";
 	
 	protected String doIt() throws Exception {
 		super.doIt();
@@ -304,6 +308,18 @@ public class PostInstallUpgradeFrom1110 extends PluginPostInstallProcess {
 								getBinaryFileURL(PRODUCT_MOVEMENTS_JASPER_REPORT_FILENAME)));
 		
 		updateTransfer();
+		
+		// Listado de existencias negativas
+		MJasperReport
+				.updateBinaryData(
+						get_TrxName(),
+						getCtx(),
+						NEGATIVE_ONHAND_JASPER_REPORT_UID,
+						JarHelper
+								.readBinaryFromJar(
+										jarFileURL,
+										getBinaryFileURL(NEGATIVE_ONHAND_JASPER_REPORT_FILENAME)));
+
 		return " ";
 	}
 	
