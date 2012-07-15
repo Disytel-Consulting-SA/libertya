@@ -1805,8 +1805,8 @@ public class VOrdenCobro extends VOrdenPago {
     }
     
     protected void updateBank(MPOSPaymentMedium paymentMedium){
-    	cboChequeBancoID.setVisible(paymentMedium.isNormalizedBank());	
-    	txtChequeBanco.setVisible(!paymentMedium.isNormalizedBank());
+    	cboChequeBancoID.setVisible(paymentMedium != null && paymentMedium.isNormalizedBank());	
+    	txtChequeBanco.setVisible(paymentMedium == null || !paymentMedium.isNormalizedBank() );
     }
 
     @Override

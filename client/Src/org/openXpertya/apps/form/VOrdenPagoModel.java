@@ -1189,7 +1189,7 @@ public class VOrdenPagoModel implements TableModelListener {
 		
 		StringBuffer sql = new StringBuffer();
 		
-		sql.append(" SELECT c_invoice_id, 0, orgname, documentno,max(duedate) as duedatemax, sum(convertedamt) as convertedamtsum, isexchange, sum(openamt) as openAmtSum FROM ");
+		sql.append(" SELECT c_invoice_id, 0, orgname, documentno,max(duedate) as duedatemax, sum(convertedamt) as convertedamtsum, sum(openamt) as openAmtSum, isexchange FROM ");
 		sql.append("  (SELECT i.C_Invoice_ID, i.C_InvoicePaySchedule_ID, org.name as orgname, i.DocumentNo, coalesce(duedate,dateinvoiced) as DueDate, "); // ips.duedate
 		sql.append("    abs(currencyConvert( i.GrandTotal, i.C_Currency_ID, ?, i.DateAcct, null, i.AD_Client_ID, i.AD_Org_ID)) as ConvertedAmt, isexchange, ");
 		sql.append("    currencyConvert( invoiceOpen(i.C_Invoice_ID, COALESCE(i.C_InvoicePaySchedule_ID, 0)), i.C_Currency_ID, ?, i.DateAcct, null, i.AD_Client_ID, i.AD_Org_ID) AS openAmt ");
