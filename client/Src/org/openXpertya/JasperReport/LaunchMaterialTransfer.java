@@ -3,6 +3,9 @@ package org.openXpertya.JasperReport;
 import org.openXpertya.JasperReport.DataSource.JasperReportsUtil;
 import org.openXpertya.JasperReport.DataSource.MaterialTransferDataSource;
 import org.openXpertya.JasperReport.DataSource.OXPJasperDataSource;
+import org.openXpertya.model.MBPartner;
+import org.openXpertya.model.MBPartnerLocation;
+import org.openXpertya.model.MCharge;
 import org.openXpertya.model.MInventory;
 import org.openXpertya.model.MOrg;
 import org.openXpertya.model.MOrgInfo;
@@ -18,6 +21,9 @@ public class LaunchMaterialTransfer extends JasperReportLaunch {
 	@Override
 	protected void loadReportParameters() throws Exception {
 		setTransfer(new MTransfer(getCtx(), getRecord_ID(), get_TrxName()));
+		MCharge charge = new MCharge(getCtx(), getTransfer().getC_Charge_ID(),
+				get_TrxName());
+		MBPartner shipper = new MBPartner(getCtx(), getTransfer().getC_BPartner_ID(), get_TrxName());
 		// Almacenes origen y destino
 		MOrg org = new MOrg(getCtx(), getTransfer().getAD_Org_ID(), get_TrxName());
 		MOrgInfo orgInfo = MOrgInfo.get(getCtx(), org.getAD_Org_ID());
@@ -38,12 +44,21 @@ public class LaunchMaterialTransfer extends JasperReportLaunch {
 						.getMovementType()));
 		addReportParameter("DATE_TRX", getTransfer().getDateTrx());
 		addReportParameter("DUE_DATE", getTransfer().getDueDate());
-		addReportParameter("CHARGE_NAME", JasperReportsUtil.getChargeName(
-				getCtx(), getTransfer().getC_Charge_ID(), get_TrxName()));
+		addReportParameter("CHARGE_NAME", charge.getName());
+		addReportParameter("CHARGE_VALUE", charge.getValue());
 		addReportParameter("DESCRIPTION", getTransfer().getDescription());
 		addReportParameter("WAREHOUSE_FROM_NAME", warehouseFrom.getName());
-		addReportParameter("SHIPPER_NAME", JasperReportsUtil.getBPartnerName(
-				getCtx(), getTransfer().getC_BPartner_ID(), get_TrxName()));
+		addReportParameter("WAREHOUSE_FROM_VALUE", warehouseFrom.getValue());
+		addReportParameter("SHIPPER_NAME", shipper.getName());
+		addReportParameter("SHIPPER_VALUE", shipper.getValue());
+		addReportParameter("SHIPPER_CUIT", shipper.getTaxID());
+		MBPartnerLocation shipperLocation = shipper.getLocations(true)[0];
+		if(shipperLocation != null){
+			addReportParameter(
+					"SHIPPER_LOCATION",
+					JasperReportsUtil.formatLocation(getCtx(),
+							shipperLocation.getC_Location_ID(), false));
+		}
 		addReportParameter("DOC_STATUS", JasperReportsUtil.getListName(
 				getCtx(), MTransfer.DOCSTATUS_AD_Reference_ID, getTransfer()
 						.getDocStatus()));
@@ -88,6 +103,7 @@ public class LaunchMaterialTransfer extends JasperReportLaunch {
 			MOrg orgTo = new MOrg(getCtx(), warehouseTo.getAD_Org_ID(), get_TrxName());
 			MOrgInfo orgToInfo = MOrgInfo.get(getCtx(), orgTo.getAD_Org_ID());
 			addReportParameter("WAREHOUSE_TO_NAME", warehouseTo.getName());
+			addReportParameter("WAREHOUSE_TO_VALUE", warehouseTo.getValue());
 			addReportParameter("ORG_TO_NAME",orgTo.getName());
 			if(!Util.isEmpty(orgToInfo.getC_Location_ID(), true)){
 				addReportParameter(
