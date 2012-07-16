@@ -14,6 +14,8 @@ public class MaterialTransferDataSource extends QueryDataSource {
 	protected String getQuery() {
 		String sql = "SELECT tl.line::integer as LINE, " +
 					 "		p.value ||' - '|| p.name as PRODUCT_NAME, " +
+					 "		p.value as PRODUCT_VALUE, " +
+					 "		p.name as PRODUCT_REAL_NAME, " +
 					 "		tl.qty as QTY,	" +
 					 "		tl.confirmedqty as CONFIRMED_QTY," +
 					 "		uc.name AS CREATED_BY," +

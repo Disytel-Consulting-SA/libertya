@@ -47,6 +47,12 @@
 	<parameter name="UPDATED_BY" isForPrompting="false" class="java.lang.String"/>
 	<parameter name="INVENTORY_DOCUMENTNO" isForPrompting="false" class="java.lang.String"/>
 	<parameter name="TRANSPORT_GUIDE" isForPrompting="false" class="java.lang.String"/>
+	<parameter name="SHIPPER_LOCATION" isForPrompting="false" class="java.lang.String"/>
+	<parameter name="SHIPPER_CUIT" isForPrompting="false" class="java.lang.String"/>
+	<parameter name="WAREHOUSE_FROM_VALUE" isForPrompting="false" class="java.lang.String"/>
+	<parameter name="WAREHOUSE_TO_VALUE" isForPrompting="false" class="java.lang.String"/>
+	<parameter name="SHIPPER_VALUE" isForPrompting="false" class="java.lang.String"/>
+	<parameter name="CHARGE_VALUE" isForPrompting="false" class="java.lang.String"/>
 
 	<field name="LINE" class="java.lang.Integer"/>
 	<field name="PRODUCT_NAME" class="java.lang.String"/>
