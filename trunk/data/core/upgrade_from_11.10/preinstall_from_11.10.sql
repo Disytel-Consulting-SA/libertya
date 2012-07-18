@@ -3019,3 +3019,6 @@ $BODY$
   LANGUAGE 'plpgsql' VOLATILE
   COST 100;
 ALTER FUNCTION currencyrate(integer, integer, timestamp with time zone, integer, integer, integer) OWNER TO libertya;
+
+-- 20120718-1718 Incorporación de configuración de TPV para autorizar los descuentos manuales generales realizados
+ALTER TABLE c_pos ADD COLUMN authorizegeneralmanualdiscount character(1) NOT NULL DEFAULT 'N'::bpchar;

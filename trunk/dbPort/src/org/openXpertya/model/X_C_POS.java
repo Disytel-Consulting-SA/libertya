@@ -7,7 +7,7 @@ import java.math.*;
 import org.openXpertya.util.*;
 /** Modelo Generado por C_POS
  *  @author Comunidad de Desarrollo Libertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
- *  @version  - 2012-05-24 15:11:19.371 */
+ *  @version  - 2012-07-18 17:24:49.464 */
 public class X_C_POS extends org.openXpertya.model.PO
 {
 /** Constructor estándar */
@@ -17,6 +17,7 @@ super (ctx, C_POS_ID, trxName);
 /** if (C_POS_ID == 0)
 {
 setAD_Role_ID (0);
+setAuthorizeGeneralManualDiscount (false);
 setC_BankAccount_ID (0);
 setC_BPartnerCashTrx_ID (0);
 setC_CashBook_ID (0);
@@ -86,6 +87,22 @@ public int getAD_Role_ID()
 Integer ii = (Integer)get_Value("AD_Role_ID");
 if (ii == null) return 0;
 return ii.intValue();
+}
+/** Set Authorize General Manual Discount */
+public void setAuthorizeGeneralManualDiscount (boolean AuthorizeGeneralManualDiscount)
+{
+set_Value ("AuthorizeGeneralManualDiscount", new Boolean(AuthorizeGeneralManualDiscount));
+}
+/** Get Authorize General Manual Discount */
+public boolean isAuthorizeGeneralManualDiscount() 
+{
+Object oo = get_Value("AuthorizeGeneralManualDiscount");
+if (oo != null) 
+{
+ if (oo instanceof Boolean) return ((Boolean)oo).booleanValue();
+ return "Y".equals(oo);
+}
+return false;
 }
 /** Set Bank Account.
 Account at the Bank */

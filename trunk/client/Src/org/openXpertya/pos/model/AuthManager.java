@@ -33,8 +33,15 @@ public class AuthManager {
 		getAuthorizeOperations().put(authOperation.getAuthorizeMoment(), operations);
 	}
 	
+	public boolean existsAuthOperation(AuthOperation authOperation){
+		List<AuthOperation> operations = getAuthorizeOperations().get(
+				authOperation.getAuthorizeMoment());
+		return operations != null && operations.contains(authOperation);
+	}
+	
 	public List<AuthOperation> getOperations(String authorizationMoment){
-		return getAuthorizeOperations().get(authorizationMoment);
+		return getAuthorizeOperations().get(authorizationMoment) != null ? getAuthorizeOperations()
+				.get(authorizationMoment) : new ArrayList<AuthOperation>();
 	}
 
 	public void setAuthorizeOperations(HashMap<String, List<AuthOperation>> authorizeOperations) {

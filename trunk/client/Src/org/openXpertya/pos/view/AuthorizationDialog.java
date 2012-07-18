@@ -103,6 +103,10 @@ public class AuthorizationDialog extends CDialog {
 		getAuthManager().removeAuthOperation(authOperation);
 	}
 	
+	public boolean existsAuthOperation(AuthOperation authOperation){
+		return getAuthManager().existsAuthOperation(authOperation);
+	}
+	
 	public boolean authorizeOperation(String authorizationMoment){
 		Set<String> operationsToAuth = new HashSet<String>();
 		List<AuthOperation> authOperations = new ArrayList<AuthOperation>(); 
@@ -262,9 +266,11 @@ public class AuthorizationDialog extends CDialog {
 		setVisible(false);
 	}
 	
-	private void markAuthorized(String authorizationMoment, boolean authorized){
+	public void markAuthorized(String authorizationMoment, boolean authorized){
 		for (AuthOperation authOperation : getAuthManager().getOperations(authorizationMoment)) {
-			authOperation.setAuthorized(authorized);
+			if(!authOperation.isLazyAuthorization()){
+				authOperation.setAuthorized(authorized);
+			}
 		}
 	}
 	
