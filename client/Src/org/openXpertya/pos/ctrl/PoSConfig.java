@@ -53,6 +53,7 @@ public class PoSConfig {
 	private boolean lockedClosed;
 	private boolean printCurrentAccountDocument;
 	private String posnet;
+	private boolean authorizeManualGeneralDiscount;
 	
 	// Del sistema
 	private int currencyID;
@@ -116,6 +117,7 @@ public class PoSConfig {
 			setInitialAuthorization(pos.isInitialPOSAuthorization());
 			setLockedClosed(pos.isLockedClosed());
 			setPosnet(pos.getPosnet());
+			setAuthorizeManualGeneralDiscount(pos.isAuthorizeGeneralManualDiscount());
 		}	
 	}
 	
@@ -698,5 +700,14 @@ public class PoSConfig {
 
 	public String getPosnet() {
 		return posnet;
+	}
+
+	public void setAuthorizeManualGeneralDiscount(
+			boolean authorizeManualGeneralDiscount) {
+		this.authorizeManualGeneralDiscount = authorizeManualGeneralDiscount;
+	}
+
+	public boolean isAuthorizeManualGeneralDiscount() {
+		return authorizeManualGeneralDiscount;
 	}
 }

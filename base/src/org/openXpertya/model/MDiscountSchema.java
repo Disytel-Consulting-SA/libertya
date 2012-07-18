@@ -570,7 +570,7 @@ public class MDiscountSchema extends X_M_DiscountSchema {
 	@Override
 	public void setDiscountApplication(String DiscountApplication) {
 		if (DiscountApplication == null) {
-			set_ValueNoCheck("DicountApplication", DiscountApplication);
+			set_ValueNoCheck("DiscountApplication", DiscountApplication);
 		} else {
 			super.setDiscountApplication(DiscountApplication);
 		}

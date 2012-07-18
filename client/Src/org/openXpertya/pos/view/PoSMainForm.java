@@ -6,7 +6,6 @@ import java.awt.Component;
 import java.awt.Container;
 import java.awt.Cursor;
 import java.awt.Dimension;
-import java.awt.Event;
 import java.awt.FlowLayout;
 import java.awt.FocusTraversalPolicy;
 import java.awt.Font;
@@ -362,6 +361,7 @@ public class PoSMainForm extends CPanel implements FormPanel, ASyncProcess, Disp
 	
 //	private AUserAuth cCashRetunAuthPanel = null;
 	private AuthorizationDialog authDialog = null;
+	private AuthOperation manualDiscountAuthOperation = null;
 	private LYCloseWindowAdapter closeWindowAdapter = null;
 	private AddPOSPaymentValidations extraPOSPaymentAddValidations = null;
 	
@@ -469,6 +469,7 @@ public class PoSMainForm extends CPanel implements FormPanel, ASyncProcess, Disp
 	private String MSG_RETRY_VOID_INVOICE_INFO_POS_JOURNAL;
 	private String MSG_VOID_INVOICE_OK;
 	private String MSG_SUPERVISOR_AUTH;
+	private String MSG_DISCOUNT_GENERAL_SHORT;
 	private String MSG_DISCOUNT_GENERAL;
 	private String MSG_CONFIRM_CANCEL_ORDER;
 	private String MSG_CANCEL_ORDER;
@@ -478,6 +479,7 @@ public class PoSMainForm extends CPanel implements FormPanel, ASyncProcess, Disp
 	private String MSG_INSERT_CARD;
 	private String MSG_CLOSE_POS_ORDERLINES;
 	private String MSG_POSNET;
+	private String MSG_NO_AUTHORIZATION;
 		
 	/**
 	 * This method initializes 
@@ -741,7 +743,8 @@ public class PoSMainForm extends CPanel implements FormPanel, ASyncProcess, Disp
 		MSG_RETRY_VOID_INVOICE_INFO_POS_JOURNAL = getMsg("RetryVoidInvoiceInfoPosJournal");
 		MSG_VOID_INVOICE_OK = getMsg("InvoiceVoidOK");
 		MSG_SUPERVISOR_AUTH = getMsg("SupervisorAuth");
-		MSG_DISCOUNT_GENERAL = getMsg("GeneralDiscountChargeShort");
+		MSG_DISCOUNT_GENERAL_SHORT = getMsg("GeneralDiscountChargeShort");
+		MSG_DISCOUNT_GENERAL = getMsg("GeneralDiscountCharge");
 		MSG_CONFIRM_CANCEL_ORDER = getMsg("ConfirmCancelOrder");
 		MSG_CANCEL_ORDER = getMsg("POSCancelOrder");
 		MSG_NEXT_INVOICE_DOCUMENTNO = getMsg("NextInvoiceDocumentNoShort");
@@ -750,6 +753,7 @@ public class PoSMainForm extends CPanel implements FormPanel, ASyncProcess, Disp
 		MSG_INSERT_CARD = getMsg("InsertCard");
 		MSG_CLOSE_POS_ORDERLINES = getMsg("POSNoCloseWithOrderLines");
 		MSG_POSNET = getMsg("Posnet");
+		MSG_NO_AUTHORIZATION = getMsg("NoAuthorization"); 
 		
 		// Estos mensajes no se asignan a variables de instancias dado que son mensajes
 		// devueltos por el modelo del TPV, pero se realiza la invocación a getMsg(...) para
@@ -793,6 +797,10 @@ public class PoSMainForm extends CPanel implements FormPanel, ASyncProcess, Disp
 		closeWindowAdapter = new LYCloseWindowAdapter(this, true);
 		LYCloseWindowAdapter.setMsg(MSG_CLOSE_POS_ORDERLINES);
 		getFrame().addWindowListener(closeWindowAdapter);
+		setManualDiscountAuthOperation(new AuthOperation(
+				UserAuthConstants.POS_MANUAL_GENERAL_DISCOUNT_UID,
+				MSG_DISCOUNT_GENERAL, UserAuthConstants.POS_FINISH_MOMENT));
+		getManualDiscountAuthOperation().setLazyAuthorization(true);
 	}
 	
 	private void keyBindingsInit() {
@@ -1776,7 +1784,7 @@ public class PoSMainForm extends CPanel implements FormPanel, ASyncProcess, Disp
 			cGeneralDiscountLabel = new CLabel();
 			cGeneralDiscountLabel.setText("%"
 					+ " "
-					+ MSG_DISCOUNT_GENERAL
+					+ MSG_DISCOUNT_GENERAL_SHORT
 					+ " "
 					+ KeyUtils.getKeyStr(getActionKeys().get(
 							CHANGE_FOCUS_GENERAL_DISCOUNT)));
@@ -1976,13 +1984,16 @@ public class PoSMainForm extends CPanel implements FormPanel, ASyncProcess, Disp
 
 				public void vetoableChange(PropertyChangeEvent event) throws PropertyVetoException {
 					// Agregar o Actualizar el descuento manual general por el valor del porcentaje del monto
-					getOrder()
-							.updateManualGeneralDiscount(
-									(BigDecimal) event.getNewValue() == null ? BigDecimal.ZERO
-											: (BigDecimal) event
-													.getNewValue());
+					BigDecimal percentage = (BigDecimal) event
+									.getNewValue() == null ? BigDecimal.ZERO
+									: (BigDecimal) event.getNewValue();
+					getOrder().updateManualGeneralDiscount(percentage);
+					// Actualizar autorización de descuento manual general
+					updateManualDiscountAuthorization(percentage);
 					// Actualizar descuentos
 					getOrder().updateDiscounts();
+					// Actualiza la tabla de pagos
+					updatePaymentsTable();
 					// Refrescar los medios de pago
 					refreshPaymentMediumInfo();
 					// Actualizar el estado de la factura
@@ -4831,6 +4842,13 @@ public class PoSMainForm extends CPanel implements FormPanel, ASyncProcess, Disp
 			errorMsg(MSG_NO_LOCATION_ERROR);
 			return;
 		}
+		// Autorizaciones al finalizar la venta
+		getAuthDialog().authorizeOperation(UserAuthConstants.POS_FINISH_MOMENT);
+		CallResult result = getAuthDialog().getAuthorizeResult(true);
+		if(result != null && result.isError()){
+			errorMsg(result.getMsg());
+			return;
+		}
 		
 		//final Waiting waitingDialog = new Waiting(getFrame(),waitMsg + "...",false,60);
 		
@@ -4918,6 +4936,8 @@ public class PoSMainForm extends CPanel implements FormPanel, ASyncProcess, Disp
 			infoFiscalPrinter.setVisible(false);
 			infoFiscalPrinter.clearDetail();
 		}
+		getManualDiscountAuthOperation().setAuthorized(true);
+		getAuthDialog().markAuthorized(UserAuthConstants.POS_FINISH_MOMENT, true);
 		getModel().newOrder();
 		loadBPartner(getModel().getDefaultBPartner());
 		getOrderTableUtils().refreshTable();
@@ -6080,5 +6100,32 @@ public class PoSMainForm extends CPanel implements FormPanel, ASyncProcess, Disp
 
 	public AddPOSPaymentValidations getExtraPOSPaymentAddValidations() {
 		return extraPOSPaymentAddValidations;
-	}  	
+	}
+
+	/**
+	 * Agrega o elimina la autorización del descuento manual general dependiendo
+	 * si el valor es distinto de 0 o 0 respectivamente
+	 * @param percentage
+	 */
+	protected void updateManualDiscountAuthorization(BigDecimal percentage){
+		if(getModel().getPoSConfig().isAuthorizeManualGeneralDiscount()){
+			if(percentage.compareTo(BigDecimal.ZERO) == 0){
+				getAuthDialog().removeAuthOperation(getManualDiscountAuthOperation());
+			}
+			else if(percentage.compareTo(BigDecimal.ZERO) != 0){
+				getManualDiscountAuthOperation().setAuthorized(false);
+				getAuthDialog().removeAuthOperation(getManualDiscountAuthOperation());
+				getAuthDialog().addAuthOperation(getManualDiscountAuthOperation());
+			}
+		}
+	}
+
+	protected void setManualDiscountAuthOperation(
+			AuthOperation manualDiscountAuthOperation) {
+		this.manualDiscountAuthOperation = manualDiscountAuthOperation;
+	}
+
+	protected AuthOperation getManualDiscountAuthOperation() {
+		return manualDiscountAuthOperation;
+	}
 }  //  @jve:decl-index=0:visual-constraint="10,10"

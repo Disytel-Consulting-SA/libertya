@@ -310,6 +310,9 @@ public class Order  {
 			if(pendingAmt.compareTo(payment.getConvertedAmount()) < 0){
 				payment.setChangeAmt(payment.getConvertedAmount().subtract(pendingAmt));
 			}
+			else{
+				payment.setChangeAmt(BigDecimal.ZERO);
+			}
 		}
 		
 		// Se agrega el pago a la lista. Si era un pago existente, anteriormente

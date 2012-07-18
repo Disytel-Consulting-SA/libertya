@@ -19,6 +19,13 @@ public class AuthOperation {
 	 */
 	private String authorizeMoment;
 	
+	/**
+	 * Booleano que determina si tiene una autorización perezoza, es decir, este
+	 * flag permite que cuando se recorren las operaciones para autorizar se
+	 * marquen autorizadas o no
+	 */
+	private boolean lazyAuthorization;
+	
 	/** Autorización que autorizó esta operación */
 	private AUserAuthModel userAthorized;
 	
@@ -27,6 +34,7 @@ public class AuthOperation {
 		setOperationType(null);
 		setAuthorized(false);
 		setAuthorizeMoment(null);
+		setLazyAuthorization(false);
 	}
 	
 	public AuthOperation(String operationType, String opDescription, String authorizeMoment) {
@@ -74,6 +82,14 @@ public class AuthOperation {
 
 	public AUserAuthModel getUserAthorized() {
 		return userAthorized;
+	}
+
+	public void setLazyAuthorization(boolean lazyAuthorization) {
+		this.lazyAuthorization = lazyAuthorization;
+	}
+
+	public boolean isLazyAuthorization() {
+		return lazyAuthorization;
 	}
 
 }
