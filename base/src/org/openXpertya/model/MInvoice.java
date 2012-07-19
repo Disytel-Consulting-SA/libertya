@@ -3543,21 +3543,7 @@ public class MInvoice extends X_C_Invoice implements DocAction {
 		boolean localeARActive = CalloutInvoiceExt
 				.ComprobantesFiscalesActivos();
 		MDocType docType = MDocType.get(getCtx(), getC_DocType_ID());
-		MDocType reversalDocType = null;
-
-		// Deep Copy
-
-		MInvoice reversal = copyFrom(this, getDateInvoiced(),
-				getC_DocType_ID(), isSOTrx(), false, get_TrxName(), true);
-
-		if (reversal == null) {
-			m_processMsg = "Could not create Invoice Reversal";
-
-			return false;
-		}
-		// Se agregan los listeners de DocAction que tiene esta Invoice
-		// a la reversal.
-		reversal.copyDocActionStatusListeners(this);
+		MDocType reversalDocType = docType;
 
 		// ////////////////////////////////////////////////////////////////
 		// LOCALIZACIÓN ARGENTINA
@@ -3575,20 +3561,45 @@ public class MInvoice extends X_C_Invoice implements DocAction {
 				reversalDocType = MDocType.getDocType(getCtx(),
 						reversalDocTypeBaseKey, getLetra(), getPuntoDeVenta(),
 						get_TrxName());
-				// Se asigna el tipo de documento nuevo.
-				reversal.setC_DocTypeTarget_ID(reversalDocType
-						.getC_DocType_ID());
-				reversal.setC_DocType_ID(reversalDocType.getC_DocType_ID());
-
-				if (reversalDocType
-						.isDocType(MDocType.DOCTYPE_CustomerCreditNote))
-					reversal.setC_Invoice_Orig_ID(getC_Invoice_ID());
 			}
+		}
+		
+		// Deep Copy
+
+		MInvoice reversal = copyFrom(this, getDateInvoiced(),
+				reversalDocType.getC_DocType_ID(), isSOTrx(), false,
+				get_TrxName(), true);
+
+		if (reversal == null) {
+			m_processMsg = "Could not create Invoice Reversal";
+
+			return false;
+		}
+		// Se agregan los listeners de DocAction que tiene esta Invoice
+		// a la reversal.
+		reversal.copyDocActionStatusListeners(this);
+
+		// ////////////////////////////////////////////////////////////////
+		// LOCALIZACIÓN ARGENTINA
+		// Para la localización argentina es necesario contemplar el tipo
+		// de documento a anular a fin de determinar el tipo de documento
+		// del documento generado (reversal).
+		if (localeARActive & isSOTrx()) {
+			// Se asigna el tipo de documento nuevo.
+			reversal.setC_DocTypeTarget_ID(reversalDocType
+					.getC_DocType_ID());
+			reversal.setC_DocType_ID(reversalDocType.getC_DocType_ID());
+
+			if (reversalDocType
+					.isDocType(MDocType.DOCTYPE_CustomerCreditNote))
+				reversal.setC_Invoice_Orig_ID(getC_Invoice_ID());
 
 			reversal.setFiscalAlreadyPrinted(false);
-			// Se ignora la impresión fiscal del reversal si esta factura no ha
-			// sido emitida fiscalmente.
-			reversal.setIgnoreFiscalPrint(!isFiscalAlreadyPrinted());
+			// Se ignora la impresión fiscal en este punto ya que puede haber un
+			// error en la imputación entre ellas lo que provoca es que se
+			// imprima fiscalmente, pero no exista en la base de datos por
+			// alg+un error eventual
+			reversal.setIgnoreFiscalPrint(true);
 		}
 
 		// Para la localización argentina no hay que invertir las cantidades ni
@@ -3767,7 +3778,17 @@ public class MInvoice extends X_C_Invoice implements DocAction {
 			allocHdr.processIt(MAllocationHdr.ACTION_Complete);
 			allocHdr.save();
 		}
-
+		
+		// Imprimir fiscalmente el documento reverso si es que así lo requiere y
+		// si el documento a revertir también se imprimió fiscalmente
+		if(localeARActive && isSOTrx() && isFiscalAlreadyPrinted()){
+			String errorMsg = reversal.doFiscalPrint();
+			if (errorMsg != null) {
+				m_processMsg = errorMsg;
+				return false;
+			}
+		}
+		
 		return true;
 	} // reverseCorrectIt
 
