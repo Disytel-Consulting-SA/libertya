@@ -20,6 +20,7 @@ import java.util.logging.Level;
 import org.openXpertya.apps.ProcessCtl;
 import org.openXpertya.apps.form.VModelHelper.ResultItem;
 import org.openXpertya.cc.CurrentAccountManager;
+import org.openXpertya.model.AllocationGeneratorException;
 import org.openXpertya.model.CalloutInvoiceExt;
 import org.openXpertya.model.MAllocationHdr;
 import org.openXpertya.model.MCashLine;
@@ -41,6 +42,7 @@ import org.openXpertya.model.MPayment;
 import org.openXpertya.model.MPaymentTerm;
 import org.openXpertya.model.MRefList;
 import org.openXpertya.model.MTax;
+import org.openXpertya.model.POCRGenerator.POCRType;
 import org.openXpertya.model.RetencionProcessor;
 import org.openXpertya.model.X_C_AllocationHdr;
 import org.openXpertya.model.X_C_Bank;
@@ -830,106 +832,32 @@ public class VOrdenCobroModel extends VOrdenPagoModel {
 		POS = pOS;
 	}
 
+	/**
+	 * Este método fue modificado casi en su totalidad para que utilice la funcionalidad
+	 * de la clase POCRGenerator.
+	 */
 	@Override
-	public void updateOnlineAllocationLines(Vector<MedioPago> pays){
+	public void updateOnlineAllocationLines(Vector<MedioPago> pays) throws AllocationGeneratorException{
 		// Eliminar todos los allocation anteriores
 		onlineAllocationLines = null;
 		onlineAllocationLines = new ArrayList<AllocationLine>();
-		BigDecimal saldoMediosPago = getSaldoMediosPago(true);		
-		// Ordenar los créditos
-		Vector<MedioPago> credits = new Vector<MedioPago>( pays );
-		// Ordenar los débitos
-		Vector<Invoice> debits = new Vector<Invoice>(
-				ordenarFacturas(reciboDeCliente.getRealInvoices()));
-		
-		BigDecimal sobraDelPago = null;
-		int payIdx = 0;
-		int totalFacturas = debits.size();
-		int totalPagos = credits.size();
-		Invoice invoice;
-		int C_Invoice_ID;
-		BigDecimal deboPagar;
-		BigDecimal sumaPagos;
-		ArrayList<MedioPago> subPagos;
-		ArrayList<BigDecimal> montosSubPagos;
-		for (int i = 0; i < totalFacturas && payIdx < totalPagos;i++) {
-			invoice = debits.get(i);
-			// Recorro todas las facturas para pagarlas 
-			C_Invoice_ID = invoice.getInvoiceID();
-			
-			deboPagar = invoice.getManualAmt().add(
-					invoice.getTotalPaymentTermDiscount()); // Esto es lo que
-															// tengo que cubrir
-			sumaPagos = (sobraDelPago != null) ? sobraDelPago : credits.get(payIdx).getImporte(); // Inicializar lo que cubro
-			subPagos = new ArrayList<MedioPago>();
-			montosSubPagos = new ArrayList<BigDecimal>();
-			
-			// Puede haber mas de un pago por factura: busco cuales son.
-			
-			subPagos.add(credits.get(payIdx));
-			montosSubPagos.add(sumaPagos);
-			
-			// Precondicion: Se asume que en este punto la cantidad de plata alcanza.
-			
-			// TODO: Redondeos de centavos ?? [(-0,01, 0.01)]
-			boolean follow = true;
-			while (compararMontos(deboPagar, sumaPagos) > 0 && follow) { // Mientras no haya cubrido
-				payIdx++;
-				follow = payIdx < totalPagos;
-				if(follow){
-					BigDecimal importe = credits.get(payIdx).getImporte();
-					
-					subPagos.add(credits.get(payIdx));
-					montosSubPagos.add(importe);
-					sumaPagos = sumaPagos.add(importe);
-				}
-			}
-
-			if (compararMontos(deboPagar, sumaPagos) < 0) {
-				// Si sobra ...
-				int x = montosSubPagos.size() - 1;
-				
-				sobraDelPago = sumaPagos.subtract(deboPagar);
-				
-				// Si sobra plata, en el ultimo monto hay plata de más.
-				montosSubPagos.set( x, montosSubPagos.get(x).subtract(sobraDelPago) );
-			} else {
-				payIdx++;
-				sobraDelPago = null;
-			}
-			
-			// Aca estoy seguro de que deboPagar.compareTo(sumaPagos) == 0			
-			
-			for (int subpayIdx = 0; subpayIdx < subPagos.size(); subpayIdx++) {
-				
-				MedioPago mp = subPagos.get(subpayIdx);
-				BigDecimal AppliedAmt = montosSubPagos.get(subpayIdx);
-				
-				//
-				// Si se cambian estos valores, verificar las monedas !!
-				//
-				
-				BigDecimal DiscountAmt = Env.ZERO;
-				BigDecimal WriteoffAmt = Env.ZERO;
-				BigDecimal OverunderAmt = Env.ZERO;
-
-				if (saldoMediosPago.signum() != 0) {
-					WriteoffAmt = saldoMediosPago; // Redondeo de minusculos centavitos.
-					saldoMediosPago = BigDecimal.ZERO;
-				}
-				
-				AllocationLine allocLine =	new AllocationLine();
-				allocLine.setAmt(AppliedAmt);
-				allocLine.setDiscountAmt(DiscountAmt);
-				allocLine.setWriteOffAmt(WriteoffAmt);
-				allocLine.setOverUnderAmt(OverunderAmt);
-				allocLine.setDebitDocumentID(C_Invoice_ID);
-				allocLine.setCreditPaymentMedium(mp);
-				onlineAllocationLines.add(allocLine);
-			}
-		}
-	}
 	
+		Vector<MedioPago> credits = new Vector<MedioPago>( pays );
+		Vector<Invoice> debits = new Vector<Invoice>(ordenarFacturas(reciboDeCliente.getRealInvoices()));
+		
+		// Agrego las facturas al generador
+		for (Invoice f : debits) {
+			int invoiceID = f.getInvoiceID();
+			BigDecimal payAmount = f.getManualAmt().add(f.getTotalPaymentTermDiscount());			
+			poGenerator.addInvoice(invoiceID, payAmount);
+		}	
+		// Agrego los medios de pagos al generador	
+		for (MedioPago pago : credits) {
+			pago.addToGenerator(poGenerator);
+		}
+		// Se crean las líneas de imputación entre las facturas y los pagos
+		poGenerator.generateLines();
+	}
 	
 	@Override
 	protected void makeCustomDebitsCredits(Vector<MedioPago> pays) throws Exception{
@@ -1751,6 +1679,11 @@ public class VOrdenCobroModel extends VOrdenPagoModel {
 
 	public String getBank(Integer value) {
 		return ((new X_C_Bank(getCtx(), value, getTrxName())).getName()); 
+	}
+	
+	@Override
+	protected POCRType getPOCRType() {
+		return POCRType.CUSTOMER_RECEIPT;
 	}
 	
 }
