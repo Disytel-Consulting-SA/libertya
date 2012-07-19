@@ -204,21 +204,24 @@ public class VOrdenCobro extends VOrdenPago {
 		
 		//
 		tblFacturas.getColumnModel().getColumn(
-				tblFacturas.getColumnModel().getColumnCount() - 3)
+				tblFacturas.getColumnModel().getColumnCount() - 4)
 				.setCellRenderer(
 						new MyNumberTableCellRenderer(getModel()
 								.getNumberFormat()));
 		
 		tblFacturas.getColumnModel().getColumn(
-				tblFacturas.getColumnModel().getColumnCount() - 2)
+				tblFacturas.getColumnModel().getColumnCount() - 3)
 				.setCellRenderer(
 						new VCellRenderer(DisplayType.YesNo));
-		if (!getCobroModel().showColumnChange()){
-			tblFacturas.getColumnModel().removeColumn(tblFacturas.getColumnModel().getColumn(tblFacturas.getColumnModel().getColumnCount() - 2));
-		}
-		
+		ocultarCanje();
 		initFormattedTextField((JFormattedTextField)txtRetencImporte);
   	}
+	
+	protected void ocultarCanje(){
+		if (!getCobroModel().showColumnChange()){
+			tblFacturas.getColumnModel().removeColumn(tblFacturas.getColumnModel().getColumn(tblFacturas.getColumnModel().getColumnCount() - 3));
+		}
+	}
 
 	@Override
 	protected void addCustomPaymentTabs(JTabbedPane tabbedPane) {

@@ -2493,6 +2493,8 @@ public class VOrdenPago extends CPanel implements FormPanel,ActionListener,Table
 
 	public void tableChanged(TableModelEvent arg0) {
 		// System.out.println("tableChanged: " + arg0);
+		// Se verifica que no se esté intentando pagar una factura que no tiene una tasa de cambio para la fecha actual
+		validateConversionRate();
 		tableUpdated();
 	}
 
@@ -2617,6 +2619,12 @@ public class VOrdenPago extends CPanel implements FormPanel,ActionListener,Table
 	
 	protected void tableUpdated() {
 		updateTotalAPagar1();
+	}
+	
+	protected void validateConversionRate() {
+		if (!m_model.validateConversionRate()){
+			showError("@NoCurrencyConvertError@");
+		}
 	}
 	
 	public void treeNodesChanged(TreeModelEvent arg0) {
