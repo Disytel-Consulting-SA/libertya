@@ -30,8 +30,8 @@ import org.openXpertya.apps.form.VModelHelper.ResultItem;
 import org.openXpertya.apps.form.VModelHelper.ResultItemTableModel;
 import org.openXpertya.cc.CurrentAccountManager;
 import org.openXpertya.cc.CurrentAccountManagerFactory;
+import org.openXpertya.model.AllocationGeneratorException;
 import org.openXpertya.model.MAllocationHdr;
-import org.openXpertya.model.MAllocationLine;
 import org.openXpertya.model.MBPartner;
 import org.openXpertya.model.MCash;
 import org.openXpertya.model.MCashLine;
@@ -46,6 +46,8 @@ import org.openXpertya.model.MPInstancePara;
 import org.openXpertya.model.MPOSPaymentMedium;
 import org.openXpertya.model.MPayment;
 import org.openXpertya.model.PO;
+import org.openXpertya.model.POCRGenerator;
+import org.openXpertya.model.POCRGenerator.POCRType;
 import org.openXpertya.model.RetencionProcessor;
 import org.openXpertya.model.X_C_AllocationHdr;
 import org.openXpertya.process.DocAction;
@@ -124,7 +126,7 @@ public class VOrdenPagoModel implements TableModelListener {
 		public abstract Timestamp getDateTrx();
 		public abstract Timestamp getDateAcct();
 		public abstract int getBankAccountID();
-		public abstract void setAllocationInfo(MAllocationLine allocLine);
+		public abstract void addToGenerator(POCRGenerator poGenerator);
 				
 		private boolean isSOTrx = false;
 		
@@ -318,8 +320,8 @@ public class VOrdenPagoModel implements TableModelListener {
 		}
 
 		@Override
-		public void setAllocationInfo(MAllocationLine allocLine) {
-			allocLine.setC_CashLine_ID(getCashLine().getC_CashLine_ID());
+		public void addToGenerator(POCRGenerator poGenerator) {
+			poGenerator.addCashLinePaymentMedium(getCashLine().getC_CashLine_ID(), getImporte());
 		}
 	}
 
@@ -387,8 +389,8 @@ public class VOrdenPagoModel implements TableModelListener {
 		}
 
 		@Override
-		public void setAllocationInfo(MAllocationLine allocLine) {
-			allocLine.setC_Payment_ID(getPayment().getC_Payment_ID());
+		public void addToGenerator(POCRGenerator poGenerator) {
+			poGenerator.addPaymentPaymentMedium(getPayment().getC_Payment_ID(), getImporte());
 		}
 	}
 	
@@ -468,8 +470,8 @@ public class VOrdenPagoModel implements TableModelListener {
 		}
 
 		@Override
-		public void setAllocationInfo(MAllocationLine allocLine) {
-			allocLine.setC_Payment_ID(getPayment().getC_Payment_ID());
+		public void addToGenerator(POCRGenerator poGenerator) {
+			poGenerator.addPaymentPaymentMedium(getPayment().getC_Payment_ID(), getImporte());
 		}
 		
 		/**
@@ -520,8 +522,8 @@ public class VOrdenPagoModel implements TableModelListener {
 		}
 
 		@Override
-		public void setAllocationInfo(MAllocationLine allocLine) {
-			allocLine.setC_Invoice_Credit_ID(C_Invoice_ID);
+		public void addToGenerator(POCRGenerator poGenerator) {
+			poGenerator.addInvoicePaymentMedium(C_Invoice_ID, getImporte());			
 		}
 	}
 	
@@ -619,8 +621,8 @@ public class VOrdenPagoModel implements TableModelListener {
 		}
 
 		@Override
-		public void setAllocationInfo(MAllocationLine allocLine) {
-			allocLine.setC_Invoice_Credit_ID(getC_invoice_ID());
+		public void addToGenerator(POCRGenerator poGenerator) {
+			poGenerator.addInvoicePaymentMedium(getC_invoice_ID(), getImporte());
 		}
 	}
 	
@@ -663,8 +665,8 @@ public class VOrdenPagoModel implements TableModelListener {
 		}
 
 		@Override
-		public void setAllocationInfo(MAllocationLine allocLine) {
-			allocLine.setC_Payment_ID(getPayment().getC_Payment_ID());
+		public void addToGenerator(POCRGenerator poGenerator) {
+			poGenerator.addPaymentPaymentMedium(getPayment().getC_Payment_ID(), getImporte());
 		}
 
 		@Override
@@ -893,6 +895,7 @@ public class VOrdenPagoModel implements TableModelListener {
 
 	// Medios de pago
 	private Vector<MedioPago> m_mediosPago = new Vector<MedioPago>();
+	protected POCRGenerator poGenerator;
 	
 	// Retenciones
 	private GeneratorRetenciones m_retGen = null;
@@ -1816,77 +1819,47 @@ public class VOrdenPagoModel implements TableModelListener {
 		Trx trx = getTrx();
 		MAllocationHdr hdr = null;
 		boolean saveOk = true;
+		POCRGenerator poGenerator = null; 
+		
 		try {
 			
 			// 1. Ordenar los pagos y devolverlos 
-			
 			Vector<MedioPago> pagos = new Vector<MedioPago>( ordenarMediosPago() );
 			
-			// 2. Crear el AllocatoinHdr para la OPA
-			hdr = createAllocationHdr();
-			saveOk = hdr.save();
+			// 2. Crear el generador de OPA y actualizar el encabezado de la asignación creada
+			poGenerator = new POCRGenerator(getCtx(), getPOCRType(), getTrxName());
+			hdr = poGenerator.getAllocationHdr();
+			updateAllocationHdr(hdr);
 			
 			// 3. Generar los pagos
-			
 			if (saveOk && !generarPagosDesdeMediosPagos(pagos) ) {
 				saveOk = false;
 				errorNo = PROCERROR_PAYMENTS_GENERATION;
+			} else {
+				// 4. Guardar Retenciones
+				m_retGen.setProjectID(getProjectID());
+				m_retGen.setCampaignID(getCampaignID());
+				m_retGen.save(hdr);
+			
+				// 5. Agregar retenciones como medio de pago
+				agregarRetencionesComoMediosPagos(pagos, hdr);
+				// Agrego los medios de pagos al generador	
+				for (MedioPago pago : pagos) {
+					pago.addToGenerator(poGenerator);
+				}
+				
+				// Se crean las líneas de imputación entre las facturas y los pagos
+				poGenerator.generateLines();
+				
+				// 99. Completar HDR
+				poGenerator.completeAllocation();
+				
+				if (saveOk && errorNo == PROCERROR_OK) {
+					trx.commit();
+					m_newlyCreatedC_AllocationHeader_ID = hdr.getC_AllocationHdr_ID();
+				}
 			}
 			
-			// 4. Guardar Retenciones
-			m_retGen.setProjectID(getProjectID());
-			m_retGen.setCampaignID(getCampaignID());
-			m_retGen.save(hdr);
-			
-			// 5. Agregar retenciones como medio de pago
-			agregarRetencionesComoMediosPagos(pagos, hdr);
-			
-			// 6. Se crean las AllocationLine por cada pago. El monto de la línea
-			// se asigna a 0 para que no surta efecto en los pendientes de los documentos.
-			for (MedioPago mp : pagos) {
-				
-				BigDecimal DiscountAmt = Env.ZERO;
-				BigDecimal WriteoffAmt = Env.ZERO;
-				BigDecimal OverunderAmt = Env.ZERO;
-				BigDecimal amount = Env.ZERO;        // Monto en CERO. Requerido en OPA para evitar que se modifiquen los importes pendientes de los pagos.
-				
-				MAllocationLine allocLine = 
-					new MAllocationLine( hdr, amount, DiscountAmt, WriteoffAmt, OverunderAmt);
-				
-				mp.setAllocationInfo(allocLine);
-				allocLine.setAmount(amount);        // Por si el MP cambió el amount.
-				allocLine.setC_BPartner_ID(C_BPartner_ID);
-				
-				// Se guarda el AllocationLine sin asignar ID de Factura C_Invoice_ID, dado
-				// esta línea no corresponde a una imputación sino a una línea de la OPA.
-				saveOk = saveOk && allocLine.save();
-				
-				if (!saveOk)
-					break;
-			}
-			
-			// 99. Completar HDR
-			
-			if( saveOk && hdr.getID() != 0 ) {
-				saveOk = saveOk && hdr.processIt( DocAction.ACTION_Complete );
-				saveOk = saveOk && hdr.save( getTrxName());
-	        }
-			
-			// Realizar las tareas de cuenta corriente previas a terminar el
-			// procesamiento
-			performAditionalCurrentAccountWork();
-			
-			// Si estuvo todo bien entonces realizo las tareas posteriores a
-			// terminar el procesamiento y confirmación de transacción
-			afterProcessDocuments();
-			
-			// Procesar los pagos y asignarles el monto.
-			
-			if (saveOk && errorNo == PROCERROR_OK) {
-				trx.commit();
-				m_newlyCreatedC_AllocationHeader_ID = hdr.getC_AllocationHdr_ID();
-			}
-				
 		} catch (Exception e) {
 			log.log(Level.SEVERE, "doPostProcesarAdelantado", e);
 			errorNo = PROCERROR_UNKNOWN;
@@ -1924,26 +1897,26 @@ public class VOrdenPagoModel implements TableModelListener {
 	}
 	
 	private int doPostProcesarNormal() {
-		
 		Trx trx = getTrx();
-		
+		poGenerator = null;
 		MAllocationHdr hdr = null;
 		
-		// BEGIN //
-		boolean saveOk = false;
+		boolean saveOk = true;
 		errorNo = PROCERROR_UNKNOWN;
 		Vector<MedioPago> pays = getMediosPago();
 
 		try 
 		{	
 			// 1. Crear débitos y créditos customs
-			
 			makeCustomDebitsCredits(pays);
 			
-			// 2. Allocation Header
+			// 2. Se crea el generador de orden de pago.
+			poGenerator = new POCRGenerator(getCtx(), getPOCRType(), getTrxName());
 			
-			hdr = createAllocationHdr();
-			saveOk = hdr.save();
+			hdr = poGenerator.getAllocationHdr();
+			
+			// Se setean las propiedades del encabezado
+			updateAllocationHdr(hdr);
 
 			// 3. Retenciones
 			m_retGen.setProjectID(getProjectID());
@@ -1951,44 +1924,31 @@ public class VOrdenPagoModel implements TableModelListener {
 			m_retGen.save(hdr);
 			
 			// 4. Generar los pagos, completos.
-			
 			if (saveOk && !generarPagosDesdeMediosPagos(pays)) {
 				saveOk = false;
 				errorNo = PROCERROR_PAYMENTS_GENERATION;
+			} else {
+				// 5. Agregar las facturas de debito 
+				agregarRetencionesComoMediosPagos(pays, hdr);
+				
+				// 6. Guardar allocation lines online creadas
+				processOnlineAllocationLines(hdr, pays, true);
+				
+				// 98. Completar HDR
+				poGenerator.completeAllocation();
+				
+				// 99. Realizar operaciones custom al final del procesamiento
+				doPostProcesarNormalCustom();
+				
+				// Realizar las tareas de cuenta corriente previas a terminar el
+				// procesamiento
+				performAditionalCurrentAccountWork();
+				
+				// Si estuvo todo bien entonces realizo las tareas posteriores a
+				// terminar el procesamiento y confirmación de transacción
+				afterProcessDocuments();
 			}
-			
-			// 5. Agregar las facturas de debito 
-			
-			agregarRetencionesComoMediosPagos(pays, hdr);
-			
-			// 6. Guardar allocation lines online creadas
-			
-			processOnlineAllocationLines(hdr, pays, true);
-			
-			// 98. Completar HDR
-			
-			if( saveOk && hdr.getID() != 0 ) {
-				saveOk = saveOk && hdr.processIt( DocAction.ACTION_Complete );
-				if(!saveOk){
-					throw new Exception(hdr.getProcessMsg());
-				}
-				saveOk = saveOk && hdr.save( getTrxName());
-				if(!saveOk){
-					throw new Exception(CLogger.retrieveErrorAsString());
-				}
-	        }
-			
-			// 99. Realizar operaciones custom al final del procesamiento
-			doPostProcesarNormalCustom();
-			
-			// Realizar las tareas de cuenta corriente previas a terminar el
-			// procesamiento
-			performAditionalCurrentAccountWork();
-			
-			// Si estuvo todo bien entonces realizo las tareas posteriores a
-			// terminar el procesamiento y confirmación de transacción
-			afterProcessDocuments();
-			
+
 			if (saveOk)
 				saveOk = trx.commit();
 		}
@@ -2256,8 +2216,8 @@ public class VOrdenPagoModel implements TableModelListener {
 		}
 		
 		@Override
-		public void setAllocationInfo(MAllocationLine allocLine) {
-			allocLine.setC_Payment_ID(getC_Payment_ID());
+		public void addToGenerator(POCRGenerator poGenerator) {
+			poGenerator.addPaymentPaymentMedium(getC_Payment_ID(), getImporte());
 		}
 	}
 	
@@ -2303,32 +2263,10 @@ public class VOrdenPagoModel implements TableModelListener {
 	}
     
     /**
-     * @return Crea y retorna el AllocationHdr que representa el encabezado de una OP u OPA.
+     * Actualiza el AllocationHdr que representa el encabezado de una OP u OPA.
      */
-    private MAllocationHdr createAllocationHdr() {
-		BigDecimal sumaRetenciones = getSumaRetenciones();
-		BigDecimal sumaTotalPagar = getAllocationHdrTotalAmt();
-		BigDecimal approvalAmt = sumaTotalPagar.subtract(sumaRetenciones);
-    	
-    	MAllocationHdr hdr = new MAllocationHdr(m_ctx, 0, getTrxName());
-		
-		// 3. Asignar al hdr: retenciones, total a pagar e importe efectivamente pagado
-
-		// TODO: Siempre va a ser normal !
-		
-		hdr.setAllocationType(getHdrAllocationType());
-
-		String HdrDescription ="";
-		if(description.compareTo("")==0){
-			HdrDescription= getAllocHdrDescription();
-		}
-		else{
-			HdrDescription=description;
-		}
-
-		hdr.setApprovalAmt(approvalAmt);
-		hdr.setGrandTotal(sumaTotalPagar);
-		hdr.setRetencion_Amt(sumaRetenciones);
+    private void updateAllocationHdr(MAllocationHdr hdr) {
+		String HdrDescription = getAllocHdrDescription();
 
 		hdr.setC_BPartner_ID(C_BPartner_ID);
 		hdr.setC_Currency_ID(C_Currency_ID);
@@ -2338,20 +2276,11 @@ public class VOrdenPagoModel implements TableModelListener {
 		
 		hdr.setDescription(HdrDescription);
 		hdr.setIsManual(false);
-		// No actualizar el saldo del entidad comercial ya que se actualiza al
-		// final de todo ya que se debe actualizar al final
-		hdr.setUpdateBPBalance(false);
+
 		hdr.setDocumentNo(documentNo);
-		// hdr.setDocumentNo(); // Lo asigna PO
-		// hdr.setDocAction(); // Default
-		// hdr.setDocStatus(); // Default
-		// hdr.setIsActive(true); // Default
-		// hdr.setIsApproved(); // Default
-		// hdr.setPosted(); // Default
-		// hdr.setProcessed(); // Default
-		// hdr.setProcessing(); // Default
-		
-		return hdr;
+
+		// Detalle es una variable String inicializada en vacio que nunca se modifica.
+		//hdr.setdetalle(detalle);
     }
     
 	protected String getAllocHdrDescriptionMsg() {
@@ -2438,11 +2367,6 @@ public class VOrdenPagoModel implements TableModelListener {
 		}
 
 		@Override
-		public void setAllocationInfo(MAllocationLine allocLine) {
-			allocLine.setC_CashLine_ID(cashLineID);			
-		}
-
-		@Override
 		public void setImporte(BigDecimal importe) {
 			this.importe = importe;
 		}
@@ -2459,6 +2383,11 @@ public class VOrdenPagoModel implements TableModelListener {
 		 */
 		public void setCashLineID(Integer cashLineID) {
 			this.cashLineID = cashLineID;
+		}
+		
+		@Override
+		public void addToGenerator(POCRGenerator poGenerator) {
+			poGenerator.addCashLinePaymentMedium(getCashLineID(), getImporte());
 		}
 	}
 	
@@ -2534,8 +2463,8 @@ public class VOrdenPagoModel implements TableModelListener {
 		}
 		
 		@Override
-		public void setAllocationInfo(MAllocationLine allocLine) {
-			allocLine.setC_Payment_ID(getChequeCP().getC_Payment_ID());
+		public void addToGenerator(POCRGenerator poGenerator) {
+			poGenerator.addPaymentPaymentMedium(getChequeCP().getC_Payment_ID(), getImporte());
 		}
 		
 		@Override
@@ -2849,109 +2778,38 @@ public class VOrdenPagoModel implements TableModelListener {
 	}
 	
 	/**
-	 * Este método genera completamente la lista de allocation line online, o
-	 * sea se crean las allocation lines que hasta ahora se deben guardar,
-	 * realizando la división de pagos etc. Texto copiado de
-	 * doPostProcesarNormal.
+	 * Este método fue modificado casi en su totalidad para que utilice la funcionalidad
+	 * de la clase POCRGenerator.
 	 * 
 	 * @param pays
 	 *            la lista de medios de pago actual a tener en cuenta, dentro de
 	 *            este método se realiza la ordenación
+	 * @throws AllocationGeneratorException 
 	 */
-	public void updateOnlineAllocationLines(Vector<MedioPago> pays){
+	public void updateOnlineAllocationLines(Vector<MedioPago> pays) throws AllocationGeneratorException{
 		// Eliminar todos los allocation anteriores
 		onlineAllocationLines = null;
 		onlineAllocationLines = new ArrayList<AllocationLine>();
 		
-		BigDecimal saldoMediosPago = getSaldoMediosPago();
-		
 		Vector<MedioPago> pagos = new Vector<MedioPago>( pays );
 		Vector<ResultItemFactura> facturas = new Vector<ResultItemFactura>(ordenarFacturas());
+	
+		int facIdColIdx = m_facturasTableModel.getIdColIdx();
 		
 		eliminarFacturasVacias(facturas);
 		
-		int facIdColIdx = m_facturasTableModel.getIdColIdx();
-		
-		int payIdx = 0;
-		BigDecimal sobraDelPago = null;
-		int totalFacturas = facturas.size();
-		int totalPagos = pagos.size();
-		ResultItemFactura f;
-		for (int i = 0; i < totalFacturas && payIdx < totalPagos;i++) {
-			f = facturas.get(i);
-			// Recorro todas las facturas para pagarlas 
-			
-			int C_Invoice_ID = ((Integer)f.getItem(facIdColIdx));
-			
-			BigDecimal deboPagar = f.getManualAmount(); // Esto es lo que tengo que cubrir
-			BigDecimal sumaPagos = (sobraDelPago != null) ? sobraDelPago : pagos.get(payIdx).getImporte(); // Inicializar lo que cubro
-			ArrayList<MedioPago> subPagos = new ArrayList<MedioPago>();
-			ArrayList<BigDecimal> montosSubPagos = new ArrayList<BigDecimal>();
-			
-			// Puede haber mas de un pago por factura: busco cuales son.
-			
-			subPagos.add(pagos.get(payIdx));
-			montosSubPagos.add(sumaPagos);
-			
-			// Precondicion: Se asume que en este punto la cantidad de plata alcanza.
-			
-			// TODO: Redondeos de centavos ?? [(-0,01, 0.01)]
-			boolean follow = true;
-			while (compararMontos(deboPagar, sumaPagos) > 0 && follow) { // Mientras no haya cubrido
-				payIdx++;
-				follow = payIdx < totalPagos;
-				if(follow){
-					BigDecimal importe = pagos.get(payIdx).getImporte();
-					
-					subPagos.add(pagos.get(payIdx));
-					montosSubPagos.add(importe);
-					sumaPagos = sumaPagos.add(importe);
-				}
-			}
-
-			if (compararMontos(deboPagar, sumaPagos) < 0) {
-				// Si sobra ...
-				int x = montosSubPagos.size() - 1;
-				
-				sobraDelPago = sumaPagos.subtract(deboPagar);
-				
-				// Si sobra plata, en el ultimo monto hay plata de más.
-				montosSubPagos.set( x, montosSubPagos.get(x).subtract(sobraDelPago) );
-			} else {
-				payIdx++;
-				sobraDelPago = null;
-			}
-			
-			// Aca estoy seguro de que deboPagar.compareTo(sumaPagos) == 0			
-			
-			for (int subpayIdx = 0; subpayIdx < subPagos.size(); subpayIdx++) {
-				
-				MedioPago mp = subPagos.get(subpayIdx);
-				BigDecimal AppliedAmt = montosSubPagos.get(subpayIdx);
-				
-				//
-				// Si se cambian estos valores, verificar las monedas !!
-				//
-				
-				BigDecimal DiscountAmt = Env.ZERO;
-				BigDecimal WriteoffAmt = Env.ZERO;
-				BigDecimal OverunderAmt = Env.ZERO;
-
-				if (saldoMediosPago.signum() != 0) {
-					WriteoffAmt = saldoMediosPago; // Redondeo de minusculos centavitos.
-					saldoMediosPago = BigDecimal.ZERO;
-				}
-				
-				AllocationLine allocLine =	new AllocationLine();
-				allocLine.setAmt(AppliedAmt);
-				allocLine.setDiscountAmt(DiscountAmt);
-				allocLine.setWriteOffAmt(WriteoffAmt);
-				allocLine.setOverUnderAmt(OverunderAmt);
-				allocLine.setDebitDocumentID(C_Invoice_ID);
-				allocLine.setCreditPaymentMedium(mp);
-				onlineAllocationLines.add(allocLine);
-			}
+		// Agrego las facturas al generador
+		for (ResultItemFactura f : facturas) {
+			int invoiceID = ((Integer)f.getItem(facIdColIdx));
+			BigDecimal payAmount = f.getManualAmount(); 				
+			poGenerator.addInvoice(invoiceID, payAmount);
+		}	
+		// Agrego los medios de pagos al generador	
+		for (MedioPago pago : pagos) {
+			pago.addToGenerator(poGenerator);
 		}
+		// Se crean las líneas de imputación entre las facturas y los pagos
+		poGenerator.generateLines();
 	}
 
 	
@@ -2959,8 +2817,9 @@ public class VOrdenPagoModel implements TableModelListener {
 	 * Este método genera completamente la lista de allocation line online, o
 	 * sea se crean las allocation lines que hasta ahora se deben guardar,
 	 * realizando la división de pagos etc. Texto copiado de doPostProcesarNormal.
+	 * @throws AllocationGeneratorException 
 	 */
-	public void updateOnlineAllocationLines(){
+	public void updateOnlineAllocationLines() throws AllocationGeneratorException{
 		updateOnlineAllocationLines(m_mediosPago);
 	}
 
@@ -2982,32 +2841,14 @@ public class VOrdenPagoModel implements TableModelListener {
 	 *             basadas en las allocation lines online
 	 */
 	protected boolean processOnlineAllocationLines(MAllocationHdr hdr, Vector<MedioPago> pays, boolean rebuild) throws Exception{
-		// Rearmar las online allocation lines por posibles medios de pagos
-		// agregados luego
+		// Rearmar las online allocation lines por posibles medios de pagos agregados luego
 		if(rebuild) updateOnlineAllocationLines(pays);			
-		MAllocationLine allocLine;
-		boolean ok = true;
-		for (AllocationLine onAllocLine : onlineAllocationLines) {
-			// Creo el allocation line desde la cabecera y los datos del
-			// allocationline online
-			allocLine = new MAllocationLine(hdr, onAllocLine.getAmt(),
-					onAllocLine.getDiscountAmt(), onAllocLine.getWriteOffAmt(),
-					onAllocLine.getOverUnderAmt());
-			// Le pido al medio de pago de crédito que agregue su info a la line
-			// creada
-			onAllocLine.getCreditPaymentMedium().setAllocationInfo(allocLine);
-			// Seteo el id del débito correspondiente
-			allocLine.setC_Invoice_ID(onAllocLine.getDebitDocumentID());
-			// Guardo
-			if(!allocLine.save()){
-				ok = false;
-				throw new Exception(CLogger.retrieveErrorAsString());
-			}
-		}
-		// Actualizo el total del allocation en base al total de las líneas
-		// creadas 
+		boolean ok = true;		
+		
+		// Actualizo el total del allocation en base al total de las líneas creadas 
 		hdr.updateTotalByLines();
 		if(!hdr.save()){
+			ok = false;
 			throw new Exception(CLogger.retrieveErrorAsString());
 		}
 		return ok;
@@ -3235,6 +3076,19 @@ public class VOrdenPagoModel implements TableModelListener {
 		// TODO Auto-generated method stub
 		return null;
 	}
+	
+	protected POCRType getPOCRType() {
+		return POCRType.PAYMENT_ORDER;
+	}
+
+	public POCRGenerator getPoGenerator() {
+		return poGenerator;
+	}
+
+	public void setPoGenerator(POCRGenerator poGenerator) {
+		this.poGenerator = poGenerator;
+	}
+	
 	
 }
 
