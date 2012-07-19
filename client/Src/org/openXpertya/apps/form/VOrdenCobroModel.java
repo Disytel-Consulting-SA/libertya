@@ -458,14 +458,15 @@ public class VOrdenCobroModel extends VOrdenPagoModel {
 		
 		StringBuffer sql = new StringBuffer();
 		
-		sql.append(" SELECT c_invoice_id, c_invoicepayschedule_id, orgname, documentno, dateinvoiced, duedate, convertedamt, openamt, isexchange FROM ");
-		sql.append("  (SELECT i.C_Invoice_ID, i.C_InvoicePaySchedule_ID, org.name as orgname, i.DocumentNo, dateinvoiced, coalesce(duedate,dateinvoiced) as DueDate, "); // ips.duedate
-		sql.append("    abs(currencyConvert( i.GrandTotal, i.C_Currency_ID, ?, i.DateAcct, null, i.AD_Client_ID, i.AD_Org_ID)) as ConvertedAmt, isexchange, ");
-		sql.append("    currencyConvert( invoiceOpen(i.C_Invoice_ID, COALESCE(i.C_InvoicePaySchedule_ID, 0)), i.C_Currency_ID, ?, i.DateAcct, null, i.AD_Client_ID, i.AD_Org_ID) AS openAmt ");
+		sql.append(" SELECT c_invoice_id, c_invoicepayschedule_id, orgname, documentno, dateinvoiced, duedate, currencyIso, grandTotal, openTotal, convertedamt, openamt, isexchange, C_Currency_ID FROM ");
+		sql.append("  (SELECT i.C_Invoice_ID, i.C_InvoicePaySchedule_ID, org.name as orgname, i.DocumentNo, dateinvoiced, coalesce(duedate,dateinvoiced) as DueDate, cu.iso_code as currencyIso, i.grandTotal, invoiceOpen(i.C_Invoice_ID, COALESCE(i.C_InvoicePaySchedule_ID, 0)) as openTotal, "); // ips.duedate
+		sql.append("    abs(currencyConvert( i.GrandTotal, i.C_Currency_ID, ?, current_date, null, i.AD_Client_ID, i.AD_Org_ID)) as ConvertedAmt, isexchange, ");
+		sql.append("    currencyConvert( invoiceOpen(i.C_Invoice_ID, COALESCE(i.C_InvoicePaySchedule_ID, 0)), i.C_Currency_ID, ?, current_date, null, i.AD_Client_ID, i.AD_Org_ID) AS openAmt, i.C_Currency_ID ");
 		sql.append("  FROM c_invoice_v AS i ");
 		sql.append("  LEFT JOIN ad_org org ON (org.ad_org_id=i.ad_org_id) ");
 		sql.append("  LEFT JOIN c_invoicepayschedule AS ips ON (i.c_invoicepayschedule_id=ips.c_invoicepayschedule_id) ");
 		sql.append("  INNER JOIN C_DocType AS dt ON (dt.C_DocType_ID=i.C_DocType_ID) ");
+		sql.append("  LEFT JOIN C_Currency cu ON (cu.C_Currency_ID=i.C_Currency_ID) ");
 		sql.append("  WHERE i.IsActive = 'Y' AND i.DocStatus IN ('CO', 'CL') ");
 		sql.append("    AND i.IsSOTRx = '" + getIsSOTrx() + "' AND GrandTotal <> 0.0 AND C_BPartner_ID = ? ");
 		sql.append("    AND dt.signo_issotrx = " + getSignoIsSOTrx());
@@ -474,8 +475,8 @@ public class VOrdenCobroModel extends VOrdenPagoModel {
 			sql.append("  AND i.ad_org_id = ?  ");
 		
 		sql.append("  ) as openInvoices ");
-		sql.append(" GROUP BY c_invoice_id, c_invoicepayschedule_id, orgname, documentno, dateinvoiced, duedate, convertedamt, openamt, isexchange ");
-		sql.append(" HAVING openamt > 0.0 ");
+		sql.append(" GROUP BY c_invoice_id, c_invoicepayschedule_id, orgname, documentno, currencyIso, grandTotal, openTotal, dateinvoiced, duedate, convertedamt, openamt, isexchange, C_Currency_ID ");
+		sql.append(" HAVING opentotal > 0.0 ");
 		// Si agrupa no se puede filtrar por fecha de vencimiento, se deben traer todas
 		if (!m_allInvoices && !getBPartner().isGroupInvoices())
 			sql.append("  AND ( duedate IS NULL OR duedate <= ? ) ");
@@ -1291,7 +1292,7 @@ public class VOrdenCobroModel extends VOrdenPagoModel {
 		if(m_facturas != null){
 			for (ResultItem f : m_facturas) {
 				ResultItemFactura fac = (ResultItemFactura) f;
-				if (fac.getManualAmount().signum() > 0) {
+				if (fac.getManualAmtClientCurrency().signum() > 0) {
 					dueDate = (Timestamp) fac.getItem(m_facturasTableModel
 							.getDueDateColIdx());
 					setIsOverdueInvoice(dueDate);
@@ -1518,19 +1519,29 @@ public class VOrdenCobroModel extends VOrdenPagoModel {
             columnNames.add( Msg.getElement( Env.getCtx(),"DocumentNo" ));
             columnNames.add( Msg.getElement( Env.getCtx(),"DateInvoiced" ));
             columnNames.add( Msg.translate( Env.getCtx(),"DueDate" ));
+            columnNames.add( Msg.translate( Env.getCtx(),"Currency" ));
             columnNames.add( Msg.translate( Env.getCtx(),"GrandTotal" ));
             columnNames.add( Msg.translate( Env.getCtx(),"openAmt" ));
+            columnNames.add( Msg.translate( Env.getCtx(),"GrandTotal" ).concat(" ").concat(mCurency.getISO_Code()));
+            columnNames.add( Msg.translate( Env.getCtx(),"openAmt" ).concat(" ").concat(mCurency.getISO_Code()));
             columnNames.add( Msg.translate( Env.getCtx(),"DiscountSurchargeDue" ));
             columnNames.add( Msg.translate( Env.getCtx(),"IsExchange" ));
+            // La columna toPay permite ingresar el monto en la moneda de la factura
             columnNames.add( Msg.translate( Env.getCtx(),"ToPay" ));
+            // La columna toPayCurrency permite ingresar el monto en la moneda de la Compañia
+            columnNames.add( Msg.translate( Env.getCtx(),"ToPay" ).concat(" ").concat(mCurency.getISO_Code()));
 		}
 		
 		public int getOpenAmtColIdx() {
-			return 7;
+			return 8;
 		}
 		
 		public int getIsExchange() {
-			return 8;
+			return 11;
+		}
+		
+		public int getCurrencyColIdx() {
+			return 12;
 		}
 		
 		public int getIdColIdx() {
@@ -1555,8 +1566,8 @@ public class VOrdenCobroModel extends VOrdenPagoModel {
 				return super.isCellEditable(row, column);
 			
 			boolean editable = false;
-			// Si es toPay
-			if (column == getColumnCount() - 1 && isAllowManualAmtEditable()) {
+			// Si es toPay o toPayCurrency se marca la columna como editable
+			if ( ((column == getColumnCount() - 1) || (column == getColumnCount() - 2)) && (isAllowManualAmtEditable()) ){
 				editable = true;
 			}
 			return editable;
@@ -1564,23 +1575,27 @@ public class VOrdenCobroModel extends VOrdenPagoModel {
 		
 		@Override
 		public Object getValueAt(int row, int column) {
-			if (column < getColumnCount() - 3)
+			if (column < getColumnCount() - 4)
 				return super.getValueAt(row, column);
 			
 			BigDecimal value = null;
-			// Si es toPay
+			// Si es toPayCurrency
 			if(column == getColumnCount()-1){
+				value = ((ResultItemFactura) item.get(row)).getManualAmtClientCurrency();
+			}
+			// Si es toPay
+			else if(column == columnNames.size()-2){
 				value = ((ResultItemFactura) item.get(row)).getManualAmount();
 			}
 			// HACK: Para descuento/recargo de esquema de vencimientos
-			else if(column == columnNames.size()-3){
+			else if(column == columnNames.size()-4){
 				value = ((ResultItemFactura) item.get(row)).getPaymentTermDiscount();
 				if(value.compareTo(BigDecimal.ZERO) != 0){
 					value = value.negate();
 				}
 			}
 			// HACK: Para columna is exchange
-			else if(column == columnNames.size()-2){
+			else if(column == columnNames.size()-3){
 				return ((ResultItemFactura) item.get(row)).getIsexchange();
 			}
 			
@@ -1589,19 +1604,22 @@ public class VOrdenCobroModel extends VOrdenPagoModel {
 		
 		@Override
 		public void setValueAt(Object arg0, int row, int column) {
-			if (column < getColumnCount() - 3)
+			if (column < getColumnCount() - 4)
 				super.setValueAt(arg0, row, column);
-			
-			// Si es toPay
+			// Si es toPayCurrency
 			if(column == getColumnCount()-1){
-				((ResultItemFactura) item.get(row)).setManualAmount((BigDecimal)arg0);				
+				((ResultItemFactura) item.get(row)).setManualAmtClientCurrency((BigDecimal)arg0);				
+			}
+			// Si es toPay
+			else if(column == columnNames.size()-2){
+				((ResultItemFactura) item.get(row)).setManualAmount((BigDecimal)arg0);
 			}
 			// HACK: Para descuento/recargo de esquema de vencimientos
-			else if(column == columnNames.size()-3){
+			else if(column == columnNames.size()-4){
 				((ResultItemFactura) item.get(row)).setPaymentTermDiscount((BigDecimal)arg0);
 			}
 			// HACK: Para columna is exchange
-			else if(column == columnNames.size()-2){
+			else if(column == columnNames.size()-3){
 				((ResultItemFactura) item.get(row)).setIsexchange(arg0.toString());
 			}
 			
@@ -1610,15 +1628,17 @@ public class VOrdenCobroModel extends VOrdenPagoModel {
 		
 		@Override
 		public Class<?> getColumnClass(int columnIndex) {
-			if ((columnIndex != getColumnCount() - 3) && (columnIndex != getColumnCount() - 2)){
+			if ((columnIndex != getColumnCount() - 4) && (columnIndex != getColumnCount() - 3)){
 				return super.getColumnClass(columnIndex);
 			}
 			else{
+				// Para columna is exchange
 				if (columnIndex == getColumnCount() - 3){
-					return BigDecimal.class;
-				}
-				else{
 					return String.class;
+				}
+				// Para columnas toPayCurrency, toPay y paymentTermDiscount
+				else{
+					return BigDecimal.class;
 				}
 			}
 		}
