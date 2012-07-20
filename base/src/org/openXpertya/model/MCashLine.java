@@ -77,6 +77,12 @@ public class MCashLine extends X_C_CashLine implements DocAction {
 	 * tenga en cuenta en la validación.
 	 */
     private Integer voiderAllocationID = 0;
+    
+	/**
+	 * Boolean que determina si hay que ignorar la validación de monto pendiente
+	 * de la factura al completar la línea del libro de caja
+	 */
+    private boolean ignoreInvoiceOpen = false;
 	
     /**
      * Constructor de la clase ...
@@ -555,7 +561,9 @@ public class MCashLine extends X_C_CashLine implements DocAction {
 		}
 		
 		// Validar los montos pendientes de Factura
-		if (CASHTYPE_Invoice.equals(getCashType()) && getC_Invoice_ID() > 0) {
+		// Bypass para que no realice esta validación
+		if (!isIgnoreInvoiceOpen() && CASHTYPE_Invoice.equals(getCashType())
+				&& getC_Invoice_ID() > 0) {
 			BigDecimal open = (BigDecimal)DB.getSQLObject(get_TrxName(), "SELECT invoiceOpen(?,0)", new Object[] {getC_Invoice_ID()});
 			if (getAmount().compareTo(open) > 0) {
 				//FIXME: pasar a ADMessage
@@ -816,6 +824,8 @@ public class MCashLine extends X_C_CashLine implements DocAction {
 					"@GeneratedReveresalCashLine@ " + getLine()));
 			
 			reversalCashLine.setConfirmAditionalWorks(false);
+			
+			reversalCashLine.setIgnoreInvoiceOpen(isIgnoreInvoiceOpen());
 			
 			// Guarda y completa la línea de caja inversa
 			if (!DocumentEngine.processAndSave(reversalCashLine,
@@ -1290,6 +1300,14 @@ public class MCashLine extends X_C_CashLine implements DocAction {
 
 	public boolean isConfirmAditionalWorks() {
 		return confirmAditionalWorks;
+	}
+
+	public void setIgnoreInvoiceOpen(boolean ignoreInvoiceOpen) {
+		this.ignoreInvoiceOpen = ignoreInvoiceOpen;
+	}
+
+	public boolean isIgnoreInvoiceOpen() {
+		return ignoreInvoiceOpen;
 	}
 
 }    // MCashLine

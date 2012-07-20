@@ -1672,7 +1672,9 @@ public class PoSOnline extends PoSConnectionState {
 		cashLine.setIsGenerated(true);
 		cashLine.setIgnoreAllocCreate(true);
 		cashLine.setDescription(p.getDescription());
-		cashLine.setC_POSPaymentMedium_ID(p.getPaymentMedium().getId());
+		if(p.getPaymentMedium() != null){
+			cashLine.setC_POSPaymentMedium_ID(p.getPaymentMedium().getId());
+		}
 		
 		throwIfFalse(cashLine.save()); // Necesario para que se asigne el C_CashLine_ID
 		throwIfFalse(cashLine.processIt(MCashLine.ACTION_Complete));

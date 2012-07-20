@@ -634,16 +634,19 @@ public class InvoiceGlobalVoiding extends SvrProcess {
 					 "WHERE (ah.docstatus IN ('CO','CL')) AND (al.c_invoice_credit_id = ?)";
 		return sql;
 	}
-	
+
 	/**
 	 * @return query que determina la cantidad de débitos que contiene un
-	 *         allocation hdr particular que se le debe pasar como parámetro
+	 *         allocation hdr particular que se le debe pasar como parámetro.
+	 *         Estos débitos deben ser realmente débitos y no créditos
 	 */
 	protected String getInvoiceDebitAllocationHdrQuery(){
 		String sql = "SELECT count(distinct al.c_invoice_id) as cant " +
 					 "FROM c_allocationhdr as ah " +
 					 "INNER JOIN c_allocationline as al ON (ah.c_allocationhdr_id = al.c_allocationhdr_id) " +
-					 "WHERE ah.c_allocationhdr_id = ?";
+					 "INNER JOIN c_invoice as i ON (i.c_invoice_id = al.c_invoice_id) " +
+					 "INNER JOIN c_doctype as dt ON (dt.c_doctype_id = i.c_doctypetarget_id) " +
+					 "WHERE ah.c_allocationhdr_id = ? AND dt.docbasetype IN ('ARI', 'API')";
 		return sql;
 	} 
 	

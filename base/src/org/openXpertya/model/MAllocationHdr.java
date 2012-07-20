@@ -1090,6 +1090,7 @@ public class MAllocationHdr extends X_C_AllocationHdr implements DocAction {
         for (MCashLine cashLine : cashLines) {
         	cashLine.setConfirmAditionalWorks(false);
 			cashLine.setVoiderAllocationID(getC_AllocationHdr_ID());
+			cashLine.setIgnoreInvoiceOpen(true);
         	if (!DocumentEngine.processAndSave(cashLine, MCashLine.ACTION_Void,
 					false)) {
 				throw new Exception("@VoidCashLineError@ ($ "
