@@ -16,6 +16,7 @@ import org.openXpertya.util.CLogger;
 import org.openXpertya.util.DB;
 import org.openXpertya.util.Env;
 import org.openXpertya.util.Msg;
+import org.openXpertya.util.Util;
 
 /**
  * Modelo de Caja Diaria de TPV
@@ -26,6 +27,15 @@ public class MPOSJournal extends X_C_POSJournal implements DocAction {
 
 	/** Mensaje de error para documentos que no se pueden completar por falta de caja diaria */
 	public static String DOCUMENT_COMPLETE_ERROR_MSG = "@CompleteDocumentPOSJournalRequiredError@";
+	
+	/**
+	 * Nombre de la preference que determina la diferencia máxima entre el saldo
+	 * y la declaración
+	 */
+	public static String VALID_DIFFERENCE_PREFERENCE = "POSCashJounal_ValidDiff";
+	
+	/** Diferencia por defecto en caso que no exista preference */
+	public static BigDecimal DEFAULT_DIFFERENCE = new BigDecimal(0.5);
 	
 	/** Log estático */
 	private static CLogger s_log = CLogger.getCLogger(MPOSJournal.class);
@@ -327,22 +337,32 @@ public class MPOSJournal extends X_C_POSJournal implements DocAction {
 		// Se requiere el libro de caja destino para poder transferir el saldo
 		// del libro de la caja diaria a este libro destino antes de cerrar la
 		// caja.
-		if (getC_CashTarget_ID() == 0) {
+		if (getCashBalance().compareTo(BigDecimal.ZERO) != 0
+				&& getC_CashTarget_ID() == 0) {
 			m_processMsg = "@POSTargetCashRequired@";
 			return false;
 		}
 		
 		// El libro de caja destino de efectivo debe estar en borrador
-		MCash targetCash = getTargetCash();
-		if (!MCash.DOCSTATUS_Drafted.equals(targetCash.getDocStatus())) {
-			m_processMsg = "@POSTargetCashInvalidStatus@";
-			return false;
+		if(getC_CashTarget_ID() != 0){
+			MCash targetCash = getTargetCash();
+			if (!MCash.DOCSTATUS_Drafted.equals(targetCash.getDocStatus())) {
+				m_processMsg = "@POSTargetCashInvalidStatus@";
+				return false;
+			}
 		}
 		
 		// Valida la declaración de valores contra el saldo del libro de caja
-		// FIXME: Parametrizar esta diferencia permitida según la moneda.
-		final BigDecimal VALID_DIFF = new BigDecimal(0.05);
-		if (getCashBalance().subtract(getCashStatementAmt()).abs().compareTo(VALID_DIFF) > 0) {
+		String diffValue = MPreference.searchCustomPreferenceValue(
+				VALID_DIFFERENCE_PREFERENCE, getAD_Client_ID(), getAD_Org_ID(),
+				getAD_User_ID(), true);
+		if(Util.isEmpty(diffValue, true))
+			log.severe("No exists preference " + VALID_DIFFERENCE_PREFERENCE
+					+ " for cash journal difference. Default "
+					+ DEFAULT_DIFFERENCE);
+		BigDecimal validDiff = Util.isEmpty(diffValue, true) ? DEFAULT_DIFFERENCE
+				: new BigDecimal(diffValue);
+		if (getCashBalance().subtract(getCashStatementAmt()).abs().compareTo(validDiff) > 0) {
 			m_processMsg = "@DifferentCashStatementAndBalanceError@";
 			return false;
 		}
@@ -355,13 +375,15 @@ public class MPOSJournal extends X_C_POSJournal implements DocAction {
 		}
 		
 		// Transfiere el saldo del libro de caja de la caja diaria hacia el
-		// libro de caja destino.
-		try {
-			MCash.transferCash(getC_Cash_ID(), getC_CashTarget_ID(),
-					getCashBalance(), getC_Project_ID(), getCtx(), get_TrxName());
-		} catch (Exception e) {
-			m_processMsg = "@TargetCashTransferError@: " + e.getMessage();
-			return false;
+		// libro de caja destino, siempre que el saldo sea mayor que 0
+		if(getCashBalance().compareTo(BigDecimal.ZERO) != 0){
+			try {
+				MCash.transferCash(getC_Cash_ID(), getC_CashTarget_ID(),
+						getCashBalance(), getC_Project_ID(), getCtx(), get_TrxName());
+			} catch (Exception e) {
+				m_processMsg = "@TargetCashTransferError@: " + e.getMessage();
+				return false;
+			}
 		}
 		
 		// Al cerrar no se podrá operar en el TPV y se debe completar
