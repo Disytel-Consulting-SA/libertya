@@ -96,6 +96,9 @@ public class VOrdenCobroModel extends VOrdenPagoModel {
 	
 	/** Existe alguna factura vencida? */
 	private boolean existsOverdueInvoices = false;
+	
+	/** ID de caja para efectivo (cajas diarias) */
+	private Integer cashID;
 			
 	public VOrdenCobroModel() {
 		super();
@@ -764,6 +767,8 @@ public class VOrdenCobroModel extends VOrdenPagoModel {
 		reciboDeCliente.updateOrg(orgID);
 		// Obtener el punto de venta de cajas diarias
 		setPOS(getPOSNumber());
+		// Obtener la caja de la caja diaria actual
+		initCashID();
 	}
 
 	/**
@@ -1704,6 +1709,23 @@ public class VOrdenCobroModel extends VOrdenPagoModel {
 	@Override
 	protected POCRType getPOCRType() {
 		return POCRType.CUSTOMER_RECEIPT;
+	}
+
+	public void setCashID(Integer cashID) {
+		this.cashID = cashID;
+	}
+
+	public Integer getCashID() {
+		return cashID;
+	}
+	
+	public void initCashID(){
+		MPOSJournal currentPosJournal = MPOSJournal.getCurrent();
+		Integer cashJournalID = null;
+		if(currentPosJournal != null){
+			cashJournalID = currentPosJournal.getC_Cash_ID();
+		}
+		setCashID(cashJournalID);
 	}
 	
 }

@@ -1420,6 +1420,8 @@ public class VOrdenCobro extends VOrdenPago {
 		txtRetencImporte.setText("0");
 		txtRetencNroRetenc.setText("");
 		retencFecha.setValue(d);
+		// Caja efectivo de la caja diaria si es que existe
+		setCashJournalToComponent();
 	}
 
 	/**
@@ -1880,6 +1882,11 @@ public class VOrdenCobro extends VOrdenPago {
     					.getSelectedItem());
     		}
     	}
+    	else if(jTabbedPane2.getSelectedIndex() == TAB_INDEX_EFECTIVO){
+			// Cargar el libro de caja por defecto de la caja diaria en caso que
+			// se encuentre
+    		setCashJournalToComponent();
+    	}
     }
     
     /**
@@ -2152,6 +2159,9 @@ public class VOrdenCobro extends VOrdenPago {
     	setPOS();
     }
     
+    protected void setCashJournalToComponent(){
+		efectivoLibroCaja.setValue(getCobroModel().getCashID());
+    }
     
     public void setPaymentMediumItemListener(PaymentMediumItemListener paymentMediumItemListener) {
 		this.paymentMediumItemListener = paymentMediumItemListener;
