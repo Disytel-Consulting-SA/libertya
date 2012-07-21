@@ -151,6 +151,25 @@ public class MInvoice extends X_C_Invoice implements DocAction {
 	public static MInvoice copyFrom(MInvoice from, Timestamp dateDoc,
 			int C_DocTypeTarget_ID, boolean isSOTrx, boolean counter,
 			String trxName, boolean setOrder) {
+		return copyFrom(from, dateDoc, C_DocTypeTarget_ID, isSOTrx, counter,
+				trxName, setOrder, false);
+	} // copyFrom
+
+	/**
+	 * 
+	 * @param from
+	 * @param dateDoc
+	 * @param C_DocTypeTarget_ID
+	 * @param isSOTrx
+	 * @param counter
+	 * @param trxName
+	 * @param setOrder
+	 * @param copyDocumentDiscounts
+	 * @return
+	 */
+	public static MInvoice copyFrom(MInvoice from, Timestamp dateDoc,
+			int C_DocTypeTarget_ID, boolean isSOTrx, boolean counter,
+			String trxName, boolean setOrder, boolean copyDocumentDiscounts) {
 		MInvoice to = new MInvoice(from.getCtx(), 0, null);
 
 		to.set_TrxName(trxName);
@@ -235,10 +254,47 @@ public class MInvoice extends X_C_Invoice implements DocAction {
 		if (to.copyLinesFrom(from, counter, setOrder) == 0) {
 			throw new IllegalStateException("Could not create Invoice Lines");
 		}
+		
+		// Copiar los document discounts
+		if(copyDocumentDiscounts){
+			try{
+				to.copyDocumentDiscounts(from, false);
+			} catch(Exception e){
+				throw new IllegalStateException(e.getMessage());
+			}
+		}
 
 		return to;
 	} // copyFrom
 
+	
+	public void copyDocumentDiscounts(MInvoice from, boolean onlyTotalizedDocumentDiscounts) throws Exception{
+		List<MDocumentDiscount> discounts = MDocumentDiscount.getOfInvoice(
+				onlyTotalizedDocumentDiscounts, from.getID(),
+				" TaxRate DESC, DiscountKind ", getCtx(), get_TrxName());
+		MDocumentDiscount newDocumentDiscount;
+		Map<Integer, Integer> parentsDocumentDiscounts = new HashMap<Integer, Integer>();
+		for (MDocumentDiscount mDocumentDiscount : discounts) {
+			newDocumentDiscount = new MDocumentDiscount(getCtx(), 0, get_TrxName());
+			PO.copyValues(mDocumentDiscount, newDocumentDiscount);
+			newDocumentDiscount.setC_Invoice_ID(getID());
+			if (mDocumentDiscount.getC_DocumentDiscount_Parent_ID() != 0
+					&& parentsDocumentDiscounts.get(mDocumentDiscount
+							.getC_DocumentDiscount_Parent_ID()) != null) {
+				newDocumentDiscount
+						.setC_DocumentDiscount_Parent_ID(parentsDocumentDiscounts
+								.get(mDocumentDiscount
+										.getC_DocumentDiscount_Parent_ID()));
+			}
+			newDocumentDiscount.setC_Order_ID(0);
+			if(!newDocumentDiscount.save()){
+				throw new Exception(CLogger.retrieveErrorAsString());
+			}
+			parentsDocumentDiscounts.put(mDocumentDiscount.getID(),
+					newDocumentDiscount.getID());
+		}
+	}
+	
 	/**
 	 * Descripción de Método
 	 * 
@@ -3568,7 +3624,7 @@ public class MInvoice extends X_C_Invoice implements DocAction {
 
 		MInvoice reversal = copyFrom(this, getDateInvoiced(),
 				reversalDocType.getC_DocType_ID(), isSOTrx(), false,
-				get_TrxName(), true);
+				get_TrxName(), true, true);
 
 		if (reversal == null) {
 			m_processMsg = "Could not create Invoice Reversal";
