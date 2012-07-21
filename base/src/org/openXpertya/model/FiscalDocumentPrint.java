@@ -1754,7 +1754,8 @@ public class FiscalDocumentPrint {
 				// Por cada línea...
 				for (MInvoiceLine invoiceLine : invoice.getLines()) {
 					// Se suma al total (sin descuentos / recargos).
-					total = total.add(invoiceLine.getTotalPriceListWithTax());
+					total = total.add(invoiceLine.getTotalPriceListWithTax())
+								 .subtract(invoiceLine.getTotalDocumentDiscountUnityAmtWithTax());
 					// Se pregunta si sigue siendo válido el monto.
 					if(total.compareTo(getMaxAmountCF()) > 0)
 						amountValid = false;
