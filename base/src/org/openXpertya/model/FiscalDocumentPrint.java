@@ -851,8 +851,7 @@ public class FiscalDocumentPrint {
 			
 			// Si es una factura a consumidor final, los datos del cliente se
 			// obtienen a partir de la factura OXP.
-			if(customer.getIvaResponsibility() == Customer.CONSUMIDOR_FINAL &&
-					getPrinterDocType().equals(MDocType.FISCALDOCUMENT_Invoice)) {
+			if(customer.getIvaResponsibility() == Customer.CONSUMIDOR_FINAL) {
 				
 				// Nombre, nro de identificación, domicilio
 				customer.setIdentificationType(Customer.DNI);
