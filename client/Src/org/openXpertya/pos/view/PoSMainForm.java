@@ -5064,7 +5064,7 @@ public class PoSMainForm extends CPanel implements FormPanel, ASyncProcess, Disp
 			// Actualiza la info adicional del medio de pago porque puede haber cambiado
 			// algún artículo y es necesario recalcular descuentos y cuotas.
 			refreshPaymentMediumInfo();
-			getCAmountText().requestFocus();
+			getCTenderTypeCombo().requestFocus();
 			// Muestra el panel del total dentro del panel superior de pagos
 			getCOrderTopPanel().remove(getCTotalPanel());
 			getCPaymentTopPanel().add(getCTotalPanel());
