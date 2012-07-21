@@ -39,8 +39,55 @@ public class MDocumentDiscount extends X_C_DocumentDiscount {
 	 *         no tiene descuentos
 	 */
 	public static List<MDocumentDiscount> getOfInvoice(int invoiceID, Properties ctx, String trxName) {
-		return get("C_Invoice_ID = ? AND C_DocumentDiscount_Parent_ID IS NULL",
-				new Object[] { invoiceID }, ctx, trxName);
+		return getOfInvoice(true, invoiceID, ctx, trxName);
+	}
+
+	/**
+	 * Busca en la BD y devuelve una lista descuentos asociados a una factura
+	 * determinada. Solo devuelve los descuentos totalizados, no aquellos que
+	 * sean discriminación por tasa de impuesto, si es que el parámetro boolean
+	 * así lo requiera.
+	 * 
+	 * @param onlyTotalized
+	 *            true si se deben devolver sólo los totalizados
+	 * @param invoiceID
+	 *            ID de factura
+	 * @param ctx
+	 *            Contexto para instanciación de objetos del modelo
+	 * @param trxName
+	 *            Transacción de BD
+	 * @return Lista con los descuentos asociados, o lista vacía si la factura
+	 *         no tiene descuentos
+	 */
+	public static List<MDocumentDiscount> getOfInvoice(boolean onlyTotalized, int invoiceID, Properties ctx, String trxName) {
+		return get("C_Invoice_ID = ?"
+				+ (onlyTotalized ? " AND C_DocumentDiscount_Parent_ID IS NULL "
+						: ""), new Object[] { invoiceID }, ctx, trxName);
+	}
+
+	/**
+	 * Busca en la BD y devuelve una lista descuentos asociados a una factura
+	 * determinada. Solo devuelve los descuentos totalizados, no aquellos que
+	 * sean discriminación por tasa de impuesto, si es que el parámetro boolean
+	 * así lo requiera.
+	 * 
+	 * @param onlyTotalized
+	 *            true si se deben devolver sólo los totalizados
+	 * @param invoiceID
+	 *            ID de factura
+	 * @param orderBy
+	 *            cláusula de ordenación
+	 * @param ctx
+	 *            Contexto para instanciación de objetos del modelo
+	 * @param trxName
+	 *            Transacción de BD
+	 * @return Lista con los descuentos asociados, o lista vacía si la factura
+	 *         no tiene descuentos
+	 */
+	public static List<MDocumentDiscount> getOfInvoice(boolean onlyTotalized, int invoiceID, String orderBy, Properties ctx, String trxName) {
+		return get("C_Invoice_ID = ?"
+				+ (onlyTotalized ? " AND C_DocumentDiscount_Parent_ID IS NULL "
+						: ""), new Object[] { invoiceID }, orderBy, ctx, trxName);
 	}
 	
 	/**
@@ -104,12 +151,30 @@ public class MDocumentDiscount extends X_C_DocumentDiscount {
 	 *         encontraron descuentos con el filtro indicado
 	 */
 	private static List<MDocumentDiscount> get(String filter, Object[] parameters, Properties ctx, String trxName) {
+		return get(filter, parameters, "DiscountKind, TaxRate ASC", ctx, trxName);
+	}
+
+	/**
+	 * Devuelve una lista de descuentos a partir de un filtro
+	 * 
+	 * @param filter
+	 *            Filtro de la consulta WHERE
+	 * @param parameters
+	 *            Valores de los parámetros que contiene el filtro.
+	 * @param orderBy
+	 *            cláusula de ordenación
+	 * @param ctx
+	 *            Contexto para instanciación de objetos del modelo
+	 * @return Lista con los descuentos encontrados, o lista vacía si no se
+	 *         encontraron descuentos con el filtro indicado
+	 */
+	private static List<MDocumentDiscount> get(String filter, Object[] parameters, String orderBy, Properties ctx, String trxName) {
 		List<MDocumentDiscount> list = new ArrayList<MDocumentDiscount>();
 
 		String sql =
 			 "SELECT * FROM C_DocumentDiscount " +
 			 "WHERE "+ filter +
-			" ORDER BY DiscountKind, TaxRate ASC";
+			" ORDER BY "+ orderBy;
 		
 		PreparedStatement pstmt = null;
 		ResultSet rs            = null;

@@ -753,6 +753,9 @@ public class FiscalDocumentPrint {
 		// Se agregan las líneas de la nota de crédito al documento.
 		loadDocumentLines(mInvoice, creditNote);
 		
+		// Se asignan los descuentos de la factura
+		loadDocumentDiscounts(creditNote, mInvoice.getDiscounts());
+		
 		// Cargar impuestos adicionales 
 		loadOtherTaxes(creditNote,mInvoice);
 		
