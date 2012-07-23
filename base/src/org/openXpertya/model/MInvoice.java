@@ -1422,7 +1422,7 @@ public class MInvoice extends X_C_Invoice implements DocAction {
 				null).getC_Currency_ID();
 		if ((priceListCurrency != getC_Currency_ID() && MCurrency
 				.currencyConvert(new BigDecimal(1), priceListCurrency,
-						getC_Currency_ID(), getDateInvoiced(), 0, getCtx()) == null)
+						getC_Currency_ID(), getDateInvoiced(), getAD_Org_ID(), getCtx()) == null)
 				|| !validateOrderCurrencyConvert()) {
 			log.saveError("Error", Msg.getMsg(getCtx(), "NoCurrencyConversion"));
 			return false;
@@ -4503,7 +4503,7 @@ public class MInvoice extends X_C_Invoice implements DocAction {
 			valid = orderCurrencyID == getC_Currency_ID()
 					|| MCurrency.currencyConvert(new BigDecimal(1),
 							orderCurrencyID, getC_Currency_ID(),
-							getDateInvoiced(), 0, getCtx()) != null;
+							getDateInvoiced(), getAD_Org_ID(), getCtx()) != null;
 		}
 		return valid;
 	}

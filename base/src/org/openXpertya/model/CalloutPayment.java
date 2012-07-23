@@ -315,6 +315,25 @@ public class CalloutPayment extends CalloutEngine {
 
         return "";
     }    // charge
+    
+    
+    public String bankaccount( Properties ctx,int WindowNo,MTab mTab,MField mField,Object value ) {
+        Integer C_BankAccount_ID = ( Integer )value;
+
+        if( isCalloutActive()    // assuming it is resetting value
+                || (C_BankAccount_ID == null) || (C_BankAccount_ID.intValue() == 0) ) {
+            return "";
+        }
+
+        setCalloutActive( true );
+        
+        MBankAccount bankAccount = MBankAccount.get( ctx,C_BankAccount_ID );
+        mTab.setValue( "C_Currency_ID", bankAccount.getC_Currency_ID());
+       
+        setCalloutActive( false );
+
+        return "";
+    }    // charge
 
     /**
      * Descripción de Método

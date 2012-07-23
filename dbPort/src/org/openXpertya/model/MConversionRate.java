@@ -167,11 +167,63 @@ public class MConversionRate extends X_C_Conversion_Rate {
         	log.saveError("Error", Msg.getMsg( getCtx(),"ConversionAlreadyExistsError") );
         	return false;
         }
+         
+        if ( (!newRecord) && (busyConversion()) ) {
+        	log.saveError("Error", Msg.getMsg( getCtx(),"InvalidChangedCurrency" ) );
+        	return false;
+        }
         
         return true;
     }		// beforeSave
 
-    /**
+    private boolean busyConversion() {
+    	try
+    	{
+    		String sql = " SELECT c_currency_id, C_ConversionType_ID, documentdate, dateacct, AD_Client_ID, AD_Org_ID FROM " +
+    					 " (SELECT c_currency_id, C_ConversionType_ID, dateordered as documentdate, dateacct, AD_Client_ID, AD_Org_ID FROM C_Order WHERE (processed = 'Y') " + 
+    					 " UNION " +
+    					 " SELECT c_currency_id, C_ConversionType_ID, dateinvoiced as documentdate, dateacct, AD_Client_ID, AD_Org_ID FROM C_Invoice WHERE (processed = 'Y') " + 
+    					 " UNION " +
+    					 " SELECT c_currency_id, C_ConversionType_ID, dateacct as documentdate, dateacct, AD_Client_ID, AD_Org_ID FROM C_Payment WHERE (processed = 'Y') " + 
+    					 " ) AS tableAux " +
+    					 " WHERE ((c_currency_id = ?) OR (c_currency_id = ?)) AND (C_ConversionType_ID = ?) AND ( ((TRUNC(documentdate) >= ?) AND (TRUNC(documentdate) <= ?)) OR ((TRUNC(dateacct) >= ?) AND (TRUNC(dateacct) <= ?)) ) AND (AD_Client_ID = ?) AND (AD_Org_ID = ?) " +
+    					 " UNION " +
+    					 " (SELECT cl.c_currency_id, 0, c.dateacct as documentdate, c.dateacct, c.AD_Client_ID, c.AD_Org_ID " + 
+    					 " FROM C_CashLine cl " +
+    					 " INNER JOIN C_Cash c ON (c.C_Cash_ID = cl.C_Cash_ID) " +
+    					 " WHERE (cl.processed = 'Y') AND ((c_currency_id = ?) OR (c_currency_id = ?)) AND ( ((TRUNC(c.statementdate) >= ?) AND (TRUNC(c.statementdate) <= ?)) OR ((TRUNC(c.dateacct) >= ?) AND (TRUNC(c.dateacct) <= ?)) ) AND (cl.AD_Client_ID = ?) AND (cl.AD_Org_ID = ?) " + 
+    					 " ) ";
+    		PreparedStatement pstmt = DB.prepareStatement( sql );
+    		pstmt.setInt(1, getC_Currency_ID() );
+    		pstmt.setInt(2, getC_Currency_ID_To() );
+    		pstmt.setInt(3, getC_ConversionType_ID() );
+    		pstmt.setTimestamp(4, getValidFrom() );
+    		pstmt.setTimestamp(5, getValidTo() );
+    		pstmt.setTimestamp(6, getValidFrom() );
+    		pstmt.setTimestamp(7, getValidTo() );
+    		pstmt.setInt(8, getAD_Client_ID());
+    		pstmt.setInt(9, getAD_Org_ID());
+    		pstmt.setInt(10, getC_Currency_ID() );
+    		pstmt.setInt(11, getC_Currency_ID_To() );
+    		pstmt.setTimestamp(12, getValidFrom() );
+    		pstmt.setTimestamp(13, getValidTo() );
+    		pstmt.setTimestamp(14, getValidFrom() );
+    		pstmt.setTimestamp(15, getValidTo() );
+    		pstmt.setInt(16, getAD_Client_ID());
+    		pstmt.setInt(17, getAD_Org_ID());
+    		
+    		ResultSet rs = pstmt.executeQuery();
+    		if (rs.next())
+    			return true;
+    		return false;
+    	}
+    	catch (Exception e)
+    	{
+    		return false;
+    	}
+	}
+
+	/**
      *  Convert an amount with today's default rate
      *      @param ctx context
      *  @param CurFrom_ID  The C_Currency_ID FROM

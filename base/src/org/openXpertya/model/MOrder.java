@@ -1348,7 +1348,7 @@ public class MOrder extends X_C_Order implements DocAction {
         //TODO: cambiar esto para usa cache....
         // Disytel: Si no hay conversion, no permitir seleccionar moneda destino
         int priceListCurrency = new MPriceList(getCtx(), getM_PriceList_ID(), null).getC_Currency_ID();
-        if (priceListCurrency != getC_Currency_ID() && MCurrency.currencyConvert(new BigDecimal(1), priceListCurrency, getC_Currency_ID(), getDateOrdered(), 0, getCtx()) == null)
+        if (priceListCurrency != getC_Currency_ID() && MCurrency.currencyConvert(new BigDecimal(1), priceListCurrency, getC_Currency_ID(), getDateOrdered(), getAD_Org_ID(), getCtx()) == null)
         {
         	log.saveError( "Error", Msg.getMsg( getCtx(),"NoCurrencyConversion" ) );
         	return false;
