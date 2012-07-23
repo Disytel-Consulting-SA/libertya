@@ -57,6 +57,8 @@ public class Customer implements Serializable{
 	/** Responsabilidad frente al IVA: No categorizado */
 	public static final int NO_CATEGORIZADO = 0;
 	
+	/** Clave de búsqueda si es que posee */
+	private String value = null;
 	/** Nombre y apellido del cliente */
 	private String name = null;
 	/** Tipo de identificación del cliente */
@@ -85,8 +87,9 @@ public class Customer implements Serializable{
 	 * @param ivaResponsibility Responsabilidad frente al IVA.
 	 * @param location Domicilio comercial.
 	 */
-	public Customer(String name, Integer identificationType, String identificationNumber, int ivaResponsibility, String location) {
+	public Customer(String value, String name, Integer identificationType, String identificationNumber, int ivaResponsibility, String location) {
 		super();
+		this.value = value;
 		this.name = name;
 		this.identificationNumber = identificationNumber;
 		this.ivaResponsibility = ivaResponsibility;
@@ -269,5 +272,13 @@ public class Customer implements Serializable{
 
 	public BigDecimal getCreditBalance() {
 		return creditBalance;
+	}
+
+	public void setValue(String value) {
+		this.value = value;
+	}
+
+	public String getValue() {
+		return value;
 	}
 }

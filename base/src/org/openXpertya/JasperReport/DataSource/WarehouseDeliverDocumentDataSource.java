@@ -60,6 +60,9 @@ public class WarehouseDeliverDocumentDataSource implements OXPJasperDataSource {
 		else if(arg0.getName().equalsIgnoreCase("PRODUCT_NAME")){
 			value = getCurrentOrderLine().getProductName();
 		}
+		else if(arg0.getName().equalsIgnoreCase("PRODUCT_VALUE")){
+			value = getCurrentOrderLine().getProductValue();
+		}
 		return value;
 	}
 

@@ -17,6 +17,9 @@ public class LaunchCurrentAccountDocument extends JasperReportLaunch {
 		// Cargar los datos de la entidad comercial
 		MBPartner bpartner = new MBPartner(getCtx(),
 				(Integer) getParameterValue("C_BPartner_ID"), get_TrxName());
+		MInvoice invoice = new MInvoice(getCtx(),
+				(Integer) getParameterValue("C_Invoice_ID"), get_TrxName());
+		/* Por ahora no se imprimen estos datos
 		MOrg org = new MOrg(getCtx(), (Integer) getParameterValue("AD_Org_ID"),
 				get_TrxName());
 		CurrentAccountManager manager = CurrentAccountManagerFactory.getManager();
@@ -29,17 +32,20 @@ public class LaunchCurrentAccountDocument extends JasperReportLaunch {
 		// Obtengo el límite de la entidad comercial
 		CallResult limit = manager.getCreditLimit(getCtx(), org, bpartner,
 				(String) null, get_TrxName());
+		*/
 		// Agregar los parámetros
-		addReportParameter("GLOBAL_BALANCE", balance.getResult());
-		addReportParameter("BPARTNER_NAME", bpartner.getValue()+" - "+bpartner.getName());
-		addReportParameter("GLOBAL_LIMIT", limit.getResult());
-		addReportParameter("CREDIT_STATUS", JasperReportsUtil.getListName(
-				getCtx(), MBPartner.SOCREDITSTATUS_AD_Reference_ID,
-				(String) creditStatus.getResult()));
+//		addReportParameter("GLOBAL_BALANCE", balance.getResult());
+		addReportParameter("BPARTNER_NAME", bpartner.getValue()+" "+bpartner.getName());
+//		addReportParameter("GLOBAL_LIMIT", limit.getResult());
+//		addReportParameter("CREDIT_STATUS", JasperReportsUtil.getListName(
+//				getCtx(), MBPartner.SOCREDITSTATUS_AD_Reference_ID,
+//				(String) creditStatus.getResult()));
 		addReportParameter("PAYMENTRULE_1", JasperReportsUtil.getListName(
 				getCtx(), MInvoice.PAYMENTRULE_AD_Reference_ID,
 				(String) getParameterValue("PaymentRule_1")));
 		addReportParameter("PAYMENTRULE_AMT_1", getParameterValue("PaymentRule_Amt_1"));
+		addReportParameter("DOCUMENTNO",invoice.getDocumentNo());
+		addReportParameter("DATE_INVOICED",invoice.getDateInvoiced());
 	}
 
 	@Override
