@@ -718,6 +718,12 @@ public final class MPayment extends X_C_Payment implements DocAction,ProcessCall
         		return false;
         	}
         }
+        
+        int bankAccountCurrency = new MBankAccount(getCtx(), getC_BankAccount_ID(),null).getC_Currency_ID();
+		if (bankAccountCurrency != getC_Currency_ID()){
+			log.saveError("SaveError", Msg.translate(getCtx(), "InvalidPayBankCurrency"));
+    		return false;
+		}
                 
         return true;
     }    // beforeSave
@@ -1917,7 +1923,13 @@ public final class MPayment extends X_C_Payment implements DocAction,ProcessCall
         		return DocAction.STATUS_Invalid;
         	}
         }
-        
+
+        // Disytel: Si no hay conversion, no permitir seleccionar moneda destino
+ 		int currencyClient = MClient.get( getCtx()).getC_Currency_ID();
+ 		if ((currencyClient != getC_Currency_ID() && MCurrency.currencyConvert(new BigDecimal(1), currencyClient, getC_Currency_ID(), getDateTrx(), getAD_Org_ID(), getCtx()) == null)) {
+ 			m_processMsg = "@NoCurrencyConversion@";
+    		return DocAction.STATUS_Invalid;
+ 		}
         
         return DocAction.STATUS_InProgress;
     }    // prepareIt

@@ -1048,10 +1048,10 @@ public class CalloutOrder extends CalloutEngine {
         }
         else
         {
-            mTab.setValue( "PriceList", MCurrency.currencyConvert(pp.getPriceList(), priceListCurrency, targetCurrency, order.getDateOrdered(), 0, ctx) );
-            mTab.setValue( "PriceLimit", MCurrency.currencyConvert(pp.getPriceLimit(), priceListCurrency, targetCurrency, order.getDateOrdered(), 0, ctx) );
-            mTab.setValue( "PriceActual", MCurrency.currencyConvert(pp.getPriceStd(), priceListCurrency, targetCurrency, order.getDateOrdered(), 0, ctx) );
-            mTab.setValue( "PriceEntered", MCurrency.currencyConvert(pp.getPriceStd(), priceListCurrency, targetCurrency, order.getDateOrdered(), 0, ctx) );
+            mTab.setValue( "PriceList", MCurrency.currencyConvert(pp.getPriceList(), priceListCurrency, targetCurrency, order.getDateOrdered(), order.getAD_Org_ID(), ctx) );
+            mTab.setValue( "PriceLimit", MCurrency.currencyConvert(pp.getPriceLimit(), priceListCurrency, targetCurrency, order.getDateOrdered(), order.getAD_Org_ID(), ctx) );
+            mTab.setValue( "PriceActual", MCurrency.currencyConvert(pp.getPriceStd(), priceListCurrency, targetCurrency, order.getDateOrdered(), order.getAD_Org_ID(), ctx) );
+            mTab.setValue( "PriceEntered", MCurrency.currencyConvert(pp.getPriceStd(), priceListCurrency, targetCurrency, order.getDateOrdered(), order.getAD_Org_ID(), ctx) );
             mTab.setValue( "C_Currency_ID", targetCurrency);  
         }
         

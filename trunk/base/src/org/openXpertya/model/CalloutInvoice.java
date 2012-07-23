@@ -396,10 +396,10 @@ public class CalloutInvoice extends CalloutEngine {
         }
         else
         {
-            mTab.setValue( "PriceList", MCurrency.currencyConvert(pp.getPriceList(), priceListCurrency, targetCurrency, invoice.getDateInvoiced(), 0, ctx) );
-            mTab.setValue( "PriceLimit", MCurrency.currencyConvert(pp.getPriceLimit(), priceListCurrency, targetCurrency, invoice.getDateInvoiced(), 0, ctx) );
-            mTab.setValue( "PriceActual", MCurrency.currencyConvert(pp.getPriceStd(), priceListCurrency, targetCurrency, invoice.getDateInvoiced(), 0, ctx) );
-            mTab.setValue( "PriceEntered", MCurrency.currencyConvert(pp.getPriceStd(), priceListCurrency, targetCurrency, invoice.getDateInvoiced(), 0, ctx) );
+            mTab.setValue( "PriceList", MCurrency.currencyConvert(pp.getPriceList(), priceListCurrency, targetCurrency, invoice.getDateInvoiced(), invoice.getAD_Org_ID(), ctx) );
+            mTab.setValue( "PriceLimit", MCurrency.currencyConvert(pp.getPriceLimit(), priceListCurrency, targetCurrency, invoice.getDateInvoiced(), invoice.getAD_Org_ID(), ctx) );
+            mTab.setValue( "PriceActual", MCurrency.currencyConvert(pp.getPriceStd(), priceListCurrency, targetCurrency, invoice.getDateInvoiced(), invoice.getAD_Org_ID(), ctx) );
+            mTab.setValue( "PriceEntered", MCurrency.currencyConvert(pp.getPriceStd(), priceListCurrency, targetCurrency, invoice.getDateInvoiced(), invoice.getAD_Org_ID(), ctx) );
             mTab.setValue( "C_Currency_ID", targetCurrency);        	
         }
         // mTab.setValue("Discount", pp.getDiscount());
