@@ -1692,6 +1692,15 @@ public class VLookup extends JComponent implements VEditor,ActionListener,FocusL
      */
 
     public void focusLost( FocusEvent e ) {
+    	// Si es de tipo búsqueda, selecciono el texto dentro del campo
+		if (e.getSource() == m_text
+				&& m_lookup.getDisplayType() == DisplayType.Search
+				&& m_text != null) {
+        	m_text.setSelectionStart(0);
+        	m_text.setSelectionEnd(0);
+        	return;
+        }
+    	
         if( e.isTemporary() || (m_lookup == null) ||!m_button.isEnabled()) {    // set by actionButton
             return;
         }
