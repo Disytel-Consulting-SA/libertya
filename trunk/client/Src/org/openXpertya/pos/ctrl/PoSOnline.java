@@ -2756,7 +2756,7 @@ public class PoSOnline extends PoSConnectionState {
 				FiscalDocumentPrint fdp = new FiscalDocumentPrint();
 				fdp.addDocumentPrintListener(getFiscalDocumentPrintListener());
 				fdp.setPrinterEventListener(getFiscalPrinterEventListener());
-				if(!fdp.printDeliveryDocument(docType.getC_Controlador_Fiscal_ID(), morder)) {
+				if(!fdp.printDeliveryDocument(docType.getC_Controlador_Fiscal_ID(), morder, invoice)) {
 					
 				}
 			}
@@ -2818,7 +2818,7 @@ public class PoSOnline extends PoSConnectionState {
 				fdp.addDocumentPrintListener(getFiscalDocumentPrintListener());
 				fdp.setPrinterEventListener(getFiscalPrinterEventListener());
 				if (!fdp.printCurrentAccountDocument(
-						docType.getC_Controlador_Fiscal_ID(), partner, infos)) {
+						docType.getC_Controlador_Fiscal_ID(), partner, invoice, infos)) {
 					
 				}
 			}
@@ -2830,6 +2830,7 @@ public class PoSOnline extends PoSConnectionState {
 				// bloque, además de pasarlos como parámetro al reporte
 				params.put("AD_Org_ID", Env.getAD_Org_ID(getCtx()));
 				params.put("C_BPartner_ID", partner.getID());
+				params.put("C_Invoice_ID", invoice.getID());
 				params.put("PaymentRule_1", MInvoice.PAYMENTRULE_OnCredit);
 				params.put("PaymentRule_Amt_1", currentAccountSalesConditions
 						.get(MInvoice.PAYMENTRULE_OnCredit));

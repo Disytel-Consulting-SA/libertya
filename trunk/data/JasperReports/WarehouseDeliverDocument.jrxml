@@ -29,6 +29,7 @@
 
 	<field name="QTY" class="java.math.BigDecimal"/>
 	<field name="PRODUCT_NAME" class="java.lang.String"/>
+	<field name="PRODUCT_VALUE" class="java.lang.String"/>
 
 		<background>
 			<band height="0"  isSplitAllowed="true" >
@@ -195,7 +196,7 @@
 					<textElement verticalAlignment="Middle">
 						<font size="8"/>
 					</textElement>
-				<textFieldExpression   class="java.lang.String"><![CDATA[" "+$F{PRODUCT_NAME}]]></textFieldExpression>
+				<textFieldExpression   class="java.lang.String"><![CDATA[" "+$F{PRODUCT_VALUE}+" "+$F{PRODUCT_NAME}]]></textFieldExpression>
 				</textField>
 			</band>
 		</detail>

@@ -8,6 +8,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.text.NumberFormat;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -17,8 +18,6 @@ import java.util.Properties;
 import java.util.Vector;
 import java.util.logging.Level;
 
-import org.openXpertya.cc.CurrentAccountManager;
-import org.openXpertya.cc.CurrentAccountManagerFactory;
 import org.openXpertya.print.OXPFiscalMsgSource;
 import org.openXpertya.print.fiscal.FiscalPrinter;
 import org.openXpertya.print.fiscal.FiscalPrinterEventListener;
@@ -38,7 +37,6 @@ import org.openXpertya.print.fiscal.exception.FiscalPrinterIOException;
 import org.openXpertya.print.fiscal.exception.FiscalPrinterStatusError;
 import org.openXpertya.print.fiscal.msg.FiscalMessages;
 import org.openXpertya.print.fiscal.msg.MsgRepository;
-import org.openXpertya.reflection.CallResult;
 import org.openXpertya.util.CLogger;
 import org.openXpertya.util.DB;
 import org.openXpertya.util.Env;
@@ -437,19 +435,25 @@ public class FiscalDocumentPrint {
 	// **************************************************************
 	//   IMPRESION DE DOCUMENTO CON ARTICULOS PENDIENTES DE ENTREGA		
 	// **************************************************************
-	
+
 	/**
-	 * Manda a imprimir un documento NO fiscal que en sus líneas contiene
-	 * el detalle de cada artículo que tiene alguna cantidad pendiente de
-	 * entrega dentro de un pedido del sistema.
-	 * @param cFiscalID Impresora que emite el documento
-	 * @param order Pedido del cual se obtienen los artículos pendientes de
-	 * entrega
+	 * Manda a imprimir un documento NO fiscal que en sus líneas contiene el
+	 * detalle de cada artículo que tiene alguna cantidad pendiente de entrega
+	 * dentro de un pedido del sistema.
+	 * 
+	 * @param cFiscalID
+	 *            Impresora que emite el documento
+	 * @param order
+	 *            Pedido del cual se obtienen los artículos pendientes de
+	 *            entrega
+	 * @param invoice
+	 *            factura impresa anteriormente
 	 * @return <code>true</code> en caso de que el documento se haya emitido
-	 * correctamente, <code>false</false> en caso contrario.
+	 *         correctamente, <code>false</false> en caso contrario.
 	 */
-	public boolean printDeliveryDocument(Integer cFiscalID, MOrder order) {
-		return execute(Actions.ACTION_PRINT_DELIVERY_DOCUMENT, cFiscalID, new Object[] {order});
+	public boolean printDeliveryDocument(Integer cFiscalID, MOrder order, MInvoice invoice) {
+		return execute(Actions.ACTION_PRINT_DELIVERY_DOCUMENT, cFiscalID,
+				new Object[] { order, invoice });
 	}
 	
 	/**
@@ -459,12 +463,18 @@ public class FiscalDocumentPrint {
 	 */
 	private void doPrintDeliveryDocument(Object[] args) throws Exception {
 		MOrder order = (MOrder) args[0];
+		MInvoice invoice = (MInvoice) args[1];
+		setOxpDocument(invoice);
 		// Informa el inicio de la impresión
 		fireActionStarted(FiscalDocumentPrintListener.AC_PRINT_DOCUMENT);
 		// Crea el documento no fiscal y luego obtiene todas las líneas del pedido
 		NonFiscalDocument nonFiscalDocument = new NonFiscalDocument();
 		MOrderLine[] orderLines = order.getLines(true);
 		String line = null;
+		nonFiscalDocument.addLine("****************************************");
+		nonFiscalDocument.addLine("********** "+Msg.getMsg(ctx, "WarehouseDeliverDocument")+" ***********");
+		nonFiscalDocument.addLine("**** "+Msg.getMsg(ctx, "VoucherNo")+": "+invoice.getDocumentNo()+" ****");
+		nonFiscalDocument.addLine("****************************************");
 		for (MOrderLine orderLine : orderLines) {
 			// Por cada línea, si tiene artículos pendientes de entrega
 			if (orderLine.isDeliverDocumentPrintable()) {
@@ -473,7 +483,7 @@ public class FiscalDocumentPrint {
 				MProduct product = orderLine.getProduct();
 				// Crea la descripción que se mostrará en la línea del documento
 				line = 
-					"[x" + qtyToDeliver + "] " + product.getValue() + " " + product.getName();
+					"[" + qtyToDeliver.setScale(2) + "] " + product.getValue() + " " + product.getName();
 				// Agrega la línea al documento no fiscal
 				nonFiscalDocument.addLine(line);
 			}
@@ -497,14 +507,18 @@ public class FiscalDocumentPrint {
 	 *            Impresora que emite el documento
 	 * @param bpartner
 	 *            cliente cuenta corriente
+	 * @param invoice
+	 *            factura actual
 	 * @param infos
 	 *            datos de las condiciones de venta de cuenta corriente
 	 * @return <code>true</code> en caso de que el documento se haya emitido
 	 *         correctamente, <code>false</false> en caso contrario.
 	 */
-	public boolean printCurrentAccountDocument(Integer cFiscalID, MBPartner bpartner, List<CurrentAccountInfo> infos) {
+	public boolean printCurrentAccountDocument(Integer cFiscalID, MBPartner bpartner, MInvoice invoice, List<CurrentAccountInfo> infos) {
+		setOxpDocument(invoice);
 		// Creo el customer
 		Customer customer = getCustomer(bpartner.getID());
+		/* Por lo pronto, no es necesaria toda esta información
 		MOrg org = MOrg.get(ctx, Env.getAD_Org_ID(ctx));
 		CurrentAccountManager manager = CurrentAccountManagerFactory.getManager();
 		// Estado de crédito
@@ -518,13 +532,13 @@ public class FiscalDocumentPrint {
 		// Saldo
 		result = manager.getTotalOpenBalance(ctx, org, bpartner, null, getTrxName());
 		customer.setCreditBalance((BigDecimal)result.getResult());
-		
+		*/
 		// Itero por los datos de cuenta corriente y le asigno el cliente
 		for (CurrentAccountInfo currentAccountInfo : infos) {
 			currentAccountInfo.setCustomer(customer);
 		}
 		return execute(Actions.ACTION_PRINT_CURRENT_ACCOUNT_DOCUMENT,
-				cFiscalID, new Object[] { infos });
+				cFiscalID, new Object[] { invoice, infos });
 	}
 
 	/**
@@ -536,7 +550,8 @@ public class FiscalDocumentPrint {
 	 * @throws Exception
 	 */
 	private void doPrintCurrentAccountDocument(Object[] args) throws Exception{
-		List<CurrentAccountInfo> infos = (List<CurrentAccountInfo>)args[0];
+		MInvoice invoice = (MInvoice) args[0];
+		List<CurrentAccountInfo> infos = (List<CurrentAccountInfo>)args[1];
 		// Si no existen datos de cuenta corriente no se imprime nada
 		if(infos == null || infos.size() == 0){
 			return;
@@ -548,16 +563,24 @@ public class FiscalDocumentPrint {
 		// Cargar datos del cliente que se obtiene de por lo menos el primer
 		// registro de los balances. Se sabe que para todos es el mismo cliente
 		Customer customer = infos.get(0).getCustomer();
-		MOrg org = MOrg.get(ctx, Env.getAD_Org_ID(ctx));
-		nonFiscalDocument.addLine(Msg.getMsg(ctx, "CurrentAccount")+":"+customer.getName());
-		// Imprimir las condiciones de esta venta de cuenta corriente
-		nonFiscalDocument.addLine(Msg.getMsg(ctx, "CurrentSalesConditions"));
+		String currentAccountMsg = Msg.getMsg(ctx, "CurrentAccount");
+		nonFiscalDocument.addLine("****************************************");
+		nonFiscalDocument.addLine("** "+Msg.getMsg(ctx, "CurrentAccountTicketAcceptanceLine")+" **");
+		nonFiscalDocument.addLine("*********** "+currentAccountMsg+" ***********");
+		nonFiscalDocument.addLine("****************************************");
+		nonFiscalDocument.addLine(Msg.getMsg(ctx, "VoucherNo")+": "+invoice.getDocumentNo());
+		nonFiscalDocument.addLine(Msg.getMsg(ctx, "Date")
+				+ ": "
+				+ new SimpleDateFormat("dd/MM/yyyy").format(invoice
+						.getDateInvoiced()));
+		nonFiscalDocument.addLine(Msg.getMsg(ctx, "Account")+": "+customer.getValue()+" "+customer.getName());
 		MCurrency currency = MCurrency.get(ctx, Env.getContextAsInt(ctx, "$C_Currency_ID"), getTrxName());
 		for (CurrentAccountInfo currentAccountInfo : infos) {
-			nonFiscalDocument.addLine(currentAccountInfo.getPaymentRule()
-					+ "  " + currency.getCurSymbol()
-					+ currentAccountInfo.getAmount());
+			nonFiscalDocument.addLine(currentAccountInfo.getPaymentRule());
+			nonFiscalDocument.addLine(Msg.getMsg(ctx, "Amt") + ":  "
+					+ currency.getCurSymbol() + currentAccountInfo.getAmount());
 		}
+		/* Por ahora no es necesario imprimir esta información
 		// Imprimir estado de crédito
 		nonFiscalDocument.addLine(Msg.getMsg(ctx, "Status")
 				+ ": "
@@ -570,11 +593,12 @@ public class FiscalDocumentPrint {
 		// Imprimir saldo
 		nonFiscalDocument.addLine(Msg.getMsg(ctx, "Balance") + ": "
 				+ currency.getCurSymbol() + customer.getCreditBalance());
+		*/
 		// Imprimir línea para firma del cliente
 		nonFiscalDocument.addLine(" ");
 		nonFiscalDocument.addLine(" ");
 		nonFiscalDocument.addLine("--------------------------");
-		nonFiscalDocument.addLine(Msg.getMsg(ctx, "CustomerSignature"));
+		nonFiscalDocument.addLine(Msg.getMsg(ctx, "SignatureAndClarification"));
 		// FIXME Excepciones de crédito?
 		// Manda a imprimir el documento en la impresora fiscal
 		getFiscalPrinter().printDocument(nonFiscalDocument);
@@ -859,6 +883,7 @@ public class FiscalDocumentPrint {
 				// Nombre, nro de identificación, domicilio
 				customer.setIdentificationType(Customer.DNI);
 				customer.setName(mInvoice.getNombreCli());
+				customer.setValue("");
 				customer.setIdentificationNumber(mInvoice.getNroIdentificCliente());
 				customer.setLocation(mInvoice.getInvoice_Adress());
 			} else {
@@ -866,7 +891,7 @@ public class FiscalDocumentPrint {
 				
 				// Se asigna el nombre del cliente a partir del BPartner.
 				customer.setName(bPartner.getName());
-
+				customer.setValue(bPartner.getValue());
 				// Se asigna el domicilio. 
 				MLocation location = MLocation.get(ctx, mInvoice.getBPartnerLocation().getC_Location_ID(), getTrxName());
 				customer.setLocation(location.toStringShort());
