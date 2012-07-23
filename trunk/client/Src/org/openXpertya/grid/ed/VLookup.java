@@ -1645,6 +1645,14 @@ public class VLookup extends JComponent implements VEditor,ActionListener,FocusL
 
     public void focusGained( FocusEvent e ) {
     	
+    	// Si es de tipo búsqueda, selecciono el texto dentro del campo
+		if (e.getSource() == m_text
+				&& m_lookup.getDisplayType() == DisplayType.Search
+				&& m_text != null) {
+        	m_text.selectAll();
+        	return;
+        }
+    	
         if( (e.getSource() != m_combo) || e.isTemporary() || m_haveFocus || (m_lookup == null) ) {
         	log.fine("Retornando");
             return;
@@ -1671,7 +1679,7 @@ public class VLookup extends JComponent implements VEditor,ActionListener,FocusL
         log.config( m_columnName + " - Update   Count=" + m_combo.getItemCount() + ", Selected=" + m_lookup.getSelectedItem());
         m_lookup.setSelectedItem( obj );
         log.config( m_columnName + " - Selected Count=" + m_combo.getItemCount() + ", Selected=" + m_lookup.getSelectedItem());
-
+        
         //
         m_settingFocus = false;
     }    // focusGained
