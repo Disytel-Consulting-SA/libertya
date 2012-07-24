@@ -472,6 +472,7 @@ public class MInventory extends X_M_Inventory implements DocAction {
 				PO.copyValues(inventoryLine, newInventoryLine);
 				sign = newInventoryLine.getQtyCount().signum();
 				newInventoryLine.setQtyCount(new BigDecimal(sign));
+				newInventoryLine.setQtyCountWithoutChargeSign(new BigDecimal(1));
 				// Crear la clase con los datos necesarios para crear la instancia
 				assetDTO = new AssetDTO();
 				assetDTO.setAttributeSetInstanceID(!Util.isEmpty(
