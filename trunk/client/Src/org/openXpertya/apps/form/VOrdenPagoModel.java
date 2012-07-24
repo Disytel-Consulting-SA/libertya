@@ -1911,6 +1911,14 @@ public class VOrdenPagoModel implements TableModelListener {
 				// 99. Completar HDR
 				poGenerator.completeAllocation();
 				
+				// Realizar las tareas de cuenta corriente previas a terminar el
+				// procesamiento
+				performAditionalCurrentAccountWork();
+				
+				// Si estuvo todo bien entonces realizo las tareas posteriores a
+				// terminar el procesamiento y confirmación de transacción
+				afterProcessDocuments();
+				
 				if (saveOk && errorNo == PROCERROR_OK) {
 					trx.commit();
 					m_newlyCreatedC_AllocationHeader_ID = hdr.getC_AllocationHdr_ID();
