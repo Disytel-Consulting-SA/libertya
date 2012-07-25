@@ -119,8 +119,6 @@ public class LaunchOrder extends SvrProcess {
 		
 		MBPartner bpartner = new MBPartner(getCtx(), order.getC_BPartner_ID(), null);
 		
-		MJasperReport jasperwrapper = new MJasperReport(getCtx(), AD_JasperReport_ID, get_TrxName());
-		
 		OrderDataSource ds = new OrderDataSource(getCtx(), order);
 		
 		 try {

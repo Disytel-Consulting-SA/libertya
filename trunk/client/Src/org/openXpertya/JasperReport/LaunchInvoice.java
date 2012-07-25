@@ -115,8 +115,6 @@ public class LaunchInvoice extends SvrProcess {
 		//Ader mejora de caches
 		invoice.initCaches();
 		
-		MJasperReport jasperwrapper = new MJasperReport(getCtx(), AD_JasperReport_ID, get_TrxName());
-		
 		InvoiceDataSource ds = new InvoiceDataSource(getCtx(), invoice);
 		
 		 try {
