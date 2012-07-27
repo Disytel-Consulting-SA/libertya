@@ -210,6 +210,30 @@ public class MProductPO extends X_M_Product_PO {
     public MProductPO( Properties ctx,ResultSet rs,String trxName ) {
         super( ctx,rs,trxName );
     }    // MProductPO
+    
+    /**
+     * Descripción de Método
+     *
+     *
+     * @param newRecord
+     *
+     * @return
+     */
+
+    protected boolean beforeSave( boolean newRecord ) {
+
+        // Se valida que no se pueda crear mas de un registro en la tabla M_Product_PO con el mismo C_BPartner_ID para el mismo Artículo
+        if(is_ValueChanged( "C_BPartner_ID" )){
+        	int count = Integer.parseInt(DB.getSQLObject(get_TrxName(), "SELECT COUNT(*) FROM M_Product_PO po WHERE po.C_BPartner_ID = ? AND po.M_Product_ID = ?", new Object[]{getC_BPartner_ID(),getM_Product_ID()}).toString());
+        	if (count > 0){
+        		log.saveError("ExistRecordWithBP", "");
+    			return false;
+        	}
+    	}
+  
+        return true;
+    }    // beforeSave
+    
 }    // MProductPO
 
 
