@@ -173,6 +173,7 @@ public class LaunchInvoice extends SvrProcess {
 		jasperwrapper.addParameter("CODIGO", bpartner.getValue());
 		jasperwrapper.addParameter("DIRECCION", JasperReportsUtil
 				.formatLocation(getCtx(), location.getID(), false));
+		jasperwrapper.addParameter("BP_LOCATION_NAME", BPLocation.getName());
 		jasperwrapper.addParameter("ADDRESS1", JasperReportsUtil.coalesce(location.getAddress1(), ""));
 		jasperwrapper.addParameter("CIUDAD", JasperReportsUtil.coalesce(location.getCity(),""));
 		jasperwrapper.addParameter("PAIS", JasperReportsUtil.coalesce(location.getCountry().getName(),""));
@@ -184,7 +185,22 @@ public class LaunchInvoice extends SvrProcess {
 		}			
 		jasperwrapper.addParameter("CUIT", JasperReportsUtil.coalesce(bpartner.getTaxID(),""));
 		jasperwrapper.addParameter("INGBRUTO", bpartner.getIIBB());
-		jasperwrapper.addParameter("VENDEDOR", (new MUser(getCtx(), invoice.getSalesRep_ID(), null).getName()) );
+		if (invoice.getSalesRep_ID() > 0) {
+			MUser salesRepUser = new MUser(getCtx(), invoice.getSalesRep_ID(),
+					get_TrxName());
+			
+			jasperwrapper.addParameter("VENDEDOR", salesRepUser.getName());
+			// FB - Nombre de la EC asociada al Usuario Vendedor (a veces el
+			// nombre de usuario suele ser todo en minúsculas y es mas correcto
+			// mostrar Nombre y Apellido de la EC que es un empleado)
+			jasperwrapper.addParameter(
+				"SALESREP_BP_NAME",
+				salesRepUser.getC_BPartner_ID() > 0 ? JasperReportsUtil
+						.getBPartnerName(getCtx(),
+								salesRepUser.getC_BPartner_ID(),
+								get_TrxName()) 
+						: salesRepUser.getName());
+		}
 		jasperwrapper.addParameter("NRODOCORIG", JasperReportsUtil.coalesce(invoice.getPOReference(), "") );
 		if(!Util.isEmpty(invoice.getC_Order_ID(), true)){
 			jasperwrapper.addParameter("NRO_OC", JasperReportsUtil.coalesce(
@@ -308,6 +324,18 @@ public class LaunchInvoice extends SvrProcess {
 					invoice.getM_PriceList_ID(), get_TrxName()));
 		jasperwrapper.addParameter("OPEN_AMT", invoice.getOpenAmt());
 		jasperwrapper.addParameter("TAXES_AMT", invoice.getTaxesAmt());
+		// Contacto (AD_User_ID)
+		if(!Util.isEmpty(invoice.getAD_User_ID(), true)) {
+			MUser contact = new MUser(getCtx(), invoice.getAD_User_ID(),
+				get_TrxName());
+			// FB - Nuevos parámetros de contacto
+			jasperwrapper.addParameter("CONTACT_NAME", contact.getName());
+			jasperwrapper.addParameter("CONTACT_PHONE", contact.getPhone());
+			jasperwrapper.addParameter("CONTACT_PHONE2", contact.getPhone2());
+			jasperwrapper.addParameter("CONTACT_PHONE3", contact.getphone3());
+			jasperwrapper.addParameter("CONTACT_FAX", contact.getFax());
+			jasperwrapper.addParameter("CONTACT_EMAIL", contact.getEMail());
+		}
 		// Usuario 1
 		if(!Util.isEmpty(invoice.getUser1_ID(),true)){
 			jasperwrapper.addParameter(
@@ -352,6 +380,24 @@ public class LaunchInvoice extends SvrProcess {
 					get_TrxName()));
 		jasperwrapper.addParameter("PERCEPCION_TOTAL_AMT",
 			invoice.getPercepcionesTotalAmt());
+		
+		// Datos de Localización 
+		MLocation loc = BPLocation.getLocation(false);
+		jasperwrapper.addParameter("LOC_ADDRESS1", loc.getAddress1());
+		jasperwrapper.addParameter("LOC_ADDRESS2", loc.getAddress2());
+		jasperwrapper.addParameter("LOC_ADDRESS3", loc.getAddress3());
+		jasperwrapper.addParameter("LOC_ADDRESS4", loc.getAddress1());
+		jasperwrapper.addParameter("LOC_PLAZA", loc.getPlaza());
+		jasperwrapper.addParameter("LOC_CITY", loc.getCity());
+		jasperwrapper.addParameter("LOC_POSTAL", loc.getPostal());
+		jasperwrapper.addParameter("LOC_REGION", loc.getC_Region_ID() > 0 ? loc.getRegion().getName() : "");
+		jasperwrapper.addParameter("LOC_COUNTRY", loc.getC_City_ID() > 0 ? loc.getCountry().getName() : "");
+		
+		jasperwrapper.addParameter("BP_LOCATION_PHONE", BPLocation.getPhone());
+		jasperwrapper.addParameter("BP_LOCATION_PHONE2", BPLocation.getPhone2());
+		jasperwrapper.addParameter("BP_LOCATION_FAX", BPLocation.getFax());
+		jasperwrapper.addParameter("BP_LOCATION_ISDN", BPLocation.getISDN());
+
 	}
 	
 	
