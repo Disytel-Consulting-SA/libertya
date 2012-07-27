@@ -20,6 +20,7 @@ import org.openXpertya.model.MOrderLine;
 import org.openXpertya.model.MProcess;
 import org.openXpertya.model.MRegion;
 import org.openXpertya.model.MTax;
+import org.openXpertya.model.MUser;
 import org.openXpertya.model.X_C_Invoice;
 import org.openXpertya.model.X_M_InOut;
 import org.openXpertya.process.ProcessInfo;
@@ -155,6 +156,7 @@ public class LaunchInOut extends SvrProcess {
 		jasperwrapper.addParameter("CODIGO", bpartner.getValue());
 		jasperwrapper.addParameter("DIRECCION", JasperReportsUtil
 				.formatLocation(getCtx(), location.getID(), false));
+		jasperwrapper.addParameter("BP_LOCATION_NAME", BPLocation.getName());
 		jasperwrapper.addParameter("CIUDAD",
 				JasperReportsUtil.coalesce(location.getCity(), ""));
 		jasperwrapper
@@ -169,10 +171,20 @@ public class LaunchInOut extends SvrProcess {
 		jasperwrapper.addParameter("CUIT", bpartner.getTaxID());
 		jasperwrapper.addParameter("INGBRUTO", bpartner.getIIBB());
 		if (!Util.isEmpty(inout.getSalesRep_ID(), true)) {
+			MUser salesRepUser = new MUser(getCtx(), inout.getSalesRep_ID(),
+					get_TrxName());
+			jasperwrapper.addParameter("VENDEDOR",salesRepUser.getName());
+			
+			// FB - Nombre de la EC asociada al Usuario Vendedor (a veces el
+			// nombre de usuario suele ser todo en minúsculas y es mas correcto
+			// mostrar Nombre y Apellido de la EC que es un empleado)
 			jasperwrapper.addParameter(
-					"VENDEDOR",
-					JasperReportsUtil.getUserName(getCtx(),
-							inout.getSalesRep_ID(), get_TrxName()));
+				"SALESREP_BP_NAME",
+				salesRepUser.getC_BPartner_ID() > 0 ? JasperReportsUtil
+						.getBPartnerName(getCtx(),
+								salesRepUser.getC_BPartner_ID(),
+								get_TrxName()) 
+						: salesRepUser.getName());
 		}
 		jasperwrapper.addParameter("NRODOCORIG",
 				JasperReportsUtil.coalesce(inout.getPOReference(), ""));
@@ -351,6 +363,19 @@ public class LaunchInOut extends SvrProcess {
 		}
 		jasperwrapper.addParameter("SHIP_DATE", inout.getShipDate());
 		jasperwrapper.addParameter("TRACKINGNO", inout.getTrackingNo());
+		// Contacto (AD_User_ID)
+		if(!Util.isEmpty(inout.getAD_User_ID(), true)) {
+			MUser contact = new MUser(getCtx(), inout.getAD_User_ID(),
+				get_TrxName());
+			// FB - Nuevos parámetros de contacto
+			jasperwrapper.addParameter("CONTACT_NAME", contact.getName());
+			jasperwrapper.addParameter("CONTACT_PHONE", contact.getPhone());
+			jasperwrapper.addParameter("CONTACT_PHONE2", contact.getPhone2());
+			jasperwrapper.addParameter("CONTACT_PHONE3", contact.getphone3());
+			jasperwrapper.addParameter("CONTACT_FAX", contact.getFax());
+			jasperwrapper.addParameter("CONTACT_EMAIL", contact.getEMail());
+		}
+		
 		if (!Util.isEmpty(inout.getUser1_ID(), true)) {
 			jasperwrapper.addParameter("USER1", JasperReportsUtil.getUserName(
 					getCtx(), inout.getUser1_ID(), get_TrxName()));
@@ -365,6 +390,23 @@ public class LaunchInOut extends SvrProcess {
 		jasperwrapper.addParameter("IS_INTRANSIT", inout.isInTransit());
 		jasperwrapper.addParameter("IS_POSTED", inout.isPosted());
 		jasperwrapper.addParameter("ISSOTRX", inout.isSOTrx());
+
+		// Datos de Localización 
+		MLocation loc = BPLocation.getLocation(false);
+		jasperwrapper.addParameter("LOC_ADDRESS1", loc.getAddress1());
+		jasperwrapper.addParameter("LOC_ADDRESS2", loc.getAddress2());
+		jasperwrapper.addParameter("LOC_ADDRESS3", loc.getAddress3());
+		jasperwrapper.addParameter("LOC_ADDRESS4", loc.getAddress1());
+		jasperwrapper.addParameter("LOC_PLAZA", loc.getPlaza());
+		jasperwrapper.addParameter("LOC_CITY", loc.getCity());
+		jasperwrapper.addParameter("LOC_POSTAL", loc.getPostal());
+		jasperwrapper.addParameter("LOC_REGION", loc.getC_Region_ID() > 0 ? loc.getRegion().getName() : "");
+		jasperwrapper.addParameter("LOC_COUNTRY", loc.getC_City_ID() > 0 ? loc.getCountry().getName() : "");
+		
+		jasperwrapper.addParameter("BP_LOCATION_PHONE", BPLocation.getPhone());
+		jasperwrapper.addParameter("BP_LOCATION_PHONE2", BPLocation.getPhone2());
+		jasperwrapper.addParameter("BP_LOCATION_FAX", BPLocation.getFax());
+		jasperwrapper.addParameter("BP_LOCATION_ISDN", BPLocation.getISDN());
 
 		try {
 			jasperwrapper.fillReport(ds);
