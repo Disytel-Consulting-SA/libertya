@@ -19,6 +19,7 @@ import java.beans.PropertyChangeEvent;
 import java.beans.PropertyVetoException;
 import java.beans.VetoableChangeListener;
 import java.math.BigDecimal;
+import java.sql.Timestamp;
 import java.text.NumberFormat;
 import java.text.ParseException;
 import java.util.Date;
@@ -70,6 +71,7 @@ import org.openXpertya.grid.ed.VDate;
 import org.openXpertya.grid.ed.VLookup;
 import org.openXpertya.images.ImageFactory;
 import org.openXpertya.model.MBPartner;
+import org.openXpertya.model.MCurrency;
 import org.openXpertya.model.MSequence;
 import org.openXpertya.model.X_C_BankAccountDoc;
 import org.openXpertya.pos.view.KeyUtils;
@@ -333,7 +335,7 @@ public class VOrdenPago extends CPanel implements FormPanel,ActionListener,Table
         jTabbedPane2 = new javax.swing.JTabbedPane();
         jPanel5 = new javax.swing.JPanel();
         lblEfectivoLibroCaja = new javax.swing.JLabel();
-        efectivoLibroCaja = VComponentsFactory.VLookupFactory("C_Cash_ID", "C_Cash", m_WindowNo, DisplayType.Search, m_model.getEfectivoLibroCajaSqlValidation() );
+        efectivoLibroCaja = VComponentsFactory.VLookupFactory("C_Cash_ID", "C_Cash", m_WindowNo, DisplayType.Search, m_model.getEfectivoLibroCajaSqlValidation() ); 
         lblEfectivoImporte = new javax.swing.JLabel();
         txtEfectivoImporte = new JFormattedTextField();
         jPanel6 = new javax.swing.JPanel();
@@ -341,7 +343,7 @@ public class VOrdenPago extends CPanel implements FormPanel,ActionListener,Table
         lblTransfNroTransf = new javax.swing.JLabel();
         lblTransfImporte = new javax.swing.JLabel();
         lblTransfFecha = new javax.swing.JLabel();
-        transfCtaBancaria = VComponentsFactory.VLookupFactory("C_BankAccount_ID", "C_BankAccount", m_WindowNo, DisplayType.Search);
+        transfCtaBancaria = VComponentsFactory.VLookupFactory("C_BankAccount_ID", "C_BankAccount", m_WindowNo, DisplayType.Search, m_model.getTransfCtaBancariaSqlValidation());
         txtTransfNroTransf = new javax.swing.JTextField();
         txtTransfImporte = new JFormattedTextField();
         transFecha = VComponentsFactory.VDateFactory();
@@ -369,8 +371,10 @@ public class VOrdenPago extends CPanel implements FormPanel,ActionListener,Table
         panelCamProy = new javax.swing.JPanel();
         cboCampaign = VComponentsFactory.VLookupFactory("C_Campaign_ID", "C_Invoice", m_WindowNo, DisplayType.Table, null, false );
         cboProject = VComponentsFactory.VLookupFactory("C_Project_ID", "C_Invoice", m_WindowNo, DisplayType.Table, null, false );
+        cboCurrency = VComponentsFactory.VLookupFactory("C_Currency_ID", "C_Currency", m_WindowNo, DisplayType.Table, m_model.getCurrencySqlValidation() );
         lblCampaign = new javax.swing.JLabel();
         lblProject = new javax.swing.JLabel();
+        lblCurrency = new javax.swing.JLabel();
         jPanel2 = new javax.swing.JPanel();
         cmdProcess = new javax.swing.JButton();
         cmdCancel = new javax.swing.JButton();
@@ -906,11 +910,13 @@ public class VOrdenPago extends CPanel implements FormPanel,ActionListener,Table
             .add(panelCamProyLayout.createSequentialGroup()
                 .add(panelCamProyLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
                     .add(lblCampaign)
-                    .add(lblProject))
+                    .add(lblProject)
+                    .add(lblCurrency))
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                 .add(panelCamProyLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
                     .add(cboCampaign, 0, 239, Short.MAX_VALUE)
-                    .add(cboProject, 0, 239, Short.MAX_VALUE)))
+                    .add(cboProject, 0, 239, Short.MAX_VALUE)
+                    .add(cboCurrency, 0, 239, Short.MAX_VALUE)))
         );
         panelCamProyLayout.setVerticalGroup(
             panelCamProyLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
@@ -923,6 +929,10 @@ public class VOrdenPago extends CPanel implements FormPanel,ActionListener,Table
                 .add(panelCamProyLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
                     .add(lblProject)
                     .add(cboProject, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
+                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                .add(panelCamProyLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
+                	.add(lblCurrency)
+                    .add(cboCurrency, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
                 .addContainerGap(org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
     }
@@ -1413,7 +1423,12 @@ public class VOrdenPago extends CPanel implements FormPanel,ActionListener,Table
     
     
     protected MedioPagoEfectivo saveCashMedioPago() throws Exception{
-    	MedioPagoEfectivo mpe = m_model.getNuevoMedioPagoEfectivo();		
+    	MedioPagoEfectivo mpe = m_model.getNuevoMedioPagoEfectivo();
+    	try {
+			mpe.monedaOriginalID = (Integer) cboCurrency.getValue();
+		} catch (Exception e) {
+			throw new Exception(cboCurrency.getValue().toString());
+		}
 		try {
 			mpe.importe = numberParse(txtEfectivoImporte.getText());
 		} catch (Exception e) {
@@ -1436,6 +1451,11 @@ public class VOrdenPago extends CPanel implements FormPanel,ActionListener,Table
     
     protected MedioPagoTransferencia saveTransferMedioPago() throws Exception{
     	MedioPagoTransferencia mpt = m_model.getNuevoMedioPagoTransferencia();		
+    	try {
+			mpt.monedaOriginalID = (Integer) cboCurrency.getValue();
+		} catch (Exception e) {
+			throw new Exception(cboCurrency.getValue().toString());
+		}
 		try {
 			mpt.C_BankAccount_ID = (Integer)transfCtaBancaria.getValue();
 		} catch (NullPointerException ee) {
@@ -1468,6 +1488,11 @@ public class VOrdenPago extends CPanel implements FormPanel,ActionListener,Table
     protected MedioPagoCheque saveCheckMedioPago() throws Exception{
     	MedioPagoCheque mpc = m_model.getNuevoMedioPagoCheque();		
 		mpc.aLaOrden = txtChequeALaOrden.getText();		
+		try {
+			mpc.monedaOriginalID = (Integer) cboCurrency.getValue();
+		} catch (Exception e) {
+			throw new Exception(cboCurrency.getValue().toString());
+		}
 		try {
 			mpc.chequera_ID = (Integer)chequeChequera.getValue();
 		} catch (Exception e) {
@@ -1535,6 +1560,11 @@ public class VOrdenPago extends CPanel implements FormPanel,ActionListener,Table
     
     protected MedioPagoCredito saveCreditMedioPago() throws Exception{
     	MedioPagoCredito mpcm = m_model.getNuevoMedioPagoCredito();
+    	try {
+			mpcm.monedaOriginalID = (Integer) cboCurrency.getValue();
+		} catch (Exception e) {
+			throw new Exception(cboCurrency.getValue().toString());
+		}
 		try {
 			mpcm.setC_invoice_ID((Integer)creditInvoice.getValue());
 		} catch (Exception ee) {
@@ -1565,16 +1595,22 @@ public class VOrdenPago extends CPanel implements FormPanel,ActionListener,Table
 		boolean isCash = cboPagoAdelantadoType.getSelectedIndex() == PAGO_ADELANTADO_TYPE_CASH_INDEX;
 		Integer payID = null;
 		BigDecimal amount = null;
+		Integer monedaOriginalID;
 		
 		payID = (Integer)(isCash ? cashAdelantado.getValue() : pagoAdelantado.getValue());
 		
+		try {
+			monedaOriginalID = (Integer) cboCurrency.getValue();
+		} catch (Exception e) {
+			throw new Exception(cboCurrency.getValue().toString());
+		}
 		try {
 			amount = numberParse(txtPagoAdelantadoImporte.getText());
 		} catch (Exception e) {
 			throw new Exception("@Invalid@ @Amount@");
 		}
 		// Se agrega el cobro adelantado como medio de cobro
-		return getModel().addPagoAdelantado(payID, amount, isCash);		
+		return getModel().addPagoAdelantado(payID, amount, isCash, monedaOriginalID);		
 	}
     
     
@@ -1750,6 +1786,10 @@ public class VOrdenPago extends CPanel implements FormPanel,ActionListener,Table
     			showError("Debe indicar el tipo de documento");
     			return;
     			
+    		case VOrdenPagoModel.PROCERROR_BOTH_EXCHANGE_INVOICES:
+    			showError("@BothExchangeInvoices@");
+    			return;
+    			
     		default:
     			showError("@ValidationError@");
     			return;
@@ -1834,6 +1874,7 @@ public class VOrdenPago extends CPanel implements FormPanel,ActionListener,Table
     protected VLookup cboClient;
     protected VLookup cboOrg;
     protected VLookup cboProject;
+    protected VLookup cboCurrency;
     protected VLookup chequeChequera;
     protected VDate chequeFechaEmision;
     protected VDate chequeFechaPago;
@@ -1842,7 +1883,7 @@ public class VOrdenPago extends CPanel implements FormPanel,ActionListener,Table
     protected javax.swing.JButton cmdEliminar;
     protected javax.swing.JButton cmdGrabar;
     protected javax.swing.JButton cmdProcess;
-    protected VLookup efectivoLibroCaja;
+    protected VLookup efectivoLibroCaja;    
     protected VDate invoiceDatePick;
     protected javax.swing.JPanel jPanel1;
     protected javax.swing.JPanel jPanel10;
@@ -1880,6 +1921,7 @@ public class VOrdenPago extends CPanel implements FormPanel,ActionListener,Table
     protected javax.swing.JLabel lblMedioPago2;
     protected javax.swing.JLabel lblOrg;
     protected javax.swing.JLabel lblProject;
+    protected javax.swing.JLabel lblCurrency;
     protected javax.swing.JLabel lblRetenciones2;
     protected javax.swing.JLabel lblSaldo;
     protected javax.swing.JLabel lblTotalPagar1;
@@ -1960,7 +2002,7 @@ public class VOrdenPago extends CPanel implements FormPanel,ActionListener,Table
 
     private boolean m_cambioTab = false;
     
-    private int m_C_Currency_ID = Env.getContextAsInt( Env.getCtx(), "$C_Currency_ID" );
+    protected int m_C_Currency_ID = Env.getContextAsInt( Env.getCtx(), "$C_Currency_ID" );
 
     private static CLogger log = CLogger.getCLogger( VAllocation.class );
     protected VOrdenPagoModel m_model = new VOrdenPagoModel();
@@ -2061,7 +2103,7 @@ public class VOrdenPago extends CPanel implements FormPanel,ActionListener,Table
 		txtPagoAdelantadoAvailable.setText("");
 		
 		//
-		
+		cboCurrency.addVetoableChangeListener(this);
 		efectivoLibroCaja.addVetoableChangeListener(this);
 		transfCtaBancaria.addVetoableChangeListener(this);
 		chequeChequera.addVetoableChangeListener(this);
@@ -2135,6 +2177,11 @@ public class VOrdenPago extends CPanel implements FormPanel,ActionListener,Table
         cboProject.setMandatory(false);
         cboProject.setValue(null);
         cboProject.refresh();
+        
+        cboCurrency.setMandatory(true);
+        cboCurrency.setValue(m_C_Currency_ID);
+        cboCurrency.refresh();
+        setCurrencyContext();
 
         // Cuando cambia el documento de crédito, se carga el 
         // importe disponible en el text correspondiente
@@ -2153,6 +2200,13 @@ public class VOrdenPago extends CPanel implements FormPanel,ActionListener,Table
 
     		public void actionPerformed(ActionEvent e) {
     			setBPartnerContext();
+    		}
+    		
+    	});
+    	
+    	cboCurrency.addActionListener( new ActionListener() {
+    		public void actionPerformed(ActionEvent e) {
+    			setCurrencyContext();
     		}
     		
     	});
@@ -2282,6 +2336,7 @@ public class VOrdenPago extends CPanel implements FormPanel,ActionListener,Table
         lblOrg.setText(Msg.translate(m_ctx,"AD_Org_ID"));
         lblDocumentType.setText(Msg.translate(m_ctx,"C_DOCTYPE_ID"));
 		lblProject.setText(Msg.translate(m_ctx,"C_Project_ID"));
+		lblCurrency.setText(Msg.translate(m_ctx,"C_Currency_ID"));
 		lblCampaign.setText(Msg.translate(m_ctx,"C_Campaign_ID"));
 		lblPagoAdelantadoType.setText(getMsg("Type"));
 		lblPagoAdelantadoAvailable.setText(Msg.translate(m_ctx, "OpenAmt"));
@@ -2518,7 +2573,8 @@ public class VOrdenPago extends CPanel implements FormPanel,ActionListener,Table
 	            	updatePayAllInvoices(false);
 	            }
 	        } );			
-			
+		} else if (e.getSource() == cboCurrency) {
+			updateDependent();
 		} else if (e.getSource() == efectivoLibroCaja) {
 			
 		} else if (e.getSource() == transfCtaBancaria) {
@@ -2544,6 +2600,10 @@ public class VOrdenPago extends CPanel implements FormPanel,ActionListener,Table
 				m_model.setDocumentType(null);
 			}
 		} 
+	}
+
+	private void updateDependent() {
+		efectivoLibroCaja.setValue(null);
 	}
 
 	public void stateChanged(ChangeEvent arg0) {
@@ -2926,13 +2986,19 @@ public class VOrdenPago extends CPanel implements FormPanel,ActionListener,Table
 	private void saveChequeTerceroMedioPago() throws Exception {
 		Integer paymentID = (Integer)chequeTercero.getValue();
 		BigDecimal importe; 
+		Integer monedaOriginalID;
+		try {
+			monedaOriginalID = (Integer) cboCurrency.getValue();
+		} catch (Exception e) {
+			throw new Exception(cboCurrency.getValue().toString());
+		}
 		try {
 			importe = numberParse(txtChequeTerceroImporte.getText());
 		} catch (Exception e) {
 			throw new Exception(lblChequeTerceroImporte.getText());
 		}
 		String description = txtChequeTerceroDescripcion.getText().trim();
-		getModel().addChequeTercero(paymentID, importe, description);
+		getModel().addChequeTercero(paymentID, importe, description, monedaOriginalID);
 	}
 	
 	private void updateContextValues() {
@@ -2959,7 +3025,13 @@ public class VOrdenPago extends CPanel implements FormPanel,ActionListener,Table
 			Env.setContext(m_ctx, m_WindowNo, "C_BPartner_ID", bPartnerID);
 		else
 			Env.setContext(m_ctx, m_WindowNo, "C_BPartner_ID", (String)null);
-		
+	}
+	
+	private void setCurrencyContext(Integer currencyID) {
+		if (currencyID != null)
+			Env.setContext(m_ctx, m_WindowNo, "C_Currency_ID", currencyID);
+		else
+			Env.setContext(m_ctx, m_WindowNo, "C_Currency_ID", (String)null);
 	}
 	
 	private void setBPartnerContext() {
@@ -2967,6 +3039,13 @@ public class VOrdenPago extends CPanel implements FormPanel,ActionListener,Table
 		if (BPartnerSel.getValue() != null)
 			value = (Integer)BPartnerSel.getValue(); 
 		setBPartnerContext(value);
+	}
+	
+	private void setCurrencyContext() {
+		Integer value = 0;
+		if (cboCurrency.getValue() != null)
+			value = (Integer) cboCurrency.getValue(); 
+		setCurrencyContext(value);
 	}
 	
 	/**
@@ -3024,6 +3103,10 @@ public class VOrdenPago extends CPanel implements FormPanel,ActionListener,Table
 	}
 	
 	protected void updatePayAmt(BigDecimal amt){
+		int currencyID = ( (Integer) cboCurrency.getValue() == null) ? m_C_Currency_ID : (Integer) cboCurrency.getValue();
+		
+		amt = MCurrency.currencyConvert(amt, m_C_Currency_ID, currencyID, new Timestamp(System.currentTimeMillis()), getModel().AD_Org_ID, m_ctx);
+		
 		Integer tabIndexSelected = jTabbedPane2.getSelectedIndex();
 		if(tabIndexSelected.equals(TAB_INDEX_CHEQUE)){
 			txtChequeImporte.setValue(amt);
@@ -3111,6 +3194,7 @@ public class VOrdenPago extends CPanel implements FormPanel,ActionListener,Table
 		m_model.actualizarFacturas();
 		cboCampaign.setValue(null);
 		cboProject.setValue(null);
+		cboCurrency.setValue(m_C_Currency_ID);
 		txtTotalPagar1.setValue(null);
 		m_cambioTab = true;
 		jTabbedPane1.setSelectedIndex(0);

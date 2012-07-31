@@ -734,7 +734,10 @@ public class ReciboDeCliente {
 	 * @return true si es posible aplicarlo, false caso contrario
 	 */
 	public boolean isGeneralDocumentDiscountApplicable(String discountContextType){
-		return getDiscountCalculator().isGeneralDocumentDiscountApplicable(discountContextType);
+		if(getDiscountCalculator() != null){
+			return getDiscountCalculator().isGeneralDocumentDiscountApplicable(discountContextType);
+		}
+		return false; 
 	}
 
 	/**
