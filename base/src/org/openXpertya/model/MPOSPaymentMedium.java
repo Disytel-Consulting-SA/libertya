@@ -89,6 +89,78 @@ public class MPOSPaymentMedium extends X_C_POSPaymentMedium {
 		}
 		return paymentMediums;
 	}
+	
+	/**
+	 * Obtiene los medios de pago disponibles para el tipo de pago parámetro y
+	 * contexto de uso. Si el tipo de pago parámetro es null y el contexto de
+	 * uso también es null entonces retorna todos los medios de pago disponibles
+	 * que existen para la compañía actual y que se encuentren activos. Un medio
+	 * de pago es disponible cuando es válido para la fecha actual. El contexto
+	 * de uso determina los medios de pago disponibles para ese contexto, el
+	 * parámetro exclude verifica si hayq ue excluir el contexto que viene como
+	 * parámetro o se debe incluir junto con el tipo de contexto Ambos.
+	 * 
+	 * @param ctx
+	 *            contexto
+	 * @param tenderType
+	 *            tipo de pago
+	 * @param contextOfUse
+	 *            contexto de uso del medio de pago
+	 * @param exclude
+	 *            true si se debe excluir el contexto de uso en la búsqueda o se
+	 *            debe inclui junto con Ambos.
+	 * @param trxName
+	 *            transacción actual
+	 * @param currencyId
+	 *            moneda
+	 * @return lista de medios de pago disponibles
+	 */
+	public static List<MPOSPaymentMedium> getAvailablePaymentMediums(Properties ctx, String tenderType, String contextOfUse, boolean exclude, String trxName, int currencyId){
+		// Se buscan los medios de pago que sean válidos para la fecha actual.
+		StringBuffer sql = new StringBuffer("SELECT * "
+				+ "FROM C_POSPaymentMedium " + "WHERE AD_Client_ID = ? "
+				+ "AND ? BETWEEN DateFrom AND DateTo " + "AND IsActive = 'Y' ");
+		if(tenderType != null){
+			sql.append(" AND (tendertype = '"+tenderType+"') ");
+		}
+		if(contextOfUse != null){
+			if(exclude){
+				sql.append(" AND (context <> '"+contextOfUse+"') ");
+			}
+			else{
+				sql.append(" AND (context = '" + contextOfUse
+						+ "' OR context = '" + MPOSPaymentMedium.CONTEXT_Both
+						+ "') ");
+			}
+		}
+		sql.append(" AND (C_Currency_ID = ?) ");
+		sql.append("ORDER BY Name ASC");
+		List<MPOSPaymentMedium> paymentMediums = new ArrayList<MPOSPaymentMedium>();
+		PreparedStatement pstmt = null;
+		ResultSet rs = null;
+		
+		try {
+			pstmt = DB.prepareStatement(sql.toString(),trxName);
+			int i = 1;
+			pstmt.setInt(i++, Env.getAD_Client_ID(ctx));
+			pstmt.setDate(i++, new Date(System.currentTimeMillis()));
+			pstmt.setInt(i++, currencyId);
+			rs = pstmt.executeQuery();
+			while(rs.next()){
+				paymentMediums.add(new MPOSPaymentMedium(ctx, rs, trxName));
+			}
+		} catch (Exception e) {
+			s_log.log(Level.SEVERE, "Error getting POS payment mediums.", e);
+		} finally{
+			try {
+				if(pstmt != null)pstmt.close();
+				if(rs != null)rs.close();
+			} catch (Exception e2) {
+				s_log.log(Level.SEVERE, "Error getting POS payment mediums.", e2);
+			}
+		}
+		return paymentMediums;
+	}
 
 	/**
 	 * Obtiene los tender types disponibles para la fecha actual a partir de un
@@ -146,6 +218,68 @@ public class MPOSPaymentMedium extends X_C_POSPaymentMedium {
 		}
 		return tenderTypes;
 	}
+	
+	/**
+	 * Obtiene los tender types disponibles para la fecha actual a partir de un
+	 * contexto de uso. El parámetro exlude indica si hay que excluir el
+	 * contexto parámetro o se debe incluir en la búsqueda, junto con la opción
+	 * ambos. Si se excluye retorna los tender types distintos al contexto
+	 * parámetro, caso contrario los que contienen ese contexto junto con el
+	 * "Ambos".
+	 * 
+	 * @param ctx
+	 *            contexto
+	 * @param contextOfUse
+	 *            contexto de uso
+	 * @param exclude
+	 *            true si se debe excluir el contexto, false cc
+	 * @param trxName
+	 *            nombre de la transacción en curso
+	 * @param currencyId
+	 *            moneda
+	 * @return lista distinta de tendertypes disponibles a la feha actual y que
+	 *         cumple el contexto de uso
+	 */
+	public static List<String> getAvailablesTenderTypesByContextOfUse(Properties ctx, String contextOfUse, boolean exclude, String trxName, int currencyId){
+		// Obtengo los tipos de pago diferentes que contienen como contexto de uso TPV
+		StringBuffer sql = new StringBuffer("SELECT distinct tendertype FROM C_POSPaymentMedium "
+				+ "WHERE AD_Client_ID = ? AND ? BETWEEN DateFrom AND DateTo "
+				+ "AND IsActive = 'Y' ");
+		if(exclude){
+			sql.append(" AND (context <> ?) ");
+		}
+		else{
+			sql.append(" AND (context = ? OR context = '"+MPOSPaymentMedium.CONTEXT_Both+"') ");
+		}
+		sql.append(" AND (C_Currency_ID = ?) ");
+		
+		PreparedStatement ps = null;
+		ResultSet rs = null;
+		Date today = new Date(System.currentTimeMillis());
+		List<String> tenderTypes = new ArrayList<String>();
+		try{
+			 ps = DB.prepareStatement(sql.toString(), trxName);
+			 int i = 1;
+			 ps.setInt(i++, Env.getAD_Client_ID(ctx));
+			 ps.setDate(i++, today);
+			 ps.setString(i++, contextOfUse);
+			 ps.setInt(i++, currencyId);
+			 rs = ps.executeQuery();
+			 while(rs.next()){
+				 tenderTypes.add(rs.getString("tendertype"));
+			 }
+		} catch(Exception e){
+			s_log.log(Level.SEVERE, "Error getting POS payment mediums.", e);
+		} finally{
+			try {
+				if(ps != null)ps.close();
+				if(rs != null)rs.close();
+			} catch (Exception e2) {
+				s_log.log(Level.SEVERE, "Error getting POS payment mediums.", e2);
+			}
+		}
+		return tenderTypes;
+	}
 
 	/**
 	 * Obtener los tender types como pares para poder utilizarlo donde deseen.
@@ -175,6 +309,58 @@ public class MPOSPaymentMedium extends X_C_POSPaymentMedium {
 						.getCtx());
 		List<String> tenderTypes = getAvailablesTenderTypesByContextOfUse(ctx,
 				contextOfUse, exclude, trxName);
+		List<ValueNamePair> realTenderTypes = new ArrayList<ValueNamePair>();
+		// Iterar por todos los tender types y filtrar 
+		for (int i = 0; i < allTenderTypes.length; i++) {
+			// Si existe el tendertype dentro de los tender types configurados
+			// entonces lo agrego a la lista a retornar
+			if(tenderTypes.contains(allTenderTypes[i].getValue())){
+				realTenderTypes.add(allTenderTypes[i]);
+			}
+		}
+		// ordeno por nombre si el parámetro me lo permite
+		if(orderByName){
+			// Se ordenan por nombre (por defecto vienen ordenados por value)
+			Collections.sort(realTenderTypes, new Comparator<ValueNamePair>() {
+				@Override
+				public int compare(ValueNamePair o1, ValueNamePair o2) {
+					return o1.getName().compareTo(o2.getName());
+				}
+			});
+		}
+		return realTenderTypes;
+	}
+	
+	/**
+	 * Obtener los tender types como pares para poder utilizarlo donde deseen.
+	 * El filtro de contexto de uso y el parámetro exclude determina que se debe
+	 * excluir este dato o incluir junto con Ambos. Según el parámetro
+	 * orderByName es posible ordenar la lista retornada por nombre en vez de
+	 * por value como se realiza por defecto.
+	 * 
+	 * @param ctx
+	 *            contexto
+	 * @param contextOfUse
+	 *            contexto de uso del medio de pago
+	 * @param exclude
+	 *            true si se debe excluir el contexto de uso en la query sql o
+	 *            incluirla junto con el valor Ambos.
+	 * @param orderByName
+	 *            true si se debe ordenar por nombre de tender type o false si
+	 *            es por value por defecto
+	 * @param trxName
+	 *            nombre de la transacción en curso
+	 * @param currencyID
+	 *            moneda del medio de pago
+	 * @return lista de tender types a utilizar
+	 */
+	public static List<ValueNamePair> getTenderTypesByContextOfUse(Properties ctx, String contextOfUse, boolean exclude, boolean orderByName, String trxName, int currencyID){
+		// Obtiene los tipos de pago de la referencia
+		ValueNamePair[] allTenderTypes = MRefList.getList(
+				MPOSPaymentMedium.TENDERTYPE_AD_Reference_ID, false, Env
+						.getCtx());
+		List<String> tenderTypes = getAvailablesTenderTypesByContextOfUse(ctx,
+				contextOfUse, exclude, trxName, currencyID);
 		List<ValueNamePair> realTenderTypes = new ArrayList<ValueNamePair>();
 		// Iterar por todos los tender types y filtrar 
 		for (int i = 0; i < allTenderTypes.length; i++) {

@@ -73,6 +73,7 @@ public class VOrdenPagoModel implements TableModelListener {
 	public static final int PROCERROR_DOCUMENTNO_NOT_SET = 5;
 	public static final int PROCERROR_DOCUMENTNO_ALREADY_EXISTS = 6;
 	public static final int PROCERROR_DOCUMENTTYPE_NOT_SET = 7;
+	public static final int PROCERROR_BOTH_EXCHANGE_INVOICES = 8;
 	public static final int PROCERROR_UNKNOWN = -1;
 	
 	protected static CLogger log = CLogger.getCLogger(VOrdenPagoModel.class);
@@ -121,8 +122,10 @@ public class VOrdenPagoModel implements TableModelListener {
 		public static final String TIPOMEDIOPAGO_TARJETACREDITO = "TC";
 		
 		public abstract String getTipoMP(); 
-		public abstract BigDecimal getImporte();
 		public abstract void setImporte(BigDecimal importe);
+		// Este metodo retorna el importe en la moneda que fue cargado el MP (USD, EUR, ARS, etc). 
+		public abstract BigDecimal getImporteMonedaOriginal();
+		
 		public abstract Timestamp getDateTrx();
 		public abstract Timestamp getDateAcct();
 		public abstract int getBankAccountID();
@@ -154,6 +157,11 @@ public class VOrdenPagoModel implements TableModelListener {
 			super();
 			this.isSOTrx = isSOTrx;
 		}		
+
+		// Este metodo retorna el importe en la moneda de la Compañia		
+		public BigDecimal getImporte() {
+			return MCurrency.currencyConvert(getImporteMonedaOriginal(), getMonedaOriginalID(), C_Currency_ID, new Timestamp(System.currentTimeMillis()), Env.getAD_Org_ID(Env.getCtx()), m_ctx);
+		}
 		
 		public void setProject(Integer projectId) {
 			this.projectId = projectId;
@@ -184,10 +192,20 @@ public class VOrdenPagoModel implements TableModelListener {
 		}
 		*/
 
+		public Integer getMonedaOriginalID() {
+			return monedaOriginalID;
+		}
+		public void setMonedaOriginalID(Integer monedaOriginalID) {
+			this.monedaOriginalID = monedaOriginalID;
+		}
+
 		protected Object payment = null;
 		
 		private Integer projectId;
 		private Integer campaignId;
+		
+		// Almacena el Currency_ID con el que creado el MP (USD, EUR, ARS, etc).
+		protected Integer monedaOriginalID = C_Currency_ID;
 		
 		public String toString() {
 			String tipoStr;
@@ -218,7 +236,11 @@ public class VOrdenPagoModel implements TableModelListener {
 			}
 
 			
-			return tipoStr + " " + numberFormat( getImporte() );
+			tipoStr = tipoStr + " " + numberFormat( getImporte() );
+			if (getMonedaOriginalID() != C_Currency_ID){
+				tipoStr = tipoStr + " (" + numberFormat( getImporteMonedaOriginal() ) + " " + (new MCurrency(m_ctx, getMonedaOriginalID(),trxName)).getISO_Code() +" )";
+			}
+			return tipoStr; 
 		}
 		
 		/**
@@ -275,20 +297,16 @@ public class VOrdenPagoModel implements TableModelListener {
 			super(isSOTrx);
 		}
 
-		public MedioPagoEfectivo(int libroCaja_ID, BigDecimal importe) {
+		public MedioPagoEfectivo(int libroCaja_ID, BigDecimal importe, int monedaOriginalID) {
 			super();
 			this.libroCaja_ID = libroCaja_ID;
 			this.importe = importe;
+			this.monedaOriginalID = monedaOriginalID;
 		}
 
 		@Override
 		public String getTipoMP() {
 			return TIPOMEDIOPAGO_EFECTIVO;
-		}
-
-		@Override
-		public BigDecimal getImporte() {
-			return importe;
 		}
 
 		@Override
@@ -323,6 +341,12 @@ public class VOrdenPagoModel implements TableModelListener {
 		public void addToGenerator(POCRGenerator poGenerator) {
 			poGenerator.addCashLinePaymentMedium(getCashLine().getC_CashLine_ID(), getImporte());
 		}
+
+		@Override
+		public BigDecimal getImporteMonedaOriginal() {
+			return importe;
+		}
+
 	}
 
 	public class MedioPagoTransferencia extends MedioPago {
@@ -356,11 +380,6 @@ public class VOrdenPagoModel implements TableModelListener {
 		}
 		
 		@Override
-		public BigDecimal getImporte() {
-			return importe;
-		}
-
-		@Override
 		public Timestamp getDateTrx() {
 			return fechaTransf;
 		}
@@ -392,6 +411,12 @@ public class VOrdenPagoModel implements TableModelListener {
 		public void addToGenerator(POCRGenerator poGenerator) {
 			poGenerator.addPaymentPaymentMedium(getPayment().getC_Payment_ID(), getImporte());
 		}
+
+		@Override
+		public BigDecimal getImporteMonedaOriginal() {
+			return importe;
+		}
+
 	}
 	
 	public class MedioPagoCheque extends MedioPago {
@@ -430,11 +455,6 @@ public class VOrdenPagoModel implements TableModelListener {
 		@Override
 		public String getTipoMP() {
 			return TIPOMEDIOPAGO_CHEQUE;
-		}
-		
-		@Override
-		public BigDecimal getImporte() {
-			return importe;
 		}
 
 		@Override
@@ -480,6 +500,12 @@ public class VOrdenPagoModel implements TableModelListener {
 		public Timestamp getDueDate() {
 			return fechaPago;
 		}
+
+		@Override
+		public BigDecimal getImporteMonedaOriginal() {
+			return importe;
+		}
+
 	}
 	
 	public class MedioPagoCreditoRetencion extends MedioPago {
@@ -525,6 +551,12 @@ public class VOrdenPagoModel implements TableModelListener {
 		public void addToGenerator(POCRGenerator poGenerator) {
 			poGenerator.addInvoicePaymentMedium(C_Invoice_ID, getImporte());			
 		}
+
+		@Override
+		public BigDecimal getImporteMonedaOriginal() {
+			return getImporte();
+		}
+
 	}
 	
 	public class MedioPagoCredito extends MedioPago {
@@ -533,7 +565,6 @@ public class VOrdenPagoModel implements TableModelListener {
 		private BigDecimal importe = BigDecimal.ZERO;
 		private BigDecimal availableAmt = BigDecimal.ZERO;
 		private String docTypeName = null;
-				
 
 		public MedioPagoCredito() {
 			super();
@@ -556,11 +587,6 @@ public class VOrdenPagoModel implements TableModelListener {
 		@Override
 		public Timestamp getDateTrx() {
 			return VModelHelper.getSQLValueTimestamp(getTrxName(), " select datetrx from c_invoice where c_invoice_id = ? ", C_invoice_ID);
-		}
-
-		@Override
-		public BigDecimal getImporte() {
-			return importe;
 		}
 
 		@Override
@@ -624,6 +650,12 @@ public class VOrdenPagoModel implements TableModelListener {
 		public void addToGenerator(POCRGenerator poGenerator) {
 			poGenerator.addInvoicePaymentMedium(getC_invoice_ID(), getImporte());
 		}
+
+		@Override
+		public BigDecimal getImporteMonedaOriginal() {
+			return importe;
+		}
+
 	}
 	
 	public class MedioPagoTarjetaCredito extends MedioPago {
@@ -652,11 +684,6 @@ public class VOrdenPagoModel implements TableModelListener {
 		@Override
 		public Timestamp getDateTrx() {
 			return today;
-		}
-
-		@Override
-		public BigDecimal getImporte() {
-			return amt;
 		}
 
 		@Override
@@ -755,6 +782,12 @@ public class VOrdenPagoModel implements TableModelListener {
 		public String getAccountName() {
 			return accountName;
 		}
+
+		@Override
+		public BigDecimal getImporteMonedaOriginal() {
+			return amt;
+		}
+
 	}
 	
 	protected class OpenInvoicesTableModel extends ResultItemTableModel {
@@ -1136,18 +1169,30 @@ public class VOrdenPagoModel implements TableModelListener {
 	}
 	
 	public String getEfectivoLibroCajaSqlValidation() {
-		return " C_Cash.DocStatus = 'DR' ";
+		return " C_Cash.DocStatus = 'DR' AND (C_Cash.C_Cashbook_ID IN (SELECT C_Cashbook_ID FROM C_Cashbook cb WHERE cb.C_Currency_ID = @C_Currency_ID@  AND isactive = 'Y')) ";
+	}
+	
+	public String getTransfCtaBancariaSqlValidation() {
+		return " C_Currency_ID = @C_Currency_ID@ ";
 	}
 	
 	public String getChequeChequeraSqlValidation() {
-		return " EXISTS (SELECT * FROM C_BankAccount ba55 WHERE ba55.BankAccountType = 'C' AND ba55.C_BankAccount_ID = C_BankAccountDoc.C_BankAccount_ID) AND C_BankAccountDoc.PaymentRule = 'S' ";
+		return " EXISTS (SELECT * FROM C_BankAccount ba55 WHERE ba55.BankAccountType = 'C' AND ba55.C_Currency_ID = @C_Currency_ID@ AND ba55.C_BankAccount_ID = C_BankAccountDoc.C_BankAccount_ID) AND C_BankAccountDoc.PaymentRule = 'S' ";
 	}
 	
 	public String getCreditSqlValidation() {
 		return " C_Invoice.DocStatus IN ('CO','CL') " +
 			   " AND C_Invoice.NotExchangeableCredit = 'N' " +
 			   " AND EXISTS (SELECT C_DocType_ID FROM C_DocType dt WHERE C_Invoice.C_DocType_ID = dt.C_DocType_ID AND dt.Signo_IsSOTrx = " + (getSignoIsSOTrx() * -1) + ") " +
-			   " AND C_Invoice.C_BPartner_ID = @C_BPartner_ID@ ";
+			   " AND C_Invoice.C_BPartner_ID = @C_BPartner_ID@ " +
+			   " AND C_Invoice.C_Currency_ID = @C_Currency_ID@ ";
+	}
+	
+	public String getCurrencySqlValidation() {
+		return "c_currency_id IN " +
+			   "(SELECT c_currency_id FROM C_Conversion_Rate cr WHERE (isActive = 'Y') AND (ad_client_id = " + Env.getAD_Client_ID(m_ctx) +") AND ((ad_org_id = " + Env.getAD_Org_ID(m_ctx) +") OR (ad_org_id = 0)) AND ((c_currency_id = "+ C_Currency_ID +") OR (c_currency_id_to = "+ C_Currency_ID +")) AND (validfrom <= current_date) AND (validto >= current_date) " +
+			   "UNION " +
+			   "SELECT c_currency_id_to FROM C_Conversion_Rate cr WHERE (isActive = 'Y') AND (ad_client_id = " + Env.getAD_Client_ID(m_ctx) +") AND ((ad_org_id = " + Env.getAD_Org_ID(m_ctx) +") OR (ad_org_id = 0)) AND ((c_currency_id = "+ C_Currency_ID +") OR (c_currency_id_to = "+ C_Currency_ID +")) AND (validfrom <= current_date) AND (validto >= current_date)) ";
 	}
 	
 	public void setFechaTablaFacturas(Timestamp fecha, boolean all) {
@@ -1444,8 +1489,17 @@ public class VOrdenPagoModel implements TableModelListener {
 		Vector<Integer> facturasProcesar = new Vector<Integer>();
 		Vector<ResultItemFactura> resultsProcesar = new Vector<ResultItemFactura>();
 		
+		ResultItemFactura fac = (ResultItemFactura) m_facturas.get(0);
+		String isExchange = fac.getIsexchange();
 		for (ResultItem f : m_facturas) {
-			ResultItemFactura fac = (ResultItemFactura) f;
+			fac = (ResultItemFactura) f;
+			if (fac.getIsexchange().compareToIgnoreCase(isExchange) != 0) {
+				return PROCERROR_BOTH_EXCHANGE_INVOICES;
+			}
+		}
+		
+		for (ResultItem f : m_facturas) {
+			fac = (ResultItemFactura) f;
 			if (fac.getManualAmtClientCurrency().signum() > 0) {
 				facturasProcesar.add((Integer)fac.getItem(m_facturasTableModel.getIdColIdx()));
 				manualAmounts.add(fac.getManualAmtClientCurrency());
@@ -2260,14 +2314,14 @@ public class VOrdenPagoModel implements TableModelListener {
 	}
 	
 	public class MedioPagoAdelantado extends MedioPago {
-
 		public int C_Payment_ID;
 		public BigDecimal importe;
 		
-		public MedioPagoAdelantado(int payment_ID, BigDecimal importe) {
+		public MedioPagoAdelantado(int payment_ID, BigDecimal importe, int monedaOriginalID) {
 			super();
 			C_Payment_ID = payment_ID;
 			this.importe = importe;
+			this.monedaOriginalID = monedaOriginalID;
 		}
 		
 		public int getC_Payment_ID() {
@@ -2277,9 +2331,7 @@ public class VOrdenPagoModel implements TableModelListener {
 		public void setC_Payment_ID(int payment_ID) {
 			C_Payment_ID = payment_ID;
 		}
-		public BigDecimal getImporte() {
-			return importe;
-		}
+
 		public void setImporte(BigDecimal importe) {
 			this.importe = importe;
 		}
@@ -2308,6 +2360,12 @@ public class VOrdenPagoModel implements TableModelListener {
 		public void addToGenerator(POCRGenerator poGenerator) {
 			poGenerator.addPaymentPaymentMedium(getC_Payment_ID(), getImporte());
 		}
+
+		@Override
+		public BigDecimal getImporteMonedaOriginal() {
+			return importe;
+		}
+
 	}
 	
 	public String getPagoAdelantadoSqlValidation() {
@@ -2315,7 +2373,8 @@ public class VOrdenPagoModel implements TableModelListener {
 		return " IsReceipt = '" + getIsSOTrx() + "' " +
 				" AND paymentavailable(C_Payment_ID) > 0 " +
 				" AND DocStatus in ('CO', 'CL')" +
-				" AND C_Payment.C_BPartner_ID = @C_BPartner_ID@ ";
+				" AND C_Payment.C_BPartner_ID = @C_BPartner_ID@ " +
+				" AND C_Payment.C_Currency_ID = @C_Currency_ID@ ";
 	}	
 	
 	/**
@@ -2324,7 +2383,7 @@ public class VOrdenPagoModel implements TableModelListener {
 	 * @param amount
 	 * @throws Exception
 	 */
-	public MedioPago addPagoAdelantado(Integer payID, BigDecimal amount, boolean isCash) throws Exception {
+	public MedioPago addPagoAdelantado(Integer payID, BigDecimal amount, boolean isCash, Integer monedaOriginalID) throws Exception {
 		if (payID == null || payID == 0)
 			throw new Exception("@FillMandatory@ " + (isCash ? getMsg("Cash") : getMsg("Payment")));
 		if (amount == null || amount.compareTo(BigDecimal.ZERO) <= 0)
@@ -2340,9 +2399,9 @@ public class VOrdenPagoModel implements TableModelListener {
 
 		MedioPago mp = null;
 		if (isCash)
-			mp = new MedioPagoEfectivoAdelantado(payID, amount);
+			mp = new MedioPagoEfectivoAdelantado(payID, amount, monedaOriginalID);
 		else
-			mp = new MedioPagoAdelantado(payID, amount);
+			mp = new MedioPagoAdelantado(payID, amount, monedaOriginalID);
 		
 		return mp;
 	}
@@ -2380,7 +2439,8 @@ public class VOrdenPagoModel implements TableModelListener {
 		return " ABS(cashlineAvailable(C_CashLine_ID)) > 0 " +
 			   " AND SIGN(amount) = " + getSignoIsSOTrx() +
 			   " AND C_CashLine.C_BPartner_ID = @C_BPartner_ID@ " +
-			   " AND C_CashLine.DocStatus IN ('CO','CL') ";
+			   " AND C_CashLine.DocStatus IN ('CO','CL') " +
+			   " AND C_CashLine.C_Currency_ID = @C_Currency_ID@ ";
 	}
 	
 	public BigDecimal getPagoAdelantadoAvailableAmt(int paymentID) {
@@ -2415,7 +2475,6 @@ public class VOrdenPagoModel implements TableModelListener {
 	}
 
 	public class MedioPagoEfectivoAdelantado extends MedioPago {
-
 		public Integer cashLineID;
 		public BigDecimal importe;
 		
@@ -2423,11 +2482,11 @@ public class VOrdenPagoModel implements TableModelListener {
 		 * @param cashLineID
 		 * @param importe
 		 */
-		public MedioPagoEfectivoAdelantado(Integer cashLineID,
-				BigDecimal importe) {
+		public MedioPagoEfectivoAdelantado(Integer cashLineID, BigDecimal importe, int monedaOriginalID) {
 			super();
 			this.cashLineID = cashLineID;
 			this.importe = importe;
+			this.monedaOriginalID = monedaOriginalID;
 		}
 
 		@Override
@@ -2443,11 +2502,6 @@ public class VOrdenPagoModel implements TableModelListener {
 		@Override
 		public Timestamp getDateTrx() {
 			return VModelHelper.getSQLValueTimestamp(null, " SELECT statementdate FROM c_cashline cl INNER JOIN c_cash c ON (cl.c_cash_id = c.c_cash_id) WHERE C_CashLine_ID = ? ", cashLineID);
-		}
-
-		@Override
-		public BigDecimal getImporte() {
-			return this.importe;
 		}
 
 		@Override
@@ -2478,6 +2532,12 @@ public class VOrdenPagoModel implements TableModelListener {
 		public void addToGenerator(POCRGenerator poGenerator) {
 			poGenerator.addCashLinePaymentMedium(getCashLineID(), getImporte());
 		}
+
+		@Override
+		public BigDecimal getImporteMonedaOriginal() {
+			return importe;
+		}
+
 	}
 	
 	private MedioPago findMedioPago(Class clazz, int id) {
@@ -2503,7 +2563,7 @@ public class VOrdenPagoModel implements TableModelListener {
 	}
 	
 	public String getChequeTerceroCuentaSqlValidation() {
-		return "IsChequesEnCartera = 'Y'";
+		return "IsChequesEnCartera = 'Y' AND C_Currency_ID = @C_Currency_ID@ ";
 	}
 	
 	public String getChequeTerceroSqlValidation() {
@@ -2524,7 +2584,8 @@ public class VOrdenPagoModel implements TableModelListener {
 			   // estado es CL implica que el cheque de tercero ya fue utilizado como medio
 			   // de pago y no se encuentra en cartera, con lo cual no se debe permitir
 			   // seleccionarlo nuevamente.
-			   " AND DocStatus IN ('CO')";
+			   " AND DocStatus IN ('CO')" +
+			   " AND C_Currency_ID = @C_Currency_ID@ ";
  	}
 	
 	public BigDecimal getChequeAmt(int paymentID) {
@@ -2541,8 +2602,8 @@ public class VOrdenPagoModel implements TableModelListener {
 		public String description = null;
 		private MPayment chequeTerceroPayment;
 		
-		public MedioPagoChequeTercero(int payment_ID, BigDecimal importe, String description) {
-			super(payment_ID, importe);
+		public MedioPagoChequeTercero(int payment_ID, BigDecimal importe, String description, int monedaOriginalID) {
+			super(payment_ID, importe, monedaOriginalID);
 			this.description = description;
 		}
 
@@ -2577,7 +2638,7 @@ public class VOrdenPagoModel implements TableModelListener {
 
 	}
 
-	public void addChequeTercero(Integer paymentID, BigDecimal amount, String description) throws Exception {
+	public void addChequeTercero(Integer paymentID, BigDecimal amount, String description, Integer monedaOriginalID) throws Exception {
 		if (paymentID == null || paymentID == 0)
 			throw new Exception("@FillMandatory@ " + getMsg("Check"));
 		if (amount == null || amount.compareTo(BigDecimal.ZERO) <= 0)
@@ -2585,7 +2646,7 @@ public class VOrdenPagoModel implements TableModelListener {
 		if (findMedioPago(MedioPagoChequeTercero.class, paymentID) != null)
 			throw new Exception(Msg.getMsg(getCtx(), "POPaymentExistsError", new Object[] { getMsg("ThirdPartyCheck"), getMsg("Payment") }));
 
-		MedioPagoChequeTercero mpct = new MedioPagoChequeTercero(paymentID, amount, description);
+		MedioPagoChequeTercero mpct = new MedioPagoChequeTercero(paymentID, amount, description, monedaOriginalID);
 		addMedioPago(mpct);
 	}
 
@@ -3177,7 +3238,6 @@ public class VOrdenPagoModel implements TableModelListener {
 	public void setPoGenerator(POCRGenerator poGenerator) {
 		this.poGenerator = poGenerator;
 	}
-	
 	
 }
 

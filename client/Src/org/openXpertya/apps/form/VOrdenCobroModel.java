@@ -131,7 +131,7 @@ public class VOrdenCobroModel extends VOrdenPagoModel {
 
 	@Override
 	public String getChequeChequeraSqlValidation() {
-		return " C_BankAccount.BankAccountType = 'C'";
+		return " C_BankAccount.BankAccountType = 'C' AND C_BankAccount.C_Currency_ID = @C_Currency_ID@ ";
 	}
 	
 	public String getRetencionSqlValidation() {
@@ -222,11 +222,11 @@ public class VOrdenCobroModel extends VOrdenPagoModel {
 	/**
 	 * Inicializa los medios de pago disponibles por tipo de medio de pago
 	 */
-	public void initPaymentMediums() {
+	public void initPaymentMediums(int currencyID) {		
 		// Obtengo los medios de pago
 		List<MPOSPaymentMedium> posPaymentMediums = MPOSPaymentMedium
 				.getAvailablePaymentMediums(getCtx(), null,
-						MPOSPaymentMedium.CONTEXT_POSOnly, true, getTrxName());
+						MPOSPaymentMedium.CONTEXT_POSOnly, true, getTrxName(), currencyID);
 		paymentMediums = new HashMap<String, List<MPOSPaymentMedium>>();
 		List<MPOSPaymentMedium> mediums = null;
 		for (MPOSPaymentMedium mposPaymentMedium : posPaymentMediums) {
@@ -266,10 +266,8 @@ public class VOrdenCobroModel extends VOrdenPagoModel {
 	 *            tipo de medio de pago
 	 * @return lista de medios de pago del tipo de medio de pago parámetro
 	 */
-	public List<MPOSPaymentMedium> getPaymentMediums(String tenderType){
-		if(paymentMediums == null){
-			initPaymentMediums();
-		}
+	public List<MPOSPaymentMedium> getPaymentMediums(String tenderType, int currencyID){
+		initPaymentMediums(currencyID);
 		return paymentMediums.get(tenderType);
 	}
 
@@ -323,7 +321,7 @@ public class VOrdenCobroModel extends VOrdenPagoModel {
 	public void addCreditCard(MPOSPaymentMedium paymentMedium,
 			MEntidadFinancieraPlan plan, String creditCardNo, String couponNo,
 			BigDecimal amt, String bank, int cuotasCount, BigDecimal cuotaAmt,
-			Integer campaignID, Integer projectID) throws Exception {
+			Integer campaignID, Integer projectID, Integer monedaOriginalID) throws Exception {
 		// Validaciones iniciales
 		if (amt == null || amt.compareTo(BigDecimal.ZERO) <= 0)
 			throw new Exception("@NoAmountError@");
@@ -347,6 +345,7 @@ public class VOrdenCobroModel extends VOrdenPagoModel {
 		tarjetaCredito.setBank(bank);
 		tarjetaCredito.setDiscountSchemaToApply(getCurrentGeneralDiscount());
 		tarjetaCredito.setAccountName(getBPartner().getName());
+		tarjetaCredito.setMonedaOriginalID(monedaOriginalID);
 		addMedioPago(tarjetaCredito);
 	}
 
@@ -369,7 +368,7 @@ public class VOrdenCobroModel extends VOrdenPagoModel {
 			String checkNo, BigDecimal amount, Timestamp fechaEmi,
 			Timestamp fechaPago, String chequeALaOrden, String bankName,
 			String CUITLibrador, String checkDescription, Integer campaignID, 
-			Integer projectID) throws Exception {
+			Integer projectID, Integer monedaOriginalID) throws Exception {
 		// Validaciones iniciales
 		if(Util.isEmpty(chequeraID, true))
 			throw new Exception("@FillMandatory@ @C_BankAccount_ID@");
@@ -402,6 +401,7 @@ public class VOrdenCobroModel extends VOrdenPagoModel {
 		cheque.setProject(projectID == null?0:projectID);
 		cheque.setSOTrx(true);
 		cheque.setDiscountSchemaToApply(getCurrentGeneralDiscount());
+		cheque.setMonedaOriginalID(monedaOriginalID);
 		addMedioPago(cheque);
 	}
 	
