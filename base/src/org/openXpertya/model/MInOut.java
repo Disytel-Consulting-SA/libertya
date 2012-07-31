@@ -1307,7 +1307,7 @@ public class MInOut extends X_M_InOut implements DocAction {
         if( m_processMsg != null ) {
             return DocAction.STATUS_Invalid;
         }
-
+        
         // Cuando está activado el control de cierres de almacenes y es un remito
         // de salida se actualiza la fecha en caso de que la misma sea menor a la
         // fecha actual. Esto es necesario para que se pueda completar el documento
@@ -1420,6 +1420,19 @@ public class MInOut extends X_M_InOut implements DocAction {
 
             return DocAction.STATUS_Invalid;
         }
+        
+		// Verificar que las lineas tengan asociado un producto.
+        if(isSOTrx()){
+        	MInOutLine[] lineas = getLines(true);
+        	MInOutLine linea;
+        	for (int i = 0; i < lineas.length; i++) {
+        		linea = lineas[i];
+				if(linea.getM_Product_ID() == 0){
+					m_processMsg = "@LineNoProduct@";
+		    		return DocAction.STATUS_Invalid;
+				}
+			}
+        }
 
         MOrder order = new MOrder(getCtx(), getC_Order_ID(), get_TrxName());
         
@@ -1458,8 +1471,6 @@ public class MInOut extends X_M_InOut implements DocAction {
                 }
             }
         }
-       
-        
         
         checkMaterialPolicy();    // set MASI
         createConfirmation();
@@ -1548,7 +1559,7 @@ public class MInOut extends X_M_InOut implements DocAction {
 					return result;
 				}
 			}
-		}
+		}        
 		return result;
     }
     
