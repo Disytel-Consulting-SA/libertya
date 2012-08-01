@@ -1279,9 +1279,14 @@ public class VLookup extends JComponent implements VEditor,ActionListener,FocusL
             Env.setContext( Env.getCtx(),Env.WINDOW_INFO,Env.TAB_INFO,"M_AttributeSetInstance_ID","0" );
 
             //
-
-            sql.append("SELECT M_Product_ID, M_AttributeSetInstance_ID FROM M_Product_Upc_Instance WHERE UPC LIKE ").append( DB.TO_STRING( text )).append(" UNION "+
-                    " SELECT M_Product_ID, NULL as M_AttributeSetInstance_ID FROM M_Product WHERE UPPER(Value) LIKE " ).append( DB.TO_STRING( text )).append( " OR UPC LIKE " ).append( DB.TO_STRING( text )).append( " OR UPPER(Name) LIKE " ).append( DB.TO_STRING( text ));
+            String subquery = "SELECT M_Product_ID, M_AttributeSetInstance_ID FROM M_Product_Upc_Instance WHERE UPC LIKE " + DB.TO_STRING( text );
+            sql.append(MRole.getDefault().addAccessSQL( subquery,"M_Product_Upc_Instance",MRole.SQL_NOTQUALIFIED,MRole.SQL_RO ));
+            sql.append(" UNION ");
+            subquery = " SELECT M_Product_ID, NULL as M_AttributeSetInstance_ID FROM M_Productupc WHERE UPC LIKE " + DB.TO_STRING( text );
+            sql.append(MRole.getDefault().addAccessSQL( subquery,"M_Productupc",MRole.SQL_NOTQUALIFIED,MRole.SQL_RO ));
+            sql.append(" UNION ");
+            subquery = " SELECT M_Product_ID, NULL as M_AttributeSetInstance_ID FROM M_Product WHERE (UPPER(Value) LIKE " + DB.TO_STRING( text ) + " OR UPC LIKE " + DB.TO_STRING( text ) + " OR UPPER(Name) LIKE " + DB.TO_STRING( text );
+            sql.append(subquery);
         } else if( columnName.equals( "C_BPartner_ID" )) {
 //            sql.append( "SELECT C_BPartner_ID FROM C_BPartner WHERE (UPPER(Value) LIKE " ).append( DB.TO_STRING( text )).append( " OR UPPER(Name) LIKE " ).append( DB.TO_STRING( text )).append( ")" );
         	sql.append( "SELECT C_BPartner_ID FROM C_BPartner WHERE (UPPER(Value) LIKE " ).append( DB.TO_STRING( text )).append( " OR UPPER(Name) LIKE " ).append( DB.TO_STRING( text )).append( " OR UPPER(TaxID) LIKE " ).append( DB.TO_STRING( text )).append( ")" );
@@ -1316,7 +1321,9 @@ public class VLookup extends JComponent implements VEditor,ActionListener,FocusL
                 sql.append( " AND IsActive='Y'" );
 
             // ***
-
+            if( columnName.equals( "M_Product_ID" )) {
+            	sql.append( ") " );
+            }
             log.finest( "(predefined) " + sql.toString());
 
             return MRole.getDefault().addAccessSQL( sql.toString(),m_tableName,MRole.SQL_NOTQUALIFIED,MRole.SQL_RO );
