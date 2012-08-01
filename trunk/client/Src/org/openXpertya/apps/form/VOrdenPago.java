@@ -2207,6 +2207,7 @@ public class VOrdenPago extends CPanel implements FormPanel,ActionListener,Table
     	cboCurrency.addActionListener( new ActionListener() {
     		public void actionPerformed(ActionEvent e) {
     			setCurrencyContext();
+    			updatePayAmt(getModel().getSaldoMediosPago());
     		}
     		
     	});
