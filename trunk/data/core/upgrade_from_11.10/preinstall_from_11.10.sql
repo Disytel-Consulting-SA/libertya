@@ -3032,3 +3032,7 @@ ALTER TABLE i_bpartner ADD COLUMN contactphone2 character varying(40);
 ALTER TABLE i_bpartner ADD COLUMN contactphone3 character varying(40);
 ALTER TABLE i_bpartner ADD COLUMN contactfax character varying(40);
 ALTER TABLE i_bpartner ADD COLUMN isdn character varying(40);
+
+-- 20120807-1547 Incorporación de nuevas columnas a importar en la importación de Artículos 
+ALTER TABLE i_product ADD COLUMN productfamily_value character varying(60);
+ALTER TABLE i_product ADD COLUMN isbom character(1) NOT NULL DEFAULT 'N'::bpchar;

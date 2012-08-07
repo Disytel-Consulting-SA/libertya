@@ -4441,7 +4441,34 @@ public abstract class PO implements Serializable, Comparator, Evaluatee {
 	 *         criterios
 	 */
 	public static boolean existRecordFor(Properties ctx, String tableName, String whereClause, Object[] whereParams, String trxName){
-		return PO.findFirst(ctx, tableName, whereClause, whereParams, null, trxName) != null;
+		// Armar la consulta sql
+		StringBuffer sql = new StringBuffer("SELECT coalesce(count(1),0)::integer as cant FROM ").append(tableName);
+		// Si hay cláusula where, entonces coloco el where parámetro
+		if ((whereClause != null) && (whereClause.trim().length() > 0)) {
+			sql.append(" WHERE ");
+			sql.append(whereClause);
+		}
+		PreparedStatement ps = null;
+		ResultSet rs = null;
+		int noRecords = 0;
+		try{
+			ps = DB.prepareStatement(sql.toString(),
+					ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_UPDATABLE,
+					trxName);
+			if (whereParams != null) {
+				int p = 1;
+				for (int i = 0; i < whereParams.length; i++) {
+					ps.setObject(p++, whereParams[i]);
+				}
+			}
+			rs = ps.executeQuery();
+			if(rs.next()){
+				noRecords = rs.getInt("cant");
+			}
+		} catch(Exception e){
+			e.printStackTrace();
+		}
+		return noRecords > 0;
 	}
 
 	/**

@@ -92,6 +92,8 @@ public final class ImpFormat {
     /** Descripción de Campos */
 
     private String m_tableUniqueChild;
+    
+    private String uniqueChildParentOperator;
 
     //
 
@@ -173,6 +175,7 @@ public final class ImpFormat {
         m_tableUnique2      = "";
         m_tableUniqueParent = "";
         m_tableUniqueChild  = "";
+        uniqueChildParentOperator = " OR ";
 
         if( m_AD_Table_ID == 311 )                  // I_061_SyncItem
         {
@@ -186,6 +189,7 @@ public final class ImpFormat {
             m_tableUnique2     = "Value";
             m_tableUniqueChild = "VendorProductNo";    // Vendor No may not be unique !
             m_tableUniqueParent = "BPartner_Value";       // Makes it unique
+            uniqueChildParentOperator = " AND ";
         } else if( m_AD_Table_ID == 533 )                 // I_BPartner
         {
             m_tableUnique1 = "Value";                     // the key
@@ -668,7 +672,7 @@ public final class ImpFormat {
         if( (whereParentChild != null) && (whereParentChild.indexOf( " AND " ) != -1) )    // need to have both criteria
         {
             if( find.length() > 0 ) {
-                find.append( " OR (" ).append( whereParentChild ).append( ")" );    // may have only one
+                find.append(uniqueChildParentOperator).append( "(" ).append( whereParentChild ).append( ")" );    // may have only one
             } else {
                 find.append( whereParentChild );
             }
