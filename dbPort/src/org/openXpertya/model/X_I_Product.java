@@ -7,7 +7,7 @@ import java.math.*;
 import org.openXpertya.util.*;
 /** Modelo Generado por I_Product
  *  @author Comunidad de Desarrollo Libertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
- *  @version  - 2011-09-16 13:18:10.785 */
+ *  @version  - 2012-08-07 15:46:50.124 */
 public class X_I_Product extends org.openXpertya.model.PO
 {
 /** Constructor estándar */
@@ -18,6 +18,7 @@ super (ctx, I_Product_ID, trxName);
 {
 setI_IsImported (false);
 setI_Product_ID (0);
+setIsBOM (false);
 setIsPurchased (false);
 setIsSold (false);
 }
@@ -381,6 +382,24 @@ Integer ii = (Integer)get_Value("I_Product_ID");
 if (ii == null) return 0;
 return ii.intValue();
 }
+/** Set Bill of Materials.
+Bill of Materials */
+public void setIsBOM (boolean IsBOM)
+{
+set_Value ("IsBOM", new Boolean(IsBOM));
+}
+/** Get Bill of Materials.
+Bill of Materials */
+public boolean isBOM() 
+{
+Object oo = get_Value("IsBOM");
+if (oo != null) 
+{
+ if (oo instanceof Boolean) return ((Boolean)oo).booleanValue();
+ return "Y".equals(oo);
+}
+return false;
+}
 /** Set ISO Currency Code.
 Three letter ISO 4217 Code of the Currency */
 public void setISO_Code (String ISO_Code)
@@ -631,6 +650,21 @@ public String getProductCategory_Value()
 {
 return (String)get_Value("ProductCategory_Value");
 }
+/** Set Product Family Value */
+public void setProductFamily_Value (String ProductFamily_Value)
+{
+if (ProductFamily_Value != null && ProductFamily_Value.length() > 60)
+{
+log.warning("Length > 60 - truncated");
+ProductFamily_Value = ProductFamily_Value.substring(0,60);
+}
+set_Value ("ProductFamily_Value", ProductFamily_Value);
+}
+/** Get Product Family Value */
+public String getProductFamily_Value() 
+{
+return (String)get_Value("ProductFamily_Value");
+}
 public static final int PRODUCTTYPE_AD_Reference_ID = MReference.getReferenceID("M_Product_ProductType");
 /** Item = I */
 public static final String PRODUCTTYPE_Item = "I";
@@ -642,12 +676,14 @@ public static final String PRODUCTTYPE_ExpenseType = "E";
 public static final String PRODUCTTYPE_Online = "O";
 /** Resource = R */
 public static final String PRODUCTTYPE_Resource = "R";
+/** Assets = A */
+public static final String PRODUCTTYPE_Assets = "A";
 /** Set Product Type.
 Type of product */
 public void setProductType (String ProductType)
 {
-if (ProductType == null || ProductType.equals("I") || ProductType.equals("S") || ProductType.equals("E") || ProductType.equals("O") || ProductType.equals("R"));
- else throw new IllegalArgumentException ("ProductType Invalid value - Reference = PRODUCTTYPE_AD_Reference_ID - I - S - E - O - R");
+if (ProductType == null || ProductType.equals("I") || ProductType.equals("S") || ProductType.equals("E") || ProductType.equals("O") || ProductType.equals("R") || ProductType.equals("A"));
+ else throw new IllegalArgumentException ("ProductType Invalid value - Reference = PRODUCTTYPE_AD_Reference_ID - I - S - E - O - R - A");
 if (ProductType != null && ProductType.length() > 1)
 {
 log.warning("Length > 1 - truncated");

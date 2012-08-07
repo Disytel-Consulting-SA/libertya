@@ -265,7 +265,8 @@ public class MProduct extends X_M_Product {
         setCheckoutPlace(impP.getCheckoutPlace());
         setIsSold(impP.isSold());
         setIsPurchased(impP.isPurchased());
-        
+        setIsBOM(impP.isBOM());
+        setM_Product_Family_ID(impP.getM_Product_Family_ID());
         
     }    // MProduct
 

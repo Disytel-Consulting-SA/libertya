@@ -24,12 +24,13 @@ import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.util.logging.Level;
 
-import javax.swing.JOptionPane;
-
 import org.openXpertya.model.MProduct;
+import org.openXpertya.model.PO;
 import org.openXpertya.model.X_I_Product;
+import org.openXpertya.model.X_M_Product;
 import org.openXpertya.util.CLogger;
 import org.openXpertya.util.DB;
+import org.openXpertya.util.Env;
 import org.openXpertya.util.Msg;
 
 /**
@@ -248,6 +249,23 @@ public class ImportProduct extends SvrProcess {
             log.warning( "Invalid UOM=" + no );
         }
 
+        // Marca
+        sql = new StringBuffer( "UPDATE I_Product i " + "SET M_Product_Family_ID = (SELECT M_Product_Family_ID FROM M_Product_Family f WHERE upper(trim(f.value)) = upper(trim(i.productfamily_value)) AND f.AD_Client_ID IN (0,i.AD_Client_ID)) " + "WHERE M_Product_Family_ID IS NULL" + " AND I_IsImported<>'Y'" ).append( clientCheck );
+        no = DB.executeUpdate( sql.toString());
+        log.info( "Set M_Product_Family_ID =" + no );
+        
+		sql = new StringBuffer("UPDATE I_Product "
+				+ "SET I_IsImported='E', I_ErrorMsg=I_ErrorMsg||'"
+				+ getMsg("ImportProductInvalidFamily") + ". ' "
+				+ "WHERE m_product_family_id IS NULL"
+				+ " AND productfamily_value is not null "
+				+ " AND I_IsImported<>'Y'").append(clientCheck);
+        no = DB.executeUpdate( sql.toString());
+
+        if( no != 0 ) {
+            log.warning( "Invalid Family=" + no );
+        }
+        
         // Set Currency
 
         sql = new StringBuffer( "UPDATE I_Product i " + "SET ISO_Code=(SELECT ISO_Code FROM C_Currency c" + " INNER JOIN C_AcctSchema a ON (a.C_Currency_ID=c.C_Currency_ID)" + " INNER JOIN AD_ClientInfo cj ON (a.C_AcctSchema_ID=cj.C_AcctSchema1_ID)" + " WHERE cj.AD_Client_ID=i.AD_Client_ID) " + "WHERE C_Currency_ID IS NULL AND ISO_Code IS NULL" + " AND I_IsImported<>'Y'" ).append( clientCheck );
@@ -279,22 +297,24 @@ public class ImportProduct extends SvrProcess {
         }
 
         // Unique UPC/Value
-
+        /* Actualmente se permiten múltiples líneas con los mismos artículos 
         sql = new StringBuffer( "UPDATE I_Product i " + "SET I_IsImported='E', I_ErrorMsg=I_ErrorMsg||'"+ getMsg("ImportProductNotUniqueValue")+". ' " + "WHERE I_IsImported<>'Y'" + " AND Value IN (SELECT Value FROM I_Product pr WHERE i.AD_Client_ID=pr.AD_Client_ID GROUP BY Value HAVING COUNT(*) > 1)" ).append( clientCheck );
         no = DB.executeUpdate( sql.toString());
 
         if( no != 0 ) {
             log.warning( "Not Unique Value=" + no );
         }
+        */
 
         //
-
+        /* Actualmente se permiten múltiples líneas con los mismos artículos
         sql = new StringBuffer( "UPDATE I_Product i " + "SET I_IsImported='E', I_ErrorMsg=I_ErrorMsg||'"+ getMsg("ImportProductNotUniqueUPC")+". ' "  + "WHERE I_IsImported<>'Y'" + " AND UPC IN (SELECT UPC FROM I_Product pr WHERE i.AD_Client_ID=pr.AD_Client_ID GROUP BY UPC HAVING COUNT(*) > 1)" ).append( clientCheck );
         no = DB.executeUpdate( sql.toString());
 
         if( no != 0 ) {
             log.warning( "Not Unique UPC=" + no );
         }
+        */
 
         // Mandatory Value
 
@@ -318,13 +338,14 @@ public class ImportProduct extends SvrProcess {
         log.info( "VendorProductNo Set to Value=" + no );
 
         //
-
+        /* Actualmente se permiten múltiples líneas con los mismos artículos
         sql = new StringBuffer( "UPDATE I_Product i " + "SET I_IsImported='E', I_ErrorMsg=I_ErrorMsg||'"+ getMsg("ImportProductNotUniqueVendorProductNo")+". ' " + "WHERE I_IsImported<>'Y'" + " AND C_BPartner_ID IS NOT NULL" + " AND (C_BPartner_ID, VendorProductNo) IN " + " (SELECT C_BPartner_ID, VendorProductNo FROM I_Product pr WHERE i.AD_Client_ID=pr.AD_Client_ID GROUP BY C_BPartner_ID, VendorProductNo HAVING COUNT(*) > 1)" ).append( clientCheck );
         no = DB.executeUpdate( sql.toString());
 
         if( no != 0 ) {
             log.warning( "Not Unique VendorProductNo=" + no );
         }
+        */
 
         // Setea Tax Category
 
@@ -383,7 +404,7 @@ public class ImportProduct extends SvrProcess {
         // Go through Records
 
         log.fine( "start inserting/updating ..." );
-        sql = new StringBuffer( "SELECT I_Product_ID, M_Product_ID, C_BPartner_ID " + "FROM I_Product WHERE I_IsImported='N'" ).append( clientCheck );
+        sql = new StringBuffer( "SELECT I_Product_ID, M_Product_ID, C_BPartner_ID, value " + "FROM I_Product WHERE I_IsImported='N'" ).append( clientCheck );
 
         Connection conn = DB.createConnection( false,Connection.TRANSACTION_READ_COMMITTED );
 
@@ -480,6 +501,28 @@ public class ImportProduct extends SvrProcess {
 
                 log.fine( "I_Product_ID..=" + I_Product_ID + ", M_Product_ID..=" + M_Product_ID + ", C_BPartner_ID..=" + C_BPartner_ID );
 
+				// Buscar el artículo si es que no se agregó actualmente. Esto
+				// se puede dar en los casos en que vienen 2 o más líneas con
+				// distintos proveedores y nros de artículo . Por esto se debe
+				// realizar la consulta para determinar si actualmente está
+				// insertado
+                if(newProduct){ 
+                	newProduct = !PO.existRecordFor(getCtx(),
+							X_M_Product.Table_Name,
+							"ad_client_id = ? AND upper(trim(value)) = upper(trim('"
+									+ rs.getString("value") + "')) ",
+							new Object[] { Env.getAD_Client_ID(getCtx()) },
+							null);
+                	// Actualizo el id del artículo si es que existe
+					M_Product_ID = newProduct ? 0
+							: DB.getSQLValue(
+									null,
+									"SELECT m_product_id FROM m_product WHERE "
+											+ "ad_client_id = ? AND upper(trim(value)) = upper(trim('"
+											+ rs.getString("value") + "')) ",
+									Env.getAD_Client_ID(getCtx()));
+                }
+                
                 // Product
 
                 if( newProduct )    // Insert new Product
@@ -536,7 +579,7 @@ public class ImportProduct extends SvrProcess {
                         try {
                             no = pstmt_updateProductPO.executeUpdate();
                             log.finer( "Update Product_PO == " + no );
-                            noUpdatePO++;
+                            noUpdatePO+= no;
                             log.finer("noUpdatePo= "+ noUpdatePO);
                         } catch( SQLException ex ) {
                             log.warning( "Update Product_PO -- " + ex.toString());
