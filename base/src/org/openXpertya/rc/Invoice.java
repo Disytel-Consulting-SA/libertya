@@ -8,10 +8,12 @@ import java.util.List;
 import java.util.Properties;
 
 import org.openXpertya.model.DiscountableDocument;
+import org.openXpertya.model.MCurrency;
 import org.openXpertya.model.MDocumentDiscount;
 import org.openXpertya.model.MInvoice;
 import org.openXpertya.model.MInvoiceLine;
 import org.openXpertya.model.DiscountCalculator.IDocumentLine;
+import org.openXpertya.util.Env;
 
 import bsh.This;
 
@@ -62,6 +64,9 @@ public class Invoice extends DiscountableDocument implements Serializable{
 	
 	/** Monto base para aplicar descuento de entidad comercial */
 	private BigDecimal bpartnerDiscountSchemaBaseAmt;
+	
+	/** Currency_ID */	
+	private Integer C_Currency_ID = Env.getContextAsInt( Env.getCtx(), "$C_Currency_ID" );
 	
 	/**
 	 * Constructor
@@ -133,7 +138,12 @@ public class Invoice extends DiscountableDocument implements Serializable{
 	 */
 	protected void loadData(){
 		setDate(getRealInvoice().getDateInvoiced());
-		setManualAmt(getRealInvoice().getGrandTotal());
+		if(C_Currency_ID != getRealInvoice().getC_Currency_ID()){
+			setManualAmt(MCurrency.currencyConvert(getRealInvoice().getGrandTotal(), getRealInvoice().getC_Currency_ID(), C_Currency_ID, getRealInvoice().getDateInvoiced(), getRealInvoice().getAD_Org_ID(), getCtx()));
+		}
+		else{
+			setManualAmt(getRealInvoice().getGrandTotal());	
+		}
 	}
 	
 	/**
@@ -213,6 +223,13 @@ public class Invoice extends DiscountableDocument implements Serializable{
 	}
 
 	public BigDecimal getManualAmt() {
+		return manualAmt;
+	}
+	
+	public BigDecimal getManualAmtOriginalCurrency() {
+		if(C_Currency_ID != getRealInvoice().getC_Currency_ID()){
+			return MCurrency.currencyConvert(manualAmt, C_Currency_ID, getRealInvoice().getC_Currency_ID(), getRealInvoice().getDateInvoiced(), getRealInvoice().getAD_Org_ID(), getCtx());	
+		}
 		return manualAmt;
 	}
 
@@ -307,6 +324,13 @@ public class Invoice extends DiscountableDocument implements Serializable{
 		this.totalPaymentTermDiscount = totalPaymentTermDiscount;
 	}
 
+	public BigDecimal getTotalPaymentTermDiscountOriginalCurrency() {
+		if(C_Currency_ID != getRealInvoice().getC_Currency_ID()){
+			return MCurrency.currencyConvert(totalPaymentTermDiscount, C_Currency_ID, getRealInvoice().getC_Currency_ID(), getRealInvoice().getDateInvoiced(), getRealInvoice().getAD_Org_ID(), getCtx());	
+		}
+		return totalPaymentTermDiscount;
+	}
+	
 	public BigDecimal getTotalPaymentTermDiscount() {
 		return totalPaymentTermDiscount;
 	}

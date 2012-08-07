@@ -2856,8 +2856,10 @@ public class VOrdenPago extends CPanel implements FormPanel,ActionListener,Table
 			return;
 		
 		if (tn.isMedioPago()) {
-			if (confirmDeleteMP(mp))
+			if (confirmDeleteMP(mp)){
 				m_model.removeMedioPago(mp);
+				updatePayAmt(getModel().getSaldoMediosPago());
+			}
 		}
 	}
 	
@@ -3105,7 +3107,7 @@ public class VOrdenPago extends CPanel implements FormPanel,ActionListener,Table
 	
 	protected void updatePayAmt(BigDecimal amt){
 		int currencyID = ( (Integer) cboCurrency.getValue() == null) ? m_C_Currency_ID : (Integer) cboCurrency.getValue();
-		
+
 		amt = MCurrency.currencyConvert(amt, m_C_Currency_ID, currencyID, new Timestamp(System.currentTimeMillis()), getModel().AD_Org_ID, m_ctx);
 		
 		Integer tabIndexSelected = jTabbedPane2.getSelectedIndex();

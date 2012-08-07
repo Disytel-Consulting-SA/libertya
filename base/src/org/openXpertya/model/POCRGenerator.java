@@ -141,15 +141,17 @@ public class POCRGenerator extends AllocationGenerator {
 	
 	/**
 	 * @return Devuelve el monto total de las facturas agregadas 
+	 * @throws AllocationGeneratorException 
 	 */
-	public BigDecimal getInvoiceTotal() {
+	public BigDecimal getInvoiceTotal() throws AllocationGeneratorException {
 		return getDebitsAmount();
 	}
 	
 	/**
 	 * @return Devuelve el monto total de los medios de pagos agregados
+	 * @throws AllocationGeneratorException 
 	 */
-	public BigDecimal getPaymentMediumTotal() {
+	public BigDecimal getPaymentMediumTotal() throws AllocationGeneratorException {
 		return getCreditsAmount();
 	}
 	

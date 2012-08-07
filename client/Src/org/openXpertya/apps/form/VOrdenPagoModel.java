@@ -339,7 +339,7 @@ public class VOrdenPagoModel implements TableModelListener {
 
 		@Override
 		public void addToGenerator(POCRGenerator poGenerator) {
-			poGenerator.addCashLinePaymentMedium(getCashLine().getC_CashLine_ID(), getImporte());
+			poGenerator.addCashLinePaymentMedium(getCashLine().getC_CashLine_ID(), getImporteMonedaOriginal());
 		}
 
 		@Override
@@ -409,7 +409,7 @@ public class VOrdenPagoModel implements TableModelListener {
 
 		@Override
 		public void addToGenerator(POCRGenerator poGenerator) {
-			poGenerator.addPaymentPaymentMedium(getPayment().getC_Payment_ID(), getImporte());
+			poGenerator.addPaymentPaymentMedium(getPayment().getC_Payment_ID(), getImporteMonedaOriginal());
 		}
 
 		@Override
@@ -491,7 +491,7 @@ public class VOrdenPagoModel implements TableModelListener {
 
 		@Override
 		public void addToGenerator(POCRGenerator poGenerator) {
-			poGenerator.addPaymentPaymentMedium(getPayment().getC_Payment_ID(), getImporte());
+			poGenerator.addPaymentPaymentMedium(getPayment().getC_Payment_ID(), getImporteMonedaOriginal());
 		}
 		
 		/**
@@ -549,7 +549,7 @@ public class VOrdenPagoModel implements TableModelListener {
 
 		@Override
 		public void addToGenerator(POCRGenerator poGenerator) {
-			poGenerator.addInvoicePaymentMedium(C_Invoice_ID, getImporte());			
+			poGenerator.addInvoicePaymentMedium(C_Invoice_ID, getImporteMonedaOriginal());			
 		}
 
 		@Override
@@ -648,7 +648,7 @@ public class VOrdenPagoModel implements TableModelListener {
 
 		@Override
 		public void addToGenerator(POCRGenerator poGenerator) {
-			poGenerator.addInvoicePaymentMedium(getC_invoice_ID(), getImporte());
+			poGenerator.addInvoicePaymentMedium(getC_invoice_ID(), getImporteMonedaOriginal());
 		}
 
 		@Override
@@ -693,7 +693,7 @@ public class VOrdenPagoModel implements TableModelListener {
 
 		@Override
 		public void addToGenerator(POCRGenerator poGenerator) {
-			poGenerator.addPaymentPaymentMedium(getPayment().getC_Payment_ID(), getImporte());
+			poGenerator.addPaymentPaymentMedium(getPayment().getC_Payment_ID(), getImporteMonedaOriginal());
 		}
 
 		@Override
@@ -813,11 +813,11 @@ public class VOrdenPagoModel implements TableModelListener {
 		}
 		
 		public int getOpenAmtColIdx() {
-			return 6;
+			return 7;
 		}
 		
 		public int getOpenCurrentAmtColIdx() {
-			return 8;
+			return 9;
 		}
 		
 		public int getCurrencyColIdx() {
@@ -1664,7 +1664,7 @@ public class VOrdenPagoModel implements TableModelListener {
 			MPayment pay ;
 			MCashLine line ;
 			
-			BigDecimal convertedAmt = mp.getImporte();
+			BigDecimal convertedAmt = mp.getImporteMonedaOriginal();
 			BigDecimal DiscountAmt = Env.ZERO;
 			BigDecimal WriteoffAmt = Env.ZERO;
 			BigDecimal OverunderAmt = Env.ZERO;
@@ -1727,7 +1727,7 @@ public class VOrdenPagoModel implements TableModelListener {
 				//Establezco el signo del monto
 				convertedAmt = establecerSigno(convertedAmt, new BigDecimal(getSignoIsSOTrx()));
 				
-				asignarMontoPago(line, C_Currency_ID, convertedAmt, DiscountAmt, WriteoffAmt, OverunderAmt);
+				asignarMontoPago(line, mp.getMonedaOriginalID(), convertedAmt, DiscountAmt, WriteoffAmt, OverunderAmt);
 				
 				line.setIgnoreAllocCreate(true); // Evita la creación del allocation al completar la línea.
 				// No actualizo el saldo de la entidad comercial
@@ -1860,7 +1860,7 @@ public class VOrdenPagoModel implements TableModelListener {
 				addCustomPaymentInfo(pay,mp);
 				// -- 
 				
-				asignarMontoPago(pay, C_Currency_ID, convertedAmt, DiscountAmt, WriteoffAmt, OverunderAmt);
+				asignarMontoPago(pay, mp.getMonedaOriginalID(), convertedAmt, DiscountAmt, WriteoffAmt, OverunderAmt);
 				
 				// No actualizo el saldo de la entidad comercial
 				pay.setUpdateBPBalance(false);
@@ -2187,7 +2187,7 @@ public class VOrdenPagoModel implements TableModelListener {
 		BigDecimal manualAmt = rif.getManualAmount();
 		BigDecimal openAmt = (BigDecimal) m_facturas.get(row).getItem(m_facturasTableModel.getOpenAmtColIdx());
 		// Sumar o restar algún monto custom
-		BigDecimal paymentTermDiscount = MCurrency.currencyConvert(rif.getPaymentTermDiscount(), C_Currency_ID, currency_ID_To, new Timestamp(System.currentTimeMillis()), 0, getCtx());
+		BigDecimal paymentTermDiscount = MCurrency.currencyConvert(rif.getPaymentTermDiscount(), currency_ID_To, C_Currency_ID, new Timestamp(System.currentTimeMillis()), 0, getCtx());
 		openAmt = openAmt.subtract(paymentTermDiscount);
 		
 		if (manualAmt == null || manualAmt.signum() < 0)
@@ -2362,7 +2362,7 @@ public class VOrdenPagoModel implements TableModelListener {
 		
 		@Override
 		public void addToGenerator(POCRGenerator poGenerator) {
-			poGenerator.addPaymentPaymentMedium(getC_Payment_ID(), getImporte());
+			poGenerator.addPaymentPaymentMedium(getC_Payment_ID(), getImporteMonedaOriginal());
 		}
 
 		@Override
@@ -2534,7 +2534,7 @@ public class VOrdenPagoModel implements TableModelListener {
 		
 		@Override
 		public void addToGenerator(POCRGenerator poGenerator) {
-			poGenerator.addCashLinePaymentMedium(getCashLineID(), getImporte());
+			poGenerator.addCashLinePaymentMedium(getCashLineID(), getImporteMonedaOriginal());
 		}
 
 		@Override
@@ -2618,7 +2618,7 @@ public class VOrdenPagoModel implements TableModelListener {
 		
 		@Override
 		public void addToGenerator(POCRGenerator poGenerator) {
-			poGenerator.addPaymentPaymentMedium(getChequeCP().getC_Payment_ID(), getImporte());
+			poGenerator.addPaymentPaymentMedium(getChequeCP().getC_Payment_ID(), getImporteMonedaOriginal());
 		}
 		
 		@Override
@@ -2955,7 +2955,8 @@ public class VOrdenPagoModel implements TableModelListener {
 		// Agrego las facturas al generador
 		for (ResultItemFactura f : facturas) {
 			int invoiceID = ((Integer)f.getItem(facIdColIdx));
-			BigDecimal payAmount = f.getManualAmtClientCurrency(); 				
+			// Es el importe en la moneda original (no el de la Compañia)
+			BigDecimal payAmount = f.getManualAmount(); 				
 			poGenerator.addInvoice(invoiceID, payAmount);
 		}	
 		// Agrego los medios de pagos al generador	

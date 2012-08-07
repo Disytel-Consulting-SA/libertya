@@ -24,6 +24,7 @@ import org.openXpertya.model.AllocationGeneratorException;
 import org.openXpertya.model.CalloutInvoiceExt;
 import org.openXpertya.model.MAllocationHdr;
 import org.openXpertya.model.MCashLine;
+import org.openXpertya.model.MCurrency;
 import org.openXpertya.model.MDiscountConfig;
 import org.openXpertya.model.MDiscountSchema;
 import org.openXpertya.model.MDocType;
@@ -854,9 +855,10 @@ public class VOrdenCobroModel extends VOrdenPagoModel {
 		// Agrego las facturas al generador
 		for (Invoice f : debits) {
 			int invoiceID = f.getInvoiceID();
-			BigDecimal payAmount = f.getManualAmt().add(f.getTotalPaymentTermDiscount());			
+			BigDecimal payAmount = f.getManualAmtOriginalCurrency().add(f.getTotalPaymentTermDiscountOriginalCurrency());
 			poGenerator.addInvoice(invoiceID, payAmount);
 		}	
+		
 		// Agrego los medios de pagos al generador	
 		for (MedioPago pago : credits) {
 			pago.addToGenerator(poGenerator);
@@ -1547,6 +1549,10 @@ public class VOrdenCobroModel extends VOrdenPagoModel {
 		
 		public int getCurrencyColIdx() {
 			return 12;
+		}
+		
+		public int getOpenCurrentAmtColIdx() {
+			return 10;
 		}
 		
 		public int getIdColIdx() {

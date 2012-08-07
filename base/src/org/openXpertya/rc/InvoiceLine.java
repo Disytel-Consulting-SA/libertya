@@ -3,9 +3,12 @@ package org.openXpertya.rc;
 import java.io.Serializable;
 import java.math.BigDecimal;
 
-import org.openXpertya.model.DiscountableDocumentLine;
-import org.openXpertya.model.MInvoiceLine;
 import org.openXpertya.model.DiscountCalculator.IDocument;
+import org.openXpertya.model.DiscountableDocumentLine;
+import org.openXpertya.model.MCurrency;
+import org.openXpertya.model.MInvoice;
+import org.openXpertya.model.MInvoiceLine;
+import org.openXpertya.util.Env;
 
 public class InvoiceLine extends DiscountableDocumentLine implements Cloneable, Serializable{
 
@@ -16,6 +19,9 @@ public class InvoiceLine extends DiscountableDocumentLine implements Cloneable, 
 	
 	/** Línea de factura real */
 	private MInvoiceLine realInvoiceLine;
+	
+	/** Línea de factura real */
+	private MInvoice realInvoice;
 	
 	/** Referencia a la factura */	
 	private Invoice invoice;
@@ -43,6 +49,12 @@ public class InvoiceLine extends DiscountableDocumentLine implements Cloneable, 
 	
 	/** Impuesto incluído en el precio */
 	private boolean isTaxIncluded;
+	
+	/** ID de la factura */	
+	private Integer invoiceID;
+	
+	/** Currency_ID */	
+	private Integer C_Currency_ID = Env.getContextAsInt( Env.getCtx(), "$C_Currency_ID" );
 
 	/**
 	 * Crea una línea de factura a partir de la línea de factura real, se copian
@@ -67,6 +79,8 @@ public class InvoiceLine extends DiscountableDocumentLine implements Cloneable, 
 		newInvoiceLine.setTaxIncluded(invoiceLine.isTaxIncluded());
 		newInvoiceLine.setTaxRate(invoiceLine.getTaxRate());
 		newInvoiceLine.sincronize(invoiceLine);
+		newInvoiceLine.setInvoiceID(invoiceLine.getInvoice().getID());
+		newInvoiceLine.setRealInvoice(new MInvoice(invoice.getCtx(), invoiceLine.getInvoice().getID(), invoice.getTrxName()));
 		return newInvoiceLine;
 	}
 	
@@ -188,12 +202,29 @@ public class InvoiceLine extends DiscountableDocumentLine implements Cloneable, 
 		this.isTaxIncluded = isTaxIncluded;
 	} 
 	
+	public Integer getInvoiceID() {
+		return invoiceID;
+	}
+
+	public void setInvoiceID(Integer invoiceID) {
+		this.invoiceID = invoiceID;
+	}	
+	
+	public MInvoice getRealInvoice(){
+		//return new MInvoice(getInvoice().getCtx(), invoiceID, getInvoice().getTrxName() );
+		return this.realInvoice;
+	}
+	
+	public void setRealInvoice(MInvoice realInvoice) {
+		this.realInvoice = realInvoice;
+	}
+	
 	/*
 	 * **********************************************
 	 * 	 HEREDADOS DE DISCOUNTABLE DOCUMENT LINE
 	 * **********************************************
 	 */
-	
+
 	@Override
 	public BigDecimal getLineBonusAmt() {
 		// Nada ya que no se juega con bonus en esta funcionalidad  
@@ -207,11 +238,17 @@ public class InvoiceLine extends DiscountableDocumentLine implements Cloneable, 
 
 	@Override
 	public BigDecimal getPrice() {
+		if(C_Currency_ID != getRealInvoice().getC_Currency_ID()){
+			return MCurrency.currencyConvert(price, getRealInvoice().getC_Currency_ID(), C_Currency_ID, getRealInvoice().getDateInvoiced(), getRealInvoice().getAD_Org_ID(), getInvoice().getCtx());	
+		}
 		return price;
 	}
 
 	@Override
 	public BigDecimal getPriceList() {
+		if(C_Currency_ID != getRealInvoice().getC_Currency_ID()){
+			return MCurrency.currencyConvert(priceList, getRealInvoice().getC_Currency_ID(), C_Currency_ID, getRealInvoice().getDateInvoiced(), getRealInvoice().getAD_Org_ID(), getInvoice().getCtx());	
+		}
 		return priceList;
 	}
 

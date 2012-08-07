@@ -56,6 +56,8 @@ public class AllocationGenerator {
 	/** Encabezado de la Asignación */
 	private MAllocationHdr allocationHdr;
 	
+	private int C_Currency_ID = Env.getContextAsInt( getCtx(), "$C_Currency_ID" );
+	
 	/**
 	 * Constructor por defecto. Es privado dado que se
 	 * deben utilizar alguno de los constructores que requieren
@@ -102,7 +104,7 @@ public class AllocationGenerator {
 	 * (mismo Tipo e ID), entonces se suma el <code>amount</code> al documento
 	 * existente en la lista de débitos
 	 * @param docID ID del documento a agregar
-	 * @param amount Monto a imputar
+	 * @param amount Monto a imputar expresado en la moneda del documento
 	 * @param docType Tipo del documento
 	 * @return Este <code>AllocationGenerator</code>
 	 */
@@ -143,7 +145,7 @@ public class AllocationGenerator {
 	 * (mismo Tipo e ID), entonces se suma el <code>amount</code> al documento
 	 * existente en la lista de débitos
 	 * @param docID ID del documento a agregar
-	 * @param amount Monto a imputar
+	 * @param amount Monto a imputar expresado en la moneda del documento
 	 * @param docType Tipo del documento
 	 * @return Este <code>PaymentOrderGenerator</code>
 	 */
@@ -288,15 +290,17 @@ public class AllocationGenerator {
 	
 	/**
 	 * @return Devuelve la suma de los montos de imputación de los débitos.
+	 * @throws AllocationGeneratorException 
 	 */
-	public BigDecimal getDebitsAmount() {
+	public BigDecimal getDebitsAmount() throws AllocationGeneratorException {
 		return getDocumentsAmount(getDebits());
 	}
 
 	/**
 	 * @return Devuelve la suma de los montos de imputación de los créditos.
+	 * @throws AllocationGeneratorException 
 	 */
-	public BigDecimal getCreditsAmount() {
+	public BigDecimal getCreditsAmount() throws AllocationGeneratorException {
 		return getDocumentsAmount(getCredits());
 	}
 	
@@ -354,7 +358,7 @@ public class AllocationGenerator {
 	 * En caso de que el documento ya se encuentre en la lista (mismo Tipo e ID), 
 	 * entonces se suma el <code>amount</code> al documento  existente en la lista
 	 * @param docID ID del documento a agregar
-	 * @param amount Monto a imputar
+	 * @param amount Monto a imputar expresado en la moneda del documento
 	 * @param docType Tipo del documento
 	 * @return Este <code>PaymentOrderGenerator</code>
 	 */
@@ -437,11 +441,14 @@ public class AllocationGenerator {
 	 * Calcula la suma de los montos de imputación de una lista de documentos
 	 * @param documents Lista de documentos involucrados en el cálculo (Débitos o Créditos)
 	 * @return BigDecimal total imputación de la lista
+	 * @throws AllocationGeneratorException 
 	 */
-	private BigDecimal getDocumentsAmount(List<Document> documents) {
+	private BigDecimal getDocumentsAmount(List<Document> documents) throws AllocationGeneratorException{
 		BigDecimal totalAmount = BigDecimal.ZERO;
 		for (Document document : documents) {
-			totalAmount = totalAmount.add(document.amount);
+			if (document.getConvertedAmount() == null)
+					throw new AllocationGeneratorException(getMsg("NoConversionRate") + ": " + document.getCurrencyId() + " - " + C_Currency_ID);
+			totalAmount = totalAmount.add(document.getConvertedAmount());
 		}
 		return totalAmount;
 	}
@@ -471,12 +478,19 @@ public class AllocationGenerator {
 			// Se recorren todos los débitos para ser imputados con los créditos.
 			// Se puede dar el caso que el monto de imputación de un débito
 			// requiera mas de un crédito para ser satisfacido.
-		
-			BigDecimal debitAmount = debitDocument.amount;   // Monto a cubrir del débito
-			BigDecimal creditAmountSum = 
-				(creditSurplus != null) ?                // Inicializar lo que se cubre 
-					creditSurplus :                      // Si hay sobrante, entonces se utiliza
-					getCredits().get(creditIdx).amount;  // Sino, se utiliza el total del crédito actual
+			if (debitDocument.getConvertedAmount() == null)
+				throw new AllocationGeneratorException(getMsg("NoConversionRate") + ": " + debitDocument.getCurrencyId() + " - " + C_Currency_ID);
+			BigDecimal debitAmount = debitDocument.getConvertedAmount();   // Monto a cubrir del débito
+			
+			BigDecimal creditAmountSum;
+			if	(creditSurplus != null){                 // Inicializar lo que se cubre 
+				creditAmountSum = creditSurplus;
+			}
+			else{                      // Si hay sobrante, entonces se utiliza
+				if (getCredits().get(creditIdx).getConvertedAmount() == null)
+					throw new AllocationGeneratorException(getMsg("NoConversionRate") + ": " + getCredits().get(creditIdx).getCurrencyId() + " - " + C_Currency_ID);
+				creditAmountSum = getCredits().get(creditIdx).getConvertedAmount();  // Sino, se utiliza el total del crédito actual
+			}
 			// Lista de créditos y sus montos a utilizar para cubrir el monto a inputar del
 			// débito actual.
 			List<Document> subCredits = new ArrayList<Document>();
@@ -498,8 +512,10 @@ public class AllocationGenerator {
 				// Se actualiza la lista de créditos utilizados, la lista de montos
 				// y la suma de los montos de todos los créditos utilizados.
 				subCredits.add(credit);
-				subCreditsAmounts.add(credit.amount);
-				creditAmountSum = creditAmountSum.add(credit.amount);
+				if (credit.getConvertedAmount() == null)
+					throw new AllocationGeneratorException(getMsg("NoConversionRate") + ": " + credit.getCurrencyId() + " - " + C_Currency_ID);
+				subCreditsAmounts.add(credit.getConvertedAmount());
+				creditAmountSum = creditAmountSum.add(credit.getConvertedAmount());
 			}
 			
 			// Si la suma de créditos supera el monto del débito, se resta la diferencia
@@ -698,7 +714,7 @@ public class AllocationGenerator {
 	 * @return Monto a setear en el campo <code>amount</code> de la línea
 	 */
 	protected BigDecimal getAllocationLineAmountFor(Document document) {
-		return document.amount;
+		return document.getConvertedAmount();
 	}
 	
 	/**
@@ -746,7 +762,7 @@ public class AllocationGenerator {
 	 * Crea un nuevo documento de crédito / débito según su tipo.
 	 * @param id ID del documento
 	 * @param type Tipo del documento
-	 * @param amount Monto a imputar
+	 * @param amount Monto a imputar expresado en la moneda del documento
 	 * @return {@link Document}
 	 */
 	private Document createDocument(Integer id, AllocationDocumentType type, BigDecimal amount) {
@@ -771,6 +787,8 @@ public class AllocationGenerator {
 		public Integer id;
 		public AllocationDocumentType type;
 		public BigDecimal amount;
+		public Integer currencyId;
+		public Timestamp date;
 		
 		/**
 		 * @param id ID del documento
@@ -783,7 +801,7 @@ public class AllocationGenerator {
 			this.type = type;
 			this.amount = amount;
 		}
-		
+
 		/**
 		 * Se asigna este documento como un débito en la línea de asignación.
 		 * Solo se asigna el ID del documento en el campo adecuado de la línea, sin
@@ -820,6 +838,15 @@ public class AllocationGenerator {
 			}
 			return equals;
 		}
+		
+		public BigDecimal getConvertedAmount(){
+			return MCurrency.currencyConvert(this.amount, this.currencyId, Env.getContextAsInt( getCtx(), "$C_Currency_ID" ), this.date, Env.getAD_Org_ID(getCtx()), getCtx());
+			//return this.amount;
+		}
+
+		public Integer getCurrencyId() {
+			return currencyId;
+		}
 	}
 	
 	/**
@@ -833,6 +860,16 @@ public class AllocationGenerator {
 		 */
 		public Invoice(Integer id, BigDecimal amount) {
 			super(id, AllocationDocumentType.INVOICE, amount);
+			this.currencyId = getSqlCurrencyId();
+			this.date = getSqlDate();
+		}
+
+		private Integer getSqlCurrencyId() {
+			return DB.getSQLValue(getTrxName(), "SELECT C_Currency_ID FROM C_Invoice WHERE C_Invoice_ID = ?", id);
+		}
+		
+		private Timestamp getSqlDate() {
+			return DB.getSQLValueTimestamp(getTrxName(), "SELECT DateInvoiced FROM C_Invoice WHERE C_Invoice_ID = "+ id);
 		}
 
 		@Override
@@ -870,6 +907,16 @@ public class AllocationGenerator {
 		 */
 		public CashLine(Integer id, BigDecimal amount) {
 			super(id, AllocationDocumentType.CASH_LINE, amount);
+			this.currencyId = getSqlCurrencyId();
+			this.date = getSqlDate();
+		}
+		
+		private Integer getSqlCurrencyId() {
+			return DB.getSQLValue(getTrxName(), "SELECT C_Currency_ID FROM C_CashLine WHERE C_CashLine_ID = ?", id);
+		}
+		
+		private Timestamp getSqlDate() {
+			return DB.getSQLValueTimestamp(getTrxName(), "SELECT StatementDate FROM C_Cash c INNER JOIN C_CashLine cl ON c.C_Cash_ID = cl.C_Cash_ID WHERE C_CashLine_ID = "+ id);
 		}
 		
 		@Override
@@ -894,6 +941,16 @@ public class AllocationGenerator {
 		 */
 		public Payment(Integer id, BigDecimal amount) {
 			super(id, AllocationDocumentType.PAYMENT, amount);
+			this.currencyId = getSqlCurrencyId();
+			this.date = getSqlDate();
+		}
+		
+		private Integer getSqlCurrencyId() {
+			return DB.getSQLValue(getTrxName(), "SELECT C_Currency_ID FROM C_Payment WHERE C_Payment_ID = ?", id);
+		}
+		
+		private Timestamp getSqlDate() {
+			return DB.getSQLValueTimestamp(getTrxName(), "SELECT DateTrx FROM C_Payment WHERE C_Payment_ID = "+ id);
 		}
 		
 		@Override
