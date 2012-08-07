@@ -7,7 +7,7 @@ import java.math.*;
 import org.openXpertya.util.*;
 /** Modelo Generado por I_BPartner
  *  @author Comunidad de Desarrollo Libertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
- *  @version  - 2011-09-14 15:40:10.839 */
+ *  @version  - 2012-08-07 14:41:28.973 */
 public class X_I_BPartner extends org.openXpertya.model.PO
 {
 /** Constructor estándar */
@@ -83,6 +83,40 @@ Address line 2 for this location */
 public String getAddress2() 
 {
 return (String)get_Value("Address2");
+}
+/** Set Address 3.
+Address Line 3 for the location */
+public void setAddress3 (String Address3)
+{
+if (Address3 != null && Address3.length() > 60)
+{
+log.warning("Length > 60 - truncated");
+Address3 = Address3.substring(0,60);
+}
+set_Value ("Address3", Address3);
+}
+/** Get Address 3.
+Address Line 3 for the location */
+public String getAddress3() 
+{
+return (String)get_Value("Address3");
+}
+/** Set Address 4.
+Address Line 4 for the location */
+public void setAddress4 (String Address4)
+{
+if (Address4 != null && Address4.length() > 60)
+{
+log.warning("Length > 60 - truncated");
+Address4 = Address4.substring(0,60);
+}
+set_Value ("Address4", Address4);
+}
+/** Get Address 4.
+Address Line 4 for the location */
+public String getAddress4() 
+{
+return (String)get_Value("Address4");
 }
 /** Set User/Contact.
 User within the system - Internal or Business Partner Contact */
@@ -288,6 +322,21 @@ public String getContactDescription()
 {
 return (String)get_Value("ContactDescription");
 }
+/** Set Contact Fax */
+public void setContactFax (String ContactFax)
+{
+if (ContactFax != null && ContactFax.length() > 40)
+{
+log.warning("Length > 40 - truncated");
+ContactFax = ContactFax.substring(0,40);
+}
+set_Value ("ContactFax", ContactFax);
+}
+/** Get Contact Fax */
+public String getContactFax() 
+{
+return (String)get_Value("ContactFax");
+}
 /** Set Contact Name.
 Business Partner Contact Name */
 public void setContactName (String ContactName)
@@ -304,6 +353,51 @@ Business Partner Contact Name */
 public String getContactName() 
 {
 return (String)get_Value("ContactName");
+}
+/** Set Contact Phone */
+public void setContactPhone (String ContactPhone)
+{
+if (ContactPhone != null && ContactPhone.length() > 40)
+{
+log.warning("Length > 40 - truncated");
+ContactPhone = ContactPhone.substring(0,40);
+}
+set_Value ("ContactPhone", ContactPhone);
+}
+/** Get Contact Phone */
+public String getContactPhone() 
+{
+return (String)get_Value("ContactPhone");
+}
+/** Set Contact Phone 2 */
+public void setContactPhone2 (String ContactPhone2)
+{
+if (ContactPhone2 != null && ContactPhone2.length() > 40)
+{
+log.warning("Length > 40 - truncated");
+ContactPhone2 = ContactPhone2.substring(0,40);
+}
+set_Value ("ContactPhone2", ContactPhone2);
+}
+/** Get Contact Phone 2 */
+public String getContactPhone2() 
+{
+return (String)get_Value("ContactPhone2");
+}
+/** Set Contact Phone 3 */
+public void setContactPhone3 (String ContactPhone3)
+{
+if (ContactPhone3 != null && ContactPhone3.length() > 40)
+{
+log.warning("Length > 40 - truncated");
+ContactPhone3 = ContactPhone3.substring(0,40);
+}
+set_Value ("ContactPhone3", ContactPhone3);
+}
+/** Get Contact Phone 3 */
+public String getContactPhone3() 
+{
+return (String)get_Value("ContactPhone3");
 }
 /** Set ISO Country Code.
 Upper-case two-letter alphanumeric ISO Country code according to ISO 3166-1 - http://www.chemie.fu-berlin.de/diverse/doc/ISO_3166.html */
@@ -503,6 +597,23 @@ if (oo != null)
 }
 return false;
 }
+/** Set ISDN.
+ISDN or modem line */
+public void setISDN (String ISDN)
+{
+if (ISDN != null && ISDN.length() > 40)
+{
+log.warning("Length > 40 - truncated");
+ISDN = ISDN.substring(0,40);
+}
+set_Value ("ISDN", ISDN);
+}
+/** Get ISDN.
+ISDN or modem line */
+public String getISDN() 
+{
+return (String)get_Value("ISDN");
+}
 /** Set Employee.
 Indicates if  this Business Partner is an employee */
 public void setIsEmployee (boolean IsEmployee)
@@ -658,6 +769,21 @@ Identifies an alternate telephone number. */
 public String getPhone2() 
 {
 return (String)get_Value("Phone2");
+}
+/** Set Plaza */
+public void setPlaza (String Plaza)
+{
+if (Plaza != null && Plaza.length() > 100)
+{
+log.warning("Length > 100 - truncated");
+Plaza = Plaza.substring(0,100);
+}
+set_Value ("Plaza", Plaza);
+}
+/** Get Plaza */
+public String getPlaza() 
+{
+return (String)get_Value("Plaza");
 }
 /** Set ZIP.
 Postal code */
