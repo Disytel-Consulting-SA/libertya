@@ -447,7 +447,7 @@ public class AllocationGenerator {
 		BigDecimal totalAmount = BigDecimal.ZERO;
 		for (Document document : documents) {
 			if (document.getConvertedAmount() == null)
-					throw new AllocationGeneratorException(getMsg("NoConversionRate") + ": " + document.getCurrencyId() + " - " + C_Currency_ID);
+					throw new AllocationGeneratorException(getMsg("NoConversionRate") + ": " + (new MCurrency(getCtx(),document.getCurrencyId(),getTrxName())).getISO_Code() + " - " + (new MCurrency(getCtx(),Env.getContextAsInt( getCtx(), "$C_Currency_ID" ),getTrxName())).getISO_Code());
 			totalAmount = totalAmount.add(document.getConvertedAmount());
 		}
 		return totalAmount;
@@ -479,7 +479,7 @@ public class AllocationGenerator {
 			// Se puede dar el caso que el monto de imputación de un débito
 			// requiera mas de un crédito para ser satisfacido.
 			if (debitDocument.getConvertedAmount() == null)
-				throw new AllocationGeneratorException(getMsg("NoConversionRate") + ": " + debitDocument.getCurrencyId() + " - " + C_Currency_ID);
+				throw new AllocationGeneratorException(getMsg("NoConversionRate") + ": " + (new MCurrency(getCtx(),debitDocument.getCurrencyId(),getTrxName())).getISO_Code() + " - " + (new MCurrency(getCtx(),Env.getContextAsInt( getCtx(), "$C_Currency_ID" ),getTrxName())).getISO_Code());
 			BigDecimal debitAmount = debitDocument.getConvertedAmount();   // Monto a cubrir del débito
 			
 			BigDecimal creditAmountSum;
@@ -488,7 +488,7 @@ public class AllocationGenerator {
 			}
 			else{                      // Si hay sobrante, entonces se utiliza
 				if (getCredits().get(creditIdx).getConvertedAmount() == null)
-					throw new AllocationGeneratorException(getMsg("NoConversionRate") + ": " + getCredits().get(creditIdx).getCurrencyId() + " - " + C_Currency_ID);
+					throw new AllocationGeneratorException(getMsg("NoConversionRate") + ": " + (new MCurrency(getCtx(),getCredits().get(creditIdx).getCurrencyId(),getTrxName())).getISO_Code() + " - " + (new MCurrency(getCtx(),Env.getContextAsInt( getCtx(), "$C_Currency_ID" ),getTrxName())).getISO_Code());
 				creditAmountSum = getCredits().get(creditIdx).getConvertedAmount();  // Sino, se utiliza el total del crédito actual
 			}
 			// Lista de créditos y sus montos a utilizar para cubrir el monto a inputar del
@@ -513,7 +513,7 @@ public class AllocationGenerator {
 				// y la suma de los montos de todos los créditos utilizados.
 				subCredits.add(credit);
 				if (credit.getConvertedAmount() == null)
-					throw new AllocationGeneratorException(getMsg("NoConversionRate") + ": " + credit.getCurrencyId() + " - " + C_Currency_ID);
+					throw new AllocationGeneratorException(getMsg("NoConversionRate") + ": " + (new MCurrency(getCtx(),credit.getCurrencyId(),getTrxName())).getISO_Code() + " - " + (new MCurrency(getCtx(),Env.getContextAsInt( getCtx(), "$C_Currency_ID" ),getTrxName())).getISO_Code());
 				subCreditsAmounts.add(credit.getConvertedAmount());
 				creditAmountSum = creditAmountSum.add(credit.getConvertedAmount());
 			}
