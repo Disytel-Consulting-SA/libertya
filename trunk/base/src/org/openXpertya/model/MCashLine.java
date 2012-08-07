@@ -574,6 +574,13 @@ public class MCashLine extends X_C_CashLine implements DocAction {
 			}
 		}
 		
+		// Si la moneda del documento es diferente a la de la compañia:
+ 		// Se valida que exista una tasa de conversión entre las monedas para la fecha de aplicación del documento.
+		if (!validateCashLineCurrencyConvert()){
+			m_processMsg = "@NoConversionRateDateAcct@";
+			return DocAction.STATUS_Invalid;
+		}
+		
 		setDocAction(DOCACTION_Complete);
 		return STATUS_InProgress;
 	}
@@ -1308,6 +1315,14 @@ public class MCashLine extends X_C_CashLine implements DocAction {
 
 	public boolean isIgnoreInvoiceOpen() {
 		return ignoreInvoiceOpen;
+	}
+	
+	private boolean validateCashLineCurrencyConvert() {
+		int currecy_Client = Env.getContextAsInt(getCtx(), "#C_Currency_ID");
+		if (getC_Currency_ID() != currecy_Client) {
+			return (MCurrency.currencyConvert(new BigDecimal(1), currecy_Client, getC_Currency_ID(), getCash().getDateAcct(), getAD_Org_ID(), getCtx()) != null);
+		}
+		return true;
 	}
 
 }    // MCashLine

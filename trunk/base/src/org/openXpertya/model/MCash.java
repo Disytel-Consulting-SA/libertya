@@ -22,8 +22,6 @@ import java.sql.ResultSet;
 import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.Iterator;
-import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
@@ -480,7 +478,18 @@ public class MCash extends X_C_Cash implements DocAction {
         		}
             }
     	}
-    	
+
+    	// Si la moneda del documento es diferente a la de la compañia:
+ 		// No es posible modificar las fechas estado de cuenta y/o aplicación si existen líneas de caja que ya fueron procesadas
+		if (getC_Currency_ID() != Env.getContextAsInt(getCtx(), "#C_Currency_ID")) {
+    		if (is_ValueChanged( "StatementDate" ) || is_ValueChanged( "DateAcct" )) {      
+                if(containsProcessedLines()) {
+                    log.saveError( "Error",Msg.translate(getCtx(), "CannotChangeDateStatementAcct"));
+                    return false;
+                }
+            }
+    	}
+    	    	
     	// Calculate End Balance
     	
     	setEndingBalance( getBeginningBalance().add( getStatementDifference()));
