@@ -3022,3 +3022,13 @@ ALTER FUNCTION currencyrate(integer, integer, timestamp with time zone, integer,
 
 -- 20120718-1718 Incorporación de configuración de TPV para autorizar los descuentos manuales generales realizados
 ALTER TABLE c_pos ADD COLUMN authorizegeneralmanualdiscount character(1) NOT NULL DEFAULT 'N'::bpchar;
+
+-- 20120807-1447 Incorporación de nuevas columnas a importar en la importación de Entidades Comerciales 
+ALTER TABLE i_bpartner ADD COLUMN plaza character varying(100);
+ALTER TABLE i_bpartner ADD COLUMN address3 character varying(60);
+ALTER TABLE i_bpartner ADD COLUMN address4 character varying(60);
+ALTER TABLE i_bpartner ADD COLUMN contactphone character varying(40);
+ALTER TABLE i_bpartner ADD COLUMN contactphone2 character varying(40);
+ALTER TABLE i_bpartner ADD COLUMN contactphone3 character varying(40);
+ALTER TABLE i_bpartner ADD COLUMN contactfax character varying(40);
+ALTER TABLE i_bpartner ADD COLUMN isdn character varying(40);

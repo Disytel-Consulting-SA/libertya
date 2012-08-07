@@ -28,7 +28,6 @@ import java.util.logging.Level;
 import org.openXpertya.model.MBPartner;
 import org.openXpertya.model.MCategoriaIva;
 import org.openXpertya.model.X_I_BPartner;
-import org.openXpertya.util.CLogErrorBuffer;
 import org.openXpertya.util.CLogger;
 import org.openXpertya.util.DB;
 import org.openXpertya.util.DBException;
@@ -243,7 +242,7 @@ public class ImportBPartner extends SvrProcess {
 
         // Go through Records
 
-        sql = new StringBuffer( "SELECT I_BPartner_ID, C_BPartner_ID," + "C_BPartner_Location_ID,COALESCE(Address1,Address2,City,RegionName,CountryCode)," + "AD_User_ID,ContactName " + "FROM I_BPartner " + "WHERE I_IsImported='N'" ).append( clientCheck );
+        sql = new StringBuffer( "SELECT I_BPartner_ID, C_BPartner_ID," + "C_BPartner_Location_ID,COALESCE(Address1,Address2,City,RegionName,CountryCode)," + "AD_User_ID,ContactName, value " + "FROM I_BPartner " + "WHERE I_IsImported='N'" ).append( clientCheck );
 
         Connection conn = DB.createConnection( false,Connection.TRANSACTION_READ_COMMITTED );
 
@@ -272,7 +271,7 @@ public class ImportBPartner extends SvrProcess {
 
             // Insert Location
 
-            PreparedStatement pstmt_insertLocation = conn.prepareStatement( "INSERT INTO C_Location (C_Location_ID," + "AD_Client_ID,AD_Org_ID,IsActive,Created,CreatedBy,Updated,UpdatedBy," + "Address1,Address2,City,Postal,Postal_Add,C_Country_ID,C_Region_ID) " + "SELECT ?," + "AD_Client_ID,AD_Org_ID,'Y',current_timestamp,CreatedBy,current_timestamp,UpdatedBy," + "Address1,Address2,City,Postal,Postal_Add,C_Country_ID,C_Region_ID " + "FROM I_BPartner " + "WHERE I_BPartner_ID=?" );
+            PreparedStatement pstmt_insertLocation = conn.prepareStatement( "INSERT INTO C_Location (C_Location_ID," + "AD_Client_ID,AD_Org_ID,IsActive,Created,CreatedBy,Updated,UpdatedBy," + "Address1,Address2,City,Postal,Postal_Add,C_Country_ID,C_Region_ID,Address3,Address4,Plaza) " + "SELECT ?," + "AD_Client_ID,AD_Org_ID,'Y',current_timestamp,CreatedBy,current_timestamp,UpdatedBy," + "Address1,Address2,City,Postal,Postal_Add,C_Country_ID,C_Region_ID,Address3,Address4,Plaza " + "FROM I_BPartner " + "WHERE I_BPartner_ID=?" );
 
             // PreparedStatement pstmt_updateLocation = conn.prepareStatement
             // ("");
@@ -299,15 +298,16 @@ public class ImportBPartner extends SvrProcess {
             		"	Phone2," +
             		"	Fax," +
             		"	C_BPartner_ID," +
-            		"	C_Location_ID) " + 
-            		
+            		"	C_Location_ID, " + 
+            		"	isdn " +
+            		" ) " +
             		"SELECT ?,AD_Client_ID,AD_Org_ID,'Y',current_timestamp,CreatedBy,current_timestamp,UpdatedBy," +
             				"CASE WHEN char_length(trim(coalesce(address1,''))) > 0 THEN address1 " +
             				"     WHEN char_length(trim(coalesce(city,''))) > 0 THEN city " +
             				"     WHEN char_length(trim(coalesce(regionname,''))) > 0 THEN regionname " +
             				"     ELSE name " +
             				"END," + 
-            				"'Y','Y','Y','Y'," + "Phone,Phone2,Fax, ?,? " + 
+            				"'Y','Y','Y','Y'," + "Phone,Phone2,Fax, ?,?, isdn " + 
             		"FROM I_BPartner " + 
             		"WHERE I_BPartner_ID=?" );
 
@@ -316,24 +316,25 @@ public class ImportBPartner extends SvrProcess {
 
             // Insert Contact
 
-            PreparedStatement pstmt_insertBPContact = conn.prepareStatement( "INSERT INTO AD_User (AD_User_ID," + "AD_Client_ID,AD_Org_ID,IsActive,Created,CreatedBy,Updated,UpdatedBy," + "C_BPartner_ID,C_BPartner_Location_ID,C_Greeting_ID," + "Name,Title,Description,Comments,Phone,Phone2,Fax,EMail,Birthday) " + "SELECT ?," + "AD_Client_ID,AD_Org_ID,'Y',current_timestamp,CreatedBy,current_timestamp,UpdatedBy," + "?,?,C_Greeting_ID," + "ContactName,Title,ContactDescription,Comments,Phone,Phone2,Fax,EMail,Birthday " + "FROM I_BPartner " + " WHERE I_BPartner_ID=?" );
+            PreparedStatement pstmt_insertBPContact = conn.prepareStatement( "INSERT INTO AD_User (AD_User_ID," + "AD_Client_ID,AD_Org_ID,IsActive,Created,CreatedBy,Updated,UpdatedBy," + "C_BPartner_ID,C_BPartner_Location_ID,C_Greeting_ID," + "Name,Title,Description,Comments,Phone,Phone2,Phone3,Fax,EMail,Birthday) " + "SELECT ?," + "AD_Client_ID,AD_Org_ID,'Y',current_timestamp,CreatedBy,current_timestamp,UpdatedBy," + "?,?,C_Greeting_ID," + "ContactName,Title,ContactDescription,Comments,ContactPhone,ContactPhone2,ContactPhone3,ContactFax,EMail,Birthday " + "FROM I_BPartner " + " WHERE I_BPartner_ID=?" );
 
             // Update Contact
             //Modificado por ConSerTi. Sentencia no valida en Postgres. Se transforma.
             //PreparedStatement pstmt_updateBPContact = conn.prepareStatement( "UPDATE AD_User " + "SET (C_Greeting_ID," + "Name,Title,Description,Comments,Phone,Phone2,Fax,EMail,Birthday,Updated,UpdatedBy)=" + "(SELECT C_Greeting_ID," + "ContactName,Title,ContactDescription,Comments,Phone,Phone2,Fax,EMail,Birthday,SysDate,UpdatedBy" + " FROM I_BPartner WHERE I_BPartner_ID=?) " + "WHERE AD_User_ID=?" ); //Original
             PreparedStatement pstmt_updateBPContact = conn.prepareStatement("UPDATE AD_User " + "SET C_Greeting_ID=aux1.C_Greeting_ID"+
-            		",Name=aux1.Name"+
+            		",Name=aux1.ContactName"+
             		",Title=aux1.Title"+
-            		",Description=aux1.Description"+
-            		",Comments=aux1.Commets"+
-            		",Phone=aux1.Phone"+
-            		",Phone2=aux1.Phone2"+
-            		",Fax=aux1.Fax"+
+            		",Description=aux1.ContactDescription"+
+            		",Comments=aux1.Comments"+
+            		",Phone=aux1.ContactPhone"+
+            		",Phone2=aux1.ContactPhone2"+
+            		",Phone3=aux1.ContactPhone3"+
+            		",Fax=aux1.ContactFax"+
             		",EMail=aux1.EMail"+
-            		",Birthday=aux1.Birthaday"+
+            		",Birthday=aux1.Birthday"+
             		",Updated=current_timestamp"+
             		",UpdatedBy=aux1.UpdatedBy"+
-            		" from (SELECT C_Greeting_ID,ContactName,Title,ContactDescription,Comments,Phone,Phone2,Fax,EMail,Birthday,UpdatedBy FROM I_BPartner WHERE I_BPartner_ID=?) as aux1"
+            		" from (SELECT C_Greeting_ID,ContactName,Title,ContactDescription,Comments,ContactPhone,ContactPhone2,ContactPhone3,ContactFax,EMail,Birthday,UpdatedBy FROM I_BPartner WHERE I_BPartner_ID=?) as aux1"
             		+ " WHERE AD_User_ID=?" );
             // Set Imported = Y
 
@@ -355,7 +356,7 @@ public class ImportBPartner extends SvrProcess {
                 boolean newContact             = rs.getString( 6 ) != null;
 
                 log.fine( "I_BPartner_ID=" + I_BPartner_ID + ", C_BPartner_ID=" + C_BPartner_ID + ", C_BPartner_Location_ID=" + C_BPartner_Location_ID + " create=" + newLocation + ", AD_User_ID=" + AD_User_ID + " create=" + newContact );
-
+                
                 // ****    Create/Update BPartner
 
                 if( newBPartner )    // Insert new BPartner
