@@ -1930,6 +1930,13 @@ public final class MPayment extends X_C_Payment implements DocAction,ProcessCall
  			m_processMsg = "@NoCurrencyConversion@";
     		return DocAction.STATUS_Invalid;
  		}
+ 		
+ 		// Si la moneda del documento es diferente a la de la compañia:
+ 		// Se valida que exista una tasa de conversión entre las monedas para la fecha de aplicación del documento.
+ 		if (!validatePaymentCurrencyConvert()){
+			m_processMsg = "@NoConversionRateDateAcct@";
+			return DocAction.STATUS_Invalid;
+		}
         
         return DocAction.STATUS_InProgress;
     }    // prepareIt
@@ -2971,6 +2978,14 @@ public final class MPayment extends X_C_Payment implements DocAction,ProcessCall
 
 	public boolean isConfirmAditionalWorks() {
 		return confirmAditionalWorks;
+	}
+	
+	private boolean validatePaymentCurrencyConvert() {
+		int currecy_Client = Env.getContextAsInt(getCtx(), "#C_Currency_ID");
+		if (getC_Currency_ID() != currecy_Client) {
+			return (MCurrency.currencyConvert(new BigDecimal(1), currecy_Client, getC_Currency_ID(), getDateAcct(), getAD_Org_ID(), getCtx()) != null);
+		}
+		return true;
 	}
 }   // MPayment
 

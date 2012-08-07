@@ -80,6 +80,7 @@ public class MInvoice extends X_C_Invoice implements DocAction {
 	private boolean isTPVInstance = false;
 	
     private boolean dragDocumentDiscountAmts = false;	
+    
 	/**
 	 * Descripción de Método
 	 * 
@@ -2327,6 +2328,13 @@ public class MInvoice extends X_C_Invoice implements DocAction {
 
 			return DocAction.STATUS_Invalid;
 		}
+		
+		// Si la moneda del documento es diferente a la de la compañia:
+ 		// Se valida que exista una tasa de conversión entre las monedas para la fecha de aplicación del documento.
+		if (!validateInvoiceCurrencyConvert()){
+			m_processMsg = "@NoConversionRateDateAcct@";
+			return DocAction.STATUS_Invalid;
+		}
 
 		// Lines
 
@@ -4506,6 +4514,14 @@ public class MInvoice extends X_C_Invoice implements DocAction {
 							getDateInvoiced(), getAD_Org_ID(), getCtx()) != null;
 		}
 		return valid;
+	}
+	
+	private boolean validateInvoiceCurrencyConvert() {
+		int currecy_Client = Env.getContextAsInt(getCtx(), "#C_Currency_ID");
+		if (getC_Currency_ID() != currecy_Client) {
+			return (MCurrency.currencyConvert(new BigDecimal(1), currecy_Client, getC_Currency_ID(), getDateAcct(), getAD_Org_ID(), getCtx()) != null);
+		}
+		return true;
 	}
 
 	/**
