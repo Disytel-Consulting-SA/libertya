@@ -7,7 +7,7 @@ import java.math.*;
 import org.openXpertya.util.*;
 /** Modelo Generado por C_POSPaymentMedium
  *  @author Comunidad de Desarrollo Libertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
- *  @version  - 2012-07-09 20:10:44.562 */
+ *  @version  - 2012-08-08 15:45:13.394 */
 public class X_C_POSPaymentMedium extends org.openXpertya.model.PO
 {
 /** Constructor estándar */
@@ -23,6 +23,7 @@ setContext (null);	// B
 setC_POSPaymentMedium_ID (0);
 setDateFrom (new Timestamp(System.currentTimeMillis()));	// @#Date@
 setDateTo (new Timestamp(System.currentTimeMillis()));
+setIsMandatoryBank (false);
 setIsNormalizedBank (false);
 setM_EntidadFinanciera_ID (0);
 setName (null);
@@ -283,6 +284,22 @@ Optional short description of the record */
 public String getDescription() 
 {
 return (String)get_Value("Description");
+}
+/** Set Is Mandatory Bank */
+public void setIsMandatoryBank (boolean IsMandatoryBank)
+{
+set_Value ("IsMandatoryBank", new Boolean(IsMandatoryBank));
+}
+/** Get Is Mandatory Bank */
+public boolean isMandatoryBank() 
+{
+Object oo = get_Value("IsMandatoryBank");
+if (oo != null) 
+{
+ if (oo instanceof Boolean) return ((Boolean)oo).booleanValue();
+ return "Y".equals(oo);
+}
+return false;
 }
 /** Set Is Normalized Bank */
 public void setIsNormalizedBank (boolean IsNormalizedBank)
