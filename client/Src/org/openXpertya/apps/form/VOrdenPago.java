@@ -2760,7 +2760,7 @@ public class VOrdenPago extends CPanel implements FormPanel,ActionListener,Table
 	}
 
 	protected VLookup createChequeBancoIDLookup() {
-		return VComponentsFactory.VLookupFactory("C_Bank_ID", "C_Bank", m_WindowNo, DisplayType.TableDir);
+		return VComponentsFactory.VLookupFactory("C_Bank_ID", "C_Bank", m_WindowNo, DisplayType.Search);
 	}
 	
 	protected void chequeraChange(PropertyChangeEvent e) {

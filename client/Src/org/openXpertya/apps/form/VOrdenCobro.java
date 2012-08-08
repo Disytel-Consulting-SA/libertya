@@ -2300,6 +2300,10 @@ public class VOrdenCobro extends VOrdenPago {
 				.getSelectedItem();
 		saveBasicValidation(paymentMedium, null);
 		
+		if (paymentMedium.isMandatoryBank() && Util.isEmpty(getBankName(), true)) {
+			throw new Exception(getMsg("Bank"));
+		}
+		
 		BigDecimal amount = null;
 		Integer monedaOriginalID;
 		try {
@@ -2644,13 +2648,24 @@ public class VOrdenCobro extends VOrdenPago {
 	 *            medio de pago
 	 */
 	protected void loadCheckInfo(MPOSPaymentMedium paymentMedium) {
-		if (!Util.isEmpty(paymentMedium.getBank())) {
-			txtChequeBanco.setText(getCobroModel().getBankName(
-					paymentMedium.getBank()));
-			txtChequeBanco.setEditable(false);
-		} else {
-			txtChequeBanco.setEditable(true);
-			txtChequeBanco.setText("");
+		if(!paymentMedium.isNormalizedBank()){
+			if (!Util.isEmpty(paymentMedium.getBank())) {
+				txtChequeBanco.setText(getCobroModel().getBankName(
+						paymentMedium.getBank()));
+				txtChequeBanco.setEditable(false);
+			} else {
+				txtChequeBanco.setEditable(true);
+				txtChequeBanco.setText("");
+			}
+		}
+		else{
+			if (paymentMedium.getC_Bank_ID() != 0) {
+				cboChequeBancoID.setValue(paymentMedium.getC_Bank_ID());
+				cboChequeBancoID.setReadWrite(false);
+			} else {
+				txtChequeBanco.setEditable(true);
+				txtChequeBanco.setText("");
+			}
 		}
 		// Obtengo la configuración de días del medio de pago para la fecha de
 		// vencimiento pago del cheque
@@ -2658,10 +2673,8 @@ public class VOrdenCobro extends VOrdenPago {
 	}
 
 	protected void updateBank(MPOSPaymentMedium paymentMedium) {
-		cboChequeBancoID.setVisible(paymentMedium != null
-				&& paymentMedium.isNormalizedBank());
-		txtChequeBanco.setVisible(paymentMedium == null
-				|| !paymentMedium.isNormalizedBank());
+		cboChequeBancoID.setVisible(paymentMedium != null && paymentMedium.isNormalizedBank());
+		txtChequeBanco.setVisible(paymentMedium == null	|| !paymentMedium.isNormalizedBank());
 	}
 
 	@Override
@@ -3064,8 +3077,12 @@ public class VOrdenCobro extends VOrdenPago {
 	}
 
 	public String getBankName() {
-		return (txtChequeBanco.isVisible() ? txtChequeBanco.getText()
-				: getModel().getBank((Integer) cboChequeBancoID.getValue()));
+		if (txtChequeBanco.isVisible())
+			return txtChequeBanco.getText();
+		else if(cboChequeBancoID.getValue() == null)
+				return null;
+			else
+				return getModel().getBank((Integer) cboChequeBancoID.getValue());		
 	}
 
 }
