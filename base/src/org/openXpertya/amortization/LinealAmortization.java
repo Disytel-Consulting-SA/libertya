@@ -70,13 +70,17 @@ public class LinealAmortization extends AbstractAmortizationProcessor {
 					.setResidualInitialAmt(linealAmortizationLineData
 							.getBeforeAmortizationLine() != null ? linealAmortizationLineData
 							.getBeforeAmortizationLine()
-							.getEndPeriodResidualAmt() : linealAmortizationLineData.getTotalCost());
+							.getEndPeriodResidualAmt() : BigDecimal.ZERO);
 			// Amortización actual
 			BigDecimal amortizationAmt = getAmortizationAmt(linealAmortizationLineData, getProcessDate());
 			linealAmortizationLineData.setAmortizationAmt(amortizationAmt);
 			linealAmortizationLineData
 					.setResidualAmt(linealAmortizationLineData
-							.getResidualInitialAmt().subtract(amortizationAmt));
+							.getResidualInitialAmt().compareTo(BigDecimal.ZERO) == 0 ? linealAmortizationLineData
+							.getTotalCost().subtract(amortizationAmt)
+							: linealAmortizationLineData
+									.getResidualInitialAmt().subtract(
+											amortizationAmt));
 			// Si la fecha de procesamiento es igual a la de fin del período
 			// entonces no calculo nuevamente el monto para el cierre del
 			// período
@@ -95,7 +99,11 @@ public class LinealAmortization extends AbstractAmortizationProcessor {
 							.getAmortizationInitialAmt().add(amortizationAmt));
 			linealAmortizationLineData
 					.setResidualEndAmt(linealAmortizationLineData
-							.getResidualInitialAmt().subtract(amortizationAmt));
+							.getResidualInitialAmt().compareTo(BigDecimal.ZERO) == 0 ? linealAmortizationLineData
+									.getTotalCost().subtract(amortizationAmt)
+									: linealAmortizationLineData
+											.getResidualInitialAmt().subtract(
+													amortizationAmt));
 			// Si la fecha de alta se encuentra en este período se agrega al alta
 			if (linealAmortizationLineData.getAsset().getDateFrom() != null
 					&& getTimePeriod()
@@ -133,6 +141,8 @@ public class LinealAmortization extends AbstractAmortizationProcessor {
 				.getAsset().getDateFrom() : getTimePeriod().getDateFrom()).getTime());
 		
 		// El periodo de vida se calcula restando la cantidad de dias del initialDate a los dias del periodo
+		Calendar periodCalendar = Calendar.getInstance();
+		periodCalendar.setTime(getTimePeriod().getDateFrom());
 		Calendar initialCalendar = Calendar.getInstance();
 		initialCalendar.setTime(initialDate);
 		Calendar processCalendar = Calendar.getInstance();
@@ -143,7 +153,7 @@ public class LinealAmortization extends AbstractAmortizationProcessor {
 				+ (processCalendar.get(Calendar.DAY_OF_YEAR) - initialCalendar
 						.get(Calendar.DAY_OF_YEAR));
 		Integer periodLivedDays = diffDays
-				- initialCalendar.get(getTimePeriod().getDayField()) + 1;
+				- periodCalendar.get(getTimePeriod().getDayField()) + 2;
 		
 		// Si la cantidad de días vividos en este ejercicio supera la cantidad
 		// de días del período entonces tomo la cantidad del período, sino los
