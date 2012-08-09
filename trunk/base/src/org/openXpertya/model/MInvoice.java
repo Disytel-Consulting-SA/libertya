@@ -4517,7 +4517,7 @@ public class MInvoice extends X_C_Invoice implements DocAction {
 	}
 	
 	private boolean validateInvoiceCurrencyConvert() {
-		int currecy_Client = Env.getContextAsInt(getCtx(), "#C_Currency_ID");
+		int currecy_Client = Env.getContextAsInt( Env.getCtx(), "$C_Currency_ID" );
 		if (getC_Currency_ID() != currecy_Client) {
 			return (MCurrency.currencyConvert(new BigDecimal(1), currecy_Client, getC_Currency_ID(), getDateAcct(), getAD_Org_ID(), getCtx()) != null);
 		}
