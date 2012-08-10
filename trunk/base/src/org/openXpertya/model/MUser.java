@@ -711,12 +711,14 @@ public class MUser extends X_AD_User {
         }
         
         // No se permiten dos nombres de usuario iguales
-        StringBuffer sql = new StringBuffer("SELECT ad_user_id FROM ad_user WHERE name = ?");
+		StringBuffer sql = new StringBuffer(
+				"SELECT count(*)::integer FROM ad_user WHERE name = '"
+						+ getName() + "' and ad_client_id = ?");
         if(!newRecord){
         	sql.append(" AND ad_user_id <> "+getID());
         }
-        int sameUser = DB.getSQLValue(get_TrxName(), sql.toString(), getName());
-        if(sameUser >= 0){
+        int sameUser = DB.getSQLValue(get_TrxName(), sql.toString(), getAD_Client_ID());
+        if(sameUser > 0){
         	log.saveError("UserNameAlreadyInUse", "");
         	return false;
         }

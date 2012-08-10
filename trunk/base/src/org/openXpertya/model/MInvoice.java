@@ -81,6 +81,12 @@ public class MInvoice extends X_C_Invoice implements DocAction {
 	
     private boolean dragDocumentDiscountAmts = false;	
     
+    /**
+	 * Indica si el DocumentNo se seteó manualmente para que no se encierre
+	 * entre <> de modo que respete el documentNo ingresado. LOCALE_AR
+	 */
+	private boolean manualDocumentNo = false;
+	
 	/**
 	 * Descripción de Método
 	 * 
@@ -1565,8 +1571,9 @@ public class MInvoice extends X_C_Invoice implements DocAction {
 										getNumeroComprobante(),
 										getLetra(),
 										IsSOTrx,
-										isCopy()
-												|| getNumeroComprobante() == nroC));
+										(isCopy() || getNumeroComprobante() == nroC)
+										&& !isManualDocumentNo()
+										));
 					} else
 						// Si no es un nuevo registro, siempre usar el indicado
 						// (no usar secuencia)
@@ -1576,6 +1583,11 @@ public class MInvoice extends X_C_Invoice implements DocAction {
 										IsSOTrx, false));
 
 				} else {
+					if ((getPuntoDeVenta() == 0 || getNumeroComprobante() == 0)
+							&& isManualDocumentNo()
+							&& !completarPuntoLetraNumeroDoc()) {
+						return false;
+					}
 					setDocumentNo(CalloutInvoiceExt.GenerarNumeroDeDocumento(
 							getPuntoDeVenta(), getNumeroComprobante(),
 							getLetra(), IsSOTrx));
@@ -4619,6 +4631,20 @@ public class MInvoice extends X_C_Invoice implements DocAction {
 		    	throw new Exception(CLogger.retrieveErrorAsString());
 		    }
 		}
+	}
+	
+	/**
+	 * @return el valor de manualDocumentNo
+	 */
+	public boolean isManualDocumentNo() {
+		return manualDocumentNo;
+	}
+
+	/**
+	 * @param manualDocumentNo el valor de manualDocumentNo a asignar
+	 */
+	public void setManualDocumentNo(boolean manualDocumentNo) {
+		this.manualDocumentNo = manualDocumentNo;
 	}
 	
 } // MInvoice

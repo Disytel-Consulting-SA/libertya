@@ -3024,14 +3024,14 @@ ALTER FUNCTION currencyrate(integer, integer, timestamp with time zone, integer,
 ALTER TABLE c_pos ADD COLUMN authorizegeneralmanualdiscount character(1) NOT NULL DEFAULT 'N'::bpchar;
 
 -- 20120807-1447 Incorporación de nuevas columnas a importar en la importación de Entidades Comerciales 
-ALTER TABLE i_bpartner ADD COLUMN plaza character varying(100);
-ALTER TABLE i_bpartner ADD COLUMN address3 character varying(60);
-ALTER TABLE i_bpartner ADD COLUMN address4 character varying(60);
-ALTER TABLE i_bpartner ADD COLUMN contactphone character varying(40);
-ALTER TABLE i_bpartner ADD COLUMN contactphone2 character varying(40);
-ALTER TABLE i_bpartner ADD COLUMN contactphone3 character varying(40);
-ALTER TABLE i_bpartner ADD COLUMN contactfax character varying(40);
-ALTER TABLE i_bpartner ADD COLUMN isdn character varying(40);
+update ad_system set dummy = (SELECT addcolumnifnotexists('i_bpartner','plaza', 'character varying(100)'));
+update ad_system set dummy = (SELECT addcolumnifnotexists('i_bpartner','address3', 'character varying(60)'));
+update ad_system set dummy = (SELECT addcolumnifnotexists('i_bpartner','address4', 'character varying(60)'));
+update ad_system set dummy = (SELECT addcolumnifnotexists('i_bpartner','contactphone', 'character varying(40)'));
+update ad_system set dummy = (SELECT addcolumnifnotexists('i_bpartner','contactphone2', 'character varying(40)'));
+update ad_system set dummy = (SELECT addcolumnifnotexists('i_bpartner','contactphone3', 'character varying(40)'));
+update ad_system set dummy = (SELECT addcolumnifnotexists('i_bpartner','contactfax', 'character varying(40)'));
+update ad_system set dummy = (SELECT addcolumnifnotexists('i_bpartner','isdn', 'character varying(40)'));
 
 -- 20120807-1547 Incorporación de nuevas columnas a importar en la importación de Artículos 
 ALTER TABLE i_product ADD COLUMN productfamily_value character varying(60);
@@ -3039,3 +3039,12 @@ ALTER TABLE i_product ADD COLUMN isbom character(1) NOT NULL DEFAULT 'N'::bpchar
 
 -- 20120808-1545 Inserción de la columna IsMandatoryBank a la tabla C_POSPaymentMedium 
 ALTER TABLE C_POSPaymentMedium ADD COLUMN IsMandatoryBank character(1) NOT NULL DEFAULT 'N'::bpchar;
+
+-- 20120809-1741 Incorporación de parámetros adicionales para importación de facturas
+update ad_system set dummy = (SELECT addcolumnifnotexists('i_invoice','paymentrule', 'character varying(2)'));
+update ad_system set dummy = (SELECT addcolumnifnotexists('i_invoice','createcashline', 'character(1) NOT NULL DEFAULT 'N'::bpchar'));
+update ad_system set dummy = (SELECT addcolumnifnotexists('i_invoice','orgvalue', 'character varying(40)'));
+update ad_system set dummy = (SELECT addcolumnifnotexists('i_invoice','salesrep_name', 'character varying(60)'));
+update ad_system set dummy = (SELECT addcolumnifnotexists('i_invoice','documentnobysequence', 'character(1) NOT NULL DEFAULT 'N'::bpchar'));
+update ad_system set dummy = (SELECT addcolumnifnotexists('i_invoice','pricelist_name', 'character varying(60)'));
+ALTER TABLE i_invoice ALTER COLUMN taxindicator TYPE character varying(10);

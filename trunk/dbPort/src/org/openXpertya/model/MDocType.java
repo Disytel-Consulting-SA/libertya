@@ -177,6 +177,12 @@ public class MDocType extends X_C_DocType {
     /** Amortization = AMO (Amortización) */
     public static final String DOCTYPE_Amortization = "AMO";
     
+    /** Saldo Inicial Proveedor = SIP (Saldo Inicial Proveedor) */
+    public static final String DOCTYPE_Saldo_Inicial_Proveedor = "SIP";
+    
+    /** Saldo Inicial Cliente = SIC (Saldo Inicial Cliente) */
+    public static final String DOCTYPE_Saldo_Inicial_Cliente = "SIC";
+    
     /**
      *      Standard Constructor
      *      @param ctx context
