@@ -3035,17 +3035,17 @@ update ad_system set dummy = (SELECT addcolumnifnotexists('i_bpartner','isdn', '
 
 -- 20120807-1547 Incorporación de nuevas columnas a importar en la importación de Artículos 
 update ad_system set dummy = (SELECT addcolumnifnotexists('i_product','productfamily_value', 'character varying(60)'));
-update ad_system set dummy = (SELECT addcolumnifnotexists('i_product','isbom', 'character(1) NOT NULL DEFAULT 'N'::bpchar'));
+update ad_system set dummy = (SELECT addcolumnifnotexists('i_product','isbom', 'character(1) NOT NULL DEFAULT \'N\'::bpchar'));
 
 -- 20120808-1545 Inserción de la columna IsMandatoryBank a la tabla C_POSPaymentMedium 
 ALTER TABLE C_POSPaymentMedium ADD COLUMN IsMandatoryBank character(1) NOT NULL DEFAULT 'N'::bpchar;
 
 -- 20120809-1741 Incorporación de parámetros adicionales para importación de facturas
 update ad_system set dummy = (SELECT addcolumnifnotexists('i_invoice','paymentrule', 'character varying(2)'));
-update ad_system set dummy = (SELECT addcolumnifnotexists('i_invoice','createcashline', 'character(1) NOT NULL DEFAULT 'N'::bpchar'));
+update ad_system set dummy = (SELECT addcolumnifnotexists('i_invoice','createcashline', 'character(1) NOT NULL DEFAULT \'N\'::bpchar'));
 update ad_system set dummy = (SELECT addcolumnifnotexists('i_invoice','orgvalue', 'character varying(40)'));
 update ad_system set dummy = (SELECT addcolumnifnotexists('i_invoice','salesrep_name', 'character varying(60)'));
-update ad_system set dummy = (SELECT addcolumnifnotexists('i_invoice','documentnobysequence', 'character(1) NOT NULL DEFAULT 'N'::bpchar'));
+update ad_system set dummy = (SELECT addcolumnifnotexists('i_invoice','documentnobysequence', 'character(1) NOT NULL DEFAULT \'N\'::bpchar'));
 update ad_system set dummy = (SELECT addcolumnifnotexists('i_invoice','pricelist_name', 'character varying(60)'));
 ALTER TABLE i_invoice ALTER COLUMN taxindicator TYPE character varying(10);
 
@@ -3192,30 +3192,6 @@ DELETE FROM AD_ImpFormat_Row WHERE ad_componentobjectuid = 'CORE-AD_ImpFormat_Ro
 DELETE FROM AD_ImpFormat_Row WHERE ad_componentobjectuid = 'CORE-AD_ImpFormat_Row-1010363';
 DELETE FROM AD_ImpFormat_Row WHERE ad_componentobjectuid = 'CORE-AD_ImpFormat_Row-1010362';
 DELETE FROM AD_ImpFormat WHERE ad_componentobjectuid = 'CORE-AD_ImpFormat-1010070';
-DELETE FROM AD_TreeNodePR WHERE ad_componentobjectuid = 'CORE-AD_TreeNodePR-1010108-1015441';
-DELETE FROM M_Product_Trl WHERE ad_componentobjectuid = 'CORE-M_Product_Trl-es_PY-1015441';
-DELETE FROM M_Product_Trl WHERE ad_componentobjectuid = 'CORE-M_Product_Trl-es_MX-1015441';
-DELETE FROM M_Product_Trl WHERE ad_componentobjectuid = 'CORE-M_Product_Trl-es_AR-1015441';
-DELETE FROM M_Product_Trl WHERE ad_componentobjectuid = 'CORE-M_Product_Trl-es_ES-1015441';
-DELETE FROM M_Product WHERE ad_componentobjectuid = 'CORE-M_Product-1015441';
-DELETE FROM AD_TreeNodePR WHERE ad_componentobjectuid = 'CORE-AD_TreeNodePR-1010108-1015440';
-DELETE FROM M_Product_Trl WHERE ad_componentobjectuid = 'CORE-M_Product_Trl-es_PY-1015440';
-DELETE FROM M_Product_Trl WHERE ad_componentobjectuid = 'CORE-M_Product_Trl-es_MX-1015440';
-DELETE FROM M_Product_Trl WHERE ad_componentobjectuid = 'CORE-M_Product_Trl-es_AR-1015440';
-DELETE FROM M_Product_Trl WHERE ad_componentobjectuid = 'CORE-M_Product_Trl-es_ES-1015440';
-DELETE FROM M_Product WHERE ad_componentobjectuid = 'CORE-M_Product-1015440';
-DELETE FROM C_DocType_Trl WHERE ad_componentobjectuid = 'CORE-C_DocType_Trl-es_PY-1010573';
-DELETE FROM C_DocType_Trl WHERE ad_componentobjectuid = 'CORE-C_DocType_Trl-es_MX-1010573';
-DELETE FROM C_DocType_Trl WHERE ad_componentobjectuid = 'CORE-C_DocType_Trl-es_AR-1010573';
-DELETE FROM C_DocType_Trl WHERE ad_componentobjectuid = 'CORE-C_DocType_Trl-es_ES-1010573';
-DELETE FROM C_DocType WHERE ad_componentobjectuid = 'CORE-C_DocType-1010573';
-DELETE FROM C_DocType_Trl WHERE ad_componentobjectuid = 'CORE-C_DocType_Trl-es_PY-1010572';
-DELETE FROM C_DocType_Trl WHERE ad_componentobjectuid = 'CORE-C_DocType_Trl-es_MX-1010572';
-DELETE FROM C_DocType_Trl WHERE ad_componentobjectuid = 'CORE-C_DocType_Trl-es_AR-1010572';
-DELETE FROM C_DocType_Trl WHERE ad_componentobjectuid = 'CORE-C_DocType_Trl-es_ES-1010572';
-DELETE FROM C_DocType WHERE ad_componentobjectuid = 'CORE-C_DocType-1010572';
-DELETE FROM AD_Sequence WHERE ad_componentobjectuid = 'CORE-AD_Sequence-1011858';
-DELETE FROM AD_Sequence WHERE ad_componentobjectuid = 'CORE-AD_Sequence-1011857';
 DELETE FROM AD_Process_Para_Trl WHERE ad_componentobjectuid = 'CORE-AD_Process_Para_Trl-es_PY-1010606';
 DELETE FROM AD_Process_Para_Trl WHERE ad_componentobjectuid = 'CORE-AD_Process_Para_Trl-es_MX-1010606';
 DELETE FROM AD_Process_Para_Trl WHERE ad_componentobjectuid = 'CORE-AD_Process_Para_Trl-es_AR-1010606';
