@@ -1318,9 +1318,22 @@ public class MInvoiceLine extends X_C_InvoiceLine {
 		}
         
         if( isTaxIncluded()) {
-            sql = "UPDATE C_Invoice i " + " SET GrandTotal=TotalLines + ChargeAmt " + "WHERE C_Invoice_ID=" + getC_Invoice_ID();
+			// El total es la suma del neto (con impuesto tmb está en el neto),
+			// del monto del cargo y de la suma de los montos de los impuestos
+			// manuales ya que no se tienen en cuenta en el monto con impuesto
+			// incluído
+			sql = "UPDATE C_Invoice i "
+					+ " SET GrandTotal=TotalLines + "
+					+ "(SELECT COALESCE(SUM(TaxAmt),0) FROM C_InvoiceTax it inner join c_tax t on t.c_tax_id = it.c_tax_id inner join c_taxcategory tc on tc.c_taxcategory_id = t.c_taxcategory_id WHERE i.C_Invoice_ID=it.C_Invoice_ID and tc.ismanual = 'Y')"
+					+ " + ChargeAmt " + "WHERE C_Invoice_ID="
+					+ getC_Invoice_ID();
         } else {
-            sql = "UPDATE C_Invoice i " + " SET GrandTotal=TotalLines+" + "(SELECT COALESCE(SUM(TaxAmt),0) FROM C_InvoiceTax it WHERE i.C_Invoice_ID=it.C_Invoice_ID) + ChargeAmt " + "WHERE C_Invoice_ID=" + getC_Invoice_ID();
+			// El total es la suma del neto, del monto del cargo y de la suma de
+			// los montos de todos los impuestos relacionados
+			sql = "UPDATE C_Invoice i "
+					+ " SET GrandTotal=TotalLines+"
+					+ "(SELECT COALESCE(SUM(TaxAmt),0) FROM C_InvoiceTax it WHERE i.C_Invoice_ID=it.C_Invoice_ID) + ChargeAmt "
+					+ "WHERE C_Invoice_ID=" + getC_Invoice_ID();
         }
 
         no = DB.executeUpdate( sql,get_TrxName());

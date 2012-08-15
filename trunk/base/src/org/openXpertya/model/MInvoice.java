@@ -2728,7 +2728,7 @@ public class MInvoice extends X_C_Invoice implements DocAction {
 					return false;
 				}
 			} else {
-				if (!isTaxIncluded()) {
+				if (!isTaxIncluded() || tax.isCategoriaManual()) {
 					grandTotal = grandTotal.add(iTax.getTaxAmt());
 				}
 			}
@@ -2759,15 +2759,21 @@ public class MInvoice extends X_C_Invoice implements DocAction {
 	 * @return
 	 */
 
-	private BigDecimal totalTax() {
+	private BigDecimal totalTax(boolean onlymanualTaxes) {
 
 		BigDecimal amount = new BigDecimal(0);
 		String id = String.valueOf(getC_Invoice_ID());
-		String sql = "SELECT taxamt FROM C_InvoiceTax "
-				+ "WHERE isActive = 'Y' AND C_Invoice_ID = " + id;
+		StringBuffer sql = new StringBuffer("SELECT taxamt FROM C_InvoiceTax it ");
+		if(onlymanualTaxes){
+			sql.append(" inner join c_tax t on t.c_tax_id = it.c_tax_id inner join c_taxcategory tc on tc.c_taxcategory_id = t.c_taxcategory_id ");
+		}
+		sql.append(" WHERE it.isActive = 'Y' AND it.C_Invoice_ID = " + id);
+		if(onlymanualTaxes){
+			sql.append(" and tc.ismanual = 'Y' ");
+		}
 
 		try {
-			PreparedStatement pstmt = DB.prepareStatement(sql);
+			PreparedStatement pstmt = DB.prepareStatement(sql.toString(), get_TrxName());
 			ResultSet rs = pstmt.executeQuery();
 
 			while (rs.next()) {
@@ -3944,7 +3950,7 @@ public class MInvoice extends X_C_Invoice implements DocAction {
 	} // getApprovalAmt
 
 	public void calculateTotal() {
-		setGrandTotal(getTotalLines().add(totalTax()));
+		setGrandTotal(getTotalLines().add(getChargeAmt()).add(totalTax(isTaxIncluded())));
 	}
 
 	public String getLetra() {
