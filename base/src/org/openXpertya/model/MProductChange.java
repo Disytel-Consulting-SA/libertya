@@ -81,6 +81,16 @@ public class MProductChange extends X_M_ProductChange implements DocAction {
 			}
 		}
 		
+		// Colocar valores por defecto en las ubicaciones si no contienen
+		// valores
+		if(Util.isEmpty(getM_Locator_ID(), true)){
+			setM_Locator_ID(MWarehouse.getDefaultLocatorID(getM_Warehouse_ID(), get_TrxName()));
+		}
+		
+		if(Util.isEmpty(getM_Locator_To_ID(), true)){
+			setM_Locator_To_ID(MWarehouse.getDefaultLocatorID(getM_Warehouse_ID(), get_TrxName()));
+		}
+		
 		return true; 
 	}
 	

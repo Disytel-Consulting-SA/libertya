@@ -188,6 +188,14 @@ public class MWarehouse extends X_M_Warehouse {
         return retValue;
 
     }		// get
+    
+    public static Integer getDefaultLocatorID(Integer warehouseID, String trxName){
+		return DB
+				.getSQLValue(
+						trxName,
+						"SELECT m_locator_id FROM m_locator where m_warehouse_id = ? order by isdefault desc limit 1",
+						warehouseID);
+    }
 
     /**
      *      Get Default Locator
