@@ -4445,7 +4445,8 @@ public class PoSMainForm extends CPanel implements FormPanel, ASyncProcess, Disp
 	private void updateCheckTenderTypeComponents() {
 		showTenderTypeParamsPanel(getCCheckParamsPanel(), null);
 		getCAmountText().setValue(null);
-		getCBankAccountCombo().setValue(null);
+		getCBankAccountCombo().setValue(
+				getModel().getPoSConfig().getCheckBankAccountID());
 	}
 	
 	private void updateCreditTenderTypeComponents() {
