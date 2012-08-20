@@ -51,7 +51,7 @@ public abstract class PoSConnectionState {
 	
 	public abstract List<Location> getBPartnerLocations(int bPartnerID);
 	
-	public abstract boolean productStockValidate(int productId, int count, int attributeSetInstanceID);
+	public abstract boolean productStockValidate(int productId, BigDecimal count, int attributeSetInstanceID);
 	
 	public abstract int getOrgCityId();
 	

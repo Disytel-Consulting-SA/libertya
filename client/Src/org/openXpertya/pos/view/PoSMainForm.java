@@ -1571,7 +1571,11 @@ public class PoSMainForm extends CPanel implements FormPanel, ASyncProcess, Disp
 					char keyChar = e.getKeyChar();
 					String countStr = cCountText.getText();
   
-					if(!Character.isDigit(keyChar)) {
+					// Si es punto y ya existe uno dentro del string, entonces consumo
+					if(keyChar == '.' && countStr.indexOf('.') > -1){
+						e.consume();
+					}					
+					if(!Character.isDigit(keyChar) && keyChar != '.') {
 						e.consume();
 					}
 					if((!Character.isDigit(e.getKeyChar()) && countStr.length() == 0)) {
@@ -4051,7 +4055,7 @@ public class PoSMainForm extends CPanel implements FormPanel, ASyncProcess, Disp
 	
 	private boolean addOrderProduct(Product product) {
 		TimeStatsLogger.beginTask(MeasurableTask.POS_ADD_PRODUCT);
-		int count = Integer.parseInt(getCCountText().getText());
+		BigDecimal count = new BigDecimal(getCCountText().getText());
 		boolean result = false;
 
 		try {

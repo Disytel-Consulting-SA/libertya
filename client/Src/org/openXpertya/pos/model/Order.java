@@ -204,7 +204,7 @@ public class Order  {
 		BigDecimal totalNetAmt = BigDecimal.ZERO;
 		for (OrderProduct orderProduct : getOrderProducts()) {
 			//amount = amount.add(orderProduct.getTotalTaxedPrice());
-			BigDecimal lineAmt = orderProduct.getPrice().multiply(orderProduct.getQty());
+			BigDecimal lineAmt = orderProduct.getPrice().multiply(orderProduct.getCount());
 			if (orderProduct.getProduct().isTaxIncludedInPrice()) {
 				amount = amount.add(lineAmt);
 				lineAmt = orderProduct.getNetPrice(lineAmt);
