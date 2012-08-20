@@ -1103,7 +1103,7 @@ public class PoSOnline extends PoSConnectionState {
 			line.setDirectInsert(true);
 			line.setProduct( product );
 			line.setM_AttributeSetInstance_ID( op.getProduct().getAttributeSetInstanceID() );
-	        line.setQty( new BigDecimal(op.getCount()) );
+	        line.setQty(op.getCount());
 	        line.setPrice(getPoSCOnfig().getPriceListID());    // sets List/limit
 
 	        numOrderLine +=10;
@@ -1913,7 +1913,7 @@ public class PoSOnline extends PoSConnectionState {
 	}
 
 	@Override
-	public boolean productStockValidate(int productId, int count, int attributeSetInstanceID) {
+	public boolean productStockValidate(int productId, BigDecimal count, int attributeSetInstanceID) {
 		MProduct mProduct = new MProduct(ctx,productId,null);
 		boolean stockAvailable;
         if( mProduct.isStocked()) {
@@ -1930,7 +1930,7 @@ public class PoSOnline extends PoSConnectionState {
             	stockAvailable = false;
             } else { 
             	stockAvailable =  
-            		(availableCount.compareTo(BigDecimal.valueOf(count)) >= 0 );
+            		(availableCount.compareTo(count) >= 0 );
                 
             }
         } else
@@ -2350,7 +2350,7 @@ public class PoSOnline extends PoSConnectionState {
 		}
 					
 		orderProduct = 
-			new OrderProduct(line.getQtyEntered().intValue(), 
+			new OrderProduct(line.getQtyEntered(), 
 					         line.getDiscount(),
 					         new Tax(mTax.getID(), mTax.getRate(), mTax.isPercepcion()),
 					         product, checkoutPlace);

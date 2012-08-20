@@ -32,7 +32,6 @@ import org.compiere.swing.CLabel;
 import org.compiere.swing.CPanel;
 import org.compiere.swing.CTextField;
 import org.openXpertya.apps.AUserAuth;
-import org.openXpertya.grid.ed.VCheckBox;
 import org.openXpertya.grid.ed.VNumber;
 import org.openXpertya.model.DiscountCalculator.IDocumentLine.DiscountApplication;
 import org.openXpertya.pos.ctrl.PoSModel;
@@ -594,7 +593,11 @@ public class UpdateOrderProductDialog extends JDialog {
 					char keyChar = e.getKeyChar();
 					String countStr = cCountText.getText();
   
-					if(!Character.isDigit(keyChar)) {
+					// Si es punto y ya existe uno dentro del string, entonces consumo
+					if(keyChar == '.' && countStr.indexOf('.') > -1){
+						e.consume();
+					}	
+					if(!Character.isDigit(keyChar) && keyChar != '.') {
 						e.consume();
 					}
 					if((!Character.isDigit(e.getKeyChar()) && countStr.length() == 0)) {
@@ -898,7 +901,7 @@ public class UpdateOrderProductDialog extends JDialog {
 		
 		BigDecimal taxedPrice = (BigDecimal)getCProductTaxedPriceText().getValue();
 		BigDecimal discount = (BigDecimal)getCDiscountText().getValue();
-		int count = Integer.parseInt(getCCountText().getText());
+		BigDecimal count = new BigDecimal(getCCountText().getText());
 	
 		// Valido que el se haya ingresado un precio.
 		if(taxedPrice == null) {
@@ -927,7 +930,7 @@ public class UpdateOrderProductDialog extends JDialog {
 		*/
 		
 		// Cantidad mayor que cero.
-		if(count < 1) {
+		if(count.compareTo(BigDecimal.ZERO) <= 0) {
 			error = true;
 			errorMsg.append("").
 					 append(MSG_INVALID_PRODUCT_COUNT);

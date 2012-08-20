@@ -99,7 +99,7 @@ public class PosMainFormEmulator extends PoSMainForm {
 			for (int j = 0; j < TPV_LINES_PER_SIMULATION; j++)
 			{
 				Product aProduct = new Product(1032483, "999-999", "ART-LIB", BigDecimal.ONE, BigDecimal.ONE, 0, "---", true, false, 1010402, new ArrayList<Integer>(), "B", true);      
-				OrderProduct anOrderProduct = new OrderProduct(1, BigDecimal.ZERO, aTax, aProduct, "P");
+				OrderProduct anOrderProduct = new OrderProduct(BigDecimal.ONE, BigDecimal.ZERO, aTax, aProduct, "P");
 				productsList.add(anOrderProduct);
 			}
 			// Medio de Pagos

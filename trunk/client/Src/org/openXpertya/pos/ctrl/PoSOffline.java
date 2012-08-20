@@ -70,7 +70,7 @@ public class PoSOffline extends PoSConnectionState {
 	}
 
 	@Override
-	public boolean productStockValidate(int productId, int count, int attributeSetInstanceID) {
+	public boolean productStockValidate(int productId, BigDecimal count, int attributeSetInstanceID) {
 		// TODO Auto-generated method stub
 		return false;
 	}

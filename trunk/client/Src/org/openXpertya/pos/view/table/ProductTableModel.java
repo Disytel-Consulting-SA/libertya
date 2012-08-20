@@ -30,7 +30,7 @@ public class ProductTableModel extends AbstractPoSTableModel {
 		OrderProduct orderProduct = getOrderProducts().get(row);
 		switch (col) {
 		case 0:
-			return new Integer(orderProduct.getCount());
+			return orderProduct.getCount();
 		case 1:
 			return orderProduct.getProduct().getDescription();
 		case 2:

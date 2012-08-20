@@ -11,7 +11,7 @@ public class OrderProduct {
 	
 	private Order order;
 	
-	private int count;
+	private BigDecimal count;
 
 	private BigDecimal price;
 
@@ -50,7 +50,7 @@ public class OrderProduct {
 	 * @param product
 	 * @param checkoutPlace
 	 */
-	public OrderProduct(int count, BigDecimal discount,
+	public OrderProduct(BigDecimal count, BigDecimal discount,
 			Tax tax, Product product, String checkoutPlace) {
 		this();
 		setProduct(product);
@@ -65,7 +65,7 @@ public class OrderProduct {
 	/**
 	 * @return Devuelve count.
 	 */
-	public int getCount() {
+	public BigDecimal getCount() {
 		return count;
 	}
 
@@ -73,7 +73,7 @@ public class OrderProduct {
 	 * @param count
 	 *            Fija o asigna count.
 	 */
-	public void setCount(int count) {
+	public void setCount(BigDecimal count) {
 		this.count = count;
 	}
 
@@ -195,8 +195,8 @@ public class OrderProduct {
 	public BigDecimal getTaxedPrice(boolean excludeBonus) {
 		BigDecimal price = getPrice();
 		if (excludeBonus) {
-			price = (getPrice().multiply(getQty()).add(getLineBonusAmt()))
-					.divide(getQty(), price.scale(), BigDecimal.ROUND_HALF_EVEN);
+			price = (getPrice().multiply(getCount()).add(getLineBonusAmt()))
+					.divide(getCount(), price.scale(), BigDecimal.ROUND_HALF_EVEN);
 		}
 		return getTaxedPrice(price);
 	}
@@ -413,14 +413,7 @@ public class OrderProduct {
 	public BigDecimal getTotalTaxedPrice(boolean excludeBonus) {
 		//return scaleAmount(getTaxedPrice(excludeBonus).multiply(getQty()));
 		return scaleAmount(getTaxedPrice(
-				scaleAmount(getPrice(excludeBonus).multiply(getQty()))));
-	}
-	
-	/**
-	 * @return La cantidad del artículo como un {@link BigDecimal}. 
-	 */
-	public BigDecimal getQty() {
-		return new BigDecimal(getCount());
+				scaleAmount(getPrice(excludeBonus).multiply(getCount()))));
 	}
 
 	/**
@@ -465,7 +458,7 @@ public class OrderProduct {
 
 	@Override
 	public String toString() {
-		return "("+ getProduct().getId() + "," + getQty() + ")";
+		return "("+ getProduct().getId() + "," + getCount() + ")";
 	}
 	
 	/**
@@ -532,8 +525,8 @@ public class OrderProduct {
 	protected BigDecimal getPrice(boolean excludeBonus) {
 		BigDecimal price = getPrice();
 		if (excludeBonus) {
-			price = (getPrice().multiply(getQty()).add(getLineBonusAmt()))
-					.divide(getQty(), price.scale(), BigDecimal.ROUND_HALF_EVEN);
+			price = (getPrice().multiply(getCount()).add(getLineBonusAmt()))
+					.divide(getCount(), price.scale(), BigDecimal.ROUND_HALF_EVEN);
 		}
 		return price;
 	}

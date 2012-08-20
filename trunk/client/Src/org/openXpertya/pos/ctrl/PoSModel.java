@@ -176,7 +176,7 @@ public class PoSModel {
 		return getConnectionState().currencyConvert(amount,fromCurrencyId);
 	}
 	
-	private boolean productStockValidate(Product product, int count) {
+	private boolean productStockValidate(Product product, BigDecimal count) {
 		boolean valid = true;
 		if (!getConnectionState().getPoSCOnfig().isSellWithoutStock())
 			valid = getConnectionState().productStockValidate(
@@ -220,7 +220,7 @@ public class PoSModel {
 			checkoutPlace = MProduct.CHECKOUTPLACE_Warehouse; 
 		}
 		
-		OrderProduct op = new OrderProduct(0,null,productTax,product, checkoutPlace);
+		OrderProduct op = new OrderProduct(BigDecimal.ZERO,null,productTax,product, checkoutPlace);
 		return op;
 	}
 	
@@ -356,7 +356,7 @@ public class PoSModel {
 	 * @throws ProductAddValidationFailed cuando la agregación no es posible según las 
 	 * condiciones necesarias del artículo.
 	 */
-	public OrderProduct addOrderProduct(Product product, int count) throws ProductAddValidationFailed {
+	public OrderProduct addOrderProduct(Product product, BigDecimal count) throws ProductAddValidationFailed {
 		
 		// Validación del lugar de retiro del artículo
 		validateProductCheckoutPlace(product);
@@ -641,8 +641,8 @@ public class PoSModel {
 	 * @param count cantidad
 	 * @return si la cantidad supera el máximo configurado
 	 */
-	public boolean countSurpassMax(Integer count){
-		return getMaxOrderLineQty() != null && getMaxOrderLineQty() < count;
+	public boolean countSurpassMax(BigDecimal count){
+		return getMaxOrderLineQty() != null && getMaxOrderLineQty() < count.intValue();
 	}
 
 	/**

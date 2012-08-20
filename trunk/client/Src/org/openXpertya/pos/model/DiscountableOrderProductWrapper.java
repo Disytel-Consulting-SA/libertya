@@ -31,7 +31,7 @@ public class DiscountableOrderProductWrapper extends DiscountableDocumentLine {
 
 	@Override
 	public BigDecimal getQty() {
-		return new BigDecimal(getOrderProduct().getCount());
+		return getOrderProduct().getCount();
 	}
 
 	@Override
@@ -102,7 +102,7 @@ public class DiscountableOrderProductWrapper extends DiscountableDocumentLine {
 	public String toString() {
 		return "OrderProductWrapper["
 				+ getOrderProduct().getProduct().getDescription() + ", Qty="
-				+ getOrderProduct().getQty() + ", QtyAvl=" + getAvailableQty()
+				+ getOrderProduct().getCount() + ", QtyAvl=" + getAvailableQty()
 				+ "]";
 	}
 
