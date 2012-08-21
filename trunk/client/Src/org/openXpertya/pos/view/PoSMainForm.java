@@ -627,7 +627,10 @@ public class PoSMainForm extends CPanel implements FormPanel, ASyncProcess, Disp
 				throw new PosException(getMsg("NoInitialAuthorization"));
 			}
 			if(result.isError()){
-				throw new PosException(result.getMsg());
+				if(!Util.isEmpty(result.getMsg(), true)){
+					throw new PosException(result.getMsg());
+				}
+				throw new PosException(getMsg("NoInitialAuthorization"));
 			}
 		}
 	}
@@ -4345,7 +4348,9 @@ public class PoSMainForm extends CPanel implements FormPanel, ASyncProcess, Disp
 					return;
 				}
 				if(result.isError()){
-					errorMsg(result.getMsg());
+					if(!Util.isEmpty(result.getMsg(), true)){
+						errorMsg(result.getMsg());
+					}
 					return;
 				}
 			}
@@ -4699,7 +4704,9 @@ public class PoSMainForm extends CPanel implements FormPanel, ASyncProcess, Disp
 					return;
 				}
 				if(result.isError()){
-					errorMsg(result.getMsg());
+					if(!Util.isEmpty(result.getMsg(), true)){
+						errorMsg(result.getMsg());
+					}
 					return;
 				}
 			}
@@ -4847,11 +4854,15 @@ public class PoSMainForm extends CPanel implements FormPanel, ASyncProcess, Disp
 			errorMsg(MSG_NO_LOCATION_ERROR);
 			return;
 		}
+		// Actualizar autorización de descuento manual general
+		updateManualDiscountAuthorization((BigDecimal)getCGeneralDiscountPercText().getValue());
 		// Autorizaciones al finalizar la venta
 		getAuthDialog().authorizeOperation(UserAuthConstants.POS_FINISH_MOMENT);
 		CallResult result = getAuthDialog().getAuthorizeResult(true);
-		if(result != null && result.isError()){
-			errorMsg(result.getMsg());
+		if (result != null && result.isError()) {
+			if(!Util.isEmpty(result.getMsg(), true)){
+				errorMsg(result.getMsg());
+			}
 			return;
 		}
 		

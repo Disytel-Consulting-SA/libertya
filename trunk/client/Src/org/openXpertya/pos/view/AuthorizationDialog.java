@@ -261,7 +261,9 @@ public class AuthorizationDialog extends CDialog {
 	}
 
 	private void cancel() {
-		setAuthorizeResult(null);
+		CallResult result = new CallResult();
+		result.setError(true);
+		setAuthorizeResult(result);
 		cancelCurrentAuthorizationOperation();
 		setVisible(false);
 	}
