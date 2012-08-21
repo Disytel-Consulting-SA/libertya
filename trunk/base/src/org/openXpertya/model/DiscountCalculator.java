@@ -1045,7 +1045,7 @@ public class DiscountCalculator {
 				// Suma el importe de descuento calculado (con impuestos) al importe total
 				// acumulado del descuento.
 				manualDiscount.addAmount(
-						documentLine.getTaxedAmount(netDiscountAmt), 
+						documentLine.getTaxedAmount(lineDiscountAmt), 
 						documentLine.getTaxRate(),
 						documentLine.getTaxedAmount(discountBaseAmt));
 				

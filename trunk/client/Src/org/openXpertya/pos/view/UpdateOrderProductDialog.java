@@ -612,6 +612,7 @@ public class UpdateOrderProductDialog extends JDialog {
 					if(countStr.equals("0")) {
 						cCountText.setText("1");
 					}
+					updateDiscountAmtText();
 				}
 				
 				
@@ -624,6 +625,13 @@ public class UpdateOrderProductDialog extends JDialog {
 				public void focusLost(FocusEvent event) {
 					
 				}
+			});
+			cCountText.addActionListener(new ActionListener() {
+
+				public void actionPerformed(ActionEvent e) {
+					updateDiscountAmtText();
+				}
+				
 			});
 			FocusUtils.addFocusHighlight(cCountText);
 		}
@@ -860,7 +868,8 @@ public class UpdateOrderProductDialog extends JDialog {
 		BigDecimal price = (BigDecimal)getCProductTaxedPriceText().getValue();
 		price = price == null || manualDiscount.compareTo(BigDecimal.ZERO) == 0 ? BigDecimal.ZERO: price;
 		getCDiscountAmtText().setValue(
-				getOrderProduct().getPricesDiff(priceList, price));
+				getOrderProduct().getPricesDiff(priceList, price).multiply(
+						new BigDecimal((String)getCCountText().getValue())));
 	}
 	
 	private boolean validateUserAccess() {
