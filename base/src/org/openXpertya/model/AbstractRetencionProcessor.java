@@ -1159,7 +1159,7 @@ public abstract class AbstractRetencionProcessor implements RetencionProcessor {
 		try {
 			// 1) Payments
 			Map<Integer, BigDecimal> payments = getSumaPagosAnteriores(
-					getBPartner(), clientID, dateTo, dateTo,
+					getBPartner(), clientID, dateFrom, dateTo,
 					getRetencionSchema());
 			total = total.add(getSumAmts(new ArrayList<BigDecimal>(payments
 					.values())));
@@ -1171,7 +1171,7 @@ public abstract class AbstractRetencionProcessor implements RetencionProcessor {
 					.values())));
 			// 3) Retenciones
 			Map<Integer, BigDecimal> retenciones = getSumaRetencionesPagosAnteriores(
-					getBPartner(), clientID, dateTo, dateTo,
+					getBPartner(), clientID, dateFrom, dateTo,
 					getRetencionSchema());
 			total = total.add(getSumAmts(new ArrayList<BigDecimal>(retenciones
 					.values())));
