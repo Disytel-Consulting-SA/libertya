@@ -166,7 +166,7 @@ public class LaunchInvoice extends SvrProcess {
 		Calendar c = Calendar.getInstance();
 		c.setTimeInMillis(invoice.getDateInvoiced().getTime());
 		jasperwrapper.addParameter("DIA", Integer.toString(c.get(Calendar.DATE)));
-		jasperwrapper.addParameter("MES", Integer.toString(c.get(Calendar.MONTH)) + 1); // Mas 1 porque el Calendar maneja los meses de 0 a 11
+		jasperwrapper.addParameter("MES", Integer.toString(c.get(Calendar.MONTH)+1)); // Mas 1 porque el Calendar maneja los meses de 0 a 11
 		jasperwrapper.addParameter("ANIO", Integer.toString(c.get(Calendar.YEAR)));		
 		jasperwrapper.addParameter("RAZONSOCIAL", JasperReportsUtil.coalesce(invoice.getNombreCli(), bpartner.getName()) ); 
 		jasperwrapper.addParameter("RAZONSOCIAL2", JasperReportsUtil.coalesce(bpartner.getName2(), "") );
