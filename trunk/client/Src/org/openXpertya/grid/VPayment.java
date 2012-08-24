@@ -1184,7 +1184,7 @@ public class VPayment extends JDialog implements ActionListener {
                 log.fine( "Old Cash - " + m_cashLine );
 
                 if( m_cashLine != null ) {
-                    MCashLine cl = m_cashLine.createReversal();
+                    MCashLine cl = m_cashLine.createReversal(m_cashLine.getC_Cash_ID());
 
                     if( cl.save()) {
                         log.config( "CashCancelled" );
@@ -1301,7 +1301,7 @@ public class VPayment extends JDialog implements ActionListener {
                 if( (m_cashLine != null) && ( (newC_CashBook_ID != m_C_CashBook_ID) ||!TimeUtil.isSameDay( m_cashLine.getStatementDate(),newDateAcct ))) {
                     log.config( "Changed CashBook/Date: " + m_C_CashBook_ID + "->" + newC_CashBook_ID );
 
-                    MCashLine reverse = m_cashLine.createReversal();
+                    MCashLine reverse = m_cashLine.createReversal(m_cashLine.getC_Cash_ID());
 
                     if( !reverse.save()) {
                         ADialog.error( m_WindowNo,this,"PaymentError","CashNotCancelled" );

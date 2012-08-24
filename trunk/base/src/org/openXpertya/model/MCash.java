@@ -212,7 +212,7 @@ public class MCash extends X_C_Cash implements DocAction {
     /** Descripción de Campos */
 
     private static CLogger s_log = CLogger.getCLogger( MCash.class );
-
+    
 	/**
 	 * @param fromCashID
 	 * @param toCashID
@@ -238,6 +238,39 @@ public class MCash extends X_C_Cash implements DocAction {
 	 */
 	public static void transferCash(int fromCashID, int toCashID,
 			BigDecimal amount, Integer projectID, Properties ctx, String trxName) throws Exception {
+		transferCash(fromCashID, toCashID, amount, projectID, false, ctx, trxName);
+    }
+    
+	/**
+	 * 
+	 * @param fromCashID
+	 * @param toCashID
+	 * @param amount
+	 * @param ignorePOSJournalRelated
+	 * @param ctx
+	 * @param trxName
+	 * @throws Exception
+	 */
+	public static void transferCash(int fromCashID, int toCashID,
+			BigDecimal amount, boolean ignorePOSJournalRelated, Properties ctx, String trxName) throws Exception {
+		transferCash(fromCashID, toCashID, amount, 0, ignorePOSJournalRelated, ctx, trxName);
+    }
+	
+	/**
+	 * 
+	 * @param fromCashID
+	 * @param toCashID
+	 * @param amount
+	 * @param projectID
+	 * @param ignorePOSJournalRelated
+	 * @param ctx
+	 * @param trxName
+	 * @throws Exception
+	 */
+	public static void transferCash(int fromCashID, int toCashID,
+			BigDecimal amount, Integer projectID,
+			boolean ignorePOSJournalRelated, Properties ctx, String trxName)
+			throws Exception {
 
 		// El importe debe ser diferente a cero.
 		if (amount.compareTo(BigDecimal.ZERO) == 0) {
@@ -264,13 +297,13 @@ public class MCash extends X_C_Cash implements DocAction {
 			realProjectID = fromCashLine.getC_Project_ID();
 		}
 		fromCashLine.setC_Project_ID(realProjectID);
-		
+		fromCashLine.setIgnorePOSJournal(ignorePOSJournalRelated);
 		if (!DocumentEngine.processAndSave(fromCashLine, MCashLine.ACTION_Complete, true)) {
 			throw new Exception("@CashLineCreateError@ (" + fromCash.getName()
 					+ "): " + fromCashLine.getProcessMsg());
 		}
     }
-    
+	
     /**
      * Constructor de la clase ...
      *
@@ -468,14 +501,12 @@ public class MCash extends X_C_Cash implements DocAction {
             	setBeginningBalance(BigDecimal.ZERO);
             }
             
-            // Referencia a la caja diaria activa, si es que aún no está referenciada.
-            // Solo para libros cuyo tipo sea Caja Diaria.
-            if (getC_POSJournal_ID() == 0 && MCashBook.CASHBOOKTYPE_JournalCashBook.equals(getCashBookType())) {
+            if(getC_POSJournal_ID() == 0 && MCashBook.CASHBOOKTYPE_JournalCashBook.equals(getCashBookType())){
         		// Caja Diaria. Intenta registrar el libro de caja
-        		if (!MPOSJournal.registerDocument(this)) {
+                if (!MPOSJournal.registerDocument(this)) {
         			log.saveError("SaveError", Msg.getMsg(getCtx(), "CashPOSJournalRequiredError"));
         			return false;
-        		}
+                }	
             }
     	}
 

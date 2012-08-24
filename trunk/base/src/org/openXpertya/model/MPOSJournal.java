@@ -28,6 +28,9 @@ public class MPOSJournal extends X_C_POSJournal implements DocAction {
 	/** Mensaje de error para documentos que no se pueden completar por falta de caja diaria */
 	public static String DOCUMENT_COMPLETE_ERROR_MSG = "@CompleteDocumentPOSJournalRequiredError@";
 	
+	/** Mensaje de error por caja diaria cerrada */
+	public static String POS_JOURNAL_VOID_CLOSED_ERROR_MSG = "@POSJournalVoidClosed@";
+	
 	/**
 	 * Nombre de la preference que determina la diferencia máxima entre el saldo
 	 * y la declaración
@@ -179,6 +182,52 @@ public class MPOSJournal extends X_C_POSJournal implements DocAction {
 			posNumber = posNumber == 0 ? null : posNumber;
 		}
 		return posNumber;
+	}
+
+	/**
+	 * @return Devuelve el libro de caja actual para el usuario logueado. Si no
+	 *         existe la caja diaria o el libro de caja, devuelve
+	 *         <code>null</code>.
+	 */
+	public static Integer getCurrentCashID() {
+		Integer cashID = null;
+		MPOSJournal journal = getCurrent();
+		if (journal != null) {
+			cashID = journal.getC_Cash_ID();
+			cashID = Util.isEmpty(cashID, true) ? null : cashID;
+		}
+		return cashID;
+	}
+
+	/**
+	 * @return Devuelve el libro de caja para la caja diaria parámetro. Si no
+	 *         existe el libro de caja, devuelve <code>null</code>.
+	 */
+	public static Integer getCashID(Properties ctx, Integer posJournalID, String trxName) {
+		Integer cashID = null;
+		MPOSJournal journal = new MPOSJournal(ctx, posJournalID, trxName);
+		if (journal != null) {
+			cashID = journal.getC_Cash_ID();
+			cashID = Util.isEmpty(cashID, true) ? null : cashID;
+		}
+		return cashID;
+	}
+	
+	/**
+	 * @param ctx
+	 * @param posJournalID
+	 * @param trxName
+	 * @return true si la caja diaria parámetro se encuentra en estado ABIERTO o
+	 *         EN VERIFICACION.
+	 */
+	public static boolean isPOSJournalOpened(Properties ctx, Integer posJournalID, String trxName){
+		return DB
+				.getSQLValue(
+						trxName,
+						"SELECT count(*) FROM c_posjournal WHERE c_posjournal_id = ? AND docstatus IN ('"
+								+ DOCSTATUS_Opened
+								+ "','"
+								+ DOCSTATUS_Completed + "')", posJournalID) > 0;
 	}
 	
 	/**
@@ -379,7 +428,7 @@ public class MPOSJournal extends X_C_POSJournal implements DocAction {
 		if(getCashBalance().compareTo(BigDecimal.ZERO) != 0){
 			try {
 				MCash.transferCash(getC_Cash_ID(), getC_CashTarget_ID(),
-						getCashBalance(), getC_Project_ID(), getCtx(), get_TrxName());
+						getCashBalance(), getC_Project_ID(), true, getCtx(), get_TrxName());
 			} catch (Exception e) {
 				m_processMsg = "@TargetCashTransferError@: " + e.getMessage();
 				return false;

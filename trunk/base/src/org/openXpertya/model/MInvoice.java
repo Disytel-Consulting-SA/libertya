@@ -88,6 +88,20 @@ public class MInvoice extends X_C_Invoice implements DocAction {
 	private boolean manualDocumentNo = false;
 	
 	/**
+	 * Caja diaria a asignar al contra-documento que se genera al anular este
+	 * documento
+	 */
+	private Integer voidPOSJournalID = 0;
+
+	/**
+	 * Control que se agrega para obligatoriedad de apertura de la caja diaria
+	 * asignada al contra-documento. Es decir que si este control se debe
+	 * realizar y existe un valor en la caja a asignar para el contra-documento,
+	 * entonces esa caja diaria debe estar abierta, sino error
+	 */
+	private boolean voidPOSJournalMustBeOpen = false; 
+	
+	/**
 	 * Descripción de Método
 	 * 
 	 * 
@@ -2918,11 +2932,20 @@ public class MInvoice extends X_C_Invoice implements DocAction {
 		// Create Cash
 
 		if (PAYMENTRULE_Cash.equals(getPaymentRule()) && isCreateCashLine()) {
-			MCash cash = MCash.get(getCtx(), getAD_Org_ID(), getDateInvoiced(),
-					getC_Currency_ID(), get_TrxName());
-
+			boolean posJournalActivated = MPOSJournal.isActivated();
+			MCash cash = null;
+			if(posJournalActivated){
+				Integer cashID = MPOSJournal.getCurrentCashID();
+				cash = cashID != null?new MCash(getCtx(), cashID, get_TrxName()):null;
+			}
+			else{
+				cash = MCash.get(getCtx(), getAD_Org_ID(), getDateInvoiced(),
+						getC_Currency_ID(), get_TrxName());
+			}
+			
 			if ((cash == null) || (cash.getID() == 0)) {
-				m_processMsg = "@NoCashBook@";
+				m_processMsg = posJournalActivated ? "@NoJournalCashForCurrentUserDate@"
+						: "@NoCashForCurrentDate@";
 
 				return DocAction.STATUS_Invalid;
 			}
@@ -3277,8 +3300,26 @@ public class MInvoice extends X_C_Invoice implements DocAction {
 					counter.getDocumentNo());
 		}
 
+		setC_POSJournal_ID(getVoidPOSJournalID() != 0 ? getVoidPOSJournalID()
+				: getC_POSJournal_ID());
+		// Si ya tenía una asignada, verificar si está abierta o en verificación
+		// Si no se encuentra en ninguno de los dos estados, entonces se setea a
+		// 0 para que se asigne la caja diaria actual
+		if (getC_POSJournal_ID() != 0
+				&& !MPOSJournal.isPOSJournalOpened(getCtx(),
+						getC_POSJournal_ID(), get_TrxName())) {
+			// Si se debe realizar el control obligatorio de apertura y la caja
+			// diaria de anulación está seteada, entonces error
+			if(getVoidPOSJournalID() != 0 && isVoidPOSJournalMustBeOpen()){
+				m_processMsg = MPOSJournal.POS_JOURNAL_VOID_CLOSED_ERROR_MSG;
+				return STATUS_Invalid;
+			}
+			log.severe("POS Journal assigned with ID "+getC_POSJournal_ID()+" is closed");
+			setC_POSJournal_ID(0);			
+		}
+		
 		// Caja Diaria. Intenta registrar la factura
-		if (!MPOSJournal.registerDocument(this)) {
+		if (getC_POSJournal_ID() == 0 && !MPOSJournal.registerDocument(this)) {
 			m_processMsg = MPOSJournal.DOCUMENT_COMPLETE_ERROR_MSG;
 			return STATUS_Invalid;
 		}
@@ -3640,8 +3681,31 @@ public class MInvoice extends X_C_Invoice implements DocAction {
 			// el tipo de documento del contramovimiento por el indicado.
 			if (reversalDocTypeBaseKey != null) {
 				// Se obtiene el tipo de documento del contramovimiento.
+				// Obtener el punto de venta:
+				// 1) Desde la caja diaria
+				// 2) Desde la config de TPV, si es que posee una sola
+				// 3) Desde la factura a anular
+				Integer ptoVenta = null;
+				// 1)
+				if(MPOSJournal.isActivated()){
+					ptoVenta = MPOSJournal.getCurrentPOSNumber();
+				}
+				// 2)
+				if(Util.isEmpty(ptoVenta, true)){
+					List<MPOS> pos = MPOS.get(getCtx(),
+							Env.getAD_Org_ID(getCtx()),
+							Env.getAD_User_ID(getCtx()), get_TrxName());
+					if(pos.size() == 1){
+						ptoVenta = pos.get(0).getPOSNumber();
+					}
+				}
+				// 3)
+				if(Util.isEmpty(ptoVenta, true)){
+					ptoVenta = getPuntoDeVenta();
+				}
+				// Se obtiene el tipo de documento del contramovimiento.
 				reversalDocType = MDocType.getDocType(getCtx(),
-						reversalDocTypeBaseKey, getLetra(), getPuntoDeVenta(),
+						reversalDocTypeBaseKey, getLetra(), ptoVenta,
 						get_TrxName());
 			}
 		}
@@ -3723,7 +3787,10 @@ public class MInvoice extends X_C_Invoice implements DocAction {
 		// realizar luego de anular la factura
 		reversal.setConfirmAditionalWorks(false);
 		reversal.setCurrentAccountVerified(true);
-		//
+		// Se asigna la misma caja diaria del documento a anular
+		reversal.setVoidPOSJournalID(getVoidPOSJournalID());
+		reversal.setVoidPOSJournalMustBeOpen(isVoidPOSJournalMustBeOpen());
+		reversal.setC_POSJournal_ID(getC_POSJournal_ID());
 
 		if (!reversal.processIt(DocAction.ACTION_Complete)) {
 			m_processMsg = "@ReversalError@: " + reversal.getProcessMsg();
@@ -4651,6 +4718,22 @@ public class MInvoice extends X_C_Invoice implements DocAction {
 	 */
 	public void setManualDocumentNo(boolean manualDocumentNo) {
 		this.manualDocumentNo = manualDocumentNo;
+	}
+
+	public void setVoidPOSJournalID(Integer voidPOSJournalID) {
+		this.voidPOSJournalID = voidPOSJournalID;
+	}
+
+	public Integer getVoidPOSJournalID() {
+		return voidPOSJournalID;
+	}
+
+	public void setVoidPOSJournalMustBeOpen(boolean voidPOSJournalMustBeOpen) {
+		this.voidPOSJournalMustBeOpen = voidPOSJournalMustBeOpen;
+	}
+
+	public boolean isVoidPOSJournalMustBeOpen() {
+		return voidPOSJournalMustBeOpen;
 	}
 	
 } // MInvoice

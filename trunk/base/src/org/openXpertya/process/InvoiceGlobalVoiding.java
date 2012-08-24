@@ -62,6 +62,18 @@ public class InvoiceGlobalVoiding extends SvrProcess {
 	private Properties localCtx = null;
 	
 	/**
+	 * Booleano que determina que se debe tomar la caja diaria de la factura
+	 * parámetro
+	 */
+	private boolean posJournalFromInvoice = false;
+	
+	/**
+	 * Caja Diaria a asignar cuando no se debe asignar la de la factura
+	 * parámetro
+	 */
+	private Integer posJournalID = 0;
+	
+	/**
 	 * Booleano que determina si se debe controlar que los allocations
 	 * relacionados se encuentren con otros débitos
 	 */
@@ -99,6 +111,12 @@ public class InvoiceGlobalVoiding extends SvrProcess {
             name = para[ i ].getParameterName();
             if( name.equalsIgnoreCase( "C_Invoice_ID" )) {
             	invoiceID = para[ i ].getParameterAsInt();
+            }
+            else if( name.equalsIgnoreCase( "POSJournalFromInvoice" )) {
+            	posJournalFromInvoice = ((String)para[ i ].getParameter()).equals("Y");
+            }
+            else if( name.equalsIgnoreCase( "C_POSJournal_ID" )) {
+            	posJournalID = para[ i ].getParameterAsInt();
             }
         }
 	}
@@ -178,6 +196,16 @@ public class InvoiceGlobalVoiding extends SvrProcess {
 			// Seteo el allocation action para que anule todo
 			mAllocationHdr.setAllocationAction(allocationAction);
 			mAllocationHdr.setConfirmAditionalWorks(false);
+			// Se asigna el booleano que determina que se debe realizar un control
+			// estricto sobre el cierre de la caja diaria.
+			// Este control se realiza solamente cuando es true el booleano que
+			// determina que se debe setear la caja de la factura o cuando la caja
+			// diaria parámetro existe
+			mAllocationHdr.setVoidPOSJournalMustBeOpen(isPosJournalFromInvoice()
+					|| getPosJournalID() != 0);
+			// Se asigna la caja diaria a setear al comprobante de anulación en el
+			// caso que éste deba setearse  
+			mAllocationHdr.setVoidPOSJournalID(getPosJournalID());
 			// Anular el allocation junto con todos sus pagos y retenciones
 			if (!DocumentEngine.processAndSave(mAllocationHdr,
 					allocationDocAction, false)) {
@@ -206,7 +234,17 @@ public class InvoiceGlobalVoiding extends SvrProcess {
 	 */
 	protected void voidInvoice(MInvoice invoice, boolean makeMsg) throws Exception{
 		// No debe confirmar las operaciones adicionales de cuenta corriente 
-		getInvoice().setConfirmAditionalWorks(false);
+		invoice.setConfirmAditionalWorks(false);
+		// Se asigna el booleano que determina que se debe realizar un control
+		// estricto sobre el cierre de la caja diaria.
+		// Este control se realiza solamente cuando es true el booleano que
+		// determina que se debe setear la caja de la factura o cuando la caja
+		// diaria parámetro existe
+		invoice.setVoidPOSJournalMustBeOpen(isPosJournalFromInvoice()
+				|| getPosJournalID() != 0);
+		// Se asigna la caja diaria a setear al comprobante de anulación en el
+		// caso que éste deba setearse  
+		invoice.setVoidPOSJournalID(getPosJournalID());
 		// Anulo la factura
 		if (!DocumentEngine.processAndSave(invoice, MInvoice.DOCACTION_Void, false)) {
 			throw new Exception("@InvoiceVoidError@ # "
@@ -926,5 +964,21 @@ public class InvoiceGlobalVoiding extends SvrProcess {
 
 	public boolean isControlMoreDebitsInAllocation() {
 		return controlMoreDebitsInAllocation;
+	}
+
+	public void setPosJournalFromInvoice(boolean posJournalFromInvoice) {
+		this.posJournalFromInvoice = posJournalFromInvoice;
+	}
+
+	public boolean isPosJournalFromInvoice() {
+		return posJournalFromInvoice;
+	}
+
+	public void setPosJournalID(Integer posJournalID) {
+		this.posJournalID = posJournalID;
+	}
+
+	public Integer getPosJournalID() {
+		return posJournalID;
 	}
 }

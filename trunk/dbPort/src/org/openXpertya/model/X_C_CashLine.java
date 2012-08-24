@@ -7,7 +7,7 @@ import java.math.*;
 import org.openXpertya.util.*;
 /** Modelo Generado por C_CashLine
  *  @author Comunidad de Desarrollo Libertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
- *  @version  - 2012-06-07 23:16:44.785 */
+ *  @version  - 2012-08-24 20:18:53.634 */
 public class X_C_CashLine extends org.openXpertya.model.PO
 {
 /** Constructor estándar */
@@ -311,6 +311,22 @@ Payment identifier */
 public int getC_Payment_ID() 
 {
 Integer ii = (Integer)get_Value("C_Payment_ID");
+if (ii == null) return 0;
+return ii.intValue();
+}
+/** Set POS Journal.
+POS Journal */
+public void setC_POSJournal_ID (int C_POSJournal_ID)
+{
+if (C_POSJournal_ID <= 0) set_Value ("C_POSJournal_ID", null);
+ else 
+set_Value ("C_POSJournal_ID", new Integer(C_POSJournal_ID));
+}
+/** Get POS Journal.
+POS Journal */
+public int getC_POSJournal_ID() 
+{
+Integer ii = (Integer)get_Value("C_POSJournal_ID");
 if (ii == null) return 0;
 return ii.intValue();
 }
