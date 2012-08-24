@@ -78,6 +78,20 @@ public final class MPayment extends X_C_Payment implements DocAction,ProcessCall
 	 */	
 	private Map<PO, Object> aditionalWorkResult;
 	
+	/**
+	 * Caja diaria a asignar al contra-documento que se genera al anular este
+	 * documento
+	 */
+	private Integer voidPOSJournalID = 0;
+
+	/**
+	 * Control que se agrega para obligatoriedad de apertura de la caja diaria
+	 * asignada al contra-documento. Es decir que si este control se debe
+	 * realizar y existe un valor en la caja a asignar para el contra-documento,
+	 * entonces esa caja diaria debe estar abierta, sino error
+	 */
+	private boolean voidPOSJournalMustBeOpen = false;
+	
     /**
      * Descripción de Método
      *
@@ -2029,8 +2043,25 @@ public final class MPayment extends X_C_Payment implements DocAction,ProcessCall
             m_processMsg = "@CounterDoc@: @C_Payment_ID@=" + counter.getDocumentNo();
         }
 
+        setC_POSJournal_ID(getVoidPOSJournalID() != 0 ? getVoidPOSJournalID()
+				: getC_POSJournal_ID());
+        // Si ya tenía una asignada, verificar si está abierta o en verificación
+		// Si no se encuentra en ninguno de los dos estados, entonces se setea a
+		// 0 para que se asigne la caja diaria actual
+		if (getC_POSJournal_ID() != 0
+				&& !MPOSJournal.isPOSJournalOpened(getCtx(),
+						getC_POSJournal_ID(), get_TrxName())) {
+			// Si se debe realizar el control obligatorio de apertura y la caja
+			// diaria de anulación está seteada, entonces error
+			if(getVoidPOSJournalID() != 0 && isVoidPOSJournalMustBeOpen()){
+				m_processMsg = MPOSJournal.POS_JOURNAL_VOID_CLOSED_ERROR_MSG;
+				return STATUS_Invalid;
+			}
+			log.severe("POS Journal assigned with ID "+getC_POSJournal_ID()+" is closed");
+			setC_POSJournal_ID(0);			
+		}
 		// Caja Diaria. Intenta registrar la factura
-		if (!MPOSJournal.registerDocument(this)) {
+		if (getC_POSJournal_ID() == 0 && !MPOSJournal.registerDocument(this)) {
 			m_processMsg = MPOSJournal.DOCUMENT_COMPLETE_ERROR_MSG;
 			return STATUS_Invalid;
 		}
@@ -2583,6 +2614,11 @@ public final class MPayment extends X_C_Payment implements DocAction,ProcessCall
 		// realizar luego de anular la factura
         reversal.setConfirmAditionalWorks(false);
         
+        // Se asigna la misma caja diaria del documento a anular
+        reversal.setVoidPOSJournalID(getVoidPOSJournalID());
+		reversal.setVoidPOSJournalMustBeOpen(isVoidPOSJournalMustBeOpen());
+		reversal.setC_POSJournal_ID(getC_POSJournal_ID());
+        
         // Post Reversal
 
         if( !reversal.processIt( DocAction.ACTION_Complete )) {
@@ -2986,6 +3022,22 @@ public final class MPayment extends X_C_Payment implements DocAction,ProcessCall
 			return (MCurrency.currencyConvert(new BigDecimal(1), currecy_Client, getC_Currency_ID(), getDateAcct(), getAD_Org_ID(), getCtx()) != null);
 		}
 		return true;
+	}
+
+	public void setVoidPOSJournalID(Integer voidPOSJournalID) {
+		this.voidPOSJournalID = voidPOSJournalID;
+	}
+
+	public Integer getVoidPOSJournalID() {
+		return voidPOSJournalID;
+	}
+
+	public void setVoidPOSJournalMustBeOpen(boolean voidPOSJournalMustBeOpen) {
+		this.voidPOSJournalMustBeOpen = voidPOSJournalMustBeOpen;
+	}
+
+	public boolean isVoidPOSJournalMustBeOpen() {
+		return voidPOSJournalMustBeOpen;
 	}
 }   // MPayment
 

@@ -102,6 +102,20 @@ public class MAllocationHdr extends X_C_AllocationHdr implements DocAction {
 	 * corriente al procesar el/los documento/s
 	 */
 	private boolean confirmAditionalWorks = true;
+
+	/**
+	 * Caja diaria a asignar a los contra-documentos que se generan al anular
+	 * pagos y/o retenciones
+	 */
+	private Integer voidPOSJournalID = 0;
+
+	/**
+	 * Control que se agrega para obligatoriedad de apertura de la caja diaria
+	 * asignada a los contra-documentos. Es decir que si este control se debe
+	 * realizar y existe un valor en la caja a asignar para los contra-documentos,
+	 * entonces esa caja diaria debe estar abierta, sino error
+	 */
+	private boolean voidPOSJournalMustBeOpen = false; 
 	
 	/** Cuenta cuántos allocation hay creados con este pago
 	 * 
@@ -725,11 +739,22 @@ public class MAllocationHdr extends X_C_AllocationHdr implements DocAction {
 			}
 		}
         
+    	// Si ya tenía una asignada, verificar si está abierta o en verificación
+		// Si no se encuentra en ninguno de los dos estados, entonces se setea a
+		// 0 para que se asigne la caja diaria actual
+		if (getC_POSJournal_ID() != 0
+				&& !MPOSJournal.isPOSJournalOpened(getCtx(),
+						getC_POSJournal_ID(), get_TrxName())) {
+			log.severe("POS Journal assigned with ID "+getC_POSJournal_ID()+" is closed");
+			setC_POSJournal_ID(0);			
+		}
+        
 		// Caja Diaria. Intenta registrar el documento
-		if (!MPOSJournal.registerDocument(this)) {
+		if (getC_POSJournal_ID() == 0 && !MPOSJournal.registerDocument(this)) {
 			m_processMsg = MPOSJournal.DOCUMENT_COMPLETE_ERROR_MSG;
 			return STATUS_Invalid;
 		}
+		
         
         return DocAction.STATUS_Completed;
     }    // completeIt
@@ -1044,6 +1069,8 @@ public class MAllocationHdr extends X_C_AllocationHdr implements DocAction {
     		// se aborta.
     		paym.setConfirmAditionalWorks(false);
     		paym.setVoiderAllocationID(getC_AllocationHdr_ID());
+    		paym.setVoidPOSJournalID(getVoidPOSJournalID());
+    		paym.setVoidPOSJournalMustBeOpen(isVoidPOSJournalMustBeOpen());
     		if (!paym.processIt( DocAction.ACTION_Void ))
     			errorMsg = paym.getProcessMsg();
     		if (!paym.save())
@@ -1091,6 +1118,8 @@ public class MAllocationHdr extends X_C_AllocationHdr implements DocAction {
         	cashLine.setConfirmAditionalWorks(false);
 			cashLine.setVoiderAllocationID(getC_AllocationHdr_ID());
 			cashLine.setIgnoreInvoiceOpen(true);
+			cashLine.setVoidPOSJournalID(getVoidPOSJournalID());
+			cashLine.setVoidPOSJournalMustBeOpen(isVoidPOSJournalMustBeOpen());
         	if (!DocumentEngine.processAndSave(cashLine, MCashLine.ACTION_Void,
 					false)) {
 				throw new Exception("@VoidCashLineError@ ($ "
@@ -1149,6 +1178,8 @@ public class MAllocationHdr extends X_C_AllocationHdr implements DocAction {
     private void voidRetentionInvoice(MInvoice invoice) throws Exception {
     	String errorMsg = null;
     	invoice.setConfirmAditionalWorks(false);
+    	invoice.setVoidPOSJournalID(getVoidPOSJournalID());
+    	invoice.setVoidPOSJournalMustBeOpen(isVoidPOSJournalMustBeOpen());
     	invoice.setVoiderAllocationID(getC_AllocationHdr_ID());
 		if (!invoice.processIt( DocAction.ACTION_Void ))
 			errorMsg = invoice.getProcessMsg();
@@ -1310,6 +1341,22 @@ public class MAllocationHdr extends X_C_AllocationHdr implements DocAction {
 	
 	        log.fine( "Fact_Acct deleted #" + no );
         }
+	}
+
+	public void setVoidPOSJournalID(Integer voidPOSJournalID) {
+		this.voidPOSJournalID = voidPOSJournalID;
+	}
+
+	public Integer getVoidPOSJournalID() {
+		return voidPOSJournalID;
+	}
+
+	public void setVoidPOSJournalMustBeOpen(boolean voidPOSJournalMustBeOpen) {
+		this.voidPOSJournalMustBeOpen = voidPOSJournalMustBeOpen;
+	}
+
+	public boolean isVoidPOSJournalMustBeOpen() {
+		return voidPOSJournalMustBeOpen;
 	}
 }    // MAllocation
 

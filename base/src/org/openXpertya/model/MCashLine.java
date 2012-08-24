@@ -83,7 +83,27 @@ public class MCashLine extends X_C_CashLine implements DocAction {
 	 * de la factura al completar la línea del libro de caja
 	 */
     private boolean ignoreInvoiceOpen = false;
+
+	/**
+	 * Boolean que determina si se deben ignorar las tareas relacionadas con
+	 * cajas diarias
+	 */
+    private boolean ignorePOSJournal = false;
 	
+    /**
+	 * Caja diaria a asignar al contra-documento que se genera al anular este
+	 * documento
+	 */
+	private Integer voidPOSJournalID = 0;
+
+	/**
+	 * Control que se agrega para obligatoriedad de apertura de la caja diaria
+	 * asignada al contra-documento. Es decir que si este control se debe
+	 * realizar y existe un valor en la caja a asignar para el contra-documento,
+	 * entonces esa caja diaria debe estar abierta, sino error
+	 */
+	private boolean voidPOSJournalMustBeOpen = false; 
+    
     /**
      * Constructor de la clase ...
      *
@@ -261,11 +281,11 @@ public class MCashLine extends X_C_CashLine implements DocAction {
 	 * @return Crea y devuelve una línea de caja inversa a esta línea de modo
 	 *         que corrija el saldo del libro y la contabilidad de la misma
 	 */
-    public MCashLine createReversal() {
+    public MCashLine createReversal(int cashID) {
         MCashLine reversal = new MCashLine( getCtx(),0,get_TrxName());
 
         reversal.setClientOrg( this );
-        reversal.setC_Cash_ID( getC_Cash_ID());
+        reversal.setC_Cash_ID( cashID );
         reversal.setC_BankAccount_ID( getC_BankAccount_ID());
         reversal.setC_Charge_ID( getC_Charge_ID());
         reversal.setC_Currency_ID( getC_Currency_ID());
@@ -589,6 +609,11 @@ public class MCashLine extends X_C_CashLine implements DocAction {
 	public String completeIt() {
         
 		try {
+			// Caja Diaria y validaciones relacionadas
+			if(!isIgnorePOSJournal()){
+				posJournalRelated();
+			}
+			
 			// Generación de documentos adicionales según el tipo de Efectivo de la línea
 			
 			// 1. Pago de Factura
@@ -627,6 +652,42 @@ public class MCashLine extends X_C_CashLine implements DocAction {
 		}
 	}
 
+	/**
+	 * Realiza las tareas relacionadas con la caja diaria
+	 * @throws Exception
+	 */
+	private void posJournalRelated() throws Exception{
+		if(MCashBook.CASHBOOKTYPE_JournalCashBook.equals(getCash().getCashBookType())){
+			setC_POSJournal_ID(getVoidPOSJournalID() != 0 ? getVoidPOSJournalID()
+					: getC_POSJournal_ID());
+			// Si ya tenía una asignada, verificar si está abierta o en verificación
+			// Si no se encuentra en ninguno de los dos estados, entonces se setea a
+			// 0 para que se asigne la caja diaria actual
+			if (getC_POSJournal_ID() != 0
+					&& !MPOSJournal.isPOSJournalOpened(getCtx(),
+							getC_POSJournal_ID(), get_TrxName())) {
+				// Si se debe realizar el control obligatorio de apertura y la caja
+				// diaria de anulación está seteada, entonces error
+				if(getVoidPOSJournalID() != 0 && isVoidPOSJournalMustBeOpen()){
+					throw new Exception(MPOSJournal.POS_JOURNAL_VOID_CLOSED_ERROR_MSG);
+				}
+				log.severe("POS Journal assigned with ID "+getC_POSJournal_ID()+" is closed");
+				setC_POSJournal_ID(0);			
+			}
+			// Registrar caja diaria para esta línea si no está registrada
+			if (getC_POSJournal_ID() == 0 && !MPOSJournal.registerDocument(this)) {
+				throw new Exception(MPOSJournal.DOCUMENT_COMPLETE_ERROR_MSG);			
+			}
+			
+			// Si la caja diaria registrada para esta línea no concuerda con la
+			// caja diaria que posee el libro de caja, entonces error
+			if (MPOSJournal.isActivated()
+					&& getCash().getC_POSJournal_ID() != getC_POSJournal_ID()) {
+				throw new Exception("@CashPOSJournalDifferentOfCashLine@");
+			}
+		}
+	}
+	
 	/**
 	 * Realiza las tareas particulares de completado de una línea de caja cuyo
 	 * tipo es Imputación a una Factura.
@@ -783,6 +844,11 @@ public class MCashLine extends X_C_CashLine implements DocAction {
 				"@CashTransferGeneratedLine@: " + getCash().getName()));
 		targetCashLine.setUpdateBPBalance(false);
 		targetCashLine.setC_Project_ID(getC_Project_ID());
+		// Se setea la caja diaria de la caja destino para que concuerden
+		targetCashLine.setC_POSJournal_ID(targetCash.getC_POSJournal_ID());
+		// Ignora lo que tiene que ver con cajas diarias sólo si la caja origen
+		// lo ignora
+		targetCashLine.setIgnorePOSJournal(isIgnorePOSJournal());
 		// Completa y guarda la línea de caja destino.
 		if (!DocumentEngine.processAndSave(targetCashLine, ACTION_Complete, true)) {
 			throw new Exception("@CashTransferLineGenerateError@: " + targetCashLine.getProcessMsg());
@@ -824,7 +890,11 @@ public class MCashLine extends X_C_CashLine implements DocAction {
 			
 			// Crea una línea de caja invertida que corrije el saldo y la
 			// contabilidad del libro de caja al cual pertenece esta línea.
-			reversalCashLine = createReversal();
+			// Si la anulación contiene la caja diaria a la cual asociarse,
+			// entonces el libro de caja de esta línea es la de la caja diaria
+			reversalCashLine = createReversal(getVoidPOSJournalID() == 0 ? getC_Cash_ID()
+					: MPOSJournal.getCashID(getCtx(), getVoidPOSJournalID(),
+							get_TrxName()));
 			
 			// Setea una descripción a la línea inversa generada.
 			reversalCashLine.setDescription(Msg.parseTranslation(getCtx(),
@@ -833,6 +903,14 @@ public class MCashLine extends X_C_CashLine implements DocAction {
 			reversalCashLine.setConfirmAditionalWorks(false);
 			
 			reversalCashLine.setIgnoreInvoiceOpen(isIgnoreInvoiceOpen());
+			
+			reversalCashLine.setC_POSPaymentMedium_ID(getC_POSPaymentMedium_ID());
+			
+			// Se asigna la misma caja diaria del documento a anular
+			reversalCashLine.setVoidPOSJournalID(getVoidPOSJournalID());
+			reversalCashLine.setVoidPOSJournalMustBeOpen(isVoidPOSJournalMustBeOpen());
+			reversalCashLine.setC_POSJournal_ID(getC_POSJournal_ID());		
+			
 			
 			// Guarda y completa la línea de caja inversa
 			if (!DocumentEngine.processAndSave(reversalCashLine,
@@ -1323,6 +1401,30 @@ public class MCashLine extends X_C_CashLine implements DocAction {
 			return (MCurrency.currencyConvert(new BigDecimal(1), currecy_Client, getC_Currency_ID(), getCash().getDateAcct(), getAD_Org_ID(), getCtx()) != null);
 		}
 		return true;
+	}
+
+	public void setIgnorePOSJournal(boolean ignorePOSJournal) {
+		this.ignorePOSJournal = ignorePOSJournal;
+	}
+
+	public boolean isIgnorePOSJournal() {
+		return ignorePOSJournal;
+	}
+
+	public void setVoidPOSJournalID(Integer voidPOSJournalID) {
+		this.voidPOSJournalID = voidPOSJournalID;
+	}
+
+	public Integer getVoidPOSJournalID() {
+		return voidPOSJournalID;
+	}
+
+	public void setVoidPOSJournalMustBeOpen(boolean voidPOSJournalMustBeOpen) {
+		this.voidPOSJournalMustBeOpen = voidPOSJournalMustBeOpen;
+	}
+
+	public boolean isVoidPOSJournalMustBeOpen() {
+		return voidPOSJournalMustBeOpen;
 	}
 
 }    // MCashLine

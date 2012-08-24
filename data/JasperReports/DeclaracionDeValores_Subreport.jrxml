@@ -44,7 +44,7 @@
 		<variableExpression><![CDATA[$F{egreso}]]></variableExpression>
 	</variable>
 	<variable name="total" class="java.math.BigDecimal" resetType="None" calculation="Nothing">
-		<variableExpression><![CDATA[$V{ingreso} != null && $V{egreso} != null?$V{ingreso}.subtract( $V{egreso} ):($V{ingreso} == null?($V{egreso} == null?java.math.BigDecimal.ZERO:$V{egreso}.negate()):$V{ingreso})]]></variableExpression>
+		<variableExpression><![CDATA[$V{ingreso} != null && $V{egreso} != null?$V{ingreso}.subtract( $V{egreso}.abs() ):($V{ingreso} == null?($V{egreso} == null?java.math.BigDecimal.ZERO:$V{egreso}.abs().negate()):$V{ingreso})]]></variableExpression>
 	</variable>
 
 		<group  name="CATEGORY" >

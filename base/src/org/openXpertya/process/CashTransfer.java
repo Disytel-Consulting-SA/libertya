@@ -4,10 +4,7 @@ import java.math.BigDecimal;
 import java.util.logging.Level;
 
 import org.openXpertya.model.MCash;
-import org.openXpertya.model.MCashLine;
 import org.openXpertya.model.MPOSJournal;
-import org.openXpertya.util.CLogger;
-import org.openXpertya.util.Msg;
 
 public class CashTransfer extends SvrProcess {
 
@@ -17,6 +14,12 @@ public class CashTransfer extends SvrProcess {
 	private int toCashID = 0;
 	/** Importe a transferir */
 	private BigDecimal amount = BigDecimal.ZERO;
+
+	/**
+	 * Flag para determinar si se debe controlar las tareas relacionadas con las
+	 * cajas diarias para las líneas de caja a crear
+	 */
+	private boolean ignorePOSJournalRelated = false;
 	
 	@Override
 	protected void prepare() {
@@ -56,6 +59,7 @@ public class CashTransfer extends SvrProcess {
         		fromCashID = cashID;
         		toCashID = journal.getC_Cash_ID();
         	}
+        	ignorePOSJournalRelated = true;
         	amount = amount.abs();
         }
         
@@ -64,7 +68,7 @@ public class CashTransfer extends SvrProcess {
 
 	@Override
 	protected String doIt() throws Exception {
-		MCash.transferCash(fromCashID, toCashID, amount, getCtx(), get_TrxName());
+		MCash.transferCash(fromCashID, toCashID, amount, ignorePOSJournalRelated, getCtx(), get_TrxName());
 		return "";
 	}
 

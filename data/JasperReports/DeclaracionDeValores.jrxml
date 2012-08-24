@@ -453,7 +453,7 @@
 					<textElement textAlignment="Right">
 						<font pdfFontName="Helvetica-Bold" size="12" isBold="true" isItalic="false"/>
 					</textElement>
-				<textFieldExpression   class="java.math.BigDecimal"><![CDATA[$P{DECLARACION_VALORES_TOTAL}.subtract($P{CASH_BALANCE} == null?java.math.BigDecimal.ZERO:$P{CASH_BALANCE})]]></textFieldExpression>
+				<textFieldExpression   class="java.math.BigDecimal"><![CDATA[($P{DECLARACION_VALORES_TOTAL} != null?$P{DECLARACION_VALORES_TOTAL}:BigDecimal.ZERO).subtract($P{CASH_BALANCE} == null?java.math.BigDecimal.ZERO:$P{CASH_BALANCE})]]></textFieldExpression>
 				</textField>
 				<textField isStretchWithOverflow="false" pattern="##0.00" isBlankWhenNull="true" evaluationTime="Band" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
@@ -637,7 +637,7 @@
 					<textElement textAlignment="Right" verticalAlignment="Top">
 						<font size="12"/>
 					</textElement>
-				<textFieldExpression   class="java.math.BigDecimal"><![CDATA[$P{DECLARACION_VALORES_TOTAL}]]></textFieldExpression>
+				<textFieldExpression   class="java.math.BigDecimal"><![CDATA[$P{DECLARACION_VALORES_TOTAL} != null?$P{DECLARACION_VALORES_TOTAL}:BigDecimal.ZERO]]></textFieldExpression>
 				</textField>
 			</band>
 		</summary>
