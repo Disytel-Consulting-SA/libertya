@@ -30,6 +30,8 @@ import org.openXpertya.apps.form.VModelHelper.ResultItem;
 import org.openXpertya.apps.form.VModelHelper.ResultItemTableModel;
 import org.openXpertya.cc.CurrentAccountManager;
 import org.openXpertya.cc.CurrentAccountManagerFactory;
+import org.openXpertya.model.AllocationGenerator;
+import org.openXpertya.model.AllocationGenerator.PaymentMediumInfo;
 import org.openXpertya.model.AllocationGeneratorException;
 import org.openXpertya.model.MAllocationHdr;
 import org.openXpertya.model.MBPartner;
@@ -160,6 +162,7 @@ public class VOrdenPagoModel implements TableModelListener {
 
 		// Este metodo retorna el importe en la moneda de la Compañia		
 		public BigDecimal getImporte() {
+			// Es correcto que se convierta a la fecha Actual
 			return MCurrency.currencyConvert(getImporteMonedaOriginal(), getMonedaOriginalID(), C_Currency_ID, new Timestamp(System.currentTimeMillis()), Env.getAD_Org_ID(Env.getCtx()), m_ctx);
 		}
 		
@@ -886,11 +889,12 @@ public class VOrdenPagoModel implements TableModelListener {
 		}
 	}
 	
-	protected class ResultItemFactura extends ResultItem {
+	public class ResultItemFactura extends ResultItem {
 		
 		private BigDecimal manualAmount = new BigDecimal(0);
 		private BigDecimal manualAmtClientCurrency = new BigDecimal(0);
 		private BigDecimal paymentTermDiscount = new BigDecimal(0);
+		
 		private String isexchange = "N";
 		
 		public ResultItemFactura(ResultSet rs) throws Exception {
@@ -930,7 +934,7 @@ public class VOrdenPagoModel implements TableModelListener {
 		}
 
 		public BigDecimal getToPayAmt(boolean withPaymentTermDiscount){
-			BigDecimal toPay = (BigDecimal)getItem(m_facturasTableModel.getOpenAmtColIdx());
+			BigDecimal toPay = (BigDecimal)getItem(m_facturasTableModel.getOpenCurrentAmtColIdx());
 			if(withPaymentTermDiscount){
 				toPay = toPay.subtract(getPaymentTermDiscount());
 			}
@@ -970,6 +974,7 @@ public class VOrdenPagoModel implements TableModelListener {
     protected MCurrency mCurency = MCurrency.get(m_ctx, C_Currency_ID);
     private Integer projectID = 0;
     private Integer campaignID = 0;
+    private BigDecimal exchangeDifference = BigDecimal.ZERO;
     
     protected boolean m_esPagoNormal = true;
     protected BigDecimal m_montoPagoAnticipado = null;
@@ -1023,6 +1028,7 @@ public class VOrdenPagoModel implements TableModelListener {
 		initTrx();
 		m_facturasTableModel = getInvoicesTableModel();
 		m_facturasTableModel.addTableModelListener(this);
+		setPoGenerator(new POCRGenerator(getCtx(), getPOCRType(), getTrxName()));
 	}
 	
 	/**
@@ -1486,6 +1492,7 @@ public class VOrdenPagoModel implements TableModelListener {
 		}
 			
 		Vector<BigDecimal> manualAmounts = new Vector<BigDecimal>();
+		Vector<BigDecimal> manualAmountsOriginal = new Vector<BigDecimal>();
 		Vector<Integer> facturasProcesar = new Vector<Integer>();
 		Vector<ResultItemFactura> resultsProcesar = new Vector<ResultItemFactura>();
 		
@@ -1507,12 +1514,13 @@ public class VOrdenPagoModel implements TableModelListener {
 			if (fac.getManualAmtClientCurrency().signum() > 0) {
 				facturasProcesar.add((Integer)fac.getItem(m_facturasTableModel.getIdColIdx()));
 				manualAmounts.add(fac.getManualAmtClientCurrency());
+				manualAmountsOriginal.add(fac.getManualAmount());
 				resultsProcesar.add(fac);
 			}
 		}
 
 		// Actualización del modelo en base a las facturas efectivas a pagar
-		updateInvoicesModel(facturasProcesar, manualAmounts, resultsProcesar);
+		updateInvoicesModel(facturasProcesar, manualAmounts, manualAmountsOriginal, resultsProcesar);
 		// Actualización de información adicional del modelo
 		updateAditionalInfo();
 		// Calcula las retenciones a aplicarle a la entidad comercial
@@ -1934,7 +1942,6 @@ public class VOrdenPagoModel implements TableModelListener {
 		Trx trx = getTrx();
 		MAllocationHdr hdr = null;
 		boolean saveOk = true;
-		POCRGenerator poGenerator = null; 
 		
 		try {
 			
@@ -1942,8 +1949,8 @@ public class VOrdenPagoModel implements TableModelListener {
 			Vector<MedioPago> pagos = new Vector<MedioPago>( ordenarMediosPago() );
 			
 			// 2. Crear el generador de OPA y actualizar el encabezado de la asignación creada
-			poGenerator = new POCRGenerator(getCtx(), getPOCRType(), getTrxName());
-			hdr = poGenerator.getAllocationHdr();
+			getPoGenerator().setTrxName(getTrxName());
+			hdr = getPoGenerator().createAllocationHdr();
 			updateAllocationHdr(hdr);
 			
 			// 3. Generar los pagos
@@ -2021,7 +2028,6 @@ public class VOrdenPagoModel implements TableModelListener {
 	
 	private int doPostProcesarNormal() {
 		Trx trx = getTrx();
-		poGenerator = null;
 		MAllocationHdr hdr = null;
 		
 		boolean saveOk = true;
@@ -2034,9 +2040,8 @@ public class VOrdenPagoModel implements TableModelListener {
 			makeCustomDebitsCredits(pays);
 			
 			// 2. Se crea el generador de orden de pago.
-			poGenerator = new POCRGenerator(getCtx(), getPOCRType(), getTrxName());
-			
-			hdr = poGenerator.getAllocationHdr();
+			getPoGenerator().setTrxName(getTrxName());
+			hdr = poGenerator.createAllocationHdr();
 			
 			// Se setean las propiedades del encabezado
 			updateAllocationHdr(hdr);
@@ -2169,7 +2174,7 @@ public class VOrdenPagoModel implements TableModelListener {
 		}	
 	}
 	
-	private void actualizarPagarConPagarCurrency(int row, ResultItemFactura rif, int currency_ID_To){
+	protected void actualizarPagarConPagarCurrency(int row, ResultItemFactura rif, int currency_ID_To){
 		BigDecimal manualAmtClientCurrency = rif.getManualAmtClientCurrency();
 		BigDecimal openAmt = ( (m_facturas.get(row).getItem(m_facturasTableModel.getOpenCurrentAmtColIdx())) == null ) ? BigDecimal.ZERO : (BigDecimal) m_facturas.get(row).getItem(m_facturasTableModel.getOpenCurrentAmtColIdx());
 		// Sumar o restar algún monto custom
@@ -2183,11 +2188,11 @@ public class VOrdenPagoModel implements TableModelListener {
 		rif.setManualAmount(manualAmt);
 	}
 	
-	private void actualizarPagarCurrencyConPagar(int row, ResultItemFactura rif, int currency_ID_To){
+	protected void actualizarPagarCurrencyConPagar(int row, ResultItemFactura rif, int currency_ID_To){
 		BigDecimal manualAmt = rif.getManualAmount();
 		BigDecimal openAmt = (BigDecimal) m_facturas.get(row).getItem(m_facturasTableModel.getOpenAmtColIdx());
 		// Sumar o restar algún monto custom
-		BigDecimal paymentTermDiscount = MCurrency.currencyConvert(rif.getPaymentTermDiscount(), currency_ID_To, C_Currency_ID, new Timestamp(System.currentTimeMillis()), 0, getCtx());
+		BigDecimal paymentTermDiscount = MCurrency.currencyConvert(rif.getPaymentTermDiscount(), C_Currency_ID, currency_ID_To, new Timestamp(System.currentTimeMillis()), 0, getCtx());
 		openAmt = openAmt.subtract(paymentTermDiscount);
 		
 		if (manualAmt == null || manualAmt.signum() < 0)
@@ -2808,7 +2813,7 @@ public class VOrdenPagoModel implements TableModelListener {
 	 * @param resultsProcesar
 	 *            resultados de la tabla de facturas
 	 */
-	protected void updateInvoicesModel(Vector<Integer> facturasProcesar, Vector<BigDecimal> manualAmounts, Vector<ResultItemFactura> resultsProcesar){
+	protected void updateInvoicesModel(Vector<Integer> facturasProcesar, Vector<BigDecimal> manualAmounts, Vector<BigDecimal> manualAmountsOriginal, Vector<ResultItemFactura> resultsProcesar){
 		// Por ahora no realiza nada aquí
 	}
 	
@@ -3024,6 +3029,7 @@ public class VOrdenPagoModel implements TableModelListener {
 		retencionIncludedInMedioPago = false;
 		setProjectID(0);
 		setCampaignID(0);
+		getPoGenerator().reset();
 	}
 
 	/**
@@ -3067,7 +3073,8 @@ public class VOrdenPagoModel implements TableModelListener {
 			// Solamente cambio el valor cuando no estamos en el momento de
 			// pagar
 			if(!toPayMoment){
-				fac.setManualAmount(amt);
+				fac.setManualAmtClientCurrency(amt);
+				actualizarPagarConPagarCurrency(i, fac, (Integer) m_facturas.get(i).getItem(m_facturasTableModel.getCurrencyColIdx()));
 				totalAmt = totalAmt.add(amt);
 			}
 		}
@@ -3218,12 +3225,20 @@ public class VOrdenPagoModel implements TableModelListener {
 		return campaignID;
 	}
 	
+	public void setExchangeDifference(BigDecimal exchangeDifference) {
+		this.exchangeDifference = exchangeDifference;
+	}
+	
+	public BigDecimal getExchangeDifference() {
+		return exchangeDifference;
+	}
+
 	/**
 	 * Validación utilizada para valores mostrados por el combo DocumentType de la Ventana Orden de Pago
 	 */
 	public String getDocumentTypeSqlValidation() {
 		return " ((C_Doctype.ad_Org_ID = 0) OR (C_Doctype.ad_Org_ID = " + Env.getAD_Org_ID(m_ctx) + "))" + 
-			   " AND (C_Doctype.IsReceiptSeq = 'N') " +
+			   " AND (C_Doctype.IsPaymentOrderSeq = 'Y') " +
 			   " AND (C_Doctype.DocBaseType = 'APP') ";
 	}
 
@@ -3243,6 +3258,30 @@ public class VOrdenPagoModel implements TableModelListener {
 	public void setPoGenerator(POCRGenerator poGenerator) {
 		this.poGenerator = poGenerator;
 	}
+	
+	
+
+	public BigDecimal calculateExchangeDifference() {
+		HashMap<Integer, BigDecimal> facts = new HashMap<Integer, BigDecimal>();
+		if (m_facturas != null) {
+			for (ResultItem x : m_facturas){
+				if(((ResultItemFactura) x).getManualAmount().compareTo(BigDecimal.ZERO) > 0){
+					facts.put(((Integer)((ResultItemFactura) x).getItem(m_facturasTableModel.getIdColIdx())), ((ResultItemFactura) x).getManualAmount());	
+				}
+			}
+		}	
+		
+		ArrayList<PaymentMediumInfo> pays= new ArrayList<PaymentMediumInfo>();
+		
+		if (m_mediosPago != null) {
+			for (MedioPago mp : m_mediosPago){
+				PaymentMediumInfo payMedInfo = getPoGenerator().new PaymentMediumInfo(mp.getImporteMonedaOriginal(), mp.getMonedaOriginalID(), mp.getDateAcct());
+				pays.add(payMedInfo);
+			}
+		}	
+		return AllocationGenerator.getExchangeDifference(facts, pays, getCtx(), getTrxName());	
+	}
+	
 	
 }
 

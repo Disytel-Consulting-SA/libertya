@@ -544,7 +544,7 @@ public class VOrdenCobroModel extends VOrdenPagoModel {
 		// Open Amt que servirá de base para el cálculo de descuento/recargo a
 		// aplicar
 		BigDecimal openAmt = (BigDecimal) rif.getItem(m_facturasTableModel
-				.getOpenAmtColIdx()); 
+				.getOpenCurrentAmtColIdx()); 
 		// ID de esquema de vencimientos de la factura
 		int paymentTermID = DB
 				.getSQLValue(
@@ -652,14 +652,14 @@ public class VOrdenCobroModel extends VOrdenPagoModel {
 	}
 	
 	@Override
-	protected void updateInvoicesModel(Vector<Integer> facturasProcesar, Vector<BigDecimal> manualAmounts, Vector<ResultItemFactura> resultsProcesar){
+	protected void updateInvoicesModel(Vector<Integer> facturasProcesar, Vector<BigDecimal> manualAmounts, Vector<BigDecimal> manualAmountsOriginal, Vector<ResultItemFactura> resultsProcesar){
 		reciboDeCliente.clear();
 		int totalInvoice = facturasProcesar.size();
 		BigDecimal paymentTermDiscount;
 		for (int i = 0; i < totalInvoice ;i++) {
 //			reciboDeCliente.add(AD_Org_ID,facturasProcesar.get(i),manualAmounts.get(i), true);
 			paymentTermDiscount = resultsProcesar.get(i).getPaymentTermDiscount();
-			reciboDeCliente.add(facturasProcesar.get(i),manualAmounts.get(i), paymentTermDiscount, true);
+			reciboDeCliente.add(facturasProcesar.get(i),manualAmounts.get(i),manualAmountsOriginal.get(i), paymentTermDiscount, true);
 		}
 		
 		// Creo la factura global
@@ -855,7 +855,7 @@ public class VOrdenCobroModel extends VOrdenPagoModel {
 		// Agrego las facturas al generador
 		for (Invoice f : debits) {
 			int invoiceID = f.getInvoiceID();
-			BigDecimal payAmount = f.getManualAmtOriginalCurrency().add(f.getTotalPaymentTermDiscountOriginalCurrency());
+			BigDecimal payAmount = f.getManualAmtOriginal().add(f.getTotalPaymentTermDiscountOriginalCurrency());
 			poGenerator.addInvoice(invoiceID, payAmount);
 		}	
 		
@@ -1406,7 +1406,8 @@ public class VOrdenCobroModel extends VOrdenPagoModel {
 				else{
 					currentManualAmt = toPay;
 				}
-				fac.setManualAmount(currentManualAmt);
+				fac.setManualAmtClientCurrency(currentManualAmt);
+				actualizarPagarConPagarCurrency(i, fac, (Integer) m_facturas.get(i).getItem(m_facturasTableModel.getCurrencyColIdx()));
 				amt = amt.subtract(currentManualAmt);
 			}
 		}

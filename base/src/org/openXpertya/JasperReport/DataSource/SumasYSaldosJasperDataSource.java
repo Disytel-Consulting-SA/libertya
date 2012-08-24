@@ -17,8 +17,6 @@ import org.openXpertya.util.CLogger;
 import org.openXpertya.util.DB;
 import org.openXpertya.util.Env;
 
-import sun.util.logging.resources.logging;
-
 public class SumasYSaldosJasperDataSource implements JRDataSource {
 
 	/** Cuenta inicio				*/

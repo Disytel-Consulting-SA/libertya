@@ -49,6 +49,25 @@ public class POCRGenerator extends AllocationGenerator {
 	/** Tipo de documento */
 	private POCRType type;
 	
+//	/**
+//	 * Constructor del Generador de OP & RC.
+//	 * Crea un generador de OP & RC creando el encabezado de asignación 
+//	 * accesible desde {@link #getAllocationHdr()}.
+//	 * El tipo de documento indica si se debe generar una Orden de Pago o un
+//	 * Recibo de Cliente. Luego a partir de las facturas y medios de pago se
+//	 * determina si la orden o el recibo es adelantado.   
+//	 * @param ctx Contexto para la creación de objetos
+//	 * @param type Tipo de documento a crear
+//	 * @param trxName Transacción de BD a utilizar por el generador
+//	 * @throws AllocationGeneratorException cuando de produce un error en la creación
+//	 * del encabezado de asignación de la OP/RC.
+//	 */
+//	public POCRGenerator(Properties ctx, POCRType type, String trxName) throws AllocationGeneratorException {
+//		super(ctx, trxName);
+//		this.type = type;
+//		createAllocationHdr(getAllocationType());
+//	}
+	
 	/**
 	 * Constructor del Generador de OP & RC.
 	 * Crea un generador de OP & RC creando el encabezado de asignación 
@@ -62,10 +81,9 @@ public class POCRGenerator extends AllocationGenerator {
 	 * @throws AllocationGeneratorException cuando de produce un error en la creación
 	 * del encabezado de asignación de la OP/RC.
 	 */
-	public POCRGenerator(Properties ctx, POCRType type, String trxName) throws AllocationGeneratorException {
+	public POCRGenerator(Properties ctx, POCRType type, String trxName){
 		super(ctx, trxName);
 		this.type = type;
-		createAllocationHdr(getAllocationType());
 	}
 	
 	/**
@@ -226,6 +244,12 @@ public class POCRGenerator extends AllocationGenerator {
 			}
 		}
 		return allocationType;
+	}
+
+	public void reset() {
+		getDebits().clear();
+		getCredits().clear();
+		setAllocationHdr(null);
 	}
 	
 }

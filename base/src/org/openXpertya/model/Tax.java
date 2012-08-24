@@ -29,8 +29,6 @@ import org.openXpertya.util.DB;
 import org.openXpertya.util.Env;
 import org.openXpertya.util.Msg;
 
-import sun.reflect.generics.scope.Scope;
-
 /**
  * Descripción de Clase
  *
