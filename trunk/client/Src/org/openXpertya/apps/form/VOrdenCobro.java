@@ -18,6 +18,7 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
 import javax.swing.AbstractAction;
 import javax.swing.BorderFactory;
 import javax.swing.JComponent;
@@ -1658,7 +1659,9 @@ public class VOrdenCobro extends VOrdenPago {
 														org.jdesktop.layout.LayoutStyle.RELATED)
 												.add(txtTotalPagar2,
 														org.jdesktop.layout.GroupLayout.PREFERRED_SIZE,
-														100, Short.MAX_VALUE))
+														100, Short.MAX_VALUE)
+												.addPreferredGap(
+														org.jdesktop.layout.LayoutStyle.RELATED))												
 										.add(panelSummary,
 												org.jdesktop.layout.GroupLayout.DEFAULT_SIZE,
 												org.jdesktop.layout.GroupLayout.DEFAULT_SIZE,
@@ -1740,15 +1743,14 @@ public class VOrdenCobro extends VOrdenPago {
 				updateSummaryInfo();
 				// Actualizar panel A Cobrar
 				
-				updatePaymentMediumCombo(tenderTypeIndexsCombos.get(jTabbedPane2.getSelectedIndex()),tenderType.getValue());
-
+				updatePaymentMediumCombo(tenderType.getValue());
+				
 				MPOSPaymentMedium selectedPaymentMedium = (MPOSPaymentMedium) tenderTypeIndexsCombos.get(jTabbedPane2.getSelectedIndex()).getSelectedItem();
 				
 				// Si estamos editando no debemos actualizar la info del medio
 				// de pago,
 				// sino si
 				updateDiscount(selectedPaymentMedium);
-				
 			}
 		});
 		// Selecciono uno por default
@@ -1980,6 +1982,7 @@ public class VOrdenCobro extends VOrdenPago {
 								.add(jPanel9Layout
 										.createParallelGroup(
 												org.jdesktop.layout.GroupLayout.TRAILING)
+										.add(lblDifCambio)
 										.add(lblMedioPago2)
 										.add(lblRetenciones2))
 								.addPreferredGap(
@@ -1987,6 +1990,9 @@ public class VOrdenCobro extends VOrdenPago {
 								.add(jPanel9Layout
 										.createParallelGroup(
 												org.jdesktop.layout.GroupLayout.LEADING)
+										.add(txtDifCambio,
+												org.jdesktop.layout.GroupLayout.DEFAULT_SIZE,
+												160, Short.MAX_VALUE)
 										.add(txtMedioPago2,
 												org.jdesktop.layout.GroupLayout.DEFAULT_SIZE,
 												160, Short.MAX_VALUE)
@@ -1999,7 +2005,8 @@ public class VOrdenCobro extends VOrdenPago {
 								.add(jPanel9Layout
 										.createParallelGroup(
 												org.jdesktop.layout.GroupLayout.TRAILING)
-										.add(lblDiscountAmt).add(lblSaldo))
+										.add(lblDiscountAmt)
+										.add(lblSaldo))
 								.addPreferredGap(
 										org.jdesktop.layout.LayoutStyle.RELATED)
 								.add(jPanel9Layout
@@ -2022,6 +2029,15 @@ public class VOrdenCobro extends VOrdenPago {
 						.add(jPanel9Layout
 								.createSequentialGroup()
 								.addContainerGap()
+								.add(jPanel9Layout
+										.createParallelGroup(
+												org.jdesktop.layout.GroupLayout.BASELINE)
+										.add(lblDifCambio)
+										.add(txtDifCambio,
+												org.jdesktop.layout.GroupLayout.PREFERRED_SIZE,
+												org.jdesktop.layout.GroupLayout.DEFAULT_SIZE,
+												org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
+								.addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
 								.add(jPanel9Layout
 										.createParallelGroup(
 												org.jdesktop.layout.GroupLayout.BASELINE)
@@ -2497,16 +2513,17 @@ public class VOrdenCobro extends VOrdenPago {
 	 *            tipo de medio de pago
 	 * @return combo con los medios de pago configurados
 	 */
-	protected void updatePaymentMediumCombo(CComboBox combo, String tenderType) {
-		combo.removeAllItems();		
+	protected void updatePaymentMediumCombo(String tenderType) {
+		tenderTypeIndexsCombos.get(jTabbedPane2.getSelectedIndex()).removeAllItems();		
+		
 		// Creo la lista a partir del tipo de medio de pago
 		List<MPOSPaymentMedium> mediums = getCobroModel().getPaymentMediums(tenderType, (Integer) cboCurrency.getValue());
-
+		
 		if (mediums != null) {
 			for(MPOSPaymentMedium medium: mediums){
-				combo.addItem(medium);
+				tenderTypeIndexsCombos.get(jTabbedPane2.getSelectedIndex()).addItem(medium);
 			}
-			combo = new CComboBox(mediums.toArray());
+			//combo = new CComboBox(mediums.toArray());
 		} 
 	}
 	
@@ -2543,23 +2560,25 @@ public class VOrdenCobro extends VOrdenPago {
 		// de Bancos.
 		// Si tiene banco el MP entonces no puede ser modificado por el usuario.
 		// Obtengo el medio de pago seleccionado
-		MPOSPaymentMedium mp = (MPOSPaymentMedium) cboCreditCardReceiptMedium
-				.getSelectedItem();
-		if (mp.getBank() != null) {
-			cboCreditCardBank.setValue(mp.getBank());
-			cboCreditCardBank.setReadWrite(false);
-			// Si no tiene banco el combo es editable y deberá elegir una
-			// opción.
-		} else {
-			cboCreditCardBank.setValue(null);
-			cboCreditCardBank.setReadWrite(true);
-		}
-		// Cuotas
-		txtCuotasCount.setText("" + plan.getCuotasPago());
-		txtCuotasCount.setEditable(false);
-		// Actualizar datos de plan y medio de pago
-		updateDiscount(mp);
-		refreshPaymentMediumAmountInfo(mp);
+
+		MPOSPaymentMedium mp = (MPOSPaymentMedium) cboCreditCardReceiptMedium.getSelectedItem();
+		if (mp != null){
+			if (mp.getBank() != null) {
+				cboCreditCardBank.setValue(mp.getBank());
+				cboCreditCardBank.setReadWrite(false);
+				// Si no tiene banco el combo es editable y deberá elegir una
+				// opción.
+			} else {
+				cboCreditCardBank.setValue(null);
+				cboCreditCardBank.setReadWrite(true);
+			}
+			// Cuotas
+			txtCuotasCount.setText("" + plan.getCuotasPago());
+			txtCuotasCount.setEditable(false);
+			// Actualizar datos de plan y medio de pago
+			updateDiscount(mp);
+			refreshPaymentMediumAmountInfo(mp);
+		}		
 	}
 
 	/**

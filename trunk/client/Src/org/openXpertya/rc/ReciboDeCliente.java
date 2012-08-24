@@ -158,8 +158,8 @@ public class ReciboDeCliente {
 	 * @param sincronizeInvoice
 	 *            determina si se debe sincronizar la factura con la de la BD
 	 */
-	public void add(Integer invoiceID, BigDecimal manualAmt, boolean sincronizeInvoice){
-		add(invoiceID, manualAmt, BigDecimal.ZERO, sincronizeInvoice);
+	public void add(Integer invoiceID, BigDecimal manualAmt, BigDecimal manualAmtOriginal, boolean sincronizeInvoice){
+		add(invoiceID, manualAmt, manualAmtOriginal, BigDecimal.ZERO, sincronizeInvoice);
 	}
 
 	/**
@@ -176,7 +176,7 @@ public class ReciboDeCliente {
 	 * @param sincronizeInvoice
 	 *            determina si se debe sincronizar la factura con la de la BD
 	 */
-	public void add(Integer invoiceID, BigDecimal manualAmt, BigDecimal paymentTermDiscount, boolean sincronizeInvoice){
+	public void add(Integer invoiceID, BigDecimal manualAmt, BigDecimal manualAmtOriginal, BigDecimal paymentTermDiscount, boolean sincronizeInvoice){
 		// Creo una factura
 		Invoice invoice = new Invoice(getCtx(), getTrxName());
 		invoice.setInvoiceID(invoiceID);
@@ -184,6 +184,7 @@ public class ReciboDeCliente {
 			invoice.sincronize();
 		}
 		invoice.setManualAmt(manualAmt);
+		invoice.setManualAmtOriginal(manualAmtOriginal);
 		invoice.setTotalPaymentTermDiscount(paymentTermDiscount);
 		add(invoice);
 	}
@@ -205,12 +206,15 @@ public class ReciboDeCliente {
 		InvoiceLine realInvoicelineCopied;
 		List<InvoiceLine> globalInvoiceLines = new ArrayList<InvoiceLine>();
 		BigDecimal totalAmt = BigDecimal.ZERO;
+		BigDecimal totalAmtOriginal = BigDecimal.ZERO;
 		BigDecimal totalPTDiscount = BigDecimal.ZERO;
 		for (Invoice realInvoice : getRealInvoices()) {
 			totalAmt = totalAmt.add(realInvoice.getManualAmt());
+			totalAmtOriginal = totalAmtOriginal.add(realInvoice.getManualAmtOriginal());
 			totalPTDiscount = totalPTDiscount.add(realInvoice
 					.getTotalPaymentTermDiscount());
 			getGlobalInvoice().setManualAmt(totalAmt);
+			getGlobalInvoice().setManualAmtOriginal(totalAmtOriginal);
 			getGlobalInvoice().setTotalPaymentTermDiscount(totalPTDiscount);
 			for (InvoiceLine realInvoiceLine : realInvoice.getLines()) {
 				// Clono la línea real 

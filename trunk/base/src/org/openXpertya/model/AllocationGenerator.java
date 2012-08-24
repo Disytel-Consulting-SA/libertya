@@ -5,6 +5,8 @@ import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Properties;
 
@@ -13,6 +15,7 @@ import org.openXpertya.util.CLogger;
 import org.openXpertya.util.DB;
 import org.openXpertya.util.Env;
 import org.openXpertya.util.Msg;
+import org.openXpertya.util.Util;
 
 /**
  * Generador de Asignación. Esta clase es un Wrapper & Helper para la creación de 
@@ -56,7 +59,8 @@ public class AllocationGenerator {
 	/** Encabezado de la Asignación */
 	private MAllocationHdr allocationHdr;
 	
-	private int C_Currency_ID = Env.getContextAsInt( getCtx(), "$C_Currency_ID" );
+	/** Locale AR activo? */
+	public final boolean LOCALE_AR_ACTIVE = CalloutInvoiceExt.ComprobantesFiscalesActivos();
 	
 	/**
 	 * Constructor por defecto. Es privado dado que se
@@ -230,7 +234,13 @@ public class AllocationGenerator {
 	 * @throws AllocationGeneratorException cuando existe un problema en la creación de 
 	 * las líneas de asignación.
 	 */
-	public void generateLines() throws AllocationGeneratorException {
+	public void generateLines() throws AllocationGeneratorException {		
+		try {
+			generateDebitCreditExchangeDifference();
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		
 		// Validaciones requeridas antes de crear las líneas de asignación
 		validate();
 
@@ -311,6 +321,10 @@ public class AllocationGenerator {
 		return trxName;
 	}
 
+	public void setTrxName(String trxName) {
+		this.trxName = trxName;
+	}
+
 	/**
 	 * @return the ctx
 	 */
@@ -349,7 +363,7 @@ public class AllocationGenerator {
 	/**
 	 * @param allocationHdr the allocationHdr to set
 	 */
-	private void setAllocationHdr(MAllocationHdr allocationHdr) {
+	protected void setAllocationHdr(MAllocationHdr allocationHdr) {
 		this.allocationHdr = allocationHdr;
 	}
 
@@ -449,6 +463,22 @@ public class AllocationGenerator {
 			if (document.getConvertedAmount() == null)
 					throw new AllocationGeneratorException(getMsg("NoConversionRate") + ": " + (new MCurrency(getCtx(),document.getCurrencyId(),getTrxName())).getISO_Code() + " - " + (new MCurrency(getCtx(),Env.getContextAsInt( getCtx(), "$C_Currency_ID" ),getTrxName())).getISO_Code());
 			totalAmount = totalAmount.add(document.getConvertedAmount());
+		}
+		return totalAmount;
+	}
+	
+	/**
+	 * Calcula la suma de los montos de imputación de una lista de documentos
+	 * @param documents Lista de documentos involucrados en el cálculo (Débitos o Créditos)
+	 * @return BigDecimal total imputación de la lista
+	 * @throws AllocationGeneratorException 
+	 */
+	private BigDecimal getDocumentsExchangeDifferenceAmount(List<Document> documents) throws AllocationGeneratorException{
+		BigDecimal totalAmount = BigDecimal.ZERO;
+		for (Document document : documents) {
+			if ( (document.getConvertedAmount() == null) || (document.getConvertedAmountToday() == null) ) 
+					throw new AllocationGeneratorException(getMsg("NoConversionRate") + ": " + (new MCurrency(getCtx(),document.getCurrencyId(),getTrxName())).getISO_Code() + " - " + (new MCurrency(getCtx(),Env.getContextAsInt( getCtx(), "$C_Currency_ID" ),getTrxName())).getISO_Code());
+			//totalAmount = totalAmount.add(document.getConvertedAmount().add(document.getConvertedAmount());
 		}
 		return totalAmount;
 	}
@@ -840,12 +870,33 @@ public class AllocationGenerator {
 		}
 		
 		public BigDecimal getConvertedAmount(){
-			return MCurrency.currencyConvert(this.amount, this.currencyId, Env.getContextAsInt( getCtx(), "$C_Currency_ID" ), this.date, Env.getAD_Org_ID(getCtx()), getCtx());
-			//return this.amount;
+			return MCurrency.currencyConvert(this.amount, this.currencyId, Env.getContextAsInt( getCtx(), "$C_Currency_ID" ), getSqlDate(), Env.getAD_Org_ID(getCtx()), getCtx());
+		}
+		
+		public abstract Date getSqlDate();
+
+		public BigDecimal getConvertedAmountToday(){
+			return MCurrency.currencyConvert(this.amount, this.currencyId, Env.getContextAsInt( getCtx(), "$C_Currency_ID" ), Env.getContextAsDate(getCtx(), "#Date"), Env.getAD_Org_ID(getCtx()), getCtx());
 		}
 
 		public Integer getCurrencyId() {
 			return currencyId;
+		}
+
+		public Integer getId() {
+			return id;
+		}
+
+		public void setId(Integer id) {
+			this.id = id;
+		}
+
+		public BigDecimal getAmount() {
+			return amount;
+		}
+
+		public void setAmount(BigDecimal amount) {
+			this.amount = amount;
 		}
 	}
 	
@@ -868,8 +919,8 @@ public class AllocationGenerator {
 			return DB.getSQLValue(getTrxName(), "SELECT C_Currency_ID FROM C_Invoice WHERE C_Invoice_ID = ?", id);
 		}
 		
-		private Timestamp getSqlDate() {
-			return DB.getSQLValueTimestamp(getTrxName(), "SELECT DateInvoiced FROM C_Invoice WHERE C_Invoice_ID = "+ id);
+		public Timestamp getSqlDate() {
+			return DB.getSQLValueTimestamp(getTrxName(), "SELECT DateAcct FROM C_Invoice WHERE C_Invoice_ID = "+ id);
 		}
 
 		@Override
@@ -915,8 +966,8 @@ public class AllocationGenerator {
 			return DB.getSQLValue(getTrxName(), "SELECT C_Currency_ID FROM C_CashLine WHERE C_CashLine_ID = ?", id);
 		}
 		
-		private Timestamp getSqlDate() {
-			return DB.getSQLValueTimestamp(getTrxName(), "SELECT StatementDate FROM C_Cash c INNER JOIN C_CashLine cl ON c.C_Cash_ID = cl.C_Cash_ID WHERE C_CashLine_ID = "+ id);
+		public Timestamp getSqlDate() {
+			return DB.getSQLValueTimestamp(getTrxName(), "SELECT DateAcct FROM C_Cash c INNER JOIN C_CashLine cl ON c.C_Cash_ID = cl.C_Cash_ID WHERE C_CashLine_ID = "+ id);
 		}
 		
 		@Override
@@ -949,8 +1000,8 @@ public class AllocationGenerator {
 			return DB.getSQLValue(getTrxName(), "SELECT C_Currency_ID FROM C_Payment WHERE C_Payment_ID = ?", id);
 		}
 		
-		private Timestamp getSqlDate() {
-			return DB.getSQLValueTimestamp(getTrxName(), "SELECT DateTrx FROM C_Payment WHERE C_Payment_ID = "+ id);
+		public Timestamp getSqlDate() {
+			return DB.getSQLValueTimestamp(getTrxName(), "SELECT DateAcct FROM C_Payment WHERE C_Payment_ID = "+ id);
 		}
 		
 		@Override
@@ -963,6 +1014,397 @@ public class AllocationGenerator {
 			allocationLine.setC_Payment_ID(id);
 		}
 	}
+	
+	public static BigDecimal getExchangeDifference(HashMap<Integer, BigDecimal> facts, ArrayList<PaymentMediumInfo> pays, Properties ctx, String trxName) {
+		BigDecimal sumaPayments = new BigDecimal(0);
+		BigDecimal sumaPaymentsToday = new BigDecimal(0);
+		for (PaymentMediumInfo mp : pays){
+			sumaPaymentsToday = sumaPaymentsToday.add(MCurrency.currencyConvert(mp.getAmount(), mp.getCurrencyId(), Env.getContextAsInt(ctx, "$C_Currency_ID"), new Timestamp(System.currentTimeMillis()), Env.getAD_Org_ID(ctx), ctx));
+			sumaPayments = sumaPayments.add(MCurrency.currencyConvert(mp.getAmount(), mp.getCurrencyId(), Env.getContextAsInt(ctx, "$C_Currency_ID"), mp.getDate(), Env.getAD_Org_ID(ctx), ctx));
+		}
+		
+		BigDecimal sumInvoices = new BigDecimal(0);
+		BigDecimal sumInvoicesToday = new BigDecimal(0);
+		for (Integer id : facts.keySet()){
+			MInvoice invoice = new MInvoice(ctx, id, trxName);
+		
+			sumInvoicesToday = sumInvoicesToday.add(MCurrency.currencyConvert(facts.get(id), invoice.getC_Currency_ID(), Env.getContextAsInt(ctx, "$C_Currency_ID"), new Timestamp(System.currentTimeMillis()), Env.getAD_Org_ID(ctx), ctx));
+			sumInvoices = sumInvoices.add(MCurrency.currencyConvert(facts.get(id), invoice.getC_Currency_ID(), Env.getContextAsInt(ctx, "$C_Currency_ID"), invoice.getDateAcct(), Env.getAD_Org_ID(ctx), ctx));
+		}
+		return sumaPayments.add(sumInvoicesToday).subtract(sumaPaymentsToday).subtract(sumInvoices);
+	}
+	
+	public HashMap<Integer, BigDecimal> generateDebitsForExchangeDifference() {
+		HashMap<Integer, BigDecimal> facts = new HashMap<Integer, BigDecimal>();
+		if (this.getDebits() != null) {
+			for (Document x : this.getDebits()){
+				if(x.getAmount().compareTo(BigDecimal.ZERO) > 0){
+					facts.put(x.getId(), x.getAmount());	
+				}
+			}
+		}	
+		return facts;
+	}
+	
+	public ArrayList<PaymentMediumInfo> generateCreditsForExchangeDifference() {
+		ArrayList<PaymentMediumInfo> pays = new ArrayList<PaymentMediumInfo>();
+		if (this.getDebits() != null) {
+			for (Document doc : this.getCredits()){
+				pays.add(new PaymentMediumInfo(doc.getAmount(), doc.getCurrencyId(), doc.getSqlDate()));
+			}
+		}	
+		return pays;	
+	}
+	
+	public void generateDebitCreditExchangeDifference() throws Exception{
+		BigDecimal amt = getExchangeDifference(generateDebitsForExchangeDifference(), generateCreditsForExchangeDifference(), ctx, trxName);
+		MInvoice credit = null;
+		MInvoice debit = null;
+		MInvoice inv = null; 
+		MInvoiceLine invoiceLine = null; 
+		boolean isCredit;
+		boolean createInvoice;
+		MTax tax = MTax.getTaxExemptRate(getCtx(),getTrxName());
+		if(amt.compareTo(BigDecimal.ZERO) != 0){
+			isCredit = amt.compareTo(BigDecimal.ZERO) < 0;
+			createInvoice = isCredit?credit == null:debit==null;
+			if(createInvoice){
+				// Crear la factura
+				inv = createCreditDebitInvoice(isCredit);
+				
+				Document doc = getDebits().get(getDebits().size() - 1);
+				MInvoice debInv = new MInvoice(ctx, doc.getId(), trxName);
+				
+				inv.setC_Project_ID(debInv.getC_Project_ID());
+				inv.setC_Campaign_ID(debInv.getC_Campaign_ID());
+				if(!inv.save()){
+					throw new Exception("Can't create " + (isCredit ? "credit" : "debit")
+							+ " document for discounts. Original Error: "+CLogger.retrieveErrorAsString());
+				}
+				if(isCredit){
+					credit = inv;
+				}
+				else{
+					debit = inv;
+				}
+			}
+			// Si es crédito 
+			inv = isCredit?credit:debit;
+			// Creo la línea de la factura
+			invoiceLine = createInvoiceLine(inv,isCredit,amt,tax);				
+			if(!invoiceLine.save()){
+				throw new Exception("Can't create " + (isCredit ? "credit" : "debit")
+						+ " document line for discounts. Original Error: "+CLogger.retrieveErrorAsString());  
+			}
+		}
+		// - Si es hay crédito lo guardo como un medio de pago
+		// - Si es débito lo guardo donde se encuentran las facturas
+		if(credit != null){			
+			// Completar el crédito en el caso que no requiera impresión fiscal,
+			// ya que si requieren se realiza al final del procesamiento
+			if(!needFiscalPrint(credit)){
+				processDocument(credit, MInvoice.DOCACTION_Complete);
+			}
+			
+			this.addCreditDocument(credit.getID(), amt, AllocationDocumentType.INVOICE);
+		}
+		if(debit != null){
+			// Completar el crédito en el caso que no requiera impresión fiscal,
+			// ya que si requieren se realiza al final del procesamiento
+			if(!needFiscalPrint(debit)){
+				processDocument(debit, MInvoice.DOCACTION_Complete);
+			}
+
+			this.addDebitDocument(debit.getID(), amt, AllocationDocumentType.INVOICE);
+		}
+	}
+	
+	/**
+	 * Creo una factura como crédito o débito, dependiendo configuración.
+	 * 
+	 * @param credit
+	 *            true si se debe crear un crédito o false si es débito
+	 * @return factura creada
+	 * @throws Exception en caso de error
+	 */
+	protected MInvoice createCreditDebitInvoice(boolean credit) throws Exception{
+		MInvoice invoice = new MInvoice(getCtx(), 0, getTrxName());
+		invoice.setBPartner(new MBPartner(getCtx(),getAllocationHdr().getC_BPartner_ID(), getTrxName()));
+		// Setear el tipo de documento
+		invoice = setDocType(invoice, credit);
+		
+		if(LOCALE_AR_ACTIVE){
+			invoice = addLocaleARData(invoice, credit);
+		}
+		
+		// Se indica que no se debe crear una línea de caja al completar la factura ya
+		// que es el propio TPV el que se encarga de crear los pagos e imputarlos con
+		// la factura (esto soluciona el problema de líneas de caja duplicadas que 
+		// se había detectado).
+		invoice.setCreateCashLine(false);
+		
+		invoice.setDocAction(MInvoice.DOCACTION_Complete);
+		invoice.setDocStatus(MInvoice.DOCSTATUS_Drafted);
+		// Seteo el bypass de la factura para que no chequee el saldo del
+		// cliente porque ya lo chequea el tpv
+		invoice.setCurrentAccountVerified(true);
+		// Seteo el bypass para que no actualice el crédito del cliente ya
+		// que se realiza luego al finalizar las operaciones
+		invoice.setUpdateBPBalance(false);
+		return invoice;
+	}
+	
+	/**
+	 * Crea una línea de factura de la factura y datos parámetro.
+	 * 
+	 * @param invoice
+	 *            factura
+	 * @param isCredit
+	 *            true si estamos creando un crédito, false caso contrario
+	 * @param amt
+	 *            monto de la línea
+	 * @param tax
+	 *            impuesto para la línea
+	 * @return línea de la factura creada
+	 * @throws Excepción
+	 *             en caso de error
+	 */
+	public MInvoiceLine createInvoiceLine(MInvoice invoice, boolean isCredit, BigDecimal amt, MTax tax) throws Exception{
+		
+		MInvoiceLine invoiceLine = new MInvoiceLine(invoice);
+		invoiceLine.setQty(1);
+		// Setear el precio con el monto del descuento
+		amt = amt.abs();
+
+		invoiceLine.setPriceEntered(amt);
+		invoiceLine.setPriceActual(amt);
+		invoiceLine.setPriceList(amt);
+		invoiceLine.setC_Tax_ID(tax.getID());
+		invoiceLine.setLineNetAmt();
+		invoiceLine.setC_Project_ID(invoice.getC_Project_ID());
+		// Setear el artículo
+		String valueProduct = MPreference.GetCustomPreferenceValue("DIF_CAMBIO_ARTICULO");
+
+		if(Util.isEmpty(valueProduct,true)){
+			throw new Exception(
+					"Falta configuracion de articulos para crear créditos/débitos para descuentos/recargos");
+		}
+		Integer productID = DB.getSQLValue(getTrxName(), "SELECT M_Product_ID FROM M_Product WHERE value = ?", valueProduct);
+		invoiceLine.setM_Product_ID(productID);
+		return invoiceLine;
+	}
+	
+	/**
+	 * Indica si la factura debe ser emitida mediante un controlador fiscal.
+	 * @param invoice Factura a evaluar.
+	 */
+	private boolean needFiscalPrint(MInvoice invoice) {
+		return MDocType.isFiscalDocType(invoice.getC_DocTypeTarget_ID())
+				&& LOCALE_AR_ACTIVE;
+	}
+	
+	/**
+	 * Procesa la factura en base a un docaction parámetro
+	 * 
+	 * @param invoice
+	 *            factura
+	 * @param docAction
+	 *            acción
+	 * @throws Exception
+	 *             si hubo error al realizar el procesamiento o al guardar
+	 */
+	public void processDocument(MInvoice invoice, String docAction) throws Exception{
+		// Procesar el documento
+		if(!invoice.processIt(docAction)){
+			throw new Exception(invoice.getProcessMsg());
+		}
+		// Guardar
+		if(!invoice.save()){
+			throw new Exception(CLogger.retrieveErrorAsString());
+		}
+	}
+	
+	/**
+	 * Agregar la info de locale ar necesaria a la factura con localización
+	 * argentina.
+	 * 
+	 * @param invoice
+	 *            factura
+	 * @param credit true si estamos ante un crédito, false si es débito
+	 * @return factura parámetro con toda la info localeAr necesaria cargada
+	 * @throws Exception en caso de error
+	 */
+	protected MInvoice addLocaleARData(MInvoice invoice, boolean credit) throws Exception{
+		MBPartner bPartner = new MBPartner(getCtx(),invoice.getC_BPartner_ID(), getTrxName());
+		
+		MLetraComprobante letraCbte = getLetraComprobante(bPartner);
+		// Se asigna la letra de comprobante, punto de venta y número de comprobante
+		// a la factura creada.
+		invoice.setC_Letra_Comprobante_ID(letraCbte.getID());
+		// Nro de comprobante.
+		Integer nroComprobante = CalloutInvoiceExt
+				.getNextNroComprobante(invoice.getC_DocTypeTarget_ID());
+		if (nroComprobante != null)
+			invoice.setNumeroComprobante(nroComprobante);
+		
+		// Asignación de CUIT en caso de que se requiera.
+		
+		String cuit = bPartner.getTaxID();
+		invoice.setCUIT(cuit);
+		
+		// Setear una factura original al crédito que estamos creando
+		if(credit && LOCALE_AR_ACTIVE){
+			// Obtengo la primer factura como random (la impresora fiscal puede tirar un error si no existe una factura original seteada)
+			if (hasDebits()){
+				getDebits().get(0);
+				Invoice firstInvoice = (Invoice) getDebits().get(0);
+				if(firstInvoice != null){
+					invoice.setC_Invoice_Orig_ID(firstInvoice.id);
+				}	
+			}
+		}
+		return invoice;
+	}
+	
+	/**
+	 * Obtener la letra del comprobante
+	 * 
+	 * @return letra del comprobante
+	 * @throws Exception
+	 *             si la compañía o el cliente no tienen configurado una
+	 *             categoría de IVA y si no existe una Letra que los corresponda
+	 */
+	protected MLetraComprobante getLetraComprobante(MBPartner bPartner) throws Exception{
+		Integer categoriaIVAclient = CalloutInvoiceExt.darCategoriaIvaClient();
+		Integer categoriaIVACustomer = bPartner.getC_Categoria_Iva_ID();
+		// Se validan las categorias de IVA de la compañia y el cliente.
+		if (categoriaIVAclient == null || categoriaIVAclient == 0) {
+			throw new Exception(getMsg("ClientWithoutIVAError"));
+		} else if (categoriaIVACustomer == null || categoriaIVACustomer == 0) {
+			throw new Exception(getMsg("BPartnerWithoutIVAError"));
+		}
+		// Se obtiene el ID de la letra del comprobante a partir de las categorias de IVA.
+		Integer letraID = CalloutInvoiceExt.darLetraComprobante(categoriaIVACustomer, categoriaIVAclient);
+		if (letraID == null || letraID == 0){
+			throw new Exception(getMsg("LetraCalculationError"));
+		}
+		// Se obtiene el PO de letra del comprobante.
+		return new MLetraComprobante(getCtx(), letraID, getTrxName());
+	}
+	
+	/**
+	 * Obtener la clave del tipo de documento real en base al general y si el
+	 * comprobante que estoy creando es un crédito o un débito
+	 * 
+	 * @param generalDocType
+	 *            tipo de documento general
+	 * @param isCredit
+	 *            true si estamos ante un crédito, false caso contrario
+	 * @return
+	 */
+	protected String getRealDocTypeKey(boolean isCredit){
+		// La lista de tipos de documento generales tiene como value los doc
+		// type keys de los tipos de documento
+		String docTypeKey = null;
+		// Para Locale AR, Abono de Cliente es Nota de Crédito o Nota de Débito
+		// dependiendo si estamos creando un crédito o un débito respectivamente 
+		if(LOCALE_AR_ACTIVE){
+			// Nota de Crédito
+			if (isCredit) {	docTypeKey = MDocType.DOCTYPE_CustomerCreditNote; }
+			// Nota de Débito
+			else{ docTypeKey = MDocType.DOCTYPE_CustomerDebitNote; }
+		}
+		else{
+			// Nota de Crédito
+			if (isCredit) {	docTypeKey = "CreditDocumentType"; }
+			// Nota de Débito
+			else{ docTypeKey = "DebitDocumentType";	}
+		}
+		return docTypeKey;
+	}
+	
+	/**
+	 * Setea el tipo de documento a la factura parámetro
+	 * 
+	 * @param invoice
+	 *            factura a modificar
+	 * @param isCredit
+	 *            booleano que determina si lo que estoy creando es un débito o
+	 *            un crédito
+	 * @return factura con el tipo de doc seteada
+	 */
+	protected MInvoice setDocType(MInvoice invoice, boolean isCredit) throws Exception{
+		MDocType documentType = null;
+
+		// Obtener la clave del tipo de documento a general
+		String docTypeKey = getRealDocTypeKey(isCredit);
+		// Si está activo locale_ar entonces se debe obtener en base al pto de venta y la letra
+		if(LOCALE_AR_ACTIVE){
+			MLetraComprobante letra = getLetraComprobante(new MBPartner(getCtx(), invoice.getC_BPartner_ID(), getTrxName()));
+			Integer posNumber = Integer.valueOf(MPreference.GetCustomPreferenceValue("DIF_CAMBIO_PTO_VENTA"));
+
+			if(Util.isEmpty(posNumber,true)) throw new Exception(getMsg("NotExistPOSNumber"));
+			// Se obtiene el tipo de documento para la factura.
+			documentType = MDocType.getDocType(getCtx(), docTypeKey,letra.getLetra(), posNumber, getTrxName());
+			if (documentType == null) {
+				throw new Exception(Msg.getMsg(getCtx(),
+						"NonexistentPOSDocType", new Object[] { letra,
+								posNumber }));
+			}
+			if(!Util.isEmpty(posNumber,true)){
+				invoice.setPuntoDeVenta(posNumber);
+			}
+		}
+		else{
+			// Tipo de documento en base a la key
+			documentType = MDocType.getDocType(getCtx(), docTypeKey, getTrxName()); 
+		}
+		
+		invoice.setC_DocTypeTarget_ID(documentType.getID());
+		return invoice;
+	}
+	
+	public class PaymentMediumInfo{
+		private BigDecimal amount;
+		private Integer currencyId;
+		private Date date;
+		
+		/**
+		 * @param id ID de la factura
+		 * @param amount Monto a imputar
+		 * @param date Fecha a imputar
+		 */
+		public PaymentMediumInfo(BigDecimal amount, Integer currencyId, Date date) {
+			this.amount = amount;
+			this.currencyId = currencyId;
+			this.date = date;
+		}
+
+		public BigDecimal getAmount() {
+			return amount;
+		}
+
+		public void setAmount(BigDecimal amount) {
+			this.amount = amount;
+		}
+
+		public Integer getCurrencyId() {
+			return currencyId;
+		}
+
+		public void setCurrencyId(Integer currencyId) {
+			this.currencyId = currencyId;
+		}
+
+		public Date getDate() {
+			return date;
+		}
+
+		public void setDate(Date date) {
+			this.date = date;
+		}
+	}
+	
 }
 
 

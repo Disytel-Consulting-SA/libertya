@@ -33,6 +33,13 @@ public class Invoice extends DiscountableDocument implements Serializable{
 	 */
 	private BigDecimal manualAmt;
 	
+	/**
+	 * Importe manual que realmente se desea pagar de esta factura (debería ser
+	 * menor que el invoiceopen de la factura real)
+	 * El valor se encuentra expresado en la moneda que se intenta pagar (USD, ARS....)
+	 */
+	private BigDecimal manualAmtOriginal;
+	
 	/** Contexto */
 	private Properties ctx;
 	
@@ -77,6 +84,7 @@ public class Invoice extends DiscountableDocument implements Serializable{
 		setCtx(ctx);
 		setTrxName(trxName);
 		setManualAmt(BigDecimal.ZERO);
+		setManualAmtOriginal(BigDecimal.ZERO);
 	}
 
 	/**
@@ -139,11 +147,12 @@ public class Invoice extends DiscountableDocument implements Serializable{
 	protected void loadData(){
 		setDate(getRealInvoice().getDateInvoiced());
 		if(C_Currency_ID != getRealInvoice().getC_Currency_ID()){
-			setManualAmt(MCurrency.currencyConvert(getRealInvoice().getGrandTotal(), getRealInvoice().getC_Currency_ID(), C_Currency_ID, getRealInvoice().getDateInvoiced(), getRealInvoice().getAD_Org_ID(), getCtx()));
+			setManualAmt(MCurrency.currencyConvert(getRealInvoice().getGrandTotal(), getRealInvoice().getC_Currency_ID(), C_Currency_ID, getRealInvoice().getDateAcct(), getRealInvoice().getAD_Org_ID(), getCtx()));
 		}
 		else{
 			setManualAmt(getRealInvoice().getGrandTotal());	
 		}
+		setManualAmtOriginal(getRealInvoice().getGrandTotal());
 	}
 	
 	/**
@@ -226,11 +235,12 @@ public class Invoice extends DiscountableDocument implements Serializable{
 		return manualAmt;
 	}
 	
-	public BigDecimal getManualAmtOriginalCurrency() {
-		if(C_Currency_ID != getRealInvoice().getC_Currency_ID()){
-			return MCurrency.currencyConvert(manualAmt, C_Currency_ID, getRealInvoice().getC_Currency_ID(), getRealInvoice().getDateInvoiced(), getRealInvoice().getAD_Org_ID(), getCtx());	
-		}
-		return manualAmt;
+	public void setManualAmtOriginal(BigDecimal manualAmtOriginal) {
+		this.manualAmtOriginal = manualAmtOriginal;
+	}
+
+	public BigDecimal getManualAmtOriginal() {
+		return manualAmtOriginal;
 	}
 
 	public void setLines(List<InvoiceLine> lines) {

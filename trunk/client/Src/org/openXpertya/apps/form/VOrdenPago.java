@@ -324,12 +324,14 @@ public class VOrdenPago extends CPanel implements FormPanel,ActionListener,Table
         cmdEliminar = new javax.swing.JButton();
         cmdEditar = new javax.swing.JButton();
         txtSaldo = new javax.swing.JTextField();
+        txtDifCambio = new javax.swing.JTextField();
         lblSaldo = new javax.swing.JLabel();
         txtMedioPago2 = new javax.swing.JTextField();
         txtRetenciones2 = new javax.swing.JTextField();
         txtTotalPagar2 = new javax.swing.JTextField();
         lblTotalPagar2 = new javax.swing.JLabel();
         lblRetenciones2 = new javax.swing.JLabel();
+        lblDifCambio = new javax.swing.JLabel();
         lblMedioPago2 = new javax.swing.JLabel();
         cmdGrabar = new javax.swing.JButton();
         jTabbedPane2 = new javax.swing.JTabbedPane();
@@ -528,6 +530,8 @@ public class VOrdenPago extends CPanel implements FormPanel,ActionListener,Table
         });
 
         txtSaldo.setEditable(false);
+        
+        txtDifCambio.setEditable(false);
 
         lblSaldo.setText("SALDO");
 
@@ -540,6 +544,8 @@ public class VOrdenPago extends CPanel implements FormPanel,ActionListener,Table
         lblTotalPagar2.setText("TOTAL A PAGAR");
 
         lblRetenciones2.setText("RETENCIONES");
+        
+        lblDifCambio.setText("Diferecia de Cambio");
 
         lblMedioPago2.setText("MEDIO DE PAGO");
 
@@ -1190,7 +1196,12 @@ public class VOrdenPago extends CPanel implements FormPanel,ActionListener,Table
                 .add(jPanel4Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
                     .add(jPanel4Layout.createSequentialGroup()
                         .add(jPanel4Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.TRAILING)
-                            .add(lblTotalPagar2)
+                       		.add(jPanel4Layout.createSequentialGroup()
+                            .add(lblDifCambio)
+                            .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                            .add(txtDifCambio)
+                            .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED, 72, Short.MAX_VALUE)
+                            .add(lblTotalPagar2))
                             .add(jPanel4Layout.createSequentialGroup()
                                 .add(cmdEliminar)
                                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
@@ -1204,6 +1215,7 @@ public class VOrdenPago extends CPanel implements FormPanel,ActionListener,Table
                             .add(org.jdesktop.layout.GroupLayout.TRAILING, txtRetenciones2, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 75, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                             .add(org.jdesktop.layout.GroupLayout.TRAILING, txtTotalPagar2, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 75, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                             .add(org.jdesktop.layout.GroupLayout.TRAILING, txtMedioPago2, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 75, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                            .add(org.jdesktop.layout.GroupLayout.TRAILING, txtDifCambio, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 75, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                             .add(org.jdesktop.layout.GroupLayout.TRAILING, txtSaldo, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 75, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)))
                     .add(jScrollPane2, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 344, Short.MAX_VALUE))
                 .addContainerGap())
@@ -1223,8 +1235,10 @@ public class VOrdenPago extends CPanel implements FormPanel,ActionListener,Table
                             .add(txtSaldo, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                         .add(jPanel4Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
-                            .add(txtTotalPagar2, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                            .add(lblTotalPagar2))
+                            .add(lblTotalPagar2)
+                            .add(lblDifCambio)
+                            .add(txtDifCambio)
+                            .add(txtTotalPagar2, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                         .add(jPanel4Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
                             .add(txtRetenciones2, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
@@ -1813,6 +1827,8 @@ public class VOrdenPago extends CPanel implements FormPanel,ActionListener,Table
     		
     		m_model.setProjectID(getC_Project_ID() == null?0:getC_Project_ID());
     		m_model.setCampaignID(getC_Campaign_ID() == null?0:getC_Campaign_ID());
+    		BigDecimal exchangeDifference = getModel().calculateExchangeDifference();
+    		m_model.setExchangeDifference( exchangeDifference == null?BigDecimal.ZERO:exchangeDifference);
     		
     		int status = m_model.doPostProcesar();
     		
@@ -1923,6 +1939,7 @@ public class VOrdenPago extends CPanel implements FormPanel,ActionListener,Table
     protected javax.swing.JLabel lblProject;
     protected javax.swing.JLabel lblCurrency;
     protected javax.swing.JLabel lblRetenciones2;
+    protected javax.swing.JLabel lblDifCambio;
     protected javax.swing.JLabel lblSaldo;
     protected javax.swing.JLabel lblTotalPagar1;
     protected javax.swing.JLabel lblTotalPagar2;
@@ -1948,6 +1965,7 @@ public class VOrdenPago extends CPanel implements FormPanel,ActionListener,Table
     protected javax.swing.JTextField txtMedioPago2;
     protected javax.swing.JTextField txtRetenciones2;
     protected javax.swing.JTextField txtSaldo;
+    protected javax.swing.JTextField txtDifCambio;
     protected JFormattedTextField txtTotalPagar1;
     protected javax.swing.JTextField txtTotalPagar2;
     protected JFormattedTextField txtTransfImporte;
@@ -2081,6 +2099,7 @@ public class VOrdenPago extends CPanel implements FormPanel,ActionListener,Table
 		txtTotalPagar1.setText("");
 		
 		txtSaldo.setText("");
+		txtDifCambio.setText("");
 		txtTotalPagar2.setText("");
 		txtRetenciones2.setText("");
 		txtMedioPago2.setText("");
@@ -2128,6 +2147,7 @@ public class VOrdenPago extends CPanel implements FormPanel,ActionListener,Table
 		// TableCellRenderer cellRend = tblFacturas.getDefaultRenderer(Float.class);
 		// tblFacturas.setDefaultRenderer(Number.class, cellRend);
 		tblFacturas.getColumnModel().getColumn(tblFacturas.getColumnModel().getColumnCount() - 1).setCellRenderer(new MyNumberTableCellRenderer(m_model.getNumberFormat()));
+		tblFacturas.getColumnModel().getColumn(tblFacturas.getColumnModel().getColumnCount() - 2).setCellRenderer(new MyNumberTableCellRenderer(m_model.getNumberFormat()));
 		// Deshabilito los atajos F4 y F8 del jtable ya que sino me los toma ahí
 		tblFacturas.getInputMap(JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT).put(
 	              KeyStroke.getKeyStroke(java.awt.event.KeyEvent.VK_F4,0), "none");
@@ -2289,6 +2309,7 @@ public class VOrdenPago extends CPanel implements FormPanel,ActionListener,Table
 		lblTotalPagar2.setText(Msg.getElement(m_ctx, "Amount"));
 		lblMedioPago2.setText(Msg.getElement(m_ctx, "TenderType"));
 		lblRetenciones2.setText(Msg.getElement(m_ctx, "C_Withholding_ID"));
+		lblDifCambio.setText(Msg.getMsg(m_ctx, "ExchangeDifference"));
 		
 		rInvoiceAll.setText(Msg.translate(m_ctx, "SearchAND"));
 		//rInvoiceDate.setText(Msg.translate(m_ctx, "DueStart"));
@@ -2662,6 +2683,7 @@ public class VOrdenPago extends CPanel implements FormPanel,ActionListener,Table
 		BigDecimal sumaMediosPago = m_model.getSumaMediosPago();
 		
 		txtSaldo.setText(numberFormat(m_model.getSaldoMediosPago()));
+		txtDifCambio.setText(numberFormat(getModel().calculateExchangeDifference()));
 		txtTotalPagar2.setText(numberFormat(m_model.getSumaTotalPagarFacturas()));
 		txtRetenciones2.setText(numberFormat(m_model.getSumaRetenciones()));
 		txtMedioPago2.setText(numberFormat(sumaMediosPago));
