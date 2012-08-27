@@ -111,6 +111,8 @@ public class OrdenPagoDataSource {
 			M_Document document = (M_Document)record;
 			if (name.toUpperCase().equals("DOCUMENTNO"))	{
 				return document.documentNo;
+			} else if (name.toUpperCase().equals("CURRENCY"))	{
+				return document.currency;
 			} else if (name.toUpperCase().equals("GRANDTOTALAMT"))	{
 				return document.grandTotalAmt;
 			} else if (name.toUpperCase().equals("ALLOCATEDAMT"))	{
@@ -133,16 +135,18 @@ public class OrdenPagoDataSource {
 				 +"		WHEN dt.DocBaseType = 'API' THEN 'FAC ' || i.DocumentNo "
 				 +"     ELSE i.DocumentNo " 
 				 +"	 END AS DocumentNo, "
-				 +"	 currencyconvert(i.grandtotal, i.c_currency_id, ah.c_currency_id, ah.datetrx::timestamp with time zone, NULL::integer, ah.ad_client_id, ah.ad_org_id) AS GrandTotalAmt, "
-				 +"	 SUM(al.amount + al.discountamt + al.writeoffamt) AS AllocatedAmt, "
-				 //+"	 SUM(currencyconvert(al.amount + al.discountamt + al.writeoffamt, i.c_currency_id, ah.c_currency_id, ah.datetrx::timestamp with time zone, NULL::integer, ah.ad_client_id, ah.ad_org_id)) AS AllocatedAmt, "
-			 	 +"	 currencyconvert(invoiceopen(i.C_Invoice_ID,0), i.c_currency_id, ah.c_currency_id, ah.datetrx::timestamp with time zone, NULL::integer, ah.ad_client_id, ah.ad_org_id) AS OpenAmt "		
+				 +"	 cu.iso_code as Currency, "
+				 +"	 i.grandtotal AS GrandTotalAmt, "
+				 //+"	 SUM(al.amount + al.discountamt + al.writeoffamt) AS AllocatedAmt, "
+				 +"	 SUM(currencyconvert(al.amount + al.discountamt + al.writeoffamt, ah.c_currency_id, i.c_currency_id, ah.datetrx::timestamp with time zone, NULL::integer, ah.ad_client_id, ah.ad_org_id)) AS AllocatedAmt, "
+			 	 +"	 invoiceopen(i.C_Invoice_ID,0) AS OpenAmt "		
 				 +"FROM c_allocationhdr ah "
 				 +"  JOIN c_allocationline al ON ah.c_allocationhdr_id = al.c_allocationhdr_id "
 				 +"  JOIN c_invoice i ON i.C_Invoice_ID = al.C_Invoice_ID "	
+				 +"  JOIN c_currency cu ON i.C_Currency_ID = cu.C_Currency_ID "
 				 +"  JOIN C_DocType dt ON dt.C_DocType_ID = i.C_DocType_ID "
 				 +"WHERE ah.C_AllocationHdr_ID = ? "	
-				 +"GROUP BY al.C_Invoice_ID, i.DocumentNo, dt.DocBaseType, GrandTotalAmt, OpenAmt ";
+				 +"GROUP BY al.C_Invoice_ID, i.DocumentNo, dt.DocBaseType, GrandTotalAmt, OpenAmt, Currency ";
 			return sql;
 		}
 
@@ -157,13 +161,15 @@ public class OrdenPagoDataSource {
 		private class M_Document {
 			
 			protected String documentNo;
+			protected String currency;
 			protected BigDecimal grandTotalAmt;
 			protected BigDecimal allocatedAmt;
 			protected BigDecimal openAmt;
 		
-			public M_Document(String documentNo, BigDecimal grandTotalAmt, BigDecimal allocatedAmt, BigDecimal openAmt) {
+			public M_Document(String documentNo, String currency, BigDecimal grandTotalAmt, BigDecimal allocatedAmt, BigDecimal openAmt) {
 				super();
 				this.documentNo = documentNo;
+				this.currency = currency;
 				this.grandTotalAmt = grandTotalAmt;
 				this.allocatedAmt = allocatedAmt;
 				this.openAmt = openAmt;
@@ -171,6 +177,7 @@ public class OrdenPagoDataSource {
 
 			public M_Document(ResultSet rs) throws SQLException {
 				this(rs.getString("DocumentNo"),
+  					 rs.getString("Currency"),
 				     rs.getBigDecimal("GrandTotalAmt"),
 				     rs.getBigDecimal("AllocatedAmt"),
 				     rs.getBigDecimal("OpenAmt")); 
@@ -189,6 +196,8 @@ public class OrdenPagoDataSource {
 			M_Check check = (M_Check)record;
 			if (name.toUpperCase().equals("DOCUMENTCHECKNO"))	{
 				return check.documentCheckNo;
+			} else if (name.toUpperCase().equals("CURRENCY"))	{
+				return check.currency;
 			} else if (name.toUpperCase().equals("BANK"))	{
 				return check.bank;
 			} else if (name.toUpperCase().equals("DUEDATE"))	{
@@ -212,6 +221,7 @@ public class OrdenPagoDataSource {
 			"                THEN p.checkNo " +
 			"                ELSE p.DocumentNo::CHARACTER VARYING " +
 			"        END AS DocumentCheckNo, " +
+			"        cu.iso_code as Currency, " +
 			"        CASE " +
 	        "               WHEN P.A_BANK IS NOT NULL AND P.A_BANK <> '' " +  
 	        "               THEN P.A_BANK  "     +         
@@ -226,16 +236,17 @@ public class OrdenPagoDataSource {
 			"        NULL::INTEGER  , " +
 			"        ah.ad_client_id, " +
 			"        ah.ad_org_id) AS Amount " +*/
-			"        sum (al.amount) as Amount," +
+			"        sum (currencyconvert(al.amount, ah.c_currency_id, p.c_currency_id, p.DateAcct::timestamp with time zone, NULL::integer, ah.ad_client_id, ah.ad_org_id )) as Amount," +
 			"        p.payamt as PayAmt " + 
 			"FROM    c_allocationhdr ah " +
 			"        JOIN c_allocationline al " +
 			"        ON      ah.c_allocationhdr_id = al.c_allocationhdr_id " +
 			"        JOIN c_payment p " +
 			"        ON      al.c_payment_id = p.c_payment_id " +
+			"  		 JOIN c_currency cu ON p.C_Currency_ID = cu.C_Currency_ID " +
 			"WHERE   p.tenderType            = 'K' " +
 			"    AND ah.C_AllocationHdr_ID   = ? " +
-			"GROUP BY p.C_Payment_ID, DocumentCheckNo, Bank, p.DueDate, PayAmt  ";
+			"GROUP BY p.C_Payment_ID, DocumentCheckNo, Bank, p.DueDate, PayAmt, Currency  ";
 			// "ORDER BY documentCheckNo ";
 			return sql;
 		}
@@ -250,13 +261,15 @@ public class OrdenPagoDataSource {
 		 */
 		private class M_Check {
 			protected String documentCheckNo;
+			protected String currency;
 			protected String bank;
 			protected Timestamp dueDate;
 			protected BigDecimal amount;
 			
-			public M_Check(String documentCheckNo, String bank, Timestamp dueDate, BigDecimal amount) {
+			public M_Check(String documentCheckNo, String currency, String bank, Timestamp dueDate, BigDecimal amount) {
 				super();
 				this.documentCheckNo = documentCheckNo;
+				this.currency = currency;
 				this.bank = bank;
 				this.dueDate = dueDate;
 				this.amount = amount;
@@ -264,6 +277,7 @@ public class OrdenPagoDataSource {
 			
 			public M_Check(ResultSet rs) throws SQLException {
 				this(rs.getString("DocumentCheckNo"),
+					 rs.getString("Currency"),
 					 rs.getString("Bank"),
 					 rs.getTimestamp("DueDate"),
 					 (getPaymentOrder().isAdvanced() ? 
@@ -293,6 +307,8 @@ public class OrdenPagoDataSource {
 				return payment.transferDate;
 			} else if (name.toUpperCase().equals("AMOUNT"))	{
 				return payment.amount;
+			} else if (name.toUpperCase().equals("CURRENCY"))	{
+				return payment.currency;
 			}
 			return null;
 		}
@@ -317,8 +333,10 @@ public class OrdenPagoDataSource {
 			"        ) AS BankAccount          , " +
 			"        p.RoutingNo               , " +
 			"        p.DateAcct AS TransferDate, " +
-			"        sum(al.amount) AS Amount,   " +
-			"        p.payamt AS PayAmt " +
+			"        sum (currencyconvert(al.amount, ah.c_currency_id, p.c_currency_id, p.DateAcct::timestamp with time zone, NULL::integer, ah.ad_client_id, ah.ad_org_id )) as Amount," +
+			//"        sum(al.amount) AS Amount,   " +
+			"        p.payamt AS PayAmt, " +
+			"        cu.iso_code as Currency " +
 			/*"        currencyconvert(al.amount, p.c_currency_id, ah.c_currency_id, ah.datetrx::TIMESTAMP " + 
 			"WITH TIME zone         , " +
 			"        NULL::INTEGER  , " +
@@ -329,9 +347,10 @@ public class OrdenPagoDataSource {
 			"        ON      ah.c_allocationhdr_id = al.c_allocationhdr_id " +
 			"        JOIN c_payment p " +
 			"        ON      al.c_payment_id = p.c_payment_id " +
+			"  		 JOIN c_currency cu ON p.C_Currency_ID = cu.C_Currency_ID " +
 			"WHERE   p.tenderType            = 'A' " +
 			"    AND ah.C_AllocationHdr_ID   = ? " +
-			"GROUP BY p.C_Payment_ID, PaymentType, CashName, BankAccount, p.RoutingNo, p.dateAcct, PayAmt " +
+			"GROUP BY p.C_Payment_ID, PaymentType, CashName, BankAccount, p.RoutingNo, p.dateAcct, PayAmt, Currency " +
 		//	"ORDER BY PaymentType, " +
 		//	"        BankAccount " +
 			") " +
@@ -350,8 +369,10 @@ public class OrdenPagoDataSource {
 			"        NULL::INTEGER  , " +
 			"        ah.ad_client_id, " +
 			"        ah.ad_org_id) AS Amount " +*/
-			"                SUM(al.amount) AS Amount, " +
-			"                ABS(ll.amount) AS PayAmt  " +
+			"        sum (currencyconvert(al.amount, ah.c_currency_id, ll.c_currency_id, c.DateAcct::timestamp with time zone, NULL::integer, ah.ad_client_id, ah.ad_org_id )) as Amount," +
+			//"                SUM(al.amount) AS Amount, " +
+			"                ABS(ll.amount) AS PayAmt,  " +
+			"                cu.iso_code AS Currency  " +
 			"        FROM    c_allocationhdr ah " +
 			"                JOIN c_allocationline al " +
 			"                ON      ah.c_allocationhdr_id = al.c_allocationhdr_id " +
@@ -361,9 +382,10 @@ public class OrdenPagoDataSource {
 			"                ON      c.C_Cash_ID = ll.C_Cash_ID " +
 			"                JOIN C_CashBook cb " +
 			"                ON      cb.C_CashBook_ID = c.C_CashBook_ID " +
+			"		  		 JOIN c_currency cu ON cb.C_Currency_ID = cu.C_Currency_ID " +
 			"        WHERE   true " +
 			"            AND ah.C_AllocationHdr_ID = ? " +
-			"        GROUP BY ll.C_CashLine_ID, PaymentType, CashName, BankAccount, RoutingNo, TransferDate, PayAmt " +
+			"        GROUP BY ll.C_CashLine_ID, PaymentType, CashName, BankAccount, RoutingNo, TransferDate, PayAmt, Currency " +
 			"        ORDER BY PaymentType, " +
 			"                CashName " +
 			"        ) " +
@@ -378,12 +400,14 @@ public class OrdenPagoDataSource {
 			"		 NULL::CHARACTER VARYING AS BankAccount, " +    
 			"		 NULL::CHARACTER VARYING AS RoutingNo, " +    
 			"		 i.DateAcct AS TransferDate, " +    
-			//"		 currencyconvert(al.amount, i.c_currency_id, ah.c_currency_id, ah.datetrx::TIMESTAMP WITH TIME zone, NULL::INTEGER, ah.ad_client_id, ah.ad_org_id) AS Amount " +    
-			"		 SUM(al.amount) AS Amount,   " +
-			"        i.grandtotal AS PayAmt " +			
+			"		 sum(currencyconvert(al.amount, ah.c_currency_id, i.c_currency_id, i.DateAcct::TIMESTAMP WITH TIME zone, NULL::INTEGER, ah.ad_client_id, ah.ad_org_id)) AS Amount, " +    
+			//"		 SUM(al.amount) AS Amount,   " +
+			"        i.grandtotal AS PayAmt, " +		
+			"        cu.iso_code AS Currency  " +
 			" FROM    c_allocationhdr ah " +    
 			"	 INNER JOIN c_allocationline al ON ah.c_allocationhdr_id = al.c_allocationhdr_id " +     
 			"	 INNER JOIN c_invoice i ON al.c_invoice_credit_id = i.c_invoice_id " +
+			"  	 INNER JOIN c_currency cu ON i.C_Currency_ID = cu.C_Currency_ID " +
 			" 	 INNER JOIN c_doctype dt ON dt.c_doctype_id = i.c_doctype_id "+
 			"    LEFT JOIN M_Retencion_Invoice ri ON i.c_invoice_id = ri.c_invoice_id " +
 			"    LEFT JOIN C_RetencionSchema rs ON ri.c_retencionschema_ID = rs.c_retencionschema_id " +
@@ -395,7 +419,7 @@ public class OrdenPagoDataSource {
 			"                    FROM M_Retencion_Invoice ri " + 
 			"                    WHERE ri.C_AllocationHdr_ID = ah.C_AllocationHdr_ID " + 
 			"                      AND ri.C_Invoice_ID = i.C_Invoice_ID) " +    */   
-			" GROUP BY i.C_Invoice_ID, PaymentType, Description2, BankAccount, RoutingNo, TransferDate, PayAmt " +
+			" GROUP BY i.C_Invoice_ID, PaymentType, Description2, BankAccount, RoutingNo, TransferDate, PayAmt, Currency " +
 			" ORDER BY Description2, i.DateAcct) ";
 			return sql;
 		}
@@ -418,8 +442,9 @@ public class OrdenPagoDataSource {
 			protected String routingNo;
 			protected Timestamp transferDate;
 			protected BigDecimal amount;
+			protected String currency;
 			
-			public M_Payment(String paymentType, String cashName, String bankAccount, String routingNo, Timestamp transferDate, BigDecimal amount) {
+			public M_Payment(String paymentType, String cashName, String bankAccount, String routingNo, Timestamp transferDate, BigDecimal amount, String currency) {
 				super();
 				this.paymentType = paymentType;
 				this.cashName = cashName;
@@ -427,6 +452,7 @@ public class OrdenPagoDataSource {
 				this.routingNo = routingNo;
 				this.transferDate = transferDate;
 				this.amount = amount;
+				this.currency = currency;
 			}
 
 			public M_Payment(ResultSet rs) throws SQLException {
@@ -437,7 +463,8 @@ public class OrdenPagoDataSource {
 					 rs.getTimestamp("TransferDate"),
 					 (getPaymentOrder().isAdvanced() ? 
 							rs.getBigDecimal("PayAmt") : 
-							rs.getBigDecimal("Amount")));
+							rs.getBigDecimal("Amount")),
+							rs.getString("Currency"));
 			}
 		}
 	}
