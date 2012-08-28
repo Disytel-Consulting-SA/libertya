@@ -1761,6 +1761,11 @@ public final class Env {
     	return Util.isEmpty(close, true) || close.equals("Y"); 
     }
     
+    public static boolean isPOSJournalSupervisor(Properties ctx){
+    	String isPOSJournalSupervisor = Env.getContext(ctx, "#POSJournalSupervisor");
+    	return isPOSJournalSupervisor != null && isPOSJournalSupervisor.equals("Y");
+    }
+    
 }    // Env
 
 
