@@ -1495,19 +1495,26 @@ public class VOrdenPagoModel implements TableModelListener {
 		Vector<BigDecimal> manualAmountsOriginal = new Vector<BigDecimal>();
 		Vector<Integer> facturasProcesar = new Vector<Integer>();
 		Vector<ResultItemFactura> resultsProcesar = new Vector<ResultItemFactura>();
-		
+
+		Vector<ResultItem> m_facturasAux = new Vector<ResultItem>(); ;
 		ResultItemFactura fac;
-		if (!m_facturas.isEmpty()){
-			fac = (ResultItemFactura) m_facturas.get(0);
+		for (ResultItem f : m_facturas) {
+			fac = (ResultItemFactura) f;
+			if (fac.getManualAmtClientCurrency().signum() > 0){
+				m_facturasAux.add(fac);
+			}
+		}	
+		
+		if (!m_facturasAux.isEmpty()){
+			fac = (ResultItemFactura) m_facturasAux.get(0);
 			String isExchange = fac.getIsexchange();
-			for (ResultItem f : m_facturas) {
+			for (ResultItem f : m_facturasAux) {
 				fac = (ResultItemFactura) f;
-				if (fac.getIsexchange().compareToIgnoreCase(isExchange) != 0) {
+				if ((fac.getManualAmtClientCurrency().signum() > 0) && (fac.getIsexchange().compareToIgnoreCase(isExchange) != 0)){
 					return PROCERROR_BOTH_EXCHANGE_INVOICES;
 				}
 			}	
 		}
-		
 		
 		for (ResultItem f : m_facturas) {
 			fac = (ResultItemFactura) f;
