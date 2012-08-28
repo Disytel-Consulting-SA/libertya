@@ -4569,7 +4569,7 @@ public class PoSMainForm extends CPanel implements FormPanel, ASyncProcess, Disp
 				errorMsg(MSG_NO_BEFORE_CHECK_DEADLINES);
 				return;
 			}
-			extraValidationsResult = getExtraPOSPaymentAddValidations().validateCheckPayment(this);
+			extraValidationsResult = getExtraPOSPaymentAddValidations().validateCheckPayment(this, amount);
 			if(extraValidationsResult.isError()){
 				errorMsg(extraValidationsResult.getMsg());
 				return;
@@ -5839,7 +5839,7 @@ public class PoSMainForm extends CPanel implements FormPanel, ASyncProcess, Disp
 	/**
 	 * @return El importe a pagar según el medio de pago actual
 	 */
-    protected BigDecimal getPaymentToPayAmt() {
+    public BigDecimal getPaymentToPayAmt() {
     	BigDecimal amount = (BigDecimal)getCPaymentToPayAmt().getValue();
     	return amount == null ? BigDecimal.ZERO : amount;
     }
