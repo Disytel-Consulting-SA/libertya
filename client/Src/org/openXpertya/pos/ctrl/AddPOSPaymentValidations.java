@@ -12,7 +12,7 @@ public class AddPOSPaymentValidations {
 		return result;
 	}
 	
-	public CallResult validateCheckPayment(PoSMainForm pmf){
+	public CallResult validateCheckPayment(PoSMainForm pmf, BigDecimal amount){
 		CallResult result = new CallResult();
 		return result;
 	}
