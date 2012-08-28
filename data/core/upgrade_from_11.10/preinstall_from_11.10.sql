@@ -4037,3 +4037,6 @@ ALTER TABLE c_pos_declaracionvalores_v OWNER TO libertya;
 -- 20120828-1040 Incorporación de nuevas columnas en la tabla T_CUENTACORRIENTE
 ALTER TABLE T_CUENTACORRIENTE ADD COLUMN iso_code character(3);
 ALTER TABLE T_CUENTACORRIENTE ADD COLUMN amount numeric(10,2) DEFAULT 0;
+
+-- 20120828-1240 Incorporación al perfil de check que permite ser supervisor de cajas diarias
+update ad_system set dummy = (SELECT addcolumnifnotexists('ad_role','posjournalsupervisor', 'character(1) NOT NULL DEFAULT \'Y\'::bpchar'));

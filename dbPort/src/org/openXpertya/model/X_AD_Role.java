@@ -1,14 +1,13 @@
 /** Modelo Generado - NO CAMBIAR MANUALMENTE - Disytel */
 package org.openXpertya.model;
-import java.math.BigDecimal;
-import java.sql.ResultSet;
-import java.util.Properties;
-
-import org.openXpertya.util.Env;
-import org.openXpertya.util.KeyNamePair;
+import java.util.logging.Level;
+ import java.util.*;
+import java.sql.*;
+import java.math.*;
+import org.openXpertya.util.*;
 /** Modelo Generado por AD_Role
  *  @author Comunidad de Desarrollo Libertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
- *  @version  - 2011-12-19 15:33:16.769 */
+ *  @version  - 2012-08-28 12:37:33.039 */
 public class X_AD_Role extends org.openXpertya.model.PO
 {
 /** Constructor estándar */
@@ -31,9 +30,8 @@ setIsShowAcct (false);	// N
 setIsUseUserOrgAccess (false);	// N
 setName (null);
 setOverwritePriceLimit (false);	// N
+setPOSJournalSupervisor (false);
 setPreferenceType (null);	// O
-setviewpurchaseprice (false);
-setviewsalesprice (false);
 }
  */
 }
@@ -388,6 +386,22 @@ Overwrite Price Limit if the Price List  enforces the Price Limit */
 public boolean isOverwritePriceLimit() 
 {
 Object oo = get_Value("OverwritePriceLimit");
+if (oo != null) 
+{
+ if (oo instanceof Boolean) return ((Boolean)oo).booleanValue();
+ return "Y".equals(oo);
+}
+return false;
+}
+/** Set POS Journal Supervisor */
+public void setPOSJournalSupervisor (boolean POSJournalSupervisor)
+{
+set_Value ("POSJournalSupervisor", new Boolean(POSJournalSupervisor));
+}
+/** Get POS Journal Supervisor */
+public boolean isPOSJournalSupervisor() 
+{
+Object oo = get_Value("POSJournalSupervisor");
 if (oo != null) 
 {
  if (oo instanceof Boolean) return ((Boolean)oo).booleanValue();

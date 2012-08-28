@@ -956,6 +956,11 @@ public class Login {
 		Env.setContext(m_ctx, "#UniqueKeyActive",
 				clientInfo.isUniqueKeyActive() ? "Y" : "N");
         
+		// Supervisor de Cajas Diarias
+		MRole role = MRole.get(m_ctx, AD_Role_ID, null);
+		Env.setContext(m_ctx, "#POSJournalSupervisor",
+				role.isPOSJournalSupervisor() ? "Y" : "N");
+		
         // Other Settings
 
         Env.setContext( m_ctx,"#YYYY","Y" );

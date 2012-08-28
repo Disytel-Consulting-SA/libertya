@@ -304,6 +304,12 @@ public class MPOSJournal extends X_C_POSJournal implements DocAction {
 	@Override
 	public boolean processIt(String action) throws Exception {
 		m_processMsg = null;
+		// Si el perfil no es Supervisor de Cajas Diarias, entonces no puede
+		// procesar registros
+		if(!Env.isPOSJournalSupervisor(getCtx())){
+			m_processMsg = Msg.getMsg(getCtx(), "NotAllowedUserToCompleteOperationShort");
+			return false;
+		}
 		String status = getDocStatus();
 		// Bypass para permitir Cerrar una Caja Diaria directamente sin pasar por el
 		// completeIt.
