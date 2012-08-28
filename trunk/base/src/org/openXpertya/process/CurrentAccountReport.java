@@ -8,7 +8,6 @@ import java.sql.Timestamp;
 import java.util.logging.Level;
 
 import org.openXpertya.model.MCurrency;
-import org.openXpertya.model.X_T_CuentaCorriente;
 import org.openXpertya.util.DB;
 import org.openXpertya.util.Env;
 
@@ -119,6 +118,7 @@ public class CurrentAccountReport extends SvrProcess {
 		sqlDoc.append("	         ELSE 0.0 END AS Credit, ");
 		sqlDoc.append("  	d.Created, ");
 		sqlDoc.append("  	d.C_Currency_ID, ");
+		sqlDoc.append("  	d.amount, ");
 		sqlDoc.append("  	d.documenttable, ");
 		sqlDoc.append("  	d.document_id ");
 		sqlDoc.append(" FROM V_Documents d ");
@@ -174,12 +174,14 @@ public class CurrentAccountReport extends SvrProcess {
 				subIndice++;
 				// insert first row: before query balance period
 				// Field used for 'date field' in temporary table: DATETRX
-				usql.append(" INSERT INTO T_CUENTACORRIENTE (SUBINDICE, IncludeOpenOrders, AD_CLIENT_ID, AD_ORG_ID, AD_PINSTANCE_ID, DEBE, HABER, SALDO, NUMEROCOMPROBANTE, C_BPARTNER_ID, ACCOUNTTYPE, DATETRX, C_DOCTYPE_ID) " +
+				usql.append(" INSERT INTO T_CUENTACORRIENTE (SUBINDICE, IncludeOpenOrders, AD_CLIENT_ID, AD_ORG_ID, AD_PINSTANCE_ID, ISO_CODE, AMOUNT, DEBE, HABER, SALDO, NUMEROCOMPROBANTE, C_BPARTNER_ID, ACCOUNTTYPE, DATETRX, C_DOCTYPE_ID) " +
 						    " VALUES ("+ subIndice + ", '" +
 						    			p_includeOpenOrders_char + "', " +
 						                 getAD_Client_ID() + ", " + 
 						                 trx_Org_ID +  " , " + 
-						                 getAD_PInstance_ID() + ", " + 
+						                 getAD_PInstance_ID() + ", '" + 
+						                 MCurrency.getISO_Code(getCtx(), rs.getInt("C_Currency_ID")) + "', " +
+						                 rs.getBigDecimal("Amount") + ", " +
 						                 acumDebit + ", " + 
 						                 acumCredit + ", " + 
 						                 acumBalance + ", '-', " + 
@@ -208,12 +210,14 @@ public class CurrentAccountReport extends SvrProcess {
 				
 				//ANTONIO: La cuenta es al reves acumBalance = acumBalance.add(credit.subtract(debit));
 				acumBalance = acumBalance.add(debit.subtract(credit));
-				usql.append(" INSERT INTO T_CUENTACORRIENTE (SUBINDICE, IncludeOpenOrders, AD_CLIENT_ID, AD_ORG_ID, AD_PINSTANCE_ID, DEBE, HABER, SALDO, NUMEROCOMPROBANTE, C_BPARTNER_ID, ACCOUNTTYPE, DATETRX, C_DOCTYPE_ID, C_INVOICE_ID, C_PAYMENT_ID, C_CASHLINE_ID) " +
+				usql.append(" INSERT INTO T_CUENTACORRIENTE (SUBINDICE, IncludeOpenOrders, AD_CLIENT_ID, AD_ORG_ID, AD_PINSTANCE_ID, ISO_CODE, AMOUNT, DEBE, HABER, SALDO, NUMEROCOMPROBANTE, C_BPARTNER_ID, ACCOUNTTYPE, DATETRX, C_DOCTYPE_ID, C_INVOICE_ID, C_PAYMENT_ID, C_CASHLINE_ID) " +
 						    " VALUES (" + subIndice + ", '"  +
 						    			  p_includeOpenOrders_char + "', " +
 						                  getAD_Client_ID() + ", " + 
 						                  trx_Org_ID +  " , " + 
-						                  getAD_PInstance_ID() + " ," + 
+						                  getAD_PInstance_ID() + " ,'" + 
+						                  MCurrency.getISO_Code(getCtx(), rs.getInt("C_Currency_ID")) + "', " +
+						                  rs.getBigDecimal("Amount") + ", " +
 						                  rs.getBigDecimal("Debit") + ", " + 
 						                  rs.getBigDecimal("Credit") + ", " + 
 						                  acumBalance + ", '" + 
@@ -308,7 +312,7 @@ public class CurrentAccountReport extends SvrProcess {
 	{
 		StringBuffer query = new StringBuffer(
 			" SELECT 	o.C_Order_ID, o.DocumentNo, o.DateAcct, o.C_DocType_ID, ").append(
-			" 			coalesce(currencyconvert(o.grandtotal - sum(matches.totalamtinvoiced), o.c_currency_id, ?, ('now'::text)::timestamp(6) with time zone, COALESCE(c_conversiontype_id,0), o.ad_client_id, o.ad_org_id),0) as pendingToInvoiceAmt ").append(
+			" 			coalesce(currencyconvert(o.grandtotal - sum(matches.totalamtinvoiced), o.c_currency_id, ?, ('now'::text)::timestamp(6) with time zone, COALESCE(c_conversiontype_id,0), o.ad_client_id, o.ad_org_id),0) as pendingToInvoiceAmt, o.c_currency_id, o.grandtotal as Amount").append(
 			" FROM ").append(
 			" ( ").append(
 			"				SELECT ol.c_orderline_id, ol.linetotalamt, ol.qtyordered, coalesce(sum(il.qtyinvoiced),0) as qtyinvoiced, coalesce(sum(il.linetotalamt),0) as totalamtinvoiced ").append(
@@ -346,12 +350,14 @@ public class CurrentAccountReport extends SvrProcess {
 		while (rs.next())
 		{
 			subIndice++;
-			usql.append(" INSERT INTO T_CUENTACORRIENTE (SUBINDICE, IncludeOpenOrders, AD_CLIENT_ID, AD_ORG_ID, AD_PINSTANCE_ID, DEBE, HABER, SALDO, NUMEROCOMPROBANTE, C_BPARTNER_ID, ACCOUNTTYPE, DATETRX, C_DOCTYPE_ID, C_INVOICE_ID, C_PAYMENT_ID, C_CASHLINE_ID) " +
+			usql.append(" INSERT INTO T_CUENTACORRIENTE (SUBINDICE, IncludeOpenOrders, AD_CLIENT_ID, AD_ORG_ID, AD_PINSTANCE_ID, ISO_CODE, AMOUNT, DEBE, HABER, SALDO, NUMEROCOMPROBANTE, C_BPARTNER_ID, ACCOUNTTYPE, DATETRX, C_DOCTYPE_ID, C_INVOICE_ID, C_PAYMENT_ID, C_CASHLINE_ID) " +
 				    " VALUES (" + subIndice + ", '"  +
 				    			  p_includeOpenOrders_char + "', " +
 				                  getAD_Client_ID() + ", " + 
 				                  trx_Org_ID +  " , " + 
-				                  getAD_PInstance_ID() + " ," + 
+				                  getAD_PInstance_ID() + " ,'" + 
+				                  MCurrency.getISO_Code(getCtx(), rs.getInt("C_Currency_ID")) + "', " +
+				                  rs.getBigDecimal("Amount") + ", " +
 				                  (p_AccountType.equalsIgnoreCase("C") ? BigDecimal.ZERO : rs.getBigDecimal("pendingToInvoiceAmt")) + ", " + 
 				                  (p_AccountType.equalsIgnoreCase("C") ? rs.getBigDecimal("pendingToInvoiceAmt") : BigDecimal.ZERO) + ", " +
 				                  acumBalance + ", '" + 
