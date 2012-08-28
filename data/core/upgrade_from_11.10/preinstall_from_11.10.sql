@@ -4033,3 +4033,7 @@ UNION ALL
         WHERE i.docstatus IN ('CL','CO');
 
 ALTER TABLE c_pos_declaracionvalores_v OWNER TO libertya;
+
+-- 20120828-1040 Incorporación de nuevas columnas en la tabla T_CUENTACORRIENTE
+ALTER TABLE T_CUENTACORRIENTE ADD COLUMN iso_code character(3);
+ALTER TABLE T_CUENTACORRIENTE ADD COLUMN amount numeric(10,2) DEFAULT 0;
