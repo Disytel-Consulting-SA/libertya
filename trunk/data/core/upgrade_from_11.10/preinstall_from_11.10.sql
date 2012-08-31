@@ -4040,3 +4040,214 @@ ALTER TABLE T_CUENTACORRIENTE ADD COLUMN amount numeric(10,2) DEFAULT 0;
 
 -- 20120828-1240 Incorporación al perfil de check que permite ser supervisor de cajas diarias
 update ad_system set dummy = (SELECT addcolumnifnotexists('ad_role','posjournalsupervisor', 'character(1) NOT NULL DEFAULT \'Y\'::bpchar'));
+
+-- 20120831-1710 Modificación de la función cashlineavailable
+CREATE OR REPLACE FUNCTION cashlineavailable(p_c_cashline_id integer)
+  RETURNS numeric AS
+$BODY$
+DECLARE
+	v_Currency_ID		INTEGER;
+	v_Amt               NUMERIC;
+   	r   			RECORD;
+	v_ConversionType_ID INTEGER := 0; -- actuamente, tal como en PL/java se usa siempre 0, no se toma desde cashLine
+	v_allocation NUMERIC;
+	v_allocatedAmt NUMERIC;	-- candida alocada total convertida a la moneda de la linea 
+	v_AvailableAmt		NUMERIC := 0;
+	v_DateAcct timestamp without time zone;
+ 
+BEGIN
+	IF (p_C_Cashline_id IS NULL OR p_C_Cashline_id = 0) THEN
+		RETURN NULL;
+	END IF;
+	
+	--	Get Currency and Amount
+	SELECT	C_Currency_ID, Amount
+		INTO v_Currency_ID, v_Amt
+	FROM	C_CashLine    
+	WHERE	C_CashLine_ID  = p_C_Cashline_id;
+
+	SELECT DateAcct
+	       INTO v_DateAcct
+	FROM C_Cash c 
+	INNER JOIN C_CashLine cl ON c.C_Cash_ID = cl.C_Cash_ID 
+	WHERE C_CashLine_ID = p_C_Cashline_id;
+	
+	IF NOT FOUND THEN
+	  RETURN NULL;
+	END IF;
+	
+	-- Calculate Allocated Amount
+	-- input: p_C_Cashline_id,v_Currency_ID,v_ConversionType_ID
+	--output: v_allocatedAmt
+	v_allocatedAmt := 0.00;
+	FOR r IN
+		SELECT	a.AD_Client_ID, a.AD_Org_ID, al.Amount, a.C_Currency_ID, a.DateTrx
+		FROM	C_AllocationLine al
+	        INNER JOIN C_AllocationHdr a ON (al.C_AllocationHdr_ID=a.C_AllocationHdr_ID)
+		WHERE	al.C_CashLine_ID = p_C_Cashline_id
+          	AND   a.IsActive='Y'
+	LOOP
+        v_allocation := currencyConvert(r.Amount, r.C_Currency_ID, v_Currency_ID, 
+				v_DateAcct, v_ConversionType_ID, r.AD_Client_ID, r.AD_Org_ID);
+	    v_allocatedAmt := v_allocatedAmt + v_allocation;
+	END LOOP;
+
+	-- esto supone que las alocaciones son siempre no negativas; si esto no pasa, se van a retornar valores que no van a tener sentido
+	v_AvailableAmt := ABS(v_Amt) - v_allocatedAmt;
+	-- v_AvailableAmt aca DEBE ser NO Negativo si admeas, las suma de las alocaciones nunca superan el monto de la linea
+	-- de cualquiera manera, por "seguridad", si el valor es negativo, se corrige a cero
+    IF (v_AvailableAmt < 0) THEN
+		RAISE NOTICE 'CashLine Available negative, correcting to zero - %',v_AvailableAmt ;
+		v_AvailableAmt := 0.00;
+    END IF;	
+	--  el resultado debe ser 0 o de lo contrario tener el mismo signo que la linea; 
+	IF (v_Amt < 0) THEN
+		v_AvailableAmt := v_AvailableAmt * -1::numeric;
+	END IF; 
+	-- redondeo de moneda
+	v_AvailableAmt :=  currencyRound(v_AvailableAmt,v_Currency_ID,NULL);
+	RETURN	v_AvailableAmt;
+END;
+$BODY$
+  LANGUAGE 'plpgsql' VOLATILE
+  COST 100;
+ALTER FUNCTION cashlineavailable(integer) OWNER TO libertya;
+
+-- 20120831-1710 Modificación de la función getallocatedamt
+CREATE OR REPLACE FUNCTION getallocatedamt(p_c_invoice_id integer, p_c_currency_id integer, p_c_conversiontype_id integer, p_multiplierap integer)
+  RETURNS numeric AS
+$BODY$
+DECLARE
+	v_MultiplierAP		NUMERIC := 1;
+	v_PaidAmt			NUMERIC := 0;
+	v_ConversionType_ID INTEGER := p_c_conversionType_ID;
+	v_Currency_ID       INTEGER := p_c_currency_id;
+	v_Temp     NUMERIC;
+	ar			RECORD;
+	v_DateAcct timestamp without time zone;
+
+BEGIN
+	--	Default
+	IF (p_MultiplierAP IS NOT NULL) THEN
+		v_MultiplierAP := p_MultiplierAP::numeric;
+	END IF;
+
+	SELECT DateAcct
+	       INTO v_DateAcct
+	FROM C_Invoice 
+	WHERE C_Invoice_ID = p_c_invoice_id;
+	
+	--	Calculate Allocated Amount
+	-- INPUTS:
+	-- p_C_Invoice_ID: el id de la factura, para econtrar la lineas de alocacion asociadas directamente o como pago (via C_Invoice_Credit_ID) ; 
+	--v_Currency_ID :la moneda a convertir los montos de las alocaciones(que va  a ser el mismo que la factura)
+	--v_ConversionType_ID: el tipo de conversión de moneda, puede ser null (tambien el mismo especificado en la factura)
+ 	--OUTPUTS:
+	--v_PaidAmt : la cantidad alocada para la factura, convertida v_Currency_ID
+	-- Basicamente : es la suma de los montos de las lineas asociadas a la factura  convertidos previamente
+	-- a la moneda de la factura (hay un pequeño detalle para las entradas en las que la factura es usada como pago....)
+	FOR ar IN 
+		SELECT	a.AD_Client_ID, a.AD_Org_ID,
+		al.Amount, al.DiscountAmt, al.WriteOffAmt,
+		a.C_Currency_ID, a.DateTrx , al.C_Invoice_Credit_ID
+		FROM	C_AllocationLine al
+		INNER JOIN C_AllocationHdr a ON (al.C_AllocationHdr_ID=a.C_AllocationHdr_ID)
+		WHERE	(al.C_Invoice_ID = p_C_Invoice_ID OR 
+				al.C_Invoice_Credit_ID = p_C_Invoice_ID ) -- condicion no en Adempiere
+          	AND   a.IsActive='Y'
+	LOOP
+	    -- Agregado, para facturas como pago
+		IF (p_C_Invoice_ID = ar.C_Invoice_Credit_ID) THEN
+		   v_Temp := ar.Amount;
+		ELSE
+		   v_Temp := ar.Amount + ar.DisCountAmt + ar.WriteOffAmt;
+		END IF;
+		-- Se asume que este v_Temp es no negativo
+		v_PaidAmt := v_PaidAmt
+        -- Allocation
+			+ currencyConvert(v_Temp,
+				ar.C_Currency_ID, v_Currency_ID, v_DateAcct, v_ConversionType_ID, 
+				ar.AD_Client_ID, ar.AD_Org_ID);
+      	--RAISE NOTICE ' C_Invoice_ID=% , PaidAmt=% , Allocation= % ',p_C_Invoice_ID, v_PaidAmt, v_Temp;
+	END LOOP;
+	RETURN	v_PaidAmt * v_MultiplierAP;
+END;
+
+$BODY$
+  LANGUAGE 'plpgsql' VOLATILE
+  COST 100;
+ALTER FUNCTION getallocatedamt(integer, integer, integer, integer) OWNER TO libertya;
+
+-- 20120831-1710 Modificación de la función paymentavailable
+CREATE OR REPLACE FUNCTION paymentavailable(p_c_payment_id integer)
+  RETURNS numeric AS
+$BODY$
+DECLARE
+	v_Currency_ID		INTEGER;
+	v_AvailableAmt		NUMERIC := 0;
+   	v_IsReceipt         CHARACTER(1);
+   	v_Amt               NUMERIC := 0;
+   	r   			RECORD;
+	v_Charge_ID INTEGER; -- no en Adempiere
+	v_ConversionType_ID INTEGER; -- no en Adempiere; puede ser null (igual es dudoso este tipo de conversion, por que lo 
+	--que se conveirte al moneda del pago son las lineas de alocacion, las cuales en otros calculos usan posiblemente otro tipo de conversion)
+	v_DateAcct timestamp without time zone;
+
+BEGIN
+
+	BEGIN
+	--	Get Currency, PayAmt,IsReceipt (not used, only for debug) and C_Charge_ID
+	SELECT	C_Currency_ID, PayAmt, IsReceipt, 
+			C_Charge_ID,C_ConversionType_ID, DateAcct
+	  INTO	STRICT 
+			v_Currency_ID, v_AvailableAmt, v_IsReceipt,
+			v_Charge_ID,v_ConversionType_ID, v_DateAcct
+	FROM	C_Payment     --NO CORREGIDO por AP/AR
+	WHERE	C_Payment_ID = p_C_Payment_ID;
+		EXCEPTION	--	No encontrado; posiblememte mal llamado
+		WHEN OTHERS THEN
+            	RAISE NOTICE 'PaymentAvailable - %', SQLERRM;
+			RETURN NULL;
+	END;
+	
+	IF (v_Charge_ID > 0 ) THEN -- mayor que cero, por lo tanto no null 
+	   RETURN 0;
+	END IF;
+--  DBMS_OUTPUT.PUT_LINE('== C_Payment_ID=' || p_C_Payment_ID || ', PayAmt=' || v_AvailableAmt || ', Receipt=' || v_IsReceipt);
+
+	--	Calculate Allocated Amount
+	FOR r IN
+		SELECT	a.AD_Client_ID, a.AD_Org_ID, al.Amount, a.C_Currency_ID, a.DateTrx
+		FROM	C_AllocationLine al
+	        INNER JOIN C_AllocationHdr a ON (al.C_AllocationHdr_ID=a.C_AllocationHdr_ID)
+		WHERE	al.C_Payment_ID = p_C_Payment_ID
+          	AND   a.IsActive='Y'
+	LOOP
+        v_Amt := currencyConvert(r.Amount, r.C_Currency_ID, v_Currency_ID, 
+				v_DateAcct, v_ConversionType_ID, r.AD_Client_ID, r.AD_Org_ID);
+	    v_AvailableAmt := v_AvailableAmt - v_Amt;
+--      DBMS_OUTPUT.PUT_LINE('  Allocation=' || a.Amount || ' - Available=' || v_AvailableAmt);
+	END LOOP;
+	
+	IF (v_AvailableAmt < 0) THEN
+		RAISE NOTICE 'Payment Available negative, correcting to zero - %',v_AvailableAmt ;
+		v_AvailableAmt := 0;
+	END IF;
+	
+	-- siguiente NO en Libertya
+	--	Ignore Rounding; 
+	--IF (v_AvailableAmt BETWEEN -0.00999 AND 0.00999) THEN
+	--	v_AvailableAmt := 0;
+	--END IF;
+	--	Round to penny
+	--v_AvailableAmt := ROUND(COALESCE(v_AvailableAmt,0), 2);
+	
+	-- redondeo de moneda
+	v_AvailableAmt :=  currencyRound(v_AvailableAmt,v_Currency_ID,NULL);
+	RETURN	v_AvailableAmt;
+END;
+
+$BODY$
+  LANGUAGE 'plpgsql' VOLATILE
+  COST 100;
+ALTER FUNCTION paymentavailable(integer) OWNER TO libertya;
