@@ -1209,8 +1209,8 @@ public class MOrder extends X_C_Order implements DocAction {
     	//si ni la lista de precios ni la moneda cambio, tampoco hay que hacer el chequoe
     	boolean needCheckQtyLines =
     		!newRecord && 
-    		is_ValueChanged( "M_PriceList_ID" ) &&
-    		is_ValueChanged( "C_Currency_ID" );
+    		(is_ValueChanged( "M_PriceList_ID" ) ||
+    		is_ValueChanged( "C_Currency_ID" ));
     	if (needCheckQtyLines) //si newRecord necesariamete se tiene 0 lineas
     	{
       		int qtyLines = getQtyLinesFromDB();
@@ -1227,6 +1227,7 @@ public class MOrder extends X_C_Order implements DocAction {
       			return false;
       		}        
     	}
+		
     	// Client/Org Check
         if( getAD_Org_ID() == 0 ) {
             int context_AD_Org_ID = Env.getAD_Org_ID( getCtx());
