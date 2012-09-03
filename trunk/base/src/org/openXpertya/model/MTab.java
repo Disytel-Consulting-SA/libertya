@@ -1766,7 +1766,7 @@ public final class MTab implements DataStatusListener,Evaluatee,Serializable {
                 return " ";
             }
 
-            Object[] arguments = new Object[ 5 ];
+            Object[] arguments = new Object[ 6 ];
             boolean  filled    = false;
 
             //
@@ -1809,6 +1809,8 @@ public final class MTab implements DataStatusListener,Evaluatee,Serializable {
                     Double grandEuro = new Double( rs.getDouble( 5 ));
 
                     arguments[ 4 ] = grandEuro;
+
+                    arguments[ 5 ] = MCurrency.getISO_Code(Env.getCtx(), Env.getContextAsInt( Env.getCtx(), "$C_Currency_ID" ));
                     filled         = true;
                 }
 
