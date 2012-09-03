@@ -20,26 +20,20 @@
 
 package org.openXpertya.model;
 
+import java.math.BigDecimal;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.Timestamp;
+import java.text.SimpleDateFormat;
+import java.util.Properties;
+import java.util.logging.Level;
+
 import org.openXpertya.util.CLogger;
 import org.openXpertya.util.DB;
 import org.openXpertya.util.DisplayType;
 import org.openXpertya.util.Env;
 import org.openXpertya.util.Msg;
 import org.openXpertya.util.TimeUtil;
-
-//~--- Importaciones JDK ------------------------------------------------------
-
-import java.math.BigDecimal;
-
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.sql.Timestamp;
-
-import java.text.SimpleDateFormat;
-
-import java.util.Properties;
-import java.util.logging.Level;
 
 /**
  *      Currency Conversion Rate Model
@@ -340,13 +334,22 @@ public class MConversionRate extends X_C_Conversion_Rate {
         }
 
         // Get Rate
-        String	sql	= "SELECT MultiplyRate " + "FROM C_Conversion_Rate " + "WHERE C_Currency_ID=?"		// #1
+        String	sql	= "(SELECT MultiplyRate " + "FROM C_Conversion_Rate " + "WHERE C_Currency_ID=?"		// #1
                           + " AND C_Currency_ID_To=?"			// #2
                           + " AND C_ConversionType_ID=?"		// #3
                           + " AND ? BETWEEN ValidFrom AND ValidTo"	// #4      TRUNC (?) ORA-00932: inconsistent datatypes: expected NUMBER got TIMESTAMP
                           + " AND AD_Client_ID IN (0,?)"	// #5
                           + " AND AD_Org_ID IN (0,?) "		// #6
-                          + "ORDER BY AD_Client_ID DESC, AD_Org_ID DESC, ValidFrom DESC";
+                          + "ORDER BY AD_Client_ID DESC, AD_Org_ID DESC, ValidFrom DESC)"
+					      + " UNION "		// #6
+                          + "(SELECT MultiplyRate " + "FROM C_Conversion_Rate " + "WHERE C_Currency_ID=?"		// #1
+					      + " AND C_Currency_ID_To=?"			// #2
+					      + " AND C_ConversionType_ID=?"		// #3
+					      + " AND ? BETWEEN ValidFrom AND ValidTo"	// #4      TRUNC (?) ORA-00932: inconsistent datatypes: expected NUMBER got TIMESTAMP
+					      + " AND AD_Client_ID IN (0,?)"	// #5
+					      + " AND AD_Org_ID IN (0,?) "		// #6
+					      + "ORDER BY AD_Client_ID DESC, AD_Org_ID DESC, ValidFrom DESC)";
+        
         BigDecimal		retValue	= null;
         PreparedStatement	pstmt		= null;
 
@@ -359,6 +362,12 @@ public class MConversionRate extends X_C_Conversion_Rate {
             pstmt.setTimestamp(4, ConvDate);
             pstmt.setInt(5, AD_Client_ID);
             pstmt.setInt(6, AD_Org_ID);
+            pstmt.setInt(7, CurTo_ID);
+            pstmt.setInt(8, CurFrom_ID);
+            pstmt.setInt(9, C_ConversionType_ID);
+            pstmt.setTimestamp(10, ConvDate);
+            pstmt.setInt(11, AD_Client_ID);
+            pstmt.setInt(12, AD_Org_ID);
 
             ResultSet	rs	= pstmt.executeQuery();
 
@@ -454,8 +463,8 @@ public class MConversionRate extends X_C_Conversion_Rate {
     		String sql = 
     				" SELECT 1 FROM C_Conversion_Rate WHERE (C_Currency_ID=? AND C_Currency_ID_To=? OR C_Currency_ID = ? AND C_Currency_ID_To = ?) "    
     				+ " AND C_ConversionType_ID=?"
-    				+ " AND TRUNC(ValidFrom) <= ?" 
-    				+ " AND TRUNC(ValidTo) >= ?" 
+    				+ " AND ( (TRUNC(ValidFrom) >= ? AND TRUNC(ValidFrom) <= ?)" 
+    				+ " OR (TRUNC(ValidTo) >= ? AND TRUNC(ValidTo) <= ?) )"
     				+ " AND AD_Client_ID IN (0,?) AND AD_Org_ID = ? AND ISACTIVE = 'Y' "
     				+ " AND C_Conversion_Rate_ID <> ? "
     				+ " ORDER BY AD_Client_ID DESC, AD_Org_ID DESC, ValidFrom DESC";
@@ -467,9 +476,11 @@ public class MConversionRate extends X_C_Conversion_Rate {
     		pstmt.setInt(5, getC_ConversionType_ID() );
     		pstmt.setTimestamp(6, getValidFrom() );
     		pstmt.setTimestamp(7, getValidTo() );
-    		pstmt.setInt(8, getAD_Client_ID());
-    		pstmt.setInt(9, getAD_Org_ID());
-    		pstmt.setInt(10, getC_Conversion_Rate_ID());
+    		pstmt.setTimestamp(8, getValidFrom() );
+    		pstmt.setTimestamp(9, getValidTo() );
+    		pstmt.setInt(10, getAD_Client_ID());
+    		pstmt.setInt(11, getAD_Org_ID());
+    		pstmt.setInt(12, getC_Conversion_Rate_ID());
     		
     		ResultSet rs = pstmt.executeQuery();
     		if (rs.next())
