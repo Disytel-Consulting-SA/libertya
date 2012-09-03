@@ -105,16 +105,55 @@ public class CurrentAccountReport extends SvrProcess {
 		// del reporte. Realiza la conversión de montos a la moneda del Contexto dado que
 		// los pagos pueden estar expresados en otra moneda. NO aplica el filtro de
 		// fechas para que sea reutilizable la consulta.
+		
+		/**
+		 * El saldo de las Invoices se calcula haciendo:
+		 * La sumatoria de lo facturado (amount + writeoffamt + discountamt de C_AllocationLine) 
+		 * +  
+		 * La sumatoria de lo pendiente por las Facturas (invoiceOpen) convertido a tasa actual.
+		 */
+		/**
+		 * El saldo de los Payments se calcula haciendo:
+		 * La sumatoria de lo cobrado (amount de C_AllocationLine) 
+		 * +  
+		 * La sumatoria de lo pendiente por las pagos (paymentavailable) convertido a tasa actual.
+		 */
+		/**
+		 * El saldo de las CashLine se calcula haciendo:
+		 * La sumatoria de lo cobrado (amount de C_AllocationLine) 
+		 * +  
+		 * La sumatoria de lo pendiente por las pagos (cashlineavailable) convertido a tasa actual.
+		 */
 		StringBuffer sqlDoc = new StringBuffer();
 		sqlDoc.append(" SELECT ");
 		sqlDoc.append(" 	d.Dateacct as DateTrx, ");
 		sqlDoc.append(" 	d.C_DocType_ID, ");
 		sqlDoc.append(" 	d.DocumentNo, ");
 		sqlDoc.append("     CASE WHEN d.signo_issotrx = ? THEN "); 
-		sqlDoc.append("		          currencyconvert(d.amount, d.c_currency_id, ?, ('now'::text)::timestamp(6) with time zone, COALESCE(c_conversiontype_id,0), d.ad_client_id, d.ad_org_id) "); 
+		sqlDoc.append("     (SELECT CASE ");
+		sqlDoc.append("     WHEN d.documenttable = 'C_Invoice' THEN (select (CASE WHEN SUM(al.amount) IS NULL THEN 0.0 ELSE SUM(al.amount + (CASE WHEN al.c_invoice_credit_id IS NULL THEN 0.0 ELSE (al.writeoffamt + al.discountamt) END )) END) FROM C_AllocationLine al WHERE (al.c_invoice_id = d.document_id) OR (al.c_invoice_credit_id = d.document_id)) ");
+		sqlDoc.append("     WHEN d.documenttable = 'C_CashLine' THEN (select (CASE WHEN SUM(al.amount) IS NULL THEN 0.0 ELSE SUM(al.amount) END) FROM C_AllocationLine al WHERE (al.c_cashline_id = d.document_id)) ");				 
+		sqlDoc.append("     ELSE (select (CASE WHEN SUM(al.amount) IS NULL THEN 0.0 ELSE SUM(al.amount) END) FROM C_AllocationLine al WHERE (al.c_payment_id = d.document_id)) END) ");		
+		//sqlDoc.append("		          currencyconvert(d.amount, d.c_currency_id, ?, ('now'::text)::timestamp(6) with time zone, COALESCE(c_conversiontype_id,0), d.ad_client_id, d.ad_org_id) ");
+		sqlDoc.append("     + ");
+		sqlDoc.append("     (SELECT currencyconvert ( CASE WHEN d.documenttable = 'C_Invoice' THEN ");
+		sqlDoc.append("     invoiceOpen(d.document_id, (SELECT C_InvoicePaySchedule_ID FROM c_invoicepayschedule ips WHERE ips.c_invoice_id = d.document_id)) ");
+		sqlDoc.append("     WHEN d.documenttable = 'C_CashLine' THEN ");
+		sqlDoc.append("     cashlineavailable(d.document_id) ");
+		sqlDoc.append("     ELSE paymentavailable(d.document_id) END, d.c_currency_id, ?, ('now'::text)::timestamp(6) with time zone, COALESCE(d.c_conversiontype_id,0), d.ad_client_id, d.ad_org_id ) ) ");
 		sqlDoc.append("	         ELSE 0.0 END AS Debit, ");
-		sqlDoc.append("     CASE WHEN d.signo_issotrx = ? THEN "); 
-		sqlDoc.append("		          currencyconvert(d.amount, d.c_currency_id, ?, ('now'::text)::timestamp(6) with time zone, COALESCE(c_conversiontype_id,0), d.ad_client_id, d.ad_org_id) "); 
+		sqlDoc.append("     CASE WHEN d.signo_issotrx = ? THEN ");
+		sqlDoc.append("     (SELECT CASE ");
+		sqlDoc.append("     WHEN d.documenttable = 'C_Invoice' THEN (select (CASE WHEN SUM(al.amount) IS NULL THEN 0.0 ELSE SUM(al.amount + (CASE WHEN al.c_invoice_credit_id IS NULL THEN 0.0 ELSE (al.writeoffamt + al.discountamt) END )) END) FROM C_AllocationLine al WHERE (al.c_invoice_id = d.document_id) OR (al.c_invoice_credit_id = d.document_id)) ");
+		sqlDoc.append("     WHEN d.documenttable = 'C_CashLine' THEN (select (CASE WHEN SUM(al.amount) IS NULL THEN 0.0 ELSE SUM(al.amount) END) FROM C_AllocationLine al WHERE (al.c_cashline_id = d.document_id)) ");				 
+		sqlDoc.append("     ELSE (select (CASE WHEN SUM(al.amount) IS NULL THEN 0.0 ELSE SUM(al.amount) END) FROM C_AllocationLine al WHERE (al.c_payment_id = d.document_id)) END) ");
+		//sqlDoc.append("		          currencyconvert(d.amount, d.c_currency_id, ?, ('now'::text)::timestamp(6) with time zone, COALESCE(c_conversiontype_id,0), d.ad_client_id, d.ad_org_id) ");
+		sqlDoc.append("     + ");
+		sqlDoc.append("     (SELECT currencyconvert ( CASE WHEN d.documenttable = 'C_Invoice' THEN ");
+		sqlDoc.append("     invoiceOpen(d.document_id, (SELECT C_InvoicePaySchedule_ID FROM c_invoicepayschedule ips WHERE ips.c_invoice_id = d.document_id)) ");
+		sqlDoc.append("     WHEN d.documenttable = 'C_CashLine' THEN ");
+		sqlDoc.append("     cashlineavailable(d.document_id) ");
+		sqlDoc.append("     ELSE paymentavailable(d.document_id) END, d.c_currency_id, ?, ('now'::text)::timestamp(6) with time zone, COALESCE(d.c_conversiontype_id,0), d.ad_client_id, d.ad_org_id ) ) ");
 		sqlDoc.append("	         ELSE 0.0 END AS Credit, ");
 		sqlDoc.append("  	d.Created, ");
 		sqlDoc.append("  	d.C_Currency_ID, ");
@@ -180,8 +219,8 @@ public class CurrentAccountReport extends SvrProcess {
 						                 getAD_Client_ID() + ", " + 
 						                 trx_Org_ID +  " , " + 
 						                 getAD_PInstance_ID() + ", '" + 
-						                 MCurrency.getISO_Code(getCtx(), rs.getInt("C_Currency_ID")) + "', " +
-						                 rs.getBigDecimal("Amount") + ", " +
+						                 "', " +
+						                 BigDecimal.ZERO + ", " + 
 						                 acumDebit + ", " + 
 						                 acumCredit + ", " + 
 						                 acumBalance + ", '-', " + 
