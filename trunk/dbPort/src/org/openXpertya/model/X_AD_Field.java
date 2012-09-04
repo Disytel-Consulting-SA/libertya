@@ -1,13 +1,14 @@
-/** Modelo Generado - NO CAMBIAR MANUALMENTE - Copyright (C) 2006 FUNDESLE */
+/** Modelo Generado - NO CAMBIAR MANUALMENTE - Disytel */
 package org.openXpertya.model;
-import java.util.*;
+import java.util.logging.Level;
+ import java.util.*;
 import java.sql.*;
 import java.math.*;
 import org.openXpertya.util.*;
 /** Modelo Generado por AD_Field
- *  @author Comunidad de Desarrollo openXpertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
- *  @version  - 2009-10-22 14:51:26.502 */
-public class X_AD_Field extends PO
+ *  @author Comunidad de Desarrollo Libertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
+ *  @version  - 2012-09-03 21:48:32.834 */
+public class X_AD_Field extends org.openXpertya.model.PO
 {
 /** Constructor estándar */
 public X_AD_Field (Properties ctx, int AD_Field_ID, String trxName)
@@ -36,13 +37,13 @@ public X_AD_Field (Properties ctx, ResultSet rs, String trxName)
 {
 super (ctx, rs, trxName);
 }
-/** AD_Table_ID=107 */
-public static final int Table_ID=107;
+/** AD_Table_ID */
+public static final int Table_ID = M_Table.getTableID("AD_Field");
 
 /** TableName=AD_Field */
 public static final String Table_Name="AD_Field";
 
-protected static KeyNamePair Model = new KeyNamePair(107,"AD_Field");
+protected static KeyNamePair Model = new KeyNamePair(Table_ID,"AD_Field");
 protected static BigDecimal AccessLevel = new BigDecimal(4);
 
 /** Load Meta Data */
@@ -143,6 +144,25 @@ Integer ii = (Integer)get_Value("AD_Tab_ID");
 if (ii == null) return 0;
 return ii.intValue();
 }
+/** Set Default Logic.
+Default value hierarchy, separated by ;
+ */
+public void setDefaultValue (String DefaultValue)
+{
+if (DefaultValue != null && DefaultValue.length() > 2000)
+{
+log.warning("Length > 2000 - truncated");
+DefaultValue = DefaultValue.substring(0,2000);
+}
+set_Value ("DefaultValue", DefaultValue);
+}
+/** Get Default Logic.
+Default value hierarchy, separated by ;
+ */
+public String getDefaultValue() 
+{
+return (String)get_Value("DefaultValue");
+}
 /** Set Description.
 Optional short description of the record */
 public void setDescription (String Description)
@@ -191,7 +211,7 @@ public String getDisplayLogic()
 {
 return (String)get_Value("DisplayLogic");
 }
-public static final int ENTITYTYPE_AD_Reference_ID=245;
+public static final int ENTITYTYPE_AD_Reference_ID = MReference.getReferenceID("_Entity Type");
 /** Applications Integrated with openXpertya = A */
 public static final String ENTITYTYPE_ApplicationsIntegratedWithOpenXpertya = "A";
 /** Country Version = C */
@@ -208,7 +228,7 @@ Dictionary Entity Type;
 public void setEntityType (String EntityType)
 {
 if (EntityType.equals("A") || EntityType.equals("C") || EntityType.equals("D") || EntityType.equals("U") || EntityType.equals("CUST"));
- else throw new IllegalArgumentException ("EntityType Invalid value - Reference_ID=245 - A - C - D - U - CUST");
+ else throw new IllegalArgumentException ("EntityType Invalid value - Reference = ENTITYTYPE_AD_Reference_ID - A - C - D - U - CUST");
 if (EntityType == null) throw new IllegalArgumentException ("EntityType is mandatory");
 if (EntityType.length() > 4)
 {
@@ -405,7 +425,7 @@ public KeyNamePair getKeyNamePair()
 {
 return new KeyNamePair(getID(), getName());
 }
-public static final int OBSCURETYPE_AD_Reference_ID=291;
+public static final int OBSCURETYPE_AD_Reference_ID = MReference.getReferenceID("AD_Field ObscureType");
 /** Obscure Digits but last 4 = 904 */
 public static final String OBSCURETYPE_ObscureDigitsButLast4 = "904";
 /** Obscure Digits but first/last 4 = 944 */
@@ -419,7 +439,7 @@ Type of obscuring the data (limiting the display) */
 public void setObscureType (String ObscureType)
 {
 if (ObscureType == null || ObscureType.equals("904") || ObscureType.equals("944") || ObscureType.equals("A44") || ObscureType.equals("A04"));
- else throw new IllegalArgumentException ("ObscureType Invalid value - Reference_ID=291 - 904 - 944 - A44 - A04");
+ else throw new IllegalArgumentException ("ObscureType Invalid value - Reference = OBSCURETYPE_AD_Reference_ID - 904 - 944 - A44 - A04");
 if (ObscureType != null && ObscureType.length() > 3)
 {
 log.warning("Length > 3 - truncated");

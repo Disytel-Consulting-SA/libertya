@@ -172,6 +172,21 @@ public class CalloutInvoiceExt extends CalloutInvoice {
         if( (C_DocType_ID == null) || (C_DocType_ID.intValue() == 0) ) {
             return "";
         }
+        
+        // Para seteo manual del nro de documento no debo sugerir nada
+        Boolean manualDocumentNo = null;
+        Object manualObj = mTab.getValue("ManualDocumentNo");
+        if(manualObj != null){
+        	if(manualObj instanceof String){
+        		manualDocumentNo = ((String)mTab.getValue("ManualDocumentNo")).equals("Y");
+        	}
+        	else{
+        		manualDocumentNo = (Boolean)mTab.getValue("ManualDocumentNo");
+        	}
+        }
+        if(manualDocumentNo != null && manualDocumentNo){
+        	return "";
+        }
 
         try {
             String SQL = "SELECT d.HasCharges,'N',d.IsDocNoControlled," + "s.CurrentNext, d.DocBaseType, s.prefix, s.suffix " + "FROM C_DocType d, AD_Sequence s " + "WHERE C_DocType_ID=?"    // 1
@@ -568,6 +583,10 @@ public class CalloutInvoiceExt extends CalloutInvoice {
 				// HARDCODED: para el proveedor Responsable Monotributo, se
 				// setea la letra B.
 				try {
+					if(mTab.getValue("C_DocTypeTarget_ID") == null){
+						return "";
+					}
+					
 					int C_DocTypeTarget_ID = Integer.parseInt(mTab.getValue(
 							"C_DocTypeTarget_ID").toString());
 					
@@ -872,5 +891,32 @@ public class CalloutInvoiceExt extends CalloutInvoice {
 		//
 		return amt (ctx, WindowNo, mTab, mField, value);
 	}	//	tax
+	
+	
+	public String documentNo( Properties ctx,int WindowNo,MTab mTab,MField mField,Object value ) {
+		try {
+			String docNo = ((String)value);
+			
+			// <A000100000001>
+			// 012345678901234
+			
+			// A000100000001
+			// 0123456789012
+			
+			HashMap<String, Object> hm = DividirDocumentNo(docNo);
+			Integer bPartnerID = (Integer)mTab.getValue("C_BPartner_ID");
+			for (String k : hm.keySet()) { 
+				// Solo asigna la letra del comprobante si no se ha ingresado
+				// la entidad comercial. Si se ingreso la entidad comercial
+				// la letra se calcula a partir de las categorias de iva
+				// de la EC y la Compañia.
+				if(bPartnerID == null || !k.equals("C_Letra_Comprobante_ID") )
+					mTab.setValue(k, hm.get(k));
+			}	
+		} catch (Exception e) {
+			
+		}
+		return "";
+	}
 	
 }

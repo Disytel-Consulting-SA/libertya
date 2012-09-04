@@ -80,12 +80,6 @@ public class MInvoice extends X_C_Invoice implements DocAction {
 	private boolean isTPVInstance = false;
 	
     private boolean dragDocumentDiscountAmts = false;	
-    
-    /**
-	 * Indica si el DocumentNo se seteó manualmente para que no se encierre
-	 * entre <> de modo que respete el documentNo ingresado. LOCALE_AR
-	 */
-	private boolean manualDocumentNo = false;
 	
 	/**
 	 * Caja diaria a asignar al contra-documento que se genera al anular este
@@ -209,7 +203,7 @@ public class MInvoice extends X_C_Invoice implements DocAction {
 		to.setC_DocType_ID(0);
 		to.setC_DocTypeTarget_ID(C_DocTypeTarget_ID);
 		to.setIsSOTrx(isSOTrx);
-
+		to.setManualDocumentNo(false);
 		//
 
 		to.setDateInvoiced(dateDoc);
@@ -1449,6 +1443,13 @@ public class MInvoice extends X_C_Invoice implements DocAction {
 			return false;
 		}
 
+		// Si está seteado que debe registrar el nro de documento manual y no lo
+		// setea, entonces error
+		if(isManualDocumentNo() && Util.isEmpty(getDocumentNo(), true)){
+			log.saveError("Error", Msg.getMsg(getCtx(), "NoDocumentNo"));
+			return false;
+		}
+		
 		// Se obtiene el tipo de documento para determinar si es fiscal o no.
 		MDocType docType = MDocType.get(getCtx(), getC_DocTypeTarget_ID());
 		/*
@@ -2437,10 +2438,13 @@ public class MInvoice extends X_C_Invoice implements DocAction {
 		// ---------------------------------------------------------------
 
 		// Valida si el documento ya fue impreso mediante un controlador
-		// fiscal.
+		// fiscal, solamente si no se debe ingresar manualmente el nro de documento
 		if (isFiscalAlreadyPrinted()) {
-			m_processMsg = "@FiscalAlreadyPrintedError@";
-			return DocAction.STATUS_Invalid;
+			if(!isManualDocumentNo()){
+				m_processMsg = "@FiscalAlreadyPrintedError@";
+				return DocAction.STATUS_Invalid;
+			}
+			setIgnoreFiscalPrint(true);
 		}
 
 		// - Validaciones generales (AR)
@@ -4704,20 +4708,6 @@ public class MInvoice extends X_C_Invoice implements DocAction {
 		    	throw new Exception(CLogger.retrieveErrorAsString());
 		    }
 		}
-	}
-	
-	/**
-	 * @return el valor de manualDocumentNo
-	 */
-	public boolean isManualDocumentNo() {
-		return manualDocumentNo;
-	}
-
-	/**
-	 * @param manualDocumentNo el valor de manualDocumentNo a asignar
-	 */
-	public void setManualDocumentNo(boolean manualDocumentNo) {
-		this.manualDocumentNo = manualDocumentNo;
 	}
 
 	public void setVoidPOSJournalID(Integer voidPOSJournalID) {
