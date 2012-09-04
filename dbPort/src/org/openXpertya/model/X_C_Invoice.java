@@ -7,7 +7,7 @@ import java.math.*;
 import org.openXpertya.util.*;
 /** Modelo Generado por C_Invoice
  *  @author Comunidad de Desarrollo Libertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
- *  @version  - 2012-07-09 20:10:41.838 */
+ *  @version  - 2012-09-03 22:07:35.849 */
 public class X_C_Invoice extends org.openXpertya.model.PO
 {
 /** Constructor estándar */
@@ -45,6 +45,7 @@ setIsSOTrx (false);	// @IsSOTrx@
 setIsTaxIncluded (false);
 setIsTransferred (false);
 setManageDragOrderDiscounts (false);
+setManualDocumentNo (false);
 setManualGeneralDiscount (Env.ZERO);
 setM_PriceList_ID (0);
 setNotExchangeableCredit (false);
@@ -798,7 +799,7 @@ if (DocumentNo.length() > 30)
 log.warning("Length > 30 - truncated");
 DocumentNo = DocumentNo.substring(0,30);
 }
-set_ValueNoCheck ("DocumentNo", DocumentNo);
+set_Value ("DocumentNo", DocumentNo);
 }
 /** Get Document No.
 Document sequence number of the document */
@@ -1124,6 +1125,22 @@ set_Value ("ManageDragOrderDiscounts", new Boolean(ManageDragOrderDiscounts));
 public boolean isManageDragOrderDiscounts() 
 {
 Object oo = get_Value("ManageDragOrderDiscounts");
+if (oo != null) 
+{
+ if (oo instanceof Boolean) return ((Boolean)oo).booleanValue();
+ return "Y".equals(oo);
+}
+return false;
+}
+/** Set Manual DocumentNo */
+public void setManualDocumentNo (boolean ManualDocumentNo)
+{
+set_Value ("ManualDocumentNo", new Boolean(ManualDocumentNo));
+}
+/** Get Manual DocumentNo */
+public boolean isManualDocumentNo() 
+{
+Object oo = get_Value("ManualDocumentNo");
 if (oo != null) 
 {
  if (oo instanceof Boolean) return ((Boolean)oo).booleanValue();

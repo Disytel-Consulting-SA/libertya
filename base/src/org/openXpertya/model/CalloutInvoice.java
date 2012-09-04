@@ -58,6 +58,21 @@ public class CalloutInvoice extends CalloutEngine {
         if( (C_DocType_ID == null) || (C_DocType_ID.intValue() == 0) ) {
             return "";
         }
+        
+        // Para seteo manual del nro de documento no debo sugerir nada
+        Boolean manualDocumentNo = null;
+        Object manualObj = mTab.getValue("ManualDocumentNo");
+        if(manualObj != null){
+        	if(manualObj instanceof String){
+        		manualDocumentNo = ((String)mTab.getValue("ManualDocumentNo")).equals("Y");
+        	}
+        	else{
+        		manualDocumentNo = (Boolean)mTab.getValue("ManualDocumentNo");
+        	}
+        }
+        if(manualDocumentNo != null && manualDocumentNo){
+        	return "";
+        }
 
         try {
             String SQL = "SELECT d.HasCharges,'N',d.IsDocNoControlled," + "s.CurrentNext, d.DocBaseType " + "FROM C_DocType d, AD_Sequence s " + "WHERE C_DocType_ID=?"    // 1
