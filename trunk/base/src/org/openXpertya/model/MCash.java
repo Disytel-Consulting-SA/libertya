@@ -734,6 +734,9 @@ public class MCash extends X_C_Cash implements DocAction {
             MCashLine line = lines[ i ];
             if (DOCSTATUS_Drafted.equals(line.getDocStatus())) {
                 line.setConfirmAditionalWorks(false);
+                if(Util.isEmpty(line.getC_POSJournal_ID(), true)){
+                	line.setC_POSJournal_ID(getC_POSJournal_ID());
+                }
             	if (!line.processIt(ACTION_Complete)) {
             		errorMsg = line.getProcessMsg();
             		error = true;
