@@ -182,7 +182,8 @@ public class LaunchInvoice extends SvrProcess {
 				"TIPO_IVA",
 				JasperReportsUtil.getCategoriaIVAName(getCtx(),
 						bpartner.getC_Categoria_Iva_ID(), get_TrxName()));
-		}			
+		}
+		jasperwrapper.addParameter("LETRA", JasperReportsUtil.coalesce(invoice.getLetra(),""));
 		jasperwrapper.addParameter("CUIT", JasperReportsUtil.coalesce(bpartner.getTaxID(),""));
 		jasperwrapper.addParameter("INGBRUTO", bpartner.getIIBB());
 		if (invoice.getSalesRep_ID() > 0) {
