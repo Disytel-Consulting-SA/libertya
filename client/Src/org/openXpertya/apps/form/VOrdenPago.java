@@ -3053,8 +3053,11 @@ public class VOrdenPago extends CPanel implements FormPanel,ActionListener,Table
 	}
 	
 	private void setCurrencyContext(Integer currencyID) {
-		if (currencyID != null)
+		if (currencyID != null){
 			Env.setContext(m_ctx, m_WindowNo, "C_Currency_ID", currencyID);
+			// Es necesario setear el Currency_Id a 0 ya que al querer utilizarlo en alguna consulta de filtro para un VLookUp lo busca con m_WindowNo 0.
+			Env.setContext(m_ctx, 0, "C_Currency_ID", currencyID);
+		}
 		else
 			Env.setContext(m_ctx, m_WindowNo, "C_Currency_ID", (String)null);
 	}
