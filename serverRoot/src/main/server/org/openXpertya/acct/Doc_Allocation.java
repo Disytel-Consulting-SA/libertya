@@ -449,18 +449,19 @@ public class Doc_Allocation extends Doc implements DocProjectSplitterInterface  
                     }
                 }
             }
-
-            // Realized Gain & Loss
-
-            if( (invoice != null) && ( (p_vo.C_Currency_ID != as.getC_Currency_ID()    // payment allocation in foreign currency
-                    ) || (p_vo.C_Currency_ID != line.getInvoiceC_Currency_ID())))    // invoice <> payment currency
-                    {
-                if( !createRealizedGainLoss( as,fact,bpAcct,invoice.isSOTrx(),line.getC_Invoice_ID(),invoiceAmt,allocationAccounted,line.getOverUnderAmt().add( line.getDiscountAmt()))) {
-                    p_vo.Error = "Cannot create Realized Gain&Loss";
-
-                    return null;
-                }
-            }
+            
+            // SE QUITO EL SIGUIENTE CODIGO YA QUE AL INCORPORAR MULTIMONEDA, LA DIFERENCIA DE CAMBIO SE REPRESENTA EN UNA NOTA DE DEBITO/CREDITO
+            
+            // Realized Gain & Loss            
+//            if( (invoice != null) && ( (p_vo.C_Currency_ID != as.getC_Currency_ID()    // payment allocation in foreign currency
+//                    ) || (p_vo.C_Currency_ID != line.getInvoiceC_Currency_ID())))    // invoice <> payment currency
+//                    {
+//                if( !createRealizedGainLoss( as,fact,bpAcct,invoice.isSOTrx(),line.getC_Invoice_ID(),invoiceAmt,allocationAccounted,line.getOverUnderAmt().add( line.getDiscountAmt()))) {
+//                    p_vo.Error = "Cannot create Realized Gain&Loss";
+//
+//                    return null;
+//                }
+//            }
         }    // for all lines
 
         // reset line info
