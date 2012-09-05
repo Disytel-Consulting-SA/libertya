@@ -170,6 +170,7 @@ public class LaunchInvoice extends SvrProcess {
 		jasperwrapper.addParameter("ANIO", Integer.toString(c.get(Calendar.YEAR)));		
 		jasperwrapper.addParameter("RAZONSOCIAL", JasperReportsUtil.coalesce(invoice.getNombreCli(), bpartner.getName()) ); 
 		jasperwrapper.addParameter("RAZONSOCIAL2", JasperReportsUtil.coalesce(bpartner.getName2(), "") );
+		jasperwrapper.addParameter("BPARTNER_NAME", bpartner.getName());
 		jasperwrapper.addParameter("CODIGO", bpartner.getValue());
 		jasperwrapper.addParameter("DIRECCION", JasperReportsUtil
 				.formatLocation(getCtx(), location.getID(), false));

@@ -20,6 +20,8 @@ public class CustomerDataDialog extends JDialog {
 	private final int BUTTON_PANEL_WIDTH = 160;
 	private final int BUTTON_WIDTH = 155;
 	
+	private final int CUSTOMER_ID_MAX_LENGTH = 11;
+	
 	private CPanel cMainPanel = null;
 	private CPanel cCmdPanel = null;
 	private CButton cClearButton = null;
@@ -274,6 +276,20 @@ public class CustomerDataDialog extends JDialog {
 			cIdentificationText.setText(getBPartner().getCustomerIdentification());
 			cIdentificationText.setCursor(Cursor.getPredefinedCursor(Cursor.TEXT_CURSOR));
 			cIdentificationText.setMandatory(isMandatoryData());
+			cIdentificationText.addKeyListener(new java.awt.event.KeyAdapter() {
+				public void keyTyped(java.awt.event.KeyEvent e) {
+					char keyChar = e.getKeyChar();
+					String idText = cIdentificationText.getText();
+					
+					if(idText != null && idText.length() >= CUSTOMER_ID_MAX_LENGTH){
+						e.consume();
+					}
+					
+					if(!Character.isDigit(keyChar)) {
+						e.consume();
+					}
+				}				
+			});
 			FocusUtils.addFocusHighlight(cIdentificationText);
 		}
 		return cIdentificationText;
