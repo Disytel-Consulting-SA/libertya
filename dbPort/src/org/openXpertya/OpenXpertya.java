@@ -572,8 +572,12 @@ public final class OpenXpertya {
 
         startup(isClient);
 
+        if (!DB.isConnected() && !isClient) {
+        	log.severe("No hay base de datos: desconectada");
+        	return false;
+        }
+        
         if (!DB.isConnected()) {
-
             log.severe("No hay base de datos: desconectada");
             System.exit(1);
         }
