@@ -881,7 +881,7 @@ public class M_Table extends X_AD_Table {
     }
     
     /** Cache para getIdentifierColumns() */
-    static Vector<String> columns = null;
+    static HashMap<String, Vector<String>> columns = null;
     /**
      * Retorna un vector con las columnas marcadas como identificador, para una tabla dada
      * @param trxName
@@ -890,9 +890,11 @@ public class M_Table extends X_AD_Table {
     public static Vector<String> getIdentifierColumns(String trxName, String tableName)
     {
     	// en cache?
-		if (columns == null)
+		if (columns == null || columns.get(tableName) == null)
 		{
-			columns = new Vector<String>();
+			
+			columns = new HashMap<String, Vector<String>>();
+			Vector<String> tempCols = new Vector<String>();
 			try
 			{
 				String sql =
@@ -908,14 +910,16 @@ public class M_Table extends X_AD_Table {
 				ResultSet rs = stmt.executeQuery();
 				
 				while (rs.next())
-					columns.add(rs.getString(1));
+					tempCols.add(rs.getString(1));
+				
+				columns.put(tableName, tempCols);
 			}
 			catch (Exception e)	{
 				e.printStackTrace();
-				return columns;
+				return columns.get(tableName);
 			}
 		}
-		return columns;
+		return columns.get(tableName);
     }
     
 }	// M_Table
