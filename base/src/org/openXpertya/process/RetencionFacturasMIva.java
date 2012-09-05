@@ -42,7 +42,9 @@ public class RetencionFacturasMIva extends AbstractRetencionProcessor {
 		
 		// Se obtiene la tasa de impuesto exento para la creación de la nota
 		// de crédito.
-		String sql = MRole.getDefault().addAccessSQL(" SELECT C_Tax_ID FROM C_Tax WHERE isactive = 'Y' AND istaxexempt = 'Y' AND to_country_id IS NULL AND rate = 0.0 ", "C_Tax", MRole.SQL_FULLYQUALIFIED, MRole.SQL_RO);;
+//		Se comenta esta opción para recuperar el ID del Tax exento, dado que el uso de roles desde acceso WS lo imposibilita.  De todas maneras, no pareciera ser necesario pasar por accesos de perfil para obtener el C_Tax_ID		
+//		String sql = MRole.getDefault().addAccessSQL(" SELECT C_Tax_ID FROM C_Tax WHERE isactive = 'Y' AND istaxexempt = 'Y' AND to_country_id IS NULL AND rate = 0.0 ", "C_Tax", MRole.SQL_FULLYQUALIFIED, MRole.SQL_RO);;
+		String sql = " SELECT C_Tax_ID FROM C_Tax WHERE isactive = 'Y' AND istaxexempt = 'Y' AND to_country_id IS NULL AND rate = 0.0 AND AD_Client_ID = " + Env.getContextAsInt(Env.getCtx(), "#AD_Client_ID");
 		taxExenc = DB.getSQLValue(null, sql);
 		
 		// Se obtiene el valor del parámetro Importe No Imponible (INI)
