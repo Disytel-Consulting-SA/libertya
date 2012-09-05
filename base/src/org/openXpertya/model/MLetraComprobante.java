@@ -17,12 +17,17 @@ public class MLetraComprobante extends X_C_Letra_Comprobante {
 		MLetraComprobante ret = null;
 		
 		try {
-			String sql = " SELECT C_Letra_Comprobante_ID FROM C_Letra_Comprobante WHERE Letra = ? ";
-			sql = MRole.getDefault().addAccessSQL( sql, "C_Letra_Comprobante", MRole.SQL_FULLYQUALIFIED, MRole.SQL_RO ) + "  ORDER BY C_Letra_Comprobante.AD_Client_ID DESC, C_Letra_Comprobante.AD_Org_ID DESC  ";
+//			Se comenta esta opción para recuperar el ID de la letra, dado que el uso de roles desde acceso WS lo imposibilita.  De todas maneras, no pareciera ser necesario pasar por accesos de perfil para obtener el ID correspondiente		
+//			String sql = " SELECT C_Letra_Comprobante_ID FROM C_Letra_Comprobante WHERE Letra = ? ";
+//			sql = MRole.getDefault().addAccessSQL( sql, "C_Letra_Comprobante", MRole.SQL_FULLYQUALIFIED, MRole.SQL_RO ) + "  ORDER BY C_Letra_Comprobante.AD_Client_ID DESC, C_Letra_Comprobante.AD_Org_ID DESC  ";
 			
+			String sql = " SELECT C_Letra_Comprobante_ID FROM C_Letra_Comprobante WHERE Letra = ? AND AD_Client_ID = ? " +
+						 " ORDER BY C_Letra_Comprobante.AD_Client_ID DESC, C_Letra_Comprobante.AD_Org_ID DESC "; 
 			CPreparedStatement pp = DB.prepareStatement( sql, trxName);
 			
-			pp.setString(1, letra);
+			int i = 1;
+			pp.setString(i++, letra);
+			pp.setInt(i++, Env.getAD_Client_ID(Env.getCtx()));
 			
 			ResultSet rs = pp.executeQuery();
 			if (rs.next())
