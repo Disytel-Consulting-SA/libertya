@@ -342,7 +342,7 @@ public class MConversionRate extends X_C_Conversion_Rate {
                           + " AND AD_Org_ID IN (0,?) "		// #6
                           + "ORDER BY AD_Client_ID DESC, AD_Org_ID DESC, ValidFrom DESC)"
 					      + " UNION "		// #6
-                          + "(SELECT MultiplyRate " + "FROM C_Conversion_Rate " + "WHERE C_Currency_ID=?"		// #1
+                          + "(SELECT DivideRate " + "FROM C_Conversion_Rate " + "WHERE C_Currency_ID=?"		// #1
 					      + " AND C_Currency_ID_To=?"			// #2
 					      + " AND C_ConversionType_ID=?"		// #3
 					      + " AND ? BETWEEN ValidFrom AND ValidTo"	// #4      TRUNC (?) ORA-00932: inconsistent datatypes: expected NUMBER got TIMESTAMP
