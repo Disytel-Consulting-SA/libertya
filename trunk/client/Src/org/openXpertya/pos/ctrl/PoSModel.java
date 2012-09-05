@@ -744,8 +744,8 @@ public class PoSModel {
 			// Si la máscara de la entidad financiera responde al string
 			// devuelto por el lector entonces lo agrego a la lista 
 			if (!Util.isEmpty(entidadFinanciera.getCardMask(), true)
-					&& creditCardStr
-							.startsWith(entidadFinanciera.getCardMask())) {
+					&& creditCardStr.toUpperCase()
+							.startsWith(entidadFinanciera.getCardMask().toUpperCase())) {
 				financieras.add(entidadFinanciera);
 			}
 		}

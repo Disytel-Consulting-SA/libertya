@@ -1376,18 +1376,19 @@ public class PoSOnline extends PoSConnectionState {
 			inv.setNumeroComprobante(nroComprobante);
 		
 		// Asignación de CUIT en caso de que se requiera.
-		MCategoriaIva mCategoriaIvaCus = new MCategoriaIva(ctx, partner.getC_Categoria_Iva_ID(), getTrxName());
+//		MCategoriaIva mCategoriaIvaCus = new MCategoriaIva(ctx, partner.getC_Categoria_Iva_ID(), getTrxName());
 		String cuit = partner.getTaxID();
 		inv.setCUIT(cuit);
 
+		// Siempre se asignan los datos del comprador
 		// Se asignan los datos de consumidor final.
 		// Nombre, dirección e identificación para los casos en que el monto de la factura
 		// sea mayor que el permitido a consumidor final.
-		if (mCategoriaIvaCus.getCodigo() == MCategoriaIva.CONSUMIDOR_FINAL) {
+//		if (mCategoriaIvaCus.getCodigo() == MCategoriaIva.CONSUMIDOR_FINAL) {
 			inv.setNombreCli(order.getBusinessPartner().getCustomerName());
 			inv.setInvoice_Adress(order.getBusinessPartner().getCustomerAddress());
 			inv.setNroIdentificCliente(order.getBusinessPartner().getCustomerIdentification());
-		}
+//		}
 		
 		return inv;
 	}

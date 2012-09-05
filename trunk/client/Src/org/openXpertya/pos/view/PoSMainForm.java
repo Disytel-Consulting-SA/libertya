@@ -2228,7 +2228,7 @@ public class PoSMainForm extends CPanel implements FormPanel, ASyncProcess, Disp
 		if (cPaymentDiscountText == null) {
 			cPaymentDiscountText = new CTextField();
 			cPaymentDiscountText.setReadWrite(false);
-			cPaymentDiscountText.setPreferredSize(new Dimension(S_PAYMENT_INFO_FIELD_WIDTH,20));
+			cPaymentDiscountText.setPreferredSize(new Dimension(S_PAYMENT_FIELD_WIDTH,20));
 		}
 		return cPaymentDiscountText;
 	}
@@ -2243,7 +2243,7 @@ public class PoSMainForm extends CPanel implements FormPanel, ASyncProcess, Disp
 			cPaymentToPayAmt = new VNumber();
 			cPaymentToPayAmt.setDisplayType(DisplayType.Amount);
 			cPaymentToPayAmt.setReadWrite(false);
-			cPaymentToPayAmt.setPreferredSize(new java.awt.Dimension(S_PAYMENT_INFO_FIELD_WIDTH,20));
+			cPaymentToPayAmt.setPreferredSize(new java.awt.Dimension(S_PAYMENT_FIELD_WIDTH,20));
 			cPaymentToPayAmt.setValue(null);
 		}
 		return cPaymentToPayAmt;
@@ -2258,7 +2258,7 @@ public class PoSMainForm extends CPanel implements FormPanel, ASyncProcess, Disp
 		if (cCreditCardCuotas == null) {
 			cCreditCardCuotas = new VNumber();
 			cCreditCardCuotas.setReadWrite(false);
-			cCreditCardCuotas.setPreferredSize(new Dimension(S_PAYMENT_INFO_FIELD_WIDTH,20));
+			cCreditCardCuotas.setPreferredSize(new Dimension(S_PAYMENT_FIELD_WIDTH,20));
 			cCreditCardCuotas.setDisplayType(DisplayType.Integer);
 		}
 		return cCreditCardCuotas;
@@ -2274,7 +2274,7 @@ public class PoSMainForm extends CPanel implements FormPanel, ASyncProcess, Disp
 			cCreditCardCuotaAmt = new VNumber();
 			cCreditCardCuotaAmt.setDisplayType(DisplayType.Amount);
 			cCreditCardCuotaAmt.setReadWrite(false);
-			cCreditCardCuotaAmt.setPreferredSize(new java.awt.Dimension(S_PAYMENT_INFO_FIELD_WIDTH,20));
+			cCreditCardCuotaAmt.setPreferredSize(new java.awt.Dimension(S_PAYMENT_FIELD_WIDTH,20));
 			cCreditCardCuotaAmt.setValue(null);
 		}
 		return cCreditCardCuotaAmt;
@@ -2928,11 +2928,18 @@ public class PoSMainForm extends CPanel implements FormPanel, ASyncProcess, Disp
 			cCardText = new VPasswordSimple();
 			cCardText.setPreferredSize(new java.awt.Dimension(S_PAYMENT_FIELD_WIDTH,20));
 			cCardText.setMinimumSize(new java.awt.Dimension(S_PAYMENT_FIELD_WIDTH,20));
-			cCardText.addVetoableChangeListener(new VetoableChangeListener() {
-
-				public void vetoableChange(PropertyChangeEvent event) throws PropertyVetoException {
-					String creditCardStr = (String)event.getNewValue();
+			cCardText.addActionListener(new ActionListener() {
+				
+				@Override
+				public void actionPerformed(ActionEvent arg0) {
+					String creditCardStr = getCCardText().getText();
 					Object selectedOld = getCPaymentMediumCombo().getSelectedItem();
+					// Obtener la info de los componentes que están actualmente
+					// en los campos para setearlos luego
+					String bank = (String)getCBankCombo().getValue();
+					String posnet = (String)getCPosnetText().getValue();
+					String coupon = (String)getCCouponNumberText().getValue();
+					BigDecimal amt = (BigDecimal)getCAmountText().getValue(); 
 					// Obtener la clase para parsear el nombre y el nro de
 					// tarjeta a partir del string devuelto por el lector de
 					// tarjetas
@@ -2961,6 +2968,12 @@ public class PoSMainForm extends CPanel implements FormPanel, ASyncProcess, Disp
 						getCPaymentMediumCombo().setSelectedItem(selectedOld);
 					}
 					setCustomerDataDescriptionText();
+					// Setear los valores que estaban seteados previamente a
+					// insertar la tarjeta
+					getCBankCombo().setValue(bank);
+					getCPosnetText().setValue(posnet);
+					getCCouponNumberText().setValue(coupon);
+					getCAmountText().setValue(amt); 
 				}
 			});
 			FocusUtils.addFocusHighlight(cCardText);
@@ -4614,6 +4627,13 @@ public class PoSMainForm extends CPanel implements FormPanel, ASyncProcess, Disp
 		
 		} else if(MPOSPaymentMedium.TENDERTYPE_CreditCard.equals(tenderType)) {
 			String bankName = getSelectedBankName();
+			// -> Reemplazado por EntidadFinanciera Plan
+			// EntidadFinanciera entidadFinanciera = (EntidadFinanciera)getCCreditCardCombo().getValue();
+			// <-
+			EntidadFinancieraPlan creditCardPlan = getSelectedCreditCardPlan();
+			String posnet = getCPosnetText().getText();
+			String creditCardNumber = getCCreditCardNumberText().getText();
+			String couponNumber = getCCouponNumberText().getText();
 			// Es necesario un plan de tarjeta
 			if (getSelectedCreditCardPlan() == null) {
 				errorMsg(MSG_NO_CREDIT_CARD_PLAN_ERROR);
@@ -4627,19 +4647,13 @@ public class PoSMainForm extends CPanel implements FormPanel, ASyncProcess, Disp
 				errorMsg(MSG_INVALID_CARD_AMOUNT_ERROR);
 				return;
 			}
-			extraValidationsResult = getExtraPOSPaymentAddValidations().validateCreditCardPayment(this);
+			extraValidationsResult = getExtraPOSPaymentAddValidations()
+					.validateCreditCardPayment(this, creditCardNumber,
+							couponNumber);
 			if(extraValidationsResult.isError()){
 				errorMsg(extraValidationsResult.getMsg());
 				return;
 			}
-
-			// -> Reemplazado por EntidadFinanciera Plan
-			// EntidadFinanciera entidadFinanciera = (EntidadFinanciera)getCCreditCardCombo().getValue();
-			// <-
-			EntidadFinancieraPlan creditCardPlan = getSelectedCreditCardPlan();
-			String creditCardNumber = getCCreditCardNumberText().getText();
-			String couponNumber = getCCouponNumberText().getText();
-			String posnet = getCPosnetText().getText();
 			
 			payment = new CreditCardPayment(creditCardPlan, creditCardNumber, couponNumber, bankName, posnet);
 						
@@ -5590,9 +5604,12 @@ public class PoSMainForm extends CPanel implements FormPanel, ASyncProcess, Disp
 		// de cada cuota.
 		if (paymentMedium.isCreditCard()) {
 			EntidadFinancieraPlan plan = getSelectedCreditCardPlan();
-			if (paymentToPayAmt != null) {
-				getCAmountText().setValue(paymentToPayAmt);
-			}
+			getCAmountText().setValue(
+					getCAmountText().getValue() != null ? getCAmountText()
+							.getValue()
+							: (paymentToPayAmt != null ? paymentToPayAmt
+									: null));
+			
 			// El importe de la cuota se calcula en base al importe del pago
 			// ingresado por el usuario
 			BigDecimal cuotaAmt = getPaymentAmount().divide(new BigDecimal(plan

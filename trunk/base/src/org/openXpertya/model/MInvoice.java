@@ -1490,10 +1490,11 @@ public class MInvoice extends X_C_Invoice implements DocAction {
 				if (IsSOTrx) {
 
 					// Solo se setea el nombre y el domicilio si no es
-					// CONSUMIDOR FINAL
+					// CONSUMIDOR FINAL y si no tiene nada cargado de antemano
 					if (bpCategoriaIva.getCodigo() != MCategoriaIva.CONSUMIDOR_FINAL) {
-						setNombreCli(partner.getName());
-						setInvoice_Adress(loc.getLocation(true).toString());
+						String location = loc.getLocation(true).toString();
+						setNombreCli(Util.isEmpty(getNombreCli(), true)?partner.getName():getNombreCli());
+						setInvoice_Adress(Util.isEmpty(getInvoice_Adress(), true)?location:getInvoice_Adress());
 					}
 				}
 
