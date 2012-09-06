@@ -83,7 +83,7 @@ public abstract class PluginDocActionHandler extends PluginHandler {
 			actualActionStatus = processActualAction(document);
 			
 			// en caso de ser inválido, detener la ejecución
-			if (actualActionStatus.equalsIgnoreCase(DocAction.STATUS_Invalid))
+			if (actualActionStatus.equals(DocAction.STATUS_Invalid) || actualActionStatus.equals(FALSE))
 				return DocAction.STATUS_Invalid;
 		}
 			
