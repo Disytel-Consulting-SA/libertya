@@ -674,6 +674,9 @@ public class FiscalDocumentPrint {
 		// instancia boolean en esta clase con ese flag, luego en la factura
 		// para setearla desde afuera y que al completar se la setee a esta
 		// clase. Luego se debe modificar este if contemplando ese flag  
+		// FIXME Descomentar este código cuando esté resuelto agregar
+		// comentarios en la cabecera y pie de la impresión fiscal
+		/*
 		if(!Util.isEmpty(mInvoice.getC_Order_ID(), true)){
 			MOrder order = new MOrder(mInvoice.getCtx(),
 					mInvoice.getC_Order_ID(), mInvoice.get_TrxName());
@@ -688,7 +691,7 @@ public class FiscalDocumentPrint {
 				invoice.addFooterObservation(Msg.getMsg(mInvoice.getCtx(),
 						"InvoiceWithDeliverDocument"));
 			}
-		}
+		}*/
 		
 		// TODO: Se asigna el número de remito en caso de existir.
 		
