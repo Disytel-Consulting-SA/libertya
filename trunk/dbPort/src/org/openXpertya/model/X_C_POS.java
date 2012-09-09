@@ -7,7 +7,7 @@ import java.math.*;
 import org.openXpertya.util.*;
 /** Modelo Generado por C_POS
  *  @author Comunidad de Desarrollo Libertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
- *  @version  - 2012-07-18 17:24:49.464 */
+ *  @version  - 2012-09-09 15:59:16.652 */
 public class X_C_POS extends org.openXpertya.model.PO
 {
 /** Constructor estándar */
@@ -46,6 +46,7 @@ setOperationMode (null);	// S
 setPOSNumber (0);
 setReturnedCashInCNControl (false);
 setSalesRep_ID (0);
+setVoidDocuments (false);
 }
  */
 }
@@ -712,5 +713,23 @@ public int getSalesRep_ID()
 Integer ii = (Integer)get_Value("SalesRep_ID");
 if (ii == null) return 0;
 return ii.intValue();
+}
+/** Set Void Documents.
+Can void documents. If it is not checked, ask user and pass for voiding */
+public void setVoidDocuments (boolean VoidDocuments)
+{
+set_Value ("VoidDocuments", new Boolean(VoidDocuments));
+}
+/** Get Void Documents.
+Can void documents. If it is not checked, ask user and pass for voiding */
+public boolean isVoidDocuments() 
+{
+Object oo = get_Value("VoidDocuments");
+if (oo != null) 
+{
+ if (oo instanceof Boolean) return ((Boolean)oo).booleanValue();
+ return "Y".equals(oo);
+}
+return false;
 }
 }

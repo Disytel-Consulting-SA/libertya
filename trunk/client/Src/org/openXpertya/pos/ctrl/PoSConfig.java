@@ -54,6 +54,7 @@ public class PoSConfig {
 	private boolean printCurrentAccountDocument;
 	private String posnet;
 	private boolean authorizeManualGeneralDiscount;
+	private boolean voidDocuments;
 	
 	// Del sistema
 	private int currencyID;
@@ -118,6 +119,8 @@ public class PoSConfig {
 			setLockedClosed(pos.isLockedClosed());
 			setPosnet(pos.getPosnet());
 			setAuthorizeManualGeneralDiscount(pos.isAuthorizeGeneralManualDiscount());
+			
+			setVoidDocuments(pos.isVoidDocuments());
 		}	
 	}
 	
@@ -709,5 +712,13 @@ public class PoSConfig {
 
 	public boolean isAuthorizeManualGeneralDiscount() {
 		return authorizeManualGeneralDiscount;
+	}
+
+	public boolean isVoidDocuments() {
+		return voidDocuments;
+	}
+
+	public void setVoidDocuments(boolean voidDocuments) {
+		this.voidDocuments = voidDocuments;
 	}
 }

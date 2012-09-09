@@ -4284,3 +4284,6 @@ CREATE OR REPLACE VIEW ad_field_vt AS
   WHERE f.isactive = 'Y'::bpchar AND c.isactive = 'Y'::bpchar;
 
 ALTER TABLE ad_field_vt OWNER TO libertya;
+
+-- 20120909-1550 Incorporación de configuración de tpv para anular comprobantes bajo clave
+update ad_system set dummy = (SELECT addcolumnifnotexists('c_pos','voiddocuments', 'character(1) NOT NULL DEFAULT \'Y\'::bpchar'));
