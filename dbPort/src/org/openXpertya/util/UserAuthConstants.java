@@ -13,6 +13,11 @@ public class UserAuthConstants {
 	public static final String POS_INIT_MOMENT = "POS_INIT_MOMENT";
 	/** Momento de finalizar la venta del TPV */
 	public static final String POS_FINISH_MOMENT = "POS_FINISH_MOMENT";
+	/**
+	 * Momento de anulación de comprobantes en el TPV (error al imprimir
+	 * el comprobante)
+	 */
+	public static final String POS_VOID_DOCUMENT = "POS_VOID_DOCUMENT";
 	
 	/*
 	 * Claves de búsqueda de los procesos que hacen las veces de operaciones a
@@ -29,6 +34,8 @@ public class UserAuthConstants {
 	public static final String POS_INIT_UID = "CORE-AD_Process-1010284";
 	/** Autorización de aplicación de descuento/recargo manual general */
 	public static final String POS_MANUAL_GENERAL_DISCOUNT_UID = "CORE-AD_Process-1010295";
+	/** Autorización de anulación de comprobantes en TPV */
+	public static final String POS_VOID_DOCUMENTS_UID = "CORE-AD_Process-1010296";
 	
 	/** Asociación de uids de procesos con sus values */
 	public static Map<String, String> processValues = new HashMap<String, String>(); 
@@ -39,6 +46,7 @@ public class UserAuthConstants {
 		processValues.put(POS_CANCEL_ORDER_UID, "POSCancelOrder");
 		processValues.put(POS_INIT_UID, "POSInitAuthorization");
 		processValues.put(POS_MANUAL_GENERAL_DISCOUNT_UID, "POSManualGeneralDiscountAuth");
+		processValues.put(POS_VOID_DOCUMENTS_UID, "POSVoidDocumentsAuth");
 	}
 	
 	public static String getProcessValue(String key){

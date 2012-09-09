@@ -5968,6 +5968,28 @@ public class PoSMainForm extends CPanel implements FormPanel, ASyncProcess, Disp
 			@Override
 			public Object construct() {
 				try {
+					// Si no está autorizado para anular comprobantes, entonces
+					// que autorice
+					if(!getModel().getPoSConfig().isVoidDocuments()){
+						AuthOperation authOperation = new AuthOperation(
+								UserAuthConstants.POS_VOID_DOCUMENTS_UID,
+								getMsgRepository()
+										.getMsg(UserAuthConstants
+												.getProcessValue(UserAuthConstants.POS_VOID_DOCUMENTS_UID)),
+								UserAuthConstants.POS_VOID_DOCUMENT);
+						getAuthDialog().addAuthOperation(authOperation);
+						getAuthDialog().authorizeOperation(UserAuthConstants.POS_VOID_DOCUMENT);
+						CallResult result = getAuthDialog().getAuthorizeResult(true);
+						if(result == null){
+							return false;
+						}
+						if(result.isError()){
+							if(!Util.isEmpty(result.getMsg(), true)){
+								errorMsg(result.getMsg());
+							}
+							return false;
+						}
+					}
 					getModel().voidDocuments();
 				} catch (PosException e) {
 					errorMsg = e.getMessage();
@@ -5979,7 +6001,9 @@ public class PoSMainForm extends CPanel implements FormPanel, ASyncProcess, Disp
 			public void finished() {
 				boolean success = (Boolean)getValue();
 				if (!success) {
-					errorMsg(errorMsg);
+					if(!Util.isEmpty(errorMsg, true)){
+						errorMsg(errorMsg);
+					}
 					
 					if (askMsg(MSG_RETRY_VOID_INVOICE, MSG_RETRY_VOID_INVOICE_INFO
 							+ (getModel().getPoSConfig().isPosJournal() ? " "
