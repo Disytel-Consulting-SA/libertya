@@ -142,11 +142,18 @@ public class ReplicationTargetProcess extends AbstractReplicationProcess {
 	            	}
 	            	catch (Exception e) {
 	            		// En caso de un error al procesar un mensaje, catchear la exception y continuar con el procesamiento del siguiente
-	            		// IMPORTANTE: Este mecanismo evita demorar al resto de mensajes encoladsos, pero por otro lado, al realizar algún
+	            		// IMPORTANTE: Este mecanismo evita demorar al resto de mensajes encolados, pero por otro lado, al realizar algún
 	            		//			   acknowledge en los siguientes mensajes, el procesamiento de este mensaje se perderá para siempre
 	            		//			   Si se quiere detener el procesamiento de mensajes hasta que el actual sea corregido, deberá propagarse la excepción
 	            		String error = "WARNING.  Error inesperado al procesar un mensaje. Error: " + e.getMessage();
 	            		saveLog(Level.SEVERE, true, error, thisOrgID);
+	            		
+	            		// La transacción es rollbackeada.  Esto implica que los registros quedarán sin actualizar.  Las posteriores
+	            		// invocaciones a message.acknowledge(), harán que los mensajes de modificaciones para esta ejecucion con excepción 
+	            		// sean perdidos para siempre, obligando al host origen a reenviar la petición de replicación por timeout,
+	            		// (dado que nunca se enviaron los Acks al host origen)
+		            	Trx.getTrx(rep_trxName).rollback();
+		            	Trx.getTrx(rep_trxName).close();
 	            	}
 	            }
 	        }
