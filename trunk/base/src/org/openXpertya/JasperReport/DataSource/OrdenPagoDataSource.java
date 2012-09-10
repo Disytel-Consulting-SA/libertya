@@ -321,7 +321,7 @@ public class OrdenPagoDataSource {
 		protected String getDataSQL() {
 			String sql = "" +
 			"(SELECT DISTINCT p.C_Payment_ID                  , " +
-			"        'TRANS'::CHARACTER VARYING AS PaymentType, " +
+			"        (CASE WHEN tendertype = 'A' THEN 'TRANS' ELSE 'TARJ' END)::CHARACTER VARYING AS PaymentType, " +
 			"        " + getCashNameDescription() + "     AS CashName   , " + // redefinir
 			"        (SELECT ba.cc " +
 			"                || ' - ' " +
@@ -331,7 +331,7 @@ public class OrdenPagoDataSource {
 			"                ON (b.C_Bank_ID     = ba.C_Bank_ID) " +
 			"        WHERE   ba.C_BankAccount_ID = p.C_BankAccount_ID " +
 			"        ) AS BankAccount          , " +
-			"        p.RoutingNo               , " +
+			"        (CASE WHEN tendertype = 'A' THEN p.checkno ELSE p.creditcardnumber END)  as RoutingNo , " +
 			"        p.DateAcct AS TransferDate, " +
 			"        sum (currencyconvert(al.amount, ah.c_currency_id, p.c_currency_id, p.DateAcct::timestamp with time zone, NULL::integer, ah.ad_client_id, ah.ad_org_id )) as Amount," +
 			//"        sum(al.amount) AS Amount,   " +
@@ -348,9 +348,9 @@ public class OrdenPagoDataSource {
 			"        JOIN c_payment p " +
 			"        ON      al.c_payment_id = p.c_payment_id " +
 			"  		 JOIN c_currency cu ON p.C_Currency_ID = cu.C_Currency_ID " +
-			"WHERE   p.tenderType            = 'A' " +
+			"WHERE   p.tenderType IN ('A','C') " +
 			"    AND ah.C_AllocationHdr_ID   = ? " +
-			"GROUP BY p.C_Payment_ID, PaymentType, CashName, BankAccount, p.RoutingNo, p.dateAcct, PayAmt, Currency " +
+			"GROUP BY p.C_Payment_ID, tendertype, CashName, BankAccount, p.checkno, p.creditcardnumber, p.dateAcct, PayAmt, Currency " +
 		//	"ORDER BY PaymentType, " +
 		//	"        BankAccount " +
 			") " +
