@@ -13,6 +13,7 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Properties;
 import java.util.Set;
 import java.util.Vector;
 import java.util.logging.Level;
@@ -24,7 +25,6 @@ import org.openXpertya.model.AllocationGeneratorException;
 import org.openXpertya.model.CalloutInvoiceExt;
 import org.openXpertya.model.MAllocationHdr;
 import org.openXpertya.model.MCashLine;
-import org.openXpertya.model.MCurrency;
 import org.openXpertya.model.MDiscountConfig;
 import org.openXpertya.model.MDiscountSchema;
 import org.openXpertya.model.MDocType;
@@ -931,7 +931,9 @@ public class VOrdenCobroModel extends VOrdenPagoModel {
 		}
 		// - Si es hay crédito lo guardo como un medio de pago
 		// - Si es débito lo guardo donde se encuentran las facturas
-		if(credit != null){			
+		if(credit != null){
+			// Refrescar la factura con la de la base 
+			credit = refreshInvoice(credit.getCtx(), credit.getC_Invoice_ID(), credit.get_TrxName());
 			// Completar el crédito en el caso que no requiera impresión fiscal,
 			// ya que si requieren se realiza al final del procesamiento
 			if(!needFiscalPrint(credit)){
@@ -947,6 +949,8 @@ public class VOrdenCobroModel extends VOrdenPagoModel {
 			customInvoices.add(credit);
 		}
 		if(debit != null){
+			// Refrescar la factura con la de la base 
+			debit = refreshInvoice(debit.getCtx(), debit.getC_Invoice_ID(), debit.get_TrxName());
 			// Completar el crédito en el caso que no requiera impresión fiscal,
 			// ya que si requieren se realiza al final del procesamiento
 			if(!needFiscalPrint(debit)){
@@ -960,6 +964,22 @@ public class VOrdenCobroModel extends VOrdenPagoModel {
 		}
 	}
 
+	protected MInvoice refreshInvoice(Properties ctx, Integer invoiceID, String trxName){
+		MInvoice invoice = new MInvoice(ctx, invoiceID, trxName);
+		// Se indica que no se debe crear una línea de caja al completar la factura ya
+		// que es el propio TPV el que se encarga de crear los pagos e imputarlos con
+		// la factura (esto soluciona el problema de líneas de caja duplicadas que 
+		// se había detectado).
+		invoice.setCreateCashLine(false);
+		// Seteo el bypass de la factura para que no chequee el saldo del
+		// cliente porque ya lo chequea el tpv
+		invoice.setCurrentAccountVerified(true);
+		// Seteo el bypass para que no actualice el crédito del cliente ya
+		// que se realiza luego al finalizar las operaciones
+		invoice.setUpdateBPBalance(false);
+		return invoice;
+	}
+	
 	/**
 	 * Creo una factura como crédito o débito, dependiendo configuración.
 	 * 
