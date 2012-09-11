@@ -2641,7 +2641,10 @@ public class VOrdenCobro extends VOrdenPago {
 			}
 		}
 		// Refrescar el monto de la pestaña con el total a pagar
-		updatePayAmt(paymentToPayAmt);
+		
+		if (!paymentMedium.getTenderType().equals(MPOSPaymentMedium.TENDERTYPE_CreditCard)) {
+			updatePayAmt(m_model.getSaldoMediosPago());
+		}
 	}
 
 	/**
@@ -2980,6 +2983,10 @@ public class VOrdenCobro extends VOrdenPago {
 		updateDiscount(selectedPaymentMedium);
 		if (medioPagoAction != null && medioPagoAction != MEDIOPAGO_ACTION_EDIT) {
 			loadPaymentMediumInfo(selectedPaymentMedium);
+			if (selectedPaymentMedium != null && selectedPaymentMedium.getTenderType().equals(MPOSPaymentMedium.TENDERTYPE_CreditCard)) {
+				updatePayAmt(m_model.getSaldoMediosPago());
+				refreshPaymentMediumAmountInfo(selectedPaymentMedium);
+			}
 		}
 		repaint();
 	}
