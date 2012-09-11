@@ -2003,11 +2003,11 @@ public class VOrdenPagoModel implements TableModelListener {
 			setMsgAMostrar(e.getMessage());
 		}
 		
-		if (!saveOk || errorNo != PROCERROR_OK)
+		if (!saveOk || errorNo != PROCERROR_OK){
+			poGenerator.reset();
 			trx.rollback();
-		
+		}
 		trx.close();
-		
 		return errorNo;
 	}
 	
@@ -2095,6 +2095,7 @@ public class VOrdenPagoModel implements TableModelListener {
 		}
 
 		if (!saveOk) {
+			poGenerator.reset();
 			trx = Trx.get(trx.getTrxName(),false);
 			trx.rollback();
 			trx.close();
