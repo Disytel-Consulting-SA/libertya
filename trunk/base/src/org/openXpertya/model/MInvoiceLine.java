@@ -1179,7 +1179,7 @@ public class MInvoiceLine extends X_C_InvoiceLine {
         	if(!updateHeaderTax()){
         		return false;
         	}
-	        MInvoice invoice = new MInvoice(getCtx(), getC_Invoice_ID(), get_TrxName());
+	        MInvoice invoice = getInvoice();
         	
 			// Si debe manejar los descuentos arrastrados de la factura,
 			// entonces actualizo el descuento de documento de la cabecera
