@@ -14,18 +14,22 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.math.BigDecimal;
+import java.sql.Date;
+import java.sql.Timestamp;
 import java.text.SimpleDateFormat;
+import java.util.Properties;
 import java.util.logging.Level;
 
-import java.util.Properties;
-
-import org.openXpertya.model.*;
+import org.openXpertya.model.MBPartner;
+import org.openXpertya.model.MCurrency;
+import org.openXpertya.model.MDocType;
+import org.openXpertya.model.MInvoice;
+import org.openXpertya.model.MInvoiceTax;
+import org.openXpertya.model.MPreference;
+import org.openXpertya.model.MTax;
 import org.openXpertya.util.CLogger;
 import org.openXpertya.util.Env;
 import org.openXpertya.util.Msg;
-
-import java.sql.Date;
-import java.sql.Timestamp;
 
 
 public class ProcessorWSFE {
@@ -177,9 +181,11 @@ public class ProcessorWSFE {
 			line.append(currency.getWSFECode()+"\n");
 			
 			//*****CONVERSION
-			int priceListCurrency = (new MPriceList(m_ctx, invoice.getM_PriceList_ID(), null)).getC_Currency_ID();
-			int targetCurrency = invoice.getC_Currency_ID();
-			BigDecimal cotizacion = MCurrency.currencyConvert(Env.ONE, priceListCurrency, targetCurrency, invoice.getDateInvoiced(), 0, m_ctx);
+			// Se debe convertir a la moneda del comprobante desde la moneda de la compañía
+			BigDecimal cotizacion = MCurrency.currencyConvert(Env.ONE,
+					Env.getContextAsInt(m_ctx, "#C_Currency_ID"),
+					invoice.getC_Currency_ID(), invoice.getDateInvoiced(), 0,
+					m_ctx);
 			line.append(cotizacion+"\n");
 			
 			//*****IMPUESTO
