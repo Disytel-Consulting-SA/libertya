@@ -24,6 +24,8 @@ import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.util.ArrayList;
 
+import javax.swing.JFrame;
+
 import org.compiere.plaf.CompierePLAF;
 import org.compiere.swing.CLabel;
 import org.compiere.swing.CTextField;
@@ -66,6 +68,7 @@ public final class InfoBPartner extends Info {
 
     public InfoBPartner( Frame frame,boolean modal,int WindowNo,String value,boolean isSOTrx,boolean multiSelection,String whereClause ) {
         super( frame,modal,WindowNo,"C_BPartner","C_BPartner_ID",multiSelection,whereClause );
+        this.setDefaultCloseOperation( JFrame.DO_NOTHING_ON_CLOSE );
         log.info( value );
         setTitle( Msg.getMsg( Env.getCtx(),"InfoBPartner" ));
         m_isSOTrx = isSOTrx;
