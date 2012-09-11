@@ -1,13 +1,16 @@
-/** Modelo Generado - NO CAMBIAR MANUALMENTE - Copyright (C) 2006 FUNDESLE */
+/** Modelo Generado - NO CAMBIAR MANUALMENTE - Disytel */
 package org.openXpertya.model;
-import java.util.*;
-import java.sql.*;
-import java.math.*;
-import org.openXpertya.util.*;
+import java.math.BigDecimal;
+import java.sql.ResultSet;
+import java.sql.Timestamp;
+import java.util.Properties;
+
+import org.openXpertya.util.Env;
+import org.openXpertya.util.KeyNamePair;
 /** Modelo Generado por I_Order
- *  @author Comunidad de Desarrollo openXpertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
- *  @version  - 2008-01-03 10:26:34.968 */
-public class X_I_Order extends PO
+ *  @author Comunidad de Desarrollo Libertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
+ *  @version  - 2012-09-10 12:26:19.875 */
+public class X_I_Order extends org.openXpertya.model.PO
 {
 /** Constructor estándar */
 public X_I_Order (Properties ctx, int I_Order_ID, String trxName)
@@ -15,6 +18,7 @@ public X_I_Order (Properties ctx, int I_Order_ID, String trxName)
 super (ctx, I_Order_ID, trxName);
 /** if (I_Order_ID == 0)
 {
+setDocumentNoBySequence (false);
 setI_IsImported (false);
 setI_Order_ID (0);
 }
@@ -25,13 +29,13 @@ public X_I_Order (Properties ctx, ResultSet rs, String trxName)
 {
 super (ctx, rs, trxName);
 }
-/** AD_Table_ID=591 */
-public static final int Table_ID=591;
+/** AD_Table_ID */
+public static final int Table_ID = M_Table.getTableID("I_Order");
 
 /** TableName=I_Order */
 public static final String Table_Name="I_Order";
 
-protected static KeyNamePair Model = new KeyNamePair(591,"I_Order");
+protected static KeyNamePair Model = new KeyNamePair(Table_ID,"I_Order");
 protected static BigDecimal AccessLevel = new BigDecimal(2);
 
 /** Load Meta Data */
@@ -45,7 +49,41 @@ public String toString()
 StringBuffer sb = new StringBuffer ("X_I_Order[").append(getID()).append("]");
 return sb.toString();
 }
-public static final int AD_ORGTRX_ID_AD_Reference_ID=130;
+/** Set Address 1.
+Address line 1 for this location */
+public void setAddress1 (String Address1)
+{
+if (Address1 != null && Address1.length() > 60)
+{
+log.warning("Length > 60 - truncated");
+Address1 = Address1.substring(0,60);
+}
+set_Value ("Address1", Address1);
+}
+/** Get Address 1.
+Address line 1 for this location */
+public String getAddress1() 
+{
+return (String)get_Value("Address1");
+}
+/** Set Address 2.
+Address line 2 for this location */
+public void setAddress2 (String Address2)
+{
+if (Address2 != null && Address2.length() > 60)
+{
+log.warning("Length > 60 - truncated");
+Address2 = Address2.substring(0,60);
+}
+set_Value ("Address2", Address2);
+}
+/** Get Address 2.
+Address line 2 for this location */
+public String getAddress2() 
+{
+return (String)get_Value("Address2");
+}
+public static final int AD_ORGTRX_ID_AD_Reference_ID = MReference.getReferenceID("AD_Org (Trx)");
 /** Set Trx Organization.
 Performing or initiating organization */
 public void setAD_OrgTrx_ID (int AD_OrgTrx_ID)
@@ -78,58 +116,7 @@ Integer ii = (Integer)get_Value("AD_User_ID");
 if (ii == null) return 0;
 return ii.intValue();
 }
-/** Set Address 1.
-Address line 1 for this location */
-public void setAddress1 (String Address1)
-{
-if (Address1 != null && Address1.length() > 60)
-{
-log.warning("Length > 60 - truncated");
-Address1 = Address1.substring(0,59);
-}
-set_Value ("Address1", Address1);
-}
-/** Get Address 1.
-Address line 1 for this location */
-public String getAddress1() 
-{
-return (String)get_Value("Address1");
-}
-/** Set Address 2.
-Address line 2 for this location */
-public void setAddress2 (String Address2)
-{
-if (Address2 != null && Address2.length() > 60)
-{
-log.warning("Length > 60 - truncated");
-Address2 = Address2.substring(0,59);
-}
-set_Value ("Address2", Address2);
-}
-/** Get Address 2.
-Address line 2 for this location */
-public String getAddress2() 
-{
-return (String)get_Value("Address2");
-}
-/** Set Business Partner Key.
-Key of the Business Partner */
-public void setBPartnerValue (String BPartnerValue)
-{
-if (BPartnerValue != null && BPartnerValue.length() > 40)
-{
-log.warning("Length > 40 - truncated");
-BPartnerValue = BPartnerValue.substring(0,39);
-}
-set_Value ("BPartnerValue", BPartnerValue);
-}
-/** Get Business Partner Key.
-Key of the Business Partner */
-public String getBPartnerValue() 
-{
-return (String)get_Value("BPartnerValue");
-}
-public static final int BILLTO_ID_AD_Reference_ID=159;
+public static final int BILLTO_ID_AD_Reference_ID = MReference.getReferenceID("C_BPartner Location");
 /** Set Invoice To.
 Bill to Address */
 public void setBillTo_ID (int BillTo_ID)
@@ -145,6 +132,23 @@ public int getBillTo_ID()
 Integer ii = (Integer)get_Value("BillTo_ID");
 if (ii == null) return 0;
 return ii.intValue();
+}
+/** Set Business Partner Key.
+Key of the Business Partner */
+public void setBPartnerValue (String BPartnerValue)
+{
+if (BPartnerValue != null && BPartnerValue.length() > 40)
+{
+log.warning("Length > 40 - truncated");
+BPartnerValue = BPartnerValue.substring(0,40);
+}
+set_Value ("BPartnerValue", BPartnerValue);
+}
+/** Get Business Partner Key.
+Key of the Business Partner */
+public String getBPartnerValue() 
+{
+return (String)get_Value("BPartnerValue");
 }
 /** Set Activity.
 Business Activity */
@@ -258,6 +262,23 @@ Integer ii = (Integer)get_Value("C_DocType_ID");
 if (ii == null) return 0;
 return ii.intValue();
 }
+/** Set City.
+Identifies a City */
+public void setCity (String City)
+{
+if (City != null && City.length() > 60)
+{
+log.warning("Length > 60 - truncated");
+City = City.substring(0,60);
+}
+set_Value ("City", City);
+}
+/** Get City.
+Identifies a City */
+public String getCity() 
+{
+return (String)get_Value("City");
+}
 /** Set Address.
 Location or Address */
 public void setC_Location_ID (int C_Location_ID)
@@ -271,6 +292,39 @@ Location or Address */
 public int getC_Location_ID() 
 {
 Integer ii = (Integer)get_Value("C_Location_ID");
+if (ii == null) return 0;
+return ii.intValue();
+}
+/** Set Contact Name.
+Business Partner Contact Name */
+public void setContactName (String ContactName)
+{
+if (ContactName != null && ContactName.length() > 60)
+{
+log.warning("Length > 60 - truncated");
+ContactName = ContactName.substring(0,60);
+}
+set_Value ("ContactName", ContactName);
+}
+/** Get Contact Name.
+Business Partner Contact Name */
+public String getContactName() 
+{
+return (String)get_Value("ContactName");
+}
+/** Set Order.
+Order */
+public void setC_Order_ID (int C_Order_ID)
+{
+if (C_Order_ID <= 0) set_Value ("C_Order_ID", null);
+ else 
+set_Value ("C_Order_ID", new Integer(C_Order_ID));
+}
+/** Get Order.
+Order */
+public int getC_Order_ID() 
+{
+Integer ii = (Integer)get_Value("C_Order_ID");
 if (ii == null) return 0;
 return ii.intValue();
 }
@@ -290,21 +344,22 @@ Integer ii = (Integer)get_Value("C_OrderLine_ID");
 if (ii == null) return 0;
 return ii.intValue();
 }
-/** Set Order.
-Order */
-public void setC_Order_ID (int C_Order_ID)
+/** Set ISO Country Code.
+Upper-case two-letter alphanumeric ISO Country code according to ISO 3166-1 - http://www.chemie.fu-berlin.de/diverse/doc/ISO_3166.html */
+public void setCountryCode (String CountryCode)
 {
-if (C_Order_ID <= 0) set_Value ("C_Order_ID", null);
- else 
-set_Value ("C_Order_ID", new Integer(C_Order_ID));
+if (CountryCode != null && CountryCode.length() > 2)
+{
+log.warning("Length > 2 - truncated");
+CountryCode = CountryCode.substring(0,2);
 }
-/** Get Order.
-Order */
-public int getC_Order_ID() 
+set_Value ("CountryCode", CountryCode);
+}
+/** Get ISO Country Code.
+Upper-case two-letter alphanumeric ISO Country code according to ISO 3166-1 - http://www.chemie.fu-berlin.de/diverse/doc/ISO_3166.html */
+public String getCountryCode() 
 {
-Integer ii = (Integer)get_Value("C_Order_ID");
-if (ii == null) return 0;
-return ii.intValue();
+return (String)get_Value("CountryCode");
 }
 /** Set Payment Term.
 The terms for Payment of this transaction */
@@ -386,57 +441,6 @@ Integer ii = (Integer)get_Value("C_UOM_ID");
 if (ii == null) return 0;
 return ii.intValue();
 }
-/** Set City.
-Identifies a City */
-public void setCity (String City)
-{
-if (City != null && City.length() > 60)
-{
-log.warning("Length > 60 - truncated");
-City = City.substring(0,59);
-}
-set_Value ("City", City);
-}
-/** Get City.
-Identifies a City */
-public String getCity() 
-{
-return (String)get_Value("City");
-}
-/** Set Contact Name.
-Business Partner Contact Name */
-public void setContactName (String ContactName)
-{
-if (ContactName != null && ContactName.length() > 60)
-{
-log.warning("Length > 60 - truncated");
-ContactName = ContactName.substring(0,59);
-}
-set_Value ("ContactName", ContactName);
-}
-/** Get Contact Name.
-Business Partner Contact Name */
-public String getContactName() 
-{
-return (String)get_Value("ContactName");
-}
-/** Set ISO Country Code.
-Upper-case two-letter alphanumeric ISO Country code according to ISO 3166-1 - http://www.chemie.fu-berlin.de/diverse/doc/ISO_3166.html */
-public void setCountryCode (String CountryCode)
-{
-if (CountryCode != null && CountryCode.length() > 2)
-{
-log.warning("Length > 2 - truncated");
-CountryCode = CountryCode.substring(0,1);
-}
-set_Value ("CountryCode", CountryCode);
-}
-/** Get ISO Country Code.
-Upper-case two-letter alphanumeric ISO Country code according to ISO 3166-1 - http://www.chemie.fu-berlin.de/diverse/doc/ISO_3166.html */
-public String getCountryCode() 
-{
-return (String)get_Value("CountryCode");
-}
 /** Set Account Date.
 Accounting Date */
 public void setDateAcct (Timestamp DateAcct)
@@ -468,7 +472,7 @@ public void setDescription (String Description)
 if (Description != null && Description.length() > 255)
 {
 log.warning("Length > 255 - truncated");
-Description = Description.substring(0,254);
+Description = Description.substring(0,255);
 }
 set_Value ("Description", Description);
 }
@@ -485,7 +489,7 @@ public void setDocTypeName (String DocTypeName)
 if (DocTypeName != null && DocTypeName.length() > 60)
 {
 log.warning("Length > 60 - truncated");
-DocTypeName = DocTypeName.substring(0,59);
+DocTypeName = DocTypeName.substring(0,60);
 }
 set_Value ("DocTypeName", DocTypeName);
 }
@@ -502,7 +506,7 @@ public void setDocumentNo (String DocumentNo)
 if (DocumentNo != null && DocumentNo.length() > 30)
 {
 log.warning("Length > 30 - truncated");
-DocumentNo = DocumentNo.substring(0,29);
+DocumentNo = DocumentNo.substring(0,30);
 }
 set_Value ("DocumentNo", DocumentNo);
 }
@@ -512,6 +516,22 @@ public String getDocumentNo()
 {
 return (String)get_Value("DocumentNo");
 }
+/** Set DocumentNo By Sequence */
+public void setDocumentNoBySequence (boolean DocumentNoBySequence)
+{
+set_Value ("DocumentNoBySequence", new Boolean(DocumentNoBySequence));
+}
+/** Get DocumentNo By Sequence */
+public boolean isDocumentNoBySequence() 
+{
+Object oo = get_Value("DocumentNoBySequence");
+if (oo != null) 
+{
+ if (oo instanceof Boolean) return ((Boolean)oo).booleanValue();
+ return "Y".equals(oo);
+}
+return false;
+}
 /** Set EMail.
 Electronic Mail Address */
 public void setEMail (String EMail)
@@ -519,7 +539,7 @@ public void setEMail (String EMail)
 if (EMail != null && EMail.length() > 60)
 {
 log.warning("Length > 60 - truncated");
-EMail = EMail.substring(0,59);
+EMail = EMail.substring(0,60);
 }
 set_Value ("EMail", EMail);
 }
@@ -550,7 +570,7 @@ public void setI_ErrorMsg (String I_ErrorMsg)
 if (I_ErrorMsg != null && I_ErrorMsg.length() > 2000)
 {
 log.warning("Length > 2000 - truncated");
-I_ErrorMsg = I_ErrorMsg.substring(0,1999);
+I_ErrorMsg = I_ErrorMsg.substring(0,2000);
 }
 set_Value ("I_ErrorMsg", I_ErrorMsg);
 }
@@ -617,7 +637,7 @@ public void setLineDescription (String LineDescription)
 if (LineDescription != null && LineDescription.length() > 255)
 {
 log.warning("Length > 255 - truncated");
-LineDescription = LineDescription.substring(0,254);
+LineDescription = LineDescription.substring(0,255);
 }
 set_Value ("LineDescription", LineDescription);
 }
@@ -698,7 +718,7 @@ public void setName (String Name)
 if (Name != null && Name.length() > 60)
 {
 log.warning("Length > 60 - truncated");
-Name = Name.substring(0,59);
+Name = Name.substring(0,60);
 }
 set_Value ("Name", Name);
 }
@@ -708,6 +728,61 @@ public String getName()
 {
 return (String)get_Value("Name");
 }
+/** Set Org Key.
+Key of the Organization */
+public void setOrgValue (String OrgValue)
+{
+if (OrgValue != null && OrgValue.length() > 40)
+{
+log.warning("Length > 40 - truncated");
+OrgValue = OrgValue.substring(0,40);
+}
+set_Value ("OrgValue", OrgValue);
+}
+/** Get Org Key.
+Key of the Organization */
+public String getOrgValue() 
+{
+return (String)get_Value("OrgValue");
+}
+public static final int PAYMENTRULE_AD_Reference_ID = MReference.getReferenceID("All_Payment Rule");
+/** Transfer = Tr */
+public static final String PAYMENTRULE_Transfer = "Tr";
+/** Credit Card = K */
+public static final String PAYMENTRULE_CreditCard = "K";
+/** Cash = B */
+public static final String PAYMENTRULE_Cash = "B";
+/** On Credit = P */
+public static final String PAYMENTRULE_OnCredit = "P";
+/** Check = S */
+public static final String PAYMENTRULE_Check = "S";
+/** Payment Check = PC */
+public static final String PAYMENTRULE_PaymentCheck = "PC";
+/** Direct Deposit = T */
+public static final String PAYMENTRULE_DirectDeposit = "T";
+/** Confirming = Cf */
+public static final String PAYMENTRULE_Confirming = "Cf";
+/** Direct Debit = D */
+public static final String PAYMENTRULE_DirectDebit = "D";
+/** Set Payment Rule.
+How you pay the invoice */
+public void setPaymentRule (String PaymentRule)
+{
+if (PaymentRule == null || PaymentRule.equals("Tr") || PaymentRule.equals("K") || PaymentRule.equals("B") || PaymentRule.equals("P") || PaymentRule.equals("S") || PaymentRule.equals("PC") || PaymentRule.equals("T") || PaymentRule.equals("Cf") || PaymentRule.equals("D"));
+ else throw new IllegalArgumentException ("PaymentRule Invalid value - Reference = PAYMENTRULE_AD_Reference_ID - Tr - K - B - P - S - PC - T - Cf - D");
+if (PaymentRule != null && PaymentRule.length() > 2)
+{
+log.warning("Length > 2 - truncated");
+PaymentRule = PaymentRule.substring(0,2);
+}
+set_Value ("PaymentRule", PaymentRule);
+}
+/** Get Payment Rule.
+How you pay the invoice */
+public String getPaymentRule() 
+{
+return (String)get_Value("PaymentRule");
+}
 /** Set Payment Term Key.
 Key of the Payment Term */
 public void setPaymentTermValue (String PaymentTermValue)
@@ -715,7 +790,7 @@ public void setPaymentTermValue (String PaymentTermValue)
 if (PaymentTermValue != null && PaymentTermValue.length() > 40)
 {
 log.warning("Length > 40 - truncated");
-PaymentTermValue = PaymentTermValue.substring(0,39);
+PaymentTermValue = PaymentTermValue.substring(0,40);
 }
 set_Value ("PaymentTermValue", PaymentTermValue);
 }
@@ -732,7 +807,7 @@ public void setPhone (String Phone)
 if (Phone != null && Phone.length() > 40)
 {
 log.warning("Length > 40 - truncated");
-Phone = Phone.substring(0,39);
+Phone = Phone.substring(0,40);
 }
 set_Value ("Phone", Phone);
 }
@@ -749,7 +824,7 @@ public void setPostal (String Postal)
 if (Postal != null && Postal.length() > 10)
 {
 log.warning("Length > 10 - truncated");
-Postal = Postal.substring(0,9);
+Postal = Postal.substring(0,10);
 }
 set_Value ("Postal", Postal);
 }
@@ -772,6 +847,21 @@ public BigDecimal getPriceActual()
 BigDecimal bd = (BigDecimal)get_Value("PriceActual");
 if (bd == null) return Env.ZERO;
 return bd;
+}
+/** Set Price List Name */
+public void setPriceList_Name (String PriceList_Name)
+{
+if (PriceList_Name != null && PriceList_Name.length() > 60)
+{
+log.warning("Length > 60 - truncated");
+PriceList_Name = PriceList_Name.substring(0,60);
+}
+set_Value ("PriceList_Name", PriceList_Name);
+}
+/** Get Price List Name */
+public String getPriceList_Name() 
+{
+return (String)get_Value("PriceList_Name");
 }
 /** Set Processed.
 The document has been processed */
@@ -814,7 +904,7 @@ public void setProductValue (String ProductValue)
 if (ProductValue != null && ProductValue.length() > 40)
 {
 log.warning("Length > 40 - truncated");
-ProductValue = ProductValue.substring(0,39);
+ProductValue = ProductValue.substring(0,40);
 }
 set_Value ("ProductValue", ProductValue);
 }
@@ -845,7 +935,7 @@ public void setRegionName (String RegionName)
 if (RegionName != null && RegionName.length() > 60)
 {
 log.warning("Length > 60 - truncated");
-RegionName = RegionName.substring(0,59);
+RegionName = RegionName.substring(0,60);
 }
 set_Value ("RegionName", RegionName);
 }
@@ -855,24 +945,7 @@ public String getRegionName()
 {
 return (String)get_Value("RegionName");
 }
-/** Set SKU.
-Stock Keeping Unit */
-public void setSKU (String SKU)
-{
-if (SKU != null && SKU.length() > 30)
-{
-log.warning("Length > 30 - truncated");
-SKU = SKU.substring(0,29);
-}
-set_Value ("SKU", SKU);
-}
-/** Get SKU.
-Stock Keeping Unit */
-public String getSKU() 
-{
-return (String)get_Value("SKU");
-}
-public static final int SALESREP_ID_AD_Reference_ID=190;
+public static final int SALESREP_ID_AD_Reference_ID = MReference.getReferenceID("AD_User - SalesRep");
 /** Set Sales Representative.
 Sales Representative or Company Agent */
 public void setSalesRep_ID (int SalesRep_ID)
@@ -888,6 +961,38 @@ public int getSalesRep_ID()
 Integer ii = (Integer)get_Value("SalesRep_ID");
 if (ii == null) return 0;
 return ii.intValue();
+}
+/** Set Sales Representative */
+public void setSalesRep_Name (String SalesRep_Name)
+{
+if (SalesRep_Name != null && SalesRep_Name.length() > 60)
+{
+log.warning("Length > 60 - truncated");
+SalesRep_Name = SalesRep_Name.substring(0,60);
+}
+set_Value ("SalesRep_Name", SalesRep_Name);
+}
+/** Get Sales Representative */
+public String getSalesRep_Name() 
+{
+return (String)get_Value("SalesRep_Name");
+}
+/** Set SKU.
+Stock Keeping Unit */
+public void setSKU (String SKU)
+{
+if (SKU != null && SKU.length() > 30)
+{
+log.warning("Length > 30 - truncated");
+SKU = SKU.substring(0,30);
+}
+set_Value ("SKU", SKU);
+}
+/** Get SKU.
+Stock Keeping Unit */
+public String getSKU() 
+{
+return (String)get_Value("SKU");
 }
 /** Set Tax Amount.
 Tax Amount for a document */
@@ -907,10 +1012,10 @@ return bd;
 Short form for Tax to be printed on documents */
 public void setTaxIndicator (String TaxIndicator)
 {
-if (TaxIndicator != null && TaxIndicator.length() > 5)
+if (TaxIndicator != null && TaxIndicator.length() > 10)
 {
-log.warning("Length > 5 - truncated");
-TaxIndicator = TaxIndicator.substring(0,4);
+log.warning("Length > 10 - truncated");
+TaxIndicator = TaxIndicator.substring(0,10);
 }
 set_Value ("TaxIndicator", TaxIndicator);
 }
@@ -927,7 +1032,7 @@ public void setUPC (String UPC)
 if (UPC != null && UPC.length() > 30)
 {
 log.warning("Length > 30 - truncated");
-UPC = UPC.substring(0,29);
+UPC = UPC.substring(0,30);
 }
 set_Value ("UPC", UPC);
 }

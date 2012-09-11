@@ -19,19 +19,16 @@ package org.openXpertya.process;
 import java.math.BigDecimal;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
-import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.util.logging.Level;
 
-import org.openXpertya.model.MBPartner;
-import org.openXpertya.model.MBPartnerLocation;
-import org.openXpertya.model.MLocation;
 import org.openXpertya.model.MOrder;
 import org.openXpertya.model.MOrderLine;
-import org.openXpertya.model.MUser;
 import org.openXpertya.model.X_I_Order;
+import org.openXpertya.util.CLogger;
 import org.openXpertya.util.DB;
 import org.openXpertya.util.Env;
+import org.openXpertya.util.Msg;
 
 /**
  * Descripción de Clase
@@ -62,6 +59,14 @@ public class ImportOrder extends SvrProcess {
     /** Descripción de Campos */
 
     private Timestamp m_DateValue = null;
+    
+	private String msgOrderProcessError = null;
+	
+	private String clientCheck;
+	
+	private String m_onActionError = null;
+	
+	int noDeleted	= 0;
 
     /**
      * Descripción de Método
@@ -82,7 +87,9 @@ public class ImportOrder extends SvrProcess {
                 m_deleteOldImported = "Y".equals( para[ i ].getParameter());
             } else if( name.equals( "DocAction" )) {
                 m_docAction = ( String )para[ i ].getParameter();
-            } else {
+            } else if( name.equals( "OnActionError" )) {
+				m_onActionError = ( String )para[ i ].getParameter();
+			} else {
                 log.log( Level.SEVERE,"prepare - Unknown Parameter: " + name );
             }
         }
@@ -91,7 +98,8 @@ public class ImportOrder extends SvrProcess {
             m_DateValue = new Timestamp( System.currentTimeMillis());
         }
     }    // prepare
-
+    
+   
     /**
      * Descripción de Método
      *
@@ -102,659 +110,581 @@ public class ImportOrder extends SvrProcess {
      */
 
     protected String doIt() throws java.lang.Exception {
-        StringBuffer sql         = null;
-        int          no          = 0;
-        String       clientCheck = " AND AD_Client_ID=" + m_AD_Client_ID;
+    	try {
+    		StringBuffer sql         = null;
+    		int          no          = 0;
+    		clientCheck = " AND AD_Client_ID=" + m_AD_Client_ID;
+    		boolean      error = false;
 
-        // ****    Prepare ****
+    		// ****    Prepare ****
 
-        // Delete Old Imported
+    		// Delete Old Imported
 
-        if( m_deleteOldImported ) {
-            sql = new StringBuffer( "DELETE I_Order " + "WHERE I_IsImported='Y'" ).append( clientCheck );
+    		if( m_deleteOldImported ) {
+    			sql = new StringBuffer( "DELETE I_Order " + "WHERE I_IsImported='Y'" ).append( clientCheck );
+    			no = DB.executeUpdate( sql.toString());
+    			log.log(Level.SEVERE,"doIt - Delete Old Imported =" + no);
+    		}
+    		
+    		// Set Client, IsActive, Created/Updated
+    		sql = new StringBuffer( "UPDATE I_Order " + "SET AD_Client_ID = COALESCE (AD_Client_ID," ).append( m_AD_Client_ID ).append( "), IsActive = COALESCE (IsActive, 'Y')," + " Created = COALESCE (Created, SysDate)," + " CreatedBy = COALESCE (CreatedBy, 0)," + " Updated = COALESCE (Updated, SysDate)," + " UpdatedBy = COALESCE (UpdatedBy, 0)," + " I_ErrorMsg = ''," + " I_IsImported = 'N' " + "WHERE I_IsImported<>'Y' OR I_IsImported IS NULL" );
+    		no = DB.executeUpdate( sql.toString());
+    		log.log(Level.SEVERE, "doIt - Reset=" + no );
+    		
+    		// ----------------------------------------------------------------------------------
+    		// - Número de Documento obligatorio en todos los registros
+    		// ----------------------------------------------------------------------------------		
+    		sql = new StringBuffer(
+    				"UPDATE I_Order i " + 
+    				"SET I_IsImported='E', I_ErrorMsg=I_ErrorMsg || '"+ getMsg("ImportOrderDocumentNoMandatory") + ". ' WHERE (DocumentNo IS NULL OR trim(DocumentNo)::bpchar = ''::bpchar) AND I_IsImported<>'Y'" ).append( clientCheck );
+    		no = DB.executeUpdate( sql.toString());
+
+    		if( no != 0 ) {
+    			log.log(Level.SEVERE,"doIt - Invalid DocumentNo=" + no);
+    			throw new Exception("@ImportOrderDocumentNoError@");
+    		}
+
+    		// ----------------------------------------------------------------------------------
+    		// - Organizacion
+    		// ----------------------------------------------------------------------------------		
+    		sql = new StringBuffer();
+    		sql.append("UPDATE i_order i ");
+    		sql.append( "SET ad_org_id = "); 
+    		sql.append(		"( ");
+    		sql.append(			"SELECT o.ad_org_id ");
+    		sql.append(			"FROM ad_org o ");
+    		sql.append(			"WHERE o.value = i.orgvalue AND o.AD_Client_ID = " + m_AD_Client_ID);
+    		sql.append(		") ");
+    		sql.append("WHERE OrgValue IS NOT NULL AND I_IsImported<>'Y' ").append(clientCheck);		
+    		no = DB.executeUpdate( sql.toString());		
+    		
+    		sql = new StringBuffer("UPDATE I_Order i " + "SET AD_Org_ID = NULL, I_IsImported='E', I_ErrorMsg=I_ErrorMsg || '"+ getMsg("ImportOrderInvalidOrgValue") + ". ' WHERE (AD_Org_ID IS NULL OR AD_Org_ID=0) AND I_IsImported<>'Y'" ).append( clientCheck );
+    		no = DB.executeUpdate( sql.toString());
+
+    		if( no != 0 ) {
+    			log.log(Level.SEVERE,"doIt - Invalid Org=" + no);
+    		}
+
+    		// ----------------------------------------------------------------------------------
+    		// - Tipo de Documento
+    		// ----------------------------------------------------------------------------------
+    		sql = new StringBuffer();
+    		sql.append("UPDATE i_order i ");
+    		sql.append(		"SET C_DocType_ID = "); 
+    		sql.append(		"( ");
+    		sql.append(			"SELECT d.C_DocType_ID ");
+    		sql.append(			"FROM C_DocType d ");
+    		sql.append(			"WHERE d.DocTypeKey = i.doctypename AND d.AD_Client_ID = " + m_AD_Client_ID);
+    		sql.append(		") ");
+    		sql.append("WHERE C_DocType_ID IS NULL  AND I_IsImported<>'Y' ").append(clientCheck);		
+    		no = DB.executeUpdate( sql.toString());
+    		
+    		sql = new StringBuffer("UPDATE I_Order " + "SET I_IsImported='E', I_ErrorMsg=I_ErrorMsg || '"+ getMsg("ImportOrderInvalidDocType")+". ' " + "WHERE C_DocType_ID IS NULL AND DocTypeName IS NOT NULL" + " AND I_IsImported<>'Y'" ).append( clientCheck );
+    		no = DB.executeUpdate( sql.toString());
+
+    		if( no != 0 ) {
+    			log.log(Level.SEVERE,"doIt - Invalid DocType=" + no);
+    			error = true;
+    		}
+
+    		// ----------------------------------------------------------------------------------
+    		// - Seteo IsSOTrx
+    		// ----------------------------------------------------------------------------------
+    		sql = new StringBuffer();
+    		sql.append("UPDATE I_Order i ");
+    		sql.append(		"SET IsSoTrx = ");
+    		sql.append(			"(SELECT IsSoTrx ");
+    		sql.append(			" FROM C_DocType d ");
+    		sql.append(			" WHERE d.c_doctype_id = i.c_doctype_id ");
+    		sql.append(			" AND i.AD_Client_ID =d.AD_Client_ID \n");
+    		sql.append(			")");
+    		sql.append("WHERE  I_IsImported<>'Y' AND i.C_DocType_ID IS NOT NULL ");
+    		sql.append(clientCheck);
+    		no = DB.executeUpdate( sql.toString());
+    		log.log(Level.FINE,"doIt - Set IsSOTrx=" + no);
+
+    		// ----------------------------------------------------------------------------------
+    		// - Moneda a partir de ISO CODE
+    		// ----------------------------------------------------------------------------------
+    		
+    		// NOTA: Tener en cuenta que si la EC tiene una Tarifa asociada (se pisa la moneda)
+    		sql = new StringBuffer();
+    		sql.append("UPDATE i_order i ");
+    		sql.append(		"SET C_Currency_ID = "); 
+    		sql.append(		"( ");
+    		sql.append(			"SELECT d.C_Currency_ID ");
+    		sql.append(			"FROM C_Currency d ");
+    		sql.append(			"WHERE d.Iso_Code = i.Iso_Code");
+    		sql.append(		") ");
+    		sql.append("WHERE C_Currency_ID IS NULL  AND I_IsImported<>'Y' ").append(clientCheck);		
+    		no = DB.executeUpdate( sql.toString());
+    		
+    		// ----------------------------------------------------------------------------------
+    		// - Moneda por defecto
+    		// ----------------------------------------------------------------------------------
+    		sql = new StringBuffer();
+    		sql.append("UPDATE i_Order i SET C_Currency_ID = ").append(Env.getContextAsInt(getCtx(), "$C_Currency_ID"));
+    		sql.append("WHERE C_Currency_ID IS NULL AND I_IsImported<>'Y' ").append(clientCheck);		
+    		no = DB.executeUpdate( sql.toString());
+    		log.log(Level.FINE,"doIt - Set Default Currency = " + no);
+
+    		// ----------------------------------------------------------------------------------
+    		// - Entidad Comercial
+    		// ----------------------------------------------------------------------------------
+    		sql = new StringBuffer( 
+    				"UPDATE I_Order o " + 
+    				"SET C_BPartner_ID=" +
+    					"(SELECT C_BPartner_ID FROM C_BPartner bp" + 
+    					" WHERE o.BPartnerValue=bp.Value AND o.AD_Client_ID=bp.AD_Client_ID AND ROWNUM=1) " + 
+    				"WHERE BPartnerValue IS NOT NULL AND I_IsImported<>'Y'" ).append( clientCheck );
+    		
+    		no = DB.executeUpdate( sql.toString());
+    		log.log(Level.FINE,"doIt - Set BP from Value=" + no);
+
+    		sql = new StringBuffer("UPDATE I_Order " + "SET I_IsImported='E', I_ErrorMsg=I_ErrorMsg || '"+ getMsg("ImportOrderInvalidBPartner")+". ' " + "WHERE C_BPartner_ID IS NULL AND I_IsImported<>'Y'" ).append( clientCheck );		
+    		no = DB.executeUpdate( sql.toString());
+            if( no != 0 ) {
+            	log.log(Level.SEVERE,"doIt - BP Not Found=" + no);
+            }
+            
+    		// La Dirección de la EC no se setea ya que se obtiene en MOrder según
+    		// los valores seteados en la EC si existe. De todas formas se valida si
+    		// la EC tiene al menos una dirección si no se marca como error
+            sql = new StringBuffer("UPDATE I_Order i " + "SET I_IsImported='E', I_ErrorMsg=I_ErrorMsg || '"+ getMsg("ImportOrderInvalidBPartnerLocation")+". ' " + "WHERE C_BPartner_ID IS NOT NULL AND I_IsImported<>'Y' AND NOT EXISTS (SELECT C_Bpartner_Location_ID FROM C_BPartner_Location bpl WHERE bpl.C_BPartner_ID = i.C_BPartner_ID) " ).append( clientCheck );
+
+    		// ----------------------------------------------------------------------------------
+    		// - Tarifa
+    		// ----------------------------------------------------------------------------------
+    		sql = new StringBuffer(
+    				" UPDATE I_Order i " +
+    				" SET M_Pricelist_ID = " +
+    				"		(SELECT M_PriceList_ID " +
+    				"        FROM M_PriceList p " +
+    				"        WHERE TRIM(i.PriceList_Name) = TRIM(p.Name) AND " +
+    				"              i.AD_Client_ID = p.AD_Client_ID AND " +
+    				"              p.IsActive = 'Y' AND " +
+    				"              ROWNUM=1) " +
+    				" WHERE PriceList_Name IS NOT NULL AND " +
+    				"       I_IsImported <> 'Y' ").append(clientCheck);
+    		no = DB.executeUpdate( sql.toString());
+    		
+    		// Valor por defecto (Compra o Venta según IsSOTrx)
+    		sql = new StringBuffer(
+    				" UPDATE I_Order i " +
+    				" SET M_Pricelist_ID = " +
+    				"		(SELECT M_PriceList_ID " +
+    				"        FROM M_PriceList p " +
+    				"        WHERE i.IsSOTrx = p.IsSOPriceList AND " +
+    				"              i.AD_Client_ID = p.AD_Client_ID AND " +
+    				"              p.IsActive = 'Y' AND " +
+    				"			   p.IsDefault = 'Y' " +
+    				"              LIMIT 1) " +
+    				" WHERE M_PriceList_ID IS NULL AND " +
+    				"       I_IsImported <> 'Y' ").append(clientCheck);
+    		no = DB.executeUpdate( sql.toString());
+    		
+    		sql = new StringBuffer( "UPDATE I_Order SET I_IsImported='E', I_ErrorMsg=I_ErrorMsg || '"+getMsg("ImportOrderInvalidPriceList")+". ' " + "WHERE M_PriceList_ID IS NULL" + " AND I_IsImported<>'Y'" ).append( clientCheck );
+    		no = DB.executeUpdate( sql.toString());
+
+    		if( no != 0 ) {
+    			log.log(Level.SEVERE,"doIt - No PriceList=" + no);
+    		}			
+
+    		// ----------------------------------------------------------------------------------
+    		// - Forma de Pago y Esquema de Vencimientos
+    		// ----------------------------------------------------------------------------------
+    		sql = new StringBuffer(
+    				"UPDATE I_Order o " + 
+    				"SET C_PaymentTerm_ID=" +
+    					"(SELECT C_PaymentTerm_ID FROM C_PaymentTerm p" + 
+    					" WHERE o.PaymentTermValue=p.Value AND o.AD_Client_ID=p.AD_Client_ID) " + 
+    				"WHERE C_PaymentTerm_ID IS NULL AND PaymentTermValue IS NOT NULL AND I_IsImported<>'Y'" ).append( clientCheck );
+    		no = DB.executeUpdate( sql.toString());
+    		log.log(Level.FINE,"doIt - Set PaymentTerm=" + no);
+    		
+    		sql = new StringBuffer( "UPDATE I_Order " + "SET I_IsImported='E', I_ErrorMsg=I_ErrorMsg || '"+getMsg("ImportOrderInvalidPaymentTerm")+". ' " + "WHERE C_PaymentTerm_ID IS NULL AND PaymentTermValue IS NOT NULL AND I_IsImported<>'Y'" ).append( clientCheck );
+    		no = DB.executeUpdate( sql.toString());
+
+    		if( no != 0 ) {
+    			log.log(Level.SEVERE,"doIt - Invalid PaymentTerm=" + no);
+    		}
+
+    		// ----------------------------------------------------------------------------------
+    		// - Comercial / Usuario
+    		// ----------------------------------------------------------------------------------
+
+            sql = new StringBuffer( "UPDATE I_Order i " + 
+    			    "SET SalesRep_ID=(SELECT AD_User_ID " +
+    			    				 "FROM AD_User u " + 
+    			    				 "WHERE u.Name = i.SalesRep_Name AND u.AD_Client_ID IN (0, i.AD_Client_ID)) " + 
+    			    "WHERE SalesRep_ID IS NULL AND SalesRep_Name IS NOT NULL " + 
+    			    "AND I_IsImported<>'Y'" ).append( clientCheck );
             no = DB.executeUpdate( sql.toString());
-            log.fine( "Delete Old Impored =" + no );
+            log.fine( "Set SalesRep=" + no );
+
+            sql = new StringBuffer( "UPDATE I_Order " + "SET I_IsImported='E', I_ErrorMsg=I_ErrorMsg || '"+getMsg("ImportOrerInvalidSalesRep")+". ' " + "WHERE SalesRep_ID IS NULL AND SalesRep_Name IS NOT NULL AND I_IsImported<>'Y'" ).append( clientCheck );
+            no = DB.executeUpdate( sql.toString());
+            if( no != 0 ) {
+    			log.log(Level.SEVERE,"doIt - Invalid SalesRep Name=" + no);
+    		}
+
+    		// ----------------------------------------------------------------------------------
+    		// - Artículo
+    		// ----------------------------------------------------------------------------------
+
+    		// Desde Value
+    		sql = new StringBuffer( 
+    				"UPDATE I_Order o " + 
+    				"SET M_Product_ID=" +
+    					"(SELECT M_Product_ID FROM M_Product p" + 
+    					" WHERE o.ProductValue=p.Value AND o.AD_Client_ID=p.AD_Client_ID AND ROWNUM=1) " + 
+    				"WHERE ProductValue IS NOT NULL AND I_IsImported<>'Y'" ).append( clientCheck );
+    		no = DB.executeUpdate( sql.toString());
+    		log.log(Level.FINE,"doIt - Set Product from Value=" + no);
+
+    		// Desde UPC
+    		sql = new StringBuffer( 
+    				"UPDATE I_Order o " + 
+    				"SET M_Product_ID=" +
+    					"(SELECT M_Product_ID FROM M_ProductUPC p" + 
+    					" WHERE o.UPC=p.UPC AND o.AD_Client_ID=p.AD_Client_ID AND ROWNUM=1) " + 
+    				"WHERE UPC IS NOT NULL AND M_Product_ID IS NULL AND I_IsImported<>'Y'" ).append( clientCheck );
+    		no = DB.executeUpdate( sql.toString());
+    		log.log(Level.FINE,"doIt - Set Product from Value=" + no);
+
+    		sql = new StringBuffer( "UPDATE I_Order " + "SET I_IsImported='E', I_ErrorMsg=I_ErrorMsg || '"+getMsg("ImportOrderInvalidProduct")+". ' " + "WHERE M_Product_ID IS NULL AND I_IsImported<>'Y'" ).append( clientCheck );
+    		no = DB.executeUpdate( sql.toString());		
+
+    		if( no != 0 ) {
+    			log.log(Level.SEVERE,"doIt - Invalid Product=" + no);
+    		}			
+
+    		// ----------------------------------------------------------------------------------
+    		// - Impuesto
+    		// ----------------------------------------------------------------------------------
+    		sql = new StringBuffer( 
+    				"UPDATE I_Order o " + 
+    				"SET C_Tax_ID=" +
+    					"(SELECT C_Tax_ID FROM C_Tax t" + 
+    					" WHERE t.TaxIndicator = o.TaxIndicator AND t.IsActive = 'Y' AND o.AD_Client_ID=t.AD_Client_ID AND ROWNUM=1) " + 
+    				"WHERE TaxIndicator IS NOT NULL AND I_IsImported<>'Y'" ).append( clientCheck );
+    		no = DB.executeUpdate( sql.toString());
+    		log.log(Level.FINE,"doIt - Set Tax From Indicator=" + no);
+    		
+    		sql = new StringBuffer( "UPDATE I_Order " + "SET I_IsImported='E', I_ErrorMsg=I_ErrorMsg|| '"+getMsg("ImportOrderInvalidTax")+". ' " + "WHERE C_Tax_ID IS NULL AND TaxIndicator IS NOT NULL" + " AND I_IsImported<>'Y'" ).append( clientCheck );
+    		no = DB.executeUpdate( sql.toString());
+
+    		if( no != 0 ) {
+    			log.log(Level.SEVERE,"doIt - Invalid Tax=" + no);
+    		}
+
+    		// -- New Orders -----------------------------------------------------
+
+    		int noInsert     = 0;
+    		int noInsertLine = 0;
+    		int noProcessed = 0;
+
+    		// Go through Order Records w/o
+
+    		sql = new StringBuffer( "SELECT * FROM I_Order " + "WHERE I_IsImported='N'" ).append( clientCheck ).append( " ORDER BY DocumentNo, C_Doctype_ID, C_BPartner_ID, C_BPartner_Location_ID, I_Order_ID" );
+
+    		try {
+    			PreparedStatement pstmt = DB.prepareStatement( sql.toString());
+    			ResultSet         rs    = pstmt.executeQuery();
+
+    			// Group Change
+
+    			int    oldC_BPartner_ID          = 0;
+    			int    oldC_BPartner_Location_ID = 0;
+    			int	   oldDocTypeID				 = 0;
+    			String oldDocumentNo             = "";
+    			String lastOrderSaveError      = null;
+    			boolean orderLineError         = false;
+    			Timestamp today 				 = Env.getDate();
+    			//
+
+    			MOrder order = null;
+    			int      lineNo  = 0;
+
+    			while( rs.next()) {
+    				X_I_Order imp           = new X_I_Order( getCtx(),rs,null );
+    				String      cmpDocumentNo = imp.getDocumentNo();
+
+    				// **************************************************************
+    				// PRECONDICION: imp.getDocumentNo() no puede ser NULL ni vacío.
+    				// (esto está validado al principio).
+    				// **************************************************************
+    				
+    				// Cambia el BPartner o el Número de Documento o el tipo de documento...
+    				if (oldC_BPartner_ID != imp.getC_BPartner_ID()
+    							|| !oldDocumentNo.equals(cmpDocumentNo)
+    							|| oldDocTypeID != imp.getC_DocType_ID()) {
+    					
+    					if (order != null) {
+
+    						// Si hubo error en el guardado de alguna de las líneas
+    						// entonces se elimina todo el pedido y se marcan todos
+    						// los registro de importación del pedido como no
+    						// importados para que el usuario pueda corregir el
+    						// problema y volver a intentar importar el pedido
+    						if (orderLineError) {
+    							noDeleted += deleteOrder(order)?1:0;
+
+    						// Si no hay error en las líneas y el pedido
+    						// está guardada correctamente entonces solo
+    						// resta procesar la acción indicada como
+    						// parámetro siempre y cuando el usuario haya
+    						// ingresado una acción
+    						} else if (m_docAction != null && lastOrderSaveError == null && processOrder(order, m_docAction)) {
+    							noProcessed++;
+    						}
+    					}
+
+    					// Cambio de grupo
+    					oldC_BPartner_ID          = imp.getC_BPartner_ID();
+    					oldC_BPartner_Location_ID = imp.getC_BPartner_Location_ID();
+    					oldDocumentNo             = imp.getDocumentNo();
+    					oldDocTypeID			  = imp.getC_DocType_ID();
+    					lastOrderSaveError      = null;
+    					orderLineError          = false;
+
+    					// Crea el nuevo pedido
+    					order = new MOrder( getCtx(),0,null );
+    					order.setClientOrg( imp.getAD_Client_ID(),imp.getAD_Org_ID());
+    					order.setC_DocTypeTarget_ID( imp.getC_DocType_ID());
+    					order.setIsSOTrx( imp.isSOTrx());
+    					
+    					if(!imp.isDocumentNoBySequence()){
+    						order.setDocumentNo(imp.getDocumentNo());
+    					}
+
+    					order.setC_BPartner_ID( imp.getC_BPartner_ID());
+    					order.setC_BPartner_Location_ID( imp.getC_BPartner_Location_ID());
+
+    					if( imp.getAD_User_ID() != 0 ) {
+    						order.setAD_User_ID( imp.getAD_User_ID());
+    					}
+
+    					if( imp.getDescription() != null ) {
+    						order.setDescription( imp.getDescription());
+    					}
+    					
+    					if (imp.getPaymentRule() != null) {
+    						order.setPaymentRule(imp.getPaymentRule());
+    					}
+    					else{
+    						order.setPaymentRule(MOrder.PAYMENTRULE_OnCredit);
+    					}
+    					// No se verifica ni chequea el estado de crédito
+//    					order.setCurrentAccountVerified(true);
+    					
+    					order.setC_PaymentTerm_ID( imp.getC_PaymentTerm_ID());
+    					order.setM_PriceList_ID( imp.getM_PriceList_ID());
+    					
+    					// SalesRep from Import or the person running the import
+
+    					if( imp.getSalesRep_ID() != 0 ) {
+    						order.setSalesRep_ID( imp.getSalesRep_ID());
+    					}
+
+//    					if( order.getSalesRep_ID() == 0 ) {
+//    						order.setSalesRep_ID( getAD_User_ID());
+//    					}
+
+    					if( imp.getAD_OrgTrx_ID() != 0 ) {
+    						order.setAD_OrgTrx_ID( imp.getAD_OrgTrx_ID());
+    					}
+
+    					if( imp.getC_Activity_ID() != 0 ) {
+    						order.setC_Activity_ID( imp.getC_Activity_ID());
+    					}
+
+    					if( imp.getC_Campaign_ID() != 0 ) {
+    						order.setC_Campaign_ID( imp.getC_Campaign_ID());
+    					}
+
+    					if( imp.getC_Project_ID() != 0 ) {
+    						order.setC_Project_ID( imp.getC_Project_ID());
+    					}
+
+    					//
+    					Timestamp dateOrdered = imp.getDateOrdered() != null ? imp
+    								.getDateOrdered() : today;
+    					
+    					order.setDateAcct(dateOrdered);
+    					order.setDateOrdered(dateOrdered);
+    					order.setDatePrinted(dateOrdered);
+
+    					if( imp.getDateAcct() != null ) {
+    						order.setDateAcct( imp.getDateAcct());
+    					}
+    					order.setC_Currency_ID(imp.getC_Currency_ID());
+    					
+    					order.setDocStatus(MOrder.DOCSTATUS_Drafted);
+    					order.setDocAction(MOrder.DOCACTION_Complete);
+    					order.setProcessed(false);
+    					order.setProcessing(false);
+
+    					//
+
+    					if(order.save()){
+    						noInsert++;
+    						lineNo = 10;
+
+    						imp.setC_Order_ID( order.getC_Order_ID());
+    					}else{
+    						lastOrderSaveError = CLogger.retrieveErrorAsString();
+    						imp.setI_ErrorMsg(lastOrderSaveError);
+    						imp.save();
+    						continue;
+    					}
+    				}
+    				
+    				// Creación de la línea del pedido
+    				if(lastOrderSaveError != null) {
+    					// Si hubo error al guardar el pedido se guarda el mensaje
+    					// de error en cada línea ya que la corrección del error
+    					// involucrará corregir alguno de los datos del
+    					// encabezado que están presentes en todas las líneas.
+    					imp.setI_ErrorMsg(lastOrderSaveError);
+    					imp.save();
+    				} else {	
+
+    					imp.setC_Order_ID( order.getC_Order_ID());
+    					// New OrderLine
+    					MOrderLine line = new MOrderLine( order );
+
+    					if( imp.getLineDescription() != null ) {
+    						line.setDescription( imp.getLineDescription());
+    					}
+
+    					line.setLine( lineNo );
+    					lineNo += 10;
+
+    					if( imp.getM_Product_ID() != 0 ) {
+    						line.setM_Product_ID( imp.getM_Product_ID(),true );
+    					}
+
+    					line.setQty( imp.getQtyOrdered());
+    					line.setPrice();
+
+    					BigDecimal price = imp.getPriceActual();
+
+    					if( (price != null) && (BigDecimal.ZERO.compareTo( price ) != 0) ) {
+    						line.setPrice( price );
+    					}
+
+    					if( imp.getC_Tax_ID() != 0 ) {
+    						line.setC_Tax_ID( imp.getC_Tax_ID());
+    					} else {
+    						line.setTax();
+    						imp.setC_Tax_ID( line.getC_Tax_ID());
+    					}
+
+//    					BigDecimal taxAmt = imp.getTaxAmt();
+//
+//    					if( (taxAmt != null) && (BigDecimal.ZERO.compareTo( taxAmt ) != 0) ) {
+//    						line.setTaxAmt( taxAmt );
+//    					}
+
+    					if(line.save()){
+    						noInsertLine++;
+    						imp.setC_OrderLine_ID( line.getC_OrderLine_ID());
+    						imp.setC_Order_ID(order.getC_Order_ID());
+    						imp.setI_IsImported( true );
+    						imp.setProcessed( true );
+    						imp.save();
+    					} else {
+    						imp.setI_ErrorMsg(imp.getI_ErrorMsg() + " " + CLogger.retrieveErrorAsString());
+    						imp.save();
+    						orderLineError = true;
+    					}
+    				}
+    			} // while
+
+    			// Procesa el último pedido
+    			if( m_docAction != null && order != null && lastOrderSaveError == null && processOrder(order, m_docAction)) {
+    				noProcessed++;
+    			}
+
+    			rs.close();
+    			pstmt.close();
+    		} catch( Exception e ) {
+    			log.log( Level.SEVERE,"doIt - CreateOrder",e );
+    			log.log(Level.SEVERE,"");
+    		}
+
+    		// Set Error to indicator to not imported
+
+    		sql = new StringBuffer( "UPDATE I_Order " + "SET I_IsImported='N', Updated=SysDate " + "WHERE I_IsImported<>'Y'" ).append( clientCheck );
+    		no = DB.executeUpdate( sql.toString());
+    		addLog( 0,null,new BigDecimal( no ),"@Errors@" );
+
+    		//
+
+    		addLog( 0,null,new BigDecimal( noInsert ).setScale(0),"Pedidos insertados" );
+    		addLog( 0,null,new BigDecimal( noInsertLine ).setScale(0),"Lineas de Pedidos insertadas" );
+    		addLog( 0,null,new BigDecimal( noProcessed ).setScale(0),"Pedidos procesados" );
+    		addLog( 0,null,new BigDecimal( noDeleted ).setScale(0),"Pedidos eliminados" );
+    		} catch (Exception e) {
+    			e.printStackTrace();
+    			throw e;
+    		}
+    		return "";
+    	}    // doIt
+    	
+        protected String getMsg(String msg) {
+        	return Msg.translate(getCtx(), msg);
         }
-
-        // Set Client, Org, IsActive, Created/Updated
-
-        sql = new StringBuffer( "UPDATE I_Order " + "SET AD_Client_ID = COALESCE (AD_Client_ID," ).append( m_AD_Client_ID ).append( ")," + " AD_Org_ID = COALESCE (AD_Org_ID," ).append( m_AD_Org_ID ).append( ")," + " IsActive = COALESCE (IsActive, 'Y')," + " Created = COALESCE (Created, SysDate)," + " CreatedBy = COALESCE (CreatedBy, 0)," + " Updated = COALESCE (Updated, SysDate)," + " UpdatedBy = COALESCE (UpdatedBy, 0)," + " I_ErrorMsg = NULL," + " I_IsImported = 'N' " + "WHERE I_IsImported<>'Y' OR I_IsImported IS NULL" );
-        no = DB.executeUpdate( sql.toString());
-        log.info( "Reset=" + no );
-        sql = new StringBuffer( "UPDATE I_Order o " + "SET I_IsImported='E', I_ErrorMsg=I_ErrorMsg||'ERR=Invalid Org, '" + "WHERE (AD_Org_ID IS NULL OR AD_Org_ID=0" + " OR EXISTS (SELECT * FROM AD_Org ad WHERE o.AD_Org_ID=ad.AD_Org_ID AND (ad.IsSummary='Y' OR ad.IsActive='N')))" + " AND I_IsImported<>'Y'" ).append( clientCheck );
-        no = DB.executeUpdate( sql.toString());
-
-        if( no != 0 ) {
-            log.warning( "Invalid Org=" + no );
+        
+        private boolean processOrder(MOrder order, String docAction) {
+    		boolean processed = true;
+        	if (!DocumentEngine.processAndSave(order, docAction, false)) {
+    			String processMsg = Msg.parseTranslation(getCtx(), order.getProcessMsg());							
+    			log.log(Level.SEVERE, "No se pudo procesar el pedido nro " + order.getDocumentNo() + ": "+ processMsg);
+    			// Se carga solo una vez el mensaje de Error al procesar el pedido
+    			if (msgOrderProcessError == null) {
+    				msgOrderProcessError = Msg.translate(getCtx(), "OrderProcessError");
+    			}
+    			DB.executeUpdate(
+    				"UPDATE I_Order SET I_ErrorMsg = I_ErrorMsg || '" + msgOrderProcessError + ": " + processMsg +"' WHERE C_Order_ID = "+ order.getC_Order_ID() + " " + clientCheck);
+    			processed = false;
+    		}
+    		// Si no se pudo procesar porque se encontró un error, entonces se
+    		// realiza la acción indicada como parámetro en caso de error
+        	if(!processed && m_onActionError != null){
+        		// Si se debe eliminar, se elimina
+        		if(isOnActionErrorDeleteOrder()){
+        			noDeleted += deleteOrder(order)?1:0;
+        		}
+    			// Si se debe dejar procesado, entonces se procesa. En el caso que
+    			// tampoco pueda procesarse entonces queda sin procesar 
+        		else if(docAction.equals(MOrder.DOCACTION_Complete)){
+        			processed = processOrder(order, MOrder.DOCACTION_Prepare);
+        		}
+        	}
+        	return processed;
         }
-
-        // Document Type - PO - SO
-
-        sql = new StringBuffer( "UPDATE I_Order o "    // PO Document Type Name
-                                + "SET C_DocType_ID=(SELECT C_DocType_ID FROM C_DocType d WHERE d.Name=o.DocTypeName" + " AND d.DocBaseType='POO' AND o.AD_Client_ID=d.AD_Client_ID) " + "WHERE C_DocType_ID IS NULL AND IsSOTrx='N' AND DocTypeName IS NOT NULL AND I_IsImported<>'Y'" ).append( clientCheck );
-        no = DB.executeUpdate( sql.toString());
-        log.fine( "Set PO DocType=" + no );
-        sql = new StringBuffer( "UPDATE I_Order o "    // SO Document Type Name
-                                + "SET C_DocType_ID=(SELECT C_DocType_ID FROM C_DocType d WHERE d.Name=o.DocTypeName" + " AND d.DocBaseType='SOO' AND o.AD_Client_ID=d.AD_Client_ID) " + "WHERE C_DocType_ID IS NULL AND IsSOTrx='Y' AND DocTypeName IS NOT NULL AND I_IsImported<>'Y'" ).append( clientCheck );
-        no = DB.executeUpdate( sql.toString());
-        log.fine( "Set SO DocType=" + no );
-        sql = new StringBuffer( "UPDATE I_Order o " + "SET C_DocType_ID=(SELECT C_DocType_ID FROM C_DocType d WHERE d.Name=o.DocTypeName" + " AND d.DocBaseType IN ('SOO','POO') AND o.AD_Client_ID=d.AD_Client_ID) "
-
-        // + "WHERE C_DocType_ID IS NULL AND IsSOTrx IS NULL AND DocTypeName IS NOT NULL AND I_IsImported<>'Y'").append (clientCheck);
-
-        + "WHERE C_DocType_ID IS NULL AND DocTypeName IS NOT NULL AND I_IsImported<>'Y'" ).append( clientCheck );
-        no = DB.executeUpdate( sql.toString());
-        log.fine( "Set DocType=" + no );
-        sql = new StringBuffer( "UPDATE I_Order "    // Error Invalid Doc Type Name
-                                + "SET I_IsImported='E', I_ErrorMsg=I_ErrorMsg||'ERR=Invalid DocTypeName, ' " + "WHERE C_DocType_ID IS NULL AND DocTypeName IS NOT NULL" + " AND I_IsImported<>'Y'" ).append( clientCheck );
-        no = DB.executeUpdate( sql.toString());
-
-        if( no != 0 ) {
-            log.warning( "Invalid DocTypeName=" + no );
+        
+        protected boolean isOnActionErrorDeleteOrder() {
+        	return "D".equals(m_onActionError);
         }
+        
+        protected boolean deleteOrder(MOrder order) {
+        	int orderID = order.getC_Order_ID();
+    		boolean deleted = true;
+    		// Borra las referencias a las líneas y el encabezado del pedido
+    		// desde la tabla de importación para poder eliminar el pedido.
+        	DB.executeUpdate(
+        			"UPDATE I_Order SET C_Order_ID = NULL, C_OrderLine_ID = NULL, I_IsImported = 'E' " +
+        			"WHERE C_Order_ID = " + orderID);
 
-        // DocType Default
-
-        sql = new StringBuffer( "UPDATE I_Order o "    // Default PO
-                                + "SET C_DocType_ID=(SELECT C_DocType_ID FROM C_DocType d WHERE d.IsDefault='Y'" + " AND d.DocBaseType='POO' AND o.AD_Client_ID=d.AD_Client_ID AND ROWNUM=1) " + "WHERE C_DocType_ID IS NULL AND IsSOTrx='N' AND I_IsImported<>'Y'" ).append( clientCheck );
-        no = DB.executeUpdate( sql.toString());
-        log.fine( "Set PO Default DocType=" + no );
-        sql = new StringBuffer( "UPDATE I_Order o "    // Default SO
-                                + "SET C_DocType_ID=(SELECT C_DocType_ID FROM C_DocType d WHERE d.IsDefault='Y'" + " AND d.DocBaseType='SOO' AND o.AD_Client_ID=d.AD_Client_ID AND ROWNUM=1) " + "WHERE C_DocType_ID IS NULL AND IsSOTrx='Y' AND I_IsImported<>'Y'" ).append( clientCheck );
-        no = DB.executeUpdate( sql.toString());
-        log.fine( "Set SO Default DocType=" + no );
-        sql = new StringBuffer( "UPDATE I_Order o " + "SET C_DocType_ID=(SELECT C_DocType_ID FROM C_DocType d WHERE d.IsDefault='Y'" + " AND d.DocBaseType IN('SOO','POO') AND o.AD_Client_ID=d.AD_Client_ID AND ROWNUM=1) " + "WHERE C_DocType_ID IS NULL AND IsSOTrx IS NULL AND I_IsImported<>'Y'" ).append( clientCheck );
-        no = DB.executeUpdate( sql.toString());
-        log.fine( "Set Default DocType=" + no );
-        sql = new StringBuffer( "UPDATE I_Order "    // No DocType
-                                + "SET I_IsImported='E', I_ErrorMsg=I_ErrorMsg||'ERR=No DocType, ' " + "WHERE C_DocType_ID IS NULL" + " AND I_IsImported<>'Y'" ).append( clientCheck );
-        no = DB.executeUpdate( sql.toString());
-
-        if( no != 0 ) {
-            log.warning( "No DocType=" + no );
+        	// Borrado del pedido.
+        	if (!order.delete(true)) {
+        		log.severe("Cannot delete order generated by invalid import records. Order =" + order.toString());
+        		deleted = false;
+        	}
+        	return deleted;
         }
-
-        // Set IsSOTrx
-
-        sql = new StringBuffer( "UPDATE I_Order o SET IsSOTrx='Y' " + "WHERE EXISTS (SELECT * FROM C_DocType d WHERE o.C_DocType_ID=d.C_DocType_ID AND d.DocBaseType='SOO' AND o.AD_Client_ID=d.AD_Client_ID)" + " AND C_DocType_ID IS NOT NULL" + " AND I_IsImported<>'Y'" ).append( clientCheck );
-        no = DB.executeUpdate( sql.toString());
-        log.fine( "Set IsSOTrx=Y=" + no );
-        sql = new StringBuffer( "UPDATE I_Order o SET IsSOTrx='N' " + "WHERE EXISTS (SELECT * FROM C_DocType d WHERE o.C_DocType_ID=d.C_DocType_ID AND d.DocBaseType='POO' AND o.AD_Client_ID=d.AD_Client_ID)" + " AND C_DocType_ID IS NOT NULL" + " AND I_IsImported<>'Y'" ).append( clientCheck );
-        no = DB.executeUpdate( sql.toString());
-        log.fine( "Set IsSOTrx=N=" + no );
-
-        // Price List
-
-        sql = new StringBuffer( "UPDATE I_Order o " + "SET M_PriceList_ID=(SELECT M_PriceList_ID FROM M_PriceList p WHERE p.IsDefault='Y'" + " AND p.C_Currency_ID=o.C_Currency_ID AND p.IsSOPriceList=o.IsSOTrx AND o.AD_Client_ID=p.AD_Client_ID AND ROWNUM=1) " + "WHERE M_PriceList_ID IS NULL AND I_IsImported<>'Y'" ).append( clientCheck );
-        no = DB.executeUpdate( sql.toString());
-        log.fine( "Set Default Currency PriceList=" + no );
-        sql = new StringBuffer( "UPDATE I_Order o " + "SET M_PriceList_ID=(SELECT M_PriceList_ID FROM M_PriceList p WHERE p.IsDefault='Y'" + " AND p.IsSOPriceList=o.IsSOTrx AND o.AD_Client_ID=p.AD_Client_ID AND ROWNUM=1) " + "WHERE M_PriceList_ID IS NULL AND C_Currency_ID IS NULL AND I_IsImported<>'Y'" ).append( clientCheck );
-        no = DB.executeUpdate( sql.toString());
-        log.fine( "Set Default PriceList=" + no );
-        sql = new StringBuffer( "UPDATE I_Order o " + "SET M_PriceList_ID=(SELECT M_PriceList_ID FROM M_PriceList p " + " WHERE p.C_Currency_ID=o.C_Currency_ID AND p.IsSOPriceList=o.IsSOTrx AND o.AD_Client_ID=p.AD_Client_ID AND ROWNUM=1) " + "WHERE M_PriceList_ID IS NULL AND I_IsImported<>'Y'" ).append( clientCheck );
-        no = DB.executeUpdate( sql.toString());
-        log.fine( "Set Currency PriceList=" + no );
-        sql = new StringBuffer( "UPDATE I_Order o " + "SET M_PriceList_ID=(SELECT M_PriceList_ID FROM M_PriceList p " + " WHERE p.IsSOPriceList=o.IsSOTrx AND o.AD_Client_ID=p.AD_Client_ID AND ROWNUM=1) " + "WHERE M_PriceList_ID IS NULL AND C_Currency_ID IS NULL AND I_IsImported<>'Y'" ).append( clientCheck );
-        no = DB.executeUpdate( sql.toString());
-        log.fine( "Set PriceList=" + no );
-
-        //
-
-        sql = new StringBuffer( "UPDATE I_Order " + "SET I_IsImported='E', I_ErrorMsg=I_ErrorMsg||'ERR=No PriceList, ' " + "WHERE M_PriceList_ID IS NULL" + " AND I_IsImported<>'Y'" ).append( clientCheck );
-        no = DB.executeUpdate( sql.toString());
-
-        if( no != 0 ) {
-            log.warning( "No PriceList=" + no );
-        }
-
-        // Payment Term
-
-        sql = new StringBuffer( "UPDATE I_Order o " + "SET C_PaymentTerm_ID=(SELECT C_PaymentTerm_ID FROM C_PaymentTerm p" + " WHERE o.PaymentTermValue=p.Value AND o.AD_Client_ID=p.AD_Client_ID) " + "WHERE C_PaymentTerm_ID IS NULL AND PaymentTermValue IS NOT NULL AND I_IsImported<>'Y'" ).append( clientCheck );
-        no = DB.executeUpdate( sql.toString());
-        log.fine( "Set PaymentTerm=" + no );
-        sql = new StringBuffer( "UPDATE I_Order o " + "SET C_PaymentTerm_ID=(SELECT C_PaymentTerm_ID FROM C_PaymentTerm p" + " WHERE p.IsDefault='Y' AND o.AD_Client_ID=p.AD_Client_ID AND ROWNUM=1) " + "WHERE C_PaymentTerm_ID IS NULL AND o.PaymentTermValue IS NULL AND I_IsImported<>'Y'" ).append( clientCheck );
-        no = DB.executeUpdate( sql.toString());
-        log.fine( "Set Default PaymentTerm=" + no );
-
-        //
-
-        sql = new StringBuffer( "UPDATE I_Order " + "SET I_IsImported='E', I_ErrorMsg=I_ErrorMsg||'ERR=No PaymentTerm, ' " + "WHERE C_PaymentTerm_ID IS NULL" + " AND I_IsImported<>'Y'" ).append( clientCheck );
-        no = DB.executeUpdate( sql.toString());
-
-        if( no != 0 ) {
-            log.warning( "No PaymentTerm=" + no );
-        }
-
-        // Warehouse
-
-        sql = new StringBuffer( "UPDATE I_Order o " + "SET M_Warehouse_ID=(SELECT M_Warehouse_ID FROM M_Warehouse w" + " WHERE o.AD_Client_ID=w.AD_Client_ID AND o.AD_Org_ID=w.AD_Org_ID AND ROWNUM=1) " + "WHERE M_Warehouse_ID IS NULL AND I_IsImported<>'Y'" ).append( clientCheck );
-        no = DB.executeUpdate( sql.toString());    // Warehouse for Org
-
-        if( no != 0 ) {
-            log.fine( "Set Warehouse=" + no );
-        }
-
-        sql = new StringBuffer( "UPDATE I_Order o " + "SET M_Warehouse_ID=(SELECT M_Warehouse_ID FROM M_Warehouse w" + " WHERE o.AD_Client_ID=w.AD_Client_ID) " + "WHERE M_Warehouse_ID IS NULL" + " AND EXISTS (SELECT AD_Client_ID FROM M_Warehouse w WHERE w.AD_Client_ID=o.AD_Client_ID GROUP BY AD_Client_ID HAVING COUNT(*)=1)" + " AND I_IsImported<>'Y'" ).append( clientCheck );
-        no = DB.executeUpdate( sql.toString());
-
-        if( no != 0 ) {
-            log.fine( "Set Only Client Warehouse=" + no );
-        }
-
-        //
-
-        sql = new StringBuffer( "UPDATE I_Order " + "SET I_IsImported='E', I_ErrorMsg=I_ErrorMsg||'ERR=No Warehouse, ' " + "WHERE M_Warehouse_ID IS NULL" + " AND I_IsImported<>'Y'" ).append( clientCheck );
-        no = DB.executeUpdate( sql.toString());
-
-        if( no != 0 ) {
-            log.warning( "No Warehouse=" + no );
-        }
-
-        // BP from EMail
-
-        sql = new StringBuffer( "UPDATE I_Order o " + "SET C_BPartner_ID=(SELECT C_BPartner_ID FROM AD_User u" + " WHERE o.EMail=u.EMail AND o.AD_Client_ID=u.AD_Client_ID AND u.C_BPartner_ID IS NOT NULL)" +
-        		",AD_User_ID=(SELECT AD_User_ID FROM AD_User u" + " WHERE o.EMail=u.EMail AND o.AD_Client_ID=u.AD_Client_ID AND u.C_BPartner_ID IS NOT NULL) " + "WHERE C_BPartner_ID IS NULL AND EMail IS NOT NULL" + " AND I_IsImported<>'Y'" ).append( clientCheck );
-        no = DB.executeUpdate( sql.toString());
-        log.fine( "Set BP from EMail=" + no );
-
-        // BP from ContactName
-
-        sql = new StringBuffer( "UPDATE I_Order o " + "SET C_BPartner_ID=(SELECT C_BPartner_ID FROM AD_User u" + " WHERE o.ContactName=u.Name AND o.AD_Client_ID=u.AD_Client_ID AND u.C_BPartner_ID IS NOT NULL)" +
-        		",AD_User_ID=(SELECT AD_User_ID FROM AD_User u" + " WHERE o.ContactName=u.Name AND o.AD_Client_ID=u.AD_Client_ID AND u.C_BPartner_ID IS NOT NULL)" + "WHERE C_BPartner_ID IS NULL AND ContactName IS NOT NULL" + " AND EXISTS (SELECT Name FROM AD_User u WHERE o.ContactName=u.Name AND o.AD_Client_ID=u.AD_Client_ID AND u.C_BPartner_ID IS NOT NULL GROUP BY Name HAVING COUNT(*)=1)" + " AND I_IsImported<>'Y'" ).append( clientCheck );
-        no = DB.executeUpdate( sql.toString());
-        log.fine( "Set BP from ContactName=" + no );
-
-        // BP from Value
-
-        sql = new StringBuffer( "UPDATE I_Order o " + "SET C_BPartner_ID=(SELECT C_BPartner_ID FROM C_BPartner bp" + " WHERE o.BPartnerValue=bp.Value AND o.AD_Client_ID=bp.AD_Client_ID AND ROWNUM=1) " + "WHERE C_BPartner_ID IS NULL AND BPartnerValue IS NOT NULL" + " AND I_IsImported<>'Y'" ).append( clientCheck );
-        no = DB.executeUpdate( sql.toString());
-        log.fine( "Set BP from Value=" + no );
-
-        // Default BP
-
-        sql = new StringBuffer( "UPDATE I_Order o " + "SET C_BPartner_ID=(SELECT C_BPartnerCashTrx_ID FROM AD_ClientInfo c" + " WHERE o.AD_Client_ID=c.AD_Client_ID) " + "WHERE C_BPartner_ID IS NULL AND BPartnerValue IS NULL AND Name IS NULL" + " AND I_IsImported<>'Y'" ).append( clientCheck );
-        no = DB.executeUpdate( sql.toString());
-        log.fine( "Set Default BP=" + no );
-
-        // Existing Location ? Exact Match
-
-        sql = new StringBuffer( "UPDATE I_Order o " + "SET BillTo_ID=(SELECT C_BPartner_Location_ID" + " FROM C_BPartner_Location bpl INNER JOIN C_Location l ON (bpl.C_Location_ID=l.C_Location_ID)" + " WHERE o.C_BPartner_ID=bpl.C_BPartner_ID AND bpl.AD_Client_ID=o.AD_Client_ID" + " AND DUMP(o.Address1)=DUMP(l.Address1) AND DUMP(o.Address2)=DUMP(l.Address2)" + " AND DUMP(o.City)=DUMP(l.City) AND DUMP(o.Postal)=DUMP(l.Postal)" + " AND DUMP(o.C_Region_ID)=DUMP(l.C_Region_ID) AND DUMP(o.C_Country_ID)=DUMP(l.C_Country_ID)) " +
-        		",C_BPartner_Location_ID=(SELECT C_BPartner_Location_ID" + " FROM C_BPartner_Location bpl INNER JOIN C_Location l ON (bpl.C_Location_ID=l.C_Location_ID)" + " WHERE o.C_BPartner_ID=bpl.C_BPartner_ID AND bpl.AD_Client_ID=o.AD_Client_ID" + " AND DUMP(o.Address1)=DUMP(l.Address1) AND DUMP(o.Address2)=DUMP(l.Address2)" + " AND DUMP(o.City)=DUMP(l.City) AND DUMP(o.Postal)=DUMP(l.Postal)" + " AND DUMP(o.C_Region_ID)=DUMP(l.C_Region_ID) AND DUMP(o.C_Country_ID)=DUMP(l.C_Country_ID))" + "WHERE C_BPartner_ID IS NOT NULL AND C_BPartner_Location_ID IS NULL" + " AND I_IsImported='N'" ).append( clientCheck );
-        no = DB.executeUpdate( sql.toString());
-        log.fine( "Found Location=" + no );
-
-        // Set Bill Location from BPartner
-
-        sql = new StringBuffer( "UPDATE I_Order o " + "SET BillTo_ID=(SELECT C_BPartner_Location_ID FROM C_BPartner_Location l" + " WHERE l.C_BPartner_ID=o.C_BPartner_ID AND o.AD_Client_ID=l.AD_Client_ID" + " AND ((l.IsBillTo='Y' AND o.IsSOTrx='Y') OR (l.IsPayFrom='Y' AND o.IsSOTrx='N'))" + " AND ROWNUM=1) " + "WHERE C_BPartner_ID IS NOT NULL AND BillTo_ID IS NULL" + " AND I_IsImported<>'Y'" ).append( clientCheck );
-        no = DB.executeUpdate( sql.toString());
-        log.fine( "Set BP BillTo from BP=" + no );
-
-        // Set Location from BPartner
-
-        sql = new StringBuffer( "UPDATE I_Order o " + "SET C_BPartner_Location_ID=(SELECT C_BPartner_Location_ID FROM C_BPartner_Location l" + " WHERE l.C_BPartner_ID=o.C_BPartner_ID AND o.AD_Client_ID=l.AD_Client_ID" + " AND ((l.IsShipTo='Y' AND o.IsSOTrx='Y') OR o.IsSOTrx='N')" + " AND ROWNUM=1) " + "WHERE C_BPartner_ID IS NOT NULL AND C_BPartner_Location_ID IS NULL" + " AND I_IsImported<>'Y'" ).append( clientCheck );
-        no = DB.executeUpdate( sql.toString());
-        log.fine( "Set BP Location from BP=" + no );
-
-        //
-
-        sql = new StringBuffer( "UPDATE I_Order " + "SET I_IsImported='E', I_ErrorMsg=I_ErrorMsg||'ERR=No BP Location, ' " + "WHERE C_BPartner_ID IS NOT NULL AND (BillTo_ID IS NULL OR C_BPartner_Location_ID IS NULL)" + " AND I_IsImported<>'Y'" ).append( clientCheck );
-        no = DB.executeUpdate( sql.toString());
-
-        if( no != 0 ) {
-            log.warning( "No BP Location=" + no );
-        }
-
-        // Set Country
-
-        sql = new StringBuffer( "UPDATE I_Order o " + "SET CountryCode=(SELECT CountryCode FROM C_Country c WHERE " + " c.AD_Client_ID IN (0, o.AD_Client_ID) AND ROWNUM=1) " + "WHERE C_BPartner_ID IS NULL AND CountryCode IS NULL AND C_Country_ID IS NULL" + " AND I_IsImported<>'Y'" ).append( clientCheck );
-        no = DB.executeUpdate( sql.toString());
-        log.fine( "Set Country Default=" + no );
-        sql = new StringBuffer( "UPDATE I_Order o " + "SET C_Country_ID=(SELECT C_Country_ID FROM C_Country c" + " WHERE o.CountryCode=c.CountryCode AND c.AD_Client_ID IN (0, o.AD_Client_ID)) " + "WHERE C_BPartner_ID IS NULL AND C_Country_ID IS NULL AND CountryCode IS NOT NULL" + " AND I_IsImported<>'Y'" ).append( clientCheck );
-        no = DB.executeUpdate( sql.toString());
-        log.fine( "Set Country=" + no );
-
-        //
-
-        sql = new StringBuffer( "UPDATE I_Order " + "SET I_IsImported='E', I_ErrorMsg=I_ErrorMsg||'ERR=Invalid Country, ' " + "WHERE C_BPartner_ID IS NULL AND C_Country_ID IS NULL" + " AND I_IsImported<>'Y'" ).append( clientCheck );
-        no = DB.executeUpdate( sql.toString());
-
-        if( no != 0 ) {
-            log.warning( "Invalid Country=" + no );
-        }
-
-        // Set Region
-
-        sql = new StringBuffer( "UPDATE I_Order o " + "Set RegionName=(SELECT Name FROM C_Region r" + " WHERE r.IsDefault='Y' AND r.C_Country_ID=o.C_Country_ID" + " AND r.AD_Client_ID IN (0, o.AD_Client_ID) AND ROWNUM=1) " + "WHERE C_BPartner_ID IS NULL AND C_Region_ID IS NULL AND RegionName IS NULL" + " AND I_IsImported<>'Y'" ).append( clientCheck );
-        no = DB.executeUpdate( sql.toString());
-        log.fine( "Set Region Default=" + no );
-
-        //
-
-        sql = new StringBuffer( "UPDATE I_Order o " + "Set C_Region_ID=(SELECT C_Region_ID FROM C_Region r" + " WHERE r.Name=o.RegionName AND r.C_Country_ID=o.C_Country_ID" + " AND r.AD_Client_ID IN (0, o.AD_Client_ID)) " + "WHERE C_BPartner_ID IS NULL AND C_Region_ID IS NULL AND RegionName IS NOT NULL" + " AND I_IsImported<>'Y'" ).append( clientCheck );
-        no = DB.executeUpdate( sql.toString());
-        log.fine( "Set Region=" + no );
-
-        //
-
-        sql = new StringBuffer( "UPDATE I_Order o " + "SET I_IsImported='E', I_ErrorMsg=I_ErrorMsg||'ERR=Invalid Region, ' " + "WHERE C_BPartner_ID IS NULL AND C_Region_ID IS NULL " + " AND EXISTS (SELECT * FROM C_Country c" + " WHERE c.C_Country_ID=o.C_Country_ID AND c.HasRegion='Y')" + " AND I_IsImported<>'Y'" ).append( clientCheck );
-        no = DB.executeUpdate( sql.toString());
-
-        if( no != 0 ) {
-            log.warning( "Invalid Region=" + no );
-        }
-
-        // Product
-
-        sql = new StringBuffer( "UPDATE I_Order o " + "SET M_Product_ID=(SELECT M_Product_ID FROM M_Product p" + " WHERE o.ProductValue=p.Value AND o.AD_Client_ID=p.AD_Client_ID AND ROWNUM=1) " + "WHERE M_Product_ID IS NULL AND ProductValue IS NOT NULL" + " AND I_IsImported<>'Y'" ).append( clientCheck );
-        no = DB.executeUpdate( sql.toString());
-        log.fine( "Set Product from Value=" + no );
-        sql = new StringBuffer( "UPDATE I_Order o " + "SET M_Product_ID=(SELECT M_Product_ID FROM M_Product p" + " WHERE o.UPC=p.UPC AND o.AD_Client_ID=p.AD_Client_ID AND ROWNUM=1) " + "WHERE M_Product_ID IS NULL AND UPC IS NOT NULL" + " AND I_IsImported<>'Y'" ).append( clientCheck );
-        no = DB.executeUpdate( sql.toString());
-        log.fine( "Set Product from UPC=" + no );
-        sql = new StringBuffer( "UPDATE I_Order o " + "SET M_Product_ID=(SELECT M_Product_ID FROM M_Product p" + " WHERE o.SKU=p.SKU AND o.AD_Client_ID=p.AD_Client_ID AND ROWNUM=1) " + "WHERE M_Product_ID IS NULL AND SKU IS NOT NULL" + " AND I_IsImported<>'Y'" ).append( clientCheck );
-        no = DB.executeUpdate( sql.toString());
-        log.fine( "Set Product fom SKU=" + no );
-        sql = new StringBuffer( "UPDATE I_Order " + "SET I_IsImported='E', I_ErrorMsg=I_ErrorMsg||'ERR=Invalid Product, ' " + "WHERE M_Product_ID IS NULL AND (ProductValue IS NOT NULL OR UPC IS NOT NULL OR SKU IS NOT NULL)" + " AND I_IsImported<>'Y'" ).append( clientCheck );
-        no = DB.executeUpdate( sql.toString());
-
-        if( no != 0 ) {
-            log.warning( "Invalid Product=" + no );
-        }
-
-        // Tax
-
-        sql = new StringBuffer( "UPDATE I_Order o " + "SET C_Tax_ID=(SELECT C_Tax_ID FROM C_Tax t" + " WHERE o.TaxIndicator=t.TaxIndicator AND o.AD_Client_ID=t.AD_Client_ID AND ROWNUM=1) " + "WHERE C_Tax_ID IS NULL AND TaxIndicator IS NOT NULL" + " AND I_IsImported<>'Y'" ).append( clientCheck );
-        no = DB.executeUpdate( sql.toString());
-        log.fine( "Set Tax=" + no );
-        sql = new StringBuffer( "UPDATE I_Order " + "SET I_IsImported='E', I_ErrorMsg=I_ErrorMsg||'ERR=Invalid Tax, ' " + "WHERE C_Tax_ID IS NULL AND TaxIndicator IS NOT NULL" + " AND I_IsImported<>'Y'" ).append( clientCheck );
-        no = DB.executeUpdate( sql.toString());
-
-        if( no != 0 ) {
-            log.warning( "Invalid Tax=" + no );
-        }
-
-        // -- New BPartner ---------------------------------------------------
-
-        // Go through Order Records w/o C_BPartner_ID
-
-        sql = new StringBuffer( "SELECT * FROM I_Order " + "WHERE I_IsImported='N' AND C_BPartner_ID IS NULL" ).append( clientCheck );
-
-        try {
-            PreparedStatement pstmt = DB.prepareStatement( sql.toString());
-            ResultSet         rs    = pstmt.executeQuery();
-
-            while( rs.next()) {
-                X_I_Order imp = new X_I_Order( getCtx(),rs,null );
-
-                if( imp.getBPartnerValue() == null ) {
-                    if( imp.getEMail() != null ) {
-                        imp.setBPartnerValue( imp.getEMail());
-                    } else if( imp.getName() != null ) {
-                        imp.setBPartnerValue( imp.getName());
-                    } else {
-                        continue;
-                    }
-                }
-
-                if( imp.getName() == null ) {
-                    if( imp.getContactName() != null ) {
-                        imp.setName( imp.getContactName());
-                    } else {
-                        imp.setName( imp.getBPartnerValue());
-                    }
-                }
-
-                // BPartner
-
-                MBPartner bp = MBPartner.get( getCtx(),imp.getBPartnerValue());
-
-                if( bp == null ) {
-                    bp = new MBPartner( getCtx(),-1,null );
-                    bp.setClientOrg( imp.getAD_Client_ID(),imp.getAD_Org_ID());
-                    bp.setValue( imp.getBPartnerValue());
-                    bp.setName( imp.getName());
-
-                    if( !bp.save()) {
-                        continue;
-                    }
-                }
-
-                imp.setC_BPartner_ID( bp.getC_BPartner_ID());
-
-                // BP Location
-
-                MBPartnerLocation   bpl  = null;
-                MBPartnerLocation[] bpls = bp.getLocations( true );
-
-                for( int i = 0;(bpl == null) && (i < bpls.length);i++ ) {
-                    if( imp.getC_BPartner_Location_ID() == bpls[ i ].getC_BPartner_Location_ID()) {
-                        bpl = bpls[ i ];
-
-                        // Same Location ID
-
-                    } else if( imp.getC_Location_ID() == bpls[ i ].getC_Location_ID()) {
-                        bpl = bpls[ i ];
-
-                        // Same Location Info
-
-                    } else if( imp.getC_Location_ID() == 0 ) {
-                        MLocation loc = bpl.getLocation( false );
-
-                        if( loc.equals( imp.getC_Country_ID(),imp.getC_Region_ID(),imp.getPostal(),"",imp.getCity(),imp.getAddress1(),imp.getAddress2())) {
-                            bpl = bpls[ i ];
-                        }
-                    }
-                }
-
-                if( bpl == null ) {
-
-                    // New Location
-
-                    MLocation loc = new MLocation( getCtx(),0,null );
-
-                    loc.setAddress1( imp.getAddress1());
-                    loc.setAddress2( imp.getAddress2());
-                    loc.setCity( imp.getCity());
-                    loc.setPostal( imp.getPostal());
-
-                    if( imp.getC_Region_ID() != 0 ) {
-                        loc.setC_Region_ID( imp.getC_Region_ID());
-                    }
-
-                    loc.setC_Country_ID( imp.getC_Country_ID());
-
-                    if( !loc.save()) {
-                        continue;
-                    }
-
-                    //
-
-                    bpl = new MBPartnerLocation( bp );
-                    bpl.setC_Location_ID( imp.getC_Location_ID());
-
-                    if( !bpl.save()) {
-                        continue;
-                    }
-                }
-
-                imp.setC_Location_ID( bpl.getC_Location_ID());
-                imp.setBillTo_ID( bpl.getC_BPartner_Location_ID());
-                imp.setC_BPartner_Location_ID( bpl.getC_BPartner_Location_ID());
-
-                // User/Contact
-
-                if( (imp.getContactName() != null) || (imp.getEMail() != null) || (imp.getPhone() != null) ) {
-                    MUser[] users = bp.getContacts( true );
-                    MUser   user  = null;
-
-                    for( int i = 0;(user == null) && (i < users.length);i++ ) {
-                        String name = users[ i ].getName();
-
-                        if( name.equals( imp.getContactName()) || name.equals( imp.getName())) {
-                            user = users[ i ];
-                            imp.setAD_User_ID( user.getAD_User_ID());
-                        }
-                    }
-
-                    if( user == null ) {
-                        user = new MUser( bp );
-
-                        if( imp.getContactName() == null ) {
-                            user.setName( imp.getName());
-                        } else {
-                            user.setName( imp.getContactName());
-                        }
-
-                        user.setEMail( imp.getEMail());
-                        user.setPhone( imp.getPhone());
-
-                        if( user.save()) {
-                            imp.setAD_User_ID( user.getAD_User_ID());
-                        }
-                    }
-                }
-
-                imp.save();
-            }    // for all new BPartners
-
-            rs.close();
-            pstmt.close();
-
-            //
-
-        } catch( SQLException e ) {
-            log.log( Level.SEVERE,"CreateBP",e );
-        }
-
-        sql = new StringBuffer( "UPDATE I_Order " + "SET I_IsImported='E', I_ErrorMsg=I_ErrorMsg||'ERR=No BPartner, ' " + "WHERE C_BPartner_ID IS NULL" + " AND I_IsImported<>'Y'" ).append( clientCheck );
-        no = DB.executeUpdate( sql.toString());
-
-        if( no != 0 ) {
-            log.warning( "No BPartner=" + no );
-        }
-
-        // -- New Orders -----------------------------------------------------
-
-        int noInsert     = 0;
-        int noInsertLine = 0;
-
-        // Go through Order Records w/o
-
-        sql = new StringBuffer( "SELECT * FROM I_Order " + "WHERE I_IsImported='N'" ).append( clientCheck ).append( " ORDER BY C_BPartner_ID, BillTo_ID, C_BPartner_Location_ID, I_Order_ID" );
-
-        try {
-            PreparedStatement pstmt = DB.prepareStatement( sql.toString());
-            ResultSet         rs    = pstmt.executeQuery();
-
-            //
-
-            int    oldC_BPartner_ID          = 0;
-            int    oldBillTo_ID              = 0;
-            int    oldC_BPartner_Location_ID = 0;
-            String oldDocumentNo             = "";
-
-            //
-
-            MOrder order  = null;
-            int    lineNo = 0;
-
-            while( rs.next()) {
-                X_I_Order imp           = new X_I_Order( getCtx(),rs,null );
-                String    cmpDocumentNo = imp.getDocumentNo();
-
-                if( cmpDocumentNo == null ) {
-                    cmpDocumentNo = "";
-                }
-
-                // New Order
-
-                if( (oldC_BPartner_ID != imp.getC_BPartner_ID()) || (oldC_BPartner_Location_ID != imp.getC_BPartner_Location_ID()) || (oldBillTo_ID != imp.getBillTo_ID()) ||!oldDocumentNo.equals( cmpDocumentNo )) {
-                    if( order != null ) {
-                        if( (m_docAction != null) && (m_docAction.length() > 0) ) {
-                            order.setDocAction( m_docAction );
-                            order.processIt( m_docAction );
-                        }
-
-                        order.save();
-                    }
-
-                    oldC_BPartner_ID          = imp.getC_BPartner_ID();
-                    oldC_BPartner_Location_ID = imp.getC_BPartner_Location_ID();
-                    oldBillTo_ID  = imp.getBillTo_ID();
-                    oldDocumentNo = imp.getDocumentNo();
-
-                    if( oldDocumentNo == null ) {
-                        oldDocumentNo = "";
-                    }
-
-                    //
-
-                    order = new MOrder( getCtx(),0,null );
-                    order.setClientOrg( imp.getAD_Client_ID(),imp.getAD_Org_ID());
-                    order.setC_DocTypeTarget_ID( imp.getC_DocType_ID());
-                    order.setIsSOTrx( imp.isSOTrx());
-
-                    if( imp.getDocumentNo() != null ) {
-                        order.setDocumentNo( imp.getDocumentNo());
-                    }
-
-                    // Ship Partner
-
-                    order.setC_BPartner_ID( imp.getC_BPartner_ID());
-                    order.setC_BPartner_Location_ID( imp.getC_BPartner_Location_ID());
-
-                    if( imp.getAD_User_ID() != 0 ) {
-                        order.setAD_User_ID( imp.getAD_User_ID());
-                    }
-
-                    // Bill Partner
-
-                    order.setBill_BPartner_ID( imp.getC_BPartner_ID());
-                    order.setBill_Location_ID( imp.getBillTo_ID());
-
-                    //
-
-                    if( imp.getDescription() != null ) {
-                        order.setDescription( imp.getDescription());
-                    }
-
-                    order.setC_PaymentTerm_ID( imp.getC_PaymentTerm_ID());
-                    order.setM_PriceList_ID( imp.getM_PriceList_ID());
-                    order.setM_Warehouse_ID( imp.getM_Warehouse_ID());
-
-                    if( imp.getM_Shipper_ID() != 0 ) {
-                        order.setM_Shipper_ID( imp.getM_Shipper_ID());
-                    }
-
-                    // SalesRep from Import or the person running the import
-
-                    if( imp.getSalesRep_ID() != 0 ) {
-                        order.setSalesRep_ID( imp.getSalesRep_ID());
-                    }
-
-                    if( order.getSalesRep_ID() == 0 ) {
-                        order.setSalesRep_ID( getAD_User_ID());
-                    }
-
-                    //
-
-                    if( imp.getAD_OrgTrx_ID() != 0 ) {
-                        order.setAD_OrgTrx_ID( imp.getAD_OrgTrx_ID());
-                    }
-
-                    if( imp.getC_Activity_ID() != 0 ) {
-                        order.setC_Activity_ID( imp.getC_Activity_ID());
-                    }
-
-                    if( imp.getC_Campaign_ID() != 0 ) {
-                        order.setC_Campaign_ID( imp.getC_Campaign_ID());
-                    }
-
-                    if( imp.getC_Project_ID() != 0 ) {
-                        order.setC_Project_ID( imp.getC_Project_ID());
-                    }
-
-                    //
-
-                    if( imp.getDateOrdered() != null ) {
-                        order.setDateOrdered( imp.getDateOrdered());
-                    }
-
-                    if( imp.getDateAcct() != null ) {
-                        order.setDateAcct( imp.getDateAcct());
-                    }
-
-                    //
-
-                    order.save();
-                    noInsert++;
-                    lineNo = 10;
-                }
-
-                imp.setC_Order_ID( order.getC_Order_ID());
-
-                // New OrderLine
-
-                MOrderLine line = new MOrderLine( order );
-
-                line.setLine( lineNo );
-                lineNo += 10;
-
-                if( imp.getM_Product_ID() != 0 ) {
-                    line.setM_Product_ID( imp.getM_Product_ID(),true );
-                }
-
-                line.setQty( imp.getQtyOrdered());
-                line.setPrice();
-
-                if( imp.getPriceActual().compareTo( Env.ZERO ) != 0 ) {
-                    line.setPrice( imp.getPriceActual());
-                }
-
-                if( imp.getC_Tax_ID() != 0 ) {
-                    line.setC_Tax_ID( imp.getC_Tax_ID());
-                } else {
-                    line.setTax();
-                    imp.setC_Tax_ID( line.getC_Tax_ID());
-                }
-
-                if( imp.getFreightAmt() != null ) {
-                    line.setFreightAmt( imp.getFreightAmt());
-                }
-
-                if( imp.getLineDescription() != null ) {
-                    line.setDescription( imp.getLineDescription());
-                }
-
-                line.save();
-                imp.setC_OrderLine_ID( line.getC_OrderLine_ID());
-                imp.setI_IsImported( true );
-                imp.setProcessed( true );
-
-                //
-
-                if( imp.save()) {
-                    noInsertLine++;
-                }
-            }
-
-            if( order != null ) {
-                if( (m_docAction != null) && (m_docAction.length() > 0) ) {
-                    order.setDocAction( m_docAction );
-                    order.processIt( m_docAction );
-                }
-
-                order.save();
-            }
-
-            rs.close();
-            pstmt.close();
-        } catch( Exception e ) {
-            log.log( Level.SEVERE,"CreateOrder",e );
-        }
-
-        // Set Error to indicator to not imported
-
-        sql = new StringBuffer( "UPDATE I_Order " + "SET I_IsImported='N', Updated=SysDate " + "WHERE I_IsImported<>'Y'" ).append( clientCheck );
-        no = DB.executeUpdate( sql.toString());
-        addLog( 0,null,new BigDecimal( no ),"@Errors@" );
-
-        //
-
-        addLog( 0,null,new BigDecimal( noInsert ),"@C_Order_ID@: @Inserted@" );
-        addLog( 0,null,new BigDecimal( noInsertLine ),"@C_OrderLine_ID@: @Inserted@" );
-
-        return "";
-    }    // doIt
-}    // ImportOrder
-
-
-
-/*
- *  @(#)ImportOrder.java   02.07.07
- * 
- *  Fin del fichero ImportOrder.java
- *  
- *  Versión 2.2
- *
- */
+        
+} 
