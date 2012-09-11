@@ -4287,3 +4287,12 @@ ALTER TABLE ad_field_vt OWNER TO libertya;
 
 -- 20120909-1550 Incorporación de configuración de tpv para anular comprobantes bajo clave
 update ad_system set dummy = (SELECT addcolumnifnotexists('c_pos','voiddocuments', 'character(1) NOT NULL DEFAULT \'Y\'::bpchar'));
+
+-- 20120911-1700 Incorporación de parámetros adicionales para importación de pedidos
+update ad_system set dummy = (SELECT addcolumnifnotexists('i_order','paymentrule', 'character varying(2)'));
+update ad_system set dummy = (SELECT addcolumnifnotexists('i_order','orgvalue', 'character varying(40)'));
+update ad_system set dummy = (SELECT addcolumnifnotexists('i_order','salesrep_name', 'character varying(60)'));
+update ad_system set dummy = (SELECT addcolumnifnotexists('i_order','documentnobysequence', 'character(1) NOT NULL DEFAULT \'N\'::bpchar'));
+update ad_system set dummy = (SELECT addcolumnifnotexists('i_order','pricelist_name', 'character varying(60)'));
+update ad_system set dummy = (SELECT addcolumnifnotexists('i_order','iso_code', 'character(3)'));
+ALTER TABLE i_order ALTER COLUMN taxindicator TYPE character varying(10);
