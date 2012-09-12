@@ -183,7 +183,7 @@ public class ProcessorWSFE {
 			//*****CONVERSION
 			// Se debe convertir a la moneda del comprobante desde la moneda de la compañía
 			BigDecimal cotizacion = MCurrency.currencyConvert(Env.ONE,
-					Env.getContextAsInt(m_ctx, "#C_Currency_ID"),
+					Env.getContextAsInt(m_ctx, "$C_Currency_ID"),
 					invoice.getC_Currency_ID(), invoice.getDateInvoiced(), 0,
 					m_ctx);
 			line.append(cotizacion+"\n");
