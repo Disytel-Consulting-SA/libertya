@@ -201,6 +201,22 @@ public class ImportInvoice extends SvrProcess {
 		sql.append(clientCheck);
 		no = DB.executeUpdate( sql.toString());
 		log.log(Level.FINE,"doIt - Set IsSOTrx=" + no);
+		
+		// ----------------------------------------------------------------------------------
+		// - Moneda a partir de ISO CODE
+		// ----------------------------------------------------------------------------------
+		
+		// NOTA: Tener en cuenta que si la EC tiene una Tarifa asociada (se pisa la moneda)
+		sql = new StringBuffer();
+		sql.append("UPDATE i_invoice i ");
+		sql.append(		"SET C_Currency_ID = "); 
+		sql.append(		"( ");
+		sql.append(			"SELECT d.C_Currency_ID ");
+		sql.append(			"FROM C_Currency d ");
+		sql.append(			"WHERE d.Iso_Code = i.Iso_Code");
+		sql.append(		") ");
+		sql.append("WHERE C_Currency_ID IS NULL  AND I_IsImported<>'Y' ").append(clientCheck);		
+		no = DB.executeUpdate( sql.toString());
 
 		// ----------------------------------------------------------------------------------
 		// - Moneda por defecto
