@@ -7,7 +7,7 @@ import java.math.*;
 import org.openXpertya.util.*;
 /** Modelo Generado por I_Invoice
  *  @author Comunidad de Desarrollo Libertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
- *  @version  - 2012-08-09 21:18:00.475 */
+ *  @version  - 2012-09-11 21:29:45.804 */
 public class X_I_Invoice extends org.openXpertya.model.PO
 {
 /** Constructor estándar */
@@ -582,6 +582,23 @@ if (oo != null)
  return "Y".equals(oo);
 }
 return false;
+}
+/** Set ISO Currency Code.
+Three letter ISO 4217 Code of the Currency */
+public void setISO_Code (String ISO_Code)
+{
+if (ISO_Code != null && ISO_Code.length() > 3)
+{
+log.warning("Length > 3 - truncated");
+ISO_Code = ISO_Code.substring(0,3);
+}
+set_Value ("ISO_Code", ISO_Code);
+}
+/** Get ISO Currency Code.
+Three letter ISO 4217 Code of the Currency */
+public String getISO_Code() 
+{
+return (String)get_Value("ISO_Code");
 }
 /** Set Sales Transaction.
 This is a Sales Transaction */
