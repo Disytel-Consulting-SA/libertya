@@ -4296,3 +4296,6 @@ update ad_system set dummy = (SELECT addcolumnifnotexists('i_order','documentnob
 update ad_system set dummy = (SELECT addcolumnifnotexists('i_order','pricelist_name', 'character varying(60)'));
 update ad_system set dummy = (SELECT addcolumnifnotexists('i_order','iso_code', 'character(3)'));
 ALTER TABLE i_order ALTER COLUMN taxindicator TYPE character varying(10);
+
+-- 20120912-0125 Incorporación de parámetro moneda para importación de facturas
+update ad_system set dummy = (SELECT addcolumnifnotexists('i_invoice','iso_code', 'character(3)'));
