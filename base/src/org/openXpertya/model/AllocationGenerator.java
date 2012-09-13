@@ -1,5 +1,6 @@
 package org.openXpertya.model;
 
+import java.awt.event.ActionListener;
 import java.math.BigDecimal;
 import java.sql.Timestamp;
 import java.util.ArrayList;
@@ -406,6 +407,18 @@ public class AllocationGenerator {
 		// Se requieren débitos y/o créditos para realizar una asignación. 
 		if (!hasDebits() && !hasCredits()) {
 			throw new AllocationGeneratorException(getMsg("CreditsOrDebitsRequiredError"));
+		}
+		
+		for(Document doc : getDebits()){
+			if (!doc.validateAmount()){
+				throw new AllocationGeneratorException(getMsg("CreditDebitAmountsMatchError"));
+			}
+		}
+		
+		for(Document doc : getCredits()){
+			if (!doc.validateAmount()){
+				throw new AllocationGeneratorException(getMsg("CreditDebitAmountsMatchError"));
+			}
 		}
 		
 		// Si hay al menos un débito y un crédito entonces la imputación no puede ser parcial
@@ -832,6 +845,10 @@ public class AllocationGenerator {
 			this.amount = amount;
 		}
 
+		public boolean validateAmount() {
+			return false;
+		}
+
 		/**
 		 * Se asigna este documento como un débito en la línea de asignación.
 		 * Solo se asigna el ID del documento en el campo adecuado de la línea, sin
@@ -945,6 +962,10 @@ public class AllocationGenerator {
 				amt = amount;
 			return amt;
 		}
+		
+		public boolean validateAmount() {
+			return ( (DB.getSQLValueBD(getTrxName(), "SELECT invoiceopen(?,(SELECT C_InvoicePaySchedule_ID FROM C_InvoicePaySchedule WHERE (C_Invoice_ID = "+ id +")))", id, true)).subtract(amount).compareTo(BigDecimal.ZERO) >= 0 );
+		}
 	}
 
 	/**
@@ -979,6 +1000,10 @@ public class AllocationGenerator {
 		public void setAsDebitIn(MAllocationLine allocationLine) {
 			allocationLine.setC_CashLine_ID(id);
 		}
+		
+		public boolean validateAmount() {
+			return ( (DB.getSQLValueBD(getTrxName(), "SELECT cashlineavailable(?)", id,true)).subtract(amount).compareTo(BigDecimal.ZERO) >= 0 );
+		}
 	}
 
 	/**
@@ -1012,6 +1037,10 @@ public class AllocationGenerator {
 		@Override
 		public void setAsDebitIn(MAllocationLine allocationLine) {
 			allocationLine.setC_Payment_ID(id);
+		}
+		
+		public boolean validateAmount() {
+			return ( (DB.getSQLValueBD(getTrxName(), "SELECT paymentavailable(?)", id,true)).subtract(amount).compareTo(BigDecimal.ZERO) >= 0 );
 		}
 	}
 	
