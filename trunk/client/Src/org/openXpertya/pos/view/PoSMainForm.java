@@ -4431,6 +4431,7 @@ public class PoSMainForm extends CPanel implements FormPanel, ASyncProcess, Disp
 			//Se carga el text del taxid.
 			getCTaxIdText().setText(getOrder().getBusinessPartner().getTaxId());
 		 	getCClientText().setBackground(false);
+		 	refreshBPartnerCreditPaymentMedium(getSelectedTenderType());
 		 	refreshBPartnerDiscount();
 			loadPaymentMediumInfo();
 		 	refreshPaymentTerm(getSelectedPaymentMedium());
@@ -5414,6 +5415,8 @@ public class PoSMainForm extends CPanel implements FormPanel, ASyncProcess, Disp
 				getCPaymentMediumCombo().addItem(paymentMedium);
 			}
 		}
+    	// Verificar las configuraciones adicionales de entidad comercial
+    	refreshBPartnerCreditPaymentMedium(tenderType);
     }
 
 	/**
@@ -5646,22 +5649,11 @@ public class PoSMainForm extends CPanel implements FormPanel, ASyncProcess, Disp
      * Actualiza el esquema de vencimientos
      */
     private void refreshPaymentTerm(PaymentMedium paymentMedium){
-    	// Si el pedido ya tiene uno configurado entonces se usará el mismo
-		// para todos los créditos que se agreguen
-		if(getOrder().getPaymentTerm() == null){
-			getCPaymentTermCombo().removeAllItems();
-    		for (PaymentTerm paymentTerm : getModel().getPaymentTerms(paymentMedium)) {
-				getCPaymentTermCombo().addItem(paymentTerm);
-			}
-    		getCPaymentTermCombo().setReadWrite(true);
-    		// Seleccionar uno como default
-    		loadDefaultPaymentTerm();
+		getCPaymentTermCombo().removeAllItems();
+		for (PaymentTerm paymentTerm : getModel().getPaymentTerms(paymentMedium)) {
+			getCPaymentTermCombo().addItem(paymentTerm);
 		}
-		else{
-			getCPaymentTermCombo().removeAllItems();
-			getCPaymentTermCombo().addItem(getOrder().getPaymentTerm());
-			getCPaymentTermCombo().setReadWrite(false);
-		}
+		getCPaymentTermCombo().setReadWrite(true);
     }
     
     
@@ -6196,5 +6188,19 @@ public class PoSMainForm extends CPanel implements FormPanel, ASyncProcess, Disp
 
 	protected AuthOperation getManualDiscountAuthOperation() {
 		return manualDiscountAuthOperation;
+	}
+	
+	/**
+	 * Actividades necesarias por medio de pago a crédito en base a
+	 * configuraciones de la entidad comercial
+	 * 
+	 * @param tenderType
+	 */
+	protected void refreshBPartnerCreditPaymentMedium(String tenderType){
+		if (MPOSPaymentMedium.TENDERTYPE_Credit.equals(tenderType)){
+			getCPaymentMediumCombo().removeAllItems();
+			getCPaymentMediumCombo().addItem(
+					getOrder().getBusinessPartner().getPaymentMedium());
+		}
 	}
 }  //  @jve:decl-index=0:visual-constraint="10,10"
