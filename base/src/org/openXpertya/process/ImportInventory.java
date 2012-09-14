@@ -372,6 +372,23 @@ public class ImportInventory extends SvrProcess {
         if( no != 0 ) {
             log.warning( "No QtyCount = " + no );
         }
+        
+        //////////////////////////////////////////////////////////////////////////////////////
+        // Set Organization from VALUE
+        //////////////////////////////////////////////////////////////////////////////////////
+        sql = new StringBuffer( 
+        	" UPDATE I_Inventory i " + 
+        	" SET AD_Org_ID = " +
+        	"		(SELECT AD_Org_ID " +
+        	"        FROM AD_Org p" + 
+        	"        WHERE i.OrgValue = p.Value AND " +
+        	"              i.AD_Client_ID = p.AD_Client_ID AND " +
+        	"              p.IsActive = 'Y'" +
+        	"              ) " + 
+        	" WHERE OrgValue IS NOT NULL AND " + 
+        	"       I_IsImported <> 'Y'" ).append( securityCheck );
+        no = DB.executeUpdate( sql.toString());
+        log.fine( "Set Org from OrgValue=" + no );
 
         //////////////////////////////////////////////////////////////////////////////////////
         // Set Organization

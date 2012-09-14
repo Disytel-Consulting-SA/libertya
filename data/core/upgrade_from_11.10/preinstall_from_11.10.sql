@@ -4299,3 +4299,6 @@ ALTER TABLE i_order ALTER COLUMN taxindicator TYPE character varying(10);
 
 -- 20120912-0125 Incorporación de parámetro moneda para importación de facturas
 update ad_system set dummy = (SELECT addcolumnifnotexists('i_invoice','iso_code', 'character(3)'));
+
+-- 20120913-2100 Incorporación de parámetro orgvalue para importación de inventario
+update ad_system set dummy = (SELECT addcolumnifnotexists('i_inventory','orgvalue', 'character varying(40)'));
