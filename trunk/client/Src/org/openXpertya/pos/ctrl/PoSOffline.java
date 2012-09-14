@@ -261,5 +261,11 @@ public class PoSOffline extends PoSConnectionState {
 		// TODO Auto-generated method stub
 		return null;
 	}
+
+	@Override
+	public boolean isCheckCUITControlActivated() {
+		// TODO Auto-generated method stub
+		return false;
+	}
 	
 }

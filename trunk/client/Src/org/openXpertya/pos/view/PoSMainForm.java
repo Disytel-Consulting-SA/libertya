@@ -4582,6 +4582,18 @@ public class PoSMainForm extends CPanel implements FormPanel, ASyncProcess, Disp
 				errorMsg(MSG_NO_BEFORE_CHECK_DEADLINES);
 				return;
 			}
+			// Si el control por CUIT está activado, entonces el CUIT y el nro
+			// de cheque son obligatorios
+			else if(getModel().isCheckCUITControlActivated()){
+				if(Util.isEmpty(checkNumber, true)){
+					errorMsg(MSG_FILL_MANDATORY, MSG_CHECK_NUMBER);
+					return;
+				}
+				if(Util.isEmpty(cuitLibrador, true)){
+					errorMsg(MSG_FILL_MANDATORY, MSG_CHECK_CUIT);
+					return;
+				}
+			}
 			extraValidationsResult = getExtraPOSPaymentAddValidations().validateCheckPayment(this, amount);
 			if(extraValidationsResult.isError()){
 				errorMsg(extraValidationsResult.getMsg());

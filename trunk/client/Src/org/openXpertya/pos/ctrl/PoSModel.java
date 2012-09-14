@@ -755,4 +755,8 @@ public class PoSModel {
 	public List<Tax> getOtherTaxes(BusinessPartner bp){
 		return getConnectionState().getOtherTaxes(bp);
 	}
+	
+	public boolean isCheckCUITControlActivated(){
+		return getConnectionState().isCheckCUITControlActivated();
+	}
 }

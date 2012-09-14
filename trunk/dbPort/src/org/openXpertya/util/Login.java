@@ -32,6 +32,7 @@ import org.openXpertya.db.CConnection;
 import org.openXpertya.model.MClientInfo;
 import org.openXpertya.model.MComponentVersion;
 import org.openXpertya.model.MCountry;
+import org.openXpertya.model.MOrgInfo;
 import org.openXpertya.model.MRole;
 import org.openXpertya.model.MTree_Base;
 import org.openXpertya.model.ModelValidationEngine;
@@ -956,6 +957,11 @@ public class Login {
 		Env.setContext(m_ctx, "#UniqueKeyActive",
 				clientInfo.isUniqueKeyActive() ? "Y" : "N");
         
+		// Control de CUIT
+		MOrgInfo orgInfo = MOrgInfo.get(m_ctx, AD_Org_ID);
+		Env.setContext(m_ctx, "#CheckCuitControl",
+				orgInfo.isCheckCuitControl() ? "Y" : "N");
+		
 		// Supervisor de Cajas Diarias
 		MRole role = MRole.get(m_ctx, AD_Role_ID, null);
 		Env.setContext(m_ctx, "#POSJournalSupervisor",

@@ -7,7 +7,7 @@ import java.math.*;
 import org.openXpertya.util.*;
 /** Modelo Generado por AD_OrgInfo
  *  @author Comunidad de Desarrollo Libertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
- *  @version  - 2011-01-19 17:17:18.321 */
+ *  @version  - 2012-09-14 00:23:21.498 */
 public class X_AD_OrgInfo extends org.openXpertya.model.PO
 {
 /** Constructor estándar */
@@ -16,7 +16,9 @@ public X_AD_OrgInfo (Properties ctx, int AD_OrgInfo_ID, String trxName)
 super (ctx, AD_OrgInfo_ID, trxName);
 /** if (AD_OrgInfo_ID == 0)
 {
+setCheckCuitControl (false);
 setDUNS (null);
+setInitialCheckLimit (Env.ZERO);
 setOverdueInvoicesCharge (Env.ZERO);
 setTaxID (null);
 }
@@ -62,6 +64,22 @@ public int getAD_OrgType_ID()
 Integer ii = (Integer)get_Value("AD_OrgType_ID");
 if (ii == null) return 0;
 return ii.intValue();
+}
+/** Set Check CUIT Control */
+public void setCheckCuitControl (boolean CheckCuitControl)
+{
+set_Value ("CheckCuitControl", new Boolean(CheckCuitControl));
+}
+/** Get Check CUIT Control */
+public boolean isCheckCuitControl() 
+{
+Object oo = get_Value("CheckCuitControl");
+if (oo != null) 
+{
+ if (oo instanceof Boolean) return ((Boolean)oo).booleanValue();
+ return "Y".equals(oo);
+}
+return false;
 }
 /** Set Address.
 Location or Address */
@@ -123,6 +141,19 @@ set_Value ("faxnumber", faxnumber);
 public String getfaxnumber() 
 {
 return (String)get_Value("faxnumber");
+}
+/** Set Initial Check Limit */
+public void setInitialCheckLimit (BigDecimal InitialCheckLimit)
+{
+if (InitialCheckLimit == null) throw new IllegalArgumentException ("InitialCheckLimit is mandatory");
+set_Value ("InitialCheckLimit", InitialCheckLimit);
+}
+/** Get Initial Check Limit */
+public BigDecimal getInitialCheckLimit() 
+{
+BigDecimal bd = (BigDecimal)get_Value("InitialCheckLimit");
+if (bd == null) return Env.ZERO;
+return bd;
 }
 /** Set Warehouse.
 Storage Warehouse and Service Point */

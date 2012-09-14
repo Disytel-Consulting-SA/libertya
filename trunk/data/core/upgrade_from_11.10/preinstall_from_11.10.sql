@@ -4302,3 +4302,30 @@ update ad_system set dummy = (SELECT addcolumnifnotexists('i_invoice','iso_code'
 
 -- 20120913-2100 Incorporación de parámetro orgvalue para importación de inventario
 update ad_system set dummy = (SELECT addcolumnifnotexists('i_inventory','orgvalue', 'character varying(40)'));
+
+-- 20120914-0010 Incorporación de nueva configuración para control de cuits por cheques
+ALTER TABLE ad_orginfo ADD COLUMN checkcuitcontrol character(1) NOT NULL DEFAULT 'N'::bpchar;
+ALTER TABLE ad_orginfo ADD COLUMN initialchecklimit numeric(20,2) NOT NULL DEFAULT 0;
+
+CREATE TABLE c_checkcuitcontrol
+(
+  c_checkcuitcontrol_id integer NOT NULL,
+  ad_client_id integer NOT NULL,
+  ad_org_id integer NOT NULL,
+  isactive character(1) NOT NULL DEFAULT 'Y'::bpchar,
+  created timestamp without time zone NOT NULL DEFAULT ('now'::text)::timestamp(6) with time zone,
+  createdby integer NOT NULL,
+  updated timestamp without time zone NOT NULL DEFAULT ('now'::text)::timestamp(6) with time zone,
+  updatedby integer NOT NULL,
+  cuit character varying(20) NOT NULL,
+  nombre character varying(60),
+  checklimit numeric(20,2) NOT NULL DEFAULT 0,
+  CONSTRAINT c_checkcuitcontrol_key PRIMARY KEY (c_checkcuitcontrol_id),
+  CONSTRAINT c_checkcuitcontrol_org FOREIGN KEY (ad_org_id)
+      REFERENCES ad_org (ad_org_id) MATCH SIMPLE
+      ON UPDATE NO ACTION ON DELETE NO ACTION,
+  CONSTRAINT c_checkcuitcontrol_client FOREIGN KEY (ad_client_id)
+      REFERENCES ad_client (ad_client_id) MATCH SIMPLE
+      ON UPDATE NO ACTION ON DELETE NO ACTION
+);
+ALTER TABLE c_checkcuitcontrol OWNER TO libertya; 

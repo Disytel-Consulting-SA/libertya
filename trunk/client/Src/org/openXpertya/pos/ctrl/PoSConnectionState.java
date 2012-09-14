@@ -111,6 +111,8 @@ public abstract class PoSConnectionState {
 	
 	public abstract Tax getTax(Integer taxID);
 	
+	public abstract boolean isCheckCUITControlActivated();
+	
 	/**
 	 * @param checkDeadLineToCompare
 	 *            plazo a comparar
