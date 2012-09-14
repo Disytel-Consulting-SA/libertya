@@ -8,6 +8,7 @@ import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
@@ -15,6 +16,7 @@ import java.util.Set;
 import java.util.Vector;
 import java.util.logging.Level;
 
+import org.apache.ecs.storage.Array;
 import org.openXpertya.apps.ProcessCtl;
 import org.openXpertya.apps.form.VModelHelper;
 import org.openXpertya.cc.CurrentAccountBalanceStrategy;
@@ -32,6 +34,7 @@ import org.openXpertya.model.MBPartnerLocation;
 import org.openXpertya.model.MCash;
 import org.openXpertya.model.MCashLine;
 import org.openXpertya.model.MCategoriaIva;
+import org.openXpertya.model.MCheckCuitControl;
 import org.openXpertya.model.MConversionRate;
 import org.openXpertya.model.MDocType;
 import org.openXpertya.model.MEntidadFinanciera;
@@ -68,6 +71,7 @@ import org.openXpertya.model.MUser;
 import org.openXpertya.model.M_Tab;
 import org.openXpertya.model.PO;
 import org.openXpertya.model.PrintInfo;
+import org.openXpertya.model.X_C_CheckCuitControl;
 import org.openXpertya.pos.exceptions.FiscalPrintException;
 import org.openXpertya.pos.exceptions.InsufficientBalanceException;
 import org.openXpertya.pos.exceptions.InsufficientCreditException;
@@ -123,6 +127,7 @@ import org.openXpertya.util.ValueNamePair;
 public class PoSOnline extends PoSConnectionState {
 
 	private final boolean LOCAL_AR_ACTIVE = CalloutInvoiceExt.ComprobantesFiscalesActivos();
+	private final boolean CHECK_CUIT_CONTROL_ACTIVE = MCheckCuitControl.isCheckCUITControlActive();
 	
 	private final String MAX_ORDER_LINE_QTY_PREFERENCE_NAME = "L_AR_MaxOrderLineQty";
 	
@@ -281,6 +286,9 @@ public class PoSOnline extends PoSConnectionState {
 			// Se controla el crédito sólo si hay que crear factura
 			if(getShouldCreateInvoice()){
 				checkCredit(order);
+				
+				// Control de CUIT de cheques
+				checkCUITControl(order);
 			}
 			
 			// MOrder
@@ -961,6 +969,73 @@ public class PoSOnline extends PoSConnectionState {
 		}
 	}
 
+	/**
+	 * Control de cuit en cheques
+	 * @param order
+	 * @throws Exception
+	 */
+	public void checkCUITControl(Order order) throws Exception{
+		if(isCheckCUITControlActivated()){
+			// Obtener los diferentes CUITs de los diferentes cheques existentes
+			// y la suma de los montos de cada uno de ellos
+			Map<String, BigDecimal> cuits = new HashMap<String, BigDecimal>();
+			String auxCuit;
+			for (Payment payment : order.getPayments()) {
+				if(payment.isCheckPayment()){
+					auxCuit = ((CheckPayment)payment).getCuitLibrador().trim();
+					cuits.put(
+							auxCuit,
+							payment.getAmount()
+									.add(cuits.get(auxCuit) == null ? BigDecimal.ZERO
+											: cuits.get(auxCuit)));
+				}
+			}
+			// Validar que existan en la tabla de control de CUITS, si no están se crean
+			// Verificar que no superen el límite impuesto en el control y que estén activos
+			MCheckCuitControl cuitControl;
+			BigDecimal balance;
+			for (String cuit : cuits.keySet()) {
+				// Obtener el control para el cuit y organización
+				cuitControl = (MCheckCuitControl) PO.findFirst(getCtx(),
+						X_C_CheckCuitControl.Table_Name,
+						"ad_org_id = ? AND upper(trim(cuit)) = upper('"
+								+ cuit + "')",
+						new Object[] { Env.getAD_Org_ID(getCtx()) }, null,
+						getTrxName());
+				// Si no existe lo creo
+				if(cuitControl == null){
+					cuitControl = new MCheckCuitControl(getCtx(), 0, getTrxName());
+					cuitControl.setCUIT(cuit);
+					cuitControl.setCheckLimit(MCheckCuitControl
+							.getInitialCheckLimit(Env.getAD_Org_ID(getCtx()),
+									getTrxName()));
+					if(!cuitControl.save()){
+						throw new Exception(CLogger.retrieveErrorAsString());
+					}
+				}
+				// Verificar si está activo y no supera el límite impuesto en el
+				// control
+				if(!cuitControl.isActive()){
+					throw new Exception(Msg.getMsg(getCtx(), "CUITNotActive",
+							new Object[] { cuit }));
+				}
+				// Verificar que la suma de los cheques con fecha de vencimiento
+				// mayor a la actual y la suma de todos los cheques de esta
+				// venta para este cuit no superen el límite impuesto en el
+				// control
+				balance = cuitControl.getBalance(Env.getDate());
+				if((balance.add(cuits.get(cuit))).compareTo(cuitControl.getCheckLimit()) > 0){
+					throw new Exception(Msg.getMsg(
+							getCtx(),
+							"CUITSurpassCheckLimit",
+							new Object[] { cuit, cuitControl.getCheckLimit(),
+									balance, cuits.get(cuit),
+									balance.add(cuits.get(cuit)) }));
+				}
+			}
+		} 
+	}
+	
 	/**
 	 * Realizar tareas adicionales para la gestión de crédito de clientes
 	 * @param order pedido
@@ -3462,5 +3537,10 @@ public class PoSOnline extends PoSConnectionState {
 			isPercepcion = mTax.isPercepcion();
 		}
 		return new org.openXpertya.pos.model.Tax(taxID, taxRate, isPercepcion);
+	}
+
+	@Override
+	public boolean isCheckCUITControlActivated() {
+		return CHECK_CUIT_CONTROL_ACTIVE;
 	}
 }
