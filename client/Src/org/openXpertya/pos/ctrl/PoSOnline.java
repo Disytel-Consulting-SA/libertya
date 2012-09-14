@@ -8,7 +8,6 @@ import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
@@ -16,7 +15,6 @@ import java.util.Set;
 import java.util.Vector;
 import java.util.logging.Level;
 
-import org.apache.ecs.storage.Array;
 import org.openXpertya.apps.ProcessCtl;
 import org.openXpertya.apps.form.VModelHelper;
 import org.openXpertya.cc.CurrentAccountBalanceStrategy;
