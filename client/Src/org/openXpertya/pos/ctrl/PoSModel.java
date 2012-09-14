@@ -549,10 +549,13 @@ public class PoSModel {
 	 *         parámetro
 	 */
 	public List<PaymentTerm> getPaymentTerms(PaymentMedium paymentMedium) {
+		List<PaymentTerm> pts = new ArrayList<PaymentTerm>();
+		if(paymentMedium == null){
+			return pts;
+		}
 		if(paymentTerms == null){
 			loadPaymentTerms();
 		}
-		List<PaymentTerm> pts = new ArrayList<PaymentTerm>();
 		// Si la entidad comercial tiene uno configurado, entonces se agrega
 		// sólo ese
 		if (getOrder() != null && getOrder().getBusinessPartner() != null
@@ -560,30 +563,13 @@ public class PoSModel {
 			pts.add(getOrder().getBusinessPartner().getPaymentTerm());
 			return pts;
 		}
-		// Si el medio de pago no es vacío, la entidad comercial tiene un medio
-		// de pago configurado y ese medio de pago es igual al parámetro,
-		// entonces realizo el filtro de los esquemas de vencimiento por su id
-		if ((paymentMedium != null)
-				&& (getOrder().getBusinessPartner() != null)
-				&& (getOrder().getBusinessPartner().getPaymentMedium() != null)
-				&& (getOrder().getBusinessPartner().getPaymentMedium().getId() == paymentMedium
-						.getId())) {
-			for (PaymentTerm paymentTerm : paymentTerms) {
-				if(paymentMedium.getId() == paymentTerm.getPosPaymentMediumID()){
-					pts.add(paymentTerm);
-				}
+		// Filtar los esquemas de vencimiento que posean el medio de cobro seleccionado
+		for (PaymentTerm paymentTerm : paymentTerms) {
+			if(paymentMedium.getId() == paymentTerm.getPosPaymentMediumID()){
+				pts.add(paymentTerm);
 			}
-			// Agrego el default
-			/* Por lo pronto no se agrega el default
-			PaymentTerm defaultInitial = getDefaultInitialPaymentTerm(); 
-			if(defaultInitial != null){
-				pts.add(defaultInitial);
-			}
-			*/
 		}
-		else{
- 			pts = paymentTerms;
-		}
+		
 		return pts;
 	}
 	
