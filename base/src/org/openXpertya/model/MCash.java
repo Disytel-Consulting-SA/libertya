@@ -990,9 +990,14 @@ public class MCash extends X_C_Cash implements DocAction {
 				// Obtengo el manager actual
 				CurrentAccountManager manager = CurrentAccountManagerFactory.getManager();
 				// Actualizo el balance
-				CallResult result = manager.afterProcessDocument(getCtx(),
-						new MOrg(getCtx(), Env.getAD_Org_ID(getCtx()),
-								get_TrxName()), bp, aditionalResults, get_TrxName());
+				CallResult result = new CallResult();
+				try{
+					result = manager.afterProcessDocument(getCtx(),
+							new MOrg(getCtx(), Env.getAD_Org_ID(getCtx()),
+									get_TrxName()), bp, aditionalResults, get_TrxName());
+				} catch(Exception e){
+					result.setMsg(e.getMessage(), true);
+				} 
 				// Si hubo error, obtengo el mensaje y retorno inválido
 				if (result.isError()) {
 					log.severe(result.getMsg());

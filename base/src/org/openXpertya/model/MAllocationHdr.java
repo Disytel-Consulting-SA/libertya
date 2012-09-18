@@ -1222,9 +1222,14 @@ public class MAllocationHdr extends X_C_AllocationHdr implements DocAction {
 				// Si es completar actualizar el saldo
 				if(getDocStatus().equals(MInvoice.DOCSTATUS_Completed)){
 					// Actualizo el balance
-					CallResult result = manager.updateBalanceAndStatus(getCtx(),
-							new MOrg(getCtx(), getAD_Org_ID(), get_TrxName()), bp,
-							get_TrxName());				
+					CallResult result = new CallResult();
+					try{
+						result = manager.updateBalanceAndStatus(getCtx(),
+								new MOrg(getCtx(), getAD_Org_ID(), get_TrxName()), bp,
+								get_TrxName());
+					} catch(Exception e){
+						result.setMsg(e.getMessage(), true);
+					}
 					// Si hubo error, obtengo el mensaje y retorno inválido
 					if (result.isError()) {
 						log.severe(result.getMsg());
@@ -1234,10 +1239,14 @@ public class MAllocationHdr extends X_C_AllocationHdr implements DocAction {
 				// cuenta corriente en el caso de haber anulado también payments
 				// y/o retenciones
 				else if(isConfirmAditionalWorks()){
-					// Actualizo el balance
-					CallResult result = manager.afterProcessDocument(getCtx(),
-							new MOrg(getCtx(), getAD_Org_ID(), get_TrxName()),
-							bp, getAditionalWorks(), get_TrxName());
+					CallResult result = new CallResult();
+					try{
+						result = manager.afterProcessDocument(getCtx(),
+								new MOrg(getCtx(), getAD_Org_ID(), get_TrxName()),
+								bp, getAditionalWorks(), get_TrxName());
+					} catch(Exception e){
+						result.setMsg(e.getMessage(), true);
+					} 
 					// Si hubo error, obtengo el mensaje y retorno inválido
 					if (result.isError()) {
 						log.severe(result.getMsg());

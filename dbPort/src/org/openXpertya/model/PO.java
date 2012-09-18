@@ -4472,6 +4472,32 @@ public abstract class PO implements Serializable, Comparator, Evaluatee {
 	}
 
 	/**
+	 * Determina si existe la columna en la tabla
+	 * @param ctx
+	 * @param tableName
+	 * @param columnName
+	 * @param trxName
+	 * @param throwIfFalse
+	 * @return
+	 * @throws Exception
+	 */
+	public static boolean existsColumnInTable(Properties ctx, String tableName, String columnName, String trxName, boolean throwIfFalse) throws Exception{
+		Integer count = DB
+				.getSQLValue(
+						trxName,
+						"SELECT coalesce(count(*),0)::integer FROM information_schema.columns WHERE upper(trim(table_name)) = upper(trim('"
+								+ tableName
+								+ "')) AND upper(trim(column_name)) = upper(trim('"
+								+ columnName + "'))");
+		boolean exists = count >= 1;
+		if(!exists && throwIfFalse){
+			throw new Exception(Msg.getMsg(ctx, "NotExistsColumnInTable",
+					new Object[] { columnName, tableName }));
+		}
+		return exists;
+	}
+	
+	/**
 	 * Verifica si el usuario parámetro tiene acceso al componente de la tabla
 	 * parámetro. Recordar que para el acceso a pestaña o a campo, la existencia
 	 * del registro significa que no posee acceso o un acceso restringido.

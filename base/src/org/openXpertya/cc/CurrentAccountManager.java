@@ -53,7 +53,7 @@ public abstract class CurrentAccountManager {
 	 * @return Valor de la columna que identifica unívocamente del regsitro
 	 *         parámetro
 	 */
-	public Object getUIDColumnValue(PO po) {
+	public Object getUIDColumnValue(PO po) throws Exception{
 		// Obtengo la columna que identifica univocamente al PO parámetro
 		String columnName = getUIDColumnName(po);
 		// Obtengo el valor de esa columna para este PO
@@ -73,7 +73,7 @@ public abstract class CurrentAccountManager {
 				&& !bpartner.getSOCreditStatus().equals(
 						MBPartner.SOCREDITSTATUS_NoCreditCheck);
 	}
-
+	
 	/**
 	 * Realiza validaciones de estado de crédito en base a los montos de la
 	 * factura.
@@ -91,7 +91,7 @@ public abstract class CurrentAccountManager {
 	 * @return resultado de la llamada
 	 */
 	public CallResult invoiceWithinCreditLimit(Properties ctx, MOrg org,
-			MBPartner bpartner, BigDecimal invAmt, String trxName) {
+			MBPartner bpartner, BigDecimal invAmt, String trxName) throws Exception{
 		CallResult result = new CallResult();
 		if(basicValidation(bpartner)){
 			result = getBalanceStrategy().checkInvoiceWithinCreditLimit(ctx,
@@ -115,7 +115,7 @@ public abstract class CurrentAccountManager {
 	 * @return resultado de la llamada
 	 */
 	public CallResult updateBalance(Properties ctx, MOrg org,
-			MBPartner bpartner, String trxName) {
+			MBPartner bpartner, String trxName) throws Exception{
 		CallResult result = new CallResult();
 		if(basicValidation(bpartner)){
 			result = getBalanceStrategy().updateBPBalance(ctx,
@@ -143,7 +143,7 @@ public abstract class CurrentAccountManager {
 	 */
 	public CallResult checkInvoicePaymentRulesBalance(Properties ctx,
 			MBPartner bpartner, MOrg org, Map<String, BigDecimal> paymentRules,
-			String trxName) {
+			String trxName) throws Exception{
 		CallResult result = new CallResult();
 		if(basicValidation(bpartner)){
 			result = getBalanceStrategy().checkInvoicePaymentRulesBalance(ctx,
@@ -168,7 +168,7 @@ public abstract class CurrentAccountManager {
 	 * @return resultado de la llamada
 	 */
 	public CallResult setCurrentAccountStatus(Properties ctx,
-			MBPartner bpartner, MOrg org, String trxName) {
+			MBPartner bpartner, MOrg org, String trxName) throws Exception{
 		CallResult result = new CallResult();
 		if(basicValidation(bpartner)){
 			result = getBalanceStrategy().setCurrentAccountStatus(ctx,
@@ -201,7 +201,7 @@ public abstract class CurrentAccountManager {
 	 */
 	public CallResult afterProcessDocument(Properties ctx, MOrg org,
 			MBPartner bpartner, PO document, Object aditionalWorkResult,
-			String trxName) {
+			String trxName) throws Exception{
 		CallResult result = new CallResult();
 		if (basicValidation(bpartner)) {
 			result = getBalanceStrategy().afterProcessDocument(ctx,
@@ -235,7 +235,7 @@ public abstract class CurrentAccountManager {
 	 */
 	public CallResult afterProcessDocument(Properties ctx, MOrg org,
 			MBPartner bpartner, Map<PO, Object> aditionalWorkResults,
-			String trxName) {
+			String trxName) throws Exception{
 		// Realizar la llamada de 
 		CallResult result = new CallResult();
 		if (basicValidation(bpartner)) {
@@ -266,7 +266,7 @@ public abstract class CurrentAccountManager {
 	 * @return resultado de la llamada
 	 */
 	public CallResult performAditionalWork(Properties ctx, MOrg org,
-			MBPartner bpartner, PO document, boolean processed, String trxName) {
+			MBPartner bpartner, PO document, boolean processed, String trxName) throws Exception{
 		CallResult result = new CallResult();
 		if (basicValidation(bpartner)) {
 			result = getBalanceStrategy().performAditionalWork(ctx,
@@ -293,7 +293,7 @@ public abstract class CurrentAccountManager {
 	 * @return resultado de la llamada
 	 */
 	public CallResult updateBalanceAndStatus(Properties ctx, MOrg org,
-			MBPartner bpartner, String trxName) {
+			MBPartner bpartner, String trxName) throws Exception{
 		CallResult result1 = new CallResult();
 		CallResult result2 = new CallResult();
 		if(basicValidation(bpartner)){
@@ -326,7 +326,7 @@ public abstract class CurrentAccountManager {
 	 * @return obtener los tipos de pagos para el control del estado de crédito
 	 */
 	public CallResult getTenderTypesToControlStatus(Properties ctx, MOrg org,
-			MBPartner bpartner, String trxName) {
+			MBPartner bpartner, String trxName) throws Exception{
 		CallResult result = new CallResult();
 		if(basicValidation(bpartner)){
 			result = getBalanceStrategy().getTenderTypesToControlStatus(ctx,
@@ -353,7 +353,7 @@ public abstract class CurrentAccountManager {
 	 * @return resultado de la llamada
 	 */
 	public CallResult validateCurrentAccountStatus(Properties ctx,
-			String creditStatus, String trxName) {
+			String creditStatus, String trxName) throws Exception{
 		CallResult result = new CallResult();
 		// Validaciones principales del estado del crédito
 		// Error es cuando el estado no es NORMAL
@@ -396,7 +396,7 @@ public abstract class CurrentAccountManager {
 	 * @return resultado de la llamada
 	 */
 	public CallResult hasZeroBalance(Properties ctx, MOrg org,
-			MBPartner bpartner, boolean underMinimumCreditAmt, String trxName){
+			MBPartner bpartner, boolean underMinimumCreditAmt, String trxName) throws Exception{
 		CallResult result = new CallResult();
 		result = getBalanceStrategy().hasZeroBalance(ctx,
 					getUIDColumnName(bpartner), getUIDColumnValue(bpartner),
@@ -415,7 +415,7 @@ public abstract class CurrentAccountManager {
 	 * @param trxName
 	 * @return
 	 */
-	public CallResult getCreditLimit(Properties ctx, MOrg org, MBPartner bpartner, String paymentRule, String trxName){
+	public CallResult getCreditLimit(Properties ctx, MOrg org, MBPartner bpartner, String paymentRule, String trxName) throws Exception{
 		CallResult result = new CallResult();
 		result.setResult(BigDecimal.ZERO);
 		if(basicValidation(bpartner)){
@@ -438,7 +438,7 @@ public abstract class CurrentAccountManager {
 	 * @param trxName
 	 * @return
 	 */
-	public CallResult getTotalOpenBalance(Properties ctx, MOrg org, MBPartner bpartner, String paymentRule, String trxName){
+	public CallResult getTotalOpenBalance(Properties ctx, MOrg org, MBPartner bpartner, String paymentRule, String trxName) throws Exception{
 		CallResult result = new CallResult();
 		result.setResult(BigDecimal.ZERO);
 		if(basicValidation(bpartner)){
@@ -462,7 +462,7 @@ public abstract class CurrentAccountManager {
 	 * @param trxName
 	 * @return
 	 */
-	public CallResult getCreditStatus(Properties ctx, MOrg org, MBPartner bpartner, String paymentRule, String trxName){
+	public CallResult getCreditStatus(Properties ctx, MOrg org, MBPartner bpartner, String paymentRule, String trxName) throws Exception{
 		CallResult result = new CallResult();
 		result.setResult(BigDecimal.ZERO);
 		if(basicValidation(bpartner)){
@@ -517,7 +517,7 @@ public abstract class CurrentAccountManager {
 	 *            registro o entidad
 	 * @return Nombre de la columna que identifica unívocamente al registro
 	 */
-	public abstract String getUIDColumnName(PO po);
+	public abstract String getUIDColumnName(PO po) throws Exception;
 
 	// ******************************************************************
 

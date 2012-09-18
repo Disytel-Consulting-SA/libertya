@@ -878,10 +878,14 @@ public class MBPartner extends X_C_BPartner {
     	// Obtengo el managaer actual
 		CurrentAccountManager manager = CurrentAccountManagerFactory
 				.getManager();
-		// Actualizo el balance
-		CallResult result = manager.updateBalance(getCtx(), new MOrg(
-				getCtx(), Env.getAD_Org_ID(getCtx()), get_TrxName()), this,
-				get_TrxName());
+		CallResult result = new CallResult();
+		try{
+			result = manager.updateBalance(getCtx(), new MOrg(
+					getCtx(), Env.getAD_Org_ID(getCtx()), get_TrxName()), this,
+					get_TrxName());
+		} catch(Exception e){
+			result.setMsg(e.getMessage(), true);
+		} 
 		// Si hubo error, obtengo el mensaje y retorno inválido
 		if (result.isError()) {
 			log.severe(result.getMsg());
@@ -917,9 +921,14 @@ public class MBPartner extends X_C_BPartner {
 		CurrentAccountManager manager = CurrentAccountManagerFactory
 				.getManager();
     	// Seteo el estado actual del cliente y lo obtengo
-		CallResult result = manager.setCurrentAccountStatus(getCtx(), this,
-				new MOrg(getCtx(), Env.getAD_Org_ID(getCtx()), get_TrxName()),
-				get_TrxName());
+		CallResult result = new CallResult();
+		try{
+			result = manager.setCurrentAccountStatus(getCtx(), this,
+					new MOrg(getCtx(), Env.getAD_Org_ID(getCtx()), get_TrxName()),
+					get_TrxName());
+		} catch(Exception e){
+			result.setMsg(e.getMessage(), true);
+		} 
 		// Si hubo error obtengo el mensaje
 		if (result.isError()) {
 			log.severe(result.getMsg());
@@ -1298,7 +1307,12 @@ public class MBPartner extends X_C_BPartner {
 			// Le consulto al manager actual
 			CurrentAccountManager manager = CurrentAccountManagerFactory.getManager();
 			MOrg org = new MOrg(getCtx(), Env.getAD_Org_ID(getCtx()), get_TrxName());
-			CallResult result = manager.hasZeroBalance(getCtx(), org, this, true, get_TrxName());
+			CallResult result = new CallResult();
+			try{
+				result = manager.hasZeroBalance(getCtx(), org, this, true, get_TrxName());
+			} catch(Exception e){
+				result.setMsg(e.getMessage(), true);
+			}
 			if(result.isError()){ 
 				log.saveError("SaveError", result.getMsg());
 				return false;
