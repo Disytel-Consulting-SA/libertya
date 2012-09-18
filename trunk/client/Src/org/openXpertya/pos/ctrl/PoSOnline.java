@@ -1112,8 +1112,13 @@ public class PoSOnline extends PoSConnectionState {
 		CurrentAccountManager manager = CurrentAccountManagerFactory
 				.getManager();
 		// Actualizo el crédito
-		CallResult result = manager.afterProcessDocument(getCtx(), org, bp,
-				getAditionalWorkResults(), getTrxName());
+		CallResult result = new CallResult();
+		try{
+			result = manager.afterProcessDocument(getCtx(), org, bp,
+					getAditionalWorkResults(), getTrxName());
+		} catch(Exception e){
+			result.setMsg(e.getMessage(), true);
+		}
 		if(result.isError()){
 			log.severe(result.getMsg());
 		}

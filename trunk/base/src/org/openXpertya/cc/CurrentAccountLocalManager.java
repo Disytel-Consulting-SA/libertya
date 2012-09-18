@@ -12,7 +12,11 @@ public class CurrentAccountLocalManager extends CurrentAccountManager {
 	}
 
 	@Override
-	public String getUIDColumnName(PO po) {
-		return po.get_TableName()+"_ID";
-	}	
+	public String getUIDColumnName(PO po) throws Exception {
+		String columnName = po.get_TableName()+"_ID"; 
+		// Verifico si la columna existe
+		PO.existsColumnInTable(po.getCtx(), po.get_TableName(), columnName,
+				po.get_TrxName(), true);
+		return columnName;
+	}
 }

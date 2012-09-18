@@ -1333,9 +1333,14 @@ public class MCashLine extends X_C_CashLine implements DocAction {
 				// Obtengo el manager actual
 				CurrentAccountManager manager = CurrentAccountManagerFactory.getManager();
 				// Actualizo el saldo
-				CallResult result = manager.afterProcessDocument(getCtx(),
-						new MOrg(getCtx(), getAD_Org_ID(), get_TrxName()), bp,
-						getAditionalWorkResult(), get_TrxName());
+				CallResult result = new CallResult();
+				try{
+					result = manager.afterProcessDocument(getCtx(),
+							new MOrg(getCtx(), getAD_Org_ID(), get_TrxName()), bp,
+							getAditionalWorkResult(), get_TrxName());
+				} catch(Exception e){
+					result.setMsg(e.getMessage(), true);
+				} 
 				// Si hubo error, obtengo el mensaje y retorno inválido
 				if (result.isError()) {
 					log.severe(result.getMsg());

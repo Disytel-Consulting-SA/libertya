@@ -2075,9 +2075,14 @@ public final class MPayment extends X_C_Payment implements DocAction,ProcessCall
     		// Obtengo el manager actual
     		CurrentAccountManager manager = CurrentAccountManagerFactory.getManager();
     		// Actualizo el balance
-    		CallResult result = manager.performAditionalWork(getCtx(), new MOrg(
-    				getCtx(), Env.getAD_Org_ID(getCtx()), get_TrxName()), bp, this, 
-    				false, get_TrxName());
+    		CallResult result = new CallResult();
+			try{
+				result = manager.performAditionalWork(getCtx(), new MOrg(
+	    				getCtx(), Env.getAD_Org_ID(getCtx()), get_TrxName()), bp, this, 
+	    				false, get_TrxName());
+			} catch(Exception e){
+				result.setMsg(e.getMessage(), true);
+			}
     		// Si hubo error, obtengo el mensaje y retorno inválido
     		if (result.isError()) {
     			m_processMsg = result.getMsg();
@@ -2639,9 +2644,14 @@ public final class MPayment extends X_C_Payment implements DocAction,ProcessCall
     		// antes de completar 
     		CurrentAccountManager manager = CurrentAccountManagerFactory.getManager();
     		// Actualizo el balance
-    		CallResult result = manager.performAditionalWork(getCtx(), new MOrg(
-    				getCtx(), Env.getAD_Org_ID(getCtx()), get_TrxName()), bp, this, 
-    				false, get_TrxName());
+    		CallResult result = new CallResult();
+			try{
+				result = manager.performAditionalWork(getCtx(), new MOrg(
+	    				getCtx(), Env.getAD_Org_ID(getCtx()), get_TrxName()), bp, this, 
+	    				false, get_TrxName());
+			} catch(Exception e){
+				result.setMsg(e.getMessage(), true);
+			}
     		// Si hubo error, obtengo el mensaje y retorno inválido
     		if (result.isError()) {
     			m_processMsg = result.getMsg();
@@ -2957,9 +2967,14 @@ public final class MPayment extends X_C_Payment implements DocAction,ProcessCall
 				// Obtengo el manager actual
 				CurrentAccountManager manager = CurrentAccountManagerFactory.getManager();
 				// Actualizo el balance
-				CallResult result = manager.afterProcessDocument(getCtx(),
-						new MOrg(getCtx(), getAD_Org_ID(), get_TrxName()), bp,
-						getAditionalWorkResult(), get_TrxName());
+				CallResult result = new CallResult();
+				try{
+					result = manager.afterProcessDocument(getCtx(),
+							new MOrg(getCtx(), getAD_Org_ID(), get_TrxName()), bp,
+							getAditionalWorkResult(), get_TrxName());
+				} catch(Exception e){
+					result.setMsg(e.getMessage(), true);
+				}
 				// Si hubo error, obtengo el mensaje y retorno inválido
 				if (result.isError()) {
 					log.severe(result.getMsg());

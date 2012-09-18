@@ -3,8 +3,6 @@ package org.openXpertya.model;
 import java.sql.ResultSet;
 import java.util.Properties;
 
-import org.openXpertya.cc.BalanceLocalStrategy;
-import org.openXpertya.cc.CurrentAccountBalanceStrategy;
 import org.openXpertya.cc.CurrentAccountManager;
 import org.openXpertya.cc.CurrentAccountManagerFactory;
 import org.openXpertya.reflection.CallResult;
@@ -144,10 +142,15 @@ public class MCentralAux extends X_C_CentralAux {
 	protected boolean afterSave(boolean newRecord, boolean success) {
 		if(getRegisterType().equals(MCentralAux.REGISTERTYPE_Offline)){
 			CurrentAccountManager manager = CurrentAccountManagerFactory.getManager();
-			CallResult result = manager.updateBalanceAndStatus(getCtx(),
-					new MOrg(getCtx(), Env.getAD_Org_ID(getCtx()),
-							get_TrxName()), new MBPartner(getCtx(),
-							getC_BPartner_ID(), get_TrxName()), get_TrxName());
+			CallResult result = new CallResult();
+			try{
+				result = manager.updateBalanceAndStatus(getCtx(),
+						new MOrg(getCtx(), Env.getAD_Org_ID(getCtx()),
+								get_TrxName()), new MBPartner(getCtx(),
+								getC_BPartner_ID(), get_TrxName()), get_TrxName());
+			} catch(Exception e){
+				result.setMsg(e.getMessage(), true);
+			} 
 			if(result.isError()){
 				log.saveError("Error",result.getMsg());
 				return false;

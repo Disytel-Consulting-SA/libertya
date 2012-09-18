@@ -2420,16 +2420,25 @@ public class MInvoice extends X_C_Invoice implements DocAction {
 			CurrentAccountManager manager = CurrentAccountManagerFactory
 					.getManager();
 			// Seteo el estado actual del cliente y lo obtengo
-			CallResult result = manager.setCurrentAccountStatus(getCtx(), bp,
-					org, null);
+			CallResult result = new CallResult();
+			try{
+				result = manager.setCurrentAccountStatus(getCtx(), bp,
+						org, null);
+			} catch(Exception e){
+				result.setMsg(e.getMessage(), true);
+			}
 			// Si hubo error, obtengo el mensaje y retorno inválido
 			if (result.isError()) {
 				m_processMsg = result.getMsg();
 				return DocAction.STATUS_Invalid;
 			}
 			// Verificar la situación de crédito de la entidad comercial
-			result = manager.validateCurrentAccountStatus(getCtx(),
-					(String) result.getResult(), get_TrxName());
+			try{
+				result = manager.validateCurrentAccountStatus(getCtx(),
+						(String) result.getResult(), get_TrxName());
+			} catch(Exception e){
+				result.setMsg(e.getMessage(), true);
+			} 
 			// Si hubo error, obtengo el mensaje y retorno inválido
 			if (result.isError()) {
 				m_processMsg = result.getMsg();
@@ -2851,9 +2860,14 @@ public class MInvoice extends X_C_Invoice implements DocAction {
 				CurrentAccountManager manager = CurrentAccountManagerFactory
 						.getManager();
 				// Actualizo el balance
-				CallResult result = manager.afterProcessDocument(getCtx(),
-						new MOrg(getCtx(), getAD_Org_ID(), get_TrxName()), bp,
-						getAditionalWorkResult(), get_TrxName());
+				CallResult result = new CallResult();
+				try{
+					result = manager.afterProcessDocument(getCtx(),
+							new MOrg(getCtx(), getAD_Org_ID(), get_TrxName()), bp,
+							getAditionalWorkResult(), get_TrxName());
+				} catch(Exception e){
+					result.setMsg(e.getMessage(), true);
+				} 
 				// Si hubo error, obtengo el mensaje y retorno inválido
 				if (result.isError()) {
 					log.severe(result.getMsg());
@@ -3095,9 +3109,14 @@ public class MInvoice extends X_C_Invoice implements DocAction {
 			CurrentAccountManager manager = CurrentAccountManagerFactory
 					.getManager();
 			// Verificar el crédito con la factura y pedido asociado
-			CallResult result = manager.invoiceWithinCreditLimit(getCtx(),
-					new MOrg(getCtx(), Env.getAD_Org_ID(getCtx()),
-							get_TrxName()), bp, invAmt, get_TrxName());
+			CallResult result = new CallResult();
+			try{
+				result = manager.invoiceWithinCreditLimit(getCtx(),
+						new MOrg(getCtx(), Env.getAD_Org_ID(getCtx()),
+								get_TrxName()), bp, invAmt, get_TrxName());
+			} catch(Exception e){
+				result.setMsg(e.getMessage(), true);
+			}
 			// Si hubo error, obtengo el mensaje y retorno inválido
 			if (result.isError()) {
 				m_processMsg = result.getMsg();
@@ -3336,9 +3355,14 @@ public class MInvoice extends X_C_Invoice implements DocAction {
 			CurrentAccountManager manager = CurrentAccountManagerFactory
 					.getManager();
 			// Actualizo el balance
-			CallResult result = manager.performAditionalWork(getCtx(),
-					new MOrg(getCtx(), Env.getAD_Org_ID(getCtx()),
-							get_TrxName()), bp, this, false, get_TrxName());
+			CallResult result = new CallResult();
+			try{
+				result = manager.performAditionalWork(getCtx(),
+						new MOrg(getCtx(), Env.getAD_Org_ID(getCtx()),
+								get_TrxName()), bp, this, false, get_TrxName());
+			} catch(Exception e){
+				result.setMsg(e.getMessage(), true);
+			}
 			// Si hubo error, obtengo el mensaje y retorno inválido
 			if (result.isError()) {
 				m_processMsg = result.getMsg();
@@ -3855,9 +3879,14 @@ public class MInvoice extends X_C_Invoice implements DocAction {
 			CurrentAccountManager manager = CurrentAccountManagerFactory
 					.getManager();
 			// Actualizo el balance
-			CallResult result = manager.performAditionalWork(getCtx(),
-					new MOrg(getCtx(), Env.getAD_Org_ID(getCtx()),
-							get_TrxName()), bp, this, false, get_TrxName());
+			CallResult result = new CallResult();
+			try{
+				result = manager.performAditionalWork(getCtx(),
+						new MOrg(getCtx(), Env.getAD_Org_ID(getCtx()),
+								get_TrxName()), bp, this, false, get_TrxName());
+			} catch(Exception e){
+				result.setMsg(e.getMessage(), true);
+			}
 			// Si hubo error, obtengo el mensaje y retorno inválido
 			if (result.isError()) {
 				m_processMsg = result.getMsg();
