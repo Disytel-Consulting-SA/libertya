@@ -3691,7 +3691,9 @@ public class PoSMainForm extends CPanel implements FormPanel, ASyncProcess, Disp
 			cFinishPayButton.addActionListener(new ActionListener() {
 
 				public void actionPerformed(ActionEvent e) {
-					completeOrder();
+					if(!getFrame().isBusy()){
+						completeOrder();
+					}
 				}
 				
 			});
@@ -4872,6 +4874,10 @@ public class PoSMainForm extends CPanel implements FormPanel, ASyncProcess, Disp
 	private void completeOrder() {
 		TimeStatsLogger.beginTask(MeasurableTask.POS_SAVE_DOCUMENTS);
 		TimeStatsLogger.beginTask(MeasurableTask.POS_COMPLETE_ORDER);
+		
+		if(getFrame().isBusy()){
+			return;
+		}
 		
 		if(getOrder().getBusinessPartner() == null) {
 			errorMsg(MSG_NO_BPARTNER_ERROR);

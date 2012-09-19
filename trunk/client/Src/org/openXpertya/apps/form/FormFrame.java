@@ -497,6 +497,9 @@ public class FormFrame extends JFrame implements ActionListener {
 		return m_parameters.get(key);
 	}	// getParameter
     
+	public boolean isBusy(){
+		return m_glassPane.isVisible();
+	}
 }    // FormFrame
 
 
