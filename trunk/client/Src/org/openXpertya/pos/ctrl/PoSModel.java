@@ -707,12 +707,15 @@ public class PoSModel {
 	 *         otro pago agregado al pedido, false caso contrario
 	 */
 	public boolean isCheckDeadLineRequired(CheckPayment checkPayment){
-		// Itero por los 
+		// Itero por los pagos y verifico obligatoriedad de alguno de ellos
 		boolean isRequired = false;
 		for (int i = 0; i < getOrder().getPayments().size()
-				&& !(isRequired = getOrder().getPayments().get(i)
-						.getPaymentMedium().getBeforeCheckDeadLinesToValidate()
-						.contains(checkPayment.getCheckDeadLine())); i++);
+				&& !(isRequired = (getOrder().getPayments().get(i)
+						.getPaymentMedium().getBeforeCheckDeadLinesToValidate() != null && getOrder()
+						.getPayments().get(i).getPaymentMedium()
+						.getBeforeCheckDeadLinesToValidate()
+						.contains(checkPayment.getCheckDeadLine()))); i++)
+			;
 		return isRequired;
 	}
 
