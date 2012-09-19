@@ -736,7 +736,8 @@ public class VOrdenPago extends CPanel implements FormPanel,ActionListener,Table
 		m_frame.getRootPane().getActionMap().put(GOTO_PAYALL,
         	new AbstractAction() {
         		public void actionPerformed(ActionEvent e) {
-					checkPayAll.requestFocus();
+        			checkPayAll.setSelected(!checkPayAll.isSelected());
+        			updatePayAllInvoices(false);
 				}
         	}
         );
