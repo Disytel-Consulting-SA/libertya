@@ -318,7 +318,7 @@ public abstract class CurrentAccountBalanceStrategy extends
 	public abstract CallResult afterProcessDocument(Properties ctx,
 			String bPartnerColumnNameUID, Object bPartnerColumnValueUID,
 			String orgColumnNameUID, Object orgColumnValueUID,
-			Map<PO, Object> aditionalWorkResults, String trxName);
+			Map<PO, Object> aditionalWorkResults, String trxName) throws Exception;
 	
 	/**
 	 * Realizo acciones procesando un documento o transacción
