@@ -5009,6 +5009,7 @@ public class PoSMainForm extends CPanel implements FormPanel, ASyncProcess, Disp
 	}
 	
 	private void updatePaymentsStatus() {
+		getModel().balanceValidate();
 		BigDecimal totalAmt = getOrder().getOrderProductsTotalAmt();
 		BigDecimal documentDiscountAmt = getOrder().getTotalDocumentDiscount().negate();
 		BigDecimal toPayAmt = getOrder().getTotalAmount();

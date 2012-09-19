@@ -479,6 +479,7 @@ public class PoSOnline extends PoSConnectionState {
 				amt = amt.subtract(change);
 				p.setAmount(currencyConvert(amt, getPoSCOnfig().getCurrencyID(), p.getCurrencyId()));
 				change = BigDecimal.ZERO;
+				p.setChangeAmt(change);
 			} 
 			else 
 			{
@@ -744,6 +745,21 @@ public class PoSOnline extends PoSConnectionState {
 				
 				cashChange = sumaCashPayments.subtract(sumaProductos.subtract(x).abs());
 			}
+		}
+		
+		// Inicializo todos los cambios en efectivo en cero
+		for (CashPayment payment : cashPayments) {
+			payment.setChangeAmt(BigDecimal.ZERO);
+		}
+		
+		// El cambio de efectivo se debe agregar a los cobros de efectivo
+		BigDecimal changeAux;
+		for (int c = 0; c < cashPayments.size()
+				&& cashChange.compareTo(BigDecimal.ZERO) > 0; c++) {
+			changeAux = cashPayments.get(0).getAmount().compareTo(cashChange) >= 0 ? cashChange
+					: cashPayments.get(0).getAmount();
+			cashPayments.get(0).setChangeAmt(changeAux);
+			cashChange = cashChange.subtract(changeAux); 
 		}
 		
 		if (invalidPayment)
