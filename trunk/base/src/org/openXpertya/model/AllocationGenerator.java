@@ -1,6 +1,5 @@
 package org.openXpertya.model;
 
-import java.awt.event.ActionListener;
 import java.math.BigDecimal;
 import java.sql.Timestamp;
 import java.util.ArrayList;
@@ -235,7 +234,7 @@ public class AllocationGenerator {
 	 * @throws AllocationGeneratorException cuando existe un problema en la creación de 
 	 * las líneas de asignación.
 	 */
-	public void generateLines() throws AllocationGeneratorException {		
+	public void generateLines() throws AllocationGeneratorException {	
 		try {
 			generateDebitCreditExchangeDifference();
 		} catch (Exception e) {
@@ -964,7 +963,7 @@ public class AllocationGenerator {
 		}
 		
 		public boolean validateAmount() {
-			return ( (DB.getSQLValueBD(getTrxName(), "SELECT invoiceopen(?,(SELECT C_InvoicePaySchedule_ID FROM C_InvoicePaySchedule WHERE (C_Invoice_ID = "+ id +")))", id, true)).subtract(amount).compareTo(BigDecimal.ZERO) >= 0 );
+			return ( (DB.getSQLValueBD(getTrxName(), "SELECT invoiceopen(?,0)", id, true)).subtract(amount).compareTo(BigDecimal.ZERO) >= 0 );
 		}
 	}
 
@@ -1002,7 +1001,7 @@ public class AllocationGenerator {
 		}
 		
 		public boolean validateAmount() {
-			return ( (DB.getSQLValueBD(getTrxName(), "SELECT cashlineavailable(?)", id,true)).subtract(amount).compareTo(BigDecimal.ZERO) >= 0 );
+			return ( (DB.getSQLValueBD(getTrxName(), "SELECT abs(cashlineavailable(?))", id,true)).subtract(amount).compareTo(BigDecimal.ZERO) >= 0 );
 		}
 	}
 

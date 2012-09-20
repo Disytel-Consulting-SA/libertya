@@ -1,10 +1,7 @@
 package org.openXpertya.model;
 
 import java.math.BigDecimal;
-import java.util.List;
 import java.util.Properties;
-
-import org.openXpertya.model.AllocationGenerator.Document;
 
 /**
  * Generador de Ordenes de Pago & Recibos de Cliente. Esta clase es una especialización
@@ -263,7 +260,7 @@ public class POCRGenerator extends AllocationGenerator {
 	 * las líneas de asignación.
 	 */
 	public void generateLines() throws AllocationGeneratorException {
-		if ((getAllocationType() == MAllocationHdr.ALLOCATIONTYPE_PaymentOrder) || (getAllocationType() == MAllocationHdr.ALLOCATIONTYPE_CustomerReceipt) && (getDebits().isEmpty())){
+		if (((getAllocationType() == MAllocationHdr.ALLOCATIONTYPE_PaymentOrder) || (getAllocationType() == MAllocationHdr.ALLOCATIONTYPE_CustomerReceipt)) && (getDebits().isEmpty())){
 			throw new AllocationGeneratorException(getMsg("CreditsOrDebitsRequiredError"));
 		}
 		super.generateLines();
