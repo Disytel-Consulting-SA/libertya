@@ -1687,7 +1687,12 @@ public class VOrdenPagoModel implements TableModelListener {
 			if (mp.getTipoMP().equals(MedioPago.TIPOMEDIOPAGO_CREDITO)) {
 				// No se debe generar ningún pago dado que es una nota de crédito
 				// existente.
-			} else if (mp.getTipoMP().equals(MedioPago.TIPOMEDIOPAGO_EFECTIVO))
+			}
+			else if (mp.getTipoMP().equals(MedioPago.TIPOMEDIOPAGO_CREDITORETENCION)) {
+				// No se debe generar ningún pago dado que es un crédito de
+				// retención 
+			}
+			else if (mp.getTipoMP().equals(MedioPago.TIPOMEDIOPAGO_EFECTIVO))
 			{
 				MedioPagoEfectivo mpe = (MedioPagoEfectivo) mp;
 				
@@ -2005,6 +2010,7 @@ public class VOrdenPagoModel implements TableModelListener {
 		
 		if (!saveOk || errorNo != PROCERROR_OK){
 			poGenerator.reset();
+			retencionIncludedInMedioPago = false;
 			trx.rollback();
 		}
 		trx.close();
@@ -2039,8 +2045,8 @@ public class VOrdenPagoModel implements TableModelListener {
 		
 		boolean saveOk = true;
 		errorNo = PROCERROR_UNKNOWN;
-		Vector<MedioPago> pays = getMediosPago();
-
+		Vector<MedioPago> pays = new Vector<VOrdenPagoModel.MedioPago>(getMediosPago());
+		
 		try 
 		{	
 			// 1. Crear débitos y créditos customs
@@ -2096,6 +2102,7 @@ public class VOrdenPagoModel implements TableModelListener {
 
 		if (!saveOk) {
 			poGenerator.reset();
+			retencionIncludedInMedioPago = false;
 			trx = Trx.get(trx.getTrxName(),false);
 			trx.rollback();
 			trx.close();
