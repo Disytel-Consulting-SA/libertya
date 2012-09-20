@@ -1033,7 +1033,7 @@ public abstract class AbstractRetencionProcessor implements RetencionProcessor {
 			MBPartner bpartner, Integer clientID, Timestamp dateFrom,
 			Timestamp dateTo, MRetencionSchema retSchema) throws Exception {
 		Map<Integer, BigDecimal> retenciones = new HashMap<Integer, BigDecimal>();
-		String sql = "SELECT DISTINCT m_retencion_invoice_id, currencybase(ri.amt_retenc, ri.c_currency_id, i.dateinvoiced, ri.ad_client_id, ri.ad_org_id) as retamt "
+		String sql = "SELECT DISTINCT ri.c_invoice_id, currencybase(ri.amt_retenc, ri.c_currency_id, i.dateinvoiced, ri.ad_client_id, ri.ad_org_id) as retamt "
 				+ "FROM m_retencion_invoice ri "
 				+ "INNER JOIN c_invoice i ON ri.c_invoice_id = i.c_invoice_id "
 				+ "WHERE i.docstatus in ('CO','CL') AND "
@@ -1076,9 +1076,23 @@ public abstract class AbstractRetencionProcessor implements RetencionProcessor {
 		// Esquema de retención
 		ps.setInt(i++, retSchema.getID());
 		ResultSet rs = ps.executeQuery();
+		Map<MInvoice, BigDecimal> allocatedAmts;
+		BigDecimal netTotal;
+		Integer retencionCreditID;		
 		while (rs.next()) {
-			retenciones.put(rs.getInt("m_retencion_invoice_id"),
-					rs.getBigDecimal("retamt"));
+			retencionCreditID = rs.getInt("c_invoice_id");
+			// Determinar las facturas imputadas al cashline y obtener su neto
+			allocatedAmts = getAllocatedInvoicesAmts("c_invoice_credit_id",
+					retencionCreditID);
+			netTotal = getPayNetAmt(
+					new ArrayList<MInvoice>(allocatedAmts.keySet()),
+					new ArrayList<BigDecimal>(allocatedAmts.values()));
+			// Si no está completamente imputado el crédito, entonces se toma el
+			// total que falta
+			netTotal = netTotal.add(DB.getSQLValueBD(getTrxName(),
+					"select invoiceopen(?,0)", retencionCreditID));
+			netTotal.setScale(2, BigDecimal.ROUND_HALF_EVEN);
+			retenciones.put(retencionCreditID, netTotal);
 		}
 		return retenciones;
 	}
