@@ -364,6 +364,7 @@ public class PoSMainForm extends CPanel implements FormPanel, ASyncProcess, Disp
 	private AuthOperation manualDiscountAuthOperation = null;
 	private LYCloseWindowAdapter closeWindowAdapter = null;
 	private AddPOSPaymentValidations extraPOSPaymentAddValidations = null;
+	private boolean processing = false;
 	
 	private String MSG_ORDER;
 	private String MSG_PAYMENT;
@@ -845,8 +846,10 @@ public class PoSMainForm extends CPanel implements FormPanel, ASyncProcess, Disp
         getActionMap().put(PAY_ORDER_ACTION,
         	new AbstractAction() {
         		public void actionPerformed(ActionEvent e) {
-					if(getCFinishPayButton().isEnabled())
+					if(getCFinishPayButton().isEnabled() && !isProcessing()){
+						updateProcessing(true);
 						completeOrder();
+					}
 				}
         	}
         );
@@ -865,7 +868,7 @@ public class PoSMainForm extends CPanel implements FormPanel, ASyncProcess, Disp
        getActionMap().put(ADD_PAYMENT_ACTION,
         	new AbstractAction() {
         		public void actionPerformed(ActionEvent e) {
-					if(getCAmountText().getValue() != null)
+					if(getCAmountText().getValue() != null && !isProcessing())
 						addPayment();
 				}
         	}
@@ -875,7 +878,9 @@ public class PoSMainForm extends CPanel implements FormPanel, ASyncProcess, Disp
        getActionMap().put(SET_CUSTOMER_DATA_ACTION,
         	new AbstractAction() {
         		public void actionPerformed(ActionEvent e) {
-        			openCustomerDataDialog();
+        			if(!isProcessing()){
+        				openCustomerDataDialog();
+        			}
         		}
         	}
         );
@@ -893,7 +898,9 @@ public class PoSMainForm extends CPanel implements FormPanel, ASyncProcess, Disp
        getActionMap().put(GOTO_ORDER,
     		   new AbstractAction() {
     	   			public void actionPerformed(ActionEvent e) {
-    	   				getCPosTab().setSelectedIndex(0);
+    	   				if(!isProcessing()){
+    	   					getCPosTab().setSelectedIndex(0);
+    	   				}
     	   			}
        			}
        );
@@ -950,7 +957,9 @@ public class PoSMainForm extends CPanel implements FormPanel, ASyncProcess, Disp
 		getActionMap().put(REMOVE_PAYMENT_ACTION,
         	new AbstractAction() {
         		public void actionPerformed(ActionEvent e) {
-					removePayment();
+        			if(!isProcessing()){
+        				removePayment();
+        			}
 				}
         	}
         );
@@ -958,10 +967,12 @@ public class PoSMainForm extends CPanel implements FormPanel, ASyncProcess, Disp
 	    // Accion: Cambiar el foco para ingreso de EC o Importe.
 		getActionMap().put(CHANGE_FOCUS_CUSTOMER_AMOUNT, new AbstractAction() {
 			public void actionPerformed(ActionEvent e) {
-				if (!getCClientText().hasFocus()) {
-					getCClientText().requestFocus();
-				} else {
-					getCAmountText().requestFocus(); 
+				if(!isProcessing()){
+					if (!getCClientText().hasFocus()) {
+						getCClientText().requestFocus();
+					} else {
+						getCAmountText().requestFocus(); 
+					}
 				}
 			}
 		});
@@ -969,21 +980,28 @@ public class PoSMainForm extends CPanel implements FormPanel, ASyncProcess, Disp
 		// Accion: Cambiar el foco para ingreso de Descuento/Recargo general
 		getActionMap().put(CHANGE_FOCUS_GENERAL_DISCOUNT, new AbstractAction() {
 			public void actionPerformed(ActionEvent e) {
-				getCGeneralDiscountPercText().requestFocus();
+				if(!isProcessing()){
+					System.out.println("Focus "+isProcessing());
+					getCGeneralDiscountPercText().requestFocus();
+				}
 			}
 		});
 		
 		// Accion: Cancelar el pedido, eliminar todas las líneas
 		getActionMap().put(CANCEL_ORDER, new AbstractAction() {
 			public void actionPerformed(ActionEvent e) {
-				cancelOrder();
+				if(!isProcessing()){
+					cancelOrder();
+				}
 			}
 		});
 		
 		// Accion: Cambiar el foco para ingreso de tarjeta de crédito
 		getActionMap().put(GOTO_INSERT_CARD, new AbstractAction() {
 			public void actionPerformed(ActionEvent e) {
-				getCCardText().requestFocus();
+				if(!isProcessing()){
+					getCCardText().requestFocus();
+				}
 			}
 		});
 		
@@ -1884,6 +1902,9 @@ public class PoSMainForm extends CPanel implements FormPanel, ASyncProcess, Disp
 			cClientText.addVetoableChangeListener(new VetoableChangeListener() {
 
 				public void vetoableChange(PropertyChangeEvent event) throws PropertyVetoException {
+					if(isProcessing()){
+						return;
+					}
 					String pName = event.getPropertyName();
 					Object pValue = event.getNewValue();
 					// El valor del componente cambio.
@@ -1990,6 +2011,9 @@ public class PoSMainForm extends CPanel implements FormPanel, ASyncProcess, Disp
 			cGeneralDiscountPercText.addVetoableChangeListener(new VetoableChangeListener() {
 
 				public void vetoableChange(PropertyChangeEvent event) throws PropertyVetoException {
+					if(isProcessing()){
+						return;
+					}
 					// Agregar o Actualizar el descuento manual general por el valor del porcentaje del monto
 					BigDecimal percentage = (BigDecimal) event
 									.getNewValue() == null ? BigDecimal.ZERO
@@ -2005,8 +2029,7 @@ public class PoSMainForm extends CPanel implements FormPanel, ASyncProcess, Disp
 					refreshPaymentMediumInfo();
 					// Actualizar el estado de la factura
 					updatePaymentsStatus();
-				}
-				
+				}				
 			});
 //			cGeneralDiscountPercText.addAction("updateAmount", KeyStroke.getKeyStroke(
 //					KeyEvent.VK_ENTER, 0), new AbstractAction() {
@@ -3691,7 +3714,8 @@ public class PoSMainForm extends CPanel implements FormPanel, ASyncProcess, Disp
 			cFinishPayButton.addActionListener(new ActionListener() {
 
 				public void actionPerformed(ActionEvent e) {
-					if(!getFrame().isBusy()){
+					if(!isProcessing()){
+						updateProcessing(true);
 						completeOrder();
 					}
 				}
@@ -4509,6 +4533,9 @@ public class PoSMainForm extends CPanel implements FormPanel, ASyncProcess, Disp
 	}
 
 	private void addPayment() {
+		if(isProcessing()){
+			return;
+		}
 		TimeStatsLogger.beginTask(MeasurableTask.POS_ADD_PAYMENT);
 		
 		String tenderType = getSelectedTenderType();
@@ -4841,6 +4868,9 @@ public class PoSMainForm extends CPanel implements FormPanel, ASyncProcess, Disp
 	}
 	
 	private void removePayment(Payment payment) {
+		if(isProcessing()){
+			return;
+		}
 		if(payment != null) {
 			// Validaciones para eliminación de cheques
 			if(MPOSPaymentMedium.TENDERTYPE_Check.equals(payment.getTenderType())){
@@ -4875,10 +4905,6 @@ public class PoSMainForm extends CPanel implements FormPanel, ASyncProcess, Disp
 		TimeStatsLogger.beginTask(MeasurableTask.POS_SAVE_DOCUMENTS);
 		TimeStatsLogger.beginTask(MeasurableTask.POS_COMPLETE_ORDER);
 		
-		if(getFrame().isBusy()){
-			return;
-		}
-		
 		if(getOrder().getBusinessPartner() == null) {
 			errorMsg(MSG_NO_BPARTNER_ERROR);
 			return;
@@ -4896,6 +4922,7 @@ public class PoSMainForm extends CPanel implements FormPanel, ASyncProcess, Disp
 			if(!Util.isEmpty(result.getMsg(), true)){
 				errorMsg(result.getMsg());
 			}
+			updateProcessing(false);
 			return;
 		}
 		
@@ -4962,7 +4989,8 @@ public class PoSMainForm extends CPanel implements FormPanel, ASyncProcess, Disp
 				if (!fiscalPrintError) {
 					getFrame().setBusy(false);
 					mNormal();
-				}
+					updateProcessing(false);
+				}				
 			}
 		};
 
@@ -5004,6 +5032,7 @@ public class PoSMainForm extends CPanel implements FormPanel, ASyncProcess, Disp
 		getCOrderLookup().setValue(null);
 		getCOrderCustomerText().setText("");
 		getCOrderDateText().setText("");
+		updateProcessing(false);
 		getCGeneralDiscountPercText().setValue(BigDecimal.ZERO);
 		updateAllowClose();
 		updateStatusDB();
@@ -6177,7 +6206,7 @@ public class PoSMainForm extends CPanel implements FormPanel, ASyncProcess, Disp
 	 */
 	protected void updateManualDiscountAuthorization(BigDecimal percentage){
 		if(getModel().getPoSConfig().isAuthorizeManualGeneralDiscount()){
-			if(percentage.compareTo(BigDecimal.ZERO) == 0){
+			if(percentage == null || percentage.compareTo(BigDecimal.ZERO) == 0){
 				getAuthDialog().removeAuthOperation(getManualDiscountAuthOperation());
 			}
 			else if(percentage.compareTo(BigDecimal.ZERO) != 0){
@@ -6209,5 +6238,20 @@ public class PoSMainForm extends CPanel implements FormPanel, ASyncProcess, Disp
 			getCPaymentMediumCombo().addItem(
 					getOrder().getBusinessPartner().getPaymentMedium());
 		}
+	}
+
+	protected synchronized boolean isProcessing() {
+		return processing;
+	}
+
+	protected synchronized void setProcessing(boolean processing) {
+		this.processing = processing;
+	}
+	
+	protected synchronized void updateProcessing(boolean processing){
+		setProcessing(processing);
+		getCGeneralDiscountPercText().setReadWrite(!processing);
+		getCClientText().setReadWrite(!processing);
+		this.repaint();
 	}
 }  //  @jve:decl-index=0:visual-constraint="10,10"
