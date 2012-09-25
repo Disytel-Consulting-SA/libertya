@@ -478,7 +478,6 @@ public class PoSOnline extends PoSConnectionState {
 			{
 				amt = amt.subtract(change);
 				p.setAmount(currencyConvert(amt, getPoSCOnfig().getCurrencyID(), p.getCurrencyId()));
-				change = BigDecimal.ZERO;
 				p.setChangeAmt(change);
 			} 
 			else 
@@ -756,9 +755,9 @@ public class PoSOnline extends PoSConnectionState {
 		BigDecimal changeAux;
 		for (int c = 0; c < cashPayments.size()
 				&& cashChange.compareTo(BigDecimal.ZERO) > 0; c++) {
-			changeAux = cashPayments.get(0).getAmount().compareTo(cashChange) >= 0 ? cashChange
-					: cashPayments.get(0).getAmount();
-			cashPayments.get(0).setChangeAmt(changeAux);
+			changeAux = cashPayments.get(c).getAmount().compareTo(cashChange) >= 0 ? cashChange
+					: cashPayments.get(c).getAmount();
+			cashPayments.get(c).setChangeAmt(changeAux);
 			cashChange = cashChange.subtract(changeAux); 
 		}
 		
