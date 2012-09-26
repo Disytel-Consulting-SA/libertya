@@ -233,15 +233,42 @@ public class PaymentMedium implements IPaymentMediumInfo {
 	/**
 	 * @return the internalID
 	 */
-	public Integer getInternalID() {
-		return internalID;
+	public Integer getInternalID(Payment payment) {
+		// El id interno se utiliza por el discount calculator para tener los
+		// descuentos por esquema de descuento. Para el caso de tarjetas de
+		// crédito, los esquemas de descuento se configuran dentro de los
+		// planes, por lo tanto si tenemos varios planes con diferentes esquemas
+		// de descuento y se utiliza el mismo id para todos los planes de un
+		// medio de pago, entonces puede haber conflictos entre esquemas de
+		// descuento diferentes
+		// Entonces, los id internos de tarjetas de crédito se manejan en los
+		// planes
+		Integer internal = internalID; 
+		if(isCreditCard()){
+			internal = ((CreditCardPayment) payment).getPlan().getInternalID();
+		}
+		return internal;
 	}
 
 	/**
 	 * @param internalID the internalID to set
 	 */
-	public void setInternalID(Integer internalID) {
-		this.internalID = internalID;
+	public void setInternalID(Integer internalID, Payment payment) {
+		// El id interno se utiliza por el discount calculator para tener los
+		// descuentos por esquema de descuento. Para el caso de tarjetas de
+		// crédito, los esquemas de descuento se configuran dentro de los
+		// planes, por lo tanto si tenemos varios planes con diferentes esquemas
+		// de descuento y se utiliza el mismo id para todos los planes de un
+		// medio de pago, entonces puede haber conflictos entre esquemas de
+		// descuento diferentes
+		// Entonces, los id internos de tarjetas de crédito se manejan en los
+		// planes
+		if(isCreditCard()){
+			((CreditCardPayment) payment).getPlan().setInternalID(internalID);
+		}
+		else{
+			this.internalID = internalID;
+		}
 	}
 
 	public void setValidationBeforeCheckDeadLines(

@@ -13,8 +13,6 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.logging.Level;
 
-import org.apache.ecs.xhtml.code;
-import org.apache.ecs.xhtml.param;
 import org.openXpertya.model.DiscountCalculator.IDocumentLine.DiscountApplication;
 import org.openXpertya.model.ProductMatching.MatchingCompareType;
 import org.openXpertya.util.CLogger;
