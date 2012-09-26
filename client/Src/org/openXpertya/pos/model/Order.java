@@ -287,7 +287,7 @@ public class Order  {
 		// Los descuentos se totalizan segun el medio de pago. Por eso que el ID
 		// del descuento dentro del calculador se guarda y obtiene desde el
 		// medio de pago.
-		Integer discountID = payment.getPaymentMedium().getInternalID();
+		Integer discountID = payment.getPaymentMedium().getInternalID(payment);
 		if (getDiscountCalculator().containsDiscount(discountID)) {
 			getDiscountCalculator().addDiscountBaseAmount(discountID, payment.getRealAmount());
 		} else {
@@ -296,7 +296,7 @@ public class Order  {
 					GeneralDiscountKind.PaymentMedium,
 					payment.getRealAmount(),
 					payment.getPaymentMedium().getName());
-			payment.getPaymentMedium().setInternalID(discountID);
+			payment.getPaymentMedium().setInternalID(discountID, payment);
 		}
 
 		// Se aplican los descuentos generales al pedido
@@ -415,7 +415,7 @@ public class Order  {
 		getPayments().remove(payment);
 		paymentRemoved(payment);
 		getDiscountCalculator().subtractDiscountBaseAmount(
-				payment.getPaymentMedium().getInternalID(), payment.getRealAmount());
+				payment.getPaymentMedium().getInternalID(payment), payment.getRealAmount());
 		updateDiscounts();
 	}
 

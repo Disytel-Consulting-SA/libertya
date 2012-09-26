@@ -15,6 +15,8 @@ public class EntidadFinancieraPlan implements IPaymentMediumInfo {
 	private String name;
 	private int coutasPago;
 	private DiscountSchema discountSchema;
+	/** ID utilizado para el Calculador de Descuentos */
+	private Integer internalID = null;
 	
 	/**
 	 * Constructor de la clase
@@ -110,5 +112,13 @@ public class EntidadFinancieraPlan implements IPaymentMediumInfo {
 	@Override
 	public String getTenderType() {
 		return MPOSPaymentMedium.TENDERTYPE_CreditCard;
+	}
+
+	public Integer getInternalID() {
+		return internalID;
+	}
+
+	public void setInternalID(Integer internalID) {
+		this.internalID = internalID;
 	}
 }
