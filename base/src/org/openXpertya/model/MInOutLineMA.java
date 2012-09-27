@@ -108,20 +108,16 @@ public class MInOutLineMA extends X_M_InOutLineMA {
     // Jorge Vidal - Disytel
     public static int deleteInOutMALine( MInOutLine line,String trxName ) {
         
-        PreparedStatement pstmt = null;
         int rno=-1;
-        try {
-            pstmt = DB.prepareStatement( "DELETE FROM M_InOutLineMA ma WHERE M_INOUTLINE_ID=?", trxName);
-            pstmt.setInt( 1,line.getID() );
-            rno=pstmt.executeUpdate();
-                       
-            pstmt.close();
-            pstmt = null;
+        try {			
+        
+        	String sql = "DELETE FROM M_InOutLineMA ma WHERE M_INOUTLINE_ID=" + line.getID();
+            rno = DB.executeUpdate( sql,trxName);
+        
         } catch( Exception e ) {
             s_log.log( Level.SEVERE,"deleteInOutLineMALine",e );
         }
 
-       
         return rno;
     }    // deleteInOutMALine
     

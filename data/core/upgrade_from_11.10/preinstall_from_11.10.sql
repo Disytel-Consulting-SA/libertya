@@ -4329,3 +4329,137 @@ CREATE TABLE c_checkcuitcontrol
       ON UPDATE NO ACTION ON DELETE NO ACTION
 );
 ALTER TABLE c_checkcuitcontrol OWNER TO libertya; 
+
+-- 20120927-1430 Creación de la tabla I_InOut para Importación de Remitos
+CREATE TABLE i_inout
+(
+  i_inout_id integer NOT NULL,
+  ad_client_id integer,
+  ad_org_id integer,
+  ad_orgtrx_id integer,
+  isactive character(1) DEFAULT 'Y'::bpchar,
+  created timestamp without time zone DEFAULT ('now'::text)::timestamp(6) with time zone,
+  createdby integer,
+  updated timestamp without time zone DEFAULT ('now'::text)::timestamp(6) with time zone,
+  updatedby integer,
+  i_isimported character(1) NOT NULL DEFAULT 'N'::bpchar,
+  i_errormsg character varying(2000),
+  processing character(1),
+  processed character(1) DEFAULT 'N'::bpchar,
+  salesrep_id integer,
+  m_warehouse_id integer,
+  warehousevalue character varying(40),
+  issotrx character(1) DEFAULT 'Y'::bpchar,
+  c_bpartner_id integer,
+  c_bpartner_location_id integer,
+  bpartnervalue character varying(40),
+  "name" character varying(60),
+  c_location_id integer,
+  address1 character varying(60),
+  address2 character varying(60),
+  postal character varying(10),
+  city character varying(60),
+  c_region_id integer,
+  regionname character varying(60),
+  ad_user_id integer,
+  email character varying(60),
+  contactname character varying(60),
+  phone character varying(40),
+  c_country_id integer,
+  countrycode character(2),
+  c_doctype_id integer,
+  doctypename character varying(60),
+  c_doctypeorder_id integer,
+  doctypenameorder character varying(60),
+  c_project_id integer,
+  c_campaign_id integer,
+  c_activity_id integer,
+  m_inout_id integer,
+  documentno character varying(30),
+  c_order_id integer,
+  c_orderline_id integer,
+  documentnoorder character varying(30),
+  movementdate timestamp without time zone,
+  dateacct timestamp without time zone,
+  description character varying(255),
+  line numeric(18,0),
+  m_product_id integer,
+  productvalue character varying(40),
+  upc character varying(30),
+  m_inoutline_id integer,
+  linedescription character varying(255),
+  movementqty numeric(22,4) DEFAULT 0,
+  m_locator_id integer,
+  locatorvalue character varying(40),
+  orgvalue character varying(40),
+  salesrep_name character varying(60),
+  documentnobysequence character(1) NOT NULL DEFAULT 'N'::bpchar,
+  CONSTRAINT i_inout_key PRIMARY KEY (i_inout_id),
+  CONSTRAINT adorg_iinout FOREIGN KEY (ad_org_id)
+      REFERENCES ad_org (ad_org_id) MATCH SIMPLE
+      ON UPDATE NO ACTION ON DELETE NO ACTION,
+  CONSTRAINT adorgtrx_iinout FOREIGN KEY (ad_orgtrx_id)
+      REFERENCES ad_org (ad_org_id) MATCH SIMPLE
+      ON UPDATE NO ACTION ON DELETE NO ACTION,
+  CONSTRAINT aduser_iinout FOREIGN KEY (ad_user_id)
+      REFERENCES ad_user (ad_user_id) MATCH SIMPLE
+      ON UPDATE NO ACTION ON DELETE NO ACTION,
+  CONSTRAINT adusersalesrep_iinout FOREIGN KEY (salesrep_id)
+      REFERENCES ad_user (ad_user_id) MATCH SIMPLE
+      ON UPDATE NO ACTION ON DELETE NO ACTION,
+  CONSTRAINT cactivity_iinout FOREIGN KEY (c_activity_id)
+      REFERENCES c_activity (c_activity_id) MATCH SIMPLE
+      ON UPDATE NO ACTION ON DELETE NO ACTION,
+  CONSTRAINT cbpartner_iinout FOREIGN KEY (c_bpartner_id)
+      REFERENCES c_bpartner (c_bpartner_id) MATCH SIMPLE
+      ON UPDATE NO ACTION ON DELETE NO ACTION,
+  CONSTRAINT cbplocation_iinout FOREIGN KEY (c_bpartner_location_id)
+      REFERENCES c_bpartner_location (c_bpartner_location_id) MATCH SIMPLE
+      ON UPDATE NO ACTION ON DELETE NO ACTION,
+  CONSTRAINT ccampaign_iinout FOREIGN KEY (c_campaign_id)
+      REFERENCES c_campaign (c_campaign_id) MATCH SIMPLE
+      ON UPDATE NO ACTION ON DELETE NO ACTION,
+  CONSTRAINT ccountry_iinout FOREIGN KEY (c_country_id)
+      REFERENCES c_country (c_country_id) MATCH SIMPLE
+      ON UPDATE NO ACTION ON DELETE NO ACTION,
+  CONSTRAINT cdoctype_iinout FOREIGN KEY (c_doctype_id)
+      REFERENCES c_doctype (c_doctype_id) MATCH SIMPLE
+      ON UPDATE NO ACTION ON DELETE NO ACTION,
+  CONSTRAINT cdoctypeorder_iinout FOREIGN KEY (c_doctypeorder_id)
+      REFERENCES c_doctype (c_doctype_id) MATCH SIMPLE
+      ON UPDATE NO ACTION ON DELETE NO ACTION,
+  CONSTRAINT clocation_iinout FOREIGN KEY (c_location_id)
+      REFERENCES c_location (c_location_id) MATCH SIMPLE
+      ON UPDATE NO ACTION ON DELETE NO ACTION,
+  CONSTRAINT corder_iinout FOREIGN KEY (c_order_id)
+      REFERENCES c_order (c_order_id) MATCH SIMPLE
+      ON UPDATE NO ACTION ON DELETE NO ACTION,
+  CONSTRAINT corderline_iinout FOREIGN KEY (c_orderline_id)
+      REFERENCES c_orderline (c_orderline_id) MATCH SIMPLE
+      ON UPDATE NO ACTION ON DELETE NO ACTION,
+  CONSTRAINT cproject_iinout FOREIGN KEY (c_project_id)
+      REFERENCES c_project (c_project_id) MATCH SIMPLE
+      ON UPDATE NO ACTION ON DELETE NO ACTION,
+  CONSTRAINT cregion_iinout FOREIGN KEY (c_region_id)
+      REFERENCES c_region (c_region_id) MATCH SIMPLE
+      ON UPDATE NO ACTION ON DELETE NO ACTION,
+  CONSTRAINT minout_iinout FOREIGN KEY (m_inout_id)
+      REFERENCES m_inout (m_inout_id) MATCH SIMPLE
+      ON UPDATE NO ACTION ON DELETE NO ACTION,
+  CONSTRAINT minoutline_iinout FOREIGN KEY (m_inoutline_id)
+      REFERENCES m_inoutline (m_inoutline_id) MATCH SIMPLE
+      ON UPDATE NO ACTION ON DELETE NO ACTION,
+  CONSTRAINT mlocator_iinout FOREIGN KEY (m_locator_id)
+      REFERENCES m_locator (m_locator_id) MATCH SIMPLE
+      ON UPDATE NO ACTION ON DELETE NO ACTION,
+  CONSTRAINT mwarehouse_iinout FOREIGN KEY (m_warehouse_id)
+      REFERENCES m_warehouse (m_warehouse_id) MATCH SIMPLE
+      ON UPDATE NO ACTION ON DELETE NO ACTION,
+  CONSTRAINT mproduct_iinout FOREIGN KEY (m_product_id)
+      REFERENCES m_product (m_product_id) MATCH SIMPLE
+      ON UPDATE NO ACTION ON DELETE NO ACTION
+)
+WITH (
+  OIDS=TRUE
+);
+ALTER TABLE i_inout OWNER TO libertya;
