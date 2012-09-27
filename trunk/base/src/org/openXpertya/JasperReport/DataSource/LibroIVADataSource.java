@@ -95,7 +95,7 @@ public class LibroIVADataSource extends QueryDataSource implements JRDataSource 
              	"       from c_Invoice " +
              	" where ad_client_id = ? " + getOrgCheck() + "AND (docstatus = 'CO' or docstatus = 'CL' or docstatus = 'RE' or docstatus = 'VO') " +
              	" AND (isactive = 'Y') "+
-             	" AND (dateacct::date between ?::date and ?::date) " );
+             	" AND (date_trunc('day', dateacct) between date_trunc('day',?::timestamp) and date_trunc('day',?::timestamp)) " );
              
              //Si no es ambos
              if(!p_transactionType.equals("B")){
