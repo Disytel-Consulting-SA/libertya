@@ -7,7 +7,7 @@ import java.math.*;
 import org.openXpertya.util.*;
 /** Modelo Generado por AD_Field
  *  @author Comunidad de Desarrollo Libertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
- *  @version  - 2012-09-03 21:48:32.834 */
+ *  @version  - 2012-10-02 19:27:33.058 */
 public class X_AD_Field extends org.openXpertya.model.PO
 {
 /** Constructor estándar */
@@ -141,6 +141,22 @@ Tab within a Window */
 public int getAD_Tab_ID() 
 {
 Integer ii = (Integer)get_Value("AD_Tab_ID");
+if (ii == null) return 0;
+return ii.intValue();
+}
+/** Set Dynamic Validation.
+Dynamic Validation Rule */
+public void setAD_Val_Rule_ID (int AD_Val_Rule_ID)
+{
+if (AD_Val_Rule_ID <= 0) set_Value ("AD_Val_Rule_ID", null);
+ else 
+set_Value ("AD_Val_Rule_ID", new Integer(AD_Val_Rule_ID));
+}
+/** Get Dynamic Validation.
+Dynamic Validation Rule */
+public int getAD_Val_Rule_ID() 
+{
+Integer ii = (Integer)get_Value("AD_Val_Rule_ID");
 if (ii == null) return 0;
 return ii.intValue();
 }
