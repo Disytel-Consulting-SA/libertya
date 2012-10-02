@@ -201,6 +201,7 @@
 	<field name="DOCUMENTDISCOUNT_UNITY_NET" class="java.math.BigDecimal"/>
 	<field name="TOTAL_DOCUMENTDISCOUNT" class="java.math.BigDecimal"/>
 	<field name="TOTAL_DOCUMENTDISCOUNT_NET" class="java.math.BigDecimal"/>
+	<field name="X12DE355" class="java.lang.String"/>
 
 		<background>
 			<band height="0"  isSplitAllowed="true" >

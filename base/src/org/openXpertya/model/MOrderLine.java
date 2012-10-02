@@ -1023,6 +1023,13 @@ public class MOrderLine extends X_C_OrderLine {
     	return "";
     }
     
+    public String getX12DE355()
+    {
+    	if (getC_UOM_ID() > 0)
+    		return (new MUOM(p_ctx, getC_UOM_ID(), null)).getX12DE355();
+    	return "";
+    }
+    
     public String getLineStr()
     {
     	return "" + getLine();
