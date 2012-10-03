@@ -15,6 +15,7 @@ import org.openXpertya.model.MBPartner;
 import org.openXpertya.model.MBPartnerLocation;
 import org.openXpertya.model.MClient;
 import org.openXpertya.model.MClientInfo;
+import org.openXpertya.model.MDocType;
 import org.openXpertya.model.MInvoice;
 import org.openXpertya.model.MInvoiceLine;
 import org.openXpertya.model.MInvoicePaySchedule;
@@ -162,6 +163,9 @@ public class LaunchInvoice extends SvrProcess {
 		jasperwrapper.addParameter("TIPOCOMPROBANTE", JasperReportsUtil
 			.getDocTypeName(getCtx(), invoice.getC_DocTypeTarget_ID(),
 					"FACTURA", get_TrxName()));
+		
+		jasperwrapper.addParameter("DOCTYPEKEY", (new MDocType(getCtx(), invoice.getC_DocTypeTarget_ID(), get_TrxName())).getDocTypeKey());
+				
 		jasperwrapper.addParameter("FECHA", invoice.getDateInvoiced());
 		Calendar c = Calendar.getInstance();
 		c.setTimeInMillis(invoice.getDateInvoiced().getTime());
@@ -480,4 +484,6 @@ public class LaunchInvoice extends SvrProcess {
 	public void setAD_Record_ID(int aD_Record_ID) {
 		AD_Record_ID = aD_Record_ID;
 	}
+	
+	
 }
