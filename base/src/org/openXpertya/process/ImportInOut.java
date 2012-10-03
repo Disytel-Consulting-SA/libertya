@@ -386,7 +386,7 @@ public class ImportInOut extends SvrProcess {
     		no = DB.executeUpdate( sql.toString());
     		log.log(Level.FINE,"doIt - Set C_OrderLine_ID from line=" + no);
 
-    		sql = new StringBuffer( "UPDATE I_InOut " + "SET I_IsImported='E', I_ErrorMsg=I_ErrorMsg || '"+getMsg("ImportInOutInvalidProduct")+". ' " + "WHERE C_OrderLine_ID IS NULL AND I_IsImported<>'Y' AND IsSoTrx='Y'" ).append( clientCheck );
+    		sql = new StringBuffer( "UPDATE I_InOut " + "SET I_IsImported='E', I_ErrorMsg=I_ErrorMsg || '"+getMsg("ImportInOutInvalidOrderLine")+". ' " + "WHERE C_OrderLine_ID IS NULL AND I_IsImported<>'Y' AND IsSoTrx='Y'" ).append( clientCheck );
     		no = DB.executeUpdate( sql.toString());		
 
     		if( no != 0 ) {
