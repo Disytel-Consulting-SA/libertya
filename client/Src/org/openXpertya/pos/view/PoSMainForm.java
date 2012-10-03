@@ -2007,6 +2007,7 @@ public class PoSMainForm extends CPanel implements FormPanel, ASyncProcess, Disp
 			cGeneralDiscountPercText.setDisplayType(DisplayType.Number);
 			cGeneralDiscountPercText.setPreferredSize(new java.awt.Dimension(70,20));
 			cGeneralDiscountPercText.setValue(0);
+			cGeneralDiscountPercText.setRange(-100.00, 100.00);
 			cGeneralDiscountPercText.setMandatory(true);
 			cGeneralDiscountPercText.addVetoableChangeListener(new VetoableChangeListener() {
 
@@ -3873,7 +3874,7 @@ public class PoSMainForm extends CPanel implements FormPanel, ASyncProcess, Disp
 			cPaymentMediumCombo.setPreferredSize(new java.awt.Dimension(S_PAYMENT_FIELD_WIDTH,20));
 			cPaymentMediumCombo.addItemListener(new ItemListener() {
 				public void itemStateChanged(ItemEvent e) {
-					loadPaymentMedium(false);
+					loadPaymentMedium(true);
 				}
 
 			});
@@ -4440,7 +4441,8 @@ public class PoSMainForm extends CPanel implements FormPanel, ASyncProcess, Disp
 		
 		getCTaxIdText().setText("");
 		getCCustomerDescriptionText().setText("");
-		setCustomerDataVisible(getOrder().getBusinessPartner().getIVACategory() == MCategoriaIva.CONSUMIDOR_FINAL);
+//		setCustomerDataVisible(getOrder().getBusinessPartner().getIVACategory() == MCategoriaIva.CONSUMIDOR_FINAL);
+		setCustomerDataVisible(true);
 		// Se carga el combo de direcciones.
 		getCClientLocationCombo().removeAllItems();
 		List<Location> bpLocations = getModel().getBPartnerLocations(bPartnerID);
@@ -5655,11 +5657,9 @@ public class PoSMainForm extends CPanel implements FormPanel, ASyncProcess, Disp
 		// de cada cuota.
 		if (paymentMedium.isCreditCard()) {
 			EntidadFinancieraPlan plan = getSelectedCreditCardPlan();
-			getCAmountText().setValue(
-					getCAmountText().getValue() != null ? getCAmountText()
-							.getValue()
-							: (paymentToPayAmt != null ? paymentToPayAmt
-									: null));
+			if(paymentToPayAmt != null){
+				getCAmountText().setValue(paymentToPayAmt);
+			}
 			
 			// El importe de la cuota se calcula en base al importe del pago
 			// ingresado por el usuario

@@ -413,7 +413,11 @@ public final class VNumber extends JComponent implements VEditor,ActionListener,
 
     public void setValue( Object value ) {
         log.finest( "Value=" + value );
-
+        
+        if(m_rangeSet && !isInRange(value)){
+        	return;
+        }
+        
         if( value == null || value.equals("") ) {
             m_oldText = "";
         } else {
@@ -431,6 +435,16 @@ public final class VNumber extends JComponent implements VEditor,ActionListener,
         m_modified    = false;
     }    // setValue
 
+    
+    public boolean isInRange(Object value){
+    	if(value == null || value.toString().length() == 0){
+    		return true;
+    	}
+    	String strValue = value.toString();
+    	double valueDouble = Double.valueOf(strValue.replace(".", "").replace(",", "."));
+    	return valueDouble >= m_minValue && valueDouble <= m_maxValue;
+    }
+    
     /**
      * Descripción de Método
      *
@@ -637,6 +651,10 @@ public final class VNumber extends JComponent implements VEditor,ActionListener,
 
         String str = startCalculator( this,m_text.getText(),m_format,m_displayType,m_title );
 
+        if(m_rangeSet && !isInRange(str)){
+        	str = m_text.getText();
+        }
+        
         m_text.setText( str );
         m_button.setEnabled( true );
 
@@ -676,11 +694,17 @@ public final class VNumber extends JComponent implements VEditor,ActionListener,
     public void keyReleased( KeyEvent e ) {
         log.finest( "Key=" + e.getKeyCode());
 
+        if(m_rangeSet && !isInRange(m_text.getText())){
+        	e.consume();
+        	m_text.setText( m_oldText );
+        }
+        
         // ESC
 
         if( e.getKeyCode() == KeyEvent.VK_ESCAPE ) {
             m_text.setText( m_initialText );
-        }
+        }       
+        
 
         // Disytel - Deprecado actualmente.
         // En algunos casos no era deseable que la tecla ENTER abra la calculadora.

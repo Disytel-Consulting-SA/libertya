@@ -1829,6 +1829,7 @@ public class PoSOnline extends PoSConnectionState {
 		pay.setA_Name(!Util.isEmpty(order.getBusinessPartner()
 				.getCustomerName(), true) ? order.getBusinessPartner()
 				.getCustomerName() : order.getBusinessPartner().getName());
+		pay.setA_Street(order.getBusinessPartner().getCustomerAddress());
 		pay.setDescription(p.getDescription());
 		pay.setPosnet(p.getPosnet());
 		pay.setC_POSPaymentMedium_ID(p.getPaymentMedium().getId());
@@ -2925,7 +2926,7 @@ public class PoSOnline extends PoSConnectionState {
 				params.put("AD_Org_ID", Env.getAD_Org_ID(getCtx()));
 				params.put("C_BPartner_ID", partner.getID());
 				params.put("C_Invoice_ID", invoice.getID());
-				params.put("PaymentRule_1", MInvoice.PAYMENTRULE_OnCredit);
+				params.put("PaymentRule_1", order.getPaymentTerm().getName());
 				params.put("PaymentRule_Amt_1", currentAccountSalesConditions
 						.get(MInvoice.PAYMENTRULE_OnCredit));
 				ProcessInfo info = MProcess.execute(getCtx(),
