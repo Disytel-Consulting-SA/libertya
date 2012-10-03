@@ -400,7 +400,7 @@ public class CustomerDataDialog extends JDialog {
 	private void setComponentsEnabled() {
 		getCClearButton().setEnabled(!getBPartner().isCustomerSynchronized());
 		//getCCancelButton().setEnabled(!getBPartner().isCustomerSynchronized());
-		getCAddressText().setEditable(!getBPartner().isCustomerSynchronized());
+		getCAddressText().setEditable(true);
 		getCIdentificationText().setEditable(!getBPartner().isCustomerSynchronized());
 		getCNameText().setEditable(!getBPartner().isCustomerSynchronized());
 	}

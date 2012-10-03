@@ -551,6 +551,11 @@ public class FiscalDocumentPrint {
 	 */
 	private void doPrintCurrentAccountDocument(Object[] args) throws Exception{
 		MInvoice invoice = (MInvoice) args[0];
+		MPaymentTerm paymentTerm = new MPaymentTerm(invoice.getCtx(),
+				invoice.getC_PaymentTerm_ID(), invoice.get_TrxName());
+		String onCreditPaymentRuleDescr = MRefList.getListName(
+				invoice.getCtx(), MInvoice.PAYMENTRULE_AD_Reference_ID,
+				MInvoice.PAYMENTRULE_OnCredit);
 		List<CurrentAccountInfo> infos = (List<CurrentAccountInfo>)args[1];
 		// Si no existen datos de cuenta corriente no se imprime nada
 		if(infos == null || infos.size() == 0){
@@ -576,7 +581,15 @@ public class FiscalDocumentPrint {
 		nonFiscalDocument.addLine(Msg.getMsg(ctx, "Account")+": "+customer.getValue()+" "+customer.getName());
 		MCurrency currency = MCurrency.get(ctx, Env.getContextAsInt(ctx, "$C_Currency_ID"), getTrxName());
 		for (CurrentAccountInfo currentAccountInfo : infos) {
-			nonFiscalDocument.addLine(currentAccountInfo.getPaymentRule());
+			// Si la línea es a crédito, entonces va el nombre del esquema de
+			// vencimientos de la factura
+			if (currentAccountInfo.getPaymentRule().equals(
+					onCreditPaymentRuleDescr)) {
+				nonFiscalDocument.addLine(paymentTerm.getName());
+			}
+			else{
+				nonFiscalDocument.addLine(currentAccountInfo.getPaymentRule());
+			}
 			nonFiscalDocument.addLine(Msg.getMsg(ctx, "Amt") + ":  "
 					+ currency.getCurSymbol() + currentAccountInfo.getAmount());
 		}
@@ -905,6 +918,14 @@ public class FiscalDocumentPrint {
 					customer.setIdentificationNumber(bPartner.getTaxID());
 				}
 			}
+			
+			// Como en el TPV se puede modificar la dirección aún si no es
+			// Consumidor Final, entonces se tomar el de la factura siempre
+			// TODO Actualmente también se guardan el nombre del cliente y el
+			// nro de identificación aún cuando no es CF, analizar si está bien
+			// que se tome directamente desde la factura antes de hacer el
+			// cambio
+			customer.setLocation(mInvoice.getInvoice_Adress());
 		}
 		
 		return customer;

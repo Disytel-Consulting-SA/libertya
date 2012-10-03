@@ -40,9 +40,12 @@ public class LaunchCurrentAccountDocument extends JasperReportLaunch {
 //		addReportParameter("CREDIT_STATUS", JasperReportsUtil.getListName(
 //				getCtx(), MBPartner.SOCREDITSTATUS_AD_Reference_ID,
 //				(String) creditStatus.getResult()));
-		addReportParameter("PAYMENTRULE_1", JasperReportsUtil.getListName(
-				getCtx(), MInvoice.PAYMENTRULE_AD_Reference_ID,
-				(String) getParameterValue("PaymentRule_1")));
+		
+		// Se cambia por el nombre del esquema de vencimientos
+//		addReportParameter("PAYMENTRULE_1", JasperReportsUtil.getListName(
+//				getCtx(), MInvoice.PAYMENTRULE_AD_Reference_ID,
+//				(String) getParameterValue("PaymentRule_1")));
+		addReportParameter("PAYMENTRULE_1",(String) getParameterValue("PaymentRule_1"));
 		addReportParameter("PAYMENTRULE_AMT_1", getParameterValue("PaymentRule_Amt_1"));
 		addReportParameter("DOCUMENTNO",invoice.getDocumentNo());
 		addReportParameter("DATE_INVOICED",invoice.getDateInvoiced());
