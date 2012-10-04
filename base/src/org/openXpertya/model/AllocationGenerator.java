@@ -10,6 +10,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Properties;
 
+import org.jacorb.trading.constraint.DoubleValue;
 import org.openXpertya.process.DocAction;
 import org.openXpertya.util.CLogger;
 import org.openXpertya.util.DB;
@@ -427,7 +428,7 @@ public class AllocationGenerator {
 			// TODO: Ver si sería posible la tolerancia de algunos centavos de diferencia en
 			// esta comparación.
 			if (getDebitsAmount().compareTo(getCreditsAmount() ) != 0) {
-				if ( Math.abs(  (getDebitsAmount().subtract(getCreditsAmount())).doubleValue() ) > 0.01 ) 
+				if ( Math.abs(  (getDebitsAmount().subtract(getCreditsAmount())).doubleValue() ) >  (Double.parseDouble(MPreference.GetCustomPreferenceValue("AllowExchangeDifference"))) )
 				throw new AllocationGeneratorException(getMsg("CreditDebitAmountsMatchError"));
 			}
 		}
@@ -512,11 +513,16 @@ public class AllocationGenerator {
 		BigDecimal creditSurplus = null; // Monto sobrante de un crédito
 		BigDecimal balance =             // Saldo (Débitos - Créditos)
 			getDebitsAmount().subtract(getCreditsAmount());  
+		BigDecimal allowExchangeDifference = getDebitsAmount().subtract(getCreditsAmount());
+		
 		// TODO: El Saldo debería ser cero aunque actualmente puede ser distinto de cero 
 		// y esta diferencia se agrega como WriteOff en la primer línea de asignación creada
 		// Ver como mejorar esta solución para que sea configurable.
 		
+		int debitNumber = 0;
+		
 		for (Document debitDocument : getDebits()) {
+			debitNumber++;
 			// Se recorren todos los débitos para ser imputados con los créditos.
 			// Se puede dar el caso que el monto de imputación de un débito
 			// requiera mas de un crédito para ser satisfacido.
@@ -548,7 +554,7 @@ public class AllocationGenerator {
 			// Si el monto del débito supera el monto de la suma de los créditos utilizados
 			// hasta el momento, entonces es necesario utilizar el siguiente crédito para
 			// cubrir el monto del débito
-			while (debitAmount.compareTo(creditAmountSum) > 0) { 
+			while (debitAmount.compareTo(creditAmountSum.add(allowExchangeDifference)) > 0) { 
 				creditIdx++;
 				Document credit = getCredits().get(creditIdx); // Siguiente crédito
 				// Se actualiza la lista de créditos utilizados, la lista de montos
@@ -563,7 +569,7 @@ public class AllocationGenerator {
 			// Si la suma de créditos supera el monto del débito, se resta la diferencia
 			// al último crédito utilizado y esta diferencia pasa a ser el monto sobrante
 			// del crédito actual.
-			if (debitAmount.compareTo(creditAmountSum) < 0) {
+			if (debitAmount.compareTo(creditAmountSum.add(allowExchangeDifference)) < 0) {
 				int lastCreditIdx = subCreditsAmounts.size() - 1;
 				creditSurplus = creditAmountSum.subtract(debitAmount);
 				subCreditsAmounts.set( lastCreditIdx, subCreditsAmounts.get(lastCreditIdx).subtract(creditSurplus) );
@@ -590,8 +596,9 @@ public class AllocationGenerator {
 
 				// Redondeo de diferencia de balance en caso que los montos de débitos
 				// y créditos sean diferentes.
-				// FIXME: Validar que esta diferencia esté dentro de un rango permitido.
-				if (balance.signum() != 0) {
+				// Se Valida que esta diferencia esté dentro de un rango permitido.		
+
+				if ((debitNumber == getDebits().size()) && (balance.signum() != 0) && (balance.abs().compareTo(new BigDecimal(MPreference.GetCustomPreferenceValue("AllowExchangeDifference"))) <= 0)) {
 					writeoffAmt = balance; 
 					balance = BigDecimal.ZERO;
 				}
