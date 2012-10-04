@@ -22,6 +22,7 @@ package org.openXpertya.db;
 
 import org.openXpertya.dbPort.*;
 import org.openXpertya.util.*;
+import org.postgresql.ds.PGSimpleDataSource;
 
 //~--- Importaciones JDK ------------------------------------------------------
 
@@ -59,7 +60,7 @@ public class DB_PostgreSQL implements BaseDatosOXP {
     private org.postgresql.Driver	s_driver	= null;
 
     /** Data Source */
-    private org.postgresql.ds.PGPoolingDataSource	m_ds	= null;
+    private PGSimpleDataSource	m_ds	= null;
 
     /** Cached Database Name */
     private String	m_dbName	= null;
@@ -233,7 +234,8 @@ public class DB_PostgreSQL implements BaseDatosOXP {
         if (m_ds != null) {
 
             try {
-                m_ds.close();
+            	if (m_ds.getConnection()!=null) 
+            		m_ds.getConnection().close();
             } catch (Exception e) {
                 e.printStackTrace();
             }
@@ -481,10 +483,14 @@ public class DB_PostgreSQL implements BaseDatosOXP {
             return m_ds;
         }
 
-        org.postgresql.ds.PGPoolingDataSource ds = new org.postgresql.ds.PGPoolingDataSource();
+        // Comentado por traer problemas bloqueantes al llegar al limite permitido de conexiones cliente
+        // org.postgresql.ds.PGPoolingDataSource ds = new org.postgresql.ds.PGPoolingDataSource();
         // org.postgresql.jdbc3.Jdbc3PoolingDataSource	ds	= new org.postgresql.jdbc3.Jdbc3PoolingDataSource();
 
-        ds.setDataSourceName("openxpDS");
+     PGSimpleDataSource ds = new PGSimpleDataSource();
+
+        
+     //   ds.setDataSourceName("openxpDS");
         ds.setServerName(connection.getDbHost());
         ds.setDatabaseName(connection.getDbName());
         ds.setUser(connection.getDbUid());
@@ -492,9 +498,10 @@ public class DB_PostgreSQL implements BaseDatosOXP {
         ds.setPortNumber(connection.getDbPort());
         
         // Establecemos el numero maximo de conexiones
-        ds.setMaxConnections(10);
-        ds.setInitialConnections(1);
-
+   //     ds.setMaxConnections(10);
+  //      ds.setInitialConnections(1);
+        ds.setSocketTimeout(30);
+    	
         // new InitialContext().rebind("DataSource", source);
         m_ds	= ds;
 
