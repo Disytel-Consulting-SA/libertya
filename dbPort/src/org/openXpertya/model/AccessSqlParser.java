@@ -378,7 +378,7 @@ public class AccessSqlParser {
         int	fromIndex	= sql.indexOf(FROM);
 
         if (fromIndex != sql.lastIndexOf(FROM)) {
-            log.log(Level.SEVERE, "getTableInfo - More than one FROM clause - " + sql);
+            log.log(Level.WARNING, "getTableInfo - More than one FROM clause - " + sql);
         }
 
         while (fromIndex != -1) {
