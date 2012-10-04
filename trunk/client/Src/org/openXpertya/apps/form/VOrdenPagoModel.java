@@ -47,6 +47,7 @@ import org.openXpertya.model.MPInstance;
 import org.openXpertya.model.MPInstancePara;
 import org.openXpertya.model.MPOSPaymentMedium;
 import org.openXpertya.model.MPayment;
+import org.openXpertya.model.MPreference;
 import org.openXpertya.model.PO;
 import org.openXpertya.model.POCRGenerator;
 import org.openXpertya.model.POCRGenerator.POCRType;
@@ -1936,7 +1937,7 @@ public class VOrdenPagoModel implements TableModelListener {
 		
 		BigDecimal saldoMediosPago = getSaldoMediosPago(); // Debe ser cero
 		
-		if (saldoMediosPago.abs().compareTo(VModelHelper.GetRedondeoMoneda(m_ctx, C_Currency_ID)) >= 0)
+		if (saldoMediosPago.abs().compareTo(new BigDecimal(MPreference.GetCustomPreferenceValue("AllowExchangeDifference"))) > 0)
 			return PROCERROR_PAYMENTS_AMT_MATCH;
 		
 		int ret ;

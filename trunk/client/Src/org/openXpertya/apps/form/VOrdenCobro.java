@@ -2642,8 +2642,10 @@ public class VOrdenCobro extends VOrdenPago {
 		}
 		// Refrescar el monto de la pestaña con el total a pagar
 		
-		if (!paymentMedium.getTenderType().equals(MPOSPaymentMedium.TENDERTYPE_CreditCard)) {
-			updatePayAmt(m_model.getSaldoMediosPago());
+		if (paymentMedium != null){ 
+			if(!paymentMedium.getTenderType().equals(MPOSPaymentMedium.TENDERTYPE_CreditCard)) {
+				updatePayAmt(m_model.getSaldoMediosPago());
+			}
 		}
 	}
 
