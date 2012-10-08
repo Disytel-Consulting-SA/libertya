@@ -444,6 +444,8 @@ public class MPOSJournal extends X_C_POSJournal implements DocAction {
 		// Al cerrar no se podrá operar en el TPV y se debe completar
 		// el libro de caja asociado a la caja diaria.
 		cash = null; // forzamos a recargar el cash para actualizar valores desde BD.
+		// El libro de caja pertenece a una caja diaria
+		getCash().setPOSJournalCash(true);
 		if (MCash.DOCSTATUS_Drafted.equals(getCash().getDocStatus()) && 
 				!DocumentEngine.processAndSave(getCash(), MCash.DOCACTION_Complete, false)) {
 			m_processMsg = "@CashCompleteError@: " + getCash().getProcessMsg();

@@ -59,6 +59,9 @@ public class MCash extends X_C_Cash implements DocAction {
 	
 	private Map<Integer, Map<PO,Object>> ccBPUpdates = new HashMap<Integer, Map<PO,Object>>();
 	
+	/** Booleano que determina que estamos ante una caja de una caja diaria */
+	private boolean isPOSJournalCash = false;
+	
     /**
      * Descripción de Método
      *
@@ -607,7 +610,10 @@ public class MCash extends X_C_Cash implements DocAction {
 
         MCashLine[] lines = getLines( false );
 
-        if( lines.length == 0 ) {
+		// Para cajas pertenecientes a cajas diarias, no se debe realizar este
+		// control ya que podemos tener movimientos que no sean efectivo en la
+		// caja diaria
+        if( !isPOSJournalCash() && lines.length == 0 ) {
             m_processMsg = "@NoLines@";
 
             return DocAction.STATUS_Invalid;
@@ -1042,6 +1048,14 @@ public class MCash extends X_C_Cash implements DocAction {
 
 	protected Map<Integer, Map<PO,Object>> getCcBPUpdates() {
 		return ccBPUpdates;
+	}
+
+	public boolean isPOSJournalCash() {
+		return isPOSJournalCash;
+	}
+
+	public void setPOSJournalCash(boolean isPOSJournalCash) {
+		this.isPOSJournalCash = isPOSJournalCash;
 	}
 }    // MCash
 
