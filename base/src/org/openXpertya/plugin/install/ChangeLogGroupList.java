@@ -97,7 +97,7 @@ public class ChangeLogGroupList {
 			sql.append("AND (log.createdby = ?) ");
 		}
 		// 
-		sql.append(" ORDER BY ad_changelog_id asc ");
+		sql.append(" ORDER BY changeloggroup_id, ad_changelog_id asc ");
 		PreparedStatement ps = null;
 		ResultSet rs = null;
 		ChangeLogGroup group = null;
