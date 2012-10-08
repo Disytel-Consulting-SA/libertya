@@ -150,7 +150,7 @@ public class LaunchDeclaracionValores extends JasperReportLaunch {
 		// que no está funcionando el valor de retorno del subreporte. Sacar
 		// esto y modificar el reporte para tomar ese valor cuando se actualice
 		// la librería de jasper, quizás venga por ahí el problema.
-		addReportParameter("DECLARACION_VALORES_TOTAL", valoresDS.getDeclaracionValoresTotalAmt());
+		addReportParameter("DECLARACION_VALORES_TOTAL", valoresDS != null?valoresDS.getDeclaracionValoresTotalAmt():null);
 	}
 	
 	
