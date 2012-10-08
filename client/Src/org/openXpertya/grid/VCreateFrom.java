@@ -751,8 +751,8 @@ public abstract class VCreateFrom extends JDialog implements ActionListener,Tabl
     protected String getRemainingQtySQLLine(boolean forInvoice){
     	// Para facturas se compara la cantidad facturada, para remitos la cantidad
     	// entregada/recibida.
-    	String compareColumn = forInvoice ? "QtyInvoiced" : "QtyDelivered";
-    	return "l.QtyOrdered-NVL(l."+compareColumn+",0)";
+    	String compareColumn = forInvoice ? "l.QtyInvoiced" : "(l.QtyDelivered+l.QtyTransferred)";
+    	return "l.QtyOrdered-"+compareColumn;
     }
     
     /**
@@ -861,9 +861,9 @@ public abstract class VCreateFrom extends JDialog implements ActionListener,Tabl
         String compareColumn = "";
 
         if( isForInvoice() ) {
-            compareColumn = "QtyInvoiced";
+            compareColumn = "ol.QtyInvoiced";
         } else { // InOut
-        	compareColumn = "QtyDelivered";
+        	compareColumn = "ol.QtyDelivered+ol.QtyTransferred";
         }
 
      	filter
@@ -872,7 +872,7 @@ public abstract class VCreateFrom extends JDialog implements ActionListener,Tabl
      		.append("C_Order.C_Order_ID IN (")
      		.append(   "SELECT ol.C_Order_ID ")
      		.append(   "FROM C_OrderLine ol ")
-     		.append(   "WHERE ol.QtyOrdered > ol.").append(compareColumn).append(")");
+     		.append(   "WHERE ol.QtyOrdered > (").append(compareColumn).append("))");
 
      	return filter.toString();
     }

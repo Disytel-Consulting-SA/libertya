@@ -490,7 +490,7 @@ public class VCreateFromInvoice extends VCreateFrom {
     protected String getRemainingQtySQLLine(boolean forInvoice){
     	String sqlLine = super.getRemainingQtySQLLine(forInvoice);
     	if(!forInvoice){
-    		sqlLine = " (CASE WHEN (l.QtyOrdered - l.QtyDelivered) > l.QtyInvoiced THEN l.QtyInvoiced ELSE (l.QtyOrdered - l.QtyDelivered) END) ";
+    		sqlLine = " (CASE WHEN (l.QtyOrdered - l.QtyDelivered - l.QtyTransferred) > l.QtyInvoiced THEN l.QtyInvoiced ELSE (l.QtyOrdered - l.QtyDelivered- l.QtyTransferred) END) ";
     	}
     	return sqlLine;
     }

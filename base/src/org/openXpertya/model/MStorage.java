@@ -109,7 +109,7 @@ public class MStorage extends X_M_Storage {
 
     public static MStorage[] getAll( Properties ctx,int M_Product_ID,int M_Locator_ID,boolean FiFo,String trxName ) {
         ArrayList list = new ArrayList();
-        String    sql  = "SELECT * FROM M_Storage " + "WHERE M_Product_ID=? AND M_Locator_ID=?" + " AND M_AttributeSetInstance_ID > 0" + " AND QtyOnHand > 0 " + "ORDER BY M_AttributeSetInstance_ID";
+        String    sql  = "SELECT * FROM M_Storage " + "WHERE M_Product_ID=? AND M_Locator_ID=?" + " AND M_AttributeSetInstance_ID >= 0" + " AND QtyOnHand > 0 " + "ORDER BY M_AttributeSetInstance_ID";
 
         if( !FiFo ) {
             sql += " DESC";

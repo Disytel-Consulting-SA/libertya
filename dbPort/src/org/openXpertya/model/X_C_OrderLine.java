@@ -7,7 +7,7 @@ import java.math.*;
 import org.openXpertya.util.*;
 /** Modelo Generado por C_OrderLine
  *  @author Comunidad de Desarrollo Libertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
- *  @version  - 2012-03-30 10:39:30.733 */
+ *  @version  - 2012-10-08 01:03:56.578 */
 public class X_C_OrderLine extends org.openXpertya.model.PO
 {
 /** Constructor estándar */
@@ -44,6 +44,7 @@ setQtyEntered (Env.ZERO);	// 1
 setQtyInvoiced (Env.ZERO);
 setQtyOrdered (Env.ZERO);	// 1
 setQtyReserved (Env.ZERO);
+setQtyTransferred (Env.ZERO);
 }
  */
 }
@@ -666,6 +667,19 @@ BigDecimal bd = (BigDecimal)get_Value("QtyReserved");
 if (bd == null) return Env.ZERO;
 return bd;
 }
+/** Set Qty Transferred */
+public void setQtyTransferred (BigDecimal QtyTransferred)
+{
+if (QtyTransferred == null) throw new IllegalArgumentException ("QtyTransferred is mandatory");
+set_Value ("QtyTransferred", QtyTransferred);
+}
+/** Get Qty Transferred */
+public BigDecimal getQtyTransferred() 
+{
+BigDecimal bd = (BigDecimal)get_Value("QtyTransferred");
+if (bd == null) return Env.ZERO;
+return bd;
+}
 public static final int REF_ORDERLINE_ID_AD_Reference_ID = MReference.getReferenceID("C_OrderLine");
 /** Set Referenced Order Line.
 Reference to corresponding Sales/Purchase Order */
@@ -706,7 +720,7 @@ public boolean insertDirect()
 try 
 {
  
- 		 String sql = " INSERT INTO C_OrderLine(AD_Client_ID,AD_Org_ID,C_BPartner_ID,C_BPartner_Location_ID,C_Charge_ID,C_Currency_ID,CheckoutPlace,C_Order_ID,C_OrderLine_ID,C_Project_ID,Created,CreatedBy,C_Tax_ID,C_UOM_ID,DateDelivered,DateInvoiced,DateOrdered,DatePromised,Description,Discount,DocumentDiscountAmt,FreightAmt,IsActive,IsDescription,Line,LineBonusAmt,LineDiscountAmt,LineNetAmt,LineTotalAmt,M_AttributeSetInstance_ID,M_Product_ID,M_Shipper_ID,M_Warehouse_ID,OpenMatrix,PriceActual,PriceEntered,PriceLimit,PriceList,Processed,QtyDelivered,QtyEntered,QtyInvoiced,QtyOrdered,QtyReserved,Ref_OrderLine_ID,S_ResourceAssignment_ID,Updated,UpdatedBy) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?) ";
+ 		 String sql = " INSERT INTO C_OrderLine(AD_Client_ID,AD_Org_ID,C_BPartner_ID,C_BPartner_Location_ID,C_Charge_ID,C_Currency_ID,CheckoutPlace,C_Order_ID,C_OrderLine_ID,C_Project_ID,Created,CreatedBy,C_Tax_ID,C_UOM_ID,DateDelivered,DateInvoiced,DateOrdered,DatePromised,Description,Discount,DocumentDiscountAmt,FreightAmt,IsActive,IsDescription,Line,LineBonusAmt,LineDiscountAmt,LineNetAmt,LineTotalAmt,M_AttributeSetInstance_ID,M_Product_ID,M_Shipper_ID,M_Warehouse_ID,OpenMatrix,PriceActual,PriceEntered,PriceLimit,PriceList,Processed,QtyDelivered,QtyEntered,QtyInvoiced,QtyOrdered,QtyReserved,QtyTransferred,Ref_OrderLine_ID,S_ResourceAssignment_ID,Updated,UpdatedBy) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?) ";
 
 		 if (getAD_Client_ID() == 0) sql = sql.replaceFirst("AD_Client_ID,","").replaceFirst("\\?,", "");
  		 if (getAD_Org_ID() == 0) sql = sql.replaceFirst("AD_Org_ID,","").replaceFirst("\\?,", "");
@@ -749,6 +763,7 @@ try
  		 if (getQtyInvoiced() == null) sql = sql.replaceFirst("QtyInvoiced,","").replaceFirst("\\?,", "");
  		 if (getQtyOrdered() == null) sql = sql.replaceFirst("QtyOrdered,","").replaceFirst("\\?,", "");
  		 if (getQtyReserved() == null) sql = sql.replaceFirst("QtyReserved,","").replaceFirst("\\?,", "");
+ 		 if (getQtyTransferred() == null) sql = sql.replaceFirst("QtyTransferred,","").replaceFirst("\\?,", "");
  		 if (getRef_OrderLine_ID() == 0) sql = sql.replaceFirst("Ref_OrderLine_ID,","").replaceFirst("\\?,", "");
  		 if (getS_ResourceAssignment_ID() == 0) sql = sql.replaceFirst("S_ResourceAssignment_ID,","").replaceFirst("\\?,", "");
  		 if (getUpdated() == null) sql = sql.replaceFirst("Updated,","").replaceFirst("\\?,", "");
@@ -802,6 +817,7 @@ try
 		 if (getQtyInvoiced() != null) pstmt.setBigDecimal(col++, getQtyInvoiced());
 		 if (getQtyOrdered() != null) pstmt.setBigDecimal(col++, getQtyOrdered());
 		 if (getQtyReserved() != null) pstmt.setBigDecimal(col++, getQtyReserved());
+		 if (getQtyTransferred() != null) pstmt.setBigDecimal(col++, getQtyTransferred());
 		 if (getRef_OrderLine_ID() != 0) pstmt.setInt(col++, getRef_OrderLine_ID());
 		 if (getS_ResourceAssignment_ID() != 0) pstmt.setInt(col++, getS_ResourceAssignment_ID());
 		 if (getUpdated() != null) pstmt.setTimestamp(col++, getUpdated());

@@ -4493,3 +4493,12 @@ CREATE OR REPLACE VIEW ad_field_vt AS
   WHERE f.isactive = 'Y'::bpchar AND c.isactive = 'Y'::bpchar;
 
 ALTER TABLE ad_field_vt OWNER TO libertya;
+
+-- 20121007-2214 Incorporación de nuevas columnas para soporte de transferencia de pedidos
+update ad_system set dummy = (SELECT addcolumnifnotexists('c_order','nombrecli', 'character varying(40)'));
+update ad_system set dummy = (SELECT addcolumnifnotexists('c_order','nroidentificcliente', 'character varying(120)'));
+update ad_system set dummy = (SELECT addcolumnifnotexists('c_order','invoice_adress', 'character varying(120)'));
+update ad_system set dummy = (SELECT addcolumnifnotexists('c_order','cuit', 'character varying(20)'));
+update ad_system set dummy = (SELECT addcolumnifnotexists('c_order','ad_org_transfer_id', 'integer'));
+update ad_system set dummy = (SELECT addcolumnifnotexists('c_order','m_warehouse_transfer_id', 'integer'));
+update ad_system set dummy = (SELECT addcolumnifnotexists('c_orderline','qtytransferred', 'numeric(22,4) NOT NULL DEFAULT 0'));

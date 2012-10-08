@@ -7,7 +7,7 @@ import java.math.*;
 import org.openXpertya.util.*;
 /** Modelo Generado por C_Order
  *  @author Comunidad de Desarrollo Libertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
- *  @version  - 2012-07-09 20:10:42.874 */
+ *  @version  - 2012-10-08 01:03:55.171 */
 public class X_C_Order extends org.openXpertya.model.PO
 {
 /** Constructor estándar */
@@ -16,6 +16,7 @@ public X_C_Order (Properties ctx, int C_Order_ID, String trxName)
 super (ctx, C_Order_ID, trxName);
 /** if (C_Order_ID == 0)
 {
+setAD_Org_Transfer_ID (0);
 setC_BPartner_ID (0);
 setC_BPartner_Location_ID (0);
 setC_Currency_ID (0);	// @C_Currency_ID@
@@ -50,6 +51,7 @@ setIsTaxIncluded (false);
 setIsTransferred (false);
 setM_PriceList_ID (0);
 setM_Warehouse_ID (0);
+setM_Warehouse_Transfer_ID (0);
 setPaymentRule (null);	// B
 setPosted (false);	// N
 setPriorityRule (null);	// 5
@@ -96,6 +98,19 @@ public BigDecimal getAcceptance()
 BigDecimal bd = (BigDecimal)get_Value("Acceptance");
 if (bd == null) return Env.ZERO;
 return bd;
+}
+public static final int AD_ORG_TRANSFER_ID_AD_Reference_ID = MReference.getReferenceID("AD_Org (all but 0)");
+/** Set Organization */
+public void setAD_Org_Transfer_ID (int AD_Org_Transfer_ID)
+{
+set_Value ("AD_Org_Transfer_ID", new Integer(AD_Org_Transfer_ID));
+}
+/** Get Organization */
+public int getAD_Org_Transfer_ID() 
+{
+Integer ii = (Integer)get_Value("AD_Org_Transfer_ID");
+if (ii == null) return 0;
+return ii.intValue();
 }
 public static final int AD_ORGTRX_ID_AD_Reference_ID = MReference.getReferenceID("AD_Org (Trx)");
 /** Set Trx Organization.
@@ -349,6 +364,18 @@ BigDecimal bd = (BigDecimal)get_Value("ChargeAmt");
 if (bd == null) return Env.ZERO;
 return bd;
 }
+/** Set CodigoCategoriaIVA */
+public void setCodigoCategoriaIVA (int CodigoCategoriaIVA)
+{
+throw new IllegalArgumentException ("CodigoCategoriaIVA is virtual column");
+}
+/** Get CodigoCategoriaIVA */
+public int getCodigoCategoriaIVA() 
+{
+Integer ii = (Integer)get_Value("CodigoCategoriaIVA");
+if (ii == null) return 0;
+return ii.intValue();
+}
 /** Set Copy From.
 Copy From Record */
 public void setCopyFrom (String CopyFrom)
@@ -454,6 +481,21 @@ public int getC_Repair_Order_ID()
 Integer ii = (Integer)get_Value("C_Repair_Order_ID");
 if (ii == null) return 0;
 return ii.intValue();
+}
+/** Set CUIT */
+public void setCUIT (String CUIT)
+{
+if (CUIT != null && CUIT.length() > 20)
+{
+log.warning("Length > 20 - truncated");
+CUIT = CUIT.substring(0,20);
+}
+set_Value ("CUIT", CUIT);
+}
+/** Get CUIT */
+public String getCUIT() 
+{
+return (String)get_Value("CUIT");
 }
 /** Set Account Date.
 Accounting Date */
@@ -707,7 +749,7 @@ if (DocumentNo.length() > 30)
 log.warning("Length > 30 - truncated");
 DocumentNo = DocumentNo.substring(0,30);
 }
-set_ValueNoCheck ("DocumentNo", DocumentNo);
+set_Value ("DocumentNo", DocumentNo);
 }
 /** Get Document No.
 Document sequence number of the document */
@@ -777,6 +819,21 @@ public BigDecimal getGrandTotal()
 BigDecimal bd = (BigDecimal)get_Value("GrandTotal");
 if (bd == null) return Env.ZERO;
 return bd;
+}
+/** Set Invoice Adress */
+public void setInvoice_Adress (String Invoice_Adress)
+{
+if (Invoice_Adress != null && Invoice_Adress.length() > 120)
+{
+log.warning("Length > 120 - truncated");
+Invoice_Adress = Invoice_Adress.substring(0,120);
+}
+set_Value ("Invoice_Adress", Invoice_Adress);
+}
+/** Get Invoice Adress */
+public String getInvoice_Adress() 
+{
+return (String)get_Value("Invoice_Adress");
 }
 public static final int INVOICERULE_AD_Reference_ID = MReference.getReferenceID("C_Order InvoiceRule");
 /** After Delivery = D */
@@ -1078,6 +1135,51 @@ public int getM_Warehouse_ID()
 Integer ii = (Integer)get_Value("M_Warehouse_ID");
 if (ii == null) return 0;
 return ii.intValue();
+}
+public static final int M_WAREHOUSE_TRANSFER_ID_AD_Reference_ID = MReference.getReferenceID("M_Warehouse of Client");
+/** Set Warehouse */
+public void setM_Warehouse_Transfer_ID (int M_Warehouse_Transfer_ID)
+{
+set_Value ("M_Warehouse_Transfer_ID", new Integer(M_Warehouse_Transfer_ID));
+}
+/** Get Warehouse */
+public int getM_Warehouse_Transfer_ID() 
+{
+Integer ii = (Integer)get_Value("M_Warehouse_Transfer_ID");
+if (ii == null) return 0;
+return ii.intValue();
+}
+/** Set Nombre Entidad Facturada */
+public void setNombreCli (String NombreCli)
+{
+if (NombreCli != null && NombreCli.length() > 40)
+{
+log.warning("Length > 40 - truncated");
+NombreCli = NombreCli.substring(0,40);
+}
+set_Value ("NombreCli", NombreCli);
+}
+/** Get Nombre Entidad Facturada */
+public String getNombreCli() 
+{
+return (String)get_Value("NombreCli");
+}
+/** Set Nro Identificacion del Cliente.
+Número de DNI, Cédula, Libreta de Enrolamiento, Pasaporte o Libreta Cívica del cliente. */
+public void setNroIdentificCliente (String NroIdentificCliente)
+{
+if (NroIdentificCliente != null && NroIdentificCliente.length() > 120)
+{
+log.warning("Length > 120 - truncated");
+NroIdentificCliente = NroIdentificCliente.substring(0,120);
+}
+set_Value ("NroIdentificCliente", NroIdentificCliente);
+}
+/** Get Nro Identificacion del Cliente.
+Número de DNI, Cédula, Libreta de Enrolamiento, Pasaporte o Libreta Cívica del cliente. */
+public String getNroIdentificCliente() 
+{
+return (String)get_Value("NroIdentificCliente");
 }
 public static final int PAY_BPARTNER_ID_AD_Reference_ID = MReference.getReferenceID("C_BPartner (No Summary)");
 /** Set Payment BPartner.

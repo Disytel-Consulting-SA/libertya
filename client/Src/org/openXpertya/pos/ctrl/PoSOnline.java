@@ -1175,6 +1175,13 @@ public class PoSOnline extends PoSConnectionState {
 				.getPaymentTerm().getId() : getPoSCOnfig().getPaymentTermID(); 
 		mo.setC_PaymentTerm_ID(paymentTermID);
 		
+		String cuit = partner.getTaxID();
+		mo.setCUIT(cuit);
+
+		mo.setNombreCli(order.getBusinessPartner().getCustomerName());
+		mo.setInvoice_Adress(order.getBusinessPartner().getCustomerAddress());
+		mo.setNroIdentificCliente(order.getBusinessPartner().getCustomerIdentification());
+		
 		debug("Guardando el Pedido (Encabezado, sin líneas aún)");
 		throwIfFalse(mo.save(), mo);
 		

@@ -628,7 +628,7 @@ public class MInOutLine extends X_M_InOutLine {
 				orderLineQtyReserved = DB
 						.getSQLValueBD(
 								get_TrxName(),
-								"SELECT qtyreserved FROM c_orderline WHERE c_orderline_id = ?",
+								"SELECT qtyordered-qtydelivered-qtytransferred FROM c_orderline WHERE c_orderline_id = ?",
 								getC_OrderLine_ID());
 			}
 			if (storage.getQtyOnHand().subtract(storage.getQtyReserved())

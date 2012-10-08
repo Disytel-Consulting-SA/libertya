@@ -6252,6 +6252,7 @@ public class PoSMainForm extends CPanel implements FormPanel, ASyncProcess, Disp
 		setProcessing(processing);
 		getCGeneralDiscountPercText().setReadWrite(!processing);
 		getCClientText().setReadWrite(!processing);
+		getCFinishPayButton().setReadWrite(!processing);
 		this.repaint();
 	}
 }  //  @jve:decl-index=0:visual-constraint="10,10"
