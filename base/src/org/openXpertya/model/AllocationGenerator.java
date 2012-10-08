@@ -10,7 +10,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Properties;
 
-import org.jacorb.trading.constraint.DoubleValue;
 import org.openXpertya.process.DocAction;
 import org.openXpertya.util.CLogger;
 import org.openXpertya.util.DB;
