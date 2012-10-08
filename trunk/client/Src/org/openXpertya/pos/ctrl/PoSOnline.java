@@ -3282,6 +3282,7 @@ public class PoSOnline extends PoSConnectionState {
 //			}
 			
 			
+			
 			InvoiceGlobalVoiding voidingProcess = new InvoiceGlobalVoiding(
 					invoice.getC_Invoice_ID(), getCtx(), trxName);
 			voidingProcess.setControlMoreDebitsInAllocation(false);
@@ -3292,6 +3293,8 @@ public class PoSOnline extends PoSConnectionState {
 		} catch (Exception e) {
 			Trx.getTrx(trxName).rollback();
 			throw new PosException(Msg.parseTranslation(getCtx(), e.getMessage()));
+		} finally {
+			Trx.getTrx(trxName).close();
 		}
 	}
 	
