@@ -183,6 +183,18 @@ public class MDocType extends X_C_DocType {
     /** Saldo Inicial Cliente = SIC (Saldo Inicial Cliente) */
     public static final String DOCTYPE_Saldo_Inicial_Cliente = "SIC";
     
+    /** Saldo Inicial Proveedor = SIP (Saldo Inicial Proveedor Crédito) */
+    public static final String DOCTYPE_Saldo_Inicial_Proveedor_Credito = "SIPC";
+    
+    /** Saldo Inicial Cliente = SIC (Saldo Inicial Cliente Crédito) */
+    public static final String DOCTYPE_Saldo_Inicial_Cliente_Credito = "SICC";
+    
+    /** Pedido Transferible = SOSOT (Pedido Transferible) */
+    public static final String DOCTYPE_Pedido_Transferible = "SOSOT";
+    
+    /** Pedido Transferido = SOSOTD (Pedido Transferido) */
+    public static final String DOCTYPE_Pedido_Transferido = "SOSOTD";
+    
     /**
      *      Standard Constructor
      *      @param ctx context

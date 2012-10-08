@@ -97,7 +97,9 @@ public class MInOut extends X_M_InOut implements DocAction {
         MOrderLine[] oLines = order.getLines( true,"M_Product_ID" );
         JOptionPane.showInputDialog("Estoy en MInout antes del for"+oLines.length);
         for( int i = 0;i < oLines.length;i++ ) {
-            BigDecimal qty = oLines[ i ].getQtyOrdered().subtract( oLines[ i ].getQtyDelivered());
+			BigDecimal qty = oLines[i].getQtyOrdered()
+					.subtract(oLines[i].getQtyDelivered())
+					.subtract(oLines[i].getQtyTransferred());
             JOptionPane.showInputDialog("Estoy en MInout y qty="+qty);
             // Nothing to deliver
 
@@ -2067,7 +2069,7 @@ public class MInOut extends X_M_InOut implements DocAction {
              * TPV Performance: no actualizar las cantidades via modelo, usar UPDATEs directos 
              */
 //            MOrderLine ol = null;
-        	BigDecimal ol_qtyOrdered = null, ol_qtyReserved = null, ol_qtyDelivered = null;
+        	BigDecimal ol_qtyOrdered = null, ol_qtyReserved = null, ol_qtyDelivered = null, ol_qtyTransferred = null;
         	int ol_attsetinstanceID = -1;
         	boolean ol_ok = false;
         	Timestamp ol_dateDelivered = null;
@@ -2075,7 +2077,7 @@ public class MInOut extends X_M_InOut implements DocAction {
             if( sLine.getC_OrderLine_ID() != 0 ) {
                 
             	try    	{
-	                String sql = " SELECT qtyOrdered, qtyReserved, qtyDelivered, M_AttributeSetInstance_ID " +
+	                String sql = " SELECT qtyOrdered, qtyReserved, qtyDelivered, M_AttributeSetInstance_ID, qtyTransferred " +
 	                				" FROM C_OrderLine WHERE C_OrderLine_ID = " + sLine.getC_OrderLine_ID();
 	                PreparedStatement stmt =  DB.prepareStatement(sql , get_TrxName());
 	                ResultSet rs = stmt.executeQuery();
@@ -2086,6 +2088,7 @@ public class MInOut extends X_M_InOut implements DocAction {
 	                	ol_qtyReserved = rs.getBigDecimal(2);
 	                	ol_qtyDelivered = rs.getBigDecimal(3);
 	                	ol_attsetinstanceID = rs.getInt(4);
+	                	ol_qtyTransferred = rs.getBigDecimal(5);
 	                }
             	}
             	catch (Exception e)	{
@@ -2099,9 +2102,9 @@ public class MInOut extends X_M_InOut implements DocAction {
                     QtySO = sLine.getMovementQty();
 					if ((MovementType.endsWith("-") && QtySO.signum() >= 0)
 							|| (MovementType.endsWith("+") && QtySO.signum() < 0)){
-	                    if (ol_qtyOrdered.subtract(ol_qtyDelivered).subtract(sLine.getMovementQty().abs()).compareTo(Env.ZERO) < 0) {
+	                    if (ol_qtyOrdered.subtract(ol_qtyDelivered).subtract(ol_qtyTransferred).subtract(sLine.getMovementQty().abs()).compareTo(Env.ZERO) < 0) {
 	                    	m_processMsg = Msg.translate(getCtx(), "MovementGreaterThanOrder");
-	                    	return DocAction.STATUS_Invalid; 
+	                    	return DocAction.STATUS_Invalid;
 	                    }
                     }
                     else{
@@ -2131,7 +2134,7 @@ public class MInOut extends X_M_InOut implements DocAction {
 
                 //
 
-                if( sLine.getM_AttributeSetInstance_ID() == 0 ) {
+//                if( sLine.getM_AttributeSetInstance_ID() == 0 ) {
                     MInOutLineMA mas[] = MInOutLineMA.get( getCtx(),sLine.getM_InOutLine_ID(),get_TrxName());
 
                     for( int j = 0;j < mas.length;j++ ) {
@@ -2201,7 +2204,7 @@ public class MInOut extends X_M_InOut implements DocAction {
                             return DocAction.STATUS_Invalid;
                         }
                     }
-                }
+//                }
 
                 // sLine.getM_AttributeSetInstance_ID() != 0
 
@@ -2244,10 +2247,10 @@ public class MInOut extends X_M_InOut implements DocAction {
                 if( ol_ok ) {    // other in VMatch.createMatchRecord
                 	if(isSOTrx()){
                 		if(MovementType.endsWith("+")){
-                			ol_qtyReserved = ol_qtyReserved.add(sLine.getMovementQty());
+                			ol_qtyReserved = ol_qtyReserved.add(sLine.getMovementQty()).add((ol_qtyTransferred));
                 		}
                 		else{
-                			ol_qtyReserved = ol_qtyReserved.subtract( sLine.getMovementQty());
+                			ol_qtyReserved = ol_qtyReserved.subtract( sLine.getMovementQty()).subtract(ol_qtyTransferred);
                 		}
 						// Si es un remito creado desde el TPV entonces se
 						// anulan las cantidades reservadas a setear en el
@@ -2262,10 +2265,10 @@ public class MInOut extends X_M_InOut implements DocAction {
                 	}
                 	else{
                 		if(MovementType.endsWith("+")){
-                			ol_qtyReserved = ol_qtyReserved.subtract( sLine.getMovementQty());
+                			ol_qtyReserved = ol_qtyReserved.subtract( sLine.getMovementQty()).subtract((ol_qtyTransferred));
                 		}
                 		else{
-                			ol_qtyReserved = ol_qtyReserved.add( sLine.getMovementQty());
+                			ol_qtyReserved = ol_qtyReserved.add( sLine.getMovementQty()).add((ol_qtyTransferred));
                 		}
                 	}
                 } 
@@ -2439,17 +2442,14 @@ public class MInOut extends X_M_InOut implements DocAction {
      */
 
     private void checkMaterialPolicy() {
-        
-    	
-
-    	
     	//Cambiado por JorgeV - Disytel para mejorar la performance 
     	int no = 0; //MInOutLineMA.deleteInOutMA( getM_InOut_ID(),get_TrxName());
 
         // Incoming Trx
 
         String  MovementType = getMovementType();
-        boolean inTrx        = MovementType.charAt( 1 ) == '+';    // V+ Vendor Receipt
+        boolean inTrx        = MovementType.endsWith("+");    // V+ Vendor Receipt, C+ Devolución de cliente
+        boolean inTrxAux = inTrx;
         MClient client       = MClient.get( getCtx());
 
         // Check Lines
@@ -2466,12 +2466,15 @@ public class MInOut extends X_M_InOut implements DocAction {
             
             boolean    needSave = false;
             MProduct   product  = line.getProduct();
-
+			// Es una transacción de entrada cuando el tipo de movimiento es de
+			// entrada y la cantidad de la línea es positiva
+            inTrxAux = inTrx && line.getMovementQty().signum() >= 0;
+            
             // Need to have Location
 
             if( (product != null) && (line.getM_Locator_ID() == 0) ) {
                 line.setM_Warehouse_ID( getM_Warehouse_ID());
-                line.setM_Locator_ID( inTrx
+                line.setM_Locator_ID( inTrxAux
                                       ?Env.ZERO
                                       :line.getMovementQty());    // default Locator
                 needSave = true;
@@ -2480,9 +2483,14 @@ public class MInOut extends X_M_InOut implements DocAction {
             // Attribute Set Instance
 
             if( (product != null) && (line.getM_AttributeSetInstance_ID() == 0) ) {
-                if( inTrx ) {
+                if( inTrxAux ) {
                 	// FIXME Se asignaba un attributesetInstance nuevo cada vez que se completaba un remito de Compras.
                 	// Modificar cuando se verifique si esto es correcto.
+                	// Esto se realiza para la política de entrega de materiales
+					// Cuando se deba chequear y verificar que la política
+					// funcione correctamente, se debe buscar otro mecanismo
+					// para registrar el histórico de registro de mercadería y
+					// la posterior por FIFO o LIFO 
 //                    MAttributeSetInstance asi = new MAttributeSetInstance( getCtx(),0,get_TrxName());
 //
 //                    asi.setClientOrg( getAD_Client_ID(),0 );
@@ -2506,45 +2514,24 @@ public class MInOut extends X_M_InOut implements DocAction {
 
                     MStorage[] storages = MStorage.getAll( getCtx(),line.getM_Product_ID(),line.getM_Locator_ID(),MClient.MMPOLICY_FiFo.equals( MMPolicy ),get_TrxName());
                     BigDecimal qtyToDeliver = line.getMovementQty();
-
+                    BigDecimal qtyAux = BigDecimal.ZERO;
                     for( int ii = 0;ii < storages.length;ii++ ) {
                         MStorage storage = storages[ ii ];
 
-                        if( ii == 0 ) {
-                            if( storage.getQtyOnHand().compareTo( qtyToDeliver ) >= 0 ) {
-                                line.setM_AttributeSetInstance_ID( storage.getM_AttributeSetInstance_ID());
-                                needSave = true;
-                                log.config( "Direct - " + line );
-                                qtyToDeliver = Env.ZERO;
-                            } else {
-                                log.config( "Split - " + line );
-
-                                MInOutLineMA ma = new MInOutLineMA( line,storage.getM_AttributeSetInstance_ID(),storage.getQtyOnHand());
-
-                                if( !ma.save()) {
-                                    ;
-                                }
-
-                                qtyToDeliver = qtyToDeliver.subtract( storage.getQtyOnHand());
-                                log.fine( "#" + ii + ": " + ma + ", QtyToDeliver=" + qtyToDeliver );
-                            }
-                        } else    // create addl material allocation
-                        {
-                            MInOutLineMA ma = new MInOutLineMA( line,storage.getM_AttributeSetInstance_ID(),qtyToDeliver );
-
-                            if( storage.getQtyOnHand().compareTo( qtyToDeliver ) >= 0 ) {
-                                qtyToDeliver = Env.ZERO;
-                            } else {
-                                ma.setMovementQty( storage.getQtyOnHand());
-                                qtyToDeliver = qtyToDeliver.subtract( storage.getQtyOnHand());
-                            }
-
-                            if( !ma.save()) {
-                                ;
-                            }
-
-                            log.fine( "#" + ii + ": " + ma + ", QtyToDeliver=" + qtyToDeliver );
+                        if( storage.getQtyOnHand().compareTo( qtyToDeliver ) >= 0 ) {
+                        	qtyAux = qtyToDeliver;
                         }
+                        else{
+                        	qtyAux = storage.getQtyOnHand();
+                        }
+                        
+                        MInOutLineMA ma = new MInOutLineMA( line,storage.getM_AttributeSetInstance_ID(),qtyAux);
+
+                        if( !ma.save()) {
+                            ;
+                        }
+                        
+                        qtyToDeliver = qtyToDeliver.subtract(qtyAux);
 
                         if( qtyToDeliver.signum() == 0 ) {
                             break;
@@ -3017,7 +3004,7 @@ public class MInOut extends X_M_InOut implements DocAction {
 				.append("(C_Order.C_Order_ID IN ")
 				.append("(SELECT ol.C_Order_ID ")
 				.append("FROM C_OrderLine ol ")
-				.append("WHERE ol.QtyOrdered > ol.QtyDelivered) ")
+				.append("WHERE ol.QtyOrdered > (ol.QtyDelivered+ol.QtyTransferred)) ")
 				.append("OR ")
 				.append("(C_Order.IsSOTrx='Y' AND POSITION('+' IN '")
 				.append(inout.getMovementType()).append("') > 0)")

@@ -36,11 +36,13 @@ import org.openXpertya.model.DiscountCalculator.IDocumentLine;
 import org.openXpertya.process.DocAction;
 import org.openXpertya.process.DocumentEngine;
 import org.openXpertya.process.ProcessInfo;
+import org.openXpertya.util.CLogger;
 import org.openXpertya.util.DB;
 import org.openXpertya.util.Env;
 import org.openXpertya.util.MProductCache;
 import org.openXpertya.util.Msg;
 import org.openXpertya.util.StringUtil;
+import org.openXpertya.util.Util;
 
 /**
  * Descripción de Clase
@@ -668,6 +670,10 @@ public class MOrder extends X_C_Order implements DocAction {
         Timestamp today = Env.getDate();
         boolean updatePrices = otherOrder.isExpiredProposal(today);
         
+        MDocType docType = MDocType.get(getCtx(), getC_DocTypeTarget_ID(), get_TrxName());
+		boolean isOrderTransferred = docType.getDocTypeKey().equalsIgnoreCase(
+				MDocType.DOCTYPE_Pedido_Transferible);
+        
         for( int i = 0;i < fromLines.length;i++ ) {
             MOrderLine line = new MOrderLine( this );
 
@@ -702,6 +708,16 @@ public class MOrder extends X_C_Order implements DocAction {
             line.setDateDelivered( null );
             line.setDateInvoiced( null );
 
+			// Si el tipo de doc del pedido es transferible, entonces la
+			// cantidad de la línea es lo pendiente a entregar y la cantidad
+			// facturada es el total ya que no se puede facturar.
+            // Se fuerza el seteo de la línea de pedido origen
+            if(isOrderTransferred){
+            	line.setQty(fromLines[i].getPendingDeliveredQty());
+            	line.setQtyInvoiced(line.getQtyOrdered());
+            	line.setRef_OrderLine_ID(fromLines[i].getC_OrderLine_ID());
+            }
+            
             // Tax
 
             if( getC_BPartner_ID() != otherOrder.getC_BPartner_ID()) {
@@ -1364,6 +1380,24 @@ public class MOrder extends X_C_Order implements DocAction {
         } else {
         	setValidTo(null);
         }
+        
+		// Para pedidos transferibles la organización no debe ser igual a la
+		// organización destino y el almacén tampoco debe ser el mismo
+        MDocType docType = MDocType.get(getCtx(), getC_DocTypeTarget_ID(), get_TrxName());
+		boolean isOrderTransferred = docType.getDocTypeKey()
+				.equalsIgnoreCase(MDocType.DOCTYPE_Pedido_Transferible);
+		if(isOrderTransferred){
+			// Organización
+			if(getAD_Org_ID() == getAD_Org_Transfer_ID()){
+				log.saveError("OrderTransferredEqualOrg", "");
+				return false;
+			}
+			// Almacén
+			if(getM_Warehouse_ID() == getM_Warehouse_Transfer_ID()){
+				log.saveError("OrderTransferredEqualWarehouse", "");
+				return false;
+			}
+		}
 
         return true;
     }    // beforeSave
@@ -1787,7 +1821,10 @@ public class MOrder extends X_C_Order implements DocAction {
         */
         
         //Ader, Mejora II: reservación de stock mejorada
-        if( !reserveStockII( dt )) {
+		boolean isOrderTransferred = dt.getDocTypeKey().equalsIgnoreCase(
+				MDocType.DOCTYPE_Pedido_Transferible);
+		// Para pedidos transferidos no se debe reservar stock
+        if(!isOrderTransferred && !reserveStockII( dt )) {
             m_processMsg = "@CannotReserveStock@";
             return DocAction.STATUS_Invalid;
         }
@@ -1951,14 +1988,14 @@ public class MOrder extends X_C_Order implements DocAction {
          */
         boolean ol_ok = false;
         int ol_M_Warehouse_ID = -1, ol_AD_Org_ID = -1, ol_Line = -1, ol_M_Product_ID = -1, ol_M_AttributeSetInstance_ID = -1;
-        BigDecimal ol_QtyOrdered = null, ol_QtyReserved = null, ol_QtyDelivered = null;
+        BigDecimal ol_QtyOrdered = null, ol_QtyReserved = null, ol_QtyDelivered = null, ol_QtyTransferred = null;
         
         for( int i = 0;i < orderLineIDs.length;i++ ) {
             int anOrderLineID = orderLineIDs[ i ];
 
         		try    	{
         			String sql = " SELECT M_Warehouse_ID, AD_Org_ID, Line, M_Product_ID, M_AttributeSetInstance_ID, " +
-        							" QtyOrdered, QtyReserved, QtyDelivered FROM C_OrderLine WHERE C_OrderLine_ID = " + anOrderLineID;
+        							" QtyOrdered, QtyReserved, QtyDelivered, QtyTransferred FROM C_OrderLine WHERE C_OrderLine_ID = " + anOrderLineID;
         			PreparedStatement stmt =  DB.prepareStatement(sql , get_TrxName());
         			ResultSet rs = stmt.executeQuery();
         			if (rs.next())
@@ -1972,6 +2009,7 @@ public class MOrder extends X_C_Order implements DocAction {
 	                	ol_QtyOrdered = rs.getBigDecimal(6);
 	                	ol_QtyReserved = rs.getBigDecimal(7);
 	                	ol_QtyDelivered = rs.getBigDecimal(8);
+	                	ol_QtyTransferred = rs.getBigDecimal(9);
         			}
         		}
 	        	catch (Exception e)	{
@@ -1997,7 +2035,7 @@ public class MOrder extends X_C_Order implements DocAction {
             BigDecimal target     = binding
                                     ?ol_QtyOrdered
                                     :Env.ZERO;
-            BigDecimal difference = target.subtract( ol_QtyReserved).subtract( ol_QtyDelivered);
+            BigDecimal difference = target.subtract(ol_QtyReserved).subtract(ol_QtyDelivered).subtract(ol_QtyTransferred);
             
             
 
@@ -3042,7 +3080,8 @@ public class MOrder extends X_C_Order implements DocAction {
     public String completeIt() {
         MDocType dt           = MDocType.get( getCtx(),getC_DocType_ID());
         String   DocSubTypeSO = dt.getDocSubTypeSO();
-        
+        boolean isOrderTransferred = dt.getDocTypeKey().equalsIgnoreCase(
+				MDocType.DOCTYPE_Pedido_Transferible);
         // Just prepare
         
         MOrderLine[] lines = getLines( false );
@@ -3227,7 +3266,7 @@ public class MOrder extends X_C_Order implements DocAction {
         MDocType docTarget = MDocType.get(this.p_ctx, this.getC_DocTypeTarget_ID());
         
         // Si es un pedido de cliente
-        if(docTarget.getDocTypeKey().equals("SOSO")){
+        if(docTarget.getDocTypeKey().equals(MDocType.DOCTYPE_StandarOrder)){
         	// Itero por las líneas del pedido verificando los artículos de venta
         	for (MOrderLine orderLine : lines) {
 				//MProduct lineProduct = MProduct.get(this.getCtx(),orderLine.getM_Product_ID());
@@ -3244,6 +3283,48 @@ public class MOrder extends X_C_Order implements DocAction {
 				}
 			}
         }
+
+        // Para pedidos transferidos, se debe controlar que la cantidad de
+		// la línea no supere el pendiente a entregar del pedido original
+		// relacionado y setear la cantidad transferida a la pedida
+        if (isOrderTransferred){
+			int locatorID = MWarehouse.getDefaultLocatorID(getM_Warehouse_ID(),
+					get_TrxName());
+	    	for (MOrderLine orderLine : lines) {
+				if (!Util.isEmpty(orderLine.getRef_OrderLine_ID(), true)) {
+					MOrderLine refOrderLine = new MOrderLine(getCtx(),
+							orderLine.getRef_OrderLine_ID(), get_TrxName());
+					if (orderLine.getQtyOrdered().compareTo(
+							refOrderLine.getPendingDeliveredQty()) > 0) {
+						m_processMsg = "@QtyOrderedSurpassOrigLineQtyReserved@";
+						return DocAction.STATUS_Invalid;
+					}
+					// Setear la cantidad transferida para que no se pueda remitir
+					orderLine.setQtyTransferred(orderLine.getQtyOrdered());
+					if(!orderLine.save()){
+						m_processMsg = CLogger.retrieveErrorAsString();
+						return DocAction.STATUS_Invalid;
+					}
+					// Setear la cantidad transferida a la línea original
+					refOrderLine.setQtyTransferred(orderLine.getQtyOrdered());
+					if(!refOrderLine.save()){
+						m_processMsg = CLogger.retrieveErrorAsString();
+						return DocAction.STATUS_Invalid;
+					}
+					// Desreservar el stock del pedido original si el artículo se stockea
+					if (MProduct.isProductStocked(getCtx(),
+							orderLine.getM_Product_ID())
+							&& !MStorage.add(getCtx(), getM_Warehouse_ID(), locatorID,
+									orderLine.getM_Product_ID(), 0, 0, BigDecimal.ZERO,
+									orderLine.getQtyOrdered().negate(),
+									BigDecimal.ZERO,
+									get_TrxName())) {
+						m_processMsg = "@CannotReserveStock@";
+		                 return DocAction.STATUS_Invalid;
+					}
+		        }
+	    	}
+    	}
 
         setProcessed( true );
         m_processMsg = info.toString();
@@ -3622,6 +3703,19 @@ public class MOrder extends X_C_Order implements DocAction {
      */
 
     public boolean voidIt() {
+    	MDocType dt = MDocType.get( getCtx(),getC_DocType_ID());
+    	boolean isOrderTransferred = dt.getDocTypeKey().equalsIgnoreCase(
+				MDocType.DOCTYPE_Pedido_Transferible);
+    	int locatorID = 0;
+    	// El pedido transferible ya fue transferido, no se puede anular
+    	if(isOrderTransferred){
+    		locatorID = MWarehouse.getDefaultLocatorID(getM_Warehouse_ID(), get_TrxName());
+    		if(isTransferred()){
+	    		m_processMsg = "@TransferableDocVoidNotAllowed@";
+	    		return false;
+    		}
+    	}
+    	
         MOrderLine[] lines = getLines( true,"M_Product_ID" );
 
         log.info( toString());
@@ -3630,6 +3724,24 @@ public class MOrder extends X_C_Order implements DocAction {
             MOrderLine line = lines[ i ];
             BigDecimal old  = line.getQtyOrdered();
 
+            // Si el pedido es transferible, se deben decrementar las cantidades
+    		// transferidas del pedido original e incrementar la cantidad pedida y
+    		// reservada del stock
+            if(isOrderTransferred){
+				DB.executeUpdate(
+						"UPDATE c_orderline SET qtytransferred = qtytransferred-"+String.valueOf(old)+" WHERE c_orderline_id = "
+								+ line.getRef_OrderLine_ID(), get_TrxName());
+				
+				// Reservar el stock del pedido original si el artículo se stockea
+				if (MProduct.isProductStocked(getCtx(), line.getM_Product_ID())
+						&& !MStorage.add(getCtx(), getM_Warehouse_ID(), locatorID,
+								line.getM_Product_ID(), 0, 0, BigDecimal.ZERO,
+								old, BigDecimal.ZERO, get_TrxName())) {
+					m_processMsg = "@CannotReserveStock@";
+                    return false;
+				}
+            }
+            
             if( old.compareTo( Env.ZERO ) != 0 ) {
                 line.addDescription( Msg.getMsg( getCtx(),"Voided" ) + " (" + old + ")" );
                 line.setQty( Env.ZERO );
@@ -3650,7 +3762,7 @@ public class MOrder extends X_C_Order implements DocAction {
 
         if( !createReversals()) {
             return false;
-        }
+        } 
 
         setProcessed( true );
         setDocAction( DOCACTION_None );

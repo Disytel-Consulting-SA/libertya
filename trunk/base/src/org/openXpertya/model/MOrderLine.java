@@ -1062,7 +1062,7 @@ public class MOrderLine extends X_C_OrderLine {
 	 * @return la diferencia entre la cantidad pedida y la cantidad entregada
 	 */
     public BigDecimal getPendingDeliveredQty(){
-    	return getQtyOrdered().subtract(getQtyDelivered());
+    	return getQtyOrdered().subtract(getQtyDelivered()).subtract(getQtyTransferred());
     }
 
 	/**

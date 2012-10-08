@@ -306,7 +306,7 @@ public class CalloutOrder extends CalloutEngine {
 
         setCalloutActive( true );
 
-        String sql = "SELECT p.AD_Language,p.C_PaymentTerm_ID," + "p.M_PriceList_ID,p.PaymentRule,p.POReference," + "p.SO_Description,p.IsDiscountPrinted," + "p.InvoiceRule,p.DeliveryRule,p.FreightCostRule,DeliveryViaRule," + "p.SO_CreditLimit, p.SO_CreditLimit-p.SO_CreditUsed AS CreditAvailable," + "lship.C_BPartner_Location_ID,c.AD_User_ID," + "p.PO_PriceList_ID, p.PaymentRulePO, p.PO_PaymentTerm_ID," + "lbill.C_BPartner_Location_ID AS Bill_Location_ID, p.SOCreditStatus " + "FROM C_BPartner p" + " LEFT OUTER JOIN C_BPartner_Location lbill ON (p.C_BPartner_ID=lbill.C_BPartner_ID AND lbill.IsBillTo='Y' AND lbill.IsActive='Y')" + " LEFT OUTER JOIN C_BPartner_Location lship ON (p.C_BPartner_ID=lship.C_BPartner_ID AND lship.IsShipTo='Y' AND lship.IsActive='Y')" + " LEFT OUTER JOIN AD_User c ON (p.C_BPartner_ID=c.C_BPartner_ID) " + "WHERE p.C_BPartner_ID=? AND p.IsActive='Y'";    // #1
+        String sql = "SELECT p.AD_Language,p.C_PaymentTerm_ID," + "p.M_PriceList_ID,p.PaymentRule,p.POReference," + "p.SO_Description,p.IsDiscountPrinted," + "p.InvoiceRule,p.DeliveryRule,p.FreightCostRule,DeliveryViaRule," + "p.SO_CreditLimit, p.SO_CreditLimit-p.SO_CreditUsed AS CreditAvailable," + "lship.C_BPartner_Location_ID,c.AD_User_ID," + "p.PO_PriceList_ID, p.PaymentRulePO, p.PO_PaymentTerm_ID," + "lbill.C_BPartner_Location_ID AS Bill_Location_ID, p.SOCreditStatus, C_Categoria_Iva_ID " + "FROM C_BPartner p" + " LEFT OUTER JOIN C_BPartner_Location lbill ON (p.C_BPartner_ID=lbill.C_BPartner_ID AND lbill.IsBillTo='Y' AND lbill.IsActive='Y')" + " LEFT OUTER JOIN C_BPartner_Location lship ON (p.C_BPartner_ID=lship.C_BPartner_ID AND lship.IsShipTo='Y' AND lship.IsActive='Y')" + " LEFT OUTER JOIN AD_User c ON (p.C_BPartner_ID=c.C_BPartner_ID) " + "WHERE p.C_BPartner_ID=? AND p.IsActive='Y'";    // #1
         boolean IsSOTrx = "Y".equals( Env.getContext( ctx,WindowNo,"IsSOTrx" ));
 
         try {
@@ -410,6 +410,14 @@ public class CalloutOrder extends CalloutEngine {
                         if( !rs.wasNull() && (CreditAvailable < 0) ) {
                             mTab.fireDataStatusEEvent( "CreditLimitOver",DisplayType.getNumberFormat( DisplayType.Amount ).format( CreditAvailable ));
                         }
+                    }
+                    
+                    Integer categoriaIva = rs.getInt("C_Categoria_Iva_ID");
+    				
+    				// Se setea el codigo de iva del bPartner en el contexto
+                    if(!Util.isEmpty(categoriaIva, true)){
+                    	int codigoIva =  MCategoriaIva.getCodigo(categoriaIva, null);
+        				Env.setContext(ctx, WindowNo, "CodigoCategoriaIVA", codigoIva);
                     }
                 }
 

@@ -21,7 +21,11 @@ import java.util.logging.Level;
 
 import javax.swing.JOptionPane;
 
+import org.openXpertya.model.MDocType;
+import org.openXpertya.model.MInvoice;
 import org.openXpertya.model.MOrder;
+import org.openXpertya.model.PO;
+import org.openXpertya.util.CLogger;
 
 /**
  * Descripción de Clase
@@ -35,8 +39,12 @@ public class CopyFromOrder extends SvrProcess {
 
     /** Descripción de Campos */
 
-    private int p_C_Order_ID = 0;
+    protected int p_C_Order_ID = 0;
 
+    protected int p_C_Invoice_ID = 0;
+    
+    protected boolean copyHeader = false;
+    
     /**
      * Descripción de Método
      *
@@ -53,7 +61,11 @@ public class CopyFromOrder extends SvrProcess {
                 ;
             } else if( name.equals( "C_Order_ID" )) {
                 p_C_Order_ID = (( BigDecimal )para[ i ].getParameter()).intValue();
-            } else {
+            } else if( name.equals( "C_Invoice_ID" )) {
+                p_C_Invoice_ID = (( BigDecimal )para[ i ].getParameter()).intValue();
+            } else if( name.equals( "CopyHeader" )) {
+                copyHeader = ((String)para[i].getParameter()).equalsIgnoreCase("Y"); 
+        	} else {
                 log.log( Level.SEVERE,"Unknown Parameter: " + name );
             }
         }
@@ -77,6 +89,13 @@ public class CopyFromOrder extends SvrProcess {
         if( To_C_Order_ID == 0 ) {
             throw new IllegalArgumentException( "Target C_Order_ID == 0" );
         }
+        
+        // Buscar el pedido de la factura
+        MInvoice invoice = null;
+        if(p_C_Invoice_ID != 0 && p_C_Order_ID == 0){
+        	invoice = new MInvoice(getCtx(), p_C_Invoice_ID, get_TrxName());
+        	p_C_Order_ID = invoice.getC_Order_ID();
+        }
 
         if( p_C_Order_ID == 0 ) {
             throw new IllegalArgumentException( "Source C_Order_ID == 0" );
@@ -85,7 +104,22 @@ public class CopyFromOrder extends SvrProcess {
         MOrder from = new MOrder( getCtx(),p_C_Order_ID,get_TrxName());
         MOrder to   = new MOrder( getCtx(),To_C_Order_ID,get_TrxName());
 
-        //
+        // Copiar la cabecera si así lo requiere
+        if(copyHeader){
+			// Datos a setear luego de la copia de campos
+        	Integer docTypeID = to.getC_DocTypeTarget_ID();
+        	String docAction = to.getDocAction();
+        	String docStatus = to.getDocStatus();
+        	PO.copyValues(from, to);
+        	to.setC_DocTypeTarget_ID(docTypeID);
+        	to.setDocStatus(docStatus);
+        	to.setDocAction(docAction);
+        	to.setProcessed(false);
+        	to.setRef_Order_ID(from.getC_Order_ID());
+        	if(!to.save()){
+        		throw new Exception(CLogger.retrieveErrorAsString());
+        	}
+        }
 
         int no = to.copyLinesFrom( from,false,false );    // no Attributes
 
