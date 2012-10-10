@@ -2843,9 +2843,9 @@ public class MInvoice extends X_C_Invoice implements DocAction {
 
 		// Setear el crédito
 
-		if ((processAction.equals(MInvoice.DOCACTION_Complete)
-				|| processAction.equals(MInvoice.DOCACTION_Reverse_Correct) || processAction
-				.equals(MInvoice.DOCACTION_Void)) && status) {
+		if ((MInvoice.DOCACTION_Complete.equals(processAction)
+				|| MInvoice.DOCACTION_Reverse_Correct.equals(processAction) || MInvoice.DOCACTION_Void
+				.equals(processAction)) && status) {
 
 			// Guardar la factura con el nuevo estado a fin de recalcular
 			// correctamente el credito disponible
