@@ -500,7 +500,7 @@ public class DB_PostgreSQL implements BaseDatosOXP {
         // Establecemos el numero maximo de conexiones
    //     ds.setMaxConnections(10);
   //      ds.setInitialConnections(1);
-        ds.setSocketTimeout(30);
+        ds.setSocketTimeout(0);
     	
         // new InitialContext().rebind("DataSource", source);
         m_ds	= ds;
