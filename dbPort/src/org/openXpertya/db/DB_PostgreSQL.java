@@ -227,22 +227,21 @@ public class DB_PostgreSQL implements BaseDatosOXP {
     /**
      *      Close
      */
-    public void close() {
+    public synchronized void close() {
 
         log.config(toString());
 
         if (m_ds != null) {
 
             try {
-            	if (m_ds.getConnection()!=null) 
-            		m_ds.getConnection().close();
+            	m_ds = null;
             } catch (Exception e) {
                 e.printStackTrace();
             }
         }
 
         m_ds	= null;
-
+        log.info(" CONEXIONES CERRADAS. trace: " + getTrace());
     }		// close
 
     /**
@@ -371,6 +370,25 @@ public class DB_PostgreSQL implements BaseDatosOXP {
 
     }		// toString
 
+    
+    protected String getTrace() {
+        StringBuffer buffer = new StringBuffer();
+        
+        for (int i=1; i< Thread.currentThread().getStackTrace().length; i++) {
+        	if (Thread.currentThread().getStackTrace()[i].getClassName().startsWith("java") || Thread.currentThread().getStackTrace()[i].getClassName().startsWith("sun") )
+        		break;
+        	buffer.append(Thread.currentThread().getStackTrace()[i].getClassName())
+        		.append(".")
+        		.append(Thread.currentThread().getStackTrace()[i].getMethodName())
+        		 .append("[")
+        		.append(Thread.currentThread().getStackTrace()[i].getLineNumber())
+        		.append("]; \n");
+        }
+        return buffer.toString();
+
+    }
+
+    
     //~--- get methods --------------------------------------------------------
 
     /**
@@ -381,7 +399,7 @@ public class DB_PostgreSQL implements BaseDatosOXP {
      *      @return Connection
      *      @throws Exception
      */
-    public Connection getCachedConnection(CConnection connection, boolean autoCommit, int transactionIsolation) throws Exception {
+    public synchronized Connection getCachedConnection(CConnection connection, boolean autoCommit, int transactionIsolation) throws Exception {
 
         if (m_ds == null) {
             getDataSource(connection);
