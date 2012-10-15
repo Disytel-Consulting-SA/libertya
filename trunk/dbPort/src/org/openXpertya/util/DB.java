@@ -108,8 +108,8 @@ public final class DB {
     /** Descripción de Campos */
 
     private static int s_conCacheSize = Ini.isClient()
-            ?3
-            :3;
+            ?1
+            :1;
 
     /** Descripción de Campos */
 
