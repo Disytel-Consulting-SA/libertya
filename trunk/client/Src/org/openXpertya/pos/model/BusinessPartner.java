@@ -38,6 +38,8 @@ public class BusinessPartner {
 	
 	private boolean percepcionLiable;
 	
+	private boolean automaticCreditNote;
+	
 	public BusinessPartner() {
 		super();
 	}
@@ -299,5 +301,13 @@ public class BusinessPartner {
 
 	public boolean isPercepcionLiable() {
 		return percepcionLiable;
+	}
+
+	public boolean isAutomaticCreditNote() {
+		return automaticCreditNote;
+	}
+
+	public void setAutomaticCreditNote(boolean automaticCreditNote) {
+		this.automaticCreditNote = automaticCreditNote;
 	}
 }

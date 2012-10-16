@@ -4502,3 +4502,6 @@ update ad_system set dummy = (SELECT addcolumnifnotexists('c_order','cuit', 'cha
 update ad_system set dummy = (SELECT addcolumnifnotexists('c_order','ad_org_transfer_id', 'integer'));
 update ad_system set dummy = (SELECT addcolumnifnotexists('c_order','m_warehouse_transfer_id', 'integer'));
 update ad_system set dummy = (SELECT addcolumnifnotexists('c_orderline','qtytransferred', 'numeric(22,4) NOT NULL DEFAULT 0'));
+
+-- 20121015-2340 Incorporación de nueva parametrización para imputación de notas de crédito automáticas
+update ad_system set dummy = (SELECT addcolumnifnotexists('c_bpartner','automaticcreditnotes', 'character(1) NOT NULL DEFAULT \'N\'::bpchar'));

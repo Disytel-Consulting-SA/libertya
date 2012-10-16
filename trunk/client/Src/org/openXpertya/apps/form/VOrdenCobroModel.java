@@ -937,6 +937,7 @@ public class VOrdenCobroModel extends VOrdenPagoModel {
 			// Completar el crédito en el caso que no requiera impresión fiscal,
 			// ya que si requieren se realiza al final del procesamiento
 			if(!needFiscalPrint(credit)){
+				credit.setSkipAutomaticCreditAllocCreation(true);
 				processDocument(credit, MInvoice.DOCACTION_Complete);
 			}
 			// Asociar como medio de pago
@@ -1518,6 +1519,7 @@ public class VOrdenCobroModel extends VOrdenPagoModel {
 		// impresión fiscal
 		for (MInvoice invoice : customInvoices) {
 			if (needFiscalPrint(invoice)) {
+				invoice.setSkipAutomaticCreditAllocCreation(true);
 				// Completar la factura
 				processDocument(invoice, MInvoice.DOCACTION_Complete);
 			}
