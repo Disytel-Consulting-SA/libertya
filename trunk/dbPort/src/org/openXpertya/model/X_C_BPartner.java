@@ -7,7 +7,7 @@ import java.math.*;
 import org.openXpertya.util.*;
 /** Modelo Generado por C_BPartner
  *  @author Comunidad de Desarrollo Libertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
- *  @version  - 2012-10-16 00:06:03.715 */
+ *  @version  - 2012-10-16 09:26:30.485 */
 public class X_C_BPartner extends org.openXpertya.model.PO
 {
 /** Constructor estándar */
@@ -16,7 +16,7 @@ public X_C_BPartner (Properties ctx, int C_BPartner_ID, String trxName)
 super (ctx, C_BPartner_ID, trxName);
 /** if (C_BPartner_ID == 0)
 {
-setAutomaticCreditNote (false);
+setAutomaticCreditNotes (false);
 setC_BPartner_ID (0);
 setC_BP_Group_ID (0);
 setCreditMinimumAmt (Env.ZERO);
@@ -143,15 +143,15 @@ public String getAD_OrgBP_ID()
 {
 return (String)get_Value("AD_OrgBP_ID");
 }
-/** Set Automatic Credit Note */
-public void setAutomaticCreditNote (boolean AutomaticCreditNote)
+/** Set Automatic Credit Notes */
+public void setAutomaticCreditNotes (boolean AutomaticCreditNotes)
 {
-set_Value ("AutomaticCreditNote", new Boolean(AutomaticCreditNote));
+set_Value ("AutomaticCreditNotes", new Boolean(AutomaticCreditNotes));
 }
-/** Get Automatic Credit Note */
-public boolean isAutomaticCreditNote() 
+/** Get Automatic Credit Notes */
+public boolean isAutomaticCreditNotes() 
 {
-Object oo = get_Value("AutomaticCreditNote");
+Object oo = get_Value("AutomaticCreditNotes");
 if (oo != null) 
 {
  if (oo instanceof Boolean) return ((Boolean)oo).booleanValue();
