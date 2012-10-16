@@ -748,4 +748,42 @@ public class PoSModel {
 	public boolean isCheckCUITControlActivated(){
 		return getConnectionState().isCheckCUITControlActivated();
 	}
+	
+	/**
+	 * @param excludeCredits
+	 *            true si se deben excluir los créditos agregados actualmente a
+	 *            la venta, false caso contrario
+	 * @return true si la entidad comercial parámetro posee créditos disponibles
+	 *         para utilizar excluyendo los créditos agregados actualmente a la
+	 *         venta en caso que así se requiera, false caso contrario
+	 */
+	public boolean hasCreditNotesAvailables(boolean excludeCredits){
+		return getConnectionState().hasCreditNotesAvailables(
+				getOrder().getBusinessPartner().getId(), excludeCredits);
+	}
+	
+	
+	public boolean hasPaymentsOf(List<String> includedTenderTypes, List<String> excludedTenderTypes){
+		// Existe cobro de los tipos de cobro incluídos
+		List<String> tenderTypes = new ArrayList<String>();
+		List<String> includedTenderTypesAux = new ArrayList<String>();
+		List<String> excludedTenderTypesAux = new ArrayList<String>();
+		String tenderType;
+		for (int i = 0; i < getOrder().getPayments().size(); i++) {
+			tenderType = getOrder().getPayments().get(i).getTenderType();
+			tenderTypes.add(tenderType);
+			if (includedTenderTypes != null
+					&& includedTenderTypes.contains(tenderType)) {
+				includedTenderTypesAux.add(tenderType);
+			}
+			if (excludedTenderTypes != null
+					&& !excludedTenderTypes.contains(tenderType)) {
+				excludedTenderTypesAux.add(tenderType);
+			}
+		}
+		return (includedTenderTypes == null || includedTenderTypesAux.size() == includedTenderTypes
+				.size())
+				&& (excludedTenderTypes == null || excludedTenderTypesAux
+						.size() > 0); 
+	}
 }

@@ -1137,6 +1137,7 @@ public class AllocationGenerator {
 			// Completar el crédito en el caso que no requiera impresión fiscal,
 			// ya que si requieren se realiza al final del procesamiento
 			if(!needFiscalPrint(credit)){
+				credit.setSkipAutomaticCreditAllocCreation(true);
 				processDocument(credit, MInvoice.DOCACTION_Complete);
 			}
 			
@@ -1248,6 +1249,7 @@ public class AllocationGenerator {
 	 *             si hubo error al realizar el procesamiento o al guardar
 	 */
 	public void processDocument(MInvoice invoice, String docAction) throws Exception{
+		invoice.setSkipAutomaticCreditAllocCreation(true);
 		// Procesar el documento
 		if(!invoice.processIt(docAction)){
 			throw new Exception(invoice.getProcessMsg());
@@ -1440,5 +1442,3 @@ public class AllocationGenerator {
 	}
 	
 }
-
-

@@ -267,5 +267,12 @@ public class PoSOffline extends PoSConnectionState {
 		// TODO Auto-generated method stub
 		return false;
 	}
+
+	@Override
+	public boolean hasCreditNotesAvailables(Integer bpartnerID,
+			boolean excludeCreditNotes) {
+		// TODO Auto-generated method stub
+		return false;
+	}
 	
 }

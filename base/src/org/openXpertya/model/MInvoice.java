@@ -96,6 +96,21 @@ public class MInvoice extends X_C_Invoice implements DocAction {
 	private boolean voidPOSJournalMustBeOpen = false; 
 	
 	/**
+	 * Bypass para no crear la imputación automática para notas de crédito
+	 * automáticas
+	 */
+	private boolean skipAutomaticCreditAllocCreation = false;
+	
+	/** Tipos de documento excluídos en la creación de nota de crédito automática */
+	private static List<String> automaticCreditDocTypesExcluded = null;
+	
+	static{
+		automaticCreditDocTypesExcluded = new ArrayList<String>();
+		automaticCreditDocTypesExcluded.add(MDocType.DOCTYPE_Retencion_Receipt);
+		automaticCreditDocTypesExcluded.add(MDocType.DOCTYPE_Retencion_ReceiptCustomer);
+	}
+	
+	/**
 	 * Descripción de Método
 	 * 
 	 * 
@@ -282,6 +297,64 @@ public class MInvoice extends X_C_Invoice implements DocAction {
 		return to;
 	} // copyFrom
 
+	/**
+	 * @param ctx
+	 * @param bpartnerID
+	 * @param isSOTrx
+	 * @param creditNotesExcluded
+	 * @param trxName
+	 * @return true si la entidad comercial parámetro posee créditos abiertos
+	 *         todavía excluyendo los créditos y montos parámetro, false caso contrario
+	 */
+	public static boolean hasCreditsOpen(Properties ctx, Integer bpartnerID, boolean isSOTrx, Map<Integer, BigDecimal> creditNotesExcluded, String trxName){
+		String docTypesOut = isSOTrx ? "'"
+				+ MDocType.DOCTYPE_Retencion_ReceiptCustomer + "'" : "'"
+				+ MDocType.DOCTYPE_Retencion_Receipt + "'";
+		String docBaseTypeCredit = isSOTrx ? "'"
+				+ MDocType.DOCBASETYPE_ARCreditMemo + "'" : "'"
+				+ MDocType.DOCBASETYPE_APCreditMemo + "'";
+		StringBuffer sql = new StringBuffer("SELECT sum(invoiceopen(c_invoice_id,0)) as open " +
+											 "FROM c_invoice as i " +
+											 "INNER JOIN c_doctype as dt ON dt.c_doctype_id = i.c_doctypetarget_id " +
+											 "WHERE i.ad_client_id = ? " +
+											 "		AND i.c_bpartner_id = ? " +
+											 "		AND dt.docbasetype = "+docBaseTypeCredit+ 
+											 "		AND dt.doctypekey NOT IN ("+docTypesOut+") ");
+		BigDecimal excludedAmt = BigDecimal.ZERO;
+		if (creditNotesExcluded != null && creditNotesExcluded.size() > 0) {
+			StringBuffer excludedCredits = new StringBuffer();
+			for (Integer creditID : creditNotesExcluded.keySet()) {
+				excludedAmt = excludedAmt.add(creditNotesExcluded.get(creditID));
+				excludedCredits.append(String.valueOf(creditID)).append(",");
+			}
+			excludedCredits = new StringBuffer(excludedCredits.substring(0,
+					excludedCredits.lastIndexOf(",")-1));
+			sql.append(" AND i.c_invoice_id NOT IN (").append(excludedCredits).append(")");
+		}
+		PreparedStatement ps = null;
+		ResultSet rs = null;
+		BigDecimal open = BigDecimal.ZERO;
+		try {
+			ps = DB.prepareStatement(sql.toString(), trxName);
+			ps.setInt(1, Env.getAD_Client_ID(ctx));
+			ps.setInt(2, bpartnerID);
+			rs = ps.executeQuery();
+			if(rs.next()){
+				open = rs.getBigDecimal("open");
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
+		} finally{
+			try {
+				if(ps != null)ps.close();
+				if(ps != null)ps.close();
+			} catch (Exception e2) {
+				e2.printStackTrace();
+			}
+		}
+		return open.subtract(excludedAmt).compareTo(BigDecimal.ZERO) > 0;
+	}
+	
 	
 	public void copyDocumentDiscounts(MInvoice from, boolean onlyTotalizedDocumentDiscounts) throws Exception{
 		List<MDocumentDiscount> discounts = MDocumentDiscount.getOfInvoice(
@@ -364,6 +437,118 @@ public class MInvoice extends X_C_Invoice implements DocAction {
 		return retValue;
 	} // get
 
+	/**
+	 * @param invoiceID
+	 * @param trxName
+	 * @return Monto sin saldar de la factura parámetro
+	 */
+	public static BigDecimal invoiceOpen(Integer invoiceID, String trxName){
+		return DB.getSQLValueBD(trxName, "SELECT invoiceopen(?,0)", invoiceID);
+	}
+	
+	/**
+	 * A partir de una factura de crédito se imputan a las facturas más viejas.
+	 * Si el pedido parámetro es distinto de null o cero, entonces sólo se
+	 * buscan las facturas sólo de ese pedido
+	 * 
+	 * @param creditInvoice
+	 * @param isCreditForReturn
+	 * @throws Exception
+	 */
+	public static void createAutomaticCreditAllocations(MInvoice creditInvoice, Integer orderID) throws Exception{
+		String docTypesOut = creditInvoice.isSOTrx() ? "'"
+				+ MDocType.DOCTYPE_Retencion_InvoiceCustomer + "'" : "'"
+				+ MDocType.DOCTYPE_Retencion_Invoice + "'";
+		String docBaseTypeDebit = creditInvoice.isSOTrx() ? "'"
+				+ MDocType.DOCBASETYPE_ARInvoice + "'" : "'"
+				+ MDocType.DOCBASETYPE_APInvoice + "'";
+		StringBuffer sql = new StringBuffer();
+		sql.append("SELECT c_invoice_id, open " +
+				   "FROM (SELECT c_invoice_id, " +
+				   "		currencyconvert(invoiceopen(c_invoice_id, 0), i.c_currency_id, ?, ?::date, 0, ?, ?) as open" +
+				   "		FROM c_invoice as i " +
+				   "		INNER JOIN c_doctype as dt on dt.c_doctype_id = i.c_doctypetarget_id " +
+				   "		WHERE c_bpartner_id = ? " +
+				   "				AND dt.docbasetype = "+docBaseTypeDebit+
+				   "				AND dt.doctypekey NOT IN ("+docTypesOut+") " +
+				   "				AND i.docstatus IN ('CO','CL') ");
+		if(!Util.isEmpty(orderID, true)){
+			sql.append(" AND c_order_id = ? ");
+		}
+		sql.append("		ORDER BY dateinvoiced) as o " +
+				   "WHERE open > 0");
+		PreparedStatement ps = DB.prepareStatement(sql.toString(), creditInvoice.get_TrxName());
+		int i = 1;
+		ps.setInt(i++, creditInvoice.getC_Currency_ID());
+		ps.setTimestamp(i++, creditInvoice.getDateInvoiced());
+		ps.setInt(i++, creditInvoice.getAD_Client_ID());
+		ps.setInt(i++, creditInvoice.getAD_Org_ID());
+		ps.setInt(i++, creditInvoice.getC_BPartner_ID());
+		if(!Util.isEmpty(orderID, true)){
+			ps.setInt(i++, orderID);
+		}
+		ResultSet rs = ps.executeQuery();
+		// Crear la cabecera de allocation
+		MAllocationHdr hdr = new MAllocationHdr(creditInvoice.getCtx(), 0, creditInvoice.get_TrxName());
+		hdr.setAllocationType(MAllocationHdr.ALLOCATIONTYPE_SalesTransaction);			
+		hdr.setRetencion_Amt(BigDecimal.ZERO);
+
+		hdr.setC_BPartner_ID(creditInvoice.getC_BPartner_ID());
+		hdr.setC_Currency_ID(creditInvoice.getC_Currency_ID());
+		Timestamp date = Env.getDate();
+		hdr.setDateAcct(date);
+		hdr.setDateTrx(date);
+		
+		hdr.setDescription("Imputacion NC Automatica");
+		hdr.setIsManual(false);
+		hdr.setDocAction(MAllocationHdr.DOCACTION_Complete);
+		hdr.setDocStatus(MAllocationHdr.DOCSTATUS_Drafted);
+		boolean hdrSaved = false;
+		BigDecimal amt = invoiceOpen(creditInvoice.getID(),
+				creditInvoice.get_TrxName());
+		BigDecimal auxAmt, allocAmt, totalAllocAmt = BigDecimal.ZERO;
+		MAllocationLine allocationLine;
+		while(amt.compareTo(BigDecimal.ZERO) > 0 && rs.next()){
+			auxAmt = amt.subtract(rs.getBigDecimal("open"));
+			allocAmt = auxAmt.compareTo(BigDecimal.ZERO) <= 0 ? amt : rs
+					.getBigDecimal("open");
+			if(!hdrSaved){
+				if(!hdr.save()){
+					throw new Exception(CLogger.retrieveErrorAsString());
+				}
+				hdrSaved = true;
+			}
+			allocationLine = new MAllocationLine(hdr);
+			allocationLine.setAmount(allocAmt);
+			allocationLine.setC_Invoice_ID(rs.getInt("c_invoice_id"));
+			allocationLine.setC_Invoice_Credit_ID(creditInvoice.getID());
+			if(!allocationLine.save()){
+				throw new Exception(CLogger.retrieveErrorAsString());
+			}
+			totalAllocAmt = totalAllocAmt.add(allocAmt);
+			amt = amt.subtract(allocAmt);
+		}
+		// Si se guardó la cabecera del allocation, entonces se guarda el total
+		if(hdrSaved){
+			hdr.setApprovalAmt(totalAllocAmt);
+			hdr.setGrandTotal(totalAllocAmt);
+			// Completar el allocation
+			if (!DocumentEngine.processAndSave(hdr,
+					MAllocationHdr.DOCACTION_Complete, true)) {
+				throw new Exception(hdr.getProcessMsg());
+			}
+			// Si tengo un remanente en la NC luego de buscar del pedido, busco
+			// por otros pedidos
+			if (!Util.isEmpty(orderID, true)
+					&& amt.compareTo(BigDecimal.ZERO) > 0) {
+				createAutomaticCreditAllocations(creditInvoice, null);
+			}		
+		}
+		rs.close();
+		ps.close();
+	}
+	
+	
 	/** Descripción de Campos */
 
 	private static CCache s_cache = new CCache("C_Invoice", 20, 2); // 2 minutes
@@ -2348,7 +2533,12 @@ public class MInvoice extends X_C_Invoice implements DocAction {
 		}
 
 		MDocType dt = MDocType.get(getCtx(), getC_DocTypeTarget_ID());
-
+		boolean isDebit = !dt.getDocBaseType().equals(
+				MDocType.DOCBASETYPE_ARCreditMemo)
+				&& !dt.getDocBaseType().equals(
+						MDocType.DOCBASETYPE_APCreditMemo);
+		
+		
 		// Std Period open?
 
 		if (!MPeriod.isOpen(getCtx(), getDateAcct(), dt.getDocBaseType())) {
@@ -2414,7 +2604,7 @@ public class MInvoice extends X_C_Invoice implements DocAction {
 				get_TrxName());
 		// Obtener la organización
 		MOrg org = new MOrg(getCtx(), Env.getAD_Org_ID(getCtx()), get_TrxName());
-		if (!isCurrentAccountVerified && isSOTrx()
+		if (!isCurrentAccountVerified && isSOTrx() && isDebit 
 				&& getPaymentRule().equals(MInvoice.PAYMENTRULE_OnCredit)) {
 			// Obtengo el manager actual
 			CurrentAccountManager manager = CurrentAccountManagerFactory
@@ -2479,12 +2669,6 @@ public class MInvoice extends X_C_Invoice implements DocAction {
 		// pedida
 		MInvoiceLine line;
 		MOrderLine orderLine;
-		MDocType docType = new MDocType(getCtx(), getC_DocTypeTarget_ID(),
-				get_TrxName());
-		boolean isDebit = !docType.getDocBaseType().equals(
-				MDocType.DOCBASETYPE_ARCreditMemo)
-				&& !docType.getDocBaseType().equals(
-						MDocType.DOCBASETYPE_APCreditMemo);
 		for (int i = 0; i < lines.length; i++) {
 			line = lines[i];
 			if (line.getC_OrderLine_ID() != 0) {
@@ -3102,7 +3286,7 @@ public class MInvoice extends X_C_Invoice implements DocAction {
 		// Las consultas y validaciones de cuenta corriente se deben manejar por
 		// las nuevas clases que tienen esta implementación centralizada.
 		// Verifico estado de crédito con la información de la factura
-		if (!isCurrentAccountVerified && isSOTrx()
+		if (!isCurrentAccountVerified && isSOTrx() && isDebit
 				&& getPaymentRule().equals(PAYMENTRULE_OnCredit)
 				&& isDebit) {
 			// Obtengo el manager actual
@@ -3348,6 +3532,21 @@ public class MInvoice extends X_C_Invoice implements DocAction {
 			return STATUS_Invalid;
 		}
 
+		// Si es nota de crédito automática se asigna a la factura más vieja y
+		// si es por devolución a la relacionada con el pedido
+		if (!isSkipAutomaticCreditAllocCreation()
+				&& bp.isAutomaticCreditNotes()
+				&& !isDebit
+				&& !automaticCreditDocTypesExcluded.contains(docType
+						.getDocTypeKey())) {
+			try {
+				createAutomaticCreditAllocations(this, getC_Order_ID());
+			} catch (Exception e) {
+				m_processMsg = e.getMessage();
+				return DocAction.STATUS_Invalid;
+			}			
+		}
+		
 		// Verifico si el gestor de cuentas corrientes debe realizar operaciones
 		// antes de completar y eventualmente disparar la impresión fiscal
 		// Obtengo el manager actual
@@ -3820,7 +4019,7 @@ public class MInvoice extends X_C_Invoice implements DocAction {
 		reversal.setVoidPOSJournalID(getVoidPOSJournalID());
 		reversal.setVoidPOSJournalMustBeOpen(isVoidPOSJournalMustBeOpen());
 		reversal.setC_POSJournal_ID(getC_POSJournal_ID());
-
+		reversal.setSkipAutomaticCreditAllocCreation(true);
 		if (!reversal.processIt(DocAction.ACTION_Complete)) {
 			m_processMsg = "@ReversalError@: " + reversal.getProcessMsg();
 
@@ -4754,6 +4953,15 @@ public class MInvoice extends X_C_Invoice implements DocAction {
 
 	public boolean isVoidPOSJournalMustBeOpen() {
 		return voidPOSJournalMustBeOpen;
+	}
+
+	public boolean isSkipAutomaticCreditAllocCreation() {
+		return skipAutomaticCreditAllocCreation;
+	}
+
+	public void setSkipAutomaticCreditAllocCreation(
+			boolean skipAutomaticCreditAllocCreation) {
+		this.skipAutomaticCreditAllocCreation = skipAutomaticCreditAllocCreation;
 	}
 	
 } // MInvoice

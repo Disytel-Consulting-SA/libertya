@@ -79,7 +79,6 @@ import org.openXpertya.images.ImageFactory;
 import org.openXpertya.minigrid.MiniTable;
 import org.openXpertya.model.CalloutInvoiceExt;
 import org.openXpertya.model.FiscalDocumentPrint;
-import org.openXpertya.model.MCategoriaIva;
 import org.openXpertya.model.MPOSPaymentMedium;
 import org.openXpertya.pos.ctrl.AddPOSPaymentValidations;
 import org.openXpertya.pos.ctrl.PoSConfig;
@@ -481,6 +480,8 @@ public class PoSMainForm extends CPanel implements FormPanel, ASyncProcess, Disp
 	private String MSG_CLOSE_POS_ORDERLINES;
 	private String MSG_POSNET;
 	private String MSG_NO_AUTHORIZATION;
+	private String MSG_HAS_CREDIT_AVAILABLE;
+	private String MSG_USE_CREDIT_MANDATORY;
 		
 	/**
 	 * This method initializes 
@@ -758,6 +759,8 @@ public class PoSMainForm extends CPanel implements FormPanel, ASyncProcess, Disp
 		MSG_CLOSE_POS_ORDERLINES = getMsg("POSNoCloseWithOrderLines");
 		MSG_POSNET = getMsg("Posnet");
 		MSG_NO_AUTHORIZATION = getMsg("NoAuthorization"); 
+		MSG_HAS_CREDIT_AVAILABLE = getMsg("CustomerHasCreditToUse");
+		MSG_USE_CREDIT_MANDATORY = getMsg("CustomerCreditMandatoryToUse");
 		
 		// Estos mensajes no se asignan a variables de instancias dado que son mensajes
 		// devueltos por el modelo del TPV, pero se realiza la invocación a getMsg(...) para
@@ -4363,6 +4366,11 @@ public class PoSMainForm extends CPanel implements FormPanel, ASyncProcess, Disp
 		} else {
 			TimeStatsLogger.beginTask(MeasurableTask.POS_GOTO_PAYMENTS);
 			
+			// Si la entidad comercial está marcado con Notas de crédito
+			// automáticas, verificar si tiene saldos en notas de crédito para
+			// imputar
+			alertAutomaticCreditNote();
+			
 			getCPosTab().setEnabledAt(1,true);
 			getCPosTab().setSelectedIndex(1);
 			updatePaymentsStatus();
@@ -4371,6 +4379,14 @@ public class PoSMainForm extends CPanel implements FormPanel, ASyncProcess, Disp
 		}
 	}
 
+	protected void alertAutomaticCreditNote(){
+		if (getCPosTab().getSelectedIndex() == 1
+				&& getOrder().getBusinessPartner().isAutomaticCreditNote()
+				&& getModel().hasCreditNotesAvailables(false)) {
+			infoMsg(MSG_HAS_CREDIT_AVAILABLE);
+		}
+	}
+	
 	protected void cancelOrder(){
 		if(hasOrderProducts() && askMsg(MSG_CONFIRM_CANCEL_ORDER)){
 			// Si el TPV está configurado para permitir modificaciones de precios
@@ -4471,6 +4487,7 @@ public class PoSMainForm extends CPanel implements FormPanel, ASyncProcess, Disp
 		}
 		setCustomerDataDescriptionText();
 		updateStatusDB();
+		alertAutomaticCreditNote();
 		return load;
 	}
 	
@@ -4562,6 +4579,14 @@ public class PoSMainForm extends CPanel implements FormPanel, ASyncProcess, Disp
 		// han agregado medios de pago que cubren el importe total del pedido)	
 		} else if (getOrder().getBalance().compareTo(BigDecimal.ZERO) >= 0) {
 			errorMsg(MSG_NOT_NEED_PAYMENTS_ERROR);
+			return;
+			// No se puede agregar otro medio de cobro que no sea nota de
+			// crédito en el caso que el cliente tenga notas de crédito
+			// automáticas y existan todavía para imputar
+		} else if (!MPOSPaymentMedium.TENDERTYPE_CreditNote.equals(tenderType)
+				&& getOrder().getBusinessPartner().isAutomaticCreditNote()
+				&& getModel().hasCreditNotesAvailables(true)) {
+			errorMsg(MSG_USE_CREDIT_MANDATORY);
 			return;
 		}
 		
@@ -4909,10 +4934,12 @@ public class PoSMainForm extends CPanel implements FormPanel, ASyncProcess, Disp
 		
 		if(getOrder().getBusinessPartner() == null) {
 			errorMsg(MSG_NO_BPARTNER_ERROR);
+			updateProcessing(false);
 			return;
 		}
 		if(getOrder().getBusinessPartner().getLocationId() == 0) {
 			errorMsg(MSG_NO_LOCATION_ERROR);
+			updateProcessing(false);
 			return;
 		}
 		// Actualizar autorización de descuento manual general
@@ -4924,6 +4951,19 @@ public class PoSMainForm extends CPanel implements FormPanel, ASyncProcess, Disp
 			if(!Util.isEmpty(result.getMsg(), true)){
 				errorMsg(result.getMsg());
 			}
+			updateProcessing(false);
+			return;
+		}
+		
+		// Validar que si la EC está marcada con notas de crédito automáticas y
+		// tenga notas de crédito disponibles para utilizar, no tenga medios de
+		// cobro de otro tipo
+		List<String> excludedTenderTypes = new ArrayList<String>();
+		excludedTenderTypes.add(MPOSPaymentMedium.TENDERTYPE_CreditNote);
+		if(getOrder().getBusinessPartner().isAutomaticCreditNote()
+				&& getModel().hasCreditNotesAvailables(true)
+				&& getModel().hasPaymentsOf(null, excludedTenderTypes)){
+			errorMsg(MSG_USE_CREDIT_MANDATORY);
 			updateProcessing(false);
 			return;
 		}
@@ -5199,6 +5239,14 @@ public class PoSMainForm extends CPanel implements FormPanel, ASyncProcess, Disp
 
 	protected boolean askMsg(String msg) {
 		return askMsg(msg,null);
+	}
+	
+	protected void infoMsg(String msg, String subMsg) {
+		ADialog.info(getWindowNo(),this,msg,subMsg);
+	}
+
+	protected void infoMsg(String msg) {
+		infoMsg(msg,null);
 	}
 
 	protected void clearComponent(JComponent component) {

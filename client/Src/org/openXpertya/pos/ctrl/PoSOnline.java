@@ -1985,6 +1985,7 @@ public class PoSOnline extends PoSConnectionState {
 		}
 		rBPartner.setIVACategory(codigoIVA);
 		rBPartner.setPercepcionLiable(isPercepcionLiable);
+		rBPartner.setAutomaticCreditNote(mBPartner.isAutomaticCreditNotes());
 		
 		rBPartner.setCustomerName(mBPartner.getName());
 		// Si no es la misma EC que la por defecto en la config, se cargan los datos
@@ -2896,10 +2897,16 @@ public class PoSOnline extends PoSConnectionState {
 		// Se imprime este comprobante cuando existe una condición de venta de
 		// la cual es cuenta corriente. Además, existe un flag en la config del
 		// TPV que permite imprimir o no este documento
-		CurrentAccountInfo currentAccountInfo;
+		// Si no hay ninguna condición de venta de cuenta corriente, también se
+		// debe imprimir este documento en el caso que el cliente posea notas de
+		// crédito automáticas y exista al menos alguna nota de crédito cargada
+		CurrentAccountInfo currentAccountInfo = null;
 		List<CurrentAccountInfo> infos = new ArrayList<CurrentAccountInfo>();
+		CurrentAccountInfo infoOnCredit = null;
 		if (getPoSCOnfig().isPrintCurrentAccountDocument() && invoice != null
-				&& !Util.isEmpty(currentAccountSalesConditions.keySet())) {
+				&& (!Util.isEmpty(currentAccountSalesConditions.keySet()) || (order
+						.getBusinessPartner().isAutomaticCreditNote() && sumaCreditNotePayments
+						.compareTo(BigDecimal.ZERO) > 0))) {
 			MBPartner partner = new MBPartner(getCtx(), order
 					.getBusinessPartner().getId(), getTrxName());
 			// Itero por las condiciones de venta de cuenta corriente
@@ -2910,7 +2917,27 @@ public class PoSOnline extends PoSConnectionState {
 								paymentRule),
 						currentAccountSalesConditions.get(paymentRule));
 				infos.add(currentAccountInfo);
+				if(MInvoice.PAYMENTRULE_OnCredit.equals(paymentRule)){
+					infoOnCredit = currentAccountInfo;
+				}
 			}
+			// Sumar lo de NC siempre que sea automática y tildar aquella
+			// condición a crédito
+			if (order.getBusinessPartner().isAutomaticCreditNote()) {
+				if(infoOnCredit != null){
+					infoOnCredit.setAmount(infoOnCredit.getAmount().add(
+							sumaCreditNotePayments));
+				}
+				else{
+					currentAccountInfo = new CurrentAccountInfo(null,
+							MRefList.getListName(getCtx(),
+									MPOSPaymentMedium.TENDERTYPE_AD_Reference_ID,
+									MPOSPaymentMedium.TENDERTYPE_CreditNote),
+									sumaCreditNotePayments);
+					infos.add(currentAccountInfo);
+				}
+			}
+			
 			// Imprimo el ticket no fiscal de cuenta corriente, en caso que no
 			// se imprima por la fiscal, entonces va al formato jasper
 			MDocType docType = MDocType.get(ctx, invoice.getC_DocType_ID());
@@ -2933,9 +2960,17 @@ public class PoSOnline extends PoSConnectionState {
 				params.put("AD_Org_ID", Env.getAD_Org_ID(getCtx()));
 				params.put("C_BPartner_ID", partner.getID());
 				params.put("C_Invoice_ID", invoice.getID());
-				params.put("PaymentRule_1", order.getPaymentTerm().getName());
-				params.put("PaymentRule_Amt_1", currentAccountSalesConditions
-						.get(MInvoice.PAYMENTRULE_OnCredit));
+				params.put(
+						"PaymentRule_1",
+						infoOnCredit != null ? order.getPaymentTerm().getName()
+								: MRefList
+										.getListName(
+												getCtx(),
+												MPOSPaymentMedium.TENDERTYPE_AD_Reference_ID,
+												MPOSPaymentMedium.TENDERTYPE_CreditNote));
+				params.put("PaymentRule_Amt_1",
+						infoOnCredit != null ? infoOnCredit.getAmount()
+								: currentAccountInfo.getAmount());
 				ProcessInfo info = MProcess.execute(getCtx(),
 						getCurrentAccountDocumentProcessID(), params,
 						getTrxName());
@@ -3571,5 +3606,25 @@ public class PoSOnline extends PoSConnectionState {
 	@Override
 	public boolean isCheckCUITControlActivated() {
 		return CHECK_CUIT_CONTROL_ACTIVE;
+	}
+
+	@Override
+	public boolean hasCreditNotesAvailables(Integer bpartnerID,	boolean excludeCreditNotes) {
+		Map<Integer, BigDecimal> excludedCredits = new HashMap<Integer, BigDecimal>();
+		if(excludeCreditNotes){
+			BigDecimal creditNoteAmt;
+			for (CreditNotePayment cnp : creditNotePayments) {
+				creditNoteAmt = excludedCredits.get(cnp.getInvoiceID());
+				if(creditNoteAmt != null){
+					creditNoteAmt = creditNoteAmt.add(cnp.getAmount());
+				}
+				else{
+					creditNoteAmt = cnp.getAmount();
+				}
+				excludedCredits.put(cnp.getInvoiceID(), creditNoteAmt);
+			}
+		}
+		return MInvoice.hasCreditsOpen(getCtx(), bpartnerID, true,
+				excludedCredits, getTrxName());
 	}
 }

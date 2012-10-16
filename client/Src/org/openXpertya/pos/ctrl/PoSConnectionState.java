@@ -2,6 +2,7 @@ package org.openXpertya.pos.ctrl;
 
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.Map;
 
 import org.openXpertya.model.FiscalDocumentPrintListener;
 import org.openXpertya.pos.exceptions.InsufficientBalanceException;
@@ -112,6 +113,8 @@ public abstract class PoSConnectionState {
 	public abstract Tax getTax(Integer taxID);
 	
 	public abstract boolean isCheckCUITControlActivated();
+	
+	public abstract boolean hasCreditNotesAvailables(Integer bpartnerID, boolean excludeCreditNotes);
 	
 	/**
 	 * @param checkDeadLineToCompare
