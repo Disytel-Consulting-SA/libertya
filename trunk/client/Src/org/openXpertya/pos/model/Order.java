@@ -459,7 +459,8 @@ public class Order  {
 	private BigDecimal getRealPaidAmount() {
 		BigDecimal realPaidAmt = BigDecimal.ZERO;
 		for (Payment payment : getPayments()) {
-			realPaidAmt = realPaidAmt.add(payment.getRealAmount());
+			if (payment!=null && payment.getRealAmount() != null)
+				realPaidAmt = realPaidAmt.add(payment.getRealAmount());
 		}
 		return realPaidAmt;
 	}

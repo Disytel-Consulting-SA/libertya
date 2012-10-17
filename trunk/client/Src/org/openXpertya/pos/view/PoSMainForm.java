@@ -4492,13 +4492,16 @@ public class PoSMainForm extends CPanel implements FormPanel, ASyncProcess, Disp
 	}
 	
 	private void refreshBPartnerDiscount() {
-	 	// Se muestra el esquema de descuento si tiene y es aplicable.
-		DiscountSchema discountSchema = getOrder().getBusinessPartner()
-				.getDiscountSchema();
-		if (!getOrder().isBPartnerDiscountApplicable()) {
-			discountSchema = null;
+		DiscountSchema discountSchema = null;
+		// Se muestra el esquema de descuento si tiene y es aplicable.
+		if (getOrder()!=null) {
+			if (getOrder().getBusinessPartner()!=null)
+				discountSchema = getOrder().getBusinessPartner().getDiscountSchema();
+			if (!getOrder().isBPartnerDiscountApplicable()) {
+				discountSchema = null;
+			}
 		}
-	 	getCBPartnerDiscountText().setText(
+		getCBPartnerDiscountText().setText(
 				getDiscountSchemaDescription(discountSchema));
 	}
 	

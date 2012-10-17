@@ -2860,7 +2860,9 @@ public class PoSOnline extends PoSConnectionState {
 				FiscalDocumentPrint fdp = new FiscalDocumentPrint();
 				fdp.addDocumentPrintListener(getFiscalDocumentPrintListener());
 				fdp.setPrinterEventListener(getFiscalPrinterEventListener());
-				if(!fdp.printDeliveryDocument(docType.getC_Controlador_Fiscal_ID(), morder, invoice)) {
+				// Se recarga el pedido para no interferir con transacciones
+				MOrder orderAux = new MOrder(getCtx(), morder.getID(), null);
+				if(!fdp.printDeliveryDocument(docType.getC_Controlador_Fiscal_ID(), orderAux, invoice)) {
 					
 				}
 			}
