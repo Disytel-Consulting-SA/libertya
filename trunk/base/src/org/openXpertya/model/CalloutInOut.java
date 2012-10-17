@@ -201,7 +201,7 @@ public class CalloutInOut extends CalloutEngine {
         	}
         }
         
-        String SQL = "SELECT p.AD_Language,p.C_PaymentTerm_ID," + "p.M_PriceList_ID,p.PaymentRule,p.POReference," + "p.SO_Description,p.IsDiscountPrinted," + "p.SO_CreditLimit-p.SO_CreditUsed AS CreditAvailable," + "l.C_BPartner_Location_ID,c.AD_User_ID " + "FROM C_BPartner p, C_BPartner_Location l, AD_User c " + "WHERE p.C_BPartner_ID=l.C_BPartner_ID(+)" + " AND p.C_BPartner_ID=c.C_BPartner_ID(+)" + " AND p.C_BPartner_ID=?";    // 1
+        String SQL = "SELECT p.AD_Language,p.C_PaymentTerm_ID," + "p.M_PriceList_ID,p.PaymentRule,p.POReference," + "p.SO_Description,p.IsDiscountPrinted," + "p.SO_CreditLimit-p.SO_CreditUsed AS CreditAvailable," + "l.C_BPartner_Location_ID,c.AD_User_ID, p.deliveryrule " + "FROM C_BPartner p, C_BPartner_Location l, AD_User c " + "WHERE p.C_BPartner_ID=l.C_BPartner_ID(+)" + " AND p.C_BPartner_ID=c.C_BPartner_ID(+)" + " AND p.C_BPartner_ID=?";    // 1
 
         try {
             PreparedStatement pstmt = DB.prepareStatement( SQL );
@@ -251,6 +251,7 @@ public class CalloutInOut extends CalloutEngine {
             		mTab.setValue( "SalesRep_ID",contEC );
             	}
 
+            	mTab.setValue( "DeliveryRule",rs.getString("DeliveryRule") );
             }
 
             rs.close();

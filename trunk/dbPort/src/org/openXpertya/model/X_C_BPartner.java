@@ -7,7 +7,7 @@ import java.math.*;
 import org.openXpertya.util.*;
 /** Modelo Generado por C_BPartner
  *  @author Comunidad de Desarrollo Libertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
- *  @version  - 2012-10-16 09:26:30.485 */
+ *  @version  - 2012-10-16 20:59:13.738 */
 public class X_C_BPartner extends org.openXpertya.model.PO
 {
 /** Constructor estándar */
@@ -422,12 +422,14 @@ public static final String DELIVERYRULE_CompleteLine = "L";
 public static final String DELIVERYRULE_Force = "F";
 /** After Invoicing = I */
 public static final String DELIVERYRULE_AfterInvoicing = "I";
+/** Force - After invoicing = Z */
+public static final String DELIVERYRULE_Force_AfterInvoicing = "Z";
 /** Set Delivery Rule.
 Defines the timing of Delivery */
 public void setDeliveryRule (String DeliveryRule)
 {
-if (DeliveryRule == null || DeliveryRule.equals("A") || DeliveryRule.equals("O") || DeliveryRule.equals("R") || DeliveryRule.equals("L") || DeliveryRule.equals("F") || DeliveryRule.equals("I"));
- else throw new IllegalArgumentException ("DeliveryRule Invalid value - Reference = DELIVERYRULE_AD_Reference_ID - A - O - R - L - F - I");
+if (DeliveryRule == null || DeliveryRule.equals("A") || DeliveryRule.equals("O") || DeliveryRule.equals("R") || DeliveryRule.equals("L") || DeliveryRule.equals("F") || DeliveryRule.equals("I") || DeliveryRule.equals("Z"));
+ else throw new IllegalArgumentException ("DeliveryRule Invalid value - Reference = DELIVERYRULE_AD_Reference_ID - A - O - R - L - F - I - Z");
 if (DeliveryRule != null && DeliveryRule.length() > 1)
 {
 log.warning("Length > 1 - truncated");
