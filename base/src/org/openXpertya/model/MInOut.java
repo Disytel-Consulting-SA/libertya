@@ -2031,7 +2031,10 @@ public class MInOut extends X_M_InOut implements DocAction {
             log.fine("La comprobacion de que la regla de albaranado:"+this.get_Value("DeliveryRule"));
             
             // if (!this.get_Value("DeliveryRule").toString().equalsIgnoreCase("F") && isSOTrx()) {
-            if (!getDeliveryRule().equalsIgnoreCase(DELIVERYRULE_Force) && isSOTrx() && MovementType.endsWith("-")) {
+			if (!getDeliveryRule().equalsIgnoreCase(DELIVERYRULE_Force)
+					&& !getDeliveryRule().equalsIgnoreCase(
+							DELIVERYRULE_ForceAfterInvoicing) && isSOTrx()
+					&& MovementType.endsWith("-")) {
             	//Si la regla de albaranado es distinta de F y ademas es un albar�n de salida
             	
 	            MProductCategory pc = MProductCategory.get( Env.getCtx(),product.getM_Product_Category_ID(), get_TrxName());
@@ -2069,7 +2072,7 @@ public class MInOut extends X_M_InOut implements DocAction {
              * TPV Performance: no actualizar las cantidades via modelo, usar UPDATEs directos 
              */
 //            MOrderLine ol = null;
-        	BigDecimal ol_qtyOrdered = null, ol_qtyReserved = null, ol_qtyDelivered = null, ol_qtyTransferred = null;
+        	BigDecimal ol_qtyOrdered = null, ol_qtyReserved = null, ol_qtyDelivered = null, ol_qtyTransferred = null, ol_qtyInvoiced = null;
         	int ol_attsetinstanceID = -1;
         	boolean ol_ok = false;
         	Timestamp ol_dateDelivered = null;
@@ -2077,7 +2080,7 @@ public class MInOut extends X_M_InOut implements DocAction {
             if( sLine.getC_OrderLine_ID() != 0 ) {
                 
             	try    	{
-	                String sql = " SELECT qtyOrdered, qtyReserved, qtyDelivered, M_AttributeSetInstance_ID, qtyTransferred " +
+	                String sql = " SELECT qtyOrdered, qtyReserved, qtyDelivered, M_AttributeSetInstance_ID, qtyTransferred, qtyInvoiced " +
 	                				" FROM C_OrderLine WHERE C_OrderLine_ID = " + sLine.getC_OrderLine_ID();
 	                PreparedStatement stmt =  DB.prepareStatement(sql , get_TrxName());
 	                ResultSet rs = stmt.executeQuery();
@@ -2089,6 +2092,7 @@ public class MInOut extends X_M_InOut implements DocAction {
 	                	ol_qtyDelivered = rs.getBigDecimal(3);
 	                	ol_attsetinstanceID = rs.getInt(4);
 	                	ol_qtyTransferred = rs.getBigDecimal(5);
+	                	ol_qtyInvoiced = rs.getBigDecimal(6);
 	                }
             	}
             	catch (Exception e)	{
@@ -2106,6 +2110,19 @@ public class MInOut extends X_M_InOut implements DocAction {
 	                    	m_processMsg = Msg.translate(getCtx(), "MovementGreaterThanOrder");
 	                    	return DocAction.STATUS_Invalid;
 	                    }
+	                    
+	                    // Para las reglas de envío Después de Facturación y Forzar
+						// - Después de Facturación, no se debe entregar más de lo
+						// facturado
+						if (getDeliveryRule().equals(
+								MInOut.DELIVERYRULE_AfterInvoicing)
+								|| getDeliveryRule().equals(
+										MInOut.DELIVERYRULE_ForceAfterInvoicing)) {
+							if(QtySO.add(ol_qtyDelivered).add(ol_qtyTransferred).compareTo(ol_qtyInvoiced) > 0){
+								m_processMsg = Msg.translate(getCtx(), "MovementGreaterThanInvoiced");
+		                    	return DocAction.STATUS_Invalid;
+							}
+						}
                     }
                     else{
                     	QtySO = QtySO.negate();
@@ -2990,6 +3007,10 @@ public class MInOut extends X_M_InOut implements DocAction {
 	 *         de un pedido
 	 */
 	public static String getOrderFilter(MInOut inout) {
+		boolean afterInvoicing = (inout.getDeliveryRule().equals(
+				MInOut.DELIVERYRULE_AfterInvoicing) || inout.getDeliveryRule()
+				.equals(MInOut.DELIVERYRULE_ForceAfterInvoicing))
+				&& inout.getMovementType().endsWith("-");
     	StringBuffer filter = new StringBuffer();
 		// Si es un remito de ventas, solo se pueden elegir pedidos
 		// que tengan al menos una línea cuya cantidad ordenada sea mayor
@@ -3004,7 +3025,10 @@ public class MInOut extends X_M_InOut implements DocAction {
 				.append("(C_Order.C_Order_ID IN ")
 				.append("(SELECT ol.C_Order_ID ")
 				.append("FROM C_OrderLine ol ")
-				.append("WHERE ol.QtyOrdered > (ol.QtyDelivered+ol.QtyTransferred)) ")
+				.append("WHERE ")
+				.append(afterInvoicing ? " ol.QtyInvoiced > "
+						: " ol.QtyOrdered > ")
+				.append(" ol.QtyDelivered+ol.QtyTransferred) ")
 				.append("OR ")
 				.append("(C_Order.IsSOTrx='Y' AND POSITION('+' IN '")
 				.append(inout.getMovementType()).append("') > 0)")

@@ -256,9 +256,10 @@ public class VCreateFromShipment extends VCreateFrom {
  		// Si la regla de envío de mercadería de la entidad comercial es Después
  		// de la Facturación entonces se debe ocultar el campo para crear remito
  		// a partir del pedido
- 		if (getBpDeliveryRule() != null
- 				&& getBpDeliveryRule().equals(
- 						MBPartner.DELIVERYRULE_AfterInvoicing)) {
+		if (getBpDeliveryRule() != null
+				&& (getBpDeliveryRule().equals(
+						MBPartner.DELIVERYRULE_AfterInvoicing) || getBpDeliveryRule()
+						.equals(MBPartner.DELIVERYRULE_ForceAfterInvoicing))) {
  			orderLabel.setVisible(false);
  			orderField.setVisible(false);
  			if(resetDocument){
@@ -403,6 +404,17 @@ public class VCreateFromShipment extends VCreateFrom {
 		}
 	} // loadInvoice
 
+	
+	@Override
+	public String getRemainingQtySQLLine(boolean forInvoice){
+		boolean afterInvoicing = (getInOut().getDeliveryRule().equals(
+				MInOut.DELIVERYRULE_AfterInvoicing) || getInOut().getDeliveryRule()
+				.equals(MInOut.DELIVERYRULE_ForceAfterInvoicing))
+				&& getInOut().getMovementType().endsWith("-");
+		String srcColumn = afterInvoicing ? "l.QtyInvoiced" : "l.QtyOrdered";
+    	return srcColumn+"-(l.QtyDelivered+l.QtyTransferred)";
+	}
+	
 	/**
 	 * Descripción de Método
 	 * 
