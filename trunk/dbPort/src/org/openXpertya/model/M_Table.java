@@ -833,7 +833,7 @@ public class M_Table extends X_AD_Table {
     
     public static int getTableID(String tablename, String trxName)
     {
-    	return DB.getSQLValue(trxName, " SELECT AD_Table_ID FROM AD_Table WHERE tablename = ? ", tablename);
+    	return DB.getSQLValue(trxName, " SELECT AD_Table_ID FROM AD_Table WHERE upper(trim(tablename)) = upper(trim(?)) ", tablename);
     }
     
     /**
