@@ -1776,10 +1776,11 @@ public class PoSOnline extends PoSConnectionState {
 		if(p.getPaymentMedium() != null){
 			cashLine.setC_POSPaymentMedium_ID(p.getPaymentMedium().getId());
 		}
+		cashLine.setIgnoreInvoiceOpen(true);
 		
-		throwIfFalse(cashLine.save()); // Necesario para que se asigne el C_CashLine_ID
-		throwIfFalse(cashLine.processIt(MCashLine.ACTION_Complete));
-		throwIfFalse(cashLine.save());
+		throwIfFalse(cashLine.save(), cashLine); // Necesario para que se asigne el C_CashLine_ID
+		throwIfFalse(cashLine.processIt(MCashLine.ACTION_Complete),cashLine);
+		throwIfFalse(cashLine.save(), cashLine);
 
 		// Agrego el cashline para llevar su registro
 		if(addToCashLineList){
