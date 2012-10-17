@@ -552,7 +552,7 @@ public class FiscalDocumentPrint {
 	private void doPrintCurrentAccountDocument(Object[] args) throws Exception{
 		MInvoice invoice = (MInvoice) args[0];
 		MPaymentTerm paymentTerm = new MPaymentTerm(invoice.getCtx(),
-				invoice.getC_PaymentTerm_ID(), invoice.get_TrxName());
+				invoice.getC_PaymentTerm_ID(), getTrxName());
 		String onCreditPaymentRuleDescr = MRefList.getListName(
 				invoice.getCtx(), MInvoice.PAYMENTRULE_AD_Reference_ID,
 				MInvoice.PAYMENTRULE_OnCredit);
