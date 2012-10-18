@@ -2033,7 +2033,7 @@ public class MInOut extends X_M_InOut implements DocAction {
             // if (!this.get_Value("DeliveryRule").toString().equalsIgnoreCase("F") && isSOTrx()) {
 			if (!getDeliveryRule().equalsIgnoreCase(DELIVERYRULE_Force)
 					&& !getDeliveryRule().equalsIgnoreCase(
-							DELIVERYRULE_ForceAfterInvoicing) && isSOTrx()
+							DELIVERYRULE_Force_AfterInvoicing) && isSOTrx()
 					&& MovementType.endsWith("-")) {
             	//Si la regla de albaranado es distinta de F y ademas es un albar�n de salida
             	
@@ -2117,7 +2117,7 @@ public class MInOut extends X_M_InOut implements DocAction {
 						if (getDeliveryRule().equals(
 								MInOut.DELIVERYRULE_AfterInvoicing)
 								|| getDeliveryRule().equals(
-										MInOut.DELIVERYRULE_ForceAfterInvoicing)) {
+										MInOut.DELIVERYRULE_Force_AfterInvoicing)) {
 							if(QtySO.add(ol_qtyDelivered).add(ol_qtyTransferred).compareTo(ol_qtyInvoiced) > 0){
 								m_processMsg = Msg.translate(getCtx(), "MovementGreaterThanInvoiced");
 		                    	return DocAction.STATUS_Invalid;
@@ -3009,7 +3009,7 @@ public class MInOut extends X_M_InOut implements DocAction {
 	public static String getOrderFilter(MInOut inout) {
 		boolean afterInvoicing = (inout.getDeliveryRule().equals(
 				MInOut.DELIVERYRULE_AfterInvoicing) || inout.getDeliveryRule()
-				.equals(MInOut.DELIVERYRULE_ForceAfterInvoicing))
+				.equals(MInOut.DELIVERYRULE_Force_AfterInvoicing))
 				&& inout.getMovementType().endsWith("-");
     	StringBuffer filter = new StringBuffer();
 		// Si es un remito de ventas, solo se pueden elegir pedidos

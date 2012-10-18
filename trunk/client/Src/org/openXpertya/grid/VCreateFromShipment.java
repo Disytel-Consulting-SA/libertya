@@ -259,7 +259,7 @@ public class VCreateFromShipment extends VCreateFrom {
 		if (getBpDeliveryRule() != null
 				&& (getBpDeliveryRule().equals(
 						MBPartner.DELIVERYRULE_AfterInvoicing) || getBpDeliveryRule()
-						.equals(MBPartner.DELIVERYRULE_ForceAfterInvoicing))) {
+						.equals(MBPartner.DELIVERYRULE_Force_AfterInvoicing))) {
  			orderLabel.setVisible(false);
  			orderField.setVisible(false);
  			if(resetDocument){
@@ -409,7 +409,7 @@ public class VCreateFromShipment extends VCreateFrom {
 	public String getRemainingQtySQLLine(boolean forInvoice){
 		boolean afterInvoicing = (getInOut().getDeliveryRule().equals(
 				MInOut.DELIVERYRULE_AfterInvoicing) || getInOut().getDeliveryRule()
-				.equals(MInOut.DELIVERYRULE_ForceAfterInvoicing))
+				.equals(MInOut.DELIVERYRULE_Force_AfterInvoicing))
 				&& getInOut().getMovementType().endsWith("-");
 		String srcColumn = afterInvoicing ? "l.QtyInvoiced" : "l.QtyOrdered";
     	return srcColumn+"-(l.QtyDelivered+l.QtyTransferred)";
