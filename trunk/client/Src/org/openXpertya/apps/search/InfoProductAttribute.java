@@ -89,7 +89,7 @@ public class InfoProductAttribute extends InfoProduct {
 		        new Info_Column( Msg.translate( Env.getCtx(),"QtyAvailable" ),"bomQtyAvailable(p.M_Product_ID,?,0) AS QtyAvailable",Double.class,true,true,null ),
 		        new Info_Column( Msg.translate( Env.getCtx(),"PriceList" ),"bomPriceList(p.M_Product_ID, pr.M_PriceList_Version_ID) AS PriceList",BigDecimal.class ),
 		        // Added by Lucas Hernandez - Kunan
-		        new Info_Column( Msg.translate( Env.getCtx(),"Instance" ),"pui.M_AttributeSetInstance_ID",Integer.class ),
+		        // new Info_Column( Msg.translate( Env.getCtx(),"Instance" ),"pui.M_AttributeSetInstance_ID",Integer.class ),
 		        new Info_Column( Msg.translate( Env.getCtx(),"PriceListVersion" ),"pr.M_PriceList_Version_ID",Integer.class ),
 		        //new Info_Column( Msg.translate( Env.getCtx(),"PriceStd" ),"bomPriceStd(p.M_Product_ID, pr.M_PriceList_Version_ID) AS PriceStd",BigDecimal.class ),
 		        //new Info_Column( Msg.translate( Env.getCtx(),"QtyOnHand" ),"bomQtyOnHand(p.M_Product_ID,?,0) AS QtyOnHand",Double.class ),
@@ -103,7 +103,7 @@ public class InfoProductAttribute extends InfoProduct {
 		INDEX_NAME = 3;
 		INDEX_QTY = 3;
 		INDEX_INSTANCE = 5;
-		INDEX_PRICELIST = 6;
+		INDEX_PRICELIST = 5;
 		INDEX_PATTRIBUTE = 1;
 		
 		return s_productLayout;
