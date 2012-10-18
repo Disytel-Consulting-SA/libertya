@@ -265,7 +265,7 @@ public class PoSOnline extends PoSConnectionState {
 	 * @throws InsufficientCreditException
 	 */
 	@Override
-	public void completeOrder(Order order) throws PosException, InsufficientCreditException, InsufficientBalanceException, InvalidPaymentException, InvalidProductException {
+	public void completeOrder(Order order, Set <Integer> ordersId) throws PosException, InsufficientCreditException, InsufficientBalanceException, InvalidPaymentException, InvalidProductException {
 		Trx trx = null; // LOCAL. Solo para hacer rollback o commit
 		try {
 		
@@ -416,6 +416,12 @@ public class PoSOnline extends PoSConnectionState {
 		}
 		
 		debug("Impresion de venta");
+		
+		for (Integer id : ordersId) {
+			MOrder orderTPV = new MOrder(getCtx(), id, null);
+			orderTPV.setIsTpvUsed(true);
+			orderTPV.save();
+		}
 		
 		// Aquí estamos fuera de la transacción. Ahora sí emitimos la factura
 		// por el controlador fiscal en caso de ser necesario.
@@ -1151,6 +1157,7 @@ public class PoSOnline extends PoSConnectionState {
 		
 		mo.setIsSOTrx( true );
 		// mo.setC_DocTypeTarget_ID();
+		mo.setIsTpvUsed(true);
 		
 		// TODO: Cual de los dos ?
 		

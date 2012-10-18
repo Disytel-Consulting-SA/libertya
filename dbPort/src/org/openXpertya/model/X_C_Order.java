@@ -7,7 +7,7 @@ import java.math.*;
 import org.openXpertya.util.*;
 /** Modelo Generado por C_Order
  *  @author Comunidad de Desarrollo Libertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
- *  @version  - 2012-10-16 20:59:36.124 */
+ *  @version  - 2012-10-18 13:48:18.107 */
 public class X_C_Order extends org.openXpertya.model.PO
 {
 /** Constructor estándar */
@@ -1069,6 +1069,22 @@ Tax is included in the price  */
 public boolean isTaxIncluded() 
 {
 Object oo = get_Value("IsTaxIncluded");
+if (oo != null) 
+{
+ if (oo instanceof Boolean) return ((Boolean)oo).booleanValue();
+ return "Y".equals(oo);
+}
+return false;
+}
+/** Set Is Tpv Used */
+public void setIsTpvUsed (boolean IsTpvUsed)
+{
+set_Value ("IsTpvUsed", new Boolean(IsTpvUsed));
+}
+/** Get Is Tpv Used */
+public boolean isTpvUsed() 
+{
+Object oo = get_Value("IsTpvUsed");
 if (oo != null) 
 {
  if (oo instanceof Boolean) return ((Boolean)oo).booleanValue();

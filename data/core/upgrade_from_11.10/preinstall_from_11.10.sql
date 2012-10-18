@@ -4505,3 +4505,13 @@ update ad_system set dummy = (SELECT addcolumnifnotexists('c_orderline','qtytran
 
 -- 20121015-2340 Incorporación de nueva parametrización para imputación de notas de crédito automáticas
 update ad_system set dummy = (SELECT addcolumnifnotexists('c_bpartner','automaticcreditnotes', 'character(1) NOT NULL DEFAULT \'N\'::bpchar'));
+
+-- 20121018-1335 Incorporación de nueva columna a la tabla C_Order
+update ad_system set dummy = (SELECT addcolumnifnotexists('c_order','istpvused', 'character(1) DEFAULT \'N\'::bpchar'));
+
+-- 20121018-1345 Modificación de la vista rv_ordernotinvoice
+CREATE OR REPLACE VIEW rv_ordernotinvoice AS 
+ SELECT o.ad_client_id, o.ad_org_id, o.isactive, o.created, o.createdby, o.updated, o.updatedby, o.c_order_id, o.documentno, o.docstatus, o.docaction, o.c_doctype_id, o.c_doctypetarget_id, o.dateordered, o.c_bpartner_id, o.totallines, o.grandtotal
+   FROM c_order o
+  WHERE o.isactive = 'Y'::bpchar AND o.issotrx = 'Y'::bpchar AND o.istpvused = 'N'::bpchar;
+ALTER TABLE rv_ordernotinvoice OWNER TO libertya;
