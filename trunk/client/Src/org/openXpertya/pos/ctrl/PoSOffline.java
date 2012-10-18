@@ -2,6 +2,7 @@ package org.openXpertya.pos.ctrl;
 
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.Set;
 
 import org.openXpertya.pos.exceptions.PosException;
 import org.openXpertya.pos.exceptions.UserException;
@@ -22,7 +23,7 @@ import org.openXpertya.pos.model.User;
 public class PoSOffline extends PoSConnectionState {
 
 	@Override
-	public void completeOrder(Order order) {
+	public void completeOrder(Order order, Set <Integer> ordersId) {
 		// TODO Auto-generated method stub
 		
 	}

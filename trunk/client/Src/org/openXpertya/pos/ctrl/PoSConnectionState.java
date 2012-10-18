@@ -2,7 +2,7 @@ package org.openXpertya.pos.ctrl;
 
 import java.math.BigDecimal;
 import java.util.List;
-import java.util.Map;
+import java.util.Set;
 
 import org.openXpertya.model.FiscalDocumentPrintListener;
 import org.openXpertya.pos.exceptions.InsufficientBalanceException;
@@ -36,7 +36,7 @@ public abstract class PoSConnectionState {
 	
 	protected CLogger log = CLogger.getCLogger(PoSConnectionState.class);
 	
-	public abstract void completeOrder(Order order) throws PosException, InsufficientCreditException, InsufficientBalanceException, InvalidPaymentException, InvalidProductException ;
+	public abstract void completeOrder(Order order, Set <Integer> ordersId) throws PosException, InsufficientCreditException, InsufficientBalanceException, InvalidPaymentException, InvalidProductException ;
 	
 	public abstract boolean balanceValidate(Order order);
 	

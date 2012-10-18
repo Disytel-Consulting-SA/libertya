@@ -83,7 +83,7 @@ public class PoSModel {
 	}
 
 	public void completeOrder() throws PosException, InsufficientCreditException, InsufficientBalanceException, InvalidPaymentException, InvalidProductException {
-		getConnectionState().completeOrder(getOrder());
+		getConnectionState().completeOrder(getOrder(), getAddedCustomerOrders().keySet());
 	}
 
 	public void setIntoOfflineMode() {
