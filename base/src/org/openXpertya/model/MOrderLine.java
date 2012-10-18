@@ -1635,6 +1635,49 @@ public class MOrderLine extends X_C_OrderLine {
     	return "";
 
 	}
+	
+	public String getInstanceName(){
+		StringBuffer sql;
+		int attributeSetInstance_ID = getM_AttributeSetInstance_ID();
+		String instanceName = null;
+
+	    sql = new StringBuffer();
+		sql.append("select v.name, u.seqno from M_AttributeSetInstance i ")
+		.append("INNER JOIN M_AttributeSet s ON (s.M_AttributeSet_ID = i.M_AttributeSet_ID) ") 
+		.append("LEFT JOIN M_AttributeUse u ON (u.M_AttributeSet_ID = s.M_AttributeSet_ID) ")
+		.append("LEFT JOIN M_AttributeInstance t ON (t.M_Attribute_ID = u.M_Attribute_ID) ")
+		.append("LEFT JOIN m_attributeValue v on (v.m_attribute_id = t.m_attribute_id) ")
+		.append("where (t.M_AttributeSetInstance_ID = "+ attributeSetInstance_ID +")  and (v.value = t.value)")
+		.append("group by t.value, u.seqno, v.name  ")
+		.append("order by u.seqno DESC");
+
+		PreparedStatement pstmt = null;
+		ResultSet rs 			= null;
+		
+		try {
+			pstmt = DB.prepareStatement( sql.toString());
+			rs = pstmt.executeQuery();
+			
+			if(rs.next()){
+				instanceName = rs.getString("Name");
+				while( rs.next()) {
+					instanceName = instanceName + " - " + rs.getString("Name");
+	    		}
+				return instanceName;
+			}
+			else{
+				return "";	
+			}
+		} catch( Exception e ) {
+		} finally {
+			try {
+	    		if (rs != null) rs.close();
+	    		if (pstmt != null) pstmt.close();
+			}	catch (Exception e) {}
+		}
+		
+		return instanceName;
+	}
 }    // MOrderLine
 
 
