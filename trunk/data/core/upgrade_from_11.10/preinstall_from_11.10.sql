@@ -4515,3 +4515,43 @@ CREATE OR REPLACE VIEW rv_ordernotinvoice AS
    FROM c_order o
   WHERE o.isactive = 'Y'::bpchar AND o.issotrx = 'Y'::bpchar AND o.istpvused = 'N'::bpchar;
 ALTER TABLE rv_ordernotinvoice OWNER TO libertya;
+
+-- 20121018-1622 Modificación de la vista de saldos bancarios para que muestre el nro de documento correctamente
+CREATE OR REPLACE VIEW v_bankbalances AS 
+         SELECT bsl.ad_client_id, bsl.ad_org_id, bsl.isactive, bs.c_bankaccount_id, '@StatementLine@'::character varying AS documenttype, bsl.description::text::character varying AS documentno, bs.statementdate AS datetrx, bsl.dateacct AS duedate, bs.docstatus, '' AS ischequesencartera, 
+                CASE
+                    WHEN bsl.stmtamt < 0.0 THEN abs(bsl.stmtamt)
+                    ELSE 0.0
+                END AS debit, 
+                CASE
+                    WHEN bsl.stmtamt >= 0.0 THEN abs(bsl.stmtamt)
+                    ELSE 0.0
+                END AS credit, bsl.isreconciled
+           FROM c_bankstatementline bsl
+      JOIN c_bankstatement bs ON bsl.c_bankstatement_id = bs.c_bankstatement_id
+   LEFT JOIN c_bpartner bp ON bsl.c_bpartner_id = bp.c_bpartner_id
+UNION 
+         SELECT p.ad_client_id, p.ad_org_id, p.isactive, p.c_bankaccount_id, dt.name AS documenttype, COALESCE((CASE WHEN p.checkno IS NULL OR trim(p.checkno) = '' THEN p.documentno ELSE p.checkno END),bp.name) AS documentno, p.datetrx, COALESCE(p.duedate, p.dateacct) AS duedate, p.docstatus, ba.ischequesencartera, 
+                CASE
+                    WHEN dt.signo_issotrx = 1 THEN abs(p.payamt)
+                    ELSE 0.0
+                END AS debit, 
+                CASE
+                    WHEN dt.signo_issotrx = (-1) THEN 
+                    CASE
+                        WHEN ba.ischequesencartera = 'Y'::bpchar THEN p.payamt
+                        ELSE abs(p.payamt)
+                    END
+                    ELSE 0.0
+                END AS credit, p.isreconciled
+           FROM c_payment p
+      JOIN c_doctype dt ON p.c_doctype_id = dt.c_doctype_id
+   JOIN c_bpartner bp ON p.c_bpartner_id = bp.c_bpartner_id
+   JOIN c_bankaccount ba ON p.c_bankaccount_id = ba.c_bankaccount_id
+  WHERE NOT (EXISTS ( SELECT bsl.c_bankstatementline_id, bsl.ad_client_id, bsl.ad_org_id, bsl.isactive, bsl.created, bsl.createdby, bsl.updated, bsl.updatedby, bsl.c_bankstatement_id, bsl.line, bsl.description, bsl.isreversal, bsl.c_payment_id, bsl.valutadate, bsl.dateacct, bsl.c_currency_id, bsl.trxamt, bsl.stmtamt, bsl.c_charge_id, bsl.chargeamt, bsl.interestamt, bsl.memo, bsl.referenceno, bsl.ismanual, bsl.efttrxid, bsl.efttrxtype, bsl.eftmemo, bsl.eftpayee, bsl.eftpayeeaccount, bsl.createpayment, bsl.statementlinedate, bsl.eftstatementlinedate, bsl.eftvalutadate, bsl.eftreference, bsl.eftcurrency, bsl.eftamt, bsl.eftcheckno, bsl.matchstatement, bsl.c_bpartner_id, bsl.c_invoice_id, bsl.processed, bsl.m_boletadeposito_id, bsl.isreconciled, bs.c_bankstatement_id, bs.ad_client_id, bs.ad_org_id, bs.isactive, bs.created, bs.createdby, bs.updated, bs.updatedby, bs.c_bankaccount_id, bs.name, bs.description, bs.ismanual, bs.statementdate, bs.beginningbalance, bs.endingbalance, bs.statementdifference, bs.createfrom, bs.processing, bs.processed, bs.posted, bs.eftstatementreference, bs.eftstatementdate, bs.matchstatement, bs.isapproved, bs.docstatus, bs.docaction, bsr.c_bankstatline_reconcil_id, bsr.ad_client_id, bsr.ad_org_id, bsr.isactive, bsr.created, bsr.createdby, bsr.updated, bsr.updatedby, bsr.c_bankstatementline_id, bsr.c_payment_id, bsr.m_boletadeposito_id, bsr.c_currency_id, bsr.trxamt, bsr.referenceno, bsr.ismanual, bsr.processed, bsr.isreconciled, bsr.processing, bsr.docstatus, bsr.docaction
+    FROM c_bankstatementline bsl
+   JOIN c_bankstatement bs ON bsl.c_bankstatement_id = bs.c_bankstatement_id
+   LEFT JOIN c_bankstatline_reconcil bsr ON bsl.c_bankstatementline_id::numeric = bsr.c_bankstatementline_id
+  WHERE (bs.docstatus = ANY (ARRAY['CO'::bpchar, 'CL'::bpchar])) AND (bsl.c_payment_id = p.c_payment_id OR bsr.c_payment_id = p.c_payment_id::numeric)));
+
+ALTER TABLE v_bankbalances OWNER TO libertya;
