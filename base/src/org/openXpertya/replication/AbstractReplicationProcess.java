@@ -383,23 +383,31 @@ public abstract class AbstractReplicationProcess extends SvrProcess {
 	  	System.out.println(message + "(" + DB.getDatabaseInfo() + ")");
 		String m_trxName = Trx.createTrxName();
 		Trx.getTrx(m_trxName).start();
-				
-		// Recuperar el proceso de replicación cliente
-		int processId = DB.getSQLValue(m_trxName, " SELECT AD_PROCESS_ID FROM AD_PROCESS WHERE AD_COMPONENTOBJECTUID = '" + 
-													("Source".equals(processType)?sourceUID:targetUID) + "' ");
-		ProcessInfo pi = MProcess.execute(Env.getCtx(), processId, params, m_trxName);
-
-		// En caso de error, presentar en consola
-		if (pi.isError())	{
-			Trx.getTrx(m_trxName).rollback();
-			System.err.println("Error en replicacion: " + pi.getSummary());
+		
+		try {
+			// Recuperar el proceso de replicación cliente
+			int processId = DB.getSQLValue(m_trxName, " SELECT AD_PROCESS_ID FROM AD_PROCESS WHERE AD_COMPONENTOBJECTUID = '" + 
+														("Source".equals(processType)?sourceUID:targetUID) + "' ");
+			ProcessInfo pi = MProcess.execute(Env.getCtx(), processId, params, m_trxName);
+	
+			// En caso de error, presentar en consola
+			if (pi.isError())	{
+				Trx.getTrx(m_trxName).rollback();
+				System.err.println("Error en replicacion: " + pi.getSummary());
+			}
+			// Todo OK, commitear transacción
+			else
+				Trx.getTrx(m_trxName).commit();
 		}
-		// Todo OK, commitear transacción
-		else
-			Trx.getTrx(m_trxName).commit();
-
-		// Cerrar la transacción
-		Trx.getTrx(m_trxName).close();
+		catch (Exception e) {
+			e.printStackTrace();
+			log.log(Level.INFO, processType + e.getMessage());
+		}
+		finally {
+			// Cerrar la transacción
+			if (m_trxName!=null && Trx.getTrx(m_trxName)!=null)
+				Trx.getTrx(m_trxName).close();
+		}
 			
 	}
 	
