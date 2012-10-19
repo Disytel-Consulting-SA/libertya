@@ -139,6 +139,9 @@ import org.openXpertya.utils.LYCloseWindowAdapter;
 
 public class PoSMainForm extends CPanel implements FormPanel, ASyncProcess, Disposable {
 
+	/** Singleton */
+	private static PoSMainForm instance = null;
+	
 	// --------------------------------------------------
 	// Constantes de Tamaños de Componentes
 	// --------------------------------------------------
@@ -364,6 +367,7 @@ public class PoSMainForm extends CPanel implements FormPanel, ASyncProcess, Disp
 	private LYCloseWindowAdapter closeWindowAdapter = null;
 	private AddPOSPaymentValidations extraPOSPaymentAddValidations = null;
 	private boolean processing = false;
+	private boolean duplicated = false;
 	
 	private String MSG_ORDER;
 	private String MSG_PAYMENT;
@@ -482,6 +486,7 @@ public class PoSMainForm extends CPanel implements FormPanel, ASyncProcess, Disp
 	private String MSG_NO_AUTHORIZATION;
 	private String MSG_HAS_CREDIT_AVAILABLE;
 	private String MSG_USE_CREDIT_MANDATORY;
+	private String MSG_DUPLICATED_POS_INSTANCE;
 		
 	/**
 	 * This method initializes 
@@ -500,6 +505,15 @@ public class PoSMainForm extends CPanel implements FormPanel, ASyncProcess, Disp
 	public void init(int WindowNo, FormFrame frame) {
 		setWindowNo(WindowNo);
 		setFrame(frame);
+		if(getInstance() == null){
+			setInstance(this);
+		}
+		else{
+			duplicated = true;
+			errorMsg(MSG_DUPLICATED_POS_INSTANCE);
+			closeFrame();
+			return;
+		}
 		getFrame().setSize(S_MINIMIZED_WIDTH, S_MINIMIZED_HEIGHT);
 		getFrame().setPreferredSize(new Dimension(S_MINIMIZED_WIDTH, S_MINIMIZED_HEIGHT));
 		try {
@@ -521,13 +535,7 @@ public class PoSMainForm extends CPanel implements FormPanel, ASyncProcess, Disp
 			// Si hubo un error al obtener la configuracion del TPV se
 			// se cierra la ventana.	
 			} else {
-				SwingUtilities.invokeLater(new Runnable() {
-
-					public void run() {
-						getFrame().setVisible(false);
-					}
-					
-				});
+				closeFrame();
 			}
 			
 			// Necesario hacerlo aquí porque se requiere el windowsNo para que
@@ -540,6 +548,18 @@ public class PoSMainForm extends CPanel implements FormPanel, ASyncProcess, Disp
 		Env.setContext(Env.getCtx(), getWindowNo(), "IsSOTrx", "Y");
 		
 		TimeStatsLogger.endTask(MeasurableTask.POS_INIT);
+	}
+	
+	
+	private void closeFrame(){
+		SwingUtilities.invokeLater(new Runnable() {
+
+			public void run() {
+//				getFrame().setVisible(false);
+				dispose();
+			}
+			
+		});
 	}
 	
 	private void initPoSConfig() {
@@ -761,6 +781,7 @@ public class PoSMainForm extends CPanel implements FormPanel, ASyncProcess, Disp
 		MSG_NO_AUTHORIZATION = getMsg("NoAuthorization"); 
 		MSG_HAS_CREDIT_AVAILABLE = getMsg("CustomerHasCreditToUse");
 		MSG_USE_CREDIT_MANDATORY = getMsg("CustomerCreditMandatoryToUse");
+		MSG_DUPLICATED_POS_INSTANCE = getMsg("DuplicatedPOSInstance");
 		
 		// Estos mensajes no se asignan a variables de instancias dado que son mensajes
 		// devueltos por el modelo del TPV, pero se realiza la invocación a getMsg(...) para
@@ -786,6 +807,9 @@ public class PoSMainForm extends CPanel implements FormPanel, ASyncProcess, Disp
 //		}
 		setFrame(null);
 		updateCloseApp("Y");
+		if(!duplicated){
+			setInstance(null);
+		}
 	}
 	
 	/**
@@ -6045,6 +6069,7 @@ public class PoSMainForm extends CPanel implements FormPanel, ASyncProcess, Disp
 		infoFiscalPrinter.setReprintButtonActive(true);
 		infoFiscalPrinter.setVoidButtonActive(true);
 		infoFiscalPrinter.setOkButtonActive(false);
+		infoFiscalPrinter.setCancelButtonActiveInBusyState(false);
 	}
 
 	/**
@@ -6305,5 +6330,13 @@ public class PoSMainForm extends CPanel implements FormPanel, ASyncProcess, Disp
 		getCClientText().setReadWrite(!processing);
 		getCFinishPayButton().setReadWrite(!processing);
 		this.repaint();
+	}
+
+	public static PoSMainForm getInstance() {
+		return instance;
+	}
+
+	public static void setInstance(PoSMainForm instance) {
+		PoSMainForm.instance = instance;
 	}
 }  //  @jve:decl-index=0:visual-constraint="10,10"
