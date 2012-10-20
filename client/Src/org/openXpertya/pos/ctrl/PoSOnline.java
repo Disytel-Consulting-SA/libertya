@@ -432,10 +432,11 @@ public class PoSOnline extends PoSConnectionState {
 			// cuando la emisión fiscal se hacía dentro de la transacción principal.
 			MInvoice tmpInvoice = new MInvoice(getCtx(), invoice.getC_Invoice_ID(), null);
 			tmpInvoice.addDocActionStatusListener(getDocActionStatusListener());
+			tmpInvoice.setThrowExceptionInCancelCheckStatus(true);
 			// Lanza la impresión fiscal
-			String errorMsg = tmpInvoice.doFiscalPrint();
-			if (errorMsg != null) {
-				throw new FiscalPrintException();
+			CallResult callResult = tmpInvoice.doFiscalPrint();
+			if (callResult.isError()) {
+				throw new FiscalPrintException();				
 			}
 		}
 		

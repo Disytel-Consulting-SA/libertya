@@ -111,6 +111,12 @@ public class MInvoice extends X_C_Invoice implements DocAction {
 	}
 	
 	/**
+	 * Elevar Exception en cancelación en el momento de chequeo de estado de
+	 * impresora fiscal
+	 */
+	private boolean throwExceptionInCancelCheckStatus = false;
+	
+	/**
 	 * Descripción de Método
 	 * 
 	 * 
@@ -3575,9 +3581,9 @@ public class MInvoice extends X_C_Invoice implements DocAction {
 		// LOCALIZACION ARGENTINA
 		// Emisión de la factura por controlador fiscal
 		if (requireFiscalPrint() && !isIgnoreFiscalPrint()) {
-			String errorMsg = doFiscalPrint();
-			if (errorMsg != null) {
-				m_processMsg = errorMsg;
+			CallResult callResult = doFiscalPrint();
+			if (callResult.isError()) {
+				m_processMsg = callResult.getMsg();
 				return STATUS_Invalid;
 			}
 		}
@@ -4164,9 +4170,9 @@ public class MInvoice extends X_C_Invoice implements DocAction {
 		// Imprimir fiscalmente el documento reverso si es que así lo requiere y
 		// si el documento a revertir también se imprimió fiscalmente
 		if(localeARActive && isSOTrx() && isFiscalAlreadyPrinted()){
-			String errorMsg = reversal.doFiscalPrint();
-			if (errorMsg != null) {
-				m_processMsg = errorMsg;
+			CallResult callResult = reversal.doFiscalPrint();
+			if (callResult.isError()) {
+				m_processMsg = callResult.getMsg();
 				return false;
 			}
 		}
@@ -4599,7 +4605,8 @@ public class MInvoice extends X_C_Invoice implements DocAction {
 	 * @return <code>null</code> si la impresión se realizó correctamente o el
 	 *         mensaje de error si hubo algún error.
 	 */
-	public String doFiscalPrint() {
+	public CallResult doFiscalPrint() {
+		CallResult printResult = null;
 		// ////////////////////////////////////////////////////////////////
 		// LOCALIZACIÓN ARGENTINA
 		// Para la localización Argentina, si el tipo de documento está
@@ -4615,12 +4622,13 @@ public class MInvoice extends X_C_Invoice implements DocAction {
 			TimeStatsLogger.beginTask(MeasurableTask.PRINT_FISCAL_INVOICE);
 
 			// Impresor de comprobantes.
-			CallResult printResult = FiscalPrintManager.printDocument(getCtx(),
+			printResult = FiscalPrintManager.printDocument(getCtx(),
 					this, true, get_TrxName());
 			if (printResult.isError()) {
-				return !Util.isEmpty(printResult.getMsg()) ? printResult
-						.getMsg() : Msg.getMsg(getCtx(),
-						"PrintFiscalDocumentError");
+				printResult
+						.setMsg(!Util.isEmpty(printResult.getMsg()) ? printResult
+								.getMsg() : Msg.getMsg(getCtx(),
+								"PrintFiscalDocumentError"));
 			}
 
 			// Impresor de comprobantes.
@@ -4636,7 +4644,7 @@ public class MInvoice extends X_C_Invoice implements DocAction {
 
 			TimeStatsLogger.endTask(MeasurableTask.PRINT_FISCAL_INVOICE);
 		}
-		return null;
+		return printResult;
 	}
 
 	private boolean ignoreFiscalPrint = false;
@@ -4962,6 +4970,15 @@ public class MInvoice extends X_C_Invoice implements DocAction {
 	public void setSkipAutomaticCreditAllocCreation(
 			boolean skipAutomaticCreditAllocCreation) {
 		this.skipAutomaticCreditAllocCreation = skipAutomaticCreditAllocCreation;
+	}
+
+	public boolean isThrowExceptionInCancelCheckStatus() {
+		return throwExceptionInCancelCheckStatus;
+	}
+
+	public void setThrowExceptionInCancelCheckStatus(
+			boolean throwExceptionInCancelCheckStatus) {
+		this.throwExceptionInCancelCheckStatus = throwExceptionInCancelCheckStatus;
 	}
 	
 } // MInvoice

@@ -67,6 +67,7 @@ public class FiscalPrintManager {
 		if (trxName != null) {
 			fdp.setTrx(Trx.get(trxName, false));
 		}
+		fdp.setThrowExceptionInCancelCheckStatus(invoice.isThrowExceptionInCancelCheckStatus());
 		// Esto vale la pena solamente para impresiones locales
 		if(fireDocActionStatusChanged){
 			invoice.fireDocActionStatusChanged(new DocActionStatusEvent(
