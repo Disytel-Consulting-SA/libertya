@@ -97,6 +97,11 @@ public class AInfoFiscalPrinter extends CDialog implements ActionListener, Fisca
     private boolean firstCommand = true;
     
     private boolean closeOnFiscalClose = false;
+    /**
+	 * Tirar Excepción al cancelar la impresión en el momento de chequeo de
+	 * estado de impresora fiscal
+	 */
+	private boolean throwExceptionInCancelCheckStatus = false;
     
     /**
      * Constructor de la clase ...    
@@ -400,7 +405,9 @@ public class AInfoFiscalPrinter extends CDialog implements ActionListener, Fisca
             dispose();
         } else if( e.getActionCommand().equals( ConfirmPanel.A_CANCEL ))  {
         	getFiscalDocumentPrint().setCancelWaiting(true);
-            dispose();
+        	if(!isThrowExceptionInCancelCheckStatus()){
+        		dispose();
+        	}
         } else if( e.getSource() == mPrintScreen ) {
             printScreen();
         } else if( e.getSource() == mEMail ) {
@@ -423,6 +430,7 @@ public class AInfoFiscalPrinter extends CDialog implements ActionListener, Fisca
 		getReprintButton().setVisible(reprintButtonActive);
 		getVoidButton().setVisible(voidButtonActive);
 		getOkButton().setVisible(okButtonActive);
+		getCancelButton().setVisible(!voidButtonActive);
 	}
 	
 	private void setBusyStatus() {
@@ -439,6 +447,7 @@ public class AInfoFiscalPrinter extends CDialog implements ActionListener, Fisca
 		getReprintButton().setVisible(false);
 		getVoidButton().setVisible(false);
 		getOkButton().setVisible(false);
+		getCancelButton().setVisible(false);
 	}
 
 	public void commandExecuted(FiscalPrinter source, final FiscalPacket command, FiscalPacket response) {
@@ -626,7 +635,7 @@ public class AInfoFiscalPrinter extends CDialog implements ActionListener, Fisca
 			boolean rsp = ADialog.ask(getWindowNo(), AInfoFiscalPrinter.this, "PrinterErrorConfirm",Msg.translate(Env.getCtx(),"PrinterErrorConfirmMsg"));
 			confirmPanel.getCancelButton().setVisible(false);
 			getFiscalDocumentPrint().setIgnoreErrorStatus(rsp);
-			AInfoFiscalPrinter.this.setVisible(rsp);
+			AInfoFiscalPrinter.this.setVisible(rsp || isThrowExceptionInCancelCheckStatus());
 		}
 	};
 	
@@ -739,6 +748,10 @@ public class AInfoFiscalPrinter extends CDialog implements ActionListener, Fisca
 		return confirmPanel.getOKButton();
 	}
 	
+	public JButton getCancelButton() {
+		return confirmPanel.getCancelButton();
+	}
+	
 	private boolean reprintButtonActive = false;
 	private boolean voidButtonActive = false;
 	private boolean okButtonActive = true;
@@ -823,6 +836,15 @@ public class AInfoFiscalPrinter extends CDialog implements ActionListener, Fisca
 
 	public boolean isCloseOnFiscalClose() {
 		return closeOnFiscalClose;
+	}
+
+	public boolean isThrowExceptionInCancelCheckStatus() {
+		return throwExceptionInCancelCheckStatus;
+	}
+
+	public void setThrowExceptionInCancelCheckStatus(
+			boolean throwExceptionInCancelCheckStatus) {
+		this.throwExceptionInCancelCheckStatus = throwExceptionInCancelCheckStatus;
 	}
 
 	/**

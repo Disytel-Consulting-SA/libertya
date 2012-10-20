@@ -111,6 +111,11 @@ public class FiscalDocumentPrint {
 	/** Indica si se debe crear o no la transacción en caso de que 
 	 * no se asigne ninguna externamente */
 	private boolean createTrx = false;
+	/**
+	 * Tirar Excepción al cancelar la impresión en el momento de chequeo de
+	 * estado de impresora fiscal
+	 */
+	private boolean throwExceptionInCancelCheckStatus = false;
 		
 	public FiscalDocumentPrint() {
 		super();
@@ -1435,14 +1440,22 @@ public class FiscalDocumentPrint {
 			// se continua con la impresión. (Esto se utiliza para evitar
 			// los casos en que la impresora quede marcada como error en 
 			// la BD pero el dispositivo ya no contenga mas este error.
-			if(isIgnoreErrorStatus()) 
+			if(isIgnoreErrorStatus()){ 
 				// Por ello se setea la impresora como Lista y se intenta
 				// continuar con la impresión.
 				setFiscalPrinterStatus(cFiscal, MControladorFiscal.STATUS_IDLE);
-			else 
+			}
+			else{
 				// Si no se pueden ignorar estados de error, entonces 
 				// no es posible continuar con la impresión.
-				return false;
+				if(isThrowExceptionInCancelCheckStatus()){
+					throw new Exception(Msg.translate(ctx,"FiscalPrintCancelError"));
+				}
+				else{
+					setCancelWaiting(true);
+					return false;
+				}
+			}
 		}			
 
 		// Mientras el status sea BUSY, espera 5 segundos y vuelve a chequear.
@@ -1457,8 +1470,13 @@ public class FiscalDocumentPrint {
 		// Si fue cancelada la operacion de espera entonces se retorna, indicando
 		// que el estado no es correcto.
 		if(isCancelWaiting()) { 
-			log.fine("Fiscal printer wait canceled");
-			return false;
+			if(isThrowExceptionInCancelCheckStatus()){
+				throw new Exception(Msg.translate(ctx,"FiscalPrintCancelError"));
+			}
+			else{
+				log.fine("Fiscal printer wait canceled");
+				return false;
+			}
 		}
 			
 		fireStatusReported(cFiscal, MControladorFiscal.STATUS_IDLE);
@@ -1889,5 +1907,14 @@ public class FiscalDocumentPrint {
 	 */
 	public static void setMaxAmountCF(BigDecimal maxAmountCF) {
 		FiscalDocumentPrint.maxAmountCF = maxAmountCF;
+	}
+
+	public boolean isThrowExceptionInCancelCheckStatus() {
+		return throwExceptionInCancelCheckStatus;
+	}
+
+	public void setThrowExceptionInCancelCheckStatus(
+			boolean throwExceptionInCancelCheckStatus) {
+		this.throwExceptionInCancelCheckStatus = throwExceptionInCancelCheckStatus;
 	}
 }

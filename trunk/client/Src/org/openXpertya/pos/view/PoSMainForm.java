@@ -6069,7 +6069,7 @@ public class PoSMainForm extends CPanel implements FormPanel, ASyncProcess, Disp
 		infoFiscalPrinter.setReprintButtonActive(true);
 		infoFiscalPrinter.setVoidButtonActive(true);
 		infoFiscalPrinter.setOkButtonActive(false);
-		infoFiscalPrinter.setCancelButtonActiveInBusyState(false);
+		infoFiscalPrinter.setThrowExceptionInCancelCheckStatus(true);
 	}
 
 	/**
