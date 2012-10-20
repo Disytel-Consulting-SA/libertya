@@ -4572,3 +4572,23 @@ UNION ALL
      WHERE p.issotrx = 'N'::bpchar AND p.tendertype = 'K'::bpchar AND p.datetrx < p.duedate AND (v.docstatus = 'CO'::bpchar OR v.docstatus = 'CL'::bpchar);
 
 ALTER TABLE v_projectedpayments OWNER TO libertya;
+
+-- 20121020-0125 Incorporación de columna clave a la tabla M_InOutLineMA, eliminando la clave múltiple
+ALTER TABLE m_inoutlinema DROP CONSTRAINT m_inoutlinema_key;
+
+ALTER TABLE m_inoutlinema ADD COLUMN m_inoutlinema_id integer;
+
+CREATE SEQUENCE seq_m_inoutlinema
+  INCREMENT 1
+  MINVALUE 1
+  MAXVALUE 9223372036854775807
+  START 1000000
+  CACHE 1;
+ALTER TABLE seq_m_inoutlinema OWNER TO libertya;
+
+UPDATE m_inoutlinema
+SET m_inoutlinema_id = nextval('seq_m_inoutlinema');
+
+ALTER TABLE m_inoutlinema ADD CONSTRAINT m_inoutlinema_key PRIMARY KEY (m_inoutlinema_id);
+
+ALTER TABLE m_inoutlinema ALTER COLUMN m_inoutlinema_id SET NOT NULL;
