@@ -1,13 +1,14 @@
-/** Modelo Generado - NO CAMBIAR MANUALMENTE - Copyright (C) 2006 FUNDESLE */
+/** Modelo Generado - NO CAMBIAR MANUALMENTE - Disytel */
 package org.openXpertya.model;
-import java.util.*;
+import java.util.logging.Level;
+ import java.util.*;
 import java.sql.*;
 import java.math.*;
 import org.openXpertya.util.*;
 /** Modelo Generado por M_InOutLineMA
- *  @author Comunidad de Desarrollo openXpertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
- *  @version  - 2008-01-03 10:26:38.171 */
-public class X_M_InOutLineMA extends PO
+ *  @author Comunidad de Desarrollo Libertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
+ *  @version  - 2012-10-20 01:32:04.506 */
+public class X_M_InOutLineMA extends org.openXpertya.model.PO
 {
 /** Constructor estándar */
 public X_M_InOutLineMA (Properties ctx, int M_InOutLineMA_ID, String trxName)
@@ -17,6 +18,7 @@ super (ctx, M_InOutLineMA_ID, trxName);
 {
 setM_AttributeSetInstance_ID (0);
 setM_InOutLine_ID (0);
+setM_InOutLineMA_ID (0);
 setMovementQty (Env.ZERO);
 }
  */
@@ -26,13 +28,13 @@ public X_M_InOutLineMA (Properties ctx, ResultSet rs, String trxName)
 {
 super (ctx, rs, trxName);
 }
-/** AD_Table_ID=762 */
-public static final int Table_ID=762;
+/** AD_Table_ID */
+public static final int Table_ID = M_Table.getTableID("M_InOutLineMA");
 
 /** TableName=M_InOutLineMA */
 public static final String Table_Name="M_InOutLineMA";
 
-protected static KeyNamePair Model = new KeyNamePair(762,"M_InOutLineMA");
+protected static KeyNamePair Model = new KeyNamePair(Table_ID,"M_InOutLineMA");
 protected static BigDecimal AccessLevel = new BigDecimal(1);
 
 /** Load Meta Data */
@@ -77,6 +79,18 @@ return ii.intValue();
 public KeyNamePair getKeyNamePair() 
 {
 return new KeyNamePair(getID(), String.valueOf(getM_InOutLine_ID()));
+}
+/** Set M_InOutLineMA_ID */
+public void setM_InOutLineMA_ID (int M_InOutLineMA_ID)
+{
+set_ValueNoCheck ("M_InOutLineMA_ID", new Integer(M_InOutLineMA_ID));
+}
+/** Get M_InOutLineMA_ID */
+public int getM_InOutLineMA_ID() 
+{
+Integer ii = (Integer)get_Value("M_InOutLineMA_ID");
+if (ii == null) return 0;
+return ii.intValue();
 }
 /** Set Movement Quantity.
 Quantity of a product moved. */
