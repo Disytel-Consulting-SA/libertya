@@ -148,22 +148,22 @@ public class PoSOnline extends PoSConnectionState {
 	// private Vector<MPayment> mpayments = new Vector<MPayment>();
 	private Vector<MAllocationLine> allocLines = new Vector<MAllocationLine>();
 	
-	private BigDecimal sumaPagos = null;
-	private BigDecimal sumaProductos = null;
+	protected BigDecimal sumaPagos = null;
+	protected BigDecimal sumaProductos = null;
 	
-	private BigDecimal sumaCashPayments = null;
-	private BigDecimal sumaCheckPayments = null;
-	private BigDecimal sumaCreditCardPayments = null;
-	private BigDecimal sumaCreditPayments = null;
-	private BigDecimal sumaCreditNotePayments = null;
-	private BigDecimal sumaBankTransferPayments = null;
+	protected BigDecimal sumaCashPayments = null;
+	protected BigDecimal sumaCheckPayments = null;
+	protected BigDecimal sumaCreditCardPayments = null;
+	protected BigDecimal sumaCreditPayments = null;
+	protected BigDecimal sumaCreditNotePayments = null;
+	protected BigDecimal sumaBankTransferPayments = null;
 	
-	private Vector<CashPayment> cashPayments = new Vector<CashPayment>();
-	private Vector<CheckPayment> checkPayments = new Vector<CheckPayment>();
-	private Vector<CreditCardPayment> creditCardPayments = new Vector<CreditCardPayment>();
-	private Vector<CreditPayment> creditPayments = new Vector<CreditPayment>();
-	private Vector<CreditNotePayment> creditNotePayments = new Vector<CreditNotePayment>();
-	private Vector<BankTransferPayment> bankTransferPayments = new Vector<BankTransferPayment>();
+	protected Vector<CashPayment> cashPayments = new Vector<CashPayment>();
+	protected Vector<CheckPayment> checkPayments = new Vector<CheckPayment>();
+	protected Vector<CreditCardPayment> creditCardPayments = new Vector<CreditCardPayment>();
+	protected Vector<CreditPayment> creditPayments = new Vector<CreditPayment>();
+	protected Vector<CreditNotePayment> creditNotePayments = new Vector<CreditNotePayment>();
+	protected Vector<BankTransferPayment> bankTransferPayments = new Vector<BankTransferPayment>();
 	
 	private BigDecimal sobraPorCheques = null;
 	private BigDecimal faltantePorRedondeo = null;
@@ -184,8 +184,11 @@ public class PoSOnline extends PoSConnectionState {
 	
 	private Map<String, BigDecimal> currentAccountSalesConditions;
 	
+	private CreatePOSPaymentValidations createPOSPaymentValidations;
+	
 	public PoSOnline() {
 		super();
+		setCreatePOSPaymentValidations(new CreatePOSPaymentValidations());
 	}
 	
 	private static void throwIfFalse(boolean b, DocAction sourceDocActionPO, Class posExceptionClass) throws PosException {
@@ -652,10 +655,12 @@ public class PoSOnline extends PoSConnectionState {
 		// En este punto sumaPagos es >= totalPagar
 		
 		// Sobra dinero ?
-		
-		if (sumaPagos.compareTo(totalPagar) > 0) 
-		{
-			sobraPorCheques = sumaPagos.subtract(totalPagar);
+		// Se prioriza el efectivo para el cambio, sobra cheques siempre y
+		// cuando sacando el efectivo
+		BigDecimal sobraCheques = sumaPagos.subtract(sumaCashPayments);
+		if (sobraCheques.compareTo(totalPagar) > 0
+				&& sumaCheckPayments.compareTo(BigDecimal.ZERO) > 0) {
+			sobraPorCheques = sobraCheques.subtract(totalPagar);
 		}
 	}
 	
@@ -1703,6 +1708,8 @@ public class PoSOnline extends PoSConnectionState {
 	}
 	
 	private void createOxpPayments(Order order) throws PosException {
+		createPOSPaymentValidations.validatePayments(this, order);
+		
 		for (CashPayment p : cashPayments)
 			createOxpCashPayment(p);
 		
@@ -3637,5 +3644,14 @@ public class PoSOnline extends PoSConnectionState {
 		}
 		return MInvoice.hasCreditsOpen(getCtx(), bpartnerID, true,
 				excludedCredits, getTrxName());
+	}
+
+	public CreatePOSPaymentValidations getCreatePOSPaymentValidations() {
+		return createPOSPaymentValidations;
+	}
+
+	public void setCreatePOSPaymentValidations(
+			CreatePOSPaymentValidations createPOSPaymentValidations) {
+		this.createPOSPaymentValidations = createPOSPaymentValidations;
 	}
 }
