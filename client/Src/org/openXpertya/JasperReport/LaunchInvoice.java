@@ -11,6 +11,7 @@ import java.util.Set;
 
 import org.openXpertya.JasperReport.DataSource.InvoiceDataSource;
 import org.openXpertya.JasperReport.DataSource.JasperReportsUtil;
+import org.openXpertya.model.MAllocationHdr;
 import org.openXpertya.model.MBPartner;
 import org.openXpertya.model.MBPartnerLocation;
 import org.openXpertya.model.MClient;
@@ -21,13 +22,17 @@ import org.openXpertya.model.MInvoiceLine;
 import org.openXpertya.model.MInvoicePaySchedule;
 import org.openXpertya.model.MLocation;
 import org.openXpertya.model.MOrder;
+import org.openXpertya.model.MOrg;
 import org.openXpertya.model.MPOSJournal;
 import org.openXpertya.model.MProcess;
 import org.openXpertya.model.MRegion;
+import org.openXpertya.model.MRetencionSchema;
+import org.openXpertya.model.MRetencionType;
 import org.openXpertya.model.MTax;
 import org.openXpertya.model.MUser;
 import org.openXpertya.model.X_C_Invoice;
 import org.openXpertya.model.X_C_POSJournal;
+import org.openXpertya.model.X_M_Retencion_Invoice;
 import org.openXpertya.process.ProcessInfo;
 import org.openXpertya.process.ProcessInfoParameter;
 import org.openXpertya.process.SvrProcess;
@@ -404,7 +409,41 @@ public class LaunchInvoice extends SvrProcess {
 		jasperwrapper.addParameter("BP_LOCATION_PHONE2", BPLocation.getPhone2());
 		jasperwrapper.addParameter("BP_LOCATION_FAX", BPLocation.getFax());
 		jasperwrapper.addParameter("BP_LOCATION_ISDN", BPLocation.getISDN());
+		
+		// Direccción de la Organización asociada a la Factura
+		MOrg org = MOrg.get(getCtx(), invoice.getAD_Org_ID());
+		MLocation locationOrg = new MLocation(getCtx(), org.getInfo().getC_Location_ID(), null);
+		MRegion regionOrg = null;
+		if (locationOrg.getC_Region_ID() > 0)
+			regionOrg = new MRegion(getCtx(), locationOrg.getC_Region_ID(), null);
+		jasperwrapper.addParameter(
+			"DIRECCION_ORG",
+			JasperReportsUtil.coalesce(locationOrg.getAddress1(), "")
+					+ ". "
+					+ JasperReportsUtil.coalesce(locationOrg.getCity(), "")
+					+ ". ("
+					+ JasperReportsUtil.coalesce(locationOrg.getPostal(), "")
+					+ "). "
+					+ JasperReportsUtil.coalesce(regionOrg == null ? ""
+							: regionOrg.getName(), ""));
+		
+		// Parámetros de la retención aplicada a la Factura
+		X_M_Retencion_Invoice retencion_invoice = getM_Retencion_Invoice(invoice);
+		if (retencion_invoice != null){
+			MRetencionSchema retencionSchema =  new MRetencionSchema(getCtx(), retencion_invoice.getC_RetencionSchema_ID(), null);
+			// Nombre del Esquema de Retención
+			jasperwrapper.addParameter("RET_SCHEMA_NAME", (retencionSchema.getName()));
+			// Nombre del Tipo de Retención
+			jasperwrapper.addParameter("RET_RETENTION_TYPE_NAME", (new MRetencionType(getCtx(), retencionSchema.getC_RetencionType_ID(), null).getName()) );
+			// Monto de la Retención
+			jasperwrapper.addParameter("RET_AMOUNT", retencion_invoice.getamt_retenc());
 
+			MAllocationHdr allocation = new MAllocationHdr(getCtx(), retencion_invoice.getC_AllocationHdr_ID(), null);
+			// Monto del Recibo
+			jasperwrapper.addParameter("RET_ALLOC_AMOUNT", allocation.getGrandTotal());
+			// Comprobante/s que origina/n la retención. (Números de Documento de las facturas en el Recibo) 
+			jasperwrapper.addParameter("RET_ALLOC_INVOICES", get_Retencion_Invoices(allocation));	
+		}
 	}
 	
 	
@@ -486,5 +525,53 @@ public class LaunchInvoice extends SvrProcess {
 		AD_Record_ID = aD_Record_ID;
 	}
 	
+	/*
+	 * El método retorna una Retencion_Invoice a partir del la factura
+	 */
+	private X_M_Retencion_Invoice getM_Retencion_Invoice(MInvoice invoice)
+	{
+		try 
+		{
+			int m_Retencion_InvoiceID = 0;
+			PreparedStatement stmt = DB.prepareStatement("SELECT m_retencion_invoice_id FROM M_Retencion_Invoice WHERE c_invoice_id = ? ORDER BY m_retencion_invoice_id DESC");
+			stmt.setInt(1, invoice.getC_Invoice_ID());
+			ResultSet rs = stmt.executeQuery();
+			if (!rs.next() || rs.getInt(1) == 0)
+				return null;
+			
+			m_Retencion_InvoiceID = rs.getInt(1);
+			X_M_Retencion_Invoice m_Retencion_Invoice = new X_M_Retencion_Invoice(getCtx(), m_Retencion_InvoiceID, null);
+			return m_Retencion_Invoice;	
+		}
+		catch (Exception e)
+		{
+			e.printStackTrace();
+			return null;
+		}
+	}
 	
+	/*
+	 * El método retorna todos los DocumentNo. de las facturas asociadas al recibo recibido por parámetro. 
+	 */
+	private String get_Retencion_Invoices(MAllocationHdr allocation)
+	{
+		try 
+		{
+			PreparedStatement stmt = DB.prepareStatement("SELECT DISTINCT factura FROM C_Allocation_Detail_V WHERE C_AllocationHdr_ID = ? ORDER BY factura DESC");
+			stmt.setInt(1, allocation.getC_AllocationHdr_ID());
+			ResultSet rs = stmt.executeQuery();
+			
+			String invoices = "- ";
+			while (rs.next()){
+				invoices = invoices.concat(rs.getString(1).concat(" - "));	
+			}
+				
+			return invoices;	
+		}
+		catch (Exception e)
+		{
+			e.printStackTrace();
+			return null;
+		}
+	}
 }
