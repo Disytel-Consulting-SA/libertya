@@ -1,0 +1,660 @@
+<?xml version="1.0" encoding="UTF-8"  ?>
+<!-- Created with iReport - A designer for JasperReports -->
+<!DOCTYPE jasperReport PUBLIC "//JasperReports//DTD Report Design//EN" "http://jasperreports.sourceforge.net/dtds/jasperreport.dtd">
+<jasperReport
+		 name="rpt_FactA"
+		 columnCount="1"
+		 printOrder="Vertical"
+		 orientation="Portrait"
+		 pageWidth="595"
+		 pageHeight="842"
+		 columnWidth="595"
+		 columnSpacing="0"
+		 leftMargin="0"
+		 rightMargin="0"
+		 topMargin="0"
+		 bottomMargin="0"
+		 whenNoDataType="NoPages"
+		 isTitleNewPage="false"
+		 isSummaryNewPage="false">
+	<property name="ireport.scriptlethandling" value="0" />
+	<property name="ireport.encoding" value="UTF-8" />
+	<import value="java.util.*" />
+	<import value="net.sf.jasperreports.engine.*" />
+	<import value="net.sf.jasperreports.engine.data.*" />
+
+	<parameter name="NROCOMPROBANTE" isForPrompting="false" class="java.lang.String">
+		<defaultValueExpression ><![CDATA["A0001-00011428"]]></defaultValueExpression>
+	</parameter>
+	<parameter name="TIPOCOMPROBANTE" isForPrompting="false" class="java.lang.String">
+		<defaultValueExpression ><![CDATA["FACTURA"]]></defaultValueExpression>
+	</parameter>
+	<parameter name="FECHA" isForPrompting="true" class="java.util.Date"/>
+	<parameter name="RAZONSOCIAL" isForPrompting="false" class="java.lang.String">
+		<defaultValueExpression ><![CDATA["ARGENTOP S.R.L."]]></defaultValueExpression>
+	</parameter>
+	<parameter name="CODIGO" isForPrompting="false" class="java.lang.String">
+		<defaultValueExpression ><![CDATA["05294"]]></defaultValueExpression>
+	</parameter>
+	<parameter name="DIRECCION" isForPrompting="false" class="java.lang.String">
+		<defaultValueExpression ><![CDATA["AVIADOR KINGLEY 1835"]]></defaultValueExpression>
+	</parameter>
+	<parameter name="TIPO_IVA" isForPrompting="false" class="java.lang.String">
+		<defaultValueExpression ><![CDATA["RESPONSABLE INSCRIPTO"]]></defaultValueExpression>
+	</parameter>
+	<parameter name="CUIT" isForPrompting="false" class="java.lang.String">
+		<defaultValueExpression ><![CDATA["30-70700706-7"]]></defaultValueExpression>
+	</parameter>
+	<parameter name="INGBRUTO" isForPrompting="false" class="java.lang.String"/>
+	<parameter name="VENDEDOR" isForPrompting="false" class="java.lang.String">
+		<defaultValueExpression ><![CDATA["Vendedor:2"]]></defaultValueExpression>
+	</parameter>
+	<parameter name="NRODOCORIG" isForPrompting="false" class="java.lang.String">
+		<defaultValueExpression ><![CDATA["Doc.Orig:N0001-00007754"]]></defaultValueExpression>
+	</parameter>
+	<parameter name="NRO_OC" isForPrompting="false" class="java.lang.String">
+		<defaultValueExpression ><![CDATA["20080918"]]></defaultValueExpression>
+	</parameter>
+	<parameter name="VCTO" isForPrompting="false" class="java.lang.String">
+		<defaultValueExpression ><![CDATA["Vencimiento: 07/10/2008"]]></defaultValueExpression>
+	</parameter>
+	<parameter name="CODVTA" isForPrompting="false" class="java.lang.String">
+		<defaultValueExpression ><![CDATA["30 D C/CHEQUE 40%"]]></defaultValueExpression>
+	</parameter>
+	<parameter name="NROREMITO_1" isForPrompting="false" class="java.lang.String"/>
+	<parameter name="LETRA_PESOS" isForPrompting="false" class="java.lang.String">
+		<defaultValueExpression ><![CDATA["TRES MIL QUINIENTOS DIECIOCHO CON CUARENTA Y DOS CENTAVOS"]]></defaultValueExpression>
+	</parameter>
+	<parameter name="SUBTOTAL" isForPrompting="false" class="java.math.BigDecimal">
+		<defaultValueExpression ><![CDATA[new BigDecimal("3136.20")]]></defaultValueExpression>
+	</parameter>
+	<parameter name="DESCUENTO" isForPrompting="false" class="java.math.BigDecimal">
+		<defaultValueExpression ><![CDATA[new BigDecimal("0")]]></defaultValueExpression>
+	</parameter>
+	<parameter name="SUBTOTAL2" isForPrompting="false" class="java.math.BigDecimal">
+		<defaultValueExpression ><![CDATA[new BigDecimal("3136.20")]]></defaultValueExpression>
+	</parameter>
+	<parameter name="IVA_105" isForPrompting="false" class="java.math.BigDecimal">
+		<defaultValueExpression ><![CDATA[new BigDecimal("10.5")]]></defaultValueExpression>
+	</parameter>
+	<parameter name="IVA_21" isForPrompting="false" class="java.math.BigDecimal">
+		<defaultValueExpression ><![CDATA[new BigDecimal("21")]]></defaultValueExpression>
+	</parameter>
+	<parameter name="SUBIVA_21" isForPrompting="false" class="java.math.BigDecimal">
+		<defaultValueExpression ><![CDATA[new BigDecimal("105.84")]]></defaultValueExpression>
+	</parameter>
+	<parameter name="SUBIVA_105" isForPrompting="false" class="java.math.BigDecimal">
+		<defaultValueExpression ><![CDATA[new BigDecimal("276.38")]]></defaultValueExpression>
+	</parameter>
+	<parameter name="TOTAL" isForPrompting="false" class="java.math.BigDecimal">
+		<defaultValueExpression ><![CDATA[new BigDecimal("3518.42")]]></defaultValueExpression>
+	</parameter>
+	<parameter name="SUBDESC" isForPrompting="false" class="java.math.BigDecimal">
+		<defaultValueExpression ><![CDATA[new BigDecimal("0")]]></defaultValueExpression>
+	</parameter>
+	<parameter name="TIPOORIGEN" isForPrompting="false" class="java.lang.String">
+		<defaultValueExpression ><![CDATA["ORIGINAL"]]></defaultValueExpression>
+	</parameter>
+	<parameter name="SUBTOTAL_WITHTAX" isForPrompting="false" class="java.math.BigDecimal"/>
+	<parameter name="DESCUENTO_NETO" isForPrompting="false" class="java.math.BigDecimal"/>
+	<parameter name="SUBTOTAL2_WITHTAX" isForPrompting="false" class="java.math.BigDecimal"/>
+	<parameter name="ALLOCATED_AMT" isForPrompting="false" class="java.math.BigDecimal"/>
+	<parameter name="APPROVAL_AMT" isForPrompting="false" class="java.math.BigDecimal"/>
+	<parameter name="AUTH_CODE" isForPrompting="false" class="java.lang.String"/>
+	<parameter name="ACTIVITY" isForPrompting="false" class="java.lang.String"/>
+	<parameter name="CAMPAIGN" isForPrompting="false" class="java.lang.String"/>
+	<parameter name="PROJECT" isForPrompting="false" class="java.lang.String"/>
+	<parameter name="CHARGE" isForPrompting="false" class="java.lang.String"/>
+	<parameter name="CURRENCY" isForPrompting="false" class="java.lang.String"/>
+	<parameter name="ORIGINAL_INVOICE" isForPrompting="false" class="java.lang.String"/>
+	<parameter name="POS_JOURNAL" isForPrompting="false" class="java.lang.String"/>
+	<parameter name="INVOICE_REGION" isForPrompting="false" class="java.lang.String"/>
+	<parameter name="CAE" isForPrompting="false" class="java.lang.String"/>
+	<parameter name="CAECBTE" isForPrompting="false" class="java.lang.Integer"/>
+	<parameter name="CAEERROR" isForPrompting="false" class="java.lang.String"/>
+	<parameter name="CAI" isForPrompting="false" class="java.lang.String"/>
+	<parameter name="CHARGE_AMT" isForPrompting="false" class="java.math.BigDecimal"/>
+	<parameter name="DATE_CAI" isForPrompting="false" class="java.sql.Timestamp"/>
+	<parameter name="INVOICE_DESCRIPTION" isForPrompting="false" class="java.lang.String"/>
+	<parameter name="DOC_STATUS" isForPrompting="false" class="java.lang.String"/>
+	<parameter name="ID_CAE" isForPrompting="false" class="java.lang.String"/>
+	<parameter name="PRICE_LIST" isForPrompting="false" class="java.lang.String"/>
+	<parameter name="OPEN_AMT" isForPrompting="false" class="java.math.BigDecimal"/>
+	<parameter name="TAXES_AMT" isForPrompting="false" class="java.math.BigDecimal"/>
+	<parameter name="USER1" isForPrompting="false" class="java.lang.String"/>
+	<parameter name="USER2" isForPrompting="false" class="java.lang.String"/>
+	<parameter name="VTO_CAE" isForPrompting="false" class="java.sql.Timestamp"/>
+	<parameter name="IS_APPROVED" isForPrompting="false" class="java.lang.Boolean"/>
+	<parameter name="AUTH_MATCH" isForPrompting="false" class="java.lang.Boolean"/>
+	<parameter name="IS_CONFIRMED_ADDWORKS" isForPrompting="false" class="java.lang.Boolean"/>
+	<parameter name="IS_PAID" isForPrompting="false" class="java.lang.Boolean"/>
+	<parameter name="IS_PAY_SCHEDULE_VALID" isForPrompting="false" class="java.lang.Boolean"/>
+	<parameter name="IS_POSTED" isForPrompting="false" class="java.lang.Boolean"/>
+	<parameter name="ISSOTRX" isForPrompting="false" class="java.lang.Boolean"/>
+	<parameter name="IS_TAX_INCLUDED" isForPrompting="false" class="java.lang.Boolean"/>
+	<parameter name="IS_TRANSFERRED" isForPrompting="false" class="java.lang.Boolean"/>
+	<parameter name="PAST_DUE" isForPrompting="false" class="java.lang.Boolean"/>
+	<parameter name="PAST_DUE_AND_UNPAIDED" isForPrompting="false" class="java.lang.Boolean"/>
+	<parameter name="RAZONSOCIAL2" isForPrompting="false" class="java.lang.String"/>
+	<parameter name="CIUDAD" isForPrompting="false" class="java.lang.String"/>
+	<parameter name="PAIS" isForPrompting="false" class="java.lang.String"/>
+	<parameter name="CLIENT" isForPrompting="false" class="java.lang.String"/>
+	<parameter name="CLIENT_CUIT" isForPrompting="false" class="java.lang.String"/>
+	<parameter name="CLIENT_CATEGORIA_IVA" isForPrompting="false" class="java.lang.String"/>
+	<parameter name="ORG" isForPrompting="false" class="java.lang.String"/>
+	<parameter name="ORG_LOCATION_DESCRIPTION" isForPrompting="false" class="java.lang.String"/>
+	<parameter name="CURRENCY_SIMBOL" isForPrompting="false" class="java.lang.String"/>
+	<parameter name="NROREMITO_2" isForPrompting="false" class="java.lang.String"/>
+	<parameter name="NROREMITO_3" isForPrompting="false" class="java.lang.String"/>
+	<parameter name="RET_SCHEMA_NAME" isForPrompting="false" class="java.lang.String"/>
+	<parameter name="RET_RETENTION_TYPE_NAME" isForPrompting="false" class="java.lang.String"/>
+	<parameter name="RET_AMOUNT" isForPrompting="false" class="java.math.BigDecimal"/>
+	<parameter name="RET_ALLOC_AMOUNT" isForPrompting="false" class="java.math.BigDecimal"/>
+	<parameter name="RET_ALLOC_INVOICES" isForPrompting="false" class="java.lang.String"/>
+	<parameter name="DIRECCION_ORG" isForPrompting="false" class="java.lang.String"/>
+
+	<field name="ITEM" class="java.lang.String"/>
+	<field name="CODARTICULO" class="java.lang.String"/>
+	<field name="CANTIDAD" class="java.math.BigDecimal"/>
+	<field name="DESCRIPCION" class="java.lang.String"/>
+	<field name="PRECIO_UNITARIO" class="java.math.BigDecimal"/>
+	<field name="IMPORTE" class="java.math.BigDecimal"/>
+	<field name="UNIDAD" class="java.lang.String"/>
+	<field name="VENDOR" class="java.lang.String"/>
+	<field name="CHARGE" class="java.lang.String"/>
+	<field name="TAX_RATE" class="java.math.BigDecimal"/>
+	<field name="PROJECT" class="java.lang.String"/>
+	<field name="COST_PRICE" class="java.math.BigDecimal"/>
+	<field name="TAX_AMT" class="java.math.BigDecimal"/>
+	<field name="IS_TAXINCLUDED" class="java.lang.Boolean"/>
+	<field name="PRICELIST" class="java.math.BigDecimal"/>
+	<field name="PRICELIST_NET" class="java.math.BigDecimal"/>
+	<field name="TOTAL_PRICELIST" class="java.math.BigDecimal"/>
+	<field name="TOTAL_PRICELIST_NET" class="java.math.BigDecimal"/>
+	<field name="PRICEENTERED" class="java.math.BigDecimal"/>
+	<field name="PRICEENTERED_NET" class="java.math.BigDecimal"/>
+	<field name="TOTAL_PRICEENTERED" class="java.math.BigDecimal"/>
+	<field name="TOTAL_PRICEENTERED_NET" class="java.math.BigDecimal"/>
+	<field name="PRICEACTUAL" class="java.math.BigDecimal"/>
+	<field name="PRICEACTUAL_NET" class="java.math.BigDecimal"/>
+	<field name="TOTAL_PRICEACTUAL" class="java.math.BigDecimal"/>
+	<field name="TOTAL_PRICEACTUAL_NET" class="java.math.BigDecimal"/>
+	<field name="BONUS_UNITY" class="java.math.BigDecimal"/>
+	<field name="BONUS_UNITY_NET" class="java.math.BigDecimal"/>
+	<field name="TOTAL_BONUS" class="java.math.BigDecimal"/>
+	<field name="TOTAL_BONUS_NET" class="java.math.BigDecimal"/>
+	<field name="LINEDISCOUNT_UNITY" class="java.math.BigDecimal"/>
+	<field name="LINEDISCOUNT_UNITY_NET" class="java.math.BigDecimal"/>
+	<field name="TOTAL_LINEDISCOUNT" class="java.math.BigDecimal"/>
+	<field name="TOTAL_LINEDISCOUNT_NET" class="java.math.BigDecimal"/>
+	<field name="DOCUMENTDISCOUNT_UNITY" class="java.math.BigDecimal"/>
+	<field name="DOCUMENTDISCOUNT_UNITY_NET" class="java.math.BigDecimal"/>
+	<field name="TOTAL_DOCUMENTDISCOUNT" class="java.math.BigDecimal"/>
+	<field name="TOTAL_DOCUMENTDISCOUNT_NET" class="java.math.BigDecimal"/>
+
+		<background>
+			<band height="0"  isSplitAllowed="true" >
+			</band>
+		</background>
+		<title>
+			<band height="0"  isSplitAllowed="true" >
+			</band>
+		</title>
+		<pageHeader>
+			<band height="10"  isSplitAllowed="true" >
+			</band>
+		</pageHeader>
+		<columnHeader>
+			<band height="650"  isSplitAllowed="true" >
+				<textField isStretchWithOverflow="false" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
+					<reportElement
+						x="290"
+						y="470"
+						width="270"
+						height="17"
+						key="textField-5"/>
+					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
+					<textElement verticalAlignment="Middle">
+						<font fontName="Times New Roman" size="13"/>
+					</textElement>
+				<textFieldExpression   class="java.math.BigDecimal"><![CDATA[$P{RET_ALLOC_AMOUNT}]]></textFieldExpression>
+				</textField>
+				<textField isStretchWithOverflow="false" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
+					<reportElement
+						x="290"
+						y="385"
+						width="270"
+						height="17"
+						key="textField-6"/>
+					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
+					<textElement textAlignment="Justified" verticalAlignment="Middle">
+						<font fontName="Times New Roman" size="13"/>
+					</textElement>
+				<textFieldExpression   class="java.lang.String"><![CDATA[$P{RET_RETENTION_TYPE_NAME}]]></textFieldExpression>
+				</textField>
+				<textField isStretchWithOverflow="false" pattern="dd/MM/yyyy" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
+					<reportElement
+						x="386"
+						y="85"
+						width="110"
+						height="17"
+						key="textField-7"/>
+					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
+					<textElement>
+						<font fontName="Times New Roman" size="13"/>
+					</textElement>
+				<textFieldExpression   class="java.util.Date"><![CDATA[$P{FECHA}]]></textFieldExpression>
+				</textField>
+				<textField isStretchWithOverflow="false" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
+					<reportElement
+						x="270"
+						y="273"
+						width="290"
+						height="17"
+						key="textField-8"/>
+					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
+					<textElement>
+						<font fontName="Times New Roman" size="13"/>
+					</textElement>
+				<textFieldExpression   class="java.lang.String"><![CDATA[$P{RAZONSOCIAL}]]></textFieldExpression>
+				</textField>
+				<textField isStretchWithOverflow="false" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
+					<reportElement
+						x="130"
+						y="307"
+						width="430"
+						height="17"
+						key="textField-9"/>
+					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
+					<textElement>
+						<font fontName="Times New Roman" size="13"/>
+					</textElement>
+				<textFieldExpression   class="java.lang.String"><![CDATA[$P{DIRECCION}]]></textFieldExpression>
+				</textField>
+				<textField isStretchWithOverflow="false" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
+					<reportElement
+						x="130"
+						y="177"
+						width="430"
+						height="17"
+						key="textField-10"/>
+					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
+					<textElement verticalAlignment="Top">
+						<font fontName="Times New Roman" size="13"/>
+					</textElement>
+				<textFieldExpression   class="java.lang.String"><![CDATA[$P{CLIENT_CUIT}]]></textFieldExpression>
+				</textField>
+				<textField isStretchWithOverflow="false" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
+					<reportElement
+						x="130"
+						y="290"
+						width="430"
+						height="17"
+						key="textField-11"/>
+					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
+					<textElement>
+						<font fontName="Times New Roman" size="13"/>
+					</textElement>
+				<textFieldExpression   class="java.lang.String"><![CDATA[$P{CUIT}]]></textFieldExpression>
+				</textField>
+				<textField isStretchWithOverflow="false" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
+					<reportElement
+						x="290"
+						y="453"
+						width="270"
+						height="17"
+						key="textField-12"/>
+					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
+					<textElement>
+						<font fontName="Times New Roman" size="13"/>
+					</textElement>
+				<textFieldExpression   class="java.math.BigDecimal"><![CDATA[$P{RET_AMOUNT}]]></textFieldExpression>
+				</textField>
+				<textField isStretchWithOverflow="false" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
+					<reportElement
+						x="386"
+						y="68"
+						width="110"
+						height="17"
+						key="textField-13"/>
+					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
+					<textElement verticalAlignment="Top">
+						<font fontName="Times New Roman" size="13"/>
+					</textElement>
+				<textFieldExpression   class="java.lang.String"><![CDATA[$P{NRO_OC}]]></textFieldExpression>
+				</textField>
+				<textField isStretchWithOverflow="false" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
+					<reportElement
+						x="270"
+						y="160"
+						width="290"
+						height="17"
+						key="textField-14"/>
+					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
+					<textElement verticalAlignment="Top">
+						<font fontName="Times New Roman" size="13"/>
+					</textElement>
+				<textFieldExpression   class="java.lang.String"><![CDATA[$P{CLIENT}]]></textFieldExpression>
+				</textField>
+				<textField isStretchWithOverflow="false" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
+					<reportElement
+						x="290"
+						y="402"
+						width="270"
+						height="17"
+						key="textField-15"/>
+					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
+					<textElement verticalAlignment="Middle">
+						<font fontName="Times New Roman" size="13"/>
+					</textElement>
+				<textFieldExpression   class="java.lang.String"><![CDATA[$P{RET_SCHEMA_NAME}]]></textFieldExpression>
+				</textField>
+				<textField isStretchWithOverflow="false" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
+					<reportElement
+						x="130"
+						y="194"
+						width="430"
+						height="17"
+						key="textField-16"/>
+					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
+					<textElement verticalAlignment="Top">
+						<font fontName="Times New Roman" size="13"/>
+					</textElement>
+				<textFieldExpression   class="java.lang.String"><![CDATA[$P{DIRECCION_ORG}]]></textFieldExpression>
+				</textField>
+				<staticText>
+					<reportElement
+						x="60"
+						y="30"
+						width="470"
+						height="30"
+						key="staticText-1"/>
+					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
+					<textElement textAlignment="Center" verticalAlignment="Middle">
+						<font fontName="Times New Roman" pdfFontName="Helvetica-Bold" size="22" isBold="true"/>
+					</textElement>
+				<text><![CDATA[Libertya - Comprobante de Retención]]></text>
+				</staticText>
+				<staticText>
+					<reportElement
+						x="294"
+						y="68"
+						width="92"
+						height="17"
+						key="staticText-2"/>
+					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
+					<textElement textAlignment="Left">
+						<font fontName="Times New Roman" pdfFontName="Helvetica-Bold" size="13" isBold="true"/>
+					</textElement>
+				<text><![CDATA[Certificado Nº :]]></text>
+				</staticText>
+				<staticText>
+					<reportElement
+						x="294"
+						y="85"
+						width="92"
+						height="17"
+						key="staticText-3"/>
+					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
+					<textElement textAlignment="Left">
+						<font fontName="Times New Roman" pdfFontName="Helvetica-Bold" size="13" isBold="true"/>
+					</textElement>
+				<text><![CDATA[Fecha :]]></text>
+				</staticText>
+				<staticText>
+					<reportElement
+						x="57"
+						y="160"
+						width="213"
+						height="17"
+						key="staticText-4"/>
+					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
+					<textElement verticalAlignment="Top">
+						<font fontName="Times New Roman" size="13" isBold="true"/>
+					</textElement>
+				<text><![CDATA[Apellido y Nombre o Denominación :]]></text>
+				</staticText>
+				<staticText>
+					<reportElement
+						x="57"
+						y="177"
+						width="73"
+						height="17"
+						key="staticText-5"/>
+					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
+					<textElement verticalAlignment="Top">
+						<font fontName="Times New Roman" size="13" isBold="true"/>
+					</textElement>
+				<text><![CDATA[C.U.I.T. Nº :]]></text>
+				</staticText>
+				<staticText>
+					<reportElement
+						x="57"
+						y="194"
+						width="73"
+						height="17"
+						key="staticText-6"/>
+					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
+					<textElement verticalAlignment="Top">
+						<font fontName="Times New Roman" size="13" isBold="true"/>
+					</textElement>
+				<text><![CDATA[Domicilio :]]></text>
+				</staticText>
+				<staticText>
+					<reportElement
+						x="30"
+						y="120"
+						width="500"
+						height="30"
+						key="staticText-7"/>
+					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
+					<textElement textAlignment="Left" verticalAlignment="Middle">
+						<font fontName="Times New Roman" pdfFontName="Helvetica-Bold" size="18" isBold="true"/>
+					</textElement>
+				<text><![CDATA[A. - Datos del Agente de Retención]]></text>
+				</staticText>
+				<staticText>
+					<reportElement
+						x="30"
+						y="235"
+						width="500"
+						height="30"
+						key="staticText-11"/>
+					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
+					<textElement textAlignment="Left" verticalAlignment="Middle">
+						<font fontName="Times New Roman" pdfFontName="Helvetica-Bold" size="18" isBold="true"/>
+					</textElement>
+				<text><![CDATA[B. - Datos del Sujeto Retenido]]></text>
+				</staticText>
+				<staticText>
+					<reportElement
+						x="57"
+						y="307"
+						width="73"
+						height="17"
+						key="staticText-12"/>
+					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
+					<textElement>
+						<font fontName="Times New Roman" size="13" isBold="true"/>
+					</textElement>
+				<text><![CDATA[Domicilio :]]></text>
+				</staticText>
+				<staticText>
+					<reportElement
+						x="57"
+						y="290"
+						width="73"
+						height="17"
+						key="staticText-13"/>
+					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
+					<textElement>
+						<font fontName="Times New Roman" size="13" isBold="true"/>
+					</textElement>
+				<text><![CDATA[C.U.I.T. Nº :]]></text>
+				</staticText>
+				<staticText>
+					<reportElement
+						x="57"
+						y="273"
+						width="213"
+						height="17"
+						key="staticText-14"/>
+					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
+					<textElement>
+						<font fontName="Times New Roman" size="13" isBold="true"/>
+					</textElement>
+				<text><![CDATA[Apellido y Nombre o Denominación :]]></text>
+				</staticText>
+				<staticText>
+					<reportElement
+						x="30"
+						y="345"
+						width="500"
+						height="30"
+						key="staticText-15"/>
+					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
+					<textElement textAlignment="Left" verticalAlignment="Middle">
+						<font fontName="Times New Roman" pdfFontName="Helvetica-Bold" size="18" isBold="true"/>
+					</textElement>
+				<text><![CDATA[C. - Datos de la Retención Practicada]]></text>
+				</staticText>
+				<staticText>
+					<reportElement
+						x="57"
+						y="385"
+						width="233"
+						height="17"
+						key="staticText-16"/>
+					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
+					<textElement>
+						<font fontName="Times New Roman" size="13" isBold="true"/>
+					</textElement>
+				<text><![CDATA[Impuesto :]]></text>
+				</staticText>
+				<staticText>
+					<reportElement
+						x="57"
+						y="402"
+						width="233"
+						height="17"
+						key="staticText-17"/>
+					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
+					<textElement>
+						<font fontName="Times New Roman" size="13" isBold="true"/>
+					</textElement>
+				<text><![CDATA[Régimen :]]></text>
+				</staticText>
+				<staticText>
+					<reportElement
+						x="57"
+						y="419"
+						width="233"
+						height="17"
+						key="staticText-18"/>
+					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
+					<textElement>
+						<font fontName="Times New Roman" size="13" isBold="true"/>
+					</textElement>
+				<text><![CDATA[Comprobante que origina la Retención :]]></text>
+				</staticText>
+				<staticText>
+					<reportElement
+						x="57"
+						y="470"
+						width="233"
+						height="17"
+						key="staticText-19"/>
+					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
+					<textElement textAlignment="Left">
+						<font fontName="Times New Roman" size="13" isBold="true"/>
+					</textElement>
+				<text><![CDATA[Monto de la Retención :]]></text>
+				</staticText>
+				<staticText>
+					<reportElement
+						x="57"
+						y="453"
+						width="233"
+						height="17"
+						key="staticText-20"/>
+					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
+					<textElement textAlignment="Left" verticalAlignment="Top">
+						<font fontName="Times New Roman" size="13" isBold="true"/>
+					</textElement>
+				<text><![CDATA[Monto del Comprobante :]]></text>
+				</staticText>
+				<staticText>
+					<reportElement
+						x="57"
+						y="557"
+						width="130"
+						height="17"
+						key="staticText-21"/>
+					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
+					<textElement>
+						<font fontName="Times New Roman" size="13" isBold="true"/>
+					</textElement>
+				<text><![CDATA[Firma del Agente de]]></text>
+				</staticText>
+				<staticText>
+					<reportElement
+						x="57"
+						y="607"
+						width="80"
+						height="17"
+						key="staticText-22"/>
+					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
+					<textElement>
+						<font fontName="Times New Roman" size="13" isBold="true"/>
+					</textElement>
+				<text><![CDATA[Aclaración :]]></text>
+				</staticText>
+				<staticText>
+					<reportElement
+						x="57"
+						y="628"
+						width="110"
+						height="17"
+						key="staticText-23"/>
+					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
+					<textElement>
+						<font fontName="Times New Roman" size="13" isBold="true"/>
+					</textElement>
+				<text><![CDATA[Cargo :]]></text>
+				</staticText>
+				<textField isStretchWithOverflow="false" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
+					<reportElement
+						x="290"
+						y="419"
+						width="270"
+						height="34"
+						key="textField-17"/>
+					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
+					<textElement verticalAlignment="Top">
+						<font fontName="Times New Roman" size="13"/>
+					</textElement>
+				<textFieldExpression   class="java.lang.String"><![CDATA[$P{RET_ALLOC_INVOICES}]]></textFieldExpression>
+				</textField>
+			</band>
+		</columnHeader>
+		<detail>
+			<band height="0"  isSplitAllowed="true" >
+			</band>
+		</detail>
+		<columnFooter>
+			<band height="0"  isSplitAllowed="true" >
+			</band>
+		</columnFooter>
+		<pageFooter>
+			<band height="0"  isSplitAllowed="true" >
+			</band>
+		</pageFooter>
+		<lastPageFooter>
+			<band height="100"  isSplitAllowed="true" >
+			</band>
+		</lastPageFooter>
+		<summary>
+			<band height="0"  isSplitAllowed="true" >
+			</band>
+		</summary>
+</jasperReport>
