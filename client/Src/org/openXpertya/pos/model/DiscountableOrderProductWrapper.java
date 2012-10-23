@@ -126,4 +126,17 @@ public class DiscountableOrderProductWrapper extends DiscountableDocumentLine {
 	public void setLineManualDiscountID(Integer lineManualDiscountID) {
 		getOrderProduct().setLineManualDiscountID(lineManualDiscountID);
 	}
+
+	@Override
+	public BigDecimal getTaxedAmount(BigDecimal amount) {
+		if (amount == null) {
+			return null;
+		}
+		if (isTaxIncluded()) {
+			BigDecimal netAmt = getOrderProduct().getNetPrice(amount);
+			return netAmt.add(netAmt.multiply(getTaxRateMultiplier()));
+		} else {
+			return amount.add(amount.multiply(getTaxRateMultiplier()));
+		}
+	}
 }
