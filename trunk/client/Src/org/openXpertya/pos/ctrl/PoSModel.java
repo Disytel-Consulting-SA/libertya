@@ -381,6 +381,24 @@ public class PoSModel {
 			throw new ProductAddValidationFailed(product, "PriceUnderZero");
 		}
 		
+		// El precio debe ser válido
+		BigDecimal scaledprice = getOrder().scalePrice(product.getStdPrice());
+		if(scaledprice.compareTo(BigDecimal.ZERO) <= 0){
+			throw new ProductAddValidationFailed(product, "InvalidPrice");
+		}
+		
+		// Cantidad debe ser válida
+		BigDecimal scaledQty = getOrder().scaleAmount(count);
+		if(scaledQty.compareTo(BigDecimal.ZERO) <= 0) {
+			throw new ProductAddValidationFailed(product, "InvalidQty");
+		}
+		
+		// El precio final de línea (precio * cantidad) debe ser válido
+		BigDecimal scaledTotalLine = getOrder().scaleAmount(scaledprice.multiply(scaledQty));
+		if(scaledTotalLine.compareTo(BigDecimal.ZERO) <= 0){
+			throw new ProductAddValidationFailed(product, "InvalidFinalPrice");
+		}
+		
 		// La cantidad de la línea no debe superar el máximo configurado
 		if(countSurpassMax(count)){
 			throw new ProductAddValidationFailed(product, "SurpassMaxOrderLineQty");

@@ -1023,8 +1023,8 @@ public class PoSOnline extends PoSConnectionState {
 				// Obtener el control para el cuit y organización
 				cuitControl = (MCheckCuitControl) PO.findFirst(getCtx(),
 						X_C_CheckCuitControl.Table_Name,
-						"ad_org_id = ? AND upper(trim(cuit)) = upper('"
-								+ cuit + "')",
+						"ad_org_id = ? AND upper(trim(cuit)) = upper(trim('"
+								+ cuit + "'))",
 						new Object[] { Env.getAD_Org_ID(getCtx()) }, null,
 						getTrxName());
 				// Si no existe lo creo

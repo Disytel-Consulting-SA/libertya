@@ -103,6 +103,9 @@ public class UpdateOrderProductDialog extends JDialog {
 	private String MSG_AMOUNT;
 	private String MSG_SUPERVISOR_AUTH;
 	private String MSG_SURPASS_MAX_QTY;
+	private String MSG_INVALID_PRICE;
+	private String MSG_INVALID_FINAL_PRICE;
+	private String MSG_INVALID_COUNT;
 	
 	private final String CHANGE_FOCUS_USER_AUTH = "changeFocusUserAuth";
 	
@@ -161,6 +164,9 @@ public class UpdateOrderProductDialog extends JDialog {
 		MSG_AMOUNT = getMsg("Amt");
 		MSG_SUPERVISOR_AUTH = getMsg("SupervisorAuth");
 		MSG_SURPASS_MAX_QTY = getMsg("SurpassMaxOrderLineQty");
+		MSG_INVALID_COUNT = getMsg("InvalidQty");
+		MSG_INVALID_PRICE = getMsg("InvalidPrice");
+		MSG_INVALID_FINAL_PRICE = getMsg("InvalidFinalPrice");
 	}
 
 	private void keyBindingsInit(){
@@ -926,9 +932,17 @@ public class UpdateOrderProductDialog extends JDialog {
 		
 		if(price != null && !getUser().isOverwriteLimitPrice() && price.compareTo(limitPrice) < 0) {
 			error = true;
-			errorMsg.append("").
+			errorMsg.append(" ").
 					 append(MSG_INVALID_PRODUCT_PRICE).append(limitPrice.setScale(2,BigDecimal.ROUND_HALF_DOWN));
 		}
+		
+		// El precio debe ser mayor a 0
+		BigDecimal scaledprice = getOrderProduct().scalePrice(price); 
+		if(scaledprice.compareTo(BigDecimal.ZERO) <= 0){
+			error = true;
+			errorMsg.append(" ").append(MSG_INVALID_PRICE);
+		}
+		
 		// Descuento entre 0 y 100.
 		/*
 		if(discount != null && discount.compareTo(new BigDecimal(100)) > 0 || discount.compareTo(BigDecimal.ZERO) < 0) {
@@ -939,16 +953,23 @@ public class UpdateOrderProductDialog extends JDialog {
 		*/
 		
 		// Cantidad mayor que cero.
-		if(count.compareTo(BigDecimal.ZERO) <= 0) {
+		BigDecimal scaledQty = getOrderProduct().scaleAmount(count);
+		if(scaledQty.compareTo(BigDecimal.ZERO) <= 0) {
 			error = true;
-			errorMsg.append("").
-					 append(MSG_INVALID_PRODUCT_COUNT);
+			errorMsg.append(" ").append(MSG_INVALID_COUNT);
+		}
+		
+		// El precio final de línea (precio * cantidad) debe ser válido
+		BigDecimal scaledTotalLine = getOrderProduct().scaleAmount(scaledprice.multiply(scaledQty));
+		if(scaledTotalLine.compareTo(BigDecimal.ZERO) <= 0){
+			error = true;
+			errorMsg.append(" ").append(MSG_INVALID_FINAL_PRICE);
 		}
 
 		// Cantidad supera el máximo
 		if(getPoS().getModel().countSurpassMax(count)){
 			error = true;
-			errorMsg.append("").append(MSG_SURPASS_MAX_QTY);
+			errorMsg.append(" ").append(MSG_SURPASS_MAX_QTY);
 		}
 		
 		if(error) {
