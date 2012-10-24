@@ -2172,6 +2172,8 @@ public class MInvoice extends X_C_Invoice implements DocAction {
 			return success;
 		}
 
+		boolean recalculateIPS = false;
+		
 		if (is_ValueChanged("AD_Org_ID")) {
 			String sql = "UPDATE C_InvoiceLine ol"
 					+ " SET AD_Org_ID ="
@@ -2180,23 +2182,30 @@ public class MInvoice extends X_C_Invoice implements DocAction {
 					+ "WHERE C_Invoice_ID=" + getC_Order_ID();
 			int no = DB.executeUpdate(sql, get_TrxName());
 
+			log.fine("Lines -> #" + no);
+		}
+		
+		if (is_ValueChanged("AD_Org_ID") || is_ValueChanged("C_BPartner_ID")) {
 			try {
 				recalculatePercepciones();
+				updateGrandTotal(get_TrxName());
+				recalculateIPS = true;
 			} catch (Exception e) {
 				log.severe("ERROR generating percepciones. " + e.getMessage());
 				e.printStackTrace();
 			}
-
-			log.fine("Lines -> #" + no);
 		}
 
 		// Esquemas de pagos
 		// Si se modificó el campo del esquema de vencimientos entonces
 		// actualizo el esquema de pagos de la factura
-		if (!isSkipApplyPaymentTerm() && is_ValueChanged("C_PaymentTerm_ID")) {
-			MPaymentTerm pt = new MPaymentTerm(getCtx(), getC_PaymentTerm_ID(),
-					get_TrxName());
-			return pt.apply(this);
+		if (!isSkipApplyPaymentTerm()
+				&& (is_ValueChanged("C_PaymentTerm_ID") || recalculateIPS)) {
+			// Vuelvo a cargar la factura desde BD
+			MInvoice invoiceUpdated = new MInvoice(getCtx(), getID(), get_TrxName());
+			MPaymentTerm pt = new MPaymentTerm(getCtx(), invoiceUpdated.getC_PaymentTerm_ID(),
+					invoiceUpdated.get_TrxName());
+			return pt.apply(invoiceUpdated);
 		}
 
 		return true;
@@ -4893,13 +4902,20 @@ public class MInvoice extends X_C_Invoice implements DocAction {
 		if (isApplyPercepcion()) {
 			GeneratorPercepciones.calculatePercepciones(this);
 		}
+		else{
+			GeneratorPercepciones.deletePercepciones(getID(), get_TrxName());
+		}
 	}
 
 	public void recalculatePercepciones() throws Exception {
 		if (isApplyPercepcion()) {
 			GeneratorPercepciones.recalculatePercepciones(this);
 		}
+		else{
+			GeneratorPercepciones.deletePercepciones(getID(), get_TrxName());
+		}
 	}
+	
 
 	/**
 	 * Obtiene el monto de descuento a nivel de documento a partir de las líneas
@@ -4979,6 +4995,31 @@ public class MInvoice extends X_C_Invoice implements DocAction {
 	public void setThrowExceptionInCancelCheckStatus(
 			boolean throwExceptionInCancelCheckStatus) {
 		this.throwExceptionInCancelCheckStatus = throwExceptionInCancelCheckStatus;
+	}
+	
+	
+	public Integer updateGrandTotal(String trxName){
+		String sql = null;
+		if( isTaxIncluded()) {
+			// El total es la suma del neto (con impuesto tmb está en el neto),
+			// del monto del cargo y de la suma de los montos de los impuestos
+			// manuales ya que no se tienen en cuenta en el monto con impuesto
+			// incluído
+			sql = "UPDATE C_Invoice i "
+					+ " SET GrandTotal=TotalLines + "
+					+ "(SELECT COALESCE(SUM(TaxAmt),0) FROM C_InvoiceTax it inner join c_tax t on t.c_tax_id = it.c_tax_id inner join c_taxcategory tc on tc.c_taxcategory_id = t.c_taxcategory_id WHERE i.C_Invoice_ID=it.C_Invoice_ID and tc.ismanual = 'Y')"
+					+ " + ChargeAmt " + "WHERE C_Invoice_ID="
+					+ getC_Invoice_ID();
+        } else {
+			// El total es la suma del neto, del monto del cargo y de la suma de
+			// los montos de todos los impuestos relacionados
+			sql = "UPDATE C_Invoice i "
+					+ " SET GrandTotal=TotalLines+"
+					+ "(SELECT COALESCE(SUM(TaxAmt),0) FROM C_InvoiceTax it WHERE i.C_Invoice_ID=it.C_Invoice_ID) + ChargeAmt "
+					+ "WHERE C_Invoice_ID=" + getC_Invoice_ID();
+        }
+
+        return DB.executeUpdate( sql,trxName);
 	}
 	
 } // MInvoice

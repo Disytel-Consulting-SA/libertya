@@ -14,10 +14,11 @@ public class GeneratorPercepciones {
 
 	
 	public static void deletePercepciones(Integer invoiceID, String trxName) throws Exception{
-		String sql = "DELETE FROM c_invoicetax WHERE c_invoice_id = ? AND c_tax_id IN (SELECT c_tax_id FROM c_tax WHERE ispercepcion = 'Y')";
-		PreparedStatement ps = DB.prepareStatement(sql, trxName);
-		ps.setInt(1, invoiceID);
-		ps.executeUpdate();
+		DB.executeUpdate(
+				"DELETE FROM c_invoicetax WHERE c_invoice_id = "
+						+ invoiceID
+						+ " AND c_tax_id IN (SELECT c_tax_id FROM c_tax WHERE ispercepcion = 'Y')",
+				trxName);
 	}
 	
 	public static List<MTax> getApplyPercepciones(Properties ctx, Integer orgID, String trxName) throws Exception{
