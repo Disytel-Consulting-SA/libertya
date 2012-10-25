@@ -1026,7 +1026,7 @@ public class VOrdenPagoModel implements TableModelListener {
 	
 	public VOrdenPagoModel() {
 		getMsgMap().put("TenderType", "TenderType");
-		initTrx();
+//		initTrx();		<-- COMENTADO: La trx debe iniciarse al confirmar el pago unicamente 
 		m_facturasTableModel = getInvoicesTableModel();
 		m_facturasTableModel.addTableModelListener(this);
 		setPoGenerator(new POCRGenerator(getCtx(), getPOCRType(), getTrxName()));
@@ -1233,7 +1233,7 @@ public class VOrdenPagoModel implements TableModelListener {
 			m_mediosPago.clear();
 			m_retenciones.clear();
 			reset();
-			initTrx();
+//			initTrx();		<-- COMENTADO: La trx debe iniciarse al confirmar el pago unicamente
 		}
 		
 		if (m_actualizarFacturasAuto)
@@ -1952,6 +1952,7 @@ public class VOrdenPagoModel implements TableModelListener {
 	
 	private int doPostProcesarAdelantado() {
 		errorNo = PROCERROR_OK;
+		initTrx();
 		Trx trx = getTrx();
 		MAllocationHdr hdr = null;
 		boolean saveOk = true;
@@ -2015,6 +2016,7 @@ public class VOrdenPagoModel implements TableModelListener {
 			trx.rollback();
 		}
 		trx.close();
+		trxName = null;
 		return errorNo;
 	}
 	
@@ -2041,6 +2043,7 @@ public class VOrdenPagoModel implements TableModelListener {
 	}
 	
 	private int doPostProcesarNormal() {
+		initTrx();
 		Trx trx = getTrx();
 		MAllocationHdr hdr = null;
 		
@@ -2104,14 +2107,13 @@ public class VOrdenPagoModel implements TableModelListener {
 		if (!saveOk) {
 			poGenerator.reset();
 			retencionIncludedInMedioPago = false;
-			trx = Trx.get(trx.getTrxName(),false);
 			trx.rollback();
 			trx.close();
 		} else {
 			if (trx.close()) 
 				m_newlyCreatedC_AllocationHeader_ID = hdr.getC_AllocationHdr_ID();
 		}
-		
+		trxName = null;
 		if (saveOk) {
 			errorNo = PROCERROR_OK;
 		}
