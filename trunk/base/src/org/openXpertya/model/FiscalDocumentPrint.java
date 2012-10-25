@@ -994,7 +994,9 @@ public class FiscalDocumentPrint {
 			// de ese tipo. Este tipo de descuento es proporcional a todas las tasas de
 			// impuestos con lo cual no es necesario discriminar los importes según la
 			// tasa.
-			if (mDocumentDiscount.isManualGeneralDiscountKind()) {
+			if (mDocumentDiscount.isManualGeneralDiscountKind()
+					&& !MDocumentDiscount.DISCOUNTAPPLICATION_DiscountToPrice
+							.equals(mDocumentDiscount.getDiscountApplication())) {
 				generalDiscountAmt = generalDiscountAmt.add(mDocumentDiscount
 						.getDiscountAmt().negate());
 			} else {
