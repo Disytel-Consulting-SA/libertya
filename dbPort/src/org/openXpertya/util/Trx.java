@@ -22,7 +22,10 @@ import java.beans.VetoableChangeListener;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.sql.Savepoint;
+import java.util.ArrayList;
 import java.util.logging.Level;
+
+import org.openXpertya.model.MPreference;
 
 /**
  * Descripción de Clase
@@ -34,6 +37,49 @@ import java.util.logging.Level;
 
 public class Trx implements VetoableChangeListener {
 
+	/** Entrada en AD_Preference de tipo Entero */
+	protected static final String OPEN_TRX_LOWER_LIMIT_PREFERENCE 	= "OpenTrxLowerLimit";
+	/** Entrada en AD_Preference de tipo Long */
+	protected static final String OPEN_TRX_TIMEOUT_MS_PREFERENCE 	= "OpenTrxTimeOutMS";
+	/** Entrada en AD_Preference de tipo Entero  */
+	protected static final String OPEN_TRX_UPPER_LIMIT_PREFERENCE 	= "OpenTrxUpperLimit";
+	
+	/** Numero maximo de transacciones abiertas.  Sin embargo, si el tiempo de vida de una Trx es menor a OPEN_TRX_TIMEOUT_MS    
+	 *  (o sea que son recientes), entonces podrán existir hasta OPEN_TRX_UPPER_LIMIT conexiones) */
+	public static int OPEN_TRX_LOWER_LIMIT = 0;		// 		3;
+	
+	/** Tiempo minimo para que pueda transaccion pueda ser cerrada (si todavía no se llegó al límite superior  
+	 *  OPEN_TRX_UPPER_LIMIT.  Si se llegó a este límite no se contempla el tiempo, forzándo a cerrar la Trx "más vieja" indefectiblemente) */
+	public static long OPEN_TRX_TIMEOUT_MS = 0; 	//		60000L * 60;
+
+	/** Numero maximo total de transacciones abiertas sin contemplar el tiempo de las Trx
+	 *  (si se llega a este limite, se van cerrando sin importar la antigüedad de las mismas) */
+	public static int OPEN_TRX_UPPER_LIMIT = 0;		//		6;
+
+	/** Transacciones abiertas */
+	protected static ArrayList<Trx> openTrx = new ArrayList<Trx>();
+
+	static {
+		try {
+			// Lower limit preference
+			String value = MPreference.searchCustomPreferenceValue(OPEN_TRX_LOWER_LIMIT_PREFERENCE, 0, 0, 0, true);
+			if (!Util.isEmpty(value))
+				OPEN_TRX_LOWER_LIMIT = Integer.parseInt(value);
+			// Upper limit preference
+			value = MPreference.searchCustomPreferenceValue(OPEN_TRX_UPPER_LIMIT_PREFERENCE, 0, 0, 0, true);
+			if (!Util.isEmpty(value))
+				OPEN_TRX_UPPER_LIMIT = Integer.parseInt(value);
+			// Time Out limit preference
+			value = MPreference.searchCustomPreferenceValue(OPEN_TRX_TIMEOUT_MS_PREFERENCE, 0, 0, 0, true);
+			if (!Util.isEmpty(value))
+				OPEN_TRX_TIMEOUT_MS = Long.parseLong(value);
+		}
+		catch (Exception e) { 
+			CLogger.getLogger(Trx.class.toString()).log(Level.WARNING, "Error al configurar limites en transacciones: " + e.getMessage()); 
+		}
+	}
+	
+	
     /**
      * Descripción de Método
      *
@@ -43,7 +89,6 @@ public class Trx implements VetoableChangeListener {
      *
      * @return
      */
-
     public static Trx get( String trxName,boolean createNew ) {
         if( (trxName == null) || (trxName.length() == 0) ) {
             throw new IllegalArgumentException( "No Transaction Name" );
@@ -59,6 +104,22 @@ public class Trx implements VetoableChangeListener {
         if( (retValue == null) && createNew ) {
             retValue = new Trx( trxName );
             s_cache.put( trxName,retValue );
+            
+            // Logica de contención por eventuales connection leaks.
+            // =====================================================
+        	openTrx.add(retValue);
+        	// Si se superó el primer limite máximo de transacciones abiertas,
+        	// recuperar la transaccion más vieja y evaluar si es factible cerrarla
+        	if (OPEN_TRX_LOWER_LIMIT > 0 && openTrx.size() > OPEN_TRX_LOWER_LIMIT) {
+        		Trx target = openTrx.get(0);
+        		// Si la transacción no es "demasiado vieja", no cerrarla todavía
+        		if (OPEN_TRX_TIMEOUT_MS > 0 && System.currentTimeMillis() - target.getCreated() > OPEN_TRX_TIMEOUT_MS)
+        			target.close();
+        	}
+        	// Si se superó el segundo límite máximo de transacciones abiertas, recuperar  
+        	// y cerrar la transacción más vieja sin contemplar la antigüedad de la misma
+        	if (OPEN_TRX_UPPER_LIMIT > 0 && openTrx.size() > OPEN_TRX_UPPER_LIMIT)
+        		openTrx.get(0).close();
         }
 
         return retValue;
@@ -123,6 +184,7 @@ public class Trx implements VetoableChangeListener {
 
         setTrxName( trxName );
         setConnection( con );
+        setCreated( System.currentTimeMillis() );
     }    // Trx
 
     /** Descripción de Campos */
@@ -145,6 +207,10 @@ public class Trx implements VetoableChangeListener {
 
     private boolean m_active = false;
 
+    /** Created timestamp */ 
+    
+    private long created = -1;
+    
     /**
      * Descripción de Método
      *
@@ -363,6 +429,10 @@ public class Trx implements VetoableChangeListener {
         m_connection = null;
         m_active     = false;
         log.config( m_trxName );
+        
+        // Remover la trx de las abiertas (ver metodo get(String, boolean))
+        if (openTrx!=null)
+        	openTrx.remove(this);
 
         return true;
     }    // close
@@ -419,6 +489,14 @@ public class Trx implements VetoableChangeListener {
 		}
 		
 		return trx;
+	}
+
+	public long getCreated() {
+		return created;
+	}
+
+	public void setCreated(long created) {
+		this.created = created;
 	}   
     
 }    // Trx
