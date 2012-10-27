@@ -4131,6 +4131,7 @@ public class PoSMainForm extends CPanel implements FormPanel, ASyncProcess, Disp
 		try {
 			// Agrega el artículo al pedido
 			OrderProduct newOrderProduct = getModel().addOrderProduct(product, count);
+			updateOtherTaxes();
 			// Actualiza la grilla del pedido
 			getOrderTableModel().fireTableDataChanged();
 			getOrderTableUtils().refreshTable();
@@ -4366,6 +4367,7 @@ public class PoSMainForm extends CPanel implements FormPanel, ASyncProcess, Disp
 	
 	protected void updateOrderProduct(OrderProduct orderProduct) {
 		//getModel().calculateOrderProductTax(orderProduct);
+		getOrder().setOtherTaxes(getModel().getOtherTaxes());
 		getOrder().updateOrderProduct();
 		getOrderTableUtils().refreshTable();
 		getOrderTableUtils().setSelection(orderProduct);
@@ -4374,6 +4376,7 @@ public class PoSMainForm extends CPanel implements FormPanel, ASyncProcess, Disp
 	
 	protected void removeOrderProduct(OrderProduct orderProduct) {
 		getOrder().removeOrderProduct(orderProduct);
+		getOrder().setOtherTaxes(getModel().getOtherTaxes());
 		getOrderTableUtils().refreshTable();
 		getCProductNameDetailLabel().setText("");
 		updateTotalAmount();
@@ -4475,7 +4478,7 @@ public class PoSMainForm extends CPanel implements FormPanel, ASyncProcess, Disp
 		   getOrder().getBusinessPartner().getId() != bPartnerID) {
 			
 			BusinessPartner bp = getModel().getBPartner(bPartnerID);
-			getOrder().setOtherTaxes(getModel().getOtherTaxes(bp));
+			getOrder().setOtherTaxes(getModel().loadBPOtherTaxes(bp));
 			getOrder().setBusinessPartner(bp);
 		}
 		
@@ -6338,5 +6341,9 @@ public class PoSMainForm extends CPanel implements FormPanel, ASyncProcess, Disp
 
 	public static void setInstance(PoSMainForm instance) {
 		PoSMainForm.instance = instance;
+	}
+	
+	public void updateOtherTaxes(){
+		getModel().getOtherTaxes();
 	}
 }  //  @jve:decl-index=0:visual-constraint="10,10"

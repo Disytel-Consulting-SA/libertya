@@ -4592,3 +4592,10 @@ SET m_inoutlinema_id = nextval('seq_m_inoutlinema');
 ALTER TABLE m_inoutlinema ADD CONSTRAINT m_inoutlinema_key PRIMARY KEY (m_inoutlinema_id);
 
 ALTER TABLE m_inoutlinema ALTER COLUMN m_inoutlinema_id SET NOT NULL;
+
+-- 20121027-0030 Mejora al cálculo de percepciones incorporando algoritmos y soporte para padrón de percepciones/retenciones
+ALTER TABLE ad_org_percepcion ADD COLUMN c_retencionprocessor_id integer;
+ALTER TABLE c_bpartner_padron_bsas ADD COLUMN padrontype character(1);
+
+ALTER TABLE c_bpartner_percexenc ALTER COLUMN c_tax_id DROP NOT NULL;
+ALTER TABLE c_bpartner_percexenc ADD COLUMN ad_org_percepcion_id integer;

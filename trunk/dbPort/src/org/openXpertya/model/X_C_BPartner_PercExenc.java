@@ -7,7 +7,7 @@ import java.math.*;
 import org.openXpertya.util.*;
 /** Modelo Generado por C_BPartner_PercExenc
  *  @author Comunidad de Desarrollo Libertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
- *  @version  - 2012-05-17 17:47:27.252 */
+ *  @version  - 2012-10-27 01:43:42.144 */
 public class X_C_BPartner_PercExenc extends org.openXpertya.model.PO
 {
 /** Constructor estándar */
@@ -16,11 +16,13 @@ public X_C_BPartner_PercExenc (Properties ctx, int C_BPartner_PercExenc_ID, Stri
 super (ctx, C_BPartner_PercExenc_ID, trxName);
 /** if (C_BPartner_PercExenc_ID == 0)
 {
+setAD_Org_Percepcion_ID (0);
 setC_BPartner_ID (0);
 setC_BPartner_PercExenc_ID (0);
 setC_Tax_ID (0);
 setDate_From (new Timestamp(System.currentTimeMillis()));
 setDate_To (new Timestamp(System.currentTimeMillis()));
+setPercent (Env.ZERO);
 }
  */
 }
@@ -48,6 +50,18 @@ public String toString()
 {
 StringBuffer sb = new StringBuffer ("X_C_BPartner_PercExenc[").append(getID()).append("]");
 return sb.toString();
+}
+/** Set AD_Org_Percepcion_ID */
+public void setAD_Org_Percepcion_ID (int AD_Org_Percepcion_ID)
+{
+set_Value ("AD_Org_Percepcion_ID", new Integer(AD_Org_Percepcion_ID));
+}
+/** Get AD_Org_Percepcion_ID */
+public int getAD_Org_Percepcion_ID() 
+{
+Integer ii = (Integer)get_Value("AD_Org_Percepcion_ID");
+if (ii == null) return 0;
+return ii.intValue();
 }
 /** Set Business Partner .
 Identifies a Business Partner */
@@ -119,6 +133,7 @@ return (Timestamp)get_Value("Date_To");
 Percentage */
 public void setPercent (BigDecimal Percent)
 {
+if (Percent == null) throw new IllegalArgumentException ("Percent is mandatory");
 set_Value ("Percent", Percent);
 }
 /** Get Percent.

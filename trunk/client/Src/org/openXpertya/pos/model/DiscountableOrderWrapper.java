@@ -84,4 +84,34 @@ public class DiscountableOrderWrapper extends DiscountableDocument {
 	public void setTotalManualGeneralDiscount(BigDecimal discountAmount) {
 		getOrder().setTotalManualGeneralDiscount(discountAmount);		
 	}
+
+	@Override
+	public Integer getOrgID() {
+		return getOrder().getOrgID();
+	}
+
+	@Override
+	public Integer getBPartnerID() {
+		return getOrder().getBusinessPartner() != null ? getOrder()
+				.getBusinessPartner().getId() : null;
+	}
+
+	@Override
+	public Integer getDocTypeID() {
+		// TODO Por ahora no se maneja esto aquí, se debe crear una clase nueva
+		// TipoDeDocumento que esté en el modelo de TPV y actualizando cada vez
+		// que se elige una entidad comercial, para una ayuda ver el método
+		// getNextDocumentNo de POSOnline.
+		// Este método se creó para la parte de percepciones para filtrar los
+		// tipos de documento de retenciones, el hecho es que desde TPV no se
+		// pueden crear documentos de retenciones, por lo pronto esto no se
+		// codifica, con el flag de instancia de TPV por ahora es suficiente
+		return null;
+	}
+
+	@Override
+	public boolean isSOTrx() {
+		// TPV siempre es transacción de ventas
+		return true;
+	}
 }

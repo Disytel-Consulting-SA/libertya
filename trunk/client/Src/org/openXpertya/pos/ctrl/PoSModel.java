@@ -100,7 +100,7 @@ public class PoSModel {
 	
 	public void newOrder() {
 		if(getOrder() == null) {
-			setOrder(new Order());
+			setOrder(new Order(getConnectionState().getOrganization()));
 		}
 		
 		getOrder().clear();
@@ -759,8 +759,13 @@ public class PoSModel {
 		return financieras;
 	}
 	
-	public List<Tax> getOtherTaxes(BusinessPartner bp){
-		return getConnectionState().getOtherTaxes(bp);
+	public List<Tax> getOtherTaxes(){
+		return getConnectionState().getOtherTaxes(
+				getOrder().getDiscountableOrderWrapper());
+	}
+	
+	public List<Tax> loadBPOtherTaxes(BusinessPartner bp){
+		return getConnectionState().loadBPOtherTaxes(bp);
 	}
 	
 	public boolean isCheckCUITControlActivated(){

@@ -7,7 +7,7 @@ import java.math.*;
 import org.openXpertya.util.*;
 /** Modelo Generado por AD_Org_Percepcion
  *  @author Comunidad de Desarrollo Libertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
- *  @version  - 2012-05-17 17:47:23.365 */
+ *  @version  - 2012-10-27 01:34:43.66 */
 public class X_AD_Org_Percepcion extends org.openXpertya.model.PO
 {
 /** Constructor estándar */
@@ -17,6 +17,7 @@ super (ctx, AD_Org_Percepcion_ID, trxName);
 /** if (AD_Org_Percepcion_ID == 0)
 {
 setAD_Org_Percepcion_ID (0);
+setC_RetencionProcessor_ID (0);
 setC_Tax_ID (0);
 setName (null);
 }
@@ -56,6 +57,18 @@ set_ValueNoCheck ("AD_Org_Percepcion_ID", new Integer(AD_Org_Percepcion_ID));
 public int getAD_Org_Percepcion_ID() 
 {
 Integer ii = (Integer)get_Value("AD_Org_Percepcion_ID");
+if (ii == null) return 0;
+return ii.intValue();
+}
+/** Set Retencion Processor */
+public void setC_RetencionProcessor_ID (int C_RetencionProcessor_ID)
+{
+set_Value ("C_RetencionProcessor_ID", new Integer(C_RetencionProcessor_ID));
+}
+/** Get Retencion Processor */
+public int getC_RetencionProcessor_ID() 
+{
+Integer ii = (Integer)get_Value("C_RetencionProcessor_ID");
 if (ii == null) return 0;
 return ii.intValue();
 }

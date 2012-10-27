@@ -147,7 +147,9 @@ public class RetencionIIBB extends AbstractRetencionProcessor {
 		baseImponible = baseImponible.subtract(descuentoNeto);
 		
 		if(getFromPadron().equals("S")){
-			BigDecimal porcentajePadron = MBPartner.getRetencionSegunPadronBsAS(getBPartner().getC_BPartner_ID());
+			BigDecimal porcentajePadron = MBPartner
+					.getRetencionSegunPadronBsAS(Env.getDate(), getBPartner()
+							.getC_BPartner_ID(), getTrxName());
 			if(!porcentajePadron.equals(Env.ZERO))
 				porcentajeRetencion = porcentajePadron;
 		}

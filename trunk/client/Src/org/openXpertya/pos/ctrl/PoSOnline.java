@@ -70,6 +70,7 @@ import org.openXpertya.model.M_Tab;
 import org.openXpertya.model.PO;
 import org.openXpertya.model.PrintInfo;
 import org.openXpertya.model.X_C_CheckCuitControl;
+import org.openXpertya.model.DiscountCalculator.IDocument;
 import org.openXpertya.pos.exceptions.FiscalPrintException;
 import org.openXpertya.pos.exceptions.InsufficientBalanceException;
 import org.openXpertya.pos.exceptions.InsufficientCreditException;
@@ -92,6 +93,7 @@ import org.openXpertya.pos.model.EntidadFinancieraPlan;
 import org.openXpertya.pos.model.Location;
 import org.openXpertya.pos.model.Order;
 import org.openXpertya.pos.model.OrderProduct;
+import org.openXpertya.pos.model.Organization;
 import org.openXpertya.pos.model.Payment;
 import org.openXpertya.pos.model.PaymentMedium;
 import org.openXpertya.pos.model.PaymentTerm;
@@ -143,6 +145,7 @@ public class PoSOnline extends PoSConnectionState {
 	private MInvoice invoice = null;
 	private MInOut shipment = null;
 	private MAllocationHdr allocHdr = null;
+	private MOrg mOrg = null;
 	
 	private HashMap<Integer, MPayment> mpayments = new HashMap<Integer, MPayment>();
 	// private Vector<MPayment> mpayments = new Vector<MPayment>();
@@ -186,9 +189,14 @@ public class PoSOnline extends PoSConnectionState {
 	
 	private CreatePOSPaymentValidations createPOSPaymentValidations;
 	
+	private GeneratorPercepciones generatorPercepciones;
+	
 	public PoSOnline() {
 		super();
 		setCreatePOSPaymentValidations(new CreatePOSPaymentValidations());
+		setmOrg(MOrg.get(ctx, Env.getAD_Org_ID(ctx)));
+		setGeneratorPercepciones(new GeneratorPercepciones(getCtx(), null));
+		getGeneratorPercepciones().setTPVInstance(true);
 	}
 	
 	private static void throwIfFalse(boolean b, DocAction sourceDocActionPO, Class posExceptionClass) throws PosException {
@@ -274,6 +282,7 @@ public class PoSOnline extends PoSConnectionState {
 		
 			trxName = createTrxName();
 			trx = Trx.get(trxName, true);
+			getGeneratorPercepciones().setTrxName(trxName);
 			//ADER, para que aparezca en el log de postgres
 			//DB.getSQLObject(getTrxName(), "select 'Comenzando completeOrder'", null);		
 	
@@ -411,6 +420,7 @@ public class PoSOnline extends PoSConnectionState {
 			throw new PosException(e);
 		} finally {
 			trxName = null;
+			getGeneratorPercepciones().setTrxName(trxName);
 			try {
 				trx.close();
 			} catch (Exception e2) {
@@ -2405,10 +2415,7 @@ public class PoSOnline extends PoSConnectionState {
 			throw new InvalidOrderException(Msg.translate(ctx, "POSOrderStatusError"));
 		
 		BusinessPartner bPartner = getBPartner(mOrder.getC_BPartner_ID());
-		
 		order.setId(orderId);
-		order.setOtherTaxes(getOtherTaxes(bPartner));
-		order.setBusinessPartner(bPartner);
 		order.setDate(mOrder.getDateOrdered());
 		order.setOrderRep(mOrder.getSalesRep_ID());
 		
@@ -2416,6 +2423,9 @@ public class PoSOnline extends PoSConnectionState {
 		if (loadLines) {
 			loadOrderLines(order);
 		}
+		
+		order.setOtherTaxes(getOtherTaxes(order.getDiscountableOrderWrapper()));
+		order.setBusinessPartner(bPartner);
 		
 		return order;
 	}
@@ -3572,40 +3582,25 @@ public class PoSOnline extends PoSConnectionState {
 	}
 
 	@Override
-	public List<Tax> getOtherTaxes(BusinessPartner bp) {
+	public List<Tax> getOtherTaxes(IDocument document) {
+		getGeneratorPercepciones().loadDocument(document);
+		return getOtherTaxes();
+	}
+	
+	public List<Tax> getOtherTaxes() {
 		List<Tax> otherTaxes = new ArrayList<Tax>();
 		List<MTax> mOtherTaxes = new ArrayList<MTax>();
-		Tax otherTax;
 		// Percepciones
 		try{
-			mOtherTaxes.addAll(GeneratorPercepciones.getApplyPercepciones(
-					getCtx(), Env.getAD_Org_ID(getCtx()), getTrxName()));
+			mOtherTaxes.addAll(getGeneratorPercepciones().getApplyPercepciones());
 		} catch(Exception e){
 			e.printStackTrace();
 		}
 		// Itero por los impuestos adicionales
-		BigDecimal rate;
 		for (MTax mTax : mOtherTaxes) {
-			otherTax = new Tax(mTax.getID(), mTax.getRate(), mTax.isPercepcion());
-			rate = mTax.getRate();
-			// Si es percepción debo determinar el porcentaje de exención y 
-			// verificar si esta entidad comercial es pasible de percepciones 
-			if(otherTax.isPercepcion() && LOCAL_AR_ACTIVE){
-				if(!bp.isPercepcionLiable()){
-					rate = BigDecimal.ZERO;
-				}
-				else{
-					rate = mTax.getRate().multiply(
-							MBPartner.getPercepcionExencionMultiplierRate(
-									bp.getId(), otherTax.getId(),
-									Env.getDate(), 2, getTrxName()));
-				}
-			}
-			otherTax.setRate(rate);
-			if(otherTax.getRate().compareTo(BigDecimal.ZERO) != 0){
-				otherTaxes.add(otherTax);
-			}
-		}		
+			otherTaxes.add(new Tax(mTax.getID(), mTax.getRate(), mTax.isPercepcion()));
+		}
+		
 		return otherTaxes;
 	}
 
@@ -3653,5 +3648,32 @@ public class PoSOnline extends PoSConnectionState {
 	public void setCreatePOSPaymentValidations(
 			CreatePOSPaymentValidations createPOSPaymentValidations) {
 		this.createPOSPaymentValidations = createPOSPaymentValidations;
+	}
+
+	@Override
+	public Organization getOrganization() {
+		return new Organization(getmOrg().getID(), getmOrg().getName());
+	}
+
+	public MOrg getmOrg() {
+		return mOrg;
+	}
+
+	public void setmOrg(MOrg mOrg) {
+		this.mOrg = mOrg;
+	}
+
+	public GeneratorPercepciones getGeneratorPercepciones() {
+		return generatorPercepciones;
+	}
+
+	public void setGeneratorPercepciones(GeneratorPercepciones generatorPercepciones) {
+		this.generatorPercepciones = generatorPercepciones;
+	}
+
+	@Override
+	public List<Tax> loadBPOtherTaxes(BusinessPartner bp) {
+		getGeneratorPercepciones().loadBPartner(bp.getId());
+		return getOtherTaxes();
 	}
 }

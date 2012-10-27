@@ -45,6 +45,9 @@ public class Order  {
 	
 	/** Esquema de vencimientos */
 	private PaymentTerm paymentTerm;
+	
+	/** Organización del pedido */
+	private Organization organization;
 		
 	public Order() {
 		super();
@@ -55,6 +58,11 @@ public class Order  {
 		// Se cargan los descuentos configurados en este momento ya que la instanciación de un
 		// Order se debe hacer en modo online.
 		discountCalculator.loadConfiguredDiscounts();
+	}
+	
+	public Order(Organization organization){
+		this();
+		setOrganization(organization);
 	}
 
 	public void addOrderProduct(OrderProduct orderProduct) {
@@ -71,14 +79,6 @@ public class Order  {
 	
 	public void updateOrderProduct() {
 		updateDiscounts();
-	}
-	
-	/**
-	 * @param date
-	 */
-	public Order(Timestamp date) {
-		this();
-		this.date = date;
 	}
 
 	/**
@@ -962,5 +962,17 @@ public class Order  {
 				((DiscountableOrderWrapper) getDiscountCalculator()
 						.getDocument()).createDocumentLine(op),
 				op.getDiscountApplication());
+	}
+	
+	public Integer getOrgID(){
+		return getOrganization().getId();
+	}
+
+	public Organization getOrganization() {
+		return organization;
+	}
+
+	public void setOrganization(Organization organization) {
+		this.organization = organization;
 	}
 }

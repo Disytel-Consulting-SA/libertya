@@ -2418,7 +2418,7 @@ public class DiscountCalculator {
 	 * interfaz {@link IDocumentLine}.
 	 */
 	public interface IDocument {
-
+		
 		/**
 		 * @return El importe total de las líneas del documento <b>incluyendo
 		 *         impuestos</b>. No incluye descuentos aplicados a nivel de
@@ -2527,6 +2527,26 @@ public class DiscountCalculator {
 		 *            Descuento de documento creado por este calculador
 		 */
 		public void setDocumentReferences(MDocumentDiscount documentDiscount);
+		
+		/**
+		 * @return ID de la organización del documento
+		 */
+		public Integer getOrgID();
+		
+		/**
+		 * @return ID de la entidad comercial del documento
+		 */
+		public Integer getBPartnerID();
+		
+		/***
+		 * @return ID de tipo de documento
+		 */
+		public Integer getDocTypeID();
+		
+		/**
+		 * @return true si es una transacción de ventas, false caso contrario
+		 */
+		public boolean isSOTrx();
 	}
 
 	/**

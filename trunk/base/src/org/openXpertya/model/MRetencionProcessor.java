@@ -62,4 +62,16 @@ public class MRetencionProcessor extends X_C_RetencionProcessor {
 		return list;
 	} 
 	
+	public static String getProcessorClassName(Properties ctx, Integer percepcionProcessorID, String trxName){
+		return DB.getSQLValueString(trxName, "SELECT nameclass FROM "
+				+ Table_Name + " WHERE " + Table_Name + "_id = ?",
+				percepcionProcessorID);
+	}
+	
+	public static Object getProcessorClass(Properties ctx, Integer processorID, String trxName) throws Exception{
+		String processorClassName = getProcessorClassName(ctx, processorID,
+				trxName);
+		Class processor = Class.forName(processorClassName);
+		return processor.newInstance();
+	}
 }

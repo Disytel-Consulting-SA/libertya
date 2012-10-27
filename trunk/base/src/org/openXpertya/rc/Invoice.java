@@ -352,4 +352,24 @@ public class Invoice extends DiscountableDocument implements Serializable{
 	public BigDecimal getTotalManualGeneralDiscount() {
 		return this.totalManualGeneralDiscount;		
 	}
+
+	@Override
+	public Integer getOrgID() {
+		return getRealInvoice().getAD_Org_ID();
+	}
+
+	@Override
+	public Integer getBPartnerID() {
+		return getRealInvoice().getC_BPartner_ID();
+	}
+
+	@Override
+	public Integer getDocTypeID() {
+		return getRealInvoice().getC_DocTypeTarget_ID();
+	}
+
+	@Override
+	public boolean isSOTrx() {
+		return getRealInvoice().isSOTrx();
+	}
 }
