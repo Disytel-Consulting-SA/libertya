@@ -4,6 +4,7 @@ import java.math.BigDecimal;
 import java.util.List;
 import java.util.Set;
 
+import org.openXpertya.model.DiscountCalculator.IDocument;
 import org.openXpertya.model.FiscalDocumentPrintListener;
 import org.openXpertya.pos.exceptions.InsufficientBalanceException;
 import org.openXpertya.pos.exceptions.InsufficientCreditException;
@@ -17,6 +18,7 @@ import org.openXpertya.pos.model.DiscountSchema;
 import org.openXpertya.pos.model.EntidadFinanciera;
 import org.openXpertya.pos.model.Location;
 import org.openXpertya.pos.model.Order;
+import org.openXpertya.pos.model.Organization;
 import org.openXpertya.pos.model.PaymentMedium;
 import org.openXpertya.pos.model.PaymentTerm;
 import org.openXpertya.pos.model.PriceList;
@@ -108,13 +110,17 @@ public abstract class PoSConnectionState {
 	
 	public abstract String getNextInvoiceDocumentNo();
 	
-	public abstract List<Tax> getOtherTaxes(BusinessPartner bp);
+	public abstract List<Tax> getOtherTaxes(IDocument document);
 	
 	public abstract Tax getTax(Integer taxID);
 	
 	public abstract boolean isCheckCUITControlActivated();
 	
 	public abstract boolean hasCreditNotesAvailables(Integer bpartnerID, boolean excludeCreditNotes);
+	
+	public abstract Organization getOrganization();
+	
+	public abstract List<Tax> loadBPOtherTaxes(BusinessPartner bp);
 	
 	/**
 	 * @param checkDeadLineToCompare

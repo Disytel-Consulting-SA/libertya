@@ -23,6 +23,8 @@ import java.sql.Timestamp;
 import java.util.Properties;
 import java.util.logging.Level;
 
+import org.openXpertya.model.DiscountCalculator.IDocument;
+import org.openXpertya.model.DiscountCalculator.IDocumentLine;
 import org.openXpertya.util.CLogger;
 import org.openXpertya.util.DB;
 import org.openXpertya.util.Env;
@@ -1776,6 +1778,117 @@ public class MInvoiceLine extends X_C_InvoiceLine {
 	public boolean isDragOrderPrice() {
 		return dragOrderPrice;
 	}
+	
+	/**
+	 * Crea el wrapper de esta línea para ser manipulada por un calculador de
+	 * descuentos.
+	 * 
+	 * @param invoice
+	 *            Wrapper de la factura que contiene esta línea
+	 * @return Nueva instancia del wrapper
+	 */
+    protected IDocumentLine createDiscountableWrapper(IDocument invoice) {
+    	return new DiscountableMInvoiceLineWrapper(invoice);
+    }
+    
+    /**
+     * Wrapper de {@link MInvoiceLine} para cálculo de descuentos.
+     */
+    private class DiscountableMInvoiceLineWrapper extends DiscountableDocumentLine {
+    	
+		public DiscountableMInvoiceLineWrapper(IDocument document) {
+			super(document);
+		}
+
+		@Override
+		public BigDecimal getPrice() {
+			return MInvoiceLine.this.getPriceActual();
+		}
+
+		@Override
+		public BigDecimal getPriceList() {
+			return MInvoiceLine.this.getPriceList();
+		}
+
+		@Override
+		public int getProductID() {
+			return MInvoiceLine.this.getM_Product_ID();
+		}
+
+		@Override
+		public BigDecimal getQty() {
+			return MInvoiceLine.this.getQtyEntered();
+		}
+
+		@Override
+		public void setPrice(BigDecimal newPrice) {
+			MInvoiceLine.this.setPrice(newPrice);		
+		}
+		
+		@Override
+		public void setDocumentDiscountAmt(BigDecimal discountAmt) {
+			MInvoiceLine.this.setDocumentDiscountAmt(discountAmt);
+			if (!MInvoiceLine.this.save()) {
+				log.severe("Cannot save discounted Invoice Line");
+			}
+		}
+		
+		@Override
+		public BigDecimal getLineDiscountAmt() {
+			return MInvoiceLine.this.getLineDiscountAmt();
+		}
+
+		@Override
+		public void setLineDiscountAmt(BigDecimal lineDiscountAmt) {
+			MInvoiceLine.this.setLineDiscountAmt(lineDiscountAmt);
+		}
+
+		@Override
+		public BigDecimal getLineBonusAmt() {
+			return MInvoiceLine.this.getLineBonusAmt();
+		}
+
+		@Override
+		public void setLineBonusAmt(BigDecimal lineBonusAmt) {
+			MInvoiceLine.this.setLineBonusAmt(lineBonusAmt);			
+		}
+		
+		@Override
+		public BigDecimal getTaxRate() {
+			return MInvoiceLine.this.getTaxRate();
+		}
+		
+		@Override
+		public boolean isTaxIncluded() {
+			return MInvoiceLine.this.isTaxIncluded();
+		}
+
+		@Override
+		public void setDiscount(BigDecimal discount) {
+			// No hace nada por aca ya que no existen descuentos a nivel de
+			// línea
+		}
+
+		@Override
+		public BigDecimal getDiscount() {
+			// No hace nada por aca ya que no existen descuentos a nivel de
+			// línea
+			return null;
+		}
+
+		@Override
+		public Integer getLineManualDiscountID() {
+			// No hace nada por aca ya que no existen descuentos a nivel de
+			// línea
+			return null;
+		}
+
+		@Override
+		public void setLineManualDiscountID(Integer lineManualDiscountID) {	
+			// No hace nada por aca ya que no existen descuentos a nivel de
+			// línea
+		}
+    }
     
 }    // MInvoiceLine
 

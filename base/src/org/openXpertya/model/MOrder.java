@@ -4360,6 +4360,25 @@ public class MOrder extends X_C_Order implements DocAction {
 			// No es necesario discriminar el importe de descuento de EC aquí.			
 		}
 
+		@Override
+		public Integer getOrgID() {
+			return MOrder.this.getAD_Org_ID();
+		}
+
+		@Override
+		public Integer getBPartnerID() {
+			return MOrder.this.getC_BPartner_ID();
+		}
+
+		@Override
+		public Integer getDocTypeID() {
+			return MOrder.this.getC_DocTypeTarget_ID();
+		}
+
+		@Override
+		public boolean isSOTrx() {
+			return MOrder.this.isSOTrx();
+		}
 	}
 	
 }    // MOrder

@@ -4,6 +4,7 @@ import java.math.BigDecimal;
 import java.util.List;
 import java.util.Set;
 
+import org.openXpertya.model.DiscountCalculator.IDocument;
 import org.openXpertya.pos.exceptions.PosException;
 import org.openXpertya.pos.exceptions.UserException;
 import org.openXpertya.pos.model.BusinessPartner;
@@ -11,6 +12,7 @@ import org.openXpertya.pos.model.DiscountSchema;
 import org.openXpertya.pos.model.EntidadFinanciera;
 import org.openXpertya.pos.model.Location;
 import org.openXpertya.pos.model.Order;
+import org.openXpertya.pos.model.Organization;
 import org.openXpertya.pos.model.PaymentMedium;
 import org.openXpertya.pos.model.PaymentTerm;
 import org.openXpertya.pos.model.PriceList;
@@ -252,7 +254,7 @@ public class PoSOffline extends PoSConnectionState {
 	}
 
 	@Override
-	public List<Tax> getOtherTaxes(BusinessPartner bp) {
+	public List<Tax> getOtherTaxes(IDocument document) {
 		// TODO Auto-generated method stub
 		return null;
 	}
@@ -275,5 +277,16 @@ public class PoSOffline extends PoSConnectionState {
 		// TODO Auto-generated method stub
 		return false;
 	}
-	
+
+	@Override
+	public Organization getOrganization() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public List<Tax> loadBPOtherTaxes(BusinessPartner bp) {
+		// TODO Auto-generated method stub
+		return null;
+	}
 }

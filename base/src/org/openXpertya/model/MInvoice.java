@@ -21,6 +21,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -31,6 +32,8 @@ import java.util.logging.Level;
 import org.openXpertya.cc.CurrentAccountBalanceStrategy;
 import org.openXpertya.cc.CurrentAccountManager;
 import org.openXpertya.cc.CurrentAccountManagerFactory;
+import org.openXpertya.model.DiscountCalculator.IDocument;
+import org.openXpertya.model.DiscountCalculator.IDocumentLine;
 import org.openXpertya.print.ReportEngine;
 import org.openXpertya.process.DocAction;
 import org.openXpertya.process.DocumentEngine;
@@ -4858,37 +4861,15 @@ public class MInvoice extends X_C_Invoice implements DocAction {
 		}
 		return true;
 	}
-
+	
 	/**
-	 * @return true si la categoria de iva de la entidad comercial está
-	 *         configurada para ser pasible de percepciones
+	 * @return El wrapper de este pedido para ser utilizado en un calculador de
+	 *         descuentos {@link DiscountCalculator}.
 	 */
-	public boolean isBPartnerPercepcionLiable() {
-		boolean isAppliedPercepcion = false;
-		MBPartner bp = new MBPartner(getCtx(), getC_BPartner_ID(),
-				get_TrxName());
-		if (!Util.isEmpty(bp.getC_Categoria_Iva_ID(), true)) {
-			MCategoriaIva catIva = new MCategoriaIva(getCtx(),
-					bp.getC_Categoria_Iva_ID(), get_TrxName());
-			isAppliedPercepcion = catIva.isPercepcionLiable();
-		}
-		return isAppliedPercepcion;
+	public IDocument getDiscountableWrapper() {
+		return new DiscountableMInvoiceWrapper();
 	}
-
-	/**
-	 * @return true si se debe aplicar las percepciones para esta factura, false
-	 *         caso contrario
-	 */
-	public boolean isApplyPercepcion() {
-		MDocType docType = MDocType.get(getCtx(), getC_DocTypeTarget_ID());
-		return isSOTrx()
-				&& CalloutInvoiceExt.ComprobantesFiscalesActivos()
-				&& isBPartnerPercepcionLiable()
-				&& (docType == null || (!docType.getDocTypeKey().equals(
-						MDocType.DOCTYPE_Retencion_InvoiceCustomer) && !docType
-						.getDocTypeKey().equals(
-								MDocType.DOCTYPE_Retencion_ReceiptCustomer)));
-	}
+	
 
 	public BigDecimal getPercepcionesTotalAmt() {
 		String sql = "SELECT sum(taxamt) FROM c_invoicetax WHERE c_invoice_id = ? AND c_tax_id IN (SELECT distinct c_tax_id FROM ad_org_percepcion WHERE ad_org_id = "
@@ -4899,23 +4880,16 @@ public class MInvoice extends X_C_Invoice implements DocAction {
 	}
 
 	public void calculatePercepciones() throws Exception {
-		if (isApplyPercepcion()) {
-			GeneratorPercepciones.calculatePercepciones(this);
-		}
-		else{
-			GeneratorPercepciones.deletePercepciones(getID(), get_TrxName());
-		}
+		GeneratorPercepciones generator = new GeneratorPercepciones(getCtx(),
+				getDiscountableWrapper(), get_TrxName());
+		generator.calculatePercepciones(this);
 	}
 
 	public void recalculatePercepciones() throws Exception {
-		if (isApplyPercepcion()) {
-			GeneratorPercepciones.recalculatePercepciones(this);
-		}
-		else{
-			GeneratorPercepciones.deletePercepciones(getID(), get_TrxName());
-		}
-	}
-	
+		GeneratorPercepciones generator = new GeneratorPercepciones(getCtx(),
+				getDiscountableWrapper(), get_TrxName());
+		generator.recalculatePercepciones(this);
+	}	
 
 	/**
 	 * Obtiene el monto de descuento a nivel de documento a partir de las líneas
@@ -5020,6 +4994,85 @@ public class MInvoice extends X_C_Invoice implements DocAction {
         }
 
         return DB.executeUpdate( sql,trxName);
+	}
+	
+	/**
+     * Wrapper de {@link MInvoice} para cálculo de descuentos.
+     */
+	private class DiscountableMInvoiceWrapper extends DiscountableDocument {
+
+		@Override
+		protected List<? extends Object> getOriginalLines() {
+			return Arrays.asList(getLines(false));
+		}
+
+		@Override
+		protected IDocumentLine createDocumentLine(Object originalLine) {
+			return ((MInvoiceLine)originalLine).createDiscountableWrapper(this);
+		}
+
+		@Override
+		public Date getDate() {
+			return getDateInvoiced();
+		}
+
+		@Override
+		public void setTotalDocumentDiscount(BigDecimal discountAmount) {
+			// En la factura se invierte el signo del descuento ya que un valor
+			// positivo representa un cargo al encabezado de la factura.
+			setChargeAmt(discountAmount.negate());
+			if (discountAmount.compareTo(BigDecimal.ZERO) == 0) {
+				setC_Charge_ID(0);
+			}
+		}
+
+		@Override
+		public boolean isCalculateNetDiscount() {
+			return true;
+		}
+
+		@Override
+		public void setDocumentReferences(MDocumentDiscount documentDiscount) {
+			documentDiscount.setC_Order_ID(getC_Order_ID());
+			documentDiscount.setC_Invoice_ID(getID());
+		}
+
+		@Override
+		public void setDocumentDiscountChargeID(int chargeID) {
+			setC_Charge_ID(chargeID);
+		}
+
+		@Override
+		public void setTotalBPartnerDiscount(BigDecimal discountAmount) {
+			// TODO por ahora no es necesario ya que esta clase se creó para el
+			// cálculo de percepciones
+		}
+
+		@Override
+		public void setTotalManualGeneralDiscount(BigDecimal discountAmount) {
+			// TODO por ahora no es necesario ya que esta clase se creó para el
+			// cálculo de percepciones 			
+		}
+
+		@Override
+		public Integer getOrgID() {
+			return MInvoice.this.getAD_Org_ID();
+		}
+
+		@Override
+		public Integer getBPartnerID() {
+			return MInvoice.this.getC_BPartner_ID();
+		}
+
+		@Override
+		public Integer getDocTypeID() {
+			return MInvoice.this.getC_DocTypeTarget_ID();
+		}
+
+		@Override
+		public boolean isSOTrx() {
+			return MInvoice.this.isSOTrx();
+		}
 	}
 	
 } // MInvoice

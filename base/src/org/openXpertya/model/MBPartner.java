@@ -234,15 +234,15 @@ public class MBPartner extends X_C_BPartner {
 
 	/**
 	 * @param bpartnerID
-	 * @param taxID
+	 * @param orgPercepcionID
 	 * @param dateInvoiced
 	 * @param trxName
 	 * @return el porcentaje de exención de la entidad comercial en la
 	 *         percepcion parámetro para esa fecha. Si no posee exenciones para
 	 *         esa fecha, entonces se retorna 0
 	 */
-    public static BigDecimal getPercepcionExencionPerc(Integer bpartnerID, Integer taxID, Timestamp dateInvoiced, String trxName){
-		String sql = "SELECT coalesce(percent,0) as porcexent FROM c_bpartner_percexenc WHERE (?::date between date_from and date_to) AND (c_bpartner_id = ?) AND (c_tax_id = ?) AND (isactive = 'Y') LIMIT 1";
+    public static BigDecimal getPercepcionExencionPerc(Integer bpartnerID, Integer orgPercepcionID, Timestamp dateInvoiced, String trxName){
+		String sql = "SELECT coalesce(percent,0) as porcexent FROM c_bpartner_percexenc WHERE (?::date between date_from and date_to) AND (c_bpartner_id = ?) AND (ad_org_percepcion_ID = ?) AND (isactive = 'Y') LIMIT 1";
 		PreparedStatement ps = null;
 		ResultSet rs = null;
 		BigDecimal exencionPerc = BigDecimal.ZERO;
@@ -251,7 +251,7 @@ public class MBPartner extends X_C_BPartner {
 			ps = DB.prepareStatement(sql, trxName);
 			ps.setTimestamp(i++, dateInvoiced);
 			ps.setInt(i++, bpartnerID);
-			ps.setInt(i++, taxID);
+			ps.setInt(i++, orgPercepcionID);
 			rs = ps.executeQuery();
 			if(rs.next()){
 				exencionPerc = rs.getBigDecimal(1);
@@ -271,7 +271,7 @@ public class MBPartner extends X_C_BPartner {
 
 	/**
 	 * @param bpartnerID
-	 * @param taxID
+	 * @param orgPercepcionID
 	 * @param dateInvoiced
 	 * @param scale 
 	 * @param trxName
@@ -280,9 +280,9 @@ public class MBPartner extends X_C_BPartner {
 	 *         entonces se retorna 0. La tasa de exención es 1 - porcentaje de
 	 *         exención/100
 	 */
-    public static BigDecimal getPercepcionExencionMultiplierRate(Integer bpartnerID, Integer taxID, Timestamp dateInvoiced, Integer scale, String trxName){
+    public static BigDecimal getPercepcionExencionMultiplierRate(Integer bpartnerID, Integer orgPercepcionID, Timestamp dateInvoiced, Integer scale, String trxName){
 		return new BigDecimal(1).subtract((MBPartner.getPercepcionExencionPerc(
-				bpartnerID, taxID, dateInvoiced, trxName).divide(
+				bpartnerID, orgPercepcionID, dateInvoiced, trxName).divide(
 				new BigDecimal(100), scale, BigDecimal.ROUND_HALF_UP)));
     } 
     
@@ -1360,32 +1360,9 @@ public class MBPartner extends X_C_BPartner {
 		}
 	}
 	
-	public static BigDecimal getRetencionSegunPadronBsAS(int C_BPartner_ID)
-	{
-		BigDecimal porcentaje = Env.ZERO;
-		StringBuffer sql = new StringBuffer();
-		sql.append("SELECT bp.retencion \n");
-		sql.append("FROM   c_bpartner b \n");
-		sql.append("       INNER JOIN c_bpartner_padron_bsas bp \n");
-		sql.append("       ON     bp.cuit = REPLACE(b.taxid,'-','') \n");
-		sql.append("WHERE  alta_baja     IN ('S','N') \n");
-		sql.append("   AND b.c_bpartner_id = ? ");
-		
-		try{
-			PreparedStatement pstmt = DB.prepareStatement(sql.toString());
-			pstmt.setInt(1, C_BPartner_ID);
-			ResultSet rs = pstmt.executeQuery();
-			if(rs.next())
-				porcentaje = rs.getBigDecimal(1);
-			pstmt.close();
-			if(rs != null)
-			   rs.close();
-		}
-		catch(Exception ex)
-		{
-			s_log.fine("Error al buscar el porcentaje a retener en el padron de Bs.As."+ex.toString());
-		}
-		return porcentaje;
+	public static BigDecimal getRetencionSegunPadronBsAS(Timestamp date, int C_BPartner_ID, String trxName){
+		return MBPartnerPadronBsAs.getBPartnerPerc("retencion", C_BPartner_ID, date,
+				MBPartnerPadronBsAs.PADRONTYPE_PadrónBsAs, trxName);
 	}	
 	
 	public boolean isConsumidorFinal(){
