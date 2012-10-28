@@ -531,6 +531,11 @@ public class VCreateFromShipment extends VCreateFrom {
 									BigDecimal.ROUND_HALF_UP));
 					iol.setC_UOM_ID(il.getC_UOM_ID());
 				}
+				// Instancia de atributo
+				if (il.getM_AttributeSetInstance_ID() != 0) {
+					iol.setM_AttributeSetInstance_ID(il
+							.getM_AttributeSetInstance_ID());
+				}
 				// Cargo (si no existe el artículo)
 				if (M_Product_ID == 0 && il.getC_Charge_ID() != 0) {
 					iol.setC_Charge_ID(il.getC_Charge_ID());
