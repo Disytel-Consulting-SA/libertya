@@ -120,4 +120,17 @@ public abstract class DiscountableDocument implements IDocument {
 		return wrappedLines;
 	}
 	
+	/**
+	 * @return lista de percepciones a aplicar al documento
+	 */
+	public List<MTax> getApplyPercepcion(GeneratorPercepciones generator) throws Exception{
+		return generator.getDebitApplyPercepciones();
+	}
+	
+	/**
+	 * @return lista de percepciones a aplicar al documento
+	 */
+	public List<DocumentTax> getAppliedPercepciones(){
+		return null;
+	}
 }

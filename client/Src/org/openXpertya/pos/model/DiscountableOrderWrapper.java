@@ -8,6 +8,7 @@ import org.openXpertya.model.DiscountCalculator;
 import org.openXpertya.model.DiscountCalculator.IDocumentLine;
 import org.openXpertya.model.DiscountableDocument;
 import org.openXpertya.model.MDocumentDiscount;
+import org.openXpertya.model.MTax;
 
 /**
  * Wrapper de Pedido de TPV que permite calcular descuentos dentro del mismo
@@ -112,6 +113,11 @@ public class DiscountableOrderWrapper extends DiscountableDocument {
 	@Override
 	public boolean isSOTrx() {
 		// TPV siempre es transacción de ventas
+		return true;
+	}
+
+	@Override
+	public boolean isApplyPercepcion() {
 		return true;
 	}
 }

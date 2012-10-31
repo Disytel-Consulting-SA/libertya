@@ -32,6 +32,7 @@ import java.util.logging.Level;
 import org.openXpertya.cc.CurrentAccountBalanceStrategy;
 import org.openXpertya.cc.CurrentAccountManager;
 import org.openXpertya.cc.CurrentAccountManagerFactory;
+import org.openXpertya.model.DiscountCalculator.ICreditDocument;
 import org.openXpertya.model.DiscountCalculator.IDocument;
 import org.openXpertya.model.DiscountCalculator.IDocumentLine;
 import org.openXpertya.print.ReportEngine;
@@ -481,7 +482,17 @@ public class MInvoice extends X_C_Invoice implements DocAction {
 				   "				AND dt.docbasetype = "+docBaseTypeDebit+
 				   "				AND dt.doctypekey NOT IN ("+docTypesOut+") " +
 				   "				AND i.docstatus IN ('CO','CL') ");
-		if(!Util.isEmpty(orderID, true)){
+		// Si tenemos una factura original en el crédito, entonces tomo esa
+		if (CalloutInvoiceExt.ComprobantesFiscalesActivos()
+				&& !Util.isEmpty(creditInvoice.getC_Invoice_Orig_ID(), true)) {
+			if(!Util.isEmpty(orderID, true)){
+				sql.append(" AND (c_invoice_id = ? OR c_order_id = ?)");
+			}
+			else{
+				sql.append(" AND c_invoice_id = ? ");
+			}
+		}
+		else if(!Util.isEmpty(orderID, true)){
 			sql.append(" AND c_order_id = ? ");
 		}
 		sql.append("		ORDER BY dateinvoiced) as o " +
@@ -493,7 +504,17 @@ public class MInvoice extends X_C_Invoice implements DocAction {
 		ps.setInt(i++, creditInvoice.getAD_Client_ID());
 		ps.setInt(i++, creditInvoice.getAD_Org_ID());
 		ps.setInt(i++, creditInvoice.getC_BPartner_ID());
-		if(!Util.isEmpty(orderID, true)){
+		if (CalloutInvoiceExt.ComprobantesFiscalesActivos()
+				&& !Util.isEmpty(creditInvoice.getC_Invoice_Orig_ID(), true)) {
+			if(!Util.isEmpty(orderID, true)){
+				ps.setInt(i++, creditInvoice.getC_Invoice_Orig_ID());
+				ps.setInt(i++, orderID);
+			}
+			else{
+				ps.setInt(i++, creditInvoice.getC_Invoice_Orig_ID());
+			}
+		}
+		else if(!Util.isEmpty(orderID, true)){
 			ps.setInt(i++, orderID);
 		}
 		ResultSet rs = ps.executeQuery();
@@ -557,6 +578,76 @@ public class MInvoice extends X_C_Invoice implements DocAction {
 		ps.close();
 	}
 	
+	/**
+	 * Obtiene el débito relacionado al pedido del crédito parámetro
+	 * @param creditInvoice factura de crédito
+	 * @return
+	 */
+	public static MInvoice getDebitFor(MInvoice creditInvoice){
+		MInvoice invoice = null;
+		String docBaseTypeDebit = creditInvoice.isSOTrx() ? "'"
+				+ MDocType.DOCBASETYPE_ARInvoice + "'" : "'"
+				+ MDocType.DOCBASETYPE_APInvoice + "'";
+		StringBuffer sql = new StringBuffer();
+		sql.append("SELECT c_invoice_id " +
+				   "FROM c_invoice as i " +
+				   "INNER JOIN c_doctype as dt on dt.c_doctype_id = i.c_doctypetarget_id " +
+				   "WHERE c_bpartner_id = ? " +
+				   "		AND dt.docbasetype = "+docBaseTypeDebit+
+				   "		AND i.docstatus IN ('CO','CL') ");
+		// Si tenemos una factura original en el crédito, entonces tomo esa
+		if (CalloutInvoiceExt.ComprobantesFiscalesActivos()
+				&& !Util.isEmpty(creditInvoice.getC_Invoice_Orig_ID(), true)) {
+			if(!Util.isEmpty(creditInvoice.getC_Order_ID(), true)){
+				sql.append(" AND (c_invoice_id = ? OR c_order_id = ?)");
+			}
+			else{
+				sql.append(" AND c_invoice_id = ? ");
+			}
+		}
+		else if(!Util.isEmpty(creditInvoice.getC_Order_ID(), true)){
+			sql.append(" AND c_order_id = ? ");
+		}
+		sql.append(" ORDER BY dateinvoiced desc ");
+		sql.append("LIMIT 1");
+		PreparedStatement ps = null;
+		ResultSet rs = null;
+		try {
+			ps = DB.prepareStatement(sql.toString(), creditInvoice.get_TrxName());
+			int i = 1;
+			ps.setInt(i++, creditInvoice.getC_BPartner_ID());
+			if (CalloutInvoiceExt.ComprobantesFiscalesActivos()
+					&& !Util.isEmpty(creditInvoice.getC_Invoice_Orig_ID(), true)) {
+				if(!Util.isEmpty(creditInvoice.getC_Order_ID(), true)){
+					ps.setInt(i++, creditInvoice.getC_Invoice_Orig_ID());
+					ps.setInt(i++, creditInvoice.getC_Order_ID());
+				}
+				else{
+					ps.setInt(i++, creditInvoice.getC_Invoice_Orig_ID());
+				}
+			}
+			else if(!Util.isEmpty(creditInvoice.getC_Order_ID(), true)){
+				ps.setInt(i++, creditInvoice.getC_Order_ID());
+			}
+			rs = ps.executeQuery();
+			if(rs.next()){
+				invoice = new MInvoice(creditInvoice.getCtx(),
+						rs.getInt("c_invoice_id"), creditInvoice.get_TrxName());
+			}
+		} catch (Exception e) {
+			s_log.severe("ERROR getting debit for " + creditInvoice.toString());
+			e.printStackTrace();
+		} finally{
+			try {
+				if(rs != null)rs.close();
+				if(ps != null)ps.close();
+			} catch (Exception e2) {
+				s_log.severe("ERROR getting debit for " + creditInvoice.toString());
+				e2.printStackTrace();
+			}
+		}
+		return invoice;
+	}
 	
 	/** Descripción de Campos */
 
@@ -1646,6 +1737,10 @@ public class MInvoice extends X_C_Invoice implements DocAction {
 		
 		// Se obtiene el tipo de documento para determinar si es fiscal o no.
 		MDocType docType = MDocType.get(getCtx(), getC_DocTypeTarget_ID());
+		boolean isDebit = !docType.getDocBaseType().equals(
+				MDocType.DOCBASETYPE_ARCreditMemo)
+				&& !docType.getDocBaseType().equals(
+						MDocType.DOCBASETYPE_APCreditMemo);
 		/*
 		 * // Indicador de documento fiscal. boolean fiscalDocType = // Factura
 		 * de Retención no requiere validaciones fiscales
@@ -1862,6 +1957,11 @@ public class MInvoice extends X_C_Invoice implements DocAction {
 
 		}
 
+		// Si es un débito, se aplican las percepciones
+		if(isDebit){
+			setApplyPercepcion(true);
+		}
+		
 		/*
 		 * Comprobar si el documento base denota crédito (generalmente una nota
 		 * de crédito). Si es, verificar que la factura o comprobante son de las
@@ -2188,8 +2288,10 @@ public class MInvoice extends X_C_Invoice implements DocAction {
 			log.fine("Lines -> #" + no);
 		}
 		
-		if (is_ValueChanged("AD_Org_ID") || is_ValueChanged("C_BPartner_ID")) {
+		if (is_ValueChanged("AD_Org_ID") || is_ValueChanged("C_BPartner_ID")
+				|| is_ValueChanged("ApplyPercepcion")) {
 			try {
+				
 				recalculatePercepciones();
 				updateGrandTotal(get_TrxName());
 				recalculateIPS = true;
@@ -4618,7 +4720,7 @@ public class MInvoice extends X_C_Invoice implements DocAction {
 	 *         mensaje de error si hubo algún error.
 	 */
 	public CallResult doFiscalPrint() {
-		CallResult printResult = null;
+		CallResult printResult = new CallResult();
 		// ////////////////////////////////////////////////////////////////
 		// LOCALIZACIÓN ARGENTINA
 		// Para la localización Argentina, si el tipo de documento está
@@ -4867,13 +4969,75 @@ public class MInvoice extends X_C_Invoice implements DocAction {
 	 *         descuentos {@link DiscountCalculator}.
 	 */
 	public IDocument getDiscountableWrapper() {
-		return new DiscountableMInvoiceWrapper();
+		IDocument document = null;
+		if(!isCreditMemo()){
+			document = new DiscountableMInvoiceWrapper(); 
+		}
+		else{
+			document = new DiscountableMInvoiceCreditWrapper();
+		}
+		return document;
 	}
 	
+	/**
+	 * @return lista de percepciones aplicadas a esta factura
+	 */
+	public List<MInvoiceTax> getAppliedPercepciones(){
+		String sql = "select it.* " +
+					 "from c_invoicetax as it " +
+					 "inner join c_tax as t on t.c_tax_id = it.c_tax_id " +
+					 "where it.c_invoice_id = ? AND t.ispercepcion = 'Y'";
+		PreparedStatement ps = null;
+		ResultSet rs = null;
+		List<MInvoiceTax> percepciones = new ArrayList<MInvoiceTax>();
+		try {
+			ps = DB.prepareStatement(sql, get_TrxName());
+			ps.setInt(1, getID());
+			rs = ps.executeQuery();
+			while(rs.next()){
+				percepciones.add(new MInvoiceTax(getCtx(), rs, get_TrxName()));
+			}
+		} catch (Exception e) {
+			log.severe("ERROR getting percepciones");
+			e.printStackTrace();
+		} finally{
+			try {
+				if(rs != null)rs.close();
+				if(ps != null)ps.close();
+			} catch (Exception e2) {
+				log.severe("ERROR getting percepciones");
+				e2.printStackTrace();
+			}
+		}
+		return percepciones;
+	}
+	
+	/**
+	 * @return lista de percepciones aplicadas a esta factura
+	 */
+	public List<DocumentTax> getDocumentAppliedPercepciones(){
+		List<MInvoiceTax> invoiceTaxes = getAppliedPercepciones();
+		List<DocumentTax> documentTaxes = new ArrayList<DocumentTax>();
+		DocumentTax doctax;
+		for (MInvoiceTax invoiceTax : invoiceTaxes) {
+			// Se debe determinar el porcentaje del impuesto que se aplicó
+			// en el documento, esto se determina con el importe base y el
+			// monto del impuesto
+			doctax = new DocumentTax();
+			doctax.setTaxID(invoiceTax.getC_Tax_ID());
+			doctax.setTaxAmt(invoiceTax.getTaxAmt());
+			doctax.setTaxBaseAmt(invoiceTax.getTaxBaseAmt());
+			doctax.setTaxRate();
+			documentTaxes.add(doctax);
+		}
+		return documentTaxes;
+	}
 
 	public BigDecimal getPercepcionesTotalAmt() {
-		String sql = "SELECT sum(taxamt) FROM c_invoicetax WHERE c_invoice_id = ? AND c_tax_id IN (SELECT distinct c_tax_id FROM ad_org_percepcion WHERE ad_org_id = "
-				+ getAD_Org_ID() + ")";
+		String sql = "select sum(taxamt)" +
+					 "from c_invoicetax as it " +
+					 "inner join c_tax as t on t.c_tax_id = it.c_tax_id " +
+					 "where it.c_invoice_id = ? AND t.ispercepcion = 'Y'";
 		BigDecimal percepcionAmt = DB
 				.getSQLValueBD(get_TrxName(), sql, getID());
 		return percepcionAmt == null ? BigDecimal.ZERO : percepcionAmt;
@@ -5072,6 +5236,39 @@ public class MInvoice extends X_C_Invoice implements DocAction {
 		@Override
 		public boolean isSOTrx() {
 			return MInvoice.this.isSOTrx();
+		}
+
+		@Override
+		public boolean isApplyPercepcion() {
+			return MInvoice.this.isApplyPercepcion();
+		}
+		
+		@Override
+		public List<DocumentTax> getAppliedPercepciones(){
+			return MInvoice.this.getDocumentAppliedPercepciones();
+		}
+	}
+	
+	private class DiscountableMInvoiceCreditWrapper extends
+			DiscountableMInvoiceWrapper implements ICreditDocument {
+
+		@Override
+		public IDocument getDebitRelatedDocument() {
+			// Determinar el débito relacionado al crédito
+			IDocument debitDocument = null;
+			MInvoice debitInvoice = MInvoice.getDebitFor(MInvoice.this);
+			if(debitInvoice != null){
+				debitDocument = debitInvoice.getDiscountableWrapper();
+			}
+			return debitDocument;
+		}
+		
+		/**
+		 * @return lista de percepciones a aplicar al documento
+		 */
+		@Override
+		public List<MTax> getApplyPercepcion(GeneratorPercepciones generator) throws Exception{
+			return generator.getCreditApplyPercepciones();
 		}
 	}
 	

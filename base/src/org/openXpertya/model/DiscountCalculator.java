@@ -12,7 +12,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.logging.Level;
-
 import org.openXpertya.model.DiscountCalculator.IDocumentLine.DiscountApplication;
 import org.openXpertya.model.ProductMatching.MatchingCompareType;
 import org.openXpertya.util.CLogger;
@@ -2547,6 +2546,31 @@ public class DiscountCalculator {
 		 * @return true si es una transacción de ventas, false caso contrario
 		 */
 		public boolean isSOTrx();
+		
+		/**
+		 * @return true si posee configuración adicional el documento que
+		 *         determine que debe aplicar descuentos, false caso contrario
+		 */
+		public boolean isApplyPercepcion();
+		
+		/**
+		 * @return lista de percepciones a aplicar al documento
+		 */
+		public List<MTax> getApplyPercepcion(GeneratorPercepciones generator) throws Exception;
+		
+		/**
+		 * @return lista de percepciones aplicadas al documento
+		 */
+		public List<DocumentTax> getAppliedPercepciones();
+	}
+	
+	
+	public interface ICreditDocument extends IDocument{
+		
+		/**
+		 * @return el documento de débito relacionado con este crédito 
+		 */
+		public IDocument getDebitRelatedDocument();
 	}
 
 	/**

@@ -4297,10 +4297,45 @@ public class MOrder extends X_C_Order implements DocAction {
 	}
 	
 	public BigDecimal getPercepcionesTotalAmt(){
-		String sql = "SELECT sum(taxamt) FROM c_ordertax WHERE c_order_id = ? AND c_tax_id IN (SELECT distinct c_tax_id FROM ad_org_percepcion WHERE ad_org_id = "
-				+ getAD_Org_ID() + ")";
+		String sql = "select sum(taxamt) " +
+					 "from c_ordertax as ot " +
+					 "inner join c_tax as t on t.c_tax_id = ot.c_tax_id " +
+					 "where ot.c_order_id = ? AND t.ispercepcion = 'Y'";
 		BigDecimal percepcionAmt = DB.getSQLValueBD(get_TrxName(), sql, getID());
 		return percepcionAmt == null ? BigDecimal.ZERO : percepcionAmt;
+	}
+	
+	/**
+	 * @return lista de percepciones aplicadas a esta factura
+	 */
+	public List<MOrderTax> getAppliedPercepciones(){
+		String sql = "select ot.* " +
+					 "from c_ordertax as ot " +
+					 "inner join c_tax as t on t.c_tax_id = ot.c_tax_id " +
+					 "where ot.c_order_id = ? AND t.ispercepcion = 'Y'";
+		PreparedStatement ps = null;
+		ResultSet rs = null;
+		List<MOrderTax> percepciones = new ArrayList<MOrderTax>();
+		try {
+			ps = DB.prepareStatement(sql, get_TrxName());
+			ps.setInt(1, getID());
+			rs = ps.executeQuery();
+			while(rs.next()){
+				percepciones.add(new MOrderTax(getCtx(), rs, get_TrxName()));
+			}
+		} catch (Exception e) {
+			log.severe("ERROR getting percepciones");
+			e.printStackTrace();
+		} finally{
+			try {
+				if(rs != null)rs.close();
+				if(ps != null)ps.close();
+			} catch (Exception e2) {
+				log.severe("ERROR getting percepciones");
+				e2.printStackTrace();
+			}
+		}
+		return percepciones;
 	}
 	
 	/**
@@ -4378,6 +4413,30 @@ public class MOrder extends X_C_Order implements DocAction {
 		@Override
 		public boolean isSOTrx() {
 			return MOrder.this.isSOTrx();
+		}
+
+		@Override
+		public boolean isApplyPercepcion() {
+			return true;
+		}
+		
+		@Override
+		public List<DocumentTax> getAppliedPercepciones(){
+			List<MOrderTax> orderTaxes = MOrder.this.getAppliedPercepciones();
+			List<DocumentTax> documentTaxes = new ArrayList<DocumentTax>();
+			DocumentTax doctax;
+			for (MOrderTax orderTax : orderTaxes) {
+				// Se debe determinar el porcentaje del impuesto que se aplicó
+				// en el documento, esto se determina con el importe base y el
+				// monto del impuesto
+				doctax = new DocumentTax();
+				doctax.setTaxID(orderTax.getC_Tax_ID());
+				doctax.setTaxAmt(orderTax.getTaxAmt());
+				doctax.setTaxBaseAmt(orderTax.getTaxBaseAmt());
+				doctax.setTaxRate();
+				documentTaxes.add(doctax);
+			}
+			return documentTaxes;
 		}
 	}
 	
