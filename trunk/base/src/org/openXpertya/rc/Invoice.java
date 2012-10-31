@@ -8,11 +8,13 @@ import java.util.List;
 import java.util.Properties;
 
 import org.openXpertya.model.DiscountableDocument;
+import org.openXpertya.model.DocumentTax;
 import org.openXpertya.model.MCurrency;
 import org.openXpertya.model.MDocumentDiscount;
 import org.openXpertya.model.MInvoice;
 import org.openXpertya.model.MInvoiceLine;
 import org.openXpertya.model.DiscountCalculator.IDocumentLine;
+import org.openXpertya.model.MTax;
 import org.openXpertya.util.Env;
 
 import bsh.This;
@@ -371,5 +373,15 @@ public class Invoice extends DiscountableDocument implements Serializable{
 	@Override
 	public boolean isSOTrx() {
 		return getRealInvoice().isSOTrx();
+	}
+
+	@Override
+	public boolean isApplyPercepcion() {
+		return true;
+	}
+
+	@Override
+	public List<DocumentTax> getAppliedPercepciones() {
+		return getRealInvoice().getDocumentAppliedPercepciones();
 	}
 }

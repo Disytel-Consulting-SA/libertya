@@ -4599,3 +4599,6 @@ ALTER TABLE c_bpartner_padron_bsas ADD COLUMN padrontype character(1);
 
 ALTER TABLE c_bpartner_percexenc ALTER COLUMN c_tax_id DROP NOT NULL;
 ALTER TABLE c_bpartner_percexenc ADD COLUMN ad_org_percepcion_id integer;
+
+-- 20121031-1907 Flag a la factura que permite o no aplicar percepciones
+ALTER TABLE c_invoice ADD COLUMN applypercepcion character(1) NOT NULL DEFAULT 'Y'::bpchar;

@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 
+import org.openXpertya.model.DiscountCalculator.ICreditDocument;
 import org.openXpertya.model.DiscountCalculator.IDocument;
 import org.openXpertya.util.CLogger;
 import org.openXpertya.util.DB;
@@ -157,8 +158,9 @@ public class GeneratorPercepciones {
 	 *         false caso contrario
 	 */
 	public boolean isApplyPercepcion() {
-		return (getDocument() != null 
-				&& getDocument().isSOTrx())
+		return getDocument() != null 
+				&& getDocument().isSOTrx()
+				&& getDocument().isApplyPercepcion()
 				&& CalloutInvoiceExt.ComprobantesFiscalesActivos()
 				&& (getCategoriaIVA() != null && getCategoriaIVA().isPercepcionLiable())
 				&& (isTPVInstance() || (getDocType() != null && (!MDocType.DOCTYPE_Retencion_InvoiceCustomer
@@ -174,7 +176,7 @@ public class GeneratorPercepciones {
 	 * @return
 	 * @throws Exception
 	 */
-	public List<MTax> getApplyPercepciones() throws Exception{
+	public List<MTax> getDebitApplyPercepciones() throws Exception{
 		List<MTax> percepciones = new ArrayList<MTax>();
 		if(!isApplyPercepcion()){
 			return percepciones;
@@ -197,6 +199,46 @@ public class GeneratorPercepciones {
 				tax.setRate(percepcionPerc);
 				percepciones.add(tax);
 			}
+		}
+		return percepciones;
+	}
+	
+	/**
+	 * Para documentos de créditos, las percepciones a aplicar difieren de los
+	 * débitos. Si un documento de crédito es de anulación o devolución de un
+	 * débito, entonces se deben aplicar los mismo porcentajes de percepciones
+	 * que se aplicaron en el débito. En cambio, si no posee débito relacionado,
+	 * por ejemplo una NC creada sin relación, entonces se deben aplicar las
+	 * percepciones básicas de un débito
+	 * 
+	 * @return lista de percepciones a aplicar al crédito
+	 * @throws Exception
+	 */
+	public List<MTax> getCreditApplyPercepciones() throws Exception{
+		ICreditDocument creditDocument = (ICreditDocument)getDocument();
+		IDocument debitDocument = creditDocument.getDebitRelatedDocument();
+		List<MTax> percepciones = new ArrayList<MTax>();
+		MTax tax;
+		// Si posee un débito relacionado, entonces aplico las percepciones del
+		// débito, sino las percepciones comunes
+		if(debitDocument != null){
+			List<DocumentTax> appliedPercepciones = debitDocument.getAppliedPercepciones();
+			for (DocumentTax documentTax : appliedPercepciones) {
+				tax = new MTax(getCtx(), documentTax.getTaxID(), getTrxName());
+				tax.setRate(documentTax.getTaxRate());
+				percepciones.add(tax);
+			}
+		}
+		else{
+			percepciones = getDebitApplyPercepciones();
+		}
+		return percepciones;
+	}
+	
+	public List<MTax> getApplyPercepciones() throws Exception{
+		List<MTax> percepciones = new ArrayList<MTax>();
+		if(getDocument() != null){
+			percepciones = getDocument().getApplyPercepcion(this);
 		}
 		return percepciones;
 	}
@@ -234,7 +276,7 @@ public class GeneratorPercepciones {
 		List<MTax> percepciones = getApplyPercepciones();
 		// Recorrer las percepciones y agregarlas a las facturas
 		BigDecimal percepcionAmt;
-		BigDecimal invoiceNetTotalAmt = invoice.getTotalLinesNetWithoutDocumentDiscount();
+		BigDecimal invoiceNetTotalAmt = invoice.getTotalLinesNet();
 		Integer scale = MCurrency.getStdPrecision(getCtx(),
 				invoice.getC_Currency_ID(), getTrxName());
 		MInvoiceTax invoiceTax;
