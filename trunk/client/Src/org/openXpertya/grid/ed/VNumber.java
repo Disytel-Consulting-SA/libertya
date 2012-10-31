@@ -54,6 +54,7 @@ import org.openXpertya.model.MRole;
 import org.openXpertya.util.CLogger;
 import org.openXpertya.util.DisplayType;
 import org.openXpertya.util.Env;
+import org.openXpertya.util.Util;
 
 /**
  * Descripción de Clase
@@ -441,7 +442,28 @@ public final class VNumber extends JComponent implements VEditor,ActionListener,
     		return true;
     	}
     	String strValue = value.toString();
-    	double valueDouble = Double.valueOf(strValue.replace(".", "").replace(",", "."));
+    	if(strValue.indexOf(",") >= 0 && strValue.indexOf(".") < 0){
+    		strValue = strValue.replace(",", ".");
+    	}
+    	
+    	
+    	try {
+    		strValue = getFormatValue(strValue);
+            value = getParseValue(strValue);
+        } catch( ParseException e ) {
+            log.log( Level.SEVERE,"VNumber.isInRange() Parse error "+strValue,e );
+            return true;
+        }
+
+    	double valueDouble = 0;
+        if( m_displayType == DisplayType.Integer ) {
+        	Integer intValue = (Integer)value;
+        	valueDouble = intValue.doubleValue();
+        }
+        else{
+        	BigDecimal bigValue = (BigDecimal)value;
+        	valueDouble = bigValue.doubleValue();
+        }
     	return valueDouble >= m_minValue && valueDouble <= m_maxValue;
     }
     
@@ -492,17 +514,7 @@ public final class VNumber extends JComponent implements VEditor,ActionListener,
         }
 
         try {
-            Number number = m_format.parse( value );
-
-            value = number.toString();    // converts it to US w/o thousands
-
-            BigDecimal bd = new BigDecimal( value );
-
-            if( m_displayType == DisplayType.Integer ) {
-                return new Integer( bd.intValue());
-            }
-
-            return bd.setScale( m_format.getMaximumFractionDigits(),BigDecimal.ROUND_HALF_UP );
+            return getParseValue(value);
         } catch( Exception e ) {
             log.log( Level.SEVERE,"getValue",e );
         }
@@ -512,8 +524,36 @@ public final class VNumber extends JComponent implements VEditor,ActionListener,
         }
 
         return Env.ZERO;
-    }    // getValue
+    }    // getValue    
+    
+    public Object getParseValue(String value) throws ParseException {
+    	Number number = m_format.parse( value );
 
+        value = number.toString();    // converts it to US w/o thousands
+
+        BigDecimal bd = new BigDecimal( value );
+
+        if( m_displayType == DisplayType.Integer ) {
+            return new Integer( bd.intValue());
+        }
+
+        return bd.setScale( m_format.getMaximumFractionDigits(),BigDecimal.ROUND_HALF_UP );
+    }
+   
+    
+    public String getFormatValue(Object value){
+    	String formattedValue = value.toString();
+    	if(value != null && !value.equals("")){
+    		try {
+    			Number number = new BigDecimal(value.toString());
+    			formattedValue = m_format.format( number );
+			} catch (Exception e) {
+				log.severe("Error formatting value "+value);
+			}
+    	}
+    	return formattedValue;
+    }
+    
     /**
      * Descripción de Método
      *
