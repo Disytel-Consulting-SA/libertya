@@ -32,6 +32,7 @@ import java.awt.event.KeyEvent;
 import java.util.HashMap;
 import java.util.Properties;
 import java.util.logging.Level;
+
 import javax.swing.JComponent;
 import javax.swing.JFrame;
 import javax.swing.JMenu;
@@ -43,6 +44,7 @@ import javax.swing.KeyStroke;
 import javax.swing.SwingUtilities;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
+
 import org.compiere.plaf.CompiereColor;
 import org.compiere.swing.CDialog;
 import org.compiere.swing.CPanel;
@@ -54,6 +56,7 @@ import org.openXpertya.apps.form.VInvoiceRemGen;
 import org.openXpertya.apps.form.VOrderMatrixDetail;
 import org.openXpertya.apps.form.VPriceInstanceMatrix;
 import org.openXpertya.apps.form.VProdPricGen;
+import org.openXpertya.apps.form.VUpcInstanceMatrix;
 import org.openXpertya.apps.search.Find;
 import org.openXpertya.grid.APanelTab;
 import org.openXpertya.grid.GridController;
@@ -2316,6 +2319,18 @@ public final class APanel extends CPanel implements DataStatusListener,ChangeLis
         		ADialog.error(m_curWindowNo, this, "SaveErrorRowNotFound");
         	} else {
         		VPriceInstanceMatrix ff = new VPriceInstanceMatrix(m_curWindowNo, (Frame)getRootPane().getParent(), null, null, false );
+	        	AEnv.showCenterScreen( ff );
+	        	m_curTab.dataRefreshAll();
+        	}
+        	
+        	return;
+        }
+        else if( col.equalsIgnoreCase( "CreateUpcMatrix" ) )
+        {
+        	if (m_curTab.needSave( true,false )) {
+        		ADialog.error(m_curWindowNo, this, "SaveErrorRowNotFound");
+        	} else {
+        		VUpcInstanceMatrix ff = new VUpcInstanceMatrix(m_curWindowNo, (Frame)getRootPane().getParent(), null, false );
 	        	AEnv.showCenterScreen( ff );
 	        	m_curTab.dataRefreshAll();
         	}
