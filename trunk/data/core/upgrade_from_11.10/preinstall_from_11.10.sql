@@ -4604,8 +4604,8 @@ ALTER TABLE c_bpartner_percexenc ADD COLUMN ad_org_percepcion_id integer;
 ALTER TABLE c_invoice ADD COLUMN applypercepcion character(1) NOT NULL DEFAULT 'Y'::bpchar;
 
 -- 20121031-2020 Columnas insertadas para el Informe Libro IVA - Kunan
-ALTER TABLE AD_ClientInfo ADD COLUMN C_Location_ID numeric(10);
-ALTER TABLE C_Categoria_Iva ADD COLUMN I_Tipo_IVA character varying(10);
+update ad_system set dummy = (SELECT addcolumnifnotexists('AD_ClientInfo','C_Location_ID', 'numeric(10)'));
+update ad_system set dummy = (SELECT addcolumnifnotexists('C_Categoria_Iva','I_Tipo_IVA', 'character varying(10)'));
 ALTER TABLE C_Categoria_Iva ALTER COLUMN I_Tipo_IVA TYPE character varying(10);
 
 -- 20121031-2145 Eliminación de registros existentes por creación de informe de libro de IVA - Kunan
