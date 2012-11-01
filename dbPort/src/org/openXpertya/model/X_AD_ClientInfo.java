@@ -1,13 +1,13 @@
 /** Modelo Generado - NO CAMBIAR MANUALMENTE - Disytel */
 package org.openXpertya.model;
-import java.util.logging.Level;
- import java.util.*;
-import java.sql.*;
-import java.math.*;
-import org.openXpertya.util.*;
+import java.math.BigDecimal;
+import java.sql.ResultSet;
+import java.util.Properties;
+
+import org.openXpertya.util.KeyNamePair;
 /** Modelo Generado por AD_ClientInfo
  *  @author Comunidad de Desarrollo Libertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
- *  @version  - 2011-10-31 17:37:12.946 */
+ *  @version  - 2012-10-31 20:27:11.798 */
 public class X_AD_ClientInfo extends org.openXpertya.model.PO
 {
 /** Constructor estándar */
@@ -334,6 +334,20 @@ set_Value ("C_IncomingTransfer_DT_ID", new Integer(C_IncomingTransfer_DT_ID));
 public int getC_IncomingTransfer_DT_ID() 
 {
 Integer ii = (Integer)get_Value("C_IncomingTransfer_DT_ID");
+if (ii == null) return 0;
+return ii.intValue();
+}
+/** Set C_Location_ID */
+public void setC_Location_ID (int C_Location_ID)
+{
+if (C_Location_ID <= 0) set_Value ("C_Location_ID", null);
+ else 
+set_Value ("C_Location_ID", new Integer(C_Location_ID));
+}
+/** Get C_Location_ID */
+public int getC_Location_ID() 
+{
+Integer ii = (Integer)get_Value("C_Location_ID");
 if (ii == null) return 0;
 return ii.intValue();
 }

@@ -7,7 +7,7 @@ import java.math.*;
 import org.openXpertya.util.*;
 /** Modelo Generado por C_Categoria_Iva
  *  @author Comunidad de Desarrollo Libertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
- *  @version  - 2012-05-17 17:47:27.761 */
+ *  @version  - 2012-10-31 20:28:17.793 */
 public class X_C_Categoria_Iva extends org.openXpertya.model.PO
 {
 /** Constructor estándar */
@@ -102,6 +102,22 @@ public String getc_sicore()
 {
 return (String)get_Value("c_sicore");
 }
+/** Set Tax.
+Tax identifier */
+public void setC_Tax_ID (int C_Tax_ID)
+{
+if (C_Tax_ID <= 0) set_Value ("C_Tax_ID", null);
+ else 
+set_Value ("C_Tax_ID", new Integer(C_Tax_ID));
+}
+/** Get Tax.
+Tax identifier */
+public int getC_Tax_ID() 
+{
+Integer ii = (Integer)get_Value("C_Tax_ID");
+if (ii == null) return 0;
+return ii.intValue();
+}
 /** Set Is Percepcion Liable */
 public void setIsPercepcionLiable (boolean IsPercepcionLiable)
 {
@@ -117,6 +133,21 @@ if (oo != null)
  return "Y".equals(oo);
 }
 return false;
+}
+/** Set I_Tipo_IVA */
+public void setI_Tipo_IVA (String I_Tipo_IVA)
+{
+if (I_Tipo_IVA != null && I_Tipo_IVA.length() > 10)
+{
+log.warning("Length > 10 - truncated");
+I_Tipo_IVA = I_Tipo_IVA.substring(0,10);
+}
+set_Value ("I_Tipo_IVA", I_Tipo_IVA);
+}
+/** Get I_Tipo_IVA */
+public String getI_Tipo_IVA() 
+{
+return (String)get_Value("I_Tipo_IVA");
 }
 /** Set Name.
 Alphanumeric identifier of the entity */
