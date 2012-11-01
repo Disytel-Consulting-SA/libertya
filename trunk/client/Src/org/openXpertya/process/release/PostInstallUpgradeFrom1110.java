@@ -92,6 +92,14 @@ public class PostInstallUpgradeFrom1110 extends PluginPostInstallProcess {
 	protected final static String NEGATIVE_ONHAND_JASPER_REPORT_UID = "CORE-AD_JasperReport-1010080";
 	protected final static String NEGATIVE_ONHAND_JASPER_REPORT_FILENAME = "NegativeOnHand.jasper";
 	
+	/** UID del Informe Libro IVA */
+	protected final static String RPT_LIBROIVA_REPORT_UID = "LIVA2CORE-AD_JasperReport-1010047-20121031201418";
+	protected final static String RPT_LIBROIVA_REPORT_FILENAME = "InformeLibroIVA.jasper";
+
+	/** UID del Informe Subreporte Tax Libro IVA */
+	protected final static String RPT_TAXLIBROIVA_REPORT_UID = "LIVA2CORE-AD_JasperReport-1010053-20121031201630";
+	protected final static String RPT_TAXLIBROIVA_REPORT_FILENAME = "SubReport_TaxInformeLibroIva.jasper";
+	
 	protected String doIt() throws Exception {
 		super.doIt();
 		
@@ -319,7 +327,19 @@ public class PostInstallUpgradeFrom1110 extends PluginPostInstallProcess {
 								.readBinaryFromJar(
 										jarFileURL,
 										getBinaryFileURL(NEGATIVE_ONHAND_JASPER_REPORT_FILENAME)));
-
+		
+		// Actualización del Informe Libro IVA
+		MJasperReport.updateBinaryData(get_TrxName(), getCtx(),
+				RPT_LIBROIVA_REPORT_UID, JarHelper.readBinaryFromJar(
+						jarFileURL,
+						getBinaryFileURL(RPT_LIBROIVA_REPORT_FILENAME)));
+				
+		// Actualización del Informe Subreporte Tax Libro IVA
+		MJasperReport.updateBinaryData(get_TrxName(), getCtx(),
+				RPT_TAXLIBROIVA_REPORT_UID, JarHelper.readBinaryFromJar(
+						jarFileURL,
+						getBinaryFileURL(RPT_TAXLIBROIVA_REPORT_FILENAME)));
+		
 		return " ";
 	}
 	
