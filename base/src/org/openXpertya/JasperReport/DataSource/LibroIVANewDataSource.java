@@ -238,7 +238,7 @@ public class LibroIVANewDataSource implements JRDataSource {
 		{
 			// Invocar al metodo segun el campo correspondiente
 			name = field.getName().toUpperCase();
-		    clazz = Class.forName("org.libertya.libroiva.process.DataSource.MLibroIVALine");
+		    clazz = Class.forName("org.openXpertya.JasperReport.DataSource.MLibroIVALine");
 		    method = clazz.getMethod(methodMapper.get(name));		    
 		    output = (Object) method.invoke(libroIVALine);
 		}
