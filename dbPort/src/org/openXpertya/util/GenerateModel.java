@@ -961,11 +961,17 @@ public class GenerateModel {
 	    		Class clazz = DisplayType.getClass( rs.getInt("AD_Reference_ID"), true );
 	            String dataType = clazz.getName();
 	            dataType = dataType.substring( dataType.lastIndexOf( '.' ) + 1 );
-	            
+
 	            // Segun el tipo de dato indicar el set correspondiente
 	            String columnName = rs.getString("columnname");
-	            if( dataType.equals( "Boolean" )) {
+	            
+	            // Handle Posted
+	            if( columnName.equalsIgnoreCase( "Posted" ) || columnName.equalsIgnoreCase( "Processed" ) || columnName.equalsIgnoreCase( "Processing" )) {
+	                clazz           = Boolean.class;
+	                dataType = "Boolean";
+	            }
 
+	            if( dataType.equals( "Boolean" )) {
 	            	if (columnName.startsWith("Is"))
 	            		columnName = columnName.replaceFirst("Is", "is");
 	            	else
