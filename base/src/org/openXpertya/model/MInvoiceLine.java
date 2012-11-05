@@ -1044,12 +1044,13 @@ public class MInvoiceLine extends X_C_InvoiceLine {
 			// Decrementar el monto de impuesto al precio de costo? esto pasa el
 			// impuesto está incluído en la tarifa
 			if(decrementTaxAmt){
-				BigDecimal taxAmtConverted = MConversionRate.convertBase(
-						getCtx(), getTaxAmt(), invoice.getC_Currency_ID(),
+				BigDecimal costConverted = MConversionRate.convertBase(
+						getCtx(), getCostPrice(), invoice.getC_Currency_ID(),
 						invoice.getDateInvoiced(), 0, getAD_Client_ID(),
 						getAD_Org_ID());
-				taxAmtConverted = taxAmtConverted != null?taxAmtConverted:getTaxAmt();
-				setCostPrice(getCostPrice().subtract(taxAmtConverted));
+				costConverted = costConverted != null?costConverted:getCostPrice();
+				BigDecimal costTaxAmt = MTax.calculateTax(costConverted, true, getTaxRate(), 2);
+				setCostPrice(costConverted.subtract(costTaxAmt));
 			}
         }
         /*
