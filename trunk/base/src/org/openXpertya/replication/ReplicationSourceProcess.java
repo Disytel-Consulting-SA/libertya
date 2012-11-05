@@ -31,7 +31,6 @@ import javax.jms.ObjectMessage;
 import javax.jms.TextMessage;
 
 import org.openXpertya.model.MChangeLog;
-import org.openXpertya.model.X_AD_ReplicationError;
 import org.openXpertya.util.DB;
 import org.openXpertya.util.Trx;
 
