@@ -1,7 +1,7 @@
 package org.openXpertya.replication;
 
+import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.HashSet;
 
 
 public class ReplicationConstants {
@@ -93,11 +93,11 @@ public class ReplicationConstants {
 	
 	/** ============= COLECCIONES ============= */
 	/** Conjunto: Estados en los que se deberá replicar */
-	public static HashSet<Character> replicateStates = new HashSet<Character>();
+	public static ArrayList<Character> replicateStates = new ArrayList<Character>();
 	/** Conjunto: Estados de error de replicacion */
-	public static HashSet<Character> errorStates = new HashSet<Character>();
+	public static ArrayList<Character> errorStates = new ArrayList<Character>();
 	/** Conjunto: Estados de retry por timeout */
-	public static HashSet<Character> timeOutStates = new HashSet<Character>();	
+	public static ArrayList<Character> timeOutStates = new ArrayList<Character>();	
 	/** Dado un estado, obtener el siguiente estado si se recibio un OK */
 	public static HashMap<Character, Character> nextStatusWhenOK = new HashMap<Character, Character>();
 	/** Dado un estado, obtener el siguiente estado si se recibio un ERROR */

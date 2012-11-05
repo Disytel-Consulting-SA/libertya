@@ -61,8 +61,7 @@ public class ReplicationTableManager {
 	
 	
 	/**
-	 * Retorn de a un registro, los registros que deben ser replicados 
-	 * (estado 1 o 3 del reparray).  
+	 * Retorna de a un registro, los registros que deben ser replicados 
 	 * Retorna true si hay un nuevo registro a replicar o false en caso contrario
 	 */
 	protected boolean getNextChange() throws Exception
@@ -154,9 +153,17 @@ public class ReplicationTableManager {
 		{
 			tablesForReplication = new Vector<String>();
 
-			String query = " select table_name from information_schema.columns " + 
-						   " where  lower(column_name) = 'reparray' " +
-						   " and table_schema = 'libertya' ";
+			// Recuperar las tablas que 1) Tienen incorporado el reparray como una columna, 2) Son tablas de 
+			String query =  " SELECT table_name " + 
+							" FROM information_schema.columns " + 
+							" WHERE lower(column_name) = 'reparray' " + 
+							" AND lower(table_name) in ( " +
+							" 	SELECT lower(tablename) " +
+							" 	FROM ad_tablereplication tr " +
+							" 	INNER JOIN ad_table t ON tr.ad_table_id = t.ad_table_id " +
+							" 	WHERE replicationarray SIMILAR TO ('%" + ReplicationConstants.REPLICATION_CONFIGURATION_SEND + "%|%" + ReplicationConstants.REPLICATION_CONFIGURATION_SENDRECEIVE + "%') " +
+							" 	AND tr.AD_Client_ID = " + Env.getContext(Env.getCtx(), "#AD_Client_ID") +
+							" ) ";
 			
 			PreparedStatement pstmt = DB.prepareStatement(query, trxName, true);
 			ResultSet rs = pstmt.executeQuery();
@@ -195,7 +202,7 @@ public class ReplicationTableManager {
 				}
 				query.append(" 		) ");				
 				query.append(" AND AD_Client_ID = " + Env.getContext(Env.getCtx(), "#AD_Client_ID") );
-				query.append(" UNION ");
+				query.append(" UNION ALL ");
 			}
 			// Finalizacion del query
 			query.append(" SELECT NULL, NULL, NULL, NULL ");							// por el ultimo union...
