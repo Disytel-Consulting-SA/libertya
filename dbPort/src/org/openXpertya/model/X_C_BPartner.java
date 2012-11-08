@@ -7,7 +7,7 @@ import java.math.*;
 import org.openXpertya.util.*;
 /** Modelo Generado por C_BPartner
  *  @author Comunidad de Desarrollo Libertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
- *  @version  - 2012-10-16 20:59:13.738 */
+ *  @version  - 2012-11-08 11:37:04.835 */
 public class X_C_BPartner extends org.openXpertya.model.PO
 {
 /** Constructor estándar */
@@ -1480,6 +1480,76 @@ Tax Identification */
 public String getTaxID() 
 {
 return (String)get_Value("TaxID");
+}
+public static final int TAXIDTYPE_AD_Reference_ID = MReference.getReferenceID("Tax Id Type");
+/** CUIT = 80 */
+public static final String TAXIDTYPE_CUIT = "80";
+/** CUIL = 86 */
+public static final String TAXIDTYPE_CUIL = "86";
+/** CDI = 87 */
+public static final String TAXIDTYPE_CDI = "87";
+/** LE = 89 */
+public static final String TAXIDTYPE_LE = "89";
+/** LC = 90 */
+public static final String TAXIDTYPE_LC = "90";
+/** CI extranjera = 91 */
+public static final String TAXIDTYPE_CIExtranjera = "91";
+/** En Trámite = 92 */
+public static final String TAXIDTYPE_EnTrámite = "92";
+/** Acta Nacimiento = 93 */
+public static final String TAXIDTYPE_ActaNacimiento = "93";
+/** CI Bs. As. RNP = 95 */
+public static final String TAXIDTYPE_CIBsAsRNP = "95";
+/** DNI = 96 */
+public static final String TAXIDTYPE_DNI = "96";
+/** Pasaporte = 94 */
+public static final String TAXIDTYPE_Pasaporte = "94";
+/** CI Policía Federal = 00 */
+public static final String TAXIDTYPE_CIPolicíaFederal = "00";
+/** CI Buenos Aires = 01 */
+public static final String TAXIDTYPE_CIBuenosAires = "01";
+/** CI Mendoza = 07 */
+public static final String TAXIDTYPE_CIMendoza = "07";
+/** CI La Rioja = 08 */
+public static final String TAXIDTYPE_CILaRioja = "08";
+/** CI Salta = 09 */
+public static final String TAXIDTYPE_CISalta = "09";
+/** CI San Juan = 10 */
+public static final String TAXIDTYPE_CISanJuan = "10";
+/** CI San Luis = 11 */
+public static final String TAXIDTYPE_CISanLuis = "11";
+/** CI Santa Fe = 12 */
+public static final String TAXIDTYPE_CISantaFe = "12";
+/** CI Santiago del Estero = 13 */
+public static final String TAXIDTYPE_CISantiagoDelEstero = "13";
+/** CI Tucumán = 14 */
+public static final String TAXIDTYPE_CITucumán = "14";
+/** CI Chaco = 16 */
+public static final String TAXIDTYPE_CIChaco = "16";
+/** CI Chubut = 17 */
+public static final String TAXIDTYPE_CIChubut = "17";
+/** CI Formosa = 18 */
+public static final String TAXIDTYPE_CIFormosa = "18";
+/** CI Misiones = 19 */
+public static final String TAXIDTYPE_CIMisiones = "19";
+/** CI Neuquén = 20 */
+public static final String TAXIDTYPE_CINeuquén = "20";
+/** Set Tax Id Type */
+public void setTaxIdType (String TaxIdType)
+{
+if (TaxIdType == null || TaxIdType.equals("80") || TaxIdType.equals("86") || TaxIdType.equals("87") || TaxIdType.equals("89") || TaxIdType.equals("90") || TaxIdType.equals("91") || TaxIdType.equals("92") || TaxIdType.equals("93") || TaxIdType.equals("95") || TaxIdType.equals("96") || TaxIdType.equals("94") || TaxIdType.equals("00") || TaxIdType.equals("01") || TaxIdType.equals("07") || TaxIdType.equals("08") || TaxIdType.equals("09") || TaxIdType.equals("10") || TaxIdType.equals("11") || TaxIdType.equals("12") || TaxIdType.equals("13") || TaxIdType.equals("14") || TaxIdType.equals("16") || TaxIdType.equals("17") || TaxIdType.equals("18") || TaxIdType.equals("19") || TaxIdType.equals("20"));
+ else throw new IllegalArgumentException ("TaxIdType Invalid value - Reference = TAXIDTYPE_AD_Reference_ID - 80 - 86 - 87 - 89 - 90 - 91 - 92 - 93 - 95 - 96 - 94 - 00 - 01 - 07 - 08 - 09 - 10 - 11 - 12 - 13 - 14 - 16 - 17 - 18 - 19 - 20");
+if (TaxIdType != null && TaxIdType.length() > 2)
+{
+log.warning("Length > 2 - truncated");
+TaxIdType = TaxIdType.substring(0,2);
+}
+set_Value ("TaxIdType", TaxIdType);
+}
+/** Get Tax Id Type */
+public String getTaxIdType() 
+{
+return (String)get_Value("TaxIdType");
 }
 /** Set Open Balance.
 Total Open Balance Amount in primary Accounting Currency */

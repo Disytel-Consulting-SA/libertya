@@ -1205,6 +1205,11 @@ public class MBPartner extends X_C_BPartner {
 			
 			// Validación del existencia de CUIT para categorías que requieren CUIT.
 			if (getC_Categoria_Iva_ID() > 0 && mCategoriaIva.isRequiereCUIT()) {
+				
+				if ( (getTaxIdType() != null) && ((("80").compareTo(getTaxIdType()) != 0) && (("86").compareTo(getTaxIdType()) != 0)) ){
+					log.saveError("SaveError", Msg.translate(getCtx(), "RequiredCUITCUILTaxType"));
+					return false;
+				}
 
 				if (cuit == null || cuit.length() == 0) {
 					log.saveError("InvalidCUIT",Msg.translate(getCtx(),"RequiredCUIT"));
@@ -1237,7 +1242,16 @@ public class MBPartner extends X_C_BPartner {
 				}
 			}
 			
-
+			if ( (getTaxIdType() != null) && ((("80").compareTo(getTaxIdType()) == 0) || (("86").compareTo(getTaxIdType()) == 0)) && !CalloutInvoiceExt.ValidarCUIT(cuit) ){
+				log.saveError("InvalidCUIT", "");
+				return false;
+			}
+			
+			// Si 
+			if( !Util.isEmpty(getTaxID(), true) && Util.isEmpty(getTaxIdType(), true) ){
+				log.saveError("SaveError", Msg.translate(getCtx(), "TypeIDRequired"));
+				return false;
+			}
 		}
 		
 		//LOCALIZACION CHILE
