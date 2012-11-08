@@ -4665,3 +4665,6 @@ update ad_system set dummy = (SELECT addcolumnifnotexists('AD_ClientInfo','C_Loc
 update ad_system set dummy = (SELECT addcolumnifnotexists('C_Categoria_Iva','I_Tipo_IVA', 'character varying(10)'));
 ALTER TABLE C_Categoria_Iva ALTER COLUMN I_Tipo_IVA TYPE character varying(10);
 
+-- 20121108-1130 Incorporación de columna TaxIDType a la tabla c_bpartner
+ALTER TABLE libertya.c_bpartner ADD COLUMN TaxIDType character(2);
+
