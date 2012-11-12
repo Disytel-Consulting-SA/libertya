@@ -9,7 +9,7 @@ import org.openXpertya.util.Env;
 import org.openXpertya.util.KeyNamePair;
 /** Modelo Generado por C_Invoice
  *  @author Comunidad de Desarrollo Libertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
- *  @version  - 2012-10-31 20:03:26.143 */
+ *  @version  - 2012-11-09 19:38:52.77 */
 public class X_C_Invoice extends org.openXpertya.model.PO
 {
 /** Constructor estándar */
@@ -1438,6 +1438,30 @@ if (oo != null)
  return "Y".equals(oo);
 }
 return false;
+}
+public static final int TIPOCOMPROBANTE_AD_Reference_ID = MReference.getReferenceID("Tipo Comprobante");
+/** Factura = FC */
+public static final String TIPOCOMPROBANTE_Factura = "FC";
+/** Nota de Débito = ND */
+public static final String TIPOCOMPROBANTE_NotaDeDébito = "ND";
+/** Nota de Crédito = NC */
+public static final String TIPOCOMPROBANTE_NotaDeCrédito = "NC";
+/** Set Tipo Comprobante */
+public void setTipoComprobante (String TipoComprobante)
+{
+if (TipoComprobante == null || TipoComprobante.equals("FC") || TipoComprobante.equals("ND") || TipoComprobante.equals("NC"));
+ else throw new IllegalArgumentException ("TipoComprobante Invalid value - Reference = TIPOCOMPROBANTE_AD_Reference_ID - FC - ND - NC");
+if (TipoComprobante != null && TipoComprobante.length() > 2)
+{
+log.warning("Length > 2 - truncated");
+TipoComprobante = TipoComprobante.substring(0,2);
+}
+set_Value ("TipoComprobante", TipoComprobante);
+}
+/** Get Tipo Comprobante */
+public String getTipoComprobante() 
+{
+return (String)get_Value("TipoComprobante");
 }
 /** Set Total Lines.
 Total of all document lines */

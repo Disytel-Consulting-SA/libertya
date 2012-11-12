@@ -1693,12 +1693,22 @@ public class MInvoice extends X_C_Invoice implements DocAction {
 		if (getC_DocType_ID() == 0) {
 			setC_DocType_ID(0); // make sure it's set to 0
 		}
+		
+		// Si el Tipo de Documento Destino es 0, se calcula a partir del Nro de Punto de Venta y el Tipo de Comprobante (FC, NC, ND)
+		if (CalloutInvoiceExt.ComprobantesFiscalesActivos()){
+			if (getC_DocTypeTarget_ID() == 0) {
+				MDocType docType = MDocType.getDocType(getCtx(), getDocTypeBaseKey(getTipoComprobante()), getLetra(), getPuntoDeVenta(), get_TrxName());
+				if (docType != null){
+					setC_DocTypeTarget_ID(docType.getC_DocType_ID());
+				}
+			}	
+		}
 
 		if (getC_DocTypeTarget_ID() == 0) {
 			setC_DocTypeTarget_ID(isSOTrx() ? MDocType.DOCBASETYPE_ARInvoice
 					: MDocType.DOCBASETYPE_APInvoice);
 		}
-
+		
 		// Payment Term
 
 		if (getC_PaymentTerm_ID() == 0) {
@@ -5270,6 +5280,20 @@ public class MInvoice extends X_C_Invoice implements DocAction {
 		public List<MTax> getApplyPercepcion(GeneratorPercepciones generator) throws Exception{
 			return generator.getCreditApplyPercepciones();
 		}
+	}
+	
+	private static String getDocTypeBaseKey(String tipoComprobante){
+		if(tipoComprobante != null){
+			if ("FC".compareToIgnoreCase(tipoComprobante) == 0) 			
+				return "CI";
+			else
+				if ("ND".compareToIgnoreCase(tipoComprobante) == 0) 			
+					return "CDN";
+				else
+					if ("NC".compareToIgnoreCase(tipoComprobante) == 0) 			
+						return "CCN";
+		}
+		return "";
 	}
 	
 } // MInvoice
