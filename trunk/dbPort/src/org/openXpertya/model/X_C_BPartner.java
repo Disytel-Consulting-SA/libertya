@@ -7,7 +7,7 @@ import java.math.*;
 import org.openXpertya.util.*;
 /** Modelo Generado por C_BPartner
  *  @author Comunidad de Desarrollo Libertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
- *  @version  - 2012-11-08 11:37:04.835 */
+ *  @version  - 2012-11-12 00:25:30.651 */
 public class X_C_BPartner extends org.openXpertya.model.PO
 {
 /** Constructor estándar */
@@ -1534,11 +1534,33 @@ public static final String TAXIDTYPE_CIFormosa = "18";
 public static final String TAXIDTYPE_CIMisiones = "19";
 /** CI Neuquén = 20 */
 public static final String TAXIDTYPE_CINeuquén = "20";
+/** CI Catamarca = 02 */
+public static final String TAXIDTYPE_CICatamarca = "02";
+/** CI Córdoba = 03 */
+public static final String TAXIDTYPE_CICórdoba = "03";
+/** CI Corrientes = 04 */
+public static final String TAXIDTYPE_CICorrientes = "04";
+/** CI Entre Ríos = 05 */
+public static final String TAXIDTYPE_CIEntreRíos = "05";
+/** CI Jujuy = 06 */
+public static final String TAXIDTYPE_CIJujuy = "06";
+/** CI La Pampa = 21 */
+public static final String TAXIDTYPE_CILaPampa = "21";
+/** CI Río Negro = 22 */
+public static final String TAXIDTYPE_CIRíoNegro = "22";
+/** CI Santa Cruz = 23 */
+public static final String TAXIDTYPE_CISantaCruz = "23";
+/** CI T. Del Fuego = 24 */
+public static final String TAXIDTYPE_CITDelFuego = "24";
+/** RUC = 25 */
+public static final String TAXIDTYPE_RUC = "25";
+/** Sin ID Tipo Documento = 99 */
+public static final String TAXIDTYPE_SinIDTipoDocumento = "99";
 /** Set Tax Id Type */
 public void setTaxIdType (String TaxIdType)
 {
-if (TaxIdType == null || TaxIdType.equals("80") || TaxIdType.equals("86") || TaxIdType.equals("87") || TaxIdType.equals("89") || TaxIdType.equals("90") || TaxIdType.equals("91") || TaxIdType.equals("92") || TaxIdType.equals("93") || TaxIdType.equals("95") || TaxIdType.equals("96") || TaxIdType.equals("94") || TaxIdType.equals("00") || TaxIdType.equals("01") || TaxIdType.equals("07") || TaxIdType.equals("08") || TaxIdType.equals("09") || TaxIdType.equals("10") || TaxIdType.equals("11") || TaxIdType.equals("12") || TaxIdType.equals("13") || TaxIdType.equals("14") || TaxIdType.equals("16") || TaxIdType.equals("17") || TaxIdType.equals("18") || TaxIdType.equals("19") || TaxIdType.equals("20"));
- else throw new IllegalArgumentException ("TaxIdType Invalid value - Reference = TAXIDTYPE_AD_Reference_ID - 80 - 86 - 87 - 89 - 90 - 91 - 92 - 93 - 95 - 96 - 94 - 00 - 01 - 07 - 08 - 09 - 10 - 11 - 12 - 13 - 14 - 16 - 17 - 18 - 19 - 20");
+if (TaxIdType == null || TaxIdType.equals("80") || TaxIdType.equals("86") || TaxIdType.equals("87") || TaxIdType.equals("89") || TaxIdType.equals("90") || TaxIdType.equals("91") || TaxIdType.equals("92") || TaxIdType.equals("93") || TaxIdType.equals("95") || TaxIdType.equals("96") || TaxIdType.equals("94") || TaxIdType.equals("00") || TaxIdType.equals("01") || TaxIdType.equals("07") || TaxIdType.equals("08") || TaxIdType.equals("09") || TaxIdType.equals("10") || TaxIdType.equals("11") || TaxIdType.equals("12") || TaxIdType.equals("13") || TaxIdType.equals("14") || TaxIdType.equals("16") || TaxIdType.equals("17") || TaxIdType.equals("18") || TaxIdType.equals("19") || TaxIdType.equals("20") || TaxIdType.equals("02") || TaxIdType.equals("03") || TaxIdType.equals("04") || TaxIdType.equals("05") || TaxIdType.equals("06") || TaxIdType.equals("21") || TaxIdType.equals("22") || TaxIdType.equals("23") || TaxIdType.equals("24") || TaxIdType.equals("25") || TaxIdType.equals("99"));
+ else throw new IllegalArgumentException ("TaxIdType Invalid value - Reference = TAXIDTYPE_AD_Reference_ID - 80 - 86 - 87 - 89 - 90 - 91 - 92 - 93 - 95 - 96 - 94 - 00 - 01 - 07 - 08 - 09 - 10 - 11 - 12 - 13 - 14 - 16 - 17 - 18 - 19 - 20 - 02 - 03 - 04 - 05 - 06 - 21 - 22 - 23 - 24 - 25 - 99");
 if (TaxIdType != null && TaxIdType.length() > 2)
 {
 log.warning("Length > 2 - truncated");
