@@ -981,7 +981,7 @@ public class MInvoiceLine extends X_C_InvoiceLine {
 			if(!Util.isEmpty(getC_BPartner_Vendor_ID(), true)){
 				MBPartner vendor = new MBPartner(getCtx(), getC_BPartner_Vendor_ID(), get_TrxName());
 				if(!Util.isEmpty(vendor.getPO_PriceList_ID(), true)){
-					MProductPrice pp = getProductPrice(getM_Product_ID(),
+					MProductPrice pp = getProductPrice(getM_Product_ID(), 0, 
 							vendor.getPO_PriceList_ID(), false);
 					if(pp != null){
 						costPrice = pp.getPriceStd();
@@ -995,10 +995,11 @@ public class MInvoiceLine extends X_C_InvoiceLine {
 				}
 				
 			}
-			// 2) Tarifas de costo (todas)
+			// 2) Tarifas de costo (primero la de la organización de la factura,
+			// sino todas)
 			if(costPrice.compareTo(BigDecimal.ZERO) == 0){
-				MProductPrice pp = getProductPrice(getM_Product_ID(), null,
-						false);
+				MProductPrice pp = getProductPrice(getM_Product_ID(),
+						getAD_Org_ID(), null, false);
 				if(pp != null){
 					costPrice = pp.getPriceStd();
 					// Determino si tengo que decrementar el impuesto y la moneda
@@ -1010,6 +1011,21 @@ public class MInvoiceLine extends X_C_InvoiceLine {
 							get_TrxName());
 					decrementTaxAmt = priceList.isTaxIncluded();
 					costCurrency = priceList.getC_Currency_ID();
+				}
+				else{
+					pp = getProductPrice(getM_Product_ID(),	0, null, false);
+					if(pp != null){
+						costPrice = pp.getPriceStd();
+						// Determino si tengo que decrementar el impuesto y la moneda
+						MPriceListVersion priceListVersion = new MPriceListVersion(
+								getCtx(), pp.getM_PriceList_Version_ID(),
+								get_TrxName());
+						MPriceList priceList = MPriceList.get(getCtx(),
+								priceListVersion.getM_PriceList_ID(),
+								get_TrxName());
+						decrementTaxAmt = priceList.isTaxIncluded();
+						costCurrency = priceList.getC_Currency_ID();
+					}
 				}
 			}
 			
@@ -1230,6 +1246,8 @@ public class MInvoiceLine extends X_C_InvoiceLine {
 	 * 
 	 * @param productID
 	 *            id de producto
+	 * @param orgID
+	 *            id de la organización de la lista de precios
 	 * @param priceListID
 	 *            id de la lista de precios, null si no se debe filtrar por ella
 	 * @param isSoPriceList
@@ -1238,7 +1256,7 @@ public class MInvoiceLine extends X_C_InvoiceLine {
 	 * @return precio más nuevo del producto parámetro, null si no existe
 	 *         ninguno con los parámetros dados
 	 */
-    private MProductPrice getProductPrice(int productID, Integer priceListID, Boolean isSoPriceList){
+    private MProductPrice getProductPrice(int productID, int orgID, Integer priceListID, Boolean isSoPriceList){
     	StringBuffer sql = new StringBuffer(
 		"select pp.m_product_id, pp.m_pricelist_version_id " +
 		"from m_pricelist_version as plv " +
@@ -1250,6 +1268,9 @@ public class MInvoiceLine extends X_C_InvoiceLine {
 		}
 		if(isSoPriceList != null){
 			sql.append(" AND pl.issopricelist = '").append(isSoPriceList?"Y":"N").append("' ");
+		}
+		if(!Util.isEmpty(orgID, true)){
+			sql.append(" AND pl.ad_org_id = ").append(orgID);
 		}
 		sql.append(" order by pl.isdefault desc, plv.validfrom desc, plv.created desc ");
 		MProductPrice price = null;
