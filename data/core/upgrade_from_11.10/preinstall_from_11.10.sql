@@ -4670,3 +4670,113 @@ ALTER TABLE libertya.c_bpartner ADD COLUMN TaxIDType character(2);
 
 -- 20121109-2000 Incorporación de columna TipoComprobante a la tabla C_Invoice
 ALTER TABLE libertya.C_Invoice ADD COLUMN TipoComprobante character(2);
+
+-- 20121113-2351 Funciones para obtener precios std de costo y venta  
+CREATE OR REPLACE FUNCTION getProductPriceStd(productID integer, orgID integer, priceListID integer, isSOPriceList character(1))
+  RETURNS numeric AS
+$BODY$
+/*************************************************************************
+ * Obtiene el precio del artículo parámetro en la lista parámetro. 
+ * Si la lista parámetro es null, entonces se determina por los restantes 
+ * parámetros:
+ * - Lista con la organización parámetro.
+ * - Lista de venta o compra dependiendo el parámetro isSOPriceList.
+ * La consulta del precio de lista requerido se ordena por 
+ * > Lista de precio por defecto 
+ * > Versión de lista de precio válido desde decreciente 
+ * > Fecha de creación de versión de lista de precios decreciente
+ ************************************************************************/
+DECLARE
+	sql character varying;
+	priceListVersionID integer;
+	pricestd numeric := 0;
+BEGIN
+	-- Consulta para determinar la lista de precios a la cual se debe consultar por el precio
+	SELECT INTO pricestd pp.pricestd
+		from m_pricelist_version as plv 
+		inner join m_pricelist as pl on pl.m_pricelist_id = plv.m_pricelist_id 
+		inner join m_productprice as pp on pp.m_pricelist_version_id = plv.m_pricelist_version_id 
+		where m_product_id = productID 
+			AND (priceListID is null OR priceListID = 0 OR pl.m_pricelist_id = priceListID)
+			AND (isSOPriceList is null OR pl.issopricelist = isSOPriceList)
+			AND (orgID is null OR orgID = 0 OR pl.ad_org_id = orgID)
+		order by pl.isdefault desc, plv.validfrom desc, plv.created desc 
+		LIMIT 1;
+
+	if(pricestd is null) then pricestd := 0; end if;
+	return pricestd;
+END;
+
+$BODY$
+  LANGUAGE 'plpgsql' VOLATILE;
+ALTER FUNCTION getProductPriceStd(integer, integer, integer, character) OWNER TO libertya;
+
+
+CREATE OR REPLACE FUNCTION determineProductPriceStd(productID integer, orgID integer, isSOPriceList character(1))
+  RETURNS numeric AS
+$BODY$
+/*************************************************************************
+ * Obtiene el precio std del artículo parámetro determinado por los siguientes pasos en orden:
+ * 1- Si se debe determinar el precio de costo, primero verifica la tarifa de costo del proveedor asociado al artículo. 
+ * 2- Tarifa de costo última (válida más última) de la tarifa de la organización parámetro, sino de cualquier organización.
+ * 3- Si se debe buscar el precio de costo y existe un proveedor asociado al artículo, entonces como tercera opción busca el precio std configurado en la relación entre el proveedor y el artículo.
+ ************************************************************************/
+DECLARE
+	sql character varying;
+	priceListVersionID integer;
+	pricestd numeric;
+	po record;
+	popricestd numeric;
+	popricelist integer;
+BEGIN
+	IF(isSOPriceList = 'N')
+	THEN
+		-- Para precio de costo, verificar si el artículo posee un proveedor configurado y obtener la relación entre ellos
+		SELECT INTO po * 
+			FROM M_Product_PO 
+			WHERE M_Product_ID=productID AND IsActive='Y'
+			ORDER BY IsCurrentVendor DESC, Updated DESC
+			LIMIT 1;
+		IF(po.c_bpartner_id is not null)
+		THEN
+			-- Me guardo este precio por si al final no encontramos ninguno para asociar, correspondería al punto 3 descrito
+			popricestd = po.pricelist;
+			-- Obtener el precio de costo de la tarifa de costo asociada al proveedor
+			SELECT INTO popricelist po_pricelist_id
+				FROM c_bpartner
+				WHERE c_bpartner_id = po.c_bpartner_id;
+			IF(popricelist is not null)
+			THEN
+				pricestd = getProductPriceStd(productID, null, popricelist, null);
+			END IF;
+		END IF;
+		-- Si no tengo precio de costo todavía, entonces vamos por el punto 2
+		IF(pricestd is null OR pricestd = 0)
+		THEN
+			pricestd := getProductPriceStd(productID, orgID, null, isSOPriceList);
+			-- Si no existe el precio de costo para esa organización, busco el último entre todas las organizaciones
+			IF(pricestd = 0)
+			THEN
+				pricestd := getProductPriceStd(productID, null, null, isSOPriceList);
+			END IF;
+		END IF;
+		-- Si todavía no tengo precio de costo, entonces punto 3
+		IF((pricestd is null OR pricestd = 0) AND (popricestd is not null AND popricestd > 0))
+		THEN
+			pricestd := popricestd;
+		END IF;
+	ELSE
+		-- Para precio de venta se debe buscar el precio de venta de la organización parámetro
+		pricestd := getProductPriceStd(productID, orgID, null, isSOPriceList);
+		-- Si no existe el precio de venta para esa organización, busco el último entre todas las organizaciones
+		IF(pricestd = 0)
+		THEN
+			pricestd := getProductPriceStd(productID, null, null, isSOPriceList);
+		END IF;
+	END IF;
+	return pricestd;
+END;
+
+$BODY$
+  LANGUAGE 'plpgsql' VOLATILE;
+ALTER FUNCTION determineProductPriceStd(integer, integer, character) OWNER TO libertya;
