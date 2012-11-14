@@ -4668,6 +4668,10 @@ ALTER TABLE C_Categoria_Iva ALTER COLUMN I_Tipo_IVA TYPE character varying(10);
 -- 20121108-1130 Incorporación de columna TaxIDType a la tabla c_bpartner
 ALTER TABLE libertya.c_bpartner ADD COLUMN TaxIDType character(2);
 
+-- Actualización del campo TaxIdType para todas las EC existentes. Este campo es activado por locale ar.
+UPDATE C_BPartner SET TaxIdType='80' WHERE TaxIdType IS NULL AND C_Categoria_Iva_ID IN (SELECT C_Categoria_Iva_ID FROM C_Categoria_Iva WHERE requierecuit = 'Y');
+UPDATE C_BPartner SET TaxIdType='96' WHERE TaxIdType IS NULL AND C_Categoria_Iva_ID IN (SELECT C_Categoria_Iva_ID FROM C_Categoria_Iva WHERE requierecuit = 'N');
+
 -- 20121109-2000 Incorporación de columna TipoComprobante a la tabla C_Invoice
 ALTER TABLE libertya.C_Invoice ADD COLUMN TipoComprobante character(2);
 
