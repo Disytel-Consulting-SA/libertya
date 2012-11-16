@@ -403,6 +403,7 @@ public class MBPartner extends X_C_BPartner {
         setC_BP_Group_ID( impBP.getC_BP_Group_ID());
         setIIBB(impBP.getIIBB());
         setC_Categoria_Iva_ID(impBP.getC_Categoria_Iva_ID());
+        setTaxIdType(impBP.getTaxIdType());
         
         setIsProspect(impBP.isProspect());
         setIsCustomer(impBP.isCustomer());
@@ -1211,12 +1212,6 @@ public class MBPartner extends X_C_BPartner {
 					log.saveError("SaveError", Msg.translate(getCtx(), "RequiredCUITCUILTaxType"));
 					return false;
 				}
-
-				// Se valida el formato del Nro de Identificación solo si el Tipo es CUIT o CUIL.
-				if ( (getTaxIdType() != null) && ((("80").compareTo(getTaxIdType()) == 0) || (("86").compareTo(getTaxIdType()) == 0)) && !CalloutInvoiceExt.ValidarCUIT(cuit) ){
-					log.saveError("InvalidCUIT", "");
-					return false;
-				}
 				
 				if (cuit == null || cuit.length() == 0) {
 					log.saveError("InvalidCUIT",Msg.translate(getCtx(),"RequiredCUIT"));
@@ -1247,6 +1242,12 @@ public class MBPartner extends X_C_BPartner {
 						return false;
 					}
 				}
+			}
+			
+			// Se valida el formato del Nro de Identificación solo si el Tipo es CUIT o CUIL.
+			if ( (getTaxIdType() != null) && ((("80").compareTo(getTaxIdType()) == 0) || (("86").compareTo(getTaxIdType()) == 0)) && !CalloutInvoiceExt.ValidarCUIT(cuit) ){
+				log.saveError("InvalidCUIT", "");
+				return false;
 			}
 			
 			// Si se indica un valor en el campo Nro. Idenficación se obliga a ingresar el valor para el campo Tipo de Identificación.
