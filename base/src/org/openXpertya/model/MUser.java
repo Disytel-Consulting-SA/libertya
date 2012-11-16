@@ -723,8 +723,9 @@ public class MUser extends X_AD_User {
         	return false;
         }
         
+        MBPartner partner = new MBPartner(getCtx(), getC_BPartner_ID(), get_TrxName());
         // Si no ingresó password, error
-        if(Util.isEmpty(getPassword(), true)){
+        if(Util.isEmpty(getPassword(), true) && !(partner.isCustomer() || partner.isVendor())){
         	log.saveError("PasswordInvalidError", "");
         	return false;
         }
@@ -761,6 +762,7 @@ public class MUser extends X_AD_User {
     public static void clearCache(){
     	s_cache.clear();
     }
+    
 }    // MUser
 
 
