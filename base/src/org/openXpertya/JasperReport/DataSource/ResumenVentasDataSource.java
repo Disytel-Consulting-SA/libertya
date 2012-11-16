@@ -39,7 +39,7 @@ public abstract class ResumenVentasDataSource extends QueryDataSource {
 	protected String getQuery() {
 		String groupFields = getGroupFields();
 		StringBuffer sql = new StringBuffer(
-				"SELECT "+groupFields+", sum(amount) as amount FROM (SELECT * FROM v_dailysales WHERE ad_client_id = ? AND docstatus <> 'DR' AND ad_org_id = ? AND issotrx = 'Y' AND "
+				"SELECT "+groupFields+", sum(amount) as amount FROM (SELECT * FROM v_dailysales as s INNER JOIN c_invoice as i on i.c_invoice_id = s.c_invoice_id INNER JOIN c_doctype as dt on dt.c_doctype_id = i.c_doctypetarget_id WHERE s.ad_client_id = ? AND i.docstatus IN ('CL','CO') AND s.ad_org_id = ? AND s.issotrx = 'Y' AND dt.doctypekey not in ('RTR', 'RTI', 'RCR', 'RCI') AND "
 						+ getDateWhereClause());
 		sql.append(getDSWhereClause() == null?"":getDSWhereClause());
 		sql.append(" ) as ventas ");
@@ -67,9 +67,9 @@ public abstract class ResumenVentasDataSource extends QueryDataSource {
 	 * @return la cláusula where de las fechas
 	 */
 	protected String getDateWhereClause(){
-		StringBuffer dateClause = new StringBuffer(" datetrx >= ?::date ");
+		StringBuffer dateClause = new StringBuffer(" date_trunc('day', invoicedateacct) >= date_trunc('day', ?::date) ");
 		if(getDateTo() != null){
-			dateClause.append("  AND datetrx <= ?::date ");
+			dateClause.append("  AND date_trunc('day', invoicedateacct) <= date_trunc('day', ?::date) ");
 		}
 		return dateClause.toString();
 	}

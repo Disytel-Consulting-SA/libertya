@@ -8,6 +8,7 @@ import org.openXpertya.JasperReport.DataSource.OXPJasperDataSource;
 import org.openXpertya.JasperReport.DataSource.OXPJasperEmptyDataSource;
 import org.openXpertya.JasperReport.DataSource.ResumenVentasBPGroupDataSource;
 import org.openXpertya.JasperReport.DataSource.ResumenVentasCategoriaIVADataSource;
+import org.openXpertya.JasperReport.DataSource.ResumenVentasCurrentAccountPaymentsDataSource;
 import org.openXpertya.JasperReport.DataSource.ResumenVentasDataSource;
 import org.openXpertya.JasperReport.DataSource.ResumenVentasDocTypeDataSource;
 import org.openXpertya.JasperReport.DataSource.ResumenVentasPaymentMediumDataSource;
@@ -30,6 +31,8 @@ public class LaunchResumenVentas extends JasperReportLaunch {
 		addReportParameter("DATE_TO", dateTo);
 		addReportParameter("ORG_NAME",
 				JasperReportsUtil.getOrgName(getCtx(), orgID));
+		addReportParameter("SHOW_CURRENTACCOUNTPAYMENTS",
+				isShowCurrentAccountPayments());
 		// Obtener los subreportes junto con sus datasources
 		// Datasources
 		//////////////////////////////////////////////////////
@@ -43,6 +46,8 @@ public class LaunchResumenVentas extends JasperReportLaunch {
 		ResumenVentasDataSource docTypeDS = getDocTypeDataSource();
 		// Data Source de Totales por Repartición de cliente
 		ResumenVentasDataSource bpGroupDS = getBPGroupDataSource();
+		// Data Source con Cobros en cuenta corriente
+		ResumenVentasDataSource currentAccountPaymentsDS = getCurrentAccountPaymentsDataSource();
 		//////////////////////////////////////////////////////
 		// Subreporte 
 		MJasperReport subreport = getResumenVentasSubreport();
@@ -55,6 +60,7 @@ public class LaunchResumenVentas extends JasperReportLaunch {
 		addReportParameter("SUBREPORT_CATEGORIAIVA", categoriaIVADS);
 		addReportParameter("SUBREPORT_DOCTYPE", docTypeDS);
 		addReportParameter("SUBREPORT_BPGROUP", bpGroupDS);
+		addReportParameter("SUBREPORT_CURRENTACCOUNTPAYMENTS", currentAccountPaymentsDS);
 	}
 	
 	protected String getTitle(){
@@ -71,6 +77,10 @@ public class LaunchResumenVentas extends JasperReportLaunch {
 	
 	protected Integer getOrgID(){
 		return (Integer)getParameterValue("AD_Org_ID");
+	}
+	
+	protected Boolean isShowCurrentAccountPayments(){
+		return (Boolean)getParameterValue("ShowCurrentAccountPayments").equals("Y");
 	}
 
 	@Override
@@ -116,6 +126,17 @@ public class LaunchResumenVentas extends JasperReportLaunch {
 				get_TrxName(), getCtx(), getOrgID(), getDateFrom(), getDateTo());
 		bpGroupDS = (ResumenVentasBPGroupDataSource)loadDSData(bpGroupDS);
 		return bpGroupDS;
+	}
+	
+	protected ResumenVentasDataSource getCurrentAccountPaymentsDataSource() throws Exception{
+		ResumenVentasCurrentAccountPaymentsDataSource currentAccountPaymentsDS = null;
+		if(isShowCurrentAccountPayments()){
+			currentAccountPaymentsDS = new ResumenVentasCurrentAccountPaymentsDataSource(
+					get_TrxName(), getCtx(), getOrgID(), getDateFrom(),
+					getDateTo());
+			currentAccountPaymentsDS = (ResumenVentasCurrentAccountPaymentsDataSource) loadDSData(currentAccountPaymentsDS);
+		}
+		return currentAccountPaymentsDS;
 	}
 	
 	/**

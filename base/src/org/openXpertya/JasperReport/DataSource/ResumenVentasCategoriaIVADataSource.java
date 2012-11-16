@@ -15,7 +15,7 @@ public class ResumenVentasCategoriaIVADataSource extends
 
 	@Override
 	protected String getDSWhereClause() {
-		return " AND trxtype <> 'I' ";
+		return " AND trxtype IN ('CAI','P') ";
 	}
 
 	@Override

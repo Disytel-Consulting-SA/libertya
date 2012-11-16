@@ -3,9 +3,10 @@ package org.openXpertya.JasperReport.DataSource;
 import java.sql.Timestamp;
 import java.util.Properties;
 
-public class ResumenVentasDocTypeDataSource extends ResumenVentasPaymentMediumDataSource {
+public class ResumenVentasCurrentAccountPaymentsDataSource extends
+		ResumenVentasPaymentMediumDataSource {
 
-	public ResumenVentasDocTypeDataSource(String trxName, Properties ctx,
+	public ResumenVentasCurrentAccountPaymentsDataSource(String trxName, Properties ctx,
 			Integer orgID, Timestamp dateFrom, Timestamp dateTo) {
 		super(trxName, ctx, orgID, dateFrom, dateTo);
 		// TODO Auto-generated constructor stub
@@ -13,6 +14,6 @@ public class ResumenVentasDocTypeDataSource extends ResumenVentasPaymentMediumDa
 
 	@Override
 	protected String getDSWhereClause() {
-		return " AND trxtype = 'I' AND tendertype NOT IN ('ARC') ";
+		return " AND trxtype = 'PCA' ";
 	}
 }

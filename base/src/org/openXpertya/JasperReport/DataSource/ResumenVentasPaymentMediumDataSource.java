@@ -17,7 +17,7 @@ public class ResumenVentasPaymentMediumDataSource extends
 
 	@Override
 	protected String getDSWhereClause() {
-		return " AND trxtype <> 'I' ";
+		return " AND trxtype IN ('CAI','P') ";
 	}
 
 	@Override
@@ -28,7 +28,7 @@ public class ResumenVentasPaymentMediumDataSource extends
 
 	@Override
 	protected String getGroupFields() {
-		return "trxtype, tendertype, c_pospaymentmedium_id, pospaymentmediumname";
+		return "trxtype, tendertype, pospaymentmediumname";
 	}
 	
 	@Override

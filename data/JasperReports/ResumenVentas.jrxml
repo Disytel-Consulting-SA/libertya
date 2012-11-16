@@ -33,6 +33,8 @@
 	<parameter name="SUBREPORT_CATEGORIAIVA" isForPrompting="false" class="net.sf.jasperreports.engine.JRDataSource"/>
 	<parameter name="SUBREPORT_DOCTYPE" isForPrompting="false" class="net.sf.jasperreports.engine.JRDataSource"/>
 	<parameter name="SUBREPORT_BPGROUP" isForPrompting="false" class="net.sf.jasperreports.engine.JRDataSource"/>
+	<parameter name="SUBREPORT_CURRENTACCOUNTPAYMENTS" isForPrompting="false" class="net.sf.jasperreports.engine.JRDataSource"/>
+	<parameter name="SHOW_CURRENTACCOUNTPAYMENTS" isForPrompting="false" class="java.lang.Boolean"/>
 
 		<background>
 			<band height="0"  isSplitAllowed="true" >
@@ -165,7 +167,7 @@
 			</band>
 		</pageFooter>
 		<summary>
-			<band height="171"  isSplitAllowed="true" >
+			<band height="211"  isSplitAllowed="true" >
 				<subreport  isUsingCache="true">
 					<reportElement
 						x="0"
@@ -231,9 +233,25 @@
 						key="subreport-5"
 						positionType="Float"/>
 					<subreportParameter  name="TITLE">
-						<subreportParameterExpression><![CDATA["Totales Discriminados por Repartición del Cliente"]]></subreportParameterExpression>
+						<subreportParameterExpression><![CDATA["Cuenta Corriente Discriminada por Repartición del Cliente"]]></subreportParameterExpression>
 					</subreportParameter>
 					<dataSourceExpression><![CDATA[$P{SUBREPORT_BPGROUP}]]></dataSourceExpression>
+					<subreportExpression  class="java.io.InputStream"><![CDATA[$P{COMPILED_SUBREPORT}]]></subreportExpression>
+				</subreport>
+				<subreport  isUsingCache="true">
+					<reportElement
+						x="0"
+						y="191"
+						width="530"
+						height="20"
+						key="subreport-6"
+						positionType="Float">
+							<printWhenExpression><![CDATA[$P{SHOW_CURRENTACCOUNTPAYMENTS}]]></printWhenExpression>
+						</reportElement>
+					<subreportParameter  name="TITLE">
+						<subreportParameterExpression><![CDATA["Cobros en Cuenta Corriente"]]></subreportParameterExpression>
+					</subreportParameter>
+					<dataSourceExpression><![CDATA[$P{SUBREPORT_CURRENTACCOUNTPAYMENTS}]]></dataSourceExpression>
 					<subreportExpression  class="java.io.InputStream"><![CDATA[$P{COMPILED_SUBREPORT}]]></subreportExpression>
 				</subreport>
 			</band>
