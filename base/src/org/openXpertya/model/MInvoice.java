@@ -1694,6 +1694,25 @@ public class MInvoice extends X_C_Invoice implements DocAction {
 			setC_DocType_ID(0); // make sure it's set to 0
 		}
 		
+		if (getC_Letra_Comprobante_ID() <= 0) {
+			Integer categoriaIvaClient = CalloutInvoiceExt.darCategoriaIvaClient();
+			categoriaIvaClient = categoriaIvaClient == null ? 0	: categoriaIvaClient;
+			int categoriaIvaPartner = partner.getC_Categoria_Iva_ID();
+
+			// Algunas de las categorias de iva no esta asignada
+			if (categoriaIvaClient == 0 || categoriaIvaPartner == 0) {
+				String errorDesc = (categoriaIvaClient == 0 ? "@ClientWithoutIVAError@"	: "@BPartnerWithoutIVAError@");
+				log.saveError("InvalidInvoiceLetraSaveError", Msg.parseTranslation(getCtx(), errorDesc+ ". @CompleteBPandClientCateoriaIVA@"));
+				return false;
+			}
+			
+			if (isSOTrx()) { // partner -> customer, empresa -> vendor
+				setC_Letra_Comprobante_ID(CalloutInvoiceExt.darLetraComprobante(categoriaIvaPartner, categoriaIvaClient));
+			} else { // empresa -> customer, partner -> vendor
+				setC_Letra_Comprobante_ID(CalloutInvoiceExt.darLetraComprobante(categoriaIvaClient, categoriaIvaPartner));
+			}
+		}
+		
 		// Si el Tipo de Documento Destino es 0, se calcula a partir del Nro de Punto de Venta y el Tipo de Comprobante (FC, NC, ND)
 		if (CalloutInvoiceExt.ComprobantesFiscalesActivos()){
 			if (getC_DocTypeTarget_ID() == 0) {
