@@ -108,13 +108,19 @@ public class ImportProduct extends SvrProcess {
             log.info( "Delete Old Impored =" + no );
         }
         
+        // Mandatory ID Organización del Articulo
+        sql = new StringBuffer( "UPDATE I_Product i " + "Set AD_Org_ID= COALESCE ((SELECT AD_Org_ID FROM AD_Org r" + " WHERE r.Value=i.ContactProduct AND r.AD_Client_ID IN (0, i.AD_Client_ID)),AD_Org_ID) " + "WHERE I_IsImported<>'Y'" ).append( clientCheck );
+        no = DB.executeUpdate( sql.toString());
 
-        // Set Client, Org, IaActive, Created/Updated,     ProductType
-
-        sql = new StringBuffer( "UPDATE I_Product " + "SET AD_Client_ID = COALESCE (AD_Client_ID, " ).append( m_AD_Client_ID ).append( ")," + " AD_Org_ID = COALESCE (AD_Org_ID, 0)," + " IsActive = COALESCE (IsActive, 'Y')," + " Created = COALESCE (Created, current_timestamp)," + " CreatedBy = COALESCE (CreatedBy, 0)," + " Updated = COALESCE (Updated, current_timestamp)," + " UpdatedBy = COALESCE (UpdatedBy, 0)," + " ProductType = COALESCE (ProductType, 'I')," + " I_ErrorMsg = ''," + " I_IsImported = 'N' " + "WHERE I_IsImported<>'Y' OR I_IsImported IS NULL" );
+        // Set Client, IaActive, Created/Updated, ProductType
+        sql = new StringBuffer( "UPDATE I_Product " + "SET AD_Client_ID = COALESCE (AD_Client_ID, " ).append( m_AD_Client_ID ).append( ")," + " IsActive = COALESCE (IsActive, 'Y')," + " Created = COALESCE (Created, current_timestamp)," + " CreatedBy = COALESCE (CreatedBy, 0)," + " Updated = COALESCE (Updated, current_timestamp)," + " UpdatedBy = COALESCE (UpdatedBy, 0)," + " ProductType = COALESCE (ProductType, 'I')," + " I_ErrorMsg = ''," + " I_IsImported = 'N' " + "WHERE I_IsImported<>'Y' OR I_IsImported IS NULL" );
         no = DB.executeUpdate( sql.toString());
         log.info( "Reset=" + no );
         
+        // Set Org
+        sql = new StringBuffer( "UPDATE I_Product " + "SET AD_Org_ID = COALESCE (AD_Org_ID, 0) " + "WHERE (AD_Org_ID IS NULL AND (I_IsImported<>'Y' OR I_IsImported IS NULL))" );
+        no = DB.executeUpdate( sql.toString());
+        log.info( "Reset=" + no );
         
         // Set Optional BPartner
 
@@ -451,7 +457,8 @@ public class ImportProduct extends SvrProcess {
 		    ",DiscontinuedBy=aux.DiscontinuedBy"+
 		    ",Updated=current_timestamp"+
 		    ",UpdatedBy=aux.UpdatedBy" +
-" from (SELECT Value,Name,Description,DocumentNote,Help,UPC,SKU,C_UOM_ID,M_Product_Category_ID,Classification,ProductType,Volume,Weight,ShelfWidth,ShelfHeight,ShelfDepth,UnitsPerPallet,Discontinued,DiscontinuedBy,UpdatedBy FROM I_Product WHERE I_Product_ID=?) as aux"
+		    ",AD_Org_ID=aux.AD_Org_ID" +
+" from (SELECT Value,Name,Description,DocumentNote,Help,UPC,SKU,C_UOM_ID,M_Product_Category_ID,Classification,ProductType,Volume,Weight,ShelfWidth,ShelfHeight,ShelfDepth,UnitsPerPallet,Discontinued,DiscontinuedBy,UpdatedBy,AD_Org_ID FROM I_Product WHERE I_Product_ID=?) as aux"
 +" WHERE M_Product_ID=?");
 
             // Update Product_PO from Import

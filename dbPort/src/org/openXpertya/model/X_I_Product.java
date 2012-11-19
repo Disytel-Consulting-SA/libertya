@@ -7,7 +7,7 @@ import java.math.*;
 import org.openXpertya.util.*;
 /** Modelo Generado por I_Product
  *  @author Comunidad de Desarrollo Libertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
- *  @version  - 2012-08-07 15:46:50.124 */
+ *  @version  - 2012-11-19 16:19:33.913 */
 public class X_I_Product extends org.openXpertya.model.PO
 {
 /** Constructor estándar */
@@ -48,6 +48,21 @@ public String toString()
 {
 StringBuffer sb = new StringBuffer ("X_I_Product[").append(getID()).append("]");
 return sb.toString();
+}
+public static final int AD_ORG_PRODUCT_ID_AD_Reference_ID = MReference.getReferenceID("AD_Org (all)");
+/** Set AD_Org_Product_ID */
+public void setAD_Org_Product_ID (int AD_Org_Product_ID)
+{
+if (AD_Org_Product_ID <= 0) set_Value ("AD_Org_Product_ID", null);
+ else 
+set_Value ("AD_Org_Product_ID", new Integer(AD_Org_Product_ID));
+}
+/** Get AD_Org_Product_ID */
+public int getAD_Org_Product_ID() 
+{
+Integer ii = (Integer)get_Value("AD_Org_Product_ID");
+if (ii == null) return 0;
+return ii.intValue();
 }
 /** Set Business Partner Key.
 The Key of the Business Partner */
@@ -140,6 +155,21 @@ Classification for grouping */
 public String getClassification() 
 {
 return (String)get_Value("Classification");
+}
+/** Set Org Product */
+public void setContactProduct (String ContactProduct)
+{
+if (ContactProduct != null && ContactProduct.length() > 60)
+{
+log.warning("Length > 60 - truncated");
+ContactProduct = ContactProduct.substring(0,60);
+}
+set_Value ("ContactProduct", ContactProduct);
+}
+/** Get Org Product */
+public String getContactProduct() 
+{
+return (String)get_Value("ContactProduct");
 }
 /** Set Cost per Order.
 Fixed Cost Per Order */
