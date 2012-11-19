@@ -5052,3 +5052,7 @@ ALTER TABLE v_dailysales OWNER TO libertya;
 update ad_system set dummy = (SELECT addcolumnifnotexists('I_BPartner','TaxIdType', 'character varying(2)'));
 update ad_system set dummy = (SELECT addcolumnifnotexists('I_BPartner','ContactOrg', 'character varying(60)'));
 update ad_system set dummy = (SELECT addcolumnifnotexists('I_BPartner','AD_Org_Contact_ID', 'integer'));
+
+-- 20121119-1605 Incorporación de nuevas columnas en la importación de Artículos
+update ad_system set dummy = (SELECT addcolumnifnotexists('I_Product','ContactProduct', 'character varying(60)'));
+update ad_system set dummy = (SELECT addcolumnifnotexists('I_Product','AD_Org_Product_ID', 'integer'));
