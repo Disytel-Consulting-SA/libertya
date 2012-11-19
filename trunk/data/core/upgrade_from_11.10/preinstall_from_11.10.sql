@@ -5047,3 +5047,8 @@ UNION ALL
   WHERE date_trunc('day'::text, i.dateacct) <> date_trunc('day'::text, pjp.dateacct::timestamp with time zone) AND hdr.isactive = 'Y'::bpchar AND ((dtc.docbasetype <> ALL (ARRAY['ARC'::bpchar, 'APC'::bpchar])) OR (dtc.docbasetype = ANY (ARRAY['ARC'::bpchar, 'APC'::bpchar])) AND pjp.c_invoice_credit_id IS NOT NULL);
 
 ALTER TABLE v_dailysales OWNER TO libertya;
+
+-- 20121119-0130 Incorporación de nuevas columnas a importar en la importación de Entidades Comerciales
+update ad_system set dummy = (SELECT addcolumnifnotexists('I_BPartner','TaxIdType', 'character varying(2)'));
+update ad_system set dummy = (SELECT addcolumnifnotexists('I_BPartner','ContactOrg', 'character varying(60)'));
+update ad_system set dummy = (SELECT addcolumnifnotexists('I_BPartner','AD_Org_Contact_ID', 'integer'));

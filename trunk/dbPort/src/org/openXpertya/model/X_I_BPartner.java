@@ -1,13 +1,15 @@
 /** Modelo Generado - NO CAMBIAR MANUALMENTE - Disytel */
 package org.openXpertya.model;
-import java.util.logging.Level;
- import java.util.*;
-import java.sql.*;
-import java.math.*;
-import org.openXpertya.util.*;
+import java.math.BigDecimal;
+import java.sql.ResultSet;
+import java.sql.Timestamp;
+import java.util.Properties;
+
+import org.openXpertya.util.Env;
+import org.openXpertya.util.KeyNamePair;
 /** Modelo Generado por I_BPartner
  *  @author Comunidad de Desarrollo Libertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
- *  @version  - 2012-08-07 14:41:28.973 */
+ *  @version  - 2012-11-19 02:09:05.811 */
 public class X_I_BPartner extends org.openXpertya.model.PO
 {
 /** Constructor estándar */
@@ -117,6 +119,20 @@ Address Line 4 for the location */
 public String getAddress4() 
 {
 return (String)get_Value("Address4");
+}
+/** Set AD_Org_Contact_ID */
+public void setAD_Org_Contact_ID (int AD_Org_Contact_ID)
+{
+if (AD_Org_Contact_ID <= 0) set_Value ("AD_Org_Contact_ID", null);
+ else 
+set_Value ("AD_Org_Contact_ID", new Integer(AD_Org_Contact_ID));
+}
+/** Get AD_Org_Contact_ID */
+public int getAD_Org_Contact_ID() 
+{
+Integer ii = (Integer)get_Value("AD_Org_Contact_ID");
+if (ii == null) return 0;
+return ii.intValue();
 }
 /** Set User/Contact.
 User within the system - Internal or Business Partner Contact */
@@ -353,6 +369,21 @@ Business Partner Contact Name */
 public String getContactName() 
 {
 return (String)get_Value("ContactName");
+}
+/** Set Contact Org */
+public void setContactOrg (String ContactOrg)
+{
+if (ContactOrg != null && ContactOrg.length() > 60)
+{
+log.warning("Length > 60 - truncated");
+ContactOrg = ContactOrg.substring(0,60);
+}
+set_Value ("ContactOrg", ContactOrg);
+}
+/** Get Contact Org */
+public String getContactOrg() 
+{
+return (String)get_Value("ContactOrg");
 }
 /** Set Contact Phone */
 public void setContactPhone (String ContactPhone)
@@ -964,6 +995,98 @@ Tax Identification */
 public String getTaxID() 
 {
 return (String)get_Value("TaxID");
+}
+public static final int TAXIDTYPE_AD_Reference_ID = MReference.getReferenceID("Tax Id Type");
+/** CUIT = 80 */
+public static final String TAXIDTYPE_CUIT = "80";
+/** CUIL = 86 */
+public static final String TAXIDTYPE_CUIL = "86";
+/** CDI = 87 */
+public static final String TAXIDTYPE_CDI = "87";
+/** LE = 89 */
+public static final String TAXIDTYPE_LE = "89";
+/** LC = 90 */
+public static final String TAXIDTYPE_LC = "90";
+/** CI extranjera = 91 */
+public static final String TAXIDTYPE_CIExtranjera = "91";
+/** En Trámite = 92 */
+public static final String TAXIDTYPE_EnTrámite = "92";
+/** Acta Nacimiento = 93 */
+public static final String TAXIDTYPE_ActaNacimiento = "93";
+/** CI Bs. As. RNP = 95 */
+public static final String TAXIDTYPE_CIBsAsRNP = "95";
+/** DNI = 96 */
+public static final String TAXIDTYPE_DNI = "96";
+/** Pasaporte = 94 */
+public static final String TAXIDTYPE_Pasaporte = "94";
+/** CI Policía Federal = 00 */
+public static final String TAXIDTYPE_CIPolicíaFederal = "00";
+/** CI Buenos Aires = 01 */
+public static final String TAXIDTYPE_CIBuenosAires = "01";
+/** CI Mendoza = 07 */
+public static final String TAXIDTYPE_CIMendoza = "07";
+/** CI La Rioja = 08 */
+public static final String TAXIDTYPE_CILaRioja = "08";
+/** CI Salta = 09 */
+public static final String TAXIDTYPE_CISalta = "09";
+/** CI San Juan = 10 */
+public static final String TAXIDTYPE_CISanJuan = "10";
+/** CI San Luis = 11 */
+public static final String TAXIDTYPE_CISanLuis = "11";
+/** CI Santa Fe = 12 */
+public static final String TAXIDTYPE_CISantaFe = "12";
+/** CI Santiago del Estero = 13 */
+public static final String TAXIDTYPE_CISantiagoDelEstero = "13";
+/** CI Tucumán = 14 */
+public static final String TAXIDTYPE_CITucumán = "14";
+/** CI Chaco = 16 */
+public static final String TAXIDTYPE_CIChaco = "16";
+/** CI Chubut = 17 */
+public static final String TAXIDTYPE_CIChubut = "17";
+/** CI Formosa = 18 */
+public static final String TAXIDTYPE_CIFormosa = "18";
+/** CI Misiones = 19 */
+public static final String TAXIDTYPE_CIMisiones = "19";
+/** CI Neuquén = 20 */
+public static final String TAXIDTYPE_CINeuquén = "20";
+/** CI Catamarca = 02 */
+public static final String TAXIDTYPE_CICatamarca = "02";
+/** CI Córdoba = 03 */
+public static final String TAXIDTYPE_CICórdoba = "03";
+/** CI Corrientes = 04 */
+public static final String TAXIDTYPE_CICorrientes = "04";
+/** CI Entre Ríos = 05 */
+public static final String TAXIDTYPE_CIEntreRíos = "05";
+/** CI Jujuy = 06 */
+public static final String TAXIDTYPE_CIJujuy = "06";
+/** CI La Pampa = 21 */
+public static final String TAXIDTYPE_CILaPampa = "21";
+/** CI Río Negro = 22 */
+public static final String TAXIDTYPE_CIRíoNegro = "22";
+/** CI Santa Cruz = 23 */
+public static final String TAXIDTYPE_CISantaCruz = "23";
+/** CI T. Del Fuego = 24 */
+public static final String TAXIDTYPE_CITDelFuego = "24";
+/** RUC = 25 */
+public static final String TAXIDTYPE_RUC = "25";
+/** Sin ID Tipo Documento = 99 */
+public static final String TAXIDTYPE_SinIDTipoDocumento = "99";
+/** Set Tax Id Type */
+public void setTaxIdType (String TaxIdType)
+{
+if (TaxIdType == null || TaxIdType.equals("80") || TaxIdType.equals("86") || TaxIdType.equals("87") || TaxIdType.equals("89") || TaxIdType.equals("90") || TaxIdType.equals("91") || TaxIdType.equals("92") || TaxIdType.equals("93") || TaxIdType.equals("95") || TaxIdType.equals("96") || TaxIdType.equals("94") || TaxIdType.equals("00") || TaxIdType.equals("01") || TaxIdType.equals("07") || TaxIdType.equals("08") || TaxIdType.equals("09") || TaxIdType.equals("10") || TaxIdType.equals("11") || TaxIdType.equals("12") || TaxIdType.equals("13") || TaxIdType.equals("14") || TaxIdType.equals("16") || TaxIdType.equals("17") || TaxIdType.equals("18") || TaxIdType.equals("19") || TaxIdType.equals("20") || TaxIdType.equals("02") || TaxIdType.equals("03") || TaxIdType.equals("04") || TaxIdType.equals("05") || TaxIdType.equals("06") || TaxIdType.equals("21") || TaxIdType.equals("22") || TaxIdType.equals("23") || TaxIdType.equals("24") || TaxIdType.equals("25") || TaxIdType.equals("99"));
+ else throw new IllegalArgumentException ("TaxIdType Invalid value - Reference = TAXIDTYPE_AD_Reference_ID - 80 - 86 - 87 - 89 - 90 - 91 - 92 - 93 - 95 - 96 - 94 - 00 - 01 - 07 - 08 - 09 - 10 - 11 - 12 - 13 - 14 - 16 - 17 - 18 - 19 - 20 - 02 - 03 - 04 - 05 - 06 - 21 - 22 - 23 - 24 - 25 - 99");
+if (TaxIdType != null && TaxIdType.length() > 2)
+{
+log.warning("Length > 2 - truncated");
+TaxIdType = TaxIdType.substring(0,2);
+}
+set_Value ("TaxIdType", TaxIdType);
+}
+/** Get Tax Id Type */
+public String getTaxIdType() 
+{
+return (String)get_Value("TaxIdType");
 }
 /** Set Title.
 Name this entity is referred to as */

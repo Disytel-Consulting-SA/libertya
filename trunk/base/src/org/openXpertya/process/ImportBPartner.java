@@ -224,6 +224,11 @@ public class ImportBPartner extends SvrProcess {
         						"  AND I_IsImported='N'" ).append( clientCheck );
         no = DB.executeUpdate( sql.toString());
         
+        // ID Organización del Usuario
+        sql = new StringBuffer( "UPDATE I_BPartner i " + "Set AD_Org_Contact_ID=(SELECT AD_Org_ID FROM AD_Org r" + " WHERE r.Value=i.ContactOrg AND r.AD_Client_ID IN (0, i.AD_Client_ID)) " + "WHERE AD_Org_Contact_ID IS NULL" + " AND I_IsImported<>'Y'" ).append( clientCheck );
+        no = DB.executeUpdate( sql.toString());
+        log.fine( "Set AD_Org_Contact_ID=" + no );
+        
         // Comercial / Usuario
         sql = new StringBuffer( "UPDATE I_BPartner i " + 
         					    "SET SalesRep_ID=(SELECT AD_User_ID " +
@@ -259,12 +264,13 @@ public class ImportBPartner extends SvrProcess {
         			",Description=aux.Description"+
         			",DUNS=aux.DUNS"+
         			",TaxID=aux.TaxID"+
+        			",TaxIdType=aux.TaxIdType"+
         			",NAICS=aux.NAICS"+
         			",C_BP_Group_ID=aux.C_BP_Group_ID"+
         			",Updated=current_timestamp"+
         			",UpdatedBy=aux.UpdatedBy" +
         			",IIBB=aux.IIBB" +
-        			" from (SELECT Value,Name,Name2,Description,DUNS,TaxID,NAICS,C_BP_Group_ID,UpdatedBy,IIBB FROM I_BPartner WHERE I_BPartner_ID=?) as aux" 
+        			" from (SELECT Value,Name,Name2,Description,DUNS,TaxID,TaxIdType,NAICS,C_BP_Group_ID,UpdatedBy,IIBB FROM I_BPartner WHERE I_BPartner_ID=?) as aux" 
         			+ " WHERE C_BPartner_ID=?" );
             
             log.info("En importBPartbner despues de hacer el update en c_BPartner");
@@ -316,12 +322,13 @@ public class ImportBPartner extends SvrProcess {
 
             // Insert Contact
 
-            PreparedStatement pstmt_insertBPContact = conn.prepareStatement( "INSERT INTO AD_User (AD_User_ID," + "AD_Client_ID,AD_Org_ID,IsActive,Created,CreatedBy,Updated,UpdatedBy," + "C_BPartner_ID,C_BPartner_Location_ID,C_Greeting_ID," + "Name,Title,Description,Comments,Phone,Phone2,Phone3,Fax,EMail,Birthday) " + "SELECT ?," + "AD_Client_ID,AD_Org_ID,'Y',current_timestamp,CreatedBy,current_timestamp,UpdatedBy," + "?,?,C_Greeting_ID," + "ContactName,Title,ContactDescription,Comments,ContactPhone,ContactPhone2,ContactPhone3,ContactFax,EMail,Birthday " + "FROM I_BPartner " + " WHERE I_BPartner_ID=?" );
+            PreparedStatement pstmt_insertBPContact = conn.prepareStatement( "INSERT INTO AD_User (AD_User_ID," + "AD_Client_ID,AD_Org_ID,IsActive,Created,CreatedBy,Updated,UpdatedBy," + "C_BPartner_ID,C_BPartner_Location_ID,C_Greeting_ID," + "Name,Title,Description,Comments,Phone,Phone2,Phone3,Fax,EMail,Birthday) " + "SELECT ?," + "AD_Client_ID,AD_Org_Contact_ID,'Y',current_timestamp,CreatedBy,current_timestamp,UpdatedBy," + "?,?,C_Greeting_ID," + "ContactName,Title,ContactDescription,Comments,ContactPhone,ContactPhone2,ContactPhone3,ContactFax,EMail,Birthday " + "FROM I_BPartner " + " WHERE I_BPartner_ID=?" );
 
             // Update Contact
             //Modificado por ConSerTi. Sentencia no valida en Postgres. Se transforma.
             //PreparedStatement pstmt_updateBPContact = conn.prepareStatement( "UPDATE AD_User " + "SET (C_Greeting_ID," + "Name,Title,Description,Comments,Phone,Phone2,Fax,EMail,Birthday,Updated,UpdatedBy)=" + "(SELECT C_Greeting_ID," + "ContactName,Title,ContactDescription,Comments,Phone,Phone2,Fax,EMail,Birthday,SysDate,UpdatedBy" + " FROM I_BPartner WHERE I_BPartner_ID=?) " + "WHERE AD_User_ID=?" ); //Original
             PreparedStatement pstmt_updateBPContact = conn.prepareStatement("UPDATE AD_User " + "SET C_Greeting_ID=aux1.C_Greeting_ID"+
+            		",AD_Org_ID=aux1.AD_Org_Contact_ID"+
             		",Name=aux1.ContactName"+
             		",Title=aux1.Title"+
             		",Description=aux1.ContactDescription"+
@@ -334,7 +341,7 @@ public class ImportBPartner extends SvrProcess {
             		",Birthday=aux1.Birthday"+
             		",Updated=current_timestamp"+
             		",UpdatedBy=aux1.UpdatedBy"+
-            		" from (SELECT C_Greeting_ID,ContactName,Title,ContactDescription,Comments,ContactPhone,ContactPhone2,ContactPhone3,ContactFax,EMail,Birthday,UpdatedBy FROM I_BPartner WHERE I_BPartner_ID=?) as aux1"
+            		" from (SELECT C_Greeting_ID,AD_Org_Contact_ID,ContactName,Title,ContactDescription,Comments,ContactPhone,ContactPhone2,ContactPhone3,ContactFax,EMail,Birthday,UpdatedBy FROM I_BPartner WHERE I_BPartner_ID=?) as aux1"
             		+ " WHERE AD_User_ID=?" );
             // Set Imported = Y
 
@@ -345,7 +352,11 @@ public class ImportBPartner extends SvrProcess {
             PreparedStatement pstmt = DB.prepareStatement( sql.toString());
             ResultSet         rs    = pstmt.executeQuery();
 
+            String anteriorBpValue           = null;
+            int     C_BPartner_ID_Prev = 0;
+
             while( rs.next()) {
+            	boolean sume = false;
                 int     I_BPartner_ID          = rs.getInt( 1 );
                 int     C_BPartner_ID          = rs.getInt( 2 );
                 boolean newBPartner            = C_BPartner_ID == 0;
@@ -354,107 +365,138 @@ public class ImportBPartner extends SvrProcess {
                 boolean newLocation            = rs.getString( 4 ) != null;
                 int     AD_User_ID             = rs.getInt( 5 );
                 boolean newContact             = rs.getString( 6 ) != null;
+                String actualBpValue           = rs.getString("value");
+                
 
                 log.fine( "I_BPartner_ID=" + I_BPartner_ID + ", C_BPartner_ID=" + C_BPartner_ID + ", C_BPartner_Location_ID=" + C_BPartner_Location_ID + " create=" + newLocation + ", AD_User_ID=" + AD_User_ID + " create=" + newContact );
                 
-                // ****    Create/Update BPartner
+                
+                if ( (anteriorBpValue == null) || (anteriorBpValue.compareTo(actualBpValue) != 0) ){
+                	anteriorBpValue = rs.getString("value");
+                	
+                	// ****    Create/Update BPartner
 
-                if( newBPartner )    // Insert new BPartner
-                {
-                    X_I_BPartner iBP = new X_I_BPartner( getCtx(),I_BPartner_ID,null );
-                    MBPartner bp = new MBPartner( iBP );
+                    if( newBPartner )    // Insert new BPartner
+                    {
+                        X_I_BPartner iBP = new X_I_BPartner( getCtx(),I_BPartner_ID,null );
+                        MBPartner bp = new MBPartner( iBP );
 
-                    if( bp.save()) {
-                        C_BPartner_ID = bp.getC_BPartner_ID();
-                        log.finest( "Insert BPartner" );
-                        noInsert++;
-                    } else {
-                        sql = new StringBuffer( "UPDATE I_BPartner i " + "SET I_IsImported='E', I_ErrorMsg=I_ErrorMsg||" ).append( DB.TO_STRING( "Insert BPartner failed: " + CLogger.retrieveErrorAsString() )).append( " WHERE I_BPartner_ID=" ).append( I_BPartner_ID );
-                        DB.executeUpdate( sql.toString());
+                        if( bp.save()) {
+                            C_BPartner_ID = bp.getC_BPartner_ID();
+                            C_BPartner_ID_Prev = C_BPartner_ID;
+                            log.finest( "Insert BPartner" );
+                            noInsert++;
+                        } else {
+                            sql = new StringBuffer( "UPDATE I_BPartner i " + "SET I_IsImported='E', I_ErrorMsg=I_ErrorMsg||" ).append( DB.TO_STRING( "Insert BPartner failed: " + CLogger.retrieveErrorAsString() )).append( " WHERE I_BPartner_ID=" ).append( I_BPartner_ID );
+                            DB.executeUpdate( sql.toString());
 
-                        continue;
-                    }
-                } else    // Update existing BPartner
-                {
-                    pstmt_updateBPartner.setInt( 1,I_BPartner_ID );
-                    pstmt_updateBPartner.setInt( 2,C_BPartner_ID );
-
-                    try {
-                        no = pstmt_updateBPartner.executeUpdate();
-                        log.finest( "Update BPartner = " + no );
-                        noUpdate++;
-                    } catch( SQLException ex ) {
-                        log.finest( "Update BPartner -- " + ex.toString());
-                        sql = new StringBuffer( "UPDATE I_BPartner i " + "SET I_IsImported='E', I_ErrorMsg=I_ErrorMsg||" ).append( DB.TO_STRING( "Update BPartner: " + ex.toString())).append( " WHERE I_BPartner_ID=" ).append( I_BPartner_ID );
-                        DB.executeUpdate( sql.toString());
-
-                        continue;
-                    }
-                }
-
-                // ****    Create/Update BPartner Location
-
-                if( C_BPartner_Location_ID != 0 )    // Update Location
-                {}
-                else if( newLocation )               // New Location
-                {
-                    int C_Location_ID = 0;
-
-                    try {
-                        C_Location_ID = DB.getNextID( m_AD_Client_ID,"C_Location",null );
-
-                        if( C_Location_ID <= 0 ) {
-                            throw new DBException( "No NextID (" + C_Location_ID + ")" );
+                            continue;
                         }
+                    } else    // Update existing BPartner
+                    {
+                        pstmt_updateBPartner.setInt( 1,I_BPartner_ID );
+                        pstmt_updateBPartner.setInt( 2,C_BPartner_ID );
+                        C_BPartner_ID_Prev = C_BPartner_ID;
+                        try {
+                            no = pstmt_updateBPartner.executeUpdate();
+                            log.finest( "Update BPartner = " + no );
+                            noUpdate++;
+                        } catch( SQLException ex ) {
+                            log.finest( "Update BPartner -- " + ex.toString());
+                            sql = new StringBuffer( "UPDATE I_BPartner i " + "SET I_IsImported='E', I_ErrorMsg=I_ErrorMsg||" ).append( DB.TO_STRING( "Update BPartner: " + ex.toString())).append( " WHERE I_BPartner_ID=" ).append( I_BPartner_ID );
+                            DB.executeUpdate( sql.toString());
 
-                        pstmt_insertLocation.setInt( 1,C_Location_ID );
-                        pstmt_insertLocation.setInt( 2,I_BPartner_ID );
+                            continue;
+                        }
+                    }
+                    sume = true;
+
+                    // ****    Create/Update BPartner Location
+
+                    if( C_BPartner_Location_ID != 0 )    // Update Location
+                    {}
+                    else if( newLocation )               // New Location
+                    {
+                        int C_Location_ID = 0;
+
+                        try {
+                            C_Location_ID = DB.getNextID( m_AD_Client_ID,"C_Location",null );
+
+                            if( C_Location_ID <= 0 ) {
+                                throw new DBException( "No NextID (" + C_Location_ID + ")" );
+                            }
+
+                            pstmt_insertLocation.setInt( 1,C_Location_ID );
+                            pstmt_insertLocation.setInt( 2,I_BPartner_ID );
+
+                            //
+
+                            no = pstmt_insertLocation.executeUpdate();
+                            log.finest( "Insert Location = " + no );
+                        } catch( SQLException ex ) {
+                            log.finest( "Insert Location - " + ex.toString());
+                            conn.rollback();
+                            noInsert--;
+                            sql = new StringBuffer( "UPDATE I_BPartner i " + "SET I_IsImported='E', I_ErrorMsg=I_ErrorMsg||" ).append( DB.TO_STRING( "Insert Location: " + ex.toString())).append( " WHERE I_BPartner_ID=" ).append( I_BPartner_ID );
+                            DB.executeUpdate( sql.toString());
+
+                            continue;
+                        }
 
                         //
 
-                        no = pstmt_insertLocation.executeUpdate();
-                        log.finest( "Insert Location = " + no );
-                    } catch( SQLException ex ) {
-                        log.finest( "Insert Location - " + ex.toString());
-                        conn.rollback();
-                        noInsert--;
-                        sql = new StringBuffer( "UPDATE I_BPartner i " + "SET I_IsImported='E', I_ErrorMsg=I_ErrorMsg||" ).append( DB.TO_STRING( "Insert Location: " + ex.toString())).append( " WHERE I_BPartner_ID=" ).append( I_BPartner_ID );
-                        DB.executeUpdate( sql.toString());
+                        try {
+                            C_BPartner_Location_ID = (DB.getNextID( m_AD_Client_ID,"C_BPartner_Location",null ));
+                        	log.finest("C_BPartner_Location_ID es : "+C_BPartner_Location_ID);
 
-                        continue;
-                    }
+                            if( C_BPartner_Location_ID <= 0 ) {
+                                throw new DBException( "No NextID (" + C_BPartner_Location_ID + ")" );
+                            }
 
-                    //
+                            pstmt_insertBPLocation.setInt( 1,C_BPartner_Location_ID );
+                            pstmt_insertBPLocation.setInt( 2,C_BPartner_ID );
+                            pstmt_insertBPLocation.setInt( 3,C_Location_ID );
+                            pstmt_insertBPLocation.setInt( 4,I_BPartner_ID );
 
-                    try {
-                        C_BPartner_Location_ID = (DB.getNextID( m_AD_Client_ID,"C_BPartner_Location",null ));
-                    	log.finest("C_BPartner_Location_ID es : "+C_BPartner_Location_ID);
+                            //
 
-                        if( C_BPartner_Location_ID <= 0 ) {
-                            throw new DBException( "No NextID (" + C_BPartner_Location_ID + ")" );
+                            no = pstmt_insertBPLocation.executeUpdate();
+                            log.finest( "Insert BP Location = " + no );
+                        } catch( Exception ex ) {
+                            log.finest( "Insert BPLocation - " + ex.toString());
+                            conn.rollback();
+                            noInsert--;
+                            sql = new StringBuffer( "UPDATE I_BPartner i " + "SET I_IsImported='E', I_ErrorMsg=I_ErrorMsg||" ).append( DB.TO_STRING( "Insert BPLocation: " + ex.toString())).append(" WHERE I_BPartner_ID=" ).append( I_BPartner_ID );
+                            DB.executeUpdate( sql.toString());
+
+                            continue;
                         }
-
-                        pstmt_insertBPLocation.setInt( 1,C_BPartner_Location_ID );
-                        pstmt_insertBPLocation.setInt( 2,C_BPartner_ID );
-                        pstmt_insertBPLocation.setInt( 3,C_Location_ID );
-                        pstmt_insertBPLocation.setInt( 4,I_BPartner_ID );
-
-                        //
-
-                        no = pstmt_insertBPLocation.executeUpdate();
-                        log.finest( "Insert BP Location = " + no );
-                    } catch( Exception ex ) {
-                        log.finest( "Insert BPLocation - " + ex.toString());
-                        conn.rollback();
-                        noInsert--;
-                        sql = new StringBuffer( "UPDATE I_BPartner i " + "SET I_IsImported='E', I_ErrorMsg=I_ErrorMsg||" ).append( DB.TO_STRING( "Insert BPLocation: " + ex.toString())).append(" WHERE I_BPartner_ID=" ).append( I_BPartner_ID );
-                        DB.executeUpdate( sql.toString());
-
-                        continue;
                     }
                 }
+                // Update I_Product
 
-                // ****    Create/Update Contact
+                if (C_BPartner_ID == 0){
+                	pstmt_setImported.setInt( 1,C_BPartner_ID_Prev );
+                }
+                else{
+                	pstmt_setImported.setInt( 1,C_BPartner_ID );
+                }
+                if( C_BPartner_Location_ID == 0 ) {
+                    pstmt_setImported.setNull( 2,Types.NUMERIC );
+                } else {
+                    pstmt_setImported.setInt( 2,C_BPartner_Location_ID );
+                }
+
+                if( AD_User_ID == 0 ) {
+                    pstmt_setImported.setNull( 3,Types.NUMERIC );
+                } else {
+                    pstmt_setImported.setInt( 3,AD_User_ID );
+                }
+
+                pstmt_setImported.setInt( 4,I_BPartner_ID );
+                no = pstmt_setImported.executeUpdate();
+                
+            	// ****    Create/Update Contact
 
                 if( AD_User_ID != 0 ) {
                     pstmt_updateBPContact.setInt( 1,I_BPartner_ID );
@@ -482,17 +524,16 @@ public class ImportBPartner extends SvrProcess {
                         }
 
                         pstmt_insertBPContact.setInt( 1,AD_User_ID );
-                        pstmt_insertBPContact.setInt( 2,C_BPartner_ID );
+                        pstmt_insertBPContact.setInt( 2,C_BPartner_ID_Prev );
 
-                        if( C_BPartner_Location_ID == 0 ) {
-                            pstmt_insertBPContact.setNull( 3,Types.NUMERIC );
-                        } else {
-                            pstmt_insertBPContact.setInt( 3,C_BPartner_Location_ID );
-                        }
+                        pstmt_insertBPContact.setNull( 3,Types.NUMERIC );
 
                         pstmt_insertBPContact.setInt( 4,I_BPartner_ID );
 
                         //
+                        if ( !sume ){
+                        	noUpdate++;
+                        }                  
 
                         no = pstmt_insertBPContact.executeUpdate();
                         log.finest( "Insert BP Contact = " + no );
@@ -506,26 +547,8 @@ public class ImportBPartner extends SvrProcess {
                         continue;
                     }
                 }
-
-                // Update I_Product
-
-                pstmt_setImported.setInt( 1,C_BPartner_ID );
-
-                if( C_BPartner_Location_ID == 0 ) {
-                    pstmt_setImported.setNull( 2,Types.NUMERIC );
-                } else {
-                    pstmt_setImported.setInt( 2,C_BPartner_Location_ID );
-                }
-
-                if( AD_User_ID == 0 ) {
-                    pstmt_setImported.setNull( 3,Types.NUMERIC );
-                } else {
-                    pstmt_setImported.setInt( 3,AD_User_ID );
-                }
-
-                pstmt_setImported.setInt( 4,I_BPartner_ID );
-                no = pstmt_setImported.executeUpdate();
-
+               
+                
                 //
 
                 conn.commit();

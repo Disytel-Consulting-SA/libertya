@@ -192,7 +192,10 @@ public final class ImpFormat {
             uniqueChildParentOperator = " AND ";
         } else if( m_AD_Table_ID == 533 )                 // I_BPartner
         {
-            m_tableUnique1 = "Value";                     // the key
+        	//m_tableUnique1 = "Value";
+        	m_tableUniqueParent = "Value";          
+            m_tableUniqueChild  = "ContactName";
+            uniqueChildParentOperator = " AND ";
         } else if( m_AD_Table_ID == 534 )                 // I_ElementValue
         {
             m_tableUniqueParent = "ElementName";          // the parent key
