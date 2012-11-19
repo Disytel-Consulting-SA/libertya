@@ -710,37 +710,39 @@ public class MUser extends X_AD_User {
             setEMailVerifyDate( null );
         }
         
-        // No se permiten dos nombres de usuario iguales
-		StringBuffer sql = new StringBuffer(
-				"SELECT count(*)::integer FROM ad_user WHERE name = '"
-						+ getName() + "' and ad_client_id = ?");
-        if(!newRecord){
-        	sql.append(" AND ad_user_id <> "+getID());
-        }
-        int sameUser = DB.getSQLValue(get_TrxName(), sql.toString(), getAD_Client_ID());
-        if(sameUser > 0){
-        	log.saveError("UserNameAlreadyInUse", "");
-        	return false;
-        }
-        
         MBPartner partner = new MBPartner(getCtx(), getC_BPartner_ID(), get_TrxName());
-        // Si no ingresó password, error
-        if(Util.isEmpty(getPassword(), true) && !(partner.isCustomer() || partner.isVendor())){
-        	log.saveError("PasswordInvalidError", "");
-        	return false;
-        }
-        
-		// Si la funcionalidad de claves únicas se encuentra activa entonces no
-		// se debe permitir cargar dos claves iguales para distintos usuarios
-        // No se permiten dos nombres de usuario iguales
-        sql = new StringBuffer("SELECT ad_user_id FROM ad_user WHERE password = ?");
-        if(!newRecord){
-        	sql.append(" AND ad_user_id <> "+getID());
-        }
-        int samePass = DB.getSQLValue(get_TrxName(), sql.toString(), getPassword());
-        if(samePass >= 0){
-        	log.saveError("PasswordInvalidError", "");
-        	return false;
+        if (partner.isEmployee()){
+        	// No se permiten dos nombres de usuario iguales
+    		StringBuffer sql = new StringBuffer(
+    				"SELECT count(*)::integer FROM ad_user WHERE name = '"
+    						+ getName() + "' and ad_client_id = ?");
+            if(!newRecord){
+            	sql.append(" AND ad_user_id <> "+getID());
+            }
+            int sameUser = DB.getSQLValue(get_TrxName(), sql.toString(), getAD_Client_ID());
+            if(sameUser > 0){
+            	log.saveError("UserNameAlreadyInUse", "");
+            	return false;
+            }
+            
+            // Si no ingresó password, error
+            if(Util.isEmpty(getPassword(), true)){
+            	log.saveError("PasswordInvalidError", "");
+            	return false;
+            }
+            
+    		// Si la funcionalidad de claves únicas se encuentra activa entonces no
+    		// se debe permitir cargar dos claves iguales para distintos usuarios
+            // No se permiten dos nombres de usuario iguales
+            sql = new StringBuffer("SELECT ad_user_id FROM ad_user WHERE password = ?");
+            if(!newRecord){
+            	sql.append(" AND ad_user_id <> "+getID());
+            }
+            int samePass = DB.getSQLValue(get_TrxName(), sql.toString(), getPassword());
+            if(samePass >= 0){
+            	log.saveError("PasswordInvalidError", "");
+            	return false;
+            }	
         }
         
         return true;
