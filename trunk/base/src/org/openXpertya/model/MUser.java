@@ -710,8 +710,8 @@ public class MUser extends X_AD_User {
             setEMailVerifyDate( null );
         }
         
-        MBPartner partner = new MBPartner(getCtx(), getC_BPartner_ID(), get_TrxName());
-        if (partner.isEmployee()){
+        // Validaciones sólo para usuarios de sistema
+        if (isSystemAccess()){
         	// No se permiten dos nombres de usuario iguales
     		StringBuffer sql = new StringBuffer(
     				"SELECT count(*)::integer FROM ad_user WHERE name = '"

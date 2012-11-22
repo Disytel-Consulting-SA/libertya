@@ -5056,3 +5056,12 @@ update ad_system set dummy = (SELECT addcolumnifnotexists('I_BPartner','AD_Org_C
 -- 20121119-1605 Incorporación de nuevas columnas en la importación de Artículos
 update ad_system set dummy = (SELECT addcolumnifnotexists('I_Product','ContactProduct', 'character varying(60)'));
 update ad_system set dummy = (SELECT addcolumnifnotexists('I_Product','AD_Org_Product_ID', 'integer'));
+
+-- 20121122-1234 Incorporación de nueva columna a la tabla de Usuarios para identificar aquellos que loguean al sistema. Actualización de flag usuario de sistema para aquellos usuarios que poseen al menos un perfil asociado, si tienen un perfil configurado, entonces ingresan al sistema
+update ad_system set dummy = (SELECT addcolumnifnotexists('AD_User','isSystemAccess', 'character(1) NOT NULL DEFAULT \'N\'::bpchar'));
+
+UPDATE ad_user u
+SET issystemaccess = 'Y'
+WHERE EXISTS (SELECT ur.ad_user_id
+		FROM ad_user_roles as ur
+		WHERE u.ad_user_id = ur.ad_user_id);
