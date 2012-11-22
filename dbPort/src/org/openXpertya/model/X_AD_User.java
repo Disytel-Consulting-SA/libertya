@@ -7,7 +7,7 @@ import java.math.*;
 import org.openXpertya.util.*;
 /** Modelo Generado por AD_User
  *  @author Comunidad de Desarrollo Libertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
- *  @version  - 2011-10-21 15:47:04.863 */
+ *  @version  - 2012-11-22 13:10:38.398 */
 public class X_AD_User extends org.openXpertya.model.PO
 {
 /** Constructor estándar */
@@ -18,6 +18,7 @@ super (ctx, AD_User_ID, trxName);
 {
 setAD_User_ID (0);
 setIsLDAPAuthorized (false);	// N
+setIsSystemAccess (false);
 setName (null);
 setNotificationType (null);	// E
 }
@@ -311,6 +312,22 @@ Authorize via LDAP (directory) services */
 public boolean isLDAPAuthorized() 
 {
 Object oo = get_Value("IsLDAPAuthorized");
+if (oo != null) 
+{
+ if (oo instanceof Boolean) return ((Boolean)oo).booleanValue();
+ return "Y".equals(oo);
+}
+return false;
+}
+/** Set Is System Access */
+public void setIsSystemAccess (boolean IsSystemAccess)
+{
+set_Value ("IsSystemAccess", new Boolean(IsSystemAccess));
+}
+/** Get Is System Access */
+public boolean isSystemAccess() 
+{
+Object oo = get_Value("IsSystemAccess");
 if (oo != null) 
 {
  if (oo instanceof Boolean) return ((Boolean)oo).booleanValue();
