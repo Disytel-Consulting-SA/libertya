@@ -5065,3 +5065,39 @@ SET issystemaccess = 'Y'
 WHERE EXISTS (SELECT ur.ad_user_id
 		FROM ad_user_roles as ur
 		WHERE u.ad_user_id = ur.ad_user_id);
+		
+-- 20121122-1847 Nueva vista para reporte de Existencias por Artículos	
+CREATE OR REPLACE VIEW rv_storage_product AS 
+ SELECT ad_client_id, 
+	ad_org_id, 
+	m_product_id, 
+	value, 
+	name, 
+	m_product_category_id, 
+	m_warehouse_id,
+	sum(qtyonhand) as qtyonhand, 
+	sum(qtyreserved) as qtyreserved, 
+	sum(qtyavailable) as qtyavailable, 
+	sum(qtyordered) as qtyordered
+ FROM (SELECT s.ad_client_id, 
+		s.ad_org_id, 
+		s.m_product_id, 
+		p.value, 
+		p.name, 
+		p.m_product_category_id, 
+		l.m_warehouse_id, 
+		s.qtyonhand, 
+		s.qtyreserved, 
+		s.qtyonhand - s.qtyreserved AS qtyavailable, 
+		s.qtyordered
+   FROM m_storage s
+   JOIN m_locator l ON s.m_locator_id = l.m_locator_id
+   JOIN m_product p ON s.m_product_id = p.m_product_id) as s
+   GROUP BY ad_client_id, 
+	ad_org_id, 
+	m_product_id, 
+	value, 
+	name, 
+	m_product_category_id, 
+	m_warehouse_id;
+ALTER TABLE rv_storage_product OWNER TO libertya;	
