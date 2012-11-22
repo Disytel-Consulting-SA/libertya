@@ -69,7 +69,8 @@ public abstract class Doc {
         MAllocationHdr.Table_ID,    // C_Allocation
         MCash.Table_ID,             // C_Cash
         MBankStatement.Table_ID,    // C_BankStatement
-        MOrder.Table_ID,            // C_Order
+        // Por ahora se comenta la contabilidad de los pedidos
+        // MOrder.Table_ID,            // C_Order
         MPayment.Table_ID,          // C_Payment
         MInOut.Table_ID,            // M_InOut
         MInventory.Table_ID,        // M_Inventory
@@ -89,7 +90,8 @@ public abstract class Doc {
         MAllocationHdr.Table_Name,    // C_Allocation
         MCash.Table_Name,             // C_Cash
         MBankStatement.Table_Name,    // C_BankStatement
-        MOrder.Table_Name,            // C_Order
+        // Por ahora se comenta la contabilidad de los pedidos
+        // MOrder.Table_Name,            // C_Order
         MPayment.Table_Name,          // C_Payment
         MInOut.Table_Name,            // M_InOut
         MInventory.Table_Name,        // M_Inventory
@@ -241,8 +243,9 @@ public abstract class Doc {
             doc = new Doc_Cash( ass,AD_Table_ID,MCash.Table_Name );
        	else if (AD_Table_ID == MBankStatement.Table_ID)
             doc = new Doc_Bank( ass,AD_Table_ID,MBankStatement.Table_Name );
-       	else if (AD_Table_ID == MOrder.Table_ID)
-            doc = new Doc_Order( ass,AD_Table_ID,MOrder.Table_Name );
+        // Por ahora se comenta la contabilidad de los pedidos
+        // else if (AD_Table_ID == MOrder.Table_ID)
+        //   doc = new Doc_Order( ass,AD_Table_ID,MOrder.Table_Name );
        	else if (AD_Table_ID == MPayment.Table_ID)
             doc = new Doc_Payment( ass,AD_Table_ID,MPayment.Table_Name );
        	else if (AD_Table_ID == MInOut.Table_ID)
