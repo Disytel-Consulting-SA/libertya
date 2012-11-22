@@ -27,6 +27,7 @@ import org.openXpertya.util.DisplayType;
 import org.openXpertya.util.Env;
 import org.openXpertya.util.KeyNamePair;
 import org.openXpertya.util.NamePair;
+import org.openXpertya.util.Util;
 import org.openXpertya.util.ValueNamePair;
 
 //~--- Importaciones JDK ------------------------------------------------------
@@ -66,8 +67,17 @@ public final class MLookup extends Lookup implements Serializable {
     /** Inactive Marker End */
     public static final String	INACTIVE_E	= "~";
 
-    /** Number of max rows to load */
-    private static final int	MAX_ROWS	= 1000;		// i.e. Drop Down has max 500 items
+    /**
+	 * Nombre de la Preference que indica la cantidad máxima de registros a
+	 * retornar
+	 */
+    public static final String LOOKUP_MAX_ROWS_PREFERENCE_NAME = "LookupMaxRowsAllowed";
+    
+	/**
+	 * Number of max rows to load. LookupMaxRowsAllowed en AD_Preference. Valor
+	 * por defecto = 1000
+	 */
+	private int maxRows = 1000; // i.e. Drop Down has max 500 items
 
     /** Indicator for Null */
     private static Integer	MINUS_ONE	= new Integer(-1);
@@ -873,6 +883,18 @@ public final class MLookup extends Lookup implements Serializable {
             String	sql	= m_info.Query;
             log.fine("En Mlookup run con sql= "+ sql);
 
+            maxRows = Util.isEmpty(MPreference
+        			.searchCustomPreferenceValue(LOOKUP_MAX_ROWS_PREFERENCE_NAME,
+        					Env.getAD_Client_ID(Env.getCtx()),
+        					Env.getAD_Org_ID(Env.getCtx()),
+        					Env.getAD_User_ID(Env.getCtx()), true)) ? 1000 : Integer
+        			.valueOf(MPreference.searchCustomPreferenceValue(
+        					LOOKUP_MAX_ROWS_PREFERENCE_NAME, Env.getAD_Client_ID(Env.getCtx()),
+        					Env.getAD_Org_ID(Env.getCtx()),
+        					Env.getAD_User_ID(Env.getCtx()), true));
+            
+            sql += " LIMIT "+maxRows+" ";
+            
             // not validated
             if (!m_info.IsValidated) {
 
@@ -949,7 +971,7 @@ public final class MLookup extends Lookup implements Serializable {
 
                 while (rs.next()) {
 
-                    if (rows++ > MAX_ROWS) {
+                    if (rows++ > maxRows) {
 
                         log.warning(m_info.KeyColumn + ": Loader - Too many records");
                         log.warning(m_info.toString());
