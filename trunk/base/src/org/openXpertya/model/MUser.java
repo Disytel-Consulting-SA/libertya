@@ -715,7 +715,7 @@ public class MUser extends X_AD_User {
         	// No se permiten dos nombres de usuario iguales
     		StringBuffer sql = new StringBuffer(
     				"SELECT count(*)::integer FROM ad_user WHERE name = '"
-    						+ getName() + "' and ad_client_id = ?");
+    						+ getName() + "' and (ad_client_id = ? OR ad_client_id = 0) AND issystemaccess = 'Y'");
             if(!newRecord){
             	sql.append(" AND ad_user_id <> "+getID());
             }
@@ -734,7 +734,7 @@ public class MUser extends X_AD_User {
     		// Si la funcionalidad de claves únicas se encuentra activa entonces no
     		// se debe permitir cargar dos claves iguales para distintos usuarios
             // No se permiten dos nombres de usuario iguales
-            sql = new StringBuffer("SELECT ad_user_id FROM ad_user WHERE password = ?");
+            sql = new StringBuffer("SELECT ad_user_id FROM ad_user WHERE password = ? AND issystemaccess = 'Y' ");
             if(!newRecord){
             	sql.append(" AND ad_user_id <> "+getID());
             }
