@@ -1720,12 +1720,17 @@ public class MInvoice extends X_C_Invoice implements DocAction {
 				if (docType != null){
 					setC_DocTypeTarget_ID(docType.getC_DocType_ID());
 				}
+				else{
+					log.saveError("Error",	Msg.getMsg(getCtx(), "DocTypeTargetError"));
+					return false;
+				}
 			}	
 		}
-
-		if (getC_DocTypeTarget_ID() == 0) {
-			setC_DocTypeTarget_ID(isSOTrx() ? MDocType.DOCBASETYPE_ARInvoice
-					: MDocType.DOCBASETYPE_APInvoice);
+		else{
+			if (getC_DocTypeTarget_ID() == 0) {
+				setC_DocTypeTarget_ID(isSOTrx() ? MDocType.DOCBASETYPE_ARInvoice
+						: MDocType.DOCBASETYPE_APInvoice);
+			}
 		}
 		
 		// Payment Term
