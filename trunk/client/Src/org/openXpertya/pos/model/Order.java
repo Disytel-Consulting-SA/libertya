@@ -49,7 +49,7 @@ public class Order  {
 	/** Organización del pedido */
 	private Organization organization;
 		
-	public Order() {
+	private Order() {
 		super();
 		setOrderProducts(new ArrayList<OrderProduct>());
 		setPayments(new ArrayList<Payment>());
