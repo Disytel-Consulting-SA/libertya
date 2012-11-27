@@ -641,51 +641,125 @@ public class MInventory extends X_M_Inventory implements DocAction {
 
             if( trx == null ) {
 
-                // Storage
-
-                MStorage storage = MStorage.get( getCtx(),line.getM_Locator_ID(),line.getM_Product_ID(),line.getM_AttributeSetInstance_ID(),get_TrxName());
-
-                if( storage == null ) {
-                    storage = MStorage.getCreate( getCtx(),line.getM_Locator_ID(),line.getM_Product_ID(),line.getM_AttributeSetInstance_ID(),get_TrxName());
-                }
-
-                //
-
-                BigDecimal qtyDiff = line.getQtyInternalUse().negate();
-
-                if( Env.ZERO.compareTo( qtyDiff ) == 0 ) {
-                    qtyDiff = line.getQtyCount().subtract( line.getQtyBook());
-                }
-
-                BigDecimal qtyNew = storage.getQtyOnHand().add( qtyDiff );
-
-                log.fine( "Count=" + line.getQtyCount() + ",Book=" + line.getQtyBook() + ", Difference=" + qtyDiff + " - OnHand=" + storage.getQtyOnHand());
-
-                //
-
-                storage.setQtyOnHand( qtyNew );
-                storage.setDateLastInventory( getMovementDate());
-
-                if( !storage.save( get_TrxName())) {
-                    m_processMsg = "Storage not updated";
-
-                    return DocAction.STATUS_Invalid;
-                }
-
-                log.fine( storage.toString());
-
-                // Transaction
-
-                trx = new MTransaction( getCtx(),MTransaction.MOVEMENTTYPE_InventoryIn,line.getM_Locator_ID(),line.getM_Product_ID(),line.getM_AttributeSetInstance_ID(),qtyDiff,getMovementDate(),get_TrxName());
-                trx.setM_InventoryLine_ID( line.getM_InventoryLine_ID());
-                trx.setClientOrg(this);
-                
-                if( !trx.save()) {
-                    m_processMsg = "Transaction not inserted";
-
-                    return DocAction.STATUS_Invalid;
-                }
-            }    // Fallback
+                // Si no hay que sobreescribir el stock, entonces se hace por la diferencia
+            	
+            	if(!X_M_InventoryLine.INVENTORYTYPE_OverwriteInventory.equals(line.getInventoryType())){
+	            	
+	            	// Storage
+	
+	                MStorage storage = MStorage.get( getCtx(),line.getM_Locator_ID(),line.getM_Product_ID(),line.getM_AttributeSetInstance_ID(),get_TrxName());
+	
+	                if( storage == null ) {
+	                    storage = MStorage.getCreate( getCtx(),line.getM_Locator_ID(),line.getM_Product_ID(),line.getM_AttributeSetInstance_ID(),get_TrxName());
+	                }
+	
+	                //
+	
+	                BigDecimal qtyDiff = line.getQtyInternalUse().negate();
+	
+	                if( Env.ZERO.compareTo( qtyDiff ) == 0 ) {
+	                    qtyDiff = line.getQtyCount().subtract( line.getQtyBook());
+	                }
+	
+	                BigDecimal qtyNew = storage.getQtyOnHand().add( qtyDiff );
+	
+	                log.fine( "Count=" + line.getQtyCount() + ",Book=" + line.getQtyBook() + ", Difference=" + qtyDiff + " - OnHand=" + storage.getQtyOnHand());
+	
+	                //
+	
+	                storage.setQtyOnHand( qtyNew );
+	                storage.setDateLastInventory( getMovementDate());
+	
+	                if( !storage.save( get_TrxName())) {
+	                    m_processMsg = "Storage not updated";
+	
+	                    return DocAction.STATUS_Invalid;
+	                }
+	
+	                log.fine( storage.toString());
+	
+	                // Transaction
+	
+	                trx = new MTransaction( getCtx(),MTransaction.MOVEMENTTYPE_InventoryIn,line.getM_Locator_ID(),line.getM_Product_ID(),line.getM_AttributeSetInstance_ID(),qtyDiff,getMovementDate(),get_TrxName());
+	                trx.setM_InventoryLine_ID( line.getM_InventoryLine_ID());
+	                trx.setClientOrg(this);
+	                
+	                if( !trx.save()) {
+	                    m_processMsg = "Transaction not inserted";
+	
+	                    return DocAction.STATUS_Invalid;
+	                }
+	            }    // Fallback
+            	// Sobreescribir el stock de ese producto e instancia de atributos en esa ubicación
+            	else{
+					// Eliminar todas las ocurrencias de stock que posea ese
+					// artículo, instancia en la ubicación. 
+            		// Se deben mantener las cantidades pedidas y reservadas
+            		BigDecimal qtyOrdered = BigDecimal.ZERO;
+            		BigDecimal qtyReserved = BigDecimal.ZERO;
+            		BigDecimal qtyOnHand = BigDecimal.ZERO;
+            		// Además, hay que guardar estas transacciones
+					List<MStorage> storages = MStorage.getAll(getCtx(),
+							line.getM_Product_ID(), line.getM_Locator_ID(),
+							line.getM_AttributeSetInstance_ID(), get_TrxName());
+					for (MStorage mStorage : storages) {
+						// Me guardo la cantidad pedida y reservada
+						qtyOrdered = qtyOrdered.add(mStorage.getQtyOrdered());
+						qtyReserved = qtyReserved.add(mStorage.getQtyReserved());
+						qtyOnHand = qtyOnHand.add(mStorage.getQtyOnHand());
+						// Elimino el stock
+						if(!mStorage.delete(true,get_TrxName())){
+							m_processMsg = "Storage not updated";
+		                    return DocAction.STATUS_Invalid;
+						}
+					}
+					
+					// Agrego la transacción
+					// Creo la transacción de salida
+					trx = new MTransaction(getCtx(),
+							MTransaction.MOVEMENTTYPE_InventoryOut,
+							line.getM_Locator_ID(), line.getM_Product_ID(),
+							line.getM_AttributeSetInstance_ID(),
+							qtyOnHand, getMovementDate(),
+							get_TrxName());
+	                trx.setM_InventoryLine_ID( line.getM_InventoryLine_ID());
+	                trx.setClientOrg(this);
+	                
+	                if( !trx.save()) {
+	                    m_processMsg = "Transaction not inserted";
+	                    return DocAction.STATUS_Invalid;
+	                }
+					
+					// Creo el inventario de entrada con la cantidad actual de la línea
+					MStorage newStorage = MStorage.getCreate(getCtx(),
+							line.getM_Locator_ID(), line.getM_Product_ID(),
+							line.getM_AttributeSetInstance_ID(), get_TrxName());
+					
+					newStorage.setQtyOnHand(line.getQtyCount());
+					newStorage.setQtyOrdered(qtyOrdered);
+					newStorage.setQtyReserved(qtyReserved);
+					newStorage.setDateLastInventory(getMovementDate());
+					if(!newStorage.save()){
+						m_processMsg = "Storage not updated";
+	                    return DocAction.STATUS_Invalid;
+					}
+					
+					// Creo la transacción de entrada
+					trx = new MTransaction(getCtx(),
+							MTransaction.MOVEMENTTYPE_InventoryIn,
+							line.getM_Locator_ID(), line.getM_Product_ID(),
+							line.getM_AttributeSetInstance_ID(),
+							line.getQtyCount(), getMovementDate(),
+							get_TrxName());
+	                trx.setM_InventoryLine_ID( line.getM_InventoryLine_ID());
+	                trx.setClientOrg(this);
+	                
+	                if( !trx.save()) {
+	                    m_processMsg = "Transaction not inserted";
+	                    return DocAction.STATUS_Invalid;
+	                }
+            	}
+            }
         }        // for all lines
 
         // User Validation

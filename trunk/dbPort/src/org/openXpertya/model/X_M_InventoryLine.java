@@ -7,7 +7,7 @@ import java.math.*;
 import org.openXpertya.util.*;
 /** Modelo Generado por M_InventoryLine
  *  @author Comunidad de Desarrollo Libertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
- *  @version  - 2012-04-19 17:46:21.046 */
+ *  @version  - 2012-11-27 10:30:55.671 */
 public class X_M_InventoryLine extends org.openXpertya.model.PO
 {
 /** Constructor estándar */
@@ -21,7 +21,7 @@ setInventoryType (null);	// D
 setM_AttributeSetInstance_ID (0);
 setM_Inventory_ID (0);
 setM_InventoryLine_ID (0);
-setM_Locator_ID (0);	// @M_Locator_ID@
+setM_Locator_ID (0);	// @SQL=SELECT m_locator_id FROM m_locator where m_warehouse_id = @M_Warehouse_ID@ order by isdefault desc limit 1
 setM_Product_ID (0);
 setProcessed (false);
 setQtyBook (Env.ZERO);
@@ -108,12 +108,14 @@ public static final int INVENTORYTYPE_AD_Reference_ID = MReference.getReferenceI
 public static final String INVENTORYTYPE_InventoryDifference = "D";
 /** Charge Account = C */
 public static final String INVENTORYTYPE_ChargeAccount = "C";
+/** Overwrite Inventory = O */
+public static final String INVENTORYTYPE_OverwriteInventory = "O";
 /** Set Inventory Type.
 Type of inventory difference */
 public void setInventoryType (String InventoryType)
 {
-if (InventoryType.equals("D") || InventoryType.equals("C"));
- else throw new IllegalArgumentException ("InventoryType Invalid value - Reference = INVENTORYTYPE_AD_Reference_ID - D - C");
+if (InventoryType.equals("D") || InventoryType.equals("C") || InventoryType.equals("O"));
+ else throw new IllegalArgumentException ("InventoryType Invalid value - Reference = INVENTORYTYPE_AD_Reference_ID - D - C - O");
 if (InventoryType == null) throw new IllegalArgumentException ("InventoryType is mandatory");
 if (InventoryType.length() > 1)
 {

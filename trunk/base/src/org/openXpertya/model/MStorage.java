@@ -22,12 +22,14 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Properties;
 import java.util.logging.Level;
 
 import org.openXpertya.util.CLogger;
 import org.openXpertya.util.DB;
 import org.openXpertya.util.Env;
+import org.openXpertya.util.Util;
 
 /**
  * Descripción de Clase
@@ -94,6 +96,50 @@ public class MStorage extends X_M_Storage {
         return retValue;
     }    // get
 
+    
+    public static List<MStorage> getAll( Properties ctx, Integer M_Product_ID, Integer M_Locator_ID, Integer M_AttributeSetInstance_ID,String trxName ) {
+        List<MStorage> storages = new ArrayList<MStorage>();
+        StringBuffer sql = new StringBuffer("SELECT * " +
+        									"FROM M_Storage " + 
+        									"WHERE M_Product_ID=? ");
+        if(!Util.isEmpty(M_Locator_ID, true)){
+            sql.append(" AND M_Locator_ID=? ");
+        }
+        if(!Util.isEmpty(M_AttributeSetInstance_ID, true)){
+        	sql.append(" AND M_AttributeSetInstance_ID=? ");
+        }
+        PreparedStatement pstmt = null;
+        ResultSet rs = null;
+        try {
+            pstmt = DB.prepareStatement( sql.toString(),trxName );
+            int i = 1;
+            pstmt.setInt( i++,M_Product_ID );
+            if(!Util.isEmpty(M_Locator_ID, true)){
+                pstmt.setInt( i++,M_Locator_ID );
+            }
+            if(!Util.isEmpty(M_AttributeSetInstance_ID, true)){
+                pstmt.setInt( i++,M_AttributeSetInstance_ID );	
+            }
+
+            rs = pstmt.executeQuery();
+
+            while( rs.next()) {
+                storages.add(new MStorage( ctx,rs,trxName ));
+            }
+        } catch( SQLException ex ) {
+            s_log.log( Level.SEVERE,sql.toString(),ex );
+        } finally{
+        	try {
+				if(rs != null)rs.close();
+				if(pstmt != null)pstmt.close();
+			} catch (Exception e) {
+				s_log.log( Level.SEVERE,sql.toString(),e );
+			}
+        }
+        
+        return storages;
+    }    // get
+    
     /**
      * Descripción de Método
      *
