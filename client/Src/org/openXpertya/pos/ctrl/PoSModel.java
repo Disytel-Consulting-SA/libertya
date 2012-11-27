@@ -190,7 +190,7 @@ public class PoSModel {
 		if (getConnectionState().getPoSCOnfig().isSearchToday()==true){
 			Date TODAY = new Date(System.currentTimeMillis());
 			SimpleDateFormat sdf = new SimpleDateFormat("yyyy/MM/dd");
-			where = " AND C_Order.DateOrdered = '"+sdf.format(TODAY)+"' ";
+			where = " AND date_trunc('day',C_Order.DateOrdered) = '"+sdf.format(TODAY)+"'::date ";
 		}
 		return where;
 	}

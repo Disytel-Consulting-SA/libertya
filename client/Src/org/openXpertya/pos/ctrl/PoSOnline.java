@@ -2409,7 +2409,7 @@ public class PoSOnline extends PoSConnectionState {
 		if (orderId == 0)
 			throw new InvalidOrderException();
 		
-		Order order = new Order();
+		Order order = new Order(getOrganization());
 		MOrder mOrder = new MOrder(ctx, orderId, getTrxName());
 		if (!"CO".equals(mOrder.getDocStatus()) && ! "CL".equals(mOrder.getDocStatus()))
 			throw new InvalidOrderException(Msg.translate(ctx, "POSOrderStatusError"));
