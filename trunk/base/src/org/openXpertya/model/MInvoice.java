@@ -3380,6 +3380,7 @@ public class MInvoice extends X_C_Invoice implements DocAction {
 						}
 						orderLine.setQtyInvoiced(orderLine.getQtyInvoiced()
 								.add(qtyInvoiced));
+						orderLine.setControlStock(false);
 						if (!orderLine.save()) {
 							m_processMsg = "Could not update Order Line";
 							return DocAction.STATUS_Invalid;

@@ -2229,7 +2229,14 @@ public class MInOut extends X_M_InOut implements DocAction {
 
                     // Fallback: Update Storage - see also VMatch.createMatchRecord
 
-                    if( !MStorage.add( getCtx(),getM_Warehouse_ID(),sLine.getM_Locator_ID(),sLine.getM_Product_ID(),sLine.getM_AttributeSetInstance_ID(),reservationAttributeSetInstance_ID,Qty,QtySO.negate(),QtyPO.negate(),get_TrxName())) {
+					// La cantidad reservada debe tener el mismo signo que la
+					// cantidad a modificar del stock
+					// Se supone que si se agrega stock, se agrega stock
+					// reservado y si se saca stock, se saca de reservado. Esto,
+					// en el caso que esté asociado a un pedido
+					QtySO = Qty.compareTo(BigDecimal.ZERO) >= 0 ? QtySO.abs()
+							: QtySO.abs().negate();
+                    if( !MStorage.add( getCtx(),getM_Warehouse_ID(),sLine.getM_Locator_ID(),sLine.getM_Product_ID(),sLine.getM_AttributeSetInstance_ID(),reservationAttributeSetInstance_ID,Qty,QtySO,QtyPO.negate(),get_TrxName())) {
                         m_processMsg = "Cannot correct Inventory";
 
                         return DocAction.STATUS_Invalid;
