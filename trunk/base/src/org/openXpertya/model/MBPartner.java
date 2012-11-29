@@ -1208,10 +1208,10 @@ public class MBPartner extends X_C_BPartner {
 			if (getC_Categoria_Iva_ID() > 0 && mCategoriaIva.isRequiereCUIT()) {
 				
 				// Si la Categoría de IVA asignada requiere el dato de CUIT, entonce el Tipo de Identificación solo puede ser CUIT o CUIL.
-				if ( (getTaxIdType() != null) && ((("80").compareTo(getTaxIdType()) != 0) && (("86").compareTo(getTaxIdType()) != 0)) ){
+				if ( (getTaxIdType() != null) && (((MBPartner.TAXIDTYPE_CUIT).compareTo(getTaxIdType()) != 0) && ((MBPartner.TAXIDTYPE_CUIL).compareTo(getTaxIdType()) != 0)) ){
 					log.saveError("SaveError", Msg.translate(getCtx(), "RequiredCUITCUILTaxType"));
 					return false;
-				}
+				}				
 				
 				if (cuit == null || cuit.length() == 0) {
 					log.saveError("InvalidCUIT",Msg.translate(getCtx(),"RequiredCUIT"));
@@ -1245,7 +1245,7 @@ public class MBPartner extends X_C_BPartner {
 			}
 			
 			// Se valida el formato del Nro de Identificación solo si el Tipo es CUIT o CUIL.
-			if ( (getTaxIdType() != null) && ((("80").compareTo(getTaxIdType()) == 0) || (("86").compareTo(getTaxIdType()) == 0)) && !CalloutInvoiceExt.ValidarCUIT(cuit) ){
+			if ( (getTaxIdType() != null) && (((MBPartner.TAXIDTYPE_CUIT).compareTo(getTaxIdType()) == 0) || ((MBPartner.TAXIDTYPE_CUIL).compareTo(getTaxIdType()) == 0)) && !CalloutInvoiceExt.ValidarCUIT(cuit) ){
 				log.saveError("InvalidCUIT", "");
 				return false;
 			}
