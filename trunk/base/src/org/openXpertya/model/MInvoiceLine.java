@@ -1151,6 +1151,7 @@ public class MInvoiceLine extends X_C_InvoiceLine {
 		// descuento
 		setPrice(priceList.subtract(lineDiscountAmtUnit));
 		setLineDiscountAmt(lineDiscountAmtUnit.multiply(getQtyEntered()));
+		setTaxAmt(BigDecimal.ZERO);
     }
     
     public BigDecimal getDiscountAmt(BigDecimal baseAmt, BigDecimal discountPerc, Integer scale){

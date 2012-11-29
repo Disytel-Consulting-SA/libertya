@@ -113,7 +113,7 @@ public class EstadoDeCuentaProcess extends SvrProcess {
 			(bPartnerID!=0?" AND i.c_bpartner_id = " + bPartnerID:"") + 
 			(salesRepID!=0?" AND i.salesrep_id = " + salesRepID : "") +
 			"	UNION  " +
-			"	  SELECT dt.signo_issotrx, dt.name as tipodoc, i.ad_org_id, i.ad_client_id, i.documentno, i.c_invoice_id as doc_id, i.c_order_id, i.c_bpartner_id, bp.name as bpartner,  i.issotrx, (CASE WHEN ips.duedate IS NOT NULL THEN ips.duedate ELSE i.dateinvoiced END) as datedoc, to_days(ips.duedate) - to_days(i.dateinvoiced) AS netdays, ips.duedate, to_days(now()) - to_days(ips.duedate) AS daysdue, ips.discountdate, ips.discountamt, ips.dueamt * dt.signo_issotrx AS grandtotal, invoicepaid(i.c_invoice_id, i.c_currency_id, 1) * dt.signo_issotrx AS paidamt, invoiceopen(i.c_invoice_id, ips.c_invoicepayschedule_id) * dt.signo_issotrx AS openamt, i.c_currency_id, i.c_conversiontype_id, i.ispayschedulevalid, ips.c_invoicepayschedule_id, i.c_paymentterm_id " +
+			"	  SELECT dt.signo_issotrx, dt.name as tipodoc, i.ad_org_id, i.ad_client_id, i.documentno, i.c_invoice_id as doc_id, i.c_order_id, i.c_bpartner_id, bp.name as bpartner,  i.issotrx, (CASE WHEN ips.duedate IS NOT NULL THEN ips.duedate ELSE i.dateinvoiced END) as datedoc, to_days(ips.duedate::timestamp without time zone) - to_days(i.dateinvoiced::timestamp without time zone) AS netdays, ips.duedate, to_days(now()::timestamp without time zone) - to_days(ips.duedate::timestamp without time zone) AS daysdue, ips.discountdate, ips.discountamt, ips.dueamt * dt.signo_issotrx AS grandtotal, invoicepaid(i.c_invoice_id, i.c_currency_id, 1) * dt.signo_issotrx AS paidamt, invoiceopen(i.c_invoice_id, ips.c_invoicepayschedule_id) * dt.signo_issotrx AS openamt, i.c_currency_id, i.c_conversiontype_id, i.ispayschedulevalid, ips.c_invoicepayschedule_id, i.c_paymentterm_id " +
 			"	  FROM rv_c_invoice i " +
 			"	  JOIN c_invoicepayschedule ips ON i.c_invoice_id = ips.c_invoice_id " +
 			"	  JOIN c_doctype dt on i.c_doctype_id = dt.c_doctype_id " +
@@ -122,7 +122,7 @@ public class EstadoDeCuentaProcess extends SvrProcess {
 			"	  AND i.AD_Client_ID = " + getAD_Client_ID() + 
 			"	  AND i.docstatus IN ('CO', 'CL', 'RE', 'VO') " +			
 			(isShowOpenBalance() ?
-			"     AND to_days(now()) - to_days(ips.duedate) BETWEEN " + daysfrom + " AND " + daysto +
+			"     AND to_days(now()::timestamp without time zone) - to_days(ips.duedate::timestamp without time zone) BETWEEN " + daysfrom + " AND " + daysto +
 			"     AND invoiceopen(i.c_invoice_id, 0) <> 0::numeric " +
 			"	  AND invoiceopen(i.c_invoice_id, ips.c_invoicepayschedule_id) <> 0 " : "" ) +
 			// } isShowOpenBalance
@@ -135,7 +135,7 @@ public class EstadoDeCuentaProcess extends SvrProcess {
 			(bPartnerID!=0?" AND i.c_bpartner_id = " + bPartnerID:"") +
 			(salesRepID!=0?" AND i.salesrep_id = " + salesRepID : "") +
 			"	UNION " +
-			"	  SELECT dt.signo_issotrx, dt.name as tipodoc, p.ad_org_id, p.ad_client_id, p.documentno, p.c_payment_id as doc_id, null as c_order_id, p.c_bpartner_id, bp.name as bpartner, p.isreceipt as issotrx, p.datetrx as datedoc, null AS netdays, null as duedate, to_days(now()) - to_days(p.datetrx) AS daysdue, null as discountdate, null as discountamt, ABS(p.payamt) AS grandtotal, p.allocatedamt AS paidamt, availableamt AS openamt, p.c_currency_id, p.c_conversiontype_id, null as ispayschedulevalid, null as c_invoicepayschedule_id, null as c_paymentterm_id " +
+			"	  SELECT dt.signo_issotrx, dt.name as tipodoc, p.ad_org_id, p.ad_client_id, p.documentno, p.c_payment_id as doc_id, null as c_order_id, p.c_bpartner_id, bp.name as bpartner, p.isreceipt as issotrx, p.datetrx as datedoc, null AS netdays, null as duedate, to_days(now()::timestamp without time zone) - to_days(p.datetrx::timestamp without time zone) AS daysdue, null as discountdate, null as discountamt, ABS(p.payamt) AS grandtotal, p.allocatedamt AS paidamt, availableamt AS openamt, p.c_currency_id, p.c_conversiontype_id, null as ispayschedulevalid, null as c_invoicepayschedule_id, null as c_paymentterm_id " +
 			"	  FROM rv_payment p " +
 			"	  JOIN c_doctype dt on p.c_doctype_id = dt.c_doctype_id   " +
 			"	  JOIN c_bpartner bp on p.c_bpartner_id = bp.c_bpartner_id " +  
@@ -143,7 +143,7 @@ public class EstadoDeCuentaProcess extends SvrProcess {
 			"	  AND p.AD_Client_ID = " + getAD_Client_ID() + 
 			"	  AND p.docstatus IN ('CO', 'CL', 'RE', 'VO') " +
 			(isShowOpenBalance() ?
-			"     AND to_days(now()) - to_days(p.datetrx) BETWEEN " + daysfrom + " AND " + daysto +
+			"     AND to_days(now()::timestamp without time zone) - to_days(p.datetrx::timestamp without time zone) BETWEEN " + daysfrom + " AND " + daysto +
 			"     AND availableamt > 0 " : "" ) +
 			// } isShowOpenBalance 
 			(isShowByDate() ?
@@ -169,13 +169,13 @@ public class EstadoDeCuentaProcess extends SvrProcess {
 				")"	+  
 			")":"") +
 			"	UNION " +
-			"	  SELECT d.signo_issotrx as signo_issotrx, '"+libroDeCaja+"' as tipodoc, d.ad_org_id, d.ad_client_id, d.documentno, d.document_id as doc_id, null as c_order_id, d.c_bpartner_id, bp.name as bpartner, '' as issotrx, d.datetrx as datedoc, null AS netdays, null as duedate, to_days(now()) - to_days(d.datetrx) AS daysdue, null as discountdate, null as discountamt, d.amount AS grandtotal, (abs(d.amount) - abs(cashlineavailable(document_id))) AS paidamt, cashlineavailable(document_id) AS openamt, d.c_currency_id, d.c_conversiontype_id, null as ispayschedulevalid, null as c_invoicepayschedule_id, null as c_paymentterm_id " +
+			"	  SELECT d.signo_issotrx as signo_issotrx, '"+libroDeCaja+"' as tipodoc, d.ad_org_id, d.ad_client_id, d.documentno, d.document_id as doc_id, null as c_order_id, d.c_bpartner_id, bp.name as bpartner, '' as issotrx, d.datetrx as datedoc, null AS netdays, null as duedate, to_days(now()::timestamp without time zone) - to_days(d.datetrx::timestamp without time zone) AS daysdue, null as discountdate, null as discountamt, d.amount AS grandtotal, (abs(d.amount) - abs(cashlineavailable(document_id))) AS paidamt, cashlineavailable(document_id) AS openamt, d.c_currency_id, d.c_conversiontype_id, null as ispayschedulevalid, null as c_invoicepayschedule_id, null as c_paymentterm_id " +
 			"	  FROM v_documents d " +
 			"	  JOIN c_bpartner bp on d.c_bpartner_id = bp.c_bpartner_id " +  
 			"	  WHERE d.DocumentTable = 'C_CashLine'  " +
 			"	  AND d.AD_Client_ID = " + getAD_Client_ID() + 
 			(isShowOpenBalance() ?
-			"     AND to_days(now()) - to_days(d.datetrx) BETWEEN " + daysfrom + " AND " + daysto +
+			"     AND to_days(now()::timestamp without time zone) - to_days(d.datetrx::timestamp without time zone) BETWEEN " + daysfrom + " AND " + daysto +
 			"     AND cashlineavailable(d.document_id) <> 0 " : "" ) +
 			// } isShowOpenBalance
 			(isShowByDate() ?

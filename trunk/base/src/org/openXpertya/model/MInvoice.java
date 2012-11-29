@@ -1707,9 +1707,11 @@ public class MInvoice extends X_C_Invoice implements DocAction {
 			}
 			
 			if (isSOTrx()) { // partner -> customer, empresa -> vendor
-				setC_Letra_Comprobante_ID(CalloutInvoiceExt.darLetraComprobante(categoriaIvaPartner, categoriaIvaClient));
+				Integer letra = CalloutInvoiceExt.darLetraComprobante(categoriaIvaPartner, categoriaIvaClient);
+				setC_Letra_Comprobante_ID(letra == null?0:letra);
 			} else { // empresa -> customer, partner -> vendor
-				setC_Letra_Comprobante_ID(CalloutInvoiceExt.darLetraComprobante(categoriaIvaClient, categoriaIvaPartner));
+				Integer letra = CalloutInvoiceExt.darLetraComprobante(categoriaIvaClient, categoriaIvaPartner);
+				setC_Letra_Comprobante_ID(letra == null?0:letra);
 			}
 		}
 		
@@ -2334,7 +2336,7 @@ public class MInvoice extends X_C_Invoice implements DocAction {
 				e.printStackTrace();
 			}
 		}
-
+		
 		// Esquemas de pagos
 		// Si se modificó el campo del esquema de vencimientos entonces
 		// actualizo el esquema de pagos de la factura
@@ -2346,6 +2348,8 @@ public class MInvoice extends X_C_Invoice implements DocAction {
 					invoiceUpdated.get_TrxName());
 			return pt.apply(invoiceUpdated);
 		}
+		
+		
 
 		return true;
 	} // afterSave
