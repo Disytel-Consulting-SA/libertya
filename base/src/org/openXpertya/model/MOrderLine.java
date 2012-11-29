@@ -51,6 +51,11 @@ public class MOrderLine extends X_C_OrderLine {
 	private Integer lineManualDiscountID;
 	
 	/**
+	 * Flag para controlar el stock
+	 */
+	private boolean controlStock = true;
+	
+	/**
 	 * Lugar de Retiro. Utilizado para evitar reserva de stock en pedidos que se
 	 * retiran por TPV. Por defecto el lugar de retiro es Almacén lo cual
 	 * implica que para esta línea se hará la reserva de stock normalmente. Si
@@ -804,7 +809,7 @@ public class MOrderLine extends X_C_OrderLine {
          * seleccionar un conjunto de atributos cuyo 
          * stockage sea menor que el indicado en la linea.
          */
-        if (o.isSOTrx() && getM_AttributeSetInstance_ID() != 0) {
+        if (isControlStock() && o.isSOTrx() && getM_AttributeSetInstance_ID() != 0) {
 	        // BigDecimal avQty = (BigDecimal)DB.getSQLObject(get_TrxName(), "SELECT COALESCE(SUM(QtyOnHand-QtyReserved), 0.0) FROM M_Storage INNER JOIN M_Locator ON (M_Locator.M_Warehouse_ID=M_Storage.M_Locator_ID) WHERE ? IN (M_AttributeSetInstance_ID,0) AND M_Product_ID = ? AND M_Locator.M_Warehouse_ID = ? ", new Object[]{getM_AttributeSetInstance_ID(), getM_Product_ID(), getM_Warehouse_ID()});
         	// BigDecimal avQty = MStorage.get(getCtx(), getM_Locator_ID(), getM_Product_ID(), getM_AttributeSetInstance_ID(), get_TrxName());
         	BigDecimal avQty = MStorage.getQtyAvailable(getM_Warehouse_ID(), getM_Product_ID(), getM_AttributeSetInstance_ID(), get_TrxName());
@@ -1677,6 +1682,14 @@ public class MOrderLine extends X_C_OrderLine {
 		}
 		
 		return instanceName;
+	}
+
+	public boolean isControlStock() {
+		return controlStock;
+	}
+
+	public void setControlStock(boolean controlStock) {
+		this.controlStock = controlStock;
 	}
 }    // MOrderLine
 
