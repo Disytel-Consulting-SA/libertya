@@ -362,7 +362,7 @@ public class LibroIVANewDataSource implements JRDataSource {
 	 */
 	protected String getOrgCheck()
 	{
-		return (p_orgID > 0 ? " AND AD_Org_ID = " + p_orgID : " AND AD_Org_ID <> 1010072 ") + " ";
+		return (p_orgID > 0 ? " AND AD_Org_ID = " + p_orgID : "") + " ";
 	}
 
 	public boolean next() throws JRException {
