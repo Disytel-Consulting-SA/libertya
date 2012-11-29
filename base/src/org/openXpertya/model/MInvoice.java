@@ -5308,15 +5308,16 @@ public class MInvoice extends X_C_Invoice implements DocAction {
 	
 	private static String getDocTypeBaseKey(String tipoComprobante){
 		if(tipoComprobante != null){
-			if ("FC".compareToIgnoreCase(tipoComprobante) == 0) 			
-				return "CI";
+			if (MInvoice.TIPOCOMPROBANTE_Factura.compareToIgnoreCase(tipoComprobante) == 0) 			
+				return MDocType.DOCTYPE_CustomerInvoice;
 			else
-				if ("ND".compareToIgnoreCase(tipoComprobante) == 0) 			
-					return "CDN";
+				if (MInvoice.TIPOCOMPROBANTE_NotaDeDébito.compareToIgnoreCase(tipoComprobante) == 0) 			
+					return MDocType.DOCTYPE_CustomerDebitNote;
 				else
-					if ("NC".compareToIgnoreCase(tipoComprobante) == 0) 			
-						return "CCN";
+					if (MInvoice.TIPOCOMPROBANTE_NotaDeCrédito.compareToIgnoreCase(tipoComprobante) == 0) 			
+						return MDocType.DOCTYPE_CustomerCreditNote;
 		}
+		
 		return "";
 	}
 	
