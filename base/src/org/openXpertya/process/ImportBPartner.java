@@ -229,6 +229,10 @@ public class ImportBPartner extends SvrProcess {
         no = DB.executeUpdate( sql.toString());
         log.fine( "Set AD_Org_Contact_ID=" + no );
         
+        sql = new StringBuffer( "UPDATE I_BPartner i " + "SET I_IsImported='E', I_ErrorMsg=I_ErrorMsg||'"+ getMsg("ImportBPInvalidContactOrg")+". ' " + "WHERE AD_Org_Contact_ID IS NULL AND ContactName IS NOT NULL" + " AND I_IsImported<>'Y'" ).append( clientCheck );
+        no = DB.executeUpdate( sql.toString());
+        log.config( "Invalid Contact Org=" + no );
+        
         // Comercial / Usuario
         sql = new StringBuffer( "UPDATE I_BPartner i " + 
         					    "SET SalesRep_ID=(SELECT AD_User_ID " +
