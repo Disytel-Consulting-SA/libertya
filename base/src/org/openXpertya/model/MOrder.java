@@ -36,9 +36,11 @@ import org.openXpertya.model.DiscountCalculator.IDocumentLine;
 import org.openXpertya.process.DocAction;
 import org.openXpertya.process.DocumentEngine;
 import org.openXpertya.process.ProcessInfo;
+import org.openXpertya.reflection.CallResult;
 import org.openXpertya.util.CLogger;
 import org.openXpertya.util.DB;
 import org.openXpertya.util.Env;
+import org.openXpertya.util.HTMLMsg;
 import org.openXpertya.util.MProductCache;
 import org.openXpertya.util.Msg;
 import org.openXpertya.util.StringUtil;
@@ -1221,29 +1223,6 @@ public class MOrder extends X_C_Order implements DocAction {
     //saber la cantidad de lineas, bueno, solo leer esto con un solo select
     protected boolean beforeSave( boolean newRecord ) 
     {
-    	//si el registro es nuevo, no pueden haber lineas, no tiene sentido el chequeo
-    	//si ni la lista de precios ni la moneda cambio, tampoco hay que hacer el chequoe
-    	boolean needCheckQtyLines =
-    		!newRecord && 
-    		(is_ValueChanged( "M_PriceList_ID" ) ||
-    		is_ValueChanged( "C_Currency_ID" ));
-    	if (needCheckQtyLines) //si newRecord necesariamete se tiene 0 lineas
-    	{
-      		int qtyLines = getQtyLinesFromDB();
-      	  	// Disytel: Si ya se incorporaron lineas, no permitir el cambio de la tarifa
-      		if (is_ValueChanged( "M_PriceList_ID" ) && qtyLines > 0 )
-      		{
-      			log.saveError( "Error",Msg.getMsg( getCtx(),"PriceListChangedLinesAlreadyLoaded" ));
-      			return false;
-    		}
-      		// Disytel: Si ya se incorporaron lineas, no permitir el cambio de la moneda destino
-      		if (is_ValueChanged( "C_Currency_ID" ) && qtyLines > 0 )
-      		{
-      			log.saveError( "Error", Msg.getMsg( getCtx(),"CurrencyChangedLinesAlreadyLoaded" ));
-      			return false;
-      		}        
-    	}
-		
     	// Client/Org Check
         if( getAD_Org_ID() == 0 ) {
             int context_AD_Org_ID = Env.getAD_Org_ID( getCtx());
@@ -1362,6 +1341,33 @@ public class MOrder extends X_C_Order implements DocAction {
             }
         }
         
+        MDocType docType = MDocType.get(getCtx(), getC_DocTypeTarget_ID(), get_TrxName());
+        //si el registro es nuevo, no pueden haber lineas, no tiene sentido el chequeo
+    	//si ni la lista de precios ni la moneda cambio, tampoco hay que hacer el chequoe
+    	boolean needCheckQtyLines =
+    		!newRecord && 
+    		(is_ValueChanged( "M_PriceList_ID" ) ||
+    		is_ValueChanged( "C_Currency_ID" ));
+    	if (needCheckQtyLines) //si newRecord necesariamete se tiene 0 lineas
+    	{
+      		int qtyLines = getQtyLinesFromDB();
+			// Disytel: Si ya se incorporaron lineas, no permitir el cambio de
+			// la tarifa. Siempre y cuando el flag del tipo de documento que
+			// permite cambiar la tarifa se encuentre activo 
+			if (is_ValueChanged("M_PriceList_ID") && qtyLines > 0
+					&& !docType.isAllowChangePriceList())
+      		{
+      			log.saveError( "Error",Msg.getMsg( getCtx(),"PriceListChangedLinesAlreadyLoadedConfig" ));
+      			return false;
+    		}
+      		// Disytel: Si ya se incorporaron lineas, no permitir el cambio de la moneda destino
+      		if (is_ValueChanged( "C_Currency_ID" ) && qtyLines > 0 )
+      		{
+      			log.saveError( "Error", Msg.getMsg( getCtx(),"CurrencyChangedLinesAlreadyLoaded" ));
+      			return false;
+      		}        
+    	}
+        
         //TODO: cambiar esto para usa cache....
         // Disytel: Si no hay conversion, no permitir seleccionar moneda destino
         int priceListCurrency = new MPriceList(getCtx(), getM_PriceList_ID(), null).getC_Currency_ID();
@@ -1383,7 +1389,6 @@ public class MOrder extends X_C_Order implements DocAction {
         
 		// Para pedidos transferibles la organización no debe ser igual a la
 		// organización destino y el almacén tampoco debe ser el mismo
-        MDocType docType = MDocType.get(getCtx(), getC_DocTypeTarget_ID(), get_TrxName());
 		boolean isOrderTransferred = docType.getDocTypeKey()
 				.equalsIgnoreCase(MDocType.DOCTYPE_Pedido_Transferible);
 		if(isOrderTransferred){
@@ -1398,9 +1403,102 @@ public class MOrder extends X_C_Order implements DocAction {
 				return false;
 			}
 		}
+		
+		// Si cambió la tarifa, entonces actualizar todos los precios de las
+		// líneas
+		// Se debe validar a su vez que todos los artículos existan dentro de la
+		// tarifa, sino error
+		if (!newRecord && is_ValueChanged("M_PriceList_ID")
+				&& docType.isAllowChangePriceList()
+				&& (MOrder.DOCSTATUS_Drafted.equals(getDocStatus()) 
+						|| MOrder.DOCSTATUS_InProgress.equals(getDocStatus()))) {
+			// Verificar los artículos que no se encuentran dentro de la tarifa
+			// seleccionada y abortar si es que existe alguno
+			CallResult result = isAllProductsInPriceList(); 
+			if(result.isError()){
+				log.saveError("SaveError", result.getMsg());
+				return false;
+			}
+			// Iterar por las líneas y modifico sus precios
+			MProductPricing pp;
+			for (MOrderLine orderLine : getLines()) {
+				pp = new MProductPricing(orderLine.getM_Product_ID(),
+						getC_BPartner_ID(), orderLine.getQtyEntered(),
+						isSOTrx());
+				pp.setM_PriceList_ID(getM_PriceList_ID());
+				orderLine.setPriceList(pp.getPriceList());
+				orderLine.setPrice(pp.getPriceStd());
+				orderLine.setPriceLimit(pp.getPriceLimit());
+				if(!orderLine.save()){
+					log.saveError("SaveError", CLogger.retrieveErrorAsString());
+					return false;
+				}
+			}
+			// Actualizar el neto y el total del pedido
+			calculateTaxTotal();
+		}
 
         return true;
     }    // beforeSave
+    
+    /**
+     * Verifica si todos los artículos de las líneas se encuentran en la tarifa configurada
+     * @param order
+     * @return
+     */
+    private CallResult isAllProductsInPriceList(){
+    	CallResult result = new CallResult();
+		// Query para determinar los artículos que no están en la lista de
+		// precios
+		String sql = "SELECT p.value, p.name " +
+					 "FROM (SELECT DISTINCT m_product_id " +
+					 "		FROM c_orderline " +
+					 "		WHERE c_order_id = ? " +
+					 "		EXCEPT " +
+					 "		SELECT DISTINCT ol.m_product_id " +
+					 "		FROM c_orderline as ol " +
+					 "		INNER JOIN m_productprice as pp on pp.m_product_id = ol.m_product_id " +
+					 "		INNER JOIN m_pricelist_version as plv on plv.m_pricelist_version_id = pp.m_pricelist_version_id " +
+					 "		WHERE ol.c_order_id = ? AND plv.m_pricelist_id = ? AND pp.isactive = 'Y') as ne " +
+					 "INNER JOIN m_product as p on p.m_product_id = ne.m_product_id " +
+					 "ORDER BY p.value";
+		PreparedStatement ps = null;
+		ResultSet rs = null;
+		boolean allInPriceList = true;
+		HTMLMsg msg = new HTMLMsg();
+		HTMLMsg.HTMLList productList = msg.createList("products", "ul",
+				Msg.getMsg(getCtx(), "ProductsNotInPriceList"));  
+		try {
+			ps = DB.prepareStatement(sql, get_TrxName());
+			ps.setInt(1, getID());
+			ps.setInt(2, getID());
+			ps.setInt(3, getM_PriceList_ID());
+			rs = ps.executeQuery();
+			while (rs.next()) {
+				allInPriceList = false;
+				// Agregar artículo a la lista
+				msg.createAndAddListElement(rs.getString("value"),
+						rs.getString("value") + " - " + rs.getString("name"),
+						productList);
+			}
+			msg.addList(productList);
+		} catch (Exception e) {
+			getLog().severe(e.getMessage());
+		} finally{
+			try {
+				if(rs != null)rs.close();
+				if(ps != null)ps.close();
+			} catch (Exception e2) {
+				getLog().severe(e2.getMessage());
+			}
+		}
+		
+		if(!allInPriceList){
+			result.setMsg(msg.toString(), true);
+		}
+		
+		return result;
+	}
     
     /**
      * Descripción de Método
@@ -1442,6 +1540,7 @@ public class MOrder extends X_C_Order implements DocAction {
 
             log.fine( "Description -> #" + no );
         }
+        
         // Propagate Changes of Payment Info to existing (not reversed/closed) invoices
 
         if( is_ValueChanged( "PaymentRule" ) || is_ValueChanged( "C_PaymentTerm_ID" ) || is_ValueChanged( "DateAcct" ) || is_ValueChanged( "C_Payment_ID" ) || is_ValueChanged( "C_CashLine_ID" )) {

@@ -7,7 +7,7 @@ import java.math.*;
 import org.openXpertya.util.*;
 /** Modelo Generado por C_DocType
  *  @author Comunidad de Desarrollo Libertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
- *  @version  - 2012-07-09 20:10:41.06 */
+ *  @version  - 2012-12-03 18:11:09.362 */
 public class X_C_DocType extends org.openXpertya.model.PO
 {
 /** Constructor estándar */
@@ -16,6 +16,7 @@ public X_C_DocType (Properties ctx, int C_DocType_ID, String trxName)
 super (ctx, C_DocType_ID, trxName);
 /** if (C_DocType_ID == 0)
 {
+setAllowChangePriceList (false);
 setC_DocType_ID (0);
 setDocBaseType (null);
 setDocTypeKey (null);
@@ -121,6 +122,24 @@ public int getAD_Process_ID()
 Integer ii = (Integer)get_Value("AD_Process_ID");
 if (ii == null) return 0;
 return ii.intValue();
+}
+/** Set Allow Change Price List.
+Change price list is allowed in document. All prices in lines will be overwritten */
+public void setAllowChangePriceList (boolean AllowChangePriceList)
+{
+set_Value ("AllowChangePriceList", new Boolean(AllowChangePriceList));
+}
+/** Get Allow Change Price List.
+Change price list is allowed in document. All prices in lines will be overwritten */
+public boolean isAllowChangePriceList() 
+{
+Object oo = get_Value("AllowChangePriceList");
+if (oo != null) 
+{
+ if (oo instanceof Boolean) return ((Boolean)oo).booleanValue();
+ return "Y".equals(oo);
+}
+return false;
 }
 /** Set C_Controlador_Fiscal_ID */
 public void setC_Controlador_Fiscal_ID (int C_Controlador_Fiscal_ID)

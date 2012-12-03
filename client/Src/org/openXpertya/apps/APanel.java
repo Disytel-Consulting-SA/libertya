@@ -1702,6 +1702,7 @@ public final class APanel extends CPanel implements DataStatusListener,ChangeLis
     private void cmd_ignore() {
         m_curGC.stopEditor( false );
         m_curTab.dataIgnore();
+        m_curTab.clearCurrentRecordWarning();
         m_curGC.dynamicDisplay( 0 );
     }    // cmd_ignore
 

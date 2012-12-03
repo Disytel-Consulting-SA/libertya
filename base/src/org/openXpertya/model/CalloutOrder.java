@@ -82,7 +82,7 @@ public class CalloutOrder extends CalloutEngine {
         try {
             String SQL            = "SELECT d.DocSubTypeSO,d.HasCharges,'N',"                        // 1..3
                                     + "d.IsDocNoControlled,s.CurrentNext,s.CurrentNextSys,"          // 4..6
-                                    + "s.AD_Sequence_ID,d.IsSOTrx "                                  // 7..8
+                                    + "s.AD_Sequence_ID,d.IsSOTrx, d.AllowChangePriceList "                                  // 7..8
                                     + "FROM C_DocType d, AD_Sequence s " + "WHERE C_DocType_ID=?"    // #1
                                     + " AND d.DocNoSequence_ID=s.AD_Sequence_ID(+)";
             int    AD_Sequence_ID = 0;
@@ -805,6 +805,93 @@ public class CalloutOrder extends CalloutEngine {
             log.warning( "priceList - fini" );
         }
 
+		// Verificar si el tipo de documento permite modificar la tarifa, en ese
+		// caso, se debe avisar con un warning si existen líneas con precios
+		// modificados
+        Integer docTypeID = (Integer)mTab.getValue("C_DocTypeTarget_ID");
+        if(!Util.isEmpty(docTypeID, true)){
+        	MDocType docType = new MDocType(ctx, docTypeID, null);
+        	if(docType.isAllowChangePriceList()){
+        		boolean isSOTrx = docType.isSOTrx(); 
+        		// Si el id del pedido no existe es porque es un registro nuevo
+        		Integer orderID = (Integer)mTab.getValue("C_Order_ID");        		
+        		StringBuffer msg = new StringBuffer(Msg.getMsg(ctx, "ProductsPriceListDiffersPriceActualWarn"));
+        		boolean showWarn = false;
+        		if(isSOTrx && !Util.isEmpty(orderID,true)){
+					// La tarifa nueva debe ser distinta a la que tiene el
+					// pedido en la base, sino no modifico los valores
+        			MOrder order = new MOrder(ctx, orderID, null);
+					if (order.getM_PriceList_ID() != M_PriceList_ID
+							&& (MOrder.DOCSTATUS_Drafted.equals(order.getDocStatus()) 
+									|| MOrder.DOCSTATUS_InProgress.equals(order.getDocStatus()))) {
+        				String lineNoMsg = Msg.getElement(ctx, "Line");
+            			String productMsg = Msg.getElement(ctx, "M_Product_ID");
+            			String priceActualMsg = Msg.getElement(ctx, "PriceActual");
+            			// Verificar los artículos que pertenecen al pedido que poseen el
+            			// precio modificado
+            			PreparedStatement ps = null;
+            			ResultSet rs = null;
+            			String sql = "SELECT ol.line, p.value, p.name, ol.pricelist, ol.priceactual " +
+            						 "FROM c_orderline as ol " +
+            						 "INNER JOIN m_product as p on ol.m_product_id = p.m_product_id " +
+            						 "WHERE c_order_id = ? AND ol.priceactual <> ol.pricelist " +
+            						 "ORDER BY ol.line";
+            			try {
+            				ps = DB.prepareStatement(sql);
+            				ps.setInt(1, orderID);
+            				rs = ps.executeQuery();
+            				HTMLMsg linesMsg = new HTMLMsg();
+            				HTMLMsg.HTMLList lineList;
+            				int listID = 0;
+            				int lineID;
+            				while(rs.next()){
+            					showWarn = true;
+            					lineID = 0;
+            					// Crea la lista
+            					lineList = linesMsg.createList("list_"+listID, "ul");
+            					// Nro de Línea
+            					linesMsg.createAndAddListElement("linelist_" + lineID++,
+            							lineNoMsg + ": " + rs.getString("line"), lineList);
+            					// Artículo
+            					linesMsg.createAndAddListElement("linelist_" + lineID++,
+            							productMsg + ": " + rs.getString("value") + " - "
+            									+ rs.getString("name"), lineList);
+            					// Precio actual
+            					linesMsg.createAndAddListElement(
+            							"linelist_" + lineID++,
+            							priceActualMsg
+            									+ ": "
+            									+ String.valueOf(rs
+            											.getBigDecimal("priceactual")),
+            							lineList);
+            					// Agrego la lista al mensaje
+            					linesMsg.addList(lineList);
+            					listID++;
+            				}
+            				msg.append(linesMsg.toString());
+            				msg.append(Msg.getMsg(ctx, "SaveChanges?"));
+            			} catch (Exception e) {
+            				log.severe(e.getMessage());
+            			} finally{
+            				try {
+            					if(rs != null)rs.close();
+            					if(ps != null)ps.close();
+            				} catch (Exception e2) {
+            					log.severe(e2.getMessage());
+            				}
+            			}
+        			}
+        		}
+        		
+        		if(showWarn){
+        			mTab.setCurrentRecordWarning(msg.toString());
+        		}
+        		else{
+        			mTab.clearCurrentRecordWarning();
+        		}
+        	}
+        }
+        
         return "";
     }    // priceList
 
