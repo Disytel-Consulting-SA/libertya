@@ -250,7 +250,8 @@ public class VOrdenCobroModel extends VOrdenPagoModel {
 		entidadFinancieraPlans = new HashMap<Integer, List<MEntidadFinancieraPlan>>();
 		List<MEntidadFinancieraPlan> plans = null;
 		for (MEntidadFinancieraPlan mEntidadFinancieraPlan : eFPlans) {
-			plans = entidadFinancieraPlans.get(mEntidadFinancieraPlan.getID());
+			plans = entidadFinancieraPlans.get(mEntidadFinancieraPlan
+					.getM_EntidadFinanciera_ID());
 			if(plans == null){
 				plans = new ArrayList<MEntidadFinancieraPlan>();
 			}
