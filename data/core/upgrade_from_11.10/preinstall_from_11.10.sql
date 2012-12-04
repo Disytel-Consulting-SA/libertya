@@ -5100,4 +5100,11 @@ CREATE OR REPLACE VIEW rv_storage_product AS
 	name, 
 	m_product_category_id, 
 	m_warehouse_id;
-ALTER TABLE rv_storage_product OWNER TO libertya;	
+ALTER TABLE rv_storage_product OWNER TO libertya;
+
+--20121203-2107 Fix a función to_days por actualización de librerías de cliente postgresql
+CREATE OR REPLACE FUNCTION to_days(timestamp without time zone)
+  RETURNS integer AS
+$BODY$SELECT DATE_PART('DAY', $1 - '0001-01-01bc')::integer AS result$BODY$
+  LANGUAGE 'sql' VOLATILE;
+ALTER FUNCTION to_days(timestamp without time zone) OWNER TO libertya;
