@@ -4478,8 +4478,9 @@ public class PoSMainForm extends CPanel implements FormPanel, ASyncProcess, Disp
 		   getOrder().getBusinessPartner().getId() != bPartnerID) {
 			
 			BusinessPartner bp = getModel().getBPartner(bPartnerID);
-			getOrder().setOtherTaxes(getModel().loadBPOtherTaxes(bp));
 			getOrder().setBusinessPartner(bp);
+			getModel().getOtherTaxes();
+			getOrder().setOtherTaxes(getModel().loadBPOtherTaxes(bp));
 		}
 		
 		getCTaxIdText().setText("");
