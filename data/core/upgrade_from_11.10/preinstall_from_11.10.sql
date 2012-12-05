@@ -5108,3 +5108,6 @@ CREATE OR REPLACE FUNCTION to_days(timestamp without time zone)
 $BODY$SELECT DATE_PART('DAY', $1 - '0001-01-01bc')::integer AS result$BODY$
   LANGUAGE 'sql' VOLATILE;
 ALTER FUNCTION to_days(timestamp without time zone) OWNER TO libertya;
+
+--20121204-2306 Nueva columna que permite modificar las tarifas en los documentos de pedidos
+update ad_system set dummy = (SELECT addcolumnifnotexists('c_doctype','allowchangepricelist', 'character(1) NOT NULL DEFAULT \'N\'::bpchar'));
