@@ -2424,8 +2424,8 @@ public class PoSOnline extends PoSConnectionState {
 			loadOrderLines(order);
 		}
 		
-		order.setOtherTaxes(getOtherTaxes(order.getDiscountableOrderWrapper()));
 		order.setBusinessPartner(bPartner);
+		order.setOtherTaxes(getOtherTaxes(order.getDiscountableOrderWrapper()));
 		
 		return order;
 	}
