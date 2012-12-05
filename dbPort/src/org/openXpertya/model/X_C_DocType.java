@@ -7,7 +7,7 @@ import java.math.*;
 import org.openXpertya.util.*;
 /** Modelo Generado por C_DocType
  *  @author Comunidad de Desarrollo Libertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
- *  @version  - 2012-12-03 18:11:09.362 */
+ *  @version  - 2012-12-04 23:30:42.007 */
 public class X_C_DocType extends org.openXpertya.model.PO
 {
 /** Constructor estándar */
@@ -25,6 +25,7 @@ setDragOrderDocumentDiscounts (false);
 setDragOrderLineDiscounts (false);
 setDragOrderPrice (false);
 setEnabledInPOS (false);
+setEnableInCreateFromShipment (false);
 setFiscalDocument (null);
 setGL_Category_ID (0);
 setHasCharges (false);
@@ -564,6 +565,22 @@ Document enable to use in POS */
 public boolean isEnabledInPOS() 
 {
 Object oo = get_Value("EnabledInPOS");
+if (oo != null) 
+{
+ if (oo instanceof Boolean) return ((Boolean)oo).booleanValue();
+ return "Y".equals(oo);
+}
+return false;
+}
+/** Set Enable In Create From Shipment */
+public void setEnableInCreateFromShipment (boolean EnableInCreateFromShipment)
+{
+set_Value ("EnableInCreateFromShipment", new Boolean(EnableInCreateFromShipment));
+}
+/** Get Enable In Create From Shipment */
+public boolean isEnableInCreateFromShipment() 
+{
+Object oo = get_Value("EnableInCreateFromShipment");
 if (oo != null) 
 {
  if (oo instanceof Boolean) return ((Boolean)oo).booleanValue();
