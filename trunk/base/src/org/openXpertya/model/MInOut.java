@@ -3044,10 +3044,10 @@ public class MInOut extends X_M_InOut implements DocAction {
 				.append(inout.getMovementType()).append("') > 0)")
 				.append(")")
 				.append(" AND ")
-				.append("(C_Order.C_DocType_ID NOT IN ")
+				.append("(C_Order.C_DocType_ID IN ")
 				.append("(SELECT C_DocType_ID ")
 				.append("FROM C_DocType ")
-				.append("WHERE C_DocType.DocSubTypeSO IN ('ON')))");
+				.append("WHERE C_DocType.EnableInCreateFromShipment = 'Y'))");
 		return filter.toString();
 	}
 

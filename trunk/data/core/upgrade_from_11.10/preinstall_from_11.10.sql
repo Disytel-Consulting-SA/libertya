@@ -5111,3 +5111,10 @@ ALTER FUNCTION to_days(timestamp without time zone) OWNER TO libertya;
 
 --20121204-2306 Nueva columna que permite modificar las tarifas en los documentos de pedidos
 update ad_system set dummy = (SELECT addcolumnifnotexists('c_doctype','allowchangepricelist', 'character(1) NOT NULL DEFAULT \'N\'::bpchar'));
+
+--20121204-2315 Nueva columna que permite filtrar tipos de documento de pedidos en el Crear Desde de Remitos
+update ad_system set dummy = (SELECT addcolumnifnotexists('c_doctype','enableincreatefromshipment', 'character(1) NOT NULL DEFAULT \'N\'::bpchar'));
+
+UPDATE c_doctype
+SET enableincreatefromshipment = 'Y'
+WHERE doctypekey IN ('POO','SOSO', 'SOSOTD');
