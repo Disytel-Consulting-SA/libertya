@@ -5118,3 +5118,15 @@ update ad_system set dummy = (SELECT addcolumnifnotexists('c_doctype','enableinc
 UPDATE c_doctype
 SET enableincreatefromshipment = 'Y'
 WHERE doctypekey IN ('POO','SOSO', 'SOSOTD');
+
+--20121209-2100 Nueva columna que permite marcar la Tarifa con percepciones incluidas en el precio
+ALTER TABLE M_PriceList ADD COLUMN isperceptionsincluded character(1) NOT NULL DEFAULT 'N'::bpchar;
+
+--20121209-2100 Incorporación de columna isperceptionsincluded a la tabla C_InvoiceTax
+ALTER TABLE C_InvoiceTax ADD COLUMN isperceptionsincluded character(1) NOT NULL DEFAULT 'N'::bpchar;
+
+--20121209-2100 Incorporación de columna linenetamount a la tabla C_InvoiceLine
+update ad_system set dummy = (SELECT addcolumnifnotexists('c_invoiceline','linenetamount', 'numeric(22,2) NOT NULL DEFAULT 0'));
+
+-- 20121209-2215 Incorporación de columna linenetamount a la tabla C_InvoiceLine
+update ad_system set dummy = (SELECT addcolumnifnotexists('I_Padron_Sujeto','padrontype', 'character(1)'));

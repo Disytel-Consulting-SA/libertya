@@ -913,6 +913,7 @@ public class PoSOnline extends PoSConnectionState {
 						M_AttributeSetInstance_ID, 
 						masiDescription, 
 						getPoSCOnfig().isPriceListWithTax(), 
+						getPoSCOnfig().isPriceListWithPerception(),
 						masiMandatory, 
 						rs.getInt("m_product_category_id"), 
 						vendors,
@@ -2347,6 +2348,7 @@ public class PoSOnline extends PoSConnectionState {
 								attributeSetInstanceId, 
 								masiDescription, 
 								getPoSCOnfig().isPriceListWithTax(), 
+								getPoSCOnfig().isPriceListWithPerception(),
 								masiMandatory, 
 								rs.getInt("m_product_category_id"), 
 								vendorsIDs,
@@ -2541,7 +2543,7 @@ public class PoSOnline extends PoSConnectionState {
 		MPriceList mPriceList;
 		for (PO priceList : priceLists) {
 			mPriceList = (MPriceList)priceList; 
-			newPriceList = new PriceList(mPriceList.getID(),mPriceList.getName(),mPriceList.getDescription(),mPriceList.getC_Currency_ID(),mPriceList.isTaxIncluded(),mPriceList.isSOPriceList(),mPriceList.isDefault(),mPriceList.getPricePrecision());
+			newPriceList = new PriceList(mPriceList.getID(),mPriceList.getName(),mPriceList.getDescription(),mPriceList.getC_Currency_ID(),mPriceList.isTaxIncluded(),mPriceList.isPerceptionsIncluded(),mPriceList.isSOPriceList(),mPriceList.isDefault(),mPriceList.getPricePrecision());
 			lists.add(newPriceList);
 		}
 		return lists;
@@ -2550,7 +2552,7 @@ public class PoSOnline extends PoSConnectionState {
 	@Override
 	public PriceList getCurrentPriceList(int windowNo) {
 		MPriceList priceList = new MPriceList(Env.getCtx(), Env.getContextAsInt(Env.getCtx(), windowNo, "M_PriceList_ID"), null);
-		PriceList newPriceList = new PriceList(priceList.getID(),priceList.getName(), priceList.getDescription(),priceList.getC_Currency_ID(),priceList.isTaxIncluded(),priceList.isSOPriceList(),priceList.isDefault(),priceList.getPricePrecision());
+		PriceList newPriceList = new PriceList(priceList.getID(),priceList.getName(), priceList.getDescription(),priceList.getC_Currency_ID(),priceList.isTaxIncluded(),priceList.isPerceptionsIncluded(),priceList.isSOPriceList(),priceList.isDefault(),priceList.getPricePrecision());
 		return newPriceList;
 	}
 

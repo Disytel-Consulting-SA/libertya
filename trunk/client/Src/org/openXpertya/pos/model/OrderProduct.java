@@ -212,8 +212,10 @@ public class OrderProduct {
 			taxedPrice = price.add(price.multiply(getTax().getTaxRateMultiplier()));
 		}
 		
-		// Sumo el monto con los otros impuestos
-		taxedPrice = taxedPrice.add(getOtherTaxesAmt(getNetPrice(taxedPrice)));
+		if (!getProduct().isPerceptionIncludedInPrice()){
+			// Sumo el monto con los otros impuestos
+			taxedPrice = taxedPrice.add(getOtherTaxesAmt(getNetPrice(taxedPrice)));	
+		}
 		
 		return scalePrice(taxedPrice);
 	}

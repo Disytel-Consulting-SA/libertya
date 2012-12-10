@@ -3106,10 +3106,10 @@ public class MInvoice extends X_C_Invoice implements DocAction {
 
 		// Recalculo el total a partir del importe del cargo
 		grandTotal = grandTotal.add(getChargeAmt());
-
+		
 		setTotalLines(totalLines);
 		setGrandTotal(grandTotal);
-
+		
 		// Calcular las percepciones
 		try {
 			recalculatePercepciones();
@@ -4545,7 +4545,16 @@ public class MInvoice extends X_C_Invoice implements DocAction {
 		BigDecimal total = Env.ZERO;
 		for (MInvoiceLine invoiceLine : getLines()) {
 			// Total de líneas sin impuestos
-			total = total.add(invoiceLine.getTotalPriceEnteredNet());
+			total = total.add(invoiceLine.getTotalPriceEnteredNet());	
+		}
+		return total;
+	}
+	
+	public BigDecimal getTotalLinesNetPerceptionIncluded() {
+		BigDecimal total = Env.ZERO;
+		for (MInvoiceLine invoiceLine : getLines()) {
+			// Total de líneas sin impuestos
+			total = total.add(invoiceLine.getLineNetAmount());
 		}
 		return total;
 	}
@@ -4825,6 +4834,16 @@ public class MInvoice extends X_C_Invoice implements DocAction {
 		MPriceList pl = MPriceList.get(getCtx(), getM_PriceList_ID(),
 				get_TrxName());
 		return pl.isTaxIncluded();
+	}
+	
+	/**
+	 * @return true si la lista de precios asociada tiene el impuesto de percepciones incluído
+	 *         en el precio, false caso contrario
+	 */
+	public boolean isPerceptionsIncluded() {
+		MPriceList pl = MPriceList.get(getCtx(), getM_PriceList_ID(),
+				get_TrxName());
+		return pl.isPerceptionsIncluded();
 	}
 
 	/**
@@ -5177,7 +5196,7 @@ public class MInvoice extends X_C_Invoice implements DocAction {
 	
 	public Integer updateGrandTotal(String trxName){
 		String sql = null;
-		if( isTaxIncluded()) {
+		if( isTaxIncluded() ) {
 			// El total es la suma del neto (con impuesto tmb está en el neto),
 			// del monto del cargo y de la suma de los montos de los impuestos
 			// manuales ya que no se tienen en cuenta en el monto con impuesto
@@ -5192,7 +5211,8 @@ public class MInvoice extends X_C_Invoice implements DocAction {
 			// los montos de todos los impuestos relacionados
 			sql = "UPDATE C_Invoice i "
 					+ " SET GrandTotal=TotalLines+"
-					+ "(SELECT COALESCE(SUM(TaxAmt),0) FROM C_InvoiceTax it WHERE i.C_Invoice_ID=it.C_Invoice_ID) + ChargeAmt "
+					+ "(SELECT COALESCE(SUM(TaxAmt),0) FROM C_InvoiceTax it inner join c_tax t on t.c_tax_id = it.c_tax_id WHERE i.C_Invoice_ID=it.C_Invoice_ID"
+					+ (isPerceptionsIncluded() ? " and t.ispercepcion <> 'Y')" : ")") +" + ChargeAmt "
 					+ "WHERE C_Invoice_ID=" + getC_Invoice_ID();
         }
 

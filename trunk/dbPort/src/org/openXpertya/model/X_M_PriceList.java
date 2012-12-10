@@ -1,13 +1,14 @@
-/** Modelo Generado - NO CAMBIAR MANUALMENTE - Copyright (C) 2006 FUNDESLE */
+/** Modelo Generado - NO CAMBIAR MANUALMENTE - Disytel */
 package org.openXpertya.model;
-import java.util.*;
+import java.util.logging.Level;
+ import java.util.*;
 import java.sql.*;
 import java.math.*;
 import org.openXpertya.util.*;
 /** Modelo Generado por M_PriceList
- *  @author Comunidad de Desarrollo openXpertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
- *  @version  - 2008-01-03 10:26:38.843 */
-public class X_M_PriceList extends PO
+ *  @author Comunidad de Desarrollo Libertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
+ *  @version  - 2012-12-09 21:11:58.317 */
+public class X_M_PriceList extends org.openXpertya.model.PO
 {
 /** Constructor estándar */
 public X_M_PriceList (Properties ctx, int M_PriceList_ID, String trxName)
@@ -18,6 +19,7 @@ super (ctx, M_PriceList_ID, trxName);
 setC_Currency_ID (0);
 setEnforcePriceLimit (false);
 setIsDefault (false);
+setIsPerceptionsIncluded (false);
 setIsSOPriceList (false);
 setIsTaxIncluded (false);
 setM_PriceList_ID (0);
@@ -31,13 +33,13 @@ public X_M_PriceList (Properties ctx, ResultSet rs, String trxName)
 {
 super (ctx, rs, trxName);
 }
-/** AD_Table_ID=255 */
-public static final int Table_ID=255;
+/** AD_Table_ID */
+public static final int Table_ID = M_Table.getTableID("M_PriceList");
 
 /** TableName=M_PriceList */
 public static final String Table_Name="M_PriceList";
 
-protected static KeyNamePair Model = new KeyNamePair(255,"M_PriceList");
+protected static KeyNamePair Model = new KeyNamePair(Table_ID,"M_PriceList");
 protected static BigDecimal AccessLevel = new BigDecimal(3);
 
 /** Load Meta Data */
@@ -51,7 +53,7 @@ public String toString()
 StringBuffer sb = new StringBuffer ("X_M_PriceList[").append(getID()).append("]");
 return sb.toString();
 }
-public static final int BASEPRICELIST_ID_AD_Reference_ID=166;
+public static final int BASEPRICELIST_ID_AD_Reference_ID = MReference.getReferenceID("M_PriceList");
 /** Set Base Pricelist.
 Pricelist to be used, if product not found on this pricelist */
 public void setBasePriceList_ID (int BasePriceList_ID)
@@ -89,7 +91,7 @@ public void setDescription (String Description)
 if (Description != null && Description.length() > 255)
 {
 log.warning("Length > 255 - truncated");
-Description = Description.substring(0,254);
+Description = Description.substring(0,255);
 }
 set_Value ("Description", Description);
 }
@@ -128,6 +130,22 @@ Default value */
 public boolean isDefault() 
 {
 Object oo = get_Value("IsDefault");
+if (oo != null) 
+{
+ if (oo instanceof Boolean) return ((Boolean)oo).booleanValue();
+ return "Y".equals(oo);
+}
+return false;
+}
+/** Set Is Perceptions Included */
+public void setIsPerceptionsIncluded (boolean IsPerceptionsIncluded)
+{
+set_Value ("IsPerceptionsIncluded", new Boolean(IsPerceptionsIncluded));
+}
+/** Get Is Perceptions Included */
+public boolean isPerceptionsIncluded() 
+{
+Object oo = get_Value("IsPerceptionsIncluded");
 if (oo != null) 
 {
  if (oo instanceof Boolean) return ((Boolean)oo).booleanValue();
@@ -193,7 +211,7 @@ if (Name == null) throw new IllegalArgumentException ("Name is mandatory");
 if (Name.length() > 60)
 {
 log.warning("Length > 60 - truncated");
-Name = Name.substring(0,59);
+Name = Name.substring(0,60);
 }
 set_Value ("Name", Name);
 }

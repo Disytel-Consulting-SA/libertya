@@ -7,7 +7,7 @@ import java.math.*;
 import org.openXpertya.util.*;
 /** Modelo Generado por C_InvoiceLine
  *  @author Comunidad de Desarrollo Libertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
- *  @version  - 2011-09-09 10:51:28.037 */
+ *  @version  - 2012-12-09 21:11:50.3 */
 public class X_C_InvoiceLine extends org.openXpertya.model.PO
 {
 /** Constructor estándar */
@@ -26,6 +26,7 @@ setIsPrinted (true);	// Y
 setLine (0);	// @SQL=SELECT NVL(MAX(Line),0)+10 AS DefaultValue FROM C_InvoiceLine WHERE C_Invoice_ID=@C_Invoice_ID@
 setLineBonusAmt (Env.ZERO);
 setLineDiscountAmt (Env.ZERO);
+setLineNetAmount (Env.ZERO);
 setLineNetAmt (Env.ZERO);
 setM_AttributeSetInstance_ID (0);
 setPriceActual (Env.ZERO);
@@ -332,6 +333,19 @@ BigDecimal bd = (BigDecimal)get_Value("LineDiscountAmt");
 if (bd == null) return Env.ZERO;
 return bd;
 }
+/** Set Line Net Amount */
+public void setLineNetAmount (BigDecimal LineNetAmount)
+{
+if (LineNetAmount == null) throw new IllegalArgumentException ("LineNetAmount is mandatory");
+set_ValueNoCheck ("LineNetAmount", LineNetAmount);
+}
+/** Get Line Net Amount */
+public BigDecimal getLineNetAmount() 
+{
+BigDecimal bd = (BigDecimal)get_Value("LineNetAmount");
+if (bd == null) return Env.ZERO;
+return bd;
+}
 /** Set Line Amount.
 Line Extended Amount (Quantity * Actual Price) without Freight and Charges */
 public void setLineNetAmt (BigDecimal LineNetAmt)
@@ -567,7 +581,7 @@ public boolean insertDirect()
 try 
 {
  
- 		 String sql = " INSERT INTO C_InvoiceLine(A_Asset_ID,AD_Client_ID,AD_Org_ID,C_BPartner_Vendor_ID,C_Charge_ID,C_Invoice_ID,C_InvoiceLine_ID,C_OrderLine_ID,CostPrice,C_Project_ID,Created,CreatedBy,C_Tax_ID,C_UOM_ID,Description,DocumentDiscountAmt,IsActive,IsDescription,IsPrinted,Line,LineBonusAmt,LineDiscountAmt,LineNetAmt,LineTotalAmt,M_AttributeSetInstance_ID,M_InOutLine_ID,M_Product_ID,PriceActual,PriceEntered,PriceLimit,PriceList,Processed,QtyEntered,QtyInvoiced,Ref_InvoiceLine_ID,S_ResourceAssignment_ID,TaxAmt,Updated,UpdatedBy) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?) ";
+ 		 String sql = " INSERT INTO C_InvoiceLine(A_Asset_ID,AD_Client_ID,AD_Org_ID,C_BPartner_Vendor_ID,C_Charge_ID,C_Invoice_ID,C_InvoiceLine_ID,C_OrderLine_ID,CostPrice,C_Project_ID,Created,CreatedBy,C_Tax_ID,C_UOM_ID,Description,DocumentDiscountAmt,IsActive,IsDescription,IsPrinted,Line,LineBonusAmt,LineDiscountAmt,LineNetAmount,LineNetAmt,LineTotalAmt,M_AttributeSetInstance_ID,M_InOutLine_ID,M_Product_ID,PriceActual,PriceEntered,PriceLimit,PriceList,Processed,QtyEntered,QtyInvoiced,Ref_InvoiceLine_ID,S_ResourceAssignment_ID,TaxAmt,Updated,UpdatedBy) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?) ";
 
 		 if (getA_Asset_ID() == 0) sql = sql.replaceFirst("A_Asset_ID,","").replaceFirst("\\?,", "");
  		 if (getAD_Client_ID() == 0) sql = sql.replaceFirst("AD_Client_ID,","").replaceFirst("\\?,", "");
@@ -588,6 +602,7 @@ try
  		 if (getLine() == 0) sql = sql.replaceFirst("Line,","").replaceFirst("\\?,", "");
  		 if (getLineBonusAmt() == null) sql = sql.replaceFirst("LineBonusAmt,","").replaceFirst("\\?,", "");
  		 if (getLineDiscountAmt() == null) sql = sql.replaceFirst("LineDiscountAmt,","").replaceFirst("\\?,", "");
+ 		 if (getLineNetAmount() == null) sql = sql.replaceFirst("LineNetAmount,","").replaceFirst("\\?,", "");
  		 if (getLineNetAmt() == null) sql = sql.replaceFirst("LineNetAmt,","").replaceFirst("\\?,", "");
  		 if (getLineTotalAmt() == null) sql = sql.replaceFirst("LineTotalAmt,","").replaceFirst("\\?,", "");
  		 if (getM_AttributeSetInstance_ID() == 0) sql = sql.replaceFirst("M_AttributeSetInstance_ID,","").replaceFirst("\\?,", "");
@@ -631,6 +646,7 @@ try
 		 if (getLine() != 0) pstmt.setInt(col++, getLine());
 		 if (getLineBonusAmt() != null) pstmt.setBigDecimal(col++, getLineBonusAmt());
 		 if (getLineDiscountAmt() != null) pstmt.setBigDecimal(col++, getLineDiscountAmt());
+		 if (getLineNetAmount() != null) pstmt.setBigDecimal(col++, getLineNetAmount());
 		 if (getLineNetAmt() != null) pstmt.setBigDecimal(col++, getLineNetAmt());
 		 if (getLineTotalAmt() != null) pstmt.setBigDecimal(col++, getLineTotalAmt());
 		 if (getM_AttributeSetInstance_ID() != 0) pstmt.setInt(col++, getM_AttributeSetInstance_ID());

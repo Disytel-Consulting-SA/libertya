@@ -864,6 +864,20 @@ public class MInvoiceLine extends X_C_InvoiceLine {
         MPriceList pl = MPriceList.get( getCtx(),m_M_PriceList_ID,get_TrxName());
         return pl.isTaxIncluded();
     }    // isTaxIncluded
+    
+    /**
+     * Descripción de Método
+     *
+     *
+     * @return
+     */
+    public boolean isPerceptionsIncluded() {
+		m_M_PriceList_ID = DB.getSQLValue(get_TrxName(),
+				"SELECT M_PriceList_ID FROM C_Invoice WHERE C_Invoice_ID=?",
+				getC_Invoice_ID());
+        MPriceList pl = MPriceList.get( getCtx(),m_M_PriceList_ID,get_TrxName());
+        return pl.isPerceptionsIncluded();
+    }    // isTaxIncluded
 
     /**
      * Descripción de Método
@@ -942,7 +956,14 @@ public class MInvoiceLine extends X_C_InvoiceLine {
         // Calculations & Rounding
 
         setLineNetAmt();
+       	setLineNetAmount();
         
+       	// Si la Tarifa tiene impuesto incluido y percepciones incluidas, se actualiza el LineNetAmt y el TaxAmt
+       	if( isPerceptionsIncluded() && isTaxIncluded() ) {
+      		updateTaxAmt();
+       		updateLineNetAmt();
+       	}
+       			
         // Comentado para poder calcular TaxAmt y LineTotalAmt en Facturas de Cliente
         /*
         if( !m_IsSOTrx    // AP Inv Tax Amt
@@ -1065,7 +1086,7 @@ public class MInvoiceLine extends X_C_InvoiceLine {
 						invoice.getDateInvoiced(), 0, getAD_Client_ID(),
 						getAD_Org_ID());
 				costConverted = costConverted != null?costConverted:getCostPrice();
-				BigDecimal costTaxAmt = MTax.calculateTax(costConverted, true, getTaxRate(), 2);
+				BigDecimal costTaxAmt = MTax.calculateTax(costConverted, true, isPerceptionsIncluded(), getTaxRate(), 2);
 				setCostPrice(costConverted.subtract(costTaxAmt));
 			}
         }
@@ -1326,7 +1347,7 @@ public class MInvoiceLine extends X_C_InvoiceLine {
         }
         
         // Update Invoice Header
-
+        
         String sql = "UPDATE C_Invoice i" + " SET TotalLines=" + "(SELECT COALESCE(SUM(LineNetAmt),0) FROM C_InvoiceLine il WHERE i.C_Invoice_ID=il.C_Invoice_ID) " + "WHERE C_Invoice_ID=" + getC_Invoice_ID();
         int no = DB.executeUpdate( sql,get_TrxName());
 
@@ -1347,7 +1368,7 @@ public class MInvoiceLine extends X_C_InvoiceLine {
         if( no != 1 ) {
             log.warning( "updateHeaderTax (2) #" + no );
         }
-        
+              
         return no == 1;
     }    // updateHeaderTax
     
@@ -1702,7 +1723,7 @@ public class MInvoiceLine extends X_C_InvoiceLine {
 	 *         importe base
 	 */
     public BigDecimal getTaxAmt(BigDecimal amt){
-    	return MTax.calculateTax(amt, isTaxIncluded(), getTaxRate(), amt.scale());
+    	return MTax.calculateTax(amt, isTaxIncluded(), false, getTaxRate(), amt.scale());
     }
 
 	/**
@@ -1912,6 +1933,66 @@ public class MInvoiceLine extends X_C_InvoiceLine {
 			// línea
 		}
     }
+    
+    /**
+     * Se guarda el valor neto de la linea en el campo LineNetAmount.
+     */
+    public void setLineNetAmount() {
+        BigDecimal net = getLineNetAmt();
+        
+        BigDecimal tax = isTaxIncluded() ? getTaxRate().divide(new BigDecimal(100), 2, BigDecimal.ROUND_HALF_UP) : BigDecimal.ZERO;
+        
+        // Si la Tarifa tiene impuesto incluido y percepciones incluidas, el neto se calcula haciendo: monto / (1 + Tasa de Impuesto + Tasa de Percepciones)  
+        if(isTaxIncluded() && isPerceptionsIncluded()){
+        	GeneratorPercepciones generator = new GeneratorPercepciones(getCtx(), getInvoice().getDiscountableWrapper(), get_TrxName());
+            try {
+            	BigDecimal rate = generator.totalPercepcionesRate();
+            	rate = rate.divide(new BigDecimal(100), 2, BigDecimal.ROUND_HALF_UP);
+            	net = net.divide( (BigDecimal.ONE.add(rate).add(tax)), 2, BigDecimal.ROUND_HALF_UP );
+    		} catch (Exception e) {
+    			e.printStackTrace();
+    		}	
+        }
+        else{
+        	// Si la Tarifa tiene solo impuesto incluido, pero sin percepciones incluidas, el neto se calcula haciendo: monto / (1 + Tasa de Impuesto)
+        	if(isTaxIncluded()){
+        		net = net.divide( (BigDecimal.ONE.add(tax)), 2, BigDecimal.ROUND_HALF_UP );
+        	}
+        }
+
+        if( net.scale() > getPrecision()) {
+            net = net.setScale( getPrecision(),BigDecimal.ROUND_HALF_UP );
+        }
+
+        super.setLineNetAmount(net);
+    }    // setLineNetAmt
+    
+    /**
+     * Descripción de Método
+     * @throws Exception 
+     *
+     */
+    public void updateLineNetAmt() {
+        BigDecimal net = getLineNetAmount().add(getTaxAmt());
+        if( net.scale() > getPrecision()) {
+            net = net.setScale( getPrecision(),BigDecimal.ROUND_HALF_UP );
+        }
+        super.setLineNetAmt(net);
+    }    // setLineNetAmt
+    
+    /**
+     * Descripción de Método
+     * @throws Exception 
+     *
+     */
+    public void updateTaxAmt() {
+    	BigDecimal tax = getTaxRate().divide(new BigDecimal(100), 2, BigDecimal.ROUND_HALF_UP);
+        BigDecimal taxAmt = getLineNetAmount().multiply(tax);
+        if( taxAmt.scale() > getPrecision()) {
+        	taxAmt = taxAmt.setScale( getPrecision(),BigDecimal.ROUND_HALF_UP );
+        }
+        super.setTaxAmt(taxAmt);
+    }    // setLineNetAmt
     
 }    // MInvoiceLine
 

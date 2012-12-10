@@ -16,6 +16,8 @@ public class PriceList {
 	
 	private boolean isTaxIncluded;
 	
+	private boolean isPerceptionsIncluded;
+	
 	private boolean isSOPriceList;
 	
 	private boolean isDefault;
@@ -28,12 +30,13 @@ public class PriceList {
 
 	}
 
-	public PriceList(int id, String name, String description, int currencyID, boolean isTaxIncluded, boolean isSOPriceList,	boolean isDefault, BigDecimal precision) {
+	public PriceList(int id, String name, String description, int currencyID, boolean isTaxIncluded, boolean isPerceptionsIncluded, boolean isSOPriceList,	boolean isDefault, BigDecimal precision) {
 		setId(id);
 		setName(name);
 		setDescription(description);
 		setCurrencyID(currencyID);
 		setTaxIncluded(isTaxIncluded);
+		setPerceptionsIncluded(isPerceptionsIncluded);
 		setSOPriceList(isSOPriceList);
 		setDefault(isDefault);
 		setPrecision(precision);
@@ -84,6 +87,14 @@ public class PriceList {
 
 	public boolean isTaxIncluded() {
 		return isTaxIncluded;
+	}
+
+	public boolean isPerceptionsIncluded() {
+		return isPerceptionsIncluded;
+	}
+
+	public void setPerceptionsIncluded(boolean isPerceptionsIncluded) {
+		this.isPerceptionsIncluded = isPerceptionsIncluded;
 	}
 
 	public void setSOPriceList(boolean isSOPriceList) {

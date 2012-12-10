@@ -277,6 +277,9 @@ public class GeneratorPercepciones {
 		// Recorrer las percepciones y agregarlas a las facturas
 		BigDecimal percepcionAmt;
 		BigDecimal invoiceNetTotalAmt = invoice.getTotalLinesNet();
+		if (invoice.isPerceptionsIncluded()){
+			invoiceNetTotalAmt = invoice.getTotalLinesNetPerceptionIncluded();
+		}
 		Integer scale = MCurrency.getStdPrecision(getCtx(),
 				invoice.getC_Currency_ID(), getTrxName());
 		MInvoiceTax invoiceTax;
@@ -311,6 +314,21 @@ public class GeneratorPercepciones {
 				}
 			}
 		}
+	}
+	
+	/**
+	 * Calcula y guarda las percepciones para el documento
+	 * @param invoice
+	 * @throws Exception
+	 */
+	public BigDecimal totalPercepcionesRate() throws Exception{
+		// Obtener las percepciones a percibir de la organización
+		List<MTax> percepciones = getApplyPercepciones();
+		BigDecimal totalRates = BigDecimal.ZERO;
+		for (MTax percepcion : percepciones) {
+				totalRates = totalRates.add(percepcion.getRate());
+		}
+		return totalRates;
 	}
 	
 	public List<MOrgPercepcion> getOrgPercepciones() {

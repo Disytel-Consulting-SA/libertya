@@ -1,13 +1,14 @@
-/** Modelo Generado - NO CAMBIAR MANUALMENTE - Copyright (C) 2006 FUNDESLE */
+/** Modelo Generado - NO CAMBIAR MANUALMENTE - Disytel */
 package org.openXpertya.model;
-import java.util.*;
+import java.util.logging.Level;
+ import java.util.*;
 import java.sql.*;
 import java.math.*;
 import org.openXpertya.util.*;
 /** Modelo Generado por C_InvoiceTax
- *  @author Comunidad de Desarrollo openXpertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
- *  @version  - 2008-01-03 10:26:30.328 */
-public class X_C_InvoiceTax extends PO
+ *  @author Comunidad de Desarrollo Libertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
+ *  @version  - 2012-12-09 21:11:50.434 */
+public class X_C_InvoiceTax extends org.openXpertya.model.PO
 {
 /** Constructor estándar */
 public X_C_InvoiceTax (Properties ctx, int C_InvoiceTax_ID, String trxName)
@@ -17,6 +18,7 @@ super (ctx, C_InvoiceTax_ID, trxName);
 {
 setC_Invoice_ID (0);
 setC_Tax_ID (0);
+setIsPerceptionsIncluded (false);
 setIsTaxIncluded (false);
 setProcessed (false);
 setTaxAmt (Env.ZERO);
@@ -29,13 +31,13 @@ public X_C_InvoiceTax (Properties ctx, ResultSet rs, String trxName)
 {
 super (ctx, rs, trxName);
 }
-/** AD_Table_ID=334 */
-public static final int Table_ID=334;
+/** AD_Table_ID */
+public static final int Table_ID = M_Table.getTableID("C_InvoiceTax");
 
 /** TableName=C_InvoiceTax */
 public static final String Table_Name="C_InvoiceTax";
 
-protected static KeyNamePair Model = new KeyNamePair(334,"C_InvoiceTax");
+protected static KeyNamePair Model = new KeyNamePair(Table_ID,"C_InvoiceTax");
 protected static BigDecimal AccessLevel = new BigDecimal(1);
 
 /** Load Meta Data */
@@ -76,6 +78,22 @@ public int getC_Tax_ID()
 Integer ii = (Integer)get_Value("C_Tax_ID");
 if (ii == null) return 0;
 return ii.intValue();
+}
+/** Set Is Perceptions Included */
+public void setIsPerceptionsIncluded (boolean IsPerceptionsIncluded)
+{
+set_Value ("IsPerceptionsIncluded", new Boolean(IsPerceptionsIncluded));
+}
+/** Get Is Perceptions Included */
+public boolean isPerceptionsIncluded() 
+{
+Object oo = get_Value("IsPerceptionsIncluded");
+if (oo != null) 
+{
+ if (oo instanceof Boolean) return ((Boolean)oo).booleanValue();
+ return "Y".equals(oo);
+}
+return false;
 }
 /** Set Price includes Tax.
 Tax is included in the price  */

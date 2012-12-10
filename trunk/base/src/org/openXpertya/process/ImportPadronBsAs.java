@@ -225,7 +225,7 @@ public class ImportPadronBsAs extends SvrProcess
 			sql.append("       CREATEDBY                         , \n");
 			sql.append("       UPDATEDBY                         , \n");
 			sql.append("       C_BPARTNER_ID 					 , \n");
-			sql.append("'"+getPadronType()+"' ");
+			sql.append("       PADRONTYPE                            ");
 			sql.append(" FROM   i_padron_sujeto \n ");
 			sql.append(" WHERE i_isimported = 'N' \n ");
 			sql.append(getClientCheck()+" \n ");
