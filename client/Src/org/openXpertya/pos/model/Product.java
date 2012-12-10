@@ -1,7 +1,6 @@
 package org.openXpertya.pos.model;
 
 import java.math.BigDecimal;
-import java.util.ArrayList;
 import java.util.List;
 
 public class Product {
@@ -21,6 +20,8 @@ public class Product {
 	private String masiDescription;
 	
 	private boolean taxIncludedInPrice = false;
+	
+	private boolean perceptionIncludedInPrice = false;
 	
 	private boolean masiMandatory = false;
 	
@@ -45,13 +46,14 @@ public class Product {
 	 * @param M_AttributeSetInstance_ID
 	 * @param masiDescription
 	 * @param taxIncludedInPrice
+	 * @param perceptionIncludedInPrice
 	 * @param masiMandatory
 	 * @param productCategoryID
 	 * @param vendorsIds
 	 * @param checkoutPlace
 	 * @param sold
 	 */
-	public Product(int id, String code, String description, BigDecimal stdPrice, BigDecimal limitPrice, int M_AttributeSetInstance_ID, String masiDescription, boolean taxIncludedInPrice, boolean masiMandatory, int productCategoryID, List<Integer> vendorsIds, String checkoutPlace, boolean sold) {
+	public Product(int id, String code, String description, BigDecimal stdPrice, BigDecimal limitPrice, int M_AttributeSetInstance_ID, String masiDescription, boolean taxIncludedInPrice, boolean perceptionIncludedInPrice, boolean masiMandatory, int productCategoryID, List<Integer> vendorsIds, String checkoutPlace, boolean sold) {
 		super();
 		setId(id);
 		setCode(code);
@@ -61,6 +63,7 @@ public class Product {
 		setAttributeSetInstanceID(M_AttributeSetInstance_ID);
 		setMasiDescription(masiDescription);
 		setTaxIncludedInPrice(taxIncludedInPrice);
+		setPerceptionIncludedInPrice(perceptionIncludedInPrice);
 		setMasiMandatory(masiMandatory);
 		setProductCategoryID(productCategoryID);
 		setVendorsIds(vendorsIds);
@@ -255,6 +258,13 @@ public class Product {
 	public void setSold(boolean sold) {
 		this.sold = sold;
 	}
-	
+
+	public boolean isPerceptionIncludedInPrice() {
+		return perceptionIncludedInPrice;
+	}
+
+	public void setPerceptionIncludedInPrice(boolean perceptionIncludedInPrice) {
+		this.perceptionIncludedInPrice = perceptionIncludedInPrice;
+	}
 	
 }

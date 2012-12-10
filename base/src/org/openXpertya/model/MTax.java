@@ -477,8 +477,50 @@ public class MTax extends X_C_Tax {
     public BigDecimal calculateTax( BigDecimal amount,boolean taxIncluded,int scale ) {
     	return calculateTax(amount, taxIncluded, getRate(), scale);
     }    // calculateTax
+    
+    public BigDecimal calculateTax( BigDecimal amount,boolean taxIncluded,boolean perceptionIncluded,int scale ) {
+    	return calculateTax(amount, taxIncluded, perceptionIncluded, getRate(), scale);
+    }    // calculateTax
 
 	/**
+	 * Calcula el impuesto a partir del monto parámetro, obteniendo el importe
+	 * base dependiendo si está incluído el impuesto en el precio o no
+	 * 
+	 * @param amount
+	 *            monto
+	 * @param taxIncluded
+	 *            true si el impuesto está incluído en el precio, false caso
+	 *            contrario
+	 * @param perceptionIncluded
+	 *            true si las percepciones están incluídas en el precio, false caso
+	 *            contrario
+	 * @param rate
+	 *            tasa de impuesto
+	 * @param scale
+	 *            escala del monto de impuesto a retornar
+	 * @return monto de impuesto
+	 */
+    public static BigDecimal calculateTax( BigDecimal amount,boolean taxIncluded,boolean perceptionIncluded,BigDecimal rate, int scale ) {
+        if( isZeroTax(rate)) {
+            return Env.ZERO;
+        }
+        BigDecimal multiplier = rate.divide( ONEHUNDRED,10,BigDecimal.ROUND_HALF_UP );
+        BigDecimal tax = null;
+
+        if( !taxIncluded || perceptionIncluded)    // $100 * 6 / 100 == $6 == $100 * 0.06
+        {
+            tax = amount.multiply( multiplier );
+        } else                // $106 - ($106 / (100+6)/100) == $6 == $106 - ($106/1.06)
+        {
+            multiplier = multiplier.add( Env.ONE );
+            BigDecimal base = amount.divide( multiplier,10,BigDecimal.ROUND_HALF_UP );
+            tax = amount.subtract( base );
+        }
+        BigDecimal finalTax = tax.setScale( scale,BigDecimal.ROUND_HALF_UP );
+        return finalTax;
+    }    // calculateTax
+    
+    /**
 	 * Calcula el impuesto a partir del monto parámetro, obteniendo el importe
 	 * base dependiendo si está incluído el impuesto en el precio o no
 	 * 

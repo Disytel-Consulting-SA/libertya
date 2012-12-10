@@ -7,7 +7,7 @@ import java.math.*;
 import org.openXpertya.util.*;
 /** Modelo Generado por C_BPartner_Padron_BsAs
  *  @author Comunidad de Desarrollo Libertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
- *  @version  - 2012-10-27 01:43:37.834 */
+ *  @version  - 2012-12-09 22:28:23.303 */
 public class X_C_BPartner_Padron_BsAs extends org.openXpertya.model.PO
 {
 /** Constructor estándar */
@@ -175,11 +175,15 @@ return bd;
 public static final int PADRONTYPE_AD_Reference_ID = MReference.getReferenceID("Tipos de Padrón");
 /** Padrón Bs As = B */
 public static final String PADRONTYPE_PadrónBsAs = "B";
+/** Padrón de Alto Riesgo CABA = A */
+public static final String PADRONTYPE_PadrónDeAltoRiesgoCABA = "A";
+/** Régimen Simplificado CABA = S */
+public static final String PADRONTYPE_RégimenSimplificadoCABA = "S";
 /** Set Padron Type */
 public void setPadronType (String PadronType)
 {
-if (PadronType == null || PadronType.equals("B"));
- else throw new IllegalArgumentException ("PadronType Invalid value - Reference = PADRONTYPE_AD_Reference_ID - B");
+if (PadronType == null || PadronType.equals("B") || PadronType.equals("A") || PadronType.equals("S"));
+ else throw new IllegalArgumentException ("PadronType Invalid value - Reference = PADRONTYPE_AD_Reference_ID - B - A - S");
 if (PadronType != null && PadronType.length() > 1)
 {
 log.warning("Length > 1 - truncated");

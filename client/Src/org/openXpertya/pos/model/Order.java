@@ -202,7 +202,9 @@ public class Order  {
 		Map<Tax, BigDecimal> taxBaseAmt = new HashMap<Tax, BigDecimal>();
 		BigDecimal baseAmt = null;
 		BigDecimal totalNetAmt = BigDecimal.ZERO;
+		boolean isPerceptionIncludedInPrice = true;
 		for (OrderProduct orderProduct : getOrderProducts()) {
+			isPerceptionIncludedInPrice = orderProduct.getProduct().isPerceptionIncludedInPrice();
 			//amount = amount.add(orderProduct.getTotalTaxedPrice());
 			BigDecimal lineAmt = orderProduct.getPrice().multiply(orderProduct.getCount());
 			if (orderProduct.getProduct().isTaxIncludedInPrice()) {
@@ -224,11 +226,14 @@ public class Order  {
 			amount = amount.add(baseAmt).add(baseAmt.multiply(tax.getTaxRateMultiplier()));
 		}
 		
-		// Impuestos adicionales
-		for (Tax otherTax : getOtherTaxes()) {
-			baseAmt = scaleAmount(totalNetAmt);
-			amount = amount.add(baseAmt.multiply(otherTax.getTaxRateMultiplier()));
+		if (!isPerceptionIncludedInPrice){
+			// Impuestos adicionales
+			for (Tax otherTax : getOtherTaxes()) {
+				baseAmt = scaleAmount(totalNetAmt);
+				amount = amount.add(baseAmt.multiply(otherTax.getTaxRateMultiplier()));
+			}
 		}
+
 		
 		// return AmountHelper.scale(amount);
 		return scaleAmount(amount);

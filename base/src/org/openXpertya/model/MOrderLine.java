@@ -1556,7 +1556,7 @@ public class MOrderLine extends X_C_OrderLine {
 	 *         importe base
 	 */
     public BigDecimal getTaxAmt(BigDecimal amt){
-    	return MTax.calculateTax(amt, isTaxIncluded(), getTaxRate(), amt.scale());
+    	return MTax.calculateTax(amt, isTaxIncluded(), false, getTaxRate(), amt.scale());
     }
 
 	/**

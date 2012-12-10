@@ -157,6 +157,7 @@ public class MInvoiceTax extends X_C_InvoiceTax {
         retValue.setC_Tax_ID( line.getC_Tax_ID());
         retValue.setPrecision( precision );
         retValue.setIsTaxIncluded( line.isTaxIncluded());
+        retValue.setIsPerceptionsIncluded( line.isPerceptionsIncluded());
         s_log.fine( "get (new) " + retValue );
 
         return retValue;
@@ -185,6 +186,7 @@ public class MInvoiceTax extends X_C_InvoiceTax {
         setTaxAmt( Env.ZERO );
         setTaxBaseAmt( Env.ZERO );
         setIsTaxIncluded( false );
+        setIsPerceptionsIncluded( false );
     }    // MInvoiceTax
 
     /**
@@ -297,7 +299,7 @@ public class MInvoiceTax extends X_C_InvoiceTax {
         // >> END
         boolean isSetTaxAmt = taxAmtFromLines.compareTo(BigDecimal.ZERO) != 0; 
         
-        String sql = "SELECT COALESCE(SUM(LineNetAmt-DocumentDiscountAmt),0.0) FROM C_InvoiceLine WHERE C_Invoice_ID=? AND C_Tax_ID=?";
+        String sql = "SELECT COALESCE(SUM("+(isPerceptionsIncluded() ? "LineNetAmount" : "LineNetAmt")+"-DocumentDiscountAmt),0.0) FROM C_InvoiceLine WHERE C_Invoice_ID=? AND C_Tax_ID=?";
         PreparedStatement pstmt = null;
 
         try {
@@ -315,7 +317,7 @@ public class MInvoiceTax extends X_C_InvoiceTax {
 
                 if( !documentLevel ) {    // calculate line tax
                 	if(!isSetTaxAmt){
-                		taxAmt = tax.calculateTax( taxBaseAmt,isTaxIncluded(),getPrecision());
+                		taxAmt = tax.calculateTax( taxBaseAmt,isTaxIncluded(),isPerceptionsIncluded(),getPrecision());
                 	}
                 	else{
                 		taxAmt = taxAmtFromLines;
@@ -360,8 +362,8 @@ public class MInvoiceTax extends X_C_InvoiceTax {
 
         // Set Base
 
-        if( isTaxIncluded()) {
-            setTaxBaseAmt( taxBaseAmt.subtract( taxAmt ));
+        if( (isTaxIncluded() && !isPerceptionsIncluded()) || (isTaxIncluded() && !invoice.isSOTrx()) ) {
+        	setTaxBaseAmt( taxBaseAmt.subtract( taxAmt ));
         } else {
             setTaxBaseAmt( taxBaseAmt );
         }

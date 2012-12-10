@@ -33,6 +33,7 @@ public class PoSConfig {
 	private boolean createInvoice;
 	private int posNumber;
 	private boolean priceListWithTax;
+	private boolean priceListWithPerception;
 	private boolean modifyPrice;
 	private int currentUserID;
 	private boolean sellWithoutStock;
@@ -194,6 +195,12 @@ public class PoSConfig {
 							.getSQLValueString(
 									null,
 									"SELECT IsTaxIncluded FROM M_PriceList WHERE M_PriceList_ID = ?",
+									priceListID)));
+			setPriceListWithPerception("Y"
+					.equals(DB
+							.getSQLValueString(
+									null,
+									"SELECT IsPerceptionsIncluded FROM M_PriceList WHERE M_PriceList_ID = ?",
 									priceListID)));
 		}
 	}
@@ -399,6 +406,20 @@ public class PoSConfig {
 	 */
 	private void setPriceListWithTax(boolean priceListWithTax) {
 		this.priceListWithTax = priceListWithTax;
+	}
+
+	/**
+	 * @return Returns the priceListWithPerception.
+	 */	
+	public boolean isPriceListWithPerception() {
+		return priceListWithPerception;
+	}
+
+	/**
+	 * @param priceListWithPerception The priceListWithPerception to set.
+	 */
+	public void setPriceListWithPerception(boolean priceListWithPerception) {
+		this.priceListWithPerception = priceListWithPerception;
 	}
 
 	/**

@@ -407,6 +407,7 @@ public class BPartnerDialog extends JDialog {
 					orderProduct.getProduct().setStdPrice(getOrderLinesPrices().get(orderProduct));
 					orderProduct.setPrice(getOrderLinesPrices().get(orderProduct));
 					orderProduct.getProduct().setTaxIncludedInPrice(priceListSelected.isTaxIncluded());
+					orderProduct.getProduct().setPerceptionIncludedInPrice(priceListSelected.isPerceptionsIncluded());
 				}
 				getPoS().getOrder().updateDiscounts();
 				getPoS().refreshOrderProductsTable();
