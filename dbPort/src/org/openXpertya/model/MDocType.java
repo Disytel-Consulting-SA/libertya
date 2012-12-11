@@ -195,6 +195,12 @@ public class MDocType extends X_C_DocType {
     /** Pedido Transferido = SOSOTD (Pedido Transferido) */
     public static final String DOCTYPE_Pedido_Transferido = "SOSOTD";
     
+    /** Recibo de Cliente = CRSEC01 (Recibo de Cliente) */
+    public static final String DOCTYPE_Recibo_De_Cliente = "CRSEC01";
+    
+    /** Orden de Pago = POSEC01 (Orden de Pago) */
+    public static final String DOCTYPE_Orden_De_Pago = "POSEC01";
+    
     /**
      *      Standard Constructor
      *      @param ctx context

@@ -115,6 +115,18 @@ public class AllocationGenerator {
 	public AllocationGenerator addDebitDocument(int docID, BigDecimal amount, AllocationDocumentType docType) {
 		return addDocument(getDebits(), docID, amount, docType);
 	}
+	
+	/**
+	 * Agrega un documento a la lista de débitos de la Asignación.
+	 * En caso de que el documento ya se encuentre en la lista de débitos
+	 * (mismo Tipo e ID), entonces se suma el <code>amount</code> al documento
+	 * existente en la lista de débitos
+	 * @param document documento
+	 * @return Este <code>AllocationGenerator</code>
+	 */
+	public AllocationGenerator addDebitDocument(Document document) {
+		return addDocument(getDebits(), document);
+	}
 
 	/**
 	 * Agrega una factura a la lista de débitos de la Asignación.<br>
@@ -155,6 +167,18 @@ public class AllocationGenerator {
 	 */
 	public AllocationGenerator addCreditDocument(int docID, BigDecimal amount, AllocationDocumentType docType) {
 		return addDocument(getCredits(), docID, amount, docType);
+	}
+	
+	/**
+	 * Agrega un documento a la lista de créditos de la Asignación.
+	 * En caso de que el documento ya se encuentre en la lista de créditos
+	 * (mismo Tipo e ID), entonces se suma el <code>amount</code> al documento
+	 * existente en la lista de débitos
+	 * @param document documento
+	 * @return Este <code>PaymentOrderGenerator</code>
+	 */
+	public AllocationGenerator addCreditDocument(Document document) {
+		return addDocument(getCredits(), document);
 	}
 
 	/**
@@ -377,18 +401,33 @@ public class AllocationGenerator {
 	 * @return Este <code>PaymentOrderGenerator</code>
 	 */
 	private AllocationGenerator addDocument(List<Document> list, int docID, BigDecimal amount, AllocationDocumentType docType) {
-		Document newDocument = createDocument(docID, docType, amount.abs()); 
+		return addDocument(list, createDocument(docID, docType, amount.abs()));
+	}
+	
+	/**
+	 * Agrega un documento una de las listas de documentos de la Asignación. En
+	 * caso de que el documento ya se encuentre en la lista (mismo Tipo e ID),
+	 * entonces se suma el <code>amount</code> al documento existente en la
+	 * lista
+	 * 
+	 * @param list
+	 *            lista a agergar el documento
+	 * @param document
+	 *            documento a agregar a la lista
+	 * @return Este <code>PaymentOrderGenerator</code>
+	 */
+	private AllocationGenerator addDocument(List<Document> list, Document document) { 
 		// No se permiten montos de imputación iguales a cero.
-		if (amount.compareTo(BigDecimal.ZERO) == 0)
+		if (document.amount.compareTo(BigDecimal.ZERO) == 0)
 			throw new IllegalArgumentException("Allocation amount must be greather than zero");
 		// Se busca si el documento existe en la lista.
-		if (list.contains(newDocument)) {
+		if (list.contains(document)) {
 			// En ese caso se incrementa el monto a impuatar del documento existente.
-			int index = list.indexOf(newDocument);
+			int index = list.indexOf(document);
 			Document oldDocument = list.get(index);
-			oldDocument.amount = oldDocument.amount.add(newDocument.amount);
+			oldDocument.amount = oldDocument.amount.add(document.amount);
 		} else {
-			list.add(newDocument);
+			list.add(document);
 		}
 		return this;
 	}
@@ -830,13 +869,15 @@ public class AllocationGenerator {
 	 * Tipo de dato interno. Utilizado para almacenar los débitos
 	 * y créditos involucrados en la OP.
 	 */
-	protected abstract class Document {
+	public abstract class Document {
 
 		public Integer id;
 		public AllocationDocumentType type;
 		public BigDecimal amount;
 		public Integer currencyId;
 		public Timestamp date;
+		public Integer orgID;
+		private BigDecimal amountAllocated = BigDecimal.ZERO;
 		
 		/**
 		 * @param id ID del documento
@@ -920,12 +961,30 @@ public class AllocationGenerator {
 		public void setAmount(BigDecimal amount) {
 			this.amount = amount;
 		}
+
+		public BigDecimal getAmountAllocated() {
+			return amountAllocated;
+		}
+
+		public void setAmountAllocated(BigDecimal amountAllocated) {
+			this.amountAllocated = amountAllocated;
+		}
+		
+		/**
+		 * El monto disponible es el monto del documento - el monto imputado
+		 * actualmente
+		 * 
+		 * @return el monto pendiente no utilizado o no imputado
+		 */
+		public BigDecimal getAvailableAmt(){
+			return getAmount().subtract(getAmountAllocated());
+		}
 	}
 	
 	/**
 	 * Tipo de Crédito / Débito: Factura
 	 */
-	protected class Invoice extends Document {
+	public class Invoice extends Document {
 
 		/**
 		 * @param id ID de la factura
@@ -935,6 +994,13 @@ public class AllocationGenerator {
 			super(id, AllocationDocumentType.INVOICE, amount);
 			this.currencyId = getSqlCurrencyId();
 			this.date = getSqlDate();
+		}
+		
+		/**
+		 * @param id ID de la factura
+		 */
+		public Invoice(Integer id) {
+			super(id, AllocationDocumentType.INVOICE, BigDecimal.ZERO);
 		}
 
 		private Integer getSqlCurrencyId() {
@@ -976,7 +1042,7 @@ public class AllocationGenerator {
 	/**
 	 * Tipo de Crédito / Débito: Línea de Caja
 	 */
-	protected class CashLine extends Document {
+	public class CashLine extends Document {
 
 		/**
 		 * @param id ID de la línea de caja
@@ -986,6 +1052,13 @@ public class AllocationGenerator {
 			super(id, AllocationDocumentType.CASH_LINE, amount);
 			this.currencyId = getSqlCurrencyId();
 			this.date = getSqlDate();
+		}
+		
+		/**
+		 * @param id ID de la línea de caja
+		 */
+		public CashLine(Integer id) {
+			super(id, AllocationDocumentType.CASH_LINE, BigDecimal.ZERO);
 		}
 		
 		private Integer getSqlCurrencyId() {
@@ -1014,7 +1087,7 @@ public class AllocationGenerator {
 	/**
 	 * Tipo de Crédito / Débito: Pago
 	 */
-	protected class Payment extends Document {
+	public class Payment extends Document {
 
 		/**
 		 * @param id ID del pago
@@ -1024,6 +1097,13 @@ public class AllocationGenerator {
 			super(id, AllocationDocumentType.PAYMENT, amount);
 			this.currencyId = getSqlCurrencyId();
 			this.date = getSqlDate();
+		}
+		
+		/**
+		 * @param id ID del pago
+		 */
+		public Payment(Integer id) {
+			super(id, AllocationDocumentType.PAYMENT, BigDecimal.ZERO);
 		}
 		
 		private Integer getSqlCurrencyId() {

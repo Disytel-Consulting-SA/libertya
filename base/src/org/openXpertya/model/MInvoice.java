@@ -1567,7 +1567,7 @@ public class MInvoice extends X_C_Invoice implements DocAction {
 
 	private boolean completarPuntoLetraNumeroDoc() {
 		HashMap<String, Object> hm = CalloutInvoiceExt
-				.DividirDocumentNo(getDocumentNo());
+				.DividirDocumentNo(getAD_Client_ID(), getDocumentNo());
 
 		if (is_ValueChanged("NumeroComprobante"))
 			hm.put("NumeroComprobante", getNumeroComprobante());

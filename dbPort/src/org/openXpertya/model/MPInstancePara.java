@@ -301,9 +301,12 @@ public class MPInstancePara extends X_AD_PInstance_Para {
     		if(value instanceof Integer){
     			realValue = new BigDecimal((Integer)value);
     		}
-    		else{
+    		else if(value instanceof BigDecimal){
     			realValue = (BigDecimal)value;
-    		}    		
+    		}
+    		else if(value instanceof String){
+    			realValue = new BigDecimal((String)value);
+    		}
     	}
     	// Si es de tipo texto
     	else if(DisplayType.isText(displayType) || (DisplayType.YesNo == displayType) || (DisplayType.List == displayType)){
