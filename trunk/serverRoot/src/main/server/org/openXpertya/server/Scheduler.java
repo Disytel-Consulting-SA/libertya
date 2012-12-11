@@ -35,6 +35,7 @@ import org.openXpertya.model.MScheduler;
 import org.openXpertya.model.MSchedulerLog;
 import org.openXpertya.model.MSchedulerPara;
 import org.openXpertya.model.MWarehouse;
+import org.openXpertya.process.ProcessInfo;
 import org.openXpertya.util.CLogger;
 import org.openXpertya.util.DB;
 import org.openXpertya.util.Env;
@@ -196,11 +197,14 @@ public class Scheduler extends ServidorOXP {
         }
         
         // Ejecuto el proceso
-        MProcess.execute(this.getContext(),this.getM_model().getAD_Process_ID(), parameters);
+        ProcessInfo info = MProcess.execute(this.getContext(),this.getM_model().getAD_Process_ID(), parameters);
         
         int no = getM_model().deleteLog();
 
-        getM_summary().append( "Logs deleted=" ).append( no );
+        setM_summary(new StringBuffer());
+        String infoSummary = info.getSummary() == null?"":info.getSummary();
+        getM_summary().append(infoSummary);
+        
 
         //
 

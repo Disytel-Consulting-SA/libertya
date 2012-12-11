@@ -13,7 +13,7 @@ public class MLetraComprobante extends X_C_Letra_Comprobante {
 
 	private static CLogger log = CLogger.getCLogger(MLetraComprobante.class);
 	
-	public static MLetraComprobante buscarLetraComprobante(String letra, String trxName) {
+	public static MLetraComprobante buscarLetraComprobante(Integer clientID, String letra, String trxName) {
 		MLetraComprobante ret = null;
 		
 		try {
@@ -27,7 +27,7 @@ public class MLetraComprobante extends X_C_Letra_Comprobante {
 			
 			int i = 1;
 			pp.setString(i++, letra);
-			pp.setInt(i++, Env.getAD_Client_ID(Env.getCtx()));
+			pp.setInt(i++, clientID);
 			
 			ResultSet rs = pp.executeQuery();
 			if (rs.next())

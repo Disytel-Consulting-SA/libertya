@@ -5130,3 +5130,6 @@ update ad_system set dummy = (SELECT addcolumnifnotexists('c_invoiceline','linen
 
 -- 20121209-2215 Incorporación de columna linenetamount a la tabla C_InvoiceLine
 update ad_system set dummy = (SELECT addcolumnifnotexists('I_Padron_Sujeto','padrontype', 'character(1)'));
+
+--20121211-1702 Nueva columna que permite configurar a las organizaciones para incluirlas en el proceso de generación de imputaciones automáticas 
+update ad_system set dummy = (SELECT addcolumnifnotexists('ad_orginfo','allowautomaticallocation', 'character(1) NOT NULL DEFAULT \'N\'::bpchar'));

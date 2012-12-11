@@ -1,14 +1,13 @@
 /** Modelo Generado - NO CAMBIAR MANUALMENTE - Disytel */
 package org.openXpertya.model;
-import java.math.BigDecimal;
-import java.sql.ResultSet;
-import java.util.Properties;
-
-import org.openXpertya.util.Env;
-import org.openXpertya.util.KeyNamePair;
+import java.util.logging.Level;
+ import java.util.*;
+import java.sql.*;
+import java.math.*;
+import org.openXpertya.util.*;
 /** Modelo Generado por AD_OrgInfo
  *  @author Comunidad de Desarrollo Libertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
- *  @version  - 2012-09-14 00:23:21.498 */
+ *  @version  - 2012-12-11 16:58:27.752 */
 public class X_AD_OrgInfo extends org.openXpertya.model.PO
 {
 /** Constructor estándar */
@@ -17,6 +16,7 @@ public X_AD_OrgInfo (Properties ctx, int AD_OrgInfo_ID, String trxName)
 super (ctx, AD_OrgInfo_ID, trxName);
 /** if (AD_OrgInfo_ID == 0)
 {
+setAllowAutomaticAllocation (false);
 setCheckCuitControl (false);
 setDUNS (null);
 setInitialCheckLimit (Env.ZERO);
@@ -65,6 +65,22 @@ public int getAD_OrgType_ID()
 Integer ii = (Integer)get_Value("AD_OrgType_ID");
 if (ii == null) return 0;
 return ii.intValue();
+}
+/** Set Allow Automatic Allocation */
+public void setAllowAutomaticAllocation (boolean AllowAutomaticAllocation)
+{
+set_Value ("AllowAutomaticAllocation", new Boolean(AllowAutomaticAllocation));
+}
+/** Get Allow Automatic Allocation */
+public boolean isAllowAutomaticAllocation() 
+{
+Object oo = get_Value("AllowAutomaticAllocation");
+if (oo != null) 
+{
+ if (oo instanceof Boolean) return ((Boolean)oo).booleanValue();
+ return "Y".equals(oo);
+}
+return false;
 }
 /** Set Check CUIT Control */
 public void setCheckCuitControl (boolean CheckCuitControl)

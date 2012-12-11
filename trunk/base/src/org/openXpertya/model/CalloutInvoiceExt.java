@@ -106,7 +106,7 @@ public class CalloutInvoiceExt extends CalloutInvoice {
 		return ret;
 	}
 	
-	public static HashMap<String, Object> DividirDocumentNo(String docNo) {
+	public static HashMap<String, Object> DividirDocumentNo(Integer clientID, String docNo) {
 		
 		HashMap<String, Object> hm = new HashMap<String, Object>();
 		
@@ -121,7 +121,7 @@ public class CalloutInvoiceExt extends CalloutInvoice {
 		String puntoDeVenta = docNo.substring(1, 5);
 		String numeroComprobante = docNo.substring(5);
 		
-		MLetraComprobante mletra = MLetraComprobante.buscarLetraComprobante(letra, null);
+		MLetraComprobante mletra = MLetraComprobante.buscarLetraComprobante(clientID, letra, null);
 		
 		if (mletra.getID() > 0) {
 			hm.put("C_Letra_Comprobante_ID", mletra.getID());
@@ -142,7 +142,8 @@ public class CalloutInvoiceExt extends CalloutInvoice {
 	public static Integer getNroComprobante(String documentNo) {
 		Integer nro = null;
 		if (documentNo != null) {
-			Map<String, Object> parts = DividirDocumentNo(documentNo);
+			Map<String, Object> parts = DividirDocumentNo(
+					Env.getAD_Client_ID(Env.getCtx()), documentNo);
 			nro = (Integer)parts.get("NumeroComprobante");
 		}
 		return nro;
@@ -291,7 +292,8 @@ public class CalloutInvoiceExt extends CalloutInvoice {
 				// A000100000001
 				// 0123456789012
 				
-				HashMap<String, Object> hm = DividirDocumentNo(docNo);
+				HashMap<String, Object> hm = DividirDocumentNo(
+						Env.getAD_Client_ID(Env.getCtx()), docNo);
 				Integer bPartnerID = (Integer)tab.getValue("C_BPartner_ID");
 				for (String k : hm.keySet()) { 
 					// Solo asigna la letra del comprobante si no se ha ingresado
@@ -592,8 +594,12 @@ public class CalloutInvoiceExt extends CalloutInvoice {
 					
 					// TODO: Eliminar hardcode
 					
-					int letra_A_ID = MLetraComprobante.buscarLetraComprobante("A", null).getC_Letra_Comprobante_ID();
-					int letra_B_ID = MLetraComprobante.buscarLetraComprobante("B", null).getC_Letra_Comprobante_ID();
+					int letra_A_ID = MLetraComprobante.buscarLetraComprobante(
+							Env.getAD_Client_ID(ctx), "A", null)
+							.getC_Letra_Comprobante_ID();
+					int letra_B_ID = MLetraComprobante.buscarLetraComprobante(
+							Env.getAD_Client_ID(ctx), "B", null)
+							.getC_Letra_Comprobante_ID();
 					
 					// "Responsable monotributo"
 					int categoria_5_ID = (MCategoriaIva.buscarCodigo(5, null))[0].getC_Categoria_Iva_ID();
@@ -903,7 +909,7 @@ public class CalloutInvoiceExt extends CalloutInvoice {
 			// A000100000001
 			// 0123456789012
 			
-			HashMap<String, Object> hm = DividirDocumentNo(docNo);
+			HashMap<String, Object> hm = DividirDocumentNo(Env.getAD_Client_ID(ctx), docNo);
 			Integer bPartnerID = (Integer)mTab.getValue("C_BPartner_ID");
 			for (String k : hm.keySet()) { 
 				// Solo asigna la letra del comprobante si no se ha ingresado
