@@ -299,12 +299,11 @@ public class MUser extends X_AD_User {
 		Object lastDate = DB
 		.getSQLObject(
 				PluginUtils.getPluginInstallerTrxName(),
-				"SELECT lastpasswordchangedate FROM ad_user WHERE ad_user_id = ?",
+				"SELECT coalesce(lastpasswordchangedate,created)::timestamp as lastpasswordchangedate FROM ad_user WHERE ad_user_id = ?",
 				new Object[]{userID});
 		// Le sumo los días de vencimiento
-		Timestamp expirationDate = TimeUtil.addDays(new Timestamp(
-				((Date) lastDate).getTime()), clientInfo
-				.getPasswordExpirationDays());
+		Timestamp expirationDate = TimeUtil.addDays((Timestamp) lastDate,
+				clientInfo.getPasswordExpirationDays());
 		Timestamp today = Env.getDate();
 		// Se compara con la fecha actual
 		// Si la fecha de hoy es mayor o igual a la fecha resultante de la
