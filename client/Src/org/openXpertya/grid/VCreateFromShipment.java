@@ -42,6 +42,7 @@ import org.openXpertya.model.MInvoiceLine;
 import org.openXpertya.model.MLocator;
 import org.openXpertya.model.MLocatorLookup;
 import org.openXpertya.model.MOrderLine;
+import org.openXpertya.model.MProduct;
 import org.openXpertya.model.MTab;
 import org.openXpertya.model.MWarehouse;
 import org.openXpertya.model.PO;
@@ -468,19 +469,39 @@ public class VCreateFromShipment extends VCreateFrom {
 		}
 
 		// Lines
-
+		Integer productLocatorID = null;
+		MLocator productLocator = null;
 		for (SourceEntity sourceEntity : getSelectedSourceEntities()) {
 			DocumentLine docLine = (DocumentLine) sourceEntity;
 			BigDecimal movementQty = docLine.remainingQty;
 			int C_UOM_ID = docLine.uomID;
 			int M_Product_ID = docLine.productID;
-
+			
+			// Determinar la ubicación relacionada al artículo y verificar que
+			// se encuentre dentro del almacén del remito. Si se encuentra en
+			// este almacén, entonces setearle la ubicación del artículo, sino
+			// la ubicación por defecto. Sólo para movimientos de ventas.
+			productLocatorID = null;
+			if(isSOTrx()){
+				// Obtengo el id de la ubicación del artículo
+				productLocatorID = MProduct.getLocatorID(M_Product_ID, getTrxName());
+				// Si posee una configurada, verifico que sea del mismo almacén,
+				// sino seteo a null el id de la ubicación para que setee el que
+				// viene por defecto
+				if(!Util.isEmpty(productLocatorID, true)){
+					productLocator = MLocator.get(getCtx(), productLocatorID);
+					productLocatorID = productLocator.getM_Warehouse_ID() != inout
+							.getM_Warehouse_ID() ? null : productLocatorID;
+				}
+			}
+			
 			// Crea la línea del remito
-
+			
 			MInOutLine iol = new MInOutLine(inout);
 			iol.setM_Product_ID(M_Product_ID, C_UOM_ID); // Line UOM
 			iol.setQty(movementQty); // Movement/Entered
-			iol.setM_Locator_ID(locatorID); // Locator
+			iol.setM_Locator_ID(Util.isEmpty(productLocatorID, true) ? locatorID
+					: productLocatorID); // Locator
 			iol.setDescription(docLine.description);
 
 			MInvoiceLine il = null;
