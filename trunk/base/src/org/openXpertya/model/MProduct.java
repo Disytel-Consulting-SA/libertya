@@ -149,6 +149,17 @@ public class MProduct extends X_M_Product {
 
         return product.isStocked();
     }    // isProductStocked
+    
+    /**
+     * @param productID
+     * @param trxName
+     * @return id de la ubicación del artículo
+     */
+    public static Integer getLocatorID(Integer productID, String trxName){
+		return DB.getSQLValue(trxName,
+				"SELECT m_locator_id FROM m_product WHERE m_product_id = ?",
+				productID);
+    } 
 
     /** Descripción de Campos */
 
