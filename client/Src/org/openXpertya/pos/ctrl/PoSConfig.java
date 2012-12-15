@@ -63,6 +63,7 @@ public class PoSConfig {
 	private boolean posJournal = false;
 	private int stdPrecision = 2;
 	private int costingPrecision = 4;
+	private int priceListIDInConfig;
 
 	public PoSConfig(MPOS pos) {
 		setCurrencyID(Env.getContextAsInt(Env.getCtx(), "$C_Currency_ID"));
@@ -122,6 +123,7 @@ public class PoSConfig {
 			setAuthorizeManualGeneralDiscount(pos.isAuthorizeGeneralManualDiscount());
 			
 			setVoidDocuments(pos.isVoidDocuments());
+			setPriceListIDInConfig(pos.getM_PriceList_ID());
 		}	
 	}
 	
@@ -741,5 +743,13 @@ public class PoSConfig {
 
 	public void setVoidDocuments(boolean voidDocuments) {
 		this.voidDocuments = voidDocuments;
+	}
+
+	public int getPriceListIDInConfig() {
+		return priceListIDInConfig;
+	}
+
+	public void setPriceListIDInConfig(int priceListIDInConfig) {
+		this.priceListIDInConfig = priceListIDInConfig;
 	}
 }

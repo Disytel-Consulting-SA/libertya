@@ -304,6 +304,11 @@ public class PoSModel {
 		updateInfoPriceList(windowNo);
 	}
 	
+	public void updatePriceList(Integer priceListID, int windowNo){
+		getConnectionState().updatePriceList(priceListID, windowNo);
+		updateInfoPriceList(windowNo);
+	}
+	
 	private void updateInfoPriceList(int windowNo){
 		setPriceList(getConnectionState().getCurrentPriceList(windowNo));
 		setPriceListVersion(getConnectionState().getCurrentPriceListVersion(getPriceList(), windowNo));
@@ -808,5 +813,13 @@ public class PoSModel {
 				.size())
 				&& (excludedTenderTypes == null || excludedTenderTypesAux
 						.size() > 0); 
+	}
+	
+	/**
+	 * Carga el precio de lista por defecto de la config
+	 * @param windowNo
+	 */
+	public void loadDefaultPriceList(int windowNo){
+		updatePriceList(getPoSConfig().getPriceListIDInConfig(), windowNo);
 	}
 }

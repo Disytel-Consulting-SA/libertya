@@ -289,4 +289,10 @@ public class PoSOffline extends PoSConnectionState {
 		// TODO Auto-generated method stub
 		return null;
 	}
+
+	@Override
+	public void updatePriceList(Integer priceListID, int windowNo) {
+		// TODO Auto-generated method stub
+		
+	}
 }

@@ -2563,6 +2563,12 @@ public class PoSOnline extends PoSConnectionState {
 	}
 	
 	@Override
+	public void updatePriceList(Integer priceListID, int windowNo) {
+		// Seteo la nueva tarifa dentro del contexto
+		Env.setContext(ctx, windowNo,"M_PriceList_ID", priceListID);
+	}
+	
+	@Override
 	public PriceListVersion getCurrentPriceListVersion(PriceList priceList, int windowNo) {
 		Timestamp priceDate = null;
         // Sales Order Date
