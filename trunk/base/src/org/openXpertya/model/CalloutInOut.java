@@ -28,6 +28,7 @@ import org.openXpertya.util.DB;
 import org.openXpertya.util.DisplayType;
 import org.openXpertya.util.Env;
 import org.openXpertya.util.Msg;
+import org.openXpertya.util.Util;
 
 /**
  * Descripción de Clase
@@ -251,7 +252,9 @@ public class CalloutInOut extends CalloutEngine {
             		mTab.setValue( "SalesRep_ID",contEC );
             	}
 
-            	mTab.setValue( "DeliveryRule",rs.getString("DeliveryRule") );
+            	if(!Util.isEmpty(rs.getString("DeliveryRule"), true)){
+            		mTab.setValue( "DeliveryRule",rs.getString("DeliveryRule") );
+            	}
             }
 
             rs.close();
