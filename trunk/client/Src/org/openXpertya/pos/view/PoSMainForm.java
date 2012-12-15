@@ -5089,6 +5089,7 @@ public class PoSMainForm extends CPanel implements FormPanel, ASyncProcess, Disp
 		getManualDiscountAuthOperation().setAuthorized(true);
 		getAuthDialog().markAuthorized(UserAuthConstants.POS_FINISH_MOMENT, true);
 		getModel().newOrder();
+		getModel().loadDefaultPriceList(windowNo);
 		loadBPartner(getModel().getDefaultBPartner());
 		getOrderTableUtils().refreshTable();
 		getPaymentsTableUtils().refreshTable();

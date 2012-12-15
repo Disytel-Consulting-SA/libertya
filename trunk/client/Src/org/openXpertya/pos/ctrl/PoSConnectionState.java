@@ -83,6 +83,8 @@ public abstract class PoSConnectionState {
 	public abstract PriceList getCurrentPriceList(int windowNo);
 	
 	public abstract void updatePriceList(PriceList newPriceList, int windowNo);
+
+	public abstract void updatePriceList(Integer priceListID, int windowNo);
 	
 	public abstract PriceListVersion getCurrentPriceListVersion(PriceList priceList, int windowNo);
 	
