@@ -832,6 +832,9 @@ public class PoSMainForm extends CPanel implements FormPanel, ASyncProcess, Disp
 				UserAuthConstants.POS_MANUAL_GENERAL_DISCOUNT_UID,
 				MSG_DISCOUNT_GENERAL, UserAuthConstants.POS_FINISH_MOMENT));
 		getManualDiscountAuthOperation().setLazyAuthorization(true);
+		getFrame().setTitle(
+				getFrame().getTitle() + "- "
+						+ getModel().getPoSConfig().getName());
 	}
 	
 	private void keyBindingsInit() {
