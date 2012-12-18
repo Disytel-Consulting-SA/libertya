@@ -10,6 +10,7 @@ import java.util.Map;
 import org.openXpertya.model.DiscountCalculator;
 import org.openXpertya.model.DiscountCalculator.GeneralDiscountKind;
 import org.openXpertya.model.DiscountCalculator.IDocument;
+import org.openXpertya.model.DiscountCalculator.IDocumentLine.DiscountApplication;
 import org.openXpertya.model.MBPartner;
 import org.openXpertya.util.Env;
 
@@ -575,6 +576,8 @@ public class Order  {
 	public void addOrderProductsFrom(Order anotherOrder) {
 		for (OrderProduct orderProduct : anotherOrder.getOrderProducts()) {
 			addOrderProduct(orderProduct);
+			orderProduct.setDiscount(orderProduct.getDiscount(),
+					DiscountApplication.ToPrice);
 		}
 		updateDiscounts();
 	}
