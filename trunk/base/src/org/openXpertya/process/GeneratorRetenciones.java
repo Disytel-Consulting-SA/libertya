@@ -165,6 +165,7 @@ public class GeneratorRetenciones {
 		// guarda todas las retenciones
 		
 		for(int i=0; i<= lista_retenciones.size()-1; i++){
+			lista_retenciones.get(i).setTrxName(getTrxName());
 			lista_retenciones.get(i).setProjectID(getProjectID());
 			lista_retenciones.get(i).setCampaignID(getCampaignID());
 			lista_retenciones.get(i).save(alloc);
