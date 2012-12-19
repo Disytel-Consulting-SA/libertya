@@ -1973,6 +1973,7 @@ public class VOrdenPagoModel implements TableModelListener {
 				errorNo = PROCERROR_PAYMENTS_GENERATION;
 			} else {
 				// 4. Guardar Retenciones
+				m_retGen.setTrxName(getTrxName());
 				m_retGen.setProjectID(getProjectID());
 				m_retGen.setCampaignID(getCampaignID());
 				m_retGen.save(hdr);
