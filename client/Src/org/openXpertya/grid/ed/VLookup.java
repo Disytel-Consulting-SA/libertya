@@ -1274,15 +1274,16 @@ public class VLookup extends JComponent implements VEditor,ActionListener,FocusL
     	if( columnName.equals( "M_Product_ID" )) {
 
             // Reset
-
+    		String wc = getWhereClause();
+    		
             Env.setContext( Env.getCtx(),Env.WINDOW_INFO,Env.TAB_INFO,"M_Product_ID","0" );
             Env.setContext( Env.getCtx(),Env.WINDOW_INFO,Env.TAB_INFO,"M_AttributeSetInstance_ID","0" );
 
             //
-            String subquery = "SELECT M_Product_ID, M_AttributeSetInstance_ID FROM M_Product_Upc_Instance WHERE UPC LIKE " + DB.TO_STRING( text );
+            String subquery = "SELECT M_Product_Upc_Instance.M_Product_ID, M_Product_Upc_Instance.M_AttributeSetInstance_ID FROM M_Product_Upc_Instance INNER JOIN M_Product ON (M_Product_Upc_Instance.M_Product_ID = M_Product.M_Product_ID) WHERE (M_Product_Upc_Instance.UPC LIKE " + DB.TO_STRING( text )+") "+(Util.isEmpty(wc, true)?"":" AND "+wc);
             sql.append(MRole.getDefault().addAccessSQL( subquery,"M_Product_Upc_Instance",MRole.SQL_NOTQUALIFIED,MRole.SQL_RO ));
             sql.append(" UNION ");
-            subquery = " SELECT M_Product_ID, NULL as M_AttributeSetInstance_ID FROM M_Productupc WHERE UPC LIKE " + DB.TO_STRING( text );
+            subquery = " SELECT M_Productupc.M_Product_ID, NULL as M_AttributeSetInstance_ID FROM M_Productupc INNER JOIN M_Product ON (M_Productupc.M_Product_ID = M_Product.M_Product_ID) WHERE (M_Productupc.UPC LIKE " + DB.TO_STRING( text )+") "+(Util.isEmpty(wc, true)?"":" AND "+wc);
             sql.append(MRole.getDefault().addAccessSQL( subquery,"M_Productupc",MRole.SQL_NOTQUALIFIED,MRole.SQL_RO ));
             sql.append(" UNION ");
             subquery = " SELECT M_Product_ID, NULL as M_AttributeSetInstance_ID FROM M_Product WHERE (UPPER(Value) LIKE " + DB.TO_STRING( text ) + " OR UPC LIKE " + DB.TO_STRING( text ) + " OR UPPER(Name) LIKE " + DB.TO_STRING( text );
@@ -1314,16 +1315,17 @@ public class VLookup extends JComponent implements VEditor,ActionListener,FocusL
     	if( sql.length() > 0 ) {
             String wc = getWhereClause();
 
-            if( (wc != null) && (wc.length() > 0) ) {
-                sql.append( " AND " ).append( wc );
-            }
-            if( columnName.equals( "M_Product_ID" )==false) 
-                sql.append( " AND IsActive='Y'" );
-
-            // ***
             if( columnName.equals( "M_Product_ID" )) {
             	sql.append( ") " );
             }
+            
+            if( (wc != null) && (wc.length() > 0) ) {
+                sql.append( " AND " ).append( wc );
+            }
+            
+            if( columnName.equals( "M_Product_ID" )==false) 
+                sql.append( " AND IsActive='Y'" );
+
             log.finest( "(predefined) " + sql.toString());
 
             return MRole.getDefault().addAccessSQL( sql.toString(),m_tableName,MRole.SQL_NOTQUALIFIED,MRole.SQL_RO );
