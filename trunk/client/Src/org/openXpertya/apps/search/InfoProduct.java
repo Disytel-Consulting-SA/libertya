@@ -44,6 +44,7 @@ import org.openXpertya.apps.ConfirmPanel;
 import org.openXpertya.grid.ed.VComboBox;
 import org.openXpertya.minigrid.IDColumn;
 import org.openXpertya.model.MClient;
+import org.openXpertya.model.MPreference;
 import org.openXpertya.model.MPriceList;
 import org.openXpertya.model.MPriceListVersion;
 import org.openXpertya.model.MQuery;
@@ -64,6 +65,13 @@ import org.openXpertya.util.Util;
 
 public class InfoProduct extends Info implements ActionListener {
 
+	/**
+	 * Nombres de preference para obtener los caracteres comodín al inicio y fin
+	 * de los campos value, name y unique
+	 */
+	private static final String WILCARD_PREFIX_PREFERENCE_NAME = "InfoProduct_PrefixWildcard";
+	private static final String WILCARD_SUFIX_PREFERENCE_NAME = "InfoProduct_SufixWildcard";
+	
     /**
      * Constructor de la clase ...
      *
@@ -127,7 +135,7 @@ public class InfoProduct extends Info implements ActionListener {
     
     
     //Modificado por Lucas Hernandez - Kunan
-    private static  String s_productFrom_version = "M_Product p" + " LEFT OUTER JOIN M_ProductPrice pr ON (p.M_Product_ID=pr.M_Product_ID AND pr.IsActive='Y')" + " LEFT OUTER JOIN M_AttributeSet pa ON (p.M_AttributeSet_ID=pa.M_AttributeSet_ID)" + " LEFT OUTER JOIN M_Product_Upc_Instance pui ON (p.M_Product_ID=pui.M_Product_ID AND pui.IsActive='Y')";
+    private static  String s_productFrom_version = "M_Product p" + " LEFT OUTER JOIN M_ProductPrice pr ON (p.M_Product_ID=pr.M_Product_ID AND pr.IsActive='Y')" + " LEFT OUTER JOIN M_ProductUpc pu ON (p.M_Product_ID=pu.M_Product_ID AND pu.IsActive='Y') " + " LEFT OUTER JOIN M_AttributeSet pa ON (p.M_AttributeSet_ID=pa.M_AttributeSet_ID)" + " LEFT OUTER JOIN M_Product_Upc_Instance pui ON (p.M_Product_ID=pui.M_Product_ID AND pui.IsActive='Y')";
     private static String s_productFrom= "M_Product p" + "p.IsActive='Y'";
    
     // dREHER, guardo la ultima linea seleccionada
@@ -256,6 +264,12 @@ public class InfoProduct extends Info implements ActionListener {
 	private JCheckBox checkBP = new JCheckBox();
 	private CLabel labelBP = new CLabel();
 
+	/** Label para el campo de filtro único */
+    private CLabel labelUnique = new CLabel();
+
+    /** Campo de filtro único */
+    private CTextField fieldUnique = new CTextField( 10 );
+	
     /**
      * Descripci�n de M�todo
      *
@@ -300,6 +314,12 @@ public class InfoProduct extends Info implements ActionListener {
         m_InfoPAttributeButton.setToolTipText( Msg.getMsg( Env.getCtx(),"InfoPAttribute" ));
         m_InfoPAttributeButton.addActionListener( this );
         m_InfoPAttributeButton.setVisible(false);
+        
+        labelUnique.setText( Msg.getMsg( ctx,"UniqueField" ));
+        labelUnique.setToolTipText(Msg.getMsg(ctx, "UniqueFieldDescription"));
+        fieldUnique.setBackground( CompierePLAF.getInfoBackground());
+        fieldUnique.addActionListener( this );
+        
         // Line 1
 
         parameterPanel.setLayout( new ALayout());
@@ -338,6 +358,11 @@ public class InfoProduct extends Info implements ActionListener {
         confirmPanel.addButton( m_PAttributeButton );
         m_PAttributeButton.addActionListener( this );
         m_PAttributeButton.setEnabled( false );
+        
+        // Line 3
+        // Campo único
+        parameterPanel.add( labelUnique,new ALayoutConstraint( 2,0 ));
+        parameterPanel.add( fieldUnique,null );
         
         SwingUtilities.invokeLater(new Runnable() {	
 			@Override
@@ -682,6 +707,22 @@ public class InfoProduct extends Info implements ActionListener {
     protected String getSQLWhere() {
         StringBuffer where = new StringBuffer();
 
+		// Obtener los caracteres de comodín al inicio y fin a incorporar en la
+		// cláusula para los campos value, name y unique 
+		String prefixWildcard = MPreference.searchCustomPreferenceValue(
+				WILCARD_PREFIX_PREFERENCE_NAME,
+				Env.getAD_Client_ID(Env.getCtx()),
+				Env.getAD_Org_ID(Env.getCtx()),
+				Env.getAD_User_ID(Env.getCtx()), true);
+		prefixWildcard = Util.isEmpty(prefixWildcard, true)?"":prefixWildcard;
+		
+		String sufixWildcard = MPreference.searchCustomPreferenceValue(
+				WILCARD_SUFIX_PREFERENCE_NAME,
+				Env.getAD_Client_ID(Env.getCtx()),
+				Env.getAD_Org_ID(Env.getCtx()),
+				Env.getAD_User_ID(Env.getCtx()), true);
+		sufixWildcard = Util.isEmpty(sufixWildcard, true)?"":sufixWildcard;
+		
         // Optional PLV
 
         int        M_PriceList_Version_ID = 0;
@@ -725,7 +766,8 @@ public class InfoProduct extends Info implements ActionListener {
 
         if( !( upc.equals( "" ) || upc.equals( "%" ))) {
         	where.append(" AND ((UPPER(p.UPC) LIKE ?)");
-        	where.append(" OR (UPPER(pui.UPC) LIKE '"+ upc + "'))");
+        	where.append(" OR (UPPER(pui.UPC) LIKE '"+ upc + "')");
+        	where.append(" OR (UPPER(pu.UPC) LIKE '"+ upc + "'))");
         }
 
         // => SKU
@@ -745,6 +787,37 @@ public class InfoProduct extends Info implements ActionListener {
 				where.append(" AND p.M_Product_ID IN (SELECT M_Product_ID FROM M_Product_PO WHERE C_BPartner_ID=" + m_C_BPartner_ID + " )" );
 			}
 		}
+		
+		// => Unique
+
+        String unique = fieldUnique.getText().toUpperCase();
+
+		if (!Util.isEmpty(unique, true) && !unique.equals("%")) {
+			// Agrego el prefijo y sufijo de la preference
+			unique = prefixWildcard+unique+sufixWildcard;
+			// Reemplazar los espaciones por comodines
+        	unique = unique.replaceAll(" ", "%");
+        	where.append(" AND ( ");
+        	// Value
+        	where.append(" (UPPER(p.Value) LIKE '"+unique+"') ");
+            where.append(" OR ");
+            // Name
+            where.append(" (UPPER(p.Name) LIKE '"+unique+"') ");
+            where.append(" OR ");
+            // UPC
+            where.append(" ((UPPER(p.UPC) LIKE '"+unique+"')");
+        	where.append(" OR (UPPER(pui.UPC) LIKE '"+unique+"')");
+        	where.append(" OR (UPPER(pu.UPC) LIKE '"+unique+ "'))");
+            where.append(" OR ");
+            // Codigo de proveedor
+			where.append(" (p.M_Product_ID IN (SELECT M_Product_ID FROM M_Product_PO po WHERE UPPER(po.vendorproductno) LIKE '"
+					+ unique + "' ");
+            if(m_C_BPartner_ID > 0){
+            	where.append(" AND po.C_BPartner_ID = ").append(m_C_BPartner_ID);
+            }
+            where.append(" )) ");
+            where.append(" ) ");
+        }
 
         return where.toString();
     }    // getSQLWhere
@@ -761,6 +834,22 @@ public class InfoProduct extends Info implements ActionListener {
     protected void setParameters( PreparedStatement pstmt ) throws SQLException {
         int index = 1;
 
+        // Obtener los caracteres de comodín al inicio y fin a incorporar en la
+ 		// cláusula para los campos value, name y unique 
+ 		String prefixWildcard = MPreference.searchCustomPreferenceValue(
+ 				WILCARD_PREFIX_PREFERENCE_NAME,
+ 				Env.getAD_Client_ID(Env.getCtx()),
+ 				Env.getAD_Org_ID(Env.getCtx()),
+ 				Env.getAD_User_ID(Env.getCtx()), true);
+ 		prefixWildcard = Util.isEmpty(prefixWildcard, true)?"":prefixWildcard;
+ 		
+ 		String sufixWildcard = MPreference.searchCustomPreferenceValue(
+ 				WILCARD_SUFIX_PREFERENCE_NAME,
+ 				Env.getAD_Client_ID(Env.getCtx()),
+ 				Env.getAD_Org_ID(Env.getCtx()),
+ 				Env.getAD_User_ID(Env.getCtx()), true);
+ 		sufixWildcard = Util.isEmpty(sufixWildcard, true)?"":sufixWildcard;
+        
         // => Warehouse
 
         int         M_Warehouse_ID = 0;
@@ -808,7 +897,11 @@ public class InfoProduct extends Info implements ActionListener {
         	if( value.equals( "" ) ) {
                 value += "%";
             }
-
+        	// Agrego el prefijo y sufijo en la preference
+        	value = prefixWildcard+value+sufixWildcard;
+        	// Los espaciones en blanco se traducen a comodines
+        	value = value.replaceAll(" ", "%");
+        	
             pstmt.setString( index++,value );
             log.fine( "Value: " + value );
         }
@@ -823,7 +916,11 @@ public class InfoProduct extends Info implements ActionListener {
         	if( name.equals( "" ) ) {
                 name += "%";
             }
-
+        	// Agrego el prefijo y sufijo en la preference
+        	name = prefixWildcard+name+sufixWildcard;
+        	// Los espaciones en blanco se traducen a comodines
+        	name = name.replaceAll(" ", "%");
+        	
             pstmt.setString( index++,name ); //Sin quitar el %
             log.fine( "Name: " + name );
         }
