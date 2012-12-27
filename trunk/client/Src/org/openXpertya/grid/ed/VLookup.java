@@ -1281,13 +1281,13 @@ public class VLookup extends JComponent implements VEditor,ActionListener,FocusL
 
             //
             String subquery = "SELECT M_Product_Upc_Instance.M_Product_ID, M_Product_Upc_Instance.M_AttributeSetInstance_ID FROM M_Product_Upc_Instance INNER JOIN M_Product ON (M_Product_Upc_Instance.M_Product_ID = M_Product.M_Product_ID) WHERE (M_Product_Upc_Instance.UPC LIKE " + DB.TO_STRING( text )+") "+(Util.isEmpty(wc, true)?"":" AND "+wc);
-            sql.append(MRole.getDefault().addAccessSQL( subquery,"M_Product_Upc_Instance",MRole.SQL_NOTQUALIFIED,MRole.SQL_RO ));
+            sql.append(MRole.getDefault().addAccessSQL( subquery,"M_Product_Upc_Instance",MRole.SQL_FULLYQUALIFIED,MRole.SQL_RO ));
             sql.append(" UNION ");
             subquery = " SELECT M_Productupc.M_Product_ID, NULL as M_AttributeSetInstance_ID FROM M_Productupc INNER JOIN M_Product ON (M_Productupc.M_Product_ID = M_Product.M_Product_ID) WHERE (M_Productupc.UPC LIKE " + DB.TO_STRING( text )+") "+(Util.isEmpty(wc, true)?"":" AND "+wc);
-            sql.append(MRole.getDefault().addAccessSQL( subquery,"M_Productupc",MRole.SQL_NOTQUALIFIED,MRole.SQL_RO ));
+            sql.append(MRole.getDefault().addAccessSQL( subquery,"M_Productupc",MRole.SQL_FULLYQUALIFIED,MRole.SQL_RO ));
             sql.append(" UNION ");
             subquery = " SELECT M_Product_ID, NULL as M_AttributeSetInstance_ID FROM M_Product WHERE (UPPER(Value) LIKE " + DB.TO_STRING( text ) + " OR UPC LIKE " + DB.TO_STRING( text ) + " OR UPPER(Name) LIKE " + DB.TO_STRING( text );
-            sql.append(subquery);
+            sql.append(MRole.getDefault().addAccessSQL( subquery,"M_Product",MRole.SQL_FULLYQUALIFIED,MRole.SQL_RO ));
         } else if( columnName.equals( "C_BPartner_ID" )) {
 //            sql.append( "SELECT C_BPartner_ID FROM C_BPartner WHERE (UPPER(Value) LIKE " ).append( DB.TO_STRING( text )).append( " OR UPPER(Name) LIKE " ).append( DB.TO_STRING( text )).append( ")" );
         	sql.append( "SELECT C_BPartner_ID FROM C_BPartner WHERE (UPPER(Value) LIKE " ).append( DB.TO_STRING( text )).append( " OR UPPER(Name) LIKE " ).append( DB.TO_STRING( text )).append( " OR UPPER(TaxID) LIKE " ).append( DB.TO_STRING( text )).append( ")" );
