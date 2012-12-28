@@ -6,6 +6,17 @@ import java.util.HashMap;
 
 public class ReplicationConstants {
 
+	/** ============= COLUMNAS ESPECIALES ====== */
+	// Columnas reservadas para replicacion, no deberian insertarse en metadatos directamente
+	/* ID universal de replicacion */
+	public static final String COLUMN_RETRIEVEUID 				= "retrieveUID";
+	/* Array de replicacion hacia otros hosts */
+	public static final String COLUMN_REPARRAY 					= "repArray";
+	/* Ultima fecha de envio via JMS */
+	public static final String COLUMN_DATELASTSENT 				= "datelastsentjms";
+	/* Marca de incluir en replicacion */
+	public static final String COLUMN_INCLUDEINREPLICATION 		= "includeinreplication";
+	
 	/** ============= PREFERENCIAS ============= */
 	/** Cantidad de mensajes a procesar en el destino por transaccion */
 	public static int REPLICATION_TARGET_MESSAGES_PER_TRX = 100;

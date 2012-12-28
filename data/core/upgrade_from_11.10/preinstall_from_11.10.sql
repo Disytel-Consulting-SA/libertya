@@ -5136,3 +5136,112 @@ update ad_system set dummy = (SELECT addcolumnifnotexists('ad_orginfo','allowaut
 
 --20121226-2020 Se elimina el índice de cuit único en la tabla de padrón ya que pueden existir cuits repetidos
 DROP INDEX c_bpartner_padron_bsas_cuit;
+
+--20121227-1740 Correcciones y mejoras en replicacion
+ALTER TABLE AD_Changelog_Replication ADD COLUMN includeInReplication character(1) not null DEFAULT 'N';
+CREATE INDEX AD_Changelog_Replication_includeInReplication ON AD_Changelog_Replication (includeInReplication) WHERE includeInReplication = 'Y';
+
+CREATE OR REPLACE FUNCTION replication_event()
+  RETURNS trigger AS
+$BODY$
+DECLARE 
+	found integer; 
+	replicationPos integer;
+	v_newRepArray varchar; 
+	aKeyColumn varchar;
+	repSeq bigint;
+	shouldReplicate varchar;
+BEGIN 
+	
+	IF (TG_OP = 'DELETE') THEN
+		
+		SELECT INTO shouldReplicate VALUE FROM AD_PREFERENCE WHERE ATTRIBUTE = 'ReplicationEventsActive';
+		IF (shouldReplicate <> 'Y') THEN
+			RETURN OLD;
+		END IF;
+		
+		IF (OLD.repArray IS NULL OR OLD.repArray = '') THEN
+			RETURN OLD;
+		END IF;
+		
+		IF replication_is_record_replicated(OLD.repArray) = 1 THEN
+			
+			SELECT INTO v_newRepArray replicationArray 
+			FROM ad_tablereplication 
+			WHERE ad_table_ID = TG_ARGV[0]::int;
+
+			v_newRepArray := replace(v_newRepArray, '3', '1');
+			
+			IF v_newRepArray IS NOT NULL AND v_newRepArray <> '' THEN
+				INSERT INTO ad_changelog_replication (AD_Changelog_Replication_ID, AD_Client_ID, AD_Org_ID, isActive, Created, CreatedBy, Updated, UpdatedBy, AD_Table_ID, retrieveUID, operationtype, binaryvalue, reparray, columnvalues, includeInReplication)
+				SELECT nextval('seq_ad_changelog_replication'),OLD.AD_Client_ID,OLD.AD_Org_ID,'Y',now(),OLD.CreatedBy,now(),OLD.UpdatedBy,TG_ARGV[0]::int,OLD.retrieveUID,'I',null,v_newRepArray,null,'Y';
+			END IF;
+		END IF;	
+		
+		RETURN OLD;
+	END IF;
+	
+	IF (TG_OP = 'INSERT' OR TG_OP = 'UPDATE') THEN
+		
+		SELECT INTO shouldReplicate VALUE FROM AD_PREFERENCE WHERE ATTRIBUTE = 'ReplicationEventsActive';
+		IF (shouldReplicate <> 'Y') THEN
+			RETURN NEW;
+		END IF;
+
+		 IF (NEW.repArray = 'SKIP') THEN
+			NEW.repArray := NULL;
+			return NEW;
+		 END IF;
+		 
+		 IF NEW.retrieveUID IS NULL OR NEW.retrieveUID = '' THEN 
+			SELECT INTO replicationPos replicationArrayPos FROM AD_ReplicationHost WHERE thisHost = 'Y'; 
+			IF replicationPos IS NULL THEN RAISE EXCEPTION 'Configuracion de Hosts incompleta: Ninguna sucursal tiene marca de Este Host'; END IF; 
+			
+			SELECT INTO repseq nextVal('repseq_' || TG_ARGV[1]);
+			IF repseq IS NULL THEN RAISE EXCEPTION 'No hay definida una secuencia de replicacion para la tabla %', TG_ARGV[1]; END IF;
+			NEW.retrieveUID := 'h'::varchar || replicationPos::varchar || '_' || repseq || '_' || lower(TG_ARGV[1]);
+		END IF;		
+		
+		IF (TG_OP = 'INSERT') THEN
+			
+			IF (substr(NEW.repArray, 1, 3) = 'SET') THEN
+				NEW.repArray := substr(NEW.repArray, 4, length(NEW.repArray)-3);
+			ELSE
+
+				SELECT INTO v_newRepArray replicationArray 
+				FROM ad_tablereplication 
+				WHERE ad_table_ID = TG_ARGV[0]::int;
+			
+				IF v_newRepArray IS NULL OR v_newRepArray = '' THEN
+					RETURN NEW;
+				END IF;
+
+				NEW.repArray := replace(v_newRepArray, '3', '1');
+				NEW.repArray := replace(NEW.repArray, '2', '0');
+				IF (position('1' in NEW.repArray) > 0) THEN
+					NEW.includeInReplication = 'Y';
+				ELSE
+					NEW.repArray := NULL;
+				END IF;
+			END IF;
+			RETURN NEW;
+		
+		ELSEIF (TG_OP = 'UPDATE') THEN 
+		
+				 IF (substr(NEW.repArray, 1, 3) = 'SET') THEN
+					NEW.repArray := substr(NEW.repArray, 4, length(NEW.repArray)-3);
+				ELSE
+					v_newRepArray := replace(OLD.repArray, '2', '3');
+					NEW.repArray := replace(v_newRepArray, '4', '5');
+					IF (position('3' in NEW.repArray) > 0) THEN
+						NEW.includeInReplication = 'Y';
+					END IF;
+				END IF;
+				RETURN NEW;
+		END IF;
+	END IF;
+END; 
+$BODY$
+  LANGUAGE 'plpgsql' VOLATILE
+  COST 100;
+ALTER FUNCTION replication_event() OWNER TO libertya;

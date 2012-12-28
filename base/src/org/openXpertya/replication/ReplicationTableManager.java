@@ -92,8 +92,8 @@ public class ReplicationTableManager {
 			{
 				// se omiten columnas especiales
 				columnName = recordMetaData.getColumnName(i).toLowerCase();
-				if (CreateReplicationTriggerProcess.COLUMN_RETRIEVEUID.equalsIgnoreCase(columnName) ||
-					CreateReplicationTriggerProcess.COLUMN_REPARRAY.equalsIgnoreCase(columnName))
+				if (ReplicationConstants.COLUMN_RETRIEVEUID.equalsIgnoreCase(columnName) ||
+					ReplicationConstants.COLUMN_REPARRAY.equalsIgnoreCase(columnName))
 					continue;
 				
 				// Si es null, setear de manera acorde
@@ -103,7 +103,11 @@ public class ReplicationTableManager {
 				}
 				else
 				{
-					columnValue = recordRS.getObject(i).toString();
+					columnValue = recordRS.getObject(i).toString()
+															.replaceAll("<",  "&#x3C;")
+															.replaceAll(">",  "&#x3E;")
+															.replaceAll("&",  "&#x26;amp;")
+															.replaceAll("\"", "&#x22;");
 					nullValue = "";
 				}
 
@@ -153,7 +157,8 @@ public class ReplicationTableManager {
 		{
 			tablesForReplication = new Vector<String>();
 
-			// Recuperar las tablas que 1) Tienen incorporado el reparray como una columna, 2) Son tablas de 
+			// Recuperar las tablas que: 1) Tienen incorporado el reparray como una columna  Y  2) Son tablas configuradas para replicacion
+			//							 incluyendo ademas la tabla de eliminaciones
 			String query =  " SELECT table_name " + 
 							" FROM information_schema.columns " + 
 							" WHERE lower(column_name) = 'reparray' " + 
@@ -163,7 +168,8 @@ public class ReplicationTableManager {
 							" 	INNER JOIN ad_table t ON tr.ad_table_id = t.ad_table_id " +
 							" 	WHERE replicationarray SIMILAR TO ('%" + ReplicationConstants.REPLICATION_CONFIGURATION_SEND + "%|%" + ReplicationConstants.REPLICATION_CONFIGURATION_SENDRECEIVE + "%') " +
 							" 	AND tr.AD_Client_ID = " + Env.getContext(Env.getCtx(), "#AD_Client_ID") +
-							" ) ";
+							" ) " +
+							" UNION SELECT '" + ReplicationConstants.DELETIONS_TABLE + "' AS table_name ";
 			
 			PreparedStatement pstmt = DB.prepareStatement(query, trxName, true);
 			ResultSet rs = pstmt.executeQuery();
@@ -188,7 +194,7 @@ public class ReplicationTableManager {
 				query.append(" SELECT '").append(aTable).append("' as tablename, retrieveUID, reparray, created ");
 				query.append(" FROM ").append(aTable);
 				query.append(" WHERE ( ");
-				query.append(" 		   reparray similar to ('").append(getReplicationStates(true)).append("') ");
+				query.append(" 		   ").append(ReplicationConstants.COLUMN_INCLUDEINREPLICATION).append(" = 'Y' ");
 				// incluir registros por timeout sin ack.  si no recibo ack luego de un tiempo, reenviarlos (solo en caso de estar definido el parametro)
 				if (ReplicationConstants.ACK_TIME_OUT != null )
 				{
@@ -198,7 +204,7 @@ public class ReplicationTableManager {
 					else
 						query.append(" 	OR ( (reparray similar to ('%").append(ReplicationConstants.REPARRAY_ACK_WAITING).append("%|%").append(ReplicationConstants.REPARRAY_REPLICATE_AFTER_ACK).append("%') ) ");
 					// limitar al periodo especificado (registros cuya fecha de envioJMS supere el ACK_TIME_OUT indicado)
-					query.append("		AND NOW() - " + CreateReplicationTriggerProcess.COLUMN_DATELASTSENT +  "  > '" + ReplicationConstants.ACK_TIME_OUT + "') 	");
+					query.append("		AND NOW() - " + ReplicationConstants.COLUMN_DATELASTSENT +  "  > '" + ReplicationConstants.ACK_TIME_OUT + "') 	");
 				}
 				query.append(" 		) ");				
 				query.append(" AND AD_Client_ID = " + Env.getContext(Env.getCtx(), "#AD_Client_ID") );
@@ -253,7 +259,6 @@ public class ReplicationTableManager {
 			extrasRepStatesList.append("%").append(ReplicationConstants.REPARRAY_REPLICATE_NO_RETRY).append("%|");
 		}
 		return extrasRepStatesList;
-
 	}
 	
 	

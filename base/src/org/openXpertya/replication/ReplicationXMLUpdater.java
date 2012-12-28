@@ -105,7 +105,7 @@ public class ReplicationXMLUpdater extends PluginXMLUpdater {
 	protected void handleException(Exception e, ChangeGroup changeGroup) throws Exception
 	{
 		// Incorporar el error solo en el caso que se este en la segunda pasada (ya no se puede solucionar localmente)
-		if (doublePass && currentPass == 2)
+		if (!doublePass || (doublePass && currentPass == 2))
 		{
 			// tablename;uid;opType;ERROR:...
 			String data[] = {changeGroup.getTableName(), changeGroup.getUid(), changeGroup.getOperation(), "ERROR:" + e.getMessage()};

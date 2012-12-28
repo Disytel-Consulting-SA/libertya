@@ -5,6 +5,7 @@ import java.sql.ResultSet;
 
 import org.openXpertya.model.M_Table;
 import org.openXpertya.model.X_AD_TableReplication;
+import org.openXpertya.replication.ReplicationConstants;
 import org.openXpertya.util.DB;
 import org.openXpertya.util.Env;
 
@@ -30,12 +31,7 @@ public class CreateReplicationTriggerProcess extends SvrProcess {
 
 	// Valor de retorno
 	protected StringBuffer retValue = new StringBuffer("");
-	
-	// Columnas reservadas para replicacion, no deberian insertarse en metadatos directamente 
-	public static final String COLUMN_RETRIEVEUID = "retrieveUID";
-	public static final String COLUMN_REPARRAY = "repArray";
-	public static final String COLUMN_DATELASTSENT = "dateLastSentJMS";
-	
+		
 	// Replication array dummy para relleno unicamente
 	public static final String DUMMY_REPARRAY = "0";
 	
@@ -166,32 +162,43 @@ public class CreateReplicationTriggerProcess extends SvrProcess {
 	protected void appendNewColumns(StringBuffer sql)
 	{
 		// Columna retrieveUID
-		if (!existColumnInTable(COLUMN_RETRIEVEUID, table.getTableName()))
+		if (!existColumnInTable(ReplicationConstants.COLUMN_RETRIEVEUID, table.getTableName()))
 		{
-			append (sql, " ALTER TABLE " + table.getTableName() + " ADD COLUMN " + COLUMN_RETRIEVEUID + " varchar(100);" );
-			append (sql, " CREATE INDEX " + table.getTableName() + "_" + COLUMN_RETRIEVEUID + " ON " + table.getTableName() +  "(" + COLUMN_RETRIEVEUID +");");
-			retValue.append(" - Creada columna: " + COLUMN_RETRIEVEUID + " \n");
+			append (sql, " ALTER TABLE " + table.getTableName() + " ADD COLUMN " + ReplicationConstants.COLUMN_RETRIEVEUID + " varchar(100);" );
+			append (sql, " CREATE INDEX " + table.getTableName() + "_" + ReplicationConstants.COLUMN_RETRIEVEUID + " ON " + table.getTableName() +  "(" + ReplicationConstants.COLUMN_RETRIEVEUID +");");
+			retValue.append(" - Creada columna: " + ReplicationConstants.COLUMN_RETRIEVEUID + " \n");
 		}
 		else
-			retValue.append(" - Columna " + COLUMN_RETRIEVEUID + " ya existe en la tabla" + " \n");
+			retValue.append(" - Columna " + ReplicationConstants.COLUMN_RETRIEVEUID + " ya existe en la tabla" + " \n");
 		
 		// Columna repArray
-		if (!existColumnInTable(COLUMN_REPARRAY, table.getTableName()))
+		if (!existColumnInTable(ReplicationConstants.COLUMN_REPARRAY, table.getTableName()))
 		{
-			append (sql, " ALTER TABLE " + table.getTableName() + " ADD COLUMN " + COLUMN_REPARRAY + " varchar DEFAULT '0';" );
-			retValue.append(" - Creada columna: " + COLUMN_REPARRAY + " \n");
+			append (sql, " ALTER TABLE " + table.getTableName() + " ADD COLUMN " + ReplicationConstants.COLUMN_REPARRAY + " varchar DEFAULT '0';" );
+			retValue.append(" - Creada columna: " + ReplicationConstants.COLUMN_REPARRAY + " \n");
 		}
 		else
-			retValue.append(" - Columna " + COLUMN_REPARRAY + " ya existe en la tabla" + " \n");
+			retValue.append(" - Columna " + ReplicationConstants.COLUMN_REPARRAY + " ya existe en la tabla" + " \n");
 		
 		// Columna dateLastSent
-		if (!existColumnInTable(COLUMN_DATELASTSENT, table.getTableName()))
+		if (!existColumnInTable(ReplicationConstants.COLUMN_DATELASTSENT, table.getTableName()))
 		{
-			append (sql, " ALTER TABLE " + table.getTableName() + " ADD COLUMN " + COLUMN_DATELASTSENT + " timestamp null;" );
-			retValue.append(" - Creada columna: " + COLUMN_DATELASTSENT + " \n");
+			append (sql, " ALTER TABLE " + table.getTableName() + " ADD COLUMN " + ReplicationConstants.COLUMN_DATELASTSENT + " timestamp null;" );
+			retValue.append(" - Creada columna: " + ReplicationConstants.COLUMN_DATELASTSENT + " \n");
 		}
 		else
-			retValue.append(" - Columna " + COLUMN_DATELASTSENT + " ya existe en la tabla" + " \n");
+			retValue.append(" - Columna " + ReplicationConstants.COLUMN_DATELASTSENT + " ya existe en la tabla" + " \n");
+		
+		// Columna includeInReplication
+		if (!existColumnInTable(ReplicationConstants.COLUMN_INCLUDEINREPLICATION, table.getTableName()))
+		{
+			append (sql, " ALTER TABLE " + table.getTableName() + " ADD COLUMN " + ReplicationConstants.COLUMN_INCLUDEINREPLICATION + " character(1) not null default 'N';" );
+			append (sql, " CREATE INDEX " + table.getTableName() + "_" + ReplicationConstants.COLUMN_INCLUDEINREPLICATION + " ON " + table.getTableName() +  "(" + ReplicationConstants.COLUMN_INCLUDEINREPLICATION +") WHERE " + ReplicationConstants.COLUMN_INCLUDEINREPLICATION + " = 'Y';");
+			retValue.append(" - Creada columna: " + ReplicationConstants.COLUMN_INCLUDEINREPLICATION + " \n");
+		}
+		else
+			retValue.append(" - Columna " + ReplicationConstants.COLUMN_INCLUDEINREPLICATION + " ya existe en la tabla" + " \n");
+		
 	}
 	
 	
@@ -208,8 +215,8 @@ public class CreateReplicationTriggerProcess extends SvrProcess {
 		// setearlo con el mismo valor que el AD_ComponentObjectUID (el cual se sabe es comun en todas las distribuciones)
 		if (existColumnInTable("AD_ComponentObjectUID", table.getTableName()))
 		{
-			append (sql, " UPDATE " + table.getTableName() + " SET " + COLUMN_RETRIEVEUID + " = AD_ComponentObjectUID ");
-			append (sql, " WHERE " + COLUMN_RETRIEVEUID + " IS NULL AND (AD_Client_ID = " + getAD_Client_ID() + " OR AD_Client_ID = 0) ");
+			append (sql, " UPDATE " + table.getTableName() + " SET " + ReplicationConstants.COLUMN_RETRIEVEUID + " = AD_ComponentObjectUID ");
+			append (sql, " WHERE " + ReplicationConstants.COLUMN_RETRIEVEUID + " IS NULL AND (AD_Client_ID = " + getAD_Client_ID() + " OR AD_Client_ID = 0) ");
 			append (sql, " AND AD_ComponentObjectUID IS NOT NULL; ");
 			
 			retValue.append(" - Actualizadas entradas ya existentes en tabla (via AD_ComponentObjectUID): " + table.getTableName() + " \n");
@@ -221,12 +228,12 @@ public class CreateReplicationTriggerProcess extends SvrProcess {
 		{
 			// Verificamos si existe la columna NombreDeTabla_ID (ejemplo C_Invoice => C_Invoice_ID)
 			if (existColumnInTable(table.getTableName()+"_ID", table.getTableName()))
-				append (sql, " UPDATE " + table.getTableName() + " SET " + COLUMN_RETRIEVEUID + " = '" + table.getTableName() + "-' || " + table.getTableName() + "_ID::varchar ");
+				append (sql, " UPDATE " + table.getTableName() + " SET " + ReplicationConstants.COLUMN_RETRIEVEUID + " = '" + table.getTableName() + "-' || " + table.getTableName() + "_ID::varchar ");
 			else
 				// No hay forma de generar un UID de manera sencilla sin NombreDeTabla_ID (ejemplo: c_acctschema_gl). Utilizar Tabla-AD_Client-AD_Org-Created
-				append (sql, " UPDATE " + table.getTableName() + " SET " + COLUMN_RETRIEVEUID + " = '" + table.getTableName() + "-' || AD_Client_ID::varchar || '-' || AD_Org_ID::varchar || '-' || Created::varchar ");
+				append (sql, " UPDATE " + table.getTableName() + " SET " + ReplicationConstants.COLUMN_RETRIEVEUID + " = '" + table.getTableName() + "-' || AD_Client_ID::varchar || '-' || AD_Org_ID::varchar || '-' || Created::varchar ");
 
-			append (sql, " WHERE " + COLUMN_RETRIEVEUID + " IS NULL AND (AD_Client_ID = " + getAD_Client_ID() + " OR AD_Client_ID = 0); ");
+			append (sql, " WHERE " + ReplicationConstants.COLUMN_RETRIEVEUID + " IS NULL AND (AD_Client_ID = " + getAD_Client_ID() + " OR AD_Client_ID = 0); ");
 			retValue.append(" - Actualizadas entradas ya existentes en tabla (via Tabla_RecordID): " + table.getTableName() + " \n");	
 		}
 			

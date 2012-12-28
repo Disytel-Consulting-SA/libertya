@@ -269,7 +269,10 @@ public class ReplicationBuilder extends ChangeLogXMLBuilder {
 		String table = isDeletion ? ReplicationConstants.DELETIONS_TABLE : group.getTableName();
 		// Armar el query de actualizacion del repArray
 		toWaitingAckQuery.append(" UPDATE ").append(table)
-						.append(" SET repArray = '"+set).append(group.getRepArray()).append("', " + CreateReplicationTriggerProcess.COLUMN_DATELASTSENT + " = NOW() ")
+						.append(" SET ")
+						.append(  ReplicationConstants.COLUMN_REPARRAY     ).append(" = '"+set).append(group.getRepArray()).append("', ")
+						.append(  ReplicationConstants.COLUMN_DATELASTSENT ).append(" = NOW() ")
+						.append(  updateIncludeInReplication(group) )
 						.append(" WHERE retrieveUID = '").append(group.getAd_componentObjectUID()).append("'; ");
 		
 		count++;
@@ -292,7 +295,20 @@ public class ReplicationBuilder extends ChangeLogXMLBuilder {
 		count = 0;
 	}
 	
-
+	/**
+	 * Actualiza el includeInReplication a 'N' en el caso en que ninguna
+	 * de las posiciones actuales este marcada para replicación 
+	 * @param group grupo recibido
+	 * @return un string con el query aumentado en caso de cambiar a N, o un string vacio en cc
+	 */
+	protected String updateIncludeInReplication(ChangeLogGroupReplication group) {
+		for (Character pos : group.getRepArray().toCharArray()) {
+			if (ReplicationConstants.replicateStates.contains(pos))
+				return "";
+		}
+		return ", includeInReplication = 'N'";
+	}
+	
 	
 	public String getM_replicationXMLData() {
 		return m_replicationXMLData.toString();

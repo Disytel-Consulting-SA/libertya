@@ -282,6 +282,7 @@ public class ReplicationSourceProcess extends AbstractReplicationProcess {
 		String tableNameQuery = MChangeLog.OPERATIONTYPE_Deletion.equals(opType)?ReplicationConstants.DELETIONS_TABLE:tableName;
 		DB.executeUpdate(" UPDATE " + (tableNameQuery) +
 				 			" SET repArray = '"+set+"' || OVERLAY(repArray placing '" + toState + "' FROM "+(pos) + " for 1) " +
+				 			( ReplicationConstants.replicateStates.contains(toState) ? ", includeInReplication = 'Y' " : "" ) +
 				 			" WHERE retrieveUID = '" + uid + "'" +
 				 			" AND AD_Client_ID = " + getAD_Client_ID(), false, trxName, true);
 
