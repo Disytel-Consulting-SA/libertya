@@ -1940,15 +1940,23 @@ public class MInvoiceLine extends X_C_InvoiceLine {
     public void setLineNetAmount() {
         BigDecimal net = getLineNetAmt();
         
-        BigDecimal tax = isTaxIncluded() ? getTaxRate().divide(new BigDecimal(100), 2, BigDecimal.ROUND_HALF_UP) : BigDecimal.ZERO;
+        BigDecimal tax = isTaxIncluded() ? getTaxRate().divide(new BigDecimal(100)) : BigDecimal.ZERO;
         
         // Si la Tarifa tiene impuesto incluido y percepciones incluidas, el neto se calcula haciendo: monto / (1 + Tasa de Impuesto + Tasa de Percepciones)  
         if(isTaxIncluded() && isPerceptionsIncluded()){
         	GeneratorPercepciones generator = new GeneratorPercepciones(getCtx(), getInvoice().getDiscountableWrapper(), get_TrxName());
             try {
             	BigDecimal rate = generator.totalPercepcionesRate();
-            	rate = rate.divide(new BigDecimal(100), 2, BigDecimal.ROUND_HALF_UP);
-            	net = net.divide( (BigDecimal.ONE.add(rate).add(tax)), 2, BigDecimal.ROUND_HALF_UP );
+            	rate = rate.divide(new BigDecimal(100));
+            	try
+                {
+            		net = net.divide( (BigDecimal.ONE.add(rate).add(tax)));
+                }
+                catch (Exception e)
+                {
+                	net = new BigDecimal(net.doubleValue() / (BigDecimal.ONE.add(rate).add(tax)).doubleValue());
+                }
+            	
     		} catch (Exception e) {
     			e.printStackTrace();
     		}	
