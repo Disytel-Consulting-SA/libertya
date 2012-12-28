@@ -4568,6 +4568,16 @@ public class MInvoice extends X_C_Invoice implements DocAction {
 		}
 		return total;
 	}
+	
+	public BigDecimal getTotalLinesNetPerceptionIncludedWithoutDocumentDiscount() {
+		BigDecimal total = Env.ZERO;
+		for (MInvoiceLine invoiceLine : getLines()) {
+			// Total de líneas sin impuestos
+			total = total.add(invoiceLine.getLineNetAmount()).subtract(
+					invoiceLine.getTotalDocumentDiscountUnityAmtNet());
+		}
+		return total;
+	}
 
 	@Override
 	public BigDecimal getChargeAmt() {

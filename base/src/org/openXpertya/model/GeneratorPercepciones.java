@@ -276,9 +276,9 @@ public class GeneratorPercepciones {
 		List<MTax> percepciones = getApplyPercepciones();
 		// Recorrer las percepciones y agregarlas a las facturas
 		BigDecimal percepcionAmt;
-		BigDecimal invoiceNetTotalAmt = invoice.getTotalLinesNet();
+		BigDecimal invoiceNetTotalAmt = invoice.getTotalLinesNetWithoutDocumentDiscount();
 		if (invoice.isPerceptionsIncluded()){
-			invoiceNetTotalAmt = invoice.getTotalLinesNetPerceptionIncluded();
+			invoiceNetTotalAmt = invoice.getTotalLinesNetPerceptionIncludedWithoutDocumentDiscount();
 		}
 		Integer scale = MCurrency.getStdPrecision(getCtx(),
 				invoice.getC_Currency_ID(), getTrxName());
