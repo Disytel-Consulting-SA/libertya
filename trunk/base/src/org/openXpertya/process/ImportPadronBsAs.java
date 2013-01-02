@@ -78,6 +78,8 @@ public class ImportPadronBsAs extends SvrProcess
 			String name = para[i].getParameterName();
 			if (name.equals("DeleteOldImported"))
 				m_deleteOldImported = "Y".equals(para[i].getParameter());
+			if (name.equals("PadronType"))
+				padronType = ( String )para[ i ].getParameter();
 			else
 				log.log(Level.SEVERE,"prepare - Unknown Parameter: " + name);
 		}
@@ -101,6 +103,7 @@ public class ImportPadronBsAs extends SvrProcess
 		int regInserted = 0;
 		int regUpdated = 0;
 		int regDeleted = 0;
+		int noPadronType = 0;
 		//	****	Prepare	****
 
 		//	Delete Old Imported
@@ -137,6 +140,17 @@ public class ImportPadronBsAs extends SvrProcess
 			sql.append("WHERE  c_bpartner_id IS NULL AND i_isimported = 'N' ").append(getClientCheck());
 			partnerNotFound = DB.executeUpdate(sql.toString());
 			log.log (Level.SEVERE,"doIt - Entidades Comerciales NO Encontradas =" + partnerNotFound);
+			
+			sql = new StringBuffer();
+			sql.append("UPDATE i_padron_sujeto \n");
+			sql.append("SET    padrontype = '"+getPadronType()+"' \n");
+			sql.append("WHERE  padrontype IS NULL AND i_isimported = 'N' ").append(getClientCheck());
+			noPadronType = DB.executeUpdate(sql.toString());
+
+	        if( noPadronType != 0 ) {
+	            log.warning( "Invalid Padron Type=" + no );
+	        }
+			
 			
 			if(isUpdateRecords()){
 				sql = new StringBuffer();
