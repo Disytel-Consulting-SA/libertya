@@ -1694,7 +1694,9 @@ public class MInvoice extends X_C_Invoice implements DocAction {
 			setC_DocType_ID(0); // make sure it's set to 0
 		}
 		
-		if (getC_Letra_Comprobante_ID() <= 0) {
+		boolean locale_ar = CalloutInvoiceExt.ComprobantesFiscalesActivos();
+		
+		if (locale_ar && getC_Letra_Comprobante_ID() <= 0) {
 			Integer categoriaIvaClient = CalloutInvoiceExt.darCategoriaIvaClient();
 			categoriaIvaClient = categoriaIvaClient == null ? 0	: categoriaIvaClient;
 			int categoriaIvaPartner = partner.getC_Categoria_Iva_ID();
@@ -1716,7 +1718,7 @@ public class MInvoice extends X_C_Invoice implements DocAction {
 		}
 		
 		// Si el Tipo de Documento Destino es 0, se calcula a partir del Nro de Punto de Venta y el Tipo de Comprobante (FC, NC, ND)
-		if (CalloutInvoiceExt.ComprobantesFiscalesActivos()){
+		if (locale_ar){
 			if (getC_DocTypeTarget_ID() == 0) {
 				MDocType docType = MDocType.getDocType(getCtx(), getDocTypeBaseKey(getTipoComprobante()), getLetra(), getPuntoDeVenta(), get_TrxName());
 				if (docType != null){
@@ -1784,8 +1786,7 @@ public class MInvoice extends X_C_Invoice implements DocAction {
 		 * && // Recibo de retención no requiere validaciones fiscales.
 		 * !docType.getDocTypeKey().equals(MDocType.DOCTYPE_Retencion_Receipt);
 		 */
-		if (CalloutInvoiceExt.ComprobantesFiscalesActivos()
-				&& docType.isFiscalDocument()) {
+		if (locale_ar && docType.isFiscalDocument()) {
 			boolean IsSOTrx = isSOTrx();
 
 			// CUIT - si no está seteado, setearlo a partir del BPartner
