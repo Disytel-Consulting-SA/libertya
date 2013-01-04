@@ -1868,6 +1868,9 @@ public class VOrdenPagoModel implements TableModelListener {
 					mpct.setPayment(pay);
 					// Se cierra el cheque de tercero para que no vuelva a ser utilizado
 					MPayment chequeTercero = mpct.getChequeTerceroPayment();
+					// Se relaciona el cheque de tercero en la columna de pago
+					// original de la copia
+					pay.setOriginal_Ref_Payment_ID(chequeTercero.getID());
 					if (!chequeTercero.processIt(DocAction.ACTION_Close)) {
 						errorNo = PROCERROR_PAYMENTS_GENERATION;
 						throw new Exception(chequeTercero.getProcessMsg());

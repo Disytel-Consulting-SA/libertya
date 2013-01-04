@@ -44,6 +44,7 @@ import org.openXpertya.util.DB;
 import org.openXpertya.util.Env;
 import org.openXpertya.util.Msg;
 import org.openXpertya.util.Trx;
+import org.openXpertya.util.Util;
 import org.openXpertya.util.ValueNamePair;
 
 /**
@@ -2660,6 +2661,21 @@ public final class MPayment extends X_C_Payment implements DocAction,ProcessCall
     		// Me guardo el resultado de la llamada 
     		getAditionalWorkResult().put(this, result.getResult());
         }       
+		
+		// Si es un cheque de tercero lo que estoy anulando, entonces al cheque
+		// original se lo debe dejar Completo para que se puedan realizar las
+		// acciones pertienentes. Los cheques originales sino quedan en estado
+		// Cerrado y no se pueden anular
+		if(!Util.isEmpty(getOriginal_Ref_Payment_ID(), true)){
+			MPayment originalPayment = new MPayment(getCtx(),
+					getOriginal_Ref_Payment_ID(), get_TrxName());
+			originalPayment.setDocStatus(MPayment.DOCSTATUS_Completed);
+			originalPayment.setDocAction(MPayment.DOCSTATUS_Closed);
+			if(!originalPayment.save()){
+				m_processMsg = CLogger.retrieveErrorAsString();
+				return false;
+			}
+		}
 		
         // Disytel - FB
         // Dejamos como Revertido el documento inverso a fin de mantener la consistencia
