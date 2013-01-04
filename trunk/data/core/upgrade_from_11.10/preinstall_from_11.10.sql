@@ -5245,3 +5245,6 @@ $BODY$
   LANGUAGE 'plpgsql' VOLATILE
   COST 100;
 ALTER FUNCTION replication_event() OWNER TO libertya;
+
+--20130104-1247 Nueva columna que permite referenciar a los pagos originales. Muchas veces los pagos son copia de otros, por ejemplo en cheques de terceros. 
+update ad_system set dummy = (SELECT addcolumnifnotexists('c_payment','original_ref_payment_id', 'integer'));

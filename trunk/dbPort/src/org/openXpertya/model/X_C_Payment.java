@@ -7,7 +7,7 @@ import java.math.*;
 import org.openXpertya.util.*;
 /** Modelo Generado por C_Payment
  *  @author Comunidad de Desarrollo Libertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
- *  @version  - 2012-07-09 20:10:43.383 */
+ *  @version  - 2013-01-04 13:25:20.097 */
 public class X_C_Payment extends org.openXpertya.model.PO
 {
 /** Constructor estándar */
@@ -1175,6 +1175,21 @@ This payment can be processed online */
 public String getOProcessing() 
 {
 return (String)get_Value("OProcessing");
+}
+public static final int ORIGINAL_REF_PAYMENT_ID_AD_Reference_ID = MReference.getReferenceID("C_Payment");
+/** Set Original Payment ID */
+public void setOriginal_Ref_Payment_ID (int Original_Ref_Payment_ID)
+{
+if (Original_Ref_Payment_ID <= 0) set_Value ("Original_Ref_Payment_ID", null);
+ else 
+set_Value ("Original_Ref_Payment_ID", new Integer(Original_Ref_Payment_ID));
+}
+/** Get Original Payment ID */
+public int getOriginal_Ref_Payment_ID() 
+{
+Integer ii = (Integer)get_Value("Original_Ref_Payment_ID");
+if (ii == null) return 0;
+return ii.intValue();
 }
 /** Set Original Transaction ID.
 Original Transaction ID */
