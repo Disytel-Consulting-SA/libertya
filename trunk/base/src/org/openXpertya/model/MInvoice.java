@@ -963,7 +963,7 @@ public class MInvoice extends X_C_Invoice implements DocAction {
 
 		String ss = bp.getPaymentRule();
 
-		if (ss != null) {
+		if (!Util.isEmpty(ss, true)) {
 			setPaymentRule(ss);
 		}
 
