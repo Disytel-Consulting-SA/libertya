@@ -5248,3 +5248,305 @@ ALTER FUNCTION replication_event() OWNER TO libertya;
 
 --20130104-1247 Nueva columna que permite referenciar a los pagos originales. Muchas veces los pagos son copia de otros, por ejemplo en cheques de terceros. 
 update ad_system set dummy = (SELECT addcolumnifnotexists('c_payment','original_ref_payment_id', 'integer'));
+
+--20130115-0922 Nuevos cambios en logica de replicacion
+﻿CREATE OR REPLACE FUNCTION replication_is_valid_reference(p_columnid integer, column_data character varying)
+  RETURNS integer AS
+$BODY$
+DECLARE
+targetTableName varchar;
+targetTableID int;
+sourceTableID int;
+isValid int;
+colName varchar;
+hostID int;
+sourceRepArray varchar;
+targetRepArray varchar;
+viewTable varchar;
+BEGIN
+
+	-- En caso de que no presente un dato, entonces omitir cualquier validación
+	IF column_data IS NULL THEN
+		RETURN 1;
+	END IF;
+
+	-- si la columna es AD_Language, omitir cualquier tipo de validacion
+	SELECT INTO colName columnname FROM AD_Column WHERE AD_Column_ID = p_columnID;
+	IF colName = 'AD_Language' THEN
+		RETURN 1;   
+	END IF;
+   
+	-- ver si el campo es una referencia
+	select into targetTableName replication_get_referenced_table(p_columnID);
+
+	-- si es una referencia, verificar el bitacoreo en la tabla referenciada
+	IF targetTableName != '' THEN
+       
+	-- verificar si la tabla destino es simplemente una vista
+	select INTO viewTable isview from ad_table where tablename = targetTableName;
+	IF viewTable = 'Y' THEN
+		return 1;
+	end if;
+		
+	-- si el valor es 0, entonces es una referencia valida (seria como null para LY)
+	IF column_data = '0' THEN
+		return 1;
+	END IF;
+
+        -- recuperar el identificador de la tabla destino
+        SELECT into targetTableID AD_Table_ID FROM AD_Table WHERE upper(tablename) = upper(targetTableName);
+        -- recuperar el identificador de la tabla origen
+        SELECT into sourceTableID AD_Table_ID FROM AD_Column WHERE AD_Column_ID = p_columnid;
+   
+        -- ver si la tabla destino es bitacoreada
+        SELECT INTO hostID replicationarraypos FROM AD_ReplicationHost WHERE thisHost = 'Y';
+        IF hostID IS NULL THEN RAISE EXCEPTION 'Configuracion de Hosts incompleta: Ninguna sucursal tiene marca de Este Host'; END IF;
+
+        -- si la tabla destino directamente no tiene la columna retrieveuid, entonces devolver que es invalido
+        SELECT INTO isValid count(1) FROM information_schema.columns
+            WHERE lower(column_name) = 'retrieveuid' AND lower(table_name) = lower(targetTableName);
+        IF isValid = 0 THEN
+            return 0;
+        END IF;
+
+	-- comparar el replicationArray de la tabla origen y de la tabla destino:
+	-- unicamente si son iguales se podrá replicar, en caso contrario devolver que no
+	-- contemplar caso de tablas bidireccionales, aqui solo importa que exista envio hacia el otro host
+	-- (reemplazar 3 (bidireccional) por 1 (enviar)
+	SELECT INTO sourceRepArray replace(replicationArray, '3', '1') FROM AD_TableReplication where ad_table_id = sourceTableID;
+	SELECT INTO targetRepArray replace(replicationArray, '3', '1') FROM AD_TableReplication where ad_table_id = targetTableID;
+
+	-- si los repArray de las tablas origen y destino son iguales, entonces todo bien
+	IF sourceRepArray = targetRepArray THEN
+		return 1;
+	END IF;
+
+	-- si los repArray de las tablas origen y destino son diferentes (y la destino esta marcada para replicar),
+	-- entonces no puede referenciarse el registro, ya que existirá en algunos hosts y en otros no.
+	IF sourceRepArray <> targetRepArray AND (position('1' in targetRepArray) > 0) THEN
+		return 0;
+	END IF;
+
+	-- si son diferentes porque se debe a que la tabla destino tiene 
+	-- repArray con posiciones de replicación (1),habra que analizar el registro en cuestión:
+
+        -- hay que ver si se esta referenciando a 
+		-- 1) un registro ya existente en el core (retrieveuid debe iniciar con o),
+		-- 2) o bien a un registro proveniente de otra sucursal (no generado localmente)
+        EXECUTE 'select count(1) FROM ' || targetTableName ||
+            ' WHERE ' || targetTableName || '_ID = ' || column_data::int ||
+            ' AND ( retrieveuid NOT ilike ''h' || hostID::varchar || '_%'' )' INTO isValid;       
+       
+        return isValid;
+    END IF;
+   
+    return 1;
+END;
+$BODY$
+  LANGUAGE 'plpgsql' VOLATILE
+  COST 100;
+ALTER FUNCTION replication_is_valid_reference(integer, character varying) OWNER TO libertya;
+
+
+CREATE OR REPLACE FUNCTION replication_event()
+  RETURNS trigger AS
+$BODY$
+DECLARE 
+	found integer; 
+	replicationPos integer;
+	v_newRepArray varchar; 
+	aKeyColumn varchar;
+	repSeq bigint;
+	shouldReplicate varchar;
+	recordColumns RECORD;
+	columnValue varchar;
+	isValid integer;
+	v_valueDetail varchar;
+	v_nameDetail varchar;
+	v_columnname varchar;
+        v_tableid int; 
+        v_tablename varchar;
+        v_referenceStr varchar;
+	v_referencedTableStr varchar;
+	v_referencedTableID int;
+	v_existsValueField int;
+	v_existsNameField int;
+	shouldcheckreferences boolean;
+BEGIN 
+	-- se deberan verificar referencias a registros fuera del esquema de replicacion? (inicialmente no)
+	shouldcheckreferences := false;
+
+	-- estamos en una accion de eliminacion?
+	IF (TG_OP = 'DELETE') THEN
+
+		-- Checkear switch maestro de replicacion
+		SELECT INTO shouldReplicate VALUE FROM AD_PREFERENCE WHERE ATTRIBUTE = 'ReplicationEventsActive';
+		IF (shouldReplicate <> 'Y') THEN
+			RETURN OLD;
+		END IF;
+
+		-- Se repArray es nulo o vacio, no hay mas que hacer dado que es un registro fuera de replicacion
+		IF (OLD.repArray IS NULL OR OLD.repArray = '') THEN
+			RETURN OLD;
+		END IF;
+
+		-- El registro fue replicado? Si no lo fue puede ser eliminado, pero en caso contrario hay que registrar su eliminacion
+		IF replication_is_record_replicated(OLD.repArray) = 1 THEN
+
+			-- Recuperar el repArray de la tabla en cuestion
+			SELECT INTO v_newRepArray replicationArray 
+			FROM ad_tablereplication 
+			WHERE ad_table_ID = TG_ARGV[0]::int;
+
+			-- Cambiar 3 (replicacion bidireccional) por 1 (enviar); y 2 (recibir) por 0 (sin accion)
+			v_newRepArray := replace(v_newRepArray, '3', '1');
+			v_newRepArray := replace(v_newRepArray, '2', '0');
+
+			-- Insertar en la tabla de eliminaciones
+			IF v_newRepArray IS NOT NULL AND v_newRepArray <> '' THEN
+				INSERT INTO ad_changelog_replication (AD_Changelog_Replication_ID, AD_Client_ID, AD_Org_ID, isActive, Created, CreatedBy, Updated, UpdatedBy, AD_Table_ID, retrieveUID, operationtype, binaryvalue, reparray, columnvalues, includeInReplication)
+				SELECT nextval('seq_ad_changelog_replication'),OLD.AD_Client_ID,OLD.AD_Org_ID,'Y',now(),OLD.CreatedBy,now(),OLD.UpdatedBy,TG_ARGV[0]::int,OLD.retrieveUID,'I',null,v_newRepArray,null,'Y';
+			END IF;
+		END IF;	
+		
+		RETURN OLD;
+	END IF;
+
+	-- estamos en una accion de insercion o actualizacion?
+	IF (TG_OP = 'INSERT' OR TG_OP = 'UPDATE') THEN
+
+		-- Checkear switch maestro de replicacion		
+		SELECT INTO shouldReplicate VALUE FROM AD_PREFERENCE WHERE ATTRIBUTE = 'ReplicationEventsActive';
+		IF (shouldReplicate <> 'Y') THEN
+			RETURN NEW;
+		END IF;
+
+		-- El uso de SKIP se supone para omitir acciones posteriores en eliminacion (dado que setea repArray en NULL)
+		IF (NEW.repArray = 'SKIP') THEN
+			NEW.repArray := NULL;
+			return NEW;
+		END IF;
+
+		-- Verificar si hay que generar el retrieveUID. Ejemplo: h1_291
+		IF NEW.retrieveUID IS NULL OR NEW.retrieveUID = '' THEN 
+			-- Obtener posicion de host
+			SELECT INTO replicationPos replicationArrayPos FROM AD_ReplicationHost WHERE thisHost = 'Y'; 
+			IF replicationPos IS NULL THEN RAISE EXCEPTION 'Configuracion de Hosts incompleta: Ninguna sucursal tiene marca de Este Host'; END IF; 
+			-- Obtener siguiente valor para la tabla dada
+			SELECT INTO repseq nextVal('repseq_' || TG_ARGV[1]);
+			IF repseq IS NULL THEN RAISE EXCEPTION 'No hay definida una secuencia de replicacion para la tabla %', TG_ARGV[1]; END IF;
+			NEW.retrieveUID := 'h'::varchar || replicationPos::varchar || '_' || repseq || '_' || lower(TG_ARGV[1]);
+		END IF;		
+
+		-- Si estamos insertando...
+		IF (TG_OP = 'INSERT') THEN
+
+			-- Si se indico el repArray con SET, entonces se esta configurando el registro manualmente.  No hacer nada mas.
+			IF (substr(NEW.repArray, 1, 3) = 'SET') THEN
+				NEW.repArray := substr(NEW.repArray, 4, length(NEW.repArray)-3);
+			ELSE
+				-- Recuperar el repArray
+				SELECT INTO v_newRepArray replicationArray 
+				FROM ad_tablereplication 
+				WHERE ad_table_ID = TG_ARGV[0]::int;
+
+				-- Si es nulo o vacio no hacer nada mas
+				IF v_newRepArray IS NULL OR v_newRepArray = '' THEN
+					RETURN NEW;
+				END IF;
+
+				-- Cambiar 3 (replicacion bidireccional) por 1 (enviar); y 2 (recibir) por 0 (sin accion)
+				NEW.repArray := replace(v_newRepArray, '3', '1');
+				NEW.repArray := replace(NEW.repArray, '2', '0');
+				-- Si el registro deberá replicar hacia otros hosts (hay al menos un 1)
+				-- entonces debe incluirse en replicacion y hay que check referencias
+				IF (position('1' in NEW.repArray) > 0) THEN
+					NEW.includeInReplication = 'Y';
+					shouldcheckreferences := true;
+				ELSE
+					NEW.repArray := NULL;
+				END IF;
+			END IF;
+			
+		-- Si estamos actualizando...
+		ELSEIF (TG_OP = 'UPDATE') THEN 
+
+			-- Si se indico el repArray con SET, entonces se esta configurando el registro manualmente.  No hacer nada mas.		
+			IF (substr(NEW.repArray, 1, 3) = 'SET') THEN
+				NEW.repArray := substr(NEW.repArray, 4, length(NEW.repArray)-3);
+			ELSE
+				-- Cambiar los 2 (replicado) por 3 (modificado).
+				-- Adicionalmente para JMS: 4 (espera ack) por 5 (cambios luego de ack)
+				v_newRepArray := replace(OLD.repArray, '2', '3');
+				NEW.repArray := replace(v_newRepArray, '4', '5');
+				-- Si el registro deberá replicar hacia otros hosts (hay al menos un 3)
+				-- entonces debe incluirse en replicacion y hay que check referencias
+				IF (position('3' in NEW.repArray) > 0) THEN
+					NEW.includeInReplication = 'Y';
+					shouldcheckreferences := true;
+				END IF;
+			END IF;
+		END IF;
+	END IF;
+
+	IF (shouldcheckreferences = true) THEN
+
+		-- Validar referencias iterando todas las columnas de la tabla
+		FOR recordColumns IN
+			SELECT isc.column_name, isc.data_type, c.ad_column_id, t.tablename, t.ad_table_id
+			FROM information_schema.columns isc
+			INNER JOIN ad_table t ON lower(isc.table_name) = lower(t.tablename)
+			INNER JOIN ad_column c ON lower(isc.column_name) = lower(c.columnname) AND t.ad_table_id = c.ad_table_id
+			WHERE table_name = quote_ident(TG_TABLE_NAME)
+			AND isc.data_type = 'integer'
+			AND isc.column_name not in ('retrieveuid', 'reparray', 'datelastsentjms', 'includeinreplication')
+		LOOP
+			-- Obtener el value de la columna y verificar si es referencia valida.  En caso de no serlo, presentar error correspondiente
+			EXECUTE 'SELECT (' || quote_literal(NEW) || '::' || TG_RELID::regclass || ').' || quote_ident(recordColumns.column_name) INTO columnValue;
+			SELECT INTO isValid replication_is_valid_reference(recordColumns.ad_column_id, columnvalue);
+			IF isValid = 0 THEN
+
+				-- valores por defecto
+				v_valueDetail := '';
+				v_nameDetail := '';
+				v_referenceStr := '';
+				
+				-- recuperar el nombre de la columna y tabla para brindar un mensaje mas intuitivo al usuario
+				v_columnname := recordColumns.column_name;
+				v_tablename := recordColumns.tablename;
+
+				BEGIN 
+					-- recuperar el nombre o value del registro referenciado a fin de mejorar la legibilidad del mensaje de error
+					SELECT INTO v_referencedTableStr replication_get_referenced_table(recordColumns.ad_column_id);
+					SELECT INTO v_referencedTableID AD_Table_ID FROM AD_Table WHERE tablename ilike v_referencedTableStr;
+
+					-- ver si existe las columnas value y name
+					SELECT INTO v_existsValueField Count(1) FROM AD_Column WHERE columnname ilike 'Value' AND AD_Table_ID = v_referencedTableID;
+					SELECT INTO v_existsNameField Count(1) FROM AD_Column WHERE columnname ilike 'Name' AND AD_Table_ID = v_referencedTableID;
+
+					-- cargar value y name
+					IF v_existsValueField = 1 THEN
+						EXECUTE 'SELECT value FROM ' || v_referencedTableStr || ' WHERE ' || v_referencedTableStr || '_ID = ' || columnvalue || '::int' INTO v_valueDetail;
+						v_referenceStr := v_valueDetail;
+					END IF;
+					IF v_existsNameField = 1 THEN
+						EXECUTE 'SELECT name FROM ' || v_referencedTableStr || ' WHERE ' || v_referencedTableStr || '_ID = ' || columnvalue || '::int' INTO v_nameDetail;
+						v_referenceStr := v_referenceStr || ' ' || v_nameDetail;
+					END IF;
+				EXCEPTION
+					WHEN OTHERS THEN
+						-- do nothing
+				END;
+				
+				-- concatenar acordemente para mensaje de retorno
+				RAISE EXCEPTION 'Validacion de replicación - La columna: % (%) de la tabla: % (%) referencia al registro: % (%), fuera del sistema de replicacion.', v_columnname, recordColumns.ad_column_id, v_tablename, recordColumns.ad_table_id, v_referenceStr, columnvalue;
+			END IF;
+		END LOOP;
+
+	END IF;
+	RETURN NEW;
+END; 
+$BODY$
+  LANGUAGE 'plpgsql' VOLATILE
+  COST 100;
+ALTER FUNCTION replication_event() OWNER TO libertya;

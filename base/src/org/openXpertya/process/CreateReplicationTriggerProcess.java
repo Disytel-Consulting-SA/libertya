@@ -35,6 +35,8 @@ public class CreateReplicationTriggerProcess extends SvrProcess {
 	// Replication array dummy para relleno unicamente
 	public static final String DUMMY_REPARRAY = "0";
 	
+	// Actualizar los repArrays en caso de cambio de longitudes (incorporacion de nuevo host?)
+	protected boolean shouldUpdateRepArrays = false;
 	
 	@Override
 	protected void prepare() {
@@ -45,6 +47,8 @@ public class CreateReplicationTriggerProcess extends SvrProcess {
             String name = para[ i ].getParameterName();
             if( name.equals( "Scope" ))
                 p_scope = (String)para[ i ].getParameter();
+            if( name.equals( "ShouldUpdateRepArrays" ))
+            	shouldUpdateRepArrays = "Y".equals((String)para[ i ].getParameter());
         }
 		
 		retValue = new StringBuffer(" - Resultados de la ejecucion - \n");
@@ -121,6 +125,10 @@ public class CreateReplicationTriggerProcess extends SvrProcess {
 			
 			// Creación de los triggers que invocan al procedure replication_event
 			appendTriggerCreation(sql);
+
+			// Rellena el repArray con valores dummy si el nro de hosts es mayor a la longitud del repArray (caso: nueva sucursal)
+			if (shouldUpdateRepArrays)
+				appendSQLFillRepArray(sql);
 			
 			// Impactar en base de datos
 			DB.executeUpdate( sql.toString(), false , get_TrxName(), true );	
@@ -262,8 +270,7 @@ public class CreateReplicationTriggerProcess extends SvrProcess {
 		else
 			retValue.append(" - La secuencia: repseq_" + table.getTableName().toLowerCase() + " ya existe en BBDD \n");
 	}
-	
-	
+		
 	/**
 	 * Triggers para insert, update y delete
 	 */
@@ -275,6 +282,18 @@ public class CreateReplicationTriggerProcess extends SvrProcess {
 					  " FOR EACH ROW EXECUTE PROCEDURE replication_event(" + table.getAD_Table_ID() + ", '" + table.getTableName().toLowerCase() + "'); ");
 		
 		retValue.append(" - Creado el trigger: replication_event() para tabla: " + table.get_TableName() + " \n");
+	}
+	
+
+	/**
+	 * En caso de nuevo/s host/s, rellenar con valor dummy el/los nuevos espacios del repArray
+	 */
+	protected void appendSQLFillRepArray(StringBuffer sql) throws Exception 
+	{
+		String currentRepArray = " SELECT replicationarray FROM AD_TableReplication WHERE AD_table_ID = " + table.getAD_Table_ID() + " AND AD_Client_ID = " + getAD_Client_ID();
+		append( sql, 	" UPDATE " + table.getTableName() + 
+						" SET " + ReplicationConstants.COLUMN_REPARRAY + " = 'SET' || rpad(" + ReplicationConstants.COLUMN_REPARRAY + ", " + currentRepArray.length() + ", '" + DUMMY_REPARRAY + "') " +
+						" WHERE char_length(repArray) < " + currentRepArray.length() + "; ");
 	}
 	
 	
