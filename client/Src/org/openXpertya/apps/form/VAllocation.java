@@ -860,9 +860,8 @@ private Vector getCreditColumnNames() {
 			// line.add(rs.getBigDecimal(9)); // 8/10-Multiplier
 			// Add when open <> 0 (i.e. not if no conversion rate)
 
-			creditTypes.add(rs.getString("EntityType"));
-
 			if (Env.ZERO.compareTo(open) != 0) {
+				creditTypes.add(rs.getString("EntityType"));
 				data.add(line);
 				// Se agrega el tipo de documento a la lista de tipos de documentos de credito.
 				if(!getCreditDocTypes().containsKey(docTypeId)) {
