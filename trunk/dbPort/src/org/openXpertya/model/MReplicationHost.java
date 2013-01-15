@@ -53,6 +53,17 @@ public class MReplicationHost extends X_AD_ReplicationHost {
 		return DB.getSQLValue(trxName, " SELECT hostport FROM AD_ReplicationHost WHERE AD_Org_ID = ?", orgID);	
 	}
 	
+	/**
+	 * Para una organización dada, retornar el MReplicationHost correspondiente
+	 */
+	public static MReplicationHost getForOrg(int orgID, String trxName, Properties ctx) 
+	{
+		int repHostID = DB.getSQLValue(trxName, " SELECT AD_ReplicationHost_ID FROM AD_ReplicationHost WHERE AD_Org_ID = ?", orgID);
+		MReplicationHost rh = new MReplicationHost(ctx, repHostID, trxName);
+		return rh;
+	}
+	
+	
 	@Override
 	protected boolean beforeSave(boolean newRecord) {
 		

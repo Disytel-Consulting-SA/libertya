@@ -30,9 +30,9 @@ public abstract class AbstractReplicationProcess extends SvrProcess {
 	private final String JMS_PRODUCER_TYPE = "P";
 
 	/** ID de esta organización */
-	int thisOrgID = -1; 
+	protected int thisOrgID = -1; 
 	/** Posicion de esta organización en el array de organización */
-	int thisOrgPos = -1; 
+	protected int thisOrgPos = -1; 
 	/** ID de la compañía configurada para replicación */
 	int thisInstanceClient = -1;
 	
@@ -84,8 +84,15 @@ public abstract class AbstractReplicationProcess extends SvrProcess {
 		Integer timeOutNro = null;
 		// tiempo para time out (minute, hour, day).
 		String timeOutType = null;
-		ProcessInfoParameter[] para = getParameter();
-
+		ProcessInfoParameter[] para = null;
+		try {
+			para = getParameter();
+		}
+		catch (Exception e) { /* Invocacion no tradicional */}
+		
+		if (para == null)
+			return;
+		
         for( int i = 0;i < para.length;i++ ) {
 	        String name = para[ i ].getParameterName();
 	        if( para[ i ].getParameter() == null ) ;
@@ -227,7 +234,7 @@ public abstract class AbstractReplicationProcess extends SvrProcess {
 		if (persistError)
 		{
 			// Instanciar entrada en la tabla de log
-			X_AD_ReplicationError aLog = new X_AD_ReplicationError(getCtx(), 0, get_TrxName());
+			X_AD_ReplicationError aLog = new X_AD_ReplicationError(Env.getCtx(), 0, get_TrxName());
 			aLog.setORG_Target_ID(targetOrgID == null ? 0 : targetOrgID);
 			aLog.setReplication_Error(Env.getDateTime("yyyy/MM/dd-HH:mm:ss.SSS") + " - " + getProcessName() + logMessage);
 			aLog.setClientOrg(getAD_Client_ID(), thisOrgID);
@@ -412,7 +419,7 @@ public abstract class AbstractReplicationProcess extends SvrProcess {
 	}
 	
 	
-	private static final void showHelp(String message)
+	protected static void showHelp(String message)
 	{
 		String help = " [[ " + message + " ]] " + 
 				"\n" + 	

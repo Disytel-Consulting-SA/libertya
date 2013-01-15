@@ -3,11 +3,8 @@ package org.openXpertya.replication;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
-import java.util.HashMap;
 import java.util.Vector;
 
-import org.openXpertya.model.M_Column;
-import org.openXpertya.process.CreateReplicationTriggerProcess;
 import org.openXpertya.util.DB;
 import org.openXpertya.util.Env;
 
@@ -19,6 +16,12 @@ public class ReplicationTableManager {
 	/** Tablas que contienen la columna reparray */
 	protected static Vector<String> tablesForReplication = null;
 	protected static String recordsForReplicationQuery = null;
+	/** filtrar replicacion de una tabla especifica */
+	public static String filterTable = null;
+	/** filtrar replicacion de un registro especifico */
+	public static String filterRecord = null;
+	/** filtrar replicacion solo hacia un host */
+	public static Integer filterHost = null;
 	
 	/** trxName */
 	protected String trxName = null;
@@ -53,7 +56,7 @@ public class ReplicationTableManager {
 	public void evaluateChanges() throws Exception
 	{
 		// Recuperar todos los registros a replicar (inlcuir el limite indicado por parametro si el mismo es mayor a cero)
-		// Esta parte queda fuera del query cacheado debido a que en distintas ejecuciones el parametro puede varias
+		// Esta parte queda fuera del query cacheado debido a que en distintas ejecuciones el parametro puede variar
 		String limitRecords = ReplicationConstants.REPLICATION_SOURCE_MAX_RECORDS > 0 ? " LIMIT " + ReplicationConstants.REPLICATION_SOURCE_MAX_RECORDS : "";
 		pstmt = DB.prepareStatement(getRecordsForReplicationQuery() + limitRecords, trxName, true);
 		rs = pstmt.executeQuery();	
@@ -168,8 +171,11 @@ public class ReplicationTableManager {
 							" 	INNER JOIN ad_table t ON tr.ad_table_id = t.ad_table_id " +
 							" 	WHERE replicationarray SIMILAR TO ('%" + ReplicationConstants.REPLICATION_CONFIGURATION_SEND + "%|%" + ReplicationConstants.REPLICATION_CONFIGURATION_SENDRECEIVE + "%') " +
 							" 	AND tr.AD_Client_ID = " + Env.getContext(Env.getCtx(), "#AD_Client_ID") +
-							" ) " +
-							" UNION SELECT '" + ReplicationConstants.DELETIONS_TABLE + "' AS table_name ";
+							// Incluir eventual filtro por nombre de tabla
+							(filterTable!=null&&filterTable.length()>0?"  AND LOWER(t.tablename) = '"+filterTable.toLowerCase()+"'" : "") +
+							" ) ";
+			if (filterTable==null || ReplicationConstants.DELETIONS_TABLE.equalsIgnoreCase(filterTable))
+				query += " UNION SELECT '" + ReplicationConstants.DELETIONS_TABLE + "' AS table_name ";
 			
 			PreparedStatement pstmt = DB.prepareStatement(query, trxName, true);
 			ResultSet rs = pstmt.executeQuery();
@@ -195,7 +201,7 @@ public class ReplicationTableManager {
 				query.append(" FROM ").append(aTable);
 				query.append(" WHERE ( ");
 				query.append(" 		   ").append(ReplicationConstants.COLUMN_INCLUDEINREPLICATION).append(" = 'Y' ");
-				// incluir registros por timeout sin ack.  si no recibo ack luego de un tiempo, reenviarlos (solo en caso de estar definido el parametro)
+				// SOLO JMS: incluir registros por timeout sin ack.  si no recibo ack luego de un tiempo, reenviarlos (solo en caso de estar definido el parametro)
 				if (ReplicationConstants.ACK_TIME_OUT != null )
 				{
 					// reenviar TODOS los registros dentro del período especificado? incluso los ya confirmados?
@@ -208,6 +214,9 @@ public class ReplicationTableManager {
 				}
 				query.append(" 		) ");				
 				query.append(" AND AD_Client_ID = " + Env.getContext(Env.getCtx(), "#AD_Client_ID") );
+				// Incluir eventual filtro por nombre de registro
+				if (filterRecord!=null && filterRecord.length()>0)
+					query.append(" AND retrieveUID = '" + filterRecord + "'");
 				query.append(" UNION ALL ");
 			}
 			// Finalizacion del query
@@ -219,10 +228,14 @@ public class ReplicationTableManager {
 		return recordsForReplicationQuery;
 	}
 	
-	/** Si hay cambios en parametros, la cache de la query deberá invalidarse */
+	/** Si hay cambios en parametros, las caches y filtros deberán invalidarse */
 	public static void invalidateCache()
 	{
+		tablesForReplication = null;
 		recordsForReplicationQuery = null;
+		filterTable = null;
+		filterRecord = null;
+		filterHost = null;
 	}
 	
 	/**
