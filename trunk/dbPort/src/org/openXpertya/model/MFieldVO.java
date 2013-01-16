@@ -321,6 +321,9 @@ public class MFieldVO implements Serializable {
                     vo.ColumnSQL	= rs.getString(i);
                 }
             }
+            // En el caso que la columna IsReadOnly tenga el valor true, se setea el valor de la columna IsAlwaysUpdateable en false
+            // Si el campo IsReadOnly es true, no se puede actualizar el valor del campo, independientemente de si es Siempre Actualizable o no.
+            if (vo.IsReadOnly) vo.IsAlwaysUpdateable = false;
 
             if (vo.Header == null) {
                 vo.Header	= vo.ColumnName;
