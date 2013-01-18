@@ -303,24 +303,28 @@ public final class APanel extends CPanel implements DataStatusListener,ChangeLis
         JMenu mView = AEnv.getMenu( "View" );
 
         menuBar.add( mView );
-        if (currentUserRole.isInfoProductAccess()) {
+        if (currentUserRole.isInfoProductAccess())
         	aProduct = addAction( "InfoProduct",mView,KeyStroke.getKeyStroke( KeyEvent.VK_I,Event.CTRL_MASK ),false );
-        }
-        aBPartner = addAction( "InfoBPartner",mView,KeyStroke.getKeyStroke( KeyEvent.VK_I,Event.SHIFT_MASK + Event.CTRL_MASK ),false );
-
-        if( currentUserRole.isShowAcct()) {
+        if (currentUserRole.isInfoBPartnerAccess())
+        	aBPartner = addAction( "InfoBPartner",mView,KeyStroke.getKeyStroke( KeyEvent.VK_I,Event.SHIFT_MASK + Event.CTRL_MASK ),false );
+        if( currentUserRole.isShowAcct())
             aAccount = addAction( "InfoAccount",mView,KeyStroke.getKeyStroke( KeyEvent.VK_I,Event.ALT_MASK + Event.CTRL_MASK ),false );
-        }
-
       //  AEnv.addMenuItem( "InfoSchedule",null,null,mView,this );
         mView.addSeparator();
-        AEnv.addMenuItem( "InfoOrder","Info",null,mView,this );
-        AEnv.addMenuItem( "InfoInvoice","Info",null,mView,this );
-        AEnv.addMenuItem( "InfoInOut","Info",null,mView,this );
-        AEnv.addMenuItem( "InfoPayment","Info",null,mView,this );
-        AEnv.addMenuItem( "InfoCashLine","Info",null,mView,this );
-        AEnv.addMenuItem( "InfoAssignment","Info",null,mView,this );
-        AEnv.addMenuItem( "InfoAsset","Info",null,mView,this );
+        if (currentUserRole.isInfoOrderAccess())
+        	AEnv.addMenuItem( "InfoOrder","Info",null,mView,this );
+        if (currentUserRole.isInfoInvoiceAccess())
+        	AEnv.addMenuItem( "InfoInvoice","Info",null,mView,this );
+        if (currentUserRole.isInfoInOutAccess())
+        	AEnv.addMenuItem( "InfoInOut","Info",null,mView,this );
+        if (currentUserRole.isInfoPaymentAccess())
+        	AEnv.addMenuItem( "InfoPayment","Info",null,mView,this );
+        if (currentUserRole.isInfoCashLineAccess())
+        	AEnv.addMenuItem( "InfoCashLine","Info",null,mView,this );
+        if (currentUserRole.isInfoAssignmentAccess())
+        	AEnv.addMenuItem( "InfoAssignment","Info",null,mView,this );
+        if (currentUserRole.isInfoAssetAccess())
+        	AEnv.addMenuItem( "InfoAsset","Info",null,mView,this );
         mView.addSeparator();
         aAttachment = addAction( "Attachment",mView,KeyStroke.getKeyStroke( KeyEvent.VK_F7,0 ),true );    // toggle
         aHistory = addAction( "History",mView,KeyStroke.getKeyStroke( KeyEvent.VK_F9,0 ),true );    // toggle
