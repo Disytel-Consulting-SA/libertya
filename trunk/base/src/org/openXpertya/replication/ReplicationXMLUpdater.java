@@ -258,7 +258,7 @@ public class ReplicationXMLUpdater extends PluginXMLUpdater {
 		/* En la tabla C_BPartner se almacena el campo AD_Language, los cuales no son para replicacion, debido a que ya existen con anterioridad */
 		if (tableName.equalsIgnoreCase("C_BPartner") && column.getName().equalsIgnoreCase("AD_Language") && (column.getRefUID() == null || column.getRefUID().length() == 0))
 		{
-			query.append( quotes + column.getNewValue() + quotes);
+			query.append( "null".equalsIgnoreCase(column.getNewValue()) ? "null" : quotes + column.getNewValue() + quotes);
 			retValue = true;
 		}
 		/* Tablas de traducciones, para el campo AD_Language no hay que resolver valores */
