@@ -5550,3 +5550,14 @@ $BODY$
   LANGUAGE 'plpgsql' VOLATILE
   COST 100;
 ALTER FUNCTION replication_event() OWNER TO libertya;
+
+-- Nuevas columnas en AD_Role: Permiso para utilizar ventanas INFO
+ALTER TABLE ad_role ADD COLUMN isinfobpartneraccess character(1) NOT NULL DEFAULT 'Y'::bpchar;
+ALTER TABLE ad_role ADD COLUMN isinfoscheduleaccess character(1) NOT NULL DEFAULT 'Y'::bpchar;
+ALTER TABLE ad_role ADD COLUMN isinfoorderaccess character(1) NOT NULL DEFAULT 'Y'::bpchar;
+ALTER TABLE ad_role ADD COLUMN isinfoinvoiceaccess character(1) NOT NULL DEFAULT 'Y'::bpchar;
+ALTER TABLE ad_role ADD COLUMN isinfoinoutaccess character(1) NOT NULL DEFAULT 'Y'::bpchar;
+ALTER TABLE ad_role ADD COLUMN isinfopaymentaccess character(1) NOT NULL DEFAULT 'Y'::bpchar;
+ALTER TABLE ad_role ADD COLUMN isinfocashlineaccess character(1) NOT NULL DEFAULT 'Y'::bpchar;
+ALTER TABLE ad_role ADD COLUMN isinfoassignmentaccess character(1) NOT NULL DEFAULT 'Y'::bpchar;
+ALTER TABLE ad_role ADD COLUMN isinfoassetaccess character(1) NOT NULL DEFAULT 'Y'::bpchar;

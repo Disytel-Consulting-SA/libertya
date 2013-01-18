@@ -478,24 +478,29 @@ public final class AMenu extends JFrame implements ActionListener,PropertyChange
         JMenu mView = AEnv.getMenu( "View" );
 
         menuBar.add( mView );
-        if (currentUserRole.isInfoProductAccess()) {
+        if (currentUserRole.isInfoProductAccess())
         	AEnv.addMenuItem( "InfoProduct",null,KeyStroke.getKeyStroke( KeyEvent.VK_I,Event.CTRL_MASK ),mView,this );
-        }
-        AEnv.addMenuItem( "InfoBPartner",null,KeyStroke.getKeyStroke( KeyEvent.VK_I,Event.SHIFT_MASK + Event.CTRL_MASK ),mView,this );
-
-        if (currentUserRole.isShowAcct()) {
+        if (currentUserRole.isInfoBPartnerAccess())
+        	AEnv.addMenuItem( "InfoBPartner",null,KeyStroke.getKeyStroke( KeyEvent.VK_I,Event.SHIFT_MASK + Event.CTRL_MASK ),mView,this );
+        if (currentUserRole.isShowAcct())
             AEnv.addMenuItem( "InfoAccount",null,KeyStroke.getKeyStroke( KeyEvent.VK_I,Event.ALT_MASK + Event.CTRL_MASK ),mView,this );
-        }
-
-        AEnv.addMenuItem( "InfoSchedule",null,null,mView,this );
+        if (currentUserRole.isInfoScheduleAccess())
+        	AEnv.addMenuItem( "InfoSchedule",null,null,mView,this );
         mView.addSeparator();
-        AEnv.addMenuItem( "InfoOrder","Info",null,mView,this );
-        AEnv.addMenuItem( "InfoInvoice","Info",null,mView,this );
-        AEnv.addMenuItem( "InfoInOut","Info",null,mView,this );
-        AEnv.addMenuItem( "InfoPayment","Info",null,mView,this );
-        AEnv.addMenuItem( "InfoCashLine","Info",null,mView,this );
-        AEnv.addMenuItem( "InfoAssignment","Info",null,mView,this );
-        AEnv.addMenuItem( "InfoAsset","Info",null,mView,this );
+        if (currentUserRole.isInfoOrderAccess())
+        	AEnv.addMenuItem( "InfoOrder","Info",null,mView,this );
+        if (currentUserRole.isInfoInvoiceAccess())
+        	AEnv.addMenuItem( "InfoInvoice","Info",null,mView,this );
+        if (currentUserRole.isInfoInOutAccess())
+        	AEnv.addMenuItem( "InfoInOut","Info",null,mView,this );
+        if (currentUserRole.isInfoPaymentAccess())
+        	AEnv.addMenuItem( "InfoPayment","Info",null,mView,this );
+        if (currentUserRole.isInfoCashLineAccess())
+        	AEnv.addMenuItem( "InfoCashLine","Info",null,mView,this );
+        if (currentUserRole.isInfoAssignmentAccess())
+        	AEnv.addMenuItem( "InfoAssignment","Info",null,mView,this );
+        if (currentUserRole.isInfoAssetAccess())
+        	AEnv.addMenuItem( "InfoAsset","Info",null,mView,this );
 
         // Tools
 

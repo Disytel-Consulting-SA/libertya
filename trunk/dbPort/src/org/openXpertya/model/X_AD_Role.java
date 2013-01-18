@@ -7,7 +7,7 @@ import java.math.*;
 import org.openXpertya.util.*;
 /** Modelo Generado por AD_Role
  *  @author Comunidad de Desarrollo Libertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
- *  @version  - 2012-08-28 12:37:33.039 */
+ *  @version  - 2013-01-17 23:37:06.333 */
 public class X_AD_Role extends org.openXpertya.model.PO
 {
 /** Constructor estándar */
@@ -22,7 +22,16 @@ setIsCanApproveOwnDoc (false);
 setIsCanExport (true);	// Y
 setIsCanReport (true);	// Y
 setIsChangeLog (false);	// N
+setIsInfoAssetAccess (false);
+setIsInfoAssignmentAccess (false);
+setIsInfoBPartnerAccess (false);
+setIsInfoCashLineAccess (false);
+setIsInfoInOutAccess (false);
+setIsInfoInvoiceAccess (false);
+setIsInfoOrderAccess (false);
+setIsInfoPaymentAccess (false);
 setIsInfoProductAccess (true);	// Y
+setIsInfoScheduleAccess (false);
 setIsManual (false);
 setIsPersonalAccess (false);	// N
 setIsPersonalLock (false);	// N
@@ -245,6 +254,134 @@ if (oo != null)
 }
 return false;
 }
+/** Set Is Info Asset Access */
+public void setIsInfoAssetAccess (boolean IsInfoAssetAccess)
+{
+set_Value ("IsInfoAssetAccess", new Boolean(IsInfoAssetAccess));
+}
+/** Get Is Info Asset Access */
+public boolean isInfoAssetAccess() 
+{
+Object oo = get_Value("IsInfoAssetAccess");
+if (oo != null) 
+{
+ if (oo instanceof Boolean) return ((Boolean)oo).booleanValue();
+ return "Y".equals(oo);
+}
+return false;
+}
+/** Set Is Info Assignment Access */
+public void setIsInfoAssignmentAccess (boolean IsInfoAssignmentAccess)
+{
+set_Value ("IsInfoAssignmentAccess", new Boolean(IsInfoAssignmentAccess));
+}
+/** Get Is Info Assignment Access */
+public boolean isInfoAssignmentAccess() 
+{
+Object oo = get_Value("IsInfoAssignmentAccess");
+if (oo != null) 
+{
+ if (oo instanceof Boolean) return ((Boolean)oo).booleanValue();
+ return "Y".equals(oo);
+}
+return false;
+}
+/** Set Is Info BPartner Access */
+public void setIsInfoBPartnerAccess (boolean IsInfoBPartnerAccess)
+{
+set_Value ("IsInfoBPartnerAccess", new Boolean(IsInfoBPartnerAccess));
+}
+/** Get Is Info BPartner Access */
+public boolean isInfoBPartnerAccess() 
+{
+Object oo = get_Value("IsInfoBPartnerAccess");
+if (oo != null) 
+{
+ if (oo instanceof Boolean) return ((Boolean)oo).booleanValue();
+ return "Y".equals(oo);
+}
+return false;
+}
+/** Set Is Info Cash Line Access */
+public void setIsInfoCashLineAccess (boolean IsInfoCashLineAccess)
+{
+set_Value ("IsInfoCashLineAccess", new Boolean(IsInfoCashLineAccess));
+}
+/** Get Is Info Cash Line Access */
+public boolean isInfoCashLineAccess() 
+{
+Object oo = get_Value("IsInfoCashLineAccess");
+if (oo != null) 
+{
+ if (oo instanceof Boolean) return ((Boolean)oo).booleanValue();
+ return "Y".equals(oo);
+}
+return false;
+}
+/** Set Is Info InOut Access */
+public void setIsInfoInOutAccess (boolean IsInfoInOutAccess)
+{
+set_Value ("IsInfoInOutAccess", new Boolean(IsInfoInOutAccess));
+}
+/** Get Is Info InOut Access */
+public boolean isInfoInOutAccess() 
+{
+Object oo = get_Value("IsInfoInOutAccess");
+if (oo != null) 
+{
+ if (oo instanceof Boolean) return ((Boolean)oo).booleanValue();
+ return "Y".equals(oo);
+}
+return false;
+}
+/** Set Is Info Invoice Access */
+public void setIsInfoInvoiceAccess (boolean IsInfoInvoiceAccess)
+{
+set_Value ("IsInfoInvoiceAccess", new Boolean(IsInfoInvoiceAccess));
+}
+/** Get Is Info Invoice Access */
+public boolean isInfoInvoiceAccess() 
+{
+Object oo = get_Value("IsInfoInvoiceAccess");
+if (oo != null) 
+{
+ if (oo instanceof Boolean) return ((Boolean)oo).booleanValue();
+ return "Y".equals(oo);
+}
+return false;
+}
+/** Set Is Info Order Access */
+public void setIsInfoOrderAccess (boolean IsInfoOrderAccess)
+{
+set_Value ("IsInfoOrderAccess", new Boolean(IsInfoOrderAccess));
+}
+/** Get Is Info Order Access */
+public boolean isInfoOrderAccess() 
+{
+Object oo = get_Value("IsInfoOrderAccess");
+if (oo != null) 
+{
+ if (oo instanceof Boolean) return ((Boolean)oo).booleanValue();
+ return "Y".equals(oo);
+}
+return false;
+}
+/** Set Is Info Payment Access */
+public void setIsInfoPaymentAccess (boolean IsInfoPaymentAccess)
+{
+set_Value ("IsInfoPaymentAccess", new Boolean(IsInfoPaymentAccess));
+}
+/** Get Is Info Payment Access */
+public boolean isInfoPaymentAccess() 
+{
+Object oo = get_Value("IsInfoPaymentAccess");
+if (oo != null) 
+{
+ if (oo instanceof Boolean) return ((Boolean)oo).booleanValue();
+ return "Y".equals(oo);
+}
+return false;
+}
 /** Set Info Product Access.
 Info Product Access */
 public void setIsInfoProductAccess (boolean IsInfoProductAccess)
@@ -256,6 +393,22 @@ Info Product Access */
 public boolean isInfoProductAccess() 
 {
 Object oo = get_Value("IsInfoProductAccess");
+if (oo != null) 
+{
+ if (oo instanceof Boolean) return ((Boolean)oo).booleanValue();
+ return "Y".equals(oo);
+}
+return false;
+}
+/** Set Is Info Schedule Access */
+public void setIsInfoScheduleAccess (boolean IsInfoScheduleAccess)
+{
+set_Value ("IsInfoScheduleAccess", new Boolean(IsInfoScheduleAccess));
+}
+/** Get Is Info Schedule Access */
+public boolean isInfoScheduleAccess() 
+{
+Object oo = get_Value("IsInfoScheduleAccess");
 if (oo != null) 
 {
  if (oo instanceof Boolean) return ((Boolean)oo).booleanValue();
