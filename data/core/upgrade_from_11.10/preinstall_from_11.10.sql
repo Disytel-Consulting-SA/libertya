@@ -3035,17 +3035,17 @@ update ad_system set dummy = (SELECT addcolumnifnotexists('i_bpartner','isdn', '
 
 -- 20120807-1547 Incorporación de nuevas columnas a importar en la importación de Artículos 
 update ad_system set dummy = (SELECT addcolumnifnotexists('i_product','productfamily_value', 'character varying(60)'));
-update ad_system set dummy = (SELECT addcolumnifnotexists('i_product','isbom', 'character(1) NOT NULL DEFAULT \'N\'::bpchar'));
+update ad_system set dummy = (SELECT addcolumnifnotexists('i_product','isbom', 'character(1) NOT NULL DEFAULT ''N''::bpchar'));
 
 -- 20120808-1545 Inserción de la columna IsMandatoryBank a la tabla C_POSPaymentMedium 
 ALTER TABLE C_POSPaymentMedium ADD COLUMN IsMandatoryBank character(1) NOT NULL DEFAULT 'N'::bpchar;
 
 -- 20120809-1741 Incorporación de parámetros adicionales para importación de facturas
 update ad_system set dummy = (SELECT addcolumnifnotexists('i_invoice','paymentrule', 'character varying(2)'));
-update ad_system set dummy = (SELECT addcolumnifnotexists('i_invoice','createcashline', 'character(1) NOT NULL DEFAULT \'N\'::bpchar'));
+update ad_system set dummy = (SELECT addcolumnifnotexists('i_invoice','createcashline', 'character(1) NOT NULL DEFAULT ''N''::bpchar'));
 update ad_system set dummy = (SELECT addcolumnifnotexists('i_invoice','orgvalue', 'character varying(40)'));
 update ad_system set dummy = (SELECT addcolumnifnotexists('i_invoice','salesrep_name', 'character varying(60)'));
-update ad_system set dummy = (SELECT addcolumnifnotexists('i_invoice','documentnobysequence', 'character(1) NOT NULL DEFAULT \'N\'::bpchar'));
+update ad_system set dummy = (SELECT addcolumnifnotexists('i_invoice','documentnobysequence', 'character(1) NOT NULL DEFAULT ''N''::bpchar'));
 update ad_system set dummy = (SELECT addcolumnifnotexists('i_invoice','pricelist_name', 'character varying(60)'));
 ALTER TABLE i_invoice ALTER COLUMN taxindicator TYPE character varying(10);
 
@@ -4039,7 +4039,7 @@ ALTER TABLE T_CUENTACORRIENTE ADD COLUMN iso_code character(3);
 ALTER TABLE T_CUENTACORRIENTE ADD COLUMN amount numeric(10,2) DEFAULT 0;
 
 -- 20120828-1240 Incorporación al perfil de check que permite ser supervisor de cajas diarias
-update ad_system set dummy = (SELECT addcolumnifnotexists('ad_role','posjournalsupervisor', 'character(1) NOT NULL DEFAULT \'Y\'::bpchar'));
+update ad_system set dummy = (SELECT addcolumnifnotexists('ad_role','posjournalsupervisor', 'character(1) NOT NULL DEFAULT ''Y''::bpchar'));
 
 -- 20120831-1710 Modificación de la función cashlineavailable
 CREATE OR REPLACE FUNCTION cashlineavailable(p_c_cashline_id integer)
@@ -4286,13 +4286,13 @@ CREATE OR REPLACE VIEW ad_field_vt AS
 ALTER TABLE ad_field_vt OWNER TO libertya;
 
 -- 20120909-1550 Incorporación de configuración de tpv para anular comprobantes bajo clave
-update ad_system set dummy = (SELECT addcolumnifnotexists('c_pos','voiddocuments', 'character(1) NOT NULL DEFAULT \'Y\'::bpchar'));
+update ad_system set dummy = (SELECT addcolumnifnotexists('c_pos','voiddocuments', 'character(1) NOT NULL DEFAULT ''Y''::bpchar'));
 
 -- 20120911-1700 Incorporación de parámetros adicionales para importación de pedidos
 update ad_system set dummy = (SELECT addcolumnifnotexists('i_order','paymentrule', 'character varying(2)'));
 update ad_system set dummy = (SELECT addcolumnifnotexists('i_order','orgvalue', 'character varying(40)'));
 update ad_system set dummy = (SELECT addcolumnifnotexists('i_order','salesrep_name', 'character varying(60)'));
-update ad_system set dummy = (SELECT addcolumnifnotexists('i_order','documentnobysequence', 'character(1) NOT NULL DEFAULT \'N\'::bpchar'));
+update ad_system set dummy = (SELECT addcolumnifnotexists('i_order','documentnobysequence', 'character(1) NOT NULL DEFAULT ''N''::bpchar'));
 update ad_system set dummy = (SELECT addcolumnifnotexists('i_order','pricelist_name', 'character varying(60)'));
 update ad_system set dummy = (SELECT addcolumnifnotexists('i_order','iso_code', 'character(3)'));
 ALTER TABLE i_order ALTER COLUMN taxindicator TYPE character varying(10);
@@ -4504,10 +4504,10 @@ update ad_system set dummy = (SELECT addcolumnifnotexists('c_order','m_warehouse
 update ad_system set dummy = (SELECT addcolumnifnotexists('c_orderline','qtytransferred', 'numeric(22,4) NOT NULL DEFAULT 0'));
 
 -- 20121015-2340 Incorporación de nueva parametrización para imputación de notas de crédito automáticas
-update ad_system set dummy = (SELECT addcolumnifnotexists('c_bpartner','automaticcreditnotes', 'character(1) NOT NULL DEFAULT \'N\'::bpchar'));
+update ad_system set dummy = (SELECT addcolumnifnotexists('c_bpartner','automaticcreditnotes', 'character(1) NOT NULL DEFAULT ''N''::bpchar'));
 
 -- 20121018-1335 Incorporación de nueva columna a la tabla C_Order
-update ad_system set dummy = (SELECT addcolumnifnotexists('c_order','istpvused', 'character(1) DEFAULT \'N\'::bpchar'));
+update ad_system set dummy = (SELECT addcolumnifnotexists('c_order','istpvused', 'character(1) DEFAULT ''N''::bpchar'));
 
 -- 20121018-1345 Modificación de la vista rv_ordernotinvoice
 CREATE OR REPLACE VIEW rv_ordernotinvoice AS 
@@ -5058,7 +5058,7 @@ update ad_system set dummy = (SELECT addcolumnifnotexists('I_Product','ContactPr
 update ad_system set dummy = (SELECT addcolumnifnotexists('I_Product','AD_Org_Product_ID', 'integer'));
 
 -- 20121122-1234 Incorporación de nueva columna a la tabla de Usuarios para identificar aquellos que loguean al sistema. Actualización de flag usuario de sistema para aquellos usuarios que poseen al menos un perfil asociado, si tienen un perfil configurado, entonces ingresan al sistema
-update ad_system set dummy = (SELECT addcolumnifnotexists('AD_User','isSystemAccess', 'character(1) NOT NULL DEFAULT \'N\'::bpchar'));
+update ad_system set dummy = (SELECT addcolumnifnotexists('AD_User','isSystemAccess', 'character(1) NOT NULL DEFAULT ''N''::bpchar'));
 
 UPDATE ad_user u
 SET issystemaccess = 'Y'
@@ -5110,10 +5110,10 @@ $BODY$SELECT DATE_PART('DAY', $1 - '0001-01-01bc')::integer AS result$BODY$
 ALTER FUNCTION to_days(timestamp without time zone) OWNER TO libertya;
 
 --20121204-2306 Nueva columna que permite modificar las tarifas en los documentos de pedidos
-update ad_system set dummy = (SELECT addcolumnifnotexists('c_doctype','allowchangepricelist', 'character(1) NOT NULL DEFAULT \'N\'::bpchar'));
+update ad_system set dummy = (SELECT addcolumnifnotexists('c_doctype','allowchangepricelist', 'character(1) NOT NULL DEFAULT ''N''::bpchar'));
 
 --20121204-2315 Nueva columna que permite filtrar tipos de documento de pedidos en el Crear Desde de Remitos
-update ad_system set dummy = (SELECT addcolumnifnotexists('c_doctype','enableincreatefromshipment', 'character(1) NOT NULL DEFAULT \'N\'::bpchar'));
+update ad_system set dummy = (SELECT addcolumnifnotexists('c_doctype','enableincreatefromshipment', 'character(1) NOT NULL DEFAULT ''N''::bpchar'));
 
 UPDATE c_doctype
 SET enableincreatefromshipment = 'Y'
@@ -5132,7 +5132,7 @@ update ad_system set dummy = (SELECT addcolumnifnotexists('c_invoiceline','linen
 update ad_system set dummy = (SELECT addcolumnifnotexists('I_Padron_Sujeto','padrontype', 'character(1)'));
 
 --20121211-1702 Nueva columna que permite configurar a las organizaciones para incluirlas en el proceso de generación de imputaciones automáticas 
-update ad_system set dummy = (SELECT addcolumnifnotexists('ad_orginfo','allowautomaticallocation', 'character(1) NOT NULL DEFAULT \'N\'::bpchar'));
+update ad_system set dummy = (SELECT addcolumnifnotexists('ad_orginfo','allowautomaticallocation', 'character(1) NOT NULL DEFAULT ''N''::bpchar'));
 
 --20121226-2020 Se elimina el índice de cuit único en la tabla de padrón ya que pueden existir cuits repetidos
 DROP INDEX c_bpartner_padron_bsas_cuit;
@@ -5250,7 +5250,7 @@ ALTER FUNCTION replication_event() OWNER TO libertya;
 update ad_system set dummy = (SELECT addcolumnifnotexists('c_payment','original_ref_payment_id', 'integer'));
 
 --20130115-0922 Nuevos cambios en logica de replicacion
-﻿CREATE OR REPLACE FUNCTION replication_is_valid_reference(p_columnid integer, column_data character varying)
+CREATE OR REPLACE FUNCTION replication_is_valid_reference(p_columnid integer, column_data character varying)
   RETURNS integer AS
 $BODY$
 DECLARE
@@ -5564,3 +5564,6 @@ ALTER TABLE ad_role ADD COLUMN isinfoassetaccess character(1) NOT NULL DEFAULT '
 
 -- Versionado de BBDD
 UPDATE ad_system SET version = '21-01-2013' WHERE ad_system_id = 0;
+
+-- Compatibilidad de UID para este registro entre version 11.10 y 13.01
+UPDATE AD_TREENODEMM set ad_componentobjectuid = 'CORE-AD_TreeNodeMM-1010114-203' where ad_componentobjectuid = 'CORE-AD_TreeNodeMM-203-1010114';
