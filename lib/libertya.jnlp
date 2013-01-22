@@ -3,7 +3,7 @@
 	codebase = "$$context/OXPHome" 
 	href = "$$context/OXPHome/libertya.jnlp">  
 	<information>
-		<title>cliente libertya v12.04</title>
+		<title>cliente libertya v13.01</title>
 		<vendor>DISYTEL</vendor>
 		<homepage href = "http://www.libertya.org"></homepage>
 		<offline-allowed/>
