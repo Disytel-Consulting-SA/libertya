@@ -5561,3 +5561,6 @@ ALTER TABLE ad_role ADD COLUMN isinfopaymentaccess character(1) NOT NULL DEFAULT
 ALTER TABLE ad_role ADD COLUMN isinfocashlineaccess character(1) NOT NULL DEFAULT 'Y'::bpchar;
 ALTER TABLE ad_role ADD COLUMN isinfoassignmentaccess character(1) NOT NULL DEFAULT 'Y'::bpchar;
 ALTER TABLE ad_role ADD COLUMN isinfoassetaccess character(1) NOT NULL DEFAULT 'Y'::bpchar;
+
+-- Versionado de BBDD
+UPDATE ad_system SET version = '21-01-2013' WHERE ad_system_id = 0;
