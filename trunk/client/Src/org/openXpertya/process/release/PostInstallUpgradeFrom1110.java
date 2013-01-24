@@ -100,6 +100,10 @@ public class PostInstallUpgradeFrom1110 extends PluginPostInstallProcess {
 	protected final static String RPT_TAXLIBROIVA_REPORT_UID = "LIVA2CORE-AD_JasperReport-1010053-20121031201630";
 	protected final static String RPT_TAXLIBROIVA_REPORT_FILENAME = "SubReport_TaxInformeLibroIva.jasper";
 	
+	/** UID del Comprobante de Retencion */
+	protected final static String RPT_COMPROBANTE_RETENCION_REPORT_UID = "CORE-AD_JasperReport-1010081";
+	protected final static String RPT_COMPROBANTE_RETENCION_REPORT_FILENAME = "rpt_Comprobante_Retencion.jasper";
+	
 	protected String doIt() throws Exception {
 		super.doIt();
 		
@@ -339,6 +343,12 @@ public class PostInstallUpgradeFrom1110 extends PluginPostInstallProcess {
 				RPT_TAXLIBROIVA_REPORT_UID, JarHelper.readBinaryFromJar(
 						jarFileURL,
 						getBinaryFileURL(RPT_TAXLIBROIVA_REPORT_FILENAME)));
+		
+		// Actualización del Comprobante de Retención
+		MJasperReport.updateBinaryData(get_TrxName(), getCtx(),
+				RPT_COMPROBANTE_RETENCION_REPORT_UID, JarHelper.readBinaryFromJar(
+						jarFileURL,
+						getBinaryFileURL(RPT_COMPROBANTE_RETENCION_REPORT_FILENAME)));
 		
 		return " ";
 	}
