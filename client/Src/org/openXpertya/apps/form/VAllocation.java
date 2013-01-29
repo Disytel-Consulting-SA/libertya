@@ -1598,8 +1598,8 @@ private Vector getCreditColumnNames() {
 								paymentId = debitDocumentId;
 								paymentType = T_PAYMENT;
 							} else {
-								invoiceId = creditDocumentId;
-								paymentId = debitDocumentId;
+								invoiceId = debitDocumentId;
+								paymentId = creditDocumentId;
 								paymentType = T_INVOICE;
 							}
 							BigDecimal amount = null;
