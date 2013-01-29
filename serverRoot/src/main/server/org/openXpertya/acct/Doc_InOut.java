@@ -329,6 +329,12 @@ public class Doc_InOut extends Doc {
 		// TODO Auto-generated method stub
 		return null;
 	}
+
+	@Override
+	protected String loadDocumentDetails() {
+		// TODO Auto-generated method stub
+		return null;
+	}
 	
 }    // Doc_InOut
 

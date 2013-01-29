@@ -406,6 +406,19 @@ public class MSystem extends X_AD_System {
         }
 
     }		// setInternalUsers
+    
+    private static final String SYSTEM_ALLOW_REMEMBER_PASSWORD = "P";
+    public static boolean isZKRememberPasswordAllowed() {
+		String ca = MSysConfig.getValue("ZK_LOGIN_ALLOW_REMEMBER_ME", SYSTEM_ALLOW_REMEMBER_USER);
+		return (ca.equalsIgnoreCase(SYSTEM_ALLOW_REMEMBER_PASSWORD));
+	}
+	public static boolean isZKRememberUserAllowed() {
+		String ca = MSysConfig.getValue("ZK_LOGIN_ALLOW_REMEMBER_ME", SYSTEM_ALLOW_REMEMBER_USER);
+		return (ca.equalsIgnoreCase(SYSTEM_ALLOW_REMEMBER_USER) || ca.equalsIgnoreCase(SYSTEM_ALLOW_REMEMBER_PASSWORD));
+	}
+    private static final String SYSTEM_ALLOW_REMEMBER_USER = "U";
+
+    
 }	// MSystem
 
 

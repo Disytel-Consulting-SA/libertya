@@ -22,11 +22,13 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Properties;
 import java.util.logging.Level;
 
 import org.openXpertya.util.DB;
 import org.openXpertya.util.DisplayType;
+import org.openXpertya.util.Env;
 
 /**
  * Descripción de Clase
@@ -277,6 +279,45 @@ public class MAttribute extends X_M_Attribute {
 
         return success;
     }    // afterSave
+    
+    /**
+	 * 	Get Attributes Of Client
+	 *	@param ctx Properties
+	 *	@param onlyProductAttributes only Product Attributes
+	 *	@param onlyListAttributes only List Attributes
+	 *	@return array of attributes
+	 */
+	public static MAttribute[] getOfClient(Properties ctx, 
+		boolean onlyProductAttributes, boolean onlyListAttributes)
+	{
+		int AD_Client_ID = Env.getAD_Client_ID(ctx);
+		String sql = "";
+		ArrayList<Object> params = new ArrayList<Object>();
+		params.add(AD_Client_ID);
+		if (onlyProductAttributes)
+			{
+				sql += " AND IsInstanceAttribute=?";
+				params.add(false);
+			}
+		if (onlyListAttributes)
+			{
+				sql += " AND AttributeValueType=?";
+				params.add(MAttribute.ATTRIBUTEVALUETYPE_List);
+			}
+		final String whereClause = "AD_Client_ID=?"+sql;
+		
+		List<MAttribute>list = new Query(ctx,X_M_Attribute.Table_Name,whereClause,null)
+		.setParameters(params)
+		.setOnlyActiveRecords(true)
+		.setOrderBy("Name")
+		.list();
+
+		MAttribute[] retValue = new MAttribute[list.size ()];
+		list.toArray (retValue);
+		//s_log.fine("AD_Client_ID=" + AD_Client_ID + " - #" + list.size());
+		return retValue;
+	}	//	getOfClient
+
 }    // MAttribute
 
 

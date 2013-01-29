@@ -225,6 +225,56 @@ public class CLogger extends Logger {
 		}
 		return msg;
 	}
+	
+	/**
+	 * Get Error message from stack
+	 * @param defaultMsg default message (used when there are no errors on stack)
+	 * @return error message, or defaultMsg if there is not error message saved
+	 * @see #retrieveError()
+	 * @author Teo Sarca, SC ARHIPAC SERVICE SRL
+	 */
+	public static String retrieveErrorString(String defaultMsg) {
+		ValueNamePair vp = retrieveError();
+		if (vp == null)
+			return defaultMsg;
+		return vp.getName();
+	}
+	
+	/**
+	 *  Get Warning from Stack
+	 *  @return AD_Message as Value and Message as String
+	 */
+	public static ValueNamePair retrieveWarning()
+	{
+		ValueNamePair vp = (ValueNamePair) Env.getCtx().remove(LAST_WARNING);
+		return vp;
+	}   //  retrieveWarning
+	private static final String LAST_WARNING = "org.openXpertya.util.CLogger.lastWarning";
+
+	public static ValueNamePair retrieveInfo()
+	{
+		ValueNamePair vp = (ValueNamePair) Env.getCtx().remove(LAST_INFO);
+		return vp;
+	}   //  retrieveInfo
+	private static final String LAST_INFO = "org.openXpertya.util.CLogger.lastInfo";
+
+	/**
+	 *  Save Warning as ValueNamePair.
+	 *  @param AD_Message message key
+	 *  @param message clear text message
+	 *  @return true
+	 */
+	public boolean saveWarning (String AD_Message, String message)
+	{
+		ValueNamePair lastWarning = new ValueNamePair(AD_Message, message);
+		Env.getCtx().put(LAST_WARNING, lastWarning);
+		//  print it
+		if (true) //	issueError
+			warning(AD_Message + " - " + message);
+		return true;
+	}   //  saveWarning
+
+	
 }    // CLogger
 
 

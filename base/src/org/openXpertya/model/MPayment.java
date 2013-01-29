@@ -3070,6 +3070,56 @@ public final class MPayment extends X_C_Payment implements DocAction,ProcessCall
 	public boolean isVoidPOSJournalMustBeOpen() {
 		return voidPOSJournalMustBeOpen;
 	}
+	
+	/**
+	 *  CreditCard Exp  MMYY
+	 *  @param delimiter / - or null
+	 *  @return Exp
+	 */
+	public String getCreditCardExp(String delimiter)
+	{
+		String mm = String.valueOf(getCreditCardExpMM());
+		String yy = String.valueOf(getCreditCardExpYY());
+
+		StringBuffer retValue = new StringBuffer();
+		if (mm.length() == 1)
+			retValue.append("0");
+		retValue.append(mm);
+		//
+		if (delimiter != null)
+			retValue.append(delimiter);
+		//
+		if (yy.length() == 1)
+			retValue.append("0");
+		retValue.append(yy);
+		//
+		return (retValue.toString());
+	}   //  getCreditCardExp
+	
+	//TODO Hernandez
+	/**
+	 *  Set Cash BankAccount Info
+	 *
+	 *  @param C_BankAccount_ID bank account
+	 *  @param isReceipt true if receipt
+	 * 	@param tenderType - Cash (Payment)
+	 *  @return true if valid
+	 */
+	public boolean setBankCash (int C_BankAccount_ID, boolean isReceipt, String tenderType)
+	{
+		setTenderType (tenderType);
+		setIsReceipt (isReceipt);
+		//
+		if (C_BankAccount_ID > 0)
+			setBankAccountDetails(C_BankAccount_ID);
+		else
+		{
+			setC_BankAccount_ID(C_BankAccount_ID);
+		}
+		//
+		return true;
+	}   //  setBankCash
+
 }   // MPayment
 
 

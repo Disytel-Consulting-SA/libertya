@@ -2080,7 +2080,7 @@ public final class DB {
      * @return
      */
 
-    public String TO_NUMBER( BigDecimal number,int displayType ) {
+    public static String TO_NUMBER( BigDecimal number,int displayType ) {
         return s_cc.getDatabase().TO_NUMBER( number,displayType );
     }    // TO_NUMBER
 
@@ -2175,6 +2175,182 @@ public final class DB {
     	return s_cc.getDatabase().TO_DATEFORMAT( columnName,displayType,AD_Language );
     }    // TO_CHAR
 
+	//TODO Hernandez
+	/**
+     * Get String Value from sql
+     * @param trxName trx
+     * @param sql sql
+     * @param params array of parameters
+     * @return first value or null
+     * @throws DBException if there is any SQLException
+     */
+    public static String getSQLValueStringEx (String trxName, String sql, Object... params)
+    {
+    	String retValue = null;
+    	PreparedStatement pstmt = null;
+    	ResultSet rs = null;
+    	try
+    	{
+    		pstmt = prepareStatement(sql, trxName);
+    		setParameters(pstmt, params);
+    		rs = pstmt.executeQuery();
+    		if (rs.next())
+    			retValue = rs.getString(1);
+    		else
+    			log.info("No Value " + sql);
+    	}
+    	catch (SQLException e)
+    	{
+    		throw new DBException(e, sql);
+    	}
+    	finally
+    	{
+    		close(rs, pstmt);
+    		rs = null; pstmt = null;
+    	}
+    	return retValue;
+    }
+    
+    /**
+     * Get String Value from sql
+     * @param trxName trx
+     * @param sql sql
+     * @param params array of parameters
+     * @return first value or null
+     */
+    public static String getSQLValueString (String trxName, String sql, Object... params)
+    {
+    	String retValue = null;
+    	try
+    	{
+    		retValue = getSQLValueStringEx(trxName, sql, params);
+    	}
+    	catch (Exception e)
+    	{
+    		log.log(Level.SEVERE, sql, getSQLException(e));
+    	}
+    	return retValue;
+    }
+    
+    /**
+	 * Set parameters for given statement
+	 * @param stmt statements
+	 * @param params parameters list; if null or empty list, no parameters are set
+	 */
+	public static void setParameters(PreparedStatement stmt, List<?> params)
+	throws SQLException
+	{
+		if (params == null || params.size() == 0)
+		{
+			return;
+		}
+		for (int i = 0; i < params.size(); i++)
+		{
+			setParameter(stmt, i+1, params.get(i));
+		}
+	}
+
+
+	   //TODO Hernandez
+    /**
+     * Get int Value from sql
+     * @param trxName trx
+     * @param sql sql
+     * @param params array of parameters
+     * @return first value or -1 if not found
+     * @throws DBException if there is any SQLException
+     */
+    public static int getSQLValueEx (String trxName, String sql, Object... params) throws DBException
+    {
+    	int retValue = -1;
+    	PreparedStatement pstmt = null;
+    	ResultSet rs = null;
+    	try
+    	{
+    		pstmt = prepareStatement(sql, trxName);
+    		setParameters(pstmt, params);
+    		rs = pstmt.executeQuery();
+    		if (rs.next())
+    			retValue = rs.getInt(1);
+    		else
+    			log.info("No Value " + sql);
+    	}
+    	catch (SQLException e)
+    	{
+    		throw new DBException(e, sql);
+    	}
+    	finally
+    	{
+    		close(rs, pstmt);
+    		rs = null; pstmt = null;
+    	}
+    	return retValue;
+    }
+    
+    /**
+	 * Set parameters for given statement
+	 * @param stmt statements
+	 * @param params parameters array; if null or empty array, no parameters are set
+	 */
+	public static void setParameters(PreparedStatement stmt, Object[] params)
+	throws SQLException
+	{
+		if (params == null || params.length == 0) {
+			return;
+		}
+		//
+		for (int i = 0; i < params.length; i++)
+		{
+			setParameter(stmt, i+1, params[i]);
+		}
+	}
+	/**
+	 * Set PreparedStatement's parameter.
+	 * Similar with calling <code>pstmt.setObject(index, param)</code>
+	 * @param pstmt
+	 * @param index
+	 * @param param
+	 * @throws SQLException
+	 */
+	public static void setParameter(PreparedStatement pstmt, int index, Object param)
+	throws SQLException
+	{
+		if (param == null)
+			pstmt.setObject(index, null);
+		else if (param instanceof String)
+			pstmt.setString(index, (String)param);
+		else if (param instanceof Integer)
+			pstmt.setInt(index, ((Integer)param).intValue());
+		else if (param instanceof BigDecimal)
+			pstmt.setBigDecimal(index, (BigDecimal)param);
+		else if (param instanceof Timestamp)
+			pstmt.setTimestamp(index, (Timestamp)param);
+		else if (param instanceof Boolean)
+			pstmt.setString(index, ((Boolean)param).booleanValue() ? "Y" : "N");
+		else
+			throw new DBException("Unknown parameter type "+index+" - "+param);
+	}
+	
+    /**
+	 * Try to get the SQLException from Exception
+	 * @param e Exception
+	 * @return SQLException if found or provided exception elsewhere
+	 */
+    public static Exception getSQLException(Exception e)
+    {
+    	Throwable e1 = e;
+    	while (e1 != null)
+    	{
+	    	if (e1 instanceof SQLException)
+	    		return (SQLException)e1;
+	    	e1 = e1.getCause();
+    	}
+    	return e;
+    }
+	/** SQL Statement Separator "; "	*/
+	public static final String SQLSTATEMENT_SEPARATOR = "; ";
+
+	
 }    // DB
 
 

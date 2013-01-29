@@ -32,7 +32,7 @@ import java.util.Set;
  * @author     Equipo de Desarrollo de openXpertya    
  */
 
-public class CCache extends HashMap implements CacheInterface, Serializable {
+public class CCache<K,V> extends HashMap<K,V> implements CacheInterface, Serializable {
 
     /**
 	 * 
@@ -274,7 +274,7 @@ public class CCache extends HashMap implements CacheInterface, Serializable {
      * @return
      */
 
-    public Object get( Object key ) {
+    public V get( Object key ) {
         expire();
 
         return super.get( key );
@@ -290,7 +290,7 @@ public class CCache extends HashMap implements CacheInterface, Serializable {
      * @return
      */
 
-    public Object put( Object key,Object value ) {
+    public V put(K key, V value) {
         expire();
         m_justReset = false;
 

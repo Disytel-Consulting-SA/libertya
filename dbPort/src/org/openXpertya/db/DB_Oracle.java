@@ -971,6 +971,20 @@ public class DB_Oracle implements BaseDatosOXP, OracleConnectionCacheCallback {
     	
     	return dateString.toString(); 
 	}
+
+
+	@Override
+	public String addPagingSQL(String sql, int start, int end) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+
+	@Override
+	public boolean isPagingSupported() {
+		// TODO Auto-generated method stub
+		return false;
+	}
 	
     
     

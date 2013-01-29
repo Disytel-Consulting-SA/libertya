@@ -7,7 +7,7 @@ import java.math.*;
 import org.openXpertya.util.*;
 /** Modelo Generado por AD_Role
  *  @author Comunidad de Desarrollo Libertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
- *  @version  - 2013-01-17 23:37:06.333 */
+ *  @version  - 2013-01-21 13:37:52.164 */
 public class X_AD_Role extends org.openXpertya.model.PO
 {
 /** Constructor estándar */
@@ -17,6 +17,20 @@ super (ctx, AD_Role_ID, trxName);
 /** if (AD_Role_ID == 0)
 {
 setAD_Role_ID (0);
+setAllow_Info_Account (true);	// Y
+setAllow_Info_Asset (true);	// Y
+setAllow_Info_BPartner (true);	// Y
+setAllow_Info_CashJournal (true);	// Y
+setAllow_Info_CRP (true);	// Y
+setAllow_Info_InOut (true);	// Y
+setAllow_Info_Invoice (true);	// Y
+setAllow_Info_MRP (true);	// Y
+setAllow_Info_Order (true);	// Y
+setAllow_Info_Payment (true);	// Y
+setAllow_Info_Product (true);	// Y
+setAllow_Info_Resource (true);	// Y
+setAllow_Info_Schedule (true);	// Y
+setConfirmQueryRecords (0);
 setIsAccessAllOrgs (false);	// N
 setIsCanApproveOwnDoc (false);
 setIsCanExport (true);	// Y
@@ -37,6 +51,7 @@ setIsPersonalAccess (false);	// N
 setIsPersonalLock (false);	// N
 setIsShowAcct (false);	// N
 setIsUseUserOrgAccess (false);	// N
+setMaxQueryRecords (0);
 setName (null);
 setOverwritePriceLimit (false);	// N
 setPOSJournalSupervisor (false);
@@ -117,6 +132,214 @@ Integer ii = (Integer)get_Value("AD_Tree_Org_ID");
 if (ii == null) return 0;
 return ii.intValue();
 }
+/** Set Allow_Info_Account */
+public void setAllow_Info_Account (boolean Allow_Info_Account)
+{
+set_Value ("Allow_Info_Account", new Boolean(Allow_Info_Account));
+}
+/** Get Allow_Info_Account */
+public boolean isAllow_Info_Account() 
+{
+Object oo = get_Value("Allow_Info_Account");
+if (oo != null) 
+{
+ if (oo instanceof Boolean) return ((Boolean)oo).booleanValue();
+ return "Y".equals(oo);
+}
+return false;
+}
+/** Set Allow_Info_Asset */
+public void setAllow_Info_Asset (boolean Allow_Info_Asset)
+{
+set_Value ("Allow_Info_Asset", new Boolean(Allow_Info_Asset));
+}
+/** Get Allow_Info_Asset */
+public boolean isAllow_Info_Asset() 
+{
+Object oo = get_Value("Allow_Info_Asset");
+if (oo != null) 
+{
+ if (oo instanceof Boolean) return ((Boolean)oo).booleanValue();
+ return "Y".equals(oo);
+}
+return false;
+}
+/** Set Allow_Info_BPartner */
+public void setAllow_Info_BPartner (boolean Allow_Info_BPartner)
+{
+set_Value ("Allow_Info_BPartner", new Boolean(Allow_Info_BPartner));
+}
+/** Get Allow_Info_BPartner */
+public boolean isAllow_Info_BPartner() 
+{
+Object oo = get_Value("Allow_Info_BPartner");
+if (oo != null) 
+{
+ if (oo instanceof Boolean) return ((Boolean)oo).booleanValue();
+ return "Y".equals(oo);
+}
+return false;
+}
+/** Set Allow_Info_CashJournal */
+public void setAllow_Info_CashJournal (boolean Allow_Info_CashJournal)
+{
+set_Value ("Allow_Info_CashJournal", new Boolean(Allow_Info_CashJournal));
+}
+/** Get Allow_Info_CashJournal */
+public boolean isAllow_Info_CashJournal() 
+{
+Object oo = get_Value("Allow_Info_CashJournal");
+if (oo != null) 
+{
+ if (oo instanceof Boolean) return ((Boolean)oo).booleanValue();
+ return "Y".equals(oo);
+}
+return false;
+}
+/** Set Allow_Info_CRP */
+public void setAllow_Info_CRP (boolean Allow_Info_CRP)
+{
+set_Value ("Allow_Info_CRP", new Boolean(Allow_Info_CRP));
+}
+/** Get Allow_Info_CRP */
+public boolean isAllow_Info_CRP() 
+{
+Object oo = get_Value("Allow_Info_CRP");
+if (oo != null) 
+{
+ if (oo instanceof Boolean) return ((Boolean)oo).booleanValue();
+ return "Y".equals(oo);
+}
+return false;
+}
+/** Set Allow_Info_InOut */
+public void setAllow_Info_InOut (boolean Allow_Info_InOut)
+{
+set_Value ("Allow_Info_InOut", new Boolean(Allow_Info_InOut));
+}
+/** Get Allow_Info_InOut */
+public boolean isAllow_Info_InOut() 
+{
+Object oo = get_Value("Allow_Info_InOut");
+if (oo != null) 
+{
+ if (oo instanceof Boolean) return ((Boolean)oo).booleanValue();
+ return "Y".equals(oo);
+}
+return false;
+}
+/** Set Allow_Info_Invoice */
+public void setAllow_Info_Invoice (boolean Allow_Info_Invoice)
+{
+set_Value ("Allow_Info_Invoice", new Boolean(Allow_Info_Invoice));
+}
+/** Get Allow_Info_Invoice */
+public boolean isAllow_Info_Invoice() 
+{
+Object oo = get_Value("Allow_Info_Invoice");
+if (oo != null) 
+{
+ if (oo instanceof Boolean) return ((Boolean)oo).booleanValue();
+ return "Y".equals(oo);
+}
+return false;
+}
+/** Set Allow_Info_MRP */
+public void setAllow_Info_MRP (boolean Allow_Info_MRP)
+{
+set_Value ("Allow_Info_MRP", new Boolean(Allow_Info_MRP));
+}
+/** Get Allow_Info_MRP */
+public boolean isAllow_Info_MRP() 
+{
+Object oo = get_Value("Allow_Info_MRP");
+if (oo != null) 
+{
+ if (oo instanceof Boolean) return ((Boolean)oo).booleanValue();
+ return "Y".equals(oo);
+}
+return false;
+}
+/** Set Allow_Info_Order */
+public void setAllow_Info_Order (boolean Allow_Info_Order)
+{
+set_Value ("Allow_Info_Order", new Boolean(Allow_Info_Order));
+}
+/** Get Allow_Info_Order */
+public boolean isAllow_Info_Order() 
+{
+Object oo = get_Value("Allow_Info_Order");
+if (oo != null) 
+{
+ if (oo instanceof Boolean) return ((Boolean)oo).booleanValue();
+ return "Y".equals(oo);
+}
+return false;
+}
+/** Set Allow_Info_Payment */
+public void setAllow_Info_Payment (boolean Allow_Info_Payment)
+{
+set_Value ("Allow_Info_Payment", new Boolean(Allow_Info_Payment));
+}
+/** Get Allow_Info_Payment */
+public boolean isAllow_Info_Payment() 
+{
+Object oo = get_Value("Allow_Info_Payment");
+if (oo != null) 
+{
+ if (oo instanceof Boolean) return ((Boolean)oo).booleanValue();
+ return "Y".equals(oo);
+}
+return false;
+}
+/** Set Allow_Info_Product */
+public void setAllow_Info_Product (boolean Allow_Info_Product)
+{
+set_Value ("Allow_Info_Product", new Boolean(Allow_Info_Product));
+}
+/** Get Allow_Info_Product */
+public boolean isAllow_Info_Product() 
+{
+Object oo = get_Value("Allow_Info_Product");
+if (oo != null) 
+{
+ if (oo instanceof Boolean) return ((Boolean)oo).booleanValue();
+ return "Y".equals(oo);
+}
+return false;
+}
+/** Set Allow_Info_Resource */
+public void setAllow_Info_Resource (boolean Allow_Info_Resource)
+{
+set_Value ("Allow_Info_Resource", new Boolean(Allow_Info_Resource));
+}
+/** Get Allow_Info_Resource */
+public boolean isAllow_Info_Resource() 
+{
+Object oo = get_Value("Allow_Info_Resource");
+if (oo != null) 
+{
+ if (oo instanceof Boolean) return ((Boolean)oo).booleanValue();
+ return "Y".equals(oo);
+}
+return false;
+}
+/** Set Allow_Info_Schedule */
+public void setAllow_Info_Schedule (boolean Allow_Info_Schedule)
+{
+set_Value ("Allow_Info_Schedule", new Boolean(Allow_Info_Schedule));
+}
+/** Get Allow_Info_Schedule */
+public boolean isAllow_Info_Schedule() 
+{
+Object oo = get_Value("Allow_Info_Schedule");
+if (oo != null) 
+{
+ if (oo instanceof Boolean) return ((Boolean)oo).booleanValue();
+ return "Y".equals(oo);
+}
+return false;
+}
 /** Set Approval Amount.
 The approval amount limit for this role */
 public void setAmtApproval (BigDecimal AmtApproval)
@@ -144,6 +367,18 @@ The Currency for this record */
 public int getC_Currency_ID() 
 {
 Integer ii = (Integer)get_Value("C_Currency_ID");
+if (ii == null) return 0;
+return ii.intValue();
+}
+/** Set ConfirmQueryRecords */
+public void setConfirmQueryRecords (int ConfirmQueryRecords)
+{
+set_Value ("ConfirmQueryRecords", new Integer(ConfirmQueryRecords));
+}
+/** Get ConfirmQueryRecords */
+public int getConfirmQueryRecords() 
+{
+Integer ii = (Integer)get_Value("ConfirmQueryRecords");
 if (ii == null) return 0;
 return ii.intValue();
 }
@@ -254,12 +489,12 @@ if (oo != null)
 }
 return false;
 }
-/** Set Is Info Asset Access */
+/** Set IsInfoAssetAccess */
 public void setIsInfoAssetAccess (boolean IsInfoAssetAccess)
 {
 set_Value ("IsInfoAssetAccess", new Boolean(IsInfoAssetAccess));
 }
-/** Get Is Info Asset Access */
+/** Get IsInfoAssetAccess */
 public boolean isInfoAssetAccess() 
 {
 Object oo = get_Value("IsInfoAssetAccess");
@@ -270,12 +505,12 @@ if (oo != null)
 }
 return false;
 }
-/** Set Is Info Assignment Access */
+/** Set IsInfoAssignmentAccess */
 public void setIsInfoAssignmentAccess (boolean IsInfoAssignmentAccess)
 {
 set_Value ("IsInfoAssignmentAccess", new Boolean(IsInfoAssignmentAccess));
 }
-/** Get Is Info Assignment Access */
+/** Get IsInfoAssignmentAccess */
 public boolean isInfoAssignmentAccess() 
 {
 Object oo = get_Value("IsInfoAssignmentAccess");
@@ -286,12 +521,12 @@ if (oo != null)
 }
 return false;
 }
-/** Set Is Info BPartner Access */
+/** Set IsInfoBPartnerAccess */
 public void setIsInfoBPartnerAccess (boolean IsInfoBPartnerAccess)
 {
 set_Value ("IsInfoBPartnerAccess", new Boolean(IsInfoBPartnerAccess));
 }
-/** Get Is Info BPartner Access */
+/** Get IsInfoBPartnerAccess */
 public boolean isInfoBPartnerAccess() 
 {
 Object oo = get_Value("IsInfoBPartnerAccess");
@@ -302,12 +537,12 @@ if (oo != null)
 }
 return false;
 }
-/** Set Is Info Cash Line Access */
+/** Set IsInfoCashLineAccess */
 public void setIsInfoCashLineAccess (boolean IsInfoCashLineAccess)
 {
 set_Value ("IsInfoCashLineAccess", new Boolean(IsInfoCashLineAccess));
 }
-/** Get Is Info Cash Line Access */
+/** Get IsInfoCashLineAccess */
 public boolean isInfoCashLineAccess() 
 {
 Object oo = get_Value("IsInfoCashLineAccess");
@@ -318,12 +553,12 @@ if (oo != null)
 }
 return false;
 }
-/** Set Is Info InOut Access */
+/** Set IsInfoInOutAccess */
 public void setIsInfoInOutAccess (boolean IsInfoInOutAccess)
 {
 set_Value ("IsInfoInOutAccess", new Boolean(IsInfoInOutAccess));
 }
-/** Get Is Info InOut Access */
+/** Get IsInfoInOutAccess */
 public boolean isInfoInOutAccess() 
 {
 Object oo = get_Value("IsInfoInOutAccess");
@@ -334,12 +569,12 @@ if (oo != null)
 }
 return false;
 }
-/** Set Is Info Invoice Access */
+/** Set IsInfoInvoiceAccess */
 public void setIsInfoInvoiceAccess (boolean IsInfoInvoiceAccess)
 {
 set_Value ("IsInfoInvoiceAccess", new Boolean(IsInfoInvoiceAccess));
 }
-/** Get Is Info Invoice Access */
+/** Get IsInfoInvoiceAccess */
 public boolean isInfoInvoiceAccess() 
 {
 Object oo = get_Value("IsInfoInvoiceAccess");
@@ -350,12 +585,12 @@ if (oo != null)
 }
 return false;
 }
-/** Set Is Info Order Access */
+/** Set IsInfoOrderAccess */
 public void setIsInfoOrderAccess (boolean IsInfoOrderAccess)
 {
 set_Value ("IsInfoOrderAccess", new Boolean(IsInfoOrderAccess));
 }
-/** Get Is Info Order Access */
+/** Get IsInfoOrderAccess */
 public boolean isInfoOrderAccess() 
 {
 Object oo = get_Value("IsInfoOrderAccess");
@@ -366,12 +601,12 @@ if (oo != null)
 }
 return false;
 }
-/** Set Is Info Payment Access */
+/** Set IsInfoPaymentAccess */
 public void setIsInfoPaymentAccess (boolean IsInfoPaymentAccess)
 {
 set_Value ("IsInfoPaymentAccess", new Boolean(IsInfoPaymentAccess));
 }
-/** Get Is Info Payment Access */
+/** Get IsInfoPaymentAccess */
 public boolean isInfoPaymentAccess() 
 {
 Object oo = get_Value("IsInfoPaymentAccess");
@@ -400,12 +635,12 @@ if (oo != null)
 }
 return false;
 }
-/** Set Is Info Schedule Access */
+/** Set IsInfoScheduleAccess */
 public void setIsInfoScheduleAccess (boolean IsInfoScheduleAccess)
 {
 set_Value ("IsInfoScheduleAccess", new Boolean(IsInfoScheduleAccess));
 }
-/** Get Is Info Schedule Access */
+/** Get IsInfoScheduleAccess */
 public boolean isInfoScheduleAccess() 
 {
 Object oo = get_Value("IsInfoScheduleAccess");
@@ -505,6 +740,18 @@ if (oo != null)
  return "Y".equals(oo);
 }
 return false;
+}
+/** Set MaxQueryRecords */
+public void setMaxQueryRecords (int MaxQueryRecords)
+{
+set_Value ("MaxQueryRecords", new Integer(MaxQueryRecords));
+}
+/** Get MaxQueryRecords */
+public int getMaxQueryRecords() 
+{
+Integer ii = (Integer)get_Value("MaxQueryRecords");
+if (ii == null) return 0;
+return ii.intValue();
 }
 /** Set Name.
 Alphanumeric identifier of the entity */

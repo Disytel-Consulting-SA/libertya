@@ -25,6 +25,7 @@ import java.util.List;
 import java.util.Properties;
 
 import org.openXpertya.util.CCache;
+import org.openXpertya.util.CLogger;
 import org.openXpertya.util.DB;
 import org.openXpertya.util.DisplayType;
 import org.openXpertya.util.Env;
@@ -425,6 +426,10 @@ public class M_Column extends X_AD_Column {
         return (s != null) && (s.length() > 0);
 
     }		// isVirtualColumn
+	
+	/**	Static Logger	*/
+	private static CLogger	s_log	= CLogger.getCLogger (M_Column.class);
+	
 }	// M_Column
 
 

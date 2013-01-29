@@ -1432,6 +1432,28 @@ public class MCashLine extends X_C_CashLine implements DocAction {
 		return voidPOSJournalMustBeOpen;
 	}
 
+	public MCashBook getCashBook()
+	{
+		if (m_cashBook == null)
+			m_cashBook = MCashBook.get(getCtx(), getParent().getC_CashBook_ID());
+		return m_cashBook;
+	}	//	getCashBook
+	/** Cash Book				*/
+	private MCashBook 		m_cashBook = null;
+	/**
+	 * 	Get Cash (parent)
+	 *	@return cash
+	 */
+	public MCash getParent()
+	{
+		if (m_parent == null)
+			m_parent = new MCash (getCtx(), getC_Cash_ID(), get_TrxName());
+		return m_parent;
+	}	//	getCash
+	/** Parent					*/
+	private MCash			m_parent = null;
+
+	
 }    // MCashLine
 
 

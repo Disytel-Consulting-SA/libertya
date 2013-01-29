@@ -1,15 +1,13 @@
 /** Modelo Generado - NO CAMBIAR MANUALMENTE - Disytel */
 package org.openXpertya.model;
-import java.math.BigDecimal;
-import java.sql.ResultSet;
-import java.sql.Timestamp;
-import java.util.Properties;
-
-import org.openXpertya.util.Env;
-import org.openXpertya.util.KeyNamePair;
+import java.util.logging.Level;
+ import java.util.*;
+import java.sql.*;
+import java.math.*;
+import org.openXpertya.util.*;
 /** Modelo Generado por C_Invoice
  *  @author Comunidad de Desarrollo Libertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
- *  @version  - 2012-11-09 19:38:52.77 */
+ *  @version  - 2013-01-16 19:32:21.373 */
 public class X_C_Invoice extends org.openXpertya.model.PO
 {
 /** Constructor estándar */
@@ -1191,6 +1189,22 @@ Unique identifier of a Price List */
 public int getM_PriceList_ID() 
 {
 Integer ii = (Integer)get_Value("M_PriceList_ID");
+if (ii == null) return 0;
+return ii.intValue();
+}
+/** Set RMA.
+Return Material Authorization */
+public void setM_RMA_ID (int M_RMA_ID)
+{
+if (M_RMA_ID <= 0) set_Value ("M_RMA_ID", null);
+ else 
+set_Value ("M_RMA_ID", new Integer(M_RMA_ID));
+}
+/** Get RMA.
+Return Material Authorization */
+public int getM_RMA_ID() 
+{
+Integer ii = (Integer)get_Value("M_RMA_ID");
 if (ii == null) return 0;
 return ii.intValue();
 }

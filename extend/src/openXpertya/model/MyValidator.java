@@ -150,6 +150,12 @@ public class MyValidator implements ModelValidator {
     public int getAD_Client_ID() {
         return m_AD_Client_ID;
     }    // getAD_Client_ID
+
+	@Override
+	public String loginString(int AD_Org_ID, int AD_Role_ID, int AD_User_ID) {
+		// TODO Auto-generated method stub
+		return null;
+	}
 }    // MyValidator
 
 

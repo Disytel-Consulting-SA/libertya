@@ -765,7 +765,7 @@ public final class FactLine extends X_Fact_Acct {
      * @param AD_Org_ID
      */
 
-    protected void setAD_Org_ID( int AD_Org_ID ) {
+    public void setAD_Org_ID( int AD_Org_ID ) {
         super.setAD_Org_ID( AD_Org_ID );
     }    // setAD_Org_ID
 

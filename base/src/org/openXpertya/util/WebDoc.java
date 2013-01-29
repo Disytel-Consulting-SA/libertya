@@ -18,6 +18,7 @@ package org.openXpertya.util;
 
 import java.io.OutputStream;
 import java.io.PrintWriter;
+import java.util.Properties;
 
 import org.apache.ecs.AlignType;
 import org.apache.ecs.Element;
@@ -490,6 +491,28 @@ public class WebDoc {
         System.out.println( "---------" );
         doc.output( System.out );
     }    // main
+    
+    /**
+	 * 	Add Popup Close Footer
+	 *	@return null or array with left/right td
+	 */
+	public td[] addPopupClose(Properties ctx)
+	{
+		input button = WebUtil.createClosePopupButton(ctx); 
+		if (m_table == null)
+		{
+			m_body.addElement(button);
+			return null;
+		}
+		//
+		td left = new td("popupFooter", AlignType.LEFT, AlignType.MIDDLE, false, null);
+		td right = new td("popupFooter", AlignType.RIGHT, AlignType.MIDDLE, false, button); 
+		m_table.addElement(new tr()
+			.addElement(left)
+			.addElement(right));
+		return new td[] {left, right};
+	}	//	addPopupClose
+
 }    // WDoc
 
 

@@ -871,6 +871,81 @@ public class MTree extends MTree_Base {
 
         return sb.toString();
     }
+    
+    /**************************************************************************
+	 *  Get default (oldest) complete AD_Tree_ID for KeyColumn.
+	 *  Called from GridController
+	 *  @param keyColumnName key column name, eg. C_Project_ID
+	 *  @param AD_Client_ID client
+	 *  @return AD_Tree_ID
+	 */
+	public static int getDefaultAD_Tree_ID (int AD_Client_ID, String keyColumnName)
+	{
+		s_log.config(keyColumnName);
+		if (keyColumnName == null || keyColumnName.length() == 0)
+			return 0;
+
+		String TreeType = null;
+		if (keyColumnName.equals("AD_Menu_ID"))
+			TreeType = TREETYPE_Menu; 
+		else if (keyColumnName.equals("C_ElementValue_ID"))
+			TreeType = TREETYPE_ElementValue;
+		else if (keyColumnName.equals("M_Product_ID"))
+			TreeType = TREETYPE_Product;
+		else if (keyColumnName.equals("C_BPartner_ID"))
+			TreeType = TREETYPE_BPartner;
+		else if (keyColumnName.equals("AD_Org_ID"))
+			TreeType = TREETYPE_Organization;
+		else if (keyColumnName.equals("C_Project_ID"))
+			TreeType = TREETYPE_Project;
+		else if (keyColumnName.equals("M_ProductCategory_ID"))
+			TreeType = TREETYPE_ProductCategory;
+		else if (keyColumnName.equals("M_BOM_ID"))
+			TreeType = TREETYPE_BoM;
+		else if (keyColumnName.equals("C_SalesRegion_ID"))
+			TreeType = TREETYPE_SalesRegion;
+		else if (keyColumnName.equals("C_Campaign_ID"))
+			TreeType = TREETYPE_Campaign;
+		else if (keyColumnName.equals("C_Activity_ID"))
+			TreeType = TREETYPE_Activity;
+		//
+		else if (keyColumnName.equals("CM_CStage_ID"))
+			TreeType = "CS"; // TREETYPE_CMContainerStage;
+		else if (keyColumnName.equals("CM_Container_ID"))
+			TreeType = "CC"; // TREETYPE_CMContainer;
+		else if (keyColumnName.equals("CM_Media_ID"))
+			TreeType = "CM"; // TREETYPE_CMMedia;
+		else if (keyColumnName.equals("CM_Template_ID"))
+			TreeType = "CT"; // TREETYPE_CMTemplate;
+		else
+		{
+			s_log.log(Level.SEVERE, "Could not map " + keyColumnName);
+			return 0;
+		}
+
+		int AD_Tree_ID = 0;
+		String sql = "SELECT AD_Tree_ID, Name FROM AD_Tree "
+			+ "WHERE AD_Client_ID=? AND TreeType=? AND IsActive='Y' AND IsAllNodes='Y' "
+			+ "ORDER BY IsDefault DESC, AD_Tree_ID";
+		try
+		{
+			PreparedStatement pstmt = DB.prepareStatement(sql, null);
+			pstmt.setInt(1, AD_Client_ID);
+			pstmt.setString(2, TreeType);
+			ResultSet rs = pstmt.executeQuery();
+			if (rs.next())
+				AD_Tree_ID = rs.getInt(1);
+			rs.close();
+			pstmt.close();
+		}
+		catch (SQLException e)
+		{
+			s_log.log(Level.SEVERE, sql, e);
+		}
+
+		return AD_Tree_ID;
+	}   //  getDefaultAD_Tree_ID
+
 }    // MTree
 
 

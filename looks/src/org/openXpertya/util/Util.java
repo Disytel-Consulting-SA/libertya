@@ -688,6 +688,19 @@ public class Util {
 		return discountAmt.divide(amt, scale, BigDecimal.ROUND_HALF_UP);
 	}
 	
+	public static String cleanAmp (String in)
+	{
+		if (in == null || in.length() == 0)
+			return in;
+		int pos = in.indexOf('&');
+		if (pos == -1)
+			return in;
+		//
+		if (pos+1 < in.length() && in.charAt(pos+1) != ' ')
+			in = in.substring(0, pos) + in.substring(pos+1);
+		return in;
+	}	//	cleanAmp
+	
 }	// Util
 
 

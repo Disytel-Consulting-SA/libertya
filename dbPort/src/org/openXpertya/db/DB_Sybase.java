@@ -606,6 +606,18 @@ public class DB_Sybase implements BaseDatosOXP {
         retValue.append(" ,'DD/MM/YYYY')");
 
         return retValue.toString();
+	}
+
+	@Override
+	public String addPagingSQL(String sql, int start, int end) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public boolean isPagingSupported() {
+		// TODO Auto-generated method stub
+		return false;
 	}	 
     
     

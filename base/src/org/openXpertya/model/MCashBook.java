@@ -193,6 +193,18 @@ public class MCashBook extends X_C_CashBook {
     protected boolean beforeDelete() {
         return delete_Accounting( "C_Cashbook_Acct" );
     }    // beforeDelete
+    
+    /**
+	 * 	Get MCashBook from Cache
+	 *	@param ctx context
+	 *	@param C_CashBook_ID id
+	 *	@return MCashBook
+	 */
+	public static MCashBook get (Properties ctx, int C_CashBook_ID)
+	{
+		return get(ctx, C_CashBook_ID, null);
+	}	//	get
+
 }    // MCashBook
 
 

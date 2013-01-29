@@ -1102,6 +1102,26 @@ public final class WebUtil {
 
         return null;
     }    // streamFile
+    
+    /**
+	 * 	Get Close PopUp Buton
+	 *	@return button
+	 */
+	public static input createClosePopupButton(Properties ctx)
+	{
+		String text = "Close";
+		if (ctx != null)
+			text = Msg.getMsg (ctx, "Close");
+		
+		input close = new input("button", text, "  "+text);		
+		close.setID(text);
+		close.setClass("closebtn");		
+		close.setTitle ("Close PopUp");	//	Help
+		//close.setOnClick ("closePopup();return false;");
+		close.setOnClick ("self.close();return false;");
+		return close;
+	}	//	getClosePopupButton
+
 }    // WUtil
 
 

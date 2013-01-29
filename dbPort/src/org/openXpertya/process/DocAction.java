@@ -346,6 +346,9 @@ public interface DocAction {
      */
 
     public boolean save();
+    
+	/** DocAction Ref_List values **/
+	public static final int AD_REFERENCE_ID = 135;
 }    // DocAction
 
 

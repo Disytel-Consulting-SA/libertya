@@ -321,6 +321,12 @@ public class Doc_Order extends Doc {
 	public String applyCustomSettings(Fact fact) {
 		return null;
 	}
+
+	@Override
+	protected String loadDocumentDetails() {
+		// TODO Auto-generated method stub
+		return null;
+	}
 	
 	
 }    // Doc_Order

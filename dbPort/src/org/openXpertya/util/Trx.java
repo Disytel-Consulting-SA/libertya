@@ -395,6 +395,37 @@ public class Trx implements VetoableChangeListener {
         return false;
     }    // commit
 
+	/**
+	 * Commit
+	 * @param throwException if true, re-throws exception
+	 * @return true if success
+	 **/
+	public boolean commit(boolean throwException) throws SQLException
+	{
+		//local
+		try
+		{
+			if (m_connection != null)
+			{
+				m_connection.commit();
+				log.info ("**** " + m_trxName);
+				m_active = false;
+				return true;
+			}
+		}
+		catch (SQLException e)
+		{
+			log.log(Level.SEVERE, m_trxName, e);
+			if (throwException) 
+			{
+				m_active = false;
+				throw e;
+			}
+		}
+		m_active = false;
+		return false;
+	}	//	commit
+    
     /**
      * Descripción de Método
      *
@@ -498,7 +529,161 @@ public class Trx implements VetoableChangeListener {
 	public void setCreated(long created) {
 		this.created = created;
 	}   
-    
+
+// ------------------------------------------------------------------------------
+	
+	/**
+	 * @see #run(String, TrxRunnable)
+	 */
+	public static void run(TrxRunnable r)
+	{
+		run(null, r);
+	}
+	/**
+	 * Execute runnable object using provided transaction.
+	 * If execution fails, database operations will be rolled back.
+	 * <p>
+	 * Example: <pre>
+	 * Trx.run(null, new {@link TrxRunnable}() {
+	 *     public void run(String trxName) {
+	 *         // do something using trxName
+	 *     }
+	 * )};
+	 * </pre>
+	 * 
+	 * @param trxName transaction name (if null, a new transaction will be created)
+	 * @param r runnable object
+	 */
+	public static void run(String trxName, TrxRunnable r)
+	{
+		boolean localTrx = false;
+		if (trxName == null) {
+			trxName = Trx.createTrxName("TrxRun");
+			localTrx = true;
+		}
+		Trx trx = Trx.get(trxName, true);
+		Savepoint savepoint = null;
+		try
+		{
+			if (!localTrx)
+				savepoint = trx.setSavepoint(null);
+				
+			r.run(trxName);
+			
+			if (localTrx)
+				trx.commit(true);
+		}
+		catch (Throwable e)
+		{
+			// Rollback transaction
+			if (localTrx)
+			{
+				trx.rollback();
+			}
+			else if (savepoint != null)
+			{
+				try {
+					trx.rollback(savepoint);
+				}
+				catch (SQLException e2) {;}
+			}
+			trx = null;
+			// Throw exception
+			if (e instanceof RuntimeException)
+			{
+				throw (RuntimeException)e;
+			}
+			else
+			{
+				//throw new AdempiereException(e);
+			}
+		}
+		finally {
+			if (localTrx && trx != null)
+			{
+				trx.close();
+				trx = null;
+			}
+		}
+	}
+
+	/**
+	 * 
+	 * @param name
+	 * @return Savepoint
+	 * @throws SQLException
+	 */
+	public Savepoint setSavepoint(String name) throws SQLException {
+		if (m_connection == null) 
+			getConnection();
+		
+		if(m_connection != null) {
+			if (name != null)
+				return m_connection.setSavepoint(name);
+			else
+				return m_connection.setSavepoint();
+		} else {
+			return null;
+		}
+	}
+
+
+	/**
+	 * 	Rollback
+	 *  @param throwException if true, re-throws exception
+	 *	@return true if success, false if failed or transaction already rollback
+	 */
+	public boolean rollback(Savepoint savepoint) throws SQLException
+	{
+		//local
+		try
+		{
+			if (m_connection != null)
+			{
+				m_connection.rollback(savepoint);
+				log.info ("**** " + m_trxName);
+				return true;
+			}
+		}
+		catch (SQLException e)
+		{
+			log.log(Level.SEVERE, m_trxName, e);
+			throw e;
+		}		
+		return false;
+	}	//	rollback
+	/**
+	 * 	Rollback
+	 *  @param throwException if true, re-throws exception
+	 *	@return true if success, false if failed or transaction already rollback
+	 */
+	public boolean rollback(boolean throwException) throws SQLException
+	{
+		//local
+		try
+		{
+			if (m_connection != null)
+			{
+				m_connection.rollback();
+				log.info ("**** " + m_trxName);
+				m_active = false;
+				return true;
+			}
+		}
+		catch (SQLException e)
+		{
+			log.log(Level.SEVERE, m_trxName, e);
+			if (throwException)
+			{
+				m_active = false;
+				throw e;
+			}
+		}		
+		m_active = false;
+		return false;
+	}	//	rollback
+
+	
 }    // Trx
 
 

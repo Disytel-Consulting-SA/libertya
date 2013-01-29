@@ -873,7 +873,43 @@ public class ProcessInfo implements Serializable {
 			return numCopies;
 		}
 	}
+
+	public boolean isReportingProcess() 
+	{
+		return m_reportingProcess;
+	}
+	private boolean				m_reportingProcess = false;
+
+	/**
+	 *	Timeout
+	 * 	@param timeout true still running
+	 */
+	public void setIsTimeout (boolean timeout)
+	{
+		m_timeout = timeout;
+	}	//	setTimeout
+	/** Process timed out				*/
+	private boolean				m_timeout = false;
+	/**
+	 *	Timeout - i.e process did not complete
+	 *	@return boolean
+	 */
+	public boolean isTimeout()
+	{
+		return m_timeout;
+	}	//	isTimeout
 	
+	/**
+	 * Set print preview flag, only relevant if this is a reporting process
+	 * @param b
+	 */
+	public void setPrintPreview(boolean b)
+	{
+		m_printPreview = b;
+	}
+	
+	private boolean				m_printPreview = false;
+
 }    // ProcessInfo
 
 

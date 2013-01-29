@@ -493,6 +493,37 @@ public abstract class Lookup extends AbstractListModel implements MutableComboBo
         }
 
     }		// setSelectedItem
+    
+	/**
+	 * Is this lookup model populated
+	 * @return boolean
+	 */
+	public boolean isLoaded() 
+	{
+		return m_loaded;
+	}
+	private boolean					m_loaded;
+
+	/**
+	 * Set lookup model as mandatory, use in loading data
+	 * @param flag
+	 */
+	public void setMandatory(boolean flag)
+	{
+		m_mandatory = flag;
+	}
+	private boolean 				m_mandatory;
+
+	/**
+	 * Is lookup model mandatory
+	 * @return boolean
+	 */
+	public boolean isMandatory()
+	{
+		return m_mandatory;
+	}
+
+	
 }	// Lookup
 
 

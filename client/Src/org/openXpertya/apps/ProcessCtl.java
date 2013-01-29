@@ -32,6 +32,7 @@ import javax.swing.SwingUtilities;
 import org.openXpertya.db.CConnection;
 import org.openXpertya.interfaces.Server;
 import org.openXpertya.model.FiscalDocumentPrint;
+import org.openXpertya.model.IProcessParameter;
 import org.openXpertya.model.MDocType;
 import org.openXpertya.model.MPInstance;
 import org.openXpertya.model.M_Table;
@@ -680,6 +681,99 @@ public class ProcessCtl extends Thread {
 		}
     	
     };
+    
+    /**
+	 *	Async Process - Do it all.
+	 *  <code>
+	 *	- Get Instance ID
+	 *	- Get Parameters
+	 *	- execute (lock - start process - unlock)
+	 *  </code>
+	 *  Creates a ProcessCtl instance, which calls
+	 *  lockUI and unlockUI if parent is a ASyncProcess
+	 *  <br>
+	 *	Called from ProcessDialog.actionPerformed
+	 *
+	 *  @param parent ASyncProcess & Container
+	 *  @param WindowNo window no
+	 *  @param paraPanel Process Parameter Panel
+	 *  @param pi ProcessInfo process info
+	 *  @param trx Transaction
+	 *  @return worker started ProcessCtl instance or null for workflow
+	 */
+	public static ProcessCtl process(ASyncProcess parent, int WindowNo, IProcessParameter parameter, ProcessInfo pi, Trx trx)
+	{
+		log.fine("WindowNo=" + WindowNo + " - " + pi);
+
+		MPInstance instance = null; 
+		try 
+		{ 
+			instance = new MPInstance(Env.getCtx(), pi.getAD_Process_ID(), pi.getRecord_ID()); 
+		} 
+		catch (Exception e) 
+		{ 
+			pi.setSummary (e.getLocalizedMessage()); 
+			pi.setError (true); 
+			log.warning(pi.toString()); 
+			return null; 
+		} 
+		catch (Error e) 
+		{ 
+			pi.setSummary (e.getLocalizedMessage()); 
+			pi.setError (true); 
+			log.warning(pi.toString()); 
+			return null; 
+		}
+		if (!instance.save())
+		{
+			pi.setSummary (Msg.getMsg(Env.getCtx(), "ProcessNoInstance"));
+			pi.setError (true);
+			return null;
+		}
+		pi.setAD_PInstance_ID (instance.getAD_PInstance_ID());
+		
+		//	Get Parameters
+		if (parameter != null) {
+			if (!parameter.saveParameters())
+			{
+				pi.setSummary (Msg.getMsg(Env.getCtx(), "ProcessCancelled"));
+				pi.setError (true);
+				return null;
+			}
+		}
+
+		//	execute
+		ProcessCtl worker = new ProcessCtl(parent, WindowNo, pi, trx);
+		if (parent != null)
+		{
+			worker.start();
+		}
+		else
+		{
+			//synchrous
+			worker.run();
+		}
+		return worker;
+	}	//	execute
+
+	/**************************************************************************
+	 *  Constructor
+	 *  @param parent Container & ASyncProcess
+	 *  @param pi Process info
+	 *  @param trx Transaction
+	 *  Created in process(), VInvoiceGen.generateInvoices
+	 */
+	public ProcessCtl (ASyncProcess parent, int WindowNo, ProcessInfo pi, Trx trx)
+	{
+		windowno = WindowNo;
+		m_parent = parent;
+		m_pi = pi;
+		m_trx = trx;	//	handeled correctly
+	}   //  ProcessCtl
+	/** Windowno */
+	int windowno;
+
+	
 }    // ProcessCtl
 
 

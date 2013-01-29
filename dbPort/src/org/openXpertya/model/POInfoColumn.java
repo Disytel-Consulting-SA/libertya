@@ -193,6 +193,96 @@ public class POInfoColumn implements Serializable {
     }		// Column
 
     /**
+	 *  Constructor
+	 *	@param ad_Column_ID Column ID
+	 *	@param columnName Column name
+	 *	@param columnSQL virtual column
+	 *	@param displayType Display Type
+	 *	@param isMandatory Mandatory
+	 *	@param isUpdateable Updateable
+	 *	@param defaultLogic Default Logic
+	 *	@param columnLabel Column Label
+	 *	@param columnDescription Column Description
+	 *	@param isKey true if key
+	 *	@param isParent true if parent
+	 *	@param ad_Reference_Value_ID reference value
+	 *	@param validationCode sql validation code
+	 *	@param fieldLength Field Length
+	 * 	@param valueMin minimal value
+	 * 	@param valueMax maximal value
+	 * 	@param isTranslated translated
+	 * 	@param isEncrypted encrypted 
+	 * 	@param isAllowLogging allow logging 
+	 */
+	public POInfoColumn (int ad_Column_ID, String columnName, String columnSQL, int displayType,
+		boolean isMandatory, boolean isUpdateable, String defaultLogic,
+		String columnLabel, String columnDescription,
+		boolean isKey, boolean isParent,
+		int ad_Reference_Value_ID, String validationCode,
+		int fieldLength, String valueMin, String valueMax,
+		boolean isTranslated, boolean isEncrypted, boolean isAllowLogging)
+	{
+		AD_Column_ID = ad_Column_ID;
+		ColumnName = columnName;
+		ColumnSQL = columnSQL;
+		DisplayType = displayType;
+		if (columnName.equals("AD_Language") || columnName.equals("EntityType"))
+		{
+			DisplayType = org.openXpertya.util.DisplayType.String;
+			ColumnClass = String.class;
+		}
+		else if (columnName.equals("Posted") 
+			|| columnName.equals("Processed")
+			|| columnName.equals("Processing"))
+		{
+			ColumnClass = Boolean.class;
+		}
+		else if (columnName.equals("Record_ID"))
+		{
+			DisplayType = org.openXpertya.util.DisplayType.ID;
+			ColumnClass = Integer.class;
+		}
+		else
+			ColumnClass = org.openXpertya.util.DisplayType.getClass(displayType, true);
+		IsMandatory = isMandatory;
+		IsUpdateable = isUpdateable;
+		DefaultLogic = defaultLogic;
+		ColumnLabel = columnLabel;
+		ColumnDescription = columnDescription;
+		IsKey = isKey;
+		IsParent = isParent;
+		//
+		AD_Reference_Value_ID = ad_Reference_Value_ID;
+		ValidationCode = validationCode;
+		//
+		FieldLength = fieldLength;
+		ValueMin = valueMin;
+		try
+		{
+			if (valueMin != null && valueMin.length() > 0)
+				ValueMin_BD = new BigDecimal(valueMin);
+		}
+		catch (Exception ex)
+		{
+			CLogger.get().log(Level.SEVERE, "ValueMin=" + valueMin, ex);
+		}
+		ValueMax = valueMax;
+		try
+		{
+			if (valueMax != null && valueMax.length() > 0)
+				ValueMax_BD = new BigDecimal(valueMax);
+		}
+		catch (Exception ex)
+		{
+			CLogger.get().log(Level.SEVERE, "ValueMax=" + valueMax, ex);
+		}
+		IsTranslated = isTranslated;
+		IsEncrypted = isEncrypted;
+		IsAllowLogging = isAllowLogging;
+	}   //  Column
+
+    
+    /**
      *      String representation
      *  @return info
      */
@@ -206,6 +296,12 @@ public class POInfoColumn implements Serializable {
         return sb.toString();
 
     }		// toString
+    
+	/**	Encrypted		*/
+	public boolean		IsEncrypted;
+	/**	Allow Logging		*/
+	public boolean		IsAllowLogging;
+
 }	// POInfoColumn
 
 

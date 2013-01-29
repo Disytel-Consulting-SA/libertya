@@ -1933,7 +1933,35 @@ public class MInvoiceLine extends X_C_InvoiceLine {
 			// línea
 		}
     }
-    
+
+	public void setRMALine(MRMALine rmaLine)
+	{
+		// Check if this invoice is CreditMemo - teo_sarca [ 2804142 ]
+		/*if (!getParent().isCreditMemo())
+		{
+			//throw new AdempiereException("InvoiceNotCreditMemo");
+		}
+		setAD_Org_ID(rmaLine.getAD_Org_ID());
+        setM_RMALine_ID(rmaLine.getM_RMALine_ID());
+        setDescription(rmaLine.getDescription());
+        setLine(rmaLine.getLine());
+        setC_Charge_ID(rmaLine.getC_Charge_ID());
+        setM_Product_ID(rmaLine.getM_Product_ID());
+        setC_UOM_ID(rmaLine.getC_UOM_ID());
+        setC_Tax_ID(rmaLine.getC_Tax_ID());
+        setPrice(rmaLine.getAmt());
+        BigDecimal qty = rmaLine.getQty();
+        if (rmaLine.getQtyInvoiced() != null)
+        	qty = qty.subtract(rmaLine.getQtyInvoiced());
+        setQty(qty);
+        setLineNetAmt();
+        setTaxAmt();
+        setLineTotalAmt(rmaLine.getLineNetAmt());
+        setC_Project_ID(rmaLine.getC_Project_ID());
+        setC_Activity_ID(rmaLine.getC_Activity_ID());
+        setC_Campaign_ID(rmaLine.getC_Campaign_ID()); TODO Hernandez*/
+	}
+
     /**
      * Se guarda el valor neto de la linea en el campo LineNetAmount.
      */
