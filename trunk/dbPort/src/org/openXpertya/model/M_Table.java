@@ -507,6 +507,29 @@ public class M_Table extends X_AD_Table {
     	}
     }
     
+    
+    /**
+	 * 	Get Key Columns of Table
+	 *	@return key columns
+	 */
+	public String[] getKeyColumnsAsArray()
+	{
+		getColumns(false);
+		ArrayList<String> list = new ArrayList<String>();
+		//
+		for (int i = 0; i < m_columns.length; i++)
+		{
+			M_Column column = m_columns[i];
+			if (column.isKey())
+				return new String[]{column.getColumnName()};
+			if (column.isParent())
+				list.add(column.getColumnName());
+		}
+		String[] retValue = new String[list.size()];
+		retValue = list.toArray(retValue);
+		return retValue;
+	}	//	getKeyColumns
+    
     /**
      *      Get PO Class Instance
      *      @param Record_ID record
@@ -921,6 +944,69 @@ public class M_Table extends X_AD_Table {
 		}
 		return columns.get(tableName);
     }
+
+	/**
+	 * Get PO class instance
+	 * @param whereClause
+	 * @param params
+	 * @param trxName
+	 * @return
+	 */
+	public PO getPO(String whereClause, Object[] params, String trxName)
+	{
+		if (whereClause == null || whereClause.length() == 0)
+			return null;
+		//
+		PO po = null;
+		POInfo info = POInfo.getPOInfo(getCtx(), getAD_Table_ID(), trxName);
+		if (info == null) return null;
+		StringBuffer sqlBuffer = info.buildSelect();
+		sqlBuffer.append(" WHERE ").append(whereClause);
+		String sql = sqlBuffer.toString(); 
+		PreparedStatement pstmt = null;
+		try
+		{
+			pstmt = DB.prepareStatement (sql, trxName);
+			if (params != null && params.length > 0) 
+			{
+				for (int i = 0; i < params.length; i++)
+				{
+					pstmt.setObject(i+1, params[i]);
+				}
+			}
+			ResultSet rs = pstmt.executeQuery ();
+			if (rs.next ())
+			{
+				po = getPO(rs, trxName);
+			}
+			rs.close ();
+			pstmt.close ();
+			pstmt = null;
+		}
+		catch (Exception e)
+		{
+			log.log(Level.SEVERE, sql, e);
+			log.saveError("Error", e);
+		}
+		try
+		{
+			if (pstmt != null)
+				pstmt.close ();
+			pstmt = null;
+		}
+		catch (Exception e)
+		{
+			pstmt = null;
+		}
+		
+		return po;
+	}
+
+	//TODO Hernandez
+	public static String getTableName (Properties ctx, int AD_Table_ID)
+	{
+		return M_Table.get(ctx, AD_Table_ID).getTableName();
+	}	//	getTableName
     
 }	// M_Table
 

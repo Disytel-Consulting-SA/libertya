@@ -239,6 +239,12 @@ public class Doc_Payment extends Doc implements DocProjectSplitterInterface {
 		// Solo pagos allocados... ? (los adelantados no tienen proporcional y ya deberían llevar su proyecto asignado)
 		return (0 < DB.getSQLValue(factLine.get_TrxName(), " SELECT COUNT(1) FROM C_AllocationLine WHERE C_Invoice_ID IS NOT NULL AND C_Payment_ID = " + factLine.getRecord_ID()));
 	}
+
+	@Override
+	protected String loadDocumentDetails() {
+		// TODO Auto-generated method stub
+		return null;
+	}
 }    // Doc_Payment
 
 

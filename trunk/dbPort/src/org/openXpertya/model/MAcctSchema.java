@@ -20,10 +20,12 @@
 
 package org.openXpertya.model;
 
+import org.openXpertya.report.MReportTree;
 import org.openXpertya.util.CCache;
 import org.openXpertya.util.CLogger;
 import org.openXpertya.util.DB;
 import org.openXpertya.util.KeyNamePair;
+
 
 //~--- Importaciones JDK ------------------------------------------------------
 
@@ -528,6 +530,56 @@ public class MAcctSchema extends X_C_AcctSchema {
         return m_gl.isUseSuspenseBalancing() && (m_gl.getSuspenseBalancing_Acct() != 0);
 
     }		// isSuspenseBalancing
+    
+
+    /**
+	 * 	Skip creating postings for this Org.
+	 *	@param AD_Org_ID
+	 *	@return true if to skip
+	 */
+	public boolean isSkipOrg (int AD_Org_ID)
+	{
+		if (getAD_OrgOnly_ID() == 0)
+			return false;
+		//	Only Organization
+		if (getAD_OrgOnly_ID() == AD_Org_ID)
+			return false;
+		if (m_onlyOrg == null)
+			m_onlyOrg = MOrg.get(getCtx(), getAD_OrgOnly_ID());
+		//	Not Summary Only - i.e. skip it
+		if (!m_onlyOrg.isSummary())
+			return true;
+		final Integer[] onlyOrgs = getOnlyOrgs();
+		if (onlyOrgs == null)
+		{
+			return false;
+		}
+		for (int i = 0; i < onlyOrgs.length; i++)
+		{
+			if (AD_Org_ID == onlyOrgs[i].intValue())
+				return false;
+		}
+		return true;
+	}	//	isSkipOrg
+	/** Only Post Org					*/
+	private MOrg					m_onlyOrg = null;
+	/**
+	 * Get Only Org Children
+	 * @return array of AD_Org_ID
+	 */
+	public Integer[] getOnlyOrgs()
+	{
+		if (m_onlyOrgs == null)
+		{
+			m_onlyOrgs = MReportTree.getChildIDs(getCtx(), 
+					0, "OO" /*MAcctSchemaElement.ELEMENTTYPE_Organization*/, 
+					getAD_OrgOnly_ID());
+		}
+		return m_onlyOrgs;
+	}	//	getOnlyOrgs
+	/** Only Post Org Childs			*/
+	private Integer[] 				m_onlyOrgs = null; 
+
 }	// MAcctSchema
 
 

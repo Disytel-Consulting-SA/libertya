@@ -230,6 +230,16 @@ public final class DataStatusEvent extends EventObject implements Serializable {
         m_isError    = isError;
     }    // setInfo
 
+	public void setInfo (String AD_Message, String info, boolean isError, boolean isWarning)
+	{
+		m_AD_Message = AD_Message;
+		m_info = info;
+		m_isError = isError;
+		m_isWarning = isWarning;
+	}	//	setInfo
+	private boolean			m_isWarning = false;
+
+    
     /**
      * Descripción de Método
      *
@@ -435,6 +445,36 @@ public final class DataStatusEvent extends EventObject implements Serializable {
     public boolean isConfirmed() {
         return m_confirmed;
     }    // isConfirmed
+    
+	private String			m_columnName = null;
+    
+	public String getColumnName()
+	{
+		return m_columnName;
+	}	//	getColumnName
+	
+	//TODO Hernandez
+	/**
+	 *	Is this a warning
+	 *  @return true if warning
+	 */
+	public boolean isWarning()
+	{
+		return m_isWarning;
+	}	//	isWarning
+	
+	/**
+	 *	Set Changed Column
+	 *  @param col column
+	 *  @param columnName column name
+	 */
+	public void setChangedColumn (int col, String columnName)
+	{
+		m_changedColumn = col;
+		m_columnName = columnName;
+	}	//	setChangedColumn
+
+
 }    // DataStatusEvent
 
 

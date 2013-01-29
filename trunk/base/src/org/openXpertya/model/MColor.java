@@ -235,6 +235,56 @@ public class MColor extends X_AD_Color {
 
         return retValue;
     }    // getURL
+    
+    /**************************************************************************
+	 *  Get AdempiereColor.
+	 *  see org.compiere.grid.ed.VColor#getAdempiereColor
+	 *  @return AdempiereColor
+	 */
+	public CompiereColor getOpenXpertyaColor()
+	{
+		if (getID() == 0)
+			return null;
+
+		//  Color Type
+		String ColorType = (String)getColorType();
+		if (ColorType == null)
+		{
+			log.log(Level.SEVERE, "MColor.getAdempiereColor - No ColorType");
+			return null;
+		}
+		CompiereColor cc = null;
+		//
+		if (ColorType.equals(CompiereColor.TYPE_FLAT))
+		{
+			cc = new CompiereColor(getColor(true), true);
+		}
+		else if (ColorType.equals(CompiereColor.TYPE_GRADIENT))
+		{
+			int RepeatDistance = getRepeatDistance();
+			String StartPoint = getStartPoint();
+			int startPoint = StartPoint == null ? 0 : Integer.parseInt(StartPoint);
+			cc = new CompiereColor(getColor(true), getColor(false), startPoint, RepeatDistance);
+		}
+		else if (ColorType.equals(CompiereColor.TYPE_LINES))
+		{
+			int LineWidth = getLineWidth();
+			int LineDistance = getLineDistance();
+			cc = new CompiereColor(getColor(false), getColor(true), LineWidth, LineDistance);
+		}
+		else if (ColorType.equals(CompiereColor.TYPE_TEXTURE))
+		{
+			int AD_Image_ID = getAD_Image_ID();
+			String url = getURL(AD_Image_ID);
+			if (url == null)
+				return null;
+			BigDecimal ImageAlpha = getImageAlpha();
+			float compositeAlpha = ImageAlpha == null ? 0.7f : ImageAlpha.floatValue();
+			cc = new CompiereColor(url, getColor(true), compositeAlpha);
+		}
+		return cc;
+	}   //  getAdempiereColor
+
 }    // MColor
 
 

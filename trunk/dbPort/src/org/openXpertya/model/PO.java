@@ -1567,7 +1567,7 @@ public abstract class PO implements Serializable, Comparator, Evaluatee {
 	 * @param AD_Org_ID
 	 *            org
 	 */
-	protected void setAD_Org_ID(int AD_Org_ID) {
+	public void setAD_Org_ID(int AD_Org_ID) {
 		set_ValueNoCheck("AD_Org_ID", new Integer(AD_Org_ID));
 	} // setAD_Org_ID
 
@@ -1682,6 +1682,12 @@ public abstract class PO implements Serializable, Comparator, Evaluatee {
 		set_ValueNoCheck("UpdatedBy", new Integer(AD_User_ID));
 	} // setAD_User_ID
 
+	public String get_Translation (String columnName)
+	{
+		return get_Translation(columnName, Env.getAD_Language(getCtx()));
+	}
+
+	
 	/**
 	 * Get Translation of column
 	 * 
@@ -4705,4 +4711,13 @@ public abstract class PO implements Serializable, Comparator, Evaluatee {
 	public boolean isFromTab() {
 		return isFromTab;
 	}
+	
+	/**
+	 *  Get Table ID.
+	 *  @return table id
+	 */
+	public int get_Table_ID()
+	{
+		return p_info.getAD_Table_ID();
+	}   //  get_TableID
 } // PO

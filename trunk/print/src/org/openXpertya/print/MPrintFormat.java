@@ -26,6 +26,8 @@ import java.util.List;
 import java.util.Properties;
 import java.util.logging.Level;
 
+import javax.sql.RowSet;
+
 import org.openXpertya.model.MQuery;
 import org.openXpertya.model.MRole;
 import org.openXpertya.model.PO;
@@ -34,6 +36,7 @@ import org.openXpertya.model.X_AD_PrintFormatItem;
 import org.openXpertya.model.X_AD_PrintFormatItem_Trl;
 import org.openXpertya.util.CCache;
 import org.openXpertya.util.CLogger;
+import org.openXpertya.util.CPreparedStatement;
 import org.openXpertya.util.DB;
 import org.openXpertya.util.Env;
 import org.openXpertya.util.Language;
@@ -1002,6 +1005,47 @@ public class MPrintFormat extends X_AD_PrintFormat {
     static public void main( String[] args ) {
         org.openXpertya.OpenXpertya.startup( true );
     }    // main
+    
+    /**
+	 * @param AD_Table_ID
+	 * @param AD_Client_ID use -1 to retrieve from all client 
+	 * @param trxName
+	 */
+	public static RowSet getAccessiblePrintFormats (int AD_Table_ID, int AD_Client_ID, String trxName)
+	{
+		RowSet rowSet = null;
+		String sql = "SELECT AD_PrintFormat_ID, Name, AD_Client_ID "
+			+ "FROM AD_PrintFormat "
+			+ "WHERE AD_Table_ID=? AND IsTableBased='Y' ";
+		if (AD_Client_ID >= 0)
+		{
+			sql = sql + " AND AD_Client_ID = ? ";
+		}
+		sql = sql + "ORDER BY AD_Client_ID DESC, IsDefault DESC, Name"; //	Own First 
+		//
+		sql = MRole.getDefault().addAccessSQL (
+			sql, "AD_PrintFormat", MRole.SQL_NOTQUALIFIED, MRole.SQL_RO);
+		CPreparedStatement pstmt = null;
+		try
+		{
+			pstmt = DB.prepareStatement(sql, trxName);
+			pstmt.setInt(1, AD_Table_ID);
+			if (AD_Client_ID >= 0)
+				pstmt.setInt(2, AD_Client_ID);
+			rowSet = pstmt.getRowSet();
+		}
+		catch (SQLException e)
+		{
+			s_log.log(Level.SEVERE, sql, e);
+		}
+		finally {
+			DB.close(pstmt);
+			pstmt = null;
+		}
+		
+		return rowSet;
+	}
+
 }    // MPrintFormat
 
 

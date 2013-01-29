@@ -20,23 +20,23 @@
 
 package org.openXpertya.db;
 
-import org.openXpertya.dbPort.*;
-import org.openXpertya.util.*;
-import org.postgresql.ds.PGSimpleDataSource;
-
-//~--- Importaciones JDK ------------------------------------------------------
-
-import java.math.*;
-
-import java.sql.*;
-
+import java.math.BigDecimal;
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.SQLException;
+import java.sql.Timestamp;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.logging.Level;
 
-import javax.sql.*;
+import javax.sql.ConnectionPoolDataSource;
+import javax.sql.DataSource;
+import javax.sql.RowSet;
 
-import javax.swing.JOptionPane;
+import org.openXpertya.dbPort.Convert;
+import org.openXpertya.util.CLogger;
+import org.openXpertya.util.DisplayType;
+import org.postgresql.ds.PGSimpleDataSource;
 
 /**
  *  PostgreSQL Database Port
@@ -664,6 +664,20 @@ public class DB_PostgreSQL implements BaseDatosOXP {
         retValue.append(" ,'DD/MM/YYYY')");
     
         return retValue.toString();
+	}
+
+    public static final String NATIVE_MARKER = "NATIVE_"+Database.DB_POSTGRESQL+"_KEYWORK";
+	
+	@Override
+	public String addPagingSQL(String sql, int start, int end) {
+		String newSql = sql + " " + NATIVE_MARKER + "LIMIT " + ( end - start + 1 )
+				+ "  " + NATIVE_MARKER + "OFFSET " + (start - 1);
+		return newSql;
+	}
+
+	@Override
+	public boolean isPagingSupported() {
+		return true;
 	}
     
 }	// DB_PostgreSQL

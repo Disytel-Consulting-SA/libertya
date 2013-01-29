@@ -180,4 +180,10 @@ public class Doc_Amortization extends Doc {
 	protected ITime getTimePeriod() {
 		return timePeriod;
 	}
+
+	@Override
+	protected String loadDocumentDetails() {
+		// TODO Auto-generated method stub
+		return null;
+	}
 }

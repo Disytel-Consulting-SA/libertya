@@ -777,6 +777,81 @@ public class MQuery implements Serializable
         return newQuery;
     }   //  clone
 
+
+	public void setRecordCount(int count) {
+		m_recordCount = count;
+	}	//	setRecordCount
+	/**	Record Count				*/
+	private int			m_recordCount = 999999;
+
+
+	/**
+	 * 
+	 * @param tableName
+	 */
+	public void setZoomTableName(String tableName) {
+		m_zoomTable = tableName;
+	}
+	
+	public void setZoomColumnName(String column) {
+		m_zoomColumn = column;
+	}
+
+	
+	private String m_zoomTable;
+	
+	private String m_zoomColumn;
+
+	private Object m_zoomValue;
+	
+	public boolean isNewRecordQuery()
+	{
+		return m_newRecord;
+	}	//	isNewRecord
+	/** New Record Query			*/
+	private boolean		m_newRecord = false;
+
+	public int getRecordCount()
+	{
+		return m_recordCount;
+	}	//	getRecordCount
+	
+	public String getZoomColumnName() {
+		return m_zoomColumn;
+	}
+
+	public String getZoomTableName() {
+		return m_zoomTable;
+	}
+
+	public Object getZoomValue() {
+		return m_zoomValue;
+	}
+
+	/**
+	 * 	Create No Record query.
+	 * 	@param tableName table name
+	 * 	@param newRecord new Record Indicator (2=3) 
+	 * 	@return query
+	 */
+	public static MQuery getNoRecordQuery (String tableName, boolean newRecord)
+	{
+		MQuery query = new MQuery(tableName);
+		if (newRecord)
+			query.addRestriction(NEWRECORD);
+		else
+			query.addRestriction("1=2");
+		query.setRecordCount(0);
+		return query;
+	}	//	getNoRecordQuery
+	/** New Record String			*/
+	private static final String	NEWRECORD = "2=3";
+
+	public void setZoomValue(Object value) {
+		m_zoomValue = value;
+	}
+
+	
 }   //  MQuery
 
 /*****************************************************************************
@@ -1001,6 +1076,7 @@ class Restriction  implements Serializable
         return sb.toString();
     }   //  getInfoDisplay
 
+    
 }   //  Restriction
 
 

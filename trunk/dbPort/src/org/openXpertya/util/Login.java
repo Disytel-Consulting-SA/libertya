@@ -752,6 +752,21 @@ public class Login {
 //        return result;
     }    // validateLogin
 
+    public String validateLoginString( KeyNamePair org ) {
+        int    AD_Client_ID = Env.getAD_Client_ID( m_ctx );
+        int    AD_Org_ID    = org.getKey();
+        int    AD_Role_ID   = Env.getAD_Role_ID( m_ctx );
+        int    AD_User_ID   = Env.getAD_User_ID( m_ctx );
+        String error        = ModelValidationEngine.get().loginCompleteString( AD_Client_ID,AD_Org_ID,AD_Role_ID,AD_User_ID );
+
+        if( (error != null) && (error.length() > 0) ) {
+            log.severe( "Refused: " + error );
+
+            return error;
+        }
+
+        return null;
+    }    // validateLogin
     
     /**
      * Crea el schema info a partir del login

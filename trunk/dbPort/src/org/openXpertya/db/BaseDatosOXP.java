@@ -241,7 +241,22 @@ public interface BaseDatosOXP {
      * error message is available.  
      */
     public String getErrorMsg(SQLException exception);
-    	    
+
+    
+	/**
+	 * modify sql to return a subset of the query result
+	 * @param sql
+	 * @param start
+	 * @param end
+	 * @return
+	 */
+	public String addPagingSQL(String sql, int start, int end);
+	
+	/**
+	 * Is the database have sql extension that return a subset of the query result
+	 * @return boolean
+	 */
+	public boolean isPagingSupported();
 }	// BaseDatosOXP
 
 

@@ -264,6 +264,7 @@ public class MLookupInfo implements Serializable, Cloneable {
         return retValue;
 
     }		// getAD_Reference_ID
+	public String InfoFactoryClass = null;
 }	// MLookupInfo
 
 

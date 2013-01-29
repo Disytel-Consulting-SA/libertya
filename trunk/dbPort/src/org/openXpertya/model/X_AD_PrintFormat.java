@@ -1,13 +1,14 @@
-/** Modelo Generado - NO CAMBIAR MANUALMENTE - Copyright (C) 2006 FUNDESLE */
+/** Modelo Generado - NO CAMBIAR MANUALMENTE - Disytel */
 package org.openXpertya.model;
-import java.util.*;
+import java.util.logging.Level;
+ import java.util.*;
 import java.sql.*;
 import java.math.*;
 import org.openXpertya.util.*;
 /** Modelo Generado por AD_PrintFormat
- *  @author Comunidad de Desarrollo openXpertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
- *  @version  - 2009-10-22 14:51:27.225 */
-public class X_AD_PrintFormat extends PO
+ *  @author Comunidad de Desarrollo Libertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
+ *  @version  - 2013-01-16 19:12:18.579 */
+public class X_AD_PrintFormat extends org.openXpertya.model.PO
 {
 /** Constructor estándar */
 public X_AD_PrintFormat (Properties ctx, int AD_PrintFormat_ID, String trxName)
@@ -35,13 +36,13 @@ public X_AD_PrintFormat (Properties ctx, ResultSet rs, String trxName)
 {
 super (ctx, rs, trxName);
 }
-/** AD_Table_ID=493 */
-public static final int Table_ID=493;
+/** AD_Table_ID */
+public static final int Table_ID = M_Table.getTableID("AD_PrintFormat");
 
 /** TableName=AD_PrintFormat */
 public static final String Table_Name="AD_PrintFormat";
 
-protected static KeyNamePair Model = new KeyNamePair(493,"AD_PrintFormat");
+protected static KeyNamePair Model = new KeyNamePair(Table_ID,"AD_PrintFormat");
 protected static BigDecimal AccessLevel = new BigDecimal(7);
 
 /** Load Meta Data */
@@ -317,6 +318,20 @@ if (oo != null)
  return "Y".equals(oo);
 }
 return false;
+}
+/** Set JasperProcess_ID */
+public void setJasperProcess_ID (int JasperProcess_ID)
+{
+if (JasperProcess_ID <= 0) set_Value ("JasperProcess_ID", null);
+ else 
+set_Value ("JasperProcess_ID", new Integer(JasperProcess_ID));
+}
+/** Get JasperProcess_ID */
+public int getJasperProcess_ID() 
+{
+Integer ii = (Integer)get_Value("JasperProcess_ID");
+if (ii == null) return 0;
+return ii.intValue();
 }
 /** Set Name.
 Alphanumeric identifier of the entity */

@@ -461,6 +461,18 @@ public final class MLocatorLookup extends Lookup implements Serializable {
             log.fine("Complete #" + m_lookup.size());
         }	// run
     }		// Loader
+    
+	/**
+	 * 	Set Product restriction
+	 *	@param only_Product_ID Product
+	 */
+	public void setOnly_Product_ID (int only_Product_ID)
+	{
+		m_only_Product_ID = only_Product_ID;
+	}	//	setOnly_Product_ID
+	/**	Only Product					*/
+	private int					m_only_Product_ID = 0;
+
 }		// MLocatorLookup
 
 

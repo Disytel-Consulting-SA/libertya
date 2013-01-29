@@ -393,6 +393,12 @@ public class Doc_Cash extends Doc implements DocProjectSplitterInterface   {
 		// Las líneas que no tienen Line_ID son las totalizadas a splitear
 		return  (factLine.getLine_ID() == 0);
 	}
+
+	@Override
+	protected String loadDocumentDetails() {
+		// TODO Auto-generated method stub
+		return null;
+	}
 }    // Doc_Cash
 
 

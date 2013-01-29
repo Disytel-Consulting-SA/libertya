@@ -7,7 +7,7 @@ import java.math.*;
 import org.openXpertya.util.*;
 /** Modelo Generado por AD_Process
  *  @author Comunidad de Desarrollo Libertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
- *  @version  - 2011-09-29 12:38:58.794 */
+ *  @version  - 2013-01-16 19:12:19.061 */
 public class X_AD_Process extends org.openXpertya.model.PO
 {
 /** Constructor estándar */
@@ -110,6 +110,22 @@ set_Value ("AD_ComponentVersion_ID", new Integer(AD_ComponentVersion_ID));
 public int getAD_ComponentVersion_ID() 
 {
 Integer ii = (Integer)get_Value("AD_ComponentVersion_ID");
+if (ii == null) return 0;
+return ii.intValue();
+}
+/** Set Special Form.
+Special Form */
+public void setAD_Form_ID (int AD_Form_ID)
+{
+if (AD_Form_ID <= 0) set_Value ("AD_Form_ID", null);
+ else 
+set_Value ("AD_Form_ID", new Integer(AD_Form_ID));
+}
+/** Get Special Form.
+Special Form */
+public int getAD_Form_ID() 
+{
+Integer ii = (Integer)get_Value("AD_Form_ID");
 if (ii == null) return 0;
 return ii.intValue();
 }
@@ -375,7 +391,8 @@ if (oo != null)
 }
 return false;
 }
-/** Set JasperReport */
+/** Set JasperReport.
+Dynamic JasperReport */
 public void setJasperReport (String JasperReport)
 {
 if (JasperReport != null && JasperReport.length() > 255)
@@ -385,7 +402,8 @@ JasperReport = JasperReport.substring(0,255);
 }
 set_Value ("JasperReport", JasperReport);
 }
-/** Get JasperReport */
+/** Get JasperReport.
+Dynamic JasperReport */
 public String getJasperReport() 
 {
 return (String)get_Value("JasperReport");

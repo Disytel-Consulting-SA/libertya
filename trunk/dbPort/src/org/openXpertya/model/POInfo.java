@@ -78,6 +78,22 @@ public class POInfo implements Serializable {
     private boolean	m_hasKeyColumn	= false;
 
     private static CLogger log= CLogger.getCLogger( POInfo.class );
+    
+	/**************************************************************************
+	 *  Create Persistent Info
+	 *  @param ctx context
+	 *  @param AD_Table_ID AD_ Table_ID
+	 * 	@param baseLanguageOnly get in base language
+	 *  @param trxName transaction name
+	 */
+	private POInfo (Properties ctx, int AD_Table_ID, boolean baseLanguageOnly, String trxName)
+	{
+		m_ctx = ctx;
+		m_AD_Table_ID = AD_Table_ID;
+		boolean baseLanguage = baseLanguageOnly ? true : Env.isBaseLanguage(m_ctx, "AD_Table");
+		loadInfo (baseLanguage, trxName);
+	}   //  PInfo
+
     /**
      *  Create Persistent Info
      *  @param ctx context
@@ -97,6 +113,101 @@ public class POInfo implements Serializable {
 
     }		// PInfo
 
+    
+	/**
+	 *  Load Table/Column Info
+	 * 	@param baseLanguage in English
+	 *  @param trxName
+	 */
+	/**	Table needs keep log*/
+	private boolean 	m_IsChangeLog = false;
+	private void loadInfo (boolean baseLanguage, String trxName)
+	{
+		ArrayList<POInfoColumn> list = new ArrayList<POInfoColumn>(15);
+		StringBuffer sql = new StringBuffer();
+		sql.append("SELECT t.TableName, c.ColumnName,c.AD_Reference_ID,"    //  1..3
+			+ "c.IsMandatory,c.IsUpdateable,c.DefaultValue,"                //  4..6
+			+ "e.Name,e.Description, c.AD_Column_ID, "						//  7..9
+			+ "c.IsKey,c.IsParent, "										//	10..11
+			+ "c.AD_Reference_Value_ID, vr.Code, "							//	12..13
+			+ "c.FieldLength, c.ValueMin, c.ValueMax, c.IsTranslated, "		//	14..17
+			+ "t.AccessLevel, c.ColumnSQL, c.IsEncrypted, "					// 18..20
+			+ "'Y' as IsAllowLogging,t.IsChangeLog ");											// 21
+		sql.append("FROM AD_Table t"
+			+ " INNER JOIN AD_Column c ON (t.AD_Table_ID=c.AD_Table_ID)"
+			+ " LEFT OUTER JOIN AD_Val_Rule vr ON (c.AD_Val_Rule_ID=vr.AD_Val_Rule_ID)"
+			+ " INNER JOIN AD_Element");
+		if (!baseLanguage)
+			sql.append("_Trl");
+		sql.append(" e "
+			+ " ON (c.AD_Element_ID=e.AD_Element_ID) "
+			+ "WHERE t.AD_Table_ID=?"
+			+ " AND c.IsActive='Y'");
+		if (!baseLanguage)
+			sql.append(" AND e.AD_Language='").append(Env.getAD_Language(m_ctx)).append("'");
+		//
+		PreparedStatement pstmt = null;
+		ResultSet rs = null;
+		try
+		{
+			pstmt = DB.prepareStatement(sql.toString(), trxName);
+			pstmt.setInt(1, m_AD_Table_ID);
+			rs = pstmt.executeQuery();
+			while (rs.next())
+			{
+				if (m_TableName == null)
+					m_TableName = rs.getString(1);
+				String ColumnName = rs.getString(2);
+				int AD_Reference_ID = rs.getInt(3);
+				boolean IsMandatory = "Y".equals(rs.getString(4));
+				boolean IsUpdateable = "Y".equals(rs.getString(5));
+				String DefaultLogic = rs.getString(6);
+				String Name = rs.getString(7);
+				String Description = rs.getString(8);
+				int AD_Column_ID = rs.getInt(9);
+				boolean IsKey = "Y".equals(rs.getString(10));
+				if (IsKey)
+					m_hasKeyColumn = true;
+				boolean IsParent = "Y".equals(rs.getString(11));
+				int AD_Reference_Value_ID = rs.getInt(12);
+				String ValidationCode = rs.getString(13);
+				int FieldLength = rs.getInt(14);
+				String ValueMin = rs.getString(15);
+				String ValueMax = rs.getString(16);
+				boolean IsTranslated = "Y".equals(rs.getString(17));
+				//
+				m_AccessLevel = rs.getString(18);
+				String ColumnSQL = rs.getString(19);
+				boolean IsEncrypted = "Y".equals(rs.getString(20));
+				boolean IsAllowLogging = "Y".equals(rs.getString(21));
+				m_IsChangeLog="Y".equals(rs.getString(22));
+
+				POInfoColumn col = new POInfoColumn (
+					AD_Column_ID, ColumnName, ColumnSQL, AD_Reference_ID,
+					IsMandatory, IsUpdateable,
+					DefaultLogic, Name, Description,
+					IsKey, IsParent,
+					AD_Reference_Value_ID, ValidationCode,
+					FieldLength, ValueMin, ValueMax,
+					IsTranslated, IsEncrypted,
+					IsAllowLogging);
+				list.add(col);
+			}
+		}
+		catch (SQLException e)
+		{
+			CLogger.get().log(Level.SEVERE, sql.toString(), e);
+		}
+		finally {
+			DB.close(rs, pstmt);
+			rs = null; pstmt = null;
+		}
+		//  convert to array
+		m_columns = new POInfoColumn[list.size()];
+		list.toArray(m_columns);
+	}   //  loadInfo
+
+    
     /**
      *  Load Table/Column Info
      *      @param baseLanguage in English
@@ -559,6 +670,28 @@ public class POInfo implements Serializable {
     	s_cache.remove(new Integer(AD_Table_ID));
     }
     
+	/**
+	 *  POInfo Factory
+	 *  @param ctx context
+	 *  @param AD_Table_ID AD_Table_ID
+	 *  @param trxName Transaction name
+	 *  @return POInfo
+	 */
+	public static POInfo getPOInfo (Properties ctx, int AD_Table_ID, String trxName)
+	{
+		Integer key = new Integer(AD_Table_ID);
+		POInfo retValue = (POInfo)s_cache.get(key);
+		if (retValue == null)
+		{
+			retValue = new POInfo(ctx, AD_Table_ID, false, trxName);
+			if (retValue.getColumnCount() == 0)
+				//	May be run before Language verification
+				retValue = new POInfo(ctx, AD_Table_ID, true, trxName);
+			else
+				s_cache.put(key, retValue);
+		}
+		return retValue;
+	}   //  getPOInfo
     
     /**
      *  POInfo Factory
@@ -766,6 +899,25 @@ public class POInfo implements Serializable {
         }
 
     }		// setUpdateable
+    
+	/**
+	 * Build select clause
+	 * @return stringbuffer
+	 */
+	public StringBuffer buildSelect()
+	{
+		StringBuffer sql = new StringBuffer("SELECT ");
+		int size = getColumnCount();
+		for (int i = 0; i < size; i++)
+		{
+			if (i != 0)
+				sql.append(",");
+			sql.append(getColumnSQL(i));	//	Normal and Virtual Column
+		}
+		sql.append(" FROM ").append(getTableName());
+		return sql;
+	}
+
 }	// POInfo
 
 

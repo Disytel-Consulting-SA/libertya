@@ -1,13 +1,14 @@
-/** Modelo Generado - NO CAMBIAR MANUALMENTE - Copyright (C) 2006 FUNDESLE */
+/** Modelo Generado - NO CAMBIAR MANUALMENTE - Disytel */
 package org.openXpertya.model;
-import java.util.*;
+import java.util.logging.Level;
+ import java.util.*;
 import java.sql.*;
 import java.math.*;
 import org.openXpertya.util.*;
 /** Modelo Generado por PA_Goal
- *  @author Comunidad de Desarrollo openXpertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
- *  @version  - 2008-01-03 10:26:40.14 */
-public class X_PA_Goal extends PO
+ *  @author Comunidad de Desarrollo Libertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
+ *  @version  - 2013-01-16 18:04:10.614 */
+public class X_PA_Goal extends org.openXpertya.model.PO
 {
 /** Constructor estándar */
 public X_PA_Goal (Properties ctx, int PA_Goal_ID, String trxName)
@@ -32,13 +33,13 @@ public X_PA_Goal (Properties ctx, ResultSet rs, String trxName)
 {
 super (ctx, rs, trxName);
 }
-/** AD_Table_ID=440 */
-public static final int Table_ID=440;
+/** AD_Table_ID */
+public static final int Table_ID = M_Table.getTableID("PA_Goal");
 
 /** TableName=PA_Goal */
 public static final String Table_Name="PA_Goal";
 
-protected static KeyNamePair Model = new KeyNamePair(440,"PA_Goal");
+protected static KeyNamePair Model = new KeyNamePair(Table_ID,"PA_Goal");
 protected static BigDecimal AccessLevel = new BigDecimal(3);
 
 /** Load Meta Data */
@@ -71,7 +72,7 @@ public void setDescription (String Description)
 if (Description != null && Description.length() > 255)
 {
 log.warning("Length > 255 - truncated");
-Description = Description.substring(0,254);
+Description = Description.substring(0,255);
 }
 set_Value ("Description", Description);
 }
@@ -152,7 +153,7 @@ if (Name == null) throw new IllegalArgumentException ("Name is mandatory");
 if (Name.length() > 60)
 {
 log.warning("Length > 60 - truncated");
-Name = Name.substring(0,59);
+Name = Name.substring(0,60);
 }
 set_Value ("Name", Name);
 }
@@ -173,7 +174,7 @@ public void setNote (String Note)
 if (Note != null && Note.length() > 2000)
 {
 log.warning("Length > 2000 - truncated");
-Note = Note.substring(0,1999);
+Note = Note.substring(0,2000);
 }
 set_Value ("Note", Note);
 }
@@ -211,7 +212,7 @@ Integer ii = (Integer)get_Value("PA_Measure_ID");
 if (ii == null) return 0;
 return ii.intValue();
 }
-public static final int PARENT_ID_AD_Reference_ID=230;
+public static final int PARENT_ID_AD_Reference_ID = MReference.getReferenceID("PA_Goal Parent");
 /** Set Parent.
 Parent of Entity */
 public void setParent_ID (int Parent_ID)

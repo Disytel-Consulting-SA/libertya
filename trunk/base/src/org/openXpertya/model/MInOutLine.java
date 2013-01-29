@@ -18,6 +18,7 @@ import java.math.BigDecimal;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Properties;
 import java.util.logging.Level;
 
@@ -1353,6 +1354,39 @@ public class MInOutLine extends X_M_InOutLine {
 		}
 		return included;
 	}
+	
+	/**
+	 * 	Get Ship lines Of RMA Line
+	 *	@param ctx context
+	 *	@param M_RMALine_ID line
+	 *	@param where optional addition where clause
+	 *  @param trxName transaction
+	 *	@return array of receipt lines
+	 */
+	public static MInOutLine[] getOfRMALine (Properties ctx,
+		int M_RMALine_ID, String where, String trxName)
+	{
+		String whereClause = "M_RMALine_ID=? " + (!Util.isEmpty(where, true) ? " AND "+where : "");
+		List<MRMALine> list = new Query(ctx, Table_Name, whereClause, trxName)
+									.setParameters(M_RMALine_ID)
+									.list();
+		return list.toArray (new MInOutLine[list.size()]);
+	}	//	getOfRMALine
+	
+	public boolean sameOrderLineUOM()
+	{
+		if (getC_OrderLine_ID() <= 0)
+			return false;
+
+		MOrderLine oLine = new MOrderLine(getCtx(), getC_OrderLine_ID(), get_TrxName());
+
+		if (oLine.getC_UOM_ID() != getC_UOM_ID())
+			return false;
+
+		// inout has orderline and both has the same UOM
+		return true;
+	}
+
 } // MInOutLine
 
 /*

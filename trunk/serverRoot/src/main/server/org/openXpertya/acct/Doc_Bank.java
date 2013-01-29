@@ -268,6 +268,12 @@ public class Doc_Bank extends Doc {
 		// TODO Auto-generated method stub
 		return null;
 	}
+
+	@Override
+	protected String loadDocumentDetails() {
+		// TODO Auto-generated method stub
+		return null;
+	}
 }    // Doc_Bank
 
 

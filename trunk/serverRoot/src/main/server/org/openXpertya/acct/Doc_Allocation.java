@@ -807,6 +807,12 @@ public class Doc_Allocation extends Doc implements DocProjectSplitterInterface  
 	public boolean requiresSplit(FactLine factLine) {
 		return true;
 	}
+
+	@Override
+	protected String loadDocumentDetails() {
+		// TODO Auto-generated method stub
+		return null;
+	}
 }    // Doc_Allocation
 
 

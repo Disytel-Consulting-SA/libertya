@@ -7,7 +7,7 @@ import java.math.*;
 import org.openXpertya.util.*;
 /** Modelo Generado por C_AcctSchema
  *  @author Comunidad de Desarrollo Libertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
- *  @version  - 2011-12-14 18:45:53.683 */
+ *  @version  - 2013-01-16 19:12:21.437 */
 public class X_C_AcctSchema extends org.openXpertya.model.PO
 {
 /** Constructor estándar */
@@ -56,6 +56,21 @@ public String toString()
 {
 StringBuffer sb = new StringBuffer ("X_C_AcctSchema[").append(getID()).append("]");
 return sb.toString();
+}
+public static final int AD_ORGONLY_ID_AD_Reference_ID = MReference.getReferenceID("AD_Org (all)");
+/** Set AD_OrgOnly_ID */
+public void setAD_OrgOnly_ID (int AD_OrgOnly_ID)
+{
+if (AD_OrgOnly_ID <= 0) set_Value ("AD_OrgOnly_ID", null);
+ else 
+set_Value ("AD_OrgOnly_ID", new Integer(AD_OrgOnly_ID));
+}
+/** Get AD_OrgOnly_ID */
+public int getAD_OrgOnly_ID() 
+{
+Integer ii = (Integer)get_Value("AD_OrgOnly_ID");
+if (ii == null) return 0;
+return ii.intValue();
 }
 /** Set Automatic Period Control.
 If selected, the periods are automatically opened and closed */

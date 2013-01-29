@@ -1302,6 +1302,38 @@ public class MProduct extends X_M_Product {
     	
     	return success;
     }
+
+	/**
+	 * Get MProduct using UPC/EAN (case sensitive)
+	 * @param  ctx     Context
+	 * @param  upc     The upc to look for
+	 * @return List of MProduct
+	 */
+	public static List<MProduct> getByUPC(Properties ctx, String upc, String trxName)
+	{
+		final String whereClause = "UPC=?";
+		Query q = new Query(ctx, Table_Name, whereClause, trxName);
+		q.setParameters(upc).setClient_ID();
+		return(q.list());
+	}
+
+    /**
+	 * 	Get UOM Standard Precision
+	 *	@return UOM Standard Precision
+	 */
+	public int getUOMPrecision()
+	{
+		if (m_precision == null)
+		{
+			int C_UOM_ID = getC_UOM_ID();
+			if (C_UOM_ID == 0)
+				return 0;	//	EA
+			m_precision = new Integer (MUOM.getPrecision(getCtx(), C_UOM_ID));
+		}
+		return m_precision.intValue();
+	}	//	getUOMPrecision
+	
+
     
 }    // MProduct
 

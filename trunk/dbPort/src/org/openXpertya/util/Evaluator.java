@@ -17,6 +17,7 @@
 package org.openXpertya.util;
 
 import java.math.BigDecimal;
+import java.util.ArrayList;
 import java.util.StringTokenizer;
 import java.util.logging.Level;
 
@@ -264,6 +265,33 @@ public class Evaluator {
             return value1.compareTo( value2 ) != 0;
         }
     }             // evaluateLogicTouple
+    
+    /**
+	 *  Parse String and add variables with @ to the list.
+	 *  @param list list to be added to
+	 *  @param parseString string to parse for variables
+	 */
+	public static void parseDepends (ArrayList<String> list, String parseString)
+	{
+		if (parseString == null || parseString.length() == 0)
+			return;
+	//	log.fine( "MField.parseDepends", parseString);
+		String s = parseString;
+		//  while we have variables
+		while (s.indexOf('@') != -1)
+		{
+			int pos = s.indexOf('@');
+			s = s.substring(pos+1);
+			pos = s.indexOf('@');
+			if (pos == -1)
+				continue;	//	error number of @@ not correct
+			String variable = s.substring(0, pos);
+			s = s.substring(pos+1);
+		//	log.fine( variable);
+			list.add(variable);
+		}
+	}   //  parseDepends
+
 }    // Evaluator
 
 

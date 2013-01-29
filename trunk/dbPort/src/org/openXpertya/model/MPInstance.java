@@ -355,6 +355,22 @@ public class MPInstance extends X_AD_PInstance {
                         : RESULT_ERROR);
 
     }		// setResult
+    
+	/**
+	 * 	New Constructor
+	 *	@param ctx context
+	 *	@param AD_Process_ID Process ID
+	 *	@param Record_ID record
+	 */
+	public MPInstance (Properties ctx, int AD_Process_ID, int Record_ID)
+	{
+		this(ctx, 0, null);
+		setAD_Process_ID (AD_Process_ID);
+		setRecord_ID (Record_ID);
+		setAD_User_ID(Env.getAD_User_ID(ctx));
+		setIsProcessing (false);
+	}	//	MPInstance
+
 }	// MPInstance
 
 

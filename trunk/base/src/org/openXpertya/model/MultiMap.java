@@ -33,7 +33,7 @@ import org.openXpertya.util.CLogger;
  * @author     Equipo de Desarrollo de openXpertya    
  */
 
-public final class MultiMap implements Map,Serializable {
+public final class MultiMap<K,V> implements Map<K,V>,Serializable {
 
     /**
      * Constructor de la clase ...
@@ -121,8 +121,8 @@ public final class MultiMap implements Map,Serializable {
      * @return
      */
 
-    public Object get( Object key ) {
-        return getValues( key );
+    public V get( Object key ) {
+        return (V)getValues( key );
     }    // get
 
     /**
@@ -217,7 +217,7 @@ public final class MultiMap implements Map,Serializable {
      * @return
      */
 
-    public Object remove( Object key ) {
+    public V remove( Object key ) {
         throw new java.lang.UnsupportedOperationException( "Method remove() not implemented." );
     }    // remove
 

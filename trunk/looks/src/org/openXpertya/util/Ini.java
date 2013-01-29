@@ -968,6 +968,27 @@ public final class Ini implements Serializable {
         }
 
     }		// setWindowLocation
+    
+	public static boolean isCacheWindow()
+	{
+		return getProperty (P_CACHE_WINDOW).equals("Y");
+	}	//	isCacheWindow
+	/** Cache Windows			*/
+	public static final String  P_CACHE_WINDOW =	"CacheWindow";
+
+    /** Log Migration Script	*/
+	public static final String  P_LOGMIGRATIONSCRIPT =		"LogMigrationScript";	//	Log migration script
+
+	/**
+	 *	Get Property as Boolean
+	 *  @param key  Key
+	 *  @return     Value
+	 */
+	public static boolean isPropertyBool (String key)
+	{
+		return getProperty (key).equals("Y");
+	}	//	getProperty
+
 }	// Ini
 
 

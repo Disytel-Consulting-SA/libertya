@@ -1373,6 +1373,14 @@ public class CPreparedStatement extends CStatement implements PreparedStatement 
 		// TODO Auto-generated method stub
 		return null;
 	}
+	
+	/**
+	 * 	Execute Query
+	 * 	@return ResultSet or RowSet
+	 * 	@throws SQLException
+	 * @see java.sql.PreparedStatement#executeQuery()
+	 */
+	public RowSet getRowSet(){return null;};
 }    // CPreparedStatement
 
 

@@ -78,6 +78,17 @@ public interface ModelValidator {
     public CallResult login(int AD_Org_ID, int AD_Role_ID, int AD_User_ID);
 
     /**
+     *      User logged in
+     *      Called before preferences are set
+     *      @param AD_Org_ID org
+     *      @param AD_Role_ID role
+     *      @param AD_User_ID user
+     *      @return error message or null
+     */
+    public String loginString(int AD_Org_ID, int AD_Role_ID, int AD_User_ID);
+
+    
+    /**
      *  Model Change of a monitored Table.
      *  Called after PO.beforeSave/PO.beforeDelete
      *  when you called addModelChange for the table
@@ -95,6 +106,12 @@ public interface ModelValidator {
      *      @return AD_Client_ID
      */
     public int getAD_Client_ID();
+    
+	/** Called before document is posted */
+	public static final int TIMING_BEFORE_POST = 15;
+	/** Called after document is posted */
+	public static final int TIMING_AFTER_POST = 16;
+
 }	// ModelValidator
 
 

@@ -728,6 +728,12 @@ public class Doc_Invoice extends Doc implements DocProjectSplitterInterface {
 		}
 		return 0;
 	}
+
+	@Override
+	protected String loadDocumentDetails() {
+		// TODO Auto-generated method stub
+		return null;
+	}
 	
 }    // Doc_Invoice
 

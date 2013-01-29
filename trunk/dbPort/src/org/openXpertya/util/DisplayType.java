@@ -145,6 +145,23 @@ public final class DisplayType {
     /** Descripción de Campos */
 
     public static final int CostPrice = 37;
+    
+	/** Display Type 38	File Path	*/
+    
+	public static final int FilePath  = 38;
+	
+	/** Display Type 39 File Name	*/
+	
+	public static final int FileName  = 39;
+	
+	/** Display Type 40	URL	*/
+	
+	public static final int URL  = 40;
+	
+	/** Display Type 42	PrinterName	*/
+	
+	public static final int PrinterName  = 42;
+
 
     // Candidates: FileName, PrinterName
 
@@ -536,6 +553,91 @@ public final class DisplayType {
     	withoutQuotes.add(CostPrice);
     }
 
+    /**
+	 * 	Get Description
+	 *	@param displayType display Type
+	 *	@return display type description
+	 */
+	public static String getDescription (int displayType)
+	{
+		if (displayType == String)
+			return "String";
+		if (displayType == Integer)
+			return "Integer";
+		if (displayType == Amount)
+			return "Amount";
+		if (displayType == ID)
+			return "ID";
+		if (displayType == Text)
+			return "Text";
+		if (displayType == Date)
+			return "Date";
+		if (displayType == DateTime)
+			return "DateTime";
+		if (displayType == List)
+			return "List";
+		if (displayType == Table)
+			return "Table";
+		if (displayType == TableDir)
+			return "TableDir";
+		if (displayType == YesNo)
+			return "YesNo";
+		if (displayType == Location)
+			return "Location";
+		if (displayType == Number)
+			return "Number";
+		if (displayType == Binary)
+			return "Binary";
+		if (displayType == Time)
+			return "Time";
+		if (displayType == Account)
+			return "Account";
+		if (displayType == RowID)
+			return "RowID";
+		if (displayType == Color)
+			return "Color";
+		if (displayType == Button)
+			return "Button";
+		if (displayType == Quantity)
+			return "Quantity";
+		if (displayType == Search)
+			return "Search";
+		if (displayType == Locator)
+			return "Locator";
+		if (displayType == Image)
+			return "Image";
+		if (displayType == Assignment)
+			return "Assignment";
+		if (displayType == Memo)
+			return "Memo";
+		if (displayType == PAttribute)
+			return "PAttribute";
+		if (displayType == TextLong)
+			return "TextLong";
+		if (displayType == CostPrice)
+			return "CostPrice";
+		if (displayType == FilePath)
+			return "FilePath";
+		if (displayType == FileName)
+			return "FileName";
+		if (displayType == URL)
+			return "URL";
+		if (displayType == PrinterName)
+			return "PrinterName";
+		//
+		return "UNKNOWN DisplayType=" + displayType;
+	}	//	getDescription
+
+	/**
+	 *	JDBC Timestamp Format yyyy-mm-dd hh:mm:ss
+	 *  @return timestamp format
+	 */
+	static public SimpleDateFormat getTimestampFormat_Default()
+	{
+		return new SimpleDateFormat ("yyyy-MM-dd HH:mm:ss");
+	}   //  getTimestampFormat_JDBC
+
+    
 }    // DisplayType
 
 

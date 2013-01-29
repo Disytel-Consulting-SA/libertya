@@ -214,6 +214,17 @@ public class ReportCtl {
 
         return startDocumentPrint( ReportEngine.CHECK,C_PaySelectionCheck_ID,IsDirectPrint );
     }    // startCheckPrint
+    
+	/**
+	 * Launch viewer for report
+	 * @param re
+	 */
+	public static void preview(ReportEngine re) 
+	{
+		/*ReportViewerProvider provider = getReportViewerProvider();
+		provider.openViewer(re);*/
+	}
+
 }    // ReportCtl
 
 

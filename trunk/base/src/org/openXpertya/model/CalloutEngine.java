@@ -50,6 +50,8 @@ public class CalloutEngine implements Callout {
     /** Descripción de Campos */
 
     protected CLogger log = CLogger.getCLogger( getClass());
+	private GridTab m_mTab;
+	private GridField m_mField;
 
     /**
      * Descripción de Método
@@ -308,6 +310,65 @@ public class CalloutEngine implements Callout {
 
 	public void setPluginInstance(boolean isPluginInstance) {
 		this.isPluginInstance = isPluginInstance;
+	}
+
+	@Override
+	public String start(Properties ctx, String methodName, int WindowNo,
+			GridTab mTab, GridField mField, Object value, Object oldValue) {
+		// TODO Auto-generated method stub
+		if (methodName == null || methodName.length() == 0)
+			throw new IllegalArgumentException ("No Method Name");
+		
+		m_mTab = mTab;
+		m_mField = mField;
+		
+		//
+		String retValue = "";
+		StringBuffer msg = new StringBuffer(methodName).append(" - ")
+			.append(mField.getColumnName())
+			.append("=").append(value)
+			.append(" (old=").append(oldValue)
+			.append(") {active=").append(isCalloutActive()).append("}");
+		if (!isCalloutActive())
+			log.info (msg.toString());
+		
+		//	Find Method
+		Method method = getMethod(methodName);
+		if (method == null)
+			throw new IllegalArgumentException ("Method not found: " + methodName);
+		int argLength = method.getParameterTypes().length;
+		if (!(argLength == 5 || argLength == 6))
+			throw new IllegalArgumentException ("Method " + methodName 
+				+ " has invalid no of arguments: " + argLength);
+
+		//	Call Method
+		try
+		{
+			Object[] args = null;
+			if (argLength == 6)
+				args = new Object[] {ctx, new Integer(WindowNo), mTab, mField, value, oldValue};
+			else
+				args = new Object[] {ctx, new Integer(WindowNo), mTab, mField, value}; 
+			retValue = (String)method.invoke(this, args);
+		}
+		catch (Exception e)
+		{
+			Throwable ex = e.getCause();	//	InvocationTargetException
+			if (ex == null)
+				ex = e;
+			log.log(Level.SEVERE, "start: " + methodName, ex);
+			retValue = ex.getLocalizedMessage();
+			if (retValue == null)
+			{
+				retValue = ex.toString();
+			}
+		}
+		finally
+		{
+			m_mTab = null;
+			m_mField = null;
+		}
+		return retValue;
 	}
 }    // CalloutEngine
 

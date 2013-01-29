@@ -329,6 +329,35 @@ public class ModelValidationEngine {
     }		// loginComplete
 
     /**
+     *      Called when login is complete
+     *      @param AD_Client_ID client
+     *      @param AD_Org_ID org
+     *      @param AD_Role_ID role
+     *      @param AD_User_ID user
+     *      @return error message or null
+     */
+    public String loginCompleteString(int AD_Client_ID, int AD_Org_ID, int AD_Role_ID, int AD_User_ID) {
+
+        for (int i = 0; i < m_validators.size(); i++) {
+
+            ModelValidator	validator	= (ModelValidator) m_validators.get(i);
+
+            if (AD_Client_ID == validator.getAD_Client_ID()) {
+
+                String	error	= validator.loginString(AD_Org_ID, AD_Role_ID, AD_User_ID);
+
+                if ((error != null) && (error.length() > 0)) {
+                    return error;
+                }
+            }
+        }
+
+        return null;
+
+    }		// loginComplete
+
+    
+    /**
      *      Remove Document Validation Listener
      *      @param tableName table name
      * @param listener

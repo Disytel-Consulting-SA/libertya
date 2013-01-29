@@ -16,6 +16,8 @@
 
 package org.openXpertya.util;
 
+import java.sql.SQLException;
+
 /**
  * Descripción de Clase
  *
@@ -47,6 +49,89 @@ public class DBException extends RuntimeException {
     public DBException( String msg ) {
         super( msg );
     }    // DBException
+    
+	public DBException(SQLException e, String sql)
+	{
+		this(e);
+		m_sql = sql;
+	}
+	private String m_sql = null;
+
+	
+    /**
+     * Check if "child record found" exception (aka ORA-02292)
+     * @param e exception
+     */
+    public static boolean isChildRecordFoundError(Exception e) {
+    	if (DB.isPostgreSQL())
+    		return isSQLState(e, "23503");
+    	return isErrorCode(e, 2292);
+    }
+    
+    /**
+     * Check if "invalid identifier" exception (aka ORA-00904)
+     * @param e exception
+     */
+    public static boolean isInvalidIdentifierError(Exception e) {
+    	return isErrorCode(e, 904);
+    }
+    
+    private static final boolean isSQLState(Exception e, String SQLState) {
+    	if (e == null) {
+    		return false;
+    	}
+    	else if (e instanceof SQLException) {
+    		return ((SQLException)e).getSQLState().equals(SQLState);
+    	}
+    	else if (e instanceof DBException) {
+    		SQLException sqlEx = ((DBException)e).getSQLException();
+    		if (sqlEx != null)
+    			return sqlEx.getSQLState().equals(SQLState);
+    		else
+    			return false;
+    	}
+    	return false;
+    }
+
+    private static final boolean isErrorCode(Exception e, int errorCode) {
+    	if (e == null) {
+    		return false;
+    	}
+    	else if (e instanceof SQLException) {
+    		return ((SQLException)e).getErrorCode() == errorCode;
+    	}
+    	else if (e instanceof DBException) {
+    		SQLException sqlEx = ((DBException)e).getSQLException();
+    		if (sqlEx != null)
+    			return sqlEx.getErrorCode() == errorCode;
+    		else
+    			return false;
+    	}
+    	return false;
+    }
+
+    /**
+	 * @return Wrapped SQLException or null
+	 */
+	public SQLException getSQLException() {
+		Throwable cause = getCause();
+		if (cause instanceof SQLException)
+			return (SQLException)cause;
+		return null;
+	}
+
+	/**
+     * Check if Unique Constraint Exception (aka ORA-00001)
+     * @param e exception
+     */
+    public static boolean isUniqueContraintError(Exception e) {
+    	if (DB.isPostgreSQL())
+    		return isSQLState(e, "23505");
+    	//
+    	return isErrorCode(e, 1);
+    }
+
+	
 }    // DBException
 
 

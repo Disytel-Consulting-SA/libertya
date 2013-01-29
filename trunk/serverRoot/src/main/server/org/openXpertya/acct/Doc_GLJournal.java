@@ -267,6 +267,12 @@ public class Doc_GLJournal extends Doc {
 		// TODO Auto-generated method stub
 		return null;
 	}
+
+	@Override
+	protected String loadDocumentDetails() {
+		// TODO Auto-generated method stub
+		return null;
+	}
 }    // Doc_GLJournal
 
 

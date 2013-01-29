@@ -212,6 +212,12 @@ public class Doc_Movement extends Doc {
 		// TODO Auto-generated method stub
 		return null;
 	}
+
+	@Override
+	protected String loadDocumentDetails() {
+		// TODO Auto-generated method stub
+		return null;
+	}
 }    // Doc_Movement
 
 

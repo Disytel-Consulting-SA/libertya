@@ -473,7 +473,21 @@ public class MUOM extends X_C_UOM {
 		}
 		return uomSymbol;
 	}
+
 	
+	/**
+	 * 	Get Precision
+	 * 	@param ctx context
+	 *	@param C_UOM_ID ID
+	 * 	@return Precision
+	 */
+	public static int getPrecision (Properties ctx, int C_UOM_ID)
+	{
+		MUOM uom = get(ctx, C_UOM_ID);
+		return uom.getStdPrecision();
+	}	//	getPrecision
+	
+
 }    // MUOM
 
 

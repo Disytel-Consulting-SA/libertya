@@ -1765,7 +1765,183 @@ public final class Env {
     	String isPOSJournalSupervisor = Env.getContext(ctx, "#POSJournalSupervisor");
     	return isPOSJournalSupervisor != null && isPOSJournalSupervisor.equals("Y");
     }
+
     
+
+	/**
+	 * Get Value of Context for Window & Tab,
+	 * if not found global context if available.
+	 * If TabNo is TAB_INFO only tab's context will be checked.
+	 * @param ctx context
+	 * @param WindowNo window no
+	 * @param TabNo tab no
+	 * @param context context key
+	 * @param onlyTab if true, no window value is searched
+	 * @param onlyWindow if true, no global context will be searched
+	 * @return value or ""
+	 */
+	public static String getContext (Properties ctx, int WindowNo, int TabNo, String context, boolean onlyTab, boolean onlyWindow)
+	{
+		if (ctx == null || context == null)
+			throw new IllegalArgumentException ("Require Context");
+		String s = ctx.getProperty(WindowNo+"|"+TabNo+"|"+context);
+		// If TAB_INFO, don't check Window and Global context - teo_sarca BF [ 2017987 ]
+		if (TAB_INFO == TabNo)
+			return s != null ? s : "";
+		//
+		if (s == null && ! onlyTab)
+			return getContext(ctx, WindowNo, context, onlyWindow);
+		return s;
+	}	//	getContext
+	/**
+	 * Get Value of Context for Window & Tab,
+	 * if not found global context if available.
+	 * If TabNo is TAB_INFO only tab's context will be checked.
+	 * @param ctx context
+	 * @param WindowNo window no
+	 * @param TabNo tab no
+	 * @param context context key
+	 * @param onlyTab if true, no window value is searched
+	 * @return value or ""
+	 */
+	public static String getContext (Properties ctx, int WindowNo, int TabNo, String context, boolean onlyTab)
+	{
+		final boolean onlyWindow = onlyTab ? true : false;
+		return getContext(ctx, WindowNo, TabNo, context, onlyTab, onlyWindow);
+	}
+    
+
+	/**
+	 *	Is Auto New Record
+	 *  @param ctx context
+	 *  @return true if auto new
+	 */
+	public static boolean isAutoNew (Properties ctx)
+	{
+		if (ctx == null)
+			throw new IllegalArgumentException ("Require Context");
+		String s = getContext(ctx, "AutoNew");
+		if (s != null && s.equals("Y"))
+			return true;
+		return false;
+	}	//	isAutoNew
+	
+	/**
+	 *	Is Window Auto New Record (if not set use default)
+	 *  @param ctx context
+	 *  @param WindowNo window no
+	 *  @return true if auto new record
+	 */
+	public static boolean isAutoNew (Properties ctx, int WindowNo)
+	{
+		if (ctx == null)
+			throw new IllegalArgumentException ("Require Context");
+		String s = getContext(ctx, WindowNo, "AutoNew", false);
+		if (s != null)
+		{
+			if (s.equals("Y"))
+				return true;
+			else
+				return false;
+		}
+		return isAutoNew(ctx);
+	}	//	isAutoNew
+	
+	public static void setContextProvider(ContextProvider provider)
+	{
+		contextProvider = provider;
+		getCtx().put(LANGUAGE, Language.getBaseAD_Language());
+	}
+	private static ContextProvider contextProvider = new DefaultContextProvider();
+	
+	/**
+	 * 	Do we run on Apple
+	 *	@return true if Mac
+	 */
+	public static boolean isMac() 
+   	{
+   		String osName = System.getProperty ("os.name");
+   		osName = osName.toLowerCase();
+   		return osName.indexOf ("mac") != -1;
+   	}	//	isMac
+   	
+   	/**
+   	 * 	Do we run on Windows
+   	 *	@return true if windows
+   	 */
+   	public static boolean isWindows()
+   	{
+   		String osName = System.getProperty ("os.name");
+   		osName = osName.toLowerCase();
+   		return osName.indexOf ("windows") != -1;
+   	}	//	isWindows
+   	
+	/**
+	 *	Get Context and convert it to an integer (0 if error)
+	 *  @param ctx context
+	 *  @param WindowNo window no
+	 *  @param context context key
+	 *  @param onlyWindow  if true, no defaults are used unless explicitly asked for
+	 *  @return value or 0
+	 */
+	public static int getContextAsInt(Properties ctx, int WindowNo, String context, boolean onlyWindow)
+	{
+		String s = getContext(ctx, WindowNo, context, onlyWindow);
+		if (s.length() == 0)
+			return 0;
+		//
+		try
+		{
+			return Integer.parseInt(s);
+		}
+		catch (NumberFormatException e)
+		{
+			s_log.log(Level.SEVERE, "(" + context + ") = " + s, e);
+		}
+		return 0;
+	}	//	getContextAsInt
+
+    //TODO Hernandez
+    /**
+	 *	Set Auto New Record
+	 *  @param ctx context
+	 *  @param autoNew auto new record
+	 */
+	public static void setAutoNew (Properties ctx, boolean autoNew)
+	{
+		if (ctx == null)
+			return;
+		ctx.setProperty("AutoNew", autoNew ? "Y" : "N");
+	}	//	setAutoNew
+
+	/**
+	 *	Set Auto New Record for Window
+	 *  @param ctx context
+	 *  @param WindowNo window no
+	 *  @param autoNew auto new record
+	 */
+	public static void setAutoNew (Properties ctx, int WindowNo, boolean autoNew)
+	{
+		if (ctx == null)
+			return;
+		ctx.setProperty(WindowNo+"|AutoNew", autoNew ? "Y" : "N");
+	}	//	setAutoNew
+
+	/**
+	 *	Is Sales Order Trx
+	 *  @param ctx context
+	 *  @param WindowNo window no
+	 *  @return true if SO (default)
+	 */
+	public static boolean isSOTrx (Properties ctx, int WindowNo)
+	{
+		String s = getContext(ctx, WindowNo, "IsSOTrx", true);
+		if (s != null && s.equals("N"))
+			return false;
+		return true;
+	}	//	isSOTrx
+
+	
 }    // Env
 
 

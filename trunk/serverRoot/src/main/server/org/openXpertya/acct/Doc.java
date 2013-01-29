@@ -16,11 +16,14 @@
 
 package org.openXpertya.acct;
 
+import java.lang.reflect.Constructor;
 import java.math.BigDecimal;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
+import java.sql.Timestamp;
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Properties;
@@ -45,9 +48,15 @@ import org.openXpertya.model.MOrder;
 import org.openXpertya.model.MPayment;
 import org.openXpertya.model.MPeriod;
 import org.openXpertya.model.MProjectIssue;
+import org.openXpertya.model.M_Table;
+import org.openXpertya.model.ModelValidationEngine;
+import org.openXpertya.model.ModelValidator;
+import org.openXpertya.model.PO;
 import org.openXpertya.model.X_M_Production;
+import org.openXpertya.process.DocumentEngine;
 import org.openXpertya.util.CLogger;
 import org.openXpertya.util.DB;
+import org.openXpertya.util.DBException;
 import org.openXpertya.util.Env;
 import org.openXpertya.util.Msg;
 import org.openXpertya.util.Trx;
@@ -296,10 +305,673 @@ public abstract class Doc {
         return false;
     }    // post
 
+	public static String postImmediate (MAcctSchema[] ass, 
+			int AD_Table_ID, int Record_ID, boolean force, String trxName)
+		{
+			Doc doc = get (ass, AD_Table_ID, Record_ID, trxName);
+			if (doc != null)
+				return doc.post (force, true);	//	repost
+			return "NoDoc";
+		}   //  post
+    
+	
+	/**
+	 *  Create Posting document
+	 *	@param ass accounting schema
+	 *  @param AD_Table_ID Table ID of Documents
+	 *  @param Record_ID record ID to load
+	 *  @param trxName transaction name
+	 *  @return Document or null
+	 */
+	public static Doc get (MAcctSchema[] ass, int AD_Table_ID, int Record_ID, String trxName)
+	{
+		String TableName = null;
+		for (int i = 0; i < getDocumentsTableID().length; i++)
+		{
+			if (getDocumentsTableID()[i] == AD_Table_ID)
+			{
+				TableName = getDocumentsTableName()[i];
+				break;
+			}
+		}
+		if (TableName == null)
+		{
+			s_log.severe("Not found AD_Table_ID=" + AD_Table_ID);
+			return null;
+		}
+		//
+		Doc doc = null;
+		StringBuffer sql = new StringBuffer("SELECT * FROM ")
+			.append(TableName)
+			.append(" WHERE ").append(TableName).append("_ID=? AND Processed='Y'");
+		PreparedStatement pstmt = null;
+		ResultSet rs = null;
+		try
+		{
+			pstmt = DB.prepareStatement (sql.toString(), trxName);
+			pstmt.setInt (1, Record_ID);
+			rs = pstmt.executeQuery ();
+			if (rs.next ())
+			{
+				doc = get (ass, AD_Table_ID, rs, trxName);
+			}
+			else
+				s_log.severe("Not Found: " + TableName + "_ID=" + Record_ID);
+		}
+		catch (Exception e)
+		{
+			s_log.log (Level.SEVERE, sql.toString(), e);
+		}
+		finally
+		{
+			DB.close(rs, pstmt);
+			rs = null; 
+			pstmt = null;
+		}
+		return doc;
+	}	//	get
+	
+	
+	public static Doc get (MAcctSchema[] ass, int AD_Table_ID, ResultSet rs, String trxName)
+	{
+		Doc doc = null;
+		
+		/* Classname of the Doc class follows this convention:
+		 * if the prefix (letters before the first underscore _) is 1 character, then the class is Doc_TableWithoutPrefixWithoutUnderscores
+		 * otherwise Doc_WholeTableWithoutUnderscores
+		 * i.e. following this query
+              SELECT t.ad_table_id, tablename, 
+              	CASE 
+              		WHEN instr(tablename, '_') = 2 
+              		THEN 'Doc_' || substr(tablename, 3) 
+              		WHEN instr(tablename, '_') > 2 
+              		THEN 'Doc_' || 
+              		ELSE '' 
+              	REPLACE
+              		(
+              			tablename, '_', ''
+              		)
+              	END AS classname 
+              FROM ad_table t, ad_column C 
+              WHERE t.ad_table_id = C.ad_table_id AND
+              	C.columnname = 'Posted' AND
+              	isview = 'N' 
+              ORDER BY 1
+		 * This is:
+		 * 224		GL_Journal			Doc_GLJournal
+		 * 259		C_Order				Doc_Order
+		 * 318		C_Invoice			Doc_Invoice
+		 * 319		M_InOut				Doc_InOut
+		 * 321		M_Inventory			Doc_Inventory
+		 * 323		M_Movement			Doc_Movement
+		 * 325		M_Production		Doc_Production
+		 * 335		C_Payment			Doc_Payment
+		 * 392		C_BankStatement		Doc_BankStatement
+		 * 407		C_Cash				Doc_Cash
+		 * 472		M_MatchInv			Doc_MatchInv
+		 * 473		M_MatchPO			Doc_MatchPO
+		 * 623		C_ProjectIssue		Doc_ProjectIssue
+		 * 702		M_Requisition		Doc_Requisition
+		 * 735		C_AllocationHdr		Doc_AllocationHdr
+		 * 53027	PP_Order			Doc_PPOrder
+		 * 53035	PP_Cost_Collector	Doc_PPCostCollector
+		 * 53037	DD_Order			Doc_DDOrder
+		 * 53092	HR_Process			Doc_HRProcess
+		 */
+		
+		String tableName = M_Table.getTableName(Env.getCtx(), AD_Table_ID);
+		String packageName = "org.openXpertya.acct";
+		String className = null;
+
+		int firstUnderscore = tableName.indexOf("_");
+		if (firstUnderscore == 1)
+			className = packageName + ".Doc_" + tableName.substring(2).replaceAll("_", "");
+		else
+			className = packageName + ".Doc_" + tableName.replaceAll("_", "");
+		
+		try
+		{
+			Class<?> cClass = Class.forName(className);
+			Constructor<?> cnstr = cClass.getConstructor(new Class[] {MAcctSchema[].class, ResultSet.class, String.class});
+			doc = (Doc) cnstr.newInstance(ass, rs, trxName);
+		}
+		catch (Exception e)
+		{
+			s_log.log(Level.SEVERE, "Doc Class invalid: " + className + " (" + e.toString() + ")");
+			//throw new AdempiereUserError("Doc Class invalid: " + className + " (" + e.toString() + ")");
+		}
+
+		if (doc == null)
+			s_log.log(Level.SEVERE, "Unknown AD_Table_ID=" + AD_Table_ID);
+		return doc;
+	}   //  get
+	
+	
     /** Descripción de Campos */
 
     protected static CLogger s_log = CLogger.getCLogger( Doc.class );
 
+    
+	public static int[] getDocumentsTableID() {
+		fillDocumentsTableArrays();
+		return documentsTableID;
+	}
+    
+	public static String[] getDocumentsTableName() {
+		fillDocumentsTableArrays();
+		return documentsTableName;
+	}
+	
+	private static void fillDocumentsTableArrays() {
+		if (documentsTableID == null) {
+			String sql = "SELECT t.AD_Table_ID, t.TableName " +
+					"FROM AD_Table t, AD_Column c " +
+					"WHERE t.AD_Table_ID=c.AD_Table_ID AND " +
+					"c.ColumnName='Posted' AND " +
+					"IsView='N' " +
+					"ORDER BY t.AD_Table_ID";
+			ArrayList<Integer> tableIDs = new ArrayList<Integer>();
+			ArrayList<String> tableNames = new ArrayList<String>();
+			PreparedStatement pstmt = null;
+			ResultSet rs = null;
+			try
+			{
+				pstmt = DB.prepareStatement(sql, null);
+				rs = pstmt.executeQuery();
+				while (rs.next())
+				{
+					tableIDs.add(rs.getInt(1));
+					tableNames.add(rs.getString(2));
+				}
+			}
+			catch (SQLException e)
+			{
+				throw new DBException(e, sql);
+			}
+			finally
+			{
+				DB.close(rs, pstmt);
+				rs = null; pstmt = null;
+			}
+			//	Convert to array
+			documentsTableID = new int[tableIDs.size()];
+			documentsTableName = new String[tableIDs.size()];
+			for (int i = 0; i < documentsTableID.length; i++)
+			{
+				documentsTableID[i] = tableIDs.get(i);
+				documentsTableName[i] = tableNames.get(i);
+			}
+		}
+	}
+	
+	
+	/** Document Status      			*/
+	private String				m_DocStatus = null;
+	/** The Document				*/
+	protected PO				p_po = null;
+	/**	Actual Document Status  */
+	protected String			p_Status = null;
+	public String getPostStatus() {
+		return p_Status;
+	}
+	/* If the transaction must be managed locally (false if it's managed externally by the caller) */ 
+	private boolean m_manageLocalTrx;
+
+	/** Error Message			*/
+	protected String			p_Error = null;
+	
+	/** Document No      			*/
+	private String				m_DocumentNo = null;
+	
+	public String get_TableName()
+	{
+		return p_po.get_TableName();
+	}	//	get_TableName
+
+	/**
+	 * 	Get Record_ID
+	 *	@return record id
+	 */
+	public int get_ID()
+	{
+		return p_po.getID();
+	}	//	get_ID
+
+	
+	/**
+	 * 	Get Document No
+	 *	@return document No
+	 */
+	public String getDocumentNo()
+	{
+		if (m_DocumentNo != null)
+			return m_DocumentNo;
+		int index = p_po.get_ColumnIndex("DocumentNo");
+		if (index == -1)
+			index = p_po.get_ColumnIndex("Name");
+		if (index == -1)
+			throw new UnsupportedOperationException("No DocumentNo");
+		m_DocumentNo = (String)p_po.get_Value(index);
+		return m_DocumentNo;
+	}	//	getDocumentNo
+
+	
+	/**
+	 * 	Get AD_Org_ID
+	 *	@return org
+	 */
+	public int getAD_Org_ID()
+	{
+		return p_po.getAD_Org_ID();
+	}	//	getAD_Org_ID
+	/**
+	 * 	Get AD_Client_ID
+	 *	@return client
+	 */
+	public int getAD_Client_ID()
+	{
+		return p_po.getAD_Client_ID();
+	}	//	getAD_Client_ID
+
+	/**
+	 * 	Is Document Posted
+	 *	@return true if posted
+	 */
+	public boolean isPosted()
+	{
+		int index = p_po.get_ColumnIndex("Posted");
+		if (index != -1)
+		{
+			Object posted = p_po.get_Value(index);
+			if (posted instanceof Boolean)
+				return ((Boolean)posted).booleanValue();
+			if (posted instanceof String)
+				return "Y".equals(posted);
+		}
+		throw new IllegalStateException("No Posted");
+	}	//	isPosted
+
+	
+	/**
+	 * 	Delete Accounting
+	 *	@return number of records
+	 */
+	private int deleteAcct()
+	{
+		StringBuffer sql = new StringBuffer ("DELETE Fact_Acct WHERE AD_Table_ID=")
+			.append(get_Table_ID())
+			.append(" AND Record_ID=").append(p_po.getID());
+		int no = DB.executeUpdate(sql.toString(), getTrxName());
+		if (no != 0)
+			log.info("deleted=" + no);
+		return no;
+	}	//	deleteAcct
+	
+	
+	public int get_Table_ID()
+	{
+		return p_po.get_Table_ID();
+	}	//	get_Table_ID
+
+	/**************************************************************************
+	 *  Load Document Type and GL Info.
+	 * 	Set p_DocumentType and p_GL_Category_ID
+	 * 	@return document type (i.e. C_DocType.DocBaseType)
+	 */
+	public String getDocumentType()
+	{
+		if (m_DocumentType == null)
+			setDocumentType(null);
+		return m_DocumentType;
+	}   //  getDocumentType
+	private String				m_DocumentType = null;
+	
+	/**
+	 *  Load Document Type and GL Info.
+	 * 	Set p_DocumentType and p_GL_Category_ID
+	 *	@param DocumentType
+	 */
+	public void setDocumentType (String DocumentType)
+	{
+		if (DocumentType != null)
+			m_DocumentType = DocumentType;
+		//  No Document Type defined
+		if (m_DocumentType == null && getC_DocType_ID() != 0)
+		{
+			String sql = "SELECT DocBaseType, GL_Category_ID FROM C_DocType WHERE C_DocType_ID=?";
+			PreparedStatement pstmt = null;
+			ResultSet rsDT = null;
+			try
+			{
+				pstmt = DB.prepareStatement(sql, null);
+				pstmt.setInt(1, getC_DocType_ID());
+				rsDT = pstmt.executeQuery();
+				if (rsDT.next())
+				{
+					m_DocumentType = rsDT.getString(1);
+					m_GL_Category_ID = rsDT.getInt(2);
+				}
+			}
+			catch (SQLException e)
+			{
+				log.log(Level.SEVERE, sql, e);
+			}
+			finally
+			{
+				DB.close(rsDT, pstmt);
+				rsDT = null; 
+				pstmt = null;
+			}
+		}
+		if (m_DocumentType == null)
+		{
+			log.log(Level.SEVERE, "No DocBaseType for C_DocType_ID=" 
+				+ getC_DocType_ID() + ", DocumentNo=" + getDocumentNo());
+		}
+
+		//  We have a document Type, but no GL info - search for DocType
+		if (m_GL_Category_ID == 0)
+		{
+			String sql = "SELECT GL_Category_ID FROM C_DocType "
+				+ "WHERE AD_Client_ID=? AND DocBaseType=?";
+			try
+			{
+				PreparedStatement pstmt = DB.prepareStatement(sql, null);
+				pstmt.setInt(1, getAD_Client_ID());
+				pstmt.setString(2, m_DocumentType);
+				ResultSet rsDT = pstmt.executeQuery();
+				if (rsDT.next())
+					m_GL_Category_ID = rsDT.getInt(1);
+				rsDT.close();
+				pstmt.close();
+			}
+			catch (SQLException e)
+			{
+				log.log(Level.SEVERE, sql, e);
+			}
+		}
+
+		//  Still no GL_Category - get Default GL Category
+		if (m_GL_Category_ID == 0)
+		{
+			String sql = "SELECT GL_Category_ID FROM GL_Category "
+				+ "WHERE AD_Client_ID=? "
+				+ "ORDER BY IsDefault DESC";
+			try
+			{
+				PreparedStatement pstmt = DB.prepareStatement(sql, null);
+				pstmt.setInt(1, getAD_Client_ID());
+				ResultSet rsDT = pstmt.executeQuery();
+				if (rsDT.next())
+					m_GL_Category_ID = rsDT.getInt(1);
+				rsDT.close();
+				pstmt.close();
+			}
+			catch (SQLException e)
+			{
+				log.log(Level.SEVERE, sql, e);
+			}
+		}
+		//
+		if (m_GL_Category_ID == 0)
+			log.log(Level.SEVERE, "No default GL_Category - " + toString());
+
+		if (m_DocumentType == null)
+			throw new IllegalStateException("Document Type not found");
+	}	//	setDocumentType
+
+	private int					m_GL_Category_ID = 0;
+
+	/**
+	 * 	Get C_DocType_ID
+	 *	@return DocType
+	 */
+	public int getC_DocType_ID()
+	{
+		int index = p_po.get_ColumnIndex("C_DocType_ID");
+		if (index != -1)
+		{
+			Integer ii = (Integer)p_po.get_Value(index);
+			//	DocType does not exist - get DocTypeTarget
+			if (ii != null && ii.intValue() == 0)
+			{
+				index = p_po.get_ColumnIndex("C_DocTypeTarget_ID");
+				if (index != -1)
+					ii = (Integer)p_po.get_Value(index);
+			}
+			if (ii != null)
+				return ii.intValue();
+		}
+		return 0;
+	}	//	getC_DocType_ID
+
+	
+	/**
+	 * 	Get Accounting Date
+	 *	@return currency
+	 */
+	public Timestamp getDateAcct()
+	{
+		if (m_DateAcct != null)
+			return m_DateAcct;
+		int index = p_po.get_ColumnIndex("DateAcct");
+		if (index != -1)
+		{
+			m_DateAcct = (Timestamp)p_po.get_Value(index);
+			if (m_DateAcct != null)
+				return m_DateAcct;
+		}
+		throw new IllegalStateException("No DateAcct");
+	}	//	getDateAcct
+	/** Accounting Date				*/
+	private Timestamp			m_DateAcct = null;
+
+	
+	
+	/**
+	 *  Post Document.
+	 *  <pre>
+	 *  - try to lock document (Processed='Y' (AND Processing='N' AND Posted='N'))
+	 * 		- if not ok - return false
+	 *          - postlogic (for all Accounting Schema)
+	 *              - create Fact lines
+	 *          - postCommit
+	 *              - commits Fact lines and Document & sets Processing = 'N'
+	 *              - if error - create Note
+	 *  </pre>
+	 *  @param force if true ignore that locked
+	 *  @param repost if true ignore that already posted
+	 *  @return null if posted error otherwise
+	 */
+	public final String post (boolean force, boolean repost)
+	{
+		if (m_DocStatus == null)
+			;	//	return "No DocStatus for DocumentNo=" + getDocumentNo();
+		else if (m_DocStatus.equals(DocumentEngine.STATUS_Completed)
+			|| m_DocStatus.equals(DocumentEngine.STATUS_Closed)
+			|| m_DocStatus.equals(DocumentEngine.STATUS_Voided)
+			|| m_DocStatus.equals(DocumentEngine.STATUS_Reversed))
+			;
+		else
+			return "Invalid DocStatus='" + m_DocStatus + "' for DocumentNo=" + getDocumentNo();
+		//
+		if (p_po.getAD_Client_ID() != m_ass[0].getAD_Client_ID())
+		{
+			String error = "AD_Client_ID Conflict - Document=" + p_po.getAD_Client_ID()
+				+ ", AcctSchema=" + m_ass[0].getAD_Client_ID();
+			log.severe(error);
+			return error;
+		}
+		
+		//  Lock Record ----
+		String trxName = null;	//	outside trx if on server
+		if (! m_manageLocalTrx)
+			trxName = getTrxName(); // on trx if it's in client
+		StringBuffer sql = new StringBuffer ("UPDATE ");
+		sql.append(get_TableName()).append( " SET Processing='Y' WHERE ")
+			.append(get_TableName()).append("_ID=").append(get_ID())
+			.append(" AND Processed='Y' AND IsActive='Y'");
+		if (!force)
+			sql.append(" AND (Processing='N' OR Processing IS NULL)");
+		if (!repost)
+			sql.append(" AND Posted='N'");
+		if (DB.executeUpdate(sql.toString(), trxName) == 1)
+			log.info("Locked: " + get_TableName() + "_ID=" + get_ID());
+		else
+		{
+			log.log(Level.SEVERE, "Resubmit - Cannot lock " + get_TableName() + "_ID=" 
+				+ get_ID() + ", Force=" + force + ",RePost=" + repost);
+			if (force)
+				return "Cannot Lock - ReSubmit";
+			return "Cannot Lock - ReSubmit or RePost with Force";
+		}
+		
+		p_Error = loadDocumentDetails();
+		if (p_Error != null)
+			return p_Error;
+
+		Trx trx = Trx.get(getTrxName(), true);
+		//  Delete existing Accounting
+		if (repost)
+		{
+			if (isPosted() && !isPeriodOpen())	//	already posted - don't delete if period closed
+			{
+				log.log(Level.SEVERE, toString() + " - Period Closed for already posed document");
+				unlock();
+				trx.commit(); trx.close();
+				return "PeriodClosed";
+			}
+			//	delete it
+			deleteAcct();
+		}
+		else if (isPosted())
+		{
+			log.log(Level.SEVERE, toString() + " - Document already posted");
+			unlock();
+			trx.commit(); trx.close();
+			return "AlreadyPosted";
+		}
+		
+		p_Status = STATUS_NotPosted;
+
+		//  Create Fact per AcctSchema
+		m_fact = new ArrayList<Fact>(); // m_fact = new Fact[]; TODO Hernandez
+
+		//  for all Accounting Schema
+		boolean OK = true;
+		//getPO().setDoc(this) TODO Hernandez;
+		try
+		{
+			for (int i = 0; OK && i < m_ass.length; i++)
+			{
+				//	if acct schema has "only" org, skip
+				boolean skip = false;
+				if (m_ass[i].getAD_OrgOnly_ID() != 0)
+				{
+					//	Header Level Org
+					skip = m_ass[i].isSkipOrg(getAD_Org_ID());
+					//	Line Level Org
+					if (p_lines != null)
+					{
+						for (int line = 0; skip && line < p_lines.length; line++)
+						{
+							skip = m_ass[i].isSkipOrg(p_lines[line].getAD_Org_ID());
+							if (!skip)
+								break;
+						}
+					}
+				}
+				if (skip)
+					continue;
+				//	post
+				log.info("(" + i + ") " + p_po);
+				p_Status = postLogic (i);
+				if (!p_Status.equals(STATUS_Posted))
+					OK = false;
+			}
+		}
+		catch (Exception e)
+		{
+			log.log(Level.SEVERE, "", e);
+			p_Status = STATUS_Error;
+			p_Error = e.toString();
+			OK = false;
+		}
+
+		String validatorMsg = null;
+		// Call validator on before post
+		if (p_Status.equals(STATUS_Posted)) {			
+			validatorMsg = ModelValidationEngine.get().fireDocValidate(getPO(), ModelValidator.TIMING_BEFORE_POST);
+			if (validatorMsg != null) {
+				p_Status = STATUS_Error;
+				p_Error = validatorMsg;
+				OK = false;
+			}
+		}
+
+		//  commitFact
+		p_Status = postCommit (p_Status);
+
+		if (p_Status.equals(STATUS_Posted)) {
+			validatorMsg = ModelValidationEngine.get().fireDocValidate(getPO(), ModelValidator.TIMING_AFTER_POST);
+			if (validatorMsg != null) {
+				p_Status = STATUS_Error;
+				p_Error = validatorMsg;
+				OK = false;
+			}
+		}
+		  
+		//  Create Note
+		if (!p_Status.equals(STATUS_Posted))
+		{
+			//  Insert Note
+			String AD_MessageValue = "PostingError-" + p_Status;
+			int AD_User_ID = p_po.getUpdatedBy();
+			MNote note = new MNote (getCtx(), AD_MessageValue, AD_User_ID, 
+				getAD_Client_ID(), getAD_Org_ID(), null);
+			note.setRecord(p_po.get_Table_ID(), p_po.getID());
+			//  Reference
+			note.setReference(toString());	//	Document
+			//	Text
+			StringBuffer Text = new StringBuffer (Msg.getMsg(Env.getCtx(), AD_MessageValue));
+			if (p_Error != null)
+				Text.append(" (").append(p_Error).append(")");
+			String cn = getClass().getName();
+			Text.append(" - ").append(cn.substring(cn.lastIndexOf('.')))
+				.append(" (").append(getDocumentType())
+				.append(" - DocumentNo=").append(getDocumentNo())
+				.append(", DateAcct=").append(getDateAcct().toString().substring(0,10))
+				.append(", Amount=").append(getAmount())
+				.append(", Sta=").append(p_Status)
+				.append(" - PeriodOpen=").append(isPeriodOpen())
+				.append(", Balanced=").append(isBalanced());
+			note.setTextMsg(Text.toString());
+			note.save();
+			p_Error = Text.toString();
+		}
+
+		//  dispose facts
+		for (int i = 0; i < m_fact.size(); i++) //TODO Hernandez m_fact.length;
+		{
+			Fact fact = m_fact.get(i);	// m_fact.[i];
+			if (fact != null)
+				fact.dispose();
+		}
+		p_lines = null;
+
+		if (p_Status.equals(STATUS_Posted))
+			return null;
+		return p_Error;
+	}   //  post
+	
+	
+	protected PO getPO()
+	{
+		return p_po;
+	}	//	getPO
+
+	
+	
     /**
      * Constructor de la clase ...
      *
@@ -328,7 +1000,7 @@ public abstract class Doc {
 
     /** Descripción de Campos */
 
-    private Fact[] m_fact = null;
+    private ArrayList<Fact> m_fact = null;
 
     /** Descripción de Campos */
 
@@ -492,7 +1164,7 @@ public abstract class Doc {
 
         // Create Fact per AcctSchema
 
-        m_fact = new Fact[ m_ass.length ];
+        m_fact = new ArrayList<Fact>( m_ass.length ); // m_fact = new Fact[ m_ass.length ]; TODO Hernandez
 
         // for all Accounting Schema
 
@@ -551,9 +1223,9 @@ public abstract class Doc {
 
         // dispose facts
 
-        for( int i = 0;i < m_fact.length;i++ ) {
-            if( m_fact[ i ] != null ) {
-                m_fact[ i ].dispose();
+        for( int i = 0;i < m_fact.size();i++ ) { //m_fact.length //TODO Hernandez
+            if( m_fact.get(i) != null ) { //m_fact [i]
+                m_fact.get(i).dispose();
             }
         }
 
@@ -594,9 +1266,9 @@ public abstract class Doc {
 
         // createFacts
 
-        m_fact[ index ] = createFact( m_ass[ index ] );
+        m_fact.set(index, createFact( m_ass[ index ] )); //m_fact[ index ] = createFact( m_ass[ index ] );TODO Hernandez
 
-        if( m_fact[ index ] == null ) {
+        if( m_fact.get(index) == null ) {  ////m_fact[ index ]
             return STATUS_Error;
         }
 
@@ -604,41 +1276,41 @@ public abstract class Doc {
 
         // Disyte - FB
         // Invierte importes negativos
-        m_fact[index].correctNegativeAmounts();
+        m_fact.get(index).correctNegativeAmounts(); ////m_fact[ index ]
         
         // check accounts
 
-        if( !m_fact[ index ].checkAccounts()) {
+        if( !m_fact.get(index).checkAccounts()) {
             return STATUS_InvalidAccount;
         }
 
         // distribute
 
-        if( !m_fact[ index ].distribute()) {
+        if( !m_fact.get(index).distribute()) {
             return STATUS_Error;
         }
 
         // balanceSource
 
-        if( !m_fact[ index ].isSourceBalanced()) {
-            m_fact[ index ].balanceSource();
+        if( !m_fact.get(index).isSourceBalanced()) {
+            m_fact.get(index).balanceSource();
         }
 
         // balanceSegments
 
-        if( !m_fact[ index ].isSegmentBalanced()) {
-            m_fact[ index ].balanceSegments();
+        if( !m_fact.get(index).isSegmentBalanced()) {
+            m_fact.get(index).balanceSegments();
         }
 
         // balanceAccounting
 
-        if( !m_fact[ index ].isAcctBalanced()) {
-            m_fact[ index ].balanceAccounting();
+        if( !m_fact.get(index).isAcctBalanced()) {
+            m_fact.get(index).balanceAccounting();
         }
 
         // Modificaciones custom para cada tipo de documento
 
-        String status = applyCustomSettings(m_fact[index]);
+        String status = applyCustomSettings(m_fact.get(index));
         if (status != null)
         	return status;
         
@@ -666,8 +1338,8 @@ public abstract class Doc {
             // Commit Facts
 
             if( status.equals( STATUS_Posted )) {
-                for( int i = 0;i < m_fact.length;i++ ) {
-                    if( (m_fact[ i ] != null) && m_fact[ i ].save( getTrxName())) {
+                for( int i = 0;i < m_fact.size();i++ ) { //m_fact.length
+                    if( (m_fact.get(i) != null) && m_fact.get(i).save( getTrxName())) {
                         ;
                     } else {
                         log.log( Level.SEVERE,"(fact not saved) ... rolling back" );
@@ -1604,7 +2276,14 @@ public abstract class Doc {
      */
     public abstract String applyCustomSettings( Fact fact );
     
-    
+	/**
+	 *  Load Document Details
+	 *  @return error message or null
+	 *  TODO: Subclasses MUST implement this method!
+	 */
+	protected abstract String loadDocumentDetails ();
+
+	
     
 }    // Doc
 
