@@ -33,6 +33,9 @@ Este Fichero sirve para compilar el subproyecto base independiente del proyecto 
   	<pathelement path="${jar.path}/AxisJar.jar" />
   	<pathelement path="../tools/lib/jconn3.jar"/>
     <pathelement path="../tools/lib/j2ee.jar"/>
+    <pathelement path="../lib/postgresql.jar"/>
+    <pathelement path="../lib/oracle.jar"/>
+    <pathelement path="../lib/sybase.jar"/>    
   </path>
 
 
