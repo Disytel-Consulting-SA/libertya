@@ -21,7 +21,6 @@ Este Fichero sirve para compilar el subproyecto base independiente del proyecto 
     <pathelement path="${classpath}"/>
   	<pathelement path="${jar.path}/jboss.jar"/>
     <pathelement path="${jar.path}/XOXPTools.jar"/>
-    <pathelement path="../dbPort/dbPort.jar"/>
     <pathelement path="../looks/CLooks.jar"/>
     <pathelement path="../print/Print.jar"/>
     <pathelement path="../tools/lib/junit.jar"/>

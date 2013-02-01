@@ -24,8 +24,6 @@
     <pathelement path="${classpath}"/>
     <pathelement path="${jar.path}/XOXPTools.jar"/>
     <pathelement path="../base/Base.jar"/>
-    <pathelement path="../print/Print.jar"/>
-    <pathelement path="../dbPort/dbPort.jar"/>
     <pathelement path="../lib/jPDF.jar"/>
     <pathelement path="../looks/CLooks.jar"/>
     <pathelement path="../extend/Extend.jar"/>
@@ -52,9 +50,7 @@
 		targetfile="${dist.dir}/${jar.name}.jar">
       <srcfiles dir="${src}" includes="**/*.java"/>
       <srcfiles dir="..\base" includes="Base.jar"/>
-      <srcfiles dir="..\dbPort" includes="dbPort.jar"/>
       <srcfiles dir="..\looks" includes="CLooks.jar"/>
-      <srcfiles dir="..\print" includes="Print.jar"/>
       <srcfiles dir="..\extend" includes="Extend.jar"/>
       <srcfiles dir="..\interfaces" includes="Interfaces.jar"/>
     </uptodate>
@@ -96,9 +92,7 @@
   <target name="clientDistribute" depends="clientCompile" unless="jar.uptodate">
     <!-- Incluir todos los archivos jar-->
     <unjar src="..\base\Base.jar" dest="${build.dir}" />
-    <unjar src="..\dbPort\dbPort.jar" dest="${build.dir}" />
     <unjar src="..\looks\CLooks.jar" dest="${build.dir}" />
-    <unjar src="..\print\Print.jar" dest="${build.dir}" />
     <unjar src="..\extend\Extend.jar" dest="${build.dir}" />
     <unjar src="..\interfaces\Interfaces.jar" dest="${build.dir}" />
     <delete dir="${build.dir}/META-INF"/>
