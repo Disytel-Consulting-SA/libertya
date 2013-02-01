@@ -18,8 +18,6 @@
 	<target name="build" depends="init">
 		<ant inheritAll="false" dir="tools"/>
 		<ant inheritAll="false" dir="looks"/>
-    	<ant inheritAll="false" dir="dbPort"/>    
-    	<ant inheritAll="false" dir="print"/>	
 		<ant inheritAll="false" dir="base"/>
 		<ant inheritAll="false" dir="extend"/>
 		<ant inheritAll="false" dir="client"/>
@@ -37,8 +35,6 @@
 	<target name="clean">
 		<ant inheritAll="false" dir="tools" target="clean"/>
 		<ant inheritAll="false" dir="looks" target="clean"/>
-		<ant inheritAll="false" dir="print" target="clean"/>
-		<ant inheritAll="false" dir="dbPort" target="clean"/>
 		<ant inheritAll="false" dir="base" target="clean"/>
 		<ant inheritAll="false" dir="extend" target="clean"/>
 		<ant inheritAll="false" dir="client" target="clean"/>

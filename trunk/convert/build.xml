@@ -26,7 +26,6 @@
     <pathelement path="${classpath}"/>
     <pathelement path="${jar.path}/CTools.jar"/>
     <pathelement path="${jar.path}/oracle.jar"/>
-    <pathelement path="../dbPort/dbPort.jar"/>
     <pathelement path="../base/Base.jar"/>
     <pathelement path="../tools/lib/junit.jar"/>
     <pathelement path="lib/xstream-1.2.1.jar"/>
