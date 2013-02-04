@@ -2138,11 +2138,11 @@ public abstract class PO implements Serializable, Comparator, Evaluatee {
 
 				log.finest("Se actualizaron " + no + " registros.....");
 			} catch (SQLException e) {
-				log.log(Level.SEVERE, "saveUpdate", e);
+				log.log(Level.SEVERE, "saveUpdate", e + (consulta!=null?" - " + consulta.toString():""));
 				log.saveError("Error", DB.getErrorMsg(e) + " - " + e);
 				// e.printStackTrace();
 			} catch (Exception e) {
-				log.log(Level.SEVERE, "saveUpdate", e);
+				log.log(Level.SEVERE, "saveUpdate", e + (consulta!=null?" - " + consulta.toString():""));
 				// e.printStackTrace();
 			} finally {
 				try {
@@ -2161,10 +2161,10 @@ public abstract class PO implements Serializable, Comparator, Evaluatee {
 				ok = lobSave();
 			} else {
 				if (m_trxName == null)
-					log.log(Level.SEVERE, p_info.getTableName() + "." + where);
+					log.log(Level.SEVERE, p_info.getTableName() + "." + where + (consulta!=null?" - " + consulta.toString():""));
 				else
 					log.log(Level.SEVERE, "[" + m_trxName + "] - "
-							+ p_info.getTableName() + "." + where);
+							+ p_info.getTableName() + "." + where + (consulta!=null?" - " + consulta.toString():""));
 			}
 			return saveFinish(false, ok);
 		}
@@ -2592,7 +2592,7 @@ public abstract class PO implements Serializable, Comparator, Evaluatee {
 			if (m_trxName == null)
 				consulta.commit();
 		} catch (SQLException e) {
-			log.log(Level.SEVERE, "saveNew", e);
+			log.log(Level.SEVERE, "saveNew", e + (consulta!=null?" - " + consulta.toString():""));
 			log.saveError("Error", DB.getErrorMsg(e) + " - " + e);
 			// e.printStackTrace();
 		} finally {
@@ -2621,10 +2621,10 @@ public abstract class PO implements Serializable, Comparator, Evaluatee {
 			}
 		} else {
 			if (m_trxName == null)
-				log.log(Level.SEVERE, "Not inserted - " + sqlInsert.toString());
+				log.log(Level.SEVERE, "Not inserted - " + (consulta!=null?" - " + consulta.toString():"")); // sqlInsert.toString());
 			else
 				log.log(Level.SEVERE, "[" + m_trxName + "] - Not inserted - "
-						+ sqlInsert.toString());
+						 + (consulta!=null?" - " + consulta.toString():""));  // sqlInsert.toString());
 		}
 		return saveFinish(true, ok);
 	} // saveNew
