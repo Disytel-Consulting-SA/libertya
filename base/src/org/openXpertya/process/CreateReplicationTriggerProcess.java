@@ -281,19 +281,23 @@ public class CreateReplicationTriggerProcess extends SvrProcess {
 		append( sql,  " CREATE TRIGGER replication_event BEFORE INSERT OR UPDATE OR DELETE ON " + table.getTableName() + 
 					  " FOR EACH ROW EXECUTE PROCEDURE replication_event(" + table.getAD_Table_ID() + ", '" + table.getTableName().toLowerCase() + "'); ");
 		
-		retValue.append(" - Creado el trigger: replication_event() para tabla: " + table.get_TableName() + " \n");
+		retValue.append(" - Creado el trigger: replication_event() para tabla: " + table.getTableName() + " \n");
 	}
 	
 
 	/**
 	 * En caso de nuevo/s host/s, rellenar con valor dummy el/los nuevos espacios del repArray
+	 * (unicamente donde el reparray no sea nulo o tenga un solo valor dummy)
 	 */
 	protected void appendSQLFillRepArray(StringBuffer sql) throws Exception 
 	{
-		String currentRepArray = " SELECT replicationarray FROM AD_TableReplication WHERE AD_table_ID = " + table.getAD_Table_ID() + " AND AD_Client_ID = " + getAD_Client_ID();
+		String currentRepArray = DB.getSQLValueString(get_TrxName(), " SELECT replicationarray FROM AD_TableReplication WHERE AD_table_ID = " + table.getAD_Table_ID() + " AND AD_Client_ID = ?" , getAD_Client_ID());
 		append( sql, 	" UPDATE " + table.getTableName() + 
 						" SET " + ReplicationConstants.COLUMN_REPARRAY + " = 'SET' || rpad(" + ReplicationConstants.COLUMN_REPARRAY + ", " + currentRepArray.length() + ", '" + DUMMY_REPARRAY + "') " +
-						" WHERE char_length(repArray) < " + currentRepArray.length() + "; ");
+						" WHERE " + ReplicationConstants.COLUMN_REPARRAY + " is not null and " + ReplicationConstants.COLUMN_REPARRAY + " <> '0' " +
+						" AND char_length(" + ReplicationConstants.COLUMN_REPARRAY + ") < " + currentRepArray.length() + "; ");
+		
+		retValue.append(" - Incluidas las actualizaciones de repArray para tabla: " + table.getTableName() + " \n");
 	}
 	
 	
