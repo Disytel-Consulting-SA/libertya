@@ -1,12 +1,13 @@
 /** Modelo Generado - NO CAMBIAR MANUALMENTE - Disytel */
 package org.openXpertya.model;
-import java.util.*;
+import java.util.logging.Level;
+ import java.util.*;
 import java.sql.*;
 import java.math.*;
 import org.openXpertya.util.*;
 /** Modelo Generado por AD_ReplicationHost
  *  @author Comunidad de Desarrollo Libertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
- *  @version  - 2010-11-08 12:14:32.258 */
+ *  @version  - 2013-02-04 11:58:56.401 */
 public class X_AD_ReplicationHost extends org.openXpertya.model.PO
 {
 /** Constructor estándar */
@@ -121,6 +122,10 @@ public String getHostName()
 {
 return (String)get_Value("HostName");
 }
+public KeyNamePair getKeyNamePair() 
+{
+return new KeyNamePair(getID(), getHostName());
+}
 /** Set Host port.
 Host Communication Port */
 public void setHostPort (int HostPort)
@@ -150,6 +155,23 @@ Integer ii = (Integer)get_Value("LastChangelog_ID");
 if (ii == null) return 0;
 return ii.intValue();
 }
+/** Set Password.
+Password of any length (case sensitive) */
+public void setPassword (String Password)
+{
+if (Password != null && Password.length() > 100)
+{
+log.warning("Length > 100 - truncated");
+Password = Password.substring(0,100);
+}
+set_Value ("Password", Password);
+}
+/** Get Password.
+Password of any length (case sensitive) */
+public String getPassword() 
+{
+return (String)get_Value("Password");
+}
 /** Set ReplicationArrayPos */
 public void setReplicationArrayPos (int ReplicationArrayPos)
 {
@@ -177,5 +199,20 @@ if (oo != null)
  return "Y".equals(oo);
 }
 return false;
+}
+/** Set User Name */
+public void setUserName (String UserName)
+{
+if (UserName != null && UserName.length() > 100)
+{
+log.warning("Length > 100 - truncated");
+UserName = UserName.substring(0,100);
+}
+set_Value ("UserName", UserName);
+}
+/** Get User Name */
+public String getUserName() 
+{
+return (String)get_Value("UserName");
 }
 }
