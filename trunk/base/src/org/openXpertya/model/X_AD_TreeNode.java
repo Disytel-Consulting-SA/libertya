@@ -1,12 +1,13 @@
 /** Modelo Generado - NO CAMBIAR MANUALMENTE - Disytel */
 package org.openXpertya.model;
-import java.util.*;
+import java.util.logging.Level;
+ import java.util.*;
 import java.sql.*;
 import java.math.*;
 import org.openXpertya.util.*;
 /** Modelo Generado por AD_TreeNode
  *  @author Comunidad de Desarrollo Libertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
- *  @version  - 2009-12-07 15:45:37.074 */
+ *  @version  - 2013-02-04 10:04:16.199 */
 public class X_AD_TreeNode extends org.openXpertya.model.PO
 {
 /** Constructor estándar */
@@ -75,7 +76,6 @@ Integer ii = (Integer)get_Value("AD_Tree_ID");
 if (ii == null) return 0;
 return ii.intValue();
 }
-public static final int NODE_ID_AD_Reference_ID = MReference.getReferenceID("AD_Menu");
 /** Set Node_ID */
 public void setNode_ID (int Node_ID)
 {
