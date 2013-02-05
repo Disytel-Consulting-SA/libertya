@@ -491,3 +491,7 @@ ALTER FUNCTION replication_event() OWNER TO libertya;
 
 ALTER TABLE ad_replicationhost ADD column username varchar null;
 ALTER TABLE ad_replicationhost ADD column password varchar null;
+
+-- 20130205-1105 - Incorporaciones faltantes necesarias para desarrollo Libertya Web
+ALTER TABLE AD_Role ADD COLUMN connectionprofile character(1) null;
+ALTER TABLE AD_Role ADD COLUMN userdiscount numeric(22,0) null;
