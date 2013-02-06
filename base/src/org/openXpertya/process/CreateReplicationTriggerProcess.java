@@ -284,17 +284,21 @@ public class CreateReplicationTriggerProcess extends SvrProcess {
 
 	/**
 	 * En caso de nuevo/s host/s, rellenar con valor dummy el/los nuevos espacios del repArray
-	 * (unicamente donde el reparray no sea nulo o tenga un solo valor dummy)
+	 * (unicamente para tablas donde exista replicacion "saliente")
 	 */
 	protected void appendSQLFillRepArray(StringBuffer sql) throws Exception 
 	{
 		String currentRepArray = DB.getSQLValueString(get_TrxName(), " SELECT replicationarray FROM AD_TableReplication WHERE AD_table_ID = " + table.getAD_Table_ID() + " AND AD_Client_ID = ?" , getAD_Client_ID());
-		append( sql, 	" UPDATE " + table.getTableName() + 
-						" SET " + ReplicationConstants.COLUMN_REPARRAY + " = 'SET' || rpad(" + ReplicationConstants.COLUMN_REPARRAY + ", " + currentRepArray.length() + ", '" + DUMMY_REPARRAY + "') " +
-						" WHERE " + ReplicationConstants.COLUMN_REPARRAY + " is not null and " + ReplicationConstants.COLUMN_REPARRAY + " <> '0' " +
-						" AND char_length(" + ReplicationConstants.COLUMN_REPARRAY + ") < " + currentRepArray.length() + "; ");
-		
-		retValue.append(" - Incluidas las actualizaciones de repArray para tabla: " + table.getTableName() + " \n");
+		if (currentRepArray.replace(ReplicationConstants.REPLICATION_CONFIGURATION_SENDRECEIVE, ReplicationConstants.REPLICATION_CONFIGURATION_SEND)
+				.indexOf(ReplicationConstants.REPLICATION_CONFIGURATION_SEND) >= 0)
+		{
+			append( sql, 	" UPDATE " + table.getTableName() + 
+							" SET " + ReplicationConstants.COLUMN_REPARRAY + " = 'SET' || rpad(COALESCE(" + ReplicationConstants.COLUMN_REPARRAY + ",''), " + currentRepArray.length() + ", '" + DUMMY_REPARRAY + "') " +
+							" WHERE char_length(COALESCE(" + ReplicationConstants.COLUMN_REPARRAY + ", '')) < " + currentRepArray.length() + 
+							" AND AD_Client_ID IN (0, " + Env.getAD_Client_ID(getCtx()) + "); ");
+			
+			retValue.append(" - Incluidas las actualizaciones de repArray para tabla: " + table.getTableName() + " \n");
+		}
 	}
 	
 	
