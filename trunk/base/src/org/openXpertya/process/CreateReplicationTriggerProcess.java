@@ -229,22 +229,19 @@ public class CreateReplicationTriggerProcess extends SvrProcess {
 			
 			retValue.append(" - Actualizadas entradas ya existentes en tabla (via AD_ComponentObjectUID): " + table.getTableName() + " \n");
 		}
+		// Para registros cuyo valor en AD_ComponentObjectUID es NULL, o bien dicha columna no existe en la tabla:
+		// 		En algunos casos esta columna puede no llegar a existir, por ejemplo en C_CashBook no está seteado.  Aunque podría
+		// 		solucionarse simplemente para ese caso agregando la columna, puede presentarse en otras ocasiones, con lo cual
+		// 		la solucion pasa simplemente en normalizar los registros preexistentes de manera similar que ad_componentobjectuid
+		// 		Verificamos si existe la columna NombreDeTabla_ID (ejemplo C_Invoice => C_Invoice_ID)
+		if (existColumnInTable(table.getTableName()+"_ID", table.getTableName()))
+			append (sql, " UPDATE " + table.getTableName() + " SET " + ReplicationConstants.COLUMN_RETRIEVEUID + " = '" + table.getTableName() + "-' || " + table.getTableName() + "_ID::varchar ");
 		else
-		// En algunos casos esta columna puede no llegar a existir, por ejemplo en C_CashBook no está seteado.  Aunque podría
-		// solucionarse simplemente para ese caso agregando la columna, puede presentarse en otras ocasiones, con lo cual
-		// la solucion pasa simplemente en normalizar los registros preexistentes de manera similar que ad_componentobjectuid
-		{
-			// Verificamos si existe la columna NombreDeTabla_ID (ejemplo C_Invoice => C_Invoice_ID)
-			if (existColumnInTable(table.getTableName()+"_ID", table.getTableName()))
-				append (sql, " UPDATE " + table.getTableName() + " SET " + ReplicationConstants.COLUMN_RETRIEVEUID + " = '" + table.getTableName() + "-' || " + table.getTableName() + "_ID::varchar ");
-			else
-				// No hay forma de generar un UID de manera sencilla sin NombreDeTabla_ID (ejemplo: c_acctschema_gl). Utilizar Tabla-AD_Client-AD_Org-Created
-				append (sql, " UPDATE " + table.getTableName() + " SET " + ReplicationConstants.COLUMN_RETRIEVEUID + " = '" + table.getTableName() + "-' || AD_Client_ID::varchar || '-' || AD_Org_ID::varchar || '-' || Created::varchar ");
+			// No hay forma de generar un UID de manera sencilla sin NombreDeTabla_ID (ejemplo: c_acctschema_gl). Utilizar Tabla-AD_Client-AD_Org-Created
+			append (sql, " UPDATE " + table.getTableName() + " SET " + ReplicationConstants.COLUMN_RETRIEVEUID + " = '" + table.getTableName() + "-' || AD_Client_ID::varchar || '-' || AD_Org_ID::varchar || '-' || Created::varchar ");
 
-			append (sql, " WHERE " + ReplicationConstants.COLUMN_RETRIEVEUID + " IS NULL AND (AD_Client_ID = " + getAD_Client_ID() + " OR AD_Client_ID = 0); ");
-			retValue.append(" - Actualizadas entradas ya existentes en tabla (via Tabla_RecordID): " + table.getTableName() + " \n");	
-		}
-			
+		append (sql, " WHERE " + ReplicationConstants.COLUMN_RETRIEVEUID + " IS NULL AND (AD_Client_ID = " + getAD_Client_ID() + " OR AD_Client_ID = 0); ");
+		retValue.append(" - Actualizadas entradas ya existentes en tabla (via Tabla_RecordID): " + table.getTableName() + " \n");	
 	}
 	
 
