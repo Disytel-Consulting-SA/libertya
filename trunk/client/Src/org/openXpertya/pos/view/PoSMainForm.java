@@ -5518,6 +5518,18 @@ public class PoSMainForm extends CPanel implements FormPanel, ASyncProcess, Disp
 
     	Env.setContext(Env.getCtx(), windowNo, "TenderType", tenderType);
     	
+		// Si es tarjeta, entonces se debe seleccionar el campo Ingresar Tarjeta
+		// por defecto
+    	if(tenderType.equals(MPOSPaymentMedium.TENDERTYPE_CreditCard)){
+    		SwingUtilities.invokeLater(new Runnable() {
+
+    			public void run() {
+    	    		getCCardText().requestFocus();
+    			}
+    			
+    		});
+    	}
+    	
 		// Refresca la interfaz gráfica.
 		paramsPanel.repaint();
 		paramsPanel.revalidate();
