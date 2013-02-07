@@ -1157,6 +1157,9 @@ public class FiscalDocumentPrint {
 			int paymentQty = 0;
 			// Primero el efectivo
 			if (cashPayment.getAmount().compareTo(BigDecimal.ZERO) > 0) {
+				// TODO: Si se necesita mostrar en la impresión el medio de
+				// cobro del efectivo, se debe tomar de C_Cashline, columna
+				// C_POSPaymentMedium_ID
 				invoice.addPayment(cashPayment);
 				paymentQty++;
 			}
@@ -1236,25 +1239,38 @@ public class FiscalDocumentPrint {
 	private String getInvoicePaymentDescription(MPayment mPayment) {
 		Properties ctx = mPayment.getCtx();
 		String description = null;
+		// Primero verificamos si podemos obtener el medio de pago involucrado,
+		// en ese caso utilizamos ese en la impresión
+		if(!Util.isEmpty(mPayment.getC_POSPaymentMedium_ID(), true)){
+			MPOSPaymentMedium paymentMedium = new MPOSPaymentMedium(ctx,
+					mPayment.getC_POSPaymentMedium_ID(), getTrxName());
+			description = paymentMedium.getName();
+		}
 		// - Tarjeta de Crédito: NombreTarjeta NroCupon.
 		//   Ej: VISA 1248
 		if (MPayment.TENDERTYPE_CreditCard.equals(mPayment.getTenderType())) {
-			description = MRefList.getListName(ctx,
+			description = (description == null?MRefList.getListName(ctx,
 					MPayment.CREDITCARDTYPE_AD_Reference_ID,
-					mPayment.getCreditCardType()) + " " + mPayment.getCouponNumber();
+					mPayment.getCreditCardType()):description) + " " + mPayment.getCouponNumber();
 		// - Cheque: Cheque NumeroCheque
 		//   Ej: Cheque 00032456	
 		} else if (MPayment.TENDERTYPE_Check.equals(mPayment.getTenderType())) {
-			description = Msg.translate(ctx, "FiscalTicketCheckPayment") + " "
+			description = (description == null ? Msg.translate(ctx,
+					"FiscalTicketCheckPayment") : description)
+					+ " "
 					+ mPayment.getCheckNo();
 		// - Transferencia: Transf NroDeTransferencia
 		//   Ej: Transf 893276662	
 		} else if (MPayment.TENDERTYPE_DirectDeposit.equals(mPayment.getTenderType())) {
-			description = Msg.translate(ctx, "FiscalTicketTransferPayment")
-					+ " " + mPayment.getCheckNo(); // En CheckNo se guarda el nro de transferencia actualmente.
+			description = (description == null ? Msg.translate(ctx,
+					"FiscalTicketTransferPayment") : description)
+					+ " "
+					+ mPayment.getCheckNo(); // En CheckNo se guarda el nro de
+											// transferencia actualmente.
 		// Otros tipos: Otros pagos
 		} else {
-			description = Msg.translate(ctx, "FiscalTicketOthersPayment");
+			description = (description == null ? Msg.translate(ctx,
+					"FiscalTicketOthersPayment") : description);
 		}
 		
 		return description;
