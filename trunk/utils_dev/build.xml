@@ -27,10 +27,9 @@
 		<!-- fin sistema de producción con trazabilidad en pruebas   -->
 		<ant inheritAll="false" dir="serverRoot"/>
 		<ant inheritAll="false" dir="serverApps"/>
-		<ant inheritAll="false" dir="webStore"/>
 		<ant inheritAll="false" dir="sqlj"/>
-		<ant inheritAll="false" dir="install"/>
 		<ant inheritAll="false" dir="zkwebui"/>
+		<ant inheritAll="false" dir="install"/>
 	</target>
 	<target name="clean">
 		<ant inheritAll="false" dir="tools" target="clean"/>
@@ -44,10 +43,9 @@
 		<!-- fin sistema de produccion con trazabilidad en pruebas   -->
 		<ant inheritAll="false" dir="serverRoot" target="clean"/>
 		<ant inheritAll="false" dir="serverApps" target="clean"/>
-		<ant inheritAll="false" dir="webStore" target="clean"/>
 		<ant inheritAll="false" dir="sqlj" target="clean"/>
+		<ant inheritAll="false" dir="zkwebui" target="clean"/>		
 		<ant inheritAll="false" dir="install" target="clean"/>
-		<ant inheritAll="false" dir="zkwebui" target="clean"/>
 	</target>
 	<!-- ================================================ -->
 	<!-- Instalacion Local Libertya                    -->

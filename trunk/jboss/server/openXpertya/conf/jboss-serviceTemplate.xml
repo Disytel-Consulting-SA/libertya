@@ -9,6 +9,8 @@
      attribute.
     -->
 	<classpath archives="*" codebase="lib"/>
+	<!--  Incluir las librerias eventualmente referenciadas desde las webapps -->
+	<classpath archives="*" codebase="../../../lib"/>
 	<!-- ==================================================================== -->
 	<!-- JSR-77 Single JBoss Server Management Domain                         -->
 	<!-- ==================================================================== -->

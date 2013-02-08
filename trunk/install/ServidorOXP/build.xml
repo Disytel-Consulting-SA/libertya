@@ -467,7 +467,7 @@
   	
 	<copy file="${basedir}/lib/OXPRoot.ear" todir="${DEPLOY_APPS_OXP}"/>
 	<copy file="${basedir}/lib/OXPApps.ear" todir="${DEPLOY_APPS_OXP}"/>
-	<copy file="${basedir}/lib/TiendaWebOXP.ear" todir="${DEPLOY_APPS_OXP}"/>
+	<copy file="${basedir}/lib/webui.war" todir="${DEPLOY_APPS_OXP}"/>
 	  	
   </target>
 		

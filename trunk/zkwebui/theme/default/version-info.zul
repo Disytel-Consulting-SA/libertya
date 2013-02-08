@@ -5,14 +5,14 @@ Copyright (C) 2009 Idalica Corporation
 -->
 <zk>
 <zscript>
-	import org.compiere.Adempiere;
-	var mainVersion = Adempiere.MAIN_VERSION;
-	var dateVersion = Adempiere.DATE_VERSION;
-	var dbVersion = Adempiere.DB_VERSION;
-	var vendor = Adempiere.getImplementationVendor();
-	var vendorVersion = Adempiere.getImplementationVersion();
-	var jvm = Adempiere.getJavaInfo();
-	var os = Adempiere.getOSInfo();
+	import org.openXpertya.OpenXpertya;
+	var mainVersion = OpenXpertya.MAIN_VERSION;
+	var dateVersion = OpenXpertya.DATE_VERSION;
+	var dbVersion = OpenXpertya.DB_VERSION;
+	var vendor = OpenXpertya.getImplementationVendor();
+	var vendorVersion = OpenXpertya.getImplementationVersion();
+	var jvm = OpenXpertya.getJavaInfo();
+	var os = OpenXpertya.getOSInfo();
 </zscript>
 <html>
 <![CDATA[
