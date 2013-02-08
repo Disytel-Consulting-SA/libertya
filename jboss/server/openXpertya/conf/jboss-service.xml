@@ -10,7 +10,9 @@
     -->
 	<classpath archives="*" codebase="lib"/>
 	<!--  Incluir las librerias eventualmente referenciadas desde las webapps -->
-	<classpath archives="*" codebase="../../../lib"/>
+	<classpath archives="OXP.jar" codebase="../../../lib"/>
+	<classpath archives="OXPSLib.jar" codebase="../../../lib"/>
+	<classpath archives="itext_1.5.4.jar" codebase="../../../lib"/> 
 	<!-- ==================================================================== -->
 	<!-- JSR-77 Single JBoss Server Management Domain                         -->
 	<!-- ==================================================================== -->
