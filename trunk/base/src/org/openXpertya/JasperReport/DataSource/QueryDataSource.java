@@ -55,7 +55,9 @@ public abstract class QueryDataSource implements OXPJasperDataSource {
 		ResultSet rs = null;
 		try{
 			// Se crea la consulta y se asignan los parámetros.
-			pstmt = DB.prepareStatement(getQuery(), getTrxName());
+			pstmt = DB.prepareStatement(getQuery(),
+					ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_READ_ONLY,
+					getTrxName(), isQueryNoConvert());
 			int i = 1;
 			for (Object parameterValue : getParameters()) {
 				pstmt.setObject(i++, parameterValue);				
@@ -128,5 +130,13 @@ public abstract class QueryDataSource implements OXPJasperDataSource {
 	 */
 	protected Map<String, Object> getCurrentRecord() {
 		return getRecords().get(getCurrentRecordIndex());
+	}
+	
+	/**
+	 * @return true si no se debe pasar la query por el convert, false si se
+	 *         debe pasar por él. Por defecto sí se pasa por el convert
+	 */
+	protected boolean isQueryNoConvert(){
+		return false;
 	}
 }

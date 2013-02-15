@@ -10,10 +10,14 @@ public class PostInstallUpgradeFrom1301 extends PluginPostInstallProcess {
 	protected final static String PRODUCT_SALES_PURCHASE_MOVEMENTS_JASPER_REPORT_UID = "CORE-AD_JasperReport-1010090";
 	protected final static String PRODUCT_SALES_PURCHASE_MOVEMENTS_JASPER_REPORT_FILENAME = "ProductSalesPurchaseMovements.jasper";
 	
+	/** UID del informe de Maestras de Compras */
+	protected final static String PURCHASE_MASTER_JASPER_REPORT_UID = "CORE-AD_JasperReport-1010091";
+	protected final static String PURCHASE_MASTER_JASPER_REPORT_FILENAME = "PurchaseMasterReport.jasper";
+	
 	protected String doIt() throws Exception {
 		super.doIt();
 		
-		// Impresión de Transferencia de Mercadería
+		// Movimientos de venta/compra de artículo
 		MJasperReport
 				.updateBinaryData(
 						get_TrxName(),
@@ -23,6 +27,17 @@ public class PostInstallUpgradeFrom1301 extends PluginPostInstallProcess {
 								.readBinaryFromJar(
 										jarFileURL,
 										getBinaryFileURL(PRODUCT_SALES_PURCHASE_MOVEMENTS_JASPER_REPORT_FILENAME)));
+		
+		// Maestra de Compras
+		MJasperReport
+				.updateBinaryData(
+						get_TrxName(),
+						getCtx(),
+						PURCHASE_MASTER_JASPER_REPORT_UID,
+						JarHelper
+								.readBinaryFromJar(
+										jarFileURL,
+										getBinaryFileURL(PURCHASE_MASTER_JASPER_REPORT_FILENAME)));
 		
 		return " ";
 	}
