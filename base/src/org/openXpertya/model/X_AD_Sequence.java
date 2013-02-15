@@ -1,13 +1,14 @@
-/** Modelo Generado - NO CAMBIAR MANUALMENTE - Copyright (C) 2006 FUNDESLE */
+/** Modelo Generado - NO CAMBIAR MANUALMENTE - Disytel */
 package org.openXpertya.model;
-import java.util.*;
+import java.util.logging.Level;
+ import java.util.*;
 import java.sql.*;
 import java.math.*;
 import org.openXpertya.util.*;
 /** Modelo Generado por AD_Sequence
- *  @author Comunidad de Desarrollo openXpertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
- *  @version  - 2009-10-30 11:28:20.41 */
-public class X_AD_Sequence extends PO
+ *  @author Comunidad de Desarrollo Libertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
+ *  @version  - 2013-02-15 14:10:05.175 */
+public class X_AD_Sequence extends org.openXpertya.model.PO
 {
 /** Constructor estándar */
 public X_AD_Sequence (Properties ctx, int AD_Sequence_ID, String trxName)
@@ -16,7 +17,7 @@ super (ctx, AD_Sequence_ID, trxName);
 /** if (AD_Sequence_ID == 0)
 {
 setAD_Sequence_ID (0);
-setCurrentNext (0);	// 1000000
+setCurrentNext (Env.ZERO);	// 1000000
 setCurrentNextSys (0);	// 100
 setIncrementNo (0);	// 1
 setIsAutoSequence (false);
@@ -30,13 +31,13 @@ public X_AD_Sequence (Properties ctx, ResultSet rs, String trxName)
 {
 super (ctx, rs, trxName);
 }
-/** AD_Table_ID=115 */
-public static final int Table_ID=115;
+/** AD_Table_ID */
+public static final int Table_ID = M_Table.getTableID("AD_Sequence");
 
 /** TableName=AD_Sequence */
 public static final String Table_Name="AD_Sequence";
 
-protected static KeyNamePair Model = new KeyNamePair(115,"AD_Sequence");
+protected static KeyNamePair Model = new KeyNamePair(Table_ID,"AD_Sequence");
 protected static BigDecimal AccessLevel = new BigDecimal(3);
 
 /** Load Meta Data */
@@ -81,17 +82,18 @@ return ii.intValue();
 }
 /** Set Current Next.
 The next number to be used */
-public void setCurrentNext (int CurrentNext)
+public void setCurrentNext (BigDecimal CurrentNext)
 {
-set_Value ("CurrentNext", new Integer(CurrentNext));
+if (CurrentNext == null) throw new IllegalArgumentException ("CurrentNext is mandatory");
+set_Value ("CurrentNext", CurrentNext);
 }
 /** Get Current Next.
 The next number to be used */
-public int getCurrentNext() 
+public BigDecimal getCurrentNext() 
 {
-Integer ii = (Integer)get_Value("CurrentNext");
-if (ii == null) return 0;
-return ii.intValue();
+BigDecimal bd = (BigDecimal)get_Value("CurrentNext");
+if (bd == null) return Env.ZERO;
+return bd;
 }
 /** Set Current Next (System).
 Next sequence for system use */

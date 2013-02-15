@@ -191,10 +191,24 @@ public class POSDocTypeCreate extends SvrProcess {
         // Ej. 500000001 (el 5 corresponde al punto de venta) esto se hace
         // así dado que el campo es de tipo int y los ceros a la izquierda
         // serían quitados.
-        int startNo = Integer.parseInt(posNumber.substring(3,4) + "00000001");
+        int startNo;
+        BigDecimal currentNext;
+        // Si el punto de venta termina en 0.
+        // El prefijo se calcula con 3 digitos y el currentNext con 10 digitos
+        // Ej. si letra es A y punto de venta es 40,
+        // prefix = A00 y currentNext = 4000000000
+        if (Integer.parseInt(posNumber.substring(3,4)) == 0){
+        	prefix = dtd.getLetter() + posNumber.substring(0,2);
+        	startNo = Integer.parseInt(posNumber.substring(2,4) + "0000001");
+        	currentNext = new BigDecimal(posNumber.substring(2,4) + "00000001");
+        }
+        else{
+        	currentNext = new BigDecimal(posNumber.substring(3,4) + "00000001");
+        	startNo = Integer.parseInt(posNumber.substring(3,4) + "00000001");
+        }
         
         // Se crea la secuencia con numeración automática.
-        sequence = new MSequence(ctx, getAD_Client_ID(), dtd.getName(), startNo, get_TrxName());
+        sequence = new MSequence(ctx, getAD_Client_ID(), dtd.getName(), currentNext, startNo, get_TrxName());
         sequence.setPrefix(prefix);
         sequence.setIsAutoSequence(true);
         // Se guarda la secuencia.

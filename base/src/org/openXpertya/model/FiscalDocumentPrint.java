@@ -1599,7 +1599,7 @@ public class FiscalDocumentPrint {
 			// Se actualiza la secuencia solo si el número de comprobante siguiente es distinto al
 			// que ya tenía la secuencia.
 			if(!currentNext.equals(newCurrentNext)) {
-				seq.setCurrentNext(Integer.parseInt(newCurrentNext));
+				seq.setCurrentNext(new BigDecimal(newCurrentNext));
 				seq.save();
 			}
 		}

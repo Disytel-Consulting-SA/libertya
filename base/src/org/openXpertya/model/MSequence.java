@@ -20,30 +20,25 @@
 
 package org.openXpertya.model;
 
-import org.openXpertya.util.CLogMgt;
-import org.openXpertya.util.CLogger;
-import org.openXpertya.util.DB;
-import org.openXpertya.util.Env;
-import org.openXpertya.util.Ini;
-import org.openXpertya.util.Trx;
-import org.postgresql.util.PSQLException;
-
-//~--- Importaciones JDK ------------------------------------------------------
-
+import java.math.BigDecimal;
 import java.sql.CallableStatement;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Types;
-
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Map;
 import java.util.Properties;
 import java.util.Vector;
 import java.util.logging.Level;
+
+import org.openXpertya.util.CLogMgt;
+import org.openXpertya.util.CLogger;
+import org.openXpertya.util.DB;
+import org.openXpertya.util.Env;
+import org.openXpertya.util.Ini;
+import org.openXpertya.util.Trx;
 
 /**
  *      Sequence Model.
@@ -100,7 +95,7 @@ public class MSequence extends X_AD_Sequence {
             //
             setIsTableID(false);
             setStartNo(INIT_NO);
-            setCurrentNext(INIT_NO);
+            setCurrentNext(BigDecimal.valueOf(INIT_NO));
             setCurrentNextSys(INIT_SYS_NO);
             setIncrementNo(1);
             setIsAutoSequence(true);
@@ -108,7 +103,27 @@ public class MSequence extends X_AD_Sequence {
             setStartNewYear(false);
         }
 
-    }		// MSequence
+    }		// Msequence
+    
+    /**
+     *      New Document Sequence Constructor
+     *      @param ctx context
+     *      @param AD_Client_ID owner
+     * @param sequenceName
+     * @param StartNo
+     * @param trxName
+     */
+    public MSequence(Properties ctx, int AD_Client_ID, String sequenceName, BigDecimal currentNext, int StartNo, String trxName) {
+
+        this(ctx, 0, trxName);
+        setClientOrg(AD_Client_ID, 0);		// Client Ownership
+        setName(sequenceName);
+        setDescription(sequenceName);
+        setStartNo(StartNo);
+        setCurrentNext(currentNext);
+        setCurrentNextSys(StartNo / 10);
+
+    }	// Msequence;
 
     /**
      *      Load Constructor
@@ -151,10 +166,10 @@ public class MSequence extends X_AD_Sequence {
         setName(sequenceName);
         setDescription(sequenceName);
         setStartNo(StartNo);
-        setCurrentNext(StartNo);
+        setCurrentNext(BigDecimal.valueOf(StartNo));
         setCurrentNextSys(StartNo / 10);
 
-    }						// MSequence;
+    }						// Msequence;
 
     /**
      * @param ctx
@@ -542,9 +557,9 @@ public class MSequence extends X_AD_Sequence {
 
         maxTableID++;		// Next
 
-        if (getCurrentNext() < maxTableID) {
+        if (getCurrentNext().compareTo(new BigDecimal(maxTableID)) < 0) {
 
-            setCurrentNext(maxTableID);
+            setCurrentNext(new BigDecimal(maxTableID));
             info	= "CurrentNext=" + maxTableID;
             change	= true;
         }
@@ -751,15 +766,9 @@ public class MSequence extends X_AD_Sequence {
 		return nextId;
 
     	
-    }
+    }    
     
-    
-    
-    //~--- get methods --------------------------------------------------------
-
-    public static MSequence get(Properties ctx, String tableName) {
-    	return get(ctx, tableName, true, null);
-    }
+  //~--- get methods --------------------------------------------------------
     
     /**
      *      Get Sequence
@@ -768,15 +777,9 @@ public class MSequence extends X_AD_Sequence {
      *
      * @return
      */
-    public static MSequence get(Properties ctx, String tableName, boolean isTableID, Integer AD_Client_ID) {
+    public static MSequence get(Properties ctx, String tableName) {
 
-        String	sql	= "SELECT * FROM AD_Sequence " + 
-        				" WHERE UPPER(Name) = UPPER(?)" + 
-        				" AND IsTableID = " + (isTableID?"'Y'":"'N'");
-        
-        if (AD_Client_ID != null)
-        	sql = sql + " AND AD_Client_ID = " + AD_Client_ID;
-        				
+        String	sql	= "SELECT * FROM AD_Sequence " + "WHERE UPPER(Name)=?" + " AND IsTableID='Y'";
         MSequence		retValue	= null;
         PreparedStatement	pstmt		= null;
 
@@ -909,7 +912,7 @@ public class MSequence extends X_AD_Sequence {
         //
         int	AD_Sequence_ID	= 0;
         int	incrementNo	= 0;
-        int	next		= -1;
+        BigDecimal	next		= new BigDecimal(-1);
         String	prefix		= "";
         String	suffix		= "";
 
@@ -950,18 +953,18 @@ public class MSequence extends X_AD_Sequence {
                 AD_Sequence_ID	= rs.getInt(7);
 
                 if (USE_PROCEDURE) {
-                    next	= nextID(conn, AD_Sequence_ID, OXPSYS);
+                    next	= new BigDecimal(nextID(conn, AD_Sequence_ID, OXPSYS));
                 } else {
 
                     if (OXPSYS) {
 
-                        next	= rs.getInt(2);
-                        rs.updateInt(2, next + incrementNo);
+                        next	= rs.getBigDecimal(2);
+                        rs.updateBigDecimal(2, next.add(new BigDecimal(incrementNo)));
 
                     } else {
 
-                        next	= rs.getInt(1);
-                        rs.updateInt(1, next + incrementNo);
+                        next	= rs.getBigDecimal(1);
+                        rs.updateBigDecimal(1, next.add(new BigDecimal(incrementNo)));
                     }
 
                     rs.updateRow();
@@ -970,7 +973,7 @@ public class MSequence extends X_AD_Sequence {
             } else {
 
                 s_log.warning("(DocType)- no record found - " + dt);
-                next	= -2;
+                next	= new BigDecimal(-2);
             }
 
             rs.close();
@@ -990,7 +993,7 @@ public class MSequence extends X_AD_Sequence {
         } catch (Exception e) {
 
             s_log.log(Level.SEVERE, "(DocType) [" + trxName + "]", e);
-            next	= -2;
+            next	= new BigDecimal(-2);
         }
 
         // Finish
@@ -1013,7 +1016,7 @@ public class MSequence extends X_AD_Sequence {
         }
 
         // Error
-        if (next < 0) {
+        if (next.compareTo(BigDecimal.ZERO) < 0) {
             return null;
         }
 

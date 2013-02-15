@@ -2615,7 +2615,7 @@ public class VOrdenPago extends CPanel implements FormPanel,ActionListener,Table
 		} else if (e.getSource() == cboDocumentType) {
 			if(e.getNewValue() != null){
 				m_model.setDocumentType((Integer)e.getNewValue());
-				seq = MSequence.get(m_ctx, getSeqName(), false, Env.getAD_Client_ID(m_ctx));
+				seq = MSequence.get(m_ctx, getSeqName());
 				fldDocumentNo.setValue(seq.getCurrentNext());
 			}
 			else{
@@ -3232,7 +3232,7 @@ public class VOrdenPago extends CPanel implements FormPanel,ActionListener,Table
 		m_model.setDescription("");
 		checkPayAll.setSelected(false);
 		// actualizar secuencia
-		seq.setCurrentNext(seq.getCurrentNext()+1);
+		seq.setCurrentNext(seq.getCurrentNext().add(BigDecimal.ONE));
 		seq.save();
 		fldDocumentNo.setValue(seq.getCurrentNext());
 		
