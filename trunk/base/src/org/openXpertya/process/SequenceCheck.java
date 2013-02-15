@@ -16,6 +16,7 @@
 
 package org.openXpertya.process;
 
+import java.math.BigDecimal;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.util.ArrayList;
@@ -196,12 +197,12 @@ public class SequenceCheck extends SvrProcess {
 
             while( rs.next()) {
                 MSequence seq    = new MSequence( ctx,rs,trxName );
-                int       old    = seq.getCurrentNext();
+                BigDecimal       old    = seq.getCurrentNext();
                 int       oldSys = seq.getCurrentNextSys();
 
                 //Modificado para que al validar la secuencia use las secuencias de la BD.
                 if( seq.validateSequence()) {
-                    if( seq.getCurrentNext() != old ) {
+                    if( seq.getCurrentNext().compareTo(old) != 0 ) {
                         String msg = seq.getName() + " ID  " + old + " -> " + seq.getCurrentNext();
 
                         if( sp != null ) {
