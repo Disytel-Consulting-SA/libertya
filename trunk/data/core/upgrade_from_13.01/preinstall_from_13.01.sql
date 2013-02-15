@@ -507,3 +507,6 @@ SELECT ad_client_id, ad_org_id, m_product_id, value, name, m_product_category_id
   GROUP BY s.ad_client_id, s.ad_org_id, s.m_product_id, s.value, s.name, s.m_product_category_id, s.m_warehouse_id) as p;
 
 ALTER TABLE rv_storage_product_plus OWNER TO libertya;
+
+--20130215-1314 Nueva columna que permite registrar el medio de cobro a crédito 
+update ad_system set dummy = (SELECT addcolumnifnotexists('c_invoice','c_pospaymentmedium_credit_id', 'integer'));

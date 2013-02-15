@@ -1362,8 +1362,11 @@ public class PoSOnline extends PoSConnectionState {
 		inv.setChargeAmt(morder.getChargeAmt());
 		inv.setC_Charge_ID(morder.getC_Charge_ID());
 		
-		// Monto a crédito inicial
+		// Monto a crédito inicial y medio de cobro a crédito
 		inv.setInitialCurrentAccountAmt(sumaCreditPayments);
+		if(order.getCreditPOSPaymentMediumID() != null){
+			inv.setC_POSPaymentMedium_Credit_ID(order.getCreditPOSPaymentMediumID());
+		}
 		
 		throwIfFalse(inv.save(), inv, InvoiceCreateException.class);
 		
