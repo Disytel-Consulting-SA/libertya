@@ -492,9 +492,9 @@ ALTER FUNCTION replication_event() OWNER TO libertya;
 ALTER TABLE ad_replicationhost ADD column username varchar null;
 ALTER TABLE ad_replicationhost ADD column password varchar null;
 
--- 20130205-1105 - Incorporaciones faltantes necesarias para desarrollo Libertya Web
-ALTER TABLE AD_Role ADD COLUMN connectionprofile character(1) null;
-ALTER TABLE AD_Role ADD COLUMN userdiscount numeric(22,0) null;
+-- 20130205-1105 - Incorporaciones faltantes necesarias para desarrollo Libertya Web 
+update ad_system set dummy = (SELECT addcolumnifnotexists('AD_Role','connectionprofile', 'character(1)'));
+update ad_system set dummy = (SELECT addcolumnifnotexists('AD_Role','userdiscount', 'numeric(22,0)'));
 
 -- 20130214-1430 Nueva vista para el reporte de existencias por producto adicionando información del artículo como proveedor, precio de costo y venta
 CREATE OR REPLACE VIEW rv_storage_product_plus AS 
