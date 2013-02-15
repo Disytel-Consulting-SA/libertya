@@ -1148,8 +1148,19 @@ public class FiscalDocumentPrint {
 			// Se crea un pago con el total de la factura y el medio de pago en
 			// la descripción.
 			String paymentRule = mInvoice.getPaymentRule();
-			String paymentMedium = MRefList.getListName(ctx,
-					MInvoice.PAYMENTRULE_AD_Reference_ID, paymentRule);
+			String paymentMedium = null;
+			// Si existe el medio de cobro a crédito dentro de la factura y la
+			// forma de pago es A Crédito, entonces imprimo el medio de cobro
+			if (paymentRule.equals(MInvoice.PAYMENTRULE_OnCredit)
+					&& !Util.isEmpty(
+							mInvoice.getC_POSPaymentMedium_Credit_ID(), true)) {
+				MPOSPaymentMedium creditPaymentMedium = new MPOSPaymentMedium(
+						ctx, mInvoice.getC_POSPaymentMedium_Credit_ID(),
+						getTrxName());
+				paymentMedium = creditPaymentMedium.getName();
+			}
+			paymentMedium = paymentMedium == null?MRefList.getListName(ctx,
+					MInvoice.PAYMENTRULE_AD_Reference_ID, paymentRule):paymentMedium;
 			invoice.addPayment(new Payment(mInvoice.getGrandTotal(),
 					paymentMedium));
 		// Si hay pagos, se cargan a los pagos de la factura a emitir.

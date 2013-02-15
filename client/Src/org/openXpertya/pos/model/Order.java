@@ -49,6 +49,9 @@ public class Order  {
 	
 	/** Organización del pedido */
 	private Organization organization;
+	
+	/** Medio de cobro a crédito */
+	private Integer creditPOSPaymentMediumID = null;
 		
 	private Order() {
 		super();
@@ -270,6 +273,8 @@ public class Order  {
 			}
 			// Asocio el paymentTerm al pedido
 			setPaymentTerm(((CreditPayment)payment).getPaymentTerm());
+			// Asocio el medio de cobro a crédito al pedido
+			setCreditPOSPaymentMediumID(payment.getPaymentMedium().getId());
 		}
 		
 		// Si se actualizó un pago existente se lo quita de la lista de pagos
@@ -982,5 +987,13 @@ public class Order  {
 
 	public void setOrganization(Organization organization) {
 		this.organization = organization;
+	}
+
+	public Integer getCreditPOSPaymentMediumID() {
+		return creditPOSPaymentMediumID;
+	}
+
+	public void setCreditPOSPaymentMediumID(Integer creditPOSPaymentMediumID) {
+		this.creditPOSPaymentMediumID = creditPOSPaymentMediumID;
 	}
 }

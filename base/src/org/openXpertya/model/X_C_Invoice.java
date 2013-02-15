@@ -7,7 +7,7 @@ import java.math.*;
 import org.openXpertya.util.*;
 /** Modelo Generado por C_Invoice
  *  @author Comunidad de Desarrollo Libertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
- *  @version  - 2013-01-16 19:32:21.373 */
+ *  @version  - 2013-02-15 13:38:22.44 */
 public class X_C_Invoice extends org.openXpertya.model.PO
 {
 /** Constructor estándar */
@@ -534,6 +534,21 @@ POS Journal */
 public int getC_POSJournal_ID() 
 {
 Integer ii = (Integer)get_Value("C_POSJournal_ID");
+if (ii == null) return 0;
+return ii.intValue();
+}
+public static final int C_POSPAYMENTMEDIUM_CREDIT_ID_AD_Reference_ID = MReference.getReferenceID("C_POSPaymentMedium");
+/** Set Credit payment medium */
+public void setC_POSPaymentMedium_Credit_ID (int C_POSPaymentMedium_Credit_ID)
+{
+if (C_POSPaymentMedium_Credit_ID <= 0) set_Value ("C_POSPaymentMedium_Credit_ID", null);
+ else 
+set_Value ("C_POSPaymentMedium_Credit_ID", new Integer(C_POSPaymentMedium_Credit_ID));
+}
+/** Get Credit payment medium */
+public int getC_POSPaymentMedium_Credit_ID() 
+{
+Integer ii = (Integer)get_Value("C_POSPaymentMedium_Credit_ID");
 if (ii == null) return 0;
 return ii.intValue();
 }
