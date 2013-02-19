@@ -105,6 +105,8 @@ public class ChangeLogGroupListReplication extends ChangeLogGroupList {
 	{
 		boolean found = false;
 		String repArray = group.getRepArray();
+		if (repArray==null)
+			return false;
 		int size = repArray.length();
 		for (int i=0; i < size && !found; i++)
 			if (ReplicationConstants.replicateStates.contains(repArray.charAt(i)))
