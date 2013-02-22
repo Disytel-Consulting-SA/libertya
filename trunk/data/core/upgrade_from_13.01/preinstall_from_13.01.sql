@@ -510,3 +510,6 @@ ALTER TABLE rv_storage_product_plus OWNER TO libertya;
 
 --20130215-1314 Nueva columna que permite registrar el medio de cobro a crédito 
 update ad_system set dummy = (SELECT addcolumnifnotexists('c_invoice','c_pospaymentmedium_credit_id', 'integer'));
+
+--20130222-1125 Incorporación de columna netamount a la tabla C_Invoice
+update ad_system set dummy = (SELECT addcolumnifnotexists('c_invoice','netamount', 'numeric(20,2) NOT NULL DEFAULT 0'));
