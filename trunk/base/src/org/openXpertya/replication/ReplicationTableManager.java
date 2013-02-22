@@ -154,7 +154,7 @@ public class ReplicationTableManager {
 	/**
 	 * Retorna la nomina de tablas que estan marcadas para replicación
 	 */
-	protected Vector<String> getTablesForReplication() throws Exception
+	public static Vector<String> getTablesForReplication(String trxName) throws Exception
 	{
 		if (tablesForReplication == null)
 		{
@@ -195,7 +195,7 @@ public class ReplicationTableManager {
 		{
 			// Obtengo las tuplas a replicar. Todos los registros con marcas de replicacion (Inserciones, Modificaciones o Eliminaciones).  
 			StringBuffer query = new StringBuffer(" SELECT * FROM ( ");
-			for (String aTable : getTablesForReplication())
+			for (String aTable : getTablesForReplication(trxName))
 			{
 				query.append(" SELECT '").append(aTable).append("' as tablename, retrieveUID, reparray, created ");
 				query.append(" FROM ").append(aTable);

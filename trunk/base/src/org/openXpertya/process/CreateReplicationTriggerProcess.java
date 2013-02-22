@@ -120,7 +120,7 @@ public class CreateReplicationTriggerProcess extends SvrProcess {
 			// Rellena la columna retrieveUID con valor general para registros existentes (se supone que son registros comunes a todas las sucursales)
 			appendSQLFillRetrieveUID(sql);
 
-			// Rellena la columna retrieveUID con valor general para registros existentes (se supone que son registros comunes a todas las sucursales)
+			// Crea la secuencia a ser utilizada como parte del campo retrieveUID
 			appendSQLReplicationSequence(sql);
 			
 			// Creación de los triggers que invocan al procedure replication_event
