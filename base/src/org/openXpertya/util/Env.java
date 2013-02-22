@@ -203,7 +203,7 @@ public final class Env {
      */
 
     public static final Properties getCtx() {
-        return s_ctx;
+    	return contextProvider.getContext();
     }    // getCtx
 
     /**
