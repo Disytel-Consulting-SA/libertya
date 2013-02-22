@@ -7,7 +7,7 @@ import java.math.*;
 import org.openXpertya.util.*;
 /** Modelo Generado por C_Invoice
  *  @author Comunidad de Desarrollo Libertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
- *  @version  - 2013-02-15 13:38:22.44 */
+ *  @version  - 2013-02-22 11:40:24.316 */
 public class X_C_Invoice extends org.openXpertya.model.PO
 {
 /** Constructor estándar */
@@ -49,6 +49,7 @@ setManageDragOrderDiscounts (false);
 setManualDocumentNo (false);
 setManualGeneralDiscount (Env.ZERO);
 setM_PriceList_ID (0);
+setNetAmount (Env.ZERO);
 setNotExchangeableCredit (false);
 setNumeroComprobante (0);
 setPaymentRule (null);	// P
@@ -1222,6 +1223,19 @@ public int getM_RMA_ID()
 Integer ii = (Integer)get_Value("M_RMA_ID");
 if (ii == null) return 0;
 return ii.intValue();
+}
+/** Set Net Amount */
+public void setNetAmount (BigDecimal NetAmount)
+{
+if (NetAmount == null) throw new IllegalArgumentException ("NetAmount is mandatory");
+set_Value ("NetAmount", NetAmount);
+}
+/** Get Net Amount */
+public BigDecimal getNetAmount() 
+{
+BigDecimal bd = (BigDecimal)get_Value("NetAmount");
+if (bd == null) return Env.ZERO;
+return bd;
 }
 /** Set Nombre Entidad Facturada */
 public void setNombreCli (String NombreCli)

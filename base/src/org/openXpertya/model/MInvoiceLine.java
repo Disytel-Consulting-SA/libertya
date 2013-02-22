@@ -1368,6 +1368,12 @@ public class MInvoiceLine extends X_C_InvoiceLine {
         if( no != 1 ) {
             log.warning( "updateHeaderTax (2) #" + no );
         }
+        
+        no = getInvoice().updateNetAmount(get_TrxName()); 
+
+        if( no != 1 ) {
+            log.warning( "updateHeaderTax (3) #" + no );
+        }
               
         return no == 1;
     }    // updateHeaderTax
