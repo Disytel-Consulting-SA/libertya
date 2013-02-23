@@ -111,7 +111,7 @@ public class ReplicationBuilderWS extends ReplicationBuilder {
 					m_replicationXMLData.append(">");
 					
 					// Textos del nodo, old y new values
-				    newValue = useRetrieveUID ? (UID_REFERENCE_PREFIX+retrieveUIDValue) : String.valueOf(element.getNewValue());
+				    newValue = (useRetrieveUID && !"AD_Org_ID".equalsIgnoreCase(element.getColumnName())) ? (UID_REFERENCE_PREFIX+retrieveUIDValue) : String.valueOf(element.getNewValue());
 	//				if(element.getBinaryValue() != null){
 	//					/** TODO: VER QUE HACER ACA CON LOS BINARIOS EN REPLICACIÓN! */
 	//				}
