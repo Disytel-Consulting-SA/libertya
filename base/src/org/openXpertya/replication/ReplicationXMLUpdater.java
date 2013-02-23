@@ -273,6 +273,12 @@ public class ReplicationXMLUpdater extends PluginXMLUpdater {
 			query.append( quotes + "N" + quotes);
 			retValue = true;
 		}
+		/* El created deberia ser dejado como esta, a fin de difernciarlo del updated */
+		else if ("Created".equalsIgnoreCase(column.getName()) && column.getNewValue()!=null && column.getNewValue().length() > 0 )
+		{
+			query.append( quotes + column.getNewValue() + quotes );
+			retValue = true;
+		}
 		/* Dado que una misma sucursal puede tener un AD_Org_ID distinto en cada host, se debe realiza el mapeo correspondiente 
 		 * (siempre y cuando sea una organizacion con valor distinto de cero, en este caso no es necesario realizar mapeo alguno
 		 * 	Para el caso en que la tabla AD_Org se encuentra marcada para replicación, el registro "0"
