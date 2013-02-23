@@ -213,7 +213,7 @@ public class ReplicationTableManager {
 					query.append("		AND NOW() - " + ReplicationConstants.COLUMN_DATELASTSENT +  "  > '" + ReplicationConstants.ACK_TIME_OUT + "') 	");
 				}
 				query.append(" 		) ");				
-				query.append(" AND AD_Client_ID = " + Env.getContext(Env.getCtx(), "#AD_Client_ID") );
+				query.append(" AND (AD_Client_ID = 0 OR AD_Client_ID = " + Env.getContext(Env.getCtx(), "#AD_Client_ID") + ")" );
 				// Incluir eventual filtro por nombre de registro
 				if (filterRecord!=null && filterRecord.length()>0)
 					query.append(" AND retrieveUID = '" + filterRecord + "'");
