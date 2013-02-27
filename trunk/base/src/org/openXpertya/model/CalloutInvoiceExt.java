@@ -158,7 +158,7 @@ public class CalloutInvoiceExt extends CalloutInvoice {
 			if (seq != null) {
 				String nextNo = String.valueOf(seq.getCurrentNext());
 				try {
-					nro = Integer.parseInt(nextNo.substring(1,9));
+					nro = Integer.parseInt(nextNo.substring(1,nextNo.length()));
 				} catch (Exception e) {
 					// retorna null
 				}
