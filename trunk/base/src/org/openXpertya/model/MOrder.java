@@ -1377,6 +1377,11 @@ public class MOrder extends X_C_Order implements DocAction {
         	return false;
         } 
         
+        // Si la Tarifa es mayor a 0 setear el Impuesto Incluido a partir de la tarifa
+ 		if (getM_PriceList_ID() > 0 ){
+ 			setIsTaxIncluded(new MPriceList(getCtx(), getM_PriceList_ID(),null).isTaxIncluded()); 
+ 		}
+        
         // Verifica la Fecha de validez (solo para Presupuestos)
         if (MDocType.DOCSUBTYPESO_Proposal.equals(getDocSubTypeSO())) {
         	if (getValidTo() != null && getValidTo().compareTo(getDateOrdered()) < 0) {
@@ -1887,6 +1892,11 @@ public class MOrder extends X_C_Order implements DocAction {
                 }
             }
         }             // convert DocType
+        
+        // Si la Tarifa es mayor a 0 setear el Impuesto Incluido a partir de la tarifa
+  		if (getM_PriceList_ID() > 0 ){
+  			setIsTaxIncluded(new MPriceList(getCtx(), getM_PriceList_ID(),null).isTaxIncluded()); 
+  		}
 
         // Mandatory Product Attribute Set Instance
 
