@@ -367,7 +367,7 @@ public final class InfoBPartner extends Info {
         StringBuffer where = new StringBuffer();
 
         where.append( "C_BPartner.IsSummary='N' AND C_BPartner.IsActive='Y'" );
-        where.append(" AND l.Created = (SELECT Created FROM C_BPartner_Location WHERE C_BPartner_Location.c_Bpartner_id = c_bpartner.C_bpartner_ID  ORDER BY created ASC LIMIT 1 )");
+        where.append(" AND l.C_BPartner_Location_ID IN (SELECT MAX (C_BPartner_Location_ID) FROM C_BPartner_Location WHERE IsActive='Y' Group BY C_BPartner_ID )");        
         
         if( (whereClause != null) && (whereClause.length() > 0) ) {
             where.append( " AND " ).append( whereClause );
