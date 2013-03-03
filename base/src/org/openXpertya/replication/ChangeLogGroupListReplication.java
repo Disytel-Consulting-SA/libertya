@@ -56,50 +56,55 @@ public class ChangeLogGroupListReplication extends ChangeLogGroupList {
 			// Iterar por todos los registros a replicar
 			while (rtm.getNextChange()) {
 
-				/* Incorporar un nuevo changegroup por cada host destino */
-				// Cargo los valores especificos para replicación 
-				i++;
-				tempRepArray = rtm.getCurrentRecordRepArray();
-				columnValues = rtm.getColumnValuesForReplication();
-				ad_table_id = rtm.getCurrentRecordTableID();
-				operationType = rtm.isDeletionAction()?MChangeLog.OPERATIONTYPE_Deletion:"";  // se determina posteriormente por cada host de manera independiente (salvo para eliminacion)
-				ad_componentObjectUID = rtm.getCurrentRecordRetrieveUID(); 	// <-- usado para el retrieveUID
-				tableName = rtm.getCurrentRecordTableName();
-				
-				/* Crear un grupo por tupla de AD_Changelog_Replication */ 
-				group = new ChangeLogGroupReplication(ad_table_id, ad_componentObjectUID, operationType, tableName, tempRepArray);
-				group.setAd_componentObjectUID(ad_componentObjectUID);
-				group.setOperation(operationType);
-				// El timeout se da solo en los casos en que no haya estados de replicación 
-				// (en ese caso se sabe que se disparó la replicación de este grupo por dicho motivo)
-				group.setTimeOut(!repArrayContainsRepStates(group));
-				
-				/* Insertar los elementos dentro del grupo e incorporarlos al conjunto de grupos */
-				if (insertElementsIntoGroup(group, columnValues, builder) > 0)
-				{
-					// Aplicar filtrados adicionales de replicacion por registro
-					ReplicationFilterFactory.applyFilters(trxName, group);
+				try {
+					/* Incorporar un nuevo changegroup por cada host destino */
+					// Cargo los valores especificos para replicación 
+					i++;
+					tempRepArray = rtm.getCurrentRecordRepArray();
+					columnValues = rtm.getColumnValuesForReplication();
+					ad_table_id = rtm.getCurrentRecordTableID();
+					operationType = rtm.isDeletionAction()?MChangeLog.OPERATIONTYPE_Deletion:"";  // se determina posteriormente por cada host de manera independiente (salvo para eliminacion)
+					ad_componentObjectUID = rtm.getCurrentRecordRetrieveUID(); 	// <-- usado para el retrieveUID
+					tableName = rtm.getCurrentRecordTableName();
 					
-					// Una vez filtrado, quedan hosts destino donde enviar este registro? De no ser así incorporar a la nomina de grupos,
-					// En caso contrario ignorar este registro y actualizar a N su includeInReplication
-					if (group.getRepArray().replace(""+ReplicationConstants.REPARRAY_REPLICATED, "")
-											.replace(""+ReplicationConstants.REPLICATION_CONFIGURATION_NO_ACTION, "").length() > 0) 
-						groups.add(group);	
-					else {
-						boolean isDeletion = MChangeLog.OPERATIONTYPE_Deletion.equals(group.getOperation());
-						// El uso de prefijo SET para el repArray solo es para tablas con triggerEvent.  La tabla AD_Changelog_Replication obviamente no lo tiene seteado
-						String set = isDeletion ? "" : "SET";
-						String tableNameQuery = MChangeLog.OPERATIONTYPE_Deletion.equals(group.getOperation())?ReplicationConstants.DELETIONS_TABLE:tableName;
-						// Setear includeInReplication = 'N'
-						DB.executeUpdate(" UPDATE " + (tableNameQuery) +
-								 			" SET repArray = '"+set+group.getRepArray()+"', " +
-								 			"	  includeInReplication = 'N' " +
-								 			" WHERE retrieveUID = '" + group.getAd_componentObjectUID() + "'", false, trxName, true);
+					/* Crear un grupo por tupla de AD_Changelog_Replication */ 
+					group = new ChangeLogGroupReplication(ad_table_id, ad_componentObjectUID, operationType, tableName, tempRepArray);
+					group.setAd_componentObjectUID(ad_componentObjectUID);
+					group.setOperation(operationType);
+					// El timeout se da solo en los casos en que no haya estados de replicación 
+					// (en ese caso se sabe que se disparó la replicación de este grupo por dicho motivo)
+					group.setTimeOut(!repArrayContainsRepStates(group));
+					
+					/* Insertar los elementos dentro del grupo e incorporarlos al conjunto de grupos */
+					if (insertElementsIntoGroup(group, columnValues, builder) > 0)
+					{
+						// Aplicar filtrados adicionales de replicacion por registro
+						ReplicationFilterFactory.applyFilters(trxName, group);
+						
+						// Una vez filtrado, quedan hosts destino donde enviar este registro? De no ser así incorporar a la nomina de grupos,
+						// En caso contrario ignorar este registro y actualizar a N su includeInReplication
+						if (group.getRepArray().replace(""+ReplicationConstants.REPARRAY_REPLICATED, "")
+												.replace(""+ReplicationConstants.REPLICATION_CONFIGURATION_NO_ACTION, "").length() > 0) 
+							groups.add(group);	
+						else {
+							boolean isDeletion = MChangeLog.OPERATIONTYPE_Deletion.equals(group.getOperation());
+							// El uso de prefijo SET para el repArray solo es para tablas con triggerEvent.  La tabla AD_Changelog_Replication obviamente no lo tiene seteado
+							String set = isDeletion ? "" : "SET";
+							String tableNameQuery = MChangeLog.OPERATIONTYPE_Deletion.equals(group.getOperation())?ReplicationConstants.DELETIONS_TABLE:tableName;
+							// Setear includeInReplication = 'N'
+							DB.executeUpdate(" UPDATE " + (tableNameQuery) +
+									 			" SET repArray = '"+set+group.getRepArray()+"', " +
+									 			"	  includeInReplication = 'N' " +
+									 			" WHERE retrieveUID = '" + group.getAd_componentObjectUID() + "'", false, trxName, true);
+						}
 					}
+					// Limpiar memoria cada cierto intervalo de iteraciones
+					if (i++ % 1000 == 0)
+						System.gc();
+				} catch (Exception e) {
+					System.out.println("Error en fillList de replicación.  Tabla: " + group.getTableName() + ". Registro: " + group.getAd_componentObjectUID());
+					e.printStackTrace();
 				}
-				// Limpiar memoria cada cierto intervalo de iteraciones
-				if (i++ % 1000 == 0)
-					System.gc();
 			}
 		} catch(Exception e){
 			e.printStackTrace();
