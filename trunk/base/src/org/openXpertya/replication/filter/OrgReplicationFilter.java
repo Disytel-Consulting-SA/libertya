@@ -38,7 +38,11 @@ public class OrgReplicationFilter extends ReplicationFilter {
 				if ("0".equals(orgID))
 					break;
 				
-				int posInRepArray = ReplicationCache.map_RepArrayPos_OrgID.get(orgID)-1;
+				// Si el host destino no está en la configuración de hosts, entonces no se podrá replicar
+				// hacia dicho host seguro.  Dejar posInRepArray en -1 a fin de que la iteracion posterior pase todo a cero
+				int posInRepArray = -1;
+				if (ReplicationCache.map_RepArrayPos_OrgID.get(orgID)!=null)
+					posInRepArray = ReplicationCache.map_RepArrayPos_OrgID.get(orgID)-1;
 				
 				// Llevar a 0 toda posicion diferente a la del host destino segun el Org
 				StringBuilder sb = new StringBuilder(group.getRepArray());
