@@ -19,6 +19,7 @@ import org.openXpertya.model.MChangelogReplication;
 import org.openXpertya.plugin.install.ChangeLogElement;
 import org.openXpertya.plugin.install.ChangeLogGroup;
 import org.openXpertya.plugin.install.ChangeLogGroupList;
+import org.openXpertya.util.DB;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
@@ -76,10 +77,25 @@ public class ChangeLogGroupListReplication extends ChangeLogGroupList {
 				/* Insertar los elementos dentro del grupo e incorporarlos al conjunto de grupos */
 				if (insertElementsIntoGroup(group, columnValues, builder) > 0)
 				{
-					// Aplicar filtrados adicionales de replicaciòn por registro
+					// Aplicar filtrados adicionales de replicacion por registro
 					ReplicationFilterFactory.applyFilters(trxName, group);
-					// Incorporar a la nomina de grupos
-					groups.add(group);
+					
+					// Una vez filtrado, quedan hosts destino donde enviar este registro? De no ser así incorporar a la nomina de grupos,
+					// En caso contrario ignorar este registro y actualizar a N su includeInReplication
+					if (group.getRepArray().replace(""+ReplicationConstants.REPARRAY_REPLICATED, "")
+											.replace(""+ReplicationConstants.REPLICATION_CONFIGURATION_NO_ACTION, "").length() > 0) 
+						groups.add(group);	
+					else {
+						boolean isDeletion = MChangeLog.OPERATIONTYPE_Deletion.equals(group.getOperation());
+						// El uso de prefijo SET para el repArray solo es para tablas con triggerEvent.  La tabla AD_Changelog_Replication obviamente no lo tiene seteado
+						String set = isDeletion ? "" : "SET";
+						String tableNameQuery = MChangeLog.OPERATIONTYPE_Deletion.equals(group.getOperation())?ReplicationConstants.DELETIONS_TABLE:tableName;
+						// Setear includeInReplication = 'N'
+						DB.executeUpdate(" UPDATE " + (tableNameQuery) +
+								 			" SET repArray = '"+set+group.getRepArray()+"', " +
+								 			"	  includeInReplication = 'N' " +
+								 			" WHERE retrieveUID = '" + group.getAd_componentObjectUID() + "'", false, trxName, true);
+					}
 				}
 				// Limpiar memoria cada cierto intervalo de iteraciones
 				if (i++ % 1000 == 0)
