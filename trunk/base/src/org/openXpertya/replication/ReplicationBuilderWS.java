@@ -140,8 +140,7 @@ public class ReplicationBuilderWS extends ReplicationBuilder {
 				
 				// Enviar a replicacion, una vez por cada destino a replicar
 				for (int arrayPos = 0; arrayPos < group.getRepArray().length(); arrayPos++)
-					// En las posiciones que corresponde, se envia a replicacion (cola de eventos).  
-					// Si hubo timeOut, tambièn se reenvia donde corresponda
+					// En las posiciones que corresponde, se envia a replicacion 
 					// En caso de estar reenviando todos los registros, se envia a todo el repArray (menos donde se indique sin accion)
 					if (ReplicationConstantsWS.replicateStates.contains(group.getRepArray().charAt(arrayPos)) && (ReplicationTableManager.filterHost==null || ReplicationTableManager.filterHost == arrayPos+1))
 						addActionsForHost(arrayPos+1, group);
