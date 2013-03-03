@@ -703,6 +703,11 @@ public final class MPayment extends X_C_Payment implements DocAction,ProcessCall
         if( getC_DocType_ID() == 0 ) {
             setC_DocType_ID();
         }
+        
+        if ( (getTenderType() != null) && (!Util.isEmpty(getC_POSPaymentMedium_ID())) ){
+        	MPOSPaymentMedium payMedium = new MPOSPaymentMedium(getCtx(), getC_POSPaymentMedium_ID(),get_TrxName());
+        	setTenderType(payMedium.getTenderType());	
+        }        
 
         clearTenderTypeFields();
         
