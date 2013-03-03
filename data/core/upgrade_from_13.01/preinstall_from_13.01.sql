@@ -513,3 +513,33 @@ update ad_system set dummy = (SELECT addcolumnifnotexists('c_invoice','c_pospaym
 
 --20130222-1125 Incorporación de columna netamount a la tabla C_Invoice
 update ad_system set dummy = (SELECT addcolumnifnotexists('c_invoice','netamount', 'numeric(20,2) NOT NULL DEFAULT 0'));
+
+--20130303-1050 Funcion para determinar el nro de registros, pendientes de replicar
+CREATE TYPE rep_count AS (tablename varchar, recordcount int);
+CREATE OR REPLACE FUNCTION replication_record_count(p_clientid integer, p_xtraclause character varying)
+  RETURNS SETOF rep_count AS
+$BODY$
+DECLARE
+	atable varchar;
+	tablenames varchar;
+	astatus rep_count;
+	statuses record;
+	xtraclause varchar;
+BEGIN
+	xtraclause := ' 1 = 1 ';
+	IF p_xtraclause is not null THEN
+		xtraclause := p_xtraclause;
+	END IF;
+
+	tablenames := '';
+	FOR atable IN (select table_name from information_schema.columns where lower(column_name) = 'reparray' and table_schema = 'libertya' order by table_name)  LOOP
+		FOR astatus IN EXECUTE 'SELECT ''' || atable || ''' as tablename, count(1) as records FROM ' || atable || ' WHERE ad_client_id = ' || p_clientid || '  AND ' || xtraclause || ' GROUP BY tablename ' LOOP
+			return next astatus;
+		END LOOP;
+	END LOOP;
+END
+$BODY$
+  LANGUAGE 'plpgsql' VOLATILE
+  COST 100
+  ROWS 1000;
+ALTER FUNCTION replication_record_count(integer, character varying) OWNER TO libertya;
