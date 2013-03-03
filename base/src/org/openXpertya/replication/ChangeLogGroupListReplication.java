@@ -132,8 +132,15 @@ public class ChangeLogGroupListReplication extends ChangeLogGroupList {
 		boolean valueIsNull = false;
 		String value = null;
 
-		// Parsear el documento
-		doc = builder.parse(new InputSource(new StringReader("<?xml version=\"1.0\" encoding=\"UTF-8\" ?> <columns> "+columnValuesXML+" </columns> ")));
+		// Parsear el documento (si hay codificaciones no parseables, omitir e informar)
+		try {
+			doc = builder.parse(new InputSource(new StringReader("<?xml version=\"1.0\" encoding=\"UTF-8\" ?> <columns> "+columnValuesXML+" </columns> ")));
+		}
+		catch (Exception e) {
+			System.out.println("Error insertando en XML de replicación.  Tabla: " + group.getTableName() + ". Registro: " + group.getAd_componentObjectUID());
+			e.printStackTrace();
+			return 0;
+		}
 		
 		/* Leer cada columna e insertar los elementos */
 		NodeList nodes = doc.getElementsByTagName(MChangelogReplication.XML_COLUMN_TAG);
