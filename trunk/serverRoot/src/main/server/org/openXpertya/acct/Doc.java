@@ -855,7 +855,7 @@ public abstract class Doc {
 		p_Status = STATUS_NotPosted;
 
 		//  Create Fact per AcctSchema
-		m_fact = new ArrayList<Fact>(); // m_fact = new Fact[]; TODO Hernandez
+		m_fact = new ArrayList<Fact>(); // m_fact = new Fact[]; 
 
 		//  for all Accounting Schema
 		boolean OK = true;
@@ -1164,7 +1164,7 @@ public abstract class Doc {
 
         // Create Fact per AcctSchema
 
-        m_fact = new ArrayList<Fact>( m_ass.length ); // m_fact = new Fact[ m_ass.length ]; TODO Hernandez
+        m_fact = new ArrayList<Fact>( m_ass.length ); // m_fact = new Fact[ m_ass.length ];
 
         // for all Accounting Schema
 
@@ -1266,7 +1266,7 @@ public abstract class Doc {
 
         // createFacts
 
-        m_fact.set(index, createFact( m_ass[ index ] )); //m_fact[ index ] = createFact( m_ass[ index ] );TODO Hernandez
+        m_fact.add(index, createFact( m_ass[ index ] )); //m_fact[ index ] = createFact( m_ass[ index ] );
 
         if( m_fact.get(index) == null ) {  ////m_fact[ index ]
             return STATUS_Error;
