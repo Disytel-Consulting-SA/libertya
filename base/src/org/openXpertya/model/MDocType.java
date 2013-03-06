@@ -153,7 +153,7 @@ public class MDocType extends X_C_DocType {
 
     /** Incoming Bank Transfer = IBT (Transferencia Entrante) */
     public static final String DOCTYPE_IncomingBankTransfer = "IBT";
-    /** Outgoing Bank Transfer = IBT (Transferencia Saliente) */
+    /** Outgoing Bank Transfer = OBT (Transferencia Saliente) */
     public static final String DOCTYPE_OutgoingBankTransfer = "OBT";
     
     /** Deposit Receipt = DRC (Boleta de Depósito) */
