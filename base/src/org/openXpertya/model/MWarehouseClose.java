@@ -122,14 +122,15 @@ public class MWarehouseClose extends X_M_Warehouse_Close implements DocAction{
 			
 			// Verifica si existe el cierre completado para el día anterior y
 			// que haya más de 1 registro en la BD
+			// Verifica si existe el cierre completado para la fecha en cuestión.
+			MWarehouseClose dateTrxWC = MWarehouseClose.get(ctx, warehouseID, dateTrx, null);
 			if (!existsPreviousDayCloseCompleted(dateTrx, warehouseID, null)) {
-				if (getWarehouseCloseCount(warehouseID, null) > 1) {
+				if (getWarehouseCloseCount(warehouseID,
+						dateTrxWC != null ? dateTrxWC.getID() : 0, null) >= 1) {
 					log.severe("Need complete previous day close");
 					return true;
 				}
 			}
-			// Verifica si existe el cierre completado para la fecha en cuestión.
-			MWarehouseClose dateTrxWC = MWarehouseClose.get(ctx, warehouseID, dateTrx, null);
 			if(dateTrxWC != null && dateTrxWC.isCompleted()) {
 				log.severe(Msg.getMsg(ctx, "ExistsWarehouseCloseCompletedForPeriod"));
 				return true;
@@ -185,15 +186,34 @@ public class MWarehouseClose extends X_M_Warehouse_Close implements DocAction{
 	/**
 	 * @param warehouseID
 	 *            id de almacén
+	 * @param actualWarehouseCloseID
+	 *            id del cierre de almacén actual. Si este valor es distinto de
+	 *            0, no se incluye en la suma de la cantidad de registros
+	 * @param trxName
+	 *            nombre de la transacción en curso
+	 * @return cantidad de registros para el almacén actual
+	 */
+	private static int getWarehouseCloseCount(int warehouseID, int actualWarehouseCloseID, String trxName){
+		return DB
+				.getSQLValue(
+						trxName,
+						"SELECT coalesce(count(*),0) "
+								+ "FROM m_warehouse_close "
+								+ "WHERE m_warehouse_id = ?"
+								+ (actualWarehouseCloseID != 0 ? " AND  m_warehouse_close_id <> "
+										+ actualWarehouseCloseID
+										: ""), warehouseID);
+	}
+	
+	/**
+	 * @param warehouseID
+	 *            id de almacén
 	 * @param trxName
 	 *            nombre de la transacción en curso
 	 * @return cantidad de registros para el almacén actual
 	 */
 	private static int getWarehouseCloseCount(int warehouseID, String trxName){
-		return DB.getSQLValue(trxName, 
-			"SELECT coalesce(count(*),0) " +
-			"FROM m_warehouse_close " +
-			"WHERE m_warehouse_id = ?", warehouseID);
+		return getWarehouseCloseCount(warehouseID, 0, trxName);
 	}
 		
 	// DOC ACTION
@@ -255,7 +275,7 @@ public class MWarehouseClose extends X_M_Warehouse_Close implements DocAction{
 			// Además, hay que tener en cuenta que si es el primer cierre que está completando
 			// el resultado no es error debido a que el primer cierre siempre
 			// hay que dejar completarlo.
-			if (getWarehouseCloseCount(getM_Warehouse_ID(), get_TrxName()) > 1) {
+			if (getWarehouseCloseCount(getM_Warehouse_ID(), getID(), get_TrxName()) >= 1) {
 				m_processMsg = "@NotExistBeforeWarehouseClose@";
 				return DocAction.STATUS_Invalid;
 			}
