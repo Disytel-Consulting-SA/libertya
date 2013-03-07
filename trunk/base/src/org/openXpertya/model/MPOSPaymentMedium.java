@@ -119,7 +119,7 @@ public class MPOSPaymentMedium extends X_C_POSPaymentMedium {
 	public static List<MPOSPaymentMedium> getAvailablePaymentMediums(Properties ctx, String tenderType, String contextOfUse, boolean exclude, String trxName, int currencyId){
 		// Se buscan los medios de pago que sean válidos para la fecha actual.
 		StringBuffer sql = new StringBuffer("SELECT * "
-				+ "FROM C_POSPaymentMedium " + "WHERE AD_Client_ID = ? AND AD_Org_ID = ? "
+				+ "FROM C_POSPaymentMedium " + "WHERE AD_Client_ID = ? AND (AD_Org_ID = ? OR AD_Org_ID = 0) "
 				+ "AND ? BETWEEN DateFrom AND DateTo " + "AND IsActive = 'Y' ");
 		if(tenderType != null){
 			sql.append(" AND (tendertype = '"+tenderType+"') ");
@@ -246,7 +246,7 @@ public class MPOSPaymentMedium extends X_C_POSPaymentMedium {
 	public static List<String> getAvailablesTenderTypesByContextOfUse(Properties ctx, String contextOfUse, boolean exclude, String trxName, int currencyId){
 		// Obtengo los tipos de pago diferentes que contienen como contexto de uso TPV
 		StringBuffer sql = new StringBuffer("SELECT distinct tendertype FROM C_POSPaymentMedium "
-				+ "WHERE AD_Client_ID = ? AND AD_Org_ID = ? AND ? BETWEEN DateFrom AND DateTo "
+				+ "WHERE AD_Client_ID = ? AND (AD_Org_ID = ? OR AD_Org_ID = 0) AND ? BETWEEN DateFrom AND DateTo "
 				+ "AND IsActive = 'Y' ");
 		if(exclude){
 			sql.append(" AND (context <> ?) ");
