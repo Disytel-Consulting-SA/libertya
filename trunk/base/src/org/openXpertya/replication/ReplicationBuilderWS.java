@@ -146,7 +146,8 @@ public class ReplicationBuilderWS extends ReplicationBuilder {
 						addActionsForHost(arrayPos+1, group);
 			}
 			catch (Exception e) 	{
-				replicationHndler.saveLog(Level.SEVERE, true, "Error en ReplicationBuilderWS: " + e.getMessage(), null); 
+				replicationHndler.saveLog(Level.SEVERE, true, "Error en ReplicationBuilderWS: " + e.getMessage(), null);
+				e.printStackTrace();
 			}
 		
 			// Limpiar memoria cada cierto intervalo de iteraciones
