@@ -2095,14 +2095,19 @@ public class PoSOnline extends PoSConnectionState {
 		List<EntidadFinanciera> entidades = new ArrayList<EntidadFinanciera>();
 		String sql = "SELECT M_EntidadFinanciera_ID, Name, CardMask " +
 			 	     "FROM M_EntidadFinanciera " + 
-			 	     "WHERE ((C_City_ID IS NULL) OR (C_City_ID = ?)) AND IsActive = 'Y' ";
+			 	     "WHERE ((C_City_ID IS NULL) OR (C_City_ID = ?)) AND (AD_Org_ID = ? OR AD_Org_ID = 0) AND IsActive = 'Y' ";
 		
-		sql = MRole.getDefault().addAccessSQL( sql, "M_EntidadFinanciera", false, true );
+		// Se comenta esta línea ya que se cargas las entidades financieras de
+		// la organización actual o de la 0
+		//sql = MRole.getDefault().addAccessSQL( sql, "M_EntidadFinanciera", false, true );
+		
+		// FIXME El filtro de las ciudad de la organización tiene sentido?
 		
 		try {
 			PreparedStatement pstmt = DB.prepareStatement(sql);
 			// Seteo parametros
 			pstmt.setInt(1,getOrgCityId());
+			pstmt.setInt(2,Env.getAD_Org_ID(getCtx()));
 			ResultSet rs = pstmt.executeQuery();
 			while (rs.next()) {
 				int c_EntidadFinanciera_ID = rs.getInt(1);
