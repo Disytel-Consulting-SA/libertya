@@ -196,7 +196,7 @@ public class Doc_Invoice extends Doc implements DocProjectSplitterInterface {
      */
 
     private DocLine[] loadLines() {
-        ArrayList list = new ArrayList();
+        ArrayList<DocLine_Invoice> list = new ArrayList<DocLine_Invoice>();
         String    sql  = "SELECT * FROM C_InvoiceLine WHERE C_Invoice_ID=? ORDER BY Line";
 
         try {
@@ -234,32 +234,29 @@ public class Doc_Invoice extends Doc implements DocProjectSplitterInterface {
                 if( p_vo.TaxIncluded ) {
                     int C_Tax_ID = docLine.getC_Tax_ID();
 
-                    if( C_Tax_ID == 0 ) {
-                        continue;
-                    }
+                    MTax tax = C_Tax_ID > 0 ? MTax.get( getCtx(),C_Tax_ID,m_trxName ) : null;
+                    
+                    // Solo se recalculan importes si el impuesto existe y su tasa es mayor que cero.
+                    if( tax != null && !tax.isZeroTax()) {
 
-                    MTax tax = MTax.get( getCtx(),C_Tax_ID,m_trxName );
+                        BigDecimal LineNetAmtTax = tax.calculateTax( LineNetAmt,true,getStdPercision());
 
-                    if( tax.isZeroTax()) {
-                        continue;
-                    }
+                        log.fine( "LineNetAmt=" + LineNetAmt + " - Tax=" + LineNetAmtTax );
+                        LineNetAmt = LineNetAmt.subtract( LineNetAmtTax );
 
-                    BigDecimal LineNetAmtTax = tax.calculateTax( LineNetAmt,true,getStdPercision());
+                        for( int i = 0;i < m_taxes.length;i++ ) {
+                            if( m_taxes[ i ].getC_Tax_ID() == C_Tax_ID ) {
+                                m_taxes[ i ].addIncludedTax( LineNetAmtTax );
 
-                    log.fine( "LineNetAmt=" + LineNetAmt + " - Tax=" + LineNetAmtTax );
-                    LineNetAmt = LineNetAmt.subtract( LineNetAmtTax );
-
-                    for( int i = 0;i < m_taxes.length;i++ ) {
-                        if( m_taxes[ i ].getC_Tax_ID() == C_Tax_ID ) {
-                            m_taxes[ i ].addIncludedTax( LineNetAmtTax );
-
-                            break;
+                                break;
+                            }
                         }
+
+                        BigDecimal PriceListTax = tax.calculateTax( PriceList,true,getStdPercision());
+
+                        PriceList = PriceList.subtract( PriceListTax );
                     }
 
-                    BigDecimal PriceListTax = tax.calculateTax( PriceList,true,getStdPercision());
-
-                    PriceList = PriceList.subtract( PriceListTax );
                 }    // correct included Tax
 
                 docLine.setAmount( LineNetAmt,PriceList,Qty );
