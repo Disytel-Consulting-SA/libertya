@@ -624,10 +624,16 @@ public class ReciboDeCliente {
 	 *            medio de pago a eliminar
 	 */
 	public void removeMedioPago(MedioPago mp){
+		removeMedioPago(mp, true);
+	}
+	
+	public void removeMedioPago(MedioPago mp, boolean updateDiscounts){
 		getCredits().remove(mp);
 		getDiscountCalculator().subtractDiscountBaseAmount(
 				mp.getDiscountInternalID(), mp.getRealAmt());
-		updateDiscounts();
+		if(updateDiscounts){
+			updateDiscounts();
+		}
 	}
 
 	/**
@@ -691,7 +697,7 @@ public class ReciboDeCliente {
 		// la lista de pagos asociados a este recibo
 		List<MedioPago> currentCredits = new ArrayList<MedioPago>(getCredits());
 		for (MedioPago payment : currentCredits) {
-			removeMedioPago(payment);
+			removeMedioPago(payment, false);
 		}
 		// Agrega nuevamente los pagos.
 		for (MedioPago payment : currentCredits) {
