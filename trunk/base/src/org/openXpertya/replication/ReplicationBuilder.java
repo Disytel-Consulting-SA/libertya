@@ -20,8 +20,11 @@ import org.openXpertya.util.DB;
 
 public class ReplicationBuilder extends ChangeLogXMLBuilder {
 
-	public static final String UID_REFERENCE_PREFIX = "UID=";
-		
+	/** Prefijo de referencia por retrieveUID */
+	public static final String RUID_REFERENCE_PREFIX = "UID=";
+	/** Prefijo de referencia por componentObjectUID */
+	public static final String CUID_REFERENCE_PREFIX = "CID=";	
+	
 	/** XML a enviar al destinatario */
 	protected StringBuffer m_replicationXMLData = null; 
 	
@@ -145,7 +148,7 @@ public class ReplicationBuilder extends ChangeLogXMLBuilder {
 					m_replicationXMLData.append(">");
 					
 					// Textos del nodo, old y new values
-				    newValue = useRetrieveUID ? (UID_REFERENCE_PREFIX+retrieveUIDValue) : String.valueOf(element.getNewValue());
+				    newValue = useRetrieveUID ? (RUID_REFERENCE_PREFIX+retrieveUIDValue) : String.valueOf(element.getNewValue());
 	//				if(element.getBinaryValue() != null){
 	//					/** TODO: VER QUE HACER ACA CON LOS BINARIOS EN REPLICACIÓN! */
 	//				}

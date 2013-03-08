@@ -543,3 +543,111 @@ $BODY$
   COST 100
   ROWS 1000;
 ALTER FUNCTION replication_record_count(integer, character varying) OWNER TO libertya;
+
+-- 20130308:1114 Ampliacion en validacion de referencias para soportar tablas no incluidas en replicacion, pero que contienen AD_ComponentObjectUID
+CREATE OR REPLACE FUNCTION replication_is_valid_reference(p_columnid integer, column_data character varying)
+  RETURNS integer AS
+$BODY$
+DECLARE
+targetTableName varchar;
+targetTableID int;
+sourceTableID int;
+isValid int;
+colName varchar;
+hostID int;
+sourceRepArray varchar;
+targetRepArray varchar;
+viewTable varchar;
+BEGIN
+
+	-- En caso de que no presente un dato, entonces omitir cualquier validación
+	IF column_data IS NULL THEN
+		RETURN 1;
+	END IF;
+
+	-- si la columna es AD_Language, omitir cualquier tipo de validacion
+	SELECT INTO colName columnname FROM AD_Column WHERE AD_Column_ID = p_columnID;
+	IF colName = 'AD_Language' THEN
+		RETURN 1;   
+	END IF;
+   
+	-- ver si el campo es una referencia
+	select into targetTableName replication_get_referenced_table(p_columnID);
+
+	-- si es una referencia, verificar el bitacoreo en la tabla referenciada
+	IF targetTableName != '' THEN
+       
+	-- verificar si la tabla destino es simplemente una vista
+	select INTO viewTable isview from ad_table where tablename = targetTableName;
+	IF viewTable = 'Y' THEN
+		return 1;
+	end if;
+		
+	-- si el valor es 0, entonces es una referencia valida (seria como null para LY)
+	IF column_data = '0' THEN
+		return 1;
+	END IF;
+
+        -- recuperar el identificador de la tabla destino
+        SELECT into targetTableID AD_Table_ID FROM AD_Table WHERE upper(tablename) = upper(targetTableName);
+        -- recuperar el identificador de la tabla origen
+        SELECT into sourceTableID AD_Table_ID FROM AD_Column WHERE AD_Column_ID = p_columnid;
+   
+        -- ver si la tabla destino es bitacoreada
+        SELECT INTO hostID replicationarraypos FROM AD_ReplicationHost WHERE thisHost = 'Y';
+        IF hostID IS NULL THEN RAISE EXCEPTION 'Configuracion de Hosts incompleta: Ninguna sucursal tiene marca de Este Host'; END IF;
+
+        -- si la tabla destino directamente no tiene la columna retrieveuid, 
+        -- verificar si tiene la ad_componentobjectuid, sino entonces devolver que es invalido
+        SELECT INTO isValid count(1) FROM information_schema.columns
+            WHERE lower(column_name) = 'retrieveuid' AND lower(table_name) = lower(targetTableName);
+        IF isValid = 0 THEN
+	    SELECT INTO isValid count(1) FROM information_schema.columns
+                WHERE lower(column_name) = 'ad_componentobjectuid' AND lower(table_name) = lower(targetTableName);
+            IF isValid = 0 THEN
+		return 0;
+	    END IF;
+	    -- Tiene un dato seteado en ad_componentobjectuid?
+	    EXECUTE 'select count(1) FROM ' || targetTableName ||
+			' WHERE ' || targetTableName || '_ID = ' || column_data::int ||
+			' AND ( ad_componentobjectuid is NOT null )' INTO isValid;
+		return isValid;
+        END IF;
+
+	-- comparar el replicationArray de la tabla origen y de la tabla destino:
+	-- unicamente si son iguales se podrá replicar, en caso contrario devolver que no
+	-- contemplar caso de tablas bidireccionales, aqui solo importa que exista envio hacia el otro host
+	-- (reemplazar 3 (bidireccional) por 1 (enviar)
+	SELECT INTO sourceRepArray replace(replicationArray, '3', '1') FROM AD_TableReplication where ad_table_id = sourceTableID;
+	SELECT INTO targetRepArray replace(replicationArray, '3', '1') FROM AD_TableReplication where ad_table_id = targetTableID;
+
+	-- si los repArray de las tablas origen y destino son iguales, entonces todo bien
+	IF sourceRepArray = targetRepArray THEN
+		return 1;
+	END IF;
+
+	-- si los repArray de las tablas origen y destino son diferentes (y la destino esta marcada para replicar),
+	-- entonces no puede referenciarse el registro, ya que existirá en algunos hosts y en otros no.
+	IF sourceRepArray <> targetRepArray AND (position('1' in targetRepArray) > 0) THEN
+		return 0;
+	END IF;
+
+	-- si son diferentes porque se debe a que la tabla destino tiene 
+	-- repArray con posiciones de replicación (1),habra que analizar el registro en cuestión:
+
+        -- hay que ver si se esta referenciando a 
+		-- 1) un registro ya existente en el core (retrieveuid debe iniciar con o),
+		-- 2) o bien a un registro proveniente de otra sucursal (no generado localmente)
+        EXECUTE 'select count(1) FROM ' || targetTableName ||
+            ' WHERE ' || targetTableName || '_ID = ' || column_data::int ||
+            ' AND ( retrieveuid NOT ilike ''h' || hostID::varchar || '_%'' )' INTO isValid;       
+       
+        return isValid;
+    END IF;
+   
+    return 1;
+END;
+$BODY$
+  LANGUAGE 'plpgsql' VOLATILE
+  COST 100;
+ALTER FUNCTION replication_is_valid_reference(integer, character varying) OWNER TO libertya;

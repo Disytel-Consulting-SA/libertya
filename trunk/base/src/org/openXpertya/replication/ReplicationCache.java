@@ -25,6 +25,8 @@ public class ReplicationCache {
 	public static HashMap<Integer, Integer> referencesData = null;
 	/* InformationSchema: tablas con columna retrieveuid */
 	public static HashSet<String> tablesWithRetrieveUID = null;
+	/* InformationSchema: tablas con columna AD_ComponentObjectUID */
+	public static HashSet<String> tablesWithComponentObjectUID = null;
 	/* Relacion entre la posicion del una organizacion en el replicationArrayPos y el AD_Org_ID */
 	public static HashMap<String, Integer> map_RepArrayPos_OrgID = null;
 	/* Columnas.  Información gral. de las columnass */
@@ -102,6 +104,22 @@ public class ReplicationCache {
 				pstmt = null;
 			}
 	
+			if (tablesWithComponentObjectUID == null)	{
+				tablesWithComponentObjectUID = new HashSet<String>();
+				String sql = new String (	" SELECT lower(t.table_name) " +
+											" FROM information_schema.tables t " +
+											" INNER JOIN information_schema.columns c ON t.table_name = c.table_name " +
+											" WHERE t.table_schema = 'libertya' " + 
+											" AND c.column_name = 'ad_componentobjectuid' ");
+				PreparedStatement pstmt = DB.prepareStatement(sql, trxName);
+				ResultSet rs = pstmt.executeQuery();
+				while (rs.next())
+					tablesWithComponentObjectUID.add(rs.getString(1));
+				rs.close();
+				rs =null;
+				pstmt = null;
+			}			
+			
 			if (map_RepArrayPos_OrgID == null)	{
 				map_RepArrayPos_OrgID = new HashMap<String, Integer>();
 				String sql = new String (	" SELECT COALESCE(rh.ad_org_id::varchar) as org, rh.replicationarraypos " +
@@ -191,6 +209,7 @@ public class ReplicationCache {
 		tablesIDs = null;
 		referencesData = null;
 		tablesWithRetrieveUID = null;
+		tablesWithComponentObjectUID = null;
 		map_RepArrayPos_OrgID = null;
 		columnsData = null;
 		keyColumns = null;

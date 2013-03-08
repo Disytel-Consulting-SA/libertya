@@ -41,9 +41,12 @@ public class ReplicationBuilderWS extends ReplicationBuilder {
 		String newValue;
 		boolean isTableReference;
 		boolean useRetrieveUID = false;
+		boolean useComponentObjectUID = false;
 		String retrieveUIDValue = "";
+		String componentObjectUIDValue = "";
 		String tableName = "";
 		boolean tableHasRetrieveUID;
+		boolean tableHasComponentObjectUID = false;
 		int tableID = -1;
 		
 		/* Cargar el listado de grupos (cada tupla de AD_Changelog_Replication es un groupList) */
@@ -77,7 +80,9 @@ public class ReplicationBuilderWS extends ReplicationBuilder {
 					// coloco los atributos específicos
 					isTableReference = isTableReference(element);
 					useRetrieveUID = false;
+					useComponentObjectUID = false;
 					retrieveUIDValue = "";
+					componentObjectUIDValue = "";
 					if(isTableReference && element.getNewValue() != null && element.getNewValue().toString().length() > 0 
 							&& !getIgnoresReferenceColumns().contains(element.getColumnName())){
 						// Determinar el nombre de la tabla de referencia
@@ -95,7 +100,8 @@ public class ReplicationBuilderWS extends ReplicationBuilder {
 						 *  Si la referencia posee un retrieveUID, entonces se deberá utilizar éste en lugar del ID local
 						 */
 						// La tabla referenciada tiene campo retrieveUID?
-						tableHasRetrieveUID = ReplicationCache.tablesWithRetrieveUID.contains(tableName.toLowerCase()); 
+						tableHasRetrieveUID = ReplicationCache.tablesWithRetrieveUID.contains(tableName.toLowerCase());
+						tableHasComponentObjectUID = ReplicationCache.tablesWithComponentObjectUID.contains(tableName.toLowerCase());
 						if (tableHasRetrieveUID)
 						{
 							// El registro tiene seteado el retrieveUID? Si no lo tiene, es una refTable tradicional
@@ -103,6 +109,17 @@ public class ReplicationBuilderWS extends ReplicationBuilder {
 							if (retrieveUIDValue != null && retrieveUIDValue.length() > 0)
 								useRetrieveUID = true;
 						}
+						else
+						{
+							// Si retrieveUID no puede ser usado, entonces utilizar AD_ComponentObjectUID (si esto es posible)
+							if (tableHasComponentObjectUID) {
+								// 	El registro tiene seteado un AD_ComponentObjectUID? Si lo tiene entonces usarlo como referencia
+								componentObjectUIDValue = DB.getSQLValueString(trxName, " SELECT AD_ComponentObjectUID FROM " + tableName + " WHERE " + tableName + "_ID = " + element.getNewValue() + " AND 1 = ?", 1 );
+								if (componentObjectUIDValue != null && componentObjectUIDValue.length() > 0)
+									useComponentObjectUID = true;
+							}
+						}
+							
 						// incorporar la referencia a la tabla correspondiente
 						m_replicationXMLData.append(" refTable=\"").append(tableName).append("\"");
 					}
@@ -110,11 +127,14 @@ public class ReplicationBuilderWS extends ReplicationBuilder {
 					// cierre de tag inicial de la columna
 					m_replicationXMLData.append(">");
 					
-					// Textos del nodo, old y new values
-				    newValue = (useRetrieveUID && !"AD_Org_ID".equalsIgnoreCase(element.getColumnName())) ? (UID_REFERENCE_PREFIX+retrieveUIDValue) : String.valueOf(element.getNewValue());
-	//				if(element.getBinaryValue() != null){
-	//					/** TODO: VER QUE HACER ACA CON LOS BINARIOS EN REPLICACIÓN! */
-	//				}
+					// Setear el newValue, usando retrieveUID; o componentObjectUID, o bien el valor literal
+					if ((useRetrieveUID && !"AD_Org_ID".equalsIgnoreCase(element.getColumnName())))
+						newValue = (RUID_REFERENCE_PREFIX+retrieveUIDValue);
+					else if (useComponentObjectUID && !"AD_Org_ID".equalsIgnoreCase(element.getColumnName()))
+						newValue = (CUID_REFERENCE_PREFIX+componentObjectUIDValue);
+					else
+				    	newValue = String.valueOf(element.getNewValue());
+					
 					// En el AD_Org_ID en realidad no se envia el AD_Org_ID sino el host asociado (replicationArrayPos) cargado, 
 					// dado que este es el único valor en común.  Para AD_Org_ID = 0, pasamos directamente ese valor sin mapear 
 					if ("AD_Org_ID".equalsIgnoreCase(element.getColumnName()) && !"UID=AD_Org-0".equals(newValue))
