@@ -309,6 +309,9 @@ public class GeneratorPercepciones {
 				invoiceTax.setC_Tax_ID(percepcion.getID());
 				invoiceTax.setTaxAmt(invoiceTax.getTaxAmt().add(percepcionAmt));
 				invoiceTax.setTaxBaseAmt(invoiceNetTotalAmt);
+				if (invoiceTax.getAD_Org_ID() == 0){
+					invoiceTax.setAD_Org_ID(invoice.getAD_Org_ID());
+				}
 				if(!invoiceTax.save()){
 					throw new Exception("ERROR updating percepcion invoice tax");
 				}
