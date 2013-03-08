@@ -110,7 +110,7 @@ public class LibroIVADataSource extends QueryDataSource implements JRDataSource 
              }
              	
              sqlReal.append(") inv " +
-             	"     left join (select c_doctype_id, name as c_doctype_name,docbasetype , signo_issotrx as signo, doctypekey " +
+             	"     left join (select c_doctype_id, name as c_doctype_name,docbasetype , signo_issotrx as signo, doctypekey, isfiscaldocument " +
              	"				from c_docType) cdt on cdt.c_doctype_id = inv.c_doctype_id " +
              	"     left join (Select c_tax_id, c_invoice_id, taxamt as importe, ad_client_id " +
              	" 		        from c_invoicetax) cit 	on cit.c_invoice_id = inv.c_invoice_id " +
@@ -123,7 +123,7 @@ public class LibroIVADataSource extends QueryDataSource implements JRDataSource 
              	" 				from c_bpartner) cbp on inv.c_bpartner_id = cbp.c_bpartner_id " +
              	"     left join (Select c_categoria_iva_id, name as c_categoria_via_name, codigo as codiva " +
              	"				from c_categoria_iva ) cci 	on cbp.c_categoria_iva_id = cci.c_categoria_iva_id " +
-             	"	  WHERE cdt.doctypekey not in ('RTR', 'RTI', 'RCR', 'RCI')  " +
+             	"	  WHERE cdt.doctypekey not in ('RTR', 'RTI', 'RCR', 'RCI') and (cdt.isfiscaldocument = 'Y') " +
              	"     ORDER BY inv.dateinvoiced ASC, inv.c_doctype_id, inv.documentno ASC, c_tax_id,c_invoice_id");
              //System.out.println(sqlReal);
              return sqlReal.toString();
