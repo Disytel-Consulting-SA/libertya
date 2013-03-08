@@ -138,16 +138,28 @@ public class ReplicationXMLUpdater extends PluginXMLUpdater {
 	protected int getReferenceRecordID(String refKeyColumnName, Column column) throws Exception
 	{
 		/* Determinar si la referencia a buscar está alojada en retrieveUID o bien es directa (no existe el registro en la tabla) */
-		boolean useRetrieveUID = column.getNewValue().startsWith(ReplicationBuilder.UID_REFERENCE_PREFIX);	// (1 == DB.getSQLValue(m_trxName, "SELECT count(1) FROM information_schema.columns WHERE table_name = '" + column.getRefTable().toLowerCase() + "' AND column_name = 'retrieveuid'"));
+		boolean useRetrieveUID = column.getNewValue().startsWith(ReplicationBuilder.RUID_REFERENCE_PREFIX);	
+		boolean useComponentObjectUID = column.getNewValue().startsWith(ReplicationBuilder.CUID_REFERENCE_PREFIX);	
 		
-		/* Si existe el campo retrieveUID, utilizar este, sino hacer bypass del dato (si es dato vacio pasar null) */
-		if (!useRetrieveUID)
+		/* Si es referencia mediante retrieveUID (o componentObjectUID), utilizar este, sino hacer bypass del dato (si es dato vacio pasar null) */
+		if (!useRetrieveUID && !useComponentObjectUID)
 			return (column.getNewValue()==null||column.getNewValue().equals(""))?-1:Integer.parseInt(column.getNewValue());
-				
+		
+		int retValue = -1;
+		String retrieveUIDSQL = null;
 		/* valor a retornar via retrieveUID (despreciar los 4 caracteres de UID) */
-		String retrieveUIDSQL = " SELECT " + refKeyColumnName + " FROM " + column.getRefTable() + 
-								" WHERE " + appendUniversalRefenceWhereClause(column.getNewValue().substring(ReplicationBuilder.UID_REFERENCE_PREFIX.length()));
-		int retValue = DB.getSQLValue(m_trxName, retrieveUIDSQL, true);
+		if (useRetrieveUID) {
+			retrieveUIDSQL = " SELECT " + refKeyColumnName + " FROM " + column.getRefTable() + 
+		  					 " WHERE " + appendUniversalRefenceWhereClause(column.getNewValue().substring(ReplicationBuilder.RUID_REFERENCE_PREFIX.length()));
+			retValue = DB.getSQLValue(m_trxName, retrieveUIDSQL, true);
+		}
+		
+		/* valor a retornar via componentObjectUID (despreciar los 4 caracteres de CID) */
+		if (useComponentObjectUID) {
+			retrieveUIDSQL = " SELECT " + refKeyColumnName + " FROM " + column.getRefTable() + 
+		  					 " WHERE AD_ComponentObjectUID = '" + column.getNewValue().substring(ReplicationBuilder.CUID_REFERENCE_PREFIX.length()) + "'";
+			retValue = DB.getSQLValue(m_trxName, retrieveUIDSQL, true);
+		}
 		
 		/* Elevar una excepción si no pudieron mapearse correctamente las referencias se dispara la excepción correspondiente */
 		if (refKeyColumnName == null || retValue == -1)
@@ -283,7 +295,7 @@ public class ReplicationXMLUpdater extends PluginXMLUpdater {
 		 * (siempre y cuando sea una organizacion con valor distinto de cero, en este caso no es necesario realizar mapeo alguno
 		 * 	Para el caso en que la tabla AD_Org se encuentra marcada para replicación, el registro "0"
 		 * 	en realidad llegará como UID=AD_Org-0, con lo cual hay que tener en cuenta este caso adicional */
-		else if ("AD_Org_ID".equals(column.getName()) && (!"0".equals(column.getNewValue())) && (!(ReplicationBuilder.UID_REFERENCE_PREFIX+"AD_Org-0").equals(column.getNewValue())))
+		else if ("AD_Org_ID".equals(column.getName()) && (!"0".equals(column.getNewValue())) && (!(ReplicationBuilder.RUID_REFERENCE_PREFIX+"AD_Org-0").equals(column.getNewValue())))
 		{
 			// En el AD_Org_ID en realidad no me llega el AD_Org_ID sino que me llega el host (replicationArrayPos) cargado,
 			// dado que este es el único valor en común que comparten todas las organizaciones
