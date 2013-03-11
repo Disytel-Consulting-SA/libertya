@@ -226,8 +226,12 @@ public class MRefList extends X_AD_Ref_List {
      *      @return List or null
      */
     public static String getListName(Properties ctx, int AD_Reference_ID, String Value) {
+    	return getListName(Env.getAD_Language(ctx), AD_Reference_ID, Value);
+    }		// getListName
+    
+    
+    public static String getListName(String AD_Language, int AD_Reference_ID, String Value) {
 
-        String	AD_Language	= Env.getAD_Language(ctx);
         String	key		= AD_Language + "_" + AD_Reference_ID + "_" + Value;
         String	retValue	= (String) s_cache.get(key);
 
@@ -287,7 +291,7 @@ public class MRefList extends X_AD_Ref_List {
         //
         return retValue;
 
-    }		// getListName
+    }
 
 	/**
 	 * @param ctx

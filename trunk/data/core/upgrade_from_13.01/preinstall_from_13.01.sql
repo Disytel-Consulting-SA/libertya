@@ -881,3 +881,67 @@ $BODY$
   LANGUAGE 'plpgsql' VOLATILE
   COST 100;
 ALTER FUNCTION replication_event() OWNER TO libertya;
+
+-- 20130311-1200 Nueva vista para movimientos de productos detallados
+CREATE OR REPLACE VIEW v_product_movements_detailed AS 
+select t.movement_table, 
+	t.ad_client_id, 
+	t.ad_org_id, 
+	t.m_locator_id, 
+	w.m_warehouse_id, 
+	w.value as warehouse_value, 
+	w.name as warehouse_name, 
+	t.receiptvalue, 
+	t.movementdate, 
+	t.doctypename, 
+	t.documentno, 
+	t.docstatus, 
+	t.m_product_id,
+	t.product_value, 
+	t.product_name, 
+	t.qty, 
+	t.c_invoice_id, 
+	i.documentno as invoice_documentno
+FROM (
+select 'M_InOut' as movement_table, t.ad_client_id, t.ad_org_id, t.m_locator_id, (CASE dt.signo_issotrx WHEN 1 THEN 'Y' ELSE 'N' END) as receiptvalue, t.movementdate, dt.name as doctypename, io.documentno, io.docstatus, p.m_product_id, p.value as product_value, p.name as product_name, abs(t.movementqty) as qty, (select i.c_invoice_id from c_order as o inner join c_invoice as i on i.c_order_id = o.c_order_id WHERE o.c_order_id = io.c_order_id limit 1) as c_invoice_id
+from m_transaction as t
+inner join m_inoutline as iol on iol.m_inoutline_id = t.m_inoutline_id
+inner join m_product as p on p.m_product_id = t.m_product_id
+inner join m_inout as io on io.m_inout_id = iol.m_inout_id
+inner join c_doctype as dt on dt.c_doctype_id = io.c_doctype_id
+UNION ALL
+select 'M_Movement' as movement_table, t.ad_client_id, t.ad_org_id, t.m_locator_id, (CASE abs(t.movementqty) WHEN t.movementqty THEN 'Y' ELSE 'N' END) as receiptvalue, t.movementdate, dt.name as doctypename, m.documentno, m.docstatus, p.m_product_id, p.value as product_value, p.name as product_name, abs(t.movementqty) as qty, null as c_invoice_id
+from m_transaction as t
+inner join m_movementline as ml on ml.m_movementline_id = t.m_movementline_id
+inner join m_product as p on p.m_product_id = t.m_product_id
+inner join m_movement as m on m.m_movement_id = ml.m_movement_id
+inner join c_doctype as dt on dt.c_doctype_id = m.c_doctype_id
+UNION ALL
+select 'M_Inventory' as movement_table, t.ad_client_id, t.ad_org_id, t.m_locator_id, (CASE abs(t.movementqty) WHEN t.movementqty THEN 'Y' ELSE 'N' END) as receiptvalue, t.movementdate, dt.name as doctypename, i.documentno, i.docstatus, p.m_product_id, p.value as product_value, p.name as product_name, abs(t.movementqty) as qty, null as c_invoice_id
+from m_transaction as t
+inner join m_inventoryline as il on il.m_inventoryline_id = t.m_inventoryline_id
+inner join m_product as p on p.m_product_id = t.m_product_id
+inner join m_inventory as i on i.m_inventory_id = il.m_inventory_id
+inner join c_doctype as dt on dt.c_doctype_id = i.c_doctype_id
+left join m_transfer as tr on tr.m_inventory_id = i.m_inventory_id
+left join m_splitting as sp on sp.m_inventory_id = i.m_inventory_id
+where tr.m_transfer_id is null and sp.m_splitting_id is null
+UNION ALL
+select 'M_Transfer' as movement_table, t.ad_client_id, t.ad_org_id, t.m_locator_id, (CASE abs(t.movementqty) WHEN t.movementqty THEN 'Y' ELSE 'N' END) as receiptvalue, t.movementdate, transfertype as doctypename, tr.documentno, tr.docstatus, p.m_product_id, p.value as product_value, p.name as product_name, abs(t.movementqty) as qty, null as c_invoice_id
+from m_transaction as t
+inner join m_inventoryline as il on il.m_inventoryline_id = t.m_inventoryline_id
+inner join m_product as p on p.m_product_id = t.m_product_id
+inner join m_inventory as i on i.m_inventory_id = il.m_inventory_id
+inner join m_transfer as tr on tr.m_inventory_id = i.m_inventory_id
+UNION ALL
+select 'M_Splitting' as movement_table, t.ad_client_id, t.ad_org_id, t.m_locator_id, (CASE abs(t.movementqty) WHEN t.movementqty THEN 'Y' ELSE 'N' END) as receiptvalue, t.movementdate, 'M_Splitting_ID' as doctypename, sp.documentno, sp.docstatus, p.m_product_id, p.value as product_value, p.name as product_name, abs(t.movementqty) as qty, null as c_invoice_id
+from m_transaction as t
+inner join m_inventoryline as il on il.m_inventoryline_id = t.m_inventoryline_id
+inner join m_product as p on p.m_product_id = t.m_product_id
+inner join m_inventory as i on i.m_inventory_id = il.m_inventory_id
+inner join m_splitting as sp on sp.m_inventory_id = i.m_inventory_id) as t
+INNER JOIN m_locator as l on l.m_locator_id = t.m_locator_id
+INNER JOIN m_warehouse as w ON w.m_warehouse_id = l.m_warehouse_id
+LEFT JOIN c_invoice as i ON i.c_invoice_id = t.c_invoice_id;
+
+ALTER TABLE v_product_movements_detailed OWNER TO libertya;
