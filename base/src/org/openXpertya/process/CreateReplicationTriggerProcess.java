@@ -114,6 +114,9 @@ public class CreateReplicationTriggerProcess extends SvrProcess {
 			// Query resultante
 			StringBuffer sql = new StringBuffer(""); 
 
+			// Deshabilitar trigger de replicación replicationEvent() 
+			appendSQLEnableDisableCurrentTrigger(sql, false);
+			
 			// Campos necesarios para replicación
 			appendNewColumns(sql);
 			
@@ -129,6 +132,9 @@ public class CreateReplicationTriggerProcess extends SvrProcess {
 			// Rellena el repArray con valores dummy si el nro de hosts es mayor a la longitud del repArray (caso: nueva sucursal)
 			if (shouldUpdateRepArrays)
 				appendSQLFillRepArray(sql);
+
+			// Rehabilitar trigger de replicación replicationEvent() 
+			appendSQLEnableDisableCurrentTrigger(sql, true);
 			
 			// Impactar en base de datos
 			DB.executeUpdate( sql.toString(), false , get_TrxName(), true );	
@@ -161,6 +167,13 @@ public class CreateReplicationTriggerProcess extends SvrProcess {
 		values.replace(values.length()-1, values.length()-1, ")");
 		
 		return count == 0 ? "()" : values.toString().substring(0, values.toString().length()-1);
+	}
+	
+	/**
+	 * Actualiza master switch del trigger de replicacion
+	 */
+	protected void appendSQLEnableDisableCurrentTrigger(StringBuffer sql, boolean enable) {
+		sql.append(" UPDATE AD_Preference SET Value = '"+(enable?"Y":"N")+"' WHERE Attribute = 'ReplicationEventsActive'; ");
 	}
 	
 	
