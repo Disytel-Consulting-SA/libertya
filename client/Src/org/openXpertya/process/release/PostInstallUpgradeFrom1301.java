@@ -14,6 +14,14 @@ public class PostInstallUpgradeFrom1301 extends PluginPostInstallProcess {
 	protected final static String PURCHASE_MASTER_JASPER_REPORT_UID = "CORE-AD_JasperReport-1010091";
 	protected final static String PURCHASE_MASTER_JASPER_REPORT_FILENAME = "PurchaseMasterReport.jasper";
 	
+	/** UID del informe de Movimientos de artículo detallado */
+	protected final static String PRODUCT_MOVEMENTS_DETAILED_JASPER_REPORT_UID = "CORE-AD_JasperReport-1010092";
+	protected final static String PRODUCT_MOVEMENTS_DETAILED_JASPER_REPORT_FILENAME = "ProductMovementsWithStockBalance.jasper";
+	
+	/** UID del subreporte del informe de Movimientos de artículo detallado */
+	protected final static String PRODUCT_MOVEMENTS_DETAILED_SUBREPORT_JASPER_REPORT_UID = "CORE-AD_JasperReport-1010093";
+	protected final static String PRODUCT_MOVEMENTS_DETAILED_SUBREPORT_JASPER_REPORT_FILENAME = "ProductMovementsWithStockBalance_Subreport.jasper";
+	
 	protected String doIt() throws Exception {
 		super.doIt();
 		
@@ -38,6 +46,28 @@ public class PostInstallUpgradeFrom1301 extends PluginPostInstallProcess {
 								.readBinaryFromJar(
 										jarFileURL,
 										getBinaryFileURL(PURCHASE_MASTER_JASPER_REPORT_FILENAME)));
+		
+		// Movimientos de artículo detallado
+		MJasperReport
+				.updateBinaryData(
+						get_TrxName(),
+						getCtx(),
+						PRODUCT_MOVEMENTS_DETAILED_JASPER_REPORT_UID,
+						JarHelper
+								.readBinaryFromJar(
+										jarFileURL,
+										getBinaryFileURL(PRODUCT_MOVEMENTS_DETAILED_JASPER_REPORT_FILENAME)));
+		
+		// Subreporte de Movimientos de artículo detallado
+		MJasperReport
+				.updateBinaryData(
+						get_TrxName(),
+						getCtx(),
+						PRODUCT_MOVEMENTS_DETAILED_SUBREPORT_JASPER_REPORT_UID,
+						JarHelper
+								.readBinaryFromJar(
+										jarFileURL,
+										getBinaryFileURL(PRODUCT_MOVEMENTS_DETAILED_SUBREPORT_JASPER_REPORT_FILENAME)));
 		
 		return " ";
 	}
