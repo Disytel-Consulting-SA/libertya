@@ -487,8 +487,8 @@ public class VCreateFromInvoice extends VCreateFrom {
     }    // saveInvoice
 
     @Override
-    protected String getRemainingQtySQLLine(boolean forInvoice){
-    	String sqlLine = super.getRemainingQtySQLLine(forInvoice);
+    protected String getRemainingQtySQLLine(boolean forInvoice, boolean allowDeliveryReturns){
+    	String sqlLine = super.getRemainingQtySQLLine(forInvoice, allowDeliveryReturns);
     	if(!forInvoice){
     		sqlLine = " (CASE WHEN (l.QtyOrdered - l.QtyDelivered - l.QtyTransferred) > l.QtyInvoiced THEN l.QtyInvoiced ELSE (l.QtyOrdered - l.QtyDelivered- l.QtyTransferred) END) ";
     	}
@@ -531,7 +531,7 @@ public class VCreateFromInvoice extends VCreateFrom {
 		// set Shipment to Null
 		shipmentField.setValue(null);
 		invoiceOrderField.setValue(null);
-		loadOrder( orderID,isForInvoice(),true );
+		loadOrder( orderID,isForInvoice(), allowDeliveryReturned(),true );
 	}
 	
 	/**
@@ -607,7 +607,7 @@ public class VCreateFromInvoice extends VCreateFrom {
         	MInvoice invoice = new MInvoice(getCtx(), invoiceID, getTrxName());
         	relatedOrderID = invoice.getC_Order_ID();
         }
-        loadOrder(relatedOrderID, false, true);
+        loadOrder(relatedOrderID, false, allowDeliveryReturned(), true);
         if (relatedOrderID > 0) {
         	orderField.setValue(relatedOrderID);
         }

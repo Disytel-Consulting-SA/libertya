@@ -7,7 +7,7 @@ import java.math.*;
 import org.openXpertya.util.*;
 /** Modelo Generado por C_DocType
  *  @author Comunidad de Desarrollo Libertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
- *  @version  - 2012-12-04 23:30:42.007 */
+ *  @version  - 2013-03-13 15:21:40.648 */
 public class X_C_DocType extends org.openXpertya.model.PO
 {
 /** Constructor estándar */
@@ -17,6 +17,7 @@ super (ctx, C_DocType_ID, trxName);
 /** if (C_DocType_ID == 0)
 {
 setAllowChangePriceList (false);
+setAllowDeliveryReturned (false);
 setC_DocType_ID (0);
 setDocBaseType (null);
 setDocTypeKey (null);
@@ -135,6 +136,22 @@ Change price list is allowed in document. All prices in lines will be overwritte
 public boolean isAllowChangePriceList() 
 {
 Object oo = get_Value("AllowChangePriceList");
+if (oo != null) 
+{
+ if (oo instanceof Boolean) return ((Boolean)oo).booleanValue();
+ return "Y".equals(oo);
+}
+return false;
+}
+/** Set Allow delivery returneds */
+public void setAllowDeliveryReturned (boolean AllowDeliveryReturned)
+{
+set_Value ("AllowDeliveryReturned", new Boolean(AllowDeliveryReturned));
+}
+/** Get Allow delivery returneds */
+public boolean isAllowDeliveryReturned() 
+{
+Object oo = get_Value("AllowDeliveryReturned");
 if (oo != null) 
 {
  if (oo instanceof Boolean) return ((Boolean)oo).booleanValue();
