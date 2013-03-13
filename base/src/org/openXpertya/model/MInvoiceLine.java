@@ -2029,7 +2029,23 @@ public class MInvoiceLine extends X_C_InvoiceLine {
      */
     public void updateTaxAmt() {
     	BigDecimal tax = getTaxRate().divide(new BigDecimal(100), 2, BigDecimal.ROUND_HALF_UP);
-        BigDecimal taxAmt = getLineNetAmount().multiply(tax);
+    	BigDecimal net = getLineNetAmt();
+         
+    	GeneratorPercepciones generator = new GeneratorPercepciones(getCtx(), getInvoice().getDiscountableWrapper(), get_TrxName());
+        try {
+        	BigDecimal rate = generator.totalPercepcionesRate();
+        	rate = rate.divide(new BigDecimal(100));
+        	try{
+        		net = net.divide( (BigDecimal.ONE.add(rate).add(tax)));
+            }
+            catch (Exception e){
+            	net = new BigDecimal(net.doubleValue() / (BigDecimal.ONE.add(rate).add(tax)).doubleValue());
+            }
+		} catch (Exception e) {
+			e.printStackTrace();
+		}	
+    	
+        BigDecimal taxAmt = net.multiply(tax);
         if( taxAmt.scale() > getPrecision()) {
         	taxAmt = taxAmt.setScale( getPrecision(),BigDecimal.ROUND_HALF_UP );
         }
