@@ -164,7 +164,7 @@ public class ProcessorWSFE {
 			
 			//*****IMPORTE NETO
 			//line.append(invoice.getTotalLines().toString().replace(".", "")+"\n");
-			line.append(invoice.getTotalLines()+"\n");
+			line.append(invoice.getNetAmount()+"\n");
 			
 			//*****FECHA
 			if(invoice.getDateAcct() == null){
@@ -195,17 +195,49 @@ public class ProcessorWSFE {
 			boolean firstLineAppended = false;
 			for (int i = 0; i < size; i++){
 				tax = MTax.get(m_ctx, taxes[i].getC_Tax_ID(), getTrxName());
-				taxes[i].getTaxAmt();
-				taxes[i].getTaxBaseAmt();
-				tax.getWSFECode();
-				
-				if(firstLineAppended){
-					line.append(";");
+				if (!tax.isPercepcion()){
+					taxes[i].getTaxAmt();
+					taxes[i].getTaxBaseAmt();
+					tax.getWSFECode();
+					
+					if(firstLineAppended){
+						line.append(";");
+					}
+					line.append(tax.getWSFECode()+":"+taxes[i].getTaxBaseAmt()+":"+taxes[i].getTaxAmt());
+					firstLineAppended = true;	
 				}
-				line.append(tax.getWSFECode()+":"+taxes[i].getTaxBaseAmt()+":"+taxes[i].getTaxAmt());
-				firstLineAppended = true;
 			}
+			
 			line.append("\n");
+			
+			//*****IMPUESTOS PERCEPCIONES
+			BigDecimal total_Perception = BigDecimal.ZERO;
+			MInvoiceTax[] taxesPerc = this.invoice.getTaxes(false);
+			MTax taxPerc = null;
+			int sizePerc = taxesPerc.length;
+			boolean firstLineAppended2 = false;
+			for (int i = 0; i < sizePerc; i++){
+				taxPerc = MTax.get(m_ctx, taxesPerc[i].getC_Tax_ID(), getTrxName());
+				if (taxPerc.isPercepcion()){
+					total_Perception = total_Perception.add(taxesPerc[i].getTaxAmt().setScale(2, BigDecimal.ROUND_HALF_UP)); 
+					
+					taxesPerc[i].getTaxAmt();
+					taxesPerc[i].getTaxBaseAmt();
+					taxPerc.getWSFECode();
+					
+					if(firstLineAppended2){
+						line.append(";");
+					}
+					BigDecimal alic = taxPerc.getRate().setScale(2, BigDecimal.ROUND_HALF_UP);
+					line.append(taxPerc.getWSFECode()+":"+taxesPerc[i].getTaxBaseAmt()+":"+taxesPerc[i].getTaxAmt()+":"+alic);
+					firstLineAppended2 = true;	
+				}
+			}
+			
+			line.append("\n");
+			
+			//*****MONTO TOTAL DE PERCEPCIONES
+			line.append(total_Perception+"\n");
 			
 			File textFile = new File(getPath()+"entrada.txt");
 			FileWriter textOut;
@@ -389,8 +421,8 @@ public class ProcessorWSFE {
 	            if(aux == null) aux = "";
 	            if(auxE == null) auxE = "";
 	            auxE = brE.readLine();
-	            //messageError = "Exit Value="+p.exitValue()+",InputStream="+aux+",ErrorStream="+auxE;
-	            messageError = "La AFIP no aprueba el envio. Por favor corrobore los datos (CUIT, Categoria de IVA, Etc).";
+	            messageError = "Exit Value="+p.exitValue()+",InputStream="+aux+",ErrorStream="+auxE;
+	            //messageError = "La AFIP no aprueba el envio. Por favor corrobore los datos (CUIT, Categoria de IVA, Etc).";
 	            log.log(Level.SEVERE,"caeErrorCallProcess:" +aux + auxE);
 				
 			}
