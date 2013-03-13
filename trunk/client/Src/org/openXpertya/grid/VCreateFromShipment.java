@@ -30,7 +30,6 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.logging.Level;
 
-import org.apache.catalina.startup.SetAllPropertiesRule;
 import org.compiere.plaf.CompierePLAF;
 import org.compiere.swing.CCheckBox;
 import org.openXpertya.apps.form.VComponentsFactory;
