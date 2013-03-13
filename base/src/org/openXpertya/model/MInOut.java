@@ -1962,6 +1962,7 @@ public class MInOut extends X_M_InOut implements DocAction {
     	BigDecimal convertedQty = null;
     	
     	//
+    	MDocType docType = MDocType.get(getCtx(), getC_DocType_ID(), get_TrxName());
     	
     	for( int lineIndex2 = 0;lineIndex2 < lines2.length ;lineIndex2++ ) {
             MInOutLine sLine2   = lines2[ lineIndex2 ];
@@ -2072,7 +2073,7 @@ public class MInOut extends X_M_InOut implements DocAction {
              * TPV Performance: no actualizar las cantidades via modelo, usar UPDATEs directos 
              */
 //            MOrderLine ol = null;
-        	BigDecimal ol_qtyOrdered = null, ol_qtyReserved = null, ol_qtyDelivered = null, ol_qtyTransferred = null, ol_qtyInvoiced = null;
+        	BigDecimal ol_qtyOrdered = null, ol_qtyReserved = null, ol_qtyDelivered = null, ol_qtyTransferred = null, ol_qtyInvoiced = null, ol_qtyReturned = null;
         	int ol_attsetinstanceID = -1;
         	boolean ol_ok = false;
         	Timestamp ol_dateDelivered = null;
@@ -2080,8 +2081,8 @@ public class MInOut extends X_M_InOut implements DocAction {
             if( sLine.getC_OrderLine_ID() != 0 ) {
                 
             	try    	{
-	                String sql = " SELECT qtyOrdered, qtyReserved, qtyDelivered, M_AttributeSetInstance_ID, qtyTransferred, qtyInvoiced " +
-	                				" FROM C_OrderLine WHERE C_OrderLine_ID = " + sLine.getC_OrderLine_ID();
+	                String sql = " SELECT qtyOrdered, qtyReserved, qtyDelivered, M_AttributeSetInstance_ID, qtyTransferred, qtyInvoiced, coalesce((select sum(iol.movementqty) as qty from c_orderline as ol2 inner join m_inoutline as iol on iol.c_orderline_id = ol2.c_orderline_id inner join m_inout as io on io.m_inout_id = iol.m_inout_id inner join c_doctype as dt on dt.c_doctype_id = io.c_doctype_id where ol.c_orderline_id = ol2.c_orderline_id AND dt.doctypekey = 'DC' and io.docstatus IN ('CL','CO')),0) as ol_qtyReturned " +
+	                				" FROM C_OrderLine ol WHERE ol.C_OrderLine_ID = " + sLine.getC_OrderLine_ID();
 	                PreparedStatement stmt =  DB.prepareStatement(sql , get_TrxName());
 	                ResultSet rs = stmt.executeQuery();
 	                if (rs.next())
@@ -2093,6 +2094,8 @@ public class MInOut extends X_M_InOut implements DocAction {
 	                	ol_attsetinstanceID = rs.getInt(4);
 	                	ol_qtyTransferred = rs.getBigDecimal(5);
 	                	ol_qtyInvoiced = rs.getBigDecimal(6);
+						ol_qtyReturned = docType.isAllowDeliveryReturned() ? BigDecimal.ZERO
+								: rs.getBigDecimal(7);
 	                }
             	}
             	catch (Exception e)	{
@@ -2106,8 +2109,11 @@ public class MInOut extends X_M_InOut implements DocAction {
                     QtySO = sLine.getMovementQty();
 					if ((MovementType.endsWith("-") && QtySO.signum() >= 0)
 							|| (MovementType.endsWith("+") && QtySO.signum() < 0)){
-	                    if (ol_qtyOrdered.subtract(ol_qtyDelivered).subtract(ol_qtyTransferred).subtract(sLine.getMovementQty().abs()).compareTo(Env.ZERO) < 0) {
+	                    if (ol_qtyOrdered.subtract(ol_qtyDelivered).subtract(ol_qtyTransferred).subtract(ol_qtyReturned).subtract(sLine.getMovementQty().abs()).compareTo(Env.ZERO) < 0) {
 	                    	m_processMsg = Msg.translate(getCtx(), "MovementGreaterThanOrder");
+	                    	if(ol_qtyReturned.compareTo(BigDecimal.ZERO) > 0){
+	                    		m_processMsg += ". "+Msg.getMsg(getCtx(), "AdditionQtyReturned");
+	                    	}
 	                    	return DocAction.STATUS_Invalid;
 	                    }
 	                    
@@ -2118,8 +2124,11 @@ public class MInOut extends X_M_InOut implements DocAction {
 								MInOut.DELIVERYRULE_AfterInvoicing)
 								|| getDeliveryRule().equals(
 										MInOut.DELIVERYRULE_Force_AfterInvoicing)) {
-							if(QtySO.add(ol_qtyDelivered).add(ol_qtyTransferred).compareTo(ol_qtyInvoiced) > 0){
+							if(QtySO.add(ol_qtyDelivered).add(ol_qtyTransferred).add(ol_qtyReturned).compareTo(ol_qtyInvoiced) > 0){
 								m_processMsg = Msg.translate(getCtx(), "MovementGreaterThanInvoiced");
+								if(ol_qtyReturned.compareTo(BigDecimal.ZERO) > 0){
+		                    		m_processMsg += ". "+Msg.getMsg(getCtx(), "AdditionQtyReturned");
+		                    	}
 		                    	return DocAction.STATUS_Invalid;
 							}
 						}
@@ -3018,6 +3027,8 @@ public class MInOut extends X_M_InOut implements DocAction {
 				MInOut.DELIVERYRULE_AfterInvoicing) || inout.getDeliveryRule()
 				.equals(MInOut.DELIVERYRULE_Force_AfterInvoicing))
 				&& inout.getMovementType().endsWith("-");
+		MDocType docType = MDocType.get(inout.getCtx(),
+				inout.getC_DocType_ID(), inout.get_TrxName());
     	StringBuffer filter = new StringBuffer();
 		// Si es un remito de ventas, solo se pueden elegir pedidos
 		// que tengan al menos una línea cuya cantidad ordenada sea mayor
@@ -3035,7 +3046,9 @@ public class MInOut extends X_M_InOut implements DocAction {
 				.append("WHERE ")
 				.append(afterInvoicing ? " ol.QtyInvoiced > "
 						: " ol.QtyOrdered > ")
-				.append(" ol.QtyDelivered+ol.QtyTransferred) ")
+				.append(" ol.QtyDelivered+ol.QtyTransferred")
+				.append(docType.isAllowDeliveryReturned()?"":"+coalesce((select sum(iol.movementqty) as qty from c_orderline as ol2 inner join m_inoutline as iol on iol.c_orderline_id = ol2.c_orderline_id inner join m_inout as io on io.m_inout_id = iol.m_inout_id inner join c_doctype as dt on dt.c_doctype_id = io.c_doctype_id where ol.c_orderline_id = ol2.c_orderline_id AND dt.doctypekey = 'DC' and io.docstatus IN ('CL','CO')),0)")
+				.append(") ")
 				.append("OR ")
 				.append("(C_Order.IsSOTrx='Y' AND POSITION('+' IN '")
 				.append(inout.getMovementType()).append("') > 0)")

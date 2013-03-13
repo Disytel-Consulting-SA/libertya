@@ -614,7 +614,7 @@ public abstract class VCreateFrom extends JDialog implements ActionListener,Tabl
      * @param forInvoice
      */
 
-    protected void loadOrder( int C_Order_ID,boolean forInvoice, boolean filter ) {
+    protected void loadOrder( int C_Order_ID,boolean forInvoice, boolean allowDeliveryReturns, boolean filter ) {
     	log.config( "C_Order_ID=" + C_Order_ID );
     	
     	initDataTable();
@@ -646,7 +646,7 @@ public abstract class VCreateFrom extends JDialog implements ActionListener,Tabl
 		   .append(   "l.QtyOrdered, " )
 		   .append(   "l.QtyInvoiced, " )
 		   .append(   "l.QtyDelivered, " )
-		   .append(   getRemainingQtySQLLine(forInvoice) )
+		   .append(   getRemainingQtySQLLine(forInvoice, allowDeliveryReturns) )
 		   .append(   " AS RemainingQty, ")
 		   .append(   "(CASE l.QtyOrdered WHEN 0 THEN 0 ELSE l.QtyEntered/l.QtyOrdered END) AS Multiplier, ")
 		   .append(   "p.value AS ItemCode, ")
@@ -748,10 +748,15 @@ public abstract class VCreateFrom extends JDialog implements ActionListener,Tabl
 	 * @param forInvoice
 	 * @return la línea del sql que determina la cantidad a facturar
 	 */
-    protected String getRemainingQtySQLLine(boolean forInvoice){
+    protected String getRemainingQtySQLLine(boolean forInvoice, boolean allowDeliveryReturns){
     	// Para facturas se compara la cantidad facturada, para remitos la cantidad
     	// entregada/recibida.
-    	String compareColumn = forInvoice ? "l.QtyInvoiced" : "(l.QtyDelivered+l.QtyTransferred)";
+		// Si no se puede entregar lo devuelto, entonces también se debe agregar
+		// esta condición para remitos
+		String compareColumn = forInvoice ? "l.QtyInvoiced"
+				: "(l.QtyDelivered+l.QtyTransferred)"
+						+ (allowDeliveryReturns ? ""
+								: " + coalesce((select sum(iol.movementqty) as qty from c_orderline as ol inner join m_inoutline as iol on iol.c_orderline_id = ol.c_orderline_id inner join m_inout as io on io.m_inout_id = iol.m_inout_id inner join c_doctype as dt on dt.c_doctype_id = io.c_doctype_id where ol.c_orderline_id = l.c_orderline_id AND dt.doctypekey = 'DC' and io.docstatus IN ('CL','CO')),0)");
     	return "l.QtyOrdered-"+compareColumn;
     }
     
@@ -850,6 +855,16 @@ public abstract class VCreateFrom extends JDialog implements ActionListener,Tabl
     }
     
     /**
+	 * @return true si se debe entregar más mercadería de la devuelta, este
+	 *         valor va por defecto, falso en caso contrario. Las subclases que
+	 *         implementen un Crear Desde para remitos deben sobrescribir este
+	 *         método y devolver falso sea el caso
+	 */
+    protected boolean allowDeliveryReturned(){
+    	return true;
+    }
+    
+    /**
      * @return Devuelve el filtro que se aplica al Lookup de Pedidos.
      * Por defecto este filtro respeta el filtro que se aplicaba en el método
      * {@link #initBPartnerOIS(int, boolean)} para mantener la compatibilidad
@@ -884,7 +899,7 @@ public abstract class VCreateFrom extends JDialog implements ActionListener,Tabl
      * @param orderID ID del nuevo pedido seleccionado.
      */
     protected void orderChanged(int orderID) {
-    	loadOrder(orderID, isForInvoice(),true);
+    	loadOrder(orderID, isForInvoice(), allowDeliveryReturned(),true);
     }
     
     /**

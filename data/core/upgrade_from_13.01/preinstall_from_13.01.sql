@@ -945,3 +945,6 @@ INNER JOIN m_warehouse as w ON w.m_warehouse_id = l.m_warehouse_id
 LEFT JOIN c_invoice as i ON i.c_invoice_id = t.c_invoice_id;
 
 ALTER TABLE v_product_movements_detailed OWNER TO libertya;
+
+-- 20130313-1448 Incorporación de nueva columna en el tipo de documento para permitir o no entregar mercadería devuelta
+ update ad_system set dummy = (SELECT addcolumnifnotexists('C_DocType','allowdeliveryreturned', 'character(1) NOT NULL DEFAULT ''Y''::bpchar'));

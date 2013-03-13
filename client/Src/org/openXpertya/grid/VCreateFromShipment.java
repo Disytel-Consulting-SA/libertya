@@ -30,11 +30,13 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.logging.Level;
 
+import org.apache.catalina.startup.SetAllPropertiesRule;
 import org.compiere.plaf.CompierePLAF;
 import org.compiere.swing.CCheckBox;
 import org.openXpertya.apps.form.VComponentsFactory;
 import org.openXpertya.grid.ed.VLocator;
 import org.openXpertya.model.MBPartner;
+import org.openXpertya.model.MDocType;
 import org.openXpertya.model.MInOut;
 import org.openXpertya.model.MInOutLine;
 import org.openXpertya.model.MInvoice;
@@ -90,6 +92,12 @@ public class VCreateFromShipment extends VCreateFrom {
     
     private MBPartner bpartner = null;
 	
+    /** Se permite entregar más mercadería de lo devuelto? */
+    private Boolean isAllowDeliveryReturns = null;
+    
+    /** Tipo de Documento a crear */
+    private MDocType docType;
+    
 	/**
 	 * Descripción de Método
 	 * 
@@ -101,6 +109,7 @@ public class VCreateFromShipment extends VCreateFrom {
 
 	protected boolean dynInit() throws Exception {
 		log.config("");
+		initAllowDeliveryReturns();
 		setTitle(Msg.getElement(Env.getCtx(), "M_InOut_ID", false) + " .. "
 				+ Msg.translate(Env.getCtx(), "CreateFrom"));
 
@@ -279,6 +288,16 @@ public class VCreateFromShipment extends VCreateFrom {
     }
 	
 	/**
+	 * Se inicializa el valor que determina si se debe entregar más mercadería
+	 * que la devuelta
+	 */
+	protected void initAllowDeliveryReturns(){
+		MInOut inout = getInOut();
+		setDocType(MDocType.get(getCtx(), inout.getC_DocType_ID(), getTrxName()));
+		setIsAllowDeliveryReturns(getDocType().isAllowDeliveryReturned());
+	}
+	
+	/**
 	 * Descripción de Método
 	 * 
 	 * 
@@ -407,13 +426,16 @@ public class VCreateFromShipment extends VCreateFrom {
 
 	
 	@Override
-	public String getRemainingQtySQLLine(boolean forInvoice){
+	public String getRemainingQtySQLLine(boolean forInvoice, boolean allowDeliveryReturns){
 		boolean afterInvoicing = (getInOut().getDeliveryRule().equals(
 				MInOut.DELIVERYRULE_AfterInvoicing) || getInOut().getDeliveryRule()
 				.equals(MInOut.DELIVERYRULE_Force_AfterInvoicing))
 				&& getInOut().getMovementType().endsWith("-");
 		String srcColumn = afterInvoicing ? "l.QtyInvoiced" : "l.QtyOrdered";
-    	return srcColumn+"-(l.QtyDelivered+l.QtyTransferred)";
+		return srcColumn
+				+ " - (l.QtyDelivered+l.QtyTransferred)"
+				+ (allowDeliveryReturns ? ""
+						: " - coalesce((select sum(iol.movementqty) as qty from c_orderline as ol inner join m_inoutline as iol on iol.c_orderline_id = ol.c_orderline_id inner join m_inout as io on io.m_inout_id = iol.m_inout_id inner join c_doctype as dt on dt.c_doctype_id = io.c_doctype_id where ol.c_orderline_id = l.c_orderline_id AND dt.doctypekey = 'DC' and io.docstatus IN ('CL','CO')),0)");
 	}
 	
 	/**
@@ -431,6 +453,14 @@ public class VCreateFromShipment extends VCreateFrom {
 		statusBar.setStatusLine(String.valueOf(count));
 	} // info
 
+	@Override
+	protected boolean allowDeliveryReturned(){
+    	if(isAllowDeliveryReturns == null){
+    		initAllowDeliveryReturns();
+    	}
+    	return isAllowDeliveryReturns;
+    }
+	
 	/**
 	 * Descripción de Método
 	 * 
@@ -602,7 +632,7 @@ public class VCreateFromShipment extends VCreateFrom {
 		// set Invoice and Shipment to Null
 		invoiceField.setValue(null);
 		invoiceOrderField.setValue(null);
-		loadOrder(orderID, false, true);
+		loadOrder(orderID, false, allowDeliveryReturned(), true);
 		m_invoice = null;
 	}
 
@@ -635,7 +665,7 @@ public class VCreateFromShipment extends VCreateFrom {
 			MInvoice invoice = new MInvoice(getCtx(), invoiceID, getTrxName());
 			relatedOrderID = invoice.getC_Order_ID();
 		}
-		loadOrder(relatedOrderID, false, true);
+		loadOrder(relatedOrderID, false, allowDeliveryReturned(), true);
 		if (relatedOrderID > 0) {
 			orderField.setValue(relatedOrderID);
 		}
@@ -841,7 +871,7 @@ public class VCreateFromShipment extends VCreateFrom {
 				// todas las lineas de todos los pedidos retornados en
 				// la consulta anterior.
 				while (rs.next()) {
-					loadOrder(rs.getInt("C_Order_ID"), isForInvoice(), false);
+					loadOrder(rs.getInt("C_Order_ID"), isForInvoice(), allowDeliveryReturned(), false);
 					List<OrderLine> data = (List<OrderLine>) ((CreateFromTableModel) dataTable
 							.getModel()).getSourceEntities();
 					Iterator<? extends SourceEntity> it = data.iterator();
@@ -983,6 +1013,22 @@ public class VCreateFromShipment extends VCreateFrom {
 	@Override
 	protected boolean lazyEvaluation() {
 		return false;
+	}
+
+	protected Boolean getIsAllowDeliveryReturns() {
+		return isAllowDeliveryReturns;
+	}
+
+	protected void setIsAllowDeliveryReturns(Boolean isAllowDeliveryReturns) {
+		this.isAllowDeliveryReturns = isAllowDeliveryReturns;
+	}
+
+	protected MDocType getDocType() {
+		return docType;
+	}
+
+	protected void setDocType(MDocType docType) {
+		this.docType = docType;
 	}
 
 } // VCreateFromShipment
