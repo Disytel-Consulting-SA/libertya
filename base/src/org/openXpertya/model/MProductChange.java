@@ -544,7 +544,9 @@ public class MProductChange extends X_M_ProductChange implements DocAction {
         // (además es lógico que la fecha real del cambio de artículo sea igual a la fecha 
         // en que se completó el mismo, y no a la fecha en que se creó).
 		if (MWarehouseClose.isWarehouseCloseControlActivated()
-				&& getDateTrx().compareTo(Env.getDate()) < 0) {
+				&& getDateTrx().compareTo(Env.getDate()) < 0
+				&& !MWarehouseClose.existsWarehouseCloseInProgress(getCtx(),
+						getM_Warehouse_ID(), get_TrxName())) {
 			setDateTrx(Env.getDate());
 		}
 		

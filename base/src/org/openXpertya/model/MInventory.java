@@ -391,7 +391,9 @@ public class MInventory extends X_M_Inventory implements DocAction {
         // (además es lógico que la fecha real del inventario sea igual a la fecha 
         // en que se completó el mismo, y no a la fecha en que se creó).
         if (MWarehouseClose.isWarehouseCloseControlActivated() 
-        		&& getMovementDate().compareTo(Env.getDate()) < 0) {
+        		&& getMovementDate().compareTo(Env.getDate()) < 0
+        		&& !MWarehouseClose.existsWarehouseCloseInProgress(getCtx(),
+						getM_Warehouse_ID(), get_TrxName())) {
         	setMovementDate(Env.getDate());
         }
         

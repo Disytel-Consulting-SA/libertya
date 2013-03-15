@@ -56,6 +56,7 @@ import org.openXpertya.model.MPayment;
 import org.openXpertya.model.MProductChange;
 import org.openXpertya.model.MSplitting;
 import org.openXpertya.model.MTab;
+import org.openXpertya.model.MWarehouseClose;
 import org.openXpertya.model.X_C_POSJournal;
 import org.openXpertya.process.DocumentEngine;
 import org.openXpertya.util.CLogger;
@@ -446,6 +447,13 @@ public class VDocAction extends JDialog implements ActionListener {
 
             if( DocStatus.equals( DocumentEngine.STATUS_Completed )) {
                 options[ index++ ] = DocumentEngine.ACTION_Void;
+            }
+        } else if( m_AD_Table_ID == MWarehouseClose.Table_ID ) {
+
+            // Complete                    ..  CO
+
+            if( DocStatus.equals( DocumentEngine.STATUS_Completed )) {
+                options[ index++ ] = DocumentEngine.ACTION_ReActivate;
             }
         } 
 
