@@ -28,7 +28,7 @@ public class MWarehouseClose extends X_M_Warehouse_Close implements DocAction{
 	
 	// Variables de clase
 	
-	private static CLogger log = CLogger.getCLogger("MWarehouseClose");
+	protected static CLogger log = CLogger.getCLogger("MWarehouseClose");
 	
 	// Constructores
 	
