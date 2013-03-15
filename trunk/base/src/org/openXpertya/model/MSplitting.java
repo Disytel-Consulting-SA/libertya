@@ -527,7 +527,9 @@ public class MSplitting extends X_M_Splitting implements DocAction {
         // (además es lógico que la fecha real del fraccionamiento sea igual a la fecha 
         // en que se completó el mismo, y no a la fecha en que se creó).
 		if (MWarehouseClose.isWarehouseCloseControlActivated()
-				&& getDateTrx().compareTo(Env.getDate()) < 0) {
+				&& getDateTrx().compareTo(Env.getDate()) < 0
+				&& !MWarehouseClose.existsWarehouseCloseInProgress(getCtx(),
+						getM_Warehouse_ID(), get_TrxName())) {
 			setDateTrx(Env.getDate());
 		}
 		

@@ -1316,9 +1316,14 @@ public class MInOut extends X_M_InOut implements DocAction {
         // pasando la validación de cierre. (además es lógico que la fecha real del
         // remito sea igual a la fecha en que se completó el mismo, y no a la fecha
         // en que se creó).
+		// Si existe un cierre de almacén en estado En Proceso, significa que
+		// tenemos un cierre de almacén reactivado, en ese caso no debemos
+		// modificar la fecha del comprobante
         if (MWarehouseClose.isWarehouseCloseControlActivated() 
         		&& isSOTrx() 
-        		&& getMovementDate().compareTo(Env.getDate()) < 0) {
+        		&& getMovementDate().compareTo(Env.getDate()) < 0
+				&& !MWarehouseClose.existsWarehouseCloseInProgress(getCtx(),
+						getM_Warehouse_ID(), get_TrxName())) {
         	
         	setMovementDate(Env.getDate());
         	setDateAcct(Env.getDate());

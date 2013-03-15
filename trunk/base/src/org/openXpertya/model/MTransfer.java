@@ -394,8 +394,10 @@ public class MTransfer extends X_M_Transfer implements DocAction {
 		// 2) Es una transferencia saliente y está habilitado el control de cierres de
 		//    almacenes.
 		if (getDateTrx().compareTo(Env.getDate()) < 0
-				&& (isIncoming()
-						|| (isOutgoing() && MWarehouseClose.isWarehouseCloseControlActivated()))) {
+				&& MWarehouseClose.isWarehouseCloseControlActivated()
+				&& !MWarehouseClose.existsWarehouseCloseInProgress(getCtx(),
+						isOutgoing() ? getM_Warehouse_ID()
+								: getM_WarehouseTo_ID(), get_TrxName())) {
 			setDateTrx(Env.getDate());
 		}
 

@@ -2,12 +2,11 @@ package org.openXpertya.model;
 
 import java.math.BigDecimal;
 import java.sql.ResultSet;
-import java.sql.Timestamp;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Date;
-import java.util.GregorianCalendar;
 import java.util.List;
 import java.util.Properties;
 
@@ -162,6 +161,44 @@ public class MWarehouseClose extends X_M_Warehouse_Close implements DocAction{
 		// Se genera la condición de retorno. El cierre debe existir y estar en 
 		// estado Completado.
 		return previousDayWC != null && previousDayWC.isCompleted();
+	}
+	
+	/**
+	 * @param ctx
+	 * @param warehouseID
+	 *            id del almacén a verificar
+	 * @param actualWarehouseCloseID
+	 *            id del cierre a excluir en la consulta, si este valor lleva
+	 *            null o 0 no se excluye ningún cierre
+	 * @param trxName
+	 * @return true si existe un cierre de almacén abierto para el depósito
+	 *         parámetro sin tener en cuenta el cierre actual parámetro si es
+	 *         distinto de null o 0, false caso contrario
+	 */
+	public static boolean existsWarehouseCloseOpen(Properties ctx, Integer warehouseID, Integer actualWarehouseCloseID, String trxName){
+		StringBuffer sql = new StringBuffer("SELECT coalesce(count(*),0)::integer FROM "+Table_Name+" WHERE m_warehouse_id = ? AND docstatus NOT IN ('CO','CL') ");
+		if(!Util.isEmpty(actualWarehouseCloseID, true)){
+			sql.append(" AND m_warehouse_close_id <> ").append(actualWarehouseCloseID);
+		}
+		return DB.getSQLValue(trxName, sql.toString(), warehouseID) > 0;
+	}
+	
+	/**
+	 * Si un cierre de almacén está en estado En Proceso significa que tenemos
+	 * un cierre de almacén reactivado
+	 * 
+	 * @param ctx
+	 * @param warehouseID
+	 * @param trxName
+	 * @return true si existe un cierre de almacén en estado En Proceso para el
+	 *         almacén parámetro, false caso contrario.
+	 */
+	public static boolean existsWarehouseCloseInProgress(Properties ctx, Integer warehouseID, String trxName){
+		return DB
+				.getSQLValue(
+						trxName,
+						"SELECT coalesce(count(*),0)::integer FROM m_warehouse_close WHERE m_warehouse_id = ? AND docstatus = 'IP'",
+						warehouseID) > 0;
 	}
 	
 	@Override
@@ -327,7 +364,30 @@ public class MWarehouseClose extends X_M_Warehouse_Close implements DocAction{
 
 	@Override
 	public boolean reActivateIt() {
-		return false;
+		// Sólo se puede abrir el último completo más cercano a la fecha actual
+		// Obtengo el último cierre completo anterior a la fecha actual
+		MWarehouseClose beforeClosure = (MWarehouseClose) PO
+				.findFirst(
+						getCtx(),
+						get_TableName(),
+						"m_warehouse_id = ? AND date_trunc('day',datetrx) < date_trunc('day',?::date) AND docstatus <> 'DR'",
+						new Object[] { getM_Warehouse_ID(), Env.getDate() },
+						new String[] { "datetrx desc" }, get_TrxName());
+		// Si ese cierre no es el que estoy abriendo, entonces no se puede abrir
+		if(beforeClosure != null && beforeClosure.getID() != getID()){
+			// No se puede abrir otro cierre que no sea el anterior completo a
+			// la fecha actual
+			m_processMsg = Msg.getMsg(getCtx(),
+					"CanOpenOnlyWarehouseClosureWithDate",
+					new Object[] { new SimpleDateFormat("dd/MM/yyyy")
+							.format(beforeClosure.getDateTrx()) });
+			return false;
+		}
+		
+		setDocAction(DOCACTION_Complete);
+        setProcessed(false);
+        
+		return true;
 	}
 
 	@Override
