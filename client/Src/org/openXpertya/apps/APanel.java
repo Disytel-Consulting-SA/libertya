@@ -2472,9 +2472,9 @@ public final class APanel extends CPanel implements DataStatusListener,ChangeLis
 
         // Process Result
 
-        if( (pi != null    // refresh if not print
-                ) && (pi.getAD_Process_ID() != m_curTab.getAD_Process_ID())) {
-
+//        if( (pi != null    // refresh if not print
+//                ) && (pi.getAD_Process_ID() != m_curTab.getAD_Process_ID())) {
+        if(pi != null){
             // Refresh data
 
             m_curTab.dataRefresh();
