@@ -383,6 +383,16 @@ public class MTransfer extends X_M_Transfer implements DocAction {
 			return STATUS_Invalid;
 		}
 		
+		// Se controla sólo si es una transferencia saliente
+		if(isOutgoing()){
+			m_processMsg = ModelValidationEngine.get().fireDocValidate(this,
+					ModelValidator.TIMING_BEFORE_PREPARE);
+
+	        if( m_processMsg != null ) {
+	            return DocAction.STATUS_Invalid;
+	        }
+		}
+				
 		// Valida la correctitud de los datos de las líneas.
 		if (!validateLines()) {
 			return STATUS_Invalid;
