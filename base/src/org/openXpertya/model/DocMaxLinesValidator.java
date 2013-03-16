@@ -91,6 +91,10 @@ public class DocMaxLinesValidator implements ModelValidator {
 		getTablesToValidate().add(X_S_TimeExpense.Table_Name);
 		getLinesTable().put(X_S_TimeExpense.Table_Name, X_S_TimeExpenseLine.Table_Name);
 		getHeaderColumnsID().put(X_S_TimeExpense.Table_Name, X_S_TimeExpense.Table_Name+"_ID");
+		
+		getTablesToValidate().add(X_M_Transfer.Table_Name);
+		getLinesTable().put(X_M_Transfer.Table_Name, X_M_TransferLine.Table_Name);
+		getHeaderColumnsID().put(X_M_Transfer.Table_Name, X_M_Transfer.Table_Name+"_ID");
 	}
 	
 	/** ID de la compañía */
