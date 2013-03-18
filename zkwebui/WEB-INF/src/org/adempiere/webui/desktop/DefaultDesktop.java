@@ -235,7 +235,7 @@ public class DefaultDesktop extends TabbedDesktop implements MenuListener, Seria
 		            StringBuffer result = new StringBuffer("<html><head>");
 
 		    		URL url = getClass().getClassLoader().
-					getResource("org/compiere/images/PAPanel.css");
+					getResource("css/PAPanel.css");
 					InputStreamReader ins;
 					try {
 						ins = new InputStreamReader(url.openStream());

@@ -948,3 +948,6 @@ ALTER TABLE v_product_movements_detailed OWNER TO libertya;
 
 -- 20130313-1448 Incorporación de nueva columna en el tipo de documento para permitir o no entregar mercadería devuelta
  update ad_system set dummy = (SELECT addcolumnifnotexists('C_DocType','allowdeliveryreturned', 'character(1) NOT NULL DEFAULT ''Y''::bpchar'));
+ 
+-- 20130315-1415 Nueva columna para soport LYWeb
+ALTER TABLE AD_Process ADD COLUMN showHelp CHAR(1) DEFAULT 'Y';
