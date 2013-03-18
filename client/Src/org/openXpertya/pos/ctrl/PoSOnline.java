@@ -22,6 +22,7 @@ import org.openXpertya.cc.CurrentAccountManager;
 import org.openXpertya.cc.CurrentAccountManagerFactory;
 import org.openXpertya.model.CalloutInvoiceExt;
 import org.openXpertya.model.DiscountCalculator;
+import org.openXpertya.model.DiscountCalculator.IDocument;
 import org.openXpertya.model.FiscalDocumentPrint;
 import org.openXpertya.model.GeneratorPercepciones;
 import org.openXpertya.model.MAllocationHdr;
@@ -70,7 +71,6 @@ import org.openXpertya.model.M_Tab;
 import org.openXpertya.model.PO;
 import org.openXpertya.model.PrintInfo;
 import org.openXpertya.model.X_C_CheckCuitControl;
-import org.openXpertya.model.DiscountCalculator.IDocument;
 import org.openXpertya.pos.exceptions.FiscalPrintException;
 import org.openXpertya.pos.exceptions.InsufficientBalanceException;
 import org.openXpertya.pos.exceptions.InsufficientCreditException;
@@ -191,9 +191,12 @@ public class PoSOnline extends PoSConnectionState {
 	
 	private GeneratorPercepciones generatorPercepciones;
 	
+	private CompleteOrderPOSValidations completeOrderPOSValidations;
+	
 	public PoSOnline() {
 		super();
 		setCreatePOSPaymentValidations(new CreatePOSPaymentValidations());
+		setCompleteOrderPOSValidations(new CompleteOrderPOSValidations());
 		setmOrg(MOrg.get(ctx, Env.getAD_Org_ID(ctx)));
 		setGeneratorPercepciones(new GeneratorPercepciones(getCtx(), null));
 		getGeneratorPercepciones().setTPVInstance(true);
@@ -289,6 +292,9 @@ public class PoSOnline extends PoSConnectionState {
 			//ADER, iniciazliacion de caches
 			initCachesFromOrder(order);
 			
+			// Validaciones extra iniciales
+			getCompleteOrderPOSValidations().validateInitialCompleteOrder(this, order);
+			
 			// clearState(order);
 			debug("Chequeando saldo y crédito");
 			checkSaldo(order);
@@ -302,12 +308,16 @@ public class PoSOnline extends PoSConnectionState {
 			}
 			
 			// MOrder
+			// Validaciones extras al crear el pedido
+			getCompleteOrderPOSValidations().validateOrder(this, order);
 			debug("Creando Pedido (MOrder)");
 			morder = createOxpOrder(order);
 			
 			// MInvoice 
 			
 			if (getShouldCreateInvoice()) {
+				// Validaciones extras al crear la factura
+				getCompleteOrderPOSValidations().validateInvoice(this, order);
 				debug("Creando Factura (MInvoice)");
 				invoice = createOxpInvoice(order);
 				
@@ -325,6 +335,8 @@ public class PoSOnline extends PoSConnectionState {
 			// MInOut: Albarán, Remito.
 			
 			if (getShouldCreateInout()) {
+				// Validaciones extras al crear el remito
+				getCompleteOrderPOSValidations().validateInOut(this, order);
 				debug("Creando Remito (MInOut)");
 				shipment = createOxpInOut(order); 
 			}
@@ -333,6 +345,8 @@ public class PoSOnline extends PoSConnectionState {
 			// factura sino no tiene sentido
 			
 			if (getShouldCreateInvoice()) {
+				// Validaciones extras al crear el allocation
+				getCompleteOrderPOSValidations().validateAllocation(this, order);
 				// Allocation Header
 				debug("Creando Allocation");
 				allocHdr = createOxpAllocation();
@@ -340,12 +354,17 @@ public class PoSOnline extends PoSConnectionState {
 				adjustPayments(order);
 				
 				// Crear los MPayments & MAllocationLine, o MCashLine
+				// Validaciones extras al crear los pagos
+				getCompleteOrderPOSValidations().validatePayments(this, order);
 				debug("Creando los pagos (MPayment & MCashLine)");
 				createOxpPayments(order);
 				debug("Completando el allocation");
 				doCompleteAllocation();
 			}
 
+			// Validaciones extras al finalizar
+			getCompleteOrderPOSValidations().validateEndCompleteOrder(this, order);
+			
 			// Realizar las tareas de cuenta corriente antes de finalizar
 			if (shouldUpdateBPBalance) {
 				debug("Acciones de cuenta corriente");
@@ -3691,5 +3710,14 @@ public class PoSOnline extends PoSConnectionState {
 	public List<Tax> loadBPOtherTaxes(BusinessPartner bp) {
 		getGeneratorPercepciones().loadBPartner(bp.getId());
 		return getOtherTaxes();
+	}
+
+	protected CompleteOrderPOSValidations getCompleteOrderPOSValidations() {
+		return completeOrderPOSValidations;
+	}
+
+	protected void setCompleteOrderPOSValidations(
+			CompleteOrderPOSValidations completeOrderPOSValidations) {
+		this.completeOrderPOSValidations = completeOrderPOSValidations;
 	}
 }
