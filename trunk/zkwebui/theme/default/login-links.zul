@@ -25,8 +25,8 @@ Copyright (C) 2009 Idalica Corporation
 		image="http://sfx-images.mozilla.org/affiliates/Buttons/firefox3/110x32_get_ffx.png"
 		target="_blank"
 		/>
-	<button href="http://www.adempiere.org" image="images/AD32.png"
-		tooltiptext="ADempiere Community" style="height:32px; width:32px" target="_blank"/>
+	<button href="http://www.libertya.org" image="images/AD32.png"
+		tooltiptext="Comunidad Libertya" style="height:32px; width:32px" target="_blank"/>
 </div>
 
 <zscript if="${desktop.execution.localName == &quot;ip-10-8-0-1.ec2.internal&quot; or desktop.execution.serverName == &quot;127.0.0.1&quot;}">
