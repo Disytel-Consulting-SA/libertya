@@ -39,6 +39,7 @@ import org.openXpertya.model.MProject;
 import org.openXpertya.model.MRefList;
 import org.openXpertya.model.MRegion;
 import org.openXpertya.model.MShipper;
+import org.openXpertya.model.MUOM;
 import org.openXpertya.model.MUser;
 import org.openXpertya.model.MWarehouse;
 import org.openXpertya.model.M_Table;
@@ -822,5 +823,18 @@ public class JasperReportsUtil {
 			name = product.getName();
 		}
 		return name;
+	}
+	
+	/**
+	 * @param ctx
+	 *            contexto
+	 * @param uomID
+	 *            id de la unidad de medida
+	 * @param trxName
+	 *            nombre de la transacción actual
+	 * @return nombre de la unidad de medida parámetro
+	 */
+	public static String getUOMName(Properties ctx, Integer uomID, String trxName){
+		return MUOM.get(ctx, uomID).getName();
 	}
 }
