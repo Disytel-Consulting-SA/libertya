@@ -4697,7 +4697,7 @@ public class PoSMainForm extends CPanel implements FormPanel, ASyncProcess, Disp
 			
 			payment = new CheckPayment(bankName, checkNumber, emissionDate,
 					acctDate, bankAccountID, paymentMedium.getCheckDeadLine());
-			payment.setTypeName(MSG_CHECK);
+			payment.setTypeName(paymentMedium.getName());
 			((CheckPayment)payment).setCuitLibrador(cuitLibrador); // Si locale AR no está activo esto es null;
 			
 			// Se limpian los campos para ingresar un nuevo pago.
@@ -4760,7 +4760,7 @@ public class PoSMainForm extends CPanel implements FormPanel, ASyncProcess, Disp
 			
 			payment = new CreditCardPayment(creditCardPlan, creditCardNumber, couponNumber, bankName, posnet);
 						
-			payment.setTypeName(MSG_CREDIT_CARD);
+			payment.setTypeName(paymentMedium.getName());
 			
 			// Se limpian los campos para ingresar un nuevo pago.
 			getCCreditCardNumberText().setText("");
@@ -4835,7 +4835,7 @@ public class PoSMainForm extends CPanel implements FormPanel, ASyncProcess, Disp
 			}
 			
 			payment = new CreditNotePayment(invoiceID, availableAmt, balanceAmt, returnCash, returnCashAmt);
-			payment.setTypeName(paymentMedium.getTenderTypeName());
+			payment.setTypeName(paymentMedium.getName());
 
 			// Se limpian los campos para ingresar un nuevo pago.
 			getCCreditNoteSearch().setValue(null);
@@ -4869,7 +4869,7 @@ public class PoSMainForm extends CPanel implements FormPanel, ASyncProcess, Disp
 			}
 			
 			payment = new BankTransferPayment(transferNumber, bankAccountID, transferDate);
-			payment.setTypeName(MSG_TRANSFER);
+			payment.setTypeName(paymentMedium.getName());
 			
 			// Se limpian los campos para ingresar un nuevo pago.
 			getCTransferDate().setValue(TODAY);
