@@ -929,7 +929,63 @@ public class MInventory extends X_M_Inventory implements DocAction {
 
     public boolean voidIt() {
         log.info( toString());
+        
+        // Imposible anular si el status es: Cerrado, Revertido, Anulado
+		if (DOCSTATUS_Closed.equals(getDocStatus())
+				|| DOCSTATUS_Reversed.equals(getDocStatus())
+				|| DOCSTATUS_Drafted.equals(getDocStatus())
+				|| DOCSTATUS_Voided.equals(getDocStatus())) {
+			m_processMsg = Msg.getMsg(getCtx(), "InvalidAction") + ", Document status: " + getDocStatus();
+			setDocAction(DOCACTION_None);
+			return false;
+		}
 
+		// Anulación de inventario UNICAMENTE si el status es Completado
+		// Se genera un nuevo inventario cuyas líneas contienen los valores multiplicados por -1
+		if (DOCSTATUS_Completed.equals(getDocStatus())) {
+			// Nuevo documento de inventario reverso
+			MInventory reversal = new MInventory(getCtx(), 0, get_TrxName());
+			PO.copyValues(this, reversal);
+			reversal.setM_Inventory_ID(0);
+			reversal.set_ValueNoCheck( "DocumentNo",null );
+			reversal.setDocStatus(DOCSTATUS_InProgress);	//IP
+			reversal.setDocAction( DOCACTION_Complete );
+			reversal.setDescription(Msg.getMsg(getCtx(), "Voided") + " --> " + getDocumentNo());
+			if (!reversal.save()) {
+				m_processMsg = CLogger.retrieveErrorAsString();
+				return false;
+			}
+			// Iterar por las líneas de inventario, negando los valores
+			int[] lineIDs = PO.getAllIDs(MInventoryLine.Table_Name, "M_Inventory_ID = " + getM_Inventory_ID(), get_TrxName());
+			for (int i=0; i < lineIDs.length; i++) {
+				X_M_InventoryLine aLine = new X_M_InventoryLine(getCtx(), lineIDs[i], get_TrxName());
+				X_M_InventoryLine revLine = new X_M_InventoryLine(getCtx(), 0, get_TrxName());
+				PO.copyValues(aLine, revLine);
+				revLine.setQtyCount(aLine.getQtyCount().negate());
+				revLine.setQtyCountWithoutChargeSign(aLine.getQtyCountWithoutChargeSign().negate());
+				revLine.setM_Inventory_ID(reversal.getM_Inventory_ID());
+				if (!revLine.save()) {
+					m_processMsg = CLogger.retrieveErrorAsString();
+					return false;
+				}
+			}
+			// Completar el documento reverso
+			if (!reversal.processIt(DOCACTION_Complete)) {
+				m_processMsg = reversal.getProcessMsg();
+				return false;
+			}
+	        reversal.setDocStatus(DOCSTATUS_Closed);
+	        reversal.setDocAction(DOCACTION_None);
+	        if (!reversal.save()) {
+				m_processMsg = CLogger.retrieveErrorAsString();
+				return false;
+	        }
+			// Sin más acciones para el documento original
+			setDescription((getDescription()!=null?getDescription()+" - ":"") + Msg.getMsg(getCtx(), "Voided"));
+			setProcessed(true);
+			setDocAction(DOCACTION_None);
+			return true;
+		}
         return false;
     }    // voidIt
 
