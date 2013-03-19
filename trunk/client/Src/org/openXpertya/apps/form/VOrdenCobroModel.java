@@ -934,7 +934,7 @@ public class VOrdenCobroModel extends VOrdenPagoModel {
 		// - Si es débito lo guardo donde se encuentran las facturas
 		if(credit != null){
 			// Refrescar la factura con la de la base 
-			credit = refreshInvoice(credit.getCtx(), credit.getC_Invoice_ID(), credit.get_TrxName());
+			credit = refreshInvoice(credit.getCtx(), credit.getC_Invoice_ID(), getTrxName());
 			// Completar el crédito en el caso que no requiera impresión fiscal,
 			// ya que si requieren se realiza al final del procesamiento
 			if(!needFiscalPrint(credit)){
@@ -952,7 +952,7 @@ public class VOrdenCobroModel extends VOrdenPagoModel {
 		}
 		if(debit != null){
 			// Refrescar la factura con la de la base 
-			debit = refreshInvoice(debit.getCtx(), debit.getC_Invoice_ID(), debit.get_TrxName());
+			debit = refreshInvoice(debit.getCtx(), debit.getC_Invoice_ID(), getTrxName());
 			// Completar el crédito en el caso que no requiera impresión fiscal,
 			// ya que si requieren se realiza al final del procesamiento
 			if(!needFiscalPrint(debit)){
