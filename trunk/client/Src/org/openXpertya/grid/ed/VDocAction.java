@@ -47,6 +47,7 @@ import org.openXpertya.model.MBankTransfer;
 import org.openXpertya.model.MBoletaDeposito;
 import org.openXpertya.model.MCashLine;
 import org.openXpertya.model.MInOut;
+import org.openXpertya.model.MInventory;
 import org.openXpertya.model.MInvoice;
 import org.openXpertya.model.MJournal;
 import org.openXpertya.model.MJournalBatch;
@@ -455,7 +456,13 @@ public class VDocAction extends JDialog implements ActionListener {
             if( DocStatus.equals( DocumentEngine.STATUS_Completed )) {
                 options[ index++ ] = DocumentEngine.ACTION_ReActivate;
             }
-        } 
+        // Anulación de inventario
+        } else if( m_AD_Table_ID == MInventory.Table_ID ) {
+            if( DocStatus.equals( DocumentEngine.STATUS_Completed )) {
+                options[ index++ ] = DocumentEngine.ACTION_Void;
+            }
+        	
+        }
 
 		/*
 		 * @ modificacion: 13-ago-2007
