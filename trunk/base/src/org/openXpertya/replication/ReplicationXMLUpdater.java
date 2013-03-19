@@ -14,6 +14,7 @@ package org.openXpertya.replication;
 import java.util.Vector;
 
 import org.openXpertya.model.MTableReplication;
+import org.openXpertya.model.X_C_Cash;
 import org.openXpertya.model.X_C_Invoice;
 import org.openXpertya.plugin.common.PluginUtils;
 import org.openXpertya.plugin.install.PluginXMLUpdater;
@@ -318,6 +319,15 @@ public class ReplicationXMLUpdater extends PluginXMLUpdater {
 			query.append("null");
 			retValue = true;
 		}
+		/*
+		 * Omision de referencia ciclica entre C_Cash -> C_PosJournal y C_PosJournal -> C_Cash
+		 * Se omite la referencia C_PosJournal_ID en la tabla C_Cash
+		 */
+		else if (X_C_Cash.Table_Name.equalsIgnoreCase(tableName) && "C_PosJournal_ID".equalsIgnoreCase(column.getName()))
+		{
+			query.append("null");
+			retValue = true;
+		}		
 		/* Si es una columna especial, concatenar la coma final */
 		if (retValue)
 			query.append(",");
