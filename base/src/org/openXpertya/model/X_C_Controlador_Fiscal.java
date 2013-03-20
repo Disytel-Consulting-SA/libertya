@@ -7,7 +7,7 @@ import java.math.*;
 import org.openXpertya.util.*;
 /** Modelo Generado por C_Controlador_Fiscal
  *  @author Comunidad de Desarrollo Libertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
- *  @version  - 2011-04-26 14:06:35.74 */
+ *  @version  - 2013-03-20 13:40:38.774 */
 public class X_C_Controlador_Fiscal extends org.openXpertya.model.PO
 {
 /** Constructor estándar */
@@ -23,7 +23,7 @@ setIsRemote (false);
 setName (null);
 setOnPrintProductFormat (null);
 setOnPrintUseProductReference (false);
-setport (0);
+setPort (0);
 }
  */
 }
@@ -217,15 +217,15 @@ public Timestamp getoperation_date()
 {
 return (Timestamp)get_Value("operation_date");
 }
-/** Set port */
-public void setport (int port)
+/** Set Port */
+public void setPort (int Port)
 {
-set_Value ("port", new Integer(port));
+set_Value ("Port", new Integer(Port));
 }
-/** Get port */
-public int getport() 
+/** Get Port */
+public int getPort() 
 {
-Integer ii = (Integer)get_Value("port");
+Integer ii = (Integer)get_Value("Port");
 if (ii == null) return 0;
 return ii.intValue();
 }
