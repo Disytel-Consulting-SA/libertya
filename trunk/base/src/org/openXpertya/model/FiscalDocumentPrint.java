@@ -21,6 +21,7 @@ import java.util.logging.Level;
 import org.openXpertya.print.OXPFiscalMsgSource;
 import org.openXpertya.print.fiscal.FiscalPrinter;
 import org.openXpertya.print.fiscal.FiscalPrinterEventListener;
+import org.openXpertya.print.fiscal.document.CashPayment;
 import org.openXpertya.print.fiscal.document.CreditNote;
 import org.openXpertya.print.fiscal.document.CurrentAccountInfo;
 import org.openXpertya.print.fiscal.document.Customer;
@@ -1046,6 +1047,7 @@ public class FiscalDocumentPrint {
 	 */
 	private void loadInvoicePayments(Invoice invoice, MInvoice mInvoice) {
 		BigDecimal totalPaidAmt = BigDecimal.ZERO;
+		BigDecimal totalChangeAmt = BigDecimal.ZERO;
 		final String OTHERS_DESC = Msg.translate(ctx, "FiscalTicketOthersPayment");
 		final String CASH_DESC = Msg.translate(ctx, "FiscalTicketCashPayment");
 		// Lista temporal de pagos creados a partir de los allocations
@@ -1068,7 +1070,7 @@ public class FiscalDocumentPrint {
 		
 		// Crea los pagos de Efectivo y Otros para acumular montos de sendos tipos.
 		Payment othersPayment = new Payment(BigDecimal.ZERO, OTHERS_DESC);
-		Payment cashPayment =new Payment(BigDecimal.ZERO, CASH_DESC);
+		Payment cashPayment =new CashPayment(BigDecimal.ZERO, CASH_DESC);
 		
 		try {
 			pstmt = DB.prepareStatement(sql, getTrxName());
@@ -1130,6 +1132,7 @@ public class FiscalDocumentPrint {
 				}
 				
 				totalPaidAmt = totalPaidAmt.add(paidAmt).add(changeAmt);
+				totalChangeAmt = totalChangeAmt.add(changeAmt);
 			} // while
 			
 		} catch (SQLException e) {
@@ -1208,6 +1211,7 @@ public class FiscalDocumentPrint {
 			}
 		}
 		
+		invoice.setChangeAmt(totalChangeAmt);
 	}
 	
 	/**

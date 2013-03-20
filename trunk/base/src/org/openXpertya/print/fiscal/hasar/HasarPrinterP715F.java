@@ -161,4 +161,10 @@ public class HasarPrinterP715F extends HasarFiscalPrinter {
 		FiscalPacket cmd = createFiscalPacket(CMD_CLOSE_NON_FISCAL_RECEIPT);
 		return cmd;
 	}
+	
+	@Override
+	public FiscalPacket cmdOpenDrawer(){
+		FiscalPacket cmd = createFiscalPacket(CMD_OPEN_DRAWER);
+		return cmd;
+	}
 }
