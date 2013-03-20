@@ -83,7 +83,7 @@ public class MControladorFiscal extends X_C_Controlador_Fiscal {
 				throw new Exception(Msg.translate(ctx,"FiscalPrinterInstanciationError"), e);
 			}
 			String host = gethost();
-			int port = getport();
+			int port = getPort();
 			FiscalComm fiscalComm = new SpoolerTCPComm(host, port);
 			fiscalPrinter.setFiscalComm(fiscalComm);
 			
