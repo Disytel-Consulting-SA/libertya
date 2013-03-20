@@ -26,6 +26,10 @@ public class PostInstallUpgradeFrom1301 extends PluginPostInstallProcess {
 	protected final static String SPLITTING_JASPER_REPORT_UID = "CORE-AD_JasperReport-1010094";
 	protected final static String SPLITTING_JASPER_REPORT_FILENAME = "Product Splitting.jasper";
 	
+	/** UID del informe de Precios Actualizados */
+	protected final static String UPDATED_PRICES_JASPER_REPORT_UID = "CORE-AD_JasperReport-1010095";
+	protected final static String UPDATED_PRICES_JASPER_REPORT_FILENAME = "UpdatedPrices.jasper";
+	
 	protected String doIt() throws Exception {
 		super.doIt();
 		
@@ -83,6 +87,17 @@ public class PostInstallUpgradeFrom1301 extends PluginPostInstallProcess {
 								.readBinaryFromJar(
 										jarFileURL,
 										getBinaryFileURL(SPLITTING_JASPER_REPORT_FILENAME)));
+		
+		// Informe de Precios actualizados
+		MJasperReport
+				.updateBinaryData(
+						get_TrxName(),
+						getCtx(),
+						UPDATED_PRICES_JASPER_REPORT_UID,
+						JarHelper
+								.readBinaryFromJar(
+										jarFileURL,
+										getBinaryFileURL(UPDATED_PRICES_JASPER_REPORT_FILENAME)));
 		
 		return " ";
 	}
