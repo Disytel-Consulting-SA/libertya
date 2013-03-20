@@ -2040,7 +2040,8 @@ public class MInOut extends X_M_InOut implements DocAction {
 			if (!getDeliveryRule().equalsIgnoreCase(DELIVERYRULE_Force)
 					&& !getDeliveryRule().equalsIgnoreCase(
 							DELIVERYRULE_Force_AfterInvoicing) && isSOTrx()
-					&& MovementType.endsWith("-")) {
+					&& MovementType.endsWith("-")
+					&& sLine.getQtyEntered().signum() > 0) {
             	//Si la regla de albaranado es distinta de F y ademas es un albar�n de salida
             	
 	            MProductCategory pc = MProductCategory.get( Env.getCtx(),product.getM_Product_Category_ID(), get_TrxName());
