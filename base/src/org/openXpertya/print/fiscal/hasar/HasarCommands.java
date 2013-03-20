@@ -630,6 +630,14 @@ public interface HasarCommands {
 	 */
 	public FiscalPacket cmdGetEmbarkNumber(int line);
 	
+	/**
+	 * Comando para abrir el cajón de dinero
+	 * 
+	 * @return <code>FiscalPacket</code> que representa el comando para la
+	 *         impresora, null si la impresora no implementa el comando.
+	 */
+	public FiscalPacket cmdOpenDrawer();
+	
 	///////////////////////////////////////////////////////////////////////
 	// Comandos para tipos de letra
 	///////////////////////////////////////////////////////////////////////

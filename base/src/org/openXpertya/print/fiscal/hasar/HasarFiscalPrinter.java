@@ -505,6 +505,12 @@ public abstract class HasarFiscalPrinter extends BasicFiscalPrinter implements H
 		cmd.setText(i++, operation, false);
 		return cmd;
 	}
+	
+	@Override
+	public FiscalPacket cmdOpenDrawer(){
+		// Se retorna null porque la gran mayoría no implementa este comando
+		return null;
+	}
 
 	protected FiscalPacket createFiscalPacket() {
 		return new HasarFiscalPacket(getEncoding(),getBaseRolloverYear(), this);
@@ -723,6 +729,7 @@ public abstract class HasarFiscalPrinter extends BasicFiscalPrinter implements H
 		FiscalPacket response;
 		// Se valida la factura.
 		invoice.validate();
+		boolean hasCashPayments = false;
 		try {
 			setCancelAllowed(false);
 			//////////////////////////////////////////////////////////////
@@ -777,7 +784,8 @@ public abstract class HasarFiscalPrinter extends BasicFiscalPrinter implements H
 			// Se ingresan los pagos realizados por el comprador.
 			// Comando: @TotalTender
 			for (Payment payment : invoice.getPayments()) {
-				execute(cmdTotalTender(
+				hasCashPayments = hasCashPayments || payment.isCash();
+				response = execute(cmdTotalTender(
 					payment.getDescription(), 
 					payment.getAmount(), 
 					false, 
@@ -787,12 +795,27 @@ public abstract class HasarFiscalPrinter extends BasicFiscalPrinter implements H
 			}
 			
 			//////////////////////////////////////////////////////////////
+			// Abrir el cajón de dinero
+			// Comando: @OpenDrawer
+			// El cajón de dinero se abre si tenemos cambio en la factura,
+			// existen pagos en efectivo ó si el último pago agregado tiene
+			// vuelto
+			if (hasCashPayments
+					|| invoice.getChangeAmt().compareTo(BigDecimal.ZERO) > 0
+					|| response.getBigDecimal(3).compareTo(BigDecimal.ZERO) < 0) {
+				// Sólo las impresoras que soportan el comando
+				if(cmdOpenDrawer() != null){
+					execute(cmdOpenDrawer());
+				}
+			}
+			
+			//////////////////////////////////////////////////////////////
 			// Se cargan las observaciones del pie de la factura como 
 			// texto fiscal.
 			// Comando: @PrintFiscalText
 			for (String observation : invoice.getFooterObservations()) {
 				execute(cmdPrintFiscalText(observation,null));
-			}
+			}			
 			
 			//////////////////////////////////////////////////////////////
 			// Se cierra el comprobante fiscal.
@@ -1339,7 +1362,5 @@ public abstract class HasarFiscalPrinter extends BasicFiscalPrinter implements H
 		// deberá sobreescribir este método para indicar un número de pagos
 		// diferentes.
 		return 4;
-	}
-	
-	
+	}	
 }

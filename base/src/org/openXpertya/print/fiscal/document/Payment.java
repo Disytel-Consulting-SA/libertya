@@ -78,4 +78,11 @@ public class Payment implements Serializable{
 		// Validar descripción.
 		Document.validateText(getDescription(),"InvalidPaymentDescription");
 	}
+	
+	/**
+	 * @return true si este pago es efectivo, false caso contrario
+	 */
+	public boolean isCash(){
+		return false;
+	}
 }
