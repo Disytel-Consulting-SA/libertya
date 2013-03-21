@@ -11,14 +11,18 @@ package org.openXpertya.replication;
  * -------------------------------------------------------------------------
  */
 
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Vector;
 
+import org.openXpertya.model.MChangeLog;
 import org.openXpertya.model.MTableReplication;
 import org.openXpertya.model.X_C_Cash;
+import org.openXpertya.model.X_C_CashLine;
 import org.openXpertya.model.X_C_Invoice;
+import org.openXpertya.model.X_C_Order;
 import org.openXpertya.plugin.common.PluginUtils;
 import org.openXpertya.plugin.install.PluginXMLUpdater;
-import org.openXpertya.plugin.install.PluginXMLUpdater.ChangeGroup;
 import org.openXpertya.process.CreateReplicationTriggerProcess;
 import org.openXpertya.util.DB;
 
@@ -33,12 +37,10 @@ public class ReplicationXMLUpdater extends PluginXMLUpdater {
 	
 	/** Pasada actual */
 	protected int currentPass = -1;
-
-	/** Relacion entre la posicion del una organizacion en el replicationArrayPos y el AD_Org_ID */
-	
 		
 	/** Log de ACKS/Errores a enviar al host origen */
 	protected Vector<String[]> eventLog = null; 
+
 	
 	/**
 	 * Constructor con ID de organizacion origen
@@ -311,23 +313,14 @@ public class ReplicationXMLUpdater extends PluginXMLUpdater {
 			retValue = true;
 		}
 		/*
-		 * Omision de referencia ciclica entre C_Invoice -> C_CashLine y C_CashLine -> C_Invoice
-		 * La referencia a C_CahsLine desde C_Invoice se encuentra actualmente deprecada
+		 * Omision de referencias ciclicas en inserción.  Solo se omite en la inserción inicial para 
+		 * solucionar la doble referencia, a fin de que un posterior update setee el valor correctamente
 		 */
-		else if (X_C_Invoice.Table_Name.equalsIgnoreCase(tableName) && "C_CashLine_ID".equalsIgnoreCase(column.getName()))
+		else if (ReplicationConstantsWS.cyclicReferences.get(tableName.toLowerCase()) != null && ReplicationConstantsWS.cyclicReferences.get(tableName.toLowerCase()).contains(column.getName().toLowerCase()) && (MChangeLog.OPERATIONTYPE_Insertion.equals(changeGroup.getOperation()) || changeGroup.getOperation().startsWith(MChangeLog.OPERATIONTYPE_InsertionModification))) 
 		{
 			query.append("null");
 			retValue = true;
-		}
-		/*
-		 * Omision de referencia ciclica entre C_Cash -> C_PosJournal y C_PosJournal -> C_Cash
-		 * Se omite la referencia C_PosJournal_ID en la tabla C_Cash
-		 */
-		else if (X_C_Cash.Table_Name.equalsIgnoreCase(tableName) && "C_PosJournal_ID".equalsIgnoreCase(column.getName()))
-		{
-			query.append("null");
-			retValue = true;
-		}		
+		}	
 		/* Si es una columna especial, concatenar la coma final */
 		if (retValue)
 			query.append(",");
