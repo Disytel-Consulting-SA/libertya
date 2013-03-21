@@ -3,6 +3,11 @@ package org.openXpertya.replication;
 import java.util.ArrayList;
 import java.util.HashMap;
 
+import org.openXpertya.model.X_C_Cash;
+import org.openXpertya.model.X_C_CashLine;
+import org.openXpertya.model.X_C_Invoice;
+import org.openXpertya.model.X_C_Order;
+
 public class ReplicationConstantsWS extends ReplicationConstants {
 
 	/*
@@ -28,9 +33,18 @@ public class ReplicationConstantsWS extends ReplicationConstants {
 	/** Dado un estado, obtener el siguiente estado si se recibio un ERROR */
 	public static HashMap<Character, Character> nextStatusWhenERR = new HashMap<Character, Character>();
 	
+	/** Referencias ciclicas.  Tabla -> Columnas */
+	public static HashMap<String, ArrayList<String>> cyclicReferences = new HashMap<String, ArrayList<String>>();
 	
+		
 	static 
 	{
+		// Casos actuales de replicacion ciclica.  TODO: deshardcode
+		addCyclicColumnToTable(X_C_Invoice.Table_Name,	"C_CashLine_ID");
+		addCyclicColumnToTable(X_C_Cash.Table_Name, 	"C_PosJournal_ID");
+		addCyclicColumnToTable(X_C_Order.Table_Name, 	"C_Payment_ID");
+		addCyclicColumnToTable(X_C_CashLine.Table_Name,	"TransferCashLine_ID");
+		
 		// Estados de replicacion en WS
 		replicateStates.clear();
 		replicateStates.add(REPARRAY_REPLICATE_INSERT);
@@ -53,5 +67,19 @@ public class ReplicationConstantsWS extends ReplicationConstants {
 		nextStatusWhenERR.put(ReplicationConstants.REPARRAY_REPLICATE_MODIFICATION, ReplicationConstants.REPARRAY_RETRY1);
 		nextStatusWhenERR.put(ReplicationConstants.REPARRAY_RETRY1, ReplicationConstants.REPARRAY_RETRY1);
 
+	}
+	
+	
+	/**
+	 * Incorpora una nueva columna de referencia cíclica a una tabla dada
+	 * Para evitar problemas en get() y contains() de appendSpecialValues(), 
+	 * tablas y columnas se almacenan lowercase en todos los casos
+	 */
+	public static void addCyclicColumnToTable(String tableName, String columnName) {	
+		if (cyclicReferences.get(tableName.toLowerCase()) == null) {
+			ArrayList<String> columns = new ArrayList<String>();
+			cyclicReferences.put(tableName.toLowerCase(), columns);
+		}
+		cyclicReferences.get(tableName.toLowerCase()).add(columnName.toLowerCase());
 	}
 }
