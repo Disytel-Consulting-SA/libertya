@@ -97,6 +97,9 @@ public class AInfoFiscalPrinter extends CDialog implements ActionListener, Fisca
     private boolean firstCommand = true;
     
     private boolean closeOnFiscalClose = false;
+    
+    private boolean closeOnOpenDrawer = false;
+    
     /**
 	 * Tirar Excepción al cancelar la impresión en el momento de chequeo de
 	 * estado de impresora fiscal
@@ -489,6 +492,22 @@ public class AInfoFiscalPrinter extends CDialog implements ActionListener, Fisca
 		invoke(doFiscalCloseEnded, false);
 	}
 	
+	@Override
+	public void openDrawerEnded(FiscalPrinter source, FiscalMessages msgs) {
+		Runnable doOpenDrawerEnded = new Runnable() {
+			public void run() {
+				addInfoMessage("ActionEndedOk");
+				if(closeOnOpenDrawer){
+					dispose();
+				}
+				else{
+					confirmPanel.getOKButton().setEnabled(true);
+					confirmPanel.getOKButton().setVisible(true);
+				}
+			}
+		};
+		invoke(doOpenDrawerEnded, false);
+	}
 
 	public void statusChanged(FiscalPrinter source, final FiscalPacket command, FiscalPacket response, final FiscalMessages msgs) {
 		Runnable doStatusChange = new Runnable() {
@@ -847,6 +866,14 @@ public class AInfoFiscalPrinter extends CDialog implements ActionListener, Fisca
 		this.throwExceptionInCancelCheckStatus = throwExceptionInCancelCheckStatus;
 	}
 
+	public boolean isCloseOnOpenDrawer() {
+		return closeOnOpenDrawer;
+	}
+
+	public void setCloseOnOpenDrawer(boolean closeOnOpenDrawer) {
+		this.closeOnOpenDrawer = closeOnOpenDrawer;
+	}
+
 	/**
 	 * Listener de acciones que puede disparar este diálogo.
 	 */
@@ -864,8 +891,6 @@ public class AInfoFiscalPrinter extends CDialog implements ActionListener, Fisca
 		 */
 		public void actionVoidPerformed();
 		
-	}
-	
-	
+	}	
 	
 }

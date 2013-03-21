@@ -41,12 +41,12 @@ public class FiscalCloseAction extends FiscalPrinterAction {
 		StringBuffer mandatoryMsg = new StringBuffer();
 		// Tipo de cierre fiscal
 		if(getControladorFiscalID() == null || getControladorFiscalID() == 0){
-			mandatoryMsg.append(MSG_FISCAL_CLOSE_TYPE);
+			mandatoryMsg.append(MSG_FISCAL_CONTROLLER);
 			mandatoryMsg.append(" , ");
 		}
 		// Controlador fiscal
 		if(getClosetype() == null || getClosetype().length() == 0){
-			mandatoryMsg.append(MSG_FISCAL_CONTROLLER);
+			mandatoryMsg.append(MSG_FISCAL_CLOSE_TYPE);
 			mandatoryMsg.append(" , ");
 		}
 		// Si mensaje de error tiene algo, entonces muestro error
@@ -63,7 +63,7 @@ public class FiscalCloseAction extends FiscalPrinterAction {
 			setErrorMsg(getFdp().getErrorMsg());
 			return false;
 		}
-		return false;
+		return true;
 	}
 
 	
