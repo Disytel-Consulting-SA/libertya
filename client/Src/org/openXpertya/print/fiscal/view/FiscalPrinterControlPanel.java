@@ -30,6 +30,7 @@ import org.openXpertya.model.MRefList;
 import org.openXpertya.model.MReference;
 import org.openXpertya.print.fiscal.action.FiscalCloseAction;
 import org.openXpertya.print.fiscal.action.FiscalPrinterAction;
+import org.openXpertya.print.fiscal.action.OpenDrawerAction;
 import org.openXpertya.util.DisplayType;
 import org.openXpertya.util.Env;
 import org.openXpertya.util.Msg;
@@ -75,7 +76,8 @@ public class FiscalPrinterControlPanel extends CPanel implements FormPanel{
 	private String MSG_FISCAL_CONTROLLER;
 	private String MSG_FISCAL_PRINTER_CONTROL_PANEL;
 	private String FISCAL_CLOSE_TYPES_REF_NAME;
-
+	private String MSG_OPEN_DRAWER;
+	private String MSG_OPEN;
 	
 	// *********************************
 	// 	   Panel principal
@@ -116,6 +118,25 @@ public class FiscalPrinterControlPanel extends CPanel implements FormPanel{
 	private CLabel lblFiscalCloseType;
 	private CLabel lblFiscalControllers;
 	
+	// *************************************
+	// Panel de Apertura de cajón de dinero
+	// *************************************
+		
+	/** Panel de comandos de cierre fiscal */
+	
+	private CPanel openDrawerPanel;
+	
+	// Componentes del panel
+	
+	/** Combo con los controladores fiscales */
+	
+	public VLookup comboFiscalOpenDrawerControllers;
+	
+	/** Botón para ejecutar el cierre */
+	
+	private CButton btnOpenDrawer;
+	
+	private CLabel lblOpenDrawerControllers;
 	
 	// *********************************
 	// 	     Panel inferior
@@ -175,6 +196,7 @@ public class FiscalPrinterControlPanel extends CPanel implements FormPanel{
 		// Referenciar la impresora desde la ventana de info.
 		infoFiscalPrinter.setFiscalDocumentPrint(getiFiscalPrinter());
 		infoFiscalPrinter.setCloseOnFiscalClose(true);
+		infoFiscalPrinter.setCloseOnOpenDrawer(true);
 	}
 	
 	/**
@@ -189,6 +211,8 @@ public class FiscalPrinterControlPanel extends CPanel implements FormPanel{
 		MSG_FISCAL_CLOSE_TYPE = getMsg("FiscalCloseType");
 		MSG_FISCAL_CONTROLLER = Msg.getElement(Env.getCtx(), "C_Controlador_Fiscal_ID");
 		MSG_FISCAL_PRINTER_CONTROL_PANEL = getMsg("FiscalPrinterControlPanel"); 
+		MSG_OPEN_DRAWER = getMsg("OpenDrawer");
+		MSG_OPEN = getMsg("Open");
 		// Nombres
 		FISCAL_CLOSE_TYPES_REF_NAME = "Fiscal_Close_Types";
 	}
@@ -212,6 +236,7 @@ public class FiscalPrinterControlPanel extends CPanel implements FormPanel{
 	 */
 	private void initAreas(){
 		initFiscalClosePanel();
+		initOpenDrawerPanel();
 		initBottomPanel();
 	}
 	
@@ -231,6 +256,21 @@ public class FiscalPrinterControlPanel extends CPanel implements FormPanel{
 		fiscalClosePanel.add(lblFiscalControllers, new GridBagConstraints(0, 1, 1, 1, 1, 1, GridBagConstraints.EAST, GridBagConstraints.NONE, new Insets(5, 0, 5, 10), 0, 0));
 		fiscalClosePanel.add(getComboFiscalControllers(), new GridBagConstraints(1, 1, 1, 1, 1, 1, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(5, 0, 5, 0), 0, 0));
 		fiscalClosePanel.add(getBtnFiscalClose(), new GridBagConstraints(0, 2, 2, 1, 1, 1, GridBagConstraints.CENTER, GridBagConstraints.SOUTH, new Insets(15, 0, 5, 0), 0, 0));
+	}
+	
+	/**
+	 * Área de cierre fiscal
+	 */
+	protected void initOpenDrawerPanel(){
+		// Inicializar el panel
+		openDrawerPanel = new CPanel();
+		lblOpenDrawerControllers = new CLabel(MSG_FISCAL_CONTROLLER);
+		openDrawerPanel.setBorder(BorderFactory.createTitledBorder(MSG_OPEN_DRAWER));
+		openDrawerPanel.setLayout(new GridBagLayout());
+		// Crear sus componentes y agregarlos al contenedor
+		openDrawerPanel.add(lblOpenDrawerControllers, new GridBagConstraints(0, 0, 1, 1, 1, 1, GridBagConstraints.EAST, GridBagConstraints.NONE, new Insets(5, 0, 5, 10), 0, 0));
+		openDrawerPanel.add(getComboFiscalOpenDrawerControllers(), new GridBagConstraints(1, 0, 1, 1, 1, 1, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(5, 0, 5, 0), 0, 0));
+		openDrawerPanel.add(getBtnOpenDrawer(), new GridBagConstraints(0, 1, 2, 1, 1, 1, GridBagConstraints.CENTER, GridBagConstraints.SOUTH, new Insets(15, 0, 5, 0), 0, 0));
 	}
 	
 	/**
@@ -270,6 +310,18 @@ public class FiscalPrinterControlPanel extends CPanel implements FormPanel{
 	}
 	
 	/**
+	 * Retornar o crear el lookup con los controladores fiscales
+	 * @return
+	 */
+	private VLookup getComboFiscalOpenDrawerControllers(){
+		if(comboFiscalOpenDrawerControllers == null){
+			comboFiscalOpenDrawerControllers = VComponentsFactory.VLookupFactory("C_Controlador_Fiscal_ID", "C_Controlador_Fiscal", getWindowNo(), DisplayType.TableDir);
+			comboFiscalOpenDrawerControllers.setMandatory(true);
+		}
+		return comboFiscalOpenDrawerControllers;
+	}
+	
+	/**
 	 * Retornar o crear el botón que dispara el cierre fiscal
 	 * @return
 	 */
@@ -286,6 +338,29 @@ public class FiscalPrinterControlPanel extends CPanel implements FormPanel{
 			});
 		}
 		return btnFiscalClose;
+	}
+	
+	/**
+	 * Retornar o crear el botón que dispara el apertura del cajón de dinero
+	 * 
+	 * @return
+	 */
+	private CButton getBtnOpenDrawer(){
+		if(btnOpenDrawer == null){
+			btnOpenDrawer = new CButton(MSG_OPEN,ImageFactory.getImageIcon("Process24.gif"));
+			btnOpenDrawer.addActionListener(new ActionListener() {
+				
+				@Override
+				public void actionPerformed(ActionEvent arg0) {
+					setActualAction(new OpenDrawerAction(getiFiscalPrinter(),
+							null,
+							(Integer) getComboFiscalOpenDrawerControllers()
+									.getValue()));
+					executeAction();
+				}
+			});
+		}
+		return btnOpenDrawer;
 	}
 	
 	/**
@@ -311,6 +386,7 @@ public class FiscalPrinterControlPanel extends CPanel implements FormPanel{
 	 */
 	private void addAreasToMainPanel(){
 		mainPanel.add(fiscalClosePanel,BorderLayout.CENTER);
+		mainPanel.add(openDrawerPanel,BorderLayout.EAST);
 		mainPanel.add(bottomPanel,BorderLayout.SOUTH);
 	}
 	

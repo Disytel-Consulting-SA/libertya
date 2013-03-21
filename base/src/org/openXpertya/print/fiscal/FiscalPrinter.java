@@ -182,4 +182,9 @@ public interface FiscalPrinter {
 	 *         factura.
 	 */
 	public int getAllowedPaymentQty();
+	
+	/**
+	 * Abrir el cajón de dinero
+	 */
+	public void openDrawer() throws FiscalPrinterIOException;
 }

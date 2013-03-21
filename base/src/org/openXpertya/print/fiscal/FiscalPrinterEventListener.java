@@ -45,4 +45,15 @@ public interface FiscalPrinterEventListener {
 	 *            Mensajes de estado de la impresora fiscal.
 	 */
 	public void fiscalCloseEnded(FiscalPrinter source, FiscalMessages msgs);
+	
+	/**
+	 * Es invocado cuando se finaliza correctamente el apertura del cajón de
+	 * dinero
+	 * 
+	 * @param source
+	 *            Impresora fiscal que realizó el apertura
+	 * @param msgs
+	 *            Mensajes de estado de la impresora fiscal.
+	 */
+	public void openDrawerEnded(FiscalPrinter source, FiscalMessages msgs);
 }

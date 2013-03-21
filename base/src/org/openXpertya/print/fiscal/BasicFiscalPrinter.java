@@ -185,12 +185,25 @@ public abstract class BasicFiscalPrinter implements FiscalPrinter {
 			getEventListener().fiscalCloseEnded(this, msgs);
 	}
 	
+	protected void fireOpenDrawerEnded(FiscalMessages msgs){
+		if(getEventListener() != null)
+			getEventListener().openDrawerEnded(this, msgs);
+	}
+	
 	/**
 	 * Se ha finalizado correctamente el cierre fiscal. Se informa al
 	 * EventListener (en caso de que exista).
 	 */
 	protected void fireFiscalCloseEnded() {
 		fireFiscalCloseEnded(getMessages());
+	}
+	
+	/**
+	 * Se ha finalizado correctamente el apertura del cajón de dinero. Se
+	 * informa al EventListener (en caso de que exista).
+	 */
+	protected void fireOpenDrawerEnded(){
+		fireOpenDrawerEnded(getMessages());
 	}
 	
 	public String getLastDocumentNo() {

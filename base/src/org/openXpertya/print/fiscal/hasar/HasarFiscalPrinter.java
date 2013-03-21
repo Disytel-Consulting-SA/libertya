@@ -511,6 +511,18 @@ public abstract class HasarFiscalPrinter extends BasicFiscalPrinter implements H
 		// Se retorna null porque la gran mayoría no implementa este comando
 		return null;
 	}
+	
+	@Override
+	public void openDrawer() throws FiscalPrinterIOException{
+		FiscalPacket packet = cmdOpenDrawer();
+		if(packet == null){
+			throw new FiscalPrinterIOException("El comando de apertura del cajon de dinero no esta soportado para la impresora fiscal");
+		}
+		execute(packet);
+		
+		// Se indica al manejador de eventos que la impresión ha finalizado.
+		fireOpenDrawerEnded();
+	}
 
 	protected FiscalPacket createFiscalPacket() {
 		return new HasarFiscalPacket(getEncoding(),getBaseRolloverYear(), this);
@@ -1362,5 +1374,7 @@ public abstract class HasarFiscalPrinter extends BasicFiscalPrinter implements H
 		// deberá sobreescribir este método para indicar un número de pagos
 		// diferentes.
 		return 4;
-	}	
+	}
+	
+	
 }

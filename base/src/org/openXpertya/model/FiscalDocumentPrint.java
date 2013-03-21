@@ -59,7 +59,8 @@ public class FiscalDocumentPrint {
 		ACTION_PRINT_DOCUMENT, 
 		ACTION_FISCAL_CLOSE,
 		ACTION_PRINT_DELIVERY_DOCUMENT,
-		ACTION_PRINT_CURRENT_ACCOUNT_DOCUMENT
+		ACTION_PRINT_CURRENT_ACCOUNT_DOCUMENT,
+		ACTION_OPEN_DRAWER
 	};
 
 	static {
@@ -280,6 +281,7 @@ public class FiscalDocumentPrint {
 			case ACTION_FISCAL_CLOSE:		     		doFiscalClose(args); break;
 			case ACTION_PRINT_DELIVERY_DOCUMENT: 		doPrintDeliveryDocument(args); break;
 			case ACTION_PRINT_CURRENT_ACCOUNT_DOCUMENT:	doPrintCurrentAccountDocument(args); break;
+			case ACTION_OPEN_DRAWER:					doOpenDrawer(args); break;
 			default:						throw new Exception(Msg.getMsg(ctx, "InvalidAction"));
 		}
 	}
@@ -623,6 +625,34 @@ public class FiscalDocumentPrint {
 		getFiscalPrinter().printDocument(nonFiscalDocument);
 		// Se dispara el evento de impresión finalizada.
 		fireDocumentPrintEndedOk();
+	}
+	
+	// **************************************************************
+	//   			APERTURA DE CAJÓN DE DINERO		
+	// **************************************************************
+	
+	/**
+	 * @param cFiscalID
+	 *            impresora fiscal
+	 * @return true si se ejecutó correctamente, falso en caso contrario
+	 */
+	public boolean openDrawer(Integer cFiscalID) {
+		return execute(Actions.ACTION_OPEN_DRAWER, cFiscalID,
+				new Object[] { });
+	}
+	
+	/**
+	 * @param args argumentos
+	 * @throws Exception en caso de error
+	 */
+	public void doOpenDrawer(Object[] args) throws Exception{
+		fireActionStarted(FiscalDocumentPrintListener.AC_EXECUTING_ACTION);
+		
+		// Abrir el cajón de dinero
+		getFiscalPrinter().openDrawer();
+		
+		// Se dispara el evento de acción finalizada.
+		fireActionEndedOk(Actions.ACTION_OPEN_DRAWER);
 	}
 	
 	// **************************************************	
