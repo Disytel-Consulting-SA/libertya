@@ -18,16 +18,25 @@ public class PercepcionCABA extends PercepcionStandard {
 
 	@Override
 	public BigDecimal getPercepcionPercToApply() {
-		BigDecimal perc = MBPartnerPadronBsAs.getBPartnerPerc("percepcion",
-				getPercepcionData().getBpartner().getID(), Env.getDate(),
-				MBPartnerPadronBsAs.PADRONTYPE_PadrónDeAltoRiesgoCABA, null);
-		if(perc == null){
+		int c_Region_Tax_ID = getPercepcionData().getTax().getC_Region_ID();
+		
+		MBPartnerLocation bpLocation = new MBPartnerLocation(Env.getCtx(),getPercepcionData().getBpartner().getPrimaryC_BPartner_Location_ID(), null);
+		MLocation location = new MLocation(Env.getCtx(),bpLocation.getC_Location_ID(), null);
+		int c_Region_BP_ID = location.getC_Region_ID();
+		
+		BigDecimal perc = BigDecimal.ZERO;
+		if (c_Region_Tax_ID == c_Region_BP_ID){
 			perc = MBPartnerPadronBsAs.getBPartnerPerc("percepcion",
 					getPercepcionData().getBpartner().getID(), Env.getDate(),
-					MBPartnerPadronBsAs.PADRONTYPE_RégimenSimplificadoCABA, null);
-		}
-		if(perc == null){
-			perc = super.getPercepcionPercToApply();
+					MBPartnerPadronBsAs.PADRONTYPE_PadrónDeAltoRiesgoCABA, null);
+			if(perc == null){
+				perc = MBPartnerPadronBsAs.getBPartnerPerc("percepcion",
+						getPercepcionData().getBpartner().getID(), Env.getDate(),
+						MBPartnerPadronBsAs.PADRONTYPE_RégimenSimplificadoCABA, null);
+			}
+			if(perc == null){
+				perc = super.getPercepcionPercToApply();
+			}
 		}
 		return perc;
 	}
