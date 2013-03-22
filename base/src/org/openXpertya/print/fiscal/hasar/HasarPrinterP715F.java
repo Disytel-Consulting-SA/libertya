@@ -104,7 +104,9 @@ public class HasarPrinterP715F extends HasarFiscalPrinter {
 	public FiscalPacket cmdTotalTender(String description, BigDecimal amount, boolean cancel, Integer display) {
 		// El parámetro display no tiene utilidad en este modelo.
 		// Siempre se asigna a 0.
-		return super.cmdTotalTender(description, amount, cancel, 0);
+		FiscalPacket cmd = super.cmdTotalTender(description, amount, cancel, 0);
+		cmd.setText(1, description, 30, false);
+		return cmd;
 	}
 	
 	@Override
