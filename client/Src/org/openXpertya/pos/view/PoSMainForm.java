@@ -2878,8 +2878,14 @@ public class PoSMainForm extends CPanel implements FormPanel, ASyncProcess, Disp
 			cAmountText.addVetoableChangeListener(new VetoableChangeListener() {
 
 				public void vetoableChange(PropertyChangeEvent event) throws PropertyVetoException {
+					// Si el valor ingresado supera el pendiente del pedido,
+					// entonces se usa el pendiente
+					if (getCAmountText().getValue() == null) {
+						getCAmountText().setValue(getOrder().getOpenAmount());
+					}
 					updateConvertedAmount();
-					refreshPaymentMediumInfo();
+					refreshPaymentMediumInfo((BigDecimal) getCAmountText()
+							.getValue());
 				}
 				
 			});
@@ -2889,7 +2895,7 @@ public class PoSMainForm extends CPanel implements FormPanel, ASyncProcess, Disp
 				@Override
 				public void actionPerformed(ActionEvent arg0) {
 					if (getCAmountText().getValue() == null) {
-						getCAmountText().setValue(getCPaymentToPayAmt().getValue());
+						getCAmountText().setValue(getOrder().getOpenAmount());
 					}
 				}
 			});
@@ -4547,6 +4553,7 @@ public class PoSMainForm extends CPanel implements FormPanel, ASyncProcess, Disp
 	private void updateCheckTenderTypeComponents() {
 		showTenderTypeParamsPanel(getCCheckParamsPanel(), null);
 		getCAmountText().setValue(null);
+		refreshPaymentMediumInfo();
 		getCBankAccountCombo().setValue(
 				getModel().getPoSConfig().getCheckBankAccountID());
 	}
@@ -4562,6 +4569,7 @@ public class PoSMainForm extends CPanel implements FormPanel, ASyncProcess, Disp
 	private void updateCashTenderTypeComponents() {
 		showTenderTypeParamsPanel(getCCashParamsPanel(), null);
 		getCAmountText().setValue(null);
+		refreshPaymentMediumInfo();
 	}
 	
 	private void updateCreditCardTenderTypeComponents() {
@@ -4592,7 +4600,8 @@ public class PoSMainForm extends CPanel implements FormPanel, ASyncProcess, Disp
 		TimeStatsLogger.beginTask(MeasurableTask.POS_ADD_PAYMENT);
 		
 		String tenderType = getSelectedTenderType();
-		BigDecimal amount = (BigDecimal)getCAmountText().getValue();
+		BigDecimal amount = (BigDecimal)getCPaymentToPayAmt().getValue();
+		BigDecimal realAmount = (BigDecimal)getCAmountText().getValue();
 		int currencyId = ((Integer)getCCurrencyCombo().getValue()).intValue();
 		PaymentMedium paymentMedium = getSelectedPaymentMedium(); 
 		CallResult extraValidationsResult = null; 
@@ -4880,6 +4889,7 @@ public class PoSMainForm extends CPanel implements FormPanel, ASyncProcess, Disp
 		payment.setTenderType(tenderType);
 		payment.setCurrencyId(currencyId);
 		payment.setAmount(amount);
+		payment.setRealAmount(realAmount);
 		// Se asocia el medio de pago con el pago concreto.
 		payment.setPaymentMedium(paymentMedium);
 		
@@ -5717,6 +5727,7 @@ public class PoSMainForm extends CPanel implements FormPanel, ASyncProcess, Disp
 		
 		getCPaymentDiscountText().setText(getDiscountSchemaDescription(discountSchema));
 		getCPaymentDiscountText().setCaretPosition(0);
+		getCAmountText().setValue(null);
 		getCPaymentToPayAmt().setValue(null);
 
 		// Actualiza los datos adicionales del medio de pago
@@ -5732,6 +5743,18 @@ public class PoSMainForm extends CPanel implements FormPanel, ASyncProcess, Disp
 	 * de pago para ser mostrada en los componentes gráficos
 	 */
     private void refreshPaymentMediumInfo() {
+    	refreshPaymentMediumInfo(null);
+    }
+    
+    /**
+	 * Recalcula descuentos / recargos y toda la información adicional del medio
+	 * de pago para ser mostrada en los componentes gráficos
+	 * 
+	 * @param amt
+	 *            monto base por el cual refrescar los datos, si recibe null se
+	 *            realiza en base al monto pendiente de cobrar
+	 */
+    private void refreshPaymentMediumInfo(BigDecimal amt) {
     	PaymentMedium paymentMedium = getSelectedPaymentMedium();
     	if (paymentMedium == null) {
     		return;
@@ -5741,24 +5764,28 @@ public class PoSMainForm extends CPanel implements FormPanel, ASyncProcess, Disp
 		// medio de pago actualmente seleccionad) y lo muestra en el
 		// componente.
 		BigDecimal paymentToPayAmt = getOrder().getToPayAmount(
-				getSelectedPaymentMediumInfo());
-		
+				getSelectedPaymentMediumInfo(), amt);
+		System.out.println("A Pagar "+paymentToPayAmt);
 		getCPaymentToPayAmt()
 				.setValue(paymentToPayAmt.compareTo(BigDecimal.ZERO) > 0 
 							? paymentToPayAmt
 							: null);
-
+		BigDecimal paymentRealAmt = getOrder().getPaymentRealAmount(paymentToPayAmt,
+				getSelectedPaymentMediumInfo());
+		getCAmountText().setValue(paymentRealAmt);
+		System.out.println("Real "+paymentRealAmt);
+		
 		// Si es un pago con tarjeta de crédito se calcula y muestra el importe
 		// de cada cuota.
 		if (paymentMedium.isCreditCard()) {
 			EntidadFinancieraPlan plan = getSelectedCreditCardPlan();
-			if(paymentToPayAmt != null){
-				getCAmountText().setValue(paymentToPayAmt);
-			}
+//			if(paymentToPayAmt != null){
+//				getCAmountText().setValue(paymentToPayAmt);
+//			}
 			
 			// El importe de la cuota se calcula en base al importe del pago
 			// ingresado por el usuario
-			BigDecimal cuotaAmt = getPaymentAmount().divide(new BigDecimal(plan
+			BigDecimal cuotaAmt = getToPaymentAmount().divide(new BigDecimal(plan
 					.getCoutasPago()), 10, BigDecimal.ROUND_HALF_UP);
 			getCCreditCardCuotaAmt().setValue(cuotaAmt);
 		}
@@ -5880,6 +5907,7 @@ public class PoSMainForm extends CPanel implements FormPanel, ASyncProcess, Disp
     				getCAmountText().setValue(null);
     			}
     		}
+    		refreshPaymentMediumInfo((BigDecimal)getCAmountText().getValue());
     	}
 		// Agregar el saldo del crédito que quedará al final de la operación
 		updateCreditNoteBalance();
@@ -5918,7 +5946,7 @@ public class PoSMainForm extends CPanel implements FormPanel, ASyncProcess, Disp
     
     protected void updateCreditNoteBalance(){
     	BigDecimal availableCreditNoteAmt = (BigDecimal)getCCreditNoteAvailableText().getValue();
-    	BigDecimal amt = (BigDecimal) getCAmountText().getValue();
+    	BigDecimal amt = (BigDecimal) getCPaymentToPayAmt().getValue();
 		BigDecimal balanceCreditNote = (availableCreditNoteAmt == null || availableCreditNoteAmt
 				.compareTo(BigDecimal.ZERO) == 0) || amt == null ? null
 				: availableCreditNoteAmt.subtract(amt);
@@ -5983,8 +6011,8 @@ public class PoSMainForm extends CPanel implements FormPanel, ASyncProcess, Disp
 	 * @return El importe del pago ingresado por el usuario. Si el
 	 *         usuario no ingresó ningún importe devuelve cero.
 	 */
-    protected BigDecimal getPaymentAmount() {
-    	BigDecimal amount = (BigDecimal)getCAmountText().getValue();
+    protected BigDecimal getToPaymentAmount() {
+    	BigDecimal amount = (BigDecimal)getCPaymentToPayAmt().getValue();
     	return amount == null ? BigDecimal.ZERO : amount;
     }
     

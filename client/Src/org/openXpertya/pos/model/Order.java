@@ -291,7 +291,9 @@ public class Order  {
 		//
 
 		// Actualiza el pago para determinar el importe real del mismo.
-		calculatePaymentRealAmount(payment);
+		// Se comenta la línea del cálculo del pago real ya que lo que ingresa
+		// el usuario es el monto real
+//		calculatePaymentRealAmount(payment);
 		
 		// Agrega el esquema de descuento del pago como un descuento
 		// general para el calculo del descuento total general del pedido.
@@ -420,6 +422,89 @@ public class Order  {
 		
 		// Guarda el importe real en el pago
 		payment.setRealAmount(paymentRealAmt);
+	}
+	
+	/**
+	 * @return el importe real 
+	 */
+	public BigDecimal getPaymentRealAmount(BigDecimal amt, IPaymentMediumInfo paymentMediumInfo) {
+		/*
+		 * Determina cual es el importe REAL del pago. El importe real es el
+		 * importe que este pago cubre del total del pedido. Está aumentado o
+		 * decrementado según el descuento que tenga asociado el medio de pago.
+		 * Es decir, debemos calcular RP de forma que:
+		 * 
+		 *   RP = P / (1 - T)
+		 * 
+		 * Donde: 
+		 * - RP: Importe real del pago 
+		 * - P: Importe ingresado del pago 
+		 * - T: Tasa del descuento aplicado (-1 < T < 1)
+		 * 
+		 * La tasa no la conocemos ya que un esquema de descuento puede tener
+		 * una tasa del 10% pero sea aplicable solo a un subconjunto de las
+		 * líneas del pedido, en ese caso la tasa no sería 10% sobre el total.
+		 * Es por esto que se aplica el esquema de descuento sobre un importe
+		 * constante, y al obtener el importe de descuento podemos obtener
+		 * también la tasa de esa aplicación. De esta forma:
+		 * 
+		 *   T = C / D
+		 * 
+		 * Donde: 
+		 * - C: Importe constante de aplicación (se usará 100) 
+		 * - D: Importe del descuento basado en C.
+		 */
+		
+		if(amt == null){
+			return BigDecimal.ZERO;
+		}
+		
+		BigDecimal currentToPayAmt = getToPayAmount(paymentMediumInfo);
+		// Obtiene el importe del pago para el cálculo de descuento.
+		// Si el pago es menor o igual al pendiente a pagar según el medio de
+		// pago, entonces el importe del pago se toma como base para calcular el
+		// descuento del medio de pago
+		BigDecimal paymentAmt = null;
+		if (amt.compareTo(currentToPayAmt) <= 0) {
+			paymentAmt = amt;
+
+		// Si el pago supera el importe pendiente, para no calcular
+		// descuentos sobre importes que no se van a cobrar (e.d vueltos o
+		// créditos a favor del cliente), el importe base para el descuento
+		// es el importe pendiente de pago según el medio de pago indicado.
+		} else {
+			paymentAmt = currentToPayAmt;
+		}
+		
+		// Previene la división por cero en el cálculo. (solo se puede dar para
+		// recálculos de descuentos de líneas).
+		if (paymentAmt.compareTo(BigDecimal.ZERO) <= 0) {
+			return BigDecimal.ZERO;
+		}
+	
+		// Efectúa el cálculo de la fórmula
+		final int SCALE           = 20; 
+		BigDecimal discount       = BigDecimal.ZERO;     // D
+		BigDecimal rate           = BigDecimal.ZERO;     // T
+		BigDecimal paymentRealAmt = null;                // RP
+		BigDecimal constantAmt    = new BigDecimal(100); // C. Utilizado para calcular T
+		
+		// Calcula la tasa real de aplicación (puede diferir de la tasa del
+		// esquema debido a aplicaciones parciales en las líneas - descuentos
+		// selectivos -)
+		if (paymentMediumInfo.getDiscountSchema() != null
+				&& isPaymentMediumDiscountApplicable(paymentMediumInfo
+						.getDiscountSchema().getDiscountContextType())) {
+			discount = getDiscountCalculator().calculateDiscount(
+					paymentMediumInfo.getDiscountSchema(), constantAmt);
+			rate = discount.divide(constantAmt, SCALE, BigDecimal.ROUND_HALF_EVEN);
+		}
+		// Calcula el importe real del pago a partir del importe original y la
+		// tasa calculada.
+		paymentRealAmt = paymentAmt.divide(BigDecimal.ONE.subtract(rate), SCALE,
+				BigDecimal.ROUND_HALF_EVEN);
+		
+		return paymentRealAmt;
 	}
 	
 	public void removePayment(Payment payment) {
@@ -650,12 +735,37 @@ public class Order  {
 	 *         asociado: el resultado de {@link #getOpenAmount()}</li>
 	 */
 	public BigDecimal getToPayAmount(IPaymentMediumInfo paymentMediumInfo) {
+		return getToPayAmount(paymentMediumInfo, null);
+	}
+	
+	/**
+	 * Devuelve el importe pendiente de pago de este pedido teniendo en cuenta
+	 * el descuento / recargo asociado a un medio de pago para el calculo del
+	 * importe final
+	 * 
+	 * @param paymentMediumInfo
+	 *            Información del medio de pago que pondera el cálculo
+	 * @param amt
+	 *            monto base donde calcular el monto a pagar, si este valor es
+	 *            null se toma el monto pendiente a pagar del pedido
+	 * @return <ul>
+	 *         <li>Si el medio de pago tiene un esquema de descuento asociado:
+	 *         un {@link BigDecimal} con el importe pendiente descontado /
+	 *         recargado</li>
+	 *         <li>Si el medio de pago no tiene un esquema de descuento
+	 *         asociado: el resultado de {@link #getOpenAmount()}</li>
+	 */
+	public BigDecimal getToPayAmount(IPaymentMediumInfo paymentMediumInfo, BigDecimal amt) {
 		// Calcula el descuento de documento según el esquema del Medio de Pago
 		// Se ignora el esquema de EC ya que el mismo ya está (o no) aplicado
 		// dentro del pedido 
 		BigDecimal discountAmt = BigDecimal.ZERO;
-		BigDecimal openAmt = getOpenAmount();
-
+		BigDecimal orderOpenAmt = getOpenAmount();
+		System.out.println("Order open "+orderOpenAmt);
+		BigDecimal openAmt = amt == null || amt.compareTo(orderOpenAmt) > 0 ? orderOpenAmt
+				: amt;
+		System.out.println("Con que calcula el to pay "+openAmt);
+		
 		if (paymentMediumInfo != null) {
 			// Calcula el importe del descuento general a partir de importe
 			// pendiente (que incluye los descuentos realizados al documento)
@@ -672,11 +782,22 @@ public class Order  {
 			}
 			
 		}
+		
+		BigDecimal toPay = openAmt.subtract(discountAmt);
+		
+		// Obtiene el pendiente y lo compara con el importe real del pago. Si
+		// hay una diferencia mínima de centavos agrega esta diferencia al pago
+		// real para permitir completar el pedido
+		BigDecimal diff = openAmt.subtract(toPay);
+		if (diff.abs().compareTo(ROUND_TOLERANCE) <= 0) {
+			toPay = toPay.add(diff);
+		}
+		
 		// Al pendiente se le resta el descuento del Medio de Pago, y se le
 		// quita también el descuento total del pedido ya que ese importe no se
 		// debe pagar.
 		//return openAmt.subtract(discountAmt).subtract(getTotalDocumentDiscount());
-		return openAmt.subtract(discountAmt);
+		return toPay;
 	}
 
 	/**
