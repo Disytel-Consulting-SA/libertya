@@ -146,14 +146,14 @@ public abstract class Payment {
 	/**
 	 * @return El importe real de este pago (sin descuentos/recargos)
 	 */
-	protected BigDecimal getRealAmount() {
+	public BigDecimal getRealAmount() {
 		return realAmount;
 	}
 
 	/**
 	 * @param realAmount El importe real (sin descuentos/recargos) a asignar
 	 */
-	protected void setRealAmount(BigDecimal realAmount) {
+	public void setRealAmount(BigDecimal realAmount) {
 		this.realAmount = realAmount;
 	}
 

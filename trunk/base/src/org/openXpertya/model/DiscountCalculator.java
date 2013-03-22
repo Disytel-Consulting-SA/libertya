@@ -567,13 +567,16 @@ public class DiscountCalculator {
 		
 		// Si hay que calcular el descuento con impuestos, se suman los impuestos al
 		// precio descontado.
+		BigDecimal totalPriceAmt = price.multiply(qty);
+		BigDecimal totalDiscountedPriceAmt = discountedPrice.multiply(qty);
 		if (!netDiscount) {
-			price = documentLine.getTaxedAmount(price);
-			discountedPrice = documentLine.getTaxedAmount(discountedPrice);
+			totalPriceAmt = documentLine.getTaxedAmount(totalPriceAmt);
+			totalDiscountedPriceAmt = documentLine.getTaxedAmount(totalDiscountedPriceAmt);
 		}
 		
 		// Calcula el descuento/recargo de la línea
-		lineDiscountAmt = price.subtract(discountedPrice).multiply(qty);
+//		lineDiscountAmt = price.subtract(discountedPrice).multiply(qty);
+		lineDiscountAmt = totalPriceAmt.subtract(totalDiscountedPriceAmt);
 		
 		return scaleAmount(lineDiscountAmt);
 	}
