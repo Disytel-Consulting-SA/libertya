@@ -48,8 +48,8 @@ public class UpdateOrderProductDialog extends JDialog {
 
 	private final int BUTTON_PANEL_WIDTH = 160;
 	private final int BUTTON_WIDTH = 155;
-	private final int DIALOG_WIDTH = 570;
-	private final int DIALOG_HEIGHT = 205;
+	private final int DIALOG_WIDTH = 650;
+	private final int DIALOG_HEIGHT = 250;
 	
 	private OrderProduct orderProduct;
 	private PoSMainForm poS;
