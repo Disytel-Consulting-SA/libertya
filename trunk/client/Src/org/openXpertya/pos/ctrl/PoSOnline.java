@@ -193,6 +193,8 @@ public class PoSOnline extends PoSConnectionState {
 	
 	private CompleteOrderPOSValidations completeOrderPOSValidations;
 	
+	private MDocType paymentDocType = null;
+	
 	public PoSOnline() {
 		super();
 		setCreatePOSPaymentValidations(new CreatePOSPaymentValidations());
@@ -200,6 +202,8 @@ public class PoSOnline extends PoSConnectionState {
 		setmOrg(MOrg.get(ctx, Env.getAD_Org_ID(ctx)));
 		setGeneratorPercepciones(new GeneratorPercepciones(getCtx(), null));
 		getGeneratorPercepciones().setTPVInstance(true);
+		setPaymentDocType(MDocType.getDocType(ctx,
+				MDocType.DOCTYPE_CustomerReceipt, null));
 	}
 	
 	private static void throwIfFalse(boolean b, DocAction sourceDocActionPO, Class posExceptionClass) throws PosException {
@@ -1643,6 +1647,9 @@ public class PoSOnline extends PoSConnectionState {
 		pay.setC_BankAccount_ID(getPoSCOnfig().getCheckBankAccountID()); 
 		
 		pay.setC_Order_ID(morder.getC_Order_ID());
+		
+		// Asignación del tipo de documento Cobro a Cliente
+		pay.setC_DocType_ID(getPaymentDocType().getC_DocType_ID());
 		
 		// Esta asignación de RoutingNo y AccountNo es incorrecta!
 		// Aquí se está asignando los datos de la cuenta bancario destino del cobro, mientras
@@ -3719,5 +3726,13 @@ public class PoSOnline extends PoSConnectionState {
 	protected void setCompleteOrderPOSValidations(
 			CompleteOrderPOSValidations completeOrderPOSValidations) {
 		this.completeOrderPOSValidations = completeOrderPOSValidations;
+	}
+
+	private MDocType getPaymentDocType() {
+		return paymentDocType;
+	}
+
+	private void setPaymentDocType(MDocType paymentDocType) {
+		this.paymentDocType = paymentDocType;
 	}
 }
