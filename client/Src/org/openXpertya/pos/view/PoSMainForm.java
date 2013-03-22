@@ -5230,6 +5230,7 @@ public class PoSMainForm extends CPanel implements FormPanel, ASyncProcess, Disp
 			// Actualiza la info adicional del medio de pago porque puede haber cambiado
 			// algún artículo y es necesario recalcular descuentos y cuotas.
 			refreshPaymentMediumInfo();
+			updateConvertedAmount();
 			getCTenderTypeCombo().requestFocus();
 			// Muestra el panel del total dentro del panel superior de pagos
 			getCOrderTopPanel().remove(getCTotalPanel());
@@ -5765,23 +5766,20 @@ public class PoSMainForm extends CPanel implements FormPanel, ASyncProcess, Disp
 		// componente.
 		BigDecimal paymentToPayAmt = getOrder().getToPayAmount(
 				getSelectedPaymentMediumInfo(), amt);
-		System.out.println("A Pagar "+paymentToPayAmt);
+		
 		getCPaymentToPayAmt()
 				.setValue(paymentToPayAmt.compareTo(BigDecimal.ZERO) > 0 
 							? paymentToPayAmt
 							: null);
+		
 		BigDecimal paymentRealAmt = getOrder().getPaymentRealAmount(paymentToPayAmt,
 				getSelectedPaymentMediumInfo());
 		getCAmountText().setValue(paymentRealAmt);
-		System.out.println("Real "+paymentRealAmt);
 		
 		// Si es un pago con tarjeta de crédito se calcula y muestra el importe
 		// de cada cuota.
 		if (paymentMedium.isCreditCard()) {
 			EntidadFinancieraPlan plan = getSelectedCreditCardPlan();
-//			if(paymentToPayAmt != null){
-//				getCAmountText().setValue(paymentToPayAmt);
-//			}
 			
 			// El importe de la cuota se calcula en base al importe del pago
 			// ingresado por el usuario
