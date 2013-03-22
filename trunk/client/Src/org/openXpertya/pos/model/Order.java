@@ -12,6 +12,7 @@ import org.openXpertya.model.DiscountCalculator.GeneralDiscountKind;
 import org.openXpertya.model.DiscountCalculator.IDocument;
 import org.openXpertya.model.DiscountCalculator.IDocumentLine.DiscountApplication;
 import org.openXpertya.model.MBPartner;
+import org.openXpertya.model.MPOSPaymentMedium;
 import org.openXpertya.util.Env;
 
 public class Order  {
@@ -762,7 +763,13 @@ public class Order  {
 		BigDecimal discountAmt = BigDecimal.ZERO;
 		BigDecimal orderOpenAmt = getOpenAmount();
 
-		BigDecimal openAmt = amt == null || amt.compareTo(orderOpenAmt) > 0 ? orderOpenAmt
+		// Para cheques y efectivo se debe dejar que pase el monto pendiente
+		// FIXME se debería pasar la comparación del tipo de pago al modelo
+		BigDecimal openAmt = amt == null
+				|| (amt.compareTo(orderOpenAmt) > 0
+						&& !MPOSPaymentMedium.TENDERTYPE_Cash
+								.equals(paymentMediumInfo.getTenderType()) && !MPOSPaymentMedium.TENDERTYPE_Check
+							.equals(paymentMediumInfo.getTenderType())) ? orderOpenAmt
 				: amt;
 		
 		if (paymentMediumInfo != null) {
