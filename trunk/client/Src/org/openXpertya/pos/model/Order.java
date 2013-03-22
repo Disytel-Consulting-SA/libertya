@@ -761,10 +761,9 @@ public class Order  {
 		// dentro del pedido 
 		BigDecimal discountAmt = BigDecimal.ZERO;
 		BigDecimal orderOpenAmt = getOpenAmount();
-		System.out.println("Order open "+orderOpenAmt);
+
 		BigDecimal openAmt = amt == null || amt.compareTo(orderOpenAmt) > 0 ? orderOpenAmt
 				: amt;
-		System.out.println("Con que calcula el to pay "+openAmt);
 		
 		if (paymentMediumInfo != null) {
 			// Calcula el importe del descuento general a partir de importe
