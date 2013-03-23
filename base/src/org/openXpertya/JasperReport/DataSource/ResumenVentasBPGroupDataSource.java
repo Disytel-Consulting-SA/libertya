@@ -7,8 +7,9 @@ import java.util.Properties;
 public class ResumenVentasBPGroupDataSource extends ResumenVentasDataSource {
 
 	public ResumenVentasBPGroupDataSource(String trxName, Properties ctx,
-			Integer orgID, Timestamp dateFrom, Timestamp dateTo) {
-		super(trxName, ctx, orgID, dateFrom, dateTo);
+			Integer orgID, Timestamp dateFrom, Timestamp dateTo, Integer posID,
+			Integer userID) {
+		super(trxName, ctx, orgID, dateFrom, dateTo, posID, userID);
 		// TODO Auto-generated constructor stub
 	}
 

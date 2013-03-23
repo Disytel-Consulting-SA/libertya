@@ -11,6 +11,7 @@ import net.sf.jasperreports.engine.JRField;
 import org.openXpertya.model.MDocType;
 import org.openXpertya.model.MPOSPaymentMedium;
 import org.openXpertya.util.Env;
+import org.openXpertya.util.Util;
 
 public abstract class ResumenVentasDataSource extends QueryDataSource {
 
@@ -26,20 +27,30 @@ public abstract class ResumenVentasDataSource extends QueryDataSource {
 	/** Fecha de fin */
 	private Timestamp dateTo;
 	
+	/** Usuario */
+	private Integer userID;
+	
+	/** TPV */
+	private Integer posID;
+	
 	public ResumenVentasDataSource(String trxName, Properties ctx,
-			Integer orgID, Timestamp dateFrom, Timestamp dateTo) {
+			Integer orgID, Timestamp dateFrom, Timestamp dateTo, Integer posID, Integer userID) {
 		super(trxName);
 		setCtx(ctx);
 		setOrgID(orgID);
 		setDateFrom(dateFrom);
 		setDateTo(dateTo);
+		setUserID(userID);
+		setPosID(posID);
 	}
 
 	@Override
 	protected String getQuery() {
 		String groupFields = getGroupFields();
 		StringBuffer sql = new StringBuffer(
-				"SELECT "+groupFields+", sum(amount) as amount FROM (SELECT * FROM v_dailysales as s INNER JOIN c_invoice as i on i.c_invoice_id = s.c_invoice_id INNER JOIN c_doctype as dt on dt.c_doctype_id = i.c_doctypetarget_id WHERE s.ad_client_id = ? AND i.docstatus IN ('CL','CO') AND s.ad_org_id = ? AND s.issotrx = 'Y' AND dt.doctypekey not in ('RTR', 'RTI', 'RCR', 'RCI') AND "
+				"SELECT "+groupFields+", sum(amount) as amount FROM (SELECT * FROM v_dailysales as s INNER JOIN c_invoice as i on i.c_invoice_id = s.c_invoice_id INNER JOIN c_doctype as dt on dt.c_doctype_id = i.c_doctypetarget_id WHERE s.ad_client_id = ? AND i.docstatus IN ('CL','CO') AND s.ad_org_id = ? AND s.issotrx = 'Y' AND dt.doctypekey not in ('RTR', 'RTI', 'RCR', 'RCI') "
+						+ getPOSWhereClause()
+						+ getUserWhereClause()
 						+ getDateWhereClause());
 		sql.append(getDSWhereClause() == null?"":getDSWhereClause());
 		sql.append(" ) as ventas ");
@@ -57,6 +68,9 @@ public abstract class ResumenVentasDataSource extends QueryDataSource {
 		if(getDateTo() != null){
 			params.add(getDateTo());
 		}
+		else{
+			params.add(getDateFrom());
+		}
 		if(getDSWhereClauseParams() != null){
 			params.addAll(getDSWhereClauseParams());
 		}
@@ -67,13 +81,28 @@ public abstract class ResumenVentasDataSource extends QueryDataSource {
 	 * @return la cláusula where de las fechas
 	 */
 	protected String getDateWhereClause(){
-		StringBuffer dateClause = new StringBuffer(" date_trunc('day', invoicedateacct) >= date_trunc('day', ?::date) ");
+		StringBuffer dateClause = new StringBuffer(" AND date_trunc('day', invoicedateacct) >= date_trunc('day', ?::date) ");
 		if(getDateTo() != null){
+			dateClause.append("  AND date_trunc('day', invoicedateacct) <= date_trunc('day', ?::date) ");
+		}
+		else{
 			dateClause.append("  AND date_trunc('day', invoicedateacct) <= date_trunc('day', ?::date) ");
 		}
 		return dateClause.toString();
 	}
+	
+	protected String getPOSWhereClause(){
+		return Util.isEmpty(getPosID(), true) ? ""
+				: " AND (s.c_pos_id is not null AND s.c_pos_id = "
+						+ getPosID() + ") ";
+	}
 
+	protected String getUserWhereClause(){
+		return Util.isEmpty(getUserID(), true) ? ""
+				: " AND (s.ad_user_id is not null AND s.ad_user_id = "
+						+ getUserID() + ") ";
+	}
+	
 	@Override
 	public Object getFieldValue(JRField field) throws JRException {
 		Object value = getCurrentRecord().get(field.getName().toUpperCase());
@@ -160,6 +189,22 @@ public abstract class ResumenVentasDataSource extends QueryDataSource {
 
 	public Properties getCtx() {
 		return ctx;
+	}
+
+	protected Integer getUserID() {
+		return userID;
+	}
+
+	protected void setUserID(Integer userID) {
+		this.userID = userID;
+	}
+
+	protected Integer getPosID() {
+		return posID;
+	}
+
+	protected void setPosID(Integer posID) {
+		this.posID = posID;
 	}
 
 }
