@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.math.BigDecimal;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import org.openXpertya.print.fiscal.BasicFiscalPrinter;
@@ -513,6 +514,27 @@ public abstract class HasarFiscalPrinter extends BasicFiscalPrinter implements H
 	}
 	
 	@Override
+	public FiscalPacket cmdDeleteHeaderTrailerLine(int lineNo){
+		if(lineNo > 0){
+			FiscalPacket cmd = createFiscalPacket(CMD_SET_HEADER_TRAILER);
+			int i = 1;
+			cmd.setInt(i++, lineNo);
+			cmd.setText(i++, SET_HEADER_TRAILER_DEL, 40, false);
+			return cmd;
+		}
+		return cmdDeleteHeaderTrailerGroup(lineNo);
+	}
+	
+	@Override
+	public FiscalPacket cmdDeleteHeaderTrailerGroup(int delOption){
+		FiscalPacket cmd = createFiscalPacket(CMD_SET_HEADER_TRAILER);
+		int i = 1;
+		cmd.setInt(i++, delOption);
+		cmd.setText(i++, SET_HEADER_TRAILER_DEL, 40, false);
+		return cmd;
+	}
+	
+	@Override
 	public void openDrawer() throws FiscalPrinterIOException{
 		FiscalPacket packet = cmdOpenDrawer();
 		if(packet == null){
@@ -768,11 +790,16 @@ public abstract class HasarFiscalPrinter extends BasicFiscalPrinter implements H
 			
 			//////////////////////////////////////////////////////////////
 			// Se cargan las observaciones de la cabecera de la factura 
-			// como texto fiscal.
-			// Comando: @PrintFiscalText
+			// como texto fiscal. 
+			// Comando: @SetHeaderTrailer
+			// TODO Por ahora mejor no se imprimen observaciones en la cabecera
+			// porque corremos el riesgo de pisar datos agregados fijos como por
+			// ejemplo el nombre y/o cuit de la compañía. En el caso que no se
+			// pise ninguno de ellos, agregar estas observaciones de cabecera. 
+			/*
 			for (String observation : invoice.getHeaderObservations()) {
 				execute(cmdPrintFiscalText(observation,null));
-			}
+			}*/
 			
 			//////////////////////////////////////////////////////////////		
 			// Se cargan los ítems de la factura.
@@ -821,13 +848,9 @@ public abstract class HasarFiscalPrinter extends BasicFiscalPrinter implements H
 				}
 			}
 			
-			//////////////////////////////////////////////////////////////
-			// Se cargan las observaciones del pie de la factura como 
-			// texto fiscal.
-			// Comando: @PrintFiscalText
-			for (String observation : invoice.getFooterObservations()) {
-				execute(cmdPrintFiscalText(observation,null));
-			}			
+			// Agrego los nuevos datos de la cola de impresión, previo a eliminar lo de la cola
+			addFooterObservations(11, 14, invoice.getFooterObservations(),
+					false, -2);
 			
 			//////////////////////////////////////////////////////////////
 			// Se cierra el comprobante fiscal.
@@ -862,6 +885,34 @@ public abstract class HasarFiscalPrinter extends BasicFiscalPrinter implements H
 		fireFiscalCloseEnded();
 	}
 	
+	/**
+	 * Borra las líneas de la cabecera o cola de impresión que corresponden a
+	 * los nros de línea parámetro
+	 * 
+	 * @param lineNoFrom
+	 *            nro línea inicial a eliminar
+	 * @param lineNoTo
+	 *            nro de línea final a eliminar
+	 */
+	protected void delHeaderTrailerLines(int lineNoFrom, int lineNoTo) throws FiscalPrinterIOException{
+		for (int i = lineNoFrom; i <= lineNoTo; i++) {
+			execute(cmdDeleteHeaderTrailerLine(i));
+		}
+	}
+	
+	protected void delHeaderTrailerGroup(int delOption) throws FiscalPrinterIOException{
+		execute(cmdDeleteHeaderTrailerGroup(delOption));
+	} 
+	
+	protected void addFooterObservations(int lineNoFrom, int lineNoTo, List<String> observations, boolean resetGroup, int delGroupOption) throws FiscalPrinterIOException{
+		if(resetGroup){
+			execute(cmdDeleteHeaderTrailerGroup(delGroupOption));
+		}
+		for (int i = 0; i < observations.size() && lineNoFrom <= lineNoTo; i++, lineNoFrom++) {
+			execute(cmdSetHeaderTrailer(lineNoFrom, observations.get(i)));
+		}
+	}
+	
 	public void printDocument(CreditNote creditNote) throws FiscalPrinterStatusError, FiscalPrinterIOException, DocumentException {
 		Customer customer = creditNote.getCustomer();
 		FiscalPacket response;
@@ -893,12 +944,17 @@ public abstract class HasarFiscalPrinter extends BasicFiscalPrinter implements H
 			setDocumentOpened(true);
 			
 			//////////////////////////////////////////////////////////////
-			// Se cargan las observaciones de la cabecera de la nota de  
-			// crédito como texto fiscal.
-			// Comando: @PrintFiscalText
-			for (String observation : creditNote.getHeaderObservations()) {
-				execute(cmdPrintFiscalText(observation,null));
-			}
+			// Se cargan las observaciones de la cabecera de la factura 
+			// como texto fiscal. 
+			// Comando: @SetHeaderTrailer
+			// TODO Por ahora mejor no se imprimen observaciones en la cabecera
+			// porque corremos el riesgo de pisar datos agregados fijos como por
+			// ejemplo el nombre y/o cuit de la compañía. En el caso que no se
+			// pise ninguno de ellos, agregar estas observaciones de cabecera. 
+			/*
+			for (String observation : invoice.getHeaderObservations()) {
+			execute(cmdPrintFiscalText(observation,null));
+			}*/
 
 			//////////////////////////////////////////////////////////////		
 			// Se cargan los ítems de la nota de crédito.
@@ -913,13 +969,9 @@ public abstract class HasarFiscalPrinter extends BasicFiscalPrinter implements H
 			// Se cargan los impuestos adicionales de la factura
 			loadOtherTaxes(creditNote);
 			
-			//////////////////////////////////////////////////////////////
-			// Se cargan las observaciones del pie de la nota de crédito 
-			// como texto fiscal.
-			// Comando: @PrintFiscalText
-			for (String observation : creditNote.getFooterObservations()) {
-				execute(cmdPrintFiscalText(observation,null));
-			}
+			// Agrego los nuevos datos de la cola de impresión, previo a eliminar lo de la cola
+			addFooterObservations(11, 14, creditNote.getFooterObservations(),
+					false, -2);
 			
 			//////////////////////////////////////////////////////////////
 			// Se cierra el comprobante no fiscal homologado.
@@ -971,13 +1023,9 @@ public abstract class HasarFiscalPrinter extends BasicFiscalPrinter implements H
 			setCancelAllowed(true);
 			setDocumentOpened(true);
 
-			//////////////////////////////////////////////////////////////
-			// Se cargan las observaciones de la cabecera de la nota de 
-			// débito como texto fiscal.
-			// Comando: @PrintFiscalText
-			for (String observation : debitNote.getHeaderObservations()) {
-				execute(cmdPrintFiscalText(observation,null));
-			}
+			// Agrego los nuevos datos de la cola de impresión, previo a eliminar lo de la cola
+			addFooterObservations(11, 14, debitNote.getFooterObservations(),
+					false, -2);
 
 			//////////////////////////////////////////////////////////////		
 			// Se cargan los ítems de la nota de débito.

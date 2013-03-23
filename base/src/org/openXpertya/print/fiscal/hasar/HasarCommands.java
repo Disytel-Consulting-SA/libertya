@@ -176,6 +176,11 @@ public interface HasarCommands {
 	/** Seleccionar fuente de doble ancho para imprimir la línea */
 	public int CMD_DOUBLE_WIDTH               = 0xF4;
 	
+	// Otros valores 
+	
+	/** Delete de líneas de cabecera o cola de impresión */
+	public String SET_HEADER_TRAILER_DEL	  = "DEL";
+	
 	///////////////////////////////////////////////////////////////////////
 	// Comandos de inicialización, baja y configuración.
 	///////////////////////////////////////////////////////////////////////
@@ -637,6 +642,32 @@ public interface HasarCommands {
 	 *         impresora, null si la impresora no implementa el comando.
 	 */
 	public FiscalPacket cmdOpenDrawer();
+	
+	/**
+	 * Elimina la línea de cabecera o cola de impresión dependiendo el nro
+	 * 
+	 * @param lineNo
+	 *            nro de línea a eliminar
+	 * @return <code>FiscalPacket</code> que representa el comando para la
+	 *         impresora, null si la impresora no implementa el comando.
+	 */
+	public FiscalPacket cmdDeleteHeaderTrailerLine(int lineNo);
+	
+	/**
+	 * Elimina el contenido de la cabecera, cola o ambas
+	 * 
+	 * @param delOption
+	 *            opción de eliminación.
+	 *            <ul>
+	 *            <li>0: Borra todas las líneas del encabezado y cola de impresión.</li>
+	 *            <li>-1: Borra todas las líneas del encabezado.</li>
+	 *            <li>-2: Borra todas las líneas de la cola de impresión.</li>
+	 *            </ul> 
+	 *          
+	 * @return <code>FiscalPacket</code> que representa el comando para la
+	 *         impresora, null si la impresora no implementa el comando.
+	 */
+	public FiscalPacket cmdDeleteHeaderTrailerGroup(int delOption);
 	
 	///////////////////////////////////////////////////////////////////////
 	// Comandos para tipos de letra
