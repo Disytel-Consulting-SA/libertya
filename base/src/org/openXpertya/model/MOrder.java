@@ -1846,6 +1846,12 @@ public class MOrder extends X_C_Order implements DocAction {
         //de ser necesario.
         //FIN de Mejora I
         
+		// Actualización del precio de lista al priceactual en el caso que el
+		// precio de lista sea 0
+		DB.executeUpdate(
+				"UPDATE c_orderline SET pricelist = priceentered WHERE c_order_id = "
+						+ getID() + " AND pricelist = 0", get_TrxName());
+        
 
         // Convert DocType to Target
 
@@ -1940,7 +1946,7 @@ public class MOrder extends X_C_Order implements DocAction {
         //NOTA: luego de este metodo, no es necesario releer las lineas ya que calculeTaxTotal
         //lo va a hacer explicitamente (aunque posiblemente NO lo requiera).
         //Fin de Mejora II
-
+        
         if( !calculateTaxTotal()) {
             m_processMsg = "@TaxCalculatingError@";
 
