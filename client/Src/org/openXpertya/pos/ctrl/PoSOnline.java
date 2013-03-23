@@ -826,6 +826,7 @@ public class PoSOnline extends PoSConnectionState {
 		  .append("SELECT DISTINCT ")
 		  .append(   "u.M_Product_ID, ")
 		  .append(   "bomPriceStd(u.M_Product_ID, M_PriceList_Version_ID, u.M_AttributeSetInstance_ID), ")
+		  .append(	 "p.value, ")
 		  .append(	 "p.Name, ")
 		  .append(   "bomPriceLimit(u.M_Product_ID, M_PriceList_Version_ID, u.M_AttributeSetInstance_ID), ")
 		  .append(   "u.M_AttributeSetInstance_ID, ")
@@ -908,11 +909,11 @@ public class PoSOnline extends PoSConnectionState {
 				}
 				
 				BigDecimal productPrice = rs.getBigDecimal(2);
-				String productName = rs.getString(3);
-				BigDecimal productLimitPrice = rs.getBigDecimal(4); 
+				String productName = rs.getString(3)+" - "+rs.getString(4);
+				BigDecimal productLimitPrice = rs.getBigDecimal(5); 
 				
-				int M_AttributeSetInstance_ID = rs.getInt(5);
-				String masiDescription = rs.getString(6);
+				int M_AttributeSetInstance_ID = rs.getInt(6);
+				String masiDescription = rs.getString(7);
 				boolean masiMandatory = MAttributeSet.MANDATORYTYPE_AlwaysMandatory.equals(rs.getString("MandatoryType"));
 				String checkoutPlace = rs.getString("CheckoutPlace");
 				boolean sold = "Y".equals(rs.getString("IsSold"));
@@ -2339,7 +2340,7 @@ public class PoSOnline extends PoSConnectionState {
               "  AND pp.IsActive = 'Y' ";
 		 */
 		
-		sql = " SELECT p.M_Product_ID, bomPriceStd(p.M_Product_ID, ?, ?), p.name, bomPriceLimit(p.M_Product_ID, ?, ?), p.upc, s.MandatoryType, p.m_product_category_id, p.CheckoutPlace, p.IsSold, p.Value " +    
+		sql = " SELECT p.M_Product_ID, bomPriceStd(p.M_Product_ID, ?, ?), p.value, p.name, bomPriceLimit(p.M_Product_ID, ?, ?), p.upc, s.MandatoryType, p.m_product_category_id, p.CheckoutPlace, p.IsSold, p.Value " +    
 			  "	FROM M_Product p " +
 			  "	LEFT JOIN M_AttributeSet s ON (p.M_AttributeSet_ID = s.M_AttributeSet_ID)     " +
 			  " WHERE p.M_Product_ID = ? " +
@@ -2361,9 +2362,9 @@ public class PoSOnline extends PoSConnectionState {
 			if(rs.next()) {
 				int m_Product_Id = rs.getInt(1);
 				BigDecimal productPrice = rs.getBigDecimal(2);
-				String productName = rs.getString(3);
-				BigDecimal productLimitPrice = rs.getBigDecimal(4);
-				String code = rs.getString(5);
+				String productName = rs.getString(3)+" - "+rs.getString(4);
+				BigDecimal productLimitPrice = rs.getBigDecimal(5);
+				String code = rs.getString(6);
 				if (code == null || code.trim().isEmpty() || code.trim().equals("0")) {
 					code = rs.getString("Value");
 				}
