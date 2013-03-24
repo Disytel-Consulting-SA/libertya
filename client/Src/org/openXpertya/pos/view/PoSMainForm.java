@@ -5772,9 +5772,11 @@ public class PoSMainForm extends CPanel implements FormPanel, ASyncProcess, Disp
 							? paymentToPayAmt
 							: null);
 		
-		BigDecimal paymentRealAmt = getOrder().getPaymentRealAmount(paymentToPayAmt,
-				getSelectedPaymentMediumInfo());
-		getCAmountText().setValue(paymentRealAmt);
+//		BigDecimal paymentRealAmt = getOrder().getPaymentRealAmount(paymentToPayAmt,
+//				getSelectedPaymentMediumInfo());
+//		getCAmountText().setValue(paymentRealAmt);
+		amt = amt == null?getOrder().getOpenAmount():amt;
+		getCAmountText().setValue(amt);
 		
 		// Si es un pago con tarjeta de crédito se calcula y muestra el importe
 		// de cada cuota.
