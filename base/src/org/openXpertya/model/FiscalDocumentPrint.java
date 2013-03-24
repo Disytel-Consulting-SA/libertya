@@ -769,6 +769,9 @@ public class FiscalDocumentPrint {
 				invoice.addFooterObservation(Msg.getMsg(mInvoice.getCtx(),
 						"InvoiceWithDeliverDocument"));
 			}
+			else{
+				invoice.addFooterObservation(" ");
+			}	
 		}
 		
 		// TODO: Se asigna el número de remito en caso de existir.
