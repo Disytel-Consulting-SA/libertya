@@ -5256,6 +5256,10 @@ public class MInvoice extends X_C_Invoice implements DocAction {
         return DB.executeUpdate( sql,trxName);
 	}
 	
+	public BigDecimal calculateNetAmount(String trxName){
+		return DB.getSQLValueBD(trxName, "SELECT COALESCE(SUM(TaxBaseAmt),0) FROM C_Tax t INNER JOIN C_TaxCategory tc ON (tc.C_TaxCategory_ID = t.C_TaxCategory_ID) INNER JOIN C_InvoiceTax it ON (it.C_Tax_ID = t.C_Tax_ID) WHERE (tc.IsManual = 'N') AND (it.C_Invoice_ID=?)", getC_Invoice_ID());	
+	}
+	
 	/**
      * Wrapper de {@link MInvoice} para cálculo de descuentos.
      */
