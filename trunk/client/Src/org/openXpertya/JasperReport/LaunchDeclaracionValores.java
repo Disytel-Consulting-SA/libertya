@@ -77,8 +77,11 @@ public class LaunchDeclaracionValores extends JasperReportLaunch {
 		addReportParameter("SHOW_CURRENT_ACCOUNT_TRUE_DESCRIPTION", Msg.getMsg(getCtx(), "ShowCurrentAccount"));
 		addReportParameter("SHOW_CURRENT_ACCOUNT_FALSE_DESCRIPTION", Msg.getMsg(getCtx(), "DoNotShowCurrentAccount"));
 		addReportParameter("SHOW_DETAILS", isShowDetail());
-		addReportParameter("SHOW_DETAILS_TRUE_DESCRIPTION", Msg.getMsg(getCtx(), "ShowDetails"));
-		addReportParameter("SHOW_DETAILS_FALSE_DESCRIPTION", Msg.getMsg(getCtx(), "DoNotShowDetails"));
+		addReportParameter("SHOW_DETAILS_TRUE_DESCRIPTION", Msg.getMsg(getCtx(), "ShowDetailsReceipts"));
+		addReportParameter("SHOW_DETAILS_FALSE_DESCRIPTION", Msg.getMsg(getCtx(), "DoNotShowDetailsReceipts"));
+		addReportParameter("SHOW_DETAILS_SALES", isShowDetailSales());
+		addReportParameter("SHOW_DETAILS_SALES_TRUE_DESCRIPTION", Msg.getMsg(getCtx(), "ShowDetailsSales"));
+		addReportParameter("SHOW_DETAILS_SALES_FALSE_DESCRIPTION", Msg.getMsg(getCtx(), "DoNotShowDetailsSales"));
 		// Agrego los subreportes
 		addSubreports();
 	}
@@ -162,6 +165,16 @@ public class LaunchDeclaracionValores extends JasperReportLaunch {
 		else{
 			showDetail = getParameterValue("ShowDetail") != null ? getParameterValue(
 					"ShowDetail").equals("Y")
+					: showDetail;		
+		}
+		return showDetail;
+	}
+	
+	protected Boolean isShowDetailSales(){
+		Boolean showDetail = false;
+		if(getPosJournal() == null){
+			showDetail = getParameterValue("ShowDetailSales") != null ? getParameterValue(
+					"ShowDetailSales").equals("Y")
 					: showDetail;		
 		}
 		return showDetail;
