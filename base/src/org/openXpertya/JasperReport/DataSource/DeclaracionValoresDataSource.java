@@ -46,7 +46,7 @@ public abstract class DeclaracionValoresDataSource extends QueryDataSource {
 		else{
 			tableAlias = "";
 		}
-		stdWhere.append(tableAlias).append("docstatus <> 'DR' AND ");
+		stdWhere.append(tableAlias).append("docstatus IN ('CO','CL') AND ");
 		if(!getValoresDTO().getJournalIDs().isEmpty()){
 			stdWhere.append(tableAlias).append("c_posjournal_id IN ").append(getValoresDTO().getJournalIDs().toString()
 					.replaceAll("]", ")").replaceAll("\\[", "("));

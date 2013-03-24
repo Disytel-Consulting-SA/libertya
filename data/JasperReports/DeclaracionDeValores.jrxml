@@ -46,6 +46,9 @@
 	<parameter name="SUBREPORT_CURRENTACCOUNT_DATASOURCE" isForPrompting="false" class="net.sf.jasperreports.engine.JRDataSource"/>
 	<parameter name="CASH_BALANCE" isForPrompting="false" class="java.math.BigDecimal"/>
 	<parameter name="DECLARACION_VALORES_TOTAL" isForPrompting="false" class="java.math.BigDecimal"/>
+	<parameter name="SHOW_DETAILS_SALES" isForPrompting="false" class="java.lang.Boolean"/>
+	<parameter name="SHOW_DETAILS_SALES_TRUE_DESCRIPTION" isForPrompting="false" class="java.lang.String"/>
+	<parameter name="SHOW_DETAILS_SALES_FALSE_DESCRIPTION" isForPrompting="false" class="java.lang.String"/>
 
 	<variable name="total_efectivo" class="java.math.BigDecimal" resetType="Report" calculation="Nothing">
 	</variable>
@@ -74,7 +77,7 @@
 			</band>
 		</background>
 		<title>
-			<band height="87"  isSplitAllowed="true" >
+			<band height="98"  isSplitAllowed="true" >
 				<textField isStretchWithOverflow="false" isBlankWhenNull="false" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
 						x="0"
@@ -202,6 +205,19 @@
 						<font/>
 					</textElement>
 				<textFieldExpression   class="java.lang.String"><![CDATA[$P{SHOW_DETAILS}.booleanValue()?$P{SHOW_DETAILS_TRUE_DESCRIPTION}:$P{SHOW_DETAILS_FALSE_DESCRIPTION}]]></textFieldExpression>
+				</textField>
+				<textField isStretchWithOverflow="false" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
+					<reportElement
+						x="0"
+						y="84"
+						width="530"
+						height="12"
+						key="textField-14"/>
+					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
+					<textElement>
+						<font/>
+					</textElement>
+				<textFieldExpression   class="java.lang.String"><![CDATA[$P{SHOW_DETAILS_SALES}.booleanValue()?$P{SHOW_DETAILS_SALES_TRUE_DESCRIPTION}:$P{SHOW_DETAILS_SALES_FALSE_DESCRIPTION}]]></textFieldExpression>
 				</textField>
 			</band>
 		</title>
@@ -599,7 +615,7 @@
 						<subreportParameterExpression><![CDATA["VENTA"]]></subreportParameterExpression>
 					</subreportParameter>
 					<subreportParameter  name="SHOW_DETAIL">
-						<subreportParameterExpression><![CDATA[$P{SHOW_DETAILS}]]></subreportParameterExpression>
+						<subreportParameterExpression><![CDATA[$P{SHOW_DETAILS_SALES}]]></subreportParameterExpression>
 					</subreportParameter>
 					<dataSourceExpression><![CDATA[$P{SUBREPORT_SALE_DATASOURCE}]]></dataSourceExpression>
 					<returnValue subreportVariable="total" toVariable="total_venta"/>
