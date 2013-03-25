@@ -1657,23 +1657,11 @@ public class FiscalDocumentPrint {
 		Integer lastDocumentNo = new Integer(getFiscalPrinter().getLastDocumentNo());
 		MDocType docType = MDocType.get(ctx, mInvoice.getC_DocTypeTarget_ID());
 		// Se obtiene la secuencia del tipo de documento...
-		if(docType.getDocNoSequence_ID() != 0) {
-			MSequence seq = new MSequence(ctx, docType.getDocNoSequence_ID(), getTrxName());
-			String currentNext = String.valueOf(seq.getCurrentNext());
-			
-			NumberFormat format = NumberFormat.getNumberInstance();
-			format.setMinimumIntegerDigits(8);
-			format.setMaximumIntegerDigits(8);
-			format.setGroupingUsed(false);
-			// Se obtiene el número siguiente de documento según el ultimo comprobante
-			// emitido por la impresora fiscal.
-			String newCurrentNext = currentNext.substring(0,1) + format.format(lastDocumentNo + 1);
-			// Se actualiza la secuencia solo si el número de comprobante siguiente es distinto al
-			// que ya tenía la secuencia.
-			if(!currentNext.equals(newCurrentNext)) {
-				seq.setCurrentNext(new BigDecimal(newCurrentNext));
-				seq.save();
-			}
+		if(docType.getDocNoSequence_ID() != 0 && docType.isFiscalDocument()) {
+			// Actualiza la secuencia con el nuevo número de documento
+			MSequence.setFiscalDocTypeNextNroComprobante(
+					docType.getDocNoSequence_ID(), lastDocumentNo + 1,
+					getTrxName());
 		}
 	}
 		

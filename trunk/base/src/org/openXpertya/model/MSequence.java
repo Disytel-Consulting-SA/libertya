@@ -27,6 +27,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Types;
+import java.text.NumberFormat;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Properties;
@@ -273,6 +274,48 @@ public class MSequence extends X_AD_Sequence {
         return seq.save();
 
     }		// createTableSequence
+
+	/**
+	 * LOCALE AR. Setear el siguiente número de comprobante de la secuencia
+	 * teniendo en cuenta las particularidades del prefijo y el currentnext,
+	 * para dejar correctamente seteado el current next con el punto de venta
+	 * adecuado.
+	 * 
+	 * @param sequenceID
+	 * @param nextNroComprobante
+	 * @param trxName
+	 * @return
+	 */
+    public static boolean setFiscalDocTypeNextNroComprobante(int sequenceID, int nextNroComprobante, String trxName) {
+		MSequence seq = new MSequence(Env.getCtx(), sequenceID, trxName);
+		String currentNext = String.valueOf(seq.getCurrentNext());
+		String prefix = seq.getPrefix();
+		
+		NumberFormat format = NumberFormat.getNumberInstance();
+		format.setMinimumIntegerDigits(8);
+		format.setMaximumIntegerDigits(8);
+		format.setGroupingUsed(false);
+		// Se debe determinar que parte del punto de venta está contenido en el
+		// CurrentNext (debido al conocido problema de los puntos de venta
+		// terminados en Cero)
+		//
+		// Long del Prefijo = 4 -> PV en CurrentNext = 1
+		// Long del Prefijo = 3 -> PV en CurrentNext = 2
+		// Long del Prefijo = 2 -> PV en CurrentNext = 3
+		// Long del Prefijo = 1 -> PV en CurrentNext = 4
+		//
+		// Se obtiene el número siguiente de documento según el ultimo comprobante
+		// emitido por la impresora fiscal.
+		String newCurrentNext = currentNext.substring(0, (4 - prefix.length()) + 1) + format.format(nextNroComprobante);
+		// Se actualiza la secuencia solo si el número de comprobante siguiente es distinto al
+		// que ya tenía la secuencia.
+		if(!currentNext.equals(newCurrentNext)) {
+			seq.setCurrentNext(new BigDecimal(newCurrentNext));
+			return seq.save();
+		}
+
+    	return true;
+    }
 
     /**
      *      Test
