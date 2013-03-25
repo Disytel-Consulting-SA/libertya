@@ -2,6 +2,7 @@ package org.openXpertya.process;
 
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
+import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -9,6 +10,7 @@ import java.util.List;
 import java.util.Map;
 
 import org.openXpertya.model.MDocType;
+import org.openXpertya.model.MInvoice;
 import org.openXpertya.model.M_Table;
 import org.openXpertya.model.PO;
 import org.openXpertya.model.X_C_AllocationHdr;
@@ -33,6 +35,7 @@ import org.openXpertya.util.Env;
 import org.openXpertya.util.HTMLMsg;
 import org.openXpertya.util.Msg;
 import org.openXpertya.util.Trx;
+import org.openXpertya.util.Util;
 
 
 public class DocumentCompleteProcess extends SvrProcess {
@@ -45,6 +48,9 @@ public class DocumentCompleteProcess extends SvrProcess {
 	
 	/** Tablas a verificar por tipo de documento base */
 	private static Map<String, List<String>> docBaseTables;
+	
+	/** Estados de los documentos en base a la acción a tomar */
+	private static Map<String, List<String>> docStatusByDocAction;
 	
 	static{
 		// Tablas por tipo de documento base
@@ -148,12 +154,90 @@ public class DocumentCompleteProcess extends SvrProcess {
 		
 		// Tablas por tipo de documento
 		docTables = new HashMap<String, List<String>>();
+		
+		// Estados de documento en base a acción a realizar
+		// Se toman las acciones y estados de la factura como base, deberían ser todos iguales
+		docStatusByDocAction = new HashMap<String, List<String>>();
+		docStatusByDocAction.put(
+				MInvoice.DOCACTION_Approve,
+				Arrays.asList(new String[] { MInvoice.DOCSTATUS_Drafted,
+						MInvoice.DOCSTATUS_InProgress }));
+		
+		docStatusByDocAction.put(
+				MInvoice.DOCACTION_Close,
+				Arrays.asList(new String[] { MInvoice.DOCSTATUS_Completed }));
+		
+		docStatusByDocAction.put(
+				MInvoice.DOCACTION_Complete,
+				Arrays.asList(new String[] { MInvoice.DOCSTATUS_Drafted,
+						MInvoice.DOCSTATUS_InProgress, 
+						MInvoice.DOCSTATUS_Approved }));
+		
+		docStatusByDocAction.put(
+				MInvoice.DOCACTION_Invalidate,
+				Arrays.asList(new String[] { MInvoice.DOCSTATUS_InProgress }));
+		
+//		docStatusByDocAction.put(
+//				MInvoice.DOCACTION_None,
+//				Arrays.asList(new String[] { MInvoice.DOCSTATUS_Drafted,
+//						MInvoice.DOCSTATUS_InProgress }));
+		
+		docStatusByDocAction.put(
+				MInvoice.DOCACTION_Post,
+				Arrays.asList(new String[] { MInvoice.DOCSTATUS_Completed,
+						MInvoice.DOCSTATUS_Closed, 
+						MInvoice.DOCSTATUS_Reversed, 
+						MInvoice.DOCSTATUS_Voided }));
+		
+		docStatusByDocAction.put(
+				MInvoice.DOCACTION_Prepare,
+				Arrays.asList(new String[] { MInvoice.DOCSTATUS_Drafted }));
+		
+		docStatusByDocAction.put(
+				MInvoice.DOCACTION_Re_Activate,
+				Arrays.asList(new String[] { MInvoice.DOCSTATUS_Completed }));
+		
+		docStatusByDocAction.put(
+				MInvoice.DOCACTION_Reject,
+				Arrays.asList(new String[] { MInvoice.DOCSTATUS_Drafted,
+						MInvoice.DOCSTATUS_InProgress, 
+						MInvoice.DOCSTATUS_Approved }));
+		
+		docStatusByDocAction.put(
+				MInvoice.DOCACTION_Reverse_Accrual,
+				Arrays.asList(new String[] { MInvoice.DOCSTATUS_Completed }));
+		
+		docStatusByDocAction.put(
+				MInvoice.DOCACTION_Reverse_Correct,
+				Arrays.asList(new String[] { MInvoice.DOCSTATUS_Completed }));
+		
+//		docStatusByDocAction.put(
+//				MInvoice.DOCACTION_Unlock,
+//				Arrays.asList(new String[] { MInvoice.DOCSTATUS_Drafted,
+//						MInvoice.DOCSTATUS_InProgress }));
+		
+		docStatusByDocAction.put(
+				MInvoice.DOCACTION_Void,
+				Arrays.asList(new String[] { MInvoice.DOCSTATUS_Completed }));
+		
+		docStatusByDocAction.put(
+				MInvoice.DOCACTION_WaitComplete,
+				Arrays.asList(new String[] { MInvoice.DOCSTATUS_Drafted, 
+						MInvoice.DOCSTATUS_InProgress, 
+						MInvoice.DOCSTATUS_Approved }));
 	}
 	
 	/** Tipo de documento */
 	private MDocType docType;
 	
-
+	/** Acción sobre los documentos */
+	private String docAction;
+	
+	/** Fecha desde */
+	private Timestamp dateFrom;
+	
+	/** Fecha hasta */
+	private Timestamp dateTo;
 	
 	@Override
 	protected void prepare() {
@@ -163,6 +247,17 @@ public class DocumentCompleteProcess extends SvrProcess {
 			if (name.equals("C_DocType_ID")){
 				setDocType(MDocType.get(getCtx(), para[i].getParameterAsInt()));
 			}
+			else if (name.equals("Date")){
+				setDateFrom((Timestamp)para[i].getParameter());
+				setDateTo((Timestamp)para[i].getParameter_To());
+			}
+			else if (name.equals("DocAction")){
+				setDocAction((String)para[i].getParameter());
+			}
+		}
+		// Si no se agregó una acción, por defecto es Completar
+		if(Util.isEmpty(getDocAction(), true)){
+			setDocAction(MInvoice.ACTION_Complete);
 		}
 	}
 
@@ -175,6 +270,27 @@ public class DocumentCompleteProcess extends SvrProcess {
 			documentTables = docBaseTables.get(getDocType().getDocBaseType());
 		}
 		return documentTables;
+	}
+	
+	/**
+	 * @return el conjunto con los estados del documento dependiendo la acción a
+	 *         realizar. Por ejemplo, si los estados son DR e IP, entonces este
+	 *         método devuelve ('DR','IP')
+	 */
+	protected String getDocStatusByDocActionSetWhereClause(){
+		StringBuffer setWhereClause = new StringBuffer(" (");
+		// Iterar por los estados del tipo de documento y armar el conjunto para
+		// la cláusula where
+		for (String docStatus : docStatusByDocAction.get(getDocAction())) {
+			setWhereClause.append("'").append(docStatus).append("'")
+					.append(",");
+		}
+		setWhereClause = new StringBuffer(
+				setWhereClause.lastIndexOf(",") > 0 ? setWhereClause.substring(
+						0, setWhereClause.lastIndexOf(","))
+						: setWhereClause);
+		setWhereClause.append(") ");
+		return setWhereClause.toString();
 	}
 	
 	/**
@@ -217,7 +333,11 @@ public class DocumentCompleteProcess extends SvrProcess {
 	protected String getDocumentSearchSQL(M_Table table, PO generalPO){
 		StringBuffer sql = new StringBuffer("SELECT * FROM ");
 		sql.append(table.getTableName());
-		sql.append(" WHERE ad_org_id = ? AND (docaction IN ('CO','WC') OR docstatus IN ('DR','IP')) ");
+		sql.append(" WHERE ad_org_id = ? AND isactive = 'Y' AND docstatus IN "
+				+ getDocStatusByDocActionSetWhereClause());
+		// TODO Filtro de documentos por fecha. Hay que crear otra hash con
+		// clave tabla y valor el nombre de la columna de fecha del documento ya
+		// que las columnas de fecha tienen nombres diferentes por tabla 
 		if(table != null){
 			sql.append(getDocTypeCondition(table, generalPO));
 			sql.append(getDocTypeOrder(table, generalPO));
@@ -237,7 +357,7 @@ public class DocumentCompleteProcess extends SvrProcess {
 				"GOOD",
 				"ul",
 				completeds.size() + " "
-						+ Msg.getMsg(getCtx(), "CorrectlyCompletedDocuments"));
+						+ Msg.getMsg(getCtx(), "CorrectlyProcessedDocuments"));
 		for (String completed : completeds) {
 			msg.createAndAddListElement(completed, completed, listCompleted);
 		}
@@ -247,7 +367,7 @@ public class DocumentCompleteProcess extends SvrProcess {
 				"ERROR",
 				"ul",
 				erroneous.size() + " "
-						+ Msg.getMsg(getCtx(), "NotCorrectlyCompletedDocuments"));
+						+ Msg.getMsg(getCtx(), "NotCorrectlyProcessedDocuments"));
 		for (String error : erroneous) {
 			msg.createAndAddListElement(error, error, listErroneus);
 		}
@@ -291,7 +411,7 @@ public class DocumentCompleteProcess extends SvrProcess {
 						.getDisplayByIdentifiers(getCtx(), document,
 								table.getID(), get_TrxName());
 				if (!DocumentEngine.processAndSave((DocAction)document,
-						DocAction.ACTION_Complete, false)) {
+						getDocAction(), false)) {
 					// Rollback
 					erroneous.add(poIdentifier+": "+document.getProcessMsg());
 					Trx.getTrx(get_TrxName()).rollback();
@@ -315,6 +435,30 @@ public class DocumentCompleteProcess extends SvrProcess {
 
 	protected void setDocType(MDocType docType) {
 		this.docType = docType;
+	}
+
+	protected String getDocAction() {
+		return docAction;
+	}
+
+	protected void setDocAction(String docAction) {
+		this.docAction = docAction;
+	}
+
+	protected Timestamp getDateFrom() {
+		return dateFrom;
+	}
+
+	protected void setDateFrom(Timestamp dateFrom) {
+		this.dateFrom = dateFrom;
+	}
+
+	protected Timestamp getDateTo() {
+		return dateTo;
+	}
+
+	protected void setDateTo(Timestamp dateTo) {
+		this.dateTo = dateTo;
 	}
 
 }
