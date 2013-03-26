@@ -172,7 +172,7 @@ public class EstadoDeCuentaProcess extends SvrProcess {
 			"	  SELECT d.signo_issotrx as signo_issotrx, '"+libroDeCaja+"' as tipodoc, d.ad_org_id, d.ad_client_id, d.documentno, d.document_id as doc_id, null as c_order_id, d.c_bpartner_id, bp.name as bpartner, '' as issotrx, d.datetrx as datedoc, null AS netdays, null as duedate, to_days(now()::timestamp without time zone) - to_days(d.datetrx::timestamp without time zone) AS daysdue, null as discountdate, null as discountamt, d.amount AS grandtotal, (abs(d.amount) - abs(cashlineavailable(document_id))) AS paidamt, cashlineavailable(document_id) AS openamt, d.c_currency_id, d.c_conversiontype_id, null as ispayschedulevalid, null as c_invoicepayschedule_id, null as c_paymentterm_id " +
 			"	  FROM v_documents d " +
 			"	  JOIN c_bpartner bp on d.c_bpartner_id = bp.c_bpartner_id " +  
-			"	  WHERE d.DocumentTable = 'C_CashLine'  " +
+			"	  WHERE d.DocumentTable = 'C_CashLine'  AND docstatus IN ('CO','CL') " +
 			"	  AND d.AD_Client_ID = " + getAD_Client_ID() + 
 			(isShowOpenBalance() ?
 			"     AND to_days(now()::timestamp without time zone) - to_days(d.datetrx::timestamp without time zone) BETWEEN " + daysfrom + " AND " + daysto +
