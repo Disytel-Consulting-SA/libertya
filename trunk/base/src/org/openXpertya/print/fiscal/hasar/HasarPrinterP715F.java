@@ -125,6 +125,7 @@ public class HasarPrinterP715F extends HasarFiscalPrinter {
 	
 	public FiscalPacket cmdSetCustomerData(String name, String customerDocNumber, String ivaResponsibility, String docType, String location) {
 		FiscalPacket cmd = super.cmdSetCustomerData(name, customerDocNumber, ivaResponsibility, docType, location);
+		cmd.setText(1, name, 40, true);
 		cmd.setText(5, location, 40, true);
 		return cmd;
 	}
