@@ -86,7 +86,7 @@ public class GenerateLibroIva extends SvrProcess {
          	"       cbp.iibb " +
          	" from (select c_invoice_id, ad_client_id, ad_org_id, c_currency_id, c_conversiontype_id, documentno, c_bpartner_id, dateacct, dateinvoiced, totallines,grandtotal, issotrx, c_doctype_id  " +
          	"       from c_Invoice " +
-         	"       where ad_client_id = ? " + getOrgCheck() + " AND (docstatus = 'CO' or docstatus = 'CL' or docstatus = 'RE' or docstatus = 'VO') AND (isactive = 'Y')" +
+         	"       where ad_client_id = ? " + getOrgCheck() + " AND (docstatus = 'CO' or docstatus = 'CL' or docstatus = 'RE' or docstatus = 'VO' OR docstatus = '??') AND (isactive = 'Y')" +
          	"		AND (dateacct::date between ?::date and ?::date) " );
          
          //Si no es ambos
