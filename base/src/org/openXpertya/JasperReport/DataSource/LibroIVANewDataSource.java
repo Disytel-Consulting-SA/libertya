@@ -112,7 +112,7 @@ public class LibroIVANewDataSource implements JRDataSource {
 
 		+ "		FROM ( SELECT c_invoice.c_invoice_id, c_invoice.ad_client_id, c_invoice.ad_org_id, c_invoice.isactive, c_invoice.created, c_invoice.createdby, c_invoice.updated, c_invoice.updatedby, c_invoice.c_currency_id, c_invoice.c_conversiontype_id, c_invoice.documentno, c_invoice.c_bpartner_id, c_invoice.dateacct, c_invoice.dateinvoiced, c_invoice.totallines, c_invoice.grandtotal, c_invoice.issotrx, c_invoice.c_doctype_id "
 		+ "     	   FROM c_invoice "
-		+ "     	   WHERE (c_invoice.docstatus = 'CO'::bpchar OR c_invoice.docstatus = 'CL'::bpchar OR c_invoice.docstatus = 'RE'::bpchar OR c_invoice.docstatus = 'VO'::bpchar) AND c_invoice.isactive = 'Y'::bpchar " 
+		+ "     	   WHERE (c_invoice.docstatus = 'CO'::bpchar OR c_invoice.docstatus = 'CL'::bpchar OR c_invoice.docstatus = 'RE'::bpchar OR c_invoice.docstatus = 'VO'::bpchar OR c_invoice.docstatus = '??'::bpchar) AND c_invoice.isactive = 'Y'::bpchar " 
 	  	+ " 		     AND (dateacct::date between ? ::date and ? ::date) "+getOrgCheck());//'2012/06/01' and '2012/08/31') "+getOrgCheck())
              
         //Si no es ambos
