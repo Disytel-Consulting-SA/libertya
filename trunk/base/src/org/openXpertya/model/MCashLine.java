@@ -890,6 +890,13 @@ public class MCashLine extends X_C_CashLine implements DocAction {
 		// Acciones
 		try {
 			
+			// Si esta asociada a una factura primero pre-procesa la línea, anulando el allocation.
+			// Si no se hace esto en este momento luego falla el reversal en caso de tratarse de una
+			// línea de caja generada por una NC.
+			if (CASHTYPE_Invoice.equals(getCashType())) {
+				processInvoiceVoid(null);
+			}
+			
 			// Según el tipo de efectivo se crean y/o revierten ciertos documentos
 			// y líneas de caja.
 			MCashLine reversalCashLine = null;
@@ -931,8 +938,9 @@ public class MCashLine extends X_C_CashLine implements DocAction {
 			// - Transferencia a Cuenta Bancaria
 			if (CASHTYPE_BankAccountTransfer.equals(getCashType())) {
 				processBankAccountTransferVoid(reversalCashLine);
-			} else if (CASHTYPE_Invoice.equals(getCashType())) {
-				processInvoiceVoid(reversalCashLine);
+			// Esto ya no se hace mas aquí, se hace antes de crear la línea reversa.
+			//} else if (CASHTYPE_Invoice.equals(getCashType())) {
+				//processInvoiceVoid(reversalCashLine);
 			} else if (CASHTYPE_CashTransfer.equals(getCashType())) {
 				processCashTransferVoid(reversalCashLine);
 			}
