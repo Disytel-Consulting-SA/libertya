@@ -7,7 +7,7 @@ import java.math.*;
 import org.openXpertya.util.*;
 /** Modelo Generado por C_Tax
  *  @author Comunidad de Desarrollo Libertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
- *  @version  - 2012-05-17 17:56:59.326 */
+ *  @version  - 2013-03-28 18:55:47.772 */
 public class X_C_Tax extends org.openXpertya.model.PO
 {
 /** Constructor estándar */
@@ -71,6 +71,21 @@ set_Value ("AD_ComponentObjectUID", AD_ComponentObjectUID);
 public String getAD_ComponentObjectUID() 
 {
 return (String)get_Value("AD_ComponentObjectUID");
+}
+/** Set Arciba Norm Code */
+public void setArcibaNormCode (String ArcibaNormCode)
+{
+if (ArcibaNormCode != null && ArcibaNormCode.length() > 10)
+{
+log.warning("Length > 10 - truncated");
+ArcibaNormCode = ArcibaNormCode.substring(0,10);
+}
+set_Value ("ArcibaNormCode", ArcibaNormCode);
+}
+/** Get Arciba Norm Code */
+public String getArcibaNormCode() 
+{
+return (String)get_Value("ArcibaNormCode");
 }
 /** Set Business Partner Group.
 Business Partner Group */

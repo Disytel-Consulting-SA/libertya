@@ -1150,3 +1150,8 @@ UNION ALL
      ORDER BY p.tendertype::character varying(2), p.documentno);
 
 ALTER TABLE c_posjournalpayments_v OWNER TO libertya;
+
+-- 20130328-1410 Se insertaron las columnas para exportación ARCIBA
+ALTER TABLE C_Tax ADD COLUMN arcibanormcode character varying(10);
+ALTER TABLE C_InvoiceTax ADD COLUMN arcibanormcode character varying(10);
+ALTER TABLE C_InvoiceTax ADD COLUMN rate numeric(24,6);

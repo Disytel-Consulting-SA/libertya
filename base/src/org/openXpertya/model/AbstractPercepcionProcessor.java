@@ -35,4 +35,9 @@ public abstract class AbstractPercepcionProcessor {
 	 */
 	public abstract BigDecimal getPercepcionPercToApply();
 
+	/**
+	 * @return el código de norma Arciba
+	 */
+	public abstract String getArcibaNormCode();
+
 }

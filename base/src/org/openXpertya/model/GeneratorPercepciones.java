@@ -182,6 +182,7 @@ public class GeneratorPercepciones {
 			return percepciones;
 		}
 		BigDecimal percepcionPerc, exencionPerc;
+		String arcibaNormCode;
 		MTax tax;
 		for (MOrgPercepcion orgPercepcion : getOrgPercepciones()) {
 			// Porcentaje de percepción
@@ -193,10 +194,14 @@ public class GeneratorPercepciones {
 					Env.getDate(), 2, getTrxName());
 			// Porcentaje del total a aplicar
 			percepcionPerc = percepcionPerc.multiply(exencionPerc);
+			// Código de Norma Arciba
+			arcibaNormCode = getPercepcionProcessors().get(
+					orgPercepcion.getID()).getArcibaNormCode();
 			// Impuesto
 			if(percepcionPerc.compareTo(BigDecimal.ZERO) > 0){
 				tax = new MTax(getCtx(), orgPercepcion.getC_Tax_ID(), getTrxName());
 				tax.setRate(percepcionPerc);
+				tax.setArcibaNormCode(arcibaNormCode);
 				percepciones.add(tax);
 			}
 		}
@@ -309,6 +314,9 @@ public class GeneratorPercepciones {
 				invoiceTax.setC_Tax_ID(percepcion.getID());
 				invoiceTax.setTaxAmt(invoiceTax.getTaxAmt().add(percepcionAmt));
 				invoiceTax.setTaxBaseAmt(invoiceNetTotalAmt);
+				invoiceTax.setRate(percepcion.getRate());
+				invoiceTax.setArcibaNormCode(percepcion.getArcibaNormCode());
+				
 				if (invoiceTax.getAD_Org_ID() == 0){
 					invoiceTax.setAD_Org_ID(invoice.getAD_Org_ID());
 				}
