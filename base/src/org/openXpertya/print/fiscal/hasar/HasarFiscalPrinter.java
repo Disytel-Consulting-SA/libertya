@@ -1023,10 +1023,6 @@ public abstract class HasarFiscalPrinter extends BasicFiscalPrinter implements H
 			setCancelAllowed(true);
 			setDocumentOpened(true);
 
-			// Agrego los nuevos datos de la cola de impresión, previo a eliminar lo de la cola
-			addFooterObservations(11, 14, debitNote.getFooterObservations(),
-					false, -2);
-
 			//////////////////////////////////////////////////////////////		
 			// Se cargan los ítems de la nota de débito.
 			// Comando: @PrintLineItem
@@ -1040,9 +1036,13 @@ public abstract class HasarFiscalPrinter extends BasicFiscalPrinter implements H
 			// Se cargan las observaciones del pie de la nota de débito 
 			// como texto fiscal.
 			// Comando: @PrintFiscalText
-			for (String observation : debitNote.getFooterObservations()) {
-				execute(cmdPrintFiscalText(observation,null));
-			}
+//			for (String observation : debitNote.getFooterObservations()) {
+//				execute(cmdPrintFiscalText(observation,null));
+//			}
+			
+			// Agrego los nuevos datos de la cola de impresión, previo a eliminar lo de la cola
+			addFooterObservations(11, 14, debitNote.getFooterObservations(),
+					false, -2);
 			
 			//////////////////////////////////////////////////////////////
 			// Se cierra el comprobante fiscal.
