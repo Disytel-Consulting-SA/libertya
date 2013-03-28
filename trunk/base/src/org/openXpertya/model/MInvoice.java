@@ -22,6 +22,7 @@ import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Calendar;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -2068,6 +2069,20 @@ public class MInvoice extends X_C_Invoice implements DocAction {
 					return false;
 				}
 			}
+		}
+		
+		// Si no tiene hora ni minutos ni segundos, significa que es un date sin
+		// hora y hay que setearle la hora de ahora
+		Calendar dateInvoicedCalendar = Calendar.getInstance();
+		dateInvoicedCalendar.setTimeInMillis(getDateInvoiced().getTime());
+		if (dateInvoicedCalendar.get(Calendar.HOUR) == 0
+				&& dateInvoicedCalendar.get(Calendar.MINUTE) == 0
+				&& dateInvoicedCalendar.get(Calendar.SECOND) == 0) {
+			Calendar nowCalendar = Calendar.getInstance();
+			dateInvoicedCalendar.set(Calendar.HOUR_OF_DAY, nowCalendar.get(Calendar.HOUR_OF_DAY));
+			dateInvoicedCalendar.set(Calendar.MINUTE, nowCalendar.get(Calendar.MINUTE));
+			dateInvoicedCalendar.set(Calendar.SECOND, nowCalendar.get(Calendar.SECOND));
+			setDateInvoiced(new Timestamp(dateInvoicedCalendar.getTimeInMillis()));
 		}
 
 		return true;
