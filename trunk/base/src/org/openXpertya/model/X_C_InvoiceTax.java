@@ -7,7 +7,7 @@ import java.math.*;
 import org.openXpertya.util.*;
 /** Modelo Generado por C_InvoiceTax
  *  @author Comunidad de Desarrollo Libertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
- *  @version  - 2012-12-09 21:11:50.434 */
+ *  @version  - 2013-03-28 18:55:23.097 */
 public class X_C_InvoiceTax extends org.openXpertya.model.PO
 {
 /** Constructor estándar */
@@ -50,6 +50,21 @@ public String toString()
 {
 StringBuffer sb = new StringBuffer ("X_C_InvoiceTax[").append(getID()).append("]");
 return sb.toString();
+}
+/** Set Arciba Norm Code */
+public void setArcibaNormCode (String ArcibaNormCode)
+{
+if (ArcibaNormCode != null && ArcibaNormCode.length() > 10)
+{
+log.warning("Length > 10 - truncated");
+ArcibaNormCode = ArcibaNormCode.substring(0,10);
+}
+set_Value ("ArcibaNormCode", ArcibaNormCode);
+}
+/** Get Arciba Norm Code */
+public String getArcibaNormCode() 
+{
+return (String)get_Value("ArcibaNormCode");
 }
 /** Set Invoice.
 Invoice Identifier */
@@ -130,6 +145,20 @@ if (oo != null)
  return "Y".equals(oo);
 }
 return false;
+}
+/** Set Rate.
+Rate or Tax or Exchange */
+public void setRate (BigDecimal Rate)
+{
+set_Value ("Rate", Rate);
+}
+/** Get Rate.
+Rate or Tax or Exchange */
+public BigDecimal getRate() 
+{
+BigDecimal bd = (BigDecimal)get_Value("Rate");
+if (bd == null) return Env.ZERO;
+return bd;
 }
 /** Set Tax Amount.
 Tax Amount for a document */

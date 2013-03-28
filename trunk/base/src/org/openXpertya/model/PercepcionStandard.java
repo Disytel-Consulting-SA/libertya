@@ -19,4 +19,10 @@ public class PercepcionStandard extends AbstractPercepcionProcessor {
 		return getPercepcionData().getTax().getRate();
 	}
 
+	@Override
+	public String getArcibaNormCode() {
+		// TODO Auto-generated method stub
+		return "";
+	}
+
 }
