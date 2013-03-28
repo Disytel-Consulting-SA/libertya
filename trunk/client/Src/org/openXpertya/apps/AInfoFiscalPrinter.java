@@ -132,6 +132,7 @@ public class AInfoFiscalPrinter extends CDialog implements ActionListener, Fisca
         setResizable(false);
         setModal(true);
         setDefaultCloseOperation(JDialog.DO_NOTHING_ON_CLOSE);
+        getRootPane().getActionMap().remove("disposeDialog");
         infoDetail.setAutoscrolls(true);    
     }
     
@@ -253,7 +254,7 @@ public class AInfoFiscalPrinter extends CDialog implements ActionListener, Fisca
 
         mEMail.setIcon( Env.getImageIcon( "EMailSupport16.gif" ));
         mEMail.setText( Msg.getMsg( Env.getCtx(),"EMailSupport" ));
-        mEMail.addActionListener( this );
+        //mEMail.addActionListener( this ); // Se quita la opción de mail porque cierra este diálogo y hace que se cuelgue el TPV
         mPrintScreen.setIcon( Env.getImageIcon( "PrintScreen16.gif" ));
         mPrintScreen.setText( Msg.getMsg( Env.getCtx(),"PrintScreen" ));
         mPrintScreen.setAccelerator( KeyStroke.getKeyStroke( KeyEvent.VK_PRINTSCREEN,0 ));
@@ -276,7 +277,7 @@ public class AInfoFiscalPrinter extends CDialog implements ActionListener, Fisca
         mFile.add( mPrintScreen );
         mFile.add( mScreenShot );
         mFile.addSeparator();
-        mFile.add( mEMail );
+        //mFile.add( mEMail ); // Se quita la opción de mail porque cierra este diálogo y hace que se cuelgue el TPV
 
         if( MRole.getDefault().isShowPreference()) {
             mFile.add( mPreference );
