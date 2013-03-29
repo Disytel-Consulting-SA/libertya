@@ -1337,3 +1337,123 @@ CREATE OR REPLACE VIEW c_allocation_detail_v AS
   ORDER BY ah.c_allocationhdr_id, al.c_allocationline_id;
 
 ALTER TABLE c_allocation_detail_v OWNER TO libertya;
+
+--20130328-2335 Modificación a la vista de resumen de ventas diario
+DROP VIEW v_dailysales;
+
+CREATE OR REPLACE VIEW v_dailysales AS 
+        (        (         SELECT 'P' AS trxtype, pjp.ad_client_id, pjp.ad_org_id, 
+                                CASE
+                                    WHEN (dtc.docbasetype = ANY (ARRAY['ARC'::bpchar, 'APC'::bpchar])) AND pjp.c_invoice_credit_id IS NOT NULL THEN pjp.c_invoice_credit_id
+                                    ELSE i.c_invoice_id
+                                END AS c_invoice_id, pjp.allocationdate AS datetrx, pjp.c_payment_id, pjp.c_cashline_id, 
+                                CASE
+                                    WHEN (dtc.docbasetype = ANY (ARRAY['ARC'::bpchar, 'APC'::bpchar])) AND pjp.c_invoice_credit_id IS NOT NULL THEN i.c_invoice_id
+                                    ELSE pjp.c_invoice_credit_id
+                                END AS c_invoice_credit_id, pjp.tendertype, pjp.documentno, pjp.description, pjp.info, pjp.amount, bp.c_bpartner_id, bp.name, bp.c_bp_group_id, bpg.name AS groupname, bp.c_categoria_iva_id, ci.name AS categorianame, 
+                                CASE
+                                    WHEN (dtc.docbasetype = ANY (ARRAY['ARC'::bpchar, 'APC'::bpchar])) AND pjp.c_invoice_credit_id IS NOT NULL THEN dtc.c_doctype_id
+                                    WHEN (dtc.docbasetype <> ALL (ARRAY['ARC'::bpchar, 'APC'::bpchar])) AND pjp.c_invoice_credit_id IS NOT NULL THEN dt.c_doctype_id
+                                    WHEN pjp.c_cashline_id IS NOT NULL THEN ppmc.c_pospaymentmedium_id
+                                    ELSE p.c_pospaymentmedium_id
+                                END AS c_pospaymentmedium_id, 
+                                CASE
+                                    WHEN (dtc.docbasetype = ANY (ARRAY['ARC'::bpchar, 'APC'::bpchar])) AND pjp.c_invoice_credit_id IS NOT NULL THEN dtc.docbasetype::character varying
+                                    WHEN (dtc.docbasetype <> ALL (ARRAY['ARC'::bpchar, 'APC'::bpchar])) AND pjp.c_invoice_credit_id IS NOT NULL THEN dt.docbasetype::character varying
+                                    WHEN pjp.c_cashline_id IS NOT NULL THEN ppmc.name
+                                    ELSE ppm.name
+                                END AS pospaymentmediumname, pjp.m_entidadfinanciera_id, ef.name AS entidadfinancieraname, pjp.m_entidadfinancieraplan_id, efp.name AS planname, pjp.docstatus, i.issotrx, pjp.dateacct, i.dateacct::date AS invoicedateacct
+                           FROM c_posjournalpayments_v pjp
+                      JOIN c_invoice i ON i.c_invoice_id = pjp.c_invoice_id
+                 JOIN c_doctype dtc ON i.c_doctypetarget_id = dtc.c_doctype_id
+            JOIN c_bpartner bp ON bp.c_bpartner_id = i.c_bpartner_id
+       JOIN c_bp_group bpg ON bpg.c_bp_group_id = bp.c_bp_group_id
+   JOIN c_allocationhdr hdr ON hdr.c_allocationhdr_id = pjp.c_allocationhdr_id
+   LEFT JOIN c_categoria_iva ci ON ci.c_categoria_iva_id = bp.c_categoria_iva_id
+   LEFT JOIN c_payment p ON p.c_payment_id = pjp.c_payment_id
+   LEFT JOIN c_pospaymentmedium ppm ON ppm.c_pospaymentmedium_id = p.c_pospaymentmedium_id
+   LEFT JOIN c_cashline c ON c.c_cashline_id = pjp.c_cashline_id
+   LEFT JOIN c_pospaymentmedium ppmc ON ppmc.c_pospaymentmedium_id = c.c_pospaymentmedium_id
+   LEFT JOIN m_entidadfinanciera ef ON ef.m_entidadfinanciera_id = pjp.m_entidadfinanciera_id
+   LEFT JOIN m_entidadfinancieraplan efp ON efp.m_entidadfinancieraplan_id = pjp.m_entidadfinancieraplan_id
+   LEFT JOIN c_invoice cc ON cc.c_invoice_id = pjp.c_invoice_credit_id
+   LEFT JOIN c_doctype dt ON cc.c_doctypetarget_id = dt.c_doctype_id
+  WHERE date_trunc('day'::text, i.dateacct) = date_trunc('day'::text, pjp.dateacct::timestamp with time zone) AND hdr.isactive = 'Y'::bpchar AND ((dtc.docbasetype <> ALL (ARRAY['ARC'::bpchar, 'APC'::bpchar])) OR (dtc.docbasetype = ANY (ARRAY['ARC'::bpchar, 'APC'::bpchar])) AND pjp.c_invoice_credit_id IS NOT NULL)
+                UNION ALL 
+                         SELECT 'CAI' AS trxtype, i.ad_client_id, i.ad_org_id, i.c_invoice_id, date_trunc('day'::text, i.dateinvoiced) AS datetrx, NULL::unknown AS c_payment_id, NULL::unknown AS c_cashline_id, NULL::unknown AS c_invoice_credit_id, 'CC' AS tendertype, i.documentno, i.description, NULL::unknown AS info, (i.grandtotal - COALESCE(cobros.amount, 0::numeric))::numeric(20,2) AS amount, bp.c_bpartner_id, bp.name, bp.c_bp_group_id, bpg.name AS groupname, bp.c_categoria_iva_id, ci.name AS categorianame, NULL::unknown AS c_pospaymentmedium_id, NULL::unknown AS pospaymentmediumname, NULL::unknown AS m_entidadfinanciera_id, NULL::unknown AS entidadfinancieraname, NULL::unknown AS m_entidadfinancieraplan_id, NULL::unknown AS planname, i.docstatus, i.issotrx, i.dateacct::date AS dateacct, i.dateacct::date AS invoicedateacct
+                           FROM c_invoice i
+                      JOIN c_doctype dt ON i.c_doctypetarget_id = dt.c_doctype_id
+                 LEFT JOIN ( SELECT c.c_invoice_id, sum(c.amount) AS amount
+                              FROM ( SELECT 
+                                           CASE
+                                               WHEN (dt.docbasetype = ANY (ARRAY['ARC'::bpchar, 'APC'::bpchar])) AND pjp.c_invoice_credit_id IS NOT NULL THEN pjp.c_invoice_credit_id
+                                               ELSE i.c_invoice_id
+                                           END AS c_invoice_id, pjp.amount
+                                      FROM c_posjournalpayments_v pjp
+                                 JOIN c_invoice i ON i.c_invoice_id = pjp.c_invoice_id
+                            JOIN c_doctype dt ON i.c_doctypetarget_id = dt.c_doctype_id
+                       JOIN c_bpartner bp ON bp.c_bpartner_id = i.c_bpartner_id
+                  JOIN c_bp_group bpg ON bpg.c_bp_group_id = bp.c_bp_group_id
+             JOIN c_allocationhdr hdr ON hdr.c_allocationhdr_id = pjp.c_allocationhdr_id
+        LEFT JOIN c_categoria_iva ci ON ci.c_categoria_iva_id = bp.c_categoria_iva_id
+   LEFT JOIN c_payment p ON p.c_payment_id = pjp.c_payment_id
+   LEFT JOIN c_pospaymentmedium ppm ON ppm.c_pospaymentmedium_id = p.c_pospaymentmedium_id
+   LEFT JOIN c_cashline c ON c.c_cashline_id = pjp.c_cashline_id
+   LEFT JOIN c_pospaymentmedium ppmc ON ppmc.c_pospaymentmedium_id = c.c_pospaymentmedium_id
+   LEFT JOIN m_entidadfinanciera ef ON ef.m_entidadfinanciera_id = pjp.m_entidadfinanciera_id
+   LEFT JOIN m_entidadfinancieraplan efp ON efp.m_entidadfinancieraplan_id = pjp.m_entidadfinancieraplan_id
+   LEFT JOIN c_invoice cc ON cc.c_invoice_id = pjp.c_invoice_credit_id
+  WHERE date_trunc('day'::text, i.dateacct) = date_trunc('day'::text, pjp.dateacct::timestamp with time zone) AND hdr.isactive = 'Y'::bpchar) c
+                             GROUP BY c.c_invoice_id) cobros ON cobros.c_invoice_id = i.c_invoice_id
+            JOIN c_bpartner bp ON bp.c_bpartner_id = i.c_bpartner_id
+       JOIN c_bp_group bpg ON bpg.c_bp_group_id = bp.c_bp_group_id
+   LEFT JOIN c_categoria_iva ci ON ci.c_categoria_iva_id = bp.c_categoria_iva_id
+  WHERE (cobros.amount IS NULL OR i.grandtotal <> cobros.amount) AND (dt.docbasetype <> ALL (ARRAY['ARC'::bpchar, 'APC'::bpchar])))
+        UNION ALL 
+                 SELECT 'I' AS trxtype, i.ad_client_id, i.ad_org_id, i.c_invoice_id, date_trunc('day'::text, i.dateinvoiced) AS datetrx, NULL::unknown AS c_payment_id, NULL::unknown AS c_cashline_id, NULL::unknown AS c_invoice_credit_id, dt.docbasetype AS tendertype, i.documentno, i.description, NULL::unknown AS info, (i.grandtotal * dt.signo_issotrx)::numeric(20,2) AS amount, bp.c_bpartner_id, bp.name, bp.c_bp_group_id, bpg.name AS groupname, bp.c_categoria_iva_id, ci.name AS categorianame, dt.c_doctype_id AS c_pospaymentmedium_id, dt.name AS pospaymentmediumname, NULL::unknown AS m_entidadfinanciera_id, NULL::unknown AS entidadfinancieraname, NULL::unknown AS m_entidadfinancieraplan_id, NULL::unknown AS planname, i.docstatus, i.issotrx, i.dateacct::date AS dateacct, i.dateacct::date AS invoicedateacct
+                   FROM c_invoice i
+              JOIN c_doctype dt ON i.c_doctypetarget_id = dt.c_doctype_id
+         JOIN c_bpartner bp ON bp.c_bpartner_id = i.c_bpartner_id
+    JOIN c_bp_group bpg ON bpg.c_bp_group_id = bp.c_bp_group_id
+   LEFT JOIN c_categoria_iva ci ON ci.c_categoria_iva_id = bp.c_categoria_iva_id
+   WHERE dt.doctypekey NOT IN ('RCI','RCR'))
+UNION ALL 
+         SELECT 'PCA' AS trxtype, pjp.ad_client_id, pjp.ad_org_id, 
+                CASE
+                    WHEN (dtc.docbasetype = ANY (ARRAY['ARC'::bpchar, 'APC'::bpchar])) AND pjp.c_invoice_credit_id IS NOT NULL THEN pjp.c_invoice_credit_id
+                    ELSE i.c_invoice_id
+                END AS c_invoice_id, pjp.allocationdate AS datetrx, pjp.c_payment_id, pjp.c_cashline_id, 
+                CASE
+                    WHEN (dtc.docbasetype = ANY (ARRAY['ARC'::bpchar, 'APC'::bpchar])) AND pjp.c_invoice_credit_id IS NOT NULL THEN i.c_invoice_id
+                    ELSE pjp.c_invoice_credit_id
+                END AS c_invoice_credit_id, pjp.tendertype, pjp.documentno, pjp.description, pjp.info, pjp.amount, bp.c_bpartner_id, bp.name, bp.c_bp_group_id, bpg.name AS groupname, bp.c_categoria_iva_id, ci.name AS categorianame, 
+                CASE
+                    WHEN (dtc.docbasetype = ANY (ARRAY['ARC'::bpchar, 'APC'::bpchar])) AND pjp.c_invoice_credit_id IS NOT NULL THEN dtc.c_doctype_id
+                    WHEN (dtc.docbasetype <> ALL (ARRAY['ARC'::bpchar, 'APC'::bpchar])) AND pjp.c_invoice_credit_id IS NOT NULL THEN dt.c_doctype_id
+                    WHEN pjp.c_cashline_id IS NOT NULL THEN ppmc.c_pospaymentmedium_id
+                    ELSE p.c_pospaymentmedium_id
+                END AS c_pospaymentmedium_id, 
+                CASE
+                    WHEN (dtc.docbasetype = ANY (ARRAY['ARC'::bpchar, 'APC'::bpchar])) AND pjp.c_invoice_credit_id IS NOT NULL THEN dtc.docbasetype::character varying
+                    WHEN (dtc.docbasetype <> ALL (ARRAY['ARC'::bpchar, 'APC'::bpchar])) AND pjp.c_invoice_credit_id IS NOT NULL THEN dt.docbasetype::character varying
+                    WHEN pjp.c_cashline_id IS NOT NULL THEN ppmc.name
+                    ELSE ppm.name
+                END AS pospaymentmediumname, pjp.m_entidadfinanciera_id, ef.name AS entidadfinancieraname, pjp.m_entidadfinancieraplan_id, efp.name AS planname, pjp.docstatus, i.issotrx, pjp.dateacct, i.dateacct::date AS invoicedateacct
+           FROM c_posjournalpayments_v pjp
+      JOIN c_invoice i ON i.c_invoice_id = pjp.c_invoice_id
+   JOIN c_doctype dtc ON i.c_doctypetarget_id = dtc.c_doctype_id
+   JOIN c_bpartner bp ON bp.c_bpartner_id = i.c_bpartner_id
+   JOIN c_bp_group bpg ON bpg.c_bp_group_id = bp.c_bp_group_id
+   JOIN c_allocationhdr hdr ON hdr.c_allocationhdr_id = pjp.c_allocationhdr_id
+   LEFT JOIN c_categoria_iva ci ON ci.c_categoria_iva_id = bp.c_categoria_iva_id
+   LEFT JOIN c_payment p ON p.c_payment_id = pjp.c_payment_id
+   LEFT JOIN c_pospaymentmedium ppm ON ppm.c_pospaymentmedium_id = p.c_pospaymentmedium_id
+   LEFT JOIN c_cashline c ON c.c_cashline_id = pjp.c_cashline_id
+   LEFT JOIN c_pospaymentmedium ppmc ON ppmc.c_pospaymentmedium_id = c.c_pospaymentmedium_id
+   LEFT JOIN m_entidadfinanciera ef ON ef.m_entidadfinanciera_id = pjp.m_entidadfinanciera_id
+   LEFT JOIN m_entidadfinancieraplan efp ON efp.m_entidadfinancieraplan_id = pjp.m_entidadfinancieraplan_id
+   LEFT JOIN c_invoice cc ON cc.c_invoice_id = pjp.c_invoice_credit_id
+   LEFT JOIN c_doctype dt ON cc.c_doctypetarget_id = dt.c_doctype_id
+  WHERE date_trunc('day'::text, i.dateacct) <> date_trunc('day'::text, pjp.dateacct::timestamp with time zone) AND hdr.isactive = 'Y'::bpchar AND ((dtc.docbasetype <> ALL (ARRAY['ARC'::bpchar, 'APC'::bpchar])) OR (dtc.docbasetype = ANY (ARRAY['ARC'::bpchar, 'APC'::bpchar])) AND pjp.c_invoice_credit_id IS NOT NULL);
+
+ALTER TABLE v_dailysales OWNER TO libertya;
