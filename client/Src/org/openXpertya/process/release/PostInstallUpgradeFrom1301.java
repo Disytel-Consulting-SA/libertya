@@ -42,6 +42,22 @@ public class PostInstallUpgradeFrom1301 extends PluginPostInstallProcess {
 	protected final static String PRODUCT_LINES_SALES_JASPER_REPORT_UID = "CORE-AD_JasperReport-1010096";
 	protected final static String PRODUCT_LINES_SALES_JASPER_REPORT_FILENAME = "ProductLinesSales.jasper";
 	
+	/** UID del Informe de Ventas por Horario */
+	protected final static String SALES_BY_HOUR_JASPER_REPORT_UID = "CORE-AD_JasperReport-1010097";
+	protected final static String SALES_BY_HOUR_JASPER_REPORT_FILENAME = "SalesForHour.jasper";
+	
+	/** UID del Informe de Ranking de Ventas */
+	protected final static String SALES_RANKING_JASPER_REPORT_UID = "CORE-AD_JasperReport-1010099";
+	protected final static String SALES_RANKING_JASPER_REPORT_FILENAME = "SalesRanking.jasper";
+	
+	/** UID del Informe de Comprobantes Registrados */
+	protected final static String MANUAL_DISCOUNTS_FOLLOWING_JASPER_REPORT_UID = "CORE-AD_JasperReport-1010098";
+	protected final static String MANUAL_DISCOUNTS_FOLLOWING_JASPER_REPORT_FILENAME = "SeguimientoDescuentos.jasper";
+	
+	/** UID del Informe de Comprobantes Registrados */
+	protected final static String REGISTERED_DOCUMENTS_JASPER_REPORT_UID = "CORE-AD_JasperReport-1010100";
+	protected final static String REGISTERED_DOCUMENTS_JASPER_REPORT_FILENAME = "RegisteredDocuments.jasper";
+	
 	protected String doIt() throws Exception {
 		super.doIt();
 		
@@ -142,6 +158,50 @@ public class PostInstallUpgradeFrom1301 extends PluginPostInstallProcess {
 							.readBinaryFromJar(
 									jarFileURL,
 									getBinaryFileURL(PRODUCT_LINES_SALES_JASPER_REPORT_FILENAME)));
+		
+		// Informe de Ventas por Horario
+		MJasperReport
+			.updateBinaryData(
+					get_TrxName(),
+					getCtx(),
+					SALES_BY_HOUR_JASPER_REPORT_UID,
+					JarHelper
+							.readBinaryFromJar(
+									jarFileURL,
+									getBinaryFileURL(SALES_BY_HOUR_JASPER_REPORT_FILENAME)));
+		
+		// Informe de Ranking de Ventas
+		MJasperReport
+			.updateBinaryData(
+					get_TrxName(),
+					getCtx(),
+					SALES_RANKING_JASPER_REPORT_UID,
+					JarHelper
+							.readBinaryFromJar(
+									jarFileURL,
+									getBinaryFileURL(SALES_RANKING_JASPER_REPORT_FILENAME)));
+		
+		// Informe de Seguimiento de Descuentos
+		MJasperReport
+			.updateBinaryData(
+					get_TrxName(),
+					getCtx(),
+					MANUAL_DISCOUNTS_FOLLOWING_JASPER_REPORT_UID,
+					JarHelper
+							.readBinaryFromJar(
+									jarFileURL,
+									getBinaryFileURL(MANUAL_DISCOUNTS_FOLLOWING_JASPER_REPORT_FILENAME)));
+
+		// Informe de Comprobantes Registrados
+		MJasperReport
+			.updateBinaryData(
+					get_TrxName(),
+					getCtx(),
+					REGISTERED_DOCUMENTS_JASPER_REPORT_UID,
+					JarHelper
+							.readBinaryFromJar(
+									jarFileURL,
+									getBinaryFileURL(REGISTERED_DOCUMENTS_JASPER_REPORT_FILENAME)));
 		
 		return " ";
 	}

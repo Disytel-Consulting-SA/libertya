@@ -1155,3 +1155,185 @@ ALTER TABLE c_posjournalpayments_v OWNER TO libertya;
 ALTER TABLE C_Tax ADD COLUMN arcibanormcode character varying(10);
 ALTER TABLE C_InvoiceTax ADD COLUMN arcibanormcode character varying(10);
 ALTER TABLE C_InvoiceTax ADD COLUMN rate numeric(24,6);
+
+-- 20130328-2021 Nueva estructura para guardar horas y hora de inicio y fin para el reporte de Ventas por Horario
+CREATE TABLE c_salesbyhour_hours
+(
+  c_salesbyhour_hours_id integer NOT NULL,
+  ad_client_id integer NOT NULL,
+  ad_org_id integer NOT NULL,
+  isactive character(1) NOT NULL DEFAULT 'Y'::bpchar,
+  created timestamp without time zone NOT NULL DEFAULT ('now'::text)::timestamp(6) with time zone,
+  createdby integer NOT NULL,
+  updated timestamp without time zone NOT NULL DEFAULT ('now'::text)::timestamp(6) with time zone,
+  updatedby integer NOT NULL,
+  hour integer NOT NULL,
+  date timestamp NOT NULL,
+  date_to timestamp NOT NULL,
+  CONSTRAINT c_salesbyhour_hours_key PRIMARY KEY (c_salesbyhour_hours_id)
+)
+WITH (
+  OIDS=TRUE
+);
+ALTER TABLE c_salesbyhour_hours OWNER TO libertya;
+
+CREATE SEQUENCE seq_c_salesbyhour_hours
+  INCREMENT 1
+  MINVALUE 1
+  MAXVALUE 9223372036854775807
+  START 1000000
+  CACHE 1;
+ALTER TABLE seq_c_salesbyhour_hours OWNER TO libertya;
+
+INSERT INTO c_salesbyhour_hours(
+            c_salesbyhour_hours_id, ad_client_id, ad_org_id, isactive, created, 
+            createdby, updated, updatedby, "hour", "date", date_to)
+    VALUES (nextval('seq_c_salesbyhour_hours'), 1010016, 0, 'Y', now(), 
+            104, now(), 104, 7, '2013-03-01 07:00:00'::timestamp, '2013-03-01 07:59:00'::timestamp);
+            
+INSERT INTO c_salesbyhour_hours(
+            c_salesbyhour_hours_id, ad_client_id, ad_org_id, isactive, created, 
+            createdby, updated, updatedby, "hour", "date", date_to)
+    VALUES (nextval('seq_c_salesbyhour_hours'), 1010016, 0, 'Y', now(), 
+            104, now(), 104, 8, '2013-03-01 08:00:00'::timestamp, '2013-03-01 08:59:00'::timestamp);
+
+INSERT INTO c_salesbyhour_hours(
+            c_salesbyhour_hours_id, ad_client_id, ad_org_id, isactive, created, 
+            createdby, updated, updatedby, "hour", "date", date_to)
+    VALUES (nextval('seq_c_salesbyhour_hours'), 1010016, 0, 'Y', now(), 
+            104, now(), 104, 9, '2013-03-01 09:00:00'::timestamp, '2013-03-01 09:59:00'::timestamp);
+
+INSERT INTO c_salesbyhour_hours(
+            c_salesbyhour_hours_id, ad_client_id, ad_org_id, isactive, created, 
+            createdby, updated, updatedby, "hour", "date", date_to)
+    VALUES (nextval('seq_c_salesbyhour_hours'), 1010016, 0, 'Y', now(), 
+            104, now(), 104, 10, '2013-03-01 10:00:00'::timestamp, '2013-03-01 10:59:00'::timestamp);
+
+INSERT INTO c_salesbyhour_hours(
+            c_salesbyhour_hours_id, ad_client_id, ad_org_id, isactive, created, 
+            createdby, updated, updatedby, "hour", "date", date_to)
+    VALUES (nextval('seq_c_salesbyhour_hours'), 1010016, 0, 'Y', now(), 
+            104, now(), 104, 11, '2013-03-01 11:00:00'::timestamp, '2013-03-01 11:59:00'::timestamp);
+
+INSERT INTO c_salesbyhour_hours(
+            c_salesbyhour_hours_id, ad_client_id, ad_org_id, isactive, created, 
+            createdby, updated, updatedby, "hour", "date", date_to)
+    VALUES (nextval('seq_c_salesbyhour_hours'), 1010016, 0, 'Y', now(), 
+            104, now(), 104, 12, '2013-03-01 12:00:00'::timestamp, '2013-03-01 12:59:00'::timestamp);
+
+INSERT INTO c_salesbyhour_hours(
+            c_salesbyhour_hours_id, ad_client_id, ad_org_id, isactive, created, 
+            createdby, updated, updatedby, "hour", "date", date_to)
+    VALUES (nextval('seq_c_salesbyhour_hours'), 1010016, 0, 'Y', now(), 
+            104, now(), 104, 13, '2013-03-01 13:00:00'::timestamp, '2013-03-01 13:59:00'::timestamp);
+
+INSERT INTO c_salesbyhour_hours(
+            c_salesbyhour_hours_id, ad_client_id, ad_org_id, isactive, created, 
+            createdby, updated, updatedby, "hour", "date", date_to)
+    VALUES (nextval('seq_c_salesbyhour_hours'), 1010016, 0, 'Y', now(), 
+            104, now(), 104, 14, '2013-03-01 14:00:00'::timestamp, '2013-03-01 14:59:00'::timestamp);
+
+INSERT INTO c_salesbyhour_hours(
+            c_salesbyhour_hours_id, ad_client_id, ad_org_id, isactive, created, 
+            createdby, updated, updatedby, "hour", "date", date_to)
+    VALUES (nextval('seq_c_salesbyhour_hours'), 1010016, 0, 'Y', now(), 
+            104, now(), 104, 15, '2013-03-01 15:00:00'::timestamp, '2013-03-01 15:59:00'::timestamp);
+
+INSERT INTO c_salesbyhour_hours(
+            c_salesbyhour_hours_id, ad_client_id, ad_org_id, isactive, created, 
+            createdby, updated, updatedby, "hour", "date", date_to)
+    VALUES (nextval('seq_c_salesbyhour_hours'), 1010016, 0, 'Y', now(), 
+            104, now(), 104, 16, '2013-03-01 16:00:00'::timestamp, '2013-03-01 16:59:00'::timestamp);
+
+INSERT INTO c_salesbyhour_hours(
+            c_salesbyhour_hours_id, ad_client_id, ad_org_id, isactive, created, 
+            createdby, updated, updatedby, "hour", "date", date_to)
+    VALUES (nextval('seq_c_salesbyhour_hours'), 1010016, 0, 'Y', now(), 
+            104, now(), 104, 17, '2013-03-01 17:00:00'::timestamp, '2013-03-01 17:59:00'::timestamp);
+
+INSERT INTO c_salesbyhour_hours(
+            c_salesbyhour_hours_id, ad_client_id, ad_org_id, isactive, created, 
+            createdby, updated, updatedby, "hour", "date", date_to)
+    VALUES (nextval('seq_c_salesbyhour_hours'), 1010016, 0, 'Y', now(), 
+            104, now(), 104, 18, '2013-03-01 18:00:00'::timestamp, '2013-03-01 18:59:00'::timestamp);
+
+INSERT INTO c_salesbyhour_hours(
+            c_salesbyhour_hours_id, ad_client_id, ad_org_id, isactive, created, 
+            createdby, updated, updatedby, "hour", "date", date_to)
+    VALUES (nextval('seq_c_salesbyhour_hours'), 1010016, 0, 'Y', now(), 
+            104, now(), 104, 19, '2013-03-01 19:00:00'::timestamp, '2013-03-01 19:59:00'::timestamp);
+
+INSERT INTO c_salesbyhour_hours(
+            c_salesbyhour_hours_id, ad_client_id, ad_org_id, isactive, created, 
+            createdby, updated, updatedby, "hour", "date", date_to)
+    VALUES (nextval('seq_c_salesbyhour_hours'), 1010016, 0, 'Y', now(), 
+            104, now(), 104, 20, '2013-03-01 20:00:00'::timestamp, '2013-03-01 20:59:00'::timestamp);
+
+INSERT INTO c_salesbyhour_hours(
+            c_salesbyhour_hours_id, ad_client_id, ad_org_id, isactive, created, 
+            createdby, updated, updatedby, "hour", "date", date_to)
+    VALUES (nextval('seq_c_salesbyhour_hours'), 1010016, 0, 'Y', now(), 
+            104, now(), 104, 21, '2013-03-01 21:00:00'::timestamp, '2013-03-01 21:59:00'::timestamp);
+
+INSERT INTO c_salesbyhour_hours(
+            c_salesbyhour_hours_id, ad_client_id, ad_org_id, isactive, created, 
+            createdby, updated, updatedby, "hour", "date", date_to)
+    VALUES (nextval('seq_c_salesbyhour_hours'), 1010016, 0, 'Y', now(), 
+            104, now(), 104, 22, '2013-03-01 22:00:00'::timestamp, '2013-03-01 22:59:00'::timestamp);
+
+INSERT INTO c_salesbyhour_hours(
+            c_salesbyhour_hours_id, ad_client_id, ad_org_id, isactive, created, 
+            createdby, updated, updatedby, "hour", "date", date_to)
+    VALUES (nextval('seq_c_salesbyhour_hours'), 1010016, 0, 'Y', now(), 
+            104, now(), 104, 23, '2013-03-01 23:00:00'::timestamp, '2013-03-01 23:59:00'::timestamp);
+
+-- 20130328-2021 Modificación a la vista de detalle de allocation line para mostrar el nombre del paymentn medium
+DROP VIEW c_allocation_detail_v;
+
+CREATE OR REPLACE VIEW c_allocation_detail_v AS 
+ SELECT ah.c_allocationhdr_id AS c_allocation_detail_v_id, ah.c_allocationhdr_id, ah.ad_client_id, ah.ad_org_id, ah.isactive, ah.created, ah.createdby, ah.updated, ah.updatedby, ah.datetrx AS fecha, i.documentno AS factura, COALESCE(i.c_currency_id, p.c_currency_id, cl.c_currency_id, credit.c_currency_id) AS c_currency_id, i.grandtotal AS montofactura, 
+        CASE
+            WHEN p.documentno IS NOT NULL THEN p.documentno
+            ELSE 
+            CASE
+                WHEN al.c_invoice_credit_id IS NOT NULL THEN ((dt.printname::text || ' :'::text) || credit.documentno::text)::character varying
+                ELSE NULL::character varying
+            END
+        END AS pagonro, 
+        CASE
+            WHEN p.tendertype IS NOT NULL THEN p.tendertype
+            WHEN p.tendertype IS NULL THEN 'CA'::bpchar
+            ELSE NULL::bpchar
+        END AS tipo, 
+        CASE
+            WHEN cl.c_cashline_id IS NOT NULL THEN 'Y'::text
+            WHEN cl.c_cashline_id IS NULL THEN 'N'::text
+            ELSE NULL::text
+        END AS cash, COALESCE(currencyconvert(al.amount + al.discountamt + al.writeoffamt, ah.c_currency_id, i.c_currency_id, NULL::timestamp with time zone, NULL::integer, ah.ad_client_id, ah.ad_org_id), 0::numeric(20,2)) AS montosaldado, abs(COALESCE(p.payamt, cl.amount, credit.grandtotal, 0::numeric(20,2))) AS payamt, al.c_allocationline_id, i.c_invoice_id, 
+        CASE
+            WHEN p.documentno IS NOT NULL THEN p.documentno
+            ELSE 
+            CASE
+                WHEN al.c_invoice_credit_id IS NOT NULL THEN ((dt.printname::text || ' :'::text) || credit.documentno::text)::character varying
+                WHEN al.c_cashline_id IS NOT NULL THEN cl.description
+                ELSE NULL::character varying
+            END
+        END AS paydescription,
+        CASE
+            WHEN al.c_payment_id IS NOT NULL THEN pppm.name::character varying
+            WHEN al.c_cashline_id IS NOT NULL THEN cppm.name::character varying
+            WHEN al.c_invoice_credit_id IS NOT NULL THEN dt.name::character varying
+            ELSE NULL::character varying
+        END AS payment_medium_name
+   FROM c_allocationhdr ah
+   JOIN c_allocationline al ON ah.c_allocationhdr_id = al.c_allocationhdr_id
+   LEFT JOIN c_invoice i ON al.c_invoice_id = i.c_invoice_id
+   LEFT JOIN c_payment p ON al.c_payment_id = p.c_payment_id
+   LEFT JOIN c_cashline cl ON al.c_cashline_id = cl.c_cashline_id
+   LEFT JOIN c_invoice credit ON al.c_invoice_credit_id = credit.c_invoice_id
+   LEFT JOIN c_doctype dt ON credit.c_doctype_id = dt.c_doctype_id
+   LEFT JOIN c_pospaymentmedium as cppm on cppm.c_pospaymentmedium_id = cl.c_pospaymentmedium_id
+   LEFT JOIN c_pospaymentmedium as pppm on pppm.c_pospaymentmedium_id = p.c_pospaymentmedium_id
+  ORDER BY ah.c_allocationhdr_id, al.c_allocationline_id;
+
+ALTER TABLE c_allocation_detail_v OWNER TO libertya;

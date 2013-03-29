@@ -1,6 +1,7 @@
 package org.openXpertya.JasperReport;
 
 import java.io.ByteArrayInputStream;
+import java.math.BigDecimal;
 import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.List;
@@ -66,13 +67,10 @@ public class LaunchDeclaracionValores extends JasperReportLaunch {
 					JasperReportsUtil.getPODisplayByIdentifiers(getCtx(),
 							journalIDs.get(0), X_C_POSJournal.Table_ID,
 							get_TrxName()));
-			// Obtener la caja relacionada a esta caja diaria
-			MPOSJournal journal = new MPOSJournal(getCtx(), journalIDs.get(0), get_TrxName());
-			if(!Util.isEmpty(journal.getC_Cash_ID(), true)){
-				MCash cash = new MCash(getCtx(), journal.getC_Cash_ID(), get_TrxName());
-				addReportParameter("CASH_BALANCE", cash.getEndingBalance());
-			}
 		}
+		// Agregar el saldo final de cada uno de los libros de caja
+		addCashEndingBalance(journalIDs);
+		
 		addReportParameter("SHOW_CURRENT_ACCOUNT", isShowCurrentAccount());
 		addReportParameter("SHOW_CURRENT_ACCOUNT_TRUE_DESCRIPTION", Msg.getMsg(getCtx(), "ShowCurrentAccount"));
 		addReportParameter("SHOW_CURRENT_ACCOUNT_FALSE_DESCRIPTION", Msg.getMsg(getCtx(), "DoNotShowCurrentAccount"));
@@ -93,6 +91,20 @@ public class LaunchDeclaracionValores extends JasperReportLaunch {
 			M_Table table = M_Table.get(getCtx(), getTable_ID());
 			setPosJournal((MPOSJournal)table.getPO(getRecord_ID(), get_TrxName()));
 		}
+	}
+	
+	protected void addCashEndingBalance(List<Integer> journalIDs){
+		// Obtener la caja relacionada a esta caja diaria
+		MPOSJournal journal;
+		BigDecimal endingBalance = BigDecimal.ZERO;
+		for (Integer journalID : journalIDs) {
+			journal = new MPOSJournal(getCtx(), journalID, get_TrxName());
+			if(!Util.isEmpty(journal.getC_Cash_ID(), true)){
+				MCash cash = new MCash(getCtx(), journal.getC_Cash_ID(), get_TrxName());
+				endingBalance = endingBalance.add(cash.getEndingBalance());
+			}
+		}
+		addReportParameter("CASH_BALANCE", endingBalance);
 	}
 	
 	/**
@@ -210,11 +222,11 @@ public class LaunchDeclaracionValores extends JasperReportLaunch {
 			params.add(posID);
 		}
 		if(dateFrom != null){
-			where.append(" AND (datetrx >= date_trunc('day',?::date)) ");
+			where.append(" AND (date_trunc('day',datetrx) >= date_trunc('day',?::date)) ");
 			params.add(dateFrom);
 		}
 		if(dateTo != null){
-			where.append(" AND (datetrx <= date_trunc('day',?::date)) ");
+			where.append(" AND (date_trunc('day',datetrx) <= date_trunc('day',?::date)) ");
 			params.add(dateTo);
 		}
 		else if(!isRange){
