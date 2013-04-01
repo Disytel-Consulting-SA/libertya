@@ -542,7 +542,7 @@ public class InvoiceGlobalVoiding extends SvrProcess {
 			if(getOrder() != null){
 				inoutID = inspectInOut(
 						getInOutOrderQuery(),
-						"SELECT m_inout_id FROM m_inout WHERE c_order_id = ?",
+						"SELECT m_inout_id FROM m_inout WHERE c_order_id = ? and docstatus in ('CO','CL')", // Si el count tiene en cuenta el estado, acá también
 						null,
 						getOrder().getID(),
 						getMsg("ExistsAnotherInOutsForInvoiceOrder"),
@@ -552,7 +552,7 @@ public class InvoiceGlobalVoiding extends SvrProcess {
 			if(inoutID == 0){
 				inoutID = inspectInOut(
 						getInOutInvoiceQuery(),
-						"SELECT m_inout_id FROM m_inout WHERE c_invoice_id = ?",
+						"SELECT m_inout_id FROM m_inout WHERE c_invoice_id = ? and docstatus in ('CO','CL')", // Si el count tiene en cuenta el estado, acá también
 						null, getInvoice().getID(),
 						getMsg("ExistsAnotherInOutsForInvoice"),
 						null);

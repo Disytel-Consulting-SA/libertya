@@ -2843,11 +2843,21 @@ public class MInOut extends X_M_InOut implements DocAction {
 
             return false;
         }
-
-        reversal.closeIt();
-        reversal.setDocStatus( DOCSTATUS_Closed );
-        reversal.setDocAction( DOCACTION_None );
-        reversal.save( get_TrxName());
+        
+		// 01/04/13 FB. El remito inverso debe quedar en el mismo estado que el
+		// original, es decir, anulado, dado que al dejarlo en estado cerrado
+		// aparece en listados y procesos que tienen en cuenta este estado
+		// Cerrado, y en realidad este remito reverso se debe ignorar en todos
+		// los procesos y listados.
+        // -> reversal.closeIt();
+        // -> reversal.setDocStatus( DOCSTATUS_Closed );
+        // -> reversal.setDocAction( DOCACTION_None );
+        reversal.setDocStatus(DOCSTATUS_Voided);
+        reversal.setDocAction(DOCACTION_None);
+        if (!reversal.save( get_TrxName())) {
+        	m_processMsg = "@ReversalError@: " + CLogger.retrieveErrorAsString();
+        	return false;
+        }
 
         //
 
