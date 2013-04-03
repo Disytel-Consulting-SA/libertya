@@ -458,7 +458,7 @@ public class LoginPanel extends Window implements EventListener
 			return null;
 		}
 		msg = Strings.escape(msg, "\"");
-		String s = "openXpertya.store.set(\"zkTimeoutText\", \"" + msg + "\")";
+		String s = "adempiere.store.set(\"zkTimeoutText\", \"" + msg + "\")";
 		return s;
 	}
 
