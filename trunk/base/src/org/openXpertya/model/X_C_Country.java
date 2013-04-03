@@ -1,13 +1,14 @@
-/** Modelo Generado - NO CAMBIAR MANUALMENTE - Copyright (C) 2006 FUNDESLE */
+/** Modelo Generado - NO CAMBIAR MANUALMENTE - Disytel */
 package org.openXpertya.model;
-import java.util.*;
+import java.util.logging.Level;
+ import java.util.*;
 import java.sql.*;
 import java.math.*;
 import org.openXpertya.util.*;
 /** Modelo Generado por C_Country
- *  @author Comunidad de Desarrollo openXpertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
- *  @version  - 2009-10-22 14:51:31.034 */
-public class X_C_Country extends PO
+ *  @author Comunidad de Desarrollo Libertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
+ *  @version  - 2013-04-03 11:02:36.478 */
+public class X_C_Country extends org.openXpertya.model.PO
 {
 /** Constructor estándar */
 public X_C_Country (Properties ctx, int C_Country_ID, String trxName)
@@ -22,6 +23,7 @@ setHasPostal_Add (false);
 setHasRegion (false);
 setIsAddressLinesLocalReverse (false);
 setIsAddressLinesReverse (false);
+setIsPostCodeLookup (false);
 setName (null);
 }
  */
@@ -31,13 +33,13 @@ public X_C_Country (Properties ctx, ResultSet rs, String trxName)
 {
 super (ctx, rs, trxName);
 }
-/** AD_Table_ID=170 */
-public static final int Table_ID=170;
+/** AD_Table_ID */
+public static final int Table_ID = M_Table.getTableID("C_Country");
 
 /** TableName=C_Country */
 public static final String Table_Name="C_Country";
 
-protected static KeyNamePair Model = new KeyNamePair(170,"C_Country");
+protected static KeyNamePair Model = new KeyNamePair(Table_ID,"C_Country");
 protected static BigDecimal AccessLevel = new BigDecimal(6);
 
 /** Load Meta Data */
@@ -66,7 +68,7 @@ public String getAD_ComponentObjectUID()
 {
 return (String)get_Value("AD_ComponentObjectUID");
 }
-public static final int AD_LANGUAGE_AD_Reference_ID=106;
+public static final int AD_LANGUAGE_AD_Reference_ID = MReference.getReferenceID("AD_Language");
 /** Set Language.
 Language for this entity */
 public void setAD_Language (String AD_Language)
@@ -83,6 +85,37 @@ Language for this entity */
 public String getAD_Language() 
 {
 return (String)get_Value("AD_Language");
+}
+/** Set AllowCitiesOutOfList */
+public void setAllowCitiesOutOfList (boolean AllowCitiesOutOfList)
+{
+set_Value ("AllowCitiesOutOfList", new Boolean(AllowCitiesOutOfList));
+}
+/** Get AllowCitiesOutOfList */
+public boolean isAllowCitiesOutOfList() 
+{
+Object oo = get_Value("AllowCitiesOutOfList");
+if (oo != null) 
+{
+ if (oo instanceof Boolean) return ((Boolean)oo).booleanValue();
+ return "Y".equals(oo);
+}
+return false;
+}
+/** Set CaptureSequence */
+public void setCaptureSequence (String CaptureSequence)
+{
+if (CaptureSequence != null && CaptureSequence.length() > 60)
+{
+log.warning("Length > 60 - truncated");
+CaptureSequence = CaptureSequence.substring(0,60);
+}
+set_Value ("CaptureSequence", CaptureSequence);
+}
+/** Get CaptureSequence */
+public String getCaptureSequence() 
+{
+return (String)get_Value("CaptureSequence");
 }
 /** Set Country.
 Country  */
@@ -346,6 +379,82 @@ if (oo != null)
  return "Y".equals(oo);
 }
 return false;
+}
+/** Set IsPostCodeLookup */
+public void setIsPostCodeLookup (boolean IsPostCodeLookup)
+{
+set_Value ("IsPostCodeLookup", new Boolean(IsPostCodeLookup));
+}
+/** Get IsPostCodeLookup */
+public boolean isPostCodeLookup() 
+{
+Object oo = get_Value("IsPostCodeLookup");
+if (oo != null) 
+{
+ if (oo instanceof Boolean) return ((Boolean)oo).booleanValue();
+ return "Y".equals(oo);
+}
+return false;
+}
+/** Set LookupClassName */
+public void setLookupClassName (String LookupClassName)
+{
+if (LookupClassName != null && LookupClassName.length() > 255)
+{
+log.warning("Length > 255 - truncated");
+LookupClassName = LookupClassName.substring(0,255);
+}
+set_Value ("LookupClassName", LookupClassName);
+}
+/** Get LookupClassName */
+public String getLookupClassName() 
+{
+return (String)get_Value("LookupClassName");
+}
+/** Set LookupClientID */
+public void setLookupClientID (String LookupClientID)
+{
+if (LookupClientID != null && LookupClientID.length() > 50)
+{
+log.warning("Length > 50 - truncated");
+LookupClientID = LookupClientID.substring(0,50);
+}
+set_Value ("LookupClientID", LookupClientID);
+}
+/** Get LookupClientID */
+public String getLookupClientID() 
+{
+return (String)get_Value("LookupClientID");
+}
+/** Set LookupPassword */
+public void setLookupPassword (String LookupPassword)
+{
+if (LookupPassword != null && LookupPassword.length() > 50)
+{
+log.warning("Length > 50 - truncated");
+LookupPassword = LookupPassword.substring(0,50);
+}
+set_Value ("LookupPassword", LookupPassword);
+}
+/** Get LookupPassword */
+public String getLookupPassword() 
+{
+return (String)get_Value("LookupPassword");
+}
+/** Set LookupUrl */
+public void setLookupUrl (String LookupUrl)
+{
+if (LookupUrl != null && LookupUrl.length() > 100)
+{
+log.warning("Length > 100 - truncated");
+LookupUrl = LookupUrl.substring(0,100);
+}
+set_Value ("LookupUrl", LookupUrl);
+}
+/** Get LookupUrl */
+public String getLookupUrl() 
+{
+return (String)get_Value("LookupUrl");
 }
 /** Set Media Size.
 Java Media Size */

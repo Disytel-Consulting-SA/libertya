@@ -339,7 +339,7 @@ public class WLocationDialog extends Window implements EventListener
 		txtCity.fillList();
 		
 		//      sequence of City Postal Region - @P@ @C@ - @C@, @R@ @P@
-		String ds = ""; // country.getCaptureSequence();
+		String ds = country.getCaptureSequence();
 		if (ds == null || ds.length() == 0)
 		{
 			log.log(Level.SEVERE, "CaptureSequence empty - " + country);
@@ -601,7 +601,7 @@ public class WLocationDialog extends Window implements EventListener
 	@Override
 	public void dispose()
 	{
-		if (!m_change && m_location != null )//&& !m_location.is_new())
+		if (!m_change && m_location != null  && !m_location.is_new())
 		{
 			m_location = new MLocation(m_location.getCtx(), m_location.getID(), null);
 		}	
