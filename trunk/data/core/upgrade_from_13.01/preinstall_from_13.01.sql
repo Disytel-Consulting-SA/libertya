@@ -1457,3 +1457,9 @@ UNION ALL
   WHERE date_trunc('day'::text, i.dateacct) <> date_trunc('day'::text, pjp.dateacct::timestamp with time zone) AND hdr.isactive = 'Y'::bpchar AND ((dtc.docbasetype <> ALL (ARRAY['ARC'::bpchar, 'APC'::bpchar])) OR (dtc.docbasetype = ANY (ARRAY['ARC'::bpchar, 'APC'::bpchar])) AND pjp.c_invoice_credit_id IS NOT NULL);
 
 ALTER TABLE v_dailysales OWNER TO libertya;
+
+-- 20130403-1029 Indice por performance
+create index m_inoutline_c_orderline_id on m_inoutline (c_orderline_id);
+
+-- 20130403-1029 Usar referencia de tipo tabledir en lugar de una vista, a fin de evitar datos erróneos en replicacion
+update ad_column set ad_reference_id = 19, ad_reference_value_id = null, ad_val_rule_id = (select ad_val_rule_id from ad_val_rule where ad_componentobjectuid = 'CORE-AD_Val_Rule-167') where ad_componentobjectuid = 'CORE-AD_Column-3400';
