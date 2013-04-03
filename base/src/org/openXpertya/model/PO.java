@@ -1737,6 +1737,25 @@ public abstract class PO implements Serializable, Comparator, Evaluatee {
 	protected boolean directInsert = false;
 	
 	
+	/**
+	 * 	Is new record
+	 *	@return true if new
+	 */
+	public boolean is_new()
+	{
+		if (m_createNew)
+			return true;
+		//
+		for (int i = 0; i < m_IDs.length; i++)
+		{
+			if (m_IDs[i].equals(I_ZERO) || m_IDs[i] == NULL)
+				continue;
+			return false;	//	one value is non-zero
+		}
+		return true;
+	}	//	is_new
+	
+	
 	/**************************************************************************
 	 * Update Value or create new record. To reload call load() - not updated
 	 * 
