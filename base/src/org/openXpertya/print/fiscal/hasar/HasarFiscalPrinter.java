@@ -596,7 +596,7 @@ public abstract class HasarFiscalPrinter extends BasicFiscalPrinter implements H
 		}
 
 		// Se chequea el status devuelto por la impresora.
-		boolean statusChanged = checkStatus(response);
+		boolean statusChanged = checkStatus(command, response);
 
 		// Si se produjeron cambios en el estado de la impresora se dispara
 		// el evento correspondiente.
@@ -614,8 +614,8 @@ public abstract class HasarFiscalPrinter extends BasicFiscalPrinter implements H
 		
 		return response;
 	}
-
-	private boolean checkStatus(FiscalPacket response) throws FiscalPrinterIOException {
+	
+	private boolean checkStatus(FiscalPacket command, FiscalPacket response) throws FiscalPrinterIOException {
 		int newPrinterStatus;
 		int newFiscalStatus;
 
@@ -651,20 +651,32 @@ public abstract class HasarFiscalPrinter extends BasicFiscalPrinter implements H
 		// Se chequea el estado de la impresora.
 		for(int i = 0; i < getPrinterStatusCodes().length; i++) {
 			int statusCode = getPrinterStatusCodes()[i];
-			if((getPrinterStatus() & statusCode) != 0) {
-				FiscalMessage msg = getPrinterStatusMsgs().get(statusCode);
-				msgs.add(msg);
+			// Si el comando es el de cierre del documento y tenemos el flag de
+			// que falta papel se desestima ya que ya a esta altura se imprimió
+			// el ticket y además generalmente el error de falta papel como
+			// respuesta a este comando es un WARNING "Queda poco papel"
+			if (!(isCloseCommand(command) && (statusCode == PST_JOURNAL_PAPER_OUT || statusCode == PST_TICKET_PAPER_OUT))) {
+				if((getPrinterStatus() & statusCode) != 0) {
+					FiscalMessage msg = getPrinterStatusMsgs().get(statusCode);
+					msgs.add(msg);
+				}
+				// Se chequea el estado del papel de la impresora y se 
+				// setea el mismo.
+				if(statusCode == PST_JOURNAL_PAPER_OUT || statusCode == PST_TICKET_PAPER_OUT)
+					setWithoutPaper((getPrinterStatus() & statusCode) != 0);
 			}
-			// Se chequea el estado del papel de la impresora y se 
-			// setea el mismo.
-			if(statusCode == PST_JOURNAL_PAPER_OUT || statusCode == PST_TICKET_PAPER_OUT)
-				setWithoutPaper((getPrinterStatus() & statusCode) != 0);
 		}
 		
 		// Se setean los mensajes de la impresora.
 		setMessages(msgs);
 		
 		return stsChanged;
+	}
+	
+	private boolean isCloseCommand(FiscalPacket command){
+		return command.getCommandCode() == CMD_CLOSE_DNFH
+				|| command.getCommandCode() == CMD_CLOSE_FISCAL_RECEIPT
+				|| command.getCommandCode() == CMD_CLOSE_NON_FISCAL_RECEIPT;
 	}
 	
 	/**
