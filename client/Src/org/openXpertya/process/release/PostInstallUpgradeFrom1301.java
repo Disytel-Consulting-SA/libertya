@@ -1,7 +1,10 @@
 package org.openXpertya.process.release;
 
 import org.openXpertya.JasperReport.MJasperReport;
+import org.openXpertya.model.MAttachment;
+import org.openXpertya.model.MProcess;
 import org.openXpertya.process.PluginPostInstallProcess;
+import org.openXpertya.util.DB;
 import org.openXpertya.utils.JarHelper;
 
 public class PostInstallUpgradeFrom1301 extends PluginPostInstallProcess {
@@ -57,6 +60,11 @@ public class PostInstallUpgradeFrom1301 extends PluginPostInstallProcess {
 	/** UID del Informe de Comprobantes Registrados */
 	protected final static String REGISTERED_DOCUMENTS_JASPER_REPORT_UID = "CORE-AD_JasperReport-1010100";
 	protected final static String REGISTERED_DOCUMENTS_JASPER_REPORT_FILENAME = "RegisteredDocuments.jasper";
+	
+	/** UID del informe IVA Ventas General*/
+	protected final static String IVA_VENTAS_GENERAL_REPORT_UID = "CORE-AD_Process-1010324";
+	/** Nombre del .jrxml del informe IVA Ventas General*/
+	protected final static String IVA_VENTAS_GENERAL_REPORT_FILENAME = "Iva_Ventas.jrxml";
 	
 	protected String doIt() throws Exception {
 		super.doIt();
@@ -202,6 +210,16 @@ public class PostInstallUpgradeFrom1301 extends PluginPostInstallProcess {
 							.readBinaryFromJar(
 									jarFileURL,
 									getBinaryFileURL(REGISTERED_DOCUMENTS_JASPER_REPORT_FILENAME)));
+		
+		// Informe de IVA Ventas General
+		MAttachment att  = new MAttachment(getCtx(), 0, get_TrxName()); 
+		att.setAD_Table_ID(MProcess.Table_ID);
+		String getIDFromUID = " SELECT AD_Process_ID FROM AD_Process WHERE AD_ComponentObjectUID = ?";
+		att.setRecord_ID(DB.getSQLValue(get_TrxName(), getIDFromUID, IVA_VENTAS_GENERAL_REPORT_UID));
+		att.addEntry("Iva_Ventas.jrxml", JarHelper.readBinaryFromJar(jarFileURL,getBinaryFileURL(IVA_VENTAS_GENERAL_REPORT_FILENAME)));
+		if(!att.save()){
+			throw new Exception ("Error al guardar jrxml ");
+		}
 		
 		return " ";
 	}
