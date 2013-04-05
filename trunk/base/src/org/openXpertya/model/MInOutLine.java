@@ -592,7 +592,8 @@ public class MInOutLine extends X_M_InOutLine {
 		MProduct product = Util.isEmpty(getM_Product_ID(), true) ? null
 				: MProduct.get(getCtx(), getM_Product_ID());
 		if (!isTPVInstance && !isProductionMovement(inout.getMovementType())
-				&& product != null
+				&& product != null 
+				&& product.getProductType() != null
 				&& product.getProductType().equals(MProduct.PRODUCTTYPE_Assets)
 				&& Util.isEmpty(getC_OrderLine_ID(), true) 
 				&& Util.isEmpty(getC_InvoiceLine_ID(), true)) {
