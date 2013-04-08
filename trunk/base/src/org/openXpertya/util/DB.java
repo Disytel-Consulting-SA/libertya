@@ -2348,9 +2348,11 @@ public final class DB {
     	return e;
     }
 	/** SQL Statement Separator "; "	*/
-	public static final String SQLSTATEMENT_SEPARATOR = "; ";
-
+	public static final String SQLSTATEMENT_SEPARATOR = "; "; 
 	
+	public static Timestamp getDBTimestamp(String trxName){
+		return getSQLValueTimestamp(trxName, "SELECT now()");
+	}
 }    // DB
 
 
