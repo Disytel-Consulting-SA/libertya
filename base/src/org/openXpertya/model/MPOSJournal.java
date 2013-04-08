@@ -6,6 +6,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.List;
 import java.util.Properties;
 import java.util.logging.Level;
@@ -30,6 +31,9 @@ public class MPOSJournal extends X_C_POSJournal implements DocAction {
 	
 	/** Mensaje de error por caja diaria cerrada */
 	public static String POS_JOURNAL_VOID_CLOSED_ERROR_MSG = "@POSJournalVoidClosed@";
+
+	/** Preference de tolerancia de horas para determinar la fecha  */
+	public static String HOUR_TOLERANCE_PREFERENCE_NAME = "POSJournalHourTolerance";
 	
 	/**
 	 * Nombre de la preference que determina la diferencia máxima entre el saldo
@@ -91,7 +95,7 @@ public class MPOSJournal extends X_C_POSJournal implements DocAction {
 		sql.append("SELECT * ")
 		   .append("FROM C_POSJournal ")
 		   .append("WHERE AD_User_ID = ? ")
-		   .append(  "AND DateTrx = ? ");
+		   .append(  "AND DateTrx = ?::date ");
 		
 		// Filtro de los dosStatus
 		if (docStatus != null && docStatus.length > 0) {
@@ -109,6 +113,23 @@ public class MPOSJournal extends X_C_POSJournal implements DocAction {
 		
 		PreparedStatement pstmt = null;
 		ResultSet rs = null;
+		
+		// Verificar si existe la preference para la tolerancia de horas
+		String hourToleranceValue = MPreference.searchCustomPreferenceValue(
+				HOUR_TOLERANCE_PREFERENCE_NAME, Env.getAD_Client_ID(ctx),
+				Env.getAD_Org_ID(ctx), Env.getAD_User_ID(ctx), true);
+		if(!Util.isEmpty(hourToleranceValue, true)){
+			Integer hourTolerance = Integer.parseInt(hourToleranceValue);
+			Calendar newDate = Calendar.getInstance();
+			// Busco la fecha actual en la base
+			Timestamp actualDate = DB.getDBTimestamp(trxName);
+			// Seteo la fecha parámetro
+			newDate.setTimeInMillis(actualDate.getTime());
+			// Restar la cantidad de horas y tomar la fecha resultante para la
+			// comparación
+			newDate.add(Calendar.HOUR_OF_DAY, hourTolerance * -1);
+			date = new Timestamp(newDate.getTimeInMillis());
+		}
 		
 		try {
 			pstmt = DB.prepareStatement(sql.toString(), trxName);
