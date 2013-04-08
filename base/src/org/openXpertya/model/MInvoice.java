@@ -2075,7 +2075,7 @@ public class MInvoice extends X_C_Invoice implements DocAction {
 		// hora y hay que setearle la hora de ahora
 		Calendar dateInvoicedCalendar = Calendar.getInstance();
 		dateInvoicedCalendar.setTimeInMillis(getDateInvoiced().getTime());
-		if (dateInvoicedCalendar.get(Calendar.HOUR) == 0
+		if (dateInvoicedCalendar.get(Calendar.HOUR_OF_DAY) == 0
 				&& dateInvoicedCalendar.get(Calendar.MINUTE) == 0
 				&& dateInvoicedCalendar.get(Calendar.SECOND) == 0) {
 			Calendar nowCalendar = Calendar.getInstance();
