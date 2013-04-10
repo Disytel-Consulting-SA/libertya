@@ -97,7 +97,7 @@ public final class OpenXpertya {
     static public final String	OXP_R	= "Libertya\u00AE";
 
     /** Descripción de Campo */
-    static public final String	COPYRIGHT	= "\u00A9 2011 DISYTEL";
+    static public final String	COPYRIGHT	= "\u00A9 2013 DISYTEL";
 
     /** Descripción de Campo */
     static private String	s_ImplementationVersion	= null;

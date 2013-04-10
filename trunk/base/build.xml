@@ -34,7 +34,9 @@ Este Fichero sirve para compilar el subproyecto base independiente del proyecto 
     <pathelement path="../tools/lib/j2ee.jar"/>
     <pathelement path="../lib/postgresql.jar"/>
     <pathelement path="../lib/oracle.jar"/>
-    <pathelement path="../lib/sybase.jar"/>    
+    <pathelement path="../lib/sybase.jar"/>
+    <pathelement path="../tools/lib/jpedal.jar"/>
+    <pathelement path="../lib/itext_1.5.4.jar"/>    
   </path>
 
 
@@ -69,6 +71,7 @@ Este Fichero sirve para compilar el subproyecto base independiente del proyecto 
         <include name="**/*.jpg"/>
         <include name="**/*.wav"/>
         <include name="**/*.htm"/>
+        <include name="**/*.afm"/>
         <include name="**/*.html"/>
         <include name="**/*.properties"/>
         <exclude name="**/package.html"/>

@@ -27,7 +27,11 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import org.adempiere.webui.ZkContextProvider;
+import org.adempiere.webui.window.ZkJRViewerProvider;
+import org.adempiere.webui.window.ZkReportViewerProvider;
 import org.openXpertya.OpenXpertya;
+import org.openXpertya.JasperReport.ReportStarter;
+import org.openXpertya.print.ReportCtl;
 import org.openXpertya.util.CLogger;
 import org.openXpertya.util.Env;
 import org.openXpertya.util.Ini;
@@ -73,8 +77,8 @@ public class WebUIServlet extends DHtmlLayoutServlet
         
         // hengsin: temporary solution for problem with zk client
         Ini.setProperty(Ini.P_OXPSYS, false);
-        //ReportCtl.setReportViewerProvider(new ZkReportViewerProvider());
-        //ReportStarter.setReportViewerProvider(new ZkJRViewerProvider());
+        ReportCtl.setReportViewerProvider(new ZkReportViewerProvider());
+//        ReportStarter.setReportViewerProvider(new ZkJRViewerProvider()); 	TODO: Esto debe descomentarse
         logger.info("Libertya started successfully");
         /**
          * End ADempiere Start

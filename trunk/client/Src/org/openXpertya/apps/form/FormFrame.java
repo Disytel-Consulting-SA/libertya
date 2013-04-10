@@ -36,6 +36,7 @@ import javax.swing.KeyStroke;
 
 import org.compiere.plaf.CompiereColor;
 import org.compiere.swing.CCheckBox;
+import org.compiere.swing.CFrame;
 import org.openXpertya.apps.AEnv;
 import org.openXpertya.apps.AGlassPane;
 import org.openXpertya.apps.Help;
@@ -53,7 +54,7 @@ import org.openXpertya.util.Trace;
  * @author     Equipo de Desarrollo de openXpertya
  */
 
-public class FormFrame extends JFrame implements ActionListener {
+public class FormFrame extends CFrame implements ActionListener {
 
     /**
 	 * 
@@ -123,6 +124,9 @@ public class FormFrame extends JFrame implements ActionListener {
 
     private static CLogger log = CLogger.getCLogger( FormFrame.class );
 
+	/** Form ID			*/
+	private int		p_AD_Form_ID = 0;
+    
     /**
      * Descripción de Método
      *
@@ -304,7 +308,7 @@ public class FormFrame extends JFrame implements ActionListener {
         //
 
         m_panel.init( m_WindowNo,this );
-
+        p_AD_Form_ID = AD_Form_ID;
         return true;
     }    // openForm
     /**
@@ -506,6 +510,15 @@ public class FormFrame extends JFrame implements ActionListener {
 	public boolean isBusy(){
 		return m_glassPane.isVisible();
 	}
+	
+	/**
+	 * @return Returns the AD_Form_ID.
+	 */
+	public int getAD_Form_ID ()
+	{
+		return p_AD_Form_ID;
+	}	//	getAD_Window_ID
+
 }    // FormFrame
 
 

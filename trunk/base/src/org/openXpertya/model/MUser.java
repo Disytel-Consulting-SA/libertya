@@ -33,6 +33,7 @@ import javax.naming.directory.Attributes;
 import javax.naming.directory.DirContext;
 import javax.naming.directory.InitialDirContext;
 
+import org.openXpertya.model.MClient;
 import org.openXpertya.plugin.common.PluginUtils;
 import org.openXpertya.util.CCache;
 import org.openXpertya.util.CLogger;
@@ -538,6 +539,22 @@ public class MUser extends X_AD_User {
         return validateEmail( getInternetAddress()) == null;
     }    // isEMailValid
 
+	/**
+	 * 	Could we send an email
+	 * 	@return true if EMail Uwer/PW exists
+	 */
+	public boolean isCanSendEMail()
+	{
+		String s = getEMailUser();
+		if (s == null || s.length() == 0)
+			return false;
+		// If SMTP authorization is not required, then don't check password - teo_sarca [ 1723309 ]
+		if (!MClient.get(getCtx()).isSmtpAuthorization())
+			return true;
+		s = getEMailUserPW();
+		return s != null && s.length() > 0;
+	}	//	isCanSendEMail
+    
     /**
      * Descripción de Método
      *

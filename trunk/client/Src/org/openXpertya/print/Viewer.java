@@ -62,6 +62,7 @@ import javax.swing.event.ChangeListener;
 import org.compiere.plaf.CompiereColor;
 import org.compiere.swing.CButton;
 import org.compiere.swing.CComboBox;
+import org.compiere.swing.CFrame;
 import org.compiere.swing.CLabel;
 import org.compiere.swing.CPanel;
 import org.openXpertya.apps.ADialog;
@@ -99,7 +100,7 @@ import org.openXpertya.util.ValueNamePair;
  * @author     Equipo de Desarrollo de openXpertya    
  */
 
-public class Viewer extends JFrame implements ActionListener,ChangeListener,WindowStateListener {
+public class Viewer extends CFrame implements ActionListener,ChangeListener,WindowStateListener {
 
     /**
      * Constructor de la clase ...

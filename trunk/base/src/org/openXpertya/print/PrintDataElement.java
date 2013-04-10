@@ -129,6 +129,22 @@ public class PrintDataElement {
         return m_value;
     }    // getValue
 
+    
+	/**
+	 * 	Get Node Data Value as String
+	 * 	@return data value
+	 */
+	public String getValueAsString()
+	{
+		if (m_value == null)
+			return "";
+		String retValue = m_value.toString();
+		if (m_value instanceof NamePair)
+			retValue = ((NamePair)m_value).getID();
+		return retValue;
+	}	//	getValueDisplay
+
+    
     /**
      * Descripción de Método
      *
