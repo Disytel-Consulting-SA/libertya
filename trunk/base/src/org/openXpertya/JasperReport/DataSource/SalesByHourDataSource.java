@@ -30,11 +30,12 @@ public class SalesByHourDataSource extends QueryDataSource {
 	@Override
 	protected String getQuery() {
 		String sql = "select hour, time_ini, time_end, total::numeric(22,9), sales::numeric(22,9), cant_tickets::integer, (CASE WHEN total = 0 THEN 0 ELSE sales/total END)::numeric(11,2) as part_total " +
-					 "from (select hour, time_ini, time_end, total, sum(grandtotal) as sales, count(distinct c_invoice_id) as cant_tickets " +
-					 "		from (select hour, time_ini, time_end, coalesce(grandtotal,0.00) as grandtotal, coalesce(total,0.00) as total, c_invoice_id " +
-					 "				from (select h.hour, coalesce(time_ini,h.date) as time_ini, coalesce(time_end, h.date_to) as time_end, grandtotal, c_invoice_id " +
+					 "from (select hour, time_ini, time_end, total, sum(grandtotal) as sales, sum(cant_ticket) as cant_tickets " +
+					 "		from (select hour, time_ini, time_end, coalesce(grandtotal,0.00) as grandtotal, coalesce(total,0.00) as total, c_invoice_id, coalesce(cant_ticket,0.00) as cant_ticket " +
+					 "				from (select h.hour, coalesce(time_ini,h.date) as time_ini, coalesce(time_end, h.date_to) as time_end, grandtotal, c_invoice_id, cant_ticket " +
 					 "						from c_salesbyhour_hours as h " +
 					 "						left join (select c_invoice_id, " +
+					 "									(CASE dt.signo_issotrx WHEN 1 THEN 1 ELSE 0 END) as cant_ticket," +
 					 "									grandtotal * dt.signo_issotrx as grandtotal, " +
 					 "									date_trunc('hour', dateinvoiced) as time_ini, " +
 					 "									(date_trunc('hour', dateinvoiced) + interval '1 hour' - interval '1 minute') as time_end, " +
