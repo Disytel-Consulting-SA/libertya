@@ -1722,3 +1722,7 @@ UPDATE C_Country SET capturesequence = '@A1@ @A2@ @A3@ @A4@ @C@,  @P@ @CO@' WHER
 UPDATE C_Country SET capturesequence = '@A1@ @A2@ @A3@ @A4@ @C@,  @P@ @CO@' WHERE countrycode ='ZM';
 UPDATE C_Country SET capturesequence = '@A1@ @A2@ @A3@ @A4@ @C@,  @P@ @CO@' WHERE countrycode ='ZW';
 
+-- 20130410-1825: LYWeb: nuevas columnas
+UPDATE ad_system SET dummy = (SELECT addcolumnifnotexists('AD_Process_Para','readonlylogic', 'varchar(2000)'));
+UPDATE ad_system SET dummy = (SELECT addcolumnifnotexists('AD_UserMail','subject', 'varchar(255)'));
+UPDATE ad_system SET dummy = (SELECT addcolumnifnotexists('AD_UserMail','mailtext', 'varchar(2000)'));

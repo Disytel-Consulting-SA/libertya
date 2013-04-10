@@ -7,7 +7,7 @@ import java.math.*;
 import org.openXpertya.util.*;
 /** Modelo Generado por AD_Process_Para
  *  @author Comunidad de Desarrollo Libertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
- *  @version  - 2011-07-19 17:22:44.194 */
+ *  @version  - 2013-04-10 18:37:32.512 */
 public class X_AD_Process_Para extends org.openXpertya.model.PO
 {
 /** Constructor estándar */
@@ -404,6 +404,23 @@ return (String)get_Value("Name");
 public KeyNamePair getKeyNamePair() 
 {
 return new KeyNamePair(getID(), getName());
+}
+/** Set Read Only Logic.
+Logic to determine if field is read only (applies only when field is read-write) */
+public void setReadOnlyLogic (String ReadOnlyLogic)
+{
+if (ReadOnlyLogic != null && ReadOnlyLogic.length() > 2000)
+{
+log.warning("Length > 2000 - truncated");
+ReadOnlyLogic = ReadOnlyLogic.substring(0,2000);
+}
+set_Value ("ReadOnlyLogic", ReadOnlyLogic);
+}
+/** Get Read Only Logic.
+Logic to determine if field is read only (applies only when field is read-write) */
+public String getReadOnlyLogic() 
+{
+return (String)get_Value("ReadOnlyLogic");
 }
 /** Set Same Line */
 public void setSameLine (boolean SameLine)

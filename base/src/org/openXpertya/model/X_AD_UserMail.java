@@ -1,13 +1,14 @@
-/** Modelo Generado - NO CAMBIAR MANUALMENTE - Copyright (C) 2006 FUNDESLE */
+/** Modelo Generado - NO CAMBIAR MANUALMENTE - Disytel */
 package org.openXpertya.model;
-import java.util.*;
+import java.util.logging.Level;
+ import java.util.*;
 import java.sql.*;
 import java.math.*;
 import org.openXpertya.util.*;
 /** Modelo Generado por AD_UserMail
- *  @author Comunidad de Desarrollo openXpertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
- *  @version  - 2008-01-03 10:26:25.718 */
-public class X_AD_UserMail extends PO
+ *  @author Comunidad de Desarrollo Libertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
+ *  @version  - 2013-04-10 18:37:59.518 */
+public class X_AD_UserMail extends org.openXpertya.model.PO
 {
 /** Constructor estándar */
 public X_AD_UserMail (Properties ctx, int AD_UserMail_ID, String trxName)
@@ -15,8 +16,8 @@ public X_AD_UserMail (Properties ctx, int AD_UserMail_ID, String trxName)
 super (ctx, AD_UserMail_ID, trxName);
 /** if (AD_UserMail_ID == 0)
 {
-setAD_UserMail_ID (0);
 setAD_User_ID (0);
+setAD_UserMail_ID (0);
 }
  */
 }
@@ -25,13 +26,13 @@ public X_AD_UserMail (Properties ctx, ResultSet rs, String trxName)
 {
 super (ctx, rs, trxName);
 }
-/** AD_Table_ID=782 */
-public static final int Table_ID=782;
+/** AD_Table_ID */
+public static final int Table_ID = M_Table.getTableID("AD_UserMail");
 
 /** TableName=AD_UserMail */
 public static final String Table_Name="AD_UserMail";
 
-protected static KeyNamePair Model = new KeyNamePair(782,"AD_UserMail");
+protected static KeyNamePair Model = new KeyNamePair(Table_ID,"AD_UserMail");
 protected static BigDecimal AccessLevel = new BigDecimal(7);
 
 /** Load Meta Data */
@@ -44,20 +45,6 @@ public String toString()
 {
 StringBuffer sb = new StringBuffer ("X_AD_UserMail[").append(getID()).append("]");
 return sb.toString();
-}
-/** Set User Mail.
-Mail sent to the user */
-public void setAD_UserMail_ID (int AD_UserMail_ID)
-{
-set_ValueNoCheck ("AD_UserMail_ID", new Integer(AD_UserMail_ID));
-}
-/** Get User Mail.
-Mail sent to the user */
-public int getAD_UserMail_ID() 
-{
-Integer ii = (Integer)get_Value("AD_UserMail_ID");
-if (ii == null) return 0;
-return ii.intValue();
 }
 /** Set User/Contact.
 User within the system - Internal or Business Partner Contact */
@@ -77,6 +64,20 @@ public KeyNamePair getKeyNamePair()
 {
 return new KeyNamePair(getID(), String.valueOf(getAD_User_ID()));
 }
+/** Set User Mail.
+Mail sent to the user */
+public void setAD_UserMail_ID (int AD_UserMail_ID)
+{
+set_ValueNoCheck ("AD_UserMail_ID", new Integer(AD_UserMail_ID));
+}
+/** Get User Mail.
+Mail sent to the user */
+public int getAD_UserMail_ID() 
+{
+Integer ii = (Integer)get_Value("AD_UserMail_ID");
+if (ii == null) return 0;
+return ii.intValue();
+}
 /** Set Delivery Confirmation.
 EMail Delivery confirmation */
 public void setDeliveryConfirmation (String DeliveryConfirmation)
@@ -84,7 +85,7 @@ public void setDeliveryConfirmation (String DeliveryConfirmation)
 if (DeliveryConfirmation != null && DeliveryConfirmation.length() > 120)
 {
 log.warning("Length > 120 - truncated");
-DeliveryConfirmation = DeliveryConfirmation.substring(0,119);
+DeliveryConfirmation = DeliveryConfirmation.substring(0,120);
 }
 set_ValueNoCheck ("DeliveryConfirmation", DeliveryConfirmation);
 }
@@ -94,7 +95,7 @@ public String getDeliveryConfirmation()
 {
 return (String)get_Value("DeliveryConfirmation");
 }
-public static final int ISDELIVERED_AD_Reference_ID=319;
+public static final int ISDELIVERED_AD_Reference_ID = MReference.getReferenceID("_YesNo");
 /** Yes = Y */
 public static final String ISDELIVERED_Yes = "Y";
 /** No = N */
@@ -103,11 +104,11 @@ public static final String ISDELIVERED_No = "N";
 public void setIsDelivered (String IsDelivered)
 {
 if (IsDelivered == null || IsDelivered.equals("Y") || IsDelivered.equals("N"));
- else throw new IllegalArgumentException ("IsDelivered Invalid value - Reference_ID=319 - Y - N");
+ else throw new IllegalArgumentException ("IsDelivered Invalid value - Reference = ISDELIVERED_AD_Reference_ID - Y - N");
 if (IsDelivered != null && IsDelivered.length() > 1)
 {
 log.warning("Length > 1 - truncated");
-IsDelivered = IsDelivered.substring(0,0);
+IsDelivered = IsDelivered.substring(0,1);
 }
 set_ValueNoCheck ("IsDelivered", IsDelivered);
 }
@@ -116,6 +117,23 @@ public String getIsDelivered()
 {
 return (String)get_Value("IsDelivered");
 }
+/** Set Mail Text.
+Text used for Mail message */
+public void setMailText (String MailText)
+{
+if (MailText != null && MailText.length() > 2000)
+{
+log.warning("Length > 2000 - truncated");
+MailText = MailText.substring(0,2000);
+}
+set_Value ("MailText", MailText);
+}
+/** Get Mail Text.
+Text used for Mail message */
+public String getMailText() 
+{
+return (String)get_Value("MailText");
+}
 /** Set Message ID.
 EMail Message ID */
 public void setMessageID (String MessageID)
@@ -123,7 +141,7 @@ public void setMessageID (String MessageID)
 if (MessageID != null && MessageID.length() > 120)
 {
 log.warning("Length > 120 - truncated");
-MessageID = MessageID.substring(0,119);
+MessageID = MessageID.substring(0,120);
 }
 set_ValueNoCheck ("MessageID", MessageID);
 }
@@ -148,6 +166,23 @@ public int getR_MailText_ID()
 Integer ii = (Integer)get_Value("R_MailText_ID");
 if (ii == null) return 0;
 return ii.intValue();
+}
+/** Set Subject.
+Email Message Subject */
+public void setSubject (String Subject)
+{
+if (Subject != null && Subject.length() > 255)
+{
+log.warning("Length > 255 - truncated");
+Subject = Subject.substring(0,255);
+}
+set_Value ("Subject", Subject);
+}
+/** Get Subject.
+Email Message Subject */
+public String getSubject() 
+{
+return (String)get_Value("Subject");
 }
 /** Set Mail Message.
 Web Store Mail Message Template */
