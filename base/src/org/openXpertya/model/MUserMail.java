@@ -19,6 +19,7 @@ package org.openXpertya.model;
 import java.sql.ResultSet;
 import java.util.Properties;
 
+import org.openXpertya.model.PO;
 import org.openXpertya.util.EMail;
 
 /**
@@ -98,6 +99,30 @@ public class MUserMail extends X_AD_UserMail {
         setW_MailMsg_ID( parent.getW_MailMsg_ID());
     }    // MUserMail
 
+	/**
+	 * 	New User Mail (no trx)
+	 *	@param po persistent object
+	 *	@param AD_User_ID recipient user
+	 *	@param mail email
+	 */
+	public MUserMail (PO po, int AD_User_ID, EMail mail)
+	{
+		this (po.getCtx(), 0, null);
+		setClientOrg(po);
+		setAD_User_ID(AD_User_ID);		
+		setSubject(mail.getSubject());
+		setMailText(mail.getMessageCRLF());
+		//
+		if (mail.isSentOK())
+			setMessageID(mail.getMessageID());
+		else
+		{
+			setMessageID(mail.getSentMsg());
+			setIsDelivered(ISDELIVERED_No);
+		}
+	}	//	MUserMail
+
+    
     /**
      * Descripción de Método
      *

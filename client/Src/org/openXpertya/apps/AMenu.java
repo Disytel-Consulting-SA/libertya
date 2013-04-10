@@ -53,6 +53,7 @@ import javax.swing.KeyStroke;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
+import org.openXpertya.apps.WindowManager;
 import org.compiere.plaf.CompiereColor;
 import org.compiere.swing.CButton;
 import org.compiere.swing.CPanel;
@@ -207,6 +208,9 @@ public final class AMenu extends JFrame implements ActionListener,PropertyChange
 
     private static CLogger log = CLogger.getCLogger( AMenu.class );
 
+    
+    private WindowManager windowManager = new WindowManager();
+    
     /**
      * Descripción de Método
      *
@@ -927,6 +931,11 @@ public final class AMenu extends JFrame implements ActionListener,PropertyChange
 	public Container getContainerForMsg() {
 		return this;
 	}
+	
+	public WindowManager getWindowManager() {
+		return windowManager;
+	}
+
 }    // AMenu
 
 

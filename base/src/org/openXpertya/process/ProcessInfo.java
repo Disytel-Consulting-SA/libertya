@@ -910,6 +910,16 @@ public class ProcessInfo implements Serializable {
 	
 	private boolean				m_printPreview = false;
 
+	/**
+	 * Is print preview instead of direct print ? Only relevant if this is a reporting process 
+	 * @return boolean
+	 */
+	public boolean isPrintPreview()
+	{
+		return m_printPreview;
+	}
+
+	
 }    // ProcessInfo
 
 

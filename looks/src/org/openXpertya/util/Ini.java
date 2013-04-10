@@ -27,6 +27,7 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.Serializable;
+import java.nio.charset.Charset;
 import java.sql.Timestamp;
 import java.util.Enumeration;
 import java.util.Properties;
@@ -268,6 +269,9 @@ public final class Ini implements Serializable {
     /** Descripción de Campos */
     private static final String	DEFAULT_WARNING	= "Do_not_change_any_of_the_data_as_they_will_have_undocumented_side_effects.";
 
+	/** Charset */
+	public static final String P_CHARSET = "Charset";
+    
     /** Descripción de Campos */
     private static final String	P_WARNING_de	= "WarningD";
 
@@ -988,6 +992,23 @@ public final class Ini implements Serializable {
 	{
 		return getProperty (key).equals("Y");
 	}	//	getProperty
+
+	
+	/**
+	 * Get current charset
+	 * @return current charset
+	 * @since 3.1.4
+	 */
+	public static Charset getCharset() {
+		String charsetName = getProperty(P_CHARSET);
+		if (charsetName == null || charsetName.length() == 0)
+			return Charset.defaultCharset();
+		try {
+			return Charset.forName(charsetName);
+		} catch (Exception e) {
+		}
+		return Charset.defaultCharset();
+	}
 
 }	// Ini
 

@@ -34,6 +34,7 @@ import javax.swing.WindowConstants;
 
 import org.compiere.plaf.CompiereColor;
 import org.compiere.swing.CButton;
+import org.compiere.swing.CDialog;
 import org.compiere.swing.CLabel;
 import org.compiere.swing.CPanel;
 import org.openXpertya.util.CLogger;
@@ -48,7 +49,7 @@ import org.openXpertya.util.Msg;
  * @author     Equipo de Desarrollo de openXpertya    
  */
 
-public class Waiting extends JDialog implements ActionListener {
+public class Waiting extends CDialog implements ActionListener {
 
     /**
      * Constructor de la clase ...

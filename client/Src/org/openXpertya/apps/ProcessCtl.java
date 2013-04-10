@@ -406,26 +406,38 @@ public class ProcessCtl extends Thread {
     private void lock() {
 
         // log.info("...");
-
-        JFrame frame = Env.getFrame(( Container )m_parent );
-
-        if( frame instanceof AWindow ) {
-            (( AWindow )frame ).setBusyTimer( m_pi.getEstSeconds());
-        } else {
-            m_waiting = new Waiting( frame,Msg.getMsg( Env.getCtx(),"Processing" ),false,m_pi.getEstSeconds());
-        }
-
-        SwingUtilities.invokeLater( new Runnable() {
-            public void run() {
-                log.finer( "lock" );
-                m_parent.lockUI( m_pi );
-            }
-        } );
-
-        if( m_waiting != null ) {
-            m_waiting.toFront();
-            m_waiting.setVisible( true );
-        }
+		//m_parent is null for synchrous execution
+		if (m_parent != null)
+		{
+			if (m_parent instanceof Container)
+			{
+				//swing client
+				JFrame frame = Env.getFrame((Container)m_parent);
+				if (frame instanceof AWindow)
+					((AWindow)frame).setBusyTimer(m_pi.getEstSeconds());
+				else
+					m_waiting = new Waiting (frame, Msg.getMsg(Env.getCtx(), "Processing"), false, m_pi.getEstSeconds());
+				SwingUtilities.invokeLater(new Runnable()
+				{
+					public void run()
+					{
+						log.finer("lock");
+						m_parent.lockUI(m_pi);
+					}
+				});
+				if (m_waiting != null)
+				{
+					m_waiting.toFront();
+					m_waiting.setVisible(true);
+				}
+			}
+			else
+			{
+				//other client
+				log.finer("lock");
+				m_parent.lockUI(m_pi);
+			}
+		}
     }    // lock
 
     /**
@@ -436,28 +448,35 @@ public class ProcessCtl extends Thread {
     private void unlock() {
 
         // log.info("...");
-
-        SwingUtilities.invokeLater( new Runnable() {
-            public void run() {
-                String summary = m_pi.getSummary();
-
-                log.finer( "unlock - " + summary );
-
-                if( (summary != null) && (summary.indexOf( "@" ) != -1) ) {
-                    m_pi.setSummary( Msg.parseTranslation( Env.getCtx(),summary ));
-                }
-
-                m_parent.unlockUI( m_pi );
-            }
-        } );
-
-        // Remove Waiting/Processing Indicator
-
-        if( m_waiting != null ) {
-            m_waiting.dispose();
-        }
-
-        m_waiting = null;
+//		if (m_pi.isBatch())
+//			m_pi.setIsTimeout(true);
+		if (m_parent != null)
+		{
+			if (m_parent instanceof Container)
+			{
+				//swing client
+				SwingUtilities.invokeLater(new Runnable()
+				{
+					public void run()
+					{
+						String summary = m_pi.getSummary();
+						log.finer("unlock - " + summary);
+						if (summary != null && summary.indexOf('@') != -1)
+							m_pi.setSummary(Msg.parseTranslation(Env.getCtx(), summary));
+						m_parent.unlockUI(m_pi);
+					}
+				});
+				//	Remove Waiting/Processing Indicator
+				if (m_waiting != null)
+					m_waiting.dispose();
+				m_waiting = null;
+			}
+			else
+			{
+				//other client
+				m_parent.unlockUI(m_pi);
+			}
+		}
     }    // unlock
 
     /**

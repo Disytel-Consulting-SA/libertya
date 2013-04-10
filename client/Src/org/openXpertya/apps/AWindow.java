@@ -24,6 +24,7 @@ import java.awt.event.WindowEvent;
 import javax.swing.JFrame;
 
 import org.compiere.plaf.CompiereColor;
+import org.compiere.swing.CFrame;
 import org.openXpertya.model.MQuery;
 import org.openXpertya.util.CLogger;
 
@@ -35,7 +36,7 @@ import org.openXpertya.util.CLogger;
  * @author     Equipo de Desarrollo de openXpertya    
  */
 
-public class AWindow extends JFrame {
+public class AWindow extends CFrame {
 
     /**
      * Constructor de la clase ...

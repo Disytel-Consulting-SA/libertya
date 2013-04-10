@@ -831,4 +831,17 @@ public class MProcess extends X_AD_Process {
     	return pi;
     }
     
+	/**
+	 * Grant independence to GenerateModel from AD_Process_ID
+	 * @param value
+	 * @param trxName
+	 * @return
+	 */
+	public static int getProcess_ID(String value, String trxName)
+	{
+		int retValue = DB.getSQLValueEx(trxName, "SELECT AD_Process_ID FROM AD_Process WHERE Value=?", value);
+		return retValue;
+	}
+
+    
 }	// MProcess

@@ -20,25 +20,25 @@
 
 package org.compiere.swing;
 
-import org.compiere.plaf.CompiereColor;
-
-//~--- Importaciones JDK ------------------------------------------------------
-
+import java.awt.Container;
 import java.awt.Dialog;
 import java.awt.Frame;
 import java.awt.GraphicsConfiguration;
 import java.awt.HeadlessException;
+import java.awt.Window;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 
 import javax.swing.AbstractAction;
-import javax.swing.Action;
 import javax.swing.JComponent;
 import javax.swing.JDialog;
 import javax.swing.KeyStroke;
+
+import org.compiere.plaf.CompiereColor;
 
 /**
  *      Conveniance Dialog Class.
@@ -261,6 +261,82 @@ public class CDialog extends JDialog implements ActionListener, MouseListener {
      *      @param e
      */
     public void mouseReleased(MouseEvent e) {}
+    
+    
+	/**
+	 * 	Set Title
+	 *	@param title title
+	 */
+	public void setTitle(String title)
+	{
+		if (title != null)
+		{
+			int pos = title.indexOf('&');
+			if (pos != -1 && title.length() > pos)	//	We have a nemonic
+			{
+				int mnemonic = title.toUpperCase().charAt(pos+1);
+				if (mnemonic != ' ')
+					title = title.substring(0, pos) + title.substring(pos+1);
+			}
+		}
+		super.setTitle(title);
+	}	//	setTitle
+    
+    
+	/** Dispose Action Name				*/
+	protected static String			ACTION_DISPOSE = "CDialogDispose";
+	/**	Action							*/
+	protected static DialogAction	s_dialogAction = new DialogAction(ACTION_DISPOSE);
+	/** ALT-EXCAPE						*/
+	protected static KeyStroke		s_disposeKeyStroke = 
+		KeyStroke.getKeyStroke(KeyEvent.VK_PAUSE, InputEvent.ALT_MASK);
+
+	/**
+	 * 	Adempiere Dialog Action
+	 *	
+	 *  @author Jorg Janke
+	 *  @version $Id: CDialog.java,v 1.3 2006/07/30 00:52:24 jjanke Exp $
+	 */
+	static class DialogAction extends AbstractAction
+	{
+		/**
+		 * 
+		 */
+		private static final long serialVersionUID = -1502992970807699945L;
+
+		DialogAction (String actionName)
+		{
+			super(actionName);
+			putValue(AbstractAction.ACTION_COMMAND_KEY, actionName);
+		}	//	DialogAction
+		
+		/**
+		 * 	Action Listener
+		 *	@param e event
+		 */
+		public void actionPerformed (ActionEvent e)
+		{
+			if (ACTION_DISPOSE.equals(e.getActionCommand()))
+			{
+				Object source = e.getSource();
+				while (source != null)
+				{
+					if (source instanceof Window)
+					{
+						((Window)source).dispose();
+						return;
+					}
+					if (source instanceof Container)
+						source = ((Container)source).getParent();
+					else
+						source = null;
+				}
+			}
+			else
+				System.out.println("Action: " + e);
+		}	//	actionPerformed
+	}	//	DialogAction
+	
 }	// CDialog
 
 
