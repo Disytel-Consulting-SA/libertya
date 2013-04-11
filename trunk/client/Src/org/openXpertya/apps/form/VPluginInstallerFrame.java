@@ -7,8 +7,11 @@ package org.openXpertya.apps.form;
 import javax.swing.JFrame;
 import javax.swing.JPanel;
 
+import org.openXpertya.OpenXpertya;
 import org.openXpertya.apps.AEnv;
 import org.openXpertya.apps.ALogin;
+import org.openXpertya.util.DB;
+import org.openXpertya.util.Env;
 import org.openXpertya.util.Splash;
 
 public class VPluginInstallerFrame extends FormFrame {
@@ -17,23 +20,24 @@ public class VPluginInstallerFrame extends FormFrame {
 	
 	public static void main(String[] args)
 	{
-		org.openXpertya.OpenXpertya.startupEnvironment( true );
 		
-		Splash splash = Splash.getSplash();
-		ALogin login = new ALogin( splash );
-		
-        if( !login.initLogin())                    
-        {
-            try {
-                AEnv.showCenterScreen( login );    
-            } catch( Exception ex ) {}
+	  	String oxpHomeDir = System.getenv("OXP_HOME"); 
+	  	if (oxpHomeDir == null) {
+	  		System.out.println("ERROR: La variable de entorno OXP_HOME no está seteada ");
+	  		System.exit(1);
+	  	}
+	  	// Cargar el entorno basico
+	  	System.setProperty("OXP_HOME", oxpHomeDir);
+	  	if (!OpenXpertya.startupEnvironment( false )){
+	  		System.out.println("ERROR: Error al iniciar la configuracion de replicacion ");
+	  		System.exit(1);
+	  	}
 
-            if( !login.isConnected() ||!login.isOKpressed()) {
-                AEnv.exit( 1 );
-            }
-        }
-        splash.setVisible(false);
-        
+	  	// Configuracion 
+	  	Env.setContext(Env.getCtx(), "#AD_Client_ID", 0);
+	  	Env.setContext(Env.getCtx(), "#AD_Org_ID", 0);
+	  	Env.setContext(Env.getCtx(), "#AD_Language", "es_AR");
+
 		new VPluginInstallerFrame();
 	}
 	
