@@ -2835,7 +2835,7 @@ public class MInOut extends X_M_InOut implements DocAction {
 
         reversal.setC_Order_ID( getC_Order_ID());
         reversal.addDescription( "{->" + getDocumentNo() + ")" );
-
+        reversal.setTPVInstance(isTPVInstance());
         //
 
         if( !reversal.processIt( DocAction.ACTION_Complete )) {
