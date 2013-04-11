@@ -41,6 +41,7 @@ public class ReplicationConstantsWS extends ReplicationConstants {
 	{
 		// Casos actuales de replicacion ciclica.  TODO: deshardcode
 		addCyclicColumnToTable(X_C_Invoice.Table_Name,	"C_CashLine_ID");
+		addCyclicColumnToTable(X_C_Invoice.Table_Name,	"C_Invoice_Orig_ID");
 		addCyclicColumnToTable(X_C_Cash.Table_Name, 	"C_PosJournal_ID");
 		addCyclicColumnToTable(X_C_Order.Table_Name, 	"C_Payment_ID");
 		addCyclicColumnToTable(X_C_CashLine.Table_Name,	"TransferCashLine_ID");
