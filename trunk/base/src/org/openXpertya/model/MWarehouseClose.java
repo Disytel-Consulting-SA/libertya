@@ -364,24 +364,28 @@ public class MWarehouseClose extends X_M_Warehouse_Close implements DocAction{
 
 	@Override
 	public boolean reActivateIt() {
-		// Sólo se puede abrir el último completo más cercano a la fecha actual
-		// Obtengo el último cierre completo anterior a la fecha actual
-		MWarehouseClose beforeClosure = (MWarehouseClose) PO
-				.findFirst(
-						getCtx(),
-						get_TableName(),
-						"m_warehouse_id = ? AND date_trunc('day',datetrx) < date_trunc('day',?::date) AND docstatus <> 'DR'",
-						new Object[] { getM_Warehouse_ID(), Env.getDate() },
-						new String[] { "datetrx desc" }, get_TrxName());
-		// Si ese cierre no es el que estoy abriendo, entonces no se puede abrir
-		if(beforeClosure != null && beforeClosure.getID() != getID()){
-			// No se puede abrir otro cierre que no sea el anterior completo a
-			// la fecha actual
-			m_processMsg = Msg.getMsg(getCtx(),
-					"CanOpenOnlyWarehouseClosureWithDate",
-					new Object[] { new SimpleDateFormat("dd/MM/yyyy")
-							.format(beforeClosure.getDateTrx()) });
-			return false;
+		// Si el cierre completo es el de la fecha actual, entonces se deja abrir
+		if(Env.getDate().compareTo(getDateTrx()) != 0){
+			// Sino es el de la fecha actual, sólo se puede abrir el último
+			// completo más cercano a la fecha actual
+			// Obtengo el último cierre completo anterior a la fecha actual
+			MWarehouseClose beforeClosure = (MWarehouseClose) PO
+					.findFirst(
+							getCtx(),
+							get_TableName(),
+							"m_warehouse_id = ? AND date_trunc('day',datetrx) < date_trunc('day',?::date) AND docstatus <> 'DR'",
+							new Object[] { getM_Warehouse_ID(), Env.getDate() },
+							new String[] { "datetrx desc" }, get_TrxName());
+			// Si ese cierre no es el que estoy abriendo, entonces no se puede abrir
+			if(beforeClosure != null && beforeClosure.getID() != getID()){
+				// No se puede abrir otro cierre que no sea el anterior completo a
+				// la fecha actual
+				m_processMsg = Msg.getMsg(getCtx(),
+						"CanOpenOnlyWarehouseClosureWithDate",
+						new Object[] { new SimpleDateFormat("dd/MM/yyyy")
+								.format(beforeClosure.getDateTrx()) });
+				return false;
+			}
 		}
 		
 		setDocAction(DOCACTION_Complete);
