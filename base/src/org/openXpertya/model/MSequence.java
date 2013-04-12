@@ -820,9 +820,14 @@ public class MSequence extends X_AD_Sequence {
      *
      * @return
      */
-    public static MSequence get(Properties ctx, String tableName) {
+    public static MSequence get(Properties ctx, String tableName, boolean isTableID, Integer AD_Client_ID) {
 
-        String	sql	= "SELECT * FROM AD_Sequence " + "WHERE UPPER(Name)=?" + " AND IsTableID='Y'";
+        String	sql	= 	"SELECT * FROM AD_Sequence " + 
+        				" WHERE UPPER(Name) = UPPER(?)" + 
+        				" AND IsTableID = " + (isTableID?"'Y'":"'N'");
+        
+        if (AD_Client_ID != null)
+        	sql = sql + " AND AD_Client_ID = " + AD_Client_ID;
         MSequence		retValue	= null;
         PreparedStatement	pstmt		= null;
 

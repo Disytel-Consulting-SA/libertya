@@ -2615,7 +2615,7 @@ public class VOrdenPago extends CPanel implements FormPanel,ActionListener,Table
 		} else if (e.getSource() == cboDocumentType) {
 			if(e.getNewValue() != null){
 				m_model.setDocumentType((Integer)e.getNewValue());
-				seq = MSequence.get(m_ctx, getSeqName());
+				seq = MSequence.get(m_ctx, getSeqName(), false, Env.getAD_Client_ID(m_ctx));
 				fldDocumentNo.setValue(seq.getCurrentNext());
 			}
 			else{
