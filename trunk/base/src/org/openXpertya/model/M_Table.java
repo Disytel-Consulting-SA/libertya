@@ -129,7 +129,7 @@ public class M_Table extends X_AD_Table {
             MSequence.createTableSequence(getCtx(), getTableName(), get_TrxName());
         } else {
 
-            MSequence	seq	= MSequence.get(getCtx(), getTableName());
+            MSequence	seq	= MSequence.get(getCtx(), getTableName(), true, null);
 
             if ((seq == null) || (seq.getID() == 0)) {
                 MSequence.createTableSequence(getCtx(), getTableName(), get_TrxName());
