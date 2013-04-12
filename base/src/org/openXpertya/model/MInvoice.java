@@ -5138,15 +5138,21 @@ public class MInvoice extends X_C_Invoice implements DocAction {
 	}
 
 	public void calculatePercepciones() throws Exception {
-		GeneratorPercepciones generator = new GeneratorPercepciones(getCtx(),
-				getDiscountableWrapper(), get_TrxName());
-		generator.calculatePercepciones(this);
+		MDocType docType = MDocType.get(getCtx(), getC_DocTypeTarget_ID()); 
+		if (docType.isFiscalDocument()){
+			GeneratorPercepciones generator = new GeneratorPercepciones(getCtx(),
+					getDiscountableWrapper(), get_TrxName());
+			generator.calculatePercepciones(this);
+		}
 	}
 
 	public void recalculatePercepciones() throws Exception {
-		GeneratorPercepciones generator = new GeneratorPercepciones(getCtx(),
-				getDiscountableWrapper(), get_TrxName());
-		generator.recalculatePercepciones(this);
+		MDocType docType = MDocType.get(getCtx(), getC_DocTypeTarget_ID()); 
+		if (docType.isFiscalDocument()){
+			GeneratorPercepciones generator = new GeneratorPercepciones(getCtx(),
+					getDiscountableWrapper(), get_TrxName());
+			generator.recalculatePercepciones(this);			
+		}
 	}	
 
 	/**
