@@ -69,9 +69,9 @@
 				<staticText>
 					<reportElement
 						x="0"
-						y="32"
+						y="30"
 						width="80"
-						height="12"
+						height="14"
 						key="staticText-1"/>
 					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
 					<textElement verticalAlignment="Middle">
@@ -82,9 +82,9 @@
 				<textField isStretchWithOverflow="false" pattern="dd/MM/yyyy" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
 						x="80"
-						y="32"
+						y="30"
 						width="190"
-						height="12"
+						height="14"
 						key="textField-1"/>
 					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
 					<textElement textAlignment="Left" verticalAlignment="Middle">
@@ -95,9 +95,9 @@
 				<textField isStretchWithOverflow="false" pattern="dd/MM/yyyy" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
 						x="330"
-						y="32"
+						y="30"
 						width="200"
-						height="12"
+						height="14"
 						key="textField-2"/>
 					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
 					<textElement verticalAlignment="Middle">
@@ -108,9 +108,9 @@
 				<staticText>
 					<reportElement
 						x="270"
-						y="32"
+						y="30"
 						width="60"
-						height="12"
+						height="14"
 						key="staticText-2">
 							<printWhenExpression><![CDATA[new Boolean($P{DATE_TO} != null)]]></printWhenExpression>
 						</reportElement>
@@ -125,7 +125,7 @@
 						x="80"
 						y="44"
 						width="450"
-						height="12"
+						height="14"
 						key="textField"/>
 					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
 					<textElement textAlignment="Left" verticalAlignment="Middle">
@@ -138,7 +138,7 @@
 						x="0"
 						y="44"
 						width="80"
-						height="12"
+						height="14"
 						key="staticText-3"/>
 					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
 					<textElement verticalAlignment="Middle">
@@ -149,9 +149,9 @@
 				<staticText>
 					<reportElement
 						x="0"
-						y="56"
+						y="58"
 						width="80"
-						height="12"
+						height="14"
 						key="staticText-4">
 							<printWhenExpression><![CDATA[new Boolean($P{POS_NAME} != null && $P{POS_NAME}.length() > 0)]]></printWhenExpression>
 						</reportElement>
@@ -164,9 +164,9 @@
 				<textField isStretchWithOverflow="false" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
 						x="80"
-						y="56"
+						y="58"
 						width="190"
-						height="12"
+						height="14"
 						key="textField"/>
 					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
 					<textElement verticalAlignment="Middle">
@@ -177,9 +177,9 @@
 				<staticText>
 					<reportElement
 						x="270"
-						y="56"
+						y="58"
 						width="60"
-						height="12"
+						height="14"
 						key="staticText-5">
 							<printWhenExpression><![CDATA[new Boolean($P{USER_NAME} != null && $P{USER_NAME}.length() > 0)]]></printWhenExpression>
 						</reportElement>
@@ -192,9 +192,9 @@
 				<textField isStretchWithOverflow="false" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
 						x="330"
-						y="56"
+						y="58"
 						width="200"
-						height="12"
+						height="14"
 						key="textField"/>
 					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
 					<textElement verticalAlignment="Middle">
