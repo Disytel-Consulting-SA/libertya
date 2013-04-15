@@ -526,6 +526,8 @@ public class ReportStarter implements ProcessCall // , ClientProcess
             // contribution from Ricardo (ralexsander)
             // in iReports you can 'SELECT' AD_Client_ID, AD_Org_ID and AD_User_ID using only AD_PINSTANCE_ID
             params.put("AD_PINSTANCE_ID", new Integer( AD_PInstance_ID));
+            
+            params.put("AD_CLIENT_ID", Env.getAD_Client_ID(Env.getCtx()));
 
             log.info("ReportStarter - leo parametros!");
             
