@@ -2457,7 +2457,7 @@ public class VOrdenPagoModel implements TableModelListener {
 		hdr.setIsManual(false);
 
 		hdr.setDocumentNo(documentNo);
-
+		hdr.setC_DocType_ID(documentType);
 		// Detalle es una variable String inicializada en vacio que nunca se modifica.
 		//hdr.setdetalle(detalle);
     }
