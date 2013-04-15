@@ -1726,3 +1726,12 @@ UPDATE C_Country SET capturesequence = '@A1@ @A2@ @A3@ @A4@ @C@,  @P@ @CO@' WHER
 UPDATE ad_system SET dummy = (SELECT addcolumnifnotexists('AD_Process_Para','readonlylogic', 'varchar(2000)'));
 UPDATE ad_system SET dummy = (SELECT addcolumnifnotexists('AD_UserMail','subject', 'varchar(255)'));
 UPDATE ad_system SET dummy = (SELECT addcolumnifnotexists('AD_UserMail','mailtext', 'varchar(2000)'));
+
+-- 20130412-1930 Indice y constraint por performance en tabla e_electronicinvoice
+create index e_electronicinvoice_key on e_electronicinvoice (e_electronicinvoice_id);
+alter table e_electronicinvoice add constraint e_electronicinvoice_id_key PRIMARY KEY (e_electronicinvoice_id);
+
+-- 20130412-1930 Indice y constraint por performance en tabla e_electronicinvoiceline
+create index e_electronicinvoiceline_electronicinvoice on e_electronicinvoiceline (e_electronicinvoice_id);
+alter table e_electronicinvoiceline add constraint e_electronicinvoiceline_key PRIMARY KEY (e_electronicinvoiceline_id);
+alter table e_electronicinvoiceline add constraint eelectronicinvoice_eelectronicline FOREIGN KEY (e_electronicinvoice_id) REFERENCES e_electronicinvoice (e_electronicinvoice_id) MATCH SIMPLE ON UPDATE NO ACTION ON DELETE CASCADE;

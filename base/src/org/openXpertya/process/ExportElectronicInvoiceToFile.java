@@ -22,7 +22,7 @@ public class ExportElectronicInvoiceToFile extends SvrProcess {
 	@Override
 	protected String doIt() throws Exception {
 	    // delete all rows older than a week
-		DB.executeUpdate("DELETE FROM T_ELECTRONICINVOICE WHERE CREATED < ('now'::text)::timestamp(6) - interval '7 days'");		
+		DB.executeUpdate("DELETE FROM T_ELECTRONICINVOICE WHERE (AD_Client_ID = "+ getAD_Client_ID() +") AND (createdby = "+ getAD_User_ID()+") ");		
 		// delete all rows in table with the given ad_pinstance_id
 		DB.executeUpdate("DELETE FROM T_ELECTRONICINVOICE WHERE AD_PInstance_ID = " + getAD_PInstance_ID());
 		
@@ -32,39 +32,42 @@ public class ExportElectronicInvoiceToFile extends SvrProcess {
 		// Consulta con todos los datos
 		StringBuffer sql = new StringBuffer();
 		sql.append("select " +
-				" (select count(e_electronicinvoice_id) from e_electronicinvoice where dateinvoiced >= '"+periodo.getStartDate()+"' and dateinvoiced <= '"+periodo.getEndDate()+"') as factcantregtipo1, "+
-				" (select count(e_electronicinvoice_id) from e_electronicinvoice where dateinvoiced >= '"+periodo.getStartDate()+"' and dateinvoiced <= '"+periodo.getEndDate()+"' and issotrx = '"+"Y"+"') as ventacantregtipo1, "+
-				" (select count(e_electronicinvoice_id) from e_electronicinvoice where dateinvoiced >= '"+periodo.getStartDate()+"' and dateinvoiced <= '"+periodo.getEndDate()+"' and issotrx = '"+"N"+"') as compracantregtipo1, "+
-				" (select sum(grandtotal) from e_electronicinvoice where dateinvoiced >= '"+periodo.getStartDate()+"' and dateinvoiced <= '"+periodo.getEndDate()+"') as factgrandtotal, "+
-				" (select sum(grandtotal) from e_electronicinvoice where dateinvoiced >= '"+periodo.getStartDate()+"' and dateinvoiced <= '"+periodo.getEndDate()+"' and issotrx = 'Y') as ventagrandtotal, "+
-				" (select sum(grandtotal) from e_electronicinvoice where dateinvoiced >= '"+periodo.getStartDate()+"' and dateinvoiced <= '"+periodo.getEndDate()+"' and issotrx = 'N') as compragrandtotal, "+
-				" (select sum(taxbaseamt) from e_electronicinvoice where dateinvoiced >= '"+periodo.getStartDate()+"' and dateinvoiced <= '"+periodo.getEndDate()+"') as facttaxbaseamt, "+
-				" (select sum(taxbaseamt) from e_electronicinvoice where dateinvoiced >= '"+periodo.getStartDate()+"' and dateinvoiced <= '"+periodo.getEndDate()+"' and issotrx = 'Y') as ventataxbaseamt, "+
-				" (select sum(taxbaseamt) from e_electronicinvoice where dateinvoiced >= '"+periodo.getStartDate()+"' and dateinvoiced <= '"+periodo.getEndDate()+"' and issotrx = 'N') as comprataxbaseamt, "+
-				" (select sum(totallines) from e_electronicinvoice where dateinvoiced >= '"+periodo.getStartDate()+"' and dateinvoiced <= '"+periodo.getEndDate()+"') as facttotallines, "+
-				" (select sum(totallines) from e_electronicinvoice where dateinvoiced >= '"+periodo.getStartDate()+"' and dateinvoiced <= '"+periodo.getEndDate()+"' and issotrx = 'Y') as ventatotallines, "+
-				" (select sum(totallines) from e_electronicinvoice where dateinvoiced >= '"+periodo.getStartDate()+"' and dateinvoiced <= '"+periodo.getEndDate()+"' and issotrx = 'N') as compratotallines, "+
-				" (select sum(taxamt) from e_electronicinvoice where dateinvoiced >= '"+periodo.getStartDate()+"' and dateinvoiced <= '"+periodo.getEndDate()+"') as facttaxamt, "+
-				" (select sum(taxamt) from e_electronicinvoice where dateinvoiced >= '"+periodo.getStartDate()+"' and dateinvoiced <= '"+periodo.getEndDate()+"' and issotrx = 'Y') as ventataxamt, "+
-				" (select sum(taxamt) from e_electronicinvoice where dateinvoiced >= '"+periodo.getStartDate()+"' and dateinvoiced <= '"+periodo.getEndDate()+"' and issotrx = 'N') as comprataxamt, "+
-				" (select sum(rni) from e_electronicinvoice where dateinvoiced >= '"+periodo.getStartDate()+"' and dateinvoiced <= '"+periodo.getEndDate()+"') as factrni, "+
-				" (select sum(rni) from e_electronicinvoice where dateinvoiced >= '"+periodo.getStartDate()+"' and dateinvoiced <= '"+periodo.getEndDate()+"' and issotrx = 'Y') as ventarni, "+
-				" (select sum(rni) from e_electronicinvoice where dateinvoiced >= '"+periodo.getStartDate()+"' and dateinvoiced <= '"+periodo.getEndDate()+"' and issotrx = 'N') as comprarni, "+
-				" (select sum(operacionesexentas) from e_electronicinvoice where dateinvoiced >= '"+periodo.getStartDate()+"' and dateinvoiced <= '"+periodo.getEndDate()+"') as factoperacionesexentas, "+
-				" (select sum(operacionesexentas) from e_electronicinvoice where dateinvoiced >= '"+periodo.getStartDate()+"' and dateinvoiced <= '"+periodo.getEndDate()+"' and issotrx = 'Y') as ventaoperacionesexentas, "+
-				" (select sum(operacionesexentas) from e_electronicinvoice where dateinvoiced >= '"+periodo.getStartDate()+"' and dateinvoiced <= '"+periodo.getEndDate()+"' and issotrx = 'N') as compraoperacionesexentas, "+
-				" (select sum(importepercepciones) from e_electronicinvoice where dateinvoiced >= '"+periodo.getStartDate()+"' and dateinvoiced <= '"+periodo.getEndDate()+"') as factimportepercepciones, "+
-				" (select sum(importepercepciones) from e_electronicinvoice where dateinvoiced >= '"+periodo.getStartDate()+"' and dateinvoiced <= '"+periodo.getEndDate()+"' and issotrx = 'Y') as ventaimportepercepciones, "+
-				" (select sum(importepercepciones) from e_electronicinvoice where dateinvoiced >= '"+periodo.getStartDate()+"' and dateinvoiced <= '"+periodo.getEndDate()+"' and issotrx = 'N') as compraimportepercepciones, "+
-				" (select sum(percepcionesiibb) from e_electronicinvoice where dateinvoiced >= '"+periodo.getStartDate()+"' and dateinvoiced <= '"+periodo.getEndDate()+"') as factpercepcionesiibb, "+
-				" (select sum(percepcionesiibb) from e_electronicinvoice where dateinvoiced >= '"+periodo.getStartDate()+"' and dateinvoiced <= '"+periodo.getEndDate()+"' and issotrx = 'Y') as ventapercepcionesiibb, "+
-				" (select sum(percepcionesiibb) from e_electronicinvoice where dateinvoiced >= '"+periodo.getStartDate()+"' and dateinvoiced <= '"+periodo.getEndDate()+"' and issotrx = 'N') as comprapercepcionesiibb, "+
-				" (select sum(impuestosmunicipales) from e_electronicinvoice where dateinvoiced >= '"+periodo.getStartDate()+"' and dateinvoiced <= '"+periodo.getEndDate()+"') as factimpuestosmunicipales, "+
-				" (select sum(impuestosmunicipales) from e_electronicinvoice where dateinvoiced >= '"+periodo.getStartDate()+"' and dateinvoiced <= '"+periodo.getEndDate()+"' and issotrx = 'Y') as ventaimpuestosmunicipales, "+
-				" (select sum(impuestosmunicipales) from e_electronicinvoice where dateinvoiced >= '"+periodo.getStartDate()+"' and dateinvoiced <= '"+periodo.getEndDate()+"' and issotrx = 'N') as compraimpuestosmunicipales, "+
-				" (select sum(impuestosinternos) from e_electronicinvoice where dateinvoiced >= '"+periodo.getStartDate()+"' and dateinvoiced <= '"+periodo.getEndDate()+"') as factimpuestosinternos, "+
-				" (select sum(impuestosinternos) from e_electronicinvoice where dateinvoiced >= '"+periodo.getStartDate()+"' and dateinvoiced <= '"+periodo.getEndDate()+"' and issotrx = 'Y') as ventaimpuestosinternos, "+
-				" (select sum(impuestosinternos) from e_electronicinvoice where dateinvoiced >= '"+periodo.getStartDate()+"' and dateinvoiced <= '"+periodo.getEndDate()+"' and issotrx = 'N') as compraimpuestosinternos, "+
+				" (select count(e_electronicinvoice_id) from e_electronicinvoice where dateinvoiced >= '"+periodo.getStartDate()+"' and dateinvoiced <= '"+periodo.getEndDate()+"' and (AD_Client_ID = "+ getAD_Client_ID() +") and (createdby = "+ getAD_User_ID()+") ) as factcantregtipo1, "+
+				" (select count(e_electronicinvoice_id) from e_electronicinvoice where dateinvoiced >= '"+periodo.getStartDate()+"' and dateinvoiced <= '"+periodo.getEndDate()+"' and issotrx = '"+"Y"+"' and (AD_Client_ID = "+ getAD_Client_ID() +") and (createdby = "+ getAD_User_ID()+")) as ventacantregtipo1, "+
+				" (select count(e_electronicinvoice_id) from e_electronicinvoice where dateinvoiced >= '"+periodo.getStartDate()+"' and dateinvoiced <= '"+periodo.getEndDate()+"' and issotrx = '"+"N"+"' and (AD_Client_ID = "+ getAD_Client_ID() +") and (createdby = "+ getAD_User_ID()+")) as compracantregtipo1, "+
+				" (select sum(grandtotal) from e_electronicinvoice where dateinvoiced >= '"+periodo.getStartDate()+"' and dateinvoiced <= '"+periodo.getEndDate()+"' and (AD_Client_ID = "+ getAD_Client_ID() +") and (createdby = "+ getAD_User_ID()+")) as factgrandtotal, "+
+				" (select sum(grandtotal) from e_electronicinvoice where dateinvoiced >= '"+periodo.getStartDate()+"' and dateinvoiced <= '"+periodo.getEndDate()+"' and issotrx = 'Y' and (AD_Client_ID = "+ getAD_Client_ID() +") and (createdby = "+ getAD_User_ID()+")) as ventagrandtotal, "+
+				" (select sum(grandtotal) from e_electronicinvoice where dateinvoiced >= '"+periodo.getStartDate()+"' and dateinvoiced <= '"+periodo.getEndDate()+"' and issotrx = 'N' and (AD_Client_ID = "+ getAD_Client_ID() +") and (createdby = "+ getAD_User_ID()+")) as compragrandtotal, "+
+				// Importe total de conceptos que no integran el precio neto gravado
+				" (select sum(taxbaseamt) from e_electronicinvoice where dateinvoiced >= '"+periodo.getStartDate()+"' and dateinvoiced <= '"+periodo.getEndDate()+"' and (AD_Client_ID = "+ getAD_Client_ID() +") and (createdby = "+ getAD_User_ID()+")) as facttaxbaseamt, "+
+				" (select sum(taxbaseamt) from e_electronicinvoice where dateinvoiced >= '"+periodo.getStartDate()+"' and dateinvoiced <= '"+periodo.getEndDate()+"' and issotrx = 'Y' and (AD_Client_ID = "+ getAD_Client_ID() +") and (createdby = "+ getAD_User_ID()+")) as ventataxbaseamt, "+
+				" (select sum(taxbaseamt) from e_electronicinvoice where dateinvoiced >= '"+periodo.getStartDate()+"' and dateinvoiced <= '"+periodo.getEndDate()+"' and issotrx = 'N' and (AD_Client_ID = "+ getAD_Client_ID() +") and (createdby = "+ getAD_User_ID()+")) as comprataxbaseamt, "+
+				// Importe neto gravado
+				" (select sum(totallines) from e_electronicinvoice where dateinvoiced >= '"+periodo.getStartDate()+"' and dateinvoiced <= '"+periodo.getEndDate()+"' and (AD_Client_ID = "+ getAD_Client_ID() +") and (createdby = "+ getAD_User_ID()+")) as facttotallines, "+
+				" (select sum(totallines) from e_electronicinvoice where dateinvoiced >= '"+periodo.getStartDate()+"' and dateinvoiced <= '"+periodo.getEndDate()+"' and issotrx = 'Y' and (AD_Client_ID = "+ getAD_Client_ID() +") and (createdby = "+ getAD_User_ID()+")) as ventatotallines, "+
+				" (select sum(totallines) from e_electronicinvoice where dateinvoiced >= '"+periodo.getStartDate()+"' and dateinvoiced <= '"+periodo.getEndDate()+"' and issotrx = 'N' and (AD_Client_ID = "+ getAD_Client_ID() +") and (createdby = "+ getAD_User_ID()+")) as compratotallines, "+
+				// Impuesto liquidado
+				" (select sum(taxamt) from e_electronicinvoice where dateinvoiced >= '"+periodo.getStartDate()+"' and dateinvoiced <= '"+periodo.getEndDate()+"' and (AD_Client_ID = "+ getAD_Client_ID() +") and (createdby = "+ getAD_User_ID()+")) as facttaxamt, "+
+				" (select sum(taxamt) from e_electronicinvoice where dateinvoiced >= '"+periodo.getStartDate()+"' and dateinvoiced <= '"+periodo.getEndDate()+"' and issotrx = 'Y' and (AD_Client_ID = "+ getAD_Client_ID() +") and (createdby = "+ getAD_User_ID()+")) as ventataxamt, "+
+				" (select sum(taxamt) from e_electronicinvoice where dateinvoiced >= '"+periodo.getStartDate()+"' and dateinvoiced <= '"+periodo.getEndDate()+"' and issotrx = 'N' and (AD_Client_ID = "+ getAD_Client_ID() +") and (createdby = "+ getAD_User_ID()+")) as comprataxamt, "+
+				" (select sum(rni) from e_electronicinvoice where dateinvoiced >= '"+periodo.getStartDate()+"' and dateinvoiced <= '"+periodo.getEndDate()+"' and (AD_Client_ID = "+ getAD_Client_ID() +") and (createdby = "+ getAD_User_ID()+")) as factrni, "+
+				" (select sum(rni) from e_electronicinvoice where dateinvoiced >= '"+periodo.getStartDate()+"' and dateinvoiced <= '"+periodo.getEndDate()+"' and issotrx = 'Y' and (AD_Client_ID = "+ getAD_Client_ID() +") and (createdby = "+ getAD_User_ID()+")) as ventarni, "+
+				" (select sum(rni) from e_electronicinvoice where dateinvoiced >= '"+periodo.getStartDate()+"' and dateinvoiced <= '"+periodo.getEndDate()+"' and issotrx = 'N' and (AD_Client_ID = "+ getAD_Client_ID() +") and (createdby = "+ getAD_User_ID()+")) as comprarni, "+
+				" (select sum(operacionesexentas) from e_electronicinvoice where dateinvoiced >= '"+periodo.getStartDate()+"' and dateinvoiced <= '"+periodo.getEndDate()+"' and (AD_Client_ID = "+ getAD_Client_ID() +") and (createdby = "+ getAD_User_ID()+")) as factoperacionesexentas, "+
+				" (select sum(operacionesexentas) from e_electronicinvoice where dateinvoiced >= '"+periodo.getStartDate()+"' and dateinvoiced <= '"+periodo.getEndDate()+"' and issotrx = 'Y' and (AD_Client_ID = "+ getAD_Client_ID() +") and (createdby = "+ getAD_User_ID()+")) as ventaoperacionesexentas, "+
+				" (select sum(operacionesexentas) from e_electronicinvoice where dateinvoiced >= '"+periodo.getStartDate()+"' and dateinvoiced <= '"+periodo.getEndDate()+"' and issotrx = 'N' and (AD_Client_ID = "+ getAD_Client_ID() +") and (createdby = "+ getAD_User_ID()+")) as compraoperacionesexentas, "+
+				" (select sum(importepercepciones) from e_electronicinvoice where dateinvoiced >= '"+periodo.getStartDate()+"' and dateinvoiced <= '"+periodo.getEndDate()+"' and (AD_Client_ID = "+ getAD_Client_ID() +") and (createdby = "+ getAD_User_ID()+")) as factimportepercepciones, "+
+				" (select sum(importepercepciones) from e_electronicinvoice where dateinvoiced >= '"+periodo.getStartDate()+"' and dateinvoiced <= '"+periodo.getEndDate()+"' and issotrx = 'Y' and (AD_Client_ID = "+ getAD_Client_ID() +") and (createdby = "+ getAD_User_ID()+")) as ventaimportepercepciones, "+
+				" (select sum(importepercepciones) from e_electronicinvoice where dateinvoiced >= '"+periodo.getStartDate()+"' and dateinvoiced <= '"+periodo.getEndDate()+"' and issotrx = 'N' and (AD_Client_ID = "+ getAD_Client_ID() +") and (createdby = "+ getAD_User_ID()+")) as compraimportepercepciones, "+
+				" (select sum(percepcionesiibb) from e_electronicinvoice where dateinvoiced >= '"+periodo.getStartDate()+"' and dateinvoiced <= '"+periodo.getEndDate()+"' and (AD_Client_ID = "+ getAD_Client_ID() +") and (createdby = "+ getAD_User_ID()+")) as factpercepcionesiibb, "+
+				" (select sum(percepcionesiibb) from e_electronicinvoice where dateinvoiced >= '"+periodo.getStartDate()+"' and dateinvoiced <= '"+periodo.getEndDate()+"' and issotrx = 'Y' and (AD_Client_ID = "+ getAD_Client_ID() +") and (createdby = "+ getAD_User_ID()+")) as ventapercepcionesiibb, "+
+				" (select sum(percepcionesiibb) from e_electronicinvoice where dateinvoiced >= '"+periodo.getStartDate()+"' and dateinvoiced <= '"+periodo.getEndDate()+"' and issotrx = 'N' and (AD_Client_ID = "+ getAD_Client_ID() +") and (createdby = "+ getAD_User_ID()+")) as comprapercepcionesiibb, "+
+				" (select sum(impuestosmunicipales) from e_electronicinvoice where dateinvoiced >= '"+periodo.getStartDate()+"' and dateinvoiced <= '"+periodo.getEndDate()+"' and (AD_Client_ID = "+ getAD_Client_ID() +") and (createdby = "+ getAD_User_ID()+")) as factimpuestosmunicipales, "+
+				" (select sum(impuestosmunicipales) from e_electronicinvoice where dateinvoiced >= '"+periodo.getStartDate()+"' and dateinvoiced <= '"+periodo.getEndDate()+"' and issotrx = 'Y' and (AD_Client_ID = "+ getAD_Client_ID() +") and (createdby = "+ getAD_User_ID()+")) as ventaimpuestosmunicipales, "+
+				" (select sum(impuestosmunicipales) from e_electronicinvoice where dateinvoiced >= '"+periodo.getStartDate()+"' and dateinvoiced <= '"+periodo.getEndDate()+"' and issotrx = 'N' and (AD_Client_ID = "+ getAD_Client_ID() +") and (createdby = "+ getAD_User_ID()+")) as compraimpuestosmunicipales, "+
+				" (select sum(impuestosinternos) from e_electronicinvoice where dateinvoiced >= '"+periodo.getStartDate()+"' and dateinvoiced <= '"+periodo.getEndDate()+"' and (AD_Client_ID = "+ getAD_Client_ID() +") and (createdby = "+ getAD_User_ID()+")) as factimpuestosinternos, "+
+				" (select sum(impuestosinternos) from e_electronicinvoice where dateinvoiced >= '"+periodo.getStartDate()+"' and dateinvoiced <= '"+periodo.getEndDate()+"' and issotrx = 'Y' and (AD_Client_ID = "+ getAD_Client_ID() +") and (createdby = "+ getAD_User_ID()+")) as ventaimpuestosinternos, "+
+				" (select sum(impuestosinternos) from e_electronicinvoice where dateinvoiced >= '"+periodo.getStartDate()+"' and dateinvoiced <= '"+periodo.getEndDate()+"' and issotrx = 'N' and (AD_Client_ID = "+ getAD_Client_ID() +") and (createdby = "+ getAD_User_ID()+")) as compraimpuestosinternos, "+
 				" hdr.identif_comprador," +
 				" hdr.identif_vendedor," +
 				" hdr.multiplyrate," +
@@ -98,6 +101,7 @@ public class ExportElectronicInvoiceToFile extends SvrProcess {
 				" hdr.tipo_responsable," +
 				" hdr.tipo_comprobante," +
 				" hdr.importepercepciones," +
+				" hdr.percepcionesiibb," +
 				" hdr.impuestosmunicipales," +
 				" hdr.impuestosinternos," +
 				" hdr.jurimpuestosmunicipales," +
@@ -112,7 +116,7 @@ public class ExportElectronicInvoiceToFile extends SvrProcess {
 				" ln.rate " +
 				" from e_electronicinvoice hdr");
 		sql.append(" inner join e_electronicinvoiceline ln on (hdr.e_electronicinvoice_id = ln.e_electronicinvoice_id)");
-		sql.append(" where dateinvoiced >= '"+periodo.getStartDate()+"' and dateinvoiced <= '"+periodo.getEndDate()+"'");
+		sql.append(" where dateinvoiced >= '"+periodo.getStartDate()+"' and dateinvoiced <= '"+periodo.getEndDate()+"' and (hdr.AD_Client_ID = "+ getAD_Client_ID() +") and (hdr.createdby = "+ getAD_User_ID()+") ");
 				
 		PreparedStatement pstmt = null;
 		ResultSet rs = null;
@@ -219,6 +223,7 @@ public class ExportElectronicInvoiceToFile extends SvrProcess {
 				eInv.setTipo_Comprobante(rs.getInt("tipo_comprobante"));
 				eInv.setRate(rs.getBigDecimal("rate").setScale(2));
 				eInv.setImportePercepciones(rs.getBigDecimal("importepercepciones"));
+				eInv.setPercepcionesIIBB(rs.getBigDecimal("percepcionesiibb"));
 				eInv.setImpuestosMunicipales(rs.getBigDecimal("impuestosmunicipales"));
 				eInv.setImpuestosInternos(rs.getBigDecimal("impuestosinternos"));
 				eInv.setJurImpuestosMunicipales(rs.getString("jurimpuestosmunicipales"));
