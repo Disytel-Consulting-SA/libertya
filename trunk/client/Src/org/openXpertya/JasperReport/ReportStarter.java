@@ -527,8 +527,8 @@ public class ReportStarter implements ProcessCall // , ClientProcess
             // in iReports you can 'SELECT' AD_Client_ID, AD_Org_ID and AD_User_ID using only AD_PINSTANCE_ID
             params.put("AD_PINSTANCE_ID", new Integer( AD_PInstance_ID));
             
-            params.put("AD_CLIENT_ID", Env.getAD_Client_ID(Env.getCtx()));
-
+            addParameterClientInfo(params);
+            
             log.info("ReportStarter - leo parametros!");
             
         	Language currLang = Env.getLanguage(Env.getCtx());
@@ -1250,7 +1250,33 @@ public class ReportStarter implements ProcessCall // , ClientProcess
             return false;
         }
     }
+    
+    public void addParameterClientInfo(HashMap<String, Object> params){
+    	final String sql = "SELECT c.AD_Client_ID AS AD_Client_ID, c.description AS CLIENT_DESC, ci.cuit AS CLIENT_CUIT, (address1 || ' - ' || city) AS CLIENT_ADDRESS" +
+    			" FROM ad_client c" +
+    			" LEFT JOIN AD_ClientInfo ci ON (ci.ad_client_ID = c.ad_client_ID)" +
+    			" LEFT JOIN C_Location l ON (ci.C_Location_ID = l.C_Location_ID)" +
+    			" WHERE (c.AD_Client_ID = ?)";
+    	PreparedStatement pstmt = null;
+    	try
+    	{
+    	pstmt = DB.prepareStatement(sql);
+    	pstmt.setInt(1, Env.getAD_Client_ID(Env.getCtx()));
+    	
+    	ResultSet rs = pstmt.executeQuery();
 
-        
+        if( rs.next()) {
+        	params.put("AD_CLIENT_ID", rs.getInt("AD_Client_ID"));
+        	params.put("CLIENT_DESC", rs.getString("CLIENT_DESC"));
+        	params.put("CLIENT_CUIT", rs.getString("CLIENT_CUIT"));
+        	params.put("CLIENT_ADDRESS", rs.getString("CLIENT_ADDRESS"));
+        }
+
+        rs.close();
+        pstmt.close();
+	    } catch( SQLException e ) {
+	        log.log( Level.SEVERE,sql,e );
+	    }
+    }
 
 }
