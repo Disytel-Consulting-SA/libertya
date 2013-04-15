@@ -28,13 +28,13 @@ public class MElectronicInvoice extends X_E_ElectronicInvoice {
 		setPuntoDeVenta(inv.getPuntoDeVenta());
 		setNumeroDeDocumento(inv.getNumeroDeDocumento());
 		setCant_Hojas(1); 														// Se deja en 1 según se vio en una exportación WEB de la AFIP
-		setDoc_Identificatorio_Comprador(80); 									// Según tabla 2 -- En Libertya siempre se usa CUIT
+		setDoc_Identificatorio_Comprador(Integer.parseInt(getInvoiceBPartnerTaxIdType(inv.getC_BPartner_ID()))); // Según tabla 2
 		setIdentif_Comprador(getCuit(inv.getCUIT()));							// CUIT del cliente según se vio en una exportación WEB de la AFIP
 		setIdentif_Vendedor("0");												// No se usa
 		setName(getInvoiceBPartnerName(inv.getC_BPartner_ID()));
 		setGrandTotal(inv.getGrandTotal());
 		setTaxBaseAmt(getInvoiceTaxBaseAmt(inv.getC_Invoice_ID())); 			// Suma los taxbaseamt de la factura
-		setTotalLines(inv.getTotalLines());
+		setTotalLines(inv.getNetAmount());
 		setTaxAmt(getInvoiceTaxAmt(inv.getC_Invoice_ID()));						// suma los taxamt de la factura
 		setTipo_Responsable(getRefTablaTipoResponsable(inv.getC_BPartner_ID()));// Según tabla 4
 		setCod_Moneda(getRefTablaMoneda(inv.getC_Currency_ID()));	  			// sacar de c_currency	
@@ -97,6 +97,7 @@ public class MElectronicInvoice extends X_E_ElectronicInvoice {
 	}
 	
 	private String getCuit(String cuit){
+		if (cuit == null){ return "00000000000"; }
 		if (cuit.length() == 13){
 			String numero = cuit.substring(0,2)+cuit.substring(3,11)+cuit.substring(12,13);
 			return numero;
@@ -105,7 +106,7 @@ public class MElectronicInvoice extends X_E_ElectronicInvoice {
 	}
 
 	private int getInvoiceCantAlicuotas(int id) throws SQLException{
-		String	sql = " SELECT count(c_tax_id) as cant_alicuotas FROM C_InvoiceTax Where C_Invoice_ID = '"+id+"'";
+		String	sql = "SELECT count(it.c_tax_id) as cant_alicuotas FROM C_InvoiceTax it INNER JOIN C_Tax t ON (it.C_Tax_ID = t.C_Tax_ID) WHERE t.IsPercepcion = 'N' AND C_Invoice_ID = '"+id+"'";
 		PreparedStatement pstmt = DB.prepareStatement(sql, get_TrxName());
 		ResultSet rs = pstmt.executeQuery();
 		
@@ -156,7 +157,7 @@ public class MElectronicInvoice extends X_E_ElectronicInvoice {
 		// Instancio mdoctype para recuperar el name del tipo de documento de factura
 		MDocType doctype = new MDocType(getCtx(), id, get_TrxName());
 				
-		String	sql = " SELECT * FROM E_ElectronicInvoiceRef Where tabla_ref = '"+FiscalDocumentExport.TABLAREF_TablaComprobantes +"' and clave_busqueda = '"+doctype.getName()+"'";
+		String	sql = " SELECT * FROM E_ElectronicInvoiceRef Where tabla_ref = '"+FiscalDocumentExport.TABLAREF_TablaComprobantes +"' and '"+doctype.getDocTypeKey()+"' ILIKE '%' || clave_busqueda || '%' ";
 		PreparedStatement pstmt = DB.prepareStatement(sql.toString(), get_TrxName());
 		ResultSet rs = pstmt.executeQuery();
 		
@@ -212,19 +213,19 @@ public class MElectronicInvoice extends X_E_ElectronicInvoice {
 	}
 	
 	private BigDecimal getInvoiceTaxBaseAmt(int id) throws SQLException{
-		 String	sql = " SELECT * FROM C_Invoicetax Where c_invoice_id = "+ id;
+		 String	sql = " SELECT * FROM C_Invoicetax Where c_invoice_id = "+ id + "ORDER BY Created desc LIMIT 1";
 		 PreparedStatement pstmt	= DB.prepareStatement(sql, get_TrxName());
 		 ResultSet rs = pstmt.executeQuery();
 		 BigDecimal sumTaxBaseAmt = BigDecimal.ZERO;
 		 while (rs.next()) {
 		   MInvoiceTax invoiceTax = new MInvoiceTax(getCtx(), rs, get_TrxName());
-		   sumTaxBaseAmt.add(invoiceTax.getTaxBaseAmt());
+		   sumTaxBaseAmt = sumTaxBaseAmt.add(invoiceTax.getTaxBaseAmt());
 		 } 
 		return sumTaxBaseAmt;
 	}
 	
 	private BigDecimal getInvoiceTaxAmt(int id) throws SQLException{
-		 String	sql = " SELECT * FROM C_Invoicetax Where c_invoice_id = "+ id;
+		 String	sql = " SELECT * FROM C_InvoiceTax it INNER JOIN C_Tax t ON (it.C_Tax_ID = t.C_Tax_ID) WHERE t.IsPercepcion = 'N' AND C_Invoice_ID = "+ id;
 		 PreparedStatement pstmt = DB.prepareStatement(sql, get_TrxName());
 		 ResultSet rs = pstmt.executeQuery();
 		 BigDecimal sumTaxAmt = BigDecimal.ZERO;
@@ -244,7 +245,7 @@ public class MElectronicInvoice extends X_E_ElectronicInvoice {
 			 MTax tax = new MTax(getCtx(), rs.getInt("c_tax_id"), get_TrxName());
 			 if (tax.getRate() == BigDecimal.ZERO || tax.isTaxExempt() == true){
 				 MInvoiceTax invoiceTax = new MInvoiceTax(getCtx(), rs, get_TrxName());
-				 sumTaxAmt.add(invoiceTax.getTaxAmt());
+				 sumTaxAmt = sumTaxAmt.add(invoiceTax.getTaxAmt());
 			 }
 		 } 
 		return sumTaxAmt;
@@ -257,5 +258,15 @@ public class MElectronicInvoice extends X_E_ElectronicInvoice {
 			return Integer.parseInt(cod);
 		}
 		return 0;
+	}
+	
+	private String getInvoiceBPartnerTaxIdType(int id){
+		MBPartner bpartner = new MBPartner(getCtx(), id, get_TrxName());
+		if (bpartner.getTaxIdType() == null){
+			return "99";
+		}
+		else{
+			return bpartner.getTaxIdType();	
+		}
 	}
 }

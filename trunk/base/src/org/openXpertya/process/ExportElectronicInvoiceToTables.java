@@ -24,20 +24,24 @@ public class ExportElectronicInvoiceToTables extends SvrProcess {
 		// Borro los datos para ese período de la tabla e_electronicinvoice y e_electronicinvoiceline
 		String	sqlDeleteLines	= " delete from e_electronicinvoiceline where e_electronicinvoice_id in " +
 							  "		(select e_electronicinvoice_id from e_electronicinvoice " +
-							  " 	 where dateinvoiced >= '"+periodo.getStartDate()+"' and dateinvoiced <= '"+periodo.getEndDate()+"')";
+							  " 	 where dateinvoiced >= '"+periodo.getStartDate()+"' and dateinvoiced <= '"+periodo.getEndDate()+"' and (AD_Client_ID = "+ getAD_Client_ID() +") and (createdby = "+ getAD_User_ID() + ")) ";
         DB.executeUpdate(sqlDeleteLines, get_TrxName());
 		
-        String	sqlDelete	= " delete from e_electronicinvoice where dateinvoiced >= '"+periodo.getStartDate()+"' and dateinvoiced <= '"+periodo.getEndDate()+"'";
+        String	sqlDelete	= " delete from e_electronicinvoice where dateinvoiced >= '"+periodo.getStartDate()+"' and dateinvoiced <= '"+periodo.getEndDate()+"' and (AD_Client_ID = "+ getAD_Client_ID() +") and (createdby = "+ getAD_User_ID() +") ";
         DB.executeUpdate(sqlDelete, get_TrxName());
-        
+               
 		// Consulta con todos los datos
 		StringBuffer sql = new StringBuffer();
 		sql.append(" select i.c_invoice_id from c_invoice i " +
-				   "   left join e_electronicinvoice e on (i.c_invoice_id = e.c_invoice_id) " +
+				   " inner join C_Doctype d ON i.C_Doctype_id = d.C_Doctype_id " +
+				   " left join e_electronicinvoice e on (i.c_invoice_id = e.c_invoice_id) " +
 				   " where /*e.c_invoice_id is null " +
 				   " and i.numerodedocumento is not null" +
 				   " and*/ i.dateinvoiced >= '"+periodo.getStartDate()+"' and i.dateinvoiced <= '"+periodo.getEndDate()+"'" +
-				   " and (docstatus = 'CO' or docstatus = 'CL' or docstatus = 'VO' or docstatus = 'RE')");
+				   " and (docstatus = 'CO' or docstatus = 'CL' or docstatus = 'VO' or docstatus = 'RE') " +
+				   " and (case when (d.isfiscal = 'Y') then (i.FiscalAlreadyPrinted = 'Y') else true end) " +
+				   " and (i.AD_Client_ID = "+ getAD_Client_ID() +") " +
+				   " and (d.isfiscaldocument = 'Y')");
 		
 		PreparedStatement pstmt = null;
 		ResultSet rs = null;
