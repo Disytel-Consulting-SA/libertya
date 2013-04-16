@@ -33,8 +33,8 @@ public class ValoresDataSource extends DeclaracionValoresDataSource {
 					 "from C_POSCashStatement as cs " +
 					 "inner join c_posjournal as pj on pj.c_posjournal_id = cs.c_posjournal_id " +
 					 "inner join c_currency as c on c.c_currency_id = cs.c_currency_id");
-		String where = " WHERE ";
-		String whereClause = getStdWhereClause(false, "pj");
+		String where = " WHERE pj.docstatus NOT IN ('DR') AND ";
+		String whereClause = getStdWhereClause(false, "pj", false);
 		if(!Util.isEmpty(whereClause, true)){
 			sql.append(where).append(whereClause);
 		}

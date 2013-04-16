@@ -39,6 +39,10 @@ public abstract class DeclaracionValoresDataSource extends QueryDataSource {
 	}
 	
 	protected String getStdWhereClause(boolean withTenderType, String tableAlias){
+		return getStdWhereClause(withTenderType, tableAlias, true);
+	}
+
+	protected String getStdWhereClause(boolean withTenderType, String tableAlias, boolean addDocStatus){
 		StringBuffer stdWhere = new StringBuffer();
 		if(!Util.isEmpty(tableAlias, true)){
 			tableAlias += ".";
@@ -46,7 +50,9 @@ public abstract class DeclaracionValoresDataSource extends QueryDataSource {
 		else{
 			tableAlias = "";
 		}
-		stdWhere.append(tableAlias).append("docstatus IN ('CO','CL') AND ");
+		if(addDocStatus){
+			stdWhere.append(tableAlias).append("docstatus IN ('CO','CL') AND ");
+		}
 		if(!getValoresDTO().getJournalIDs().isEmpty()){
 			stdWhere.append(tableAlias).append("c_posjournal_id IN ").append(getValoresDTO().getJournalIDs().toString()
 					.replaceAll("]", ")").replaceAll("\\[", "("));
@@ -59,7 +65,7 @@ public abstract class DeclaracionValoresDataSource extends QueryDataSource {
 		}
 		return Util.removeInitialAND(stdWhere.toString());
 	}
-
+	
 	protected Object[] getStdWhereClauseParams(){
 		List<Object> params = new ArrayList<Object>();
 		if (!Util.isEmpty(getValoresDTO().getUserID(), true)) {
