@@ -601,6 +601,21 @@ public class MAllocationHdr extends X_C_AllocationHdr implements DocAction {
             return DocAction.STATUS_Invalid;
         }
 
+        // Validar si el numero de documento ya existe (unicamente si tenemos un c_doctype definido)
+        if (getC_DocType_ID() > 0) {
+        	X_C_DocType docType = new X_C_DocType(getCtx(), getC_DocType_ID(), get_TrxName());
+        	// Si el documentNo no esta seteado, recuperar el valor 
+        	// correspondiente de la secuencia asociada al tipo de documento
+        	if (getDocumentNo()==null||getDocumentNo().length()==0) {
+        		setDocumentNo(MSequence.getDocumentNo(getC_DocType_ID(), get_TrxName()));
+        	}
+        	// Verificar que no exista el documentNo
+        	if (documentNoAlreadyExists(getC_AllocationHdr_ID(), getDocumentNo(), getC_DocType_ID(), getAllocTypes(docType), docType.isSOTrx(), getCtx())) {
+        		m_processMsg = "Número de documento ya existente";
+        		return DocAction.STATUS_Invalid;
+        	}
+        }
+        
         getLines( false );
 
         if( m_lines.length == 0 ) {
@@ -1367,6 +1382,68 @@ public class MAllocationHdr extends X_C_AllocationHdr implements DocAction {
 	public boolean isVoidPOSJournalMustBeOpen() {
 		return voidPOSJournalMustBeOpen;
 	}
+	
+	
+	/**
+	 * Valida si el numero de documento especificado ya existe.  En ese caso retorna true
+	 * @param currentAllocationHdrID si valida basado en un registro existente (el cual debe omitirse)
+	 * @param documentNo nùmero de documento de la allocation
+	 * @param docTypeID tipo de documento de la allocation
+	 * @param allocTypes tipos de recibos/pagos a validar
+	 * @param isSOTrx transacciòn de compra o venta
+	 * @param ctx context
+	 * @return true en caso de número de documento repetido o false en caso contrario
+	 */
+	public static boolean documentNoAlreadyExists(Integer currentAllocationHdrID, String documentNo, int docTypeID, String allocTypes, boolean isSOTrx, Properties ctx)
+	{
+		// OP/RC Automaticas
+		int count = DB.getSQLValue(null, " SELECT count(1) FROM C_AllocationHdr " +
+											" WHERE documentNo = '" + documentNo + "'" +
+											" AND C_DocType_ID = " + docTypeID + 
+											" AND AD_Client_ID = " + Env.getAD_Client_ID(ctx) +
+											" AND allocationtype IN " + allocTypes +
+											(currentAllocationHdrID!=null?" AND C_AllocationHdr_ID != " + currentAllocationHdrID:""));
+
+		// Si ya existe una automatica, no consultar por las manuales y retornar true
+		if (count > 0)
+			return true;
+		
+		// OP/RC Manuales
+		count += DB.getSQLValue(null, " SELECT count(1) FROM C_AllocationLine al" +
+										" INNER JOIN C_AllocationHdr ah ON al.C_AllocationHdr_ID = ah.C_AllocationHdr_ID" +
+										" INNER JOIN C_Invoice i ON al.C_Invoice_ID = i.C_Invoice_ID" +
+										" WHERE ah.documentNo = '" + Integer.parseInt(documentNo) + "'" +
+										" AND ah.C_DocType_ID = " + docTypeID + 
+										" AND ah.AD_Client_ID = " + Env.getAD_Client_ID(ctx) +
+										" AND ah.allocationtype = '" + X_C_AllocationHdr.ALLOCATIONTYPE_Manual + "'" +
+										" AND i.issotrx = " + (isSOTrx?"'Y'":"'N'") +
+										(currentAllocationHdrID!=null?" AND ah.C_AllocationHdr_ID != " + currentAllocationHdrID:""));
+		
+		return count > 0;			
+	}
+
+
+    /**
+     * Devuelve el allocType en función del docType
+     * @param allocationDocType docType de tipo allocation a utilizar 
+     * @return el valor correspondiente (OP/OPA/RC/RCA/STX)
+     */
+    protected static String getAllocTypes(X_C_DocType allocationDocType) {
+    	if (allocationDocType.isSOTrx())
+	    	return
+					"(" +
+					"'" + X_C_AllocationHdr.ALLOCATIONTYPE_CustomerReceipt + "'," + 
+					"'" + X_C_AllocationHdr.ALLOCATIONTYPE_AdvancedCustomerReceipt + "'," +
+					"'" + X_C_AllocationHdr.ALLOCATIONTYPE_SalesTransaction + "'" +
+					")";
+		return
+				"(" +
+				"'" + X_C_AllocationHdr.ALLOCATIONTYPE_PaymentOrder + "'," +
+				"'" + X_C_AllocationHdr.ALLOCATIONTYPE_PaymentFromInvoice + "'," +
+				"'" + X_C_AllocationHdr.ALLOCATIONTYPE_AdvancedPaymentOrder + "'" +
+				")";
+    }
+	
 }    // MAllocation
 
 
