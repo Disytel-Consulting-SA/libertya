@@ -26,6 +26,10 @@
 	<parameter name="AD_Org_ID" isForPrompting="false" class="java.math.BigDecimal"/>
 	<parameter name="FechaHasta" isForPrompting="false" class="java.util.Date"/>
 	<parameter name="FechaDesde" isForPrompting="false" class="java.util.Date"/>
+	<parameter name="AD_CLIENT_ID" isForPrompting="false" class="java.lang.Integer"/>
+	<parameter name="CLIENT_DESC" isForPrompting="false" class="java.lang.String"/>
+	<parameter name="CLIENT_CUIT" isForPrompting="false" class="java.lang.String"/>
+	<parameter name="CLIENT_ADDRESS" isForPrompting="false" class="java.lang.String"/>
 	<queryString><![CDATA[SELECT i.dateinvoiced AS FECHA,
 o.name as ORGANIZACION,
 i.AD_ORG_ID,
@@ -37,17 +41,17 @@ bp.taxid AS CUIT,
 ci.i_tipo_iva AS CATEGORIA_DE_IVA, 
 c.name AS PAIS,
 r.name AS PROVINCIA,
-(CASE WHEN lc.letra = 'E' THEN 0.00 ELSE it.taxbaseamt END) AS NETO,
+currencyconvert((CASE WHEN lc.letra = 'E' THEN 0.00 ELSE it.taxbaseamt * d.signo_issotrx END), i.c_currency_id, 118, i.dateacct::timestamp with time zone, NULL::integer, i.ad_client_id, i.ad_org_id) AS NETO,
 (CASE WHEN lc.letra = 'E' THEN 0.00 ELSE t.rate END) AS ALICUOTA,
-(CASE WHEN lc.letra = 'E' THEN 0.00 ELSE it.taxamt END) AS IVA_INSCRIPTO,
+currencyconvert((CASE WHEN lc.letra = 'E' THEN 0.00 ELSE it.taxamt * d.signo_issotrx END), i.c_currency_id, 118, i.dateacct::timestamp with time zone, NULL::integer, i.ad_client_id, i.ad_org_id) AS IVA_INSCRIPTO,
 0.00 AS IVA_NO_INSCRIPTO,
 0.00 AS PERCEPCIONES_DE_IVA,
 -- Percepciones de IIBB: sumatoria de importes por percepciones de IIBB
-(CASE WHEN lc.letra = 'E' THEN 0.00 WHEN (SELECT SUM(ita.TAXAMT) AS PERCEPCIONES_DE_IIBB FROM C_InvoiceTax ita LEFT JOIN C_Tax ta ON (ta.C_Tax_ID = ita.C_Tax_ID) WHERE ta.ISPERCEPCION = 'Y' AND ita.C_INVOICE_ID = I.C_INVOICE_ID) IS NULL THEN 0.00 ELSE (SELECT SUM(ita.TAXAMT) AS PERCEPCIONES_DE_IIBB FROM C_InvoiceTax ita LEFT JOIN C_Tax ta ON (ta.C_Tax_ID = ita.C_Tax_ID) WHERE ta.ISPERCEPCION = 'Y' AND ita.C_INVOICE_ID = I.C_INVOICE_ID) END)  AS PERCEPCIONES_DE_IIBB,
+currencyconvert((CASE WHEN lc.letra = 'E' THEN 0.00 WHEN (SELECT SUM(ita.TAXAMT) AS PERCEPCIONES_DE_IIBB FROM C_InvoiceTax ita LEFT JOIN C_Tax ta ON (ta.C_Tax_ID = ita.C_Tax_ID) WHERE ta.ISPERCEPCION = 'Y' AND ita.C_INVOICE_ID = I.C_INVOICE_ID) IS NULL THEN 0.00 ELSE (SELECT SUM(ita.TAXAMT) * d.signo_issotrx AS PERCEPCIONES_DE_IIBB FROM C_InvoiceTax ita LEFT JOIN C_Tax ta ON (ta.C_Tax_ID = ita.C_Tax_ID) WHERE ta.ISPERCEPCION = 'Y' AND ita.C_INVOICE_ID = I.C_INVOICE_ID) END), i.c_currency_id, 118, i.dateacct::timestamp with time zone, NULL::integer, i.ad_client_id, i.ad_org_id) AS PERCEPCIONES_DE_IIBB,
 -- Otros: muestra el importe para facturas E. En este caso, los netos, importes de iva, percepciones quedan en cero.
-(CASE WHEN lc.letra = 'E' THEN i.grandtotal ELSE 0.00 END) AS OTROS,
+currencyconvert((CASE WHEN lc.letra = 'E' THEN i.grandtotal * d.signo_issotrx ELSE 0.00 END), i.c_currency_id, 118, i.dateacct::timestamp with time zone, NULL::integer, i.ad_client_id, i.ad_org_id) AS OTROS,
 -- Total: total del documento.
-i.grandtotal AS TOTAL,
+currencyconvert(i.grandtotal * d.signo_issotrx, i.c_currency_id, 118, i.dateacct::timestamp with time zone, NULL::integer, i.ad_client_id, i.ad_org_id) AS TOTAL,
 i.c_invoice_id AS ID_FACTURA,
 it.C_tax_ID AS ID_IMPUESTO,
 (SELECT it.C_tax_ID FROM C_InvoiceTax it LEFT JOIN C_Tax t ON (t.C_Tax_ID = it.C_Tax_ID) WHERE t.ISPERCEPCION = 'N' AND it.C_Invoice_ID = i.C_Invoice_ID ORDER BY it.C_tax_ID LIMIT 1) AS ID_IMPUESTO_MIN,
@@ -64,7 +68,7 @@ LEFT JOIN C_Country c ON (c.C_Country_ID = l.C_Country_ID)
 LEFT JOIN C_Region r ON (r.C_Region_ID = l.C_Region_ID)
 LEFT JOIN C_Categoria_IVA ci ON (ci.C_Categoria_IVA_ID = bp.C_Categoria_IVA_ID)
 LEFT JOIN ad_org o ON (i.ad_org_ID = o.ad_org_ID)
-WHERE i.AD_CLIENT_ID IN (1010016,1010056,1010057) AND d.isfiscaldocument = 'Y' AND (i.docstatus = 'CO' OR i.docstatus = 'CL' OR i.docstatus = 'VO' OR i.docstatus = 'RE') AND t.ISPERCEPCION = 'N' AND (($P{FechaDesde}::date IS NULL) OR (i.dateinvoiced >= $P{FechaDesde}::date)) AND (($P{FechaHasta}::date IS NULL) OR (i.dateinvoiced <= $P{FechaHasta}::date)) AND (($P{AD_Org_ID} IS NULL) OR (o.AD_Org_ID = $P{AD_Org_ID}))
+WHERE i.AD_CLIENT_ID IN (1010016,1010056,1010057) AND d.isfiscaldocument = 'Y' AND (i.docstatus = 'CO' OR i.docstatus = 'CL' OR i.docstatus = 'VO' OR i.docstatus = 'RE') AND t.ISPERCEPCION = 'N' AND (i.AD_Client_ID = $P{AD_CLIENT_ID}) AND (($P{FechaDesde}::date IS NULL) OR (i.dateinvoiced::date >= $P{FechaDesde}::date)) AND (($P{FechaHasta}::date IS NULL) OR (i.dateinvoiced::date <= $P{FechaHasta}::date)) AND (($P{AD_Org_ID} IS NULL) OR (o.AD_Org_ID = $P{AD_Org_ID}))
 ORDER BY FECHA, ID_FACTURA, ID_IMPUESTO_MIN]]></queryString>
 
 	<field name="fecha" class="java.sql.Timestamp"/>
@@ -114,16 +118,16 @@ ORDER BY FECHA, ID_FACTURA, ID_IMPUESTO_MIN]]></queryString>
 		<variableExpression><![CDATA[($F{id_impuesto}.compareTo( $F{id_impuesto_min} ) == 0) ? $F{total} : new BigDecimal(0)]]></variableExpression>
 	</variable>
 	<variable name="sumaDocA" class="java.math.BigDecimal" resetType="Report" calculation="Sum">
-		<variableExpression><![CDATA[($F{id_impuesto}.compareTo( $F{id_impuesto_min} ) == 0) ? (($F{letra}.compareTo("A") == 0) ? $F{total} : new BigDecimal(0)) : new BigDecimal(0)]]></variableExpression>
+		<variableExpression><![CDATA[($F{id_impuesto}.compareTo( $F{id_impuesto_min} ) == 0) ? (($F{letra}.compareTo("A") == 0) ? $F{neto} : new BigDecimal(0)) : new BigDecimal(0)]]></variableExpression>
 	</variable>
 	<variable name="sumaDocB" class="java.math.BigDecimal" resetType="Report" calculation="Sum">
-		<variableExpression><![CDATA[($F{id_impuesto}.compareTo( $F{id_impuesto_min} ) == 0) ? (($F{letra}.compareTo("B") == 0) ? $F{total} : new BigDecimal(0)) : new BigDecimal(0)]]></variableExpression>
+		<variableExpression><![CDATA[($F{id_impuesto}.compareTo( $F{id_impuesto_min} ) == 0) ? (($F{letra}.compareTo("B") == 0) ? $F{neto} : new BigDecimal(0)) : new BigDecimal(0)]]></variableExpression>
 	</variable>
 	<variable name="sumaDocC" class="java.math.BigDecimal" resetType="Report" calculation="Sum">
-		<variableExpression><![CDATA[($F{id_impuesto}.compareTo( $F{id_impuesto_min} ) == 0) ? (($F{letra}.compareTo("C") == 0) ? $F{total} : new BigDecimal(0)) : new BigDecimal(0)]]></variableExpression>
+		<variableExpression><![CDATA[($F{id_impuesto}.compareTo( $F{id_impuesto_min} ) == 0) ? (($F{letra}.compareTo("C") == 0) ? $F{neto} : new BigDecimal(0)) : new BigDecimal(0)]]></variableExpression>
 	</variable>
 	<variable name="sumaDocE" class="java.math.BigDecimal" resetType="Report" calculation="Sum">
-		<variableExpression><![CDATA[($F{id_impuesto}.compareTo( $F{id_impuesto_min} ) == 0) ? (($F{letra}.compareTo("E") == 0) ? $F{total} : new BigDecimal(0)) : new BigDecimal(0)]]></variableExpression>
+		<variableExpression><![CDATA[($F{id_impuesto}.compareTo( $F{id_impuesto_min} ) == 0) ? (($F{letra}.compareTo("E") == 0) ? $F{neto} : new BigDecimal(0)) : new BigDecimal(0)]]></variableExpression>
 	</variable>
 	<variable name="sumaIva21" class="java.math.BigDecimal" resetType="Report" calculation="Sum">
 		<variableExpression><![CDATA[($F{alicuota}.compareTo( new BigDecimal(21.0) ) == 0) ? $F{iva_inscripto} : new BigDecimal(0)]]></variableExpression>
@@ -131,12 +135,33 @@ ORDER BY FECHA, ID_FACTURA, ID_IMPUESTO_MIN]]></queryString>
 	<variable name="sumaIva10.5" class="java.math.BigDecimal" resetType="Report" calculation="Sum">
 		<variableExpression><![CDATA[($F{alicuota}.compareTo( new BigDecimal(10.5) ) == 0) ? $F{iva_inscripto} : new BigDecimal(0)]]></variableExpression>
 	</variable>
+	<variable name="sumaNetoTotal" class="java.math.BigDecimal" resetType="Report" calculation="Sum">
+		<variableExpression><![CDATA[$F{neto}]]></variableExpression>
+	</variable>
+	<variable name="sumaIvaInscriptoTotal" class="java.math.BigDecimal" resetType="Report" calculation="Sum">
+		<variableExpression><![CDATA[$F{iva_inscripto}]]></variableExpression>
+	</variable>
+	<variable name="sumaIvaNoInscriptoTotal" class="java.math.BigDecimal" resetType="Report" calculation="Sum">
+		<variableExpression><![CDATA[$F{iva_no_inscripto}]]></variableExpression>
+	</variable>
+	<variable name="sumaPercepIvaTotal" class="java.math.BigDecimal" resetType="Report" calculation="Sum">
+		<variableExpression><![CDATA[($F{id_impuesto}.compareTo( $F{id_impuesto_min} ) == 0) ? $F{percepciones_de_iva} : new BigDecimal(0)]]></variableExpression>
+	</variable>
+	<variable name="sumaPercepIIBBTotal" class="java.math.BigDecimal" resetType="Report" calculation="Sum">
+		<variableExpression><![CDATA[($F{id_impuesto}.compareTo( $F{id_impuesto_min} ) == 0) ? $F{percepciones_de_iibb} : new BigDecimal(0)]]></variableExpression>
+	</variable>
+	<variable name="sumaOtrosTotal" class="java.math.BigDecimal" resetType="Report" calculation="Sum">
+		<variableExpression><![CDATA[($F{id_impuesto}.compareTo( $F{id_impuesto_min} ) == 0) ? $F{otros} : new BigDecimal(0)]]></variableExpression>
+	</variable>
+	<variable name="sumaTotalTotal" class="java.math.BigDecimal" resetType="Report" calculation="Sum">
+		<variableExpression><![CDATA[($F{id_impuesto}.compareTo( $F{id_impuesto_min} ) == 0) ? $F{total} : new BigDecimal(0)]]></variableExpression>
+	</variable>
 		<background>
 			<band height="0"  isSplitAllowed="true" >
 			</band>
 		</background>
 		<title>
-			<band height="35"  isSplitAllowed="true" >
+			<band height="120"  isSplitAllowed="true" >
 				<staticText>
 					<reportElement
 						x="142"
@@ -150,14 +175,10 @@ ORDER BY FECHA, ID_FACTURA, ID_IMPUESTO_MIN]]></queryString>
 					</textElement>
 				<text><![CDATA[Informe IVA Ventas General]]></text>
 				</staticText>
-			</band>
-		</title>
-		<pageHeader>
-			<band height="45"  isSplitAllowed="true" >
 				<textField isStretchWithOverflow="false" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
 						x="82"
-						y="27"
+						y="58"
 						width="163"
 						height="12"
 						key="textField-3">
@@ -165,14 +186,14 @@ ORDER BY FECHA, ID_FACTURA, ID_IMPUESTO_MIN]]></queryString>
 						</reportElement>
 					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
 					<textElement>
-						<font pdfFontName="Helvetica-Bold" size="9" isBold="true"/>
+						<font pdfFontName="Helvetica" size="9" isBold="false"/>
 					</textElement>
 				<textFieldExpression   class="java.lang.String"><![CDATA[$F{organizacion}]]></textFieldExpression>
 				</textField>
 				<staticText>
 					<reportElement
 						x="4"
-						y="1"
+						y="32"
 						width="200"
 						height="12"
 						key="staticText-2"/>
@@ -185,33 +206,33 @@ ORDER BY FECHA, ID_FACTURA, ID_IMPUESTO_MIN]]></queryString>
 				<staticText>
 					<reportElement
 						x="4"
-						y="27"
+						y="58"
 						width="78"
 						height="12"
 						key="staticText-4"/>
 					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
 					<textElement>
-						<font pdfFontName="Helvetica-Bold" size="9" isBold="true"/>
+						<font pdfFontName="Helvetica" size="9" isBold="false"/>
 					</textElement>
 				<text><![CDATA[Organización =]]></text>
 				</staticText>
 				<staticText>
 					<reportElement
 						x="4"
-						y="14"
+						y="45"
 						width="44"
 						height="12"
 						key="staticText-7"/>
 					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
 					<textElement>
-						<font pdfFontName="Helvetica-Bold" size="9" isBold="true"/>
+						<font pdfFontName="Helvetica" size="9" isBold="false"/>
 					</textElement>
 				<text><![CDATA[Desde =]]></text>
 				</staticText>
 				<textField isStretchWithOverflow="false" pattern="dd/MM/yyyy" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
 						x="48"
-						y="14"
+						y="45"
 						width="81"
 						height="12"
 						key="textField-5">
@@ -219,27 +240,27 @@ ORDER BY FECHA, ID_FACTURA, ID_IMPUESTO_MIN]]></queryString>
 						</reportElement>
 					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
 					<textElement>
-						<font pdfFontName="Helvetica-Bold" size="9" isBold="true"/>
+						<font pdfFontName="Helvetica" size="9" isBold="false"/>
 					</textElement>
 				<textFieldExpression   class="java.util.Date"><![CDATA[$P{FechaDesde}]]></textFieldExpression>
 				</textField>
 				<staticText>
 					<reportElement
 						x="129"
-						y="14"
+						y="45"
 						width="41"
 						height="12"
 						key="staticText-8"/>
 					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
 					<textElement>
-						<font pdfFontName="Helvetica-Bold" size="9" isBold="true"/>
+						<font pdfFontName="Helvetica" size="9" isBold="false"/>
 					</textElement>
 				<text><![CDATA[Hasta =]]></text>
 				</staticText>
 				<textField isStretchWithOverflow="false" pattern="dd/MM/yyyy" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
 						x="170"
-						y="14"
+						y="45"
 						width="81"
 						height="12"
 						key="textField-6">
@@ -247,53 +268,122 @@ ORDER BY FECHA, ID_FACTURA, ID_IMPUESTO_MIN]]></queryString>
 						</reportElement>
 					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
 					<textElement>
-						<font pdfFontName="Helvetica-Bold" size="9" isBold="true"/>
+						<font pdfFontName="Helvetica" size="9" isBold="false"/>
+					</textElement>
+				<textFieldExpression   class="java.util.Date"><![CDATA[$P{FechaHasta}]]></textFieldExpression>
+				</textField>
+				<staticText>
+					<reportElement
+						x="5"
+						y="79"
+						width="60"
+						height="12"
+						key="staticText-45"/>
+					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
+					<textElement>
+						<font pdfFontName="Helvetica" size="10" isBold="false" isUnderline="false"/>
+					</textElement>
+				<text><![CDATA[Compañía:]]></text>
+				</staticText>
+				<staticText>
+					<reportElement
+						x="5"
+						y="91"
+						width="60"
+						height="12"
+						key="staticText-46"/>
+					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
+					<textElement>
+						<font pdfFontName="Helvetica" size="9" isBold="false"/>
+					</textElement>
+				<text><![CDATA[Domicilio:]]></text>
+				</staticText>
+				<staticText>
+					<reportElement
+						x="5"
+						y="103"
+						width="26"
+						height="12"
+						key="staticText-47"/>
+					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
+					<textElement>
+						<font pdfFontName="Helvetica" size="9" isBold="false"/>
+					</textElement>
+				<text><![CDATA[CUIT:]]></text>
+				</staticText>
+				<textField isStretchWithOverflow="false" pattern="" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
+					<reportElement
+						x="65"
+						y="79"
+						width="204"
+						height="12"
+						key="textField-70"/>
+					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
+					<textElement>
+						<font pdfFontName="Helvetica" size="9" isBold="false"/>
+					</textElement>
+				<textFieldExpression   class="java.lang.String"><![CDATA[$P{CLIENT_DESC}]]></textFieldExpression>
+				</textField>
+				<textField isStretchWithOverflow="false" pattern="" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
+					<reportElement
+						x="65"
+						y="91"
+						width="204"
+						height="12"
+						key="textField-71"/>
+					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
+					<textElement>
+						<font pdfFontName="Helvetica" size="9" isBold="false"/>
+					</textElement>
+				<textFieldExpression   class="java.lang.String"><![CDATA[$P{CLIENT_ADDRESS}]]></textFieldExpression>
+				</textField>
+				<textField isStretchWithOverflow="false" pattern="" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
+					<reportElement
+						x="31"
+						y="103"
+						width="72"
+						height="12"
+						key="textField-72"/>
+					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
+					<textElement>
+						<font pdfFontName="Helvetica" size="9" isBold="false"/>
+					</textElement>
+				<textFieldExpression   class="java.lang.String"><![CDATA[$P{CLIENT_CUIT}]]></textFieldExpression>
+				</textField>
+				<staticText>
+					<reportElement
+						x="137"
+						y="103"
+						width="42"
+						height="12"
+						key="staticText-48"/>
+					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
+					<textElement>
+						<font pdfFontName="Helvetica" size="9" isBold="false"/>
+					</textElement>
+				<text><![CDATA[Ejercicio:]]></text>
+				</staticText>
+				<textField isStretchWithOverflow="false" pattern="dd/MM" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
+					<reportElement
+						x="179"
+						y="103"
+						width="72"
+						height="12"
+						key="textField-73"/>
+					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
+					<textElement>
+						<font pdfFontName="Helvetica" size="9" isBold="false"/>
 					</textElement>
 				<textFieldExpression   class="java.util.Date"><![CDATA[$P{FechaHasta}]]></textFieldExpression>
 				</textField>
 			</band>
+		</title>
+		<pageHeader>
+			<band height="0"  isSplitAllowed="true" >
+			</band>
 		</pageHeader>
 		<columnHeader>
 			<band height="10"  isSplitAllowed="true" >
-				<staticText>
-					<reportElement
-						x="30"
-						y="-271"
-						width="50"
-						height="20"
-						key="staticText-9"/>
-					<box topBorder="Thin" topBorderColor="#000000" leftBorder="Thin" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="Thin" bottomBorderColor="#000000"/>
-					<textElement textAlignment="Center" verticalAlignment="Middle">
-						<font pdfFontName="Helvetica-Bold" size="8" isBold="true"/>
-					</textElement>
-				<text><![CDATA[Campaña]]></text>
-				</staticText>
-				<staticText>
-					<reportElement
-						x="80"
-						y="-271"
-						width="50"
-						height="20"
-						key="staticText-10"/>
-					<box topBorder="Thin" topBorderColor="#000000" leftBorder="Thin" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="Thin" bottomBorderColor="#000000"/>
-					<textElement textAlignment="Center" verticalAlignment="Middle">
-						<font pdfFontName="Helvetica-Bold" size="8" isBold="true"/>
-					</textElement>
-				<text><![CDATA[Proyecto]]></text>
-				</staticText>
-				<staticText>
-					<reportElement
-						x="0"
-						y="-271"
-						width="30"
-						height="20"
-						key="staticText-11"/>
-					<box topBorder="Thin" topBorderColor="#000000" leftBorder="Thin" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="Thin" bottomBorderColor="#000000"/>
-					<textElement textAlignment="Center" verticalAlignment="Middle">
-						<font pdfFontName="Helvetica-Bold" size="8" isBold="true"/>
-					</textElement>
-				<text><![CDATA[Org]]></text>
-				</staticText>
 				<staticText>
 					<reportElement
 						x="0"
@@ -851,13 +941,20 @@ ORDER BY FECHA, ID_FACTURA, ID_IMPUESTO_MIN]]></queryString>
 		</pageFooter>
 		<lastPageFooter>
 			<band height="80"  isSplitAllowed="true" >
+				<frame>					<reportElement
+						x="0"
+						y="0"
+						width="345"
+						height="80"
+						key="frame-1"/>
+					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
 				<staticText>
 					<reportElement
-						x="10"
-						y="10"
+						x="5"
+						y="9"
 						width="120"
 						height="12"
-						key="staticText-29"/>
+						key="staticText-37"/>
 					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
 					<textElement textAlignment="Center">
 						<font pdfFontName="Helvetica-Bold" size="8" isBold="true"/>
@@ -866,11 +963,11 @@ ORDER BY FECHA, ID_FACTURA, ID_IMPUESTO_MIN]]></queryString>
 				</staticText>
 				<staticText>
 					<reportElement
-						x="10"
-						y="23"
+						x="5"
+						y="22"
 						width="40"
 						height="12"
-						key="staticText-30"/>
+						key="staticText-38"/>
 					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
 					<textElement>
 						<font pdfFontName="Helvetica-Bold" size="8" isBold="true"/>
@@ -879,11 +976,11 @@ ORDER BY FECHA, ID_FACTURA, ID_IMPUESTO_MIN]]></queryString>
 				</staticText>
 				<staticText>
 					<reportElement
-						x="10"
-						y="36"
+						x="5"
+						y="35"
 						width="40"
 						height="12"
-						key="staticText-31"/>
+						key="staticText-39"/>
 					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
 					<textElement>
 						<font pdfFontName="Helvetica-Bold" size="8" isBold="true"/>
@@ -892,11 +989,11 @@ ORDER BY FECHA, ID_FACTURA, ID_IMPUESTO_MIN]]></queryString>
 				</staticText>
 				<staticText>
 					<reportElement
-						x="10"
-						y="49"
+						x="5"
+						y="48"
 						width="40"
 						height="12"
-						key="staticText-32"/>
+						key="staticText-40"/>
 					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
 					<textElement>
 						<font pdfFontName="Helvetica-Bold" size="8" isBold="true"/>
@@ -905,11 +1002,11 @@ ORDER BY FECHA, ID_FACTURA, ID_IMPUESTO_MIN]]></queryString>
 				</staticText>
 				<staticText>
 					<reportElement
-						x="10"
-						y="62"
+						x="5"
+						y="61"
 						width="40"
 						height="12"
-						key="staticText-33"/>
+						key="staticText-41"/>
 					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
 					<textElement>
 						<font pdfFontName="Helvetica-Bold" size="8" isBold="true"/>
@@ -918,11 +1015,11 @@ ORDER BY FECHA, ID_FACTURA, ID_IMPUESTO_MIN]]></queryString>
 				</staticText>
 				<textField isStretchWithOverflow="false" pattern="#,##0.00" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
-						x="51"
-						y="23"
+						x="46"
+						y="22"
 						width="79"
 						height="12"
-						key="textField-31"/>
+						key="textField-64"/>
 					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
 					<textElement>
 						<font pdfFontName="Helvetica-Bold" size="8" isBold="true"/>
@@ -931,11 +1028,11 @@ ORDER BY FECHA, ID_FACTURA, ID_IMPUESTO_MIN]]></queryString>
 				</textField>
 				<textField isStretchWithOverflow="false" pattern="#,##0.00" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
-						x="51"
-						y="36"
+						x="46"
+						y="35"
 						width="79"
 						height="12"
-						key="textField-32"/>
+						key="textField-65"/>
 					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
 					<textElement>
 						<font pdfFontName="Helvetica-Bold" size="8" isBold="true"/>
@@ -944,11 +1041,11 @@ ORDER BY FECHA, ID_FACTURA, ID_IMPUESTO_MIN]]></queryString>
 				</textField>
 				<textField isStretchWithOverflow="false" pattern="#,##0.00" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
-						x="51"
-						y="49"
+						x="46"
+						y="48"
 						width="79"
 						height="12"
-						key="textField-33"/>
+						key="textField-66"/>
 					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
 					<textElement>
 						<font pdfFontName="Helvetica-Bold" size="8" isBold="true"/>
@@ -957,11 +1054,11 @@ ORDER BY FECHA, ID_FACTURA, ID_IMPUESTO_MIN]]></queryString>
 				</textField>
 				<textField isStretchWithOverflow="false" pattern="#,##0.00" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
-						x="51"
-						y="62"
+						x="46"
+						y="61"
 						width="79"
 						height="12"
-						key="textField-34"/>
+						key="textField-67"/>
 					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
 					<textElement>
 						<font pdfFontName="Helvetica-Bold" size="8" isBold="true"/>
@@ -970,11 +1067,11 @@ ORDER BY FECHA, ID_FACTURA, ID_IMPUESTO_MIN]]></queryString>
 				</textField>
 				<staticText>
 					<reportElement
-						x="228"
-						y="35"
+						x="134"
+						y="34"
 						width="62"
 						height="11"
-						key="staticText-34"/>
+						key="staticText-42"/>
 					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
 					<textElement textAlignment="Left" verticalAlignment="Bottom">
 						<font fontName="SansSerif" pdfFontName="Helvetica-Bold" size="8" isBold="true"/>
@@ -983,11 +1080,11 @@ ORDER BY FECHA, ID_FACTURA, ID_IMPUESTO_MIN]]></queryString>
 				</staticText>
 				<textField isStretchWithOverflow="false" pattern="#,##0.00" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
-						x="290"
-						y="23"
+						x="196"
+						y="22"
 						width="103"
 						height="11"
-						key="textField-35"
+						key="textField-68"
 						positionType="FixRelativeToBottom"/>
 					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
 					<textElement textAlignment="Right" verticalAlignment="Bottom">
@@ -997,11 +1094,11 @@ ORDER BY FECHA, ID_FACTURA, ID_IMPUESTO_MIN]]></queryString>
 				</textField>
 				<textField isStretchWithOverflow="false" pattern="#,##0.00" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
-						x="290"
-						y="35"
+						x="196"
+						y="34"
 						width="103"
 						height="11"
-						key="textField-36"
+						key="textField-69"
 						positionType="FixRelativeToBottom"/>
 					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
 					<textElement textAlignment="Right" verticalAlignment="Bottom">
@@ -1011,11 +1108,11 @@ ORDER BY FECHA, ID_FACTURA, ID_IMPUESTO_MIN]]></queryString>
 				</textField>
 				<staticText>
 					<reportElement
-						x="228"
-						y="23"
+						x="134"
+						y="22"
 						width="62"
 						height="11"
-						key="staticText-35"/>
+						key="staticText-43"/>
 					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
 					<textElement textAlignment="Left" verticalAlignment="Bottom">
 						<font fontName="SansSerif" pdfFontName="Helvetica-Bold" size="8" isBold="true"/>
@@ -1024,28 +1121,119 @@ ORDER BY FECHA, ID_FACTURA, ID_IMPUESTO_MIN]]></queryString>
 				</staticText>
 				<staticText>
 					<reportElement
-						x="228"
-						y="10"
+						x="134"
+						y="9"
 						width="165"
 						height="12"
-						key="staticText-36"/>
+						key="staticText-44"/>
 					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
 					<textElement textAlignment="Center">
 						<font fontName="SansSerif" pdfFontName="Helvetica-Bold" size="8" isBold="true"/>
 					</textElement>
 				<text><![CDATA[TOTALES IVA]]></text>
 				</staticText>
-			</band>
+				</frame>			</band>
 		</lastPageFooter>
 		<summary>
-			<band height="10"  isSplitAllowed="true" >
+			<band height="20"  isSplitAllowed="true" >
+				<textField isStretchWithOverflow="false" pattern="###0.00" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
+					<reportElement
+						x="458"
+						y="10"
+						width="40"
+						height="10"
+						key="textField-44"/>
+					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
+					<textElement textAlignment="Right">
+						<font size="5"/>
+					</textElement>
+				<textFieldExpression   class="java.math.BigDecimal"><![CDATA[$V{sumaNetoTotal}]]></textFieldExpression>
+				</textField>
+				<textField isStretchWithOverflow="false" pattern="###0.00" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
+					<reportElement
+						x="537"
+						y="10"
+						width="40"
+						height="10"
+						key="textField-45"/>
+					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
+					<textElement textAlignment="Right">
+						<font size="5"/>
+					</textElement>
+				<textFieldExpression   class="java.math.BigDecimal"><![CDATA[$V{sumaIvaInscriptoTotal}]]></textFieldExpression>
+				</textField>
+				<textField isStretchWithOverflow="false" pattern="###0.00" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
+					<reportElement
+						x="577"
+						y="10"
+						width="45"
+						height="10"
+						key="textField-46"/>
+					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
+					<textElement textAlignment="Right">
+						<font size="5"/>
+					</textElement>
+				<textFieldExpression   class="java.math.BigDecimal"><![CDATA[$V{sumaIvaNoInscriptoTotal}]]></textFieldExpression>
+				</textField>
+				<textField isStretchWithOverflow="false" pattern="###0.00" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
+					<reportElement
+						x="622"
+						y="10"
+						width="40"
+						height="10"
+						key="textField-47"/>
+					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
+					<textElement textAlignment="Right">
+						<font size="5"/>
+					</textElement>
+				<textFieldExpression   class="java.math.BigDecimal"><![CDATA[$V{sumaPercepIvaTotal}]]></textFieldExpression>
+				</textField>
+				<textField isStretchWithOverflow="false" pattern="###0.00" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
+					<reportElement
+						x="662"
+						y="10"
+						width="40"
+						height="10"
+						key="textField-48"/>
+					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
+					<textElement textAlignment="Right">
+						<font size="5"/>
+					</textElement>
+				<textFieldExpression   class="java.math.BigDecimal"><![CDATA[$V{sumaPercepIIBBTotal}]]></textFieldExpression>
+				</textField>
+				<textField isStretchWithOverflow="false" pattern="###0.00" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
+					<reportElement
+						x="702"
+						y="10"
+						width="40"
+						height="10"
+						key="textField-49"/>
+					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
+					<textElement textAlignment="Right">
+						<font size="5"/>
+					</textElement>
+				<textFieldExpression   class="java.math.BigDecimal"><![CDATA[$V{sumaOtrosTotal}]]></textFieldExpression>
+				</textField>
+				<textField isStretchWithOverflow="false" pattern="###0.00" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
+					<reportElement
+						x="742"
+						y="10"
+						width="40"
+						height="10"
+						key="textField-50"/>
+					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
+					<textElement textAlignment="Right">
+						<font size="5"/>
+					</textElement>
+				<textFieldExpression   class="java.math.BigDecimal"><![CDATA[$V{sumaTotalTotal}]]></textFieldExpression>
+				</textField>
 				<textField isStretchWithOverflow="false" pattern="###0.00" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
 						x="458"
 						y="0"
 						width="40"
 						height="10"
-						key="textField-44"/>
+						key="textField-51"/>
 					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
 					<textElement textAlignment="Right">
 						<font size="5"/>
@@ -1058,7 +1246,7 @@ ORDER BY FECHA, ID_FACTURA, ID_IMPUESTO_MIN]]></queryString>
 						y="0"
 						width="40"
 						height="10"
-						key="textField-45"/>
+						key="textField-52"/>
 					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
 					<textElement textAlignment="Right">
 						<font size="5"/>
@@ -1071,7 +1259,7 @@ ORDER BY FECHA, ID_FACTURA, ID_IMPUESTO_MIN]]></queryString>
 						y="0"
 						width="45"
 						height="10"
-						key="textField-46"/>
+						key="textField-53"/>
 					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
 					<textElement textAlignment="Right">
 						<font size="5"/>
@@ -1084,7 +1272,7 @@ ORDER BY FECHA, ID_FACTURA, ID_IMPUESTO_MIN]]></queryString>
 						y="0"
 						width="40"
 						height="10"
-						key="textField-47"/>
+						key="textField-54"/>
 					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
 					<textElement textAlignment="Right">
 						<font size="5"/>
@@ -1097,7 +1285,7 @@ ORDER BY FECHA, ID_FACTURA, ID_IMPUESTO_MIN]]></queryString>
 						y="0"
 						width="40"
 						height="10"
-						key="textField-48"/>
+						key="textField-55"/>
 					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
 					<textElement textAlignment="Right">
 						<font size="5"/>
@@ -1110,7 +1298,7 @@ ORDER BY FECHA, ID_FACTURA, ID_IMPUESTO_MIN]]></queryString>
 						y="0"
 						width="40"
 						height="10"
-						key="textField-49"/>
+						key="textField-56"/>
 					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
 					<textElement textAlignment="Right">
 						<font size="5"/>
@@ -1123,7 +1311,7 @@ ORDER BY FECHA, ID_FACTURA, ID_IMPUESTO_MIN]]></queryString>
 						y="0"
 						width="40"
 						height="10"
-						key="textField-50"/>
+						key="textField-57"/>
 					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
 					<textElement textAlignment="Right">
 						<font size="5"/>
