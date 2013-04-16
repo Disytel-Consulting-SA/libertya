@@ -1484,7 +1484,7 @@ public class VOrdenPagoModel implements TableModelListener {
 			return PROCERROR_DOCUMENTNO_NOT_SET;
 		}	
 		
-		if (documentNoAlreadyExists()){
+		if (MAllocationHdr.documentNoAlreadyExists(null, documentNo, getDocumentType(), getAllocTypes(), isSOTrx(), m_ctx)){
 			return PROCERROR_DOCUMENTNO_ALREADY_EXISTS;
 		}
 		
@@ -3197,34 +3197,7 @@ public class VOrdenPagoModel implements TableModelListener {
 		this.documentType = documentType;
 	}
 
-	/**
-	 * Valida si el numero de documento especificado ya existe.  En ese caso retorna true
-	 */
-	protected boolean documentNoAlreadyExists()
-	{
-		// OP/RC Automaticas
-		int count = DB.getSQLValue(null, " SELECT count(1) FROM C_AllocationHdr " +
-											" WHERE documentNo = '" + Integer.parseInt(documentNo) + "'" +
-											" AND C_DocType_ID = " + getDocumentType() + 
-											" AND AD_Client_ID = " + Env.getAD_Client_ID(m_ctx) +
-											" AND allocationtype IN " + getAllocTypes());
 
-		// Si ya existe una automatica, no consultar por las manuales y retornar true
-		if (count > 0)
-			return true;
-		
-		// OP/RC Manuales
-		count += DB.getSQLValue(null, " SELECT count(1) FROM C_AllocationLine al" +
-										" INNER JOIN C_AllocationHdr ah ON al.C_AllocationHdr_ID = ah.C_AllocationHdr_ID" +
-										" INNER JOIN C_Invoice i ON al.C_Invoice_ID = i.C_Invoice_ID" +
-										" WHERE ah.documentNo = '" + Integer.parseInt(documentNo) + "'" +
-										" AND ah.C_DocType_ID = " + getDocumentType() + 
-										" AND ah.AD_Client_ID = " + Env.getAD_Client_ID(m_ctx) +
-										" AND ah.allocationtype = '" + X_C_AllocationHdr.ALLOCATIONTYPE_Manual + "'" +
-										" AND i.issotrx = " + (isSOTrx()?"'Y'":"'N'"));
-		
-		return count > 0;			
-	}
 	
 	protected String getAllocTypes()
 	{
