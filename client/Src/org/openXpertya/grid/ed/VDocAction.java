@@ -357,7 +357,9 @@ public class VDocAction extends JDialog implements ActionListener {
             // Complete                    ..  CO
 
             if( DocStatus.equals( DocumentEngine.STATUS_Completed )) {
-                options[ index++ ] = DocumentEngine.ACTION_Reverse_Correct;
+				// El cancelado hace las veces de revertido para facturas. No se
+				// despliega la opción ya que es lo mismo
+            	// options[ index++ ] = DocumentEngine.ACTION_Reverse_Correct;
                 options[ index++ ] = DocumentEngine.ACTION_Void;
             }
         } else if( m_AD_Table_ID == MPayment.Table_ID ) {
