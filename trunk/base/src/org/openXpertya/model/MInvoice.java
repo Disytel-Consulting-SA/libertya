@@ -4148,10 +4148,8 @@ public class MInvoice extends X_C_Invoice implements DocAction {
 			reversal.setC_DocTypeTarget_ID(reversalDocType
 					.getC_DocType_ID());
 			reversal.setC_DocType_ID(reversalDocType.getC_DocType_ID());
-
-			if (reversalDocType
-					.isDocType(MDocType.DOCTYPE_CustomerCreditNote))
-				reversal.setC_Invoice_Orig_ID(getC_Invoice_ID());
+			
+			reversal.setC_Invoice_Orig_ID(getC_Invoice_ID());
 
 			reversal.setFiscalAlreadyPrinted(false);
 			// Se ignora la impresión fiscal en este punto ya que puede haber un

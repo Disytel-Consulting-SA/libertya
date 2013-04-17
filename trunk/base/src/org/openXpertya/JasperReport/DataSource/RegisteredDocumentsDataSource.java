@@ -6,8 +6,10 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Properties;
+import java.util.Set;
 
 import net.sf.jasperreports.engine.JRException;
 import net.sf.jasperreports.engine.JRField;
@@ -86,13 +88,48 @@ public class RegisteredDocumentsDataSource implements OXPJasperDataSource {
 						.replaceAll("]", ")").replaceAll("\\[", "("));
 		// Estado de documentos
 		whereClause.append(" AND ").append(tableAlias)
-				.append("docstatus NOT IN ('DR','IP') ");
+				.append("docstatus NOT IN ('IP','DR') ");
 		// Agregar las condiciones dependiendo la opción de filtrado
-		if(getFilterOption().equals("N") || getFilterOption().equals("Y")){
-			whereClause.append(" AND ");
-			whereClause.append(tableAlias);
-			whereClause.append("fiscalalreadyprinted = '")
-					.append(getFilterOption()).append("'");
+		if(!getFilterOption().equals("A")){
+			if(getFilterOption().equals("Y") || getFilterOption().equals("M")){
+				whereClause.append(" AND ").append(tableAlias)
+						.append("fiscalalreadyprinted = 'Y' ");
+			}
+			else if(getFilterOption().equals("N")){
+				whereClause.append(" AND (").append(tableAlias)
+						.append("fiscalalreadyprinted = 'N' AND ")
+						.append(tableAlias)
+						.append("docstatus IN ('CO','CL')) ");
+			}
+			else if(getFilterOption().equals("B")){
+				whereClause.append(" AND (").append(tableAlias)
+						.append("fiscalalreadyprinted = 'Y' OR (")
+						.append(tableAlias)
+						.append("fiscalalreadyprinted = 'N' AND ")
+						.append(tableAlias)
+						.append("docstatus IN ('CO','CL'))) ");
+			}
+			// Los documentos no pueden estar en contenidos en el campo
+			// C_Invoice_Orig_ID ya que sino son comprobantes de anulación. 
+			// Además, si tiene un C_Invoice_Orig_ID y además la factura está
+			// referenciada en otra por el campo C_Invoice_Orig_ID significa que es
+			// anulación y además está anulada por lo tanto se debe mostrar
+			// Por ahora comentado ya que solamente sería necesario para la opción de filtrado "Y"
+//			whereClause
+//					.append(" AND (")
+//					.append(tableAlias)
+//					.append("c_invoice_orig_id is null OR ")
+//					.append(tableAlias)
+//					.append("c_invoice_orig_id = 0 OR (")
+//					.append(tableAlias)
+//					.append("c_invoice_orig_id > 0 AND ")
+//					.append(tableAlias)
+//					.append("docstatus IN ('CO','CL')) OR (")
+//					.append(tableAlias)
+//					.append("c_invoice_orig_id > 0 AND ")
+//					.append(tableAlias)
+//					.append("docstatus IN ('VO','RE') AND EXISTS (SELECT c_invoice_orig_id FROM c_invoice as i2 WHERE i2.c_invoice_orig_id = ")
+//					.append(tableAlias).append("c_invoice_id))) ");
 		}
 		return whereClause.toString();
 	}
@@ -115,7 +152,8 @@ public class RegisteredDocumentsDataSource implements OXPJasperDataSource {
 					 "			coalesce(i.nombrecli, bp.name) as nombrecli, " +
 					 "			i.fiscalalreadyprinted, " +
 					 "			(i.grandtotal * signo_issotrx) as grandtotal, " +
-					 "			i.docstatus " +
+					 "			i.docstatus," +
+					 "			i.c_invoice_orig_id " +
 					 "from c_invoice as i " +
 					 "inner join c_doctype as dt on dt.c_doctype_id = i.c_doctypetarget_id " +
 					 "inner join c_letra_comprobante as lc on lc.c_letra_comprobante_id = i.c_letra_comprobante_id " +
@@ -135,11 +173,15 @@ public class RegisteredDocumentsDataSource implements OXPJasperDataSource {
 		int actual_docTypeID, actual_comprobante;
 		boolean showMissing = showMissing();
 		boolean onlyMissing = showOnlyMissing();
+		boolean fiscalPrinted;
+		Set<String> documentsNo = new HashSet<String>();
 		while (rs.next()) {
+			fiscalPrinted = rs.getString("fiscalalreadyprinted").equals("Y");
+			documentsNo.add(rs.getString("documentno"));
 			// Verificar si tengo que agregar el faltante
 			actual_docTypeID = rs.getInt("c_doctype_id");
 			actual_comprobante = rs.getInt("numerocomprobante");
-			if(old_doctypeID != actual_docTypeID){
+			if(old_doctypeID != actual_docTypeID && fiscalPrinted){
 				old_doctypeID = -1;
 				old_comprobante = -1;
 				old_docTypeName = null;
@@ -148,6 +190,7 @@ public class RegisteredDocumentsDataSource implements OXPJasperDataSource {
 			// comprobante es diferente al anterior + 1, significa que se pasó
 			// en la numeración
 			if (showMissing
+					&& fiscalPrinted
 					&& actual_docTypeID == old_doctypeID
 					&& actual_comprobante > (old_comprobante+1)) {
 				// Por cada documento faltante entre el siguiente y el actual,
@@ -169,12 +212,18 @@ public class RegisteredDocumentsDataSource implements OXPJasperDataSource {
 									getTrxName()));
 				}
 			}
+			// Si la opción de filtrado es A, se imprime todo
 			// Agregar el documento siempre y cuando no sea sólo para faltantes
-			// Además si se imprimen los faltantes y los no registrados, sólo
-			// hay que imprimir el dato si no es impreso fiscal
-			if (!onlyMissing
-					&& !(getFilterOption().equals("B") && rs.getString(
-							"fiscalalreadyprinted").equals("Y"))) {
+			// O si se imprimen los faltantes y los no impresos, sólo
+			// hay que imprimir el dato si no es impreso fiscal.
+			// Hay que tener en cuenta que no se deben imprimir tampoco si el
+			// documento es una anulación. Por ejemplo, si tenemos una NC que
+			// anula un comprobante, esta NC no se debe mostrar. De la misma
+			// manera, si una ND es por anulación de una NC, entonces la ND no
+			// se muestra
+			if (getFilterOption().equals("A")
+					|| (!onlyMissing
+							&& !(getFilterOption().equals("B") && fiscalPrinted))) {
 				getDocuments().add(
 						new RegisteredDocumentDTO(getCtx(), rs
 								.getDate("datetrx"), rs.getInt("c_pos_id"), rs
@@ -189,9 +238,11 @@ public class RegisteredDocumentsDataSource implements OXPJasperDataSource {
 										.getString("docstatus"), false,
 								getTrxName()));
 			}
-			old_doctypeID = actual_docTypeID;
-			old_comprobante = actual_comprobante;
-			old_docTypeName = rs.getString("doctypename");
+			if(fiscalPrinted){
+				old_doctypeID = actual_docTypeID;
+				old_comprobante = actual_comprobante;
+				old_docTypeName = rs.getString("doctypename");
+			}
 		}
 		ps.close();
 		rs.close();

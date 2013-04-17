@@ -17,7 +17,7 @@
 		 whenNoDataType="NoPages"
 		 isTitleNewPage="false"
 		 isSummaryNewPage="false">
-	<property name="ireport.scriptlethandling" value="2" />
+	<property name="ireport.scriptlethandling" value="0" />
 	<property name="ireport.encoding" value="UTF-8" />
 	<import value="java.util.*" />
 	<import value="net.sf.jasperreports.engine.*" />
@@ -132,7 +132,7 @@
 					<reportElement
 						x="0"
 						y="15"
-						width="215"
+						width="240"
 						height="12"
 						key="textField-14"/>
 					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
@@ -143,7 +143,7 @@
 				</textField>
 				<staticText>
 					<reportElement
-						x="215"
+						x="240"
 						y="3"
 						width="7"
 						height="12"
@@ -156,7 +156,7 @@
 				</staticText>
 				<staticText>
 					<reportElement
-						x="215"
+						x="240"
 						y="15"
 						width="7"
 						height="12"
@@ -167,22 +167,9 @@
 					</textElement>
 				<text><![CDATA[:]]></text>
 				</staticText>
-				<textField isStretchWithOverflow="false" isBlankWhenNull="false" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
-					<reportElement
-						x="0"
-						y="27"
-						width="215"
-						height="12"
-						key="textField-15"/>
-					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
-					<textElement verticalAlignment="Middle">
-						<font size="9"/>
-					</textElement>
-				<textFieldExpression   class="java.lang.String"><![CDATA["Total Comprobantes No Registrados"]]></textFieldExpression>
-				</textField>
 				<staticText>
 					<reportElement
-						x="215"
+						x="240"
 						y="27"
 						width="7"
 						height="12"
@@ -195,7 +182,7 @@
 				</staticText>
 				<textField isStretchWithOverflow="false" pattern="#,##0.00" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
-						x="222"
+						x="247"
 						y="3"
 						width="122"
 						height="12"
@@ -208,7 +195,7 @@
 				</textField>
 				<textField isStretchWithOverflow="false" pattern="###0" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
-						x="222"
+						x="247"
 						y="15"
 						width="122"
 						height="12"
@@ -221,7 +208,7 @@
 				</textField>
 				<textField isStretchWithOverflow="false" pattern="###0" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
-						x="222"
+						x="247"
 						y="27"
 						width="122"
 						height="12"
@@ -245,7 +232,7 @@
 					<reportElement
 						x="88"
 						y="3"
-						width="127"
+						width="152"
 						height="12"
 						key="textField"/>
 					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
@@ -263,6 +250,19 @@
 						key="line-6"/>
 					<graphicElement stretchType="NoStretch" pen="Thin"/>
 				</line>
+				<textField isStretchWithOverflow="false" isBlankWhenNull="false" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
+					<reportElement
+						x="0"
+						y="27"
+						width="240"
+						height="12"
+						key="textField-26"/>
+					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
+					<textElement verticalAlignment="Middle">
+						<font size="9"/>
+					</textElement>
+				<textFieldExpression   class="java.lang.String"><![CDATA["Total Comprobantes No Impresos Fiscalmente"]]></textFieldExpression>
+				</textField>
 			</band>
 			</groupFooter>
 		</group>
@@ -305,20 +305,7 @@
 					<reportElement
 						x="0"
 						y="2"
-						width="215"
-						height="12"
-						key="textField-7"/>
-					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
-					<textElement verticalAlignment="Middle">
-						<font size="9"/>
-					</textElement>
-				<textFieldExpression   class="java.lang.String"><![CDATA["Total Caja " + $F{POSNAME}]]></textFieldExpression>
-				</textField>
-				<textField isStretchWithOverflow="false" isBlankWhenNull="false" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
-					<reportElement
-						x="0"
-						y="2"
-						width="215"
+						width="240"
 						height="12"
 						key="textField-7"/>
 					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
@@ -331,7 +318,7 @@
 					<reportElement
 						x="0"
 						y="14"
-						width="215"
+						width="240"
 						height="12"
 						key="textField-8"/>
 					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
@@ -342,7 +329,7 @@
 				</textField>
 				<staticText>
 					<reportElement
-						x="215"
+						x="240"
 						y="2"
 						width="7"
 						height="12"
@@ -355,7 +342,7 @@
 				</staticText>
 				<staticText>
 					<reportElement
-						x="215"
+						x="240"
 						y="14"
 						width="7"
 						height="12"
@@ -370,18 +357,18 @@
 					<reportElement
 						x="0"
 						y="26"
-						width="215"
+						width="240"
 						height="12"
 						key="textField-9"/>
 					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
 					<textElement verticalAlignment="Middle">
 						<font size="9"/>
 					</textElement>
-				<textFieldExpression   class="java.lang.String"><![CDATA["Total Comprobantes No Registrados"]]></textFieldExpression>
+				<textFieldExpression   class="java.lang.String"><![CDATA["Total Comprobantes No Impresos Fiscalmente"]]></textFieldExpression>
 				</textField>
 				<staticText>
 					<reportElement
-						x="215"
+						x="240"
 						y="26"
 						width="7"
 						height="12"
@@ -394,7 +381,7 @@
 				</staticText>
 				<textField isStretchWithOverflow="false" pattern="#,##0.00" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
-						x="222"
+						x="247"
 						y="2"
 						width="122"
 						height="12"
@@ -407,7 +394,7 @@
 				</textField>
 				<textField isStretchWithOverflow="false" pattern="###0" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
-						x="222"
+						x="247"
 						y="14"
 						width="122"
 						height="12"
@@ -420,7 +407,7 @@
 				</textField>
 				<textField isStretchWithOverflow="false" pattern="###0" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
-						x="222"
+						x="247"
 						y="26"
 						width="122"
 						height="12"
@@ -460,7 +447,7 @@
 					<textElement textAlignment="Left">
 						<font pdfFontName="Helvetica" size="12" isBold="false"/>
 					</textElement>
-				<text><![CDATA[Comprobantes Registrados]]></text>
+				<text><![CDATA[Comprobantes No Registrados]]></text>
 				</staticText>
 				<staticText>
 					<reportElement
@@ -858,7 +845,7 @@
 					<reportElement
 						x="0"
 						y="3"
-						width="215"
+						width="240"
 						height="12"
 						key="textField-19"/>
 					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
@@ -871,7 +858,7 @@
 					<reportElement
 						x="0"
 						y="15"
-						width="215"
+						width="240"
 						height="12"
 						key="textField-20"/>
 					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
@@ -882,7 +869,7 @@
 				</textField>
 				<staticText>
 					<reportElement
-						x="215"
+						x="240"
 						y="3"
 						width="7"
 						height="12"
@@ -895,7 +882,7 @@
 				</staticText>
 				<staticText>
 					<reportElement
-						x="215"
+						x="240"
 						y="15"
 						width="7"
 						height="12"
@@ -906,22 +893,9 @@
 					</textElement>
 				<text><![CDATA[:]]></text>
 				</staticText>
-				<textField isStretchWithOverflow="false" isBlankWhenNull="false" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
-					<reportElement
-						x="0"
-						y="27"
-						width="215"
-						height="12"
-						key="textField-21"/>
-					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
-					<textElement verticalAlignment="Middle">
-						<font size="9"/>
-					</textElement>
-				<textFieldExpression   class="java.lang.String"><![CDATA["Total Comprobantes No Registrados"]]></textFieldExpression>
-				</textField>
 				<staticText>
 					<reportElement
-						x="215"
+						x="240"
 						y="27"
 						width="7"
 						height="12"
@@ -934,7 +908,7 @@
 				</staticText>
 				<textField isStretchWithOverflow="false" pattern="#,##0.00" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
-						x="222"
+						x="247"
 						y="3"
 						width="122"
 						height="12"
@@ -947,7 +921,7 @@
 				</textField>
 				<textField isStretchWithOverflow="false" pattern="###0" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
-						x="222"
+						x="247"
 						y="15"
 						width="122"
 						height="12"
@@ -960,7 +934,7 @@
 				</textField>
 				<textField isStretchWithOverflow="false" pattern="###0" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
-						x="222"
+						x="247"
 						y="27"
 						width="122"
 						height="12"
@@ -970,6 +944,19 @@
 						<font size="9"/>
 					</textElement>
 				<textFieldExpression   class="java.lang.Integer"><![CDATA[$V{COUNT_NOFISCALPRINTED_ALL}]]></textFieldExpression>
+				</textField>
+				<textField isStretchWithOverflow="false" isBlankWhenNull="false" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
+					<reportElement
+						x="0"
+						y="27"
+						width="240"
+						height="12"
+						key="textField-27"/>
+					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
+					<textElement verticalAlignment="Middle">
+						<font size="9"/>
+					</textElement>
+				<textFieldExpression   class="java.lang.String"><![CDATA["Total Comprobantes No Impresos Fiscalmente"]]></textFieldExpression>
 				</textField>
 			</band>
 		</summary>

@@ -49,13 +49,17 @@ public class LaunchRegisteredDocuments extends JasperReportLaunch {
 	}
 	
 	protected String getFilterOption(){
-		return (String)getParameterValue("Filter");
+		String paramValue = (String)getParameterValue("Filter");
+		if(Util.isEmpty(paramValue, true)){
+			paramValue = "B";
+		}
+		return paramValue; 
 	}
 	
 	protected String getFilterOptionName(){
 		return JasperReportsUtil.getListName(getCtx(),
 				getFilterOptionReferenceID(),
-				(String) getParameterValue("Filter"));
+				getFilterOption());
 	}
 	
 	protected Integer getFilterOptionReferenceID(){
