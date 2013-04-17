@@ -1324,9 +1324,12 @@ public class VOrdenPagoModel implements TableModelListener {
 	
 		sql.append(" ORDER BY max(DueDate)");
 		
+		CPreparedStatement ps = null; 
+		ResultSet rs = null;
+		
 		try {
 			
-			CPreparedStatement ps = DB.prepareStatement(sql.toString(), ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_UPDATABLE, getTrxName());
+			ps = DB.prepareStatement(sql.toString(), getTrxName());
 			
 			ps.setInt(i++, C_Currency_ID);
 			ps.setInt(i++, C_Currency_ID);
@@ -1338,7 +1341,7 @@ public class VOrdenPagoModel implements TableModelListener {
 			if (!m_allInvoices)
 				ps.setTimestamp(i++, m_fechaFacturas);
 
-			ResultSet rs = ps.executeQuery();
+			rs = ps.executeQuery();
 			//int ultimaFactura = -1;
 			while (rs.next()) {
 				ResultItemFactura rif = new ResultItemFactura(rs);
@@ -1351,7 +1354,18 @@ public class VOrdenPagoModel implements TableModelListener {
 			}
 			
 		} catch (Exception e) {
-			log.log(Level.SEVERE, "", e);
+			log.log(Level.SEVERE, "Error al actualizar facturas. ", e);
+		}
+		finally {
+			try {
+				if (rs!=null)
+					rs.close();
+				if (ps!=null)
+					ps.close();
+			}
+			catch (Exception e) {
+				log.log(Level.SEVERE, "", e);	
+			}
 		}
 		
 		m_facturasTableModel.fireChanged(false);
@@ -1365,48 +1379,61 @@ public class VOrdenPagoModel implements TableModelListener {
 		int cantidadPagos=0;
 				
 		for(int i=0; i<3;i++){
-		StringBuffer sql = new StringBuffer();
-		if(i==0){
-			sql.append(" SELECT COUNT(*)");				
-			sql.append(" FROM libertya.c_payment i");
-			sql.append(" INNER JOIN libertya.C_DocType AS dt ON (dt.C_DocType_ID=i.C_DocType_ID) ");
-			sql.append(" WHERE i.IsActive = 'Y' AND i.DocStatus IN ('CO', 'CL') ");
-			sql.append(" AND i.C_BPartner_ID = ? ");
-			sql.append(" AND dt.DocTypeKey = 'VP'");
-			sql.append(" AND libertya.paymentavailable(i.c_payment_id) > 0");
-			sql.append(" AND i.ad_org_id = ?  ");
-		}
-		if(i==1){
-			sql.append(" SELECT COUNT(*)");				
-			sql.append(" FROM libertya.c_invoice i");
-			sql.append(" INNER JOIN libertya.C_DocType AS dt ON (dt.C_DocType_ID=i.C_DocType_ID) ");
-			sql.append(" WHERE i.IsActive = 'Y' AND i.DocStatus IN ('CO', 'CL') ");
-			sql.append(" AND i.C_BPartner_ID = ? ");
-			sql.append(" AND dt.DocBaseType = 'APC'");
-			sql.append(" AND libertya.invoiceopen(i.c_invoice_id,null) > 0");
-			sql.append(" AND i.ad_org_id = ?  ");
-			sql.append(" AND dt.signo_issotrx=1 ");
-		}
-		if(i==2){
-			sql.append(" SELECT COUNT(*)");				
-			sql.append(" FROM libertya.c_cashline i");
-			sql.append(" WHERE i.IsActive = 'Y' AND i.DocStatus IN ('CO', 'CL') ");
-			sql.append(" AND i.C_BPartner_ID = ? ");
-			sql.append(" AND SIGN(i.amount)<0 ");
-			sql.append(" AND libertya.cashlineavailable(i.c_cashline_id) <> 0 ");
-			sql.append(" AND i.ad_org_id = ?  ");
-		}
-		try {			
-			CPreparedStatement ps = DB.prepareStatement(sql.toString(), ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_UPDATABLE, getTrxName());			
-			ps.setInt(1, bpartner);			
-			ps.setInt(2, AD_Org_ID);			
-			ResultSet rs = ps.executeQuery();
-			while (rs.next()) {
-				cantidadPagos+=rs.getInt(1);
-			}			
-		} catch (Exception e) {
-			log.log(Level.SEVERE, "", e);
-		}
+			StringBuffer sql = new StringBuffer();
+			if(i==0){
+				sql.append(" SELECT COUNT(*)");				
+				sql.append(" FROM libertya.c_payment i");
+				sql.append(" INNER JOIN libertya.C_DocType AS dt ON (dt.C_DocType_ID=i.C_DocType_ID) ");
+				sql.append(" WHERE i.IsActive = 'Y' AND i.DocStatus IN ('CO', 'CL') ");
+				sql.append(" AND i.C_BPartner_ID = ? ");
+				sql.append(" AND dt.DocTypeKey = 'VP'");
+				sql.append(" AND libertya.paymentavailable(i.c_payment_id) > 0");
+				sql.append(" AND i.ad_org_id = ?  ");
+			}
+			if(i==1){
+				sql.append(" SELECT COUNT(*)");				
+				sql.append(" FROM libertya.c_invoice i");
+				sql.append(" INNER JOIN libertya.C_DocType AS dt ON (dt.C_DocType_ID=i.C_DocType_ID) ");
+				sql.append(" WHERE i.IsActive = 'Y' AND i.DocStatus IN ('CO', 'CL') ");
+				sql.append(" AND i.C_BPartner_ID = ? ");
+				sql.append(" AND dt.DocBaseType = 'APC'");
+				sql.append(" AND libertya.invoiceopen(i.c_invoice_id,null) > 0");
+				sql.append(" AND i.ad_org_id = ?  ");
+				sql.append(" AND dt.signo_issotrx=1 ");
+			}
+			if(i==2){
+				sql.append(" SELECT COUNT(*)");				
+				sql.append(" FROM libertya.c_cashline i");
+				sql.append(" WHERE i.IsActive = 'Y' AND i.DocStatus IN ('CO', 'CL') ");
+				sql.append(" AND i.C_BPartner_ID = ? ");
+				sql.append(" AND SIGN(i.amount)<0 ");
+				sql.append(" AND libertya.cashlineavailable(i.c_cashline_id) <> 0 ");
+				sql.append(" AND i.ad_org_id = ?  ");
+			}
+			CPreparedStatement ps = null;
+			ResultSet rs = null;
+			try {			
+				ps = DB.prepareStatement(sql.toString(), getTrxName());			
+				ps.setInt(1, bpartner);			
+				ps.setInt(2, AD_Org_ID);			
+				rs = ps.executeQuery();
+				while (rs.next()) {
+					cantidadPagos+=rs.getInt(1);
+				}			
+			} catch (Exception e) {
+				log.log(Level.SEVERE, "Error al buscar pagos. ", e);
+			}
+			finally {
+				try {
+					if (rs!=null)
+						rs.close();
+					if (ps!=null)
+						ps.close();
+				}
+				catch (Exception e) {
+					log.log(Level.SEVERE, "", e);	
+				}
+			}
 		}		
 		
 		if(cantidadPagos>0){
