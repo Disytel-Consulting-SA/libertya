@@ -4225,7 +4225,7 @@ public class MInvoice extends X_C_Invoice implements DocAction {
 		// documentos aparezcan
 		// en el mismo lugar
 		// reversal.setDocStatus( DOCSTATUS_Closed );
-		reversal.setDocStatus(DOCSTATUS_Reversed);
+		reversal.setDocStatus(DOCSTATUS_Voided);
 
 		reversal.setDocAction(DOCACTION_None);
 		reversal.save(get_TrxName());
