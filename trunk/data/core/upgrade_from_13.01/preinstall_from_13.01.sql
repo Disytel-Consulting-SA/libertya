@@ -1858,3 +1858,8 @@ UNION ALL
   WHERE date_trunc('day'::text, i.dateacct) <> date_trunc('day'::text, pjp.dateacct::timestamp with time zone) AND (i.initialcurrentaccountamt > 0) AND hdr.isactive = 'Y'::bpchar AND ((dtc.docbasetype <> ALL (ARRAY['ARC'::bpchar, 'APC'::bpchar])) OR (dtc.docbasetype = ANY (ARRAY['ARC'::bpchar, 'APC'::bpchar])) AND pjp.c_invoice_credit_id IS NOT NULL);
 
 ALTER TABLE v_dailysales OWNER TO libertya;
+
+--20130417-1254 Modificación de estado de documentos factura en estado Revertido a Anulado.
+update c_invoice
+set docstatus = 'VO'
+where ad_client_id = 1010016 and docstatus = 'RE';
