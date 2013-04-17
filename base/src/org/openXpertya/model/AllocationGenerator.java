@@ -1,6 +1,7 @@
 package org.openXpertya.model;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -1035,7 +1036,7 @@ public class AllocationGenerator {
 		}
 		
 		public boolean validateAmount() {
-			return ( (DB.getSQLValueBD(getTrxName(), "SELECT invoiceopen(?,0)", id, true)).subtract(amount).compareTo(BigDecimal.ZERO) >= 0 );
+			return ( (DB.getSQLValueBD(getTrxName(), "SELECT invoiceopen(?,0)", id, true)).subtract(amount.setScale(2, RoundingMode.HALF_EVEN)).compareTo(BigDecimal.ZERO) >= 0 );
 		}
 	}
 
@@ -1080,7 +1081,7 @@ public class AllocationGenerator {
 		}
 		
 		public boolean validateAmount() {
-			return ( (DB.getSQLValueBD(getTrxName(), "SELECT abs(cashlineavailable(?))", id,true)).subtract(amount).compareTo(BigDecimal.ZERO) >= 0 );
+			return ( (DB.getSQLValueBD(getTrxName(), "SELECT abs(cashlineavailable(?))", id,true)).subtract(amount.setScale(2, RoundingMode.HALF_EVEN)).compareTo(BigDecimal.ZERO) >= 0 );
 		}
 	}
 
@@ -1125,7 +1126,7 @@ public class AllocationGenerator {
 		}
 		
 		public boolean validateAmount() {
-			return ( (DB.getSQLValueBD(getTrxName(), "SELECT paymentavailable(?)", id,true)).subtract(amount).compareTo(BigDecimal.ZERO) >= 0 );
+			return ( (DB.getSQLValueBD(getTrxName(), "SELECT paymentavailable(?)", id,true)).subtract(amount.setScale(2, RoundingMode.HALF_EVEN)).compareTo(BigDecimal.ZERO) >= 0 );
 		}
 	}
 	
