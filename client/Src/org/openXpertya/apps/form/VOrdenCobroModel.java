@@ -488,9 +488,12 @@ public class VOrdenCobroModel extends VOrdenPagoModel {
 	
 		sql.append(" ORDER BY DueDate");
 		
+		CPreparedStatement ps = null; 
+		ResultSet rs = null;
+		
 		try {
 			
-			CPreparedStatement ps = DB.prepareStatement(sql.toString(), ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_UPDATABLE, getTrxName());
+			ps = DB.prepareStatement(sql.toString(), getTrxName());
 			
 			ps.setInt(i++, C_Currency_ID);
 			ps.setInt(i++, C_Currency_ID);
@@ -502,7 +505,7 @@ public class VOrdenCobroModel extends VOrdenPagoModel {
 			if (!m_allInvoices && !getBPartner().isGroupInvoices())
 				ps.setTimestamp(i++, m_fechaFacturas);
 
-			ResultSet rs = ps.executeQuery();
+			rs = ps.executeQuery();
 			//int ultimaFactura = -1;
 			while (rs.next()) {
 				ResultItemFactura rif = new ResultItemFactura(rs);
@@ -514,7 +517,18 @@ public class VOrdenCobroModel extends VOrdenPagoModel {
 			}
 			
 		} catch (Exception e) {
-			log.log(Level.SEVERE, "", e);
+			log.log(Level.SEVERE, "Error en actualizarFacturas. ", e);
+		}
+		finally {
+			try {
+				if (rs!=null)
+					rs.close();
+				if (ps!=null)
+					ps.close();
+			}
+			catch (Exception e) {
+				log.log(Level.SEVERE, "", e);	
+			}
 		}
 		
 		applyBPartnerDiscount();
