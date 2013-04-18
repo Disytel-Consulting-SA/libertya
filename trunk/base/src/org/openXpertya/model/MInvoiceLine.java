@@ -996,7 +996,7 @@ public class MInvoiceLine extends X_C_InvoiceLine {
 	        }
 	        // Setear el precio de costo
 			BigDecimal costPrice = BigDecimal.ZERO;
-			boolean decrementTaxAmt = false;
+			int deltaTax = 0;
 			int costCurrency = Env.getContextAsInt(getCtx(), "$C_Currency_ID");
 			// 1) Tarifas de costo del proveedor
 			if(!Util.isEmpty(getC_BPartner_Vendor_ID(), true)){
@@ -1010,7 +1010,9 @@ public class MInvoiceLine extends X_C_InvoiceLine {
 						MPriceList priceList = MPriceList.get(getCtx(),
 								vendor.getPO_PriceList_ID(),
 								get_TrxName());
-						decrementTaxAmt = priceList.isTaxIncluded();
+						if(isTaxIncluded() != priceList.isTaxIncluded()){
+							deltaTax = isTaxIncluded()?1:-1;
+						}
 						costCurrency = priceList.getC_Currency_ID();
 					}
 				}
@@ -1030,7 +1032,9 @@ public class MInvoiceLine extends X_C_InvoiceLine {
 					MPriceList priceList = MPriceList.get(getCtx(),
 							priceListVersion.getM_PriceList_ID(),
 							get_TrxName());
-					decrementTaxAmt = priceList.isTaxIncluded();
+					if(isTaxIncluded() != priceList.isTaxIncluded()){
+						deltaTax = isTaxIncluded()?1:-1;
+					}
 					costCurrency = priceList.getC_Currency_ID();
 				}
 				else{
@@ -1044,7 +1048,9 @@ public class MInvoiceLine extends X_C_InvoiceLine {
 						MPriceList priceList = MPriceList.get(getCtx(),
 								priceListVersion.getM_PriceList_ID(),
 								get_TrxName());
-						decrementTaxAmt = priceList.isTaxIncluded();
+						if(isTaxIncluded() != priceList.isTaxIncluded()){
+							deltaTax = isTaxIncluded()?1:-1;
+						}
 						costCurrency = priceList.getC_Currency_ID();
 					}
 				}
@@ -1066,28 +1072,29 @@ public class MInvoiceLine extends X_C_InvoiceLine {
 				}
 			}
 			// Seteo el precio de costo
+			BigDecimal costConverted = costPrice;
 			if(costPrice.compareTo(BigDecimal.ZERO) > 0){
-				BigDecimal costPriceConverted = MConversionRate.convertBase(getCtx(), costPrice,
-						costCurrency, invoice.getDateInvoiced(), 0,
-						getAD_Client_ID(), getAD_Org_ID());
-				costPrice = costPriceConverted != null
-						&& costPriceConverted.compareTo(BigDecimal.ZERO) != 0? costPriceConverted
-						: costPrice;
-			}
-			else{
-				decrementTaxAmt = false;
-			}
-			setCostPrice(costPrice);
-			// Decrementar el monto de impuesto al precio de costo? esto pasa el
-			// impuesto está incluído en la tarifa
-			if(decrementTaxAmt){
-				BigDecimal costConverted = MConversionRate.convertBase(
-						getCtx(), getCostPrice(), invoice.getC_Currency_ID(),
+				costConverted = MConversionRate.convert(getCtx(),
+						costPrice, costCurrency, invoice.getC_Currency_ID(),
 						invoice.getDateInvoiced(), 0, getAD_Client_ID(),
 						getAD_Org_ID());
-				costConverted = costConverted != null?costConverted:getCostPrice();
-				BigDecimal costTaxAmt = MTax.calculateTax(costConverted, true, isPerceptionsIncluded(), getTaxRate(), 2);
-				setCostPrice(costConverted.subtract(costTaxAmt));
+				costConverted = costConverted != null?costConverted:costPrice;
+			}
+			else{
+				deltaTax = 0;
+			}
+			setCostPrice(costPrice);
+			// Decrementar/incrementar el monto de impuesto al precio de costo
+			// si las tarifas difieren en el campo impuesto incluido. Si la
+			// tarifa de ventas de esta factura posee impuesto incluido y la de
+			// costo no, entonces se debe agregar el impuesto al costo, caso
+			// contrario decrementar. En el caso que no difieran en ese campo,
+			// no se incrementa ni decrementa
+			if(deltaTax != 0){
+				BigDecimal costTaxAmt = MTax.calculateTax(costConverted, true,
+						isPerceptionsIncluded(), getTaxRate(), 2);
+				setCostPrice(costConverted.add(costTaxAmt
+						.multiply(new BigDecimal(deltaTax))));
 			}
         }
         /*
