@@ -1150,11 +1150,13 @@ public class MInOut extends X_M_InOut implements DocAction {
             MWarehouse wh = MWarehouse.get( getCtx(),getM_Warehouse_ID());
 
         	//Validar número de doccumento para remitos de salida
+            // Se saca la validación para permitir duplicados
+    		/*
         	if (!isSOTrx() && existsDocNumber(false)) {
         		log.saveError("ShipmentNumberAlredyExists", "");
         		return false;
         	}
-            
+            */
             
             if( wh.getAD_Org_ID() != getAD_Org_ID()) {
                 log.saveError( "WarehouseOrgConflict","" );
@@ -1346,14 +1348,15 @@ public class MInOut extends X_M_InOut implements DocAction {
         }
 
         // Credit Check
-
+		// Se saca la validación para permitir duplicados
+		/*
         if( !isSOTrx()) {
             if (existsDocNumber(true)) {
         		m_processMsg = "@ShippmentNumberAlredyExists@";
         		return DocAction.STATUS_Invalid;
 
         	}
-        }
+        }*/
 
         // -----------------------------------------------------------------------
 		// IMPORTANTE: Estas porciones de código se deben dejar antes de las
@@ -1579,16 +1582,24 @@ public class MInOut extends X_M_InOut implements DocAction {
 		sql +=	" AND IsActive = 'Y' AND DocumentNo = ?" +
 		" AND isSOTrx = 'N' ";
 		CPreparedStatement pstm = DB.prepareStatement(sql, get_TrxName());
-		
+		ResultSet rs = null;
 		try {
 			pstm.setInt(1, getAD_Client_ID());
 			pstm.setString(2, getDocumentNo());
-			ResultSet rs = pstm.executeQuery();
+			rs = pstm.executeQuery();
 			return rs.next();
 			
 		} catch (SQLException e) {
 			log.saveError("Error validating document number", e);
 			return false;
+		} finally{
+			try{
+				if(pstm != null)pstm.close();
+				if(rs != null)rs.close();
+			} catch(Exception e2){
+				log.saveError("Error validating document number", e2);
+				return false;
+			}
 		}
 	}
 
