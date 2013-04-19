@@ -47,12 +47,16 @@ public class RegisteredDocumentsDataSource implements OXPJasperDataSource {
 	/** Utilizado para mapear los campos con las invocaciones de los metodos  */
 	HashMap<String, String> methodMapper = new HashMap<String, String>(); 
 	
+	/** Números de documento totales impresos fiscalmente */
+	private Set<String> documentsNo;
+	
 	public RegisteredDocumentsDataSource(Properties ctx, DeclaracionValoresDTO valoresDTO, String filterOption, String trxName) {
 		setTrxName(trxName);
 		setCtx(ctx);
 		setValoresDTO(valoresDTO);
 		setFilterOption(filterOption);
 		setDocuments(new ArrayList<RegisteredDocumentDTO>());
+		setDocumentsNo(new HashSet<String>());
 		initMethodMapper();
 	}
 	
@@ -72,6 +76,31 @@ public class RegisteredDocumentsDataSource implements OXPJasperDataSource {
 		methodMapper.put("ISMISSING", "isMissing");
 	}
 
+	private void initDocumentsNo() throws Exception{
+		if(showMissing()){
+			// Cargar las facturas dependiendo de las opciones
+			StringBuffer sql = new StringBuffer("select distinct i.documentno, fiscalalreadyprinted " +
+						 "from c_invoice as i " +
+						 "inner join c_doctype as dt on dt.c_doctype_id = i.c_doctypetarget_id " +
+						 "inner join c_letra_comprobante as lc on lc.c_letra_comprobante_id = i.c_letra_comprobante_id " +
+						 "inner join c_bpartner as bp on bp.c_bpartner_id = i.c_bpartner_id " +
+						 "inner join c_posjournal as pj on pj.c_posjournal_id = i.c_posjournal_id " +
+						 "inner join c_pos as p on p.c_pos_id = pj.c_pos_id " +
+						 "inner join ad_user as u on u.ad_user_id = pj.ad_user_id " +
+						 "where ");
+			sql.append(getWhereClause("i"));
+			PreparedStatement ps = DB.prepareStatement(sql.toString(), getTrxName());
+			ResultSet rs = ps.executeQuery();
+			while(rs.next()){
+				if(rs.getString("fiscalalreadyprinted").equals("Y")){
+					getDocumentsNo().add(rs.getString("documentno"));
+				}
+			}
+			ps.close();
+			rs.close();
+		}
+	}
+	
 	protected String getWhereClause(String tableAlias){
 		StringBuffer whereClause = new StringBuffer();
 		if(!Util.isEmpty(tableAlias, true)){
@@ -136,6 +165,9 @@ public class RegisteredDocumentsDataSource implements OXPJasperDataSource {
 	
 	@Override
 	public void loadData() throws Exception {
+		// Inicializar todos los nros de documento encontrados si necesito
+		// mostrar los faltantes
+		initDocumentsNo();
 		// Cargar las facturas dependiendo de las opciones
 		StringBuffer sql = new StringBuffer("select date_trunc('day', pj.datetrx) as datetrx, " +
 					 "			p.c_pos_id," +
@@ -174,10 +206,8 @@ public class RegisteredDocumentsDataSource implements OXPJasperDataSource {
 		boolean showMissing = showMissing();
 		boolean onlyMissing = showOnlyMissing();
 		boolean fiscalPrinted;
-		Set<String> documentsNo = new HashSet<String>();
 		while (rs.next()) {
 			fiscalPrinted = rs.getString("fiscalalreadyprinted").equals("Y");
-			documentsNo.add(rs.getString("documentno"));
 			// Verificar si tengo que agregar el faltante
 			actual_docTypeID = rs.getInt("c_doctype_id");
 			actual_comprobante = rs.getInt("numerocomprobante");
@@ -195,21 +225,25 @@ public class RegisteredDocumentsDataSource implements OXPJasperDataSource {
 					&& actual_comprobante > (old_comprobante+1)) {
 				// Por cada documento faltante entre el siguiente y el actual,
 				// meto los faltantes en la lista de documentos
+				String docNo;
 				for (int aux = (old_comprobante+1); aux < actual_comprobante; aux++) {
-					getDocuments()
-							.add(new RegisteredDocumentDTO(
-									getCtx(),
-									rs.getDate("datetrx"),
-									rs.getInt("c_pos_id"),
-									rs.getString("posname"),
-									rs.getInt("ad_user_id"),
-									null,
-									old_docTypeName,
-									CalloutInvoiceExt.GenerarNumeroDeDocumento(
-											rs.getInt("puntodeventa"), aux,
-											rs.getString("letra"), true, false),
-									null, null, null, null, "Faltante", true,
-									getTrxName()));
+					docNo = CalloutInvoiceExt.GenerarNumeroDeDocumento(
+							rs.getInt("puntodeventa"), aux,
+							rs.getString("letra"), true, false);
+					if(!getDocumentsNo().contains(docNo)){
+						getDocuments()
+								.add(new RegisteredDocumentDTO(
+										getCtx(),
+										rs.getDate("datetrx"),
+										rs.getInt("c_pos_id"),
+										rs.getString("posname"),
+										rs.getInt("ad_user_id"),
+										null,
+										old_docTypeName,
+										docNo,
+										null, null, null, null, "Faltante", true,
+										getTrxName()));
+					}
 				}
 			}
 			// Si la opción de filtrado es A, se imprime todo
@@ -246,6 +280,8 @@ public class RegisteredDocumentsDataSource implements OXPJasperDataSource {
 		}
 		ps.close();
 		rs.close();
+		getDocumentsNo().clear();
+		setDocumentsNo(null);
 		totalDocuments = documents.size();
 	}
 	
@@ -292,6 +328,7 @@ public class RegisteredDocumentsDataSource implements OXPJasperDataSource {
 		currentRecord++;
 		
 		if (currentRecord >= totalDocuments)	{
+			getDocuments().clear();
 			setDocuments(null);
 			return false;
 		}
@@ -345,6 +382,14 @@ public class RegisteredDocumentsDataSource implements OXPJasperDataSource {
 
 	protected void setCurrentDocument(RegisteredDocumentDTO currentDocument) {
 		this.currentDocument = currentDocument;
+	}
+
+	protected Set<String> getDocumentsNo() {
+		return documentsNo;
+	}
+
+	protected void setDocumentsNo(Set<String> documentsNo) {
+		this.documentsNo = documentsNo;
 	}
 
 }
