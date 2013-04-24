@@ -16,6 +16,7 @@ import org.openXpertya.JasperReport.DataSource.DeclaracionValoresDataSource;
 import org.openXpertya.JasperReport.DataSource.DeclaracionValoresTransferDataSource;
 import org.openXpertya.JasperReport.DataSource.DeclaracionValoresVentasDataSource;
 import org.openXpertya.JasperReport.DataSource.DeclaracionValoresVentasReceiptDataSource;
+import org.openXpertya.JasperReport.DataSource.DeclaracionValoresVoidedDocumentsDataSource;
 import org.openXpertya.JasperReport.DataSource.JasperReportsUtil;
 import org.openXpertya.JasperReport.DataSource.OXPJasperDataSource;
 import org.openXpertya.JasperReport.DataSource.OXPJasperEmptyDataSource;
@@ -80,6 +81,9 @@ public class LaunchDeclaracionValores extends JasperReportLaunch {
 		addReportParameter("SHOW_DETAILS_SALES", isShowDetailSales());
 		addReportParameter("SHOW_DETAILS_SALES_TRUE_DESCRIPTION", Msg.getMsg(getCtx(), "ShowDetailsSales"));
 		addReportParameter("SHOW_DETAILS_SALES_FALSE_DESCRIPTION", Msg.getMsg(getCtx(), "DoNotShowDetailsSales"));
+		addReportParameter("SHOW_VOID_DOCUMENTS", isShowVoidDocuments());
+		addReportParameter("SHOW_VOID_DOCUMENTS_TRUE_DESCRIPTION", Msg.getMsg(getCtx(), "ShowVoidDocuments"));
+		addReportParameter("SHOW_VOID_DOCUMENTS_FALSE_DESCRIPTION", Msg.getMsg(getCtx(), "DoNotShowVoidDocuments"));
 		// Agrego los subreportes
 		addSubreports();
 	}
@@ -133,9 +137,11 @@ public class LaunchDeclaracionValores extends JasperReportLaunch {
 		DeclaracionValoresVentasReceiptDataSource ventaReceiptDS = getVentasReceiptDataSource();
 		// Data Source de Valores
 		ValoresDataSource valoresDS = getValoresDataSource();
+		// Data Source de Comprobantes Anulados
+		DeclaracionValoresVoidedDocumentsDataSource voidDocumentsDS = getVoidDocumentsDataSource();
 		//////////////////////////////////////
 		// Subreporte de totales por tipo de transacción
-		MJasperReport trxSubreport = getDeclaracionValoresSubreport(); 
+		MJasperReport trxSubreport = getDeclaracionValoresSubreport();
 		// Se agrega el informe compilado como parámetro.
 		addReportParameter("COMPILED_SUBREPORT_TYPE_VALUES", new ByteArrayInputStream(trxSubreport.getBinaryData()));
 		// Se agregan los datasources de los subreportes
@@ -146,6 +152,12 @@ public class LaunchDeclaracionValores extends JasperReportLaunch {
 		addReportParameter("SUBREPORT_CUPON_DATASOURCE", cuponDS);
 		addReportParameter("SUBREPORT_CREDIT_NOTE_DATASOURCE", creditNoteDS);
 		addReportParameter("SUBREPORT_CURRENTACCOUNT_DATASOURCE", ccDS);
+		//////////////////////////////////////
+		// Subreporte de comprobantes anulados
+		MJasperReport voidDocsSubreport = getDeclaracionValoresSubreportVoidDocuments();
+		addReportParameter("COMPILED_SUBREPORT_ANULADOS",
+				new ByteArrayInputStream(voidDocsSubreport.getBinaryData()));
+		addReportParameter("SUBREPORT_ANULADOS_DATASOURCE", voidDocumentsDS);
 		//////////////////////////////////////
 		// Subreporte de venta y sus medios de cobro
 		MJasperReport ventaReceiptSubreport = getVentasReceiptSubreport();
@@ -165,7 +177,16 @@ public class LaunchDeclaracionValores extends JasperReportLaunch {
 		// que no está funcionando el valor de retorno del subreporte. Sacar
 		// esto y modificar el reporte para tomar ese valor cuando se actualice
 		// la librería de jasper, quizás venga por ahí el problema.
-		addReportParameter("DECLARACION_VALORES_TOTAL", valoresDS != null?valoresDS.getDeclaracionValoresTotalAmt():null);
+		addReportParameter("TOTAL_DECLARACION_VALORES", valoresDS != null?valoresDS.getDeclaracionValoresTotalAmt():null);
+		addReportParameter("TOTAL_CUPON", cuponDS != null?cuponDS.getTotalAmt():null);
+		addReportParameter("TOTAL_VENTA", ventaDS != null?ventaDS.getTotalAmt():null);
+		addReportParameter("TOTAL_EFECTIVO", cashDS != null?cashDS.getTotalAmt():null);
+		addReportParameter("TOTAL_CHEQUE", checkDS != null?checkDS.getTotalAmt():null);
+		addReportParameter("TOTAL_TRANSFER", transferDS != null?transferDS.getTotalAmt():null);
+		addReportParameter("TOTAL_NC", creditNoteDS != null?creditNoteDS.getTotalAmt():null);
+		addReportParameter("TOTAL_CC", ccDS != null?ccDS.getTotalAmt():null);
+		addReportParameter("TOTAL_VENTA_RECEIPT", ventaReceiptDS != null?ventaReceiptDS.getTotalAmt():null);
+		addReportParameter("TOTAL_VOID_DOCUMENTS", voidDocumentsDS != null?voidDocumentsDS.getTotalAmt():null);
 	}
 	
 	
@@ -190,6 +211,16 @@ public class LaunchDeclaracionValores extends JasperReportLaunch {
 					: showDetail;		
 		}
 		return showDetail;
+	}
+	
+	protected Boolean isShowVoidDocuments(){
+		Boolean showVoidDocuments = false;
+		if(getPosJournal() == null){
+			showVoidDocuments = getParameterValue("ShowVoidDocuments") != null ? getParameterValue(
+					"ShowVoidDocuments").equals("Y")
+					: showVoidDocuments;		
+		}
+		return showVoidDocuments;
 	}
 	
 	protected List<Integer> getJournalIDs(){
@@ -377,6 +408,16 @@ public class LaunchDeclaracionValores extends JasperReportLaunch {
 		return valoresDS;
 	}
 	
+	protected DeclaracionValoresVoidedDocumentsDataSource getVoidDocumentsDataSource() throws Exception{
+		DeclaracionValoresVoidedDocumentsDataSource voidDocumentsDS = null;
+		if(isLoadVoidDocumentsDataSource()){
+			voidDocumentsDS = new DeclaracionValoresVoidedDocumentsDataSource(
+					getCtx(), getValoresDTO(), get_TrxName());
+			voidDocumentsDS = (DeclaracionValoresVoidedDocumentsDataSource) loadDSData(voidDocumentsDS);
+		}
+		return voidDocumentsDS;
+	}
+	
 	protected DeclaracionValoresDataSource loadDSData(DeclaracionValoresDataSource ds) throws Exception{
 		ds.loadData();
 		return ds;
@@ -401,6 +442,13 @@ public class LaunchDeclaracionValores extends JasperReportLaunch {
 	 */
 	protected MJasperReport getVentasReceiptSubreport() throws Exception{
 		return getJasperReport(getCtx(), "DeclaracionValores-Subreporte-VentasReceipt", get_TrxName());
+	}
+	
+	/**
+	 * @return el subreporte de comprobantes anulados
+	 */
+	protected MJasperReport getDeclaracionValoresSubreportVoidDocuments() throws Exception{
+		return getJasperReport(getCtx(), "DeclaracionDeValores-Subreport-Anulados", get_TrxName());
 	}
 	
 	/**
@@ -446,6 +494,10 @@ public class LaunchDeclaracionValores extends JasperReportLaunch {
 	
 	protected boolean isLoadVentasReceiptDataSource(){
 		return false;
+	}
+	
+	protected boolean isLoadVoidDocumentsDataSource(){
+		return isShowVoidDocuments();
 	}
 	
 	protected void setPosJournal(MPOSJournal posJournal) {

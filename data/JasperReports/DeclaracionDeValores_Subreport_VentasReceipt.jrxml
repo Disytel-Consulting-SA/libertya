@@ -59,11 +59,11 @@
 						width="130"
 						height="16"
 						forecolor="#606060"
-						backcolor="#E8E8E8"
+						backcolor="#ECE7E7"
 						key="textField-1"/>
 					<box topBorder="Thin" topBorderColor="#000000" leftBorder="Thin" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="Thin" bottomBorderColor="#000000"/>
 					<textElement verticalAlignment="Middle">
-						<font pdfFontName="Helvetica-BoldOblique" size="11" isBold="true" isItalic="true"/>
+						<font pdfFontName="Helvetica-BoldOblique" size="10" isBold="true" isItalic="true"/>
 					</textElement>
 				<textFieldExpression   class="java.lang.String"><![CDATA["Factura"]]></textFieldExpression>
 				</textField>
@@ -75,11 +75,11 @@
 						width="80"
 						height="16"
 						forecolor="#606060"
-						backcolor="#E8E8E8"
+						backcolor="#ECE7E7"
 						key="textField-2"/>
 					<box topBorder="Thin" topBorderColor="#000000" leftBorder="Thin" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="Thin" bottomBorderColor="#000000"/>
 					<textElement textAlignment="Right" verticalAlignment="Middle">
-						<font pdfFontName="Helvetica-BoldOblique" size="11" isBold="true" isItalic="true"/>
+						<font pdfFontName="Helvetica-BoldOblique" size="10" isBold="true" isItalic="true"/>
 					</textElement>
 				<textFieldExpression   class="java.lang.String"><![CDATA["Ingreso"]]></textFieldExpression>
 				</textField>
@@ -91,11 +91,11 @@
 						width="90"
 						height="16"
 						forecolor="#606060"
-						backcolor="#E8E8E8"
+						backcolor="#ECE7E7"
 						key="textField-3"/>
 					<box topBorder="Thin" topBorderColor="#000000" leftBorder="Thin" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="Thin" bottomBorderColor="#000000"/>
 					<textElement textAlignment="Center" verticalAlignment="Middle">
-						<font pdfFontName="Helvetica-BoldOblique" size="11" isBold="true" isItalic="true"/>
+						<font pdfFontName="Helvetica-BoldOblique" size="10" isBold="true" isItalic="true"/>
 					</textElement>
 				<textFieldExpression   class="java.lang.String"><![CDATA["Cobro"]]></textFieldExpression>
 				</textField>
@@ -107,11 +107,11 @@
 						width="160"
 						height="16"
 						forecolor="#606060"
-						backcolor="#E8E8E8"
+						backcolor="#ECE7E7"
 						key="textField-4"/>
 					<box topBorder="Thin" topBorderColor="#000000" leftBorder="Thin" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="Thin" bottomBorderColor="#000000"/>
 					<textElement verticalAlignment="Middle">
-						<font pdfFontName="Helvetica-BoldOblique" size="11" isBold="true" isItalic="true"/>
+						<font pdfFontName="Helvetica-BoldOblique" size="10" isBold="true" isItalic="true"/>
 					</textElement>
 				<textFieldExpression   class="java.lang.String"><![CDATA["Descripción del Cobro"]]></textFieldExpression>
 				</textField>
@@ -123,11 +123,11 @@
 						width="75"
 						height="16"
 						forecolor="#606060"
-						backcolor="#E8E8E8"
+						backcolor="#ECE7E7"
 						key="textField-5"/>
 					<box topBorder="Thin" topBorderColor="#000000" leftBorder="Thin" leftBorderColor="#000000" rightBorder="Thin" rightBorderColor="#000000" bottomBorder="Thin" bottomBorderColor="#000000"/>
 					<textElement textAlignment="Right" verticalAlignment="Middle">
-						<font pdfFontName="Helvetica-BoldOblique" size="11" isBold="true" isItalic="true"/>
+						<font pdfFontName="Helvetica-BoldOblique" size="10" isBold="true" isItalic="true"/>
 					</textElement>
 				<textFieldExpression   class="java.lang.String"><![CDATA["Saldado"]]></textFieldExpression>
 				</textField>
