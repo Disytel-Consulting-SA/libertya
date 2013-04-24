@@ -45,10 +45,23 @@
 	<parameter name="COMPILED_SUBREPORT_VALORES" isForPrompting="false" class="java.io.InputStream"/>
 	<parameter name="SUBREPORT_CURRENTACCOUNT_DATASOURCE" isForPrompting="false" class="net.sf.jasperreports.engine.JRDataSource"/>
 	<parameter name="CASH_BALANCE" isForPrompting="false" class="java.math.BigDecimal"/>
-	<parameter name="DECLARACION_VALORES_TOTAL" isForPrompting="false" class="java.math.BigDecimal"/>
+	<parameter name="TOTAL_DECLARACION_VALORES" isForPrompting="false" class="java.math.BigDecimal"/>
 	<parameter name="SHOW_DETAILS_SALES" isForPrompting="false" class="java.lang.Boolean"/>
 	<parameter name="SHOW_DETAILS_SALES_TRUE_DESCRIPTION" isForPrompting="false" class="java.lang.String"/>
 	<parameter name="SHOW_DETAILS_SALES_FALSE_DESCRIPTION" isForPrompting="false" class="java.lang.String"/>
+	<parameter name="COMPILED_SUBREPORT_ANULADOS" isForPrompting="false" class="java.io.InputStream"/>
+	<parameter name="SUBREPORT_ANULADOS_DATASOURCE" isForPrompting="false" class="net.sf.jasperreports.engine.JRDataSource"/>
+	<parameter name="SHOW_VOID_DOCUMENTS" isForPrompting="false" class="java.lang.Boolean"/>
+	<parameter name="SHOW_VOID_DOCUMENTS_TRUE_DESCRIPTION" isForPrompting="false" class="java.lang.String"/>
+	<parameter name="SHOW_VOID_DOCUMENTS_FALSE_DESCRIPTION" isForPrompting="false" class="java.lang.String"/>
+	<parameter name="TOTAL_VOID_DOCUMENTS" isForPrompting="false" class="java.math.BigDecimal"/>
+	<parameter name="TOTAL_CUPON" isForPrompting="false" class="java.math.BigDecimal"/>
+	<parameter name="TOTAL_VENTA" isForPrompting="false" class="java.math.BigDecimal"/>
+	<parameter name="TOTAL_EFECTIVO" isForPrompting="false" class="java.math.BigDecimal"/>
+	<parameter name="TOTAL_CHEQUE" isForPrompting="false" class="java.math.BigDecimal"/>
+	<parameter name="TOTAL_TRANSFER" isForPrompting="false" class="java.math.BigDecimal"/>
+	<parameter name="TOTAL_NC" isForPrompting="false" class="java.math.BigDecimal"/>
+	<parameter name="TOTAL_CC" isForPrompting="false" class="java.math.BigDecimal"/>
 
 	<variable name="total_efectivo" class="java.math.BigDecimal" resetType="Report" calculation="Nothing">
 	</variable>
@@ -77,7 +90,7 @@
 			</band>
 		</background>
 		<title>
-			<band height="103"  isSplitAllowed="true" >
+			<band height="118"  isSplitAllowed="true" >
 				<textField isStretchWithOverflow="false" isBlankWhenNull="false" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
 						x="0"
@@ -219,6 +232,19 @@
 					</textElement>
 				<textFieldExpression   class="java.lang.String"><![CDATA[$P{SHOW_DETAILS_SALES}.booleanValue()?$P{SHOW_DETAILS_SALES_TRUE_DESCRIPTION}:$P{SHOW_DETAILS_SALES_FALSE_DESCRIPTION}]]></textFieldExpression>
 				</textField>
+				<textField isStretchWithOverflow="false" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
+					<reportElement
+						x="0"
+						y="102"
+						width="530"
+						height="14"
+						key="textField-15"/>
+					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
+					<textElement>
+						<font/>
+					</textElement>
+				<textFieldExpression   class="java.lang.String"><![CDATA[$P{SHOW_VOID_DOCUMENTS}.booleanValue()?$P{SHOW_VOID_DOCUMENTS_TRUE_DESCRIPTION}:$P{SHOW_VOID_DOCUMENTS_FALSE_DESCRIPTION}]]></textFieldExpression>
+				</textField>
 			</band>
 		</title>
 		<pageHeader>
@@ -242,11 +268,11 @@
 			</band>
 		</pageFooter>
 		<summary>
-			<band height="377"  isSplitAllowed="true" >
+			<band height="411"  isSplitAllowed="true" >
 				<subreport  isUsingCache="true">
 					<reportElement
 						x="0"
-						y="226"
+						y="258"
 						width="535"
 						height="20"
 						key="subreport-1"
@@ -262,11 +288,11 @@
 					<reportElement
 						mode="Opaque"
 						x="0"
-						y="259"
+						y="291"
 						width="535"
 						height="20"
 						forecolor="#505050"
-						backcolor="#E8E8E8"
+						backcolor="#ECE7E7"
 						key="textField-6"
 						positionType="Float"/>
 					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="1Point" bottomBorderColor="#000000"/>
@@ -278,7 +304,7 @@
 				<textField isStretchWithOverflow="false" pattern="##0.00" isBlankWhenNull="true" evaluationTime="Band" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
 						x="120"
-						y="285"
+						y="317"
 						width="100"
 						height="15"
 						key="textField"
@@ -292,7 +318,7 @@
 				<staticText>
 					<reportElement
 						x="0"
-						y="285"
+						y="317"
 						width="120"
 						height="15"
 						key="staticText-7"
@@ -306,7 +332,7 @@
 				<staticText>
 					<reportElement
 						x="0"
-						y="300"
+						y="332"
 						width="120"
 						height="15"
 						key="staticText-8"
@@ -320,7 +346,7 @@
 				<textField isStretchWithOverflow="false" pattern="##0.00" isBlankWhenNull="true" evaluationTime="Band" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
 						x="120"
-						y="300"
+						y="332"
 						width="100"
 						height="15"
 						key="textField-7"
@@ -334,7 +360,7 @@
 				<staticText>
 					<reportElement
 						x="0"
-						y="315"
+						y="347"
 						width="120"
 						height="15"
 						key="staticText-9"
@@ -348,7 +374,7 @@
 				<textField isStretchWithOverflow="false" pattern="##0.00" isBlankWhenNull="true" evaluationTime="Band" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
 						x="120"
-						y="315"
+						y="347"
 						width="100"
 						height="15"
 						key="textField-8"
@@ -362,7 +388,7 @@
 				<staticText>
 					<reportElement
 						x="0"
-						y="330"
+						y="362"
 						width="120"
 						height="15"
 						key="staticText-10"
@@ -376,7 +402,7 @@
 				<textField isStretchWithOverflow="false" pattern="##0.00" isBlankWhenNull="true" evaluationTime="Band" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
 						x="120"
-						y="330"
+						y="362"
 						width="100"
 						height="15"
 						key="textField-9"
@@ -390,7 +416,7 @@
 				<staticText>
 					<reportElement
 						x="0"
-						y="345"
+						y="377"
 						width="120"
 						height="15"
 						key="staticText-11"
@@ -404,7 +430,7 @@
 				<textField isStretchWithOverflow="false" pattern="##0.00" isBlankWhenNull="true" evaluationTime="Band" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
 						x="120"
-						y="345"
+						y="377"
 						width="100"
 						height="15"
 						key="textField-10"
@@ -418,7 +444,7 @@
 				<staticText>
 					<reportElement
 						x="0"
-						y="360"
+						y="392"
 						width="120"
 						height="15"
 						key="staticText-12"
@@ -432,7 +458,7 @@
 				<textField isStretchWithOverflow="false" pattern="##0.00" isBlankWhenNull="true" evaluationTime="Band" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
 						x="120"
-						y="360"
+						y="392"
 						width="100"
 						height="15"
 						key="textField-11"
@@ -446,7 +472,7 @@
 				<staticText>
 					<reportElement
 						x="246"
-						y="341"
+						y="373"
 						width="182"
 						height="18"
 						key="staticText-13"
@@ -460,7 +486,7 @@
 				<textField isStretchWithOverflow="false" pattern="##0.00" isBlankWhenNull="true" evaluationTime="Band" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
 						x="428"
-						y="359"
+						y="391"
 						width="100"
 						height="18"
 						key="textField-12"
@@ -469,12 +495,12 @@
 					<textElement textAlignment="Right">
 						<font pdfFontName="Helvetica-Bold" size="12" isBold="true" isItalic="false"/>
 					</textElement>
-				<textFieldExpression   class="java.math.BigDecimal"><![CDATA[($P{DECLARACION_VALORES_TOTAL} != null?$P{DECLARACION_VALORES_TOTAL}:BigDecimal.ZERO).subtract($P{CASH_BALANCE} == null?java.math.BigDecimal.ZERO:$P{CASH_BALANCE})]]></textFieldExpression>
+				<textFieldExpression   class="java.math.BigDecimal"><![CDATA[($P{TOTAL_DECLARACION_VALORES} != null?$P{TOTAL_DECLARACION_VALORES}:BigDecimal.ZERO).subtract($P{CASH_BALANCE} == null?java.math.BigDecimal.ZERO:$P{CASH_BALANCE})]]></textFieldExpression>
 				</textField>
 				<textField isStretchWithOverflow="false" pattern="##0.00" isBlankWhenNull="true" evaluationTime="Band" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
 						x="428"
-						y="341"
+						y="373"
 						width="100"
 						height="18"
 						key="textField-13"
@@ -488,7 +514,7 @@
 				<staticText>
 					<reportElement
 						x="246"
-						y="323"
+						y="355"
 						width="182"
 						height="18"
 						key="staticText-14"
@@ -502,7 +528,7 @@
 				<staticText>
 					<reportElement
 						x="246"
-						y="359"
+						y="391"
 						width="182"
 						height="18"
 						key="staticText-15"
@@ -644,7 +670,7 @@
 				<textField isStretchWithOverflow="false" pattern="##0.00" isBlankWhenNull="true" evaluationTime="Band" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
 						x="428"
-						y="323"
+						y="355"
 						width="100"
 						height="18"
 						key="textField"
@@ -653,8 +679,27 @@
 					<textElement textAlignment="Right" verticalAlignment="Top">
 						<font size="12"/>
 					</textElement>
-				<textFieldExpression   class="java.math.BigDecimal"><![CDATA[$P{DECLARACION_VALORES_TOTAL} != null?$P{DECLARACION_VALORES_TOTAL}:BigDecimal.ZERO]]></textFieldExpression>
+				<textFieldExpression   class="java.math.BigDecimal"><![CDATA[$P{TOTAL_DECLARACION_VALORES} != null?$P{TOTAL_DECLARACION_VALORES}:BigDecimal.ZERO]]></textFieldExpression>
 				</textField>
+				<subreport  isUsingCache="true">
+					<reportElement
+						x="0"
+						y="226"
+						width="535"
+						height="20"
+						key="subreport-9"
+						positionType="Float">
+							<printWhenExpression><![CDATA[$P{SHOW_VOID_DOCUMENTS}]]></printWhenExpression>
+						</reportElement>
+					<subreportParameter  name="TITLE">
+						<subreportParameterExpression><![CDATA["COMPROBANTES ANULADOS"]]></subreportParameterExpression>
+					</subreportParameter>
+					<subreportParameter  name="SHOW_DETAIL">
+						<subreportParameterExpression><![CDATA[$P{SHOW_DETAILS}]]></subreportParameterExpression>
+					</subreportParameter>
+					<dataSourceExpression><![CDATA[$P{SUBREPORT_ANULADOS_DATASOURCE}]]></dataSourceExpression>
+					<subreportExpression  class="java.io.InputStream"><![CDATA[$P{COMPILED_SUBREPORT_ANULADOS}]]></subreportExpression>
+				</subreport>
 			</band>
 		</summary>
 </jasperReport>

@@ -28,7 +28,7 @@ public class DeclaracionValoresCreditNoteDataSource extends
 
 	@Override
 	protected String getTenderType() {
-		return "'CR','ARC'";
+		return "'CR'";
 	}
 
 }

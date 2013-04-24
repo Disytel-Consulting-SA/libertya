@@ -247,8 +247,9 @@ public abstract class JasperReportLaunch extends SvrProcess {
 	 * @return Retorna el MJasperReport con el nombre indicado.
 	 */
 	protected MJasperReport getJasperReport(Properties ctx, String name, String trxName) throws Exception {
-		Integer jasperReport_ID = 
-			(Integer)DB.getSQLObject(get_TrxName(), "SELECT AD_JasperReport_ID FROM AD_JasperReport WHERE Name ilike ?", new Object[] { name });
+		Integer jasperReport_ID = (Integer) DB.getSQLValue(get_TrxName(),
+				"SELECT AD_JasperReport_ID FROM AD_JasperReport WHERE Name ilike '"
+						+ name + "'");
 		if(jasperReport_ID == null || jasperReport_ID == 0)
 			throw new Exception("Jasper Report "+name+" not found");
 		

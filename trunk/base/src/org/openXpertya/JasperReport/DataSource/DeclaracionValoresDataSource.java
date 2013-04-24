@@ -1,9 +1,11 @@
 package org.openXpertya.JasperReport.DataSource;
 
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Properties;
 
+import org.openXpertya.util.DB;
 import org.openXpertya.util.Util;
 
 
@@ -27,7 +29,7 @@ public abstract class DeclaracionValoresDataSource extends QueryDataSource {
 	}
 	
 	protected String getStdSelect(boolean withWhereClause){
-		String select = "SELECT * FROM c_pos_declaracionvalores_v";
+		String select = "SELECT *, coalesce(ingreso - egreso,0) as total FROM c_pos_declaracionvalores_v";
 		if(withWhereClause){
 			select += " WHERE ";
 		}
@@ -77,7 +79,26 @@ public abstract class DeclaracionValoresDataSource extends QueryDataSource {
 	protected String getStdQuery(boolean withTenderType){
 		StringBuffer sql = new StringBuffer(getStdSelect(true));
 		sql.append(getStdWhereClause(withTenderType));
+		if(!Util.isEmpty(getOrderBy(), true)){
+			sql.append(getOrderBy());
+		}
 		return sql.toString();
+	}
+	
+	protected String getOrderBy(){
+		return null;
+	}
+	
+	/**
+	 * @return Suma de todos los registros 
+	 */
+	public BigDecimal getTotalAmt(){
+		StringBuffer sql = new StringBuffer("select sum(total)::numeric(11,2) FROM (");
+		sql.append(getQuery());
+		sql.append(") as ce ");
+		BigDecimal amt = (BigDecimal) DB.getSQLObject(getTrxName(),
+				sql.toString(), getParameters());
+		return amt == null?BigDecimal.ZERO:amt;
 	}
 	
 	/**

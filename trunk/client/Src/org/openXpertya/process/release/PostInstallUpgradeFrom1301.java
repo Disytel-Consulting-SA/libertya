@@ -66,6 +66,22 @@ public class PostInstallUpgradeFrom1301 extends PluginPostInstallProcess {
 	/** Nombre del .jrxml del informe IVA Ventas General*/
 	protected final static String IVA_VENTAS_GENERAL_REPORT_FILENAME = "Iva_Ventas.jrxml";
 	
+	/** UID del Subreporte del Informe de Declaración de Valores */
+	protected final static String DECLARACION_VALORES_SUBREPORT_JASPER_REPORT_UID = "CORE-AD_JasperReport-1010048";
+	protected final static String DECLARACION_VALORES_SUBREPORT_JASPER_REPORT_FILENAME = "DeclaracionDeValores_Subreport.jasper";
+	
+	/** UID del Subreporte de Valores del Informe de Declaración de Valores */
+	protected final static String DECLARACION_VALORES_SUBREPORT_VALORES_JASPER_REPORT_UID = "CORE-AD_JasperReport-1010049";
+	protected final static String DECLARACION_VALORES_SUBREPORT_VALORES_JASPER_REPORT_FILENAME = "DeclaracionDeValores_Subreport_Valores.jasper";
+
+	/** UID del Subreporte de Ventas */
+	protected final static String DECLARACION_VALORES_SUBREPORT_VENTAS_RECEIPT_JASPER_REPORT_UID = "CORE-AD_JasperReport-1010072";
+	protected final static String DECLARACION_VALORES_SUBREPORT_VENTAS_RECEIPT_JASPER_REPORT_FILENAME = "DeclaracionDeValores_Subreport_VentasReceipt.jasper";
+	
+	/** UID del Subreporte de Anulados del Informe de Declaración de Valores */
+	protected final static String DECLARACION_VALORES_SUBREPORT_ANULADOS_JASPER_REPORT_UID = "CORE-AD_JasperReport-1010101";
+	protected final static String DECLARACION_VALORES_SUBREPORT_ANULADOS_JASPER_REPORT_FILENAME = "DeclaracionDeValores_Subreport_Anulados.jasper";
+	
 	protected String doIt() throws Exception {
 		super.doIt();
 		
@@ -156,7 +172,7 @@ public class PostInstallUpgradeFrom1301 extends PluginPostInstallProcess {
 									jarFileURL,
 									getBinaryFileURL(DECLARACION_VALORES_JASPER_REPORT_FILENAME)));
 		
-		// Informe de Declaración de Valores
+		// Informe de Ventas por Líneas de Artículo
 		MJasperReport
 			.updateBinaryData(
 					get_TrxName(),
@@ -220,6 +236,50 @@ public class PostInstallUpgradeFrom1301 extends PluginPostInstallProcess {
 		if(!att.save()){
 			throw new Exception ("Error al guardar jrxml ");
 		}
+		
+		// Subreporte del Informe de Declaración de Valores
+		MJasperReport
+			.updateBinaryData(
+					get_TrxName(),
+					getCtx(),
+					DECLARACION_VALORES_SUBREPORT_JASPER_REPORT_UID,
+					JarHelper
+							.readBinaryFromJar(
+									jarFileURL,
+									getBinaryFileURL(DECLARACION_VALORES_SUBREPORT_JASPER_REPORT_FILENAME)));
+
+		// Subreporte de Valores del Informe de Declaración de Valores
+		MJasperReport
+			.updateBinaryData(
+					get_TrxName(),
+					getCtx(),
+					DECLARACION_VALORES_SUBREPORT_VALORES_JASPER_REPORT_UID,
+					JarHelper
+							.readBinaryFromJar(
+									jarFileURL,
+									getBinaryFileURL(DECLARACION_VALORES_SUBREPORT_VALORES_JASPER_REPORT_FILENAME)));
+		
+		// Subreporte de Ventas
+		MJasperReport
+			.updateBinaryData(
+					get_TrxName(),
+					getCtx(),
+					DECLARACION_VALORES_SUBREPORT_VENTAS_RECEIPT_JASPER_REPORT_UID,
+					JarHelper
+							.readBinaryFromJar(
+									jarFileURL,
+									getBinaryFileURL(DECLARACION_VALORES_SUBREPORT_VENTAS_RECEIPT_JASPER_REPORT_FILENAME)));
+		
+		// Subreporte de Anulados del Informe de Declaración de Valores
+		MJasperReport
+			.updateBinaryData(
+					get_TrxName(),
+					getCtx(),
+					DECLARACION_VALORES_SUBREPORT_ANULADOS_JASPER_REPORT_UID,
+					JarHelper
+							.readBinaryFromJar(
+									jarFileURL,
+									getBinaryFileURL(DECLARACION_VALORES_SUBREPORT_ANULADOS_JASPER_REPORT_FILENAME)));
 		
 		return " ";
 	}
