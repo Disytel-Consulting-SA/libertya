@@ -299,7 +299,7 @@ public class MInvoiceTax extends X_C_InvoiceTax {
         // >> END
         boolean isSetTaxAmt = taxAmtFromLines.compareTo(BigDecimal.ZERO) != 0; 
         
-        String sql = "SELECT COALESCE(SUM("+(isPerceptionsIncluded() ? "LineNetAmount" : "LineNetAmt")+"-DocumentDiscountAmt),0.0) FROM C_InvoiceLine WHERE C_Invoice_ID=? AND C_Tax_ID=?";
+        String sql = "SELECT COALESCE(SUM(LineNetAmt-DocumentDiscountAmt),0.0) FROM C_InvoiceLine WHERE C_Invoice_ID=? AND C_Tax_ID=?";
         PreparedStatement pstmt = null;
 
         try {
@@ -357,12 +357,12 @@ public class MInvoiceTax extends X_C_InvoiceTax {
         		taxAmt = taxAmtFromLines;
         	}
         }
-
+        
         setTaxAmt( taxAmt );
 
         // Set Base
 
-        if( (isTaxIncluded() && !isPerceptionsIncluded()) || (isTaxIncluded() && !invoice.isSOTrx()) ) {
+        if( (isTaxIncluded() && isPerceptionsIncluded()) || (isTaxIncluded() && !invoice.isSOTrx()) ) {
         	setTaxBaseAmt( taxBaseAmt.subtract( taxAmt ));
         } else {
             setTaxBaseAmt( taxBaseAmt );
