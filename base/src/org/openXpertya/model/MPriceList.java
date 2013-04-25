@@ -270,17 +270,21 @@ public class MPriceList extends X_M_PriceList {
      */
 
     public MPriceListVersion getPriceListVersion( Timestamp valid ) {
+        return getPriceListVersion(valid, false);
+    }    // getPriceListVersion
+
+    public MPriceListVersion getPriceListVersion( Timestamp valid, boolean ignoreCache ) {
         if( valid == null ) {
             valid = new Timestamp( System.currentTimeMillis());
         }
 
         // Assume there is no later
 
-        if( (m_plv != null) && m_plv.getValidFrom().before( valid )) {
+        if( !ignoreCache && m_plv != null && m_plv.getValidFrom().before( valid )) {
             return m_plv;
         }
 
-        String sql = "SELECT * FROM M_PriceList_Version " + "WHERE M_PriceList_ID=?" + " AND TRUNC(ValidFrom)<=? " + "ORDER BY ValidFrom DESC";
+        String sql = "SELECT * FROM M_PriceList_Version " + "WHERE M_PriceList_ID=?" + " AND date_trunc('day',ValidFrom) <= date_trunc('day',?::timestamp) " + "ORDER BY ValidFrom DESC";
         PreparedStatement pstmt = null;
 
         try {
@@ -319,7 +323,7 @@ public class MPriceList extends X_M_PriceList {
 
         return m_plv;
     }    // getPriceListVersion
-
+    
     /**
      * Descripción de Método
      *

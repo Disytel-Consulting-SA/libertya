@@ -805,7 +805,16 @@ public class CalloutOrder extends CalloutEngine {
             log.warning( "priceList - fini" );
         }
 
-		// Verificar si el tipo de documento permite modificar la tarifa, en ese
+		// Manejar la modificación de precios de las líneas dependiendo del tipo
+		// de documento
+		handlePricesModification(ctx, mTab);
+        
+        return "";
+    }    // priceList
+    
+    
+    public void handlePricesModification(Properties ctx, MTab mTab){
+    	// Verificar si el tipo de documento permite modificar la tarifa, en ese
 		// caso, se debe avisar con un warning si existen líneas con precios
 		// modificados
         Integer docTypeID = (Integer)mTab.getValue("C_DocTypeTarget_ID");
@@ -814,14 +823,38 @@ public class CalloutOrder extends CalloutEngine {
         	if(docType.isAllowChangePriceList()){
         		boolean isSOTrx = docType.isSOTrx(); 
         		// Si el id del pedido no existe es porque es un registro nuevo
-        		Integer orderID = (Integer)mTab.getValue("C_Order_ID");        		
+        		Integer orderID = (Integer)mTab.getValue("C_Order_ID"); 
+        		Integer M_PriceList_ID = (Integer)mTab.getValue("M_PriceList_ID");;
         		StringBuffer msg = new StringBuffer(Msg.getMsg(ctx, "ProductsPriceListDiffersPriceActualWarn"));
         		boolean showWarn = false;
         		if(isSOTrx && !Util.isEmpty(orderID,true)){
 					// La tarifa nueva debe ser distinta a la que tiene el
 					// pedido en la base, sino no modifico los valores
         			MOrder order = new MOrder(ctx, orderID, null);
-					if (order.getM_PriceList_ID() != M_PriceList_ID
+        			boolean validatePrices = order.getM_PriceList_ID() != M_PriceList_ID;
+        			if(!validatePrices){
+    					// Otra validación a tener en cuenta es que las fechas
+    					// difieran, en ese caso se debe verificar que las versiones
+    					// de la lista de precio sean distintas dependiendo la fecha
+        				Timestamp dateOrdered = (Timestamp)mTab.getValue("DateOrdered");
+						validatePrices = dateOrdered != null
+								&& dateOrdered
+										.compareTo(order.getDateOrdered()) != 0;
+        				if(validatePrices){
+        					MPriceList priceList = MPriceList.get(ctx, M_PriceList_ID, null);
+							MPriceListVersion pricelistVersionOrder = priceList
+									.getPriceListVersion(
+											order.getDateOrdered(), true);
+							MPriceListVersion pricelistVersionActual = priceList
+									.getPriceListVersion(dateOrdered, true);
+							validatePrices = (pricelistVersionOrder == null && pricelistVersionActual != null)
+									|| (pricelistVersionOrder != null && pricelistVersionActual == null)
+									|| (pricelistVersionActual.getID() != pricelistVersionOrder
+											.getID());
+        				}
+        			}
+        			
+					if (validatePrices
 							&& (MOrder.DOCSTATUS_Drafted.equals(order.getDocStatus()) 
 									|| MOrder.DOCSTATUS_InProgress.equals(order.getDocStatus()))) {
         				String lineNoMsg = Msg.getElement(ctx, "Line");
@@ -891,9 +924,7 @@ public class CalloutOrder extends CalloutEngine {
         		}
         	}
         }
-        
-        return "";
-    }    // priceList
+    }
 
     
     public String partner_location( Properties ctx,int WindowNo,MTab mTab,MField mField,Object value ) {
@@ -1942,6 +1973,17 @@ public class CalloutOrder extends CalloutEngine {
     	else {
     		mTab.setCurrentRecordWarning(Msg.getMsg(ctx,"InsufficientStockWarning",new Object[] { qtyAvl }));
     	}
+    }
+    
+    public String dateOrdered( Properties ctx,int WindowNo,MTab mTab,MField mField,Object value ) {
+    	if( isCalloutActive() || (value == null) ) {
+            return "";
+        }
+    	
+    	handlePricesModification(ctx, mTab);
+    	
+    	setCalloutActive( false );
+    	return "";
     }
    
 }    // CalloutOrder

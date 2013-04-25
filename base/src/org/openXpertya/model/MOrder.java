@@ -1413,34 +1413,62 @@ public class MOrder extends X_C_Order implements DocAction {
 		// líneas
 		// Se debe validar a su vez que todos los artículos existan dentro de la
 		// tarifa, sino error
-		if (!newRecord && is_ValueChanged("M_PriceList_ID")
+		if (!newRecord 
 				&& docType.isAllowChangePriceList()
+				&& (is_ValueChanged("M_PriceList_ID") || is_ValueChanged("DateOrdered"))
 				&& (MOrder.DOCSTATUS_Drafted.equals(getDocStatus()) 
 						|| MOrder.DOCSTATUS_InProgress.equals(getDocStatus()))) {
-			// Verificar los artículos que no se encuentran dentro de la tarifa
-			// seleccionada y abortar si es que existe alguno
-			CallResult result = isAllProductsInPriceList(); 
-			if(result.isError()){
-				log.saveError("SaveError", result.getMsg());
-				return false;
+			// Si no cambió la tarifa, pero sí la fecha, sólo modifico los
+			// valores si la nueva fecha trae como consecuencia otra versión de
+			// tarifa que la fecha anterior
+			boolean changePrices = true;
+			if (!is_ValueChanged("M_PriceList_ID")
+					&& is_ValueChanged("DateOrdered")) {
+				MPriceList priceList = MPriceList.get(getCtx(),
+						getM_PriceList_ID(), get_TrxName());
+				MPriceListVersion pricelistVersionOrder = priceList
+						.getPriceListVersion(
+								(Timestamp) get_ValueOld("DateOrdered"), true);
+				MPriceListVersion pricelistVersionActual = priceList
+						.getPriceListVersion(getDateOrdered(), true);
+				changePrices = (pricelistVersionOrder == null && pricelistVersionActual != null)
+						|| (pricelistVersionOrder != null && pricelistVersionActual == null)
+						|| (pricelistVersionActual.getID() != pricelistVersionOrder
+								.getID());
 			}
-			// Iterar por las líneas y modifico sus precios
-			MProductPricing pp;
-			for (MOrderLine orderLine : getLines()) {
-				pp = new MProductPricing(orderLine.getM_Product_ID(),
-						getC_BPartner_ID(), orderLine.getQtyEntered(),
-						isSOTrx());
-				pp.setM_PriceList_ID(getM_PriceList_ID());
-				orderLine.setPriceList(pp.getPriceList());
-				orderLine.setPrice(pp.getPriceStd());
-				orderLine.setPriceLimit(pp.getPriceLimit());
-				if(!orderLine.save()){
-					log.saveError("SaveError", CLogger.retrieveErrorAsString());
+			if(changePrices){
+				// Verificar los artículos que no se encuentran dentro de la tarifa
+				// seleccionada y abortar si es que existe alguno
+				CallResult result = isAllProductsInPriceList(); 
+				if(result.isError()){
+					log.saveError("SaveError", result.getMsg());
 					return false;
 				}
+				// Iterar por las líneas y modifico sus precios
+				MProductPricing pp;
+				for (MOrderLine orderLine : getLines()) {
+					pp = new MProductPricing(orderLine.getM_Product_ID(),
+							getC_BPartner_ID(), orderLine.getQtyEntered(),
+							isSOTrx());
+					pp.setPriceDate(getDateOrdered());
+					pp.setM_PriceList_ID(getM_PriceList_ID());
+					orderLine.setPriceList(pp.getPriceList());
+					orderLine.setPriceLimit(pp.getPriceLimit());
+					// Seteo el precio actual y el entered en base al precio de
+					// lista aplicando el descuento existente
+					orderLine.setPrice(pp.getPriceList().subtract(
+							pp.getPriceList().multiply(
+									orderLine.getDiscount().divide(
+											Env.ONEHUNDRED, 2,
+											BigDecimal.ROUND_HALF_UP))));
+					if(!orderLine.save()){
+						log.saveError("SaveError", CLogger.retrieveErrorAsString());
+						return false;
+					}
+				}
+				// Actualizar el neto y el total del pedido
+				calculateTaxTotal();
 			}
-			// Actualizar el neto y el total del pedido
-			calculateTaxTotal();
 		}
 
         return true;
@@ -1464,7 +1492,7 @@ public class MOrder extends X_C_Order implements DocAction {
 					 "		FROM c_orderline as ol " +
 					 "		INNER JOIN m_productprice as pp on pp.m_product_id = ol.m_product_id " +
 					 "		INNER JOIN m_pricelist_version as plv on plv.m_pricelist_version_id = pp.m_pricelist_version_id " +
-					 "		WHERE ol.c_order_id = ? AND plv.m_pricelist_id = ? AND pp.isactive = 'Y') as ne " +
+					 "		WHERE ol.c_order_id = ? AND plv.m_pricelist_id = ? AND pp.isactive = 'Y' AND date_trunc('day',validfrom) <= date_trunc('day',?::timestamp)) as ne " +
 					 "INNER JOIN m_product as p on p.m_product_id = ne.m_product_id " +
 					 "ORDER BY p.value";
 		PreparedStatement ps = null;
@@ -1478,6 +1506,7 @@ public class MOrder extends X_C_Order implements DocAction {
 			ps.setInt(1, getID());
 			ps.setInt(2, getID());
 			ps.setInt(3, getM_PriceList_ID());
+			ps.setTimestamp(4, getDateOrdered());
 			rs = ps.executeQuery();
 			while (rs.next()) {
 				allInPriceList = false;
