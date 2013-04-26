@@ -40,6 +40,7 @@ public class OrderDataSource implements JRDataSource  {
 		methodMapper.put("PRECIO_UNITARIO", "getPriceEnteredNet");
 		methodMapper.put("DESCUENTO", "getDiscount");
 		methodMapper.put("IMPORTE", "getTotalPriceEnteredNet");
+		methodMapper.put("VENDOR_PRODUCT_NO", "getVendorProductNo");
 		
 		methodMapper.put("ITEM", "getLineStr");
 		methodMapper.put("UNIDAD", "getUOMName");
