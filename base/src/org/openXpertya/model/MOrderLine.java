@@ -21,6 +21,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.util.Properties;
 import java.util.logging.Level;
+
 import org.openXpertya.model.DiscountCalculator.IDocument;
 import org.openXpertya.model.DiscountCalculator.IDocumentLine;
 import org.openXpertya.util.DB;
@@ -1639,6 +1640,34 @@ public class MOrderLine extends X_C_OrderLine {
     	}
     	return "";
 
+	}
+	
+	public String getVendorProductNo(){
+		StringBuffer sql = new StringBuffer();
+		sql.append("SELECT VendorProductNo FROM M_Product_PO WHERE M_Product_ID = ? ORDER BY iscurrentvendor desc, updated desc LIMIT 1");
+
+    	PreparedStatement pstmt = null;
+    	ResultSet rs 			= null;
+    	String vendorNo = null;
+    	
+    	try {
+    		pstmt = DB.prepareStatement( sql.toString());
+    		pstmt.setInt( 1, getProduct().getID() );
+    		rs = pstmt.executeQuery();
+
+    		if( rs.next()) {
+    			vendorNo = rs.getString("VendorProductNo");
+    		}
+
+    	} catch( Exception e ) {
+    		log.log( Level.SEVERE,sql.toString(),e );
+    	} finally {
+    		try {
+	    		if (rs != null) rs.close();
+	    		if (pstmt != null) pstmt.close();
+    		}	catch (Exception e) {}
+    	}
+    	return vendorNo;
 	}
 	
 	public String getInstanceName(){
