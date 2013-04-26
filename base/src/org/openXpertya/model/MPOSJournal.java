@@ -95,7 +95,7 @@ public class MPOSJournal extends X_C_POSJournal implements DocAction {
 		sql.append("SELECT * ")
 		   .append("FROM C_POSJournal ")
 		   .append("WHERE AD_User_ID = ? ")
-		   .append(  "AND DateTrx = ?::date ");
+		   .append(  "AND date_trunc('day',DateTrx) = date_trunc('day',?::date) ");
 		
 		// Filtro de los dosStatus
 		if (docStatus != null && docStatus.length > 0) {

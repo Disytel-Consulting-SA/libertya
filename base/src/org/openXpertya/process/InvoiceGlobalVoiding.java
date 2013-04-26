@@ -14,6 +14,7 @@ import org.openXpertya.model.MInOut;
 import org.openXpertya.model.MInvoice;
 import org.openXpertya.model.MOrder;
 import org.openXpertya.model.MOrg;
+import org.openXpertya.model.MPOSJournal;
 import org.openXpertya.model.PO;
 import org.openXpertya.reflection.CallResult;
 import org.openXpertya.util.DB;
@@ -118,6 +119,11 @@ public class InvoiceGlobalVoiding extends SvrProcess {
             else if( name.equalsIgnoreCase( "C_POSJournal_ID" )) {
             	posJournalID = para[ i ].getParameterAsInt();
             }
+        }
+        // Si no hay caja diaria donde asociar, se toma la del usuario actual
+		if (!isPosJournalFromInvoice() && Util.isEmpty(getPosJournalID(), true)) {
+			MPOSJournal currentPosJournal = MPOSJournal.getCurrent();
+        	setPosJournalID(currentPosJournal != null?currentPosJournal.getID():0);
         }
 	}
 	
