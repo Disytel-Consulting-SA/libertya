@@ -1926,7 +1926,10 @@ CREATE OR REPLACE VIEW c_posjournalpayments_v AS
                         bp.value as bp_entidadfinanciera_value, 
                         bp.name as bp_entidadfinanciera_name,
                         p.couponnumber as cupon,
-                        p.creditcardnumber as creditcard
+                        p.creditcardnumber as creditcard,
+                        dt.isfiscaldocument, 
+                        dt.isfiscal, 
+                        ic.fiscalalreadyprinted
                    FROM c_allocationline al
               LEFT JOIN c_allocationhdr ah ON al.c_allocationhdr_id = ah.c_allocationhdr_id
          LEFT JOIN c_invoice i ON al.c_invoice_id = i.c_invoice_id
@@ -1937,6 +1940,7 @@ CREATE OR REPLACE VIEW c_posjournalpayments_v AS
    LEFT JOIN c_cashline cl ON al.c_cashline_id = cl.c_cashline_id
    LEFT JOIN c_cash c ON cl.c_cash_id = c.c_cash_id
    LEFT JOIN c_invoice ic ON al.c_invoice_credit_id = ic.c_invoice_id
+   LEFT JOIN c_doctype as dt ON dt.c_doctype_id = ic.c_doctypetarget_id
   ORDER BY 
 CASE
     WHEN al.c_payment_id IS NOT NULL THEN p.tendertype::character varying
@@ -1950,14 +1954,14 @@ CASE
     ELSE NULL::character varying
 END::character varying(30))
         UNION ALL 
-                 SELECT NULL::unknown AS c_allocationhdr_id, NULL::unknown AS c_allocationline_id, cl.ad_client_id, cl.ad_org_id, cl.isactive, cl.created, cl.createdby, cl.updated, cl.updatedby, NULL::unknown AS c_invoice_id, NULL::unknown AS c_payment_id, cl.c_cashline_id, NULL::unknown AS c_invoice_credit_id, 'CA'::character varying(2) AS tendertype, NULL::character varying(30) AS documentno, cl.description, (((c.name::text || '_#'::text) || cl.line::text))::character varying(255) AS info, cl.amount, cl.c_cash_id, cl.line, NULL::unknown AS c_doctype_id, NULL::character varying(20) AS checkno, NULL::character varying(255) AS a_bank, NULL::character varying(20) AS transferno, NULL::character(1) AS creditcardtype, NULL::unknown AS m_entidadfinancieraplan_id, NULL::unknown AS m_entidadfinanciera_id, NULL::character varying(30) AS couponnumber, date_trunc('day'::text, c.statementdate) AS allocationdate, cl.docstatus, c.dateacct::date AS dateacct, null as invoice_documentno, null as invoice_grandtotal, null as entidadfinanciera_value, null as entidadfinanciera_name, null as bp_entidadfinanciera_value, null as bp_entidadfinanciera_name, null as cupon, null as creditcard
+                 SELECT NULL::unknown AS c_allocationhdr_id, NULL::unknown AS c_allocationline_id, cl.ad_client_id, cl.ad_org_id, cl.isactive, cl.created, cl.createdby, cl.updated, cl.updatedby, NULL::unknown AS c_invoice_id, NULL::unknown AS c_payment_id, cl.c_cashline_id, NULL::unknown AS c_invoice_credit_id, 'CA'::character varying(2) AS tendertype, NULL::character varying(30) AS documentno, cl.description, (((c.name::text || '_#'::text) || cl.line::text))::character varying(255) AS info, cl.amount, cl.c_cash_id, cl.line, NULL::unknown AS c_doctype_id, NULL::character varying(20) AS checkno, NULL::character varying(255) AS a_bank, NULL::character varying(20) AS transferno, NULL::character(1) AS creditcardtype, NULL::unknown AS m_entidadfinancieraplan_id, NULL::unknown AS m_entidadfinanciera_id, NULL::character varying(30) AS couponnumber, date_trunc('day'::text, c.statementdate) AS allocationdate, cl.docstatus, c.dateacct::date AS dateacct, null as invoice_documentno, null as invoice_grandtotal, null as entidadfinanciera_value, null as entidadfinanciera_name, null as bp_entidadfinanciera_value, null as bp_entidadfinanciera_name, null as cupon, null as creditcard, null as isfiscaldocument, null as isfiscal, null as fiscalalreadyprinted
                    FROM c_cashline cl
               JOIN c_cash c ON c.c_cash_id = cl.c_cash_id
              WHERE NOT (EXISTS ( SELECT al.c_allocationline_id
                       FROM c_allocationline al
                      WHERE al.c_cashline_id = cl.c_cashline_id)))
 UNION ALL 
-        ( SELECT NULL::unknown AS c_allocationhdr_id, NULL::unknown AS c_allocationline_id, p.ad_client_id, p.ad_org_id, p.isactive, p.created, p.createdby, p.updated, p.updatedby, NULL::unknown AS c_invoice_id, p.c_payment_id, NULL::unknown AS c_cashline_id, NULL::unknown AS c_invoice_credit_id, p.tendertype::character varying(2) AS tendertype, p.documentno, p.description, (((p.documentno::text || '_'::text) || to_char(p.datetrx, 'DD/MM/YYYY'::text)))::character varying(255) AS info, p.payamt AS amount, NULL::unknown AS c_cash_id, NULL::numeric(18,0) AS line, NULL::unknown AS c_doctype_id, p.checkno, p.a_bank, p.checkno AS transferno, p.creditcardtype, p.m_entidadfinancieraplan_id, ep.m_entidadfinanciera_id, p.couponnumber, date_trunc('day'::text, p.datetrx) AS allocationdate, p.docstatus, p.dateacct::date AS dateacct, null as invoice_documentno, null as invoice_grandtotal, ef.value as entidadfinanciera_value, ef.name as entidadfinanciera_name, bp.value as bp_entidadfinanciera_value, bp.name as bp_entidadfinanciera_name, p.couponnumber as cupon, p.creditcardnumber as creditcard
+        ( SELECT NULL::unknown AS c_allocationhdr_id, NULL::unknown AS c_allocationline_id, p.ad_client_id, p.ad_org_id, p.isactive, p.created, p.createdby, p.updated, p.updatedby, NULL::unknown AS c_invoice_id, p.c_payment_id, NULL::unknown AS c_cashline_id, NULL::unknown AS c_invoice_credit_id, p.tendertype::character varying(2) AS tendertype, p.documentno, p.description, (((p.documentno::text || '_'::text) || to_char(p.datetrx, 'DD/MM/YYYY'::text)))::character varying(255) AS info, p.payamt AS amount, NULL::unknown AS c_cash_id, NULL::numeric(18,0) AS line, NULL::unknown AS c_doctype_id, p.checkno, p.a_bank, p.checkno AS transferno, p.creditcardtype, p.m_entidadfinancieraplan_id, ep.m_entidadfinanciera_id, p.couponnumber, date_trunc('day'::text, p.datetrx) AS allocationdate, p.docstatus, p.dateacct::date AS dateacct, null as invoice_documentno, null as invoice_grandtotal, ef.value as entidadfinanciera_value, ef.name as entidadfinanciera_name, bp.value as bp_entidadfinanciera_value, bp.name as bp_entidadfinanciera_name, p.couponnumber as cupon, p.creditcardnumber as creditcard, null as isfiscaldocument, null as isfiscal, null as fiscalalreadyprinted
            FROM c_payment p
       LEFT JOIN m_entidadfinancieraplan ep ON p.m_entidadfinancieraplan_id = ep.m_entidadfinancieraplan_id
       LEFT JOIN m_entidadfinanciera as ef on ef.m_entidadfinanciera_id = ep.m_entidadfinanciera_id
