@@ -507,7 +507,7 @@ public class MTax extends X_C_Tax {
         BigDecimal multiplier = rate.divide( ONEHUNDRED,10,BigDecimal.ROUND_HALF_UP );
         BigDecimal tax = null;
 
-        if( !taxIncluded )    // $100 * 6 / 100 == $6 == $100 * 0.06
+        if( !taxIncluded || perceptionIncluded)    // $100 * 6 / 100 == $6 == $100 * 0.06
         {
             tax = amount.multiply( multiplier );
         } else                // $106 - ($106 / (100+6)/100) == $6 == $106 - ($106/1.06)
@@ -516,7 +516,15 @@ public class MTax extends X_C_Tax {
             BigDecimal base = amount.divide( multiplier,10,BigDecimal.ROUND_HALF_UP );
             tax = amount.subtract( base );
         }
-        BigDecimal finalTax = tax.setScale( scale,BigDecimal.ROUND_HALF_UP );
+        
+        BigDecimal finalTax;
+        if (perceptionIncluded) {
+        	finalTax = tax.setScale( scale,BigDecimal.ROUND_DOWN );	
+        }
+        else{
+        	finalTax = tax.setScale( scale,BigDecimal.ROUND_HALF_UP );	
+        }
+        
         return finalTax;
     }    // calculateTax
     
