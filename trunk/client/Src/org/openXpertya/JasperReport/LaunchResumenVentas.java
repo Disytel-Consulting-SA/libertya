@@ -10,6 +10,7 @@ import org.openXpertya.JasperReport.DataSource.ResumenVentasBPGroupDataSource;
 import org.openXpertya.JasperReport.DataSource.ResumenVentasCategoriaIVADataSource;
 import org.openXpertya.JasperReport.DataSource.ResumenVentasCurrentAccountPaymentsDataSource;
 import org.openXpertya.JasperReport.DataSource.ResumenVentasDataSource;
+import org.openXpertya.JasperReport.DataSource.ResumenVentasDocTypeBaseKeyDataSource;
 import org.openXpertya.JasperReport.DataSource.ResumenVentasDocTypeDataSource;
 import org.openXpertya.JasperReport.DataSource.ResumenVentasPaymentMediumDataSource;
 import org.openXpertya.JasperReport.DataSource.ResumenVentasTenderTypeDataSource;
@@ -58,12 +59,14 @@ public class LaunchResumenVentas extends JasperReportLaunch {
 		ResumenVentasDataSource paymentMediumDS = getPaymentMediumDataSource();
 		// Data Source de Totales por Categoría de IVA
 		ResumenVentasDataSource categoriaIVADS = getCategoriaIVADataSource();
-		// Data Source de Totales por Tipo de Comprobante
+		// Data Source de Totales por Comprobante
 		ResumenVentasDataSource docTypeDS = getDocTypeDataSource();
 		// Data Source de Totales por Repartición de cliente
 		ResumenVentasDataSource bpGroupDS = getBPGroupDataSource();
 		// Data Source con Cobros en cuenta corriente
 		ResumenVentasDataSource currentAccountPaymentsDS = getCurrentAccountPaymentsDataSource();
+		// Data Source de Totales por Tipo de Comprobante
+		ResumenVentasDataSource docTypeBaseKeyDS = getDocTypeBaseKeyDataSource();
 		//////////////////////////////////////////////////////
 		// Subreporte 
 		MJasperReport subreport = getResumenVentasSubreport();
@@ -77,6 +80,7 @@ public class LaunchResumenVentas extends JasperReportLaunch {
 		addReportParameter("SUBREPORT_DOCTYPE", docTypeDS);
 		addReportParameter("SUBREPORT_BPGROUP", bpGroupDS);
 		addReportParameter("SUBREPORT_CURRENTACCOUNTPAYMENTS", currentAccountPaymentsDS);
+		addReportParameter("SUBREPORT_DOCTYPE_BASEKEY", docTypeBaseKeyDS);
 	}
 	
 	protected String getTitle(){
@@ -165,6 +169,13 @@ public class LaunchResumenVentas extends JasperReportLaunch {
 			currentAccountPaymentsDS = (ResumenVentasCurrentAccountPaymentsDataSource) loadDSData(currentAccountPaymentsDS);
 		}
 		return currentAccountPaymentsDS;
+	}
+	
+	protected ResumenVentasDataSource getDocTypeBaseKeyDataSource() throws Exception{
+		ResumenVentasDocTypeBaseKeyDataSource docBaseKeyDS = new ResumenVentasDocTypeBaseKeyDataSource(
+				get_TrxName(), getCtx(), getOrgID(), getDateFrom(), getDateTo(), getPosID(), getUserID());
+		docBaseKeyDS = (ResumenVentasDocTypeBaseKeyDataSource)loadDSData(docBaseKeyDS);
+		return docBaseKeyDS;
 	}
 	
 	/**
