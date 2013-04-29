@@ -37,6 +37,7 @@
 	<parameter name="SHOW_CURRENTACCOUNTPAYMENTS" isForPrompting="false" class="java.lang.Boolean"/>
 	<parameter name="POS_NAME" isForPrompting="false" class="java.lang.String"/>
 	<parameter name="USER_NAME" isForPrompting="false" class="java.lang.String"/>
+	<parameter name="SUBREPORT_DOCTYPE_BASEKEY" isForPrompting="false" class="net.sf.jasperreports.engine.JRDataSource"/>
 
 		<background>
 			<band height="0"  isSplitAllowed="true" >
@@ -225,7 +226,7 @@
 			</band>
 		</pageFooter>
 		<summary>
-			<band height="211"  isSplitAllowed="true" >
+			<band height="247"  isSplitAllowed="true" >
 				<subreport  isUsingCache="true">
 					<reportElement
 						x="0"
@@ -271,13 +272,13 @@
 				<subreport  isUsingCache="true">
 					<reportElement
 						x="0"
-						y="114"
+						y="151"
 						width="530"
 						height="20"
 						key="subreport-4"
 						positionType="Float"/>
 					<subreportParameter  name="TITLE">
-						<subreportParameterExpression><![CDATA["Ventas Discriminadas por Tipo de Comprobante"]]></subreportParameterExpression>
+						<subreportParameterExpression><![CDATA["Ventas Discriminadas por Comprobante"]]></subreportParameterExpression>
 					</subreportParameter>
 					<dataSourceExpression><![CDATA[$P{SUBREPORT_DOCTYPE}]]></dataSourceExpression>
 					<subreportExpression  class="java.io.InputStream"><![CDATA[$P{COMPILED_SUBREPORT}]]></subreportExpression>
@@ -285,7 +286,7 @@
 				<subreport  isUsingCache="true">
 					<reportElement
 						x="0"
-						y="151"
+						y="189"
 						width="530"
 						height="20"
 						key="subreport-5"
@@ -299,7 +300,7 @@
 				<subreport  isUsingCache="true">
 					<reportElement
 						x="0"
-						y="191"
+						y="227"
 						width="530"
 						height="20"
 						key="subreport-6"
@@ -310,6 +311,20 @@
 						<subreportParameterExpression><![CDATA["Cobros en Cuenta Corriente"]]></subreportParameterExpression>
 					</subreportParameter>
 					<dataSourceExpression><![CDATA[$P{SUBREPORT_CURRENTACCOUNTPAYMENTS}]]></dataSourceExpression>
+					<subreportExpression  class="java.io.InputStream"><![CDATA[$P{COMPILED_SUBREPORT}]]></subreportExpression>
+				</subreport>
+				<subreport  isUsingCache="true">
+					<reportElement
+						x="0"
+						y="113"
+						width="530"
+						height="20"
+						key="subreport-7"
+						positionType="Float"/>
+					<subreportParameter  name="TITLE">
+						<subreportParameterExpression><![CDATA["Ventas Discriminadas por Tipo de Comprobante"]]></subreportParameterExpression>
+					</subreportParameter>
+					<dataSourceExpression><![CDATA[$P{SUBREPORT_DOCTYPE_BASEKEY}]]></dataSourceExpression>
 					<subreportExpression  class="java.io.InputStream"><![CDATA[$P{COMPILED_SUBREPORT}]]></subreportExpression>
 				</subreport>
 			</band>
