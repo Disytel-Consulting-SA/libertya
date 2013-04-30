@@ -371,8 +371,10 @@ ContextMenuListener, IZoomableEditor
         {
 			Object curValue = getValue();
 			
-			if (isReadWrite())
+			if (isReadWrite()) {
 				lookup.refresh();
+				lookup.fillComboBox(isMandatory(), true, true, false, false);
+			}
             refreshList();
             if (curValue != null)
             {
