@@ -152,6 +152,10 @@ public abstract class Lookup extends AbstractListModel implements MutableComboBo
 
     }		// fillComboBox
 
+    public void fillComboBox(boolean mandatory, boolean onlyValidated, boolean onlyActive, boolean temporary) {
+    	fillComboBox(mandatory, onlyValidated, onlyActive, temporary, true);
+    }
+    
     /**
      *  Fill ComboBox with lookup data (async using Worker).
      *  - try to maintain selected item
@@ -160,7 +164,7 @@ public abstract class Lookup extends AbstractListModel implements MutableComboBo
      *  @param onlyActive onlt active
      *  @param temporary  save current values - restore via fillComboBox (true)
      */
-    public void fillComboBox(boolean mandatory, boolean onlyValidated, boolean onlyActive, boolean temporary) {
+    public void fillComboBox(boolean mandatory, boolean onlyValidated, boolean onlyActive, boolean temporary, boolean fireContentsChanged) {
 
         long	startTime	= System.currentTimeMillis();
 
@@ -202,7 +206,8 @@ public abstract class Lookup extends AbstractListModel implements MutableComboBo
             // fireContentsChanged(this, -1, -1);
         }
 
-        fireContentsChanged(this, 0, p_data.size());
+        if (fireContentsChanged)
+        	fireContentsChanged(this, 0, p_data.size());
 
         if (p_data.size() == 0) {
             log.fine(getColumnName() + ": fillComboBox - #0 - ms=" + String.valueOf(System.currentTimeMillis() - startTime));
