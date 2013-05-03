@@ -77,7 +77,7 @@ public class GenerateLibroIva extends SvrProcess {
          	"		cbp.taxid, " +
          	"		cbp.c_categoria_iva_id, " +
          	"		cci.c_categoria_via_name, " +
-         	"		currencyconvert(inv.totalLines, inv.c_currency_id, " + moneda + ", inv.dateacct, c_conversiontype_id, inv.ad_client_id, inv.ad_org_id) as neto, " +
+         	"		currencyconvert(citn.neto, inv.c_currency_id, " + moneda + ", inv.dateacct, c_conversiontype_id, inv.ad_client_id, inv.ad_org_id) as neto, " +
          	"		currencyconvert(inv.grandtotal, inv.c_currency_id, " + moneda + ", inv.dateacct, c_conversiontype_id, inv.ad_client_id, inv.ad_org_id) as total, " +
          	"		ct.c_tax_name as item, " +
          	"		currencyconvert(cit.importe, inv.c_currency_id, " + moneda + ", inv.dateacct, c_conversiontype_id, inv.ad_client_id, inv.ad_org_id) as importe, " +
@@ -106,6 +106,9 @@ public class GenerateLibroIva extends SvrProcess {
          	"				from c_docType) cdt on cdt.c_doctype_id = inv.c_doctype_id " +
          	"     left join (Select c_tax_id, c_invoice_id, taxamt as importe, ad_client_id " +
          	" 		        from c_invoicetax) cit 	on cit.c_invoice_id = inv.c_invoice_id " +
+         	"     left join (Select c_invoice_id, sum(taxbaseamt) as neto " +
+         	" 		        from c_invoicetax" +
+         	"				group by c_invoice_id) citn on citn.c_invoice_id = inv.c_invoice_id " +
          	"     left join (Select c_tax_id, name as c_tax_name " +
          	"				from c_tax) ct on ct.c_tax_id = cit.c_tax_id " +
          	"     left join (Select c_bpartner_id, name as c_bpartner_name, c_categoria_iva_id, taxid, iibb " +

@@ -8,25 +8,52 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.Map;
 import java.util.Properties;
+
 import net.sf.jasperreports.engine.JRDataSource;
 import net.sf.jasperreports.engine.JRException;
 import net.sf.jasperreports.engine.JRField;
+
 import org.openXpertya.model.MLocation;
+import org.openXpertya.model.MPreference;
 import org.openXpertya.util.CPreparedStatement;
 import org.openXpertya.util.DB;
 import org.openXpertya.util.Env;
+import org.openXpertya.util.Util;
 
 
 public class LibroIVANewDataSource implements JRDataSource {
 
+	/**
+	 * Nombre de la preferencia que contiene el valor máximo para agrupar
+	 * facturas a CF
+	 */
+	private static final String GROUPED_CF_INVOICES_PREFERENCE_NAME = "L_AR_LibroIVA_CFMontoMaximoAgrupacion";
+	
+	/**
+	 * Nombre de la preferencia que contiene el valor máximo de facturas para CF
+	 * para impresión fiscal. Se utiliza este valor si no existe la preferencia
+	 * de valor máximo de agrupación
+	 */
+	private static final String CF_MAX_AMT_L_AR = "L_AR_CFMontoMaximo";
+	
+	/**
+	 * Valor por defecto para agrupación de facturas a CF si ninguna de las 2
+	 * preferencias anteriores existen
+	 */
+	private static final BigDecimal CF_MAX_AMT_DEFAULT = new BigDecimal(1000);
+	
 	/** Fecha desde y hasta de las facturas */
 	private Date p_dateFrom;
 	private Date p_dateTo;
 	private int p_orgID;	
+	private boolean groupCFInvoices;
+	private BigDecimal groupCFInvoicesAmt;
 
 	/** Tipo de transaccion */
 	private String p_transactionType;
@@ -53,14 +80,15 @@ public class LibroIVANewDataSource implements JRDataSource {
 	/** Utilizado para mapear los campos con las invocaciones de los metodos  */
 	HashMap<String, String> methodMapper = new HashMap<String, String>(); 
 	
-	public LibroIVANewDataSource(Properties ctx,Date p_dateFrom,Date p_dateTo,String p_transactionType,int p_OrgID)
+	public LibroIVANewDataSource(Properties ctx,Date p_dateFrom,Date p_dateTo,String p_transactionType,int p_OrgID, boolean groupCFInvoices)
 	{
 		this.m_lines = new MLibroIVALine[10000000];
 		this.p_ctx = ctx;
 		this.p_dateFrom=p_dateFrom;
 		this.p_dateTo=p_dateTo;
 		this.p_transactionType=p_transactionType;
-		this.p_orgID=p_OrgID;		
+		this.p_orgID=p_OrgID;
+		this.groupCFInvoices = groupCFInvoices;
 		
 		methodMapper.put("AD_CLIENT_ID", "getAd_client_id");
 		methodMapper.put("AD_ORG_ID", "getAd_org_id");
@@ -98,19 +126,24 @@ public class LibroIVANewDataSource implements JRDataSource {
 		  "			inv.updatedby, " +
 		  "			inv.c_invoice_id, " +
 		  "			inv.issotrx, " +
-		  "			inv.dateacct, " +
+		  "			date_trunc('day',inv.dateacct) as dateacct, " +
 		  "			cdt.printname, " +
 		  "			inv.documentno, " +
 		  "			cbp.c_bpartner_name, " +
 		  "			cbp.taxid, " +
 		  "			cci.i_tipo_iva, " +
+		  "			inv.nombrecli, " +
+		  "			inv.nroidentificcliente, " +
+		  "			ct.rate, " +
+		  "			coalesce(inv.puntodeventa,0) as puntodeventa, " +
+		  "			cdt.c_doctype_id, " +
 		  "			(currencyconvert(cit.gravado, inv.c_currency_id, 118, inv.dateacct::timestamp with time zone, inv.c_conversiontype_id, inv.ad_client_id, inv.ad_org_id) * cdt.signo::numeric)::numeric(20,2) AS netoGravado," +
 		  "			(currencyconvert(cit.nogravado, inv.c_currency_id, 118, inv.dateacct::timestamp with time zone, inv.c_conversiontype_id, inv.ad_client_id, inv.ad_org_id) * cdt.signo::numeric)::numeric(20,2) AS netoNoGravado, " +
 		  "			(currencyconvert(inv.grandtotal, inv.c_currency_id, 118, inv.dateacct::timestamp with time zone, inv.c_conversiontype_id, inv.ad_client_id, inv.ad_org_id) * cdt.signo::numeric)::numeric(20,2) AS total, " +
 		  "			ct.c_tax_name AS item, " +
 		  "			(currencyconvert(cit.importe, inv.c_currency_id, 118, inv.dateacct::timestamp with time zone, inv.c_conversiontype_id, inv.ad_client_id, inv.ad_org_id) * cdt.signo::numeric)::numeric(20,2) AS importe "
 
-		+ "		FROM ( SELECT c_invoice.c_invoice_id, c_invoice.ad_client_id, c_invoice.ad_org_id, c_invoice.isactive, c_invoice.created, c_invoice.createdby, c_invoice.updated, c_invoice.updatedby, c_invoice.c_currency_id, c_invoice.c_conversiontype_id, c_invoice.documentno, c_invoice.c_bpartner_id, c_invoice.dateacct, c_invoice.dateinvoiced, c_invoice.totallines, c_invoice.grandtotal, c_invoice.issotrx, c_invoice.c_doctype_id "
+		+ "		FROM ( SELECT c_invoice.c_invoice_id, c_invoice.ad_client_id, c_invoice.ad_org_id, c_invoice.isactive, c_invoice.created, c_invoice.createdby, c_invoice.updated, c_invoice.updatedby, c_invoice.c_currency_id, c_invoice.c_conversiontype_id, c_invoice.documentno, c_invoice.c_bpartner_id, c_invoice.dateacct, c_invoice.dateinvoiced, c_invoice.totallines, c_invoice.grandtotal, c_invoice.issotrx, c_invoice.c_doctype_id, c_invoice.nombrecli, c_invoice.nroidentificcliente, c_invoice.puntodeventa "
 		+ "     	   FROM c_invoice "
 		+ "     	   WHERE (c_invoice.docstatus = 'CO'::bpchar OR c_invoice.docstatus = 'CL'::bpchar OR c_invoice.docstatus = 'RE'::bpchar OR c_invoice.docstatus = 'VO'::bpchar OR c_invoice.docstatus = '??'::bpchar) AND c_invoice.isactive = 'Y'::bpchar " 
 	  	+ " 		     AND (dateacct::date between ? ::date and ? ::date) "+getOrgCheck());//'2012/06/01' and '2012/08/31') "+getOrgCheck())
@@ -142,7 +175,7 @@ public class LibroIVANewDataSource implements JRDataSource {
 	    + "					 FROM c_invoicetax) cit ON cit.c_invoice_id = inv.c_invoice_id "
         + "		LEFT JOIN ( SELECT c_doctype.c_doctype_id, c_doctype.name AS c_doctype_name, c_doctype.docbasetype, c_doctype.signo_issotrx AS signo, c_doctype.doctypekey, c_doctype.printname, c_doctype.isfiscaldocument "
 		+ " 				FROM c_doctype) cdt ON cdt.c_doctype_id = inv.c_doctype_id "
-	    + "		LEFT JOIN ( SELECT c_tax.c_tax_id, c_tax.name AS c_tax_name "
+	    + "		LEFT JOIN ( SELECT c_tax.c_tax_id, c_tax.name AS c_tax_name, c_tax.rate "
 	    + " 				FROM c_tax) ct ON ct.c_tax_id = cit.c_tax_id "
 	    + "		LEFT JOIN ( SELECT c_bpartner.c_bpartner_id, c_bpartner.name AS c_bpartner_name, c_bpartner.c_categoria_iva_id,c_bpartner.taxid, c_bpartner.iibb "
 	    + " 				FROM c_bpartner) cbp ON inv.c_bpartner_id = cbp.c_bpartner_id "
@@ -150,7 +183,7 @@ public class LibroIVANewDataSource implements JRDataSource {
 	    + " 				FROM c_categoria_iva) cci ON cbp.c_categoria_iva_id = cci.c_categoria_iva_id "
 	    + " 	WHERE cdt.doctypekey::text <> ALL (ARRAY['RTR'::character varying, 'RTI'::character varying, 'RCR'::character varying, 'RCI'::character varying]::text[])"
 	    + "       AND cdt.isfiscaldocument = 'Y' "
-	    + " 	ORDER BY inv.dateacct, inv.c_invoice_id, inv.c_doctype_id, inv.documentno ");
+	    + " 	ORDER BY date_trunc('day',inv.dateacct), puntodeventa, inv.documentno, cdt.c_doctype_id ");
 		return query.toString();
 	}
 	
@@ -162,6 +195,8 @@ public class LibroIVANewDataSource implements JRDataSource {
 	public void loadData() throws RuntimeException {		
 		try
 		{
+			// Inicialización del monto máximo para agrupar facturas a CF
+			initCFGroupedAmt();
 			
 			int i = 0;
 			int j = 1;
@@ -170,7 +205,7 @@ public class LibroIVANewDataSource implements JRDataSource {
 			pstmt.setTimestamp(j++,new Timestamp(this.p_dateFrom.getTime()));
 			pstmt.setTimestamp(j++,new Timestamp(this.p_dateTo.getTime()));
 			ResultSet rs = pstmt.executeQuery();
-						
+			
 			int invoiceID = 0;
 			int lastInvoiceID = -1;
 			totalNeto = new BigDecimal(0);
@@ -178,22 +213,40 @@ public class LibroIVANewDataSource implements JRDataSource {
 			totalGravado = new BigDecimal(0);
 			totalFacturado = new BigDecimal(0);
 			totalIVA = new BigDecimal(0);
+			Map<String, MLibroIVALine> groupedInvoicesByIVA = new HashMap<String, MLibroIVALine>();
+			Integer oldDocTypeID = null;
+			Integer actualDocTypeID = null;
+			String oldDate = null;
+			String actualDate = null;
+			SimpleDateFormat simpleDateFormat = new SimpleDateFormat("dd-MM-yyyy");
+			MLibroIVALine lineAux;
 			while(rs.next())
-			{					
-				Date dateAcct= rs.getDate("dateacct");				
+			{
+				Date dateAcct= rs.getDate("dateacct");
+				actualDocTypeID = rs.getInt("c_doctype_id");
+				actualDate = simpleDateFormat.format(dateAcct);
+				if (groupCFInvoices
+						&& ((oldDocTypeID != null && actualDocTypeID.intValue() != oldDocTypeID
+								.intValue()) || (oldDate != null && !actualDate
+								.equalsIgnoreCase(oldDate)))) {
+					oldDocTypeID = null;
+					oldDate = null;
+				}
 				String tipodocname= rs.getString("printname");				
 				String documentno= rs.getString("documentno");					
-				String c_bpartner_name= rs.getString("c_bpartner_name");				
+				String c_bpartner_name = Util.isEmpty(
+						rs.getString("nombrecli"), true) ? rs
+						.getString("c_bpartner_name") : rs
+						.getString("nombrecli");			
 				String taxid=rs.getString("taxid");
-				if(taxid==null){
-					taxid="";
+				if(Util.isEmpty(taxid, true)){
+					String nroIdentificCliente = rs.getString("nroidentificcliente");
+					taxid = !Util.isEmpty(nroIdentificCliente, true)?nroIdentificCliente:"";
 				}				
 				invoiceID = rs.getInt("c_invoice_id");
 				String c_categoria_via_name= rs.getString("i_tipo_iva");	
 				String item= rs.getString("item");	
-				if(item.compareTo("IVA 0%")!=0){						
-				}	
-				else{
+				if (rs.getBigDecimal("rate").compareTo(BigDecimal.ZERO) == 0) {
 					item="Exento";
 				}				
 				//BigDecimal neto=rs.getBigDecimal("neto");				
@@ -204,18 +257,88 @@ public class LibroIVANewDataSource implements JRDataSource {
 				BigDecimal neto = netoNoGravado.add(netoGravado);
 				BigDecimal importe= rs.getBigDecimal("importe");
 				//BigDecimal total= importe.add(netoGravado.add(netoNoGravado));
-				BigDecimal total= rs.getBigDecimal("total");
+				BigDecimal realTotal = rs.getBigDecimal("total"); 
+				BigDecimal total = realTotal;
 				if (lastInvoiceID == invoiceID) {
 					total = null;
 				}
-				m_lines[i]=new MLibroIVALine(dateAcct,tipodocname,documentno,c_bpartner_name,taxid,c_categoria_via_name,neto,netoGravado,netoNoGravado,total,item,importe);
-				i++;
+				// Si el actual es distinto al anterior tipo de documento,
+				// entonces se agregan los datos del anterior como líneas
+				if(groupCFInvoices && (oldDocTypeID == null || oldDate == null)){
+					for (String itemIVA : groupedInvoicesByIVA.keySet()) {
+						m_lines[i]= groupedInvoicesByIVA.get(itemIVA);
+						i++;
+					}
+					groupedInvoicesByIVA.clear();
+				}
+				
+				// Si se debe agrupar facturas a CF, se suma por iva el monto
+				// total de la factura
+				if (groupCFInvoices
+						&& c_categoria_via_name.equalsIgnoreCase("CF")
+						&& realTotal.compareTo(groupCFInvoicesAmt) <= 0
+						&& (oldDocTypeID == null || actualDocTypeID.intValue() == oldDocTypeID.intValue())
+						&& (oldDate == null || actualDate.equalsIgnoreCase(oldDate))) {
+					lineAux = groupedInvoicesByIVA.get(item);
+					if(lineAux == null){
+						lineAux = new MLibroIVALine(dateAcct, tipodocname,
+								documentno, c_bpartner_name, taxid,
+								c_categoria_via_name,
+								neto == null ? BigDecimal.ZERO : neto,
+								netoGravado == null ? BigDecimal.ZERO
+										: netoGravado,
+								netoNoGravado == null ? BigDecimal.ZERO
+										: netoNoGravado,
+								total == null ? BigDecimal.ZERO : realTotal,
+								item, importe == null ? BigDecimal.ZERO
+										: importe);
+					}
+					else{
+						lineAux.setDocumentno(rs.getInt("puntodeventa") == 0 ? "-"
+								: String.valueOf(rs.getInt("puntodeventa")));
+						lineAux.setBpartner_name("");
+						lineAux.setTaxid("");
+						lineAux.setNeto(lineAux.getNeto().add(
+								neto == null ? BigDecimal.ZERO : neto));
+						lineAux.setNetoGravado(lineAux.getNetoGravado().add(
+								netoGravado == null ? BigDecimal.ZERO
+										: netoGravado));
+						lineAux.setNetoNoGravado(lineAux.getNetoNoGravado()
+								.add(netoNoGravado == null ? BigDecimal.ZERO
+										: netoNoGravado));
+						lineAux.setTotal(lineAux.getTotal().add(
+								total == null ? BigDecimal.ZERO : total));
+						lineAux.setImporte(lineAux.getImporte().add(
+								importe == null ? BigDecimal.ZERO : importe));
+					}
+					groupedInvoicesByIVA.put(item, lineAux);
+				}
+				else{
+					m_lines[i] = new MLibroIVALine(dateAcct, tipodocname,
+							documentno, c_bpartner_name, taxid,
+							c_categoria_via_name, neto, netoGravado,
+							netoNoGravado, total, item, importe);
+					i++;
+				}
 				total_lines=i;
 				totalFacturado = totalFacturado.add(total == null ? BigDecimal.ZERO : total);					
 				totalNoGravado=totalNoGravado.add(netoNoGravado);
 				totalGravado=totalGravado.add(netoGravado);				
 				
 				lastInvoiceID = invoiceID;
+				if (groupCFInvoices
+						&& (oldDocTypeID == null || oldDate == null)) {
+					oldDocTypeID = actualDocTypeID;
+					oldDate = actualDate;
+				}
+			}
+			
+			if(groupedInvoicesByIVA.keySet().size() > 0){
+				for (String itemIVA : groupedInvoicesByIVA.keySet()) {
+					m_lines[i]= groupedInvoicesByIVA.get(itemIVA);
+					i++;
+				}
+				groupedInvoicesByIVA.clear();
 			}
 			totalNeto = totalGravado.add(totalNoGravado);	
 			totalIVA=totalIVA.add(totalFacturado.subtract(totalNeto));		
@@ -225,6 +348,34 @@ public class LibroIVANewDataSource implements JRDataSource {
 		{
 			e.printStackTrace();
 		}
+	}
+	
+	private void initCFGroupedAmt(){
+		// Busco la preferencia con el valor límite para agrupar ventas
+		BigDecimal groupedCFInvoicesAmt = CF_MAX_AMT_DEFAULT;
+		if(groupCFInvoices){
+			// 1) Busco la preferencia de monto máximo de agrupación de facturas
+			// a CF
+			String value = MPreference.searchCustomPreferenceValue(
+					GROUPED_CF_INVOICES_PREFERENCE_NAME,
+					Env.getAD_Client_ID(p_ctx),
+					p_orgID > 0 ? p_orgID : Env.getAD_Org_ID(p_ctx), null,
+					false);
+			// 2) Si no existe 1), busco la preferencia de monto máximo para
+			// facturas a CF en impresión fiscal
+			if(Util.isEmpty(value, true)){
+				value = MPreference.searchCustomPreferenceValue(
+						CF_MAX_AMT_L_AR,
+						Env.getAD_Client_ID(p_ctx),
+						p_orgID > 0 ? p_orgID : Env.getAD_Org_ID(p_ctx), null,
+						false);
+			}
+			
+			if(!Util.isEmpty(value, true)){
+				groupedCFInvoicesAmt = new BigDecimal(value);
+			}
+		}
+		this.groupCFInvoicesAmt = groupedCFInvoicesAmt;
 	}
 	
 	/* Retorna el valor correspondiente al campo indicado */
@@ -418,6 +569,8 @@ public class LibroIVANewDataSource implements JRDataSource {
 				return tax.sopoType;
 			} else if (name.toUpperCase().equals("TAXTYPE"))	{
 				return tax.taxType;
+			} else if (name.toUpperCase().equals("TAXBASEAMOUNT"))	{
+				return tax.taxBaseAmt;
 			}
 			
 			return null;
@@ -432,6 +585,7 @@ public class LibroIVANewDataSource implements JRDataSource {
 					  "     SELECT " +
 					  "			ct.c_tax_name AS TaxName, " +
 					  "			SUM(currencyconvert(cit.importe, inv.c_currency_id, 118, inv.dateacct::timestamp with time zone, inv.c_conversiontype_id, inv.ad_client_id, inv.ad_org_id) * cdt.signo::numeric)::numeric(20,2) AS TaxAmount, " +
+					  "			SUM(currencyconvert(cit.taxbaseamt, inv.c_currency_id, 118, inv.dateacct::timestamp with time zone, inv.c_conversiontype_id, inv.ad_client_id, inv.ad_org_id) * cdt.signo::numeric)::numeric(20,2) AS TaxBaseAmount, " +
 					  "         ct.taxindicator as TaxIndicator, ct.rate as Rate, ct.sopotype as Sopotype, ct.taxtype as TaxType "
 					+ "		FROM ( SELECT c_invoice.c_invoice_id, c_invoice.ad_client_id, c_invoice.ad_org_id, c_invoice.isactive, c_invoice.created, c_invoice.createdby, c_invoice.updated, c_invoice.updatedby, c_invoice.c_currency_id, c_invoice.c_conversiontype_id, c_invoice.documentno, c_invoice.c_bpartner_id, c_invoice.dateacct, c_invoice.dateinvoiced, c_invoice.totallines, c_invoice.grandtotal, c_invoice.issotrx, c_invoice.c_doctype_id "
 					+ "     	   FROM c_invoice "
@@ -461,6 +615,7 @@ public class LibroIVANewDataSource implements JRDataSource {
 				    + "							WHEN c_invoicetax.taxamt <> 0::numeric THEN c_invoicetax.taxbaseamt "
 				    + "							ELSE NULL::numeric "
 				    + "					    END AS gravado, "
+				    + "						c_invoicetax.taxbaseamt, "
 				    + "						c_invoicetax.ad_client_id "
 				    + "					 FROM c_invoicetax) cit ON cit.c_invoice_id = inv.c_invoice_id "
 			        + "		LEFT JOIN ( SELECT c_doctype.c_doctype_id, c_doctype.name AS c_doctype_name, c_doctype.docbasetype, c_doctype.signo_issotrx AS signo, c_doctype.doctypekey, c_doctype.printname, c_doctype.isfiscaldocument "
@@ -472,7 +627,6 @@ public class LibroIVANewDataSource implements JRDataSource {
 				    + "		LEFT JOIN ( SELECT c_categoria_iva.c_categoria_iva_id, c_categoria_iva.name AS c_categoria_via_name, c_categoria_iva.codigo AS codiva, c_categoria_iva.i_tipo_iva "
 				    + " 				FROM c_categoria_iva) cci ON cbp.c_categoria_iva_id = cci.c_categoria_iva_id "
 				    + " 	WHERE cdt.doctypekey::text <> ALL (ARRAY['RTR'::character varying, 'RTI'::character varying, 'RCR'::character varying, 'RCI'::character varying]::text[])"
-				    + "       AND cdt.isfiscaldocument = 'Y' "
 				    + "       AND cdt.isfiscaldocument = 'Y' "
 				    + "       AND ct.issummary = 'N' "
 				    + "     GROUP BY ct.c_tax_name, ct.taxindicator, ct.rate, ct.sopotype, ct.taxtype  "
@@ -497,9 +651,10 @@ public class LibroIVANewDataSource implements JRDataSource {
 			protected BigDecimal rate;
 			protected String sopoType;
 			protected String taxType;
+			private BigDecimal taxBaseAmt;
 			
 		
-			public M_Tax(String taxName, BigDecimal taxAmount, String taxIndicator, BigDecimal rate, String sopoType, String taxType) {
+			public M_Tax(String taxName, BigDecimal taxAmount, String taxIndicator, BigDecimal rate, String sopoType, String taxType, BigDecimal taxBaseAmt) {
 				super();
 				this.taxName = taxName;
 				this.taxAmount = taxAmount;
@@ -507,10 +662,14 @@ public class LibroIVANewDataSource implements JRDataSource {
 				this.rate = rate;
 				this.sopoType = sopoType;
 				this.taxType = taxType;
+				this.taxBaseAmt = taxBaseAmt;
 			}
 
 			public M_Tax(ResultSet rs) throws SQLException {
-				this(rs.getString("TaxName"), rs.getBigDecimal("TaxAmount"), rs.getString("TaxIndicator"), rs.getBigDecimal("Rate"), rs.getString("SopoType"), rs.getString("TaxType")); 
+				this(rs.getString("TaxName"), rs.getBigDecimal("TaxAmount"), rs
+						.getString("TaxIndicator"), rs.getBigDecimal("Rate"),
+						rs.getString("SopoType"), rs.getString("TaxType"), rs
+								.getBigDecimal("TaxBaseAmount")); 
 			}
 		}
 		
@@ -520,7 +679,7 @@ public class LibroIVANewDataSource implements JRDataSource {
 			ArrayList<Object> list = new ArrayList<Object>();
 			
 			try {
-				PreparedStatement pstmt = DB.prepareStatement(getDataSQL());
+				PreparedStatement pstmt = DB.prepareStatement(getDataSQL(), null, true);
 				setQueryParameters(pstmt);
 				ResultSet rs = pstmt.executeQuery();
 				while (rs.next())	{
