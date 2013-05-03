@@ -5,8 +5,8 @@ import java.math.BigDecimal;
 import java.sql.Timestamp;
 import java.util.Date;
 
+import org.openXpertya.JasperReport.DataSource.JasperReportsUtil;
 import org.openXpertya.JasperReport.DataSource.LibroIVANewDataSource;
-import org.openXpertya.model.MClient;
 import org.openXpertya.model.MOrder;
 import org.openXpertya.model.MProcess;
 import org.openXpertya.process.ProcessInfo;
@@ -14,6 +14,7 @@ import org.openXpertya.process.ProcessInfoParameter;
 import org.openXpertya.process.SvrProcess;
 import org.openXpertya.util.DB;
 import org.openXpertya.util.Env;
+import org.openXpertya.util.Util;
 
 	public class LaunchLibroIVANew extends SvrProcess {
 
@@ -35,6 +36,8 @@ import org.openXpertya.util.Env;
 		private String p_tipoLibro = null;
 		
 		private int p_OrgID = -1;
+		
+		private boolean groupCFInvoices = false;
 		
 		/** Nombre del informe	*/
 		private final String p_reportName = "Libro de IVA";
@@ -76,6 +79,11 @@ import org.openXpertya.util.Env;
 		            	BigDecimal tmp = ( BigDecimal )para[ i ].getParameter();
 		            	p_hoja = tmp == null ? null : tmp.intValue();
 		            }
+		            if(name.equals("GroupCFInvoices"))
+		            {
+		            	String tmp = ( String )para[ i ].getParameter();
+		            	groupCFInvoices = tmp == null ? false : tmp.equalsIgnoreCase("Y");
+		            }
 	            }
 	        }
 			
@@ -92,7 +100,9 @@ import org.openXpertya.util.Env;
 			
 			p_tipoLibro="";
 			
-			LibroIVANewDataSource ds = new LibroIVANewDataSource(getCtx(),(Date)p_dateFrom,(Date)p_dateTo,p_transactionType,p_OrgID);
+			LibroIVANewDataSource ds = new LibroIVANewDataSource(getCtx(),
+					(Date) p_dateFrom, (Date) p_dateTo, p_transactionType, p_OrgID,
+					groupCFInvoices);
 			
 			///////////////////////////////////////
 			// Subreporte de Impuestos.
@@ -110,15 +120,23 @@ import org.openXpertya.util.Env;
 				}
 				
 				// Establecemos parametros
-				jasperwrapper.addParameter("AD_Client_ID", new Integer (Env.getAD_Client_ID(getCtx())));
+			 	Integer clientID = Env.getAD_Client_ID(getCtx());
+				jasperwrapper.addParameter("AD_Client_ID", clientID);
 				jasperwrapper.addParameter("TOTALCOMPROBANTES", ds.getTotalFacturado());
 				jasperwrapper.addParameter("TOTALIMPORTES", ds.getTotalIVA());
 				jasperwrapper.addParameter("TOTALGRAVADOS", ds.getTotalGravado());
 				jasperwrapper.addParameter("TOTALNOGRAVADOS", ds.getTotalNoGravado());
 				jasperwrapper.addParameter("HOJA", p_hoja);
 				MOrder order = new MOrder(getCtx(), 0, null);
-				jasperwrapper.addParameter("COMPANIA", (MClient.get(getCtx())).getName());
-				jasperwrapper.addParameter("LOCALIZACION", ds.getLocalizacion(Env.getAD_Client_ID(getCtx())));
+				jasperwrapper.addParameter("COMPANIA", JasperReportsUtil.getClientName(getCtx(), clientID));
+				jasperwrapper.addParameter("LOCALIZACION", ds.getLocalizacion(clientID));
+				if(!Util.isEmpty(p_OrgID, true)){
+					jasperwrapper.addParameter("ORG_NAME",
+							JasperReportsUtil.getOrgName(getCtx(), p_OrgID));
+					jasperwrapper.addParameter("ORG_LOCALIZATION",
+							JasperReportsUtil.getLocalizacion(getCtx(), clientID,
+									p_OrgID, get_TrxName()));
+				}
 				jasperwrapper.addParameter("REPORT_NAME", p_reportName);
 				jasperwrapper.addParameter("FECHADESDE", (Date)p_dateFrom);
 				jasperwrapper.addParameter("FECHAHASTA",(Date) p_dateTo);
