@@ -2252,14 +2252,23 @@ public class MInvoice extends X_C_Invoice implements DocAction {
 		// Para facturas de venta, si está activo locale ar y el tipo de
 		// documento requiere impresión fiscal entonces no debo controlar
 		// factura repetida
-		if (isSOTrx() && requireFiscalPrint()) {
+		if (isSOTrx() && requireFiscalPrint() && !isManualDocumentNo()) {
 			return false;
 		}
 
 		// Condiciones comunes entre issotrx=Y y issotrx=N
 		StringBuffer whereClause = new StringBuffer();
 		whereClause
-				.append("docStatus in ('CO', 'CL') AND (c_invoice_id != ?) AND (issotrx = ?) AND (documentno = ?) AND (c_doctypetarget_id = ?) ");
+				.append("(c_invoice_id != ?) AND (issotrx = ?) AND (documentno = ?) AND (c_doctypetarget_id = ?) ");
+		// Con el tema de nros de documento manuales en realidad un documento
+		// anulado impreso fiscalmente existe físicamente por lo tanto también
+		// se debe tener en cuenta en la validación
+		if(isSOTrx() && requireFiscalPrint() && isManualDocumentNo()){
+			whereClause.append(" AND (docStatus in ('CO', 'CL') OR (docStatus in ('VO', 'RE') AND fiscalalreadyprinted = 'Y')) ");
+		}
+		else{
+			whereClause.append(" AND docStatus in ('CO', 'CL') ");
+		}
 		List<Object> whereParams = new ArrayList<Object>();
 		whereParams.add(getID());
 		whereParams.add(isSOTrx() ? "Y" : "N");
