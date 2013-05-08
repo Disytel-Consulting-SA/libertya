@@ -175,19 +175,19 @@ public class CalloutInvoiceExt extends CalloutInvoice {
         }
         
         // Para seteo manual del nro de documento no debo sugerir nada
-        Boolean manualDocumentNo = null;
-        Object manualObj = mTab.getValue("ManualDocumentNo");
-        if(manualObj != null){
-        	if(manualObj instanceof String){
-        		manualDocumentNo = ((String)mTab.getValue("ManualDocumentNo")).equals("Y");
-        	}
-        	else{
-        		manualDocumentNo = (Boolean)mTab.getValue("ManualDocumentNo");
-        	}
-        }
-        if(manualDocumentNo != null && manualDocumentNo){
-        	return "";
-        }
+//        Boolean manualDocumentNo = null;
+//        Object manualObj = mTab.getValue("ManualDocumentNo");
+//        if(manualObj != null){
+//        	if(manualObj instanceof String){
+//        		manualDocumentNo = ((String)mTab.getValue("ManualDocumentNo")).equals("Y");
+//        	}
+//        	else{
+//        		manualDocumentNo = (Boolean)mTab.getValue("ManualDocumentNo");
+//        	}
+//        }
+//        if(manualDocumentNo != null && manualDocumentNo){
+//        	return "";
+//        }
 
         try {
             String SQL = "SELECT d.HasCharges,'N',d.IsDocNoControlled," + "s.CurrentNext, d.DocBaseType, s.prefix, s.suffix " + "FROM C_DocType d, AD_Sequence s " + "WHERE C_DocType_ID=?"    // 1
@@ -282,7 +282,7 @@ public class CalloutInvoiceExt extends CalloutInvoice {
 		
 		String ret = docTypeStd(ctx, WindowNo, tab, field, value);
 		
-		if(tab.isInserting() || field.isChanged()){
+		if(field.isChanged()){
 			try {
 				String docNo = ((String)tab.getValue("DocumentNo"));
 				
