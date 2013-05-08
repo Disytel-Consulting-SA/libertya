@@ -3067,10 +3067,10 @@ public class MInOut extends X_M_InOut implements DocAction {
 		filter.append("C_Order.IsSOTrx='").append(inout.isSOTrx()?"Y":"N")
 				.append("' AND ")
 				.append("C_Order.DocStatus IN ('CL','CO') AND ")
-				.append("(C_Order.C_Order_ID IN ")
+				.append("(EXISTS ")
 				.append("(SELECT ol.C_Order_ID ")
 				.append("FROM C_OrderLine ol ")
-				.append("WHERE ")
+				.append("WHERE C_Order.C_Order_ID = ol.C_Order_ID AND ")
 				.append(afterInvoicing ? " ol.QtyInvoiced > "
 						: " ol.QtyOrdered > ")
 				.append(" ol.QtyDelivered+ol.QtyTransferred")
