@@ -2583,3 +2583,29 @@ ALTER TABLE v_dailysales OWNER TO libertya;
 
 -- 20130509-1232 - Nueva columna para especificar el tipo de documento por anulacion 
 update ad_system set dummy = (SELECT addcolumnifnotexists('C_DocType','C_ReverseDocType_ID', 'int'));
+
+--20130509 - 1730 Creación de vista para Informe Resumen de Pedidos Pendientes de Facturación
+-- View: RV_Order_pending
+-- DROP VIEW RV_Order_pending;
+CREATE OR REPLACE VIEW RV_Order_pending AS 
+SELECT o.ad_client_id, o.ad_org_id, o.isactive, o.created, o.createdby, o.updated, o.updatedby, o.c_order_id, o.documentno, o.dateordered::date AS dateordered, o.datepromised::date AS datepromised, o.c_bpartner_id, o.issotrx, currencyconvert(o.grandtotal, o.c_currency_id, 118, o.dateacct::timestamp with time zone, NULL::integer, o.ad_client_id, o.ad_org_id) AS totalOrdered, (CASE WHEN (ol.qtyordered > ol.qtyinvoiced AND ol.qtyinvoiced <> 0) THEN 'Y' ELSE 'N' END)::character(1) as IsParcial, currencyconvert(SUM(((ol.qtyordered - ol.qtyinvoiced) * (CASE WHEN pl.istaxincluded = 'Y' THEN ol.linenetamt ELSE ol.linetotalamt END) / (CASE WHEN ol.qtyordered = 0 THEN 1 ELSE ol.qtyordered END))), o.c_currency_id, 118, o.dateacct::timestamp with time zone, NULL::integer, o.ad_client_id, o.ad_org_id) AS totalPending
+from c_orderline ol
+JOIN c_order o ON o.c_order_id = ol.c_order_id AND (ol.qtyordered <> ol.qtyinvoiced) AND (o.docstatus = ANY (ARRAY['CO'::bpchar, 'CL'::bpchar])) AND ol.m_product_id IS NOT NULL
+INNER JOIN M_PriceList pl ON (pl.M_PriceList_ID = o.M_PriceList_ID)
+GROUP BY o.ad_client_id, o.ad_org_id, o.isactive, o.created, o.createdby, o.updated, o.updatedby, o.c_order_id, o.documentno, o.dateordered, o.datepromised, o.c_bpartner_id, o.issotrx, o.grandtotal, ol.qtyordered, ol.qtyinvoiced, o.c_currency_id, o.dateacct;
+
+ALTER TABLE RV_Order_pending OWNER TO libertya;
+GRANT ALL ON TABLE RV_Order_pending TO libertya;
+
+--20130509 - 1730 Creación de vista para Informe Detalle de Pedidos Pendientes de Facturación
+-- View: RV_Order_pending_detail
+-- DROP VIEW RV_Order_pending_detail;
+CREATE OR REPLACE VIEW RV_Order_pending_detail AS 
+SELECT o.ad_client_id, o.ad_org_id, o.isactive, o.created, o.createdby, o.updated, o.updatedby, o.c_order_id, o.documentno, o.dateordered::date AS dateordered, o.datepromised::date AS datepromised, o.c_bpartner_id, o.issotrx, ol.m_product_id, ol.qtyordered, ol.qtyinvoiced, currencyconvert(((ol.qtyordered - ol.qtyinvoiced) * (CASE WHEN pl.istaxincluded = 'Y' THEN ol.linenetamt ELSE ol.linetotalamt END) / (CASE WHEN ol.qtyordered = 0 THEN 1 ELSE ol.qtyordered END)), o.c_currency_id, 118, o.dateacct::timestamp with time zone, NULL::integer, o.ad_client_id, o.ad_org_id) AS totalPending
+from c_orderline ol
+JOIN c_order o ON o.c_order_id = ol.c_order_id AND (ol.qtyordered <> ol.qtyinvoiced) AND (o.docstatus = ANY (ARRAY['CO'::bpchar, 'CL'::bpchar])) AND ol.m_product_id IS NOT NULL
+INNER JOIN M_PriceList pl ON (pl.M_PriceList_ID = o.M_PriceList_ID);
+
+ALTER TABLE RV_Order_pending_detail OWNER TO libertya;
+GRANT ALL ON TABLE RV_Order_pending_detail TO libertya;
+                                      
