@@ -2580,3 +2580,6 @@ UNION ALL
   WHERE date_trunc('day'::text, i.dateacct) <> date_trunc('day'::text, pjp.dateacct::timestamp with time zone) AND i.initialcurrentaccountamt > 0::numeric AND hdr.isactive = 'Y'::bpchar AND ((dtc.docbasetype <> ALL (ARRAY['ARC'::bpchar, 'APC'::bpchar])) OR (dtc.docbasetype = ANY (ARRAY['ARC'::bpchar, 'APC'::bpchar])) AND pjp.c_invoice_credit_id IS NOT NULL);
 
 ALTER TABLE v_dailysales OWNER TO libertya;
+
+-- 20130509-1232 - Nueva columna para especificar el tipo de documento por anulacion 
+update ad_system set dummy = (SELECT addcolumnifnotexists('C_DocType','C_ReverseDocType_ID', 'int'));

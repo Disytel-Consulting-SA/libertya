@@ -4132,6 +4132,10 @@ public class MInvoice extends X_C_Invoice implements DocAction {
 			}
 		}
 		
+		// Si se especificó el tipo de documento de anulacion a nivel C_DocType, utilizar éste, redefiniendo cualquier logica anterior
+		if (docType.getC_ReverseDocType_ID()>0)
+			reversalDocType = new MDocType(getCtx(), docType.getC_ReverseDocType_ID(), get_TrxName());
+				
 		// Deep Copy
 
 		MInvoice reversal = copyFrom(this, getDateInvoiced(),
