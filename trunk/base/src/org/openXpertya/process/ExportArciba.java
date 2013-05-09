@@ -13,8 +13,6 @@ import java.util.Date;
 import java.util.logging.Level;
 
 import org.openXpertya.model.X_C_BPartner;
-import org.openXpertya.process.ProcessInfoParameter;
-import org.openXpertya.process.SvrProcess;
 import org.openXpertya.util.DB;
 
 public class ExportArciba extends SvrProcess {
@@ -34,7 +32,7 @@ public class ExportArciba extends SvrProcess {
 
 	            if( para[ i ].getParameter() == null ) {
 	                ;
-	            } else if( name.equalsIgnoreCase( "DateTrx" )) {
+	            } else if( name.equalsIgnoreCase( "DateInvoiced" )) {
 	            	date_from = (Timestamp)para[i].getParameter();
 	            	date_to = (Timestamp)para[i].getParameter_To();
 	            } else if( name.equalsIgnoreCase( "AD_Org_ID" )) {
@@ -222,10 +220,10 @@ public class ExportArciba extends SvrProcess {
 			sqlReal.append(" AND (i.AD_Org_ID = "+ad_org_id+")");
 		}
 		if (date_from != null){
-			sqlReal.append(" AND (i.DateInvoiced >= '"+date_from+"'::timestamp)");
+			sqlReal.append(" AND (date_trunc('day',i.DateInvoiced) >= '"+date_from+"')");
 		}
 		if (date_to != null){
-			sqlReal.append(" AND (i.DateInvoiced <= '"+date_to+"'::timestamp)");
+			sqlReal.append(" AND (date_trunc('day',i.DateInvoiced) <= '"+date_to+"')");
 		}
 		
 		sqlReal.append("ORDER BY FECHA_DE_RETEN_PERC ");
@@ -268,10 +266,10 @@ public class ExportArciba extends SvrProcess {
 			sqlReal.append(" AND (i.AD_Org_ID = "+ad_org_id+")");
 		}
 		if (date_from != null){
-			sqlReal.append(" AND (FECHA_COMPROBANTE_ORIGEN >= '"+date_from+"'::timestamp)");
+			sqlReal.append(" AND ((SELECT date_trunc('day',inv.dateinvoiced) FROM C_Invoice inv WHERE inv.C_Invoice_ID = i.C_Invoice_Orig_ID) >= '"+date_from+"')");
 		}
 		if (date_to != null){
-			sqlReal.append(" AND (FECHA_COMPROBANTE_ORIGEN <= '"+date_to+"'::timestamp)");
+			sqlReal.append(" AND ((SELECT date_trunc('day',inv.dateinvoiced) FROM C_Invoice inv WHERE inv.C_Invoice_ID = i.C_Invoice_Orig_ID) <= '"+date_to+"')");
 		}
 		// NOTAS DE CREDITO IMPUTADAS
 		if (imputed){
@@ -361,6 +359,6 @@ public class ExportArciba extends SvrProcess {
         DateFormat dateFormat = new SimpleDateFormat("ddMMyyyy");
         Date date = new Date();
         return dateFormat.format(date);
-    }
-
+    }       
+    
 }
