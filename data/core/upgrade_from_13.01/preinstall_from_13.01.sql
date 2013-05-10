@@ -2608,4 +2608,63 @@ INNER JOIN M_PriceList pl ON (pl.M_PriceList_ID = o.M_PriceList_ID);
 
 ALTER TABLE RV_Order_pending_detail OWNER TO libertya;
 GRANT ALL ON TABLE RV_Order_pending_detail TO libertya;
-                                      
+
+
+--20130510 - 1700 Modificación de vista de movimientos por artículo para soporte de nuevo reporte Movimientos Valorizados y fixes
+DROP VIEW v_product_movements;
+
+CREATE OR REPLACE VIEW v_product_movements AS 
+ SELECT m.tablename, m.ad_client_id, m.ad_org_id, o.value AS orgvalue, o.name AS orgname, m.doc_id, m.documentno, m.docstatus, m.description, m.datetrx, m.m_product_id, m.qty, m.type, m.aditionaltype, m.c_charge_id, m.chargename, p.name AS productname, p.value AS productvalue, w.m_warehouse_id, w.value as warehousevalue, w.name as warehousename, wt.m_warehouse_id as m_warehouseto_id, wt.value as warehousetovalue, wt.name as warehousetoname, bp.c_bpartner_id, bp.value as bpartnervalue, bp.name as bpartnername
+   FROM (        (        (        (        (        (        (         SELECT 'M_Transfer' AS tablename, t.ad_client_id, t.ad_org_id, t.m_transfer_id as doc_id, t.documentno, t.docstatus, t.description, t.datetrx, tl.m_product_id, tl.qty, t.transfertype AS type, t.movementtype AS aditionaltype, c.c_charge_id, c.name AS chargename, t.m_warehouse_id, t.m_warehouseto_id, t.c_bpartner_id
+                                                                   FROM m_transfer t                                                                   
+                                                              JOIN m_transferline tl ON tl.m_transfer_id = t.m_transfer_id
+                                                         LEFT JOIN c_charge c ON c.c_charge_id = t.c_charge_id
+                                                        UNION ALL 
+                                                                 SELECT 'M_ProductChange' AS tablename, pc.ad_client_id, pc.ad_org_id, pc.m_productchange_id as doc_id, pc.documentno, pc.docstatus, pc.description, pc.datetrx, pc.m_product_id, pc.productqty AS qty, NULL::unknown AS type, NULL::unknown AS aditionaltype, NULL::unknown AS c_charge_id, NULL::unknown AS chargename, pc.m_warehouse_id, null as m_warehouseto_id, null as c_bpartner_id
+                                                                   FROM m_productchange pc)
+                                                UNION ALL 
+                                                         SELECT 'M_ProductChange' AS tablename, pc.ad_client_id, pc.ad_org_id, pc.m_productchange_id as doc_id, pc.documentno, pc.docstatus, pc.description, pc.datetrx, pc.m_product_to_id AS m_product_id, pc.productqty * (-1)::numeric AS qty, NULL::unknown AS type, NULL::unknown AS aditionaltype, NULL::unknown AS c_charge_id, NULL::unknown AS chargename, pc.m_warehouse_id, null as m_warehouseto_id, null as c_bpartner_id
+                                                           FROM m_productchange pc)
+                                        UNION ALL 
+                                                 SELECT 'M_InOut' AS tablename, io.ad_client_id, io.ad_org_id, io.m_inout_id as doc_id, io.documentno, io.docstatus, io.description, io.movementdate AS datetrx, iol.m_product_id, iol.movementqty AS qty, dt.name AS type, NULL::unknown AS aditionaltype, NULL::unknown AS c_charge_id, NULL::unknown AS chargename, io.m_warehouse_id, null as m_warehouseto_id, io.c_bpartner_id
+                                                   FROM m_inout io
+                                              JOIN m_inoutline iol ON iol.m_inout_id = io.m_inout_id
+                                         JOIN c_doctype dt ON dt.c_doctype_id = io.c_doctype_id)
+                                UNION ALL 
+                                         SELECT 'M_Splitting' AS tablename, s.ad_client_id, s.ad_org_id, s.m_splitting_id as doc_id, s.documentno, s.docstatus, s.comments AS description, s.datetrx, s.m_product_id, s.productqty * (-1)::numeric AS qty, NULL::unknown AS type, NULL::unknown AS aditionaltype, NULL::unknown AS c_charge_id, NULL::unknown AS chargename, s.m_warehouse_id, null as m_warehouseto_id, null as c_bpartner_id
+                                           FROM m_splitting s)
+                        UNION ALL 
+                                 SELECT 'M_Splitting' AS tablename, s.ad_client_id, s.ad_org_id, s.m_splitting_id as doc_id, s.documentno, s.docstatus, s.comments AS description, s.datetrx, sl.m_product_to_id AS m_product_id, sl.productqty AS qty, NULL::unknown AS type, NULL::unknown AS aditionaltype, NULL::unknown AS c_charge_id, NULL::unknown AS chargename, s.m_warehouse_id, null as m_warehouseto_id, null as c_bpartner_id
+                                   FROM m_splitting s
+                              JOIN m_splittingline sl ON sl.m_splitting_id = s.m_splitting_id)
+                UNION ALL 
+                         SELECT 'M_Inventory' AS tablename, i.ad_client_id, i.ad_org_id, i.m_inventory_id as doc_id, i.documentno, i.docstatus, i.description, i.movementdate AS datetrx, il.m_product_id, il.qtycount AS qty, dt.name AS type, i.inventorykind AS aditionaltype, c.c_charge_id, c.name AS chargename, i.m_warehouse_id, null as m_warehouseto_id, null as c_bpartner_id
+                           FROM m_inventory i
+                      JOIN m_inventoryline il ON i.m_inventory_id = il.m_inventory_id
+                 JOIN c_doctype dt ON dt.c_doctype_id = i.c_doctype_id
+            LEFT JOIN c_charge c ON c.c_charge_id = i.c_charge_id
+           WHERE NOT (EXISTS ( SELECT m_transfer.m_inventory_id
+				FROM m_transfer
+				WHERE m_transfer.m_inventory_id = i.m_inventory_id)) 
+		AND NOT (EXISTS ( SELECT m_productchange.m_inventory_id
+				FROM m_productchange
+				WHERE m_productchange.m_inventory_id = i.m_inventory_id OR m_productchange.void_inventory_id = i.m_inventory_id)) 
+		AND NOT (EXISTS ( SELECT s.m_inventory_id
+				FROM m_splitting s
+				WHERE s.m_inventory_id = i.m_inventory_id OR s.void_inventory_id = i.m_inventory_id)))
+        UNION ALL 
+                 SELECT 'M_Movement' AS tablename, m.ad_client_id, m.ad_org_id, m.m_movement_id as doc_id, m.documentno, m.docstatus, m.description, m.movementdate AS datetrx, ml.m_product_id, ml.movementqty AS qty, dt.name AS type, NULL::unknown AS aditionaltype, NULL::unknown AS c_charge_id, NULL::unknown AS chargename, w.m_warehouse_id, wt.m_warehouse_id as m_warehouseto_id, null as c_bpartner_id
+                   FROM m_movement m
+              JOIN m_movementline ml ON ml.m_movement_id = m.m_movement_id
+              INNER JOIN m_locator as l ON l.m_locator_id = ml.m_locator_id
+              INNER JOIN m_warehouse as w on w.m_warehouse_id = l.m_warehouse_id
+              INNER JOIN m_locator as lt ON lt.m_locator_id = ml.m_locatorto_id
+              INNER JOIN m_warehouse as wt on wt.m_warehouse_id = lt.m_warehouse_id
+         JOIN c_doctype dt ON dt.c_doctype_id = m.c_doctype_id) m
+   JOIN m_product p ON p.m_product_id = m.m_product_id
+   JOIN ad_org o ON o.ad_org_id = m.ad_org_id
+   INNER JOIN m_warehouse as w ON w.m_warehouse_id = m.m_warehouse_id
+   LEFT JOIN m_warehouse as wt ON wt.m_warehouse_id = m.m_warehouseto_id
+   LEFT JOIN c_bpartner as bp ON bp.c_bpartner_id = m.c_bpartner_id;
+
+ALTER TABLE v_product_movements OWNER TO libertya;
