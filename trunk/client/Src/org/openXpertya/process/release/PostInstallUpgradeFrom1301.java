@@ -89,6 +89,16 @@ public class PostInstallUpgradeFrom1301 extends PluginPostInstallProcess {
 	/** UID del Subreporte de impuestos del Informe de Libro de IVA */
 	protected final static String LIBRO_IVA_TAX_SUBREPORT_JASPER_REPORT_UID = "LIVA2CORE-AD_JasperReport-1010053-20121031201630";
 	protected final static String LIBRO_IVA_TAX_SUBREPORT_JASPER_REPORT_FILENAME = "SubReport_TaxInformeLibroIva.jasper";	
+	
+	/** UID del informe Stock Valorizado a Fecha*/
+	protected final static String STOCK_VALORIZADO_A_FECHA_REPORT_UID = "CORE-AD_Process-1010327";
+	/** Nombre del .jrxml del informe Stock Valorizado a Fecha*/
+	protected final static String STOCK_VALORIZADO_A_FECHA_REPORT_FILENAME = "StockValorizadoAFecha.jrxml";
+	
+	/** UID del informe Listado de Utilidades por Artículo*/
+	protected final static String LISTADO_DE_UTILIDADES_POR_ARTICULO_REPORT_UID = "CORE-AD_Process-1010328";
+	/** Nombre del .jrxml del informe Listado de Utilidades por Artículo*/
+	protected final static String LISTADO_DE_UTILIDADES_POR_ARTICULO_REPORT_FILENAME = "UtilidadesPorArticulo.jrxml";
 
 	protected String doIt() throws Exception {
 		super.doIt();
@@ -236,10 +246,18 @@ public class PostInstallUpgradeFrom1301 extends PluginPostInstallProcess {
 									getBinaryFileURL(REGISTERED_DOCUMENTS_JASPER_REPORT_FILENAME)));
 		
 		// Informe de IVA Ventas General
+		String getID_VentasGeneral_FromUID = " SELECT AD_Process_ID FROM AD_Process WHERE AD_ComponentObjectUID = ?";
+		int ventasGeneral_Process_Record_ID = DB.getSQLValue(get_TrxName(), getID_VentasGeneral_FromUID, IVA_VENTAS_GENERAL_REPORT_UID);
+		
+		String getAttachment_VentasGeneral = "SELECT AD_Attachment_ID FROM AD_Attachment WHERE AD_Table_ID = ? AND Record_ID = ?";
+		int ventasGeneral_Attachment_Record_ID = DB.getSQLValue(get_TrxName(), getAttachment_VentasGeneral, MProcess.Table_ID, ventasGeneral_Process_Record_ID);
+		
+		if(ventasGeneral_Attachment_Record_ID > 0){
+			DB.executeUpdate("DELETE FROM AD_Attachment WHERE AD_Table_ID = "+ MProcess.Table_ID +" AND Record_ID = "+ ventasGeneral_Process_Record_ID, get_TrxName());
+		}
 		MAttachment att  = new MAttachment(getCtx(), 0, get_TrxName()); 
 		att.setAD_Table_ID(MProcess.Table_ID);
-		String getIDFromUID = " SELECT AD_Process_ID FROM AD_Process WHERE AD_ComponentObjectUID = ?";
-		att.setRecord_ID(DB.getSQLValue(get_TrxName(), getIDFromUID, IVA_VENTAS_GENERAL_REPORT_UID));
+		att.setRecord_ID(ventasGeneral_Process_Record_ID);
 		att.addEntry("Iva_Ventas.jrxml", JarHelper.readBinaryFromJar(jarFileURL,getBinaryFileURL(IVA_VENTAS_GENERAL_REPORT_FILENAME)));
 		if(!att.save()){
 			throw new Exception ("Error al guardar jrxml ");
@@ -310,6 +328,42 @@ public class PostInstallUpgradeFrom1301 extends PluginPostInstallProcess {
 							.readBinaryFromJar(
 									jarFileURL,
 									getBinaryFileURL(LIBRO_IVA_TAX_SUBREPORT_JASPER_REPORT_FILENAME)));
+		
+		// Informe de Stock Valorizado a Fecha
+		String getID_StockValorizado_FromUID = " SELECT AD_Process_ID FROM AD_Process WHERE AD_ComponentObjectUID = ?";
+		int stockValorizado_Process_Record_ID = DB.getSQLValue(get_TrxName(), getID_StockValorizado_FromUID, STOCK_VALORIZADO_A_FECHA_REPORT_UID);
+		
+		String getAttachment_StockValorizado = "SELECT AD_Attachment_ID FROM AD_Attachment WHERE AD_Table_ID = ? AND Record_ID = ?";
+		int stockValorizado_Attachment_Record_ID = DB.getSQLValue(get_TrxName(), getAttachment_StockValorizado, MProcess.Table_ID, stockValorizado_Process_Record_ID);
+		
+		if(stockValorizado_Attachment_Record_ID > 0){
+			DB.executeUpdate("DELETE FROM AD_Attachment WHERE AD_Table_ID = "+ MProcess.Table_ID +" AND Record_ID = "+ stockValorizado_Process_Record_ID, get_TrxName());
+		}
+		MAttachment att_StockValorizado  = new MAttachment(getCtx(), 0, get_TrxName()); 
+		att_StockValorizado.setAD_Table_ID(MProcess.Table_ID);
+		att_StockValorizado.setRecord_ID(stockValorizado_Process_Record_ID);
+		att_StockValorizado.addEntry("StockValorizadoAFecha.jrxml", JarHelper.readBinaryFromJar(jarFileURL,getBinaryFileURL(STOCK_VALORIZADO_A_FECHA_REPORT_FILENAME)));
+		if(!att_StockValorizado.save()){
+			throw new Exception ("Error al guardar jrxml ");
+		}
+		
+		// Informe de Listado de Utilidades por Artículo
+		String getID_ListadoUtilidadesArticulo_FromUID = " SELECT AD_Process_ID FROM AD_Process WHERE AD_ComponentObjectUID = ?";
+		int listadoUtilidadesArticulo_Process_Record_ID = DB.getSQLValue(get_TrxName(), getID_ListadoUtilidadesArticulo_FromUID, LISTADO_DE_UTILIDADES_POR_ARTICULO_REPORT_UID);
+		
+		String getAttachment_ListadoUtilidadesArticulo = "SELECT AD_Attachment_ID FROM AD_Attachment WHERE AD_Table_ID = ? AND Record_ID = ?";
+		int listadoUtilidadesArticulo_Attachment_Record_ID = DB.getSQLValue(get_TrxName(), getAttachment_ListadoUtilidadesArticulo, MProcess.Table_ID, listadoUtilidadesArticulo_Process_Record_ID);
+		
+		if(listadoUtilidadesArticulo_Attachment_Record_ID > 0){
+			DB.executeUpdate("DELETE FROM AD_Attachment WHERE AD_Table_ID = "+ MProcess.Table_ID +" AND Record_ID = "+ listadoUtilidadesArticulo_Process_Record_ID, get_TrxName());
+		}
+		MAttachment att_ListadoUtilidadesArticulo  = new MAttachment(getCtx(), 0, get_TrxName()); 
+		att_ListadoUtilidadesArticulo.setAD_Table_ID(MProcess.Table_ID);
+		att_ListadoUtilidadesArticulo.setRecord_ID(listadoUtilidadesArticulo_Process_Record_ID);
+		att_ListadoUtilidadesArticulo.addEntry("UtilidadesPorArticulo.jrxml", JarHelper.readBinaryFromJar(jarFileURL,getBinaryFileURL(LISTADO_DE_UTILIDADES_POR_ARTICULO_REPORT_FILENAME)));
+		if(!att_ListadoUtilidadesArticulo.save()){
+			throw new Exception ("Error al guardar jrxml ");
+		}
 		
 		return " ";
 	}
