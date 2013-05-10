@@ -100,6 +100,10 @@ public class PostInstallUpgradeFrom1301 extends PluginPostInstallProcess {
 	/** Nombre del .jrxml del informe Listado de Utilidades por Artículo*/
 	protected final static String LISTADO_DE_UTILIDADES_POR_ARTICULO_REPORT_FILENAME = "UtilidadesPorArticulo.jrxml";
 
+	/** UID del informe de Movimientos Valorizados */
+	protected final static String VALUED_MOVEMENTS_JASPER_REPORT_UID = "CORE-AD_JasperReport-1010102";
+	protected final static String VALUED_MOVEMENTS_JASPER_REPORT_FILENAME = "InformeLibroIVA.jasper";
+	
 	protected String doIt() throws Exception {
 		super.doIt();
 		
@@ -364,6 +368,17 @@ public class PostInstallUpgradeFrom1301 extends PluginPostInstallProcess {
 		if(!att_ListadoUtilidadesArticulo.save()){
 			throw new Exception ("Error al guardar jrxml ");
 		}
+		
+		// Reporte de Movimientos Valorizados
+		MJasperReport
+			.updateBinaryData(
+					get_TrxName(),
+					getCtx(),
+					VALUED_MOVEMENTS_JASPER_REPORT_UID,
+					JarHelper
+							.readBinaryFromJar(
+									jarFileURL,
+									getBinaryFileURL(VALUED_MOVEMENTS_JASPER_REPORT_FILENAME)));
 		
 		return " ";
 	}

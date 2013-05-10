@@ -174,7 +174,7 @@ public class ProductMovementsDataSource extends QueryDataSource {
 	}
 	
 	protected String getInventoryDescription(){
-		return getInitSplittingDescription()
+		return (String) getCurrentRecord().get("TYPE")
 				+ (Util.isEmpty((String) getCurrentRecord().get("CHARGENAME"),
 						true) ? "" : " - "
 						+ (String) getCurrentRecord().get("CHARGENAME"))
