@@ -72,7 +72,8 @@ public class ValuedMovementsDataSource extends ProductMovementsDataSource {
 											"		FROM v_product_movements " +
 											"		WHERE docstatus IN ('CL','CO') " +
 											"				AND ad_client_id = ? " +
-											"				AND tablename <> 'M_InOut' ");
+											"				AND tablename <> 'M_InOut' " +
+											"				AND qty <> 0 ");
 		if(getOrgID() != null){
 			sql.append(" AND ad_org_id = ? ");
 		}
