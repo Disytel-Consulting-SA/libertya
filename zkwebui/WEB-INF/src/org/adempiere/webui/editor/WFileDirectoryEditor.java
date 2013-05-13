@@ -17,7 +17,7 @@ package org.adempiere.webui.editor;
 import org.adempiere.webui.component.FilenameBox;
 import org.adempiere.webui.component.FolderBrowser;
 import org.adempiere.webui.event.ValueChangeEvent;
-import org.openXpertya.model.GridField;
+import org.openXpertya.model.MField;
 import org.openXpertya.util.CLogger;
 import org.zkoss.zk.ui.event.Event;
 import org.zkoss.zk.ui.event.Events;
@@ -35,9 +35,9 @@ public class WFileDirectoryEditor extends WEditor
 
 	private String oldValue;
 
-	public WFileDirectoryEditor(GridField gridField)
+	public WFileDirectoryEditor(MField mField)
 	{
-		super(new FilenameBox(), gridField);
+		super(new FilenameBox(), mField);
 		getComponent().setButtonImage("/images/Open16.png");
 		getComponent().addEventListener(Events.ON_CLICK, this);
 	}

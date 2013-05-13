@@ -21,7 +21,7 @@ import java.util.Vector;
 import java.util.logging.Level;
 
 import org.openXpertya.minigrid.IMiniTable;
-import org.openXpertya.model.GridTab;
+import org.openXpertya.model.MTab;
 import org.openXpertya.model.MRMA;
 import org.openXpertya.model.MRMALine;
 import org.openXpertya.util.DB;
@@ -37,7 +37,7 @@ import org.openXpertya.util.Msg;
  */
 public class CreateFromRMA extends CreateFrom {
 
-	public CreateFromRMA(GridTab mTab)
+	public CreateFromRMA(MTab mTab)
 	{
 		super(mTab);
 		log.info(mTab.toString());

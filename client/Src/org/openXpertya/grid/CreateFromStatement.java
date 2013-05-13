@@ -22,7 +22,7 @@ import java.util.Vector;
 import java.util.logging.Level;
 
 import org.openXpertya.minigrid.IMiniTable;
-import org.openXpertya.model.GridTab;
+import org.openXpertya.model.MTab;
 import org.openXpertya.model.MBankAccount;
 import org.openXpertya.model.MBankStatement;
 import org.openXpertya.model.MBankStatementLine;
@@ -50,7 +50,7 @@ public class CreateFromStatement extends CreateFrom
 	 *  Protected Constructor
 	 *  @param mTab MTab
 	 */
-	public CreateFromStatement(GridTab mTab)
+	public CreateFromStatement(MTab mTab)
 	{
 		super(mTab);
 		log.info(mTab.toString());

@@ -39,7 +39,7 @@ import org.adempiere.webui.event.DrillEvent;
 import org.adempiere.webui.event.ZoomEvent;
 import org.adempiere.webui.panel.StatusBarPanel;
 import org.adempiere.webui.report.HTMLExtension;
-import org.openXpertya.model.GridField;
+import org.openXpertya.model.MField;
 import org.openXpertya.model.MArchive;
 import org.openXpertya.model.MClient;
 import org.openXpertya.model.MQuery;
@@ -918,9 +918,9 @@ public class ZkReportViewer extends Window implements EventListener {
 			log.log(Level.SEVERE, sql, e);
 		}
 
-		GridField[] findFields = null;
+		MField[] findFields = null;
 		if (tableName != null)
-			findFields = GridField.createFields(m_ctx, m_WindowNo, 0, AD_Tab_ID);
+			findFields = MField.createFields(m_ctx, m_WindowNo, 0, AD_Tab_ID);
 		
 		if (findFields == null)		//	No Tab for Table exists
 			bFind.setVisible(false);

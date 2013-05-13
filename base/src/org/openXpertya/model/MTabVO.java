@@ -20,6 +20,9 @@
 
 package org.openXpertya.model;
 
+import org.openXpertya.model.MFieldVO;
+import org.openXpertya.model.MTab;
+import org.openXpertya.model.MTabVO;
 import org.openXpertya.util.CLogger;
 import org.openXpertya.util.DB;
 import org.openXpertya.util.Env;
@@ -89,6 +92,9 @@ public class MTabVO implements Evaluatee, Serializable {
 
     /** Primary Parent Column */
     public int	AD_Column_ID	= 0;
+    
+	/** Parent Tab Link Column */
+	public	int			Parent_Column_ID = 0;
 
     /** Descripción de Campo */
     public int	TabLevel	= 0;
@@ -124,7 +130,7 @@ public class MTabVO implements Evaluatee, Serializable {
     public int	onlyCurrentDays	= 0;
 
     /** Fields contain MFieldVO entities */
-    public ArrayList	Fields	= null;
+    public ArrayList<MFieldVO>	Fields = null;
 
     // Database Fields
 
@@ -171,9 +177,9 @@ public class MTabVO implements Evaluatee, Serializable {
     public boolean showDialogProcessMsg;
 
     /**
-     *  Private constructor - must use Factory
+     *  protected constructor - must use Factory
      */
-    private MTabVO() {}		// MTabVO
+    protected MTabVO() {}		// MTabVO
 
     /**
      *      Create MTab VO
@@ -233,7 +239,7 @@ public class MTabVO implements Evaluatee, Serializable {
      *  @param mTabVO tab value object
      *  @return true if fields were created
      */
-    private static boolean createFields(MTabVO mTabVO) {
+    protected static boolean createFields(MTabVO mTabVO) {
 
         mTabVO.Fields	= new ArrayList();
 
@@ -285,7 +291,7 @@ public class MTabVO implements Evaluatee, Serializable {
      *      @param rs ResultSet from AD_Tab_v/t
      *      @return true if read ok
      */
-    private static boolean loadTabDetails(MTabVO vo, ResultSet rs) {
+    protected static boolean loadTabDetails(MTabVO vo, ResultSet rs) {
 
         MRole	role		= MRole.getDefault(vo.ctx, false);
         boolean	showTrl		= "Y".equals(Env.getContext(vo.ctx, "#ShowTrl"));
@@ -558,6 +564,85 @@ public class MTabVO implements Evaluatee, Serializable {
         }
 
     }		// setCtx
+    
+	/**
+	 * 	Clone
+	 * 	@param Ctx context
+	 * 	@param windowNo no
+	 *	@return MTabVO or null
+	 */
+	protected MTabVO clone(Properties Ctx, int windowNo)
+	{
+		MTabVO clone = new MTabVO(Ctx, windowNo);
+		clone.AD_Window_ID = AD_Window_ID;
+		clone.TabNo = TabNo;
+		Env.setContext(Ctx, windowNo, clone.TabNo, MTab.CTX_AD_Tab_ID, String.valueOf(clone.AD_Tab_ID));
+		//
+		clone.AD_Tab_ID = AD_Tab_ID;
+		clone.Name = Name;
+		Env.setContext(Ctx, windowNo, clone.TabNo, MTab.CTX_Name, clone.Name);
+		clone.Description = Description;
+		clone.Help = Help;
+		clone.IsSingleRow = IsSingleRow;
+		clone.IsReadOnly = IsReadOnly;
+		clone.IsInsertRecord = IsInsertRecord;
+		clone.HasTree = HasTree;
+		clone.AD_Table_ID = AD_Table_ID;
+		clone.AD_Column_ID = AD_Column_ID;
+		clone.Parent_Column_ID = Parent_Column_ID;
+		clone.TableName = TableName;
+		clone.IsView = IsView;
+		clone.AccessLevel = AccessLevel;
+		clone.IsSecurityEnabled = IsSecurityEnabled;
+		clone.IsDeleteable = IsDeleteable;
+		clone.IsHighVolume = IsHighVolume;
+		clone.AD_Process_ID = AD_Process_ID;
+		clone.CommitWarning = CommitWarning;
+		clone.WhereClause = WhereClause;
+		clone.OrderByClause = OrderByClause;
+		clone.ReadOnlyLogic = ReadOnlyLogic;
+		clone.DisplayLogic = DisplayLogic;
+		clone.TabLevel = TabLevel;
+		clone.AD_Image_ID = AD_Image_ID;
+		clone.Included_Tab_ID = Included_Tab_ID;
+		clone.ReplicationType = ReplicationType;
+		Env.setContext(Ctx, windowNo, clone.TabNo, MTab.CTX_AccessLevel, clone.AccessLevel);
+		Env.setContext(Ctx, windowNo, clone.TabNo, MTab.CTX_AD_Table_ID, String.valueOf(clone.AD_Table_ID));
+
+		//
+		clone.IsSortTab = IsSortTab;
+		clone.AD_ColumnSortOrder_ID = AD_ColumnSortOrder_ID;
+		clone.AD_ColumnSortYesNo_ID = AD_ColumnSortYesNo_ID;
+		//  Derived
+		clone.onlyCurrentRows = true;
+		clone.onlyCurrentDays = 0;
+
+		clone.Fields = new ArrayList<MFieldVO>();
+		for (int i = 0; i < Fields.size(); i++)
+		{
+			MFieldVO field = Fields.get(i);
+			MFieldVO cloneField = field.clone(Ctx, windowNo, TabNo, 
+				AD_Window_ID, AD_Tab_ID, IsReadOnly);
+			if (cloneField == null)
+				return null;
+			clone.Fields.add(cloneField);
+		}
+		
+		return clone;
+	}	//	clone
+
+	/**************************************************************************
+	 *  protected constructor - must use Factory
+	 *  @param Ctx context
+	 *  @param windowNo window
+	 */
+	protected MTabVO (Properties Ctx, int windowNo)
+	{
+		ctx = Ctx;
+		WindowNo = windowNo;
+	}   //  MTabVO
+
+	
 }	// MTabVO
 
 

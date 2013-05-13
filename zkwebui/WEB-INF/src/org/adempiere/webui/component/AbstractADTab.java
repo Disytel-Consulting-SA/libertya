@@ -26,8 +26,8 @@ import org.adempiere.webui.panel.ADTabpanel;
 import org.adempiere.webui.panel.IADTabpanel;
 import org.adempiere.webui.part.AbstractUIPart;
 import org.openXpertya.model.DataStatusEvent;
-import org.openXpertya.model.GridField;
-import org.openXpertya.model.GridTab;
+import org.openXpertya.model.MField;
+import org.openXpertya.model.MTab;
 import org.openXpertya.util.CLogger;
 import org.openXpertya.util.Env;
 import org.openXpertya.util.Evaluator;
@@ -59,7 +59,7 @@ public abstract class AbstractADTab extends AbstractUIPart implements IADTab
      *  @param gTab grid tab model
      *  @param tabElement GridController or VSortTab
      */
-    public void addTab(GridTab gTab, IADTabpanel tabPanel)
+    public void addTab(MTab gTab, IADTabpanel tabPanel)
     {
     	tabPanelList.add(tabPanel);
         ArrayList<String>  dependents = gTab.getDependentOn();
@@ -75,7 +75,7 @@ public abstract class AbstractADTab extends AbstractUIPart implements IADTab
         doAddTab(gTab, tabPanel);                
     }//  addTab
     
-    protected abstract void doAddTab(GridTab tab, IADTabpanel tabPanel);
+    protected abstract void doAddTab(MTab tab, IADTabpanel tabPanel);
 
 	/**
      * @param index of tab panel
@@ -164,8 +164,8 @@ public abstract class AbstractADTab extends AbstractUIPart implements IADTab
 				IADTabpanel adtab = tabPanelList.get(i);
 				if (adtab.getGridTab() == null) continue;
 				if (adtab instanceof ADSortTab) continue;
-				GridField[] fields = adtab.getGridTab().getFields();
-				for (GridField gf : fields)
+				MField[] fields = adtab.getGridTab().getFields();
+				for (MField gf : fields)
 				{
 					Env.setContext(Env.getCtx(), gf.getWindowNo(),  gf.getColumnName(), "");
 				}
@@ -178,8 +178,8 @@ public abstract class AbstractADTab extends AbstractUIPart implements IADTab
 				{
 					IADTabpanel adtab = tabPanelList.get(i);
 
-					GridField[] fields = adtab.getGridTab().getFields();
-					for (GridField gf : fields)
+					MField[] fields = adtab.getGridTab().getFields();
+					for (MField gf : fields)
 					{
 						gf.updateContext();
 					}

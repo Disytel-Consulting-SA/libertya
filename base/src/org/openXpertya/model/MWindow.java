@@ -20,7 +20,10 @@ import java.awt.Dimension;
 import java.awt.Image;
 import java.awt.Rectangle;
 import java.io.Serializable;
+import java.sql.Timestamp;
 import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.Set;
 
 import javax.swing.Icon;
 
@@ -33,6 +36,8 @@ import org.apache.ecs.xhtml.table;
 import org.apache.ecs.xhtml.td;
 import org.apache.ecs.xhtml.th;
 import org.apache.ecs.xhtml.tr;
+import org.openXpertya.model.MWindowVO;
+import org.openXpertya.model.MTab;
 import org.compiere.plaf.CompiereColor;
 import org.openXpertya.util.CLogger;
 import org.openXpertya.util.Env;
@@ -47,7 +52,7 @@ import org.openXpertya.util.WebDoc;
  * @author     Equipo de Desarrollo de openXpertya    
  */
 
-public final class MWindow implements Serializable {
+public class MWindow implements Serializable {
 
     /**
      * Constructor de la clase ...
@@ -64,21 +69,44 @@ public final class MWindow implements Serializable {
         }
     }    // MWindow
 
+	/**************************************************************************
+	 *	Constructor
+	 *  @param vo value object
+	 *  @param virtual
+	 */
+	public MWindow (MWindowVO vo, boolean virtual)
+	{
+		m_vo = vo;
+		m_virtual = virtual;
+		if (loadTabData())
+			enableEvents();
+	}	//	MWindow
+
+    
     /** Descripción de Campos */
 
-    private MWindowVO m_vo;
+    protected MWindowVO m_vo;
 
     /** Descripción de Campos */
 
-    private ArrayList m_tabs = new ArrayList();
+    protected ArrayList<MTab>	m_tabs = new ArrayList<MTab>();
 
+	/** Model last updated			*/
+	protected Timestamp		m_modelUpdated = null;
+
+	protected Set<MTab> initTabs = new HashSet<MTab>();
+
+    
     /** Descripción de Campos */
 
-    private Rectangle m_position = null;
+    protected Rectangle m_position = null;
 
+	/** use virtual table			*/
+	protected boolean m_virtual;
+    
     /** Descripción de Campos */
 
-    private static CLogger log = CLogger.getCLogger( MWindow.class );
+    protected static CLogger log = CLogger.getCLogger( MWindow.class );
 
     /**
      * Descripción de Método
@@ -117,7 +145,7 @@ public final class MWindow implements Serializable {
      * @return
      */
 
-    private boolean loadTabData() {
+    protected boolean loadTabData() {
         log.config( "" );
 
         if( m_vo.Tabs == null ) {
@@ -283,7 +311,7 @@ public final class MWindow implements Serializable {
      *
      */
 
-    private void enableEvents() {
+    protected void enableEvents() {
         for( int i = 0;i < getTabCount();i++ ) {
             getTab( i ).enableEvents();
         }
@@ -563,6 +591,67 @@ public final class MWindow implements Serializable {
 
         return doc;
     }    // getHelpDoc
+    
+	/**
+	 * Initialise tab
+	 * @param index
+	 */
+	public void initTab(int index)
+	{
+		MTab mTab = m_tabs.get(index);
+		if (initTabs.contains(mTab)) return;		
+		mTab.initTab(false);		
+		//		Set Link Column
+		if (mTab.getLinkColumnName().length() == 0)
+		{
+			ArrayList<String> parents = mTab.getParentColumnNames();
+			//	No Parent - no link
+			if (parents.size() == 0)
+				;
+			//	Standard case
+			else if (parents.size() == 1)
+				mTab.setLinkColumnName((String)parents.get(0));
+			else
+			{
+				//	More than one parent.
+				//	Search prior tabs for the "right parent"
+				//	for all previous tabs
+				for (int i = 0; i < index; i++)
+				{
+					//	we have a tab
+					MTab tab = (MTab)m_tabs.get(i);
+					String tabKey = tab.getKeyColumnName();		//	may be ""
+					//	look, if one of our parents is the key of that tab
+					for (int j = 0; j < parents.size(); j++)
+					{
+						String parent = (String)parents.get(j);
+						if (parent.equals(tabKey))
+						{
+							mTab.setLinkColumnName(parent);
+							break;
+						}
+						//	The tab could have more than one key, look into their parents
+						if (tabKey.equals(""))
+							for (int k = 0; k < tab.getParentColumnNames().size(); k++)
+								if (parent.equals(tab.getParentColumnNames().get(k)))
+								{
+									mTab.setLinkColumnName(parent);
+									break;
+								}
+					}	//	for all parents
+				}	//	for all previous tabs
+			}	//	parents.size > 1
+		}	//	set Link column
+		mTab.setLinkColumnName(null);	//	overwrites, if AD_Column_ID exists
+		//
+		initTabs.add(mTab);
+	}
+
+	public int getTabIndex(MTab tab)
+	{
+		return m_tabs.indexOf(tab);
+	}
+
 }    // MWindow
 
 

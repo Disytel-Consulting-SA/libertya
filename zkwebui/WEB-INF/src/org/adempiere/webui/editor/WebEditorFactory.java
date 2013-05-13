@@ -17,8 +17,8 @@
 
 package org.adempiere.webui.editor;
 
-import org.openXpertya.model.GridField;
-import org.openXpertya.model.GridTab;
+import org.openXpertya.model.MField;
+import org.openXpertya.model.MTab;
 import org.openXpertya.util.CLogger;
 import org.openXpertya.util.DisplayType;
 import org.zkoss.zul.Messagebox;
@@ -43,23 +43,23 @@ public class WebEditorFactory
         logger = CLogger.getCLogger(WebEditorFactory.class);
     }
     
-    public static WEditor getEditor(GridField gridField, boolean tableEditor)
+    public static WEditor getEditor(MField mField, boolean tableEditor)
     {
-    	return getEditor(null, gridField, tableEditor);
+    	return getEditor(null, mField, tableEditor);
     }
     
-    public static WEditor getEditor(GridTab gridTab, GridField gridField, boolean tableEditor)
+    public static WEditor getEditor(MTab mTab, MField mField, boolean tableEditor)
     {
-        if (gridField == null)
+        if (mField == null)
         {
             return null;
         }
 
         WEditor editor = null;
-        int displayType = gridField.getDisplayType();
+        int displayType = mField.getDisplayType();
         
         /** Not a Field */
-        if (gridField.isHeading())
+        if (mField.isHeading())
         {
             return null;
         }
@@ -69,35 +69,35 @@ public class WebEditorFactory
             || displayType == DisplayType.PrinterName 
             || (tableEditor && (displayType == DisplayType.Text || displayType == DisplayType.TextLong)))
         {
-            if (gridField.isEncryptedField())
+            if (mField.isEncryptedField())
             {
-                editor = new WPasswordEditor(gridField);
+                editor = new WPasswordEditor(mField);
             }
             else
             {
-                editor = new WStringEditor(gridField, tableEditor);
+                editor = new WStringEditor(mField, tableEditor);
             }
         }
         /** File */
         else if (displayType == DisplayType.FileName)
         {
-        	editor = new WFilenameEditor(gridField);
+        	editor = new WFilenameEditor(mField);
         }
         /** File Path */
         else if (displayType == DisplayType.FilePath)
         {
-        	editor = new WFileDirectoryEditor(gridField);
+        	editor = new WFileDirectoryEditor(mField);
         }
         /** Number */
         else if (DisplayType.isNumeric(displayType))
         {
-            editor = new WNumberEditor(gridField);
+            editor = new WNumberEditor(mField);
         }
 
         /** YesNo */
         else if (displayType == DisplayType.YesNo)
         {
-            editor = new WYesNoEditor(gridField);
+            editor = new WYesNoEditor(mField);
             if (tableEditor)
             	((WYesNoEditor)editor).getComponent().setLabel("");
         }
@@ -105,24 +105,24 @@ public class WebEditorFactory
         /** Text */
         else if (displayType == DisplayType.Text || displayType == DisplayType.Memo || displayType == DisplayType.TextLong)
         {
-            editor = new WStringEditor(gridField);
+            editor = new WStringEditor(mField);
         }
         
         /** Date */
         else if (DisplayType.isDate(displayType))
         {
         	if (displayType == DisplayType.Time)
-        		editor = new WTimeEditor(gridField);
+        		editor = new WTimeEditor(mField);
         	else if (displayType == DisplayType.DateTime)
-        		editor = new WDatetimeEditor(gridField);
+        		editor = new WDatetimeEditor(mField);
         	else
-        		editor = new WDateEditor(gridField);
+        		editor = new WDateEditor(mField);
         }
         
         /**  Button */
         else if (displayType == DisplayType.Button)
         {
-            editor = new WButtonEditor(gridField);
+            editor = new WButtonEditor(mField);
         }
 
         /** Table Direct */
@@ -130,50 +130,50 @@ public class WebEditorFactory
                 displayType == DisplayType.Table || displayType == DisplayType.List
                 || displayType == DisplayType.ID )
         {
-            editor = new WTableDirEditor(gridField);
+            editor = new WTableDirEditor(mField);
         }
                    
         else if (displayType == DisplayType.URL)
         {
-        	editor = new WUrlEditor(gridField);
+        	editor = new WUrlEditor(mField);
         }
         
         else if (displayType == DisplayType.Search)
         {
-        	editor = new WSearchEditor(gridField);
+        	editor = new WSearchEditor(mField);
         }
         
         else if (displayType == DisplayType.Location)
         {
-            editor = new WLocationEditor(gridField);
+            editor = new WLocationEditor(mField);
         }
         else if (displayType == DisplayType.Locator)
         {
-        	editor = new WLocatorEditor(gridField); 
+        	editor = new WLocatorEditor(mField); 
         }
         else if (displayType == DisplayType.Account)
         {
-        	editor = new WAccountEditor(gridField);
+        	editor = new WAccountEditor(mField);
         }
         else if (displayType == DisplayType.Image)
         {
-        	//editor = new WImageEditor(gridField);
+        	//editor = new WImageEditor(mField);
         }
         else if (displayType == DisplayType.Binary)
         {
-        	editor = new WBinaryEditor(gridField);        	
+        	editor = new WBinaryEditor(mField);        	
         }
         else if (displayType == DisplayType.PAttribute)
         {
-        	//editor = new WPAttributeEditor(gridTab, gridField);
+        	//editor = new WPAttributeEditor(mTab, mField);
         }
         else if (displayType == DisplayType.Assignment)
         {
-        	editor = new WAssignmentEditor(gridField);
+        	editor = new WAssignmentEditor(mField);
         }
         else
         {
-            //editor = new WUnknownEditor(gridField); //TODO Hernandez
+            //editor = new WUnknownEditor(mField); //TODO Hernandez
         }
         
         return editor;

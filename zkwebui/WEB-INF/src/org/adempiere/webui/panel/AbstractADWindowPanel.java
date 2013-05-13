@@ -55,11 +55,11 @@ import org.adempiere.webui.window.WRecordAccessDialog;
 import org.openXpertya.grid.ICreateFrom;
 import org.openXpertya.model.DataStatusEvent;
 import org.openXpertya.model.DataStatusListener;
-import org.openXpertya.model.GridField;
-import org.openXpertya.model.GridTab;
-import org.openXpertya.model.GridTable;
-import org.openXpertya.model.GridWindow;
-import org.openXpertya.model.GridWindowVO;
+import org.openXpertya.model.MField;
+import org.openXpertya.model.MTab;
+import org.openXpertya.model.MTable;
+import org.openXpertya.model.MWindow;
+import org.openXpertya.model.MWindowVO;
 import org.openXpertya.model.Lookup;
 import org.openXpertya.model.MLookupFactory;
 import org.openXpertya.model.MProcess;
@@ -127,7 +127,7 @@ public abstract class AbstractADWindowPanel extends AbstractUIPart implements To
 
     private Properties           ctx;
 
-    private GridWindow           gridWindow;
+    private MWindow           mWindow;
 
     protected StatusBarPanel     statusBar;
 
@@ -135,7 +135,7 @@ public abstract class AbstractADWindowPanel extends AbstractUIPart implements To
 
     private int                  curWindowNo;
 
-    private GridTab              curTab;
+    private MTab              curTab;
 
     private boolean              m_onlyCurrentRows = true;
 
@@ -181,20 +181,20 @@ public abstract class AbstractADWindowPanel extends AbstractUIPart implements To
      * Constructor for embedded mode
      * @param ctx
      * @param windowNo
-     * @param gridWindow
+     * @param mWindow
      * @param tabIndex
      * @param tabPanel
      */
-    public AbstractADWindowPanel(Properties ctx, int windowNo, GridWindow gridWindow, int tabIndex, IADTabpanel tabPanel)
+    public AbstractADWindowPanel(Properties ctx, int windowNo, MWindow mWindow, int tabIndex, IADTabpanel tabPanel)
     {
         this.ctx = ctx;
         this.curWindowNo = windowNo;
-        this.gridWindow = gridWindow;
+        this.mWindow = mWindow;
         this.embeddedTabindex = tabIndex;
         this.embeddedTabPanel = tabPanel;
         curTabpanel = tabPanel;
-        if (gridWindow != null && tabIndex >= 0)
-        	curTab = gridWindow.getTab(tabIndex);
+        if (mWindow != null && tabIndex >= 0)
+        	curTab = mWindow.getTab(tabIndex);
 
         initComponents();
     }
@@ -286,25 +286,25 @@ public abstract class AbstractADWindowPanel extends AbstractUIPart implements To
 			boolean autoNew = Env.isAutoNew(ctx);
 			Env.setAutoNew(ctx, curWindowNo, autoNew);
 
-	        GridWindowVO gWindowVO = AEnv.getMWindowVO(curWindowNo, adWindowId, 0);
+	        MWindowVO gWindowVO = AEnv.getMWindowVO(curWindowNo, adWindowId, 0);
 	        if (gWindowVO == null)
 	        {
 	            throw new ApplicationException(Msg.getMsg(ctx,
 	                    "AccessTableNoView")
 	                    + "(No Window Model Info)");
 	        }
-	        gridWindow = new GridWindow(gWindowVO, true);
-	        title = gridWindow.getName();
+	        mWindow = new MWindow(gWindowVO, true);
+	        title = mWindow.getName();
 
 	        // Set SO/AutoNew for Window
-	        Env.setContext(ctx, curWindowNo, "IsSOTrx", gridWindow.isSOTrx());
-	        if (!autoNew && gridWindow.isTransaction())
+	        Env.setContext(ctx, curWindowNo, "IsSOTrx", mWindow.isSOTrx());
+	        if (!autoNew && mWindow.isTransaction())
 	        {
 	            Env.setAutoNew(ctx, curWindowNo, true);
 	        }
 		}
 
-        m_onlyCurrentRows =  embeddedTabindex < 0 && gridWindow.isTransaction();
+        m_onlyCurrentRows =  embeddedTabindex < 0 && mWindow.isTransaction();
 
         MQuery detailQuery = null;
         /**
@@ -315,7 +315,7 @@ public abstract class AbstractADWindowPanel extends AbstractUIPart implements To
         	if (query != null && query.getZoomTableName() != null && query.getZoomColumnName() != null
 					&& query.getZoomValue() instanceof Integer && (Integer)query.getZoomValue() > 0)
 	    	{
-	    		if (!query.getZoomTableName().equalsIgnoreCase(gridWindow.getTab(0).getTableName()))
+	    		if (!query.getZoomTableName().equalsIgnoreCase(mWindow.getTab(0).getTableName()))
 	    		{
 	    			detailQuery = query;
 	    			query = new MQuery();
@@ -324,7 +324,7 @@ public abstract class AbstractADWindowPanel extends AbstractUIPart implements To
 	    		}
 	    	}
 
-	        int tabSize = gridWindow.getTabCount();
+	        int tabSize = mWindow.getTabCount();
 
 	        for (int tab = 0; tab < tabSize; tab++)
 	        {
@@ -332,7 +332,7 @@ public abstract class AbstractADWindowPanel extends AbstractUIPart implements To
 	            if (tab == 0 && curTab == null && m_findCancelled)
 	            	return false;
 	        }
-	        Env.setContext(ctx, curWindowNo, "WindowName", gridWindow.getName());
+	        Env.setContext(ctx, curWindowNo, "WindowName", mWindow.getName());
         }
         else
         {
@@ -351,7 +351,7 @@ public abstract class AbstractADWindowPanel extends AbstractUIPart implements To
 	        toolbar.enableFind(true);
 	        adTab.evaluate(null);
 
-	        if (gridWindow.isTransaction())
+	        if (mWindow.isTransaction())
 	        {
 	        	toolbar.enableHistoryRecords(true);
 	        }
@@ -378,14 +378,14 @@ public abstract class AbstractADWindowPanel extends AbstractUIPart implements To
 		//zoom to detail
         if (query != null && query.getZoomTableName() != null && query.getZoomColumnName() != null)
     	{
-    		GridTab gTab = gridWindow.getTab(0);
+    		MTab gTab = mWindow.getTab(0);
     		if (!query.getZoomTableName().equalsIgnoreCase(gTab.getTableName()))
     		{
-    			int tabSize = gridWindow.getTabCount();
+    			int tabSize = mWindow.getTabCount();
 
     	        for (int tab = 0; tab < tabSize; tab++)
     	        {
-    	        	gTab = gridWindow.getTab(tab);
+    	        	gTab = mWindow.getTab(tab);
     	        	if (gTab.isSortTab())
     	        		continue;
     	        	if (gTab.getTableName().equalsIgnoreCase(query.getZoomTableName()))
@@ -400,27 +400,27 @@ public abstract class AbstractADWindowPanel extends AbstractUIPart implements To
         return false;
 	}
 
-	private boolean doZoomToDetail(GridTab gTab, MQuery query, int tabIndex) {
-		GridField[] fields = gTab.getFields();
-		for (GridField field : fields)
+	private boolean doZoomToDetail(MTab gTab, MQuery query, int tabIndex) {
+		MField[] fields = gTab.getFields();
+		for (MField field : fields)
 		{
 			if (field.getColumnName().equalsIgnoreCase(query.getZoomColumnName()))
 			{
-				gridWindow.initTab(tabIndex);
+				mWindow.initTab(tabIndex);
 				int parentId = DB.getSQLValue(null, "SELECT " + gTab.getLinkColumnName() + " FROM " + gTab.getTableName() + " WHERE " + query.getWhereClause());
 				if (parentId > 0)
 				{
 					Map<Integer, Object[]>parentMap = new TreeMap<Integer, Object[]>();
 					int index = tabIndex;
 					int oldpid = parentId;
-					GridTab currentTab = gTab;
+					MTab currentTab = gTab;
 					while (index > 0)
 					{
 						index--;
-						GridTab pTab = gridWindow.getTab(index);
+						MTab pTab = mWindow.getTab(index);
 						if (pTab.getTabLevel() < currentTab.getTabLevel())
 						{
-							gridWindow.initTab(index);
+							mWindow.initTab(index);
 							if (index > 0)
 							{
 								if (pTab.getLinkColumnName() != null && pTab.getLinkColumnName().trim().length() > 0)
@@ -448,7 +448,7 @@ public abstract class AbstractADWindowPanel extends AbstractUIPart implements To
 
 					for(Map.Entry<Integer, Object[]> entry : parentMap.entrySet())
 					{
-						GridTab pTab = gridWindow.getTab(entry.getKey());
+						MTab pTab = mWindow.getTab(entry.getKey());
 						Object[] value = entry.getValue();
 						MQuery pquery = new MQuery(pTab.getAD_Table_ID());
 						pquery.addRestriction((String)value[0], "=", value[1]);
@@ -474,7 +474,7 @@ public abstract class AbstractADWindowPanel extends AbstractUIPart implements To
 					gc.createUI();
 					gc.query(false, 0, 0);
 
-					GridTable table = gTab.getTableModel();
+					MTable table = gTab.getTableModel();
     				int count = table.getRowCount();
     				for(int i = 0; i < count; i++)
     				{
@@ -483,12 +483,12 @@ public abstract class AbstractADWindowPanel extends AbstractUIPart implements To
     					{
     						if (!includedMap.containsKey(gTab.getAD_Tab_ID()))
     						{
-    							setActiveTab(gridWindow.getTabIndex(gTab));
+    							setActiveTab(mWindow.getTabIndex(gTab));
     						}
     						else
     						{
     							IADTabpanel parent = includedMap.get(gTab.getAD_Tab_ID());
-    							int pindex = gridWindow.getTabIndex(parent.getGridTab());
+    							int pindex = mWindow.getTabIndex(parent.getGridTab());
     							if (pindex >= 0)
     								setActiveTab(pindex);
     						}
@@ -503,13 +503,13 @@ public abstract class AbstractADWindowPanel extends AbstractUIPart implements To
 	}
 
 	private void initEmbeddedTab(MQuery query, int tabIndex) {
-		GridTab gTab = gridWindow.getTab(tabIndex);
+		MTab gTab = mWindow.getTab(tabIndex);
 		gTab.addDataStatusListener(this);
 		adTab.addTab(gTab, embeddedTabPanel);
 		if (gTab.isSortTab()) {
 			((ADSortTab)embeddedTabPanel).registerAPanel(this);
 		} else {
-			((ADTabpanel)embeddedTabPanel).init(this, curWindowNo, gTab, gridWindow);
+			((ADTabpanel)embeddedTabPanel).init(this, curWindowNo, gTab, mWindow);
 		}
 	}
 
@@ -519,10 +519,10 @@ public abstract class AbstractADWindowPanel extends AbstractUIPart implements To
 	 */
 	protected void initTab(MQuery query, int tabIndex) {
 
-		gridWindow.initTab(tabIndex);
+		mWindow.initTab(tabIndex);
 
-		GridTab gTab = gridWindow.getTab(tabIndex);
-		Env.setContext(ctx, curWindowNo, tabIndex, GridTab.CTX_TabLevel, Integer.toString(gTab.getTabLevel()));
+		MTab gTab = mWindow.getTab(tabIndex);
+		Env.setContext(ctx, curWindowNo, tabIndex, MTab.CTX_TabLevel, Integer.toString(gTab.getTabLevel()));
 
 		// Query first tab
 		if (tabIndex == 0)
@@ -551,7 +551,7 @@ public abstract class AbstractADWindowPanel extends AbstractUIPart implements To
 			ADSortTab sortTab = new ADSortTab(curWindowNo, gTab);
 			if (includedMap.containsKey(gTab.getAD_Tab_ID()))
 		    {
-		    	includedMap.get(gTab.getAD_Tab_ID()).embed(ctx, curWindowNo, gridWindow, gTab.getAD_Tab_ID(), tabIndex, sortTab);
+		    	includedMap.get(gTab.getAD_Tab_ID()).embed(ctx, curWindowNo, mWindow, gTab.getAD_Tab_ID(), tabIndex, sortTab);
 		    }
 			else
 			{
@@ -570,7 +570,7 @@ public abstract class AbstractADWindowPanel extends AbstractUIPart implements To
 		{			
 			//build embedded tab map
 			ADTabpanel fTabPanel = new ADTabpanel();
-			GridField[] fields = gTab.getTableModel().getFields();
+			MField[] fields = gTab.getTableModel().getFields();
 		    for(int i = 0; i < fields.length; i++)
 		    {
 		    	if (fields[i].getIncluded_Tab_ID() > 0)
@@ -581,12 +581,12 @@ public abstract class AbstractADWindowPanel extends AbstractUIPart implements To
 
 		    if (includedMap.containsKey(gTab.getAD_Tab_ID()))
 		    {
-		    	includedMap.get(gTab.getAD_Tab_ID()).embed(ctx, curWindowNo, gridWindow, gTab.getAD_Tab_ID(), tabIndex, fTabPanel);
+		    	includedMap.get(gTab.getAD_Tab_ID()).embed(ctx, curWindowNo, mWindow, gTab.getAD_Tab_ID(), tabIndex, fTabPanel);
 		    }
 		    else
 		    {
 		    	gTab.addDataStatusListener(this);
-		    	fTabPanel.init(this, curWindowNo, gTab, gridWindow);
+		    	fTabPanel.init(this, curWindowNo, gTab, mWindow);
 		    	adTab.addTab(gTab, fTabPanel);
 			    if (tabIndex == 0) {
 			    	fTabPanel.createUI();
@@ -616,7 +616,7 @@ public abstract class AbstractADWindowPanel extends AbstractUIPart implements To
      *            tab
      * @return query or null
      */
-    private MQuery initialQuery(MQuery query, GridTab mTab)
+    private MQuery initialQuery(MQuery query, MTab mTab)
     {
         // We have a (Zoom) query
         if (query != null && query.isActive() && query.getRecordCount() < 10)
@@ -658,7 +658,7 @@ public abstract class AbstractADWindowPanel extends AbstractUIPart implements To
         {
         	m_findCancelled = false;
         	m_findCreateNew = false;
-            GridField[] findFields = mTab.getFields();
+            MField[] findFields = mTab.getFields();
             FindWindow find = new FindWindow(curWindowNo,
                     mTab.getName(), mTab.getAD_Table_ID(), mTab.getTableName(),
                     where.toString(), findFields, 10, mTab.getAD_Tab_ID()); // no query below 10
@@ -805,7 +805,7 @@ public abstract class AbstractADWindowPanel extends AbstractUIPart implements To
     {
 		logger.info("");
 
-		if (gridWindow.isTransaction())
+		if (mWindow.isTransaction())
 		{
 			if (curTab.needSave(true, true) && !onSave(false))
 				return;
@@ -1082,7 +1082,7 @@ public abstract class AbstractADWindowPanel extends AbstractUIPart implements To
 
 		toolbar.enablePrint(curTab.isPrinted());
 
-        if (gridWindow.isTransaction() && isFirstTab())
+        if (mWindow.isTransaction() && isFirstTab())
         {
         	toolbar.enableHistoryRecords(true);
         }
@@ -1133,7 +1133,7 @@ public abstract class AbstractADWindowPanel extends AbstractUIPart implements To
                     sb.replace(pos, pos+1, " - ");
             	}
                 boolean showPopup = e.isError() 
-                	|| (!GridTab.DEFAULT_STATUS_MESSAGE.equals(e.getAD_Message()) && !GridTable.DATA_REFRESH_MESSAGE.equals(e.getAD_Message()));
+                	|| (!MTab.DEFAULT_STATUS_MESSAGE.equals(e.getAD_Message()) && !MTable.DATA_REFRESH_MESSAGE.equals(e.getAD_Message()));
                 statusBar.setStatusLine (sb.toString (), e.isError (), showPopup);
             }
         }
@@ -1143,8 +1143,8 @@ public abstract class AbstractADWindowPanel extends AbstractUIPart implements To
         {
         	//focus to error field
         	ADTabpanel tabPanel = (ADTabpanel) getADTab().getSelectedTabpanel();
-        	GridField[] fields = curTab.getFields();
-        	for (GridField field : fields)
+        	MField[] fields = curTab.getFields();
+        	for (MField field : fields)
         	{
         		if (field.isError())
         		{
@@ -1285,7 +1285,7 @@ public abstract class AbstractADWindowPanel extends AbstractUIPart implements To
      */
     public void onHelp()
     {
-    	WebDoc doc = gridWindow.getHelpDoc(true);
+    	WebDoc doc = mWindow.getHelpDoc(true);
 		SessionManager.getAppDesktop().showURL(doc, "Help", true);
     }
 
@@ -1386,7 +1386,7 @@ public abstract class AbstractADWindowPanel extends AbstractUIPart implements To
         	return;
 
         //  Gets Fields from AD_Field_v
-        GridField[] findFields = GridField.createFields(ctx, curTab.getWindowNo(), 0,curTab.getAD_Tab_ID());
+        MField[] findFields = MField.createFields(ctx, curTab.getWindowNo(), 0,curTab.getAD_Tab_ID());
         FindWindow find = new FindWindow (curTab.getWindowNo(), curTab.getName(),
             curTab.getAD_Table_ID(), curTab.getTableName(),
             curTab.getWhereExtended(), findFields, 1, curTab.getAD_Tab_ID());
@@ -1543,7 +1543,7 @@ public abstract class AbstractADWindowPanel extends AbstractUIPart implements To
 				for (Iterator<String> iter = parentColumnNames.iterator(); iter.hasNext();)
 				{
 					String columnName = iter.next();
-					GridField field = curTab.getField(columnName);
+					MField field = curTab.getField(columnName);
 					if(field.isLookup()){
 						Lookup lookup = field.getLookup();
 						if (lookup != null){
@@ -1710,7 +1710,7 @@ public abstract class AbstractADWindowPanel extends AbstractUIPart implements To
 		String infoDisplay = null;
 		for (int i = 0; i < curTab.getFieldCount(); i++)
 		{
-			GridField field = curTab.getField(i);
+			MField field = curTab.getField(i);
 			if (field.isKey())
 				infoName = field.getHeader();
 			if ((field.getColumnName().equals("Name") || field.getColumnName().equals("DocumentNo") )
@@ -2107,7 +2107,7 @@ public abstract class AbstractADWindowPanel extends AbstractUIPart implements To
 	 */
 	private String processButtonCallout (WButtonEditor button)
 	{
-		GridField field = curTab.getField(button.getColumnName());
+		MField field = curTab.getField(button.getColumnName());
 		return curTab.processCallout(field);
 	}	//	processButtonCallout
 
@@ -2236,7 +2236,7 @@ public abstract class AbstractADWindowPanel extends AbstractUIPart implements To
 	/**
 	 * @return active grid tab
 	 */
-	public GridTab getActiveGridTab() {
+	public MTab getActiveGridTab() {
 		return curTab;
 	}
 

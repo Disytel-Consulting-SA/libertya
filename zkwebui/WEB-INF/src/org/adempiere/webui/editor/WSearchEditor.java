@@ -35,7 +35,7 @@ import org.adempiere.webui.panel.InfoBPartnerPanel;
 import org.adempiere.webui.panel.InfoPanel;
 import org.adempiere.webui.panel.InfoProductPanel;
 import org.adempiere.webui.window.WFieldRecordInfo;
-import org.openXpertya.model.GridField;
+import org.openXpertya.model.MField;
 import org.openXpertya.model.Lookup;
 import org.openXpertya.model.MLookup;
 import org.openXpertya.model.MLookupFactory;
@@ -68,11 +68,11 @@ public class WSearchEditor extends WEditor implements ContextMenuListener, Value
 
 	private static CLogger log = CLogger.getCLogger(WSearchEditor.class);
 
-	public WSearchEditor (GridField gridField)
+	public WSearchEditor (MField mField)
 	{
-		super(new Searchbox(), gridField);
+		super(new Searchbox(), mField);
 
-		lookup = gridField.getLookup();
+		lookup = mField.getLookup();
 		
 		if (lookup != null)
 			columnName = lookup.getColumnName();
@@ -166,7 +166,7 @@ public class WSearchEditor extends WEditor implements ContextMenuListener, Value
 		}
 		
 		getComponent().getTextbox().setContext(popupMenu.getId());
-		if (gridField != null && gridField.getGridTab() != null)
+		if (mField != null && mField.getGridTab() != null)
 		{
 			WFieldRecordInfo.addMenu(popupMenu);
 		}
@@ -304,7 +304,7 @@ public class WSearchEditor extends WEditor implements ContextMenuListener, Value
 		}
 		else if (WEditorPopupMenu.CHANGE_LOG_EVENT.equals(evt.getContextEvent()))
 		{
-			WFieldRecordInfo.start(gridField);
+			WFieldRecordInfo.start(mField);
 		}
 		//
 	}

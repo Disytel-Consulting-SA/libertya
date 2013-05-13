@@ -17,7 +17,7 @@ import java.util.HashMap;
 import java.util.logging.Level;
 
 import org.openXpertya.grid.ICreateFrom;
-import org.openXpertya.model.GridTab;
+import org.openXpertya.model.MTab;
 import org.openXpertya.model.X_C_BankStatement;
 import org.openXpertya.model.X_C_Invoice;
 import org.openXpertya.model.X_M_InOut;
@@ -59,7 +59,7 @@ public class WCreateFromFactory
 	 *  @param  mTab        Model Tab for the trx
 	 *  @return JDialog
 	 */
-	public static ICreateFrom create (GridTab mTab)
+	public static ICreateFrom create (MTab mTab)
 	{
 		//	dynamic init preparation
 		int AD_Table_ID = Env.getContextAsInt(Env.getCtx(), mTab.getWindowNo(), "BaseTable_ID");
@@ -70,7 +70,7 @@ public class WCreateFromFactory
 		{
 			try
 			{
-				java.lang.reflect.Constructor<? extends ICreateFrom> ctor = cl.getConstructor(GridTab.class);
+				java.lang.reflect.Constructor<? extends ICreateFrom> ctor = cl.getConstructor(MTab.class);
 				retValue = ctor.newInstance(mTab);
 			}
 			catch (Throwable e)

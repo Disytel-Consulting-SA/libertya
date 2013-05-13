@@ -17,15 +17,15 @@ import java.util.Properties;
 import org.adempiere.webui.editor.WEditor;
 import org.adempiere.webui.event.ValueChangeEvent;
 import org.adempiere.webui.event.ValueChangeListener;
-import org.openXpertya.model.GridField;
-import org.openXpertya.model.GridTab;
-import org.openXpertya.model.GridTable;
+import org.openXpertya.model.MField;
+import org.openXpertya.model.MTab;
+import org.openXpertya.model.MTable;
 import org.openXpertya.util.CLogger;
 import org.openXpertya.util.Env;
 import org.openXpertya.util.Trx;
 
 /**
- * Transfer data from editor to GridTab
+ * Transfer data from editor to MTab
  * @author hengsin
  *
  */
@@ -33,14 +33,14 @@ public class GridTabDataBinder implements ValueChangeListener {
 
 	private final static CLogger logger = CLogger.getCLogger(GridTabDataBinder.class);
 	
-	private GridTab gridTab;
+	private MTab mTab;
 
 	/**
 	 * 
-	 * @param gridTab
+	 * @param mTab
 	 */
-	public GridTabDataBinder(GridTab gridTab) {
-		this.gridTab = gridTab;
+	public GridTabDataBinder(MTab mTab) {
+		this.mTab = mTab;
 	}
 	
 	/**
@@ -48,43 +48,43 @@ public class GridTabDataBinder implements ValueChangeListener {
 	 */
 	public void valueChange(ValueChangeEvent e)
     {
-        if (gridTab.isProcessed())       //  only active records
+        if (mTab.isProcessed())       //  only active records
         {
             Object source = e.getSource();
             if (source instanceof WEditor)
             {
             	// Elaine 2009/05/06
             	WEditor editor = (WEditor) source;
-            	GridField gridField = editor.getGridField();
+            	MField mField = editor.getGridField();
             	
-            	if(gridField != null)
+            	if(mField != null)
             	{
-            		if(!gridField.isEditable(true))
+            		if(!mField.isEditable(true))
             		{
-            			logger.config("(" + gridTab.toString() + ") " + e.getPropertyName());
+            			logger.config("(" + mTab.toString() + ") " + e.getPropertyName());
             			return;
             		}
             	}
             	else if(!editor.isReadWrite())
             	{
-            		logger.config("(" + gridTab.toString() + ") " + e.getPropertyName());
+            		logger.config("(" + mTab.toString() + ") " + e.getPropertyName());
             		return;            		
             	}
             }
             else
             {
-                logger.config("(" + gridTab.toString() + ") " + e.getPropertyName());
+                logger.config("(" + mTab.toString() + ") " + e.getPropertyName());
                 return;
             }
         }   //  processed
-        logger.config("(" + gridTab.toString() + ") "
+        logger.config("(" + mTab.toString() + ") "
             + e.getPropertyName() + "=" + e.getNewValue() + " (" + e.getOldValue() + ") "
             + (e.getOldValue() == null ? "" : e.getOldValue().getClass().getName()));
         
 
         //  Get Row/Col Info
-        GridTable mTable = gridTab.getTableModel();
-        int row = gridTab.getCurrentRow();
+        MTable mTable = mTab.getTableModel();
+        int row = mTab.getCurrentRow();
         int col = mTable.findColumn(e.getPropertyName());
         //
         if (e.getNewValue() == null && e.getOldValue() != null 
@@ -124,31 +124,31 @@ public class GridTabDataBinder implements ValueChangeListener {
             //  Force Callout
             if ( e.getPropertyName().equals("S_ResourceAssignment_ID") )
             {
-                GridField mField = gridTab.getField(col);
+                MField mField = mTab.getField(col);
                 if (mField != null && mField.getCallout().length() > 0)
                 {
-                    gridTab.processFieldChange(mField);     //  Dependencies & Callout
+                    mTab.processFieldChange(mField);     //  Dependencies & Callout
                 }
             }
             
 			if (newValues != null && newValues.length > 0)
 			{
 				// Save data, since record need to be used for generating clones.
-				if (!gridTab.dataSave(false))
+				if (!mTab.dataSave(false))
 				{
 					//throw new AdempiereException("SaveError");
 				}
 				
 				// Retrieve the current record ID
-				int recordId = gridTab.getKeyID(gridTab.getCurrentRow());
+				int recordId = mTab.getKeyID(mTab.getCurrentRow());
 				
 				Trx trx = Trx.get(Trx.createTrxName(), true);
 				trx.start();
 				try
 				{
-					saveMultipleRecords(Env.getCtx(), gridTab.getTableName(), e.getPropertyName(), recordId, newValues, trx.getTrxName());
+					saveMultipleRecords(Env.getCtx(), mTab.getTableName(), e.getPropertyName(), recordId, newValues, trx.getTrxName());
 					trx.commit();
-					gridTab.dataRefreshAll();
+					mTab.dataRefreshAll();
 				}
 				catch(Exception ex)
 				{
@@ -187,29 +187,29 @@ public class GridTabDataBinder implements ValueChangeListener {
 			return ;
 		}
 		
-		int oldRow = gridTab.getCurrentRow();
-		GridField lineField = gridTab.getField("Line");	
+		int oldRow = mTab.getCurrentRow();
+		MField lineField = mTab.getField("Line");	
 		
 		for (int i = 0; i < values.length; i++)
 		{
-			if (!gridTab.dataNew(true))
+			if (!mTab.dataNew(true))
 			{
 				throw new IllegalStateException("Could not clone tab");
 			}
 			
-			gridTab.setValue(columnName, values[i]);
+			mTab.setValue(columnName, values[i]);
 			
 			if (lineField != null)
 			{
-				gridTab.setValue(lineField, 0);
+				mTab.setValue(lineField, 0);
 			}
 			
-			if (!gridTab.dataSave(false))
+			if (!mTab.dataSave(false))
 			{
 				throw new IllegalStateException("Could not update tab");
 			}
 			
-			gridTab.setCurrentRow(oldRow);
+			mTab.setCurrentRow(oldRow);
 		}
 	}
 }

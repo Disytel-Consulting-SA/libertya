@@ -23,7 +23,7 @@ import org.adempiere.webui.event.ContextMenuListener;
 import org.adempiere.webui.event.ValueChangeEvent;
 import org.adempiere.webui.window.FDialog;
 import org.adempiere.webui.window.WFieldRecordInfo;
-import org.openXpertya.model.GridField;
+import org.openXpertya.model.MField;
 import org.openXpertya.util.Env;
 import org.zkoss.zk.ui.event.Event;
 import org.zkoss.zk.ui.event.Events;
@@ -34,14 +34,14 @@ public class WUrlEditor extends WEditor implements ContextMenuListener
 	private String oldValue;
 	private WEditorPopupMenu popupMenu;
 
-	public WUrlEditor(GridField gridField)
+	public WUrlEditor(MField mField)
 	{
-		super(new Urlbox(), gridField);
+		super(new Urlbox(), mField);
 		getComponent().setButtonImage("/images/Online10.png");
 		
 		popupMenu = new WEditorPopupMenu(false, false, true);
 		popupMenu.addMenuListener(this);
-		if (gridField != null && gridField.getGridTab() != null)
+		if (mField != null && mField.getGridTab() != null)
 		{
 			WFieldRecordInfo.addMenu(popupMenu);
 		}
@@ -141,7 +141,7 @@ public class WUrlEditor extends WEditor implements ContextMenuListener
 	{
 		if (WEditorPopupMenu.CHANGE_LOG_EVENT.equals(evt.getContextEvent()))
 		{
-			WFieldRecordInfo.start(gridField);
+			WFieldRecordInfo.start(mField);
 		}
 	}
 

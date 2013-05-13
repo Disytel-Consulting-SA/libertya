@@ -20,6 +20,7 @@
 
 package org.openXpertya.model;
 
+import org.openXpertya.model.MFieldVO;
 import org.openXpertya.util.CLogger;
 import org.openXpertya.util.DisplayType;
 import org.openXpertya.util.Env;
@@ -57,6 +58,16 @@ public class MFieldVO implements Serializable {
     /** Lookup Value Object */
     public MLookupInfo	lookupInfo	= null;
 
+	//*  Feature Request FR [ 1757088 ]
+	public int          Included_Tab_ID = 0;
+
+	/** Collapse By Default * */
+	public boolean IsCollapsedByDefault = false;
+	/**  Autocompletion for textfields - Feature Request FR [ 1757088 ] */
+	public boolean IsAutocomplete = false;
+
+	public String InfoFactoryClass = null;
+	
     // Process Parameter
 
     /** Descripción de Campo */
@@ -67,6 +78,10 @@ public class MFieldVO implements Serializable {
 
     /** Descripción de Campo */
     public int	displayType	= 0;
+    
+	/**	Table ID		*/
+	public int          AD_Table_ID = 0;
+
 
     /** Descripción de Campo */
     public String	ValueMin	= "";
@@ -123,6 +138,9 @@ public class MFieldVO implements Serializable {
     /** Descripción de Campo */
     public boolean	IsEncryptedField	= false;
 
+    /**	Storage Encryption	*/
+	public boolean      IsEncryptedColumn = false;
+
     /** Descripción de Campo */
     public boolean	IsDisplayed	= false;
 
@@ -134,6 +152,9 @@ public class MFieldVO implements Serializable {
 
     /** Descripción de Campo */
     public String	Help	= "";
+    
+	/**	Mandatory Logic	*/
+	public String 		MandatoryLogic = "";
 
     /** Descripción de Campo */
     public String	Header	= "";
@@ -143,7 +164,10 @@ public class MFieldVO implements Serializable {
 
     /** Descripción de Campo */
     public String	FieldGroup	= "";
-
+    
+	/**	Field Group	Type	*/
+	public String       FieldGroupType = "";
+	
     /** Descripción de Campo */
     public String	DisplayLogic	= "";
 
@@ -182,6 +206,8 @@ public class MFieldVO implements Serializable {
     /** AD_Winmdow_ID */
     public int	AD_Window_ID;
 
+	public int			AD_Tab_ID;
+	
     /** AD_Winmdow_ID */
     public int	AD_Field_ID;
 
@@ -195,14 +221,14 @@ public class MFieldVO implements Serializable {
     public int	WindowNo;
 
     /**
-     *  Private constructor
+     *  protected constructor
      *  @param ctx context
      *  @param WindowNo window
      *  @param TabNo tab
      *  @param AD_Window_ID window
      *  @param tabReadOnly read only
      */
-    private MFieldVO(Properties ctx, int WindowNo, int TabNo, int AD_Window_ID, boolean tabReadOnly) {
+    protected MFieldVO(Properties ctx, int WindowNo, int TabNo, int AD_Window_ID, boolean tabReadOnly) {
 
         this.ctx		= ctx;
         this.WindowNo		= WindowNo;
@@ -566,6 +592,96 @@ public class MFieldVO implements Serializable {
         }
 
     }		// setCtx
+    
+	/**
+	 * 	Clone Field.
+	 *	@param Ctx ctx
+	 *	@param windowNo window no
+	 *	@param tabNo tab no
+	 *	@param ad_Window_ID window id
+	 *	@param ad_Tab_ID tab id
+	 *	@param TabReadOnly r/o
+	 *	@return Field or null
+	 */
+	public MFieldVO clone(Properties Ctx, int windowNo, int tabNo, 
+		int ad_Window_ID, int ad_Tab_ID, 
+		boolean TabReadOnly)
+	{
+		MFieldVO clone = new MFieldVO(Ctx, windowNo, tabNo, 
+			ad_Window_ID, ad_Tab_ID, TabReadOnly);
+		//
+		clone.isProcess = false;
+		//  Database Fields
+		clone.ColumnName = ColumnName;
+		clone.ColumnSQL = ColumnSQL;
+		clone.Header = Header;
+		clone.displayType = displayType;
+		clone.AD_Table_ID = AD_Table_ID;
+		clone.AD_Column_ID = AD_Column_ID;
+		clone.DisplayLength = DisplayLength;
+		clone.IsSameLine = IsSameLine;
+		clone.IsDisplayed = IsDisplayed;
+		clone.DisplayLogic = DisplayLogic;
+		clone.DefaultValue = DefaultValue;
+		clone.IsMandatory = IsMandatory;
+		clone.IsReadOnly = IsReadOnly;
+		clone.IsUpdateable = IsUpdateable;
+		clone.IsAlwaysUpdateable = IsAlwaysUpdateable;
+		clone.IsHeading = IsHeading;
+		clone.IsFieldOnly = IsFieldOnly;
+		clone.IsEncryptedField = IsEncryptedField;
+		clone.IsEncryptedColumn = IsEncryptedColumn;
+		clone.IsSelectionColumn = IsSelectionColumn;
+		clone.IsAutocomplete = IsAutocomplete;
+		clone.SortNo = SortNo;
+		clone.FieldLength = FieldLength;
+		clone.VFormat = VFormat;
+		clone.ValueMin = ValueMin;
+		clone.ValueMax = ValueMax;
+		clone.FieldGroup = FieldGroup;
+		clone.FieldGroupType = FieldGroupType;
+		clone.IsKey = IsKey;
+		clone.IsParent = IsParent;
+		clone.Callout = Callout;
+		clone.AD_Process_ID = AD_Process_ID;
+		clone.Description = Description;
+		clone.Help = Help;
+		clone.ReadOnlyLogic = ReadOnlyLogic;
+		clone.MandatoryLogic = MandatoryLogic;
+		clone.ObscureType = ObscureType;
+		//	Lookup
+		clone.ValidationCode = ValidationCode;
+		clone.AD_Reference_Value_ID = AD_Reference_Value_ID;
+		clone.lookupInfo = lookupInfo;
+
+		//  Process Parameter
+		clone.isRange = isRange;
+		clone.DefaultValue2 = DefaultValue2;
+
+		return clone;
+	}	//	clone
+
+	/**************************************************************************
+	 *  protected constructor.
+	 *  @param Ctx context
+	 *  @param windowNo window
+	 *  @param tabNo tab
+	 *  @param ad_Window_ID window
+	 *  @param ad_Tab_ID tab
+	 *  @param TabReadOnly tab read only
+	 */
+	protected MFieldVO (Properties Ctx, int windowNo, int tabNo, 
+		int ad_Window_ID, int ad_Tab_ID, boolean TabReadOnly)
+	{
+		ctx = Ctx;
+		WindowNo = windowNo;
+		TabNo = tabNo;
+		AD_Window_ID = ad_Window_ID;
+		AD_Tab_ID = ad_Tab_ID;
+		tabReadOnly = TabReadOnly;
+	}   //  MFieldVO
+
+	
 }	// MFieldVO
 
 

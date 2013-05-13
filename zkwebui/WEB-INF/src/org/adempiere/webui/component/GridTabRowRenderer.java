@@ -31,8 +31,8 @@ import org.adempiere.webui.panel.AbstractADWindowPanel;
 import org.adempiere.webui.session.SessionManager;
 import org.adempiere.webui.util.GridTabDataBinder;
 import org.adempiere.webui.window.ADWindow;
-import org.openXpertya.model.GridField;
-import org.openXpertya.model.GridTab;
+import org.openXpertya.model.MField;
+import org.openXpertya.model.MTab;
 import org.openXpertya.util.DisplayType;
 import org.openXpertya.util.Env;
 import org.openXpertya.util.NamePair;
@@ -56,7 +56,7 @@ import org.zkoss.zul.RowRenderer;
 import org.zkoss.zul.RowRendererExt;
 
 /**
- * Row renderer for GridTab grid.
+ * Row renderer for MTab grid.
  * @author hengsin
  * 
  * @author Teo Sarca, teo.sarca@gmail.com
@@ -67,10 +67,10 @@ public class GridTabRowRenderer implements RowRenderer, RowRendererExt, Renderer
 
 	private static final String CURRENT_ROW_STYLE = "border-top: 2px solid #6f97d2; border-bottom: 2px solid #6f97d2";
 	private static final int MAX_TEXT_LENGTH = 60;
-	private GridTab gridTab;
+	private MTab mTab;
 	private int windowNo;
 	private GridTabDataBinder dataBinder;
-	private Map<GridField, WEditor> editors = new LinkedHashMap<GridField, WEditor>();
+	private Map<MField, WEditor> editors = new LinkedHashMap<MField, WEditor>();
 	private Paging paging;
 
 	private Map<String, Map<Object, String>> lookupCache = null;
@@ -86,17 +86,17 @@ public class GridTabRowRenderer implements RowRenderer, RowRendererExt, Renderer
 
 	/**
 	 *
-	 * @param gridTab
+	 * @param mTab
 	 * @param windowNo
 	 */
-	public GridTabRowRenderer(GridTab gridTab, int windowNo) {
-		this.gridTab = gridTab;
+	public GridTabRowRenderer(MTab mTab, int windowNo) {
+		this.mTab = mTab;
 		this.windowNo = windowNo;
-		this.dataBinder = new GridTabDataBinder(gridTab);
+		this.dataBinder = new GridTabDataBinder(mTab);
 	}
 
-	private WEditor getEditorCell(GridField gridField, Object object, int i) {
-		WEditor editor = editors.get(gridField);
+	private WEditor getEditorCell(MField mField, Object object, int i) {
+		WEditor editor = editors.get(mField);
 		if (editor != null)  {
 			if (editor instanceof WButtonEditor)
             {
@@ -118,9 +118,9 @@ public class GridTabRowRenderer implements RowRenderer, RowRendererExt, Renderer
 			{
 				editor.addValueChangeListener(dataBinder);
 			}
-			gridField.removePropertyChangeListener(editor);
-			gridField.addPropertyChangeListener(editor);
-			editor.setValue(gridField.getValue());
+			mField.removePropertyChangeListener(editor);
+			mField.addPropertyChangeListener(editor);
+			editor.setValue(mField.getValue());
 
             //streach component to fill grid cell
             if (editor.getComponent() instanceof Textbox)
@@ -131,8 +131,8 @@ public class GridTabRowRenderer implements RowRenderer, RowRendererExt, Renderer
 		return editor;
 	}
 
-	private int getColumnIndex(GridField field) {
-		GridField[] fields = gridTab.getFields();
+	private int getColumnIndex(MField field) {
+		MField[] fields = mTab.getFields();
 		for(int i = 0; i < fields.length; i++) {
 			if (fields[i] == field)
 				return i;
@@ -150,20 +150,20 @@ public class GridTabRowRenderer implements RowRenderer, RowRendererExt, Renderer
 		return checkBox;
 	}
 
-	private String getDisplayText(Object value, GridField gridField)
+	private String getDisplayText(Object value, MField mField)
 	{
 		if (value == null)
 			return "";
 
-		if (gridField.isEncryptedField())
+		if (mField.isEncryptedField())
 		{
 			return "********";
 		}
-		else if (gridField.isLookup())
+		else if (mField.isLookup())
     	{
 			if (lookupCache != null)
 			{
-				Map<Object, String> cache = lookupCache.get(gridField.getColumnName());
+				Map<Object, String> cache = lookupCache.get(mField.getColumnName());
 				if (cache != null && cache.size() >0)
 				{
 					String text = cache.get(value);
@@ -173,17 +173,17 @@ public class GridTabRowRenderer implements RowRenderer, RowRendererExt, Renderer
 					}
 				}
 			}
-			NamePair namepair = gridField.getLookup().get(value);
+			NamePair namepair = mField.getLookup().get(value);
 			if (namepair != null)
 			{
 				String text = namepair.getName();
 				if (lookupCache != null)
 				{
-					Map<Object, String> cache = lookupCache.get(gridField.getColumnName());
+					Map<Object, String> cache = lookupCache.get(mField.getColumnName());
 					if (cache == null)
 					{
 						cache = new HashMap<Object, String>();
-						lookupCache.put(gridField.getColumnName(), cache);
+						lookupCache.put(mField.getColumnName(), cache);
 					}
 					cache.put(value, text);
 				}
@@ -192,23 +192,23 @@ public class GridTabRowRenderer implements RowRenderer, RowRendererExt, Renderer
 			else
 				return "";
     	}
-    	else if (gridTab.getTableModel().getColumnClass(getColumnIndex(gridField)).equals(Timestamp.class))
+    	else if (mTab.getTableModel().getColumnClass(getColumnIndex(mField)).equals(Timestamp.class))
     	{
     		int displayType = DisplayType.Date;
-    		if (gridField != null && gridField.getDisplayType() == DisplayType.DateTime)
+    		if (mField != null && mField.getDisplayType() == DisplayType.DateTime)
     			displayType = DisplayType.DateTime;
     		SimpleDateFormat dateFormat = DisplayType.getDateFormat(displayType, AEnv.getLanguage(Env.getCtx()));
     		return dateFormat.format((Timestamp)value);
     	}
-    	else if (DisplayType.isNumeric(gridField.getDisplayType()))
+    	else if (DisplayType.isNumeric(mField.getDisplayType()))
     	{
-    		return DisplayType.getNumberFormat(gridField.getDisplayType(), AEnv.getLanguage(Env.getCtx())).format(value);
+    		return DisplayType.getNumberFormat(mField.getDisplayType(), AEnv.getLanguage(Env.getCtx())).format(value);
     	}
-    	else if (DisplayType.Button == gridField.getDisplayType())
+    	else if (DisplayType.Button == mField.getDisplayType())
     	{
     		return "";
     	}
-    	else if (DisplayType.Image == gridField.getDisplayType())
+    	else if (DisplayType.Image == mField.getDisplayType())
     	{
     		if (value == null || (Integer)value <= 0)
     			return "";
@@ -219,12 +219,12 @@ public class GridTabRowRenderer implements RowRenderer, RowRendererExt, Renderer
     		return value.toString();
 	}
 
-	private Component getDisplayComponent(Object value, GridField gridField) {
+	private Component getDisplayComponent(Object value, MField mField) {
 		Component component;
-		if (gridField.getDisplayType() == DisplayType.YesNo) {
+		if (mField.getDisplayType() == DisplayType.YesNo) {
 			component = createReadonlyCheckbox(value);
 		} else {
-			String text = getDisplayText(value, gridField);
+			String text = getDisplayText(value, mField);
 
 			Label label = new Label();
 			setLabelText(text, label);
@@ -281,7 +281,7 @@ public class GridTabRowRenderer implements RowRenderer, RowRendererExt, Renderer
 			editing = false;
 		}
 		Row row = null;
-		for (Entry<GridField, WEditor> entry : editors.entrySet()) {
+		for (Entry<MField, WEditor> entry : editors.entrySet()) {
 			if (entry.getValue().getComponent().getParent() != null) {
 				Component child = entry.getValue().getComponent();
 				Div div = null;
@@ -340,8 +340,8 @@ public class GridTabRowRenderer implements RowRenderer, RowRendererExt, Renderer
 			rowListener = new RowListener((Grid)row.getParent().getParent());
 
 		currentValues = (Object[])data;
-		int columnCount = gridTab.getTableModel().getColumnCount();
-		GridField[] gridField = gridTab.getFields();
+		int columnCount = mTab.getTableModel().getColumnCount();
+		MField[] gridField = mTab.getFields();
 		Grid grid = (Grid) row.getParent().getParent();
 		org.zkoss.zul.Columns columns = grid.getColumns();
 
@@ -384,7 +384,7 @@ public class GridTabRowRenderer implements RowRenderer, RowRendererExt, Renderer
 			row.appendChild(div);
 		}
 
-		if (rowIndex == gridTab.getCurrentRow()) {
+		if (rowIndex == mTab.getCurrentRow()) {
 			setCurrentRow(row);
 		}
 		row.addEventListener(Events.ON_OK, rowListener);
@@ -412,13 +412,13 @@ public class GridTabRowRenderer implements RowRenderer, RowRendererExt, Renderer
 		}
 		currentRow = row;
 		currentRow.setStyle(CURRENT_ROW_STYLE);
-		if (currentRowIndex == gridTab.getCurrentRow()) {
+		if (currentRowIndex == mTab.getCurrentRow()) {
 			if (editing) {
 				stopEditing(false);
 				editCurrentRow();
 			}
 		} else {
-			currentRowIndex = gridTab.getCurrentRow();
+			currentRowIndex = mTab.getCurrentRow();
 			if (editing) {
 				stopEditing(false);
 			}
@@ -445,8 +445,8 @@ public class GridTabRowRenderer implements RowRenderer, RowRendererExt, Renderer
 	public void editCurrentRow() {
 		if (currentRow != null && currentRow.getParent() != null && currentRow.isVisible()
 			&& grid != null && grid.isVisible() && grid.getParent() != null && grid.getParent().isVisible()) {
-			int columnCount = gridTab.getTableModel().getColumnCount();
-			GridField[] gridField = gridTab.getFields();
+			int columnCount = mTab.getTableModel().getColumnCount();
+			MField[] gridField = mTab.getFields();
 			org.zkoss.zul.Columns columns = grid.getColumns();
 			int colIndex = -1;
 			for (int i = 0; i < columnCount; i++) {

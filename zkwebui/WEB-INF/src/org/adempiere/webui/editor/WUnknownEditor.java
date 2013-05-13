@@ -17,7 +17,7 @@
 
 package org.adempiere.webui.editor;
 
-import org.openXpertya.model.GridField;
+import org.openXpertya.model.MField;
 
 /**
  *
@@ -27,9 +27,9 @@ import org.openXpertya.model.GridField;
  */
 public class WUnknownEditor extends WStringEditor
 {
-    public WUnknownEditor(GridField gridField)
+    public WUnknownEditor(MField mField)
     {
-        super(gridField);
+        super(mField);
         init();
     }
     

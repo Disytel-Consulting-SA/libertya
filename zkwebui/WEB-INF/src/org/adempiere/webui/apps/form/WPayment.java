@@ -46,7 +46,7 @@ import org.adempiere.webui.editor.WButtonEditor;
 import org.adempiere.webui.editor.WDateEditor;
 import org.adempiere.webui.editor.WNumberEditor;
 import org.adempiere.webui.window.FDialog;
-import org.openXpertya.model.GridTab;
+import org.openXpertya.model.MTab;
 import org.openXpertya.model.MCash;
 import org.openXpertya.model.MCashLine;
 import org.openXpertya.model.MConversionRate;
@@ -121,7 +121,7 @@ public class WPayment extends Window
 	 *  @param mTab     owning tab
 	 *	@param button	button with access information
 	 */
-	public WPayment (int WindowNo, GridTab mTab, WButtonEditor button)
+	public WPayment (int WindowNo, MTab mTab, WButtonEditor button)
 	{
 		super();
 		this.setTitle(Msg.getMsg(Env.getCtx(), "Payment"));
@@ -149,7 +149,7 @@ public class WPayment extends Window
 	/**	Window						*/
 	private int                 m_WindowNo = 0;
 	/**	Tab							*/
-	private GridTab         		m_mTab;
+	private MTab         		m_mTab;
 
 	//	Data from Order/Invoice
 	private String              m_DocStatus = null;

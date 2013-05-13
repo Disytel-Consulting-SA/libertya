@@ -48,8 +48,8 @@ public abstract class CalloutPluginEngine extends CalloutEngine {
 
         try {	
        	
-       		 Object[] args=null;
-        		 
+        	Object[] args=null;
+        		
             if( argLength == 6 ) {
                 args = new Object[] {
                     ctx,new Integer( WindowNo ),mTab,mField,value,oldValue
@@ -64,8 +64,7 @@ public abstract class CalloutPluginEngine extends CalloutEngine {
 
             Throwable ex = e.getCause();    // InvocationTargetException
 
-            if( ex ==             	
-null ) {
+            if( ex == null ) {
                 ex = e;
             }
 

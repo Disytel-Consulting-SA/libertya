@@ -17,7 +17,7 @@ package org.adempiere.webui.editor;
 import org.adempiere.webui.component.Button;
 import org.adempiere.webui.event.ValueChangeEvent;
 import org.adempiere.webui.window.WMediaDialog;
-import org.openXpertya.model.GridField;
+import org.openXpertya.model.MField;
 import org.openXpertya.util.CLogger;
 import org.zkoss.zk.ui.event.Event;
 import org.zkoss.zk.ui.event.Events;
@@ -35,9 +35,9 @@ public class WBinaryEditor extends WEditor
     private boolean         m_mandatory;
     private Object          m_data;
    
-    public WBinaryEditor(GridField gridField)
+    public WBinaryEditor(MField mField)
     {
-        super(new Button(), gridField);
+        super(new Button(), mField);
         init();
     }
 
@@ -45,7 +45,7 @@ public class WBinaryEditor extends WEditor
     {
         label.setValue(" ");
         getComponent().setLabel("-");
-        getComponent().setTooltiptext(gridField.getDescription());
+        getComponent().setTooltiptext(mField.getDescription());
     }
 
      @Override
@@ -124,7 +124,7 @@ public class WBinaryEditor extends WEditor
 	{
 		if (Events.ON_CLICK.equals(event.getName()))
 		{
-			WMediaDialog dialog = new WMediaDialog(gridField.getHeader(), m_data);
+			WMediaDialog dialog = new WMediaDialog(mField.getHeader(), m_data);
 			if (!dialog.isCancel() && dialog.isChange())
 			{
 				Object oldValue = m_data;

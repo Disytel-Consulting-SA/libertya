@@ -20,6 +20,8 @@
 
 package org.openXpertya.model;
 
+import org.openXpertya.model.MTabVO;
+import org.openXpertya.model.MWindowVO;
 import org.openXpertya.util.CLogger;
 import org.openXpertya.util.DB;
 import org.openXpertya.util.Env;
@@ -82,7 +84,10 @@ public class MWindowVO implements Serializable {
     public int	WinHeight	= 0;
 
     /** Tabs contains MTabVO elements */
-    public ArrayList	Tabs	= null;
+    public ArrayList<MTabVO>	Tabs = null;
+
+	/** Base Table		*/
+	public int 			AD_Table_ID = 0;
 
     /** Descripción de Campo */
     public boolean	IsSOTrx	= false;
@@ -103,11 +108,11 @@ public class MWindowVO implements Serializable {
     public Properties	ctx;
 
     /**
-     *  Private Constructor
+     *  protected Constructor
      *  @param ctx context
      *  @param WindowNo window no
      */
-    private MWindowVO(Properties ctx, int WindowNo) {
+    protected MWindowVO(Properties ctx, int WindowNo) {
 
         this.ctx	= ctx;
         this.WindowNo	= WindowNo;
@@ -284,7 +289,7 @@ public class MWindowVO implements Serializable {
      *  @param mWindowVO Window Value Object
      *  @return true if tabs were created
      */
-    private static boolean createTabs(MWindowVO mWindowVO) {
+    protected static boolean createTabs(MWindowVO mWindowVO) {
 
         mWindowVO.Tabs	= new ArrayList();
 
@@ -370,6 +375,50 @@ public class MWindowVO implements Serializable {
         }
 
     }		// setCtx
+    
+	/**
+	 * 	Clone
+	 * 	@param windowNo no
+	 *	@return WindowVO
+	 */
+	public MWindowVO clone (int windowNo)
+	{
+		MWindowVO clone = null;
+		try
+		{
+			clone = new MWindowVO(ctx, windowNo);
+			clone.AD_Window_ID = AD_Window_ID;
+			clone.Name = Name;
+			clone.Description = Description;
+			clone.Help = Help;
+			clone.WindowType = WindowType;
+			clone.AD_Image_ID = AD_Image_ID;
+			clone.AD_Color_ID = AD_Color_ID;
+			clone.IsReadWrite = IsReadWrite;
+			clone.WinWidth = WinWidth;
+			clone.WinHeight = WinHeight;
+			clone.IsSOTrx = IsSOTrx;
+			Env.setContext(ctx, windowNo, "IsSOTrx", clone.IsSOTrx);
+			clone.AD_Table_ID = AD_Table_ID;
+			Env.setContext(ctx, windowNo, "BaseTable_ID", clone.AD_Table_ID);
+			//
+			clone.Tabs = new ArrayList<MTabVO>();
+			for (int i = 0; i < Tabs.size(); i++)
+			{
+				MTabVO tab = Tabs.get(i);
+				MTabVO cloneTab = tab.clone(clone.ctx, windowNo);
+				if (cloneTab == null)
+					return null;
+				clone.Tabs.add(cloneTab);
+			}
+		}
+		catch (Exception e)
+		{
+			clone = null;
+		}
+		return clone;
+	}	//	clone
+
 }	// MWindowVO
 
 

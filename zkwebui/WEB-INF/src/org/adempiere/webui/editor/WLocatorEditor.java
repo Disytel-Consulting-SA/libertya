@@ -31,7 +31,7 @@ import org.adempiere.webui.event.ContextMenuListener;
 import org.adempiere.webui.event.ValueChangeEvent;
 import org.adempiere.webui.window.WFieldRecordInfo;
 import org.adempiere.webui.window.WLocatorDialog;
-import org.openXpertya.model.GridField;
+import org.openXpertya.model.MField;
 import org.openXpertya.model.MLocator;
 import org.openXpertya.model.MLocatorLookup;
 import org.openXpertya.model.MQuery;
@@ -99,22 +99,22 @@ public class WLocatorEditor extends WEditor implements EventListener, PropertyCh
 	}
 	
 	/**
-	 * @param gridField
+	 * @param mField
 	 */
-	public WLocatorEditor(GridField gridField) {
-		super(new EditorBox(), gridField);
-		m_mLocator = (MLocatorLookup)gridField.getLookup();
+	public WLocatorEditor(MField mField) {
+		super(new EditorBox(), mField);
+		m_mLocator = (MLocatorLookup)mField.getLookup();
 		
 		getComponent().setButtonImage("/images/Locator10.png");
 		
 		setDefault_Locator_ID(); // set default locator, teo_sarca [ 1661546 ]
 		
-		m_WindowNo = gridField.getWindowNo();
+		m_WindowNo = mField.getWindowNo();
 		
-		if (gridField != null) 
+		if (mField != null) 
         {
         	popupMenu = new WEditorPopupMenu(true, true, false);
-        	if (gridField != null && gridField.getGridTab() != null)
+        	if (mField != null && mField.getGridTab() != null)
     		{
     			WFieldRecordInfo.addMenu(popupMenu);
     		}
@@ -296,7 +296,7 @@ public class WLocatorEditor extends WEditor implements EventListener, PropertyCh
 		}
 		else if (WEditorPopupMenu.CHANGE_LOG_EVENT.equals(evt.getContextEvent()))
 		{
-			WFieldRecordInfo.start(gridField);
+			WFieldRecordInfo.start(mField);
 		}
 	}
 	
@@ -407,7 +407,7 @@ public class WLocatorEditor extends WEditor implements EventListener, PropertyCh
 	 *  @param mField Model Field
 	 */
 	
-	public void setField (org.openXpertya.model.GridField mField)
+	public void setField (org.openXpertya.model.MField mField)
 	{
 	} // setField
 	
@@ -504,7 +504,7 @@ public class WLocatorEditor extends WEditor implements EventListener, PropertyCh
 	
     public void propertyChange (PropertyChangeEvent evt)
     {
-        if (evt.getPropertyName().equals(org.openXpertya.model.GridField.PROPERTY))
+        if (evt.getPropertyName().equals(org.openXpertya.model.MField.PROPERTY))
             setValue(evt.getNewValue());
     }
 

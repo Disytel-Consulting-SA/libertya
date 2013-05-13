@@ -15,7 +15,7 @@ package org.adempiere.webui.component;
 import org.adempiere.webui.panel.IADTabpanel;
 import org.adempiere.webui.part.UIPart;
 import org.openXpertya.model.DataStatusEvent;
-import org.openXpertya.model.GridTab;
+import org.openXpertya.model.MTab;
 import org.zkoss.zk.ui.Component;
 import org.zkoss.zk.ui.event.EventListener;
 
@@ -69,7 +69,7 @@ public interface IADTab extends UIPart {
 	 * @param tab
 	 * @param tabPanel
 	 */
-	public void addTab(GridTab tab, IADTabpanel tabPanel);
+	public void addTab(MTab tab, IADTabpanel tabPanel);
 
 	/**
 	 * @return Number of tab
@@ -124,5 +124,5 @@ public interface IADTab extends UIPart {
 	 * @param gTab
 	 * @return IADTabpanel or null if not found
 	 */
-	public IADTabpanel findADTabpanel(GridTab gTab);
+	public IADTabpanel findADTabpanel(MTab gTab);
 }

@@ -38,8 +38,8 @@ import org.adempiere.webui.event.ContextMenuListener;
 import org.adempiere.webui.event.ValueChangeEvent;
 import org.adempiere.webui.event.ValueChangeListener;
 import org.adempiere.webui.window.FDialog;
-import org.openXpertya.model.GridField;
-import org.openXpertya.model.GridFieldVO;
+import org.openXpertya.model.MField;
+import org.openXpertya.model.MFieldVO;
 import org.openXpertya.model.IProcessParameter;
 import org.openXpertya.model.MClient;
 import org.openXpertya.model.MPInstancePara;
@@ -116,8 +116,8 @@ implements ValueChangeListener, IProcessParameter
 		//
 		private ArrayList<WEditor>	m_wEditors = new ArrayList<WEditor>();
 		private ArrayList<WEditor>	m_wEditors2 = new ArrayList<WEditor>();		//	for ranges
-		private ArrayList<GridField>	m_mFields = new ArrayList<GridField>();
-		private ArrayList<GridField>	m_mFields2 = new ArrayList<GridField>();
+		private ArrayList<MField>	m_mFields = new ArrayList<MField>();
+		private ArrayList<MField>	m_mFields2 = new ArrayList<MField>();
 		private ArrayList<Label> m_separators = new ArrayList<Label>();
 		//
 		private Grid centerPanel = null;
@@ -263,8 +263,8 @@ implements ValueChangeListener, IProcessParameter
 		private void createField (ResultSet rs, Rows rows)
 		{
 			//  Create Field
-			GridFieldVO voF = GridFieldVO.createParameter(Env.getCtx(), m_WindowNo, rs);
-			GridField mField = new GridField (voF);
+			MFieldVO voF = MFieldVO.createParameter(Env.getCtx(), m_WindowNo, rs);
+			MField mField = new MField (voF);
 			m_mFields.add(mField);                      //  add to Fields
 
 			Row row = new Row();
@@ -297,8 +297,8 @@ implements ValueChangeListener, IProcessParameter
 				Hbox box = new Hbox();
 				box.appendChild(editor.getComponent());
 				//
-				GridFieldVO voF2 = GridFieldVO.createParameter(voF);
-				GridField mField2 = new GridField (voF2);
+				MFieldVO voF2 = MFieldVO.createParameter(voF);
+				MField mField2 = new MField (voF2);
 				m_mFields2.add (mField2);
 				//	The Editor
 				WEditor editor2 = WebEditorFactory.getEditor(mField2, false);
@@ -352,7 +352,7 @@ implements ValueChangeListener, IProcessParameter
 			int size = m_mFields.size();
 			for (int i = 0; i < size; i++)
 			{
-				GridField field = (GridField)m_mFields.get(i);
+				MField field = (MField)m_mFields.get(i);
 				if (field.isMandatory(true))        //  check context
 				{
 					WEditor wEditor = (WEditor)m_wEditors.get(i);
@@ -372,7 +372,7 @@ implements ValueChangeListener, IProcessParameter
 					if (wEditor2 != null)
 					{
 						Object data2 = wEditor.getValue();
-						GridField field2 = (GridField)m_mFields2.get(i);
+						MField field2 = (MField)m_mFields2.get(i);
 						if (data2 == null || data2.toString().length() == 0)
 						{
 							field.setInserting (true);  //  set editable (i.e. updateable) otherwise deadlock
@@ -409,7 +409,7 @@ implements ValueChangeListener, IProcessParameter
 				
 				//	Create Parameter
 				MPInstancePara para = new MPInstancePara (Env.getCtx(), m_processInfo.getAD_PInstance_ID(), i);
-				GridField mField = (GridField)m_mFields.get(i);
+				MField mField = (MField)m_mFields.get(i);
 				para.setParameterName(mField.getColumnName());
 				
 				//	Date
@@ -503,7 +503,7 @@ implements ValueChangeListener, IProcessParameter
 		private void dynamicDisplay() {
 			for(int i = 0; i < m_wEditors.size(); i++) {
 				WEditor editor = m_wEditors.get(i);
-				GridField mField = editor.getGridField();
+				MField mField = editor.getGridField();
 				if (mField.isDisplayed(true)) {
 					if (!editor.isVisible()) {
 						editor.setVisible(true);
@@ -532,14 +532,14 @@ implements ValueChangeListener, IProcessParameter
 		/**
 		 * Restore window context.
 		 * @author teo_sarca [ 1699826 ]
-		 * @see org.compiere.model.GridField#restoreValue()
+		 * @see org.compiere.MField.GridField#restoreValue()
 		 */
 		protected void restoreContext() {
-			for (GridField f : m_mFields) {
+			for (MField f : m_mFields) {
 				if (f != null)
 					f.restoreValue();
 			}
-			for (GridField f : m_mFields2) {
+			for (MField f : m_mFields2) {
 				if (f != null)
 					f.restoreValue();
 			}

@@ -50,88 +50,9 @@ public class CalloutEngine implements Callout {
     /** Descripción de Campos */
 
     protected CLogger log = CLogger.getCLogger( getClass());
-	private GridTab m_mTab;
-	private GridField m_mField;
+	private MTab m_mTab;
+	private MField m_mField;
 
-    /**
-     * Descripción de Método
-     *
-     *
-     * @param ctx
-     * @param methodName
-     * @param WindowNo
-     * @param mTab
-     * @param mField
-     * @param value
-     * @param oldValue
-     *
-     * @return
-     */
-
-    public String start( Properties ctx,String methodName,int WindowNo,MTab mTab,MField mField,Object value,Object oldValue ) {
-        if( (methodName == null) || (methodName.length() == 0) ) {
-            throw new IllegalArgumentException( "No Method Name" );
-        }
-
-        //
-
-        String       retValue = "";
-        StringBuffer msg      = new StringBuffer( methodName ).append( " - " ).append( mField.getColumnName()).append( "=" ).append( value ).append( " (old=" ).append( oldValue ).append( ") {active=" ).append( isCalloutActive()).append( "}" );
-
-        if( !isCalloutActive()) {
-            log.info( "No esta el callout Activo"+msg.toString());
-        }
-
-        // Find Method
-        
-
-        Method method = getMethod( methodName );
-        
-        if( method == null ) {
-            throw new IllegalArgumentException( "Method not found: " + methodName );
-        }
-
-        int argLength = method.getParameterTypes().length;
-
-        if( !( (argLength == 5) || (argLength == 6) ) ) {
-            throw new IllegalArgumentException( "Method " + methodName + " has invalid no of arguments: " + argLength );
-        }
-
-        // Call Method
-
-        try {	
-            //Object[] args = null;//Original;
-        	
-        		 Object[] args=null;
-        		 
-
-            if( argLength == 6 ) {
-                args = new Object[] {
-                    ctx,new Integer( WindowNo ),mTab,mField,value,oldValue
-                };
-            } else {
-            	
-                	args = new Object[]{ ctx,new Integer( WindowNo ),mTab,mField,value };
-            	
-            }
-
-            retValue = ( String )method.invoke( this,args );
-        } catch( Exception e ) {
-            setCalloutActive( false );
-
-            Throwable ex = e.getCause();    // InvocationTargetException
-
-            if( ex == null ) {
-                ex = e;
-            }
-
-            log.log( Level.SEVERE,"start:....... " + methodName,ex );
-            ex.printStackTrace( System.err );
-            retValue = ex.getLocalizedMessage();
-        }
-
-        return retValue;
-    }    // start
 
     /**
      * Descripción de Método
@@ -314,7 +235,7 @@ public class CalloutEngine implements Callout {
 
 	@Override
 	public String start(Properties ctx, String methodName, int WindowNo,
-			GridTab mTab, GridField mField, Object value, Object oldValue) {
+			MTab mTab, MField mField, Object value, Object oldValue) {
 		// TODO Auto-generated method stub
 		if (methodName == null || methodName.length() == 0)
 			throw new IllegalArgumentException ("No Method Name");

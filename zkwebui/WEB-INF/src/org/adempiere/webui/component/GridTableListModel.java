@@ -18,8 +18,8 @@ import javax.swing.event.TableModelEvent;
 import javax.swing.event.TableModelListener;
 
 import org.adempiere.webui.util.SortComparator;
-import org.openXpertya.model.GridField;
-import org.openXpertya.model.GridTable;
+import org.openXpertya.model.MField;
+import org.openXpertya.model.MTable;
 import org.zkoss.zk.ui.Executions;
 import org.zkoss.zul.AbstractListModel;
 import org.zkoss.zul.ListModel;
@@ -38,9 +38,9 @@ public class GridTableListModel extends AbstractListModel implements TableModelL
 	 * 
 	 */
 	private static final long serialVersionUID = 698185856751242764L;
-	private GridTable tableModel;
+	private MTable tableModel;
 	@SuppressWarnings("unused")
-	private GridField[] gridField;
+	private MField[] mField;
 	@SuppressWarnings("unused")
 	private int windowNo;
 	
@@ -54,10 +54,10 @@ public class GridTableListModel extends AbstractListModel implements TableModelL
 	 * @param tableModel
 	 * @param windowNo
 	 */
-	public GridTableListModel(GridTable tableModel, int windowNo) {
+	public GridTableListModel(MTable tableModel, int windowNo) {
 		this.tableModel = tableModel;
 		this.windowNo = windowNo;
-		gridField = tableModel.getFields();
+		mField = tableModel.getFields();
 		tableModel.addTableModelListener(this);
 	}
 

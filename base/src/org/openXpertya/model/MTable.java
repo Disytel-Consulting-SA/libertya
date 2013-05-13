@@ -26,9 +26,12 @@ import java.sql.Clob;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Vector;
@@ -37,8 +40,13 @@ import java.util.logging.Level;
 import javax.swing.event.TableModelListener;
 import javax.swing.table.AbstractTableModel;
 
+import org.openXpertya.util.Trx;
+import org.openXpertya.model.MField;
+import org.openXpertya.model.MTable.Loader;
+import org.openXpertya.model.DataStatusEvent;
 import org.openXpertya.util.CLogger;
 import org.openXpertya.util.DB;
+import org.openXpertya.util.DBException;
 import org.openXpertya.util.DisplayType;
 import org.openXpertya.util.Env;
 import org.openXpertya.util.MSort;
@@ -52,8 +60,12 @@ import org.openXpertya.util.ValueNamePair;
  * @author     Equipo de Desarrollo de openXpertya    
  */
 
-public final class MTable extends AbstractTableModel implements Serializable {
+public class MTable extends AbstractTableModel implements Serializable {
 
+	public static final String DATA_REFRESH_MESSAGE = "Refreshed";
+	protected final static Integer NEW_ROW_ID = Integer.valueOf(-1);
+	protected static final int DEFAULT_FETCH_SIZE = 200;
+	
     /**
      * Constructor de la clase ...
      *
@@ -79,170 +91,181 @@ public final class MTable extends AbstractTableModel implements Serializable {
 
     /** Descripción de Campos */
 
-    private static CLogger log = CLogger.getCLogger( MTable.class.getName());
+    protected static CLogger log = CLogger.getCLogger( MTable.class.getName());
 
     /** Descripción de Campos */
 
-    private Properties m_ctx;
+    protected Properties m_ctx;
 
     /** Descripción de Campos */
 
-    private int m_AD_Table_ID;
+    protected int m_AD_Table_ID;
 
     /** Descripción de Campos */
 
-    private String m_tableName = "";
+    protected String m_tableName = "";
 
     /** Descripción de Campos */
 
-    private int m_WindowNo;
+    protected int m_WindowNo;
 
     /** Descripción de Campos */
 
-    private int m_TabNo;
+    protected int m_TabNo;
 
     /** Descripción de Campos */
 
-    private boolean m_withAccessControl;
+    protected boolean m_withAccessControl;
 
     /** Descripción de Campos */
 
-    private boolean m_readOnly = true;
+    protected boolean m_readOnly = true;
 
     /** Descripción de Campos */
 
-    private boolean m_deleteable = true;
+    protected boolean m_deleteable = true;
 
     //
 
+	//virtual table state variables
+	protected boolean				m_virtual;
+	public static final String CTX_KeyColumnName = "KeyColumnName";
+
+    
     /** Descripción de Campos */
 
-    private int m_rowCount = 0;
-
-    /** Descripción de Campos */
-
-    private boolean m_changed = false;
-
-    /** Descripción de Campos */
-
-    private int m_rowChanged = -1;
+    protected int m_rowCount = 0;
 
     /** Descripción de Campos */
 
-    private boolean m_inserting = false;
+    protected boolean m_changed = false;
 
     /** Descripción de Campos */
 
-    private int m_newRow = -1;
+    protected int m_rowChanged = -1;
 
     /** Descripción de Campos */
 
-    private boolean m_open = false;
+    protected boolean m_inserting = false;
 
     /** Descripción de Campos */
 
-    private boolean m_compareDB = true;    // set to true after every save
+    protected int m_newRow = -1;
+
+    /** Descripción de Campos */
+
+    protected boolean m_open = false;
+
+    /** Descripción de Campos */
+
+    protected boolean m_compareDB = true;    // set to true after every save
 
     // The buffer for all data
 
     /** Descripción de Campos */
 
-    private volatile ArrayList m_buffer = new ArrayList( 100 );
+    protected volatile ArrayList m_buffer = new ArrayList( 100 );
 
     /** Descripción de Campos */
 
-    private volatile ArrayList m_sort = new ArrayList( 100 );
+    protected volatile ArrayList<MSort>		m_sort = new ArrayList<MSort>(100);
+    
+	protected volatile Map<Integer, Object[]> m_virtualBuffer = new HashMap<Integer, Object[]>(100);
 
     /** Descripción de Campos */
 
-    private Object[] m_rowData = null;
+    protected Object[] m_rowData = null;
 
     /** Descripción de Campos */
 
-    private Object[] m_oldValue = null;
+    protected Object[] m_oldValue = null;
 
     //
 
     /** Descripción de Campos */
 
-    private Loader m_loader = null;
+    protected Loader m_loader = null;
 
     /** Descripción de Campos */
 
-    private ArrayList m_fields = new ArrayList( 30 );
+    protected ArrayList m_fields = new ArrayList( 30 );
     
-    private Map<String, MField> mapFields = new HashMap<String, MField>();
+    protected Map<String, MField> mapFields = new HashMap<String, MField>();
 
     /** Descripción de Campos */
 
-    private ArrayList m_parameterSELECT = new ArrayList( 5 );
+    protected ArrayList m_parameterSELECT = new ArrayList( 5 );
 
     /** Descripción de Campos */
 
-    private ArrayList m_parameterWHERE = new ArrayList( 5 );
+    protected ArrayList m_parameterWHERE = new ArrayList( 5 );
 
     /** Descripción de Campos */
 
-    private String m_SQL;
+    protected String m_SQL;
 
     /** Descripción de Campos */
 
-    private String m_SQL_Count;
+    protected String m_SQL_Count;
 
     /** Descripción de Campos */
 
-    private String m_SQL_Select;
+    protected String m_SQL_Select;
 
     /** Descripción de Campos */
 
-    private String m_whereClause = "";
+    protected String m_whereClause = "";
 
     /** Descripción de Campos */
 
-    private boolean m_onlyCurrentRows = false;
+    protected boolean m_onlyCurrentRows = false;
 
     /** Descripción de Campos */
 
-    private int m_onlyCurrentDays = 1;
+    protected int m_onlyCurrentDays = 1;
 
     /** Descripción de Campos */
 
-    private String m_orderClause = "";
+    protected String m_orderClause = "";
+    
+	/** Max Rows to query or 0 for all	*/
+	protected int					m_maxRows = 0;
 
     /** Descripción de Campos */
 
-    private int m_indexKeyColumn = -1;
+    protected int m_indexKeyColumn = -1;
 
     /** Descripción de Campos */
 
-    private int m_indexColorColumn = -1;
+    protected int m_indexColorColumn = -1;
 
     /** Descripción de Campos */
 
-    private int m_indexProcessedColumn = -1;
+    protected int m_indexProcessedColumn = -1;
 
     /** Descripción de Campos */
 
-    private int m_indexActiveColumn = -1;
+    protected int m_indexActiveColumn = -1;
 
     /** Descripción de Campos */
 
-    private int m_indexClientColumn = -1;
+    protected int m_indexClientColumn = -1;
 
     /** Descripción de Campos */
 
-    private int m_indexOrgColumn = -1;
+    protected int m_indexOrgColumn = -1;
 
     /** Descripción de Campos */
 
-    private Vector m_dataStatusListeners;
+    protected Vector m_dataStatusListeners;
    
     //Añadido por ConSerTi
-    private boolean exitProccesed=false;
+    protected boolean exitProccesed=false;
 
     /** Descripción de Campos */
 
-    private VetoableChangeSupport m_vetoableChangeSupport = new VetoableChangeSupport( this );
+    protected VetoableChangeSupport m_vetoableChangeSupport = new VetoableChangeSupport( this );
+	protected Thread m_loaderThread;
 
     /** Descripción de Campos */
 
@@ -370,7 +393,7 @@ public final class MTable extends AbstractTableModel implements Serializable {
      * @return
      */
 
-    private String createSelectSql() {
+    protected String createSelectSql() {
     	log.info(" en createSelectSql()" );
         if( (m_fields.size() == 0) || (m_tableName == null) || m_tableName.equals( "" )) {
             return "";
@@ -686,6 +709,69 @@ public final class MTable extends AbstractTableModel implements Serializable {
         return retValue;
     }    // getField
 
+	/**************************************************************************
+	 *	Open Database.
+	 *  if already opened, data is refreshed
+	 *	@param maxRows maximum number of rows or 0 for all
+	 *	@return true if success
+	 */
+	public boolean open (int maxRows)
+	{
+		log.info("MaxRows=" + maxRows);
+		m_maxRows = maxRows;
+		if (m_open)
+		{
+			log.fine("already open");
+			dataRefreshAll();
+			return true;
+		}
+
+		if (m_virtual)
+		{
+			verifyVirtual();
+		}
+
+		//	create m_SQL and m_countSQL
+		createSelectSql();
+		if (m_SQL == null || m_SQL.equals(""))
+		{
+			log.log(Level.SEVERE, "No SQL");
+			return false;
+		}
+
+		//	Start Loading
+		m_loader = new Loader();
+		m_rowCount = m_loader.open(maxRows);
+		if (m_virtual)
+		{
+			m_buffer = null;
+			m_virtualBuffer = new HashMap<Integer, Object[]>(210);
+		}
+		else
+		{
+			m_buffer = new ArrayList<Object[]>(m_rowCount+10);
+		}
+		m_sort = new ArrayList<MSort>(m_rowCount+10);
+		if (m_rowCount > 0)
+		{
+			if (m_rowCount < 1000)
+				m_loader.run();
+			else
+			{
+				m_loaderThread = new Thread(m_loader, "TLoader");
+				m_loaderThread.start();
+			}
+		}
+		else
+			m_loader.close();
+		m_open = true;
+		//
+		m_changed = false;
+		m_rowChanged = -1;
+		m_inserting = false;
+		return true;
+	}	//	open
+    
     /**
      * Descripción de Método
      *
@@ -736,6 +822,25 @@ public final class MTable extends AbstractTableModel implements Serializable {
         return true;
     }    // open
 
+	protected void verifyVirtual()
+	{
+		if (m_indexKeyColumn == -1)
+		{
+			m_virtual = false;
+			return;
+		}
+		MField[] fields = getFields();
+		for(int i = 0; i < fields.length; i++)
+		{
+			if (fields[i].isKey() && i != m_indexKeyColumn)
+			{
+				m_virtual = false;
+				return;
+			}
+		}
+	}
+
+    
     /**
      * Descripción de Método
      *
@@ -865,7 +970,7 @@ public final class MTable extends AbstractTableModel implements Serializable {
      *
      */
 
-    private void dispose() {
+    protected void dispose() {
 
         // MFields
 
@@ -2175,7 +2280,7 @@ public final class MTable extends AbstractTableModel implements Serializable {
      * @throws Exception
      */
 
-    private char dataSavePO( int Record_ID ) throws Exception {
+    protected char dataSavePO( int Record_ID ) throws Exception {
         log.fine( "ID=" + Record_ID );
 
         //
@@ -2383,7 +2488,7 @@ public final class MTable extends AbstractTableModel implements Serializable {
      * @return
      */
 
-    private String getWhereClause( Object[] rowData ) {
+    protected String getWhereClause( Object[] rowData ) {
     	if(rowData == null){
     		return null;
     	}
@@ -2448,11 +2553,11 @@ public final class MTable extends AbstractTableModel implements Serializable {
 
     /** Descripción de Campos */
 
-    private ArrayList m_createSqlColumn = new ArrayList();
+    protected ArrayList m_createSqlColumn = new ArrayList();
 
     /** Descripción de Campos */
 
-    private ArrayList m_createSqlValue = new ArrayList();
+    protected ArrayList m_createSqlValue = new ArrayList();
 
     /**
      * Descripción de Método
@@ -2462,7 +2567,7 @@ public final class MTable extends AbstractTableModel implements Serializable {
      * @param value
      */
 
-    private void createUpdateSql( String columnName,String value ) {
+    protected void createUpdateSql( String columnName,String value ) {
         m_createSqlColumn.add( columnName );
         m_createSqlValue.add( value );
         log.finest( "#" + m_createSqlColumn.size() + " - " + columnName + "=" + value );
@@ -2478,7 +2583,7 @@ public final class MTable extends AbstractTableModel implements Serializable {
      * @return
      */
 
-    private String createUpdateSql( boolean insert,String whereClause ) {
+    protected String createUpdateSql( boolean insert,String whereClause ) {
         StringBuffer sb = new StringBuffer();
         log.info("en createUpdateSql con insert= "+insert+" y whereClause= "+ whereClause);
 
@@ -2533,7 +2638,7 @@ public final class MTable extends AbstractTableModel implements Serializable {
      *
      */
 
-    private void createUpdateSqlReset() {
+    protected void createUpdateSqlReset() {
         m_createSqlColumn = new ArrayList();
         m_createSqlValue  = new ArrayList();
     }    // createUpdateSqlReset
@@ -2547,7 +2652,7 @@ public final class MTable extends AbstractTableModel implements Serializable {
      * @return
      */
 
-    private String getMandatory( Object[] rowData ) {
+    protected String getMandatory( Object[] rowData ) {
 
         // see also => ProcessParameter.saveParameter
 
@@ -2586,14 +2691,14 @@ public final class MTable extends AbstractTableModel implements Serializable {
 
     /** Descripción de Campos */
 
-    private ArrayList m_lobInfo = null;
+    protected ArrayList m_lobInfo = null;
 
     /**
      * Descripción de Método
      *
      */
 
-    private void lobReset() {
+    protected void lobReset() {
         m_lobInfo = null;
     }    // resetLOB
 
@@ -2604,7 +2709,7 @@ public final class MTable extends AbstractTableModel implements Serializable {
      * @param lob
      */
 
-    private void lobAdd( PO_LOB lob ) {
+    protected void lobAdd( PO_LOB lob ) {
         log.fine( "LOB=" + lob );
 
         if( m_lobInfo == null ) {
@@ -2621,7 +2726,7 @@ public final class MTable extends AbstractTableModel implements Serializable {
      * @param whereClause
      */
 
-    private void lobSave( String whereClause ) {
+    protected void lobSave( String whereClause ) {
         if( m_lobInfo == null ) {
             return;
         }
@@ -2972,6 +3077,68 @@ public final class MTable extends AbstractTableModel implements Serializable {
         fireDataStatusIEvent( "Ignored" );
     }    // dataIgnore
 
+	/**
+	 *	Refresh Row - ignore changes
+	 *  @param row row
+	 *  @param fireStatusEvent
+	 */
+	public void dataRefresh (int row, boolean fireStatusEvent)
+	{
+		log.info("Row=" + row);
+
+		if (row < 0 || m_sort.size() == 0 || m_inserting)
+			return;
+
+		MSort sort = (MSort)m_sort.get(row);
+		Object[] rowData = getDataAtRow(row);
+
+		//  ignore
+		dataIgnore();
+
+		//	Create SQL
+		String where = getWhereClause(rowData);
+		if (where == null || where.length() == 0)
+			where = "1=2";
+		String sql = m_SQL_Select + " WHERE " + where;
+		sort = (MSort)m_sort.get(row);
+		Object[] rowDataDB = null;
+		PreparedStatement pstmt = null;
+		ResultSet rs = null;
+		try
+		{
+			pstmt = DB.prepareStatement(sql, null);
+			rs = pstmt.executeQuery();
+			//	only one row
+			if (rs.next())
+				rowDataDB = readData(rs);
+		}
+		catch (SQLException e)
+		{
+			log.log(Level.SEVERE, sql, e);
+			fireTableRowsUpdated(row, row);
+			fireDataStatusEEvent("RefreshError", sql, true);
+			return;
+		}
+		finally
+		{
+			DB.close(rs, pstmt);
+			rs = null;
+			pstmt = null;
+		}
+
+		//	update buffer
+		setDataAtRow(row, rowDataDB);
+		//	info
+		m_rowData = null;
+		m_changed = false;
+		m_rowChanged = -1;
+		m_inserting = false;
+		fireTableRowsUpdated(row, row);
+		if (fireStatusEvent)
+			fireDataStatusIEvent(DATA_REFRESH_MESSAGE, "");
+	}	//	dataRefresh
+
+    
     /**
      * Descripción de Método
      *
@@ -3041,6 +3208,28 @@ public final class MTable extends AbstractTableModel implements Serializable {
         fireDataStatusIEvent( "Refreshed" );
     }    // dataRefresh
 
+	/**
+	 *	Refresh all Rows - ignore changes
+	 *  @param fireStatusEvent
+	 */
+	public void dataRefreshAll(boolean fireStatusEvent)
+	{
+		log.info("");
+		m_inserting = false;	//	should not happen
+		dataIgnore();
+		close(false);
+		open(m_maxRows);
+		//	Info
+		m_rowData = null;
+		m_changed = false;
+		m_rowChanged = -1;
+		m_inserting = false;
+		fireTableDataChanged();
+		if (fireStatusEvent)
+			fireDataStatusIEvent(DATA_REFRESH_MESSAGE, "");
+	}	//	dataRefreshAll
+
+    
     /**
      * Descripción de Método
      *
@@ -3213,7 +3402,7 @@ public final class MTable extends AbstractTableModel implements Serializable {
      * @return
      */
 
-    private int[] getClientOrg( int row ) {
+    protected int[] getClientOrg( int row ) {
         int AD_Client_ID = -1;
 
         if( m_indexClientColumn != -1 ) {
@@ -3314,7 +3503,7 @@ public final class MTable extends AbstractTableModel implements Serializable {
      * @return
      */
 
-    private Object[] readData( ResultSet rs ) {
+    protected Object[] readData( ResultSet rs ) {
         int      size        = m_fields.size();
         Object[] rowData     = new Object[ size ];
         String   columnName  = null;
@@ -3439,7 +3628,7 @@ public final class MTable extends AbstractTableModel implements Serializable {
      * @param e
      */
 
-    private void fireDataStatusChanged( DataStatusEvent e ) {
+    protected void fireDataStatusChanged( DataStatusEvent e ) {
         if( m_dataStatusListeners != null ) {
             Vector listeners = m_dataStatusListeners;
             int    count     = listeners.size();
@@ -3457,7 +3646,7 @@ public final class MTable extends AbstractTableModel implements Serializable {
      * @return
      */
 
-    private DataStatusEvent createDSE() {
+    protected DataStatusEvent createDSE() {
         boolean changed = m_changed;
 
         if( m_rowChanged != -1 ) {
@@ -3583,6 +3772,73 @@ public final class MTable extends AbstractTableModel implements Serializable {
 
     class Loader extends Thread implements Serializable {
 
+		/**
+		 *	Open ResultSet
+		 *	@param maxRows maximum number of rows or 0 for all
+		 *	@return number of records
+		 */
+		protected int open (int maxRows)
+		{
+		//	log.config( "MTable Loader.open");
+			//	Get Number of Rows
+			int rows = 0;
+			PreparedStatement pstmt = null;
+			ResultSet rs = null;			
+			try
+			{
+				pstmt = DB.prepareStatement(m_SQL_Count, null);
+				setParameter (pstmt, true);
+				rs = pstmt.executeQuery();
+				if (rs.next())
+					rows = rs.getInt(1);
+			}
+			catch (SQLException e0)
+			{
+				//	Zoom Query may have invalid where clause
+				if (DBException.isInvalidIdentifierError(e0))
+					log.warning("Count - " + e0.getLocalizedMessage() + "\nSQL=" + m_SQL_Count);
+				else
+					log.log(Level.SEVERE, "Count SQL=" + m_SQL_Count, e0);
+				return 0;
+			}
+			finally
+			{
+				DB.close(rs, pstmt);				
+			}
+			StringBuffer info = new StringBuffer("Rows=");
+			info.append(rows);
+			if (rows == 0)
+				info.append(" - ").append(m_SQL_Count);
+						
+			//postgresql need trx to use cursor based resultset
+			String trxName = m_virtual ? Trx.createTrxName("Loader") : null;
+			trx  = trxName != null ? Trx.get(trxName, true) : null;
+			//	open Statement (closed by Loader.close)
+			try
+			{
+				m_pstmt = DB.prepareStatement(m_SQL, trxName);
+				if (maxRows > 0 && rows > maxRows)
+				{
+					m_pstmt.setMaxRows(maxRows);
+					info.append(" - MaxRows=").append(maxRows);
+					rows = maxRows;
+				}
+				//ensure not all row is fectch into memory for virtual table
+				if (m_virtual)
+					m_pstmt.setFetchSize(100);
+				setParameter (m_pstmt, false);
+				m_rs = m_pstmt.executeQuery();
+			}
+			catch (SQLException e)
+			{
+				log.log(Level.SEVERE, m_SQL, e);
+				return 0;
+			}
+			log.fine(info.toString());
+			return rows;
+		}	//	open
+
+    	
         /**
          * Constructor de la clase ...
          *
@@ -3594,11 +3850,9 @@ public final class MTable extends AbstractTableModel implements Serializable {
 
         /** Descripción de Campos */
 
-        private PreparedStatement m_pstmt = null;
-
-        /** Descripción de Campos */
-
-        private ResultSet m_rs = null;
+        protected PreparedStatement m_pstmt = null;
+        protected ResultSet m_rs = null;
+        protected Trx trx = null;
 
         /**
          * Descripción de Método
@@ -3674,7 +3928,7 @@ public final class MTable extends AbstractTableModel implements Serializable {
          *
          */
 
-        private void close() {
+        protected void close() {
 
             // log.config( "MTable Loader.close");
 
@@ -3764,7 +4018,7 @@ public final class MTable extends AbstractTableModel implements Serializable {
          * @param countSQL
          */
 
-        private void setParameter( PreparedStatement pstmt,boolean countSQL ) {
+        protected void setParameter( PreparedStatement pstmt,boolean countSQL ) {
             if( (m_parameterSELECT.size() == 0) && (m_parameterWHERE.size() == 0) ) {
                 return;
             }
@@ -3824,6 +4078,242 @@ public final class MTable extends AbstractTableModel implements Serializable {
             }
         }    // setParameter
     }    // Loader
+    
+	protected void setDataAtRow(int row, Object[] rowData) {
+		MSort sort = m_sort.get(row);
+		if (m_virtual)
+		{
+			if (sort.index != NEW_ROW_ID && !(m_virtualBuffer.containsKey(sort.index)))
+			{
+				fillBuffer(row, DEFAULT_FETCH_SIZE);
+			}
+			m_virtualBuffer.put(sort.index, rowData);
+		}
+		else
+		{
+			m_buffer.set(sort.index, rowData);
+		}
+
+	}
+
+	protected Object[] getDataAtRow(int row)
+	{
+		return getDataAtRow(row, true);
+	}
+
+	protected Object[] getDataAtRow(int row, boolean fetchIfNotFound)
+	{
+		MSort sort = (MSort)m_sort.get(row);
+		Object[] rowData = null;
+		if (m_virtual)
+		{
+			if (sort.index != NEW_ROW_ID && !(m_virtualBuffer.containsKey(sort.index)) && fetchIfNotFound)
+			{
+				fillBuffer(row, DEFAULT_FETCH_SIZE);
+			}
+			rowData = (Object[])m_virtualBuffer.get(sort.index);
+		}
+		else
+		{
+			rowData = (Object[])m_buffer.get(sort.index);
+		}
+		return rowData;
+	}
+
+	
+	/**
+	 *  Create and fire Data Status Error Event
+	 *  @param AD_Message message
+	 *  @param info info
+	 *  @param isError error
+	 */
+	protected void fireDataStatusEEvent (String AD_Message, String info, boolean isError)
+	{
+	//	org.compiere.util.Trace.printStack();
+		//
+		DataStatusEvent e = createDSE();
+		e.setInfo(AD_Message, info, isError, !isError);
+		if (isError)
+			log.saveWarning(AD_Message, info);
+		fireDataStatusChanged (e);
+	}   //  fireDataStatusEvent
+
+	protected void fillBuffer(int start, int fetchSize)
+	{
+		//adjust start if needed
+		if (start > 0)
+		{
+			if (start + fetchSize >= m_sort.size())
+			{
+				start = start - (fetchSize - ( m_sort.size() - start ));
+				if (start < 0)
+					start = 0;
+			}
+		}
+		StringBuffer sql = new StringBuffer();
+		sql.append(m_SQL_Select)
+			.append(" WHERE ")
+			.append(getKeyColumnName())
+			.append(" IN (");
+		Map<Integer, Integer>rowmap = new LinkedHashMap<Integer, Integer>(DEFAULT_FETCH_SIZE);
+		for(int i = start; i < start+fetchSize && i < m_sort.size(); i++)
+		{
+			if(i > start)
+				sql.append(",");
+			sql.append(m_sort.get(i).index);
+			rowmap.put(m_sort.get(i).index, i);
+		}
+		sql.append(")");
+
+		Object[] newRow = m_virtualBuffer.get(NEW_ROW_ID);
+		//cache changed row
+		Object[] changedRow = m_rowChanged >= 0 ? getDataAtRow(m_rowChanged, false) : null;
+		m_virtualBuffer = new HashMap<Integer, Object[]>(210);
+		if (newRow != null && newRow.length > 0)
+			m_virtualBuffer.put(NEW_ROW_ID, newRow);
+		if (changedRow != null && changedRow.length > 0)
+		{
+			if (changedRow[m_indexKeyColumn] != null && (Integer)changedRow[m_indexKeyColumn] > 0)
+			{
+				m_virtualBuffer.put((Integer)changedRow[m_indexKeyColumn], changedRow);
+			}
+		}
+
+		PreparedStatement stmt = null;
+		ResultSet rs = null;
+		try
+		{
+			stmt = DB.prepareStatement(sql.toString(), null);
+			rs = stmt.executeQuery();
+			while(rs.next())
+			{
+				Object[] data = readData(rs);
+				rowmap.remove(data[m_indexKeyColumn]);
+				m_virtualBuffer.put((Integer)data[m_indexKeyColumn], data);
+			}
+			if (!rowmap.isEmpty())
+			{
+				List<Integer> toremove = new ArrayList<Integer>();
+				for(Map.Entry<Integer, Integer> entry : rowmap.entrySet())
+				{
+					toremove.add(entry.getValue());
+				}
+				Collections.reverse(toremove);
+				for(Integer row : toremove)
+				{
+					m_sort.remove(row);
+				}
+			}
+		}
+		catch (SQLException e)
+		{
+			log.log(Level.SEVERE, e.getLocalizedMessage(), e);
+		}
+		finally
+		{
+			DB.close(rs, stmt);
+		}
+	}
+
+	/**
+	 *  Create and fire Data Status Info Event
+	 *  @param AD_Message message
+	 *  @param info additional info
+	 */
+	protected void fireDataStatusIEvent (String AD_Message, String info)
+	{
+		DataStatusEvent e = createDSE();
+		e.setInfo(AD_Message, info, false,false);
+		fireDataStatusChanged (e);
+	}   //  fireDataStatusEvent
+
+	
+	// verify if the current record has changed
+	public boolean hasChanged(int row) {
+		// not so aggressive (it can has still concurrency problems)
+		// compare Updated, IsProcessed
+		if (getKeyID(row) > 0) {
+			int colUpdated = findColumn("Updated");
+			int colProcessed = findColumn("Processed");
+			
+			boolean hasUpdated = (colUpdated > 0);
+			boolean hasProcessed = (colProcessed > 0);
+			
+			String columns = null;
+			if (hasUpdated && hasProcessed) {
+				columns = new String("Updated, Processed");
+			} else if (hasUpdated) {
+				columns = new String("Updated");
+			} else if (hasProcessed) {
+				columns = new String("Processed");
+			} else {
+				// no columns updated or processed to commpare
+				return false;
+			}
+
+	    	Timestamp dbUpdated = null;
+	    	String dbProcessedS = null;
+	    	PreparedStatement pstmt = null;
+	    	ResultSet rs = null;
+	    	String sql = "SELECT " + columns + " FROM " + m_tableName + " WHERE " + m_tableName + "_ID=?";
+	    	try
+	    	{
+	    		pstmt = DB.prepareStatement(sql, null);
+	    		pstmt.setInt(1, getKeyID(row));
+	    		rs = pstmt.executeQuery();
+	    		if (rs.next()) {
+	    			int idx = 1;
+	    			if (hasUpdated)
+	    				dbUpdated = rs.getTimestamp(idx++);
+	    			if (hasProcessed)
+	    				dbProcessedS = rs.getString(idx++);
+	    		}
+	    		else
+	    			log.info("No Value " + sql);
+	    	}
+	    	catch (SQLException e)
+	    	{
+	    		throw new DBException(e, sql);
+	    	}
+	    	finally
+	    	{
+	    		DB.close(rs, pstmt);
+	    		rs = null; pstmt = null;
+	    	}
+	    	
+	    	if (hasUpdated) {
+				Timestamp memUpdated = null;
+				memUpdated = (Timestamp) getOldValue(row, colUpdated);
+				if (memUpdated == null)
+					memUpdated = (Timestamp) getValueAt(row, colUpdated);
+
+				if (memUpdated != null && ! memUpdated.equals(dbUpdated))
+					return true;
+	    	}
+	    	
+	    	if (hasProcessed) {
+				Boolean memProcessed = null;
+				memProcessed = (Boolean) getOldValue(row, colProcessed);
+				if (memProcessed == null)
+					memProcessed = (Boolean) getValueAt(row, colProcessed);
+		    	
+				Boolean dbProcessed = Boolean.TRUE;
+				if (! dbProcessedS.equals("Y"))
+					dbProcessed = Boolean.FALSE;
+				if (memProcessed != null && ! memProcessed.equals(dbProcessed))
+					return true;
+	    	}
+		}
+
+		// @TODO: configurable aggressive - compare each column with the DB
+		return false;
+	}
+
+	public int getNewRow()
+	{
+		return m_newRow;
+	}
+	
 }        // MTable
 
 

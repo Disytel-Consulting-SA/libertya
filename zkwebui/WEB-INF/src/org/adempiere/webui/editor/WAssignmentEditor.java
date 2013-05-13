@@ -10,7 +10,7 @@ import org.adempiere.webui.component.EditorBox;
 import org.adempiere.webui.event.ValueChangeEvent;
 import org.adempiere.webui.window.InfoSchedule;
 import org.adempiere.webui.window.WAssignmentDialog;
-import org.openXpertya.model.GridField;
+import org.openXpertya.model.MField;
 import org.openXpertya.model.MResourceAssignment;
 import org.openXpertya.util.CLogger;
 import org.openXpertya.util.DB;
@@ -32,8 +32,8 @@ public class WAssignmentEditor extends WEditor {
 	private DateFormat			m_dateFormat = DisplayType.getDateFormat(DisplayType.DateTime);
 	private NumberFormat		m_qtyFormat = DisplayType.getNumberFormat(DisplayType.Quantity);
 
-	public WAssignmentEditor(GridField gridField) {
-		super(new EditorBox(), gridField);
+	public WAssignmentEditor(MField mField) {
+		super(new EditorBox(), mField);
 		
 		initComponents();
 	}
@@ -149,7 +149,7 @@ public class WAssignmentEditor extends WEditor {
 			if (ma != null && ma.getS_ResourceAssignment_ID() != 0)
 			{
 				setValue(new Integer(ma.getS_ResourceAssignment_ID()));
-				ValueChangeEvent vce = new ValueChangeEvent(this, gridField.getColumnName(), oldValue, getValue());
+				ValueChangeEvent vce = new ValueChangeEvent(this, mField.getColumnName(), oldValue, getValue());
 				fireValueChange(vce);
 			}
 		}

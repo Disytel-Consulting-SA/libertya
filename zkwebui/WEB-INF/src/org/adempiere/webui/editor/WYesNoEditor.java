@@ -25,7 +25,7 @@ import org.adempiere.webui.event.ContextMenuEvent;
 import org.adempiere.webui.event.ContextMenuListener;
 import org.adempiere.webui.event.ValueChangeEvent;
 import org.adempiere.webui.window.WFieldRecordInfo;
-import org.openXpertya.model.GridField;
+import org.openXpertya.model.MField;
 import org.openXpertya.util.CLogger;
 import org.openXpertya.util.Env;
 import org.openXpertya.util.Msg;
@@ -51,9 +51,9 @@ public class WYesNoEditor extends WEditor implements ContextMenuListener
     private boolean oldValue = false;
 	private WEditorPopupMenu popupMenu;
 
-    public WYesNoEditor(GridField gridField)
+    public WYesNoEditor(MField mField)
     {
-        super(new Checkbox(), gridField);
+        super(new Checkbox(), mField);
         init();
     }
 
@@ -66,8 +66,8 @@ public class WYesNoEditor extends WEditor implements ContextMenuListener
 
 	private void init()
     {
-		if (gridField != null)
-			getComponent().setLabel(gridField.getHeader());
+		if (mField != null)
+			getComponent().setLabel(mField.getHeader());
 		else
 			getComponent().setLabel(label.getValue());
         label.setValue("");
@@ -75,7 +75,7 @@ public class WYesNoEditor extends WEditor implements ContextMenuListener
         
         popupMenu = new WEditorPopupMenu(false, false, true);
 		popupMenu.addMenuListener(this);
-		if (gridField != null && gridField.getGridTab() != null)
+		if (mField != null && mField.getGridTab() != null)
 		{
 			WFieldRecordInfo.addMenu(popupMenu);
 		}
@@ -95,7 +95,7 @@ public class WYesNoEditor extends WEditor implements ContextMenuListener
 
     public void propertyChange(PropertyChangeEvent evt)
     {
-        if (evt.getPropertyName().equals(org.openXpertya.model.GridField.PROPERTY))
+        if (evt.getPropertyName().equals(org.openXpertya.model.MField.PROPERTY))
         {
             setValue(evt.getNewValue());
         }
@@ -165,7 +165,7 @@ public class WYesNoEditor extends WEditor implements ContextMenuListener
 	{
 		if (WEditorPopupMenu.CHANGE_LOG_EVENT.equals(evt.getContextEvent()))
 		{
-			WFieldRecordInfo.start(gridField);
+			WFieldRecordInfo.start(mField);
 		}
 	}
 

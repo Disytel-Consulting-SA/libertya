@@ -34,7 +34,7 @@ import org.adempiere.webui.component.Listbox;
 import org.adempiere.webui.component.Panel;
 import org.adempiere.webui.component.SimpleListModel;
 import org.adempiere.webui.window.FDialog;
-import org.openXpertya.model.GridTab;
+import org.openXpertya.model.MTab;
 import org.openXpertya.model.MRole;
 import org.openXpertya.util.CLogger;
 import org.openXpertya.util.DB;
@@ -76,15 +76,15 @@ public class ADSortTab extends Panel implements IADTabpanel
 	 *	Sort Tab Constructor
 	 *
 	 *  @param WindowNo Window No
-	 *  @param GridTab
+	 *  @param MTab
 	 */
-	public ADSortTab(int WindowNo, GridTab gridTab)
+	public ADSortTab(int WindowNo, MTab mTab)
 	{
-		log.config("SortOrder=" + gridTab.getAD_ColumnSortOrder_ID() + ", SortYesNo=" + gridTab.getAD_ColumnSortYesNo_ID());
+		log.config("SortOrder=" + mTab.getAD_ColumnSortOrder_ID() + ", SortYesNo=" + mTab.getAD_ColumnSortYesNo_ID());
 		m_WindowNo = WindowNo;
-		this.gridTab = gridTab;
+		this.mTab = mTab;
 
-		m_AD_Table_ID = gridTab.getAD_Table_ID();
+		m_AD_Table_ID = mTab.getAD_Table_ID();
 		this.setHeight("100%");
 	}	//	VSortTab
 
@@ -134,7 +134,7 @@ public class ADSortTab extends Panel implements IADTabpanel
 	Listbox noList = new Listbox();
 	Listbox yesList = new Listbox();
 
-	private GridTab gridTab;
+	private MTab mTab;
 	private boolean uiCreated;
 
 	/**
@@ -842,7 +842,7 @@ public class ADSortTab extends Panel implements IADTabpanel
 		try
 		{
 			init();
-			dynInit (gridTab.getAD_Table_ID(), gridTab.getAD_ColumnSortOrder_ID(), gridTab.getAD_ColumnSortYesNo_ID());
+			dynInit (mTab.getAD_Table_ID(), mTab.getAD_ColumnSortOrder_ID(), mTab.getAD_ColumnSortYesNo_ID());
 		}
 		catch(Exception e)
 		{
@@ -858,23 +858,23 @@ public class ADSortTab extends Panel implements IADTabpanel
 	}
 
 	public String getDisplayLogic() {
-		return gridTab.getDisplayLogic();
+		return mTab.getDisplayLogic();
 	}
 
-	public GridTab getGridTab() {
-		return gridTab;
+	public MTab getGridTab() {
+		return mTab;
 	}
 
 	public int getTabLevel() {
-		return gridTab.getTabLevel();
+		return mTab.getTabLevel();
 	}
 
 	public String getTitle() {
-		return gridTab.getName();
+		return mTab.getName();
 	}
 
 	public boolean isCurrent() {
-		return gridTab != null ? gridTab.isCurrent() : false;
+		return mTab != null ? mTab.isCurrent() : false;
 	}
 
 	public void query() {

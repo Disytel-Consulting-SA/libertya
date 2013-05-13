@@ -27,7 +27,7 @@ import org.adempiere.webui.event.ContextMenuListener;
 import org.adempiere.webui.event.ValueChangeEvent;
 import org.adempiere.webui.window.WFieldRecordInfo;
 import org.adempiere.webui.window.WLocationDialog;
-import org.openXpertya.model.GridField;
+import org.openXpertya.model.MField;
 import org.openXpertya.model.MLocation;
 import org.openXpertya.model.MLocationLookup;
 import org.openXpertya.util.CLogger;
@@ -54,7 +54,7 @@ public class WLocationEditor extends WEditor implements EventListener, PropertyC
 	private WEditorPopupMenu popupMenu;
     
     /**
-     * Constructor without GridField
+     * Constructor without MField
      * @param columnName    column name
      * @param mandatory     mandatory
      * @param isReadOnly    read only
@@ -73,11 +73,11 @@ public class WLocationEditor extends WEditor implements EventListener, PropertyC
 
     /**
      * 
-     * @param gridField
+     * @param mField
      */
-    public WLocationEditor(GridField gridField) {
-		super(new Locationbox(), gridField);
-		m_Location = (MLocationLookup)gridField.getLookup();
+    public WLocationEditor(MField mField) {
+		super(new Locationbox(), mField);
+		m_Location = (MLocationLookup)mField.getLookup();
 	}
 
     private void init()
@@ -86,7 +86,7 @@ public class WLocationEditor extends WEditor implements EventListener, PropertyC
     	
     	popupMenu = new WEditorPopupMenu(false, false, true);
     	popupMenu.addMenuListener(this);
-    	if (gridField != null && gridField.getGridTab() != null)
+    	if (mField != null && mField.getGridTab() != null)
 		{
 			WFieldRecordInfo.addMenu(popupMenu);
 		}
@@ -157,7 +157,7 @@ public class WLocationEditor extends WEditor implements EventListener, PropertyC
      */
     public void propertyChange (PropertyChangeEvent evt)
     {
-        if (evt.getPropertyName().equals(org.openXpertya.model.GridField.PROPERTY))
+        if (evt.getPropertyName().equals(org.openXpertya.model.MField.PROPERTY))
             setValue(evt.getNewValue());
     }
     
@@ -204,7 +204,7 @@ public class WLocationEditor extends WEditor implements EventListener, PropertyC
 	public void onMenu(ContextMenuEvent evt) {
 		if (WEditorPopupMenu.CHANGE_LOG_EVENT.equals(evt.getContextEvent()))
 		{
-			WFieldRecordInfo.start(gridField);
+			WFieldRecordInfo.start(mField);
 		}
 	}
 }

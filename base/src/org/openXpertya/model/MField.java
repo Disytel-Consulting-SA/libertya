@@ -32,6 +32,7 @@ import java.util.logging.Level;
 
 import javax.swing.JOptionPane;
 
+import org.openXpertya.model.MTab;
 import org.openXpertya.util.CLogMgt;
 import org.openXpertya.util.CLogger;
 import org.openXpertya.util.DB;
@@ -48,7 +49,7 @@ import org.openXpertya.util.Evaluator;
  * @author     Equipo de Desarrollo de openXpertya    
  */
 
-public final class MField implements Serializable,Evaluatee {
+public class MField implements Serializable,Evaluatee {
 
     /**
      * Constructor de la clase ...
@@ -68,8 +69,10 @@ public final class MField implements Serializable,Evaluatee {
 
     /** Descripción de Campos */
 
-    private MFieldVO m_vo;
+    protected MFieldVO m_vo;
 
+	protected MTab m_gridTab;
+    
     /**
      * Descripción de Método
      *
@@ -92,11 +95,11 @@ public final class MField implements Serializable,Evaluatee {
 
     /** Descripción de Campos */
 
-    private Lookup m_lookup = null;
+    protected Lookup m_lookup = null;
 
     /** Descripción de Campos */
 
-    private boolean m_inserting = false;
+    protected boolean m_inserting = false;
 
     /** Descripción de Campos */
 
@@ -104,31 +107,31 @@ public final class MField implements Serializable,Evaluatee {
 
     /** Descripción de Campos */
 
-    private Object m_value = null;
+    protected Object m_value = null;
 
     /** Descripción de Campos */
 
-    private static Object s_oldValue = new Object();
+    protected static Object s_oldValue = new Object();
 
     /** Descripción de Campos */
 
-    private Object m_oldValue = s_oldValue;
+    protected Object m_oldValue = s_oldValue;
 
     /** Descripción de Campos */
 
-    private boolean m_valueNoFire = true;
+    protected boolean m_valueNoFire = true;
 
     /** Descripción de Campos */
 
-    private boolean m_error = false;
+    protected boolean m_error = false;
 
     /** Descripción de Campos */
 
-    private boolean m_parentChecked = false;
+    protected boolean m_parentChecked = false;
 
     /** Descripción de Campos */
 
-    private PropertyChangeSupport m_propertyChangeListeners = new PropertyChangeSupport( this );
+    protected PropertyChangeSupport m_propertyChangeListeners = new PropertyChangeSupport( this );
 
     /** Descripción de Campos */
 
@@ -140,17 +143,17 @@ public final class MField implements Serializable,Evaluatee {
 
     /** Descripción de Campos */
 
-    private String m_errorValue = null;
+    protected String m_errorValue = null;
 
     /** Descripción de Campos */
 
-    private boolean m_errorValueFlag = false;
+    protected boolean m_errorValueFlag = false;
 
     /** Descripción de Campos */
 
-    private static CLogger log = CLogger.getCLogger( MField.class );
+    protected static CLogger log = CLogger.getCLogger( MField.class );
     
-    private boolean changed = false;
+    protected boolean changed = false;
 
     /**
      * Descripción de Método
@@ -322,7 +325,7 @@ public final class MField implements Serializable,Evaluatee {
      * @param parseString
      */
 
-    private static void parseDepends( ArrayList list,String parseString ) {
+    protected static void parseDepends( ArrayList list,String parseString ) {
         if( (parseString == null) || (parseString.length() == 0) ) {
             return;
         }
@@ -719,7 +722,7 @@ public final class MField implements Serializable,Evaluatee {
      * @return
      */
 
-    private Object createDefault( String value ) {
+    protected Object createDefault( String value ) {
 
         // true NULL
 
@@ -1689,6 +1692,305 @@ public final class MField implements Serializable,Evaluatee {
 	public boolean isChanged() {
 		return changed;
 	}
+	
+	/**
+	 * @return MTab
+	 */
+	public MTab getGridTab()
+	{
+		return m_gridTab;
+	}
+
+	/**
+	 * 	Is Encrypted Column (data)
+	 *	@return encrypted column
+	 */
+	public boolean isEncryptedColumn()
+	{
+		return m_vo.IsEncryptedColumn;
+	}
+
+	
+	/**
+	    *  Feature Request FR [ 1757088 ]
+		*  Get the id tab include
+		*  @return id Tab
+		*/
+		public int getIncluded_Tab_ID ()
+		{	 
+		 return m_vo.Included_Tab_ID;
+		}
+
+
+		/**
+		 * 	Is Autocomplete
+		 *	@return true if autocomplete
+		 */
+		public boolean isAutocomplete() {
+			return m_vo.IsAutocomplete;
+		}
+
+		
+		/**
+		 * Returns a list containing all existing entries of this field
+		 * with the actual AD_Org_ID and AD_Client_ID.
+		 * @return List of existing entries for this field
+		 */
+		public List<String> getEntries() {
+			ArrayList<String> list = new ArrayList<String>();
+			PreparedStatement pstmt1;
+			PreparedStatement pstmt2;
+			String sql = "";
+			
+			try
+			{
+				String tableName = null;
+				String columnName = null;
+				int AD_Org_ID = Env.getAD_Org_ID(Env.getCtx());
+				int AD_Client_ID = Env.getAD_Client_ID(Env.getCtx());
+				sql = "SELECT t.TableName, c.ColumnName " +
+						" FROM AD_COLUMN c INNER JOIN AD_Table t ON (c.AD_Table_ID=t.AD_Table_ID)" +
+						" WHERE AD_Column_ID=?";
+				pstmt1 = DB.prepareStatement(sql, null);
+				pstmt1.setInt(1, getAD_Column_ID());
+				ResultSet rs1 = pstmt1.executeQuery();
+				if (rs1.next())
+				{
+					tableName = rs1.getString(1);
+					columnName = rs1.getString(2);
+								}
+				DB.close(rs1, pstmt1);
+				
+				if (tableName != null && columnName != null) {
+					sql = "SELECT DISTINCT "  + columnName + " FROM " + tableName + " WHERE AD_Client_ID=? "
+					+ " AND AD_Org_ID=?";
+					pstmt2 = DB.prepareStatement(sql, null);
+					pstmt2.setInt(1, AD_Client_ID);
+					pstmt2.setInt(2, AD_Org_ID);
+					
+					ResultSet rs2 = pstmt2.executeQuery();
+					while (rs2.next())
+					{
+						list.add(rs2.getString(1));
+					}
+					DB.close(rs2, pstmt2);
+				}
+			}
+			catch (Exception e)
+			{
+				log.log(Level.SEVERE, sql, e);
+			}
+			
+			
+			return list;
+		}
+
+
+		/**
+		 * Restore the backup value if any
+		 * @author teo_sarca [ 1699826 ]
+		 */
+		public void restoreValue() {
+			if (m_isBackupValue) {
+				if (isParentTabField())
+				{
+					if (CLogMgt.isLevelFinest())
+						log.finest("Restore " + m_vo.WindowNo + "|" + m_vo.TabNo + "|" + m_vo.ColumnName + "=" + m_backupValue);
+					Env.setContext(m_vo.ctx, m_vo.WindowNo, m_vo.TabNo, m_vo.ColumnName, m_backupValue);
+				}
+				else
+				{
+					if (CLogMgt.isLevelFinest())
+						log.finest("Restore " + m_vo.WindowNo + "|" + m_vo.ColumnName + "=" + m_backupValue);
+					Env.setContext(m_vo.ctx, m_vo.WindowNo, m_vo.ColumnName, m_backupValue);
+				}
+			}
+		}
+
+		/** Initial context value for this field - teo_sarca [ 1699826 ] */
+		protected String m_backupValue = null;
+		
+		/** Is the initial context value for this field backup ? - teo_sarca [ 1699826 ] */
+		protected boolean m_isBackupValue = false;
+
+		/**
+		 * 	Get AD_Reference_Value_ID
+		 *	@return reference value
+		 */
+		public int getAD_Reference_Value_ID()
+		{
+			return m_vo.AD_Reference_Value_ID;
+		}
+
+		/**
+		 * 	Get AD_Tab_ID
+		 *	@return tab
+		 */
+		public int getAD_Tab_ID()
+		{
+			return m_vo.AD_Tab_ID;
+		}
+
+		
+		/**
+		 *	Is parameter Editable - checks if parameter is Read Only
+		 *  @param checkContext if true checks Context
+		 *  @return true, if editable
+		 */
+		public boolean isEditablePara(boolean checkContext) {
+			if (checkContext && m_vo.ReadOnlyLogic.length() > 0)
+			{
+				boolean retValue = !Evaluator.evaluateLogic(this, m_vo.ReadOnlyLogic);
+				log.finest(m_vo.ColumnName + " R/O(" + m_vo.ReadOnlyLogic + ") => R/W-" + retValue);
+				if (!retValue)
+					return false;
+			}
+
+			//  ultimately visibility decides
+			return isDisplayed (checkContext);
+		}
+
+		/**
+		 *  Get Column Name or SQL .. with/without AS
+		 *  @param withAS include AS ColumnName for virtual columns in select statements
+		 *  @return column name
+		 */
+		public String getColumnSQL(boolean withAS)
+		{
+			if (m_vo.ColumnSQL != null && m_vo.ColumnSQL.length() > 0)
+			{
+				if (withAS)
+					return m_vo.ColumnSQL + " AS " + m_vo.ColumnName;
+				else
+					return m_vo.ColumnSQL;
+			}
+			return m_vo.ColumnName;
+		}	//	getColumnSQL
+
+		/**
+		 * 	Get Field Group Type
+		 *	@return field group type
+		 */
+		public String getFieldGroupType()
+		{
+			return m_vo.FieldGroupType;
+		}
+
+		/**
+		 * 
+		 * @return true if this field (m_vo.ColumnName) also exist in parent tab
+		 */
+		protected boolean isParentTabField()
+		{
+			return isParentTabField(m_vo.ColumnName);
+		}
+
+		/**
+		 * @param columnName
+		 * @return true if columnName also exist in parent tab
+		 */
+		protected boolean isParentTabField(String columnName)
+		{
+			if (m_gridTab == null)
+				return false;
+			MTab parentTab = m_gridTab.getParentTab();
+			if (parentTab == null)
+				return false;
+			return parentTab.getField(columnName) != null;
+		}
+
+		/**
+		 * Get the default state of collapse field group type
+		 * @param collapseDefaultState
+		 */
+		public boolean getIsCollapsedByDefault() {
+			return m_vo.IsCollapsedByDefault;
+		}
+
+		/**
+		 * 	Is Always Updateable
+		 *	@return true if always updateable
+		 */
+		public boolean isAlwaysUpdateable()
+		{
+			if (isVirtualColumn() || !m_vo.IsUpdateable)
+				return false;
+			return m_vo.IsAlwaysUpdateable;
+		}
+
+		/**
+		 * Update env. context with current value
+		 */
+		public void updateContext() {
+			//	Set Context
+			if (m_vo.displayType == DisplayType.Text 
+				|| m_vo.displayType == DisplayType.Memo
+				|| m_vo.displayType == DisplayType.TextLong
+				|| m_vo.displayType == DisplayType.Binary
+				|| m_vo.displayType == DisplayType.RowID
+				|| isEncrypted())
+				;	//	ignore
+			else if (m_value instanceof Boolean)
+			{
+				backupValue(); // teo_sarca [ 1699826 ]
+				if (!isParentTabField())
+				{
+					Env.setContext(m_vo.ctx, m_vo.WindowNo, m_vo.ColumnName, 
+						((Boolean)m_value).booleanValue());
+				}
+				Env.setContext(m_vo.ctx, m_vo.WindowNo, m_vo.TabNo, m_vo.ColumnName, 
+						m_value==null ? null : (((Boolean)m_value) ? "Y" : "N"));
+			}
+			else if (m_value instanceof Timestamp)
+			{
+				backupValue(); // teo_sarca [ 1699826 ]
+				if (!isParentTabField())
+				{
+					Env.setContext(m_vo.ctx, m_vo.WindowNo, m_vo.ColumnName, (Timestamp)m_value);
+				}
+				Env.setContext(m_vo.ctx, m_vo.WindowNo, m_vo.TabNo, m_vo.ColumnName, 
+						m_value==null ? null : m_value.toString().substring(0, m_value.toString().indexOf(".")));
+			}
+			else
+			{
+				backupValue(); // teo_sarca [ 1699826 ]
+				if (!isParentTabField())
+				{
+					Env.setContext(m_vo.ctx, m_vo.WindowNo, m_vo.ColumnName, 
+						m_value==null ? null : m_value.toString());
+				}
+				Env.setContext(m_vo.ctx, m_vo.WindowNo, m_vo.TabNo, m_vo.ColumnName, 
+					m_value==null ? null : m_value.toString());
+			}		
+		}
+
+		/**
+		 * Backup the context value
+		 * @author teo_sarca [ 1699826 ]
+		 */
+		protected final void backupValue() {
+			if (!m_isBackupValue) {
+				m_backupValue = get_ValueAsString(m_vo.ColumnName);
+				if (CLogMgt.isLevelFinest())
+					log.finest("Backup " + m_vo.WindowNo + "|" + m_vo.ColumnName + "=" + m_backupValue);
+				m_isBackupValue = true;
+			}
+		}
+		
+		/**
+		 * 	Is Encrypted Field (display) or obscured
+		 *	@return encrypted field
+		 */
+		public boolean isEncrypted()
+		{
+			if (m_vo.IsEncryptedField)
+				return true;
+			String ob = getObscureType();
+			if (ob != null && ob.length() > 0)
+				return true;
+			return m_vo.ColumnName.equals("Password");
+		}
+
 }    // MField
 
 

@@ -23,7 +23,7 @@ import java.util.logging.Level;
 
 import org.adempiere.webui.component.FilenameBox;
 import org.adempiere.webui.event.ValueChangeEvent;
-import org.openXpertya.model.GridField;
+import org.openXpertya.model.MField;
 import org.openXpertya.util.CLogger;
 import org.zkoss.util.media.Media;
 import org.zkoss.zk.ui.event.Event;
@@ -43,9 +43,9 @@ public class WFilenameEditor extends WEditor
 
 	private String oldValue;
 
-	public WFilenameEditor(GridField gridField)
+	public WFilenameEditor(MField mField)
 	{
-		super(new FilenameBox(), gridField);
+		super(new FilenameBox(), mField);
 		getComponent().setButtonImage("/images/Open16.png");
 		getComponent().addEventListener(Events.ON_CLICK, this);
 	}

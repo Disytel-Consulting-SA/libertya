@@ -29,8 +29,8 @@ import org.adempiere.webui.panel.AbstractADWindowPanel;
 import org.adempiere.webui.session.SessionManager;
 import org.adempiere.webui.util.GridTabDataBinder;
 import org.adempiere.webui.window.ADWindow;
-import org.openXpertya.model.GridField;
-import org.openXpertya.model.GridTab;
+import org.openXpertya.model.MField;
+import org.openXpertya.model.MTab;
 import org.openXpertya.util.DisplayType;
 import org.openXpertya.util.NamePair;
 import org.zkoss.zk.ui.Component;
@@ -47,28 +47,28 @@ import org.zkoss.zul.Paging;
 import org.zkoss.zul.RendererCtrl;
 
 /**
- * ListItem renderer for GridTab list box.
+ * ListItem renderer for MTab list box.
  * @author hengsin
  *
  */
 public class GridTabListItemRenderer implements ListitemRenderer, ListitemRendererExt, RendererCtrl {
 
 	private static final int MAX_TEXT_LENGTH = 60;
-	private GridTab gridTab;
+	private MTab mTab;
 	private int windowNo;
 	private GridTabDataBinder dataBinder;
-	private Map<GridField, WEditor> editors = new HashMap<GridField, WEditor>();
+	private Map<MField, WEditor> editors = new HashMap<MField, WEditor>();
 	private Paging paging;
 
 	/**
 	 * 
-	 * @param gridTab
+	 * @param mTab
 	 * @param windowNo
 	 */
-	public GridTabListItemRenderer(GridTab gridTab, int windowNo) {
-		this.gridTab = gridTab;
+	public GridTabListItemRenderer(MTab mTab, int windowNo) {
+		this.mTab = mTab;
 		this.windowNo = windowNo;
-		this.dataBinder = new GridTabDataBinder(gridTab);
+		this.dataBinder = new GridTabDataBinder(mTab);
 	}
 	
 	/**
@@ -83,8 +83,8 @@ public class GridTabListItemRenderer implements ListitemRenderer, ListitemRender
 				return;
 		}
 		Object[] values = (Object[])data;
-		int columnCount = gridTab.getTableModel().getColumnCount();
-		GridField[] gridField = gridTab.getFields();
+		int columnCount = mTab.getTableModel().getColumnCount();
+		MField[] gridField = mTab.getFields();
 		for (int i = 0; i < columnCount; i++) {
 			if (!gridField[i].isDisplayed()) {
 				continue;
@@ -97,7 +97,7 @@ public class GridTabListItemRenderer implements ListitemRenderer, ListitemRender
 				rowIndex = (paging.getActivePage() * paging.getPageSize()) + rowIndex;
 			}
 			Listcell cell = null;
-			if (rowIndex == gridTab.getCurrentRow() && gridField[i].isEditable(true)) {
+			if (rowIndex == mTab.getCurrentRow() && gridField[i].isEditable(true)) {
 				cell = getEditorCell(gridField[i], values[i], i);
 				cell.setParent(listitem);
 			} else {
@@ -137,9 +137,9 @@ public class GridTabListItemRenderer implements ListitemRenderer, ListitemRender
 		checkBox.setParent(cell);
 	}
 
-	private Listcell getEditorCell(GridField gridField, Object object, int i) {
+	private Listcell getEditorCell(MField mField, Object object, int i) {
 		Listcell cell = new Listcell("", null);
-		WEditor editor = editors.get(gridField);
+		WEditor editor = editors.get(mField);
 		if (editor != null)  {
 			if (editor instanceof WButtonEditor)
             {
@@ -158,11 +158,11 @@ public class GridTabListItemRenderer implements ListitemRenderer, ListitemRender
 			if (editor.getComponent() instanceof Checkbox || editor.getComponent() instanceof Image) {
 				cell.setStyle("text-align:center");
 			}
-			else if (DisplayType.isNumeric(gridField.getDisplayType())) {
+			else if (DisplayType.isNumeric(mField.getDisplayType())) {
 				cell.setStyle("text-align:right");
 			}
-			gridField.addPropertyChangeListener(editor);
-			editor.setValue(gridField.getValue());
+			mField.addPropertyChangeListener(editor);
+			editor.setValue(mField.getValue());
 			WEditorPopupMenu popupMenu = editor.getPopupMenu();
             
             if (popupMenu != null)
@@ -183,7 +183,7 @@ public class GridTabListItemRenderer implements ListitemRenderer, ListitemRender
 	 * @param updateCellLabel
 	 */
 	public void stopEditing(boolean updateCellLabel) {
-		for (Entry<GridField, WEditor> entry : editors.entrySet()) {
+		for (Entry<MField, WEditor> entry : editors.entrySet()) {
 			if (entry.getValue().getComponent().getParent() != null) {
 				if (updateCellLabel) {
 					Listcell cell = (Listcell) entry.getValue().getComponent().getParent();
@@ -201,8 +201,8 @@ public class GridTabListItemRenderer implements ListitemRenderer, ListitemRender
 		}
 	}
 
-	private int getColumnIndex(GridField field) {
-		GridField[] fields = gridTab.getFields();
+	private int getColumnIndex(MField field) {
+		MField[] fields = mTab.getFields();
 		for(int i = 0; i < fields.length; i++) {
 			if (fields[i] == field)
 				return i;
@@ -245,7 +245,7 @@ public class GridTabListItemRenderer implements ListitemRenderer, ListitemRender
 		if (value == null)
 			return "";
 		
-		GridField[] gridField = gridTab.getFields();
+		MField[] gridField = mTab.getFields();
 		if (gridField[columnIndex].isEncryptedField())
 		{
 			return "********";
@@ -285,7 +285,7 @@ public class GridTabListItemRenderer implements ListitemRenderer, ListitemRender
 			else
 				return "";
     	}
-    	else if (gridTab.getTableModel().getColumnClass(columnIndex).equals(Timestamp.class))
+    	else if (mTab.getTableModel().getColumnClass(columnIndex).equals(Timestamp.class))
     	{
     		SimpleDateFormat dateFormat = DisplayType.getDateFormat(DisplayType.Date);
     		return dateFormat.format((Timestamp)value);

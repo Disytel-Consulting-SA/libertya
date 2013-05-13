@@ -27,7 +27,7 @@ import org.adempiere.webui.event.ContextMenuEvent;
 import org.adempiere.webui.event.ContextMenuListener;
 import org.adempiere.webui.event.ValueChangeEvent;
 import org.adempiere.webui.window.WFieldRecordInfo;
-import org.openXpertya.model.GridField;
+import org.openXpertya.model.MField;
 import org.openXpertya.model.MRole;
 import org.openXpertya.util.DisplayType;
 import org.openXpertya.util.Env;
@@ -61,24 +61,24 @@ public class WNumberEditor extends WEditor implements ContextMenuListener
 
     /**
      *
-     * @param gridField
+     * @param mField
      */
-    public WNumberEditor(GridField gridField)
+    public WNumberEditor(MField mField)
     {
-        super(new NumberBox(gridField.getDisplayType() == DisplayType.Integer),
-                gridField);
-        this.displayType = gridField.getDisplayType();
+        super(new NumberBox(mField.getDisplayType() == DisplayType.Integer),
+                mField);
+        this.displayType = mField.getDisplayType();
         init();
     }
 
     /**
      *
-     * @param gridField
+     * @param mField
      * @param integral
      */
-    public WNumberEditor(GridField gridField, boolean integral)
+    public WNumberEditor(MField mField, boolean integral)
     {
-        super(new NumberBox(integral), gridField);
+        super(new NumberBox(integral), mField);
         this.displayType = integral ? DisplayType.Integer : DisplayType.Number;
         init();
     }
@@ -103,9 +103,9 @@ public class WNumberEditor extends WEditor implements ContextMenuListener
 
 	private void init()
     {
-		if (gridField != null)
+		if (mField != null)
 		{
-			getComponent().setTooltiptext(gridField.getDescription());
+			getComponent().setTooltiptext(mField.getDescription());
 		}
 
 		if (!DisplayType.isNumeric(displayType))
@@ -114,7 +114,7 @@ public class WNumberEditor extends WEditor implements ContextMenuListener
 		getComponent().getDecimalbox().setFormat(format.toPattern());
 		
 		popupMenu = new WEditorPopupMenu(true, true, false);
-    	if (gridField != null && gridField.getGridTab() != null)
+    	if (mField != null && mField.getGridTab() != null)
 		{
 			WFieldRecordInfo.addMenu(popupMenu);
 		}
@@ -195,7 +195,7 @@ public class WNumberEditor extends WEditor implements ContextMenuListener
      */
     public void onMenu(ContextMenuEvent evt)
 	{
-	 	if (WEditorPopupMenu.PREFERENCE_EVENT.equals(evt.getContextEvent()) && gridField != null)
+	 	if (WEditorPopupMenu.PREFERENCE_EVENT.equals(evt.getContextEvent()) && mField != null)
 		{
 			if (MRole.getDefault().isShowPreference())
 				ValuePreference.start (this.getGridField(), getValue());
@@ -203,7 +203,7 @@ public class WNumberEditor extends WEditor implements ContextMenuListener
 		}
 	 	else if (WEditorPopupMenu.CHANGE_LOG_EVENT.equals(evt.getContextEvent()))
 		{
-			WFieldRecordInfo.start(gridField);
+			WFieldRecordInfo.start(mField);
 		}
 	}
 }

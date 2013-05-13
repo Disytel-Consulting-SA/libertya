@@ -26,7 +26,7 @@ import org.adempiere.webui.event.ContextMenuEvent;
 import org.adempiere.webui.event.ContextMenuListener;
 import org.adempiere.webui.event.ValueChangeEvent;
 import org.adempiere.webui.window.WFieldRecordInfo;
-import org.openXpertya.model.GridField;
+import org.openXpertya.model.MField;
 import org.openXpertya.util.CLogger;
 import org.openXpertya.util.DisplayType;
 import org.openXpertya.util.Env;
@@ -55,11 +55,11 @@ public class WDateEditor extends WEditor implements ContextMenuListener
 
     /**
      *
-     * @param gridField
+     * @param mField
      */
-    public WDateEditor(GridField gridField)
+    public WDateEditor(MField mField)
     {
-        super(new Datebox(), gridField);
+        super(new Datebox(), mField);
         init();
     }
 
@@ -109,7 +109,7 @@ public class WDateEditor extends WEditor implements ContextMenuListener
 		getComponent().setFormat(DisplayType.getDateFormat(AEnv.getLanguage(Env.getCtx())).toPattern());
 		popupMenu = new WEditorPopupMenu(false, false, true);
 		popupMenu.addMenuListener(this);
-		if (gridField != null && gridField.getGridTab() != null)
+		if (mField != null && mField.getGridTab() != null)
 		{
 			WFieldRecordInfo.addMenu(popupMenu);
 		}
@@ -208,7 +208,7 @@ public class WDateEditor extends WEditor implements ContextMenuListener
 	public void onMenu(ContextMenuEvent evt) {
 		if (WEditorPopupMenu.CHANGE_LOG_EVENT.equals(evt.getContextEvent()))
 		{
-			WFieldRecordInfo.start(gridField);
+			WFieldRecordInfo.start(mField);
 		}
 	}
 
