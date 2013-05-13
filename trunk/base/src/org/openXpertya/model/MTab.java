@@ -19,6 +19,7 @@ package org.openXpertya.model;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
 import java.io.Serializable;
+import java.math.BigDecimal;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -32,13 +33,20 @@ import java.util.StringTokenizer;
 import java.util.Vector;
 import java.util.logging.Level;
 
-import javax.swing.JOptionPane;
+import javax.swing.event.EventListenerList;
 
+import org.openXpertya.model.DataStatusEvent;
+import org.openXpertya.util.DisplayType;
+import org.openXpertya.model.MField;
+import org.openXpertya.model.StateChangeListener;
+import org.openXpertya.model.StateChangeEvent;
+import org.openXpertya.model.MWindow;
+import org.openXpertya.model.MTab;
 import org.openXpertya.plugin.CalloutPluginEngine;
 import org.openXpertya.plugin.MPluginStatus;
 import org.openXpertya.plugin.MPluginStatusCallout;
-import org.openXpertya.plugin.MPluginStatusPO;
 import org.openXpertya.plugin.common.PluginCalloutUtils;
+import org.openXpertya.util.CLogMgt;
 import org.openXpertya.util.CLogger;
 import org.openXpertya.util.DB;
 import org.openXpertya.util.Env;
@@ -55,15 +63,28 @@ import org.openXpertya.util.ValueNamePair;
  * @author     Equipo de Desarrollo de openXpertya    
  */
 
-public final class MTab implements DataStatusListener,Evaluatee,Serializable {
+public class MTab implements DataStatusListener,Evaluatee,Serializable {
 
+	// Context property names:
+	public static final String CTX_KeyColumnName = "_TabInfo_KeyColumnName";
+	public static final String CTX_LinkColumnName = "_TabInfo_LinkColumnName";
+	public static final String CTX_TabLevel = "_TabInfo_TabLevel";
+	public static final String CTX_AccessLevel = "_TabInfo_AccessLevel";
+	public static final String CTX_AD_Tab_ID = "_TabInfo_AD_Tab_ID";
+	public static final String CTX_Name = "_TabInfo_Name";
+	public static final String CTX_AD_Table_ID = "_TabInfo_AD_Table_ID";
+	public static final String CTX_FindSQL = "_TabInfo_FindSQL";
+	public static final String CTX_SQL = "_TabInfo_SQL";
+
+	public static final String DEFAULT_STATUS_MESSAGE = "NavigateOrUpdate";
+	
     /**
      * Constructor de la clase ...
      *
      *
      * @param vo
      */
-
+	
     public MTab( MTabVO vo ) {
         m_vo = vo;
 
@@ -90,94 +111,110 @@ public final class MTab implements DataStatusListener,Evaluatee,Serializable {
 
     /** Descripción de Campos */
 
-    private MTabVO m_vo;
+    protected MTabVO m_vo;
+
+	// The window of this tab
+	protected MWindow			m_window;
+
+    
+    /** Descripción de Campos */
+
+    protected MTable m_mTable = null;
 
     /** Descripción de Campos */
 
-    private MTable m_mTable = null;
+    protected String m_keyColumnName = "";
 
     /** Descripción de Campos */
 
-    private String m_keyColumnName = "";
+    protected String m_linkColumnName = "";
+
+	protected String m_parentColumnName = "";
+
+	
+    /** Descripción de Campos */
+
+    protected String m_extendedWhere;
 
     /** Descripción de Campos */
 
-    private String m_linkColumnName = "";
+    protected HashMap m_Attachment = null;
 
     /** Descripción de Campos */
 
-    private String m_extendedWhere;
+    protected ArrayList m_Lock = null;
 
     /** Descripción de Campos */
 
-    private HashMap m_Attachment = null;
+    protected int m_currentRow = -1;
 
     /** Descripción de Campos */
 
-    private ArrayList m_Lock = null;
-
-    /** Descripción de Campos */
-
-    private int m_currentRow = -1;
-
-    /** Descripción de Campos */
-
-    private PropertyChangeSupport m_propertyChangeSupport = new PropertyChangeSupport( this );
+    protected PropertyChangeSupport m_propertyChangeSupport = new PropertyChangeSupport( this );
 
     /** Descripción de Campos */
 
     public static final String PROPERTY = "CurrentRow";
 
+    /** A list of event listeners for this component.	*/
+    protected EventListenerList m_listenerList = new EventListenerList();
+
     /** Descripción de Campos */
 
-    private Vector m_dataStatusListeners = null;
+    protected Vector m_dataStatusListeners = null;
 
     /** Descripción de Campos */
 
-    private DataStatusEvent m_DataStatusEvent = null;
+    protected DataStatusEvent m_DataStatusEvent = null;
 
     //
 
     /** Descripción de Campos */
 
-    private MQuery m_query = new MQuery();
+    protected MQuery m_query = new MQuery();
 
     /** Descripción de Campos */
 
-    private String m_oldQuery = "0=9";
+    protected String m_oldQuery = "0=9";
 
     /** Descripción de Campos */
 
-    private String m_linkValue = "999999";
+    protected String m_linkValue = "999999";
 
     /** Descripción de Campos */
 
-    private String[] m_OrderBys = new String[ 3 ];
+    protected String[] m_OrderBys = new String[ 3 ];
 
     /** Descripción de Campos */
 
-    private ArrayList m_parents = new ArrayList( 2 );
+    protected ArrayList m_parents = new ArrayList( 2 );
 
     /** Descripción de Campos */
 
-    private MultiMap m_depOnField = new MultiMap();
+    protected MultiMap m_depOnField = new MultiMap();
 
     /** Descripción de Campos */
 
-    private Loader m_loader = null;
+    protected Loader m_loader = null;
 
     /** Descripción de Campos */
 
-    private volatile boolean m_loadComplete = false;
+    protected volatile boolean m_loadComplete = false;
 
     /** Descripción de Campos */
 
-    private boolean m_included = false;
+    protected boolean m_included = false;
 
     /** Descripción de Campos */
 
     protected CLogger log = CLogger.getCLogger( getClass());
     
+    protected boolean m_parentNeedSave = false;
+
+	protected long m_lastDataStatusEventTime;
+
+	protected DataStatusEvent m_lastDataStatusEvent;
+
     protected String currentRecordWarning = null;
 
     /**
@@ -206,7 +243,7 @@ public final class MTab implements DataStatusListener,Evaluatee,Serializable {
      *
      */
 
-    private void waitLoadCompete() {
+    protected void waitLoadCompete() {
         if( m_loadComplete ) {
             return;
         }
@@ -305,7 +342,7 @@ public final class MTab implements DataStatusListener,Evaluatee,Serializable {
      * @return
      */
 
-    private boolean loadFields() {
+    protected boolean loadFields() {
         log.fine( "LoadFields#" + m_vo.TabNo );
 
         if( m_vo.Fields == null ) {
@@ -694,6 +731,135 @@ public final class MTab implements DataStatusListener,Evaluatee,Serializable {
         setCurrentRow( 0,true );
     }    // query
 
+	/**
+	 *	Assemble whereClause and query MTable and position to row 0.
+	 *  <pre>
+	 *		Scenarios:
+	 *		- Never opened 					(full query)
+	 *		- query changed 				(full query)
+	 *		- Detail link value changed		(full query)
+	 *		- otherwise 					(refreshAll)
+	 *  </pre>
+	 *  @param onlyCurrentRows only current rows
+	 *  @param onlyCurrentDays if only current row, how many days back
+	 *  @param maxRows maximum rows or 0 for all
+	 */
+	public void query (boolean onlyCurrentRows, int onlyCurrentDays, int maxRows)
+	{
+		if (!m_loadComplete) initTab(false);
+		
+		log.fine("#" + m_vo.TabNo
+			+ " - Only Current Rows=" + onlyCurrentRows
+			+ ", Days=" + onlyCurrentDays + ", Detail=" + isDetail());
+		//	is it same query?
+		boolean refresh = m_oldQuery.equals(m_query.getWhereClause())
+			&& m_vo.onlyCurrentRows == onlyCurrentRows && m_vo.onlyCurrentDays == onlyCurrentDays;
+		m_oldQuery = m_query.getWhereClause();
+		m_vo.onlyCurrentRows = onlyCurrentRows;
+		m_vo.onlyCurrentDays = onlyCurrentDays;
+
+		/**
+		 *	Set Where Clause
+		 */
+		//	Tab Where Clause
+		StringBuffer where = new StringBuffer(m_vo.WhereClause);
+		if (m_vo.onlyCurrentDays > 0)
+		{
+			if (where.length() > 0)
+				where.append(" AND ");
+			where.append("Created >= ");
+			where.append("SysDate-").append(m_vo.onlyCurrentDays);
+		}
+		//	Detail Query
+		if (isDetail())
+		{
+			m_parentNeedSave = false;
+			String lc = getLinkColumnName();
+			if (lc.equals("")) {
+				log.warning ("No link column");
+				where.append (" 2=3");
+			}
+			else
+			{
+				String value = null;
+				if ( m_parentColumnName.length() > 0 )
+				{	
+					// explicit parent link defined
+					value = Env.getContext(m_vo.ctx, m_vo.WindowNo, getParentTabNo(), m_parentColumnName, true);
+					if (value == null || value.length() == 0)
+						value = Env.getContext(m_vo.ctx, m_vo.WindowNo, m_parentColumnName, true); // back compatibility
+				} else {
+					value = Env.getContext(m_vo.ctx, m_vo.WindowNo, getParentTabNo(), lc, true);
+					if (value == null || value.length() == 0)
+						value = Env.getContext(m_vo.ctx, m_vo.WindowNo, lc, true); // back compatibility
+				}	
+				
+				//	Same link value?
+				if (refresh)
+					refresh = m_linkValue.equals(value);
+				m_linkValue = value;
+				//	Check validity
+				if (value.length() == 0)
+				{
+					//log.severe ("No value for link column " + lc);
+					//parent is new, can't retrieve detail
+					m_parentNeedSave = true;
+					if (where.length() != 0)
+						where.append(" AND ");
+					// where.append(lc).append(" is null ");
+					// as opened by this fix [ 1881480 ] Navigation problem between tabs
+					// it's safer to avoid retrieving details at all if there is no parent value
+					where.append (" 2=3");
+				}
+				else
+				{
+					//	we have column and value
+					if (where.length() != 0)
+						where.append(" AND ");
+					where.append(getTableName()).append(".").append(lc).append("=");
+					if (lc.endsWith("_ID"))
+						where.append(DB.TO_NUMBER(new BigDecimal(value), DisplayType.ID));
+					else
+						where.append(DB.TO_STRING(value));
+				}
+			}
+		}	//	isDetail
+
+		m_extendedWhere = where.toString();
+
+		//	Final Query
+		if (m_query.isActive())
+		{
+			String q = validateQuery(m_query);
+			if (q != null)
+			{
+				if (where.length() > 0 )
+					where.append(" AND ");
+				where.append(" (").append(q).append(")");
+			}
+		}
+
+		/**
+		 *	Query
+		 */
+		log.fine("#" + m_vo.TabNo + " - " + where);
+		if (m_mTable.isOpen())
+		{
+			if (refresh)
+				m_mTable.dataRefreshAll();
+			else
+				m_mTable.dataRequery(where.toString(), m_vo.onlyCurrentRows && !isDetail(), onlyCurrentDays);
+		}
+		else
+		{
+			m_mTable.setSelectWhereClause(where.toString(), m_vo.onlyCurrentRows && !isDetail(), onlyCurrentDays);
+			m_mTable.open(maxRows);
+		}
+		//  Go to Record 0
+		setCurrentRow(0, true);
+	}	//	query
+
+    
     /**
      * Descripción de Método
      *
@@ -703,7 +869,7 @@ public final class MTab implements DataStatusListener,Evaluatee,Serializable {
      * @return
      */
 
-    private String validateQuery( MQuery query ) {
+    protected String validateQuery( MQuery query ) {
     	log.fine("-----------------> En validateQuery");
         if( (query == null) || (query.getRestrictionCount() == 0) ) {
             return null;
@@ -829,6 +995,63 @@ public final class MTab implements DataStatusListener,Evaluatee,Serializable {
         return result.toString();
     }    // validateQuery
 
+	/**
+	 *  Refresh row data
+	 *  @param row index
+	 *  @param fireEvent
+	 */
+	public void dataRefresh (int row, boolean fireEvent)
+	{
+		log.fine("#" + m_vo.TabNo + " - row=" + row);
+		m_mTable.dataRefresh(row, fireEvent);
+		setCurrentRow(row, fireEvent);
+		if (fireEvent)
+			fireStateChangeEvent(new StateChangeEvent(this, StateChangeEvent.DATA_REFRESH));
+	}   //  dataRefresh
+
+    
+	/**
+	 *  Refresh current row data
+	 *  @param fireEvent
+	 */
+	public void dataRefresh (boolean fireEvent)
+	{
+		dataRefresh (m_currentRow, fireEvent);
+	}   //  dataRefresh
+
+    
+	/**************************************************************************
+	 *  Refresh all data
+	 *  @param fireEvent
+	 */
+	public void dataRefreshAll (boolean fireEvent)
+	{
+		log.fine("#" + m_vo.TabNo);
+		/** @todo does not work with alpha key */
+		int keyNo = m_mTable.getKeyID(m_currentRow);
+		m_mTable.dataRefreshAll(fireEvent);
+		//  Should use RowID - not working for tables with multiple keys
+		if (keyNo != -1)
+		{
+			if (keyNo != m_mTable.getKeyID(m_currentRow))   //  something changed
+			{
+				int size = getRowCount();
+				for (int i = 0; i < size; i++)
+				{
+					if (keyNo == m_mTable.getKeyID(i))
+					{
+						m_currentRow = i;
+						break;
+					}
+				}
+			}
+		}
+		setCurrentRow(m_currentRow, fireEvent);
+		if (fireEvent)
+			fireStateChangeEvent(new StateChangeEvent(this, StateChangeEvent.DATA_REFRESH_ALL));
+	}   //  dataRefreshAll
+
+	
     /**
      * Descripción de Método
      *
@@ -1282,7 +1505,7 @@ public final class MTab implements DataStatusListener,Evaluatee,Serializable {
      * @return
      */
 
-    private int getTreeID() {
+    protected int getTreeID() {
         log.fine( m_vo.TableName );
 
         String SQL = "SELECT * FROM AD_ClientInfo WHERE AD_Client=" + Env.getContext( m_vo.ctx,m_vo.WindowNo,"AD_Client_ID" ) + " ORDER BY AD_Org DESC";
@@ -1614,7 +1837,7 @@ public final class MTab implements DataStatusListener,Evaluatee,Serializable {
      * @return
      */
 
-    private String getOrderByClause( boolean onlyCurrentRows ) {
+    protected String getOrderByClause( boolean onlyCurrentRows ) {
 
         // First Prio: Tab Order By
 
@@ -1905,7 +2128,7 @@ public final class MTab implements DataStatusListener,Evaluatee,Serializable {
      *
      */
 
-    private void loadDependentInfo() {
+    protected void loadDependentInfo() {
         if( m_vo.TableName.equals( "C_Order" )) {
             int     C_DocTyp_ID = 0;
             Integer target      = ( Integer )getValue( "C_DocTypeTarget_ID" );
@@ -2073,7 +2296,7 @@ public final class MTab implements DataStatusListener,Evaluatee,Serializable {
             return;
         }
 
-        String SQL = "SELECT Record_ID " + "FROM AD_Private_Access " + "WHERE AD_User_ID=? AND AD_Table_ID=? AND IsActive='Y' " + "ORDER BY Record_ID";
+        String SQL = "SELECT Record_ID " + "FROM AD_protected_Access " + "WHERE AD_User_ID=? AND AD_Table_ID=? AND IsActive='Y' " + "ORDER BY Record_ID";
 
         try {
             if( m_Lock == null ) {
@@ -2210,7 +2433,7 @@ public final class MTab implements DataStatusListener,Evaluatee,Serializable {
      * @param e
      */
 
-    private void fireDataStatusChanged( DataStatusEvent e ) {
+    protected void fireDataStatusChanged( DataStatusEvent e ) {
         log.fine( e.toString());
 
         if( m_dataStatusListeners != null ) {
@@ -2394,7 +2617,7 @@ public final class MTab implements DataStatusListener,Evaluatee,Serializable {
      * @return
      */
 
-    private int verifyRow( int targetRow ) {
+    protected int verifyRow( int targetRow ) {
         int newRow = targetRow;
 
         // Table Open?
@@ -2426,6 +2649,15 @@ public final class MTab implements DataStatusListener,Evaluatee,Serializable {
         return newRow;
     }    // verifyRow
 
+	/**
+	 *  Set current row - used for deleteSelection
+	 *  @return current row
+	 */
+	public void setCurrentRow(int row){
+			setCurrentRow(row, false);
+	}
+
+    
     /**
      * Descripción de Método
      *
@@ -2436,7 +2668,7 @@ public final class MTab implements DataStatusListener,Evaluatee,Serializable {
      * @return
      */
 
-    private int setCurrentRow( int newCurrentRow,boolean fireEvents ) {
+    public int setCurrentRow( int newCurrentRow,boolean fireEvents ) {
         int oldCurrentRow = m_currentRow;
 
         m_currentRow = verifyRow( newCurrentRow );
@@ -2698,7 +2930,7 @@ public final class MTab implements DataStatusListener,Evaluatee,Serializable {
      * @return
      */
 
-    private String processCallout( MField field ) {
+    public String processCallout( MField field ) {
         String callout = field.getCallout();
         //JOptionPane.showMessageDialog( null,"En MTab, processCallout \n con callout= "+field.getCallout(),"..Fin", JOptionPane.INFORMATION_MESSAGE );
 
@@ -2950,7 +3182,7 @@ public final class MTab implements DataStatusListener,Evaluatee,Serializable {
 		return getCurrentRecordWarning() != null;
 	}
 	
-	private void clearCurrentRecordWarning(boolean ok) {
+	protected void clearCurrentRecordWarning(boolean ok) {
 		if (ok)
 			setCurrentRecordWarning(null);
 	}
@@ -2958,6 +3190,192 @@ public final class MTab implements DataStatusListener,Evaluatee,Serializable {
 	public boolean isShowDialogProcessMsg(){
 		return m_vo.showDialogProcessMsg;
 	}	
+	
+	/**
+	 *  Get dependents fields of columnName
+	 *  @param columnName column name
+	 *  @return ArrayList with GridFields dependent on columnName
+	 */
+	public ArrayList<MField> getDependantFields (String columnName)
+	{
+		return m_depOnField.getValues(columnName);
+	}   //  getDependentFields
+
+	
+	/**
+	 * 	Get Display Logic
+	 *	@return display logic
+	 */
+	public String getDisplayLogic()
+	{
+		return m_vo.DisplayLogic;
+	}	//	getDisplayLogic
+
+	/**
+	 *  Get a list of variables, this tab is dependent on.
+	 *  - for display purposes
+	 *  @return ArrayList
+	 */
+	public ArrayList<String> getDependentOn()
+	{
+		ArrayList<String> list = new ArrayList<String>();
+		//  Display
+		Evaluator.parseDepends(list, m_vo.DisplayLogic);
+		//
+		if (list.size() > 0 && CLogMgt.isLevelFiner())
+		{
+			StringBuffer sb = new StringBuffer();
+			for (int i = 0; i < list.size(); i++)
+				sb.append(list.get(i)).append(" ");
+			log.finer("(" + m_vo.Name + ") " + sb.toString());
+		}
+		return list;
+	}   //  getDependentOn
+
+	
+	/**
+	 * Get Boolean Value of Field with columnName.
+	 * If there is no column with the given name, the context for current window will be checked.
+	 * @param columnName column name
+	 * @return boolean value or false if the field was not found
+	 * @author Teo Sarca
+	 */
+	public boolean getValueAsBoolean(String columnName)
+	{
+		int index = m_mTable.findColumn(columnName);
+		if (index != -1)
+		{
+			Object oo = m_mTable.getValueAt(m_currentRow, index);
+			if (oo instanceof String)
+				return "Y".equals(oo);
+			if (oo instanceof Boolean)
+				return ((Boolean)oo).booleanValue();
+		}
+		return "Y".equals(Env.getContext(m_vo.ctx, m_vo.WindowNo, columnName));
+	}	//	isProcessed
+
+	// Validate if the current tab record has changed in database or any parent record
+	// Return if there are changes
+	public boolean hasChangedCurrentTabAndParents() {
+		String msg = null;
+		// Carlos Ruiz / globalqss - [ adempiere-Bugs-1985481 ] Processed documents can be edited
+		// Validate that current record has not changed and validate that every parent above has not changed
+		if (m_mTable.hasChanged(m_currentRow)) {
+			// return error stating that current record has changed and it cannot be saved
+			msg = Msg.getMsg(Env.getCtx(), "CurrentRecordModified");
+			log.saveError("CurrentRecordModified", msg, false);
+			return true;
+		}
+		if (isDetail()) {
+			// get parent tab
+			// the parent tab is the first tab above with level = this_tab_level-1
+			int level = m_vo.TabLevel;
+			for (int i = m_window.getTabIndex(this) - 1; i >= 0; i--) {
+				MTab parentTab = m_window.getTab(i);
+				if (parentTab.m_vo.TabLevel == level-1) {
+					// this is parent tab
+					if (parentTab.m_mTable.hasChanged(parentTab.m_currentRow)) {
+						// return error stating that current record has changed and it cannot be saved
+						msg = Msg.getMsg(Env.getCtx(), "ParentRecordModified") + ": " + parentTab.getName();
+						log.saveError("ParentRecordModified", msg, false);
+						return true;
+					} else {
+						// search for the next parent
+						if (parentTab.isDetail()) {
+							level = parentTab.m_vo.TabLevel;
+						} else {
+							break;
+						}
+					}
+				}
+			}
+		}
+		return false;
+	}
+
+
+	/**
+	 * 	Is Processed
+	 *	@return true if current record is processed
+	 */
+	public boolean isProcessed()
+	{
+		return getValueAsBoolean("Processed");
+	}	//	isProcessed
+
+	public boolean isLoadComplete()
+	{
+		return m_loadComplete;
+	}
+
+	protected void fireStateChangeEvent(StateChangeEvent e)
+	{
+		StateChangeListener[] listeners = m_listenerList.getListeners(StateChangeListener.class);
+		if (listeners.length == 0)
+			return;
+		for(int i = 0; i < listeners.length; i++) {
+			listeners[i].stateChange(e);
+		}
+		
+	}
+
+	
+	public MTab getParentTab()
+	{
+		int parentTabNo = getParentTabNo();
+		if (parentTabNo < 0 || parentTabNo == m_vo.TabNo)
+			return null;
+		return m_window.getTab(parentTabNo);
+	}
+
+	
+	/**
+	 * get Parent Tab No
+	 * @return Tab No
+	 */
+	protected int getParentTabNo()
+	{
+		int tabNo = m_vo.TabNo;
+		int currentLevel = m_vo.TabLevel;
+		int parentLevel = currentLevel-1;
+		if (parentLevel < 0)
+			return tabNo;
+			while (parentLevel != currentLevel)
+			{
+				tabNo--;				
+				currentLevel = Env.getContextAsInt(m_vo.ctx, m_vo.WindowNo, tabNo, MTab.CTX_TabLevel);
+			}
+		return tabNo;
+	}
+
+	
+	/**
+	 * 	Tab contains Always Update Field
+	 *	@return true if field with always updateable
+	 */
+	public boolean isAlwaysUpdateField()
+	{
+		for (int i = 0; i < m_mTable.getColumnCount(); i++)
+		{
+			MField field = m_mTable.getField(i);
+			if (field.isAlwaysUpdateable())
+				return true;
+		}
+		return false;
+	}	//	isAlwaysUpdateField
+
+	/**
+	 *	Is Query New Record
+	 *  @return true if query active
+	 */
+	public boolean isQueryNewRecord()
+	{
+		if (m_query != null)
+			return m_query.isNewRecordQuery();
+		return false;
+	}	//	isQueryNewRecord
+
+	
 }    // MTab
 
 

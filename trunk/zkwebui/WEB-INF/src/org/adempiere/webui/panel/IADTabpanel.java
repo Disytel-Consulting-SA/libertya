@@ -12,7 +12,7 @@
  *****************************************************************************/
 package org.adempiere.webui.panel;
 
-import org.openXpertya.model.GridTab;
+import org.openXpertya.model.MTab;
 import org.openXpertya.util.Evaluatee;
 import org.zkoss.zk.ui.Component;
 
@@ -51,9 +51,9 @@ public interface IADTabpanel extends Component, Evaluatee {
 
 	/**
 	 *
-	 * @return GridTab
+	 * @return MTab
 	 */
-	public GridTab getGridTab();
+	public MTab getGridTab();
 
 	/**
 	 * activate/deactivate the panel

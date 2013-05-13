@@ -17,7 +17,7 @@
 
 package org.adempiere.webui.editor;
 
-import org.openXpertya.model.GridField;
+import org.openXpertya.model.MField;
 
 /**
  *
@@ -28,9 +28,9 @@ import org.openXpertya.model.GridField;
 public class WPasswordEditor extends WStringEditor
 {
 
-    public WPasswordEditor(GridField gridField)
+    public WPasswordEditor(MField mField)
     {
-        super(gridField);
+        super(mField);
         super.setTypePassword(true);
     }
 

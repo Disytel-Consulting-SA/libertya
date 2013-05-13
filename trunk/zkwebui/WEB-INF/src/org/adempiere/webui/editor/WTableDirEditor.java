@@ -29,7 +29,7 @@ import org.adempiere.webui.event.ContextMenuEvent;
 import org.adempiere.webui.event.ContextMenuListener;
 import org.adempiere.webui.event.ValueChangeEvent;
 import org.adempiere.webui.window.WFieldRecordInfo;
-import org.openXpertya.model.GridField;
+import org.openXpertya.model.MField;
 import org.openXpertya.model.Lookup;
 import org.openXpertya.model.MRole;
 import org.openXpertya.util.CLogger;
@@ -66,10 +66,10 @@ ContextMenuListener, IZoomableEditor
     private Object oldValue;
     private WEditorPopupMenu popupMenu;
        
-    public WTableDirEditor(GridField gridField)
+    public WTableDirEditor(MField mField)
     {
-        super(new Combobox(), gridField);
-        lookup = gridField.getLookup();
+        super(new Combobox(), mField);
+        lookup = mField.getLookup();
         init();
     }
 	
@@ -143,10 +143,10 @@ ContextMenuListener, IZoomableEditor
             refreshList();
         }
         
-        if (gridField != null) 
+        if (mField != null) 
         {
         	popupMenu = new WEditorPopupMenu(zoom, true, true);
-        	if (gridField != null &&  gridField.getGridTab() != null)
+        	if (mField != null &&  mField.getGridTab() != null)
     		{
     			WFieldRecordInfo.addMenu(popupMenu);
     		}
@@ -409,7 +409,7 @@ ContextMenuListener, IZoomableEditor
 		}
 		else if (WEditorPopupMenu.CHANGE_LOG_EVENT.equals(evt.getContextEvent()))
 		{
-			WFieldRecordInfo.start(gridField);
+			WFieldRecordInfo.start(mField);
 		}
 	}
 	

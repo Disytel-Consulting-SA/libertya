@@ -35,7 +35,7 @@ import org.adempiere.webui.component.Tabs;
 import org.adempiere.webui.part.ITabOnSelectHandler;
 import org.adempiere.webui.session.SessionManager;
 import org.adempiere.webui.util.UserPreference;
-import org.openXpertya.model.GridWindow;
+import org.openXpertya.model.MWindow;
 import org.openXpertya.model.MQuery;
 import org.openXpertya.util.CLogger;
 import org.openXpertya.util.Env;
@@ -86,9 +86,9 @@ public class ADWindowPanel extends AbstractADWindowPanel
     }
 
 
-	public ADWindowPanel(Properties ctx, int windowNo, GridWindow gridWindow,
+	public ADWindowPanel(Properties ctx, int windowNo, MWindow mWindow,
 			int tabIndex, IADTabpanel tabPanel) {
-		super(ctx, windowNo, gridWindow, tabIndex, tabPanel);
+		super(ctx, windowNo, mWindow, tabIndex, tabPanel);
 	}
 
 

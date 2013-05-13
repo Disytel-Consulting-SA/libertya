@@ -28,22 +28,6 @@ import java.util.Properties;
 
 public interface Callout {
 
-    /**
-     * Descripción de Método
-     *
-     *
-     * @param ctx
-     * @param method
-     * @param WindowNo
-     * @param mTab
-     * @param mField
-     * @param value
-     * @param oldValue
-     *
-     * @return
-     */
-
-    public String start( Properties ctx,String method,int WindowNo,MTab mTab,MField mField,Object value,Object oldValue );
 
     /**
 	 *	Start Callout.
@@ -63,7 +47,7 @@ public interface Callout {
 	 *  @return Error message or ""
 	 */
 	public String start (Properties ctx, String method, int WindowNo,
-		GridTab mTab, GridField mField, Object value, Object oldValue);
+		MTab mTab, MField mField, Object value, Object oldValue);
     
     /**
      * Descripción de Método

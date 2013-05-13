@@ -30,7 +30,7 @@ import org.adempiere.webui.component.Row;
 import org.adempiere.webui.component.Rows;
 import org.adempiere.webui.component.Window;
 import org.adempiere.webui.window.FDialog;
-import org.openXpertya.model.GridTab;
+import org.openXpertya.model.MTab;
 import org.openXpertya.model.M_Table;
 import org.openXpertya.model.PO;
 import org.openXpertya.process.DocOptions;
@@ -61,7 +61,7 @@ public class WDocActionPanel extends Window implements EventListener
 	private Label label;
 	private Listbox lstDocAction;
 
-	private static GridTab gridTab;
+	private static MTab mTab;
 	private static String[]		s_value = null;
 	private static String[]		s_name;
 	private static String[]		s_description;
@@ -78,13 +78,13 @@ public class WDocActionPanel extends Window implements EventListener
         logger = CLogger.getCLogger(WDocActionPanel.class);
     }
 
-	public WDocActionPanel(GridTab mgridTab)
+	public WDocActionPanel(MTab mgridTab)
 	{
-		gridTab = mgridTab;
-		DocStatus = (String)gridTab.getValue("DocStatus");
-		DocAction = (String)gridTab.getValue("DocAction");
+		mTab = mgridTab;
+		DocStatus = (String)mTab.getValue("DocStatus");
+		DocAction = (String)mTab.getValue("DocAction");
 
-		m_AD_Table_ID = Env.getContextAsInt(Env.getCtx(), gridTab.getWindowNo(), "BaseTable_ID");
+		m_AD_Table_ID = Env.getContextAsInt(Env.getCtx(), mTab.getWindowNo(), "BaseTable_ID");
 
 		readReference();
 		initComponents();
@@ -103,9 +103,9 @@ public class WDocActionPanel extends Window implements EventListener
 	{
 
 		//
-		Object Processing = gridTab.getValue("Processing");
-		String OrderType = Env.getContext(Env.getCtx(), gridTab.getWindowNo(), "OrderType");
-		String IsSOTrx = Env.getContext(Env.getCtx(), gridTab.getWindowNo(), "IsSOTrx");
+		Object Processing = mTab.getValue("Processing");
+		String OrderType = Env.getContext(Env.getCtx(), mTab.getWindowNo(), "OrderType");
+		String IsSOTrx = Env.getContext(Env.getCtx(), mTab.getWindowNo(), "IsSOTrx");
 
 		if (DocStatus == null)
 		{
@@ -116,7 +116,7 @@ public class WDocActionPanel extends Window implements EventListener
 		logger.fine("DocStatus=" + DocStatus
 			+ ", DocAction=" + DocAction + ", OrderType=" + OrderType
 			+ ", IsSOTrx=" + IsSOTrx + ", Processing=" + Processing
-			+ ", AD_Table_ID=" +gridTab.getAD_Table_ID() + ", Record_ID=" + gridTab.getRecord_ID());
+			+ ", AD_Table_ID=" +mTab.getAD_Table_ID() + ", Record_ID=" + mTab.getRecord_ID());
         int index = 0;
         if(lstDocAction.getSelectedItem() != null)
         {
@@ -134,17 +134,17 @@ public class WDocActionPanel extends Window implements EventListener
 		/**
 		 * 	Check Existence of Workflow Acrivities
 		 */
-		String wfStatus = MWFActivity.getActiveInfo(Env.getCtx(), m_AD_Table_ID, gridTab.getRecord_ID());
+		String wfStatus = MWFActivity.getActiveInfo(Env.getCtx(), m_AD_Table_ID, mTab.getRecord_ID());
 		if (wfStatus != null)
 		{
-			FDialog.error(gridTab.getWindowNo(), this, "WFActiveForRecord", wfStatus);
+			FDialog.error(mTab.getWindowNo(), this, "WFActiveForRecord", wfStatus);
 			return;
 		}
 
 		//	Status Change
-		if (!checkStatus(gridTab.getTableName(), gridTab.getRecord_ID(), DocStatus))
+		if (!checkStatus(mTab.getTableName(), mTab.getRecord_ID(), DocStatus))
 		{
-			FDialog.error(gridTab.getWindowNo(), this, "DocumentStatusChanged");
+			FDialog.error(mTab.getWindowNo(), this, "DocumentStatusChanged");
 			return;
 		}
 		/*******************
@@ -157,14 +157,14 @@ public class WDocActionPanel extends Window implements EventListener
 		JOptionPane.showMessageDialog(null, "INDEX "+index);
 
 		M_Table table = M_Table.get(Env.getCtx(), m_AD_Table_ID);
-		PO po = table.getPO(gridTab.getRecord_ID(), null);
+		PO po = table.getPO(mTab.getRecord_ID(), null);
 		if (po instanceof DocOptions)
 			index = ((DocOptions) po).customizeValidActions(DocStatus, Processing, OrderType, IsSOTrx,
 					m_AD_Table_ID, docActionHolder, options, index);
 
-		Integer doctypeId = (Integer)gridTab.getValue("C_DocType_ID");
+		Integer doctypeId = (Integer)mTab.getValue("C_DocType_ID");
 		if(doctypeId==null || doctypeId.intValue()==0){
-			doctypeId = (Integer)gridTab.getValue("C_DocTypeTarget_ID");
+			doctypeId = (Integer)mTab.getValue("C_DocTypeTarget_ID");
 		}
 		logger.fine("get doctype: " + doctypeId);
 		if (doctypeId != null) {
@@ -323,7 +323,7 @@ public class WDocActionPanel extends Window implements EventListener
 		int index = getSelectedIndex();
 		//	Save Selection
 		logger.config("DocAction=" + s_value[index]);
-		gridTab.setValue("DocAction", s_value[index]);
+		mTab.setValue("DocAction", s_value[index]);
 	}	//	save
 
 	 private void readReference()

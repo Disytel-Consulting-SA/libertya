@@ -40,7 +40,7 @@ import org.adempiere.webui.component.Window;
 import org.adempiere.webui.session.SessionManager;
 import org.adempiere.webui.theme.ThemeManager;
 import org.openXpertya.acct.Doc;
-import org.openXpertya.model.GridWindowVO;
+import org.openXpertya.model.MWindowVO;
 import org.openXpertya.model.Lookup;
 import org.openXpertya.model.MAcctSchema;
 import org.openXpertya.model.MQuery;
@@ -227,7 +227,7 @@ public final class AEnv
 	private static CLogger log = CLogger.getCLogger(AEnv.class);
 
 	/**	Window Cache		*/
-	private static Map<String, CCache<Integer,GridWindowVO>> windowCache = new HashMap<String, CCache<Integer,GridWindowVO>>();
+	private static Map<String, CCache<Integer,MWindowVO>> windowCache = new HashMap<String, CCache<Integer,MWindowVO>>();
 
 	/**
 	 *  Get Window Model
@@ -237,17 +237,17 @@ public final class AEnv
 	 *  @param AD_Menu_ID menu
 	 *  @return Model Window Value Obkect
 	 */
-	public static GridWindowVO getMWindowVO (int WindowNo, int AD_Window_ID, int AD_Menu_ID)
+	public static MWindowVO getMWindowVO (int WindowNo, int AD_Window_ID, int AD_Menu_ID)
 	{
 
 		log.config("Window=" + WindowNo + ", AD_Window_ID=" + AD_Window_ID);
-		GridWindowVO mWindowVO = null;
+		MWindowVO mWindowVO = null;
 		String locale = Env.getLanguage(Env.getCtx()).getLocale().toString();
 		if (AD_Window_ID != 0 && Ini.isCacheWindow())	//	try cache
 		{
 			synchronized (windowCache)
 			{
-				CCache<Integer,GridWindowVO> cache = windowCache.get(locale);
+				CCache<Integer,MWindowVO> cache = windowCache.get(locale);
 				if (cache != null)
 				{
 					mWindowVO = cache.get(AD_Window_ID);
@@ -264,15 +264,15 @@ public final class AEnv
 		if (mWindowVO == null)
 		{
 			log.config("create local");
-			mWindowVO = GridWindowVO.create (Env.getCtx(), WindowNo, AD_Window_ID, AD_Menu_ID);
+			mWindowVO = MWindowVO.create (Env.getCtx(), WindowNo, AD_Window_ID, AD_Menu_ID);
 			if (mWindowVO != null)
 			{
 				synchronized (windowCache)
 				{
-					CCache<Integer,GridWindowVO> cache = windowCache.get(locale);
+					CCache<Integer,MWindowVO> cache = windowCache.get(locale);
 					if (cache == null)
 					{
-						cache = new CCache<Integer, GridWindowVO>("AD_Window", 10);
+						cache = new CCache<Integer, MWindowVO>("AD_Window", 10);
 						windowCache.put(locale, cache);
 					}
 					cache.put(AD_Window_ID, mWindowVO);

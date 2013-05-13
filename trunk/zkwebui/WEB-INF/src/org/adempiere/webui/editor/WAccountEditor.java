@@ -23,7 +23,7 @@ import org.adempiere.webui.event.ContextMenuListener;
 import org.adempiere.webui.event.ValueChangeEvent;
 import org.adempiere.webui.window.WAccountDialog;
 import org.adempiere.webui.window.WFieldRecordInfo;
-import org.openXpertya.model.GridField;
+import org.openXpertya.model.MField;
 import org.openXpertya.model.MAccountLookup;
 import org.openXpertya.model.MRole;
 import org.openXpertya.util.CLogger;
@@ -50,16 +50,16 @@ public class WAccountEditor extends WEditor implements ContextMenuListener
 	/**	Logger			*/
 	private static CLogger log = CLogger.getCLogger(WAccountEditor.class);
 
-	public WAccountEditor(GridField gridField)
+	public WAccountEditor(MField mField)
 	{
-		super(new Combinationbox(), gridField);
+		super(new Combinationbox(), mField);
 		getComponent().setButtonImage("/images/Account10.png");
 
-		m_mAccount = new MAccountLookup (gridField.getVO().ctx, gridField.getWindowNo());
+		m_mAccount = new MAccountLookup (mField.getVO().ctx, mField.getWindowNo());
 		
 		popupMenu = new WEditorPopupMenu(false, false, true);
 		popupMenu.addMenuListener(this);
-		if (gridField != null && gridField.getGridTab() != null)
+		if (mField != null && mField.getGridTab() != null)
 		{
 			WFieldRecordInfo.addMenu(popupMenu);
 		}
@@ -96,13 +96,13 @@ public class WAccountEditor extends WEditor implements ContextMenuListener
 	 */
 	public void cmd_button()
 	{
-		int C_AcctSchema_ID = Env.getContextAsInt(Env.getCtx(), gridField.getWindowNo(), "C_AcctSchema_ID");
+		int C_AcctSchema_ID = Env.getContextAsInt(Env.getCtx(), mField.getWindowNo(), "C_AcctSchema_ID");
 		// Try to get C_AcctSchema_ID from global context - teo_sarca BF [ 1830531 ]
 		if (C_AcctSchema_ID <= 0)
 		{
 			C_AcctSchema_ID = Env.getContextAsInt(Env.getCtx(), "$C_AcctSchema_ID");
 		}
-		WAccountDialog ad = new WAccountDialog (gridField.getHeader(), m_mAccount, C_AcctSchema_ID);
+		WAccountDialog ad = new WAccountDialog (mField.getHeader(), m_mAccount, C_AcctSchema_ID);
 		//
 		Integer newValue = ad.getValue();
 		if (newValue == null)
@@ -136,7 +136,7 @@ public class WAccountEditor extends WEditor implements ContextMenuListener
 			+ " AND (UPPER(Alias) LIKE ? OR UPPER(Combination) LIKE ?)";
 		sql = MRole.getDefault().addAccessSQL(sql,
 			"C_ValidCombination", MRole.SQL_NOTQUALIFIED, MRole.SQL_RO);
-		int C_AcctSchema_ID = Env.getContextAsInt(Env.getCtx(), gridField.getWindowNo(), "C_AcctSchema_ID");
+		int C_AcctSchema_ID = Env.getContextAsInt(Env.getCtx(), mField.getWindowNo(), "C_AcctSchema_ID");
 		//
 		int C_ValidCombination_ID = 0;
 		PreparedStatement pstmt = null;
@@ -214,7 +214,7 @@ public class WAccountEditor extends WEditor implements ContextMenuListener
 	public void onMenu(ContextMenuEvent evt) {
 		if (WEditorPopupMenu.CHANGE_LOG_EVENT.equals(evt.getContextEvent()))
 		{
-			WFieldRecordInfo.start(gridField);
+			WFieldRecordInfo.start(mField);
 		}
 	}
 

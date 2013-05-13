@@ -21,9 +21,9 @@ import javax.swing.table.AbstractTableModel;
 
 import org.adempiere.webui.LayoutUtils;
 import org.adempiere.webui.editor.WEditor;
-import org.openXpertya.model.GridField;
-import org.openXpertya.model.GridTab;
-import org.openXpertya.model.GridTable;
+import org.openXpertya.model.MField;
+import org.openXpertya.model.MTab;
+import org.openXpertya.model.MTable;
 import org.openXpertya.model.MSysConfig;
 import org.openXpertya.util.DisplayType;
 import org.zkoss.zk.ui.event.Event;
@@ -55,14 +55,14 @@ public class ListPanel extends Borderlayout implements EventListener
 	
 	private int pageSize = 100;
 	
-	private GridField[] gridField;
+	private MField[] mField;
 	private AbstractTableModel tableModel;
 	
 	private int numColumns = 5;
 	
 	private int windowNo;
 	
-	private GridTab gridTab;
+	private MTab mTab;
 	
 	private boolean init;
 
@@ -97,18 +97,18 @@ public class ListPanel extends Borderlayout implements EventListener
 
 	/**
 	 * 
-	 * @param gridTab
+	 * @param mTab
 	 */
-	public void init(GridTab gridTab)
+	public void init(MTab mTab)
 	{
 		if (init) return;
 				
-		this.gridTab = gridTab;
-		tableModel = gridTab.getTableModel();
+		this.mTab = mTab;
+		tableModel = mTab.getTableModel();
 		
 		numColumns = tableModel.getColumnCount();
 		
-		gridField = ((GridTable)tableModel).getFields();
+		mField = ((MTable)tableModel).getFields();
 				
 		setupColumns();
 		render();
@@ -128,15 +128,15 @@ public class ListPanel extends Borderlayout implements EventListener
 	
 	/**
 	 * 
-	 * @param gridTab
+	 * @param mTab
 	 */
-	public void activate(GridTab gridTab) {		
+	public void activate(MTab mTab) {		
 		if (isInit())
 		{
-			if (this.gridTab != gridTab)
+			if (this.mTab != mTab)
 			{
 				init = false;
-				init(gridTab);
+				init(mTab);
 			}
 			else
 			{
@@ -150,18 +150,18 @@ public class ListPanel extends Borderlayout implements EventListener
 			}
 		}
 		else
-			init(gridTab);
+			init(mTab);
 	}
 	
 	/**
 	 * 
-	 * @param gridTab
+	 * @param mTab
 	 */
-	public void refresh(GridTab gridTab) {
-		if (this.gridTab != gridTab)
+	public void refresh(MTab mTab) {
+		if (this.mTab != mTab)
 		{
 			init = false;
-			init(gridTab);
+			init(mTab);
 		}
 		else
 		{
@@ -183,10 +183,10 @@ public class ListPanel extends Borderlayout implements EventListener
 	 * @param updateSelectionOnly if true, doesn't attempt to refresh current row from model
 	 */
 	public void updateListIndex(boolean updateSelectionOnly) {
-		int rowIndex  = gridTab.isOpen() ? gridTab.getCurrentRow() : -1;
+		int rowIndex  = mTab.isOpen() ? mTab.getCurrentRow() : -1;
 		if (pageSize > 0) {			
-			if (paging.getTotalSize() != gridTab.getRowCount())
-				paging.setTotalSize(gridTab.getRowCount());
+			if (paging.getTotalSize() != mTab.getRowCount())
+				paging.setTotalSize(mTab.getRowCount());
 			int pgIndex = rowIndex % pageSize;
 			int pgNo = (rowIndex - pgIndex) / pageSize;
 			
@@ -257,17 +257,17 @@ public class ListPanel extends Borderlayout implements EventListener
 		int index = 0;
 		for (int i = 0; i < numColumns; i++)
 		{
-			if (gridField[i].isDisplayed())
+			if (mField[i].isDisplayed())
 			{
-				colnames.put(index, gridField[i].getHeader());
+				colnames.put(index, mField[i].getHeader());
 				index++;
 				ListHeader colHeader = new ListHeader();
 				colHeader.setSort("auto");
-				colHeader.setLabel(gridField[i].getHeader());
-				int l = DisplayType.isNumeric(gridField[i].getDisplayType()) 
-					? 100 : gridField[i].getDisplayLength() * 9;
-				if (gridField[i].getHeader().length() * 9 > l)
-					l = gridField[i].getHeader().length() * 9;
+				colHeader.setLabel(mField[i].getHeader());
+				int l = DisplayType.isNumeric(mField[i].getDisplayType()) 
+					? 100 : mField[i].getDisplayLength() * 9;
+				if (mField[i].getHeader().length() * 9 > l)
+					l = mField[i].getHeader().length() * 9;
 				if (l > MAX_COLUMN_WIDTH) 
 					l = MAX_COLUMN_WIDTH;
 				else if ( l < MIN_COLUMN_WIDTH)
@@ -314,11 +314,11 @@ public class ListPanel extends Borderlayout implements EventListener
 	}
 	
 	private void updateModel() {
-		listModel = new GridTableListModel((GridTable)tableModel, windowNo);		
+		listModel = new GridTableListModel((MTable)tableModel, windowNo);		
 		listModel.setPageSize(pageSize);
 		if (renderer != null)
 			renderer.stopEditing(false);
-		renderer = new GridTabListItemRenderer(gridTab, windowNo);
+		renderer = new GridTabListItemRenderer(mTab, windowNo);
 				
 		listbox.setItemRenderer(renderer);
 		listbox.setModel(listModel);
@@ -371,9 +371,9 @@ public class ListPanel extends Borderlayout implements EventListener
 			rowIndex = start + rowIndex;
 		} 
 		
-		if (gridTab.getCurrentRow() != rowIndex) {
+		if (mTab.getCurrentRow() != rowIndex) {
 			renderer.stopEditing(true);
-			gridTab.navigate(rowIndex);
+			mTab.navigate(rowIndex);
 			return true;
 		}
 		return false;
@@ -392,7 +392,7 @@ public class ListPanel extends Borderlayout implements EventListener
 	 * @param col
 	 */
 	public void dynamicDisplay(int col) {
-		if (!gridTab.isOpen())
+		if (!mTab.isOpen())
         {
             return;
         }
@@ -401,11 +401,11 @@ public class ListPanel extends Borderlayout implements EventListener
         if (col > 0)
         	return;
 
-        boolean noData = gridTab.getRowCount() == 0;
+        boolean noData = mTab.getRowCount() == 0;
         List<WEditor> list =  renderer.getEditors();
         for (WEditor comp : list)
         {
-            GridField mField = comp.getGridField();
+            MField mField = comp.getGridField();
             if (mField != null && mField.getIncluded_Tab_ID() <= 0)
             {
                 if (noData)

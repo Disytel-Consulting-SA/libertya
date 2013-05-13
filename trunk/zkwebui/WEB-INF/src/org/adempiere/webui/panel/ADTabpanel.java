@@ -49,10 +49,10 @@ import org.adempiere.webui.util.GridTabDataBinder;
 import org.adempiere.webui.window.FDialog;
 import org.openXpertya.model.DataStatusEvent;
 import org.openXpertya.model.DataStatusListener;
-import org.openXpertya.model.GridField;
-import org.openXpertya.model.GridTab;
-import org.openXpertya.model.GridTable;
-import org.openXpertya.model.GridWindow;
+import org.openXpertya.model.MField;
+import org.openXpertya.model.MTab;
+import org.openXpertya.model.MTable;
+import org.openXpertya.model.MWindow;
 import org.openXpertya.model.MLookup;
 import org.openXpertya.model.MTree;
 import org.openXpertya.model.MTreeNode;
@@ -107,10 +107,10 @@ DataStatusListener, IADTabpanel, VetoableChangeListener
         logger = CLogger.getCLogger(ADTabpanel.class);
     }
 
-    private GridTab           gridTab;
+    private MTab           mTab;
 
     @SuppressWarnings("unused")
-	private GridWindow        gridWindow;
+	private MWindow        mWindow;
 
     private AbstractADWindowPanel      windowPanel;
 
@@ -179,26 +179,26 @@ DataStatusListener, IADTabpanel, VetoableChangeListener
      *
      * @param winPanel
      * @param windowNo
-     * @param gridTab
-     * @param gridWindow
+     * @param mTab
+     * @param mWindow
      */
-    public void init(AbstractADWindowPanel winPanel, int windowNo, GridTab gridTab,
-            GridWindow gridWindow)
+    public void init(AbstractADWindowPanel winPanel, int windowNo, MTab mTab,
+            MWindow mWindow)
     {
         this.windowNo = windowNo;
-        this.gridWindow = gridWindow;
-        this.gridTab = gridTab;
+        this.mWindow = mWindow;
+        this.mTab = mTab;
         this.windowPanel = winPanel;
-        gridTab.addDataStatusListener(this);
-        this.dataBinder = new GridTabDataBinder(gridTab);
+        mTab.addDataStatusListener(this);
+        this.dataBinder = new GridTabDataBinder(mTab);
 
         this.getChildren().clear();
 
         int AD_Tree_ID = 0;
-		if (gridTab.isTreeTab())
+		if (mTab.isTreeTab())
 			AD_Tree_ID = MTree.getDefaultAD_Tree_ID (
-				Env.getAD_Client_ID(Env.getCtx()), gridTab.getKeyColumnName());
-		if (gridTab.isTreeTab() && AD_Tree_ID != 0)
+				Env.getAD_Client_ID(Env.getCtx()), mTab.getKeyColumnName());
+		if (mTab.isTreeTab() && AD_Tree_ID != 0)
 		{
 			Borderlayout layout = new Borderlayout();
 			layout.setParent(this);
@@ -231,7 +231,7 @@ DataStatusListener, IADTabpanel, VetoableChangeListener
         listPanel.setWindowNo(windowNo);
         listPanel.setADWindowPanel(winPanel);
 
-        gridTab.getTableModel().addVetoableChangeListener(this);
+        mTab.getTableModel().addVetoableChangeListener(this);
     }
 
     /**
@@ -263,13 +263,13 @@ DataStatusListener, IADTabpanel, VetoableChangeListener
     	columns.appendChild(col);
 
     	Rows rows = grid.newRows();
-        GridField fields[] = gridTab.getFields();
+        MField fields[] = mTab.getFields();
         org.zkoss.zul.Row row = new Row();
 
         String currentFieldGroup = null;
         for (int i = 0; i < fields.length; i++)
         {
-            GridField field = fields[i];
+            MField field = fields[i];
             if (field.isDisplayed())
             {            	
             	//included tab
@@ -422,7 +422,7 @@ DataStatusListener, IADTabpanel, VetoableChangeListener
         				rowList.add(row);
                     row = new Row();
                 }
-                WEditor editor = WebEditorFactory.getEditor(gridTab, field, false);
+                WEditor editor = WebEditorFactory.getEditor(mTab, field, false);
 
                 if (editor != null) // Not heading
                 {
@@ -514,13 +514,13 @@ DataStatusListener, IADTabpanel, VetoableChangeListener
         }
 
         //create tree
-        if (gridTab.isTreeTab() && treePanel != null) {
+        if (mTab.isTreeTab() && treePanel != null) {
 			int AD_Tree_ID = MTree.getDefaultAD_Tree_ID (
-				Env.getAD_Client_ID(Env.getCtx()), gridTab.getKeyColumnName());
+				Env.getAD_Client_ID(Env.getCtx()), mTab.getKeyColumnName());
 			treePanel.initTree(AD_Tree_ID, windowNo);
         }
 
-        if (!gridTab.isSingleRow() && !isGridView())
+        if (!mTab.isSingleRow() && !isGridView())
         	switchRowPresentation();
     }
 
@@ -534,7 +534,7 @@ DataStatusListener, IADTabpanel, VetoableChangeListener
 	 */
     public void dynamicDisplay (int col)
     {
-        if (!gridTab.isOpen())
+        if (!mTab.isOpen())
         {
             return;
         }
@@ -542,10 +542,10 @@ DataStatusListener, IADTabpanel, VetoableChangeListener
         //  Selective
         if (col > 0)
         {
-            GridField changedField = gridTab.getField(col);
+            MField changedField = mTab.getField(col);
             String columnName = changedField.getColumnName();
-            ArrayList<?> dependants = gridTab.getDependantFields(columnName);
-            logger.config("(" + gridTab.toString() + ") "
+            ArrayList<?> dependants = mTab.getDependantFields(columnName);
+            logger.config("(" + mTab.toString() + ") "
                 + columnName + " - Dependents=" + dependants.size());
             if (dependants.size() == 0 && changedField.getCallout().length() > 0)
             {
@@ -553,11 +553,11 @@ DataStatusListener, IADTabpanel, VetoableChangeListener
             }
         }
 
-        boolean noData = gridTab.getRowCount() == 0;
-        logger.config(gridTab.toString() + " - Rows=" + gridTab.getRowCount());
+        boolean noData = mTab.getRowCount() == 0;
+        logger.config(mTab.toString() + " - Rows=" + mTab.getRowCount());
         for (WEditor comp : editors)
         {
-            GridField mField = comp.getGridField();
+            MField mField = comp.getGridField();
             if (mField != null && mField.getIncluded_Tab_ID() <= 0)
             {
                 if (mField.isDisplayed(true))       //  check context
@@ -632,7 +632,7 @@ DataStatusListener, IADTabpanel, VetoableChangeListener
         	}
         }
 
-        logger.config(gridTab.toString() + " - fini - " + (col<=0 ? "complete" : "seletive"));
+        logger.config(mTab.toString() + " - fini - " + (col<=0 ? "complete" : "seletive"));
     }   //  dynamicDisplay
 
     /**
@@ -640,7 +640,7 @@ DataStatusListener, IADTabpanel, VetoableChangeListener
      */
     public String getDisplayLogic()
     {
-        return gridTab.getDisplayLogic();
+        return mTab.getDisplayLogic();
     }
 
     /**
@@ -648,7 +648,7 @@ DataStatusListener, IADTabpanel, VetoableChangeListener
      */
     public String getTitle()
     {
-        return gridTab.getName();
+        return mTab.getName();
     } // getTitle
 
     /**
@@ -664,7 +664,7 @@ DataStatusListener, IADTabpanel, VetoableChangeListener
      */
     public int getTabLevel()
     {
-        return gridTab.getTabLevel();
+        return mTab.getTabLevel();
     }
 
     /**
@@ -673,7 +673,7 @@ DataStatusListener, IADTabpanel, VetoableChangeListener
      */
     public boolean isCurrent()
     {
-        return gridTab != null ? gridTab.isCurrent() : false;
+        return mTab != null ? mTab.isCurrent() : false;
     }
 
     /**
@@ -690,10 +690,10 @@ DataStatusListener, IADTabpanel, VetoableChangeListener
      */
     public void query()
     {
-    	boolean open = gridTab.isOpen();
-        gridTab.query(false);
+    	boolean open = mTab.isOpen();
+        mTab.query(false);
         if (listPanel.isVisible() && !open)
-        	gridTab.getTableModel().fireTableDataChanged();
+        	mTab.getTableModel().fireTableDataChanged();
     }
 
     /**
@@ -704,18 +704,18 @@ DataStatusListener, IADTabpanel, VetoableChangeListener
      */
     public void query (boolean onlyCurrentRows, int onlyCurrentDays, int maxRows)
     {
-    	boolean open = gridTab.isOpen();
-        gridTab.query(onlyCurrentRows, onlyCurrentDays, maxRows);
+    	boolean open = mTab.isOpen();
+        mTab.query(onlyCurrentRows, onlyCurrentDays, maxRows);
         if (listPanel.isVisible() && !open)
-        	gridTab.getTableModel().fireTableDataChanged();
+        	mTab.getTableModel().fireTableDataChanged();
     }
 
     /**
-     * @return GridTab
+     * @return MTab
      */
-    public GridTab getGridTab()
+    public MTab getGridTab()
     {
-        return gridTab;
+        return mTab;
     }
 
     /**
@@ -723,7 +723,7 @@ DataStatusListener, IADTabpanel, VetoableChangeListener
      */
     public void refresh()
     {
-        gridTab.dataRefresh();
+        mTab.dataRefresh();
     }
 
     /**
@@ -735,7 +735,7 @@ DataStatusListener, IADTabpanel, VetoableChangeListener
     	active = activate;
         if (listPanel.isVisible()) {
         	if (activate)
-        		listPanel.activate(gridTab);
+        		listPanel.activate(mTab);
         	else
         		listPanel.deactivate();
         } else {
@@ -813,11 +813,11 @@ DataStatusListener, IADTabpanel, VetoableChangeListener
 			//return;
 
 		//  Search all rows for mode id
-		int size = gridTab.getRowCount();
+		int size = mTab.getRowCount();
 		int row = -1;
 		for (int i = 0; i < size; i++)
 		{
-			if (gridTab.getKeyID(i) == nodeID)
+			if (mTab.getKeyID(i) == nodeID)
 			{
 				row = i;
 				break;
@@ -831,7 +831,7 @@ DataStatusListener, IADTabpanel, VetoableChangeListener
 		}
 
 		//  Navigate to node row
-		gridTab.navigate(row);
+		mTab.navigate(row);
 	}
 
     /**
@@ -844,24 +844,24 @@ DataStatusListener, IADTabpanel, VetoableChangeListener
     	if (Executions.getCurrent() == null) return;
 
         int col = e.getChangedColumn();
-        logger.config("(" + gridTab + ") Col=" + col + ": " + e.toString());
+        logger.config("(" + mTab + ") Col=" + col + ": " + e.toString());
 
         //  Process Callout
-        GridField mField = gridTab.getField(col);
+        MField mField = mTab.getField(col);
         if (mField != null
-            && (mField.getCallout().length() > 0 || gridTab.hasDependants(mField.getColumnName())))
+            && (mField.getCallout().length() > 0 || mTab.hasDependants(mField.getColumnName())))
         {
-            String msg = gridTab.processFieldChange(mField);     //  Dependencies & Callout
+            String msg = mTab.processFieldChange(mField);     //  Dependencies & Callout
             if (msg.length() > 0)
             {
                 FDialog.error(windowNo, this, msg);
             }
 
             // Refresh the list on dependant fields
-    		ArrayList<GridField> list = gridTab.getDependantFields(mField.getColumnName());
+    		ArrayList<MField> list = mTab.getDependantFields(mField.getColumnName());
     		for (int i = 0; i < list.size(); i++)
     		{
-    			GridField dependentField = (GridField)list.get(i);
+    			MField dependentField = (MField)list.get(i);
     		//	log.trace(log.l5_DData, "Dependent Field", dependentField==null ? "null" : dependentField.getColumnName());
     			//  if the field has a lookup
     			if (dependentField != null && dependentField.getLookup() instanceof MLookup)
@@ -886,12 +886,12 @@ DataStatusListener, IADTabpanel, VetoableChangeListener
         	if ("Deleted".equalsIgnoreCase(e.getAD_Message()))
         		if (e.Record_ID != null
         				&& e.Record_ID instanceof Integer
-        				&& ((Integer)e.Record_ID != gridTab.getRecord_ID()))
+        				&& ((Integer)e.Record_ID != mTab.getRecord_ID()))
         			deleteNode((Integer)e.Record_ID);
         		else
-        			setSelectedNode(gridTab.getRecord_ID());
+        			setSelectedNode(mTab.getRecord_ID());
         	else
-        		setSelectedNode(gridTab.getRecord_ID());
+        		setSelectedNode(mTab.getRecord_ID());
         }
 
         if (listPanel.isVisible()) {
@@ -927,16 +927,16 @@ DataStatusListener, IADTabpanel, VetoableChangeListener
 	}
 
 	private void addNewNode() {
-    	if (gridTab.getRecord_ID() > 0) {
-	    	String name = (String)gridTab.getValue("Name");
-			String description = (String)gridTab.getValue("Description");
-			boolean summary = gridTab.getValueAsBoolean("IsSummary");
-			String imageIndicator = (String)gridTab.getValue("Action");  //  Menu - Action
+    	if (mTab.getRecord_ID() > 0) {
+	    	String name = (String)mTab.getValue("Name");
+			String description = (String)mTab.getValue("Description");
+			boolean summary = mTab.getValueAsBoolean("IsSummary");
+			String imageIndicator = (String)mTab.getValue("Action");  //  Menu - Action
 			//
 			SimpleTreeModel model = (SimpleTreeModel) treePanel.getTree().getModel();
 			SimpleTreeNode treeNode = model.getRoot();
 			MTreeNode root = (MTreeNode) treeNode.getData();
-			MTreeNode node = new MTreeNode (gridTab.getRecord_ID(), 0, name, description,
+			MTreeNode node = new MTreeNode (mTab.getRecord_ID(), 0, name, description,
 					root.getNode_ID(), summary, imageIndicator, false, null);
 			SimpleTreeNode newNode = new SimpleTreeNode(node, new ArrayList<Object>());
 			model.addNode(newNode);
@@ -987,7 +987,7 @@ DataStatusListener, IADTabpanel, VetoableChangeListener
 		}
 		listPanel.setVisible(!formComponent.isVisible());
 		if (listPanel.isVisible()) {
-			listPanel.refresh(gridTab);
+			listPanel.refresh(mTab);
 			listPanel.scrollToCurrentRow();
 		} else {
 			listPanel.deactivate();
@@ -1015,18 +1015,18 @@ DataStatusListener, IADTabpanel, VetoableChangeListener
 	 * Embed detail tab
 	 * @param ctx
 	 * @param windowNo
-	 * @param gridWindow
+	 * @param mWindow
 	 * @param adTabId
 	 * @param tabIndex
 	 * @param tabPanel
 	 */
-	public void embed(Properties ctx, int windowNo, GridWindow gridWindow,
+	public void embed(Properties ctx, int windowNo, MWindow mWindow,
 			int adTabId, int tabIndex, IADTabpanel tabPanel) {
 		EmbeddedPanel ep = new EmbeddedPanel();
 		ep.tabPanel = tabPanel;
 		ep.adTabId = adTabId;
 		ep.tabIndex = tabIndex;
-		ep.gridWindow = gridWindow;
+		ep.mWindow = mWindow;
 		includedPanel.add(ep);
 		Group group = includedTab.get(adTabId);
 		ep.group = group;
@@ -1034,7 +1034,7 @@ DataStatusListener, IADTabpanel, VetoableChangeListener
 			ADTabpanel atp = (ADTabpanel) tabPanel;
 			atp.listPanel.setPageSize(-1);
 		}
-		ADWindowPanel panel = new ADWindowPanel(ctx, windowNo, gridWindow, tabIndex, tabPanel);
+		ADWindowPanel panel = new ADWindowPanel(ctx, windowNo, mWindow, tabIndex, tabPanel);
 		ep.windowPanel = panel;
 
 		if (group != null) {
@@ -1046,7 +1046,7 @@ DataStatusListener, IADTabpanel, VetoableChangeListener
 
 	class EmbeddedPanel {
 		Group group;
-		GridWindow gridWindow;
+		MWindow mWindow;
 		int tabIndex;
 		ADWindowPanel windowPanel;
 		IADTabpanel tabPanel;
@@ -1072,7 +1072,7 @@ DataStatusListener, IADTabpanel, VetoableChangeListener
 		ep.windowPanel.getComponent().setStyle("position: relative");
 		ep.windowPanel.getComponent().setHeight("400px");
 
-		Label title = new Label(ep.gridWindow.getTab(ep.tabIndex).getName());
+		Label title = new Label(ep.mWindow.getTab(ep.tabIndex).getName());
 		ep.group.appendChild(title);
 		ep.group.appendChild(ep.windowPanel.getToolbar());
 		ep.windowPanel.getStatusBar().setZclass("z-group-foot");
@@ -1121,7 +1121,7 @@ DataStatusListener, IADTabpanel, VetoableChangeListener
 	public void vetoableChange(PropertyChangeEvent e)
 			throws PropertyVetoException {
 		//  Save Confirmation dialog    MTable-RowSave
-		if (e.getPropertyName().equals(GridTable.PROPERTY))
+		if (e.getPropertyName().equals(MTable.PROPERTY))
 		{
 			//  throw new PropertyVetoException will call this listener again to revert to old value
 			if (m_vetoActive)
@@ -1130,9 +1130,9 @@ DataStatusListener, IADTabpanel, VetoableChangeListener
 				m_vetoActive = false;
 				return;
 			}
-			if (!Env.isAutoCommit(Env.getCtx(), getWindowNo()) || gridTab.getCommitWarning().length() > 0)
+			if (!Env.isAutoCommit(Env.getCtx(), getWindowNo()) || mTab.getCommitWarning().length() > 0)
 			{
-				if (!FDialog.ask(getWindowNo(), this, "SaveChanges?", gridTab.getCommitWarning()))
+				if (!FDialog.ask(getWindowNo(), this, "SaveChanges?", mTab.getCommitWarning()))
 				{
 					m_vetoActive = true;
 					throw new PropertyVetoException ("UserDeniedSave", e);
@@ -1153,7 +1153,7 @@ DataStatusListener, IADTabpanel, VetoableChangeListener
 	 * @param gTab
 	 * @return embedded panel or null if not found
 	 */
-	public IADTabpanel findEmbeddedPanel(GridTab gTab) {
+	public IADTabpanel findEmbeddedPanel(MTab gTab) {
 		IADTabpanel panel = null;
 		for(EmbeddedPanel ep : includedPanel) {
 			if (ep.tabPanel.getGridTab().equals(gTab)) {

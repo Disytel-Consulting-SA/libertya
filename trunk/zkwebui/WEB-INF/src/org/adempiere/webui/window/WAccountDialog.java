@@ -39,10 +39,10 @@ import org.adempiere.webui.panel.StatusBarPanel;
 import org.adempiere.webui.session.SessionManager;
 import org.openXpertya.model.DataStatusEvent;
 import org.openXpertya.model.DataStatusListener;
-import org.openXpertya.model.GridField;
-import org.openXpertya.model.GridTab;
-import org.openXpertya.model.GridWindow;
-import org.openXpertya.model.GridWindowVO;
+import org.openXpertya.model.MField;
+import org.openXpertya.model.MTab;
+import org.openXpertya.model.MWindow;
+import org.openXpertya.model.MWindowVO;
 import org.openXpertya.model.MAccount;
 import org.openXpertya.model.MAccountLookup;
 import org.openXpertya.model.MAcctSchema;
@@ -120,9 +120,9 @@ public final class WAccountDialog extends Window
 	/** Accounting Schema           */
 	private static MAcctSchema	s_AcctSchema = null;
 	/** MWindow for AccountCombination  */
-	private GridWindow             m_mWindow = null;
+	private MWindow             m_mWindow = null;
 	/** MTab for AccountCombination     */
-	private GridTab                m_mTab = null;
+	private MTab                m_mTab = null;
 	/** GridController                  */
 	private ADTabpanel      m_adTabPanel = null;
 
@@ -273,10 +273,10 @@ public final class WAccountDialog extends Window
 
 		//  Model
 		int AD_Window_ID = 153;		//	Maintain Account Combinations
-		GridWindowVO wVO = AEnv.getMWindowVO (m_WindowNo, AD_Window_ID, 0);
+		MWindowVO wVO = AEnv.getMWindowVO (m_WindowNo, AD_Window_ID, 0);
 		if (wVO == null)
 			return false;
-		m_mWindow = new GridWindow (wVO);
+		m_mWindow = new MWindow (wVO);
 		m_mTab = m_mWindow.getTab(0);
 		// Make sure is the tab is loaded - teo_sarca [ 1659124 ]
 		if (!m_mTab.isLoadComplete())
@@ -293,7 +293,7 @@ public final class WAccountDialog extends Window
 		//  don't show fields not being displayed in this environment
 		for (int i = 0; i < m_mTab.getFieldCount(); i++)
 		{
-			GridField field = m_mTab.getField(i);
+			MField field = m_mTab.getField(i);
 			if (!field.isDisplayed (true))      //  check context
 				field.setDisplayed (false);
 		}
@@ -315,13 +315,13 @@ public final class WAccountDialog extends Window
 		//	Alias
 		if (s_AcctSchema.isHasAlias())
 		{
-			GridField alias = m_mTab.getField("Alias");
+			MField alias = m_mTab.getField("Alias");
 			f_Alias = WebEditorFactory.getEditor(alias, false);
 			addLine(alias, f_Alias, false);
 		}	//	Alias
 
 		//	Combination
-		GridField combination = m_mTab.getField("Combination");
+		MField combination = m_mTab.getField("Combination");
 		f_Combination = WebEditorFactory.getEditor(combination, false);
 		addLine(combination, f_Combination, false);
 		m_newRow = true;
@@ -338,13 +338,13 @@ public final class WAccountDialog extends Window
 			//
 			if (type.equals("OO"/*MAcctSchemaElement.ELEMENTTYPE_Organization*/))
 			{
-				GridField field = m_mTab.getField("AD_Org_ID");
+				MField field = m_mTab.getField("AD_Org_ID");
 				f_AD_Org_ID = WebEditorFactory.getEditor(field, false);
 				addLine(field, f_AD_Org_ID, isMandatory);
 			}
 			else if (type.equals(MAcctSchemaElement.ELEMENTTYPE_Account))
 			{
-				GridField field = m_mTab.getField("Account_ID");
+				MField field = m_mTab.getField("Account_ID");
 				f_Account_ID = WebEditorFactory.getEditor(field, false);
 			//	((VLookup)f_Account_ID).setWidth(400);
 				addLine(field, f_Account_ID, isMandatory);
@@ -352,75 +352,75 @@ public final class WAccountDialog extends Window
 			}
 			/*else if (type.equals(MAcctSchemaElement.ELEMENTTYPE_SubAccount))
 			{
-				GridField field = m_mTab.getField("C_SubAcct_ID");
+				MField field = m_mTab.getField("C_SubAcct_ID");
 				f_SubAcct_ID = WebEditorFactory.getEditor(field, false);
 			//	((VLookup)f_SubAcct_ID).setWidth(400);
 				addLine(field, f_SubAcct_ID, isMandatory);
 			}*/
 			else if (type.equals(MAcctSchemaElement.ELEMENTTYPE_Product))
 			{
-				GridField field = m_mTab.getField("M_Product_ID");
+				MField field = m_mTab.getField("M_Product_ID");
 				f_M_Product_ID = WebEditorFactory.getEditor(field, false);
 				addLine(field, f_M_Product_ID, isMandatory);
 			}
 			else if (type.equals(MAcctSchemaElement.ELEMENTTYPE_BPartner))
 			{
-				GridField field = m_mTab.getField("C_BPartner_ID");
+				MField field = m_mTab.getField("C_BPartner_ID");
 				f_C_BPartner_ID = WebEditorFactory.getEditor(field, false);
 				addLine(field, f_C_BPartner_ID, isMandatory);
 			}
 			else if (type.equals(MAcctSchemaElement.ELEMENTTYPE_Campaign))
 			{
-				GridField field = m_mTab.getField("C_Campaign_ID");
+				MField field = m_mTab.getField("C_Campaign_ID");
 				f_C_Campaign_ID = WebEditorFactory.getEditor(field, false);
 				addLine(field, f_C_Campaign_ID, isMandatory);
 			}
 			else if (type.equals(MAcctSchemaElement.ELEMENTTYPE_LocationFrom))
 			{
-				GridField field = m_mTab.getField("C_LocFrom_ID");
+				MField field = m_mTab.getField("C_LocFrom_ID");
 				f_C_LocFrom_ID = WebEditorFactory.getEditor(field, false);
 				addLine(field, f_C_LocFrom_ID, isMandatory);
 			}
 			else if (type.equals(MAcctSchemaElement.ELEMENTTYPE_LocationTo))
 			{
-				GridField field = m_mTab.getField("C_LocTo_ID");
+				MField field = m_mTab.getField("C_LocTo_ID");
 				f_C_LocTo_ID = WebEditorFactory.getEditor(field, false);
 				addLine(field, f_C_LocTo_ID, isMandatory);
 			}
 			else if (type.equals(MAcctSchemaElement.ELEMENTTYPE_Project))
 			{
-				GridField field = m_mTab.getField("C_Project_ID");
+				MField field = m_mTab.getField("C_Project_ID");
 				f_C_Project_ID = WebEditorFactory.getEditor(field, false);
 				addLine(field, f_C_Project_ID, isMandatory);
 			}
 			else if (type.equals(MAcctSchemaElement.ELEMENTTYPE_SalesRegion))
 			{
-				GridField field = m_mTab.getField("C_SalesRegion_ID");
+				MField field = m_mTab.getField("C_SalesRegion_ID");
 				f_C_SalesRegion_ID = WebEditorFactory.getEditor(field, false);
 				addLine(field, f_C_SalesRegion_ID, isMandatory);
 			}
 			else if (type.equals(MAcctSchemaElement.ELEMENTTYPE_OrgTrx))
 			{
-				GridField field = m_mTab.getField("AD_OrgTrx_ID");
+				MField field = m_mTab.getField("AD_OrgTrx_ID");
 				f_AD_OrgTrx_ID = WebEditorFactory.getEditor(field, false);
 				addLine(field, f_AD_OrgTrx_ID, isMandatory);
 			}
 			else if (type.equals(MAcctSchemaElement.ELEMENTTYPE_Activity))
 			{
-				GridField field = m_mTab.getField("C_Activity_ID");
+				MField field = m_mTab.getField("C_Activity_ID");
 				f_C_Activity_ID = WebEditorFactory.getEditor(field, false);
 				addLine(field, f_C_Activity_ID, isMandatory);
 			}
 			//	User1
 			else if (type.equals("U1"/*MAcctSchemaElement.ELEMENTTYPE_UserList1*/))
 			{
-				GridField field = m_mTab.getField("User1_ID");
+				MField field = m_mTab.getField("User1_ID");
 				f_User1_ID = WebEditorFactory.getEditor(field, false);
 				addLine(field, f_User1_ID, isMandatory);
 			}
 			else if (type.equals("U2"/*MAcctSchemaElement.ELEMENTTYPE_UserList2*/))
 			{
-				GridField field = m_mTab.getField("User2_ID");
+				MField field = m_mTab.getField("User2_ID");
 				f_User2_ID = WebEditorFactory.getEditor(field, false);
 				addLine(field, f_User2_ID, isMandatory);
 			}
@@ -472,7 +472,7 @@ public final class WAccountDialog extends Window
 	 *  @param editor editor
 	 *  @param mandatory mandatory
 	 */
-	private void addLine (GridField field, WEditor editor, boolean mandatory)
+	private void addLine (MField field, WEditor editor, boolean mandatory)
 	{
 		log.fine("Field=" + field);
 		Label label = editor.getLabel();

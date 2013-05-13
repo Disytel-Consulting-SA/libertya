@@ -23,7 +23,7 @@ import java.util.List;
 import org.adempiere.webui.LayoutUtils;
 import org.adempiere.webui.panel.IADTabpanel;
 import org.openXpertya.model.DataStatusEvent;
-import org.openXpertya.model.GridTab;
+import org.openXpertya.model.MTab;
 import org.openXpertya.util.CLogger;
 import org.zkoss.zk.ui.Component;
 import org.zkoss.zk.ui.event.EventListener;
@@ -67,7 +67,7 @@ public class CompositeADTab extends AbstractADTab
     }
 
     @Override
-	protected void doAddTab(GridTab gTab, IADTabpanel tabPanel) {
+	protected void doAddTab(MTab gTab, IADTabpanel tabPanel) {
     	tabPanel.setParent(div);
         tabPanel.setVisible(false);
 
@@ -150,7 +150,7 @@ public class CompositeADTab extends AbstractADTab
 	}
 
 	@Override
-	public IADTabpanel findADTabpanel(GridTab gTab) {
+	public IADTabpanel findADTabpanel(MTab gTab) {
 		for (IADTabpanel tabpanel : tabPanelList) {
 			if (tabpanel.getGridTab() == gTab) {
 				return tabpanel;

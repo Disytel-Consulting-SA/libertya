@@ -31,7 +31,7 @@ import org.adempiere.webui.component.Rows;
 import org.adempiere.webui.component.Textbox;
 import org.adempiere.webui.component.Window;
 import org.adempiere.webui.window.FDialog;
-import org.openXpertya.model.GridField;
+import org.openXpertya.model.MField;
 import org.openXpertya.model.MRole;
 import org.openXpertya.util.CLogMgt;
 import org.openXpertya.util.CLogger;
@@ -67,7 +67,7 @@ public class ValuePreference extends Window implements EventListener
 	 *  @param aValue	value
 	 *  @return ValuePreference or null
 	 */
-	public static ValuePreference start (GridField mField, Object aValue)
+	public static ValuePreference start (MField mField, Object aValue)
 	{
 		return start (mField, aValue, null);
 	}   //  start
@@ -79,7 +79,7 @@ public class ValuePreference extends Window implements EventListener
 	 *  @param aDisplayValue	display value
 	 *  @return ValuePreference or null
 	 */
-	public static ValuePreference start (GridField mField, Object aValue, String aDisplayValue)
+	public static ValuePreference start (MField mField, Object aValue, String aDisplayValue)
 	{
 		if (!mField.isEditable(false))
 		{

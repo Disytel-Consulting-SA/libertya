@@ -23,7 +23,7 @@ import java.util.Vector;
 import java.util.logging.Level;
 
 import org.openXpertya.minigrid.IMiniTable;
-import org.openXpertya.model.GridTab;
+import org.openXpertya.model.MTab;
 import org.openXpertya.model.MInOut;
 import org.openXpertya.model.MInOutLine;
 import org.openXpertya.model.MInvoice;
@@ -63,7 +63,7 @@ public class CreateFromShipment extends CreateFrom
 	 *  Protected Constructor
 	 *  @param mTab MTab
 	 */
-	public CreateFromShipment(GridTab mTab)
+	public CreateFromShipment(MTab mTab)
 	{
 		super(mTab);
 		log.info(mTab.toString());

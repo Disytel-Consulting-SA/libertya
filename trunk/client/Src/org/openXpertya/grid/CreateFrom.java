@@ -22,7 +22,7 @@ import java.util.Vector;
 import java.util.logging.Level;
 
 import org.openXpertya.minigrid.IMiniTable;
-import org.openXpertya.model.GridTab;
+import org.openXpertya.model.MTab;
 import org.openXpertya.model.MOrder;
 import org.openXpertya.model.MRMA;
 import org.openXpertya.util.CLogger;
@@ -42,14 +42,14 @@ public abstract class CreateFrom implements ICreateFrom
 	/**  Loaded RMA             */
 	protected MRMA m_rma = null;
 
-	private GridTab gridTab;
+	private MTab mTab;
 
 	private String title;
 
 	private boolean initOK = false;
 
-	public CreateFrom(GridTab gridTab) {
-		this.gridTab = gridTab;
+	public CreateFrom(MTab mTab) {
+		this.mTab = mTab;
 	}
 
 	public abstract boolean dynInit() throws Exception;
@@ -229,9 +229,9 @@ public abstract class CreateFrom implements ICreateFrom
 
 	}
 
-	public GridTab getGridTab()
+	public MTab getGridTab()
 	{
-		return gridTab;
+		return mTab;
 	}
 
 	/**
@@ -240,7 +240,7 @@ public abstract class CreateFrom implements ICreateFrom
 	 */
 	public int getM_Warehouse_ID()
 	{
-		return Env.getContextAsInt(Env.getCtx(), gridTab.getWindowNo(), "M_Warehouse_ID");
+		return Env.getContextAsInt(Env.getCtx(), mTab.getWindowNo(), "M_Warehouse_ID");
 	}
 
 	public String getTitle() {

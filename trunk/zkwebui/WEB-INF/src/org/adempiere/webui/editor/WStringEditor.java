@@ -29,7 +29,7 @@ import org.adempiere.webui.event.ValueChangeEvent;
 import org.adempiere.webui.session.SessionManager;
 import org.adempiere.webui.window.WFieldRecordInfo;
 import org.adempiere.webui.window.WTextEditorDialog;
-import org.openXpertya.model.GridField;
+import org.openXpertya.model.MField;
 import org.openXpertya.model.MRole;
 import org.openXpertya.util.DisplayType;
 import org.openXpertya.util.Env;
@@ -64,15 +64,15 @@ public class WStringEditor extends WEditor implements ContextMenuListener
     	this("String", false, false, true, 30, 30, "", null);
     }
 
-    public WStringEditor(GridField gridField) {
-    	this(gridField, false);
+    public WStringEditor(MField mField) {
+    	this(mField, false);
     }
 
-    public WStringEditor(GridField gridField, boolean tableEditor)
+    public WStringEditor(MField mField, boolean tableEditor)
     {
-        super(gridField.isAutocomplete() ? new Combobox() : new Textbox(), gridField);
+        super(mField.isAutocomplete() ? new Combobox() : new Textbox(), mField);
         this.tableEditor = tableEditor;
-        init(gridField.getObscureType());
+        init(mField.getObscureType());
     }
 
     /**
@@ -111,27 +111,27 @@ public class WStringEditor extends WEditor implements ContextMenuListener
 
 	private void init(String obscureType)
     {
-		if (gridField != null)
+		if (mField != null)
 		{
-	        getComponent().setMaxlength(gridField.getFieldLength());
-	        int displayLength = gridField.getDisplayLength();
+	        getComponent().setMaxlength(mField.getFieldLength());
+	        int displayLength = mField.getDisplayLength();
 	        if (displayLength <= 0 || displayLength > MAX_DISPLAY_LENGTH)
 	        {
 	            displayLength = MAX_DISPLAY_LENGTH;
 	        }
 	        getComponent().setCols(displayLength);
 
-	        if (gridField.getDisplayType() == DisplayType.Text)
+	        if (mField.getDisplayType() == DisplayType.Text)
 	        {
 	            getComponent().setMultiline(true);
 	            getComponent().setRows(3);
 	        }
-	        else if (gridField.getDisplayType() == DisplayType.TextLong)
+	        else if (mField.getDisplayType() == DisplayType.TextLong)
 	        {
 	            getComponent().setMultiline(true);
 	            getComponent().setRows(5);
 	        }
-	        else if (gridField.getDisplayType() == DisplayType.Memo)
+	        else if (mField.getDisplayType() == DisplayType.Memo)
 	        {
 	            getComponent().setMultiline(true);
 	            getComponent().setRows(8);
@@ -146,19 +146,19 @@ public class WStringEditor extends WEditor implements ContextMenuListener
 	        editor.addEventListener(Events.ON_CLICK, popupMenu);
 	        popupMenu.appendChild(editor);
 	        
-	        if (gridField != null && gridField.getGridTab() != null)
+	        if (mField != null && mField.getGridTab() != null)
 			{
 				WFieldRecordInfo.addMenu(popupMenu);
 			}
 
 	        getComponent().setContext(popupMenu.getId());
 
-	        if (gridField.isAutocomplete()) {
+	        if (mField.isAutocomplete()) {
 	        	Combobox combo = (Combobox)getComponent();
 	        	combo.setAutodrop(true);
 	        	combo.setAutocomplete(true);
 	        	combo.setButtonVisible(false);
-	        	List<String> items = gridField.getEntries();
+	        	List<String> items = mField.getEntries();
 	        	for(String s : items) {
 	        		combo.appendItem(s);
 	        	}
@@ -243,7 +243,7 @@ public class WStringEditor extends WEditor implements ContextMenuListener
 		else if (EDITOR_EVENT.equals(evt.getContextEvent()))
 		{
 			WTextEditorDialog dialog = new WTextEditorDialog(this.getColumnName(), getDisplay(),
-					isReadWrite(), gridField.getFieldLength());
+					isReadWrite(), mField.getFieldLength());
 			dialog.setAttribute(Window.MODE_KEY, Window.MODE_MODAL);
 			SessionManager.getAppDesktop().showWindow(dialog);
 			if (!dialog.isCancelled()) {
@@ -256,16 +256,16 @@ public class WStringEditor extends WEditor implements ContextMenuListener
 		}
 		else if (WEditorPopupMenu.CHANGE_LOG_EVENT.equals(evt.getContextEvent()))
 		{
-			WFieldRecordInfo.start(gridField);
+			WFieldRecordInfo.start(mField);
 		}
 	}
 
 	@Override
 	public void dynamicDisplay() {
 		//referesh auto complete list
-		if (gridField.isAutocomplete()) {
+		if (mField.isAutocomplete()) {
         	Combobox combo = (Combobox)getComponent();
-        	List<String> items = gridField.getEntries();
+        	List<String> items = mField.getEntries();
         	if (items.size() != combo.getItemCount())
         	{
         		combo.removeAllItems();

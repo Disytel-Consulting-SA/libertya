@@ -33,7 +33,7 @@ import org.adempiere.webui.editor.WSearchEditor;
 import org.adempiere.webui.event.ValueChangeEvent;
 import org.adempiere.webui.event.ValueChangeListener;
 import org.openXpertya.grid.CreateFromInvoice;
-import org.openXpertya.model.GridTab;
+import org.openXpertya.model.MTab;
 import org.openXpertya.model.MDocType;
 import org.openXpertya.model.MLookup;
 import org.openXpertya.model.MLookupFactory;
@@ -54,7 +54,7 @@ public class WCreateFromInvoiceUI extends CreateFromInvoice implements EventList
 	
 	private WCreateFromWindow window;
 	
-	public WCreateFromInvoiceUI(GridTab tab) 
+	public WCreateFromInvoiceUI(MTab tab) 
 	{
 		super(tab);
 		log.info(getGridTab().toString());

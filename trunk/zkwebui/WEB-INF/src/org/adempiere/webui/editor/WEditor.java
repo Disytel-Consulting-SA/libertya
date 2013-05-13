@@ -28,8 +28,8 @@ import org.adempiere.webui.component.Datebox;
 import org.adempiere.webui.component.Label;
 import org.adempiere.webui.event.ValueChangeEvent;
 import org.adempiere.webui.event.ValueChangeListener;
-import org.openXpertya.model.GridField;
-import org.openXpertya.model.GridTab;
+import org.openXpertya.model.MField;
+import org.openXpertya.model.MTab;
 import org.openXpertya.util.DisplayType;
 import org.zkoss.zk.ui.Component;
 import org.zkoss.zk.ui.HtmlBasedComponent;
@@ -50,9 +50,9 @@ public abstract class WEditor implements EventListener, PropertyChangeListener
 
     public static final int MAX_DISPLAY_LENGTH = 35;
 
-    protected GridField gridField;
+    protected MField mField;
 
-    protected GridTab gridTab;
+    protected MTab mTab;
 
     protected Label label;
 
@@ -77,29 +77,29 @@ public abstract class WEditor implements EventListener, PropertyChangeListener
     /**
      *
      * @param comp
-     * @param gridField
+     * @param mField
      */
-    public WEditor(Component comp, GridField gridField)
+    public WEditor(Component comp, MField mField)
     {
         if (comp == null)
         {
             throw new IllegalArgumentException("Component cannot be null");
         }
 
-        if (gridField == null)
+        if (mField == null)
         {
             throw new IllegalArgumentException("Grid field cannot be null");
         }
 
         this.setComponent(comp);
-        comp.setAttribute("zk_component_prefix", "Field_" + gridField.getColumnName() + "_" + gridField.getAD_Tab_ID() + "_" + gridField.getWindowNo() + "_");
-        this.gridField = gridField;
-        this.setMandatory(gridField.isMandatory(false));
-        this.readOnly = gridField.isReadOnly();
-        this.description = gridField.getDescription();
-        this.updateable = gridField.isUpdateable();
-        this.columnName = gridField.getColumnName();
-        this.strLabel = gridField.getHeader();
+        comp.setAttribute("zk_component_prefix", "Field_" + mField.getColumnName() + "_" + mField.getAD_Tab_ID() + "_" + mField.getWindowNo() + "_");
+        this.mField = mField;
+        this.setMandatory(mField.isMandatory(false));
+        this.readOnly = mField.isReadOnly();
+        this.description = mField.getDescription();
+        this.updateable = mField.isUpdateable();
+        this.columnName = mField.getColumnName();
+        this.strLabel = mField.getHeader();
         init();
     }
 
@@ -219,9 +219,9 @@ public abstract class WEditor implements EventListener, PropertyChangeListener
      *
      * @return grid field for this editor ( can be null )
      */
-    public GridField getGridField()
+    public MField getGridField()
     {
-        return gridField;
+        return mField;
     }
 
     /**
@@ -274,11 +274,11 @@ public abstract class WEditor implements EventListener, PropertyChangeListener
     }
 
     /**
-     * @param gridTab
+     * @param mTab
      */
-    public void setGridTab(GridTab gridTab)
+    public void setGridTab(MTab mTab)
     {
-    	this.gridTab = gridTab;
+    	this.mTab = mTab;
     }
 
     /**
@@ -295,7 +295,7 @@ public abstract class WEditor implements EventListener, PropertyChangeListener
      */
     public void propertyChange(PropertyChangeEvent evt)
     {
-        if (evt.getPropertyName().equals(org.openXpertya.model.GridField.PROPERTY))
+        if (evt.getPropertyName().equals(org.openXpertya.model.MField.PROPERTY))
         {
             setValue((evt.getNewValue()));
         }
@@ -458,7 +458,7 @@ public abstract class WEditor implements EventListener, PropertyChangeListener
         		if (getComponent() instanceof Button) {
         			Button btn = (Button) getComponent();
         			String zclass = btn.getZclass();
-        			if (gridField.getDisplayType() == DisplayType.Image) {
+        			if (mField.getDisplayType() == DisplayType.Image) {
         				if (!zclass.contains("image-button-field ")) {
             				btn.setZclass("image-button-field " + zclass);
         				}

@@ -58,9 +58,9 @@ import org.adempiere.webui.editor.WebEditorFactory;
 import org.adempiere.webui.event.ValueChangeEvent;
 import org.adempiere.webui.event.ValueChangeListener;
 import org.adempiere.webui.part.MultiTabPart;
-import org.openXpertya.model.GridField;
-import org.openXpertya.model.GridFieldVO;
-import org.openXpertya.model.GridTab;
+import org.openXpertya.model.MField;
+import org.openXpertya.model.MFieldVO;
+import org.openXpertya.model.MTab;
 import org.openXpertya.model.MLookupFactory;
 import org.openXpertya.model.MProduct;
 import org.openXpertya.model.MQuery;
@@ -131,7 +131,7 @@ public class FindWindow extends Window implements EventListener,ValueChangeListe
     /** Where                       */
     private String          m_whereExtended;
     /** Search Fields               */
-    private GridField[]     m_findFields;
+    private MField[]     m_findFields;
     /** Resulting query             */
     private MQuery          m_query = null;
     /** Is cancel ?                 */
@@ -149,7 +149,7 @@ public class FindWindow extends Window implements EventListener,ValueChangeListe
     /** List of WEditors            */
     private ArrayList<WEditor>          m_sEditors = new ArrayList<WEditor>();
     /** Target Fields with AD_Column_ID as key  */
-    private Hashtable<Integer,GridField>    m_targetFields = new Hashtable<Integer,GridField>();
+    private Hashtable<Integer,MField>    m_targetFields = new Hashtable<Integer,MField>();
     /** For Grid Controller         */
     public static final int     TABNO = 99;
     /** Length of Fields on first tab   */
@@ -191,7 +191,7 @@ public class FindWindow extends Window implements EventListener,ValueChangeListe
     **/
     public FindWindow (int targetWindowNo, String title,
             int AD_Table_ID, String tableName, String whereExtended,
-            GridField[] findFields, int minRecords, int adTabId)
+            MField[] findFields, int minRecords, int adTabId)
     {
         m_targetWindowNo = targetWindowNo;
         m_AD_Table_ID = AD_Table_ID;
@@ -489,14 +489,14 @@ public class FindWindow extends Window implements EventListener,ValueChangeListe
         //  Get Info from target Tab
         for (int i = 0; i < m_findFields.length; i++)
         {
-            GridField mField = m_findFields[i];
+            MField mField = m_findFields[i];
             String columnName = mField.getColumnName();
 
 			// Make Yes-No searchable as list
 			if (mField.getVO().displayType == DisplayType.YesNo)
 			{
-				GridFieldVO vo = mField.getVO();
-				GridFieldVO ynvo = vo.clone(vo.ctx, vo.WindowNo, vo.TabNo, vo.AD_Window_ID, vo.AD_Tab_ID, vo.tabReadOnly);
+				MFieldVO vo = mField.getVO();
+				MFieldVO ynvo = vo.clone(vo.ctx, vo.WindowNo, vo.TabNo, vo.AD_Window_ID, vo.AD_Tab_ID, vo.tabReadOnly);
 				ynvo.IsDisplayed = true;
 				ynvo.displayType = DisplayType.List;
 				ynvo.AD_Reference_Value_ID = AD_REFERENCE_ID_YESNO;
@@ -506,7 +506,7 @@ public class FindWindow extends Window implements EventListener,ValueChangeListe
 						ynvo.IsParent, ynvo.ValidationCode);
 				ynvo.lookupInfo.InfoFactoryClass = ynvo.InfoFactoryClass;
 
-				GridField ynfield = new GridField(ynvo);
+				MField ynfield = new MField(ynvo);
 
 				// replace the original field by the YN List field
 				m_findFields[i] = ynfield;
@@ -516,10 +516,10 @@ public class FindWindow extends Window implements EventListener,ValueChangeListe
 			// Make Buttons searchable
 			if  ( mField.getVO().displayType == DisplayType.Button )
 			{
-				GridFieldVO vo = mField.getVO();
+				MFieldVO vo = mField.getVO();
 				if ( vo.AD_Reference_Value_ID > 0 )
 				{
-					GridFieldVO postedvo = vo.clone(vo.ctx, vo.WindowNo, vo.TabNo, vo.AD_Window_ID, vo.AD_Tab_ID, vo.tabReadOnly);
+					MFieldVO postedvo = vo.clone(vo.ctx, vo.WindowNo, vo.TabNo, vo.AD_Window_ID, vo.AD_Tab_ID, vo.tabReadOnly);
 					postedvo.IsDisplayed = true;
 					postedvo.displayType = DisplayType.List;
 
@@ -528,7 +528,7 @@ public class FindWindow extends Window implements EventListener,ValueChangeListe
 							postedvo.IsParent, postedvo.ValidationCode);
 					postedvo.lookupInfo.InfoFactoryClass = postedvo.InfoFactoryClass;
 
-					GridField postedfield = new GridField(postedvo);
+					MField postedfield = new MField(postedvo);
 
 					// replace the original field by the Posted List field
 					m_findFields[i] = postedfield;
@@ -644,7 +644,7 @@ public class FindWindow extends Window implements EventListener,ValueChangeListe
         ArrayList<ValueNamePair> items = new ArrayList<ValueNamePair>();
         for (int c = 0; c < m_findFields.length; c++)
         {
-            GridField field = m_findFields[c];
+            MField field = m_findFields[c];
             String columnName = field.getColumnName();
             String header = field.getHeader();
             if (header == null || header.length() == 0)
@@ -714,7 +714,7 @@ public class FindWindow extends Window implements EventListener,ValueChangeListe
      *  Add Selection Column to first Tab
      *  @param mField field
     **/
-    public void addSelectionColumn(GridField mField)
+    public void addSelectionColumn(MField mField)
     {
         log.config(mField.getHeader());
         int displayLength = mField.getDisplayLength();
@@ -927,7 +927,7 @@ public class FindWindow extends Window implements EventListener,ValueChangeListe
 	 * @param listItem
 	 * 	@return data type corected value
 	 */
-	private Component parseString(GridField field, String in, ListItem listItem, boolean to)
+	private Component parseString(MField field, String in, ListItem listItem, boolean to)
 	{
 		if (in == null)
 			return null;
@@ -1020,7 +1020,7 @@ public class FindWindow extends Window implements EventListener,ValueChangeListe
             String ColumnName = column.getSelectedItem().getValue().toString();
             String infoName = column.toString();
             //
-            GridField field = getTargetMField(ColumnName);
+            MField field = getTargetMField(ColumnName);
             if(field == null) continue; // Elaine 2008/07/29
             boolean isProductCategoryField = isProductCategoryField(field.getAD_Column_ID());
             String ColumnSQL = field.getColumnSQL(false);
@@ -1239,7 +1239,7 @@ public class FindWindow extends Window implements EventListener,ValueChangeListe
         boolean enabled = !to || (to && between);
 
         //  Create Editor
-        GridField field = getTargetMField(columnName);
+        MField field = getTargetMField(columnName);
         if(field == null) return new Label("");
 
         WEditor editor = null;
@@ -1266,13 +1266,13 @@ public class FindWindow extends Window implements EventListener,ValueChangeListe
      *  @param columnName column name
      *  @return MField
     **/
-    public GridField getTargetMField (String columnName)
+    public MField getTargetMField (String columnName)
     {
         if (columnName == null)
             return null;
         for (int c = 0; c < m_findFields.length; c++)
         {
-            GridField field = m_findFields[c];
+            MField field = m_findFields[c];
             if (columnName.equals(field.getColumnName()))
                 return field;
         }
@@ -1333,7 +1333,7 @@ public class FindWindow extends Window implements EventListener,ValueChangeListe
 
                 // globalqss - Carlos Ruiz - 20060711
                 // fix a bug with virtualColumn + isSelectionColumn not yielding results
-                GridField field = getTargetMField(ColumnName);
+                MField field = getTargetMField(ColumnName);
                 // add encryption here if the field is encrypted.
                 if (field.isEncryptedColumn()) {
                 	value = SecureEngine.encrypt(value);
@@ -1418,7 +1418,7 @@ public class FindWindow extends Window implements EventListener,ValueChangeListe
             String ColumnName = column.getSelectedItem().getValue().toString();
             String infoName = column.toString();
             //
-            GridField field = getTargetMField(ColumnName);
+            MField field = getTargetMField(ColumnName);
             if(field == null) continue; // Elaine 2008/07/29
             boolean isProductCategoryField = isProductCategoryField(field.getAD_Column_ID());
             String ColumnSQL = field.getColumnSQL(false);
@@ -1503,7 +1503,7 @@ public class FindWindow extends Window implements EventListener,ValueChangeListe
         String finalSQL = MRole.getDefault().addAccessSQL(sql.toString(),
             m_tableName, MRole.SQL_NOTQUALIFIED, MRole.SQL_RO);
         finalSQL = Env.parseContext(Env.getCtx(), m_targetWindowNo, finalSQL, false);
-        Env.setContext(Env.getCtx(), m_targetWindowNo, TABNO, GridTab.CTX_FindSQL, finalSQL);
+        Env.setContext(Env.getCtx(), m_targetWindowNo, TABNO, MTab.CTX_FindSQL, finalSQL);
 
         //  Execute Qusery
         m_total = 999999;
@@ -1646,7 +1646,7 @@ public class FindWindow extends Window implements EventListener,ValueChangeListe
      *  @param in value
      *  @return data type corected value
     **/
-    private Object parseValue (GridField field, Object in)
+    private Object parseValue (MField field, Object in)
     {
         if (in == null)
             return null;

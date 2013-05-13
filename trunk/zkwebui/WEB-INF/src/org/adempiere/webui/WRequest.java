@@ -20,7 +20,7 @@ import java.util.logging.Level;
 
 import org.adempiere.webui.session.SessionManager;
 import org.adempiere.webui.window.ADWindow;
-import org.openXpertya.model.GridTab;
+import org.openXpertya.model.MTab;
 import org.openXpertya.model.MAsset;
 import org.openXpertya.model.MBPartner;
 import org.openXpertya.model.MCampaign;
@@ -211,7 +211,7 @@ public class WRequest implements EventListener
 			//	New - set Table/Record
 			if (e.getTarget() == m_new)
 			{
-				GridTab tab = frame.getADWindowPanel().getActiveGridTab();
+				MTab tab = frame.getADWindowPanel().getActiveGridTab();
 				tab.dataNew (false);
 				tab.setValue("AD_Table_ID", new Integer(m_AD_Table_ID));
 				tab.setValue("Record_ID", new Integer(m_Record_ID));

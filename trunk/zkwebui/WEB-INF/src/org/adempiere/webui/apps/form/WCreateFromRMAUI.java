@@ -29,7 +29,7 @@ import org.adempiere.webui.editor.WSearchEditor;
 import org.adempiere.webui.event.ValueChangeEvent;
 import org.adempiere.webui.event.ValueChangeListener;
 import org.openXpertya.grid.CreateFromRMA;
-import org.openXpertya.model.GridTab;
+import org.openXpertya.model.MTab;
 import org.openXpertya.model.MLookup;
 import org.openXpertya.model.MLookupFactory;
 import org.openXpertya.util.CLogger;
@@ -45,7 +45,7 @@ public class WCreateFromRMAUI extends CreateFromRMA implements ValueChangeListen
 	
 	private WCreateFromWindow window;
 	
-	public WCreateFromRMAUI(GridTab tab) 
+	public WCreateFromRMAUI(MTab tab) 
 	{
 		super(tab);
 		log.info(getGridTab().toString());

@@ -38,7 +38,7 @@ import org.adempiere.webui.editor.WStringEditor;
 import org.adempiere.webui.event.ValueChangeEvent;
 import org.adempiere.webui.event.ValueChangeListener;
 import org.openXpertya.grid.CreateFromShipment;
-import org.openXpertya.model.GridTab;
+import org.openXpertya.model.MTab;
 import org.openXpertya.model.MInvoice;
 import org.openXpertya.model.MLocatorLookup;
 import org.openXpertya.model.MLookup;
@@ -65,7 +65,7 @@ public class WCreateFromShipmentUI extends CreateFromShipment implements EventLi
 
 	private WCreateFromWindow window;
 	
-	public WCreateFromShipmentUI(GridTab tab) 
+	public WCreateFromShipmentUI(MTab tab) 
 	{
 		super(tab);
 		log.info(getGridTab().toString());

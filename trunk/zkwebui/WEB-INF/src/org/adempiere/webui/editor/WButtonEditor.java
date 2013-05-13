@@ -27,7 +27,7 @@ import java.util.logging.Level;
 import org.adempiere.webui.component.Button;
 import org.adempiere.webui.event.ActionEvent;
 import org.adempiere.webui.event.ActionListener;
-import org.openXpertya.model.GridField;
+import org.openXpertya.model.MField;
 import org.openXpertya.model.MLookup;
 import org.openXpertya.model.MLookupFactory;
 import org.openXpertya.util.CLogger;
@@ -68,16 +68,16 @@ public class WButtonEditor extends WEditor
     private MLookup         m_lookup;
   
     private int AD_Process_ID;
-    private GridField gridfield = null;
+    private MField gridfield = null;
     
     private ArrayList<ActionListener> actionListeners = new ArrayList<ActionListener>();
     
-    public WButtonEditor(GridField gridField)
+    public WButtonEditor(MField mField)
     {
-        super(new Button(), gridField);
-        m_text = gridField.getHeader();
-        AD_Process_ID = gridField.getAD_Process_ID();
-        gridfield = gridField;
+        super(new Button(), mField);
+        m_text = mField.getHeader();
+        AD_Process_ID = mField.getAD_Process_ID();
+        gridfield = mField;
         init();
     }
 
@@ -90,7 +90,7 @@ public class WButtonEditor extends WEditor
 		return AD_Process_ID;
 	}	//	getProcess_ID
 	
-	public GridField getGridField()
+	public MField getGridField()
 	{
 		return gridfield;
 	}
@@ -98,8 +98,8 @@ public class WButtonEditor extends WEditor
     private void init()
     {
         label.setValue(" ");
-        getComponent().setLabel(gridField.getHeader());
-        getComponent().setTooltiptext(gridField.getDescription());
+        getComponent().setLabel(mField.getHeader());
+        getComponent().setTooltiptext(mField.getDescription());
         
         String columnName = super.getColumnName();
         if (columnName.equals("PaymentRule"))
@@ -127,16 +127,16 @@ public class WButtonEditor extends WEditor
             getComponent().setImage("/images/InfoAccount16.png");    //  16*16
         }
         
-        if (gridField.getColumnName().endsWith("_ID") && !gridField.getColumnName().equals("Record_ID"))
+        if (mField.getColumnName().endsWith("_ID") && !mField.getColumnName().equals("Record_ID"))
         {
-            m_lookup = MLookupFactory.get(Env.getCtx(), gridField.getWindowNo(), 0,
-                    gridField.getAD_Column_ID(), DisplayType.Search);
+            m_lookup = MLookupFactory.get(Env.getCtx(), mField.getWindowNo(), 0,
+                    mField.getAD_Column_ID(), DisplayType.Search);
         }
-        else if (gridField.getAD_Reference_Value_ID() != 0)
+        else if (mField.getAD_Reference_Value_ID() != 0)
         {
             //  Assuming List
-            m_lookup = MLookupFactory.get(Env.getCtx(), gridField.getWindowNo(), 0,
-                    gridField.getAD_Column_ID(), DisplayType.List);
+            m_lookup = MLookupFactory.get(Env.getCtx(), mField.getWindowNo(), 0,
+                    mField.getAD_Column_ID(), DisplayType.List);
         }
     }
 

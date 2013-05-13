@@ -37,7 +37,7 @@ import org.adempiere.webui.editor.WStringEditor;
 import org.adempiere.webui.editor.WTableDirEditor;
 import org.adempiere.webui.window.FDialog;
 import org.openXpertya.grid.CreateFromStatement;
-import org.openXpertya.model.GridTab;
+import org.openXpertya.model.MTab;
 import org.openXpertya.model.MBankAccount;
 import org.openXpertya.model.MBankStatement;
 import org.openXpertya.model.M_Column;
@@ -61,7 +61,7 @@ public class WCreateFromStatementUI extends CreateFromStatement implements Event
 	
 	private WCreateFromWindow window;
 	
-	public WCreateFromStatementUI(GridTab tab) 
+	public WCreateFromStatementUI(MTab tab) 
 	{
 		super(tab);
 		log.info(getGridTab().toString());

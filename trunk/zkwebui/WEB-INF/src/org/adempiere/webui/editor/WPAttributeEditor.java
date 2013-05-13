@@ -22,8 +22,8 @@ import org.adempiere.webui.event.ContextMenuListener;
 import org.adempiere.webui.event.ValueChangeEvent;
 import org.adempiere.webui.window.WFieldRecordInfo;
 import org.adempiere.webui.window.WPAttributeDialog;
-import org.openXpertya.model.GridField;
-import org.openXpertya.model.GridTab;
+import org.openXpertya.model.MField;
+import org.openXpertya.model.MTab;
 import org.openXpertya.model.Lookup;
 import org.openXpertya.model.MAttributeSet;
 import org.openXpertya.model.MProduct;
@@ -53,15 +53,15 @@ public class WPAttributeEditor extends WEditor implements ContextMenuListener
 
 	private Object m_value;
 
-	private GridTab m_GridTab;
+	private MTab m_GridTab;
 
 	/**	No Instance Key					*/
 	private static Integer		NO_INSTANCE = new Integer(0);
 
-	public WPAttributeEditor(GridTab gridTab, GridField gridField)
+	public WPAttributeEditor(MTab mTab, MField mField)
 	{
-		super(new PAttributebox(), gridField);
-		m_GridTab = gridTab;
+		super(new PAttributebox(), mField);
+		m_GridTab = mTab;
 		initComponents();
 	}
 
@@ -69,14 +69,14 @@ public class WPAttributeEditor extends WEditor implements ContextMenuListener
 		getComponent().setButtonImage("images/PAttribute10.png");
 		getComponent().addEventListener(Events.ON_CLICK, this);
 
-		m_WindowNo = gridField.getWindowNo();
-		m_mPAttribute = gridField.getLookup();
+		m_WindowNo = mField.getWindowNo();
+		m_mPAttribute = mField.getLookup();
 		m_C_BPartner_ID = Env.getContextAsInt(Env.getCtx(), m_WindowNo, "C_BPartner_ID");
 
 		//	Popup
 		popupMenu = new WEditorPopupMenu(true, false, false);
 		getComponent().getTextbox().setContext(popupMenu.getId());
-		if (gridField != null && gridField.getGridTab() != null)
+		if (mField != null && mField.getGridTab() != null)
 		{
 			WFieldRecordInfo.addMenu(popupMenu);
 		}
@@ -167,10 +167,10 @@ public class WPAttributeEditor extends WEditor implements ContextMenuListener
 
 		log.config("M_Product_ID=" + M_Product_ID + "/" + M_ProductBOM_ID
 			+ ",M_AttributeSetInstance_ID=" + M_AttributeSetInstance_ID
-			+ ", AD_Column_ID=" + gridField.getAD_Column_ID());
+			+ ", AD_Column_ID=" + mField.getAD_Column_ID());
 
 		//	M_Product.M_AttributeSetInstance_ID = 8418
-		boolean productWindow = (gridField.getAD_Column_ID() == 8418);		//	HARDCODED
+		boolean productWindow = (mField.getAD_Column_ID() == 8418);		//	HARDCODED
 
 		//	Exclude ability to enter ASI
 		boolean exclude = true;
@@ -182,7 +182,7 @@ public class WPAttributeEditor extends WEditor implements ContextMenuListener
 			if (M_AttributeSet_ID != 0)
 			{
 				MAttributeSet mas = MAttributeSet.get(Env.getCtx(), M_AttributeSet_ID);
-				//exclude = mas.excludeEntry(gridField.getAD_Column_ID(), Env.isSOTrx(Env.getCtx(), m_WindowNo));
+				//exclude = mas.excludeEntry(mField.getAD_Column_ID(), Env.isSOTrx(Env.getCtx(), m_WindowNo));
 			}
 		}
 
@@ -200,7 +200,7 @@ public class WPAttributeEditor extends WEditor implements ContextMenuListener
 		{
 			WPAttributeDialog vad = new WPAttributeDialog (
 				M_AttributeSetInstance_ID, M_Product_ID, m_C_BPartner_ID,
-				productWindow, gridField.getAD_Column_ID(), m_WindowNo);
+				productWindow, mField.getAD_Column_ID(), m_WindowNo);
 			if (vad.isChanged())
 			{
 				getComponent().setText(vad.getM_AttributeSetInstanceName());
@@ -258,12 +258,12 @@ public class WPAttributeEditor extends WEditor implements ContextMenuListener
 			else
 				setValue(new Integer(M_AttributeSetInstance_ID));
 
-			ValueChangeEvent vce = new ValueChangeEvent(this, gridField.getColumnName(), new Object(), getValue());
+			ValueChangeEvent vce = new ValueChangeEvent(this, mField.getColumnName(), new Object(), getValue());
 			fireValueChange(vce);
-			if (M_AttributeSetInstance_ID == oldValueInt && m_GridTab != null && gridField != null)
+			if (M_AttributeSetInstance_ID == oldValueInt && m_GridTab != null && mField != null)
 			{
 				//  force Change - user does not realize that embedded object is already saved.
-				m_GridTab.processFieldChange(gridField);
+				m_GridTab.processFieldChange(mField);
 			}
 		}	//	change
 	}   //  cmd_file
@@ -281,7 +281,7 @@ public class WPAttributeEditor extends WEditor implements ContextMenuListener
 		}
 		else if (WEditorPopupMenu.CHANGE_LOG_EVENT.equals(evt.getContextEvent()))
 		{
-			WFieldRecordInfo.start(gridField);
+			WFieldRecordInfo.start(mField);
 		}
 	}
 

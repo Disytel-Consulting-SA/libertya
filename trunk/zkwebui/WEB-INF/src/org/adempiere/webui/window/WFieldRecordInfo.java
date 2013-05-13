@@ -29,7 +29,7 @@ import org.adempiere.webui.component.Listbox;
 import org.adempiere.webui.component.SimpleListModel;
 import org.adempiere.webui.component.Window;
 import org.adempiere.webui.editor.WEditorPopupMenu;
-import org.openXpertya.model.GridField;
+import org.openXpertya.model.MField;
 import org.openXpertya.model.MChangeLog;
 import org.openXpertya.model.M_Column;
 import org.openXpertya.model.MLookup;
@@ -354,12 +354,12 @@ public class WFieldRecordInfo extends Window implements EventListener
 
 	/**
 	 * Open field record info dialog
-	 * @param gridField
+	 * @param mField
 	 */
-	public static void start(GridField gridField) {
-		new WFieldRecordInfo(gridField.getColumnName(), 
-				gridField.getGridTab().getAD_Table_ID(), gridField.getAD_Column_ID(), 
-				gridField.getGridTab().getRecord_ID());
+	public static void start(MField mField) {
+		new WFieldRecordInfo(mField.getColumnName(), 
+				mField.getGridTab().getAD_Table_ID(), mField.getAD_Column_ID(), 
+				mField.getGridTab().getRecord_ID());
 	}
 
 	/**
