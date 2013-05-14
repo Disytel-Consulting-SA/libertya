@@ -21,9 +21,9 @@ public class MElectronicInvoiceLine extends X_E_ElectronicInvoiceLine {
 
 	public void createLine(MInvoiceLine line, int hdr_id, String dateVoid) throws Exception{
 		setUnidad_Medida(getRefTablaUnidadMedida(line.getC_UOM_ID())); 			// Según tabla 9
-		setLineNetAmt(line.getLineNetAmt());
+		setLineNetAmt(line.getLineNetAmount().divide( line.getQtyEntered(),BigDecimal.ROUND_HALF_UP ));
 		setImporte_Bonificacion(BigDecimal.ZERO);										// No se usa
-		setLineTotalAmt(line.getLineTotalAmt());
+		setLineTotalAmt(line.getLineNetAmount());
 		setRate(getLineRate(line.getC_Tax_ID()));
 		setIsTaxExempt(getLineIsTaxExempt(line.getC_Tax_ID()));
 		if (line.getDescription() != null)

@@ -24,20 +24,20 @@ public class ExportElectronicInvoiceToTables extends SvrProcess {
 		// Borro los datos para ese período de la tabla e_electronicinvoice y e_electronicinvoiceline
 		String	sqlDeleteLines	= " delete from e_electronicinvoiceline where e_electronicinvoice_id in " +
 							  "		(select e_electronicinvoice_id from e_electronicinvoice " +
-							  " 	 where dateinvoiced >= '"+periodo.getStartDate()+"' and dateinvoiced <= '"+periodo.getEndDate()+"' and (AD_Client_ID = "+ getAD_Client_ID() +") and (createdby = "+ getAD_User_ID() + ")) ";
+							  " 	 where date_trunc('day',dateinvoiced) >= '"+periodo.getStartDate()+"' and date_trunc('day',dateinvoiced) <= '"+periodo.getEndDate()+"' and (AD_Client_ID = "+ getAD_Client_ID() +") and (createdby = "+ getAD_User_ID() + ")) ";
         DB.executeUpdate(sqlDeleteLines, get_TrxName());
 		
-        String	sqlDelete	= " delete from e_electronicinvoice where dateinvoiced >= '"+periodo.getStartDate()+"' and dateinvoiced <= '"+periodo.getEndDate()+"' and (AD_Client_ID = "+ getAD_Client_ID() +") and (createdby = "+ getAD_User_ID() +") ";
+        String	sqlDelete	= " delete from e_electronicinvoice where date_trunc('day',dateinvoiced) >= '"+periodo.getStartDate()+"' and date_trunc('day',dateinvoiced) <= '"+periodo.getEndDate()+"' and (AD_Client_ID = "+ getAD_Client_ID() +") and (createdby = "+ getAD_User_ID() +") ";
         DB.executeUpdate(sqlDelete, get_TrxName());
                
 		// Consulta con todos los datos
 		StringBuffer sql = new StringBuffer();
-		sql.append(" select i.c_invoice_id from c_invoice i " +
+		sql.append(" select distinct(i.c_invoice_id) from c_invoice i " +
 				   " inner join C_Doctype d ON i.C_Doctype_id = d.C_Doctype_id " +
 				   " left join e_electronicinvoice e on (i.c_invoice_id = e.c_invoice_id) " +
 				   " where /*e.c_invoice_id is null " +
 				   " and i.numerodedocumento is not null" +
-				   " and*/ i.dateinvoiced >= '"+periodo.getStartDate()+"' and i.dateinvoiced <= '"+periodo.getEndDate()+"'" +
+				   " and*/ date_trunc('day',i.dateinvoiced) >= '"+periodo.getStartDate()+"' and date_trunc('day',i.dateinvoiced) <= '"+periodo.getEndDate()+"'" +
 				   " and (docstatus = 'CO' or docstatus = 'CL' or docstatus = 'VO' or docstatus = 'RE') " +
 				   " and (case when (d.isfiscal = 'Y') then (i.FiscalAlreadyPrinted = 'Y') else true end) " +
 				   " and (i.AD_Client_ID = "+ getAD_Client_ID() +") " +
@@ -51,9 +51,11 @@ public class ExportElectronicInvoiceToTables extends SvrProcess {
 			rs = pstmt.executeQuery();
 			// Exportación Resolución 1361
 			FiscalDocumentExport createFD = new FiscalDocumentExport();
-			// 
+			//
+			int i = 0;
 			while (rs.next()) {
 				// Instancio la Factura a exportar
+				long inicio = System.currentTimeMillis();
 				MInvoice inv = new MInvoice(getCtx(), rs.getInt("C_Invoice_ID"), get_TrxName());
 				if (inv.isFiscalAlreadyPrinted()){
 					// Exporto la factura fiscal y sus lineas para satisfacer la resolución 1361 de duplicados electrónicos
@@ -63,12 +65,16 @@ public class ExportElectronicInvoiceToTables extends SvrProcess {
 					// Exporto la factura no fiscal y sus lineas para satisfacer la resolución 1361 de duplicados electrónicos
 					createFD.noFiscalPrintingExport( getCtx(), inv );
 				}
+				long fin = System.currentTimeMillis();
+				i=i+1;
+				System.out.println("Creacion de una factura:" + i);
+				System.out.println(fin - inicio);
 			}
 		} catch (SQLException e) {
 			log.log(Level.SEVERE, "Export To Table E_ElectronicInvoice error", e);
 			throw new Exception("Export Electronic Invoice To Table Error",e);
 		}
-		return "Exportación finalizada correctamente";
+		return "Generalización finalizada correctamente";
 	}
 
 	@Override

@@ -8,6 +8,7 @@ import java.util.Properties;
 
 import org.openXpertya.util.CLogger;
 import org.openXpertya.util.DB;
+import org.openXpertya.util.Util;
 
 public class MElectronicInvoice extends X_E_ElectronicInvoice {
 
@@ -22,27 +23,56 @@ public class MElectronicInvoice extends X_E_ElectronicInvoice {
 	}
 
 	public void createHdr(boolean isFiscal, MInvoice inv) throws Exception{
+		String taxIdType = null;
+		String name = null;
+		int c_Categoria_Iva_ID = 0;	
+		String iibb = null;
+		PreparedStatement ps = null;
+    	ResultSet rs = null;
+    	try {
+			ps = DB.prepareStatement("SELECT TaxIdType, Name, C_Categoria_Iva_ID, IIBB FROM C_BPartner WHERE C_BPartner_ID = ?", get_TrxName());
+			ps.setInt(1, inv.getC_BPartner_ID());
+			rs = ps.executeQuery();
+			if (rs.next()){
+				taxIdType = rs.getString("TaxIdType");
+				name = rs.getString("Name");
+				c_Categoria_Iva_ID = rs.getInt("C_Categoria_Iva_ID");	
+				iibb = rs.getString("IIBB");
+			}
+		}
+		catch (Exception e) {
+			log.severe("Error finding c_bpartner. Error: " + e.getMessage());
+		} finally{
+			if(ps != null) ps.close();
+			if(rs != null) rs.close();
+		}
+
 		setDateInvoiced(inv.getDateInvoiced());
 		setTipo_Comprobante(getRefTablaComprobantes(inv.getC_DocType_ID()));	// Según tabla 1
 		setIsFiscal(isFiscal);
 		setPuntoDeVenta(inv.getPuntoDeVenta());
 		setNumeroDeDocumento(inv.getNumeroDeDocumento());
 		setCant_Hojas(1); 														// Se deja en 1 según se vio en una exportación WEB de la AFIP
-		setDoc_Identificatorio_Comprador(Integer.parseInt(getInvoiceBPartnerTaxIdType(inv.getC_BPartner_ID()))); // Según tabla 2
+		setDoc_Identificatorio_Comprador(Integer.parseInt(getInvoiceBPartnerTaxIdType(taxIdType))); // Según tabla 2
 		setIdentif_Comprador(getCuit(inv.getCUIT()));							// CUIT del cliente según se vio en una exportación WEB de la AFIP
 		setIdentif_Vendedor("0");												// No se usa
-		setName(getInvoiceBPartnerName(inv.getC_BPartner_ID()));
+		setName(name);
 		setGrandTotal(inv.getGrandTotal());
 		setTaxBaseAmt(getInvoiceTaxBaseAmt(inv.getC_Invoice_ID())); 			// Suma los taxbaseamt de la factura
 		setTotalLines(inv.getNetAmount());
 		setTaxAmt(getInvoiceTaxAmt(inv.getC_Invoice_ID()));						// suma los taxamt de la factura
-		setTipo_Responsable(getRefTablaTipoResponsable(inv.getC_BPartner_ID()));// Según tabla 4
+		setTipo_Responsable(getRefTablaTipoResponsable(c_Categoria_Iva_ID));// Según tabla 4
 		setCod_Moneda(getRefTablaMoneda(inv.getC_Currency_ID()));	  			// sacar de c_currency	
 		setMultiplyRate(new BigDecimal(1));										// No se usa
 		setCant_Alicuotas_Iva(getInvoiceCantAlicuotas(inv.getC_Invoice_ID()));	// Campo calculado
-		setCod_Operacion("");													// Campo calculado
-		setCAI(inv.getCAI());
+		setCAI(inv.getcae());
 		setOperacionesExentas(getInvoiceTaxAmtTaxExempt(inv.getC_Invoice_ID()));
+		//Si el impuesto liquidado (campo 15) es igual a cero (0) y el importe total de conceptos que no integran el precio neto gravado (campo 13) es distinto de cero, se deberá completar 
+		if ((getTaxAmt().compareTo(BigDecimal.ZERO) == 0) && (getOperacionesExentas().compareTo(BigDecimal.ZERO) == 0)){
+			if (getTipo_Responsable() == 9){
+				setCod_Operacion("X");													// Campo calculado				
+			}
+		}
 		setRNI(BigDecimal.ZERO);
 		setTransporte(BigDecimal.ZERO);
 		setPercepcionesIIBB(getImpuestoIIBB(getRefTablaImpuestosIIBB(),inv.getC_Invoice_ID()));
@@ -52,7 +82,7 @@ public class MElectronicInvoice extends X_E_ElectronicInvoice {
 		setImpuestosInternos(BigDecimal.ZERO);											// No se usa
 		
 		
-		setDateCAI(inv.getDateCAI());
+		setDateCAI(inv.getvtocae());
 		if (inv.getDocStatus().equalsIgnoreCase("VO") || inv.getDocStatus().equalsIgnoreCase("RE")){
 			setDateVoid(inv.getUpdated());
 			
@@ -77,7 +107,7 @@ public class MElectronicInvoice extends X_E_ElectronicInvoice {
 		setIdentif_Vendedor("0");												// No se usa
 		
 		// Campo para Otras Percepciones 
-		setCod_Jurisdiccion_IIBB(getCodJurisdiccionIIBB(inv.getC_BPartner_ID()));// Según tabla 8
+		setCod_Jurisdiccion_IIBB(getCodJurisdiccionIIBB(iibb));// Según tabla 8
 		setJurImpuestosMunicipales("");
 		
 		// Salvo el nuevo HEADER
@@ -129,16 +159,14 @@ public class MElectronicInvoice extends X_E_ElectronicInvoice {
 		return null;
 	}
 	
-	private String getInvoiceBPartnerName(int id){
-		MBPartner bpartner = new MBPartner(getCtx(), id, get_TrxName());
-		return bpartner.getName();
-	}
+//	private String getInvoiceBPartnerName(int id){
+//		MBPartner bpartner = new MBPartner(getCtx(), id, get_TrxName());
+//		return bpartner.getName();
+//	}
 	
-	private int getRefTablaTipoResponsable(int id) throws SQLException{
-		// Instancio mbpartner para recuperar la categoria de iva
-		MBPartner bpartner = new MBPartner(getCtx(), id, get_TrxName());
+	private int getRefTablaTipoResponsable(int c_Categoria_Iva_ID) throws SQLException{
 		// Instancio mcategoria para recuperar el codigo de la categoria de iva
-		MCategoriaIva catIva = new MCategoriaIva(getCtx(), bpartner.getC_Categoria_Iva_ID(), get_TrxName());
+		MCategoriaIva catIva = new MCategoriaIva(getCtx(), c_Categoria_Iva_ID, get_TrxName());
 		
 		String	sql = " SELECT * FROM E_ElectronicInvoiceRef Where tabla_ref = '"+FiscalDocumentExport.TABLAREF_TipoResponsable +"' and clave_busqueda = '"+catIva.getCodigo()+"'";
 		PreparedStatement pstmt = DB.prepareStatement(sql, get_TrxName());
@@ -251,22 +279,23 @@ public class MElectronicInvoice extends X_E_ElectronicInvoice {
 		return sumTaxAmt;
 	}
 	
-	private int getCodJurisdiccionIIBB(int id){
-		MBPartner bpartner = new MBPartner(getCtx(), id, get_TrxName());
-		if (bpartner.getIIBB() != null){
-			String cod = bpartner.getIIBB().substring(bpartner.getIIBB().length() - 2);
+	private int getCodJurisdiccionIIBB(String iibb){
+		if (!Util.isEmpty(iibb)){
+			String cod = iibb;
+			if (iibb.length() >= 2){
+				cod = iibb.substring(iibb.length() - 2);
+			}
 			return Integer.parseInt(cod);
 		}
 		return 0;
 	}
 	
-	private String getInvoiceBPartnerTaxIdType(int id){
-		MBPartner bpartner = new MBPartner(getCtx(), id, get_TrxName());
-		if (bpartner.getTaxIdType() == null){
+	private String getInvoiceBPartnerTaxIdType(String taxIdType){
+		if (taxIdType == null){
 			return "99";
 		}
 		else{
-			return bpartner.getTaxIdType();	
+			return taxIdType;	
 		}
 	}
 }
