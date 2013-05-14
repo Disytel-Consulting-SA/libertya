@@ -48,7 +48,7 @@ public abstract class ResumenVentasDataSource extends QueryDataSource {
 	protected String getQuery() {
 		String groupFields = getGroupFields();
 		StringBuffer sql = new StringBuffer(
-				"SELECT "+groupFields+", sum(amount) as amount FROM (SELECT s.* FROM v_dailysales as s INNER JOIN c_invoice as i on i.c_invoice_id = s.c_invoice_id INNER JOIN c_doctype as dt on dt.c_doctype_id = i.c_doctypetarget_id WHERE s.ad_client_id = ? AND i.docstatus IN ('CL','CO') AND s.ad_org_id = ? AND s.issotrx = 'Y' AND dt.doctypekey not in ('RTR', 'RTI', 'RCR', 'RCI') "
+				"SELECT "+groupFields+", sum(amount) as amount FROM (SELECT s.* FROM v_dailysales as s INNER JOIN c_invoice as i on i.c_invoice_id = s.c_invoice_id INNER JOIN c_doctype as dt on dt.c_doctype_id = i.c_doctypetarget_id WHERE s.ad_client_id = ? AND (i.docstatus IN ('CL','CO') OR (i.docstatus IN ('VO','RE') AND (s.isfiscal is null OR s.isfiscal = 'N' OR (s.isfiscal = 'Y' AND s.fiscalalreadyprinted = 'Y')))) AND s.ad_org_id = ? AND s.issotrx = 'Y' AND dt.doctypekey not in ('RTR', 'RTI', 'RCR', 'RCI') "
 						+ getPOSWhereClause()
 						+ getUserWhereClause()
 						+ getDateWhereClause());
