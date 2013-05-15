@@ -4138,7 +4138,7 @@ public class MInvoice extends X_C_Invoice implements DocAction {
 				
 		// Deep Copy
 
-		MInvoice reversal = copyFrom(this, getDateInvoiced(),
+		MInvoice reversal = copyFrom(this, Env.getDate(),
 				reversalDocType.getC_DocType_ID(), isSOTrx(), false,
 				get_TrxName(), true, true);
 
@@ -4329,7 +4329,7 @@ public class MInvoice extends X_C_Invoice implements DocAction {
 		if (localeARActive && isSOTrx()) {
 			// Se crea el la imputación con la fecha de facturación.
 			MAllocationHdr allocHdr = new MAllocationHdr(getCtx(), false,
-					getDateInvoiced(), getC_Currency_ID(), "Anulación de "
+					Env.getDate(), getC_Currency_ID(), "Anulación de "
 							+ docType.getPrintName() + " número "
 							+ getDocumentNo(), get_TrxName());
 
