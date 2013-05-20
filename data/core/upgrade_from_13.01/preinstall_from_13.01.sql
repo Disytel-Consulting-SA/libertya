@@ -2804,3 +2804,6 @@ ALTER TABLE c_pos_declaracionvalores_v OWNER TO libertya;
 
 --20130520-1230 Nueva columna para monto límite de control de cuit de cheques por perfil
 ALTER TABLE ad_role ADD COLUMN controlcuitlimit numeric(9,2) NOT NULL DEFAULT 0;
+
+--20130520-1428 Nueva columna para especificar si el smtp es ssl
+ALTER TABLE ad_client ADD COLUMN usessl CHARACTER(1) default 'N';

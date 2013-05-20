@@ -19,6 +19,10 @@ public class ReplicationConstantsWS extends ReplicationConstants {
 	public static int TIME_OUT_BASE = 60000;
 	/** TimeOut adicional en funcion del numero de eventos a enviar. */
 	public static int TIME_OUT_EXTRA_FACTOR = 100;
+	/** Limite de aceptacion para envio de alerta por cantidad excesiva de registros pendientes a replicar */
+	public static int WARNING_LIMIT = 20000;
+	/** Nombre del atributo en AD_Preference que almacena el mail destinatario por problemas de replicacion */
+	public static String REPLICATION_ADMIN = "ReplicationAdmin";
 	
 	/*
 	 * En WS no se limita el numero de reintentos.  Solo se usa RETRY1 para diferenciar OK de ERROR.
