@@ -2801,3 +2801,6 @@ UNION ALL
   WHERE (ji.docstatus = ANY (ARRAY['VO'::bpchar, 'RE'::bpchar])) AND ji.allocation_active = 'Y'::bpchar AND (ji.isfiscal IS NULL OR ji.isfiscal = 'N'::bpchar OR ji.isfiscal = 'Y'::bpchar AND ji.fiscalalreadyprinted = 'Y'::bpchar);
 
 ALTER TABLE c_pos_declaracionvalores_v OWNER TO libertya;
+
+--20130520-1230 Nueva columna para monto límite de control de cuit de cheques por perfil
+ALTER TABLE ad_role ADD COLUMN controlcuitlimit numeric(9,2) NOT NULL DEFAULT 0;

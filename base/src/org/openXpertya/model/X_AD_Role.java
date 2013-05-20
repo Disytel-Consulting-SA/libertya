@@ -7,7 +7,7 @@ import java.math.*;
 import org.openXpertya.util.*;
 /** Modelo Generado por AD_Role
  *  @author Comunidad de Desarrollo Libertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
- *  @version  - 2013-01-21 13:37:52.164 */
+ *  @version  - 2013-05-20 12:34:38.373 */
 public class X_AD_Role extends org.openXpertya.model.PO
 {
 /** Constructor estándar */
@@ -31,6 +31,7 @@ setAllow_Info_Product (true);	// Y
 setAllow_Info_Resource (true);	// Y
 setAllow_Info_Schedule (true);	// Y
 setConfirmQueryRecords (0);
+setControlCUITLimit (Env.ZERO);
 setIsAccessAllOrgs (false);	// N
 setIsCanApproveOwnDoc (false);
 setIsCanExport (true);	// Y
@@ -382,6 +383,19 @@ Integer ii = (Integer)get_Value("ConfirmQueryRecords");
 if (ii == null) return 0;
 return ii.intValue();
 }
+/** Set Control CUIT Limit */
+public void setControlCUITLimit (BigDecimal ControlCUITLimit)
+{
+if (ControlCUITLimit == null) throw new IllegalArgumentException ("ControlCUITLimit is mandatory");
+set_Value ("ControlCUITLimit", ControlCUITLimit);
+}
+/** Get Control CUIT Limit */
+public BigDecimal getControlCUITLimit() 
+{
+BigDecimal bd = (BigDecimal)get_Value("ControlCUITLimit");
+if (bd == null) return Env.ZERO;
+return bd;
+}
 /** Set Description.
 Optional short description of the record */
 public void setDescription (String Description)
@@ -489,12 +503,12 @@ if (oo != null)
 }
 return false;
 }
-/** Set IsInfoAssetAccess */
+/** Set Is Info Asset Access */
 public void setIsInfoAssetAccess (boolean IsInfoAssetAccess)
 {
 set_Value ("IsInfoAssetAccess", new Boolean(IsInfoAssetAccess));
 }
-/** Get IsInfoAssetAccess */
+/** Get Is Info Asset Access */
 public boolean isInfoAssetAccess() 
 {
 Object oo = get_Value("IsInfoAssetAccess");
@@ -505,12 +519,12 @@ if (oo != null)
 }
 return false;
 }
-/** Set IsInfoAssignmentAccess */
+/** Set Is Info Assignment Access */
 public void setIsInfoAssignmentAccess (boolean IsInfoAssignmentAccess)
 {
 set_Value ("IsInfoAssignmentAccess", new Boolean(IsInfoAssignmentAccess));
 }
-/** Get IsInfoAssignmentAccess */
+/** Get Is Info Assignment Access */
 public boolean isInfoAssignmentAccess() 
 {
 Object oo = get_Value("IsInfoAssignmentAccess");
@@ -521,12 +535,12 @@ if (oo != null)
 }
 return false;
 }
-/** Set IsInfoBPartnerAccess */
+/** Set Is Info BPartner Access */
 public void setIsInfoBPartnerAccess (boolean IsInfoBPartnerAccess)
 {
 set_Value ("IsInfoBPartnerAccess", new Boolean(IsInfoBPartnerAccess));
 }
-/** Get IsInfoBPartnerAccess */
+/** Get Is Info BPartner Access */
 public boolean isInfoBPartnerAccess() 
 {
 Object oo = get_Value("IsInfoBPartnerAccess");
@@ -537,12 +551,12 @@ if (oo != null)
 }
 return false;
 }
-/** Set IsInfoCashLineAccess */
+/** Set Is Info Cash Line Access */
 public void setIsInfoCashLineAccess (boolean IsInfoCashLineAccess)
 {
 set_Value ("IsInfoCashLineAccess", new Boolean(IsInfoCashLineAccess));
 }
-/** Get IsInfoCashLineAccess */
+/** Get Is Info Cash Line Access */
 public boolean isInfoCashLineAccess() 
 {
 Object oo = get_Value("IsInfoCashLineAccess");
@@ -553,12 +567,12 @@ if (oo != null)
 }
 return false;
 }
-/** Set IsInfoInOutAccess */
+/** Set Is Info InOut Access */
 public void setIsInfoInOutAccess (boolean IsInfoInOutAccess)
 {
 set_Value ("IsInfoInOutAccess", new Boolean(IsInfoInOutAccess));
 }
-/** Get IsInfoInOutAccess */
+/** Get Is Info InOut Access */
 public boolean isInfoInOutAccess() 
 {
 Object oo = get_Value("IsInfoInOutAccess");
@@ -569,12 +583,12 @@ if (oo != null)
 }
 return false;
 }
-/** Set IsInfoInvoiceAccess */
+/** Set Is Info Invoice Access */
 public void setIsInfoInvoiceAccess (boolean IsInfoInvoiceAccess)
 {
 set_Value ("IsInfoInvoiceAccess", new Boolean(IsInfoInvoiceAccess));
 }
-/** Get IsInfoInvoiceAccess */
+/** Get Is Info Invoice Access */
 public boolean isInfoInvoiceAccess() 
 {
 Object oo = get_Value("IsInfoInvoiceAccess");
@@ -585,12 +599,12 @@ if (oo != null)
 }
 return false;
 }
-/** Set IsInfoOrderAccess */
+/** Set Is Info Order Access */
 public void setIsInfoOrderAccess (boolean IsInfoOrderAccess)
 {
 set_Value ("IsInfoOrderAccess", new Boolean(IsInfoOrderAccess));
 }
-/** Get IsInfoOrderAccess */
+/** Get Is Info Order Access */
 public boolean isInfoOrderAccess() 
 {
 Object oo = get_Value("IsInfoOrderAccess");
@@ -601,12 +615,12 @@ if (oo != null)
 }
 return false;
 }
-/** Set IsInfoPaymentAccess */
+/** Set Is Info Payment Access */
 public void setIsInfoPaymentAccess (boolean IsInfoPaymentAccess)
 {
 set_Value ("IsInfoPaymentAccess", new Boolean(IsInfoPaymentAccess));
 }
-/** Get IsInfoPaymentAccess */
+/** Get Is Info Payment Access */
 public boolean isInfoPaymentAccess() 
 {
 Object oo = get_Value("IsInfoPaymentAccess");
@@ -635,12 +649,12 @@ if (oo != null)
 }
 return false;
 }
-/** Set IsInfoScheduleAccess */
+/** Set Is Info Schedule Access */
 public void setIsInfoScheduleAccess (boolean IsInfoScheduleAccess)
 {
 set_Value ("IsInfoScheduleAccess", new Boolean(IsInfoScheduleAccess));
 }
-/** Get IsInfoScheduleAccess */
+/** Get Is Info Schedule Access */
 public boolean isInfoScheduleAccess() 
 {
 Object oo = get_Value("IsInfoScheduleAccess");
