@@ -102,7 +102,7 @@ public class PostInstallUpgradeFrom1301 extends PluginPostInstallProcess {
 
 	/** UID del informe de Movimientos Valorizados */
 	protected final static String VALUED_MOVEMENTS_JASPER_REPORT_UID = "CORE-AD_JasperReport-1010102";
-	protected final static String VALUED_MOVEMENTS_JASPER_REPORT_FILENAME = "InformeLibroIVA.jasper";
+	protected final static String VALUED_MOVEMENTS_JASPER_REPORT_FILENAME = "ValuedMovements.jasper";
 	
 	protected String doIt() throws Exception {
 		super.doIt();
