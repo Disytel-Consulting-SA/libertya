@@ -103,6 +103,18 @@ public class MCheckCuitControl extends X_C_CheckCuitControl {
 			log.saveError("SameCUITInOrg", "");
 			return false;
 		}
+		
+		// Si se modificó el monto, no se debe permitir que sobrepase el límite
+		// asignado por perfil
+		MRole role = MRole.get(getCtx(), Env.getAD_Role_ID(getCtx()));
+		if ((newRecord || is_ValueChanged("CheckLimit"))
+				&& role.getControlCUITLimit().compareTo(BigDecimal.ZERO) > 0
+				&& getCheckLimit().compareTo(role.getControlCUITLimit()) > 0) {
+			log.saveError(Msg.getMsg(getCtx(), "CheckLimitSurpassRoleLimit",
+					new Object[] { role.getControlCUITLimit() }), "");
+			return false;
+		}
+		
 		return true;
 	}
 	
