@@ -95,6 +95,9 @@ public final class EMail implements Serializable {
                 createAuthenticator( client.getRequestUser(),client.getRequestUserPW());
             }
         }
+        if (client.isUseSSL()) {
+        	m_useSSL = true;
+        }
     }    // EMail
 
     /**
@@ -154,6 +157,10 @@ public final class EMail implements Serializable {
 
     private InternetAddress m_from;
 
+    
+    /** Usar SSL en la autenticacion */
+    protected boolean m_useSSL = false;
+    
     /** Descripción de Campos */
 
     private ArrayList m_to;
@@ -243,7 +250,7 @@ public final class EMail implements Serializable {
 
         props.put( "mail.store.protocol","smtp" );
         props.put( "mail.transport.protocol","smtp" );
-        props.put( "mail.host",m_smtpHost );
+        props.put( "mail.host",m_smtpHost ); 
 
         //
 
@@ -253,7 +260,9 @@ public final class EMail implements Serializable {
             if( getAuthenticator() != null ) {
                 props.put( "mail.smtp.auth","true" );
             }
-
+            if (m_useSSL) {
+                props.put("mail.smtp.starttls.enable","true");
+            }
             session = Session.getDefaultInstance( props,getAuthenticator());
         } catch( Exception e ) {
             log.log( Level.SEVERE,"Auth=" + m_auth,e );

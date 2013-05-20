@@ -1,13 +1,14 @@
-/** Modelo Generado - NO CAMBIAR MANUALMENTE - Copyright (C) 2006 FUNDESLE */
+/** Modelo Generado - NO CAMBIAR MANUALMENTE - Disytel */
 package org.openXpertya.model;
-import java.util.*;
+import java.util.logging.Level;
+ import java.util.*;
 import java.sql.*;
 import java.math.*;
 import org.openXpertya.util.*;
 /** Modelo Generado por AD_Client
- *  @author Comunidad de Desarrollo openXpertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
- *  @version  - 2009-06-18 14:08:42.515 */
-public class X_AD_Client extends PO
+ *  @author Comunidad de Desarrollo Libertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
+ *  @version  - 2013-05-20 14:46:51.644 */
+public class X_AD_Client extends org.openXpertya.model.PO
 {
 /** Constructor estándar */
 public X_AD_Client (Properties ctx, int AD_Client_ID, String trxName)
@@ -30,13 +31,13 @@ public X_AD_Client (Properties ctx, ResultSet rs, String trxName)
 {
 super (ctx, rs, trxName);
 }
-/** AD_Table_ID=112 */
-public static final int Table_ID=112;
+/** AD_Table_ID */
+public static final int Table_ID = M_Table.getTableID("AD_Client");
 
 /** TableName=AD_Client */
 public static final String Table_Name="AD_Client";
 
-protected static KeyNamePair Model = new KeyNamePair(112,"AD_Client");
+protected static KeyNamePair Model = new KeyNamePair(Table_ID,"AD_Client");
 protected static BigDecimal AccessLevel = new BigDecimal(6);
 
 /** Load Meta Data */
@@ -50,7 +51,7 @@ public String toString()
 StringBuffer sb = new StringBuffer ("X_AD_Client[").append(getID()).append("]");
 return sb.toString();
 }
-public static final int AD_LANGUAGE_AD_Reference_ID=327;
+public static final int AD_LANGUAGE_AD_Reference_ID = MReference.getReferenceID("AD_Language System");
 /** Set Language.
 Language for this entity */
 public void setAD_Language (String AD_Language)
@@ -68,21 +69,21 @@ public String getAD_Language()
 {
 return (String)get_Value("AD_Language");
 }
-public static final int AUTOARCHIVE_AD_Reference_ID=334;
-/** None = N */
-public static final String AUTOARCHIVE_None = "N";
-/** All (Reports, Documents) = 1 */
-public static final String AUTOARCHIVE_AllReportsDocuments = "1";
+public static final int AUTOARCHIVE_AD_Reference_ID = MReference.getReferenceID("AD_Client AutoArchive");
 /** Documents = 2 */
 public static final String AUTOARCHIVE_Documents = "2";
 /** External Documents = 3 */
 public static final String AUTOARCHIVE_ExternalDocuments = "3";
+/** None = N */
+public static final String AUTOARCHIVE_None = "N";
+/** All (Reports, Documents) = 1 */
+public static final String AUTOARCHIVE_AllReportsDocuments = "1";
 /** Set Auto Archive.
 Enable and level of automatic Archive of documents */
 public void setAutoArchive (String AutoArchive)
 {
-if (AutoArchive.equals("N") || AutoArchive.equals("1") || AutoArchive.equals("2") || AutoArchive.equals("3"));
- else throw new IllegalArgumentException ("AutoArchive Invalid value - Reference_ID=334 - N - 1 - 2 - 3");
+if (AutoArchive.equals("2") || AutoArchive.equals("3") || AutoArchive.equals("N") || AutoArchive.equals("1"));
+ else throw new IllegalArgumentException ("AutoArchive Invalid value - Reference = AUTOARCHIVE_AD_Reference_ID - 2 - 3 - N - 1");
 if (AutoArchive == null) throw new IllegalArgumentException ("AutoArchive is mandatory");
 if (AutoArchive.length() > 1)
 {
@@ -229,7 +230,7 @@ public byte[] getLogoImg()
 {
 return (byte[])get_Value("LogoImg");
 }
-public static final int MMPOLICY_AD_Reference_ID=335;
+public static final int MMPOLICY_AD_Reference_ID = MReference.getReferenceID("_MMPolicy");
 /** LiFo = L */
 public static final String MMPOLICY_LiFo = "L";
 /** FiFo = F */
@@ -239,7 +240,7 @@ Material Movement Policy */
 public void setMMPolicy (String MMPolicy)
 {
 if (MMPolicy.equals("L") || MMPolicy.equals("F"));
- else throw new IllegalArgumentException ("MMPolicy Invalid value - Reference_ID=335 - L - F");
+ else throw new IllegalArgumentException ("MMPolicy Invalid value - Reference = MMPOLICY_AD_Reference_ID - L - F");
 if (MMPolicy == null) throw new IllegalArgumentException ("MMPolicy is mandatory");
 if (MMPolicy.length() > 1)
 {
@@ -381,6 +382,22 @@ Hostname of Mail Server for SMTP and IMAP */
 public String getSMTPHost() 
 {
 return (String)get_Value("SMTPHost");
+}
+/** Set UseSSL */
+public void setUseSSL (boolean UseSSL)
+{
+set_Value ("UseSSL", new Boolean(UseSSL));
+}
+/** Get UseSSL */
+public boolean isUseSSL() 
+{
+Object oo = get_Value("UseSSL");
+if (oo != null) 
+{
+ if (oo instanceof Boolean) return ((Boolean)oo).booleanValue();
+ return "Y".equals(oo);
+}
+return false;
 }
 /** Set Search Key.
 Search key for the record in the format required - must be unique */
