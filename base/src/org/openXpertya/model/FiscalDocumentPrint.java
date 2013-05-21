@@ -675,9 +675,13 @@ public class FiscalDocumentPrint {
 	 * Agrega las observaciones standard a la cola del ticket para ser
 	 * imprimibles
 	 */
-	protected void setStdFooterObservations(MInvoice invoice, Document document){		
+	protected void setStdFooterObservations(MInvoice invoice, Document document){
+		// Agregar la descripción fiscal del comprobante
+		document.addFooterObservation(Util.isEmpty(
+				invoice.getFiscalDescription(), true) ? "" : invoice
+				.getFiscalDescription());
 		// Si tiene relacionado una caja diaria, entonces se agrega el nombre de
-		// la config del tpv y el usuario asociados a la caja
+		// la config del tpv y el usuario asociados a la caja		
 		if(!Util.isEmpty(invoice.getC_POSJournal_ID(), true)){
 			MPOSJournal posJournal = new MPOSJournal(ctx,
 					invoice.getC_POSJournal_ID(), getTrxName());

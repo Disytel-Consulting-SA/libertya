@@ -68,6 +68,8 @@ public class MInvoice extends X_C_Invoice implements DocAction {
 	 */
 	private static final long serialVersionUID = 1L;
 
+	private static final String VOID_FISCAL_DESCRIPTION_PREFERENCE_NAME = "FiscalDescription_VoidedDocument";
+	
 	// Adder: POSSimple - Omision de pre y before Save
 	public boolean skipAfterAndBeforeSave = false;
 
@@ -4216,6 +4218,16 @@ public class MInvoice extends X_C_Invoice implements DocAction {
 		reversal.setVoidPOSJournalMustBeOpen(isVoidPOSJournalMustBeOpen());
 		reversal.setC_POSJournal_ID(getC_POSJournal_ID());
 		reversal.setSkipAutomaticCreditAllocCreation(true);
+		// Descripción fiscal. Para los documentos generados por anulación se
+		// setea el contenido de la preference asociada
+		String voidDocumentFiscalDesc = MPreference
+				.searchCustomPreferenceValue(
+						VOID_FISCAL_DESCRIPTION_PREFERENCE_NAME,
+						getAD_Client_ID(), getAD_Org_ID(),
+						Env.getAD_User_ID(getCtx()), true);
+		reversal.setFiscalDescription(Util
+				.isEmpty(voidDocumentFiscalDesc, true) ? null
+				: voidDocumentFiscalDesc);		
 		if (!reversal.processIt(DocAction.ACTION_Complete)) {
 			m_processMsg = "@ReversalError@: " + reversal.getProcessMsg();
 

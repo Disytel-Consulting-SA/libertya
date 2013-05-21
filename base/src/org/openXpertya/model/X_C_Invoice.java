@@ -7,7 +7,7 @@ import java.math.*;
 import org.openXpertya.util.*;
 /** Modelo Generado por C_Invoice
  *  @author Comunidad de Desarrollo Libertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
- *  @version  - 2013-02-22 11:40:24.316 */
+ *  @version  - 2013-05-21 00:21:27.795 */
 public class X_C_Invoice extends org.openXpertya.model.PO
 {
 /** Constructor estándar */
@@ -859,6 +859,21 @@ if (oo != null)
  return "Y".equals(oo);
 }
 return false;
+}
+/** Set Fiscal Description */
+public void setFiscalDescription (String FiscalDescription)
+{
+if (FiscalDescription != null && FiscalDescription.length() > 255)
+{
+log.warning("Length > 255 - truncated");
+FiscalDescription = FiscalDescription.substring(0,255);
+}
+set_Value ("FiscalDescription", FiscalDescription);
+}
+/** Get Fiscal Description */
+public String getFiscalDescription() 
+{
+return (String)get_Value("FiscalDescription");
 }
 /** Set Generate To.
 Generate To */
