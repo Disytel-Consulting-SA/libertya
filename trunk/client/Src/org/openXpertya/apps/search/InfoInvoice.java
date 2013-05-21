@@ -362,7 +362,11 @@ public class InfoInvoice extends Info {
 
         //
 
-        MAllocationLine.setIsPaid( Env.getCtx(),0,null );
+// Comentado: En realidad no es lógico que al disparar el Info se gestione
+//			  la actualización del campo isPaid, primeramente porque no es
+//			  performante, pero adicionalmente debido a que el estado del 
+//			  mismo ya es actualizado al crear/modificar/anular allocations
+//        MAllocationLine.setIsPaid( Env.getCtx(),0,null );
 
         return true;
     }    // initInfo
