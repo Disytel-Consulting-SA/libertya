@@ -2810,3 +2810,6 @@ ALTER TABLE ad_client ADD COLUMN usessl CHARACTER(1) default 'N';
 
 --20130521-0000 Nueva columna para agregar una descripción de documento que se imprimirá en el ticket fiscal
 ALTER TABLE c_invoice ADD COLUMN fiscaldescription character varying(255);
+
+--20130521-1136 Nuevo indice para mejorar el tiempo de respuesta en los InfoBPartner
+CREATE INDEX ad_user_bpartner ON ad_user USING btree (c_bpartner_id);

@@ -129,7 +129,8 @@ public final class InfoBPartner extends Info {
    private static String s_partnerFROM = 	"C_BPartner" +
     										" LEFT OUTER JOIN AD_User c ON (C_BPartner.C_BPartner_ID=c.C_BPartner_ID AND c.IsActive='Y')" + 
     										" LEFT OUTER JOIN C_BPartner_Location l ON (C_BPartner.C_BPartner_ID=l.C_BPartner_ID AND l.IsActive='Y')" + 
-    										" LEFT OUTER JOIN C_Location a ON (l.C_Location_ID=a.C_Location_ID)";
+    										" LEFT OUTER JOIN C_Location a ON (l.C_Location_ID=a.C_Location_ID) " +
+   											" INNER JOIN (SELECT MAX (C_BPartner_Location_ID) as C_BPartner_Location_ID FROM C_BPartner_Location WHERE IsActive='Y' Group BY C_BPartner_ID) AS foo ON l.C_BPartner_Location_ID = foo.C_BPartner_Location_ID ";
    
     /** Descripción de Campos */
 
@@ -367,7 +368,8 @@ public final class InfoBPartner extends Info {
         StringBuffer where = new StringBuffer();
 
         where.append( "C_BPartner.IsSummary='N' AND C_BPartner.IsActive='Y'" );
-        where.append(" AND l.C_BPartner_Location_ID IN (SELECT MAX (C_BPartner_Location_ID) FROM C_BPartner_Location WHERE IsActive='Y' Group BY C_BPartner_ID )");        
+// Comentado: utilizar IN no es performante.  En lugar de ésto, se incluyo un nuevo inner join en s_partnerFROM
+//        where.append(" AND l.C_BPartner_Location_ID IN (SELECT MAX (C_BPartner_Location_ID) FROM C_BPartner_Location WHERE IsActive='Y' Group BY C_BPartner_ID )");        
         
         if( (whereClause != null) && (whereClause.length() > 0) ) {
             where.append( " AND " ).append( whereClause );
