@@ -17,7 +17,7 @@
 		 whenNoDataType="NoPages"
 		 isTitleNewPage="false"
 		 isSummaryNewPage="false">
-	<property name="ireport.scriptlethandling" value="2" />
+	<property name="ireport.scriptlethandling" value="0" />
 	<property name="ireport.encoding" value="UTF-8" />
 	<import value="java.util.*" />
 	<import value="net.sf.jasperreports.engine.*" />
@@ -27,6 +27,7 @@
 	<parameter name="ORG_NAME" isForPrompting="false" class="java.lang.String"/>
 	<parameter name="DATE_FROM" isForPrompting="false" class="java.sql.Timestamp"/>
 	<parameter name="DATE_TO" isForPrompting="false" class="java.sql.Timestamp"/>
+	<parameter name="PERCENTAGE" isForPrompting="false" class="java.math.BigDecimal"/>
 
 	<field name="DOCUMENTNO" class="java.lang.String"/>
 	<field name="DATEINVOICED" class="java.sql.Timestamp"/>
@@ -42,7 +43,7 @@
 			</band>
 		</background>
 		<title>
-			<band height="85"  isSplitAllowed="true" >
+			<band height="75"  isSplitAllowed="true" >
 				<staticText>
 					<reportElement
 						mode="Opaque"
@@ -68,7 +69,7 @@
 						key="textField"/>
 					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
 					<textElement verticalAlignment="Middle">
-						<font/>
+						<font size="9"/>
 					</textElement>
 				<textFieldExpression   class="java.util.Date"><![CDATA[new java.util.Date()]]></textFieldExpression>
 				</textField>
@@ -107,7 +108,7 @@
 						key="textField-1"/>
 					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
 					<textElement verticalAlignment="Middle">
-						<font/>
+						<font size="9"/>
 					</textElement>
 				<textFieldExpression   class="java.util.Date"><![CDATA[new java.util.Date()]]></textFieldExpression>
 				</textField>
@@ -133,7 +134,7 @@
 					<reportElement
 						x="0"
 						y="42"
-						width="74"
+						width="80"
 						height="14"
 						key="staticText-4"/>
 					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
@@ -146,7 +147,7 @@
 					<reportElement
 						x="0"
 						y="28"
-						width="74"
+						width="80"
 						height="14"
 						key="staticText-5"/>
 					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
@@ -157,61 +158,95 @@
 				</staticText>
 				<textField isStretchWithOverflow="false" isBlankWhenNull="false" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
-						x="74"
+						x="80"
 						y="28"
-						width="366"
+						width="350"
 						height="14"
 						key="textField"/>
 					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
 					<textElement verticalAlignment="Middle">
-						<font pdfFontName="Helvetica" isItalic="false"/>
+						<font pdfFontName="Helvetica" size="9" isItalic="false"/>
 					</textElement>
 				<textFieldExpression   class="java.lang.String"><![CDATA[$P{ORG_VALUE} + " - " +$P{ORG_NAME}]]></textFieldExpression>
 				</textField>
 				<textField isStretchWithOverflow="false" pattern="dd/MM/yyyy" isBlankWhenNull="false" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
-						x="74"
+						x="80"
 						y="42"
 						width="53"
 						height="14"
 						key="textField"/>
 					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
 					<textElement verticalAlignment="Middle">
-						<font/>
+						<font size="9"/>
 					</textElement>
 				<textFieldExpression   class="java.sql.Timestamp"><![CDATA[$P{DATE_FROM}]]></textFieldExpression>
 				</textField>
 				<textField isStretchWithOverflow="false" pattern="dd/MM/yyyy" isBlankWhenNull="false" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
-						x="144"
+						x="150"
 						y="42"
 						width="53"
 						height="14"
 						key="textField-2"/>
 					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
 					<textElement verticalAlignment="Middle">
-						<font/>
+						<font size="9"/>
 					</textElement>
 				<textFieldExpression   class="java.sql.Timestamp"><![CDATA[$P{DATE_TO}]]></textFieldExpression>
 				</textField>
 				<staticText>
 					<reportElement
-						x="127"
+						x="133"
 						y="42"
 						width="17"
 						height="14"
 						key="staticText-6"/>
 					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
-					<textElement textAlignment="Left" verticalAlignment="Middle">
+					<textElement textAlignment="Center" verticalAlignment="Middle">
 						<font/>
 					</textElement>
 				<text><![CDATA[-]]></text>
 				</staticText>
 				<staticText>
 					<reportElement
+						x="0"
+						y="56"
+						width="80"
+						height="14"
+						key="staticText-15">
+							<printWhenExpression><![CDATA[new Boolean($P{PERCENTAGE}.compareTo( java.math.BigDecimal.ZERO ) != 0)]]></printWhenExpression>
+						</reportElement>
+					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
+					<textElement verticalAlignment="Middle">
+						<font pdfFontName="Helvetica" isItalic="false"/>
+					</textElement>
+				<text><![CDATA[Porcentaje >= ]]></text>
+				</staticText>
+				<textField isStretchWithOverflow="false" pattern="##0.00" isBlankWhenNull="false" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
+					<reportElement
+						x="80"
+						y="56"
+						width="123"
+						height="14"
+						key="textField">
+							<printWhenExpression><![CDATA[new Boolean($P{PERCENTAGE}.compareTo( java.math.BigDecimal.ZERO ) != 0)]]></printWhenExpression>
+						</reportElement>
+					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
+					<textElement verticalAlignment="Middle">
+						<font size="9"/>
+					</textElement>
+				<textFieldExpression   class="java.math.BigDecimal"><![CDATA[$P{PERCENTAGE}]]></textFieldExpression>
+				</textField>
+			</band>
+		</title>
+		<pageHeader>
+			<band height="15"  isSplitAllowed="true" >
+				<staticText>
+					<reportElement
 						mode="Opaque"
 						x="0"
-						y="70"
+						y="0"
 						width="137"
 						height="15"
 						forecolor="#010101"
@@ -227,7 +262,7 @@
 					<reportElement
 						mode="Opaque"
 						x="137"
-						y="70"
+						y="0"
 						width="70"
 						height="15"
 						forecolor="#010101"
@@ -243,7 +278,7 @@
 					<reportElement
 						mode="Opaque"
 						x="271"
-						y="70"
+						y="0"
 						width="47"
 						height="15"
 						forecolor="#010101"
@@ -259,7 +294,7 @@
 					<reportElement
 						mode="Opaque"
 						x="318"
-						y="70"
+						y="0"
 						width="79"
 						height="15"
 						forecolor="#010101"
@@ -275,7 +310,7 @@
 					<reportElement
 						mode="Opaque"
 						x="397"
-						y="70"
+						y="0"
 						width="138"
 						height="15"
 						forecolor="#010101"
@@ -291,7 +326,7 @@
 					<reportElement
 						mode="Opaque"
 						x="207"
-						y="70"
+						y="0"
 						width="64"
 						height="15"
 						forecolor="#010101"
@@ -303,10 +338,6 @@
 					</textElement>
 				<text><![CDATA[Monto Dto.]]></text>
 				</staticText>
-			</band>
-		</title>
-		<pageHeader>
-			<band height="0"  isSplitAllowed="true" >
 			</band>
 		</pageHeader>
 		<columnHeader>
