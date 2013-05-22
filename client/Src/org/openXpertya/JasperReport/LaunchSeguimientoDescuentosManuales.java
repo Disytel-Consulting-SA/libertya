@@ -1,5 +1,6 @@
 package org.openXpertya.JasperReport;
 
+import java.math.BigDecimal;
 import java.sql.Timestamp;
 
 import org.openXpertya.JasperReport.DataSource.OXPJasperDataSource;
@@ -16,6 +17,7 @@ public class LaunchSeguimientoDescuentosManuales extends JasperReportLaunch {
 		addReportParameter("ORG_NAME", org.getName());
 		addReportParameter("DATE_FROM", getDateFrom());
 		addReportParameter("DATE_TO", getDateTo());
+		addReportParameter("PERCENTAGE", getPercentage());
 	}
 	
 	protected Integer getOrgID(){
@@ -33,11 +35,15 @@ public class LaunchSeguimientoDescuentosManuales extends JasperReportLaunch {
 		}
 		return dateTo;
 	}
+	
+	protected BigDecimal getPercentage(){
+		return (BigDecimal)getParameterValue("Percentage");
+	}
 
 	@Override
 	protected OXPJasperDataSource createReportDataSource() {
 		return new SeguimientoDescuentosManualesDataSource(get_TrxName(),
-				getOrgID(), getDateFrom(), getDateTo());
+				getOrgID(), getDateFrom(), getDateTo(), getPercentage());
 	}
 
 }

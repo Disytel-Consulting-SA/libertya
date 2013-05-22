@@ -1,5 +1,6 @@
 package org.openXpertya.JasperReport.DataSource;
 
+import java.math.BigDecimal;
 import java.sql.Timestamp;
 
 import org.openXpertya.model.MDocType;
@@ -13,24 +14,32 @@ public class SeguimientoDescuentosManualesDataSource extends QueryDataSource {
 	/** Fecha desde */
 	private Timestamp dateFrom;
 	
-	/** fecha hasta */
+	/** Fecha hasta */
 	private Timestamp dateTo;
+	
+	/**
+	 * Porcentaje mínimo de filtro de información. Se muestra la información con
+	 * porcentaje de descuento mayor a este valor
+	 */
+	private BigDecimal percentage;
 	
 	public SeguimientoDescuentosManualesDataSource(String trxName) {
 		super(trxName);
 		// TODO Auto-generated constructor stub
 	}
 
-	public SeguimientoDescuentosManualesDataSource(String trxName, Integer orgID, Timestamp dateFrom, Timestamp dateTo) {
+	public SeguimientoDescuentosManualesDataSource(String trxName, Integer orgID, Timestamp dateFrom, Timestamp dateTo, BigDecimal percentage) {
 		super(trxName);
 		setOrgID(orgID);
 		setDateFrom(dateFrom);
 		setDateTo(dateTo);
+		setPercentage(percentage);
 	}
 	
 	@Override
 	protected String getQuery() {
-		StringBuffer sql = new StringBuffer("select c_invoice_id, " +
+		StringBuffer sql = new StringBuffer("select * " +
+											"from (select c_invoice_id, " +
 												"documentno, " +
 												"c_bpartner_id, " +
 												"nombrecli, " +
@@ -64,20 +73,22 @@ public class SeguimientoDescuentosManualesDataSource extends QueryDataSource {
 															"AND i.docstatus IN ('CO','CL') " +
 															"AND dt.docbasetype = '"+MDocType.DOCBASETYPE_ARInvoice+"' " +
 															"AND dt.doctypekey NOT IN ('RCI') " +
-															"AND discountamt < 0 " +
+															"AND discountamt > 0 " +
 															"AND discountbaseamt <> 0 " +
 															"AND c_documentdiscount_parent_id is null " +
 															"AND discountkind IN ('"+MDocumentDiscount.DISCOUNTKIND_ManualDiscount+"','"+MDocumentDiscount.DISCOUNTKIND_ManualGeneralDiscount+"') " +
 															"AND date_trunc('day',i.dateinvoiced) >= date_trunc('day',?::date) " +
 															"AND date_trunc('day',i.dateinvoiced) <= date_trunc('day',?::date)) as d " +
 											"group by c_invoice_id,	documentno, c_bpartner_id, nombrecli, discount_responsable, dateinvoiced, cond_vta, grandtotal " +
-											"order by dateinvoiced, documentno");
+											"order by dateinvoiced, documentno) as a " +
+											"where discount_perc >= (?/100)::numeric(11,2) ");
+		
 		return sql.toString();
 	}
 
 	@Override
 	protected Object[] getParameters() {
-		return new Object[] { getOrgID(), getDateFrom(), getDateTo() };
+		return new Object[] { getOrgID(), getDateFrom(), getDateTo(), getPercentage() };
 	}
 
 	protected Integer getOrgID() {
@@ -102,6 +113,14 @@ public class SeguimientoDescuentosManualesDataSource extends QueryDataSource {
 
 	protected void setDateTo(Timestamp dateTo) {
 		this.dateTo = dateTo;
+	}
+
+	protected BigDecimal getPercentage() {
+		return percentage;
+	}
+
+	protected void setPercentage(BigDecimal percentage) {
+		this.percentage = percentage;
 	}
 
 }
