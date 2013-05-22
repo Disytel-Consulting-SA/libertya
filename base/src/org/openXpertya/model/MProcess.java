@@ -20,6 +20,15 @@
 
 package org.openXpertya.model;
 
+import java.sql.CallableStatement;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.util.ArrayList;
+import java.util.Map;
+import java.util.Properties;
+import java.util.Set;
+import java.util.logging.Level;
+
 import org.openXpertya.process.ProcessCall;
 import org.openXpertya.process.ProcessInfo;
 import org.openXpertya.util.CCache;
@@ -27,19 +36,8 @@ import org.openXpertya.util.CLogger;
 import org.openXpertya.util.DB;
 import org.openXpertya.util.Env;
 import org.openXpertya.util.Trx;
-
+import org.openXpertya.util.Util;
 //~--- Importaciones JDK ------------------------------------------------------
-
-import java.math.BigDecimal;
-import java.sql.CallableStatement;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-
-import java.util.ArrayList;
-import java.util.Map;
-import java.util.Properties;
-import java.util.Set;
-import java.util.logging.Level;
 
 /**
  *  Process Model
@@ -843,5 +841,39 @@ public class MProcess extends X_AD_Process {
 		return retValue;
 	}
 
-    
+    /**
+     * Guarda un adjunto para este proceso
+     * @param trxName
+     * @param ctx
+     * @param componentObjectUID
+     * @param attachmentName
+     * @param data
+     * @throws Exception
+     */
+	public static void addAttachment(String trxName, Properties ctx, String componentObjectUID, String attachmentName, byte[] data) throws Exception {
+		// Obtener el id del proceso
+		int processID = DB.getSQLValue(trxName,
+				"SELECT AD_Process_ID FROM AD_Process WHERE AD_ComponentObjectUID = '"
+						+ componentObjectUID + "'");
+		// Obtener el id del adjunto del proceso
+		int attachmentID = DB
+				.getSQLValue(
+						trxName,
+						"SELECT AD_Attachment_ID FROM AD_Attachment WHERE AD_Table_ID = ? AND Record_ID = ?",
+						Table_ID, processID);
+		// Si existe lo elimino
+		if(!Util.isEmpty(attachmentID, true)){
+			DB.executeUpdate("DELETE FROM AD_Attachment WHERE AD_Table_ID = "
+					+ Table_ID + " AND Record_ID = " + processID, trxName);
+		}
+		// Creo el adjunto y lo guardo
+		MAttachment att  = new MAttachment(ctx, 0, trxName);
+		att.setAD_Table_ID(Table_ID);
+		att.setRecord_ID(processID);
+		att.addEntry(attachmentName, data);
+		if(!att.save()){
+			throw new Exception ("ERROR saving attachment "+attachmentName);
+		}
+	}
+	
 }	// MProcess

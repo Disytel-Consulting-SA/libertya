@@ -104,6 +104,10 @@ public class PostInstallUpgradeFrom1301 extends PluginPostInstallProcess {
 	protected final static String VALUED_MOVEMENTS_JASPER_REPORT_UID = "CORE-AD_JasperReport-1010102";
 	protected final static String VALUED_MOVEMENTS_JASPER_REPORT_FILENAME = "ValuedMovements.jasper";
 	
+	/** UID del Listado de Notas de Crédito */
+	protected final static String GENERATED_CREDIT_NOTES_REPORT_UID = "CORE-AD_Process-1010330";
+	protected final static String GENERATED_CREDIT_NOTES_REPORT_FILENAME = "GeneratedCreditNotes.jrxml";
+	
 	protected String doIt() throws Exception {
 		super.doIt();
 		
@@ -379,6 +383,17 @@ public class PostInstallUpgradeFrom1301 extends PluginPostInstallProcess {
 							.readBinaryFromJar(
 									jarFileURL,
 									getBinaryFileURL(VALUED_MOVEMENTS_JASPER_REPORT_FILENAME)));
+		
+		// Listado de Notas de Crédito
+		MProcess.addAttachment(
+				get_TrxName(),
+				getCtx(),
+				GENERATED_CREDIT_NOTES_REPORT_UID,
+				GENERATED_CREDIT_NOTES_REPORT_FILENAME,
+				JarHelper
+						.readBinaryFromJar(
+								jarFileURL,
+								getBinaryFileURL(GENERATED_CREDIT_NOTES_REPORT_FILENAME)));
 		
 		return " ";
 	}
