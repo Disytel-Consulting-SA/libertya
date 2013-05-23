@@ -85,9 +85,9 @@ public class MTab implements DataStatusListener,Evaluatee,Serializable {
      * @param vo
      */
 	
-    public MTab( MTabVO vo ) {
+    public MTab( MTabVO vo, MWindow w ) {
         m_vo = vo;
-
+        m_window = w;
         // Create MTable
 
         m_mTable = new MTable( m_vo.ctx,m_vo.AD_Table_ID,m_vo.TableName,m_vo.WindowNo,m_vo.TabNo,true );
