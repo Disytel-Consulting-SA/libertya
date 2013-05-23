@@ -2938,3 +2938,6 @@ UNION ALL
   WHERE date_trunc('day'::text, i.dateacct) <> date_trunc('day'::text, pjp.dateacct::timestamp with time zone) AND i.initialcurrentaccountamt > 0::numeric AND hdr.isactive = 'Y'::bpchar AND ((dtc.docbasetype <> ALL (ARRAY['ARC'::bpchar, 'APC'::bpchar])) OR (dtc.docbasetype = ANY (ARRAY['ARC'::bpchar, 'APC'::bpchar])) AND pjp.c_invoice_credit_id IS NOT NULL);
 
 ALTER TABLE v_dailysales OWNER TO libertya;
+
+--20130523-1220 Cambiados a null los campos del dashboard
+UPDATE PA_DASHBOARDCONTENT SET HTML = null;

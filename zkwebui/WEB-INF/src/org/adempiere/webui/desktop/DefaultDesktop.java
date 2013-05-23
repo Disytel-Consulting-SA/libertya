@@ -232,7 +232,7 @@ public class DefaultDesktop extends TabbedDesktop implements MenuListener, Seria
 	            String htmlContent = rs.getString("HTML");
 	            if(htmlContent != null)
 	            {
-		            StringBuffer result = new StringBuffer("<html><head>");
+		            StringBuffer result = new StringBuffer("<html><head><style type=\"text/css\">");
 
 		    		URL url = getClass().getClassLoader().
 					getResource("css/PAPanel.css");
@@ -247,10 +247,10 @@ public class DefaultDesktop extends TabbedDesktop implements MenuListener, Seria
 						logger.log(Level.SEVERE, e1.getLocalizedMessage(), e1);
 					}
 
-					result.append("</head><body><div class=\"content\">\n");
+					result.append("</style></head><body><div class=\"content\">\n");
 
-//	            	if(description != null)
-//	            		result.append("<h2>" + description + "</h2>\n");
+	            	if(description != null)
+	            		result.append("<h2>" + description + "</h2>\n");
 	            	result.append(stripHtml(htmlContent, false) + "<br>\n");
 	            	result.append("</div>\n</body>\n</html>\n</html>");
 
