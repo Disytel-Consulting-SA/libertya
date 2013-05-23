@@ -108,6 +108,10 @@ public class PostInstallUpgradeFrom1301 extends PluginPostInstallProcess {
 	protected final static String GENERATED_CREDIT_NOTES_REPORT_UID = "CORE-AD_Process-1010330";
 	protected final static String GENERATED_CREDIT_NOTES_REPORT_FILENAME = "GeneratedCreditNotes.jrxml";
 	
+	/** UID del formato de impresión de Inventario y Entradas/Salidas Simples */
+	protected final static String INVENTORY_JASPER_REPORT_UID = "CORE-AD_JasperReport-1010069";
+	protected final static String INVENTORY_JASPER_REPORT_FILENAME = "Inventory.jasper";
+	
 	protected String doIt() throws Exception {
 		super.doIt();
 		
@@ -395,6 +399,17 @@ public class PostInstallUpgradeFrom1301 extends PluginPostInstallProcess {
 								jarFileURL,
 								getBinaryFileURL(GENERATED_CREDIT_NOTES_REPORT_FILENAME)));
 		
+		// Formato de impresión de Inventario y Entradas/Salidas Simples
+		MJasperReport
+			.updateBinaryData(
+					get_TrxName(),
+					getCtx(),
+					INVENTORY_JASPER_REPORT_UID,
+					JarHelper
+							.readBinaryFromJar(
+									jarFileURL,
+									getBinaryFileURL(INVENTORY_JASPER_REPORT_FILENAME)));
+	
 		return " ";
 	}
 
