@@ -57,7 +57,7 @@ public class LaunchInventory extends JasperReportLaunch {
 
 	@Override
 	protected OXPJasperDataSource createReportDataSource() {
-		return new InventoryDataSource(get_TrxName(), getInventory().getID());
+		return new InventoryDataSource(getCtx(), get_TrxName(), getInventory().getID());
 	}
 
 	protected void setInventory(MInventory inventory) {

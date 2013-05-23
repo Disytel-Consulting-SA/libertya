@@ -75,7 +75,13 @@ public class MPriceList extends X_M_PriceList {
      */
 
     public static MPriceList getDefault( Properties ctx,boolean IsSOPriceList ) {
+        return getDefault(ctx, IsSOPriceList, false);
+    }    // getDefault
+    
+    public static MPriceList getDefault( Properties ctx,boolean IsSOPriceList, boolean includeOrg ) {
         int        AD_Client_ID = Env.getAD_Client_ID( ctx );
+        int orgID = Env.getAD_Org_ID(ctx);
+        
         MPriceList retValue     = null;
 
         // Search for it in cache
@@ -85,20 +91,30 @@ public class MPriceList extends X_M_PriceList {
         while( it.hasNext()) {
             retValue = ( MPriceList )it.next();
 
-            if( retValue.isDefault() && (retValue.getAD_Client_ID() == AD_Client_ID) && retValue.isSOPriceList() == IsSOPriceList ) {
+			if (retValue.isDefault()
+					&& (retValue.getAD_Client_ID() == AD_Client_ID)
+					&& retValue.isSOPriceList() == IsSOPriceList
+					&& (!includeOrg || orgID == retValue.getAD_Org_ID())) {
                 return retValue;
             }
         }
 
         retValue = null;
 
-        String sql = "SELECT * FROM M_PriceList " + "WHERE AD_Client_ID=?" + " AND IsDefault='Y'" + " AND IsSOPriceList=? AND IsActive='Y' " + "ORDER BY M_PriceList_ID";
+		String sql = "SELECT * FROM M_PriceList " + "WHERE AD_Client_ID=?"
+				+ (includeOrg ? " AND AD_Org_ID = ? " : "")
+				+ " AND IsDefault='Y'"
+				+ " AND IsSOPriceList='"+(IsSOPriceList?"Y":"N")+"' AND IsActive='Y' "
+				+ "ORDER BY M_PriceList_ID";
         PreparedStatement pstmt = null;
 
         try {
             pstmt = DB.prepareStatement( sql,null );
-            pstmt.setInt( 1,AD_Client_ID );
-            pstmt.setString(2, IsSOPriceList?"Y":"N");
+            int i = 1;
+            pstmt.setInt( i++,AD_Client_ID );
+            if(includeOrg){
+            	pstmt.setInt( i++,orgID );
+            }
 
             ResultSet rs = pstmt.executeQuery();
 
