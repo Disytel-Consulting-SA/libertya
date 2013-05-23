@@ -156,7 +156,7 @@ public class MWindow implements Serializable {
             MTabVO mTabVO = ( MTabVO )m_vo.Tabs.get( t );
 
             if( mTabVO != null ) {
-                MTab mTab = new MTab( mTabVO );
+                MTab mTab = new MTab( mTabVO, this );
 
                 // Set Link Column
 
