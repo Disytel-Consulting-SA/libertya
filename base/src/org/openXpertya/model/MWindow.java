@@ -215,7 +215,7 @@ public class MWindow implements Serializable {
                 mTab.setLinkColumnName( null );    // overwrites, if AD_Column_ID exists
 
                 //
-
+                initTabs.add(mTab);
                 m_tabs.add( mTab );
             }
         }    // for all tabs
