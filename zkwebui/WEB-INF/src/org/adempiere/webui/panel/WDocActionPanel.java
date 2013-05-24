@@ -154,7 +154,7 @@ public class WDocActionPanel extends Window implements EventListener
 		String[] docActionHolder = new String[]{DocAction};
 		index = DocumentEngine.getValidActions(DocStatus, Processing, OrderType, IsSOTrx,
 				m_AD_Table_ID, docActionHolder, options);
-		JOptionPane.showMessageDialog(null, "INDEX "+index);
+//		JOptionPane.showMessageDialog(null, "INDEX "+index);
 
 		M_Table table = M_Table.get(Env.getCtx(), m_AD_Table_ID);
 		PO po = table.getPO(mTab.getRecord_ID(), null);
