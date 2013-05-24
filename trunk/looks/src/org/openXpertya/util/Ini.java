@@ -29,6 +29,7 @@ import java.io.FileOutputStream;
 import java.io.Serializable;
 import java.nio.charset.Charset;
 import java.sql.Timestamp;
+import java.util.Collection;
 import java.util.Enumeration;
 import java.util.Properties;
 import java.util.logging.Level;
@@ -992,6 +993,19 @@ public final class Ini implements Serializable {
 	{
 		return getProperty (key).equals("Y");
 	}	//	getProperty
+
+	
+	/**
+	 * Get Available Encoding Charsets
+	 * @return array of available encoding charsets
+	 * @since 3.1.4
+	 */
+	public static Charset[] getAvailableCharsets() {
+		Collection<Charset> col = Charset.availableCharsets().values();
+		Charset[] arr = new Charset[col.size()];
+		col.toArray(arr);
+		return arr;
+	}
 
 	
 	/**

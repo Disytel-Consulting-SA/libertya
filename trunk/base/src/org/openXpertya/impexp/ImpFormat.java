@@ -23,6 +23,7 @@ import java.util.ArrayList;
 import java.util.Properties;
 import java.util.logging.Level;
 
+import org.openXpertya.model.X_I_GLJournal;
 import org.openXpertya.util.CLogger;
 import org.openXpertya.util.DB;
 import org.openXpertya.util.Env;
@@ -599,6 +600,143 @@ public final class ImpFormat {
         return "";
     }    // parseFlexFormat
 
+    
+	/*************************************************************************
+	 *	Insert/Update Database.
+	 *  @param ctx context
+	 *  @param line line
+	 *  @param trxName transaction
+	 *	@return true if inserted/updated
+	 */
+	public boolean updateDB (Properties ctx, String line, String trxName)
+	{
+		if (line == null || line.trim().length() == 0)
+		{
+			log.finest("No Line");
+			return false;
+		}
+		String[] nodes = parseLine (line, true, false, true);	//	with label, no trace, ignore empty
+		if (nodes.length == 0)
+		{
+			log.finest("Nothing parsed from: " + line);
+			return false;
+		}
+	//	log.config( "ImpFormat.updateDB - listSize=" + nodes.length);
+
+		//  Standard Fields
+		int AD_Client_ID = Env.getAD_Client_ID(ctx);
+		int AD_Org_ID = Env.getAD_Org_ID(ctx);
+		if (getAD_Table_ID() == X_I_GLJournal.Table_ID)
+			AD_Org_ID = 0;
+		int UpdatedBy = Env.getAD_User_ID(ctx);
+
+
+		//	Check if the record is already there ------------------------------
+		StringBuffer sql = new StringBuffer ("SELECT COUNT(*), MAX(")
+			.append(m_tablePK).append(") FROM ").append(m_tableName)
+			.append(" WHERE AD_Client_ID=").append(AD_Client_ID).append(" AND (");
+		//
+		String where1 = null;
+		String where2 = null;
+		String whereParentChild = null;
+		for (int i = 0; i < nodes.length; i++)
+		{
+			if (nodes[i].endsWith("=''") || nodes[i].endsWith("=0"))
+				;
+			else if (nodes[i].startsWith(m_tableUnique1 + "="))
+				where1 = nodes[i];
+			else if (nodes[i].startsWith(m_tableUnique2 + "="))
+				where2 = nodes[i];
+			else if (nodes[i].startsWith(m_tableUniqueParent + "=") || nodes[i].startsWith(m_tableUniqueChild + "="))
+			{
+				if (whereParentChild == null)
+					whereParentChild = nodes[i];
+				else
+					whereParentChild += " AND " + nodes[i];
+			}
+		}
+		StringBuffer find = new StringBuffer();
+		if (where1 != null)
+			find.append(where1);
+		if (where2 != null)
+		{
+			if (find.length() > 0)
+				find.append(" OR ");
+			find.append(where2);
+		}
+		if (whereParentChild != null && whereParentChild.indexOf(" AND ") != -1)	//	need to have both criteria
+		{
+			if (find.length() > 0)
+				find.append(" OR (").append(whereParentChild).append(")");	//	may have only one
+			else
+				find.append(whereParentChild);
+		}
+		sql.append(find).append(")");
+		int count = 0;
+		int ID = 0;
+		try
+		{
+			if (find.length() > 0)
+			{
+				PreparedStatement pstmt = DB.prepareStatement(sql.toString(), trxName);
+				ResultSet rs = pstmt.executeQuery();
+				if (rs.next())
+				{
+					count = rs.getInt(1);
+					if (count == 1)
+						ID = rs.getInt(2);
+				}
+				rs.close();
+				pstmt.close();
+			}
+		}
+		catch (SQLException e)
+		{
+			log.log(Level.SEVERE, sql.toString(), e);
+			return false;
+		}
+
+
+		//	Insert Basic Record -----------------------------------------------
+		if (ID == 0)
+		{
+			ID = DB.getNextID(ctx, m_tableName, null);		//	get ID
+			sql = new StringBuffer("INSERT INTO ")
+				.append(m_tableName).append("(").append(m_tablePK).append(",")
+				.append("AD_Client_ID,AD_Org_ID,Created,CreatedBy,Updated,UpdatedBy,IsActive")	//	StdFields
+				.append(") VALUES (").append(ID).append(",")
+				.append(AD_Client_ID).append(",").append(AD_Org_ID)
+				.append(",SysDate,").append(UpdatedBy).append(",SysDate,").append(UpdatedBy).append(",'Y'")
+				.append(")");
+			//
+			int no = DB.executeUpdate(sql.toString(), trxName);
+			if (no != 1)
+			{
+				log.log(Level.SEVERE, "Insert records=" + no + "; SQL=" + sql.toString());
+				return false;
+			}
+			log.finer("New ID=" + ID + " " + find);
+		}
+		else
+			log.finer("Old ID=" + ID + " " + find);
+
+		//	Update Info -------------------------------------------------------
+		sql = new StringBuffer ("UPDATE ")
+			.append(m_tableName).append(" SET ");
+		for (int i = 0; i < nodes.length; i++)
+			sql.append(nodes[i]).append(",");		//	column=value
+		sql.append("IsActive='Y',Processed='N',I_IsImported='N',Updated=SysDate,UpdatedBy=").append(UpdatedBy);
+		sql.append(" WHERE ").append(m_tablePK).append("=").append(ID);
+		//  Update Cmd
+		int no = DB.executeUpdate(sql.toString(), trxName);
+		if (no != 1)
+		{
+			log.log(Level.SEVERE, m_tablePK + "=" + ID + " - rows updated=" + no);
+			return false;
+		}
+		return true;
+	}	//	updateDB
+    
     /**
      * Descripción de Método
      *
