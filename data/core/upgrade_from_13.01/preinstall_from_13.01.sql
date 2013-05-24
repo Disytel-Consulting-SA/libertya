@@ -2941,3 +2941,33 @@ ALTER TABLE v_dailysales OWNER TO libertya;
 
 --20130523-1220 Cambiados a null los campos del dashboard
 UPDATE PA_DASHBOARDCONTENT SET HTML = null;
+
+-- 20130524-1130 Incorporación de funcion getLabelDueDate utilizada en reportes
+CREATE OR REPLACE FUNCTION getLabelDueDate(fecha_corte date, fecha_vencimiento date)
+  RETURNS character varying AS
+$BODY$
+DECLARE
+	days		INTEGER := fecha_vencimiento - fecha_corte;
+BEGIN
+	IF (days <= 0) THEN
+		RETURN 'A Vencer';
+	ELSIF ((days > 0) AND (days <= 30)) THEN
+		RETURN 'D. Vencida 30';
+	ELSIF ((days > 30) AND (days <= 60)) THEN
+		RETURN 'D. Vencida 60';
+	ELSIF ((days > 60) AND (days <= 90)) THEN
+		RETURN 'D. Vencida 90';
+	ELSIF ((days > 90) AND (days <= 120)) THEN
+		RETURN 'D. Vencida 120';
+	ELSIF ((days > 120) AND (days <= 150)) THEN
+		RETURN 'D. Vencida 150';
+	ELSE
+		RETURN 'D. Vencida 150+'; 
+	END IF;
+END; $BODY$
+  LANGUAGE 'plpgsql' VOLATILE
+  COST 100;
+ALTER FUNCTION getLabelDueDate(date, date) OWNER TO libertya;
+
+-- 20130524-1130 Incorporación de columna DateEmissionCheck a Pagos
+ALTER TABLE C_Payment ADD COLUMN DateEmissionCheck timestamp without time zone NULL;

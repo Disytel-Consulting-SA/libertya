@@ -59,7 +59,7 @@ public class CheckPayment extends Payment {
 	public Timestamp getAcctDate() {
 		return acctDate;
 	}
-
+	
 	/**
 	 * @param acctDate
 	 *            Fija o asigna acctDate.
@@ -152,6 +152,14 @@ public class CheckPayment extends Payment {
 
 	public Integer getCheckDeadLine() {
 		return checkDeadLine;
+	}
+	
+	public Timestamp getDateTrx(){
+		return new Timestamp(System.currentTimeMillis());	
+	}
+	
+	public Timestamp getDateAcct(){
+		return new Timestamp(System.currentTimeMillis());	
 	}
 	
 	

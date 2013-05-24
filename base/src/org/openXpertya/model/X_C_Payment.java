@@ -7,7 +7,7 @@ import java.math.*;
 import org.openXpertya.util.*;
 /** Modelo Generado por C_Payment
  *  @author Comunidad de Desarrollo Libertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
- *  @version  - 2013-01-04 13:25:20.097 */
+ *  @version  - 2013-05-22 14:29:42.216 */
 public class X_C_Payment extends org.openXpertya.model.PO
 {
 /** Constructor estándar */
@@ -752,6 +752,16 @@ Accounting Date */
 public Timestamp getDateAcct() 
 {
 return (Timestamp)get_Value("DateAcct");
+}
+/** Set Date Emission Check */
+public void setDateEmissionCheck (Timestamp DateEmissionCheck)
+{
+set_Value ("DateEmissionCheck", DateEmissionCheck);
+}
+/** Get Date Emission Check */
+public Timestamp getDateEmissionCheck() 
+{
+return (Timestamp)get_Value("DateEmissionCheck");
 }
 /** Set Transaction Date.
 Transaction Date */
