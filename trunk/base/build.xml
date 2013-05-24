@@ -29,6 +29,7 @@ Este Fichero sirve para compilar el subproyecto base independiente del proyecto 
     <pathelement path="../interfaces/Interfaces.jar"/>
     <pathelement path="../tools/lib/servlet.jar" />
   	<pathelement path="../tools/lib/JasperReports/jasperreports-2.0.1.jar" />
+  	<pathelement path="../tools/lib/JasperReports/poi-3.0.1-FINAL-20070705.jar" />
   	<pathelement path="${jar.path}/AxisJar.jar" />
   	<pathelement path="../tools/lib/jconn3.jar"/>
     <pathelement path="../tools/lib/j2ee.jar"/>

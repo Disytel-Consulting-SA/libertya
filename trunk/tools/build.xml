@@ -283,6 +283,7 @@
     <unjar src="lib/log4j.jar" dest="${buildServer.dir}"/>
     <!-- Rowset para JDK 1.4			-->
     <unjar src="lib/rowset.jar" dest="${buildServer.dir}"/>
+    <unjar src="lib/JasperReports/poi-3.0.1-FINAL-20070705.jar" dest="${buildServer.dir}"/>
 
     <!-- Limpiando	-->
     <delete file="${buildServer.dir}/META-INF/MANIFEST.MF" failonerror="false"/>
@@ -326,6 +327,8 @@
   	<!-- JFreeChart-->
   	<unjar src="lib/jcommon-1.0.0.jar" dest="${buildClient.dir}"/>
   	<unjar src="lib/jfreechart-1.0.1.jar" dest="${buildClient.dir}"/>
+  	<unjar src="lib/JasperReports/poi-3.0.1-FINAL-20070705.jar" dest="${buildClient.dir}"/>
+  	
   	<!-- JFreeChart-->
 
     <!-- Limpiando	-->

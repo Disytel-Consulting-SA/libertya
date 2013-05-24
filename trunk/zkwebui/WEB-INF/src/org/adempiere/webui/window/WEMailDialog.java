@@ -447,8 +447,6 @@ public class WEMailDialog extends Window implements EventListener, ValueChangeLi
 		//	Send
 		if (event.getTarget().getId().equals(ConfirmPanel.A_OK))
 		{
-// TODO: Pendiente a completar			
-/*
 			StringTokenizer st = new StringTokenizer(getTo(), " ,;", false);
 			String to = st.nextToken();
 			EMail email = m_client.createEMail(getFrom(), to, getSubject(), getMessage());
@@ -485,7 +483,6 @@ public class WEMailDialog extends Window implements EventListener, ValueChangeLi
 			//
 //			confirmPanel.getOKButton().setEnabled(false);
 //			setCursor(Cursor.getDefaultCursor());
-*/
 		}
 		else if (event.getTarget().getId().equals(ConfirmPanel.A_CANCEL))
 			onClose();
