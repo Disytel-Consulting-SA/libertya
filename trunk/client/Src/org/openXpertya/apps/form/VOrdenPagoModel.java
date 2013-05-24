@@ -463,12 +463,14 @@ public class VOrdenPagoModel implements TableModelListener {
 
 		@Override
 		public Timestamp getDateTrx() {
-			return fechaEm;
+			return new Timestamp(System.currentTimeMillis());
+			// return fechaEm;
 		}
 
 		@Override
 		public Timestamp getDateAcct() {
-			return fechaEm;
+			return new Timestamp(System.currentTimeMillis());
+			//return fechaEm;
 		}
 		
 		@Override
@@ -1874,6 +1876,7 @@ public class VOrdenPagoModel implements TableModelListener {
 					String sucursal = VModelHelper.getSQLValueString(null, " select AccountNo from c_bankaccount where c_bankaccount.c_bankaccount_id = ? ", mp.getBankAccountID() );
 					
 					pay.setCheckNo(mpc.nroCheque); // Numero de cheque
+					pay.setDateEmissionCheck(mpc.fechaEm); // Fecha de Emision de Cheque
 					pay.setMicr(sucursal + ";" + mp.getBankAccountID() + ";" + mpc.nroCheque); // Sucursal; cta; No. cheque
 					pay.setA_Name(mpc.aLaOrden); // Nombre
 					

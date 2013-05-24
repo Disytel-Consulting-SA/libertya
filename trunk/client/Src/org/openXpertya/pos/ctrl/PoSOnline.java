@@ -1852,8 +1852,9 @@ public class PoSOnline extends PoSConnectionState {
 		
 		MPayment pay = createOxpMPayment(MPayment.TENDERTYPE_Check, getClientCurrencyID(), p.getAmount(), null);
 		String sucursal = VModelHelper.getSQLValueString(null, " select AccountNo from c_bankaccount where c_bankaccount.c_bankaccount_id = ? ", p.getBankAccountID() );
-		pay.setDateAcct(p.getAcctDate());
-		pay.setDateTrx(p.getEmissionDate());
+		pay.setDateAcct(p.getDateTrx()); 
+		pay.setDateTrx(p.getDateAcct()); 
+		pay.setDateEmissionCheck(p.getEmissionDate());
 		
 		pay.setC_BankAccount_ID(p.getBankAccountID());
 		pay.setCheckNo(p.getCheckNumber()); // Numero de cheque
@@ -1861,7 +1862,7 @@ public class PoSOnline extends PoSConnectionState {
 		pay.setA_Name(""); // Nombre
 		pay.setA_Bank(p.getBankName());
 		pay.setA_CUIT(p.getCuitLibrador());
-		pay.setDueDate(p.getAcctDate());
+		pay.setDueDate(p.getAcctDate()); // AcctDate es la fecha de Vencimiento
 		pay.setDescription(p.getDescription());
 		pay.setC_POSPaymentMedium_ID(p.getPaymentMedium().getId());
 		
