@@ -48,6 +48,7 @@ import javax.print.event.PrintServiceAttributeEvent;
 import javax.print.event.PrintServiceAttributeListener;
 import javax.xml.transform.stream.StreamResult;
 
+import org.openXpertya.print.export.PrintDataExcelExporter;
 import org.apache.ecs.XhtmlDocument;
 import org.apache.ecs.xhtml.a;
 import org.apache.ecs.xhtml.link;
@@ -1000,6 +1001,22 @@ public class ReportEngine implements PrintServiceAttributeListener {
         return false;
     }    // createXML
 
+    
+	/**
+	 * Create Excel file
+	 * @param outFile output file
+	 * @param language
+	 * @throws Exception if error
+	 */
+	public void createXLS(File outFile, Language language)
+	throws Exception
+	{
+		PrintDataExcelExporter exp = new PrintDataExcelExporter(getPrintData(), getPrintFormat());
+		exp.export(outFile, language);
+	}
+
+    
+    
     /**
      * Descripción de Método
      *

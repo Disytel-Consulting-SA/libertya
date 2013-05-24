@@ -349,9 +349,8 @@ public class ZkReportViewer extends Window implements EventListener {
 			File file = File.createTempFile(prefix, ".html", new File(path));
 			m_reportEngine.createHTML(file, false, AEnv.getLanguage(Env.getCtx()), new HTMLExtension(Executions.getCurrent().getContextPath(), "rp", this.getUuid()));
 			media = new AMedia(getTitle(), "html", "text/html", file, false);
-		}/* 
-//			TODO: Pendiente de importar logica de PrintDataExcelExporter 
-			else if ("XLS".equals(previewType.getSelectedItem().getValue())) {
+		} 
+ 			else if ("XLS".equals(previewType.getSelectedItem().getValue())) {
 			String path = System.getProperty("java.io.tmpdir");
 			String prefix = makePrefix(m_reportEngine.getName());
 			if (log.isLoggable(Level.FINE))
@@ -361,8 +360,7 @@ public class ZkReportViewer extends Window implements EventListener {
 			File file = File.createTempFile(prefix, ".xls", new File(path));
 			m_reportEngine.createXLS(file, AEnv.getLanguage(Env.getCtx()));
 			media = new AMedia(getTitle(), "xls", "application/vnd.ms-excel", file, true);
-		}*/
-		
+		}		
 		iframe.setContent(media);
 	}
 
@@ -753,12 +751,11 @@ public class ZkReportViewer extends Window implements EventListener {
 				m_reportEngine.createHTML(sw, false, m_reportEngine.getPrintFormat().getLanguage());
 				data = sw.getBuffer().toString().getBytes();	
 			}
-//			TODO: Pendiente de importar logica de PrintDataExcelExporter
-/*			else if (ext.equals("xls"))
+			else if (ext.equals("xls"))
 			{
 				inputFile = File.createTempFile("Export", ".xls");							
 				m_reportEngine.createXLS(inputFile, m_reportEngine.getPrintFormat().getLanguage());
-			}*/
+			}
 			else
 			{
 				FDialog.error(m_WindowNo, winExportFile, "FileInvalidExtension");

@@ -65,6 +65,7 @@ import org.compiere.swing.CComboBox;
 import org.compiere.swing.CFrame;
 import org.compiere.swing.CLabel;
 import org.compiere.swing.CPanel;
+import org.openXpertya.util.CLogMgt;
 import org.openXpertya.apps.ADialog;
 import org.openXpertya.apps.AEnv;
 import org.openXpertya.apps.AWindow;
@@ -1120,7 +1121,7 @@ public class Viewer extends CFrame implements ActionListener,ChangeListener,Wind
         chooser.addChoosableFileFilter( new ExtensionFileFilter( "txt",Msg.getMsg( m_ctx,"FileTXT" )));
         chooser.addChoosableFileFilter( new ExtensionFileFilter( "ssv",Msg.getMsg( m_ctx,"FileSSV" )));
         chooser.addChoosableFileFilter( new ExtensionFileFilter( "csv",Msg.getMsg( m_ctx,"FileCSV" )));
-
+        chooser.addChoosableFileFilter(new ExtensionFileFilter("xls", Msg.getMsg(m_ctx, "FileXLS")));
         //
 
         if( chooser.showSaveDialog( this ) != JFileChooser.APPROVE_OPTION ) {
@@ -1154,23 +1155,33 @@ public class Viewer extends CFrame implements ActionListener,ChangeListener,Wind
         log.config( "File=" + outFile.getPath() + "; Type=" + ext );
         setCursor( Cursor.getPredefinedCursor( Cursor.WAIT_CURSOR ));
 
-        if( ext.equalsIgnoreCase( "pdf" )) {
-            m_reportEngine.createPDF( outFile );
-        } else if( ext.equals( "ps" )) {
-            m_reportEngine.createPS( outFile );
-        } else if( ext.equals( "xml" )) {
-            m_reportEngine.createXML( outFile );
-        } else if( ext.equals( "csv" )) {
-            m_reportEngine.createCSV( outFile,',',m_reportEngine.getPrintFormat().getLanguage());
-        } else if( ext.equals( "ssv" )) {
-            m_reportEngine.createCSV( outFile,';',m_reportEngine.getPrintFormat().getLanguage());
-        } else if( ext.equals( "txt" )) {
-            m_reportEngine.createCSV( outFile,'\t',m_reportEngine.getPrintFormat().getLanguage());
-        } else if( ext.equals( "html" ) || ext.equals( "htm" )) {
-            m_reportEngine.createHTML( outFile,false,m_reportEngine.getPrintFormat().getLanguage());
-        } else {
-            ADialog.error( m_WindowNo,this,"FileInvalidExtension" );
+        try {
+	        if( ext.equalsIgnoreCase( "pdf" )) {
+	            m_reportEngine.createPDF( outFile );
+	        } else if( ext.equals( "ps" )) {
+	            m_reportEngine.createPS( outFile );
+	        } else if( ext.equals( "xml" )) {
+	            m_reportEngine.createXML( outFile );
+	        } else if( ext.equals( "csv" )) {
+	            m_reportEngine.createCSV( outFile,',',m_reportEngine.getPrintFormat().getLanguage());
+	        } else if( ext.equals( "ssv" )) {
+	            m_reportEngine.createCSV( outFile,';',m_reportEngine.getPrintFormat().getLanguage());
+	        } else if( ext.equals( "txt" )) {
+	            m_reportEngine.createCSV( outFile,'\t',m_reportEngine.getPrintFormat().getLanguage());
+	        } else if( ext.equals( "html" ) || ext.equals( "htm" )) {
+	            m_reportEngine.createHTML( outFile,false,m_reportEngine.getPrintFormat().getLanguage());
+	        } else if (ext.equals("xls")) {
+				m_reportEngine.createXLS(outFile, m_reportEngine.getPrintFormat().getLanguage());
+			}
+	        else {
+	            ADialog.error( m_WindowNo,this,"FileInvalidExtension" );
+	        }
         }
+		catch (Exception e) {
+			ADialog.error(m_WindowNo, this, "Error", e.getLocalizedMessage());
+			if (CLogMgt.isLevelFinest())
+				e.printStackTrace();
+		}
 
         cmd_drill();    // setCursor
     }                   // cmd_export

@@ -20,6 +20,12 @@
 
 package org.openXpertya.model;
 
+import org.openXpertya.db.CConnection;
+import org.openXpertya.interfaces.Server;
+import org.openXpertya.model.MUser;
+import org.openXpertya.model.X_AD_UserMail;
+import org.openXpertya.util.EMail;
+import org.openXpertya.util.Ini;
 import org.openXpertya.util.CCache;
 import org.openXpertya.util.CLogger;
 import org.openXpertya.util.DB;
@@ -28,15 +34,19 @@ import org.openXpertya.util.Language;
 
 //~--- Importaciones JDK ------------------------------------------------------
 
+import java.io.File;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Locale;
 import java.util.Properties;
 import java.util.logging.Level;
+
+import javax.mail.internet.InternetAddress;
 
 /**
  *  Client Model
@@ -667,6 +677,440 @@ public class MClient extends X_AD_Client {
 	/**	Field Access			*/
 	private ArrayList<Integer>	m_fieldAccess = null;
 
+	/**************************************************************************
+	 * 	Test EMail
+	 *	@return OK or error
+	 */
+	public String testEMail()
+	{
+		if (getRequestEMail() == null || getRequestEMail().length() == 0)
+			return "No Request EMail for " + getName();
+		//
+		EMail email = createEMail (getRequestEMail(),
+			"Adempiere EMail Test", 
+			"Adempiere EMail Test: " + toString());
+		if (email == null)
+			return "Could not create EMail: " + getName();
+		try
+		{
+			String msg = email.send();
+			if (EMail.SENT_OK.equals (msg))
+			{
+				log.info("Sent Test EMail to " + getRequestEMail());
+				return "OK";
+			}
+			else
+			{
+				log.warning("Could NOT send Test EMail from "
+					+ getSMTPHost() + ": " + getRequestEMail()
+					+ " (" + getRequestUser()
+					+ ") to " + getRequestEMail() + ": " + msg);
+				return msg;
+			}
+		}
+		catch (Exception ex)
+		{
+			log.severe(getName() + " - " + ex.getLocalizedMessage());
+			return ex.getLocalizedMessage();
+		}
+	}	//	testEMail
+	
+	/**
+	 * 	Send EMail from Request User - with trace
+	 *	@param AD_User_ID recipient
+	 *	@param subject subject
+	 *	@param message message
+	 *	@param attachment optional attachment
+	 *	@return true if sent
+	 */
+	public boolean sendEMail (int AD_User_ID, 
+			String subject, String message, File attachment)
+	{
+		Collection<File> attachments = new ArrayList<File>();
+		if (attachment != null)
+			attachments.add(attachment);
+		return sendEMailAttachments(AD_User_ID, subject, message, attachments);
+	}
+	
+	/**
+	 * 	Send EMail from Request User - with trace
+	 *	@param AD_User_ID recipient
+	 *	@param subject subject
+	 *	@param message message
+	 *	@param attachment optional collection of attachments
+	 *	@return true if sent
+	 */
+	public boolean sendEMailAttachments (int AD_User_ID, 
+		String subject, String message, Collection<File> attachments)
+	{
+		return sendEMailAttachments(AD_User_ID, subject, message, attachments, false);
+	}
+	
+	/**
+	 * 	Send EMail from Request User - with trace
+	 *	@param AD_User_ID recipient
+	 *	@param subject subject
+	 *	@param message message
+	 *	@param attachment optional collection of attachments
+	 *  @param html
+	 *	@return true if sent
+	 */
+	public boolean sendEMailAttachments (int AD_User_ID, 
+		String subject, String message, Collection<File> attachments, boolean html)
+	{
+		MUser to = MUser.get(getCtx(), AD_User_ID);
+		String toEMail = to.getEMail(); 
+		if (toEMail == null || toEMail.length() == 0)
+		{
+			log.warning("No EMail for recipient: " + to);
+			return false;
+		}
+		EMail email = createEMail(null, to, subject, message, html);
+		if (email == null)
+			return false;
+		email.addAttachments(attachments);
+		try
+		{
+			return sendEmailNow(null, to, email);
+		}
+		catch (Exception ex)
+		{
+			log.severe(getName() + " - " + ex.getLocalizedMessage());
+			return false;
+		}
+	}	//	sendEMail
+	
+	/**
+	 * 	Send EMail from Request User - no trace
+	 *	@param to recipient email address
+	 *	@param subject subject
+	 *	@param message message
+	 *	@param attachment optional attachment
+	 *	@return true if sent
+	 */
+	public boolean sendEMail (String to, 
+		String subject, String message, File attachment)
+	{
+		return sendEMail(to, subject, message, attachment, false);
+	}
+	
+	/**
+	 * 	Send EMail from Request User - no trace
+	 *	@param to recipient email address
+	 *	@param subject subject
+	 *	@param message message
+	 *	@param attachment optional attachment
+	 *  @param html
+	 *	@return true if sent
+	 */
+	public boolean sendEMail (String to, 
+		String subject, String message, File attachment, boolean html)
+	{
+		EMail email = createEMail(to, subject, message, html);
+		if (email == null)
+			return false;
+		if (attachment != null)
+			email.addAttachment(attachment);
+		try
+		{
+			String msg = email.send();
+			if (EMail.SENT_OK.equals (msg))
+			{
+				log.info("Sent EMail " + subject + " to " + to);
+				return true;
+			}
+			else
+			{
+				log.warning("Could NOT Send Email: " + subject 
+					+ " to " + to + ": " + msg
+					+ " (" + getName() + ")");
+				return false;
+			}
+		}
+		catch (Exception ex)
+		{
+			log.severe(getName() + " - " + ex.getLocalizedMessage());
+			return false;
+		}
+	}	//	sendEMail
+
+	/**
+	 * 	Send EMail from User
+	 * 	@param from sender
+	 *	@param to recipient
+	 *	@param subject subject
+	 *	@param message message
+	 *	@param attachment optional attachment
+	 *	@return true if sent
+	 */
+	public boolean sendEMail (MUser from, MUser to, 
+		String subject, String message, File attachment)
+	{
+		return sendEMail(from, to, subject, message, attachment, false);
+	}
+	
+	/**
+	 * 	Send EMail from User
+	 * 	@param from sender
+	 *	@param to recipient
+	 *	@param subject subject
+	 *	@param message message
+	 *	@param attachment optional attachment
+	 *  @param isHtml
+	 *	@return true if sent
+	 */
+	public boolean sendEMail (MUser from, MUser to, 
+		String subject, String message, File attachment, boolean isHtml)
+	{
+		EMail email = createEMail(from, to, subject, message, isHtml);
+		if (email == null)
+			return false;
+		
+		if (attachment != null)
+			email.addAttachment(attachment);
+		InternetAddress emailFrom = email.getFrom();
+		try
+		{
+			return sendEmailNow(from, to, email);
+		}
+		catch (Exception ex)
+		{
+			log.severe(getName() + " - from " + emailFrom
+				+ " to " + to + ": " + ex.getLocalizedMessage());
+			return false;
+		}
+	}	//	sendEMail
+
+	/**
+	 * 	Send Email Now
+	 *	@param from optional from user
+	 *	@param to to user
+	 *	@param email email
+	 *	@return true if sent
+	 */
+	public boolean sendEmailNow(MUser from, MUser to, EMail email)
+	{
+		String msg = email.send();
+		//
+		X_AD_UserMail um = new X_AD_UserMail(getCtx(), 0, null);
+		um.setClientOrg(this);
+		um.setAD_User_ID(to.getAD_User_ID());
+		um.setSubject(email.getSubject());
+		um.setMailText(email.getMessageCRLF());
+		if (email.isSentOK())
+			um.setMessageID(email.getMessageID());
+		else
+		{
+			um.setMessageID(email.getSentMsg());
+			um.setIsDelivered(X_AD_UserMail.ISDELIVERED_No);
+		}
+		um.save();
+
+		//
+		if (email.isSentOK())
+		{
+			if (from != null)
+				log.info("Sent Email: " + email.getSubject() 
+					+ " from " + from.getEMail()
+					+ " to " + to.getEMail());
+			else
+				log.info("Sent Email: " + email.getSubject() 
+					+ " to " + to.getEMail());
+			return true;
+		}
+		else
+		{
+			if (from != null)
+				log.warning("Could NOT Send Email: " + email.getSubject()
+					+ " from " + from.getEMail()
+					+ " to " + to.getEMail() + ": " + msg
+					+ " (" + getName() + ")");
+			else
+				log.warning("Could NOT Send Email: " + email.getSubject()
+					+ " to " + to.getEMail() + ": " + msg
+					+ " (" + getName() + ")");
+			return false;
+		}
+	}	//	sendEmailNow
+
+	/************
+	 * 	Create EMail from Request User
+	 *	@param to recipient
+	 *	@param subject sunject
+	 *	@param message nessage
+	 *	@return EMail
+	 */
+	public EMail createEMail (String to, 
+		String subject, String message)
+	{
+		return createEMail(to, subject, message, false);
+	}
+	
+	/************
+	 * 	Create EMail from Request User
+	 *	@param to recipient
+	 *	@param subject sunject
+	 *	@param message nessage
+	 *  @param html
+	 *	@return EMail
+	 */
+	public EMail createEMail (String to, 
+		String subject, String message, boolean html)
+	{
+		if (to == null || to.length() == 0)
+		{
+			log.warning("No To");
+			return null;
+		}
+		//
+		EMail email = null;
+// Temporalmente comentado.  Solo envio de mail desde el cliente		
+//		if (isServerEMail() && Ini.isClient())
+//		{
+//			Server server = CConnection.get().getServer();
+//			try
+//			{
+//				if (server != null)
+//				{	//	See ServerBean
+//					if (html && message != null)
+//						message = EMail.HTML_MAIL_MARKER + message;
+//					email = server.createEMail(Env.getRemoteCallCtx(getCtx()), getAD_Client_ID(), 
+//						to, subject, message);
+//				}
+//				else
+//					log.log(Level.WARNING, "No AppsServer"); 
+//			}
+//			catch (Exception ex)
+//			{
+//				log.log(Level.SEVERE, getName() + " - AppsServer error", ex);
+//			}
+//		}
+		if (email == null)
+			email = new EMail (this,
+				   getRequestEMail(), to,
+				   subject, message, html);
+		if (isSmtpAuthorization())
+			email.createAuthenticator (getRequestUser(), getRequestUserPW());
+		return email;
+	}	//	createEMail
+
+	/**
+	 * 	Create EMail from User
+	 * 	@param from optional sender
+	 *	@param to recipient
+	 *	@param subject sunject
+	 *	@param message nessage
+	 *	@return EMail
+	 */
+	public EMail createEMail (MUser from, MUser to, 
+		String subject, String message)
+	{
+		return createEMail(from, to, subject, message, false);
+	}
+	
+	/**
+	 * 	Create EMail from User
+	 * 	@param from optional sender
+	 *	@param to recipient
+	 *	@param subject sunject
+	 *	@param message nessage
+	 *  @param html
+	 *	@return EMail
+	 */
+	public EMail createEMail (MUser from, MUser to, 
+		String subject, String message, boolean html)
+	{
+		if (to == null)
+		{
+			log.warning("No To user");
+			return null;
+		}
+		if (to.getEMail() == null || to.getEMail().length() == 0)
+		{
+			log.warning("No To address: " + to);
+			return null;
+		}
+		return createEMail (from, to.getEMail(), subject, message, html);
+	}	//	createEMail
+	
+	/**
+	 * 	Create EMail from User
+	 * 	@param from optional sender
+	 *	@param to recipient
+	 *	@param subject sunject
+	 *	@param message nessage
+	 *	@return EMail
+	 */
+	public EMail createEMail (MUser from, String to, 
+		String subject, String message)
+	{
+		return createEMail(from, to, subject, message, false);
+	}
+	
+	/**
+	 * 	Create EMail from User
+	 * 	@param from optional sender
+	 *	@param to recipient
+	 *	@param subject sunject
+	 *	@param message nessage
+	 *  @param html
+	 *	@return EMail
+	 */
+	public EMail createEMail (MUser from, String to, 
+		String subject, String message, boolean html)
+	{
+		if (to == null || to.length() == 0)
+		{
+			log.warning("No To address");
+			return null;
+		}
+		//	No From - send from Request
+		if (from == null)
+			return createEMail (to, subject, message, html);
+		//	No From details - Error
+		if (from.getEMail() == null 
+			|| from.getEMailUser() == null
+			|| (isSmtpAuthorization() && from.getEMailUserPW() == null) ) // is SMTP authorization and password is null - teo_sarca [ 1723309 ]
+		{
+			log.warning("From EMail incomplete: " + from + " (" + getName() + ")");
+			return null;
+		}
+		//
+		EMail email = null;
+// Temporalmente comentado.  Solo envio de mail desde el cliente
+//		if (isServerEMail() && Ini.isClient())
+//		{
+//			Server server = CConnection.get().getServer();
+//			try
+//			{
+//				if (server != null)
+//				{	//	See ServerBean
+//					if (html && message != null)
+//						message = EMail.HTML_MAIL_MARKER + message;
+//					email = server.createEMail(Env.getRemoteCallCtx(getCtx()), getAD_Client_ID(),
+//						from.getAD_User_ID(),
+//						to, subject, message);
+//				}
+//				else
+//					log.log(Level.WARNING, "No AppsServer"); 
+//			}
+//			catch (Exception ex)
+//			{
+//				log.log(Level.SEVERE, getName() + " - AppsServer error", ex);
+//			}
+//		}
+		if (email == null)
+			email = new EMail (this,
+				   from.getEMail(), 
+				   to,
+				   subject, 
+				   message, html);
+		if (isSmtpAuthorization())
+			email.createAuthenticator (from.getEMailUser(), from.getEMailUserPW());
+		return email;
+	}	//	createEMail
+
+	
 }	// MClient
 
 

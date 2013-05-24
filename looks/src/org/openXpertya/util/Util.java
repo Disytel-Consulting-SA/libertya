@@ -700,6 +700,29 @@ public class Util {
 			in = in.substring(0, pos) + in.substring(pos+1);
 		return in;
 	}	//	cleanAmp
+
+	/**
+	 * String diacritics from given string
+	 * @param s	original string
+	 * @return string without diacritics
+	 */
+	public static String stripDiacritics(String s) {
+		/* JAVA5 behaviour
+		return s;
+		JAVA6 behaviour */ 
+		if (s == null) {
+			return s;
+		}
+		String normStr = java.text.Normalizer.normalize(s, java.text.Normalizer.Form.NFD);
+		
+		StringBuffer sb = new StringBuffer();
+		for (int i = 0; i < normStr.length(); i++) {
+			char ch = normStr.charAt(i);
+			if (ch < 255)
+				sb.append(ch);
+		}
+		return sb.toString();
+	}
 	
 }	// Util
 

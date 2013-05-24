@@ -21,6 +21,7 @@ import java.io.IOException;
 import java.io.Serializable;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Enumeration;
 import java.util.Properties;
 import java.util.logging.Level;
@@ -129,6 +130,55 @@ public final class EMail implements Serializable {
         m_valid = isValid( true );
     }    // EMail
 
+    
+	/**
+	 *	Full Constructor
+	 *	@param ctx context
+	 *  @param smtpHost The mail server
+	 *  @param from Sender's EMail address
+	 *  @param to   Recipient EMail address
+	 *  @param subject  Subject of message
+	 *  @param message  The message
+	 *  @param html html email
+	 */
+	public EMail (Properties ctx, String smtpHost, String from, String to, 
+		String subject, String message, boolean html)
+	{
+		setSmtpHost(smtpHost);
+		setFrom(from);
+		addTo(to);
+		m_ctx = ctx;
+		if (subject == null || subject.length() == 0)
+			setSubject(".");	//	pass validation
+		else
+			setSubject (subject);
+		if (message != null && message.length() > 0)
+		{
+			if (html)
+				setMessageHTML(subject, message);
+			else
+				setMessageText (message);
+		}
+		m_valid = isValid (true);
+	}	//	EMail
+	
+	/**
+	 *	Full Constructor
+	 *  @param client the client
+	 *  @param from Sender's EMail address
+	 *  @param to   Recipient EMail address
+	 *  @param subject  Subject of message
+	 *  @param message  The message
+	 *  @param html
+	 */
+	public EMail (MClient client, String from, String to, 
+		String subject, String message, boolean html)
+	{
+		this (client.getCtx(), client.getSMTPHost(), from, to, subject, message, html);
+	}	//	EMail
+	
+	
+    
     /** Descripción de Campos */
 
     public static final String CTX_EMAIL = "#User_EMail";
@@ -965,6 +1015,20 @@ public final class EMail implements Serializable {
         return m_messageHTML;
     }    // getMessageHTML
 
+	/**
+	 * Add a collection of attachments
+	 * @param files collection of files
+	 */
+	public void addAttachments(Collection<File> files)
+	{
+		if (files == null || files.size() == 0)
+			return;
+		for (File f : files) {
+			addAttachment(f);
+		}
+	}
+
+    
     /**
      * Descripción de Método
      *
