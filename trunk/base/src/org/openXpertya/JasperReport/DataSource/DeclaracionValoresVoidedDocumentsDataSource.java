@@ -25,7 +25,7 @@ public class DeclaracionValoresVoidedDocumentsDataSource extends
 	@Override
 	protected String getQuery() {
 		StringBuffer sql = new StringBuffer(getStdSelect(true));
-		sql.append(getStdWhereClause(false, null, false));
+		sql.append(getStdWhereClause(false, null, false, true));
 		sql.append(" AND generated_invoice_documentno is not null ");
 		sql.append(" ORDER BY invoice_documentno "); 
 		return sql.toString();
