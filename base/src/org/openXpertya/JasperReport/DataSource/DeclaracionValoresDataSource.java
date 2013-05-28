@@ -41,10 +41,10 @@ public abstract class DeclaracionValoresDataSource extends QueryDataSource {
 	}
 	
 	protected String getStdWhereClause(boolean withTenderType, String tableAlias){
-		return getStdWhereClause(withTenderType, tableAlias, true);
+		return getStdWhereClause(withTenderType, tableAlias, true, true);
 	}
 
-	protected String getStdWhereClause(boolean withTenderType, String tableAlias, boolean addDocStatus){
+	protected String getStdWhereClause(boolean withTenderType, String tableAlias, boolean addDocStatus, boolean withAllocationActive){
 		StringBuffer stdWhere = new StringBuffer();
 		if(!Util.isEmpty(tableAlias, true)){
 			tableAlias += ".";
@@ -64,6 +64,9 @@ public abstract class DeclaracionValoresDataSource extends QueryDataSource {
 		}
 		if(withTenderType){
 			stdWhere.append(" AND ("+tableAlias+"tendertype IN (").append(getTenderType()).append(")) ");
+		}
+		if(withAllocationActive){
+			stdWhere.append(" AND allocation_active = 'Y' ");
 		}
 		return Util.removeInitialAND(stdWhere.toString());
 	}
