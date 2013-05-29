@@ -10,6 +10,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import org.openXpertya.model.FiscalDocumentPrint;
 import org.openXpertya.model.FiscalDocumentPrintListener;
 import org.openXpertya.model.MPOSJournal;
 import org.openXpertya.model.MProduct;
@@ -821,5 +822,9 @@ public class PoSModel {
 	 */
 	public void loadDefaultPriceList(int windowNo){
 		updatePriceList(getPoSConfig().getPriceListIDInConfig(), windowNo);
+	}
+	
+	public boolean reprintInvoice(FiscalDocumentPrint fdp){
+		return getConnectionState().reprintInvoice(getOrder(),fdp);
 	}
 }
