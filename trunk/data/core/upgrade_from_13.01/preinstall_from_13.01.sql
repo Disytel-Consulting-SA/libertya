@@ -3051,3 +3051,6 @@ UNION ALL
   WHERE (ji.docstatus = ANY (ARRAY['VO'::bpchar, 'RE'::bpchar])) AND (ji.isfiscal IS NULL OR ji.isfiscal = 'N'::bpchar OR ji.isfiscal = 'Y'::bpchar AND ji.fiscalalreadyprinted = 'Y'::bpchar);
 
 ALTER TABLE c_pos_declaracionvalores_v OWNER TO libertya;
+
+-- Correccion en OP/RC para multimoneda.  La preferencia DIF_CAMBIO_PTO_VENTA tiene que ser independiente por client
+update ad_preference set ad_client_id = 1010016 where ad_componentobjectuid = 'CORE-AD_Preference-1011156'
