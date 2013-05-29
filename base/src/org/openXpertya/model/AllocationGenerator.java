@@ -264,6 +264,7 @@ public class AllocationGenerator {
 			generateDebitCreditExchangeDifference();
 		} catch (Exception e) {
 			e.printStackTrace();
+			throw new AllocationGeneratorException(e.toString());
 		}
 		
 		// Validaciones requeridas antes de crear las líneas de asignación
@@ -1458,7 +1459,7 @@ public class AllocationGenerator {
 		// Si está activo locale_ar entonces se debe obtener en base al pto de venta y la letra
 		if(LOCALE_AR_ACTIVE){
 			MLetraComprobante letra = getLetraComprobante(new MBPartner(getCtx(), invoice.getC_BPartner_ID(), getTrxName()));
-			Integer posNumber = Integer.valueOf(MPreference.GetCustomPreferenceValue("DIF_CAMBIO_PTO_VENTA"));
+			Integer posNumber = Integer.valueOf(MPreference.GetCustomPreferenceValue("DIF_CAMBIO_PTO_VENTA", Env.getAD_Client_ID(getCtx())));
 
 			if(Util.isEmpty(posNumber,true)) throw new Exception(getMsg("NotExistPOSNumber"));
 			// Se obtiene el tipo de documento para la factura.
