@@ -397,7 +397,7 @@ public class AInfoFiscalPrinter extends CDialog implements ActionListener, Fisca
     public void actionPerformed( ActionEvent e ) {
         // log.finest( "ADialogDialog.actionPerformed - " + e);
         if( e.getActionCommand().equals(ACTION_REPRINT)) {
-        	reprintDocument();
+        	fireReprintAction();
         } else if( e.getActionCommand().equals(ACTION_VOID))  {
         	fireVoidAction();
             dispose();
@@ -820,34 +820,10 @@ public class AInfoFiscalPrinter extends CDialog implements ActionListener, Fisca
 		}
 	}
 	
-	private void fireReprintFinishedAction() {
+	private void fireReprintAction() {
 		if (getDialogActionListener() != null) {
-			getDialogActionListener().actionReprintFinished();
+			getDialogActionListener().actionReprintPerformed(getFiscalDocumentPrint());
 		}
-	}
-
-	/**
-	 * Realiza el intento de reimpresión del documento invocando al
-	 * FiscalDocumentPrint bajo un nuevo hilo (SwingWorker)
-	 */
-	private void reprintDocument() {
-		SwingWorker worker = new SwingWorker() {
-			@Override
-			public Object construct() {
-				return getFiscalDocumentPrint().reprintDocument();
-			}
-
-			@Override
-			public void finished() {
-				boolean success = (Boolean)getValue();
-				if (success) {
-					fireReprintFinishedAction();
-				}
-				
-			}
-		};
-		
-		worker.start();
 	}
 
 	public void setCloseOnFiscalClose(boolean closeOnFiscalClose) {
@@ -879,11 +855,6 @@ public class AInfoFiscalPrinter extends CDialog implements ActionListener, Fisca
 	 * Listener de acciones que puede disparar este diálogo.
 	 */
 	public interface DialogActionListener {
-		
-		/**
-		 * Acción que indica que la reimpresión del documento se realizó correctamente.
-		 */
-		public void actionReprintFinished();
 
 		/**
 		 * Acción que indica que se presionó el botón de anulación de factura.
@@ -891,6 +862,11 @@ public class AInfoFiscalPrinter extends CDialog implements ActionListener, Fisca
 		 * adicional
 		 */
 		public void actionVoidPerformed();
+		
+		/**
+		 * Acción que indica que se presionó el botón de reimpresión
+		 */
+		public void actionReprintPerformed(FiscalDocumentPrint fdp);
 		
 	}	
 	

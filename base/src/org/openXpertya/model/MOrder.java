@@ -4584,6 +4584,15 @@ public class MOrder extends X_C_Order implements DocAction {
 		}
 	}
 	
+	
+	public Integer getWarehouseDeliveryProductsCount(){
+		Integer count = 0;
+		for (MOrderLine orderLine : getLines()) {
+			count += orderLine.isDeliverDocumentPrintable()?1:0;
+		}
+		return count;
+	}
+	
 }    // MOrder
 
 

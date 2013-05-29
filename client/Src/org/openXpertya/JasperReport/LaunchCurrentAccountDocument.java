@@ -1,14 +1,9 @@
 package org.openXpertya.JasperReport;
 
-import org.openXpertya.JasperReport.DataSource.JasperReportsUtil;
 import org.openXpertya.JasperReport.DataSource.OXPJasperDataSource;
 import org.openXpertya.JasperReport.DataSource.OXPJasperEmptyDataSource;
-import org.openXpertya.cc.CurrentAccountManager;
-import org.openXpertya.cc.CurrentAccountManagerFactory;
 import org.openXpertya.model.MBPartner;
 import org.openXpertya.model.MInvoice;
-import org.openXpertya.model.MOrg;
-import org.openXpertya.reflection.CallResult;
 
 public class LaunchCurrentAccountDocument extends JasperReportLaunch {
 

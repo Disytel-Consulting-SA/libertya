@@ -326,7 +326,7 @@ public class MInvoice extends X_C_Invoice implements DocAction {
 		String docBaseTypeCredit = isSOTrx ? "'"
 				+ MDocType.DOCBASETYPE_ARCreditMemo + "'" : "'"
 				+ MDocType.DOCBASETYPE_APCreditMemo + "'";
-		StringBuffer sql = new StringBuffer("SELECT sum(invoiceopen(c_invoice_id,0)) as open " +
+		StringBuffer sql = new StringBuffer("SELECT sum(coalesce(invoiceopen(c_invoice_id,0),0)) as open " +
 											 "FROM c_invoice as i " +
 											 "INNER JOIN c_doctype as dt ON dt.c_doctype_id = i.c_doctypetarget_id " +
 											 "WHERE i.ad_client_id = ? " +
@@ -353,13 +353,14 @@ public class MInvoice extends X_C_Invoice implements DocAction {
 			ps.setInt(2, bpartnerID);
 			rs = ps.executeQuery();
 			if(rs.next()){
-				open = rs.getBigDecimal("open");
+				open = rs.getBigDecimal("open") != null ? rs
+						.getBigDecimal("open") : BigDecimal.ZERO;
 			}
 		} catch (Exception e) {
 			e.printStackTrace();
 		} finally{
 			try {
-				if(ps != null)ps.close();
+				if(rs != null)rs.close();
 				if(ps != null)ps.close();
 			} catch (Exception e2) {
 				e2.printStackTrace();
@@ -368,6 +369,26 @@ public class MInvoice extends X_C_Invoice implements DocAction {
 		return open.subtract(excludedAmt).compareTo(BigDecimal.ZERO) > 0;
 	}
 	
+	
+	/**
+	 * @return el id de proceso que corresponde con la impresión de la salida
+	 *         por depósito
+	 */
+	public static Integer getWarehouseDeliverDocumentProcessID(String trxName){
+		return DB
+				.getSQLValue(trxName,
+						"SELECT ad_process_id FROM ad_process WHERE ad_componentobjectuid = 'CORE-AD_Process-1010274'");
+	}
+	
+	/**
+	 * @return el id de proceso que corresponde con la impresión cliente en
+	 *         cuenta corriente
+	 */
+	public static Integer getCurrentAccountDocumentProcessID(String trxName){
+		return DB
+				.getSQLValue(trxName,
+						"SELECT ad_process_id FROM ad_process WHERE ad_componentobjectuid = 'CORE-AD_Process-1010286'");
+	}
 	
 	public void copyDocumentDiscounts(MInvoice from, boolean onlyTotalizedDocumentDiscounts) throws Exception{
 		List<MDocumentDiscount> discounts = MDocumentDiscount.getOfInvoice(
@@ -2434,49 +2455,69 @@ public class MInvoice extends X_C_Invoice implements DocAction {
 	 */
 
 	public BigDecimal getAllocatedAmt() {
+		return getAllocatedAmt(false, false, false, null);
+	} // getAllocatedAmt
+
+	
+	public BigDecimal getAllocatedAmt(boolean inCredit, boolean inCash, boolean inPayment, String paymentTenderType) {
 		BigDecimal retValue = null;
-		String sql = "SELECT SUM(currencyConvert(al.Amount+al.DiscountAmt+al.WriteOffAmt,"
+		StringBuffer sql = new StringBuffer("SELECT SUM(currencyConvert(al.Amount+al.DiscountAmt+al.WriteOffAmt,"
 				+ "ah.C_Currency_ID, i.C_Currency_ID,ah.DateTrx,i.C_ConversionType_ID, al.AD_Client_ID,al.AD_Org_ID)) "
 				+ "FROM C_AllocationLine al"
 				+ " INNER JOIN C_AllocationHdr ah ON (al.C_AllocationHdr_ID=ah.C_AllocationHdr_ID)"
 				+ " INNER JOIN C_Invoice i ON (al.C_Invoice_ID=i.C_Invoice_ID) "
 				+ "WHERE al.C_Invoice_ID=?"
-				+ " AND ah.IsActive='Y' AND al.IsActive='Y'";
+				+ " AND ah.IsActive='Y' AND al.IsActive='Y'");
+		boolean inAPaymentType = inCredit || inCash || inPayment;
+		sql.append(inAPaymentType?" AND ( ":"");
+		StringBuffer inAPaymentWhereCondition = new StringBuffer();
+		if(inCredit){
+			inAPaymentWhereCondition.append("  (al.c_invoice_credit_id is not null AND al.c_invoice_credit_id > 0) ");
+		}
+		if(inCash){
+			inAPaymentWhereCondition
+					.append(inAPaymentWhereCondition.length() > 0 ? " OR " : "")
+					.append("  (al.c_cashline_id is not null AND al.c_cashline_id > 0) ");
+		}
+		if(inPayment){
+			inAPaymentWhereCondition
+					.append(inAPaymentWhereCondition.length() > 0 ? " OR " : "")
+					.append("  (al.c_payment_id is not null AND al.c_payment_id > 0 AND EXISTS (SELECT p.c_payment_id FROM c_payment p WHERE p.c_payment_id = al.c_payment_id AND p.tendertype = '"
+							+ paymentTenderType + "')) ");
+		}
+		sql.append(inAPaymentWhereCondition);
+		sql.append(inAPaymentType?" ) ":"");
+		
 		PreparedStatement pstmt = null;
-
+		ResultSet rs = null;
 		try {
-			pstmt = DB.prepareStatement(sql, get_TrxName());
+			pstmt = DB.prepareStatement(sql.toString(), get_TrxName());
 			pstmt.setInt(1, getC_Invoice_ID());
 
-			ResultSet rs = pstmt.executeQuery();
+			rs = pstmt.executeQuery();
 
 			if (rs.next()) {
 				retValue = rs.getBigDecimal(1);
 			}
-
-			rs.close();
-			pstmt.close();
-			pstmt = null;
+			
 		} catch (Exception e) {
 			log.log(Level.SEVERE, "getAllocatedAmt", e);
-		}
-
-		try {
-			if (pstmt != null) {
-				pstmt.close();
+		} finally{
+			try {
+				if(rs != null)rs.close();
+				if(pstmt != null)pstmt.close();
+	
+				rs = null;
+				pstmt = null;
+			} catch (Exception e) {
+				rs = null;
+				pstmt = null;
 			}
-
-			pstmt = null;
-		} catch (Exception e) {
-			pstmt = null;
 		}
-
-		// log.fine("getAllocatedAmt - " + retValue);
-		// ? ROUND(NVL(v_AllocatedAmt,0), 2);
-
+		
 		return retValue;
-	} // getAllocatedAmt
-
+	}
+	
 	/**
 	 * Descripción de Método
 	 * 

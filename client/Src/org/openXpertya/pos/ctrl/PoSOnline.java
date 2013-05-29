@@ -489,6 +489,22 @@ public class PoSOnline extends PoSConnectionState {
 		}
 	}
 	
+	@Override
+	public boolean reprintInvoice(Order order, FiscalDocumentPrint fdp){
+		boolean success = fdp.reprintDocument();
+		if(success){
+			try {
+				// Impresión del documento de artículos a retirar por almacén
+				printWarehouseDeliveryTicket(order);
+				// Impresión del documento con datos del cliente en cuenta corriente
+				printCurrentAccountTicket(order);
+			} catch (Exception e) {
+				
+			}
+		}
+		return success;
+	}
+	
 	private boolean getShouldCreateInvoice() {
 		return shouldCreateInvoice;
 	}
@@ -2900,7 +2916,7 @@ public class PoSOnline extends PoSConnectionState {
 	 * Imprime el comprobante para retiro de artículos por almacén en caso de estar
 	 * indicada esta opción en la configuración del TPV.
 	 */
-	private void printWarehouseDeliveryTicket(Order order) throws Exception{
+	public void printWarehouseDeliveryTicket(Order order) throws Exception{
 		/*
 		 * Por el momento SOLO se imprime el comprobante mediante una Impresora Fiscal, con
 		 * lo cual se deben cumplir estas condiciones:
@@ -2941,9 +2957,9 @@ public class PoSOnline extends PoSConnectionState {
 				Map<String, Object> params = new HashMap<String, Object>();
 				params.put("C_Order_ID", morder.getID());
 				params.put("C_Invoice_ID", invoice.getID());
-				ProcessInfo info = MProcess.execute(getCtx(),
-						getWarehouseDeliverDocumentProcessID(), params,
-						getTrxName());
+				ProcessInfo info = MProcess.execute(getCtx(), MInvoice
+						.getWarehouseDeliverDocumentProcessID(getTrxName()),
+						params, getTrxName());
 				if(info.isError()){
 					
 				}
@@ -2952,20 +2968,10 @@ public class PoSOnline extends PoSConnectionState {
 	}
 
 	/**
-	 * @return el id de proceso que corresponde con la impresión de la salida
-	 *         por depósito
-	 */
-	public Integer getWarehouseDeliverDocumentProcessID(){
-		return DB
-				.getSQLValue(getTrxName(),
-						"SELECT ad_process_id FROM ad_process WHERE ad_componentobjectuid = 'CORE-AD_Process-1010274'");
-	}
-
-	/**
 	 * Imprime el comprobante con datos del cliente en cuenta corriente si así
 	 * lo indica esta opción en la configuración del TPV.
 	 */
-	private void printCurrentAccountTicket(Order order) throws Exception{
+	public void printCurrentAccountTicket(Order order) throws Exception{
 		// Se imprime este comprobante cuando existe una condición de venta de
 		// la cual es cuenta corriente. Además, existe un flag en la config del
 		// TPV que permite imprimir o no este documento
@@ -3043,24 +3049,14 @@ public class PoSOnline extends PoSConnectionState {
 				params.put("PaymentRule_Amt_1",
 						infoOnCredit != null ? infoOnCredit.getAmount()
 								: currentAccountInfo.getAmount());
-				ProcessInfo info = MProcess.execute(getCtx(),
-						getCurrentAccountDocumentProcessID(), params,
-						getTrxName());
+				ProcessInfo info = MProcess.execute(getCtx(), MInvoice
+						.getCurrentAccountDocumentProcessID(getTrxName()),
+						params, getTrxName());
 				if(info.isError()){
 					
 				}
 			}
 		}
-	}
-
-	/**
-	 * @return el id de proceso que corresponde con la impresión cliente en
-	 *         cuenta corriente
-	 */
-	public Integer getCurrentAccountDocumentProcessID(){
-		return DB
-				.getSQLValue(getTrxName(),
-						"SELECT ad_process_id FROM ad_process WHERE ad_componentobjectuid = 'CORE-AD_Process-1010286'");
 	}
 	
 	@Override

@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.Set;
 
 import org.openXpertya.model.DiscountCalculator.IDocument;
+import org.openXpertya.model.FiscalDocumentPrint;
 import org.openXpertya.model.FiscalDocumentPrintListener;
 import org.openXpertya.pos.exceptions.InsufficientBalanceException;
 import org.openXpertya.pos.exceptions.InsufficientCreditException;
@@ -123,6 +124,8 @@ public abstract class PoSConnectionState {
 	public abstract Organization getOrganization();
 	
 	public abstract List<Tax> loadBPOtherTaxes(BusinessPartner bp);
+	
+	public abstract boolean reprintInvoice(Order order, FiscalDocumentPrint fdp);
 	
 	/**
 	 * @param checkDeadLineToCompare

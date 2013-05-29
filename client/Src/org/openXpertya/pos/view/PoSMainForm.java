@@ -5895,7 +5895,8 @@ public class PoSMainForm extends CPanel implements FormPanel, ASyncProcess, Disp
     	// Carga el campo de importe con el importe pendiente en caso de que el usuario
     	// no haya ingresado un valor aún
     	BigDecimal amount = (BigDecimal)getCAmountText().getValue();
-    	if (amount == null || amount.compareTo(BigDecimal.ZERO) == 0) {
+		if (amount == null || amount.compareTo(BigDecimal.ZERO) == 0
+				|| amount.compareTo(availableAmt) > 0) {
     		// Si el pendiente es mayor al saldo entonces se carga el saldo
     		// en el campo de importe.
     		if (availableAmt.compareTo(getOrder().getBalance().negate()) <= 0) {
@@ -6103,14 +6104,11 @@ public class PoSMainForm extends CPanel implements FormPanel, ASyncProcess, Disp
 				// Anulación de los documentos.
 				voidDocuments();
 			}
-			
+
 			@Override
-			public void actionReprintFinished() {
-				// Al finalizar una reimpresión de ticket, se
-				// reestablece la interfaz para un nuevo pedido
-				newOrder();
-				getFrame().setBusy(false);
-				mNormal();
+			public void actionReprintPerformed(FiscalDocumentPrint fdp) {
+				// Reimpresión de documentos
+				reprintDocument(fdp);
 			}
 		});
 		
@@ -6194,6 +6192,12 @@ public class PoSMainForm extends CPanel implements FormPanel, ASyncProcess, Disp
 		getFrame().setBusyTimer(4);
 		getFrame().setBusy(true);
 
+		worker.start();
+	}
+	
+	private void reprintDocument(FiscalDocumentPrint fdp) {
+		SwingWorkerRePrintDocument worker = new SwingWorkerRePrintDocument();		
+		worker.setFiscalDocumentPrint(fdp);
 		worker.start();
 	}
 	
@@ -6390,5 +6394,33 @@ public class PoSMainForm extends CPanel implements FormPanel, ASyncProcess, Disp
 	
 	public void updateOtherTaxes(){
 		getModel().getOtherTaxes();
+	}
+	
+	private class SwingWorkerRePrintDocument extends SwingWorker{
+
+		FiscalDocumentPrint fdp = null;
+		
+		public void setFiscalDocumentPrint(FiscalDocumentPrint fdp){
+			this.fdp = fdp;
+		}
+		
+		@Override
+		public Object construct() {
+			return getModel().reprintInvoice(fdp);
+		}
+
+		@Override
+		public void finished() {
+			boolean success = (Boolean)getValue();
+			if (success) {
+				// Al finalizar una reimpresión de ticket, se
+				// reestablece la interfaz para un nuevo pedido				
+				newOrder();
+				getFrame().setBusy(false);
+				mNormal();
+			}
+			
+		}
+		
 	}
 }  //  @jve:decl-index=0:visual-constraint="10,10"

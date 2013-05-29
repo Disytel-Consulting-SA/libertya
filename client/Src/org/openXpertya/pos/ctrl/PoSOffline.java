@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.Set;
 
 import org.openXpertya.model.DiscountCalculator.IDocument;
+import org.openXpertya.model.FiscalDocumentPrint;
 import org.openXpertya.pos.exceptions.PosException;
 import org.openXpertya.pos.exceptions.UserException;
 import org.openXpertya.pos.model.BusinessPartner;
@@ -294,5 +295,11 @@ public class PoSOffline extends PoSConnectionState {
 	public void updatePriceList(Integer priceListID, int windowNo) {
 		// TODO Auto-generated method stub
 		
+	}
+
+	@Override
+	public boolean reprintInvoice(Order order, FiscalDocumentPrint fdp) {
+		// TODO Auto-generated method stub
+		return false;
 	}
 }
