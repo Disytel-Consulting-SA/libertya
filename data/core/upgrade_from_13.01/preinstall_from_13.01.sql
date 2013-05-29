@@ -3052,5 +3052,5 @@ UNION ALL
 
 ALTER TABLE c_pos_declaracionvalores_v OWNER TO libertya;
 
--- Correccion en OP/RC para multimoneda.  La preferencia DIF_CAMBIO_PTO_VENTA tiene que ser independiente por client
+-- 20130529-1421-Correccion en OP/RC para multimoneda.  La preferencia DIF_CAMBIO_PTO_VENTA tiene que ser independiente por client
 update ad_preference set ad_client_id = 1010016 where ad_componentobjectuid = 'CORE-AD_Preference-1011156'
