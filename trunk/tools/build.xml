@@ -243,7 +243,11 @@
 	<unjar src="lib/JasperReports/bcimage.jar" dest="${buildJasper.dir}" />
 	<unjar src="lib/JasperReports/mondrian-2.3.2.8944.jar" dest="${buildJasper.dir}" />
 	<unjar src="lib/JasperReports/commons-logging-api-1.0.2.jar" dest="${buildJasper.dir}" />
-	<unjar src="lib/JasperReports/jdt-compiler-3.1.1.jar" dest="${buildJasper.dir}" />
+<!-- 
+	Comentado: 	se quita esta librería dado que no es utilizada y actualmente  
+				genera java.lang.NoSuchMethodError al iniciar Axis (LYWS) 
+	<unjar src="lib/JasperReports/jdt-compiler-3.1.1.jar" dest="${buildJasper.dir}" /> 
+--> 
 	<unjar src="lib/JasperReports/commons-digester-1.7.jar" dest="${buildJasper.dir}" />
 	<unjar src="lib/JasperReports/jcommon-1.0.0.jar" dest="${buildJasper.dir}" />	
 
