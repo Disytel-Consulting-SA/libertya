@@ -13,6 +13,8 @@ public class CreditCardPayment extends Payment {
 	
 	private String posnet;
 	
+	private String couponBatchNumber;
+	
 	public CreditCardPayment() {
 		super();
 	}
@@ -23,13 +25,14 @@ public class CreditCardPayment extends Payment {
 	 * @param couponNumber
 	 */
 	public CreditCardPayment(EntidadFinancieraPlan plan, String creditCardNumber,
-			String couponNumber, String bankName, String posnet) {
+			String couponNumber, String bankName, String posnet, String couponBatchNumber) {
 		this();
 		this.plan = plan;
 		this.creditCardNumber = creditCardNumber;
 		this.couponNumber = couponNumber;
 		this.bankName = bankName;
 		this.posnet = posnet;
+		this.couponBatchNumber = couponBatchNumber;
 	}
 
 	/**
@@ -109,5 +112,13 @@ public class CreditCardPayment extends Payment {
 
 	public String getPosnet() {
 		return posnet;
+	}
+
+	public String getCouponBatchNumber() {
+		return couponBatchNumber;
+	}
+
+	public void setCouponBatchNumber(String couponBatchNumber) {
+		this.couponBatchNumber = couponBatchNumber;
 	}
 }

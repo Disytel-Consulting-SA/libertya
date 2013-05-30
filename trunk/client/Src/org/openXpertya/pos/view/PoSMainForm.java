@@ -150,6 +150,7 @@ public class PoSMainForm extends CPanel implements FormPanel, ASyncProcess, Disp
 	private final int S_TENDERTYPE_PANEL_WIDTH = 325;
 	
 	private final int S_PAYMENT_FIELD_WIDTH = 176;
+	private final int S_PAYMENT_SMALL_FIELD_WIDTH = 60;
 	private final int S_PAYMENT_INFO_FIELD_WIDTH = 140;
 	
 	private final int S_PAYMENT_ACTION_BUTTON_WIDTH = 140;
@@ -246,12 +247,15 @@ public class PoSMainForm extends CPanel implements FormPanel, ASyncProcess, Disp
 	private CLabel cAmountLabel = null;
 	private CPanel cSelectTenderTypeContentPanel = null;
 	private CPanel cCreditCardParamsPanel = null;
+	private CPanel cCreditCardCouponParamsPanel = null;
 	private CLabel cCreditCardLabel = null;
 	private CComboBox cCreditCardCombo = null;
 	private CLabel cCreditCardNumberLabel = null;
 	private CTextField cCreditCardNumberText = null;
 	private CLabel cCouponNumberLabel = null;
 	private CTextField cCouponNumberText = null;
+	private CLabel cCouponBatchNumberLabel = null;
+	private CTextField cCouponBatchNumberText = null;
 	private CLabel cPosnetLabel = null;
 	private CTextField cPosnetText = null;
 	private CPanel cCheckParamsPanel = null;
@@ -393,6 +397,8 @@ public class PoSMainForm extends CPanel implements FormPanel, ASyncProcess, Disp
 	private String MSG_CREDIT_CARD;
 	private String MSG_CASH;
 	private String MSG_COUPON_NUMBER;
+	private String MSG_COUPON_NUMBER_SHORT;
+	private String MSG_COUPON_BATCH_NUMBER_SHORT;
 	private String MSG_CARD_NUMBER;
 	private String MSG_ACCT_DATE;
 	private String MSG_EMISSION_DATE;
@@ -688,6 +694,8 @@ public class PoSMainForm extends CPanel implements FormPanel, ASyncProcess, Disp
 		MSG_CREDIT_CARD = getMsg("CreditCard");
 		MSG_CASH = getMsg("Cash");
 		MSG_COUPON_NUMBER = getMsg("CouponNumber");
+		MSG_COUPON_NUMBER_SHORT = getMsg("CouponNumberShort");
+		MSG_COUPON_BATCH_NUMBER_SHORT = getMsg("CouponBatchNumberShort");
 		MSG_CARD_NUMBER = getMsg("CreditCardNumber");
 		MSG_ACCT_DATE = getMsg("AcctDate");
 		MSG_EMISSION_DATE = getMsg("EmissionDate");
@@ -2468,19 +2476,12 @@ public class PoSMainForm extends CPanel implements FormPanel, ASyncProcess, Disp
 	private CPanel getCCreditCardParamsPanel() {
 		if (cCreditCardParamsPanel == null) {
 			GridBagConstraints gridBagConstraints28 = new GridBagConstraints();
-			gridBagConstraints28.fill = java.awt.GridBagConstraints.NONE;
-			gridBagConstraints28.anchor = java.awt.GridBagConstraints.EAST;
+			gridBagConstraints28.fill = java.awt.GridBagConstraints.WEST;
+			gridBagConstraints28.anchor = java.awt.GridBagConstraints.WEST;
 			gridBagConstraints28.gridy = 3;
-			gridBagConstraints28.weightx = 1.0;
-			gridBagConstraints28.insets = new java.awt.Insets(7,10,0,0);
-			gridBagConstraints28.gridx = 1;
-			GridBagConstraints gridBagConstraints27 = new GridBagConstraints();
-			gridBagConstraints27.gridx = 0;
-			gridBagConstraints27.insets = new java.awt.Insets(7,0,0,0);
-			gridBagConstraints27.anchor = java.awt.GridBagConstraints.WEST;
-			gridBagConstraints27.gridy = 3;
-			cCouponNumberLabel = new CLabel();
-			cCouponNumberLabel.setText(MSG_COUPON_NUMBER);
+			gridBagConstraints28.insets = new java.awt.Insets(7,0,0,0);
+			gridBagConstraints28.gridx = 0;
+			gridBagConstraints28.gridwidth = 2;
 			GridBagConstraints gridBagConstraints26 = new GridBagConstraints();
 			gridBagConstraints26.fill = java.awt.GridBagConstraints.NONE;
 			gridBagConstraints26.anchor = java.awt.GridBagConstraints.EAST;
@@ -2566,8 +2567,7 @@ public class PoSMainForm extends CPanel implements FormPanel, ASyncProcess, Disp
 			// Acá va el banco (ver mas adelante)
 			cCreditCardParamsPanel.add(cCreditCardNumberLabel, gridBagConstraints25);
 			cCreditCardParamsPanel.add(getCCreditCardNumberText(), gridBagConstraints26);
-			cCreditCardParamsPanel.add(cCouponNumberLabel, gridBagConstraints27);
-			cCreditCardParamsPanel.add(getCCouponNumberText(), gridBagConstraints28);
+			cCreditCardParamsPanel.add(getCCreditCardCouponParamsPanel(), gridBagConstraints28);
 			cCreditCardParamsPanel.add(cPosnetLabel, gridBagConstraints32);
 			cCreditCardParamsPanel.add(getCPosnetText(), gridBagConstraints33);			
 			cCreditCardParamsPanel.add(cCardSeparator, gridBagConstraints31);
@@ -2589,6 +2589,47 @@ public class PoSMainForm extends CPanel implements FormPanel, ASyncProcess, Disp
 		return cCreditCardParamsPanel;
 	}
 
+	
+	private CPanel getCCreditCardCouponParamsPanel(){
+		if(cCreditCardCouponParamsPanel == null){
+			GridBagConstraints gridBagConstraints1 = new GridBagConstraints();
+			gridBagConstraints1.fill = java.awt.GridBagConstraints.NONE;
+			gridBagConstraints1.gridy = 0;
+			gridBagConstraints1.insets = new java.awt.Insets(0,10,0,0);
+			gridBagConstraints1.anchor = java.awt.GridBagConstraints.EAST;
+			gridBagConstraints1.gridx = 1;
+			GridBagConstraints gridBagConstraints2 = new GridBagConstraints();
+			gridBagConstraints2.gridx = 0;
+			gridBagConstraints2.anchor = java.awt.GridBagConstraints.WEST;
+			gridBagConstraints2.gridy = 0;
+			
+			GridBagConstraints gridBagConstraints3 = new GridBagConstraints();
+			gridBagConstraints3.fill = java.awt.GridBagConstraints.NONE;
+			gridBagConstraints3.gridy = 0;
+			gridBagConstraints3.insets = new java.awt.Insets(0,10,0,0);
+			gridBagConstraints3.anchor = java.awt.GridBagConstraints.EAST;
+			gridBagConstraints3.gridx = 4;
+			GridBagConstraints gridBagConstraints4 = new GridBagConstraints();
+			gridBagConstraints4.gridx = 3;
+			gridBagConstraints4.anchor = java.awt.GridBagConstraints.WEST;
+			gridBagConstraints4.gridy = 0;
+			gridBagConstraints4.insets = new java.awt.Insets(0,15,0,0);
+			
+			cCouponNumberLabel = new CLabel();
+			cCouponNumberLabel.setText(MSG_COUPON_NUMBER_SHORT);
+			cCouponBatchNumberLabel = new CLabel();
+			cCouponBatchNumberLabel.setText(MSG_COUPON_BATCH_NUMBER_SHORT);
+			
+			cCreditCardCouponParamsPanel = new CPanel();
+			cCreditCardCouponParamsPanel.setLayout(new GridBagLayout());
+			cCreditCardCouponParamsPanel.add(cCouponNumberLabel, gridBagConstraints2);
+			cCreditCardCouponParamsPanel.add(getCCouponNumberText(), gridBagConstraints1);
+			cCreditCardCouponParamsPanel.add(cCouponBatchNumberLabel, gridBagConstraints4);
+			cCreditCardCouponParamsPanel.add(getCCouponBatchNumberText(), gridBagConstraints3);
+		}
+		return cCreditCardCouponParamsPanel;
+	}
+	
 	/**
 	 * This method initializes cCreditNoteParamsPanel	
 	 * 	
@@ -2971,11 +3012,21 @@ public class PoSMainForm extends CPanel implements FormPanel, ASyncProcess, Disp
 	private CTextField getCCouponNumberText() {
 		if (cCouponNumberText == null) {
 			cCouponNumberText = new CTextField();
-			cCouponNumberText.setPreferredSize(new java.awt.Dimension(S_PAYMENT_FIELD_WIDTH,20));
-			cCouponNumberText.setMinimumSize(new java.awt.Dimension(S_PAYMENT_FIELD_WIDTH,20));
+			cCouponNumberText.setPreferredSize(new java.awt.Dimension(S_PAYMENT_SMALL_FIELD_WIDTH,20));
+			cCouponNumberText.setMinimumSize(new java.awt.Dimension(S_PAYMENT_SMALL_FIELD_WIDTH,20));
 			FocusUtils.addFocusHighlight(cCouponNumberText);
 		}
 		return cCouponNumberText;
+	}
+	
+	private CTextField getCCouponBatchNumberText() {
+		if (cCouponBatchNumberText == null) {
+			cCouponBatchNumberText = new CTextField();
+			cCouponBatchNumberText.setPreferredSize(new java.awt.Dimension(S_PAYMENT_SMALL_FIELD_WIDTH,20));
+			cCouponBatchNumberText.setMinimumSize(new java.awt.Dimension(S_PAYMENT_SMALL_FIELD_WIDTH,20));
+			FocusUtils.addFocusHighlight(cCouponBatchNumberText);
+		}
+		return cCouponBatchNumberText;
 	}
 	
 	/**
@@ -4746,6 +4797,7 @@ public class PoSMainForm extends CPanel implements FormPanel, ASyncProcess, Disp
 			String posnet = getCPosnetText().getText();
 			String creditCardNumber = getCCreditCardNumberText().getText();
 			String couponNumber = getCCouponNumberText().getText();
+			String couponBatchNumber = getCCouponBatchNumberText().getText();
 			// Es necesario un plan de tarjeta
 			if (getSelectedCreditCardPlan() == null) {
 				errorMsg(MSG_NO_CREDIT_CARD_PLAN_ERROR);
@@ -4761,19 +4813,21 @@ public class PoSMainForm extends CPanel implements FormPanel, ASyncProcess, Disp
 			}
 			extraValidationsResult = getExtraPOSPaymentAddValidations()
 					.validateCreditCardPayment(this, creditCardNumber,
-							couponNumber);
+							couponNumber, couponBatchNumber);
 			if(extraValidationsResult.isError()){
 				errorMsg(extraValidationsResult.getMsg());
 				return;
 			}
 			
-			payment = new CreditCardPayment(creditCardPlan, creditCardNumber, couponNumber, bankName, posnet);
+			payment = new CreditCardPayment(creditCardPlan, creditCardNumber,
+					couponNumber, bankName, posnet, couponBatchNumber);
 						
 			payment.setTypeName(paymentMedium.getName());
 			
 			// Se limpian los campos para ingresar un nuevo pago.
 			getCCreditCardNumberText().setText("");
 			getCCouponNumberText().setText("");
+			getCCouponBatchNumberText().setText("");
 			getCCardText().setText("");
 			clearBankCombo();
 

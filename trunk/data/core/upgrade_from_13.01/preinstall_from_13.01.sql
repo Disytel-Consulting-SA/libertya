@@ -3054,3 +3054,6 @@ ALTER TABLE c_pos_declaracionvalores_v OWNER TO libertya;
 
 -- 20130529-1421-Correccion en OP/RC para multimoneda.  La preferencia DIF_CAMBIO_PTO_VENTA tiene que ser independiente por client
 update ad_preference set ad_client_id = 1010016 where ad_componentobjectuid = 'CORE-AD_Preference-1011156'
+
+--20130530-1430 Nuevo campo para registrar el nro de lote del cupon 
+update ad_system set dummy = (SELECT addcolumnifnotexists('C_Payment','couponbatchnumber', 'character varying(30)'));
