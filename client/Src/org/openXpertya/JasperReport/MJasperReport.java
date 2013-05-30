@@ -23,6 +23,7 @@ import org.openXpertya.process.ProcessInfo;
 import org.openXpertya.process.ProcessInfo.JasperReportDTO;
 import org.openXpertya.util.CLogger;
 import org.openXpertya.util.DB;
+import org.openXpertya.util.Ini;
 import org.openXpertya.util.Msg;
 import org.openXpertya.util.Util;
 
@@ -198,6 +199,12 @@ public class MJasperReport extends X_AD_JasperReport
     }
     
     public static void showReport(Properties ctx, ProcessInfo pi, JasperPrint jPrint, String name) throws Exception {
+    	// Si es invocacion server-side, delegar a ViewerProvider
+    	if (!Ini.isClient()) {
+            JRViewerProvider viewerLauncher = ReportStarter.getReportViewerProvider();
+            viewerLauncher.openViewer(jPrint, pi.getTitle());
+            return;
+    	}
     	if(JasperReportsUtil.isPrintPreview(ctx, pi)){
         	OXPJasperViewer v = OXPJasperViewer.viewReport(ctx, pi, jPrint, false);
         	v.setTitle(name);

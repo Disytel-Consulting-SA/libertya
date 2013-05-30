@@ -296,7 +296,6 @@
 	<classpathentry kind="lib" path="tools/lib/JasperReports/hibernate3.jar"/>
 	<classpathentry kind="lib" path="tools/lib/JasperReports/hsqldb-1.7.1.jar"/>
 	<classpathentry kind="lib" path="tools/lib/JasperReports/jasperreports-2.0.1.jar"/>
-	<classpathentry kind="lib" path="tools/lib/JasperReports/jdt-compiler-3.1.1.jar"/>
 	<classpathentry kind="lib" path="tools/lib/JasperReports/jfreechart-1.0.0.jar"/>
 	<classpathentry kind="lib" path="tools/lib/JasperReports/jxl-2.6.jar"/>
 	<classpathentry kind="lib" path="tools/lib/JasperReports/mondrian-2.3.2.8944.jar"/>

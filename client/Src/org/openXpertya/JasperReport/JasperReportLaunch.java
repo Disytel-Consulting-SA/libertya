@@ -102,7 +102,7 @@ public abstract class JasperReportLaunch extends SvrProcess {
 		} catch (RuntimeException e) {
 			throw new Exception ("@JasperReportFillError@", e);
 		}
-		return null;
+		return "";
 	}
 
 	/**

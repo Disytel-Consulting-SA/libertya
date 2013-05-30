@@ -78,7 +78,7 @@ public class WebUIServlet extends DHtmlLayoutServlet
         // hengsin: temporary solution for problem with zk client
         Ini.setProperty(Ini.P_OXPSYS, false);
         ReportCtl.setReportViewerProvider(new ZkReportViewerProvider());
-//        ReportStarter.setReportViewerProvider(new ZkJRViewerProvider()); 	TODO: Esto debe descomentarse
+        ReportStarter.setReportViewerProvider(new ZkJRViewerProvider());
         logger.info("Libertya started successfully");
         /**
          * End ADempiere Start
