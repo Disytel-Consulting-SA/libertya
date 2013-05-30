@@ -1904,6 +1904,7 @@ public class PoSOnline extends PoSConnectionState {
 		pay.setC_BankAccount_ID(entidadFinanciera.getC_BankAccount_ID());
 		pay.setM_EntidadFinancieraPlan_ID(p.getPlan().getEntidadFinancieraPlanID());
 		pay.setCouponNumber(p.getCouponNumber());
+		pay.setCouponBatchNumber(p.getCouponBatchNumber());
 		pay.setA_Bank(p.getBankName());
 		// Setea el nombre del cliente o de la entidad comercial al responsable
 		// del cobro con tarjeta de crédito

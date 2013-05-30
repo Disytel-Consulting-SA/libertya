@@ -7,7 +7,7 @@ import java.math.*;
 import org.openXpertya.util.*;
 /** Modelo Generado por C_Payment
  *  @author Comunidad de Desarrollo Libertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
- *  @version  - 2013-05-22 14:29:42.216 */
+ *  @version  - 2013-05-30 13:45:17.305 */
 public class X_C_Payment extends org.openXpertya.model.PO
 {
 /** Constructor estándar */
@@ -548,6 +548,21 @@ public int getC_Order_ID()
 Integer ii = (Integer)get_Value("C_Order_ID");
 if (ii == null) return 0;
 return ii.intValue();
+}
+/** Set Coupon Batch Number */
+public void setCouponBatchNumber (String CouponBatchNumber)
+{
+if (CouponBatchNumber != null && CouponBatchNumber.length() > 30)
+{
+log.warning("Length > 30 - truncated");
+CouponBatchNumber = CouponBatchNumber.substring(0,30);
+}
+set_Value ("CouponBatchNumber", CouponBatchNumber);
+}
+/** Get Coupon Batch Number */
+public String getCouponBatchNumber() 
+{
+return (String)get_Value("CouponBatchNumber");
 }
 /** Set Coupon Number.
 Credit Card Payment Coupon Number */

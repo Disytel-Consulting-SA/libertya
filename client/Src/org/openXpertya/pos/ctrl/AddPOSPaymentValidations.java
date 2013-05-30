@@ -22,7 +22,7 @@ public class AddPOSPaymentValidations {
 		return result;
 	}
 	
-	public CallResult validateCreditCardPayment(PoSMainForm pmf, String creditCardNumber, String couponNumber){
+	public CallResult validateCreditCardPayment(PoSMainForm pmf, String creditCardNumber, String couponNumber, String couponBatchNumber){
 		CallResult result = new CallResult();
 		return result;
 	}
