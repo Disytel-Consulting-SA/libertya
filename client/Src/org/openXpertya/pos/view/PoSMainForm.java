@@ -150,7 +150,7 @@ public class PoSMainForm extends CPanel implements FormPanel, ASyncProcess, Disp
 	private final int S_TENDERTYPE_PANEL_WIDTH = 325;
 	
 	private final int S_PAYMENT_FIELD_WIDTH = 176;
-	private final int S_PAYMENT_SMALL_FIELD_WIDTH = 60;
+	private final int S_PAYMENT_SMALL_FIELD_WIDTH = 55;
 	private final int S_PAYMENT_INFO_FIELD_WIDTH = 140;
 	
 	private final int S_PAYMENT_ACTION_BUTTON_WIDTH = 140;
@@ -2595,7 +2595,7 @@ public class PoSMainForm extends CPanel implements FormPanel, ASyncProcess, Disp
 			GridBagConstraints gridBagConstraints1 = new GridBagConstraints();
 			gridBagConstraints1.fill = java.awt.GridBagConstraints.NONE;
 			gridBagConstraints1.gridy = 0;
-			gridBagConstraints1.insets = new java.awt.Insets(0,10,0,0);
+			gridBagConstraints1.insets = new java.awt.Insets(0,36,0,0);
 			gridBagConstraints1.anchor = java.awt.GridBagConstraints.EAST;
 			gridBagConstraints1.gridx = 1;
 			GridBagConstraints gridBagConstraints2 = new GridBagConstraints();
@@ -2616,7 +2616,7 @@ public class PoSMainForm extends CPanel implements FormPanel, ASyncProcess, Disp
 			gridBagConstraints4.insets = new java.awt.Insets(0,15,0,0);
 			
 			cCouponNumberLabel = new CLabel();
-			cCouponNumberLabel.setText(MSG_COUPON_NUMBER_SHORT);
+			cCouponNumberLabel.setText(MSG_COUPON_NUMBER);
 			cCouponBatchNumberLabel = new CLabel();
 			cCouponBatchNumberLabel.setText(MSG_COUPON_BATCH_NUMBER_SHORT);
 			
