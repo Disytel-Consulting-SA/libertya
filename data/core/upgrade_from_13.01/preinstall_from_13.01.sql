@@ -3057,3 +3057,352 @@ update ad_preference set ad_client_id = 1010016 where ad_componentobjectuid = 'C
 
 --20130530-1430 Nuevo campo para registrar el nro de lote del cupon 
 update ad_system set dummy = (SELECT addcolumnifnotexists('C_Payment','couponbatchnumber', 'character varying(30)'));
+
+--20130531-0045 Funcion para retornar el nro. de remito asociado al pedido recibido por parametro.
+CREATE OR REPLACE FUNCTION getinoutsdocumentsnofromorder(p_c_order_id integer)
+  RETURNS character varying AS
+$BODY$
+DECLARE
+	v_nro_Remito	  CHARACTER VARYING(30) := null;
+   	v_IsSoTrx         CHARACTER(1);
+BEGIN
+	BEGIN
+	SELECT	IsSoTrx
+	  INTO	STRICT 
+			v_IsSoTrx
+	FROM	C_Order
+	WHERE	C_Order_ID = p_c_order_id;
+		EXCEPTION	--	No encontrado; posiblememte mal llamado
+		WHEN OTHERS THEN
+            	RAISE NOTICE 'OrderAvailable - %', SQLERRM;
+			RETURN NULL;
+	END;
+
+	IF (v_IsSoTrx = 'N') THEN 
+		BEGIN
+		-- Si es issotrx = 'N' se debe verificar en MMatchPO, como último el remito puede estar relacionado al pedido mismo 
+		SELECT	distinct io.documentno
+		  INTO
+				v_nro_Remito
+		FROM       m_matchpo as mpo
+		INNER JOIN m_inoutline as iol ON (iol.m_inoutline_id = mpo.m_inoutline_id)
+		INNER JOIN c_orderline as ol ON (ol.c_orderline_id = mpo.c_orderline_id)
+		INNER JOIN m_inout as io ON (io.m_inout_id = iol.m_inout_id)
+		WHERE	ol.c_order_id = p_c_order_id AND io.docstatus IN ('CO','CL')
+		ORDER BY io.documentno DESC
+		LIMIT 1;
+			EXCEPTION	--	No encontrado; posiblememte mal llamado
+			WHEN OTHERS THEN
+			RAISE NOTICE 'OrderAvailable - %', SQLERRM;
+				RETURN NULL;
+		END;
+	END IF;
+	
+	IF (v_nro_Remito IS null) THEN 
+		BEGIN
+		-- Obtener el remito directamente desde el pedido mismo, para los casos	también de issotrx = 'Y'
+		SELECT	distinct documentno
+		  INTO
+				v_nro_Remito
+		FROM       m_inout
+		WHERE	c_order_id = p_c_order_id AND docstatus IN ('CO','CL')
+		ORDER BY documentno DESC
+		LIMIT 1;
+			EXCEPTION	--	No encontrado; posiblememte mal llamado
+			WHEN OTHERS THEN
+			RAISE NOTICE 'OrderAvailable - %', SQLERRM;
+				RETURN NULL;
+		END;
+	END IF;
+
+	RETURN	v_nro_Remito;
+END;
+
+$BODY$
+  LANGUAGE 'plpgsql' VOLATILE
+  COST 100;
+ALTER FUNCTION getinoutsdocumentsnofromorder(integer) OWNER TO libertya;
+
+--20130531-0048 Funcion para retornar el nro. de remito asociado a la factura recibida por parametro.
+CREATE OR REPLACE FUNCTION getinoutsdocumentsnofrominvoice(p_c_invoice_id integer)
+  RETURNS character varying AS
+$BODY$
+DECLARE
+	v_nro_Remito	  CHARACTER VARYING(30) := null;
+   	v_IsSoTrx         CHARACTER(1);
+	v_order_id	  INTEGER := 0;
+BEGIN
+	BEGIN
+	SELECT	IsSoTrx, C_Order_ID
+	  INTO	STRICT 
+			v_IsSoTrx, v_order_id
+	FROM	C_Invoice
+	WHERE	C_Invoice_ID = p_c_invoice_id;
+		EXCEPTION	--	No encontrado; posiblememte mal llamado
+		WHEN OTHERS THEN
+            	RAISE NOTICE 'InvoiceAvailable - %', SQLERRM;
+			RETURN NULL;
+	END;
+
+	IF (v_IsSoTrx = 'N') THEN 
+		BEGIN
+		-- Si es issotrx = 'N' se debe verificar en MMatchPO, como último el remito puede estar relacionado al pedido mismo 
+		SELECT	distinct io.documentno
+		  INTO
+				v_nro_Remito
+		FROM       m_matchpo as mpo
+		INNER JOIN m_inoutline as iol ON (iol.m_inoutline_id = mpo.m_inoutline_id)
+		INNER JOIN c_invoiceline as il ON (il.c_invoiceline_id = minv.c_invoiceline_id)
+		INNER JOIN m_inout as io ON (io.m_inout_id = iol.m_inout_id)
+		WHERE	il.c_invoice_id = p_c_invoice_id AND io.docstatus IN ('CO','CL')
+		ORDER BY io.documentno DESC
+		LIMIT 1;
+			EXCEPTION	--	No encontrado; posiblememte mal llamado
+			WHEN OTHERS THEN
+			RAISE NOTICE 'InvoiceAvailable - %', SQLERRM;
+				RETURN NULL;
+		END;
+	END IF;
+	
+	IF (v_nro_Remito IS NULL) THEN 
+		BEGIN
+		-- Obtener el remito directamente desde el pedido mismo, para los casos	también de issotrx = 'Y'
+		SELECT	distinct documentno
+		  INTO
+				v_nro_Remito
+		FROM       m_inout
+		WHERE	c_invoice_id = p_c_invoice_id AND docstatus IN ('CO','CL')
+		ORDER BY documentno DESC
+		LIMIT 1;
+			EXCEPTION	--	No encontrado; posiblememte mal llamado
+			WHEN OTHERS THEN
+			RAISE NOTICE 'InvoiceAvailable - %', SQLERRM;
+				RETURN NULL;
+		END;
+	END IF;
+
+	IF (v_nro_Remito IS NULL) THEN
+		RETURN getInOutsDocumentsNoFromOrder(v_order_id);
+	END IF;
+	RETURN	v_nro_Remito;
+END;
+
+$BODY$
+  LANGUAGE 'plpgsql' VOLATILE
+  COST 100;
+ALTER FUNCTION getinoutsdocumentsnofrominvoice(integer) OWNER TO libertya;
+
+--20130531-0225 Modificación de Vista rv_c_invoice que requirio el borrado de vistas dependientes.
+DROP VIEW rv_openitem;
+DROP VIEW rv_c_invoice_week;
+DROP VIEW rv_c_invoice_vendormonth;
+DROP VIEW rv_c_invoice_prodweek;
+DROP VIEW rv_c_invoice_prodmonth;
+DROP VIEW rv_c_invoice_month;
+DROP VIEW rv_c_invoice_day;
+DROP VIEW rv_c_invoice_customervendqtr;
+DROP VIEW rv_c_invoice_customerprodqtr;
+DROP VIEW rv_c_invoiceline;
+DROP VIEW rv_c_invoice;
+
+CREATE OR REPLACE VIEW rv_c_invoice AS 
+ SELECT i.c_invoice_id, i.ad_client_id, i.ad_org_id, i.isactive, i.created, i.createdby, i.updated, i.updatedby, i.issotrx, i.documentno, i.docstatus, i.docaction, i.isprinted, i.isdiscountprinted, i.processing, i.processed, i.istransferred, i.ispaid, i.c_doctype_id, i.c_doctypetarget_id, i.c_order_id, i.description, i.isapproved, i.salesrep_id, i.dateinvoiced, i.dateprinted, i.dateacct, i.c_bpartner_id, i.c_bpartner_location_id, i.ad_user_id, b.c_bp_group_id, i.poreference, i.dateordered, i.c_currency_id, i.c_conversiontype_id, i.paymentrule, i.c_paymentterm_id, i.m_pricelist_id, i.c_campaign_id, i.c_project_id, i.c_activity_id, i.ispayschedulevalid, loc.c_country_id, loc.c_region_id, loc.postal, loc.city, i.c_charge_id, 
+        CASE
+            WHEN charat(d.docbasetype::character varying, 3)::text = 'C'::text THEN i.chargeamt * (- 1::numeric)
+            ELSE i.chargeamt
+        END AS chargeamt, 
+        CASE
+            WHEN charat(d.docbasetype::character varying, 3)::text = 'C'::text THEN i.totallines * (- 1::numeric)
+            ELSE i.totallines
+        END AS totallines, 
+        CASE
+            WHEN charat(d.docbasetype::character varying, 3)::text = 'C'::text THEN i.grandtotal * (- 1::numeric)
+            ELSE i.grandtotal
+        END AS grandtotal, 
+        CASE
+            WHEN charat(d.docbasetype::character varying, 3)::text = 'C'::text THEN (-1)
+            ELSE 1
+        END AS multiplier,
+        getinoutsdocumentsnofrominvoice(i.c_invoice_id)::CHARACTER VARYING(30) AS documentNo_InOut
+   FROM c_invoice i
+   JOIN c_doctype d ON i.c_doctype_id = d.c_doctype_id
+   JOIN c_bpartner b ON i.c_bpartner_id = b.c_bpartner_id
+   JOIN c_bpartner_location bpl ON i.c_bpartner_location_id = bpl.c_bpartner_location_id
+   JOIN c_location loc ON bpl.c_location_id = loc.c_location_id
+  WHERE i.docstatus = ANY (ARRAY['CO'::bpchar, 'CL'::bpchar]);
+
+ALTER TABLE rv_c_invoice OWNER TO libertya;
+GRANT ALL ON TABLE rv_c_invoice TO libertya;
+
+CREATE OR REPLACE VIEW rv_c_invoiceline AS 
+ SELECT i.c_order_id, i.c_currency_id, il.ad_client_id, il.ad_org_id, il.c_invoiceline_id, i.c_invoice_id, i.salesrep_id, i.c_bpartner_id, i.c_bp_group_id, il.m_product_id, p.m_product_category_id, i.dateinvoiced, i.dateacct, i.issotrx, i.c_doctype_id, i.docstatus, il.qtyinvoiced * i.multiplier::numeric AS qtyinvoiced, il.qtyentered * i.multiplier::numeric AS qtyentered, il.m_attributesetinstance_id, productattribute(il.m_attributesetinstance_id) AS productattribute, pasi.m_attributeset_id, pasi.m_lot_id, pasi.guaranteedate, pasi.lot, pasi.serno, il.pricelist, il.priceactual, il.pricelimit, il.priceentered, 
+        CASE
+            WHEN il.pricelist = 0::numeric THEN 0::numeric
+            ELSE round((il.pricelist - il.priceactual) / il.pricelist * 100::numeric, 2)
+        END AS discount, 
+        CASE
+            WHEN costprice.pricestd = 0::numeric THEN 0::numeric
+            ELSE round((il.priceactual - costprice.pricestd) / costprice.pricestd * 100::numeric, 2)
+        END AS margin, round(i.multiplier::numeric * il.linenetamt, 2) AS linenetamt, round(i.multiplier::numeric * il.pricelist * il.qtyinvoiced, 2) AS linelistamt, 
+        CASE
+            WHEN COALESCE(il.pricelimit, 0::numeric) = 0::numeric THEN round(i.multiplier::numeric * il.linenetamt, 2)
+            ELSE round(i.multiplier::numeric * il.pricelimit * il.qtyinvoiced, 2)
+        END AS linelimitamt, round(i.multiplier::numeric * il.pricelist * il.qtyinvoiced - il.linenetamt, 2) AS linediscountamt, 
+        CASE
+            WHEN COALESCE(il.pricelimit, 0::numeric) = 0::numeric THEN 0::numeric
+            ELSE round(i.multiplier::numeric * il.linenetamt - il.pricelimit * il.qtyinvoiced, 2)
+        END AS lineoverlimitamt
+   FROM rv_c_invoice i
+   JOIN c_invoiceline il ON i.c_invoice_id = il.c_invoice_id
+   LEFT JOIN m_product p ON il.m_product_id = p.m_product_id
+   LEFT JOIN m_attributesetinstance pasi ON il.m_attributesetinstance_id = pasi.m_attributesetinstance_id
+   LEFT JOIN ( SELECT pp.m_product_id, pp.pricestd
+   FROM m_productprice pp
+   JOIN m_pricelist_version plv ON pp.m_pricelist_version_id = plv.m_pricelist_version_id
+   JOIN m_pricelist pl ON plv.m_pricelist_id = pl.m_pricelist_id AND pl.issopricelist = 'N'::bpchar AND pl.isdefault = 'Y'::bpchar) costprice ON p.m_product_id = costprice.m_product_id;
+
+ALTER TABLE rv_c_invoiceline OWNER TO libertya;
+
+CREATE OR REPLACE VIEW rv_c_invoice_customerprodqtr AS 
+ SELECT il.ad_client_id, il.ad_org_id, il.c_bpartner_id, il.m_product_category_id, firstof(il.dateinvoiced::timestamp with time zone, 'Q'::character varying) AS dateinvoiced, sum(il.linenetamt) AS linenetamt, sum(il.linelistamt) AS linelistamt, sum(il.linelimitamt) AS linelimitamt, sum(il.linediscountamt) AS linediscountamt, il.c_currency_id, 
+        CASE
+            WHEN sum(il.linelistamt) = 0::numeric THEN 0::numeric
+            ELSE round((sum(il.linelistamt) - sum(il.linenetamt)) / sum(il.linelistamt) * 100::numeric, 2)
+        END AS linediscount, sum(il.lineoverlimitamt) AS lineoverlimitamt, 
+        CASE
+            WHEN sum(il.linenetamt) = 0::numeric THEN 0::numeric
+            ELSE 100::numeric - round((sum(il.linenetamt) - sum(il.lineoverlimitamt)) / sum(il.linenetamt) * 100::numeric, 2)
+        END AS lineoverlimit, sum(il.qtyinvoiced) AS qtyinvoiced, il.issotrx
+   FROM rv_c_invoiceline il
+  GROUP BY il.ad_client_id, il.ad_org_id, il.c_bpartner_id, il.m_product_category_id, firstof(il.dateinvoiced::timestamp with time zone, 'Q'::character varying), il.issotrx, il.c_currency_id;
+
+ALTER TABLE rv_c_invoice_customerprodqtr OWNER TO libertya;
+
+CREATE OR REPLACE VIEW rv_c_invoice_customervendqtr AS 
+ SELECT il.ad_client_id, il.ad_org_id, il.c_bpartner_id, po.c_bpartner_id AS vendor_id, firstof(il.dateinvoiced::timestamp with time zone, 'Q'::character varying) AS dateinvoiced, sum(il.linenetamt) AS linenetamt, sum(il.linelistamt) AS linelistamt, sum(il.linelimitamt) AS linelimitamt, sum(il.linediscountamt) AS linediscountamt, il.c_currency_id, 
+        CASE
+            WHEN sum(il.linelistamt) = 0::numeric THEN 0::numeric
+            ELSE round((sum(il.linelistamt) - sum(il.linenetamt)) / sum(il.linelistamt) * 100::numeric, 2)
+        END AS linediscount, sum(il.lineoverlimitamt) AS lineoverlimitamt, 
+        CASE
+            WHEN sum(il.linenetamt) = 0::numeric THEN 0::numeric
+            ELSE 100::numeric - round((sum(il.linenetamt) - sum(il.lineoverlimitamt)) / sum(il.linenetamt) * 100::numeric, 2)
+        END AS lineoverlimit, sum(il.qtyinvoiced) AS qtyinvoiced
+   FROM rv_c_invoiceline il
+   JOIN m_product_po po ON il.m_product_id = po.m_product_id
+  WHERE il.issotrx = 'Y'::bpchar
+  GROUP BY il.ad_client_id, il.ad_org_id, il.c_bpartner_id, po.c_bpartner_id, firstof(il.dateinvoiced::timestamp with time zone, 'Q'::character varying), il.c_currency_id;
+
+ALTER TABLE rv_c_invoice_customervendqtr OWNER TO libertya;
+
+CREATE OR REPLACE VIEW rv_c_invoice_day AS 
+ SELECT rv_c_invoiceline.ad_client_id, rv_c_invoiceline.ad_org_id, rv_c_invoiceline.salesrep_id, firstof(rv_c_invoiceline.dateinvoiced::timestamp with time zone, 'DD'::character varying) AS dateinvoiced, sum(rv_c_invoiceline.linenetamt) AS linenetamt, sum(rv_c_invoiceline.linelistamt) AS linelistamt, sum(rv_c_invoiceline.linelimitamt) AS linelimitamt, sum(rv_c_invoiceline.linediscountamt) AS linediscountamt, rv_c_invoiceline.c_currency_id, 
+        CASE
+            WHEN sum(rv_c_invoiceline.linelistamt) = 0::numeric THEN 0::numeric
+            ELSE round((sum(rv_c_invoiceline.linelistamt) - sum(rv_c_invoiceline.linenetamt)) / sum(rv_c_invoiceline.linelistamt) * 100::numeric, 2)
+        END AS linediscount, sum(rv_c_invoiceline.lineoverlimitamt) AS lineoverlimitamt, 
+        CASE
+            WHEN sum(rv_c_invoiceline.linenetamt) = 0::numeric THEN 0::numeric
+            ELSE 100::numeric - round((sum(rv_c_invoiceline.linenetamt) - sum(rv_c_invoiceline.lineoverlimitamt)) / sum(rv_c_invoiceline.linenetamt) * 100::numeric, 2)
+        END AS lineoverlimit, rv_c_invoiceline.issotrx
+   FROM rv_c_invoiceline
+  GROUP BY rv_c_invoiceline.ad_client_id, rv_c_invoiceline.ad_org_id, rv_c_invoiceline.salesrep_id, firstof(rv_c_invoiceline.dateinvoiced::timestamp with time zone, 'DD'::character varying), rv_c_invoiceline.issotrx, rv_c_invoiceline.c_currency_id;
+
+ALTER TABLE rv_c_invoice_day OWNER TO libertya;
+
+CREATE OR REPLACE VIEW rv_c_invoice_month AS 
+ SELECT rv_c_invoiceline.ad_client_id, rv_c_invoiceline.ad_org_id, rv_c_invoiceline.salesrep_id, firstof(rv_c_invoiceline.dateinvoiced::timestamp with time zone, 'MM'::character varying) AS dateinvoiced, sum(rv_c_invoiceline.linenetamt) AS linenetamt, sum(rv_c_invoiceline.linelistamt) AS linelistamt, sum(rv_c_invoiceline.linelimitamt) AS linelimitamt, sum(rv_c_invoiceline.linediscountamt) AS linediscountamt, rv_c_invoiceline.c_currency_id, 
+        CASE
+            WHEN sum(rv_c_invoiceline.linelistamt) = 0::numeric THEN 0::numeric
+            ELSE round((sum(rv_c_invoiceline.linelistamt) - sum(rv_c_invoiceline.linenetamt)) / sum(rv_c_invoiceline.linelistamt) * 100::numeric, 2)
+        END AS linediscount, sum(rv_c_invoiceline.lineoverlimitamt) AS lineoverlimitamt, 
+        CASE
+            WHEN sum(rv_c_invoiceline.linenetamt) = 0::numeric THEN 0::numeric
+            ELSE 100::numeric - round((sum(rv_c_invoiceline.linenetamt) - sum(rv_c_invoiceline.lineoverlimitamt)) / sum(rv_c_invoiceline.linenetamt) * 100::numeric, 2)
+        END AS lineoverlimit, rv_c_invoiceline.issotrx
+   FROM rv_c_invoiceline
+  GROUP BY rv_c_invoiceline.ad_client_id, rv_c_invoiceline.ad_org_id, rv_c_invoiceline.salesrep_id, firstof(rv_c_invoiceline.dateinvoiced::timestamp with time zone, 'MM'::character varying), rv_c_invoiceline.issotrx, rv_c_invoiceline.c_currency_id;
+
+ALTER TABLE rv_c_invoice_month OWNER TO libertya;
+
+CREATE OR REPLACE VIEW rv_c_invoice_prodmonth AS 
+ SELECT il.ad_client_id, il.ad_org_id, il.m_product_category_id, firstof(il.dateinvoiced::timestamp with time zone, 'MM'::character varying) AS dateinvoiced, sum(il.linenetamt) AS linenetamt, sum(il.linelistamt) AS linelistamt, sum(il.linelimitamt) AS linelimitamt, sum(il.linediscountamt) AS linediscountamt, il.c_currency_id, 
+        CASE
+            WHEN sum(il.linelistamt) = 0::numeric THEN 0::numeric
+            ELSE round((sum(il.linelistamt) - sum(il.linenetamt)) / sum(il.linelistamt) * 100::numeric, 2)
+        END AS linediscount, sum(il.lineoverlimitamt) AS lineoverlimitamt, 
+        CASE
+            WHEN sum(il.linenetamt) = 0::numeric THEN 0::numeric
+            ELSE 100::numeric - round((sum(il.linenetamt) - sum(il.lineoverlimitamt)) / sum(il.linenetamt) * 100::numeric, 2)
+        END AS lineoverlimit, sum(il.qtyinvoiced) AS qtyinvoiced, il.issotrx
+   FROM rv_c_invoiceline il
+  GROUP BY il.ad_client_id, il.ad_org_id, il.m_product_category_id, firstof(il.dateinvoiced::timestamp with time zone, 'MM'::character varying), il.issotrx, il.c_currency_id;
+
+ALTER TABLE rv_c_invoice_prodmonth OWNER TO libertya;
+
+CREATE OR REPLACE VIEW rv_c_invoice_prodweek AS 
+ SELECT il.ad_client_id, il.ad_org_id, il.m_product_category_id, firstof(il.dateinvoiced::timestamp with time zone, 'DY'::character varying) AS dateinvoiced, sum(il.linenetamt) AS linenetamt, sum(il.linelistamt) AS linelistamt, sum(il.linelimitamt) AS linelimitamt, sum(il.linediscountamt) AS linediscountamt, il.c_currency_id, 
+        CASE
+            WHEN sum(il.linelistamt) = 0::numeric THEN 0::numeric
+            ELSE round((sum(il.linelistamt) - sum(il.linenetamt)) / sum(il.linelistamt) * 100::numeric, 2)
+        END AS linediscount, sum(il.lineoverlimitamt) AS lineoverlimitamt, 
+        CASE
+            WHEN sum(il.linenetamt) = 0::numeric THEN 0::numeric
+            ELSE 100::numeric - round((sum(il.linenetamt) - sum(il.lineoverlimitamt)) / sum(il.linenetamt) * 100::numeric, 2)
+        END AS lineoverlimit, sum(il.qtyinvoiced) AS qtyinvoiced, il.issotrx
+   FROM rv_c_invoiceline il
+  GROUP BY il.ad_client_id, il.ad_org_id, il.m_product_category_id, firstof(il.dateinvoiced::timestamp with time zone, 'DY'::character varying), il.issotrx, il.c_currency_id;
+
+ALTER TABLE rv_c_invoice_prodweek OWNER TO libertya;
+
+CREATE OR REPLACE VIEW rv_c_invoice_vendormonth AS 
+ SELECT il.ad_client_id, il.ad_org_id, po.c_bpartner_id, il.m_product_category_id, firstof(il.dateinvoiced::timestamp with time zone, 'MM'::character varying) AS dateinvoiced, sum(il.linenetamt) AS linenetamt, sum(il.linelistamt) AS linelistamt, sum(il.linelimitamt) AS linelimitamt, sum(il.linediscountamt) AS linediscountamt, il.c_currency_id, 
+        CASE
+            WHEN sum(il.linelistamt) = 0::numeric THEN 0::numeric
+            ELSE round((sum(il.linelistamt) - sum(il.linenetamt)) / sum(il.linelistamt) * 100::numeric, 2)
+        END AS linediscount, sum(il.lineoverlimitamt) AS lineoverlimitamt, 
+        CASE
+            WHEN sum(il.linenetamt) = 0::numeric THEN 0::numeric
+            ELSE 100::numeric - round((sum(il.linenetamt) - sum(il.lineoverlimitamt)) / sum(il.linenetamt) * 100::numeric, 2)
+        END AS lineoverlimit, sum(il.qtyinvoiced) AS qtyinvoiced
+   FROM rv_c_invoiceline il
+   JOIN m_product_po po ON il.m_product_id = po.m_product_id
+  WHERE il.issotrx = 'Y'::bpchar
+  GROUP BY il.ad_client_id, il.ad_org_id, po.c_bpartner_id, il.m_product_category_id, firstof(il.dateinvoiced::timestamp with time zone, 'MM'::character varying), il.c_currency_id;
+
+ALTER TABLE rv_c_invoice_vendormonth OWNER TO libertya;
+
+
+CREATE OR REPLACE VIEW rv_c_invoice_week AS 
+ SELECT rv_c_invoiceline.ad_client_id, rv_c_invoiceline.ad_org_id, rv_c_invoiceline.salesrep_id, firstof(rv_c_invoiceline.dateinvoiced::timestamp with time zone, 'DY'::character varying) AS dateinvoiced, sum(rv_c_invoiceline.linenetamt) AS linenetamt, sum(rv_c_invoiceline.linelistamt) AS linelistamt, sum(rv_c_invoiceline.linelimitamt) AS linelimitamt, sum(rv_c_invoiceline.linediscountamt) AS linediscountamt, rv_c_invoiceline.c_currency_id, 
+        CASE
+            WHEN sum(rv_c_invoiceline.linelistamt) = 0::numeric THEN 0::numeric
+            ELSE round((sum(rv_c_invoiceline.linelistamt) - sum(rv_c_invoiceline.linenetamt)) / sum(rv_c_invoiceline.linelistamt) * 100::numeric, 2)
+        END AS linediscount, sum(rv_c_invoiceline.lineoverlimitamt) AS lineoverlimitamt, 
+        CASE
+            WHEN sum(rv_c_invoiceline.linenetamt) = 0::numeric THEN 0::numeric
+            ELSE 100::numeric - round((sum(rv_c_invoiceline.linenetamt) - sum(rv_c_invoiceline.lineoverlimitamt)) / sum(rv_c_invoiceline.linenetamt) * 100::numeric, 2)
+        END AS lineoverlimit, rv_c_invoiceline.issotrx
+   FROM rv_c_invoiceline
+  GROUP BY rv_c_invoiceline.ad_client_id, rv_c_invoiceline.ad_org_id, rv_c_invoiceline.salesrep_id, firstof(rv_c_invoiceline.dateinvoiced::timestamp with time zone, 'DY'::character varying), rv_c_invoiceline.issotrx, rv_c_invoiceline.c_currency_id;
+
+ALTER TABLE rv_c_invoice_week OWNER TO libertya;
+
+CREATE OR REPLACE VIEW rv_openitem AS 
+ SELECT i.ad_org_id, i.ad_client_id, i.documentno, i.c_invoice_id, i.c_order_id, i.c_bpartner_id, i.issotrx, i.dateinvoiced, p.netdays, i.dateinvoiced + ((p.netdays::text || ' days'::text)::interval) AS duedate, paymenttermduedays(i.c_paymentterm_id, i.dateinvoiced::timestamp with time zone, now()) AS daysdue, i.dateinvoiced + ((p.discountdays::text || ' days'::text)::interval) AS discountdate, round(i.grandtotal * p.discount / 100::numeric, 2) AS discountamt, i.grandtotal, invoicepaid(i.c_invoice_id, i.c_currency_id, 1) AS paidamt, invoiceopen(i.c_invoice_id, 0) AS openamt, i.c_currency_id, i.c_conversiontype_id, i.ispayschedulevalid, NULL::unknown AS c_invoicepayschedule_id, i.c_paymentterm_id, i.c_doctypetarget_id, i.docstatus
+   FROM rv_c_invoice i
+   JOIN c_paymentterm p ON i.c_paymentterm_id = p.c_paymentterm_id
+  WHERE invoiceopen(i.c_invoice_id, 0) <> 0::numeric AND i.ispayschedulevalid <> 'Y'::bpchar AND i.docstatus <> 'DR'::bpchar
+UNION 
+ SELECT i.ad_org_id, i.ad_client_id, i.documentno, i.c_invoice_id, i.c_order_id, i.c_bpartner_id, i.issotrx, i.dateinvoiced, to_days(ips.duedate) - to_days(i.dateinvoiced) AS netdays, ips.duedate, to_days(now()) - to_days(ips.duedate) AS daysdue, ips.discountdate, ips.discountamt, ips.dueamt AS grandtotal, invoicepaid(i.c_invoice_id, i.c_currency_id, 1) AS paidamt, invoiceopen(i.c_invoice_id, ips.c_invoicepayschedule_id) AS openamt, i.c_currency_id, i.c_conversiontype_id, i.ispayschedulevalid, ips.c_invoicepayschedule_id, i.c_paymentterm_id, i.c_doctypetarget_id, i.docstatus
+   FROM rv_c_invoice i
+   JOIN c_invoicepayschedule ips ON i.c_invoice_id = ips.c_invoice_id
+  WHERE invoiceopen(i.c_invoice_id, 0) <> 0::numeric AND i.ispayschedulevalid = 'Y'::bpchar AND i.docstatus <> 'DR'::bpchar AND ips.isvalid = 'Y'::bpchar;
+
+ALTER TABLE rv_openitem OWNER TO libertya;
+
+--20130531 - 0245 Incorporación de nuevas columnas en la tabla T_CUENTACORRIENTE
+ALTER TABLE T_CUENTACORRIENTE ADD COLUMN C_AllocationHdr_ID integer;
+
+--20130531 - 0245 Contemplar la posibilidad de mostrar los pedidos no facturados en el informe de cuenta corriente
+ALTER TABLE T_CuentaCorriente ADD COLUMN ShowDetailedReceiptsPayments varchar(1);
