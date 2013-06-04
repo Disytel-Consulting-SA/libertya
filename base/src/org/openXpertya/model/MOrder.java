@@ -1459,7 +1459,7 @@ public class MOrder extends X_C_Order implements DocAction {
 					orderLine.setPrice(pp.getPriceList().subtract(
 							pp.getPriceList().multiply(
 									orderLine.getDiscount().divide(
-											Env.ONEHUNDRED, 2,
+											Env.ONEHUNDRED, 4,
 											BigDecimal.ROUND_HALF_UP))));
 					if(!orderLine.save()){
 						log.saveError("SaveError", CLogger.retrieveErrorAsString());
