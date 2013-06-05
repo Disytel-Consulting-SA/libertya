@@ -8,6 +8,7 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Properties;
 
 import org.openXpertya.model.MDocType;
 import org.openXpertya.model.MInvoice;
@@ -51,6 +52,9 @@ public class DocumentCompleteProcess extends SvrProcess {
 	
 	/** Estados de los documentos en base a la acción a tomar */
 	private static Map<String, List<String>> docStatusByDocAction;
+	
+	/** Nombre de columna de fecha por tabla */
+	private static Map<String, String> dateColumnNameByTable;
 	
 	static{
 		// Tablas por tipo de documento base
@@ -225,6 +229,25 @@ public class DocumentCompleteProcess extends SvrProcess {
 				Arrays.asList(new String[] { MInvoice.DOCSTATUS_Drafted, 
 						MInvoice.DOCSTATUS_InProgress, 
 						MInvoice.DOCSTATUS_Approved }));
+		
+		// Nombre de columnas de fecha por tabla
+		dateColumnNameByTable = new HashMap<String, String>();
+		
+		dateColumnNameByTable.put(X_M_Amortization.Table_Name, "AmortizationDate");
+		dateColumnNameByTable.put(X_C_Invoice.Table_Name, "DateInvoiced");
+		dateColumnNameByTable.put(X_C_BankTransfer.Table_Name, "DateTrx");
+		dateColumnNameByTable.put(X_C_Payment.Table_Name, "DateTrx");
+		dateColumnNameByTable.put(X_C_AllocationHdr.Table_Name, "DateTrx");
+		dateColumnNameByTable.put(X_C_BankStatement.Table_Name, "StatementDate");
+		dateColumnNameByTable.put(X_C_Cash.Table_Name, "StatementDate");
+		dateColumnNameByTable.put(X_GL_Journal.Table_Name, "DateDoc");
+		dateColumnNameByTable.put(X_M_Inventory.Table_Name, "MovementDate");
+		dateColumnNameByTable.put(X_M_Movement.Table_Name, "MovementDate");
+		dateColumnNameByTable.put(X_M_Transfer.Table_Name, "DateTrx");
+		dateColumnNameByTable.put(X_M_Production.Table_Name, "MovementDate");
+		dateColumnNameByTable.put(X_M_InOut.Table_Name, "MovementDate");
+		dateColumnNameByTable.put(X_C_Repair_Order.Table_Name, "DateOrdered");
+		dateColumnNameByTable.put(X_C_Order.Table_Name, "DateOrdered");
 	}
 	
 	/** Tipo de documento */
@@ -239,6 +262,27 @@ public class DocumentCompleteProcess extends SvrProcess {
 	/** Fecha hasta */
 	private Timestamp dateTo;
 	
+	/** Condiciones where adicionales */
+	private String aditionalWhereClause;
+	
+	/** Contexto local */
+	private Properties localCtx;
+	
+	/** Nombre de transacción local */
+	private String localTrxName;
+	
+	public DocumentCompleteProcess(Properties ctx, MDocType docType,
+			String docAction, Timestamp dateFrom, Timestamp dateTo,
+			String aditionalWhereClause, String trxName) {
+		this.localCtx = ctx;
+		this.localTrxName = trxName;
+		setDocType(docType);
+		setDocAction(docAction);
+		setDateFrom(dateFrom);
+		setDateTo(dateTo);
+		setAditionalWhereClause(aditionalWhereClause);
+	}
+	
 	@Override
 	protected void prepare() {
 		ProcessInfoParameter[] para = getParameter();
@@ -247,17 +291,13 @@ public class DocumentCompleteProcess extends SvrProcess {
 			if (name.equals("C_DocType_ID")){
 				setDocType(MDocType.get(getCtx(), para[i].getParameterAsInt()));
 			}
-			else if (name.equals("Date")){
+			else if (name.equals("DateFrom")){
 				setDateFrom((Timestamp)para[i].getParameter());
 				setDateTo((Timestamp)para[i].getParameter_To());
 			}
 			else if (name.equals("DocAction")){
 				setDocAction((String)para[i].getParameter());
 			}
-		}
-		// Si no se agregó una acción, por defecto es Completar
-		if(Util.isEmpty(getDocAction(), true)){
-			setDocAction(MInvoice.ACTION_Complete);
 		}
 	}
 
@@ -315,6 +355,25 @@ public class DocumentCompleteProcess extends SvrProcess {
 	}
 	
 	/**
+	 * @param table tabla en cuestión
+	 * @return condición del where para la búsqueda por fechas, vacío
+	 *         en caso que no se hayan pasado los parámetros de fecha
+	 */
+	protected String getDateCondition(M_Table table, PO generalPO){
+		StringBuffer dateCondition = new StringBuffer();
+		String dateColumnName = dateColumnNameByTable.get(table.getTableName());
+		if(getDateFrom() != null){
+			dateCondition.append(" AND ").append(dateColumnName)
+					.append("::date >= ?::date ");
+		}
+		if(getDateTo() != null){
+			dateCondition.append(" AND ").append(dateColumnName)
+					.append("::date <= ?::date ");
+		}
+		return dateCondition.toString();
+	}
+	
+	/**
 	 * 
 	 * @param table tabla en cuestión
 	 * @return ORDER BY para la consulta de búsqueda de documentos, vacío en
@@ -340,6 +399,8 @@ public class DocumentCompleteProcess extends SvrProcess {
 		// que las columnas de fecha tienen nombres diferentes por tabla 
 		if(table != null){
 			sql.append(getDocTypeCondition(table, generalPO));
+			sql.append(getDateCondition(table, generalPO));
+			sql.append(getAditionalWhereClause());
 			sql.append(getDocTypeOrder(table, generalPO));
 		}
 		return sql.toString();
@@ -384,6 +445,11 @@ public class DocumentCompleteProcess extends SvrProcess {
 			return Msg.getMsg(getCtx(), "NoSearchDocuments");
 		}
 		
+		// Si no se agregó una acción, por defecto es Completar
+		if(Util.isEmpty(getDocAction(), true)){
+			setDocAction(MInvoice.ACTION_Complete);
+		}
+		
 		// Iterar por las tablas, realizando las búsquedas y completando los
 		// documentos
 		PreparedStatement ps = null;
@@ -397,8 +463,16 @@ public class DocumentCompleteProcess extends SvrProcess {
 			// Conseguir los documentos e iterar por todos ellos y completarlos
 			table = M_Table.get(getCtx(), documentTable);
 			generalPO = table.getGeneralPO(0, get_TrxName());
-			ps = DB.prepareStatement(getDocumentSearchSQL(table, generalPO), get_TrxName());
-			ps.setInt(1, Env.getAD_Org_ID(getCtx()));
+			ps = DB.prepareStatement(getDocumentSearchSQL(table, generalPO),
+					get_TrxName(), true);
+			int i = 1;
+			ps.setInt(i++, Env.getAD_Org_ID(getCtx()));
+			if(getDateFrom() != null){
+				ps.setTimestamp(i++, getDateFrom());
+			}
+			if(getDateTo() != null){
+				ps.setTimestamp(i++, getDateTo());
+			}
 			rs = ps.executeQuery();
 			while(rs.next()){
 				// Transacción por documento
@@ -429,36 +503,72 @@ public class DocumentCompleteProcess extends SvrProcess {
 		return getMsg(completed, erroneous);
 	}
 
-	protected MDocType getDocType() {
+	/**
+	 * Comienza la ejecución del proceso.
+	 * 
+	 * @return Mesaje HTML con los documentos procesados
+	 * @throws Exception
+	 *             cuando se produce un error en el proceso 
+	 */
+	public String start() throws Exception {
+		return doIt();
+	}
+	
+	public MDocType getDocType() {
 		return docType;
 	}
 
-	protected void setDocType(MDocType docType) {
+	public void setDocType(MDocType docType) {
 		this.docType = docType;
 	}
 
-	protected String getDocAction() {
+	public String getDocAction() {
 		return docAction;
 	}
 
-	protected void setDocAction(String docAction) {
+	public void setDocAction(String docAction) {
 		this.docAction = docAction;
 	}
 
-	protected Timestamp getDateFrom() {
+	public Timestamp getDateFrom() {
 		return dateFrom;
 	}
 
-	protected void setDateFrom(Timestamp dateFrom) {
+	public void setDateFrom(Timestamp dateFrom) {
 		this.dateFrom = dateFrom;
 	}
 
-	protected Timestamp getDateTo() {
+	public Timestamp getDateTo() {
 		return dateTo;
 	}
 
-	protected void setDateTo(Timestamp dateTo) {
+	public void setDateTo(Timestamp dateTo) {
 		this.dateTo = dateTo;
 	}
 
+	public String getAditionalWhereClause() {
+		return aditionalWhereClause;
+	}
+
+	public void setAditionalWhereClause(String aditionalWhereClause) {
+		this.aditionalWhereClause = aditionalWhereClause;
+	}
+	
+	@Override
+	public Properties getCtx() {
+		if (localCtx != null) {
+			return localCtx;
+		} else {
+			return super.getCtx();
+		}
+	}
+	
+	@Override
+	public String get_TrxName() {
+		if (!Util.isEmpty(localTrxName, true)) {
+			return localTrxName;
+		} else {
+			return super.get_TrxName();
+		}
+	}
 }
