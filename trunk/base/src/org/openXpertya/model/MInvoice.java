@@ -4215,9 +4215,9 @@ public class MInvoice extends X_C_Invoice implements DocAction {
 			reversal.setIgnoreFiscalPrint(true);
 		}
 
-		// Para la localización argentina no hay que invertir las cantidades ni
-		// los montos.
-		if (!localeARActive || !isSOTrx()) {
+		// Si el docType = reversalDocType, entonces se utilizará el mismo docType.  Invertir montos
+		// Ademas, para la localización argentina no hay que invertir las cantidades ni los montos (usa distinto doctype)
+		if (!localeARActive || (docType == reversalDocType)) {
 
 			// Reverse Line Qty
 			MInvoiceLine[] rLines = reversal.getLines(false);
