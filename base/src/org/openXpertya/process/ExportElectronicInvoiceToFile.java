@@ -112,6 +112,7 @@ public class ExportElectronicInvoiceToFile extends SvrProcess {
 				" ln.linetotalamt," +
 				" ln.unidad_medida," +
 				" ln.importe_bonificacion, " +
+				" 0 as importe_ajuste, " +
 				" ln.qtyinvoiced, " +
 				" ln.rate " +
 				" from e_electronicinvoice hdr");

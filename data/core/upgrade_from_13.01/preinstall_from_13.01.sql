@@ -3406,3 +3406,10 @@ ALTER TABLE T_CUENTACORRIENTE ADD COLUMN C_AllocationHdr_ID integer;
 
 --20130531 - 0245 Contemplar la posibilidad de mostrar los pedidos no facturados en el informe de cuenta corriente
 ALTER TABLE T_CuentaCorriente ADD COLUMN ShowDetailedReceiptsPayments varchar(1);
+
+-- 20130605 - 1510 Nuevas columnas en el tipo de documento 
+ALTER TABLE c_doctype ADD COLUMN cai character varying(14);
+ALTER TABLE c_doctype ADD COLUMN datecai timestamp without time zone;
+
+-- 20130605 - 1530 Nuevas columnas en T_ElectronicInvoice
+ALTER TABLE T_ElectronicInvoice ADD COLUMN importe_ajuste numeric(20,2);

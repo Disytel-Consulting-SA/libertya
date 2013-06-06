@@ -26,8 +26,14 @@ public class MElectronicInvoiceLine extends X_E_ElectronicInvoiceLine {
 		setLineTotalAmt(line.getLineNetAmount());
 		setRate(getLineRate(line.getC_Tax_ID()));
 		setIsTaxExempt(getLineIsTaxExempt(line.getC_Tax_ID()));
-		if (line.getDescription() != null)
-			setDiseno_Libre(line.getDescription().substring(0, line.getDescription().length()));
+		//if (line.getDescription() != null)
+			//setDiseno_Libre(line.getDescription().substring(0, line.getDescription().length()));
+		if (dateVoid != null){
+			setDiseno_Libre(MPreference.GetCustomPreferenceValue("ReasonVoid"));	
+		}
+		else{
+			setDiseno_Libre( (new MProduct(getCtx(), line.getM_Product_ID(), get_TrxName())).getName() );	
+		}
 		if (dateVoid != null)
 			if (dateVoid.equalsIgnoreCase(""))
 				setIndica_Anulacion("A");
