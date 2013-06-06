@@ -46,7 +46,7 @@ public class MElectronicInvoice extends X_E_ElectronicInvoice {
 			if(ps != null) ps.close();
 			if(rs != null) rs.close();
 		}
-
+    	MDocType doctype = new MDocType(getCtx(), inv.getC_DocType_ID(), get_TrxName());
 		setDateInvoiced(inv.getDateInvoiced());
 		setTipo_Comprobante(getRefTablaComprobantes(inv.getC_DocType_ID()));	// Según tabla 1
 		setIsFiscal(isFiscal);
@@ -65,7 +65,7 @@ public class MElectronicInvoice extends X_E_ElectronicInvoice {
 		setCod_Moneda(getRefTablaMoneda(inv.getC_Currency_ID()));	  			// sacar de c_currency	
 		setMultiplyRate(new BigDecimal(1));										// No se usa
 		setCant_Alicuotas_Iva(getInvoiceCantAlicuotas(inv.getC_Invoice_ID()));	// Campo calculado
-		setCAI(inv.getcae());
+		setCAI(doctype.getCAI());
 		setOperacionesExentas(getInvoiceTaxAmtTaxExempt(inv.getC_Invoice_ID()));
 		//Si el impuesto liquidado (campo 15) es igual a cero (0) y el importe total de conceptos que no integran el precio neto gravado (campo 13) es distinto de cero, se deberá completar 
 		if ((getTaxAmt().compareTo(BigDecimal.ZERO) == 0) && (getOperacionesExentas().compareTo(BigDecimal.ZERO) == 0)){
@@ -82,10 +82,9 @@ public class MElectronicInvoice extends X_E_ElectronicInvoice {
 		setImpuestosInternos(BigDecimal.ZERO);											// No se usa
 		
 		
-		setDateCAI(inv.getvtocae());
+		setDateCAI(doctype.getDateCAI());
 		if (inv.getDocStatus().equalsIgnoreCase("VO") || inv.getDocStatus().equalsIgnoreCase("RE")){
 			setDateVoid(inv.getUpdated());
-			
 		}
 		setIsSOTrx(inv.isSOTrx());
 		setC_Invoice_ID(inv.getC_Invoice_ID());

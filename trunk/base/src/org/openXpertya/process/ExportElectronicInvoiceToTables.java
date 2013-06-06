@@ -51,11 +51,8 @@ public class ExportElectronicInvoiceToTables extends SvrProcess {
 			rs = pstmt.executeQuery();
 			// Exportación Resolución 1361
 			FiscalDocumentExport createFD = new FiscalDocumentExport();
-			//
-			int i = 0;
 			while (rs.next()) {
 				// Instancio la Factura a exportar
-				long inicio = System.currentTimeMillis();
 				MInvoice inv = new MInvoice(getCtx(), rs.getInt("C_Invoice_ID"), get_TrxName());
 				if (inv.isFiscalAlreadyPrinted()){
 					// Exporto la factura fiscal y sus lineas para satisfacer la resolución 1361 de duplicados electrónicos
@@ -65,10 +62,6 @@ public class ExportElectronicInvoiceToTables extends SvrProcess {
 					// Exporto la factura no fiscal y sus lineas para satisfacer la resolución 1361 de duplicados electrónicos
 					createFD.noFiscalPrintingExport( getCtx(), inv );
 				}
-				long fin = System.currentTimeMillis();
-				i=i+1;
-				System.out.println("Creacion de una factura:" + i);
-				System.out.println(fin - inicio);
 			}
 		} catch (SQLException e) {
 			log.log(Level.SEVERE, "Export To Table E_ElectronicInvoice error", e);

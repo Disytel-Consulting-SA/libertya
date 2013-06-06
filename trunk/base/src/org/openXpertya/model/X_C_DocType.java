@@ -7,7 +7,7 @@ import java.math.*;
 import org.openXpertya.util.*;
 /** Modelo Generado por C_DocType
  *  @author Comunidad de Desarrollo Libertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
- *  @version  - 2013-05-09 13:03:08.452 */
+ *  @version  - 2013-06-04 18:48:21.265 */
 public class X_C_DocType extends org.openXpertya.model.PO
 {
 /** Constructor estándar */
@@ -159,6 +159,21 @@ if (oo != null)
 }
 return false;
 }
+/** Set CAI */
+public void setCAI (String CAI)
+{
+if (CAI != null && CAI.length() > 14)
+{
+log.warning("Length > 14 - truncated");
+CAI = CAI.substring(0,14);
+}
+set_Value ("CAI", CAI);
+}
+/** Get CAI */
+public String getCAI() 
+{
+return (String)get_Value("CAI");
+}
 /** Set C_Controlador_Fiscal_ID */
 public void setC_Controlador_Fiscal_ID (int C_Controlador_Fiscal_ID)
 {
@@ -269,6 +284,16 @@ public int getC_ReverseDocType_ID()
 Integer ii = (Integer)get_Value("C_ReverseDocType_ID");
 if (ii == null) return 0;
 return ii.intValue();
+}
+/** Set CAI Date */
+public void setDateCAI (Timestamp DateCAI)
+{
+set_Value ("DateCAI", DateCAI);
+}
+/** Get CAI Date */
+public Timestamp getDateCAI() 
+{
+return (Timestamp)get_Value("DateCAI");
 }
 /** Set Description.
 Optional short description of the record */
