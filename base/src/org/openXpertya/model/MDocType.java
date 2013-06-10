@@ -560,6 +560,16 @@ public class MDocType extends X_C_DocType {
 
 	@Override
 	protected boolean beforeSave(boolean newRecord) {
+		
+		// Verificar que el del documento al revertir especificado no tenga igual signo que el documento que se está definiendo
+		if (getC_ReverseDocType_ID()>0) {
+			X_C_DocType revDocType = new X_C_DocType(getCtx(), getC_ReverseDocType_ID(), get_TrxName());
+			if (getsigno_issotrx().equals(revDocType.getsigno_issotrx())) {
+				log.saveError("El Tipo de Doc. al revertir posee igual signo de transaccion de ventas que el tipo de documento que se esta definiendo", "");
+				return false;
+			}
+		}
+		
 		// Agregador por Disytel - Franco Bonafine
 		// Validación de la clave única del tipo de documento.
 		if(newRecord) {
