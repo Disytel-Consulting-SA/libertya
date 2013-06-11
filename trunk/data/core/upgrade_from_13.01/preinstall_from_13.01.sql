@@ -3498,3 +3498,66 @@ UNION ALL
   WHERE (ji.docstatus = ANY (ARRAY['VO'::bpchar, 'RE'::bpchar])) AND (ji.isfiscal IS NULL OR ji.isfiscal = 'N'::bpchar OR ji.isfiscal = 'Y'::bpchar AND ji.fiscalalreadyprinted = 'Y'::bpchar);
 
 ALTER TABLE c_pos_declaracionvalores_v OWNER TO libertya;
+
+--20130611-1320 Mejoras a la vista de detalle de allocations y nueva vista para el informe de Asignaciones de Factura
+DROP VIEW c_allocation_detail_v;
+
+CREATE OR REPLACE VIEW c_allocation_detail_v AS 
+ SELECT ah.c_allocationhdr_id AS c_allocation_detail_v_id, ah.c_allocationhdr_id, ah.ad_client_id, ah.ad_org_id, ah.isactive, ah.created, ah.createdby, ah.updated, ah.updatedby, ah.datetrx AS fecha, i.documentno AS factura, COALESCE(i.c_currency_id, p.c_currency_id, cl.c_currency_id, credit.c_currency_id) AS c_currency_id, i.grandtotal AS montofactura, 
+        CASE
+            WHEN p.documentno IS NOT NULL THEN p.documentno
+            ELSE 
+            CASE
+                WHEN al.c_invoice_credit_id IS NOT NULL THEN ((dt.printname::text || ' :'::text) || credit.documentno::text)::character varying
+                ELSE NULL::character varying
+            END
+        END AS pagonro, 
+        CASE
+            WHEN al.c_invoice_credit_id IS NOT NULL THEN 'N'::bpchar
+            WHEN p.tendertype IS NOT NULL THEN p.tendertype
+            WHEN p.tendertype IS NULL THEN 'CA'::bpchar
+            ELSE NULL::bpchar
+        END AS tipo, 
+        CASE
+            WHEN cl.c_cashline_id IS NOT NULL THEN 'Y'::text
+            WHEN cl.c_cashline_id IS NULL THEN 'N'::text
+            ELSE NULL::text
+        END AS cash, COALESCE(currencyconvert(al.amount + al.discountamt + al.writeoffamt, ah.c_currency_id, i.c_currency_id, NULL::timestamp with time zone, NULL::integer, ah.ad_client_id, ah.ad_org_id), 0::numeric(20,2)) AS montosaldado, abs(COALESCE(p.payamt, cl.amount, credit.grandtotal, 0::numeric(20,2))) AS payamt, al.c_allocationline_id, i.c_invoice_id, 
+        CASE
+            WHEN p.documentno IS NOT NULL THEN p.documentno
+            ELSE 
+            CASE
+                WHEN al.c_invoice_credit_id IS NOT NULL THEN ((dt.printname::text || ' :'::text) || credit.documentno::text)::character varying
+                WHEN al.c_cashline_id IS NOT NULL THEN cl.description
+                ELSE NULL::character varying
+            END
+        END AS paydescription, 
+        CASE
+            WHEN al.c_payment_id IS NOT NULL THEN pppm.name
+            WHEN al.c_cashline_id IS NOT NULL THEN cppm.name
+            WHEN al.c_invoice_credit_id IS NOT NULL THEN dt.name
+            ELSE NULL::character varying
+        END AS payment_medium_name, COALESCE(p.c_currency_id, cl.c_currency_id, credit.c_currency_id) AS pay_currency_id
+   FROM c_allocationhdr ah
+   JOIN c_allocationline al ON ah.c_allocationhdr_id = al.c_allocationhdr_id
+   LEFT JOIN c_invoice i ON al.c_invoice_id = i.c_invoice_id
+   LEFT JOIN c_payment p ON al.c_payment_id = p.c_payment_id
+   LEFT JOIN c_cashline cl ON al.c_cashline_id = cl.c_cashline_id
+   LEFT JOIN c_invoice credit ON al.c_invoice_credit_id = credit.c_invoice_id
+   LEFT JOIN c_doctype dt ON credit.c_doctype_id = dt.c_doctype_id
+   LEFT JOIN c_pospaymentmedium cppm ON cppm.c_pospaymentmedium_id = cl.c_pospaymentmedium_id
+   LEFT JOIN c_pospaymentmedium pppm ON pppm.c_pospaymentmedium_id = p.c_pospaymentmedium_id
+  ORDER BY ah.c_allocationhdr_id, al.c_allocationline_id;
+
+ALTER TABLE c_allocation_detail_v OWNER TO libertya;
+
+CREATE OR REPLACE VIEW c_invoice_allocation_v AS 
+ SELECT ah.ad_client_id, ah.ad_org_id, ah.c_allocationhdr_id, ah.c_doctype_id, dt.name AS allocation_doc_name, ah.documentno, ah.datetrx, ah.isactive, ah.docstatus, al.c_invoice_id, i.documentno AS invoice_documentno, i.dateinvoiced, i.grandtotal, bp.c_bpartner_id, bp.value, bp.name, COALESCE(i.nombrecli, bp.name) AS customer, sum(al.amount) AS amount
+   FROM c_allocationhdr ah
+   LEFT JOIN c_doctype dt ON dt.c_doctype_id = ah.c_doctype_id
+   JOIN c_allocationline al ON al.c_allocationhdr_id = ah.c_allocationhdr_id
+   JOIN c_invoice i ON i.c_invoice_id = al.c_invoice_id
+   JOIN c_bpartner bp ON bp.c_bpartner_id = i.c_bpartner_id
+  GROUP BY ah.ad_client_id, ah.ad_org_id, ah.c_allocationhdr_id, ah.c_doctype_id, dt.name, ah.documentno, ah.datetrx, ah.isactive, ah.docstatus, al.c_invoice_id, i.documentno, i.dateinvoiced, i.grandtotal, bp.c_bpartner_id, bp.value, bp.name, COALESCE(i.nombrecli, bp.name);
+
+ALTER TABLE c_invoice_allocation_v OWNER TO libertya;
