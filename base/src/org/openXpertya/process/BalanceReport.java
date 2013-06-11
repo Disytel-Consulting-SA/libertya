@@ -72,10 +72,10 @@ public class BalanceReport extends SvrProcess {
 		sqlDoc.append(" 		bp.C_BP_Group_ID, ");
 		sqlDoc.append(" 		bp.so_description, ");
 		sqlDoc.append(" 		CASE WHEN d.signo_issotrx = 1 THEN "); 
-		sqlDoc.append(" 			currencyconvert(d.amount, d.c_currency_id, ").append(client_Currency_ID).append(", ('now'::text)::timestamp(6) with time zone, COALESCE(c_conversiontype_id,0), d.ad_client_id, d.ad_org_id) "); 
+		sqlDoc.append(" 			currencyconvert(d.amount, d.c_currency_id, ").append(client_Currency_ID).append(", ('"+ ((p_DateTrx_To != null) ? p_DateTrx_To + "'" : "now'::text") +")::timestamp(6) with time zone, COALESCE(c_conversiontype_id,0), d.ad_client_id, d.ad_org_id) "); 
 		sqlDoc.append(" 		ELSE 0.0 END AS Debit, "); 
 		sqlDoc.append(" 		CASE WHEN d.signo_issotrx = -1 THEN "); 
-		sqlDoc.append(" 			currencyconvert(d.amount, d.c_currency_id, ").append(client_Currency_ID).append(", ('now'::text)::timestamp(6) with time zone, COALESCE(c_conversiontype_id,0), d.ad_client_id, d.ad_org_id) "); 
+		sqlDoc.append(" 			currencyconvert(d.amount, d.c_currency_id, ").append(client_Currency_ID).append(", ('"+ ((p_DateTrx_To != null) ? p_DateTrx_To + "'" : "now'::text") +")::timestamp(6) with time zone, COALESCE(c_conversiontype_id,0), d.ad_client_id, d.ad_org_id) "); 
 		sqlDoc.append(" 		ELSE 0.0 END AS Credit ");
 		sqlDoc.append(" 	FROM V_Documents d "); 
 		sqlDoc.append(" 	INNER JOIN c_bpartner bp on d.c_bpartner_id = bp.c_bpartner_id ");
