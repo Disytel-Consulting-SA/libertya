@@ -682,7 +682,7 @@ public class Doc_Invoice extends Doc implements DocProjectSplitterInterface {
     	 
     	// utilizo "* pow" en lugar de "/" debido a las traducciones de DB
     	String sql = 	" SELECT 	il.c_project_id as Project, " +
-    					"			sum( currencyConvert(il.linenetamount, i.C_Currency_ID, " + currencyID + ", i.dateAcct, null, i.AD_Client_ID, i.AD_Org_ID) * (1 + (t.rate + COALESCE((SELECT SUM (ita.rate) FROM C_InvoiceTax it INNER JOIN C_Tax ta ON (ta.C_tax_ID = it.C_tax_ID) INNER JOIN C_InvoiceTax ita ON (ta.C_tax_ID = ita.C_tax_ID) AND (ita.C_Invoice_ID = il.C_Invoice_ID) WHERE it.C_Invoice_ID = il.C_Invoice_ID AND ta.ispercepcion = 'Y'),0)) / 100) / currencyConvert(i.grandtotal, i.C_Currency_ID, " + currencyID + ", i.DateAcct, null, i.AD_Client_ID, i.AD_Org_ID)) as Percent " +
+    					"			sum( currencyConvert(il.linenetamount, i.C_Currency_ID, " + currencyID + ", i.dateAcct, null, i.AD_Client_ID, i.AD_Org_ID) * (1 + (t.rate + COALESCE((SELECT SUM (COALESCE(ita.rate,ta.rate)) FROM C_InvoiceTax it INNER JOIN C_Tax ta ON (ta.C_tax_ID = it.C_tax_ID) INNER JOIN C_InvoiceTax ita ON (ta.C_tax_ID = ita.C_tax_ID) AND (ita.C_Invoice_ID = il.C_Invoice_ID) WHERE it.C_Invoice_ID = il.C_Invoice_ID AND ta.ispercepcion = 'Y'),0)) / 100) / currencyConvert(i.grandtotal, i.C_Currency_ID, " + currencyID + ", i.DateAcct, null, i.AD_Client_ID, i.AD_Org_ID)) as Percent " +
     					" FROM C_InvoiceLine il INNER JOIN C_Invoice i ON il.c_invoice_id = i.c_invoice_id INNER JOIN C_Tax t ON il.C_Tax_ID = t.C_Tax_ID WHERE il.C_Invoice_ID = " + recordId + " GROUP BY il.c_project_id "; 
 
     	// Instanciar el CPreparedStatement con true en el ultimo parametro para evitar conversiones y poder utilizar el signo de division
