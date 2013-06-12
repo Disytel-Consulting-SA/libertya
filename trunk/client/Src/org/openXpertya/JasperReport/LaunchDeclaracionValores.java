@@ -22,6 +22,8 @@ import org.openXpertya.JasperReport.DataSource.OXPJasperDataSource;
 import org.openXpertya.JasperReport.DataSource.OXPJasperEmptyDataSource;
 import org.openXpertya.JasperReport.DataSource.ValoresDataSource;
 import org.openXpertya.model.MCash;
+import org.openXpertya.model.MOrg;
+import org.openXpertya.model.MPOS;
 import org.openXpertya.model.MPOSJournal;
 import org.openXpertya.model.M_Table;
 import org.openXpertya.model.PO;
@@ -68,6 +70,17 @@ public class LaunchDeclaracionValores extends JasperReportLaunch {
 					JasperReportsUtil.getPODisplayByIdentifiers(getCtx(),
 							journalIDs.get(0), X_C_POSJournal.Table_ID,
 							get_TrxName()));
+		}
+		Integer posID = getPOSID();
+		if(!Util.isEmpty(posID, true)){
+			MPOS pos = MPOS.get(getCtx(), posID);
+			addReportParameter("POSNAME",pos.getName());
+		}
+		Integer orgID = getOrgID();
+		if(!Util.isEmpty(orgID, true)){
+			MOrg org = MOrg.get(getCtx(), orgID);
+			addReportParameter("ORG_VALUE", org.getValue());
+			addReportParameter("ORG_NAME", org.getName());
 		}
 		// Agregar el saldo final de cada uno de los libros de caja
 		addCashEndingBalance(journalIDs);
@@ -234,13 +247,17 @@ public class LaunchDeclaracionValores extends JasperReportLaunch {
 		return journalIDs;
 	}
 	
+	protected Integer getPOSID(){
+		return (Integer)getParameterValue("C_POS_ID");
+	}
+	
 	protected List<Integer> getJournalsFromValues(){
 		List<Integer> journalsIDs = new ArrayList<Integer>();
 		StringBuffer where = new StringBuffer(" (1=1) ");
 		Timestamp dateFrom = getDateFrom();
 		Timestamp dateTo = getDateTo();
 		Integer orgID = getOrgID();
-		Integer posID = (Integer)getParameterValue("C_POS_ID");
+		Integer posID = getPOSID();
 		Boolean isRange = getParameterValue("IsRange") == null ? false
 				: getParameterValue("IsRange").equals("Y");
 		List<Object> params = new ArrayList<Object>();
@@ -515,7 +532,4 @@ public class LaunchDeclaracionValores extends JasperReportLaunch {
 	protected DeclaracionValoresDTO getValoresDTO() {
 		return valoresDTO;
 	}
-
-	
-	
 }
