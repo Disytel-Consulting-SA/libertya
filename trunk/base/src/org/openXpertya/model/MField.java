@@ -811,7 +811,7 @@ public class MField implements Serializable,Evaluatee {
 
         // cannot be validated
 
-        if( !isLookup() || m_lookup.containsKey( m_value )) {
+        if( !isLookup() || m_lookup == null || m_lookup.containsKey( m_value )) {
             return true;
         }
 
