@@ -16,6 +16,7 @@ import org.openXpertya.model.MOrder;
 import org.openXpertya.model.MOrg;
 import org.openXpertya.model.MPOSJournal;
 import org.openXpertya.model.PO;
+import org.openXpertya.model.X_AD_ClientInfo;
 import org.openXpertya.reflection.CallResult;
 import org.openXpertya.util.DB;
 import org.openXpertya.util.Env;
@@ -63,23 +64,21 @@ public class InvoiceGlobalVoiding extends SvrProcess {
 	private Properties localCtx = null;
 	
 	/**
-	 * Booleano que determina que se debe tomar la caja diaria de la factura
-	 * parámetro
+	 * Caja Diaria a asignar al comprobante creado por anulación de la factura
 	 */
-	private boolean posJournalFromInvoice = false;
+	private Integer posJournalCreditID = 0;
 	
 	/**
-	 * Caja Diaria a asignar cuando no se debe asignar la de la factura
-	 * parámetro
+	 * Caja Diaria a asignar a los cobros/pagos creados por anulación
 	 */
-	private Integer posJournalID = 0;
+	private Integer posJournalPaymentID = 0;
 	
 	/**
 	 * Booleano que determina si se debe controlar que los allocations
 	 * relacionados se encuentren con otros débitos
 	 */
 	private boolean controlMoreDebitsInAllocation = true;
-
+	
 	public InvoiceGlobalVoiding() {
 		super();
 	}
@@ -113,17 +112,12 @@ public class InvoiceGlobalVoiding extends SvrProcess {
             if( name.equalsIgnoreCase( "C_Invoice_ID" )) {
             	invoiceID = para[ i ].getParameterAsInt();
             }
-            else if( name.equalsIgnoreCase( "POSJournalFromInvoice" )) {
-            	posJournalFromInvoice = ((String)para[ i ].getParameter()).equals("Y");
+            else if( name.equalsIgnoreCase( "C_POSJournalCredit_ID" )) {
+            	setPosJournalCreditID(para[ i ].getParameterAsInt());
             }
-            else if( name.equalsIgnoreCase( "C_POSJournal_ID" )) {
-            	posJournalID = para[ i ].getParameterAsInt();
+            else if( name.equalsIgnoreCase( "C_POSJournalPayment_ID" )) {
+            	setPosJournalPaymentID(para[ i ].getParameterAsInt());
             }
-        }
-        // Si no hay caja diaria donde asociar, se toma la del usuario actual
-		if (!isPosJournalFromInvoice() && Util.isEmpty(getPosJournalID(), true)) {
-			MPOSJournal currentPosJournal = MPOSJournal.getCurrent();
-        	setPosJournalID(currentPosJournal != null?currentPosJournal.getID():0);
         }
 	}
 	
@@ -177,6 +171,8 @@ public class InvoiceGlobalVoiding extends SvrProcess {
         initAllocationHdrs();
         // Remito
         initInOut();
+        // Caja Diaria
+ 		initPOSJournal();
 	}
 	
 	/**
@@ -207,11 +203,12 @@ public class InvoiceGlobalVoiding extends SvrProcess {
 			// Este control se realiza solamente cuando es true el booleano que
 			// determina que se debe setear la caja de la factura o cuando la caja
 			// diaria parámetro existe
-			mAllocationHdr.setVoidPOSJournalMustBeOpen(isPosJournalFromInvoice()
-					|| getPosJournalID() != 0);
+			mAllocationHdr.setVoidPOSJournalMustBeOpen(false);
+			mAllocationHdr.setVoidPOSJournalConfig(Env.getContext(getCtx(),
+					"@#VoidingInvoicePaymentsPOSJournalConfig@"));
 			// Se asigna la caja diaria a setear al comprobante de anulación en el
 			// caso que éste deba setearse  
-			mAllocationHdr.setVoidPOSJournalID(getPosJournalID());
+			mAllocationHdr.setVoidPOSJournalID(getPosJournalPaymentID());
 			// Anular el allocation junto con todos sus pagos y retenciones
 			if (!DocumentEngine.processAndSave(mAllocationHdr,
 					allocationDocAction, false)) {
@@ -241,16 +238,17 @@ public class InvoiceGlobalVoiding extends SvrProcess {
 	protected void voidInvoice(MInvoice invoice, boolean makeMsg) throws Exception{
 		// No debe confirmar las operaciones adicionales de cuenta corriente 
 		invoice.setConfirmAditionalWorks(false);
-		// Se asigna el booleano que determina que se debe realizar un control
-		// estricto sobre el cierre de la caja diaria.
+		// TODO Se asigna el booleano que determina que se debe realizar un control
+		// estricto sobre el cierre de la caja diaria. Esto hay que controlarlo? 
 		// Este control se realiza solamente cuando es true el booleano que
 		// determina que se debe setear la caja de la factura o cuando la caja
 		// diaria parámetro existe
-		invoice.setVoidPOSJournalMustBeOpen(isPosJournalFromInvoice()
-				|| getPosJournalID() != 0);
+		invoice.setVoidPOSJournalMustBeOpen(false);
+		invoice.setVoidPOSJournalConfig(Env.getContext(getCtx(),
+				"@#VoidingInvoicePOSJournalConfig@"));
 		// Se asigna la caja diaria a setear al comprobante de anulación en el
 		// caso que éste deba setearse  
-		invoice.setVoidPOSJournalID(getPosJournalID());
+		invoice.setVoidPOSJournalID(getPosJournalCreditID());
 		// Anulo la factura
 		if (!DocumentEngine.processAndSave(invoice, MInvoice.DOCACTION_Void, false)) {
 			throw new Exception("@InvoiceVoidError@ # "
@@ -374,6 +372,40 @@ public class InvoiceGlobalVoiding extends SvrProcess {
 						get_TrxName()), getAditionalWorks(), get_TrxName());
 		if(result.isError()){
 			throw new Exception(result.getMsg());
+		}
+	}
+	
+	protected void initPOSJournal(){
+		// Tomar la caja seleccionada del combo si es distinto de cero, sino
+		// verificar la config y sino por defecto la del usuario actual
+		MPOSJournal currentPosJournal = MPOSJournal.getCurrent();
+		// Caja Diaria de Crédito
+		if(Util.isEmpty(getPosJournalCreditID(), true)){
+			String posJournalCreditConfig = Env.getContext(getCtx(),
+					"#VoidingInvoicePOSJournalConfig");
+			if (Util.isEmpty(posJournalCreditConfig, true)
+					|| posJournalCreditConfig
+							.equals(X_AD_ClientInfo.VOIDINGINVOICEPOSJOURNALCONFIG_User)) {
+				setPosJournalCreditID(currentPosJournal != null?currentPosJournal.getID():0);
+			}
+			else if(posJournalCreditConfig
+					.equals(X_AD_ClientInfo.VOIDINGINVOICEPOSJOURNALCONFIG_OriginalDocument)) {
+				setPosJournalCreditID(getInvoice().getC_POSJournal_ID());
+			}
+		}
+		// Caja Diaria de Cobros/Pagos
+		if(Util.isEmpty(getPosJournalPaymentID(), true)){
+			String posJournalPaymentConfig = Env.getContext(getCtx(),
+					"#VoidingInvoicePaymentsPOSJournalConfig");
+			if (Util.isEmpty(posJournalPaymentConfig, true) 
+					|| posJournalPaymentConfig
+							.equals(X_AD_ClientInfo.VOIDINGINVOICEPAYMENTSPOSJOURNALCONFIG_User)) {
+				setPosJournalPaymentID(currentPosJournal != null?currentPosJournal.getID():0);
+			}
+			else if (posJournalPaymentConfig
+					.equals(X_AD_ClientInfo.VOIDINGINVOICEPOSJOURNALCONFIG_OriginalDocument)) {
+				setPosJournalPaymentID(getInvoice().getC_POSJournal_ID());
+			}
 		}
 	}
 	
@@ -974,19 +1006,19 @@ public class InvoiceGlobalVoiding extends SvrProcess {
 		return controlMoreDebitsInAllocation;
 	}
 
-	public void setPosJournalFromInvoice(boolean posJournalFromInvoice) {
-		this.posJournalFromInvoice = posJournalFromInvoice;
+	public Integer getPosJournalCreditID() {
+		return posJournalCreditID;
 	}
 
-	public boolean isPosJournalFromInvoice() {
-		return posJournalFromInvoice;
+	public void setPosJournalCreditID(Integer posJournalCreditID) {
+		this.posJournalCreditID = posJournalCreditID;
 	}
 
-	public void setPosJournalID(Integer posJournalID) {
-		this.posJournalID = posJournalID;
+	public Integer getPosJournalPaymentID() {
+		return posJournalPaymentID;
 	}
 
-	public Integer getPosJournalID() {
-		return posJournalID;
+	public void setPosJournalPaymentID(Integer posJournalPaymentID) {
+		this.posJournalPaymentID = posJournalPaymentID;
 	}
 }

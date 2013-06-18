@@ -569,13 +569,15 @@ public class Login {
         Env.setContext( m_ctx,"#AD_Client_Name",client.getName());
         Ini.setProperty( Ini.P_CLIENT,client.getName());
         
+        MClientInfo clientInfo = MClientInfo.get(m_ctx, client.getKey());
+        
         // Info de Cajas Diarias activas
-		String isPOSJournalActive = DB
-				.getSQLValueString(
-						null,
-						"SELECT IsPOSJournalActive FROM AD_ClientInfo WHERE AD_Client_ID = ?",
-						client.getKey());
+		String isPOSJournalActive = clientInfo.isPOSJournalActive()?"Y":"N";
 		Env.setContext(m_ctx, "#IsPOSJournalActive", isPOSJournalActive);
+		Env.setContext(m_ctx, "#VoidingInvoicePOSJournalConfig",
+				clientInfo.getVoidingInvoicePOSJournalConfig());
+		Env.setContext(m_ctx, "#VoidingInvoicePaymentsPOSJournalConfig",
+				clientInfo.getVoidingInvoicePaymentsPOSJournalConfig());
 
         return retValue;
     }    // getOrgs

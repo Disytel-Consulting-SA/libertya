@@ -1,13 +1,14 @@
-/** Modelo Generado - NO CAMBIAR MANUALMENTE - Copyright (C) 2006 FUNDESLE */
+/** Modelo Generado - NO CAMBIAR MANUALMENTE - Disytel */
 package org.openXpertya.model;
-import java.util.*;
+import java.util.logging.Level;
+ import java.util.*;
 import java.sql.*;
 import java.math.*;
 import org.openXpertya.util.*;
 /** Modelo Generado por AD_Ref_Table
- *  @author Comunidad de Desarrollo openXpertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
- *  @version  - 2009-10-22 14:51:27.789 */
-public class X_AD_Ref_Table extends PO
+ *  @author Comunidad de Desarrollo Libertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
+ *  @version  - 2013-06-18 17:45:05.244 */
+public class X_AD_Ref_Table extends org.openXpertya.model.PO
 {
 /** Constructor estándar */
 public X_AD_Ref_Table (Properties ctx, int AD_Ref_Table_ID, String trxName)
@@ -20,6 +21,7 @@ setAD_Key (0);
 setAD_Reference_ID (0);
 setAD_Table_ID (0);
 setEntityType (null);	// U
+setIsDisplayIdentifiers (false);
 setIsValueDisplayed (false);
 }
  */
@@ -29,13 +31,13 @@ public X_AD_Ref_Table (Properties ctx, ResultSet rs, String trxName)
 {
 super (ctx, rs, trxName);
 }
-/** AD_Table_ID=103 */
-public static final int Table_ID=103;
+/** AD_Table_ID */
+public static final int Table_ID = M_Table.getTableID("AD_Ref_Table");
 
 /** TableName=AD_Ref_Table */
 public static final String Table_Name="AD_Ref_Table";
 
-protected static KeyNamePair Model = new KeyNamePair(103,"AD_Ref_Table");
+protected static KeyNamePair Model = new KeyNamePair(Table_ID,"AD_Ref_Table");
 protected static BigDecimal AccessLevel = new BigDecimal(4);
 
 /** Load Meta Data */
@@ -78,7 +80,7 @@ Integer ii = (Integer)get_Value("AD_ComponentVersion_ID");
 if (ii == null) return 0;
 return ii.intValue();
 }
-public static final int AD_DISPLAY_AD_Reference_ID=3;
+public static final int AD_DISPLAY_AD_Reference_ID = MReference.getReferenceID("AD_Column ColumName");
 /** Set Display column.
 Column that will display */
 public void setAD_Display (int AD_Display)
@@ -93,7 +95,7 @@ Integer ii = (Integer)get_Value("AD_Display");
 if (ii == null) return 0;
 return ii.intValue();
 }
-public static final int AD_KEY_AD_Reference_ID=3;
+public static final int AD_KEY_AD_Reference_ID = MReference.getReferenceID("AD_Column ColumName");
 /** Set Key column.
 Unique identifier of a record */
 public void setAD_Key (int AD_Key)
@@ -140,7 +142,7 @@ Integer ii = (Integer)get_Value("AD_Table_ID");
 if (ii == null) return 0;
 return ii.intValue();
 }
-public static final int ENTITYTYPE_AD_Reference_ID=245;
+public static final int ENTITYTYPE_AD_Reference_ID = MReference.getReferenceID("_Entity Type");
 /** Applications Integrated with openXpertya = A */
 public static final String ENTITYTYPE_ApplicationsIntegratedWithOpenXpertya = "A";
 /** Country Version = C */
@@ -157,7 +159,7 @@ Dictionary Entity Type;
 public void setEntityType (String EntityType)
 {
 if (EntityType.equals("A") || EntityType.equals("C") || EntityType.equals("D") || EntityType.equals("U") || EntityType.equals("CUST"));
- else throw new IllegalArgumentException ("EntityType Invalid value - Reference_ID=245 - A - C - D - U - CUST");
+ else throw new IllegalArgumentException ("EntityType Invalid value - Reference = ENTITYTYPE_AD_Reference_ID - A - C - D - U - CUST");
 if (EntityType == null) throw new IllegalArgumentException ("EntityType is mandatory");
 if (EntityType.length() > 4)
 {
@@ -172,6 +174,24 @@ Dictionary Entity Type;
 public String getEntityType() 
 {
 return (String)get_Value("EntityType");
+}
+/** Set Is Display Identifiers.
+The showing value is the value of concatenated columns marked as identifiers */
+public void setIsDisplayIdentifiers (boolean IsDisplayIdentifiers)
+{
+set_Value ("IsDisplayIdentifiers", new Boolean(IsDisplayIdentifiers));
+}
+/** Get Is Display Identifiers.
+The showing value is the value of concatenated columns marked as identifiers */
+public boolean isDisplayIdentifiers() 
+{
+Object oo = get_Value("IsDisplayIdentifiers");
+if (oo != null) 
+{
+ if (oo instanceof Boolean) return ((Boolean)oo).booleanValue();
+ return "Y".equals(oo);
+}
+return false;
 }
 /** Set Display Value.
 Displays Value column with the Display column */
