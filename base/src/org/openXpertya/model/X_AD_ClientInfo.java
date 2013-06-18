@@ -1,13 +1,13 @@
 /** Modelo Generado - NO CAMBIAR MANUALMENTE - Disytel */
 package org.openXpertya.model;
-import java.math.BigDecimal;
-import java.sql.ResultSet;
-import java.util.Properties;
-
-import org.openXpertya.util.KeyNamePair;
+import java.util.logging.Level;
+ import java.util.*;
+import java.sql.*;
+import java.math.*;
+import org.openXpertya.util.*;
 /** Modelo Generado por AD_ClientInfo
  *  @author Comunidad de Desarrollo Libertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
- *  @version  - 2012-10-31 20:27:11.798 */
+ *  @version  - 2013-06-18 17:44:31.313 */
 public class X_AD_ClientInfo extends org.openXpertya.model.PO
 {
 /** Constructor estándar */
@@ -639,6 +639,58 @@ if (oo != null)
  return "Y".equals(oo);
 }
 return false;
+}
+public static final int VOIDINGINVOICEPAYMENTSPOSJOURNALCONFIG_AD_Reference_ID = MReference.getReferenceID("Invoice Global Voiding POS Journal Options");
+/** Select = S */
+public static final String VOIDINGINVOICEPAYMENTSPOSJOURNALCONFIG_Select = "S";
+/** Original Payment = P */
+public static final String VOIDINGINVOICEPAYMENTSPOSJOURNALCONFIG_OriginalPayment = "P";
+/** Original Document = D */
+public static final String VOIDINGINVOICEPAYMENTSPOSJOURNALCONFIG_OriginalDocument = "D";
+/** User = U */
+public static final String VOIDINGINVOICEPAYMENTSPOSJOURNALCONFIG_User = "U";
+/** Set Voiding Invoice Payments POS Journal Config */
+public void setVoidingInvoicePaymentsPOSJournalConfig (String VoidingInvoicePaymentsPOSJournalConfig)
+{
+if (VoidingInvoicePaymentsPOSJournalConfig == null || VoidingInvoicePaymentsPOSJournalConfig.equals("S") || VoidingInvoicePaymentsPOSJournalConfig.equals("P") || VoidingInvoicePaymentsPOSJournalConfig.equals("D") || VoidingInvoicePaymentsPOSJournalConfig.equals("U"));
+ else throw new IllegalArgumentException ("VoidingInvoicePaymentsPOSJournalConfig Invalid value - Reference = VOIDINGINVOICEPAYMENTSPOSJOURNALCONFIG_AD_Reference_ID - S - P - D - U");
+if (VoidingInvoicePaymentsPOSJournalConfig != null && VoidingInvoicePaymentsPOSJournalConfig.length() > 1)
+{
+log.warning("Length > 1 - truncated");
+VoidingInvoicePaymentsPOSJournalConfig = VoidingInvoicePaymentsPOSJournalConfig.substring(0,1);
+}
+set_Value ("VoidingInvoicePaymentsPOSJournalConfig", VoidingInvoicePaymentsPOSJournalConfig);
+}
+/** Get Voiding Invoice Payments POS Journal Config */
+public String getVoidingInvoicePaymentsPOSJournalConfig() 
+{
+return (String)get_Value("VoidingInvoicePaymentsPOSJournalConfig");
+}
+public static final int VOIDINGINVOICEPOSJOURNALCONFIG_AD_Reference_ID = MReference.getReferenceID("Invoice Global Voiding POS Journal Options");
+/** Select = S */
+public static final String VOIDINGINVOICEPOSJOURNALCONFIG_Select = "S";
+/** Original Payment = P */
+public static final String VOIDINGINVOICEPOSJOURNALCONFIG_OriginalPayment = "P";
+/** Original Document = D */
+public static final String VOIDINGINVOICEPOSJOURNALCONFIG_OriginalDocument = "D";
+/** User = U */
+public static final String VOIDINGINVOICEPOSJOURNALCONFIG_User = "U";
+/** Set Voiding Invoice POS Journal Config */
+public void setVoidingInvoicePOSJournalConfig (String VoidingInvoicePOSJournalConfig)
+{
+if (VoidingInvoicePOSJournalConfig == null || VoidingInvoicePOSJournalConfig.equals("S") || VoidingInvoicePOSJournalConfig.equals("P") || VoidingInvoicePOSJournalConfig.equals("D") || VoidingInvoicePOSJournalConfig.equals("U"));
+ else throw new IllegalArgumentException ("VoidingInvoicePOSJournalConfig Invalid value - Reference = VOIDINGINVOICEPOSJOURNALCONFIG_AD_Reference_ID - S - P - D - U");
+if (VoidingInvoicePOSJournalConfig != null && VoidingInvoicePOSJournalConfig.length() > 1)
+{
+log.warning("Length > 1 - truncated");
+VoidingInvoicePOSJournalConfig = VoidingInvoicePOSJournalConfig.substring(0,1);
+}
+set_Value ("VoidingInvoicePOSJournalConfig", VoidingInvoicePOSJournalConfig);
+}
+/** Get Voiding Invoice POS Journal Config */
+public String getVoidingInvoicePOSJournalConfig() 
+{
+return (String)get_Value("VoidingInvoicePOSJournalConfig");
 }
 /** Set Web Site.
 Client Web Site */

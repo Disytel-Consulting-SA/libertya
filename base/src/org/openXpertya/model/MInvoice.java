@@ -123,6 +123,9 @@ public class MInvoice extends X_C_Invoice implements DocAction {
 	 */
 	private boolean throwExceptionInCancelCheckStatus = false;
 	
+	/** Config de caja diaria de anulación desde el proceso de anulación */
+	private String voidPOSJournalConfig = null;
+	
 	/**
 	 * Descripción de Método
 	 * 
@@ -4385,6 +4388,8 @@ public class MInvoice extends X_C_Invoice implements DocAction {
 					Env.getDate(), getC_Currency_ID(), "Anulación de "
 							+ docType.getPrintName() + " número "
 							+ getDocumentNo(), get_TrxName());
+			// Seteo la caja diaria del documento reverso
+			allocHdr.setC_POSJournal_ID(reversal.getC_POSJournal_ID());
 
 			if (!allocHdr.save()) {
 				m_processMsg = "Could not create reversal allocation header";
@@ -5470,6 +5475,14 @@ public class MInvoice extends X_C_Invoice implements DocAction {
 		}
 		
 		return "";
+	}
+	
+	public String getVoidPOSJournalConfig() {
+		return voidPOSJournalConfig;
+	}
+
+	public void setVoidPOSJournalConfig(String voidPOSJournalConfig) {
+		this.voidPOSJournalConfig = voidPOSJournalConfig;
 	}
 	
 } // MInvoice

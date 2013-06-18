@@ -363,7 +363,7 @@ public class MLookupFactory {
         String	sql0	= "SELECT t.TableName,ck.ColumnName AS KeyColumn,"				// 1..2
                           + "cd.ColumnName AS DisplayColumn,rt.IsValueDisplayed,cd.IsTranslated,"	// 3..5
                           + "rt.WhereClause,rt.OrderByClause,t.AD_Window_ID,t.PO_Window_ID, "		// 6..9
-                          + "t.AD_Table_ID "	// 10
+                          + "t.AD_Table_ID, rt.IsDisplayIdentifiers "	// 10, 11
                           + "FROM AD_Ref_Table rt" 
                           + " INNER JOIN AD_Table t ON (rt.AD_Table_ID=t.AD_Table_ID)" 
                           + " INNER JOIN AD_Column ck ON (rt.AD_Key=ck.AD_Column_ID)" 
@@ -377,7 +377,8 @@ public class MLookupFactory {
 		WhereClause		= null,
 		OrderByClause		= null;
         boolean	IsTranslated		= false,
-		isValueDisplayed	= false;
+		isValueDisplayed	= false,
+		IsDisplayIdentifiers = false;
         boolean	isSOTrx			= !"N".equals(Env.getContext(ctx, WindowNo, "IsSOTrx"));
         int	ZoomWindow	= 0;
         int	ZoomWindowPO	= 0;
@@ -404,6 +405,7 @@ public class MLookupFactory {
                 ZoomWindow		= rs.getInt(8);
                 ZoomWindowPO		= rs.getInt(9);
                 AD_Table_ID		= rs.getInt(10);
+                IsDisplayIdentifiers = "Y".equals(rs.getString(11));
                 loaded			= true;
             }
 
@@ -424,6 +426,10 @@ public class MLookupFactory {
             return null;
         }
 
+        if(IsDisplayIdentifiers){
+        	return getLookup_TableDir(ctx, language, WindowNo, TableName, TableName+"_ID");
+        }
+        
         StringBuffer	realSQL	= new StringBuffer("SELECT ");
 
         if (!KeyColumn.endsWith("_ID")) {
@@ -555,10 +561,17 @@ public class MLookupFactory {
         s_log.fine("En MlookupInfo.getLookup_TableDir con Tablemane= "+ TableName );
 
         //JOptionPane.showMessageDialog( null,"En MlookupInfo.getLookup_TableDir, con TableName ="+TableName,"..Fin", JOptionPane.INFORMATION_MESSAGE );
-        boolean	isSOTrx	= !"N".equals(Env.getContext(ctx, WindowNo, "IsSOTrx"));
+        return getLookup_TableDir(ctx, language, WindowNo, TableName, ColumnName);
+    }		// getLookup_TableDir
+
+    
+    static private MLookupInfo getLookup_TableDir(Properties ctx, Language language, int WindowNo, String TableName, String ColumnName) {
+    	String key = "TableDir_"+language.getAD_Language()+"_"+ ColumnName;
+    	boolean	isSOTrx	= !"N".equals(Env.getContext(ctx, WindowNo, "IsSOTrx"));
         int	ZoomWindow	= 0;
         int	ZoomWindowPO	= 0;
-
+        MLookupInfo retValue = null;
+        
         // get display column names
         String	sql0	= "SELECT c.ColumnName,c.IsTranslated,c.AD_Reference_ID," + 
         	"c.AD_Reference_Value_ID,t.AD_Window_ID,t.PO_Window_ID " + 
@@ -707,8 +720,8 @@ public class MLookupFactory {
         s_cacheRefTable.put(key, retValue.cloneIt());
          
         return retValue;
-    }		// getLookup_TableDir
-
+    }
+    
     /**
      *  Get embedded SQL for TableDir Lookup (no translation)
      *
@@ -731,10 +744,13 @@ public class MLookupFactory {
      *  @return SELECT Column FROM TableName WHERE BaseTable.BaseColumn=TableName.ColumnName
      */
     static public String getLookup_TableDirEmbed(Language language, String ColumnName, String BaseTable, String BaseColumn) {
-
         String	TableName	= ColumnName.substring(0, ColumnName.length() - 3);
-
-        // get display column name (first identifier column)
+        return getLookup_TableDirEmbed(language, ColumnName, TableName, BaseTable, BaseColumn);
+    }		// getLookup_TableDirEmbed
+    
+    static public String getLookup_TableDirEmbed(Language language, String ColumnName, String TableName, String BaseTable, String BaseColumn) {
+    	
+    	// get display column name (first identifier column)
         String	SQL	= "SELECT c.ColumnName,c.IsTranslated,c.AD_Reference_ID,c.AD_Reference_Value_ID " +
         "FROM AD_Table t INNER JOIN AD_Column c ON (t.AD_Table_ID=c.AD_Table_ID) " +
         "WHERE TableName=?" + " AND c.IsIdentifier='Y' " + 
@@ -821,8 +837,7 @@ public class MLookupFactory {
 
         //
         return embedSQL.toString();
-
-    }		// getLookup_TableDirEmbed
+    }
 
     /**
      *      Get Embedded Lookup SQL for Table Lookup
@@ -834,11 +849,11 @@ public class MLookupFactory {
      */
     static public String getLookup_TableEmbed(Language language, String BaseColumn, String BaseTable, int AD_Reference_Value_ID) {
 
-        String	sql	= "SELECT t.TableName,ck.ColumnName AS KeyColumn," + "cd.ColumnName AS DisplayColumn,rt.isValueDisplayed,cd.IsTranslated " + "FROM AD_Ref_Table rt" + " INNER JOIN AD_Table t ON (rt.AD_Table_ID=t.AD_Table_ID)" + " INNER JOIN AD_Column ck ON (rt.AD_Key=ck.AD_Column_ID)" + " INNER JOIN AD_Column cd ON (rt.AD_Display=cd.AD_Column_ID) " + "WHERE rt.AD_Reference_ID=?" + " AND rt.IsActive='Y' AND t.IsActive='Y'";
+        String	sql	= "SELECT t.TableName,ck.ColumnName AS KeyColumn," + "cd.ColumnName AS DisplayColumn,rt.isValueDisplayed,cd.IsTranslated, rt.IsDisplayIdentifiers " + "FROM AD_Ref_Table rt" + " INNER JOIN AD_Table t ON (rt.AD_Table_ID=t.AD_Table_ID)" + " INNER JOIN AD_Column ck ON (rt.AD_Key=ck.AD_Column_ID)" + " INNER JOIN AD_Column cd ON (rt.AD_Display=cd.AD_Column_ID) " + "WHERE rt.AD_Reference_ID=?" + " AND rt.IsActive='Y' AND t.IsActive='Y'";
 
         //
         String	KeyColumn, DisplayColumn, TableName;
-        boolean	IsTranslated, isValueDisplayed;
+        boolean	IsTranslated, isValueDisplayed, IsDisplayIdentifiers;
 
         try {
 
@@ -862,6 +877,7 @@ public class MLookupFactory {
             DisplayColumn	= rs.getString(3);
             isValueDisplayed	= rs.getString(4).equals("Y");
             IsTranslated	= rs.getString(5).equals("Y");
+            IsDisplayIdentifiers = rs.getString(6).equals("Y");
             rs.close();
             pstmt.close();
 
@@ -872,6 +888,10 @@ public class MLookupFactory {
             return null;
         }
 
+        if(IsDisplayIdentifiers){
+        	return getLookup_TableDirEmbed(language, KeyColumn, TableName, BaseTable, BaseColumn);
+        }
+        
         StringBuffer	embedSQL	= new StringBuffer("SELECT ");
 
         // Translated

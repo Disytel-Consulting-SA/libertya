@@ -117,6 +117,9 @@ public class MAllocationHdr extends X_C_AllocationHdr implements DocAction {
 	 */
 	private boolean voidPOSJournalMustBeOpen = false; 
 	
+	/** Config de caja diaria de anulación desde el proceso de anulación */
+	private String voidPOSJournalConfig = null;
+	
 	/** Cuenta cuántos allocation hay creados con este pago
 	 * 
 	 * @param pay Pago
@@ -1084,7 +1087,11 @@ public class MAllocationHdr extends X_C_AllocationHdr implements DocAction {
     		// se aborta.
     		paym.setConfirmAditionalWorks(false);
     		paym.setVoiderAllocationID(getC_AllocationHdr_ID());
-    		paym.setVoidPOSJournalID(getVoidPOSJournalID());
+			paym.setVoidPOSJournalID(!Util.isEmpty(getVoidPOSJournalConfig(),
+					true)
+					&& getVoidPOSJournalConfig()
+							.equals(X_AD_ClientInfo.VOIDINGINVOICEPAYMENTSPOSJOURNALCONFIG_OriginalPayment) ? getC_POSJournal_ID()
+					: getVoidPOSJournalID());
     		paym.setVoidPOSJournalMustBeOpen(isVoidPOSJournalMustBeOpen());
     		if (!paym.processIt( DocAction.ACTION_Void ))
     			errorMsg = paym.getProcessMsg();
@@ -1133,7 +1140,11 @@ public class MAllocationHdr extends X_C_AllocationHdr implements DocAction {
         	cashLine.setConfirmAditionalWorks(false);
 			cashLine.setVoiderAllocationID(getC_AllocationHdr_ID());
 			cashLine.setIgnoreInvoiceOpen(true);
-			cashLine.setVoidPOSJournalID(getVoidPOSJournalID());
+			cashLine.setVoidPOSJournalID(!Util.isEmpty(getVoidPOSJournalConfig(),
+					true)
+					&& getVoidPOSJournalConfig()
+							.equals(X_AD_ClientInfo.VOIDINGINVOICEPAYMENTSPOSJOURNALCONFIG_OriginalPayment) ? getC_POSJournal_ID()
+					: getVoidPOSJournalID());
 			cashLine.setVoidPOSJournalMustBeOpen(isVoidPOSJournalMustBeOpen());
         	if (!DocumentEngine.processAndSave(cashLine, MCashLine.ACTION_Void,
 					false)) {
@@ -1443,6 +1454,14 @@ public class MAllocationHdr extends X_C_AllocationHdr implements DocAction {
 				"'" + X_C_AllocationHdr.ALLOCATIONTYPE_AdvancedPaymentOrder + "'" +
 				")";
     }
+
+	public String getVoidPOSJournalConfig() {
+		return voidPOSJournalConfig;
+	}
+
+	public void setVoidPOSJournalConfig(String voidPOSJournalConfig) {
+		this.voidPOSJournalConfig = voidPOSJournalConfig;
+	}
 	
 }    // MAllocation
 

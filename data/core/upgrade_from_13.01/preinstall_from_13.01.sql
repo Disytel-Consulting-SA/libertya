@@ -3561,3 +3561,18 @@ CREATE OR REPLACE VIEW c_invoice_allocation_v AS
   GROUP BY ah.ad_client_id, ah.ad_org_id, ah.c_allocationhdr_id, ah.c_doctype_id, dt.name, ah.documentno, ah.datetrx, ah.isactive, ah.docstatus, al.c_invoice_id, i.documentno, i.dateinvoiced, i.grandtotal, bp.c_bpartner_id, bp.value, bp.name, COALESCE(i.nombrecli, bp.name);
 
 ALTER TABLE c_invoice_allocation_v OWNER TO libertya;
+
+--20130618-1650 Incorporación de nueva columna para permitir mostrar en los tipos de dato Tabla los identificadores de la tabla correspondiente
+update ad_system set dummy = (SELECT addcolumnifnotexists('AD_Ref_Table','isdisplayidentifiers', 'character(1) NOT NULL DEFAULT ''N''::bpchar'));
+
+--20130618-1650 Incorporación de configuración de cajas diarias al realizar anulaciones globales de factura
+update ad_system set dummy = (SELECT addcolumnifnotexists('AD_ClientInfo','voidinginvoiceposjournalconfig', 'character(1)'));
+update ad_system set dummy = (SELECT addcolumnifnotexists('AD_ClientInfo','voidinginvoicepaymentsposjournalconfig', 'character(1)'));
+
+UPDATE ad_clientinfo
+SET voidinginvoiceposjournalconfig = 'U'
+WHERE ad_client_id = 1010016;
+
+UPDATE ad_clientinfo
+SET voidinginvoicepaymentsposjournalconfig = 'P'
+WHERE ad_client_id = 1010016;
