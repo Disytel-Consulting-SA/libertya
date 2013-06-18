@@ -266,10 +266,23 @@ public class ExportArciba extends SvrProcess {
 			sqlReal.append(" AND (i.AD_Org_ID = "+ad_org_id+")");
 		}
 		if (date_from != null){
-			sqlReal.append(" AND ((SELECT date_trunc('day',inv.dateinvoiced) FROM C_Invoice inv WHERE inv.C_Invoice_ID = i.C_Invoice_Orig_ID) >= '"+date_from+"')");
+			// NOTAS DE CREDITO IMPUTADAS
+			if (imputed){
+				sqlReal.append(" AND ((SELECT date_trunc('day',inv.dateinvoiced) FROM C_Invoice inv WHERE inv.C_Invoice_ID = i.C_Invoice_Orig_ID) >= '"+date_from+"')");
+			}
+			else{
+				sqlReal.append(" AND (date_trunc('day',i.dateinvoiced) >= '"+date_from+"')");
+			}
 		}
+		
 		if (date_to != null){
-			sqlReal.append(" AND ((SELECT date_trunc('day',inv.dateinvoiced) FROM C_Invoice inv WHERE inv.C_Invoice_ID = i.C_Invoice_Orig_ID) <= '"+date_to+"')");
+			// NOTAS DE CREDITO IMPUTADAS
+			if (imputed){
+				sqlReal.append(" AND ((SELECT date_trunc('day',inv.dateinvoiced) FROM C_Invoice inv WHERE inv.C_Invoice_ID = i.C_Invoice_Orig_ID) <= '"+date_to+"')");
+			}
+			else{
+				sqlReal.append(" AND (date_trunc('day',i.dateinvoiced) <= '"+date_to+"')");
+			}
 		}
 		// NOTAS DE CREDITO IMPUTADAS
 		if (imputed){
