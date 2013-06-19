@@ -328,7 +328,14 @@ public class InfoProduct extends Info implements ActionListener {
         
         // parameterPanel.add( labelValue,new ALayoutConstraint( 0,0 ));
         // parameterPanel.add( fieldValue,null );
-        parameterPanel.add( labelName,new ALayoutConstraint( 0,0 ));
+        
+        // Campo único
+        parameterPanel.add( labelUnique,new ALayoutConstraint( 0,0 ));
+        parameterPanel.add( fieldUnique,null );
+        
+        // Line 2
+        
+        parameterPanel.add( labelName,new ALayoutConstraint( 1,0 ));
         parameterPanel.add( fieldName,null );
        
         
@@ -338,8 +345,8 @@ public class InfoProduct extends Info implements ActionListener {
         parameterPanel.add( pickWarehouse,null );
         parameterPanel.add( m_InfoPAttributeButton );
 
-        // Line 2
-        parameterPanel.add( labelValue,new ALayoutConstraint( 1,0 ));
+        // Line 3
+        parameterPanel.add( labelValue,new ALayoutConstraint( 2,0 ));
         parameterPanel.add( fieldValue,null );
         // parameterPanel.add( labelName,new ALayoutConstraint( 1,0 ));
         // parameterPanel.add( fieldName,null );
@@ -360,15 +367,13 @@ public class InfoProduct extends Info implements ActionListener {
         m_PAttributeButton.setEnabled( false );
         
         // Line 3
-        // Campo único
-        parameterPanel.add( labelUnique,new ALayoutConstraint( 2,0 ));
-        parameterPanel.add( fieldUnique,null );
         
         SwingUtilities.invokeLater(new Runnable() {	
 			@Override
 			public void run() {
 				// fieldValue.requestFocus();
-				fieldName.requestFocus();
+				//fieldName.requestFocus();
+				fieldUnique.requestFocus();
 			}
 		});
         
@@ -1262,6 +1267,11 @@ public class InfoProduct extends Info implements ActionListener {
 		}
 		return res;
 	}
+	
+	@Override
+	protected int getInfoWidth() {
+    	return INFO_WIDTH+140;
+    }
 }    // InfoProduct
 
 
