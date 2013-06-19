@@ -3576,3 +3576,6 @@ WHERE ad_client_id = 1010016;
 UPDATE ad_clientinfo
 SET voidinginvoicepaymentsposjournalconfig = 'P'
 WHERE ad_client_id = 1010016;
+
+--20130619-1602 LYWeb nueva columna utilizada en el visor de cuentas
+ALTER TABLE c_acctschema_element ADD COLUMN ad_column_id numeric(10,0);

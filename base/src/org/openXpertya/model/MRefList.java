@@ -51,7 +51,7 @@ public class MRefList extends X_AD_Ref_List {
     private static CLogger	s_log	= CLogger.getCLogger(MRefList.class);
 
     /** Value Cache */
-    private static CCache	s_cache	= new CCache("AD_Ref_List", 20);
+    private static CCache<String,String>	s_cache	= new CCache<String,String>("AD_Ref_List", 20);
 
     /**
      *      Persistency Constructor
@@ -329,6 +329,121 @@ public class MRefList extends X_AD_Ref_List {
 		}
 		return values;
     }
+    
+	/**
+	 * Get Reference List Value Description (cached)
+	 * @param ctx context
+	 * @param ListName reference
+	 * @param Value value
+	 * @return List or null
+	 */
+	public static String getListDescription (Properties ctx, String ListName, String Value)
+	{
+		String AD_Language = Env.getAD_Language(ctx);
+		String key = AD_Language + "_" + ListName + "_" + Value;
+		String retValue = s_cache.get(key);
+		if (retValue != null)
+			return retValue;
+
+		boolean isBaseLanguage = Env.isBaseLanguage(AD_Language, "AD_Ref_List");
+		String sql = isBaseLanguage ?
+			"SELECT a.Description FROM AD_Ref_List a, AD_Reference b"
+			+ " WHERE b.Name=? AND a.Value=?" 
+			+ " AND a.AD_Reference_ID = b.AD_Reference_ID"
+			: 				
+			"SELECT t.Description FROM AD_Reference r"
+			+" INNER JOIN AD_Ref_List rl ON (r.AD_Reference_ID=rl.AD_Reference_ID)"
+			+" INNER JOIN AD_Ref_List_Trl t ON (t.AD_Ref_List_ID=rl.AD_Ref_List_ID)"
+			+" WHERE r.Name=? AND rl.Value=? AND t.AD_Language=?";
+		PreparedStatement pstmt = null;
+		ResultSet rs = null;
+		try
+		{
+			pstmt = DB.prepareStatement (sql,null);
+			pstmt.setString (1, ListName);
+			pstmt.setString(2, Value);			
+			if (!isBaseLanguage)
+				pstmt.setString(3, AD_Language);
+			rs = pstmt.executeQuery ();
+			if (rs.next ())
+				retValue = rs.getString(1);
+			rs.close ();
+			pstmt.close ();
+			pstmt = null;
+		}
+		catch (SQLException ex)
+		{
+			s_log.log(Level.SEVERE, sql + " -- " + key, ex);
+		}
+		finally
+		{
+			DB.close(rs, pstmt);
+			rs = null; pstmt = null;
+		}
+
+		//	Save into Cache
+		if (retValue == null)
+		{
+			retValue = "";
+			s_log.info("getListDescription - Not found " + key);
+		}
+		s_cache.put(key, retValue);
+		//
+		return retValue;
+	}	//	getListDescription
+	
+	/**
+	 * Get Reference List (translated)
+	 * @param ctx context
+	 * @param AD_Reference_ID reference
+	 * @param optional if true add "",""
+	 * @return List or null
+	 */
+	public static ValueNamePair[] getList (Properties ctx, int AD_Reference_ID, boolean optional)
+	{
+		String ad_language = Env.getAD_Language(ctx);
+		boolean isBaseLanguage = Env.isBaseLanguage(ad_language, "AD_Ref_List");
+		String sql = isBaseLanguage ?
+			"SELECT Value, Name FROM AD_Ref_List WHERE AD_Reference_ID=? AND IsActive='Y' ORDER BY Name"
+			:
+			"SELECT r.Value, t.Name FROM AD_Ref_List_Trl t"
+			+ " INNER JOIN AD_Ref_List r ON (r.AD_Ref_List_ID=t.AD_Ref_List_ID)"
+			+ " WHERE r.AD_Reference_ID=? AND t.AD_Language=? AND r.IsActive='Y'"
+			+ " ORDER BY t.Name"
+		;
+		PreparedStatement pstmt = null;
+		ResultSet rs = null;
+		ArrayList<ValueNamePair> list = new ArrayList<ValueNamePair>();
+		if (optional)
+			list.add(new ValueNamePair("", ""));
+		try
+		{
+			pstmt = DB.prepareStatement(sql, null);
+			pstmt.setInt(1, AD_Reference_ID);
+			if (!isBaseLanguage)
+				pstmt.setString(2, ad_language);
+			rs = pstmt.executeQuery();
+			while (rs.next())
+				list.add(new ValueNamePair(rs.getString(1), rs.getString(2)));
+			rs.close();
+			pstmt.close();
+			pstmt = null;
+		}
+		catch (SQLException e)
+		{
+			s_log.log(Level.SEVERE, sql, e);
+		}
+		finally
+		{
+			DB.close(rs, pstmt);
+			rs = null; pstmt = null;
+		}
+		ValueNamePair[] retValue = new ValueNamePair[list.size()];
+		list.toArray(retValue);
+		return retValue;		
+	}	//	getList
+
+    
 }	// MRef_List
 
 
