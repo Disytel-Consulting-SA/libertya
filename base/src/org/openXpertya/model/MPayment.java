@@ -22,6 +22,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
@@ -733,7 +734,11 @@ public final class MPayment extends X_C_Payment implements DocAction,ProcessCall
         		setDueDate(getDateTrx());
         	}
         	// La fecha de vto debe ser mayor o igual a la fecha de transacción
-        	if (getDueDate().compareTo(getDateTrx()) < 0) {
+        	SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy/MM/dd");
+        	String dueDateFormatted = simpleDateFormat.format(getDueDate());
+        	String dateTrxFormatted = simpleDateFormat.format(getDateTrx());
+			if (getDueDate().compareTo(getDateTrx()) <= 0
+					&& !dueDateFormatted.equals(dateTrxFormatted)) {
         		log.saveError("SaveError", Msg.translate(getCtx(), "InvalidCheckDueDate"));
         		return false;
         	}
