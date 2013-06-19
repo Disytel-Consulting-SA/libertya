@@ -20,6 +20,7 @@
 
 package org.openXpertya.model;
 
+import org.openXpertya.model.M_Column;
 import org.openXpertya.util.CCache;
 import org.openXpertya.util.CLogger;
 import org.openXpertya.util.DB;
@@ -204,6 +205,23 @@ public final class MAcctSchemaElement extends X_C_AcctSchema_Element {
 
     }		// beforeSave
 
+	/**
+	 * Get Display ColumnName
+	 * @return column name
+	 */
+	public String getDisplayColumnName()
+	{
+		String et = getElementType();
+		if (ELEMENTTYPE_User1.equals(et) || ELEMENTTYPE_User2.equals(et))
+		{
+			if (m_ColumnName == null)
+				m_ColumnName = M_Column.getColumnName(getCtx(), getAD_Column_ID());
+			return m_ColumnName;
+		}
+		return getColumnName(et);
+	}	//	getDisplayColumnName
+	
+    
     /**
      *  String representation
      *  @return info
@@ -477,6 +495,9 @@ public final class MAcctSchemaElement extends X_C_AcctSchema_Element {
         setC_BPartner_ID(C_BPartner_ID);
     }
 
+	/** User Element Column Name		*/
+	private String		m_ColumnName = null;
+    
     /**
      *      Set Organization Type
      *      @param SeqNo sequence

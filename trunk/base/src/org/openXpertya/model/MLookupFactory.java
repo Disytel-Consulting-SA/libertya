@@ -337,6 +337,31 @@ public class MLookupFactory {
         return retValue;
     }		// getLookup_List
 
+	/**
+	 * Get Lookup SQL for List
+	 * @param language report Language
+	 * @param AD_Reference_Value_ID reference value
+	 * @param linkColumnName link column name
+	 * @return SELECT Name FROM AD_Ref_List WHERE AD_Reference_ID=x AND Value=linkColumn
+	 */
+	static public String getLookup_ListEmbed(Language language,
+		int AD_Reference_Value_ID, String linkColumnName)
+	{
+		StringBuffer realSQL = new StringBuffer ("SELECT ");
+		if (Env.isBaseLanguage(language, "AD_Ref_List"))
+			realSQL.append("AD_Ref_List.Name FROM AD_Ref_List");
+		else
+			realSQL.append("trl.Name "
+				+ "FROM AD_Ref_List INNER JOIN AD_Ref_List_Trl trl "
+				+ " ON (AD_Ref_List.AD_Ref_List_ID=trl.AD_Ref_List_ID AND trl.AD_Language='")
+					.append(language.getAD_Language()).append("')");
+		realSQL.append(" WHERE AD_Ref_List.AD_Reference_ID=").append(AD_Reference_Value_ID)
+			.append(" AND AD_Ref_List.Value=").append(linkColumnName);
+
+		//
+		return realSQL.toString();
+	}	//	getLookup_ListEmbed
+    
     /**
      *      Get Lookup SQL for Table Lookup
      *  @param ctx context for access and dynamic access

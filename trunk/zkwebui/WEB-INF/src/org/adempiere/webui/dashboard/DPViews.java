@@ -172,7 +172,7 @@ public class DPViews extends DashboardPanel implements EventListener {
         				  MRole.getDefault().isShowAcct() &&
         				  AEnv.canAccessInfo("ACCOUNT"))
         		{
-        			//new org.openXpertya.webui.acct.WAcctViewer();
+        			new org.adempiere.webui.acct.WAcctViewer();
         		}
         		else if (actionCommand.equals("InfoSchedule") && AEnv.canAccessInfo("SCHEDULE"))
         		{

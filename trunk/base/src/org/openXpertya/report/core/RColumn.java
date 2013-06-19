@@ -20,6 +20,7 @@ import java.math.BigDecimal;
 import java.sql.Timestamp;
 import java.util.Properties;
 
+import org.openXpertya.report.core.RModel;
 import org.openXpertya.model.MLookupFactory;
 import org.openXpertya.util.DisplayType;
 import org.openXpertya.util.Env;
@@ -140,6 +141,125 @@ public class RColumn {
         m_colClass  = colClass;
     }    // RColumn
 
+    
+	/**
+	 *  Create Report Column
+	 *	@param ctx context 
+	 *	@param columnName column name
+	 *	@param displayType display type
+	 *	@param sql sql (if null then columnName is used). 
+	 *	@param AD_Reference_Value_ID List/Table Reference
+	 *	@param refColumnName UserReference column name
+	 *	Will be overwritten if TableDir or Search 
+	 */
+	public RColumn (Properties ctx, String columnName, int displayType, 
+		String sql,	int AD_Reference_Value_ID, String refColumnName)
+	{
+		m_columnName = columnName;
+		m_colHeader = Msg.translate(ctx, columnName);
+		if (refColumnName != null)
+			m_colHeader = Msg.translate(ctx, refColumnName);
+		m_displayType = displayType;
+		m_colSQL = sql;
+		if (m_colSQL == null || m_colSQL.length() == 0)
+			m_colSQL = columnName;
+
+		//  Strings
+		if (DisplayType.isText(displayType))
+			m_colClass = String.class;                  //  default size=30
+		//  Amounts
+		else if (displayType == DisplayType.Amount)
+		{
+			m_colClass = BigDecimal.class;
+			m_colSize = 70;
+		}
+		//  Boolean
+		else if (displayType == DisplayType.YesNo)
+			m_colClass = Boolean.class;
+		//  Date
+		else if (DisplayType.isDate(displayType))
+			m_colClass = Timestamp.class;
+		//  Number
+		else if (displayType == DisplayType.Quantity 
+			|| displayType == DisplayType.Number  
+			|| displayType == DisplayType.CostPrice)
+		{
+			m_colClass = Double.class;
+			m_colSize = 70;
+		}
+		//  Integer
+		else if (displayType == DisplayType.Integer)
+			m_colClass = Integer.class;
+		//  List
+		else if (displayType == DisplayType.List)
+		{
+			Language language = Language.getLanguage(Env.getAD_Language(ctx));
+			m_colSQL = "(" + MLookupFactory.getLookup_ListEmbed(
+				language, AD_Reference_Value_ID, columnName) + ")";
+			m_displaySQL = m_colSQL;
+			m_colClass = String.class;
+			m_isIDcol = false;
+		}
+		else if (displayType == DisplayType.ID) {
+			m_colClass = Integer.class;
+		}
+		/**  Table
+		else if (displayType == DisplayType.Table)
+		{
+			Language language = Language.getLanguage(Env.getAD_Language(ctx));
+			m_colSQL += ",(" + MLookupFactory.getLookup_TableEmbed(
+				language, columnName, RModel.TABLE_ALIAS, AD_Reference_Value_ID) + ")";
+			m_colClass = String.class;
+			m_isIDcol = false;
+		}	**/
+		//  TableDir, Search,...
+		else
+		{
+			m_colClass = String.class;
+			Language language = Language.getLanguage(Env.getAD_Language(ctx));
+			if (columnName.equals("Account_ID") 
+				|| columnName.equals("User1_ID") || columnName.equals("User2_ID"))
+			{
+				m_displaySQL = "(" + MLookupFactory.getLookup_TableDirEmbed(
+					language, "C_ElementValue_ID", RModel.TABLE_ALIAS, columnName) + ")";
+				m_colSQL += "," + m_displaySQL;
+				m_isIDcol = true;
+			}
+			else if (columnName.startsWith("UserElement") && refColumnName != null)
+			{
+				m_displaySQL = "(" + MLookupFactory.getLookup_TableDirEmbed(
+					language, refColumnName, RModel.TABLE_ALIAS, columnName) + ")";
+				m_colSQL += "," + m_displaySQL;
+				m_isIDcol = true;
+			}
+			else if (columnName.equals("C_LocFrom_ID") || columnName.equals("C_LocTo_ID"))
+			{
+				m_displaySQL = "(" + MLookupFactory.getLookup_TableDirEmbed(
+					language, "C_Location_ID", RModel.TABLE_ALIAS, columnName) + ")";
+				m_colSQL += "," + m_displaySQL;
+				m_isIDcol = true;
+			}
+			else if (columnName.equals("AD_OrgTrx_ID"))
+			{
+				m_displaySQL = "(" + MLookupFactory.getLookup_TableDirEmbed(
+					language, "AD_Org_ID", RModel.TABLE_ALIAS, columnName) + ")";
+				m_colSQL += "," + m_displaySQL;
+				m_isIDcol = true;
+			}
+			else if (displayType == DisplayType.TableDir)
+			{
+				m_displaySQL = "(" + MLookupFactory.getLookup_TableDirEmbed(
+					language, columnName, RModel.TABLE_ALIAS) + ")";
+				m_colSQL += "," + m_displaySQL;
+				m_isIDcol = true;
+			}
+		}
+	}   //  RColumn
+    
+	
+	/** Column Name                 */
+	private String		m_columnName;
+	
     /** Descripción de Campos */
 
     private String m_colHeader;
@@ -148,8 +268,11 @@ public class RColumn {
 
     private String m_colSQL;
 
+	/** Column Display SQL          */
+	private String      m_displaySQL;
+    
     /** Descripción de Campos */
-
+    
     private Class m_colClass;
 
     /** Descripción de Campos */

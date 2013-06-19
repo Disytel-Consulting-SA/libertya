@@ -1,13 +1,14 @@
-/** Modelo Generado - NO CAMBIAR MANUALMENTE - Copyright (C) 2006 FUNDESLE */
+/** Modelo Generado - NO CAMBIAR MANUALMENTE - Disytel */
 package org.openXpertya.model;
-import java.util.*;
+import java.util.logging.Level;
+ import java.util.*;
 import java.sql.*;
 import java.math.*;
 import org.openXpertya.util.*;
 /** Modelo Generado por C_AcctSchema_Element
- *  @author Comunidad de Desarrollo openXpertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
- *  @version  - 2008-01-03 10:26:27.39 */
-public class X_C_AcctSchema_Element extends PO
+ *  @author Comunidad de Desarrollo Libertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
+ *  @version  - 2013-06-19 16:09:09.492 */
+public class X_C_AcctSchema_Element extends org.openXpertya.model.PO
 {
 /** Constructor estándar */
 public X_C_AcctSchema_Element (Properties ctx, int C_AcctSchema_Element_ID, String trxName)
@@ -32,13 +33,13 @@ public X_C_AcctSchema_Element (Properties ctx, ResultSet rs, String trxName)
 {
 super (ctx, rs, trxName);
 }
-/** AD_Table_ID=279 */
-public static final int Table_ID=279;
+/** AD_Table_ID */
+public static final int Table_ID = M_Table.getTableID("C_AcctSchema_Element");
 
 /** TableName=C_AcctSchema_Element */
 public static final String Table_Name="C_AcctSchema_Element";
 
-protected static KeyNamePair Model = new KeyNamePair(279,"C_AcctSchema_Element");
+protected static KeyNamePair Model = new KeyNamePair(Table_ID,"C_AcctSchema_Element");
 protected static BigDecimal AccessLevel = new BigDecimal(2);
 
 /** Load Meta Data */
@@ -51,6 +52,22 @@ public String toString()
 {
 StringBuffer sb = new StringBuffer ("X_C_AcctSchema_Element[").append(getID()).append("]");
 return sb.toString();
+}
+/** Set Column.
+Column in the table */
+public void setAD_Column_ID (int AD_Column_ID)
+{
+if (AD_Column_ID <= 0) set_Value ("AD_Column_ID", null);
+ else 
+set_Value ("AD_Column_ID", new Integer(AD_Column_ID));
+}
+/** Get Column.
+Column in the table */
+public int getAD_Column_ID() 
+{
+Integer ii = (Integer)get_Value("AD_Column_ID");
+if (ii == null) return 0;
+return ii.intValue();
 }
 /** Set Acct.Schema Element */
 public void setC_AcctSchema_Element_ID (int C_AcctSchema_Element_ID)
@@ -126,6 +143,20 @@ Integer ii = (Integer)get_Value("C_Campaign_ID");
 if (ii == null) return 0;
 return ii.intValue();
 }
+/** Set Element.
+Accounting Element */
+public void setC_Element_ID (int C_Element_ID)
+{
+set_Value ("C_Element_ID", new Integer(C_Element_ID));
+}
+/** Get Element.
+Accounting Element */
+public int getC_Element_ID() 
+{
+Integer ii = (Integer)get_Value("C_Element_ID");
+if (ii == null) return 0;
+return ii.intValue();
+}
 /** Set Account Element.
 Account Element */
 public void setC_ElementValue_ID (int C_ElementValue_ID)
@@ -139,20 +170,6 @@ Account Element */
 public int getC_ElementValue_ID() 
 {
 Integer ii = (Integer)get_Value("C_ElementValue_ID");
-if (ii == null) return 0;
-return ii.intValue();
-}
-/** Set Element.
-Accounting Element */
-public void setC_Element_ID (int C_Element_ID)
-{
-set_Value ("C_Element_ID", new Integer(C_Element_ID));
-}
-/** Get Element.
-Accounting Element */
-public int getC_Element_ID() 
-{
-Integer ii = (Integer)get_Value("C_Element_ID");
 if (ii == null) return 0;
 return ii.intValue();
 }
@@ -204,7 +221,19 @@ Integer ii = (Integer)get_Value("C_SalesRegion_ID");
 if (ii == null) return 0;
 return ii.intValue();
 }
-public static final int ELEMENTTYPE_AD_Reference_ID=181;
+public static final int ELEMENTTYPE_AD_Reference_ID = MReference.getReferenceID("C_AcctSchema ElementType");
+/** Activity = AY */
+public static final String ELEMENTTYPE_Activity = "AY";
+/** Org = OO */
+public static final String ELEMENTTYPE_Org = "OO";
+/** Account = AC */
+public static final String ELEMENTTYPE_Account = "AC";
+/** Product = PR */
+public static final String ELEMENTTYPE_Product = "PR";
+/** BPartner = BP */
+public static final String ELEMENTTYPE_BPartner = "BP";
+/** Org Trx = OT */
+public static final String ELEMENTTYPE_OrgTrx = "OT";
 /** Location From = LF */
 public static final String ELEMENTTYPE_LocationFrom = "LF";
 /** Location To = LT */
@@ -219,29 +248,17 @@ public static final String ELEMENTTYPE_Campaign = "MC";
 public static final String ELEMENTTYPE_User1 = "U1";
 /** User 2 = U2 */
 public static final String ELEMENTTYPE_User2 = "U2";
-/** Org = OO */
-public static final String ELEMENTTYPE_Org = "OO";
-/** Account = AC */
-public static final String ELEMENTTYPE_Account = "AC";
-/** Product = PR */
-public static final String ELEMENTTYPE_Product = "PR";
-/** BPartner = BP */
-public static final String ELEMENTTYPE_BPartner = "BP";
-/** Org Trx = OT */
-public static final String ELEMENTTYPE_OrgTrx = "OT";
-/** Activity = AY */
-public static final String ELEMENTTYPE_Activity = "AY";
 /** Set Type.
 Element Type (account or user defined) */
 public void setElementType (String ElementType)
 {
-if (ElementType.equals("LF") || ElementType.equals("LT") || ElementType.equals("SR") || ElementType.equals("PJ") || ElementType.equals("MC") || ElementType.equals("U1") || ElementType.equals("U2") || ElementType.equals("OO") || ElementType.equals("AC") || ElementType.equals("PR") || ElementType.equals("BP") || ElementType.equals("OT") || ElementType.equals("AY"));
- else throw new IllegalArgumentException ("ElementType Invalid value - Reference_ID=181 - LF - LT - SR - PJ - MC - U1 - U2 - OO - AC - PR - BP - OT - AY");
+if (ElementType.equals("AY") || ElementType.equals("OO") || ElementType.equals("AC") || ElementType.equals("PR") || ElementType.equals("BP") || ElementType.equals("OT") || ElementType.equals("LF") || ElementType.equals("LT") || ElementType.equals("SR") || ElementType.equals("PJ") || ElementType.equals("MC") || ElementType.equals("U1") || ElementType.equals("U2"));
+ else throw new IllegalArgumentException ("ElementType Invalid value - Reference = ELEMENTTYPE_AD_Reference_ID - AY - OO - AC - PR - BP - OT - LF - LT - SR - PJ - MC - U1 - U2");
 if (ElementType == null) throw new IllegalArgumentException ("ElementType is mandatory");
 if (ElementType.length() > 2)
 {
 log.warning("Length > 2 - truncated");
-ElementType = ElementType.substring(0,1);
+ElementType = ElementType.substring(0,2);
 }
 set_Value ("ElementType", ElementType);
 }
@@ -309,7 +326,7 @@ if (Name == null) throw new IllegalArgumentException ("Name is mandatory");
 if (Name.length() > 60)
 {
 log.warning("Length > 60 - truncated");
-Name = Name.substring(0,59);
+Name = Name.substring(0,60);
 }
 set_Value ("Name", Name);
 }
@@ -323,7 +340,7 @@ public KeyNamePair getKeyNamePair()
 {
 return new KeyNamePair(getID(), getName());
 }
-public static final int ORG_ID_AD_Reference_ID=130;
+public static final int ORG_ID_AD_Reference_ID = MReference.getReferenceID("AD_Org (Trx)");
 /** Set Organization.
 Organizational entity within client */
 public void setOrg_ID (int Org_ID)
