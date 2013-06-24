@@ -571,6 +571,8 @@ public class LibroIVANewDataSource implements JRDataSource {
 				return tax.taxType;
 			} else if (name.toUpperCase().equals("TAXBASEAMOUNT"))	{
 				return tax.taxBaseAmt;
+			} else if (name.equalsIgnoreCase("c_categoria_iva_name"))	{
+				return tax.categoriaIVAName;
 			}
 			
 			return null;
@@ -586,7 +588,7 @@ public class LibroIVANewDataSource implements JRDataSource {
 					  "			ct.c_tax_name AS TaxName, " +
 					  "			SUM(currencyconvert(cit.importe, inv.c_currency_id, 118, inv.dateacct::timestamp with time zone, inv.c_conversiontype_id, inv.ad_client_id, inv.ad_org_id) * cdt.signo::numeric)::numeric(20,2) AS TaxAmount, " +
 					  "			SUM(currencyconvert(cit.taxbaseamt, inv.c_currency_id, 118, inv.dateacct::timestamp with time zone, inv.c_conversiontype_id, inv.ad_client_id, inv.ad_org_id) * cdt.signo::numeric)::numeric(20,2) AS TaxBaseAmount, " +
-					  "         ct.taxindicator as TaxIndicator, ct.rate as Rate, ct.sopotype as Sopotype, ct.taxtype as TaxType "
+					  "         ct.taxindicator as TaxIndicator, ct.rate as Rate, ct.sopotype as Sopotype, ct.taxtype as TaxType, c_categoria_iva_name "
 					+ "		FROM ( SELECT c_invoice.c_invoice_id, c_invoice.ad_client_id, c_invoice.ad_org_id, c_invoice.isactive, c_invoice.created, c_invoice.createdby, c_invoice.updated, c_invoice.updatedby, c_invoice.c_currency_id, c_invoice.c_conversiontype_id, c_invoice.documentno, c_invoice.c_bpartner_id, c_invoice.dateacct, c_invoice.dateinvoiced, c_invoice.totallines, c_invoice.grandtotal, c_invoice.issotrx, c_invoice.c_doctype_id "
 					+ "     	   FROM c_invoice "
 					+ "     	   WHERE (c_invoice.docstatus = 'CO'::bpchar OR c_invoice.docstatus = 'CL'::bpchar OR c_invoice.docstatus = 'RE'::bpchar OR c_invoice.docstatus = 'VO'::bpchar) AND c_invoice.isactive = 'Y'::bpchar " 
@@ -624,13 +626,13 @@ public class LibroIVANewDataSource implements JRDataSource {
 				    + " 				FROM c_tax) ct ON ct.c_tax_id = cit.c_tax_id "
 				    + "		LEFT JOIN ( SELECT c_bpartner.c_bpartner_id, c_bpartner.name AS c_bpartner_name, c_bpartner.c_categoria_iva_id,c_bpartner.taxid, c_bpartner.iibb "
 				    + " 				FROM c_bpartner) cbp ON inv.c_bpartner_id = cbp.c_bpartner_id "
-				    + "		LEFT JOIN ( SELECT c_categoria_iva.c_categoria_iva_id, c_categoria_iva.name AS c_categoria_via_name, c_categoria_iva.codigo AS codiva, c_categoria_iva.i_tipo_iva "
+				    + "		LEFT JOIN ( SELECT c_categoria_iva.c_categoria_iva_id, c_categoria_iva.name AS c_categoria_iva_name, c_categoria_iva.codigo AS codiva, c_categoria_iva.i_tipo_iva "
 				    + " 				FROM c_categoria_iva) cci ON cbp.c_categoria_iva_id = cci.c_categoria_iva_id "
 				    + " 	WHERE cdt.doctypekey::text <> ALL (ARRAY['RTR'::character varying, 'RTI'::character varying, 'RCR'::character varying, 'RCI'::character varying]::text[])"
 				    + "       AND cdt.isfiscaldocument = 'Y' "
 				    + "       AND ct.issummary = 'N' "
-				    + "     GROUP BY ct.c_tax_name, ct.taxindicator, ct.rate, ct.sopotype, ct.taxtype  "
-				    + " 	ORDER BY ct.c_tax_name ");
+				    + "     GROUP BY ct.c_tax_name, ct.taxindicator, ct.rate, ct.sopotype, ct.taxtype, c_categoria_iva_name  "
+				    + " 	ORDER BY c_categoria_iva_name, ct.rate ");
 					return query.toString();
 		}
 
@@ -652,9 +654,10 @@ public class LibroIVANewDataSource implements JRDataSource {
 			protected String sopoType;
 			protected String taxType;
 			private BigDecimal taxBaseAmt;
+			private String categoriaIVAName;
 			
 		
-			public M_Tax(String taxName, BigDecimal taxAmount, String taxIndicator, BigDecimal rate, String sopoType, String taxType, BigDecimal taxBaseAmt) {
+			public M_Tax(String taxName, BigDecimal taxAmount, String taxIndicator, BigDecimal rate, String sopoType, String taxType, BigDecimal taxBaseAmt, String categoriaIVAName) {
 				super();
 				this.taxName = taxName;
 				this.taxAmount = taxAmount;
@@ -663,13 +666,14 @@ public class LibroIVANewDataSource implements JRDataSource {
 				this.sopoType = sopoType;
 				this.taxType = taxType;
 				this.taxBaseAmt = taxBaseAmt;
+				this.categoriaIVAName = categoriaIVAName;
 			}
 
 			public M_Tax(ResultSet rs) throws SQLException {
 				this(rs.getString("TaxName"), rs.getBigDecimal("TaxAmount"), rs
 						.getString("TaxIndicator"), rs.getBigDecimal("Rate"),
 						rs.getString("SopoType"), rs.getString("TaxType"), rs
-								.getBigDecimal("TaxBaseAmount")); 
+								.getBigDecimal("TaxBaseAmount"), rs.getString("c_categoria_iva_name")); 
 			}
 		}
 		

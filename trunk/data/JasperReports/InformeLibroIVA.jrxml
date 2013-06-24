@@ -60,6 +60,15 @@
 	<variable name="importe_sum_row" class="java.math.BigDecimal" resetType="Report" calculation="Sum">
 		<variableExpression><![CDATA[$F{IMPORTE}]]></variableExpression>
 	</variable>
+	<variable name="NETO_GRAVADO_SUM" class="java.math.BigDecimal" resetType="Report" calculation="Sum">
+		<variableExpression><![CDATA[$F{NETOGRAVADO}]]></variableExpression>
+	</variable>
+	<variable name="NETO_NO_GRAVADO_SUM" class="java.math.BigDecimal" resetType="Report" calculation="Sum">
+		<variableExpression><![CDATA[$F{NETONOGRAVADO}]]></variableExpression>
+	</variable>
+	<variable name="TOTAL_SUM" class="java.math.BigDecimal" resetType="Report" calculation="Sum">
+		<variableExpression><![CDATA[$F{TOTAL}]]></variableExpression>
+	</variable>
 
 		<group  name="TIPODOC" >
 			<groupExpression><![CDATA[$F{TIPODOCNAME}]]></groupExpression>
@@ -687,19 +696,15 @@
 			</band>
 		</columnFooter>
 		<pageFooter>
-			<band height="28"  isSplitAllowed="true" >
+			<band height="0"  isSplitAllowed="true" >
 			</band>
 		</pageFooter>
-		<lastPageFooter>
-			<band height="28"  isSplitAllowed="true" >
-			</band>
-		</lastPageFooter>
 		<summary>
-			<band height="130"  isSplitAllowed="true" >
+			<band height="84"  isSplitAllowed="true" >
 				<textField isStretchWithOverflow="false" pattern="##0.00" isBlankWhenNull="false" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
 						x="79"
-						y="70"
+						y="65"
 						width="63"
 						height="11"
 						key="textField"/>
@@ -713,7 +718,7 @@
 					<reportElement
 						mode="Transparent"
 						x="0"
-						y="13"
+						y="8"
 						width="53"
 						height="16"
 						forecolor="#010101"
@@ -728,7 +733,7 @@
 				<textField isStretchWithOverflow="false" isBlankWhenNull="false" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
 						x="79"
-						y="34"
+						y="29"
 						width="63"
 						height="11"
 						key="textField-2"/>
@@ -741,7 +746,7 @@
 				<textField isStretchWithOverflow="false" isBlankWhenNull="false" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
 						x="79"
-						y="46"
+						y="41"
 						width="63"
 						height="11"
 						key="textField-3"/>
@@ -754,7 +759,7 @@
 				<textField isStretchWithOverflow="false" isBlankWhenNull="false" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
 						x="79"
-						y="58"
+						y="53"
 						width="63"
 						height="11"
 						key="textField-4"/>
@@ -768,7 +773,7 @@
 					<reportElement
 						mode="Transparent"
 						x="0"
-						y="34"
+						y="29"
 						width="79"
 						height="11"
 						forecolor="#010101"
@@ -784,7 +789,7 @@
 					<reportElement
 						mode="Transparent"
 						x="0"
-						y="46"
+						y="41"
 						width="79"
 						height="11"
 						forecolor="#010101"
@@ -800,7 +805,7 @@
 					<reportElement
 						mode="Transparent"
 						x="0"
-						y="58"
+						y="53"
 						width="79"
 						height="11"
 						forecolor="#010101"
@@ -816,7 +821,7 @@
 					<reportElement
 						mode="Transparent"
 						x="0"
-						y="70"
+						y="65"
 						width="79"
 						height="11"
 						forecolor="#010101"
@@ -831,8 +836,8 @@
 				<staticText>
 					<reportElement
 						mode="Transparent"
-						x="240"
-						y="15"
+						x="220"
+						y="10"
 						width="83"
 						height="16"
 						forecolor="#010101"
@@ -847,9 +852,9 @@
 				<subreport  isUsingCache="true">
 					<reportElement
 						mode="Transparent"
-						x="240"
-						y="36"
-						width="210"
+						x="220"
+						y="32"
+						width="315"
 						height="30"
 						key="subreport-1"
 						positionType="Float"/>
