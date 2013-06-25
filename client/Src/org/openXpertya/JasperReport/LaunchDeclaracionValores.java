@@ -97,6 +97,8 @@ public class LaunchDeclaracionValores extends JasperReportLaunch {
 		addReportParameter("SHOW_VOID_DOCUMENTS", isShowVoidDocuments());
 		addReportParameter("SHOW_VOID_DOCUMENTS_TRUE_DESCRIPTION", Msg.getMsg(getCtx(), "ShowVoidDocuments"));
 		addReportParameter("SHOW_VOID_DOCUMENTS_FALSE_DESCRIPTION", Msg.getMsg(getCtx(), "DoNotShowVoidDocuments"));
+		addReportParameter("ONLY_TOTALS", Util.isEmpty(getPOSID(), true)
+				&& Util.isEmpty(getUserID(), true));
 		// Agrego los subreportes
 		addSubreports();
 	}
