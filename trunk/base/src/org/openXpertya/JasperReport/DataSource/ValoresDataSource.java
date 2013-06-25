@@ -29,7 +29,7 @@ public class ValoresDataSource extends DeclaracionValoresDataSource {
 
 	@Override
 	protected String getQuery() {
-		StringBuffer sql = new StringBuffer("select cs.c_posjournal_id,qty,cashvalue,cs.c_currency_id,amount,iso_code,description,currencybase(amount, cs.c_currency_id, pj.datetrx, cs.ad_client_id, cs.ad_org_id)::numeric(22,2) as amount_converted " +
+		StringBuffer sql = new StringBuffer("select cashvalue, cs.c_currency_id, iso_code, description, sum(qty)::integer as qty, sum(amount)::numeric(22,2) as amount, sum(currencybase(amount, cs.c_currency_id, pj.datetrx, cs.ad_client_id, cs.ad_org_id))::numeric(22,2) as amount_converted " +
 					 "from C_POSCashStatement as cs " +
 					 "inner join c_posjournal as pj on pj.c_posjournal_id = cs.c_posjournal_id " +
 					 "inner join c_currency as c on c.c_currency_id = cs.c_currency_id");
@@ -38,6 +38,8 @@ public class ValoresDataSource extends DeclaracionValoresDataSource {
 		if(!Util.isEmpty(whereClause, true)){
 			sql.append(where).append(whereClause);
 		}
+		sql.append(" GROUP BY cashvalue, cs.c_currency_id, iso_code, description ");
+		sql.append(" ORDER BY cashvalue ");
 		return sql.toString();
 	}
 
