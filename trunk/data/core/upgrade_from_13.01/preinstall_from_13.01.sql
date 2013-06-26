@@ -3579,3 +3579,39 @@ WHERE ad_client_id = 1010016;
 
 --20130619-1602 LYWeb nueva columna utilizada en el visor de cuentas
 ALTER TABLE c_acctschema_element ADD COLUMN ad_column_id numeric(10,0);
+
+--20130626-1625 Creación función SQL getInvoiceAmt utilizada en informe Estado de Cuenta EC
+CREATE OR REPLACE FUNCTION getInvoiceAmt(p_c_invoice_id integer, p_c_currency_id integer)
+  RETURNS numeric AS
+$BODY$
+DECLARE
+	v_TotalAmt			NUMERIC := 0;
+BEGIN
+	SELECT 
+	(CASE
+	WHEN d.documenttable = 'C_Invoice' THEN (select (CASE WHEN SUM(al.amount) IS NULL THEN 0.0 ELSE SUM(al.amount + (CASE WHEN al.c_invoice_credit_id IS NULL THEN 0.0 ELSE (al.writeoffamt + al.discountamt) END )) END) FROM C_AllocationLine al WHERE ((al.c_invoice_id = d.document_id) OR (al.c_invoice_credit_id = d.document_id)) AND (al.isactive = 'Y'))
+	WHEN d.documenttable = 'C_CashLine' THEN (select (CASE WHEN SUM(al.amount) IS NULL THEN 0.0 ELSE SUM(al.amount) END) FROM C_AllocationLine al WHERE (al.c_cashline_id = d.document_id) AND (al.isactive = 'Y'))
+	ELSE (select (CASE WHEN SUM(al.amount) IS NULL THEN 0.0 ELSE SUM(al.amount) END) FROM C_AllocationLine al WHERE (al.c_payment_id = d.document_id) AND (al.isactive = 'Y')) END)
+	+
+	(SELECT currencyconvert ( CASE WHEN d.documenttable = 'C_Invoice' THEN 
+	invoiceOpen(d.document_id, (SELECT C_InvoicePaySchedule_ID FROM c_invoicepayschedule ips WHERE ips.c_invoice_id = d.document_id))
+	WHEN d.documenttable = 'C_CashLine' THEN
+	cashlineavailable(d.document_id)
+	ELSE paymentavailable(d.document_id) END, d.c_currency_id, p_c_currency_id, ('now'::text)::timestamp(6) with time zone, COALESCE(d.c_conversiontype_id,0), d.ad_client_id, d.ad_org_id))
+	* SIGN(d.amount)::numeric AS Debit
+	INTO v_TotalAmt
+	FROM V_Documents d
+	WHERE d.DocStatus IN ('CO','CL', 'RE', 'VO') AND document_ID = p_c_invoice_id;
+
+	RETURN v_TotalAmt;
+END;
+$BODY$
+  LANGUAGE 'plpgsql' VOLATILE
+  COST 100;
+ALTER FUNCTION getInvoiceAmt(integer, integer) OWNER TO libertya;
+
+--20130626-1625 Incoporación de columnas a la tabla t_estadodecuenta utilizada en informe Estado de Cuenta EC
+UPDATE ad_system SET dummy = (SELECT addcolumnifnotexists('t_estadodecuenta','grandtotalmulticurrency', 'numeric'));
+UPDATE ad_system SET dummy = (SELECT addcolumnifnotexists('t_estadodecuenta','paidamtmulticurrency', 'numeric'));
+UPDATE ad_system SET dummy = (SELECT addcolumnifnotexists('t_estadodecuenta','openamtmulticurrency', 'numeric'));
+UPDATE ad_system SET dummy = (SELECT addcolumnifnotexists('t_estadodecuenta','conversionrate', 'numeric'));

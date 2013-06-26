@@ -7,7 +7,7 @@ import java.math.*;
 import org.openXpertya.util.*;
 /** Modelo Generado por T_EstadoDeCuenta
  *  @author Comunidad de Desarrollo Libertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
- *  @version  - 2011-08-16 14:50:50.726 */
+ *  @version  - 2013-06-26 15:40:53.353 */
 public class X_T_EstadoDeCuenta extends org.openXpertya.model.PO
 {
 /** Constructor estándar */
@@ -156,6 +156,18 @@ Integer ii = (Integer)get_Value("C_InvoicePaySchedule_ID");
 if (ii == null) return 0;
 return ii.intValue();
 }
+/** Set Conversion Rate */
+public void setConversionRate (BigDecimal ConversionRate)
+{
+set_Value ("ConversionRate", ConversionRate);
+}
+/** Get Conversion Rate */
+public BigDecimal getConversionRate() 
+{
+BigDecimal bd = (BigDecimal)get_Value("ConversionRate");
+if (bd == null) return Env.ZERO;
+return bd;
+}
 /** Set Order.
 Order */
 public void setC_Order_ID (int C_Order_ID)
@@ -283,6 +295,18 @@ BigDecimal bd = (BigDecimal)get_Value("GrandTotal");
 if (bd == null) return Env.ZERO;
 return bd;
 }
+/** Set Grand Total Multicurrency */
+public void setGrandTotalMulticurrency (BigDecimal GrandTotalMulticurrency)
+{
+set_Value ("GrandTotalMulticurrency", GrandTotalMulticurrency);
+}
+/** Get Grand Total Multicurrency */
+public BigDecimal getGrandTotalMulticurrency() 
+{
+BigDecimal bd = (BigDecimal)get_Value("GrandTotalMulticurrency");
+if (bd == null) return Env.ZERO;
+return bd;
+}
 /** Set Pay Schedule valid.
 Is the Payment Schedule is valid */
 public void setIsPayScheduleValid (boolean IsPayScheduleValid)
@@ -347,6 +371,18 @@ BigDecimal bd = (BigDecimal)get_Value("OpenAmt");
 if (bd == null) return Env.ZERO;
 return bd;
 }
+/** Set Open Amt Multicurrency */
+public void setOpenAmtMulticurrency (BigDecimal OpenAmtMulticurrency)
+{
+set_Value ("OpenAmtMulticurrency", OpenAmtMulticurrency);
+}
+/** Get Open Amt Multicurrency */
+public BigDecimal getOpenAmtMulticurrency() 
+{
+BigDecimal bd = (BigDecimal)get_Value("OpenAmtMulticurrency");
+if (bd == null) return Env.ZERO;
+return bd;
+}
 /** Set Paid Amount */
 public void setPaidAmt (BigDecimal PaidAmt)
 {
@@ -356,6 +392,18 @@ set_Value ("PaidAmt", PaidAmt);
 public BigDecimal getPaidAmt() 
 {
 BigDecimal bd = (BigDecimal)get_Value("PaidAmt");
+if (bd == null) return Env.ZERO;
+return bd;
+}
+/** Set Paid Amt Multicurrency */
+public void setPaidAmtMulticurrency (BigDecimal PaidAmtMulticurrency)
+{
+set_Value ("PaidAmtMulticurrency", PaidAmtMulticurrency);
+}
+/** Get Paid Amt Multicurrency */
+public BigDecimal getPaidAmtMulticurrency() 
+{
+BigDecimal bd = (BigDecimal)get_Value("PaidAmtMulticurrency");
 if (bd == null) return Env.ZERO;
 return bd;
 }
