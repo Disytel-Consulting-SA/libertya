@@ -104,15 +104,19 @@ public class CalloutInvoice extends CalloutEngine {
                 Env.setContext( ctx,WindowNo,"DocBaseType",s );
 
                 // AP Check & AR Credit Memo
-
-                if( s.startsWith( "AP" )) {
-                	if(mTab.isInserting() || mField.isChanged()){
-                		mTab.setValue( "PaymentRule","S" );    // Check
-                	}
-                } else if( s.endsWith( "C" )) {
-                	if(mTab.isInserting() || mField.isChanged()){
-                		mTab.setValue( "PaymentRule","P" );    // OnCredit
-                	}
+                // Si el campo de forma de pago contiene un valor por defecto,
+				// entonces no lo modifico
+                MField paymentRuleField = mTab.getField("PaymentRule");
+                if(paymentRuleField != null && paymentRuleField.getDefault() == null){
+	                if( s.startsWith( "AP" )) {
+	                	if(mTab.isInserting() || mField.isChanged()){
+	                		mTab.setValue( "PaymentRule","S" );    // Check
+	                	}
+	                } else if( s.endsWith( "C" )) {
+	                	if(mTab.isInserting() || mField.isChanged()){
+	                		mTab.setValue( "PaymentRule","P" );    // OnCredit
+	                	}
+	                }
                 }
             }
 
