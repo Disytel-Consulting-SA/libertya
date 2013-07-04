@@ -3668,3 +3668,6 @@ WHERE ad_client_id = 1010016 AND s.m_attributesetinstance_id = 0;
 UPDATE c_orderline ol
 SET qtyreserved = 0
 WHERE ad_client_id = 1010016 AND EXISTS (SELECT c_order_id FROM c_order as o WHERE o.c_order_id = ol.c_order_id AND o.docstatus IN ('IP','??'));
+
+--20130704-1820 Nueva columna para que los parámetros de procesos puedan ser encriptados
+UPDATE ad_system SET dummy = (SELECT addcolumnifnotexists('ad_process_para','isencrypted', 'character(1) NOT NULL DEFAULT ''N''::bpchar'));

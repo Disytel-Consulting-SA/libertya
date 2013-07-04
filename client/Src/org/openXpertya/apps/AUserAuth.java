@@ -109,6 +109,13 @@ public abstract class AUserAuth {
 	}
 	
 	/**
+	 * Limpia los componentes de usuario y password
+	 */
+	public void clear(){
+		getfPassword().setText(null);
+	}
+	
+	/**
 	 * @return el panel de autorización de usuario dependiendo cada subclase
 	 */	
 	public abstract JPanel getAuthorizationPanel();

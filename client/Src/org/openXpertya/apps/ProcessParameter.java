@@ -249,10 +249,10 @@ public class ProcessParameter extends CDialog implements ActionListener,Vetoable
         String sql = null;
 
         if( Env.isBaseLanguage( Env.getCtx(),"AD_Process_Para" )) {
-            sql = "SELECT p.Name, p.Description, p.Help, " + "p.AD_Reference_ID, p.AD_Process_Para_ID, " + "p.FieldLength, p.IsMandatory, p.IsRange, p.ColumnName, " + "p.DefaultValue, p.DefaultValue2, p.VFormat, p.ValueMin, p.ValueMax, " + "p.SeqNo, p.AD_Reference_Value_ID, vr.Code AS ValidationCode, p.sameline, p.displaylogic " + "FROM AD_Process_Para p" + " LEFT OUTER JOIN AD_Val_Rule vr ON (p.AD_Val_Rule_ID=vr.AD_Val_Rule_ID) " + "WHERE p.AD_Process_ID=?"    // 1
+            sql = "SELECT p.Name, p.Description, p.Help, " + "p.AD_Reference_ID, p.AD_Process_Para_ID, " + "p.FieldLength, p.IsMandatory, p.IsRange, p.ColumnName, " + "p.DefaultValue, p.DefaultValue2, p.VFormat, p.ValueMin, p.ValueMax, " + "p.SeqNo, p.AD_Reference_Value_ID, vr.Code AS ValidationCode, p.sameline, p.displaylogic, p.isencrypted " + "FROM AD_Process_Para p" + " LEFT OUTER JOIN AD_Val_Rule vr ON (p.AD_Val_Rule_ID=vr.AD_Val_Rule_ID) " + "WHERE p.AD_Process_ID=?"    // 1
                   + " AND p.IsActive='Y' " + "ORDER BY SeqNo";
         } else {
-            sql = "SELECT t.Name, t.Description, t.Help, " + "p.AD_Reference_ID, p.AD_Process_Para_ID, " + "p.FieldLength, p.IsMandatory, p.IsRange, p.ColumnName, " + "p.DefaultValue, p.DefaultValue2, p.VFormat, p.ValueMin, p.ValueMax, " + "p.SeqNo, p.AD_Reference_Value_ID, vr.Code AS ValidationCode, p.sameline, p.displaylogic " + "FROM AD_Process_Para p" + " INNER JOIN AD_Process_Para_Trl t ON (p.AD_Process_Para_ID=t.AD_Process_Para_ID)" + " LEFT OUTER JOIN AD_Val_Rule vr ON (p.AD_Val_Rule_ID=vr.AD_Val_Rule_ID) " + "WHERE p.AD_Process_ID=?"    // 1
+            sql = "SELECT t.Name, t.Description, t.Help, " + "p.AD_Reference_ID, p.AD_Process_Para_ID, " + "p.FieldLength, p.IsMandatory, p.IsRange, p.ColumnName, " + "p.DefaultValue, p.DefaultValue2, p.VFormat, p.ValueMin, p.ValueMax, " + "p.SeqNo, p.AD_Reference_Value_ID, vr.Code AS ValidationCode, p.sameline, p.displaylogic, p.isencrypted " + "FROM AD_Process_Para p" + " INNER JOIN AD_Process_Para_Trl t ON (p.AD_Process_Para_ID=t.AD_Process_Para_ID)" + " LEFT OUTER JOIN AD_Val_Rule vr ON (p.AD_Val_Rule_ID=vr.AD_Val_Rule_ID) " + "WHERE p.AD_Process_ID=?"    // 1
                   + " AND t.AD_Language='" + Env.getAD_Language( Env.getCtx()) + "'" + " AND p.IsActive='Y' " + "ORDER BY SeqNo";
         }
 

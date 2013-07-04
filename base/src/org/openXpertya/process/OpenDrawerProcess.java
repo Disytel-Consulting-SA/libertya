@@ -1,12 +1,19 @@
 package org.openXpertya.process;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import org.openXpertya.model.FiscalDocumentPrint;
 import org.openXpertya.model.MControladorFiscal;
 import org.openXpertya.model.MDocType;
 import org.openXpertya.model.MPOS;
 import org.openXpertya.model.MPOSJournal;
 import org.openXpertya.model.MRefList;
+import org.openXpertya.reflection.CallResult;
+import org.openXpertya.util.AUserAuthModel;
 import org.openXpertya.util.Msg;
+import org.openXpertya.util.UserAuthConstants;
+import org.openXpertya.util.UserAuthData;
 import org.openXpertya.util.Util;
 
 public class OpenDrawerProcess extends SvrProcess {
@@ -23,6 +30,12 @@ public class OpenDrawerProcess extends SvrProcess {
 	/** Punto de Venta Actual */
 	private Integer posNumber;
 	
+	/** Nombre de usuario */
+	private String userName;
+	
+	/** Clave */
+	private String password;
+	
 	@Override
 	protected void prepare() {
 		ProcessInfoParameter[] para = getParameter();
@@ -30,6 +43,12 @@ public class OpenDrawerProcess extends SvrProcess {
             String name = para[ i ].getParameterName();
             if( name.equals( "C_POS_ID" )) {
             	setPosID(para[i].getParameterAsInt());
+            }
+            else if(name.equals( "UserName" )){
+            	setUserName((String)para[i].getParameter());
+            }
+            else if(name.equals( "Password" )){
+            	setPassword((String)para[i].getParameter());
             }
         }
         
@@ -60,6 +79,9 @@ public class OpenDrawerProcess extends SvrProcess {
 		// dinero
 		if(docType != null){
 			if(!Util.isEmpty(docType.getC_Controlador_Fiscal_ID(), true)){
+				// Autorización de usuario
+				validateUserAccess();
+				// Apertura del cajón de dinero
 				MControladorFiscal controladorFiscal = new MControladorFiscal(
 						getCtx(), docType.getC_Controlador_Fiscal_ID(),
 						get_TrxName());
@@ -93,6 +115,30 @@ public class OpenDrawerProcess extends SvrProcess {
 		return null;
 	}
 
+	
+	/**
+	 * Validación del usuario para abrir el cajón de dinero
+	 * @throws Exception
+	 */
+	protected void validateUserAccess() throws Exception{
+		if (Util.isEmpty(getUserName(), true)
+				&& Util.isEmpty(getPassword(), true)) {
+			throw new Exception(Msg.getMsg(getCtx(), "MustInsertAuthorizedUser"));
+		}
+		else{
+			UserAuthData userAuthData = new UserAuthData(getUserName(),getPassword());
+			List<String> operations = new ArrayList<String>();
+			operations.add(UserAuthConstants.OPEN_DRAWER_UID);
+			userAuthData.setAuthOperations(operations);
+			AUserAuthModel userAuthValidation = AUserAuthModel.get();
+			CallResult authorized = userAuthValidation.validateAuthorization(userAuthData);
+			if(authorized.isError()){
+				throw new Exception(authorized.getMsg());
+			}
+		}
+	}
+	
+	
 	protected Integer getPosNumber() {
 		return posNumber;
 	}
@@ -107,6 +153,22 @@ public class OpenDrawerProcess extends SvrProcess {
 
 	protected void setPosID(Integer posID) {
 		this.posID = posID;
+	}
+
+	protected String getUserName() {
+		return userName;
+	}
+
+	protected void setUserName(String userName) {
+		this.userName = userName;
+	}
+
+	protected String getPassword() {
+		return password;
+	}
+
+	protected void setPassword(String password) {
+		this.password = password;
 	}
 
 }

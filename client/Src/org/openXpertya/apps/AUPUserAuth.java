@@ -118,4 +118,9 @@ public class AUPUserAuth extends AUserAuth {
 		getfUserName().requestFocus();
 	}
 	
+	@Override
+	public void clear(){
+		super.clear();
+		getfUserName().setText(null);
+	}
 }
