@@ -8,6 +8,9 @@ import java.awt.GridBagLayout;
 import java.awt.Insets;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.Semaphore;
 
 import javax.swing.BorderFactory;
 import javax.swing.JOptionPane;
@@ -19,6 +22,7 @@ import org.compiere.swing.CLabel;
 import org.compiere.swing.CPanel;
 import org.openXpertya.apps.ADialog;
 import org.openXpertya.apps.AInfoFiscalPrinter;
+import org.openXpertya.apps.AUserAuth;
 import org.openXpertya.apps.SwingWorker;
 import org.openXpertya.apps.form.FormFrame;
 import org.openXpertya.apps.form.FormPanel;
@@ -31,9 +35,13 @@ import org.openXpertya.model.MReference;
 import org.openXpertya.print.fiscal.action.FiscalCloseAction;
 import org.openXpertya.print.fiscal.action.FiscalPrinterAction;
 import org.openXpertya.print.fiscal.action.OpenDrawerAction;
+import org.openXpertya.reflection.CallResult;
 import org.openXpertya.util.DisplayType;
 import org.openXpertya.util.Env;
 import org.openXpertya.util.Msg;
+import org.openXpertya.util.UserAuthConstants;
+import org.openXpertya.util.UserAuthData;
+import org.openXpertya.util.Util;
 import org.openXpertya.util.ValueNamePair;
 
 public class FiscalPrinterControlPanel extends CPanel implements FormPanel{
@@ -65,6 +73,21 @@ public class FiscalPrinterControlPanel extends CPanel implements FormPanel{
 	/** Acción actual a procesar o en proceso */
 	
 	private FiscalPrinterAction actualAction;
+	
+	/** Panel de autorización de operaciones */
+	private AUserAuth userAuthPanel = null;
+	
+	/** Autorización actual */
+	private String actualAuthOperation;
+	
+	/** Semáforo barrera */
+	private Semaphore barrerSem = new Semaphore(1);
+	
+	/**
+	 * Booleano que determina si se debe mostrar la ventana de info de la
+	 * impresora fiscal
+	 */
+	private boolean showInfoFiscalPrinter;
 	
 	// Mensajes
 	
@@ -225,6 +248,7 @@ public class FiscalPrinterControlPanel extends CPanel implements FormPanel{
 		mainPanel.setLayout(mainLayout);
 		getFrame().setContentPane(mainPanel);
 		getFrame().setTitle(MSG_FISCAL_PRINTER_CONTROL_PANEL);
+		userAuthPanel = AUserAuth.get();
 		// Crear e inicializar las áreas del panel de control  
 		initAreas();
 		// Agregarlas al panel principal
@@ -280,6 +304,7 @@ public class FiscalPrinterControlPanel extends CPanel implements FormPanel{
 		// inicializar el panel
 		bottomPanel = new CPanel();
 		bottomPanel.setLayout(new FlowLayout(FlowLayout.RIGHT));
+		bottomPanel.add(userAuthPanel.getAuthPanel());
 		// Crear sus componentes y agregarlos al contenedor
 		bottomPanel.add(getBtnCloseForm());
 	}
@@ -352,10 +377,14 @@ public class FiscalPrinterControlPanel extends CPanel implements FormPanel{
 				
 				@Override
 				public void actionPerformed(ActionEvent arg0) {
+					// Autorización actual
+					setActualAuthOperation(UserAuthConstants.OPEN_DRAWER_UID);
+					// Operación actual
 					setActualAction(new OpenDrawerAction(getiFiscalPrinter(),
 							null,
 							(Integer) getComboFiscalOpenDrawerControllers()
 									.getValue()));
+					// Ejecución de acción
 					executeAction();
 				}
 			});
@@ -401,9 +430,30 @@ public class FiscalPrinterControlPanel extends CPanel implements FormPanel{
 			
 			@Override
 			public Object construct() {
+				try{
+					getBarrerSem().acquire();
+				} catch(InterruptedException ie){
+					ie.printStackTrace();
+				}
 				errorMsg = null;
 				errorDesc = null;
-				if(!getActualAction().execute()){
+				boolean authorized = true;
+				// Autorización
+				if(!Util.isEmpty(getActualAuthOperation(), true)){
+					UserAuthData userAuthData = new UserAuthData();
+					List<String> operations = new ArrayList<String>();
+					operations.add(getActualAuthOperation());
+					userAuthData.setAuthOperations(operations);
+					CallResult result = userAuthPanel.validateAuthorization(userAuthData);
+					authorized = !result.isError();
+					if(!authorized){
+						errorMsg = result.getMsg();
+					}
+				}
+				setShowInfoFiscalPrinter(authorized);
+				getBarrerSem().release();
+				// Ejeución de acción
+				if(authorized && !getActualAction().execute()){
 					errorMsg = getActualAction().getErrorMsg();
 					errorDesc = getActualAction().getErrorDesc();
 				}
@@ -419,6 +469,8 @@ public class FiscalPrinterControlPanel extends CPanel implements FormPanel{
 					else
 						errorMsg(errorMsg, errorDesc);
 				}
+				setActualAuthOperation(null);
+				userAuthPanel.clear();
 				getFrame().setBusy(false);
 				mNormal();
 			}
@@ -436,7 +488,13 @@ public class FiscalPrinterControlPanel extends CPanel implements FormPanel{
 		// Mostrar ventana de la impresora fiscal
 		SwingUtilities.invokeLater(new Runnable() {
 			public void run() {
-				infoFiscalPrinter.setVisible(true);
+				try{
+					getBarrerSem().acquire();
+				} catch(InterruptedException ie){
+					ie.printStackTrace();
+				}
+				infoFiscalPrinter.setVisible(isShowInfoFiscalPrinter());
+				getBarrerSem().release();
 			}
 		});
 	}
@@ -493,5 +551,37 @@ public class FiscalPrinterControlPanel extends CPanel implements FormPanel{
 
 	private FiscalPrinterAction getActualAction() {
 		return actualAction;
+	}
+
+	protected AUserAuth getUserAuthPanel() {
+		return userAuthPanel;
+	}
+
+	protected void setUserAuthPanel(AUserAuth userAuthPanel) {
+		this.userAuthPanel = userAuthPanel;
+	}
+
+	protected String getActualAuthOperation() {
+		return actualAuthOperation;
+	}
+
+	protected void setActualAuthOperation(String actualAuthOperation) {
+		this.actualAuthOperation = actualAuthOperation;
+	}
+
+	protected synchronized boolean isShowInfoFiscalPrinter() {
+		return showInfoFiscalPrinter;
+	}
+
+	protected synchronized void setShowInfoFiscalPrinter(boolean showInfoFiscalPrinter) {
+		this.showInfoFiscalPrinter = showInfoFiscalPrinter;
+	}
+
+	protected synchronized Semaphore getBarrerSem() {
+		return barrerSem;
+	}
+
+	protected synchronized void setBarrerSem(Semaphore barrerSem) {
+		this.barrerSem = barrerSem;
 	}
 }
