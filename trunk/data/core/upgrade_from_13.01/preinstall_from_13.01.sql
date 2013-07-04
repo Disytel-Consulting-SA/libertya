@@ -3646,3 +3646,25 @@ UNION
    JOIN ad_org org ON org.ad_org_id = mw.ad_org_id
   GROUP BY r.ad_client_id, r.ad_org_id, r.isactive, r.created, r.createdby, r.updated, r.updatedby, r.m_product_id, r.relatedproduct_id, mw.m_warehouse_id, mpr.m_pricelist_version_id, org.name, mp.name;
 
+--20130704-1623 Actualización de la cantidad reservada del storage en base a la cantidad pedida - cantidad entregada - cantidad transferida de pedidos de ventas y la cantidad pedida del storage en base a la cantidad pedida - cantidad entregada - cantidad transferida de pedidos de compras
+UPDATE m_storage as s
+SET qtyreserved = coalesce((SELECT sum(ol.qtyordered - ol.qtydelivered - ol.qtytransferred) 
+				FROM c_orderline as ol 
+				INNER JOIN c_order as o ON o.c_order_id = ol.c_order_id 
+				INNER JOIN c_doctype as dt ON dt.c_doctype_id = o.c_doctypetarget_id
+				INNER JOIN m_warehouse as w ON w.m_warehouse_id = o.m_warehouse_id
+				INNER JOIN m_locator as l ON l.m_warehouse_id = w.m_warehouse_id
+				WHERE o.docstatus IN ('CO','CL') AND doctypekey = 'SOSO' AND ol.m_product_id = s.m_product_id AND s.m_locator_id = l.m_locator_id),0),
+    qtyordered = coalesce((SELECT sum(ol.qtyordered - ol.qtydelivered - ol.qtytransferred) 
+				FROM c_orderline as ol 
+				INNER JOIN c_order as o ON o.c_order_id = ol.c_order_id 
+				INNER JOIN c_doctype as dt ON dt.c_doctype_id = o.c_doctypetarget_id
+				INNER JOIN m_warehouse as w ON w.m_warehouse_id = o.m_warehouse_id
+				INNER JOIN m_locator as l ON l.m_warehouse_id = w.m_warehouse_id
+				WHERE o.docstatus IN ('CO','CL') AND doctypekey = 'POO' AND ol.m_product_id = s.m_product_id AND s.m_locator_id = l.m_locator_id),0)
+WHERE ad_client_id = 1010016 AND s.m_attributesetinstance_id = 0;
+
+--20130704-1623 Actualización de la cantidad reservada de las líneas del pedido a 0 ya que se modificó la lógica de reapertura de pedidos
+UPDATE c_orderline ol
+SET qtyreserved = 0
+WHERE ad_client_id = 1010016 AND EXISTS (SELECT c_order_id FROM c_order as o WHERE o.c_order_id = ol.c_order_id AND o.docstatus IN ('IP','??'));

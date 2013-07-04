@@ -2179,11 +2179,14 @@ public class MOrder extends X_C_Order implements DocAction {
             BigDecimal target     = binding
                                     ?ol_QtyOrdered
                                     :Env.ZERO;
-            BigDecimal difference = target.subtract(ol_QtyReserved).subtract(ol_QtyDelivered).subtract(ol_QtyTransferred);
+			BigDecimal difference = target.subtract(
+					ol_QtyReserved.subtract(ol_QtyTransferred)).subtract(
+					ol_QtyDelivered.add(ol_QtyTransferred));
             
             
 
-            if( difference.compareTo( Env.ZERO ) == 0 ) {
+			if (difference.compareTo(Env.ZERO) == 0
+					&& ol_QtyTransferred.compareTo(BigDecimal.ZERO) <= 0) {
                 continue;
             }
 
@@ -2218,13 +2221,19 @@ public class MOrder extends X_C_Order implements DocAction {
 
                 // Update Storage
 
-                if( !MStorage.add( getCtx(),ol_M_Warehouse_ID,M_Locator_ID,ol_M_Product_ID,ol_M_AttributeSetInstance_ID,ol_M_AttributeSetInstance_ID,Env.ZERO,reserved,ordered,get_TrxName())) {
+				if ((reserved.compareTo(Env.ZERO) != 0 || ordered
+						.compareTo(Env.ZERO) != 0)
+						&& !MStorage.add(getCtx(), ol_M_Warehouse_ID,
+								M_Locator_ID,
+						ol_M_Product_ID, ol_M_AttributeSetInstance_ID,
+						ol_M_AttributeSetInstance_ID, Env.ZERO, reserved,
+						ordered, get_TrxName())) {
                     return false;
                 }
 
                 // update line
 
-                DB.executeUpdate( " UPDATE C_OrderLine SET QtyReserved = " + ol_QtyReserved.add(difference) + " WHERE C_OrderLine_ID = " + anOrderLineID, get_TrxName());
+                DB.executeUpdate( " UPDATE C_OrderLine SET QtyReserved = " + ol_QtyReserved.subtract(ol_QtyTransferred).add(difference) + " WHERE C_OrderLine_ID = " + anOrderLineID, get_TrxName());
             }
         }    // reverse inventory
 
@@ -2287,6 +2296,10 @@ public class MOrder extends X_C_Order implements DocAction {
      */
     private boolean deleteQtyOrderedCeroIfNeeded()
     {
+    	// No se eliminan las líneas cuando el pedido ya fue procesado
+    	if(!DOCSTATUS_Drafted.equals(getDocStatus())){
+    		return true;
+    	}
     	MOrderLine[] lines = getLines();
     	List<Integer> idsToRemove = new ArrayList<Integer>();
     	List<MOrderLine> linesNotCero = new ArrayList<MOrderLine>();
@@ -2501,7 +2514,8 @@ public class MOrder extends X_C_Order implements DocAction {
             BigDecimal target     = binding
             						?item.QtyOrdered
             						:Env.ZERO;
-            BigDecimal difference = target.subtract( item.QtyReserved).subtract( item.QtyDelivered);
+			BigDecimal difference = target.subtract(item.QtyReserved).subtract(
+					item.QtyDelivered.add(item.QtyTransferred));
 
             if( difference.compareTo( Env.ZERO ) == 0 ) 
             	continue;
@@ -2623,6 +2637,7 @@ public class MOrder extends X_C_Order implements DocAction {
     		item.QtyOrdered = ol.getQtyOrdered();
     		item.QtyReserved = ol.getQtyReserved();
     		item.QtyDelivered = ol.getQtyDelivered();
+    		item.QtyTransferred = ol.getQtyTransferred();
     		item.IsStocked = false; //por defecto
     		item.M_Product_IsStocked = false;
     		item.M_Product_ProductType = "";
@@ -2805,9 +2820,11 @@ public class MOrder extends X_C_Order implements DocAction {
     	for (int i = 0; i < data.length ; i ++)
     	{
     		DataReserveStock item = data[i];
-    		if (item.differenceAppliedInStock.compareTo(BigDecimal.ZERO) == 0)
+			if (item.differenceAppliedInStock.compareTo(BigDecimal.ZERO) == 0
+					&& item.QtyTransferred.compareTo(BigDecimal.ZERO) == 0)
     			continue;
-    		BigDecimal newQtyReserved = item.QtyReserved.add(item.differenceAppliedInStock);
+			BigDecimal newQtyReserved = item.QtyReserved.add(
+					item.differenceAppliedInStock).add(item.QtyTransferred);
     		int C_OrderLine_ID = item.C_OrderLine_ID;
     		
     		listIds.add(C_OrderLine_ID);
@@ -2848,6 +2865,7 @@ public class MOrder extends X_C_Order implements DocAction {
     	BigDecimal QtyOrdered;
     	BigDecimal QtyReserved;
     	BigDecimal QtyDelivered;
+    	BigDecimal QtyTransferred;
     	/** determina si lleva stock: calculado a partir de M_Product_IsStocket y M_Product_ProductType */
     	boolean IsStocked; //campo calculado a partir de los siguientes
     	boolean M_Product_IsStocked;
@@ -3234,6 +3252,21 @@ public class MOrder extends X_C_Order implements DocAction {
         
         for( int lineIndex = 0;lineIndex < lines.length;lineIndex++ ) {
             MOrderLine sLine   = lines[ lineIndex ];
+            
+            // La cantidad pedida no puede ser menor a la cantidad entregada + la
+    		// cantidad transferida
+			if (sLine.getQtyOrdered().compareTo(
+					sLine.getQtyDelivered().add(sLine.getQtyTransferred())) < 0) {
+				m_processMsg = "@LinesWithQtyOrderedMinorToQtyDelivered@";
+            	return DocAction.STATUS_InProgress;
+        	}
+			
+			// La cantidad pedida no puede ser menor a la cantidad facturada
+			if (sLine.getQtyOrdered().compareTo(sLine.getQtyInvoiced()) < 0) {
+				m_processMsg = "@LinesWithQtyOrderedMinorToQtyInvoiced@";
+            	return DocAction.STATUS_InProgress;
+        	}
+            
             //MProduct   product = sLine.getProduct(); -> depende de la cache en MProduct, que expira cada 5 min..
             MProduct   product = getProductFromCache(sLine.getM_Product_ID());
             
@@ -3898,7 +3931,7 @@ public class MOrder extends X_C_Order implements DocAction {
 
         // Clear Reservations
         int[] orderLines = PO.getAllIDs("C_OrderLine", "C_Order_ID = " + getC_Order_ID() , get_TrxName() );
-        if( !reserveStock( null,orderLines )) {
+        if( !isOrderTransferred && !reserveStock( null,orderLines )) {
             m_processMsg = "@NotUnreserveStockVoid@";
 
             return false;
@@ -4030,35 +4063,42 @@ public class MOrder extends X_C_Order implements DocAction {
 
     public boolean closeIt() {
         log.info( toString());
+        MDocType dt = MDocType.get( getCtx(),getC_DocType_ID());
+        boolean isOrderTransferred = dt.getDocTypeKey().equalsIgnoreCase(
+				MDocType.DOCTYPE_Pedido_Transferible);
 
-        // Close Not delivered Qty - SO/PO
-
-        MOrderLine[] lines = getLines( true,"M_Product_ID" );
-
-        for( int i = 0;i < lines.length;i++ ) {
-            MOrderLine line = lines[ i ];
-            BigDecimal old  = line.getQtyOrdered();
-
-            if( old.compareTo( line.getQtyDelivered()) != 0 ) {
-
-            	//Modificado por ConSerTi por el fallo de linea a 0 al cerrar un pedido
-               log.fine("Estoy en MOrder y entro en el if, para poner el valor..:"+line.getQtyDelivered()+", old="+old);
-            	line.setQtyOrdered( line.getQtyDelivered());
-//            	line.setQtyOrdered(old);
-
-//            	Fin modificacion
-            	// QtyEntered unchanged	
-                line.addDescription( "Close (" + old + ")" );
-                line.save( get_TrxName());
-            }
-        }
-
-        // Clear Reservations
-        int[] orderLines = PO.getAllIDs("C_OrderLine", "C_Order_ID = " + getC_Order_ID() , get_TrxName() );
-        if( !reserveStock( null,orderLines )) {
-            m_processMsg = "@NotUnreserveStockClose@";
-
-            return false;
+        if(!isOrderTransferred){
+	        // Close Not delivered Qty - SO/PO
+	
+	        MOrderLine[] lines = getLines( true,"M_Product_ID" );
+	
+	        for( int i = 0;i < lines.length;i++ ) {
+	            MOrderLine line = lines[ i ];
+	            BigDecimal old  = line.getQtyOrdered();
+				BigDecimal qtyDelivered = line.getQtyDelivered().add(
+						line.getQtyTransferred());
+				
+	            if( old.compareTo(qtyDelivered) != 0 ) {
+	
+	            	//Modificado por ConSerTi por el fallo de linea a 0 al cerrar un pedido
+	               log.fine("Estoy en MOrder y entro en el if, para poner el valor..:"+line.getQtyDelivered()+", old="+old);
+	            	line.setQtyOrdered(qtyDelivered);
+	//            	line.setQtyOrdered(old);
+	
+	//            	Fin modificacion
+	            	// QtyEntered unchanged	
+	                line.addDescription( "Close (" + old + ")" );
+	                line.save( get_TrxName());
+	            }
+	        }
+	
+	        // Clear Reservations
+	        int[] orderLines = PO.getAllIDs("C_OrderLine", "C_Order_ID = " + getC_Order_ID() , get_TrxName() );
+	        if( !reserveStock( null,orderLines )) {
+	            m_processMsg = "@NotUnreserveStockClose@";
+	
+	            return false;
+	        }
         }
 
         setProcessed( true );
@@ -4138,6 +4178,57 @@ public class MOrder extends X_C_Order implements DocAction {
 //        }
         // ---------------------------------------------------------
 
+		// Retornar el pendiente o pedido, dependiendo del signo del pedido, al
+		// stock y luego al completar vuelve todo al stock. Esto se hace así ya
+		// que puede quedar un pedido reactivado indefinidamente y reservando
+		// stock innecesariamente
+        // Si se reactiva un pedido transferible, en realidad debe sumar el reservado
+        boolean isOrderTransferred = dt.getDocTypeKey().equalsIgnoreCase(
+				MDocType.DOCTYPE_Pedido_Transferible);
+        Integer locatorID = MWarehouse.getDefaultLocatorID(getM_Warehouse_ID(), get_TrxName());
+        MOrderLine[] lines = getLines(true,null);
+        
+        BigDecimal qtyReserved, qtyOrdered;
+        int updated = 0;
+        for (MOrderLine line : lines) {
+        	qtyReserved = (isSOTrx()?line.getPendingDeliveredQty():BigDecimal.ZERO).negate();
+        	qtyOrdered = (isSOTrx()?BigDecimal.ZERO:line.getPendingDeliveredQty()).negate();
+        	// Si el pedido es transferible, se deben decrementar las cantidades
+    		// transferidas del pedido original 
+            if(isOrderTransferred){
+				updated = DB.executeUpdate(
+						"UPDATE c_orderline SET qtytransferred = qtytransferred-"
+								+ String.valueOf(line.getQtyOrdered())
+								+ " WHERE c_orderline_id = "
+								+ line.getRef_OrderLine_ID(), get_TrxName());
+				if(updated != 1){
+					m_processMsg = "Can not update ref order line";
+					return false;
+				}
+				qtyReserved = (isSOTrx()?line.getQtyOrdered():BigDecimal.ZERO);
+				qtyOrdered = (isSOTrx()?BigDecimal.ZERO:line.getQtyOrdered());
+            }
+            
+			// Actualizar la cantidad pendiente del pedido a 0
+			updated = DB.executeUpdate(
+					"UPDATE c_orderline SET qtyReserved = 0 WHERE c_orderline_id = "
+							+ line.getID(), get_TrxName());
+            
+			if(updated != 1){
+				m_processMsg = "Can not update order line reserved qty";
+				return false;
+			}
+			
+            // Actualizar la cantidad reservada o pedida en el stock
+			if (MProduct.isProductStocked(getCtx(), line.getM_Product_ID())
+					&& !MStorage.add(getCtx(), getM_Warehouse_ID(), locatorID,
+							line.getM_Product_ID(), 0, 0, BigDecimal.ZERO,
+							qtyReserved, qtyOrdered, get_TrxName())) {
+				m_processMsg = "@CannotReserveStock@";
+                return false;
+			}
+		}
+        
         setDocAction( DOCACTION_Complete );
         setProcessed( false );
 
