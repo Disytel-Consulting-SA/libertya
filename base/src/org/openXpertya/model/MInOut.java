@@ -1146,25 +1146,36 @@ public class MInOut extends X_M_InOut implements DocAction {
 
         // Warehouse Org
 
-        if( newRecord ) {
-            MWarehouse wh = MWarehouse.get( getCtx(),getM_Warehouse_ID());
+        MWarehouse wh = MWarehouse.get( getCtx(),getM_Warehouse_ID());
 
-        	//Validar número de doccumento para remitos de salida
-            // Se saca la validación para permitir duplicados
-    		/*
-        	if (!isSOTrx() && existsDocNumber(false)) {
-        		log.saveError("ShipmentNumberAlredyExists", "");
-        		return false;
-        	}
-            */
-            
-            if( wh.getAD_Org_ID() != getAD_Org_ID()) {
-                log.saveError( "WarehouseOrgConflict","" );
+    	//Validar número de doccumento para remitos de salida
+        // Se saca la validación para permitir duplicados
+		/*
+    	if (!isSOTrx() && existsDocNumber(false)) {
+    		log.saveError("ShipmentNumberAlredyExists", "");
+    		return false;
+    	}
+        */
+        
+        if( wh.getAD_Org_ID() != getAD_Org_ID()) {
+            log.saveError( "WarehouseOrgConflict","" );
 
-                return false;
-            }
+            return false;
         }
-
+        
+		// Si cambió el depósito, se deben modificar las líneas con la ubicación
+		// por defecto de este depósito
+        if(!newRecord && is_ValueChanged("M_Warehouse_ID")){
+			Integer locatorID = MWarehouse.getDefaultLocatorID(
+					getM_Warehouse_ID(), get_TrxName());
+        	if(!Util.isEmpty(locatorID, true)){
+				DB.executeUpdate("UPDATE m_inoutline SET m_locator_id = "
+						+ locatorID + " WHERE m_inout_id = " + getM_InOut_ID(),
+						get_TrxName());
+        	}
+        }
+        
+        
         // Shipment - Needs Order
 
 //        if( isSOTrx() && (getC_Order_ID() == 0) && !isProcessed() && !isIgnoreShipmentOrder()) {
@@ -2094,12 +2105,13 @@ public class MInOut extends X_M_InOut implements DocAction {
         	int ol_attsetinstanceID = -1;
         	boolean ol_ok = false;
         	Timestamp ol_dateDelivered = null;
+        	int ol_warehouseID = 0; 
         	
             if( sLine.getC_OrderLine_ID() != 0 ) {
                 
             	try    	{
-	                String sql = " SELECT qtyOrdered, qtyReserved, qtyDelivered, M_AttributeSetInstance_ID, qtyTransferred, qtyInvoiced, coalesce((select sum(iol.movementqty) as qty from c_orderline as ol2 inner join m_inoutline as iol on iol.c_orderline_id = ol2.c_orderline_id inner join m_inout as io on io.m_inout_id = iol.m_inout_id inner join c_doctype as dt on dt.c_doctype_id = io.c_doctype_id where ol.c_orderline_id = ol2.c_orderline_id AND dt.doctypekey = 'DC' and io.docstatus IN ('CL','CO')),0) as ol_qtyReturned " +
-	                				" FROM C_OrderLine ol WHERE ol.C_OrderLine_ID = " + sLine.getC_OrderLine_ID();
+	                String sql = " SELECT ol.qtyOrdered, ol.qtyReserved, ol.qtyDelivered, ol.M_AttributeSetInstance_ID, ol.qtyTransferred, ol.qtyInvoiced, coalesce((select sum(iol.movementqty) as qty from c_orderline as ol2 inner join m_inoutline as iol on iol.c_orderline_id = ol2.c_orderline_id inner join m_inout as io on io.m_inout_id = iol.m_inout_id inner join c_doctype as dt on dt.c_doctype_id = io.c_doctype_id where ol.c_orderline_id = ol2.c_orderline_id AND dt.doctypekey = 'DC' and io.docstatus IN ('CL','CO')),0) as ol_qtyReturned , o.m_warehouse_id " +
+	                				" FROM C_OrderLine ol INNER JOIN C_Order o ON ol.c_order_id = o.c_order_id WHERE ol.C_OrderLine_ID = " + sLine.getC_OrderLine_ID();
 	                PreparedStatement stmt =  DB.prepareStatement(sql , get_TrxName());
 	                ResultSet rs = stmt.executeQuery();
 	                if (rs.next())
@@ -2113,6 +2125,7 @@ public class MInOut extends X_M_InOut implements DocAction {
 	                	ol_qtyInvoiced = rs.getBigDecimal(6);
 						ol_qtyReturned = docType.isAllowDeliveryReturned() ? BigDecimal.ZERO
 								: rs.getBigDecimal(7);
+						ol_warehouseID = rs.getInt(8);
 	                }
             	}
             	catch (Exception e)	{
@@ -2217,9 +2230,45 @@ public class MInOut extends X_M_InOut implements DocAction {
                         }
 
                         // Update Storage - see also VMatch.createMatchRecord
-
-                        if( !MStorage.add( getCtx(),getM_Warehouse_ID(),sLine.getM_Locator_ID(),sLine.getM_Product_ID(),ma.getM_AttributeSetInstance_ID(),reservationAttributeSetInstance_ID,QtyMA,QtySOMA.negate(),QtyPOMA.negate(),get_TrxName())) {
-                            m_processMsg = "Cannot correct Inventory (MA)";
+                        
+                        // La cantidad reservada debe tener el mismo signo que la
+    					// cantidad a modificar del stock
+    					// Se supone que si se agrega stock, se agrega stock
+    					// reservado y si se saca stock, se saca de reservado. Esto,
+    					// en el caso que esté asociado a un pedido
+    					QtySOMA = QtyMA.compareTo(BigDecimal.ZERO) >= 0 ? QtySOMA.abs()
+    							: QtySOMA.abs().negate();
+    					
+						// Las cantidades reservadas se actualizan en el almacén del
+						// pedido, si es que poseemos uno relacionado
+                        
+						if (!Util.isEmpty(sLine.getC_OrderLine_ID(), true)) {
+							Integer orderLocatorID = MWarehouse.getDefaultLocatorID(
+									ol_warehouseID, get_TrxName());
+							if(!MStorage.add(getCtx(), getM_Warehouse_ID(),
+										orderLocatorID,
+										sLine.getM_Product_ID(),
+										ma.getM_AttributeSetInstance_ID(),
+										reservationAttributeSetInstance_ID, BigDecimal.ZERO,
+										QtySOMA, QtyPOMA.negate(),
+										get_TrxName())){
+	                            m_processMsg = "Cannot correct reserved Inventory (MA)";
+	
+	                            return DocAction.STATUS_Invalid;
+							}
+							QtySOMA = BigDecimal.ZERO;
+							QtyPOMA = BigDecimal.ZERO;
+						}
+                        
+						// Las cantidades de stock se decrementan en el almacén del
+						// remito
+                        
+						if (!MStorage.add(getCtx(), getM_Warehouse_ID(),
+								sLine.getM_Locator_ID(), sLine.getM_Product_ID(),
+								ma.getM_AttributeSetInstance_ID(),
+								reservationAttributeSetInstance_ID, QtyMA, QtySOMA,
+								QtyPOMA.negate(), get_TrxName())) {
+                            m_processMsg = "Cannot correct stock (MA)";
 
                             return DocAction.STATUS_Invalid;
                         }
@@ -2262,8 +2311,43 @@ public class MInOut extends X_M_InOut implements DocAction {
 					// en el caso que esté asociado a un pedido
 					QtySO = Qty.compareTo(BigDecimal.ZERO) >= 0 ? QtySO.abs()
 							: QtySO.abs().negate();
-                    if( !MStorage.add( getCtx(),getM_Warehouse_ID(),sLine.getM_Locator_ID(),sLine.getM_Product_ID(),sLine.getM_AttributeSetInstance_ID(),reservationAttributeSetInstance_ID,Qty,QtySO,QtyPO.negate(),get_TrxName())) {
-                        m_processMsg = "Cannot correct Inventory";
+					// Acá tenemos dos situaciones: 1) El reservado y 2) El stock.
+					// 1) El reservado en stock se hace en el depósito del
+					// pedido por lo que es correcto que se decremente el
+					// pendiente en ese depósito. Si manejo los reservados en
+					// otro depósito diferente del pedido quedan cantidades
+					// reservadas en el depósito del pedido que nunca serán
+					// entregadas. Adicionalmente, en el depósito del remito se
+					// manejan reservados que nunca se reservaron.
+					// 2) El stock sí es correcto que se maneje en el depósito
+					// porque se puede sacar un pedido por otro depósito.
+					
+					// Entonces por 1) se debe modificar el reservado del
+					// almacén del pedido si es que posee uno relacionado
+					if (!Util.isEmpty(sLine.getC_OrderLine_ID(), true)
+							&& !Util.isEmpty(ol_warehouseID, true)) {
+						Integer orderLocatorID = MWarehouse.getDefaultLocatorID(
+								ol_warehouseID, get_TrxName());
+						if (!MStorage.add(getCtx(), ol_warehouseID,
+								orderLocatorID, sLine.getM_Product_ID(),
+								sLine.getM_AttributeSetInstance_ID(),
+								reservationAttributeSetInstance_ID, BigDecimal.ZERO,
+								QtySO, QtyPO.negate(), get_TrxName())) {
+	                        m_processMsg = "Cannot correct Reserved stock";
+
+	                        return DocAction.STATUS_Invalid;
+	                    }
+						QtySO = BigDecimal.ZERO;
+						QtyPO = BigDecimal.ZERO;
+					}
+					// Entonces por 2) se debe manejar el stock en el almacén
+					// del remito
+					if (!MStorage.add(getCtx(), getM_Warehouse_ID(),
+							sLine.getM_Locator_ID(), sLine.getM_Product_ID(),
+							sLine.getM_AttributeSetInstance_ID(),
+							reservationAttributeSetInstance_ID, Qty,
+							QtySO, QtyPO.negate(), get_TrxName())) {
+                        m_processMsg = "Cannot correct Stock";
 
                         return DocAction.STATUS_Invalid;
                     }
@@ -2297,10 +2381,10 @@ public class MInOut extends X_M_InOut implements DocAction {
                 if( ol_ok ) {    // other in VMatch.createMatchRecord
                 	if(isSOTrx()){
                 		if(MovementType.endsWith("+")){
-                			ol_qtyReserved = ol_qtyReserved.add(sLine.getMovementQty()).add((ol_qtyTransferred));
+                			ol_qtyReserved = ol_qtyReserved.add(sLine.getMovementQty());
                 		}
                 		else{
-                			ol_qtyReserved = ol_qtyReserved.subtract( sLine.getMovementQty()).subtract(ol_qtyTransferred);
+                			ol_qtyReserved = ol_qtyReserved.subtract( sLine.getMovementQty());
                 		}
 						// Si es un remito creado desde el TPV entonces se
 						// anulan las cantidades reservadas a setear en el
@@ -2315,10 +2399,10 @@ public class MInOut extends X_M_InOut implements DocAction {
                 	}
                 	else{
                 		if(MovementType.endsWith("+")){
-                			ol_qtyReserved = ol_qtyReserved.subtract( sLine.getMovementQty()).subtract((ol_qtyTransferred));
+                			ol_qtyReserved = ol_qtyReserved.subtract( sLine.getMovementQty());
                 		}
                 		else{
-                			ol_qtyReserved = ol_qtyReserved.add( sLine.getMovementQty()).add((ol_qtyTransferred));
+                			ol_qtyReserved = ol_qtyReserved.add( sLine.getMovementQty());
                 		}
                 	}
                 } 
@@ -2524,9 +2608,9 @@ public class MInOut extends X_M_InOut implements DocAction {
 
             if( (product != null) && (line.getM_Locator_ID() == 0) ) {
                 line.setM_Warehouse_ID( getM_Warehouse_ID());
-                line.setM_Locator_ID( inTrxAux
-                                      ?Env.ZERO
-                                      :line.getMovementQty());    // default Locator
+				line.setM_Locator_ID(MWarehouse.getDefaultLocatorID(
+						getM_Warehouse_ID(), get_TrxName()));
+				
                 needSave = true;
             }
 
