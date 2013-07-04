@@ -17,24 +17,26 @@
 		 whenNoDataType="NoPages"
 		 isTitleNewPage="false"
 		 isSummaryNewPage="false">
-	<property name="ireport.scriptlethandling" value="2" />
+	<property name="ireport.scriptlethandling" value="0" />
 	<property name="ireport.encoding" value="UTF-8" />
 	<import value="java.util.*" />
 	<import value="net.sf.jasperreports.engine.*" />
 	<import value="net.sf.jasperreports.engine.data.*" />
 
-	<parameter name="DATE" isForPrompting="false" class="java.sql.Timestamp"/>
-	<parameter name="DATE_KIND" isForPrompting="false" class="java.lang.String"/>
+	<parameter name="DATE_FROM" isForPrompting="false" class="java.sql.Timestamp"/>
+	<parameter name="DATE_ORDER" isForPrompting="false" class="java.lang.String"/>
 	<parameter name="INITIAL_BALANCE" isForPrompting="false" class="java.math.BigDecimal"/>
 	<parameter name="BANK_ACCOUNT" isForPrompting="false" class="java.lang.String"/>
+	<parameter name="DATE_TO" isForPrompting="false" class="java.sql.Timestamp"/>
 
-	<field name="DATE" class="java.sql.Timestamp"/>
+	<field name="DATETRX" class="java.sql.Timestamp"/>
 	<field name="DOCUMENTNO" class="java.lang.String"/>
 	<field name="DESCRIPTION" class="java.lang.String"/>
 	<field name="OUTAMT" class="java.math.BigDecimal"/>
 	<field name="INAMT" class="java.math.BigDecimal"/>
 	<field name="BANK_ACCOUNT" class="java.lang.String"/>
 	<field name="BALANCE" class="java.math.BigDecimal"/>
+	<field name="DUEDATE" class="java.sql.Timestamp"/>
 
 	<variable name="SUMIN" class="java.math.BigDecimal" resetType="Report" calculation="Sum">
 		<variableExpression><![CDATA[$F{INAMT}]]></variableExpression>
@@ -52,14 +54,14 @@
 					<reportElement
 						x="0"
 						y="26"
-						width="40"
+						width="90"
 						height="15"
 						key="staticText-1"/>
 					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
 					<textElement>
 						<font size="9"/>
 					</textElement>
-				<text><![CDATA[Fecha:]]></text>
+				<text><![CDATA[Rango de Fechas:]]></text>
 				</staticText>
 				<staticText>
 					<reportElement
@@ -76,16 +78,16 @@
 				</staticText>
 				<textField isStretchWithOverflow="false" pattern="dd/MM/yyyy" isBlankWhenNull="false" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
-						x="40"
+						x="90"
 						y="26"
-						width="80"
+						width="50"
 						height="15"
 						key="textField"/>
 					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
 					<textElement>
 						<font size="9"/>
 					</textElement>
-				<textFieldExpression   class="java.sql.Timestamp"><![CDATA[$P{DATE}]]></textFieldExpression>
+				<textFieldExpression   class="java.sql.Timestamp"><![CDATA[$P{DATE_FROM}]]></textFieldExpression>
 				</textField>
 				<textField isStretchWithOverflow="false" isBlankWhenNull="false" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
@@ -98,14 +100,14 @@
 					<textElement>
 						<font size="9"/>
 					</textElement>
-				<textFieldExpression   class="java.lang.String"><![CDATA[$P{DATE_KIND}]]></textFieldExpression>
+				<textFieldExpression   class="java.lang.String"><![CDATA[$P{DATE_ORDER}]]></textFieldExpression>
 				</textField>
 				<staticText>
 					<reportElement
 						mode="Opaque"
 						x="0"
 						y="76"
-						width="50"
+						width="55"
 						height="16"
 						backcolor="#EDEBEB"
 						key="staticText-3"/>
@@ -118,9 +120,9 @@
 				<staticText>
 					<reportElement
 						mode="Opaque"
-						x="50"
+						x="110"
 						y="76"
-						width="80"
+						width="60"
 						height="16"
 						backcolor="#EDEBEB"
 						key="staticText-4"/>
@@ -128,14 +130,14 @@
 					<textElement textAlignment="Center" verticalAlignment="Middle">
 						<font/>
 					</textElement>
-				<text><![CDATA[Comprobante]]></text>
+				<text><![CDATA[Cheque]]></text>
 				</staticText>
 				<staticText>
 					<reportElement
 						mode="Opaque"
-						x="220"
+						x="270"
 						y="76"
-						width="130"
+						width="110"
 						height="16"
 						backcolor="#EDEBEB"
 						key="staticText-5"/>
@@ -148,9 +150,9 @@
 				<staticText>
 					<reportElement
 						mode="Opaque"
-						x="350"
+						x="380"
 						y="76"
-						width="60"
+						width="50"
 						height="16"
 						backcolor="#EDEBEB"
 						key="staticText-6"/>
@@ -163,9 +165,9 @@
 				<staticText>
 					<reportElement
 						mode="Opaque"
-						x="410"
+						x="430"
 						y="76"
-						width="60"
+						width="50"
 						height="16"
 						backcolor="#EDEBEB"
 						key="staticText-7"/>
@@ -178,9 +180,9 @@
 				<staticText>
 					<reportElement
 						mode="Opaque"
-						x="470"
+						x="480"
 						y="76"
-						width="65"
+						width="55"
 						height="16"
 						backcolor="#EDEBEB"
 						key="staticText-8"/>
@@ -222,7 +224,7 @@
 					<reportElement
 						x="0"
 						y="0"
-						width="150"
+						width="230"
 						height="20"
 						key="staticText-11"/>
 					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="Thin" bottomBorderColor="#000000"/>
@@ -286,9 +288,9 @@
 				<staticText>
 					<reportElement
 						mode="Opaque"
-						x="130"
+						x="170"
 						y="76"
-						width="90"
+						width="100"
 						height="16"
 						backcolor="#EDEBEB"
 						key="staticText-14"/>
@@ -297,6 +299,49 @@
 						<font/>
 					</textElement>
 				<text><![CDATA[Cta. Bancaria]]></text>
+				</staticText>
+				<textField isStretchWithOverflow="false" pattern="dd/MM/yyyy" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
+					<reportElement
+						x="150"
+						y="26"
+						width="80"
+						height="15"
+						key="textField-4"/>
+					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
+					<textElement>
+						<font size="9"/>
+					</textElement>
+				<textFieldExpression   class="java.sql.Timestamp"><![CDATA[$P{DATE_TO}]]></textFieldExpression>
+				</textField>
+				<staticText>
+					<reportElement
+						x="140"
+						y="26"
+						width="10"
+						height="15"
+						key="staticText-15">
+							<printWhenExpression><![CDATA[new Boolean($P{DATE_TO} != null)]]></printWhenExpression>
+						</reportElement>
+					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
+					<textElement>
+						<font/>
+					</textElement>
+				<text><![CDATA[-]]></text>
+				</staticText>
+				<staticText>
+					<reportElement
+						mode="Opaque"
+						x="55"
+						y="76"
+						width="55"
+						height="16"
+						backcolor="#EDEBEB"
+						key="staticText-16"/>
+					<box topBorder="Thin" topBorderColor="#000000" leftBorder="Thin" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="Thin" bottomBorderColor="#000000"/>
+					<textElement textAlignment="Center" verticalAlignment="Middle">
+						<font/>
+					</textElement>
+				<text><![CDATA[Vto.]]></text>
 				</staticText>
 			</band>
 		</title>
@@ -309,40 +354,42 @@
 			</band>
 		</columnHeader>
 		<detail>
-			<band height="15"  isSplitAllowed="true" >
-				<textField isStretchWithOverflow="false" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
+			<band height="16"  isSplitAllowed="true" >
+				<textField isStretchWithOverflow="false" pattern="dd/MM/yyyy" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
 						x="0"
 						y="0"
-						width="50"
+						width="55"
 						height="15"
 						key="textField"/>
 					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
 					<textElement textAlignment="Center" verticalAlignment="Middle">
 						<font size="8"/>
 					</textElement>
-				<textFieldExpression   class="java.sql.Timestamp"><![CDATA[$F{DATE}]]></textFieldExpression>
+				<textFieldExpression   class="java.sql.Timestamp"><![CDATA[$F{DATETRX}]]></textFieldExpression>
 				</textField>
-				<textField isStretchWithOverflow="false" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
+				<textField isStretchWithOverflow="true" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
-						x="50"
+						x="110"
 						y="0"
-						width="80"
+						width="60"
 						height="15"
-						key="textField"/>
+						key="textField"
+						isPrintWhenDetailOverflows="true"/>
 					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
 					<textElement verticalAlignment="Middle">
 						<font size="8"/>
 					</textElement>
 				<textFieldExpression   class="java.lang.String"><![CDATA[$F{DOCUMENTNO}]]></textFieldExpression>
 				</textField>
-				<textField isStretchWithOverflow="false" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
+				<textField isStretchWithOverflow="true" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
-						x="220"
+						x="270"
 						y="0"
-						width="130"
+						width="110"
 						height="15"
-						key="textField"/>
+						key="textField"
+						isPrintWhenDetailOverflows="true"/>
 					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
 					<textElement verticalAlignment="Middle">
 						<font size="8"/>
@@ -351,9 +398,9 @@
 				</textField>
 				<textField isStretchWithOverflow="false" pattern="##0.00" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
-						x="350"
+						x="380"
 						y="0"
-						width="60"
+						width="50"
 						height="15"
 						key="textField">
 							<printWhenExpression><![CDATA[new Boolean($F{OUTAMT} != null && $F{OUTAMT}.compareTo( java.math.BigDecimal.ZERO ) != 0)]]></printWhenExpression>
@@ -366,9 +413,9 @@
 				</textField>
 				<textField isStretchWithOverflow="false" pattern="##0.00" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
-						x="410"
+						x="430"
 						y="0"
-						width="60"
+						width="50"
 						height="15"
 						key="textField">
 							<printWhenExpression><![CDATA[new Boolean($F{INAMT} != null && $F{INAMT}.compareTo( java.math.BigDecimal.ZERO ) != 0)]]></printWhenExpression>
@@ -379,13 +426,14 @@
 					</textElement>
 				<textFieldExpression   class="java.math.BigDecimal"><![CDATA[$F{INAMT}]]></textFieldExpression>
 				</textField>
-				<textField isStretchWithOverflow="false" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
+				<textField isStretchWithOverflow="true" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
-						x="130"
+						x="170"
 						y="0"
-						width="90"
+						width="100"
 						height="15"
-						key="textField"/>
+						key="textField"
+						isPrintWhenDetailOverflows="true"/>
 					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
 					<textElement verticalAlignment="Middle">
 						<font size="8"/>
@@ -394,9 +442,9 @@
 				</textField>
 				<textField isStretchWithOverflow="false" pattern="##0.00" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
-						x="470"
+						x="480"
 						y="0"
-						width="65"
+						width="55"
 						height="15"
 						key="textField-3"/>
 					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
@@ -405,6 +453,29 @@
 					</textElement>
 				<textFieldExpression   class="java.math.BigDecimal"><![CDATA[$F{BALANCE}]]></textFieldExpression>
 				</textField>
+				<textField isStretchWithOverflow="false" pattern="dd/MM/yyyy" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
+					<reportElement
+						x="55"
+						y="0"
+						width="55"
+						height="15"
+						key="textField-5"/>
+					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
+					<textElement textAlignment="Center" verticalAlignment="Middle">
+						<font size="8"/>
+					</textElement>
+				<textFieldExpression   class="java.sql.Timestamp"><![CDATA[$F{DUEDATE}]]></textFieldExpression>
+				</textField>
+				<line direction="TopDown">
+					<reportElement
+						x="0"
+						y="15"
+						width="535"
+						height="0"
+						key="line-1"
+						positionType="Float"/>
+					<graphicElement stretchType="NoStretch"/>
+				</line>
 			</band>
 		</detail>
 		<columnFooter>
@@ -422,11 +493,11 @@
 						mode="Opaque"
 						x="0"
 						y="0"
-						width="350"
+						width="380"
 						height="16"
 						backcolor="#EDEBEB"
 						key="staticText-9"/>
-					<box topBorder="Thin" topBorderColor="#000000" leftBorder="Thin" leftBorderColor="#000000" rightBorder="Thin" rightBorderColor="#000000" bottomBorder="Thin" bottomBorderColor="#000000"/>
+					<box topBorder="None" topBorderColor="#000000" leftBorder="Thin" leftBorderColor="#000000" rightBorder="Thin" rightBorderColor="#000000" bottomBorder="Thin" bottomBorderColor="#000000"/>
 					<textElement textAlignment="Center" verticalAlignment="Middle">
 						<font/>
 					</textElement>
@@ -434,40 +505,40 @@
 				</staticText>
 				<textField isStretchWithOverflow="false" pattern="##0.00" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
-						x="470"
+						x="480"
 						y="0"
-						width="65"
+						width="55"
 						height="16"
 						key="textField"/>
 					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
 					<textElement textAlignment="Right" verticalAlignment="Middle">
-						<font/>
+						<font size="8"/>
 					</textElement>
 				<textFieldExpression   class="java.math.BigDecimal"><![CDATA[$F{BALANCE}]]></textFieldExpression>
 				</textField>
 				<textField isStretchWithOverflow="false" pattern="##0.00" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
-						x="410"
+						x="430"
 						y="0"
-						width="60"
+						width="50"
 						height="16"
 						key="textField"/>
 					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
 					<textElement textAlignment="Right" verticalAlignment="Middle">
-						<font/>
+						<font size="8"/>
 					</textElement>
 				<textFieldExpression   class="java.math.BigDecimal"><![CDATA[$V{SUMIN}]]></textFieldExpression>
 				</textField>
 				<textField isStretchWithOverflow="false" pattern="##0.00" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
-						x="350"
+						x="380"
 						y="0"
-						width="60"
+						width="50"
 						height="16"
 						key="textField"/>
 					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
 					<textElement textAlignment="Right" verticalAlignment="Middle">
-						<font/>
+						<font size="8"/>
 					</textElement>
 				<textFieldExpression   class="java.math.BigDecimal"><![CDATA[$V{SUMOUT}]]></textFieldExpression>
 				</textField>
