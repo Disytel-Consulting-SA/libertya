@@ -17,13 +17,18 @@ public class LaunchChecksByAccount extends JasperReportLaunch {
 			MBankAccount bankAccount = MBankAccount.get(getCtx(), getBankAccountID());
 			addReportParameter("BANK_ACCOUNT", bankAccount.getDescription());
 		}
-		addReportParameter("DATE_KIND", JasperReportsUtil.getListName(getCtx(),
+		addReportParameter("DATE_ORDER", JasperReportsUtil.getListName(getCtx(),
 				X_T_BankBalances.DATEORDER_AD_Reference_ID, getDateOrder()));
-		addReportParameter("DATE", getDate());
+		addReportParameter("DATE_FROM", getDateFrom());
+		addReportParameter("DATE_TO", getDateTo());
 	}
 
-	protected Timestamp getDate(){
+	protected Timestamp getDateFrom(){
 		return (Timestamp)getParameterValue("Date");
+	}
+	
+	protected Timestamp getDateTo(){
+		return (Timestamp)getParameterValue("Date_To");
 	}
 	
 	protected Integer getBankAccountID(){
@@ -37,7 +42,7 @@ public class LaunchChecksByAccount extends JasperReportLaunch {
 	@Override
 	protected OXPJasperDataSource createReportDataSource() {
 		return new ChecksByAccountDataSource(getCtx(), getBankAccountID(),
-				getDate(), getDateOrder(), get_TrxName());
+				getDateFrom(), getDateTo(), getDateOrder(), get_TrxName());
 	}
 
 }

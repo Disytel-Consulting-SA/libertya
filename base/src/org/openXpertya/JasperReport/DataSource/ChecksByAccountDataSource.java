@@ -1,22 +1,19 @@
 package org.openXpertya.JasperReport.DataSource;
 
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
 import java.math.BigDecimal;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.Timestamp;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Properties;
+
+import net.sf.jasperreports.engine.JRException;
+import net.sf.jasperreports.engine.JRField;
 
 import org.openXpertya.util.DB;
 import org.openXpertya.util.Env;
 import org.openXpertya.util.Util;
-import net.sf.jasperreports.engine.JRException;
-import net.sf.jasperreports.engine.JRField;
 
 public class ChecksByAccountDataSource implements OXPJasperDataSource {
 
@@ -29,8 +26,11 @@ public class ChecksByAccountDataSource implements OXPJasperDataSource {
 	/** Data Source: Cheques a imprimir */
 	private List<CheckDTO> checks;
 	
-	/** Fecha */
-	private Timestamp date;
+	/** Fecha desde */
+	private Timestamp dateFrom;
+	
+	/** Fecha hasta */
+	private Timestamp dateTo;
 	
 	/** Tipo de fecha: Emisión o Vencimiento */
 	private String dateOrder;
@@ -53,33 +53,20 @@ public class ChecksByAccountDataSource implements OXPJasperDataSource {
 	/** Saldo inicial */
 	private BigDecimal initialBalance;
 	
-	private Map<String, String> methodMapper;
-	
-	public ChecksByAccountDataSource(Properties ctx, Integer bankAccountID, Timestamp date, String dateOrder, String trxName) {
+	public ChecksByAccountDataSource(Properties ctx, Integer bankAccountID, Timestamp dateFrom, Timestamp dateTo, String dateOrder, String trxName) {
 		setCtx(ctx);
 		setBankAccountID(bankAccountID);
-		setDate(date);
+		setDateFrom(dateFrom);
+		setDateTo(dateTo);
 		setDateOrder(dateOrder);
 		setDateColumnName(dateOrder.equals("D")?"duedate":"datetrx");
 		setTrxName(trxName);
-		initMethodMapper();
-	}
-
-	public void initMethodMapper(){
-		setMethodMapper(new HashMap<String, String>());
-		getMethodMapper().put("DATE", "getDate");
-		getMethodMapper().put("DOCUMENTNO", "getDocumentNo");
-		getMethodMapper().put("DESCRIPTION", "getDescription");
-		getMethodMapper().put("OUTAMT", "getOutAmt");
-		getMethodMapper().put("INAMT", "getInAmt");
-		getMethodMapper().put("BANK_ACCOUNT", "getBankAccount");
-		getMethodMapper().put("BALANCE", "getBalance");
 	}
 	
-	protected String getQuery(String dateCompareOperator) {
-		StringBuffer sql = new StringBuffer("SELECT ");
-		sql.append(getDateColumnName()).append(", ");
-		sql.append("	p.documentno, " +
+	protected String getQuery(String dateCompareOperator, boolean addDateTo) {
+		StringBuffer sql = new StringBuffer("SELECT p.datetrx, " +
+					"	p.duedate, " +
+					"	p.documentno, " +
 					"	ba.description as bank_account, " +
 					"	bp.name as description, " +
 					"	abs((CASE WHEN p.isreceipt = 'Y' THEN 0 ELSE p.payamt END)) as outamt, " +
@@ -87,12 +74,15 @@ public class ChecksByAccountDataSource implements OXPJasperDataSource {
 					"FROM c_payment as p " +
 					"INNER JOIN c_bankaccount as ba ON ba.c_bankaccount_id = p.c_bankaccount_id " +
 					"INNER JOIN c_bpartner as bp ON bp.c_bpartner_id = p.c_bpartner_id " +
-					"WHERE p.ad_client_id = ? AND p.docstatus IN ('CO','CL') ");
+					"WHERE p.ad_client_id = ? AND p.tendertype = 'K' AND p.docstatus IN ('CO','CL') ");
 		sql.append(" AND ");
 		sql.append(getDateColumnName());
 		sql.append("::date ");
 		sql.append(dateCompareOperator);
 		sql.append(" ?::date ");
+		if(addDateTo && getDateTo() != null){
+			sql.append(" AND ").append(getDateColumnName()).append("::date ").append(" <= ?::date ");
+		}
 		sql.append(Util.isEmpty(getBankAccountID(), true) ? ""
 				: " AND p.c_bankaccount_id = ? ");
 		sql.append(" ORDER BY ");
@@ -107,10 +97,13 @@ public class ChecksByAccountDataSource implements OXPJasperDataSource {
 		// Agregar el saldo inicial
 		initialBalance();
 		// Data Source
-		PreparedStatement ps = DB.prepareStatement(getQuery(">"), getTrxName(), true);
+		PreparedStatement ps = DB.prepareStatement(getQuery(">=", true), getTrxName(), true);
 		int i = 1;
 		ps.setInt(i++, Env.getAD_Client_ID(getCtx()));
-		ps.setTimestamp(i++, getDate());
+		ps.setTimestamp(i++, getDateFrom());
+		if(getDateTo() != null){
+			ps.setTimestamp(i++, getDateTo());
+		}
 		if(!Util.isEmpty(getBankAccountID(), true)){
 			ps.setInt(i++, getBankAccountID());
 		}
@@ -120,7 +113,8 @@ public class ChecksByAccountDataSource implements OXPJasperDataSource {
 			balanceAux = balanceAux.add(rs.getBigDecimal("inAmt").subtract(
 					rs.getBigDecimal("outAmt")));
 			getChecks()
-					.add(new CheckDTO(rs.getTimestamp(getDateColumnName()), rs
+					.add(new CheckDTO(rs.getTimestamp("datetrx"), rs
+							.getTimestamp("duedate"), rs
 							.getString("documentno"), rs
 							.getString("bank_account"), rs
 							.getString("description"), rs
@@ -138,12 +132,12 @@ public class ChecksByAccountDataSource implements OXPJasperDataSource {
 		StringBuffer sql = new StringBuffer(
 				"SELECT coalesce(sum(inAmt-outAmt),0)::numeric(22,2) as balance, MAX("
 						+ getDateColumnName() + ") as maxDate FROM (");
-		sql.append(getQuery("<"));
+		sql.append(getQuery("<", false));
 		sql.append(" ) as c ");
 		PreparedStatement ps = DB.prepareStatement(sql.toString(), getTrxName(), true);
 		int i = 1;
 		ps.setInt(i++, Env.getAD_Client_ID(getCtx()));
-		ps.setTimestamp(i++, getDate());
+		ps.setTimestamp(i++, getDateFrom());
 		if(!Util.isEmpty(getBankAccountID(), true)){
 			ps.setInt(i++, getBankAccountID());
 		}
@@ -153,7 +147,7 @@ public class ChecksByAccountDataSource implements OXPJasperDataSource {
 			balance = rs.getBigDecimal("balance");
 		}
 		getChecks().add(
-				new CheckDTO(rs.getTimestamp("maxDate"), null, null,
+				new CheckDTO(rs.getTimestamp("maxDate"), null, null, null,
 						"Saldo inicial", BigDecimal.ZERO, BigDecimal.ZERO,
 						balance));
 		setInitialBalance(balance);
@@ -165,8 +159,11 @@ public class ChecksByAccountDataSource implements OXPJasperDataSource {
 	public Object getFieldValue(JRField arg0) throws JRException {
 		Object output = null;
 		String fieldName = arg0.getName();
-		if(fieldName.equalsIgnoreCase("DATE")){
-			output = getCurrentCheck().getDate();
+		if(fieldName.equalsIgnoreCase("DATETRX")){
+			output = getCurrentCheck().getDateTrx();
+		}
+		else if(fieldName.equalsIgnoreCase("DUEDATE")){
+			output = getCurrentCheck().getDueDate();
 		}
 		else if(fieldName.equalsIgnoreCase("DOCUMENTNO")){
 			output = getCurrentCheck().getDocumentNo();
@@ -246,14 +243,6 @@ public class ChecksByAccountDataSource implements OXPJasperDataSource {
 	protected void setBankAccountID(Integer bankAccountID) {
 		this.bankAccountID = bankAccountID;
 	}
-
-	protected Timestamp getDate() {
-		return date;
-	}
-
-	protected void setDate(Timestamp date) {
-		this.date = date;
-	}
 	
 	protected Integer getCurrentCheckIndex() {
 		return currentCheckIndex;
@@ -286,17 +275,26 @@ public class ChecksByAccountDataSource implements OXPJasperDataSource {
 	protected void setInitialBalance(BigDecimal initialBalance) {
 		this.initialBalance = initialBalance;
 	}
-
-	protected Map<String, String> getMethodMapper() {
-		return methodMapper;
+	
+	protected Timestamp getDateFrom() {
+		return dateFrom;
 	}
 
-	protected void setMethodMapper(Map<String, String> methodMapper) {
-		this.methodMapper = methodMapper;
+	protected void setDateFrom(Timestamp dateFrom) {
+		this.dateFrom = dateFrom;
+	}
+
+	protected Timestamp getDateTo() {
+		return dateTo;
+	}
+
+	protected void setDateTo(Timestamp dateTo) {
+		this.dateTo = dateTo;
 	}
 
 	private class CheckDTO{
-		private Timestamp date;
+		private Timestamp dateTrx;
+		private Timestamp dueDate;
 		private String documentNo;
 		private String bankAccount;
 		private String description;
@@ -306,9 +304,10 @@ public class ChecksByAccountDataSource implements OXPJasperDataSource {
 		
 		public CheckDTO(){}
 		
-		public CheckDTO(Timestamp date, String documentNo, String bankAccount,
+		public CheckDTO(Timestamp dateTrx, Timestamp dueDate, String documentNo, String bankAccount,
 				String description, BigDecimal outAmt, BigDecimal inAmt, BigDecimal balance) {
-			this.setDate(date);
+			this.setDateTrx(dateTrx);
+			this.setDueDate(dueDate);
 			this.setBankAccount(bankAccount);
 			this.setDescription(description);
 			this.setDocumentNo(documentNo);
@@ -317,14 +316,22 @@ public class ChecksByAccountDataSource implements OXPJasperDataSource {
 			this.setBalance(balance);
 		}
 
-		public Timestamp getDate() {
-			return date;
+		public Timestamp getDateTrx() {
+			return dateTrx;
 		}
 
-		public void setDate(Timestamp date) {
-			this.date = date;
+		public void setDateTrx(Timestamp dateTrx) {
+			this.dateTrx = dateTrx;
 		}
 
+		public Timestamp getDueDate() {
+			return dueDate;
+		}
+
+		public void setDueDate(Timestamp dueDate) {
+			this.dueDate = dueDate;
+		}
+		
 		public String getDocumentNo() {
 			return documentNo;
 		}
