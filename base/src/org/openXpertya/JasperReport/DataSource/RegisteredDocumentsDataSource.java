@@ -16,6 +16,7 @@ import net.sf.jasperreports.engine.JRField;
 
 import org.openXpertya.model.CalloutInvoiceExt;
 import org.openXpertya.util.DB;
+import org.openXpertya.util.Env;
 import org.openXpertya.util.Util;
 
 public class RegisteredDocumentsDataSource implements OXPJasperDataSource {
@@ -45,10 +46,7 @@ public class RegisteredDocumentsDataSource implements OXPJasperDataSource {
 	private int currentRecord = -1;
 	
 	/** Utilizado para mapear los campos con las invocaciones de los metodos  */
-	HashMap<String, String> methodMapper = new HashMap<String, String>(); 
-	
-	/** Números de documento totales impresos fiscalmente */
-	private Set<String> documentsNo;
+	HashMap<String, String> methodMapper = new HashMap<String, String>();
 	
 	public RegisteredDocumentsDataSource(Properties ctx, DeclaracionValoresDTO valoresDTO, String filterOption, String trxName) {
 		setTrxName(trxName);
@@ -56,7 +54,6 @@ public class RegisteredDocumentsDataSource implements OXPJasperDataSource {
 		setValoresDTO(valoresDTO);
 		setFilterOption(filterOption);
 		setDocuments(new ArrayList<RegisteredDocumentDTO>());
-		setDocumentsNo(new HashSet<String>());
 		initMethodMapper();
 	}
 	
@@ -74,31 +71,6 @@ public class RegisteredDocumentsDataSource implements OXPJasperDataSource {
 		methodMapper.put("GRANDTOTAL", "getGrandTotal");
 		methodMapper.put("DOCSTATUS", "getDocStatus");
 		methodMapper.put("ISMISSING", "isMissing");
-	}
-
-	private void initDocumentsNo() throws Exception{
-		if(showMissing()){
-			// Cargar las facturas dependiendo de las opciones
-			StringBuffer sql = new StringBuffer("select distinct i.documentno, fiscalalreadyprinted " +
-						 "from c_invoice as i " +
-						 "inner join c_doctype as dt on dt.c_doctype_id = i.c_doctypetarget_id " +
-						 "inner join c_letra_comprobante as lc on lc.c_letra_comprobante_id = i.c_letra_comprobante_id " +
-						 "inner join c_bpartner as bp on bp.c_bpartner_id = i.c_bpartner_id " +
-						 "inner join c_posjournal as pj on pj.c_posjournal_id = i.c_posjournal_id " +
-						 "inner join c_pos as p on p.c_pos_id = pj.c_pos_id " +
-						 "inner join ad_user as u on u.ad_user_id = pj.ad_user_id " +
-						 "where ");
-			sql.append(getWhereClause("i"));
-			PreparedStatement ps = DB.prepareStatement(sql.toString(), getTrxName());
-			ResultSet rs = ps.executeQuery();
-			while(rs.next()){
-				if(rs.getString("fiscalalreadyprinted").equals("Y")){
-					getDocumentsNo().add(rs.getString("documentno"));
-				}
-			}
-			ps.close();
-			rs.close();
-		}
 	}
 	
 	protected String getWhereClause(String tableAlias){
@@ -165,9 +137,6 @@ public class RegisteredDocumentsDataSource implements OXPJasperDataSource {
 	
 	@Override
 	public void loadData() throws Exception {
-		// Inicializar todos los nros de documento encontrados si necesito
-		// mostrar los faltantes
-		initDocumentsNo();
 		// Cargar las facturas dependiendo de las opciones
 		StringBuffer sql = new StringBuffer("select date_trunc('day', pj.datetrx) as datetrx, " +
 					 "			p.c_pos_id," +
@@ -230,7 +199,7 @@ public class RegisteredDocumentsDataSource implements OXPJasperDataSource {
 					docNo = CalloutInvoiceExt.GenerarNumeroDeDocumento(
 							rs.getInt("puntodeventa"), aux,
 							rs.getString("letra"), true, false);
-					if(!getDocumentsNo().contains(docNo)){
+					if(!existsDocumentNo(docNo)){
 						getDocuments()
 								.add(new RegisteredDocumentDTO(
 										getCtx(),
@@ -280,8 +249,6 @@ public class RegisteredDocumentsDataSource implements OXPJasperDataSource {
 		}
 		ps.close();
 		rs.close();
-		getDocumentsNo().clear();
-		setDocumentsNo(null);
 		totalDocuments = documents.size();
 	}
 	
@@ -292,6 +259,15 @@ public class RegisteredDocumentsDataSource implements OXPJasperDataSource {
 	
 	protected boolean showOnlyMissing(){
 		return getFilterOption().equals("M");
+	}
+	
+	protected boolean existsDocumentNo(String documentNo){
+		return DB
+				.getSQLValue(
+						getTrxName(),
+						"SELECT count(1)::integer FROM c_invoice WHERE ad_client_id = ? AND docstatus NOT IN ('DR','IP') AND fiscalalreadyprinted = 'Y' AND documentno = '"
+								+ documentNo + "'",
+						Env.getAD_Client_ID(getCtx()), true) > 0;
 	}
 	
 	@Override
@@ -382,14 +358,6 @@ public class RegisteredDocumentsDataSource implements OXPJasperDataSource {
 
 	protected void setCurrentDocument(RegisteredDocumentDTO currentDocument) {
 		this.currentDocument = currentDocument;
-	}
-
-	protected Set<String> getDocumentsNo() {
-		return documentsNo;
-	}
-
-	protected void setDocumentsNo(Set<String> documentsNo) {
-		this.documentsNo = documentsNo;
 	}
 
 }
