@@ -35,6 +35,8 @@ public abstract class BasicFiscalPrinter implements FiscalPrinter {
 	private FiscalPacket lastRequest;
 	/** Ultima respuesta recibida desde la impresora fiscal */
 	private FiscalPacket lastResponse;
+	/** Enviar comando de cancelación antes de imprimir un documento */
+	private boolean cancelBeforePrint = false;
 	
 	public BasicFiscalPrinter() {
 		super();
@@ -311,4 +313,13 @@ public abstract class BasicFiscalPrinter implements FiscalPrinter {
 		this.lastResponse = lastResponse;
 	}
 	
+	@Override
+	public void setCancelBeforePrint(boolean cancelBeforePrint){
+		this.cancelBeforePrint = cancelBeforePrint;
+	}
+	
+	@Override
+	public boolean isCancelBeforePrint(){
+		return cancelBeforePrint;
+	}
 }

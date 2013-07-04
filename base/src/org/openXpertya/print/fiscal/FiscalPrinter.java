@@ -187,4 +187,19 @@ public interface FiscalPrinter {
 	 * Abrir el cajón de dinero
 	 */
 	public void openDrawer() throws FiscalPrinterIOException;
+	
+	/**
+	 * Setea el flag de cancelación antes de imprimir un documento
+	 * 
+	 * @param cancelBeforePrint
+	 *            true si se debe enviar el comando de cancelación antes de
+	 *            imprimir un documento, false caso contrario
+	 */
+	public void setCancelBeforePrint(boolean cancelBeforePrint);
+	
+	/**
+	 * @return true si se debe enviar el comando de cancelación antes de
+	 *         imprimir un documento, false caso contrario
+	 */
+	public boolean isCancelBeforePrint();
 }

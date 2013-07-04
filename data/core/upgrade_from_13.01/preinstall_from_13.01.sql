@@ -3671,3 +3671,6 @@ WHERE ad_client_id = 1010016 AND EXISTS (SELECT c_order_id FROM c_order as o WHE
 
 --20130704-1820 Nueva columna para que los parámetros de procesos puedan ser encriptados
 UPDATE ad_system SET dummy = (SELECT addcolumnifnotexists('ad_process_para','isencrypted', 'character(1) NOT NULL DEFAULT ''N''::bpchar'));
+
+--20130704-1910 Nueva columna para configurar enviar el comando de cancelación antes de imprimir a la impresora fiscal
+UPDATE ad_system SET dummy = (SELECT addcolumnifnotexists('c_controlador_fiscal','cmdcancelbeforeprintdocument', 'character(1) NOT NULL DEFAULT ''N''::bpchar'));

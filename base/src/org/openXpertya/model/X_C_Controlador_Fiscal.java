@@ -7,7 +7,7 @@ import java.math.*;
 import org.openXpertya.util.*;
 /** Modelo Generado por C_Controlador_Fiscal
  *  @author Comunidad de Desarrollo Libertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
- *  @version  - 2013-03-20 13:40:38.774 */
+ *  @version  - 2013-07-04 19:14:05.305 */
 public class X_C_Controlador_Fiscal extends org.openXpertya.model.PO
 {
 /** Constructor estándar */
@@ -18,6 +18,7 @@ super (ctx, C_Controlador_Fiscal_ID, trxName);
 {
 setC_Controlador_Fiscal_ID (0);
 setC_Controlador_Fiscal_Type_ID (0);
+setCmdCancelBeforePrintDocument (false);
 sethost (null);
 setIsRemote (false);
 setName (null);
@@ -90,6 +91,24 @@ public int getC_Controlador_Fiscal_Type_ID()
 Integer ii = (Integer)get_Value("C_Controlador_Fiscal_Type_ID");
 if (ii == null) return 0;
 return ii.intValue();
+}
+/** Set Cmd Cancel Before Print Document.
+Cancel command before print document */
+public void setCmdCancelBeforePrintDocument (boolean CmdCancelBeforePrintDocument)
+{
+set_Value ("CmdCancelBeforePrintDocument", new Boolean(CmdCancelBeforePrintDocument));
+}
+/** Get Cmd Cancel Before Print Document.
+Cancel command before print document */
+public boolean isCmdCancelBeforePrintDocument() 
+{
+Object oo = get_Value("CmdCancelBeforePrintDocument");
+if (oo != null) 
+{
+ if (oo instanceof Boolean) return ((Boolean)oo).booleanValue();
+ return "Y".equals(oo);
+}
+return false;
 }
 /** Set Description.
 Optional short description of the record */
