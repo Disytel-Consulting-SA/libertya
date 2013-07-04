@@ -7,7 +7,7 @@ import java.math.*;
 import org.openXpertya.util.*;
 /** Modelo Generado por AD_Process_Para
  *  @author Comunidad de Desarrollo Libertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
- *  @version  - 2013-04-10 18:37:32.512 */
+ *  @version  - 2013-07-04 18:37:04.504 */
 public class X_AD_Process_Para extends org.openXpertya.model.PO
 {
 /** Constructor estándar */
@@ -23,6 +23,7 @@ setColumnName (null);
 setEntityType (null);	// U
 setFieldLength (0);
 setIsCentrallyMaintained (true);	// Y
+setIsEncrypted (false);
 setIsMandatory (false);
 setIsRange (false);
 setName (null);
@@ -340,6 +341,24 @@ Information maintained in System Element table */
 public boolean isCentrallyMaintained() 
 {
 Object oo = get_Value("IsCentrallyMaintained");
+if (oo != null) 
+{
+ if (oo instanceof Boolean) return ((Boolean)oo).booleanValue();
+ return "Y".equals(oo);
+}
+return false;
+}
+/** Set Encrypted.
+Display or Storage is encrypted */
+public void setIsEncrypted (boolean IsEncrypted)
+{
+set_Value ("IsEncrypted", new Boolean(IsEncrypted));
+}
+/** Get Encrypted.
+Display or Storage is encrypted */
+public boolean isEncrypted() 
+{
+Object oo = get_Value("IsEncrypted");
 if (oo != null) 
 {
  if (oo instanceof Boolean) return ((Boolean)oo).booleanValue();

@@ -440,6 +440,7 @@ public class MFieldVO implements Serializable {
             vo.FieldLength	= rs.getInt("FieldLength");
             vo.DisplayLength	= vo.FieldLength;
             vo.DisplayLogic	= rs.getString("DisplayLogic");
+            vo.IsEncryptedField	= "Y".equals(rs.getString("IsEncrypted"));
             
             // vo.DisplayLength = rs.getInt("DisplayLength");
             vo.DefaultValue	= rs.getString("DefaultValue");

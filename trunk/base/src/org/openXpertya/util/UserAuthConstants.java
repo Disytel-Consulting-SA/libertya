@@ -36,6 +36,8 @@ public class UserAuthConstants {
 	public static final String POS_MANUAL_GENERAL_DISCOUNT_UID = "CORE-AD_Process-1010295";
 	/** Autorización de anulación de comprobantes en TPV */
 	public static final String POS_VOID_DOCUMENTS_UID = "CORE-AD_Process-1010296";
+	/** Autorización de Apertura del cajón de dinero */
+	public static final String OPEN_DRAWER_UID = "CORE-AD_Process-1010337";
 	
 	/** Asociación de uids de procesos con sus values */
 	public static Map<String, String> processValues = new HashMap<String, String>(); 
@@ -47,6 +49,7 @@ public class UserAuthConstants {
 		processValues.put(POS_INIT_UID, "POSInitAuthorization");
 		processValues.put(POS_MANUAL_GENERAL_DISCOUNT_UID, "POSManualGeneralDiscountAuth");
 		processValues.put(POS_VOID_DOCUMENTS_UID, "POSVoidDocumentsAuth");
+		processValues.put(OPEN_DRAWER_UID, "OpenDrawerAuthorization");
 	}
 	
 	public static String getProcessValue(String key){
