@@ -777,6 +777,12 @@ public abstract class HasarFiscalPrinter extends BasicFiscalPrinter implements H
 		invoice.validate();
 		boolean hasCashPayments = false;
 		try {
+			// Enviar comando de cancelación antes de imprimir si así se
+			// requiere
+			if(isCancelBeforePrint()){
+				setCancelAllowed(true);
+				cancelCurrentDocument();
+			}
 			setCancelAllowed(false);
 			//////////////////////////////////////////////////////////////
 			// Se setean los datos del comprador.
@@ -931,6 +937,12 @@ public abstract class HasarFiscalPrinter extends BasicFiscalPrinter implements H
 		// Se valida la nota de crédito.
 		creditNote.validate();
 		try {
+			// Enviar comando de cancelación antes de imprimir si así se
+			// requiere
+			if(isCancelBeforePrint()){
+				setCancelAllowed(true);
+				cancelCurrentDocument();
+			}
 			setCancelAllowed(false);
 			//////////////////////////////////////////////////////////////
 			// Se setean los datos del comprador.
@@ -1012,6 +1024,12 @@ public abstract class HasarFiscalPrinter extends BasicFiscalPrinter implements H
 		// Se valida la nota de débito.
 		debitNote.validate();
 		try {
+			// Enviar comando de cancelación antes de imprimir si así se
+			// requiere
+			if(isCancelBeforePrint()){
+				setCancelAllowed(true);
+				cancelCurrentDocument();
+			}
 			setCancelAllowed(false);
 			//////////////////////////////////////////////////////////////
 			// Se setean los datos del comprador.
@@ -1086,6 +1104,12 @@ public abstract class HasarFiscalPrinter extends BasicFiscalPrinter implements H
 		// Se valida el documento no fiscal.
 		nonFiscalDocument.validate();
 		try {
+			// Enviar comando de cancelación antes de imprimir si así se
+			// requiere
+			if(isCancelBeforePrint()){
+				setCancelAllowed(true);
+				cancelCurrentDocument();
+			}
 			setCancelAllowed(false);
 			//////////////////////////////////////////////////////////////
 			// Se abre el documento no fiscal.
