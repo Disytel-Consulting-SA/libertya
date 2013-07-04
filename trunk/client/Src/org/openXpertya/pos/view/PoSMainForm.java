@@ -1647,9 +1647,13 @@ public class PoSMainForm extends CPanel implements FormPanel, ASyncProcess, Disp
 				@Override
 				public void keyReleased(KeyEvent event) {
 					String countStr = cCountText.getText();
-					if(countStr.equals("0")) {
-						cCountText.setText("1");
-						cCountText.selectAll();
+					if (countStr.length() > 1 && countStr.startsWith("0")
+							&& !countStr.startsWith("0.")) {
+						cCountText.setText("0."
+								+ countStr.substring(1, countStr.length()));
+					}
+					if(countStr.startsWith(".")){
+						cCountText.setText("0"+countStr);
 					}
 				}
 				
