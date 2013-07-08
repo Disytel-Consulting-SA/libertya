@@ -338,7 +338,19 @@ public class EstadoDeCuentaProcess extends SvrProcess {
 		ec.setC_BPartner_ID(bPartner);
 		ec.setbpartner("             TOTAL CHEQUES CARTERA:");
 		
-		BigDecimal checksAmt = BigDecimal.ZERO.add(DB.getSQLValueBD(null,"SELECT COALESCE(SUM(paymentavailable(C_Payment_ID)),0) FROM C_Payment p INNER JOIN C_bankaccount ba ON (ba.C_BankAccount_ID = p.C_BankAccount_ID) WHERE ((tendertype = 'K') AND (ba.ischequesencartera = 'Y') AND p.docstatus IN ('CO', 'CL', 'RE', 'VO') AND (C_Bpartner_ID = ?));", bPartner));
+		String sql = "SELECT COALESCE(SUM(payamt),0) AS checkAmt " +
+				     "FROM ((SELECT p.PayAmt, C_Bpartner_ID " +
+				     "FROM C_Payment p " +
+				     "INNER JOIN C_bankaccount ba ON (ba.C_BankAccount_ID = p.C_BankAccount_ID) " +
+				     "WHERE (tendertype = 'K') AND (ba.ischequesencartera = 'Y') AND p.docstatus IN ('CO') AND (p.IsReceipt = 'Y'))	" +
+				     "UNION	" +
+				     "(SELECT pa.PayAmt, C_Bpartner_ID " +
+				     "FROM C_Payment pa " +
+				     "INNER JOIN C_bankaccount ba ON (ba.C_BankAccount_ID = pa.C_BankAccount_ID) " +
+				     "WHERE (tendertype = 'K') AND (ba.ischequesencartera = 'N') AND pa.docstatus IN ('CO') AND (pa.IsReceipt = 'Y') AND (pa.IsReconciled = 'Y'))) AS subconsulta " +
+				     "WHERE (C_Bpartner_ID = ?);";
+		
+		BigDecimal checksAmt = BigDecimal.ZERO.add(DB.getSQLValueBD(null,sql, bPartner));
 		ec.setOpenAmt(checksAmt);
 		if (daysfrom != MAX_DUE_DAYS*-1 || daysto != MAX_DUE_DAYS) {
 			ec.setDaysDue(daysfrom);
