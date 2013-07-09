@@ -3674,3 +3674,9 @@ UPDATE ad_system SET dummy = (SELECT addcolumnifnotexists('ad_process_para','ise
 
 --20130704-1910 Nueva columna para configurar enviar el comando de cancelación antes de imprimir a la impresora fiscal
 UPDATE ad_system SET dummy = (SELECT addcolumnifnotexists('c_controlador_fiscal','cmdcancelbeforeprintdocument', 'character(1) NOT NULL DEFAULT ''N''::bpchar'));
+
+--20130709-1925 Nueva columna para registrar el costo en algunos movimientos de mercadería
+UPDATE ad_system SET dummy = (SELECT addcolumnifnotexists('m_productchange','cost', 'numeric(11,2) NOT NULL DEFAULT 0'));
+UPDATE ad_system SET dummy = (SELECT addcolumnifnotexists('m_productchange','costto', 'numeric(11,2) NOT NULL DEFAULT 0'));
+UPDATE ad_system SET dummy = (SELECT addcolumnifnotexists('m_splitting','cost', 'numeric(11,2) NOT NULL DEFAULT 0'));
+UPDATE ad_system SET dummy = (SELECT addcolumnifnotexists('m_splittingline','cost', 'numeric(11,2) NOT NULL DEFAULT 0'));

@@ -1,9 +1,10 @@
 package org.openXpertya.model;
 
 import java.math.BigDecimal;
-import java.util.Arrays;
 import java.util.Properties;
 import java.util.Set;
+
+import org.openXpertya.util.Env;
 
 public class CalloutSplitting extends CalloutEngine {
 
@@ -18,6 +19,8 @@ public class CalloutSplitting extends CalloutEngine {
 	 */
 	public String sourceProduct(Properties ctx, int windowNo, MTab mTab, MField mField, Object value) {
         Integer productID = (Integer)value;
+        BigDecimal cost = BigDecimal.ZERO;
+        BigDecimal oldCost = (BigDecimal)mTab.getValue("Cost");
         if (productID != null && productID > 0) {
         	MProduct product = MProduct.get(ctx, productID);
         	// Se asigna la UM del artículo
@@ -27,8 +30,18 @@ public class CalloutSplitting extends CalloutEngine {
         	if (!conversionUOMs.isEmpty()) {
         		mTab.setValue("C_Conversion_UOM_ID", conversionUOMs.iterator().next());
         	}
+        	// Obtengo el precio de costo
+        	cost = MProductPricing.getCostPrice(ctx, Env.getAD_Org_ID(ctx),
+					productID,
+					MProductPO.getFirstVendorID(productID, null),
+					Env.getContextAsInt(ctx, "$C_Currency_ID"), Env.getDate(),
+					false, false, null, false, null);
         }
         // Cuando el artículo cambia se resetean las cantidades
+        // Se actualiza si es distinto
+ 		if(oldCost == null || cost.compareTo(oldCost) != 0){
+ 			mTab.setValue("Cost", cost);
+ 		}
         mTab.setValue("ShrinkQty", BigDecimal.ZERO);
         mTab.setValue("SplitQty", BigDecimal.ZERO);
         mTab.setValue("ConvertedShrinkQty", BigDecimal.ZERO);
@@ -47,11 +60,23 @@ public class CalloutSplitting extends CalloutEngine {
 	 */
 	public String targetProduct(Properties ctx, int windowNo, MTab mTab, MField mField, Object value) {
 		Integer productID = (Integer)value;
+		BigDecimal cost = BigDecimal.ZERO;
+		BigDecimal oldCost = (BigDecimal)mTab.getValue("Cost");
 		if (productID != null && productID > 0) {
         	MProduct product = MProduct.get(ctx, productID);
         	// Se asigna la UM del artículo
         	mTab.setValue("C_UOM_ID", product.getC_UOM_ID());
+        	// Obtengo el precio de costo
+        	cost = MProductPricing.getCostPrice(ctx, Env.getAD_Org_ID(ctx),
+					productID,
+					MProductPO.getFirstVendorID(productID, null),
+					Env.getContextAsInt(ctx, "$C_Currency_ID"), Env.getDate(),
+					false, false, null, false, null);
         }
+		// Se actualiza si es distinto
+		if(oldCost == null || cost.compareTo(oldCost) != 0){
+			mTab.setValue("Cost", cost);
+		}
 		return "";
 	}
 

@@ -21,12 +21,14 @@ import java.math.BigDecimal;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.Timestamp;
+import java.util.Properties;
 import java.util.logging.Level;
 
 import org.openXpertya.util.CLogger;
 import org.openXpertya.util.DB;
 import org.openXpertya.util.Env;
 import org.openXpertya.util.Trace;
+import org.openXpertya.util.Util;
 
 /**
  * Descripción de Clase
@@ -43,6 +45,153 @@ public class MProductPricing implements Serializable{
 	 */
 	private static final long serialVersionUID = 1L;
 
+	/**
+	 * Obtengo el precio de costo de un artículo en base al siguiente orden:
+	 * <ol>
+	 * <li>Tarifa de costo relacionado al proveedor parámetro.</li>
+	 * <li>Tarifas de costo de la organización parámetro ordenadas por defecto
+	 * descendiente esto hace que las tarifas por defecto queden prioritarias
+	 * con respecto a las restantes.</li>
+	 * <li>Tarifas de costo de todas las organizaciones ordenadas por defecto
+	 * descendiente esto hace que las tarifas por defecto queden prioritarias
+	 * con respecto a las restantes.</li>
+	 * <li>Precio configurado en la relación entre el artículo y el proveedor
+	 * parámetro.</li>
+	 * </ol>
+	 * 
+	 * @param ctx
+	 *            contexto
+	 * @param orgID
+	 *            id de organización
+	 * @param productID
+	 *            id de artículo
+	 * @param vendorID
+	 *            id de proveedor
+	 * @param convertCurrencyID
+	 *            id de moneda a la cual se debe convertir
+	 * @param convertDate
+	 *            fecha a la cual se debe convertir
+	 * @param manageTax
+	 *            true si se debe incrementar/decrementar el impuesto en el
+	 *            precio dependiendo del parámetro de inclusión de impuesto y de
+	 *            la tarifa de costo encontrada
+	 * @param taxIncluded
+	 *            el monto de impuesto está incluído en la operación actual que
+	 *            consulta este precio de costo, este dato es necesario sólo si
+	 *            se debe gestionar el incremento/decremento de impuestos
+	 * @param taxRate
+	 *            la tasa de impuesto en la operación actual que consulta este
+	 *            precio de costo, este dato es necesario sólo si se debe
+	 *            gestionar el incremento/decremento de impuestos
+	 * @param percepcionIncluded
+	 *            el monto de percepciones está incluído en la operación actual
+	 *            que consulta este precio de costo, este dato es necesario sólo
+	 *            si se debe gestionar el incremento/decremento de impuestos
+	 * @param trxName
+	 *            transacción actual
+	 * @return el precio de costo obtenido o 0 en caso de no encontrar ninguno
+	 */
+	public static BigDecimal getCostPrice(Properties ctx, Integer orgID, Integer productID, Integer vendorID, Integer convertCurrencyID, Timestamp convertDate, boolean manageTax, boolean taxIncluded, BigDecimal taxRate, boolean percepcionIncluded, String trxName){
+		BigDecimal costPrice = BigDecimal.ZERO;
+		int deltaTax = 0;
+		int costCurrency = Env.getContextAsInt(ctx, "$C_Currency_ID");
+		// 1) Tarifas de costo del proveedor
+		if(!Util.isEmpty(vendorID, true)){
+			MBPartner vendor = new MBPartner(ctx, vendorID, trxName);
+			if(!Util.isEmpty(vendor.getPO_PriceList_ID(), true)){
+				MProductPrice pp = MProductPrice.getProductPrice(ctx,
+						productID, 0, vendor.getPO_PriceList_ID(), false,
+						trxName);
+				if(pp != null){
+					costPrice = pp.getPriceStd();
+					// Determino si tengo que decrementar el impuesto y la moneda
+					MPriceList priceList = MPriceList.get(ctx,
+							vendor.getPO_PriceList_ID(), trxName);
+					if(taxIncluded != priceList.isTaxIncluded()){
+						deltaTax = taxIncluded?1:-1;
+					}
+					costCurrency = priceList.getC_Currency_ID();
+				}
+			}
+			
+		}
+		// 2) Tarifas de costo (primero la de la organización de la factura,
+		// sino todas)
+		if(costPrice.compareTo(BigDecimal.ZERO) == 0){
+			MProductPrice pp = MProductPrice.getProductPrice(ctx, productID,
+					orgID, null, false, trxName);
+			if(pp != null){
+				costPrice = pp.getPriceStd();
+				// Determino si tengo que decrementar el impuesto y la moneda
+				MPriceListVersion priceListVersion = new MPriceListVersion(ctx,
+						pp.getM_PriceList_Version_ID(), trxName);
+				MPriceList priceList = MPriceList.get(ctx,
+						priceListVersion.getM_PriceList_ID(), trxName);
+				if(taxIncluded != priceList.isTaxIncluded()){
+					deltaTax = taxIncluded?1:-1;
+				}
+				costCurrency = priceList.getC_Currency_ID();
+			}
+			else{
+				pp = MProductPrice.getProductPrice(ctx, productID,	0, null, false, trxName);
+				if(pp != null){
+					costPrice = pp.getPriceStd();
+					// Determino si tengo que decrementar el impuesto y la moneda
+					MPriceListVersion priceListVersion = new MPriceListVersion(
+							ctx, pp.getM_PriceList_Version_ID(), trxName);
+					MPriceList priceList = MPriceList.get(ctx,
+							priceListVersion.getM_PriceList_ID(), trxName);
+					if(taxIncluded != priceList.isTaxIncluded()){
+						deltaTax = taxIncluded?1:-1;
+					}
+					costCurrency = priceList.getC_Currency_ID();
+				}
+			}
+		}
+		
+		// 3) m_producto_po con ese proveedor
+		if(costPrice.compareTo(BigDecimal.ZERO) == 0){
+			MProductPO po = null;
+			// Si no tengo a priori el PO, entonces lo busco
+			if(!Util.isEmpty(vendorID, true)){
+				// Obtención del po
+				po = MProductPO.get(ctx, productID, vendorID, trxName);
+			}
+			// Si puedo obtener el precio de ahí entonces lo obtengo
+			if(po != null){
+				costPrice = po.getPriceList();
+				// Verificar la moneda si hay que convertir
+				costCurrency = po.getC_Currency_ID();
+			}
+		}
+		// Seteo el precio de costo
+		BigDecimal costConverted = costPrice;
+		if(costPrice.compareTo(BigDecimal.ZERO) > 0){
+			costConverted = MConversionRate.convert(ctx, costPrice,
+					costCurrency, convertCurrencyID, convertDate, 0,
+					Env.getAD_Client_ID(ctx), orgID);
+			costConverted = costConverted != null?costConverted:costPrice;
+		}
+		else{
+			deltaTax = 0;
+		}
+
+		// Decrementar/incrementar el monto de impuesto al precio de costo
+		// si las tarifas difieren en el campo impuesto incluido. Si la
+		// tarifa de ventas de esta factura posee impuesto incluido y la de
+		// costo no, entonces se debe agregar el impuesto al costo, caso
+		// contrario decrementar. En el caso que no difieran en ese campo,
+		// no se incrementa ni decrementa
+		if(manageTax && deltaTax != 0){
+			BigDecimal costTaxAmt = MTax.calculateTax(costConverted, true,
+					percepcionIncluded, taxRate, 2);
+			costPrice = costConverted.add(costTaxAmt.multiply(new BigDecimal(
+					deltaTax)));
+		}
+		
+		return costPrice;
+	}
+	
 	/**
      * Constructor de la clase ...
      *

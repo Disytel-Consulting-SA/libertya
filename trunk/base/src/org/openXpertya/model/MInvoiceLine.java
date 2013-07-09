@@ -994,108 +994,12 @@ public class MInvoiceLine extends X_C_InvoiceLine {
 	        else{
 	        	setC_BPartner_Vendor_ID(invoice.getC_BPartner_ID());
 	        }
-	        // Setear el precio de costo
-			BigDecimal costPrice = BigDecimal.ZERO;
-			int deltaTax = 0;
-			int costCurrency = Env.getContextAsInt(getCtx(), "$C_Currency_ID");
-			// 1) Tarifas de costo del proveedor
-			if(!Util.isEmpty(getC_BPartner_Vendor_ID(), true)){
-				MBPartner vendor = new MBPartner(getCtx(), getC_BPartner_Vendor_ID(), get_TrxName());
-				if(!Util.isEmpty(vendor.getPO_PriceList_ID(), true)){
-					MProductPrice pp = getProductPrice(getM_Product_ID(), 0, 
-							vendor.getPO_PriceList_ID(), false);
-					if(pp != null){
-						costPrice = pp.getPriceStd();
-						// Determino si tengo que decrementar el impuesto y la moneda
-						MPriceList priceList = MPriceList.get(getCtx(),
-								vendor.getPO_PriceList_ID(),
-								get_TrxName());
-						if(isTaxIncluded() != priceList.isTaxIncluded()){
-							deltaTax = isTaxIncluded()?1:-1;
-						}
-						costCurrency = priceList.getC_Currency_ID();
-					}
-				}
-				
-			}
-			// 2) Tarifas de costo (primero la de la organización de la factura,
-			// sino todas)
-			if(costPrice.compareTo(BigDecimal.ZERO) == 0){
-				MProductPrice pp = getProductPrice(getM_Product_ID(),
-						getAD_Org_ID(), null, false);
-				if(pp != null){
-					costPrice = pp.getPriceStd();
-					// Determino si tengo que decrementar el impuesto y la moneda
-					MPriceListVersion priceListVersion = new MPriceListVersion(
-							getCtx(), pp.getM_PriceList_Version_ID(),
-							get_TrxName());
-					MPriceList priceList = MPriceList.get(getCtx(),
-							priceListVersion.getM_PriceList_ID(),
-							get_TrxName());
-					if(isTaxIncluded() != priceList.isTaxIncluded()){
-						deltaTax = isTaxIncluded()?1:-1;
-					}
-					costCurrency = priceList.getC_Currency_ID();
-				}
-				else{
-					pp = getProductPrice(getM_Product_ID(),	0, null, false);
-					if(pp != null){
-						costPrice = pp.getPriceStd();
-						// Determino si tengo que decrementar el impuesto y la moneda
-						MPriceListVersion priceListVersion = new MPriceListVersion(
-								getCtx(), pp.getM_PriceList_Version_ID(),
-								get_TrxName());
-						MPriceList priceList = MPriceList.get(getCtx(),
-								priceListVersion.getM_PriceList_ID(),
-								get_TrxName());
-						if(isTaxIncluded() != priceList.isTaxIncluded()){
-							deltaTax = isTaxIncluded()?1:-1;
-						}
-						costCurrency = priceList.getC_Currency_ID();
-					}
-				}
-			}
-			
-			// 3) m_producto_po con ese proveedor
-			if(costPrice.compareTo(BigDecimal.ZERO) == 0){
-				// Si no tengo a priori el PO, entonces lo busco
-				if(po == null && !Util.isEmpty(getC_BPartner_Vendor_ID(), true)){
-					// Obtención del po
-					po = MProductPO.get(getCtx(), getM_Product_ID(),
-							getC_BPartner_Vendor_ID(), get_TrxName());
-				}
-				// Si puedo obtener el precio de ahí entonces lo obtengo
-				if(po != null){
-					costPrice = po.getPriceList();
-					// Verificar la moneda si hay que convertir
-					costCurrency = po.getC_Currency_ID();
-				}
-			}
-			// Seteo el precio de costo
-			BigDecimal costConverted = costPrice;
-			if(costPrice.compareTo(BigDecimal.ZERO) > 0){
-				costConverted = MConversionRate.convert(getCtx(),
-						costPrice, costCurrency, invoice.getC_Currency_ID(),
-						invoice.getDateInvoiced(), 0, getAD_Client_ID(),
-						getAD_Org_ID());
-				costConverted = costConverted != null?costConverted:costPrice;
-			}
-			else{
-				deltaTax = 0;
-			}
-			setCostPrice(costPrice);
-			// Decrementar/incrementar el monto de impuesto al precio de costo
-			// si las tarifas difieren en el campo impuesto incluido. Si la
-			// tarifa de ventas de esta factura posee impuesto incluido y la de
-			// costo no, entonces se debe agregar el impuesto al costo, caso
-			// contrario decrementar. En el caso que no difieran en ese campo,
-			// no se incrementa ni decrementa
-			if(deltaTax != 0){
-				BigDecimal costTaxAmt = MTax.calculateTax(costConverted, true,
-						isPerceptionsIncluded(), getTaxRate(), 2);
-				setCostPrice(costConverted.add(costTaxAmt
-						.multiply(new BigDecimal(deltaTax))));
-			}
+	        // Seteo el precio de costo
+			setCostPrice(MProductPricing.getCostPrice(getCtx(), getAD_Org_ID(),
+					getM_Product_ID(), getC_BPartner_Vendor_ID(),
+					invoice.getC_Currency_ID(), invoice.getDateInvoiced(), true, 
+					isTaxIncluded(), getTaxRate(), isPerceptionsIncluded(),
+					get_TrxName()));
         }
         /*
         String sql = "select rate from c_tax where c_tax_id = " + getC_Tax_ID();
@@ -1266,70 +1170,6 @@ public class MInvoiceLine extends X_C_InvoiceLine {
         return !shouldUpdateHeader || updateHeaderTax();
     }    // afterDelete
 
-	/**
-	 * Obtener el precio del producto parámetro, en la lista de precios
-	 * parámetro y si debe ser de ventas o compras el precio. El precio que se
-	 * obtiene está dado por el siguiente órden: 1) Precio de lista default; 2)
-	 * Versión con campo "Válido desde" más nuevo; 3) Versión con campo created
-	 * más nuevo. estos 3 criterios determinan qué lista de precios tomar.
-	 * 
-	 * @param productID
-	 *            id de producto
-	 * @param orgID
-	 *            id de la organización de la lista de precios
-	 * @param priceListID
-	 *            id de la lista de precios, null si no se debe filtrar por ella
-	 * @param isSoPriceList
-	 *            true si es precio de venta, false si es precio de compra y
-	 *            null si no se debe colocar la condición
-	 * @return precio más nuevo del producto parámetro, null si no existe
-	 *         ninguno con los parámetros dados
-	 */
-    private MProductPrice getProductPrice(int productID, int orgID, Integer priceListID, Boolean isSoPriceList){
-    	StringBuffer sql = new StringBuffer(
-		"select pp.m_product_id, pp.m_pricelist_version_id " +
-		"from m_pricelist_version as plv " +
-		"inner join m_pricelist as pl on pl.m_pricelist_id = plv.m_pricelist_id " +
-		"inner join m_productprice as pp on pp.m_pricelist_version_id = plv.m_pricelist_version_id " +
-		"where m_product_id = ? ");
-		if(!Util.isEmpty(priceListID, true)){
-			sql.append(" AND pl.m_pricelist_id = ").append(priceListID);
-		}
-		if(isSoPriceList != null){
-			sql.append(" AND pl.issopricelist = '").append(isSoPriceList?"Y":"N").append("' ");
-		}
-		if(!Util.isEmpty(orgID, true)){
-			sql.append(" AND pl.ad_org_id = ").append(orgID);
-		}
-		sql.append(" order by pl.isdefault desc, plv.validfrom desc, plv.created desc ");
-		MProductPrice price = null;
-    	PreparedStatement ps = null;
-    	ResultSet rs = null;
-    	try {
-			ps = DB.prepareStatement(sql.toString(), get_TrxName());
-			ps.setInt(1, productID);
-			rs = ps.executeQuery();
-			if(rs.next()){
-				price = MProductPrice.get(getCtx(),
-						rs.getInt("m_pricelist_version_id"),
-						productID, get_TrxName());
-			}
-		} catch (Exception e) {
-			log.severe("Error finding product price for product " + productID
-					+ ". Error: " + e.getMessage());
-		} finally{
-			try {
-				if(ps != null)ps.close();
-				if(rs != null)rs.close();
-			} catch (Exception e2) {
-				log.severe("Error finding product price for product " + productID
-						+ ". Error: " + e2.getMessage());
-			}
-		}
-		return price;
-    }
-    
-    
     /**
      * Descripción de Método
      *
