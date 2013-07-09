@@ -7,7 +7,7 @@ import java.math.*;
 import org.openXpertya.util.*;
 /** Modelo Generado por M_ProductChange
  *  @author Comunidad de Desarrollo Libertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
- *  @version  - 2012-04-18 14:15:33.051 */
+ *  @version  - 2013-07-09 19:58:57.907 */
 public class X_M_ProductChange extends org.openXpertya.model.PO
 {
 /** Constructor estándar */
@@ -16,13 +16,15 @@ public X_M_ProductChange (Properties ctx, int M_ProductChange_ID, String trxName
 super (ctx, M_ProductChange_ID, trxName);
 /** if (M_ProductChange_ID == 0)
 {
+setCost (Env.ZERO);
+setCostTo (Env.ZERO);
 setDateTrx (new Timestamp(System.currentTimeMillis()));	// @#Date@
 setDocAction (null);	// CO
 setDocStatus (null);	// DR
 setDocumentNo (null);
 setMaxPriceVariationPerc (Env.ZERO);
-setM_Locator_ID (0);	// @#M_Locator_ID@
-setM_Locator_To_ID (0);	// @#M_Locator_ID@
+setM_Locator_ID (0);	// @SQL=SELECT m_locator_id FROM m_locator where m_warehouse_id = @M_Warehouse_ID@ order by isdefault desc limit 1
+setM_Locator_To_ID (0);	// @SQL=SELECT m_locator_id FROM m_locator where m_warehouse_id = @M_Warehouse_ID@ order by isdefault desc limit 1
 setM_ProductChange_ID (0);
 setM_Product_ID (0);
 setM_Product_To_ID (0);
@@ -58,6 +60,34 @@ public String toString()
 {
 StringBuffer sb = new StringBuffer ("X_M_ProductChange[").append(getID()).append("]");
 return sb.toString();
+}
+/** Set Cost.
+Cost information */
+public void setCost (BigDecimal Cost)
+{
+if (Cost == null) throw new IllegalArgumentException ("Cost is mandatory");
+set_Value ("Cost", Cost);
+}
+/** Get Cost.
+Cost information */
+public BigDecimal getCost() 
+{
+BigDecimal bd = (BigDecimal)get_Value("Cost");
+if (bd == null) return Env.ZERO;
+return bd;
+}
+/** Set Cost To */
+public void setCostTo (BigDecimal CostTo)
+{
+if (CostTo == null) throw new IllegalArgumentException ("CostTo is mandatory");
+set_Value ("CostTo", CostTo);
+}
+/** Get Cost To */
+public BigDecimal getCostTo() 
+{
+BigDecimal bd = (BigDecimal)get_Value("CostTo");
+if (bd == null) return Env.ZERO;
+return bd;
 }
 /** Set Transaction Date.
 Transaction Date */
@@ -438,10 +468,12 @@ public boolean insertDirect()
 try 
 {
  
- 		 String sql = " INSERT INTO M_ProductChange(AD_Client_ID,AD_Org_ID,Created,CreatedBy,DateTrx,Description,DocAction,DocStatus,DocumentNo,IsActive,M_AttributeSetInstance_ID,M_AttributeSetInstanceTo_ID,MaxPriceVariationPerc,M_Inventory_ID,M_Locator_ID,M_Locator_To_ID,M_ProductChange_ID,M_Product_ID,M_Product_To_ID,M_Warehouse_ID,Processed,ProductPrice,ProductQty,ProductToPrice,Updated,UpdatedBy,Void_Inventory_ID) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?) ";
+ 		 String sql = " INSERT INTO M_ProductChange(AD_Client_ID,AD_Org_ID,Cost,CostTo,Created,CreatedBy,DateTrx,Description,DocAction,DocStatus,DocumentNo,IsActive,M_AttributeSetInstance_ID,M_AttributeSetInstanceTo_ID,MaxPriceVariationPerc,M_Inventory_ID,M_Locator_ID,M_Locator_To_ID,M_ProductChange_ID,M_Product_ID,M_Product_To_ID,M_Warehouse_ID,Processed,ProductPrice,ProductQty,ProductToPrice,Updated,UpdatedBy,Void_Inventory_ID) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?) ";
 
 		 if (getAD_Client_ID() == 0) sql = sql.replaceFirst("AD_Client_ID,","").replaceFirst("\\?,", "");
  		 if (getAD_Org_ID() == 0) sql = sql.replaceFirst("AD_Org_ID,","").replaceFirst("\\?,", "");
+ 		 if (getCost() == null) sql = sql.replaceFirst("Cost,","").replaceFirst("\\?,", "");
+ 		 if (getCostTo() == null) sql = sql.replaceFirst("CostTo,","").replaceFirst("\\?,", "");
  		 if (getCreated() == null) sql = sql.replaceFirst("Created,","").replaceFirst("\\?,", "");
  		 if (getCreatedBy() == 0) sql = sql.replaceFirst("CreatedBy,","").replaceFirst("\\?,", "");
  		 if (getDateTrx() == null) sql = sql.replaceFirst("DateTrx,","").replaceFirst("\\?,", "");
@@ -472,6 +504,8 @@ try
  
 		 if (getAD_Client_ID() != 0) pstmt.setInt(col++, getAD_Client_ID());
 		 if (getAD_Org_ID() != 0) pstmt.setInt(col++, getAD_Org_ID());
+		 if (getCost() != null) pstmt.setBigDecimal(col++, getCost());
+		 if (getCostTo() != null) pstmt.setBigDecimal(col++, getCostTo());
 		 if (getCreated() != null) pstmt.setTimestamp(col++, getCreated());
 		 if (getCreatedBy() != 0) pstmt.setInt(col++, getCreatedBy());
 		 if (getDateTrx() != null) pstmt.setTimestamp(col++, getDateTrx());

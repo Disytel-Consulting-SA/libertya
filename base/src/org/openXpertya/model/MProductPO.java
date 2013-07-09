@@ -91,6 +91,24 @@ public class MProductPO extends X_M_Product_PO {
         return retValue;
     }    // getOfProduct
 
+    /**
+	 * @param productID
+	 *            id del artículo
+	 * @param trxName
+	 *            nombre de transacción
+	 * @return id del primer proveedor en órden de actual proveedor y última vez
+	 *         actualizado descendientemente
+	 */
+    public static Integer getFirstVendorID(Integer productID, String trxName){
+		return DB
+				.getSQLValue(
+						trxName,
+						"SELECT c_bpartner_id FROM "
+								+ Table_Name
+								+ " WHERE m_product_id = ? AND IsActive='Y' ORDER BY IsCurrentVendor DESC, updated desc",
+						productID);
+    }
+    
     /** Descripción de Campos */
 
     private static CLogger s_log = CLogger.getCLogger( MProductPO.class );

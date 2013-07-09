@@ -112,7 +112,13 @@ public class MSplitting extends X_M_Splitting implements DocAction {
 			log.saveError("SaveError", Msg.translate(getCtx(), "SplitQtyUnderLinesQty"));
 			return false;
 		}
-			
+		
+		// Setear precio de costo
+		setCost(MProductPricing.getCostPrice(getCtx(), getAD_Org_ID(),
+				getM_Product_ID(),
+				MProductPO.getFirstVendorID(getM_Product_ID(), get_TrxName()),
+				Env.getContextAsInt(getCtx(), "$C_Currency_ID"), Env.getDate(),
+				false, false, null, false, get_TrxName()));
 		
 		return true;
 	}

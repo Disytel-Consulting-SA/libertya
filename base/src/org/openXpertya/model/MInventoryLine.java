@@ -224,6 +224,19 @@ public class MInventoryLine extends X_M_InventoryLine {
             setLine( ii );
         }
         
+        MProduct product = null;
+        if(!Util.isEmpty(getM_Product_ID(), true)){
+	        product = MProduct.get(getCtx(), getM_Product_ID());
+	        // Seteo el precio de costo
+	        if(!product.getProductType().equals(MProduct.PRODUCTTYPE_Assets)){
+		        setCost(MProductPricing.getCostPrice(getCtx(), getAD_Org_ID(),
+						getM_Product_ID(),
+						MProductPO.getFirstVendorID(getM_Product_ID(), get_TrxName()),
+						Env.getContextAsInt(getCtx(), "$C_Currency_ID"), Env.getDate(),
+						false, false, null, false, get_TrxName()));
+	        }
+        }
+        
         // Si el inventario es una Entrada/Salida Simple, se nulean las cantidades de sistema
         // e interna, y se asigna el tipo Cargo a Cuenta seteando el cargo configurado
         // en el inventario encabezado.
@@ -244,11 +257,7 @@ public class MInventoryLine extends X_M_InventoryLine {
         	setQtyInternalUse(BigDecimal.ZERO);
         	setInventoryType(INVENTORYTYPE_ChargeAccount);
         	setC_Charge_ID(getInventory().getC_Charge_ID());
-        	MProduct product = MProduct.get(getCtx(), getM_Product_ID());
-        	if(!product.getProductType().equals(MProduct.PRODUCTTYPE_Assets)){
-            	setCost(BigDecimal.ZERO);
-        	}
-        	else{
+        	if(product.getProductType().equals(MProduct.PRODUCTTYPE_Assets)){
 				// Si es un producto bien de uso, se debe verificar que si es
 				// salida y tiene una instancia asignada, entonces sea de -1 y
 				// no mas

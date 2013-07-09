@@ -1,11 +1,11 @@
 package org.openXpertya.model;
 
 import java.math.BigDecimal;
-import java.sql.Timestamp;
 import java.util.Properties;
 
 import org.openXpertya.util.CLogger;
 import org.openXpertya.util.Env;
+import org.openXpertya.util.Util;
 
 public class CalloutChange extends CalloutEngine {
 
@@ -14,6 +14,23 @@ public class CalloutChange extends CalloutEngine {
     /** Descripción de Campos */
 
     private boolean steps = false;
+    
+    private void setCost(Properties ctx, MTab mTab, String productColumnName, String costColumnName){
+		Integer productID = (Integer)mTab.getValue(productColumnName);
+		BigDecimal cost = BigDecimal.ZERO;
+		BigDecimal oldCost = (BigDecimal)mTab.getValue(costColumnName);
+		if(!Util.isEmpty(productID, true)){
+			cost = MProductPricing.getCostPrice(ctx, Env.getAD_Org_ID(ctx),
+					productID,
+					MProductPO.getFirstVendorID(productID, null),
+					Env.getContextAsInt(ctx, "$C_Currency_ID"), Env.getDate(),
+					false, false, null, false, null);
+		}
+		// Se actualiza si es distinto
+		if(oldCost == null || cost.compareTo(oldCost) != 0){
+			mTab.setValue(costColumnName, cost);
+		}
+	}
     
     /**
      * Descripción de Método
@@ -32,9 +49,11 @@ public class CalloutChange extends CalloutEngine {
     	Integer M_Product_ID = null;
     	if(mField.getColumnName().equals("M_Product_ID")){
     		M_Product_ID  =(Integer)mTab.getValue("M_Product_ID") ;
+    		setCost(ctx, mTab, "M_Product_ID", "Cost");
     	}
     	if(mField.getColumnName().equals("M_Product_To_ID")){
     		M_Product_ID  =(Integer)mTab.getValue("M_Product_To_ID") ;
+    		setCost(ctx, mTab, "M_Product_To_ID", "CostTo");
     	}
     	if( (M_Product_ID == null) || (M_Product_ID.intValue() == 0) ) {
             return "";

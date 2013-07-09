@@ -1,12 +1,13 @@
 /** Modelo Generado - NO CAMBIAR MANUALMENTE - Disytel */
 package org.openXpertya.model;
-import java.util.*;
+import java.util.logging.Level;
+ import java.util.*;
 import java.sql.*;
 import java.math.*;
 import org.openXpertya.util.*;
 /** Modelo Generado por M_Splitting
  *  @author Comunidad de Desarrollo Libertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
- *  @version  - 2009-11-30 17:35:54.317 */
+ *  @version  - 2013-07-09 19:59:10.087 */
 public class X_M_Splitting extends org.openXpertya.model.PO
 {
 /** Constructor estándar */
@@ -16,12 +17,13 @@ super (ctx, M_Splitting_ID, trxName);
 /** if (M_Splitting_ID == 0)
 {
 setC_Conversion_UOM_ID (0);
+setCost (Env.ZERO);
 setC_UOM_ID (0);
 setDateTrx (new Timestamp(System.currentTimeMillis()));	// @#Date@
 setDocAction (null);	// CO
 setDocStatus (null);	// DR
 setDocumentNo (null);
-setM_Locator_ID (0);
+setM_Locator_ID (0);	// @SQL=SELECT m_locator_id FROM m_locator where m_warehouse_id = @M_Warehouse_ID@ order by isdefault desc limit 1
 setM_Product_ID (0);
 setM_Splitting_ID (0);
 setM_Warehouse_ID (0);
@@ -127,6 +129,21 @@ Converted Split Quantity */
 public BigDecimal getConvertedSplitQty() 
 {
 BigDecimal bd = (BigDecimal)get_Value("ConvertedSplitQty");
+if (bd == null) return Env.ZERO;
+return bd;
+}
+/** Set Cost.
+Cost information */
+public void setCost (BigDecimal Cost)
+{
+if (Cost == null) throw new IllegalArgumentException ("Cost is mandatory");
+set_Value ("Cost", Cost);
+}
+/** Get Cost.
+Cost information */
+public BigDecimal getCost() 
+{
+BigDecimal bd = (BigDecimal)get_Value("Cost");
 if (bd == null) return Env.ZERO;
 return bd;
 }
@@ -408,16 +425,16 @@ if (bd == null) return Env.ZERO;
 return bd;
 }
 public static final int VOID_INVENTORY_ID_AD_Reference_ID = MReference.getReferenceID("M_Inventory");
-/** Set Splitting Void Inventory.
-Splitting Void Inventory */
+/** Set Void Inventory.
+Void Inventory */
 public void setVoid_Inventory_ID (int Void_Inventory_ID)
 {
 if (Void_Inventory_ID <= 0) set_Value ("Void_Inventory_ID", null);
  else 
 set_Value ("Void_Inventory_ID", new Integer(Void_Inventory_ID));
 }
-/** Get Splitting Void Inventory.
-Splitting Void Inventory */
+/** Get Void Inventory.
+Void Inventory */
 public int getVoid_Inventory_ID() 
 {
 Integer ii = (Integer)get_Value("Void_Inventory_ID");

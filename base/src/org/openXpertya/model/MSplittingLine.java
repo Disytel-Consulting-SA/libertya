@@ -5,6 +5,7 @@ import java.sql.ResultSet;
 import java.util.Properties;
 
 import org.openXpertya.util.DB;
+import org.openXpertya.util.Env;
 import org.openXpertya.util.Msg;
 
 /**
@@ -76,6 +77,13 @@ public class MSplittingLine extends X_M_SplittingLine {
 		if (!getSplitting().beforeSaveLine(this)) {
 			return false;
 		}
+		
+		// Setear precio de costo
+		setCost(MProductPricing.getCostPrice(getCtx(), getAD_Org_ID(),
+				getM_Product_To_ID(),
+				MProductPO.getFirstVendorID(getM_Product_To_ID(), get_TrxName()),
+				Env.getContextAsInt(getCtx(), "$C_Currency_ID"), Env.getDate(),
+				false, false, null, false, get_TrxName()));
 		
 		return true;
 	}

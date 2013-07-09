@@ -1,12 +1,13 @@
 /** Modelo Generado - NO CAMBIAR MANUALMENTE - Disytel */
 package org.openXpertya.model;
-import java.util.*;
+import java.util.logging.Level;
+ import java.util.*;
 import java.sql.*;
 import java.math.*;
 import org.openXpertya.util.*;
 /** Modelo Generado por M_SplittingLine
  *  @author Comunidad de Desarrollo Libertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
- *  @version  - 2009-11-27 13:31:17.159 */
+ *  @version  - 2013-07-09 19:59:10.779 */
 public class X_M_SplittingLine extends org.openXpertya.model.PO
 {
 /** Constructor estándar */
@@ -15,8 +16,9 @@ public X_M_SplittingLine (Properties ctx, int M_SplittingLine_ID, String trxName
 super (ctx, M_SplittingLine_ID, trxName);
 /** if (M_SplittingLine_ID == 0)
 {
+setCost (Env.ZERO);
 setC_UOM_ID (0);
-setM_Locator_ID (0);
+setM_Locator_ID (0);	// @SQL=SELECT m_locator_id FROM m_locator where m_warehouse_id = @M_Warehouse_ID@ order by isdefault desc limit 1
 setM_Product_To_ID (0);
 setM_Splitting_ID (0);
 setM_SplittingLine_ID (0);
@@ -60,6 +62,21 @@ Converted Quantity */
 public BigDecimal getConvertedQty() 
 {
 BigDecimal bd = (BigDecimal)get_Value("ConvertedQty");
+if (bd == null) return Env.ZERO;
+return bd;
+}
+/** Set Cost.
+Cost information */
+public void setCost (BigDecimal Cost)
+{
+if (Cost == null) throw new IllegalArgumentException ("Cost is mandatory");
+set_Value ("Cost", Cost);
+}
+/** Get Cost.
+Cost information */
+public BigDecimal getCost() 
+{
+BigDecimal bd = (BigDecimal)get_Value("Cost");
 if (bd == null) return Env.ZERO;
 return bd;
 }

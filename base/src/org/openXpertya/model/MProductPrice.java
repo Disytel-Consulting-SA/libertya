@@ -24,6 +24,7 @@ import java.util.Properties;
 import org.openXpertya.util.CLogger;
 import org.openXpertya.util.DB;
 import org.openXpertya.util.Env;
+import org.openXpertya.util.Util;
 
 /**
  * Descripción de Clase
@@ -38,6 +39,73 @@ public class MProductPrice extends X_M_ProductPrice {
 	/** Log estático */
 	private static CLogger s_log = CLogger.getCLogger( MProductPrice.class );
 
+	/**
+	 * Obtener el precio del producto parámetro, en la lista de precios
+	 * parámetro y si debe ser de ventas o compras el precio. El precio que se
+	 * obtiene está dado por el siguiente órden: 1) Precio de lista default; 2)
+	 * Versión con campo "Válido desde" más nuevo; 3) Versión con campo created
+	 * más nuevo. estos 3 criterios determinan qué lista de precios tomar.
+	 * 
+	 * @param ctx
+	 *            Contexto
+	 * @param productID
+	 *            id de producto
+	 * @param orgID
+	 *            id de la organización de la lista de precios
+	 * @param priceListID
+	 *            id de la lista de precios, null si no se debe filtrar por ella
+	 * @param isSoPriceList
+	 *            true si es precio de venta, false si es precio de compra y
+	 *            null si no se debe colocar la condición
+	 * @param trxName
+	 *            Nombre de la transacción
+	 * @return precio más nuevo del producto parámetro, null si no existe
+	 *         ninguno con los parámetros dados
+	 */
+	public static MProductPrice getProductPrice(Properties ctx, int productID, int orgID, Integer priceListID, Boolean isSoPriceList, String trxName){
+    	StringBuffer sql = new StringBuffer(
+		"select pp.m_product_id, pp.m_pricelist_version_id " +
+		"from m_pricelist_version as plv " +
+		"inner join m_pricelist as pl on pl.m_pricelist_id = plv.m_pricelist_id " +
+		"inner join m_productprice as pp on pp.m_pricelist_version_id = plv.m_pricelist_version_id " +
+		"where m_product_id = ? ");
+		if(!Util.isEmpty(priceListID, true)){
+			sql.append(" AND pl.m_pricelist_id = ").append(priceListID);
+		}
+		if(isSoPriceList != null){
+			sql.append(" AND pl.issopricelist = '").append(isSoPriceList?"Y":"N").append("' ");
+		}
+		if(!Util.isEmpty(orgID, true)){
+			sql.append(" AND pl.ad_org_id = ").append(orgID);
+		}
+		sql.append(" order by pl.isdefault desc, plv.validfrom desc, plv.created desc ");
+		MProductPrice price = null;
+    	PreparedStatement ps = null;
+    	ResultSet rs = null;
+    	try {
+			ps = DB.prepareStatement(sql.toString(), trxName);
+			ps.setInt(1, productID);
+			rs = ps.executeQuery();
+			if(rs.next()){
+				price = MProductPrice.get(ctx,
+						rs.getInt("m_pricelist_version_id"),
+						productID, trxName);
+			}
+		} catch (Exception e) {
+			s_log.severe("Error finding product price for product " + productID
+					+ ". Error: " + e.getMessage());
+		} finally{
+			try {
+				if(ps != null)ps.close();
+				if(rs != null)rs.close();
+			} catch (Exception e2) {
+				s_log.severe("Error finding product price for product " + productID
+						+ ". Error: " + e2.getMessage());
+			}
+		}
+		return price;
+    }
+	
 	/**
 	 * Obtener un precio de producto a partir del producto y de la versión de la
 	 * tarifa

@@ -91,6 +91,19 @@ public class MProductChange extends X_M_ProductChange implements DocAction {
 			setM_Locator_To_ID(MWarehouse.getDefaultLocatorID(getM_Warehouse_ID(), get_TrxName()));
 		}
 		
+		// Setear los precios de costo para el artículo origen y destino
+		setCost(MProductPricing.getCostPrice(getCtx(), getAD_Org_ID(),
+				getM_Product_ID(),
+				MProductPO.getFirstVendorID(getM_Product_ID(), get_TrxName()),
+				Env.getContextAsInt(getCtx(), "$C_Currency_ID"), Env.getDate(),
+				false, false, null, false, get_TrxName()));
+		
+		setCostTo(MProductPricing.getCostPrice(getCtx(), getAD_Org_ID(),
+				getM_Product_To_ID(),
+				MProductPO.getFirstVendorID(getM_Product_To_ID(), get_TrxName()),
+				Env.getContextAsInt(getCtx(), "$C_Currency_ID"), Env.getDate(),
+				false, false, null, false, get_TrxName()));
+		
 		return true; 
 	}
 	

@@ -37,6 +37,23 @@ import org.openXpertya.util.Util;
 
 public class CalloutInventory extends CalloutEngine {
 
+	private void setCost(Properties ctx, MTab mTab, String productColumnName, String costColumnName){
+		Integer productID = (Integer)mTab.getValue(productColumnName);
+		BigDecimal cost = BigDecimal.ZERO;
+		BigDecimal oldCost = (BigDecimal)mTab.getValue(costColumnName);
+		if(!Util.isEmpty(productID, true)){
+			cost = MProductPricing.getCostPrice(ctx, Env.getAD_Org_ID(ctx),
+					productID,
+					MProductPO.getFirstVendorID(productID, null),
+					Env.getContextAsInt(ctx, "$C_Currency_ID"), Env.getDate(),
+					false, false, null, false, null);
+		}
+		// Se actualiza si es distinto
+		if(oldCost == null || cost.compareTo(oldCost) != 0){
+			mTab.setValue(costColumnName, cost);
+		}
+	}
+	
     /**
      * Descripción de Método
      *
@@ -121,6 +138,11 @@ public class CalloutInventory extends CalloutEngine {
 					(Integer) mTab.getValue("M_Inventory_ID"), null); 
 			Env.setContext(ctx, WindowNo, "C_Charge_ID",
 					inventory.getC_Charge_ID());	
+        }
+        
+        // Seteo el costo siempre que no sea artículo bien de uso
+        if(!X_M_Product.PRODUCTTYPE_Assets.equals(product.getProductType())){
+        	setCost(ctx, mTab, "M_Product_ID", "Cost");
         }
         
         return "";
