@@ -3527,8 +3527,7 @@ public class MInvoice extends X_C_Invoice implements DocAction {
 		// las nuevas clases que tienen esta implementación centralizada.
 		// Verifico estado de crédito con la información de la factura
 		if (!isCurrentAccountVerified && isSOTrx() && isDebit
-				&& getPaymentRule().equals(PAYMENTRULE_OnCredit)
-				&& isDebit) {
+				&& getPaymentRule().equals(PAYMENTRULE_OnCredit)) {
 			// Obtengo el manager actual
 			CurrentAccountManager manager = CurrentAccountManagerFactory
 					.getManager();
