@@ -7,7 +7,7 @@ import java.math.*;
 import org.openXpertya.util.*;
 /** Modelo Generado por M_Product
  *  @author Comunidad de Desarrollo Libertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
- *  @version  - 2011-12-02 16:44:45.978 */
+ *  @version  - 2013-07-10 15:52:17.595 */
 public class X_M_Product extends org.openXpertya.model.PO
 {
 /** Constructor estándar */
@@ -82,14 +82,14 @@ public String getAD_ComponentObjectUID()
 return (String)get_Value("AD_ComponentObjectUID");
 }
 /** Set Amortization Percentage.
-Anual Amortization Percentage */
+Period Amortization Percentage */
 public void setAmortizationPerc (BigDecimal AmortizationPerc)
 {
 if (AmortizationPerc == null) throw new IllegalArgumentException ("AmortizationPerc is mandatory");
 set_Value ("AmortizationPerc", AmortizationPerc);
 }
 /** Get Amortization Percentage.
-Anual Amortization Percentage */
+Period Amortization Percentage */
 public BigDecimal getAmortizationPerc() 
 {
 BigDecimal bd = (BigDecimal)get_Value("AmortizationPerc");
@@ -211,6 +211,20 @@ public int getC_UOM_ID()
 Integer ii = (Integer)get_Value("C_UOM_ID");
 if (ii == null) return 0;
 return ii.intValue();
+}
+/** Set Promised Delivery Time.
+Promised days between order and delivery */
+public void setDeliveryTime_Promised (BigDecimal DeliveryTime_Promised)
+{
+set_Value ("DeliveryTime_Promised", DeliveryTime_Promised);
+}
+/** Get Promised Delivery Time.
+Promised days between order and delivery */
+public BigDecimal getDeliveryTime_Promised() 
+{
+BigDecimal bd = (BigDecimal)get_Value("DeliveryTime_Promised");
+if (bd == null) return Env.ZERO;
+return bd;
 }
 /** Set Description.
 Optional short description of the record */

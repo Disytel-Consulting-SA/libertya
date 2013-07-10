@@ -3680,3 +3680,6 @@ UPDATE ad_system SET dummy = (SELECT addcolumnifnotexists('m_productchange','cos
 UPDATE ad_system SET dummy = (SELECT addcolumnifnotexists('m_productchange','costto', 'numeric(11,2) NOT NULL DEFAULT 0'));
 UPDATE ad_system SET dummy = (SELECT addcolumnifnotexists('m_splitting','cost', 'numeric(11,2) NOT NULL DEFAULT 0'));
 UPDATE ad_system SET dummy = (SELECT addcolumnifnotexists('m_splittingline','cost', 'numeric(11,2) NOT NULL DEFAULT 0'));
+
+--20130710-1526 Nueva columna en m_product
+UPDATE ad_system SET dummy = (SELECT addcolumnifnotexists('m_product','deliverytime_promised', 'numeric(18,0)'));
