@@ -7,7 +7,7 @@ import java.math.*;
 import org.openXpertya.util.*;
 /** Modelo Generado por C_POSPaymentMedium
  *  @author Comunidad de Desarrollo Libertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
- *  @version  - 2012-08-08 15:45:13.394 */
+ *  @version  - 2013-07-11 11:37:29.82 */
 public class X_C_POSPaymentMedium extends org.openXpertya.model.PO
 {
 /** Constructor estándar */
@@ -70,14 +70,110 @@ public static final String BANK_Galicia = "BG";
 public static final String BANK_Hipotecario = "BH";
 /** Santander = BS */
 public static final String BANK_Santander = "BS";
-/** HSBC = BH */
-public static final String BANK_HSBC = "BH";
+/** Provincia = BP */
+public static final String BANK_Provincia = "BP";
+/** Columbia = BC */
+public static final String BANK_Columbia = "BC";
+/** Comafi = CO */
+public static final String BANK_Comafi = "CO";
+/** Credicoop = CR */
+public static final String BANK_Credicoop = "CR";
+/** Itau = BI */
+public static final String BANK_Itau = "BI";
+/** Macro = BM */
+public static final String BANK_Macro = "BM";
+/** Citibank = CB */
+public static final String BANK_Citibank = "CB";
+/** Standard Bank = SB */
+public static final String BANK_StandardBank = "SB";
+/** American Express Bank = AE */
+public static final String BANK_AmericanExpressBank = "AE";
+/** BACS = CS */
+public static final String BANK_BACS = "CS";
+/** Bica = BB */
+public static final String BANK_Bica = "BB";
+/** Bradesco = BR */
+public static final String BANK_Bradesco = "BR";
+/** Cetelem = CE */
+public static final String BANK_Cetelem = "CE";
+/** CMF = CM */
+public static final String BANK_CMF = "CM";
+/** Ciudad = CI */
+public static final String BANK_Ciudad = "CI";
+/** Banco de Corrientes = AC */
+public static final String BANK_BancoDeCorrientes = "AC";
+/** Banco de Formosa = AF */
+public static final String BANK_BancoDeFormosa = "AF";
+/** Banco de La Pampa = AP */
+public static final String BANK_BancoDeLaPampa = "AP";
+/** Banco de Cordoba = AB */
+public static final String BANK_BancoDeCordoba = "AB";
+/** Banco del Uruguay = BU */
+public static final String BANK_BancoDelUruguay = "BU";
+/** Banco de San Juan = AJ */
+public static final String BANK_BancoDeSanJuan = "AJ";
+/** Banco de Santa Cruz = AS */
+public static final String BANK_BancoDeSantaCruz = "AS";
+/** Banco de Sgo. Del Estero = BE */
+public static final String BANK_BancoDeSgoDelEstero = "BE";
+/** Banco del Chubut = AH */
+public static final String BANK_BancoDelChubut = "AH";
+/** Banco del Sol = SO */
+public static final String BANK_BancoDelSol = "SO";
+/** Banco de Tucuman = AT */
+public static final String BANK_BancoDeTucuman = "AT";
+/** Banco do Brasil = BL */
+public static final String BANK_BancoDoBrasil = "BL";
+/** Finansur = FI */
+public static final String BANK_Finansur = "FI";
+/** Industrial = IN */
+public static final String BANK_Industrial = "IN";
+/** Mariva = MA */
+public static final String BANK_Mariva = "MA";
+/** Meridian = ME */
+public static final String BANK_Meridian = "ME";
+/** Banco de Rosario = RO */
+public static final String BANK_BancoDeRosario = "RO";
+/** Patagonia = PA */
+public static final String BANK_Patagonia = "PA";
+/** Piano = PI */
+public static final String BANK_Piano = "PI";
+/** Banco de Tierra del Fuego = TF */
+public static final String BANK_BancoDeTierraDelFuego = "TF";
+/** Banco de Neuquen = AN */
+public static final String BANK_BancoDeNeuquen = "AN";
+/** Roela = RB */
+public static final String BANK_Roela = "RB";
+/** Saenz = SA */
+public static final String BANK_Saenz = "SA";
+/** Supervielle = SU */
+public static final String BANK_Supervielle = "SU";
+/** Bank of America = AM */
+public static final String BANK_BankOfAmerica = "AM";
+/** Deutsche = DB */
+public static final String BANK_Deutsche = "DB";
+/** Banco de Entre Rios = ER */
+public static final String BANK_BancoDeEntreRios = "ER";
+/** Banco de La Rioja = RI */
+public static final String BANK_BancoDeLaRioja = "RI";
+/** Banco de Santa Fe = SF */
+public static final String BANK_BancoDeSantaFe = "SF";
+/** Banco del Chaco = CH */
+public static final String BANK_BancoDelChaco = "CH";
+/** RCI = RC */
+public static final String BANK_RCI = "RC";
+/** Royal = RY */
+public static final String BANK_Royal = "RY";
+/** HSBC = HS */
+public static final String BANK_HSBC = "HS";
+/** Paribas = PB */
+public static final String BANK_Paribas = "PB";
 /** Set Bank.
 Bank */
 public void setBank (String Bank)
 {
-if (Bank == null || Bank.equals("O") || Bank.equals("BN") || Bank.equals("BF") || Bank.equals("BG") || Bank.equals("BH") || Bank.equals("BS") || Bank.equals("BH"));
- else throw new IllegalArgumentException ("Bank Invalid value - Reference = BANK_AD_Reference_ID - O - BN - BF - BG - BH - BS - BH");
+if (Bank == null || Bank.equals("O") || Bank.equals("BN") || Bank.equals("BF") || Bank.equals("BG") || Bank.equals("BH") || Bank.equals("BS") || Bank.equals("BP") || Bank.equals("BC") || Bank.equals("CO") || Bank.equals("CR") || Bank.equals("BI") || Bank.equals("BM") || Bank.equals("CB") || Bank.equals("SB") || Bank.equals("AE") || Bank.equals("CS") || Bank.equals("BB") || Bank.equals("BR") || Bank.equals("CE") || Bank.equals("CM") || Bank.equals("CI") || Bank.equals("AC") || Bank.equals("AF") || Bank.equals("AP") || Bank.equals("AB") || Bank.equals("BU") || Bank.equals("AJ") || Bank.equals("AS") || Bank.equals("BE") || Bank.equals("AH") || Bank.equals("SO") || Bank.equals("AT") || Bank.equals("BL") || Bank.equals("FI") || Bank.equals("IN") || Bank.equals("MA") || Bank.equals("ME") || Bank.equals("RO") || Bank.equals("PA") || Bank.equals("PI") || Bank.equals("TF") || Bank.equals("AN") || Bank.equals("RB") || Bank.equals("SA") || Bank.equals("SU") || Bank.equals("AM") || Bank.equals("DB") || Bank.equals("ER") || Bank.equals("RI") || Bank.equals("SF") || Bank.equals("CH") || Bank.equals("RC") || Bank.equals("RY") || Bank.equals("HS") || Bank.equals("PB"));
+ else throw new IllegalArgumentException ("Bank Invalid value - Reference = BANK_AD_Reference_ID - O - BN - BF - BG - BH - BS - BP - BC - CO - CR - BI - BM - CB - SB - AE - CS - BB - BR - CE - CM - CI - AC - AF - AP - AB - BU - AJ - AS - BE - AH - SO - AT - BL - FI - IN - MA - ME - RO - PA - PI - TF - AN - RB - SA - SU - AM - DB - ER - RI - SF - CH - RC - RY - HS - PB");
 if (Bank != null && Bank.length() > 2)
 {
 log.warning("Length > 2 - truncated");
