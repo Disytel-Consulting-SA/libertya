@@ -120,6 +120,10 @@ public class PostInstallUpgradeFrom1301 extends PluginPostInstallProcess {
 	protected final static String CHECKS_BY_ACCOUNT_JASPER_REPORT_UID = "CORE-AD_JasperReport-1010104";
 	protected final static String CHECKS_BY_ACCOUNT_JASPER_REPORT_FILENAME = "ChecksByAccount.jasper";
 	
+	/** UID del Reporte de Totales por Entidad Financiera */
+	protected final static String TOTALES_POR_ENTIDAD_FINANCIERA_REPORT_UID = "CORE-AD_Process-1010338";
+	protected final static String TOTALES_POR_ENTIDAD_FINANCIERA_REPORT_FILENAME = "TotalesPorEntidadFinanciera.jrxml";
+	
 	protected String doIt() throws Exception {
 		super.doIt();
 		
@@ -440,6 +444,17 @@ public class PostInstallUpgradeFrom1301 extends PluginPostInstallProcess {
 										jarFileURL,
 										getBinaryFileURL(CHECKS_BY_ACCOUNT_JASPER_REPORT_FILENAME)));
 	
+		// Reporte de Totales por Entidad Financiera
+		MProcess.addAttachment(
+				get_TrxName(),
+				getCtx(),
+				TOTALES_POR_ENTIDAD_FINANCIERA_REPORT_UID,
+				TOTALES_POR_ENTIDAD_FINANCIERA_REPORT_FILENAME,
+				JarHelper
+						.readBinaryFromJar(
+								jarFileURL,
+								getBinaryFileURL(TOTALES_POR_ENTIDAD_FINANCIERA_REPORT_FILENAME)));
+		
 		return " ";
 	}
 
