@@ -7,6 +7,7 @@ import java.util.logging.Level;
 import org.openXpertya.model.MChangeLog;
 import org.openXpertya.plugin.install.ChangeLogElement;
 import org.openXpertya.util.DB;
+import org.openXpertya.util.DisplayType;
 
 
 public class ReplicationBuilderWS extends ReplicationBuilder {
@@ -94,6 +95,10 @@ public class ReplicationBuilderWS extends ReplicationBuilder {
 						if(element.getAD_Reference_Value_ID() != 0){
 							tableID = ReplicationCache.referencesData.get(element.getAD_Reference_Value_ID()); 
 							tableName = ReplicationCache.tablesData.get(tableID);  
+						}
+						// Las columnas de tipo Cuenta referencian siempre a una entrada dentro de C_ValidCombination
+						if (DisplayType.Account == element.getAD_Reference_ID()) {
+							tableName = "C_ValidCombination";
 						}
 						
 						/**
