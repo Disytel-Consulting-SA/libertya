@@ -4166,9 +4166,12 @@ public class MOrder extends X_C_Order implements DocAction {
         }
         
         // Actualiza la fecha del pedido a la fecha actual
-        Timestamp today = Env.getDate();
-        setDateOrdered(today);
-        setDateAcct(today);
+		// Se comentan estas líneas ya que no se debe modificar la fecha del
+		// pedido al reactivar, ya que dispara otras funcionalidades indeseadas,
+		// de última que se modifique a mano. 
+//        Timestamp today = Env.getDate();
+//        setDateOrdered(today);
+//        setDateAcct(today);
         
         // Comentado por para que deje el precio que estaba
         // ---------------------------------------------------------
