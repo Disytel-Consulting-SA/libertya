@@ -271,6 +271,8 @@ public class DocumentCompleteProcess extends SvrProcess {
 	/** Nombre de transacción local */
 	private String localTrxName;
 	
+	public DocumentCompleteProcess(){}
+	
 	public DocumentCompleteProcess(Properties ctx, MDocType docType,
 			String docAction, Timestamp dateFrom, Timestamp dateTo,
 			String aditionalWhereClause, String trxName) {
@@ -400,7 +402,8 @@ public class DocumentCompleteProcess extends SvrProcess {
 		if(table != null){
 			sql.append(getDocTypeCondition(table, generalPO));
 			sql.append(getDateCondition(table, generalPO));
-			sql.append(getAditionalWhereClause());
+			sql.append(!Util.isEmpty(getAditionalWhereClause(), true) ? getAditionalWhereClause()
+					: "");
 			sql.append(getDocTypeOrder(table, generalPO));
 		}
 		return sql.toString();
