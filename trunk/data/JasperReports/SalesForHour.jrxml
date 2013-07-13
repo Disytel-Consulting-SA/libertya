@@ -33,6 +33,7 @@
 	<field name="SALES" class="java.math.BigDecimal"/>
 	<field name="CANT_TICKETS" class="java.lang.Integer"/>
 	<field name="PART_TOTAL" class="java.math.BigDecimal"/>
+	<field name="HOUR" class="java.lang.Integer"/>
 
 	<variable name="SUM_SALES" class="java.math.BigDecimal" resetType="Report" calculation="Sum">
 		<variableExpression><![CDATA[$F{SALES}]]></variableExpression>
@@ -317,58 +318,19 @@
 					</textElement>
 				<textFieldExpression   class="java.math.BigDecimal"><![CDATA[$F{PART_TOTAL}]]></textFieldExpression>
 				</textField>
-				<staticText>
+				<textField isStretchWithOverflow="false" pattern="" isBlankWhenNull="false" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
 						x="0"
 						y="0"
-						width="19"
-						height="12"
-						key="staticText-11"/>
-					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
-					<textElement verticalAlignment="Middle">
-						<font size="9"/>
-					</textElement>
-				<text><![CDATA[De]]></text>
-				</staticText>
-				<textField isStretchWithOverflow="false" pattern="HH:mm" isBlankWhenNull="false" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
-					<reportElement
-						x="19"
-						y="0"
-						width="27"
+						width="187"
 						height="12"
 						key="textField"/>
 					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
 					<textElement verticalAlignment="Middle">
 						<font size="9"/>
 					</textElement>
-				<textFieldExpression   class="java.sql.Timestamp"><![CDATA[$F{TIME_INI}]]></textFieldExpression>
+				<textFieldExpression   class="java.lang.String"><![CDATA["De "+($F{HOUR}.intValue() >= 10?(""+$F{HOUR}.intValue()):("0"+$F{HOUR}.intValue()))+":00 a "+($F{HOUR}.intValue() >= 10?(""+$F{HOUR}.intValue()):("0"+$F{HOUR}.intValue()))+":59"]]></textFieldExpression>
 				</textField>
-				<textField isStretchWithOverflow="false" pattern="HH:mm" isBlankWhenNull="false" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
-					<reportElement
-						x="65"
-						y="0"
-						width="122"
-						height="12"
-						key="textField"/>
-					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
-					<textElement verticalAlignment="Middle">
-						<font size="9"/>
-					</textElement>
-				<textFieldExpression   class="java.sql.Timestamp"><![CDATA[$F{TIME_END}]]></textFieldExpression>
-				</textField>
-				<staticText>
-					<reportElement
-						x="46"
-						y="0"
-						width="19"
-						height="12"
-						key="staticText-12"/>
-					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
-					<textElement textAlignment="Center" verticalAlignment="Middle">
-						<font size="9"/>
-					</textElement>
-				<text><![CDATA[a]]></text>
-				</staticText>
 			</band>
 		</detail>
 		<columnFooter>
