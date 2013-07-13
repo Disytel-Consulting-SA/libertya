@@ -29,8 +29,8 @@ public class SalesByHourDataSource extends QueryDataSource {
 
 	@Override
 	protected String getQuery() {
-		String sql = "select hour, time_ini, time_end, total::numeric(22,9), sales::numeric(22,9), cant_tickets::integer, (CASE WHEN total = 0 THEN 0 ELSE sales/total END)::numeric(11,2) as part_total " +
-					 "from (select hour, time_ini, time_end, total, sum(grandtotal) as sales, sum(cant_ticket) as cant_tickets " +
+		String sql = "select hour, total::numeric(22,9), sales::numeric(22,9), cant_tickets::integer, (CASE WHEN total = 0 THEN 0 ELSE sales/total END)::numeric(11,2) as part_total " +
+					 "from (select hour, total, sum(grandtotal) as sales, sum(cant_ticket) as cant_tickets " +
 					 "		from (select hour, time_ini, time_end, coalesce(grandtotal,0.00) as grandtotal, coalesce(total,0.00) as total, c_invoice_id, coalesce(cant_ticket,0.00) as cant_ticket " +
 					 "				from (select h.hour, coalesce(time_ini,h.date) as time_ini, coalesce(time_end, h.date_to) as time_end, grandtotal, c_invoice_id, cant_ticket " +
 					 "						from c_salesbyhour_hours as h " +
@@ -53,7 +53,8 @@ public class SalesByHourDataSource extends QueryDataSource {
 					 "							inner join c_doctype as dt on dt.c_doctype_id = i.c_doctypetarget_id " +
 					 "							where i.ad_org_id = ? AND i.docstatus IN ('CO','CL') AND dt.docbasetype IN ('"+MDocType.DOCBASETYPE_ARInvoice+"','"+MDocType.DOCBASETYPE_ARCreditMemo +"') AND dt.doctypekey NOT IN ('RCI','RCR') AND date_trunc('day',i.dateinvoiced) >= date_trunc('day',?::date) AND date_trunc('day',i.dateinvoiced) <= date_trunc('day',?::date) " +
 					 "							group by extract('hour' from dateinvoiced), extract('minute' from dateinvoiced)) as t on t.hour = ht.hour) as total) as todo " +
-					 "group by hour, time_ini, time_end, total) as todo_total";
+					 "group by hour, total) as todo_total " +
+					 "order by hour";
 		return sql;
 	}
 
