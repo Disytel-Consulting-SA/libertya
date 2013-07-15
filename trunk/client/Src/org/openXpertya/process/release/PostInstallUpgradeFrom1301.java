@@ -124,6 +124,10 @@ public class PostInstallUpgradeFrom1301 extends PluginPostInstallProcess {
 	protected final static String TOTALES_POR_ENTIDAD_FINANCIERA_REPORT_UID = "CORE-AD_Process-1010338";
 	protected final static String TOTALES_POR_ENTIDAD_FINANCIERA_REPORT_FILENAME = "TotalesPorEntidadFinanciera.jrxml";
 	
+	/** UID del Reporte de Operadores por Caja */
+	protected final static String POSJOURNAL_SALES_REPS_REPORT_UID = "CORE-AD_Process-1010339";
+	protected final static String POSJOURNAL_SALES_REPS_REPORT_FILENAME = "POSJournalSalesReps.jrxml";
+	
 	protected String doIt() throws Exception {
 		super.doIt();
 		
@@ -454,6 +458,17 @@ public class PostInstallUpgradeFrom1301 extends PluginPostInstallProcess {
 						.readBinaryFromJar(
 								jarFileURL,
 								getBinaryFileURL(TOTALES_POR_ENTIDAD_FINANCIERA_REPORT_FILENAME)));
+		
+		// Reporte de Totales por Entidad Financiera
+		MProcess.addAttachment(
+				get_TrxName(),
+				getCtx(),
+				POSJOURNAL_SALES_REPS_REPORT_UID,
+				POSJOURNAL_SALES_REPS_REPORT_FILENAME,
+				JarHelper
+						.readBinaryFromJar(
+								jarFileURL,
+								getBinaryFileURL(POSJOURNAL_SALES_REPS_REPORT_FILENAME)));
 		
 		return " ";
 	}
