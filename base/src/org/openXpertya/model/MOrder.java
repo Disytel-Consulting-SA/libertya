@@ -312,6 +312,12 @@ public class MOrder extends X_C_Order implements DocAction {
     private Integer tpvGeneratedInvoiceID = 0;
     
     /**
+	 * Flag especial para evitar validaciones costosas computacionalmente, las
+	 * cuales no son necesario realizar en caso de ser parte de una venta TPV
+	 */
+ 	protected boolean isTPVInstance = false;
+    
+    /**
      * Descripción de Método
      *
      *
@@ -4687,6 +4693,14 @@ public class MOrder extends X_C_Order implements DocAction {
 		return count;
 	}
 	
+	
+	public boolean isTPVInstance() {
+		return isTPVInstance;
+	}
+
+	public void setTPVInstance(boolean isTPVInstance) {
+		this.isTPVInstance = isTPVInstance;
+	}
 }    // MOrder
 
 

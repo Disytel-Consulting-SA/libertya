@@ -1215,7 +1215,7 @@ public class PoSOnline extends PoSConnectionState {
 		mo.setIsSOTrx( true );
 		// mo.setC_DocTypeTarget_ID();
 		mo.setIsTpvUsed(true);
-		
+		mo.setTPVInstance(true);
 		// TODO: Cual de los dos ?
 		
 		mo.setC_DocType_ID(getPoSCOnfig().getOrderDocTypeID());
