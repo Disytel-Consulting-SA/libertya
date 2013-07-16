@@ -1396,7 +1396,8 @@ public class MField implements Serializable,Evaluatee {
         setChanged(false);
         
         // Set Context
-
+		// En el contexto si estamos bajo un campo con despliegue encriptado,
+		// debemos encriptar también el valor del contexto o no mostrarlo
         if( (m_vo.displayType == DisplayType.Text) || 
         	(m_vo.displayType == DisplayType.Memo) || 
         	(m_vo.displayType == DisplayType.TextLong) ||
@@ -1408,9 +1409,11 @@ public class MField implements Serializable,Evaluatee {
         } else if( newValue instanceof Timestamp ) {
             Env.setContext( m_vo.ctx,m_vo.WindowNo,m_vo.ColumnName,( Timestamp )m_value );
         } else {
-            Env.setContext( m_vo.ctx,m_vo.WindowNo,m_vo.ColumnName,(m_value == null)
-                    ?null
-                    :m_value.toString());
+        	if(!isEncrypted()){
+	            Env.setContext( m_vo.ctx,m_vo.WindowNo,m_vo.ColumnName,(m_value == null)
+	                    ?null
+	                    :m_value.toString());
+        	}
         }
 
         // Does not fire, if same value
