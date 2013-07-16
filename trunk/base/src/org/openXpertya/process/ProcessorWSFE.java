@@ -203,7 +203,7 @@ public class ProcessorWSFE {
 					if(firstLineAppended){
 						line.append(";");
 					}
-					line.append(tax.getWSFECode()+":"+taxes[i].getTaxBaseAmt()+":"+taxes[i].getTaxAmt());
+					line.append(tax.getWSFECode()+":"+getTaxBaseAmt(taxes[i].getTaxBaseAmt(), invoice.getGrandTotal(), invoice.getTaxesAmt())+":"+taxes[i].getTaxAmt());
 					firstLineAppended = true;	
 				}
 			}
@@ -229,7 +229,7 @@ public class ProcessorWSFE {
 						line.append(";");
 					}
 					BigDecimal alic = taxPerc.getRate().setScale(2, BigDecimal.ROUND_HALF_UP);
-					line.append(taxPerc.getWSFECode()+":"+taxesPerc[i].getTaxBaseAmt()+":"+taxesPerc[i].getTaxAmt()+":"+alic);
+					line.append(taxPerc.getWSFECode()+":"+getTaxBaseAmt(taxesPerc[i].getTaxBaseAmt(), invoice.getGrandTotal(), invoice.getTaxesAmt())+":"+taxesPerc[i].getTaxAmt()+":"+alic);
 					firstLineAppended2 = true;	
 				}
 			}
@@ -491,5 +491,12 @@ public class ProcessorWSFE {
 	private void setTrxName(String value){
 		trxName = value;
 	}	
+	
+	private BigDecimal getTaxBaseAmt(BigDecimal taxBaseAmt, BigDecimal grandTotal,	BigDecimal taxesAmt) {
+		if ((Math.abs((grandTotal.subtract(taxesAmt).subtract(taxBaseAmt)).doubleValue()) >= 0.01) && (Math.abs((grandTotal.subtract(taxesAmt).subtract(taxBaseAmt)).doubleValue()) <= 0.02)){
+			return (grandTotal.subtract(taxesAmt));
+		}
+		return taxBaseAmt;
+	}
 
 }

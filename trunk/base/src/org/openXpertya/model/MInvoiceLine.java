@@ -1223,6 +1223,8 @@ public class MInvoiceLine extends X_C_InvoiceLine {
         }
         
         getInvoice().setNetAmount(getInvoice().calculateNetAmount(get_TrxName()));
+        
+        updateNetAmount();        
            
         return no == 1;
     }    // updateHeaderTax
@@ -1900,6 +1902,18 @@ public class MInvoiceLine extends X_C_InvoiceLine {
         }
         super.setTaxAmt(taxAmt);
     }    // setLineNetAmt
+    
+    private void updateNetAmount() {
+		BigDecimal taxamt = DB.getSQLValueBD(get_TrxName(), "SELECT SUM(it.taxamt) FROM C_InvoiceTax it WHERE (it.C_Invoice_ID = ?)", getC_Invoice_ID());
+		BigDecimal grandTotal = DB.getSQLValueBD(get_TrxName(), "SELECT i.grandtotal FROM C_Invoice i WHERE (i.C_Invoice_ID = ?)", getC_Invoice_ID());
+		BigDecimal taxbaseamt = DB.getSQLValueBD(get_TrxName(), "SELECT it.taxbaseamt FROM C_InvoiceTax it WHERE (it.C_Invoice_ID = ?) ORDER BY it.Created DESC LIMIT 1", getC_Invoice_ID());
+		// Si existe un diferencia de hasta 0.02 se ajusta el neto.
+		if((Math.abs((grandTotal.subtract(taxamt).subtract(taxbaseamt)).doubleValue()) >= 0.01) && (Math.abs((grandTotal.subtract(taxamt).subtract(taxbaseamt)).doubleValue()) <= 0.02)){
+			String queryUpdate = "UPDATE C_Invoice SET NetAmount = " + (grandTotal.subtract(taxamt)) + " WHERE (C_Invoice_ID = " + getInvoice().getC_Invoice_ID() + ")";
+			getInvoice().setNetAmount(grandTotal.subtract(taxamt));
+			DB.executeUpdate(queryUpdate, get_TrxName());
+    	  }
+	}
     
 }    // MInvoiceLine
 
