@@ -3654,20 +3654,20 @@ SET qtyreserved = coalesce((SELECT sum(ol.qtyordered - ol.qtydelivered - ol.qtyt
 				INNER JOIN c_doctype as dt ON dt.c_doctype_id = o.c_doctypetarget_id
 				INNER JOIN m_warehouse as w ON w.m_warehouse_id = o.m_warehouse_id
 				INNER JOIN m_locator as l ON l.m_warehouse_id = w.m_warehouse_id
-				WHERE o.docstatus IN ('CO','CL') AND doctypekey = 'SOSO' AND ol.m_product_id = s.m_product_id AND s.m_locator_id = l.m_locator_id),0),
+				WHERE ol.ad_client_id = s.ad_client_id AND o.docstatus IN ('CO','CL') AND doctypekey = 'SOSO' AND ol.m_product_id = s.m_product_id AND s.m_locator_id = l.m_locator_id),0),
     qtyordered = coalesce((SELECT sum(ol.qtyordered - ol.qtydelivered - ol.qtytransferred) 
 				FROM c_orderline as ol 
 				INNER JOIN c_order as o ON o.c_order_id = ol.c_order_id 
 				INNER JOIN c_doctype as dt ON dt.c_doctype_id = o.c_doctypetarget_id
 				INNER JOIN m_warehouse as w ON w.m_warehouse_id = o.m_warehouse_id
 				INNER JOIN m_locator as l ON l.m_warehouse_id = w.m_warehouse_id
-				WHERE o.docstatus IN ('CO','CL') AND doctypekey = 'POO' AND ol.m_product_id = s.m_product_id AND s.m_locator_id = l.m_locator_id),0)
-WHERE ad_client_id = 1010016 AND s.m_attributesetinstance_id = 0;
+				WHERE ol.ad_client_id = s.ad_client_id AND o.docstatus IN ('CO','CL') AND doctypekey = 'POO' AND ol.m_product_id = s.m_product_id AND s.m_locator_id = l.m_locator_id),0)
+WHERE s.m_attributesetinstance_id = 0;
 
 --20130704-1623 Actualización de la cantidad reservada de las líneas del pedido a 0 ya que se modificó la lógica de reapertura de pedidos
 UPDATE c_orderline ol
 SET qtyreserved = 0
-WHERE ad_client_id = 1010016 AND EXISTS (SELECT c_order_id FROM c_order as o WHERE o.c_order_id = ol.c_order_id AND o.docstatus IN ('IP','??'));
+WHERE EXISTS (SELECT c_order_id FROM c_order as o WHERE o.c_order_id = ol.c_order_id AND o.docstatus IN ('IP','??'));
 
 --20130704-1820 Nueva columna para que los parámetros de procesos puedan ser encriptados
 UPDATE ad_system SET dummy = (SELECT addcolumnifnotexists('ad_process_para','isencrypted', 'character(1) NOT NULL DEFAULT ''N''::bpchar'));
