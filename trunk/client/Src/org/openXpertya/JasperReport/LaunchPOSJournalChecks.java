@@ -14,7 +14,8 @@ public class LaunchPOSJournalChecks extends LaunchDeclaracionValores {
 	
 	@Override
 	protected OXPJasperDataSource createReportDataSource() {
-		return new POSJournalChecksDataSource(getCtx(), getValoresDTO(), get_TrxName());
+		return new POSJournalChecksDataSource(getCtx(), getValoresDTO(), null,
+				null, null, get_TrxName());
 	}
 	
 	protected boolean isLoadVentasDataSource(){
