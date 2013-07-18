@@ -349,7 +349,8 @@ public class LaunchDeclaracionValores extends JasperReportLaunch {
 	protected DeclaracionValoresVentasDataSource getVentaDataSource() throws Exception{
 		DeclaracionValoresVentasDataSource ventaDS = null;
 		if(isLoadVentasDataSource()){
-			ventaDS = new DeclaracionValoresVentasDataSource(getCtx(), getValoresDTO(), get_TrxName());
+			ventaDS = new DeclaracionValoresVentasDataSource(getCtx(),
+					getValoresDTO(), getSelect(), getGroupBy(), getOrderBy(), get_TrxName());
 			ventaDS = (DeclaracionValoresVentasDataSource)loadDSData(ventaDS);
 		}
 		return ventaDS;
@@ -358,7 +359,8 @@ public class LaunchDeclaracionValores extends JasperReportLaunch {
 	protected DeclaracionValoresCashDataSource getCashDataSource() throws Exception{
 		DeclaracionValoresCashDataSource cashDS = null;
 		if(isLoadCashDataSource()){
-			cashDS = new DeclaracionValoresCashDataSource(getCtx(), getValoresDTO(), get_TrxName());
+			cashDS = new DeclaracionValoresCashDataSource(getCtx(),
+					getValoresDTO(), getSelect(), getGroupBy(), getOrderBy(), get_TrxName());
 			cashDS = (DeclaracionValoresCashDataSource)loadDSData(cashDS);
 		}
 		return cashDS;
@@ -367,7 +369,8 @@ public class LaunchDeclaracionValores extends JasperReportLaunch {
 	protected DeclaracionValoresCheckDataSource getCheckDataSource() throws Exception{
 		DeclaracionValoresCheckDataSource checkDS = null;
 		if(isLoadCheckDataSource()){
-			checkDS = new DeclaracionValoresCheckDataSource(getCtx(), getValoresDTO(), get_TrxName());
+			checkDS = new DeclaracionValoresCheckDataSource(getCtx(),
+					getValoresDTO(), getSelect(), getGroupBy(), getOrderBy(), get_TrxName());
 			checkDS = (DeclaracionValoresCheckDataSource)loadDSData(checkDS);
 		}
 		return checkDS;
@@ -376,7 +379,8 @@ public class LaunchDeclaracionValores extends JasperReportLaunch {
 	protected DeclaracionValoresTransferDataSource getTransferDataSource() throws Exception{
 		DeclaracionValoresTransferDataSource transferDS = null;
 		if(isLoadTransferDataSource()){
-			transferDS = new DeclaracionValoresTransferDataSource(getCtx(), getValoresDTO(), get_TrxName());
+			transferDS = new DeclaracionValoresTransferDataSource(getCtx(),
+					getValoresDTO(), getSelect(), getGroupBy(), getOrderBy(), get_TrxName());
 			transferDS = (DeclaracionValoresTransferDataSource)loadDSData(transferDS);
 		}
 		return transferDS;
@@ -385,7 +389,8 @@ public class LaunchDeclaracionValores extends JasperReportLaunch {
 	protected DeclaracionValoresCuponDataSource getCuponDataSource() throws Exception{
 		DeclaracionValoresCuponDataSource cuponDS = null;
 		if(isLoadCuponDataSource()){
-			cuponDS = new DeclaracionValoresCuponDataSource(getCtx(), getValoresDTO(), get_TrxName());
+			cuponDS = new DeclaracionValoresCuponDataSource(getCtx(),
+					getValoresDTO(), getSelect(), getGroupBy(), getOrderBy(), get_TrxName());
 			cuponDS = (DeclaracionValoresCuponDataSource)loadDSData(cuponDS);
 		}
 		return cuponDS;
@@ -394,7 +399,8 @@ public class LaunchDeclaracionValores extends JasperReportLaunch {
 	protected DeclaracionValoresCreditNoteDataSource getCreditNoteDataSource() throws Exception{
 		DeclaracionValoresCreditNoteDataSource creditNoteDS = null;
 		if(isLoadCreditNoteDataSource()){
-			creditNoteDS = new DeclaracionValoresCreditNoteDataSource(getCtx(), getValoresDTO(), get_TrxName());
+			creditNoteDS = new DeclaracionValoresCreditNoteDataSource(getCtx(),
+					getValoresDTO(), getSelect(), getGroupBy(), getOrderBy(), get_TrxName());
 			creditNoteDS = (DeclaracionValoresCreditNoteDataSource)loadDSData(creditNoteDS);
 		}
 		return creditNoteDS;
@@ -403,7 +409,8 @@ public class LaunchDeclaracionValores extends JasperReportLaunch {
 	protected DeclaracionValoresCuentaCorrienteDataSource getCuentaCorrienteDataSource() throws Exception{
 		DeclaracionValoresCuentaCorrienteDataSource ccDS = null;
 		if(isLoadCuentaCorrienteDataSource()){
-			ccDS = new DeclaracionValoresCuentaCorrienteDataSource(getCtx(), getValoresDTO(), get_TrxName());
+			ccDS = new DeclaracionValoresCuentaCorrienteDataSource(getCtx(),
+					getValoresDTO(), getSelect(), getGroupBy(), getOrderBy(), get_TrxName());
 			ccDS = (DeclaracionValoresCuentaCorrienteDataSource)loadDSData(ccDS);
 		}
 		return ccDS;
@@ -412,7 +419,9 @@ public class LaunchDeclaracionValores extends JasperReportLaunch {
 	protected DeclaracionValoresVentasReceiptDataSource getVentasReceiptDataSource() throws Exception{
 		DeclaracionValoresVentasReceiptDataSource ventasReceiptDS = null;
 		if(isLoadVentasReceiptDataSource()){
-			ventasReceiptDS = new DeclaracionValoresVentasReceiptDataSource(getCtx(), getValoresDTO(), get_TrxName());
+			ventasReceiptDS = new DeclaracionValoresVentasReceiptDataSource(
+					getCtx(), getValoresDTO(), getSelect(), getGroupBy(),
+					getOrderBy(), get_TrxName());
 			ventasReceiptDS = (DeclaracionValoresVentasReceiptDataSource)loadDSData(ventasReceiptDS);
 		}
 		return ventasReceiptDS;
@@ -421,7 +430,8 @@ public class LaunchDeclaracionValores extends JasperReportLaunch {
 	protected ValoresDataSource getValoresDataSource() throws Exception{
 		ValoresDataSource valoresDS = null;
 		if(isLoadValoresDataSource()){
-			valoresDS = new ValoresDataSource(getCtx(), getValoresDTO(), get_TrxName());
+			valoresDS = new ValoresDataSource(getCtx(), getValoresDTO(),
+					getSelect(), getGroupBy(), getOrderBy(), get_TrxName());
 			valoresDS = (ValoresDataSource)loadDSData(valoresDS);
 		}
 		return valoresDS;
@@ -431,7 +441,7 @@ public class LaunchDeclaracionValores extends JasperReportLaunch {
 		DeclaracionValoresVoidedDocumentsDataSource voidDocumentsDS = null;
 		if(isLoadVoidDocumentsDataSource()){
 			voidDocumentsDS = new DeclaracionValoresVoidedDocumentsDataSource(
-					getCtx(), getValoresDTO(), get_TrxName());
+					getCtx(), getValoresDTO(), getSelect(), getGroupBy(), getOrderBy(), get_TrxName());
 			voidDocumentsDS = (DeclaracionValoresVoidedDocumentsDataSource) loadDSData(voidDocumentsDS);
 		}
 		return voidDocumentsDS;
@@ -513,6 +523,18 @@ public class LaunchDeclaracionValores extends JasperReportLaunch {
 	
 	protected boolean isLoadVentasReceiptDataSource(){
 		return false;
+	}
+	
+	protected String getSelect(){
+		return "*, coalesce(ingreso - egreso,0) as total ";
+	}
+	
+	protected String getGroupBy(){
+		return null;
+	}
+	
+	protected String getOrderBy(){
+		return null;
 	}
 	
 	protected boolean isLoadVoidDocumentsDataSource(){

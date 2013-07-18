@@ -10,9 +10,9 @@ public class AuditoriaCuponDataSource extends AuditoriaDataSource {
 	}
 
 	public AuditoriaCuponDataSource(Properties ctx,
-			DeclaracionValoresDTO valoresDTO, String trxName) {
-		super(ctx, valoresDTO, trxName);
-		// TODO Auto-generated constructor stub
+			DeclaracionValoresDTO valoresDTO, String select, String groupBy,
+			String orderBy, String trxName) {
+		super(ctx, valoresDTO, select, groupBy, orderBy, trxName);
 	}
 	
 	public AuditoriaCuponDataSource(Properties ctx,

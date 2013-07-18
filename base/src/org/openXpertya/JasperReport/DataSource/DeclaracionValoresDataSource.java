@@ -17,19 +17,34 @@ public abstract class DeclaracionValoresDataSource extends QueryDataSource {
 	/** Contexto */
 	private Properties ctx;
 	
+	/** String con los campos que van en el SELECT de la query */
+	private String select;
+	
+	/** String con los campos del GROUP BY de la query */
+	private String groupBy;
+	
+	/** String con los campos del ORDER BY de la query */
+	private String orderBy;
+	
 	public DeclaracionValoresDataSource(String trxName) {
 		super(trxName);
 	}
 	
 	public DeclaracionValoresDataSource(Properties ctx,
-			DeclaracionValoresDTO valoresDTO, String trxName) {
+			DeclaracionValoresDTO valoresDTO, String select, String groupBy,
+			String orderBy, String trxName) {
 		super(trxName);
 		setCtx(ctx);
 		setValoresDTO(valoresDTO);
+		setSelect(Util.isEmpty(select, true) ? "*, coalesce(ingreso - egreso,0) as total "
+				: select);
+		setGroupBy(groupBy);
+		setOrderBy(orderBy);
 	}
 	
 	protected String getStdSelect(boolean withWhereClause){
-		String select = "SELECT *, coalesce(ingreso - egreso,0) as total FROM c_pos_declaracionvalores_v";
+		String select = "SELECT " + getSelect()
+				+ " FROM c_pos_declaracionvalores_v";
 		if(withWhereClause){
 			select += " WHERE ";
 		}
@@ -82,14 +97,13 @@ public abstract class DeclaracionValoresDataSource extends QueryDataSource {
 	protected String getStdQuery(boolean withTenderType){
 		StringBuffer sql = new StringBuffer(getStdSelect(true));
 		sql.append(getStdWhereClause(withTenderType));
+		if(!Util.isEmpty(getGroupBy())){
+			sql.append(" GROUP BY "+getGroupBy());
+		}
 		if(!Util.isEmpty(getOrderBy(), true)){
-			sql.append(getOrderBy());
+			sql.append(" ORDER BY "+getOrderBy());
 		}
 		return sql.toString();
-	}
-	
-	protected String getOrderBy(){
-		return null;
 	}
 	
 	/**
@@ -123,5 +137,29 @@ public abstract class DeclaracionValoresDataSource extends QueryDataSource {
 
 	public Properties getCtx() {
 		return ctx;
+	}
+
+	public String getSelect() {
+		return select;
+	}
+
+	public void setSelect(String select) {
+		this.select = select;
+	}
+
+	public String getGroupBy() {
+		return groupBy;
+	}
+
+	public void setGroupBy(String groupBy) {
+		this.groupBy = groupBy;
+	}
+
+	public void setOrderBy(String orderBy) {
+		this.orderBy = orderBy;
+	}
+	
+	public String getOrderBy(){
+		return orderBy;
 	}
 }
