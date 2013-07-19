@@ -1,0 +1,800 @@
+<?xml version="1.0" encoding="UTF-8"  ?>
+<!-- Created with iReport - A designer for JasperReports -->
+<!DOCTYPE jasperReport PUBLIC "//JasperReports//DTD Report Design//EN" "http://jasperreports.sourceforge.net/dtds/jasperreport.dtd">
+<jasperReport
+		 name="ReporteDeCompras"
+		 columnCount="1"
+		 printOrder="Vertical"
+		 orientation="Landscape"
+		 pageWidth="1300"
+		 pageHeight="595"
+		 columnWidth="1240"
+		 columnSpacing="0"
+		 leftMargin="30"
+		 rightMargin="30"
+		 topMargin="20"
+		 bottomMargin="20"
+		 whenNoDataType="NoPages"
+		 isTitleNewPage="false"
+		 isSummaryNewPage="false">
+	<property name="ireport.scriptlethandling" value="0" />
+	<property name="ireport.encoding" value="UTF-8" />
+	<import value="java.util.*" />
+	<import value="net.sf.jasperreports.engine.*" />
+	<import value="net.sf.jasperreports.engine.data.*" />
+
+	<parameter name="AD_Org_ID" isForPrompting="false" class="java.math.BigDecimal"/>
+	<parameter name="AD_CLIENT_ID" isForPrompting="false" class="java.lang.Integer"/>
+	<parameter name="M_Product_Lines_ID" isForPrompting="false" class="java.math.BigDecimal"/>
+	<parameter name="M_Product_Gamas_ID" isForPrompting="false" class="java.math.BigDecimal"/>
+	<parameter name="M_Product_Category_ID" isForPrompting="false" class="java.math.BigDecimal"/>
+	<parameter name="M_Product_Family_ID" isForPrompting="false" class="java.math.BigDecimal"/>
+	<parameter name="M_Product_ID" isForPrompting="false" class="java.math.BigDecimal"/>
+	<parameter name="C_BPartner_ID" isForPrompting="false" class="java.math.BigDecimal"/>
+	<parameter name="C_BPartnerCustomer_ID" isForPrompting="false" class="java.math.BigDecimal"/>
+	<queryString><![CDATA[SELECT Compania, Codigo_Organizacion, Nombre_Organizacion, Codigo_Proveedor, Nombre_Proveedor, Codigo_Producto, Linea_Producto, Familia, Subfamilia, Marca, Nombre_Articulo, Stock, Costo_PP, Iva, (Stock * Costo_PP) AS Stock_Actual_x_Costo_PP, Ultimo_Costo, Fecha_Ultima_Compra::date, Ultimo_Proveedor, Cant_Ultima_Compra, Ventas_Desde_Ultima_Compra, Ventas_Ultimo_Mes
+FROM (
+SELECT a.name AS Compania, o.value AS Codigo_Organizacion, o.name AS Nombre_Organizacion, bpp.value AS Codigo_Proveedor, bpp.name AS Nombre_Proveedor, p.value AS Codigo_Producto, pl.name AS Linea_Producto, pg.name AS Familia, pc.name AS Subfamilia, pf.name AS Marca, p.name AS Nombre_Articulo,
+COALESCE((SELECT SUM(s.qtyonhand - s.qtyreserved) AS qtyavailable FROM m_storage s JOIN m_locator l ON s.m_locator_id = l.m_locator_id WHERE p.M_Product_ID=s.M_Product_ID),0) AS Stock,
+COALESCE(
+(CASE 
+WHEN ((SELECT (CASE WHEN (SUM(il.qtyentered) > 0) THEN SUM(priceactual * il.qtyentered) / SUM(il.qtyentered) ELSE 0 END) FROM C_Order o INNER JOIN C_OrderLine ol ON (o.C_Order_ID = ol.C_Order_ID) INNER JOIN M_InOut i ON (o.C_Order_ID = i.C_Order_ID) INNER JOIN M_InOutLine il ON (il.M_InOut_ID = i.M_InOut_ID) WHERE (i.docstatus IN ('CL', 'CO', 'VO', 'RE')) AND (i.Issotrx = 'N') AND (ol.M_Product_ID=p.M_Product_ID) AND (il.qtyentered > 0)) = 0) THEN
+	(SELECT pp.pricestd FROM M_ProductPrice pp WHERE (pp.M_Product_ID=p.M_Product_ID) AND (pp.M_PriceList_Version_ID = (SELECT M_PriceList_Version_ID FROM M_PriceList_Version plv INNER JOIN M_PriceList pl ON plv.M_PriceList_ID = pl.M_PriceList_ID WHERE (IsSoPriceList = 'N') AND (plv.AD_Org_ID = p.AD_Org_ID) ORDER BY plv.Created DESC LIMIT 1)))
+ELSE
+	(SELECT (CASE WHEN (SUM(il.qtyentered) > 0) THEN 
+	SUM(currencyconvert(priceactual, o.c_currency_id, 118, o.dateacct::timestamp with time zone, NULL::integer, o.ad_client_id, o.ad_org_id) * il.qtyentered) / SUM(il.qtyentered) ELSE 0 END) 
+	FROM C_Order o 
+	INNER JOIN C_OrderLine ol ON (o.C_Order_ID = ol.C_Order_ID) 
+	INNER JOIN M_InOut i ON (o.C_Order_ID = i.C_Order_ID) 
+	INNER JOIN M_InOutLine il ON (il.M_InOut_ID = i.M_InOut_ID) 
+	WHERE (i.docstatus IN ('CL', 'CO', 'VO', 'RE')) AND (i.Issotrx = 'N') AND (ol.M_Product_ID=p.M_Product_ID) AND (il.qtyentered > 0))
+END)
+,0) AS Costo_PP, -- Finaliza el coalesce
+COALESCE(
+(CASE 
+WHEN ((SELECT priceactual FROM C_Order o INNER JOIN C_OrderLine ol ON (o.C_Order_ID = ol.C_Order_ID) INNER JOIN M_InOut i ON (o.C_Order_ID = i.C_Order_ID) INNER JOIN M_InOutLine il ON (il.M_InOut_ID = i.M_InOut_ID) WHERE (il.qtyentered > 0) AND (i.docstatus IN ('CL', 'CO', 'VO', 'RE')) AND (i.Issotrx = 'N') AND (ol.M_Product_ID=p.M_Product_ID) ORDER BY i.created DESC LIMIT 1) IS NULL) THEN
+(SELECT pp.pricestd FROM M_ProductPrice pp WHERE (pp.M_Product_ID=p.M_Product_ID) AND (pp.M_PriceList_Version_ID = (SELECT M_PriceList_Version_ID FROM M_PriceList_Version plv INNER JOIN M_PriceList pl ON plv.M_PriceList_ID = pl.M_PriceList_ID WHERE (IsSoPriceList = 'N') AND (plv.AD_Org_ID = p.AD_Org_ID) ORDER BY plv.Created DESC LIMIT 1)))
+ELSE
+(SELECT currencyconvert(priceactual, o.c_currency_id, 118, o.dateacct::timestamp with time zone, NULL::integer, o.ad_client_id, o.ad_org_id) FROM C_Order o INNER JOIN C_OrderLine ol ON (o.C_Order_ID = ol.C_Order_ID) INNER JOIN M_InOut i ON (o.C_Order_ID = i.C_Order_ID) INNER JOIN M_InOutLine il ON (il.M_InOut_ID = i.M_InOut_ID) WHERE (il.qtyentered > 0) AND (i.docstatus IN ('CL', 'CO', 'VO', 'RE')) AND (i.Issotrx = 'N') AND (ol.M_Product_ID=p.M_Product_ID) ORDER BY i.created DESC LIMIT 1)
+END)
+,0) AS Ultimo_Costo, -- Finaliza el coalesce
+(SELECT rate FROM C_Tax t WHERE (t.C_TaxCategory_ID = tc.C_TaxCategory_ID) LIMIT 1) AS Iva,
+(SELECT i.movementdate FROM M_InOut i INNER JOIN M_InOutLine il ON (il.M_InOut_ID = i.M_InOut_ID) WHERE (il.qtyentered > 0) AND (i.docstatus IN ('CL', 'CO', 'VO', 'RE')) AND (i.Issotrx = 'N') AND (il.M_Product_ID=p.M_Product_ID) ORDER BY i.movementdate DESC LIMIT 1) AS Fecha_Ultima_Compra,
+(SELECT bp.name FROM C_BPartner bp WHERE (bp.C_BPartner_ID = (SELECT C_BPartner_ID FROM M_InOut i INNER JOIN M_InOutLine il ON (il.M_InOut_ID = i.M_InOut_ID) WHERE (il.qtyentered > 0) AND (i.docstatus IN ('CL', 'CO', 'VO', 'RE')) AND (i.Issotrx = 'N') AND (il.M_Product_ID=p.M_Product_ID) ORDER BY i.movementdate DESC LIMIT 1))) AS Ultimo_Proveedor,
+(SELECT il.qtyentered FROM M_InOut i INNER JOIN M_InOutLine il ON (il.M_InOut_ID = i.M_InOut_ID) WHERE (il.qtyentered > 0) AND (i.docstatus IN ('CL', 'CO', 'VO', 'RE')) AND (i.Issotrx = 'N') AND (il.M_Product_ID=p.M_Product_ID) ORDER BY i.movementdate DESC LIMIT 1) AS Cant_Ultima_Compra,
+(SELECT SUM(invl.qtyinvoiced)
+FROM C_Invoice inv
+INNER JOIN C_InvoiceLine invl ON (inv.C_Invoice_ID = invl.C_Invoice_ID)
+WHERE (inv.docstatus IN ('CO','CL')) AND (inv.IsSoTrx = 'Y') AND (invl.M_Product_ID = p.M_Product_ID) AND (inv.DateInvoiced > (SELECT i.movementdate FROM M_InOut i INNER JOIN M_InOutLine il ON (il.M_InOut_ID = i.M_InOut_ID) WHERE (il.qtyentered > 0) AND (i.docstatus IN ('CL', 'CO', 'VO', 'RE')) AND (i.Issotrx = 'N') AND (il.M_Product_ID=p.M_Product_ID) ORDER BY i.movementdate DESC LIMIT 1))) AS Ventas_Desde_Ultima_Compra,
+(SELECT SUM(invl.qtyinvoiced)
+FROM C_Invoice inv
+INNER JOIN C_InvoiceLine invl ON (inv.C_Invoice_ID = invl.C_Invoice_ID)
+WHERE (inv.docstatus IN ('CO','CL')) AND (inv.IsSoTrx = 'Y') AND (invl.M_Product_ID = p.M_Product_ID) AND (inv.DateInvoiced > (current_date - 30))) AS Ventas_Ultimo_Mes
+FROM M_Product p
+INNER JOIN AD_Client a ON (a.AD_Client_ID = p.AD_Client_ID)
+INNER JOIN AD_Org o ON (o.AD_Org_ID = p.AD_Org_ID)
+INNER JOIN C_TaxCategory tc ON (tc.C_TaxCategory_ID = p.C_TaxCategory_ID)
+LEFT JOIN M_Product_Category pc ON (p.M_Product_Category_ID = pc.M_Product_Category_ID) -- SUBFAMILIA
+LEFT JOIN M_Product_Gamas pg ON (pg.M_Product_Gamas_ID = pc.M_Product_Gamas_ID) -- FAMILIA
+LEFT JOIN M_Product_Lines pl ON (pl.M_Product_Lines_ID = pg.M_Product_Lines_ID) -- LINEA DE PRODUCTO
+LEFT JOIN M_Product_Family pf ON (pf.M_Product_Family_ID = p.M_Product_Family_ID) -- MARCA
+LEFT JOIN M_Product_PO po ON (po.M_Product_ID = p.M_Product_ID)
+LEFT JOIN C_BPartner bpp ON (bpp.C_BPartner_ID = po.C_BPartner_ID)
+WHERE (1 = 1)
+AND (($P{AD_CLIENT_ID} IS NULL) OR (p.AD_CLIENT_ID = $P{AD_CLIENT_ID})) 
+AND (($P{AD_Org_ID} IS NULL) OR (p.AD_Org_ID = $P{AD_Org_ID})) 
+AND (($P{M_Product_Lines_ID} IS NULL) OR (pl.M_Product_Lines_ID = $P{M_Product_Lines_ID}))
+AND (($P{M_Product_Gamas_ID} IS NULL) OR (pg.M_Product_Gamas_ID = $P{M_Product_Gamas_ID})) 
+AND (($P{M_Product_Category_ID} IS NULL) OR (pc.M_Product_Category_ID = $P{M_Product_Category_ID})) 
+AND (($P{M_Product_Family_ID} IS NULL) OR (pf.M_Product_Family_ID = $P{M_Product_Family_ID})) 
+AND (($P{M_Product_ID} IS NULL) OR (p.M_Product_ID = $P{M_Product_ID}))
+AND (($P{C_BPartner_ID} IS NULL) OR (po.C_BPartner_ID = $P{C_BPartner_ID}))
+) AS subconsulta
+ORDER BY Nombre_Articulo DESC]]></queryString>
+
+	<field name="compania" class="java.lang.String"/>
+	<field name="codigo_organizacion" class="java.lang.String"/>
+	<field name="nombre_organizacion" class="java.lang.String"/>
+	<field name="codigo_proveedor" class="java.lang.String"/>
+	<field name="nombre_proveedor" class="java.lang.String"/>
+	<field name="codigo_producto" class="java.lang.String"/>
+	<field name="linea_producto" class="java.lang.String"/>
+	<field name="familia" class="java.lang.String"/>
+	<field name="subfamilia" class="java.lang.String"/>
+	<field name="marca" class="java.lang.String"/>
+	<field name="nombre_articulo" class="java.lang.String"/>
+	<field name="stock" class="java.math.BigDecimal"/>
+	<field name="costo_pp" class="java.math.BigDecimal"/>
+	<field name="iva" class="java.math.BigDecimal"/>
+	<field name="stock_actual_x_costo_pp" class="java.math.BigDecimal"/>
+	<field name="ultimo_costo" class="java.math.BigDecimal"/>
+	<field name="fecha_ultima_compra" class="java.sql.Timestamp"/>
+	<field name="ultimo_proveedor" class="java.lang.String"/>
+	<field name="cant_ultima_compra" class="java.math.BigDecimal"/>
+	<field name="ventas_desde_ultima_compra" class="java.math.BigDecimal"/>
+	<field name="ventas_ultimo_mes" class="java.math.BigDecimal"/>
+
+		<background>
+			<band height="1"  isSplitAllowed="true" >
+			</band>
+		</background>
+		<title>
+			<band height="0"  isSplitAllowed="true" >
+			</band>
+		</title>
+		<pageHeader>
+			<band height="0"  isSplitAllowed="true" >
+			</band>
+		</pageHeader>
+		<columnHeader>
+			<band height="80"  isSplitAllowed="true" >
+				<textField isStretchWithOverflow="false" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
+					<reportElement
+						x="70"
+						y="15"
+						width="150"
+						height="12"
+						key="textField-3">
+							<printWhenExpression><![CDATA[new Boolean($P{AD_Org_ID}.toString() != "")]]></printWhenExpression>
+						</reportElement>
+					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
+					<textElement>
+						<font pdfFontName="Helvetica" size="8" isBold="false"/>
+					</textElement>
+				<textFieldExpression   class="java.lang.String"><![CDATA[$F{nombre_organizacion}]]></textFieldExpression>
+				</textField>
+				<staticText>
+					<reportElement
+						x="4"
+						y="3"
+						width="200"
+						height="12"
+						key="staticText-2"/>
+					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
+					<textElement>
+						<font pdfFontName="Helvetica-Bold" size="8" isBold="true" isUnderline="false"/>
+					</textElement>
+				<text><![CDATA[Parámetros del Informe]]></text>
+				</staticText>
+				<staticText>
+					<reportElement
+						x="4"
+						y="15"
+						width="66"
+						height="12"
+						key="staticText-4"/>
+					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
+					<textElement>
+						<font pdfFontName="Helvetica" size="8" isBold="false"/>
+					</textElement>
+				<text><![CDATA[Organización =]]></text>
+				</staticText>
+				<staticText>
+					<reportElement
+						x="240"
+						y="27"
+						width="50"
+						height="12"
+						key="staticText-8"/>
+					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
+					<textElement>
+						<font pdfFontName="Helvetica" size="8" isBold="false"/>
+					</textElement>
+				<text><![CDATA[Familia =]]></text>
+				</staticText>
+				<textField isStretchWithOverflow="false" pattern="" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
+					<reportElement
+						x="290"
+						y="27"
+						width="166"
+						height="12"
+						key="textField-6">
+							<printWhenExpression><![CDATA[new Boolean($P{M_Product_Gamas_ID}.toString() != "")]]></printWhenExpression>
+						</reportElement>
+					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
+					<textElement>
+						<font pdfFontName="Helvetica" size="8" isBold="false"/>
+					</textElement>
+				<textFieldExpression   class="java.lang.String"><![CDATA[$F{familia}]]></textFieldExpression>
+				</textField>
+				<staticText>
+					<reportElement
+						x="0"
+						y="70"
+						width="50"
+						height="10"
+						key="staticText-12"/>
+					<box topBorder="Thin" topBorderColor="#000000" leftBorder="Thin" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" rightPadding="1" bottomBorder="Thin" bottomBorderColor="#000000"/>
+					<textElement textAlignment="Right" verticalAlignment="Middle">
+						<font pdfFontName="Helvetica-Bold" size="6" isBold="true"/>
+					</textElement>
+				<text><![CDATA[Cód. Artículo]]></text>
+				</staticText>
+				<staticText>
+					<reportElement
+						x="372"
+						y="70"
+						width="216"
+						height="10"
+						key="staticText-16"/>
+					<box topBorder="Thin" topBorderColor="#000000" leftBorder="Thin" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" rightPadding="1" bottomBorder="Thin" bottomBorderColor="#000000"/>
+					<textElement textAlignment="Right" verticalAlignment="Middle">
+						<font pdfFontName="Helvetica-Bold" size="6" isBold="true"/>
+					</textElement>
+				<text><![CDATA[Nombre Artículo]]></text>
+				</staticText>
+				<staticText>
+					<reportElement
+						x="4"
+						y="27"
+						width="66"
+						height="12"
+						key="staticText-57"/>
+					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
+					<textElement>
+						<font pdfFontName="Helvetica" size="8" isBold="false"/>
+					</textElement>
+				<text><![CDATA[Línea Artículo =]]></text>
+				</staticText>
+				<textField isStretchWithOverflow="false" pattern="" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
+					<reportElement
+						x="70"
+						y="27"
+						width="170"
+						height="12"
+						key="textField-77">
+							<printWhenExpression><![CDATA[new Boolean($P{M_Product_Lines_ID}.toString() != "")]]></printWhenExpression>
+						</reportElement>
+					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
+					<textElement>
+						<font pdfFontName="Helvetica" size="8" isBold="false"/>
+					</textElement>
+				<textFieldExpression   class="java.lang.String"><![CDATA[$F{linea_producto}]]></textFieldExpression>
+				</textField>
+				<staticText>
+					<reportElement
+						x="4"
+						y="39"
+						width="66"
+						height="12"
+						key="staticText-58"/>
+					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
+					<textElement>
+						<font pdfFontName="Helvetica" size="8" isBold="false"/>
+					</textElement>
+				<text><![CDATA[Subfamilia =]]></text>
+				</staticText>
+				<textField isStretchWithOverflow="false" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
+					<reportElement
+						x="70"
+						y="39"
+						width="170"
+						height="12"
+						key="textField-78">
+							<printWhenExpression><![CDATA[new Boolean($P{M_Product_Category_ID}.toString() != "")]]></printWhenExpression>
+						</reportElement>
+					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
+					<textElement>
+						<font pdfFontName="Helvetica" size="8" isBold="false"/>
+					</textElement>
+				<textFieldExpression   class="java.lang.String"><![CDATA[$F{subfamilia}]]></textFieldExpression>
+				</textField>
+				<staticText>
+					<reportElement
+						x="632"
+						y="70"
+						width="39"
+						height="10"
+						key="staticText-61"/>
+					<box topBorder="Thin" topBorderColor="#000000" leftBorder="Thin" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" rightPadding="1" bottomBorder="Thin" bottomBorderColor="#000000"/>
+					<textElement textAlignment="Right" verticalAlignment="Middle">
+						<font pdfFontName="Helvetica-Bold" size="6" isBold="true"/>
+					</textElement>
+				<text><![CDATA[Costo PP]]></text>
+				</staticText>
+				<staticText>
+					<reportElement
+						x="240"
+						y="39"
+						width="50"
+						height="12"
+						key="staticText-62"/>
+					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
+					<textElement>
+						<font pdfFontName="Helvetica" size="8" isBold="false"/>
+					</textElement>
+				<text><![CDATA[Marca =]]></text>
+				</staticText>
+				<textField isStretchWithOverflow="false" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
+					<reportElement
+						x="290"
+						y="39"
+						width="166"
+						height="12"
+						key="textField-82">
+							<printWhenExpression><![CDATA[new Boolean($P{M_Product_Family_ID}.toString() != "")]]></printWhenExpression>
+						</reportElement>
+					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
+					<textElement>
+						<font pdfFontName="Helvetica" size="8" isBold="false"/>
+					</textElement>
+				<textFieldExpression   class="java.lang.String"><![CDATA[$F{marca}]]></textFieldExpression>
+				</textField>
+				<staticText>
+					<reportElement
+						x="4"
+						y="51"
+						width="66"
+						height="12"
+						key="staticText-63"/>
+					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
+					<textElement>
+						<font pdfFontName="Helvetica" size="8" isBold="false"/>
+					</textElement>
+				<text><![CDATA[Artículo =]]></text>
+				</staticText>
+				<textField isStretchWithOverflow="false" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
+					<reportElement
+						x="70"
+						y="51"
+						width="170"
+						height="12"
+						key="textField-83">
+							<printWhenExpression><![CDATA[new Boolean($P{M_Product_ID}.toString() != "")]]></printWhenExpression>
+						</reportElement>
+					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
+					<textElement>
+						<font pdfFontName="Helvetica" size="8" isBold="false"/>
+					</textElement>
+				<textFieldExpression   class="java.lang.String"><![CDATA[$F{nombre_articulo}]]></textFieldExpression>
+				</textField>
+				<staticText>
+					<reportElement
+						x="240"
+						y="51"
+						width="50"
+						height="12"
+						key="staticText-64"/>
+					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
+					<textElement>
+						<font pdfFontName="Helvetica" size="8" isBold="false"/>
+					</textElement>
+				<text><![CDATA[Proveedor =]]></text>
+				</staticText>
+				<textField isStretchWithOverflow="false" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
+					<reportElement
+						x="290"
+						y="51"
+						width="150"
+						height="12"
+						key="textField-84">
+							<printWhenExpression><![CDATA[new Boolean($P{C_BPartner_ID}.toString() != "")]]></printWhenExpression>
+						</reportElement>
+					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
+					<textElement>
+						<font pdfFontName="Helvetica" size="8" isBold="false"/>
+					</textElement>
+				<textFieldExpression   class="java.lang.String"><![CDATA[$F{nombre_proveedor}]]></textFieldExpression>
+				</textField>
+				<staticText>
+					<reportElement
+						x="691"
+						y="70"
+						width="48"
+						height="10"
+						key="staticText-66"/>
+					<box topBorder="Thin" topBorderColor="#000000" leftBorder="Thin" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" rightPadding="1" bottomBorder="Thin" bottomBorderColor="#000000"/>
+					<textElement textAlignment="Right" verticalAlignment="Middle">
+						<font pdfFontName="Helvetica-Bold" size="6" isBold="true"/>
+					</textElement>
+				<text><![CDATA[Stock x CPP]]></text>
+				</staticText>
+				<staticText>
+					<reportElement
+						x="588"
+						y="70"
+						width="45"
+						height="10"
+						key="staticText-67"/>
+					<box topBorder="Thin" topBorderColor="#000000" leftBorder="Thin" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" rightPadding="1" bottomBorder="Thin" bottomBorderColor="#000000"/>
+					<textElement textAlignment="Right" verticalAlignment="Middle">
+						<font pdfFontName="Helvetica-Bold" size="6" isBold="true"/>
+					</textElement>
+				<text><![CDATA[Stock Actual]]></text>
+				</staticText>
+				<staticText>
+					<reportElement
+						x="671"
+						y="70"
+						width="20"
+						height="10"
+						key="staticText-69"/>
+					<box topBorder="Thin" topBorderColor="#000000" leftBorder="Thin" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" rightPadding="1" bottomBorder="Thin" bottomBorderColor="#000000"/>
+					<textElement textAlignment="Right" verticalAlignment="Middle">
+						<font pdfFontName="Helvetica-Bold" size="6" isBold="true"/>
+					</textElement>
+				<text><![CDATA[Iva]]></text>
+				</staticText>
+				<staticText>
+					<reportElement
+						x="739"
+						y="70"
+						width="50"
+						height="10"
+						key="staticText-73"/>
+					<box topBorder="Thin" topBorderColor="#000000" leftBorder="Thin" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" rightPadding="1" bottomBorder="Thin" bottomBorderColor="#000000"/>
+					<textElement textAlignment="Right" verticalAlignment="Middle">
+						<font pdfFontName="Helvetica-Bold" size="6" isBold="true"/>
+					</textElement>
+				<text><![CDATA[Ultimo Costo]]></text>
+				</staticText>
+				<staticText>
+					<reportElement
+						x="50"
+						y="70"
+						width="82"
+						height="10"
+						key="staticText-74"/>
+					<box topBorder="Thin" topBorderColor="#000000" leftBorder="Thin" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" rightPadding="1" bottomBorder="Thin" bottomBorderColor="#000000"/>
+					<textElement textAlignment="Right" verticalAlignment="Middle">
+						<font pdfFontName="Helvetica-Bold" size="6" isBold="true"/>
+					</textElement>
+				<text><![CDATA[Línea de Artículo]]></text>
+				</staticText>
+				<staticText>
+					<reportElement
+						x="132"
+						y="70"
+						width="82"
+						height="10"
+						key="staticText-75"/>
+					<box topBorder="Thin" topBorderColor="#000000" leftBorder="Thin" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" rightPadding="1" bottomBorder="Thin" bottomBorderColor="#000000"/>
+					<textElement textAlignment="Right" verticalAlignment="Middle">
+						<font pdfFontName="Helvetica-Bold" size="6" isBold="true"/>
+					</textElement>
+				<text><![CDATA[Familia]]></text>
+				</staticText>
+				<staticText>
+					<reportElement
+						x="214"
+						y="70"
+						width="82"
+						height="10"
+						key="staticText-76"/>
+					<box topBorder="Thin" topBorderColor="#000000" leftBorder="Thin" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" rightPadding="1" bottomBorder="Thin" bottomBorderColor="#000000"/>
+					<textElement textAlignment="Right" verticalAlignment="Middle">
+						<font pdfFontName="Helvetica-Bold" size="6" isBold="true"/>
+					</textElement>
+				<text><![CDATA[Subfamilia]]></text>
+				</staticText>
+				<staticText>
+					<reportElement
+						x="296"
+						y="70"
+						width="76"
+						height="10"
+						key="staticText-78"/>
+					<box topBorder="Thin" topBorderColor="#000000" leftBorder="Thin" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" rightPadding="1" bottomBorder="Thin" bottomBorderColor="#000000"/>
+					<textElement textAlignment="Right" verticalAlignment="Middle">
+						<font pdfFontName="Helvetica-Bold" size="6" isBold="true"/>
+					</textElement>
+				<text><![CDATA[Marca]]></text>
+				</staticText>
+				<staticText>
+					<reportElement
+						x="789"
+						y="70"
+						width="70"
+						height="10"
+						key="staticText-79"/>
+					<box topBorder="Thin" topBorderColor="#000000" leftBorder="Thin" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" rightPadding="1" bottomBorder="Thin" bottomBorderColor="#000000"/>
+					<textElement textAlignment="Right" verticalAlignment="Middle">
+						<font pdfFontName="Helvetica-Bold" size="6" isBold="true"/>
+					</textElement>
+				<text><![CDATA[Fecha Ult. Compra]]></text>
+				</staticText>
+				<staticText>
+					<reportElement
+						x="859"
+						y="70"
+						width="155"
+						height="10"
+						key="staticText-80"/>
+					<box topBorder="Thin" topBorderColor="#000000" leftBorder="Thin" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" rightPadding="1" bottomBorder="Thin" bottomBorderColor="#000000"/>
+					<textElement textAlignment="Right" verticalAlignment="Middle">
+						<font pdfFontName="Helvetica-Bold" size="6" isBold="true"/>
+					</textElement>
+				<text><![CDATA[Ultimo Proveedor]]></text>
+				</staticText>
+				<staticText>
+					<reportElement
+						x="1014"
+						y="70"
+						width="67"
+						height="10"
+						key="staticText-81"/>
+					<box topBorder="Thin" topBorderColor="#000000" leftBorder="Thin" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" rightPadding="1" bottomBorder="Thin" bottomBorderColor="#000000"/>
+					<textElement textAlignment="Right" verticalAlignment="Middle">
+						<font pdfFontName="Helvetica-Bold" size="6" isBold="true"/>
+					</textElement>
+				<text><![CDATA[Cant. Ult. Compra]]></text>
+				</staticText>
+				<staticText>
+					<reportElement
+						x="1080"
+						y="70"
+						width="100"
+						height="10"
+						key="staticText-82"/>
+					<box topBorder="Thin" topBorderColor="#000000" leftBorder="Thin" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" rightPadding="1" bottomBorder="Thin" bottomBorderColor="#000000"/>
+					<textElement textAlignment="Right" verticalAlignment="Middle">
+						<font pdfFontName="Helvetica-Bold" size="6" isBold="true"/>
+					</textElement>
+				<text><![CDATA[Ventas Desde Ult. Compra]]></text>
+				</staticText>
+				<staticText>
+					<reportElement
+						x="1180"
+						y="70"
+						width="60"
+						height="10"
+						key="staticText-83"/>
+					<box topBorder="Thin" topBorderColor="#000000" leftBorder="Thin" leftBorderColor="#000000" rightBorder="Thin" rightBorderColor="#000000" rightPadding="1" bottomBorder="Thin" bottomBorderColor="#000000"/>
+					<textElement textAlignment="Right" verticalAlignment="Middle">
+						<font pdfFontName="Helvetica-Bold" size="6" isBold="true"/>
+					</textElement>
+				<text><![CDATA[Ventas Ult. Mes]]></text>
+				</staticText>
+			</band>
+		</columnHeader>
+		<detail>
+			<band height="10"  isSplitAllowed="true" >
+				<textField isStretchWithOverflow="true" pattern="" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
+					<reportElement
+						x="0"
+						y="0"
+						width="50"
+						height="10"
+						key="textField-7"/>
+					<box topBorder="None" topBorderColor="#000000" leftBorder="Thin" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" rightPadding="1" bottomBorder="Thin" bottomBorderColor="#000000"/>
+					<textElement textAlignment="Right">
+						<font size="6"/>
+					</textElement>
+				<textFieldExpression   class="java.lang.String"><![CDATA[$F{codigo_producto}]]></textFieldExpression>
+				</textField>
+				<textField isStretchWithOverflow="true" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
+					<reportElement
+						x="372"
+						y="0"
+						width="216"
+						height="10"
+						key="textField-11"/>
+					<box topBorder="None" topBorderColor="#000000" leftBorder="Thin" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" rightPadding="1" bottomBorder="Thin" bottomBorderColor="#000000"/>
+					<textElement textAlignment="Right">
+						<font size="6"/>
+					</textElement>
+				<textFieldExpression   class="java.lang.String"><![CDATA[$F{nombre_articulo}]]></textFieldExpression>
+				</textField>
+				<textField isStretchWithOverflow="true" pattern="#,##0.00" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
+					<reportElement
+						x="632"
+						y="0"
+						width="39"
+						height="10"
+						key="textField-81"/>
+					<box topBorder="None" topBorderColor="#000000" leftBorder="Thin" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" rightPadding="1" bottomBorder="Thin" bottomBorderColor="#000000"/>
+					<textElement textAlignment="Right">
+						<font size="6"/>
+					</textElement>
+				<textFieldExpression   class="java.math.BigDecimal"><![CDATA[$F{costo_pp}]]></textFieldExpression>
+				</textField>
+				<textField isStretchWithOverflow="true" pattern="#,##0.00" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
+					<reportElement
+						x="691"
+						y="0"
+						width="48"
+						height="10"
+						key="textField-87"/>
+					<box topBorder="None" topBorderColor="#000000" leftBorder="Thin" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" rightPadding="1" bottomBorder="Thin" bottomBorderColor="#000000"/>
+					<textElement textAlignment="Right">
+						<font size="6"/>
+					</textElement>
+				<textFieldExpression   class="java.math.BigDecimal"><![CDATA[$F{stock_actual_x_costo_pp}]]></textFieldExpression>
+				</textField>
+				<textField isStretchWithOverflow="true" pattern="###0" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
+					<reportElement
+						x="588"
+						y="0"
+						width="45"
+						height="10"
+						key="textField-89"/>
+					<box topBorder="None" topBorderColor="#000000" leftBorder="Thin" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" rightPadding="1" bottomBorder="Thin" bottomBorderColor="#000000"/>
+					<textElement textAlignment="Right">
+						<font size="6"/>
+					</textElement>
+				<textFieldExpression   class="java.math.BigDecimal"><![CDATA[$F{stock}]]></textFieldExpression>
+				</textField>
+				<textField isStretchWithOverflow="true" pattern="#,##0.00" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
+					<reportElement
+						x="671"
+						y="0"
+						width="20"
+						height="10"
+						key="textField-91"/>
+					<box topBorder="None" topBorderColor="#000000" leftBorder="Thin" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" rightPadding="1" bottomBorder="Thin" bottomBorderColor="#000000"/>
+					<textElement textAlignment="Right">
+						<font size="6"/>
+					</textElement>
+				<textFieldExpression   class="java.math.BigDecimal"><![CDATA[$F{iva}]]></textFieldExpression>
+				</textField>
+				<textField isStretchWithOverflow="true" pattern="#,##0.00" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
+					<reportElement
+						x="739"
+						y="0"
+						width="50"
+						height="10"
+						key="textField-95"/>
+					<box topBorder="None" topBorderColor="#000000" leftBorder="Thin" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" rightPadding="1" bottomBorder="Thin" bottomBorderColor="#000000"/>
+					<textElement textAlignment="Right">
+						<font size="6"/>
+					</textElement>
+				<textFieldExpression   class="java.math.BigDecimal"><![CDATA[$F{ultimo_costo}]]></textFieldExpression>
+				</textField>
+				<textField isStretchWithOverflow="true" pattern="" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
+					<reportElement
+						x="50"
+						y="0"
+						width="82"
+						height="10"
+						key="textField-96"/>
+					<box topBorder="None" topBorderColor="#000000" leftBorder="Thin" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" rightPadding="1" bottomBorder="Thin" bottomBorderColor="#000000"/>
+					<textElement textAlignment="Right">
+						<font size="6"/>
+					</textElement>
+				<textFieldExpression   class="java.lang.String"><![CDATA[$F{linea_producto}]]></textFieldExpression>
+				</textField>
+				<textField isStretchWithOverflow="true" pattern="" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
+					<reportElement
+						x="132"
+						y="0"
+						width="82"
+						height="10"
+						key="textField-97"/>
+					<box topBorder="None" topBorderColor="#000000" leftBorder="Thin" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" rightPadding="1" bottomBorder="Thin" bottomBorderColor="#000000"/>
+					<textElement textAlignment="Right">
+						<font size="6"/>
+					</textElement>
+				<textFieldExpression   class="java.lang.String"><![CDATA[$F{familia}]]></textFieldExpression>
+				</textField>
+				<textField isStretchWithOverflow="true" pattern="" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
+					<reportElement
+						x="214"
+						y="0"
+						width="82"
+						height="10"
+						key="textField-98"/>
+					<box topBorder="None" topBorderColor="#000000" leftBorder="Thin" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" rightPadding="1" bottomBorder="Thin" bottomBorderColor="#000000"/>
+					<textElement textAlignment="Right">
+						<font size="6"/>
+					</textElement>
+				<textFieldExpression   class="java.lang.String"><![CDATA[$F{subfamilia}]]></textFieldExpression>
+				</textField>
+				<textField isStretchWithOverflow="true" pattern="" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
+					<reportElement
+						x="296"
+						y="0"
+						width="76"
+						height="10"
+						key="textField-99"/>
+					<box topBorder="None" topBorderColor="#000000" leftBorder="Thin" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" rightPadding="1" bottomBorder="Thin" bottomBorderColor="#000000"/>
+					<textElement textAlignment="Right">
+						<font size="6"/>
+					</textElement>
+				<textFieldExpression   class="java.lang.String"><![CDATA[$F{marca}]]></textFieldExpression>
+				</textField>
+				<textField isStretchWithOverflow="true" pattern="" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
+					<reportElement
+						x="789"
+						y="0"
+						width="70"
+						height="10"
+						key="textField-100"/>
+					<box topBorder="None" topBorderColor="#000000" leftBorder="Thin" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" rightPadding="1" bottomBorder="Thin" bottomBorderColor="#000000"/>
+					<textElement textAlignment="Right">
+						<font size="6"/>
+					</textElement>
+				<textFieldExpression   class="java.util.Date"><![CDATA[$F{fecha_ultima_compra}]]></textFieldExpression>
+				</textField>
+				<textField isStretchWithOverflow="true" pattern="" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
+					<reportElement
+						x="859"
+						y="0"
+						width="155"
+						height="10"
+						key="textField-101"/>
+					<box topBorder="None" topBorderColor="#000000" leftBorder="Thin" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" rightPadding="1" bottomBorder="Thin" bottomBorderColor="#000000"/>
+					<textElement textAlignment="Right">
+						<font size="6"/>
+					</textElement>
+				<textFieldExpression   class="java.lang.String"><![CDATA[$F{ultimo_proveedor}]]></textFieldExpression>
+				</textField>
+				<textField isStretchWithOverflow="true" pattern="#,##0" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
+					<reportElement
+						x="1014"
+						y="0"
+						width="67"
+						height="10"
+						key="textField-102"/>
+					<box topBorder="None" topBorderColor="#000000" leftBorder="Thin" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" rightPadding="1" bottomBorder="Thin" bottomBorderColor="#000000"/>
+					<textElement textAlignment="Right">
+						<font size="6"/>
+					</textElement>
+				<textFieldExpression   class="java.math.BigDecimal"><![CDATA[$F{cant_ultima_compra}]]></textFieldExpression>
+				</textField>
+				<textField isStretchWithOverflow="true" pattern="#,##0" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
+					<reportElement
+						x="1080"
+						y="0"
+						width="100"
+						height="10"
+						key="textField-103"/>
+					<box topBorder="None" topBorderColor="#000000" leftBorder="Thin" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" rightPadding="1" bottomBorder="Thin" bottomBorderColor="#000000"/>
+					<textElement textAlignment="Right">
+						<font size="6"/>
+					</textElement>
+				<textFieldExpression   class="java.math.BigDecimal"><![CDATA[$F{ventas_desde_ultima_compra}]]></textFieldExpression>
+				</textField>
+				<textField isStretchWithOverflow="true" pattern="#,##0" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
+					<reportElement
+						x="1180"
+						y="0"
+						width="60"
+						height="10"
+						key="textField-104"/>
+					<box topBorder="None" topBorderColor="#000000" leftBorder="Thin" leftBorderColor="#000000" rightBorder="Thin" rightBorderColor="#000000" rightPadding="1" bottomBorder="Thin" bottomBorderColor="#000000"/>
+					<textElement textAlignment="Right">
+						<font size="6"/>
+					</textElement>
+				<textFieldExpression   class="java.math.BigDecimal"><![CDATA[$F{ventas_ultimo_mes}]]></textFieldExpression>
+				</textField>
+			</band>
+		</detail>
+		<columnFooter>
+			<band height="0"  isSplitAllowed="true" >
+			</band>
+		</columnFooter>
+		<pageFooter>
+			<band height="20"  isSplitAllowed="true" >
+				<textField isStretchWithOverflow="false" pattern="###0" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
+					<reportElement
+						x="45"
+						y="10"
+						width="25"
+						height="10"
+						key="textField-76"/>
+					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
+					<textElement textAlignment="Left">
+						<font size="5"/>
+					</textElement>
+				<textFieldExpression   class="java.lang.Integer"><![CDATA[$V{PAGE_NUMBER}]]></textFieldExpression>
+				</textField>
+				<staticText>
+					<reportElement
+						x="0"
+						y="10"
+						width="45"
+						height="10"
+						key="staticText-56"/>
+					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
+					<textElement verticalAlignment="Top">
+						<font pdfFontName="Helvetica-Bold" size="6" isBold="true"/>
+					</textElement>
+				<text><![CDATA[Nro. Página:]]></text>
+				</staticText>
+			</band>
+		</pageFooter>
+		<summary>
+			<band height="0"  isSplitAllowed="true" >
+			</band>
+		</summary>
+</jasperReport>
