@@ -7,12 +7,14 @@ import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.util.logging.Level;
 
+import org.openXpertya.model.MPayment;
 import org.openXpertya.model.MRole;
 import org.openXpertya.model.X_T_BankBalances;
 import org.openXpertya.util.CLogger;
 import org.openXpertya.util.CPreparedStatement;
 import org.openXpertya.util.DB;
 import org.openXpertya.util.Msg;
+import org.openXpertya.util.Util;
 
 public class BankBalancesReport extends SvrProcess {
 
@@ -133,7 +135,14 @@ public class BankBalancesReport extends SvrProcess {
 		sql.append("       (? IS NULL OR IsReconciled = ?) AND ");
 		
 //		sql.append("       (DocStatus = ? OR ? IS NULL) ");
-		sql.append("       (? IS NULL OR DocStatus = ?) ");
+		// Sólo se muestran completos y cerrados cuando no se agrega estado como
+		// parámetro
+		if(!Util.isEmpty(p_DocStatus, true)){
+			sql.append(" (DocStatus = ?) ");
+		}
+		else{
+			sql.append(" (DocStatus IN ('CO','CL')) ");
+		}
 		
 		String realSql = null;
 		if(p_AD_Org_ID != null){
@@ -203,8 +212,9 @@ public class BankBalancesReport extends SvrProcess {
 		
 			pstmt.setString   (i++, p_IsReconciled);
 			pstmt.setString   (i++, p_IsReconciled);
-			pstmt.setString   (i++, p_DocStatus);
-			pstmt.setString   (i++, p_DocStatus);
+			if(!Util.isEmpty(p_DocStatus, true)){
+				pstmt.setString   (i++, p_DocStatus);
+			}
 			
 			if(p_AD_Org_ID != null){
 				pstmt.setInt(i++, p_AD_Org_ID);
@@ -223,7 +233,10 @@ public class BankBalancesReport extends SvrProcess {
 			BigDecimal balance = getOpeningAmt(p_Date_From, true);
 			// ----------------------------------------------------------			
 			// Se recorren las tuplas y se crean las líneas en la tabla temporal.
+			String tenderType;
 			while (rs.next()) {
+				// La fecha de vencimiento se debe mostrar sólo para cheques
+				tenderType = rs.getString("TenderType");
 				// ----------------------------------------------------------
 				// Modified by Matías Cap - Disytel
 				// Todo esto se pasó a un método
@@ -241,7 +254,22 @@ public class BankBalancesReport extends SvrProcess {
 				line.setIsReconciled("Y".equals(rs.getString("IsReconciled")));*/
 				// **************************************
 				// Creo cada línea
-				line = createBankBalancesLine(rs.getInt("C_BankAccount_ID"), rs.getString("DocumentType"), rs.getString("DocumentNo"),rs.getTimestamp("DateTrx"), rs.getTimestamp("DueDate"),rs.getString("DocStatus"), rs.getBigDecimal("Debit"),rs.getBigDecimal("Credit"), rs.getString("IsReconciled"), p_DateOrder == null?null:rs.getTimestamp(getColumnNameForDate()),p_DateOrder);
+				line = createBankBalancesLine(
+						rs.getInt("C_BankAccount_ID"),
+						rs.getString("DocumentType"),
+						rs.getString("DocumentNo"),
+						rs.getTimestamp("DateTrx"),
+						!Util.isEmpty(tenderType, true)
+								&& tenderType.equals(MPayment.TENDERTYPE_Check) ? rs
+								.getTimestamp("DueDate") : null,
+						rs.getString("DocStatus"),
+						rs.getBigDecimal("Debit"),
+						rs.getBigDecimal("Credit"),
+						rs.getString("IsReconciled"),
+						p_DateOrder == null ? null : rs
+								.getTimestamp(getColumnNameForDate()),
+						p_DateOrder, tenderType,
+						rs.getString("Description"));
 				// Se calcula el saldo a partir de los datos de esta línea y el acumulado.
 				balance = balance.add(line.getCredit().subtract(line.getDebit()));
 				line.setBalance(balance);
@@ -276,11 +304,16 @@ public class BankBalancesReport extends SvrProcess {
 			StringBuffer sql = new StringBuffer();
 			sql.append(" SELECT C_BankAccount_ID, sum(credit) as credit, sum(debit) as debit, sum(credit-debit) as balance ");
 			sql.append(" FROM V_BankBalances as bb ");
-			sql.append(" WHERE DocStatus <> 'IP' AND DocStatus <> 'DR' AND ");
+			sql.append(" WHERE ");
 			sql.append("       C_BankAccount_ID = ? AND ");
 			sql.append("       (? IS NULL OR date_trunc('day',?::date)::date > date_trunc('day',"+getColumnNameForDate()+")::date) AND ");
 			sql.append("       (? IS NULL OR IsReconciled = ?) AND ");
-			sql.append("       (? IS NULL OR DocStatus = ?) ");
+			if(!Util.isEmpty(p_DocStatus, true)){
+				sql.append(" (DocStatus = ?) ");
+			}
+			else{
+				sql.append(" (DocStatus IN ('CO','CL')) ");
+			}
 			
 			String realSql = null;
 			if(p_AD_Org_ID != null){
@@ -305,8 +338,9 @@ public class BankBalancesReport extends SvrProcess {
 				pstmt.setString(i++, p_Date_From == null? null : p_Date_From.toString());
 				pstmt.setString(i++, p_IsReconciled);
 				pstmt.setString(i++, p_IsReconciled);
-				pstmt.setString(i++, p_DocStatus);
-				pstmt.setString(i++, p_DocStatus);
+				if(!Util.isEmpty(p_DocStatus, true)){
+					pstmt.setString   (i++, p_DocStatus);
+				}
 				if(p_AD_Org_ID != null){
 					pstmt.setInt(i++, p_AD_Org_ID);
 				}
@@ -347,7 +381,10 @@ public class BankBalancesReport extends SvrProcess {
 	private void createInitialBalanceRecord(BigDecimal openingDebit, BigDecimal openingCredit, BigDecimal openingBalance) throws Exception{
 		// Creo la línea inicial
 		String description = Msg.getMsg(getCtx(), "Balance");
-		X_T_BankBalances line = createBankBalancesLine(p_C_BankAccount_ID,description, description, p_Date_From, p_Date_From,p_DocStatus, openingDebit, openingCredit, "Y",p_Date_From,p_DateOrder);
+		X_T_BankBalances line = createBankBalancesLine(p_C_BankAccount_ID,
+				description, description, p_Date_From, p_Date_From,
+				p_DocStatus, openingDebit, openingCredit, "Y", p_Date_From,
+				p_DateOrder, null, null);
 		// Seteo el saldo inicial
 		line.setBalance(openingBalance);
 		if(!line.save()){
@@ -375,7 +412,7 @@ public class BankBalancesReport extends SvrProcess {
 			String DocumentType, String DocumentNo, Timestamp DateTrx,
 			Timestamp DueDate, String DocStatus, BigDecimal Debit,
 			BigDecimal Credit, String IsReconciled, Timestamp commonDate,
-			String dateOrder) {
+			String dateOrder, String tenderType, String description) {
 		X_T_BankBalances line = new X_T_BankBalances(getCtx(), 0, get_TrxName());
 		line.setAD_PInstance_ID(getAD_PInstance_ID());
 		line.setC_BankAccount_ID(C_BankAccount_ID);
@@ -389,6 +426,8 @@ public class BankBalancesReport extends SvrProcess {
 		line.setIsReconciled("Y".equals(IsReconciled));
 		line.setCommonDate(commonDate);
 		line.setDateOrder(dateOrder);
+		line.setTenderType(tenderType);
+		line.setDescription(description);
 		return line;
 	}
 
