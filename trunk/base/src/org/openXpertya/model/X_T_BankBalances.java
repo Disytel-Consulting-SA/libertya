@@ -1,12 +1,13 @@
 /** Modelo Generado - NO CAMBIAR MANUALMENTE - Disytel */
 package org.openXpertya.model;
-import java.util.*;
+import java.util.logging.Level;
+ import java.util.*;
 import java.sql.*;
 import java.math.*;
 import org.openXpertya.util.*;
 /** Modelo Generado por T_BankBalances
  *  @author Comunidad de Desarrollo Libertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
- *  @version  - 2010-09-01 12:51:58.928 */
+ *  @version  - 2013-07-23 16:38:16.139 */
 public class X_T_BankBalances extends org.openXpertya.model.PO
 {
 /** Constructor estándar */
@@ -19,7 +20,6 @@ setAD_PInstance_ID (0);
 setC_BankAccount_ID (0);
 setDateTrx (new Timestamp(System.currentTimeMillis()));
 setDocStatus (null);
-setDueDate (new Timestamp(System.currentTimeMillis()));
 setT_BankBalances_ID (0);
 }
  */
@@ -158,6 +158,23 @@ BigDecimal bd = (BigDecimal)get_Value("Debit");
 if (bd == null) return Env.ZERO;
 return bd;
 }
+/** Set Description.
+Optional short description of the record */
+public void setDescription (String Description)
+{
+if (Description != null && Description.length() > 255)
+{
+log.warning("Length > 255 - truncated");
+Description = Description.substring(0,255);
+}
+set_Value ("Description", Description);
+}
+/** Get Description.
+Optional short description of the record */
+public String getDescription() 
+{
+return (String)get_Value("Description");
+}
 public static final int DOCSTATUS_AD_Reference_ID = MReference.getReferenceID("_Document Status");
 /** Voided = VO */
 public static final String DOCSTATUS_Voided = "VO";
@@ -241,7 +258,6 @@ return (String)get_Value("DocumentType");
 Date when the payment is due */
 public void setDueDate (Timestamp DueDate)
 {
-if (DueDate == null) throw new IllegalArgumentException ("DueDate is mandatory");
 set_Value ("DueDate", DueDate);
 }
 /** Get Due Date.
@@ -279,5 +295,35 @@ public int getT_BankBalances_ID()
 Integer ii = (Integer)get_Value("T_BankBalances_ID");
 if (ii == null) return 0;
 return ii.intValue();
+}
+public static final int TENDERTYPE_AD_Reference_ID = MReference.getReferenceID("C_Payment Tender Type");
+/** Check = K */
+public static final String TENDERTYPE_Check = "K";
+/** Direct Debit = D */
+public static final String TENDERTYPE_DirectDebit = "D";
+/** Direct Deposit = A */
+public static final String TENDERTYPE_DirectDeposit = "A";
+/** Credit Card = C */
+public static final String TENDERTYPE_CreditCard = "C";
+/** Cash = CA */
+public static final String TENDERTYPE_Cash = "CA";
+/** Set Tender type.
+Method of Payment */
+public void setTenderType (String TenderType)
+{
+if (TenderType == null || TenderType.equals("K") || TenderType.equals("D") || TenderType.equals("A") || TenderType.equals("C") || TenderType.equals("CA"));
+ else throw new IllegalArgumentException ("TenderType Invalid value - Reference = TENDERTYPE_AD_Reference_ID - K - D - A - C - CA");
+if (TenderType != null && TenderType.length() > 1)
+{
+log.warning("Length > 1 - truncated");
+TenderType = TenderType.substring(0,1);
+}
+set_Value ("TenderType", TenderType);
+}
+/** Get Tender type.
+Method of Payment */
+public String getTenderType() 
+{
+return (String)get_Value("TenderType");
 }
 }
