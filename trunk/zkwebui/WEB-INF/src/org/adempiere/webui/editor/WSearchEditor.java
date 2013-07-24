@@ -492,6 +492,7 @@ public class WSearchEditor extends WEditor implements ContextMenuListener, Value
 
 		if (col.equals("M_Product_ID"))
 		{
+			m_tableName = "M_Product";
 			//	Reset
 			Env.setContext(Env.getCtx(), lookup.getWindowNo(), Env.TAB_INFO, "M_Product_ID", "0");
 			Env.setContext(Env.getCtx(), lookup.getWindowNo(), Env.TAB_INFO, "M_AttributeSetInstance_ID", "0");
@@ -505,8 +506,8 @@ public class WSearchEditor extends WEditor implements ContextMenuListener, Value
 			int M_PriceList_ID = Env.getContextAsInt(Env.getCtx(), lookup.getWindowNo(), "M_PriceList_ID");
 
 			//	Show Info
-			InfoProductPanel ip = new InfoProductPanel (lookup.getWindowNo(),
-					M_Warehouse_ID, M_PriceList_ID, true, queryValue, whereClause);
+			// InfoProductPanel ip = new InfoProductPanel (lookup.getWindowNo(), M_Warehouse_ID, M_PriceList_ID, true, queryValue, whereClause);
+			InfoPanel ip = InfoPanel.create(lookup.getWindowNo(), m_tableName,m_keyColumnName,queryValue, false, whereClause, M_Warehouse_ID, M_PriceList_ID);
 
 			ip.setVisible(true);
 			ip.setTitle("Product Info");
@@ -522,6 +523,7 @@ public class WSearchEditor extends WEditor implements ContextMenuListener, Value
 		}
 		else if (col.equals("C_BPartner_ID"))
 		{
+			m_tableName = "C_BPartner";
 			//  Replace Value with name if no value exists
 			if (queryValue.length() == 0 && getComponent().getText().length() > 0)
 				queryValue = getComponent().getText();
@@ -531,8 +533,9 @@ public class WSearchEditor extends WEditor implements ContextMenuListener, Value
 			if (Env.getContext(Env.getCtx(), lookup.getWindowNo(), "IsSOTrx").equals("N"))
 				isSOTrx = false;
 
-			InfoBPartnerPanel ip = new InfoBPartnerPanel(queryValue, lookup.getWindowNo(), isSOTrx,false, whereClause);
-
+			// InfoBPartnerPanel ip = new InfoBPartnerPanel(lookup.getWindowNo(), queryValue, isSOTrx,false, whereClause);
+			InfoPanel ip = InfoPanel.create(lookup.getWindowNo(), m_tableName,m_keyColumnName,queryValue, false, whereClause, isSOTrx);
+			
 			ip.setVisible(true);
 			ip.setTitle("Business Partner Info");
 			ip.setStyle("border: 2px");

@@ -123,9 +123,9 @@ public class InfoBPartnerPanel extends InfoPanel implements EventListener, WTabl
 	 *  @param isSOTrx  if false, query vendors only
 	 *  @param whereClause where clause
 	 */
-	public InfoBPartnerPanel(String queryValue,int windowNo, boolean isSOTrx,boolean multipleSelection, String whereClause)
+	public InfoBPartnerPanel(int windowNo, String queryValue, boolean isSOTrx,boolean multipleSelection, String whereClause)
 	{		
-		this(queryValue, windowNo, isSOTrx, multipleSelection, whereClause, true);
+		this(windowNo, queryValue, isSOTrx, multipleSelection, whereClause, true);
 	}
 
 	/**
@@ -134,7 +134,7 @@ public class InfoBPartnerPanel extends InfoPanel implements EventListener, WTabl
 	 *  @param isSOTrx  if false, query vendors only
 	 *  @param whereClause where clause
 	 */
-	public InfoBPartnerPanel(String queryValue,int windowNo, boolean isSOTrx,boolean multipleSelection, String whereClause, boolean lookup)
+	public InfoBPartnerPanel(int windowNo, String queryValue, boolean isSOTrx,boolean multipleSelection, String whereClause, boolean lookup)
 	{
 
 		super (windowNo, "C_BPartner", "C_BPartner_ID",multipleSelection, whereClause, lookup);

@@ -33,6 +33,7 @@ package org.adempiere.webui.panel;
  * ComPiere, Inc., 2620 Augustine Dr. #245, Santa Clara, CA 95054, USA        *
  * or via info@compiere.org or http://www.compiere.org/license.html           *
  *****************************************************************************/
+import java.awt.Frame;
 import java.math.BigDecimal;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -62,12 +63,18 @@ import org.adempiere.webui.component.Tabs;
 import org.adempiere.webui.component.Textbox;
 import org.adempiere.webui.component.WListbox;
 import org.adempiere.webui.session.SessionManager;
+import org.openXpertya.apps.search.InfoProduct;
+import org.openXpertya.apps.search.InfoProductAttribute;
 import org.openXpertya.minigrid.ColumnInfo;
 import org.openXpertya.minigrid.IDColumn;
 import org.openXpertya.model.MClient;
 import org.openXpertya.model.MDocType;
+import org.openXpertya.model.MPreference;
 import org.openXpertya.model.MQuery;
 import org.openXpertya.model.MRole;
+import org.openXpertya.pos.view.PoSInfoProduct;
+import org.openXpertya.pos.view.PoSInfoProductAttribute;
+import org.openXpertya.process.ComponentActivation;
 import org.openXpertya.util.CLogMgt;
 import org.openXpertya.util.DB;
 import org.openXpertya.util.Env;
@@ -1188,6 +1195,22 @@ public class InfoProductPanel extends InfoPanel implements EventListener
 		return s_productLayout;
 	}   //  getProductLayout
 
+	protected Listbox getPickPriceList() {
+		return pickPriceList;
+	}
+
+	protected void setPickPriceList(Listbox pickPriceList) {
+		this.pickPriceList = pickPriceList;
+	}
+
+	protected Listbox getPickWarehouse() {
+		return pickWarehouse;
+	}
+
+	protected void setPickWarehouse(Listbox pickWarehouse) {
+		this.pickWarehouse = pickWarehouse;
+	}
+	
 	/**
 	 * 	System has Unforfirmed records
 	 *	@return true if unconfirmed
@@ -1461,5 +1484,6 @@ public class InfoProductPanel extends InfoPanel implements EventListener
 
 		return M_AttributeSet_ID;
 	}
+    
     
 }	//	InfoProduct
