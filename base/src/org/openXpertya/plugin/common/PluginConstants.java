@@ -13,8 +13,11 @@ public class PluginConstants {
 	/** Package donde se almacenan los plugins process */
 	public static final String PACKAGE_NAME_PROCESS = "process";
 	
-	/** Package donde se almacenan los plugins info */
+	/** Package donde se almacenan los plugins info (Swing) */
 	public static final String PACKAGE_NAME_INFO = "info";
+	
+	/** Package donde se almacenan los plugins infoPanel (Web) */
+	public static final String PACKAGE_NAME_INFO_PANEL = "infoPanel";
 
 	/** Package donde se almacenan clases relacionadas con el Cliente de la App */
 	public static final String PACKAGE_NAME_CLIENT = "client";
@@ -30,6 +33,9 @@ public class PluginConstants {
 	/** Prefijo para clases Info */
 	public static final String CLASS_INFO_PREFIX = "Info";
 
+	/** Prefijo para clases InfoPanel (Web) */
+	public static final String CLASS_INFO_SUFFIX = "Panel";
+	
 	/** Prefijo para clases CreateFrom */
 	public static final String CLASS_CREATEFROM_PREFIX = "VCreateFrom";
 

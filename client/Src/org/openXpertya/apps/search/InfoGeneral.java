@@ -48,7 +48,7 @@ import org.openXpertya.util.Msg;
  * @author     Equipo de Desarrollo de openXpertya    
  */
 
-public final class InfoGeneral extends Info {
+public class InfoGeneral extends Info {
 
     /**
      * Constructor de la clase ...
