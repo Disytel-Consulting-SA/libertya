@@ -161,6 +161,10 @@ public class PostInstallUpgradeFrom1301 extends PluginPostInstallProcess {
 	/** Nombre del .jrxml del informe Listado de Utilidades por Concepto*/
 	protected final static String LISTADO_DE_UTILIDADES_POR_CONCEPTO_REPORT_FILENAME = "Listado_de_Utilidades_por_Concepto.jrxml";
 	
+	/** UID del Informe de Débitos y Créditos de Cliente */
+	protected final static String CUSTOMER_DEBITS_CREDITS_REPORT_UID = "CORE-AD_Process-1010346";
+	protected final static String CUSTOMER_DEBITS_CREDITS_REPORT_FILENAME = "CustomerDebitsCredits.jrxml";
+	
 	protected String doIt() throws Exception {
 		super.doIt();
 		
@@ -614,6 +618,17 @@ public class PostInstallUpgradeFrom1301 extends PluginPostInstallProcess {
 		if(!att_ListadoUtilidadesConcepto.save()){
 			throw new Exception ("Error al guardar jrxml ");
 		}
+		
+		// Informe de Débitos y Créditos de Cliente
+		MProcess.addAttachment(
+				get_TrxName(),
+				getCtx(),
+				CUSTOMER_DEBITS_CREDITS_REPORT_UID,
+				CUSTOMER_DEBITS_CREDITS_REPORT_FILENAME,
+				JarHelper
+						.readBinaryFromJar(
+								jarFileURL,
+								getBinaryFileURL(CUSTOMER_DEBITS_CREDITS_REPORT_FILENAME)));
 		
 		return " ";
 	}
