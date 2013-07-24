@@ -2852,7 +2852,7 @@ public class MInvoice extends X_C_Invoice implements DocAction {
 			CallResult result = new CallResult();
 			try{
 				result = manager.setCurrentAccountStatus(getCtx(), bp,
-						org, null);
+						org, get_TrxName());
 			} catch(Exception e){
 				result.setMsg(e.getMessage(), true);
 			}
