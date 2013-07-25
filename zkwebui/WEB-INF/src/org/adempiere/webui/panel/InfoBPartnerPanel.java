@@ -34,8 +34,12 @@ import org.adempiere.webui.event.WTableModelEvent;
 import org.adempiere.webui.event.WTableModelListener;
 import org.openXpertya.minigrid.ColumnInfo;
 import org.openXpertya.minigrid.IDColumn;
+import org.openXpertya.model.CalloutInvoiceExt;
 import org.openXpertya.model.MQuery;
+import org.openXpertya.model.MRole;
+import org.openXpertya.plugin.common.PluginUtils;
 import org.openXpertya.util.CLogger;
+import org.openXpertya.util.DB;
 import org.openXpertya.util.Env;
 import org.openXpertya.util.KeyNamePair;
 import org.openXpertya.util.Msg;
@@ -81,6 +85,8 @@ public class InfoBPartnerPanel extends InfoPanel implements EventListener, WTabl
 	private Textbox fieldPhone;
 	private Checkbox checkAND ;
 	private Checkbox checkCustomer;
+	private Label labelTaxID;
+	private Textbox fieldTaxID;
 
 	private int m_AD_User_ID_index = -1; // Elaine 2008/12/16
     private int m_C_BPartner_Location_ID_index = -1;
@@ -94,10 +100,11 @@ public class InfoBPartnerPanel extends InfoPanel implements EventListener, WTabl
 	private Vbox southBody;
 	
 	/** From Clause             */
-	private static String s_partnerFROM = "C_BPartner"
-		+ " LEFT OUTER JOIN C_BPartner_Location l ON (C_BPartner.C_BPartner_ID=l.C_BPartner_ID AND l.IsActive='Y')"
-		+ " LEFT OUTER JOIN AD_User c ON (C_BPartner.C_BPartner_ID=c.C_BPartner_ID AND (c.C_BPartner_Location_ID IS NULL OR c.C_BPartner_Location_ID=l.C_BPartner_Location_ID) AND c.IsActive='Y')" 
-		+ " LEFT OUTER JOIN C_Location a ON (l.C_Location_ID=a.C_Location_ID)";
+	private static String s_partnerFROM = 	" C_BPartner" +
+											" LEFT OUTER JOIN AD_User c ON (C_BPartner.C_BPartner_ID=c.C_BPartner_ID AND c.IsActive='Y')" + 
+											" LEFT OUTER JOIN C_BPartner_Location l ON (C_BPartner.C_BPartner_ID=l.C_BPartner_ID AND l.IsActive='Y')" + 
+											" LEFT OUTER JOIN C_Location a ON (l.C_Location_ID=a.C_Location_ID) " +
+											" INNER JOIN (SELECT MAX (C_BPartner_Location_ID) as C_BPartner_Location_ID FROM C_BPartner_Location WHERE IsActive='Y' Group BY C_BPartner_ID) AS foo ON l.C_BPartner_Location_ID = foo.C_BPartner_Location_ID ";
 	
 	/**  Array of Column Info    */
 	private static ColumnInfo[] s_partnerLayout = {
@@ -114,7 +121,8 @@ public class InfoBPartnerPanel extends InfoPanel implements EventListener, WTabl
 		new ColumnInfo(Msg.translate(Env.getCtx(), "Revenue"), "C_BPartner.ActualLifetimeValue", BigDecimal.class),
 		new ColumnInfo(Msg.translate(Env.getCtx(), "Address1"), "a.Address1", String.class),
 		new ColumnInfo(Msg.translate(Env.getCtx(), "IsShipTo"), "l.IsShipTo", Boolean.class),
-		new ColumnInfo(Msg.translate(Env.getCtx(), "IsBillTo"), "l.IsBillTo", Boolean.class)
+		new ColumnInfo(Msg.translate(Env.getCtx(), "IsBillTo"), "l.IsBillTo", Boolean.class),
+		new ColumnInfo(Msg.translate(Env.getCtx(), "TaxID"), "C_BPartner.TaxID", String.class)
 	};
 
 	/**
@@ -184,7 +192,10 @@ public class InfoBPartnerPanel extends InfoPanel implements EventListener, WTabl
 		fieldPostal.setMaxlength(40);
 		fieldPhone = new Textbox();
 		fieldPhone.setMaxlength(40);
-		
+		fieldTaxID = new Textbox();
+		fieldTaxID.setMaxlength(13);
+		labelTaxID = new Label();
+		labelTaxID.setValue(Msg.translate(Env.getCtx(), "TaxID"));
 		checkAND = new Checkbox();
 		checkAND.setLabel(Msg.getMsg(Env.getCtx(), "SearchAND"));
 		checkAND.setChecked(true);
@@ -229,10 +240,20 @@ public class InfoBPartnerPanel extends InfoPanel implements EventListener, WTabl
 		row.appendChild(fieldName);
 		row.appendChild(lblEMail.rightAlign());
 		row.appendChild(fieldEMail);
-		row.appendChild(lblPostal.rightAlign());
-		row.appendChild(fieldPostal);
+		// Si la localización argentina está activa entonces coloco el campo
+		// para búsqueda por CUIT o DNI, sino el codigo postal caso contrario
+		boolean localeARActive = CalloutInvoiceExt.ComprobantesFiscalesActivos();
+        if(localeARActive){
+			row.appendChild(labelTaxID.rightAlign());
+			row.appendChild(fieldTaxID);
+        }
+        else{
+			row.appendChild(lblPostal.rightAlign());
+			row.appendChild(fieldPostal);
+        }
 		row.appendChild(checkAND);
-        
+
+
 		layout = new Borderlayout();
         layout.setWidth("100%");
         layout.setHeight("100%");
@@ -322,9 +343,19 @@ public class InfoBPartnerPanel extends InfoPanel implements EventListener, WTabl
 				else
 					fieldName.setText("%" + value);
 			}
-			//	Number entered
-			else
-				fieldValue.setText(value);
+
+			// Number entered
+
+	        else {
+	            boolean forTaxID = bPartnerFor("TaxID", value) > 0;
+	            boolean forValue = bPartnerFor("Value", value) > 0;
+	        	if(forTaxID && !forValue){
+	        		fieldTaxID.setText( value );
+	        	}
+	        	else{
+	        		fieldValue.setText( value );
+	        	}
+	        }
 	}	//	initInfo
 
 	/**
@@ -341,8 +372,11 @@ public class InfoBPartnerPanel extends InfoPanel implements EventListener, WTabl
 		String value = fieldValue.getText().toUpperCase();
 		if (!(value.equals("") || value.equals("%")))
 		{
-			if (!value.endsWith("%"))
+			// if (!value.endsWith("%"))
+			// Modificado por el if siguiente para que no ingrese siempre el % al final del value
+			if( value.equals( "" ) ) {
 				value += "%";
+			}
 			pstmt.setString(index++, value);
 			log.fine("Value: " + value);
 		}
@@ -350,8 +384,11 @@ public class InfoBPartnerPanel extends InfoPanel implements EventListener, WTabl
 		String name = fieldName.getText().toUpperCase();
 		if (!(name.equals("") || name.equals("%")))
 		{
-			if (!name.endsWith("%"))
+			// if (!name.endsWith("%"))
+			// Modificado por el if siguiente para que no ingrese siempre el % al final del name
+			if( name.equals( "" ) ) {
 				name += "%";
+			}
 			pstmt.setString(index++, name);
 			log.fine("Name: " + name);
 		}
@@ -359,8 +396,11 @@ public class InfoBPartnerPanel extends InfoPanel implements EventListener, WTabl
 		String contact = fieldContact.getText().toUpperCase();
 		if (!(contact.equals("") || contact.equals("%")))
 		{
-			if (!contact.endsWith("%"))
+			// if (!contact.endsWith("%"))
+			// Modificado por el if siguiente para que no ingrese siempre el % al final del name
+			if( contact.equals( "" ) ) {
 				contact += "%";
+			}
 			pstmt.setString(index++, contact);
 			log.fine("Contact: " + contact);
 		}
@@ -368,8 +408,11 @@ public class InfoBPartnerPanel extends InfoPanel implements EventListener, WTabl
 		String email = fieldEMail.getText().toUpperCase();
 		if (!(email.equals("") || email.equals("%")))
 		{
-			if (!email.endsWith("%"))
+            //if( !email.endsWith( "%" )) {
+            // Modificado por el if siguiente para que no ingrese siempre el % al final del email
+            if( email.equals( "" ) ) {
 				email += "%";
+            }
 			pstmt.setString(index++, email);
 			log.fine("EMail: " + email);
 		}
@@ -377,8 +420,11 @@ public class InfoBPartnerPanel extends InfoPanel implements EventListener, WTabl
 		String phone = fieldPhone.getText().toUpperCase();
 		if (!(phone.equals("") || phone.equals("%")))
 		{
-			if (!phone.endsWith("%"))
+            //if( !phone.endsWith( "%" )) {
+            // Modificado por el if siguiente para que no ingrese siempre el % al final del phone
+            if( phone.equals( "" ) ) {
 				phone += "%";
+            }
 			pstmt.setString(index++, phone);
 			log.fine("Phone: " + phone);
 		}
@@ -386,11 +432,25 @@ public class InfoBPartnerPanel extends InfoPanel implements EventListener, WTabl
 		String postal = fieldPostal.getText().toUpperCase();
 		if (!(postal.equals("") || postal.equals("%")))
 		{
-			if (!postal.endsWith("%"))
+            //if( !postal.endsWith( "%" )) {
+            // Modificado por el if siguiente para que no ingrese siempre el % al final del postal
+            if( postal.equals( "" ) ) {
 				postal += "%";
+            }
 			pstmt.setString(index++, postal);
 			log.fine("Postal: " + postal);
 		}
+        // => TaxID
+        String taxID = fieldTaxID.getText().toUpperCase();
+        if( !( taxID.equals( "" ) || taxID.equals( "%" ))) {
+            //if( !postal.endsWith( "%" )) {
+            // Modificado por el if siguiente para que no ingrese siempre el % al final del taxID
+            if( taxID.equals( "" ) ) {
+            	taxID += "%";
+            }
+            pstmt.setString( index++,taxID );
+            log.fine( "TaxID: " + taxID );
+        }
 	}   //  setParameters
 
 	/*************************************************************************/
@@ -428,6 +488,10 @@ public class InfoBPartnerPanel extends InfoPanel implements EventListener, WTabl
 		String postal = fieldPostal.getText().toUpperCase();
 		if (!(postal.equals("") || postal.equals("%")))
 			list.add ("UPPER(a.Postal) LIKE ?");
+        // => TaxID
+        String taxID = fieldTaxID.getText().toUpperCase();
+        if( !( taxID.equals( "" ) || taxID.equals( "%" )))
+            list.add( "UPPER(C_BPartner.TaxID) LIKE ?" );
 		StringBuffer sql = new StringBuffer();
 		int size = list.size();
 		//	Just one
@@ -573,4 +637,18 @@ public class InfoBPartnerPanel extends InfoPanel implements EventListener, WTabl
         
     }
 	
+    protected int bPartnerFor(String columnName, String text){
+    	StringBuffer sql = new StringBuffer();
+    	sql.append(" SELECT count(*) ");
+    	sql.append(" FROM ").append(getTableName());
+    	sql.append(" WHERE ").append(getTableName()).append(".").append(columnName).append(" LIKE ").append("?");
+    	sql.append(" AND IsActive='Y'");
+    	if( m_isSOTrx ) {
+            sql.append( " AND C_BPartner.IsCustomer='Y' " );
+        } else {
+            sql.append( " AND C_BPartner.IsVendor='Y' " );
+        }
+    	String sqlReal = MRole.getDefault().addAccessSQL( sql.toString(),getTableName(),MRole.SQL_NOTQUALIFIED,MRole.SQL_RO );
+    	return DB.getSQLValue(PluginUtils.getPluginInstallerTrxName(), sqlReal, text);    	
+    }
 }
