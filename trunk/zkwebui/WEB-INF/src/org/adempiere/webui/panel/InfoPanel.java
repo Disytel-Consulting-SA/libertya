@@ -565,6 +565,16 @@ public abstract class InfoPanel extends Window implements EventListener, WTableM
 	            contentPanel.setData(model, null);
         	}
         }
+        else {
+        	// Si no hay registros que mostrar, limpiar las opciones a fin 
+        	// de no visualizar el resultado de busquedas anteriores
+            model = new ListModelTable();
+            model.clear();
+            model.addTableModelListener(this);
+            contentPanel.setData(model, null);
+        }
+        	
+       
         int no = m_count;
         setStatusLine(Integer.toString(no) + " " + Msg.getMsg(Env.getCtx(), "SearchRows_EnterQuery"), false);
         setStatusDB(Integer.toString(no));
