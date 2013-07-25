@@ -45,6 +45,7 @@ import java.util.logging.Level;
 
 import org.adempiere.webui.apps.AEnv;
 import org.adempiere.webui.component.Button;
+import org.adempiere.webui.component.Checkbox;
 import org.adempiere.webui.component.ConfirmPanel;
 import org.adempiere.webui.component.Grid;
 import org.adempiere.webui.component.GridFactory;
@@ -102,6 +103,14 @@ import org.zkoss.zkex.zul.South;
 public class InfoProductPanel extends InfoPanel implements EventListener
 {
 	/**
+	 * Disytel: Merge desde r253GC
+	 * Nombres de preference para obtener los caracteres comodín al inicio y fin
+	 * de los campos value, name y unique
+	 */
+	private static final String WILCARD_PREFIX_PREFERENCE_NAME = "InfoProduct_PrefixWildcard";
+	private static final String WILCARD_SUFIX_PREFERENCE_NAME = "InfoProduct_SufixWildcard";
+	
+	/**
 	 * 
 	 */
 	private static final long serialVersionUID = 6804975825156657866L;
@@ -126,6 +135,12 @@ public class InfoProductPanel extends InfoPanel implements EventListener
 	private Label lblAS = new Label();
 	private Listbox pickAS = new Listbox();
 
+	// Disytel: Merge desde r2570LP
+	private Checkbox checkBP = new Checkbox();
+	// Disytel: Merge desde r253GC
+	private Label labelUnique = new Label();
+	private Textbox fieldUnique = new Textbox();
+	
 	// Elaine 2008/11/25
 	private Borderlayout borderlayout = new Borderlayout();
 	private Textbox fieldDescription = new Textbox();
@@ -152,8 +167,10 @@ public class InfoProductPanel extends InfoPanel implements EventListener
 		+ " LEFT OUTER JOIN M_ProductPrice pr ON (p.M_Product_ID=pr.M_Product_ID AND pr.IsActive='Y')"
 		+ " LEFT OUTER JOIN M_AttributeSet pa ON (p.M_AttributeSet_ID=pa.M_AttributeSet_ID)"
 		+ " LEFT OUTER JOIN M_Product_PO ppo ON (p.M_Product_ID=ppo.M_Product_ID)"
+		+ " LEFT OUTER JOIN M_Product_Upc_Instance pui ON (p.M_Product_ID=pui.M_Product_ID AND pui.IsActive='Y')"
+		+ " LEFT OUTER JOIN M_ProductUpc pu ON (p.M_Product_ID=pu.M_Product_ID AND pu.IsActive='Y') "
 		+ " LEFT OUTER JOIN C_BPartner bp ON (ppo.C_BPartner_ID=bp.C_BPartner_ID)";
-
+		
 	/**  Array of Column Info    */
 	private static ColumnInfo[] s_productLayout = null;
 	private static int INDEX_NAME = 0;
@@ -294,6 +311,15 @@ public class InfoProductPanel extends InfoPanel implements EventListener
 		fieldVendor = new Textbox();
 		fieldVendor.setMaxlength(40);
 
+		// Disytel: Merge desde r2570LP
+		checkBP = new Checkbox();
+		checkBP.setChecked(false);
+		checkBP.addEventListener(Events.ON_CHECK, this);
+		checkBP.setLabel(Msg.getMsg(Env.getCtx(), "Filtrar por socio actual"));
+		// Disytel: Merge desde r253GC
+        labelUnique.setText( Msg.getMsg( Env.getCtx(),"UniqueField" ));
+        labelUnique.setTooltip(Msg.getMsg(Env.getCtx(), "UniqueFieldDescription"));
+		
         contentPanel.setVflex(true);
 	}	//	initComponents
 
@@ -333,6 +359,14 @@ public class InfoProductPanel extends InfoPanel implements EventListener
 		row.appendChild(pickProductCategory);
 		row.appendChild(lblAS.rightAlign());
 		row.appendChild(pickAS);
+		
+		// Disyel: Merge desde r2570LP
+		row = new Row();
+		rows.appendChild(row);
+		row.appendChild(labelUnique.rightAlign());
+		row.appendChild(fieldUnique);
+		row.appendChild(checkBP);
+
 		
 		row = new Row();
 		rows.appendChild(row);
@@ -840,6 +874,23 @@ public class InfoProductPanel extends InfoPanel implements EventListener
 	{
 		StringBuffer where = new StringBuffer();
 
+		// Disytel: Merge desde r253GC
+		// Obtener los caracteres de comodín al inicio y fin a incorporar en la
+		// cláusula para los campos value, name y unique 
+		String prefixWildcard = MPreference.searchCustomPreferenceValue(
+				WILCARD_PREFIX_PREFERENCE_NAME,
+				Env.getAD_Client_ID(Env.getCtx()),
+				Env.getAD_Org_ID(Env.getCtx()),
+				Env.getAD_User_ID(Env.getCtx()), true);
+		prefixWildcard = Util.isEmpty(prefixWildcard, true)?"":prefixWildcard;
+		
+		String sufixWildcard = MPreference.searchCustomPreferenceValue(
+				WILCARD_SUFIX_PREFERENCE_NAME,
+				Env.getAD_Client_ID(Env.getCtx()),
+				Env.getAD_Org_ID(Env.getCtx()),
+				Env.getAD_User_ID(Env.getCtx()), true);
+		sufixWildcard = Util.isEmpty(sufixWildcard, true)?"":sufixWildcard;
+		
 		//	Optional PLV
 		int M_PriceList_Version_ID = 0;
 		ListItem listitem = pickPriceList.getSelectedItem();
@@ -879,9 +930,11 @@ public class InfoProductPanel extends InfoPanel implements EventListener
 
 		//  => UPC
 		String upc = fieldUPC.getText().toUpperCase();
-		if (!(upc.equals("") || upc.equals("%")))
+		if (!(upc.equals("") || upc.equals("%"))) {
 			where.append(" AND UPPER(p.UPC) LIKE ?");
-
+			where.append(" OR (UPPER(pui.UPC) LIKE '"+ upc + "')");
+        	where.append(" OR (UPPER(pu.UPC) LIKE '"+ upc + "'))");
+		}
 		//  => SKU
 		String sku = fieldSKU.getText().toUpperCase();
 		if (!(sku.equals("") || sku.equals("%")))
@@ -891,6 +944,47 @@ public class InfoProductPanel extends InfoPanel implements EventListener
 		if (!(vendor.equals("") || vendor.equals("%")))
 			where.append(" AND UPPER(bp.Name) LIKE ? AND ppo.IsCurrentVendor='Y' AND ppo.IsActive='Y'"); // Elaine 2008/12/16
 
+        // Disytel: Merge desde r2570LP
+		boolean isBP = checkBP.isSelected();
+		if (isBP){
+			log.finest("Detecto marcado filtro por proveedor asociado");
+			if(m_C_BPartner_ID > 0){
+				log.finest("Encontro socio de negocios activo C_BPartner_ID=" + m_C_BPartner_ID);
+				where.append(" AND p.M_Product_ID IN (SELECT M_Product_ID FROM M_Product_PO WHERE C_BPartner_ID=" + m_C_BPartner_ID + " )" );
+			}
+		}
+
+		// Disytel: Merge desde r253GC
+		// => Unique
+
+        String unique = fieldUnique.getText().toUpperCase();
+
+		if (!Util.isEmpty(unique, true) && !unique.equals("%")) {
+			// Agrego el prefijo y sufijo de la preference
+			unique = prefixWildcard+unique+sufixWildcard;
+			// Reemplazar los espaciones por comodines
+        	unique = unique.replaceAll(" ", "%");
+        	where.append(" AND ( ");
+        	// Value
+        	where.append(" (UPPER(p.Value) LIKE '"+unique+"') ");
+            where.append(" OR ");
+            // Name
+            where.append(" (UPPER(p.Name) LIKE '"+unique+"') ");
+            where.append(" OR ");
+            // UPC
+            where.append(" ((UPPER(p.UPC) LIKE '"+unique+"')");
+        	where.append(" OR (UPPER(pui.UPC) LIKE '"+unique+"')");
+        	where.append(" OR (UPPER(pu.UPC) LIKE '"+unique+ "'))");
+            where.append(" OR ");
+            // Codigo de proveedor
+			where.append(" (p.M_Product_ID IN (SELECT M_Product_ID FROM M_Product_PO po WHERE UPPER(po.vendorproductno) LIKE '"
+					+ unique + "' ");
+            if(m_C_BPartner_ID > 0){
+            	where.append(" AND po.C_BPartner_ID = ").append(m_C_BPartner_ID);
+            }
+            where.append(" )) ");
+            where.append(" ) ");
+		}
 		return where.toString();
 	}	//	getSQLWhere
 
@@ -905,6 +999,23 @@ public class InfoProductPanel extends InfoPanel implements EventListener
 	{
 		int index = 1;
 
+		// Disytel: Merge desde r253GC
+        // Obtener los caracteres de comodín al inicio y fin a incorporar en la
+ 		// cláusula para los campos value, name y unique 
+ 		String prefixWildcard = MPreference.searchCustomPreferenceValue(
+ 				WILCARD_PREFIX_PREFERENCE_NAME,
+ 				Env.getAD_Client_ID(Env.getCtx()),
+ 				Env.getAD_Org_ID(Env.getCtx()),
+ 				Env.getAD_User_ID(Env.getCtx()), true);
+ 		prefixWildcard = Util.isEmpty(prefixWildcard, true)?"":prefixWildcard;
+ 		
+ 		String sufixWildcard = MPreference.searchCustomPreferenceValue(
+ 				WILCARD_SUFIX_PREFERENCE_NAME,
+ 				Env.getAD_Client_ID(Env.getCtx()),
+ 				Env.getAD_Org_ID(Env.getCtx()),
+ 				Env.getAD_User_ID(Env.getCtx()), true);
+ 		sufixWildcard = Util.isEmpty(sufixWildcard, true)?"":sufixWildcard;
+		
 		//  => Warehouse
 		int M_Warehouse_ID = 0;
 		ListItem listitem = pickWarehouse.getSelectedItem();
@@ -951,8 +1062,17 @@ public class InfoProductPanel extends InfoPanel implements EventListener
 		String value = fieldValue.getText().toUpperCase();
 		if (!(value.equals("") || value.equals("%")))
 		{
-			if (!value.endsWith("%"))
+        	// if( !value.endsWith( "%" )) {
+        	// Modificado por el if siguiente para que no ingrese siempre el % al final del value 
+        	if( value.equals( "" ) ) {
 				value += "%";
+        	}
+        	
+        	// Agrego el prefijo y sufijo en la preference
+        	value = prefixWildcard+value+sufixWildcard;
+        	// Los espaciones en blanco se traducen a comodines
+        	value = value.replaceAll(" ", "%");
+        	
 			pstmt.setString(index++, value);
 			log.fine("Value: " + value);
 		}
@@ -961,8 +1081,17 @@ public class InfoProductPanel extends InfoPanel implements EventListener
 		String name = fieldName.getText().toUpperCase();
 		if (!(name.equals("") || name.equals("%")))
 		{
-			if (!name.endsWith("%"))
+         	// if( !name.endsWith( "%" )) {
+        	// Modificado por el if siguiente para que no ingrese siempre el % al final del name 
+        	if( name.equals( "" ) ) {
 				name += "%";
+        	}
+        	
+        	// Agrego el prefijo y sufijo en la preference
+        	name = prefixWildcard+name+sufixWildcard;
+        	// Los espaciones en blanco se traducen a comodines
+        	name = name.replaceAll(" ", "%");
+        	
 			pstmt.setString(index++, name);
 			log.fine("Name: " + name);
 		}
@@ -971,8 +1100,11 @@ public class InfoProductPanel extends InfoPanel implements EventListener
 		String upc = fieldUPC.getText().toUpperCase();
 		if (!(upc.equals("") || upc.equals("%")))
 		{
-			if (!upc.endsWith("%"))
-				upc += "%";
+           	// if( !upc.endsWith( "%" )) {
+           	// Modificado por el if siguiente para que no ingrese siempre el % al final del upc
+           	if( upc.equals( "" ) ) {
+           		upc += "%";
+           	}
 			pstmt.setString(index++, upc);
 			log.fine("UPC: " + upc);
 		}
@@ -981,8 +1113,11 @@ public class InfoProductPanel extends InfoPanel implements EventListener
 		String sku = fieldSKU.getText().toUpperCase();
 		if (!(sku.equals("") || sku.equals("%")))
 		{
-			if (!sku.endsWith("%"))
+           	// if( !sku.endsWith( "%" )) {
+           	// Modificado por el if siguiente para que no ingrese siempre el % al final del sku
+           	if( sku.equals( "" ) ) {
 				sku += "%";
+           	}
 			pstmt.setString(index++, sku);
 			log.fine("SKU: " + sku);
 		}
@@ -991,8 +1126,11 @@ public class InfoProductPanel extends InfoPanel implements EventListener
 		String vendor = fieldVendor.getText().toUpperCase();
 		if (!(vendor.equals("") || vendor.equals("%")))
 		{
-			if (!vendor.endsWith("%"))
+           	// if( !vendor.endsWith( "%" )) {
+           	// Modificado por el if siguiente para que no ingrese siempre el % al final del vendor
+           	if( vendor.equals( "" ) ) {
 				vendor += "%";
+           	}
 			pstmt.setString(index++, vendor);
 			log.fine("Vendor: " + vendor);
 		}
@@ -1113,6 +1251,7 @@ public class InfoProductPanel extends InfoPanel implements EventListener
 		if (pickWH != null)
         {
             Env.setContext(Env.getCtx(), p_WindowNo, Env.TAB_INFO, "M_Warehouse_ID",pickWH.getValue().toString());
+            Env.setContext(Env.getCtx(), "M_Warehouse_ID", pickWH.getId());
         }
 		//
 		if (m_M_AttributeSetInstance_ID == -1)	//	not selected
