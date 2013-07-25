@@ -193,7 +193,7 @@ public class InfoBPartnerPanel extends InfoPanel implements EventListener, WTabl
 		fieldPhone = new Textbox();
 		fieldPhone.setMaxlength(40);
 		fieldTaxID = new Textbox();
-		fieldTaxID.setMaxlength(13);
+		fieldTaxID.setMaxlength(40);
 		labelTaxID = new Label();
 		labelTaxID.setValue(Msg.translate(Env.getCtx(), "TaxID"));
 		checkAND = new Checkbox();
@@ -218,6 +218,8 @@ public class InfoBPartnerPanel extends InfoPanel implements EventListener, WTabl
 		fieldName.setWidth("100%");
 		fieldEMail.setWidth("100%");
 		fieldPostal.setWidth("100%");
+		
+		fieldTaxID.setWidth("100%");
 		
 		Grid grid = GridFactory.newGridLayout();
 		
