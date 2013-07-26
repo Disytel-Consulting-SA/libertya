@@ -61,6 +61,7 @@ import org.openXpertya.model.MAttachmentEntry;
 import org.openXpertya.model.MProcess;
 import org.openXpertya.model.PrintInfo;
 import org.openXpertya.model.X_AD_PInstance_Para;
+import org.openXpertya.plugin.common.PluginProcessUtils;
 import org.openXpertya.print.MPrintFormat;
 import org.openXpertya.print.ReportCtl;
 import org.openXpertya.process.ProcessCall;
@@ -594,6 +595,9 @@ public class ReportStarter implements ProcessCall // , ClientProcess
                     ;
                 }
             }
+            
+            // Agregar los parámetros específicos de cada subclase
+            addCustomReportParameters(ctx, params, reportData);
 
             Connection conn = null;
             try {
@@ -1117,7 +1121,7 @@ public class ReportStarter implements ProcessCall // , ClientProcess
     public ReportData getReportData (ProcessInfo pi, String trxName)
     {
     	log.info("");
-        String sql = "SELECT pr.JasperReport, pr.IsDirectPrint "
+        String sql = "SELECT pr.JasperReport, pr.IsDirectPrint, pr.ClassName "
         		   + "FROM AD_Process pr, AD_PInstance pi "
                    + "WHERE pr.AD_Process_ID = pi.AD_Process_ID "
                    + " AND pi.AD_PInstance_ID=?";
@@ -1129,11 +1133,13 @@ public class ReportStarter implements ProcessCall // , ClientProcess
             pstmt.setInt(1, pi.getAD_PInstance_ID());
             rs = pstmt.executeQuery();
             String path = null;
+            String className = null;
             boolean	directPrint = false;
             boolean isPrintPreview = true; // pi.isPrintPreview();
             if (rs.next()) {
                 path = rs.getString(1);
-
+                className = rs.getString(3);
+                
 //OJO				if ("Y".equalsIgnoreCase(rs.getString(2)) && !Ini.isPropertyBool(Ini.P_PRINTPREVIEW)
 //						&& !isPrintPreview )
 //					directPrint = true;
@@ -1142,7 +1148,7 @@ public class ReportStarter implements ProcessCall // , ClientProcess
 				return null;
             }
 
-            return new ReportData( path, directPrint);
+            return new ReportData( path, directPrint, className );
         }
         catch (SQLException e)
         {
@@ -1178,10 +1184,13 @@ public class ReportStarter implements ProcessCall // , ClientProcess
     class ReportData {
         private String reportFilePath;
         private boolean directPrint;
-
-        public ReportData(String reportFilePath, boolean directPrint) {
+        private String customClassFilePath;
+        
+        
+        public ReportData(String reportFilePath, boolean directPrint, String customClassFilePath) {
             this.reportFilePath = reportFilePath;
             this.directPrint = directPrint;
+            this.customClassFilePath = customClassFilePath;
         }
 
         public String getReportFilePath() {
@@ -1190,6 +1199,10 @@ public class ReportStarter implements ProcessCall // , ClientProcess
 
         public boolean isDirectPrint() {
             return directPrint;
+        }
+        
+        public String getCustomClassFilePath(){
+        	return customClassFilePath;
         }
     }
 
@@ -1278,5 +1291,37 @@ public class ReportStarter implements ProcessCall // , ClientProcess
 	        log.log( Level.SEVERE,sql,e );
 	    }
     }
-
+    
+    /***
+     * Agrego los parámetros custom de la clase definida en el proceso
+     * @param ctx contexto
+     * @param params parámetros
+     * @param reportData datos del reporte
+     */
+    public void addCustomReportParameters(Properties ctx, Map<String, Object> params, ReportData reportData){
+		// Lógica para plugins, verificar si existe una clase que redefina el
+		// reporte dinámico original 
+		String pluginDynamicJasperReportClassName = PluginProcessUtils
+				.findPluginDynamicJasperReportClass(reportData.getCustomClassFilePath());
+        if (pluginDynamicJasperReportClassName == null){
+        	pluginDynamicJasperReportClassName = reportData.getCustomClassFilePath();
+        }
+        
+        // Si existe la clase instanciarla y agregar los parámetros custom
+        if(!Util.isEmpty(pluginDynamicJasperReportClassName, true)){
+	        try{
+				Class myClass = Class
+						.forName(pluginDynamicJasperReportClassName);
+				DynamicJasperReport dynamicJasperReportObject = (DynamicJasperReport) myClass
+						.newInstance();
+		        dynamicJasperReportObject.addReportParameters(ctx, params);
+	        } catch(ClassNotFoundException cnfe){
+	        	log.severe(" Class not found: "+pluginDynamicJasperReportClassName);
+	        } catch(IllegalAccessException iae){
+	        	log.severe(" Illegal access to: "+pluginDynamicJasperReportClassName);
+	        } catch(InstantiationException ie){
+	        	log.severe(" Error in instantiation: "+pluginDynamicJasperReportClassName);
+	        }
+        }
+    } 
 }

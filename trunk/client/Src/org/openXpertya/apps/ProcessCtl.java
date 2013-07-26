@@ -219,13 +219,14 @@ public class ProcessCtl extends Thread {
                 if (rs.getString("dynamicreport") != null && "Y".equalsIgnoreCase(rs.getString("dynamicreport")) &&
                 	rs.getString("jasperreport") != null && rs.getString("jasperreport").trim().length() > 0) 
                 	m_pi.setClassName( DYNAMIC_JASPER_CLASSNAME );
-                
-                /**
-                 * Logica para plugins, verificar si existe una clase que redefina el proceso original 
-                 */
-                String pluginProcessClassName = PluginProcessUtils.findPluginProcessClass(rs.getString(3));
-                if (pluginProcessClassName != null)
-                	m_pi.setClassName(pluginProcessClassName);
+                else{
+	                /**
+	                 * Logica para plugins, verificar si existe una clase que redefina el proceso original 
+	                 */
+	                String pluginProcessClassName = PluginProcessUtils.findPluginProcessClass(rs.getString(3));
+	                if (pluginProcessClassName != null)
+	                	m_pi.setClassName(pluginProcessClassName);
+                }
                 
                 m_pi.setAD_Process_ID( rs.getInt( 4 ));
 
