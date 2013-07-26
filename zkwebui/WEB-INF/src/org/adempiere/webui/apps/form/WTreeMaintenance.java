@@ -388,6 +388,10 @@ public class WTreeMaintenance extends TreeMaintenance implements IFormController
 	 */
 	private void action_treeAddAll()
 	{
+		// Confirmar si se quieren mover todos los items
+		if (!FDialog.ask(m_WindowNo, null, Msg.getMsg( Env.getCtx(),"MoveAllItems" )))
+			return;
+
 		log.info("");
 		ListModel model = centerList.getModel();
 		int size = model.getSize();
@@ -406,7 +410,7 @@ public class WTreeMaintenance extends TreeMaintenance implements IFormController
 	{
 		log.info("");
 		//TODO: translation
-		if (FDialog.ask(m_WindowNo, null, "Remove all item(s) from tree?")) {
+		if (FDialog.ask(m_WindowNo, null, Msg.getMsg( Env.getCtx(),"MoveAllItems" ))) {
 			ListModel model = centerList.getModel();
 			int size = model.getSize();
 			int index = -1;
