@@ -25,6 +25,9 @@ public class PluginConstants {
 	/** Package donde se almacena la logica para lookups */
 	public static final String PACKAGE_NAME_LOOKUP= "lookup";
 	
+	/** Package donde se almacenan los plugins de reportes jasper dinámicos */
+	public static final String PACKAGE_NAME_DYNAMIC_JASPER_REPORT = "JasperReport";
+	
 	/** --------------------------- PREFIJOS ------------------------------------------- */
 
 	/** Prefijo para clases Callout */
