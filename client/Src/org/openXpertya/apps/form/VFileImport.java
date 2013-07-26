@@ -49,6 +49,7 @@ import org.openXpertya.apps.ConfirmPanel;
 import org.openXpertya.apps.SwingWorker;
 import org.openXpertya.impexp.ImpFormat;
 import org.openXpertya.impexp.ImpFormatRow;
+import org.openXpertya.model.MRole;
 import org.openXpertya.util.CLogger;
 import org.openXpertya.util.DB;
 import org.openXpertya.util.Env;
@@ -275,7 +276,8 @@ public class VFileImport extends CPanel implements FormPanel,ActionListener {
 
         pickFormat.addItem( s_none );
 
-        String sql = "SELECT Name from AD_ImpFormat WHERE IsActive = 'Y'";
+        String sql = MRole.getDefault().addAccessSQL("SELECT Name FROM AD_ImpFormat", "AD_ImpFormat",
+				MRole.SQL_FULLYQUALIFIED, MRole.SQL_RO) + " AND isActive = 'Y' ";
 
         try {
             PreparedStatement pstmt = DB.prepareStatement( sql );

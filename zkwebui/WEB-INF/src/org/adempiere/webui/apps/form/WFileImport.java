@@ -230,7 +230,7 @@ public class WFileImport extends ADForm implements EventListener
 		pickFormat.appendItem(s_none, s_none);
 		
 		String sql = MRole.getDefault().addAccessSQL("SELECT Name FROM AD_ImpFormat", "AD_ImpFormat",
-				MRole.SQL_FULLYQUALIFIED, MRole.SQL_RO);
+				MRole.SQL_FULLYQUALIFIED, MRole.SQL_RO)  + " AND isActive = 'Y' ";
 		try
 		{
 			PreparedStatement pstmt = DB.prepareStatement(sql, null);
