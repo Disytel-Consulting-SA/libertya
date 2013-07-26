@@ -18,6 +18,7 @@ import java.sql.ResultSet;
 import java.util.ArrayList;
 import java.util.logging.Level;
 
+import org.openXpertya.apps.form.VTreeMaintenance.ListItem;
 import org.openXpertya.model.MRole;
 import org.openXpertya.model.MTree;
 import org.openXpertya.model.MTree_Node;
@@ -26,6 +27,7 @@ import org.openXpertya.model.MTree_NodeMM;
 import org.openXpertya.model.MTree_NodePR;
 import org.openXpertya.util.CLogger;
 import org.openXpertya.util.DB;
+import org.openXpertya.util.Env;
 import org.openXpertya.util.KeyNamePair;
 
 public class TreeMaintenance {
@@ -52,12 +54,20 @@ public class TreeMaintenance {
 		String columnNameX = m_tree.getSourceTableName(true);
 		String actionColor = m_tree.getActionColorName();
 		
-		String sql = "SELECT t." + columnNameX 
-			+ "_ID,t.Name,t.Description,t.IsSummary,"
-			+ actionColor
-			+ " FROM " + fromClause
-		//	+ " WHERE t.IsActive='Y'"	//	R/O
-			+ " ORDER BY 2";
+        String hasTrlSql = "SELECT IsTranslated FROM AD_Column INNER JOIN AD_Table ON (AD_Table.AD_Table_ID=AD_Column.AD_Table_ID) WHERE TableName = ? AND ColumnName = ? ";
+        boolean hasNameTrl = "Y".equals(DB.getSQLObject(null, hasTrlSql, new Object[]{columnNameX, "Name"}));
+        boolean hasDescriptionTrl = "Y".equals(DB.getSQLObject(null, hasTrlSql, new Object[]{columnNameX, "Description"}));
+        String sql;
+		
+        if (hasNameTrl || hasDescriptionTrl) {
+        	sql = "SELECT t." + columnNameX + "_ID," + (hasNameTrl ? "COALESCE(trl.Name,t.Name)" : "t.Name") + "," + (hasDescriptionTrl ? "COALESCE(trl.Description,t.Description)" : "t.Description") + ",t.IsSummary," + actionColor + ",t.Name,t.Description " + 
+        		" FROM " + fromClause +
+        		" LEFT JOIN " + columnNameX + "_trl trl ON (t." + columnNameX + "_ID = trl." + columnNameX + "_ID AND trl.AD_Language = ?) " +
+        		" ORDER BY 2";
+        } else {
+        	sql = "SELECT t." + columnNameX + "_ID,t.Name,t.Description,t.IsSummary," + actionColor + " FROM " + fromClause + " ORDER BY 2";
+        }
+
 		sql = MRole.getDefault().addAccessSQL(sql, 
 			"t", MRole.SQL_FULLYQUALIFIED, MRole.SQL_RO);
 		log.config(sql);
@@ -67,11 +77,18 @@ public class TreeMaintenance {
 		try
 		{
 			pstmt = DB.prepareStatement (sql, null);
+			
+            if (hasNameTrl || hasDescriptionTrl)
+            	pstmt.setString(1, Env.getAD_Language(Env.getCtx()));
+            
 			rs = pstmt.executeQuery ();
 			while (rs.next ())
 			{
-				ListItem item = new ListItem(rs.getInt(1), rs.getString(2),
-					rs.getString(3), "Y".equals(rs.getString(4)), rs.getString(5));
+            	ListItem item ;
+            	if (hasNameTrl || hasDescriptionTrl)
+            		item = new ListItem( rs.getInt( 1 ),rs.getString( 2 ),rs.getString( 6 ),rs.getString( 3 ),rs.getString( 7 ),"Y".equals( rs.getString( 4 )),rs.getString( 5 ));
+            	else
+            		item = new ListItem( rs.getInt( 1 ),rs.getString( 2 ),rs.getString( 3 ),"Y".equals( rs.getString( 4 )),rs.getString( 5 ));
 				data.add(item);
 			}
 		}
@@ -178,6 +195,16 @@ public class TreeMaintenance {
 			imageIndicator = ImageIndicator;
 		}	//	ListItem
 		
+        public ListItem( int id,String name, String defName,String description, String defDescription,boolean isSummary,String imageIndicator ) {
+            this.id             = id;
+            this.name           = name;
+            this.description    = description;
+            this.isSummary      = isSummary;
+            this.imageIndicator = imageIndicator;
+            this.defname        = defName;
+            this.defdescription = defDescription;
+        }    // ListItem
+		
 		/**	ID			*/
 		public int id;
 		/** Name		*/
@@ -188,7 +215,10 @@ public class TreeMaintenance {
 		public boolean isSummary;
 		/** Indicator	*/
 		public String imageIndicator;  //  Menu - Action
-		
+        /** Descripción de Campos */
+        public String defname;
+        /** Descripción de Campos */
+        public String defdescription;
 		/**
 		 * 	To String
 		 *	@return	String Representation
