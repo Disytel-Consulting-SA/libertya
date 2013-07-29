@@ -796,7 +796,10 @@ DataStatusListener, IADTabpanel, VetoableChangeListener
     {
     	if (event.getTarget() == listPanel.getListbox())
     	{
-    		this.switchRowPresentation();
+    		// Se incluye validacion por doble click, dado que no tiene sentido
+    		// que se cambie el modo grilla/formulario al hacer doble click
+    		if (!"onDoubleClick".equalsIgnoreCase(event.getName()))
+    			this.switchRowPresentation();
     	}
     	else if (event.getTarget() == treePanel.getTree()) {
     		Treeitem item =  treePanel.getTree().getSelectedItem();

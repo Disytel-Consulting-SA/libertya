@@ -157,7 +157,7 @@ public class WebEditorFactory
         }
         else if (displayType == DisplayType.Image)
         {
-        	//editor = new WImageEditor(mField);
+        	editor = new WImageEditor(mField);
         }
         else if (displayType == DisplayType.Binary)
         {
@@ -165,7 +165,7 @@ public class WebEditorFactory
         }
         else if (displayType == DisplayType.PAttribute)
         {
-        	//editor = new WPAttributeEditor(mTab, mField);
+        	editor = new WPAttributeEditor(mTab, mField);
         }
         else if (displayType == DisplayType.Assignment)
         {
@@ -173,7 +173,7 @@ public class WebEditorFactory
         }
         else
         {
-            //editor = new WUnknownEditor(mField); //TODO Hernandez
+            editor = new WUnknownEditor(mField); //TODO Hernandez
         }
         
         return editor;

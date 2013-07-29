@@ -141,6 +141,7 @@ ContextMenuListener, IZoomableEditor
             if (isReadWrite())
             	lookup.refresh();
             refreshList();
+            actionRefresh();
         }
         
         if (mField != null) 
