@@ -18,8 +18,11 @@ package org.openXpertya.model;
 
 import java.awt.Image;
 import java.awt.Toolkit;
+import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.io.InputStream;
 import java.net.URL;
+import java.net.URLConnection;
 import java.sql.ResultSet;
 import java.util.Properties;
 
@@ -198,6 +201,52 @@ public class MImage extends X_AD_Image {
         return url;
     }    // getURL
 
+	/**
+	 * 	Get Data 
+	 *	@return data
+	 */
+	public byte[] getData()
+	{
+		byte[] data = super.getBinaryData ();
+		if (data != null)
+			return data;
+		//	From URL
+		String str = getImageURL();
+		if (str == null || str.length() == 0)
+		{
+			log.config("No Image URL");
+			return null;
+		}
+		//	Get from URL
+		URL url = getURL();
+		if (url == null)
+		{
+			log.config("No URL");
+			return null;
+		}
+		try
+		{
+			URLConnection conn = url.openConnection();
+		    conn.setUseCaches(false);
+		    InputStream is = conn.getInputStream();
+			byte[] buffer = new byte[1024*8];   //  8kB
+			ByteArrayOutputStream os = new ByteArrayOutputStream();
+			int length = -1;
+			while ((length = is.read(buffer)) != -1)
+				os.write(buffer, 0, length);
+			is.close();
+			data = os.toByteArray();
+			os.close();
+		    
+		}
+		catch (Exception e)
+		{
+			log.config (e.toString());
+		}
+		return data;
+	}	//	getData
+
+    
     /**
      * Descripción de Método
      *
