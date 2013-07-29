@@ -900,7 +900,7 @@ public class VCreateFromShipment extends VCreateFrom {
 	// En caso contratio crea el modelo de tabla para líneas de documentos
 	// (Pedidos, Remitos, Facturas)
 	protected CreateFromTableModel createTableModelInstance() {
-		if (!isSOTrx() && allInOut.isSelected()) {
+		if (!isSOTrx() && allInOut != null && allInOut.isSelected()) {
 			return new DocumentLineTableModelFromShipment();
 		} else {
 			return new DocumentLineTableModel();
