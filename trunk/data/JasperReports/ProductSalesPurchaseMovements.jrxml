@@ -189,7 +189,7 @@
 						x="0"
 						y="1"
 						width="253"
-						height="14"
+						height="19"
 						key="textField-6"/>
 					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="1Point" bottomBorderColor="#000000"/>
 					<textElement>

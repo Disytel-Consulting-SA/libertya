@@ -41,7 +41,7 @@ public class ProductSalesPurchaseMovementsDataSource extends QueryDataSource {
 
 	@Override
 	protected String getQuery() {
-		StringBuffer sql = new StringBuffer("select i.dateinvoiced, dt.name as doctypename, i.c_invoice_id, i.documentno, coalesce(i.nombrecli,bp.name) as bpartner_name, sum(qtyinvoiced*(CASE WHEN i.issotrx = 'N' AND signo_issotrx = -1 THEN 1 WHEN i.issotrx = 'N' AND signo_issotrx = 1 THEN -1 ELSE signo_issotrx END)) as qty, sum(linetotalamt) as linetotalamt " +
+		StringBuffer sql = new StringBuffer("select i.dateinvoiced, dt.name as doctypename, i.c_invoice_id, i.documentno, coalesce(i.nombrecli,bp.name) as bpartner_name, sum(qtyinvoiced*(CASE WHEN i.issotrx = 'N' AND signo_issotrx = -1 THEN 1 WHEN i.issotrx = 'N' AND signo_issotrx = 1 THEN -1 ELSE signo_issotrx END)) as qty, sum(linenetamount+taxamt) as linetotalamt " +
 											"from c_invoiceline as il " +
 											"inner join c_invoice as i on il.c_invoice_id = i.c_invoice_id " +
 											"inner join c_doctype as dt on i.c_doctypetarget_id = dt.c_doctype_id " +
