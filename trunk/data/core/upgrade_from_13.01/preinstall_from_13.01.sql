@@ -3850,3 +3850,441 @@ CREATE OR REPLACE VIEW c_invoice_bydoctype_v AS
    JOIN c_doctype d ON i.c_doctypetarget_id = d.c_doctype_id;
 
 ALTER TABLE c_invoice_bydoctype_v OWNER TO libertya;
+
+--20130731-0000 Mejoras de performance a los reportes de declaración de valores y declaración de valores por organización, entre otros
+CREATE OR REPLACE VIEW c_posjournalpayments_v AS 
+        (        ( SELECT al.c_allocationhdr_id, al.c_allocationline_id, al.ad_client_id, al.ad_org_id, al.isactive, al.created, al.createdby, al.updated, al.updatedby, al.c_invoice_id, al.c_payment_id, al.c_cashline_id, al.c_invoice_credit_id, 
+                        CASE
+                            WHEN al.c_payment_id IS NOT NULL THEN p.tendertype::character varying
+                            WHEN al.c_cashline_id IS NOT NULL THEN 'CA'::character varying
+                            WHEN al.c_invoice_credit_id IS NOT NULL THEN 'CR'::character varying
+                            ELSE NULL::character varying
+                        END::character varying(2) AS tendertype, 
+                        CASE
+                            WHEN al.c_payment_id IS NOT NULL THEN p.documentno
+                            WHEN al.c_invoice_credit_id IS NOT NULL THEN ic.documentno
+                            ELSE NULL::character varying
+                        END::character varying(30) AS documentno, 
+                        CASE
+                            WHEN al.c_payment_id IS NOT NULL THEN p.description
+                            WHEN al.c_cashline_id IS NOT NULL THEN cl.description
+                            WHEN al.c_invoice_credit_id IS NOT NULL THEN ic.description
+                            ELSE NULL::character varying
+                        END::character varying(255) AS description, 
+                        CASE
+                            WHEN al.c_payment_id IS NOT NULL THEN ((p.documentno::text || '_'::text) || to_char(p.datetrx, 'DD/MM/YYYY'::text))::character varying
+                            WHEN al.c_cashline_id IS NOT NULL THEN ((c.name::text || '_#'::text) || cl.line::text)::character varying
+                            WHEN al.c_invoice_credit_id IS NOT NULL THEN ic.documentno
+                            ELSE NULL::character varying
+                        END::character varying(255) AS info, COALESCE(currencyconvert(al.amount + al.discountamt + al.writeoffamt, ah.c_currency_id, i.c_currency_id, NULL::timestamp with time zone, NULL::integer, ah.ad_client_id, ah.ad_org_id), 0::numeric)::numeric(20,2) AS amount, cl.c_cash_id, cl.line, ic.c_doctype_id, p.checkno, p.a_bank, p.checkno AS transferno, p.creditcardtype, p.m_entidadfinancieraplan_id, ep.m_entidadfinanciera_id, p.couponnumber, date_trunc('day'::text, ah.datetrx) AS allocationdate, 
+                        CASE
+                            WHEN al.c_payment_id IS NOT NULL THEN p.docstatus
+                            WHEN al.c_cashline_id IS NOT NULL THEN cl.docstatus
+                            WHEN al.c_invoice_credit_id IS NOT NULL THEN ic.docstatus
+                            ELSE NULL::character(2)
+                        END AS docstatus, 
+                        CASE
+                            WHEN al.c_payment_id IS NOT NULL THEN p.dateacct::date
+                            WHEN al.c_cashline_id IS NOT NULL THEN c.dateacct::date
+                            WHEN al.c_invoice_credit_id IS NOT NULL THEN ic.dateacct::date
+                            ELSE NULL::date
+                        END AS dateacct, i.documentno AS invoice_documentno, i.grandtotal AS invoice_grandtotal, ef.value AS entidadfinanciera_value, ef.name AS entidadfinanciera_name, bp.value AS bp_entidadfinanciera_value, bp.name AS bp_entidadfinanciera_name, p.couponnumber AS cupon, p.creditcardnumber AS creditcard, dt.isfiscaldocument, dt.isfiscal, ic.fiscalalreadyprinted
+                   FROM c_allocationline al
+              INNER JOIN c_allocationhdr ah ON al.c_allocationhdr_id = ah.c_allocationhdr_id
+         LEFT JOIN c_invoice i ON al.c_invoice_id = i.c_invoice_id
+    LEFT JOIN c_payment p ON al.c_payment_id = p.c_payment_id
+   LEFT JOIN m_entidadfinancieraplan ep ON p.m_entidadfinancieraplan_id = ep.m_entidadfinancieraplan_id
+   LEFT JOIN m_entidadfinanciera ef ON ef.m_entidadfinanciera_id = ep.m_entidadfinanciera_id
+   LEFT JOIN c_bpartner bp ON bp.c_bpartner_id = ef.c_bpartner_id
+   LEFT JOIN c_cashline cl ON al.c_cashline_id = cl.c_cashline_id
+   LEFT JOIN c_cash c ON cl.c_cash_id = c.c_cash_id
+   LEFT JOIN c_invoice ic ON al.c_invoice_credit_id = ic.c_invoice_id
+   LEFT JOIN c_doctype dt ON dt.c_doctype_id = ic.c_doctypetarget_id
+  ORDER BY 
+CASE
+    WHEN al.c_payment_id IS NOT NULL THEN p.tendertype::character varying
+    WHEN al.c_cashline_id IS NOT NULL THEN 'CA'::character varying
+    WHEN al.c_invoice_credit_id IS NOT NULL THEN 'CR'::character varying
+    ELSE NULL::character varying
+END::character varying(2), 
+CASE
+    WHEN al.c_payment_id IS NOT NULL THEN p.documentno
+    WHEN al.c_invoice_credit_id IS NOT NULL THEN ic.documentno
+    ELSE NULL::character varying
+END::character varying(30))
+        UNION ALL 
+                 SELECT NULL::unknown AS c_allocationhdr_id, NULL::unknown AS c_allocationline_id, cl.ad_client_id, cl.ad_org_id, cl.isactive, cl.created, cl.createdby, cl.updated, cl.updatedby, NULL::unknown AS c_invoice_id, NULL::unknown AS c_payment_id, cl.c_cashline_id, NULL::unknown AS c_invoice_credit_id, 'CA'::character varying(2) AS tendertype, NULL::character varying(30) AS documentno, cl.description, (((c.name::text || '_#'::text) || cl.line::text))::character varying(255) AS info, cl.amount, cl.c_cash_id, cl.line, NULL::unknown AS c_doctype_id, NULL::character varying(20) AS checkno, NULL::character varying(255) AS a_bank, NULL::character varying(20) AS transferno, NULL::character(1) AS creditcardtype, NULL::unknown AS m_entidadfinancieraplan_id, NULL::unknown AS m_entidadfinanciera_id, NULL::character varying(30) AS couponnumber, date_trunc('day'::text, c.statementdate) AS allocationdate, cl.docstatus, c.dateacct::date AS dateacct, NULL::unknown AS invoice_documentno, NULL::unknown AS invoice_grandtotal, NULL::unknown AS entidadfinanciera_value, NULL::unknown AS entidadfinanciera_name, NULL::unknown AS bp_entidadfinanciera_value, NULL::unknown AS bp_entidadfinanciera_name, NULL::unknown AS cupon, NULL::unknown AS creditcard, NULL::unknown AS isfiscaldocument, NULL::unknown AS isfiscal, NULL::unknown AS fiscalalreadyprinted
+                   FROM c_cashline cl
+              JOIN c_cash c ON c.c_cash_id = cl.c_cash_id
+             WHERE NOT (EXISTS ( SELECT al.c_allocationline_id
+                      FROM c_allocationline al
+                     WHERE al.c_cashline_id = cl.c_cashline_id)))
+UNION ALL 
+        ( SELECT NULL::unknown AS c_allocationhdr_id, NULL::unknown AS c_allocationline_id, p.ad_client_id, p.ad_org_id, p.isactive, p.created, p.createdby, p.updated, p.updatedby, NULL::unknown AS c_invoice_id, p.c_payment_id, NULL::unknown AS c_cashline_id, NULL::unknown AS c_invoice_credit_id, p.tendertype::character varying(2) AS tendertype, p.documentno, p.description, (((p.documentno::text || '_'::text) || to_char(p.datetrx, 'DD/MM/YYYY'::text)))::character varying(255) AS info, p.payamt AS amount, NULL::unknown AS c_cash_id, NULL::numeric(18,0) AS line, NULL::unknown AS c_doctype_id, p.checkno, p.a_bank, p.checkno AS transferno, p.creditcardtype, p.m_entidadfinancieraplan_id, ep.m_entidadfinanciera_id, p.couponnumber, date_trunc('day'::text, p.datetrx) AS allocationdate, p.docstatus, p.dateacct::date AS dateacct, NULL::unknown AS invoice_documentno, NULL::unknown AS invoice_grandtotal, ef.value AS entidadfinanciera_value, ef.name AS entidadfinanciera_name, bp.value AS bp_entidadfinanciera_value, bp.name AS bp_entidadfinanciera_name, p.couponnumber AS cupon, p.creditcardnumber AS creditcard, NULL::unknown AS isfiscaldocument, NULL::unknown AS isfiscal, NULL::unknown AS fiscalalreadyprinted
+           FROM c_payment p
+      LEFT JOIN m_entidadfinancieraplan ep ON p.m_entidadfinancieraplan_id = ep.m_entidadfinancieraplan_id
+   LEFT JOIN m_entidadfinanciera ef ON ef.m_entidadfinanciera_id = ep.m_entidadfinanciera_id
+   LEFT JOIN c_bpartner bp ON bp.c_bpartner_id = ef.c_bpartner_id
+  WHERE NOT (EXISTS ( SELECT al.c_allocationline_id
+    FROM c_allocationline al
+   WHERE al.c_payment_id = p.c_payment_id))
+  ORDER BY p.tendertype::character varying(2), p.documentno);
+
+ALTER TABLE c_posjournalpayments_v OWNER TO libertya;
+
+CREATE OR REPLACE VIEW c_posjournal_c_payment_v AS 
+SELECT al.c_allocationhdr_id, 
+	al.c_allocationline_id, 
+	al.ad_client_id, 
+	al.ad_org_id, 
+	al.isactive, 
+	al.created, al.createdby, al.updated, al.updatedby, al.c_invoice_id, al.c_payment_id, al.c_cashline_id, al.c_invoice_credit_id, 
+	p.tendertype::character varying AS tendertype, 
+	p.documentno AS documentno, 
+	p.description AS description, 
+	((p.documentno::text || '_'::text) || to_char(p.datetrx, 'DD/MM/YYYY'::text))::character varying AS info, 
+	COALESCE(currencyconvert(al.amount + al.discountamt + al.writeoffamt, ah.c_currency_id, i.c_currency_id, NULL::timestamp with time zone, NULL::integer, ah.ad_client_id, ah.ad_org_id), 0::numeric)::numeric(20,2) AS amount, 
+	null::integer as c_cash_id, 
+	null::numeric(18,0) as line, 
+	null::integer as c_doctype_id, 
+	p.checkno, 
+	p.a_bank, 
+	p.checkno AS transferno, 
+	p.creditcardtype, 
+	p.m_entidadfinancieraplan_id, 
+	ep.m_entidadfinanciera_id, 
+	p.couponnumber, 
+	date_trunc('day'::text, ah.datetrx) AS allocationdate, 
+	p.docstatus AS docstatus, 
+	p.dateacct::date AS dateacct, 
+	i.documentno AS invoice_documentno, 
+	i.grandtotal AS invoice_grandtotal, 
+	ef.value AS entidadfinanciera_value, 
+	ef.name AS entidadfinanciera_name, 
+	bp.value AS bp_entidadfinanciera_value, 
+	bp.name AS bp_entidadfinanciera_name, 
+	p.couponnumber AS cupon, 
+	p.creditcardnumber AS creditcard, 
+	null::bpchar as isfiscaldocument, 
+	null::bpchar as isfiscal, 
+	null::bpchar as fiscalalreadyprinted
+FROM c_allocationline al
+INNER JOIN c_allocationhdr ah ON al.c_allocationhdr_id = ah.c_allocationhdr_id
+LEFT JOIN c_invoice i ON al.c_invoice_id = i.c_invoice_id
+INNER JOIN c_payment p ON al.c_payment_id = p.c_payment_id
+LEFT JOIN m_entidadfinancieraplan ep ON p.m_entidadfinancieraplan_id = ep.m_entidadfinancieraplan_id
+LEFT JOIN m_entidadfinanciera ef ON ef.m_entidadfinanciera_id = ep.m_entidadfinanciera_id
+LEFT JOIN c_bpartner bp ON bp.c_bpartner_id = ef.c_bpartner_id
+UNION ALL 
+        ( SELECT NULL::integer AS c_allocationhdr_id, 
+		NULL::integer AS c_allocationline_id, 
+		p.ad_client_id, 
+		p.ad_org_id, 
+		p.isactive, 
+		p.created, 
+		p.createdby, 
+		p.updated, 
+		p.updatedby, 
+		NULL::integer AS c_invoice_id, 
+		p.c_payment_id, 
+		NULL::integer AS c_cashline_id, 
+		NULL::integer AS c_invoice_credit_id, 
+		p.tendertype::character varying(2) AS tendertype, 
+		p.documentno, 
+		p.description, 
+		(((p.documentno::text || '_'::text) || to_char(p.datetrx, 'DD/MM/YYYY'::text)))::character varying(255) AS info, 
+		p.payamt AS amount, 
+		NULL::integer AS c_cash_id, 
+		NULL::numeric(18,0) AS line, 
+		NULL::integer AS c_doctype_id, 
+		p.checkno, 
+		p.a_bank, 
+		p.checkno AS transferno, 
+		p.creditcardtype, 
+		p.m_entidadfinancieraplan_id, 
+		ep.m_entidadfinanciera_id, 
+		p.couponnumber, 
+		date_trunc('day'::text, p.datetrx) AS allocationdate, 
+		p.docstatus, 
+		p.dateacct::date AS dateacct, 
+		NULL::character varying(30) AS invoice_documentno, 
+		NULL::numeric(20,2) AS invoice_grandtotal, 
+		ef.value AS entidadfinanciera_value, 
+		ef.name AS entidadfinanciera_name, 
+		bp.value AS bp_entidadfinanciera_value, 
+		bp.name AS bp_entidadfinanciera_name, 
+		p.couponnumber AS cupon, 
+		p.creditcardnumber AS creditcard, 
+		NULL::bpchar AS isfiscaldocument, 
+		NULL::bpchar AS isfiscal, 
+		NULL::bpchar AS fiscalalreadyprinted
+           FROM c_payment p
+      LEFT JOIN m_entidadfinancieraplan ep ON p.m_entidadfinancieraplan_id = ep.m_entidadfinancieraplan_id
+   LEFT JOIN m_entidadfinanciera ef ON ef.m_entidadfinanciera_id = ep.m_entidadfinanciera_id
+   LEFT JOIN c_bpartner bp ON bp.c_bpartner_id = ef.c_bpartner_id
+  WHERE NOT (EXISTS ( SELECT al.c_allocationline_id
+    FROM c_allocationline al
+   WHERE al.c_payment_id = p.c_payment_id))
+  ORDER BY p.tendertype::character varying(2), p.documentno);
+
+ALTER TABLE c_posjournal_c_payment_v OWNER TO libertya;
+
+
+
+CREATE OR REPLACE VIEW c_posjournal_c_cash_v AS 
+SELECT al.c_allocationhdr_id, 
+	al.c_allocationline_id, 
+	al.ad_client_id, 
+	al.ad_org_id, 
+	al.isactive, 
+	al.created, 
+	al.createdby, 
+	al.updated, 
+	al.updatedby, al.c_invoice_id, al.c_payment_id, al.c_cashline_id, al.c_invoice_credit_id, 
+        'CA'::character varying AS tendertype, 
+        NULL::character varying AS documentno, 
+        cl.description AS description, 
+        ((c.name::text || '_#'::text) || cl.line::text)::character varying as info, 
+        COALESCE(currencyconvert(al.amount + al.discountamt + al.writeoffamt, ah.c_currency_id, i.c_currency_id, NULL::timestamp with time zone, NULL::integer, ah.ad_client_id, ah.ad_org_id), 0::numeric)::numeric(20,2) AS amount, 
+	cl.c_cash_id, 
+	cl.line, 
+	null::integer as c_doctype_id, 
+	null::character varying as checkno, 
+	null::character varying as a_bank, 
+	null::character varying AS transferno, 
+	null::character(1) as creditcardtype, 
+	null::integer as m_entidadfinancieraplan_id, 
+	null::integer as m_entidadfinanciera_id, 
+	null::character varying as couponnumber, 
+	date_trunc('day'::text, ah.datetrx) AS allocationdate, 
+        cl.docstatus AS docstatus, 
+        c.dateacct::date AS dateacct, 
+        i.documentno AS invoice_documentno, 
+        i.grandtotal AS invoice_grandtotal, 
+        null::character varying as entidadfinanciera_value, 
+        null::character varying as entidadfinanciera_name, 
+        null::character varying as bp_entidadfinanciera_value, 
+        null::character varying as bp_entidadfinanciera_name, 
+        null::character varying AS cupon, 
+        null::character varying AS creditcard, 
+        null::bpchar as isfiscaldocument, 
+        null::bpchar as isfiscal, 
+        null::bpchar as fiscalalreadyprinted
+FROM c_allocationline al
+INNER JOIN c_allocationhdr ah ON al.c_allocationhdr_id = ah.c_allocationhdr_id
+INNER JOIN c_cashline cl ON al.c_cashline_id = cl.c_cashline_id
+INNER JOIN c_cash c ON cl.c_cash_id = c.c_cash_id
+LEFT JOIN c_invoice i ON al.c_invoice_id = i.c_invoice_id
+UNION ALL 
+                 SELECT NULL::integer AS c_allocationhdr_id, 
+			NULL::integer AS c_allocationline_id, 
+			cl.ad_client_id, 
+			cl.ad_org_id, 
+			cl.isactive, 
+			cl.created, 
+			cl.createdby, 
+			cl.updated, 
+			cl.updatedby, 
+			NULL::integer AS c_invoice_id, 
+			NULL::integer AS c_payment_id, 
+			cl.c_cashline_id, 
+			NULL::integer AS c_invoice_credit_id, 
+			'CA'::character varying(2) AS tendertype, 
+			NULL::character varying(30) AS documentno, 
+			cl.description, 
+			(((c.name::text || '_#'::text) || cl.line::text))::character varying(255) AS info, 
+			cl.amount, 
+			cl.c_cash_id, 
+			cl.line, 
+			NULL::integer AS c_doctype_id, 
+			NULL::character varying(20) AS checkno, 
+			NULL::character varying(255) AS a_bank, 
+			NULL::character varying(20) AS transferno, 
+			NULL::character(1) AS creditcardtype, 
+			NULL::integer AS m_entidadfinancieraplan_id, 
+			NULL::integer AS m_entidadfinanciera_id, 
+			NULL::character varying(30) AS couponnumber, 
+			date_trunc('day'::text, c.statementdate) AS allocationdate, 
+			cl.docstatus, 
+			c.dateacct::date AS dateacct, 
+			NULL::character varying(30) AS invoice_documentno, 
+			NULL::numeric(20,2) AS invoice_grandtotal, 
+			NULL::character varying AS entidadfinanciera_value, 
+			NULL::character varying AS entidadfinanciera_name, 
+			NULL::character varying AS bp_entidadfinanciera_value, 
+			NULL::character varying AS bp_entidadfinanciera_name, 
+			NULL::character varying AS cupon, 
+			NULL::character varying AS creditcard, 
+			NULL::bpchar AS isfiscaldocument, 
+			NULL::bpchar AS isfiscal, 
+			NULL::bpchar AS fiscalalreadyprinted
+                   FROM c_cashline cl
+              JOIN c_cash c ON c.c_cash_id = cl.c_cash_id
+             WHERE NOT (EXISTS ( SELECT al.c_allocationline_id
+                      FROM c_allocationline al
+                     WHERE al.c_cashline_id = cl.c_cashline_id));
+
+ALTER TABLE c_posjournal_c_cash_v OWNER TO libertya;
+
+
+CREATE OR REPLACE VIEW c_posjournal_c_invoice_credit_v AS 
+
+SELECT al.c_allocationhdr_id, al.c_allocationline_id, al.ad_client_id, al.ad_org_id, al.isactive, al.created, al.createdby, al.updated, al.updatedby, al.c_invoice_id, al.c_payment_id, al.c_cashline_id, al.c_invoice_credit_id, 
+	'CR'::character varying AS tendertype, 
+        ic.documentno AS documentno, 
+        ic.description AS description, 
+        ic.documentno AS info, 
+        COALESCE(currencyconvert(al.amount + al.discountamt + al.writeoffamt, ah.c_currency_id, i.c_currency_id, NULL::timestamp with time zone, NULL::integer, ah.ad_client_id, ah.ad_org_id), 0::numeric)::numeric(20,2) AS amount, 
+        null::integer as c_cash_id, 
+        null::integer as line, 
+        ic.c_doctype_id, 
+        null::character varying as checkno, 
+        null::character varying as a_bank, 
+        null::character varying AS transferno, 
+        null::character(1) as creditcardtype, 
+        null::integer as m_entidadfinancieraplan_id, 
+        null::integer as m_entidadfinanciera_id, 
+        null::character varying as couponnumber, 
+        date_trunc('day'::text, ah.datetrx) AS allocationdate, 
+	ic.docstatus AS docstatus, 
+	ic.dateacct::date AS dateacct, 
+	i.documentno AS invoice_documentno, 
+	i.grandtotal AS invoice_grandtotal, 
+	null::character varying AS entidadfinanciera_value, 
+	null::character varying AS entidadfinanciera_name, 
+	null::character varying as bp_entidadfinanciera_value, 
+	null::character varying as bp_entidadfinanciera_name, 
+	null::character varying as cupon, 
+	null::character varying as creditcard, 
+	dt.isfiscaldocument, 
+	dt.isfiscal, 
+	ic.fiscalalreadyprinted
+FROM c_allocationline al
+INNER JOIN c_allocationhdr ah ON al.c_allocationhdr_id = ah.c_allocationhdr_id
+INNER JOIN c_invoice ic ON al.c_invoice_credit_id = ic.c_invoice_id
+INNER JOIN c_doctype dt ON dt.c_doctype_id = ic.c_doctypetarget_id
+LEFT JOIN c_invoice i ON al.c_invoice_id = i.c_invoice_id;
+
+ALTER TABLE c_posjournal_c_invoice_credit_v OWNER TO libertya;
+
+
+DROP VIEW c_pos_declaracionvalores_v;
+
+CREATE OR REPLACE VIEW c_pos_declaracionvalores_v AS 
+        (        (        (         SELECT i.ad_client_id, i.ad_org_id, i.c_posjournal_id, i.ad_user_id, i.c_currency_id, i.dateinvoiced AS datetrx, i.docstatus, NULL::unknown AS category, dt.docbasetype AS tendertype, (i.documentno::text || ' '::text) || COALESCE(i.description, ''::character varying)::text AS description, i.c_charge_id, i.chargename, i.c_invoice_id AS doc_id, 
+                                        CASE dt.signo_issotrx
+                                            WHEN 1 THEN i.ca_amount
+                                            WHEN (-1) THEN 0::numeric
+                                            ELSE NULL::numeric
+                                        END::numeric(22,2) AS ingreso, 
+                                        CASE dt.signo_issotrx
+                                            WHEN 1 THEN 0::numeric
+                                            WHEN (-1) THEN abs(i.ca_amount)
+                                            ELSE NULL::numeric
+                                        END::numeric(22,2) AS egreso, i.c_invoice_id, i.documentno AS invoice_documentno, i.total AS invoice_grandtotal, NULL::unknown AS entidadfinanciera_value, NULL::unknown AS entidadfinanciera_name, NULL::unknown AS bp_entidadfinanciera_value, NULL::unknown AS bp_entidadfinanciera_name, NULL::unknown AS cupon, NULL::unknown AS creditcard, NULL::unknown AS generated_invoice_documentno, i.allocation_active, i.c_pos_id, i.posname
+                                   FROM ( SELECT DISTINCT i.ad_client_id, i.ad_org_id, i.documentno, inv.description, i.c_posjournal_id, pj.ad_user_id, i.c_invoice_id, i.c_currency_id, i.docstatus, i.dateinvoiced::date AS dateinvoiced, i.c_bpartner_id, i.c_doctype_id, ch.c_charge_id, ch.name AS chargename, currencybase(i.grandtotal, i.c_currency_id, i.dateinvoiced::timestamp with time zone, i.ad_client_id, i.ad_org_id)::numeric(22,2) AS total, COALESCE(ds.amount, 0::numeric)::numeric(22,2) AS ca_amount, i.allocation_active, pos.c_pos_id, pos.name as posname
+                                           FROM c_posjournalinvoices_v i
+                                      JOIN c_posjournal pj ON pj.c_posjournal_id = i.c_posjournal_id
+                                      INNER JOIN c_pos as pos ON pos.c_pos_id = pj.c_pos_id
+                                 JOIN c_invoice inv ON i.c_invoice_id = inv.c_invoice_id
+                            LEFT JOIN ( SELECT al.c_invoice_id, ah.c_posjournal_id, sum(al.amount) AS amount
+                                         FROM c_allocationhdr ah
+                                    JOIN c_allocationline al ON al.c_allocationhdr_id = ah.c_allocationhdr_id
+                                   WHERE ah.isactive = 'Y'::bpchar
+                                   GROUP BY al.c_invoice_id, ah.c_posjournal_id) ds ON ds.c_invoice_id = inv.c_invoice_id AND pj.c_posjournal_id = ds.c_posjournal_id
+                       LEFT JOIN c_charge ch ON ch.c_charge_id = inv.c_charge_id
+                      ORDER BY i.ad_client_id, i.ad_org_id, i.documentno, inv.description, i.c_posjournal_id, pj.ad_user_id, i.c_invoice_id, i.c_currency_id, i.docstatus, i.dateinvoiced::date, i.c_bpartner_id, i.c_doctype_id, ch.c_charge_id, ch.name, currencybase(i.grandtotal, i.c_currency_id, i.dateinvoiced::timestamp with time zone, i.ad_client_id, i.ad_org_id)::numeric(22,2), COALESCE(ds.amount, 0::numeric)::numeric(22,2), i.allocation_active, pos.c_pos_id, pos.name) i
+                              JOIN c_doctype dt ON i.c_doctype_id = dt.c_doctype_id
+                        UNION ALL 
+                                 SELECT p.ad_client_id, p.ad_org_id, p.c_posjournal_id, p.ad_user_id, p.c_currency_id, p.datetrx, p.docstatus, NULL::unknown AS category, p.tendertype, (p.documentno::text || ' '::text) || COALESCE(p.description, ''::character varying)::text AS description, p.c_charge_id, p.chargename, p.c_payment_id AS doc_id, 
+                                        CASE p.isreceipt
+                                            WHEN 'Y'::bpchar THEN p.total
+                                            ELSE 0::numeric
+                                        END::numeric(22,2) AS ingreso, 
+                                        CASE p.isreceipt
+                                            WHEN 'N'::bpchar THEN abs(p.total)
+                                            ELSE 0::numeric
+                                        END::numeric(22,2) AS egreso, p.c_invoice_id, p.invoice_documentno, p.invoice_grandtotal, p.entidadfinanciera_value, p.entidadfinanciera_name, p.bp_entidadfinanciera_value, p.bp_entidadfinanciera_name, p.cupon, p.creditcard, NULL::unknown AS generated_invoice_documentno, p.allocation_active, p.c_pos_id, p.posname
+                                   FROM ( SELECT p.ad_client_id, p.ad_org_id, p.c_payment_id, p.c_posjournal_id, pj.ad_user_id, p.c_currency_id, p.datetrx::date AS datetrx, p.docstatus, p.documentno, p.description, p.isreceipt, p.tendertype, ch.c_charge_id, ch.name AS chargename, sum(currencybase(pjp.amount, p.c_currency_id, p.datetrx::timestamp with time zone, p.ad_client_id, p.ad_org_id)::numeric(22,2))::numeric(22,2) AS total, pjp.invoice_documentno, pjp.invoice_grandtotal, pjp.entidadfinanciera_value, pjp.entidadfinanciera_name, pjp.bp_entidadfinanciera_value, pjp.bp_entidadfinanciera_name, pjp.cupon, pjp.creditcard, pjp.isactive AS allocation_active, pjp.c_invoice_id, pos.c_pos_id, pos.name as posname
+                                           FROM c_payment p
+                                      JOIN c_posjournal_c_payment_v pjp ON pjp.c_payment_id = p.c_payment_id
+                                 JOIN c_posjournal pj ON pj.c_posjournal_id = p.c_posjournal_id
+                                 INNER JOIN c_pos as pos ON pos.c_pos_id = pj.c_pos_id
+                            LEFT JOIN c_charge ch ON ch.c_charge_id = p.c_charge_id
+                           GROUP BY p.ad_client_id, p.ad_org_id, p.c_payment_id, p.c_posjournal_id, pj.ad_user_id, p.c_currency_id, p.datetrx::date, p.docstatus, p.documentno, p.description, p.isreceipt, p.tendertype, ch.c_charge_id, ch.name, pjp.invoice_documentno, pjp.invoice_grandtotal, pjp.entidadfinanciera_value, pjp.entidadfinanciera_name, pjp.bp_entidadfinanciera_value, pjp.bp_entidadfinanciera_name, pjp.cupon, pjp.creditcard, pjp.isactive, pjp.c_invoice_id, pos.c_pos_id, pos.name) p)
+                UNION ALL 
+                         SELECT c.ad_client_id, c.ad_org_id, c.c_posjournal_id, c.ad_user_id, c.c_currency_id, c.datetrx, c.docstatus, c.cashtype AS category, c.tendertype, 
+                                CASE
+                                    WHEN length(c.description::text) > 0 THEN c.description
+                                    ELSE c.info
+                                END AS description, c.c_charge_id, c.chargename, c.c_cashline_id AS doc_id, 
+                                CASE sign(c.amount)
+                                    WHEN (-1) THEN 0::numeric
+                                    ELSE c.total
+                                END::numeric(22,2) AS ingreso, 
+                                CASE sign(c.amount)
+                                    WHEN (-1) THEN abs(c.total)
+                                    ELSE 0::numeric
+                                END::numeric(22,2) AS egreso, c.c_invoice_id, c.invoice_documentno, c.invoice_grandtotal, c.entidadfinanciera_value, c.entidadfinanciera_name, c.bp_entidadfinanciera_value, c.bp_entidadfinanciera_name, c.cupon, c.creditcard, NULL::unknown AS generated_invoice_documentno, c.allocation_active, c.c_pos_id, c.posname
+                           FROM ( SELECT cl.ad_client_id, cl.ad_org_id, cl.c_cashline_id, c.c_posjournal_id, pj.ad_user_id, cl.c_currency_id, c.statementdate::date AS datetrx, cl.docstatus, cl.description, pjp.info, pjp.tendertype, cl.cashtype, ch.c_charge_id, ch.name AS chargename, sum(currencybase(pjp.amount, cl.c_currency_id, c.statementdate::timestamp with time zone, cl.ad_client_id, cl.ad_org_id)::numeric(22,2))::numeric(22,2) AS total, pjp.invoice_documentno, pjp.invoice_grandtotal, pjp.entidadfinanciera_value, pjp.entidadfinanciera_name, pjp.bp_entidadfinanciera_value, pjp.bp_entidadfinanciera_name, pjp.cupon, pjp.creditcard, cl.amount, pjp.isactive AS allocation_active, pjp.c_invoice_id, pos.c_pos_id, pos.name as posname
+                                   FROM c_cashline cl
+                              JOIN c_cash c ON c.c_cash_id = cl.c_cash_id
+                         JOIN c_posjournal_c_cash_v pjp ON pjp.c_cashline_id = cl.c_cashline_id
+                    JOIN c_posjournal pj ON pj.c_posjournal_id = c.c_posjournal_id
+                    INNER JOIN c_pos as pos ON pos.c_pos_id = pj.c_pos_id
+               LEFT JOIN c_charge ch ON ch.c_charge_id = cl.c_charge_id
+              GROUP BY cl.ad_client_id, cl.ad_org_id, cl.c_cashline_id, c.c_posjournal_id, pj.ad_user_id, cl.c_currency_id, c.statementdate::date, cl.docstatus, cl.description, pjp.info, pjp.tendertype, cl.cashtype, ch.c_charge_id, ch.name, pjp.invoice_documentno, pjp.invoice_grandtotal, pjp.entidadfinanciera_value, pjp.entidadfinanciera_name, pjp.bp_entidadfinanciera_value, pjp.bp_entidadfinanciera_name, pjp.cupon, pjp.creditcard, cl.amount, pjp.isactive, pjp.c_invoice_id, pos.c_pos_id, pos.name) c)
+        UNION ALL 
+                 SELECT i.ad_client_id, i.ad_org_id, i.c_posjournal_id, i.ad_user_id, i.c_currency_id, i.dateinvoiced AS datetrx, i.docstatus, NULL::unknown AS category, i.tendertype, (i.documentno::text || ' '::text) || COALESCE(i.description, ''::character varying)::text AS description, i.c_charge_id, i.chargename, i.c_invoice_id AS doc_id, i.total AS ingreso, 0 AS egreso, i.invoice_id AS c_invoice_id, i.invoice_documentno, i.invoice_grandtotal, i.entidadfinanciera_value, i.entidadfinanciera_name, i.bp_entidadfinanciera_value, i.bp_entidadfinanciera_name, i.cupon, i.creditcard, NULL::unknown AS generated_invoice_documentno, i.allocation_active, i.c_pos_id, i.posname
+                   FROM ( SELECT i.ad_client_id, i.ad_org_id, i.documentno, i.description, ah.c_posjournal_id, pj.ad_user_id, i.c_invoice_id, i.c_currency_id, i.docstatus, pjp.tendertype, i.dateinvoiced::date AS dateinvoiced, i.c_bpartner_id, i.c_doctype_id, ch.c_charge_id, ch.name AS chargename, sum(currencybase(pjp.amount, i.c_currency_id, i.dateinvoiced::timestamp with time zone, i.ad_client_id, i.ad_org_id)::numeric(22,2))::numeric(22,2) AS total, pjp.invoice_documentno, pjp.invoice_grandtotal, pjp.entidadfinanciera_value, pjp.entidadfinanciera_name, pjp.bp_entidadfinanciera_value, pjp.bp_entidadfinanciera_name, pjp.cupon, pjp.creditcard, pjp.isactive AS allocation_active, pjp.c_invoice_id AS invoice_id, pos.c_pos_id, pos.name as posname
+                           FROM c_invoice i
+                      JOIN c_posjournal_c_invoice_credit_v pjp ON pjp.c_invoice_credit_id = i.c_invoice_id
+                 JOIN c_allocationhdr ah ON ah.c_allocationhdr_id = pjp.c_allocationhdr_id
+            JOIN c_posjournal pj ON pj.c_posjournal_id = ah.c_posjournal_id
+            INNER JOIN c_pos as pos ON pos.c_pos_id = pj.c_pos_id
+       LEFT JOIN c_charge ch ON ch.c_charge_id = i.c_charge_id
+      GROUP BY i.ad_client_id, i.ad_org_id, i.documentno, i.description, ah.c_posjournal_id, pj.ad_user_id, i.c_invoice_id, i.c_currency_id, i.docstatus, pjp.tendertype, i.dateinvoiced::date, i.c_bpartner_id, i.c_doctype_id, ch.c_charge_id, ch.name, pjp.invoice_documentno, pjp.invoice_grandtotal, pjp.entidadfinanciera_value, pjp.entidadfinanciera_name, pjp.bp_entidadfinanciera_value, pjp.bp_entidadfinanciera_name, pjp.cupon, pjp.creditcard, pjp.isactive, pjp.c_invoice_id, pos.c_pos_id, pos.name) i
+              JOIN c_doctype dt ON i.c_doctype_id = dt.c_doctype_id
+             WHERE i.docstatus = ANY (ARRAY['CL'::bpchar, 'CO'::bpchar]))
+UNION ALL 
+         SELECT ji.ad_client_id, ji.ad_org_id, ji.c_posjournal_id, pj.ad_user_id, ji.c_currency_id, ji.dateinvoiced AS datetrx, ji.docstatus, NULL::unknown AS category, ji.docbasetype AS tendertype, (ji.documentno::text || ' '::text) || COALESCE(ji.description, ''::character varying)::text AS description, NULL::unknown AS c_charge_id, NULL::unknown AS chargename, ji.c_invoice_id AS doc_id, ji.signo_issotrx::numeric * ji.grandtotal AS ingreso, 0::numeric(22,2) AS egreso, ji.c_invoice_id, ji.documentno AS invoice_documentno, ji.grandtotal AS invoice_grandtotal, NULL::unknown AS entidadfinanciera_value, NULL::unknown AS entidadfinanciera_name, NULL::unknown AS bp_entidadfinanciera_value, NULL::unknown AS bp_entidadfinanciera_name, NULL::unknown AS cupon, NULL::unknown AS creditcard, ic.documentno AS generated_invoice_documentno, ji.allocation_active, pos.c_pos_id, pos.name as posname
+           FROM c_posjournalinvoices_v ji
+      JOIN c_posjournal pj ON ji.c_posjournal_id = pj.c_posjournal_id
+      INNER JOIN c_pos as pos ON pos.c_pos_id = pj.c_pos_id
+   JOIN c_allocationline al ON al.c_allocationhdr_id = ji.c_allocationhdr_id
+   JOIN c_invoice ic ON al.c_invoice_credit_id = ic.c_invoice_id
+  WHERE (ji.docstatus = ANY (ARRAY['VO'::bpchar, 'RE'::bpchar])) AND (ji.isfiscal IS NULL OR ji.isfiscal = 'N'::bpchar OR ji.isfiscal = 'Y'::bpchar AND ji.fiscalalreadyprinted = 'Y'::bpchar);
+
+ALTER TABLE c_pos_declaracionvalores_v OWNER TO libertya;
+
+
+CREATE INDEX cinvoice_posjournal
+  ON c_invoice
+  USING btree
+  (c_posjournal_id);
+
+CREATE INDEX callocationhdr_posjournal
+  ON c_allocationhdr
+  USING btree
+  (c_posjournal_id);
+  
+CREATE INDEX cpayment_posjournal
+  ON c_payment
+  USING btree
+  (c_posjournal_id);
+
+CREATE INDEX ccashline_posjournal
+  ON c_cashline
+  USING btree
+  (c_posjournal_id);
+
+CREATE INDEX ccash_posjournal
+  ON c_cash
+  USING btree
+  (c_posjournal_id);
+
+CREATE INDEX c_allocationline_active
+  ON c_allocationline
+  USING btree
+  (c_allocationhdr_id)
+  WHERE isactive = 'Y'::bpchar;
