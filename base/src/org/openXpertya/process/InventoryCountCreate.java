@@ -25,9 +25,11 @@ import org.openXpertya.model.MAttributeSet;
 import org.openXpertya.model.MInventory;
 import org.openXpertya.model.MInventoryLine;
 import org.openXpertya.model.MInventoryLineMA;
+import org.openXpertya.model.MWarehouse;
 import org.openXpertya.util.DB;
 import org.openXpertya.util.Env;
 import org.openXpertya.util.ErrorOXPSystem;
+import org.openXpertya.util.Util;
 
 /**
  * Descripción de Clase
@@ -63,6 +65,12 @@ public class InventoryCountCreate extends SvrProcess {
 
     private int p_M_Product_Category_ID = 0;
 
+    /** Familia */
+    private int p_M_Product_Gamas_ID = 0;
+    
+    /** Línea de Artículo */
+    private int p_M_Product_Lines_ID = 0;
+    
     /** Descripción de Campos */
 
     private String p_QtyRange = null;
@@ -92,6 +100,10 @@ public class InventoryCountCreate extends SvrProcess {
                 p_ProductValue = ( String )para[ i ].getParameter();
             } else if( name.equals( "M_Product_Category_ID" )) {
                 p_M_Product_Category_ID = para[ i ].getParameterAsInt();
+            } else if( name.equals( "M_Product_Gamas_ID" )) {
+            	p_M_Product_Gamas_ID = para[ i ].getParameterAsInt();
+            } else if( name.equals( "M_Product_Lines_ID" )) {
+            	p_M_Product_Lines_ID = para[ i ].getParameterAsInt();
             } else if( name.equals( "QtyRange" )) {
                 p_QtyRange = ( String )para[ i ].getParameter();
             } else if( name.equals( "DeleteOld" )) {
@@ -154,10 +166,42 @@ public class InventoryCountCreate extends SvrProcess {
             log.fine( "'0' Inserted #" + no );
         }
 
-        StringBuffer sql = new StringBuffer( "SELECT s.M_Product_ID, s.M_Locator_ID, s.M_AttributeSetInstance_ID," + " s.QtyOnHand, p.M_AttributeSet_ID " + "FROM M_Product p" + " INNER JOIN M_Storage s ON (s.M_Product_ID=p.M_Product_ID)" + " INNER JOIN M_Locator l ON (s.M_Locator_ID=l.M_Locator_ID) " + "WHERE l.M_Warehouse_ID=?" + " AND p.IsActive='Y' AND p.IsStocked='Y' and p.ProductType='I'" );
+        StringBuffer sql = new StringBuffer( "SELECT p.M_Product_ID, s.M_Locator_ID, s.M_AttributeSetInstance_ID," + " s.QtyOnHand, p.M_AttributeSet_ID " 
+        									+ " FROM (SELECT p.M_Product_ID, p.Value, p.Name, p.M_AttributeSet_ID "
+        									+ "			FROM M_Product p "
+        									+ " 		INNER JOIN M_Product_Category pc ON (pc.M_Product_Category_ID=p.M_Product_Category_ID) "
+        									+ " 		LEFT JOIN M_Product_Gamas pg ON (pg.M_Product_Gamas_ID=pc.M_Product_Gamas_ID) "
+        									+ " 		LEFT JOIN M_Product_Lines pl ON (pl.M_Product_Lines_ID=pg.M_Product_Lines_ID) "
+        									+ "			WHERE p.IsActive='Y' AND p.IsStocked='Y' AND p.ProductType='I' ");
+        
+        if( (p_ProductValue != null) && ( (p_ProductValue.trim().length() == 0) || p_ProductValue.equals( "%" ))) {
+            p_ProductValue = null;
+        }
+
+        if( p_ProductValue != null ) {
+            sql.append( " AND UPPER(p.Value) LIKE ?" );
+        }
 
         //
 
+        if( p_M_Product_Category_ID != 0 ) {
+            sql.append( " AND pc.M_Product_Category_ID=?" );
+        }
+        
+        if( p_M_Product_Gamas_ID != 0 ) {
+            sql.append( " AND pg.M_Product_Gamas_ID=?" );
+        }
+        
+        if( p_M_Product_Lines_ID != 0 ) {
+            sql.append( " AND pl.M_Product_Lines_ID=?" );
+        }
+        
+        sql.append(") p "); 
+        sql.append(" LEFT JOIN (SELECT s.M_Product_ID, l.M_Warehouse_ID, s.M_Locator_ID, l.Value, s.M_AttributeSetInstance_ID, sum(s.QtyOnHand) QtyOnHand " +
+        						" FROM M_Storage s " +
+        						" INNER JOIN M_Locator l ON (s.M_Locator_ID=l.M_Locator_ID) " +
+        						" WHERE l.M_Warehouse_ID=? ");
+        
         if( p_M_Locator_ID != 0 ) {
             sql.append( " AND s.M_Locator_ID=?" );
         }
@@ -171,23 +215,12 @@ public class InventoryCountCreate extends SvrProcess {
         if( p_LocatorValue != null ) {
             sql.append( " AND UPPER(l.Value) LIKE ?" );
         }
-
-        //
-
-        if( (p_ProductValue != null) && ( (p_ProductValue.trim().length() == 0) || p_ProductValue.equals( "%" ))) {
-            p_ProductValue = null;
-        }
-
-        if( p_ProductValue != null ) {
-            sql.append( " AND UPPER(p.Value) LIKE ?" );
-        }
-
-        //
-
-        if( p_M_Product_Category_ID != 0 ) {
-            sql.append( " AND p.M_Product_Category_ID=?" );
-        }
-
+        
+        sql.append(" GROUP BY s.M_Product_ID, l.M_Warehouse_ID, s.M_Locator_ID, l.Value, s.M_AttributeSetInstance_ID ");
+        sql.append(" ) s ON (s.M_Product_ID=p.M_Product_ID) "); 
+        
+        sql.append(" WHERE 1=1 ");
+        
         // Do not overwrite existing records
 
         if( !p_DeleteOld ) {
@@ -196,7 +229,7 @@ public class InventoryCountCreate extends SvrProcess {
 
         //
 
-        sql.append( " ORDER BY l.Value, p.Value" );    // Locator/Product
+        sql.append( " ORDER BY s.Value, p.Value" );    // Locator/Product
 
         //
 
@@ -208,6 +241,22 @@ public class InventoryCountCreate extends SvrProcess {
 
             int index = 1;
 
+            if( p_ProductValue != null ) {
+                pstmt.setString( index++,p_ProductValue.toUpperCase());
+            }
+
+            if( p_M_Product_Category_ID != 0 ) {
+                pstmt.setInt( index++,p_M_Product_Category_ID );
+            }
+            
+            if( p_M_Product_Gamas_ID != 0 ) {
+                pstmt.setInt( index++,p_M_Product_Gamas_ID );
+            }
+            
+            if( p_M_Product_Lines_ID != 0 ) {
+                pstmt.setInt( index++,p_M_Product_Lines_ID );
+            }
+            
             pstmt.setInt( index++,m_inventory.getM_Warehouse_ID());
 
             if( p_M_Locator_ID != 0 ) {
@@ -218,20 +267,15 @@ public class InventoryCountCreate extends SvrProcess {
                 pstmt.setString( index++,p_LocatorValue.toUpperCase());
             }
 
-            if( p_ProductValue != null ) {
-                pstmt.setString( index++,p_ProductValue.toUpperCase());
-            }
-
-            if( p_M_Product_Category_ID != 0 ) {
-                pstmt.setInt( index++,p_M_Product_Category_ID );
-            }
-
             if( !p_DeleteOld ) {
                 pstmt.setInt( index++,p_M_Inventory_ID );
             }
 
+			Integer defaultLocatorID = MWarehouse.getDefaultLocatorID(
+					m_inventory.getM_Warehouse_ID(), get_TrxName());
+            
             ResultSet rs = pstmt.executeQuery();
-
+            
             while( rs.next()) {
                 int        M_Product_ID              = rs.getInt( 1 );
                 int        M_Locator_ID              = rs.getInt( 2 );
@@ -242,6 +286,8 @@ public class InventoryCountCreate extends SvrProcess {
                     QtyOnHand = Env.ZERO;
                 }
 
+                M_Locator_ID = Util.isEmpty(M_Locator_ID, true)?defaultLocatorID:M_Locator_ID;
+                
                 int M_AttributeSet_ID = rs.getInt( 5 );
 
                 //
