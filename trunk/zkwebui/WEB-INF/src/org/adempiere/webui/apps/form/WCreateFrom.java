@@ -869,6 +869,40 @@ public abstract class WCreateFrom extends ADForm implements EventListener {
 		public void setRemainingQty(BigDecimal remainingQty) {
 			this.remainingQty = remainingQty;
 		}
+		
+		/**
+		 * Convierte a ArrayList el SourceEntity para que el mismo pueda ser cargado en el WListBox 
+		 */
+		public ArrayList<Object> toList() {
+			ArrayList<Object> result = new ArrayList<Object>();
+			CreateFromTableModel model = (CreateFromTableModel)window.getDataTable().getModel();
+			for (int i=0; i < model.getColumnCount(); i++ ) {
+				Object value = null;
+				switch (i) {
+					case DocumentLineTableModel.COL_IDX_SELECTION:
+						value = selected; break;
+					case DocumentLineTableModel.COL_IDX_LINE:
+						value = lineNo; break;
+					case DocumentLineTableModel.COL_IDX_ITEM_CODE:
+						value = itemCode; break;
+					case DocumentLineTableModel.COL_IDX_PRODUCT:
+						value = productName; break;
+					case DocumentLineTableModel.COL_IDX_UOM:
+						value = uomName; break;
+					case DocumentLineTableModel.COL_IDX_QTY:
+						value = lineQty; break;
+					case DocumentLineTableModel.COL_IDX_REMAINING:
+						value = remainingQty; break;
+					case DocumentLineTableModel.COL_IDX_INSTANCE_NAME:
+						value = instanceName; break;
+					default:
+						value = null; break;
+				}
+				result.add(value);
+			}
+			return result;
+		}
+		
     }
     
     /**
@@ -896,28 +930,6 @@ public abstract class WCreateFrom extends ADForm implements EventListener {
 			return true;
 		}
 		
-		public ArrayList<Object> toList() {
-			ArrayList<Object> result = new ArrayList<Object>();
-			// Selected
-			result.add(selected);
-			// Linea
-			result.add(lineNo);
-			// Value
-			result.add(itemCode);
-			// Product
-			KeyNamePair pp = new KeyNamePair(productID, productName);
-			result.add(pp);
-			// Description
-			result.add(description);
-			// UOM
-			pp = new KeyNamePair(uomID, uomName);
-			result.add(pp);
-			// Qty
-			result.add(lineQty);
-			// RemainingQty
-			result.add(remainingQty);
-			return result;
-		}
     }
     
     /**
@@ -1388,5 +1400,7 @@ public abstract class WCreateFrom extends ADForm implements EventListener {
 		window.getWListbox().setData(model, ((DocumentLineTableModel)window.getWListbox().getModel()).getColumnNamesAsList());
 		window.getWListbox().autoSize();
 	}
+	
+
 	
 }
