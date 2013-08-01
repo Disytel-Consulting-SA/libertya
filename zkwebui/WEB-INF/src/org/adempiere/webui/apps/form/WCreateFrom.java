@@ -261,6 +261,12 @@ public abstract class WCreateFrom extends ADForm implements EventListener {
 		row.appendChild(shipmentLabel.rightAlign());
 		row.appendChild(shipmentField.getComponent());				
         
+		row = rows.newRow();
+		row.appendChild(new Space());
+		row.appendChild(new Space());
+		row.appendChild(invoiceOrderLabel.rightAlign());
+		row.appendChild(invoiceOrderField.getComponent());
+		
         customizarPanel();
     }    // jbInit
 
