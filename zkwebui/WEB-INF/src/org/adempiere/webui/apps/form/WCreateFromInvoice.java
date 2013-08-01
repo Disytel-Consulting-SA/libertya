@@ -9,7 +9,6 @@ import java.util.List;
 import java.util.logging.Level;
 
 import org.adempiere.webui.apps.AEnv;
-import org.adempiere.webui.component.ListItem;
 import org.adempiere.webui.editor.WSearchEditor;
 import org.adempiere.webui.event.ValueChangeEvent;
 import org.adempiere.webui.event.ValueChangeListener;
@@ -30,8 +29,6 @@ import org.openXpertya.util.CLogger;
 import org.openXpertya.util.DB;
 import org.openXpertya.util.DisplayType;
 import org.openXpertya.util.Env;
-import org.openXpertya.util.Msg;
-import org.zkoss.zk.ui.event.Event;
 
 public class WCreateFromInvoice extends WCreateFrom {
 
@@ -131,51 +128,7 @@ public class WCreateFromInvoice extends WCreateFrom {
      */
 
     protected void initBPDetails( int C_BPartner_ID ) {
-        /* 
-    	log.config( "C_BPartner_ID" + C_BPartner_ID );
-
-        // load Shipments (Receipts) - Completed, Closed
-
-        shipmentField.removeActionListener( this );
-        shipmentField.removeAllItems();
-
-        // None
-
-        KeyNamePair pp = new KeyNamePair( 0,"" );
-
-        shipmentField.addItem( pp );
-
-        // Display
-
-        StringBuffer display = new StringBuffer( "s.DocumentNo||' - '||" ).append( DB.TO_CHAR( "s.MovementDate",DisplayType.Date,Env.getAD_Language( Env.getCtx())));
-
-        //
-        Boolean isSOTrx = (Boolean)p_mTab.getValue("IsSOTrx");
-        
-        //StringBuffer sql = new StringBuffer( "SELECT s.M_InOut_ID," ).append( display ).append( " FROM M_InOut s " + "WHERE s.C_BPartner_ID=? AND s.IsSOTrx='N' AND s.DocStatus IN ('CL','CO')" + " AND s.M_InOut_ID IN " + "(SELECT sl.M_InOut_ID FROM M_InOutLine sl" + " LEFT OUTER JOIN M_MatchInv mi ON (sl.M_InOutLine_ID=mi.M_InOutLine_ID) " + "GROUP BY sl.M_InOut_ID,mi.M_InOutLine_ID,sl.MovementQty " + "HAVING (sl.MovementQty<>SUM(mi.Qty) AND mi.M_InOutLine_ID IS NOT NULL)" + " OR mi.M_InOutLine_ID IS NULL) " + "ORDER BY s.MovementDate" );
-        StringBuffer sql = new StringBuffer( "SELECT s.M_InOut_ID," ).append( display ).append( " FROM M_InOut s " + "WHERE s.C_BPartner_ID=? AND s.IsSOTrx=? AND s.DocStatus IN ('CL','CO')" + " AND s.M_InOut_ID IN " + "(SELECT sl.M_InOut_ID FROM M_InOutLine sl" + " LEFT OUTER JOIN M_MatchInv mi ON (sl.M_InOutLine_ID=mi.M_InOutLine_ID) " + "GROUP BY sl.M_InOut_ID,mi.M_InOutLine_ID,sl.MovementQty " + "HAVING (sl.MovementQty<>SUM(mi.Qty) AND mi.M_InOutLine_ID IS NOT NULL)" + " OR mi.M_InOutLine_ID IS NULL) " + "ORDER BY s.MovementDate" );
-        
-        try {
-            PreparedStatement pstmt = DB.prepareStatement( sql.toString());
-
-            pstmt.setInt( 1,C_BPartner_ID );
-            pstmt.setString( 2, (isSOTrx == null || !isSOTrx ? "N" : "Y"));
-            ResultSet rs = pstmt.executeQuery();
-
-            while( rs.next()) {
-                pp = new KeyNamePair( rs.getInt( 1 ),rs.getString( 2 ));
-                shipmentField.addItem( pp );
-            }
-
-            rs.close();
-            pstmt.close();
-        } catch( SQLException e ) {
-            log.log( Level.SEVERE,sql.toString(),e );
-        }
-
-        shipmentField.setSelectedIndex( 0 );
-        shipmentField.addActionListener( this );
-        */
+ 
     }    // initDetails
 
     /**
@@ -534,8 +487,6 @@ public class WCreateFromInvoice extends WCreateFrom {
 	 */
 	private void initShipmentLookup() {
     	String whereClause = getShipmentFilter();     	
-//FEDE:NOVA    	shipmentField = VComponentsFactory.VLookupFactory("M_InOut_ID", "M_InOut", p_WindowNo, DisplayType.Search, whereClause, false);
-    	
     	/* FEDE:TODO: ESTO DEBERIA REFACTORIZARSE A OTRO LUGAR */
     	int colID = 3521; 	// M_InOut.M_InOut_ID
     	MLookupInfo info = VComponentsFactory.MLookupInfoFactory( Env.getCtx(),p_WindowNo,p_mTab.getTabNo(),colID,DisplayType.Search, whereClause );
@@ -561,8 +512,6 @@ public class WCreateFromInvoice extends WCreateFrom {
 	 */
 	private void initInvoiceOrderLookup() {
     	String whereClause = getInvoiceOrderFilter(); 
-//FEDE:NOVA    	invoiceOrderField = VComponentsFactory.VLookupFactory("C_Invoice_ID", "C_Invoice", p_WindowNo, DisplayType.Search, whereClause, false);
-    	
     	/* FEDE:TODO: ESTO DEBERIA REFACTORIZARSE A OTRO LUGAR */
     	int colID = 3484; 	// C_Invoice.C_Invoice_ID
     	MLookupInfo info = VComponentsFactory.MLookupInfoFactory( Env.getCtx(),p_WindowNo,p_mTab.getTabNo(),colID,DisplayType.Search, whereClause );
@@ -668,13 +617,6 @@ public class WCreateFromInvoice extends WCreateFrom {
 			return true;
 		}
 
-		@Override
-		public ArrayList<Object> toList() {
-			// TODO Auto-generated method stub
-			return null;
-		}
-		
-
 	}
 
 	@Override
@@ -718,51 +660,5 @@ public class WCreateFromInvoice extends WCreateFrom {
 	{
 		window.dispose();
 	}
-	
-//	public void onEvent(Event e) throws Exception
-//	{
-//		if (m_actionActive)
-//			return;
-//		m_actionActive = true;
-//		
-//		//  Order
-//		if (e.getTarget().equals(orderField))
-//		{
-//			ListItem li = orderField.getValue();
-//			int C_Order_ID = 0;
-//			if (li != null && li.getValue() != null)
-//				C_Order_ID = ((Integer) li.getValue()).intValue();
-//			//  set Invoice, RMA and Shipment to Null
-//			rmaField.setSelectedIndex(-1);
-//			shipmentField.setSelectedIndex(-1);
-//			loadOrder(C_Order_ID, true);
-//		}
-//		//  Shipment
-//		else if (e.getTarget().equals(shipmentField))
-//		{
-//			ListItem li = shipmentField.getSelectedItem();
-//			int M_InOut_ID = 0;
-//			if (li != null && li.getValue() != null)
-//				M_InOut_ID = ((Integer) li.getValue()).intValue();
-//			//  set Order, RMA and Invoice to Null
-//			orderField.setSelectedIndex(-1);
-//			rmaField.setSelectedIndex(-1);
-//			loadShipment(M_InOut_ID);
-//		}
-//		//  RMA
-//		else if (e.getTarget().equals(rmaField))
-//		{
-//			ListItem li = rmaField.getSelectedItem();
-//		    int M_RMA_ID = 0;
-//		    if (li != null && li.getValue() != null)
-//		        M_RMA_ID = ((Integer) li.getValue()).intValue();
-//		    //  set Order and Invoice to Null
-//		    orderField.setSelectedIndex(-1);
-//		    shipmentField.setSelectedIndex(-1);
-//		    loadRMA(M_RMA_ID);
-//		}
-//		m_actionActive = false;
-//	}
-	
 	
 }
