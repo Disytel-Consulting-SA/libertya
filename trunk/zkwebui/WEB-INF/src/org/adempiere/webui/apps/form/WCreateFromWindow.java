@@ -13,6 +13,7 @@
  *****************************************************************************/
 package org.adempiere.webui.apps.form;
 
+import org.adempiere.webui.apps.form.WCreateFrom.CreateFromTableModel;
 import org.adempiere.webui.component.Button;
 import org.adempiere.webui.component.ConfirmPanel;
 import org.adempiere.webui.component.ListModelTable;
@@ -25,7 +26,6 @@ import org.adempiere.webui.event.WTableModelEvent;
 import org.adempiere.webui.event.WTableModelListener;
 import org.adempiere.webui.panel.StatusBarPanel;
 import org.adempiere.webui.window.FDialog;
-import org.openXpertya.grid.CreateFrom;
 import org.openXpertya.util.Trx;
 import org.openXpertya.util.TrxRunnable;
 import org.zkoss.zk.ui.event.Event;
@@ -40,7 +40,7 @@ public class WCreateFromWindow extends Window implements EventListener, WTableMo
 {
 	private static final long serialVersionUID = 1L;
 	
-	private CreateFrom createFrom;
+	private WCreateFrom createFrom;
 	private int windowNo;
 	
 	private Panel parameterPanel = new Panel();
@@ -51,7 +51,7 @@ public class WCreateFromWindow extends Window implements EventListener, WTableMo
 	public static final String SELECT_ALL = "SelectAll";
 
 	
-	public WCreateFromWindow(CreateFrom createFrom, int windowNo)
+	public WCreateFromWindow(WCreateFrom createFrom, int windowNo)
 	{
 		super();
 		setAttribute("mode", "modal");
@@ -66,11 +66,10 @@ public class WCreateFromWindow extends Window implements EventListener, WTableMo
 			
 			statusBar.setStatusDB("");
 			tableChanged(null);
-			createFrom.setInitOK(true);
 		}
 		catch(Exception e)
 		{
-			createFrom.setInitOK(false);
+
 		}		
     }
 	
@@ -143,12 +142,10 @@ public class WCreateFromWindow extends Window implements EventListener, WTableMo
 		else if (e.getTarget().getId().equals(SELECT_ALL)) {
 			ListModelTable model = dataTable.getModel();
 			int rows = model.getSize();
-			for (int i = 0; i < rows; i++)
-			{
-				model.setValueAt(new Boolean(true), i, 0);
+			for (int i = 0; i < rows; i++) {
+				Boolean newValue = !(Boolean)dataTable.getValueAt(i, 0);
+				dataTable.setValueAt(newValue, i, 0);
 			}
-			//refresh
-			dataTable.setModel(model);
 			info();
 		}
 	}
@@ -161,8 +158,18 @@ public class WCreateFromWindow extends Window implements EventListener, WTableMo
 			type = e.getType();
 			if (type != WTableModelEvent.CONTENTS_CHANGED)
 				return;
+
+			// Propagar el cambio de selección hacia las SourceEntities - FIXME: Mejorar MVC
+			if (e.getColumn() == CreateFromTableModel.COL_IDX_SELECTION) {
+				ListModelTable model = dataTable.getModel();
+				Boolean newValue = !(Boolean)model.getValueAt(e.getFirstRow(), CreateFromTableModel.COL_IDX_SELECTION); 
+				model.setValueAt(newValue, e.getFirstRow(), CreateFromTableModel.COL_IDX_SELECTION);
+			}
 		}
-		info();
+        // El OK solo se habilita si hay al menos una línea seleccionada
+        confirmPanel.getOKButton().setEnabled(createFrom.getSelectedSourceEntities().size() > 0);
+
+        info();
 	}
 	
 	public boolean save(String trxName)
@@ -171,8 +178,12 @@ public class WCreateFromWindow extends Window implements EventListener, WTableMo
 		int rows = model.getSize();
 		if (rows == 0)
 			return false;
-		
-		return createFrom.save(dataTable, trxName);
+		try {
+			createFrom.doSave();
+		}catch (Exception e) {
+			return false;
+		}
+		return true;
 	}
 
 	public void info()
@@ -202,6 +213,11 @@ public class WCreateFromWindow extends Window implements EventListener, WTableMo
 	}
 	
 	public WListbox getWListbox()
+	{
+		return dataTable;
+	}
+	
+	public WListbox getDataTable()
 	{
 		return dataTable;
 	}

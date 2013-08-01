@@ -50,7 +50,7 @@ public class WCreateFromRMAUI extends CreateFromRMA implements ValueChangeListen
 		super(tab);
 		log.info(getGridTab().toString());
 		
-		window = new WCreateFromWindow(this, getGridTab().getWindowNo());
+//		window = new WCreateFromWindow(this, getGridTab().getWindowNo());
 		
 		p_WindowNo = getGridTab().getWindowNo();
 

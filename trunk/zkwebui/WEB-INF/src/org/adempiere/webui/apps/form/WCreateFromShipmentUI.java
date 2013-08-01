@@ -70,7 +70,7 @@ public class WCreateFromShipmentUI extends CreateFromShipment implements EventLi
 		super(tab);
 		log.info(getGridTab().toString());
 		
-		window = new WCreateFromWindow(this, getGridTab().getWindowNo());
+//		window = new WCreateFromWindow(this, getGridTab().getWindowNo());
 		
 		p_WindowNo = getGridTab().getWindowNo();
 

@@ -35,6 +35,7 @@ import org.adempiere.webui.WZoomAcross;
 import org.adempiere.webui.apps.AEnv;
 import org.adempiere.webui.apps.ProcessModalDialog;
 import org.adempiere.webui.apps.WReport;
+import org.adempiere.webui.apps.form.WCreateFrom;
 import org.adempiere.webui.apps.form.WCreateFromFactory;
 import org.adempiere.webui.apps.form.WPayment;
 import org.adempiere.webui.component.CWindowToolbar;
@@ -1943,15 +1944,19 @@ public abstract class AbstractADWindowPanel extends AbstractUIPart implements To
 
 		else if (col.equals("CreateFrom"))
 		{
-			ICreateFrom cf = WCreateFromFactory.create(curTab);
+			WCreateFrom cf = WCreateFrom.create(curTab);
 
 			if(cf != null)
 			{
 				if(cf.isInitOK())
 				{
 					cf.showWindow();
+					// cf.setVisible(true);
+					cf.dispose();
 					curTab.dataRefresh();
 				}
+				else
+					cf.closeWindow();
 				return;
 			}
 			// else may start process
