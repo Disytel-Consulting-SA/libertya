@@ -59,7 +59,7 @@ public class WCreateFromInvoiceUI extends CreateFromInvoice implements EventList
 		super(tab);
 		log.info(getGridTab().toString());
 		
-		window = new WCreateFromWindow(this, getGridTab().getWindowNo());
+//		window = new WCreateFromWindow(this, getGridTab().getWindowNo());
 		
 		p_WindowNo = getGridTab().getWindowNo();
 
