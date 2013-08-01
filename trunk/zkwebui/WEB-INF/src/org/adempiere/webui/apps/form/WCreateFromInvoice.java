@@ -140,6 +140,9 @@ public class WCreateFromInvoice extends WCreateFrom {
 
     private void loadShipment( int M_InOut_ID ) {
         log.config( "M_InOut_ID=" + M_InOut_ID );
+        
+        initDataTable();
+        
         p_order = null;
         
         if (M_InOut_ID > 0) {

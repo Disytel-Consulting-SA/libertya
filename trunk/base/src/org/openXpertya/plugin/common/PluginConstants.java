@@ -39,8 +39,11 @@ public class PluginConstants {
 	/** Prefijo para clases InfoPanel (Web) */
 	public static final String CLASS_INFO_SUFFIX = "Panel";
 	
-	/** Prefijo para clases CreateFrom */
+	/** Prefijo para clases CreateFrom (Swing) */
 	public static final String CLASS_CREATEFROM_PREFIX = "VCreateFrom";
+	
+	/** Prefijo para clases CreateFrom (Web) */
+	public static final String CLASS_WCREATEFROM_PREFIX = "WCreateFrom";
 
 		
 	/** ----------------------- DEFINICION DE ARCHIVOS DE PLUGIN ----------------------- */

@@ -27,6 +27,7 @@ import org.adempiere.webui.editor.WSearchEditor;
 import org.adempiere.webui.event.ValueChangeEvent;
 import org.adempiere.webui.event.ValueChangeListener;
 import org.adempiere.webui.panel.ADForm;
+import org.adempiere.webui.plugin.common.PluginWCreateFromUtils;
 import org.adempiere.webui.window.FDialog;
 import org.openXpertya.apps.form.VComponentsFactory;
 import org.openXpertya.grid.VCreateFrom;
@@ -73,16 +74,16 @@ public abstract class WCreateFrom extends ADForm implements EventListener {
         WCreateFrom retValue = null;
 
         // Busca una definición de CreateFrom en los plugins activos
-//FEDE:SIVA        retValue = PluginCreateFromUtils.getCreateFrom(mTab);
+        retValue = PluginWCreateFromUtils.getCreateFrom(mTab);
         
         if (retValue != null) {
         	; // Devuelve retValue que es la instancia del CreateFrom del plugin
         } else if( AD_Table_ID == 392 ) {           // C_BankStatement
-//            retValue = new VCreateFromStatement( mTab );
+//            retValue = new WCreateFromStatement( mTab );
         } else if( AD_Table_ID == 318 ) {    // C_Invoice
             retValue = new WCreateFromInvoice( mTab );
         } else if( AD_Table_ID == 319 ) {    // M_InOut
-//            retValue = new VCreateFromShipment( mTab );
+//            retValue = new WCreateFromShipment( mTab );
         } else if( AD_Table_ID == 426 ) {    // C_PaySelection
             return null;                     // ignore - will call process C_PaySelection_CreateFrom
         } else                               // Not supported CreateFrom
