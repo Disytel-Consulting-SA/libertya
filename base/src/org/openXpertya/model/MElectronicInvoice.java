@@ -57,16 +57,25 @@ public class MElectronicInvoice extends X_E_ElectronicInvoice {
 		setIdentif_Comprador(getCuit(inv.getCUIT()));							// CUIT del cliente según se vio en una exportación WEB de la AFIP
 		setIdentif_Vendedor("0");												// No se usa
 		setName(name);
-		setGrandTotal(inv.getGrandTotal());
-		setTaxBaseAmt(getInvoiceTaxBaseAmt(inv.getC_Invoice_ID())); 			// Suma los taxbaseamt de la factura
-		setTotalLines(inv.getNetAmount());
-		setTaxAmt(getInvoiceTaxAmt(inv.getC_Invoice_ID()));						// suma los taxamt de la factura
+		MClientInfo ci = MClient.get(getCtx()).getInfo();
+		int currencyClient = ci.getC_Currency_ID();
+		setGrandTotal(MCurrency.currencyConvert(inv.getGrandTotal(), inv.getC_Currency_ID(), currencyClient, inv.getDateAcct(), inv.getAD_Org_ID(),getCtx()));
+		setTaxBaseAmt(MCurrency.currencyConvert(getInvoiceTaxBaseAmt(inv.getC_Invoice_ID()), inv.getC_Currency_ID(), currencyClient, inv.getDateAcct(), inv.getAD_Org_ID(),getCtx())); 			// Suma los taxbaseamt de la factura
+		setTotalLines(MCurrency.currencyConvert(inv.getNetAmount(), inv.getC_Currency_ID(), currencyClient, inv.getDateAcct(), inv.getAD_Org_ID(),getCtx()));
+		setTaxAmt(MCurrency.currencyConvert(getInvoiceTaxAmt(inv.getC_Invoice_ID()), inv.getC_Currency_ID(), currencyClient, inv.getDateAcct(), inv.getAD_Org_ID(),getCtx()));						// suma los taxamt de la factura
 		setTipo_Responsable(getRefTablaTipoResponsable(c_Categoria_Iva_ID));// Según tabla 4
 		setCod_Moneda(getRefTablaMoneda(inv.getC_Currency_ID()));	  			// sacar de c_currency	
 		setMultiplyRate(new BigDecimal(1));										// No se usa
 		setCant_Alicuotas_Iva(getInvoiceCantAlicuotas(inv.getC_Invoice_ID()));	// Campo calculado
-		setCAI(doctype.getCAI());
-		setOperacionesExentas(getInvoiceTaxAmtTaxExempt(inv.getC_Invoice_ID()));
+		if(Util.isEmpty(inv.getcae())){
+			setCAI(doctype.getCAI());
+			setDateCAI(doctype.getDateCAI());
+		}
+		else{
+			setCAI(inv.getcae());
+			setDateCAI(inv.getvtocae());
+		}
+		setOperacionesExentas(MCurrency.currencyConvert(getInvoiceTaxAmtTaxExempt(inv.getC_Invoice_ID()), inv.getC_Currency_ID(), currencyClient, inv.getDateAcct(), inv.getAD_Org_ID(),getCtx()));
 		//Si el impuesto liquidado (campo 15) es igual a cero (0) y el importe total de conceptos que no integran el precio neto gravado (campo 13) es distinto de cero, se deberá completar 
 		if ((getTaxAmt().compareTo(BigDecimal.ZERO) == 0) && (getOperacionesExentas().compareTo(BigDecimal.ZERO) == 0)){
 			if (getTipo_Responsable() == 9){
@@ -75,14 +84,12 @@ public class MElectronicInvoice extends X_E_ElectronicInvoice {
 		}
 		setRNI(BigDecimal.ZERO);
 		setTransporte(BigDecimal.ZERO);
-		setPercepcionesIIBB(getImpuestoIIBB(getRefTablaImpuestosIIBB(),inv.getC_Invoice_ID()));
+		setPercepcionesIIBB(MCurrency.currencyConvert(getImpuestoIIBB(getRefTablaImpuestosIIBB(),inv.getC_Invoice_ID()), inv.getC_Currency_ID(), currencyClient, inv.getDateAcct(), inv.getAD_Org_ID(),getCtx()));
 		
 		setImportePercepciones(BigDecimal.ZERO);										// No se usa
 		setImpuestosMunicipales(BigDecimal.ZERO);										// No se usa
 		setImpuestosInternos(BigDecimal.ZERO);											// No se usa
 		
-		
-		setDateCAI(doctype.getDateCAI());
 		if (inv.getDocStatus().equalsIgnoreCase("VO") || inv.getDocStatus().equalsIgnoreCase("RE")){
 			setDateVoid(inv.getUpdated());
 		}
@@ -272,10 +279,10 @@ public class MElectronicInvoice extends X_E_ElectronicInvoice {
 			 MTax tax = new MTax(getCtx(), rs.getInt("c_tax_id"), get_TrxName());
 			 if (tax.getRate() == BigDecimal.ZERO || tax.isTaxExempt() == true){
 				 MInvoiceTax invoiceTax = new MInvoiceTax(getCtx(), rs, get_TrxName());
-				 sumTaxAmt = sumTaxAmt.add(invoiceTax.getTaxAmt());
+				 sumTaxAmt = sumTaxAmt.add(invoiceTax.getTaxBaseAmt());
 			 }
 		 } 
-		return sumTaxAmt;
+		 return sumTaxAmt;
 	}
 	
 	private int getCodJurisdiccionIIBB(String iibb){
