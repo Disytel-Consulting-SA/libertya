@@ -4,6 +4,7 @@ import java.math.BigDecimal;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -618,12 +619,6 @@ public abstract class WCreateFrom extends ADForm implements EventListener {
         	);
         }
 
-        // Se desactiva la posibilidad de ordenamiento debido a que la lógica está "atada"
-        // a que el modelo de la tabla sea instancia de DefaultTableModel. Debido a que esta
-        // tabla no tiene un DefaultTableModel, se desactiva al posibilidad de ordenar para
-        // que no se disparen errores (además no es tan requerida esa funcionalidad aquí).
-//FEDE:SIVAPERONOSECOMO        window.getDataTable(). .setSorted(false);
-        
         // Si es Perfil Ventas no se muestra la columna COL_IDX_INSTANCE_NAME
         if (isSOTrx()) {
     		((CreateFromTableModel) window.getDataTable().getModel()).updateColumns();
@@ -1058,6 +1053,15 @@ public abstract class WCreateFrom extends ADForm implements EventListener {
     	/** Posibilidad de edición de las columnas */
     	private Map<Integer,Boolean> columnEditable;
     	
+
+        public void sort(Comparator cmpr, boolean ascending)
+        { 
+            // Se desactiva la posibilidad de ordenamiento debido a que la lógica está "atada"
+            // a que el modelo de la tabla sea instancia de DefaultTableModel. Debido a que esta
+            // tabla no tiene un DefaultTableModel, se desactiva al posibilidad de ordenar para
+            // que no se disparen errores (además no es tan requerida esa funcionalidad aquí).        	
+        }
+    	
 		/**
     	 * Constructor por defecto que no asigna los datos del modelo.
     	 * Luego se deben cargar los datos invocando el método 
@@ -1323,7 +1327,7 @@ public abstract class WCreateFrom extends ADForm implements EventListener {
 		
 		@Override
 		protected void updateColumns() {
-// FEDE:NOSESIVA, QUEDARA PARA DESPUES
+// TODO: Pendiente de migrar. No es de alta prioridad.
 //			window.getDataTable()dataTable.getColumnModel().removeColumn(dataTable.getColumnModel().getColumn(DocumentLineTableModel.COL_IDX_INSTANCE_NAME));
 //			((DocumentLineTableModel)dataTable.getModel()).visibles = ((DocumentLineTableModel) window.getDataTable().getModel()).visibles - 1; 
 		}
@@ -1415,7 +1419,7 @@ public abstract class WCreateFrom extends ADForm implements EventListener {
     		}
     		// Si en el recorrido anterior ninguna celda de la columna tenia un valor para la columna
     		// Descripcion (nombre de la instacia) se elimina la columna de la tabla y no se visualiza.
-    	// FEDE:NOVA HASTA QUE NO SE IMPLEMENTE EL WCreateFromShipment
+// TODO: Pendiente de migrar. No es de alta prioridad.
 //    		if(!mostrarColumna){
 //    			if( (window.getDataTable().getModel()) instanceof DocumentLineTableModelFromShipment ){
 //    				((DocumentLineTableModelFromShipment)window.getDataTable().getModel()).visibles = ((DocumentLineTableModelFromShipment) window.getDataTable().getModel()).visibles - 1; 
