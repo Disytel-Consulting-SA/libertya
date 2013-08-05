@@ -198,7 +198,7 @@ public class WCreateFromWindow extends Window implements EventListener, WTableMo
 		}
 		setStatusLine(count, null);
 		
-		createFrom.info();
+//		createFrom.info();
 	}
 	
 	public void setStatusLine(int selectedRowCount, String text) 

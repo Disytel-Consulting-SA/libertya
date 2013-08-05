@@ -238,20 +238,6 @@ public class WCreateFromInvoice extends WCreateFrom {
         loadTable(data);
     }    // loadShipment
 
-    /**
-     * Descripción de Método
-     *
-     */
-
-    protected void info() {
-        int count = 0;
-        for (SourceEntity sourceEntity : getSourceEntities()) {
-			if (sourceEntity.selected) {
-				count++; 
-			}
-		}
-        window.setStatusLine(count, "");
-    }    // info
 
     /**
      * Descripción de Método
