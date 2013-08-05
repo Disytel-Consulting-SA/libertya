@@ -13,6 +13,7 @@ import java.util.Properties;
 import java.util.Vector;
 import java.util.logging.Level;
 
+import org.adempiere.webui.apps.form.WCreateFromShipment.DocumentLineTableModelFromShipment;
 import org.adempiere.webui.component.Checkbox;
 import org.adempiere.webui.component.Grid;
 import org.adempiere.webui.component.GridFactory;
@@ -83,7 +84,7 @@ public abstract class WCreateFrom extends ADForm implements EventListener {
         } else if( AD_Table_ID == 318 ) {    // C_Invoice
             retValue = new WCreateFromInvoice( mTab );
         } else if( AD_Table_ID == 319 ) {    // M_InOut
-//            retValue = new WCreateFromShipment( mTab );
+            retValue = new WCreateFromShipment( mTab );
         } else if( AD_Table_ID == 426 ) {    // C_PaySelection
             return null;                     // ignore - will call process C_PaySelection_CreateFrom
         } else                               // Not supported CreateFrom
@@ -108,7 +109,7 @@ public abstract class WCreateFrom extends ADForm implements EventListener {
         p_WindowNo = mTab.getWindowNo();
         p_mTab     = mTab;
 		window = new WCreateFromWindow(this, mTab.getWindowNo());
-		window.setTitle( Msg.getElement( Env.getCtx(),"C_Invoice_ID",false ) + " .. " + Msg.translate( Env.getCtx(),"CreateFrom" ));
+		window.setTitle(Msg.translate( Env.getCtx(),"CreateFrom"));
 
         try {
         	initOrderLookup();
@@ -127,7 +128,7 @@ public abstract class WCreateFrom extends ADForm implements EventListener {
             	initDataTable();
             }
             p_initOK = true;
-        } catch( Exception e ) {
+        } catch( Exception e ) { 
             log.log( Level.SEVERE,"",e );
             p_initOK = false;
         }
@@ -191,7 +192,7 @@ public abstract class WCreateFrom extends ADForm implements EventListener {
 
     /** Descripción de Campos */
 
-    protected Listbox invoiceField = null;
+    protected WSearchEditor invoiceField = null;
 
     /** Descripción de Campos */
 
@@ -216,6 +217,7 @@ public abstract class WCreateFrom extends ADForm implements EventListener {
 
     protected boolean m_actionActive = false;
     
+	protected Checkbox allInOut;
     /**
      * Descripción de Método
      *
@@ -259,14 +261,27 @@ public abstract class WCreateFrom extends ADForm implements EventListener {
 		row = rows.newRow();
 		row.appendChild(new Space());
 		row.appendChild(new Space());
-		row.appendChild(shipmentLabel.rightAlign());
-		row.appendChild(shipmentField.getComponent());				
-        
-		row = rows.newRow();
-		row.appendChild(new Space());
-		row.appendChild(new Space());
+
 		row.appendChild(invoiceOrderLabel.rightAlign());
 		row.appendChild(invoiceOrderField.getComponent());
+        
+		row = rows.newRow();
+		if (locatorField!=null && locatorField.isVisible()) {
+			row.appendChild(locatorLabel.rightAlign());
+			row.appendChild(locatorField.getComponent());
+		}
+		else {
+			row.appendChild(new Space());
+			row.appendChild(new Space());
+		}
+		if (invoiceField!=null) {
+			row.appendChild(invoiceLabel.rightAlign());
+			row.appendChild(invoiceField.getComponent());
+		}
+		if (shipmentField!=null) {
+			row.appendChild(shipmentLabel.rightAlign());
+			row.appendChild(shipmentField.getComponent());
+		}
 		
         customizarPanel();
     }    // jbInit
@@ -305,12 +320,7 @@ public abstract class WCreateFrom extends ADForm implements EventListener {
 
     abstract void initBPDetails( int C_BPartner_ID );
 
-    /**
-     * Descripción de Método
-     *
-     */
 
-    abstract void info();
 
     /**
      * Descripción de Método
@@ -569,7 +579,6 @@ public abstract class WCreateFrom extends ADForm implements EventListener {
      */
     private void initOrderLookup() {
     	String whereClause = getOrderFilter(); 
-//FEDE:NOVA    	orderField = VComponentsFactory.VLookupFactory("C_Order_ID", "C_Order", p_WindowNo, DisplayType.Search, whereClause, false);
     	/* FEDE:TODO: ESTO DEBERIA REFACTORIZARSE A OTRO LUGAR */
     	int colID = 2161; 	// C_Order.C_Order_ID
     	MLookupInfo info = VComponentsFactory.MLookupInfoFactory( Env.getCtx(),p_WindowNo,p_mTab.getTabNo(),colID,DisplayType.Search, whereClause );
@@ -781,6 +790,7 @@ public abstract class WCreateFrom extends ADForm implements EventListener {
     	/** Indica si esta entidad debe ser procesada o no */
     	protected Boolean selected = false;
 
+    	/** Requiere la conversion del objeto a un array de valores */
     	public abstract ArrayList<Object> toList();
     }
 
@@ -887,9 +897,9 @@ public abstract class WCreateFrom extends ADForm implements EventListener {
 					case DocumentLineTableModel.COL_IDX_ITEM_CODE:
 						value = itemCode; break;
 					case DocumentLineTableModel.COL_IDX_PRODUCT:
-						value = productName; break;
+						value = new KeyNamePair(productID, productName) ; break;
 					case DocumentLineTableModel.COL_IDX_UOM:
-						value = uomName; break;
+						value = new KeyNamePair(uomID, uomName) ; break;
 					case DocumentLineTableModel.COL_IDX_QTY:
 						value = lineQty; break;
 					case DocumentLineTableModel.COL_IDX_REMAINING:
@@ -931,6 +941,45 @@ public abstract class WCreateFrom extends ADForm implements EventListener {
 			return true;
 		}
 		
+		/**
+		 * Esta redefinicion se utiliza solo en el caso de Ver todos los Pedidos para creacion de remitos 
+		 */
+		public ArrayList<Object> toList() {
+			// Si allInOut es nulo o no esta seleccionado, entonces usar la definicion tradicional. TODO: Mejorar
+			if (allInOut==null || !allInOut.isSelected())
+				return super.toList();
+			ArrayList<Object> result = new ArrayList<Object>();
+			CreateFromTableModel model = (CreateFromTableModel)window.getDataTable().getModel();
+			for (int i=0; i < model.getColumnCount(); i++ ) {
+				Object value = null;
+				switch (i) {
+					case DocumentLineTableModelFromShipment.COL_IDX_SELECTION:
+						value = selected; break;
+					case DocumentLineTableModelFromShipment.COL_IDX_ORDER:
+						value = new KeyNamePair(orderLineID, documentNo) ; break;						
+					case DocumentLineTableModelFromShipment.COL_IDX_DATE:
+						value = dateOrderLine; break;
+					case DocumentLineTableModelFromShipment.COL_IDX_LINE:
+						value = lineNo; break;
+					case DocumentLineTableModelFromShipment.COL_IDX_ITEM_CODE:
+						value = itemCode; break;						
+					case DocumentLineTableModelFromShipment.COL_IDX_PRODUCT:
+						value = new KeyNamePair(productID, productName) ; break;
+					case DocumentLineTableModelFromShipment.COL_IDX_UOM:
+						value = new KeyNamePair(uomID, uomName) ; break;
+					case DocumentLineTableModelFromShipment.COL_IDX_QTY:
+						value = lineQty; break;
+					case DocumentLineTableModelFromShipment.COL_IDX_REMAINING:
+						value = remainingQty; break;
+					case DocumentLineTableModelFromShipment.COL_IDX_INSTANCE_NAME:
+						value = instanceName; break;
+					default:
+						value = null; break;
+				}
+				result.add(value);
+			}
+			return result;
+		}
     }
     
     /**
@@ -1369,12 +1418,12 @@ public abstract class WCreateFrom extends ADForm implements EventListener {
     	// FEDE:NOVA HASTA QUE NO SE IMPLEMENTE EL WCreateFromShipment
 //    		if(!mostrarColumna){
 //    			if( (window.getDataTable().getModel()) instanceof DocumentLineTableModelFromShipment ){
-//    				((DocumentLineTableModelFromShipment)dataTable.getModel()).visibles = ((DocumentLineTableModelFromShipment) window.getDataTable().getModel()).visibles - 1; 
-//        			dataTable.getColumnModel().removeColumn(dataTable.getColumnModel().getColumn(DocumentLineTableModelFromShipment.COL_IDX_INSTANCE_NAME));	
+//    				((DocumentLineTableModelFromShipment)window.getDataTable().getModel()).visibles = ((DocumentLineTableModelFromShipment) window.getDataTable().getModel()).visibles - 1; 
+//    				window.getDataTable().getModel().remove(window.getDataTable().getModel().get(DocumentLineTableModelFromShipment.COL_IDX_INSTANCE_NAME));	
 //    			}
 //    			else{
-//    				((DocumentLineTableModel)dataTable.getModel()).visibles = ((DocumentLineTableModel) dataTable.getModel()).visibles - 1; 
-//        			dataTable.getColumnModel().removeColumn(dataTable.getColumnModel().getColumn(DocumentLineTableModel.COL_IDX_INSTANCE_NAME));	
+//    				((DocumentLineTableModel)window.getDataTable().getModel()).visibles = ((DocumentLineTableModel)window.getDataTable().getModel()).visibles - 1; 
+//    				window.getDataTable().getModel().remove(window.getDataTable().getModel().get(DocumentLineTableModel.COL_IDX_INSTANCE_NAME));	
 //    			}
 //    		}
     	}
