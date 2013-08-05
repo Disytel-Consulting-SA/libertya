@@ -37,7 +37,7 @@ public class WCreateFromInvoice extends WCreateFrom {
         log.info( mTab.toString());
 		p_WindowNo = mTab.getWindowNo();
 		AEnv.showWindow(window);
-    }    // VCreateFromInvoice
+    }    
 	
     /** Descripción de Campos */
 

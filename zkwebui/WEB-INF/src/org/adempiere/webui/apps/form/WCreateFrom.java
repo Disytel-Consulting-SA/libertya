@@ -80,8 +80,8 @@ public abstract class WCreateFrom extends ADForm implements EventListener {
         
         if (retValue != null) {
         	; // Devuelve retValue que es la instancia del CreateFrom del plugin
-        } else if( AD_Table_ID == 392 ) {           // C_BankStatement
-//            retValue = new WCreateFromStatement( mTab );
+        } else if( AD_Table_ID == 392 ) {    // C_BankStatement
+            retValue = new WCreateFromStatement( mTab );
         } else if( AD_Table_ID == 318 ) {    // C_Invoice
             retValue = new WCreateFromInvoice( mTab );
         } else if( AD_Table_ID == 319 ) {    // M_InOut
@@ -157,7 +157,7 @@ public abstract class WCreateFrom extends ADForm implements EventListener {
 
     /** Descripción de Campos */
 
-    private Label bankAccountLabel = new Label();
+    protected Label bankAccountLabel = new Label();
 
     /** Descripción de Campos */
 
@@ -165,7 +165,7 @@ public abstract class WCreateFrom extends ADForm implements EventListener {
 
     /** Descripción de Campos */
 
-    protected Listbox bankAccountField;
+    protected WSearchEditor bankAccountField;
 
     protected Checkbox automatico = new Checkbox();
 
@@ -253,18 +253,23 @@ public abstract class WCreateFrom extends ADForm implements EventListener {
 		
 		Rows rows = (Rows) parameterStdLayout.newRows();
 		Row row = rows.newRow();
-		row.appendChild(bPartnerLabel.rightAlign());
-		if (bPartnerField != null)
+		if (bPartnerField != null) {
 			row.appendChild(bPartnerField.getComponent());
-		row.appendChild(orderLabel.rightAlign());
-		row.appendChild(orderField.getComponent());
+			row.appendChild(bPartnerLabel.rightAlign());
+		}
+		if (orderField!=null) {
+			row.appendChild(orderLabel.rightAlign());
+			row.appendChild(orderField.getComponent());
+		}
 		
 		row = rows.newRow();
 		row.appendChild(new Space());
 		row.appendChild(new Space());
 
-		row.appendChild(invoiceOrderLabel.rightAlign());
-		row.appendChild(invoiceOrderField.getComponent());
+		if (invoiceOrderField!=null) {
+			row.appendChild(invoiceOrderLabel.rightAlign());
+			row.appendChild(invoiceOrderField.getComponent());
+		}
         
 		row = rows.newRow();
 		if (locatorField!=null && locatorField.isVisible()) {
