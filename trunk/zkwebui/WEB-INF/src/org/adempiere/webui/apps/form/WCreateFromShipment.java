@@ -57,7 +57,7 @@ public class WCreateFromShipment extends WCreateFrom {
         log.info( mTab.toString());
 		p_WindowNo = mTab.getWindowNo();
 		AEnv.showWindow(window);
-	} // VCreateFromShipment
+	}
 
 	/** Descripción de Campos */
 
