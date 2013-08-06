@@ -10,6 +10,10 @@ import java.util.List;
 import java.util.logging.Level;
 
 import org.adempiere.webui.apps.AEnv;
+import org.adempiere.webui.component.Grid;
+import org.adempiere.webui.component.GridFactory;
+import org.adempiere.webui.component.Row;
+import org.adempiere.webui.component.Rows;
 import org.adempiere.webui.editor.WSearchEditor;
 import org.adempiere.webui.event.ValueChangeEvent;
 import org.adempiere.webui.event.ValueChangeListener;
@@ -252,7 +256,7 @@ public class WCreateFromStatement  extends WCreateFrom {
 	/**
      * Entidad Oríden: Pagos
      */
-    protected class Payment extends SourceEntity {
+    protected class Payment extends DocumentLine {
     	/** ID del pago */
     	protected int paymentID = 0;
     	/** Nro de Documento del pago */
@@ -379,9 +383,13 @@ public class WCreateFromStatement  extends WCreateFrom {
 		orderField.setVisible(false);
 		locatorLabel.setVisible(false);
 		locatorField.setVisible(false);
-		
-		window.getParameterPanel().appendChild(bankAccountLabel.rightAlign());
-		window.getParameterPanel().appendChild(bankAccountField.getComponent());
+		Grid parameterStdLayout = GridFactory.newGridLayout();		
+		Rows rows = (Rows) parameterStdLayout.newRows();
+		Row row = rows.newRow();
+		row.appendChild(bankAccountLabel.rightAlign());
+		row.appendChild(bankAccountField.getComponent());
+		window.getParameterPanel().appendChild(parameterStdLayout);
+
 	}
 	
 	@Override
