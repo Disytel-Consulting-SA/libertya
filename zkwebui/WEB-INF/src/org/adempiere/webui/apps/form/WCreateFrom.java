@@ -254,8 +254,8 @@ public abstract class WCreateFrom extends ADForm implements EventListener {
 		Rows rows = (Rows) parameterStdLayout.newRows();
 		Row row = rows.newRow();
 		if (bPartnerField != null) {
-			row.appendChild(bPartnerField.getComponent());
 			row.appendChild(bPartnerLabel.rightAlign());
+			row.appendChild(bPartnerField.getComponent());
 		}
 		if (orderField!=null) {
 			row.appendChild(orderLabel.rightAlign());
