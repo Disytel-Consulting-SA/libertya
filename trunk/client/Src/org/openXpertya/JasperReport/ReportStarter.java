@@ -530,6 +530,9 @@ public class ReportStarter implements ProcessCall // , ClientProcess
             
             addParameterClientInfo(params);
             
+            // Organización de login
+            params.put("AD_Org_Login_ID", Env.getAD_Org_ID(ctx));
+            
             log.info("ReportStarter - leo parametros!");
             
         	Language currLang = Env.getLanguage(Env.getCtx());
