@@ -46,6 +46,15 @@ import org.openXpertya.reflection.CallResult;
  * @author     Equipo de Desarrollo de openXpertya    
  */
 
+
+/*
+ * RP5. 
+ * SportClub
+ * dREHER jorge.dreher@gmail.com
+ * Mar - 2013
+ */
+
+
 public class Login {
 
     /**
@@ -460,6 +469,25 @@ public class Login {
         return retValue;
     }    // getClients
 
+    /*
+     * dREHER, para mantener compatibilidad con el metodo actual agrego
+     * sobrecarga sin parametro de seteo, por defecto setea variables de entorno,
+     * pero si solo se necesita que devuelva lista de organizaciones con acceso de rol actual
+     * se llama metodo con flag en false
+     * 
+     * jorge.dreher@gmail.com
+     * 
+     */
+    
+    public KeyNamePair[] getOrgs( KeyNamePair client ) {
+    	
+    	// Por defecto seteo variables de entorno tal cual trabaja ahora
+    	return getOrgs(client, true);
+    	
+    }	
+    
+    
+    
     /**
      * Descripción de Método
      *
@@ -469,7 +497,7 @@ public class Login {
      * @return
      */
 
-    public KeyNamePair[] getOrgs( KeyNamePair client ) {
+    public KeyNamePair[] getOrgs( KeyNamePair client, boolean setContext ) {
         if( client == null ) {
             throw new IllegalArgumentException( "Client missing" );
         }
@@ -494,6 +522,7 @@ public class Login {
                      + "FROM AD_Role r, AD_Client c" + " INNER JOIN AD_Org o ON (c.AD_Client_ID=o.AD_Client_ID OR o.AD_Org_ID=0) " + "WHERE r.AD_Role_ID=?"    // #1
                      + " AND c.AD_Client_ID=?"                                                                                                                                                                                                                                                                                                                                                 // #2
                      + " AND o.IsActive='Y'" + " AND (r.IsAccessAllOrgs='Y' " + "OR (r.IsUseUserOrgAccess='N' AND o.AD_Org_ID IN (SELECT AD_Org_ID FROM AD_Role_OrgAccess ra " + "WHERE ra.AD_Role_ID=r.AD_Role_ID AND ra.IsActive='Y')) " + "OR (r.IsUseUserOrgAccess='Y' AND o.AD_Org_ID IN (SELECT AD_Org_ID FROM AD_User_OrgAccess ua " + "WHERE ua.AD_User_ID=? AND ua.IsActive='Y'))"    // #3
+                     + " AND o.IsSummary='N'"  // dREHER, para evitar loguearse con sucursal carpeta, aunque tenga acceso
                      + ") " + "ORDER BY o.Name";
 
         //
@@ -565,20 +594,23 @@ public class Login {
 
         // Client Info
 
-        Env.setContext( m_ctx,"#AD_Client_ID",client.getKey());
-        Env.setContext( m_ctx,"#AD_Client_Name",client.getName());
-        Ini.setProperty( Ini.P_CLIENT,client.getName());
-        
-        MClientInfo clientInfo = MClientInfo.get(m_ctx, client.getKey());
-        
-        // Info de Cajas Diarias activas
-		String isPOSJournalActive = clientInfo.isPOSJournalActive()?"Y":"N";
-		Env.setContext(m_ctx, "#IsPOSJournalActive", isPOSJournalActive);
-		Env.setContext(m_ctx, "#VoidingInvoicePOSJournalConfig",
-				clientInfo.getVoidingInvoicePOSJournalConfig());
-		Env.setContext(m_ctx, "#VoidingInvoicePaymentsPOSJournalConfig",
-				clientInfo.getVoidingInvoicePaymentsPOSJournalConfig());
+        // dREHER, setea entorno si el flag es true, por defecto es true ?
+        if(setContext){
 
+		    Env.setContext( m_ctx,"#AD_Client_ID",client.getKey());
+		    Env.setContext( m_ctx,"#AD_Client_Name",client.getName());
+		    Ini.setProperty( Ini.P_CLIENT,client.getName());
+		    
+		    MClientInfo clientInfo = MClientInfo.get(m_ctx, client.getKey());
+		    
+		    // Info de Cajas Diarias activas
+			String isPOSJournalActive = clientInfo.isPOSJournalActive()?"Y":"N";
+			Env.setContext(m_ctx, "#IsPOSJournalActive", isPOSJournalActive);
+			Env.setContext(m_ctx, "#VoidingInvoicePOSJournalConfig",
+					clientInfo.getVoidingInvoicePOSJournalConfig());
+			Env.setContext(m_ctx, "#VoidingInvoicePaymentsPOSJournalConfig",
+					clientInfo.getVoidingInvoicePaymentsPOSJournalConfig());
+		}
         return retValue;
     }    // getOrgs
 

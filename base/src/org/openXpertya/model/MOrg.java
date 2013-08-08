@@ -23,11 +23,13 @@ package org.openXpertya.model;
 import org.openXpertya.util.CCache;
 import org.openXpertya.util.DB;
 import org.openXpertya.util.Env;
+import org.openXpertya.util.Msg;
 
 //~--- Importaciones JDK ------------------------------------------------------
 
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
+import java.sql.SQLException;
 
 import java.util.ArrayList;
 import java.util.Properties;
@@ -182,7 +184,7 @@ public class MOrg extends X_AD_Org {
     
     public static MOrg[] getOfClient(Properties ctx, String trxName){
     	String sql = "SELECT * FROM ad_org WHERE ad_client_id = ?";
-    	ArrayList orgs = new ArrayList();
+    	ArrayList<MOrg> orgs = new ArrayList<MOrg>();
     	PreparedStatement psmt = null;
     	
     	try{
@@ -259,8 +261,118 @@ public class MOrg extends X_AD_Org {
 				getValue(), newRecord, true)) {
 			return false;
 		}
+		
+		// dREHER, agrego validaciones de control de padre/hijo
+		
+		// Pasar a org padre la org de login
+		if(this.getAD_Org_ID()==Env.getAD_Org_ID(getCtx())){
+			if(this.isSummary()){
+				// log.warning("No se puede convertir a organizacion 'Padre' la organizacion de login!");
+				log.saveError("SaveError", Msg.translate(Env.getCtx(),
+				"No se puede convertir a organizacion 'Padre' la organizacion de login!"));
+				return false;
+			}
+		}
+		
+		// Pasar a org Padre una org con documentos asociados
+		if(this.isSummary()){
+			String sql = "SELECT COUNT(o.*) + COUNT(i.*) + COUNT(p.*) + COUNT(m.*) + COUNT(b.*) + COUNT(r.*) + COUNT(w.*) " +
+
+			" FROM C_Invoice i " +
+
+			" LEFT JOIN C_Order o ON o.AD_Org_ID= " + this.getAD_Org_ID() +
+			" LEFT JOIN C_Payment p ON p.AD_Org_ID= " + this.getAD_Org_ID() +
+			" LEFT JOIN M_InOut m ON m.AD_Org_ID= " + this.getAD_Org_ID() +
+			" LEFT JOIN C_BPartner b ON b.AD_Org_ID= " + this.getAD_Org_ID() +
+			" LEFT JOIN M_Product r ON r.AD_Org_ID= " + this.getAD_Org_ID() +
+			" LEFT JOIN M_WareHouse w ON w.AD_Org_ID= " + this.getAD_Org_ID() +
+
+			" WHERE i.AD_Org_ID = " + this.getAD_Org_ID() + 
+			" OR o.AD_Org_ID = " + this.getAD_Org_ID() +
+			" OR p.AD_Org_ID = " + this.getAD_Org_ID() +
+			" OR m.AD_Org_ID = " + this.getAD_Org_ID() +
+			" OR b.AD_Org_ID = " + this.getAD_Org_ID() +
+			" OR r.AD_Org_ID = " + this.getAD_Org_ID() +
+			" OR w.AD_Org_ID = " + this.getAD_Org_ID() +
+			"";
+			int poseeDocumentos = DB.getSQLValue(get_TrxName(), sql);
+			if(poseeDocumentos > 0){
+				log.saveError("SaveError", Msg.translate(Env.getCtx(),"No se puede convertir a organizacion 'Padre' una organizacion que contiene documentos asociados!"));
+				return false;
+			}
+		}
+		
+		// Pasar a org hija una org padre que ya contiene hijas
+		if(!this.isSummary()){
+			log.fine("Va a guardar organizacion hija, verificar si antes no era padre...");
+			ArrayList<MOrg> hijas = this.getOrgsChilds();
+			if(hijas.size() > 0){
+				log.saveError("SaveError", Msg.translate(Env.getCtx(), "No se puede convertir a organizacion 'Hija' una organizacion que ya contiene organizaciones 'hijas!'"));
+				return false;
+			}
+		}
+		
     	return true;
     }
+
+	 /*
+      * dREHER jorge.dreher@gmail.com 
+      * 
+      * Devuelve un array de organizaciones hojas hijas, en caso de que la organizacion actual sea del tipo carpeta isSummary='Y'
+      * 
+      */
+      public ArrayList<MOrg> getOrgsChilds(){
+     	 
+     	 ArrayList<MOrg> orgs = new ArrayList<MOrg>();
+     	 
+     	 // Buscar siempre, en caso de llamarse desde una validacion, podia no funcionar
+     	 // if(isSummary()){
+     		 
+     	 // Si estoy dando de alta, no existen orgs hijas
+     	 if(getAD_Org_ID() <= 0)
+     		 return orgs;
+     	 
+     	 log.fine("Busco organizaciones hijas para AD_Org_ID=" + getAD_Org_ID());
+     	 
+     		 String sql = "SELECT org.AD_Org_ID " +
+     				 "FROM AD_Org AS org " +
+     				 "WHERE getisnodechild(" + Env.getAD_Client_ID(getCtx()) + "," + getAD_Org_ID() + ", org.AD_Org_ID, 'OO') = 'Y'";
+     		 
+     		 PreparedStatement pstmt = null;
+     		 ResultSet rs = null;
+     		 
+     		 try{
+     			 
+     			 log.fine("sql getOrgsChilds=" + sql);
+     			 pstmt = DB.prepareStatement( sql );
+     			 rs = pstmt.executeQuery();
+     			 while(rs.next()){
+     				 
+     				 int orgID = rs.getInt("AD_Org_ID");
+     				 
+     				 orgs.add(new MOrg(Env.getCtx(), orgID, null));
+
+     				 log.fine("Encontro org hija ID=" + orgID);
+     				 
+     			 }
+     			 DB.close(rs, pstmt);
+
+     		 }catch(SQLException ex){
+     			 log.log( Level.SEVERE,sql,ex );
+     		 }finally{
+     			 DB.close(rs, pstmt);
+     			 rs = null; pstmt=null;
+     		 }
+     		 
+     		 
+     	 // }
+     	 
+     	 return orgs;
+     	 
+      }
+
+    
+    
 }	// MOrg
 
 
