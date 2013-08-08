@@ -1,6 +1,5 @@
 package org.adempiere.webui.apps.form;
 
-import java.math.BigDecimal;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -13,22 +12,25 @@ import org.adempiere.webui.editor.WSearchEditor;
 import org.adempiere.webui.event.ValueChangeEvent;
 import org.adempiere.webui.event.ValueChangeListener;
 import org.openXpertya.apps.form.VComponentsFactory;
+import org.openXpertya.grid.CreateFromInvoiceModel;
+import org.openXpertya.grid.CreateFromModel.CreateFromSaveException;
+import org.openXpertya.grid.CreateFromModel.InOutLine;
+import org.openXpertya.grid.CreateFromModel.ListedSourceEntityInterface;
+import org.openXpertya.grid.CreateFromModel.OrderLine;
+import org.openXpertya.grid.CreateFromModel.SourceEntity;
 import org.openXpertya.model.MDocType;
 import org.openXpertya.model.MInOut;
-import org.openXpertya.model.MInOutLine;
 import org.openXpertya.model.MInvoice;
-import org.openXpertya.model.MInvoiceLine;
 import org.openXpertya.model.MLookup;
 import org.openXpertya.model.MLookupInfo;
 import org.openXpertya.model.MOrder;
-import org.openXpertya.model.MOrderLine;
 import org.openXpertya.model.MQuery;
 import org.openXpertya.model.MTab;
 import org.openXpertya.model.PO;
-import org.openXpertya.util.CLogger;
 import org.openXpertya.util.DB;
 import org.openXpertya.util.DisplayType;
 import org.openXpertya.util.Env;
+import org.openXpertya.util.KeyNamePair;
 
 public class WCreateFromInvoice extends WCreateFrom {
 
@@ -40,7 +42,6 @@ public class WCreateFromInvoice extends WCreateFrom {
     }    
 	
     /** Descripción de Campos */
-
     private MInOut m_inout = null;
     
     /** Factura que invoca este Crear Desde */
@@ -51,7 +52,16 @@ public class WCreateFromInvoice extends WCreateFrom {
     
     /** Tipo de Documento a crear */
     private MDocType docType;
-    
+
+    /** Helper para centralizar lógica de modelo */
+	protected CreateFromInvoiceModel helper = null;
+	
+	protected CreateFromInvoiceModel getHelper() {
+		if (helper == null)
+			helper = new CreateFromInvoiceModel();
+		return helper;
+	}
+
    
     
     /**
@@ -157,72 +167,18 @@ public class WCreateFromInvoice extends WCreateFrom {
         }
 
         //
+        StringBuffer sql = getHelper().loadShipmentQuery();
         List<SourceEntity> data = new ArrayList<SourceEntity>();
-        
-        StringBuffer sql  = new StringBuffer();
-        sql.append("SELECT ")
-           .append(   "l.M_InOutLine_ID, ")
-           .append(   "l.Line, ")
-           .append(   "l.M_Product_ID, ")
-           .append(   "p.Name AS ProductName, ")
-           .append("p.value AS ItemCode, ")
-           .append(   "l.C_UOM_ID, ")
-           .append(   "l.MovementQty, ")
-           .append(   "l.MovementQty-SUM(NVL(mi.Qty,0)) AS RemainingQty, ")
-           .append(   "l.QtyEntered/l.MovementQty AS Multiplier, ")
-           .append(   "COALESCE(l.C_OrderLine_ID,0) AS C_OrderLine_ID, ")  
-           .append("l.M_AttributeSetInstance_ID AS AttributeSetInstance_ID ")
-           
-           .append("FROM M_InOutLine l, M_Product p, M_MatchInv mi " )
-           .append("WHERE l.M_Product_ID=p.M_Product_ID " )
-           // begin vpj-cd e-evolution 03/15/2005
-	       // .append(" AND l.M_InOutLine_ID=mi.M_InOutLine_ID(+)")
-	       .append(  "AND l.M_InOutLine_ID=mi.M_InOutLine_ID(+) " )
-	       // end vpj-cd e-evolution 03/15/2005
-	       .append(  "AND l.M_InOut_ID=? " )    // #1
-           .append("GROUP BY l.MovementQty, l.QtyEntered/l.MovementQty, l.C_UOM_ID, l.M_Product_ID, p.Name, l.M_InOutLine_ID, l.Line, l.C_OrderLine_ID, p.value,l.M_AttributeSetInstance_ID " )
-           .append("ORDER BY l.Line" );
-
         PreparedStatement pstmt = null;
         ResultSet rs = null;
-
-        try {
-            pstmt = DB.prepareStatement( sql.toString());
+        try {        	
+            pstmt = DB.prepareStatement(sql.toString());
             pstmt.setInt( 1,M_InOut_ID );
             rs = pstmt.executeQuery();
 
             while( rs.next()) {
-                InOutLine docLine = new InOutLine();
-
-                // Por defecto no está seleccionada para ser procesada
-                docLine.selected = false;
-    			
-                // ID de la línea de remito
-                docLine.inOutLineID = rs.getInt("M_InOutLine_ID");
-                
-    			// Nro de línea
-                docLine.lineNo = rs.getInt("Line");
-                
-                // Cantidades
-                BigDecimal multiplier  = rs.getBigDecimal("Multiplier");
-                BigDecimal movementQty = rs.getBigDecimal("MovementQty").multiply(multiplier);
-                BigDecimal remainingQty = rs.getBigDecimal("RemainingQty").multiply(multiplier);
-                docLine.lineQty = movementQty;
-                docLine.remainingQty = remainingQty;
-
-                // Artículo
-    			docLine.productID = rs.getInt("M_Product_ID");
-				docLine.productName = rs.getString("ProductName");
-				docLine.itemCode = rs.getString("ItemCode");
-				docLine.instanceName = getInstanceName(rs.getInt("AttributeSetInstance_ID"));
-
-				// Unidad de Medida
-				docLine.uomID = rs.getInt("C_UOM_ID");
-                docLine.uomName = getUOMName(docLine.uomID);
-
-                // Línea de pedido (puede ser 0)
-                docLine.orderLineID = rs.getInt("C_OrderLine_ID");
-
+                InOutLineListImpl docLine = new InOutLineListImpl();
+                getHelper().loadShipmentLine(docLine, rs);
                 // Agrega la línea a la lista
                 data.add(docLine);
             }
@@ -247,156 +203,9 @@ public class WCreateFromInvoice extends WCreateFrom {
      */
 
     protected void save() throws CreateFromSaveException {
-
-    	// Actualiza el encabezado de la factura
-        MInvoice invoice = getInvoice();
-		invoice.setDragDocumentDiscountAmts(getDocType()
-				.isDragOrderDocumentDiscounts());
-        log.config( invoice.toString());
-        // Asociación con el pedido
-        if( p_order != null ) {
-            invoice.setOrder( p_order, true );    // overwrite header values
-			invoice.setManageDragOrderDiscounts(getDocType()
-					.isDragOrderDocumentDiscounts()
-					|| getDocType().isDragOrderLineDiscounts());
-			invoice.setIsExchange(p_order.isExchange());
-            if (!invoice.save()) {
-            	throw new CreateFromSaveException(CLogger.retrieveErrorAsString());
-            }
-        }
-        // Asocia el remito con la factura si es que se está creando a partir
-        // de un remito
-        if( (m_inout != null) && (m_inout.getM_InOut_ID() != 0) && (m_inout.getC_Invoice_ID() == 0)) {    // only first time
-            m_inout.setC_Invoice_ID(invoice.getC_Invoice_ID());
-            if (!m_inout.save(getTrxName())) {
-            	throw new CreateFromSaveException(CLogger.retrieveErrorAsString());
-            }
-        }
-
-        // Lines
-
-        for (SourceEntity sourceEntity : getSelectedSourceEntities()) {
-
-            // variable values
-        	DocumentLine docLine = (DocumentLine) sourceEntity;
-            BigDecimal  QtyEntered = docLine.remainingQty;
-            int C_UOM_ID = docLine.uomID;
-            int M_Product_ID = docLine.productID;
-            int C_Charge_ID = 0;
-            int C_OrderLine_ID = 0;
-            int M_InOutLine_ID = 0;
-
-            if (docLine.isOrderLine()) {
-            	C_OrderLine_ID = ((OrderLine)docLine).orderLineID;
-            } else if (docLine.isInOutLine()) {
-            	M_InOutLine_ID = ((InOutLine)docLine).inOutLineID;
-            	C_OrderLine_ID = ((InOutLine)docLine).orderLineID;
-            }
-            
-            //
-            log.fine( "Line QtyEntered=" + QtyEntered + ", Product_ID=" + M_Product_ID + ", OrderLine_ID=" + C_OrderLine_ID + ", InOutLine_ID=" + M_InOutLine_ID );
-
-            MInvoiceLine invoiceLine = new MInvoiceLine(invoice);
-
-            invoiceLine.setM_Product_ID(M_Product_ID, C_UOM_ID);    // Line UOM
-            invoiceLine.setQty(QtyEntered);    // Invoiced/Entered
-            invoiceLine.setDescription(docLine.description);
-			invoiceLine.setDragDocumentDiscountAmts(getDocType()
-					.isDragOrderDocumentDiscounts());
-			invoiceLine.setDragLineDiscountAmts(getDocType()
-					.isDragOrderLineDiscounts());
-			invoiceLine.setDragOrderPrice(getDocType().isDragOrderPrice());
-			
-            // Info
-            MOrderLine orderLine = null;
-
-            if( C_OrderLine_ID != 0 ) {
-                orderLine = new MOrderLine( Env.getCtx(),C_OrderLine_ID, getTrxName());
-            }
-
-            MInOutLine inoutLine = null;
-
-            if( M_InOutLine_ID != 0 ) {
-                inoutLine = new MInOutLine( Env.getCtx(),M_InOutLine_ID, getTrxName());
-
-                if( (orderLine == null) && (inoutLine.getC_OrderLine_ID() != 0) ) {
-                    C_OrderLine_ID = inoutLine.getC_OrderLine_ID();
-                    orderLine      = new MOrderLine( Env.getCtx(),C_OrderLine_ID, getTrxName());
-                }
-            } else {
-                MInOutLine[] lines = MInOutLine.getOfOrderLine( Env.getCtx(),C_OrderLine_ID,null,getTrxName());
-
-                log.fine( "Receipt Lines with OrderLine = #" + lines.length );
-
-                if( lines.length > 0 ) {
-                    for( int j = 0;j < lines.length;j++ ) {
-                        MInOutLine line = lines[ j ];
-
-                        if( line.getQtyEntered().compareTo( QtyEntered ) == 0 ) {
-                            inoutLine      = line;
-                            M_InOutLine_ID = inoutLine.getM_InOutLine_ID();
-
-                            break;
-                        }
-                    }
-
-                    if( inoutLine == null ) {
-                        inoutLine      = lines[ 0 ];     // first as default
-                        M_InOutLine_ID = inoutLine.getM_InOutLine_ID();
-                    }
-                }
-            }                                            // get Ship info
-
-            // Shipment Info
-
-            if( inoutLine != null ) {
-                invoiceLine.setShipLine( inoutLine );    // overwrites
-
-                // Este metodo es redefinido por un plugin
-                customMethod(inoutLine,invoiceLine);
-                
-                if( inoutLine.getQtyEntered().compareTo( inoutLine.getMovementQty()) != 0 ) {
-                    invoiceLine.setQtyInvoiced( QtyEntered.multiply( inoutLine.getMovementQty()).divide( inoutLine.getQtyEntered(),BigDecimal.ROUND_HALF_UP ));
-                }
-            } else {
-                log.fine( "No Receipt Line" );
-            }
-
-            // Order Info
-
-            if( orderLine != null) {
-                invoiceLine.setOrderLine( orderLine );    // overwrites
-                
-                // Este metodo es redefinido por un plugin
-                customMethod(orderLine,invoiceLine);
-
-                if( orderLine.getQtyEntered().compareTo( orderLine.getQtyOrdered()) != 0 ) {
-                    invoiceLine.setQtyInvoiced( QtyEntered.multiply( orderLine.getQtyOrdered()).divide( orderLine.getQtyEntered(),BigDecimal.ROUND_HALF_UP ));
-                }
-            } else {
-                log.fine( "No Order Line" );
-                invoiceLine.setPrice();
-                invoiceLine.setTax();
-            }
-
-            if( !invoiceLine.save()) {
-                throw new CreateFromSaveException(
-             		   "@InvoiceLineSaveError@ (# " + docLine.lineNo + "):<br>" + 
-             		   CLogger.retrieveErrorAsString()
-             	);
-            }
-        }        // for all rows
-        
-		// Actualización de la cabecera por totales de descuentos e impuestos
-		// siempre y cuando el tipo de documento lo permita
-        if(getDocType().isDragOrderDocumentDiscounts() && p_order != null){
-			try{
-				invoice.updateTotalDocumentDiscount();	
-			} catch(Exception e){
-				throw new CreateFromSaveException(e.getMessage());
-			}
-        }
+    	getHelper().save(p_order, getInvoice(), m_inout, getDocType(), getSelectedSourceEntities(), getTrxName(), this);
     }    // saveInvoice
+
 
     @Override
     protected String getRemainingQtySQLLine(boolean forInvoice, boolean allowDeliveryReturns){
@@ -459,23 +268,14 @@ public class WCreateFromInvoice extends WCreateFrom {
 	
 	@Override
 	protected boolean beforeAddOrderLine(OrderLine orderLine) {
-		// Si la línea de pedido ya está asociada con alguna línea de la factura entonces
-		// no debe ser mostrada en la grilla. No se permite que dos líneas de una misma
-		// factura compartan una línea del pedido. Todo en el caso que no se
-		// esté creando una factura sino un crédito
-		String sql = 
-			"SELECT COUNT(*) FROM C_InvoiceLine WHERE C_Invoice_ID = ? AND C_OrderLine_ID = ?";
-		Long count = (Long)DB.getSQLObject(null, sql, 
-				new Object[] { getInvoice().getC_Invoice_ID(), orderLine.orderLineID }
-		);
-		return (count == null || count == 0);
+		return CreateFromInvoiceModel.beforeAddOrderLine(orderLine, getInvoice());
 	}
 	
 	/**
 	 * Inicializa el lookup de remitos
 	 */
 	private void initShipmentLookup() {
-    	String whereClause = getShipmentFilter();     	
+    	String whereClause = CreateFromInvoiceModel.getShipmentFilter(getIsSOTrx());     	
     	/* FEDE:TODO: ESTO DEBERIA REFACTORIZARSE A OTRO LUGAR */
     	int colID = 3521; 	// M_InOut.M_InOut_ID
     	MLookupInfo info = VComponentsFactory.MLookupInfoFactory( Env.getCtx(),p_WindowNo,p_mTab.getTabNo(),colID,DisplayType.Search, whereClause );
@@ -500,7 +300,7 @@ public class WCreateFromInvoice extends WCreateFrom {
 	 * Inicializa el lookup de facturas con pedidos asociados.
 	 */
 	private void initInvoiceOrderLookup() {
-    	String whereClause = getInvoiceOrderFilter(); 
+    	String whereClause = CreateFromInvoiceModel.getInvoiceOrderFilter(getIsSOTrx(), getOrderFilter()); 
     	/* FEDE:TODO: ESTO DEBERIA REFACTORIZARSE A OTRO LUGAR */
     	int colID = 3484; 	// C_Invoice.C_Invoice_ID
     	MLookupInfo info = VComponentsFactory.MLookupInfoFactory( Env.getCtx(),p_WindowNo,p_mTab.getTabNo(),colID,DisplayType.Search, whereClause );
@@ -541,46 +341,6 @@ public class WCreateFromInvoice extends WCreateFrom {
 	}
 	
 	
-	/**
-	 * @return Devuelve el filtro que se aplica al Lookup de Facturas asociadas
-	 * a pedidos.
-	 */
-	protected String getInvoiceOrderFilter() {
-    	StringBuffer filter = new StringBuffer();
-
-     	filter
-	     	.append("C_Invoice.IsSOTrx='").append(getIsSOTrx()).append("' AND ")
-	     	.append("C_Invoice.DocStatus IN ('CL','CO') AND ") 
-	     	.append("C_Invoice.C_Order_ID IS NOT NULL AND ")
-	     	.append("C_Invoice.C_Order_ID IN (")
-	     	.append(   "SELECT C_Order.C_Order_ID ") 
-	     	.append(   "FROM C_Order ")
-	     	.append(   "WHERE (")
-	     	.append(   getOrderFilter()).append(")")
-	     	.append(")");
-     	   	
-     	return filter.toString();
-	}
-	
-	/**
-	 * @return Devuelve el filtro que se aplica al Lookup de remitos.
-	 */
-	protected String getShipmentFilter() {
-    	StringBuffer filter = new StringBuffer();
-
-     	filter
-	     	.append("M_InOut.IsSOTrx='").append(getIsSOTrx()).append("' AND ")
-	     	.append("M_InOut.DocStatus IN ('CL','CO') AND ") 
-	     	.append("M_InOut.M_InOut_ID IN (")
-	     	.append(   "SELECT sl.M_InOut_ID ")
-	     	.append(   "FROM M_InOutLine sl ")
-	     	.append(   "LEFT OUTER JOIN M_MatchInv mi ON (sl.M_InOutLine_ID=mi.M_InOutLine_ID) ")
-	     	.append(   "GROUP BY sl.M_InOut_ID,mi.M_InOutLine_ID,sl.MovementQty ")
-	     	.append(   "HAVING (sl.MovementQty<>SUM(mi.Qty) AND mi.M_InOutLine_ID IS NOT NULL) OR mi.M_InOutLine_ID IS NULL) ");
-     	
-     	return filter.toString();
-	}
-	
     /**
      * Este método es invocado cuando el usuario cambia el remito seleccionado
      * en el VLookup. Las subclases puede sobrescribir este comportamiento.
@@ -595,17 +355,39 @@ public class WCreateFromInvoice extends WCreateFrom {
 	/**
 	 * Entidad Orígen: Línea de Remito
 	 */
-	protected class InOutLine extends DocumentLine {
-		/** ID de la línea de remito */
-		protected int inOutLineID = 0;
-		/** La línea de remito puede tener asociada a su vez una línea de pedido */
-		protected int orderLineID = 0;
-
-		@Override
-		public boolean isInOutLine() {
-			return true;
+	protected class InOutLineListImpl extends InOutLine implements ListedSourceEntityInterface {
+		/**
+		 * Convierte a ArrayList el SourceEntityListImpl para que el mismo pueda ser cargado en el WListBox 
+		 */
+		public ArrayList<Object> toList() {
+			ArrayList<Object> result = new ArrayList<Object>();
+			CreateFromTableModel model = (CreateFromTableModel)window.getDataTable().getModel();
+			for (int i=0; i < model.getColumnCount(); i++ ) {
+				Object value = null;
+				switch (i) {
+					case DocumentLineTableModel.COL_IDX_SELECTION:
+						value = selected; break;
+					case DocumentLineTableModel.COL_IDX_LINE:
+						value = lineNo; break;
+					case DocumentLineTableModel.COL_IDX_ITEM_CODE:
+						value = itemCode; break;
+					case DocumentLineTableModel.COL_IDX_PRODUCT:
+						value = new KeyNamePair(productID, productName) ; break;
+					case DocumentLineTableModel.COL_IDX_UOM:
+						value = new KeyNamePair(uomID, uomName) ; break;
+					case DocumentLineTableModel.COL_IDX_QTY:
+						value = lineQty; break;
+					case DocumentLineTableModel.COL_IDX_REMAINING:
+						value = remainingQty; break;
+					case DocumentLineTableModel.COL_IDX_INSTANCE_NAME:
+						value = instanceName; break;
+					default:
+						value = null; break;
+				}
+				result.add(value);
+			}
+			return result;
 		}
-
 	}
 
 	@Override
@@ -632,7 +414,7 @@ public class WCreateFromInvoice extends WCreateFrom {
 	
 	// El siguiente metodo podrá ser redefinido por un plugin para agregar una funcionalidad particular.
 	// El metodo es invocado antes de hacer el save de la linea
-	protected void customMethod(PO ol, PO iol) {
+	public void customMethod(PO ol, PO iol) {
 	}
 
 	@Override
