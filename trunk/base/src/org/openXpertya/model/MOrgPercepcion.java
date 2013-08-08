@@ -16,6 +16,7 @@ public class MOrgPercepcion extends X_AD_Org_Percepcion {
 		return getOrgPercepciones(ctx, Env.getAD_Org_ID(ctx), trxName);
 	}
 	
+	// dREHER, TODO: en un futuro buscar configuracion de percepciones respetando org segun relacion padre/hijos ???
 	public static List<MOrgPercepcion> getOrgPercepciones(Properties ctx, Integer orgID, String trxName){
 		List<MOrgPercepcion> percepciones = new ArrayList<MOrgPercepcion>();
 		String sql = "SELECT * FROM ad_org_percepcion WHERE ad_org_id = ? AND isactive = 'Y'";
@@ -64,6 +65,20 @@ public class MOrgPercepcion extends X_AD_Org_Percepcion {
 			log.saveError("OrgPercepcionRepeated", "");
 			return false;
 		}
+		
+		// dREHER, si la organizacion es Padre, no permitir guardar registro y mostrar error
+		
+		int AD_Org_ID = this.getAD_Org_ID();
+		MOrg org = new MOrg(Env.getCtx(), AD_Org_ID, get_TrxName());
+		if(org!=null){
+			boolean isCarpeta = org.isSummary();
+			if(isCarpeta){
+				log.saveError("OrgPercepcionInOrgSummary", "No se pueden configurar percepciones en organizaciones del tipo carpeta!");
+				return false;
+			}
+		}
+		
+		
 		return true;
 	}	
 }

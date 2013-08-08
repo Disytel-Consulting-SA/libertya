@@ -4288,3 +4288,90 @@ CREATE INDEX c_allocationline_active
   USING btree
   (c_allocationhdr_id)
   WHERE isactive = 'Y'::bpchar;
+
+--20130808-1522 Funciones por migración de requerimiento de Organizaciones Carpeta creadas por Jorge Dreher
+-- Devuelve Y si es hijo, N si no lo es
+-- dREHER
+-- jorge.dreher@gmail.com
+
+CREATE OR REPLACE FUNCTION libertya.getisnodechild(p_ad_client_id integer, p_ad_org_padre_id integer, p_ad_org_hijo_id integer, p_type_tree varchar)
+  RETURNS char AS
+$BODY$
+
+DECLARE
+	v_Items	NUMERIC := 0;
+	v_IsChild CHAR := 'N';
+BEGIN
+
+-- inicio
+
+SELECT 
+
+ COUNT(n.*) INTO v_Items
+
+ FROM AD_Tree AS t
+
+ LEFT JOIN AD_TreeNode AS n ON t.AD_Tree_ID = n.AD_Tree_ID
+ 
+ WHERE t.AD_Client_ID = p_ad_client_id -- 1010016 libertya default
+	AND t.TreeType=p_type_tree
+	AND n.Parent_ID=p_ad_org_padre_id -- ID del registro a buscar, este es el ID del treeNode padre
+	AND n.Node_ID=p_ad_org_hijo_id; -- ID del registro a buscar, este el el ID del treeNode hijo
+
+-- fin
+
+IF v_Items ISNULL THEN
+	v_Items := 0;
+END IF;
+
+IF v_Items > 0 THEN
+   v_IsChild := 'Y';
+END IF;
+	
+RETURN v_IsChild;
+
+END;
+$BODY$
+  LANGUAGE plpgsql VOLATILE
+  COST 100;
+ALTER FUNCTION libertya.getisnodechild(integer, integer, integer, varchar) OWNER TO libertya;
+ 
+-- Devuelve ID del node padre
+-- dREHER
+-- jorge.dreher@gmail.com
+
+CREATE OR REPLACE FUNCTION libertya.getnodepadre(p_ad_client_id integer, p_ad_org_hijo_id integer, p_type_tree character varying)
+  RETURNS NUMERIC AS
+$BODY$
+
+DECLARE
+	v_NodePadre_ID NUMERIC := 0;
+BEGIN
+
+-- inicio
+
+SELECT 
+
+ n.Parent_ID AS NodoPadre INTO v_NodePadre_ID
+ 
+ FROM AD_Tree AS t
+
+ LEFT JOIN AD_TreeNode AS n ON t.AD_Tree_ID = n.AD_Tree_ID
+
+ WHERE t.AD_Client_ID = p_ad_client_id  -- default libertya client 1010016 -- AD_Client_ID
+	AND t.TreeType = p_type_tree  -- tipo Organizacion 'OO'
+	AND n.Node_ID = p_ad_org_hijo_id;  -- 1010095; -- ID del registro a buscar, este el el ID del treeNode hijo, trae el padre
+
+-- fin
+
+IF v_NodePadre_ID ISNULL THEN
+	v_NodePadre_ID := -1;
+END IF;
+
+RETURN v_NodePadre_ID;
+
+END;
+$BODY$
+  LANGUAGE plpgsql VOLATILE
+  COST 100;
+ALTER FUNCTION libertya.getnodepadre(integer, integer, character varying) OWNER TO libertya;
