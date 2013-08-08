@@ -29,7 +29,9 @@ import java.util.List;
 import java.util.logging.Level;
 
 import org.openXpertya.apps.ADialog;
-import org.openXpertya.grid.VCreateFrom.DocumentLineTableModel;
+import org.openXpertya.grid.CreateFromModel.CreateFromSaveException;
+import org.openXpertya.grid.CreateFromModel.Payment;
+import org.openXpertya.grid.CreateFromModel.SourceEntity;
 import org.openXpertya.grid.ed.VLookup;
 import org.openXpertya.model.MBankStatement;
 import org.openXpertya.model.MBankStatementLine;
@@ -37,6 +39,7 @@ import org.openXpertya.model.MLookup;
 import org.openXpertya.model.MLookupFactory;
 import org.openXpertya.model.MPayment;
 import org.openXpertya.model.MTab;
+import org.openXpertya.model.PO;
 import org.openXpertya.util.CLogger;
 import org.openXpertya.util.DB;
 import org.openXpertya.util.DisplayType;
@@ -53,6 +56,16 @@ import org.openXpertya.util.Msg;
 
 public class VCreateFromStatement extends VCreateFrom implements VetoableChangeListener {
 
+    /** Helper para centralizar lógica de modelo */
+	protected CreateFromStatementModel helper = new CreateFromStatementModel();
+
+	protected CreateFromStatementModel getHelper() {
+		if (helper==null)
+			helper = new CreateFromStatementModel();
+		return helper;
+	}
+
+	
     /**
      * Constructor de la clase ...
      *
@@ -144,35 +157,9 @@ public class VCreateFromStatement extends VCreateFrom implements VetoableChangeL
         log.config( "C_BankAccount_ID=" + C_BankAccount_ID );
 
         List<Payment> data = new ArrayList<Payment>();
-        
-        StringBuffer sql = new StringBuffer(); 
-        sql.append("SELECT ")
-           .append(   "p.DateTrx, ")
-           .append(   "p.C_Payment_ID, ")
-           .append(	  "p.DocumentNo, ")
-           .append(   "p.C_Currency_ID, ")
-           .append(   "c.ISO_Code, ")
-           .append(   "p.PayAmt, ")
-           .append(   "currencyConvert(p.PayAmt,p.C_Currency_ID,ba.C_Currency_ID,?,null,p.AD_Client_ID,p.AD_Org_ID) AS ConvertedAmt, ")
-           .append(   "bp.Name AS BPartnerName ")
-           
-           .append("FROM C_BankAccount ba ")
-           .append("INNER JOIN C_Payment_v p ON (p.C_BankAccount_ID=ba.C_BankAccount_ID) ")
-           .append("INNER JOIN C_Currency c ON (p.C_Currency_ID=c.C_Currency_ID) ")
-           .append("INNER JOIN C_BPartner bp ON (p.C_BPartner_ID=bp.C_BPartner_ID) ")
-        		   
-           .append("WHERE p.Processed='Y' ")
-           .append(  "AND p.IsReconciled='N' ")
-           .append(  "AND p.DocStatus IN ('CO','CL','RE') ")
-           .append(  "AND p.PayAmt<>0 ")
-           .append(  "AND p.C_BankAccount_ID=? ")
-           .append(  "AND NOT EXISTS ")
-           .append(      "(SELECT * FROM C_BankStatementLine l ")
-           // Voided Bank Statements have 0 StmtAmt
-           .append(       "WHERE p.C_Payment_ID=l.C_Payment_ID AND l.StmtAmt <> 0)");
+        StringBuffer sql = getHelper().loadBankAccountQuery(); 
 
         // Get StatementDate
-
         Timestamp ts = ( Timestamp )p_mTab.getValue( "StatementDate" );
 
         if( ts == null ) {
@@ -189,17 +176,7 @@ public class VCreateFromStatement extends VCreateFrom implements VetoableChangeL
 
             while( rs.next()) {
                 Payment payment = new Payment();
-                
-                payment.selected = false;
-                payment.paymentID = rs.getInt("C_Payment_ID");
-                payment.dateTrx = rs.getTimestamp("DateTrx");
-                payment.documentNo = rs.getString("DocumentNo");
-                payment.currencyID = rs.getInt("C_Currency_ID");
-                payment.currencyISO = rs.getString("ISO_Code");
-                payment.payAmt = rs.getBigDecimal("PayAmt");
-                payment.convertedAmt = rs.getBigDecimal("ConvertedAmt");
-                payment.bPartnerName = rs.getString("BPartnerName");                
-                
+                getHelper().loadPayment(payment, rs);
                 data.add(payment);
             }
 
@@ -243,43 +220,8 @@ public class VCreateFromStatement extends VCreateFrom implements VetoableChangeL
      */
 
     protected void save() throws CreateFromSaveException {
-        log.config( "" );
-
-        // fixed values
-
-        int C_BankStatement_ID = (( Integer )p_mTab.getValue( "C_BankStatement_ID" )).intValue();
-        MBankStatement bs = new MBankStatement( Env.getCtx(),C_BankStatement_ID, getTrxName());
-
-        log.config( bs.toString());
-
-        // Lines
-        for (SourceEntity sourceEntity : getSelectedSourceEntities()) {
-        	Payment payment = (Payment)sourceEntity;	
-            Timestamp trxDate = payment.dateTrx;
-            int C_Payment_ID = payment.paymentID;
-            int C_Currency_ID = payment.currencyID;
-            BigDecimal TrxAmt  = payment.payAmt;
-            BigDecimal StmtAmt = payment.convertedAmt;
-
-            //
-
-            log.fine( "Line Date=" + trxDate + ", Payment=" + C_Payment_ID + ", Currency=" + C_Currency_ID + ", Amt=" + TrxAmt );
-
-            //
-            MPayment pay = new MPayment( Env.getCtx(),C_Payment_ID, getTrxName());
-            MBankStatementLine bsl = new MBankStatementLine( bs );
-
-            bsl.setStatementLineDate( trxDate );
-            bsl.setPayment(pay);
-            
-            if( !bsl.save()) {
-                throw new CreateFromSaveException(
-             		   "@StatementLineSaveError@ (@C_Paymenty_ID@ # " + payment.documentNo + "):<br>" + 
-             		   CLogger.retrieveErrorAsString()
-             	);
-
-            }
-        }        // for all rows
+    	int C_BankStatement_ID = (( Integer )p_mTab.getValue( "C_BankStatement_ID" )).intValue();
+    	getHelper().save(C_BankStatement_ID, getTrxName(), getSelectedSourceEntities(), this);
     }    // save
     
 	@Override
@@ -287,30 +229,7 @@ public class VCreateFromStatement extends VCreateFrom implements VetoableChangeL
 		return new PaymentTableModel();
 	}
 
-	/**
-     * Entidad Oríden: Pagos
-     */
-    protected class Payment extends SourceEntity {
-    	/** ID del pago */
-    	protected int paymentID = 0;
-    	/** Nro de Documento del pago */
-    	protected String documentNo = null;
-    	/** Fecha de transacción */
-    	protected Timestamp dateTrx = null;
-        /** Nombre o descripción de la EC asociada al pago */
-    	protected String bPartnerName = null;
-    	/** ID de la moneda en la que se encuentra expresada el monto
-    	 * del pago */
-    	protected int currencyID = 0;
-    	/** Código ISO de la moneda en la que se encuentra expresada el monto
-    	 * del pago */
-    	protected String currencyISO = null;
-        /** Importe del pago expresado en la moneda currencyID */
-    	protected BigDecimal payAmt = BigDecimal.ZERO;
-        /** Importe del pago convertido a la moneda de la cuenta bancaria a la que pertence*/
-    	protected BigDecimal convertedAmt = BigDecimal.ZERO;
-    
-    }
+
     
     /**
      * Modelo de tabla para presentación de los pagos de una cuenta bancaria.
@@ -390,6 +309,12 @@ public class VCreateFromStatement extends VCreateFrom implements VetoableChangeL
 	@Override
 	protected boolean lazyEvaluation() {
 		return true;
+	}
+
+	@Override
+	public void customMethod(PO ol, PO iol) {
+		// TODO Auto-generated method stub
+		
 	}
 }    // VCreateFromStatement
 

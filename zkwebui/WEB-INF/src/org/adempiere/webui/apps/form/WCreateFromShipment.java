@@ -18,6 +18,15 @@ import org.adempiere.webui.event.ValueChangeEvent;
 import org.adempiere.webui.event.ValueChangeListener;
 import org.compiere.plaf.CompierePLAF;
 import org.openXpertya.apps.form.VComponentsFactory;
+import org.openXpertya.grid.CreateFromInvoiceModel;
+import org.openXpertya.grid.CreateFromModel;
+import org.openXpertya.grid.CreateFromModel.CreateFromSaveException;
+import org.openXpertya.grid.CreateFromModel.DocumentLine;
+import org.openXpertya.grid.CreateFromModel.InvoiceLine;
+import org.openXpertya.grid.CreateFromModel.ListedSourceEntityInterface;
+import org.openXpertya.grid.CreateFromModel.OrderLine;
+import org.openXpertya.grid.CreateFromModel.SourceEntity;
+import org.openXpertya.grid.CreateFromShipmentModel;
 import org.openXpertya.model.MBPartner;
 import org.openXpertya.model.MDocType;
 import org.openXpertya.model.MInOut;
@@ -38,6 +47,7 @@ import org.openXpertya.util.CLogger;
 import org.openXpertya.util.DB;
 import org.openXpertya.util.DisplayType;
 import org.openXpertya.util.Env;
+import org.openXpertya.util.KeyNamePair;
 import org.openXpertya.util.Msg;
 import org.openXpertya.util.Util;
 import org.zkoss.zk.ui.event.Event;
@@ -75,6 +85,15 @@ public class WCreateFromShipment extends WCreateFrom {
     
     /** Tipo de Documento a crear */
     private MDocType docType;
+    
+    /** Helper para centralizar lógica de modelo */
+	protected CreateFromShipmentModel helper = null;
+
+	protected CreateFromShipmentModel getHelper() {
+		if (helper == null)
+			helper = new CreateFromShipmentModel();
+		return helper;
+	}
     
 	/**
 	 * Descripción de Método
@@ -244,35 +263,8 @@ public class WCreateFromShipment extends WCreateFrom {
     	}
 		
 		p_order = null;
-
 		List<InvoiceLine> data = new ArrayList<InvoiceLine>();
-
-		StringBuffer sql = new StringBuffer();
-		sql.append("SELECT ")
-				// Entered UOM
-				.append("l.C_InvoiceLine_ID, ")
-				.append("l.Line, ")
-				.append("l.Description, ")
-				.append("l.M_Product_ID, ")
-				.append("p.Name AS ProductName, ")
-				.append("p.value AS ItemCode, ")
-				.append("p.producttype AS ProductType, ")
-				.append("l.C_UOM_ID, ")
-				.append("QtyInvoiced, ")
-				.append("l.QtyInvoiced-SUM(NVL(mi.Qty,0)) AS RemainingQty, ")
-				.append("l.QtyEntered/l.QtyInvoiced AS Multiplier, ")
-				.append("COALESCE(l.C_OrderLine_ID,0) AS C_OrderLine_ID, ")
-				.append("l.M_AttributeSetInstance_ID AS AttributeSetInstance_ID ")
-
-				.append("FROM C_UOM uom, C_InvoiceLine l, M_Product p, M_MatchInv mi ")
-
-				.append("WHERE l.C_UOM_ID=uom.C_UOM_ID ")
-				.append("AND l.M_Product_ID=p.M_Product_ID ")
-				.append("AND l.C_InvoiceLine_ID=mi.C_InvoiceLine_ID(+) ")
-				.append("AND l.C_Invoice_ID=? ")
-				.append("GROUP BY l.QtyInvoiced, l.QtyEntered/l.QtyInvoiced, l.C_UOM_ID, l.M_Product_ID, p.Name, l.C_InvoiceLine_ID, l.Line, l.C_OrderLine_ID, l.Description, p.value,l.M_AttributeSetInstance_ID,p.producttype ")
-				.append("ORDER BY l.Line ");
-
+		StringBuffer sql = getHelper().loadInvoiceQuery();
 		PreparedStatement pstmt = null;
 		ResultSet rs = null;
 
@@ -282,44 +274,8 @@ public class WCreateFromShipment extends WCreateFrom {
 			rs = pstmt.executeQuery();
 
 			while (rs.next()) {
-				InvoiceLine invoiceLine = new InvoiceLine();
-
-				// Por defecto no está seleccionada para ser procesada
-				invoiceLine.selected = false;
-
-				// ID de la línea de factura
-				invoiceLine.invoiceLineID = rs.getInt("C_InvoiceLine_ID");
-
-				// Nro de línea
-				invoiceLine.lineNo = rs.getInt("Line");
-
-				// Descripción
-				invoiceLine.description = rs.getString("Description");
-
-				// Cantidades
-				BigDecimal multiplier = rs.getBigDecimal("Multiplier");
-				BigDecimal qtyInvoiced = rs.getBigDecimal("QtyInvoiced")
-						.multiply(multiplier);
-				BigDecimal remainingQty = rs.getBigDecimal("RemainingQty")
-						.multiply(multiplier);
-				invoiceLine.lineQty = qtyInvoiced;
-				invoiceLine.remainingQty = remainingQty;
-
-				// Artículo
-				invoiceLine.productID = rs.getInt("M_Product_ID");
-				invoiceLine.productName = rs.getString("ProductName");
-				invoiceLine.itemCode = rs.getString("ItemCode");
-				invoiceLine.instanceName = getInstanceName(rs
-						.getInt("AttributeSetInstance_ID"));
-				invoiceLine.productType = rs.getString("ProductType");
-
-				// Unidad de Medida
-				invoiceLine.uomID = rs.getInt("C_UOM_ID");
-				invoiceLine.uomName = getUOMName(invoiceLine.uomID);
-
-				// Línea de pedido (puede ser 0)
-				invoiceLine.orderLineID = rs.getInt("C_OrderLine_ID");
-
+				InvoiceLineListImpl invoiceLine = new InvoiceLineListImpl();
+				getHelper().loadInvoiceLine(invoiceLine, rs);
 				// Agrega la línea a la lista solo si tiene cantidad pendiente
 				if (invoiceLine.remainingQty.compareTo(BigDecimal.ZERO) > 0 || invoiceLine.productType.equals("E")) {
 					data.add(invoiceLine);
@@ -354,15 +310,7 @@ public class WCreateFromShipment extends WCreateFrom {
 	
 	@Override
 	public String getRemainingQtySQLLine(boolean forInvoice, boolean allowDeliveryReturns){
-		boolean afterInvoicing = (getInOut().getDeliveryRule().equals(
-				MInOut.DELIVERYRULE_AfterInvoicing) || getInOut().getDeliveryRule()
-				.equals(MInOut.DELIVERYRULE_Force_AfterInvoicing))
-				&& getInOut().getMovementType().endsWith("-");
-		String srcColumn = afterInvoicing ? "l.QtyInvoiced" : "l.QtyOrdered";
-		return srcColumn
-				+ " - (l.QtyDelivered+l.QtyTransferred)"
-				+ (allowDeliveryReturns ? ""
-						: " - coalesce((select sum(iol.movementqty) as qty from c_orderline as ol inner join m_inoutline as iol on iol.c_orderline_id = ol.c_orderline_id inner join m_inout as io on io.m_inout_id = iol.m_inout_id inner join c_doctype as dt on dt.c_doctype_id = io.c_doctype_id where ol.c_orderline_id = l.c_orderline_id AND dt.doctypekey = 'DC' and io.docstatus IN ('CL','CO')),0)");
+		return getHelper().getRemainingQtySQLLine(getInOut(), forInvoice, allowDeliveryReturns);
 	}
 	
 
@@ -382,157 +330,8 @@ public class WCreateFromShipment extends WCreateFrom {
 	 */
 
 	protected void save() throws CreateFromSaveException {
-
-		// La ubicación es obligatoria
 		Integer locatorID = (Integer) locatorField.getValue();
-		if (locatorID == null || (locatorID == 0)) {
-			locatorField.setBackground(CompierePLAF.getFieldBackground_Error());
-			throw new CreateFromSaveException("@NoLocator@");
-		}
-
-		// Actualiza el encabezado del remito (necesario para validaciones en
-		// las
-		// líneas a crear del remito)
-		MInOut inout = getInOut();
-		log.config(inout + ", C_Locator_ID=" + locatorID);
-		// Asocia el pedido
-		if (p_order != null) {
-			inout.setC_Order_ID(p_order.getC_Order_ID());
-			inout.setDateOrdered(p_order.getDateOrdered());
-			inout.setC_Project_ID(p_order.getC_Project_ID());
-		}
-		// Asocia la factura
-		if ((m_invoice != null) && (m_invoice.getC_Invoice_ID() != 0)) {
-			inout.setC_Invoice_ID(m_invoice.getC_Invoice_ID());
-		}
-
-		// Guarda el encabezado. Si hay error cancela la operación
-		if (!inout.save()) {
-			throw new CreateFromSaveException(CLogger.retrieveErrorAsString());
-		}
-
-		// Lines
-		Integer productLocatorID = null;
-		MLocator productLocator = null;
-		for (SourceEntity sourceEntity : getSelectedSourceEntities()) {
-			DocumentLine docLine = (DocumentLine) sourceEntity;
-			BigDecimal movementQty = docLine.remainingQty;
-			int C_UOM_ID = docLine.uomID;
-			int M_Product_ID = docLine.productID;
-			
-			// Determinar la ubicación relacionada al artículo y verificar que
-			// se encuentre dentro del almacén del remito. Si se encuentra en
-			// este almacén, entonces setearle la ubicación del artículo, sino
-			// la ubicación por defecto. Sólo para movimientos de ventas.
-			productLocatorID = null;
-			if(isSOTrx()){
-				// Obtengo el id de la ubicación del artículo
-				productLocatorID = MProduct.getLocatorID(M_Product_ID, getTrxName());
-				// Si posee una configurada, verifico que sea del mismo almacén,
-				// sino seteo a null el id de la ubicación para que setee el que
-				// viene por defecto
-				if(!Util.isEmpty(productLocatorID, true)){
-					productLocator = MLocator.get(getCtx(), productLocatorID);
-					productLocatorID = productLocator.getM_Warehouse_ID() != inout
-							.getM_Warehouse_ID() ? null : productLocatorID;
-				}
-			}
-			
-			// Crea la línea del remito
-			
-			MInOutLine iol = new MInOutLine(inout);
-			iol.setM_Product_ID(M_Product_ID, C_UOM_ID); // Line UOM
-			iol.setQty(movementQty); // Movement/Entered
-			iol.setM_Locator_ID(Util.isEmpty(productLocatorID, true) ? locatorID
-					: productLocatorID); // Locator
-			iol.setDescription(docLine.description);
-
-			MInvoiceLine il = null;
-			MOrderLine ol = null;
-
-			// La línea del remito se crea a partir de una línea de pedido
-			if (docLine.isOrderLine()) {
-				OrderLine orderLine = (OrderLine) docLine;
-				// Asocia línea remito -> línea pedido
-				iol.setC_OrderLine_ID(orderLine.orderLineID);
-				ol = new MOrderLine(Env.getCtx(), orderLine.orderLineID,
-						getTrxName());
-				// Proyecto
-				iol.setC_Project_ID(ol.getC_Project_ID());
-				if (ol.getQtyEntered().compareTo(ol.getQtyOrdered()) != 0) {
-					iol.setMovementQty(movementQty.multiply(ol.getQtyOrdered())
-							.divide(ol.getQtyEntered(),
-									BigDecimal.ROUND_HALF_UP));
-					iol.setC_UOM_ID(ol.getC_UOM_ID());
-				}
-				// Instancia de atributo
-				if (ol.getM_AttributeSetInstance_ID() != 0) {
-					iol.setM_AttributeSetInstance_ID(ol
-							.getM_AttributeSetInstance_ID());
-				}
-				// Cargo (si no existe el artículo)
-				if (M_Product_ID == 0 && ol.getC_Charge_ID() != 0) {
-					iol.setC_Charge_ID(ol.getC_Charge_ID());
-				}
-				
-				// Este metodo es redefinido por un plugin
-				customMethod(ol,iol);
-
-				// La línea del remito se crea a partir de una línea de factura
-			} else if (docLine.isInvoiceLine()) {
-				InvoiceLine invoiceLine = (InvoiceLine) docLine;
-				// Credit Memo - negative Qty
-				if (m_invoice != null && m_invoice.isCreditMemo()) {
-					movementQty = movementQty.negate();
-				}
-				il = new MInvoiceLine(Env.getCtx(), invoiceLine.invoiceLineID,
-						getTrxName());
-				// Proyecto
-				iol.setC_Project_ID(il.getC_Project_ID());
-				if (il.getQtyEntered().compareTo(il.getQtyInvoiced()) != 0) {
-					iol.setQtyEntered(movementQty.multiply(il.getQtyInvoiced())
-							.divide(il.getQtyEntered(),
-									BigDecimal.ROUND_HALF_UP));
-					iol.setC_UOM_ID(il.getC_UOM_ID());
-				}
-				// Instancia de atributo
-				if (il.getM_AttributeSetInstance_ID() != 0) {
-					iol.setM_AttributeSetInstance_ID(il
-							.getM_AttributeSetInstance_ID());
-				}
-				// Cargo (si no existe el artículo)
-				if (M_Product_ID == 0 && il.getC_Charge_ID() != 0) {
-					iol.setC_Charge_ID(il.getC_Charge_ID());
-				}
-				// Si la línea de factura estaba relacionada con una línea de
-				// pedido
-				// entonces se hace la asociación a la línea del remito. Esto es
-				// necesario
-				// para que se actualicen los valores QtyOrdered y QtyReserved
-				// en el Storage
-				// a la hora de completar el remito.
-				if (invoiceLine.orderLineID > 0) {
-					iol.setC_OrderLine_ID(invoiceLine.orderLineID);
-				}
-				iol.setC_InvoiceLine_ID(invoiceLine.invoiceLineID);
-			}
-			// Guarda la línea de remito
-			if (!iol.save()) {
-				throw new CreateFromSaveException("@InOutLineSaveError@ (# "
-						+ docLine.lineNo + "):<br>"
-						+ CLogger.retrieveErrorAsString());
-
-				// Create Invoice Line Link
-			} else if (il != null) {
-				il.setM_InOutLine_ID(iol.getM_InOutLine_ID());
-				if (!il.save()) {
-					throw new CreateFromSaveException(
-							"@InvoiceLineSaveError@ (# " + il.getLine()
-									+ "):<br>"
-									+ CLogger.retrieveErrorAsString());
-				}
-			}
-		} // for all rows
+		getHelper().save(locatorID, getInOut(), p_order, m_invoice, getSelectedSourceEntities(), getTrxName(), isSOTrx(), this); 
 	} // save
 
 	@Override
@@ -598,27 +397,7 @@ public class WCreateFromShipment extends WCreateFrom {
 
 	@Override
 	protected boolean beforeAddOrderLine(OrderLine orderLine) {
-		// Si la línea de pedido ya está asociada con alguna línea del remito
-		// entonces
-		// no debe ser mostrada en la grilla. No se permite que dos líneas de un
-		// mismo
-		// remito compartan una línea del pedido.
-		String sql = "SELECT COUNT(*) FROM M_InOutLine WHERE M_InOut_ID = ? AND C_OrderLine_ID = ?";
-		Long count = (Long) DB.getSQLObject(null, sql, new Object[] {
-				getInOut().getM_InOut_ID(), orderLine.orderLineID });
-		if (count != null && count > 0) {
-			return false;
-		}
-
-		// Para devoluciones de clientes, la cantidad pendiente es en realidad
-		// la cantidad que se le ha entregado.
-		if ((isSOTrx() && getInOut().getMovementType().endsWith("+"))
-				|| (!isSOTrx() && getInOut().getMovementType().endsWith("-"))) {
-			orderLine.remainingQty = orderLine.qtyDelivered;
-		}
-
-		return true;
-	}
+		return getHelper().beforeAddOrderLine(orderLine, getInOut(), isSOTrx());	}
 
 	/**
 	 * Inicializa el lookup de facturas
@@ -712,20 +491,38 @@ public class WCreateFromShipment extends WCreateFrom {
 	/**
 	 * Entidad Orígen: Línea de Factura
 	 */
-	protected class InvoiceLine extends DocumentLine {
-		/** ID de la línea de factura */
-		protected int invoiceLineID = 0;
+	protected class InvoiceLineListImpl extends InvoiceLine implements ListedSourceEntityInterface {
 		/**
-		 * La línea de factura puede tener asociada a su vez una línea de pedido
+		 * Convierte a ArrayList el SourceEntityListImpl para que el mismo pueda ser cargado en el WListBox 
 		 */
-		protected int orderLineID = 0;
-
-		// /** Nombre de la instancia */
-		// protected String instanceName = null;
-
-		@Override
-		public boolean isInvoiceLine() {
-			return true;
+		public ArrayList<Object> toList() {
+			ArrayList<Object> result = new ArrayList<Object>();
+			CreateFromTableModel model = (CreateFromTableModel)window.getDataTable().getModel();
+			for (int i=0; i < model.getColumnCount(); i++ ) {
+				Object value = null;
+				switch (i) {
+					case DocumentLineTableModel.COL_IDX_SELECTION:
+						value = selected; break;
+					case DocumentLineTableModel.COL_IDX_LINE:
+						value = lineNo; break;
+					case DocumentLineTableModel.COL_IDX_ITEM_CODE:
+						value = itemCode; break;
+					case DocumentLineTableModel.COL_IDX_PRODUCT:
+						value = new KeyNamePair(productID, productName) ; break;
+					case DocumentLineTableModel.COL_IDX_UOM:
+						value = new KeyNamePair(uomID, uomName) ; break;
+					case DocumentLineTableModel.COL_IDX_QTY:
+						value = lineQty; break;
+					case DocumentLineTableModel.COL_IDX_REMAINING:
+						value = remainingQty; break;
+					case DocumentLineTableModel.COL_IDX_INSTANCE_NAME:
+						value = instanceName; break;
+					default:
+						value = null; break;
+				}
+				result.add(value);
+			}
+			return result;
 		}
 	}
 
@@ -830,7 +627,7 @@ public class WCreateFromShipment extends WCreateFrom {
 	// En caso contratio crea el modelo de tabla para líneas de documentos
 	// (Pedidos, Remitos, Facturas)
 	protected CreateFromTableModel createTableModelInstance() {
-		if (!isSOTrx() && allInOut.isSelected()) {
+		if (!isSOTrx() && allInOut != null && allInOut.isSelected()) {
 			return new DocumentLineTableModelFromShipment();
 		} else {
 			return new DocumentLineTableModel();
@@ -891,7 +688,7 @@ public class WCreateFromShipment extends WCreateFrom {
 
 		@Override
 		public Object getValueAt(int rowIndex, int colIndex) {
-			OrderLine docLine = (OrderLine) getDocumentLine(rowIndex);
+			OrderLine docLine = (OrderLine)getDocumentLine(rowIndex);
 			Object value = null;
 			switch (colIndex) {
 			case COL_IDX_LINE:
@@ -936,7 +733,7 @@ public class WCreateFromShipment extends WCreateFrom {
 	
 	// El siguiente metodo podrá ser redefinido por un plugin para agregar una funcionalidad particular.
 	// El metodo es invocado antes de hacer el save de la linea
-	protected void customMethod(PO ol, PO iol) {
+	public void customMethod(PO ol, PO iol) {
 	} 
 	
 	@Override
