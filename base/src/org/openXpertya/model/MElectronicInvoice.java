@@ -8,7 +8,18 @@ import java.util.Properties;
 
 import org.openXpertya.util.CLogger;
 import org.openXpertya.util.DB;
+import org.openXpertya.util.Env;
 import org.openXpertya.util.Util;
+
+/*
+ * 
+ * RP5. Información de CUIT e IVA a nivel de Organización
+ * respetando jerarquia de busqueda, info a organizacion hija, org carpeta, client (compa#ia)
+ * SportClub
+ * dREHER jorge.dreher@gmail.com
+ * Mar - 2013
+ */
+
 
 public class MElectronicInvoice extends X_E_ElectronicInvoice {
 
@@ -153,7 +164,30 @@ public class MElectronicInvoice extends X_E_ElectronicInvoice {
 		return 0;
 	}
 	
+	/* Modificado por dREHER, jorge.dreher@gmail.com para utilizar logica de 
+	 * cascada de organizacion hoja, organizacion carpeta, client (compania)
+	 */
 	private String getInvoiceCuit(int id) throws SQLException{
+		
+		return getInvoiceCuit(id, 0);
+			
+	}
+	
+	/* 
+	 * Sobrecarga del metodo para recibir ambos parametros
+	 */
+	private String getInvoiceCuit(int id, int ad_org) throws SQLException{
+		
+		String cuit = null;
+		String trxName = null;
+		
+		MClient client = new MClient(Env.getCtx(), id, trxName);
+		if(client != null)
+			cuit = client.getCUIT(true, ad_org); 
+		
+		return cuit;
+		
+	/* Codigo original	
 		String	sql = " SELECT * FROM AD_ClientInfo Where ad_client_id = '"+id+"'";
 		PreparedStatement pstmt = DB.prepareStatement(sql, get_TrxName());
 		ResultSet rs = pstmt.executeQuery();
@@ -163,6 +197,8 @@ public class MElectronicInvoice extends X_E_ElectronicInvoice {
 			return getCuit(clientinfo.getCUIT());
 		}
 		return null;
+	*/	
+		
 	}
 	
 //	private String getInvoiceBPartnerName(int id){

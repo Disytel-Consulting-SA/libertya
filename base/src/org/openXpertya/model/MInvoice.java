@@ -1723,8 +1723,16 @@ public class MInvoice extends X_C_Invoice implements DocAction {
 		
 		boolean locale_ar = CalloutInvoiceExt.ComprobantesFiscalesActivos();
 		
+		// dREHER - Setea la letra correspondiente, luego se encarga la misma clase de verificar si corresponde
+		// con el tipo segun IVA Cliente E IVA Compa#ia
 		if (locale_ar && getC_Letra_Comprobante_ID() <= 0) {
-			Integer categoriaIvaClient = CalloutInvoiceExt.darCategoriaIvaClient();
+			
+			// dREHER - Llamo pasando como parametro la organizacion del documento
+			Integer categoriaIvaClient = CalloutInvoiceExt.darCategoriaIvaClient(getAD_Org_ID());
+			
+			// TODO: despues eliminar comentario
+			log.fine("Trajo condicion IVA de organizacion como =" + categoriaIvaClient);
+			
 			categoriaIvaClient = categoriaIvaClient == null ? 0	: categoriaIvaClient;
 			int categoriaIvaPartner = partner.getC_Categoria_Iva_ID();
 
@@ -1738,6 +1746,11 @@ public class MInvoice extends X_C_Invoice implements DocAction {
 			if (isSOTrx()) { // partner -> customer, empresa -> vendor
 				Integer letra = CalloutInvoiceExt.darLetraComprobante(categoriaIvaPartner, categoriaIvaClient);
 				setC_Letra_Comprobante_ID(letra == null?0:letra);
+				
+				log.fine("Iva cliente=" + categoriaIvaPartner + " iva compa#ia=" + categoriaIvaClient);
+				
+				// chequear aca que letra trae y que condiciones de iva envia
+				
 			} else { // empresa -> customer, partner -> vendor
 				Integer letra = CalloutInvoiceExt.darLetraComprobante(categoriaIvaClient, categoriaIvaPartner);
 				setC_Letra_Comprobante_ID(letra == null?0:letra);
@@ -1868,8 +1881,11 @@ public class MInvoice extends X_C_Invoice implements DocAction {
 				if (getDocumentNo() == null && getC_Letra_Comprobante_ID() == 0) {
 					Integer letraId;
 
-					Integer categoriaIvaClient = CalloutInvoiceExt
-							.darCategoriaIvaClient();
+					// dREHER - Llamo pasando como parametro la organizacion del documento
+					Integer categoriaIvaClient = CalloutInvoiceExt.darCategoriaIvaClient(getAD_Org_ID());
+					
+					// Integer categoriaIvaClient = CalloutInvoiceExt
+					//		.darCategoriaIvaClient();
 					categoriaIvaClient = categoriaIvaClient == null ? 0
 							: categoriaIvaClient;
 					int categoriaIvaPartner = partner.getC_Categoria_Iva_ID();
@@ -2199,11 +2215,22 @@ public class MInvoice extends X_C_Invoice implements DocAction {
 
 		MClient vCompania = new MClient(getCtx(),
 				Env.getAD_Client_ID(getCtx()), get_TrxName());
-		Integer vCategoriaIva = vCompania.getCategoriaIva();
+		// Integer vCategoriaIva = vCompania.getCategoriaIva();
+		
+		// dREHER, traer categoria de iva de la compania, respetando orden jerarquico org hija, padre, compania
+		// Llamo pasando como parametro la organizacion del documento
+		Integer vCategoriaIva = vCompania.getCategoriaIva(getAD_Org_ID());
+		
 		MBPartner vCliente = new MBPartner(getCtx(), this.getC_BPartner_ID(),
 				get_TrxName());
 		boolean value = false;
 
+		// dREHER, debug TODO: quitar luego...
+		log.fine("MInvoice.validarLetraComprobante = ***** Dio algun error de compatibilidad entre ambas cat de iva compania=" + vCategoriaIva + "\n" +
+				"cliente=" + vCliente.getC_Categoria_Iva_ID() + "\n" +
+				"letra=" + this.getC_Letra_Comprobante_ID());
+		
+		
 		//
 		if (vCategoriaIva == 0) {
 			// no existen alguno de los datos a validar, devuelvo verdadero

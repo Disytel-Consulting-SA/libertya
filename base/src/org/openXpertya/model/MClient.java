@@ -56,6 +56,18 @@ import javax.mail.internet.InternetAddress;
  *         * Jorg Janke
  *  @version $Id: MClient.java,v 1.22 2005/05/09 21:35:02 jjanke Exp $
  */
+
+/*
+ * 
+ * RP5. Información de CUIT e IVA a nivel de Organización
+ * respetando jerarquia de busqueda, info a organizacion hija, org carpeta, client (compa#ia)
+ * SportClub
+ * dREHER jorge.dreher@gmail.com
+ * Mar - 2013
+ */
+
+
+
 public class MClient extends X_AD_Client {
 
     /** Static Logger */
@@ -561,38 +573,228 @@ public class MClient extends X_AD_Client {
 
     }		// setAD_Language
     
+    
+    /*
+     * 
+     * dREHER jorge.dreher@gmail.com para mantener compatibilidad con metodos utilizados
+     * 
+     */
+    
+    public Integer getCategoriaIva(){
+    	return getCategoriaIva(0);
+    }
+    
+    
     /**
      *      Set AD_Client
      *      @param 
-     */    
-	public Integer getCategoriaIva() {
-		// devuelve la categoria de iva de la compañia
-	Integer vInfo_ID = 0;	
-	StringBuffer sql = new StringBuffer( "SELECT C_Categoria_IVA_ID FROM AD_ClientInfo " +
-				"         WHERE  AD_Client_Id = ? " );
+     *      
+     *      
+     *      Modificado por dREHER jorge.dreher@gmil.com - marzo 2013
+     *      Permito busqueda de info a nivel organizacion hoja, organizacion carpeta o bien client (logica actual)
+     *      
+    */    
+	public Integer getCategoriaIva(int p_AD_Org_ID) {
+	   /* 
+	    * devuelve la categoria de iva de la compañia, utilizando logica de orden con organizacion:
+		* Si la organizacion actual contiene la data IVA diferente de null, se toma esta info,
+		* Si la orgazanicion actual es hija, se busca organizacion padre y se realiza mismo procedimiento,
+		* Si la organizacion padre, contiene la data de IVA diferente de null, se toma esta info, caso
+		* contrario se utiliza la vieja logica, es decir, tomar la data de IVA desde la tabla ClientInfo
+		*/
+		
+		/* 	
+			Traigo la organizacion de login, si se logueo en una organizacion diferente de 0
+			tomar ese AD_Org_ID, en caso contrario, traer la organizacion de la ventana activa
+		 */
+		
+		int AD_Org_ID = loadAD_Org_ID(p_AD_Org_ID);
+		
+		/*
+			Ahora buscar los datos de IVA en la organizacion hoja, si esta en null
+			buscar la organizacion carpeta, en caso de existir, si tambien da null
+			dejar el comportamiento actual, es decir, buscar la condicion de IVA en la Compañía (Client) actual
+		 */
+		
+		int client = getAD_Client_ID();
+		String sql = "SELECT C_Categoria_Iva_ID FROM AD_ClientInfo WHERE "
+				+ "AD_Client_ID = " + client;
+		String sql1 = "SELECT C_Categoria_Iva_ID FROM AD_OrgInfo WHERE AD_Org_ID=" + AD_Org_ID;
+		
+		int categoriaIvaClient = DB.getSQLValue(get_TrxName(), sql1);
+		log.fine("** Busco iva para ad_org_id=" + AD_Org_ID + "/nsql=" + sql1);
+		
+		if(categoriaIvaClient <= 0){
+			
+			sql1 = "SELECT getnodepadre(" + client + "," + AD_Org_ID + "," + "'OO' )";
+			log.fine("No encontro condicion de iva en org hoja, buscar la org padre =" + sql1);
+			
+			/* Si no encontro categoria de IVA definida en la organizacion hoja, buscar en la organizacion carpeta, si es que existe */
+			AD_Org_ID = DB.getSQLValue(get_TrxName(), sql1);			
+			if(AD_Org_ID > 0){
+				sql1 = "SELECT C_Categoria_Iva_ID FROM AD_OrgInfo WHERE AD_Org_ID=" + AD_Org_ID;
+				log.fine("No encontro condicion de iva en org hoja, buscar en org padre si existe =" + sql1);
+				categoriaIvaClient = DB.getSQLValue( get_TrxName(), sql1);
+			}
+			
+			if(categoriaIvaClient <= 0){
+				log.fine("No encontro condicion de iva en org carpeta, buscar en ClientInfo sql =" + sql);
+				/* si no encontro categoria de IVA definida en la organizacion carpeta, buscar en la informacion de la compa#ia */
+				categoriaIvaClient = DB.getSQLValue( get_TrxName(), sql);
+			}
+
+		}else
+			log.fine("Devuelvo condicion de iva encontrada=" + categoriaIvaClient);
+
+	return categoriaIvaClient;
+	
+/* Inicio de Codigo original, modificado Marzo 2013 dREHER */
+		
+	//Integer vInfo_ID = 0;	
+	//StringBuffer sql = new StringBuffer( "SELECT C_Categoria_IVA_ID FROM AD_ClientInfo " +
+	//			"         WHERE  AD_Client_Id = ? " );
+	
    /* 
     * realizo una busqueda sql, por que la instanciación de AD_ClientInfo es muy oscura, no es normal
     * como las otras subclases de PO
     */
 	
-   try {
-        PreparedStatement pstmt = DB.prepareStatement( sql.toString());
-        pstmt.setInt( 1,Env.getAD_Client_ID(getCtx()));
-        ResultSet rs = pstmt.executeQuery();
+    //    PreparedStatement pstmt = DB.prepareStatement( sql.toString());
+    //    pstmt.setInt( 1,Env.getAD_Client_ID(getCtx()));
+    //    ResultSet rs = pstmt.executeQuery();
         
-        if(rs.next()) {
-           vInfo_ID = rs.getInt("C_Categoria_IVA_ID");
-        }
-        rs.close();
-        pstmt.close();
-    } catch( SQLException e ) {
-        log.log( Level.SEVERE,sql.toString(),e );
-    }
-    	return vInfo_ID;    
+    //    if(rs.next()) {
+    //       vInfo_ID = rs.getInt("C_Categoria_IVA_ID");
+    //    }
+    //    rs.close();
+    //    pstmt.close();
+    //} catch( SQLException e ) {
+    //    log.log( Level.SEVERE,sql.toString(),e );
+    // }
+    // 	return vInfo_ID;    
+    	
+/* Fin de Codigo original, modificado Marzo 2013 dREHER */
+		
+    	
 	}   // getCategoriaIva
 	
+	private int loadAD_Org_ID(){
+		return loadAD_Org_ID(0);
+	}
+	
+	private int loadAD_Org_ID(int p_AD_Org_ID) {
+		int AD_Org_ID = 0;
+		
+		/* 	
+		Traigo la organizacion de login, si se logueo en una organizacion diferente de 0
+		tomar ese AD_Org_ID, en caso contrario, traer la organizacion de la ventana activa, o
+		directamente la enviada como parametro
+		*/
 
-	/**
+		if(p_AD_Org_ID > 0)
+			return p_AD_Org_ID;
+		
+		
+		AD_Org_ID = Env.getAD_Org_ID(Env.getCtx());
+		log.fine("** Organizacion de login ad_org_id=" + AD_Org_ID);
+		
+		if(AD_Org_ID == 0){
+			// TODO: ver como se comporta si se esta por ej emitiendo un reporte, lee correctamente AD_Org_ID del entorno?
+			// caso contrario, poder enviar parametro AD_Org_ID desde llamado al metodo
+			AD_Org_ID = Env.getContextAsInt(Env.getCtx(), "AD_Org_ID");
+			log.fine("** Se logueo con asterisco, buscar org organizacion actual de entorno ad_org_id=" + AD_Org_ID);
+		}		
+		
+		return AD_Org_ID;
+	}
+
+	public String getCUIT(){
+		return getCUIT(false, 0);
+	}
+	
+	public String getCUIT(int p_AD_Org_ID){
+		return getCUIT(false, p_AD_Org_ID);
+	}
+	
+	  /**
+     *      Set AD_Client
+     *      @param 
+     *      
+     *      
+     *      Creado por dREHER jorge.dreher@gmil.com - marzo 2013
+     *      Permito busqueda de info a nivel organizacion hoja, organizacion carpeta o bien client (logica actual)
+     *      
+    */    
+	public String getCUIT(boolean formateado, int p_AD_Org_ID) {
+	   /* 
+	    * devuelve cuit de la compañia, utilizando logica de orden con organizacion:
+		* Si la organizacion actual contiene la data CUIT diferente de null, se toma esta info,
+		* Si la orgazanicion actual es hija, se busca organizacion padre y se realiza mismo procedimiento,
+		* Si la organizacion padre, contiene la data de CUIT diferente de null, se toma esta info, caso
+		* contrario se utiliza la vieja logica, es decir, tomar la data de CUIT desde la tabla ClientInfo
+		*/
+		
+		/* 	
+			Traigo la organizacion de login, si se logueo en una organizacion diferente de 0
+			tomar ese AD_Org_ID, en caso contrario, traer la organizacion de la ventana activa
+		 */
+		
+		int AD_Org_ID = loadAD_Org_ID(p_AD_Org_ID);
+	
+		/*
+			Ahora buscar los datos de CUIT en la organizacion hoja, si esta en null
+			buscar la organizacion carpeta, en caso de existir, si tambien da null
+			dejar el comportamiento actual, es decir, buscar CUIT en la Compañía (Client) actual
+		 */
+		
+		int client = getAD_Client_ID();
+		String sql = "SELECT CUIT FROM AD_ClientInfo WHERE "
+				+ "AD_Client_ID = " + client;
+		String sql1 = "SELECT CUIT FROM AD_OrgInfo WHERE AD_Org_ID=" + AD_Org_ID;
+		
+		String cuitClient = DB.getSQLValueString(get_TrxName(), sql1);
+		log.fine("** Busco cuit para ad_org_id=" + AD_Org_ID + "/nsql=" + sql1);
+		
+		if(cuitClient == null){
+			
+			sql1 = "SELECT getnodepadre(" + client + "," + AD_Org_ID + "," + "'OO' )";
+			log.fine("No encontro cuit en org hoja, buscar la org padre =" + sql1);
+			
+			/* Si no encontro CUIT definida en la organizacion hoja, buscar en la organizacion carpeta, si es que existe */
+			AD_Org_ID = DB.getSQLValue(get_TrxName(), sql1);			
+			if(AD_Org_ID > 0){
+				sql1 = "SELECT CUIT FROM AD_OrgInfo WHERE AD_Org_ID=" + AD_Org_ID;
+				log.fine("No encontro cuit en org hoja, buscar en org padre si existe =" + sql1);
+				cuitClient = DB.getSQLValueString( get_TrxName(), sql1);
+			}
+			
+			if(cuitClient == null){
+				log.fine("No encontro cuit en org carpeta, buscar en ClientInfo sql =" + sql);
+				/* si no encontro cuit definida en la organizacion carpeta, buscar en la informacion de la compa#ia */
+				cuitClient = DB.getSQLValueString( get_TrxName(), sql);
+			}
+
+		}else
+			log.fine("Devuelvo condicion de iva encontrada=" + cuitClient);
+
+		if(formateado)
+			cuitClient = getCuit(cuitClient);
+		
+		return cuitClient;
+	
+	}
+	
+	// dREHER, jorge.dreher@gmail.com agregue formateo de cuit a nivel compania, para cuando sea preciso, por default getCUIT() devuelve sin formateo
+	// es cuit solo numeros Ej: cuit 20-20986613-9 return 20209866139
+	private String getCuit(String cuit){
+		if (cuit.length() == 13){
+			String numero = cuit.substring(0,2)+cuit.substring(3,11)+cuit.substring(12,13);
+			return numero;
+		}
+		return cuit;
+	}
+
+ 	/**
 	 * 	Define is a field is displayed based on ASP rules
 	 * 	@param ad_field_id
 	 *	@return boolean indicating if it's displayed or not

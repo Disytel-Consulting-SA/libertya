@@ -377,11 +377,25 @@ public class LaunchInvoice extends SvrProcess {
 		jasperwrapper.addParameter("PAST_DUE_AND_UNPAIDED", MInvoice.isPastDue(
 			getCtx(), invoice, new Date(), true, get_TrxName()) > 0);
 		jasperwrapper.addParameter("CLIENT",client.getName());
+		
+		// dREHER, cambie el llamado de estos metodos por el del cliente
+		// que incluye la logica en cascada de busqueda org hoja, org carpeta, client (compania)
+				
+				
+		jasperwrapper.addParameter("CLIENT_CUIT",client.getCUIT(invoice.getAD_Org_ID()));
+		jasperwrapper.addParameter(
+					"CLIENT_CATEGORIA_IVA",
+					JasperReportsUtil.getCategoriaIVAName(getCtx(),
+							client.getCategoriaIva(invoice.getAD_Org_ID()), get_TrxName()));
+		
+		/* Codigo original
 		jasperwrapper.addParameter("CLIENT_CUIT",clientInfo.getCUIT());
 		jasperwrapper.addParameter(
 			"CLIENT_CATEGORIA_IVA",
 			JasperReportsUtil.getCategoriaIVAName(getCtx(),
 					clientInfo.getC_Categoria_Iva_ID(), get_TrxName()));
+		*/
+		
 		jasperwrapper.addParameter(
 				"ORG",
 				JasperReportsUtil.getOrgName(getCtx(), invoice.getAD_Org_ID()));

@@ -33,6 +33,18 @@ import org.openXpertya.util.DisplayType;
 import org.openXpertya.util.Env;
 import org.openXpertya.util.Util;
 
+
+/*
+ * 
+ * RP5. Información de CUIT e IVA a nivel de Organización
+ * respetando jerarquia de busqueda, info a organizacion hija, org carpeta, client (compa#ia)
+ * SportClub
+ * dREHER jorge.dreher@gmail.com
+ * Mar - 2013
+ */
+
+
+
 public class CalloutInvoiceExt extends CalloutInvoice {
 
 	private static Boolean st_ComprobantesFiscalesActivos = null;
@@ -280,6 +292,56 @@ public class CalloutInvoiceExt extends CalloutInvoice {
 		return documentNo;
 	}
 	
+	// dREHER, cuando se modifique la organizacion setear la letra de comprobante correspondiente
+	// en funcion de la categoria de IVA del cliente y de la compa#ia
+	public String AD_Org(Properties ctx, int WindowNo, MTab tab, MField field,
+			Object value){
+		
+		if(tab.isInserting() || field.isChanged()){
+
+			Integer AD_Org_ID = ( Integer )value;
+			if( (AD_Org_ID == null) || (AD_Org_ID.intValue() == 0) ) {
+				return "";
+			}
+
+			// Si todavia no se eligio socio, no hacer nada
+			if(tab.getValue("C_BPartner_ID")==null)
+				return "";
+			
+			MBPartner partner = new MBPartner(ctx, (Integer)tab.getValue("C_BPartner_ID"),
+					null);
+
+			// Llamo pasando como parametro la organizacion del documento
+			Integer categoriaIvaClient = darCategoriaIvaClient(AD_Org_ID);
+
+			// TODO: despues eliminar comentario
+			log.fine("Trajo condicion IVA de organizacion como =" + categoriaIvaClient);
+
+			categoriaIvaClient = categoriaIvaClient == null ? 0	: categoriaIvaClient;
+			int categoriaIva = partner.getC_Categoria_Iva_ID();
+
+			log.fine("Iva cliente=" + categoriaIva + " iva compa#ia=" + categoriaIvaClient);
+
+			// Si ambas categorias estan asignadas, setear letra de comprobante correspondiente
+			if (categoriaIvaClient > 0 || categoriaIva > 0) {
+
+				int letraId = 0;
+				boolean IsSOTrx = Env.getContext(ctx, WindowNo, "IsSOTrx").equals("Y");
+
+				if (IsSOTrx) { // partner -> customer, empresa -> vendor
+					letraId = darLetraComprobante(categoriaIva, categoriaIvaClient);
+				} else { // empresa -> customer, partner -> vendor
+					letraId = darLetraComprobante(categoriaIvaClient, categoriaIva);
+				}
+
+				tab.setValue("C_Letra_comprobante_ID", letraId);
+			}
+
+		}
+
+		return "";
+	}
+	
 	@Override
 	public String docType(Properties ctx, int WindowNo, MTab tab, MField field,
 			Object value) {
@@ -344,13 +406,35 @@ public class CalloutInvoiceExt extends CalloutInvoice {
 		return letraId;
 	}
 	
+	// Sobrecargo metodos para guardar compatibilidad con codigo existente
+	public static Integer darCategoriaIvaClient(){
+		return darCategoriaIvaClient(0);
+	}
+	
 	/** Devuelve la categoria de IVA de la Compañía (Client) actual
+	 * 
+	 * Modificado por dREHER, jorge.dreher@gmail.com - Marzo 2013
+	 * para buscar en cascada respetando logica de organizaciones hoja, carpeta, compania
 	 * 
 	 * @return
 	 */
-	public static Integer darCategoriaIvaClient() {
+	public static Integer darCategoriaIvaClient(int AD_Org_ID) {
 		Integer categoriaIvaClient = null;
+		String trxName = null;
 		
+		//TODO: ver si leo AD_Org_ID y ya lo paso como parametro desde aca, por ahora dejo que se encargue MClient de obtenerla a partir del entorno
+		// int AD_Org_ID = Env.getContextAsInt(ctx, WindowNo, "AD_Org_ID");
+		
+		MClient client = new MClient(Env.getCtx(), Env.getAD_Client_ID(Env.getCtx()), trxName);
+		if(client != null)
+			categoriaIvaClient = client.getCategoriaIva(AD_Org_ID);
+		
+		return categoriaIvaClient;
+		
+		
+/* Codigo original
+ * 		
+ 
 		String sq = "SELECT C_Categoria_Iva_ID FROM AD_CLIENTINFO WHERE "
 			+ "AD_CLIENT_ID = ?";
 		
@@ -368,6 +452,9 @@ public class CalloutInvoiceExt extends CalloutInvoice {
 		}
 		
 		return categoriaIvaClient;
+		
+*/		
+		
 	}
 	
     public String bPartner(Properties ctx, int WindowNo, MTab mTab,
@@ -576,7 +663,9 @@ public class CalloutInvoiceExt extends CalloutInvoice {
 			// busco la categoria de la empresa
 			
 			try {
-				int categoriaIvaClient = darCategoriaIvaClient();
+				
+				// dREHER - Tomo el ID del tab del comprobante
+				int categoriaIvaClient = darCategoriaIvaClient((Integer)mTab.getValue("AD_Org_ID"));
 				
 				if (IsSOTrx) { // partner -> customer, empresa -> vendor
 					letraId = darLetraComprobante(categoriaIva, categoriaIvaClient);
