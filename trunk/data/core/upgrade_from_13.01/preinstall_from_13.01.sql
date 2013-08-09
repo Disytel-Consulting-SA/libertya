@@ -4375,3 +4375,7 @@ $BODY$
   LANGUAGE plpgsql VOLATILE
   COST 100;
 ALTER FUNCTION libertya.getnodepadre(integer, integer, character varying) OWNER TO libertya;
+
+--20130809-1150 Nuevas columnas para configuración de categoría de iva y cuit por organización creadas por Jorge Dreher
+ALTER TABLE AD_OrgInfo ADD COLUMN C_Categoria_IVA_ID numeric(10);
+ALTER TABLE AD_OrgInfo ADD COLUMN CUIT character varying(13);

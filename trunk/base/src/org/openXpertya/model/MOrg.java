@@ -315,7 +315,32 @@ public class MOrg extends X_AD_Org {
     	return true;
     }
 
-	 /*
+    /*
+     * dREHER jorge.dreher@gmail.com 
+     * 
+     * Genera un string con todos los ID de las organizaciones hojas hijas, en caso de que la organizacion actual sea del tipo carpeta isSummary='Y'
+     * 
+     */
+     public String getOrgsChildsAsString(){
+    	 
+    	 String orgs = null;
+    	 String orgsX = "";
+    	 
+    	 // LLamo a metodo getOrgsChilds, para evitar duplicidad de codigo
+    	 
+    	 ArrayList<MOrg> orgsA = this.getOrgsChilds();
+    	 
+    	 for(MOrg org : orgsA)
+    		 orgsX += (!orgsX.isEmpty()?",":"") + org.getAD_Org_ID();
+    		 
+    	 if(orgsX != "")
+    		 orgs = orgsX;
+    	 
+    	 return orgs;
+    	 
+     }
+
+     /*
       * dREHER jorge.dreher@gmail.com 
       * 
       * Devuelve un array de organizaciones hojas hijas, en caso de que la organizacion actual sea del tipo carpeta isSummary='Y'
