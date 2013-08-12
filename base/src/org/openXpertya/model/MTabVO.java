@@ -529,6 +529,14 @@ public class MTabVO implements Evaluatee, Serializable {
 
     //~--- get methods --------------------------------------------------------
 
+
+    // Es necesario al menos por el momento, no recuperar las pestañas incluidas en la solución web,
+    // pero mantener el query original para la solución swing, con lo cual se adoptó esta solución
+    protected static boolean omitIncludedTabs = false;
+    public static void omitIncludedTabs() {
+		omitIncludedTabs = true;
+    }
+    
     /**
      *  Return the SQL statement used for the MTabVO.create
      *  @param ctx context
@@ -537,12 +545,18 @@ public class MTabVO implements Evaluatee, Serializable {
     protected static String getSQL(Properties ctx) {
 
         // View only returns IsActive='Y'
-        String	sql	= "SELECT * FROM AD_Tab_v WHERE AD_Window_ID=?" + " ORDER BY SeqNo";
+        String	sql	= " SELECT * FROM AD_Tab_v WHERE AD_Window_ID=? ";
 
         if (!Env.isBaseLanguage(ctx, "AD_Window")) {
-            sql	= "SELECT * FROM AD_Tab_vt WHERE AD_Window_ID=?" + " AND AD_Language='" + Env.getAD_Language(ctx) + "'" + " ORDER BY SeqNo";
+            sql	= " SELECT * FROM AD_Tab_vt WHERE AD_Window_ID=?" + " AND AD_Language='" + Env.getAD_Language(ctx) + "' ";
         }
-
+        
+        // Clausula adicional para excluir pestañas incluidas
+        if (omitIncludedTabs) {
+        	sql = sql + " AND AD_Tab_ID NOT IN (SELECT included_tab_id FROM AD_Tab_vt WHERE included_tab_id IS NOT NULL) ";
+        }
+        
+        sql = sql + " ORDER BY SeqNo";
         return sql;
     }		// getSQL
 

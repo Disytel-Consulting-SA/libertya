@@ -56,6 +56,7 @@ import org.openXpertya.model.DataStatusEvent;
 import org.openXpertya.model.DataStatusListener;
 import org.openXpertya.model.MField;
 import org.openXpertya.model.MTab;
+import org.openXpertya.model.MTabVO;
 import org.openXpertya.model.MTable;
 import org.openXpertya.model.MWindow;
 import org.openXpertya.model.MWindowVO;
@@ -284,7 +285,8 @@ public abstract class AbstractADWindowPanel extends AbstractUIPart implements To
 			Env.setAutoCommit(ctx, curWindowNo, Env.isAutoCommit(ctx));
 			boolean autoNew = Env.isAutoNew(ctx);
 			Env.setAutoNew(ctx, curWindowNo, autoNew);
-
+			// Omitir las pestañas incluidas por el momento
+			MTabVO.omitIncludedTabs();
 	        MWindowVO gWindowVO = AEnv.getMWindowVO(curWindowNo, adWindowId, 0);
 	        if (gWindowVO == null)
 	        {
@@ -1474,7 +1476,7 @@ public abstract class AbstractADWindowPanel extends AbstractUIPart implements To
     }
 
 	private void showLastError() {
-		String msg = CLogger.retrieveErrorString(null);
+		String msg = CLogger.retrieveErrorAsString();
 		if (msg != null)
 		{
 			statusBar.setStatusLine(Msg.getMsg(Env.getCtx(), msg), true, true);
@@ -1999,8 +2001,8 @@ public abstract class AbstractADWindowPanel extends AbstractUIPart implements To
 
 			if (ps != null && ps.equals("Y"))
 			{
-				/*new org.adempiere.webui.acct.WAcctViewer(Env.getContextAsInt (ctx, curWindowNo, "AD_Client_ID"),
-						tableId, recordId);*/
+				new org.adempiere.webui.acct.WAcctViewer(Env.getContextAsInt (ctx, curWindowNo, "AD_Client_ID"),
+						tableId, recordId);
 			}
 			else
 			{
