@@ -349,10 +349,13 @@ public class MPOSJournal extends X_C_POSJournal implements DocAction {
 		
 		// No es posible abrir una Caja Diaria si ya existe otra abierta para el mismo
 		// TPV.
-		if (!validateOpenedJournal()) {
-			m_processMsg = "@CannotOpenMultiplesJournals@";
-			return false;
-		}
+		// Modificación por Matías Cap
+		// Ahora sí es posible tener más de una caja diaria abierta para el
+		// mismo TPV
+//		if (!validateOpenedJournal()) {
+//			m_processMsg = "@CannotOpenMultiplesJournals@";
+//			return false;
+//		}
 		
 		// No es posible abrir una Caja Diaria para un usuario que ya tiene una
 		// caja abierta o en verificación.
