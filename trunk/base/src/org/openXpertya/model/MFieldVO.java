@@ -346,6 +346,8 @@ public class MFieldVO implements Serializable {
                 } else if (columnName.equalsIgnoreCase("ColumnSQL")) {
                     vo.ColumnSQL	= rs.getString(i);
                 }
+				else if (columnName.equalsIgnoreCase("Included_Tab_ID"))
+					vo.Included_Tab_ID = rs.getInt(i);
             }
             // En el caso que la columna IsReadOnly tenga el valor true, se setea el valor de la columna IsAlwaysUpdateable en false
             // Si el campo IsReadOnly es true, no se puede actualizar el valor del campo, independientemente de si es Siempre Actualizable o no.

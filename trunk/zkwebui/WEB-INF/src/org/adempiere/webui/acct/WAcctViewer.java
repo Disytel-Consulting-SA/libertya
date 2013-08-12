@@ -1205,7 +1205,7 @@ public class WAcctViewer extends Window implements EventListener
 			//setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
 			boolean force = forcePost.isChecked();
 			String error = AEnv.postImmediate (m_data.WindowNo, m_data.AD_Client_ID,
-				m_data.AD_Table_ID, m_data.Record_ID, force);
+				m_data.AD_Table_ID, m_data.Record_ID, true);
 			//setCursor(Cursor.getDefaultCursor());
 			if (error != null)
 				FDialog.error(0, this, "PostingError-N", error);
