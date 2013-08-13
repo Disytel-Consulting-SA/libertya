@@ -2725,23 +2725,23 @@ public class PoSOnline extends PoSConnectionState {
 	      // 1. Busca en los UPC de instancias. Estos son los que tiene mayor prioridad
 	      .append("(SELECT M_Product_ID, M_AttributeSetInstance_ID, <MT_M_Product_Upc_Instance> As MatchType ")
 	      .append( "FROM M_Product_Upc_Instance ")
-	      .append( "WHERE (UPC <COMPARATOR> <VALUE>) AND IsActive = 'Y') ")
+	      .append( "WHERE (UPPER(UPC) <COMPARATOR> UPPER(<VALUE>)) AND IsActive = 'Y') ")
 	      .append("UNION ")
 		  // 2. Busca en los UPC asociados al artículo. Primero se lista el UPC predeterminado.
 	      .append("(SELECT M_Product_ID, 0, <MT_M_ProductUPC> ") 
 		  .append( "FROM M_ProductUPC ")
-		  .append( "WHERE (UPC <COMPARATOR> <VALUE>) AND IsActive = 'Y' ")
+		  .append( "WHERE (UPPER(UPC) <COMPARATOR> UPPER(<VALUE>)) AND IsActive = 'Y' ")
 		  .append( "ORDER BY IsDefault DESC) ")
 		  .append("UNION ")
 		  // 3. Buscan por UPC en los artículos asociados al proveedor
 		  .append("(SELECT M_Product_ID, 0, <MT_M_Product_PO> ")
 		  .append( "FROM M_Product_PO ")
-		  .append( "WHERE (UPC <COMPARATOR> <VALUE>) AND IsActive = 'Y') ") 
+		  .append( "WHERE (UPPER(UPC) <COMPARATOR> UPPER(<VALUE>)) AND IsActive = 'Y') ") 
 		  .append("UNION ")
 		  // 4. Busca por VendorProductNo en los artículos asociados a entidades comerciales 
 		  .append("(SELECT M_Product_ID, 0, <MT_C_BPartner_Product> ")
 		  .append( "FROM C_BPartner_Product ")
-		  .append( "WHERE (VendorProductNo <COMPARATOR> <VALUE>) AND isActive = 'Y') ");
+		  .append( "WHERE (UPPER(VendorProductNo) <COMPARATOR> UPPER(<VALUE>)) AND isActive = 'Y') ");
 
 	    String exactQuery = null;
 	    String partialQuery = null;
@@ -2800,7 +2800,7 @@ public class PoSOnline extends PoSConnectionState {
 		  // 1. Buscan por Value en la tabla de artículos
 		  .append("(SELECT M_Product_ID, 0 AS M_AttributeSetInstance_ID, <MT_M_Product> AS MatchType ")
 		  .append( "FROM M_Product ")
-		  .append( "WHERE (Value <COMPARATOR> <VALUE>) AND IsActive = 'Y') "); 
+		  .append( "WHERE (UPPER(Value) <COMPARATOR> UPPER(<VALUE>)) AND IsActive = 'Y') "); 
 
 	    String exactQuery = null;
 	    String partialQuery = null;
@@ -2853,7 +2853,7 @@ public class PoSOnline extends PoSConnectionState {
 		  // 1. Buscan por Value en la tabla de artículos
 		  .append("(SELECT M_Product_ID, 0 AS M_AttributeSetInstance_ID, <MT_M_Product> AS MatchType ")
 		  .append( "FROM M_Product ")
-		  .append( "WHERE (Name <COMPARATOR> <VALUE>) AND IsActive = 'Y') "); 
+		  .append( "WHERE (UPPER(Name) <COMPARATOR> UPPER(<VALUE>)) AND IsActive = 'Y') "); 
 
 	    String exactQuery = null;
 	    String partialQuery = null;
