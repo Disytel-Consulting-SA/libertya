@@ -2305,7 +2305,7 @@ public class MInvoice extends X_C_Invoice implements DocAction {
 		// Para facturas de venta, si está activo locale ar y el tipo de
 		// documento requiere impresión fiscal entonces no debo controlar
 		// factura repetida
-		if (isSOTrx() && requireFiscalPrint() && !isManualDocumentNo()) {
+		if (isSOTrx() && (requireFiscalPrint() || isElectronicInvoice()) && !isManualDocumentNo()) {
 			return false;
 		}
 
@@ -4889,6 +4889,15 @@ public class MInvoice extends X_C_Invoice implements DocAction {
 	public boolean requireFiscalPrint() {
 		return CalloutInvoiceExt.ComprobantesFiscalesActivos()
 				&& MDocType.isFiscalDocType(getC_DocTypeTarget_ID());
+	}
+	
+	/**
+	 * @return true en caso que el tipo de documento para esta 
+	 * factura sea electrónico, o false en caso contrario
+	 */
+	public boolean isElectronicInvoice() {
+		return CalloutInvoiceExt.ComprobantesFiscalesActivos(false)
+				&& MDocType.isElectronicDocType(getC_DocTypeTarget_ID());
 	}
 
 	/**
