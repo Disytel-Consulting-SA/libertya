@@ -851,6 +851,11 @@ public class MProcess extends X_AD_Process {
      * @throws Exception
      */
 	public static void addAttachment(String trxName, Properties ctx, String componentObjectUID, String attachmentName, byte[] data) throws Exception {
+		// Si el attachment parámetro es null no hago nada
+    	if(data == null || data.length <= 0){
+    		return;
+    	}
+    	
 		// Obtener el id del proceso
 		int processID = DB.getSQLValue(trxName,
 				"SELECT AD_Process_ID FROM AD_Process WHERE AD_ComponentObjectUID = '"
