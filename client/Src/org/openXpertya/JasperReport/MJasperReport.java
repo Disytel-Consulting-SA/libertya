@@ -272,9 +272,15 @@ public class MJasperReport extends X_AD_JasperReport
      */
     public static void updateBinaryData(String trxName, Properties ctx, String componentObjectUID, byte[] data) throws Exception
     {
+    	// Si el .jasper parámetro es null no hago nada
+    	if(data == null || data.length <= 0){
+    		return;
+    	}
+    	
     	// recuperar un Jasper a partir de su UID
     	String getIDFromUID = " SELECT AD_JasperReport_ID FROM AD_JasperReport WHERE AD_ComponentObjectUID = ? ";
 		MJasperReport libroIvaJR = new MJasperReport(ctx, DB.getSQLValue(trxName, getIDFromUID, componentObjectUID), trxName);
+		
 		
 		// Setear el contenido binario correspondiente
 		libroIvaJR.setBinaryData(data);
