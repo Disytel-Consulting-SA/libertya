@@ -173,6 +173,10 @@ public class PostInstallUpgradeFrom1301 extends PluginPostInstallProcess {
 	protected final static String ENTIDADES_FINANCIERAS_SALES_PURCHASES_REPORT_UID = "CORE-AD_Process-1010358";
 	protected final static String ENTIDADES_FINANCIERAS_SALES_PURCHASES_REPORT_FILENAME = "EntidadFinancieraSalesPurchases.jrxml";
 	
+	/** UID del Informe de Auditoría de Entidades Financieras */
+	protected final static String ENTIDADES_FINANCIERAS_AUDIT_REPORT_UID = "CORE-AD_Process-1010359";
+	protected final static String ENTIDADES_FINANCIERAS_AUDIT_REPORT_FILENAME = "EntidadFinancieraAudit.jrxml";
+	
 	protected String doIt() throws Exception {
 		super.doIt();
 		
@@ -649,7 +653,7 @@ public class PostInstallUpgradeFrom1301 extends PluginPostInstallProcess {
 								jarFileURL,
 								getBinaryFileURL(STOCK_VALUED_REPORT_FILENAME)));
 		
-		// Informe de Venta/Compra de Entidades Fiancieras
+		// Informe de Venta/Compra de Entidades Financieras
 		MProcess.addAttachment(
 				get_TrxName(),
 				getCtx(),
@@ -660,6 +664,16 @@ public class PostInstallUpgradeFrom1301 extends PluginPostInstallProcess {
 								jarFileURL,
 								getBinaryFileURL(ENTIDADES_FINANCIERAS_SALES_PURCHASES_REPORT_FILENAME)));
 		
+		// Informe de Auditoría de Entidades Financieras
+		MProcess.addAttachment(
+				get_TrxName(),
+				getCtx(),
+				ENTIDADES_FINANCIERAS_AUDIT_REPORT_UID,
+				ENTIDADES_FINANCIERAS_AUDIT_REPORT_FILENAME,
+				JarHelper
+						.readBinaryFromJar(
+								jarFileURL,
+								getBinaryFileURL(ENTIDADES_FINANCIERAS_AUDIT_REPORT_FILENAME)));
 		
 		return " ";
 	}
