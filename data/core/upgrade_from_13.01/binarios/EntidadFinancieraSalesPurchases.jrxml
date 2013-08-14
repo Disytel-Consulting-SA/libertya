@@ -23,21 +23,11 @@
 	<import value="net.sf.jasperreports.engine.*" />
 	<import value="net.sf.jasperreports.engine.data.*" />
 
-	<parameter name="AD_Org_ID" isForPrompting="false" class="java.math.BigDecimal">
-		<defaultValueExpression ><![CDATA[new java.math.BigDecimal(1010053)]]></defaultValueExpression>
-	</parameter>
-	<parameter name="DateFrom" isForPrompting="false" class="java.sql.Timestamp">
-		<defaultValueExpression ><![CDATA[new java.sql.Timestamp(System.currentTimeMillis())]]></defaultValueExpression>
-	</parameter>
-	<parameter name="DateTo" isForPrompting="false" class="java.sql.Timestamp">
-		<defaultValueExpression ><![CDATA[new java.sql.Timestamp(System.currentTimeMillis())]]></defaultValueExpression>
-	</parameter>
-	<parameter name="M_EntidadFinanciera_ID" isForPrompting="false" class="java.math.BigDecimal">
-		<defaultValueExpression ><![CDATA[new java.math.BigDecimal(0)]]></defaultValueExpression>
-	</parameter>
-	<parameter name="C_BPartner_ID" isForPrompting="false" class="java.math.BigDecimal">
-		<defaultValueExpression ><![CDATA[new java.math.BigDecimal(1028018)]]></defaultValueExpression>
-	</parameter>
+	<parameter name="AD_Org_ID" isForPrompting="false" class="java.math.BigDecimal"/>
+	<parameter name="DateFrom" isForPrompting="false" class="java.sql.Timestamp"/>
+	<parameter name="DateTo" isForPrompting="false" class="java.sql.Timestamp"/>
+	<parameter name="M_EntidadFinanciera_ID" isForPrompting="false" class="java.math.BigDecimal"/>
+	<parameter name="C_BPartner_ID" isForPrompting="false" class="java.math.BigDecimal"/>
 	<parameter name="EntidadFinancieraName" isForPrompting="false" class="java.lang.String"/>
 	<parameter name="EntidadFinancieraValue" isForPrompting="false" class="java.lang.String"/>
 	<queryString><![CDATA[SELECT org_value, 
