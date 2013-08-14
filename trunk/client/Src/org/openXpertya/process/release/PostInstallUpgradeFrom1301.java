@@ -169,6 +169,10 @@ public class PostInstallUpgradeFrom1301 extends PluginPostInstallProcess {
 	protected final static String STOCK_VALUED_REPORT_UID = "CORE-AD_Process-1010347";
 	protected final static String STOCK_VALUED_REPORT_FILENAME = "StockValued.jrxml";
 	
+	/** UID del Informe de Venta/Compra de Entidades Financieras */
+	protected final static String ENTIDADES_FINANCIERAS_SALES_PURCHASES_REPORT_UID = "CORE-AD_Process-1010358";
+	protected final static String ENTIDADES_FINANCIERAS_SALES_PURCHASES_REPORT_FILENAME = "EntidadFinancieraSalesPurchases.jrxml";
+	
 	protected String doIt() throws Exception {
 		super.doIt();
 		
@@ -644,6 +648,18 @@ public class PostInstallUpgradeFrom1301 extends PluginPostInstallProcess {
 						.readBinaryFromJar(
 								jarFileURL,
 								getBinaryFileURL(STOCK_VALUED_REPORT_FILENAME)));
+		
+		// Informe de Venta/Compra de Entidades Fiancieras
+		MProcess.addAttachment(
+				get_TrxName(),
+				getCtx(),
+				ENTIDADES_FINANCIERAS_SALES_PURCHASES_REPORT_UID,
+				ENTIDADES_FINANCIERAS_SALES_PURCHASES_REPORT_FILENAME,
+				JarHelper
+						.readBinaryFromJar(
+								jarFileURL,
+								getBinaryFileURL(ENTIDADES_FINANCIERAS_SALES_PURCHASES_REPORT_FILENAME)));
+		
 		
 		return " ";
 	}
