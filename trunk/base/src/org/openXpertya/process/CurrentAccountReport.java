@@ -135,7 +135,7 @@ public class CurrentAccountReport extends SvrProcess {
 		StringBuffer sqlDoc = new StringBuffer();
 		if (p_ShowDetailedReceiptsPayments){
 			sqlDoc.append(" SELECT ");
-			sqlDoc.append(" 	d.Dateacct as DateTrx, ");
+			sqlDoc.append(" 	d.Dateacct::date as DateTrx, ");
 			sqlDoc.append(" 	d.C_DocType_ID, ");
 			sqlDoc.append(" 	d.DocumentNo, ");
 			sqlDoc.append("     ABS(CASE WHEN d.signo_issotrx = ? THEN "); 
@@ -228,8 +228,8 @@ public class CurrentAccountReport extends SvrProcess {
 		StringBuffer sql = new StringBuffer();
 		
 		sql.append(sqlDoc); // Consulta de todos los comprobantes
-		sqlAppend ("   AND ? <= d.Dateacct ", p_DateTrx_From, sql);
-		sqlAppend ("   AND d.Dateacct <= ? ", p_DateTrx_To, sql);
+		sqlAppend ("   AND ?::date <= d.Dateacct::date ", p_DateTrx_From, sql);
+		sqlAppend ("   AND d.Dateacct::date <= ?::date ", p_DateTrx_To, sql);
 		sql.append(" ORDER BY d.Dateacct, d.Created");
 		
 		if (!p_ShowDetailedReceiptsPayments){
