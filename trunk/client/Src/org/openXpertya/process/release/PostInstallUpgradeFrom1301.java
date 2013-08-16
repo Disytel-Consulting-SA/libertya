@@ -181,6 +181,10 @@ public class PostInstallUpgradeFrom1301 extends PluginPostInstallProcess {
 	protected final static String ENTIDADES_FINANCIERAS_CURRENT_ACCOUNT_REPORT_UID = "CORE-AD_Process-1010360";
 	protected final static String ENTIDADES_FINANCIERAS_CURRENT_ACCOUNT_REPORT_FILENAME = "EntidadFinancieraCuentaCorriente.jrxml";
 	
+	/** UID del Informe de Saldos de Entidades Financieras */
+	protected final static String ENTIDADES_FINANCIERAS_BALANCES_REPORT_UID = "CORE-AD_Process-1010361";
+	protected final static String ENTIDADES_FINANCIERAS_BALANCES_REPORT_FILENAME = "EntidadFinancieraBalances.jrxml";
+	
 	protected String doIt() throws Exception {
 		super.doIt();
 		
@@ -689,6 +693,17 @@ public class PostInstallUpgradeFrom1301 extends PluginPostInstallProcess {
 						.readBinaryFromJar(
 								jarFileURL,
 								getBinaryFileURL(ENTIDADES_FINANCIERAS_CURRENT_ACCOUNT_REPORT_FILENAME)));
+		
+		// Informe de Saldos de Entidades Financieras
+		MProcess.addAttachment(
+				get_TrxName(),
+				getCtx(),
+				ENTIDADES_FINANCIERAS_BALANCES_REPORT_UID,
+				ENTIDADES_FINANCIERAS_BALANCES_REPORT_FILENAME,
+				JarHelper
+						.readBinaryFromJar(
+								jarFileURL,
+								getBinaryFileURL(ENTIDADES_FINANCIERAS_BALANCES_REPORT_FILENAME)));
 		
 		return " ";
 	}
