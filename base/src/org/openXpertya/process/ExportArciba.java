@@ -215,7 +215,7 @@ public class ExportArciba extends SvrProcess {
 		sqlReal.append("LEFT JOIN C_BPartner bp ON (i.C_BPartner_ID = bp.C_BPartner_ID) ");
 		sqlReal.append("LEFT JOIN C_Categoria_IVA ci ON (ci.C_Categoria_IVA_ID = bp.C_Categoria_IVA_ID) ");
 		
-		sqlReal.append("WHERE (i.isActive = 'Y') AND (i.AD_CLIENT_ID = "+getAD_Client_ID()+") AND (d.isfiscaldocument = 'Y') AND (t.ispercepcion = 'Y') AND (i.docstatus = 'CO' OR i.docstatus = 'CL' OR i.docstatus = 'VO' OR i.docstatus = 'RE') AND (t.C_Region_ID::text =(SELECT value FROM AD_Preference WHERE attribute = 'C_Region_ID_FACTURA_ARCIBA')) AND ((d.docbasetype = 'ARI' AND doctypekey ILIKE 'CI%') OR (d.docbasetype = 'ARI' AND doctypekey ILIKE 'CND%')) ");
+		sqlReal.append("WHERE (i.isActive = 'Y') AND (i.AD_CLIENT_ID = "+getAD_Client_ID()+") AND (d.isfiscaldocument = 'Y') AND (t.ispercepcion = 'Y') AND (i.docstatus = 'CO' OR i.docstatus = 'CL' OR i.docstatus = 'VO' OR i.docstatus = 'RE') AND (t.C_Region_ID::text =(SELECT value FROM AD_Preference WHERE attribute = 'C_Region_ID_FACTURA_ARCIBA')) AND ((d.docbasetype = 'ARI' AND doctypekey ILIKE 'CI%') OR (d.docbasetype = 'ARI' AND doctypekey ILIKE 'CDN%')) ");
 		if (ad_org_id > 0){
 			sqlReal.append(" AND (i.AD_Org_ID = "+ad_org_id+")");
 		}
