@@ -29,7 +29,7 @@ public class OnCreditCurrentAccountBalanceData extends
 		"			INNER JOIN c_doctype AS dt ON dt.c_doctype_id = i.c_doctypetarget_id " +
 		"			WHERE i.C_BPartner_ID=? and (docstatus IN ('CO','CL')))" +
 		" 		  + " +
-		" 		  (SELECT SUM (currencyconvert(invoiceOpen(i.c_invoice_id, i.C_InvoicePaySchedule_ID), i.c_currency_id, ?, ('now'::text)::timestamp(6) with time zone, COALESCE(i.c_conversiontype_id,0), i.ad_client_id, i.ad_org_id )) " + 
+		" 		  (SELECT SUM (currencyconvert(invoiceOpen(i.c_invoice_id, i.C_InvoicePaySchedule_ID) * cast(dt.signo_issotrx as numeric), i.c_currency_id, ?, ('now'::text)::timestamp(6) with time zone, COALESCE(i.c_conversiontype_id,0), i.ad_client_id, i.ad_org_id )) " + 
 		" 		   FROM C_Invoice_v i " +
 		"          INNER JOIN c_doctype AS dt ON dt.c_doctype_id = i.c_doctypetarget_id " +
 		"          WHERE i.C_BPartner_ID=? and (docstatus IN ('CO','CL'))) " +
