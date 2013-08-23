@@ -866,6 +866,27 @@ public class FiscalDocumentPrint {
 				origInvoiceNumber = origInvoiceNumber.substring(1,5) + "-" + origInvoiceNumber.substring(5,13);
 			}
 		}
+		// Si no existe también se puede obtener del nro del pedido transferido
+		// si es que es uno de ellos el relacionado a la NC
+		else{
+			if(!Util.isEmpty(mInvoice.getC_Order_ID(), true)){
+				MOrder order = new MOrder(ctx, mInvoice.getC_Order_ID(),
+						getTrxName());
+				MDocType orderDocType = MDocType.get(ctx,
+						order.getC_DocTypeTarget_ID(), getTrxName());
+				if (orderDocType.getDocTypeKey().equals(
+						MDocType.DOCTYPE_Pedido_Transferido)) {
+					origInvoiceNumber = order.getDocumentNo();
+				}
+				// Si no cumple con el formato de comprobantes fiscales se envia
+				// el documentNo como número de factura original.
+				if (!Util.isEmpty(origInvoiceNumber, true)
+						&& origInvoiceNumber.length() == 13) {
+					// El formato es: PPPP-NNNNNNNN, Ej: 0001-00000023
+					origInvoiceNumber = origInvoiceNumber.substring(1,5) + "-" + origInvoiceNumber.substring(5,13);
+				}
+			}
+		}
 		creditNote.setOriginalDocumentNo(origInvoiceNumber);
 		
 		// Se agregan las líneas de la nota de crédito al documento.
