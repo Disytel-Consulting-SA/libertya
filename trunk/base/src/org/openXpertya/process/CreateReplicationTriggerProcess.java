@@ -6,6 +6,7 @@ import java.sql.ResultSet;
 import org.openXpertya.model.M_Table;
 import org.openXpertya.model.X_AD_TableReplication;
 import org.openXpertya.replication.ReplicationConstants;
+import org.openXpertya.replication.ReplicationConstantsWS;
 import org.openXpertya.util.DB;
 import org.openXpertya.util.Env;
 
@@ -296,8 +297,13 @@ public class CreateReplicationTriggerProcess extends SvrProcess {
 	
 
 	/**
-	 * En caso de nuevo/s host/s, rellenar con valor dummy el/los nuevos espacios del repArray
+	 * En caso de nuevo/s host/s, rellenar con valor de envio el/los nuevos espacios del repArray
 	 * (unicamente para tablas donde exista replicacion "saliente")
+	 * IMPORTANTE: Se presupone que el nuevo host posee una base de datos en blanco y deberá recibir el
+	 * 				conjunto de registros a los que se les está ampliando el reparray.
+	 * 				Se supone que luego se replicarán los registros de las tablas paulatinamente
+	 * 				según se considere necesario.  No es factible determinar inicialmente qué registros replicar y que no,
+	 * 				de ahí que se utiliza el valor ReplicationConstantsWS.REPLICATION_CONFIGURATION_NO_ACTION
 	 */
 	protected void appendSQLFillRepArray(StringBuffer sql) throws Exception 
 	{
@@ -306,8 +312,9 @@ public class CreateReplicationTriggerProcess extends SvrProcess {
 				.indexOf(ReplicationConstants.REPLICATION_CONFIGURATION_SEND) >= 0)
 		{
 			append( sql, 	" UPDATE " + table.getTableName() + 
-							" SET " + ReplicationConstants.COLUMN_REPARRAY + " = 'SET' || rpad(COALESCE(" + ReplicationConstants.COLUMN_REPARRAY + ",''), " + currentRepArray.length() + ", '" + DUMMY_REPARRAY + "') " +
-							" WHERE char_length(COALESCE(" + ReplicationConstants.COLUMN_REPARRAY + ", '')) < " + currentRepArray.length() + 
+							" SET " + ReplicationConstants.COLUMN_REPARRAY + " = rpad(COALESCE(" + ReplicationConstants.COLUMN_REPARRAY + ",''), " + currentRepArray.length() + ", '" + ReplicationConstantsWS.REPLICATION_CONFIGURATION_NO_ACTION + "') " +
+							" WHERE char_length(COALESCE(" + ReplicationConstants.COLUMN_REPARRAY + ", '')) < " + currentRepArray.length() +
+							" AND " + ReplicationConstants.COLUMN_REPARRAY + " IS NOT NULL AND " + ReplicationConstants.COLUMN_REPARRAY + " <> '0' " + 
 							" AND AD_Client_ID IN (0, " + Env.getAD_Client_ID(getCtx()) + "); ");
 			
 			retValue.append(" - Incluidas las actualizaciones de repArray para tabla: " + table.getTableName() + " \n");
