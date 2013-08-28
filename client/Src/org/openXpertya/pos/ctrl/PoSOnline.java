@@ -1270,6 +1270,8 @@ public class PoSOnline extends PoSConnectionState {
 	        line.setQty(op.getCount());
 	        line.setPrice(getPoSCOnfig().getPriceListID());    // sets List/limit
 
+	        line.setDescription(op.getLineDescription());
+	        
 	        numOrderLine +=10;
 	        line.setLine(numOrderLine); //ADER: mejora de seteo explicito
 	        line.setPrice(op.getPrice());
@@ -2549,6 +2551,7 @@ public class PoSOnline extends PoSConnectionState {
 					         product, checkoutPlace);
 		
 		orderProduct.setPrice(line.getPriceActual());
+		orderProduct.setLineDescription(line.getDescription());
 		return orderProduct;
 	}
 

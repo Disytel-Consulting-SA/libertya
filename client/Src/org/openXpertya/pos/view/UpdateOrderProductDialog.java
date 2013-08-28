@@ -2,6 +2,7 @@ package org.openXpertya.pos.view;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
+import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
@@ -49,7 +50,7 @@ public class UpdateOrderProductDialog extends JDialog {
 	private final int BUTTON_PANEL_WIDTH = 160;
 	private final int BUTTON_WIDTH = 155;
 	private final int DIALOG_WIDTH = 650;
-	private final int DIALOG_HEIGHT = 250;
+	private final int DIALOG_HEIGHT = 280;
 	
 	private OrderProduct orderProduct;
 	private PoSMainForm poS;
@@ -81,6 +82,8 @@ public class UpdateOrderProductDialog extends JDialog {
 	private JRadioButton cBonusRadio = null;
 	private ButtonGroup applicationGroup = null;
 	private AUserAuth userAuthPanel = null;
+	private CLabel cLineDescriptionLabel = null;
+	private CTextField cLineDescriptionText = null;
 	private String MSG_PRODUCT;
 	private String MSG_OK;
 	private String MSG_DELETE;
@@ -106,6 +109,8 @@ public class UpdateOrderProductDialog extends JDialog {
 	private String MSG_INVALID_PRICE;
 	private String MSG_INVALID_FINAL_PRICE;
 	private String MSG_INVALID_COUNT;
+	private String MSG_LINE_DESCRIPTION_TITLE;
+	private String MSG_DESCRIPTION;
 	
 	private final String CHANGE_FOCUS_USER_AUTH = "changeFocusUserAuth";
 	
@@ -167,6 +172,8 @@ public class UpdateOrderProductDialog extends JDialog {
 		MSG_INVALID_COUNT = getMsg("InvalidQty");
 		MSG_INVALID_PRICE = getMsg("InvalidPrice");
 		MSG_INVALID_FINAL_PRICE = getMsg("InvalidFinalPrice");
+		MSG_LINE_DESCRIPTION_TITLE = getMsg("LineDescription");
+		MSG_DESCRIPTION = getMsg("Description");
 	}
 
 	private void keyBindingsInit(){
@@ -284,7 +291,7 @@ public class UpdateOrderProductDialog extends JDialog {
 			gbc0500.gridx = 0;
 			gbc0500.insets = new java.awt.Insets(V_SPAN,0,0,0);
 			gbc0500.anchor = java.awt.GridBagConstraints.WEST;
-			gbc0500.gridy = 5;
+			gbc0500.gridy = 8;
 			gbc0500.gridwidth = 4;
 			gbc0500.insets = new java.awt.Insets(10,0,3,0);
 			
@@ -435,7 +442,34 @@ public class UpdateOrderProductDialog extends JDialog {
 			CLabel cAuthTitleLabel = new CLabel();
 			cAuthTitleLabel.setText(MSG_SUPERVISOR_AUTH);
 			cAuthTitleLabel.setFontBold(true);			
-						
+			
+			// Título de descripción de línea
+			CLabel cLineDescriptionTitleLabel = new CLabel();
+			cLineDescriptionTitleLabel.setText(MSG_LINE_DESCRIPTION_TITLE);
+			cLineDescriptionTitleLabel.setFontBold(true);
+			GridBagConstraints gbc0700 = new GridBagConstraints();
+			gbc0700.gridx = 0;
+			gbc0700.anchor = java.awt.GridBagConstraints.WEST;
+			gbc0700.gridy = 6;
+			gbc0700.gridwidth = 4;
+			gbc0700.insets = new java.awt.Insets(10,0,3,0);
+			// Label de Descripción
+			cLineDescriptionLabel = new CLabel();
+			cLineDescriptionLabel.setText(MSG_DESCRIPTION);
+			GridBagConstraints gbc0800 = new GridBagConstraints();
+			gbc0800.gridx = 0;
+			gbc0800.anchor = java.awt.GridBagConstraints.WEST;
+			gbc0800.gridy = 7;
+			gbc0800.insets = new java.awt.Insets(V_SPAN,0,5,0);
+			// Descripción
+			GridBagConstraints gbc0801 = new GridBagConstraints();
+			gbc0801.gridx = 1;
+			gbc0801.anchor = java.awt.GridBagConstraints.WEST;
+			gbc0801.gridy = 7;
+			gbc0801.insets = new java.awt.Insets(V_SPAN,5,5,0);
+			gbc0801.gridwidth = 5;
+			gbc0801.fill = java.awt.GridBagConstraints.HORIZONTAL;
+			
 			cItemPanel = new CPanel();
 			cItemPanel.setLayout(new GridBagLayout());
 			cItemPanel.setBorder(javax.swing.BorderFactory.createCompoundBorder(javax.swing.BorderFactory.createBevelBorder(javax.swing.border.BevelBorder.LOWERED), javax.swing.BorderFactory.createEmptyBorder(5,5,5,5)));
@@ -457,13 +491,16 @@ public class UpdateOrderProductDialog extends JDialog {
 			cItemPanel.add(getCDiscountAmtText(), gbc0403);
 			cItemPanel.add(cDiscountLabel, gbc0400);
 			cItemPanel.add(getCDiscountText(), gbc0401);
+			cItemPanel.add(cLineDescriptionTitleLabel, gbc0700);
+			cItemPanel.add(cLineDescriptionLabel, gbc0800);
+			cItemPanel.add(getCLineDescriptionText(), gbc0801);
 			cItemPanel.add(cAuthTitleLabel, gbc0500);
 			
 			GridBagConstraints userAuthConstraints = new GridBagConstraints();
 			userAuthConstraints.gridx = 0;
 			userAuthConstraints.insets = new java.awt.Insets(V_SPAN,5,0,0);
 			userAuthConstraints.anchor = java.awt.GridBagConstraints.WEST;
-			userAuthConstraints.gridy = 6;
+			userAuthConstraints.gridy = 9;
 			userAuthConstraints.gridwidth = 6;
 			
 			// Obtener la instancia del panel de autorización y el panel
@@ -650,6 +687,14 @@ public class UpdateOrderProductDialog extends JDialog {
 		return cCountText;
 	}
 
+	private CTextField getCLineDescriptionText() {
+		if(cLineDescriptionText == null){
+			cLineDescriptionText = new CTextField();
+			cLineDescriptionText.setText(getOrderProduct().getLineDescription());
+		}
+		return cLineDescriptionText;
+	}
+	
 	/**
 	 * This method initializes cOkButton	
 	 * 	
@@ -985,6 +1030,7 @@ public class UpdateOrderProductDialog extends JDialog {
 			// Al setear el descuento el producto recalcula el precio.
 			getOrderProduct().setDiscount(discount, getDiscountApplication());
 			getOrderProduct().setCount(count);
+			getOrderProduct().setLineDescription(getCLineDescriptionText().getText());
 			
 			getPoS().updateOrderProduct(getOrderProduct());
 			setVisible(false);
