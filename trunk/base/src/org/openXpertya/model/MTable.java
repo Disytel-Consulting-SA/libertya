@@ -50,6 +50,7 @@ import org.openXpertya.util.DBException;
 import org.openXpertya.util.DisplayType;
 import org.openXpertya.util.Env;
 import org.openXpertya.util.MSort;
+import org.openXpertya.util.Util;
 import org.openXpertya.util.ValueNamePair;
 
 /**
@@ -1627,7 +1628,7 @@ public class MTable extends AbstractTableModel implements Serializable {
         if( missingColumns.length() != 0 ) {
 
             // Trace.printStack(false, false);
-
+        	
             fireDataStatusEEvent( "FillMandatory",missingColumns + "\n" );
 
             return SAVE_MANDATORY;
@@ -2665,17 +2666,27 @@ public class MTable extends AbstractTableModel implements Serializable {
         for( int i = 0;i < size;i++ ) {
             MField field = ( MField )m_fields.get( i );
 
-            if( field.isMandatory( true ))    // check context
+			// Es obligatorio, pero si el registro actual está procesado y no es
+			// siempre actualizable, entonces no se verifica obligatoriedad
+			if (field.isMandatory(true)) // check context
             {
                 if( (rowData[ i ] == null) || (rowData[ i ].toString().length() == 0) ) {
-                    field.setInserting( true );    // set editable otherwise deadlock
-                    field.setError( true );
-
-                    if( sb.length() > 0 ) {
-                        sb.append( ", " );
-                    }
-
-                    sb.append( field.getHeader());
+					if (m_indexProcessedColumn < 0
+							|| (m_indexProcessedColumn >= 0 && !((Boolean) rowData[m_indexProcessedColumn])
+									.booleanValue())
+							|| (m_indexProcessedColumn >= 0
+									&& ((Boolean) rowData[m_indexProcessedColumn])
+											.booleanValue() && field
+										.isAlwaysUpdateable())) {
+	                    field.setInserting( true );    // set editable otherwise deadlock
+	                    field.setError( true );
+	
+	                    if( sb.length() > 0 ) {
+	                        sb.append( ", " );
+	                    }
+	
+	                    sb.append( field.getHeader());
+                	}
                 } else {
                     field.setError( false );
                 }
