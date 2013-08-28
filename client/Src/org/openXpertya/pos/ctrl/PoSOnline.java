@@ -1521,7 +1521,14 @@ public class PoSOnline extends PoSConnectionState {
 		// Se obtiene la letra y el nro de punto de venta para determinar el tipo
 		// de documento de la factura.
 		String letra = mLetraComprobante.getLetra();
-		int posNumber = getPoSCOnfig().getPosNumber();
+		
+		// Obtener el punto de venta específicamente para esta letra en la
+		// config
+		Integer posNumber = getPoSCOnfig().getPosNumberLetters().get(
+				mLetraComprobante.getLetra());
+		if(Util.isEmpty(posNumber, true)){
+			posNumber = getPoSCOnfig().getPosNumber();
+		}
 		
 		// Se obtiene el tipo de documento para la factura.
 		MDocType mDocType = MDocType.getDocType(ctx,
@@ -3516,9 +3523,17 @@ public class PoSOnline extends PoSConnectionState {
 		// Se obtiene la letra del comprobante
 		MLetraComprobante mLetraComprobante = getLocaleArLetraComprobante();
 		
+		// Obtener el punto de venta específicamente para esta letra en la
+		// config
+		Integer posNumber = getPoSCOnfig().getPosNumberLetters().get(
+				mLetraComprobante.getLetra());
+		if(Util.isEmpty(posNumber, true)){
+			posNumber = getPoSCOnfig().getPosNumber();
+		}
+		
 		// Se obtiene el tipo de documento para la factura.
 		return MDocType.getDocType(ctx, MDocType.DOCTYPE_CustomerInvoice,
-				mLetraComprobante.getLetra(), getPoSCOnfig().getPosNumber(),
+				mLetraComprobante.getLetra(), posNumber,
 				getTrxName());
 	}
 

@@ -4405,3 +4405,27 @@ CREATE OR REPLACE VIEW c_invoice_bydoctype_v AS
    JOIN c_doctype d ON i.c_doctypetarget_id = d.c_doctype_id;
 
 ALTER TABLE c_invoice_bydoctype_v OWNER TO libertya;
+
+--20130828-0000 Nueva tabla de personalización de puntos de venta por letra por configuración de tpv
+CREATE TABLE c_posletter
+(
+  c_posletter_id integer NOT NULL,
+  ad_client_id integer NOT NULL,
+  ad_org_id integer NOT NULL,
+  isactive character(1) NOT NULL DEFAULT 'Y'::bpchar,
+  created timestamp without time zone NOT NULL DEFAULT ('now'::text)::timestamp(6) with time zone,
+  createdby integer NOT NULL,
+  updated timestamp without time zone NOT NULL DEFAULT ('now'::text)::timestamp(6) with time zone,
+  updatedby integer NOT NULL,
+  c_pos_id integer NOT NULL,
+  letter character(1) NOT NULL,
+  posnumber integer NOT NULL,
+  CONSTRAINT c_posletter_key PRIMARY KEY (c_posletter_id),
+  CONSTRAINT pos_cposletter FOREIGN KEY (c_pos_id)
+      REFERENCES c_pos (c_pos_id) MATCH SIMPLE
+      ON UPDATE NO ACTION ON DELETE NO ACTION
+)
+WITH (
+  OIDS=TRUE
+);
+ALTER TABLE c_posletter OWNER TO libertya; 

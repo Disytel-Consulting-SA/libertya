@@ -1,6 +1,7 @@
 package org.openXpertya.pos.ctrl;
 
 import java.math.BigDecimal;
+import java.util.Map;
 import java.util.Properties;
 
 import org.openXpertya.model.MBPartner;
@@ -8,6 +9,7 @@ import org.openXpertya.model.MBPartnerLocation;
 import org.openXpertya.model.MCurrency;
 import org.openXpertya.model.MPOS;
 import org.openXpertya.model.MPOSJournal;
+import org.openXpertya.model.MPOSLetter;
 import org.openXpertya.model.MRole;
 import org.openXpertya.pos.exceptions.PosException;
 import org.openXpertya.util.DB;
@@ -56,6 +58,7 @@ public class PoSConfig {
 	private String posnet;
 	private boolean authorizeManualGeneralDiscount;
 	private boolean voidDocuments;
+	private Map<String, Integer> posNumberLetters;
 	
 	// Del sistema
 	private int currencyID;
@@ -124,6 +127,8 @@ public class PoSConfig {
 			
 			setVoidDocuments(pos.isVoidDocuments());
 			setPriceListIDInConfig(pos.getM_PriceList_ID());
+			
+			setPosNumberLetters(MPOSLetter.getPOSLetters(pos.getID(), null));
 		}	
 	}
 	
@@ -751,5 +756,13 @@ public class PoSConfig {
 
 	public void setPriceListIDInConfig(int priceListIDInConfig) {
 		this.priceListIDInConfig = priceListIDInConfig;
+	}
+
+	public Map<String, Integer> getPosNumberLetters() {
+		return posNumberLetters;
+	}
+
+	public void setPosNumberLetters(Map<String, Integer> posNumberLetters) {
+		this.posNumberLetters = posNumberLetters;
 	}
 }

@@ -63,7 +63,7 @@ public class OpenDrawerProcess extends SvrProcess {
 			MPOSJournal posJournal = MPOSJournal.getCurrent();
 			if(posJournal != null){
 				setPosID(posJournal.getC_POS_ID());
-				setPosNumber(MPOSJournal.getCurrentPOSNumber());
+				setPosNumber(MPOSJournal.getCurrentPOSNumber(null));
 			}
         }
 	}
