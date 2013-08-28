@@ -813,7 +813,7 @@ public class VOrdenCobroModel extends VOrdenPagoModel {
 	 */
 	public Integer getPOSNumber(){
 		// Obtenerlo de la caja diaria
-		Integer posNro = MPOSJournal.getCurrentPOSNumber();
+		Integer posNro = MPOSJournal.getCurrentPOSNumber(null);
 		boolean error = true;
 		// Si no existe, directamente el pto de venta del usuario
 		if(Util.isEmpty(posNro, true)){

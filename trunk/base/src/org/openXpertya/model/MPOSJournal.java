@@ -8,6 +8,7 @@ import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.List;
+import java.util.Map;
 import java.util.Properties;
 import java.util.logging.Level;
 
@@ -189,18 +190,27 @@ public class MPOSJournal extends X_C_POSJournal implements DocAction {
 	}
 
 	/**
+	 * @param letter
+	 *            letra del comprobante.
 	 * @return Devuelve el Número de Punto de Venta fiscal de la caja diaria
 	 *         actual para el usuario logueado. El nro lo obtiene de la
-	 *         configuración de TPV (C_POS) asociada a la caja diaria. Si no
-	 *         existe la caja diaria o el nro de punto de venta, devuelve
-	 *         <code>null</code>.
+	 *         configuración de TPV (C_POS) asociada a la caja diaria, si la
+	 *         letra es distinto de null entonces busca una personalización del
+	 *         punto de venta (C_POSLetter). Si no existe la caja diaria o el
+	 *         nro de punto de venta, devuelve <code>null</code>.
 	 */
-	public static Integer getCurrentPOSNumber() {
+	public static Integer getCurrentPOSNumber(String letter) {
 		Integer posNumber = null;
 		MPOSJournal journal = getCurrent();
 		if (journal != null) {
-			posNumber = journal.getPOS().getPOSNumber();
-			posNumber = posNumber == 0 ? null : posNumber;
+			if(!Util.isEmpty(letter, true)){
+				Map<String, Integer> letters = MPOSLetter.getPOSLetters(
+						journal.getC_POS_ID(), null);
+				posNumber = letters.get(letter);
+			}
+			posNumber = Util.isEmpty(posNumber, true) ? journal.getPOS()
+					.getPOSNumber() : posNumber;
+			posNumber = Util.isEmpty(posNumber, true) ? null : posNumber;
 		}
 		return posNumber;
 	}

@@ -4176,13 +4176,16 @@ public class MInvoice extends X_C_Invoice implements DocAction {
 			if (reversalDocTypeBaseKey != null) {
 				// Se obtiene el tipo de documento del contramovimiento.
 				// Obtener el punto de venta:
-				// 1) Desde la caja diaria
-				// 2) Desde la config de TPV, si es que posee una sola
+				// 1) Desde la caja diaria, priorizando la personalización de
+				// punto de venta por letra de la config del tpv asociada a ella
+				// 2) Desde la config de TPV, si es que posee una sola,
+				// priorizando la personalización de punto de venta por letra
 				// 3) Desde la factura a anular
 				Integer ptoVenta = null;
+				String letra = getLetra();
 				// 1)
 				if(MPOSJournal.isActivated()){
-					ptoVenta = MPOSJournal.getCurrentPOSNumber();
+					ptoVenta = MPOSJournal.getCurrentPOSNumber(letra);
 				}
 				// 2)
 				if(Util.isEmpty(ptoVenta, true)){
@@ -4190,7 +4193,11 @@ public class MInvoice extends X_C_Invoice implements DocAction {
 							Env.getAD_Org_ID(getCtx()),
 							Env.getAD_User_ID(getCtx()), get_TrxName());
 					if(pos.size() == 1){
-						ptoVenta = pos.get(0).getPOSNumber();
+						Map<String, Integer> letters = MPOSLetter
+								.getPOSLetters(pos.get(0).getID(),
+										get_TrxName());
+						ptoVenta = letters.get(letra) != null ? letters
+								.get(letra) : pos.get(0).getPOSNumber();
 					}
 				}
 				// 3)
