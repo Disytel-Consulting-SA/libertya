@@ -5,6 +5,7 @@ import java.util.List;
 
 import org.openXpertya.pos.model.OrderProduct;
 import org.openXpertya.pos.view.PoSMsgRepository;
+import org.openXpertya.util.Util;
 
 public class ProductTableModel extends AbstractPoSTableModel {
 
@@ -32,7 +33,9 @@ public class ProductTableModel extends AbstractPoSTableModel {
 		case 0:
 			return orderProduct.getCount();
 		case 1:
-			return orderProduct.getProduct().getDescription();
+			return orderProduct.getProduct().getDescription()
+					+ (Util.isEmpty(orderProduct.getLineDescription(), true) ? ""
+							: " - " + orderProduct.getLineDescription());
 		case 2:
 			return orderProduct.getTaxRate();
 		case 3:
