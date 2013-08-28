@@ -4429,3 +4429,7 @@ WITH (
   OIDS=TRUE
 );
 ALTER TABLE c_posletter OWNER TO libertya; 
+
+-- 20130828-0713 Fix en referencia de c_bpartner hacia c_paymentterm.  Referenciaba registro de ad_client = 1000008
+update c_bpartner set c_paymentterm_id = (select c_paymentterm_id from c_paymentterm where ad_componentobjectuid = 'CORE-C_PaymentTerm-1010083') where ad_componentobjectuid = 'CORE-C_BPartner-1012145' and c_paymentterm_id = 1000073;
+
