@@ -1647,7 +1647,9 @@ public class PoSOnline extends PoSConnectionState {
 				}
 			}
 			// Completa el remito
-			throwIfFalse(shipment.processIt(DocAction.ACTION_Complete), shipment);
+			if(!getPoSCOnfig().isDraftedInOut()){
+				throwIfFalse(shipment.processIt(DocAction.ACTION_Complete), shipment);
+			}
 			throwIfFalse(shipment.save(), shipment);
 		}
 		return shipment;

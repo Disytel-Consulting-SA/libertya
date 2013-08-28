@@ -7,7 +7,7 @@ import java.math.*;
 import org.openXpertya.util.*;
 /** Modelo Generado por C_POS
  *  @author Comunidad de Desarrollo Libertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
- *  @version  - 2012-09-09 15:59:16.652 */
+ *  @version  - 2013-08-28 13:23:47.043 */
 public class X_C_POS extends org.openXpertya.model.PO
 {
 /** Constructor estándar */
@@ -24,6 +24,7 @@ setC_CashBook_ID (0);
 setC_InvoiceDocType_ID (0);
 setC_OrderDocType_ID (0);
 setC_POS_ID (0);
+setDraftedInOut (false);
 setInitialPOSAuthorization (false);
 setIsCreateInvoice (false);
 setIsDeliverOrderInWarehouse (false);	// N
@@ -251,6 +252,24 @@ Optional short description of the record */
 public String getDescription() 
 {
 return (String)get_Value("Description");
+}
+/** Set Drafted In Out.
+Generate Drafted In Out */
+public void setDraftedInOut (boolean DraftedInOut)
+{
+set_Value ("DraftedInOut", new Boolean(DraftedInOut));
+}
+/** Get Drafted In Out.
+Generate Drafted In Out */
+public boolean isDraftedInOut() 
+{
+Object oo = get_Value("DraftedInOut");
+if (oo != null) 
+{
+ if (oo instanceof Boolean) return ((Boolean)oo).booleanValue();
+ return "Y".equals(oo);
+}
+return false;
 }
 /** Set Comment/Help.
 Comment or Hint */
