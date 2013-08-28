@@ -59,6 +59,7 @@ public class PoSConfig {
 	private boolean authorizeManualGeneralDiscount;
 	private boolean voidDocuments;
 	private Map<String, Integer> posNumberLetters;
+	private boolean draftedInOut;
 	
 	// Del sistema
 	private int currencyID;
@@ -129,6 +130,8 @@ public class PoSConfig {
 			setPriceListIDInConfig(pos.getM_PriceList_ID());
 			
 			setPosNumberLetters(MPOSLetter.getPOSLetters(pos.getID(), null));
+			
+			setDraftedInOut(pos.isDraftedInOut());
 		}	
 	}
 	
@@ -764,5 +767,13 @@ public class PoSConfig {
 
 	public void setPosNumberLetters(Map<String, Integer> posNumberLetters) {
 		this.posNumberLetters = posNumberLetters;
+	}
+
+	public boolean isDraftedInOut() {
+		return draftedInOut;
+	}
+
+	public void setDraftedInOut(boolean draftedInOut) {
+		this.draftedInOut = draftedInOut;
 	}
 }

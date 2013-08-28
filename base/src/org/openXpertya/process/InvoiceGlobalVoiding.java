@@ -582,7 +582,7 @@ public class InvoiceGlobalVoiding extends SvrProcess {
 			if(getOrder() != null){
 				inoutID = inspectInOut(
 						getInOutOrderQuery(),
-						"SELECT m_inout_id FROM m_inout WHERE c_order_id = ? and docstatus in ('CO','CL')", // Si el count tiene en cuenta el estado, acá también
+						"SELECT m_inout_id FROM m_inout WHERE c_order_id = ? and docstatus in ('CO','CL','DR','IP')",
 						null,
 						getOrder().getID(),
 						getMsg("ExistsAnotherInOutsForInvoiceOrder"),
@@ -592,7 +592,7 @@ public class InvoiceGlobalVoiding extends SvrProcess {
 			if(inoutID == 0){
 				inoutID = inspectInOut(
 						getInOutInvoiceQuery(),
-						"SELECT m_inout_id FROM m_inout WHERE c_invoice_id = ? and docstatus in ('CO','CL')", // Si el count tiene en cuenta el estado, acá también
+						"SELECT m_inout_id FROM m_inout WHERE c_invoice_id = ? and docstatus in ('CO','CL','DR','IP')",
 						null, getInvoice().getID(),
 						getMsg("ExistsAnotherInOutsForInvoice"),
 						null);
@@ -777,7 +777,7 @@ public class InvoiceGlobalVoiding extends SvrProcess {
 	protected String getInOutOrderQuery(){
 		String sql = "SELECT count(distinct m_inout_id) as cant " +
 					 "FROM m_inout as io " +
-					 "WHERE (docstatus IN ('CO','CL')) AND (c_order_id = ?)";
+					 "WHERE (docstatus IN ('CO','CL','DR','IP')) AND (c_order_id = ?)";
 		return sql;
 	}
 
@@ -789,7 +789,7 @@ public class InvoiceGlobalVoiding extends SvrProcess {
 	protected String getInOutInvoiceQuery(){
 		String sql = "SELECT count(distinct m_inout_id) as cant " +
 					 "FROM m_inout as io " +
-					 "WHERE (docstatus IN ('CO','CL')) AND (c_invoice_id = ?)";
+					 "WHERE (docstatus IN ('CO','CL','DR','IP')) AND (c_invoice_id = ?)";
 		return sql;
 	}
 	
