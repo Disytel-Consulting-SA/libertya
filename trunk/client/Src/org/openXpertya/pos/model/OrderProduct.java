@@ -38,6 +38,8 @@ public class OrderProduct {
 	
 	private Integer lineManualDiscountID;
 	
+	private String lineDescription;
+	
 	public OrderProduct() {
 		super();
 	}
@@ -570,5 +572,15 @@ public class OrderProduct {
 
 	public Integer getLineManualDiscountID() {
 		return lineManualDiscountID;
+	}
+
+
+	public String getLineDescription() {
+		return lineDescription;
+	}
+
+
+	public void setLineDescription(String lineDescription) {
+		this.lineDescription = lineDescription;
 	}
 }
