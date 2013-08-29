@@ -1525,8 +1525,7 @@ public final class MPayment extends X_C_Payment implements DocAction,ProcessCall
     public void setC_DocType_ID( boolean isReceipt ) {
         setIsReceipt( isReceipt );
 
-        String sql = "SELECT C_DocType_ID FROM C_DocType WHERE AD_Client_ID=? AND DocBaseType=? ORDER BY IsDefault DESC";
-
+        String sql = "SELECT C_DocType_ID FROM C_DocType WHERE AD_Client_ID=? AND DocBaseType=? AND IsPaymentOrderSeq = 'N' AND IsReceiptSeq = 'N' ORDER BY IsDefault DESC";
         try {
             PreparedStatement pstmt = DB.prepareStatement( sql,get_TrxName());
 
