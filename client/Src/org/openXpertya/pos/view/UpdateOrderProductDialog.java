@@ -422,7 +422,9 @@ public class UpdateOrderProductDialog extends JDialog {
 			gbc0001.fill = java.awt.GridBagConstraints.HORIZONTAL;
 			gbc0001.gridy = 0;
 			cProductDescLabel = new CLabel();
-			cProductDescLabel.setText(getOrderProduct().getProduct().getDescription());
+			cProductDescLabel.setText("<html>"
+					+ getOrderProduct().getProduct().getDescription()
+					+ "</html>");
 			cProductDescLabel.setHorizontalAlignment(javax.swing.SwingConstants.LEFT);
 			GridBagConstraints gbc0000 = new GridBagConstraints();
 			gbc0000.gridx = 0;
@@ -628,6 +630,7 @@ public class UpdateOrderProductDialog extends JDialog {
 	private CTextField getCCountText() {
 		if (cCountText == null) {
 			cCountText = new CTextField();
+			cCountText.setMinimumSize(new java.awt.Dimension(50,20));
 			cCountText.setPreferredSize(new java.awt.Dimension(50,20));
 			cCountText.setText(String.valueOf(getOrderProduct().getCount()));
 			cCountText.setMandatory(true);
@@ -691,6 +694,7 @@ public class UpdateOrderProductDialog extends JDialog {
 		if(cLineDescriptionText == null){
 			cLineDescriptionText = new CTextField();
 			cLineDescriptionText.setText(getOrderProduct().getLineDescription());
+			cLineDescriptionText.setMinimumSize(new Dimension(100,20));
 		}
 		return cLineDescriptionText;
 	}
