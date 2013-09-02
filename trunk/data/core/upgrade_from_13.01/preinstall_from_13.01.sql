@@ -4441,3 +4441,9 @@ update c_doctype set ad_org_id = 0 where ad_org_id = 1010053 and ad_componentobj
 ('CORE-C_DocType-1010537', 'CORE-C_DocType-1010538', 'CORE-C_DocType-1010550',
 'CORE-C_DocType-1010572', 'CORE-C_DocType-1010573', 'CORE-C_DocType-1010574',
 'CORE-C_DocType-1010575', 'CORE-C_DocType-1010576', 'CORE-C_DocType-1010577');
+
+--201309002-1142 Secuencias que deberian tener org = 0 en lugar de 1010053
+update ad_sequence set ad_org_id = 0 where ad_org_id = 1010053 and ad_componentobjectuid in
+('CORE-AD_Sequence-1011740', 'CORE-AD_Sequence-1011812', 'CORE-AD_Sequence-1011861', 
+'CORE-AD_Sequence-1011857', 'CORE-AD_Sequence-1011858', 'CORE-AD_Sequence-1011862', 
+'CORE-AD_Sequence-1011739');
