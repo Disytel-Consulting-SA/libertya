@@ -4435,3 +4435,9 @@ update c_bpartner set c_paymentterm_id = (select c_paymentterm_id from c_payment
 
 --20130828-1310 Nueva configuración de TPV que permite generar el remito en estado borrador
 UPDATE ad_system SET dummy = (SELECT addcolumnifnotexists('c_pos','draftedinout', 'character(1) NOT NULL DEFAULT ''N''::bpchar'));
+
+--20130902-1138 Tipos de documento que deberian tener org = 0 en lugar de 1010053
+update c_doctype set ad_org_id = 0 where ad_org_id = 1010053 and ad_componentobjectuid in 
+('CORE-C_DocType-1010537', 'CORE-C_DocType-1010538', 'CORE-C_DocType-1010550',
+'CORE-C_DocType-1010572', 'CORE-C_DocType-1010573', 'CORE-C_DocType-1010574',
+'CORE-C_DocType-1010575', 'CORE-C_DocType-1010576', 'CORE-C_DocType-1010577');
