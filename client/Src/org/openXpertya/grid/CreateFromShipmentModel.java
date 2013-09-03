@@ -136,6 +136,19 @@ public class CreateFromShipmentModel extends CreateFromModel {
 			inout.setC_Order_ID(p_order.getC_Order_ID());
 			inout.setDateOrdered(p_order.getDateOrdered());
 			inout.setC_Project_ID(p_order.getC_Project_ID());
+			inout.setPOReference(p_order.getPOReference());
+			inout.setAD_Org_ID(p_order.getAD_Org_ID());
+			inout.setAD_OrgTrx_ID(p_order.getAD_OrgTrx_ID());
+			inout.setC_Campaign_ID(p_order.getC_Campaign_ID());
+			inout.setUser1_ID(p_order.getUser1_ID());
+			inout.setUser2_ID(p_order.getUser2_ID());
+			inout.setM_Warehouse_ID(p_order.getM_Warehouse_ID());
+			inout.setDeliveryRule(p_order.getDeliveryRule());
+			inout.setDeliveryViaRule(p_order.getDeliveryViaRule());
+			inout.setM_Shipper_ID(p_order.getM_Shipper_ID());
+			inout.setFreightCostRule(p_order.getFreightCostRule());
+			inout.setFreightAmt(p_order.getFreightAmt());
+			inout.setC_BPartner_ID(p_order.getBill_BPartner_ID());
 		}
 		// Asocia la factura
 		if ((m_invoice != null) && (m_invoice.getC_Invoice_ID() != 0)) {
