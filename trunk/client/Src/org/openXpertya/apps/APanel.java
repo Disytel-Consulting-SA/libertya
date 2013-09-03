@@ -1882,7 +1882,7 @@ public final class APanel extends CPanel implements DataStatusListener,ChangeLis
 
         if (field != null)
         {
-        	int C_DocType_ID = (Integer)field.getValue();
+        	int C_DocType_ID = ((Integer)field.getValue() == null) ? 0 : (Integer)field.getValue();
         	MDocType DocType = new MDocType(m_ctx, C_DocType_ID, null);
        		AD_Process_ID = DocType.getAD_Process_ID();
        	}
