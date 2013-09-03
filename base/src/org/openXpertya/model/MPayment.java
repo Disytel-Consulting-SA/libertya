@@ -749,6 +749,15 @@ public final class MPayment extends X_C_Payment implements DocAction,ProcessCall
 			log.saveError("SaveError", Msg.translate(getCtx(), "InvalidPayBankCurrency"));
     		return false;
 		}
+		
+		// Para los cobros en tarjeta de crédito, el plan de EF debe ser
+		// obligatorio
+		if (isReceipt()
+				&& MPayment.TENDERTYPE_CreditCard.equals(getTenderType())
+				&& Util.isEmpty(getM_EntidadFinancieraPlan_ID(), true)) {
+			log.saveError("MandatoryCreditCardPlan", "");
+			return false;
+		}
                 
         return true;
     }    // beforeSave
