@@ -17,6 +17,7 @@ import java.util.Vector;
 
 import org.openXpertya.model.MChangeLog;
 import org.openXpertya.model.MTableReplication;
+import org.openXpertya.model.X_C_BPartner;
 import org.openXpertya.model.X_C_Cash;
 import org.openXpertya.model.X_C_CashLine;
 import org.openXpertya.model.X_C_Invoice;
@@ -321,6 +322,15 @@ public class ReplicationXMLUpdater extends PluginXMLUpdater {
 			query.append("null");
 			retValue = true;
 		}	
+		/*
+		 * Los representantes de ventas son inherentes a las organizaciones, con lo cual probablemente genere
+		 * un error intentar recuperar el AD_User, dado que el mismo podría no existir en otros hosts
+		 */
+		else if (X_C_BPartner.Table_Name.equalsIgnoreCase(tableName) && "salesrep_id".equalsIgnoreCase(column.getName()))
+		{
+			query.append("null");
+			retValue = true;
+		}
 		/* Si es una columna especial, concatenar la coma final */
 		if (retValue)
 			query.append(",");
