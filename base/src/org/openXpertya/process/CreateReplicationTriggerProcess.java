@@ -273,7 +273,7 @@ public class CreateReplicationTriggerProcess extends SvrProcess {
 		// Si la secuencia no existe, entonces crearla
 		if (existe == 0)
 		{
-			append (sql, " CREATE SEQUENCE repseq_" + table.getTableName());
+			append (sql, " CREATE SEQUENCE repseq_" + table.getTableName().toLowerCase());
 			append (sql, " INCREMENT 1 MAXVALUE 9223372036854775807 START 1; ");
 			
 			retValue.append(" - Creada la secuencia de replicación: repseq_" + table.getTableName().toLowerCase() + " \n");
