@@ -360,7 +360,10 @@ public class CreateReplicationTriggerProcess extends SvrProcess {
 		while (rs.next())
 		{
 			query.append(" DROP TRIGGER IF EXISTS replication_event on ").append(rs.getString("tablename")).append(";");
-			query.append(" DROP SEQUENCE IF EXISTS repseq_").append(rs.getString("tablename").toLowerCase()).append(";");
+//			Comentado: Esto iba a ser origen de problemas graves.  Al hacer drop de las secuencias, se pierde el
+//						valor actual para cada tabla, lo cual lleva a tener una bbdd inutilizable para replicación
+//						luego de cada importación de nuevo ruleSet!
+//			query.append(" DROP SEQUENCE IF EXISTS repseq_").append(rs.getString("tablename").toLowerCase()).append(";");
 		}
 		DB.executeUpdate(query.toString(), trxName);
 	}
