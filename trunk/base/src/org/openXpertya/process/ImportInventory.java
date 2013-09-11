@@ -25,6 +25,7 @@ import java.util.logging.Level;
 import org.openXpertya.model.MInventory;
 import org.openXpertya.model.MInventoryLine;
 import org.openXpertya.model.X_I_Inventory;
+import org.openXpertya.util.CLogger;
 import org.openXpertya.util.DB;
 import org.openXpertya.util.Env;
 import org.openXpertya.util.Msg;
@@ -413,7 +414,7 @@ public class ImportInventory extends SvrProcess {
         // Go through Inventory Records
 
         sql = new StringBuffer( 
-        	" SELECT * " +
+        	" SELECT I_Inventory_ID " +
         	" FROM I_Inventory " + 
         	" WHERE I_IsImported = 'N'" ).append( securityCheck ).append(
         	" ORDER BY M_Warehouse_ID, TRUNC(MovementDate), I_Inventory_ID" );
@@ -426,9 +427,9 @@ public class ImportInventory extends SvrProcess {
 
             int       x_M_Warehouse_ID = -1;
             Timestamp x_MovementDate   = null;
-
+            X_I_Inventory imp = null;
             while( rs.next()) {
-                X_I_Inventory imp          = new X_I_Inventory( getCtx(),rs,null );
+				imp = new X_I_Inventory(getCtx(), rs.getInt("I_Inventory_ID"), null);
                 Timestamp     MovementDate = TimeUtil.getDay( imp.getMovementDate());
 
                 if( (inventory == null) || (imp.getM_Warehouse_ID() != x_M_Warehouse_ID) ||!MovementDate.equals( x_MovementDate )) {
@@ -439,7 +440,7 @@ public class ImportInventory extends SvrProcess {
                     inventory.setMovementDate( MovementDate );
 
                     if( !inventory.save()) {
-                        log.log( Level.SEVERE,"Inventory not saved" );
+                        log.log( Level.SEVERE,"Inventory not saved: "+CLogger.retrieveErrorAsString() );
 
                         break;
                     }
@@ -448,6 +449,8 @@ public class ImportInventory extends SvrProcess {
                     x_MovementDate   = MovementDate;
                     noInsert++;
                 }
+                
+                
 
                 // Line
 
@@ -456,15 +459,28 @@ public class ImportInventory extends SvrProcess {
                 MInventoryLine line                      = new MInventoryLine( inventory,imp.getM_Locator_ID(),imp.getM_Product_ID(),imp.getM_AttributeSetInstance_ID(),imp.getQtyBook(),imp.getQtyCount());
 
                 if( line.save()) {
-                    imp.setI_IsImported( true );
-                    imp.setI_ErrorMsg(null);
-                    imp.setM_Inventory_ID( line.getM_Inventory_ID());
-                    imp.setM_InventoryLine_ID( line.getM_InventoryLine_ID());
-                    imp.setProcessed( true );
+                	
+					no = DB.executeUpdate("UPDATE I_Inventory SET i_isimported='Y',i_errormsg=null,m_inventory_id="
+							+ line.getM_Inventory_ID()
+							+ ",M_InventoryLine_ID="
+							+ line.getM_InventoryLine_ID()
+							+ ",processed='Y' WHERE i_inventory_id = "
+							+ imp.getID());
+//                    imp.setI_IsImported( true );
+//                    imp.setI_ErrorMsg(null);
+//                    imp.setM_Inventory_ID( line.getM_Inventory_ID());
+//                    imp.setM_InventoryLine_ID( line.getM_InventoryLine_ID());
+//                    imp.setProcessed( true );
 
-                    if( imp.save()) {
+//                    if( imp.save()) {
+					if(no == 1){
                         noInsertLine++;
                     }
+                }
+                else{
+					no = DB.executeUpdate("UPDATE I_Inventory SET i_isimported='E',i_errormsg="
+							+ CLogger.retrieveErrorAsString()
+							+ " WHERE i_inventory_id = " + imp.getID());
                 }
             }
 
