@@ -23,10 +23,12 @@ import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
+import java.util.Set;
 import java.util.logging.Level;
 
 import org.openXpertya.cc.CurrentAccountManager;
@@ -1115,6 +1117,7 @@ public class MAllocationHdr extends X_C_AllocationHdr implements DocAction {
      */
     private void voidCashLines() throws Exception {
         MAllocationLine[] lines = getLines(false);
+        Set<Integer> cashLineIDs = new HashSet<Integer>();
         List<MCashLine> cashLines = new ArrayList<MCashLine>();
 
         // Si el libro de caja al que pertenece la línea está procesado
@@ -1123,6 +1126,14 @@ public class MAllocationHdr extends X_C_AllocationHdr implements DocAction {
         	MCashLine cashLine = null;
         	int C_CashLine_ID = lines[i].getC_CashLine_ID();
         	if (C_CashLine_ID != 0) {
+        		/*
+        		 * BugFix: Se presentaba un error en la anulación de recibos que contenian referencias a libros de caja
+				 * 			Cuando hay varios C_AllocationLines que referencian a un mismo C_CashLine, 
+				 * 			se invocaba a la anulación de la línea de caja varias veces en lugar de una única vez
+        		 */
+        		if (cashLineIDs.contains(C_CashLine_ID))
+        			continue;
+        		cashLineIDs.add(C_CashLine_ID);
         		cashLine = new MCashLine(getCtx(), C_CashLine_ID, get_TrxName());
         		cashLines.add(cashLine);
         		String cashStatus = cashLine.getCash().getDocStatus();
