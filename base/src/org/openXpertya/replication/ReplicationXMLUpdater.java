@@ -17,6 +17,7 @@ import java.util.Vector;
 
 import org.openXpertya.model.MChangeLog;
 import org.openXpertya.model.MTableReplication;
+import org.openXpertya.model.X_AD_Sequence;
 import org.openXpertya.model.X_C_BPartner;
 import org.openXpertya.model.X_C_Cash;
 import org.openXpertya.model.X_C_CashLine;
@@ -330,6 +331,22 @@ public class ReplicationXMLUpdater extends PluginXMLUpdater {
 		{
 			query.append("null");
 			retValue = true;
+		}
+		/*
+		 * No modificar el valor actual de los campos currentnext y currentnextsys de las secuencias a fin de evitar pisar los valores actuales 
+		 */
+		else if (MChangeLog.OPERATIONTYPE_Modification.equals(changeGroup.getOperation()) && X_AD_Sequence.Table_Name.equalsIgnoreCase(tableName))
+		{
+			if ("currentnext".equalsIgnoreCase(column.getName())) {
+				query.append("currentnext");
+				retValue = true;
+			}
+			else if ("currentnextsys".equalsIgnoreCase(column.getName())) {
+				query.append("currentnextsys");
+				retValue = true;
+			}
+			else 
+				retValue = false;
 		}
 		/* Si es una columna especial, concatenar la coma final */
 		if (retValue)
