@@ -77,8 +77,31 @@ public class MOrgPercepcion extends X_AD_Org_Percepcion {
 				return false;
 			}
 		}
-		
-		
 		return true;
 	}	
+	
+	public static MOrgPercepcion getOrgPercepcion(Properties ctx, Integer orgID, int taxID, String trxName){
+		String sql = "SELECT * FROM ad_org_percepcion WHERE ad_org_id = ? AND isactive = 'Y' AND c_tax_id = ?";
+		PreparedStatement ps = null;
+		ResultSet rs = null;
+		try {
+			ps = DB.prepareStatement(sql, trxName);
+			ps.setInt(1, orgID);
+			ps.setInt(2, taxID);
+			rs = ps.executeQuery();
+			if(rs.next()){
+				return (new MOrgPercepcion(ctx, rs, trxName));
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
+		} finally{
+			try {
+				if(ps != null)ps.close();
+				if(rs != null)rs.close();
+			} catch (Exception e2) {
+				e2.printStackTrace();
+			}
+		}
+		return null;
+	}
 }

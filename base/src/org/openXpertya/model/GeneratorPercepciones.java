@@ -181,7 +181,7 @@ public class GeneratorPercepciones {
 		if(!isApplyPercepcion()){
 			return percepciones;
 		}
-		BigDecimal percepcionPerc, exencionPerc;
+		BigDecimal percepcionPerc, exencionPerc, montoMinimo;
 		String arcibaNormCode;
 		MTax tax;
 		for (MOrgPercepcion orgPercepcion : getOrgPercepciones()) {
@@ -197,11 +197,13 @@ public class GeneratorPercepciones {
 			// Código de Norma Arciba
 			arcibaNormCode = getPercepcionProcessors().get(
 					orgPercepcion.getID()).getArcibaNormCode();
+			montoMinimo = getPercepcionProcessors().get(orgPercepcion.getID()).getMinimumNetAmount();
 			// Impuesto
 			if(percepcionPerc.compareTo(BigDecimal.ZERO) > 0){
 				tax = new MTax(getCtx(), orgPercepcion.getC_Tax_ID(), getTrxName());
 				tax.setRate(percepcionPerc);
 				tax.setArcibaNormCode(arcibaNormCode);
+				tax.setMinimumNetAmount(montoMinimo);
 				percepciones.add(tax);
 			}
 		}
@@ -289,39 +291,41 @@ public class GeneratorPercepciones {
 				invoice.getC_Currency_ID(), getTrxName());
 		MInvoiceTax invoiceTax;
 		for (MTax percepcion : percepciones) {
-			// Calcular el monto de percepción
-			percepcionAmt = percepcion.calculateTax(invoiceNetTotalAmt, false,
-					scale);
-			// Verificar si existe ese impuesto cargado en la factura, si es así
-			// actualizarlo, sino crear uno nuevo
-			invoiceTax = MInvoiceTax.get(getCtx(), invoice.getID(),
-					percepcion.getID(), getTrxName());
-			// Si el monto de percepción es 0 y existe el impuesto agregado a la
-			// factura entonces se elimina
-			if(percepcionAmt.compareTo(BigDecimal.ZERO) == 0){
-				if(invoiceTax != null){
-					invoiceTax.delete(true);
+			if(invoiceNetTotalAmt.compareTo(percepcion.getMinimumNetAmount()) >= 0){
+				// Calcular el monto de percepción
+				percepcionAmt = percepcion.calculateTax(invoiceNetTotalAmt, false,
+						scale);
+				// Verificar si existe ese impuesto cargado en la factura, si es así
+				// actualizarlo, sino crear uno nuevo
+				invoiceTax = MInvoiceTax.get(getCtx(), invoice.getID(),
+						percepcion.getID(), getTrxName());
+				// Si el monto de percepción es 0 y existe el impuesto agregado a la
+				// factura entonces se elimina
+				if(percepcionAmt.compareTo(BigDecimal.ZERO) == 0){
+					if(invoiceTax != null){
+						invoiceTax.delete(true);
+					}
 				}
-			}
-			// Si el monto es distinto de 0 y existe el impuesto agregado,
-			// entonces lo actualizo. En el caso que no exista ninguno se crea 
-			else{
-				// Si no existe ninguna, la agrego
-				if(invoiceTax == null){
-					invoiceTax = new MInvoiceTax(getCtx(), 0, getTrxName());
-				}
-				invoiceTax.setC_Invoice_ID(invoice.getID());
-				invoiceTax.setC_Tax_ID(percepcion.getID());
-				invoiceTax.setTaxAmt(invoiceTax.getTaxAmt().add(percepcionAmt));
-				invoiceTax.setTaxBaseAmt(invoiceNetTotalAmt);
-				invoiceTax.setRate(percepcion.getRate());
-				invoiceTax.setArcibaNormCode(percepcion.getArcibaNormCode());
-				
-				if (invoiceTax.getAD_Org_ID() == 0){
-					invoiceTax.setAD_Org_ID(invoice.getAD_Org_ID());
-				}
-				if(!invoiceTax.save()){
-					throw new Exception("ERROR updating percepcion invoice tax");
+				// Si el monto es distinto de 0 y existe el impuesto agregado,
+				// entonces lo actualizo. En el caso que no exista ninguno se crea 
+				else{
+					// Si no existe ninguna, la agrego
+					if(invoiceTax == null){
+						invoiceTax = new MInvoiceTax(getCtx(), 0, getTrxName());
+					}
+					invoiceTax.setC_Invoice_ID(invoice.getID());
+					invoiceTax.setC_Tax_ID(percepcion.getID());
+					invoiceTax.setTaxAmt(invoiceTax.getTaxAmt().add(percepcionAmt));
+					invoiceTax.setTaxBaseAmt(invoiceNetTotalAmt);
+					invoiceTax.setRate(percepcion.getRate());
+					invoiceTax.setArcibaNormCode(percepcion.getArcibaNormCode());
+					
+					if (invoiceTax.getAD_Org_ID() == 0){
+						invoiceTax.setAD_Org_ID(invoice.getAD_Org_ID());
+					}
+					if(!invoiceTax.save()){
+						throw new Exception("ERROR updating percepcion invoice tax");
+					}
 				}
 			}
 		}

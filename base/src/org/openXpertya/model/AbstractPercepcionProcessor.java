@@ -39,5 +39,10 @@ public abstract class AbstractPercepcionProcessor {
 	 * @return el código de norma Arciba
 	 */
 	public abstract String getArcibaNormCode();
+	
+	/**
+	 * @return el monto neto mínimo de aplicación 
+	 */
+	public abstract BigDecimal getMinimumNetAmount();
 
 }

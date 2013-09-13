@@ -36,4 +36,9 @@ public class PercepcionPorLocalizacionDeCliente extends PercepcionStandard {
 	public String getArcibaNormCode() {
 		return getPercepcionData().getTax().getArcibaNormCode();
 	}
+	
+	@Override
+	public BigDecimal getMinimumNetAmount() {
+		return super.getMinimumNetAmount();
+	}
 }

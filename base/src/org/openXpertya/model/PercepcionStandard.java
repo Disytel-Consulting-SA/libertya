@@ -2,6 +2,8 @@ package org.openXpertya.model;
 
 import java.math.BigDecimal;
 
+import org.openXpertya.util.Env;
+
 public class PercepcionStandard extends AbstractPercepcionProcessor {
 
 	public PercepcionStandard() {
@@ -23,6 +25,12 @@ public class PercepcionStandard extends AbstractPercepcionProcessor {
 	public String getArcibaNormCode() {
 		// TODO Auto-generated method stub
 		return "";
+	}
+
+	@Override
+	public BigDecimal getMinimumNetAmount() {
+		MOrgPercepcion orgPercepcion = MOrgPercepcion.getOrgPercepcion(Env.getCtx(), getPercepcionData().getDocument().getOrgID(), getPercepcionData().getTax().getC_Tax_ID(), null);
+		return orgPercepcion.getMinimumNetAmount();
 	}
 
 }

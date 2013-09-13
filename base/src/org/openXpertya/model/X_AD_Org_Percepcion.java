@@ -7,7 +7,7 @@ import java.math.*;
 import org.openXpertya.util.*;
 /** Modelo Generado por AD_Org_Percepcion
  *  @author Comunidad de Desarrollo Libertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
- *  @version  - 2012-10-27 01:34:43.66 */
+ *  @version  - 2013-09-12 18:05:08.85 */
 public class X_AD_Org_Percepcion extends org.openXpertya.model.PO
 {
 /** Constructor estándar */
@@ -19,6 +19,7 @@ super (ctx, AD_Org_Percepcion_ID, trxName);
 setAD_Org_Percepcion_ID (0);
 setC_RetencionProcessor_ID (0);
 setC_Tax_ID (0);
+setMinimumNetAmount (Env.ZERO);
 setName (null);
 }
  */
@@ -102,6 +103,19 @@ Optional short description of the record */
 public String getDescription() 
 {
 return (String)get_Value("Description");
+}
+/** Set Minimum Net Amount */
+public void setMinimumNetAmount (BigDecimal MinimumNetAmount)
+{
+if (MinimumNetAmount == null) throw new IllegalArgumentException ("MinimumNetAmount is mandatory");
+set_Value ("MinimumNetAmount", MinimumNetAmount);
+}
+/** Get Minimum Net Amount */
+public BigDecimal getMinimumNetAmount() 
+{
+BigDecimal bd = (BigDecimal)get_Value("MinimumNetAmount");
+if (bd == null) return Env.ZERO;
+return bd;
 }
 /** Set Name.
 Alphanumeric identifier of the entity */

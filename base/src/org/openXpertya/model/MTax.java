@@ -309,6 +309,11 @@ public class MTax extends X_C_Tax {
 
     private MTaxPostal[] m_postals = null;
 
+    /** Descripción de Campos */
+    /** Campo utilizado temporalmente para calculo de percepciones. No es una columna en base de datos */ 
+    private BigDecimal minimumNetAmount = BigDecimal.ZERO;
+    
+
     /**
      * Descripción de Método
      *
@@ -640,7 +645,14 @@ public class MTax extends X_C_Tax {
 		
 		return !error;
 	}
-    
+
+	public BigDecimal getMinimumNetAmount() {
+		return minimumNetAmount;
+	}
+
+	public void setMinimumNetAmount(BigDecimal minimumNetAmount) {
+		this.minimumNetAmount = minimumNetAmount;
+	}
     
 }    // MTax
 
