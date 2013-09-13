@@ -6,6 +6,7 @@ import org.openXpertya.util.Env;
 
 public class PercepcionCABA extends PercepcionStandard {
 	
+	private BigDecimal minimumNetAmount = null;
 	private BigDecimal percepcionPercToApply = null;
 	private String arcibaNormCode = null;
 	
@@ -44,11 +45,18 @@ public class PercepcionCABA extends PercepcionStandard {
 				percepcionPercToApply = MBPartnerPadronBsAs.getBPartnerPerc("percepcion", getPercepcionData().getBpartner().getID(), Env.getDate(), MBPartnerPadronBsAs.PADRONTYPE_RégimenSimplificadoCABA, null);
 				if(percepcionPercToApply == null){
 					percepcionPercToApply = super.getPercepcionPercToApply();
+					minimumNetAmount = super.getMinimumNetAmount();
 					arcibaNormCode = codigo_De_Norma_Regimen_General;
 				}
-				else{ arcibaNormCode = codigo_De_Norma_Regimen_Simplificado; }
+				else{ 
+					arcibaNormCode = codigo_De_Norma_Regimen_Simplificado; 
+					minimumNetAmount = getRegisterMinimumNetAmount(MBPartnerPadronBsAs.PADRONTYPE_RégimenSimplificadoCABA);
+				}
 			}
-			else{ arcibaNormCode = codigo_De_Norma_Padron_Alto_Riesgo; }
+			else{ 
+				arcibaNormCode = codigo_De_Norma_Padron_Alto_Riesgo; 
+				minimumNetAmount = getRegisterMinimumNetAmount(MBPartnerPadronBsAs.PADRONTYPE_PadrónDeAltoRiesgoCABA);
+			}
 		}
 	}
 
@@ -60,5 +68,21 @@ public class PercepcionCABA extends PercepcionStandard {
 			loadData();
 		}
 		return arcibaNormCode;
+	}
+	
+	@Override
+	public BigDecimal getMinimumNetAmount() {
+		if (minimumNetAmount == null){
+			loadData();
+		}
+		return minimumNetAmount;
+	}
+	
+	public BigDecimal getRegisterMinimumNetAmount(String padronType) {
+		MOrgPercepcionConfig percepcionConfig = MOrgPercepcionConfig.getOrgPercepcionConfig(Env.getCtx(), getPercepcionData().getDocument().getOrgID(), padronType, null);
+		if (percepcionConfig != null){
+			return percepcionConfig.getMinimumNetAmount();
+		}
+		return super.getMinimumNetAmount();
 	}
 }

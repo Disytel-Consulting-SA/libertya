@@ -1,13 +1,14 @@
-/** Modelo Generado - NO CAMBIAR MANUALMENTE - Copyright (C) 2006 FUNDESLE */
+/** Modelo Generado - NO CAMBIAR MANUALMENTE - Disytel */
 package org.openXpertya.model;
-import java.util.*;
+import java.util.logging.Level;
+ import java.util.*;
 import java.sql.*;
 import java.math.*;
 import org.openXpertya.util.*;
 /** Modelo Generado por C_RetencionProcessor
- *  @author Comunidad de Desarrollo openXpertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
- *  @version  - 2009-10-22 14:51:33.069 */
-public class X_C_RetencionProcessor extends PO
+ *  @author Comunidad de Desarrollo Libertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
+ *  @version  - 2013-09-12 18:06:40.172 */
+public class X_C_RetencionProcessor extends org.openXpertya.model.PO
 {
 /** Constructor estándar */
 public X_C_RetencionProcessor (Properties ctx, int C_RetencionProcessor_ID, String trxName)
@@ -18,6 +19,8 @@ super (ctx, C_RetencionProcessor_ID, trxName);
 setC_RetencionProcessor_ID (0);
 setName (null);
 setnameclass (null);
+setProcessorType (null);	// R
+setSupportRegister (false);
 }
  */
 }
@@ -26,13 +29,13 @@ public X_C_RetencionProcessor (Properties ctx, ResultSet rs, String trxName)
 {
 super (ctx, rs, trxName);
 }
-/** AD_Table_ID=1000141 */
-public static final int Table_ID=1000141;
+/** AD_Table_ID */
+public static final int Table_ID = M_Table.getTableID("C_RetencionProcessor");
 
 /** TableName=C_RetencionProcessor */
 public static final String Table_Name="C_RetencionProcessor";
 
-protected static KeyNamePair Model = new KeyNamePair(1000141,"C_RetencionProcessor");
+protected static KeyNamePair Model = new KeyNamePair(Table_ID,"C_RetencionProcessor");
 protected static BigDecimal AccessLevel = new BigDecimal(3);
 
 /** Load Meta Data */
@@ -127,5 +130,44 @@ set_Value ("nameclass", nameclass);
 public String getnameclass() 
 {
 return (String)get_Value("nameclass");
+}
+public static final int PROCESSORTYPE_AD_Reference_ID = MReference.getReferenceID("C_Processor_Type");
+/** Perception = P */
+public static final String PROCESSORTYPE_Perception = "P";
+/** Retention = R */
+public static final String PROCESSORTYPE_Retention = "R";
+/** Set Processor Type */
+public void setProcessorType (String ProcessorType)
+{
+if (ProcessorType.equals("P") || ProcessorType.equals("R"));
+ else throw new IllegalArgumentException ("ProcessorType Invalid value - Reference = PROCESSORTYPE_AD_Reference_ID - P - R");
+if (ProcessorType == null) throw new IllegalArgumentException ("ProcessorType is mandatory");
+if (ProcessorType.length() > 1)
+{
+log.warning("Length > 1 - truncated");
+ProcessorType = ProcessorType.substring(0,1);
+}
+set_Value ("ProcessorType", ProcessorType);
+}
+/** Get Processor Type */
+public String getProcessorType() 
+{
+return (String)get_Value("ProcessorType");
+}
+/** Set Support Register */
+public void setSupportRegister (boolean SupportRegister)
+{
+set_Value ("SupportRegister", new Boolean(SupportRegister));
+}
+/** Get Support Register */
+public boolean isSupportRegister() 
+{
+Object oo = get_Value("SupportRegister");
+if (oo != null) 
+{
+ if (oo instanceof Boolean) return ((Boolean)oo).booleanValue();
+ return "Y".equals(oo);
+}
+return false;
 }
 }

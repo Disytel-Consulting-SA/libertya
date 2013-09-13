@@ -4447,3 +4447,40 @@ update ad_sequence set ad_org_id = 0 where ad_org_id = 1010053 and ad_componento
 ('CORE-AD_Sequence-1011740', 'CORE-AD_Sequence-1011812', 'CORE-AD_Sequence-1011861', 
 'CORE-AD_Sequence-1011857', 'CORE-AD_Sequence-1011858', 'CORE-AD_Sequence-1011862', 
 'CORE-AD_Sequence-1011739');
+
+--20130912-1625 Nuevas columnas en Procesador de Retenciones / Percepciones
+UPDATE ad_system SET dummy = (SELECT addcolumnifnotexists('C_RetencionProcessor','SupportRegister', 'character(1) NOT NULL DEFAULT ''N''::bpchar'));
+UPDATE ad_system SET dummy = (SELECT addcolumnifnotexists('C_RetencionProcessor','ProcessorType', 'character(1)'));
+
+--20130912-1655 Nueva columna para establecer el monto neto mínimo a aplicar en la percepción
+UPDATE ad_system SET dummy = (SELECT addcolumnifnotexists('AD_Org_Percepcion','MinimumNetAmount', 'numeric(20,2) NOT NULL DEFAULT 0'));
+
+--20130912-1710 Nueva tabla para poder configurar el monto neto mínimo a aplicar en la percepción por padrón.
+CREATE TABLE ad_org_percepcion_config
+(
+  ad_org_percepcion_config_id integer NOT NULL,
+  ad_client_id integer NOT NULL,
+  ad_org_id integer NOT NULL,
+  ad_org_percepcion_id integer NOT NULL,
+  isactive character(1) NOT NULL DEFAULT 'Y'::bpchar,
+  created timestamp without time zone NOT NULL DEFAULT ('now'::text)::timestamp(6) with time zone,
+  createdby integer NOT NULL,
+  updated timestamp without time zone NOT NULL DEFAULT ('now'::text)::timestamp(6) with time zone,
+  updatedby integer NOT NULL,
+  padrontype character(1),
+  minimumnetamount numeric(20,2) NOT NULL DEFAULT 0,
+  CONSTRAINT ad_org_percepcion_config_key PRIMARY KEY (ad_org_percepcion_config_id),
+  CONSTRAINT ad_org_percepcion FOREIGN KEY (ad_org_percepcion_id)
+      REFERENCES ad_org_percepcion (ad_org_percepcion_id) MATCH SIMPLE
+      ON UPDATE NO ACTION ON DELETE NO ACTION,
+  CONSTRAINT ad_org_percepcion_client FOREIGN KEY (ad_client_id)
+      REFERENCES ad_client (ad_client_id) MATCH SIMPLE
+      ON UPDATE NO ACTION ON DELETE NO ACTION,
+  CONSTRAINT ad_org_percepcion_org FOREIGN KEY (ad_org_id)
+      REFERENCES ad_org (ad_org_id) MATCH SIMPLE
+      ON UPDATE NO ACTION ON DELETE NO ACTION
+)
+WITH (
+  OIDS=FALSE
+);
+ALTER TABLE ad_org_percepcion_config OWNER TO libertya;
