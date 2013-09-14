@@ -49,7 +49,7 @@ public class MOrgPercepcionConfig extends X_AD_Org_Percepcion_Config {
 		// No puede existir un registro repetido por organización e impuesto
 		StringBuffer sql = new StringBuffer("SELECT count(*) as cant FROM "
 				+ get_TableName() + " WHERE ad_org_id = " + getAD_Org_ID()
-				+ " AND padrontype = " + getPadronType());
+				+ " AND padrontype = '" + getPadronType()+"'");
 		if(!Util.isEmpty(getID(), true)){
 			sql.append(" AND ("+get_TableName()+"_ID <> "+getID()+")");
 		}
