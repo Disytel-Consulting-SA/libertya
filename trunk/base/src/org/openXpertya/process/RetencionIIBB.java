@@ -150,7 +150,7 @@ public class RetencionIIBB extends AbstractRetencionProcessor {
 			BigDecimal porcentajePadron = MBPartner
 					.getRetencionSegunPadronBsAS(Env.getDate(), getBPartner()
 							.getC_BPartner_ID(), getTrxName());
-			if(!porcentajePadron.equals(Env.ZERO))
+			if ((porcentajePadron != null) && (!porcentajePadron.equals(Env.ZERO)))
 				porcentajeRetencion = porcentajePadron;
 		}
 //			porcentajeRetencion = this.
