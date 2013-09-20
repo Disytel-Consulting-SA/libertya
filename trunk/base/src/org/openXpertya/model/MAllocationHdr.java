@@ -765,8 +765,11 @@ public class MAllocationHdr extends X_C_AllocationHdr implements DocAction {
 		if (getC_POSJournal_ID() != 0
 				&& !MPOSJournal.isPOSJournalOpened(getCtx(),
 						getC_POSJournal_ID(), get_TrxName())) {
-			log.severe("POS Journal assigned with ID "+getC_POSJournal_ID()+" is closed");
-			setC_POSJournal_ID(0);			
+			MClientInfo clientInfo = MClientInfo.get(getCtx());
+			if(clientInfo.isPaymentsPOSJournalOpen()){
+				log.severe("POS Journal assigned with ID "+getC_POSJournal_ID()+" is closed");
+				setC_POSJournal_ID(0);
+			}
 		}
         
 		// Caja Diaria. Intenta registrar el documento

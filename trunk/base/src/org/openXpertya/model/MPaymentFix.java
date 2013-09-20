@@ -370,6 +370,12 @@ public class MPaymentFix extends X_C_PaymentFix {
 
 		if (document instanceof MCashLine) {
 			((MCashLine)document).setVoiderAllocationID(getC_AllocationHdr_ID());
+			((MCashLine)document).setVoidPOSJournalID(((MCashLine)document).getC_POSJournal_ID());
+			((MCashLine)document).setVoidPOSJournalMustBeOpen(false);
+		}
+		else if(document instanceof MPayment){
+			((MPayment)document).setVoidPOSJournalID(((MPayment)document).getC_POSJournal_ID());
+			((MPayment)document).setVoidPOSJournalMustBeOpen(false);
 		}
 		
 		// Anula y guarda el documento

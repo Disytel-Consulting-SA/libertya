@@ -1212,7 +1212,12 @@ public class MTab implements DataStatusListener,Evaluatee,Serializable {
         	// principal y cualquier pestaña hijo.
         	int parentTabNo = 0;
         	// Obtiene los dos valores del contexto indicando el nro de pestaña del registro principal.
-        	boolean processed = "Y".equals( Env.getContext( m_vo.ctx,m_vo.WindowNo, parentTabNo,"Processed" ));
+			// Si la pestaña está marcada como siempre actualizable, entonces no
+			// se verifica el campo processed
+        	
+			boolean processed = !isAlwaysUpdateable()
+					&& "Y".equals(Env.getContext(m_vo.ctx, m_vo.WindowNo,
+							parentTabNo, "Processed"));
             boolean active = "Y".equals( Env.getContext( m_vo.ctx,m_vo.WindowNo, parentTabNo, "IsActive" ));
 
             if( processed ||!active ) {
@@ -1643,6 +1648,18 @@ public class MTab implements DataStatusListener,Evaluatee,Serializable {
 
         return m_vo.IsInsertRecord;
     }    // isInsertRecord
+    
+    public boolean isAlwaysUpdateable() {
+        if( isReadOnly()) {
+            return false;
+        }
+        
+        if(!isInsertRecord()){
+        	return false;
+        }
+
+        return m_vo.IsAlwaysUpdateable;
+    }
     
     public boolean isInserting(){
     	return m_mTable.isInserting();
