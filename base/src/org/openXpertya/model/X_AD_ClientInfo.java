@@ -7,7 +7,7 @@ import java.math.*;
 import org.openXpertya.util.*;
 /** Modelo Generado por AD_ClientInfo
  *  @author Comunidad de Desarrollo Libertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
- *  @version  - 2013-06-18 17:44:31.313 */
+ *  @version  - 2013-09-20 17:24:32.794 */
 public class X_AD_ClientInfo extends org.openXpertya.model.PO
 {
 /** Constructor estándar */
@@ -23,6 +23,7 @@ setIsPOSJournalActive (false);
 setIsWarehouseCloseControl (false);
 setPasswordExpirationActive (false);
 setPasswordExpirationDays (0);
+setPaymentsPOSJournalOpen (false);
 setUniqueKeyActive (false);
 }
  */
@@ -621,6 +622,22 @@ public int getPasswordExpirationDays()
 Integer ii = (Integer)get_Value("PasswordExpirationDays");
 if (ii == null) return 0;
 return ii.intValue();
+}
+/** Set Payments POS Journal Open */
+public void setPaymentsPOSJournalOpen (boolean PaymentsPOSJournalOpen)
+{
+set_Value ("PaymentsPOSJournalOpen", new Boolean(PaymentsPOSJournalOpen));
+}
+/** Get Payments POS Journal Open */
+public boolean isPaymentsPOSJournalOpen() 
+{
+Object oo = get_Value("PaymentsPOSJournalOpen");
+if (oo != null) 
+{
+ if (oo instanceof Boolean) return ((Boolean)oo).booleanValue();
+ return "Y".equals(oo);
+}
+return false;
 }
 /** Set Unique Key Active.
 Unique Key Active */

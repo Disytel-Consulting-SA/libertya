@@ -1,12 +1,13 @@
 /** Modelo Generado - NO CAMBIAR MANUALMENTE - Disytel */
 package org.openXpertya.model;
-import java.util.*;
+import java.util.logging.Level;
+ import java.util.*;
 import java.sql.*;
 import java.math.*;
 import org.openXpertya.util.*;
 /** Modelo Generado por AD_Tab
  *  @author Comunidad de Desarrollo Libertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
- *  @version  - 2010-02-19 19:09:49.405 */
+ *  @version  - 2013-09-20 17:25:36.304 */
 public class X_AD_Tab extends org.openXpertya.model.PO
 {
 /** Constructor estándar */
@@ -21,6 +22,7 @@ setAD_Window_ID (0);
 setEntityType (null);	// U
 setHasTree (false);
 setIsAdvancedTab (false);	// N
+setIsAlwaysUpdateable (false);
 setIsInsertRecord (true);	// Y
 setIsProcessMsgShowDialog (false);
 setIsReadOnly (false);
@@ -375,6 +377,24 @@ This Tab contains advanced Functionality */
 public boolean isAdvancedTab() 
 {
 Object oo = get_Value("IsAdvancedTab");
+if (oo != null) 
+{
+ if (oo instanceof Boolean) return ((Boolean)oo).booleanValue();
+ return "Y".equals(oo);
+}
+return false;
+}
+/** Set Always Updateable.
+The column is always updateable, even if the record is not active or processed */
+public void setIsAlwaysUpdateable (boolean IsAlwaysUpdateable)
+{
+set_Value ("IsAlwaysUpdateable", new Boolean(IsAlwaysUpdateable));
+}
+/** Get Always Updateable.
+The column is always updateable, even if the record is not active or processed */
+public boolean isAlwaysUpdateable() 
+{
+Object oo = get_Value("IsAlwaysUpdateable");
 if (oo != null) 
 {
  if (oo instanceof Boolean) return ((Boolean)oo).booleanValue();

@@ -4484,3 +4484,27 @@ WITH (
   OIDS=FALSE
 );
 ALTER TABLE ad_org_percepcion_config OWNER TO libertya;
+
+--20130920-1630 Nueva columna en la config de la compañía para configurar si la caja diaria debe estar abierta para cobros/pagos y sus allocations
+ALTER TABLE ad_clientinfo ADD COLUMN paymentsposjournalopen character(1) NOT NULL DEFAULT 'Y'::bpchar;
+
+--20130920-1630 Nueva columna para transformar pestañas como siempre actualizables
+ALTER TABLE ad_tab ADD COLUMN isalwaysupdateable character(1) NOT NULL DEFAULT 'N'::bpchar;
+
+DROP VIEW ad_tab_v;
+DROP VIEW ad_tab_vt;
+
+CREATE OR REPLACE VIEW ad_tab_v AS 
+ SELECT t.ad_tab_id, t.ad_window_id, t.ad_table_id, t.name, t.description, t.help, t.seqno, t.issinglerow, t.hastree, t.isinfotab, tbl.replicationtype, tbl.tablename, tbl.accesslevel, tbl.issecurityenabled, tbl.isdeleteable, tbl.ishighvolume, tbl.isview, 'N' AS hasassociation, t.istranslationtab, t.isreadonly, t.ad_image_id, t.tablevel, t.whereclause, t.orderbyclause, t.commitwarning, t.readonlylogic, t.displaylogic, t.ad_column_id, t.ad_process_id, t.issorttab, t.isinsertrecord, t.isadvancedtab, t.ad_columnsortorder_id, t.ad_columnsortyesno_id, t.included_tab_id, t.isprocessmsgshowdialog, t.isalwaysupdateable
+   FROM ad_tab t
+   JOIN ad_table tbl ON t.ad_table_id = tbl.ad_table_id
+  WHERE t.isactive = 'Y'::bpchar AND tbl.isactive = 'Y'::bpchar;
+
+ALTER TABLE ad_tab_v OWNER TO libertya;
+
+CREATE OR REPLACE VIEW ad_tab_vt AS 
+ SELECT trl.ad_language, t.ad_tab_id, t.ad_window_id, t.ad_table_id, trl.name, trl.description, trl.help, t.seqno, t.issinglerow, t.hastree, t.isinfotab, tbl.replicationtype, tbl.tablename, tbl.accesslevel, tbl.issecurityenabled, tbl.isdeleteable, tbl.ishighvolume, tbl.isview, 'N' AS hasassociation, t.istranslationtab, t.isreadonly, t.ad_image_id, t.tablevel, t.whereclause, t.orderbyclause, trl.commitwarning, t.readonlylogic, t.displaylogic, t.ad_column_id, t.ad_process_id, t.issorttab, t.isinsertrecord, t.isadvancedtab, t.ad_columnsortorder_id, t.ad_columnsortyesno_id, t.included_tab_id, t.isprocessmsgshowdialog, t.isalwaysupdateable
+   FROM ad_tab t
+   JOIN ad_table tbl ON t.ad_table_id = tbl.ad_table_id
+   JOIN ad_tab_trl trl ON t.ad_tab_id = trl.ad_tab_id
+  WHERE t.isactive = 'Y'::bpchar AND tbl.isactive = 'Y'::bpchar;

@@ -2076,8 +2076,12 @@ public final class MPayment extends X_C_Payment implements DocAction,ProcessCall
 				m_processMsg = MPOSJournal.POS_JOURNAL_VOID_CLOSED_ERROR_MSG;
 				return STATUS_Invalid;
 			}
-			log.severe("POS Journal assigned with ID "+getC_POSJournal_ID()+" is closed");
-			setC_POSJournal_ID(0);			
+			// Cargar config de 
+			MClientInfo clientInfo = MClientInfo.get(getCtx());
+			if(clientInfo.isPaymentsPOSJournalOpen()){
+				log.severe("POS Journal assigned with ID "+getC_POSJournal_ID()+" is closed");
+				setC_POSJournal_ID(0);
+			}
 		}
 		// Caja Diaria. Intenta registrar la factura
 		if (getC_POSJournal_ID() == 0 && !MPOSJournal.registerDocument(this)) {

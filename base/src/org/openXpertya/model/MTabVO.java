@@ -176,6 +176,9 @@ public class MTabVO implements Evaluatee, Serializable {
     /** Mostrar mensajes processmsg en dialog */
     public boolean showDialogProcessMsg;
 
+    /** Descripción de Campo */
+    public boolean	IsAlwaysUpdateable	= false;
+    
     /**
      *  protected constructor - must use Factory
      */
@@ -403,6 +406,10 @@ public class MTabVO implements Evaluatee, Serializable {
                 vo.IsInsertRecord	= false;
             }
 
+            if (rs.getString("IsAlwaysUpdateable").equals("Y")) {
+                vo.IsAlwaysUpdateable = true;
+            }
+            
             //
             vo.Description	= rs.getString("Description");
 
@@ -600,6 +607,7 @@ public class MTabVO implements Evaluatee, Serializable {
 		clone.IsSingleRow = IsSingleRow;
 		clone.IsReadOnly = IsReadOnly;
 		clone.IsInsertRecord = IsInsertRecord;
+		clone.IsAlwaysUpdateable = IsAlwaysUpdateable;
 		clone.HasTree = HasTree;
 		clone.AD_Table_ID = AD_Table_ID;
 		clone.AD_Column_ID = AD_Column_ID;
