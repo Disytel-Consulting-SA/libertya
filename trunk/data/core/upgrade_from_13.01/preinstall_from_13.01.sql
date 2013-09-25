@@ -4486,10 +4486,10 @@ WITH (
 ALTER TABLE ad_org_percepcion_config OWNER TO libertya;
 
 --20130920-1630 Nueva columna en la config de la compañía para configurar si la caja diaria debe estar abierta para cobros/pagos y sus allocations
-ALTER TABLE ad_clientinfo ADD COLUMN paymentsposjournalopen character(1) NOT NULL DEFAULT 'Y'::bpchar;
+UPDATE ad_system SET dummy = (SELECT addcolumnifnotexists('AD_ClientInfo','paymentsposjournalopen', 'character(1) NOT NULL DEFAULT ''Y''::bpchar'));
 
 --20130920-1630 Nueva columna para transformar pestañas como siempre actualizables
-ALTER TABLE ad_tab ADD COLUMN isalwaysupdateable character(1) NOT NULL DEFAULT 'N'::bpchar;
+UPDATE ad_system SET dummy = (SELECT addcolumnifnotexists('AD_Tab','isalwaysupdateable', 'character(1) NOT NULL DEFAULT ''Y''::bpchar'));
 
 DROP VIEW ad_tab_v;
 DROP VIEW ad_tab_vt;
