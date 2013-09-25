@@ -244,6 +244,17 @@ public class ImportBPartner extends SvrProcess {
         no = DB.executeUpdate( sql.toString());
         log.fine( "Set Country=" + no );
 
+        // Mismo codigo y tipo de identificación, error
+		sql = new StringBuffer(
+				"UPDATE I_BPartner i SET I_IsImported='E', I_ErrorMsg=I_ErrorMsg||'"
+						+ getMsg("BPartnerSameIDCode")
+						+ ". ' "
+						+ " WHERE EXISTS (SELECT c_bpartner_id FROM c_bpartner bp WHERE i.taxidtype=bp.taxidtype AND i.taxid=bp.taxid AND bp.AD_Client_ID=i.AD_Client_ID) "
+						+ " AND I_IsImported<>'Y'");
+        
+		no = DB.executeUpdate( sql.toString());
+        log.config( "Same TaxIDType and TaxID = " + no );
+		
         // -------------------------------------------------------------------
 
         int noInsert = 0;
