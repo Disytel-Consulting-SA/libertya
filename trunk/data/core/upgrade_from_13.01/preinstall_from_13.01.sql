@@ -4508,3 +4508,30 @@ CREATE OR REPLACE VIEW ad_tab_vt AS
    JOIN ad_table tbl ON t.ad_table_id = tbl.ad_table_id
    JOIN ad_tab_trl trl ON t.ad_tab_id = trl.ad_tab_id
   WHERE t.isactive = 'Y'::bpchar AND tbl.isactive = 'Y'::bpchar;
+
+--20130926-1200 Nueva tabla para poder configurar los datos de un Servicio Externo.
+CREATE TABLE C_ExternalService
+(
+  c_externalservice_id integer NOT NULL,
+  ad_client_id integer NOT NULL,
+  ad_org_id integer NOT NULL,
+  isactive character(1) NOT NULL DEFAULT 'Y'::bpchar,
+  created timestamp without time zone NOT NULL DEFAULT ('now'::text)::timestamp(6) with time zone,
+  createdby integer NOT NULL,
+  updated timestamp without time zone NOT NULL DEFAULT ('now'::text)::timestamp(6) with time zone,
+  updatedby integer NOT NULL,
+  "name" character varying(60) NOT NULL,
+  description character varying(255),
+  ad_componentobjectuid character varying(100),
+  "value" character varying(40) NOT NULL,
+  url character varying(255) NOT NULL,
+  username character varying(60),
+  password character varying(60),
+  timeout integer,
+  port integer,
+  CONSTRAINT c_externalservice_key PRIMARY KEY (c_externalservice_id)
+)
+WITH (
+  OIDS=TRUE
+);
+ALTER TABLE C_ExternalService OWNER TO libertya;
