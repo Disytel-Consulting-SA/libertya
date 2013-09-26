@@ -325,9 +325,11 @@ public class ReplicationXMLUpdater extends PluginXMLUpdater {
 		}	
 		/*
 		 * Los representantes de ventas son inherentes a las organizaciones, con lo cual probablemente genere
-		 * un error intentar recuperar el AD_User, dado que el mismo podría no existir en otros hosts
+		 * un error intentar recuperar el AD_User, dado que el mismo podría no existir en otros hosts.
+		 * Por otra parte las listas de precio en general pertenecen a una unica organizacion, con lo cual replicar
+		 * la lista de precio de las entidades comerciales entre sucursales va a presentar un error. 
 		 */
-		else if (X_C_BPartner.Table_Name.equalsIgnoreCase(tableName) && "salesrep_id".equalsIgnoreCase(column.getName()))
+		else if (X_C_BPartner.Table_Name.equalsIgnoreCase(tableName) && ("salesrep_id".equalsIgnoreCase(column.getName()) || "m_pricelist_id".equalsIgnoreCase(column.getName())))
 		{
 			query.append("null");
 			retValue = true;
