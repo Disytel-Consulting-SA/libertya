@@ -974,7 +974,8 @@ public class MInventory extends X_M_Inventory implements DocAction {
 				m_processMsg = reversal.getProcessMsg();
 				return false;
 			}
-	        reversal.setDocStatus(DOCSTATUS_Closed);
+			// El estado del documento reverso no queda cerrado sino anulado
+	        reversal.setDocStatus(DOCSTATUS_Voided);
 	        reversal.setDocAction(DOCACTION_None);
 	        if (!reversal.save()) {
 				m_processMsg = CLogger.retrieveErrorAsString();
