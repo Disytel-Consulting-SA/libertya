@@ -642,7 +642,10 @@ public abstract class HasarFiscalPrinter extends BasicFiscalPrinter implements H
 		// Se chequea el estado del controlador fiscal.
 		for(int i = 0; i < getFiscalStatusCodes().length; i++) {
 			int statusCode = getFiscalStatusCodes()[i];
-			if((getFiscalStatus() & statusCode) != 0) {
+			if(command.getCommandCode() == CMD_CANCEL_DOCUMENT && statusCode != FST_DOCUMENT_OPEN)
+				continue;
+			// Si el comando es de cancelación y no hay ningún documento abierto, se desestima
+			if ((getFiscalStatus() & statusCode) != 0) {
 				FiscalMessage msg = getFiscalStatusMsgs().get(statusCode);
 				msgs.add(msg);
 			}
