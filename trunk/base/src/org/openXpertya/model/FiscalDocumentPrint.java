@@ -7,7 +7,6 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
-import java.text.NumberFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -15,6 +14,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
+import java.util.StringTokenizer;
 import java.util.Vector;
 import java.util.logging.Level;
 
@@ -85,6 +85,13 @@ public class FiscalDocumentPrint {
 	 * finales
 	 */
 	private static final String MAX_AMOUNT_CF_PREFERENCE_VALUE = "L_AR_CFMontoMaximo";
+	/**
+	 * Cuando el comprobante original de la NC no está seteado en la factura, es
+	 * posible obtenerlo del pedido relacionado a la NC. Esta preference
+	 * contiene claves de tipo de documento de pedido pasibles de obtención de
+	 * nro de documento.
+	 */
+	private static final String COMPROBANTE_ORIGINAL_NC_TIPOS_DOCUMENTO_PEDIDOS_PREFERENCE_NAME = "NCFiscal_ComprobanteOriginal_ClaveTiposDocumentoPedido";
 	/** Manejador de eventos de la impresora fiscal */
 	private FiscalPrinterEventListener printerEventListener;
 	/** Manejador de eventos del estado del Controlador Fiscal de OXP */
@@ -866,24 +873,37 @@ public class FiscalDocumentPrint {
 				origInvoiceNumber = origInvoiceNumber.substring(1,5) + "-" + origInvoiceNumber.substring(5,13);
 			}
 		}
-		// Si no existe también se puede obtener del nro del pedido transferido
-		// si es que es uno de ellos el relacionado a la NC
+		// Si no existe también se puede obtener del nro del pedido dependiendo
+		// de las claves de preference
 		else{
 			if(!Util.isEmpty(mInvoice.getC_Order_ID(), true)){
-				MOrder order = new MOrder(ctx, mInvoice.getC_Order_ID(),
-						getTrxName());
-				MDocType orderDocType = MDocType.get(ctx,
-						order.getC_DocTypeTarget_ID(), getTrxName());
-				if (orderDocType.getDocTypeKey().equals(
-						MDocType.DOCTYPE_Pedido_Transferido)) {
-					origInvoiceNumber = order.getDocumentNo();
-				}
-				// Si no cumple con el formato de comprobantes fiscales se envia
-				// el documentNo como número de factura original.
-				if (!Util.isEmpty(origInvoiceNumber, true)
-						&& origInvoiceNumber.length() == 13) {
-					// El formato es: PPPP-NNNNNNNN, Ej: 0001-00000023
-					origInvoiceNumber = origInvoiceNumber.substring(1,5) + "-" + origInvoiceNumber.substring(5,13);
+				String orderDocTypesKeys = MPreference
+						.searchCustomPreferenceValue(
+								COMPROBANTE_ORIGINAL_NC_TIPOS_DOCUMENTO_PEDIDOS_PREFERENCE_NAME,
+								Env.getAD_Client_ID(ctx),
+								Env.getAD_Org_ID(ctx), null, false);
+				if(!Util.isEmpty(orderDocTypesKeys, true)){
+					MOrder order = new MOrder(ctx, mInvoice.getC_Order_ID(),
+							getTrxName());
+					MDocType orderDocType = MDocType.get(ctx,
+							order.getC_DocTypeTarget_ID(), getTrxName());
+					StringTokenizer tokens = new StringTokenizer(orderDocTypesKeys,";");
+					boolean founded = false;
+					String token;
+					while(tokens.hasMoreTokens() && !founded){
+						token = tokens.nextToken();
+						if (orderDocType.getDocTypeKey().equals(token)) {
+							origInvoiceNumber = order.getDocumentNo();
+							founded = true;
+						}
+					}
+					// Si no cumple con el formato de comprobantes fiscales se envia
+					// el documentNo como número de factura original.
+					if (!Util.isEmpty(origInvoiceNumber, true)
+							&& origInvoiceNumber.length() == 13) {
+						// El formato es: PPPP-NNNNNNNN, Ej: 0001-00000023
+						origInvoiceNumber = origInvoiceNumber.substring(1,5) + "-" + origInvoiceNumber.substring(5,13);
+					}
 				}
 			}
 		}
