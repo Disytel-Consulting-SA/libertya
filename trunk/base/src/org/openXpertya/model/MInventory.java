@@ -947,7 +947,7 @@ public class MInventory extends X_M_Inventory implements DocAction {
 			MInventory reversal = new MInventory(getCtx(), 0, get_TrxName());
 			PO.copyValues(this, reversal);
 			reversal.setM_Inventory_ID(0);
-			reversal.set_ValueNoCheck( "DocumentNo",null );
+			reversal.set_ValueNoCheck( "DocumentNo",getDocumentNo()+"^" );
 			reversal.setDocStatus(DOCSTATUS_InProgress);	//IP
 			reversal.setDocAction( DOCACTION_Complete );
 			reversal.setDescription(Msg.getMsg(getCtx(), "Voided") + " --> " + getDocumentNo());
