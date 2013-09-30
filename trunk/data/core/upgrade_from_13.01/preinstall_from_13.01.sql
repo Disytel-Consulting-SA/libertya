@@ -4621,7 +4621,7 @@ BEGIN
 	-- si los repArray de las tablas origen y destino son diferentes (y la destino esta marcada para replicar),
 	-- entonces no puede referenciarse el registro, ya que existirá en algunos hosts y en otros no.
 	-- si no hay un valor de replicacion en el targetRepArray, entoces todo bien	
-	IF sourceRepArray <> targetRepArray AND (position('1' in targetRepArray) == 0) THEN
+	IF sourceRepArray <> targetRepArray AND (position('1' in targetRepArray) = 0) THEN
 		return 1;
 	END IF;
 
