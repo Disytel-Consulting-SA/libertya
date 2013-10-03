@@ -45,7 +45,7 @@
 		<variableExpression><![CDATA[$F{M_PRODUCT_ID}]]></variableExpression>
 	</variable>
 
-		<group  name="PRODUCT_LINES" >
+		<group  name="PRODUCT_LINES" isStartNewPage="true" >
 			<groupExpression><![CDATA[$F{M_PRODUCT_LINES_ID}]]></groupExpression>
 			<groupHeader>
 			<band height="26"  isSplitAllowed="true" >
