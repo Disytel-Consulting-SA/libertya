@@ -290,8 +290,8 @@ public class ReplicationXMLUpdater extends PluginXMLUpdater {
 			query.append( quotes + "N" + quotes);
 			retValue = true;
 		}
-		/* El created deberia ser dejado como esta, a fin de difernciarlo del updated */
-		else if ("Created".equalsIgnoreCase(column.getName()) && column.getNewValue()!=null && column.getNewValue().length() > 0 )
+		/* El created y updated también deberían copiarse como cualquier otro dato (no utilizar NOW() como lo hace la superclase) */
+		else if (("Created".equalsIgnoreCase(column.getName()) || "Updated".equalsIgnoreCase(column.getName())) && column.getNewValue()!=null && column.getNewValue().length() > 0 )
 		{
 			query.append( quotes + column.getNewValue() + quotes );
 			retValue = true;
