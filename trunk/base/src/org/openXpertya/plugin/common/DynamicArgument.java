@@ -12,33 +12,25 @@ public class DynamicArgument {
 	 * <br>
 	 * Ejemplo: para el metodo con los siguientes parámetros:<br>	
 	 * <br>
-	 * 		<code>execute(String param1, String param2, int param3, ArrayList<Integer> param4)</code> <br>
+	 * 		<code>execute(String param1, String param2, int param3, Integer[] param4)</code> <br>
 	 * <br>
-	 * la invocación <code>execute('foo', 'bar', 43, {x, y, z}) se convierte en</code><br>
+	 * la invocación <code>execute('foo', 'bar', 43, {9, 8, 7}) se convierte en</code><br>
 	 * <br>
 	 * <code>
-	 * 	content[0]: param1 = {'foo'}<br>
-	 * 	content[1]: param2 = {'bar'}<br>
-	 * 	content[2]: param3 = {43}<br>
-	 * 	content[3]: param4 = {x, y, z}<br>
+	 * 	param1 = {'foo'}<br>
+	 * 	param2 = {'bar'}<br>
+	 * 	param3 = {'43'}<br>
+	 * 	param4 = {'9', '8', '7'}<br>
 	 * </code>
 	 */
-	public ArrayList<HashMap<String, ArrayList<String>>> content = new ArrayList<HashMap<String, ArrayList<String>>>(); 
+	public HashMap<String, ArrayList<String>> content = new HashMap<String, ArrayList<String>>(); 
 	
-	/**
-	 * Constructor por defecto
-	 */
-	public DynamicArgument() {
-		HashMap<String, ArrayList<String>> emptyArgs = new HashMap<String, ArrayList<String>>();
-		content.add(emptyArgs);
-	}
-
 	
-	public ArrayList<HashMap<String, ArrayList<String>>> getContent() {
+	public HashMap<String, ArrayList<String>> getContent() {
 		return content;
 	}
 
-	public void setContent(ArrayList<HashMap<String, ArrayList<String>>> content) {
+	public void setContent(HashMap<String, ArrayList<String>> content) {
 		this.content = content;
 	}
 	
@@ -46,15 +38,11 @@ public class DynamicArgument {
 	public String toString() {
 		StringBuffer out = new StringBuffer();
 		if (content!=null) {
-			for (HashMap<String, ArrayList<String>> params : content) {
-				if (params!=null) {
-					for (String argName : params.keySet()) {
-						if (params.get(argName)!=null) {
-							out.append("\n ").append(argName).append(" : ");
-							for (String value : params.get(argName)) {
-								out.append(value).append(" ");
-							}
-						}
+			for (String argName : content.keySet()) {
+				if (content.get(argName)!=null) {
+					out.append("\n ").append(argName).append(" : ");
+					for (String value : content.get(argName)) {
+						out.append(value).append(" ");
 					}
 				}
 			}
