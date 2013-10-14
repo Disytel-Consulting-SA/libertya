@@ -4644,3 +4644,102 @@ $BODY$
   LANGUAGE 'plpgsql' VOLATILE
   COST 100;
 ALTER FUNCTION replication_is_valid_reference(integer, character varying) OWNER TO libertya;
+
+--20131014-1400 Nuevas tablas para formatos de exportación y columna para configurar procesos con dichos formatos
+CREATE TABLE ad_expformat
+(
+  ad_expformat_id integer NOT NULL,
+  ad_client_id integer NOT NULL,
+  ad_org_id integer NOT NULL,
+  isactive character(1) NOT NULL DEFAULT 'Y'::bpchar,
+  created timestamp without time zone NOT NULL DEFAULT ('now'::text)::timestamp(6) with time zone,
+  createdby integer NOT NULL,
+  updated timestamp without time zone NOT NULL DEFAULT ('now'::text)::timestamp(6) with time zone,
+  updatedby integer NOT NULL,
+  value character varying(40) NOT NULL,
+  name character varying(60) NOT NULL,
+  description character varying(255),
+  ad_table_id integer NOT NULL,
+  formattype character(1) NOT NULL,
+  delimiter character(1),
+  filename character varying(100) NOT NULL,
+  concatenatetimestamp character(1) NOT NULL DEFAULT 'N'::bpchar,
+  timestamppattern character varying(40),
+  ad_componentobjectuid character varying(100),
+  ad_componentversion_id integer,
+  CONSTRAINT ad_expformat_key PRIMARY KEY (ad_expformat_id),
+  CONSTRAINT adclient_adexpformat FOREIGN KEY (ad_client_id)
+      REFERENCES ad_client (ad_client_id) MATCH SIMPLE
+      ON UPDATE NO ACTION ON DELETE NO ACTION,
+  CONSTRAINT adorg_adexpformat FOREIGN KEY (ad_org_id)
+      REFERENCES ad_org (ad_org_id) MATCH SIMPLE
+      ON UPDATE NO ACTION ON DELETE NO ACTION,
+  CONSTRAINT adtable_adexpformat FOREIGN KEY (ad_table_id)
+      REFERENCES ad_table (ad_table_id) MATCH SIMPLE
+      ON UPDATE NO ACTION ON DELETE NO ACTION
+);
+ALTER TABLE ad_expformat OWNER TO libertya;
+
+CREATE TABLE ad_expformat_row
+(
+  ad_expformat_row_id integer NOT NULL,
+  ad_client_id integer NOT NULL,
+  ad_org_id integer NOT NULL,
+  isactive character(1) NOT NULL DEFAULT 'Y'::bpchar,
+  created timestamp without time zone NOT NULL DEFAULT ('now'::text)::timestamp(6) with time zone,
+  createdby integer NOT NULL,
+  updated timestamp without time zone NOT NULL DEFAULT ('now'::text)::timestamp(6) with time zone,
+  updatedby integer NOT NULL,
+  ad_expformat_id integer NOT NULL,
+  seqno numeric(18,0) NOT NULL,
+  name character varying(60) NOT NULL,
+  ad_column_id integer,
+  length integer,
+  datatype character(1) NOT NULL,
+  dataformat character varying(20),
+  decimalpoint character(1),
+  constantvalue character varying(60),
+  fillcharacter character(1),
+  alignment character(1),
+  orderseqno integer,
+  orderdirection character(1),
+  ad_componentobjectuid character varying(100),
+  ad_componentversion_id integer,
+  isorderfield character(1) NOT NULL DEFAULT 'N'::bpchar,
+  CONSTRAINT ad_expformat_row_key PRIMARY KEY (ad_expformat_row_id),
+  CONSTRAINT adclient_adexpformatrow FOREIGN KEY (ad_client_id)
+      REFERENCES ad_client (ad_client_id) MATCH SIMPLE
+      ON UPDATE NO ACTION ON DELETE NO ACTION,
+  CONSTRAINT adcolumn_adexpformatrow FOREIGN KEY (ad_column_id)
+      REFERENCES ad_column (ad_column_id) MATCH SIMPLE
+      ON UPDATE NO ACTION ON DELETE NO ACTION,
+  CONSTRAINT adexpformat_adexpformatrow FOREIGN KEY (ad_expformat_id)
+      REFERENCES ad_expformat (ad_expformat_id) MATCH SIMPLE
+      ON UPDATE NO ACTION ON DELETE CASCADE,
+  CONSTRAINT adorg_adexpformatrow FOREIGN KEY (ad_org_id)
+      REFERENCES ad_org (ad_org_id) MATCH SIMPLE
+      ON UPDATE NO ACTION ON DELETE NO ACTION
+);
+ALTER TABLE ad_expformat_row OWNER TO libertya;
+
+UPDATE ad_system SET dummy = (SELECT addcolumnifnotexists('AD_Process','ad_expformat_id', 'integer'));
+ALTER TABLE ad_process ADD CONSTRAINT adexpformat_adprocess FOREIGN KEY (ad_expformat_id)
+      REFERENCES ad_expformat (ad_expformat_id) MATCH SIMPLE
+      ON UPDATE NO ACTION ON DELETE NO ACTION;
+      
+--20131014-1400 Nueva vista para exportar percepciones
+CREATE OR REPLACE VIEW c_invoice_percepciones_v AS 
+ SELECT i.ad_client_id, i.ad_org_id, dt.c_doctype_id, dt.name AS doctypename, 
+        CASE
+            WHEN dt.signo_issotrx = 1 THEN 'F'::text
+            ELSE 'C'::text
+        END AS doctypechar, i.c_invoice_id, i.documentno, date_trunc('day'::text, i.dateinvoiced) AS dateinvoiced, lc.letra, i.puntodeventa, i.numerocomprobante, i.grandtotal, bp.c_bpartner_id, bp.value AS bpartner_value, bp.name AS bpartner_name, bp.taxid, ((("substring"(replace(bp.taxid::text, '-'::text, ''::text), 1, 2) || '-'::text) || "substring"(replace(bp.taxid::text, '-'::text, ''::text), 3, 8)) || '-'::text) || "substring"(replace(bp.taxid::text, '-'::text, ''::text), 11, 1) AS taxid_with_script, COALESCE(i.nombrecli, bp.name) AS nombrecli, COALESCE(i.nroidentificcliente, bp.taxid) AS nroidentificcliente, ((("substring"(replace(bp.taxid::text, '-'::text, ''::text), 1, 2) || '-'::text) || "substring"(replace(bp.taxid::text, '-'::text, ''::text), 3, 8)) || '-'::text) || "substring"(replace(bp.taxid::text, '-'::text, ''::text), 11, 1) AS nroidentificcliente_with_script, t.c_tax_id, t.name AS percepcionname, it.taxbaseamt, it.taxamt
+   FROM c_invoicetax it
+   JOIN c_invoice i ON i.c_invoice_id = it.c_invoice_id
+   JOIN c_letra_comprobante lc ON lc.c_letra_comprobante_id = i.c_letra_comprobante_id
+   JOIN c_doctype dt ON dt.c_doctype_id = i.c_doctypetarget_id
+   JOIN c_bpartner bp ON bp.c_bpartner_id = i.c_bpartner_id
+   JOIN c_tax t ON t.c_tax_id = it.c_tax_id
+  WHERE t.ispercepcion = 'Y'::bpchar AND ((i.docstatus = ANY (ARRAY['CL'::bpchar, 'CO'::bpchar])) OR (i.docstatus = ANY (ARRAY['VO'::bpchar, 'RE'::bpchar])) AND dt.isfiscal = 'Y'::bpchar AND i.fiscalalreadyprinted = 'Y'::bpchar) AND i.issotrx = 'Y'::bpchar;
+
+ALTER TABLE c_invoice_percepciones_v OWNER TO libertya; 

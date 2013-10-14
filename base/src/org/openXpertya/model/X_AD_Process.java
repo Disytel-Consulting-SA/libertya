@@ -7,7 +7,7 @@ import java.math.*;
 import org.openXpertya.util.*;
 /** Modelo Generado por AD_Process
  *  @author Comunidad de Desarrollo Libertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
- *  @version  - 2013-01-16 19:12:19.061 */
+ *  @version  - 2013-10-14 14:27:57.976 */
 public class X_AD_Process extends org.openXpertya.model.PO
 {
 /** Constructor estándar */
@@ -110,6 +110,20 @@ set_Value ("AD_ComponentVersion_ID", new Integer(AD_ComponentVersion_ID));
 public int getAD_ComponentVersion_ID() 
 {
 Integer ii = (Integer)get_Value("AD_ComponentVersion_ID");
+if (ii == null) return 0;
+return ii.intValue();
+}
+/** Set Export Format */
+public void setAD_ExpFormat_ID (int AD_ExpFormat_ID)
+{
+if (AD_ExpFormat_ID <= 0) set_Value ("AD_ExpFormat_ID", null);
+ else 
+set_Value ("AD_ExpFormat_ID", new Integer(AD_ExpFormat_ID));
+}
+/** Get Export Format */
+public int getAD_ExpFormat_ID() 
+{
+Integer ii = (Integer)get_Value("AD_ExpFormat_ID");
 if (ii == null) return 0;
 return ii.intValue();
 }
@@ -442,6 +456,22 @@ Name of the Database Procedure */
 public String getProcedureName() 
 {
 return (String)get_Value("ProcedureName");
+}
+/** Set showhelp */
+public void setshowhelp (boolean showhelp)
+{
+set_Value ("showhelp", new Boolean(showhelp));
+}
+/** Get showhelp */
+public boolean isshowhelp() 
+{
+Object oo = get_Value("showhelp");
+if (oo != null) 
+{
+ if (oo instanceof Boolean) return ((Boolean)oo).booleanValue();
+ return "Y".equals(oo);
+}
+return false;
 }
 /** Set Statistic Count.
 Internal statistics how often the entity was used */
