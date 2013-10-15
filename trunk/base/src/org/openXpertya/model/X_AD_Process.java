@@ -7,7 +7,7 @@ import java.math.*;
 import org.openXpertya.util.*;
 /** Modelo Generado por AD_Process
  *  @author Comunidad de Desarrollo Libertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
- *  @version  - 2013-10-14 14:27:57.976 */
+ *  @version  - 2013-10-15 12:42:33.719 */
 public class X_AD_Process extends org.openXpertya.model.PO
 {
 /** Constructor estándar */
@@ -235,6 +235,23 @@ Java Classname */
 public String getClassname() 
 {
 return (String)get_Value("Classname");
+}
+/** Set Copy Parameters.
+Copy parameters from other process */
+public void setCopyParameters (String CopyParameters)
+{
+if (CopyParameters != null && CopyParameters.length() > 1)
+{
+log.warning("Length > 1 - truncated");
+CopyParameters = CopyParameters.substring(0,1);
+}
+set_Value ("CopyParameters", CopyParameters);
+}
+/** Get Copy Parameters.
+Copy parameters from other process */
+public String getCopyParameters() 
+{
+return (String)get_Value("CopyParameters");
 }
 /** Set Description.
 Optional short description of the record */
