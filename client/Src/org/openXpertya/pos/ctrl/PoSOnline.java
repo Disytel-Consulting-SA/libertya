@@ -1742,7 +1742,7 @@ public class PoSOnline extends PoSConnectionState {
 	private MAllocationLine createOxpMAllocationLine(Integer debitInvoiceID, Payment p, MPayment pay, MCashLine cashLine, Integer creditInvoiceID) throws PosException {
 		
 		BigDecimal allocLineAmt = currencyConvert(p.getAmount().abs(), p.getCurrencyId(), allocHdr.getC_Currency_ID());
-		BigDecimal changeAmt = currencyConvert(p.getChangeAmt().abs(), p.getCurrencyId(), allocHdr.getC_Currency_ID());
+		BigDecimal changeAmt = p.getChangeAmt().abs();
 		BigDecimal writeOffAmt = BigDecimal.ZERO;
 		
 		if (faltantePorRedondeo != null) {
