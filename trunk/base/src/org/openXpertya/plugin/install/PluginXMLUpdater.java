@@ -4,7 +4,6 @@ import java.io.StringReader;
 import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.Savepoint;
-import java.util.HashMap;
 import java.util.Vector;
 
 import javax.xml.parsers.DocumentBuilder;
@@ -14,6 +13,9 @@ import org.openXpertya.model.MChangeLog;
 import org.openXpertya.model.MSequence;
 import org.openXpertya.model.M_Column;
 import org.openXpertya.model.M_Table;
+import org.openXpertya.model.X_AD_Column;
+import org.openXpertya.model.X_AD_Ref_Table;
+import org.openXpertya.model.X_AD_Table;
 import org.openXpertya.plugin.common.PluginConstants;
 import org.openXpertya.plugin.common.PluginUtils;
 import org.openXpertya.replication.ReplicationCache;
@@ -154,7 +156,7 @@ public class PluginXMLUpdater {
 				if (sentence != null && sentence.length() > 0)
 				{
 					/* Impactar la bitácora */
-					appendStatus(" SQL: " + sentence);
+					appendStatus("[" + iter + "]: " + sentence);
 					executeUpdate(sentence, m_trxName);
 					
 					/* Impactar en el changelog */ 
@@ -196,7 +198,11 @@ public class PluginXMLUpdater {
 	 */
 	protected void handleSuccess(String sentence, ChangeGroup changeGroup) throws Exception
 	{
-		// Implemented by subclass
+		// Es necesario invalidar las caches para ciertas tablas que pueden ser utilizadas en el resto de la instalacion
+		if (X_AD_Table.Table_Name.equalsIgnoreCase(changeGroup.getTableName()) || 
+			X_AD_Column.Table_Name.equalsIgnoreCase(changeGroup.getTableName()) ||
+			X_AD_Ref_Table.Table_Name.equalsIgnoreCase(changeGroup.getTableName()) )
+				ReplicationCache.reloadCacheData();
 	}
 	
 	/**
