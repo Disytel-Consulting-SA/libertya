@@ -1559,27 +1559,26 @@ public class MSequence extends X_AD_Sequence {
 				if (rs.next()) {
 
 					if (OXPSYS) {
-
 						retValue = rs.getInt(2);
-
 					} else {
-
 						incrementNo = rs.getInt(3);
 						retValue = rs.getInt(1) + incrementNo;
 					}
-
-					String createSeq = "create sequence " + secuencia	+ " INCREMENT BY " + incrementNo + " START WITH " + (retValue + 10000);
-					pstmt=null;
-					pstmt=DB.prepareStatement(createSeq,ResultSet.TYPE_FORWARD_ONLY,ResultSet.CONCUR_UPDATABLE, trxName);
-					pstmt.execute();
-					rs.close();
-					pstmt.close();
-					pstmt=null;
-					rs=null;
-					
-					sequences_cache.add(secuencia);
-
 				}
+				else {
+					// Aquí ya estamos en una situacion donde no hay configuracion alguna sobre la secuencia de la tabla en cuestion 
+					retValue = 1010001;
+				}
+				String createSeq = "create sequence " + secuencia	+ " INCREMENT BY " + incrementNo + " START WITH " + (retValue + 1);
+				pstmt=null;
+				pstmt=DB.prepareStatement(createSeq,ResultSet.TYPE_FORWARD_ONLY,ResultSet.CONCUR_UPDATABLE, trxName);
+				pstmt.execute();
+				rs.close();
+				pstmt.close();
+				pstmt=null;
+				rs=null;
+				
+				sequences_cache.add(secuencia);
               
              }catch (Exception ex)
              {
