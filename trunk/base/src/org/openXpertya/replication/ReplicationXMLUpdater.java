@@ -221,11 +221,13 @@ public class ReplicationXMLUpdater extends PluginXMLUpdater {
 		// Insertar en el query los valores de las columnas
 		int lastValuePos =  sql.lastIndexOf(")");
 		
+		// Recuperar configuracion de repArray para la tabla dada
 		int tableID = ReplicationCache.tablesIDs.get(changeGroup.getTableName().toLowerCase());
 		String newRepArray = MTableReplication.getReplicationArray(tableID, m_trxName);
 		// Es bidireccional? (algún 3 en alguna posicion).  Marcar el registro como "replicado", pero esto permite reenviarlo al origen si es modificado
 		if (newRepArray.indexOf(ReplicationConstants.REPLICATION_CONFIGURATION_SENDRECEIVE) >= 0)
-			newRepArray = "'SET" + newRepArray.replace(ReplicationConstants.REPLICATION_CONFIGURATION_SENDRECEIVE, ReplicationConstants.REPARRAY_REPLICATED) + "'";
+			newRepArray = "'SET" + newRepArray.replace(ReplicationConstants.REPLICATION_CONFIGURATION_SENDRECEIVE, ReplicationConstants.REPARRAY_REPLICATED)
+											  .replace(ReplicationConstants.REPLICATION_CONFIGURATION_SEND, ReplicationConstants.REPARRAY_REPLICATED) + "'";
 		else
 			newRepArray = "'SKIP'";
 		sql.insert(lastValuePos, ",'" + changeGroup.getUid() + "',"+newRepArray);
@@ -244,7 +246,8 @@ public class ReplicationXMLUpdater extends PluginXMLUpdater {
 		String newRepArray = MTableReplication.getReplicationArray(tableID, m_trxName);
 		// Es bidireccional? (algún 3 en alguna posicion).  Marcar el registro como "replicado", pero esto permite reenviarlo al origen si es modificado
 		if (newRepArray.indexOf(ReplicationConstants.REPLICATION_CONFIGURATION_SENDRECEIVE) >= 0)
-			newRepArray = newRepArray.replace(ReplicationConstants.REPLICATION_CONFIGURATION_SENDRECEIVE, ReplicationConstants.REPARRAY_REPLICATED);
+			newRepArray = newRepArray.replace(ReplicationConstants.REPLICATION_CONFIGURATION_SENDRECEIVE, ReplicationConstants.REPARRAY_REPLICATED)
+									 .replace(ReplicationConstants.REPLICATION_CONFIGURATION_SEND, ReplicationConstants.REPARRAY_REPLICATED);
 		else
 		// En caso contrario (no es bidireccional), simplemente dejarlo como un registro sin nueva posibilidad de reenvio
 			newRepArray = CreateReplicationTriggerProcess.DUMMY_REPARRAY;
