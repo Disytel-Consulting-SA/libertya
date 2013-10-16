@@ -79,22 +79,29 @@ public class ChangeLogGroupListReplication extends ChangeLogGroupList {
 					if (insertElementsIntoGroup(group, columnValues, builder) > 0)
 					{
 						// Aplicar filtrados adicionales de replicacion por registro
+						String beforeFilter = group.getRepArray();
 						ReplicationFilterFactory.applyFilters(trxName, group);
-						
-						// Una vez filtrado, quedan hosts destino donde enviar este registro? De no ser así incorporar a la nomina de grupos,
+						String includeInRep = null;
+						// Una vez filtrado, quedan hosts destino donde enviar este registro? De ser así incorporar a la nomina de grupos,
 						// En caso contrario ignorar este registro y actualizar a N su includeInReplication
 						if (group.getRepArray().replace(""+ReplicationConstants.REPARRAY_REPLICATED, "")
-												.replace(""+ReplicationConstants.REPLICATION_CONFIGURATION_NO_ACTION, "").length() > 0) 
-							groups.add(group);	
-						else {
+												.replace(""+ReplicationConstants.REPLICATION_CONFIGURATION_NO_ACTION, "").length() > 0) {
+							groups.add(group);
+							includeInRep = "Y";	
+						}
+						else
+							includeInRep = "N";	
+						// El repArray cambio luego del filtrado o se debe pasar a includeInReplication?
+						if (!beforeFilter.equals(group.getRepArray()) || "N".equals(includeInRep))		
+						{
 							boolean isDeletion = MChangeLog.OPERATIONTYPE_Deletion.equals(group.getOperation());
 							// El uso de prefijo SET para el repArray solo es para tablas con triggerEvent.  La tabla AD_Changelog_Replication obviamente no lo tiene seteado
 							String set = isDeletion ? "" : "SET";
 							String tableNameQuery = MChangeLog.OPERATIONTYPE_Deletion.equals(group.getOperation())?ReplicationConstants.DELETIONS_TABLE:tableName;
-							// Setear includeInReplication = 'N'
+							// Setear includeInReplication = 'Y' / 'N'
 							DB.executeUpdate(" UPDATE " + (tableNameQuery) +
 									 			" SET repArray = '"+set+group.getRepArray()+"', " +
-									 			"	  includeInReplication = 'N' " +
+									 			"	  includeInReplication = '" + includeInRep + "' " +
 									 			" WHERE retrieveUID = '" + group.getAd_componentObjectUID() + "'", false, trxName, true);
 						}
 					}
