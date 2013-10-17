@@ -18,7 +18,7 @@ public class POSJournalChecksDataSource extends
 	
 	@Override
 	protected String getQuery() {
-		StringBuffer sql = new StringBuffer("SELECT p.documentno, p.checkno, p.a_bank, ba.description as bank_account_description, p.a_name, bp.name as bpartner_name, p.duedate, p.datetrx, p.payamt as total ");
+		StringBuffer sql = new StringBuffer("SELECT distinct p.documentno, p.checkno, p.a_bank, ba.description as bank_account_description, p.a_name, bp.name as bpartner_name, p.duedate, p.datetrx, p.payamt as total ");
 		sql.append("FROM (");
 		sql.append(getStdQuery(true));
 		sql.append(" ) as dv ");
