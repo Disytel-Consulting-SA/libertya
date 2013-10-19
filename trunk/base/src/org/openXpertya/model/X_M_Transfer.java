@@ -7,7 +7,7 @@ import java.math.*;
 import org.openXpertya.util.*;
 /** Modelo Generado por M_Transfer
  *  @author Comunidad de Desarrollo Libertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
- *  @version  - 2011-10-14 14:11:56.11 */
+ *  @version  - 2013-10-18 18:29:02.325 */
 public class X_M_Transfer extends org.openXpertya.model.PO
 {
 /** Constructor estándar */
@@ -18,6 +18,7 @@ super (ctx, M_Transfer_ID, trxName);
 {
 setC_BPartner_ID (0);
 setC_Charge_ID (0);
+setC_DocType_ID (0);
 setDateTrx (new Timestamp(System.currentTimeMillis()));	// @#Date@
 setDocAction (null);	// CO
 setDocStatus (null);	// DR
@@ -82,6 +83,20 @@ Additional document charges */
 public int getC_Charge_ID() 
 {
 Integer ii = (Integer)get_Value("C_Charge_ID");
+if (ii == null) return 0;
+return ii.intValue();
+}
+/** Set Document Type.
+Document type or rules */
+public void setC_DocType_ID (int C_DocType_ID)
+{
+set_ValueNoCheck ("C_DocType_ID", new Integer(C_DocType_ID));
+}
+/** Get Document Type.
+Document type or rules */
+public int getC_DocType_ID() 
+{
+Integer ii = (Integer)get_Value("C_DocType_ID");
 if (ii == null) return 0;
 return ii.intValue();
 }
