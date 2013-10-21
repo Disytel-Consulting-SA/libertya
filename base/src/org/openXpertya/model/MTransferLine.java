@@ -111,5 +111,29 @@ public class MTransferLine extends X_M_TransferLine {
 	public void setClientOrg(int AD_Client_ID, int AD_Org_ID){
 		super.setClientOrg(AD_Client_ID, AD_Org_ID);
 	} // setClientOrg
+	
+	/**
+	 * Descripción de Método
+	 * 
+	 * 
+	 * @param oLine
+	 * @param M_Locator_ID
+	 * @param Qty
+	 */
+
+	public void setOrderLine(MOrderLine oLine, int M_Locator_Origin_ID, int M_Locator_Destination_ID, BigDecimal Qty) {
+		setLine(oLine.getLine());
+
+		MProduct product = oLine.getProduct();
+		if (product == null) {
+			set_ValueNoCheck("M_Product_ID", null);
+			set_ValueNoCheck("M_AttributeSetInstance_ID", null);
+			set_ValueNoCheck("M_Locator_ID", null);
+		} else {
+			setM_Product_ID(oLine.getM_Product_ID());
+			setM_Locator_ID(M_Locator_Origin_ID);
+			setM_Locator_To_ID(M_Locator_Destination_ID);
+		}
+	} // setOrderLine
 
 }
