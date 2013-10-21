@@ -4684,7 +4684,6 @@ public class MOrder extends X_C_Order implements DocAction {
 		}
 	}
 	
-	
 	public Integer getWarehouseDeliveryProductsCount(){
 		Integer count = 0;
 		for (MOrderLine orderLine : getLines()) {
@@ -4693,13 +4692,29 @@ public class MOrder extends X_C_Order implements DocAction {
 		return count;
 	}
 	
-	
 	public boolean isTPVInstance() {
 		return isTPVInstance;
 	}
 
 	public void setTPVInstance(boolean isTPVInstance) {
 		this.isTPVInstance = isTPVInstance;
+	}
+	
+	// Proceso de Reasignación de almacén del Pedido
+	public void changeOrderWarehouse(Integer M_Warehouse_ID) {
+		if (getDocStatus().compareTo(DOCSTATUS_Drafted) == 0){
+			setM_Warehouse_ID(M_Warehouse_ID);
+		}
+		else{
+			if (getDocStatus().compareTo(DOCSTATUS_Completed) == 0){
+				reActivateIt();
+				setAD_Org_ID( MWarehouse.get( getCtx(),M_Warehouse_ID).getAD_Org_ID());
+				setM_Warehouse_ID(M_Warehouse_ID);
+				save();
+				completeIt();
+				save();
+			}	
+		}
 	}
 }    // MOrder
 
