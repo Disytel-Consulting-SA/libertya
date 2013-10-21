@@ -29,8 +29,10 @@ import javax.swing.JOptionPane;
 
 
 
+import org.openXpertya.model.MDiscountSchemaLine;
 import org.openXpertya.util.DB;
 import org.openXpertya.util.Env;
+import org.openXpertya.util.Util;
 
 /*
  * Descripción de Clase
@@ -480,6 +482,17 @@ public class ProductPriceTemp extends SvrProcess {
 	            if( rs.getInt( "C_BPartner_ID" ) != 0 )
 	                sql.append( " AND EXISTS (SELECT * FROM M_Product_PO po WHERE po.M_Product_ID = p.M_Product_ID AND po.C_BPartner_ID = " + rs.getInt( "C_BPartner_ID" ) + ")" );
 	    	}
+	    	// Comprado y Vendido
+	    	String optionPS = rs.getString( "SoldPurchasedOption" );
+	    	if(!Util.isEmpty(optionPS, true)){
+	    		if(!optionPS.equals(MDiscountSchemaLine.SOLDPURCHASEDOPTION_Sold)){
+	    			sql.append( " AND (p.IsPurchased = 'Y') " );
+	    		}
+	    		
+	    		if(!optionPS.equals(MDiscountSchemaLine.SOLDPURCHASEDOPTION_Purchased)){
+	    			sql.append( " AND (p.IsSold = 'Y') " );
+	    		}	    		
+	    	}
     	}
     	catch (Exception e)
     	{
@@ -758,6 +771,42 @@ public class ProductPriceTemp extends SvrProcess {
 
             sql.append( " WHERE " + getUserSQLCheck() + " AND p.M_DiscountSchemaLine_ID = " + rs.getInt( "M_DiscountSchemaLine_ID" ));
             no = DB.executeUpdate( sql.toString());
+            
+			boolean addTax = rs.getString("List_AddProductTax")
+					.equalsIgnoreCase("Y")
+					|| rs.getString("Limit_AddProductTax")
+							.equalsIgnoreCase("Y")
+					|| rs.getString("Std_AddProductTax").equalsIgnoreCase("Y");
+            
+			if(addTax){
+	            // Incluir impuesto del artículo
+	            sql       = new StringBuffer( "UPDATE I_ProductPrice p SET PriceList = " );
+
+	            String addTaxSql = " (coalesce((select rate from m_product pro inner join c_taxcategory tc on tc.c_taxcategory_id = pro.c_taxcategory_id inner join c_tax t on t.c_taxcategory_id = tc.c_taxcategory_id where pro.m_product_id = p.m_product_id and t.isactive = 'Y' order by t.isdefault desc limit 1),0.00)/100)::numeric(9,2) ";
+	            
+	            if( rs.getString( "List_AddProductTax" ).equalsIgnoreCase("Y") ) {
+	            	
+	                sql.append(  "PriceList + (PriceList * " + addTaxSql + ") , PriceStd = " );
+	            } else {
+	                sql.append( "PriceList , PriceStd = " );
+	            }
+
+	            if( rs.getString( "Std_AddProductTax" ).equalsIgnoreCase("Y") ) {
+	                sql.append( "PriceStd + (PriceStd * " + addTaxSql + ") , PriceLimit = " );
+	            } else {
+	                sql.append( "PriceStd , PriceLimit = " );
+	            }
+
+	            if( rs.getString( "Limit_AddProductTax" ).equalsIgnoreCase("Y") ) {
+	            	sql.append( "PriceLimit + (PriceLimit * " + addTaxSql + ")" );
+	            } else {
+	                sql.append( "PriceLimit" );
+	            }
+	            
+	            sql.append( " WHERE " + getUserSQLCheck() + " AND p.M_DiscountSchemaLine_ID = " + rs.getInt( "M_DiscountSchemaLine_ID" ));
+	            no = DB.executeUpdate( sql.toString());				
+			}
+			
         } catch( Exception e ) {
             ResultStr = ResultStr + ":" + e.getMessage() + " " + Message;
             log.log( Level.SEVERE,"\n " + ResultStr );
