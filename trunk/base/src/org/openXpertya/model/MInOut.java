@@ -95,12 +95,12 @@ public class MInOut extends X_M_InOut implements DocAction {
         // Check if we can create the lines
 
         MOrderLine[] oLines = order.getLines( true,"M_Product_ID" );
-        JOptionPane.showInputDialog("Estoy en MInout antes del for"+oLines.length);
+        //JOptionPane.showInputDialog("Estoy en MInout antes del for"+oLines.length);
         for( int i = 0;i < oLines.length;i++ ) {
 			BigDecimal qty = oLines[i].getQtyOrdered()
 					.subtract(oLines[i].getQtyDelivered())
 					.subtract(oLines[i].getQtyTransferred());
-            JOptionPane.showInputDialog("Estoy en MInout y qty="+qty);
+            //JOptionPane.showInputDialog("Estoy en MInout y qty="+qty);
             // Nothing to deliver
 
             if( qty.compareTo( Env.ZERO ) == 0 ) {
@@ -154,9 +154,9 @@ public class MInOut extends X_M_InOut implements DocAction {
             for( int ll = 0;ll < storages.length;ll++ ) {
                 BigDecimal lineQty = storages[ ll ].getQtyOnHand();
 
-                if( lineQty.compareTo( qty ) > 0 ) {
+                //if( lineQty.compareTo( qty ) > 0 ) {
                     lineQty = qty;
-                }
+                //}
 
                 MInOutLine line = new MInOutLine( retValue );
 
