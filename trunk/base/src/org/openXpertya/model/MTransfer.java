@@ -715,4 +715,70 @@ public class MTransfer extends X_M_Transfer implements DocAction {
 	public void setAD_Org_ID(int AD_Org_ID) {
 		super.setAD_Org_ID(AD_Org_ID);
 	} // setAD_Org_ID
+	
+	/**
+     * Descripción de Método
+     *
+     *
+     * @param dt
+     * @param movementDate
+     *
+     * @return
+     */
+    public static MTransfer createTransfer( MOrder order, int M_Warehouse_Origin_ID, int M_Warehouse_Destination_ID, String transferType, String trxName ) {
+        MTransfer transfer = new MTransfer(order);
+       
+        transfer.setDateTrx(Env.getDate());
+        transfer.setDueDate(Env.getDate());
+        transfer.setTransferType(transferType);
+        transfer.setMovementType(MTransfer.MOVEMENTTYPE_Outgoing);
+        
+        /** Almacén Origen */
+        transfer.setM_Warehouse_ID(M_Warehouse_Origin_ID);
+        /** Almacén Destino */
+        transfer.setM_WarehouseTo_ID(M_Warehouse_Destination_ID);
+        
+        if( transfer.getID() == 0 ) {    // not saved yet
+        	transfer.save( trxName );
+        }
+
+        MOrderLine[] oLines = order.getLines( true,null );
+        for( int i = 0;i < oLines.length;i++ ) {
+            MOrderLine oLine = oLines[ i ];
+            MTransferLine tLine = new MTransferLine( transfer );
+
+            // Qty = Ordered - Delivered
+            BigDecimal MovementQty = oLine.getQtyOrdered().subtract( oLine.getQtyDelivered());
+
+            // Location Origin
+            int M_Locator_Origin_ID = MStorage.getM_Locator_ID( M_Warehouse_Origin_ID,oLine.getM_Product_ID(),oLine.getM_AttributeSetInstance_ID(),MovementQty,trxName);
+            if( M_Locator_Origin_ID == 0 ) {    // Get default Location
+                MWarehouse wh = MWarehouse.get( order.getCtx(),M_Warehouse_Origin_ID);
+                M_Locator_Origin_ID = wh.getDefaultLocator().getM_Locator_ID();
+            }
+            
+            // Location Destination
+            MWarehouse wh = MWarehouse.get( order.getCtx(),M_Warehouse_Destination_ID);
+            int M_Locator_Destination_ID = wh.getDefaultLocator().getM_Locator_ID();
+
+            tLine.setOrderLine(oLine, M_Locator_Origin_ID, M_Locator_Destination_ID, MovementQty);
+            tLine.setQty( MovementQty );
+
+            tLine.save( trxName);
+        }
+        return transfer;
+    }
+    
+    /**
+     * Constructor de la clase ...
+     *
+     *
+     * @param order
+     * @param C_DocTypeShipment_ID
+     * @param movementDate
+     */
+
+    public MTransfer( MOrder order) {
+        this( order.getCtx(),0,order.get_TrxName());
+    }    // MTransfer
 }
