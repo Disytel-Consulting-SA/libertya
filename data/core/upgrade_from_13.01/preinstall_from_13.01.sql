@@ -4865,3 +4865,29 @@ UPDATE ad_system SET dummy = (SELECT addcolumnifnotexists('M_DiscountSchemaLine'
 UPDATE ad_system SET dummy = (SELECT addcolumnifnotexists('M_DiscountSchemaLine','list_addproducttax', 'character(1) NOT NULL DEFAULT ''N''::bpchar'));
 UPDATE ad_system SET dummy = (SELECT addcolumnifnotexists('M_DiscountSchemaLine','std_addproducttax', 'character(1) NOT NULL DEFAULT ''N''::bpchar'));
 UPDATE ad_system SET dummy = (SELECT addcolumnifnotexists('M_DiscountSchemaLine','soldpurchasedoption', 'character(1)'));
+
+--20131021-1815 Incorporación de nueva columna a la columna del formato de exportación para el lugar de colocación del signo negativo para números
+UPDATE ad_system SET dummy = (SELECT addcolumnifnotexists('AD_ExpFormat_Row','negative_position', 'character(1)'));
+
+DROP VIEW c_invoice_percepciones_v;
+
+CREATE OR REPLACE VIEW c_invoice_percepciones_v AS 
+ SELECT i.ad_client_id, i.ad_org_id, dt.c_doctype_id, dt.name AS doctypename, 
+        CASE
+            WHEN dt.signo_issotrx = 1 THEN 'F'::text
+            ELSE 'C'::text
+        END AS doctypechar, 
+        CASE
+            WHEN "substring"(dt.doctypekey::text, 1, 2) = 'CI'::text THEN 'F'::text
+            WHEN "substring"(dt.doctypekey::text, 1, 2) = 'CC'::text THEN 'NC'::text
+            ELSE 'ND'::text
+        END AS doctypenameshort, i.c_invoice_id, i.documentno, date_trunc('day'::text, i.dateinvoiced) AS dateinvoiced, lc.letra, i.puntodeventa, i.numerocomprobante, i.grandtotal, bp.c_bpartner_id, bp.value AS bpartner_value, bp.name AS bpartner_name, bp.taxid, ((("substring"(replace(bp.taxid::text, '-'::text, ''::text), 1, 2) || '-'::text) || "substring"(replace(bp.taxid::text, '-'::text, ''::text), 3, 8)) || '-'::text) || "substring"(replace(bp.taxid::text, '-'::text, ''::text), 11, 1) AS taxid_with_script, COALESCE(i.nombrecli, bp.name) AS nombrecli, COALESCE(i.nroidentificcliente, bp.taxid) AS nroidentificcliente, ((("substring"(replace(bp.taxid::text, '-'::text, ''::text), 1, 2) || '-'::text) || "substring"(replace(bp.taxid::text, '-'::text, ''::text), 3, 8)) || '-'::text) || "substring"(replace(bp.taxid::text, '-'::text, ''::text), 11, 1) AS nroidentificcliente_with_script, t.c_tax_id, t.name AS percepcionname, it.taxbaseamt, it.taxamt, (it.taxbaseamt * dt.signo_issotrx)::numeric(20,2) as taxbaseamt_with_sign, (it.taxamt * dt.signo_issotrx)::numeric(20,2) as taxamt_with_sign
+   FROM c_invoicetax it
+   JOIN c_invoice i ON i.c_invoice_id = it.c_invoice_id
+   JOIN c_letra_comprobante lc ON lc.c_letra_comprobante_id = i.c_letra_comprobante_id
+   JOIN c_doctype dt ON dt.c_doctype_id = i.c_doctypetarget_id
+   JOIN c_bpartner bp ON bp.c_bpartner_id = i.c_bpartner_id
+   JOIN c_tax t ON t.c_tax_id = it.c_tax_id
+  WHERE t.ispercepcion = 'Y'::bpchar AND ((i.docstatus = ANY (ARRAY['CL'::bpchar, 'CO'::bpchar])) OR (i.docstatus = ANY (ARRAY['VO'::bpchar, 'RE'::bpchar])) AND dt.isfiscal = 'Y'::bpchar AND i.fiscalalreadyprinted = 'Y'::bpchar) AND i.issotrx = 'Y'::bpchar;
+
+ALTER TABLE c_invoice_percepciones_v OWNER TO libertya;
