@@ -356,6 +356,19 @@ public class ExportProcess extends SvrProcess {
 				newData = (MExpFormatRow.ALIGNMENT_Left.equals(alignment) ? newData
 						+ filling.toString()
 						: filling.toString() + newData);
+				// Posición del negativo
+				if(!Util.isEmpty(expFormatRow.getNegative_Position(), true)){
+					if (data.contains("-")
+							&& (expFormatRow.getAlignment() != null && expFormatRow
+									.getAlignment().equals(
+											MExpFormatRow.ALIGNMENT_Right)) 
+							&& expFormatRow
+									.getNegative_Position()
+									.equals(MExpFormatRow.NEGATIVE_POSITION_BeforeFilling)) {
+						newData = newData.replace("-", fillCharacter);
+						newData = newData.replaceFirst(fillCharacter, "-");
+					}
+				}
 			}
 		}
 		return newData;

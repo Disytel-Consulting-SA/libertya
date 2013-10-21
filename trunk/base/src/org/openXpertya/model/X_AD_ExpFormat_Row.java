@@ -7,7 +7,7 @@ import java.math.*;
 import org.openXpertya.util.*;
 /** Modelo Generado por AD_ExpFormat_Row
  *  @author Comunidad de Desarrollo Libertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
- *  @version  - 2013-10-14 14:27:32.387 */
+ *  @version  - 2013-10-21 18:23:38.961 */
 public class X_AD_ExpFormat_Row extends org.openXpertya.model.PO
 {
 /** Constructor estándar */
@@ -21,7 +21,7 @@ setAD_ExpFormat_Row_ID (0);
 setDataType (null);
 setIsOrderField (false);
 setName (null);
-setSeqNo (Env.ZERO);
+setSeqNo (0);	// @SQL=SELECT NVL(MAX(SeqNo),0)+10 AS DefaultValue FROM AD_ExpFormat_Row WHERE AD_ExpFormat_ID=@AD_ExpFormat_ID@
 }
  */
 }
@@ -292,6 +292,28 @@ public KeyNamePair getKeyNamePair()
 {
 return new KeyNamePair(getID(), getName());
 }
+public static final int NEGATIVE_POSITION_AD_Reference_ID = MReference.getReferenceID("Negative sign position");
+/** Before Number = N */
+public static final String NEGATIVE_POSITION_BeforeNumber = "N";
+/** Before Filling = F */
+public static final String NEGATIVE_POSITION_BeforeFilling = "F";
+/** Set Negative sign position */
+public void setNegative_Position (String Negative_Position)
+{
+if (Negative_Position == null || Negative_Position.equals("N") || Negative_Position.equals("F"));
+ else throw new IllegalArgumentException ("Negative_Position Invalid value - Reference = NEGATIVE_POSITION_AD_Reference_ID - N - F");
+if (Negative_Position != null && Negative_Position.length() > 1)
+{
+log.warning("Length > 1 - truncated");
+Negative_Position = Negative_Position.substring(0,1);
+}
+set_Value ("Negative_Position", Negative_Position);
+}
+/** Get Negative sign position */
+public String getNegative_Position() 
+{
+return (String)get_Value("Negative_Position");
+}
 public static final int ORDERDIRECTION_AD_Reference_ID = MReference.getReferenceID("Order of a List");
 /** Ascending = A */
 public static final String ORDERDIRECTION_Ascending = "A";
@@ -331,18 +353,17 @@ return ii.intValue();
 /** Set Sequence.
 Method of ordering records;
  lowest number comes first */
-public void setSeqNo (BigDecimal SeqNo)
+public void setSeqNo (int SeqNo)
 {
-if (SeqNo == null) throw new IllegalArgumentException ("SeqNo is mandatory");
-set_Value ("SeqNo", SeqNo);
+set_Value ("SeqNo", new Integer(SeqNo));
 }
 /** Get Sequence.
 Method of ordering records;
  lowest number comes first */
-public BigDecimal getSeqNo() 
+public int getSeqNo() 
 {
-BigDecimal bd = (BigDecimal)get_Value("SeqNo");
-if (bd == null) return Env.ZERO;
-return bd;
+Integer ii = (Integer)get_Value("SeqNo");
+if (ii == null) return 0;
+return ii.intValue();
 }
 }
