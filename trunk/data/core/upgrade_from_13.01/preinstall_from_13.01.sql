@@ -4859,3 +4859,9 @@ UNION ALL
   WHERE (ji.docstatus = ANY (ARRAY['VO'::bpchar, 'RE'::bpchar])) AND (ji.isfiscal IS NULL OR ji.isfiscal = 'N'::bpchar OR ji.isfiscal = 'Y'::bpchar AND ji.fiscalalreadyprinted = 'Y'::bpchar);
 
 ALTER TABLE c_pos_declaracionvalores_v OWNER TO libertya;
+
+--20131021-1045 Incorporación de nuevas columnas a las líneas de reglas de precios para soportar incluir impuesto de artículo en el precio y filtro para comprados y vendidos
+UPDATE ad_system SET dummy = (SELECT addcolumnifnotexists('M_DiscountSchemaLine','limit_addproducttax', 'character(1) NOT NULL DEFAULT ''N''::bpchar'));
+UPDATE ad_system SET dummy = (SELECT addcolumnifnotexists('M_DiscountSchemaLine','list_addproducttax', 'character(1) NOT NULL DEFAULT ''N''::bpchar'));
+UPDATE ad_system SET dummy = (SELECT addcolumnifnotexists('M_DiscountSchemaLine','std_addproducttax', 'character(1) NOT NULL DEFAULT ''N''::bpchar'));
+UPDATE ad_system SET dummy = (SELECT addcolumnifnotexists('M_DiscountSchemaLine','soldpurchasedoption', 'character(1)'));

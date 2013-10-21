@@ -1,13 +1,14 @@
-/** Modelo Generado - NO CAMBIAR MANUALMENTE - Copyright (C) 2006 FUNDESLE */
+/** Modelo Generado - NO CAMBIAR MANUALMENTE - Disytel */
 package org.openXpertya.model;
-import java.util.*;
+import java.util.logging.Level;
+ import java.util.*;
 import java.sql.*;
 import java.math.*;
 import org.openXpertya.util.*;
 /** Modelo Generado por M_DiscountSchemaLine
- *  @author Comunidad de Desarrollo openXpertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
- *  @version  - 2009-10-22 14:51:35.295 */
-public class X_M_DiscountSchemaLine extends PO
+ *  @author Comunidad de Desarrollo Libertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
+ *  @version  - 2013-10-21 11:33:24.83 */
+public class X_M_DiscountSchemaLine extends org.openXpertya.model.PO
 {
 /** Constructor estándar */
 public X_M_DiscountSchemaLine (Properties ctx, int M_DiscountSchemaLine_ID, String trxName)
@@ -18,12 +19,14 @@ super (ctx, M_DiscountSchemaLine_ID, trxName);
 setC_ConversionType_ID (0);
 setConversionDate (new Timestamp(System.currentTimeMillis()));	// @#Date@
 setLimit_AddAmt (Env.ZERO);
+setLimit_AddProductTax (false);
 setLimit_Base (null);	// X
 setLimit_Discount (Env.ZERO);
 setLimit_MaxAmt (Env.ZERO);
 setLimit_MinAmt (Env.ZERO);
 setLimit_Rounding (null);	// C
 setList_AddAmt (Env.ZERO);
+setList_AddProductTax (false);
 setList_Base (null);	// L
 setList_Discount (Env.ZERO);
 setList_MaxAmt (Env.ZERO);
@@ -33,6 +36,7 @@ setM_DiscountSchema_ID (0);
 setM_DiscountSchemaLine_ID (0);
 setSeqNo (0);	// @SQL=SELECT NVL(MAX(SeqNo),0)+10 AS DefaultValue FROM M_DiscountSchemaLine WHERE M_DiscountSchema_ID=@M_DiscountSchema_ID@
 setStd_AddAmt (Env.ZERO);
+setStd_AddProductTax (false);
 setStd_Base (null);	// S
 setStd_Discount (Env.ZERO);
 setStd_MaxAmt (Env.ZERO);
@@ -46,13 +50,13 @@ public X_M_DiscountSchemaLine (Properties ctx, ResultSet rs, String trxName)
 {
 super (ctx, rs, trxName);
 }
-/** AD_Table_ID=477 */
-public static final int Table_ID=477;
+/** AD_Table_ID */
+public static final int Table_ID = M_Table.getTableID("M_DiscountSchemaLine");
 
 /** TableName=M_DiscountSchemaLine */
 public static final String Table_Name="M_DiscountSchemaLine";
 
-protected static KeyNamePair Model = new KeyNamePair(477,"M_DiscountSchemaLine");
+protected static KeyNamePair Model = new KeyNamePair(Table_ID,"M_DiscountSchemaLine");
 protected static BigDecimal AccessLevel = new BigDecimal(3);
 
 /** Load Meta Data */
@@ -155,7 +159,25 @@ BigDecimal bd = (BigDecimal)get_Value("Limit_AddAmt");
 if (bd == null) return Env.ZERO;
 return bd;
 }
-public static final int LIMIT_BASE_AD_Reference_ID=194;
+/** Set Add product tax.
+Add product tax rate to price limit */
+public void setLimit_AddProductTax (boolean Limit_AddProductTax)
+{
+set_Value ("Limit_AddProductTax", new Boolean(Limit_AddProductTax));
+}
+/** Get Add product tax.
+Add product tax rate to price limit */
+public boolean isLimit_AddProductTax() 
+{
+Object oo = get_Value("Limit_AddProductTax");
+if (oo != null) 
+{
+ if (oo instanceof Boolean) return ((Boolean)oo).booleanValue();
+ return "Y".equals(oo);
+}
+return false;
+}
+public static final int LIMIT_BASE_AD_Reference_ID = MReference.getReferenceID("M_DiscountPriceList Base");
 /** Fixed Price = F */
 public static final String LIMIT_BASE_FixedPrice = "F";
 /** List Price = L */
@@ -169,7 +191,7 @@ Base price for calculation of the new price */
 public void setLimit_Base (String Limit_Base)
 {
 if (Limit_Base.equals("F") || Limit_Base.equals("L") || Limit_Base.equals("S") || Limit_Base.equals("X"));
- else throw new IllegalArgumentException ("Limit_Base Invalid value - Reference_ID=194 - F - L - S - X");
+ else throw new IllegalArgumentException ("Limit_Base Invalid value - Reference = LIMIT_BASE_AD_Reference_ID - F - L - S - X");
 if (Limit_Base == null) throw new IllegalArgumentException ("Limit_Base is mandatory");
 if (Limit_Base.length() > 1)
 {
@@ -247,7 +269,7 @@ BigDecimal bd = (BigDecimal)get_Value("Limit_MinAmt");
 if (bd == null) return Env.ZERO;
 return bd;
 }
-public static final int LIMIT_ROUNDING_AD_Reference_ID=155;
+public static final int LIMIT_ROUNDING_AD_Reference_ID = MReference.getReferenceID("M_DiscountPriceList RoundingRule");
 /** Currency Precision = C */
 public static final String LIMIT_ROUNDING_CurrencyPrecision = "C";
 /** Whole Number .00 = 0 */
@@ -267,7 +289,7 @@ Rounding of the final result */
 public void setLimit_Rounding (String Limit_Rounding)
 {
 if (Limit_Rounding.equals("C") || Limit_Rounding.equals("0") || Limit_Rounding.equals("N") || Limit_Rounding.equals("Q") || Limit_Rounding.equals("D") || Limit_Rounding.equals("5") || Limit_Rounding.equals("T"));
- else throw new IllegalArgumentException ("Limit_Rounding Invalid value - Reference_ID=155 - C - 0 - N - Q - D - 5 - T");
+ else throw new IllegalArgumentException ("Limit_Rounding Invalid value - Reference = LIMIT_ROUNDING_AD_Reference_ID - C - 0 - N - Q - D - 5 - T");
 if (Limit_Rounding == null) throw new IllegalArgumentException ("Limit_Rounding is mandatory");
 if (Limit_Rounding.length() > 1)
 {
@@ -297,7 +319,25 @@ BigDecimal bd = (BigDecimal)get_Value("List_AddAmt");
 if (bd == null) return Env.ZERO;
 return bd;
 }
-public static final int LIST_BASE_AD_Reference_ID=194;
+/** Set Add product tax.
+Add product tax rate to price list */
+public void setList_AddProductTax (boolean List_AddProductTax)
+{
+set_Value ("List_AddProductTax", new Boolean(List_AddProductTax));
+}
+/** Get Add product tax.
+Add product tax rate to price list */
+public boolean isList_AddProductTax() 
+{
+Object oo = get_Value("List_AddProductTax");
+if (oo != null) 
+{
+ if (oo instanceof Boolean) return ((Boolean)oo).booleanValue();
+ return "Y".equals(oo);
+}
+return false;
+}
+public static final int LIST_BASE_AD_Reference_ID = MReference.getReferenceID("M_DiscountPriceList Base");
 /** Fixed Price = F */
 public static final String LIST_BASE_FixedPrice = "F";
 /** List Price = L */
@@ -311,7 +351,7 @@ Price used as the basis for price list calculations */
 public void setList_Base (String List_Base)
 {
 if (List_Base.equals("F") || List_Base.equals("L") || List_Base.equals("S") || List_Base.equals("X"));
- else throw new IllegalArgumentException ("List_Base Invalid value - Reference_ID=194 - F - L - S - X");
+ else throw new IllegalArgumentException ("List_Base Invalid value - Reference = LIST_BASE_AD_Reference_ID - F - L - S - X");
 if (List_Base == null) throw new IllegalArgumentException ("List_Base is mandatory");
 if (List_Base.length() > 1)
 {
@@ -385,7 +425,7 @@ BigDecimal bd = (BigDecimal)get_Value("List_MinAmt");
 if (bd == null) return Env.ZERO;
 return bd;
 }
-public static final int LIST_ROUNDING_AD_Reference_ID=155;
+public static final int LIST_ROUNDING_AD_Reference_ID = MReference.getReferenceID("M_DiscountPriceList RoundingRule");
 /** Currency Precision = C */
 public static final String LIST_ROUNDING_CurrencyPrecision = "C";
 /** Whole Number .00 = 0 */
@@ -405,7 +445,7 @@ Rounding rule for final list price */
 public void setList_Rounding (String List_Rounding)
 {
 if (List_Rounding.equals("C") || List_Rounding.equals("0") || List_Rounding.equals("N") || List_Rounding.equals("Q") || List_Rounding.equals("D") || List_Rounding.equals("5") || List_Rounding.equals("T"));
- else throw new IllegalArgumentException ("List_Rounding Invalid value - Reference_ID=155 - C - 0 - N - Q - D - 5 - T");
+ else throw new IllegalArgumentException ("List_Rounding Invalid value - Reference = LIST_ROUNDING_AD_Reference_ID - C - 0 - N - Q - D - 5 - T");
 if (List_Rounding == null) throw new IllegalArgumentException ("List_Rounding is mandatory");
 if (List_Rounding.length() > 1)
 {
@@ -528,6 +568,30 @@ public KeyNamePair getKeyNamePair()
 {
 return new KeyNamePair(getID(), String.valueOf(getSeqNo()));
 }
+public static final int SOLDPURCHASEDOPTION_AD_Reference_ID = MReference.getReferenceID("Sold/Purchased Options");
+/** Sold = S */
+public static final String SOLDPURCHASEDOPTION_Sold = "S";
+/** Purchased = P */
+public static final String SOLDPURCHASEDOPTION_Purchased = "P";
+/** Sold and Purchased = B */
+public static final String SOLDPURCHASEDOPTION_SoldAndPurchased = "B";
+/** Set Sold/Purchased option */
+public void setSoldPurchasedOption (String SoldPurchasedOption)
+{
+if (SoldPurchasedOption == null || SoldPurchasedOption.equals("S") || SoldPurchasedOption.equals("P") || SoldPurchasedOption.equals("B"));
+ else throw new IllegalArgumentException ("SoldPurchasedOption Invalid value - Reference = SOLDPURCHASEDOPTION_AD_Reference_ID - S - P - B");
+if (SoldPurchasedOption != null && SoldPurchasedOption.length() > 1)
+{
+log.warning("Length > 1 - truncated");
+SoldPurchasedOption = SoldPurchasedOption.substring(0,1);
+}
+set_Value ("SoldPurchasedOption", SoldPurchasedOption);
+}
+/** Get Sold/Purchased option */
+public String getSoldPurchasedOption() 
+{
+return (String)get_Value("SoldPurchasedOption");
+}
 /** Set Standard price Surcharge Amount.
 Amount added to a price as a surcharge */
 public void setStd_AddAmt (BigDecimal Std_AddAmt)
@@ -543,7 +607,25 @@ BigDecimal bd = (BigDecimal)get_Value("Std_AddAmt");
 if (bd == null) return Env.ZERO;
 return bd;
 }
-public static final int STD_BASE_AD_Reference_ID=194;
+/** Set Add product tax.
+Add product tax rate to price std */
+public void setStd_AddProductTax (boolean Std_AddProductTax)
+{
+set_Value ("Std_AddProductTax", new Boolean(Std_AddProductTax));
+}
+/** Get Add product tax.
+Add product tax rate to price std */
+public boolean isStd_AddProductTax() 
+{
+Object oo = get_Value("Std_AddProductTax");
+if (oo != null) 
+{
+ if (oo instanceof Boolean) return ((Boolean)oo).booleanValue();
+ return "Y".equals(oo);
+}
+return false;
+}
+public static final int STD_BASE_AD_Reference_ID = MReference.getReferenceID("M_DiscountPriceList Base");
 /** Fixed Price = F */
 public static final String STD_BASE_FixedPrice = "F";
 /** List Price = L */
@@ -557,7 +639,7 @@ Base price for calculating new standard price */
 public void setStd_Base (String Std_Base)
 {
 if (Std_Base.equals("F") || Std_Base.equals("L") || Std_Base.equals("S") || Std_Base.equals("X"));
- else throw new IllegalArgumentException ("Std_Base Invalid value - Reference_ID=194 - F - L - S - X");
+ else throw new IllegalArgumentException ("Std_Base Invalid value - Reference = STD_BASE_AD_Reference_ID - F - L - S - X");
 if (Std_Base == null) throw new IllegalArgumentException ("Std_Base is mandatory");
 if (Std_Base.length() > 1)
 {
@@ -631,7 +713,7 @@ BigDecimal bd = (BigDecimal)get_Value("Std_MinAmt");
 if (bd == null) return Env.ZERO;
 return bd;
 }
-public static final int STD_ROUNDING_AD_Reference_ID=155;
+public static final int STD_ROUNDING_AD_Reference_ID = MReference.getReferenceID("M_DiscountPriceList RoundingRule");
 /** Currency Precision = C */
 public static final String STD_ROUNDING_CurrencyPrecision = "C";
 /** Whole Number .00 = 0 */
@@ -651,7 +733,7 @@ Rounding rule for calculated price */
 public void setStd_Rounding (String Std_Rounding)
 {
 if (Std_Rounding.equals("C") || Std_Rounding.equals("0") || Std_Rounding.equals("N") || Std_Rounding.equals("Q") || Std_Rounding.equals("D") || Std_Rounding.equals("5") || Std_Rounding.equals("T"));
- else throw new IllegalArgumentException ("Std_Rounding Invalid value - Reference_ID=155 - C - 0 - N - Q - D - 5 - T");
+ else throw new IllegalArgumentException ("Std_Rounding Invalid value - Reference = STD_ROUNDING_AD_Reference_ID - C - 0 - N - Q - D - 5 - T");
 if (Std_Rounding == null) throw new IllegalArgumentException ("Std_Rounding is mandatory");
 if (Std_Rounding.length() > 1)
 {
