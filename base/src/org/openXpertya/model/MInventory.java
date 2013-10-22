@@ -962,6 +962,8 @@ public class MInventory extends X_M_Inventory implements DocAction {
 				X_M_InventoryLine revLine = new X_M_InventoryLine(getCtx(), 0, get_TrxName());
 				PO.copyValues(aLine, revLine);
 				revLine.setQtyCount(aLine.getQtyCount().negate());
+				revLine.setQtyBook(aLine.getQtyBook().negate());
+				revLine.setQtyInternalUse(aLine.getQtyInternalUse().negate());
 				revLine.setQtyCountWithoutChargeSign(aLine.getQtyCountWithoutChargeSign().negate());
 				revLine.setM_Inventory_ID(reversal.getM_Inventory_ID());
 				if (!revLine.save()) {
