@@ -50,6 +50,12 @@ public class ResumenVentasDocTypeBaseKeyDataSource extends
 		setAmtsByDocTypeBaseKey(new HashMap<String, BigDecimal>());
 	}
 	
+	public ResumenVentasDocTypeBaseKeyDataSource(String trxName, Properties ctx,
+			Integer orgID, Timestamp dateFrom, Timestamp dateTo, Integer posID,
+			Integer userID, boolean onlyCN,	boolean onlyDN) {
+		super(trxName, ctx, orgID, dateFrom, dateTo, posID, userID, onlyCN, onlyDN);
+	}
+
 	@Override
 	protected String getGroupFields() {
 		return "trxtype, c_pospaymentmedium_id, pospaymentmediumname";

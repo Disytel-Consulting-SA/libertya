@@ -38,6 +38,8 @@
 	<parameter name="POS_NAME" isForPrompting="false" class="java.lang.String"/>
 	<parameter name="USER_NAME" isForPrompting="false" class="java.lang.String"/>
 	<parameter name="SUBREPORT_DOCTYPE_BASEKEY" isForPrompting="false" class="net.sf.jasperreports.engine.JRDataSource"/>
+	<parameter name="SUBREPORT_DOCUMENTS" isForPrompting="false" class="net.sf.jasperreports.engine.JRDataSource"/>
+	<parameter name="SHOW_DOCUMENTS" isForPrompting="false" class="java.lang.Boolean"/>
 
 		<background>
 			<band height="0"  isSplitAllowed="true" >
@@ -226,7 +228,7 @@
 			</band>
 		</pageFooter>
 		<summary>
-			<band height="247"  isSplitAllowed="true" >
+			<band height="283"  isSplitAllowed="true" >
 				<subreport  isUsingCache="true">
 					<reportElement
 						x="0"
@@ -234,7 +236,8 @@
 						width="530"
 						height="20"
 						key="subreport-1"
-						positionType="Float"/>
+						positionType="Float"
+						isRemoveLineWhenBlank="true"/>
 					<subreportParameter  name="TITLE">
 						<subreportParameterExpression><![CDATA["Totales Discriminados por Tipo de Condición de Venta"]]></subreportParameterExpression>
 					</subreportParameter>
@@ -248,7 +251,8 @@
 						width="530"
 						height="20"
 						key="subreport-2"
-						positionType="Float"/>
+						positionType="Float"
+						isRemoveLineWhenBlank="true"/>
 					<subreportParameter  name="TITLE">
 						<subreportParameterExpression><![CDATA["Total de Ventas Desagregado por Condición de Venta"]]></subreportParameterExpression>
 					</subreportParameter>
@@ -262,7 +266,8 @@
 						width="530"
 						height="20"
 						key="subreport-3"
-						positionType="Float"/>
+						positionType="Float"
+						isRemoveLineWhenBlank="true"/>
 					<subreportParameter  name="TITLE">
 						<subreportParameterExpression><![CDATA["Totales Discriminados por Categoria de IVA"]]></subreportParameterExpression>
 					</subreportParameter>
@@ -276,7 +281,8 @@
 						width="530"
 						height="20"
 						key="subreport-4"
-						positionType="Float"/>
+						positionType="Float"
+						isRemoveLineWhenBlank="true"/>
 					<subreportParameter  name="TITLE">
 						<subreportParameterExpression><![CDATA["Ventas Discriminadas por Comprobante"]]></subreportParameterExpression>
 					</subreportParameter>
@@ -290,7 +296,8 @@
 						width="530"
 						height="20"
 						key="subreport-5"
-						positionType="Float"/>
+						positionType="Float"
+						isRemoveLineWhenBlank="true"/>
 					<subreportParameter  name="TITLE">
 						<subreportParameterExpression><![CDATA["Cuenta Corriente Discriminada por Repartición del Cliente"]]></subreportParameterExpression>
 					</subreportParameter>
@@ -304,7 +311,8 @@
 						width="530"
 						height="20"
 						key="subreport-6"
-						positionType="Float">
+						positionType="Float"
+						isRemoveLineWhenBlank="true">
 							<printWhenExpression><![CDATA[$P{SHOW_CURRENTACCOUNTPAYMENTS}]]></printWhenExpression>
 						</reportElement>
 					<subreportParameter  name="TITLE">
@@ -320,11 +328,29 @@
 						width="530"
 						height="20"
 						key="subreport-7"
-						positionType="Float"/>
+						positionType="Float"
+						isRemoveLineWhenBlank="true"/>
 					<subreportParameter  name="TITLE">
 						<subreportParameterExpression><![CDATA["Ventas Discriminadas por Tipo de Comprobante"]]></subreportParameterExpression>
 					</subreportParameter>
 					<dataSourceExpression><![CDATA[$P{SUBREPORT_DOCTYPE_BASEKEY}]]></dataSourceExpression>
+					<subreportExpression  class="java.io.InputStream"><![CDATA[$P{COMPILED_SUBREPORT}]]></subreportExpression>
+				</subreport>
+				<subreport  isUsingCache="true">
+					<reportElement
+						x="0"
+						y="262"
+						width="530"
+						height="20"
+						key="subreport-8"
+						positionType="Float"
+						isRemoveLineWhenBlank="true">
+							<printWhenExpression><![CDATA[$P{SHOW_DOCUMENTS}]]></printWhenExpression>
+						</reportElement>
+					<subreportParameter  name="TITLE">
+						<subreportParameterExpression><![CDATA["Listado de Comprobantes"]]></subreportParameterExpression>
+					</subreportParameter>
+					<dataSourceExpression><![CDATA[$P{SUBREPORT_DOCUMENTS}]]></dataSourceExpression>
 					<subreportExpression  class="java.io.InputStream"><![CDATA[$P{COMPILED_SUBREPORT}]]></subreportExpression>
 				</subreport>
 			</band>

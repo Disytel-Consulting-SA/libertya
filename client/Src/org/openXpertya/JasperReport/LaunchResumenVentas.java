@@ -12,6 +12,7 @@ import org.openXpertya.JasperReport.DataSource.ResumenVentasCurrentAccountPaymen
 import org.openXpertya.JasperReport.DataSource.ResumenVentasDataSource;
 import org.openXpertya.JasperReport.DataSource.ResumenVentasDocTypeBaseKeyDataSource;
 import org.openXpertya.JasperReport.DataSource.ResumenVentasDocTypeDataSource;
+import org.openXpertya.JasperReport.DataSource.ResumenVentasDocumentsDataSource;
 import org.openXpertya.JasperReport.DataSource.ResumenVentasPaymentMediumDataSource;
 import org.openXpertya.JasperReport.DataSource.ResumenVentasTenderTypeDataSource;
 import org.openXpertya.model.MPOS;
@@ -37,6 +38,8 @@ public class LaunchResumenVentas extends JasperReportLaunch {
 				JasperReportsUtil.getOrgName(getCtx(), orgID));
 		addReportParameter("SHOW_CURRENTACCOUNTPAYMENTS",
 				isShowCurrentAccountPayments());
+		addReportParameter("SHOW_DOCUMENTS",
+				isShowDocuments());
 		Integer posID = getPosID();
 		if(!Util.isEmpty(posID, true)){
 			MPOS pos = MPOS.get(getCtx(), posID);
@@ -67,6 +70,8 @@ public class LaunchResumenVentas extends JasperReportLaunch {
 		ResumenVentasDataSource currentAccountPaymentsDS = getCurrentAccountPaymentsDataSource();
 		// Data Source de Totales por Tipo de Comprobante
 		ResumenVentasDataSource docTypeBaseKeyDS = getDocTypeBaseKeyDataSource();
+		// Data Source de Totales por Tipo de Comprobante
+		ResumenVentasDataSource documentsDS = getDocumentsDataSource();
 		//////////////////////////////////////////////////////
 		// Subreporte 
 		MJasperReport subreport = getResumenVentasSubreport();
@@ -81,6 +86,7 @@ public class LaunchResumenVentas extends JasperReportLaunch {
 		addReportParameter("SUBREPORT_BPGROUP", bpGroupDS);
 		addReportParameter("SUBREPORT_CURRENTACCOUNTPAYMENTS", currentAccountPaymentsDS);
 		addReportParameter("SUBREPORT_DOCTYPE_BASEKEY", docTypeBaseKeyDS);
+		addReportParameter("SUBREPORT_DOCUMENTS", documentsDS);
 	}
 	
 	protected String getTitle(){
@@ -104,7 +110,14 @@ public class LaunchResumenVentas extends JasperReportLaunch {
 	}
 	
 	protected Boolean isShowCurrentAccountPayments(){
-		return (Boolean)getParameterValue("ShowCurrentAccountPayments").equals("Y");
+		return getParameterValue("ShowCurrentAccountPayments") != null
+				&& (Boolean) getParameterValue("ShowCurrentAccountPayments")
+						.equals("Y");
+	}
+	
+	protected Boolean isShowDocuments(){
+		return getParameterValue("ShowDocuments") != null
+				&& (Boolean) getParameterValue("ShowDocuments").equals("Y");
 	}
 	
 	protected Integer getPosID(){
@@ -120,6 +133,14 @@ public class LaunchResumenVentas extends JasperReportLaunch {
 		return new OXPJasperEmptyDataSource();
 	}
 	
+	protected boolean isOnlyCN(){
+		return false;
+	}
+	
+	protected boolean isOnlyDN(){
+		return false;
+	}
+	
 	protected ResumenVentasDataSource loadDSData(ResumenVentasDataSource ds) throws Exception{
 		ds.loadData();
 		return ds;
@@ -127,35 +148,40 @@ public class LaunchResumenVentas extends JasperReportLaunch {
 	
 	protected ResumenVentasDataSource getTenderTypeDataSource() throws Exception{
 		ResumenVentasTenderTypeDataSource tenderTypeDS = new ResumenVentasTenderTypeDataSource(
-				get_TrxName(), getCtx(), getOrgID(), getDateFrom(), getDateTo(), getPosID(), getUserID());
+				get_TrxName(), getCtx(), getOrgID(), getDateFrom(),
+				getDateTo(), getPosID(), getUserID(), isOnlyCN(), isOnlyDN());
 		tenderTypeDS = (ResumenVentasTenderTypeDataSource)loadDSData(tenderTypeDS);
 		return tenderTypeDS;
 	}
 	
 	protected ResumenVentasDataSource getPaymentMediumDataSource() throws Exception{
 		ResumenVentasPaymentMediumDataSource paymentMediumDS = new ResumenVentasPaymentMediumDataSource(
-				get_TrxName(), getCtx(), getOrgID(), getDateFrom(), getDateTo(), getPosID(), getUserID());
+				get_TrxName(), getCtx(), getOrgID(), getDateFrom(),
+				getDateTo(), getPosID(), getUserID(), isOnlyCN(), isOnlyDN());
 		paymentMediumDS = (ResumenVentasPaymentMediumDataSource)loadDSData(paymentMediumDS);
 		return paymentMediumDS;
 	}
 	
 	protected ResumenVentasDataSource getCategoriaIVADataSource() throws Exception{
 		ResumenVentasCategoriaIVADataSource categoriaIVADS = new ResumenVentasCategoriaIVADataSource(
-				get_TrxName(), getCtx(), getOrgID(), getDateFrom(), getDateTo(), getPosID(), getUserID());
+				get_TrxName(), getCtx(), getOrgID(), getDateFrom(),
+				getDateTo(), getPosID(), getUserID(), isOnlyCN(), isOnlyDN());
 		categoriaIVADS = (ResumenVentasCategoriaIVADataSource)loadDSData(categoriaIVADS);
 		return categoriaIVADS;
 	}
 	
 	protected ResumenVentasDataSource getDocTypeDataSource() throws Exception{
 		ResumenVentasDocTypeDataSource docTypeDS = new ResumenVentasDocTypeDataSource(
-				get_TrxName(), getCtx(), getOrgID(), getDateFrom(), getDateTo(), getPosID(), getUserID());
+				get_TrxName(), getCtx(), getOrgID(), getDateFrom(),
+				getDateTo(), getPosID(), getUserID(), isOnlyCN(), isOnlyDN());
 		docTypeDS = (ResumenVentasDocTypeDataSource)loadDSData(docTypeDS);
 		return docTypeDS;
 	}
 	
 	protected ResumenVentasDataSource getBPGroupDataSource() throws Exception{
 		ResumenVentasBPGroupDataSource bpGroupDS = new ResumenVentasBPGroupDataSource(
-				get_TrxName(), getCtx(), getOrgID(), getDateFrom(), getDateTo(), getPosID(), getUserID());
+				get_TrxName(), getCtx(), getOrgID(), getDateFrom(),
+				getDateTo(), getPosID(), getUserID(), isOnlyCN(), isOnlyDN());
 		bpGroupDS = (ResumenVentasBPGroupDataSource)loadDSData(bpGroupDS);
 		return bpGroupDS;
 	}
@@ -165,7 +191,7 @@ public class LaunchResumenVentas extends JasperReportLaunch {
 		if(isShowCurrentAccountPayments()){
 			currentAccountPaymentsDS = new ResumenVentasCurrentAccountPaymentsDataSource(
 					get_TrxName(), getCtx(), getOrgID(), getDateFrom(),
-					getDateTo(), getPosID(), getUserID());
+					getDateTo(), getPosID(), getUserID(), isOnlyCN(), isOnlyDN());
 			currentAccountPaymentsDS = (ResumenVentasCurrentAccountPaymentsDataSource) loadDSData(currentAccountPaymentsDS);
 		}
 		return currentAccountPaymentsDS;
@@ -173,9 +199,18 @@ public class LaunchResumenVentas extends JasperReportLaunch {
 	
 	protected ResumenVentasDataSource getDocTypeBaseKeyDataSource() throws Exception{
 		ResumenVentasDocTypeBaseKeyDataSource docBaseKeyDS = new ResumenVentasDocTypeBaseKeyDataSource(
-				get_TrxName(), getCtx(), getOrgID(), getDateFrom(), getDateTo(), getPosID(), getUserID());
+				get_TrxName(), getCtx(), getOrgID(), getDateFrom(),
+				getDateTo(), getPosID(), getUserID(), isOnlyCN(), isOnlyDN());
 		docBaseKeyDS = (ResumenVentasDocTypeBaseKeyDataSource)loadDSData(docBaseKeyDS);
 		return docBaseKeyDS;
+	}
+	
+	protected ResumenVentasDataSource getDocumentsDataSource() throws Exception{
+		ResumenVentasDocumentsDataSource docDS = new ResumenVentasDocumentsDataSource(
+				get_TrxName(), getCtx(), getOrgID(), getDateFrom(),
+				getDateTo(), getPosID(), getUserID(), isOnlyCN(), isOnlyDN());
+		docDS = (ResumenVentasDocumentsDataSource)loadDSData(docDS);
+		return docDS;
 	}
 	
 	/**

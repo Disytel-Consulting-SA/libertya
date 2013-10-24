@@ -13,6 +13,12 @@ public class ResumenVentasCurrentAccountPaymentsDataSource extends
 		// TODO Auto-generated constructor stub
 	}
 
+	public ResumenVentasCurrentAccountPaymentsDataSource(String trxName, Properties ctx,
+			Integer orgID, Timestamp dateFrom, Timestamp dateTo, Integer posID,
+			Integer userID, boolean onlyCN,	boolean onlyDN) {
+		super(trxName, ctx, orgID, dateFrom, dateTo, posID, userID, onlyCN, onlyDN);
+	}
+
 	@Override
 	protected String getDSWhereClause() {
 		return " AND trxtype = 'PCA' ";
