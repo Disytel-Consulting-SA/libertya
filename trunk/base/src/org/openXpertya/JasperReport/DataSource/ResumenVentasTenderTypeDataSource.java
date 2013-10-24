@@ -14,9 +14,15 @@ public class ResumenVentasTenderTypeDataSource extends
 		// TODO Auto-generated constructor stub
 	}
 
+	public ResumenVentasTenderTypeDataSource(String trxName, Properties ctx,
+			Integer orgID, Timestamp dateFrom, Timestamp dateTo, Integer posID,
+			Integer userID, boolean onlyCN,	boolean onlyDN) {
+		super(trxName, ctx, orgID, dateFrom, dateTo, posID, userID, onlyCN, onlyDN);
+	}
+
 	@Override
 	protected String getDSWhereClause() {
-		return " AND trxtype IN ('CAI','P') ";
+		return " AND trxtype IN ('CAI','P','NCC','PA','ND') ";
 	}
 
 	@Override
@@ -27,7 +33,7 @@ public class ResumenVentasTenderTypeDataSource extends
 
 	@Override
 	protected String getGroupFields() {
-		return "trxtype, tendertype";
+		return "tendertype";
 	}
 	
 	@Override

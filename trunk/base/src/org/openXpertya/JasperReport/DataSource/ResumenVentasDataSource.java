@@ -33,8 +33,15 @@ public abstract class ResumenVentasDataSource extends QueryDataSource {
 	/** TPV */
 	private Integer posID;
 	
+	/** Sólo Notas de Crédito */
+	private boolean onlyCN = false;
+	
+	/** Sólo Notas de Débito */
+	private boolean onlyDN = false;
+	
 	public ResumenVentasDataSource(String trxName, Properties ctx,
-			Integer orgID, Timestamp dateFrom, Timestamp dateTo, Integer posID, Integer userID) {
+			Integer orgID, Timestamp dateFrom, Timestamp dateTo, Integer posID,
+			Integer userID) {
 		super(trxName);
 		setCtx(ctx);
 		setOrgID(orgID);
@@ -42,6 +49,14 @@ public abstract class ResumenVentasDataSource extends QueryDataSource {
 		setDateTo(dateTo);
 		setUserID(userID);
 		setPosID(posID);
+	}
+	
+	public ResumenVentasDataSource(String trxName, Properties ctx,
+			Integer orgID, Timestamp dateFrom, Timestamp dateTo, Integer posID,
+			Integer userID, boolean onlyCN, boolean onlyDN) {
+		this(trxName, ctx, orgID, dateFrom, dateTo, posID, userID);
+		setOnlyCN(onlyCN);
+		setOnlyDN(onlyDN);
 	}
 
 	@Override
@@ -51,7 +66,8 @@ public abstract class ResumenVentasDataSource extends QueryDataSource {
 				"SELECT "+groupFields+", sum(amount) as amount FROM (SELECT s.* FROM v_dailysales as s INNER JOIN c_invoice as i on i.c_invoice_id = s.c_invoice_id INNER JOIN c_doctype as dt on dt.c_doctype_id = i.c_doctypetarget_id WHERE s.ad_client_id = ? AND (i.docstatus IN ('CL','CO') OR (i.docstatus IN ('VO','RE') AND (s.isfiscal is null OR s.isfiscal = 'N' OR (s.isfiscal = 'Y' AND s.fiscalalreadyprinted = 'Y')))) AND s.ad_org_id = ? AND s.issotrx = 'Y' AND dt.doctypekey not in ('RTR', 'RTI', 'RCR', 'RCI') "
 						+ getPOSWhereClause()
 						+ getUserWhereClause()
-						+ getDateWhereClause());
+						+ getDateWhereClause()
+						+ getDocumentsWhereClause());
 		sql.append(getDSWhereClause() == null?"":getDSWhereClause());
 		sql.append(" ) as ventas ");
 		sql.append(" GROUP BY ").append(groupFields);
@@ -117,6 +133,19 @@ public abstract class ResumenVentasDataSource extends QueryDataSource {
 						+ getUserID() + ") ";
 	}
 	
+	protected String getDocumentsWhereClause(){
+		String docsClause = "";
+		// Sólo NC, entonces filtro para las NC
+		if(isOnlyCN()){
+			docsClause = getCreditsNotesFilter();
+		}
+		// Sólo ND, entonces filtro para las ND
+		else if(isOnlyDN()){
+			docsClause = getDebitsNotesFilter();
+		}
+		return docsClause;
+	}
+	
 	@Override
 	public Object getFieldValue(JRField field) throws JRException {
 		Object value = getCurrentRecord().get(field.getName().toUpperCase());
@@ -133,11 +162,11 @@ public abstract class ResumenVentasDataSource extends QueryDataSource {
 		String tenderType = (String)getCurrentRecord().get("TENDERTYPE");
 		String trxType = (String)getCurrentRecord().get("TRXTYPE");
 		String tenderTypeDescription = "";
-		// Es cuenta corriente
+		// Es cuenta corriente,
 		if(tenderType.equals("CC")){
 			tenderTypeDescription = "Cuenta Corriente";
 		}
-		else if(trxType.equals("I")){
+		else if(trxType != null && trxType.equals("I")){
 			tenderTypeDescription = JasperReportsUtil.getListName(getCtx(),
 					MDocType.DOCBASETYPE_AD_Reference_ID, tenderType);
 		}
@@ -149,6 +178,21 @@ public abstract class ResumenVentasDataSource extends QueryDataSource {
 					MPOSPaymentMedium.TENDERTYPE_AD_Reference_ID, tenderType);
 		}
 		return tenderTypeDescription;
+	}
+	
+	/**
+	 * @return condición de filtro para informar notas de crédito
+	 */
+	protected String getCreditsNotesFilter(){
+		return " AND (s.trxtype = 'PA' OR EXISTS (SELECT c_invoice_id FROM c_invoice inv INNER JOIN c_doctype doc ON doc.c_doctype_id = inv.c_doctypetarget_id WHERE s.c_invoice_id = inv.c_invoice_id AND doc.docbasetype = '"
+				+ MDocType.DOCBASETYPE_ARCreditMemo + "')) ";
+	}
+	
+	/**
+	 * @return condición de filtro para informar notas de crédito
+	 */
+	protected String getDebitsNotesFilter(){
+		return " AND (s.trxtype = 'ND' OR EXISTS (SELECT c_invoice_id FROM c_invoice inv INNER JOIN c_doctype doc ON doc.c_doctype_id = inv.c_doctypetarget_id WHERE s.c_invoice_id = inv.c_invoice_id AND position('CDN' in doc.doctypekey) = 1))";
 	}
 	
 	/**
@@ -219,6 +263,22 @@ public abstract class ResumenVentasDataSource extends QueryDataSource {
 
 	protected void setPosID(Integer posID) {
 		this.posID = posID;
+	}
+
+	protected boolean isOnlyCN() {
+		return onlyCN;
+	}
+
+	protected void setOnlyCN(boolean onlyCN) {
+		this.onlyCN = onlyCN;
+	}
+
+	protected boolean isOnlyDN() {
+		return onlyDN;
+	}
+
+	protected void setOnlyDN(boolean onlyDN) {
+		this.onlyDN = onlyDN;
 	}
 
 }
