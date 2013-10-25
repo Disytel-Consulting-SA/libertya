@@ -346,7 +346,7 @@ public class RetencionGanancias extends AbstractRetencionProcessor {
        	      "               WHERE mri.c_invoice_id = ci.c_invoice_id AND " +
        	      "                     c_bpartner_id = ? AND " +
        	      "                     ci.DocStatus IN ('CO','CL') AND " +
-       	      "                     dateInvoiced BETWEEN ?::timestamp AND ?::timestamp)";
+       	      "                     date_trunc('day',dateInvoiced) BETWEEN ?::timestamp AND ?::timestamp)";
 		
         PreparedStatement pstmt = null;
         ResultSet rs = null;
