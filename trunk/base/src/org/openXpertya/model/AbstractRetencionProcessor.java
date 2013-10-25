@@ -3,6 +3,7 @@ package org.openXpertya.model;
 import java.math.BigDecimal;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -557,6 +558,7 @@ public abstract class AbstractRetencionProcessor implements RetencionProcessor {
 		// del crédito parámetro
 		// TODO: conversión del monto imputado a la moneda del crédito, la fecha
 		// de conversión es la fecha del crédito o la de imputación?
+		BigDecimal amountRet = getRetencionPorcentaje(allocationLineCreditColumn,creditID);
 		String sql = "SELECT DISTINCT c_allocationline_id, c_invoice_id, amount "
 				+ "FROM c_allocationhdr as ah "
 				+ "INNER JOIN c_allocationline as al ON al.c_allocationhdr_id = ah.c_allocationhdr_id "
@@ -570,10 +572,51 @@ public abstract class AbstractRetencionProcessor implements RetencionProcessor {
 		while (rs.next()) {
 			allocatedAmts.put(
 					new MInvoice(Env.getCtx(), rs.getInt("c_invoice_id"),
-							getTrxName()), rs.getBigDecimal("amount"));
+							getTrxName()), rs.getBigDecimal("amount").add(amountRet));
 		}
 		return allocatedAmts;
 	}
+	
+	public BigDecimal getRetencionPorcentaje(String allocationLineCreditColumn, Integer creditID) throws SQLException{
+		// de conversión es la fecha del crédito o la de imputación?
+		String sql = "SELECT DISTINCT ah.c_allocationhdr_id "
+				+ "FROM c_allocationhdr as ah "
+				+ "INNER JOIN c_allocationline as al ON al.c_allocationhdr_id = ah.c_allocationhdr_id "
+				+ "WHERE ah.isactive = 'Y' AND ah.docstatus in ('CO','CL') AND al."
+				+ allocationLineCreditColumn
+				+ " = "
+				+ creditID;
+		PreparedStatement ps = DB.prepareStatement(sql, getTrxName());
+		ResultSet rs = ps.executeQuery();
+		int c_allocationhdr_id = 0;
+		if (rs.next()) {
+			c_allocationhdr_id = rs.getInt("c_allocationhdr_id");
+		}
+		
+		sql = "	SELECT ( " +
+			  " (SELECT SUM(amount) " +
+			  " FROM C_AllocationLine al " +
+			  "	INNER JOIN C_Invoice i ON (i.C_Invoice_ID = al.C_Invoice_Credit_ID) " +
+			  "	WHERE C_AllocationHdr_ID = ? AND (i.C_Doctype_ID IN (SELECT C_Doctype_ID FROM C_Doctype WHERE doctypekey IN ('RTR', 'RCR', 'RCI', 'RTI')))" +
+			  "	)/(" +
+			  "	SELECT COUNT(c_allocationlINE_ID)" +
+			  "	FROM C_AllocationLine al" +
+			  "	LEFT JOIN C_Invoice i ON (i.C_Invoice_ID = al.C_Invoice_Credit_ID)" +
+			  "	WHERE C_AllocationHdr_ID = ? AND ((i.C_Doctype_ID NOT IN (SELECT C_Doctype_ID FROM C_Doctype WHERE doctypekey IN ('RTR', 'RCR', 'RCI', 'RTI'))) OR (al.C_Invoice_Credit_ID IS NULL)))" +
+			  ") AS amountRetention";
+		ps = DB.prepareStatement(sql, getTrxName());
+		int i = 1;
+		ps.setInt(i++, c_allocationhdr_id);
+		ps.setInt(i++, c_allocationhdr_id);
+		rs = ps.executeQuery();
+		if (rs.next()) {
+			return rs.getBigDecimal("amountRetention");
+		}
+		
+		return BigDecimal.ZERO;
+	}
+	
+ 
 
 	/**
 	 * Obtener la suma de los pagos adelantados anteriores dentro del rango de
