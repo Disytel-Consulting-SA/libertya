@@ -286,7 +286,9 @@ public class MLookupFactory {
         // AddSecurity Hardcode 
 		// TODO Se debería colocar una parametrización en la columna para que
 		// permita o no agregar esta seguridad de organización
-        if(ColumnName.equalsIgnoreCase("M_WarehouseTo_ID")){
+        if(ColumnName.equalsIgnoreCase("M_WarehouseTo_ID") 
+        		|| ColumnName.equals("AD_Org_Transfer_ID")
+        		|| ColumnName.equals("M_Warehouse_Transfer_ID")){
         	needToAddSecurity = false;
         }
         
