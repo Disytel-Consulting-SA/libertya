@@ -23,6 +23,7 @@ import org.openXpertya.model.X_C_Cash;
 import org.openXpertya.model.X_C_CashLine;
 import org.openXpertya.model.X_C_Invoice;
 import org.openXpertya.model.X_C_Order;
+import org.openXpertya.model.X_M_Transfer;
 import org.openXpertya.plugin.common.PluginUtils;
 import org.openXpertya.plugin.install.PluginXMLUpdater;
 import org.openXpertya.process.CreateReplicationTriggerProcess;
@@ -352,6 +353,13 @@ public class ReplicationXMLUpdater extends PluginXMLUpdater {
 			}
 			else 
 				retValue = false;
+		}
+		/*
+		 * No replicar el campo M_Inventory_ID para la tabla M_Transfer
+		 */
+		else if (X_M_Transfer.Table_Name.equalsIgnoreCase(tableName) && "m_inventory_id".equalsIgnoreCase(column.getName())) {
+			query.append("null");
+			retValue = true;
 		}
 		/* Si es una columna especial, concatenar la coma final */
 		if (retValue)
