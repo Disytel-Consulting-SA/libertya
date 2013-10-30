@@ -24,6 +24,7 @@ import org.openXpertya.util.Util;
 public class MElectronicInvoice extends X_E_ElectronicInvoice {
 
 	public static final String impuestoIIBB = "IIBB";
+	public static final String exento = "E";
 	
 	public MElectronicInvoice(Properties ctx, int E_ElectronicInvoice_ID,	String trxName) {
 		super(ctx, E_ElectronicInvoice_ID, trxName);
@@ -58,13 +59,30 @@ public class MElectronicInvoice extends X_E_ElectronicInvoice {
 			if(rs != null) rs.close();
 		}
     	MDocType doctype = new MDocType(getCtx(), inv.getC_DocType_ID(), get_TrxName());
+    	setDocBaseType(doctype.getDocBaseType());
+    	if(doctype.getDocBaseType().equals(MDocType.DOCBASETYPE_ARCreditMemo)){
+    		setTotalSign(new BigDecimal(-1));	
+    	}
+    	else{
+    		setTotalSign(new BigDecimal(1));
+    	}
+    	setDocBaseType(doctype.getDocBaseType());
 		setDateInvoiced(inv.getDateInvoiced());
 		setTipo_Comprobante(getRefTablaComprobantes(inv.getC_DocType_ID()));	// Según tabla 1
 		setIsFiscal(isFiscal);
 		setPuntoDeVenta(inv.getPuntoDeVenta());
 		setNumeroDeDocumento(inv.getNumeroDeDocumento());
 		setCant_Hojas(1); 														// Se deja en 1 según se vio en una exportación WEB de la AFIP
-		setDoc_Identificatorio_Comprador(Integer.parseInt(getInvoiceBPartnerTaxIdType(taxIdType))); // Según tabla 2
+		int taxIDType = 0;
+		try{
+			taxIDType = Integer.parseInt(getInvoiceBPartnerTaxIdType(taxIdType));
+		}
+		catch(Exception e){ 
+			taxIDType = 99;
+		}
+		finally{
+			setDoc_Identificatorio_Comprador(taxIDType); // Según tabla 2	
+		}
 		setIdentif_Comprador(getCuit(inv.getCUIT()));							// CUIT del cliente según se vio en una exportación WEB de la AFIP
 		setIdentif_Vendedor("0");												// No se usa
 		setName(name);
@@ -72,7 +90,13 @@ public class MElectronicInvoice extends X_E_ElectronicInvoice {
 		int currencyClient = ci.getC_Currency_ID();
 		setGrandTotal(MCurrency.currencyConvert(inv.getGrandTotal(), inv.getC_Currency_ID(), currencyClient, inv.getDateAcct(), inv.getAD_Org_ID(),getCtx()));
 		setTaxBaseAmt(MCurrency.currencyConvert(getInvoiceTaxBaseAmt(inv.getC_Invoice_ID()), inv.getC_Currency_ID(), currencyClient, inv.getDateAcct(), inv.getAD_Org_ID(),getCtx())); 			// Suma los taxbaseamt de la factura
-		setTotalLines(MCurrency.currencyConvert(inv.getNetAmount(), inv.getC_Currency_ID(), currencyClient, inv.getDateAcct(), inv.getAD_Org_ID(),getCtx()));
+		MLetraComprobante letra = new MLetraComprobante(getCtx(), inv.getC_Letra_Comprobante_ID(), get_TrxName());
+		if (letra.getLetra().equalsIgnoreCase(exento)){
+			setTotalLines(BigDecimal.ZERO);	
+		}
+		else{
+			setTotalLines(MCurrency.currencyConvert(inv.getNetAmount(), inv.getC_Currency_ID(), currencyClient, inv.getDateAcct(), inv.getAD_Org_ID(),getCtx()));	
+		}
 		setTaxAmt(MCurrency.currencyConvert(getInvoiceTaxAmt(inv.getC_Invoice_ID()), inv.getC_Currency_ID(), currencyClient, inv.getDateAcct(), inv.getAD_Org_ID(),getCtx()));						// suma los taxamt de la factura
 		setTipo_Responsable(getRefTablaTipoResponsable(c_Categoria_Iva_ID));// Según tabla 4
 		setCod_Moneda(getRefTablaMoneda(inv.getC_Currency_ID()));	  			// sacar de c_currency	
@@ -124,7 +148,14 @@ public class MElectronicInvoice extends X_E_ElectronicInvoice {
 		setIdentif_Vendedor("0");												// No se usa
 		
 		// Campo para Otras Percepciones 
-		setCod_Jurisdiccion_IIBB(getCodJurisdiccionIIBB(iibb));// Según tabla 8
+		int codJurisdiccionIIBB = 0;
+		try{
+			codJurisdiccionIIBB = getCodJurisdiccionIIBB(iibb);
+		}
+		finally{
+			setCod_Jurisdiccion_IIBB(codJurisdiccionIIBB);// Según tabla 8	
+		}
+		
 		setJurImpuestosMunicipales("");
 		
 		// Salvo el nuevo HEADER
@@ -323,6 +354,8 @@ public class MElectronicInvoice extends X_E_ElectronicInvoice {
 	
 	private int getCodJurisdiccionIIBB(String iibb){
 		if (!Util.isEmpty(iibb)){
+			iibb = iibb.replace('-','0');
+			iibb = iibb.trim();
 			String cod = iibb;
 			if (iibb.length() >= 2){
 				cod = iibb.substring(iibb.length() - 2);

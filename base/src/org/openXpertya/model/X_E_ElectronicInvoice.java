@@ -1,12 +1,13 @@
 /** Modelo Generado - NO CAMBIAR MANUALMENTE - Disytel */
 package org.openXpertya.model;
-import java.util.*;
+import java.util.logging.Level;
+ import java.util.*;
 import java.sql.*;
 import java.math.*;
 import org.openXpertya.util.*;
 /** Modelo Generado por E_ElectronicInvoice
  *  @author Comunidad de Desarrollo Libertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
- *  @version  - 2010-05-28 14:49:30.583 */
+ *  @version  - 2013-10-30 11:59:53.434 */
 public class X_E_ElectronicInvoice extends org.openXpertya.model.PO
 {
 /** Constructor estándar */
@@ -246,6 +247,23 @@ set_Value ("DigVerifNroDespacho", DigVerifNroDespacho);
 public String getDigVerifNroDespacho() 
 {
 return (String)get_Value("DigVerifNroDespacho");
+}
+/** Set Document BaseType.
+Logical type of document */
+public void setDocBaseType (String DocBaseType)
+{
+if (DocBaseType != null && DocBaseType.length() > 10)
+{
+log.warning("Length > 10 - truncated");
+DocBaseType = DocBaseType.substring(0,10);
+}
+set_Value ("DocBaseType", DocBaseType);
+}
+/** Get Document BaseType.
+Logical type of document */
+public String getDocBaseType() 
+{
+return (String)get_Value("DocBaseType");
 }
 /** Set Doc_Identificatorio_Comprador */
 public void setDoc_Identificatorio_Comprador (int Doc_Identificatorio_Comprador)
@@ -622,6 +640,18 @@ Total of all document lines */
 public BigDecimal getTotalLines() 
 {
 BigDecimal bd = (BigDecimal)get_Value("TotalLines");
+if (bd == null) return Env.ZERO;
+return bd;
+}
+/** Set Total Sign */
+public void setTotalSign (BigDecimal TotalSign)
+{
+set_Value ("TotalSign", TotalSign);
+}
+/** Get Total Sign */
+public BigDecimal getTotalSign() 
+{
+BigDecimal bd = (BigDecimal)get_Value("TotalSign");
 if (bd == null) return Env.ZERO;
 return bd;
 }
