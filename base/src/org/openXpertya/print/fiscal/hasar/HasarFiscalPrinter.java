@@ -782,6 +782,7 @@ public abstract class HasarFiscalPrinter extends BasicFiscalPrinter implements H
 		try {
 			// Enviar comando de cancelación antes de imprimir si así se
 			// requiere
+			setAskMoment(true);
 			if(isCancelBeforePrint()){
 				setCancelAllowed(true);
 				cancelCurrentDocument();
@@ -877,6 +878,7 @@ public abstract class HasarFiscalPrinter extends BasicFiscalPrinter implements H
 			// Se cierra el comprobante fiscal.
 			// Comando: @CloseFiscalReceipt
 			response = execute(cmdCloseFiscalReceipt(null));
+			
 			setDocumentOpened(false);
 			// Chequeo de impuestos
 			checkTaxes(invoice);
@@ -887,14 +889,18 @@ public abstract class HasarFiscalPrinter extends BasicFiscalPrinter implements H
 			// Se obtiene el número del CAI.
 			if(invoice.getLetter().equals(Document.DOC_LETTER_A));
 				invoice.setCAINumber(getCAINumber(response));
-		
+			
+			setAskMoment(false);
+			
 			// Se indica al manejador de eventos que la impresión ha finalizado.
 			firePrintEnded();
 			
 		} catch (FiscalPrinterIOException e) {
-			// Si ocurrió algún error se intenta cancelar el documento
-			// actual y se relanza la excepción.
-			cancelCurrentDocument();
+			if(!isDocumentPrintAsk()){
+				// Si ocurrió algún error se intenta cancelar el documento
+				// actual y se relanza la excepción.
+				cancelCurrentDocument();
+			}
 			throw e;
 		}
 	}
@@ -942,6 +948,7 @@ public abstract class HasarFiscalPrinter extends BasicFiscalPrinter implements H
 		try {
 			// Enviar comando de cancelación antes de imprimir si así se
 			// requiere
+			setAskMoment(true);
 			if(isCancelBeforePrint()){
 				setCancelAllowed(true);
 				cancelCurrentDocument();
@@ -1010,13 +1017,17 @@ public abstract class HasarFiscalPrinter extends BasicFiscalPrinter implements H
 			setLastDocumentNo(response.getString(3));
 			creditNote.setDocumentNo(getLastDocumentNo());
 			
+			setAskMoment(false);
+			
 			// Se indica al manejador de eventos que la impresión ha finalizado.
 			firePrintEnded();
 
 		} catch (FiscalPrinterIOException e) {
-			// Si ocurrió algún error se intenta cancelar el documento
-			// actual y se relanza la excepción.
-			cancelCurrentDocument();
+			if(!isDocumentPrintAsk()){
+				// Si ocurrió algún error se intenta cancelar el documento
+				// actual y se relanza la excepción.
+				cancelCurrentDocument();
+			}
 			throw e;
 		}
 	}
@@ -1029,6 +1040,7 @@ public abstract class HasarFiscalPrinter extends BasicFiscalPrinter implements H
 		try {
 			// Enviar comando de cancelación antes de imprimir si así se
 			// requiere
+			setAskMoment(true);
 			if(isCancelBeforePrint()){
 				setCancelAllowed(true);
 				cancelCurrentDocument();
@@ -1089,13 +1101,17 @@ public abstract class HasarFiscalPrinter extends BasicFiscalPrinter implements H
 			if(debitNote.getLetter().equals(Document.DOC_LETTER_A));
 				debitNote.setCAINumber(getCAINumber(response));
 			
+			setAskMoment(false);
+				
 			// Se indica al manejador de eventos que la impresión ha finalizado.
 			firePrintEnded();
 
 		} catch (FiscalPrinterIOException e) {
-			// Si ocurrió algún error se intenta cancelar el documento
-			// actual y se relanza la excepción.
-			cancelCurrentDocument();
+			if(!isDocumentPrintAsk()){
+				// Si ocurrió algún error se intenta cancelar el documento
+				// actual y se relanza la excepción.
+				cancelCurrentDocument();
+			}
 			throw e;
 		}
 	}
@@ -1109,6 +1125,7 @@ public abstract class HasarFiscalPrinter extends BasicFiscalPrinter implements H
 		try {
 			// Enviar comando de cancelación antes de imprimir si así se
 			// requiere
+			setAskMoment(true);
 			if(isCancelBeforePrint()){
 				setCancelAllowed(true);
 				cancelCurrentDocument();
@@ -1135,13 +1152,17 @@ public abstract class HasarFiscalPrinter extends BasicFiscalPrinter implements H
 			execute(cmdCloseNonFiscalReceipt(nonFiscalDocument.getCopies()));
 			setDocumentOpened(false);
 			
+			setAskMoment(false);
+			
 			// Se indica al manejador de eventos que la impresión ha finalizado.
 			firePrintEnded();
 
 		} catch (FiscalPrinterIOException e) {
-			// Si ocurrió algún error se intenta cancelar el documento
-			// actual y se relanza la excepción.
-			cancelCurrentDocument();
+			if(!isDocumentPrintAsk()){
+				// Si ocurrió algún error se intenta cancelar el documento
+				// actual y se relanza la excepción.
+				cancelCurrentDocument();
+			}
 			throw e;
 		}
 	}
@@ -1269,14 +1290,12 @@ public abstract class HasarFiscalPrinter extends BasicFiscalPrinter implements H
 	 * En caso positivo, se indica que la impresora no contiene un
 	 * documento abierto.
 	 */
-	protected void cancelCurrentDocument() {
-		if(isCancelAllowed())
-			try {
-				execute(cmdCancelDocument());
-				setDocumentOpened(false);
-			} catch (FiscalPrinterIOException e) {
-				// Do nothing
-			}
+	@Override
+	public void cancelCurrentDocument() throws FiscalPrinterIOException, FiscalPrinterStatusError{
+		if(isCancelAllowed()){
+			execute(cmdCancelDocument());
+			setDocumentOpened(false);
+		}
 	}
 	
 	/**
@@ -1461,6 +1480,31 @@ public abstract class HasarFiscalPrinter extends BasicFiscalPrinter implements H
 		// deberá sobreescribir este método para indicar un número de pagos
 		// diferentes.
 		return 4;
+	}
+	
+	@Override
+	public String getLastDocumentNoPrinted(String documentType, String letra)
+			throws FiscalPrinterStatusError, FiscalPrinterIOException {
+		String lastNro = "";
+		
+		//////////////////////////////////////////////////////////////
+		// Incia la transmisión de información de IVA
+		// Comando: @StatusRequest
+		FiscalPacket response = execute(cmdStatusRequest());
+		int index = 0;
+		
+		if(documentType.equals(Document.DT_CREDIT_NOTE)){
+			index = letra.equals(Document.DOC_LETTER_A)?8:7;
+		}
+		else{
+			index = letra.equals(Document.DOC_LETTER_A)?5:3;
+		}
+		
+		lastNro = response.getString(index);
+		
+		setLastDocumentNo(lastNro);
+		
+		return lastNro;
 	}
 	
 	
