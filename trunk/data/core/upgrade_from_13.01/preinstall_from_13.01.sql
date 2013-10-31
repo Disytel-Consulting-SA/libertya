@@ -5437,3 +5437,6 @@ ALTER TABLE v_dailysales OWNER TO libertya;
 --20131030-1130 Incorporación de columnas utilizadas en Exportación RG1361
 UPDATE ad_system SET dummy = (SELECT addcolumnifnotexists('e_electronicinvoice','docbasetype', 'character varying(10)'));
 UPDATE ad_system SET dummy = (SELECT addcolumnifnotexists('e_electronicinvoice','totalsign', 'numeric(22,0)'));
+
+--20131031-1920 Incorporación de nuevo campo a la impresora fiscal para confirmar impresión o no en caso de error
+UPDATE ad_system SET dummy = (SELECT addcolumnifnotexists('c_controlador_fiscal','askwhenerror', 'character(1) NOT NULL DEFAULT ''N''::bpchar'));

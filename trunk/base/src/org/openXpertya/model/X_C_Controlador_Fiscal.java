@@ -7,7 +7,7 @@ import java.math.*;
 import org.openXpertya.util.*;
 /** Modelo Generado por C_Controlador_Fiscal
  *  @author Comunidad de Desarrollo Libertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
- *  @version  - 2013-07-04 19:14:05.305 */
+ *  @version  - 2013-10-31 19:36:46.252 */
 public class X_C_Controlador_Fiscal extends org.openXpertya.model.PO
 {
 /** Constructor estándar */
@@ -16,6 +16,7 @@ public X_C_Controlador_Fiscal (Properties ctx, int C_Controlador_Fiscal_ID, Stri
 super (ctx, C_Controlador_Fiscal_ID, trxName);
 /** if (C_Controlador_Fiscal_ID == 0)
 {
+setAskWhenError (false);
 setC_Controlador_Fiscal_ID (0);
 setC_Controlador_Fiscal_Type_ID (0);
 setCmdCancelBeforePrintDocument (false);
@@ -67,6 +68,22 @@ set_Value ("AD_ComponentObjectUID", AD_ComponentObjectUID);
 public String getAD_ComponentObjectUID() 
 {
 return (String)get_Value("AD_ComponentObjectUID");
+}
+/** Set Ask When Error */
+public void setAskWhenError (boolean AskWhenError)
+{
+set_Value ("AskWhenError", new Boolean(AskWhenError));
+}
+/** Get Ask When Error */
+public boolean isAskWhenError() 
+{
+Object oo = get_Value("AskWhenError");
+if (oo != null) 
+{
+ if (oo instanceof Boolean) return ((Boolean)oo).booleanValue();
+ return "Y".equals(oo);
+}
+return false;
 }
 /** Set C_Controlador_Fiscal_ID */
 public void setC_Controlador_Fiscal_ID (int C_Controlador_Fiscal_ID)

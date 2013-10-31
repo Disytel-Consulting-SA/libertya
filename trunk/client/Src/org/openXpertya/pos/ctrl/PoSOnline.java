@@ -470,7 +470,7 @@ public class PoSOnline extends PoSConnectionState {
 			tmpInvoice.addDocActionStatusListener(getDocActionStatusListener());
 			tmpInvoice.setThrowExceptionInCancelCheckStatus(true);
 			// Lanza la impresión fiscal
-			CallResult callResult = tmpInvoice.doFiscalPrint();
+			CallResult callResult = tmpInvoice.doFiscalPrint(true);
 			if (callResult.isError()) {
 				throw new FiscalPrintException();				
 			}

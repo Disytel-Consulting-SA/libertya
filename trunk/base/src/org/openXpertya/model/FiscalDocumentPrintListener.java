@@ -64,4 +64,6 @@ public interface FiscalDocumentPrintListener {
 	 * @param fdp
 	 */
 	public void setFiscalDocumentPrint(FiscalDocumentPrint fdp);
+	
+	public void documentPrintAsk(FiscalDocumentPrint source, String errorTitle, String errorDesc, String printerStatus);
 }

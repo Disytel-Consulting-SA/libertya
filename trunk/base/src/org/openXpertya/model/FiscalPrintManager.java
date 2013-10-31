@@ -61,13 +61,14 @@ public class FiscalPrintManager {
 	 * @return resultado de la impresión, con el error indicado internamente en
 	 *         caso que el resultado sea erróneo
 	 */
-	public static CallResult printDocument(Properties ctx, MInvoice invoice, boolean fireDocActionStatusChanged, String trxName){
+	public static CallResult printDocument(Properties ctx, MInvoice invoice, boolean fireDocActionStatusChanged, boolean askAllowed, String trxName){
 		// Creo la impresión del documento fiscal
 		FiscalDocumentPrint fdp = createFiscalDocumentPrint(ctx, invoice, trxName);
 		if (trxName != null) {
 			fdp.setTrx(Trx.get(trxName, false));
 		}
 		fdp.setThrowExceptionInCancelCheckStatus(invoice.isThrowExceptionInCancelCheckStatus());
+		fdp.setAskAllowed(askAllowed);
 		// Esto vale la pena solamente para impresiones locales
 		if(fireDocActionStatusChanged){
 			invoice.fireDocActionStatusChanged(new DocActionStatusEvent(

@@ -105,7 +105,7 @@ public class AInfoFiscalPrinter extends CDialog implements ActionListener, Fisca
 	 * estado de impresora fiscal
 	 */
 	private boolean throwExceptionInCancelCheckStatus = false;
-    
+	
     /**
      * Constructor de la clase ...    
      */
@@ -454,6 +454,10 @@ public class AInfoFiscalPrinter extends CDialog implements ActionListener, Fisca
 		getCancelButton().setVisible(false);
 	}
 
+	private void setAskStatus(){
+		this.setVisible(false);
+	}
+	
 	public void commandExecuted(FiscalPrinter source, final FiscalPacket command, FiscalPacket response) {
 		Runnable doCommandExecuted = new Runnable() {
 			public void run() {
@@ -825,6 +829,12 @@ public class AInfoFiscalPrinter extends CDialog implements ActionListener, Fisca
 			getDialogActionListener().actionReprintPerformed(getFiscalDocumentPrint());
 		}
 	}
+	
+	private void firePrintOKAction() {
+		if (getDialogActionListener() != null) {
+			getDialogActionListener().actionPrintFinishOK();
+		}
+	}
 
 	public void setCloseOnFiscalClose(boolean closeOnFiscalClose) {
 		this.closeOnFiscalClose = closeOnFiscalClose;
@@ -868,6 +878,38 @@ public class AInfoFiscalPrinter extends CDialog implements ActionListener, Fisca
 		 */
 		public void actionReprintPerformed(FiscalDocumentPrint fdp);
 		
+		/**
+		 * Acción que indica que finalizó correctamente la impresión
+		 */
+		public void actionPrintFinishOK();
+	}
+
+	@Override
+	public void documentPrintAsk(final FiscalDocumentPrint source, final String errorTitle,
+			final String errorDesc, final String printerStatus) {
+		Runnable doDocumentPrintAsk = new Runnable() {
+			public void run() {
+				if(source.isAskAllowed()){
+					setAskStatus();
+					if (ADialog
+							.ask(windowNo,
+									AInfoFiscalPrinter.this,
+									"FiscalPrintErrorAsk",
+									errorDesc)) {
+						try{
+							source.endPrintingOK();
+							firePrintOKAction();
+						} catch(Exception e){
+							documentPrintAsk(source, "PrintFiscalDocumentError", e.getMessage(), printerStatus);
+						}
+					}
+					else{
+						source.endPrintingWrong(errorTitle, errorDesc, printerStatus);
+						setVisible(true);
+					}				
+				}
+			}
+		};
+		invoke(doDocumentPrintAsk, false);	
 	}	
-	
 }

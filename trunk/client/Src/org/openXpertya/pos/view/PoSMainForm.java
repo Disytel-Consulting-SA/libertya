@@ -6168,6 +6168,11 @@ public class PoSMainForm extends CPanel implements FormPanel, ASyncProcess, Disp
 				// Reimpresión de documentos
 				reprintDocument(fdp);
 			}
+			
+			@Override
+			public void actionPrintFinishOK() {
+				finishAndNewOrder();				
+			}
 		});
 		
 		infoFiscalPrinter.setReprintButtonActive(true);
@@ -6232,14 +6237,10 @@ public class PoSMainForm extends CPanel implements FormPanel, ASyncProcess, Disp
 						// Re intenta anular los documentos.
 						voidDocuments();
 					} else {
-						newOrder();
-						getFrame().setBusy(false);
-						mNormal();
+						finishAndNewOrder();
 					}
 				} else {
-					newOrder();
-					getFrame().setBusy(false);
-					mNormal();
+					finishAndNewOrder();
 					getStatusBar().setStatusLine(MSG_VOID_INVOICE_OK);
 				}
 			}
@@ -6454,6 +6455,12 @@ public class PoSMainForm extends CPanel implements FormPanel, ASyncProcess, Disp
 		getModel().getOtherTaxes();
 	}
 	
+	private void finishAndNewOrder(){
+		newOrder();
+		getFrame().setBusy(false);
+		mNormal();
+	}
+	
 	private class SwingWorkerRePrintDocument extends SwingWorker{
 
 		FiscalDocumentPrint fdp = null;
@@ -6473,9 +6480,7 @@ public class PoSMainForm extends CPanel implements FormPanel, ASyncProcess, Disp
 			if (success) {
 				// Al finalizar una reimpresión de ticket, se
 				// reestablece la interfaz para un nuevo pedido				
-				newOrder();
-				getFrame().setBusy(false);
-				mNormal();
+				finishAndNewOrder();
 			}
 			
 		}

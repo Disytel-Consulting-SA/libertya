@@ -676,6 +676,17 @@ public class MInvoice extends X_C_Invoice implements DocAction {
 		return invoice;
 	}
 	
+	public static boolean existInvoiceFiscalPrinted(Properties ctx, String letter, Integer ptoVenta, Integer nroComprobante, Integer doctypeID, Integer excludeInvoiceID, String trxName){
+		// Armar el nro de documento
+		String documentNo = CalloutInvoiceExt.GenerarNumeroDeDocumento(
+				ptoVenta, nroComprobante, letter, true, false);
+		// Buscar esa factura
+		return PO.findFirst(ctx, Table_Name,
+				"fiscalalreadyprinted = 'Y' and documentno = '" + documentNo
+						+ "' and c_doctypetarget_id = ? and c_invoice_id <> ? and ad_org_id = ?",
+				new Object[] { doctypeID, excludeInvoiceID, Env.getAD_Org_ID(ctx)}, null, trxName) != null;
+	}
+	
 	/** Descripción de Campos */
 
 	private static CCache s_cache = new CCache("C_Invoice", 20, 2); // 2 minutes
@@ -4911,10 +4922,13 @@ public class MInvoice extends X_C_Invoice implements DocAction {
 	 * Realiza la emisión fiscal de la factura mediante el controlador fiscal
 	 * configurado en su tipo de documento
 	 * 
+	 * @param askAllowed
+	 *            flag que determina si está permitido preguntar en caso de
+	 *            error
 	 * @return <code>null</code> si la impresión se realizó correctamente o el
 	 *         mensaje de error si hubo algún error.
 	 */
-	public CallResult doFiscalPrint() {
+	public CallResult doFiscalPrint(boolean askAllowed) {
 		CallResult printResult = new CallResult();
 		// ////////////////////////////////////////////////////////////////
 		// LOCALIZACIÓN ARGENTINA
@@ -4932,7 +4946,7 @@ public class MInvoice extends X_C_Invoice implements DocAction {
 
 			// Impresor de comprobantes.
 			printResult = FiscalPrintManager.printDocument(getCtx(),
-					this, true, get_TrxName());
+					this, true, askAllowed, get_TrxName());
 			if (printResult.isError()) {
 				printResult
 						.setMsg(!Util.isEmpty(printResult.getMsg()) ? printResult
@@ -4956,6 +4970,10 @@ public class MInvoice extends X_C_Invoice implements DocAction {
 		return printResult;
 	}
 
+	public CallResult doFiscalPrint() {
+		return doFiscalPrint(false);
+	}
+	
 	private boolean ignoreFiscalPrint = false;
 
 	/**

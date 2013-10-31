@@ -41,4 +41,11 @@ public class FiscalDocumentPrintAdapter implements FiscalDocumentPrintListener  
 	public FiscalDocumentPrint getFiscalDocumentPrint() {
 		return fdp;
 	}
+
+	@Override
+	public void documentPrintAsk(FiscalDocumentPrint source, String errorTitle,
+			String errorDesc, String printerStatus) {
+		// TODO Auto-generated method stub
+		
+	}
 }

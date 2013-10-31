@@ -137,6 +137,17 @@ public interface FiscalPrinter {
 	public String getLastDocumentNo();
 	
 	/**
+	 * @param documentType
+	 *            tipo del documento a consultar
+	 * @param letra
+	 *            letra del comprobante a consultar
+	 * @return Retorna el último número impreso por la fiscal del tipo de
+	 *         comprobante y letras parámetro
+	 */
+	public String getLastDocumentNoPrinted(String documentType, String letra)
+			throws FiscalPrinterStatusError, FiscalPrinterIOException;
+	
+	/**
 	 * Conecta la impresora con el dispositivo fiscal. Aquí se debe efectivizar
 	 * la conexión de la interfaz de comunicación con el dispositivo.
 	 * Para efectuar cualquier operación con la impresora fiscal es necesario
@@ -202,4 +213,18 @@ public interface FiscalPrinter {
 	 *         imprimir un documento, false caso contrario
 	 */
 	public boolean isCancelBeforePrint();
+	
+	/**
+	 * @param askWhenError
+	 *            true si se debe preguntar en caso de error
+	 */
+	public void setAskWhenError(boolean askWhenError);
+	
+	/**
+	 * @return true si se debe preguntar en caso de error, false en caso
+	 *         contrario
+	 */
+	public boolean isDocumentPrintAsk();
+	
+	public void cancelCurrentDocument() throws FiscalPrinterIOException, FiscalPrinterStatusError;
 }

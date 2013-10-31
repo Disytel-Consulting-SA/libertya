@@ -87,6 +87,7 @@ public class MControladorFiscal extends X_C_Controlador_Fiscal {
 			FiscalComm fiscalComm = new SpoolerTCPComm(host, port);
 			fiscalPrinter.setFiscalComm(fiscalComm);
 			fiscalPrinter.setCancelBeforePrint(isCmdCancelBeforePrintDocument());
+			fiscalPrinter.setAskWhenError(isAskWhenError());
 		} catch(Exception e) {
 			log.severe(e.getMessage());
 			throw e;
@@ -94,6 +95,5 @@ public class MControladorFiscal extends X_C_Controlador_Fiscal {
 		return fiscalPrinter;
 		
 	}
-	
 	
 }

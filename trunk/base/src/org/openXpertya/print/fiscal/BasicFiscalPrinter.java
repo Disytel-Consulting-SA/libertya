@@ -29,6 +29,10 @@ public abstract class BasicFiscalPrinter implements FiscalPrinter {
 	private boolean connected = false;
 	/** Indica si es posible cancelar el documento actualmente en impresión */
 	private boolean cancelAllowed = false;
+	/** Indica si es posible preguntar en caso de error */
+	private boolean askAllowed = false;
+	/** Indica si es posible preguntar en este momento en caso de error */
+	private boolean askMoment = false;
 	/** Indica si la impresora se encuentra sin papel */
 	private boolean withoutPaper = false;
 	/** Ultimo comando enviado a la impresora fiscal */
@@ -37,6 +41,8 @@ public abstract class BasicFiscalPrinter implements FiscalPrinter {
 	private FiscalPacket lastResponse;
 	/** Enviar comando de cancelación antes de imprimir un documento */
 	private boolean cancelBeforePrint = false;
+	/** Preguntar cuando hay un error */
+	private boolean askWhenError = false;
 	
 	public BasicFiscalPrinter() {
 		super();
@@ -321,5 +327,34 @@ public abstract class BasicFiscalPrinter implements FiscalPrinter {
 	@Override
 	public boolean isCancelBeforePrint(){
 		return cancelBeforePrint;
+	}
+	
+	@Override
+	public boolean isDocumentPrintAsk(){
+		return isAskAllowed() && isAskWhenError() && isAskMoment();
+	}
+
+	public boolean isAskAllowed() {
+		return askAllowed;
+	}
+
+	public void setAskAllowed(boolean askAllowed) {
+		this.askAllowed = askAllowed;
+	}
+
+	public boolean isAskMoment() {
+		return askMoment;
+	}
+
+	public void setAskMoment(boolean askMoment) {
+		this.askMoment = askMoment;
+	}
+
+	public boolean isAskWhenError() {
+		return askWhenError;
+	}
+
+	public void setAskWhenError(boolean askWhenError) {
+		this.askWhenError = askWhenError;
 	}
 }
