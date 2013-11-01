@@ -4,7 +4,7 @@
    start to allow web apps to be deployed before starting the
    connectors.
    -->  <Service className="org.jboss.web.tomcat.tc5.StandardService" name="jboss.web" >
-<!-- A HTTP/1.1 Connector on port 8080 -->    <Connector port="@PUERTO_WEB_OXP@" strategy="ms" address="${jboss.bind.address}" maxHttpHeaderSize="8192" redirectPort="8443" acceptCount="100" emptySessionPath="true" disableUploadTimeout="true" maxThreads="250" connectionTimeout="20000" enableLookups="false" />
+<!-- A HTTP/1.1 Connector on port 8080 -->    <Connector port="@PUERTO_WEB_OXP@" strategy="ms" address="${jboss.bind.address}" maxHttpHeaderSize="8192" redirectPort="8443" acceptCount="100" emptySessionPath="true" disableUploadTimeout="true" maxThreads="250" connectionTimeout="20000" enableLookups="false" compression="on" compressionMinSize="2048" noCompressionUserAgents="gozilla, traviata" compressableMimeType="text/html,text/xml,text/javascript,text/css" />
 <!-- A AJP 1.3 Connector on port 8009 -->    <Connector protocol="AJP/1.3" port="8009" address="${jboss.bind.address}" redirectPort="8443" emptySessionPath="true" enableLookups="false" />
 <!-- SSL/TLS Connector configuration using the admin devl guide keystore-->    <Connector strategy="ms" port="@PUERTO_SSL_OXP@" clientAuth="false" keystoreFile="@KEYSTORE_OXP@" address="${jboss.bind.address}" scheme="https" maxHttpHeaderSize="8192" secure="true" emptySessionPath="true" sslProtocol="TLS" keystorePass="@KEYSTOREPASS_OXP@" maxThreads="100" />
     <Engine name="jboss.web" defaultHost="localhost" >
