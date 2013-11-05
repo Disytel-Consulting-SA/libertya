@@ -2510,6 +2510,8 @@ public class PoSOnline extends PoSConnectionState {
 			MOrderLine line = oLines[i];
 			if (line.getM_Product_ID() == 0)
 				continue;
+			if (line.getQtyOrdered().compareTo(BigDecimal.ZERO) == 0)
+				continue;
 
 			order.addOrderProduct(createOrderProduct(line));
 		}
