@@ -54,6 +54,7 @@ import org.openXpertya.util.Env;
 import org.openXpertya.util.StringUtil;
 import org.openXpertya.util.Trace;
 import org.openXpertya.util.Trx;
+import org.openXpertya.util.Util;
 
 /**
  * Descripción de Clase
@@ -1034,7 +1035,8 @@ public class MWFActivity extends X_AD_WF_Activity implements Runnable {
 
             if( !m_po.save()) {
                 success    = false;
-                processMsg = "SaveError";
+                String error = CLogger.retrieveErrorAsString();
+                processMsg = Util.isEmpty(error, true)?"SaveError":error;
             }
 
             if( !success ) {
