@@ -108,7 +108,12 @@ public class TransferReplicationFilter extends ReplicationFilter {
 		// Si es entrante, replicar a central y hacia el otro host (host origen o destino según si estoy en destino u origen)	
 		if (incoming) {
 			sb.setCharAt(CENTRAL_REPARRAY_POS-1, group.getRepArray().charAt(CENTRAL_REPARRAY_POS-1));
-			sb.setCharAt(warehousePos-1, group.getRepArray().charAt(warehousePos-1));
+			try {
+				sb.setCharAt(warehousePos-1, group.getRepArray().charAt(warehousePos-1));
+			}
+			catch (StringIndexOutOfBoundsException e) {
+				// El almacén pertence a una organizacion (host) actualmente fuera del anillo de replicacion, no hacer nada mas
+			}
 		}
 		// Si es saliente y estoy en el origen, replicar hacia la central
 		if (!incoming && atSource)
