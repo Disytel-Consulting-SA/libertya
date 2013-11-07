@@ -15,11 +15,10 @@ public class ReplicationBuilderWS extends ReplicationBuilder {
 	/** Cliente de replicacion WS */
 	protected AbstractReplicationProcess replicationHndler = null;
 	
-	/** Contenido a enviar para cada host destino.  RepArrayPos -> XMLContent[]
-	  * 	(agrupando conjuntos de acciones a fin de no hacer un XML demasiado extenso para una misma invocacion al WS) */
-	public HashMap<Integer, ArrayList<StringBuffer>> completeReplicationXMLDataForHost = new HashMap<Integer, ArrayList<StringBuffer>>(); 
-	/** Contador temporal de acciones para un host destino (para saber cuando crear un nuevo conjunto de acciones) */
-	protected HashMap<Integer, Integer> completeReplicationXMLDataForHostCount = new HashMap<Integer, Integer>();
+	/** Contenido completo a enviar a los hosts.  Cada parte es independiente, y para cada host se referenciarán las partes a replicar, según su indice */
+	public ArrayList<String> completeReplicationXMLData = new ArrayList<String>();
+	/** Contenido a enviar para cada host destino.  RepArrayPos -> Integer[],  en donde cada valor entero es una referencia a una posición del completeReplicationXMLData */ 
+	public HashMap<Integer, ArrayList<Integer>> replicationActionsForHost = new HashMap<Integer, ArrayList<Integer>>(); 
 	
 	public ReplicationBuilderWS(String trxName, AbstractReplicationProcess handler) {
 		super(trxName, null);
@@ -163,12 +162,13 @@ public class ReplicationBuilderWS extends ReplicationBuilder {
 				// Cierre del changegroup
 				m_replicationXMLData.append("</changegroup>");
 				
-				// Enviar a replicacion, una vez por cada destino a replicar
+				// Enviar a replicacion, una vez por cada destino a replicar.  Almacenar si el grupo ya se incorporo al completeReplicationXMLData
+				boolean alreadyAdded = false;
 				for (int arrayPos = 0; arrayPos < group.getRepArray().length(); arrayPos++)
 					// En las posiciones que corresponde, se envia a replicacion 
 					// En caso de estar reenviando todos los registros, se envia a todo el repArray (menos donde se indique sin accion)
 					if (ReplicationConstantsWS.replicateStates.contains(group.getRepArray().charAt(arrayPos)) && (ReplicationTableManager.filterHost==null || ReplicationTableManager.filterHost == arrayPos+1))
-						addActionsForHost(arrayPos+1, group);
+						alreadyAdded = addActionsForHost(arrayPos+1, group, alreadyAdded);
 			}
 			catch (Exception e) 	{
 				replicationHndler.saveLog(Level.SEVERE, true, "Error en ReplicationBuilderWS: " + e.getMessage(), null);
@@ -186,13 +186,12 @@ public class ReplicationBuilderWS extends ReplicationBuilder {
 	 * Almacena el XML completo correspondiente a enviar hacia cada sucursal, basado en <code>m_replicationXMLData</code>
 	 * @param arrayPos posicion destino
 	 * @param group informacion de la acción
+	 * @return true si el grupo se agregó a completeReplicationXMLData, o false si no se incorporó dado que ya existía 
 	 */
-	protected void addActionsForHost(int arrayPos, ChangeLogGroupReplication group) throws Exception {
+	protected boolean addActionsForHost(int arrayPos, ChangeLogGroupReplication group, boolean alreadyAdded) throws Exception {
 		// Si para la posicion dada todavia no se encuentra inicializado el buffer, inicializarlo
-		if (completeReplicationXMLDataForHost.get(arrayPos) == null) {
-			completeReplicationXMLDataForHost.put(arrayPos, new ArrayList<StringBuffer>());
-			completeReplicationXMLDataForHost.get(arrayPos).add(new StringBuffer());
-			completeReplicationXMLDataForHostCount.put(arrayPos, 0);
+		if (replicationActionsForHost.get(arrayPos) == null) {
+			replicationActionsForHost.put(arrayPos, new ArrayList<Integer>());
 		}
 		
 		String actionXML = null;
@@ -215,15 +214,13 @@ public class ReplicationBuilderWS extends ReplicationBuilder {
 				throw new Exception("ReplicationBuilder. Sin opType para: " + group);
 		}
 
-		// Se llego al limite? Nuevo conjunto de acciones
-		if (completeReplicationXMLDataForHostCount.get(arrayPos) == ReplicationConstantsWS.EVENTS_PER_CALL) {
-			completeReplicationXMLDataForHost.get(arrayPos).add(new StringBuffer());
-			completeReplicationXMLDataForHostCount.put(arrayPos, 1);
+		// Incorporar al conjunto de acciones general si todavía no fue incorporado, y referenciarlo desde el host actual
+		if (!alreadyAdded) {
+			completeReplicationXMLData.add(actionXML);
+			alreadyAdded = true;
 		}
-		else
-			completeReplicationXMLDataForHostCount.put(arrayPos, completeReplicationXMLDataForHostCount.get(arrayPos)+1);
-		// Incorporar al conjunto de acciones 
-		(completeReplicationXMLDataForHost.get(arrayPos).get(completeReplicationXMLDataForHost.get(arrayPos).size()-1)).append(actionXML);
+		replicationActionsForHost.get(arrayPos).add(completeReplicationXMLData.size()-1);
+		return alreadyAdded;
 	}
 
 }

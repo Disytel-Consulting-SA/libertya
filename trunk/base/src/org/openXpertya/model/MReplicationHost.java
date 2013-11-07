@@ -62,6 +62,14 @@ public class MReplicationHost extends X_AD_ReplicationHost {
 		MReplicationHost rh = new MReplicationHost(ctx, repHostID, trxName);
 		return rh;
 	}
+ 
+	/**
+	 * Para un host dado, indica si el mismo se encuentra activo o no
+	 * @return
+	 */
+	public static boolean isHostActive(int orgID, String trxName) {
+		return 1==DB.getSQLValue(trxName, " SELECT COUNT(1) FROM AD_ReplicationHost WHERE AD_Org_ID = " + orgID + " AND isactive ='Y'");
+	}
 	
 	
 	@Override
