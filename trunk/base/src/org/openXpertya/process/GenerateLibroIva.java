@@ -4,10 +4,8 @@ import java.math.BigDecimal;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.Timestamp;
-import java.util.Date;
 import java.util.logging.Level;
 
-import org.openXpertya.model.MCategoriaIva;
 import org.openXpertya.model.X_T_LibroIva;
 import org.openXpertya.util.CPreparedStatement;
 import org.openXpertya.util.DB;
@@ -77,14 +75,14 @@ public class GenerateLibroIva extends SvrProcess {
          	"		cbp.taxid, " +
          	"		cbp.c_categoria_iva_id, " +
          	"		cci.c_categoria_via_name, " +
-         	"		currencyconvert(citn.neto, inv.c_currency_id, " + moneda + ", inv.dateacct, c_conversiontype_id, inv.ad_client_id, inv.ad_org_id) as neto, " +
+         	"		currencyconvert(inv.netamount, inv.c_currency_id, " + moneda + ", inv.dateacct, c_conversiontype_id, inv.ad_client_id, inv.ad_org_id) as neto, " +
          	"		currencyconvert(inv.grandtotal, inv.c_currency_id, " + moneda + ", inv.dateacct, c_conversiontype_id, inv.ad_client_id, inv.ad_org_id) as total, " +
          	"		ct.c_tax_name as item, " +
          	"		currencyconvert(cit.importe, inv.c_currency_id, " + moneda + ", inv.dateacct, c_conversiontype_id, inv.ad_client_id, inv.ad_org_id) as importe, " +
          	"       cdt.signo," +
          	"       cit.AD_Client_ID, " +
          	"       cbp.iibb " +
-         	" from (select c_invoice_id, ad_client_id, ad_org_id, c_currency_id, c_conversiontype_id, documentno, c_bpartner_id, dateacct, dateinvoiced, totallines,grandtotal, issotrx, c_doctypetarget_id, fiscalalreadyprinted  " +
+         	" from (select c_invoice_id, ad_client_id, ad_org_id, c_currency_id, c_conversiontype_id, documentno, c_bpartner_id, dateacct, dateinvoiced, totallines, grandtotal, issotrx, c_doctypetarget_id, fiscalalreadyprinted, netamount  " +
          	"       from c_Invoice " +
          	"       where ad_client_id = ? " + getOrgCheck() + " AND (docstatus = 'CO' or docstatus = 'CL' or docstatus = 'RE' or docstatus = 'VO' OR docstatus = '??') AND (isactive = 'Y')" +
          	"		AND (dateacct::date between ?::date and ?::date) " );
@@ -106,9 +104,6 @@ public class GenerateLibroIva extends SvrProcess {
          	"				from c_docType) cdt on cdt.c_doctype_id = inv.c_doctypetarget_id " +
          	"     left join (Select c_tax_id, c_invoice_id, taxamt as importe, ad_client_id " +
          	" 		        from c_invoicetax) cit 	on cit.c_invoice_id = inv.c_invoice_id " +
-         	"     left join (Select c_invoice_id, sum(taxbaseamt) as neto " +
-         	" 		        from c_invoicetax" +
-         	"				group by c_invoice_id) citn on citn.c_invoice_id = inv.c_invoice_id " +
          	"     left join (Select c_tax_id, name as c_tax_name " +
          	"				from c_tax) ct on ct.c_tax_id = cit.c_tax_id " +
          	"     left join (Select c_bpartner_id, name as c_bpartner_name, c_categoria_iva_id, taxid, iibb " +
