@@ -5443,3 +5443,6 @@ UPDATE ad_system SET dummy = (SELECT addcolumnifnotexists('c_controlador_fiscal'
 
 --20131111-1340 Incorporación de nuevo campo para tipo de cuenta del informe de saldos
 UPDATE ad_system SET dummy = (SELECT addcolumnifnotexists('t_balancereport','accounttype', 'character(1)'));
+
+--20131101-1610 Incorporación de la columna Stock Disponible para la Venta a la tabla Almacén.
+update ad_system set dummy = (SELECT addcolumnifnotexists('M_Warehouse','StockAvailableForSale', 'character(1) NOT NULL DEFAULT ''Y''::bpchar'));
