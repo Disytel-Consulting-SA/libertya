@@ -7,7 +7,7 @@ import java.math.*;
 import org.openXpertya.util.*;
 /** Modelo Generado por M_InOut
  *  @author Comunidad de Desarrollo Libertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
- *  @version  - 2012-10-16 21:00:23.929 */
+ *  @version  - 2013-11-11 17:29:14.839 */
 public class X_M_InOut extends org.openXpertya.model.PO
 {
 /** Constructor estándar */
@@ -957,6 +957,30 @@ set_Value ("PrePrinted_DocNo", PrePrinted_DocNo);
 public String getPrePrinted_DocNo() 
 {
 return (String)get_Value("PrePrinted_DocNo");
+}
+public static final int PRINTTYPE_AD_Reference_ID = MReference.getReferenceID("Print Type");
+/** Original = O */
+public static final String PRINTTYPE_Original = "O";
+/** Duplicate = D */
+public static final String PRINTTYPE_Duplicate = "D";
+/** Triplicate = T */
+public static final String PRINTTYPE_Triplicate = "T";
+/** Set Print Type */
+public void setPrintType (String PrintType)
+{
+if (PrintType == null || PrintType.equals("O") || PrintType.equals("D") || PrintType.equals("T"));
+ else throw new IllegalArgumentException ("PrintType Invalid value - Reference = PRINTTYPE_AD_Reference_ID - O - D - T");
+if (PrintType != null && PrintType.length() > 1)
+{
+log.warning("Length > 1 - truncated");
+PrintType = PrintType.substring(0,1);
+}
+set_Value ("PrintType", PrintType);
+}
+/** Get Print Type */
+public String getPrintType() 
+{
+return (String)get_Value("PrintType");
 }
 public static final int PRIORITYRULE_AD_Reference_ID = MReference.getReferenceID("_PriorityRule");
 /** Medium = 5 */

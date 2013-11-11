@@ -5446,3 +5446,7 @@ UPDATE ad_system SET dummy = (SELECT addcolumnifnotexists('t_balancereport','acc
 
 --20131101-1610 Incorporación de la columna Stock Disponible para la Venta a la tabla Almacén.
 update ad_system set dummy = (SELECT addcolumnifnotexists('M_Warehouse','StockAvailableForSale', 'character(1) NOT NULL DEFAULT ''Y''::bpchar'));
+
+--20131111-1700 Incorporación de nuevo campo a la factura y remito para configurar el tipo de impresión del documento: Original, Duplicado y Triplicado
+UPDATE ad_system SET dummy = (SELECT addcolumnifnotexists('c_invoice','printtype', 'character(1)'));
+UPDATE ad_system SET dummy = (SELECT addcolumnifnotexists('m_inout','printtype', 'character(1)'));
