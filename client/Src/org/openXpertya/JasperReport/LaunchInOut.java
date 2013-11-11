@@ -25,7 +25,6 @@ import org.openXpertya.model.MUser;
 import org.openXpertya.model.X_C_Invoice;
 import org.openXpertya.model.X_M_InOut;
 import org.openXpertya.process.ProcessInfo;
-import org.openXpertya.process.ProcessInfoParameter;
 import org.openXpertya.process.SvrProcess;
 import org.openXpertya.report.NumeroCastellano;
 import org.openXpertya.util.DB;
@@ -42,10 +41,7 @@ public class LaunchInOut extends SvrProcess {
 
 	/** Record */
 	protected int AD_Record_ID;
-
-	/** Tipo de impresion */
-	protected String printType;
-
+	
 	/** Total de líneas con impuestos */
 	private BigDecimal linesTotalAmt = BigDecimal.ZERO;
 
@@ -111,15 +107,6 @@ public class LaunchInOut extends SvrProcess {
 		AD_Table_ID = getTable_ID();
 		AD_Record_ID = getRecord_ID();
 
-		ProcessInfoParameter[] para = getParameter();
-		for (int i = 0; i < para.length; i++) {
-			String name = para[i].getParameterName();
-			if (para[i].getParameter() == null)
-				;
-			else if (name.equalsIgnoreCase("TipoDeImpresion")) {
-				printType = (String) para[i].getParameter();
-			}
-		}
 		jasperwrapper = new MJasperReport(getCtx(),AD_JasperReport_ID, get_TrxName());
 	}
 
@@ -263,7 +250,14 @@ public class LaunchInOut extends SvrProcess {
 					JasperReportsUtil.getCurrencySymbol(getCtx(),
 							getInout().getC_Currency_ID(), get_TrxName()));
 		}
-		jasperwrapper.addParameter("TIPOORIGEN", printType);
+		jasperwrapper
+				.addParameter(
+						"TIPOORIGEN",
+						JasperReportsUtil.getListName(
+								getCtx(),
+								MInOut.PRINTTYPE_AD_Reference_ID,
+								Util.isEmpty(getInout().getPrintType(), true) ? MInOut.PRINTTYPE_Original
+										: getInout().getPrintType()));
 		jasperwrapper.addParameter("CLIENT", client.getName());
 		jasperwrapper.addParameter("CLIENT_CUIT", clientInfo.getCUIT());
 		jasperwrapper.addParameter(

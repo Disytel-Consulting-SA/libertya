@@ -34,7 +34,6 @@ import org.openXpertya.model.X_C_Invoice;
 import org.openXpertya.model.X_C_POSJournal;
 import org.openXpertya.model.X_M_Retencion_Invoice;
 import org.openXpertya.process.ProcessInfo;
-import org.openXpertya.process.ProcessInfoParameter;
 import org.openXpertya.process.SvrProcess;
 import org.openXpertya.report.NumeroCastellano;
 import org.openXpertya.util.DB;
@@ -50,10 +49,7 @@ public class LaunchInvoice extends SvrProcess {
 	private int AD_Table_ID;
 	
 	/** Record					*/
-	private int AD_Record_ID;	
-	
-	/** Tipo de impresion		*/
-	private String printType;
+	private int AD_Record_ID;
 	
 	/** Total de líneas con impuestos */
 	private BigDecimal linesTotalAmt = BigDecimal.ZERO;
@@ -95,16 +91,7 @@ public class LaunchInvoice extends SvrProcess {
 		AD_JasperReport_ID = proceso.getAD_JasperReport_ID();
 		AD_Table_ID = getTable_ID();
 		AD_Record_ID = getRecord_ID();	
-		
-        ProcessInfoParameter[] para = getParameter();
-        for( int i = 0;i < para.length;i++ ) {
-            String name = para[ i ].getParameterName();
-            if( para[ i ].getParameter() == null ) ;
-            else 
-            if( name.equalsIgnoreCase( "TipoDeImpresion" )) {
-            	printType = (String)para[ i ].getParameter();
-            }
-        }
+
         jasperwrapper = new MJasperReport(getCtx(), AD_JasperReport_ID, get_TrxName());
 	}
 	
@@ -255,7 +242,14 @@ public class LaunchInvoice extends SvrProcess {
 		jasperwrapper.addParameter("SUBIVA_21", getTaxAmt(invoice, new BigDecimal(21)) );
 		jasperwrapper.addParameter("SUBDESC", invoice.getDiscountsAmt());
 		jasperwrapper.addParameter("TOTAL", invoice.getGrandTotal() );
-		jasperwrapper.addParameter("TIPOORIGEN", printType );
+		jasperwrapper
+				.addParameter(
+						"TIPOORIGEN",
+						JasperReportsUtil.getListName(
+								getCtx(),
+								MInvoice.PRINTTYPE_AD_Reference_ID,
+								Util.isEmpty(invoice.getPrintType(), true) ? MInvoice.PRINTTYPE_Original
+										: invoice.getPrintType()));
 		
 		jasperwrapper.addParameter("ALLOCATED_AMT", invoice.getAllocatedAmt() );
 		jasperwrapper.addParameter("APPROVAL_AMT", invoice.getApprovalAmt() );
