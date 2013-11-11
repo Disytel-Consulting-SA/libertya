@@ -5440,3 +5440,6 @@ UPDATE ad_system SET dummy = (SELECT addcolumnifnotexists('e_electronicinvoice',
 
 --20131031-1920 Incorporación de nuevo campo a la impresora fiscal para confirmar impresión o no en caso de error
 UPDATE ad_system SET dummy = (SELECT addcolumnifnotexists('c_controlador_fiscal','askwhenerror', 'character(1) NOT NULL DEFAULT ''N''::bpchar'));
+
+--20131111-1340 Incorporación de nuevo campo para tipo de cuenta del informe de saldos
+UPDATE ad_system SET dummy = (SELECT addcolumnifnotexists('t_balancereport','accounttype', 'character(1)'));

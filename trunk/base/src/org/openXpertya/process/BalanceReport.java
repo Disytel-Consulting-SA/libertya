@@ -20,7 +20,14 @@ public class BalanceReport extends SvrProcess {
 	private int    p_C_BP_Group_ID;
 	/** Fecha hasta de la transacción */
 	private Timestamp  p_DateTrx_To;
-	
+	/** Tipo de Cuenta del Reporte: Cliente o Proveedor */
+	private String     p_AccountType;
+	/** Signo de documentos que son débitos (depende de p_AccountType) */
+	private int debit_signo_issotrx;
+	/** Signo de documentos que son créditos (depende de p_AccountType) */
+	private int credit_signo_issotrx;
+	/** Es transacción de ventas? (depende de p_AccountType) */
+	private String isSOtrx = "Y";
 	/** Moneda en la que trabaja la compañía */
 	private int client_Currency_ID;
 	
@@ -43,9 +50,21 @@ public class BalanceReport extends SvrProcess {
         		p_C_BP_Group_ID = para[ i ].getParameterAsInt();
         	} else if( name.equalsIgnoreCase( "TrueDateTrx" )) {
         		p_DateTrx_To = ( Timestamp )para[ i ].getParameter();
+        	} else if( name.equalsIgnoreCase( "AccountType" )) {
+        		p_AccountType = ( String )para[ i ].getParameter();
         	}
         }
         
+        // Reporte de Cta Corriente de Cliente o Proveedor.
+ 		// +-------------------------+--------------------------+
+ 		// |  Cta Corriente Cliente  |  Cta Corriente Proveedor |
+ 		// +-------------------------+--------------------------+
+ 		// |   Debitos  = Signo 1    |   Debitos  = Signo -1    |
+ 		// |   Créditos = Signo -1   |   Créditos = Signo 1     |
+ 		// +-------------------------+--------------------------+
+ 		debit_signo_issotrx = p_AccountType.equalsIgnoreCase("C") ? 1 : -1;
+ 		credit_signo_issotrx = p_AccountType.equalsIgnoreCase("C") ? -1 : 1;
+        isSOtrx = p_AccountType.equalsIgnoreCase("C")?"'Y'":"'N'";
      // Moneda de la compañía utilizada para conversión de montos de documentos.
         client_Currency_ID = Env.getContextAsInt(getCtx(), "$C_Currency_ID");
 	}
@@ -61,20 +80,24 @@ public class BalanceReport extends SvrProcess {
 
 		// calcular el estado de cuenta de cada E.C.
 		StringBuffer sqlDoc = new StringBuffer();
-		sqlDoc.append(" SELECT T.C_BPARTNER_ID, T.NAME, C_BP_Group_ID, COALESCE(T.so_description,'') AS so_description, COALESCE(SUM(t.Credit),0.0) AS Credit, COALESCE(SUM(t.Debit),0.0) AS Debit, COALESCE(SUM(t.Credit),0.0) - COALESCE(SUM(t.Debit),0.0) AS balance,  ");
-		sqlDoc.append(" 	( SELECT dateacct FROM C_INVOICE WHERE issotrx = 'Y' AND invoiceopen(c_invoice_id, 0) > 0	AND C_BPartner_id = t.c_bpartner_id ORDER BY DATEACCT asc LIMIT 1 ) as fecha_fact_antigua, ");
-		sqlDoc.append(" 	( SELECT dateacct FROM C_INVOICE WHERE issotrx = 'Y' AND invoiceopen(c_invoice_id, 0) > 0	AND C_BPartner_id = t.c_bpartner_id ORDER BY DATEACCT desc LIMIT 1 ) as fecha_fact_reciente ");
+		sqlDoc.append(" SELECT T.C_BPARTNER_ID, T.NAME, C_BP_Group_ID, COALESCE(T.so_description,'') AS so_description, COALESCE(SUM(t.Credit),0.0) AS Credit, COALESCE(SUM(t.Debit),0.0) AS Debit, COALESCE(SUM(t.Debit),0.0) - COALESCE(SUM(t.Credit),0.0) AS balance,  ");
+		sqlDoc.append(" 	( SELECT dateacct FROM C_INVOICE WHERE issotrx = ")
+				.append(isSOtrx)
+				.append(" AND invoiceopen(c_invoice_id, 0) > 0	AND C_BPartner_id = t.c_bpartner_id ORDER BY DATEACCT asc LIMIT 1 ) as fecha_fact_antigua, ");
+		sqlDoc.append(" 	( SELECT dateacct FROM C_INVOICE WHERE issotrx = ")
+				.append(isSOtrx)
+				.append(" AND invoiceopen(c_invoice_id, 0) > 0	AND C_BPartner_id = t.c_bpartner_id ORDER BY DATEACCT desc LIMIT 1 ) as fecha_fact_reciente ");
 		sqlDoc.append(" FROM ");
 		sqlDoc.append(" ( ");
 		sqlDoc.append(" 	SELECT " ); 
 		sqlDoc.append(" 		d.c_bpartner_id, ");
 		sqlDoc.append(" 		bp.name, ");
 		sqlDoc.append(" 		bp.C_BP_Group_ID, ");
-		sqlDoc.append(" 		bp.so_description, ");
-		sqlDoc.append(" 		CASE WHEN d.signo_issotrx = 1 THEN "); 
+		sqlDoc.append(" 		bp.so_description, "); 
+		sqlDoc.append(" 		CASE WHEN d.signo_issotrx = ").append(debit_signo_issotrx).append(" THEN "); 
 		sqlDoc.append(" 			currencyconvert(d.amount, d.c_currency_id, ").append(client_Currency_ID).append(", ('"+ ((p_DateTrx_To != null) ? p_DateTrx_To + "'" : "now'::text") +")::timestamp(6) with time zone, COALESCE(c_conversiontype_id,0), d.ad_client_id, d.ad_org_id) "); 
 		sqlDoc.append(" 		ELSE 0.0 END AS Debit, "); 
-		sqlDoc.append(" 		CASE WHEN d.signo_issotrx = -1 THEN "); 
+		sqlDoc.append(" 		CASE WHEN d.signo_issotrx = ").append(credit_signo_issotrx).append(" THEN "); 
 		sqlDoc.append(" 			currencyconvert(d.amount, d.c_currency_id, ").append(client_Currency_ID).append(", ('"+ ((p_DateTrx_To != null) ? p_DateTrx_To + "'" : "now'::text") +")::timestamp(6) with time zone, COALESCE(c_conversiontype_id,0), d.ad_client_id, d.ad_org_id) "); 
 		sqlDoc.append(" 		ELSE 0.0 END AS Credit ");
 		sqlDoc.append(" 	FROM V_Documents d "); 
@@ -89,7 +112,10 @@ public class BalanceReport extends SvrProcess {
 		{
 			sqlDoc.append(" AND bp.C_BPartner_ID IN (");
 			sqlDoc.append(" 	SELECT DISTINCT c_bpartner_id FROM c_invoice ");
-			sqlDoc.append(" 	WHERE invoiceopen(c_invoice_id, 0) > 0 AND issotrx = 'Y' AND AD_Client_ID = ").append(getAD_Client_ID()).append(")");
+			sqlDoc.append(
+					" 	WHERE invoiceopen(c_invoice_id, 0) > 0 AND issotrx = ")
+					.append(isSOtrx).append(" AND AD_Client_ID = ")
+					.append(getAD_Client_ID()).append(")");
 		}
 		sqlDoc.append(" 	AND d.AD_Client_ID = ").append(getAD_Client_ID()); 
 		sqlDoc.append(" 	AND bp.isactive = 'Y' ");
@@ -120,7 +146,7 @@ public class BalanceReport extends SvrProcess {
 		{
 			subindice++;
 			usql.append(" INSERT INTO T_BALANCEREPORT (ad_pinstance_id, ad_client_id, ad_org_id, subindice, c_bpartner_id, observaciones, ");
-			usql.append("								credit, debit, balance, date_oldest_open_invoice, date_newest_open_invoice, sortcriteria, scope, c_bp_group_id, truedatetrx ) ");
+			usql.append("								credit, debit, balance, date_oldest_open_invoice, date_newest_open_invoice, sortcriteria, scope, c_bp_group_id, truedatetrx, accounttype ) ");
 			usql.append(" VALUES ( ")	.append(getAD_PInstance_ID()).append(",")
 										.append(getAD_Client_ID()).append(",")
 										.append(p_AD_Org_ID).append(",")
@@ -142,9 +168,10 @@ public class BalanceReport extends SvrProcess {
 				.append(" '").append(p_Scope).append("', ")
 				.append(rs.getInt("C_BP_Group_ID")).append(", ");
 			if (p_DateTrx_To!=null)
-				usql.append(" '").append(p_DateTrx_To).append("'::timestamp ");
+				usql.append(" '").append(p_DateTrx_To).append("'::timestamp, ");
 			else
-				usql.append("null ");
+				usql.append("null, ");
+			usql.append("'").append(p_AccountType).append("'");
 			usql.append(" ); ");
 		}
 		
