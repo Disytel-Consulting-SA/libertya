@@ -1,12 +1,13 @@
 /** Modelo Generado - NO CAMBIAR MANUALMENTE - Disytel */
 package org.openXpertya.model;
-import java.util.*;
+import java.util.logging.Level;
+ import java.util.*;
 import java.sql.*;
 import java.math.*;
 import org.openXpertya.util.*;
 /** Modelo Generado por M_Warehouse
  *  @author Comunidad de Desarrollo Libertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
- *  @version  - 2010-01-13 14:26:20.982 */
+ *  @version  - 2013-11-11 16:17:08.916 */
 public class X_M_Warehouse extends org.openXpertya.model.PO
 {
 /** Constructor estándar */
@@ -19,6 +20,7 @@ setC_Location_ID (0);
 setM_Warehouse_ID (0);
 setName (null);
 setSeparator (null);	// *
+setStockAvailableForSale (true);	// Y
 setValue (null);
 }
  */
@@ -198,6 +200,22 @@ public int getSplitting_Charge_ID()
 Integer ii = (Integer)get_Value("Splitting_Charge_ID");
 if (ii == null) return 0;
 return ii.intValue();
+}
+/** Set Stock Available For Sale */
+public void setStockAvailableForSale (boolean StockAvailableForSale)
+{
+set_Value ("StockAvailableForSale", new Boolean(StockAvailableForSale));
+}
+/** Get Stock Available For Sale */
+public boolean isStockAvailableForSale() 
+{
+Object oo = get_Value("StockAvailableForSale");
+if (oo != null) 
+{
+ if (oo instanceof Boolean) return ((Boolean)oo).booleanValue();
+ return "Y".equals(oo);
+}
+return false;
 }
 /** Set Search Key.
 Search key for the record in the format required - must be unique */
