@@ -54,11 +54,11 @@ from (select i.c_invoice_id,
 	inner join c_doctype as dt on dt.c_doctype_id = i.c_doctypetarget_id 
 	inner join ad_user as u on u.ad_user_id = i.salesrep_id
 	where i.ad_org_id = $P{AD_Org_ID}
-		AND i.docstatus IN ('CO','CL') 
 		AND dt.docbasetype = 'ARC' 
 		AND dt.doctypekey NOT IN ('RCR') 
 		AND date_trunc('day',i.dateinvoiced) >= date_trunc('day',$P{DateFrom}::date) 
-		AND date_trunc('day',i.dateinvoiced) <= date_trunc('day',$P{DateTo}::date)) as d 
+		AND date_trunc('day',i.dateinvoiced) <= date_trunc('day',$P{DateTo}::date)
+		AND (i.docstatus IN ('CL','CO') OR (i.docstatus IN ('VO','RE') AND (dt.isfiscal is null OR dt.isfiscal = 'N' OR (dt.isfiscal = 'Y' AND i.fiscalalreadyprinted = 'Y'))))) as d 
 order by dateinvoiced, documentno]]></queryString>
 
 	<field name="DOCUMENTNO" class="java.lang.String"/>
