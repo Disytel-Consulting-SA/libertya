@@ -17,6 +17,7 @@ import java.util.Vector;
 
 import org.openXpertya.model.MChangeLog;
 import org.openXpertya.model.MTableReplication;
+import org.openXpertya.model.X_AD_Client;
 import org.openXpertya.model.X_AD_Sequence;
 import org.openXpertya.model.X_C_BPartner;
 import org.openXpertya.model.X_C_Cash;
@@ -282,8 +283,8 @@ public class ReplicationXMLUpdater extends PluginXMLUpdater {
 			query.append( "null".equalsIgnoreCase(column.getNewValue()) ? "null" : quotes + column.getNewValue() + quotes);
 			retValue = true;
 		}
-		/* Tablas de traducciones, para el campo AD_Language no hay que resolver valores */
-		else if (tableName.toLowerCase().endsWith("_trl") && "AD_Language".equalsIgnoreCase(column.getName()))
+		/* Tablas AD_Client y tablas de traducciones, para el campo AD_Language no hay que resolver valores */
+		else if ((X_AD_Client.Table_Name.equalsIgnoreCase(tableName) || tableName.toLowerCase().endsWith("_trl")) && "AD_Language".equalsIgnoreCase(column.getName()))
 		{
 			query.append( quotes + column.getNewValue() + quotes);
 			retValue = true;
