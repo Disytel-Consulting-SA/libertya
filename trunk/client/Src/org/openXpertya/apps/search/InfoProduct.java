@@ -49,6 +49,7 @@ import org.openXpertya.model.MPriceList;
 import org.openXpertya.model.MPriceListVersion;
 import org.openXpertya.model.MQuery;
 import org.openXpertya.model.MRole;
+import org.openXpertya.model.X_M_Warehouse;
 import org.openXpertya.util.DB;
 import org.openXpertya.util.Env;
 import org.openXpertya.util.KeyNamePair;
@@ -157,12 +158,15 @@ public class InfoProduct extends Info implements ActionListener {
 	        //new Info_Column( Msg.translate( Env.getCtx(),"Discontinued" ).substring( 0,1 ),"p.Discontinued",Boolean.class ),
 	        new Info_Column( Msg.translate( Env.getCtx(),"Value" ),"p.Value",String.class ),
 	        new Info_Column( Msg.translate( Env.getCtx(),"Name" ),"p.Name",String.class ),
-	        new Info_Column( Msg.translate( Env.getCtx(),"QtyAvailable" ),"bomQtyAvailable(p.M_Product_ID,?,0) AS QtyAvailable",Double.class,true,true,null ),
+	        new Info_Column( Msg.translate( Env.getCtx(),"QtyAvailable" ),"infoproductbomqty('bomQtyAvailable',p.M_Product_ID,?,0) AS QtyAvailable",Double.class,true,true,null ),
 	        new Info_Column( Msg.translate( Env.getCtx(),"PriceList" ),"bomPriceList(p.M_Product_ID, pr.M_PriceList_Version_ID) AS PriceList",BigDecimal.class ),
 	        new Info_Column( Msg.translate( Env.getCtx(),"PriceStd" ),"bomPriceStd(p.M_Product_ID, pr.M_PriceList_Version_ID) AS PriceStd",BigDecimal.class ),
-	        new Info_Column( Msg.translate( Env.getCtx(),"QtyOnHand" ),"bomQtyOnHand(p.M_Product_ID,?,0) AS QtyOnHand",Double.class ),
-	        new Info_Column( Msg.translate( Env.getCtx(),"QtyReserved" ),"bomQtyReserved(p.M_Product_ID,?,0) AS QtyReserved",Double.class ),
-	        new Info_Column( Msg.translate( Env.getCtx(),"QtyOrdered" ),"bomQtyOrdered(p.M_Product_ID,?,0) AS QtyOrdered",Double.class )
+	        //new Info_Column( Msg.translate( Env.getCtx(),"QtyOnHand" ),"bomQtyOnHand(p.M_Product_ID,?,0) AS QtyOnHand",Double.class ),
+	        new Info_Column( Msg.translate( Env.getCtx(),"QtyOnHand" ),"infoproductbomqty('bomQtyOnHand',p.M_Product_ID,?,0) AS QtyOnHand",Double.class ),
+	        //new Info_Column( Msg.translate( Env.getCtx(),"QtyReserved" ),"bomQtyReserved(p.M_Product_ID,?,0) AS QtyReserved",Double.class ),
+	        new Info_Column( Msg.translate( Env.getCtx(),"QtyReserved" ),"infoproductbomqty('bomQtyReserved',p.M_Product_ID,?,0) AS QtyReserved",Double.class ),
+	        //new Info_Column( Msg.translate( Env.getCtx(),"QtyOrdered" ),"bomQtyOrdered(p.M_Product_ID,?,0) AS QtyOrdered",Double.class )
+	        new Info_Column( Msg.translate( Env.getCtx(),"QtyOrdered" ),"infoproductbomqty('bomQtyOrdered',p.M_Product_ID,?,0) AS QtyOrdered",Double.class )
 	        //new Info_Column( Msg.translate( Env.getCtx(),"Unconfirmed" ),"(SELECT SUM(c.TargetQty) FROM M_InOutLineConfirm c INNER JOIN M_InOutLine il ON (c.M_InOutLine_ID=il.M_InOutLine_ID) INNER JOIN M_InOut i ON (il.M_InOut_ID=i.M_InOut_ID) WHERE c.Processed='N' AND i.M_Warehouse_ID=? AND il.M_Product_ID=p.M_Product_ID) AS Unconfirmed",Double.class ),
 	        //new Info_Column( Msg.translate( Env.getCtx(),"Margin" ),"bomPriceStd(p.M_Product_ID, pr.M_PriceList_Version_ID)-bomPriceLimit(p.M_Product_ID, pr.M_PriceList_Version_ID) AS Margin",BigDecimal.class ),new Info_Column( Msg.translate( Env.getCtx(),"PriceLimit" ),"bomPriceLimit(p.M_Product_ID, pr.M_PriceList_Version_ID) AS PriceLimit",BigDecimal.class ),
 	        //new Info_Column( Msg.translate( Env.getCtx(),"IsInstanceAttribute" ),"pa.IsInstanceAttribute",Boolean.class )
@@ -863,10 +867,26 @@ public class InfoProduct extends Info implements ActionListener {
         if( wh != null ) {
             M_Warehouse_ID = wh.getKey();
         }
+        
+        String parameter_M_Warehouse_IDs = Integer.toString(M_Warehouse_ID);
+        // Si el ID de Almacén es 0 entonces no se ha seleciconado ningún almacén
+        if (M_Warehouse_ID == 0){
+        	// Itero por todos los almacénes del combo agregando los ID al parametro M_Warehouse_IDs
+        	for( int i = 0;i < getPickWarehouse().getItemCount();i++ ) {
+        		M_Warehouse_ID = (( KeyNamePair )pickWarehouse.getItemAt(i)).getKey();
+        		X_M_Warehouse warehouse = new X_M_Warehouse(Env.getCtx(), M_Warehouse_ID, null);
+        		// TODO Se deberá agregar un parámetro a la ventana InfoProduct para poder indicar si se quiere contemplar 
+        		// o no aquellas organizaciones que tiene la marca Stock Disponible para la Venta.
+        		if(warehouse.isStockAvailableForSale()){
+                	// El parametro M_Warehouse_IDs es una concatenación de los id separados por un guión. 
+        			parameter_M_Warehouse_IDs= parameter_M_Warehouse_IDs.concat(Integer.toString(M_Warehouse_ID)+"-");        			
+        		}
+        	}
+        }    
 
         for( int i = 0;i < p_layout.length;i++ ) {
             if( p_layout[ i ].getColSQL().indexOf( "?" ) != -1 ) {
-                pstmt.setInt( index++,M_Warehouse_ID );
+                pstmt.setString( index++, parameter_M_Warehouse_IDs);
             }
         }
 
