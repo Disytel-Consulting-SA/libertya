@@ -5561,3 +5561,96 @@ $BODY$
   LANGUAGE 'plpgsql' VOLATILE
   COST 100;
 ALTER FUNCTION replication_is_valid_reference(integer, character varying) OWNER TO libertya;
+
+-- 20131113-1750 Creación de la función infoproductbomqty utilizada en la ventana InfoProduct. 
+CREATE OR REPLACE FUNCTION infoproductbomqty(bomqtyname character varying, m_product_id numeric, m_warehouse_ids character varying, m_locator_id numeric)
+  RETURNS numeric AS
+$BODY$
+DECLARE
+	m_Warehouse_ID integer;
+	aux_m_warehouse_ids character varying;
+	totalQty numeric = 0;
+BEGIN
+    aux_m_warehouse_ids := m_warehouse_ids;
+    WHILE (char_length(aux_m_warehouse_ids) > 0) LOOP
+	IF (position('-' in m_warehouse_ids) = 0) THEN
+		m_Warehouse_ID := m_warehouse_ids;
+		aux_m_warehouse_ids := '';
+	ELSE
+		m_Warehouse_ID := cast(substring(aux_m_warehouse_ids from 1 for position('-' in aux_m_warehouse_ids)-1) as int);
+	END IF;
+	aux_m_warehouse_ids :=  substring(aux_m_warehouse_ids from position('-' in aux_m_warehouse_ids)+1 for char_length(aux_m_warehouse_ids));
+
+	IF (bomqtyname = 'bomQtyOnHand') THEN
+		totalQty := totalQty + bomQtyOnHand(ID(M_Product_ID),ID(M_Warehouse_ID),ID(M_Locator_ID));
+	ELSIF (bomqtyname = 'bomQtyAvailable') THEN
+		totalQty := totalQty + bomQtyAvailable(ID(M_Product_ID),ID(M_Warehouse_ID),ID(M_Locator_ID));
+	ELSIF (bomqtyname = 'bomQtyReserved') THEN
+		totalQty := totalQty + bomQtyReserved(ID(M_Product_ID),ID(M_Warehouse_ID),ID(M_Locator_ID));
+	ELSIF (bomqtyname = 'bomQtyOrdered') THEN
+		totalQty := totalQty + bomQtyOrdered(ID(M_Product_ID),ID(M_Warehouse_ID),ID(M_Locator_ID));
+	ELSE
+		RETURN 0;
+	END IF;
+    END LOOP;
+    RETURN totalQty;
+END;
+$BODY$
+  LANGUAGE 'plpgsql' VOLATILE
+  COST 100;
+ALTER FUNCTION infoproductbomqty(character varying, numeric, character varying, numeric) OWNER TO libertya;
+
+-- 20131113-1750 Modificación de la vista rv_storage_product_plus para que solo tenga en cuenta aquellos almacenes marcados como Disponibles para la Venta. 
+CREATE OR REPLACE VIEW rv_storage_product_plus AS 
+ SELECT p.ad_client_id, p.ad_org_id, p.m_product_id, p.value, p.name, p.m_product_category_id, p.m_warehouse_id, p.qtyonhand, p.qtyreserved, p.qtyavailable, p.qtyordered, ( SELECT po.c_bpartner_id
+           FROM m_product_po po
+          WHERE po.m_product_id = p.m_product_id
+          ORDER BY po.iscurrentvendor
+         LIMIT 1) AS c_bpartner_id, COALESCE(( SELECT pp.pricelist
+           FROM m_productprice pp
+      JOIN m_pricelist_version plv ON pp.m_pricelist_version_id = plv.m_pricelist_version_id
+   JOIN m_pricelist pl ON pl.m_pricelist_id = plv.m_pricelist_id
+  WHERE pl.issopricelist = 'Y'::bpchar AND pl.isactive = 'Y'::bpchar AND plv.isactive = 'Y'::bpchar AND pp.isactive = 'Y'::bpchar AND (pl.ad_org_id = p.ad_org_id OR pl.ad_org_id = 0) AND pp.m_product_id = p.m_product_id
+  ORDER BY pl.ad_org_id DESC, plv.validfrom DESC
+ LIMIT 1), 0::numeric) AS sales_pricelist, COALESCE(( SELECT pp.pricelist
+           FROM m_productprice pp
+      JOIN m_pricelist_version plv ON pp.m_pricelist_version_id = plv.m_pricelist_version_id
+   JOIN m_pricelist pl ON pl.m_pricelist_id = plv.m_pricelist_id
+  WHERE pl.issopricelist = 'N'::bpchar AND pl.isactive = 'Y'::bpchar AND plv.isactive = 'Y'::bpchar AND pp.isactive = 'Y'::bpchar AND (pl.ad_org_id = p.ad_org_id OR pl.ad_org_id = 0) AND pp.m_product_id = p.m_product_id
+  ORDER BY pl.ad_org_id DESC, plv.validfrom DESC
+ LIMIT 1), 0::numeric) AS cost_pricelist
+   FROM ( SELECT s.ad_client_id, s.ad_org_id, s.m_product_id, s.value, s.name, s.m_product_category_id, s.m_warehouse_id, sum(s.qtyonhand) AS qtyonhand, sum(s.qtyreserved) AS qtyreserved, sum(s.qtyavailable) AS qtyavailable, sum(s.qtyordered) AS qtyordered
+           FROM ( SELECT s.ad_client_id, s.ad_org_id, s.m_product_id, p.value, p.name, p.m_product_category_id, l.m_warehouse_id, s.qtyonhand, s.qtyreserved, s.qtyonhand - s.qtyreserved AS qtyavailable, s.qtyordered
+                   FROM m_storage s
+              JOIN m_locator l ON s.m_locator_id = l.m_locator_id
+              JOIN m_warehouse w ON w.m_warehouse_id = l.m_warehouse_id
+         JOIN m_product p ON s.m_product_id = p.m_product_id 
+         WHERE (w.StockAvailableForSale = 'Y')) s
+          GROUP BY s.ad_client_id, s.ad_org_id, s.m_product_id, s.value, s.name, s.m_product_category_id, s.m_warehouse_id) p;
+
+ALTER TABLE rv_storage_product_plus OWNER TO libertya;
+
+-- 20131113-1750 Modificación de la vista rv_storage para que solo tenga en cuenta aquellos almacenes marcados como Disponibles para la Venta.
+CREATE OR REPLACE VIEW rv_storage AS 
+ SELECT s.ad_client_id, s.ad_org_id, s.m_product_id, p.value, p.name, p.description, p.upc, p.sku, p.c_uom_id, p.m_product_category_id, p.classification, p.weight, p.volume, p.versionno, p.guaranteedays, p.guaranteedaysmin, s.m_locator_id, l.m_warehouse_id, l.x, l.y, l.z, s.qtyonhand, s.qtyreserved, s.qtyonhand - s.qtyreserved AS qtyavailable, s.qtyordered, s.datelastinventory, s.m_attributesetinstance_id, asi.m_attributeset_id, asi.serno, asi.lot, asi.m_lot_id, asi.guaranteedate, 
+        CASE
+            WHEN asi.guaranteedate IS NULL THEN NULL::integer
+            ELSE daysbetween(asi.guaranteedate::timestamp with time zone, now())
+        END AS shelflifedays, 
+        CASE
+            WHEN asi.guaranteedate IS NULL THEN NULL::numeric
+            ELSE daysbetween(asi.guaranteedate::timestamp with time zone, now())::numeric - p.guaranteedaysmin
+        END AS goodfordays, 
+        CASE
+            WHEN asi.guaranteedate IS NULL THEN NULL::numeric
+            WHEN p.guaranteedays = 0::numeric THEN NULL::numeric
+            ELSE round(daysbetween(asi.guaranteedate::timestamp with time zone, now())::numeric / p.guaranteedays * 100::numeric, 0)
+        END AS shelfliferemainingpct
+   FROM m_storage s
+   JOIN m_locator l ON s.m_locator_id = l.m_locator_id
+   JOIN m_warehouse w ON w.m_warehouse_id = l.m_warehouse_id
+   JOIN m_product p ON s.m_product_id = p.m_product_id
+   LEFT JOIN m_attributesetinstance asi ON s.m_attributesetinstance_id = asi.m_attributesetinstance_id
+   WHERE (w.StockAvailableForSale = 'Y');
+
+ALTER TABLE rv_storage OWNER TO libertya;
