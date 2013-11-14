@@ -45,6 +45,8 @@ public class CopyProcessParameters extends SvrProcess {
 			if(!newParam.save()){
 				throw new Exception(CLogger.retrieveErrorAsString());
 			}
+			// Copiar traducciones
+			newParam.copyTranslation(paramsSrc[i]);
 		}
 		return "@CopiedParameters@: "+paramsSrc.length;
 	}
