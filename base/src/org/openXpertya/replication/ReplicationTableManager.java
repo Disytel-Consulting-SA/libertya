@@ -220,8 +220,8 @@ public class ReplicationTableManager {
 				query.append(" UNION ALL ");
 			}
 			// Finalizacion del query
-			query.append(" SELECT NULL, NULL, NULL, NULL ");							// por el ultimo union...
-			query.append(" ) AS foo WHERE tablename IS NOT NULL ORDER BY CREATED ");	// (se ignora en este where)
+			query.append(" SELECT NULL::varchar as tablename, NULL::varchar as retrieveuid, NULL::varchar as reparray, NULL::timestamp as created "); // por el ultimo union...
+			query.append(" ) AS foo WHERE tablename IS NOT NULL ORDER BY CREATED ");																  // (se ignora en este where)
 			
 			recordsForReplicationQuery = query.toString();
 		}
