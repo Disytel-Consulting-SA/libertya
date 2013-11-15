@@ -782,7 +782,7 @@ public class ProductPriceTemp extends SvrProcess {
 	            // Incluir impuesto del artículo
 	            sql       = new StringBuffer( "UPDATE I_ProductPrice p SET PriceList = " );
 
-	            String addTaxSql = " (coalesce((select rate from m_product pro inner join c_taxcategory tc on tc.c_taxcategory_id = pro.c_taxcategory_id inner join c_tax t on t.c_taxcategory_id = tc.c_taxcategory_id where pro.m_product_id = p.m_product_id and t.isactive = 'Y' order by t.isdefault desc limit 1),0.00)/100)::numeric(9,2) ";
+	            String addTaxSql = " (coalesce((select rate from m_product pro inner join c_taxcategory tc on tc.c_taxcategory_id = pro.c_taxcategory_id inner join c_tax t on t.c_taxcategory_id = tc.c_taxcategory_id where pro.m_product_id = p.m_product_id and t.isactive = 'Y' order by t.isdefault desc limit 1),0.00)/100) ";
 	            
 	            if( rs.getString( "List_AddProductTax" ).equalsIgnoreCase("Y") ) {
 	            	
