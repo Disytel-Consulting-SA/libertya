@@ -98,8 +98,9 @@ public class LibroIVANewDataSource implements JRDataSource {
 		methodMapper.put("UPDATED", "getUpdated");	
 		methodMapper.put("UPDATEDBY", "getUpdatedby");
 		methodMapper.put("C_INVOICE_ID", "getC_invoice_id");
-		methodMapper.put("ISSOTRX", "getIsSoTrx");	
+		methodMapper.put("ISSOTRX", "isSoTrx");	
 		methodMapper.put("DATEACCT", "getDateacct");
+		methodMapper.put("DATEINVOICED", "getDateinvoiced");
 		methodMapper.put("TIPODOCNAME", "getTipodocname");
 		methodMapper.put("DOCUMENTNO", "getDocumentno");
 		methodMapper.put("C_BPARTNER_NAME", "getBpartner_name");
@@ -127,6 +128,7 @@ public class LibroIVANewDataSource implements JRDataSource {
 		  "			inv.c_invoice_id, " +
 		  "			inv.issotrx, " +
 		  "			date_trunc('day',inv.dateacct) as dateacct, " +
+		  "			date_trunc('day',inv.dateinvoiced) as dateinvoiced, " +
 		  "			cdt.printname, " +
 		  "			inv.documentno, " +
 		  "			cbp.c_bpartner_name, " +
@@ -222,6 +224,7 @@ public class LibroIVANewDataSource implements JRDataSource {
 			MLibroIVALine lineAux;
 			while(rs.next())
 			{
+				Date dateinvoiced= rs.getDate("dateinvoiced");
 				Date dateAcct= rs.getDate("dateacct");
 				actualDocTypeID = rs.getInt("c_doctype_id");
 				actualDate = simpleDateFormat.format(dateAcct);
@@ -256,6 +259,7 @@ public class LibroIVANewDataSource implements JRDataSource {
 				//netoGravado=neto.subtract(netoNoGravado);
 				BigDecimal neto = netoNoGravado.add(netoGravado);
 				BigDecimal importe= rs.getBigDecimal("importe");
+				String isSoTrx= rs.getString("isSoTrx");
 				//BigDecimal total= importe.add(netoGravado.add(netoNoGravado));
 				BigDecimal realTotal = rs.getBigDecimal("total"); 
 				BigDecimal total = realTotal;
@@ -281,7 +285,7 @@ public class LibroIVANewDataSource implements JRDataSource {
 						&& (oldDate == null || actualDate.equalsIgnoreCase(oldDate))) {
 					lineAux = groupedInvoicesByIVA.get(item);
 					if(lineAux == null){
-						lineAux = new MLibroIVALine(dateAcct, tipodocname,
+						lineAux = new MLibroIVALine(dateinvoiced, dateAcct, tipodocname,
 								documentno, c_bpartner_name, taxid,
 								c_categoria_via_name,
 								neto == null ? BigDecimal.ZERO : neto,
@@ -291,7 +295,7 @@ public class LibroIVANewDataSource implements JRDataSource {
 										: netoNoGravado,
 								total == null ? BigDecimal.ZERO : realTotal,
 								item, importe == null ? BigDecimal.ZERO
-										: importe);
+										: importe, isSoTrx);
 					}
 					else{
 						lineAux.setDocumentno(rs.getInt("puntodeventa") == 0 ? "-"
@@ -314,10 +318,10 @@ public class LibroIVANewDataSource implements JRDataSource {
 					groupedInvoicesByIVA.put(item, lineAux);
 				}
 				else{
-					m_lines[i] = new MLibroIVALine(dateAcct, tipodocname,
+					m_lines[i] = new MLibroIVALine(dateinvoiced, dateAcct, tipodocname,
 							documentno, c_bpartner_name, taxid,
 							c_categoria_via_name, neto, netoGravado,
-							netoNoGravado, total, item, importe);
+							netoNoGravado, total, item, importe, isSoTrx);
 					i++;
 				}
 				total_lines=i;
@@ -707,6 +711,7 @@ public class LibroIVANewDataSource implements JRDataSource {
 
 class MLibroIVALine {
 	
+	private Date dateinvoiced;
 	private Date dateacct;
 	private String tipodocname;
 	private String documentno;
@@ -727,13 +732,14 @@ class MLibroIVALine {
 	private String updatedby;
 	private Date updated;
 	private boolean isActive;
-	private boolean isSoTrx;
+	private String isSoTrx;
 	
 	
-	public MLibroIVALine(Date dateacct, String tipodocname, String documentno,
+	public MLibroIVALine(Date dateinvoiced, Date dateacct, String tipodocname, String documentno,
 			String bpartnerName, String taxid, String cCategoriaViaName, BigDecimal neto,BigDecimal netoGravado,BigDecimal netoNoGravado, BigDecimal total,
-			String item, BigDecimal importe) {
+			String item, BigDecimal importe, String isSoTrx) {
 		super();
+		this.dateinvoiced = dateinvoiced;
 		this.dateacct = dateacct;
 		this.tipodocname = tipodocname;
 		this.documentno = documentno;
@@ -746,8 +752,16 @@ class MLibroIVALine {
 		this.item = item;
 		this.importe = importe;
 		this.total = total;
+		this.isSoTrx = isSoTrx;
 	}
 	
+	
+	public Date getDateinvoiced() {
+		return dateinvoiced;
+	}
+	public void setDateinvoiced(Date dateinvoiced) {
+		this.dateinvoiced = dateinvoiced;
+	}
 	public Date getDateacct() {		
 		return dateacct;
 	}
@@ -889,11 +903,11 @@ class MLibroIVALine {
 		this.updated = updated;
 	}
 
-	public boolean isSoTrx() {
+	public String isSoTrx() {
 		return isSoTrx;
 	}
 
-	public void setSoTrx(boolean isSoTrx) {
+	public void setSoTrx(String isSoTrx) {
 		this.isSoTrx = isSoTrx;
 	}
 

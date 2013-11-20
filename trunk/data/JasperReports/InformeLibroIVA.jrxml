@@ -53,6 +53,8 @@
 	<field name="IMPORTE" class="java.math.BigDecimal"/>
 	<field name="NETONOGRAVADO" class="java.math.BigDecimal"/>
 	<field name="NETOGRAVADO" class="java.math.BigDecimal"/>
+	<field name="DATEINVOICED" class="java.util.Date"/>
+	<field name="ISSOTRX" class="java.lang.String"/>
 
 	<variable name="SUBTOTAL" class="java.math.BigDecimal" resetType="Group" resetGroup="TIPODOC" calculation="Sum">
 		<variableExpression><![CDATA[$F{TOTAL}]]></variableExpression>
@@ -528,7 +530,7 @@
 					<textElement textAlignment="Center">
 						<font size="7"/>
 					</textElement>
-				<textFieldExpression   class="java.util.Date"><![CDATA[$F{DATEACCT}]]></textFieldExpression>
+				<textFieldExpression   class="java.util.Date"><![CDATA["Y".equalsIgnoreCase( $F{ISSOTRX} ) ? $F{DATEACCT} : $F{DATEINVOICED}]]></textFieldExpression>
 				</textField>
 				<textField isStretchWithOverflow="false" isBlankWhenNull="false" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
