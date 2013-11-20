@@ -65,7 +65,7 @@ public class PurchaseMasterDataSource extends QueryDataSource {
 			sql.append("INNER JOIN m_product_gamas as pg ON pg.m_product_gamas_id = pc.m_product_gamas_id ");
 			sql.append("INNER JOIN m_product_lines as pls ON pls.m_product_lines_id = pg.m_product_lines_id ");
 		}
-		sql.append("WHERE po.isactive = 'Y' AND p.isactive = 'Y' AND po.c_bpartner_id = ? ");
+		sql.append("WHERE po.isactive = 'Y' AND p.isactive = 'Y' AND p.ispurchased = 'Y' AND po.c_bpartner_id = ? ");
 		if(!Util.isEmpty(getProductLinesID(), true)){
 			sql.append(" AND pls.m_product_lines_id = ? ");
 		}
