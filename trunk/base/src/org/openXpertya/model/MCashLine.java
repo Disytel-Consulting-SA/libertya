@@ -420,6 +420,8 @@ public class MCashLine extends X_C_CashLine implements DocAction {
         // Verify CashType
 
         if( CASHTYPE_Invoice.equals( getCashType())  ) {
+        	// no permitir cargo cuando es de tipo factura
+        	setC_Charge_ID(0);
         	if (getC_Invoice_ID() == 0 && !isGenerated()) {	// si es generada, entonces permitir C_Invoice_ID vacio
         		setCashType( CASHTYPE_GeneralExpense );
         	}
