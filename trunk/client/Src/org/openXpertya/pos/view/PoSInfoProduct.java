@@ -38,7 +38,7 @@ public class PoSInfoProduct extends InfoProduct {
 	        //new Info_Column( Msg.translate( Env.getCtx(),"Discontinued" ).substring( 0,1 ),"p.Discontinued",Boolean.class ),
 	        new Info_Column( getFromCache( "Value" ),"p.Value",String.class ),
 	        new Info_Column( getFromCache( "Name" ),"p.Name",String.class ),
-	        new Info_Column( getFromCache( "QtyAvailable" ),"bomQtyAvailable(p.M_Product_ID,?,0) AS QtyAvailable",Double.class,true,true,null ),
+	        new Info_Column( getFromCache( "QtyAvailable" ),"infoproductbomqty('bomQtyOnHand',p.M_Product_ID,?,0) AS QtyOnHand",Double.class,true,true,null ),
 	        new Info_Column( getFromCache( "PriceStd" ),"bomPriceStd(p.M_Product_ID, pr.M_PriceList_Version_ID) AS PriceStd",BigDecimal.class ),
 	        //new Info_Column( Msg.translate( Env.getCtx(),"Unconfirmed" ),"(SELECT SUM(c.TargetQty) FROM M_InOutLineConfirm c INNER JOIN M_InOutLine il ON (c.M_InOutLine_ID=il.M_InOutLine_ID) INNER JOIN M_InOut i ON (il.M_InOut_ID=i.M_InOut_ID) WHERE c.Processed='N' AND i.M_Warehouse_ID=? AND il.M_Product_ID=p.M_Product_ID) AS Unconfirmed",Double.class ),
 	        //new Info_Column( Msg.translate( Env.getCtx(),"Margin" ),"bomPriceStd(p.M_Product_ID, pr.M_PriceList_Version_ID)-bomPriceLimit(p.M_Product_ID, pr.M_PriceList_Version_ID) AS Margin",BigDecimal.class ),new Info_Column( Msg.translate( Env.getCtx(),"PriceLimit" ),"bomPriceLimit(p.M_Product_ID, pr.M_PriceList_Version_ID) AS PriceLimit",BigDecimal.class ),

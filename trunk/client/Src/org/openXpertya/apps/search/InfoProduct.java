@@ -1215,17 +1215,17 @@ public class InfoProduct extends Info implements ActionListener {
                 // new Info_Column(Msg.translate(Env.getCtx(), "Value"), "p.Value", String.class),
 
                 new Info_Column( Msg.translate( Env.getCtx(),"Name" ),"p.Name",String.class ),
-                new Info_Column( Msg.translate( Env.getCtx(),"QtyAvailable" ),"bomQtyAvailable(p.M_Product_ID,?,0) AS QtyAvailable",Double.class,true,true,null ),
+                new Info_Column( Msg.translate( Env.getCtx(),"QtyAvailable" ),"infoproductbomqty('bomQtyAvailable',p.M_Product_ID,?,0) AS QtyAvailable",Double.class,true,true,null ),
                 //new Info_Column( Msg.translate( Env.getCtx(),"PriceList" ),"bomPriceList(p.M_Product_ID, pr.M_PriceList_Version_ID) AS PriceList",BigDecimal.class ),
                 //new Info_Column( Msg.translate( Env.getCtx(),"PriceStd" ),"bomPriceStd(p.M_Product_ID, pr.M_PriceList_Version_ID) AS PriceStd",BigDecimal.class ),
                 new Info_Column( "Einzel MWSt","pr.PriceStd * 1.16",BigDecimal.class ),new Info_Column( "Einzel kompl","(pr.PriceStd+13) * 1.16",BigDecimal.class ),
-                new Info_Column( "Satz kompl","((pr.PriceStd+13) * 1.16) * 4",BigDecimal.class ),new Info_Column( Msg.translate( Env.getCtx(),"QtyOnHand" ),"bomQtyOnHand(p.M_Product_ID,?,0) AS QtyOnHand",Double.class ),
-                new Info_Column( Msg.translate( Env.getCtx(),"QtyReserved" ),"bomQtyReserved(p.M_Product_ID,?,0) AS QtyReserved",Double.class ),new Info_Column( Msg.translate( Env.getCtx(),"QtyOrdered" ),"bomQtyOrdered(p.M_Product_ID,?,0) AS QtyOrdered",Double.class ),
+                new Info_Column( "Satz kompl","((pr.PriceStd+13) * 1.16) * 4",BigDecimal.class ),new Info_Column( Msg.translate( Env.getCtx(),"QtyOnHand" ),"infoproductbomqty('bomQtyOnHand',p.M_Product_ID,?,0) AS QtyOnHand",Double.class ),
+                new Info_Column( Msg.translate( Env.getCtx(),"QtyReserved" ),"infoproductbomqty('bomQtyReserved',p.M_Product_ID,?,0) AS QtyReserved",Double.class ),new Info_Column( Msg.translate( Env.getCtx(),"QtyOrdered" ),"infoproductbomqty('bomQtyOrdered',p.M_Product_ID,?,0) AS QtyOrdered",Double.class ),
                 new Info_Column( Msg.translate( Env.getCtx(),"Discontinued" ).substring( 0,1 ),"p.Discontinued",Boolean.class ),new Info_Column( Msg.translate( Env.getCtx(),"Margin" ),"bomPriceStd(p.M_Product_ID, pr.M_PriceList_Version_ID)-bomPriceLimit(p.M_Product_ID, pr.M_PriceList_Version_ID) AS Margin",BigDecimal.class ),
                 new Info_Column( Msg.translate( Env.getCtx(),"PriceLimit" ),"bomPriceLimit(p.M_Product_ID, pr.M_PriceList_Version_ID) AS PriceLimit",BigDecimal.class ),
                 new Info_Column( Msg.translate( Env.getCtx(),"IsInstanceAttribute" ),"pa.IsInstanceAttribute",Boolean.class ),
             };
-             
+	        
             INDEX_NAME       = 2;
             INDEX_PATTRIBUTE = s_productLayout.length - 1;    // last item
 
