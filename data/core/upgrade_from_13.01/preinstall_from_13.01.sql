@@ -5654,3 +5654,6 @@ CREATE OR REPLACE VIEW rv_storage AS
    WHERE (w.StockAvailableForSale = 'Y');
 
 ALTER TABLE rv_storage OWNER TO libertya;
+
+-- 20131122-1815 Incorporación de nueva columna en C_Controlador_Fiscal para permitir imprimir el campo descripción de línea en el ticket fiscal
+update ad_system set dummy = (SELECT addcolumnifnotexists('C_Controlador_Fiscal','OnlyLineDescription', 'character(1) NOT NULL DEFAULT ''N''::bpchar'));

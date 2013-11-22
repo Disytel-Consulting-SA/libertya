@@ -1995,21 +1995,27 @@ public class FiscalDocumentPrint {
 			/* Usar alguna de las combinaciones CLAVE NOMBRE - NOMBRE CLAVE - NOMBRE - CLAVE */
 			else
 			{
-				// recuperar clave y nombre del articulo
-				if (aProduct.getValue() != null && !aProduct.getValue().trim().isEmpty()) 
-					value = aProduct.getValue().trim();
-				if (aProduct.getName() != null && !aProduct.getName().trim().isEmpty())
-					name = aProduct.getName().trim();
-				
-				// armar la descripción según la selección
-				if (MControladorFiscal.ONPRINTPRODUCTFORMAT_Name.equals(cFiscal.getOnPrintProductFormat()))
-					description = name;
-				if (MControladorFiscal.ONPRINTPRODUCTFORMAT_Value.equals(cFiscal.getOnPrintProductFormat()))
-					description = value;
-				if (MControladorFiscal.ONPRINTPRODUCTFORMAT_NameValue.equals(cFiscal.getOnPrintProductFormat()))
-					description = name + " " + value;
-				if (MControladorFiscal.ONPRINTPRODUCTFORMAT_ValueName.equals(cFiscal.getOnPrintProductFormat()))
-					description = value + " " + name;	
+				// Si se encuentra marcada la opción "Solo Descripción de Línea" y la descripción no es vacía.
+				if (cFiscal.isOnlyLineDescription() && (!Util.isEmpty(mLine.getDescription()))){
+					description = mLine.getDescription();
+				}
+				else{
+					// recuperar clave y nombre del articulo
+					if (aProduct.getValue() != null && !aProduct.getValue().trim().isEmpty()) 
+						value = aProduct.getValue().trim();
+					if (aProduct.getName() != null && !aProduct.getName().trim().isEmpty())
+						name = aProduct.getName().trim();
+					
+					// armar la descripción según la selección
+					if (MControladorFiscal.ONPRINTPRODUCTFORMAT_Name.equals(cFiscal.getOnPrintProductFormat()))
+						description = name;
+					if (MControladorFiscal.ONPRINTPRODUCTFORMAT_Value.equals(cFiscal.getOnPrintProductFormat()))
+						description = value;
+					if (MControladorFiscal.ONPRINTPRODUCTFORMAT_NameValue.equals(cFiscal.getOnPrintProductFormat()))
+						description = name + " " + value;
+					if (MControladorFiscal.ONPRINTPRODUCTFORMAT_ValueName.equals(cFiscal.getOnPrintProductFormat()))
+						description = value + " " + name;	
+				}
 			}
 		}	
 		
