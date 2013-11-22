@@ -7,7 +7,7 @@ import java.math.*;
 import org.openXpertya.util.*;
 /** Modelo Generado por C_Controlador_Fiscal
  *  @author Comunidad de Desarrollo Libertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
- *  @version  - 2013-10-31 19:36:46.252 */
+ *  @version  - 2013-11-22 18:22:25.632 */
 public class X_C_Controlador_Fiscal extends org.openXpertya.model.PO
 {
 /** Constructor estándar */
@@ -23,6 +23,7 @@ setCmdCancelBeforePrintDocument (false);
 sethost (null);
 setIsRemote (false);
 setName (null);
+setOnlyLineDescription (false);
 setOnPrintProductFormat (null);
 setOnPrintUseProductReference (false);
 setPort (0);
@@ -199,6 +200,22 @@ return (String)get_Value("Name");
 public KeyNamePair getKeyNamePair() 
 {
 return new KeyNamePair(getID(), getName());
+}
+/** Set Only Line Description */
+public void setOnlyLineDescription (boolean OnlyLineDescription)
+{
+set_Value ("OnlyLineDescription", new Boolean(OnlyLineDescription));
+}
+/** Get Only Line Description */
+public boolean isOnlyLineDescription() 
+{
+Object oo = get_Value("OnlyLineDescription");
+if (oo != null) 
+{
+ if (oo instanceof Boolean) return ((Boolean)oo).booleanValue();
+ return "Y".equals(oo);
+}
+return false;
 }
 public static final int ONPRINTPRODUCTFORMAT_AD_Reference_ID = MReference.getReferenceID("PrintProductFormat");
 /** Name = N */
