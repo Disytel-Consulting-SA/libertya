@@ -66,7 +66,7 @@ public class PluginXMLUpdater {
 	protected final static String savePointName = "installSavePoint";
 	
 	/** Indicador de actividad */
-	protected String[] animation = {".", "..", "...", "....", ".....", "......", ".......", "........", ".........", ".........."}; // {"-", "\\", "|", "/"};
+	protected String[] animation = {":.........", ".:........", "..:.......", "...:......", "....:.....", ".....:....", "......:...", ".......:..", "........:.", ".........:", "........:.", ".......:..", "......:...", ".....:....", "....:.....", "...:......", "..:.......", ".:........"}; // {"-", "\\", "|", "/"};
 	
 	/** Si esta activado, la instalacion de un componente implicará no solo impactar en las tablas, sino que tambien copiará 
 	 *  la instalación en el changelog, quedando la base de datos destino como lista a exportar dicho componente */
@@ -142,7 +142,7 @@ public class PluginXMLUpdater {
 				
 				sentence = "";
 				currentChangeGroup = changeGroup;
-				PluginUtils.appendStatus(animation[iter++%animation.length], true, false, false, false);
+				PluginUtils.appendStatus("[" + iter + "]" + animation[iter++%animation.length], true, false, false, false);
 				if (MChangeLog.OPERATIONTYPE_Insertion.equals(changeGroup.getOperation()))
 					sentence = processInsert(changeGroup).toString();
 				else if (MChangeLog.OPERATIONTYPE_Modification.equals(changeGroup.getOperation()))
