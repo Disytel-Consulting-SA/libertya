@@ -39,10 +39,10 @@ import org.openXpertya.utils.JarHelper;
 public class VPluginInstaller extends CPanel implements FormPanel, ASyncProcess {
 	
 	/* Componentes de la clase */
-	private Properties m_ctx;
-	private Properties m_component_props;
-	private String m_trx;
-	private int m_WindowNo;
+	protected static Properties m_ctx;
+	protected Properties m_component_props;
+	protected String m_trx;
+	protected int m_WindowNo;
 	private FormFrame m_frame;
 	private VFile fileChooser;
 	private CButton doInstallButton;
@@ -218,8 +218,8 @@ public class VPluginInstaller extends CPanel implements FormPanel, ASyncProcess 
 						
 						/* PostInstalacion - Invocar proceso genérico o ad-hoc */
 						PluginUtils.appendStatus(" === Disparando proceso de postinstalación === ");
-						boolean postInstallInvoked = VPluginInstallerUtils.doPostInstall(m_ctx, m_trx, fileChooser.getDisplay(), PluginConstants.URL_INSIDE_JAR + PluginConstants.FILENAME_POSTINSTALL, m_component_props, VPluginInstaller.this);
-						if (!postInstallInvoked)
+						ProcessInfo pi = VPluginInstallerUtils.doPostInstall(m_ctx, m_trx, fileChooser.getDisplay(), PluginConstants.URL_INSIDE_JAR + PluginConstants.FILENAME_POSTINSTALL, m_component_props, VPluginInstaller.this);
+						if (pi==null) // si el proceso de instalacion no fue invocado, llamar al installFinalize manualmente 
 							performInstallFinalize();
 					} catch (Exception e) {
 						return e;
@@ -253,7 +253,7 @@ public class VPluginInstaller extends CPanel implements FormPanel, ASyncProcess 
 	 * Finalización del proceso de instalación de un plugin (sin existencia de postInstall)
 	 * Debe manejar las excepciones correspondientes
 	 */
-	private void performInstallFinalize()
+	protected void performInstallFinalize()
 	{
 		performInstallFinalize(null);
 	}
@@ -262,7 +262,7 @@ public class VPluginInstaller extends CPanel implements FormPanel, ASyncProcess 
 	 * Finalización del proceso de instalación de un plugin (con existencia de postInstall)
 	 * Debe manejar las excepciones correspondientes
 	 */
-	private void performInstallFinalize(ProcessInfo pi)
+	protected void performInstallFinalize(ProcessInfo pi)
 	{
 		try
 		{
@@ -311,7 +311,7 @@ public class VPluginInstaller extends CPanel implements FormPanel, ASyncProcess 
 	/**
 	 * Almacena en archivo correspondiente el log de instalacion 
 	 */
-	private void writeInstallLog()
+	protected void writeInstallLog()
 	{
 		String prefix = (String)m_component_props.get(PluginConstants.PROP_PREFIX);
 		String fileName = "Component_" + prefix + "_install_" + Env.getDateTime("yyyyMMdd_HHmmss") + ".log";
@@ -322,7 +322,7 @@ public class VPluginInstaller extends CPanel implements FormPanel, ASyncProcess 
 	/**
 	 * Muestra el detalle del plugin en pantalla
 	 */
-	private void showPluginDetails()
+	protected void showPluginDetails()
 	{
 		try
 		{
@@ -345,7 +345,7 @@ public class VPluginInstaller extends CPanel implements FormPanel, ASyncProcess 
 	/**
 	 * En caso de error al realizar la instalación rollbackear la trx, detener la instalacion e informar 
 	 */
-	private void handleException(String msg, Exception e)
+	protected void handleException(String msg, Exception e)
 	{
 		/* Error en algún punto, rollback e informar al usuario */
 		Trx.getTrx(m_trx).rollback();

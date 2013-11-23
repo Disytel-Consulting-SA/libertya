@@ -1,16 +1,12 @@
 package org.openXpertya.apps.form;
 
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Properties;
 
 import org.openXpertya.apps.ProcessCtl;
 import org.openXpertya.model.MComponent;
 import org.openXpertya.model.MComponentVersion;
 import org.openXpertya.model.MProcess;
-import org.openXpertya.model.MProcessAccess;
-import org.openXpertya.model.PO;
 import org.openXpertya.model.POInfo;
 import org.openXpertya.model.X_AD_Plugin;
 import org.openXpertya.plugin.common.PluginConstants;
@@ -192,7 +188,7 @@ public class VPluginInstallerUtils  {
 	 * Entrada principal a la ejecución del proceso de PostInstalación
   	 * @throws Exception
 	 */
-	public static boolean doPostInstall(Properties ctx, String trxName, String jarURL, String fileURL, Properties props, VPluginInstaller installer) throws Exception
+	public static ProcessInfo doPostInstall(Properties ctx, String trxName, String jarURL, String fileURL, Properties props, VPluginInstaller installer) throws Exception
 	{
 		/* Toma el archivo XML correspondiente, genera las sentencias SQL correspondientes e impacta en la base de datos */
 		String xml = JarHelper.readFromJar(jarURL, fileURL, "", null);
@@ -212,14 +208,20 @@ public class VPluginInstallerUtils  {
 	        pi.setParameter(addToArray(pi.getParameter(), xtraParamJARLocation));
 	        
 	        /* Invocar la ejecución del proceso, si el mismo devuelve null es porque se cancelo en los parametros */
-	        ProcessCtl worker = ProcessCtl.process(installer, installer.getM_WindowNo(), pi, Trx.getTrx(trxName));
-	        if (worker == null)
-	        	throw new Exception (" Instalacion cancelada en post configuracion! ");
-	        
-	        return true;
+	        if (installer != null) {
+		        ProcessCtl worker = ProcessCtl.process(installer, installer.getM_WindowNo(), pi, Trx.getTrx(trxName));
+		        if (worker == null)
+		        	throw new Exception (" Instalacion cancelada en post configuracion! ");
+	        }
+	        /* Si installer es null, entonces la invocacion no es gestionada por una ventana, sino desde terminal */
+	        else {
+	        	MProcess process = new MProcess(ctx, postInstallProcessId, trxName);
+	        	MProcess.execute(ctx, process, pi, trxName);
+	        }
+	        return pi;
 	        
 		}
-		return false;
+		return null;
 	}
 	
 	
