@@ -3,6 +3,7 @@ package org.openXpertya.apps.form;
 import java.util.HashMap;
 import java.util.Properties;
 
+import org.openXpertya.OpenXpertya;
 import org.openXpertya.apps.ProcessCtl;
 import org.openXpertya.model.MComponent;
 import org.openXpertya.model.MComponentVersion;
@@ -10,6 +11,7 @@ import org.openXpertya.model.MProcess;
 import org.openXpertya.model.POInfo;
 import org.openXpertya.model.X_AD_Plugin;
 import org.openXpertya.plugin.common.PluginConstants;
+import org.openXpertya.plugin.common.PluginUtils;
 import org.openXpertya.plugin.install.PluginXMLUpdater;
 import org.openXpertya.process.ProcessInfo;
 import org.openXpertya.process.ProcessInfoParameter;
@@ -30,6 +32,113 @@ public class VPluginInstallerUtils  {
 
 	/** Plugin que se esta registrando o actualizando */
 	protected static X_AD_Plugin plugin = null;
+
+	/** Numero de errores en instalacion */
+	protected static int installErrorsLength = 0;
+	
+	/** Numero de errores en post-instalacion */
+	protected static int postInstallErrorsLength = 0;
+
+	/** Trx a usar en la instalacion */
+	protected static String m_trx;
+	
+	/**
+	 * Realiza todos los pasos de la instalación.  Pre-actual-Post.  
+	 * @param jarURL ubicacion del Jar
+	 * @param m_ctx Entorno
+	 * @param m_trx nombre de la transaccion
+	 * @param m_component_props propiedades del Jar
+	 * @param owner gestor Swing o null si es invocado desde terminal
+	 * @return resultado del ProcessInfo de PostInstall
+	 * @throws Exception en caso de error
+	 */
+	public static ProcessInfo performInstall(String jarURL, Properties m_ctx, Properties m_component_props, VPluginInstaller owner) throws Exception 
+	{
+		/* Iniciar la transacción y setear componente global */
+		m_trx = Trx.createTrxName();
+		Trx.getTrx(m_trx).start();
+		PluginUtils.startInstalation(m_trx);									
+		
+		/* Instalacion por etapas: pre - install - post */
+		PluginUtils.appendStatus(" === Instalando Componente y Version. Registrando Plugin === ");
+		createComponentAndVersion(m_ctx, m_component_props);
+
+		/* Preinstalacion - Sentencias SQL */
+		PluginUtils.appendStatus(" === Ejecutando sentencias de preinstalacion === ");
+		doPreInstall(m_ctx, jarURL, PluginConstants.URL_INSIDE_JAR + PluginConstants.FILENAME_PREINSTALL);
+		
+		/* Comprobar secuencia por modificaciones a nivel SQL */
+		PluginUtils.appendStatus(" === Comprobando secuencias de nuevos componentes - preinstalacion === ");
+		sequenceCheck(m_ctx);
+		
+		/* Instalacion - Carga de metadatos */
+		PluginUtils.appendStatus(" === Insertando metadatos de instalación === ");
+		doInstall(m_ctx, jarURL, PluginConstants.URL_INSIDE_JAR + PluginConstants.FILENAME_INSTALL);
+		// Almacenar la longitud del log de errores luego de la instalacion
+		if (PluginUtils.getErrorStatus() != null && PluginUtils.getErrorStatus().length()>0)
+			installErrorsLength = PluginUtils.getErrorStatus().length();
+		
+		/* Comprobar secuencia por modificaciones relacionadas en metadatos */
+		PluginUtils.appendStatus(" === Comprobando secuencias de nuevos componentes - metadatos === ");
+		sequenceCheck(m_ctx);
+
+		/* Información adicional del plugin */
+		PluginUtils.appendStatus(" === Registrando informacion adicional del componente === ");
+		setAditionalValues(m_ctx, m_component_props);
+		
+		/* PostInstalacion - Invocar proceso genérico o ad-hoc */
+		PluginUtils.appendStatus(" === Disparando proceso de postinstalación === ");
+		ProcessInfo pi = doPostInstall(m_ctx, jarURL, PluginConstants.URL_INSIDE_JAR + PluginConstants.FILENAME_POSTINSTALL, m_component_props, owner);
+		return pi;
+	}
+	
+
+	
+	/**
+	 * Finalización del proceso de instalación de un plugin (con existencia de postInstall)
+	 * Debe manejar las excepciones correspondientes
+	 */
+	public static void performInstallFinalize(ProcessInfo pi, VPluginInstaller invoker, Properties m_component_props)
+	{
+		try
+		{
+			/* Indicar que no hubo post instalacion */
+			if (pi == null)
+				PluginUtils.appendStatus("Sin post instalacion");
+			
+			/* Contemplar error al ejecutar el proceso de postInstall */
+			if (pi != null && pi.isError())
+				throw new Exception(" Excepcion al ejecutar postInstall - " + pi.getSummary());
+
+			// Almacenar la longitud del log de errores luego de la post-instalacion
+			if (PluginUtils.getErrorStatus() != null && PluginUtils.getErrorStatus().length()>0)
+				postInstallErrorsLength = PluginUtils.getErrorStatus().length();
+
+			// Hubo errores en instalacion o en postinstalacion?
+			boolean errorsOnInstall = installErrorsLength > 0;
+			boolean errorsOnPostInstall = postInstallErrorsLength - installErrorsLength > 0; 
+			boolean errors = errorsOnInstall || errorsOnPostInstall;
+			
+			/* Si hubo errores, solo commitear si corresponde */
+			if (!invoker.confirmCommit(errorsOnInstall, errorsOnPostInstall))
+				invoker.handleException("Instalación cancelada.", new Exception(" Instalación cancelada debido a errores en: " + (errorsOnInstall?"INSTALL":"") + " " + (errorsOnPostInstall?"POSTINSTALL":"")));
+			
+			/* Finalizar la transacción y resetear componente global */
+			Trx.getTrx(m_trx).commit();
+			Trx.getTrx(m_trx).close();
+			PluginUtils.stopInstalation();
+		
+			/* Informar todo OK */
+			PluginUtils.appendStatus(" === Instalación finalizada " + (errors?"con errores":"") + " === ");
+			writeInstallLog(m_component_props);
+		}
+		catch (Exception e)
+		{
+			invoker.handleException("Error al realizar la post-instalación: ", e);	
+		}
+	}
+
+	
 	
 	/**
 	 * Inserta o actualiza las entradas en las tablas: AD_Plugin, AD_Component y AD_ComponentVersion
@@ -42,7 +151,7 @@ public class VPluginInstallerUtils  {
 	 * 			Este es un caso mas tradicional donde no se realiza mapeo alguno
 	 * 			En este caso solo hay que especificar CopyToChangelog = Y
 	 */
-	public static void createComponentAndVersion(Properties ctx, String trxName, Properties m_component_props) throws Exception
+	public static void createComponentAndVersion(Properties ctx, Properties m_component_props) throws Exception
 	{
 		/* Entrada en AD_Component: Columna AD_ComponentObjectUID */
 		String componentEntry = (String)m_component_props.get(PluginConstants.PROP_COMPONENTUID);
@@ -82,11 +191,11 @@ public class VPluginInstallerUtils  {
 		}
 		
 		/* Registros de cada tabla (recuperar el ID de ambos) */
-		int componentID = DB.getSQLValue(trxName, " SELECT AD_Component_ID FROM AD_Component WHERE AD_ComponentObjectUID = ?", componentEntry);
-		int componentVersionID = DB.getSQLValue(trxName, " SELECT AD_ComponentVersion_ID FROM AD_ComponentVersion WHERE AD_ComponentObjectUID = ?", componentVersionEntry);
+		int componentID = DB.getSQLValue(m_trx, " SELECT AD_Component_ID FROM AD_Component WHERE AD_ComponentObjectUID = ?", componentEntry);
+		int componentVersionID = DB.getSQLValue(m_trx, " SELECT AD_ComponentVersion_ID FROM AD_ComponentVersion WHERE AD_ComponentObjectUID = ?", componentVersionEntry);
 		
 		/* Insertar/actualizar el Component */ 
-		component = new MComponent(ctx, (componentID==-1?0:componentID), trxName);
+		component = new MComponent(ctx, (componentID==-1?0:componentID), m_trx);
 		if (!copyToChangelog || !mapToComponent)
 		{
 			component.setPublicName((String)m_component_props.get(PluginConstants.PROP_PUBLICNAME));
@@ -101,7 +210,7 @@ public class VPluginInstallerUtils  {
 		}
 		
 		/* Insertar/actualizar el ComponentVersion */
-		componentVersion = new MComponentVersion(ctx, (componentVersionID==-1?0:componentVersionID), trxName);
+		componentVersion = new MComponentVersion(ctx, (componentVersionID==-1?0:componentVersionID), m_trx);
 		if (!copyToChangelog || !mapToComponent)
 		{
 			componentVersion.setVersion((String)m_component_props.get(PluginConstants.PROP_VERSION));
@@ -113,9 +222,9 @@ public class VPluginInstallerUtils  {
 		}
 
 		/* Registrar/actualizar el plugin */
-		POInfo.clearKey(DB.getSQLValue(trxName, " SELECT AD_Table_ID FROM AD_Table WHERE tableName = ?", "AD_Plugin"));
-		int pluginID = DB.getSQLValue(trxName, " SELECT P.AD_Plugin_ID FROM " + getGeneralPluginQuery() + " WHERE C.AD_Component_ID = ?", component.getAD_Component_ID());
-		plugin = new X_AD_Plugin(ctx, (pluginID==-1?0:pluginID), trxName); 
+		POInfo.clearKey(DB.getSQLValue(m_trx, " SELECT AD_Table_ID FROM AD_Table WHERE tableName = ?", "AD_Plugin"));
+		int pluginID = DB.getSQLValue(m_trx, " SELECT P.AD_Plugin_ID FROM " + getGeneralPluginQuery() + " WHERE C.AD_Component_ID = ?", component.getAD_Component_ID());
+		plugin = new X_AD_Plugin(ctx, (pluginID==-1?0:pluginID), m_trx); 
 		if (!copyToChangelog || !mapToComponent)
 		{
 			plugin.setAD_ComponentVersion_ID(componentVersion.getAD_ComponentVersion_ID());
@@ -145,12 +254,12 @@ public class VPluginInstallerUtils  {
 	 * Incorpora información adicional a las entradas vacias de las tablas: AD_Plugin, AD_Component y AD_ComponentVersion
 	 * (esto lo realiza posterior a la ejecucion de preinstall e install a fin de contar con los posibles nuevos campos) 
 	 */
-	public static void setAditionalValues(Properties ctx, String trxName, Properties m_component_props) throws Exception
+	public static void setAditionalValues(Properties ctx, Properties m_component_props) throws Exception
 	{
 		// Fecha de exportación del componente y ultimo changelog relacionado (lo vuelvo a instanciar para recuperar las nuevas columnas)
 		// Primeramente limpiar de la cache poinfo la estructura actual de ad_plugin
-		POInfo.clearKey(DB.getSQLValue(trxName, " SELECT AD_Table_ID FROM AD_Table WHERE tableName = ?", "AD_Plugin"));
-		plugin = new X_AD_Plugin(ctx, plugin.getAD_Plugin_ID(), trxName);
+		POInfo.clearKey(DB.getSQLValue(m_trx, " SELECT AD_Table_ID FROM AD_Table WHERE tableName = ?", "AD_Plugin"));
+		plugin = new X_AD_Plugin(ctx, plugin.getAD_Plugin_ID(), m_trx);
 		plugin.setComponent_Export_Date((String)m_component_props.get(PluginConstants.PROP_EXPORT_TIMESTAMP));
 		plugin.setComponent_Last_Changelog((String)m_component_props.get(PluginConstants.PROP_LAST_CHANGELOG));
 		if (!plugin.save())
@@ -161,25 +270,25 @@ public class VPluginInstallerUtils  {
 	 * Entrada principal a la ejecución del proceso de PreInstalación
 	 * @throws Exception
 	 */
-	public static void doPreInstall(Properties ctx, String trxName, String jarURL, String fileURL) throws Exception
+	public static void doPreInstall(Properties ctx, String jarURL, String fileURL) throws Exception
 	{
 		/* Toma el archivo SQL correspondiente e impacta en la base de datos */
 		String sql = JarHelper.readFromJar(jarURL, fileURL, "\n", "--");
 		if (sql != null && sql.length() > 0)
-			PluginXMLUpdater.executeUpdate(sql, trxName);
+			PluginXMLUpdater.executeUpdate(sql, m_trx);
 	}
 	
 	/** 
 	 * Entrada principal a la ejecución del proceso de Instalación
   	 * @throws Exception
 	 */
-	public static void doInstall(Properties ctx, String trxName, String jarURL, String fileURL) throws Exception
+	public static void doInstall(Properties ctx, String jarURL, String fileURL) throws Exception
 	{
 		/* Toma el archivo XML correspondiente, genera las sentencias SQL correspondientes e impacta en la base de datos */
 		String xml = JarHelper.readFromJar(jarURL, fileURL, "", null);
 		if (xml != null && xml.length() > 0)
 		{
-			PluginXMLUpdater uploaderMetaData = new PluginXMLUpdater(xml, trxName, false);
+			PluginXMLUpdater uploaderMetaData = new PluginXMLUpdater(xml, m_trx, false);
 			uploaderMetaData.processChangeLog();
 		}
 	}
@@ -188,14 +297,14 @@ public class VPluginInstallerUtils  {
 	 * Entrada principal a la ejecución del proceso de PostInstalación
   	 * @throws Exception
 	 */
-	public static ProcessInfo doPostInstall(Properties ctx, String trxName, String jarURL, String fileURL, Properties props, VPluginInstaller installer) throws Exception
+	public static ProcessInfo doPostInstall(Properties ctx, String jarURL, String fileURL, Properties props, VPluginInstaller installer) throws Exception
 	{
 		/* Toma el archivo XML correspondiente, genera las sentencias SQL correspondientes e impacta en la base de datos */
 		String xml = JarHelper.readFromJar(jarURL, fileURL, "", null);
 		if (xml != null && xml.length() > 0)
 		{
 			/* Determinar el proceso a invocar */
-			int postInstallProcessId = getPostInstallProcessID(ctx, trxName, props);
+			int postInstallProcessId = getPostInstallProcessID(ctx, props);
 			
 			if (postInstallProcessId <= 0)
 				throw new Exception (" PostInstall process not found!");
@@ -207,16 +316,17 @@ public class VPluginInstallerUtils  {
 	        pi.setParameter(addToArray(pi.getParameter(), xtraParamXMLContent));
 	        pi.setParameter(addToArray(pi.getParameter(), xtraParamJARLocation));
 	        
-	        /* Invocar la ejecución del proceso, si el mismo devuelve null es porque se cancelo en los parametros */
+	        /* Si installer no es null, entonces la invocación es gestionada desde una ventana => Asincrónico a fin de requerir eventuales parámetros adicionales definidos en metadatos */
 	        if (installer != null) {
-		        ProcessCtl worker = ProcessCtl.process(installer, installer.getM_WindowNo(), pi, Trx.getTrx(trxName));
+		        /* Invocar la ejecución del proceso, si el mismo devuelve null es porque se cancelo en los parametros */
+		        ProcessCtl worker = ProcessCtl.process(installer, installer.getM_WindowNo(), pi, Trx.getTrx(m_trx));
 		        if (worker == null)
 		        	throw new Exception (" Instalacion cancelada en post configuracion! ");
 	        }
-	        /* Si installer es null, entonces la invocacion no es gestionada por una ventana, sino desde terminal */
+	        /* Si installer es null, entonces la invocacion no es gestionada desde una ventana, sino desde terminal => Sincronico (Y SIN SOPORTE DE PARAMS ADICIONALES!) */
 	        else {
-	        	MProcess process = new MProcess(ctx, postInstallProcessId, trxName);
-	        	MProcess.execute(ctx, process, pi, trxName);
+	        	MProcess process = new MProcess(ctx, postInstallProcessId, m_trx);
+	        	MProcess.execute(ctx, process, pi, m_trx);
 	        }
 	        return pi;
 	        
@@ -228,17 +338,17 @@ public class VPluginInstallerUtils  {
 	/**
 	 * Dispara el proceso de comprobar secuencias a fin de generar las mismas para las nuevas tablas
 	 */
-	public static void sequenceCheck(Properties ctx, String trxName) throws Exception
+	public static void sequenceCheck(Properties ctx) throws Exception
 	{
 		/* Determinar el proceso a invocar */
-		int sequenceCheckProcessId = DB.getSQLValue(trxName, " SELECT AD_PROCESS_ID FROM AD_PROCESS WHERE CLASSNAME = 'org.openXpertya.process.SequenceCheck' ");
+		int sequenceCheckProcessId = DB.getSQLValue(m_trx, " SELECT AD_PROCESS_ID FROM AD_PROCESS WHERE CLASSNAME = 'org.openXpertya.process.SequenceCheck' ");
 		
 		if (sequenceCheckProcessId <= 0)
 			throw new Exception (" SequenceCheck process not found!");
 		
 		/* ejecutar el proceso, si hay un error propagar la excepcion */
 		HashMap<String, Object> params = new HashMap<String, Object>();
-		ProcessInfo pi = MProcess.execute(ctx, sequenceCheckProcessId, params, trxName);
+		ProcessInfo pi = MProcess.execute(ctx, sequenceCheckProcessId, params, m_trx);
 		if (pi.isError())
 			throw new Exception( " Error al comprobar secuencia: " + pi.getSummary());
 	}
@@ -282,10 +392,10 @@ public class VPluginInstallerUtils  {
 	 * @param m_component_props
 	 * @return
 	 */
-	protected static int getPostInstallProcessID(Properties ctx, String trxName, Properties m_component_props) throws Exception
+	protected static int getPostInstallProcessID(Properties ctx, Properties m_component_props) throws Exception
 	{
 		/* Process ID por defecto (org.openXpertya.process.PluginPostInstallProcess) */
-		int defaultProcessID = DB.getSQLValue(trxName, " SELECT AD_PROCESS_ID FROM AD_PROCESS WHERE Value = '" + PluginConstants.POST_INSTALL_PROCESS_NAME + "' ");
+		int defaultProcessID = DB.getSQLValue(m_trx, " SELECT AD_PROCESS_ID FROM AD_PROCESS WHERE Value = '" + PluginConstants.POST_INSTALL_PROCESS_NAME + "' ");
 		
 		/* Verificar si tiene definido un proceso.  Si no es así, debe devolver la clase por defecto */
 		String aCustomProcess = (String)m_component_props.get(PluginConstants.PROP_INSTALLPROCESS);
@@ -293,7 +403,7 @@ public class VPluginInstallerUtils  {
 			return defaultProcessID;
 		
 		/* Devolver el ID del proceso a partir del OUID (si existe) */
-		defaultProcessID = DB.getSQLValue(trxName, " SELECT AD_PROCESS_ID FROM AD_PROCESS WHERE AD_ComponentObjectUID = '" + m_component_props.get(PluginConstants.PROP_INSTALLPROCESS) + "' ");
+		defaultProcessID = DB.getSQLValue(m_trx, " SELECT AD_PROCESS_ID FROM AD_PROCESS WHERE AD_ComponentObjectUID = '" + m_component_props.get(PluginConstants.PROP_INSTALLPROCESS) + "' ");
 		if (defaultProcessID < 1)
 			throw new Exception( " Error al determinar el ID del proceso de postinstalacion ");
 		
@@ -325,4 +435,34 @@ public class VPluginInstallerUtils  {
 	}
 
 	
+	/**
+	 * En caso de error al realizar la instalación rollbackear la trx, detener la instalacion e informar 
+	 */
+	public static void handleException(String msg, Exception e, Properties props)
+	{
+		/* Error en algún punto, rollback (si hay trx activa) e informar al usuario */
+		if (m_trx!=null) {
+			Trx.getTrx(m_trx).rollback();
+			Trx.getTrx(m_trx).close();
+		}
+		PluginUtils.stopInstalation();
+		PluginUtils.appendStatus(msg + e.getMessage());
+		writeInstallLog(props);
+	}
+
+	
+	/**
+	 * Almacena en archivo correspondiente el log de instalacion 
+	 */
+	protected static void writeInstallLog(Properties props)
+	{
+		try {
+			String prefix = (String)props.get(PluginConstants.PROP_PREFIX);
+			String fileName = "Component_" + prefix + "_install_" + Env.getDateTime("yyyyMMdd_HHmmss") + ".log";
+			PluginUtils.writeInstallLog(OpenXpertya.getOXPHome(), fileName);
+		} catch (Exception e) {
+			System.out.println("Error en escritura de log: " + e);
+		}
+	}
+
 }

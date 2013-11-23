@@ -19,7 +19,6 @@ import org.compiere.plaf.CompiereColor;
 import org.compiere.swing.CButton;
 import org.compiere.swing.CPanel;
 import org.compiere.swing.CTextPane;
-import org.openXpertya.OpenXpertya;
 import org.openXpertya.apps.ADialog;
 import org.openXpertya.apps.SwingWorker;
 import org.openXpertya.grid.ed.VFile;
@@ -31,7 +30,6 @@ import org.openXpertya.replication.ReplicationCache;
 import org.openXpertya.util.ASyncProcess;
 import org.openXpertya.util.Env;
 import org.openXpertya.util.Msg;
-import org.openXpertya.util.Trx;
 import org.openXpertya.utils.JarHelper;
 
 
@@ -41,7 +39,6 @@ public class VPluginInstaller extends CPanel implements FormPanel, ASyncProcess 
 	/* Componentes de la clase */
 	protected static Properties m_ctx;
 	protected Properties m_component_props;
-	protected String m_trx;
 	protected int m_WindowNo;
 	private FormFrame m_frame;
 	private VFile fileChooser;
@@ -102,7 +99,6 @@ public class VPluginInstaller extends CPanel implements FormPanel, ASyncProcess 
 		
 		/* Contexto y transacción */
 		m_ctx = Env.getCtx();
-		m_trx = Trx.createTrxName();
 		
 		/* Listener especial para el File Chooser */
 		ActionListener specialListener = new ActionListener() {
@@ -187,38 +183,8 @@ public class VPluginInstaller extends CPanel implements FormPanel, ASyncProcess 
 				@Override
 				public Object construct() {
 					try {
-						/* Iniciar la transacción y setear componente global */
-						m_trx = Trx.createTrxName();
-						Trx.getTrx(m_trx).start();
-						PluginUtils.startInstalation(m_trx);
-										
-						/* Instalacion por etapas: pre - install - post */
-						PluginUtils.appendStatus(" === Instalando Componente y Version. Registrando Plugin === ");
-						VPluginInstallerUtils.createComponentAndVersion(m_ctx, m_trx, m_component_props);
-
-						/* Preinstalacion - Sentencias SQL */
-						PluginUtils.appendStatus(" === Ejecutando sentencias de preinstalacion === ");
-						VPluginInstallerUtils.doPreInstall(m_ctx, m_trx, fileChooser.getDisplay(), PluginConstants.URL_INSIDE_JAR + PluginConstants.FILENAME_PREINSTALL);
-						
-						/* Comprobar secuencia por modificaciones a nivel SQL */
-						PluginUtils.appendStatus(" === Comprobando secuencias de nuevos componentes - preinstalacion === ");
-						VPluginInstallerUtils.sequenceCheck(m_ctx, m_trx);
-						
-						/* Instalacion - Carga de metadatos */
-						PluginUtils.appendStatus(" === Insertando metadatos de instalación === ");
-						VPluginInstallerUtils.doInstall(m_ctx, m_trx, fileChooser.getDisplay(), PluginConstants.URL_INSIDE_JAR + PluginConstants.FILENAME_INSTALL);
-						
-						/* Comprobar secuencia por modificaciones relacionadas en metadatos */
-						PluginUtils.appendStatus(" === Comprobando secuencias de nuevos componentes - metadatos === ");
-						VPluginInstallerUtils.sequenceCheck(m_ctx, m_trx);
-
-						/* Información adicional del plugin */
-						PluginUtils.appendStatus(" === Registrando informacion adicional del componente === ");
-						VPluginInstallerUtils.setAditionalValues(m_ctx, m_trx, m_component_props);
-						
-						/* PostInstalacion - Invocar proceso genérico o ad-hoc */
-						PluginUtils.appendStatus(" === Disparando proceso de postinstalación === ");
-						ProcessInfo pi = VPluginInstallerUtils.doPostInstall(m_ctx, m_trx, fileChooser.getDisplay(), PluginConstants.URL_INSIDE_JAR + PluginConstants.FILENAME_POSTINSTALL, m_component_props, VPluginInstaller.this);
+						/* Delegar lógica de instalación (pre, install, post) centralizada */
+						ProcessInfo pi = VPluginInstallerUtils.performInstall(fileChooser.getDisplay(), m_ctx, m_component_props, (VPluginInstaller)currentWorker.getOwner());
 						if (pi==null) // si el proceso de instalacion no fue invocado, llamar al installFinalize manualmente 
 							performInstallFinalize();
 					} catch (Exception e) {
@@ -236,7 +202,7 @@ public class VPluginInstaller extends CPanel implements FormPanel, ASyncProcess 
 					}
 				}
 			};
-			
+			currentWorker.setOwner(this);
 			mWait();
 			currentWorker.start();
 		}
@@ -247,13 +213,12 @@ public class VPluginInstaller extends CPanel implements FormPanel, ASyncProcess 
 		}
 	}
 	
-
 	
 	/**
 	 * Finalización del proceso de instalación de un plugin (sin existencia de postInstall)
 	 * Debe manejar las excepciones correspondientes
 	 */
-	protected void performInstallFinalize()
+	public void performInstallFinalize()
 	{
 		performInstallFinalize(null);
 	}
@@ -262,34 +227,11 @@ public class VPluginInstaller extends CPanel implements FormPanel, ASyncProcess 
 	 * Finalización del proceso de instalación de un plugin (con existencia de postInstall)
 	 * Debe manejar las excepciones correspondientes
 	 */
-	protected void performInstallFinalize(ProcessInfo pi)
+	public void performInstallFinalize(ProcessInfo pi)
 	{
 		try
 		{
-			/* Indicar que no hubo post instalacion */
-			if (pi == null)
-				PluginUtils.appendStatus("Sin post instalacion");
-			
-			/* Contemplar error al ejecutar el proceso de postInstall */
-			if (pi != null && pi.isError())
-				throw new Exception(" Excepcion al ejecutar postInstall - " + pi.getSummary());
-
-			/* Si hubo errores, consultar al usuario si en realidad está de acuerdo con la actualización */
-			if (installHadErrors() && !confirm("Hubo errores en la instalación. Continuar de todos modos?"))
-			{
-				handleException("Instalación cancelada por el usuario.", new Exception(" Instalación cancelada por el usuario debido a errores en la ejecución. Verifique archivo de log."));
-				return;
-			}
-			
-			/* Finalizar la transacción y resetear componente global */
-			Trx.getTrx(m_trx).commit();
-			Trx.getTrx(m_trx).close();
-			PluginUtils.stopInstalation();
-		
-			/* Informar todo OK */
-			PluginUtils.appendStatus(" === Instalación finalizada === ");
-			// detailsTextPane.setText(PluginUtils.getInstallStatus()); <-- comentado, el componente visual se colgaba con el volumen de datos a mostrar
-			writeInstallLog();										//	<-- directamente se genera un archivo donde se almacena el log
+			VPluginInstallerUtils.performInstallFinalize(pi, this, m_component_props);
 			ADialog.info(m_WindowNo, this, "Instalación finalizada " + (installHadErrors()?"con errores. Verifique archivo de log":"correctamente") );
 			setComponentsEnabled(true);
 		}
@@ -298,6 +240,13 @@ public class VPluginInstaller extends CPanel implements FormPanel, ASyncProcess 
 			handleException("Error al realizar la post-instalación: ", e);	
 		}
 	}
+
+	/**
+	 * Retorna true si el usuario confirma el commit o false en caso contrario
+	 */
+	public boolean confirmCommit(boolean errorsOnInstall, boolean errorsOnPostInstall) {
+		return confirm("Hubo errores en la instalación. Continuar de todos modos?");
+	}
 	
 	/**
 	 * Devuelve true en caso de que existieron errores en la instalación
@@ -305,17 +254,6 @@ public class VPluginInstaller extends CPanel implements FormPanel, ASyncProcess 
 	protected boolean installHadErrors()
 	{
 		 return PluginUtils.getErrorStatus() != null && PluginUtils.getErrorStatus().length() > 0;
-	}
-	
-	
-	/**
-	 * Almacena en archivo correspondiente el log de instalacion 
-	 */
-	protected void writeInstallLog()
-	{
-		String prefix = (String)m_component_props.get(PluginConstants.PROP_PREFIX);
-		String fileName = "Component_" + prefix + "_install_" + Env.getDateTime("yyyyMMdd_HHmmss") + ".log";
-		PluginUtils.writeInstallLog(OpenXpertya.getOXPHome(), fileName);
 	}
 	
 	
@@ -343,17 +281,12 @@ public class VPluginInstaller extends CPanel implements FormPanel, ASyncProcess 
 	}
 	
 	/**
-	 * En caso de error al realizar la instalación rollbackear la trx, detener la instalacion e informar 
+	 * En caso de error al realizar la instalación delegar al installer y notificar al usuario 
 	 */
 	protected void handleException(String msg, Exception e)
 	{
 		/* Error en algún punto, rollback e informar al usuario */
-		Trx.getTrx(m_trx).rollback();
-		Trx.getTrx(m_trx).close();
-		PluginUtils.stopInstalation();
-		PluginUtils.appendStatus(msg + e.getMessage());
-		// detailsTextPane.setText(PluginUtils.getInstallStatus()); <-- comentado, el componente visual se colgaba con el volumen de datos a mostrar
-		writeInstallLog();										//	<-- directamente se genera un archivo donde se almacena el log
+		VPluginInstallerUtils.handleException(msg, e, m_component_props);
 		setComponentsEnabled(true);
 		ADialog.error(m_WindowNo, this, msg + e.getMessage());
 	}

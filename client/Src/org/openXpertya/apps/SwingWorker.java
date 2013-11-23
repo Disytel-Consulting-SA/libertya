@@ -32,7 +32,9 @@ public abstract class SwingWorker {
      * Constructor de la clase ...
      *
      */
-
+	protected Object owner = null;
+	
+	
     public SwingWorker() {
         final Runnable doFinished = new Runnable() {
             public void run() {
@@ -216,6 +218,14 @@ public abstract class SwingWorker {
             thread = null;
         }    // clear
     }    // ThreadVar
+
+	public Object getOwner() {
+		return owner;
+	}
+
+	public void setOwner(Object owner) {
+		this.owner = owner;
+	}
 }        // SwingWorker
 
 
