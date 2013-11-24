@@ -433,6 +433,7 @@ public class CreateReplicationTriggerProcess extends SvrProcess {
 		catch (Exception e) {
 			Trx.getTrx(trxName).rollback();
 			System.out.println("ReplicationTriggerProcess ERROR: " + e.toString());
+			System.exit(1);
 		}
 		finally {
 			Trx.getTrx(trxName).close();			
