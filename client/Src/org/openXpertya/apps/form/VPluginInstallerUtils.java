@@ -119,7 +119,7 @@ public class VPluginInstallerUtils  {
 			boolean errors = errorsOnInstall || errorsOnPostInstall;
 			
 			/* Si hubo errores, solo commitear si corresponde */
-			if (!invoker.confirmCommit(errorsOnInstall, errorsOnPostInstall))
+			if (errors && !invoker.confirmCommit(errorsOnInstall, errorsOnPostInstall))
 				invoker.handleException("Instalación cancelada.", new Exception(" Instalación cancelada debido a errores en: " + (errorsOnInstall?"INSTALL":"") + " " + (errorsOnPostInstall?"POSTINSTALL":"")));
 			
 			/* Finalizar la transacción y resetear componente global */
