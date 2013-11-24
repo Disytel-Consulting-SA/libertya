@@ -57,7 +57,9 @@ public class VPluginInstallerUtils  {
 		/* Iniciar la transacción y setear componente global */
 		m_trx = Trx.createTrxName();
 		Trx.getTrx(m_trx).start();
-		PluginUtils.startInstalation(m_trx);									
+		PluginUtils.startInstalation(m_trx);
+		installErrorsLength = 0;
+		postInstallErrorsLength = 0;
 		
 		/* Instalacion por etapas: pre - install - post */
 		PluginUtils.appendStatus(" === Instalando Componente y Version. Registrando Plugin === ");
@@ -119,12 +121,17 @@ public class VPluginInstallerUtils  {
 			boolean errors = errorsOnInstall || errorsOnPostInstall;
 			
 			/* Si hubo errores, solo commitear si corresponde */
-			if (errors && !invoker.confirmCommit(errorsOnInstall, errorsOnPostInstall))
+			if (errors && !invoker.confirmCommit(errorsOnInstall, errorsOnPostInstall)) {
 				invoker.handleException("Instalación cancelada.", new Exception(" Instalación cancelada debido a errores en: " + (errorsOnInstall?"INSTALL":"") + " " + (errorsOnPostInstall?"POSTINSTALL":"")));
+				return;
+			}
 			
 			/* Finalizar la transacción y resetear componente global */
-			Trx.getTrx(m_trx).commit();
-			Trx.getTrx(m_trx).close();
+			if (m_trx!=null) {
+				Trx.getTrx(m_trx).commit();
+				Trx.getTrx(m_trx).close();
+				m_trx=null;
+			}
 			PluginUtils.stopInstalation();
 		
 			/* Informar todo OK */
@@ -443,6 +450,7 @@ public class VPluginInstallerUtils  {
 		if (m_trx!=null) {
 			Trx.getTrx(m_trx).rollback();
 			Trx.getTrx(m_trx).close();
+			m_trx=null;
 		}
 		PluginUtils.stopInstalation();
 		PluginUtils.appendStatus(msg + e.getMessage());
