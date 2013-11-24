@@ -2,13 +2,18 @@ package org.openXpertya.process;
 
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
+import java.util.HashMap;
+import java.util.Properties;
 
+import org.openXpertya.OpenXpertya;
+import org.openXpertya.model.MProcess;
 import org.openXpertya.model.M_Table;
 import org.openXpertya.model.X_AD_TableReplication;
 import org.openXpertya.replication.ReplicationConstants;
 import org.openXpertya.replication.ReplicationConstantsWS;
 import org.openXpertya.util.DB;
 import org.openXpertya.util.Env;
+import org.openXpertya.util.Trx;
 
 /**
  * Crea el SQL correspondiente a los triggers de replicación
@@ -81,10 +86,10 @@ public class CreateReplicationTriggerProcess extends SvrProcess {
 														" WHERE pt.table_schema = 'libertya' " +
 														" AND pt.table_type = 'BASE TABLE' " + scopeClause, get_TrxName());
 		ResultSet rs = pstmt.executeQuery();
-		
 		while (rs.next())
 		{
 			// Recuperar el ID de la tabla
+			System.out.print(".");
 			table = new M_Table(getCtx(), rs.getInt("AD_Table_ID"), get_TrxName());
 			
 			// Si estamos realizando la insercion masiva, entonces tambien generar todas las entradas en AD_TableReplication
@@ -101,7 +106,6 @@ public class CreateReplicationTriggerProcess extends SvrProcess {
 					// Genera una entrada dummy para cada tabla en la tabla de replicación por tabla, 
 					// de esta manera, la bitacora sera creada en cada caso 
 					// (dado que los triggers validan la existencia en esta tabla)
-					System.out.print(".");
 					X_AD_TableReplication tr = new X_AD_TableReplication(getCtx(), 0, get_TrxName());
 					tr.setClientOrg(getAD_Client_ID(), Env.getAD_Org_ID(getCtx()));
 					tr.set_ValueNoCheck("AD_Table_ID", table.getAD_Table_ID());
@@ -359,6 +363,7 @@ public class CreateReplicationTriggerProcess extends SvrProcess {
 		ResultSet rs = pstmt.executeQuery();
 		while (rs.next())
 		{
+			System.out.print(".");
 			query.append(" DROP TRIGGER IF EXISTS replication_event on ").append(rs.getString("tablename")).append(";");
 //			Comentado: Esto iba a ser origen de problemas graves.  Al hacer drop de las secuencias, se pierde el
 //						valor actual para cada tabla, lo cual lleva a tener una bbdd inutilizable para replicación
@@ -367,6 +372,72 @@ public class CreateReplicationTriggerProcess extends SvrProcess {
 		}
 		DB.executeUpdate(query.toString(), trxName);
 	}
+	
+	/**
+	 * Acceso estático para la invocación de este proceso 
+	 */
+	public static void invokeReplicationTriggerProcess(String trxName, Properties ctx) throws Exception
+	{
+		int repTriggerProc = DB.getSQLValue(trxName, " SELECT AD_PROCESS_ID FROM AD_PROCESS WHERE AD_ComponentObjectUID = 'CORE-AD_Process-1010219' ");
+		if (repTriggerProc <= 0)
+			throw new Exception (" CreateReplicationTriggerProcess process not found!");
 
+		// Ejecutarlo únicamente para las tablas configuradas
+		HashMap<String, Object> params = new HashMap<String, Object>();
+		params.put("Scope", CreateReplicationTriggerProcess.SCOPE_CONFIGURED);
+		
+		// Invocar a proceso de ampliación estructural en las tablas de replicación
+		System.out.print("\nDropping previous triggers...");
+		CreateReplicationTriggerProcess.dropPreviousTriggers(trxName);
+		System.out.print("\nRegenerating replication structures...");
+		ProcessInfo pi = MProcess.execute(ctx, repTriggerProc, params, trxName);
+		System.out.print("\nDone!");
+		if (pi.isError())
+			throw new Exception( " Error al ejecutar CreateReplicationTriggerProcess: " + pi.getSummary());
+	}
+
+	
+	/**
+	 * Entrada principal desde terminal
+	 */
+	public static void main(String[] args) 
+	{
+	  	// OXP_HOME seteada?
+	  	String oxpHomeDir = System.getenv("OXP_HOME"); 
+	  	if (oxpHomeDir == null) { 
+	  		System.err.println("ERROR: La variable de entorno OXP_HOME no está seteada ");
+	  		System.exit(1);
+	  	}
+	  	
+	  	// Cargar el entorno basico
+	  	System.setProperty("OXP_HOME", oxpHomeDir);
+	  	if (!OpenXpertya.startupEnvironment( false )) {
+	  		System.err.println("ERROR: Error al iniciar la configuracion... Postgres esta levantado?");
+	  		System.exit(1);
+	  	}
+		
+		// Configuracion: Compañía la cual tiene configurado replicacion.  Si no hay configuración, no hay nada mas que hacer 
+	  	Env.setContext(Env.getCtx(), "#AD_Client_ID", DB.getSQLValue(null, " SELECT AD_Client_ID FROM AD_ReplicationHost WHERE thisHost = 'Y' "));
+	  	Env.setContext(Env.getCtx(), "#AD_Org_ID", DB.getSQLValue(null, " SELECT AD_Org_ID FROM AD_ReplicationHost WHERE thisHost = 'Y' "));
+	  	if (Env.getContext(Env.getCtx(), "#AD_Client_ID") == null || Env.getContext(Env.getCtx(), "#AD_Client_ID") == null)
+	  		return;
+
+	  	// Si no hay configuración de tablas de replicación, simplemente no hará nada
+		String trxName = Trx.createTrxName();
+		try {
+			Trx.getTrx(trxName).start();
+			invokeReplicationTriggerProcess(trxName, Env.getCtx());
+			Trx.getTrx(trxName).commit();
+			System.out.println("ReplicationTriggerProcess OK");
+		}
+		catch (Exception e) {
+			Trx.getTrx(trxName).rollback();
+			System.out.println("ReplicationTriggerProcess ERROR: " + e.toString());
+		}
+		finally {
+			Trx.getTrx(trxName).close();			
+		}
+
+	}
 }
 
