@@ -419,8 +419,11 @@ public class CreateReplicationTriggerProcess extends SvrProcess {
 		// Configuracion: Compañía la cual tiene configurado replicacion.  Si no hay configuración, no hay nada mas que hacer 
 	  	Env.setContext(Env.getCtx(), "#AD_Client_ID", DB.getSQLValue(null, " SELECT AD_Client_ID FROM AD_ReplicationHost WHERE thisHost = 'Y' "));
 	  	Env.setContext(Env.getCtx(), "#AD_Org_ID", DB.getSQLValue(null, " SELECT AD_Org_ID FROM AD_ReplicationHost WHERE thisHost = 'Y' "));
-	  	if (Env.getContext(Env.getCtx(), "#AD_Client_ID") == null || Env.getContext(Env.getCtx(), "#AD_Client_ID") == null)
+	  	if (Env.getContext(Env.getCtx(), "#AD_Client_ID") == null || Env.getContext(Env.getCtx(), "#AD_Client_ID") == null ||
+	  	    Env.getContextAsInt(Env.getCtx(), "#AD_Client_ID") <= 0 || Env.getContextAsInt(Env.getCtx(), "#AD_Client_ID") <= 0) {
+	  		System.err.println("Configuracion faltante o incorrecta en AD_ReplicationHost");
 	  		return;
+	  	}
 
 	  	// Si no hay configuración de tablas de replicación, simplemente no hará nada
 		String trxName = Trx.createTrxName();
