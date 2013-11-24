@@ -88,8 +88,7 @@ public class VPluginInstallerUtils  {
 		
 		/* PostInstalacion - Invocar proceso genérico o ad-hoc */
 		PluginUtils.appendStatus(" === Disparando proceso de postinstalación === ");
-		ProcessInfo pi = doPostInstall(m_ctx, jarURL, PluginConstants.URL_INSIDE_JAR + PluginConstants.FILENAME_POSTINSTALL, m_component_props, owner);
-		return pi;
+		return doPostInstall(m_ctx, jarURL, PluginConstants.URL_INSIDE_JAR + PluginConstants.FILENAME_POSTINSTALL, m_component_props, owner);
 	}
 	
 
@@ -464,5 +463,4 @@ public class VPluginInstallerUtils  {
 			System.out.println("Error en escritura de log: " + e);
 		}
 	}
-
 }
