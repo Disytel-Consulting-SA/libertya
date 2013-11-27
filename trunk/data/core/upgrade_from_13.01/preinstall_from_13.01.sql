@@ -4489,7 +4489,7 @@ ALTER TABLE ad_org_percepcion_config OWNER TO libertya;
 UPDATE ad_system SET dummy = (SELECT addcolumnifnotexists('AD_ClientInfo','paymentsposjournalopen', 'character(1) NOT NULL DEFAULT ''Y''::bpchar'));
 
 --20130920-1630 Nueva columna para transformar pestañas como siempre actualizables
-UPDATE ad_system SET dummy = (SELECT addcolumnifnotexists('AD_Tab','isalwaysupdateable', 'character(1) NOT NULL DEFAULT ''Y''::bpchar'));
+UPDATE ad_system SET dummy = (SELECT addcolumnifnotexists('AD_Tab','isalwaysupdateable', 'character(1) NOT NULL DEFAULT ''N''::bpchar'));
 
 DROP VIEW ad_tab_v;
 DROP VIEW ad_tab_vt;
@@ -5657,3 +5657,7 @@ ALTER TABLE rv_storage OWNER TO libertya;
 
 -- 20131122-1815 Incorporación de nueva columna en C_Controlador_Fiscal para permitir imprimir el campo descripción de línea en el ticket fiscal
 update ad_system set dummy = (SELECT addcolumnifnotexists('C_Controlador_Fiscal','OnlyLineDescription', 'character(1) NOT NULL DEFAULT ''N''::bpchar'));
+
+--20131127-1330 Las pestañas van todas como no Siempre Actualizables por un error en el preinstall al agregar la columna
+update ad_tab
+set isalwaysupdateable = 'N';
