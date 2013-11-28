@@ -48,22 +48,22 @@
 	pricestd,
 	sum(qtyonhand) qtyonhand,
 	sum(total) total
-from (select plv.name pricelistversion_name,
-		coalesce(pl.m_product_lines_id,0) m_product_lines_id,
-		coalesce(pl.value,'SD') product_lines_value,
-		coalesce(pl.name,'SIN DESCRIPCION') product_lines_name,
-		coalesce(pg.m_product_gamas_id,0) m_product_gamas_id,
-		coalesce(pg.value,'SD') product_gamas_value,
-		coalesce(pg.name,'SIN DESCRIPCION') product_gamas_name,
+from (select plv.name as pricelistversion_name,
+		coalesce(pl.m_product_lines_id,0) as m_product_lines_id,
+		coalesce(pl.value,'SD') as product_lines_value,
+		coalesce(pl.name,'SIN DESCRIPCION') as product_lines_name,
+		coalesce(pg.m_product_gamas_id,0) as m_product_gamas_id,
+		coalesce(pg.value,'SD') as product_gamas_value,
+		coalesce(pg.name,'SIN DESCRIPCION') as product_gamas_name,
 		pc.m_product_category_id,
-		pc.value product_category_value,
-		pc.name product_category_name,
+		pc.value as product_category_value,
+		pc.name as product_category_name,
 		p.m_product_id,
-		p.value product_value,
-		p.name product_name,
+		p.value as product_value,
+		p.name as product_name,
 		s.qtyonhand,
-		coalesce(pp.pricestd,0.00) pricestd,
-		(s.qtyonhand * coalesce(pp.pricestd,0.00)) total
+		coalesce(pp.pricestd,0.00) as pricestd,
+		(s.qtyonhand * coalesce(pp.pricestd,0.00)) as total
 	from m_storage s
 	inner join m_locator l on l.m_locator_id = s.m_locator_id
 	inner join m_warehouse w on w.m_warehouse_id = l.m_warehouse_id

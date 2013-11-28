@@ -37,16 +37,16 @@
 	bpartnerValue, 
 	bpartnerName, 
 	couponbatchnumber, 
-	coalesce(sum(sales),0) sales,
-	coalesce(sum(purchases),0) purchases
-FROM (SELECT o.value org_value,
-	o.name org_name,
+	coalesce(sum(sales),0) as sales,
+	coalesce(sum(purchases),0) as purchases
+FROM (SELECT o.value as org_value,
+	o.name as org_name,
 	bp.c_bpartner_id,
-	bp.value bpartnerValue, 
-	bp.name bpartnerName, 
-	coalesce(couponbatchnumber,'SIN NRO DE LOTE') couponbatchnumber, 
-	(CASE WHEN p.isreceipt = 'Y' THEN currencybase(p.payamt, p.c_currency_id, p.datetrx, p.ad_client_id, p.ad_org_id) ELSE 0.00 END) sales,
-	(CASE WHEN p.isreceipt = 'Y' THEN 0.00 ELSE currencybase(p.payamt, p.c_currency_id, p.datetrx, p.ad_client_id, p.ad_org_id) END) purchases
+	bp.value as bpartnerValue, 
+	bp.name as bpartnerName, 
+	coalesce(couponbatchnumber,'SIN NRO DE LOTE') as couponbatchnumber, 
+	(CASE WHEN p.isreceipt = 'Y' THEN currencybase(p.payamt, p.c_currency_id, p.datetrx, p.ad_client_id, p.ad_org_id) ELSE 0.00 END) as sales,
+	(CASE WHEN p.isreceipt = 'Y' THEN 0.00 ELSE currencybase(p.payamt, p.c_currency_id, p.datetrx, p.ad_client_id, p.ad_org_id) END) as purchases
 FROM c_payment p 
 INNER JOIN m_entidadfinancieraplan efp ON efp.m_entidadfinancieraplan_id = p.m_entidadfinancieraplan_id
 INNER JOIN m_entidadfinanciera ef ON ef.m_entidadfinanciera_id = efp.m_entidadfinanciera_id
