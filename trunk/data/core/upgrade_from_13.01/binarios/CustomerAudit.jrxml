@@ -43,8 +43,8 @@
 	bpartner_value,
 	bpartner_name,
 	sum(fc+nc+nd+rec) as total
-from (SELECT min(value) min FROM c_bpartner WHERE ad_client_id = $P{AD_CLIENT_ID} and (($P{ValueFrom} is null OR length(trim($P{ValueFrom}::character varying)) = 0) OR (CASE WHEN position('%' in $P{ValueFrom}::character varying) > 0 THEN value ilike trim($P{ValueFrom}::character varying) ELSE upper(value) >= upper(trim($P{ValueFrom}::character varying)) END))) min,
-	(SELECT max(value) max FROM c_bpartner WHERE ad_client_id = $P{AD_CLIENT_ID} AND (($P{ValueTo} is null OR length(trim($P{ValueTo}::character varying)) = 0) OR (CASE WHEN position('%' in $P{ValueTo}::character varying) > 0 THEN value ilike trim($P{ValueTo}::character varying) ELSE upper(value) <= upper(trim($P{ValueTo}::character varying)) END))) max,
+from (SELECT min(value) as min FROM c_bpartner WHERE ad_client_id = $P{AD_CLIENT_ID} and (($P{ValueFrom} is null OR length(trim($P{ValueFrom}::character varying)) = 0) OR (CASE WHEN position('%' in $P{ValueFrom}::character varying) > 0 THEN value ilike trim($P{ValueFrom}::character varying) ELSE upper(value) >= upper(trim($P{ValueFrom}::character varying)) END))) min,
+	(SELECT max(value) as max FROM c_bpartner WHERE ad_client_id = $P{AD_CLIENT_ID} AND (($P{ValueTo} is null OR length(trim($P{ValueTo}::character varying)) = 0) OR (CASE WHEN position('%' in $P{ValueTo}::character varying) > 0 THEN value ilike trim($P{ValueTo}::character varying) ELSE upper(value) <= upper(trim($P{ValueTo}::character varying)) END))) max,
 (select ad_org_id,
 	org_value,
 	org_name,
@@ -56,17 +56,17 @@ from (SELECT min(value) min FROM c_bpartner WHERE ad_client_id = $P{AD_CLIENT_ID
 	c_bpartner_id,
 	bpartner_value,
 	bpartner_name,
-	coalesce(sum(fc),0.00) fc,
-	coalesce(sum(nc),0.00) nc,
-	coalesce(sum(nd),0.00) nd,
+	coalesce(sum(fc),0.00) as fc,
+	coalesce(sum(nc),0.00) as nc,
+	coalesce(sum(nd),0.00) as nd,
 	0.00 as rec
 from (select o.ad_org_id,
-		o.value org_value,
-		o.name org_name,
+		o.value as org_value,
+		o.name as org_name,
 		id.documentno,
 		bp.c_bpartner_id,
-		bp.value bpartner_value,
-		coalesce(id.nombrecli,bp.name) bpartner_name,
+		bp.value as bpartner_value,
+		coalesce(id.nombrecli,bp.name) as bpartner_name,
 		coalesce(CASE WHEN doctypekey ILIKE 'CI%' THEN 'FC' 
 				WHEN doctypekey ILIKE 'CD%' THEN 'ND' 
 				WHEN doctypekey ILIKE 'CC%' THEN 'NC' 
@@ -114,19 +114,19 @@ from (select o.ad_org_id,
 		bpartner_name
 union all
 select o.ad_org_id,
-		o.value org_value,
-		o.name org_name,
+		o.value as org_value,
+		o.name as org_name,
 		'RC' as type,
 		'Recibos' as type_name,
 		'C' as debit_credit,
 		'Creditos' as debit_credit_name,
 		i.documentno,
 		bp.c_bpartner_id,
-		bp.value bpartner_value,
-		bp.name bpartner_name,
-		0.00 fc,
-		0.00 nc,
-		0.00 nd,
+		bp.value as bpartner_value,
+		bp.name as bpartner_name,
+		0.00 as fc,
+		0.00 as nc,
+		0.00 as nd,
 		sum(amount) as rec
 	from v_dailysales as id
 	inner join c_invoice as i on i.c_invoice_id = id.c_invoice_id
