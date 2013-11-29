@@ -78,7 +78,10 @@ public class InventoryCountCreate extends SvrProcess {
     /** Descripción de Campos */
 
     private boolean p_DeleteOld = false;
-
+    
+    /** Cantidad contada en cero */
+    private boolean p_ZeroQtyCount = false;
+    
     /**
      * Descripción de Método
      *
@@ -108,6 +111,8 @@ public class InventoryCountCreate extends SvrProcess {
                 p_QtyRange = ( String )para[ i ].getParameter();
             } else if( name.equals( "DeleteOld" )) {
                 p_DeleteOld = "Y".equals( para[ i ].getParameter());
+            } else if( name.equals( "ZeroQtyCount" )) {
+                p_ZeroQtyCount = "Y".equals( para[ i ].getParameter());
             } else {
                 log.log( Level.SEVERE,"prepare - Unknown Parameter: " + name );
             }
@@ -351,13 +356,13 @@ public class InventoryCountCreate extends SvrProcess {
         boolean added = false;
 
         if( line == null ) {
-            line = new MInventoryLine( m_inventory,M_Locator_ID,M_Product_ID,M_AttributeSetInstance_ID,QtyOnHand,QtyOnHand );    // book/count
+            line = new MInventoryLine( m_inventory,M_Locator_ID,M_Product_ID,M_AttributeSetInstance_ID,QtyOnHand,p_ZeroQtyCount?BigDecimal.ZERO:QtyOnHand );    // book/count
             added = true;
         } else {
             BigDecimal qty = line.getQtyBook().add( QtyOnHand );
 
             line.setQtyBook( qty );
-            line.setQtyCount( qty );
+            line.setQtyCount( p_ZeroQtyCount?BigDecimal.ZERO:qty );
         }
 
         boolean success = line.save();

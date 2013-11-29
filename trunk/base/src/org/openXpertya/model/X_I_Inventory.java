@@ -7,7 +7,7 @@ import java.math.*;
 import org.openXpertya.util.*;
 /** Modelo Generado por I_Inventory
  *  @author Comunidad de Desarrollo Libertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
- *  @version  - 2013-09-11 18:53:36.063 */
+ *  @version  - 2013-11-29 02:08:51.775 */
 public class X_I_Inventory extends org.openXpertya.model.PO
 {
 /** Constructor estándar */
@@ -131,6 +131,21 @@ set_Value ("instance_description", instance_description);
 public String getinstance_description() 
 {
 return (String)get_Value("instance_description");
+}
+/** Set Inventory DocumentNo */
+public void setInventory_DocumentNo (String Inventory_DocumentNo)
+{
+if (Inventory_DocumentNo != null && Inventory_DocumentNo.length() > 30)
+{
+log.warning("Length > 30 - truncated");
+Inventory_DocumentNo = Inventory_DocumentNo.substring(0,30);
+}
+set_Value ("Inventory_DocumentNo", Inventory_DocumentNo);
+}
+/** Get Inventory DocumentNo */
+public String getInventory_DocumentNo() 
+{
+return (String)get_Value("Inventory_DocumentNo");
 }
 /** Set Locator Key.
 Key of the Warehouse Locator */
@@ -480,7 +495,7 @@ public boolean insertDirect()
 try 
 {
  
- 		 String sql = " INSERT INTO I_Inventory(AD_Client_ID,AD_Org_ID,Created,CreatedBy,Description,I_ErrorMsg,I_Inventory_ID,I_IsImported,instance_description,IsActive,LocatorValue,Lot,M_AttributeSetInstance_ID,M_Inventory_ID,M_InventoryLine_ID,M_Locator_ID,MovementDate,M_Product_ID,M_Warehouse_ID,OrgValue,Processed,Processing,QtyBook,QtyCount,SerNo,UPC,Updated,UpdatedBy,Value,WarehouseValue,X,Y,Z) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?) ";
+ 		 String sql = " INSERT INTO I_Inventory(AD_Client_ID,AD_Org_ID,Created,CreatedBy,Description,I_ErrorMsg,I_Inventory_ID,I_IsImported,instance_description,Inventory_DocumentNo,IsActive,LocatorValue,Lot,M_AttributeSetInstance_ID,M_Inventory_ID,M_InventoryLine_ID,M_Locator_ID,MovementDate,M_Product_ID,M_Warehouse_ID,OrgValue,Processed,Processing,QtyBook,QtyCount,SerNo,UPC,Updated,UpdatedBy,Value,WarehouseValue,X,Y,Z) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?) ";
 
 		 if (getAD_Client_ID() == 0) sql = sql.replaceFirst("AD_Client_ID,","").replaceFirst("\\?,", "");
  		 if (getAD_Org_ID() == 0) sql = sql.replaceFirst("AD_Org_ID,","").replaceFirst("\\?,", "");
@@ -490,6 +505,7 @@ try
  		 if (getI_ErrorMsg() == null) sql = sql.replaceFirst("I_ErrorMsg,","").replaceFirst("\\?,", "");
  		 if (getI_Inventory_ID() == 0) sql = sql.replaceFirst("I_Inventory_ID,","").replaceFirst("\\?,", "");
  		 if (getinstance_description() == null) sql = sql.replaceFirst("instance_description,","").replaceFirst("\\?,", "");
+ 		 if (getInventory_DocumentNo() == null) sql = sql.replaceFirst("Inventory_DocumentNo,","").replaceFirst("\\?,", "");
  		 if (getLocatorValue() == null) sql = sql.replaceFirst("LocatorValue,","").replaceFirst("\\?,", "");
  		 if (getLot() == null) sql = sql.replaceFirst("Lot,","").replaceFirst("\\?,", "");
  		 if (getM_AttributeSetInstance_ID() == 0) sql = sql.replaceFirst("M_AttributeSetInstance_ID,","").replaceFirst("\\?,", "");
@@ -525,6 +541,7 @@ try
 		 if (getI_Inventory_ID() != 0) pstmt.setInt(col++, getI_Inventory_ID());
 		 pstmt.setString(col++, isI_IsImported()?"Y":"N");
 		 if (getinstance_description() != null) pstmt.setString(col++, getinstance_description());
+		 if (getInventory_DocumentNo() != null) pstmt.setString(col++, getInventory_DocumentNo());
 		 pstmt.setString(col++, isActive()?"Y":"N");
 		 if (getLocatorValue() != null) pstmt.setString(col++, getLocatorValue());
 		 if (getLot() != null) pstmt.setString(col++, getLot());
