@@ -291,7 +291,9 @@ public class ImportPadronBsAs extends SvrProcess
 		try {
 			padron = Integer.parseInt(updatePadron);
 		} catch (Exception e) {
-			throw e;
+			throw new Exception("La preferencia o valor predeterminado "
+					+ MANTENIMIENTO_PADRON
+					+ " no esta existo o contiene un valor no numerico");
 		}
 		padron = padron * -1;
 		// Eliminación de registros anteriores a los meses de tolerancia hacia atrás
