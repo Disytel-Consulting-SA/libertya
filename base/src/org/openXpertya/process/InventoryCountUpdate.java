@@ -36,6 +36,9 @@ public class InventoryCountUpdate extends SvrProcess {
 
     private int p_M_Inventory_ID = 0;
 
+    /** Cantidad contada en cero */
+    private boolean p_ZeroQtyCount = false;
+    
     /**
      * Descripción de Método
      *
@@ -49,6 +52,8 @@ public class InventoryCountUpdate extends SvrProcess {
 
             if( para[ i ].getParameter() == null ) {
                 ;
+            } else if( name.equals( "ZeroQtyCount" )) {
+                p_ZeroQtyCount = "Y".equals( para[ i ].getParameter());
             } else {
                 log.log( Level.SEVERE,"Unknown Parameter: " + name );
             }
@@ -75,7 +80,7 @@ public class InventoryCountUpdate extends SvrProcess {
             throw new ErrorOXPSystem( "Not found: M_Inventory_ID=" + p_M_Inventory_ID );
         }
 
-        String sql = "UPDATE M_InventoryLine l SET QtyBook = (SELECT QtyOnHand FROM M_Storage s  WHERE s.M_Product_ID=l.M_Product_ID AND s.M_Locator_ID=l.M_Locator_ID AND COALESCE(s.M_AttributeSetInstance_ID,0)=COALESCE(l.M_AttributeSetInstance_ID,0)), QtyCount = (SELECT QtyOnHand FROM M_Storage s  WHERE s.M_Product_ID=l.M_Product_ID AND s.M_Locator_ID=l.M_Locator_ID AND COALESCE(s.M_AttributeSetInstance_ID,0)=COALESCE(l.M_AttributeSetInstance_ID,0)), Updated=SysDate, UpdatedBy=" + getAD_User_ID()
+        String sql = "UPDATE M_InventoryLine l SET QtyBook = (SELECT QtyOnHand FROM M_Storage s  WHERE s.M_Product_ID=l.M_Product_ID AND s.M_Locator_ID=l.M_Locator_ID AND COALESCE(s.M_AttributeSetInstance_ID,0)=COALESCE(l.M_AttributeSetInstance_ID,0)), QtyCount = "+(p_ZeroQtyCount?"0.00":"(SELECT QtyOnHand FROM M_Storage s  WHERE s.M_Product_ID=l.M_Product_ID AND s.M_Locator_ID=l.M_Locator_ID AND COALESCE(s.M_AttributeSetInstance_ID,0)=COALESCE(l.M_AttributeSetInstance_ID,0))")+", Updated=SysDate, UpdatedBy=" + getAD_User_ID()
 
         + " WHERE M_Inventory_ID=" + p_M_Inventory_ID + " AND EXISTS (SELECT * FROM M_Storage s " + "WHERE s.M_Product_ID=l.M_Product_ID AND s.M_Locator_ID=l.M_Locator_ID" + " AND COALESCE(s.M_AttributeSetInstance_ID,0)=COALESCE(l.M_AttributeSetInstance_ID,0))";
 
