@@ -524,6 +524,7 @@ public class ImportInventory extends SvrProcess {
                 if(!Util.isEmpty(imp.getM_Inventory_ID(), true)){
                 	if(inventory == null || inventory.getM_Inventory_ID() != imp.getM_Inventory_ID()){
                 		inventory = new MInventory( getCtx(),imp.getM_Inventory_ID(),null );
+                		manageInventory(inventory);
                 		noUpdate++;
                 	}
                 }
@@ -533,7 +534,8 @@ public class ImportInventory extends SvrProcess {
                     inventory.setDescription( "I " + imp.getM_Warehouse_ID() + " " + MovementDate );
                     inventory.setM_Warehouse_ID( imp.getM_Warehouse_ID());
                     inventory.setMovementDate( MovementDate );
-
+                    manageInventory(inventory);
+                    
                     if( !inventory.save()) {
                         log.log( Level.SEVERE,"Inventory not saved: "+CLogger.retrieveErrorAsString() );
 
@@ -556,6 +558,7 @@ public class ImportInventory extends SvrProcess {
                 if(!Util.isEmpty(imp.getM_InventoryLine_ID(), true)){
                 	line = new MInventoryLine(getCtx(), imp.getM_InventoryLine_ID(), null);
                 	line.setQtyCount(imp.getQtyCount());
+                	line.setQtyInternalUse(line.getQtyBook().subtract(imp.getQtyCount()));
                 }
                 else{
 					line = new MInventoryLine(inventory, imp.getM_Locator_ID(),
@@ -613,7 +616,8 @@ public class ImportInventory extends SvrProcess {
         no = DB.executeUpdate( sql.toString());
         addLog( 0,null,new BigDecimal( no ),"@Errors@" );
 
-        //
+        // Post Import
+        postImport();
 
         addLog( 0,null,new BigDecimal( noInsert ),"@M_Inventory_ID@: @Inserted@" );
         addLog( 0,null,new BigDecimal( noUpdate ),"@M_Inventory_ID@: @Updated@" );
@@ -663,6 +667,16 @@ public class ImportInventory extends SvrProcess {
 				get_TrxName(), true);
 		ps.setTimestamp(1, new Timestamp(toleranceDate.getTimeInMillis()));
 		return ps.executeUpdate();
+	}
+	
+	protected void manageInventory(MInventory inventory){
+		// Las subclases pueden extender este método para realizar operaciones custom
+		// NO agregar código en este método en esta clase
+	}
+	
+	protected void postImport(){
+		// Las subclases pueden extender este método para realizar operaciones custom
+		// NO agregar código en este método en esta clase
 	}
 }    // ImportInventory
 

@@ -85,9 +85,16 @@ public class InventoryCountUpdate extends SvrProcess {
         + " WHERE M_Inventory_ID=" + p_M_Inventory_ID + " AND EXISTS (SELECT * FROM M_Storage s " + "WHERE s.M_Product_ID=l.M_Product_ID AND s.M_Locator_ID=l.M_Locator_ID" + " AND COALESCE(s.M_AttributeSetInstance_ID,0)=COALESCE(l.M_AttributeSetInstance_ID,0))";
 
         // log.fine("doIt - " + sql);
-
+        
         int no = DB.executeUpdate( sql,get_TrxName());
-
+        
+//        // Actualizar cantidad interna (diferencia)
+//        
+//		sql = "UPDATE M_InventoryLine SET QtyInternalUse = coalesce(QtyCount,0.00) - coalesce(QtyBook,0.00) "
+//				+ "WHERE M_Inventory_ID=" + p_M_Inventory_ID;
+//
+//		no = DB.executeUpdate( sql,get_TrxName());
+		
         // Multiple Lines for one item
 
         sql = "UPDATE M_InventoryLine SET IsActive='N' " + "WHERE M_Inventory_ID=" + p_M_Inventory_ID + " AND (M_Product_ID, M_Locator_ID, M_AttributeSetInstance_ID) IN " + "(SELECT M_Product_ID, M_Locator_ID, M_AttributeSetInstance_ID " + "FROM M_InventoryLine " + "WHERE M_Inventory_ID=" + p_M_Inventory_ID + " GROUP BY M_Product_ID, M_Locator_ID, M_AttributeSetInstance_ID " + "HAVING COUNT(*) > 1)";

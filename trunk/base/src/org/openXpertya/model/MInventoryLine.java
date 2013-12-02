@@ -277,20 +277,22 @@ public class MInventoryLine extends X_M_InventoryLine {
         }
 
         // InternalUse Inventory
+		// Si la cantidad interna (diferencia) es distinta de cero no siempre
+		// debe ser del tipo Cargo, no es obligatorio
 
-        if( Env.ZERO.compareTo( getQtyInternalUse()) != 0 ) {
-            if( !INVENTORYTYPE_ChargeAccount.equals( getInventoryType())) {
-                setInventoryType( INVENTORYTYPE_ChargeAccount );
-            }
-
-            //
-
-            if( getC_Charge_ID() == 0 ) {
-                log.saveError( "InternalUseNeedsCharge","" );
-
-                return false;
-            }
-        }
+//        if( Env.ZERO.compareTo( getQtyInternalUse()) != 0 ) {
+//            if( !INVENTORYTYPE_ChargeAccount.equals( getInventoryType())) {
+//                setInventoryType( INVENTORYTYPE_ChargeAccount );
+//            }
+//
+//            //
+//
+//            if( getC_Charge_ID() == 0 ) {
+//                log.saveError( "InternalUseNeedsCharge","" );
+//
+//                return false;
+//            }
+//        }
 
         return true;
     }    // beforeSave
