@@ -189,6 +189,10 @@ public class PostInstallUpgradeFrom1301 extends PluginPostInstallProcess {
 	protected final static String VALUED_MOVEMENTS_DETAIL_JASPER_REPORT_UID = "CORE-AD_JasperReport-1010117";
 	protected final static String VALUED_MOVEMENTS_DETAIL_JASPER_REPORT_FILENAME = "ValuedMovementsDetail.jasper";
 	
+	/** UID del Informe de Auditoría de Inventario Físico */
+	protected final static String PHYSICAL_INVENTORY_AUDIT_REPORT_UID = "CORE-AD_Process-1010369";
+	protected final static String PHYSICAL_INVENTORY_AUDIT_REPORT_FILENAME = "PhysicalInventoryAudit.jrxml";
+	
 	protected String doIt() throws Exception {
 		super.doIt();
 		
@@ -719,6 +723,17 @@ public class PostInstallUpgradeFrom1301 extends PluginPostInstallProcess {
 							.readBinaryFromJar(
 									jarFileURL,
 									getBinaryFileURL(VALUED_MOVEMENTS_DETAIL_JASPER_REPORT_FILENAME)));
+		
+		// Informe de Saldos de Entidades Financieras
+		MProcess.addAttachment(
+				get_TrxName(),
+				getCtx(),
+				PHYSICAL_INVENTORY_AUDIT_REPORT_UID,
+				PHYSICAL_INVENTORY_AUDIT_REPORT_FILENAME,
+				JarHelper
+						.readBinaryFromJar(
+								jarFileURL,
+								getBinaryFileURL(PHYSICAL_INVENTORY_AUDIT_REPORT_FILENAME)));
 		
 		return " ";
 	}
