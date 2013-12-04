@@ -5695,3 +5695,6 @@ CREATE TABLE AD_UnattendedUpgradeHost (
   CONSTRAINT AD_UnattendedUpgradeHost_key PRIMARY KEY (AD_UnattendedUpgradeHost_ID),
   CONSTRAINT UnattendedUpgradeHeader FOREIGN KEY (AD_UnattendedUpgrade_ID) REFERENCES AD_UnattendedUpgrade (AD_UnattendedUpgrade_ID) MATCH SIMPLE ON UPDATE NO ACTION ON DELETE NO ACTION
 );
+
+-- 20131204-1236 UnattendedUpgrader - Actualizador de instancias LY desatendido.  Ampliacion de las tablas
+ALTER TABLE AD_UnattendedUpgrade ADD COLUMN ScheduleUpgradeAllHosts Character(1);
