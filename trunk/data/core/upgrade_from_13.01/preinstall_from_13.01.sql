@@ -5661,3 +5661,37 @@ update ad_system set dummy = (SELECT addcolumnifnotexists('C_Controlador_Fiscal'
 --20131127-1330 Las pestañas van todas como no Siempre Actualizables por un error en el preinstall al agregar la columna
 update ad_tab
 set isalwaysupdateable = 'N';
+
+--20131204-0851 UnattendedUpgrader - Actualizador de instancias LY desatendido.  Tablas de configuracion
+CREATE TABLE AD_UnattendedUpgrade (
+  AD_UnattendedUpgrade_ID integer NOT NULL,
+  ad_client_id integer NOT NULL,
+  ad_org_id integer NOT NULL,
+  isactive character(1) NOT NULL DEFAULT 'Y'::bpchar,
+  created timestamp without time zone NOT NULL DEFAULT ('now'::text)::timestamp(6) WITH time zone,
+  createdby integer NOT NULL,
+  updated timestamp without time zone NOT NULL DEFAULT ('now'::text)::timestamp(6) WITH time zone,
+  updatedby integer NOT NULL,
+  version varchar(100) not NULL,
+  description varchar(255) NULL,
+  directory varchar(255) NOT NULL,
+  scheduledFor timestamp NOT NULL,
+  CONSTRAINT AD_UnattendedUpgrade_key PRIMARY KEY (AD_UnattendedUpgrade_ID)
+);
+
+CREATE TABLE AD_UnattendedUpgradeHost (
+  AD_UnattendedUpgradeHost_ID integer NOT NULL,
+  ad_client_id integer NOT NULL,
+  ad_org_id integer NOT NULL,
+  isactive character(1) NOT NULL DEFAULT 'Y'::bpchar,
+  created timestamp without time zone NOT NULL DEFAULT ('now'::text)::timestamp(6) WITH time zone,
+  createdby integer NOT NULL,
+  updated timestamp without time zone NOT NULL DEFAULT ('now'::text)::timestamp(6) WITH time zone,
+  updatedby integer NOT NULL,
+  AD_UnattendedUpgrade_ID integer NOT NULL,
+  status character(1) not null default 'P',
+  upgraded timestamp NULL,
+  errorMsg varchar(500) null,
+  CONSTRAINT AD_UnattendedUpgradeHost_key PRIMARY KEY (AD_UnattendedUpgradeHost_ID),
+  CONSTRAINT UnattendedUpgradeHeader FOREIGN KEY (AD_UnattendedUpgrade_ID) REFERENCES AD_UnattendedUpgrade (AD_UnattendedUpgrade_ID) MATCH SIMPLE ON UPDATE NO ACTION ON DELETE NO ACTION
+);
