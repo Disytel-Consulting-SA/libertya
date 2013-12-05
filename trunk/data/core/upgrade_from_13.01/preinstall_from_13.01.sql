@@ -5698,3 +5698,14 @@ CREATE TABLE AD_UnattendedUpgradeHost (
 
 -- 20131204-1236 UnattendedUpgrader - Actualizador de instancias LY desatendido.  Ampliacion de las tablas
 ALTER TABLE AD_UnattendedUpgrade ADD COLUMN ScheduleUpgradeAllHosts Character(1);
+
+-- 20131205-1600 Nuevos índices a la tabla de padron bs as para mejoras de performance 
+CREATE INDEX c_bpartner_padron_bsas_cuit
+  ON c_bpartner_padron_bsas
+  USING btree
+  (cuit);
+
+CREATE INDEX c_bpartner_padron_bsas_bpartner_id
+  ON c_bpartner_padron_bsas
+  USING btree
+  (c_bpartner_id);
