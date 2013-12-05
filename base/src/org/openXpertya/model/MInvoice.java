@@ -612,6 +612,10 @@ public class MInvoice extends X_C_Invoice implements DocAction {
 	 */
 	public static MInvoice getDebitFor(MInvoice creditInvoice){
 		MInvoice invoice = null;
+		// Esta variable booleana permite determinar si es posible buscar un
+		// débito relacionado con este crédito por alguno de los campos de
+		// documentos ya que sino busca cualquier débito de la EC lo cual no es correcto
+		boolean canSearchByDocument = false;
 		String docBaseTypeDebit = creditInvoice.isSOTrx() ? "'"
 				+ MDocType.DOCBASETYPE_ARInvoice + "'" : "'"
 				+ MDocType.DOCBASETYPE_APInvoice + "'";
@@ -627,13 +631,21 @@ public class MInvoice extends X_C_Invoice implements DocAction {
 				&& !Util.isEmpty(creditInvoice.getC_Invoice_Orig_ID(), true)) {
 			if(!Util.isEmpty(creditInvoice.getC_Order_ID(), true)){
 				sql.append(" AND (c_invoice_id = ? OR c_order_id = ?)");
+				canSearchByDocument = true;
 			}
 			else{
 				sql.append(" AND c_invoice_id = ? ");
+				canSearchByDocument = true;
 			}
 		}
 		else if(!Util.isEmpty(creditInvoice.getC_Order_ID(), true)){
 			sql.append(" AND c_order_id = ? ");
+			canSearchByDocument = true;
+		}
+		// Si no se puede buscar por ninguna relación de comprobante, entonces
+		// salgo
+		if(!canSearchByDocument){
+			return invoice;
 		}
 		sql.append(" ORDER BY dateinvoiced desc ");
 		sql.append("LIMIT 1");
@@ -2419,7 +2431,7 @@ public class MInvoice extends X_C_Invoice implements DocAction {
 		}
 		
 		if (is_ValueChanged("AD_Org_ID") || is_ValueChanged("C_BPartner_ID")
-				|| is_ValueChanged("ApplyPercepcion")) {
+				|| is_ValueChanged("ApplyPercepcion") || is_ValueChanged("C_Invoice_Orig_ID")) {
 			try {
 				
 				recalculatePercepciones();
