@@ -5662,6 +5662,9 @@ update ad_system set dummy = (SELECT addcolumnifnotexists('C_Controlador_Fiscal'
 update ad_tab
 set isalwaysupdateable = 'N';
 
+-- 20131129-1200 Incorporación de nueva columna en importador de inventario para poder actualizar uno existente
+update ad_system set dummy = (SELECT addcolumnifnotexists('I_Inventory','Inventory_DocumentNo', 'character varying(30)'));
+
 --20131204-0851 UnattendedUpgrader - Actualizador de instancias LY desatendido.  Tablas de configuracion
 CREATE TABLE AD_UnattendedUpgrade (
   AD_UnattendedUpgrade_ID integer NOT NULL,
