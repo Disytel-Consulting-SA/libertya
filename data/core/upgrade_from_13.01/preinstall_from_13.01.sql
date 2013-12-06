@@ -5712,3 +5712,23 @@ CREATE INDEX c_bpartner_padron_bsas_bpartner_id
   ON c_bpartner_padron_bsas
   USING btree
   (c_bpartner_id);
+
+-- 20131206-1330 Incorporación de nueva tabla utilizada al cargar padron de retenciones y percepciones.
+CREATE TABLE i_padron_sujeto_aux
+(
+  fecha_publicacion character varying(8),
+  fecha_desde character varying(8),
+  fecha_hasta character varying(8),
+  cuit character varying(11),
+  tipo_contr_insc character(1),
+  alta_baja character(1),
+  cbio_alicuota character(1),
+  percepcion character varying(6),
+  retencion character varying(6),
+  nro_grupo_ret integer,
+  nro_grupo_per integer
+)
+WITH (
+  OIDS=TRUE
+);
+ALTER TABLE i_padron_sujeto_aux OWNER TO libertya;
