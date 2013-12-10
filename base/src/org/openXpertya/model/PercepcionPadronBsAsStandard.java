@@ -22,12 +22,6 @@ public class PercepcionPadronBsAsStandard extends PercepcionStandard {
 		BigDecimal perc = MBPartnerPadronBsAs.getBPartnerPerc("percepcion",
 				getPercepcionData().getBpartner().getTaxID(), Env.getDate(),
 				MBPartnerPadronBsAs.PADRONTYPE_PadrónBsAs, null);
-		// Sino por la EC
-		if(perc == null){
-			perc = MBPartnerPadronBsAs.getBPartnerPerc("percepcion",
-					getPercepcionData().getBpartner().getID(), Env.getDate(),
-					MBPartnerPadronBsAs.PADRONTYPE_PadrónBsAs, null);
-		}
 		if(perc == null){
 			perc = super.getPercepcionPercToApply();
 		}
@@ -40,12 +34,6 @@ public class PercepcionPadronBsAsStandard extends PercepcionStandard {
 		BigDecimal perc = MBPartnerPadronBsAs.getBPartnerPerc("percepcion",
 				getPercepcionData().getBpartner().getTaxID(), Env.getDate(),
 				MBPartnerPadronBsAs.PADRONTYPE_PadrónBsAs, null);
-		// Sino por la EC
-		if(perc == null){
-			perc = MBPartnerPadronBsAs.getBPartnerPerc("percepcion",
-					getPercepcionData().getBpartner().getID(), Env.getDate(),
-					MBPartnerPadronBsAs.PADRONTYPE_PadrónBsAs, null);
-		}
 		if(perc == null){
 			return super.getMinimumNetAmount();
 		}

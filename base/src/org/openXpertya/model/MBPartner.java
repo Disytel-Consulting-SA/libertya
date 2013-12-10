@@ -1377,8 +1377,8 @@ public class MBPartner extends X_C_BPartner {
 		}
 	}
 	
-	public static BigDecimal getRetencionSegunPadronBsAS(Timestamp date, int C_BPartner_ID, String trxName){
-		return MBPartnerPadronBsAs.getBPartnerPerc("retencion", C_BPartner_ID, date,
+	public static BigDecimal getRetencionSegunPadronBsAS(Timestamp date, String taxID, String trxName){
+		return MBPartnerPadronBsAs.getBPartnerPerc("retencion", taxID, date,
 				MBPartnerPadronBsAs.PADRONTYPE_PadrónBsAs, trxName);
 	}	
 	
