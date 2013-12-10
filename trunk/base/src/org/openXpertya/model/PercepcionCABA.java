@@ -40,9 +40,19 @@ public class PercepcionCABA extends PercepcionStandard {
 		int c_Region_BP_ID = location.getC_Region_ID();
 		
 		if (c_Region_Tax_ID == c_Region_BP_ID){
-			percepcionPercToApply = MBPartnerPadronBsAs.getBPartnerPerc("percepcion", getPercepcionData().getBpartner().getID(), Env.getDate(), MBPartnerPadronBsAs.PADRONTYPE_PadrónDeAltoRiesgoCABA, null);
+			percepcionPercToApply = MBPartnerPadronBsAs
+					.getBPartnerPerc(
+							"percepcion",
+							getPercepcionData().getBpartner().getTaxID(),
+							Env.getDate(),
+							MBPartnerPadronBsAs.PADRONTYPE_PadrónDeAltoRiesgoCABA,
+							null);
 			if(percepcionPercToApply == null){
-				percepcionPercToApply = MBPartnerPadronBsAs.getBPartnerPerc("percepcion", getPercepcionData().getBpartner().getID(), Env.getDate(), MBPartnerPadronBsAs.PADRONTYPE_RégimenSimplificadoCABA, null);
+				percepcionPercToApply = MBPartnerPadronBsAs.getBPartnerPerc(
+						"percepcion", getPercepcionData().getBpartner()
+								.getTaxID(), Env.getDate(),
+						MBPartnerPadronBsAs.PADRONTYPE_RégimenSimplificadoCABA,
+						null);
 				if(percepcionPercToApply == null){
 					percepcionPercToApply = super.getPercepcionPercToApply();
 					minimumNetAmount = super.getMinimumNetAmount();

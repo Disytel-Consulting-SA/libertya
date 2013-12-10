@@ -10,7 +10,6 @@ import org.openXpertya.model.MInvoice;
 import org.openXpertya.model.MInvoiceLine;
 import org.openXpertya.model.MRetSchemaConfig;
 import org.openXpertya.model.MRetencionSchema;
-import org.openXpertya.model.MRole;
 import org.openXpertya.model.X_M_Retencion_Invoice;
 import org.openXpertya.util.DB;
 import org.openXpertya.util.Env;
@@ -149,7 +148,7 @@ public class RetencionIIBB extends AbstractRetencionProcessor {
 		if(getFromPadron().equals("S")){
 			BigDecimal porcentajePadron = MBPartner
 					.getRetencionSegunPadronBsAS(Env.getDate(), getBPartner()
-							.getC_BPartner_ID(), getTrxName());
+							.getTaxID(), getTrxName());
 			if ((porcentajePadron != null) && (!porcentajePadron.equals(Env.ZERO)))
 				porcentajeRetencion = porcentajePadron;
 		}
