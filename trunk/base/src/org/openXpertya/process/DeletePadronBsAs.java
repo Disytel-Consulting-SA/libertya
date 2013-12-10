@@ -62,7 +62,7 @@ public class DeletePadronBsAs extends SvrProcess {
 		
 		log.log (Level.SEVERE,"doIt - Cantidad de registros eliminados =" + regDeleted);
 		
-		addLog (0, null, new BigDecimal (regDeleted), "Registros eliminados por Mantenimiento de Padron");
+		addLog (0, null, new BigDecimal (regDeleted), "Registros eliminados del Padron");
 
 		return "Proceso finalizado satisfactoriamente";
 
