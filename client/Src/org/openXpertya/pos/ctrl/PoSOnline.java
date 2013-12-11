@@ -1340,7 +1340,10 @@ public class PoSOnline extends PoSConnectionState {
 		mo = new MOrder(ctx, mo.getID(), getTrxName());
 		
 		setCaches(mo); //caches
-		
+		// Se reserva stock solo si el remito realizado desde tpv se genera en
+		// borrador
+		mo.setForceReserveStock(getPoSCOnfig().isCreateInOut()
+				&& getPoSCOnfig().isDraftedInOut());
 		// Completar Orden
 		debug("Completando el pedido");
 		throwIfFalse(mo.processIt(DocAction.ACTION_Complete), mo);
