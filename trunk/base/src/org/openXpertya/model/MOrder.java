@@ -316,6 +316,9 @@ public class MOrder extends X_C_Order implements DocAction {
 	 * cuales no son necesario realizar en caso de ser parte de una venta TPV
 	 */
  	protected boolean isTPVInstance = false;
+ 	
+ 	/** Flag que forza la reserva de stock */
+ 	private boolean forceReserveStock = false; 
     
     /**
      * Descripción de Método
@@ -2627,7 +2630,8 @@ public class MOrder extends X_C_Order implements DocAction {
 			// se retira por TPV. Si el TPV no se encarga de emitir el remito
 			// entonces setea que se retira por Almacén (lo cual es lógico)
     		MOrderLine ol = lines[i];
-			if (ol.getCheckoutPlace() != null
+			if (!isForceReserveStock() 
+					&& ol.getCheckoutPlace() != null
 					&& MProduct.CHECKOUTPLACE_PointOfSale.equals(ol
 							.getCheckoutPlace())) { 
     			continue;
@@ -4715,6 +4719,14 @@ public class MOrder extends X_C_Order implements DocAction {
 				save();
 			}	
 		}
+	}
+
+	public boolean isForceReserveStock() {
+		return forceReserveStock;
+	}
+
+	public void setForceReserveStock(boolean forceReserveStock) {
+		this.forceReserveStock = forceReserveStock;
 	}
 }    // MOrder
 
