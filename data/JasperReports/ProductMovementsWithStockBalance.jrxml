@@ -38,7 +38,11 @@
 	<field name="DOCUMENTNO" class="java.lang.String"/>
 	<field name="QTY" class="java.math.BigDecimal"/>
 	<field name="INVOICE_DOCUMENTNO" class="java.lang.String"/>
+	<field name="IO_KIND_NO_PARSED" class="java.lang.String"/>
 
+	<variable name="BALANCE" class="java.math.BigDecimal" resetType="Report" calculation="Sum">
+		<variableExpression><![CDATA[$F{QTY}.multiply( $F{IO_KIND_NO_PARSED}.equalsIgnoreCase( "Y" )?new java.math.BigDecimal(1):new java.math.BigDecimal(-1) )]]></variableExpression>
+	</variable>
 		<background>
 			<band height="0"  isSplitAllowed="true" >
 			</band>
@@ -252,7 +256,7 @@
 					<reportElement
 						x="115"
 						y="0"
-						width="154"
+						width="145"
 						height="15"
 						key="staticText-10"/>
 					<box topBorder="Thin" topBorderColor="#000000" leftBorder="Thin" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="Thin" bottomBorderColor="#000000"/>
@@ -263,22 +267,22 @@
 				</staticText>
 				<staticText>
 					<reportElement
-						x="269"
+						x="260"
 						y="0"
-						width="111"
+						width="71"
 						height="15"
 						key="staticText-11"/>
 					<box topBorder="Thin" topBorderColor="#000000" leftBorder="Thin" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="Thin" bottomBorderColor="#000000"/>
 					<textElement textAlignment="Center" verticalAlignment="Middle">
 						<font pdfFontName="Helvetica" size="11" isBold="false"/>
 					</textElement>
-				<text><![CDATA[Número de Doc.]]></text>
+				<text><![CDATA[Número]]></text>
 				</staticText>
 				<staticText>
 					<reportElement
-						x="380"
+						x="331"
 						y="0"
-						width="62"
+						width="59"
 						height="15"
 						key="staticText-12"/>
 					<box topBorder="Thin" topBorderColor="#000000" leftBorder="Thin" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="Thin" bottomBorderColor="#000000"/>
@@ -299,6 +303,19 @@
 						<font pdfFontName="Helvetica" size="11" isBold="false"/>
 					</textElement>
 				<text><![CDATA[Fact. Imputada]]></text>
+				</staticText>
+				<staticText>
+					<reportElement
+						x="390"
+						y="0"
+						width="52"
+						height="15"
+						key="staticText-14"/>
+					<box topBorder="Thin" topBorderColor="#000000" leftBorder="Thin" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="Thin" bottomBorderColor="#000000"/>
+					<textElement textAlignment="Center" verticalAlignment="Middle">
+						<font pdfFontName="Helvetica" size="11" isBold="false"/>
+					</textElement>
+				<text><![CDATA[Saldo]]></text>
 				</staticText>
 			</band>
 		</pageHeader>
@@ -338,7 +355,7 @@
 					<reportElement
 						x="115"
 						y="0"
-						width="154"
+						width="145"
 						height="11"
 						key="textField-6"/>
 					<box topBorder="None" topBorderColor="#000000" leftBorder="Thin" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="Thin" bottomBorderColor="#000000"/>
@@ -349,9 +366,9 @@
 				</textField>
 				<textField isStretchWithOverflow="false" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
-						x="269"
+						x="260"
 						y="0"
-						width="111"
+						width="71"
 						height="11"
 						key="textField-7"/>
 					<box topBorder="None" topBorderColor="#000000" leftBorder="Thin" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="Thin" bottomBorderColor="#000000"/>
@@ -362,9 +379,9 @@
 				</textField>
 				<textField isStretchWithOverflow="false" pattern="##0.00" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
-						x="380"
+						x="331"
 						y="0"
-						width="62"
+						width="59"
 						height="11"
 						key="textField-8"/>
 					<box topBorder="None" topBorderColor="#000000" leftBorder="Thin" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="Thin" bottomBorderColor="#000000"/>
@@ -385,6 +402,19 @@
 						<font size="8"/>
 					</textElement>
 				<textFieldExpression   class="java.lang.String"><![CDATA[$F{INVOICE_DOCUMENTNO}]]></textFieldExpression>
+				</textField>
+				<textField isStretchWithOverflow="false" pattern="##0.00" isBlankWhenNull="false" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
+					<reportElement
+						x="390"
+						y="0"
+						width="52"
+						height="11"
+						key="textField"/>
+					<box topBorder="None" topBorderColor="#000000" leftBorder="Thin" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="Thin" bottomBorderColor="#000000"/>
+					<textElement textAlignment="Right" verticalAlignment="Middle">
+						<font size="8"/>
+					</textElement>
+				<textFieldExpression   class="java.math.BigDecimal"><![CDATA[$V{BALANCE}]]></textFieldExpression>
 				</textField>
 			</band>
 		</detail>

@@ -51,7 +51,7 @@ public class DetailedProductMovementsDataDource extends QueryDataSource {
 	
 	@Override
 	protected String getQuery() {
-		StringBuffer sql = new StringBuffer("select movement_table, receiptvalue, movementdate, doctypename, documentno, qty, invoice_documentno " +
+		StringBuffer sql = new StringBuffer("select movement_table, receiptvalue, receiptvalue as io_kind_no_parsed, movementdate, doctypename, documentno, qty, invoice_documentno " +
 					 "from v_product_movements_detailed " +
 					 "where m_product_id = ? AND m_warehouse_id = ? AND docstatus IN ('CO','CL') ");
 		if(getDateFrom() != null){
