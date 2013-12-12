@@ -32,7 +32,7 @@ public class OrgReplicationFilter extends ReplicationFilter {
 		String orgID = "";
 		// recorrer las columnas hasta recuperar AD_Org_ID
 		for (ChangeLogElement element : group.getElements()) {
-			if ("AD_Org_ID".equalsIgnoreCase(element.getColumnName())) {
+			if (getFilterColumnName().equalsIgnoreCase(element.getColumnName())) {
 				// Obtener la posicion donde debe replicar.  Si el registro tiene org = 0 (*), no se filtra 
 				orgID = (String)element.getNewValue();
 				if ("0".equals(orgID))
@@ -54,4 +54,8 @@ public class OrgReplicationFilter extends ReplicationFilter {
 		}
 	}
 
+	
+	protected String getFilterColumnName() {
+		return "AD_Org_ID";
+	}
 }

@@ -5965,3 +5965,6 @@ UNION ALL
   WHERE al.c_invoice_id = i.c_invoice_id));
 
 ALTER TABLE v_dailysales OWNER TO libertya;
+
+-- 20131212-1513 UnattendedUpgrader - Actualizador de instancias LY desatendido.  Ampliacion de las tablas
+ALTER TABLE AD_UnattendedUpgradeHost ADD COLUMN AD_TargetOrg_ID int NOT NULL;
