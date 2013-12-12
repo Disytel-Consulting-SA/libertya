@@ -37,7 +37,6 @@ import org.openXpertya.apps.form.VOrdenPagoModel.MedioPagoCredito;
 import org.openXpertya.apps.form.VOrdenPagoModel.MedioPagoEfectivo;
 import org.openXpertya.apps.form.VOrdenPagoModel.MedioPagoTarjetaCredito;
 import org.openXpertya.apps.form.VOrdenPagoModel.MedioPagoTransferencia;
-import org.openXpertya.apps.form.VOrdenPagoModel.MyTreeNode;
 import org.openXpertya.grid.ed.VCellRenderer;
 import org.openXpertya.grid.ed.VComboBox;
 import org.openXpertya.grid.ed.VDate;
