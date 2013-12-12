@@ -26,6 +26,12 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
+import javax.swing.event.TableModelEvent;
+import javax.swing.event.TableModelListener;
+import javax.swing.table.TableModel;
+import javax.swing.tree.DefaultMutableTreeNode;
+import javax.swing.tree.DefaultTreeModel;
+import javax.swing.tree.TreeModel;
 
 import javax.swing.AbstractAction;
 import javax.swing.DefaultCellEditor;
@@ -57,6 +63,8 @@ import javax.swing.text.NumberFormatter;
 import javax.swing.tree.DefaultTreeCellRenderer;
 import javax.swing.tree.TreePath;
 
+import mondrian.jolap.util.Model;
+
 import org.compiere.swing.CPanel;
 import org.openXpertya.OpenXpertya;
 import org.openXpertya.apps.ADialog;
@@ -65,6 +73,7 @@ import org.openXpertya.apps.form.VOrdenPagoModel.MedioPagoCheque;
 import org.openXpertya.apps.form.VOrdenPagoModel.MedioPagoCredito;
 import org.openXpertya.apps.form.VOrdenPagoModel.MedioPagoEfectivo;
 import org.openXpertya.apps.form.VOrdenPagoModel.MedioPagoTransferencia;
+import org.openXpertya.apps.form.VOrdenPagoModel.ResultItemFactura;
 import org.openXpertya.grid.ed.VCheckBox;
 import org.openXpertya.grid.ed.VComboBox;
 import org.openXpertya.grid.ed.VDate;
@@ -73,6 +82,7 @@ import org.openXpertya.images.ImageFactory;
 import org.openXpertya.model.MBPartner;
 import org.openXpertya.model.MCurrency;
 import org.openXpertya.model.MSequence;
+import org.openXpertya.model.RetencionProcessor;
 import org.openXpertya.model.X_C_BankAccountDoc;
 import org.openXpertya.pos.view.KeyUtils;
 import org.openXpertya.process.ProcessInfo;
@@ -198,7 +208,7 @@ public class VOrdenPago extends CPanel implements FormPanel,ActionListener,Table
 	                        int row,
 	                        boolean hasFocus) {
 	    	
-	    	VOrdenPagoModel.MyTreeNode td = (VOrdenPagoModel.MyTreeNode)value;
+	    	MyTreeNode td = (MyTreeNode)value;
 	    	
 	    	Component ret = super.getTreeCellRendererComponent(tree, value, sel, expanded, leaf, row, hasFocus);
 	    	
@@ -312,7 +322,7 @@ public class VOrdenPago extends CPanel implements FormPanel,ActionListener,Table
 		txtDescription.setEditable(true);		
 		lblDocumentType = new javax.swing.JLabel();
 		cboDocumentType = VComponentsFactory.VLookupFactory("C_DOCTYPE_ID", "C_DOCTYPE", m_WindowNo, DisplayType.Table,m_model.getDocumentTypeSqlValidation(),false);
-        tblFacturas = new javax.swing.JTable(m_model.getFacturasTableModel());
+        tblFacturas = new javax.swing.JTable(getFacturasTableModel());
         txtTotalPagar1 = new JFormattedTextField();
         lblTotalPagar1 = new javax.swing.JLabel();
         rInvoiceAll = new javax.swing.JRadioButton();
@@ -320,7 +330,7 @@ public class VOrdenPago extends CPanel implements FormPanel,ActionListener,Table
         invoiceDatePick = VComponentsFactory.VDateFactory();
         jPanel4 = new javax.swing.JPanel();
         jScrollPane2 = new javax.swing.JScrollPane();
-        jTree1 = new javax.swing.JTree(m_model.getMediosPagoTreeModel());
+        jTree1 = new javax.swing.JTree(getMediosPagoTreeModel());
         cmdEliminar = new javax.swing.JButton();
         cmdEditar = new javax.swing.JButton();
         txtSaldo = new javax.swing.JTextField();
@@ -1424,6 +1434,7 @@ public class VOrdenPago extends CPanel implements FormPanel,ActionListener,Table
 	    	if(mp != null){
 	    		m_model.addMedioPago(mp);
 	    	}
+	    	updateTreeModel();
 	    	clearMediosPago();
 			// Actualizar componentes de interfaz gráfica necesarios luego de
 			// agregar el medio de pago 
@@ -1629,11 +1640,11 @@ public class VOrdenPago extends CPanel implements FormPanel,ActionListener,Table
 	}
     
     
-    private VOrdenPagoModel.MyTreeNode darElementoArbolSeleccionado() {
+    private MyTreeNode darElementoArbolSeleccionado() {
     	if (jTree1.getSelectionCount() == 1) {
 			TreePath path = jTree1.getSelectionPath();
 			
-			VOrdenPagoModel.MyTreeNode tn = (VOrdenPagoModel.MyTreeNode)path.getLastPathComponent();
+			MyTreeNode tn = (MyTreeNode)path.getLastPathComponent();
 			return tn;
     	}
     	
@@ -1642,7 +1653,7 @@ public class VOrdenPago extends CPanel implements FormPanel,ActionListener,Table
     
     private void cmdEditarActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdEditarActionPerformed
     	try {
-			VOrdenPagoModel.MyTreeNode tn = darElementoArbolSeleccionado();
+			MyTreeNode tn = darElementoArbolSeleccionado();
 			if (tn != null) {
 				cmdEditMedioPago(tn);
 				// Actualizar componentes de interfaz gráfica necesarios luego de
@@ -1656,7 +1667,7 @@ public class VOrdenPago extends CPanel implements FormPanel,ActionListener,Table
 
     private void cmdEliminarActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdEliminarActionPerformed
     	try {
-			VOrdenPagoModel.MyTreeNode tn = darElementoArbolSeleccionado();
+			MyTreeNode tn = darElementoArbolSeleccionado();
 
 			if (tn != null) {
 				cmdDeleteMedioPago(tn);
@@ -1775,6 +1786,7 @@ public class VOrdenPago extends CPanel implements FormPanel,ActionListener,Table
 			}
   		
     		int status = m_model.doPreProcesar();
+    		updateTreeModel();	
     		
     		switch ( status )
     		{
@@ -2076,7 +2088,7 @@ public class VOrdenPago extends CPanel implements FormPanel,ActionListener,Table
         initComponents();
         customInitComponents();
         initTranslations();
-        
+        m_model.m_facturasTableModel.addTableModelListener(this);
         m_frame.pack();
         
         onTipoPagoChange(false);
@@ -2135,7 +2147,13 @@ public class VOrdenPago extends CPanel implements FormPanel,ActionListener,Table
 		transFecha.addVetoableChangeListener(this);
 		
 		tblFacturas.addVetoableChangeListener(this);
-		tblFacturas.getModel().addTableModelListener(this);
+		tblFacturas.getModel().addTableModelListener(new TableModelListener() {
+			public void tableChanged(TableModelEvent e) {
+				// Se verifica que no se esté intentando pagar una factura que no tiene una tasa de cambio para la fecha actual
+				validateConversionRate();
+				tableUpdated();
+			}
+		});				
 		
 		// tblFacturas.getDefaultEditor(BigDecimal.class).addCellEditorListener(this);
 		// TableCellEditor cellEd = tblFacturas.getDefaultEditor(BigDecimal.class); 
@@ -2571,9 +2589,20 @@ public class VOrdenPago extends CPanel implements FormPanel,ActionListener,Table
 
 	public void tableChanged(TableModelEvent arg0) {
 		// System.out.println("tableChanged: " + arg0);
-		// Se verifica que no se esté intentando pagar una factura que no tiene una tasa de cambio para la fecha actual
-		validateConversionRate();
-		tableUpdated();
+		if ( (arg0.getColumn() == m_model.m_facturasTableModel.getColumnCount() - 1) || (arg0.getColumn() == m_model.m_facturasTableModel.getColumnCount() - 2) ){
+			// Se actualizó el monto manual
+			for (int row = arg0.getFirstRow(); row <= arg0.getLastRow() && row < m_model.m_facturas.size(); row++) {
+				ResultItemFactura rif = (ResultItemFactura)m_model.m_facturas.get(row);
+				int currency_ID_To = (Integer) m_model.m_facturas.get(row).getItem(m_model.m_facturasTableModel.getCurrencyColIdx());
+				if (arg0.getColumn() == m_model.m_facturasTableModel.getColumnCount() - 1){
+					m_model.actualizarPagarConPagarCurrency(row,rif,currency_ID_To);
+				}
+				else{
+					m_model.actualizarPagarCurrencyConPagar(row,rif,currency_ID_To);
+				}
+				m_model.m_facturasTableModel.fireTableDataChanged();	
+			}
+		}
 	}
 
 	public void vetoableChange(PropertyChangeEvent e) throws PropertyVetoException {
@@ -2729,7 +2758,7 @@ public class VOrdenPago extends CPanel implements FormPanel,ActionListener,Table
 
 	public void mouseClicked(MouseEvent arg0) {
 
-		VOrdenPagoModel.MyTreeNode tn = darElementoArbolSeleccionado();
+		MyTreeNode tn = darElementoArbolSeleccionado();
 
 		if (tn != null) {
 			//boolean activo = tn.isMedioPago();
@@ -2850,14 +2879,14 @@ public class VOrdenPago extends CPanel implements FormPanel,ActionListener,Table
 		return (Integer)cboProject.getValue();
 	}
 	
-	protected boolean canEditTreeNode(VOrdenPagoModel.MyTreeNode treeNode) {
+	protected boolean canEditTreeNode(MyTreeNode treeNode) {
 		return treeNode.isMedioPago();
 	}
 	
 	/**
 	 * Ingresa en modo de edición el medio de pago seleccionado en el árbol.
 	 */
-	protected void cmdEditMedioPago(VOrdenPagoModel.MyTreeNode tn) {
+	protected void cmdEditMedioPago(MyTreeNode tn) {
 		VOrdenPagoModel.MedioPago mp = (VOrdenPagoModel.MedioPago)tn.getUserObject();
 		
 		if (mp == null)
@@ -2872,7 +2901,7 @@ public class VOrdenPago extends CPanel implements FormPanel,ActionListener,Table
 	/**
 	 * Borrado del nodo actual del arbol de medios de pago y retenciones.
 	 */
-	protected void cmdDeleteMedioPago(VOrdenPagoModel.MyTreeNode tn) {
+	protected void cmdDeleteMedioPago(MyTreeNode tn) {
 		VOrdenPagoModel.MedioPago mp = (VOrdenPagoModel.MedioPago)tn.getUserObject();
 		
 		if (mp == null)
@@ -3297,4 +3326,127 @@ public class VOrdenPago extends CPanel implements FormPanel,ActionListener,Table
 			actionListener.actionPerformed(event);
 		}
 	}
+
+	/* === Contenido migrado de VOrdenPagoModel === */
+	
+	public class MyTreeNode extends DefaultMutableTreeNode {
+		
+		protected String m_msg;
+		protected boolean m_leaf;
+		
+		public MyTreeNode(String msg, Object obj, boolean leaf) {
+			m_msg = msg;
+			m_leaf = leaf;
+			userObject = obj;
+		}
+		
+		public void setMsg(String msg) {
+			m_msg = msg;
+		}
+		
+		public String toString() {
+			return m_msg != null ? m_msg : userObject.toString();
+		}
+		
+		public boolean isLeaf() {
+			return m_leaf;
+		}
+		
+		public boolean isMedioPago() {
+			return userObject != null && userObject instanceof MedioPago;
+		}
+		
+		public boolean isRetencion() {
+			return userObject != null && !isMedioPago();
+		}
+	}
+	
+	// Tree de Medios de pago
+	private DefaultTreeModel m_arbolModel = null;
+	private MyTreeNode m_nodoRaiz = null;
+	private MyTreeNode m_nodoRetenciones = null;
+	private MyTreeNode m_nodoMediosPago = null;
+
+	
+	public TableModel getFacturasTableModel() {
+		return VModelHelper.HideColumnsTableModelFactory( m_model.m_facturasTableModel );
+	}
+	
+	
+	protected void initTreeModel() {
+		String nodoRaizMsg ;
+		String nodoRetencionesMsg = Msg.getElement(m_ctx, "C_Withholding_ID");
+		String nodoMediosPagoMsg = Msg.translate(m_ctx, m_model.getMsgMap().get("TenderType"));
+		String bpName = m_model.BPartner != null ? m_model.BPartner.getName() + " - " : "";
+		
+		String monto = numberFormat(m_model.getSumaTotalPagarFacturas());
+		
+		nodoRaizMsg = bpName + Msg.getElement(m_ctx, "Amount") + ": " + monto;
+		
+		// Crear los nodos base o actualizar sus mensajes
+		
+		if (m_nodoRaiz == null) {
+			m_nodoRaiz = new MyTreeNode(nodoRaizMsg, null, false);
+		} else {
+			m_nodoRaiz.setMsg(nodoRaizMsg);
+			m_nodoRaiz.removeAllChildren();
+		}
+		
+		if (m_nodoRetenciones == null)
+			m_nodoRetenciones = new MyTreeNode(nodoRetencionesMsg, null, false);
+		else
+			m_nodoRetenciones.setMsg(nodoRetencionesMsg);
+		
+		if (m_nodoMediosPago == null)
+			m_nodoMediosPago = new MyTreeNode(nodoMediosPagoMsg, null, false);
+		else
+			m_nodoMediosPago.setMsg(nodoMediosPagoMsg);
+		
+		// Agrego los hijos del nodo raiz
+		
+		if (m_model.m_retenciones.size() > 0) 
+			m_nodoRaiz.add(m_nodoRetenciones);
+		
+		m_nodoRaiz.add(m_nodoMediosPago);
+		
+		// Actualizo el Modelo 
+		
+		if (m_arbolModel == null)
+			m_arbolModel = new DefaultTreeModel(m_nodoRaiz);
+		else
+			m_arbolModel.setRoot(m_nodoRaiz);
+	}
+	
+	public void updateTreeModel() {
+		initTreeModel();
+		
+		// Agrego las retenciones
+		
+		if (m_nodoRetenciones != null) {
+			m_nodoRetenciones.removeAllChildren();
+			
+			for (RetencionProcessor r : m_model.m_retenciones)
+				m_nodoRetenciones.add(new MyTreeNode(r.getRetencionTypeName() + ": " + numberFormat( r.getAmount() ), r, true));
+		}
+		
+		// Agrego los medios de pago
+		
+		if (m_nodoMediosPago != null) {
+			m_nodoMediosPago.removeAllChildren();
+			
+			for (MedioPago mp : m_model.m_mediosPago) 
+				m_nodoMediosPago.add(new MyTreeNode(null, mp, true));
+		}
+		
+		m_arbolModel.nodeStructureChanged(m_nodoRaiz);
+	}
+	
+	public TreeModel getMediosPagoTreeModel() {
+		updateTreeModel();
+		return m_arbolModel;
+	}
+	
+	
+	
+	
 }

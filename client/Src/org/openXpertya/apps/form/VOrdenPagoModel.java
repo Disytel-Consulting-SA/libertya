@@ -18,13 +18,6 @@ import java.util.Properties;
 import java.util.Vector;
 import java.util.logging.Level;
 
-import javax.swing.event.TableModelEvent;
-import javax.swing.event.TableModelListener;
-import javax.swing.table.TableModel;
-import javax.swing.tree.DefaultMutableTreeNode;
-import javax.swing.tree.DefaultTreeModel;
-import javax.swing.tree.TreeModel;
-
 import org.openXpertya.apps.ProcessCtl;
 import org.openXpertya.apps.form.VModelHelper.ResultItem;
 import org.openXpertya.apps.form.VModelHelper.ResultItemTableModel;
@@ -66,7 +59,7 @@ import org.openXpertya.util.Msg;
 import org.openXpertya.util.Trx;
 import org.openXpertya.util.Util;
 
-public class VOrdenPagoModel implements TableModelListener {
+public class VOrdenPagoModel {
 
 	public static final int PROCERROR_OK = 0;
 	public static final int PROCERROR_INSUFFICIENT_INVOICES = 1;
@@ -81,37 +74,7 @@ public class VOrdenPagoModel implements TableModelListener {
 	
 	protected static CLogger log = CLogger.getCLogger(VOrdenPagoModel.class);
 	
-	public class MyTreeNode extends DefaultMutableTreeNode {
-		
-		protected String m_msg;
-		protected boolean m_leaf;
-		
-		public MyTreeNode(String msg, Object obj, boolean leaf) {
-			m_msg = msg;
-			m_leaf = leaf;
-			userObject = obj;
-		}
-		
-		public void setMsg(String msg) {
-			m_msg = msg;
-		}
-		
-		public String toString() {
-			return m_msg != null ? m_msg : userObject.toString();
-		}
-		
-		public boolean isLeaf() {
-			return m_leaf;
-		}
-		
-		public boolean isMedioPago() {
-			return userObject != null && userObject instanceof MedioPago;
-		}
-		
-		public boolean isRetencion() {
-			return userObject != null && !isMedioPago();
-		}
-	}
+
 	
 	public abstract class MedioPago {
 		public static final String TIPOMEDIOPAGO_EFECTIVO = "E";
@@ -972,7 +935,7 @@ public class VOrdenPagoModel implements TableModelListener {
 	protected boolean m_allInvoices = true;
 	protected int C_BPartner_ID = 0;
 	protected int AD_Org_ID = 0;
-	protected MBPartner BPartner = null;
+	public MBPartner BPartner = null;
     protected int C_Currency_ID = Env.getContextAsInt( Env.getCtx(), "$C_Currency_ID" );
     protected MCurrency mCurency = MCurrency.get(m_ctx, C_Currency_ID);
     private Integer projectID = 0;
@@ -984,22 +947,17 @@ public class VOrdenPagoModel implements TableModelListener {
     
     private boolean m_actualizarFacturasAuto = true;
     
-	// Tree de Medios de pago
-	private DefaultTreeModel m_arbolModel = null;
-	private MyTreeNode m_nodoRaiz = null;
-	private MyTreeNode m_nodoRetenciones = null;
-	private MyTreeNode m_nodoMediosPago = null;
 
 	// Medios de pago
-	private Vector<MedioPago> m_mediosPago = new Vector<MedioPago>();
+	public Vector<MedioPago> m_mediosPago = new Vector<MedioPago>();
 	protected POCRGenerator poGenerator;
 	
 	// Retenciones
 	private GeneratorRetenciones m_retGen = null;
-	private Vector<RetencionProcessor> m_retenciones = new Vector<RetencionProcessor>();
+	public Vector<RetencionProcessor> m_retenciones = new Vector<RetencionProcessor>();
 	
 	// Table Facturas
-	protected OpenInvoicesTableModel m_facturasTableModel;
+	public OpenInvoicesTableModel m_facturasTableModel;
 	// private Vector<BigDecimal> m_facturasManualAmounts = null;
 	protected Vector<ResultItem> m_facturas = null;
 	// Payments creados
@@ -1030,7 +988,6 @@ public class VOrdenPagoModel implements TableModelListener {
 		getMsgMap().put("TenderType", "TenderType");
 //		initTrx();		<-- COMENTADO: La trx debe iniciarse al confirmar el pago unicamente 
 		m_facturasTableModel = getInvoicesTableModel();
-		m_facturasTableModel.addTableModelListener(this);
 		setPoGenerator(new POCRGenerator(getCtx(), getPOCRType(), getTrxName()));
 	}
 	
@@ -1068,94 +1025,6 @@ public class VOrdenPagoModel implements TableModelListener {
 		//return m_trx != null ? m_trx.getTrxName() : null;
 	}
 	
-	public TableModel getFacturasTableModel() {
-		return VModelHelper.HideColumnsTableModelFactory( m_facturasTableModel );
-	}
-	
-	protected void initTreeModel() {
-		String nodoRaizMsg ;
-		String nodoRetencionesMsg = Msg.getElement(m_ctx, "C_Withholding_ID");
-		String nodoMediosPagoMsg = Msg.translate(m_ctx, getMsgMap().get("TenderType"));
-		String bpName = BPartner != null ? BPartner.getName() + " - " : "";
-		
-		String monto = numberFormat(getSumaTotalPagarFacturas());
-		
-		nodoRaizMsg = bpName + Msg.getElement(m_ctx, "Amount") + ": " + monto;
-		
-		// Crear los nodos base o actualizar sus mensajes
-		
-		if (m_nodoRaiz == null) {
-			m_nodoRaiz = new MyTreeNode(nodoRaizMsg, null, false);
-		} else {
-			m_nodoRaiz.setMsg(nodoRaizMsg);
-			m_nodoRaiz.removeAllChildren();
-		}
-		
-		if (m_nodoRetenciones == null)
-			m_nodoRetenciones = new MyTreeNode(nodoRetencionesMsg, null, false);
-		else
-			m_nodoRetenciones.setMsg(nodoRetencionesMsg);
-		
-		if (m_nodoMediosPago == null)
-			m_nodoMediosPago = new MyTreeNode(nodoMediosPagoMsg, null, false);
-		else
-			m_nodoMediosPago.setMsg(nodoMediosPagoMsg);
-		
-		// Agrego los hijos del nodo raiz
-		
-		if (m_retenciones.size() > 0) 
-			m_nodoRaiz.add(m_nodoRetenciones);
-		
-		m_nodoRaiz.add(m_nodoMediosPago);
-		
-		// Actualizo el Modelo 
-		
-		if (m_arbolModel == null)
-			m_arbolModel = new DefaultTreeModel(m_nodoRaiz);
-		else
-			m_arbolModel.setRoot(m_nodoRaiz);
-	}
-	
-	protected void updateTreeModel() {
-		initTreeModel();
-		
-		// Agrego las retenciones
-		
-		if (m_nodoRetenciones != null) {
-			m_nodoRetenciones.removeAllChildren();
-			
-			for (RetencionProcessor r : m_retenciones)
-				m_nodoRetenciones.add(new MyTreeNode(r.getRetencionTypeName() + ": " + numberFormat( r.getAmount() ), r, true));
-		}
-		
-		// Agrego los medios de pago
-		
-		if (m_nodoMediosPago != null) {
-			m_nodoMediosPago.removeAllChildren();
-			
-			for (MedioPago mp : m_mediosPago) 
-				m_nodoMediosPago.add(new MyTreeNode(null, mp, true));
-		}
-		
-		m_arbolModel.nodeStructureChanged(m_nodoRaiz);
-	}
-	
-	public TreeModel getMediosPagoTreeModel() {
-		updateTreeModel();
-		return m_arbolModel;
-	}
-	
-	public void addMedioPago(MedioPago mp) {
-		m_mediosPago.add(mp);
-		updateAddingMedioPago(mp);
-		updateTreeModel();
-	}
-	
-	public void removeMedioPago(MedioPago mp) {
-		m_mediosPago.remove(mp);
-		updateRemovingMedioPago(mp);
-		updateTreeModel();
-	}
 	
 	public MedioPago getMedioPago(int idx) {
 		return m_mediosPago.get(idx);
@@ -1567,8 +1436,6 @@ public class VOrdenPagoModel implements TableModelListener {
 			calculateRetencions();
 			m_retenciones = m_retGen.getRetenciones();
 		}
-		
-		updateTreeModel();
 		
 		return PROCERROR_OK;
 	}
@@ -2210,22 +2077,6 @@ public class VOrdenPagoModel implements TableModelListener {
         printCustomDocuments(asyncProc);
 	}
 		
-	public void tableChanged(TableModelEvent arg0) {
-		if ( (arg0.getColumn() == m_facturasTableModel.getColumnCount() - 1) || (arg0.getColumn() == m_facturasTableModel.getColumnCount() - 2) ){
-			// Se actualizó el monto manual
-			for (int row = arg0.getFirstRow(); row <= arg0.getLastRow() && row < m_facturas.size(); row++) {
-				ResultItemFactura rif = (ResultItemFactura)m_facturas.get(row);
-				int currency_ID_To = (Integer) m_facturas.get(row).getItem(m_facturasTableModel.getCurrencyColIdx());
-				if (arg0.getColumn() == m_facturasTableModel.getColumnCount() - 1){
-					actualizarPagarConPagarCurrency(row,rif,currency_ID_To);
-				}
-				else{
-					actualizarPagarCurrencyConPagar(row,rif,currency_ID_To);
-				}
-				m_facturasTableModel.fireTableDataChanged();	
-			}
-		}	
-	}
 	
 	protected void actualizarPagarConPagarCurrency(int row, ResultItemFactura rif, int currency_ID_To){
 		BigDecimal manualAmtClientCurrency = rif.getManualAmtClientCurrency();
@@ -2314,7 +2165,7 @@ public class VOrdenPagoModel implements TableModelListener {
 	/**
 	 * @return the msgMap
 	 */
-	protected Map<String, String> getMsgMap() {
+	public Map<String, String> getMsgMap() {
 		return msgMap;
 	}
 	
@@ -2712,6 +2563,17 @@ public class VOrdenPagoModel implements TableModelListener {
 		addMedioPago(mpct);
 	}
 
+
+	public void addMedioPago(MedioPago mp) {
+		m_mediosPago.add(mp);
+		updateAddingMedioPago(mp);
+	}
+	
+	public void removeMedioPago(MedioPago mp) {
+		m_mediosPago.remove(mp);
+		updateRemovingMedioPago(mp);
+	}
+
 	
 	/**
 	 * Realizar tareas adicionales para la gestión de crédito de clientes
@@ -2889,7 +2751,7 @@ public class VOrdenPagoModel implements TableModelListener {
 	 * @param mp
 	 *            medio de pago agregado
 	 */
-	protected void updateAddingMedioPago(MedioPago mp){
+	public void updateAddingMedioPago(MedioPago mp){
 		// Por ahora no se hace nada aquí 
 	}
 
@@ -2899,7 +2761,7 @@ public class VOrdenPagoModel implements TableModelListener {
 	 * @param mp
 	 *            medio de pago removido (ya sea para eliminar o editar)
 	 */
-	protected void updateRemovingMedioPago(MedioPago mp){
+	public void updateRemovingMedioPago(MedioPago mp){
 		// Por ahora no se hace nada aquí
 	}
 
@@ -2953,13 +2815,18 @@ public class VOrdenPagoModel implements TableModelListener {
 		// Por ahora no hace nada aquí, ver subclases.
 	}
 
+	/** Sobrecarga por compatibilidad */
+	public void addDebit(MInvoice invoice) {
+		addDebit(invoice, null);
+	}
+	
 	/**
 	 * Agrego un débito a la lista de facturas de proveedor
 	 * 
 	 * @param invoice
 	 *            débito
 	 */
-	public void addDebit(MInvoice invoice){
+	public void addDebit(MInvoice invoice, BigDecimal amount){
 		StringBuffer sql = new StringBuffer();
 		sql.append(" SELECT c_invoice_id, 0, orgname, documentno,max(duedate) as duedatemax, sum(convertedamt) as convertedamtsum, sum(openamt) as openAmtSum FROM ");
 		sql.append("  (SELECT i.C_Invoice_ID, i.C_InvoicePaySchedule_ID, org.name as orgname, i.DocumentNo, coalesce(duedate,dateinvoiced) as DueDate, "); // ips.duedate
@@ -2969,7 +2836,9 @@ public class VOrdenPagoModel implements TableModelListener {
 		sql.append("  LEFT JOIN ad_org org ON (org.ad_org_id=i.ad_org_id) ");
 		sql.append("  LEFT JOIN c_invoicepayschedule AS ips ON (i.c_invoicepayschedule_id=ips.c_invoicepayschedule_id) ");
 		sql.append("  INNER JOIN C_DocType AS dt ON (dt.C_DocType_ID=i.C_DocType_ID) ");
-		sql.append("  WHERE c_invoice_id = ? ");
+		sql.append("  WHERE i.c_invoice_id = ? ");
+		sql.append("  ) as foo " );
+		sql.append("  group by foo.c_invoice_id, foo.orgname, foo.documentno ");
 		PreparedStatement ps = null;
 		ResultSet rs = null;
 		try {
@@ -2980,6 +2849,11 @@ public class VOrdenPagoModel implements TableModelListener {
 			rs = ps.executeQuery();
 			if(rs.next()){
 				ResultItemFactura rif = new ResultItemFactura(rs);
+				if (amount!=null) {
+					BigDecimal manualAmtClientCurrency = MCurrency.currencyConvert(amount, invoice.getC_Currency_ID(), C_Currency_ID, new Timestamp(System.currentTimeMillis()), 0, getCtx());
+					rif.setManualAmtClientCurrency(manualAmtClientCurrency);
+					rif.setManualAmount(amount);
+				}
 				m_facturas.add(rif);
 			}
 		} catch (Exception e) {

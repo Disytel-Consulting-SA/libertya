@@ -179,14 +179,12 @@ public class VOrdenCobroModel extends VOrdenPagoModel {
 	public void removeRetencion(RetencionProcessor processor) {
 		getRetenciones().remove(processor);
 		updateRemovingRetencion(processor);
-		updateTreeModel();
 	}
 	
 	
 	public void addRetencion(RetencionProcessor processor) {
 //		getRetenciones().add(processor);
 		updateAddingRetencion(processor);
-		updateTreeModel();
 	}
 
 	/**
@@ -194,7 +192,6 @@ public class VOrdenCobroModel extends VOrdenPagoModel {
 	 */
 	public void removePagoAdelantado(MedioPagoAdelantado mpa) {
 		getMediosPago().remove(mpa);
-		updateTreeModel();
 	}	
 
 	@Override
@@ -721,7 +718,7 @@ public class VOrdenCobroModel extends VOrdenPagoModel {
 	}
 	
 	@Override
-	protected void updateAddingMedioPago(MedioPago mp){
+	public void updateAddingMedioPago(MedioPago mp){
 		if(getToPayAmount(null).compareTo(BigDecimal.ZERO) != 0){
 			// Agregar el medio de pago en el recibo
 			reciboDeCliente.addMedioPago(mp);
@@ -729,7 +726,7 @@ public class VOrdenCobroModel extends VOrdenPagoModel {
 	}
 
 	@Override
-	protected void updateRemovingMedioPago(MedioPago mp){
+	public void updateRemovingMedioPago(MedioPago mp){
 		// Eliminar el medio de pago en el recibo
 		reciboDeCliente.removeMedioPago(mp);
 	}
@@ -908,7 +905,7 @@ public class VOrdenCobroModel extends VOrdenPagoModel {
 		MTax tax = MTax.getTaxExemptRate(getCtx(),getTrxName());
 		for (String discountKind : kinds) {
 			amt = discountsPerKind.get(discountKind);
-			if(amt.compareTo(BigDecimal.ZERO) != 0){
+			if(amt!=null && amt.compareTo(BigDecimal.ZERO) != 0){
 				isCredit = amt.compareTo(BigDecimal.ZERO) > 0;
 				// Si es cargo por organización entonces el monto de cargo viene
 				// positivo, no es descuento sino recargo por eso hay que
