@@ -7,7 +7,7 @@ import java.math.*;
 import org.openXpertya.util.*;
 /** Modelo Generado por AD_UnattendedUpgradeHost
  *  @author Comunidad de Desarrollo Libertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
- *  @version  - 2013-12-04 12:46:14.841 */
+ *  @version  - 2013-12-12 15:28:11.876 */
 public class X_AD_UnattendedUpgradeHost extends org.openXpertya.model.PO
 {
 /** Constructor estándar */
@@ -16,6 +16,7 @@ public X_AD_UnattendedUpgradeHost (Properties ctx, int AD_UnattendedUpgradeHost_
 super (ctx, AD_UnattendedUpgradeHost_ID, trxName);
 /** if (AD_UnattendedUpgradeHost_ID == 0)
 {
+setAD_TargetOrg_ID (0);
 setAD_UnattendedUpgradeHost_ID (0);
 setAD_UnattendedUpgrade_ID (0);
 setStatus (null);	// P
@@ -46,6 +47,19 @@ public String toString()
 {
 StringBuffer sb = new StringBuffer ("X_AD_UnattendedUpgradeHost[").append(getID()).append("]");
 return sb.toString();
+}
+public static final int AD_TARGETORG_ID_AD_Reference_ID = MReference.getReferenceID("AD_Org (all but 0)");
+/** Set AD_TargetOrg_ID */
+public void setAD_TargetOrg_ID (int AD_TargetOrg_ID)
+{
+set_Value ("AD_TargetOrg_ID", new Integer(AD_TargetOrg_ID));
+}
+/** Get AD_TargetOrg_ID */
+public int getAD_TargetOrg_ID() 
+{
+Integer ii = (Integer)get_Value("AD_TargetOrg_ID");
+if (ii == null) return 0;
+return ii.intValue();
 }
 /** Set AD_UnattendedUpgradeHost_ID */
 public void setAD_UnattendedUpgradeHost_ID (int AD_UnattendedUpgradeHost_ID)
