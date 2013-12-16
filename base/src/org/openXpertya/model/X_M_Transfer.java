@@ -7,7 +7,7 @@ import java.math.*;
 import org.openXpertya.util.*;
 /** Modelo Generado por M_Transfer
  *  @author Comunidad de Desarrollo Libertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
- *  @version  - 2013-10-18 18:29:02.325 */
+ *  @version  - 2013-12-16 16:07:14.389 */
 public class X_M_Transfer extends org.openXpertya.model.PO
 {
 /** Constructor estándar */
@@ -97,6 +97,22 @@ Document type or rules */
 public int getC_DocType_ID() 
 {
 Integer ii = (Integer)get_Value("C_DocType_ID");
+if (ii == null) return 0;
+return ii.intValue();
+}
+/** Set Order.
+Order */
+public void setC_Order_ID (int C_Order_ID)
+{
+if (C_Order_ID <= 0) set_Value ("C_Order_ID", null);
+ else 
+set_Value ("C_Order_ID", new Integer(C_Order_ID));
+}
+/** Get Order.
+Order */
+public int getC_Order_ID() 
+{
+Integer ii = (Integer)get_Value("C_Order_ID");
 if (ii == null) return 0;
 return ii.intValue();
 }
