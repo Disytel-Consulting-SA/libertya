@@ -6022,3 +6022,6 @@ CREATE OR REPLACE VIEW v_product_movements AS
    LEFT JOIN c_charge c ON c.c_charge_id = m.c_charge_id;
 
 ALTER TABLE v_product_movements OWNER TO libertya;
+
+--20131216-1553 Referencia al C_Order desde el M_Transfer
+ALTER TABLE M_Transfer ADD COLUMN C_Order_ID INT NULL;
