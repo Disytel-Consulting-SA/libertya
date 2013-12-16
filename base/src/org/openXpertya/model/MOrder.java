@@ -1057,13 +1057,27 @@ public class MOrder extends X_C_Order implements DocAction {
      */
 
     public int getC_Invoice_ID() {
+    	return getC_Invoice_ID(false);
+    }
+    
+    public int getC_Invoice_ID(boolean onlyDebits) {
         int       C_Invoice_ID = 0;
         ArrayList list         = new ArrayList();
-        String    sql          = "SELECT C_Invoice_ID FROM C_Invoice " + "WHERE C_Order_ID=? AND DocStatus IN ('CO','CL') " + "ORDER BY Created DESC";
+        StringBuffer    sql = new StringBuffer("SELECT i.C_Invoice_ID FROM C_Invoice as i ");
+        if(onlyDebits){
+            sql.append(" INNER JOIN C_DocType as dt ON dt.c_doctype_id = i.c_doctypetarget_id ");
+        }
+        sql.append(" WHERE i.C_Order_ID=? AND i.DocStatus IN ('CO','CL') ");
+        if(onlyDebits){
+			sql.append(" AND dt.docbasetype IN ('"
+					+ MDocType.DOCBASETYPE_APInvoice + "','"
+					+ MDocType.DOCBASETYPE_ARInvoice + "') ");
+        }
+        sql.append(" ORDER BY i.Created DESC ");
         PreparedStatement pstmt = null;
 
         try {
-            pstmt = DB.prepareStatement( sql,get_TrxName());
+            pstmt = DB.prepareStatement( sql.toString(),get_TrxName());
             pstmt.setInt( 1,getC_Order_ID());
 
             ResultSet rs = pstmt.executeQuery();

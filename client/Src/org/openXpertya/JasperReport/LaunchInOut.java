@@ -634,8 +634,8 @@ public class LaunchInOut extends SvrProcess {
 			}
 			// Buscar la factura por el pedido
 			else if (getOrder() != null) {
-				Integer invoiceID = getOrder().getC_Invoice_ID();
-				if(!Util.isEmpty(getOrder().getC_Invoice_ID(), true)){
+				Integer invoiceID = getOrder().getC_Invoice_ID(true);
+				if(!Util.isEmpty(invoiceID, true)){
 					setInvoice(new MInvoice(getCtx(), invoiceID, get_TrxName()));
 				}
 			}
