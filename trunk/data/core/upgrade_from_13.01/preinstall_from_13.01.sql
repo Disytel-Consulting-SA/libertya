@@ -5444,12 +5444,71 @@ UPDATE ad_system SET dummy = (SELECT addcolumnifnotexists('c_controlador_fiscal'
 --20131111-1340 Incorporación de nuevo campo para tipo de cuenta del informe de saldos
 UPDATE ad_system SET dummy = (SELECT addcolumnifnotexists('t_balancereport','accounttype', 'character(1)'));
 
+--20131111-1500 DELETEs por parche de requerimiento a cliente del tipo de cuenta del informe de saldos
+DELETE FROM AD_Process_Para_Trl WHERE ad_componentobjectuid = 'CORE-AD_Process_Para_Trl-es_PY-1010852';
+DELETE FROM AD_Process_Para_Trl WHERE ad_componentobjectuid = 'CORE-AD_Process_Para_Trl-es_MX-1010852';
+DELETE FROM AD_Process_Para_Trl WHERE ad_componentobjectuid = 'CORE-AD_Process_Para_Trl-es_AR-1010852';
+DELETE FROM AD_Process_Para_Trl WHERE ad_componentobjectuid = 'CORE-AD_Process_Para_Trl-es_ES-1010852';
+DELETE FROM AD_Process_Para WHERE ad_componentobjectuid = 'CORE-AD_Process_Para-1010852';
+DELETE FROM AD_Column_Trl WHERE ad_componentobjectuid = 'CORE-AD_Column_Trl-1016341-es_PY';
+DELETE FROM AD_Column_Trl WHERE ad_componentobjectuid = 'CORE-AD_Column_Trl-1016341-es_MX';
+DELETE FROM AD_Column_Trl WHERE ad_componentobjectuid = 'CORE-AD_Column_Trl-1016341-es_AR';
+DELETE FROM AD_Column_Trl WHERE ad_componentobjectuid = 'CORE-AD_Column_Trl-1016341-es_ES';
+DELETE FROM AD_Column WHERE ad_componentobjectuid = 'CORE-AD_Column-1016341';
+
 --20131101-1610 Incorporación de la columna Stock Disponible para la Venta a la tabla Almacén.
 update ad_system set dummy = (SELECT addcolumnifnotexists('M_Warehouse','StockAvailableForSale', 'character(1) NOT NULL DEFAULT ''Y''::bpchar'));
 
 --20131111-1700 Incorporación de nuevo campo a la factura y remito para configurar el tipo de impresión del documento: Original, Duplicado y Triplicado
 UPDATE ad_system SET dummy = (SELECT addcolumnifnotexists('c_invoice','printtype', 'character(1)'));
 UPDATE ad_system SET dummy = (SELECT addcolumnifnotexists('m_inout','printtype', 'character(1)'));
+
+--20131111-1800 DELETEs por parche de requerimiento a cliente del tipo de impresión del documento: Original, Duplicado y Triplicado
+DELETE FROM AD_Field_Trl WHERE ad_componentobjectuid = 'CORE-AD_Field_Trl-1017632-es_PY';
+DELETE FROM AD_Field_Trl WHERE ad_componentobjectuid = 'CORE-AD_Field_Trl-1017632-es_MX';
+DELETE FROM AD_Field_Trl WHERE ad_componentobjectuid = 'CORE-AD_Field_Trl-1017632-es_AR';
+DELETE FROM AD_Field_Trl WHERE ad_componentobjectuid = 'CORE-AD_Field_Trl-1017632-es_ES';
+DELETE FROM AD_Field WHERE ad_componentobjectuid = 'CORE-AD_Field-1017632';
+DELETE FROM AD_Column_Trl WHERE ad_componentobjectuid = 'CORE-AD_Column_Trl-1016344-es_PY';
+DELETE FROM AD_Column_Trl WHERE ad_componentobjectuid = 'CORE-AD_Column_Trl-1016344-es_MX';
+DELETE FROM AD_Column_Trl WHERE ad_componentobjectuid = 'CORE-AD_Column_Trl-1016344-es_AR';
+DELETE FROM AD_Column_Trl WHERE ad_componentobjectuid = 'CORE-AD_Column_Trl-1016344-es_ES';
+DELETE FROM AD_Column WHERE ad_componentobjectuid = 'CORE-AD_Column-1016344';
+DELETE FROM AD_Field_Trl WHERE ad_componentobjectuid = 'CORE-AD_Field_Trl-1017631-es_PY';
+DELETE FROM AD_Field_Trl WHERE ad_componentobjectuid = 'CORE-AD_Field_Trl-1017631-es_MX';
+DELETE FROM AD_Field_Trl WHERE ad_componentobjectuid = 'CORE-AD_Field_Trl-1017631-es_AR';
+DELETE FROM AD_Field_Trl WHERE ad_componentobjectuid = 'CORE-AD_Field_Trl-1017631-es_ES';
+DELETE FROM AD_Field WHERE ad_componentobjectuid = 'CORE-AD_Field-1017631';
+DELETE FROM AD_Ref_List_Trl WHERE ad_componentobjectuid = 'CORE-AD_Ref_List_Trl-es_PY-1010695';
+DELETE FROM AD_Ref_List_Trl WHERE ad_componentobjectuid = 'CORE-AD_Ref_List_Trl-es_MX-1010695';
+DELETE FROM AD_Ref_List_Trl WHERE ad_componentobjectuid = 'CORE-AD_Ref_List_Trl-es_AR-1010695';
+DELETE FROM AD_Ref_List_Trl WHERE ad_componentobjectuid = 'CORE-AD_Ref_List_Trl-es_ES-1010695';
+DELETE FROM AD_Ref_List WHERE ad_componentobjectuid = 'CORE-AD_Ref_List-1010695';
+DELETE FROM AD_Ref_List_Trl WHERE ad_componentobjectuid = 'CORE-AD_Ref_List_Trl-es_PY-1010694';
+DELETE FROM AD_Ref_List_Trl WHERE ad_componentobjectuid = 'CORE-AD_Ref_List_Trl-es_MX-1010694';
+DELETE FROM AD_Ref_List_Trl WHERE ad_componentobjectuid = 'CORE-AD_Ref_List_Trl-es_AR-1010694';
+DELETE FROM AD_Ref_List_Trl WHERE ad_componentobjectuid = 'CORE-AD_Ref_List_Trl-es_ES-1010694';
+DELETE FROM AD_Ref_List WHERE ad_componentobjectuid = 'CORE-AD_Ref_List-1010694';
+DELETE FROM AD_Ref_List_Trl WHERE ad_componentobjectuid = 'CORE-AD_Ref_List_Trl-es_PY-1010693';
+DELETE FROM AD_Ref_List_Trl WHERE ad_componentobjectuid = 'CORE-AD_Ref_List_Trl-es_MX-1010693';
+DELETE FROM AD_Ref_List_Trl WHERE ad_componentobjectuid = 'CORE-AD_Ref_List_Trl-es_AR-1010693';
+DELETE FROM AD_Ref_List_Trl WHERE ad_componentobjectuid = 'CORE-AD_Ref_List_Trl-es_ES-1010693';
+DELETE FROM AD_Ref_List WHERE ad_componentobjectuid = 'CORE-AD_Ref_List-1010693';
+DELETE FROM AD_Reference_Trl WHERE ad_componentobjectuid = 'CORE-AD_Reference_Trl-es_PY-1010235';
+DELETE FROM AD_Reference_Trl WHERE ad_componentobjectuid = 'CORE-AD_Reference_Trl-es_MX-1010235';
+DELETE FROM AD_Reference_Trl WHERE ad_componentobjectuid = 'CORE-AD_Reference_Trl-es_AR-1010235';
+DELETE FROM AD_Reference_Trl WHERE ad_componentobjectuid = 'CORE-AD_Reference_Trl-es_ES-1010235';
+DELETE FROM AD_Reference WHERE ad_componentobjectuid = 'CORE-AD_Reference-1010235';
+DELETE FROM AD_Column_Trl WHERE ad_componentobjectuid = 'CORE-AD_Column_Trl-1016343-es_PY';
+DELETE FROM AD_Column_Trl WHERE ad_componentobjectuid = 'CORE-AD_Column_Trl-1016343-es_MX';
+DELETE FROM AD_Column_Trl WHERE ad_componentobjectuid = 'CORE-AD_Column_Trl-1016343-es_AR';
+DELETE FROM AD_Column_Trl WHERE ad_componentobjectuid = 'CORE-AD_Column_Trl-1016343-es_ES';
+DELETE FROM AD_Column WHERE ad_componentobjectuid = 'CORE-AD_Column-1016343';
+DELETE FROM AD_Element_Trl WHERE ad_componentobjectuid = 'CORE-AD_Element_Trl-1011411-es_PY';
+DELETE FROM AD_Element_Trl WHERE ad_componentobjectuid = 'CORE-AD_Element_Trl-1011411-es_MX';
+DELETE FROM AD_Element_Trl WHERE ad_componentobjectuid = 'CORE-AD_Element_Trl-1011411-es_AR';
+DELETE FROM AD_Element_Trl WHERE ad_componentobjectuid = 'CORE-AD_Element_Trl-1011411-es_ES';
+DELETE FROM AD_Element WHERE ad_componentobjectuid = 'CORE-AD_Element-1011411';
 
 -- 20131112-1300 Omitir validaciones para columna M_Transfer.M_Inventory_ID 
 CREATE OR REPLACE FUNCTION replication_is_valid_reference(p_columnid integer, column_data character varying)
