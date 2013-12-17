@@ -6084,3 +6084,32 @@ ALTER TABLE v_product_movements OWNER TO libertya;
 
 --20131216-1553 Referencia al C_Order desde el M_Transfer
 ALTER TABLE M_Transfer ADD COLUMN C_Order_ID INT NULL;
+
+--20131217-1215 Fix a la función ya que traía más de un resultado la subquery de invoicepayschedule
+CREATE OR REPLACE FUNCTION getinvoiceamt(p_c_invoice_id integer, p_c_currency_id integer)
+  RETURNS numeric AS
+$BODY$
+DECLARE
+	v_TotalAmt			NUMERIC := 0;
+BEGIN
+	SELECT 
+	(CASE
+	WHEN d.documenttable = 'C_Invoice' THEN (select (CASE WHEN SUM(al.amount) IS NULL THEN 0.0 ELSE SUM(al.amount + (CASE WHEN al.c_invoice_credit_id IS NULL THEN 0.0 ELSE (al.writeoffamt + al.discountamt) END )) END) FROM C_AllocationLine al WHERE ((al.c_invoice_id = d.document_id) OR (al.c_invoice_credit_id = d.document_id)) AND (al.isactive = 'Y'))
+	WHEN d.documenttable = 'C_CashLine' THEN (select (CASE WHEN SUM(al.amount) IS NULL THEN 0.0 ELSE SUM(al.amount) END) FROM C_AllocationLine al WHERE (al.c_cashline_id = d.document_id) AND (al.isactive = 'Y'))
+	ELSE (select (CASE WHEN SUM(al.amount) IS NULL THEN 0.0 ELSE SUM(al.amount) END) FROM C_AllocationLine al WHERE (al.c_payment_id = d.document_id) AND (al.isactive = 'Y')) END)
+	+
+	(SELECT currencyconvert ( CASE WHEN d.documenttable = 'C_Invoice' THEN 
+	invoiceOpen(d.document_id, d.c_invoicepayschedule_id)
+	WHEN d.documenttable = 'C_CashLine' THEN
+	cashlineavailable(d.document_id)
+	ELSE paymentavailable(d.document_id) END, d.c_currency_id, p_c_currency_id, ('now'::text)::timestamp(6) with time zone, COALESCE(d.c_conversiontype_id,0), d.ad_client_id, d.ad_org_id))
+	* SIGN(d.amount)::numeric AS Debit
+	INTO v_TotalAmt
+	FROM V_Documents d
+	WHERE d.DocStatus IN ('CO','CL', 'RE', 'VO') AND document_ID = p_c_invoice_id;
+	RETURN v_TotalAmt;
+END;
+$BODY$
+  LANGUAGE 'plpgsql' VOLATILE
+  COST 100;
+ALTER FUNCTION getinvoiceamt(integer, integer) OWNER TO libertya;
