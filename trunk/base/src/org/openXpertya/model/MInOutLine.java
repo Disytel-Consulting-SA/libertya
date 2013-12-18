@@ -555,6 +555,13 @@ public class MInOutLine extends X_M_InOutLine {
 			}
 		}
 
+		// Si la linea no tiene artículo seteado pero tiene referenciado una linea de pedido, tomar el articulo de la linea de pedido
+		if (getM_Product_ID() == 0 && getC_OrderLine_ID() > 0) {
+			X_C_OrderLine anOrderLine = new X_C_OrderLine(getCtx(), getC_OrderLine_ID(), get_TrxName());
+			if (anOrderLine.getM_Product_ID() > 0)
+				setM_Product_ID(anOrderLine.getM_Product_ID());
+		}
+		
 		if (inout.isSOTrx() && !isProductionMovement(inout.getMovementType())) {
 			MOrderLine orderLine = new MOrderLine(getCtx(),
 					getC_OrderLine_ID(), get_TrxName());
