@@ -1660,6 +1660,7 @@ public class VOrdenPago extends CPanel implements FormPanel,ActionListener,Table
 				// agregar el medio de pago 
 		    	updateCustomInfoAfterMedioPago(MEDIOPAGO_ACTION_EDIT);
 			}
+			updateTreeModel();
     	} catch (Exception e) {
     		
     	}
@@ -1675,6 +1676,7 @@ public class VOrdenPago extends CPanel implements FormPanel,ActionListener,Table
 				// agregar el medio de pago 
 		    	updateCustomInfoAfterMedioPago(MEDIOPAGO_ACTION_DELETE);
 			}
+			updateTreeModel();
     	} catch (Exception e) {
     		
     	}
