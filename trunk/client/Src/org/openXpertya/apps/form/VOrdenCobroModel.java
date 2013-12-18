@@ -92,6 +92,17 @@ public class VOrdenCobroModel extends VOrdenPagoModel {
 	/** Facturas creadas como débito y/o crédito en base a descuentos/recargos */
 	private List<MInvoice> customInvoices = new ArrayList<MInvoice>();
 	
+	/** Débitos custom generados */
+	private List<MInvoice> customDebitInvoices = new ArrayList<MInvoice>();
+	
+	/**
+	 * Asociación entre los créditos custom generados y el medio de pago
+	 * correspondiente en el recibo
+	 */
+	private Map<MInvoice, MedioPago> customCreditInvoices = new HashMap<MInvoice, VOrdenPagoModel.MedioPago>();
+	
+	
+	
 	/** Info de la organización actual */
 	private MOrgInfo orgInfo;
 	
@@ -892,6 +903,17 @@ public class VOrdenCobroModel extends VOrdenPagoModel {
 //				&& getTotalPaymentTermDiscount().compareTo(BigDecimal.ZERO) == 0) {
 //			return;
 //		}
+		// Resetear los débitos y créditos custom ya que se generan nuevamente,
+		// sacarlos del recibo de cliente si existen
+		for (MInvoice customInvoice : customCreditInvoices.keySet()) {
+			reciboDeCliente.removeMedioPago(customCreditInvoices.get(customInvoice));
+		}
+		for (MInvoice customInvoice : customDebitInvoices) {
+			reciboDeCliente.removeDebit(customInvoice);
+		}
+		customCreditInvoices.clear();
+		customDebitInvoices.clear();
+		customInvoices.clear();
 		// Obtener la suma de descuentos/recargos por tipo de descuento
 		Map<String, BigDecimal> discountsPerKind = reciboDeCliente.getDiscountsSumPerKind();
 		Set<String> kinds = discountsPerKind.keySet();
@@ -959,6 +981,7 @@ public class VOrdenCobroModel extends VOrdenPagoModel {
 			pays.add(credito);
 			// Agregarla a la lista local para después jugar con ellas para la
 			// cuenta corriente del cliente
+			customCreditInvoices.put(credit, credito);
 			customInvoices.add(credit);
 		}
 		if(debit != null){
@@ -973,6 +996,7 @@ public class VOrdenCobroModel extends VOrdenPagoModel {
 			addDebit(debit);
 			// Agregarla a la lista local para después jugar con ellas para la
 			// cuenta corriente del cliente
+			customDebitInvoices.add(debit);
 			customInvoices.add(debit);
 		}
 	}
@@ -1310,6 +1334,8 @@ public class VOrdenCobroModel extends VOrdenPagoModel {
 		super.reset();
 		reciboDeCliente = new ReciboDeCliente(getCtx(),getTrxName());
 		customInvoices = new ArrayList<MInvoice>();
+		customDebitInvoices = new ArrayList<MInvoice>();
+		customCreditInvoices = new HashMap<MInvoice, VOrdenPagoModel.MedioPago>();
 		existsOverdueInvoices = false;
 	}
 	
@@ -1768,5 +1794,5 @@ public class VOrdenCobroModel extends VOrdenPagoModel {
 		}
 		setCashID(cashJournalID);
 	}
-	
+
 }

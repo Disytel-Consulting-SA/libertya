@@ -3186,8 +3186,7 @@ public class VOrdenPagoModel {
 		}	
 		return AllocationGenerator.getExchangeDifference(facts, pays, getCtx(), getTrxName());	
 	}
-	
-	
+
 }
 
 
