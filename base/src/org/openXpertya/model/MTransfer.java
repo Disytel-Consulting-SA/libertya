@@ -577,7 +577,7 @@ public class MTransfer extends X_M_Transfer implements DocAction {
 	
 	/**
 	 * Crea la transferencia entrante que se corresponde con la transferencia saliente.
-	 * La trasnferencia creada queda en estado borrador para que sea completada 
+	 * La transferencia creada queda en estado borrador para que sea completada 
 	 * posteriormente por el usuario que recibe la mercadería.
 	 * @throws Exception cuando se produce algún error al guardar el encabezado de la
 	 * transferencia o alguna de sus líneas.
@@ -732,6 +732,7 @@ public class MTransfer extends X_M_Transfer implements DocAction {
         transfer.setDueDate(Env.getDate());
         transfer.setTransferType(transferType);
         transfer.setMovementType(MTransfer.MOVEMENTTYPE_Outgoing);
+        transfer.setC_Order_ID(order.getC_Order_ID());
         
         /** Almacén Origen */
         transfer.setM_Warehouse_ID(M_Warehouse_Origin_ID);
