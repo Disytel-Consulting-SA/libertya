@@ -393,6 +393,7 @@ public class VOrdenPagoModel {
 		public BigDecimal importe;
 		public Timestamp fechaEm;
 		public Timestamp fechaPago;
+		public Timestamp dateTrx;
 		public String aLaOrden;
 		public String banco;
 		public String cuitLibrador;
@@ -411,11 +412,13 @@ public class VOrdenPagoModel {
 	
 		public MedioPagoCheque(int chequera_ID, String nroCheque, BigDecimal importe, Timestamp fechaEm, Timestamp fechaPago, String laOrden) {
 			super();
+			Timestamp today = new Timestamp(System.currentTimeMillis());
 			this.chequera_ID = chequera_ID;
 			this.nroCheque = nroCheque;
 			this.importe = importe;
 			this.fechaEm = fechaEm;
 			this.fechaPago = fechaPago;
+			dateTrx = fechaPago.before(today)?fechaPago:today;
 			aLaOrden = laOrden;
 		}
 
@@ -426,14 +429,12 @@ public class VOrdenPagoModel {
 
 		@Override
 		public Timestamp getDateTrx() {
-			return new Timestamp(System.currentTimeMillis());
-			// return fechaEm;
+			return dateTrx;
 		}
 
 		@Override
 		public Timestamp getDateAcct() {
-			return new Timestamp(System.currentTimeMillis());
-			//return fechaEm;
+			return dateTrx;
 		}
 		
 		@Override
