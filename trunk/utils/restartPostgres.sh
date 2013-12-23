@@ -1,0 +1,106 @@
+#!/bin/bash
+PG_USR=libertya
+PG_DBN=libertya_prod
+PG_HST=localhost
+PG_BIN=/usr/local/pgsql/bin
+PG_DAT=/usr/local/pgsql/data
+PG_CMD=pg_ctl
+PG_STARTING_RESULT_FILE=$HOME/resultStartingPostgres.txt
+LY_STATUS_RESULT_FILE=$HOME/resultStatusLibertya.txt
+PG_LOCKS_FILE=$HOME/locks.sql
+PG_ACTIVITY_FILE=$HOME/activity.sql
+OXP_HOME=/ServidorOXP
+
+# =====================================================================================================================
+# =================================================PostgreSQL==========================================================
+# =====================================================================================================================
+
+
+# Guardar estado de pg_stat_activity y de pg_locks
+sudo -u postgres $PG_BIN/psql -U $PG_USR -h $PG_HST -d $PG_DBN -c "select * from pg_stat_activity" > $PG_ACTIVITY_FILE
+sudo -u postgres $PG_BIN/psql -U $PG_USR -h $PG_HST -d $PG_DBN -c "select * from pg_locks" > $PG_LOCKS_FILE
+
+# Reiniciar postgres, intentando los diferentes modos
+echo =======================================
+echo === Intentando reiniciar PostgreSQL ===
+echo =======================================
+STOPPED=0
+for MODE in " " "-m s" "-m f" "-m i"
+do
+	echo === Ejecutando detencion - $MODE ===
+	OUTPUT=$(sudo -u postgres $PG_BIN/$PG_CMD -D $PG_DAT stop $MODE)
+	if [[ "$OUTPUT" =~ "stopped" ]]; then
+		STOPPED=1
+		break
+	fi
+done
+
+if [[ "$STOPPED" == "1" ]]; then
+	echo === Detenido! ===
+else
+	echo === No se pudo detener! estaba corriendo? ===
+fi
+
+# Garantizar que Postgre se detuvo por completo
+echo Esperando un rato...
+sleep 30;
+
+# Matar toda posible existencia de postgres anterior (si aparece un solo proceso no es problema, es el grep)
+echo === Eliminando eventuales procesos postgres remanentes ===
+ps -aeo pid,cmd | grep $PG_BIN/postgres | awk '{print $1}'
+ps -aeo pid,cmd | grep $PG_BIN/postgres | awk '{print $1}' | xargs kill -9
+
+# Darle tiempo al kill
+sleep 10;
+
+# Al parecer no funciona que el resultado del comando de inicio del servidor postgres se guarde en una variable, por lo tanto guardamos la salida a un archivo txt y levantamos esa salida, primeramente borramos lo que hay en el archivo por si queda basura y estamos leyendo log de un inicio viejo, no debería pasar, pero por las dudas
+echo Iniciando postgres mediante $PG_BIN/$PG_CMD -D $PG_DAT start
+echo "" > $PG_STARTING_RESULT_FILE
+sudo -u postgres $PG_BIN/$PG_CMD -D $PG_DAT start > $PG_STARTING_RESULT_FILE
+STARTED=`cat $PG_STARTING_RESULT_FILE`
+
+echo Estado: $STARTED
+if [[ "$STARTED" =~ "starting" ]]; then
+	# Inicio correctamente
+	echo === Postgre Iniciado! ===
+else
+	# Si no pudo iniciar, evaluar el motivo
+	if [[ "STOPPED" == "0" ]]; then
+		# Ninguno de los 4 modos lo detuvo
+		echo === ERROR: No se pudo iniciar dado que no se pudo detener! ===
+	else
+		# Uno de los 4 modos lo detuvo
+		echo === ERROR: No se pudo reiniciar luego de detener! ===
+	fi
+fi
+
+# Garantizar que Postgre inicio por completo
+echo Esperando un rato...
+sleep 30;
+
+# =====================================================================================================================
+# =================================================ServidorOXP=========================================================
+# =====================================================================================================================
+
+# Reiniciar también el servidor de aplicaciones (en caso de que el mismo estaba corriendo)
+service libertyad status > $LY_STATUS_RESULT_FILE
+LYSTARTED=`cat $LY_STATUS_RESULT_FILE`
+
+if [[ "$LYSTARTED" == "0" ]]; then
+        echo === libertyad no estaba corriendo, no se reinicia ===
+else
+        echo === libertyad estaba corriendo, se reinicia ===
+		# Bajar el server de manera normal
+		service libertyad stop; 
+		echo Esperando un rato...
+		sleep 30; 
+		# Matar posibles existencias del server.  Eliminar eventual existencia del PID generado por libertyad. (si aparece un solo proceso no es problema, es el grep)
+		ps -aeo pid,cmd | grep $OXP_HOME/jboss | awk '{print $1}'
+		ps -aeo pid,cmd | grep $OXP_HOME/jboss | awk '{print $1}' | xargs kill -9
+		rm -f /var/run/libertya.pid
+		# Iniciar normalmente
+		service libertyad start;
+		echo Esperando un rato mas...
+		sleep 30; 
+fi
+
