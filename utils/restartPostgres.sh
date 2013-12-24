@@ -47,10 +47,10 @@ sleep 30;
 
 # Matar toda posible existencia de postgres anterior (si aparece un solo proceso no es problema, es el grep)
 echo === Eliminando eventuales procesos postgres remanentes ===
-ps -aeo pid,cmd | grep $PG_BIN/postgres | awk '{print $1}'
-ps -aeo pid,cmd | grep $PG_BIN/postgres | awk '{print $1}' | xargs kill -9
+./killEmAll.sh $PG_BIN/postgres
 
 # Darle tiempo al kill
+echo Esperando otro rato...
 sleep 10;
 
 # Al parecer no funciona que el resultado del comando de inicio del servidor postgres se guarde en una variable, por lo tanto guardamos la salida a un archivo txt y levantamos esa salida, primeramente borramos lo que hay en el archivo por si queda basura y estamos leyendo log de un inicio viejo, no debería pasar, pero por las dudas
@@ -65,7 +65,7 @@ if [[ "$STARTED" =~ "starting" ]]; then
 	echo === Postgre Iniciado! ===
 else
 	# Si no pudo iniciar, evaluar el motivo
-	if [[ "STOPPED" == "0" ]]; then
+	if [[ "$STOPPED" == "0" ]]; then
 		# Ninguno de los 4 modos lo detuvo
 		echo === ERROR: No se pudo iniciar dado que no se pudo detener! ===
 	else
@@ -86,21 +86,24 @@ sleep 30;
 service libertyad status > $LY_STATUS_RESULT_FILE
 LYSTARTED=`cat $LY_STATUS_RESULT_FILE`
 
-if [[ "$LYSTARTED" == "0" ]]; then
-        echo === libertyad no estaba corriendo, no se reinicia ===
-else
-        echo === libertyad estaba corriendo, se reinicia ===
+if [[ "$LYSTARTED" == "1" ]]; then
+	if [[ $1 == "Y" ]]; then
+	    echo === libertyad estaba corriendo, se reinicia ===
 		# Bajar el server de manera normal
 		service libertyad stop; 
 		echo Esperando un rato...
 		sleep 30; 
 		# Matar posibles existencias del server.  Eliminar eventual existencia del PID generado por libertyad. (si aparece un solo proceso no es problema, es el grep)
-		ps -aeo pid,cmd | grep $OXP_HOME/jboss | awk '{print $1}'
-		ps -aeo pid,cmd | grep $OXP_HOME/jboss | awk '{print $1}' | xargs kill -9
+		./killEmAll.sh $OXP_HOME/jboss
 		rm -f /var/run/libertya.pid
 		# Iniciar normalmente
 		service libertyad start;
 		echo Esperando un rato mas...
 		sleep 30; 
+	else
+		echo === libertyad estaba corriendo, pero no se reinicia debido al argumento en la invocacion ===
+	fi
+else
+        echo === libertyad no estaba corriendo, no se reinicia ===		
 fi
 
