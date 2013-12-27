@@ -1205,8 +1205,10 @@ public class MInOut extends X_M_InOut implements DocAction {
         // Obtener el ID de EC a partir del Pedido en caso de que el remito no tenga uno seteado
         if (getC_BPartner_ID() == 0 && getC_Order_ID() > 0) {
         	X_C_Order anOrder = new X_C_Order(getCtx(), getC_Order_ID(), get_TrxName());
-        	if (anOrder.getC_BPartner_ID() > 0)
-        		setC_BPartner_ID(anOrder.getC_BPartner_ID());
+        	if (anOrder.getC_BPartner_ID() > 0) {
+        		MBPartner aBPartner = new MBPartner(getCtx(), anOrder.getC_BPartner_ID(), get_TrxName());
+        		setBPartner(aBPartner);
+        	}
         }
         
         // No permitir guardar un remito que posee un pedido no facturado cuando
