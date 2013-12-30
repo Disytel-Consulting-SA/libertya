@@ -5,6 +5,7 @@ import java.sql.ResultSet;
 import java.util.HashMap;
 import java.util.HashSet;
 
+import org.openXpertya.model.MSequence;
 import org.openXpertya.plugin.common.PluginUtils;
 import org.openXpertya.util.DB;
 
@@ -214,6 +215,7 @@ public class ReplicationCache {
 		columnsData = null;
 		keyColumns = null;
 		map_RepArrayPos_OrgID_inv = null;
+		MSequence.resetCache();
 		System.gc();
 	}
 	

@@ -1695,6 +1695,12 @@ public class MSequence extends X_AD_Sequence {
             }
         }
     }		// GetIDs
+    
+    public static void resetCache() {
+    	sequences_cache = new HashSet<String>();
+    }
+    
+    
 }		// MSequence
 
 
