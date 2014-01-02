@@ -3685,7 +3685,7 @@ public class MInvoice extends X_C_Invoice implements DocAction {
 		
 		// Crear los DocumentDiscount de los descuentos cuando se arrastran
 		// desde el pedido
-		MDocumentDiscount documentDiscount;
+		MDocumentDiscount documentDiscount = null;
 		if(isManageDragOrderDiscounts()){
 			// Suma de los descuentos a nivel de documento y de la base, separado por impuesto
 			Map<BigDecimal, BigDecimal> documentDiscountBaseAmtsByTaxRate = new HashMap<BigDecimal, BigDecimal>();
@@ -3767,7 +3767,27 @@ public class MInvoice extends X_C_Invoice implements DocAction {
 			// descuento a nivel de documento en base a la suma de ellos
 			BigDecimal totalDocumentDiscountAmt = BigDecimal.ZERO;
 			BigDecimal totalDocumentDiscountBaseAmt = BigDecimal.ZERO;
+			BigDecimal discountAmt = BigDecimal.ZERO;
+			BigDecimal discountBaseAmt = BigDecimal.ZERO;
+			List<Integer> documentDiscounts = new ArrayList<Integer>();
+			MDocumentDiscount documentDiscountByTax = null;
+			String documentDiscountDescription = Msg.getMsg(getCtx(), "DiscountChargeShort");
 			for (BigDecimal baseTaxRate : documentDiscountBaseAmtsByTaxRate.keySet()) {
+				discountBaseAmt = documentDiscountBaseAmtsByTaxRate.get(baseTaxRate);
+				discountAmt = documentDiscountAmtsByTaxRate.get(baseTaxRate);
+				// Crear el descuento por impuesto
+				documentDiscountByTax = createDocumentDiscount(
+						discountBaseAmt, discountAmt, baseTaxRate,
+						MDocumentDiscount.CUMULATIVELEVEL_Document,
+						MDocumentDiscount.DISCOUNTAPPLICATION_DiscountToPrice,
+						MDocumentDiscount.DISCOUNTKIND_DocumentDiscount,
+						documentDiscountDescription	+ " " + baseTaxRate);
+				// Si no se puede guardar aborta la operación
+				if (!documentDiscountByTax.save()) {
+					m_processMsg = CLogger.retrieveErrorAsString();
+					return DocAction.STATUS_Invalid;
+				}
+				documentDiscounts.add(documentDiscountByTax.getID());
 				totalDocumentDiscountBaseAmt = totalDocumentDiscountBaseAmt
 						.add(documentDiscountBaseAmtsByTaxRate.get(baseTaxRate));
 				totalDocumentDiscountAmt = totalDocumentDiscountAmt
@@ -3779,12 +3799,26 @@ public class MInvoice extends X_C_Invoice implements DocAction {
 						totalDocumentDiscountBaseAmt, totalDocumentDiscountAmt, null,
 						MDocumentDiscount.CUMULATIVELEVEL_Document,
 						MDocumentDiscount.DISCOUNTAPPLICATION_DiscountToPrice,
-						MDocumentDiscount.DISCOUNTKIND_DocumentDiscount, null);
+						MDocumentDiscount.DISCOUNTKIND_DocumentDiscount, 
+						"Total "+documentDiscountDescription);
 				// Si no se puede guardar aborta la operación
 				if (!documentDiscount.save()) {
 					m_processMsg = CLogger.retrieveErrorAsString();
 					return DocAction.STATUS_Invalid;
 				}
+			}
+			
+			// Actualizar todos los descuentos de documento por tasa con el
+			// descuento padre
+			if (documentDiscounts.size() > 0 && documentDiscount != null
+					&& documentDiscount.getID() > 0) {
+				int du = DB.executeUpdate("UPDATE "
+						+ X_C_DocumentDiscount.Table_Name
+						+ " SET c_documentdiscount_parent_id = "
+						+ documentDiscount.getID()
+						+ " WHERE c_documentdiscount_id IN "
+						+ documentDiscounts.toString().replace("[", "(")
+								.replace("]", ")"), get_TrxName());
 			}
 		}		
 
@@ -5310,7 +5344,7 @@ public class MInvoice extends X_C_Invoice implements DocAction {
 		BigDecimal amt = DB.getSQLValueBD(get_TrxName(), sql, getID());
 		amt = Util.isEmpty(amt, false)?BigDecimal.ZERO:amt;
 		if(set){
-			setChargeAmt(amt);
+			setChargeAmt(amt.negate());
 		}
 		return amt;
 	}
@@ -5334,7 +5368,8 @@ public class MInvoice extends X_C_Invoice implements DocAction {
 	public void updateTotalDocumentDiscount() throws Exception{
 		BigDecimal linesTotalDocumentDiscount = getTotalDocumentDiscountAmtFromLines(false);
 		if(!Util.isEmpty(linesTotalDocumentDiscount, true)){
-			setChargeAmt(linesTotalDocumentDiscount.abs());
+			getChargeAmt();
+			setChargeAmt(linesTotalDocumentDiscount.negate());
 			calculateTaxTotal();
 			if (!save()) {
 		    	throw new Exception(CLogger.retrieveErrorAsString());
