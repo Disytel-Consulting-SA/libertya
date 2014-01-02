@@ -289,11 +289,11 @@ public class MInvoiceLine extends X_C_InvoiceLine {
 	        // Descuento a nivel de línea
 	        if(isDragLineDiscountAmts()){
 	        	BigDecimal lineDiscountRate = Util.getDiscountRate(oLine
-						.getPriceList().multiply(getQtyInvoiced()), oLine
+						.getPriceList().multiply(oLine.getQtyOrdered()), oLine
 						.getLineDiscountAmt(), invoiceCurrency
 						.getStdPrecision());
 	        	BigDecimal bonusDiscountRate = Util.getDiscountRate(oLine
-						.getPriceList().multiply(getQtyInvoiced()), oLine
+						.getPriceList().multiply(oLine.getQtyOrdered()), oLine
 						.getLineBonusAmt(), invoiceCurrency
 						.getStdPrecision());
 	        	
@@ -309,7 +309,7 @@ public class MInvoiceLine extends X_C_InvoiceLine {
 	        // Descuento a nivel de documento
 	        if(isDragDocumentDiscountAmts()){
 				BigDecimal documentDiscountRate = Util.getDiscountRate(oLine
-						.getPriceEntered().multiply(getQtyInvoiced()), oLine
+						.getPriceEntered().multiply(oLine.getQtyOrdered()), oLine
 						.getDocumentDiscountAmt(), invoiceCurrency
 						.getStdPrecision());
 				setDocumentDiscountAmt(getPriceEntered().multiply(
@@ -345,11 +345,11 @@ public class MInvoiceLine extends X_C_InvoiceLine {
 	        // Descuento a nivel de línea
 	        if(isDragLineDiscountAmts()){
 	        	BigDecimal lineDiscountRate = Util.getDiscountRate(oLine
-						.getPriceList().multiply(getQtyInvoiced()), oLine
+						.getPriceList().multiply(oLine.getQtyOrdered()), oLine
 						.getLineDiscountAmt(), invoiceCurrency
 						.getStdPrecision());
 	        	BigDecimal bonusDiscountRate = Util.getDiscountRate(oLine
-						.getPriceList().multiply(getQtyInvoiced()), oLine
+						.getPriceList().multiply(oLine.getQtyOrdered()), oLine
 						.getLineBonusAmt(), invoiceCurrency
 						.getStdPrecision());
 	        	
@@ -376,7 +376,7 @@ public class MInvoiceLine extends X_C_InvoiceLine {
 	        // Descuento a nivel de documento
 	        if(isDragDocumentDiscountAmts()){
 	        	BigDecimal documentDiscountRate = Util.getDiscountRate(oLine
-						.getPriceEntered().multiply(getQtyInvoiced()), oLine
+						.getPriceEntered().multiply(oLine.getQtyOrdered()), oLine
 						.getDocumentDiscountAmt(), invoiceCurrency
 						.getStdPrecision());
 				setDocumentDiscountAmt(MCurrency.currencyConvert(
