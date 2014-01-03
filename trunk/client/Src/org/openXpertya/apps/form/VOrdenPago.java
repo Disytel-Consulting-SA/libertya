@@ -1531,7 +1531,8 @@ public class VOrdenPago extends CPanel implements FormPanel,ActionListener,Table
 		mpc.banco = txtChequeBanco.getText().trim();
 		mpc.cuitLibrador = txtChequeCUITLibrador.getText().trim();
 		mpc.descripcion = txtChequeDescripcion.getText().trim();
-		
+		Timestamp today = new Timestamp(System.currentTimeMillis());
+		mpc.dateTrx = mpc.fechaPago.before(today)?mpc.fechaPago:today;
 		// A La Orden: Campo no obligatorio
 		//
 		// if (mpc.aLaOrden.trim().equals(""))
