@@ -205,7 +205,7 @@ public class MTransfer extends X_M_Transfer implements DocAction {
 			ResultSet rs = null;
 			
 			try {
-				pstmt = DB.prepareStatement(sql);
+				pstmt = DB.prepareStatement(sql, get_TrxName());
 				pstmt.setInt(1, getM_Transfer_ID());
 				rs = pstmt.executeQuery();
 				MTransferLine line = null; 
@@ -725,7 +725,7 @@ public class MTransfer extends X_M_Transfer implements DocAction {
      *
      * @return
      */
-    public static MTransfer createTransfer( MOrder order, int M_Warehouse_Origin_ID, int M_Warehouse_Destination_ID, String transferType, String trxName ) {
+    public static MTransfer createTransfer( MOrder order, int M_Warehouse_Origin_ID, int M_Warehouse_Destination_ID, String transferType, String trxName ) throws Exception {
         MTransfer transfer = new MTransfer(order);
        
         transfer.setDateTrx(Env.getDate());
@@ -740,7 +740,9 @@ public class MTransfer extends X_M_Transfer implements DocAction {
         transfer.setM_WarehouseTo_ID(M_Warehouse_Destination_ID);
         
         if( transfer.getID() == 0 ) {    // not saved yet
-        	transfer.save( trxName );
+        	if (!transfer.save( trxName )) {
+        		throw new Exception("Error creando cabecera de transferencia: " + CLogger.retrieveErrorAsString());	
+        	}
         }
 
         MOrderLine[] oLines = order.getLines( true,null );
@@ -765,7 +767,8 @@ public class MTransfer extends X_M_Transfer implements DocAction {
             tLine.setOrderLine(oLine, M_Locator_Origin_ID, M_Locator_Destination_ID, MovementQty);
             tLine.setQty( MovementQty );
 
-            tLine.save( trxName);
+            if (!tLine.save( trxName))
+            	throw new Exception("Error creando linea de transferencia: " + CLogger.retrieveErrorAsString());
         }
         return transfer;
     }
