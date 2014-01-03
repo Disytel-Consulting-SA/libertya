@@ -1601,6 +1601,10 @@ public class PoSOnline extends PoSConnectionState {
 			shipment.setDocAction(MInOut.DOCACTION_Complete);
 			shipment.setDocStatus(MInOut.DOCSTATUS_Drafted);
 			shipment.setTPVInstance(true);
+			// Tipo de documento del remito
+			if (!Util.isEmpty(getPoSCOnfig().getInoutDocTypeID(), true)) {
+				shipment.setC_DocType_ID(getPoSCOnfig().getInoutDocTypeID());
+			}
 			
 			throwIfFalse(shipment.save(), shipment);
 			
