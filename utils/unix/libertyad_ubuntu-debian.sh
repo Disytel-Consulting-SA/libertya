@@ -1,8 +1,5 @@
 #!/bin/bash
 
-# chkconfig: 2345 98 02
-# description: Libertya Application Server
-
 ## Libertyad v0.3
 ## path: /etc/init.d/libertyad
 ## author: Hermann D. Schimpf
@@ -98,21 +95,10 @@ sleep 1
 # nos reejecutamos con el comando start
 $0 start
 ;;
-# si se especifico status
-status)
-# verificamos si el demonio esta corriendo
-if test -f $PID ;then
-# mostramos un mensaje. 1 implica que si esta corriendo
-echo "1"
-else
-# mostramos un mensaje. 0 implica que no esta corriendo
-echo "0"
-fi
-;;
 # en cualquier otro caso
 *)
 # mostramos un mensaje
-echo "Utilizacion: /etc/init.d/$0 {start|stop|restart|status}"
+echo "Utilizacion: /etc/init.d/$0 {start|stop|restart}"
 # salimos de la ejecucion
 exit 1
 ;;
