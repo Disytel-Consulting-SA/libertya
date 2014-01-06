@@ -3775,23 +3775,25 @@ public class MInvoice extends X_C_Invoice implements DocAction {
 			for (BigDecimal baseTaxRate : documentDiscountBaseAmtsByTaxRate.keySet()) {
 				discountBaseAmt = documentDiscountBaseAmtsByTaxRate.get(baseTaxRate);
 				discountAmt = documentDiscountAmtsByTaxRate.get(baseTaxRate);
-				// Crear el descuento por impuesto
-				documentDiscountByTax = createDocumentDiscount(
-						discountBaseAmt, discountAmt, baseTaxRate,
-						MDocumentDiscount.CUMULATIVELEVEL_Document,
-						MDocumentDiscount.DISCOUNTAPPLICATION_DiscountToPrice,
-						MDocumentDiscount.DISCOUNTKIND_DocumentDiscount,
-						documentDiscountDescription	+ " " + baseTaxRate);
-				// Si no se puede guardar aborta la operación
-				if (!documentDiscountByTax.save()) {
-					m_processMsg = CLogger.retrieveErrorAsString();
-					return DocAction.STATUS_Invalid;
+				if(discountAmt.compareTo(BigDecimal.ZERO) != 0){
+					// Crear el descuento por impuesto
+					documentDiscountByTax = createDocumentDiscount(
+							discountBaseAmt, discountAmt, baseTaxRate,
+							MDocumentDiscount.CUMULATIVELEVEL_Document,
+							MDocumentDiscount.DISCOUNTAPPLICATION_DiscountToPrice,
+							MDocumentDiscount.DISCOUNTKIND_DocumentDiscount,
+							documentDiscountDescription	+ " " + baseTaxRate);
+					// Si no se puede guardar aborta la operación
+					if (!documentDiscountByTax.save()) {
+						m_processMsg = CLogger.retrieveErrorAsString();
+						return DocAction.STATUS_Invalid;
+					}
+					documentDiscounts.add(documentDiscountByTax.getID());
+					totalDocumentDiscountBaseAmt = totalDocumentDiscountBaseAmt
+							.add(documentDiscountBaseAmtsByTaxRate.get(baseTaxRate));
+					totalDocumentDiscountAmt = totalDocumentDiscountAmt
+							.add(documentDiscountAmtsByTaxRate.get(baseTaxRate));
 				}
-				documentDiscounts.add(documentDiscountByTax.getID());
-				totalDocumentDiscountBaseAmt = totalDocumentDiscountBaseAmt
-						.add(documentDiscountBaseAmtsByTaxRate.get(baseTaxRate));
-				totalDocumentDiscountAmt = totalDocumentDiscountAmt
-						.add(documentDiscountAmtsByTaxRate.get(baseTaxRate));
 			}
 			// Creo el descuento de documento si hubo efectivamente uno
 			if(totalDocumentDiscountAmt.compareTo(BigDecimal.ZERO) != 0){
