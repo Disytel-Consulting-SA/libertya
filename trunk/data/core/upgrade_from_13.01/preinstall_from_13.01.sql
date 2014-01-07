@@ -6427,3 +6427,6 @@ UNION ALL
   WHERE al.c_invoice_id = i.c_invoice_id));
 
 ALTER TABLE v_dailysales OWNER TO libertya;
+
+-- Desactivar por el momento el dashboard de actividades, dado que resta completar algunas funcionalidades
+UPDATE pa_dashboardcontent SET isactive = 'N' WHERE name = 'Activities';
