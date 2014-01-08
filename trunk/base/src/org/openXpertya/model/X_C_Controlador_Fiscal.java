@@ -7,7 +7,7 @@ import java.math.*;
 import org.openXpertya.util.*;
 /** Modelo Generado por C_Controlador_Fiscal
  *  @author Comunidad de Desarrollo Libertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
- *  @version  - 2013-11-22 18:22:25.632 */
+ *  @version  - 2014-01-08 09:04:14.183 */
 public class X_C_Controlador_Fiscal extends org.openXpertya.model.PO
 {
 /** Constructor estándar */
@@ -289,22 +289,22 @@ public static final String STATUS_BUSY = "BSY";
 public static final String STATUS_ERROR = "ERR";
 /** IDLE = IDL */
 public static final String STATUS_IDLE = "IDL";
-/** Set status */
-public void setstatus (String status)
+/** Set Status */
+public void setStatus (String Status)
 {
-if (status == null || status.equals("BSY") || status.equals("ERR") || status.equals("IDL"));
- else throw new IllegalArgumentException ("status Invalid value - Reference = STATUS_AD_Reference_ID - BSY - ERR - IDL");
-if (status != null && status.length() > 3)
+if (Status == null || Status.equals("BSY") || Status.equals("ERR") || Status.equals("IDL"));
+ else throw new IllegalArgumentException ("Status Invalid value - Reference = STATUS_AD_Reference_ID - BSY - ERR - IDL");
+if (Status != null && Status.length() > 3)
 {
 log.warning("Length > 3 - truncated");
-status = status.substring(0,3);
+Status = Status.substring(0,3);
 }
-set_Value ("status", status);
+set_Value ("Status", Status);
 }
-/** Get status */
-public String getstatus() 
+/** Get Status */
+public String getStatus() 
 {
-return (String)get_Value("status");
+return (String)get_Value("Status");
 }
 public static final int USEDBY_ID_AD_Reference_ID = MReference.getReferenceID("AD_User");
 /** Set UsedBy_ID */
