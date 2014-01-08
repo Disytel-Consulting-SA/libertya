@@ -505,19 +505,6 @@ public class InfoInvoicePanel extends InfoPanel implements ValueChangeListener
        
     }
 
-    /**
-     *  Get SQL WHERE parameter
-     *  @param f field
-     *  @return sql
-     */
-    private String getSQLText (Textbox f)
-    {
-        String s = f.getText().toUpperCase();
-        if (!s.endsWith("%"))
-            s += "%";
-        log.fine("String=" + s);
-        return s;
-    }   //  getSQLText
     
     // Elaine 2008/12/16
 	/**

@@ -451,23 +451,6 @@ public class InfoCashLinePanel extends InfoPanel implements ValueChangeListener,
 		}
 	} // setParameters
 
-	/**
-	 *  Get SQL WHERE parameter
-	 *  @param f field
-	 *  @return Upper case text with % at the end
-	 */
-	
-	private String getSQLText (Textbox f)
-	{
-		String s = f.getText().toUpperCase();
-		
-		if (!s.endsWith("%"))
-			s += "%";
-		
-		log.fine( "String=" + s);
-		
-		return s;
-	} // getSQLText
 
 	public void valueChange(ValueChangeEvent evt) 
 	{
