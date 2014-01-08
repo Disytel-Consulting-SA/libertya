@@ -59,7 +59,7 @@ from (select i.c_invoice_id,
 		AND date_trunc('day',i.dateinvoiced) >= date_trunc('day',$P{DateFrom}::date) 
 		AND date_trunc('day',i.dateinvoiced) <= date_trunc('day',$P{DateTo}::date)
 		AND (i.docstatus IN ('CL','CO') OR (i.docstatus IN ('VO','RE') AND (dt.isfiscal is null OR dt.isfiscal = 'N' OR (dt.isfiscal = 'Y' AND i.fiscalalreadyprinted = 'Y'))))) as d 
-order by dateinvoiced, documentno]]></queryString>
+order by documentno]]></queryString>
 
 	<field name="DOCUMENTNO" class="java.lang.String"/>
 	<field name="DATEINVOICED" class="java.sql.Timestamp"/>
