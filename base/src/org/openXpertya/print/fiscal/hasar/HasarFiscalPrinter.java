@@ -871,7 +871,7 @@ public abstract class HasarFiscalPrinter extends BasicFiscalPrinter implements H
 			}
 			
 			// Agrego los nuevos datos de la cola de impresión, previo a eliminar lo de la cola
-			addFooterObservations(11, 14, invoice.getFooterObservations(),
+			addFooterObservations(11, 20, invoice.getFooterObservations(),
 					false, -2);
 			
 			//////////////////////////////////////////////////////////////
@@ -1004,7 +1004,7 @@ public abstract class HasarFiscalPrinter extends BasicFiscalPrinter implements H
 			loadOtherTaxes(creditNote);
 			
 			// Agrego los nuevos datos de la cola de impresión, previo a eliminar lo de la cola
-			addFooterObservations(11, 14, creditNote.getFooterObservations(),
+			addFooterObservations(11, 20, creditNote.getFooterObservations(),
 					false, -2);
 			
 			//////////////////////////////////////////////////////////////
@@ -1086,7 +1086,7 @@ public abstract class HasarFiscalPrinter extends BasicFiscalPrinter implements H
 //			}
 			
 			// Agrego los nuevos datos de la cola de impresión, previo a eliminar lo de la cola
-			addFooterObservations(11, 14, debitNote.getFooterObservations(),
+			addFooterObservations(11, 20, debitNote.getFooterObservations(),
 					false, -2);
 			
 			//////////////////////////////////////////////////////////////

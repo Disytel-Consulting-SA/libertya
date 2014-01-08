@@ -7,7 +7,7 @@ import java.math.*;
 import org.openXpertya.util.*;
 /** Modelo Generado por C_DocType
  *  @author Comunidad de Desarrollo Libertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
- *  @version  - 2013-06-04 18:48:21.265 */
+ *  @version  - 2014-01-08 09:05:29.374 */
 public class X_C_DocType extends org.openXpertya.model.PO
 {
 /** Constructor estándar */
@@ -669,6 +669,21 @@ set_Value ("FiscalDocument", FiscalDocument);
 public String getFiscalDocument() 
 {
 return (String)get_Value("FiscalDocument");
+}
+/** Set Fiscal Printing Footer Legends */
+public void setFiscalPrintingFooterLegends (String FiscalPrintingFooterLegends)
+{
+if (FiscalPrintingFooterLegends != null && FiscalPrintingFooterLegends.length() > 500)
+{
+log.warning("Length > 500 - truncated");
+FiscalPrintingFooterLegends = FiscalPrintingFooterLegends.substring(0,500);
+}
+set_Value ("FiscalPrintingFooterLegends", FiscalPrintingFooterLegends);
+}
+/** Get Fiscal Printing Footer Legends */
+public String getFiscalPrintingFooterLegends() 
+{
+return (String)get_Value("FiscalPrintingFooterLegends");
 }
 /** Set GL Category.
 General Ledger Category */

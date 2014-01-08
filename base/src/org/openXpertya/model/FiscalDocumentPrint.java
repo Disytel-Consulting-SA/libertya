@@ -785,6 +785,18 @@ public class FiscalDocumentPrint {
 					+ (Util.isEmpty(salesRep.getDescription(), true) ? salesRep
 							.getName() : salesRep.getDescription()));
 		}
+		// Agregar las leyendas del pie del ticket del tipo de documento
+		MDocType docType = new MDocType(ctx, invoice.getC_DocTypeTarget_ID(),
+				getTrxName());
+		if(!Util.isEmpty(docType.getFiscalPrintingFooterLegends(), true)){
+			StringTokenizer tokens = new StringTokenizer(
+					docType.getFiscalPrintingFooterLegends(), ";");
+			String token;
+			while (tokens.hasMoreTokens()) {
+				token = tokens.nextToken();
+				document.addFooterObservation(Util.isEmpty(token, true)?"-":token);
+			}
+		}
 	}
 
 	/**
@@ -1647,7 +1659,7 @@ public class FiscalDocumentPrint {
 	}
 	
 	private void fireStatusReported(MControladorFiscal cFiscal) {
-		fireStatusReported(cFiscal, cFiscal.getstatus());
+		fireStatusReported(cFiscal, cFiscal.getStatus());
 	}
 
 	private void fireActionStarted(Integer action) {
@@ -1695,7 +1707,7 @@ public class FiscalDocumentPrint {
 		int bsyCount = 0;
 		// Si la impresora se encuentra en estado de error se dispara el evento
 		// que informa dicha situación.
-		if(cFiscal.getstatus().equals(MControladorFiscal.STATUS_ERROR)) {
+		if(cFiscal.getStatus().equals(MControladorFiscal.STATUS_ERROR)) {
 			fireStatusReported(cFiscal);
 			// Dependiendo de si hay que ignorar o no el estado de error
 			// se continua con la impresión. (Esto se utiliza para evitar
@@ -1720,7 +1732,7 @@ public class FiscalDocumentPrint {
 		}			
 
 		// Mientras el status sea BUSY, espera 5 segundos y vuelve a chequear.
-		while(cFiscal.getstatus().equals(MControladorFiscal.STATUS_BUSY) && !isCancelWaiting()) {
+		while(cFiscal.getStatus().equals(MControladorFiscal.STATUS_BUSY) && !isCancelWaiting()) {
 			fireStatusReported(cFiscal);
 			Thread.sleep(BSY_SLEEP_TIME);
 			bsyCount++;
@@ -1743,7 +1755,7 @@ public class FiscalDocumentPrint {
 		fireStatusReported(cFiscal, MControladorFiscal.STATUS_IDLE);
 		// Se asigna el status de la impresora, el usuario que realiza la operación
 		// y la fecha de operación.
-		cFiscal.setstatus(MControladorFiscal.STATUS_BUSY);
+		cFiscal.setStatus(MControladorFiscal.STATUS_BUSY);
 		cFiscal.setUsedBy_ID(Env.getAD_User_ID(ctx));
 		cFiscal.setoperation_date(new Timestamp(System.currentTimeMillis()));
 		// No se usa trx dado que los cambios deben ser visibles 
@@ -1754,7 +1766,7 @@ public class FiscalDocumentPrint {
 	
 	private void setFiscalPrinterStatus(MControladorFiscal cFiscal, String status) {
 		if(cFiscal != null) {
-			cFiscal.setstatus(status);
+			cFiscal.setStatus(status);
 			cFiscal.save();
 		}
 	}
