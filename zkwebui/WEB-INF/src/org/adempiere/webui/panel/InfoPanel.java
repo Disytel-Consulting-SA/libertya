@@ -34,6 +34,7 @@ import org.adempiere.webui.apps.AEnv;
 import org.adempiere.webui.apps.BusyDialog;
 import org.adempiere.webui.component.ConfirmPanel;
 import org.adempiere.webui.component.ListModelTable;
+import org.adempiere.webui.component.Textbox;
 import org.adempiere.webui.component.WListItemRenderer;
 import org.adempiere.webui.component.WListbox;
 import org.adempiere.webui.component.Window;
@@ -126,6 +127,8 @@ public abstract class InfoPanel extends Window implements EventListener, WTableM
                info = new InfoCashLinePanel (WindowNo, value, multiSelection, whereClause);
             else if (tableName.equals("S_ResourceAssigment"))
                 info = new InfoAssignmentPanel (WindowNo, value, multiSelection, whereClause);
+            else if (tableName.equals("C_POSJournal"))
+                info = new InfoPOSJournalPanel(WindowNo, value, multiSelection, whereClause);
             else
                 info = new InfoGeneralPanel (value, WindowNo, tableName, keyColumn, multiSelection, whereClause);
             //
@@ -1317,4 +1320,18 @@ public abstract class InfoPanel extends Window implements EventListener, WTableM
     		}
     	}
     }
+    
+    /**
+     *  Get SQL WHERE parameter
+     *  @param f field
+     *  @return sql
+     */
+    protected String getSQLText (Textbox f)
+    {
+        String s = f.getText().toUpperCase();
+        if (!s.endsWith("%"))
+            s += "%";
+        log.fine("String=" + s);
+        return s;
+    }   //  getSQLText
 }	//	Info

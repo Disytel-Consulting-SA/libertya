@@ -372,22 +372,6 @@ public class InfoInOutPanel extends InfoPanel implements ValueChangeListener, Ev
 		pstmt.setString(index++, fIsSOTrx .isChecked() ? "Y" : "N");
 	} // setParameters
 
-	/**
-	 *  Get SQL WHERE parameter
-	 *  @param f field
-	 *  @return sql part
-	 */
-	
-	private String getSQLText (Textbox f)
-	{
-		String s = f.getText().toUpperCase();
-	
-		if (!s.endsWith("%"))
-			s += "%";
-		
-		log.fine( "String=" + s);
-		return s;
-	} // getSQLText
 
 	// Elaine 2008/12/16
 	/**
