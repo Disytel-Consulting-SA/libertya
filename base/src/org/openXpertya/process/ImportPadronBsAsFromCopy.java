@@ -165,7 +165,7 @@ public class ImportPadronBsAsFromCopy extends SvrProcess {
 		toleranceDate.add(Calendar.MONTH, padron);
 		PreparedStatement ps = new CPreparedStatement(
 				ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_UPDATABLE, sql,
-				get_TrxName(), true);
+				null, true);
 		ps.setTimestamp(1, new Timestamp(toleranceDate.getTimeInMillis()));
 		return ps.executeUpdate();
 	}
