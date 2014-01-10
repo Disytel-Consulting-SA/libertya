@@ -1144,8 +1144,29 @@ public class MInOut extends X_M_InOut implements DocAction {
 
     protected boolean beforeSave( boolean newRecord ) {
 
+    	
+        /* Informacion a recuperar desde el pedido (si el mismo se encuentra referenciado) en caso de que no se encuentre cargada en el remito */
+        if (getC_Order_ID() > 0) {
+        	// Obtener el pedido asociado
+        	X_C_Order anOrder = new X_C_Order(getCtx(), getC_Order_ID(), get_TrxName());
+        	
+	        // Setear E.C. a partir del Pedido en caso de que el remito no tenga uno seteado
+	        if (getC_BPartner_ID() == 0) {
+	        	if (anOrder.getC_BPartner_ID() > 0) {
+	        		MBPartner aBPartner = new MBPartner(getCtx(), anOrder.getC_BPartner_ID(), get_TrxName());
+	        		setBPartner(aBPartner);
+	        	}
+	        }
+	        
+	        // Setear Warehouse a partir del Pedido en caso de que el remito no tenga uno seteado
+	        if (getM_Warehouse_ID() == 0) {
+	        	if (anOrder.getM_Warehouse_ID() > 0) {
+	        		setM_Warehouse_ID(anOrder.getM_Warehouse_ID());
+	        	}
+	        }
+        }
+    	
         // Warehouse Org
-
         MWarehouse wh = MWarehouse.get( getCtx(),getM_Warehouse_ID());
 
     	//Validar número de doccumento para remitos de salida
@@ -1201,15 +1222,6 @@ public class MInOut extends X_M_InOut implements DocAction {
 //			}
 //        }
 		// ------------------------------------------------------------------------
-
-        // Obtener el ID de EC a partir del Pedido en caso de que el remito no tenga uno seteado
-        if (getC_BPartner_ID() == 0 && getC_Order_ID() > 0) {
-        	X_C_Order anOrder = new X_C_Order(getCtx(), getC_Order_ID(), get_TrxName());
-        	if (anOrder.getC_BPartner_ID() > 0) {
-        		MBPartner aBPartner = new MBPartner(getCtx(), anOrder.getC_BPartner_ID(), get_TrxName());
-        		setBPartner(aBPartner);
-        	}
-        }
         
         // No permitir guardar un remito que posee un pedido no facturado cuando
 		// la regla de envío de mercadería es Después de Facturación
