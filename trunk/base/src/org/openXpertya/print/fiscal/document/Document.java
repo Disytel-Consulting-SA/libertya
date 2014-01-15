@@ -336,6 +336,10 @@ public abstract class Document implements Serializable{
 		return footerObservations;
 	}
 	
+	public void setFooterObservations(List<String> observations){
+		this.footerObservations = observations;
+	}
+	
 	/**
 	 * Agrega una observación del pie del documento.
 	 * @param observation Texto de la observación.

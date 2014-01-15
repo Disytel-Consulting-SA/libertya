@@ -772,18 +772,14 @@ public class FiscalDocumentPrint {
 			MPOS pos = MPOS.get(ctx, posJournal.getC_POS_ID());
 			MUser salesRep = MUser.get(ctx, posJournal.getAD_User_ID());
 			
-			document.addFooterObservation("Cajero: "
-					+ (Util.isEmpty(salesRep.getDescription(), true) ? salesRep
-							.getName() : salesRep.getDescription()));
-			document.addFooterObservation("Caja: "+pos.getName());
+			document.addFooterObservation("Cajero:" + salesRep.getName()
+					+ "|Caja:" + pos.getName());
 		}
 		// Sino busca el usuario de ventas desde el documento
 		else{
 			// Setear el nombre del responsable de ventas
 			MUser salesRep = MUser.get(ctx, invoice.getSalesRep_ID());
-			document.addFooterObservation("Resp. Ventas: "
-					+ (Util.isEmpty(salesRep.getDescription(), true) ? salesRep
-							.getName() : salesRep.getDescription()));
+			document.addFooterObservation("Resp. Ventas: "+ salesRep.getName());
 		}
 		// Agregar las leyendas del pie del ticket del tipo de documento
 		MDocType docType = new MDocType(ctx, invoice.getC_DocTypeTarget_ID(),
@@ -799,6 +795,26 @@ public class FiscalDocumentPrint {
 		}
 	}
 
+	/**
+	 * Reordenación de leyendas al pie del ticket
+	 * @param document
+	 */
+	protected void reorderFooterObservation(Document document){
+		List<String> observationsOrdered = new ArrayList<String>();
+		for (String observation : document.getFooterObservations()) {
+			if(observation != null && !observation.equals("-")){
+				observationsOrdered.add(observation);
+			}
+		}
+		// Si la cantidad de observaciones no llega a 10, agrego los guiones
+		// FIXME 10 se toma como límite de cantidad de leyendas al pie del
+		// ticket, pueden ser menos o más dependiendo del controlador fiscal
+		for (int i = observationsOrdered.size(); i <= 10; i++){
+			observationsOrdered.add("-");
+		}
+		document.setFooterObservations(observationsOrdered);
+	}
+	
 	/**
 	 * Crea un documento imprimible mediante un controlador fiscal a partir de
 	 * la factura parámetro y del tipo de documento fiscal configurado.
@@ -874,6 +890,9 @@ public class FiscalDocumentPrint {
 			}	
 		}
 		
+		// Reorganizar las leyendas al pie del ticket
+		reorderFooterObservation(invoice);
+		
 		// TODO: Se asigna el número de remito en caso de existir.
 		
 		// Se agregan las líneas de la factura al documento.
@@ -907,6 +926,9 @@ public class FiscalDocumentPrint {
 		
 		// Setear los mensajes a la cola de la impresión
 		setStdFooterObservations(mInvoice, debitNote);
+		
+		// Reorganizar las leyendas al pie de la nd
+		reorderFooterObservation(debitNote);
 		
 		// TODO: Se asigna el número de remito en caso de existir.
 		
@@ -997,6 +1019,9 @@ public class FiscalDocumentPrint {
 			}
 		}
 		creditNote.setOriginalDocumentNo(origInvoiceNumber);
+		
+		// Reorganizar las leyendas al pie de la nc
+		reorderFooterObservation(creditNote);
 		
 		// Se agregan las líneas de la nota de crédito al documento.
 		loadDocumentLines(mInvoice, creditNote);
