@@ -44,6 +44,7 @@ import org.openXpertya.util.HTMLMsg;
 import org.openXpertya.util.MProductCache;
 import org.openXpertya.util.Msg;
 import org.openXpertya.util.StringUtil;
+import org.openXpertya.util.TimeUtil;
 import org.openXpertya.util.Util;
 
 /**
@@ -4496,11 +4497,12 @@ public class MOrder extends X_C_Order implements DocAction {
 		return MDocType.get(getCtx(), docTypeID).getDocSubTypeSO();
 	}
 	
-	private boolean isExpiredProposal(Date date) {
+	public boolean isExpiredProposal(Date date) {
 		return 
 			MDocType.DOCSUBTYPESO_Proposal.equals(getDocSubTypeSO()) 
 				&& getValidTo() != null
-				&& getValidTo().compareTo(date) < 0;
+				&& getValidTo().compareTo(date) < 0
+				&& !TimeUtil.isSameDay(getValidTo(), new Timestamp(date.getTime()));
 	}
 
     /**

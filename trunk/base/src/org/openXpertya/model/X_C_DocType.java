@@ -7,7 +7,7 @@ import java.math.*;
 import org.openXpertya.util.*;
 /** Modelo Generado por C_DocType
  *  @author Comunidad de Desarrollo Libertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
- *  @version  - 2014-01-08 09:05:29.374 */
+ *  @version  - 2014-01-16 15:56:13.372 */
 public class X_C_DocType extends org.openXpertya.model.PO
 {
 /** Constructor estándar */
@@ -18,6 +18,7 @@ super (ctx, C_DocType_ID, trxName);
 {
 setAllowChangePriceList (false);
 setAllowDeliveryReturned (false);
+setAllowProposalDue (false);
 setC_DocType_ID (0);
 setDocBaseType (null);
 setDocTypeKey (null);
@@ -152,6 +153,22 @@ set_Value ("AllowDeliveryReturned", new Boolean(AllowDeliveryReturned));
 public boolean isAllowDeliveryReturned() 
 {
 Object oo = get_Value("AllowDeliveryReturned");
+if (oo != null) 
+{
+ if (oo instanceof Boolean) return ((Boolean)oo).booleanValue();
+ return "Y".equals(oo);
+}
+return false;
+}
+/** Set Allow Proposal Due */
+public void setAllowProposalDue (boolean AllowProposalDue)
+{
+set_Value ("AllowProposalDue", new Boolean(AllowProposalDue));
+}
+/** Get Allow Proposal Due */
+public boolean isAllowProposalDue() 
+{
+Object oo = get_Value("AllowProposalDue");
 if (oo != null) 
 {
  if (oo instanceof Boolean) return ((Boolean)oo).booleanValue();

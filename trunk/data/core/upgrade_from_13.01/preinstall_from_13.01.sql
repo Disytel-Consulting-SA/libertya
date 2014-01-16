@@ -6431,5 +6431,8 @@ ALTER TABLE v_dailysales OWNER TO libertya;
 -- Desactivar por el momento el dashboard de actividades, dado que resta completar algunas funcionalidades
 UPDATE pa_dashboardcontent SET isactive = 'N' WHERE name = 'Activities';
 
---20130107-1300 Nueva columna para agregar leyendas al pie del ticket fiscal
+--20140107-1300 Nueva columna para agregar leyendas al pie del ticket fiscal
 update ad_system set dummy = (SELECT addcolumnifnotexists('C_DocType','fiscalprintingfooterlegends', 'character varying(500)'));
+
+--20140116-1530 Nueva columna para permitir o no la copia de pedidos a partir de presupuestos vencidos
+update ad_system set dummy = (SELECT addcolumnifnotexists('C_DocType','allowproposaldue', 'character(1) NOT NULL DEFAULT ''Y''::bpchar'));
