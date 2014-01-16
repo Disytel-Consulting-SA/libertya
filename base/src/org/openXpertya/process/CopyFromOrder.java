@@ -17,6 +17,7 @@
 package org.openXpertya.process;
 
 import java.math.BigDecimal;
+import java.util.Date;
 import java.util.logging.Level;
 
 import javax.swing.JOptionPane;
@@ -26,6 +27,8 @@ import org.openXpertya.model.MInvoice;
 import org.openXpertya.model.MOrder;
 import org.openXpertya.model.PO;
 import org.openXpertya.util.CLogger;
+import org.openXpertya.util.Env;
+import org.openXpertya.util.Msg;
 
 /**
  * Descripción de Clase
@@ -104,6 +107,16 @@ public class CopyFromOrder extends SvrProcess {
         MOrder from = new MOrder( getCtx(),p_C_Order_ID,get_TrxName());
         MOrder to   = new MOrder( getCtx(),To_C_Order_ID,get_TrxName());
 
+		// Si el tipo de documento del order from es un presupuesto vencido, hay
+		// que verificar si a configuración del tipo de documento destino
+		// permite crear a partir de presupuestos vencidos
+		MDocType docTypeTo = new MDocType(getCtx(), to.getC_DocTypeTarget_ID(),
+				get_TrxName());
+		if (from.isExpiredProposal(Env.getDate())
+				&& !docTypeTo.isAllowProposalDue()) {
+        	throw new Exception(Msg.getMsg(getCtx(), "NotAllowedProposalDue"));
+        }
+		
         // Copiar la cabecera si así lo requiere
         if(copyHeader){
 			// Datos a setear luego de la copia de campos
