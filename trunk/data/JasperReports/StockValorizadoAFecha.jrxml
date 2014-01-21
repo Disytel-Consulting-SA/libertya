@@ -25,7 +25,7 @@
 
 	<parameter name="AD_Org_ID" isForPrompting="false" class="java.math.BigDecimal"/>
 	<parameter name="FechaCorte" isForPrompting="false" class="java.util.Date">
-		<defaultValueExpression ><![CDATA[(new Date())]]></defaultValueExpression>
+		<defaultValueExpression ><![CDATA[(Calendar.getInstance().getTime())]]></defaultValueExpression>
 	</parameter>
 	<parameter name="AD_CLIENT_ID" isForPrompting="false" class="java.lang.Integer"/>
 	<parameter name="M_Product_Lines_ID" isForPrompting="false" class="java.math.BigDecimal"/>
@@ -35,7 +35,7 @@
 	<parameter name="M_Product_ID" isForPrompting="false" class="java.math.BigDecimal"/>
 	<parameter name="C_BPartner_ID" isForPrompting="false" class="java.math.BigDecimal"/>
 	<parameter name="TipoDeCosto" isForPrompting="false" class="java.lang.String"/>
-	<queryString><![CDATA[SELECT DISTINCT Compañia, Organizacion, Clave_de_Busqueda_del_Articulo, Linea_de_Producto, Familia, Subfamlia, MARCA, Nombre_Articulo, Fecha::date, Stock,Costo_FIFO, Costo_LIFO, Costo_PP::numeric(22,4), (Stock * Costo_FIFO)::numeric(22,4) AS Costo_FIFO_Total, (Stock * Costo_LIFO)::numeric(22,4) AS Costo_LIFO_Total, (Stock * Costo_PP)::numeric(22,4) AS Costo_PP_Total, Proveedor, IVA 
+	<queryString><![CDATA[SELECT DISTINCT Compañia, Organizacion, Clave_de_Busqueda_del_Articulo, Linea_de_Producto, Familia, Subfamlia, MARCA, Nombre_Articulo, Fecha::date, Stock, StockDisponibleActual, Costo_FIFO, Costo_LIFO, Costo_PP::numeric(22,4), (Stock * Costo_FIFO)::numeric(22,4) AS Costo_FIFO_Total, (Stock * Costo_LIFO)::numeric(22,4) AS Costo_LIFO_Total, (Stock * Costo_PP)::numeric(22,4) AS Costo_PP_Total, Proveedor, IVA 
 FROM
 (
 SELECT DISTINCT
@@ -47,29 +47,30 @@ pc.value AS Subfamlia,
 pf.value AS MARCA, 
 p.name AS Nombre_Articulo,
 $P{FechaCorte}::date AS Fecha,
-COALESCE((SELECT (SELECT SUM(QtyOnHand) FROM M_Storage s WHERE p.M_Product_ID=s.M_Product_ID) - (CASE WHEN SUM(t.MovementQty) IS NULL THEN 0 ELSE SUM(t.MovementQty) END) FROM M_Transaction t, M_Locator l WHERE (t.M_Product_ID=p.M_Product_ID) /* FECHA DE CORTE - POR DEFECTO ES LA FECHA ACTUAL */ AND (t.MovementDate > $P{FechaCorte}) AND (t.M_Locator_ID=l.M_Locator_ID)),0) AS Stock,
+COALESCE((SELECT (SELECT SUM(QtyOnHand) FROM M_Storage s WHERE (p.M_Product_ID=s.M_Product_ID) AND (s.M_Locator_ID IN (SELECT loc.M_Locator_ID FROM M_Locator loc INNER JOIN M_Warehouse wa ON (loc.M_Warehouse_ID = wa.M_Warehouse_ID) WHERE (wa.OwnStock = 'N') AND (wa.StockAvailableForSale = 'Y')))) - (CASE WHEN SUM(t.MovementQty) IS NULL THEN 0 ELSE SUM(t.MovementQty) END) FROM M_Transaction t, M_Locator l WHERE (t.M_Product_ID=p.M_Product_ID) /* FECHA DE CORTE - POR DEFECTO ES LA FECHA ACTUAL */ AND (t.MovementDate > $P{FechaCorte}) AND (t.M_Locator_ID=l.M_Locator_ID) AND (l.M_Locator_ID IN (SELECT loc.M_Locator_ID FROM M_Locator loc INNER JOIN M_Warehouse wa ON (loc.M_Warehouse_ID = wa.M_Warehouse_ID) WHERE (wa.OwnStock = 'N') AND (wa.StockAvailableForSale = 'Y')))),0) AS Stock,
+COALESCE((SELECT SUM(QtyOnHand) - SUM(QtyReserved) FROM M_Storage s WHERE (p.M_Product_ID=s.M_Product_ID) AND (M_Locator_ID IN (SELECT M_Locator_ID FROM M_Locator loc INNER JOIN M_Warehouse wa ON (loc.M_Warehouse_ID = wa.M_Warehouse_ID) WHERE (wa.OwnStock = 'N') AND (wa.StockAvailableForSale = 'Y')))),0) AS StockDisponibleActual,
 COALESCE(
 (CASE 
-WHEN ((SELECT priceactual FROM C_Order o INNER JOIN C_OrderLine ol ON (o.C_Order_ID = ol.C_Order_ID) INNER JOIN M_InOut i ON (o.C_Order_ID = i.C_Order_ID) INNER JOIN M_InOutLine il ON (il.M_InOut_ID = i.M_InOut_ID) WHERE (il.qtyentered > 0) AND  (i.docstatus IN ('CL', 'CO')) AND (i.Issotrx = 'N') AND (ol.M_Product_ID=p.M_Product_ID) AND (movementdate <= $P{FechaCorte}) ORDER BY i.created ASC LIMIT 1) IS NULL) THEN
+WHEN ((SELECT priceactual FROM C_Order o INNER JOIN C_OrderLine ol ON (o.C_Order_ID = ol.C_Order_ID) INNER JOIN M_InOut i ON (o.C_Order_ID = i.C_Order_ID) INNER JOIN M_InOutLine il ON (il.M_InOut_ID = i.M_InOut_ID) WHERE (il.qtyentered > 0) AND  (i.docstatus IN ('CL', 'CO', 'VO', 'RE')) AND (i.Issotrx = 'N') AND (ol.M_Product_ID=p.M_Product_ID) AND (movementdate <= $P{FechaCorte}) ORDER BY i.created ASC LIMIT 1) IS NULL) THEN
 (SELECT pp.pricestd FROM M_ProductPrice pp WHERE (pp.M_Product_ID=p.M_Product_ID) AND (pp.M_PriceList_Version_ID = (SELECT M_PriceList_Version_ID FROM M_PriceList_Version plv INNER JOIN M_PriceList pl ON plv.M_PriceList_ID = pl.M_PriceList_ID WHERE (IsSoPriceList = 'N') AND (plv.AD_Org_ID = p.AD_Org_ID) ORDER BY plv.Created DESC LIMIT 1)))
 ELSE
-(SELECT currencyconvert(priceactual, o.c_currency_id, 118, o.dateacct::timestamp with time zone, NULL::integer, o.ad_client_id, o.ad_org_id) FROM C_Order o INNER JOIN C_OrderLine ol ON (o.C_Order_ID = ol.C_Order_ID) INNER JOIN M_InOut i ON (o.C_Order_ID = i.C_Order_ID) INNER JOIN M_InOutLine il ON (il.M_InOut_ID = i.M_InOut_ID) WHERE (il.qtyentered > 0) AND  (i.docstatus IN ('CL', 'CO')) AND (i.Issotrx = 'N') AND (ol.M_Product_ID=p.M_Product_ID) /* FECHA DE CORTE - POR DEFECTO ES LA FECHA ACTUAL */ AND (movementdate <= $P{FechaCorte}) ORDER BY i.created ASC LIMIT 1)
+(SELECT cost_fifo(p.m_product_id, $P{FechaCorte}) ) 
 END)
 ,0) AS Costo_FIFO, -- Finaliza el coalesce
 COALESCE(
 (CASE 
-WHEN ((SELECT priceactual FROM C_Order o INNER JOIN C_OrderLine ol ON (o.C_Order_ID = ol.C_Order_ID) INNER JOIN M_InOut i ON (o.C_Order_ID = i.C_Order_ID) INNER JOIN M_InOutLine il ON (il.M_InOut_ID = i.M_InOut_ID) WHERE (il.qtyentered > 0) AND (i.docstatus IN ('CL', 'CO')) AND (i.Issotrx = 'N') AND (ol.M_Product_ID=p.M_Product_ID) AND (movementdate <= $P{FechaCorte}) ORDER BY i.created DESC LIMIT 1) IS NULL) THEN
+WHEN ((SELECT priceactual FROM C_Order o INNER JOIN C_OrderLine ol ON (o.C_Order_ID = ol.C_Order_ID) INNER JOIN M_InOut i ON (o.C_Order_ID = i.C_Order_ID) INNER JOIN M_InOutLine il ON (il.M_InOut_ID = i.M_InOut_ID) WHERE (il.qtyentered > 0) AND (i.docstatus IN ('CL', 'CO', 'VO', 'RE')) AND (i.Issotrx = 'N') AND (ol.M_Product_ID=p.M_Product_ID) AND (movementdate <= $P{FechaCorte}) ORDER BY i.created DESC LIMIT 1) IS NULL) THEN
 (SELECT pp.pricestd FROM M_ProductPrice pp WHERE (pp.M_Product_ID=p.M_Product_ID) AND (pp.M_PriceList_Version_ID = (SELECT M_PriceList_Version_ID FROM M_PriceList_Version plv INNER JOIN M_PriceList pl ON plv.M_PriceList_ID = pl.M_PriceList_ID WHERE (IsSoPriceList = 'N') AND (plv.AD_Org_ID = p.AD_Org_ID) ORDER BY plv.Created DESC LIMIT 1)))
 ELSE
-(SELECT currencyconvert(priceactual, o.c_currency_id, 118, o.dateacct::timestamp with time zone, NULL::integer, o.ad_client_id, o.ad_org_id) FROM C_Order o INNER JOIN C_OrderLine ol ON (o.C_Order_ID = ol.C_Order_ID) INNER JOIN M_InOut i ON (o.C_Order_ID = i.C_Order_ID) INNER JOIN M_InOutLine il ON (il.M_InOut_ID = i.M_InOut_ID) WHERE (il.qtyentered > 0) AND (i.docstatus IN ('CL', 'CO')) AND (i.Issotrx = 'N') AND (ol.M_Product_ID=p.M_Product_ID) /* FECHA DE CORTE - POR DEFECTO ES LA FECHA ACTUAL */ AND (movementdate <= $P{FechaCorte}) ORDER BY i.created DESC LIMIT 1)
+(SELECT currencyconvert(priceactual, o.c_currency_id, 118, o.dateacct::timestamp with time zone, NULL::integer, o.ad_client_id, o.ad_org_id) FROM C_Order o INNER JOIN C_OrderLine ol ON (o.C_Order_ID = ol.C_Order_ID) INNER JOIN M_InOut i ON (o.C_Order_ID = i.C_Order_ID) INNER JOIN M_InOutLine il ON (il.M_InOut_ID = i.M_InOut_ID) WHERE (il.qtyentered > 0) AND (i.docstatus IN ('CL', 'CO', 'VO', 'RE')) AND (i.Issotrx = 'N') AND (ol.M_Product_ID=p.M_Product_ID) /* FECHA DE CORTE - POR DEFECTO ES LA FECHA ACTUAL */ AND (movementdate <= $P{FechaCorte}) ORDER BY i.created DESC LIMIT 1)
 END)
 ,0) AS Costo_LIFO, -- Finaliza el coalesce
 COALESCE(
 (CASE 
-WHEN ((SELECT (CASE WHEN (SUM(il.qtyentered) > 0) THEN SUM(priceactual * il.qtyentered) / SUM(il.qtyentered) ELSE 0 END) FROM C_Order o INNER JOIN C_OrderLine ol ON (o.C_Order_ID = ol.C_Order_ID) INNER JOIN M_InOut i ON (o.C_Order_ID = i.C_Order_ID) INNER JOIN M_InOutLine il ON (il.M_InOut_ID = i.M_InOut_ID) WHERE (i.docstatus IN ('CL', 'CO')) AND (i.Issotrx = 'N') AND (ol.M_Product_ID=p.M_Product_ID) AND (il.qtyentered > 0) /* FILTRO FECHA DE CORTE */ AND (movementdate <= $P{FechaCorte})) = 0) THEN
+WHEN ((SELECT (CASE WHEN (SUM(il.qtyentered) > 0) THEN SUM(priceactual * il.qtyentered) / SUM(il.qtyentered) ELSE 0 END) FROM C_Order o INNER JOIN C_OrderLine ol ON (o.C_Order_ID = ol.C_Order_ID) INNER JOIN M_InOut i ON (o.C_Order_ID = i.C_Order_ID) INNER JOIN M_InOutLine il ON (il.M_InOut_ID = i.M_InOut_ID) WHERE (i.docstatus IN ('CL', 'CO', 'VO', 'RE')) AND (i.Issotrx = 'N') AND (ol.M_Product_ID=p.M_Product_ID) AND (il.qtyentered > 0) /* FILTRO FECHA DE CORTE */ AND (movementdate <= $P{FechaCorte})) = 0) THEN
 (SELECT pp.pricestd FROM M_ProductPrice pp WHERE (pp.M_Product_ID=p.M_Product_ID) AND (pp.M_PriceList_Version_ID = (SELECT M_PriceList_Version_ID FROM M_PriceList_Version plv INNER JOIN M_PriceList pl ON plv.M_PriceList_ID = pl.M_PriceList_ID WHERE (IsSoPriceList = 'N') AND (plv.AD_Org_ID = p.AD_Org_ID) ORDER BY plv.Created DESC LIMIT 1)))
 ELSE
-(SELECT (CASE WHEN (SUM(il.qtyentered) > 0) THEN SUM(currencyconvert(priceactual, o.c_currency_id, 118, o.dateacct::timestamp with time zone, NULL::integer, o.ad_client_id, o.ad_org_id) * il.qtyentered) / SUM(il.qtyentered) ELSE 0 END) FROM C_Order o INNER JOIN C_OrderLine ol ON (o.C_Order_ID = ol.C_Order_ID) INNER JOIN M_InOut i ON (o.C_Order_ID = i.C_Order_ID) INNER JOIN M_InOutLine il ON (il.M_InOut_ID = i.M_InOut_ID) WHERE (i.docstatus IN ('CL', 'CO')) AND (i.Issotrx = 'N') AND (ol.M_Product_ID=p.M_Product_ID) AND (il.qtyentered > 0) /* FILTRO FECHA DE CORTE */ AND (movementdate <= $P{FechaCorte}))
+(SELECT (CASE WHEN (SUM(il.qtyentered) > 0) THEN SUM(currencyconvert(priceactual, o.c_currency_id, 118, o.dateacct::timestamp with time zone, NULL::integer, o.ad_client_id, o.ad_org_id) * il.qtyentered * CASE WHEN i.issotrx = 'N' THEN 1 ELSE -1 END) / SUM(il.qtyentered * CASE WHEN i.issotrx = 'N' THEN 1 ELSE -1 END) ELSE 0 END) FROM C_Order o INNER JOIN C_OrderLine ol ON (o.C_Order_ID = ol.C_Order_ID) INNER JOIN M_InOut i ON (o.C_Order_ID = i.C_Order_ID) INNER JOIN M_InOutLine il ON (il.M_InOut_ID = i.M_InOut_ID) WHERE (i.docstatus IN ('CL', 'CO', 'VO', 'RE')) AND (i.Issotrx IN ('Y', 'N')) AND (ol.M_Product_ID=p.M_Product_ID) AND (il.qtyentered > 0) /* FILTRO FECHA DE CORTE */ AND (movementdate <= $P{FechaCorte}))
 END)
 ,0) AS Costo_PP, -- Finaliza el coalesce
 bp.value AS Proveedor,
@@ -105,6 +106,7 @@ ORDER BY Fecha ASC;]]></queryString>
 	<field name="nombre_articulo" class="java.lang.String"/>
 	<field name="fecha" class="java.sql.Date"/>
 	<field name="stock" class="java.math.BigDecimal"/>
+	<field name="stockdisponibleactual" class="java.math.BigDecimal"/>
 	<field name="costo_fifo" class="java.math.BigDecimal"/>
 	<field name="costo_lifo" class="java.math.BigDecimal"/>
 	<field name="costo_pp" class="java.math.BigDecimal"/>
@@ -229,91 +231,91 @@ ORDER BY Fecha ASC;]]></queryString>
 					<reportElement
 						x="0"
 						y="90"
-						width="100"
+						width="75"
 						height="10"
 						key="staticText-12"/>
-					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="Thin" bottomBorderColor="#000000"/>
+					<box topBorder="Thin" topBorderColor="#000000" leftBorder="Thin" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" rightPadding="2" bottomBorder="Thin" bottomBorderColor="#000000"/>
 					<textElement textAlignment="Right" verticalAlignment="Middle">
-						<font pdfFontName="Helvetica-Bold" size="7" isBold="true"/>
+						<font pdfFontName="Helvetica-Bold" size="6" isBold="true"/>
 					</textElement>
-				<text><![CDATA[Clave Búsq. del Artículo]]></text>
+				<text><![CDATA[Clave Búsq. Artículo]]></text>
 				</staticText>
 				<staticText>
 					<reportElement
-						x="159"
+						x="134"
 						y="90"
 						width="65"
 						height="10"
 						key="staticText-13"/>
-					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="Thin" bottomBorderColor="#000000"/>
+					<box topBorder="Thin" topBorderColor="#000000" leftBorder="Thin" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" rightPadding="2" bottomBorder="Thin" bottomBorderColor="#000000"/>
 					<textElement textAlignment="Right" verticalAlignment="Middle">
-						<font pdfFontName="Helvetica-Bold" size="7" isBold="true"/>
+						<font pdfFontName="Helvetica-Bold" size="6" isBold="true"/>
 					</textElement>
 				<text><![CDATA[Familia
 ]]></text>
 				</staticText>
 				<staticText>
 					<reportElement
-						x="224"
+						x="199"
 						y="90"
 						width="65"
 						height="10"
 						key="staticText-14"/>
-					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="Thin" bottomBorderColor="#000000"/>
+					<box topBorder="Thin" topBorderColor="#000000" leftBorder="Thin" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" rightPadding="2" bottomBorder="Thin" bottomBorderColor="#000000"/>
 					<textElement textAlignment="Right" verticalAlignment="Middle">
-						<font pdfFontName="Helvetica-Bold" size="7" isBold="true"/>
+						<font pdfFontName="Helvetica-Bold" size="6" isBold="true"/>
 					</textElement>
 				<text><![CDATA[Subfamilia]]></text>
 				</staticText>
 				<staticText>
 					<reportElement
-						x="289"
+						x="264"
 						y="90"
-						width="60"
+						width="54"
 						height="10"
 						key="staticText-15"/>
-					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="Thin" bottomBorderColor="#000000"/>
+					<box topBorder="Thin" topBorderColor="#000000" leftBorder="Thin" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" rightPadding="2" bottomBorder="Thin" bottomBorderColor="#000000"/>
 					<textElement textAlignment="Right" verticalAlignment="Middle">
-						<font pdfFontName="Helvetica-Bold" size="7" isBold="true"/>
+						<font pdfFontName="Helvetica-Bold" size="6" isBold="true"/>
 					</textElement>
 				<text><![CDATA[Marca]]></text>
 				</staticText>
 				<staticText>
 					<reportElement
-						x="350"
+						x="318"
 						y="90"
-						width="196"
+						width="181"
 						height="10"
 						key="staticText-16"/>
-					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="Thin" bottomBorderColor="#000000"/>
+					<box topBorder="Thin" topBorderColor="#000000" leftBorder="Thin" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" rightPadding="2" bottomBorder="Thin" bottomBorderColor="#000000"/>
 					<textElement textAlignment="Right" verticalAlignment="Middle">
-						<font pdfFontName="Helvetica-Bold" size="7" isBold="true"/>
+						<font pdfFontName="Helvetica-Bold" size="6" isBold="true"/>
 					</textElement>
 				<text><![CDATA[Nombre Artículo]]></text>
 				</staticText>
 				<staticText>
 					<reportElement
-						x="546"
+						x="499"
 						y="90"
 						width="59"
 						height="10"
 						key="staticText-17"/>
-					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="Thin" bottomBorderColor="#000000"/>
+					<box topBorder="Thin" topBorderColor="#000000" leftBorder="Thin" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" rightPadding="2" bottomBorder="Thin" bottomBorderColor="#000000"/>
 					<textElement textAlignment="Right" verticalAlignment="Middle">
-						<font pdfFontName="Helvetica-Bold" size="7" isBold="true"/>
+						<font pdfFontName="Helvetica-Bold" size="6" isBold="true"/>
 					</textElement>
 				<text><![CDATA[Fecha]]></text>
 				</staticText>
 				<staticText>
 					<reportElement
-						x="644"
+						x="643"
 						y="90"
 						width="52"
 						height="10"
 						key="staticText-18"/>
-					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="Thin" bottomBorderColor="#000000"/>
+					<box topBorder="Thin" topBorderColor="#000000" leftBorder="Thin" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" rightPadding="2" bottomBorder="Thin" bottomBorderColor="#000000"/>
 					<textElement textAlignment="Right" verticalAlignment="Middle">
-						<font pdfFontName="Helvetica-Bold" size="7" isBold="true"/>
+						<font pdfFontName="Helvetica-Bold" size="6" isBold="true"/>
 					</textElement>
 				<text><![CDATA[Costo]]></text>
 				</staticText>
@@ -375,40 +377,42 @@ ORDER BY Fecha ASC;]]></queryString>
 				</textField>
 				<staticText>
 					<reportElement
-						x="100"
+						x="75"
 						y="90"
 						width="59"
 						height="10"
 						key="staticText-59"/>
-					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="Thin" bottomBorderColor="#000000"/>
+					<box topBorder="Thin" topBorderColor="#000000" leftBorder="Thin" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" rightPadding="2" bottomBorder="Thin" bottomBorderColor="#000000"/>
 					<textElement textAlignment="Right" verticalAlignment="Middle">
-						<font pdfFontName="Helvetica-Bold" size="7" isBold="true"/>
+						<font pdfFontName="Helvetica-Bold" size="6" isBold="true"/>
 					</textElement>
 				<text><![CDATA[Línea de Art.]]></text>
 				</staticText>
 				<staticText>
 					<reportElement
-						x="696"
+						x="695"
 						y="90"
 						width="52"
 						height="10"
 						key="staticText-60"/>
-					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="Thin" bottomBorderColor="#000000"/>
+					<box topBorder="Thin" topBorderColor="#000000" leftBorder="Thin" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" rightPadding="2" bottomBorder="Thin" bottomBorderColor="#000000"/>
 					<textElement textAlignment="Right" verticalAlignment="Middle">
-						<font pdfFontName="Helvetica-Bold" size="7" isBold="true"/>
+						<font pdfFontName="Helvetica-Bold" size="6" isBold="true"/>
 					</textElement>
 				<text><![CDATA[Costo Total]]></text>
 				</staticText>
 				<staticText>
 					<reportElement
-						x="605"
+						x="558"
 						y="90"
 						width="39"
 						height="10"
-						key="staticText-61"/>
-					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="Thin" bottomBorderColor="#000000"/>
+						key="staticText-61">
+							<printWhenExpression><![CDATA[new Boolean((new SimpleDateFormat("dd/MM/yyyy").format($P{FechaCorte})).compareTo(new SimpleDateFormat("dd/MM/yyyy").format(Calendar.getInstance().getTime())) == 0)]]></printWhenExpression>
+						</reportElement>
+					<box topBorder="Thin" topBorderColor="#000000" leftBorder="Thin" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" rightPadding="2" bottomBorder="Thin" bottomBorderColor="#000000"/>
 					<textElement textAlignment="Right" verticalAlignment="Middle">
-						<font pdfFontName="Helvetica-Bold" size="7" isBold="true"/>
+						<font pdfFontName="Helvetica-Bold" size="6" isBold="true"/>
 					</textElement>
 				<text><![CDATA[Stock]]></text>
 				</staticText>
@@ -531,11 +535,41 @@ ORDER BY Fecha ASC;]]></queryString>
 						width="35"
 						height="10"
 						key="staticText-66"/>
-					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="Thin" bottomBorderColor="#000000"/>
+					<box topBorder="Thin" topBorderColor="#000000" leftBorder="Thin" leftBorderColor="#000000" rightBorder="Thin" rightBorderColor="#000000" rightPadding="2" bottomBorder="Thin" bottomBorderColor="#000000"/>
 					<textElement textAlignment="Right" verticalAlignment="Middle">
-						<font pdfFontName="Helvetica-Bold" size="7" isBold="true"/>
+						<font pdfFontName="Helvetica-Bold" size="6" isBold="true"/>
 					</textElement>
 				<text><![CDATA[Iva]]></text>
+				</staticText>
+				<staticText>
+					<reportElement
+						x="597"
+						y="90"
+						width="46"
+						height="10"
+						key="staticText-67">
+							<printWhenExpression><![CDATA[new Boolean((new SimpleDateFormat("dd/MM/yyyy").format($P{FechaCorte})).compareTo(new SimpleDateFormat("dd/MM/yyyy").format(Calendar.getInstance().getTime())) == 0)]]></printWhenExpression>
+						</reportElement>
+					<box topBorder="Thin" topBorderColor="#000000" leftBorder="Thin" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" rightPadding="2" bottomBorder="Thin" bottomBorderColor="#000000"/>
+					<textElement textAlignment="Right" verticalAlignment="Middle">
+						<font pdfFontName="Helvetica-Bold" size="6" isBold="true"/>
+					</textElement>
+				<text><![CDATA[Stock Disp.]]></text>
+				</staticText>
+				<staticText>
+					<reportElement
+						x="558"
+						y="90"
+						width="85"
+						height="10"
+						key="staticText-68">
+							<printWhenExpression><![CDATA[new Boolean((new SimpleDateFormat("dd/MM/yyyy").format($P{FechaCorte})).compareTo(new SimpleDateFormat("dd/MM/yyyy").format(Calendar.getInstance().getTime())) != 0)]]></printWhenExpression>
+						</reportElement>
+					<box topBorder="Thin" topBorderColor="#000000" leftBorder="Thin" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" rightPadding="2" bottomBorder="Thin" bottomBorderColor="#000000"/>
+					<textElement textAlignment="Right" verticalAlignment="Middle">
+						<font pdfFontName="Helvetica-Bold" size="6" isBold="true"/>
+					</textElement>
+				<text><![CDATA[Stock]]></text>
 				</staticText>
 			</band>
 		</columnHeader>
@@ -545,77 +579,77 @@ ORDER BY Fecha ASC;]]></queryString>
 					<reportElement
 						x="0"
 						y="0"
-						width="100"
+						width="75"
 						height="10"
 						key="textField-7"/>
-					<box topBorder="None" topBorderColor="#000000" leftBorder="Thin" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="Thin" bottomBorderColor="#000000"/>
+					<box topBorder="None" topBorderColor="#000000" leftBorder="Thin" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" rightPadding="2" bottomBorder="Thin" bottomBorderColor="#000000"/>
 					<textElement textAlignment="Right">
-						<font size="7"/>
+						<font size="6"/>
 					</textElement>
 				<textFieldExpression   class="java.lang.String"><![CDATA[$F{clave_de_busqueda_del_articulo}]]></textFieldExpression>
 				</textField>
 				<textField isStretchWithOverflow="false" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
-						x="159"
+						x="134"
 						y="0"
 						width="65"
 						height="10"
 						key="textField-8"/>
-					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="Thin" bottomBorderColor="#000000"/>
+					<box topBorder="None" topBorderColor="#000000" leftBorder="Thin" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" rightPadding="2" bottomBorder="Thin" bottomBorderColor="#000000"/>
 					<textElement textAlignment="Right">
-						<font size="7"/>
+						<font size="6"/>
 					</textElement>
 				<textFieldExpression   class="java.lang.String"><![CDATA[$F{familia}]]></textFieldExpression>
 				</textField>
 				<textField isStretchWithOverflow="false" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
-						x="224"
+						x="199"
 						y="0"
 						width="65"
 						height="10"
 						key="textField-9"/>
-					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="Thin" bottomBorderColor="#000000"/>
+					<box topBorder="None" topBorderColor="#000000" leftBorder="Thin" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" rightPadding="2" bottomBorder="Thin" bottomBorderColor="#000000"/>
 					<textElement textAlignment="Right">
-						<font size="7"/>
+						<font size="6"/>
 					</textElement>
 				<textFieldExpression   class="java.lang.String"><![CDATA[$F{subfamlia}]]></textFieldExpression>
 				</textField>
 				<textField isStretchWithOverflow="false" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
-						x="289"
+						x="264"
 						y="0"
-						width="60"
+						width="54"
 						height="10"
 						key="textField-10"/>
-					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="Thin" bottomBorderColor="#000000"/>
+					<box topBorder="None" topBorderColor="#000000" leftBorder="Thin" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" rightPadding="2" bottomBorder="Thin" bottomBorderColor="#000000"/>
 					<textElement textAlignment="Right">
-						<font size="7"/>
+						<font size="6"/>
 					</textElement>
 				<textFieldExpression   class="java.lang.String"><![CDATA[$F{marca}]]></textFieldExpression>
 				</textField>
 				<textField isStretchWithOverflow="false" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
-						x="349"
+						x="318"
 						y="0"
-						width="196"
+						width="181"
 						height="10"
 						key="textField-11"/>
-					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="Thin" bottomBorderColor="#000000"/>
+					<box topBorder="None" topBorderColor="#000000" leftBorder="Thin" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" rightPadding="2" bottomBorder="Thin" bottomBorderColor="#000000"/>
 					<textElement textAlignment="Right">
-						<font size="7"/>
+						<font size="6"/>
 					</textElement>
 				<textFieldExpression   class="java.lang.String"><![CDATA[$F{nombre_articulo}]]></textFieldExpression>
 				</textField>
 				<textField isStretchWithOverflow="false" pattern="dd/MM/yyyy" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
-						x="545"
+						x="499"
 						y="0"
 						width="59"
 						height="10"
 						key="textField-12"/>
-					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="Thin" bottomBorderColor="#000000"/>
+					<box topBorder="None" topBorderColor="#000000" leftBorder="Thin" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" rightPadding="2" bottomBorder="Thin" bottomBorderColor="#000000"/>
 					<textElement textAlignment="Right">
-						<font size="7"/>
+						<font size="6"/>
 					</textElement>
 				<textFieldExpression   class="java.util.Date"><![CDATA[$F{fecha}]]></textFieldExpression>
 				</textField>
@@ -626,22 +660,22 @@ ORDER BY Fecha ASC;]]></queryString>
 						width="52"
 						height="10"
 						key="textField-13"/>
-					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="Thin" bottomBorderColor="#000000"/>
+					<box topBorder="None" topBorderColor="#000000" leftBorder="Thin" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" rightPadding="2" bottomBorder="Thin" bottomBorderColor="#000000"/>
 					<textElement textAlignment="Right">
-						<font size="7"/>
+						<font size="6"/>
 					</textElement>
 				<textFieldExpression   class="java.math.BigDecimal"><![CDATA[($P{TipoDeCosto}.compareTo( "F" ) == 0  ? $F{costo_fifo} : ( $P{TipoDeCosto}.compareTo( "P" ) == 0 ? $F{costo_pp} :  $F{costo_lifo} ))]]></textFieldExpression>
 				</textField>
 				<textField isStretchWithOverflow="false" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
-						x="100"
+						x="75"
 						y="0"
 						width="59"
 						height="10"
 						key="textField-79"/>
-					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="Thin" bottomBorderColor="#000000"/>
+					<box topBorder="None" topBorderColor="#000000" leftBorder="Thin" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" rightPadding="2" bottomBorder="Thin" bottomBorderColor="#000000"/>
 					<textElement textAlignment="Right">
-						<font size="7"/>
+						<font size="6"/>
 					</textElement>
 				<textFieldExpression   class="java.lang.String"><![CDATA[$F{linea_de_producto}]]></textFieldExpression>
 				</textField>
@@ -652,22 +686,24 @@ ORDER BY Fecha ASC;]]></queryString>
 						width="52"
 						height="10"
 						key="textField-80"/>
-					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="Thin" bottomBorderColor="#000000"/>
+					<box topBorder="None" topBorderColor="#000000" leftBorder="Thin" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" rightPadding="2" bottomBorder="Thin" bottomBorderColor="#000000"/>
 					<textElement textAlignment="Right">
-						<font size="7"/>
+						<font size="6"/>
 					</textElement>
 				<textFieldExpression   class="java.math.BigDecimal"><![CDATA[($P{TipoDeCosto}.compareTo( "F" ) == 0  ? $F{costo_fifo_total} : ( $P{TipoDeCosto}.compareTo( "P" ) == 0 ? $F{costo_pp_total} :  $F{costo_lifo_total} ))]]></textFieldExpression>
 				</textField>
 				<textField isStretchWithOverflow="false" pattern="#,##0" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
-						x="604"
+						x="558"
 						y="0"
 						width="39"
 						height="10"
-						key="textField-81"/>
-					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="Thin" bottomBorderColor="#000000"/>
+						key="textField-81">
+							<printWhenExpression><![CDATA[new Boolean((new SimpleDateFormat("dd/MM/yyyy").format($P{FechaCorte})).compareTo(new SimpleDateFormat("dd/MM/yyyy").format(Calendar.getInstance().getTime())) == 0)]]></printWhenExpression>
+						</reportElement>
+					<box topBorder="None" topBorderColor="#000000" leftBorder="Thin" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" rightPadding="2" bottomBorder="Thin" bottomBorderColor="#000000"/>
 					<textElement textAlignment="Right">
-						<font size="7"/>
+						<font size="6"/>
 					</textElement>
 				<textFieldExpression   class="java.math.BigDecimal"><![CDATA[$F{stock}]]></textFieldExpression>
 				</textField>
@@ -678,11 +714,41 @@ ORDER BY Fecha ASC;]]></queryString>
 						width="35"
 						height="10"
 						key="textField-87"/>
-					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="Thin" rightBorderColor="#000000" bottomBorder="Thin" bottomBorderColor="#000000"/>
+					<box topBorder="None" topBorderColor="#000000" leftBorder="Thin" leftBorderColor="#000000" rightBorder="Thin" rightBorderColor="#000000" rightPadding="2" bottomBorder="Thin" bottomBorderColor="#000000"/>
 					<textElement textAlignment="Right">
-						<font size="7"/>
+						<font size="6"/>
 					</textElement>
 				<textFieldExpression   class="java.math.BigDecimal"><![CDATA[$F{iva}]]></textFieldExpression>
+				</textField>
+				<textField isStretchWithOverflow="false" pattern="#,##0" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
+					<reportElement
+						x="597"
+						y="0"
+						width="46"
+						height="10"
+						key="textField-88">
+							<printWhenExpression><![CDATA[new Boolean((new SimpleDateFormat("dd/MM/yyyy").format($P{FechaCorte})).compareTo(new SimpleDateFormat("dd/MM/yyyy").format(Calendar.getInstance().getTime())) == 0)]]></printWhenExpression>
+						</reportElement>
+					<box topBorder="None" topBorderColor="#000000" leftBorder="Thin" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" rightPadding="2" bottomBorder="Thin" bottomBorderColor="#000000"/>
+					<textElement textAlignment="Right">
+						<font size="6"/>
+					</textElement>
+				<textFieldExpression   class="java.math.BigDecimal"><![CDATA[$F{stockdisponibleactual}]]></textFieldExpression>
+				</textField>
+				<textField isStretchWithOverflow="false" pattern="#,##0" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
+					<reportElement
+						x="558"
+						y="0"
+						width="85"
+						height="10"
+						key="textField-89">
+							<printWhenExpression><![CDATA[new Boolean((new SimpleDateFormat("dd/MM/yyyy").format($P{FechaCorte})).compareTo(new SimpleDateFormat("dd/MM/yyyy").format(Calendar.getInstance().getTime())) != 0)]]></printWhenExpression>
+						</reportElement>
+					<box topBorder="None" topBorderColor="#000000" leftBorder="Thin" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" rightPadding="2" bottomBorder="Thin" bottomBorderColor="#000000"/>
+					<textElement textAlignment="Right">
+						<font size="6"/>
+					</textElement>
+				<textFieldExpression   class="java.math.BigDecimal"><![CDATA[$F{stock}]]></textFieldExpression>
 				</textField>
 			</band>
 		</detail>
