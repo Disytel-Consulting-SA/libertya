@@ -2122,7 +2122,7 @@ public class MInOut extends X_M_InOut implements DocAction {
              * TPV Performance: no actualizar las cantidades via modelo, usar UPDATEs directos 
              */
 //            MOrderLine ol = null;
-        	BigDecimal ol_qtyOrdered = null, ol_qtyReserved = null, ol_qtyDelivered = null, ol_qtyTransferred = null, ol_qtyInvoiced = null, ol_qtyReturned = null;
+			BigDecimal ol_qtyOrdered = null, ol_qtyReserved = null, ol_qtyDelivered = null, ol_qtyTransferred = null, ol_qtyInvoiced = null, ol_qtyReturned = null, ol_initialQtyReserved = null;
         	int ol_attsetinstanceID = -1;
         	boolean ol_ok = false;
         	Timestamp ol_dateDelivered = null;
@@ -2148,6 +2148,7 @@ public class MInOut extends X_M_InOut implements DocAction {
 								: rs.getBigDecimal(7);
 						ol_warehouseID = rs.getInt(8);
 	                }
+	                ol_initialQtyReserved = ol_qtyReserved;
             	}
             	catch (Exception e)	{
             		e.printStackTrace();
@@ -2260,10 +2261,12 @@ public class MInOut extends X_M_InOut implements DocAction {
     					QtySOMA = QtyMA.compareTo(BigDecimal.ZERO) >= 0 ? QtySOMA.abs()
     							: QtySOMA.abs().negate();
     					
+    					QtySOMA = docType.isReserveStockManagment()?QtySOMA:BigDecimal.ZERO;
+    					
 						// Las cantidades reservadas se actualizan en el almacén del
 						// pedido, si es que poseemos uno relacionado
                         
-						if (!Util.isEmpty(sLine.getC_OrderLine_ID(), true)) {
+						if (!Util.isEmpty(sLine.getC_OrderLine_ID(), true)) {							
 							Integer orderLocatorID = MWarehouse.getDefaultLocatorID(
 									ol_warehouseID, get_TrxName());
 							if(!MStorage.add(getCtx(), getM_Warehouse_ID(),
@@ -2332,6 +2335,8 @@ public class MInOut extends X_M_InOut implements DocAction {
 					// en el caso que esté asociado a un pedido
 					QtySO = Qty.compareTo(BigDecimal.ZERO) >= 0 ? QtySO.abs()
 							: QtySO.abs().negate();
+					
+					QtySO = docType.isReserveStockManagment()?QtySO:BigDecimal.ZERO;
 					// Acá tenemos dos situaciones: 1) El reservado y 2) El stock.
 					// 1) El reservado en stock se hace en el depósito del
 					// pedido por lo que es correcto que se decremente el
@@ -2357,7 +2362,7 @@ public class MInOut extends X_M_InOut implements DocAction {
 	                        m_processMsg = "Cannot correct Reserved stock";
 
 	                        return DocAction.STATUS_Invalid;
-	                    }
+						}
 						QtySO = BigDecimal.ZERO;
 						QtyPO = BigDecimal.ZERO;
 					}
@@ -2439,7 +2444,12 @@ public class MInOut extends X_M_InOut implements DocAction {
                     	ol_dateDelivered = getMovementDate();    // overwrite=last
                     }
 //                }
-
+				// Si el tipo de documento no maneja reservados, entonces el
+				// reservado es 0
+                if(!docType.isReserveStockManagment()){
+                	ol_qtyReserved = ol_initialQtyReserved;
+                }
+                    
                 try {
 	                String updateSQL = " UPDATE C_OrderLine " +
 	                					" SET qtyOrdered = ?, qtyReserved = ?, qtyDelivered = ?, M_AttributeSetInstance_ID = ?, dateDelivered = ? " +

@@ -6499,3 +6499,6 @@ $BODY$
   COST 100;
 ALTER FUNCTION cost_fifo(integer)
   OWNER TO libertya;
+
+--20140121-1600 Nueva columna para gestionar reservados de pedidos y stock, por lo pronto para tipos de documento con base Remito de Salida y signo positivo (1), por ejemplo Devoluciones de Clientes. 
+update ad_system set dummy = (SELECT addcolumnifnotexists('C_DocType','reservestockmanagment', 'character(1) NOT NULL DEFAULT ''Y''::bpchar'));
