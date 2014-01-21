@@ -7,7 +7,7 @@ import java.math.*;
 import org.openXpertya.util.*;
 /** Modelo Generado por C_DocType
  *  @author Comunidad de Desarrollo Libertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
- *  @version  - 2014-01-16 15:56:13.372 */
+ *  @version  - 2014-01-21 16:23:15.115 */
 public class X_C_DocType extends org.openXpertya.model.PO
 {
 /** Constructor estándar */
@@ -50,6 +50,7 @@ setName (null);
 setPOSEnableDue (false);
 setPOSEnableDueDays (0);
 setPrintName (null);
+setReserveStockManagment (false);
 setsigno_issotrx (null);
 }
  */
@@ -1170,6 +1171,24 @@ The label text to be printed on a document or correspondence. */
 public String getPrintName() 
 {
 return (String)get_Value("PrintName");
+}
+/** Set Reserve Stock Managment.
+Manage qty reserved of orders and stock */
+public void setReserveStockManagment (boolean ReserveStockManagment)
+{
+set_Value ("ReserveStockManagment", new Boolean(ReserveStockManagment));
+}
+/** Get Reserve Stock Managment.
+Manage qty reserved of orders and stock */
+public boolean isReserveStockManagment() 
+{
+Object oo = get_Value("ReserveStockManagment");
+if (oo != null) 
+{
+ if (oo instanceof Boolean) return ((Boolean)oo).booleanValue();
+ return "Y".equals(oo);
+}
+return false;
 }
 public static final int SIGNO_ISSOTRX_AD_Reference_ID = MReference.getReferenceID("C_DocType_Signo_Issotrx");
 /** -1 = -1 */
