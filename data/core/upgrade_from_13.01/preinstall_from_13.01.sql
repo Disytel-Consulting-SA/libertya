@@ -6436,3 +6436,66 @@ update ad_system set dummy = (SELECT addcolumnifnotexists('C_DocType','fiscalpri
 
 --20140116-1530 Nueva columna para permitir o no la copia de pedidos a partir de presupuestos vencidos
 update ad_system set dummy = (SELECT addcolumnifnotexists('C_DocType','allowproposaldue', 'character(1) NOT NULL DEFAULT ''Y''::bpchar'));
+
+--20140121-12:49 Funcion para el calculo de Costo_Fifo
+CREATE OR REPLACE FUNCTION cost_fifo(p_productID integer, p_date timestamp)
+  RETURNS numeric AS
+$BODY$
+
+DECLARE
+	v_qtyOut NUMERIC;
+	v_qtyIn NUMERIC;
+	v_retValue NUMERIC;
+	r RECORD;
+BEGIN
+	IF (p_productID IS NULL OR p_productID = 0) THEN
+		RETURN NULL;
+	END IF;
+
+	v_retValue := 0;
+
+	-- Determinar cantidad vendida
+	SELECT INTO v_qtyOut COALESCE(sum(il.qtyEntered),0)
+	FROM C_Order o 
+	INNER JOIN C_OrderLine ol ON (o.C_Order_ID = ol.C_Order_ID) 
+	INNER JOIN M_InOut i ON (o.C_Order_ID = i.C_Order_ID) 
+	INNER JOIN M_InOutLine il ON (il.M_InOut_ID = i.M_InOut_ID) 
+	WHERE (il.qtyentered > 0) 
+	AND (i.docstatus IN ('CL', 'CO', 'VO', 'RE')) 
+	AND (i.Issotrx = 'Y') 
+	AND (i.movementdate <= p_date)
+	AND (ol.M_Product_ID=p_productID);
+
+	-- Sumatoria de cantidad comprada hasta alcanzar las vendidas
+	v_qtyIn := 0;
+	FOR r IN	
+		SELECT il.qtyEntered, ol.priceActual, o.c_currency_id, o.dateacct, o.ad_client_id, o.ad_org_id
+		FROM C_Order o 
+		INNER JOIN C_OrderLine ol ON (o.C_Order_ID = ol.C_Order_ID) 
+		INNER JOIN M_InOut i ON (o.C_Order_ID = i.C_Order_ID) 
+		INNER JOIN M_InOutLine il ON (il.M_InOut_ID = i.M_InOut_ID) 
+		WHERE (il.qtyentered > 0) 
+		AND (i.docstatus IN ('CL', 'CO', 'VO', 'RE')) 
+		AND (i.Issotrx = 'N') 
+		AND (ol.M_Product_ID=p_productID)
+		AND (i.movementdate <= p_date)
+		ORDER BY il.created ASC
+	LOOP
+		-- Ir sumando las cantidades vendidas
+		v_retValue := r.priceActual;
+		v_qtyIn := v_qtyIn + r.qtyEntered;
+		-- Al alcanzar la cantidad vendida, devolver el valor del articulo. TODO: deshardcode 118
+		IF v_qtyIn = 0 OR v_qtyIn > v_qtyOut THEN
+			 SELECT into v_retValue currencyconvert(v_retValue, r.c_currency_id, 118, r.dateacct::timestamp with time zone, NULL::integer, r.ad_client_id, r.ad_org_id );
+			 RETURN v_retValue;
+		END IF;
+	END LOOP;
+
+	
+	RETURN	v_retValue;
+END;
+$BODY$
+  LANGUAGE plpgsql VOLATILE
+  COST 100;
+ALTER FUNCTION cost_fifo(integer)
+  OWNER TO libertya;
