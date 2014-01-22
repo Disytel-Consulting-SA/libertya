@@ -156,7 +156,19 @@ public class MOrder extends X_C_Order implements DocAction {
 
         return to;
     }    // copyFrom
-
+    
+    /**
+     * @param order
+     * @return true si se aplicaron descuentos en este pedido parámetro
+     */
+    public static boolean isDiscountsApplied(MOrder order){
+    	BigDecimal totalDiscountsAmt = order.getTotalDiscountAmtFromLines(null);
+		List<MDocumentDiscount> discounts = MDocumentDiscount.getOfOrder(
+				order.getID(), order.getCtx(), order.get_TrxName());
+		return totalDiscountsAmt.compareTo(BigDecimal.ZERO) != 0
+				|| (discounts != null && discounts.size() > 0); 
+    }
+    
     /**
      * Constructor de la clase ...
      *
@@ -4743,6 +4755,33 @@ public class MOrder extends X_C_Order implements DocAction {
 
 	public void setForceReserveStock(boolean forceReserveStock) {
 		this.forceReserveStock = forceReserveStock;
+	}
+	
+	public BigDecimal getTotalDocumentDiscountAmtFromLines() {
+		String sql = "select sum(documentdiscountamt) as documentdiscountamt from c_orderline where c_order_id = ?";
+		BigDecimal amt = DB.getSQLValueBD(get_TrxName(), sql, getID());
+		return Util.isEmpty(amt, false)?BigDecimal.ZERO:amt;
+	}
+	
+	public BigDecimal getTotalLineDiscountAmtFromLines() {
+		String sql = "select sum(linediscountamt) as linediscountamt from c_orderline where c_order_id = ?";
+		BigDecimal amt = DB.getSQLValueBD(get_TrxName(), sql, getID());
+		return Util.isEmpty(amt, false)?BigDecimal.ZERO:amt;
+	}
+	
+	public BigDecimal getTotalBonusDiscountAmtFromLines() {
+		String sql = "select sum(linebonusamt) as linebonusamt from c_orderline where c_order_id = ?";
+		BigDecimal amt = DB.getSQLValueBD(get_TrxName(), sql, getID());
+		return Util.isEmpty(amt, false)?BigDecimal.ZERO:amt;
+	}
+	
+	public BigDecimal getTotalDiscountAmtFromLines(String discountColumnName) {
+		discountColumnName = !Util.isEmpty(discountColumnName, true) ? discountColumnName
+				: "documentdiscountamt+linediscountamt+linebonusamt";
+		String sql = "select sum(" + discountColumnName
+				+ ") from c_orderline where c_order_id = ?";
+		BigDecimal amt = DB.getSQLValueBD(get_TrxName(), sql, getID());
+		return Util.isEmpty(amt, false)?BigDecimal.ZERO:amt;
 	}
 }    // MOrder
 

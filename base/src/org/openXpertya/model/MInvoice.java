@@ -127,6 +127,12 @@ public class MInvoice extends X_C_Invoice implements DocAction {
 	private String voidPOSJournalConfig = null;
 	
 	/**
+	 * Bypass para no validar al momento de modificar el descuento manual
+	 * general
+	 */
+	private boolean skipManualGeneralDiscountValidation = false;
+	
+	/**
 	 * Descripción de Método
 	 * 
 	 * 
@@ -2097,9 +2103,10 @@ public class MInvoice extends X_C_Invoice implements DocAction {
 		}
 
 		// No se puede aplicar descuentos manuales generales cuando el documento
-		// arrastra descuentos del pedido
+		// arrastra descuentos del pedido, siempre y cuando en el pedido se
+		// hayan aplicado descuentos
 		if (!newRecord && is_ValueChanged("ManualGeneralDiscount")){
-			if(isManageDragOrderDiscounts()){
+			if(isManageDragOrderDiscounts() && !isSkipManualGeneralDiscountValidation()){
 				log.saveError("ManualGeneralDiscountNotAllowed", "");
 				return false;
 			}
@@ -5592,6 +5599,15 @@ public class MInvoice extends X_C_Invoice implements DocAction {
 
 	public void setVoidPOSJournalConfig(String voidPOSJournalConfig) {
 		this.voidPOSJournalConfig = voidPOSJournalConfig;
+	}
+
+	public boolean isSkipManualGeneralDiscountValidation() {
+		return skipManualGeneralDiscountValidation;
+	}
+
+	public void setSkipManualGeneralDiscountValidation(
+			boolean skipManualGeneralDiscountValidation) {
+		this.skipManualGeneralDiscountValidation = skipManualGeneralDiscountValidation;
 	}
 	
 } // MInvoice
