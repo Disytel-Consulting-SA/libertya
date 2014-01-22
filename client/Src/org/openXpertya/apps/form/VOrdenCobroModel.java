@@ -126,7 +126,7 @@ public class VOrdenCobroModel extends VOrdenPagoModel {
 	}
 	
 	@Override
-	protected String getIsSOTrx() {
+	public String getIsSOTrx() {
 		return "Y";
 	}
 
