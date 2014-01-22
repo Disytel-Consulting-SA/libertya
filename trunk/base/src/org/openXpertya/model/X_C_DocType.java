@@ -7,7 +7,7 @@ import java.math.*;
 import org.openXpertya.util.*;
 /** Modelo Generado por C_DocType
  *  @author Comunidad de Desarrollo Libertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
- *  @version  - 2014-01-21 16:23:15.115 */
+ *  @version  - 2014-01-22 14:15:15.739 */
 public class X_C_DocType extends org.openXpertya.model.PO
 {
 /** Constructor estándar */
@@ -52,6 +52,7 @@ setPOSEnableDueDays (0);
 setPrintName (null);
 setReserveStockManagment (false);
 setsigno_issotrx (null);
+setUseOrderWarehouse (true);	// Y
 }
  */
 }
@@ -1212,5 +1213,21 @@ set_Value ("signo_issotrx", signo_issotrx);
 public String getsigno_issotrx() 
 {
 return (String)get_Value("signo_issotrx");
+}
+/** Set UseOrderWarehouse */
+public void setUseOrderWarehouse (boolean UseOrderWarehouse)
+{
+set_Value ("UseOrderWarehouse", new Boolean(UseOrderWarehouse));
+}
+/** Get UseOrderWarehouse */
+public boolean isUseOrderWarehouse() 
+{
+Object oo = get_Value("UseOrderWarehouse");
+if (oo != null) 
+{
+ if (oo instanceof Boolean) return ((Boolean)oo).booleanValue();
+ return "Y".equals(oo);
+}
+return false;
 }
 }
