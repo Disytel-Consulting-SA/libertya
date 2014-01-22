@@ -2034,7 +2034,7 @@ public class VOrdenPago extends CPanel implements FormPanel,ActionListener,Table
     
     protected int m_C_Currency_ID = Env.getContextAsInt( Env.getCtx(), "$C_Currency_ID" );
 
-    private static CLogger log = CLogger.getCLogger( VAllocation.class );
+    private static CLogger log = CLogger.getCLogger( VOrdenPago.class );
     protected VOrdenPagoModel m_model = new VOrdenPagoModel();
     protected Properties m_ctx = Env.getCtx();
     private String m_trxName = m_model.getTrxName();

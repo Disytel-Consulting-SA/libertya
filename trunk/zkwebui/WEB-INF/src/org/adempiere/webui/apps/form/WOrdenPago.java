@@ -6,10 +6,12 @@
 
 package org.adempiere.webui.apps.form;
 
+import java.math.BigDecimal;
+import java.sql.Timestamp;
+import java.text.ParseException;
 import java.util.Date;
+import java.util.Properties;
 import java.util.logging.Level;
-
-import javax.swing.JFormattedTextField;
 
 import org.adempiere.webui.component.Button;
 import org.adempiere.webui.component.Checkbox;
@@ -19,7 +21,7 @@ import org.adempiere.webui.component.Datebox;
 import org.adempiere.webui.component.Grid;
 import org.adempiere.webui.component.GridFactory;
 import org.adempiere.webui.component.Label;
-//import org.adempiere.webui.component.Panel;
+import org.adempiere.webui.component.ListModelTable;
 import org.adempiere.webui.component.Row;
 import org.adempiere.webui.component.Rows;
 import org.adempiere.webui.component.Tab;
@@ -28,21 +30,43 @@ import org.adempiere.webui.component.Tabpanel;
 import org.adempiere.webui.component.Tabpanels;
 import org.adempiere.webui.component.Tabs;
 import org.adempiere.webui.component.Textbox;
+import org.adempiere.webui.editor.WDateEditor;
 import org.adempiere.webui.editor.WSearchEditor;
 import org.adempiere.webui.editor.WTableDirEditor;
+import org.adempiere.webui.event.ValueChangeEvent;
+import org.adempiere.webui.event.ValueChangeListener;
 import org.adempiere.webui.panel.ADForm;
+import org.adempiere.webui.window.FDialog;
+import org.openXpertya.apps.form.VComponentsFactory;
+import org.openXpertya.apps.form.VOrdenPago;
+import org.openXpertya.apps.form.VOrdenPagoModel;
+import org.openXpertya.apps.form.VOrdenPagoModel.MedioPago;
+import org.openXpertya.apps.form.VOrdenPagoModel.MedioPagoCheque;
+import org.openXpertya.apps.form.VOrdenPagoModel.MedioPagoCredito;
+import org.openXpertya.apps.form.VOrdenPagoModel.MedioPagoEfectivo;
+import org.openXpertya.apps.form.VOrdenPagoModel.MedioPagoTransferencia;
+import org.openXpertya.model.Lookup;
+import org.openXpertya.model.MBPartner;
+import org.openXpertya.model.MCurrency;
 import org.openXpertya.model.MLookup;
 import org.openXpertya.model.MLookupFactory;
+import org.openXpertya.model.MLookupInfo;
+import org.openXpertya.model.MSequence;
+import org.openXpertya.model.X_C_BankAccountDoc;
 import org.openXpertya.util.CLogger;
+import org.openXpertya.util.DB;
 import org.openXpertya.util.DisplayType;
 import org.openXpertya.util.Env;
 import org.openXpertya.util.Msg;
+import org.zkoss.zk.ui.event.Event;
+import org.zkoss.zk.ui.event.EventListener;
 import org.zkoss.zkex.zul.Borderlayout;
 import org.zkoss.zkex.zul.Center;
 import org.zkoss.zkex.zul.North;
 import org.zkoss.zkex.zul.South;
 import org.zkoss.zkmax.zul.Tablechildren;
 import org.zkoss.zkmax.zul.Tablelayout;
+import org.zkoss.zul.Combobox;
 import org.zkoss.zul.Div;
 import org.zkoss.zul.Hbox;
 import org.zkoss.zul.Panel;
@@ -52,207 +76,18 @@ import org.zkoss.zul.Radiogroup;
 import org.zkoss.zul.Separator;
 import org.zkoss.zul.Space;
 import org.zkoss.zul.Tree;
-import org.zkoss.zul.Treecell;
 import org.zkoss.zul.Treechildren;
-import org.zkoss.zul.Treecol;
-import org.zkoss.zul.Treecols;
-import org.zkoss.zul.Treerow;
 import org.zkoss.zul.Treeitem;
+import org.zkoss.zul.event.ListDataEvent;
+import org.zkoss.zul.event.ListDataListener;
 
 /**
  *
  * @author  usuario
  */
-public class WOrdenPago extends ADForm /*implements /*FormPanel,ActionListener,TableModelListener,VetoableChangeListener,ChangeListener,TreeModelListener,MouseListener,CellEditorListener,ASyncProcess*/ {
-    /*
-	public class DecimalEditor extends DefaultCellEditor {
-	    JFormattedTextField ftf;
-	    NumberFormat decFormat;
-	    private BigDecimal minimum, maximum;
+public class WOrdenPago extends ADForm implements ValueChangeListener /*implements /*FormPanel,ActionListener,TableModelListener,VetoableChangeListener,ChangeListener,TreeModelListener,MouseListener,CellEditorListener,ASyncProcess*/ {
 
-	    public DecimalEditor(BigDecimal min, BigDecimal max, NumberFormat nf) {
-	        super(new JFormattedTextField());
-	        ftf = (JFormattedTextField)getComponent();
-	        minimum = min;
-	        maximum = max;
-
-	        //Set up the editor for the integer cells.
-	        decFormat = nf != null ? nf : NumberFormat.getNumberInstance();
-	        NumberFormatter intFormatter = new NumberFormatter(decFormat);
-	        intFormatter.setFormat(decFormat);
-	        intFormatter.setMinimum(minimum);
-	        intFormatter.setMaximum(maximum);
-
-	        ftf.setFormatterFactory(
-	                new DefaultFormatterFactory(intFormatter));
-	        ftf.setValue(minimum);
-	        ftf.setHorizontalAlignment(JTextField.TRAILING);
-	        ftf.setFocusLostBehavior(JFormattedTextField.REVERT);
-
-	        //React when the user presses Enter while the editor is
-	        //active.  (Tab is handled as specified by
-	        //JFormattedTextField's focusLostBehavior property.)
-	        ftf.getInputMap().put(KeyStroke.getKeyStroke(
-	                                        KeyEvent.VK_ENTER, 0),
-	                                        "check");
-	        ftf.getActionMap().put("check", new AbstractAction() {
-	            public void actionPerformed(ActionEvent e) {
-					if (!ftf.isEditValid()) { // The text is invalid.
-						ftf.postActionEvent(); // inform the editor
-					} else {
-						try { // The text is valid,
-							ftf.commitEdit(); // so use it.
-							ftf.postActionEvent(); // stop editing
-						} catch (java.text.ParseException exc) {}
-					}
-				}
-	        });
-	    }
-
-	    // Override to invoke setValue on the formatted text field.
-	    public Component getTableCellEditorComponent(JTable table,
-	            Object value, boolean isSelected,
-	            int row, int column) {
-	        JFormattedTextField ftf =
-	            (JFormattedTextField)super.getTableCellEditorComponent(
-	                table, value, isSelected, row, column);
-	        ftf.setValue(value);
-	        return ftf;
-	    }
-
-	    public Object getCellEditorValue() {
-	        JFormattedTextField ftf = (JFormattedTextField)getComponent();
-	        Object o = ftf.getValue();
-	        if (o instanceof BigDecimal) {
-	            return o;
-	        } else if (o instanceof Number) {
-	            return new BigDecimal(o.toString());
-	        } else {
-	            try {
-	                return decFormat.parseObject(o.toString());
-	            } catch (ParseException exc) {
-	                return null;
-	            }
-	        }
-	    }
-
-	    public boolean stopCellEditing() {
-	        JFormattedTextField ftf = (JFormattedTextField)getComponent();
-	        if (ftf.isEditValid()) {
-	            try {
-	                ftf.commitEdit();
-	            } catch (java.text.ParseException exc) { }
-		    
-	        } else { //text is invalid
-		        return false; //don't let the editor go away
-	        }
-	        return super.stopCellEditing();
-	    }
-	}
-	
-	class MyRenderer extends DefaultTreeCellRenderer {
-
-		protected HashMap customLeafs = new HashMap();
-		
-	    public MyRenderer() {
-	    	customLeafs.put("E", new ImageIcon(OpenXpertya.getImage16()));
-	    	customLeafs.put("T", new ImageIcon(OpenXpertya.getImage16()));
-	    	customLeafs.put("C", new ImageIcon(OpenXpertya.getImage16()));
-	    }
-
-	    private Icon retencionIcon = ImageFactory.getImageIcon("Register16.gif");
-	    private Icon paymentIcon = ImageFactory.getImageIcon("Caunt16.gif");
-	    private Icon folderOpen =  ImageFactory.getImageIcon("FolderOpen.gif");
-	    private Icon folderClosed =  ImageFactory.getImageIcon("FolderClose.gif");
-	    
-	    public Component getTreeCellRendererComponent(
-	                        JTree tree,
-	                        Object value,
-	                        boolean sel,
-	                        boolean expanded,
-	                        boolean leaf,
-	                        int row,
-	                        boolean hasFocus) {
-	    	
-	    	VOrdenPagoModel.MyTreeNode td = (VOrdenPagoModel.MyTreeNode)value;
-	    	
-	    	Component ret = super.getTreeCellRendererComponent(tree, value, sel, expanded, leaf, row, hasFocus);
-	    	
-	    	if (td.isLeaf()) {
-	    		try {
-	    			if (td.isMedioPago()) {
-	    				VOrdenPagoModel.MedioPago mp = (VOrdenPagoModel.MedioPago)td.getUserObject();
-	    				
-	    				if (customLeafs.containsKey(mp.getTipoMP()))
-	    					setIcon((ImageIcon)customLeafs.get(mp.getTipoMP()));
-	    			}
-	    		} catch (Exception e) {
-	    			
-	    		}
-	    		
-	    		if (td.isRetencion())
-	    			setIcon( retencionIcon );
-	    		else
-	    			setIcon( paymentIcon ); // leafIcon
-	    	} else {
-	    		if (expanded)
-	    			setIcon( folderOpen );
-	    		else
-	    			setIcon( folderClosed );
-	    	}
-	    	return ret;
-	    }
-	}
-	
-	protected class MyNumberTableCellRenderer extends DefaultTableCellRenderer {
-
-		private NumberFormat nf = null;
-		
-		public MyNumberTableCellRenderer(NumberFormat nf) {
-			super();
-			this.nf = nf;
-		}
-		
-		@Override
-		protected void setValue(Object arg0) {
-			if (arg0 == null)
-				arg0 = new BigDecimal(0.0);
-			setHorizontalAlignment(JLabel.RIGHT);
-			setText(nf.format(arg0));
-		}
-		
-	}
-
-	public void initFormattedTextField(JFormattedTextField ftf) {
-		NumberFormatter numFormatter = new NumberFormatter(m_model.getNumberFormat());
-		numFormatter.setMinimum(BigDecimal.ZERO);
-		numFormatter.setMaximum(null);
-
-        ftf.setFormatterFactory(new DefaultFormatterFactory(numFormatter));
-        ftf.setValue(BigDecimal.ZERO);
-        ftf.setHorizontalAlignment(JTextField.TRAILING);
-        ftf.setFocusLostBehavior(JFormattedTextField.COMMIT);
-        
-        ftf.getInputMap().put(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0), "check");
-		ftf.getActionMap().put("check", new AbstractAction() {
-			public void actionPerformed(ActionEvent e) {
-				JFormattedTextField ftf = (JFormattedTextField)e.getSource();
-				
-				if (!ftf.isEditValid()) { // The text is invalid.
-					ftf.setValue(BigDecimal.ZERO);
-					ftf.postActionEvent();
-				} else {
-					try { // The text is valid,
-						ftf.commitEdit(); // so use it.
-						ftf.postActionEvent(); // stop editing
-					} catch (java.text.ParseException exc) {
-					}
-				}
-			}
-		});
-	}
-	*/
-    /** Creates new form VOrdenPago */
+    /** Creates new form WOrdenPago */
     public WOrdenPago() {
 
     }
@@ -277,11 +112,10 @@ public class WOrdenPago extends ADForm /*implements /*FormPanel,ActionListener,T
         lblDocumentNo = new Label();
         lblDescription = new Label();
         
-        
-        //cboClient.setReadWrite(false);
         MLookup lookup = MLookupFactory.get (Env.getCtx(), m_WindowNo, 0, 1014335, DisplayType.TableDir);
         cboClient = new WTableDirEditor("AD_Client_ID", false, false, true, lookup);
         cboClient.setValue(Env.getAD_Client_ID(Env.getCtx()));
+        cboClient.setReadWrite(false);
         
         lookup = MLookupFactory.get (Env.getCtx(), m_WindowNo, 0, 3499, DisplayType.Search);
 		BPartnerSel = new WSearchEditor ("C_BPartner_ID", true, false, true, lookup);
@@ -292,86 +126,68 @@ public class WOrdenPago extends ADForm /*implements /*FormPanel,ActionListener,T
         lookup = MLookupFactory.get (Env.getCtx(), m_WindowNo, 0, 1016168, DisplayType.TableDir);
 		cboOrg = new WTableDirEditor("AD_Org_ID", false, false, true, lookup);
 		cboOrg.setValue(Env.getAD_Org_ID(Env.getCtx()));
-        /*
-        jTabbedPane1 = new javax.swing.JTabbedPane();
-        jPanel3 = new javax.swing.JPanel();
-        */
 		
         radPayTypeStd = new Radio();
         radPayTypeAdv = new Radio();
-        /*
-        radPayTypeStd = new javax.swing.JRadioButton();
-        radPayTypeAdv = new javax.swing.JRadioButton();
-        jScrollPane1 = new javax.swing.JScrollPane();
-        */
+
         txtDescription = new Textbox();
-		/*
-        txtDescription.setEditable(true);	
-		*/	
+
 		
 		lblDocumentType = new Label();
-		// TODO: VER
-		//cboDocumentType = VComponentsFactory.VLookupFactory("C_DOCTYPE_ID", "C_DOCTYPE", m_WindowNo, DisplayType.Table,m_model.getDocumentTypeSqlValidation(),false);
-		lookup = MLookupFactory.get (Env.getCtx(), m_WindowNo, 0, 1016307, DisplayType.TableDir);
-		cboDocumentType = new WTableDirEditor("C_DOCTYPE_ID", false, false, true, lookup);
-        
-		/*
-		tblFacturas = new javax.swing.JTable(m_model.getFacturasTableModel());
-		*/
+		// FEDE:TODO: Centralizar la creacion de combos en algun lugar
+		MLookupInfo info = VComponentsFactory.MLookupInfoFactory( Env.getCtx(),m_WindowNo, 0, 1016307, DisplayType.TableDir, m_model.getDocumentTypeSqlValidation());
+		lookup = new MLookup(info, 0);
+		cboDocumentType = new WTableDirEditor("C_DocType_ID", false, false, true, lookup);
+		
+
+//		// tblFacturas = new javax.swing.JTable(m_model.getFacturasTableModel());
+//		/* TODO:VER */
+		tblFacturas = new Grid();
+		// FEDE:TODO simplemente para evitar NPE mas adelante
+		ListModelTable model = new ListModelTable(); 
+		tblFacturas.setModel(model);
+//		ListModel
+//		 m_model.getFacturasTableModel();		
+		
+		
         txtTotalPagar1 = new Textbox();
-        txtTotalPagar1.setConstraint("/^[0-9]+$/");
+//        txtTotalPagar1.setConstraint("/^[0-9]+$/");
         lblTotalPagar1 = new Label();
         
 		rInvoiceAll = new Radio();
 		rInvoiceDate = new Radio();
-		/*
-        rInvoiceAll = new javax.swing.JRadioButton();
-        rInvoiceDate = new javax.swing.JRadioButton();
-        */
+
         invoiceDatePick = new Datebox();
-        /*
-        jPanel4 = new javax.swing.JPanel();
-        jScrollPane2 = new javax.swing.JScrollPane();
-        jTree1 = new javax.swing.JTree(m_model.getMediosPagoTreeModel());
-        */
+
         cmdEliminar = new Button();
         cmdEditar = new Button();
-        /*
-        txtSaldo = new javax.swing.JTextField();
-        txtDifCambio = new javax.swing.JTextField();
-        lblSaldo = new Label();
-        txtMedioPago2 = new javax.swing.JTextField();
-        txtRetenciones2 = new javax.swing.JTextField();
-        txtTotalPagar2 = new javax.swing.JTextField();
-        lblTotalPagar2 = new Label();
-        lblRetenciones2 = new Label();
-        lblDifCambio = new Label();
-        lblMedioPago2 = new Label();
-        */
+
         cmdGrabar = new Button();
-        /*
-        jTabbedPane2 = new javax.swing.JTabbedPane();
-        jPanel5 = new javax.swing.JPanel();
-        */
+
         lblEfectivoLibroCaja = new Label();
         
-        lookup = MLookupFactory.get (Env.getCtx(), m_WindowNo, 0, 1016307, DisplayType.Search);
-        efectivoLibroCaja = new WSearchEditor("C_Cash_ID", false, false, true, lookup);
-        //efectivoLibroCaja = VComponentsFactory.VLookupFactory("C_Cash_ID", "C_Cash", m_WindowNo, DisplayType.Search, m_model.getEfectivoLibroCajaSqlValidation() ); 
+        lookup = MLookupFactory.get(Env.getCtx(), m_WindowNo, 0, 1016307, DisplayType.Search);
+		info = VComponentsFactory.MLookupInfoFactory( Env.getCtx(),m_WindowNo, 0, 5241, DisplayType.Search, m_model.getEfectivoLibroCajaSqlValidation());
+		lookup = new MLookup(info, 0);
+		efectivoLibroCaja = new WSearchEditor("C_Cash_ID", false, false, true, lookup);
+
         lblEfectivoImporte = new Label();
         txtEfectivoImporte = new Textbox();
         txtEfectivoImporte.setConstraint("/^[0-9]+$/");
-        /*
-        jPanel6 = new javax.swing.JPanel();
-        lblTransfCtaBancaria = new Label();
+        
+//        jPanel6 = new javax.swing.JPanel();
+          lblTransfCtaBancaria = new Label();
         lblTransfNroTransf = new Label();
         lblTransfImporte = new Label();
         lblTransfFecha = new Label();
-        transfCtaBancaria = VComponentsFactory.VLookupFactory("C_BankAccount_ID", "C_BankAccount", m_WindowNo, DisplayType.Search, m_model.getTransfCtaBancariaSqlValidation());
-        txtTransfNroTransf = new javax.swing.JTextField();
-        txtTransfImporte = new JFormattedTextField();
-        transFecha = VComponentsFactory.VDateFactory();
-        jPanel7 = new javax.swing.JPanel();
+		info = VComponentsFactory.MLookupInfoFactory(Env.getCtx(),m_WindowNo, 0, 3077, DisplayType.Search, m_model.getTransfCtaBancariaSqlValidation());
+		lookup = new MLookup(info, 0);
+		transfCtaBancaria = new WSearchEditor( "C_BankAccount_ID",false,false,true,lookup );
+	    
+        txtTransfNroTransf = new Textbox();
+        txtTransfImporte = new Textbox();
+        transFecha = new WDateEditor(); // VComponentsFactory.VDateFactory();
+//        jPanel7 = new javax.swing.JPanel();
         lblChequeChequera = new Label();
         lblChequeNroCheque = new Label();
         lblChequeImporte = new Label();
@@ -381,65 +197,59 @@ public class WOrdenPago extends ADForm /*implements /*FormPanel,ActionListener,T
         lblChequeBanco = new Label();
         lblChequeCUITLibrador = new Label(); 
         lblChequeDescripcion = new Label();
-        //chequeChequera = VComponentsFactory.VLookupFactory("C_BankAccountDoc_ID", "C_BankAccountDoc", m_WindowNo, DisplayType.TableDir , m_model.getChequeChequeraSqlValidation() );
         chequeChequera = createChequeChequeraLookup(); 
-        txtChequeImporte = new JFormattedTextField();
-        chequeFechaEmision = VComponentsFactory.VDateFactory();
-        chequeFechaPago = VComponentsFactory.VDateFactory();
-        txtChequeALaOrden = new javax.swing.JTextField();
-        txtChequeNroCheque = new javax.swing.JTextField();
-        txtChequeBanco = new javax.swing.JTextField();
+        txtChequeImporte = new Textbox();
+        chequeFechaEmision = new WDateEditor(); // VComponentsFactory.VDateFactory();
+        chequeFechaPago = new WDateEditor(); // VComponentsFactory.VDateFactory();
+        txtChequeALaOrden = new Textbox();
+        txtChequeNroCheque = new Textbox();
+        txtChequeBanco = new Textbox();
         cboChequeBancoID = createChequeBancoIDLookup();
-        txtChequeCUITLibrador = new javax.swing.JTextField();
-        txtChequeDescripcion = new javax.swing.JTextField();
-        panelCamProy = new javax.swing.JPanel();
-        */
+        txtChequeCUITLibrador = new Textbox();
+        txtChequeDescripcion = new Textbox();     
         
-        
-        lookup = MLookupFactory.get (Env.getCtx(), m_WindowNo, 0, 1016307, DisplayType.TableDir);
+        lookup = MLookupFactory.get (Env.getCtx(), m_WindowNo, 0, 2570, DisplayType.TableDir);
         cboCampaign = new WTableDirEditor("C_Campaign_ID", false, false, true, lookup);
         
-        lookup = MLookupFactory.get (Env.getCtx(), m_WindowNo, 0, 1016307, DisplayType.TableDir);
+        lookup = MLookupFactory.get (Env.getCtx(), m_WindowNo, 0, 1349, DisplayType.TableDir);
         cboProject = new WTableDirEditor("C_Project_ID", false, false, true, lookup);
         
-        lookup = MLookupFactory.get (Env.getCtx(), m_WindowNo, 0, 1016307, DisplayType.TableDir);
+		info = VComponentsFactory.MLookupInfoFactory(Env.getCtx(),m_WindowNo, 0, 457, DisplayType.TableDir, m_model.getCurrencySqlValidation());
+        lookup = new MLookup(info, 0);
         cboCurrency = new WTableDirEditor("C_Currency_ID", false, false, true, lookup);
-        
-        //cboCampaign = VComponentsFactory.VLookupFactory("C_Campaign_ID", "C_Invoice", m_WindowNo, DisplayType.Table, null, false );
-        //cboProject = VComponentsFactory.VLookupFactory("C_Project_ID", "C_Invoice", m_WindowNo, DisplayType.Table, null, false );
-        //cboCurrency = VComponentsFactory.VLookupFactory("C_Currency_ID", "C_Currency", m_WindowNo, DisplayType.Table, m_model.getCurrencySqlValidation() );
-        
+            
         lblCampaign = new Label();
         lblProject = new Label();
         lblCurrency = new Label();
-        /*
-        jPanel2 = new javax.swing.JPanel();
-        */
+
         cmdProcess = new Button();
-        /*
-        cmdCancel = new javax.swing.JButton();
-        jPanel11 = new javax.swing.JPanel();
         
-        lblCreditInvoice = new Label();
-        creditInvoice = VComponentsFactory.VLookupFactory("C_Invoice_ID", "C_Invoice", m_WindowNo, DisplayType.Search, m_model.getCreditSqlValidation() );
-        lblCreditAvailable = new Label();
-        txtCreditAvailable = new JFormattedTextField();
-        txtCreditAvailable.setEditable(false);
-        lblCreditImporte = new Label();
-        txtCreditImporte = new JFormattedTextField();
+        cmdCancel = new Button();
+        /*
+        jPanel11 = new javax.swing.JPanel();
         */
-		
+        lblCreditInvoice = new Label();
+        info = VComponentsFactory.MLookupInfoFactory( Env.getCtx(),m_WindowNo, 0, 3484, DisplayType.Search, m_model.getCreditSqlValidation());
+		lookup = new MLookup(info, 0);
+		creditInvoice = new WSearchEditor("C_Invoice_ID", false, false, true, lookup);
+        
+        lblCreditAvailable = new Label();
+        txtCreditAvailable = new Textbox();
+        txtCreditAvailable.setReadonly(true); // setEditable(false);
+        lblCreditImporte = new Label();
+        txtCreditImporte = new Textbox();
+        
         checkPayAll = new Checkbox();
         checkPayAll.setText("Pagar Todo");
-        /*
-        checkPayAll.addActionListener(new ActionListener() {
+        checkPayAll.addActionListener(new EventListener() {
 			
 			@Override
-			public void actionPerformed(ActionEvent e) {
+			public void onEvent(Event arg0) throws Exception {
 				updatePayAllInvoices(false);
+				
 			}
 		});
-        
+/*       
         checkPayAll.addAction("setSelected",
 				KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0),
 				new AbstractAction() {
@@ -449,471 +259,124 @@ public class WOrdenPago extends ADForm /*implements /*FormPanel,ActionListener,T
 						fireActionPerformed(checkPayAll.getActionListeners(), null);
 					}
 				});
-        
-        m_frame.setMinimumSize(new java.awt.Dimension(800, 400));
-        // m_frame.setOpaque(false);
-        jPanel1.setOpaque(false);
+*/        
         lblBPartner.setText("Entidad Comercial");
 
         chequeFechaEmision.setMandatory(true);
         chequeFechaPago.setMandatory(true);
-        */
-                
-        /*
-        
-        org.jdesktop.layout.GroupLayout jPanel1Layout = new org.jdesktop.layout.GroupLayout(jPanel1);
-        jPanel1.setLayout(jPanel1Layout);
-        jPanel1Layout.setHorizontalGroup(
-            jPanel1Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-            .add(jPanel1Layout.createSequentialGroup()
-                .add(jPanel9, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                .add(jPanel10, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-        );
-        jPanel1Layout.setVerticalGroup(
-            jPanel1Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-            .add(jPanel10, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-            .add(jPanel9, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-        );
-		*/
-		
         buttonGroup1.appendChild(radPayTypeStd);
-        /*
-        jTabbedPane1.setTabLayoutPolicy(javax.swing.JTabbedPane.SCROLL_TAB_LAYOUT);
-        jPanel3.setOpaque(false);
-        buttonGroup1.add(radPayTypeStd);
-        radPayTypeStd.setSelected(true);
-        radPayTypeStd.setText("PAGO NORMAL");
-        radPayTypeStd.setBorder(javax.swing.BorderFactory.createEmptyBorder(0, 0, 0, 0));
-        radPayTypeStd.setMargin(new java.awt.Insets(0, 0, 0, 0));
-        radPayTypeStd.setOpaque(false);
-        radPayTypeStd.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                onTipoPagoChange(false);
-            }
-        });
-        radPayTypeStd.addChangeListener(new ChangeListener() {
-			
-			@Override
-			public void stateChanged(ChangeEvent arg0) {
+        radPayTypeStd.addEventListener("onCheck", new EventListener() {
+			public void onEvent(Event arg0) throws Exception {
 				onTipoPagoChange(false);
-				
 			}
-		});
-        */
-        
+		});        
         buttonGroup1.appendChild(radPayTypeAdv);
-        /*
-        buttonGroup1.add(radPayTypeAdv);
-        radPayTypeAdv.setText("PAGO ADELANTADO");
-        radPayTypeAdv.setBorder(javax.swing.BorderFactory.createEmptyBorder(0, 0, 0, 0));
-        radPayTypeAdv.setMargin(new java.awt.Insets(0, 0, 0, 0));
-        radPayTypeAdv.setOpaque(false);
-        radPayTypeAdv.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
+        radPayTypeAdv.setValue("PAGO ADELANTADO");
+        radPayTypeAdv.addEventListener("onCheck", new EventListener() {
+            public void onEvent(Event arg0) throws Exception {
                 onTipoPagoChange(false);
             }
         });
-        
-        radPayTypeAdv.addChangeListener(new ChangeListener() {
-			
-			@Override
-			public void stateChanged(ChangeEvent arg0) {
-				onTipoPagoChange(false);
-				
-			}
-		});
 
         // tblFacturas.setModel(new javax.swing.table.DefaultTableModel());
-        jScrollPane1.setViewportView(tblFacturas);
 
-        txtTotalPagar1.setText("TOTAL A PAGAR");
+        txtTotalPagar1.setValue("TOTAL A PAGAR");
+        lblTotalPagar1.setValue("TOTAL A PAGAR");
 
-        lblTotalPagar1.setText("TOTAL A PAGAR");
-		*/
-
-        buttonGroup2.appendChild(rInvoiceAll);
-        /*
-        buttonGroup2.add(rInvoiceAll);
+        buttonGroup2.appendChild(rInvoiceAll);      
         rInvoiceAll.setSelected(true);
-        rInvoiceAll.setText("TODAS");
-        rInvoiceAll.setBorder(javax.swing.BorderFactory.createEmptyBorder(0, 0, 0, 0));
-        rInvoiceAll.setMargin(new java.awt.Insets(0, 0, 0, 0));
-        rInvoiceAll.setOpaque(false);
-        rInvoiceAll.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
+        rInvoiceAll.setValue("TODAS");
+        rInvoiceAll.addEventListener("onClick", new EventListener() {
+            public void onEvent(Event arg0) throws Exception {
                 onFechaChange(false);
             }
         });
-		*/
+
         
         buttonGroup2.appendChild(rInvoiceDate);
-        /*
-        buttonGroup2.add(rInvoiceDate);
-        rInvoiceDate.setText("VENCIDAS A FECHA:");
-        rInvoiceDate.setBorder(javax.swing.BorderFactory.createEmptyBorder(0, 0, 0, 0));
-        rInvoiceDate.setMargin(new java.awt.Insets(0, 0, 0, 0));
-        rInvoiceDate.setOpaque(false);
-        rInvoiceDate.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
+        rInvoiceDate.setValue("VENCIDAS A FECHA:");
+        rInvoiceDate.addEventListener("onClick", new EventListener() {
+            public void onEvent(Event arg0) throws Exception {
                 onFechaChange(false);
             }
         });
 
-        jTabbedPane1.addTab("TITULO TAB1", createInvoicesPanel());
-
-        jPanel4.setOpaque(false);
-        jScrollPane2.setViewportView(jTree1);
-
-        cmdEliminar.setText("ELIMINAR");
-        cmdEliminar.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                cmdEliminarActionPerformed(evt);
+        cmdEliminar.setLabel("ELIMINAR");
+        cmdEliminar.addEventListener("onClick", new EventListener() {
+            public void onEvent(Event evt) throws Exception {
+            	cmdEditarActionPerformed(evt);
             }
         });
 
-        cmdEditar.setText("EDITAR");
-        cmdEditar.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                cmdEditarActionPerformed(evt);
+        cmdEditar.setLabel("EDITAR");
+        cmdEditar.addEventListener("onClick", new EventListener() {
+            public void onEvent(Event evt) throws Exception {
+            	cmdEditarActionPerformed(evt);
             }
         });
 
-        txtSaldo.setEditable(false);
-        
-        txtDifCambio.setEditable(false);
-
+          txtSaldo = new Textbox();
+          txtSaldo.setReadonly(true); // setEditable(false);
+        txtDifCambio = new Textbox();
+        txtDifCambio.setReadonly(true); // (false);
+        lblSaldo = new Label();
         lblSaldo.setText("SALDO");
-
-        txtMedioPago2.setEditable(false);
-
-        txtRetenciones2.setEditable(false);
-
-        txtTotalPagar2.setEditable(false);
-
+        txtMedioPago2 = new Textbox();
+        txtMedioPago2.setReadonly(true);
+        txtRetenciones2 = new Textbox();
+        txtRetenciones2.setReadonly(true);
+        txtTotalPagar2 = new Textbox();
+        txtTotalPagar2.setReadonly(true);
+        lblTotalPagar2 = new Label();
         lblTotalPagar2.setText("TOTAL A PAGAR");
-
+        lblRetenciones2 = new Label();
         lblRetenciones2.setText("RETENCIONES");
-        
+        lblDifCambio = new Label();
         lblDifCambio.setText("Diferecia de Cambio");
-
+        lblMedioPago2 = new Label();
         lblMedioPago2.setText("MEDIO DE PAGO");
 
-        cmdGrabar.setText("GRABAR");
-        cmdGrabar.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                cmdSavePMActionPerformed(evt);
+        cmdGrabar.setLabel("GRABAR");
+        cmdGrabar.addEventListener("onClick", new EventListener() {
+            public void onEvent(Event evt) throws Exception {
+            	cmdSavePMActionPerformed(evt);
             }
         });
 
-        // Pestañas de pagos
-        jTabbedPane2.setTabLayoutPolicy(javax.swing.JTabbedPane.SCROLL_TAB_LAYOUT);
-        jTabbedPane2.addTab("EFECTIVO", createCashTab());
-        jTabbedPane2.addTab("TRANSFERENCIA", createTransferTab());
-        jTabbedPane2.addTab("CHEQUE", createCheckTab());
-        jTabbedPane2.addTab("CREDITO", createCreditTab());
-        
-        // Se crea el panel que contiene Campaña y Proyecto
-        createCamProyPanel();
-        
-        // Crear el panel de pagos
-        createPaymentTab();
-        jTabbedPane1.addTab("TITULO TAB2", jPanel4);
+        cmdProcess.setLabel("SIGUIENTE/PROCESAR");
+        cmdProcess.addActionListener(new EventListener() {
+			
+			@Override
+			public void onEvent(Event arg0) throws Exception {
+				 cmdProcessActionPerformed(arg0);
+			}
+		});
 
-        jPanel2.setOpaque(false);
-        cmdProcess.setText("SIGUIENTE/PROCESAR");
-        cmdProcess.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                cmdProcessActionPerformed(evt);
-            }
-        });
-
-        cmdCancel.setText("CANCELAR");
-        cmdCancel.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                cmdCancelActionPerformed(evt);
+        cmdCancel.setLabel("CANCELAR");
+        cmdCancel.addEventListener("onClick", new EventListener() {
+            public void onEvent(Event evt) throws Exception {
+            	cmdCancelActionPerformed(evt);
             }
         });
         
-        // Creo el panel de botones
-        createButtonsPanel();
-
-        // Agrego los paneles al frame principal
-        addPanelsToFrame();
-        
-        // Pagos anticipados como medios de pago
-		jTabbedPane2.addTab("PAGO ADELANTADO", createPagoAdelantadoTab());
-		m_PagoAdelantadoTabIndex = jTabbedPane1.indexOfComponent(panelPagoAdelantado);
-        
-        //Agrego un listener para verificar si es null o no, y deshabilitar el boton Siguiente en caso de que sea null
-        
-        this.BPartnerSel.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                cmdBPartnerSelActionPerformed(evt);
-            }
-        });
-        
-        keyBindingsInit();
-        */
+//        // Pagos anticipados como medios de pago
+        createPagoAdelantadoTab();  // FEDE:TODO llamado al menos para que instancie los objetos
+//		jTabbedPane2.addTab("PAGO ADELANTADO", createPagoAdelantadoTab());
+//		m_PagoAdelantadoTabIndex = jTabbedPane1.indexOfComponent(panelPagoAdelantado);
+//        
+//        //Agrego un listener para verificar si es null o no, y deshabilitar el boton Siguiente en caso de que sea null
+//        
+        BPartnerSel.addValueChangeListener(new ValueChangeListener() {
+			
+			@Override
+			public void valueChange(ValueChangeEvent evt) {
+				cmdBPartnerSelActionPerformed(evt);
+			}
+		}); 
+//        
+//        keyBindingsInit();
     }// </editor-fold>//GEN-END:initComponents
 
-    /*
-    protected void keyBindingsInit(){
-    	// Deshabilito el F10 que algunos look and feel y 
-		// técnicas de focos asignan al primer componente menú de la barra de menú 
-		m_frame.getJMenuBar().getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(
-              KeyStroke.getKeyStroke(java.awt.event.KeyEvent.VK_F10,0), "none");
-		// Se asignan las teclas shorcut de las acciones.
-		setActionKeys(new HashMap<String,KeyStroke>());
-		getActionKeys().put(GOTO_BPARTNER, KeyStroke.getKeyStroke(KeyEvent.VK_F3, 0));
-		getActionKeys().put(MOVE_INVOICE_FORWARD, KeyStroke.getKeyStroke(KeyEvent.VK_DOWN, 0));
-		getActionKeys().put(MOVE_INVOICE_BACKWARD, KeyStroke.getKeyStroke(KeyEvent.VK_UP, 0));
-		getActionKeys().put(GOTO_PROCESS, KeyStroke.getKeyStroke(KeyEvent.VK_F8, 0));
-		getActionKeys().put(GOTO_EXIT, KeyStroke.getKeyStroke(KeyEvent.VK_F11, 0));
-		getActionKeys().put(ADD_PAYMENT, KeyStroke.getKeyStroke(KeyEvent.VK_F9, 0));
-		getActionKeys().put(EDIT_PAYMENT, KeyStroke.getKeyStroke(KeyEvent.VK_F7, 0));
-		getActionKeys().put(REMOVE_PAYMENT, KeyStroke.getKeyStroke(KeyEvent.VK_F10, 0));
-		getActionKeys().put(GO_BACK, KeyStroke.getKeyStroke(KeyEvent.VK_F2, 0));
-		getActionKeys().put(MOVE_PAYMENT_FORWARD, KeyStroke.getKeyStroke(KeyEvent.VK_DOWN, 0));
-		getActionKeys().put(MOVE_PAYMENT_BACKWARD, KeyStroke.getKeyStroke(KeyEvent.VK_UP, 0));
-		getActionKeys().put(GOTO_PAYALL, KeyStroke.getKeyStroke(KeyEvent.VK_F5, 0));
-		
-		// Accion: Foco en Entidad Comercial
-		m_frame.getRootPane().getActionMap().put(GOTO_BPARTNER,
-        	new AbstractAction() {
-        		public void actionPerformed(ActionEvent e) {
-					BPartnerSel.requestFocus();
-				}
-        	}
-        );
-        
-        // Accion: Moverse hacia adelante sobre las facturas
-        m_frame.getRootPane().getActionMap().put(MOVE_INVOICE_FORWARD,
-        	new AbstractAction() {
-        		public void actionPerformed(ActionEvent e) {
-        			moveTableSelection(tblFacturas, true);
-				}
-        	}
-        );
-        
-        // Accion: Moverse hacia atras sobre las facturas
-        m_frame.getRootPane().getActionMap().put(MOVE_INVOICE_BACKWARD,
-        	new AbstractAction() {
-        		public void actionPerformed(ActionEvent e) {
-        			moveTableSelection(tblFacturas, false);
-				}
-        	}
-        );
-
-        // Accion: Seleccionar el botón Siguiente o Procesar
-        m_frame.getRootPane().getActionMap().put(GOTO_PROCESS,
-        	new AbstractAction() {
-        		public void actionPerformed(ActionEvent e) {
-					if(cmdProcess.isEnabled()){
-						cmdProcessActionPerformed(null);
-					}
-				}
-        	}
-        );
-
-        // Accion: Seleccionar el botón cancelar
-        m_frame.getRootPane().getActionMap().put(GOTO_EXIT,
-        	new AbstractAction() {
-        		public void actionPerformed(ActionEvent e) {
-        			cmdCancelActionPerformed(null);
-				}
-        	}
-        );
-        
-        // Accion: Agregar un pago
-        m_frame.getRootPane().getActionMap().put(ADD_PAYMENT,
-        	new AbstractAction() {
-        		public void actionPerformed(ActionEvent e) {
-        			cmdSavePMActionPerformed(null);
-				}
-        	}
-        );
-        
-     // Accion: Editar un pago
-        m_frame.getRootPane().getActionMap().put(EDIT_PAYMENT,
-        	new AbstractAction() {
-        		public void actionPerformed(ActionEvent e) {
-					cmdEditarActionPerformed(null);
-				}
-        	}
-        );
-        
-        // Accion: Eliminar un pago
-        m_frame.getRootPane().getActionMap().put(REMOVE_PAYMENT,
-        	new AbstractAction() {
-        		public void actionPerformed(ActionEvent e) {
-					cmdEliminarActionPerformed(null);
-				}
-        	}
-        );
-        
-        // Accion: Foco en Entidad Comercial
-		m_frame.getRootPane().getActionMap().put(GO_BACK,
-        	new AbstractAction() {
-        		public void actionPerformed(ActionEvent e) {
-					jTabbedPane1.setSelectedIndex(0);
-					
-				}
-        	}
-        );
-		
-		// Accion: Moverse hacia adelante sobre las facturas
-        m_frame.getRootPane().getActionMap().put(MOVE_PAYMENT_FORWARD,
-        	new AbstractAction() {
-        		public void actionPerformed(ActionEvent e) {
-        			if(!jTree1.isFocusOwner()){
-        				jTree1.requestFocus();
-        				jTree1.setSelectionRow(0);
-        			}
-				}
-        	}
-        );
-        
-        // Accion: Moverse hacia atras sobre las facturas
-        m_frame.getRootPane().getActionMap().put(MOVE_PAYMENT_BACKWARD,
-        	new AbstractAction() {
-        		public void actionPerformed(ActionEvent e) {
-        			moveTableSelection(tblFacturas, false);
-				}
-        	}
-        );
-        
-        // Accion: Foco en el check para pagar todas las facturas
-		m_frame.getRootPane().getActionMap().put(GOTO_PAYALL,
-        	new AbstractAction() {
-        		public void actionPerformed(ActionEvent e) {
-        			checkPayAll.setSelected(!checkPayAll.isSelected());
-        			updatePayAllInvoices(false);
-				}
-        	}
-        );
-        
-        // Iniciales
-        setActionEnabled(GOTO_BPARTNER, true);
-		setActionEnabled(GOTO_PROCESS, true);
-		setActionEnabled(GOTO_EXIT, true);
-		setActionEnabled(ADD_PAYMENT, false);
-		setActionEnabled(EDIT_PAYMENT, false);
-		setActionEnabled(REMOVE_PAYMENT, false);
-		setActionEnabled(GO_BACK, false);
-		setActionEnabled(MOVE_PAYMENT_FORWARD, false);
-		setActionEnabled(MOVE_PAYMENT_BACKWARD, false);
-		setActionEnabled(MOVE_INVOICE_FORWARD, true);
-		setActionEnabled(MOVE_INVOICE_BACKWARD, true);
-		setActionEnabled(GOTO_PAYALL, true);
-		
-        // Las subclases también deben definir las suyas
-        customKeyBindingsInit();
-    }
-    
-    protected void setActionEnabled(String action, boolean enabled) {
-		String kAction = (enabled?action:"none");
-        KeyStroke keyStroke = getActionKeys().get(action);
-        
-        m_frame.getRootPane().getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(
-            	keyStroke, kAction);
-	}
-    */
-    /**
-     * Crea el panel de ingreso de facturas a pagar
-     */
-    /*
-    protected JComponent createInvoicesPanel(){
-        org.jdesktop.layout.GroupLayout jPanel3Layout = new org.jdesktop.layout.GroupLayout(jPanel3);
-        jPanel3.setLayout(jPanel3Layout);
-        jPanel3Layout.setHorizontalGroup(
-            jPanel3Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-            .add(jPanel3Layout.createSequentialGroup()
-                .addContainerGap()
-                .add(jPanel3Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-                    .add(jScrollPane1, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 647, Short.MAX_VALUE)
-                    .add(jPanel3Layout.createSequentialGroup()
-                        .add(radPayTypeStd)
-                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                        .add(radPayTypeAdv)
-                        .addContainerGap(50, Short.MAX_VALUE)
-                        .add(checkPayAll, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 130, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
-                    .add(org.jdesktop.layout.GroupLayout.TRAILING, jPanel3Layout.createSequentialGroup()
-                        .add(rInvoiceAll)
-                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                        .add(rInvoiceDate)
-                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                        .add(invoiceDatePick, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 110, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED, 179, Short.MAX_VALUE)
-                        .add(lblTotalPagar1)
-                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                        .add(txtTotalPagar1, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 95, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)))
-                .addContainerGap())
-        );
-        jPanel3Layout.setVerticalGroup(
-            jPanel3Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-            .add(jPanel3Layout.createSequentialGroup()
-                .addContainerGap()
-                .add(jPanel3Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
-                    .add(radPayTypeStd)
-                    .add(radPayTypeAdv)
-                    .add(checkPayAll))
-                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                .add(jScrollPane1, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 260, Short.MAX_VALUE)
-                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                .add(jPanel3Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
-                    .add(lblTotalPagar1)
-                    .add(rInvoiceAll)
-                    .add(rInvoiceDate)
-                    .add(txtTotalPagar1, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                    .add(invoiceDatePick, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
-                .addContainerGap())
-        );
-        return jPanel3;
-    }
-    */
-    
-    /**
-     * Creo el panel que contiene Campaña y Proyecto
-     */
-    /*
-    protected void createCamProyPanel(){
-        panelCamProy.setOpaque(false);
-    	org.jdesktop.layout.GroupLayout panelCamProyLayout = new org.jdesktop.layout.GroupLayout(panelCamProy);
-        panelCamProy.setLayout(panelCamProyLayout);
-        panelCamProyLayout.setHorizontalGroup(
-            panelCamProyLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-            .add(panelCamProyLayout.createSequentialGroup()
-                .add(panelCamProyLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-                    .add(lblCampaign)
-                    .add(lblProject)
-                    .add(lblCurrency))
-                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                .add(panelCamProyLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-                    .add(cboCampaign, 0, 239, Short.MAX_VALUE)
-                    .add(cboProject, 0, 239, Short.MAX_VALUE)
-                    .add(cboCurrency, 0, 239, Short.MAX_VALUE)))
-        );
-        panelCamProyLayout.setVerticalGroup(
-            panelCamProyLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-            .add(panelCamProyLayout.createSequentialGroup()
-                .addContainerGap()
-                .add(panelCamProyLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
-                    .add(lblCampaign)
-                    .add(cboCampaign, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
-                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                .add(panelCamProyLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
-                    .add(lblProject)
-                    .add(cboProject, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
-                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                .add(panelCamProyLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
-                	.add(lblCurrency)
-                    .add(cboCurrency, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
-                .addContainerGap(org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-        );
-    }
-    */
     /**
      * Crea la pestaña de efectivo 
      */
@@ -938,205 +401,7 @@ public class WOrdenPago extends ADForm /*implements /*FormPanel,ActionListener,T
         return tabpanel;
     }
 	
-	/**
-	 * Crea la pestaña de transferencia bancaria
-	 * 
-	 * @return el panel para la pestaña
-	 */
-    /*
-    protected JComponent createTransferTab(){
-    	jPanel6.setOpaque(false);
-        lblTransfCtaBancaria.setText("CUENTA BANCARIA");
-        lblTransfNroTransf.setText("NRO TRANSFERENCIA");
-        lblTransfImporte.setText("IMPORTE");
-        lblTransfFecha.setText("FECHA");
-        txtTransfImporte.setText("0");
-
-        org.jdesktop.layout.GroupLayout jPanel6Layout = new org.jdesktop.layout.GroupLayout(jPanel6);
-        jPanel6.setLayout(jPanel6Layout);
-        jPanel6Layout.setHorizontalGroup(
-            jPanel6Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-            .add(jPanel6Layout.createSequentialGroup()
-                .addContainerGap()
-                .add(jPanel6Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.TRAILING)
-                    .add(lblTransfFecha)
-                    .add(lblTransfImporte)
-                    .add(lblTransfNroTransf)
-                    .add(lblTransfCtaBancaria))
-                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                .add(jPanel6Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-                    .add(txtTransfImporte, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 160, Short.MAX_VALUE)
-                    .add(txtTransfNroTransf, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 160, Short.MAX_VALUE)
-                    .add(transfCtaBancaria, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 160, Short.MAX_VALUE)
-                    .add(transFecha, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 160, Short.MAX_VALUE))
-                .addContainerGap())
-        );
-        jPanel6Layout.setVerticalGroup(
-            jPanel6Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-            .add(jPanel6Layout.createSequentialGroup()
-                .addContainerGap()
-                .add(jPanel6Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
-                    .add(lblTransfCtaBancaria)
-                    .add(transfCtaBancaria, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
-                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                .add(jPanel6Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
-                    .add(lblTransfNroTransf)
-                    .add(txtTransfNroTransf, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
-                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                .add(jPanel6Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
-                    .add(lblTransfImporte)
-                    .add(txtTransfImporte, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
-                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                .add(jPanel6Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
-                    .add(lblTransfFecha)
-                    .add(transFecha, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
-                .addContainerGap(66, Short.MAX_VALUE))
-        );
-        return jPanel6;
-    }
-    */
     
-    /**
-     * Crea la pestaña de cheques
-     * @return el panel que se debe insertar como pestaña
-     */
-    /*
-    protected JComponent createCheckTab(){
-    	jPanel7.setOpaque(false);
-        lblChequeChequera.setText("CHEQUERA");
-        lblChequeNroCheque.setText("NUMERO DE CHEQUE");
-        lblChequeImporte.setText("IMPORTE");
-        lblChequeFechaEmision.setText("FECHA EMISION");
-        lblChequeFechaPago.setText("FECHA PAGO");
-        lblChequeALaOrden.setText(getModel().isSOTrx()?"LIBRADOR":"A LA ORDEN");
-        lblChequeBanco.setText("BANCO");
-        lblChequeCUITLibrador.setText("CUIT LIBRADOR");
-        lblChequeDescripcion.setText("DESCRIPCION");
-        
-        org.jdesktop.layout.GroupLayout jPanel7Layout = new org.jdesktop.layout.GroupLayout(jPanel7);
-        jPanel7.setLayout(jPanel7Layout);
-        jPanel7Layout.setHorizontalGroup(
-            jPanel7Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-            .add(jPanel7Layout.createSequentialGroup()
-                .addContainerGap()
-                .add(jPanel7Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.TRAILING)
-                	.add(lblChequeCUITLibrador)
-                	.add(lblChequeBanco)
-                    .add(lblChequeALaOrden)
-                    .add(lblChequeChequera)
-                    .add(lblChequeNroCheque)
-                    .add(lblChequeImporte)
-                    .add(lblChequeFechaEmision)
-                    .add(lblChequeFechaPago)
-                    .add(lblChequeDescripcion))
-                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                .add(jPanel7Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-                	.add(txtChequeCUITLibrador, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 165, Short.MAX_VALUE)
-                	.add(txtChequeBanco, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 165, Short.MAX_VALUE)
-                    .add(txtChequeNroCheque, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 165, Short.MAX_VALUE)
-                    .add(txtChequeALaOrden, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 165, Short.MAX_VALUE)
-                    .add(txtChequeImporte, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 165, Short.MAX_VALUE)
-                    .add(chequeChequera, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 165, Short.MAX_VALUE)
-                    .add(chequeFechaEmision, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 165, Short.MAX_VALUE)
-                    .add(chequeFechaPago, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 165, Short.MAX_VALUE)
-                    .add(txtChequeDescripcion, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 165, Short.MAX_VALUE))
-                .addContainerGap())
-        );
-        jPanel7Layout.setVerticalGroup(
-            jPanel7Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-            .add(jPanel7Layout.createSequentialGroup()
-                .addContainerGap()
-                .add(jPanel7Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
-                    .add(lblChequeChequera)
-                    .add(chequeChequera, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
-                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                .add(jPanel7Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
-                    .add(lblChequeNroCheque)
-                    .add(txtChequeNroCheque, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
-                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                .add(jPanel7Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
-                    .add(lblChequeImporte)
-                    .add(txtChequeImporte, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
-                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                .add(jPanel7Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
-                    .add(lblChequeFechaEmision)
-                    .add(chequeFechaEmision, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
-                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                .add(jPanel7Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
-                    .add(lblChequeFechaPago)
-                    .add(chequeFechaPago, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
-                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                .add(jPanel7Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
-                    .add(lblChequeALaOrden)
-                    .add(txtChequeALaOrden, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
-                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                .add(jPanel7Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
-                    .add(lblChequeBanco)
-                    .add(txtChequeBanco, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
-                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                .add(jPanel7Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
-                    .add(lblChequeCUITLibrador)
-                    .add(txtChequeCUITLibrador, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
-                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                .add(jPanel7Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
-                    .add(lblChequeDescripcion)
-                    .add(txtChequeDescripcion, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
-                .addContainerGap(25, Short.MAX_VALUE))
-        );
-        return jPanel7;
-    }
-	*/
-	/**
-	 * Crea la pestaña de Crédito
-	 * 
-	 * @return panel que se debe insertar como pestaña
-	 */
-    /*
-    protected JComponent createCreditTab(){
-    	jPanel11.setOpaque(false);
-    	lblCreditInvoice.setText("CREDITO");        
-        lblCreditAvailable.setText("DISPONIBLE");        
-        lblCreditImporte.setText("IMPORTE");        
-        txtCreditAvailable.setText("0");        
-        txtCreditImporte.setText("0");
-        
-        org.jdesktop.layout.GroupLayout jPanel11Layout = new org.jdesktop.layout.GroupLayout(jPanel11);
-        jPanel11.setLayout(jPanel11Layout);
-        jPanel11Layout.setHorizontalGroup(
-            jPanel11Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-            .add(jPanel11Layout.createSequentialGroup()
-                .addContainerGap()
-                .add(jPanel11Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.TRAILING)
-                    .add(lblCreditImporte)
-                    .add(lblCreditAvailable)
-                    .add(lblCreditInvoice))
-                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                .add(jPanel11Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-                    .add(txtCreditImporte, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 160, Short.MAX_VALUE)
-                    .add(txtCreditAvailable, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 160, Short.MAX_VALUE)
-                    .add(creditInvoice, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 160, Short.MAX_VALUE))
-                .addContainerGap())
-        );
-        jPanel11Layout.setVerticalGroup(
-            jPanel11Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-            .add(jPanel11Layout.createSequentialGroup()
-                .addContainerGap()
-                .add(jPanel11Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
-                    .add(lblCreditInvoice)
-                    .add(creditInvoice, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
-                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                .add(jPanel11Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
-                    .add(lblCreditAvailable)
-                    .add(txtCreditAvailable, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
-                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                .add(jPanel11Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
-                    .add(lblCreditImporte)
-                    .add(txtCreditImporte, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
-                .addContainerGap(66, Short.MAX_VALUE))
-        );
-        return jPanel11;
-    }
-    */
     /**
      * Crea el panel de pagos
      */
@@ -1199,225 +464,66 @@ public class WOrdenPago extends ADForm /*implements /*FormPanel,ActionListener,T
 		
 		contenedor.appendChild(tablelayout);
 		jTabbedPane2.appendChild(contenedor);
-		
-    	/*
-    	org.jdesktop.layout.GroupLayout jPanel4Layout = new org.jdesktop.layout.GroupLayout(jPanel4);
-        jPanel4.setLayout(jPanel4Layout);
-        jPanel4Layout.setHorizontalGroup(
-            jPanel4Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-            .add(jPanel4Layout.createSequentialGroup()
-                .addContainerGap()
-                .add(jPanel4Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-                    .add(jTabbedPane2, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 297, Short.MAX_VALUE)
-                    .add(panelCamProy, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .add(cmdGrabar))
-                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                .add(jPanel4Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-                    .add(jPanel4Layout.createSequentialGroup()
-                        .add(jPanel4Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.TRAILING)
-                       		.add(jPanel4Layout.createSequentialGroup()
-                            .add(lblDifCambio)
-                            .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                            .add(txtDifCambio)
-                            .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED, 72, Short.MAX_VALUE)
-                            .add(lblTotalPagar2))
-                            .add(jPanel4Layout.createSequentialGroup()
-                                .add(cmdEliminar)
-                                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                                .add(cmdEditar)
-                                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED, 72, Short.MAX_VALUE)
-                                .add(lblSaldo))
-                            .add(lblRetenciones2)
-                            .add(lblMedioPago2))
-                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                        .add(jPanel4Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING, false)
-                            .add(org.jdesktop.layout.GroupLayout.TRAILING, txtRetenciones2, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 75, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                            .add(org.jdesktop.layout.GroupLayout.TRAILING, txtTotalPagar2, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 75, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                            .add(org.jdesktop.layout.GroupLayout.TRAILING, txtMedioPago2, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 75, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                            .add(org.jdesktop.layout.GroupLayout.TRAILING, txtDifCambio, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 75, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                            .add(org.jdesktop.layout.GroupLayout.TRAILING, txtSaldo, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 75, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)))
-                    .add(jScrollPane2, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 344, Short.MAX_VALUE))
-                .addContainerGap())
-        );
-        jPanel4Layout.setVerticalGroup(
-            jPanel4Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-            .add(jPanel4Layout.createSequentialGroup()
-                .addContainerGap()
-                .add(jPanel4Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.TRAILING)
-                    .add(jPanel4Layout.createSequentialGroup()
-                        .add(jScrollPane2, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 197, Short.MAX_VALUE)
-                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                        .add(jPanel4Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
-                            .add(lblSaldo)
-                            .add(cmdEliminar)
-                            .add(cmdEditar)
-                            .add(txtSaldo, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
-                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                        .add(jPanel4Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
-                            .add(lblTotalPagar2)
-                            .add(lblDifCambio)
-                            .add(txtDifCambio)
-                            .add(txtTotalPagar2, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
-                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                        .add(jPanel4Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
-                            .add(txtRetenciones2, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                            .add(lblRetenciones2)))
-                    .add(org.jdesktop.layout.GroupLayout.LEADING, jPanel4Layout.createSequentialGroup()
-                        .add(panelCamProy, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                        .add(jTabbedPane2, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 200, Short.MAX_VALUE)))
-                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                .add(jPanel4Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
-                    .add(txtMedioPago2, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                    .add(lblMedioPago2)
-                    .add(cmdGrabar))
-                .addContainerGap())
-        );
-        */
     }
-  
-    /**
-     * Crea el panel de botones
-     */
-    /*
-    protected void createButtonsPanel(){
-        org.jdesktop.layout.GroupLayout jPanel2Layout = new org.jdesktop.layout.GroupLayout(jPanel2);
-        jPanel2.setLayout(jPanel2Layout);
-        jPanel2Layout.setHorizontalGroup(
-            jPanel2Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-            .add(org.jdesktop.layout.GroupLayout.TRAILING, jPanel2Layout.createSequentialGroup()
-                .addContainerGap(424, Short.MAX_VALUE)
-                .add(cmdCancel)
-                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                .add(cmdProcess)
-                .addContainerGap())
-        );
-        jPanel2Layout.setVerticalGroup(
-            jPanel2Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-            .add(jPanel2Layout.createSequentialGroup()
-                .addContainerGap()
-                .add(jPanel2Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
-                    .add(cmdProcess)
-                    .add(cmdCancel))
-                .addContainerGap(org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-        );
-    }
-    
-    /**
-     * Agrego los paneles al frame principal
-     */
-    /*
-    protected void addPanelsToFrame(){
-    	org.jdesktop.layout.GroupLayout layout = new org.jdesktop.layout.GroupLayout(m_frame.getContentPane());
-        m_frame.getContentPane().setLayout(layout);
-        layout.setHorizontalGroup(
-            layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-            .add(jPanel2, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-            .add(jPanel1, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-            .add(jTabbedPane1, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 672, Short.MAX_VALUE)
-        );
-        layout.setVerticalGroup(
-            layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-            .add(org.jdesktop.layout.GroupLayout.TRAILING, layout.createSequentialGroup()
-                .add(jPanel1, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                .add(jTabbedPane1, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 354, Short.MAX_VALUE)
-                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                .add(jPanel2, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
-        );
-    }
+
    
 	// Uso de un pago adelantado como parte de una orden de pago
-	protected JComponent createPagoAdelantadoTab()
+	protected Panel createPagoAdelantadoTab()
 	{
-		panelPagoAdelantado= new javax.swing.JPanel();
-		panelPagoAdelantado.setOpaque(false);
+		Panel panelPagoAdelantado = new Panel();
+		Panelchildren panelChildren = new Panelchildren();
 		
-		lblPagoAdelantado = new JLabel();
+		lblPagoAdelantado = new Label();
 		lblPagoAdelantado.setText(getModel().isSOTrx()?"COBRO":"PAGO");
-        lblPagoAdelantadoImporte = new JLabel();
+        lblPagoAdelantadoImporte = new Label();
         lblPagoAdelantadoImporte.setText("IMPORTE");
-        txtPagoAdelantadoImporte = new JFormattedTextField();
+        txtPagoAdelantadoImporte = new Textbox();
         txtPagoAdelantadoImporte.setText("0");
-        initFormattedTextField((JFormattedTextField)txtPagoAdelantadoImporte);
-        pagoAdelantado = VComponentsFactory.VLookupFactory("C_Payment_ID", "C_Payment", m_WindowNo, DisplayType.Search, getModel().getPagoAdelantadoSqlValidation());
+//        initFormattedTextField((JFormattedTextField)txtPagoAdelantadoImporte);      
+		MLookupInfo info = VComponentsFactory.MLookupInfoFactory( Env.getCtx(),m_WindowNo, 0, 5043, DisplayType.Search, getModel().getPagoAdelantadoSqlValidation());
+		Lookup lookup = new MLookup(info, 0);
+		pagoAdelantado = new WSearchEditor("C_Payment_ID", false, false, true, lookup);
         
-        cashAdelantado = VComponentsFactory.VLookupFactory("C_CashLine_ID", "C_CashLine", m_WindowNo, DisplayType.Search, getModel().getCashAnticipadoSqlValidation());
-        lblPagoAdelantadoType = new JLabel();
+        info = VComponentsFactory.MLookupInfoFactory( Env.getCtx(),m_WindowNo, 0, 5283, DisplayType.Search, getModel().getCashAnticipadoSqlValidation());
+		lookup = new MLookup(info, 0);
+		cashAdelantado = new WSearchEditor("C_Payment_ID", false, false, true, lookup);
+     
+        lblPagoAdelantadoType = new Label();
         lblPagoAdelantadoType.setText("TIPO");
-        cboPagoAdelantadoType = new VComboBox(new Object[] {
-        	getMsg("Payment"),
-        	getMsg("Cash")
-        });
-        // Por defecto pago.
-        cboPagoAdelantadoType.setSelectedIndex(PAGO_ADELANTADO_TYPE_PAYMENT_INDEX);
-        cboPagoAdelantadoType.setPreferredSize(new Dimension(200,20));
-        cboPagoAdelantadoType.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent e) {
+        cboPagoAdelantadoType = new Combobox();
+        cboPagoAdelantadoType.appendItem(getMsg("Payment"));
+        cboPagoAdelantadoType.appendItem(getMsg("Cash"));		
+        // Por defecto pago
+        cboPagoAdelantadoType.setSelectedIndex(PAGO_ADELANTADO_TYPE_PAYMENT_INDEX); 
+        cboPagoAdelantadoType.addEventListener("onChange", new EventListener() {
+        	public void onEvent(Event arg0) throws Exception {
 				updatePagoAdelantadoTab();
 			}
-        });
-        pagoAdelantadoTypePanel = new JPanel();
-        pagoAdelantadoTypePanel.setLayout(new BorderLayout());
-        txtPagoAdelantadoAvailable = new JFormattedTextField();
-        txtPagoAdelantadoAvailable.setEditable(false);
-        lblPagoAdelantadoAvailable = new JLabel();
+		});
+        txtPagoAdelantadoAvailable = new Textbox();
+        txtPagoAdelantadoAvailable.setReadonly(true); 
+        lblPagoAdelantadoAvailable = new Label();
         lblPagoAdelantadoAvailable.setText("PENDIENTE");
-        
-        org.jdesktop.layout.GroupLayout jPanel7Layout = new org.jdesktop.layout.GroupLayout(panelPagoAdelantado);
-        panelPagoAdelantado.setLayout(jPanel7Layout);
-        jPanel7Layout.setHorizontalGroup(
-            jPanel7Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-            .add(jPanel7Layout.createSequentialGroup()
-                .addContainerGap()
-                .add(jPanel7Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.TRAILING)
-                	.add(lblPagoAdelantadoType)
-                	.add(lblPagoAdelantado)
-                    .add(lblPagoAdelantadoAvailable)
-                    .add(lblPagoAdelantadoImporte))
-                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                .add(jPanel7Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-                	.add(cboPagoAdelantadoType, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 165, Short.MAX_VALUE)
-                	.add(pagoAdelantadoTypePanel, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 165, Short.MAX_VALUE)
-                    .add(txtPagoAdelantadoAvailable, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 165, Short.MAX_VALUE)
-                    .add(txtPagoAdelantadoImporte, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 165, Short.MAX_VALUE))
-                .addContainerGap())
-        );
-        jPanel7Layout.setVerticalGroup(
-            jPanel7Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-            .add(jPanel7Layout.createSequentialGroup()
-                .addContainerGap()
-                .add(jPanel7Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
-                    .add(lblPagoAdelantadoType)
-                    .add(cboPagoAdelantadoType, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
-                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                .add(jPanel7Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
-                    .add(lblPagoAdelantado)
-                    .add(pagoAdelantadoTypePanel, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
-                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                .add(jPanel7Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
-                    .add(lblPagoAdelantadoAvailable)
-                    .add(txtPagoAdelantadoAvailable, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
-                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                .add(jPanel7Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
-                    .add(lblPagoAdelantadoImporte)
-                    .add(txtPagoAdelantadoImporte, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
-                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                .add(jPanel7Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
-                	))
-        );
 		
+        Grid gridpanel = GridFactory.newGridLayout();
+		gridpanel.setWidth("100%");
+		        
         updatePagoAdelantadoTab();
+
+        panelPagoAdelantado.appendChild(panelChildren);
+        
+        // FEDE:TODO falta completar
+        
 		return panelPagoAdelantado;	
 	}    
     
-    private void cmdSavePMActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdSavePMActionPerformed
+    private void cmdSavePMActionPerformed(Event evt) {//GEN-FIRST:event_cmdSavePMActionPerformed
 
     	try {
     		
 	    	VOrdenPagoModel.MedioPago mp = null;
 	    	
-	    	switch (jTabbedPane2.getSelectedIndex())
+	    	switch (jTabbedPane2.getIndex())
 	    	{
 	    	case 0: // Efectivo
 	    		mp = saveCashMedioPago();
@@ -1438,7 +544,7 @@ public class WOrdenPago extends ADForm /*implements /*FormPanel,ActionListener,T
 	    		mp = savePagoAdelantadoMedioPago();
 	    		break;
 	    	default:
-	    		cmdCustomSaveMedioPago(jTabbedPane2.getSelectedIndex());
+	    		cmdCustomSaveMedioPago(jTabbedPane2.getIndex());
 	    		break;
 	    	}
 	    	
@@ -1451,7 +557,7 @@ public class WOrdenPago extends ADForm /*implements /*FormPanel,ActionListener,T
 	    	updateCustomInfoAfterMedioPago(MEDIOPAGO_ACTION_INSERT);
     	} catch (Exception e) {
     		String title = Msg.getMsg(m_ctx, "Error");
-    		String msg = Msg.parseTranslation(m_ctx, "@SaveErrorNotUnique@ \n\n" + e.getMessage() /*"@SaveError@"*/ /*);
+    		String msg = Msg.parseTranslation(m_ctx, "@SaveErrorNotUnique@ \n\n" + e.getMessage() /*"@SaveError@"*/ );
     		
     		// TODO: VER
     		//JOptionPane.showMessageDialog(this, msg, title, JOptionPane.ERROR_MESSAGE);
@@ -1470,15 +576,15 @@ public class WOrdenPago extends ADForm /*implements /*FormPanel,ActionListener,T
 		try {
 			mpe.importe = numberParse(txtEfectivoImporte.getText());
 		} catch (Exception e) {
-			throw new Exception(lblEfectivoImporte.getText());
+			throw new Exception(lblEfectivoImporte.getValue());
 		}		
 		try {
 			mpe.libroCaja_ID = (Integer)efectivoLibroCaja.getValue();
 		} catch (NullPointerException ee) {
-			throw new Exception(lblEfectivoLibroCaja.getText());
+			throw new Exception(lblEfectivoLibroCaja.getValue());
 		}
 		if (mpe.importe.compareTo(new BigDecimal(0.0)) <= 0)
-			throw new Exception(lblEfectivoImporte.getText());
+			throw new Exception(lblEfectivoImporte.getValue());
 
 		mpe.setCampaign(getC_Campaign_ID() == null?0:getC_Campaign_ID());
 		mpe.setProject(getC_Project_ID() == null?0:getC_Project_ID());
@@ -1497,24 +603,24 @@ public class WOrdenPago extends ADForm /*implements /*FormPanel,ActionListener,T
 		try {
 			mpt.C_BankAccount_ID = (Integer)transfCtaBancaria.getValue();
 		} catch (NullPointerException ee) {
-			throw new Exception(lblTransfCtaBancaria.getText());
+			throw new Exception(lblTransfCtaBancaria.getValue());
 		}		
-		mpt.fechaTransf = transFecha.getTimestamp();		
+		mpt.fechaTransf = Timestamp.valueOf(transFecha.getValue().toString());		
 		try {
 			mpt.importe = numberParse(txtTransfImporte.getText());
 		} catch (Exception e) {
-			throw new Exception(lblTransfImporte.getText());
+			throw new Exception(lblTransfImporte.getValue());
 		}		
 		mpt.nroTransf = txtTransfNroTransf.getText();
 		
 		if (mpt.fechaTransf == null)
-			throw new Exception(lblTransfFecha.getText());
+			throw new Exception(lblTransfFecha.getValue());
 		
 		if (mpt.importe.compareTo(new BigDecimal(0.0)) <= 0)
-			throw new Exception(lblTransfImporte.getText());
+			throw new Exception(lblTransfImporte.getValue());
 		
 		if (mpt.nroTransf.trim().equals(""))
-			throw new Exception(lblTransfNroTransf.getText());
+			throw new Exception(lblTransfNroTransf.getValue());
 		
 		mpt.setCampaign(getC_Campaign_ID() == null?0:getC_Campaign_ID());
 		mpt.setProject(getC_Project_ID() == null?0:getC_Project_ID());
@@ -1534,14 +640,14 @@ public class WOrdenPago extends ADForm /*implements /*FormPanel,ActionListener,T
 		try {
 			mpc.chequera_ID = (Integer)chequeChequera.getValue();
 		} catch (Exception e) {
-			throw new Exception(lblChequeChequera.getText());
+			throw new Exception(lblChequeChequera.getValue());
 		}		
-		mpc.fechaEm = chequeFechaEmision.getTimestamp();
-		mpc.fechaPago = chequeFechaPago.getTimestamp();
+		mpc.fechaEm = Timestamp.valueOf(chequeFechaEmision.getValue().toString());
+		mpc.fechaPago = Timestamp.valueOf(chequeFechaPago.getValue().toString());
 		try {	    		
 			mpc.importe = numberParse(txtChequeImporte.getText());
 		} catch (Exception e) {
-			throw new Exception(lblChequeImporte.getText());
+			throw new Exception(lblChequeImporte.getValue());
 		}		
 		mpc.nroCheque = txtChequeNroCheque.getText(); 
 		mpc.banco = txtChequeBanco.getText().trim();
@@ -1554,20 +660,20 @@ public class WOrdenPago extends ADForm /*implements /*FormPanel,ActionListener,T
 		// 	throw new Exception("");
 		
 		if (mpc.fechaEm == null)
-			throw new Exception(lblChequeFechaEmision.getText());
+			throw new Exception(lblChequeFechaEmision.getValue());
 		
 		if (mpc.fechaPago == null)
-			throw new Exception(lblChequeFechaPago.getText());
+			throw new Exception(lblChequeFechaPago.getValue());
 		
 		if (mpc.fechaPago.compareTo(mpc.fechaEm) < 0) {
 			throw new Exception(getMsg("InvalidCheckDueDate"));
 		}
 		
 		if (mpc.importe.compareTo(new BigDecimal(0.0)) <= 0)
-			throw new Exception(lblChequeImporte.getText());
+			throw new Exception(lblChequeImporte.getValue());
 		
 		if (mpc.nroCheque.trim().equals(""))
-			throw new Exception(lblChequeNroCheque.getText());
+			throw new Exception(lblChequeNroCheque.getValue());
 		
 		mpc.setCampaign(getC_Campaign_ID() == null?0:getC_Campaign_ID());
 		mpc.setProject(getC_Project_ID() == null?0:getC_Project_ID());
@@ -1606,19 +712,19 @@ public class WOrdenPago extends ADForm /*implements /*FormPanel,ActionListener,T
 		try {
 			mpcm.setC_invoice_ID((Integer)creditInvoice.getValue());
 		} catch (Exception ee) {
-			throw new Exception(lblCreditInvoice.getText());
+			throw new Exception(lblCreditInvoice.getValue());
 		}
 		
 		try {
 			mpcm.setAvailableAmt(getModel().getCreditAvailableAmt(mpcm.getC_invoice_ID() ) );
 		} catch (Exception e) {
-			throw new Exception(lblCreditAvailable.getText());
+			throw new Exception(lblCreditAvailable.getValue());
 		}
 		
 		try {
 			mpcm.setImporte(numberParse(txtCreditImporte.getText()));
 		} catch (Exception e) {
-			throw new Exception(lblCreditImporte.getText());
+			throw new Exception(lblCreditImporte.getValue());
 		}
 		
 		mpcm.validate();
@@ -1651,7 +757,7 @@ public class WOrdenPago extends ADForm /*implements /*FormPanel,ActionListener,T
 		return getModel().addPagoAdelantado(payID, amount, isCash, monedaOriginalID);		
 	}
     
-    
+/*    
     private VOrdenPagoModel.MyTreeNode darElementoArbolSeleccionado() {
     	if (jTree1.getSelectionCount() == 1) {
 			TreePath path = jTree1.getSelectionPath();
@@ -1662,60 +768,60 @@ public class WOrdenPago extends ADForm /*implements /*FormPanel,ActionListener,T
     	
     	return null;
     }
-    
-    private void cmdEditarActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdEditarActionPerformed
-    	try {
-			VOrdenPagoModel.MyTreeNode tn = darElementoArbolSeleccionado();
-			if (tn != null) {
-				cmdEditMedioPago(tn);
-				// Actualizar componentes de interfaz gráfica necesarios luego de
-				// agregar el medio de pago 
-		    	updateCustomInfoAfterMedioPago(MEDIOPAGO_ACTION_EDIT);
-			}
-    	} catch (Exception e) {
-    		
-    	}
+*/    
+    private void cmdEditarActionPerformed(Event evt) {//GEN-FIRST:event_cmdEditarActionPerformed
+//    	try {
+//			VOrdenPagoModel.MyTreeNode tn = darElementoArbolSeleccionado();
+//			if (tn != null) {
+//				cmdEditMedioPago(tn);
+//				// Actualizar componentes de interfaz gráfica necesarios luego de
+//				// agregar el medio de pago 
+//		    	updateCustomInfoAfterMedioPago(MEDIOPAGO_ACTION_EDIT);
+//			}
+//    	} catch (Exception e) {
+//    		
+//    	}
     }//GEN-LAST:event_cmdEditarActionPerformed
 
-    private void cmdEliminarActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdEliminarActionPerformed
-    	try {
-			VOrdenPagoModel.MyTreeNode tn = darElementoArbolSeleccionado();
-
-			if (tn != null) {
-				cmdDeleteMedioPago(tn);
-				// Actualizar componentes de interfaz gráfica necesarios luego de
-				// agregar el medio de pago 
-		    	updateCustomInfoAfterMedioPago(MEDIOPAGO_ACTION_DELETE);
-			}
-    	} catch (Exception e) {
-    		
-    	}
+    private void cmdEliminarActionPerformed(Event evt) {//GEN-FIRST:event_cmdEliminarActionPerformed
+//    	try {
+//			VOrdenPagoModel.MyTreeNode tn = darElementoArbolSeleccionado();
+//
+//			if (tn != null) {
+//				cmdDeleteMedioPago(tn);
+//				// Actualizar componentes de interfaz gráfica necesarios luego de
+//				// agregar el medio de pago 
+//		    	updateCustomInfoAfterMedioPago(MEDIOPAGO_ACTION_DELETE);
+//			}
+//    	} catch (Exception e) {
+//    		
+//    	}
     }//GEN-LAST:event_cmdEliminarActionPerformed
 
     private void onFechaChange(boolean toPayMoment) {//GEN-FIRST:event_onFechaChange
     	if (rInvoiceAll.isSelected()) {
     		invoiceDatePick.setValue(new Date());
-    		invoiceDatePick.setReadWrite(false);
+    		invoiceDatePick.setReadonly(true); // setReadWrite(false);
     	} else {
-    		invoiceDatePick.setReadWrite(true);
+    		invoiceDatePick.setReadonly(false); // ReadWrite(true);
     	}
     	
-    	m_model.setFechaTablaFacturas(invoiceDatePick.getTimestamp(),rInvoiceAll.isSelected());
+    	m_model.setFechaTablaFacturas(new Timestamp(((Date)invoiceDatePick.getValue()).getTime()), rInvoiceAll.isSelected());
     	updatePayAllInvoices(toPayMoment);
     }//GEN-LAST:event_onFechaChange
 
     private void onTipoPagoChange(boolean toPayMoment) {//GEN-FIRST:event_onTipoPagoChange
     	if (radPayTypeStd.isSelected()) {
-    		tblFacturas.setEnabled(true);
-    		txtTotalPagar1.setEditable(false);
-    		rInvoiceAll.setEnabled(true);
-    		rInvoiceDate.setEnabled(true);
+    		tblFacturas.setVisible(true); // setEnabled(true);
+    		txtTotalPagar1.setReadonly(true);
+    		rInvoiceAll.setDisabled(false);
+    		rInvoiceDate.setDisabled(false);
     	} else {
-    		tblFacturas.setEnabled(false);
-    		txtTotalPagar1.setEditable(true);
+    		tblFacturas.setVisible(false); // setEnabled(false);
+    		txtTotalPagar1.setReadonly(false);
     		rInvoiceAll.setSelected(true);
-    		rInvoiceAll.setEnabled(true);
-    		rInvoiceDate.setEnabled(false);
+    		rInvoiceAll.setDisabled(false);
+    		rInvoiceDate.setDisabled(true);
     		//forzo la verificación de la entidad comercial
     		this.cmdBPartnerSelActionPerformed(null);
     		
@@ -1733,41 +839,35 @@ public class WOrdenPago extends ADForm /*implements /*FormPanel,ActionListener,T
     
     protected void updatePayAllInvoices(boolean toPayMoment){
     	getModel().updatePayAllInvoices(checkPayAll.isSelected(), toPayMoment);
-		tblFacturas.repaint();
+//		tblFacturas.repaint();
     }
-    
-    private void cmdCancelActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdCancelActionPerformed
 
-    	dispose();
-    	
+    private void cmdCancelActionPerformed(Event evt) {//GEN-FIRST:event_cmdCancelActionPerformed
+    	dispose();   	
     }//GEN-LAST:event_cmdCancelActionPerformed
-
+    
     protected void showError(String msg) {
 		//String title = Msg.getMsg(m_ctx, "Error");
-		String translatedMsg = Msg.parseTranslation(m_ctx, msg /*"@SaveError@"*/ /*);
+		String translatedMsg = Msg.parseTranslation(m_ctx, msg /*"@SaveError@"*/ );
 		
-		//JOptionPane.showMessageDialog(this, translatedMsg, title, JOptionPane.ERROR_MESSAGE);
-		
-		// TODO: VER
-		//ADialog.error(m_WindowNo, this, translatedMsg);
+		FDialog.error(m_WindowNo, this, translatedMsg);
 		
     }
-	*/
+	
 	/**
 	 * Mostrar una ventana dialog con el mensaje parámetro
 	 * 
 	 * @param msg
 	 *            clave ad_message de un mensaje o la descripción de un mensaje.
 	 */
-    /*
     protected void showInfo(String msg){
     	// TODO: VER
-    	//ADialog.info(m_WindowNo, this, msg);
+    	FDialog.info(m_WindowNo, this, msg);
     }
     
-    private void cmdProcessActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdProcessActionPerformed
+    private void cmdProcessActionPerformed(Event evt) {
 
-    	final int idx = jTabbedPane1.getSelectedIndex();
+    	final int idx = jTabbedPane1.getIndex();
     	
     	if (idx == 0) {
 
@@ -1779,10 +879,10 @@ public class WOrdenPago extends ADForm /*implements /*FormPanel,ActionListener,T
     		try {
     			monto = numberParse(txtTotalPagar1.getText());
     		} catch (ParseException e) {
-    			showError("@SaveErrorNotUnique@ \n\n" + lblTotalPagar1.getText());
+    			showError("@SaveErrorNotUnique@ \n\n" + lblTotalPagar1.getValue());
     			
-        		txtTotalPagar1.requestFocusInWindow();
-        		txtTotalPagar1.select(0, txtTotalPagar1.getText().length() - 1);
+        		txtTotalPagar1.setFocus(true); // .requestFocusInWindow();
+        		txtTotalPagar1.getValue().substring(0, txtTotalPagar1.getText().length() - 1); // .select(0, txtTotalPagar1.getText().length() - 1);
         		
         		return;
     		}
@@ -1842,11 +942,11 @@ public class WOrdenPago extends ADForm /*implements /*FormPanel,ActionListener,T
     		updateComponentsPreProcesar();
     		// Avanza a la siguiente tab
     		m_cambioTab = true;
-    		jTabbedPane1.setSelectedIndex(1);
+    		jTabbedPane1.setZindex(1); // setSelectedIndex(1);
     		m_cambioTab = false;
     		
     		updatePaymentsTabsState();
-    		treeUpdated();
+//    		treeUpdated();
     		// Actualizar descuento de entidad comercial
     		customUpdateBPartnerRelatedComponents(false);
     		
@@ -1880,7 +980,8 @@ public class WOrdenPago extends ADForm /*implements /*FormPanel,ActionListener,T
     		
     		if (status == VOrdenPagoModel.PROCERROR_OK)
     		{
-	    		m_model.mostrarInforme(this);
+// FEDE:TODO: Mostrar informe bajo contexto Web!
+//	    		m_model.mostrarInforme(this);
 	    		
 	    		// Reset	    		
 	    		reset();
@@ -1890,15 +991,15 @@ public class WOrdenPago extends ADForm /*implements /*FormPanel,ActionListener,T
 
     	}    	
     }//GEN-LAST:event_cmdProcessActionPerformed
-    */
+    
     /**
      * Metodo que determina el valor que se encuentra dentro de la entidad comercial.
      * Si es null y está seteado el radio button de pago anticipado, no se puede pasar a Siguiente.
      * Para que el boton Siguiente se encuentre habilitado, debería ingresar una entidad comercial en el VLookUP
      * @param evt
      */
-    /*
-    private void cmdBPartnerSelActionPerformed(java.awt.event.ActionEvent evt){
+    
+    private void cmdBPartnerSelActionPerformed(ValueChangeEvent evt){
     	if((this.BPartnerSel.getValue() == null)){
     		this.cmdProcess.setEnabled(false);
     	}
@@ -1906,7 +1007,7 @@ public class WOrdenPago extends ADForm /*implements /*FormPanel,ActionListener,T
     		this.cmdProcess.setEnabled(true);
     	}
     }
-    */
+    
     
     // Declaración de varibales -no modificar//GEN-BEGIN:variables
     
@@ -1921,12 +1022,12 @@ public class WOrdenPago extends ADForm /*implements /*FormPanel,ActionListener,T
     protected WTableDirEditor cboOrg;
     protected WTableDirEditor cboProject;
     protected WTableDirEditor cboCurrency;
-    /*
+    
     protected WTableDirEditor chequeChequera;
-    protected VDate chequeFechaEmision;
-    protected VDate chequeFechaPago;
-    protected javax.swing.JButton cmdCancel;
-    */
+    protected WDateEditor chequeFechaEmision;
+    protected WDateEditor chequeFechaPago;
+    protected Button cmdCancel;
+    
     protected Button cmdEditar;
     protected Button cmdEliminar;
     protected Button cmdGrabar;
@@ -1936,17 +1037,6 @@ public class WOrdenPago extends ADForm /*implements /*FormPanel,ActionListener,T
     
     protected Datebox invoiceDatePick;
     protected Grid jPanel1;
-    /*
-    protected javax.swing.JPanel jPanel11;
-    protected javax.swing.JPanel jPanel2;
-    protected javax.swing.JPanel jPanel3;
-    protected javax.swing.JPanel jPanel4;
-    protected javax.swing.JPanel jPanel5;
-    protected javax.swing.JPanel jPanel6;
-    protected javax.swing.JPanel jPanel7;
-    protected javax.swing.JScrollPane jScrollPane1;
-    protected javax.swing.JScrollPane jScrollPane2;
-    */
     
     // Tabs
     private Tabpanel jTabbedPane1 = new Tabpanel();
@@ -1955,14 +1045,8 @@ public class WOrdenPago extends ADForm /*implements /*FormPanel,ActionListener,T
  	private Tabs tabs = new Tabs();
  	private Tabpanels tabpanels = new Tabpanels();
     
- 	/*
-    protected javax.swing.JTabbedPane jTabbedPane1;
-    protected javax.swing.JTabbedPane jTabbedPane2;
-    private javax.swing.JTree jTree1;
-    */
     protected Label lblBPartner;
     protected Label lblCampaign;
-    /*
     protected Label lblChequeALaOrden;
     protected Label lblChequeChequera;
     protected Label lblChequeFechaEmision;
@@ -1970,7 +1054,6 @@ public class WOrdenPago extends ADForm /*implements /*FormPanel,ActionListener,T
     protected Label lblChequeImporte;
     protected Label lblChequeNroCheque;
     protected Label lblChequeDescripcion;
-    */
     protected Label lblClient;
     protected Label lblDocumentNo;
     private Label lblDescription;
@@ -1979,24 +1062,22 @@ public class WOrdenPago extends ADForm /*implements /*FormPanel,ActionListener,T
     
     protected Label lblEfectivoImporte;
     protected Label lblEfectivoLibroCaja;
-    /*
     protected Label lblMedioPago2;
-    */
     protected Label lblOrg;
     protected Label lblProject;
     protected Label lblCurrency;
-    /*
+    
     protected Label lblRetenciones2;
     protected Label lblDifCambio;
     protected Label lblSaldo;
-    */
     protected Label lblTotalPagar1;
-    /*
+    
     protected Label lblTotalPagar2;
     protected Label lblTransfCtaBancaria;
     protected Label lblTransfFecha;
     protected Label lblTransfImporte;
     protected Label lblTransfNroTransf;
+    /*
     protected javax.swing.JPanel panelCamProy;
     */
     protected Radio rInvoiceAll;
@@ -2005,93 +1086,85 @@ public class WOrdenPago extends ADForm /*implements /*FormPanel,ActionListener,T
     protected Radio radPayTypeStd;
     protected Checkbox checkPayAll;
     
-    /*
-    protected javax.swing.JTable tblFacturas;
-    protected VDate transFecha;
-    protected VLookup transfCtaBancaria;
-    */
+    protected Grid tblFacturas;
+    protected WDateEditor transFecha;
+    protected WSearchEditor transfCtaBancaria;
+
     protected Textbox txtDescription;
-    /*
-    protected javax.swing.JTextField txtChequeALaOrden;
-    protected JFormattedTextField txtChequeImporte;
-    protected javax.swing.JTextField txtChequeNroCheque;
-    protected javax.swing.JTextField txtChequeDescripcion;
-    */
+    
+    protected Textbox txtChequeALaOrden;
+    protected Textbox txtChequeImporte;
+    protected Textbox txtChequeNroCheque;
+    protected Textbox txtChequeDescripcion;
+    
     protected Textbox txtEfectivoImporte;
-    /*
-    protected javax.swing.JTextField txtMedioPago2;
-    protected javax.swing.JTextField txtRetenciones2;
-    protected javax.swing.JTextField txtSaldo;
-    protected javax.swing.JTextField txtDifCambio;
-    */
+    
+    protected Textbox txtMedioPago2;
+    protected Textbox txtRetenciones2;
+    protected Textbox txtSaldo;
+    protected Textbox txtDifCambio;
+    
     protected Textbox txtTotalPagar1;
-    /*
-    protected javax.swing.JTextField txtTotalPagar2;
-    protected JFormattedTextField txtTransfImporte;
-    protected javax.swing.JTextField txtTransfNroTransf;
+    
+    protected Textbox txtTotalPagar2;
+    protected Textbox txtTransfImporte;
+    protected Textbox txtTransfNroTransf;
     // Fin de declaraci�n de variables//GEN-END:variables
-    protected JLabel lblCreditInvoice;
-    protected VLookup creditInvoice;
-    protected JLabel lblCreditImporte;
-    protected JFormattedTextField txtCreditImporte;
-    protected JLabel lblCreditAvailable;
-    protected JFormattedTextField txtCreditAvailable;
+
+    protected Label lblCreditInvoice;
+    protected WSearchEditor creditInvoice;
+    protected Label lblCreditImporte;
+    protected Textbox txtCreditImporte;
+    protected Label lblCreditAvailable;
+    protected Textbox txtCreditAvailable;
 	protected Label lblChequeBanco;
 	protected Label lblChequeCUITLibrador;
-	protected javax.swing.JTextField txtChequeBanco;
-	protected VLookup cboChequeBancoID;
-	protected javax.swing.JTextField txtChequeCUITLibrador;
-	
-    protected javax.swing.JPanel panelPagoAdelantado;
+	protected Textbox txtChequeBanco;
+	protected WSearchEditor cboChequeBancoID;
+	protected Textbox txtChequeCUITLibrador;
     protected Label lblPagoAdelantado;
-    */
-    protected Label lblPagoAdelantadoImporte;
-    protected JFormattedTextField txtPagoAdelantadoImporte;
-    /*
-    protected VLookup pagoAdelantado;
-    protected VLookup cashAdelantado;
-    protected VComboBox cboPagoAdelantadoType;
-    protected JLabel lblPagoAdelantadoType;
-    protected JLabel lblPagoAdelantadoAvailable;
-    protected JFormattedTextField txtPagoAdelantadoAvailable;
-    protected javax.swing.JPanel pagoAdelantadoTypePanel;
     
+    protected Label lblPagoAdelantadoImporte;
+    protected Textbox txtPagoAdelantadoImporte;
+    
+    protected WSearchEditor pagoAdelantado;
+    protected WSearchEditor cashAdelantado;
+    protected Combobox cboPagoAdelantadoType;
+    protected Label lblPagoAdelantadoType;
+    protected Label lblPagoAdelantadoAvailable;
+    protected Textbox txtPagoAdelantadoAvailable;
+
     protected static final int PAGO_ADELANTADO_TYPE_PAYMENT_INDEX = 0;
     protected static final int PAGO_ADELANTADO_TYPE_CASH_INDEX = 1;
-        
+//        
     protected MSequence seq;
     
     private int m_PagoAdelantadoTabIndex = -1;
     private int m_chequeTerceroTabIndex = -1;
     
-    private JPanel panelChequeTercero;
+    private Panel panelChequeTercero;
     private Label lblChequeTerceroCuenta;
     private Label lblChequeTercero;
     private Label lblChequeTerceroImporte;
     private Label lblChequeTerceroDescripcion;
-    private VLookup chequeTerceroCuenta;
-    private VLookup chequeTercero;
-    private JFormattedTextField txtChequeTerceroImporte;
-    private javax.swing.JTextField txtChequeTerceroDescripcion;
-    
-    // Variables //
-    
-    protected int m_WindowNo = 0;
-    protected FormFrame m_frame;
+    private WSearchEditor chequeTerceroCuenta;
+    private WSearchEditor chequeTercero;
+    private Textbox txtChequeTerceroImporte;
+    private Textbox txtChequeTerceroDescripcion;
+//    
+//    // Variables //
 
-    private boolean m_cambioTab = false;
+      private boolean m_cambioTab = false;
+//    
+      protected int m_C_Currency_ID = Env.getContextAsInt( Env.getCtx(), "$C_Currency_ID" );
+//
+      private static CLogger log = CLogger.getCLogger( WOrdenPago.class );
+      protected VOrdenPagoModel m_model = new VOrdenPagoModel();
+      protected Properties m_ctx = Env.getCtx();
+      private String m_trxName = m_model.getTrxName();
     
-    protected int m_C_Currency_ID = Env.getContextAsInt( Env.getCtx(), "$C_Currency_ID" );
+      private boolean actualizarNrosChequera = true;
 
-    private static CLogger log = CLogger.getCLogger( VAllocation.class );
-    protected VOrdenPagoModel m_model = new VOrdenPagoModel();
-    protected Properties m_ctx = Env.getCtx();
-    private String m_trxName = m_model.getTrxName();
-    
-    private boolean actualizarNrosChequera = true;
-    
-    private Map<String, KeyStroke> actionKeys;
-    
     protected static final String GOTO_BPARTNER = "GOTO_BPARTNER";
     protected static final String MOVE_INVOICE_FORWARD = "MOVE_INVOICE_FORWARD";
     protected static final String MOVE_INVOICE_BACKWARD = "MOVE_INVOICE_BACKWARD";
@@ -2114,39 +1187,8 @@ public class WOrdenPago extends ADForm /*implements /*FormPanel,ActionListener,T
     protected static final Integer MEDIOPAGO_ACTION_INSERT = 0;
     protected static final Integer MEDIOPAGO_ACTION_EDIT = 1;
     protected static final Integer MEDIOPAGO_ACTION_DELETE = 2;
-    
-	public void init(int WindowNo, FormFrame frame) {
-        m_WindowNo = WindowNo;
-        m_frame    = frame;
 
-        setIsSOTrxContext();
-        
-        if (Env.getAD_Org_ID(Env.getCtx()) == 0) {
-        	showError("@InvalidPORCOrg@");
-        	SwingUtilities.invokeLater(new Runnable() {
-				public void run() {
-					m_frame.dispose();
-				}
-        	});
-        	
-        	return;
-        }
-        // TODO: VER
-    	/*
-        this.revalidate();
-        this.repaint();
-        */
-    	/*
-        initComponents();
-        customInitComponents();
-        initTranslations();
-        
-        m_frame.pack();
-        
-        onTipoPagoChange(false);
-	}
-	
-	*/
+    
 	protected void customInitComponents() {
 		//
 		// Los setModel los invoco desde initComponents
@@ -2158,7 +1200,7 @@ public class WOrdenPago extends ADForm /*implements /*FormPanel,ActionListener,T
 		
 		invoiceDatePick.setValue(d);
 		
-		/*
+		
 		clearMediosPago();
 		
 		//
@@ -2171,84 +1213,55 @@ public class WOrdenPago extends ADForm /*implements /*FormPanel,ActionListener,T
 		txtRetenciones2.setText("");
 		txtMedioPago2.setText("");
 		txtDescription.setText("");
-		//
-		
-		jTree1.setCellRenderer(new MyRenderer());
-		jTree1.expandRow(0);
-		
-		// 
-		
-		initFormattedTextField((JFormattedTextField)txtTotalPagar1);
-		initFormattedTextField((JFormattedTextField)txtChequeImporte);
-		initFormattedTextField((JFormattedTextField)txtEfectivoImporte);
-		initFormattedTextField((JFormattedTextField)txtTransfImporte);
-		initFormattedTextField((JFormattedTextField)txtCreditImporte);
-		initFormattedTextField((JFormattedTextField)txtCreditAvailable);
-		initFormattedTextField((JFormattedTextField)txtPagoAdelantadoAvailable);
+
 		txtCreditAvailable.setText("");
 		txtPagoAdelantadoAvailable.setText("");
-		
+	
 		//
-		cboCurrency.addVetoableChangeListener(this);
-		efectivoLibroCaja.addVetoableChangeListener(this);
-		transfCtaBancaria.addVetoableChangeListener(this);
-		chequeChequera.addVetoableChangeListener(this);
-		BPartnerSel.addVetoableChangeListener(this);
+		cboCurrency.addValueChangeListener(this);
+		efectivoLibroCaja.addValueChangeListener(this);
+		transfCtaBancaria.addValueChangeListener(this);
+		chequeChequera.addValueChangeListener(this);
+		BPartnerSel.addValueChangeListener(this);
 		
-		chequeFechaEmision.addVetoableChangeListener(this);
-		chequeFechaPago.addVetoableChangeListener(this);
-		invoiceDatePick.addVetoableChangeListener(this);
-		transFecha.addVetoableChangeListener(this);
+		chequeFechaEmision.addValueChangeListener(this);
+		chequeFechaPago.addValueChangeListener(this);
+		invoiceDatePick.addEventListener("onClick", this); // addValueChangeListener(this);
+		transFecha.addValueChangeListener(this);
 		
-		tblFacturas.addVetoableChangeListener(this);
-		tblFacturas.getModel().addTableModelListener(this);
+		tblFacturas.addEventListener("onChange", this); // addValueChangeListener(this);
+		tblFacturas.getModel().addListDataListener(new ListDataListener() {
+			public void onChange(ListDataEvent arg0) {
+				// Se verifica que no se esté intentando pagar una factura que no tiene una tasa de cambio para la fecha actual
+				validateConversionRate();
+				tableUpdated();
+			}
+		}); // addTableModelListener(this);
 		
 		// tblFacturas.getDefaultEditor(BigDecimal.class).addCellEditorListener(this);
 		// TableCellEditor cellEd = tblFacturas.getDefaultEditor(BigDecimal.class); 
-		TableCellEditor cellEd = new DecimalEditor(BigDecimal.ZERO, new BigDecimal(Integer.MAX_VALUE), m_model.getNumberFormat());
-		int cc = tblFacturas.getColumnModel().getColumnCount();
-		TableColumn tc = tblFacturas.getColumnModel().getColumn(cc - 1);
-		tc.setCellEditor(cellEd);
-		cellEd.addCellEditorListener(this); 
+//		TableCellEditor cellEd = new DecimalEditor(BigDecimal.ZERO, new BigDecimal(Integer.MAX_VALUE), m_model.getNumberFormat());
+//		int cc = tblFacturas.getColumnModel().getColumnCount();
+//		TableColumn tc = tblFacturas.getColumnModel().getColumn(cc - 1);
+//		tc.setCellEditor(cellEd);
+//		cellEd.addCellEditorListener(this); 
 		
 		// TableCellRenderer cellRend = tblFacturas.getDefaultRenderer(Float.class);
 		// tblFacturas.setDefaultRenderer(Number.class, cellRend);
-		tblFacturas.getColumnModel().getColumn(tblFacturas.getColumnModel().getColumnCount() - 1).setCellRenderer(new MyNumberTableCellRenderer(m_model.getNumberFormat()));
-		tblFacturas.getColumnModel().getColumn(tblFacturas.getColumnModel().getColumnCount() - 2).setCellRenderer(new MyNumberTableCellRenderer(m_model.getNumberFormat()));
-		// Deshabilito los atajos F4 y F8 del jtable ya que sino me los toma ahí
-		tblFacturas.getInputMap(JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT).put(
-	              KeyStroke.getKeyStroke(java.awt.event.KeyEvent.VK_F4,0), "none");
-		tblFacturas.getInputMap(JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT).put(
-	              KeyStroke.getKeyStroke(java.awt.event.KeyEvent.VK_F6,0), "none");
-		tblFacturas.getInputMap(JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT).put(
-	              KeyStroke.getKeyStroke(java.awt.event.KeyEvent.VK_F8,0), "none");
-		
-		jTree1.addVetoableChangeListener(this);
-		jTree1.getModel().addTreeModelListener(this);
-		jTree1.addMouseListener(this);
-		
-		jTabbedPane1.addChangeListener(this);
-		jTabbedPane2.addChangeListener(this);
-		
-		//
-		
-		cmdCancel.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/openXpertya/images/Cancel16.gif")));
-		cmdCancel.setHorizontalTextPosition(javax.swing.SwingConstants.LEADING);
-
-		cmdProcess.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/openXpertya/images/Process16.gif")));
-		cmdProcess.setHorizontalTextPosition(javax.swing.SwingConstants.LEADING);
+//		tblFacturas.getColumnModel().getColumn(tblFacturas.getColumnModel().getColumnCount() - 1).setCellRenderer(new MyNumberTableCellRenderer(m_model.getNumberFormat()));
+//		tblFacturas.getColumnModel().getColumn(tblFacturas.getColumnModel().getColumnCount() - 2).setCellRenderer(new MyNumberTableCellRenderer(m_model.getNumberFormat()));		
 
         cboClient.setReadWrite(false);
         cboClient.setValue(Env.getAD_Client_ID(m_ctx));
         cboOrg.setMandatory(true);
-        cboOrg.addVetoableChangeListener(this);
+        cboOrg.addValueChangeListener(this);
         cboOrg.setValue(Env.getAD_Org_ID(m_ctx));
         
         cboDocumentType.setMandatory(true);
-        cboDocumentType.addVetoableChangeListener(this);
+        cboDocumentType.addValueChangeListener(this);
 
         // campo para numero de documento
-        fldDocumentNo.setMandatory(true);
+//        fldDocumentNo.setMandatory(true);
         
         updateOrg((Integer)cboOrg.getValue());
 		
@@ -2258,70 +1271,60 @@ public class WOrdenPago extends ADForm /*implements /*FormPanel,ActionListener,T
         cboCampaign.setVisible("Y".equals(Element_MC));
         cboCampaign.setMandatory(false);
         cboCampaign.setValue(null);
-        cboCampaign.refresh();
+//        cboCampaign.refresh();
         
         cboProject.setVisible("Y".equals(Element_PJ));
         cboProject.setMandatory(false);
         cboProject.setValue(null);
-        cboProject.refresh();
+//        cboProject.refresh();
         
         cboCurrency.setMandatory(true);
         cboCurrency.setValue(m_C_Currency_ID);
-        cboCurrency.refresh();
+//        cboCurrency.refresh();
         setCurrencyContext();
 
         // Cuando cambia el documento de crédito, se carga el 
         // importe disponible en el text correspondiente
-        creditInvoice.addActionListener(new ActionListener() {
-
-			public void actionPerformed(ActionEvent e) {
+        creditInvoice.addValueChangeListener(new ValueChangeListener() {
+			public void valueChange(ValueChangeEvent evt) {
 				Integer invoiceID = (Integer)creditInvoice.getValue();
 				if (invoiceID != null)
 					txtCreditAvailable.setText(getModel().numberFormat(getModel().getCreditAvailableAmt(invoiceID)));
 			}
-        	
-        });
+		});
         
-        
-    	BPartnerSel.addActionListener( new ActionListener() {
-
-    		public void actionPerformed(ActionEvent e) {
-    			setBPartnerContext();
-    		}
-    		
-    	});
+    	BPartnerSel.addValueChangeListener(new ValueChangeListener() {
+			public void valueChange(ValueChangeEvent evt) {
+				setBPartnerContext();
+			}
+		});
     	
-    	cboCurrency.addActionListener( new ActionListener() {
-    		public void actionPerformed(ActionEvent e) {
-    			setCurrencyContext();
+    	cboCurrency.addValueChangeListener(new ValueChangeListener() {
+			public void valueChange(ValueChangeEvent evt) {
+				setCurrencyContext();
     			updatePayAmt(getModel().getSaldoMediosPago());
-    		}
-    		
-    	});
-
+			}
+		});
         // Cuando cambia el documento de pago adelantado, se carga el 
         // importe disponible en el text correspondiente
-        pagoAdelantado.addActionListener(new ActionListener() {
-
-			public void actionPerformed(ActionEvent e) {
+        pagoAdelantado.addValueChangeListener(new ValueChangeListener() {
+			public void valueChange(ValueChangeEvent evt) {
 				Integer paymentID = (Integer)pagoAdelantado.getValue();
 				if (paymentID != null)
 					txtPagoAdelantadoAvailable.setText(getModel().numberFormat(getModel().getPagoAdelantadoAvailableAmt(paymentID)));
 			}
-        	
-        });
+		});
 
         // Cuando cambia el documento de efectivo adelantado, se carga el 
         // importe disponible en el text correspondiente
-        cashAdelantado.addActionListener(new ActionListener() {
-
-			public void actionPerformed(ActionEvent e) {
+        cashAdelantado.addValueChangeListener(new ValueChangeListener() {
+			public void valueChange(ValueChangeEvent evt) {
 				Integer cashLineID = (Integer)cashAdelantado.getValue();
 				if (cashLineID != null)
 					txtPagoAdelantadoAvailable.setText(getModel().numberFormat(getModel().getCashAdelantadoAvailableAmt(cashLineID)));
 			}
-        	
-        });
+		});
+        
         // Total a pagar 1
     	updateTotalAPagar1();
         // Agregado de pestañas con otras formas de pago. Método vacío que deben
@@ -2329,7 +1332,7 @@ public class WOrdenPago extends ADForm /*implements /*FormPanel,ActionListener,T
         addCustomPaymentTabs(jTabbedPane2);
         // Agregado de operaciones luego de crear las pestañas custom
         addCustomOperationAfterTabsDefinition();
-        */
+        
 	}
 	
 	protected void initTranslations() {
@@ -2464,53 +1467,17 @@ public class WOrdenPago extends ADForm /*implements /*FormPanel,ActionListener,T
 		
 		if (jTabbedPane1.getIndex() == 0){
 			cmdProcess.setLabel(Msg.translate(Env.getCtx(), "NextStep"));
-			//cmdProcess.setText(Msg.getMsg(m_ctx, "NextStep")+" "+KeyUtils.getKeyStr(getActionKeys().get(GOTO_PROCESS)));
-			/*
-			jTabbedPane1.setTitleAt(0, Msg.getMsg(m_ctx, "PaymentSelection"));
-			lblBPartner.setText(Msg.getElement(m_ctx, "C_BPartner_ID") + " "
-					+ KeyUtils.getKeyStr(getActionKeys().get(GOTO_BPARTNER)));
-			setActionEnabled(GOTO_BPARTNER, true);
-			setActionEnabled(GOTO_PROCESS, true);
-			setActionEnabled(GOTO_EXIT, true);
-			setActionEnabled(ADD_PAYMENT, false);
-			setActionEnabled(EDIT_PAYMENT, false);
-			setActionEnabled(REMOVE_PAYMENT, false);
-			setActionEnabled(GO_BACK, false);
-			setActionEnabled(MOVE_PAYMENT_FORWARD, false);
-			setActionEnabled(MOVE_PAYMENT_BACKWARD, false);
-			setActionEnabled(MOVE_INVOICE_FORWARD, true);
-			setActionEnabled(MOVE_INVOICE_BACKWARD, true);
-			setActionEnabled(GOTO_BPARTNER, true);
-			*/
 		}
 		else if (jTabbedPane1.getIndex() == 1){
 			cmdProcess.setLabel(Msg.translate(Env.getCtx(),"EmitPayment"));
-			//cmdProcess.setText(getMsg("EmitPayment")+" "+KeyUtils.getKeyStr(getActionKeys().get(GOTO_PROCESS)));
-			/*
-			jTabbedPane1.setTitleAt(0, jTabbedPane1.getTitleAt(0) + " "
-					+ KeyUtils.getKeyStr(getActionKeys().get(GO_BACK)));
-			lblBPartner.setText(Msg.getElement(m_ctx, "C_BPartner_ID"));
-			setActionEnabled(GOTO_BPARTNER, false);
-			setActionEnabled(MOVE_INVOICE_FORWARD, false);
-			setActionEnabled(MOVE_INVOICE_BACKWARD, false);
-			setActionEnabled(GOTO_PROCESS, true);
-			setActionEnabled(GOTO_EXIT, true);
-			setActionEnabled(ADD_PAYMENT, true);
-			setActionEnabled(EDIT_PAYMENT, true);
-			setActionEnabled(REMOVE_PAYMENT, true);
-			setActionEnabled(GO_BACK, true);
-			setActionEnabled(MOVE_PAYMENT_FORWARD, true);
-			setActionEnabled(MOVE_PAYMENT_BACKWARD, true);
-			setActionEnabled(GOTO_BPARTNER, false);
-			*/
 		}
-		/*
+		
 		// Las subclases también deben realizar las operaciones necesarias
 		// correspondientes en esta instancia
 		customUpdateCaptions();
-		*/
+		
 	}
-	/*
+	
 	protected void clearMediosPago() {
 		
 		Date d = new Date();
@@ -2518,7 +1485,7 @@ public class WOrdenPago extends ADForm /*implements /*FormPanel,ActionListener,T
 		// Efectivo
 		
 		efectivoLibroCaja.setValue(null);
-		txtEfectivoImporte.setText("");
+		txtEfectivoImporte.setText("0");
 		
 		// Transferencia 
 		
@@ -2587,7 +1554,7 @@ public class WOrdenPago extends ADForm /*implements /*FormPanel,ActionListener,T
 			efectivoLibroCaja.setValue(mpe.libroCaja_ID);
 			txtEfectivoImporte.setText(m_model.numberFormat(mpe.importe));
 			
-			jTabbedPane2.setSelectedIndex(TAB_INDEX_EFECTIVO);
+			jTabbedPane2.setZIndex(TAB_INDEX_EFECTIVO);
 			
 		} else if (mp.getTipoMP().equals(VOrdenPagoModel.MedioPago.TIPOMEDIOPAGO_TRANSFERENCIA)) { // Transferencia - Transfer
 			
@@ -2598,7 +1565,7 @@ public class WOrdenPago extends ADForm /*implements /*FormPanel,ActionListener,T
 			txtTransfImporte.setText(m_model.numberFormat(mpt.importe));
 			txtTransfNroTransf.setText(mpt.nroTransf);
 			
-			jTabbedPane2.setSelectedIndex(TAB_INDEX_TRANSFERENCIA);
+			jTabbedPane2.setZIndex(TAB_INDEX_TRANSFERENCIA);
 			
 		} else if (mp.getTipoMP().equals(VOrdenPagoModel.MedioPago.TIPOMEDIOPAGO_CHEQUE)) { // Cheque - Check
 			
@@ -2614,69 +1581,65 @@ public class WOrdenPago extends ADForm /*implements /*FormPanel,ActionListener,T
 			txtChequeCUITLibrador.setText(mpc.cuitLibrador);
 			txtChequeDescripcion.setText(mpc.descripcion);
 			
-			jTabbedPane2.setSelectedIndex(TAB_INDEX_CHEQUE);
+			jTabbedPane2.setZIndex(TAB_INDEX_CHEQUE);
 		} else if (mp.getTipoMP().equals(VOrdenPagoModel.MedioPago.TIPOMEDIOPAGO_CREDITO)) { // Credito
 			VOrdenPagoModel.MedioPagoCredito mpcm = (VOrdenPagoModel.MedioPagoCredito)mp;
 			creditInvoice.setValue(mpcm.getC_invoice_ID());
-			txtCreditAvailable.setValue(mpcm.getAvailableAmt());
-			txtCreditImporte.setValue(mpcm.getImporte());
+			txtCreditAvailable.setValue(mpcm.getAvailableAmt().toString());
+			txtCreditImporte.setValue(mpcm.getImporte().toString());
 			
-			jTabbedPane2.setSelectedIndex(TAB_INDEX_CREDITO);
+			jTabbedPane2.setZIndex(TAB_INDEX_CREDITO);
 		} else if (mp.getTipoMP().equals(VOrdenPagoModel.MedioPago.TIPOMEDIOPAGO_PAGOANTICIPADO)) { // Pago adelantado
 			VOrdenPagoModel.MedioPagoAdelantado mpa = (VOrdenPagoModel.MedioPagoAdelantado)mp;
 			cboPagoAdelantadoType.setSelectedIndex(PAGO_ADELANTADO_TYPE_PAYMENT_INDEX);
 			pagoAdelantado.setValue(mpa.getC_Payment_ID());
-			txtPagoAdelantadoImporte.setValue(mpa.getImporte());
-			txtPagoAdelantadoAvailable.setValue(getModel().getPagoAdelantadoAvailableAmt(mpa.getC_Payment_ID()));
+			txtPagoAdelantadoImporte.setValue(mpa.getImporte().toString());
+			txtPagoAdelantadoAvailable.setValue(getModel().getPagoAdelantadoAvailableAmt(mpa.getC_Payment_ID()).toString());
 			
-			jTabbedPane2.setSelectedIndex(TAB_INDEX_PAGO_ADELANTADO);
+			jTabbedPane2.setZIndex(TAB_INDEX_PAGO_ADELANTADO);
 		} else if (mp.getTipoMP().equals(VOrdenPagoModel.MedioPago.TIPOMEDIOPAGO_EFECTIVOADELANTADO)) { // Efectivo adelantado
 			VOrdenPagoModel.MedioPagoEfectivoAdelantado mpa = (VOrdenPagoModel.MedioPagoEfectivoAdelantado)mp;
 			cboPagoAdelantadoType.setSelectedIndex(PAGO_ADELANTADO_TYPE_CASH_INDEX);
 			cashAdelantado.setValue(mpa.getCashLineID());
-			txtPagoAdelantadoImporte.setValue(mpa.getImporte());
-			txtPagoAdelantadoAvailable.setValue(getModel().getCashAdelantadoAvailableAmt(mpa.getCashLineID()));
+			txtPagoAdelantadoImporte.setValue(mpa.getImporte().toString());
+			txtPagoAdelantadoAvailable.setValue(getModel().getCashAdelantadoAvailableAmt(mpa.getCashLineID()).toString());
 			
-			jTabbedPane2.setSelectedIndex(TAB_INDEX_PAGO_ADELANTADO);
+			jTabbedPane2.setZIndex(TAB_INDEX_PAGO_ADELANTADO);
 		} else if (mp.getTipoMP().equals(VOrdenPagoModel.MedioPago.TIPOMEDIOPAGO_CHEQUETERCERO)) { // Cheque de tercero
 			VOrdenPagoModel.MedioPagoChequeTercero mpct = (VOrdenPagoModel.MedioPagoChequeTercero)mp;
 			chequeTercero.setValue(mpct.getC_Payment_ID());
-			txtChequeTerceroImporte.setValue(mpct.getImporte());
+			txtChequeTerceroImporte.setValue(mpct.getImporte().toString());
 			txtChequeTerceroDescripcion.setText(mpct.description);
 			
-			jTabbedPane2.setSelectedIndex(m_chequeTerceroTabIndex);
+			jTabbedPane2.setZIndex(m_chequeTerceroTabIndex);
 		}
 			
 	}
 		
-	
 	public void dispose() {
-
+		super.dispose();
 		m_model.dispose();
 		m_model = null;
 		
-		m_frame.dispose();
-		m_frame = null;
-		
 	}
 
-	public void actionPerformed(ActionEvent arg0) {}
 
-	public void tableChanged(TableModelEvent arg0) {
+	public void tableChanged() {
 		// System.out.println("tableChanged: " + arg0);
 		// Se verifica que no se esté intentando pagar una factura que no tiene una tasa de cambio para la fecha actual
 		validateConversionRate();
 		tableUpdated();
+		// FEDE:TODO ver VOrdenPago.. difiere
 	}
 
-	public void vetoableChange(PropertyChangeEvent e) throws PropertyVetoException {
+	public void valueChange(ValueChangeEvent e) {
 		// System.out.println("vetoableChange: " + arg0);
 		if (e.getSource() == BPartnerSel) {
 			
 			// m_model.setBPartnerFacturas((Integer)BPartnerSel.getValue());
 			
-			SwingUtilities.invokeLater( new Runnable() {
-	            public void run() {
+//			SwingUtilities.invokeLater( new Runnable() {
+//	            public void run() {
 	            	// Actualizo el modelo
 	            	getModel().updateBPartner((Integer)BPartnerSel.getValue());
 					// Actualizo los componentes custom de la interfaz gráfica
@@ -2687,8 +1650,8 @@ public class WOrdenPago extends ADForm /*implements /*FormPanel,ActionListener,T
 					if (BPartnerSel.getValue() == null)
 						cmdBPartnerSelActionPerformed(null);
 	            	updatePayAllInvoices(false);
-	            }
-	        } );			
+//	            }
+//	        } );			
 		} else if (e.getSource() == cboCurrency) {
 			updateDependent();
 		} else if (e.getSource() == efectivoLibroCaja) {
@@ -2709,19 +1672,22 @@ public class WOrdenPago extends ADForm /*implements /*FormPanel,ActionListener,T
 			if(e.getNewValue() != null){
 				m_model.setDocumentType((Integer)e.getNewValue());
 				seq = MSequence.get(m_ctx, getSeqName(), false, Env.getAD_Client_ID(m_ctx));
-				fldDocumentNo.setValue(seq.getCurrentNext());
+				fldDocumentNo.setValue(seq.getCurrentNext().toString());
 			}
 			else{
 				fldDocumentNo.setValue(null);
 				m_model.setDocumentType(null);
 			}
-		} 
+		} else if (e.getSource() == tblFacturas) {
+			tableChanged();
+		}
+		
 	}
 
 	private void updateDependent() {
 		efectivoLibroCaja.setValue(null);
 	}
-
+/*
 	public void stateChanged(ChangeEvent arg0) {
 		if (arg0.getSource() == jTabbedPane1) {
 			// TAB principal
@@ -2763,18 +1729,18 @@ public class WOrdenPago extends ADForm /*implements /*FormPanel,ActionListener,T
 	 * Actualización de la organización
 	 * @param AD_Org_ID id de la organización nueva
 	 */
-    /*
+    
 	protected void updateOrg(Integer AD_Org_ID){
 		getModel().updateOrg(AD_Org_ID);
     	updatePayAllInvoices(false);
 	}
-	*/
+	
 	
 	/**
 	 * Actualización de la información de resumen de pagos, saldo, retenciones,
 	 * etc.
 	 */
-    /*
+    
 	protected void updateSummaryInfo(){
 		BigDecimal sumaMediosPago = m_model.getSumaMediosPago();
 		
@@ -2805,77 +1771,7 @@ public class WOrdenPago extends ADForm /*implements /*FormPanel,ActionListener,T
 			showError("@NoCurrencyConvertError@");
 		}
 	}
-	
-	public void treeNodesChanged(TreeModelEvent arg0) {
-		treeUpdated();
-	}
 
-	public void treeNodesInserted(TreeModelEvent arg0) {
-		treeUpdated();
-	}
-
-	public void treeNodesRemoved(TreeModelEvent arg0) {
-		treeUpdated();
-	}
-
-	public void treeStructureChanged(TreeModelEvent arg0) {
-		treeUpdated();
-	}
-
-	public void mouseClicked(MouseEvent arg0) {
-
-		VOrdenPagoModel.MyTreeNode tn = darElementoArbolSeleccionado();
-
-		if (tn != null) {
-			//boolean activo = tn.isMedioPago();
-			boolean activo = canEditTreeNode(tn);
-			
-			cmdEditar.setEnabled(activo);
-			cmdEliminar.setEnabled(activo);
-		}
-		
-	}
-
-	public void mousePressed(MouseEvent arg0) {}
-	public void mouseReleased(MouseEvent arg0) {}
-	public void mouseEntered(MouseEvent arg0) {}
-	public void mouseExited(MouseEvent arg0) {}
-
-	public void editingStopped(ChangeEvent arg0) {
-		tableUpdated();
-	}
-
-	public void editingCanceled(ChangeEvent arg0) {
-		tableUpdated();
-	}
-
-	public void lockUI(ProcessInfo pi) {
-		// TODO: VER
-		/*
-		this.setCursor( Cursor.getPredefinedCursor( Cursor.WAIT_CURSOR ));
-        this.setEnabled( false );
-        */
-    	/*
-	}
-
-	public void unlockUI(ProcessInfo pi) {
-		// TODO: VER
-		/*
-		this.setEnabled( true );
-        this.setCursor( Cursor.getDefaultCursor());
-        */
-		/*
-	}
-
-	public boolean isUILocked() {
-		// TODO: VER
-		//return this.isEnabled();
-		return false;
-		
-	}
-
-	public void executeASync(ProcessInfo pi) { }
-    
 	protected void setModel(VOrdenPagoModel model) {
 		m_model = model;
 	}
@@ -2884,15 +1780,19 @@ public class WOrdenPago extends ADForm /*implements /*FormPanel,ActionListener,T
 		return m_model;
 	}
 	
-	protected VLookup createChequeChequeraLookup() {
-		return VComponentsFactory.VLookupFactory("C_BankAccountDoc_ID", "C_BankAccountDoc", m_WindowNo, DisplayType.TableDir , getModel().getChequeChequeraSqlValidation() );
+	protected WTableDirEditor createChequeChequeraLookup() {
+		MLookupInfo info = VComponentsFactory.MLookupInfoFactory( Env.getCtx(),m_WindowNo, 0, 6188, DisplayType.TableDir, m_model.getChequeChequeraSqlValidation());
+		MLookup lookup = new MLookup(info, 0);
+		return new WTableDirEditor("C_BankAccountDoc_ID", false, false, true, lookup);
 	}
 
-	protected VLookup createChequeBancoIDLookup() {
-		return VComponentsFactory.VLookupFactory("C_Bank_ID", "C_Bank", m_WindowNo, DisplayType.Search);
+	protected WSearchEditor createChequeBancoIDLookup() {
+		MLookupInfo info = VComponentsFactory.MLookupInfoFactory( Env.getCtx(),m_WindowNo, 0, 3031, DisplayType.Search, null);
+		MLookup lookup = new MLookup(info, 0);
+		return new WSearchEditor("C_Bank_ID", false, false, true, lookup);
 	}
 	
-	protected void chequeraChange(PropertyChangeEvent e) {
+	protected void chequeraChange(ValueChangeEvent e) {
 		Integer C_BankAccountDoc_ID = (Integer) e.getNewValue();
 		if(C_BankAccountDoc_ID != null && C_BankAccountDoc_ID > 0) {
 			X_C_BankAccountDoc bankAccountDoc = new X_C_BankAccountDoc(Env.getCtx(),C_BankAccountDoc_ID,null);
@@ -2901,45 +1801,44 @@ public class WOrdenPago extends ADForm /*implements /*FormPanel,ActionListener,T
 		} else
 			txtChequeNroCheque.setText("");
 	}
-	*/
+
 	/**
 	 * @return the actualizarNrosChequera
 	 */
-    /*
+ 
 	protected boolean isActualizarNrosChequera() {
 		return actualizarNrosChequera;
 	}
-	*/
+	
 	/**
 	 * @param actualizarNrosChequera the actualizarNrosChequera to set
 	 */
-    /*
 	protected void setActualizarNrosChequera(boolean actualizarNrosChequera) {
 		this.actualizarNrosChequera = actualizarNrosChequera;
 	}
-	*/
+	
 	/**
 	 * Redefinir en caso de ser nesario ampliar el conjunto de pestañas con medios de
 	 * pago. Aquí se deben agregar las pestañas necesarias por las especializaciones.
 	 * @param tabbedPane Panel de pestaña que contiene los medios de pagos.
 	 */
-    /*
-	protected void addCustomPaymentTabs(JTabbedPane tabbedPane) { 
+	protected void addCustomPaymentTabs(Tabpanel tabbedPane) { 
 		// Agregado de pestaña de medio de pago cheques de terceros.
-		tabbedPane.addTab(getMsg("ThirdPartyCheck"), createChequeTerceroTab());
-		m_chequeTerceroTabIndex = tabbedPane.indexOfComponent(panelChequeTercero);
+//		tabbedPane.addTab(getMsg("ThirdPartyCheck"), createChequeTerceroTab());
+		tabbedPane.appendChild(createChequeTerceroTab());
+		// FEDE:TODO		
+//		m_chequeTerceroTabIndex = tabbedPane.indexOfComponent(panelChequeTercero);
 	}
-	*/
+	
 	/**
 	 * Redefinir en caso que de ser necesario ampliar la funcionalidad y
 	 * operaciones luego de crear pestañas custom si hubiere.
 	 */
-    /*
 	protected void addCustomOperationAfterTabsDefinition(){
 		// Incorporación de operaciones luego de la definición de las pestañas
 		// custom
 	}
-	*/
+	
 	/**
 	 * Guardado de medios de pago específicos de las subclases. En caso de que se intente
 	 * guardar un medio de pago que no es de esta clase, entonces se invoca este método
@@ -2947,7 +1846,7 @@ public class WOrdenPago extends ADForm /*implements /*FormPanel,ActionListener,T
 	 * el tabIndex.
 	 * @param tabIndex Indice de pestaña que contiene los datos del medio de pago.
 	 */
-    /*
+    
 	protected void cmdCustomSaveMedioPago(int tabIndex) throws Exception { 
 		if (tabIndex == m_chequeTerceroTabIndex)
 			saveChequeTerceroMedioPago();
@@ -2960,7 +1859,7 @@ public class WOrdenPago extends ADForm /*implements /*FormPanel,ActionListener,T
 	protected Integer getC_Project_ID() {
 		return (Integer)cboProject.getValue();
 	}
-	
+	/*
 	protected boolean canEditTreeNode(VOrdenPagoModel.MyTreeNode treeNode) {
 		return treeNode.isMedioPago();
 	}
@@ -3007,119 +1906,85 @@ public class WOrdenPago extends ADForm /*implements /*FormPanel,ActionListener,T
 		//return (JOptionPane.showConfirmDialog(this, msg, title, JOptionPane.YES_NO_OPTION) == JOptionPane.YES_OPTION);
 		return false;
 	}
-	
+*/	
 	protected String getMsg(String name) {
 		return Msg.translate(m_ctx, name);
 	}
 	
 	protected void updatePaymentsTabsState() {
-		jTabbedPane2.setEnabledAt(TAB_INDEX_CREDITO, m_model.isNormalPayment());
-		jTabbedPane2.setEnabledAt(TAB_INDEX_PAGO_ADELANTADO, m_model.isNormalPayment());
+//		jTabbedPane2.setEnabledAt(TAB_INDEX_CREDITO, m_model.isNormalPayment());
+//		jTabbedPane2.setEnabledAt(TAB_INDEX_PAGO_ADELANTADO, m_model.isNormalPayment());
+		jTabbedPane2.setEnabled(m_model.isNormalPayment());
+		
 		// Refrescar el monto de la pestaña con el total a pagar
 		updatePayAmt(getModel().getSaldoMediosPago());
 //		jTabbedPane2.setSelectedIndex(TAB_INDEX_EFECTIVO);
 	}
 	
 	protected void updatePagoAdelantadoTab() {
-		pagoAdelantadoTypePanel.removeAll();
+//		pagoAdelantadoTypePanel.removeAll();
 		pagoAdelantado.setValue(null);
 		cashAdelantado.setValue(null);
 		txtPagoAdelantadoAvailable.setText("");
 		if (cboPagoAdelantadoType.getSelectedIndex() == PAGO_ADELANTADO_TYPE_PAYMENT_INDEX) {
-			pagoAdelantadoTypePanel.add(pagoAdelantado);
+//			pagoAdelantadoTypePanel.add(pagoAdelantado);
 			lblPagoAdelantado.setText(getMsg("Payment"));
 		} else if (cboPagoAdelantadoType.getSelectedIndex() == PAGO_ADELANTADO_TYPE_CASH_INDEX) {
-			pagoAdelantadoTypePanel.add(cashAdelantado);
+//			pagoAdelantadoTypePanel.add(cashAdelantado);
 			lblPagoAdelantado.setText(getMsg("Cash"));
 		}
 	}
 	
-	private JPanel createChequeTerceroTab() {
-		panelChequeTercero= new javax.swing.JPanel();
-		panelChequeTercero.setOpaque(false);
+	private Panel createChequeTerceroTab() {
+		panelChequeTercero = new Panel();
 		
 		// Cuenta
-		lblChequeTerceroCuenta = new JLabel();
+		lblChequeTerceroCuenta = new Label();
 		lblChequeTerceroCuenta.setText(getMsg("Account"));
-        chequeTerceroCuenta = VComponentsFactory.VLookupFactory("C_BankAccount_ID", "C_BankAccount", m_WindowNo, DisplayType.Search, getModel().getChequeTerceroCuentaSqlValidation(), false);
-        chequeTerceroCuenta.addActionListener(new ActionListener() {
-        	public void actionPerformed(ActionEvent e) {
-        		Integer bankAccountID = (Integer)chequeTerceroCuenta.getValue();
-        		if (bankAccountID == null)
-        			bankAccountID = 0;
-        		Env.setContext(m_ctx, m_WindowNo, "C_BankAccount_ID", bankAccountID);
+		MLookupInfo info = VComponentsFactory.MLookupInfoFactory( Env.getCtx(),m_WindowNo, 0, 5283, DisplayType.Search, m_model.getChequeTerceroCuentaSqlValidation());
+		Lookup lookup = new MLookup(info, 0);
+		chequeTerceroCuenta = new WSearchEditor("C_BankAccount_ID", false, false, true, lookup);
+        
+        chequeTerceroCuenta.addValueChangeListener(new ValueChangeListener() {
+			public void valueChange(ValueChangeEvent evt) {
+	        		Integer bankAccountID = (Integer)chequeTerceroCuenta.getValue();
+	        		if (bankAccountID == null)
+	        			bankAccountID = 0;
+	        		Env.setContext(m_ctx, m_WindowNo, "C_BankAccount_ID", bankAccountID);
 			}
-        });
+		});
         chequeTerceroCuenta.setValue(null);
 		// Cheque
-        lblChequeTercero = new JLabel();
+        lblChequeTercero = new Label();
         lblChequeTercero.setText(getMsg("Check"));
-        chequeTercero = VComponentsFactory.VLookupFactory("C_Payment_ID", "C_Payment", m_WindowNo, DisplayType.Search, getModel().getChequeTerceroSqlValidation());
-        chequeTercero.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent e) {
+		info = VComponentsFactory.MLookupInfoFactory( Env.getCtx(),m_WindowNo, 0, 5043, DisplayType.Search, m_model.getChequeTerceroSqlValidation());
+		lookup = new MLookup(info, 0);
+		chequeTercero = new WSearchEditor("C_Payment_ID", false, false, true, lookup);
+        
+        chequeTercero.addValueChangeListener(new ValueChangeListener() {
+			public void valueChange(ValueChangeEvent evt) {
 				Integer paymentID = (Integer)chequeTercero.getValue();
 				String importe = "";
 				if (paymentID != null)
 					importe = getModel().numberFormat(getModel().getChequeAmt(paymentID));
-				txtChequeTerceroImporte.setText(importe);
+				txtChequeTerceroImporte.setText(importe);			
 			}
-        });
+		}); 
         // Importe
-        lblChequeTerceroImporte = new JLabel();
+        lblChequeTerceroImporte = new Label();
         lblChequeTerceroImporte.setText(Msg.getElement(m_ctx, "Amount"));
-        txtChequeTerceroImporte = new JFormattedTextField();
+        txtChequeTerceroImporte = new Textbox();
         txtChequeTerceroImporte.setText("0");
-        initFormattedTextField((JFormattedTextField)txtChequeTerceroImporte);
+//        initFormattedTextField((JFormattedTextField)txtChequeTerceroImporte);
         txtChequeTerceroImporte.setValue(null);
-        txtChequeTerceroImporte.setEditable(false);
+        txtChequeTerceroImporte.setReadonly(true); // Editable(false);
         // Descripcion
-        lblChequeTerceroDescripcion = new JLabel();
+        lblChequeTerceroDescripcion = new Label();
         lblChequeTerceroDescripcion.setText(getMsg("Description"));
-        txtChequeTerceroDescripcion = new javax.swing.JTextField();
-      
-        org.jdesktop.layout.GroupLayout jPanel7Layout = new org.jdesktop.layout.GroupLayout(panelChequeTercero);
-        panelChequeTercero.setLayout(jPanel7Layout);
-        jPanel7Layout.setHorizontalGroup(
-            jPanel7Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-            .add(jPanel7Layout.createSequentialGroup()
-                .addContainerGap()
-                .add(jPanel7Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.TRAILING)
-                	.add(lblChequeTerceroCuenta)
-                	.add(lblChequeTercero)
-                    .add(lblChequeTerceroImporte)
-                    .add(lblChequeTerceroDescripcion))
-                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                .add(jPanel7Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-                	.add(chequeTerceroCuenta, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 165, Short.MAX_VALUE)
-                	.add(chequeTercero, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 165, Short.MAX_VALUE)
-                    .add(txtChequeTerceroImporte, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 165, Short.MAX_VALUE)
-                    .add(txtChequeTerceroDescripcion, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 165, Short.MAX_VALUE))
-                .addContainerGap())
-        );
-        jPanel7Layout.setVerticalGroup(
-            jPanel7Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-            .add(jPanel7Layout.createSequentialGroup()
-                .addContainerGap()
-                .add(jPanel7Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
-                    .add(lblChequeTerceroCuenta)
-                    .add(chequeTerceroCuenta, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
-                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                .add(jPanel7Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
-                    .add(lblChequeTercero)
-                    .add(chequeTercero, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
-                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                .add(jPanel7Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
-                    .add(lblChequeTerceroImporte)
-                    .add(txtChequeTerceroImporte, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
-                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                .add(jPanel7Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
-                    .add(lblChequeTerceroDescripcion)
-                    .add(txtChequeTerceroDescripcion, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
-                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                .add(jPanel7Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)))
-        );
-
+        txtChequeTerceroDescripcion = new Textbox();
 		
+        // TODO:FEDE armar bien el panel
+        
 		return panelChequeTercero;
 	}
 	
@@ -3135,14 +2000,14 @@ public class WOrdenPago extends ADForm /*implements /*FormPanel,ActionListener,T
 		try {
 			importe = numberParse(txtChequeTerceroImporte.getText());
 		} catch (Exception e) {
-			throw new Exception(lblChequeTerceroImporte.getText());
+			throw new Exception(lblChequeTerceroImporte.getValue());
 		}
 		String description = txtChequeTerceroDescripcion.getText().trim();
 		getModel().addChequeTercero(paymentID, importe, description, monedaOriginalID);
 	}
 	
 	private void updateContextValues() {
-		if (jTabbedPane2.getSelectedIndex() == m_chequeTerceroTabIndex) {
+		if (jTabbedPane2.getIndex() == m_chequeTerceroTabIndex) {
 			setIsSOTrxContext("Y");
 			setBPartnerContext(null);
 		} else {
@@ -3190,27 +2055,19 @@ public class WOrdenPago extends ADForm /*implements /*FormPanel,ActionListener,T
 			value = (Integer) cboCurrency.getValue(); 
 		setCurrencyContext(value);
 	}
-	*/
+	
 	/**
 	 * Busca las notas de créditos o pagos anticipados sin imputar para la
 	 * entidad comercial seleccionada
 	 */
-    /*
+    
 	private void buscarPagos() {
 		String title = Msg.getMsg(m_ctx, "InfoPayment");
 		Integer value = 0;
 		if (BPartnerSel.getValue() != null) {
 			value = (Integer) BPartnerSel.getValue();
 			if (getModel().buscarPagos(value) == true) {
-				// TODO: VER
-				/*
-				JOptionPane
-						.showMessageDialog(
-								this,
-								"El Proveedor tiene notas de crédito o pagos anticipados sin imputar",
-								title, 0);
-				*/
-    			/*
+				showInfo("El Proveedor tiene notas de crédito o pagos anticipados sin imputar");
 			}
 		}
 	}
@@ -3230,20 +2087,19 @@ public class WOrdenPago extends ADForm /*implements /*FormPanel,ActionListener,T
 			}
 		}
 	}
-	*/
+	
 	/**
 	 * Actualizar el total a pagar de la primer pestaña
-	 */
-    /*
+	 */    
 	protected void updateTotalAPagar1(){
 		txtTotalPagar1.setText(numberFormat(m_model.getSumaTotalPagarFacturas()));
 	}
-	*/
+	
 	/**
 	 * Actualiza componentes custom de la interfaz gráfica relacionadas con el
 	 * cambio de entidad comercial
 	 */
-    /*
+    
 	protected void customUpdateBPartnerRelatedComponents(boolean loadingBP){
 		if(loadingBP==true)
 		{	
@@ -3257,21 +2113,21 @@ public class WOrdenPago extends ADForm /*implements /*FormPanel,ActionListener,T
 
 		amt = MCurrency.currencyConvert(amt, m_C_Currency_ID, currencyID, new Timestamp(System.currentTimeMillis()), getModel().AD_Org_ID, m_ctx);
 		
-		Integer tabIndexSelected = jTabbedPane2.getSelectedIndex();
+		Integer tabIndexSelected = jTabbedPane2.getIndex();
 		if(tabIndexSelected.equals(TAB_INDEX_CHEQUE)){
-			txtChequeImporte.setValue(amt);
+			txtChequeImporte.setValue(amt.toString());
 		}
 		else if(tabIndexSelected.equals(TAB_INDEX_CREDITO)){
-			txtCreditImporte.setValue(amt);
+			txtCreditImporte.setValue(amt.toString());
 		}
 		else if(tabIndexSelected.equals(TAB_INDEX_EFECTIVO)){
-			txtEfectivoImporte.setValue(amt);
+			txtEfectivoImporte.setValue(amt.toString());
 		}
 		else if(tabIndexSelected.equals(TAB_INDEX_PAGO_ADELANTADO)){
-			txtPagoAdelantadoImporte.setValue(amt);
+			txtPagoAdelantadoImporte.setValue(amt.toString());
 		}
 		else if(tabIndexSelected.equals(TAB_INDEX_TRANSFERENCIA)){
-			txtTransfImporte.setValue(amt);
+			txtTransfImporte.setValue(amt.toString());
 		}
 		else {
 			updateCustomPayAmt(amt);
@@ -3281,16 +2137,14 @@ public class WOrdenPago extends ADForm /*implements /*FormPanel,ActionListener,T
 	protected void updateCustomPayAmt(BigDecimal amt){
 		// Por ahora aca no se hace nada, verificar subclases
 	}
-	*/
+	
 	
 	/**
 	 * Actualizo componentes luego del preprocesar y antes de procesar.
 	 */
-    /*
 	protected void updateComponentsPreProcesar(){
 		// Por ahora aca no se hace nada, verificar subclases		
 	}
-	*/
 	/**
 	 * Actualiza componentes de interfaz gráfica luego de agregar o eliminar un
 	 * medio de pago
@@ -3302,48 +2156,40 @@ public class WOrdenPago extends ADForm /*implements /*FormPanel,ActionListener,T
 	 *            {@link VOrdenPago#MEDIOPAGO_ACTION_EDIT} y
 	 *            {@link VOrdenPago#MEDIOPAGO_ACTION_DELETE}.
 	 */
-    /*
 	protected void updateCustomInfoAfterMedioPago(Integer medioPagoAction){
 		// Por ahora aca no se hace nada, verificar subclases
 	}
-	*/
 	/**
 	 * Realizar operaciones antes del pro-procesar
-	 */
-    /*
+	 */   
 	protected void makeOperationsBeforePreProcesar() throws Exception{
 		// Por ahora no hace nada aquí
 	}
-	*/
+	
 	/**
 	 * Realizar operaciones luego de cambiar el tipo de pago, normal o
 	 * adelantado
 	 */
-    /*
 	protected void updateCustomTipoPagoChange(){
 		// Por ahora no hace nada aquí
 	}
-	*/
+	
 	/**
 	 * Realizar operaciones luego de iniciar los atajos y sus operaciones
 	 */
-    /*
 	protected void customKeyBindingsInit(){
 		// Por ahora no hace nada aquí		
 	}
-	*/
+	
 	/**
 	 * Realizar operaciones luego de actualizar los captions y acciones
 	 */
-    /*
 	protected void customUpdateCaptions(){
 		// Por ahora no hace nada aquí
 	}
-	*/
 	/**
 	 * Resetear info.
 	 */
-    /*
 	protected void reset(){
 		BPartnerSel.setValue(null);
 		m_model.setBPartnerFacturas(0);
@@ -3354,7 +2200,7 @@ public class WOrdenPago extends ADForm /*implements /*FormPanel,ActionListener,T
 		cboCurrency.setValue(m_C_Currency_ID);
 		txtTotalPagar1.setValue(null);
 		m_cambioTab = true;
-		jTabbedPane1.setSelectedIndex(0);
+		jTabbedPane1.setZindex(0);
 		m_cambioTab = false;
 		txtDescription.setText("");
 		m_model.setDescription("");
@@ -3362,7 +2208,7 @@ public class WOrdenPago extends ADForm /*implements /*FormPanel,ActionListener,T
 		// actualizar secuencia
 		seq.setCurrentNext(seq.getCurrentNext().add(BigDecimal.ONE));
 		seq.save();
-		fldDocumentNo.setValue(seq.getCurrentNext());
+		fldDocumentNo.setValue(seq.getCurrentNext().toString());
 		
 		m_model.setDocumentNo("");
 		getModel().reset();
@@ -3377,14 +2223,6 @@ public class WOrdenPago extends ADForm /*implements /*FormPanel,ActionListener,T
 		
 	}
 
-	protected void setActionKeys(Map<String, KeyStroke> actionKeys) {
-		this.actionKeys = actionKeys;
-	}
-
-	protected Map<String, KeyStroke> getActionKeys() {
-		return actionKeys;
-	}
-	*/
 	/**
 	 * Realiza el movimiento hacia adelante o atrás de la selección de una
 	 * grilla.
@@ -3429,59 +2267,32 @@ public class WOrdenPago extends ADForm /*implements /*FormPanel,ActionListener,T
 	}
 	*/
     
-    /**	Logger			*/
-	private static CLogger log = CLogger.getCLogger(WOrdenPago.class);
-    
 	@Override
 	protected void initForm() {
-		// TODO: VER
-		/*
-		m_WindowNo = WindowNo;
-        m_frame    = frame;
-		*/
-		
+
 		try
 		{
+			
+			setIsSOTrxContext();
+			
+	        if (Env.getAD_Org_ID(Env.getCtx()) == 0) {
+	        	showError("@InvalidPORCOrg@");
+	        	return;
+        	};
+			
 			initComponents();
 			zkInit();
 			initTranslations();
 			dynInit();
 			customInitComponents();
+			
+			onTipoPagoChange(false);
+			
 		}
 		catch(Exception e)
 		{
 			log.log(Level.SEVERE, "init", e);
 		}
-		/*
-        setIsSOTrxContext();
-        
-        if (Env.getAD_Org_ID(Env.getCtx()) == 0) {
-        	showError("@InvalidPORCOrg@");
-        	SwingUtilities.invokeLater(new Runnable() {
-				public void run() {
-					m_frame.dispose();
-				}
-        	});
-        	
-        	return;
-        }
-        // TODO: VER
-        /*
-        this.revalidate();
-        this.repaint();
-        */
-		
-		
-		
-        
-        
-        /*
-        
- 
-        m_frame.pack();
-        
-        onTipoPagoChange(false);
-		*/
 	}
 
 
@@ -3557,6 +2368,7 @@ public class WOrdenPago extends ADForm /*implements /*FormPanel,ActionListener,T
 		
 	}
 
+	
 	private Panel agregarCampProy() {
 		
 		Panel panel = new Panel();
@@ -3742,4 +2554,6 @@ private Panel agregarTree() {
 		contenedor2.appendChild(divTxtEfectivoImporte);
 		jTabbedPane1.appendChild(contenedor2);
 	}
+
+	
 }

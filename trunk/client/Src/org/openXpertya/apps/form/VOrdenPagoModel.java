@@ -172,7 +172,7 @@ public class VOrdenPagoModel {
 		private Integer campaignId;
 		
 		// Almacena el Currency_ID con el que creado el MP (USD, EUR, ARS, etc).
-		protected Integer monedaOriginalID = C_Currency_ID;
+		public Integer monedaOriginalID = C_Currency_ID;
 		
 		public String toString() {
 			String tipoStr;
@@ -573,14 +573,14 @@ public class VOrdenPagoModel {
 		/**
 		 * @return the c_invoice_ID
 		 */
-		protected int getC_invoice_ID() {
+		public int getC_invoice_ID() {
 			return C_invoice_ID;
 		}
 
 		/**
 		 * @param c_invoice_id the c_invoice_ID to set
 		 */
-		protected void setC_invoice_ID(int c_invoice_id) {
+		public void setC_invoice_ID(int c_invoice_id) {
 			if (c_invoice_id != C_invoice_ID)
 				docTypeName = VModelHelper.getSQLValueString(getTrxName(), 
 						"select dt.printname from c_invoice i inner join c_doctype dt on (i.c_doctype_id=dt.c_doctype_id) where i.c_invoice_id = ?", c_invoice_id);
@@ -591,14 +591,14 @@ public class VOrdenPagoModel {
 		/**
 		 * @return the availableAmt
 		 */
-		protected BigDecimal getAvailableAmt() {
+		public BigDecimal getAvailableAmt() {
 			return availableAmt;
 		}
 
 		/**
 		 * @param availableAmt the availableAmt to set
 		 */
-		protected void setAvailableAmt(BigDecimal availableAmt) {
+		public void setAvailableAmt(BigDecimal availableAmt) {
 			this.availableAmt = availableAmt;
 		}
 
@@ -911,7 +911,7 @@ public class VOrdenPagoModel {
 	
 	// Se recorren las facturas y verificando que exista una tasa de cambio existente.
 	// En caso de no existir la tasa se retorna false
-	protected boolean validateConversionRate() {
+	public boolean validateConversionRate() {
 		if (m_facturas != null) {
 			for (ResultItem x : m_facturas){
 				if (((ResultItemFactura)x).getManualAmtClientCurrency().compareTo(BigDecimal.ZERO) > 0 || ((ResultItemFactura)x).getManualAmount().compareTo(BigDecimal.ZERO) > 0){
@@ -932,13 +932,13 @@ public class VOrdenPagoModel {
 	protected String trxName = null;
 	
 	// Main
-	protected Timestamp m_fechaFacturas = null;
-	protected boolean m_allInvoices = true;
-	protected int C_BPartner_ID = 0;
-	protected int AD_Org_ID = 0;
+	public Timestamp m_fechaFacturas = null;
+	public boolean m_allInvoices = true;
+	public int C_BPartner_ID = 0;
+	public int AD_Org_ID = 0;
 	public MBPartner BPartner = null;
-    protected int C_Currency_ID = Env.getContextAsInt( Env.getCtx(), "$C_Currency_ID" );
-    protected MCurrency mCurency = MCurrency.get(m_ctx, C_Currency_ID);
+	public int C_Currency_ID = Env.getContextAsInt( Env.getCtx(), "$C_Currency_ID" );
+	public MCurrency mCurency = MCurrency.get(m_ctx, C_Currency_ID);
     private Integer projectID = 0;
     private Integer campaignID = 0;
     private BigDecimal exchangeDifference = BigDecimal.ZERO;
@@ -2144,7 +2144,7 @@ public class VOrdenPagoModel {
 		return Trx.get(getTrxName(), true);
 	}
 
-	protected String getIsSOTrx() {
+	public String getIsSOTrx() {
 		return "N";
 	}
 	
@@ -2188,7 +2188,7 @@ public class VOrdenPagoModel {
 		return m_mediosPago;
 	}	
 	
-	protected boolean isSOTrx() {
+	public boolean isSOTrx() {
 		return "Y".equals(getIsSOTrx());
 	}
 	
@@ -2196,7 +2196,7 @@ public class VOrdenPagoModel {
 		return m_fechaFacturas;
 	}
 	
-	protected boolean isNormalPayment()  {
+	public boolean isNormalPayment()  {
 		return m_esPagoNormal;
 	}
 	
