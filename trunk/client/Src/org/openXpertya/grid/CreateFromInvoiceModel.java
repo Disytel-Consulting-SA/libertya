@@ -97,9 +97,17 @@ public class CreateFromInvoiceModel extends CreateFromModel {
         // Asociación con el pedido
         if( p_order != null ) {
             invoice.setOrder( p_order, true );    // overwrite header values
-			invoice.setManageDragOrderDiscounts(docType
-					.isDragOrderDocumentDiscounts()
-					|| docType.isDragOrderLineDiscounts());
+			boolean manageOrderDiscounts = (docType
+					.isDragOrderDocumentDiscounts() || docType
+					.isDragOrderLineDiscounts())
+					&& MOrder.isDiscountsApplied(p_order);
+			invoice.setManageDragOrderDiscounts(manageOrderDiscounts);
+			// Si se deben arrastrar los descuentos del pedido, resetear el
+			// descuento de la cabecera
+			if(manageOrderDiscounts){
+				invoice.setManualGeneralDiscount(BigDecimal.ZERO);
+				invoice.setSkipManualGeneralDiscountValidation(true);
+			}
 			invoice.setIsExchange(p_order.isExchange());
             if (!invoice.save()) {
             	throw new CreateFromSaveException(CLogger.retrieveErrorAsString());
