@@ -1938,7 +1938,7 @@ public class CalloutOrder extends CalloutEngine {
      * Valida el stock disponible del producto, y setea un mensaje de warning en la pestaña
      * en caso de que el stock no alcance para la línea.
      */
-    private void validateProductQty( Properties ctx,int WindowNo,MTab mTab) {
+    protected void validateProductQty( Properties ctx,int WindowNo,MTab mTab) {
         boolean valid = true;
     	Integer mProductID = (Integer)mTab.getValue("M_Product_ID");
     	BigDecimal qtyEntered = (BigDecimal)mTab.getValue("QtyEntered");
