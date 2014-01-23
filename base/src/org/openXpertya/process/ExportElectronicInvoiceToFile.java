@@ -1,6 +1,9 @@
 package org.openXpertya.process;
 
+import java.io.BufferedWriter;
+import java.io.FileOutputStream;
 import java.io.FileWriter;
+import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.math.BigDecimal;
 import java.sql.PreparedStatement;
@@ -120,6 +123,7 @@ public class ExportElectronicInvoiceToFile extends SvrProcess {
 				" from e_electronicinvoice hdr");
 		sql.append(" inner join e_electronicinvoiceline ln on (hdr.e_electronicinvoice_id = ln.e_electronicinvoice_id)");
 		sql.append(" where date_trunc('day',dateinvoiced) >= '"+periodo.getStartDate()+"' and date_trunc('day',dateinvoiced) <= '"+periodo.getEndDate()+"' and (hdr.AD_Client_ID = "+ getAD_Client_ID() +") and (hdr.createdby = "+ getAD_User_ID()+") ");
+		sql.append(" order by date_trunc('day',hdr.dateinvoiced::date) ASC, hdr.tipo_comprobante ASC, hdr.puntodeventa ASC, hdr.numerocomprobante ASC");
 				
 		PreparedStatement pstmt = null;
 		ResultSet rs = null;
@@ -173,9 +177,12 @@ public class ExportElectronicInvoiceToFile extends SvrProcess {
 				eInv.setVentaRNI(rs.getBigDecimal("ventarni"));
 				eInv.setCompraRNI(rs.getBigDecimal("comprarni"));
 				
-				eInv.setFactOperacionesExentas(rs.getBigDecimal("factoperacionesexentas"));
-				eInv.setVentaOperacionesExentas(rs.getBigDecimal("ventaoperacionesexentas"));
-				eInv.setCompraOperacionesExentas(rs.getBigDecimal("compraoperacionesexentas"));
+				//eInv.setFactOperacionesExentas(rs.getBigDecimal("factoperacionesexentas"));
+				//eInv.setVentaOperacionesExentas(rs.getBigDecimal("ventaoperacionesexentas"));
+				//eInv.setCompraOperacionesExentas(rs.getBigDecimal("compraoperacionesexentas"));
+				eInv.setFactOperacionesExentas(BigDecimal.ZERO);
+				eInv.setVentaOperacionesExentas(BigDecimal.ZERO);
+				eInv.setCompraOperacionesExentas(BigDecimal.ZERO);
 				
 				eInv.setFactImportePercepciones(rs.getBigDecimal("factimportepercepciones"));
 				eInv.setVentaImportePercepciones(rs.getBigDecimal("ventaimportepercepciones"));
@@ -265,7 +272,7 @@ public class ExportElectronicInvoiceToFile extends SvrProcess {
 
 		// Consulta recupera datos para el AD_PInstance_ID actual
 		StringBuffer sqlT_Temp = new StringBuffer();
-		sqlT_Temp.append("select * from t_electronicinvoice where AD_PInstance_ID = " + getAD_PInstance_ID());
+		sqlT_Temp.append("select * from t_electronicinvoice where AD_PInstance_ID = " + getAD_PInstance_ID() + " order by c_invoice_id ASC, date_trunc('day',dateinvoiced::date) ASC, tipo_comprobante ASC, puntodeventa ASC, numerocomprobante ASC");
 		PreparedStatement pstmt_t = null;
 		ResultSet rs_t = null;
 		

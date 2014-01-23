@@ -67,6 +67,12 @@ public class ExportElectronicInvoiceToTables extends SvrProcess {
 			log.log(Level.SEVERE, "Export To Table E_ElectronicInvoice error", e);
 			throw new Exception("Export Electronic Invoice To Table Error",e);
 		}
+		
+		// Se actualizan los montos de las facturas anuladas a 0
+		String	sqlUpdateInvoiced	= " UPDATE E_ElectronicInvoice " +
+				" SET grandtotal= 0.00, taxbaseamt = 0.00, totallines = 0.00, taxamt = 0.00, rni = 0.00, operacionesexentas = 0.00, importepercepciones = 0.00, percepcionesiibb = 0.00, impuestosmunicipales = 0.00, impuestosinternos = 0.00, transporte = 0.00" +
+				" WHERE datevoid IS NOT NULL";
+        DB.executeUpdate(sqlUpdateInvoiced, get_TrxName());
 		return "Generalización finalizada correctamente";
 	}
 

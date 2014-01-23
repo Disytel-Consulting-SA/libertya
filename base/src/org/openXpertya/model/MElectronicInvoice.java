@@ -35,6 +35,7 @@ public class MElectronicInvoice extends X_E_ElectronicInvoice {
 	}
 
 	public void createHdr(boolean isFiscal, MInvoice inv) throws Exception{
+		String taxId = null;
 		String taxIdType = null;
 		String name = null;
 		int c_Categoria_Iva_ID = 0;	
@@ -42,10 +43,11 @@ public class MElectronicInvoice extends X_E_ElectronicInvoice {
 		PreparedStatement ps = null;
     	ResultSet rs = null;
     	try {
-			ps = DB.prepareStatement("SELECT TaxIdType, Name, C_Categoria_Iva_ID, IIBB FROM C_BPartner WHERE C_BPartner_ID = ?", get_TrxName());
+			ps = DB.prepareStatement("SELECT TaxID, TaxIdType, Name, C_Categoria_Iva_ID, IIBB FROM C_BPartner WHERE C_BPartner_ID = ?", get_TrxName());
 			ps.setInt(1, inv.getC_BPartner_ID());
 			rs = ps.executeQuery();
 			if (rs.next()){
+				taxId = rs.getString("TaxID");
 				taxIdType = rs.getString("TaxIdType");
 				name = rs.getString("Name");
 				c_Categoria_Iva_ID = rs.getInt("C_Categoria_Iva_ID");	
@@ -83,7 +85,8 @@ public class MElectronicInvoice extends X_E_ElectronicInvoice {
 		finally{
 			setDoc_Identificatorio_Comprador(taxIDType); // Según tabla 2	
 		}
-		setIdentif_Comprador(getCuit(inv.getCUIT()));							// CUIT del cliente según se vio en una exportación WEB de la AFIP
+		
+		setIdentif_Comprador(getCuit(taxId));							// CUIT del cliente según se vio en una exportación WEB de la AFIP
 		setIdentif_Vendedor("0");												// No se usa
 		setName(name);
 		MClientInfo ci = MClient.get(getCtx()).getInfo();
@@ -175,11 +178,17 @@ public class MElectronicInvoice extends X_E_ElectronicInvoice {
 	}
 	
 	private String getCuit(String cuit){
-		if (cuit == null){ return "00000000000"; }
+		if (Util.isEmpty(cuit)){ 
+			return "27000000006";
+		}
 		if (cuit.length() == 13){
 			String numero = cuit.substring(0,2)+cuit.substring(3,11)+cuit.substring(12,13);
 			return numero;
 		}
+		if (Util.isEmpty(cuit.replace("0",""))){
+			return "27000000006";
+		}
+		
 		return cuit;
 	}
 
