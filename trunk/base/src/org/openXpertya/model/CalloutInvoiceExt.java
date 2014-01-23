@@ -25,6 +25,7 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Properties;
 import java.util.logging.Level;
+import java.util.regex.Pattern;
 
 import org.openXpertya.util.CLogger;
 import org.openXpertya.util.CPreparedStatement;
@@ -1016,6 +1017,41 @@ public class CalloutInvoiceExt extends CalloutInvoice {
 			
 		}
 		return "";
+	}
+	
+	/**
+	 * Valida si el nro de documento matchea con el formato de nros de
+	 * documentos de facturas fiscales
+	 * 
+	 * @param documentNo
+	 * @return true si matchea, false caso contrario
+	 */
+	public static boolean isValidFiscalDocumentNo(String documentNo){
+		// 1) Longitud del nro de documento
+		String realDocumentNo = documentNo.replace(" ", "0");
+		if(realDocumentNo.length() != 13){
+			return false;
+		}
+		// Pasar la primer letra a mayúscula por las dudas
+		String firstLetter = realDocumentNo.charAt(0)+"";
+		String firstLetterMayus = firstLetter.toUpperCase();
+		realDocumentNo = realDocumentNo.replaceFirst(firstLetter, firstLetterMayus);
+		
+		// 2) Por patrones
+		boolean fiscalMatches = Pattern.matches("[ABC]{1}\\d{3}[1-9]{1}\\d{7}[1-9]{1}",
+				realDocumentNo);
+		if(!fiscalMatches){
+			return false;
+		}
+		
+		// 3) Diviendo el nro de documento
+		Map<String, Object> documentNoParts = DividirDocumentNo(
+				Env.getAD_Client_ID(Env.getCtx()), realDocumentNo);
+		if(documentNoParts.size() < 3){
+			return false;
+		}
+		
+		return true;
 	}
 	
 }
