@@ -1074,6 +1074,10 @@ public abstract class HasarFiscalPrinter extends BasicFiscalPrinter implements H
 			loadDocumentLineItems(debitNote);
 
 			//////////////////////////////////////////////////////////////
+			// Se cargan los descuentos de la nota de débito.
+			loadDocumentDiscounts(debitNote);
+			
+			//////////////////////////////////////////////////////////////
 			// Se cargan los impuestos adicionales de la factura
 			loadOtherTaxes(debitNote);
 			

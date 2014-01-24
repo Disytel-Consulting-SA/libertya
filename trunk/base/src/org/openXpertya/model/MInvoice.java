@@ -268,6 +268,8 @@ public class MInvoice extends X_C_Invoice implements DocAction {
 		to.setPosted(false);
 		to.setProcessed(false);
 
+		to.setManageDragOrderDiscounts(false);
+		
 		// delete references
 
 		to.setIsSelfService(false);
