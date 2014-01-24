@@ -1074,7 +1074,14 @@ public final class APanel extends CPanel implements DataStatusListener,ChangeLis
         if( isFirstTab()) {
             aHistory.setPressed( !m_curTab.isOnlyCurrentRows());
         }
-
+        
+        // Actualización de botones de pasaje por las pestañas
+        aDetail.setEnabled((m_curTabIndex != m_curWinTab.getTabCount() - 1)
+				&& !aSave.isEnabled());
+		aParent.setEnabled(((m_curTabIndex != 0) && (m_curWinTab.getTabCount() > 1))
+				&& !aSave.isEnabled());
+        
+        
         // Transaction info
 
         String trxInfo = m_curTab.getTrxInfo();
@@ -1334,8 +1341,12 @@ public final class APanel extends CPanel implements DataStatusListener,ChangeLis
 
         // Update <-> Navigation
 
-        aDetail.setEnabled( m_curTabIndex != m_curWinTab.getTabCount() - 1 );
-        aParent.setEnabled( (m_curTabIndex != 0) && (m_curWinTab.getTabCount() > 1) );
+		// Pasaje de pestañas hija y padre siempre que no esté habilitado el
+		// save
+		aDetail.setEnabled((m_curTabIndex != m_curWinTab.getTabCount() - 1)
+				&& !aSave.isEnabled());
+		aParent.setEnabled(((m_curTabIndex != 0) && (m_curWinTab.getTabCount() > 1))
+				&& !aSave.isEnabled());
 
         // History (on first tab only)
 
