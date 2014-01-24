@@ -1144,6 +1144,30 @@ public class MInOut extends X_M_InOut implements DocAction {
 
     protected boolean beforeSave( boolean newRecord ) {
 
+		// Validaciones en caso de haber cambiado el warehouse    	
+		if (is_ValueChanged("M_Warehouse_ID")) {
+			// Recuperar las líneas
+			MInOutLine[] lines = getLines(true);
+			if (lines != null && lines.length > 0) {
+				// Si hay líneas, entonces setear el locator por defecto del nuevo warehouse				
+				int defaultLocatorID = MWarehouse.getDefaultLocatorID(getM_Warehouse_ID(), get_TrxName());
+				if (defaultLocatorID <= 0) {
+					// Si no hay locator por defecto, presentar mensaje de error
+					log.saveError("Error", Msg.getMsg(getCtx(), "WHChangedLinesAlreadyLoadedNoDefLoc"));
+					return false;
+				}
+				else {
+					// Intentar actualizar las lineas con el nuevo locatorID
+					for (MInOutLine aLine : lines) {
+						aLine.setM_Locator_ID(defaultLocatorID);
+						if (!aLine.save()) {
+							log.saveError("Error", CLogger.retrieveErrorAsString());
+							return false;
+						}
+					}
+				}				
+			}
+		}
     	
         /* Informacion a recuperar desde el pedido (si el mismo se encuentra referenciado) en caso de que no se encuentre cargada en el remito */
         if (getC_Order_ID() > 0) {
