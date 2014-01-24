@@ -931,6 +931,7 @@ public class FiscalDocumentPrint {
 		reorderFooterObservation(debitNote);
 		
 		// TODO: Se asigna el número de remito en caso de existir.
+		loadDocumentDiscounts(debitNote, mInvoice.getDiscounts());
 		
 		// Se agregan las líneas de la nota de débito al documento.
 		loadDocumentLines(mInvoice, debitNote);
