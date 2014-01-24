@@ -1895,8 +1895,14 @@ public class MInvoice extends X_C_Invoice implements DocAction {
 					// CONSUMIDOR FINAL y si no tiene nada cargado de antemano
 					if (bpCategoriaIva.getCodigo() != MCategoriaIva.CONSUMIDOR_FINAL) {
 						String location = loc.getLocation(true).toString();
-						setNombreCli(Util.isEmpty(getNombreCli(), true)?partner.getName():getNombreCli());
-						setInvoice_Adress(Util.isEmpty(getInvoice_Adress(), true)?location:getInvoice_Adress());
+						setNombreCli((Util.isEmpty(getNombreCli(), true) || (is_ValueChanged("C_BPartner_ID") && !is_ValueChanged("NombreCli"))) ? partner
+								.getName() : getNombreCli());
+						setInvoice_Adress((Util.isEmpty(getInvoice_Adress(),
+								true) || (is_ValueChanged("C_BPartner_ID") && !is_ValueChanged("Invoice_Adress"))) ? location
+								: getInvoice_Adress());
+						setNroIdentificCliente((Util.isEmpty(
+								getNroIdentificCliente(), true) || (is_ValueChanged("C_BPartner_ID") && !is_ValueChanged("NroIdentificCliente"))) ? partner
+								.getTaxID() : getNroIdentificCliente());
 					}
 				}
 
