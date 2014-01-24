@@ -5,13 +5,6 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.List;
 
-import org.compiere.plaf.CompierePLAF;
-import org.openXpertya.grid.CreateFromModel.CreateFromPluginInterface;
-import org.openXpertya.grid.CreateFromModel.CreateFromSaveException;
-import org.openXpertya.grid.CreateFromModel.DocumentLine;
-import org.openXpertya.grid.CreateFromModel.InvoiceLine;
-import org.openXpertya.grid.CreateFromModel.OrderLine;
-import org.openXpertya.grid.CreateFromModel.SourceEntity;
 import org.openXpertya.model.MInOut;
 import org.openXpertya.model.MInOutLine;
 import org.openXpertya.model.MInvoice;
@@ -20,6 +13,7 @@ import org.openXpertya.model.MLocator;
 import org.openXpertya.model.MOrder;
 import org.openXpertya.model.MOrderLine;
 import org.openXpertya.model.MProduct;
+import org.openXpertya.model.X_C_DocType;
 import org.openXpertya.util.CLogger;
 import org.openXpertya.util.DB;
 import org.openXpertya.util.Env;
@@ -142,7 +136,7 @@ public class CreateFromShipmentModel extends CreateFromModel {
 			inout.setC_Campaign_ID(p_order.getC_Campaign_ID());
 			inout.setUser1_ID(p_order.getUser1_ID());
 			inout.setUser2_ID(p_order.getUser2_ID());
-			inout.setM_Warehouse_ID(p_order.getM_Warehouse_ID());
+			setWarehouse(inout, p_order, trxName);
 			inout.setDeliveryRule(p_order.getDeliveryRule());
 			inout.setDeliveryViaRule(p_order.getDeliveryViaRule());
 			inout.setM_Shipper_ID(p_order.getM_Shipper_ID());
@@ -306,5 +300,19 @@ public class CreateFromShipmentModel extends CreateFromModel {
 		}
 
 		return true;
+	}
+	
+	/*
+	 * Setea el warehouse del remito a partir del especificado en el pedido
+	 * UNICAMENTE si la configuración del tipo de documento así lo especifica,
+	 * o bien si todavía este dato no se encuentra especificado
+	 */
+	protected void setWarehouse(MInOut inOut, MOrder order, String trxName) {
+		// Recuperar tipo de documento
+		X_C_DocType inOutDocType = new X_C_DocType(ctx, inOut.getC_DocType_ID(), trxName);
+		// Si no esta seteado o bien hay que forzar el warehouse del pedido, setearlo
+		if ((inOut.getM_Warehouse_ID() <= 0) || inOutDocType.isUseOrderWarehouse()) {
+			inOut.setM_Warehouse_ID(order.getM_Warehouse_ID());
+		}
 	}
 }
