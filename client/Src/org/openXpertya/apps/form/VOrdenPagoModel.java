@@ -757,10 +757,10 @@ public class VOrdenPagoModel {
 		public BigDecimal getImporteMonedaOriginal() {
 			return amt;
 		}
-
+	
 	}
 	
-	protected class OpenInvoicesTableModel extends ResultItemTableModel {
+	public class OpenInvoicesTableModel extends ResultItemTableModel {
 		public OpenInvoicesTableModel() {
 			VModelHelper.GetInstance().super();
 			
@@ -960,7 +960,7 @@ public class VOrdenPagoModel {
 	// Table Facturas
 	public OpenInvoicesTableModel m_facturasTableModel;
 	// private Vector<BigDecimal> m_facturasManualAmounts = null;
-	protected Vector<ResultItem> m_facturas = null;
+	public Vector<ResultItem> m_facturas = null;
 	// Payments creados
 	private HashMap<Integer, MPayment> mpayments = new HashMap<Integer, MPayment>();
 	private Map<Integer, MCashLine> mCashLines = new HashMap<Integer, MCashLine>();
@@ -2079,7 +2079,7 @@ public class VOrdenPagoModel {
 	}
 		
 	
-	protected void actualizarPagarConPagarCurrency(int row, ResultItemFactura rif, int currency_ID_To){
+	public void actualizarPagarConPagarCurrency(int row, ResultItemFactura rif, int currency_ID_To){
 		BigDecimal manualAmtClientCurrency = rif.getManualAmtClientCurrency();
 		BigDecimal openAmt = ( (m_facturas.get(row).getItem(m_facturasTableModel.getOpenCurrentAmtColIdx())) == null ) ? BigDecimal.ZERO : (BigDecimal) m_facturas.get(row).getItem(m_facturasTableModel.getOpenCurrentAmtColIdx());
 		// Sumar o restar algún monto custom
@@ -2093,7 +2093,7 @@ public class VOrdenPagoModel {
 		rif.setManualAmount(manualAmt);
 	}
 	
-	protected void actualizarPagarCurrencyConPagar(int row, ResultItemFactura rif, int currency_ID_To){
+	public void actualizarPagarCurrencyConPagar(int row, ResultItemFactura rif, int currency_ID_To){
 		BigDecimal manualAmt = rif.getManualAmount();
 		BigDecimal openAmt = (BigDecimal) m_facturas.get(row).getItem(m_facturasTableModel.getOpenAmtColIdx());
 		// Sumar o restar algún monto custom

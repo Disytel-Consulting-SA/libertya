@@ -9,9 +9,14 @@ package org.adempiere.webui.apps.form;
 import java.math.BigDecimal;
 import java.sql.Timestamp;
 import java.text.ParseException;
+import java.util.Comparator;
 import java.util.Date;
 import java.util.Properties;
 import java.util.logging.Level;
+
+import javax.swing.event.TableModelEvent;
+import javax.swing.event.TableModelListener;
+import javax.swing.table.TableModel;
 
 import org.adempiere.webui.component.Button;
 import org.adempiere.webui.component.Checkbox;
@@ -21,7 +26,6 @@ import org.adempiere.webui.component.Datebox;
 import org.adempiere.webui.component.Grid;
 import org.adempiere.webui.component.GridFactory;
 import org.adempiere.webui.component.Label;
-import org.adempiere.webui.component.ListModelTable;
 import org.adempiere.webui.component.Row;
 import org.adempiere.webui.component.Rows;
 import org.adempiere.webui.component.Tab;
@@ -38,6 +42,7 @@ import org.adempiere.webui.event.ValueChangeListener;
 import org.adempiere.webui.panel.ADForm;
 import org.adempiere.webui.window.FDialog;
 import org.openXpertya.apps.form.VComponentsFactory;
+import org.openXpertya.apps.form.VModelHelper;
 import org.openXpertya.apps.form.VOrdenPago;
 import org.openXpertya.apps.form.VOrdenPagoModel;
 import org.openXpertya.apps.form.VOrdenPagoModel.MedioPago;
@@ -45,6 +50,7 @@ import org.openXpertya.apps.form.VOrdenPagoModel.MedioPagoCheque;
 import org.openXpertya.apps.form.VOrdenPagoModel.MedioPagoCredito;
 import org.openXpertya.apps.form.VOrdenPagoModel.MedioPagoEfectivo;
 import org.openXpertya.apps.form.VOrdenPagoModel.MedioPagoTransferencia;
+import org.openXpertya.apps.form.VOrdenPagoModel.ResultItemFactura;
 import org.openXpertya.model.Lookup;
 import org.openXpertya.model.MBPartner;
 import org.openXpertya.model.MCurrency;
@@ -66,26 +72,27 @@ import org.zkoss.zkex.zul.North;
 import org.zkoss.zkex.zul.South;
 import org.zkoss.zkmax.zul.Tablechildren;
 import org.zkoss.zkmax.zul.Tablelayout;
+import org.zkoss.zul.AbstractListModel;
 import org.zkoss.zul.Combobox;
 import org.zkoss.zul.Div;
 import org.zkoss.zul.Hbox;
+import org.zkoss.zul.ListModelExt;
 import org.zkoss.zul.Panel;
 import org.zkoss.zul.Panelchildren;
 import org.zkoss.zul.Radio;
 import org.zkoss.zul.Radiogroup;
+import org.zkoss.zul.RowRenderer;
 import org.zkoss.zul.Separator;
 import org.zkoss.zul.Space;
 import org.zkoss.zul.Tree;
 import org.zkoss.zul.Treechildren;
 import org.zkoss.zul.Treeitem;
-import org.zkoss.zul.event.ListDataEvent;
-import org.zkoss.zul.event.ListDataListener;
 
 /**
  *
  * @author  usuario
  */
-public class WOrdenPago extends ADForm implements ValueChangeListener /*implements /*FormPanel,ActionListener,TableModelListener,VetoableChangeListener,ChangeListener,TreeModelListener,MouseListener,CellEditorListener,ASyncProcess*/ {
+public class WOrdenPago extends ADForm implements ValueChangeListener, TableModelListener /*implements /*FormPanel,ActionListener,TableModelListener,VetoableChangeListener,ChangeListener,TreeModelListener,MouseListener,CellEditorListener,ASyncProcess*/ {
 
     /** Creates new form WOrdenPago */
     public WOrdenPago() {
@@ -112,43 +119,41 @@ public class WOrdenPago extends ADForm implements ValueChangeListener /*implemen
         lblDocumentNo = new Label();
         lblDescription = new Label();
         
-        MLookup lookup = MLookupFactory.get (Env.getCtx(), m_WindowNo, 0, 1014335, DisplayType.TableDir);
-        cboClient = new WTableDirEditor("AD_Client_ID", false, false, true, lookup);
+        MLookup lookupClient = MLookupFactory.get (Env.getCtx(), m_WindowNo, 0, 1014335, DisplayType.TableDir);
+        cboClient = new WTableDirEditor("AD_Client_ID", false, false, true, lookupClient);
         cboClient.setValue(Env.getAD_Client_ID(Env.getCtx()));
         cboClient.setReadWrite(false);
         
-        lookup = MLookupFactory.get (Env.getCtx(), m_WindowNo, 0, 3499, DisplayType.Search);
-		BPartnerSel = new WSearchEditor ("C_BPartner_ID", true, false, true, lookup);
+        MLookup lookupPartner = MLookupFactory.get (Env.getCtx(), m_WindowNo, 0, 3499, DisplayType.Search);
+		BPartnerSel = new WSearchEditor ("C_BPartner_ID", true, false, true, lookupPartner);
 		
         fldDocumentNo = new Textbox(); 
         
         lblOrg = new Label();
-        lookup = MLookupFactory.get (Env.getCtx(), m_WindowNo, 0, 1016168, DisplayType.TableDir);
-		cboOrg = new WTableDirEditor("AD_Org_ID", false, false, true, lookup);
+        MLookup lookupOrg = MLookupFactory.get (Env.getCtx(), m_WindowNo, 0, 1016168, DisplayType.TableDir);
+		cboOrg = new WTableDirEditor("AD_Org_ID", false, false, true, lookupOrg);
 		cboOrg.setValue(Env.getAD_Org_ID(Env.getCtx()));
 		
         radPayTypeStd = new Radio();
         radPayTypeAdv = new Radio();
-
+        radPayTypeStd.setValue("PAGO NORMAL");
+        radPayTypeStd.setSelected(true);
+        
         txtDescription = new Textbox();
 
 		
 		lblDocumentType = new Label();
 		// FEDE:TODO: Centralizar la creacion de combos en algun lugar
-		MLookupInfo info = VComponentsFactory.MLookupInfoFactory( Env.getCtx(),m_WindowNo, 0, 1016307, DisplayType.TableDir, m_model.getDocumentTypeSqlValidation());
-		lookup = new MLookup(info, 0);
-		cboDocumentType = new WTableDirEditor("C_DocType_ID", false, false, true, lookup);
+		MLookupInfo infoDocType = VComponentsFactory.MLookupInfoFactory( Env.getCtx(),m_WindowNo, 0, 1016307, DisplayType.TableDir, m_model.getDocumentTypeSqlValidation());
+		MLookup lookupDocType = new MLookup(infoDocType, 0);
+		cboDocumentType = new WTableDirEditor("C_DocType_ID", false, false, true, lookupDocType);
 		
-
-//		// tblFacturas = new javax.swing.JTable(m_model.getFacturasTableModel());
-//		/* TODO:VER */
 		tblFacturas = new Grid();
-		// FEDE:TODO simplemente para evitar NPE mas adelante
-		ListModelTable model = new ListModelTable(); 
-		tblFacturas.setModel(model);
-//		ListModel
-//		 m_model.getFacturasTableModel();		
-		
+		tblFacturas.setHeight("350px");
+		listModel = new FacturasModel(VModelHelper.HideColumnsTableModelFactory(m_model.m_facturasTableModel), m_WindowNo);
+		renderer = new GridRenderer(this);
+		tblFacturas.setModel(listModel);
+		tblFacturas.setRowRenderer(renderer);
 		
         txtTotalPagar1 = new Textbox();
 //        txtTotalPagar1.setConstraint("/^[0-9]+$/");
@@ -166,10 +171,9 @@ public class WOrdenPago extends ADForm implements ValueChangeListener /*implemen
 
         lblEfectivoLibroCaja = new Label();
         
-        lookup = MLookupFactory.get(Env.getCtx(), m_WindowNo, 0, 1016307, DisplayType.Search);
-		info = VComponentsFactory.MLookupInfoFactory( Env.getCtx(),m_WindowNo, 0, 5241, DisplayType.Search, m_model.getEfectivoLibroCajaSqlValidation());
-		lookup = new MLookup(info, 0);
-		efectivoLibroCaja = new WSearchEditor("C_Cash_ID", false, false, true, lookup);
+		MLookupInfo infoLibroCaja = VComponentsFactory.MLookupInfoFactory( Env.getCtx(),m_WindowNo, 0, 5241, DisplayType.Search, m_model.getEfectivoLibroCajaSqlValidation());
+		MLookup lookupLibroCaja = new MLookup(infoLibroCaja, 0);
+		efectivoLibroCaja = new WSearchEditor("C_Cash_ID", false, false, true, lookupLibroCaja);
 
         lblEfectivoImporte = new Label();
         txtEfectivoImporte = new Textbox();
@@ -180,9 +184,9 @@ public class WOrdenPago extends ADForm implements ValueChangeListener /*implemen
         lblTransfNroTransf = new Label();
         lblTransfImporte = new Label();
         lblTransfFecha = new Label();
-		info = VComponentsFactory.MLookupInfoFactory(Env.getCtx(),m_WindowNo, 0, 3077, DisplayType.Search, m_model.getTransfCtaBancariaSqlValidation());
-		lookup = new MLookup(info, 0);
-		transfCtaBancaria = new WSearchEditor( "C_BankAccount_ID",false,false,true,lookup );
+        MLookupInfo infoTransf = VComponentsFactory.MLookupInfoFactory(Env.getCtx(),m_WindowNo, 0, 3077, DisplayType.Search, m_model.getTransfCtaBancariaSqlValidation());
+		MLookup lookupTransf = new MLookup(infoTransf, 0);
+		transfCtaBancaria = new WSearchEditor( "C_BankAccount_ID",false,false,true,lookupTransf );
 	    
         txtTransfNroTransf = new Textbox();
         txtTransfImporte = new Textbox();
@@ -208,15 +212,15 @@ public class WOrdenPago extends ADForm implements ValueChangeListener /*implemen
         txtChequeCUITLibrador = new Textbox();
         txtChequeDescripcion = new Textbox();     
         
-        lookup = MLookupFactory.get (Env.getCtx(), m_WindowNo, 0, 2570, DisplayType.TableDir);
-        cboCampaign = new WTableDirEditor("C_Campaign_ID", false, false, true, lookup);
+        MLookup lookupCampaign = MLookupFactory.get (Env.getCtx(), m_WindowNo, 0, 2570, DisplayType.TableDir);
+        cboCampaign = new WTableDirEditor("C_Campaign_ID", false, false, true, lookupCampaign);
         
-        lookup = MLookupFactory.get (Env.getCtx(), m_WindowNo, 0, 1349, DisplayType.TableDir);
-        cboProject = new WTableDirEditor("C_Project_ID", false, false, true, lookup);
+        MLookup lookupProject = MLookupFactory.get (Env.getCtx(), m_WindowNo, 0, 1349, DisplayType.TableDir);
+        cboProject = new WTableDirEditor("C_Project_ID", false, false, true, lookupProject);
         
-		info = VComponentsFactory.MLookupInfoFactory(Env.getCtx(),m_WindowNo, 0, 457, DisplayType.TableDir, m_model.getCurrencySqlValidation());
-        lookup = new MLookup(info, 0);
-        cboCurrency = new WTableDirEditor("C_Currency_ID", false, false, true, lookup);
+        MLookupInfo infoCurrency = VComponentsFactory.MLookupInfoFactory(Env.getCtx(),m_WindowNo, 0, 457, DisplayType.TableDir, m_model.getCurrencySqlValidation());
+        MLookup lookupCurrency = new MLookup(infoCurrency, 0);
+        cboCurrency = new WTableDirEditor("C_Currency_ID", false, false, true, lookupCurrency);
             
         lblCampaign = new Label();
         lblProject = new Label();
@@ -229,9 +233,9 @@ public class WOrdenPago extends ADForm implements ValueChangeListener /*implemen
         jPanel11 = new javax.swing.JPanel();
         */
         lblCreditInvoice = new Label();
-        info = VComponentsFactory.MLookupInfoFactory( Env.getCtx(),m_WindowNo, 0, 3484, DisplayType.Search, m_model.getCreditSqlValidation());
-		lookup = new MLookup(info, 0);
-		creditInvoice = new WSearchEditor("C_Invoice_ID", false, false, true, lookup);
+        MLookupInfo infoCreditInvoice = VComponentsFactory.MLookupInfoFactory( Env.getCtx(),m_WindowNo, 0, 3484, DisplayType.Search, m_model.getCreditSqlValidation());
+        MLookup lookupCreditInvoice = new MLookup(infoCreditInvoice, 0);
+		creditInvoice = new WSearchEditor("C_Invoice_ID", false, false, true, lookupCreditInvoice);
         
         lblCreditAvailable = new Label();
         txtCreditAvailable = new Textbox();
@@ -278,15 +282,13 @@ public class WOrdenPago extends ADForm implements ValueChangeListener /*implemen
             }
         });
 
-        // tblFacturas.setModel(new javax.swing.table.DefaultTableModel());
-
         txtTotalPagar1.setValue("TOTAL A PAGAR");
         lblTotalPagar1.setValue("TOTAL A PAGAR");
 
         buttonGroup2.appendChild(rInvoiceAll);      
         rInvoiceAll.setSelected(true);
         rInvoiceAll.setValue("TODAS");
-        rInvoiceAll.addEventListener("onClick", new EventListener() {
+        rInvoiceAll.addEventListener("onCheck", new EventListener() {
             public void onEvent(Event arg0) throws Exception {
                 onFechaChange(false);
             }
@@ -295,7 +297,7 @@ public class WOrdenPago extends ADForm implements ValueChangeListener /*implemen
         
         buttonGroup2.appendChild(rInvoiceDate);
         rInvoiceDate.setValue("VENCIDAS A FECHA:");
-        rInvoiceDate.addEventListener("onClick", new EventListener() {
+        rInvoiceDate.addEventListener("onCheck", new EventListener() {
             public void onEvent(Event arg0) throws Exception {
                 onFechaChange(false);
             }
@@ -812,12 +814,12 @@ public class WOrdenPago extends ADForm implements ValueChangeListener /*implemen
 
     private void onTipoPagoChange(boolean toPayMoment) {//GEN-FIRST:event_onTipoPagoChange
     	if (radPayTypeStd.isSelected()) {
-    		tblFacturas.setVisible(true); // setEnabled(true);
+    		tblFacturas.setAttribute("ReadOnly", "false"); // setEnabled(true);
     		txtTotalPagar1.setReadonly(true);
     		rInvoiceAll.setDisabled(false);
     		rInvoiceDate.setDisabled(false);
     	} else {
-    		tblFacturas.setVisible(false); // setEnabled(false);
+    		tblFacturas.setAttribute("ReadOnly", "true"); // setEnabled(false);
     		txtTotalPagar1.setReadonly(false);
     		rInvoiceAll.setSelected(true);
     		rInvoiceAll.setDisabled(false);
@@ -839,7 +841,7 @@ public class WOrdenPago extends ADForm implements ValueChangeListener /*implemen
     
     protected void updatePayAllInvoices(boolean toPayMoment){
     	getModel().updatePayAllInvoices(checkPayAll.isSelected(), toPayMoment);
-//		tblFacturas.repaint();
+		tblFacturas.invalidate(); // repaint();
     }
 
     private void cmdCancelActionPerformed(Event evt) {//GEN-FIRST:event_cmdCancelActionPerformed
@@ -995,10 +997,9 @@ public class WOrdenPago extends ADForm implements ValueChangeListener /*implemen
     /**
      * Metodo que determina el valor que se encuentra dentro de la entidad comercial.
      * Si es null y está seteado el radio button de pago anticipado, no se puede pasar a Siguiente.
-     * Para que el boton Siguiente se encuentre habilitado, debería ingresar una entidad comercial en el VLookUP
+     * Para que el boton Siguiente se encuentre habilitado, debería ingresar una entidad comercial en el LookUP
      * @param evt
      */
-    
     private void cmdBPartnerSelActionPerformed(ValueChangeEvent evt){
     	if((this.BPartnerSel.getValue() == null)){
     		this.cmdProcess.setEnabled(false);
@@ -1086,7 +1087,9 @@ public class WOrdenPago extends ADForm implements ValueChangeListener /*implemen
     protected Radio radPayTypeStd;
     protected Checkbox checkPayAll;
     
+    protected FacturasModel listModel;
     protected Grid tblFacturas;
+    protected GridRenderer renderer;
     protected WDateEditor transFecha;
     protected WSearchEditor transfCtaBancaria;
 
@@ -1190,11 +1193,6 @@ public class WOrdenPago extends ADForm implements ValueChangeListener /*implemen
 
     
 	protected void customInitComponents() {
-		//
-		// Los setModel los invoco desde initComponents
-		//
-		// tblFacturas.setModel(m_model.getFacturasTableModel());
-		// jTree1.setModel(m_model.getMediosPagoTreeModel());
 		
 		Date d = new Date();
 		
@@ -1230,14 +1228,17 @@ public class WOrdenPago extends ADForm implements ValueChangeListener /*implemen
 		transFecha.addValueChangeListener(this);
 		
 		tblFacturas.addEventListener("onChange", this); // addValueChangeListener(this);
-		tblFacturas.getModel().addListDataListener(new ListDataListener() {
-			public void onChange(ListDataEvent arg0) {
+		getModel().m_facturasTableModel.addTableModelListener(new TableModelListener() {
+			public void tableChanged(TableModelEvent e) {
 				// Se verifica que no se esté intentando pagar una factura que no tiene una tasa de cambio para la fecha actual
 				validateConversionRate();
-				tableUpdated();
+				tableUpdated();		
+				// FEDE:TODO: mejorar manera de actualizar modelo
+				listModel = new FacturasModel(VModelHelper.HideColumnsTableModelFactory(m_model.m_facturasTableModel), m_WindowNo);
+				tblFacturas.setModel(listModel);
 			}
-		}); // addTableModelListener(this);
-		
+		});
+
 		// tblFacturas.getDefaultEditor(BigDecimal.class).addCellEditorListener(this);
 		// TableCellEditor cellEd = tblFacturas.getDefaultEditor(BigDecimal.class); 
 //		TableCellEditor cellEd = new DecimalEditor(BigDecimal.ZERO, new BigDecimal(Integer.MAX_VALUE), m_model.getNumberFormat());
@@ -1623,13 +1624,26 @@ public class WOrdenPago extends ADForm implements ValueChangeListener /*implemen
 		
 	}
 
-
-	public void tableChanged() {
+	@Override
+	public void tableChanged(TableModelEvent arg0) {
 		// System.out.println("tableChanged: " + arg0);
-		// Se verifica que no se esté intentando pagar una factura que no tiene una tasa de cambio para la fecha actual
-		validateConversionRate();
-		tableUpdated();
-		// FEDE:TODO ver VOrdenPago.. difiere
+		if ( (arg0.getColumn() == m_model.m_facturasTableModel.getColumnCount() - 1) || (arg0.getColumn() == m_model.m_facturasTableModel.getColumnCount() - 2) ){
+			// Se actualizó el monto manual
+			for (int row = arg0.getFirstRow(); row <= arg0.getLastRow() && row < m_model.m_facturas.size(); row++) {
+				ResultItemFactura rif = (ResultItemFactura)m_model.m_facturas.get(row);
+				int currency_ID_To = (Integer) m_model.m_facturas.get(row).getItem(m_model.m_facturasTableModel.getCurrencyColIdx());
+				if (arg0.getColumn() == m_model.m_facturasTableModel.getColumnCount() - 1){
+					m_model.actualizarPagarConPagarCurrency(row,rif,currency_ID_To);
+				}
+				else{
+					m_model.actualizarPagarCurrencyConPagar(row,rif,currency_ID_To);
+				}
+				m_model.m_facturasTableModel.fireTableDataChanged();	
+			}
+			// FEDE:TODO: mejorar manera de actualizar modelo
+			listModel = new FacturasModel(VModelHelper.HideColumnsTableModelFactory(m_model.m_facturasTableModel), m_WindowNo);
+			tblFacturas.setModel(listModel);
+		}
 	}
 
 	public void valueChange(ValueChangeEvent e) {
@@ -1678,10 +1692,7 @@ public class WOrdenPago extends ADForm implements ValueChangeListener /*implemen
 				fldDocumentNo.setValue(null);
 				m_model.setDocumentType(null);
 			}
-		} else if (e.getSource() == tblFacturas) {
-			tableChanged();
 		}
-		
 	}
 
 	private void updateDependent() {
@@ -2285,6 +2296,7 @@ public class WOrdenPago extends ADForm implements ValueChangeListener /*implemen
 			initTranslations();
 			dynInit();
 			customInitComponents();
+			getModel().m_facturasTableModel.addTableModelListener(this);
 			
 			onTipoPagoChange(false);
 			
@@ -2507,31 +2519,8 @@ private Panel agregarTree() {
 		jTabbedPane1.appendChild(contenedor1);
 		
 		jTabbedPane1.appendChild(new Separator());
-		
-		Grid grilla = new Grid();
-		grilla.setHeight("350px");
-		
-		Columns col = new Columns();
-		Column col1 = new Column();
-		col1.setLabel("Columna 1");
-		Column col2 = new Column();
-		col2.setLabel("Columna 2");
-		col.appendChild(col1);
-		col.appendChild(col2);
-
-		// Testeo de Grilla
-		Rows roww = new Rows();
-		for (int i = 0; i <= 50; i++){
-			Row row_val = new Row();
-			row_val.appendChild(new Label("Valor 1"));
-			row_val.appendChild(new Label("Valor 2"));
-			roww.appendChild(row_val);
-		}
-
-		grilla.appendChild(col);
-		grilla.appendChild(roww);
-
-		jTabbedPane1.appendChild(grilla);
+	
+		jTabbedPane1.appendChild(tblFacturas);
 		
 		jTabbedPane1.appendChild(new Separator());
 		
@@ -2554,6 +2543,104 @@ private Panel agregarTree() {
 		contenedor2.appendChild(divTxtEfectivoImporte);
 		jTabbedPane1.appendChild(contenedor2);
 	}
+	
+	public static class GridRenderer implements RowRenderer {
+
+		WOrdenPago owner = null;
+		Columns cols = new Columns();
+		
+		public GridRenderer(WOrdenPago owner) {
+			this.owner = owner;
+		}
+		
+		@Override
+		public void render(org.zkoss.zul.Row arg0, Object arg1) throws Exception {	
+			// Si no hay modelo, nada para dibujar
+			if (owner.listModel == null)
+				return;
+			// Si no hay columnas, nada para dibujar
+			if (owner.listModel.getColumnCount() == 0)
+				return;
+
+			// Resetear las columnas
+			owner.tblFacturas.removeChild(cols);
+			cols = new Columns();
+			int colCount = owner.listModel.getColumnCount();
+			for (int i=0; i < colCount; i++) {
+				Column col = new Column();
+				col.setLabel(owner.listModel.getColumnName(i));
+				cols.appendChild(col);
+			}
+			owner.tblFacturas.appendChild(cols);		
+			
+			// Setear la fila
+			Object[] _data = (Object[])arg1;
+			for (int i = 0; i < owner.listModel.getColumnCount(); i++)
+				new Label(_data[i].toString()).setParent(arg0); 
+			
+
+		}
+		
+	}
+	
+	/**
+	 * Model para la grilla.  
+	 * 
+	 * Esta clase delega la estructura y lógica de determinación de los registros a recuperar al 
+	 * módulo original de Ordenes de Pago, a fin de centralizar la lógica en un único lugar. 
+	 */
+	public static class FacturasModel extends AbstractListModel implements TableModelListener, ListModelExt {
+
+		TableModel model = null;
+		
+		public FacturasModel(TableModel model, int windowNo) {
+			this.model = model;
+		}
+
+		@Override
+		public Object getElementAt(int rowIndex) {
+			if (model==null)
+				return null;
+			int columnCount = model.getColumnCount();
+			Object[] values = new Object[columnCount];
+			for (int i = 0; i < columnCount; i++) {
+					values[i] = model.getValueAt(rowIndex, i);
+				}		
+			return values;
+		}
+
+		public Object getElementAt(int row, int col) {
+			return model.getValueAt(row, col);
+		}
+		
+		@Override
+		public int getSize() {
+			if (model==null)
+				return 0;
+			return model.getRowCount();
+		}
+
+		@Override
+		public void sort(Comparator arg0, boolean arg1) {
+			System.out.println("Sorted!");
+			
+		}
+
+		@Override
+		public void tableChanged(TableModelEvent e) {
+			System.out.println("Changed!");		
+		}	
+		
+		public int getColumnCount() {
+			return model.getColumnCount();
+		}
+		
+		public String getColumnName(int columnIndex) {
+			return model.getColumnName(columnIndex);
+		}
+		
+	}
+
 
 	
 }
