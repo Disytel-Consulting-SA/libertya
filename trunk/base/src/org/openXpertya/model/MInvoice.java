@@ -3158,7 +3158,7 @@ public class MInvoice extends X_C_Invoice implements DocAction {
 
 		BigDecimal totalLines = Env.ZERO;
 		ArrayList taxList = new ArrayList();
-		MInvoiceLine[] lines = getLines(false);
+		MInvoiceLine[] lines = getLines(true);
 
 		for (int i = 0; i < lines.length; i++) {
 			MInvoiceLine line = lines[i];
