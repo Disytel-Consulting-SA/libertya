@@ -65,6 +65,7 @@ public class WSearchEditor extends WEditor implements ContextMenuListener, Value
 	private WEditorPopupMenu	popupMenu;
     private Object              value;
     private InfoPanel			infoPanel = null;
+    private Object				newValueOnChange = null;
 
 	private static CLogger log = CLogger.getCLogger(WSearchEditor.class);
 
@@ -403,6 +404,9 @@ public class WSearchEditor extends WEditor implements ContextMenuListener, Value
 		log.fine("Value=" + value);
 
 		ValueChangeEvent evt = new ValueChangeEvent(this, this.getColumnName(), getValue(), value);
+		// Se setea con value a fin de que los listeners cuenten con el dato durante el evento valueChange
+		setNewValueOnChange(value);
+		
 		// -> ADTabpanel - valuechange
 		fireValueChange(evt);
 		
@@ -919,5 +923,15 @@ public class WSearchEditor extends WEditor implements ContextMenuListener, Value
 			log.log(Level.SEVERE, "", e);
 		}
 		return null;
+	}
+
+
+	public Object getNewValueOnChange() {
+		return newValueOnChange;
+	}
+
+
+	public void setNewValueOnChange(Object newValueOnChange) {
+		this.newValueOnChange = newValueOnChange;
 	}
 }

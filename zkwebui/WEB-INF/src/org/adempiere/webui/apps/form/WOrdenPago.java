@@ -9,6 +9,7 @@ package org.adempiere.webui.apps.form;
 import java.math.BigDecimal;
 import java.sql.Timestamp;
 import java.text.ParseException;
+import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.Date;
 import java.util.Properties;
@@ -66,6 +67,7 @@ import org.openXpertya.util.Env;
 import org.openXpertya.util.Msg;
 import org.zkoss.zk.ui.event.Event;
 import org.zkoss.zk.ui.event.EventListener;
+import org.zkoss.zk.ui.event.Events;
 import org.zkoss.zkex.zul.Borderlayout;
 import org.zkoss.zkex.zul.Center;
 import org.zkoss.zkex.zul.North;
@@ -841,7 +843,8 @@ public class WOrdenPago extends ADForm implements ValueChangeListener, TableMode
     
     protected void updatePayAllInvoices(boolean toPayMoment){
     	getModel().updatePayAllInvoices(checkPayAll.isSelected(), toPayMoment);
-		tblFacturas.invalidate(); // repaint();
+		// tblFacturas.renderAll(); // repaint();
+		resetModel();
     }
 
     private void cmdCancelActionPerformed(Event evt) {//GEN-FIRST:event_cmdCancelActionPerformed
@@ -944,7 +947,7 @@ public class WOrdenPago extends ADForm implements ValueChangeListener, TableMode
     		updateComponentsPreProcesar();
     		// Avanza a la siguiente tab
     		m_cambioTab = true;
-    		jTabbedPane1.setZindex(1); // setSelectedIndex(1);
+    		tabbox.setSelectedIndex(1);
     		m_cambioTab = false;
     		
     		updatePaymentsTabsState();
@@ -1233,9 +1236,7 @@ public class WOrdenPago extends ADForm implements ValueChangeListener, TableMode
 				// Se verifica que no se esté intentando pagar una factura que no tiene una tasa de cambio para la fecha actual
 				validateConversionRate();
 				tableUpdated();		
-				// FEDE:TODO: mejorar manera de actualizar modelo
-				listModel = new FacturasModel(VModelHelper.HideColumnsTableModelFactory(m_model.m_facturasTableModel), m_WindowNo);
-				tblFacturas.setModel(listModel);
+				resetModel();
 			}
 		});
 
@@ -1640,9 +1641,7 @@ public class WOrdenPago extends ADForm implements ValueChangeListener, TableMode
 				}
 				m_model.m_facturasTableModel.fireTableDataChanged();	
 			}
-			// FEDE:TODO: mejorar manera de actualizar modelo
-			listModel = new FacturasModel(VModelHelper.HideColumnsTableModelFactory(m_model.m_facturasTableModel), m_WindowNo);
-			tblFacturas.setModel(listModel);
+			resetModel();
 		}
 	}
 
@@ -1654,15 +1653,16 @@ public class WOrdenPago extends ADForm implements ValueChangeListener, TableMode
 			
 //			SwingUtilities.invokeLater( new Runnable() {
 //	            public void run() {
-	            	// Actualizo el modelo
-	            	getModel().updateBPartner((Integer)BPartnerSel.getValue());
+	            	// Actualizo el modelo. Utilizo newValueOnChange, dado que si utilizo newValue,
+					// obtengo null (o el valor viejo) en este punto del código
+	            	getModel().updateBPartner((Integer)BPartnerSel.getNewValueOnChange());
 					// Actualizo los componentes custom de la interfaz gráfica
 					// relacionados con el cambio de la entidad comercial
 	            	customUpdateBPartnerRelatedComponents(true);
 	            	buscarPagos();
 	            	// Actualizar interfaz grafica para null value
-					if (BPartnerSel.getValue() == null)
-						cmdBPartnerSelActionPerformed(null);
+					if (BPartnerSel.getNewValueOnChange() == null)
+						this.cmdProcess.setEnabled(false); //cmdBPartnerSelActionPerformed(null);
 	            	updatePayAllInvoices(false);
 //	            }
 //	        } );			
@@ -2211,7 +2211,7 @@ public class WOrdenPago extends ADForm implements ValueChangeListener, TableMode
 		cboCurrency.setValue(m_C_Currency_ID);
 		txtTotalPagar1.setValue(null);
 		m_cambioTab = true;
-		jTabbedPane1.setZindex(0);
+		tabbox.setSelectedIndex(0);
 		m_cambioTab = false;
 		txtDescription.setText("");
 		m_model.setDescription("");
@@ -2544,11 +2544,24 @@ private Panel agregarTree() {
 		jTabbedPane1.appendChild(contenedor2);
 	}
 	
+	
+	/**
+	 * Fuerza el reseteo del modelo de la Grid en base a los datos del modelo de VOrdenPagoModel
+	 */
+	protected void resetModel() {
+		listModel = new FacturasModel(VModelHelper.HideColumnsTableModelFactory(m_model.m_facturasTableModel), m_WindowNo);
+		tblFacturas.setModel(listModel);
+		updateTotalAPagar1();
+	}
+	
+	/**
+	 * Encargada de renderizar la grilla de facturas a pagar
+	 */
 	public static class GridRenderer implements RowRenderer {
 
 		WOrdenPago owner = null;
 		Columns cols = new Columns();
-		
+
 		public GridRenderer(WOrdenPago owner) {
 			this.owner = owner;
 		}
@@ -2575,23 +2588,109 @@ private Panel agregarTree() {
 			
 			// Setear la fila
 			Object[] _data = (Object[])arg1;
-			for (int i = 0; i < owner.listModel.getColumnCount(); i++)
-				new Label(_data[i].toString()).setParent(arg0); 
-			
+			for (int i = 0; i < colCount; i++) {
+				// Las dos ultimas columnas son para seteo de datos 
+				if (owner.listModel.model.isCellEditable(1, i) && !owner.checkPayAll.isChecked()) {
+					Textbox aTextbox = new Textbox();
+					aTextbox.setValue(_data[i].toString()); 
+					aTextbox.setWidth("60px");
+					aTextbox.setParent(arg0);
+					// Setear toPay (anteultima columna) hacia toPayCurrency (ultima columna)
+					if (i == colCount - 2) {
+						aTextbox.addEventListener(Events.ON_OK, new EventListener() {
+							@Override
+							public void onEvent(Event evt) throws Exception {
+								toPay2toPayCurrency();
+							}
+						});
+					}
+					// Setea toPayCurrency (ultima columna) hacia toPay (anteultima columna)
+					if (i == colCount - 1) {
+						aTextbox.addEventListener(Events.ON_OK, new EventListener() {
+							@Override
+							public void onEvent(Event evt) throws Exception {
+								toPayCurrency2toPay();
+							}
+						});
+					}
+				} 
+				else {
+					Label aLabel = new Label(_data[i].toString()); 
+					aLabel.setParent(arg0);
+				}
+			}
 
 		}
 		
+		/**
+		 * Setea toPay (anteultima columna) hacia toPayCurrency (ultima columna) 
+		 */
+		protected void toPay2toPayCurrency() {
+			int rows = owner.listModel.model.getRowCount(); 
+			int cols = owner.listModel.model.getColumnCount();
+			ArrayList<BigDecimal> values = new ArrayList<BigDecimal>();
+			// Recuperar valores de la columna toPay a partir del Textbox
+			for (int row = 0; row < rows; row++) {
+				BigDecimal newValue = new BigDecimal(0);
+				try {
+					newValue = new BigDecimal(((Textbox)owner.tblFacturas.getCell(row, cols - 2)).getValue());
+				}
+				catch (Exception e) { }
+				values.add(newValue);
+			}
+			// Setear valores en el modelo
+			for (int row = 0; row < rows; row++) {
+				((FacturasModel)owner.tblFacturas.getModel()).model.setValueAt(values.get(row), row, cols - 2);
+			}
+			// Invocar al metodo para actualizar toPayCurrency
+			for (int row = 0; row < rows; row++) {
+				ResultItemFactura rif = (ResultItemFactura)owner.getModel().m_facturas.get(row);
+				int currency_ID_To = (Integer)owner.getModel().m_facturas.get(row).getItem(owner.getModel().m_facturasTableModel.getCurrencyColIdx());
+				owner.getModel().actualizarPagarCurrencyConPagar(row,rif,currency_ID_To);
+			}
+			owner.resetModel();
+		}
+		
+		/**
+		 * Setea toPayCurrency (ultima columna) hacia toPay (anteultima columna) 
+		 */
+		protected void toPayCurrency2toPay() {
+			int rows = owner.listModel.model.getRowCount(); 
+			int cols = owner.listModel.model.getColumnCount();
+			ArrayList<BigDecimal> values = new ArrayList<BigDecimal>();
+			// Recuperar valores de la columna toPayCurrency  a partir del Textbox
+			for (int row = 0; row < rows; row++) {
+				BigDecimal newValue = new BigDecimal(0);
+				try {
+					newValue = new BigDecimal(((Textbox)owner.tblFacturas.getCell(row, cols - 1)).getValue());
+				}
+				catch (Exception e) { }
+				values.add(newValue);
+			}
+			// Setear valores en el modelo
+			for (int row = 0; row < rows; row++) {
+				((FacturasModel)owner.tblFacturas.getModel()).model.setValueAt(values.get(row), row, cols - 1);
+			}
+			// Invocar al metodo para actualizar toPay
+			for (int row = 0; row < rows; row++) {
+				ResultItemFactura rif = (ResultItemFactura)owner.getModel().m_facturas.get(row);
+				int currency_ID_To = (Integer)owner.getModel().m_facturas.get(row).getItem(owner.getModel().m_facturasTableModel.getCurrencyColIdx());
+				owner.getModel().actualizarPagarConPagarCurrency(row,rif,currency_ID_To);
+			}
+			owner.resetModel();
+		}
 	}
 	
 	/**
 	 * Model para la grilla.  
 	 * 
 	 * Esta clase delega la estructura y lógica de determinación de los registros a recuperar al 
-	 * módulo original de Ordenes de Pago, a fin de centralizar la lógica en un único lugar. 
+	 * módulo original de Ordenes de Pago, a fin de centralizar la lógica en un único lugar y
+	 * simplificar ademas la complejidad de WOrdenPago.
 	 */
 	public static class FacturasModel extends AbstractListModel implements TableModelListener, ListModelExt {
 
-		TableModel model = null;
+		public TableModel model = null;
 		
 		public FacturasModel(TableModel model, int windowNo) {
 			this.model = model;
@@ -2640,7 +2739,6 @@ private Panel agregarTree() {
 		}
 		
 	}
-
 
 	
 }
