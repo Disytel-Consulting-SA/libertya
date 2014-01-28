@@ -2180,11 +2180,24 @@ public class MInOut extends X_M_InOut implements DocAction {
                     return DocAction.STATUS_Invalid;
             	}
 
+            	if (!isSOTrx()) {
+            		// Validar que no se remita de más en función del pedido de proveedor
+            		QtySO = sLine.getMovementQty();
+            		if ((MovementType.endsWith("+") && QtySO.signum() >= 0) || (MovementType.endsWith("-") && QtySO.signum() < 0)) {
+	                    if (ol_qtyOrdered.subtract(ol_qtyDelivered).subtract(ol_qtyTransferred).subtract(ol_qtyReturned).subtract(sLine.getMovementQty().abs()).compareTo(Env.ZERO) < 0) {
+	                    	m_processMsg = Msg.translate(getCtx(), "MovementGreaterThanOrder");
+	                    	if(ol_qtyReturned.compareTo(BigDecimal.ZERO) > 0){
+	                    		m_processMsg += ". "+Msg.getMsg(getCtx(), "AdditionQtyReturned");
+	                    	}
+	                    	return DocAction.STATUS_Invalid;
+	                    }            			
+            		}
+            	}
                 
-                if( isSOTrx()) {
+                if (isSOTrx()) {
+                	// Validar que no se remita de más en función del pedido de cliente
                     QtySO = sLine.getMovementQty();
-					if ((MovementType.endsWith("-") && QtySO.signum() >= 0)
-							|| (MovementType.endsWith("+") && QtySO.signum() < 0)){
+					if ((MovementType.endsWith("-") && QtySO.signum() >= 0) || (MovementType.endsWith("+") && QtySO.signum() < 0)) {
 	                    if (ol_qtyOrdered.subtract(ol_qtyDelivered).subtract(ol_qtyTransferred).subtract(ol_qtyReturned).subtract(sLine.getMovementQty().abs()).compareTo(Env.ZERO) < 0) {
 	                    	m_processMsg = Msg.translate(getCtx(), "MovementGreaterThanOrder");
 	                    	if(ol_qtyReturned.compareTo(BigDecimal.ZERO) > 0){
