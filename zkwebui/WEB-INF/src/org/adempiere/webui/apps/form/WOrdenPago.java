@@ -472,25 +472,26 @@ public class WOrdenPago extends ADForm implements ValueChangeListener, TableMode
 
    
 	// Uso de un pago adelantado como parte de una orden de pago
-	protected Panel createPagoAdelantadoTab()
+	protected Tabpanel createPagoAdelantadoTab()
 	{
-		Panel panelPagoAdelantado = new Panel();
-		Panelchildren panelChildren = new Panelchildren();
+		Tabpanel panelPagoAdelantado = new Tabpanel();
 		
-		lblPagoAdelantado = new Label();
-		lblPagoAdelantado.setText(getModel().isSOTrx()?"COBRO":"PAGO");
+		lblPagoAdelantadoCash = new Label();
+		lblPagoAdelantadoPago = new Label();
+		lblPagoAdelantadoCash.setText(getModel().isSOTrx()?"COBRO":"PAGO");
+		lblPagoAdelantadoPago.setText(getModel().isSOTrx()?"COBRO":"PAGO");
         lblPagoAdelantadoImporte = new Label();
         lblPagoAdelantadoImporte.setText("IMPORTE");
         txtPagoAdelantadoImporte = new Textbox();
         txtPagoAdelantadoImporte.setText("0");
 //        initFormattedTextField((JFormattedTextField)txtPagoAdelantadoImporte);      
-		MLookupInfo info = VComponentsFactory.MLookupInfoFactory( Env.getCtx(),m_WindowNo, 0, 5043, DisplayType.Search, getModel().getPagoAdelantadoSqlValidation());
-		Lookup lookup = new MLookup(info, 0);
-		pagoAdelantado = new WSearchEditor("C_Payment_ID", false, false, true, lookup);
+		MLookupInfo infoPago = VComponentsFactory.MLookupInfoFactory( Env.getCtx(),m_WindowNo, 0, 5043, DisplayType.Search, getModel().getPagoAdelantadoSqlValidation());
+		Lookup lookupPago = new MLookup(infoPago, 0);
+		pagoAdelantado = new WSearchEditor("C_Payment_ID", false, false, true, lookupPago);
         
-        info = VComponentsFactory.MLookupInfoFactory( Env.getCtx(),m_WindowNo, 0, 5283, DisplayType.Search, getModel().getCashAnticipadoSqlValidation());
-		lookup = new MLookup(info, 0);
-		cashAdelantado = new WSearchEditor("C_Payment_ID", false, false, true, lookup);
+        MLookupInfo infoCash = VComponentsFactory.MLookupInfoFactory( Env.getCtx(),m_WindowNo, 0, 5283, DisplayType.Search, getModel().getCashAnticipadoSqlValidation());
+		Lookup lookupCash = new MLookup(infoCash, 0);
+		cashAdelantado = new WSearchEditor("C_Cash_ID", false, false, true, lookupCash);
      
         lblPagoAdelantadoType = new Label();
         lblPagoAdelantadoType.setText("TIPO");
@@ -511,13 +512,31 @@ public class WOrdenPago extends ADForm implements ValueChangeListener, TableMode
 		
         Grid gridpanel = GridFactory.newGridLayout();
 		gridpanel.setWidth("100%");
-		        
+		panelPagoAdelantado.setHeight("150px"); 
+		
+		Rows rows = gridpanel.newRows();
+		Row row = rows.newRow();
+		row.appendChild(lblPagoAdelantadoType.rightAlign());
+		row.appendChild(cboPagoAdelantadoType);
+		
+		// Uno de los dos (efectivo o pago)
+		Row row2a = rows.newRow();
+		row2a.appendChild(lblPagoAdelantadoPago.rightAlign());
+		row2a.appendChild(pagoAdelantado.getComponent());
+		Row row2b = rows.newRow();
+		row2b.appendChild(lblPagoAdelantadoCash.rightAlign());
+		row2b.appendChild(cashAdelantado.getComponent());
+		
+		Row row3 = rows.newRow();
+		row3.appendChild(lblPagoAdelantadoAvailable.rightAlign());
+		row3.appendChild(txtPagoAdelantadoAvailable);
+		Row row4 = rows.newRow();
+		row4.appendChild(lblPagoAdelantadoImporte.rightAlign());
+		row4.appendChild(txtPagoAdelantadoImporte);
+		
         updatePagoAdelantadoTab();
+        panelPagoAdelantado.appendChild(gridpanel);
 
-        panelPagoAdelantado.appendChild(panelChildren);
-        
-        // FEDE:TODO falta completar
-        
 		return panelPagoAdelantado;	
 	}    
     
@@ -1128,7 +1147,8 @@ public class WOrdenPago extends ADForm implements ValueChangeListener, TableMode
 	protected Textbox txtChequeBanco;
 	protected WSearchEditor cboChequeBancoID;
 	protected Textbox txtChequeCUITLibrador;
-    protected Label lblPagoAdelantado;
+    protected Label lblPagoAdelantadoCash;
+    protected Label lblPagoAdelantadoPago;
     
     protected Label lblPagoAdelantadoImporte;
     protected Textbox txtPagoAdelantadoImporte;
@@ -1148,7 +1168,7 @@ public class WOrdenPago extends ADForm implements ValueChangeListener, TableMode
     private int m_PagoAdelantadoTabIndex = -1;
     private int m_chequeTerceroTabIndex = -1;
     
-    private Panel panelChequeTercero;
+    private Tabpanel panelChequeTercero;
     private Label lblChequeTerceroCuenta;
     private Label lblChequeTercero;
     private Label lblChequeTerceroImporte;
@@ -1456,7 +1476,7 @@ public class WOrdenPago extends ADForm implements ValueChangeListener, TableMode
 		
 		// Pagos Adelantados
 		lblPagoAdelantadoImporte.setText(Msg.getElement(m_ctx, "Amount"));
-		lblPagoAdelantado.setText(getMsg("Payment"));
+		lblPagoAdelantadoCash.setText(getMsg("Payment"));
 		*/
         updateCaptions();
         
@@ -1836,8 +1856,8 @@ public class WOrdenPago extends ADForm implements ValueChangeListener, TableMode
 	protected void addCustomPaymentTabs(Tabpanel tabbedPane) { 
 		// Agregado de pestaña de medio de pago cheques de terceros.
 //		tabbedPane.addTab(getMsg("ThirdPartyCheck"), createChequeTerceroTab());
-		tabbedPane.appendChild(createChequeTerceroTab());
-		// FEDE:TODO		
+		// FEDE:TODO a ambas lineas 
+//		tabbedPane.appendChild(createChequeTerceroTab());
 //		m_chequeTerceroTabIndex = tabbedPane.indexOfComponent(panelChequeTercero);
 	}
 	
@@ -1933,21 +1953,26 @@ public class WOrdenPago extends ADForm implements ValueChangeListener, TableMode
 	}
 	
 	protected void updatePagoAdelantadoTab() {
-//		pagoAdelantadoTypePanel.removeAll();
 		pagoAdelantado.setValue(null);
 		cashAdelantado.setValue(null);
 		txtPagoAdelantadoAvailable.setText("");
 		if (cboPagoAdelantadoType.getSelectedIndex() == PAGO_ADELANTADO_TYPE_PAYMENT_INDEX) {
-//			pagoAdelantadoTypePanel.add(pagoAdelantado);
-			lblPagoAdelantado.setText(getMsg("Payment"));
+			pagoAdelantado.setVisible(true);
+			cashAdelantado.setVisible(false);
+			lblPagoAdelantadoPago.setText(getMsg("Payment"));
+			lblPagoAdelantadoPago.setVisible(true);
+			lblPagoAdelantadoCash.setVisible(false);
 		} else if (cboPagoAdelantadoType.getSelectedIndex() == PAGO_ADELANTADO_TYPE_CASH_INDEX) {
-//			pagoAdelantadoTypePanel.add(cashAdelantado);
-			lblPagoAdelantado.setText(getMsg("Cash"));
+			cashAdelantado.setVisible(true);
+			pagoAdelantado.setVisible(false);
+			lblPagoAdelantadoCash.setText(getMsg("Cash"));
+			lblPagoAdelantadoCash.setVisible(true);
+			lblPagoAdelantadoPago.setVisible(false);
 		}
 	}
 	
-	private Panel createChequeTerceroTab() {
-		panelChequeTercero = new Panel();
+	private Tabpanel createChequeTerceroTab() {
+		panelChequeTercero = new Tabpanel();
 		
 		// Cuenta
 		lblChequeTerceroCuenta = new Label();
@@ -1994,10 +2019,48 @@ public class WOrdenPago extends ADForm implements ValueChangeListener, TableMode
         lblChequeTerceroDescripcion.setText(getMsg("Description"));
         txtChequeTerceroDescripcion = new Textbox();
 		
-        // TODO:FEDE armar bien el panel
+        panelChequeTercero.setHeight("150px");
+    	
+    	Grid gridpanel = GridFactory.newGridLayout();
+		gridpanel.setWidth("100%");
+		
+    	Rows rows = gridpanel.newRows();
+		Row row = rows.newRow();
+		row.appendChild(lblChequeTerceroCuenta.rightAlign());
+		row.appendChild(chequeTerceroCuenta.getComponent());
+		row.appendChild(lblChequeTercero.rightAlign());
+		row.appendChild(chequeTercero.getComponent());
+		Row row2 = rows.newRow();
+		row2.appendChild(lblChequeTerceroImporte.rightAlign());
+		row2.appendChild(txtChequeTerceroImporte);
+		row2.appendChild(lblChequeTerceroDescripcion.rightAlign());
+		row2.appendChild(txtChequeTerceroDescripcion);
+		
+		panelChequeTercero.appendChild(gridpanel);
+
         
 		return panelChequeTercero;
 	}
+	
+	protected Tabpanel createCheckTab() {
+		Tabpanel aPanel = new Tabpanel();
+		aPanel.setHeight("150px");
+		return aPanel;
+	}
+
+	protected Tabpanel createCreditTab() {
+		Tabpanel aPanel = new Tabpanel();
+		aPanel.setHeight("150px");
+		return aPanel;
+	}
+	
+	protected Tabpanel creteTransferTab() {
+		Tabpanel aPanel = new Tabpanel();
+		aPanel.setHeight("150px");
+		return aPanel;
+	}
+	
+	
 	
 	private void saveChequeTerceroMedioPago() throws Exception {
 		Integer paymentID = (Integer)chequeTercero.getValue();
@@ -2448,29 +2511,14 @@ private Panel agregarTree() {
 		Panel panel = new Panel();
 		Panelchildren panelchildren = new Panelchildren();
 		//panelchildren.setStyle("border: 1px solid red");
-		
-		Tabpanel tabpanel1 = new Tabpanel();
-	    Tabpanel tabpanel2 = new Tabpanel();
-	    Tabpanel tabpanel3 = new Tabpanel();
-	    Tabpanel tabpanel4 = new Tabpanel();
-	    //Tabpanel tabpanel5 = new Tabpanel();
-	    Tabpanel tabpanel6 = new Tabpanel();
-	    
-	    tabpanel1.setHeight("150px");
-	    tabpanel2.setHeight("150px");
-	    tabpanel3.setHeight("150px");
-	    tabpanel4.setHeight("150px");
-	    //tabpanel5.setHeight("150px");
-	    tabpanel6.setHeight("150px");
-	    
 	    
 	    Tabpanels tabpanels = new Tabpanels();
-	    tabpanels.appendChild(tabpanel1);
-	    tabpanels.appendChild(tabpanel2);
-	    tabpanels.appendChild(tabpanel3);
-	    tabpanels.appendChild(tabpanel4);
+	    tabpanels.appendChild(createPagoAdelantadoTab());
+	    tabpanels.appendChild(createChequeTerceroTab());
+	    tabpanels.appendChild(createCheckTab());
+	    tabpanels.appendChild(createCreditTab());
 	    tabpanels.appendChild(createCashTab());
-	    tabpanels.appendChild(tabpanel6);
+	    tabpanels.appendChild(creteTransferTab());
 	 	
 	    Tab tab1 = new Tab("Pago Adelantado");
 	    Tab tab2 = new Tab("Cheque de Tercero");
