@@ -967,7 +967,7 @@ public class VOrdenPagoModel {
 	private Map<PO, Object> aditionalWorkResults = new HashMap<PO, Object>();
 	protected List<AllocationLine> onlineAllocationLines = new ArrayList<AllocationLine>();
 	//
-	private int m_newlyCreatedC_AllocationHeader_ID = -1;
+	public int m_newlyCreatedC_AllocationHeader_ID = -1;
 	
 	private String msgAMostrar;
 	
@@ -2223,7 +2223,7 @@ public class VOrdenPagoModel {
 	/**
 	 * @return Retorna la clave de busca del Informe y Proceso que muestra la Orden de pago.
 	 */
-	protected String getReportValue() {
+	public String getReportValue() {
 		return "Orden de Pago";
 	}
 	
