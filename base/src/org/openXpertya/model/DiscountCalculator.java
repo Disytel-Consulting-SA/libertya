@@ -1974,7 +1974,7 @@ public class DiscountCalculator {
 	/**
 	 * @return El descuento de la EC
 	 */
-	private Discount getBPartnerDiscount() {
+	public Discount getBPartnerDiscount() {
 		return bPartnerDiscount;
 	}
 
@@ -2363,6 +2363,10 @@ public class DiscountCalculator {
 
 	private void setLineManualDiscounts(Map<Integer, Discount> lineManualDiscounts) {
 		this.lineManualDiscounts = lineManualDiscounts;
+	}
+	
+	public MDiscountSchema getManualGeneralDiscountSchema(){
+		return getManualGeneralDiscount().getDiscountSchema();
 	}
 
 	/**

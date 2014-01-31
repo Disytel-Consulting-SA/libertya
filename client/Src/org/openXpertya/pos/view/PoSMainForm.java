@@ -1621,7 +1621,7 @@ public class PoSMainForm extends CPanel implements FormPanel, ASyncProcess, Disp
 	 * 	
 	 * @return org.compiere.swing.CTextField	
 	 */
-	private CTextField getCCountText() {
+	public CTextField getCCountText() {
 		if (cCountText == null) {
 			cCountText = new CTextField();
 			cCountText.setText("1");
@@ -4187,7 +4187,7 @@ public class PoSMainForm extends CPanel implements FormPanel, ASyncProcess, Disp
 		return cProductNameDetailLabel;
 	}
 	
-	private boolean addOrderProduct(Product product) {
+	public boolean addOrderProduct(Product product) {
 		TimeStatsLogger.beginTask(MeasurableTask.POS_ADD_PRODUCT);
 		BigDecimal count = new BigDecimal(getCCountText().getText());
 		boolean result = false;
@@ -4429,7 +4429,7 @@ public class PoSMainForm extends CPanel implements FormPanel, ASyncProcess, Disp
 		getCCustomerDescriptionText().setText(data);
 	}
 	
-	protected void updateOrderProduct(OrderProduct orderProduct) {
+	public void updateOrderProduct(OrderProduct orderProduct) {
 		//getModel().calculateOrderProductTax(orderProduct);
 		getOrder().setOtherTaxes(getModel().getOtherTaxes());
 		getOrder().updateOrderProduct();
@@ -4895,7 +4895,7 @@ public class PoSMainForm extends CPanel implements FormPanel, ASyncProcess, Disp
 				}
 			}
 			extraValidationsResult = getExtraPOSPaymentAddValidations()
-					.validateCreditNotePayment(this, balanceAmt, returnCash);
+					.validateCreditNotePayment(this, balanceAmt, returnCash, returnCashAmt);
 			if(extraValidationsResult.isError()){
 				errorMsg(extraValidationsResult.getMsg());
 				return;
@@ -4907,6 +4907,7 @@ public class PoSMainForm extends CPanel implements FormPanel, ASyncProcess, Disp
 			// Se limpian los campos para ingresar un nuevo pago.
 			getCCreditNoteSearch().setValue(null);
 			getCCreditNoteAvailableText().setValue(null);
+			getCCreditNoteBalanceText().setValue(null);
 			getCCreditNoteCashReturnCheck().setSelected(false);
 			fireActionPerformed(getCCreditNoteCashReturnCheck().getActionListeners(), null);
 		} else if (MPOSPaymentMedium.TENDERTYPE_DirectDeposit.equals(tenderType)) {
