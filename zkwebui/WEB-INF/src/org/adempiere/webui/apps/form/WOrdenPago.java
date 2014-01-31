@@ -164,7 +164,6 @@ public class WOrdenPago extends ADForm implements ValueChangeListener, TableMode
 
 		
 		lblDocumentType = new Label();
-		// FEDE:TODO: Centralizar la creacion de combos en algun lugar
 		MLookupInfo infoDocType = VComponentsFactory.MLookupInfoFactory( Env.getCtx(),m_WindowNo, 0, 1016307, DisplayType.TableDir, m_model.getDocumentTypeSqlValidation());
 		MLookup lookupDocType = new MLookup(infoDocType, 0);
 		cboDocumentType = new WTableDirEditor("C_DocType_ID", false, false, true, lookupDocType);
@@ -506,7 +505,7 @@ public class WOrdenPago extends ADForm implements ValueChangeListener, TableMode
         
         MLookupInfo infoCash = VComponentsFactory.MLookupInfoFactory( Env.getCtx(),m_WindowNo, 0, 5283, DisplayType.Search, getModel().getCashAnticipadoSqlValidation());
 		Lookup lookupCash = new MLookup(infoCash, 0);
-		cashAdelantado = new WSearchEditor("C_Cash_ID", false, false, true, lookupCash);
+		cashAdelantado = new WSearchEditor("C_CashLine_ID", false, false, true, lookupCash);
      
         lblPagoAdelantadoType = new Label();
         lblPagoAdelantadoType.setText("TIPO");
@@ -905,7 +904,6 @@ public class WOrdenPago extends ADForm implements ValueChangeListener, TableMode
 	 *            clave ad_message de un mensaje o la descripción de un mensaje.
 	 */
     protected void showInfo(String msg){
-    	// TODO: VER
     	FDialog.info(m_WindowNo, this, msg);
     }
     
@@ -1349,7 +1347,7 @@ public class WOrdenPago extends ADForm implements ValueChangeListener, TableMode
         // importe disponible en el text correspondiente
         creditInvoice.addValueChangeListener(new ValueChangeListener() {
 			public void valueChange(ValueChangeEvent evt) {
-				Integer invoiceID = (Integer)creditInvoice.getValue();
+				Integer invoiceID = (Integer)creditInvoice.getNewValueOnChange();
 				if (invoiceID != null)
 					txtCreditAvailable.setText(getModel().numberFormat(getModel().getCreditAvailableAmt(invoiceID)));
 			}
@@ -1371,7 +1369,7 @@ public class WOrdenPago extends ADForm implements ValueChangeListener, TableMode
         // importe disponible en el text correspondiente
         pagoAdelantado.addValueChangeListener(new ValueChangeListener() {
 			public void valueChange(ValueChangeEvent evt) {
-				Integer paymentID = (Integer)pagoAdelantado.getValue();
+				Integer paymentID = (Integer)pagoAdelantado.getNewValueOnChange();
 				if (paymentID != null)
 					txtPagoAdelantadoAvailable.setText(getModel().numberFormat(getModel().getPagoAdelantadoAvailableAmt(paymentID)));
 			}
@@ -1381,7 +1379,7 @@ public class WOrdenPago extends ADForm implements ValueChangeListener, TableMode
         // importe disponible en el text correspondiente
         cashAdelantado.addValueChangeListener(new ValueChangeListener() {
 			public void valueChange(ValueChangeEvent evt) {
-				Integer cashLineID = (Integer)cashAdelantado.getValue();
+				Integer cashLineID = (Integer)cashAdelantado.getNewValueOnChange();
 				if (cashLineID != null)
 					txtPagoAdelantadoAvailable.setText(getModel().numberFormat(getModel().getCashAdelantadoAvailableAmt(cashLineID)));
 			}
@@ -1429,10 +1427,6 @@ public class WOrdenPago extends ADForm implements ValueChangeListener, TableMode
 		lblCreditAvailable.setText(Msg.translate(m_ctx, "OpenAmt"));
 		lblCreditImporte.setText(Msg.getElement(m_ctx, "Amount"));
 		
-		//
-		
-		// TODO: VER
-		//lblBPartner.setText(Msg.getElement(m_ctx, "C_BPartner_ID")+" "+KeyUtils.getKeyStr(getActionKeys().get(GOTO_BPARTNER)));
 		lblBPartner.setText(Msg.translate(Env.getCtx(), "C_BPartner_ID"));
 		
 		lblTotalPagar1.setText(Msg.translate(Env.getCtx(), "Amount"));
@@ -1450,13 +1444,8 @@ public class WOrdenPago extends ADForm implements ValueChangeListener, TableMode
 		rInvoiceAll.setLabel(Msg.translate(Env.getCtx(), "SearchAND"));
 		//rInvoiceDate.setText(Msg.translate(m_ctx, "DueStart"));
 		rInvoiceDate.setLabel(Msg.translate(Env.getCtx(), "BeforeDueDate"));
-		
-		
-		//TODO: VER
+	
 		checkPayAll.setText(Msg.translate(Env.getCtx(), "PayAll"));
-		
-//		checkPayAll.setText(Msg.getMsg(m_ctx, "PayAll") + " "
-//				+ KeyUtils.getKeyStr(getActionKeys().get(GOTO_PAYALL)));
 		
 		// Saldo Total
 		name = VModelHelper.GetReferenceValueTrlFromColumn("I_ReportLine", "AmountType", "BT", "name");
@@ -1470,27 +1459,6 @@ public class WOrdenPago extends ADForm implements ValueChangeListener, TableMode
 		cmdGrabar.setLabel(Msg.translate(Env.getCtx(), "Save").replace("&", ""));
 		cmdProcess.setLabel(Msg.translate(Env.getCtx(), "Processing"));
 
-		/*
-		
-		// Efectivo
-		name = VModelHelper.GetReferenceValueTrlFromColumn("C_Order", "PaymentRule", "B", "name");
-		jTabbedPane2.setTitleAt(0, name != null ? name : "");
-		
-		// Transferencia Bancaria
-		name = VModelHelper.GetReferenceValueTrlFromColumn("C_Order", "PaymentRule", "Tr", "name");
-		jTabbedPane2.setTitleAt(1, name != null ? name : "");
-		
-		// Cheque
-		name = VModelHelper.GetReferenceValueTrlFromColumn("C_Order", "PaymentRule", "S", "name");
-		jTabbedPane2.setTitleAt(2, name != null ? name : "");
-		
-		// Credito
-		jTabbedPane2.setTitleAt(3, Msg.translate(m_ctx, "Credit"));
-		
-		// Pago Adelantado
-		jTabbedPane2.setTitleAt(4, getMsg("AdvancedPayment"));
-		
-		*/
 		lblClient.setText(Msg.translate(Env.getCtx(), "AD_Client_ID"));
 		lblDocumentNo.setText("Nro. Documento");
         lblOrg.setText(Msg.translate(Env.getCtx(),"AD_Org_ID"));
@@ -1500,14 +1468,14 @@ public class WOrdenPago extends ADForm implements ValueChangeListener, TableMode
 		lblProject.setText(Msg.translate(Env.getCtx(), "C_Project_ID"));
 		lblCurrency.setText(Msg.translate(Env.getCtx(), "C_Currency_ID"));
 		lblCampaign.setText(Msg.translate(Env.getCtx(), "C_Campaign_ID"));
-		/*
+		
 		lblPagoAdelantadoType.setText(getMsg("Type"));
 		lblPagoAdelantadoAvailable.setText(Msg.translate(m_ctx, "OpenAmt"));
 		
 		// Pagos Adelantados
 		lblPagoAdelantadoImporte.setText(Msg.getElement(m_ctx, "Amount"));
 		lblPagoAdelantadoCash.setText(getMsg("Payment"));
-		*/
+		
         updateCaptions();
         
 	}
@@ -1697,24 +1665,19 @@ public class WOrdenPago extends ADForm implements ValueChangeListener, TableMode
 	public void valueChange(ValueChangeEvent e) {
 		// System.out.println("vetoableChange: " + arg0);
 		if (e.getSource() == BPartnerSel) {
-			
-			// m_model.setBPartnerFacturas((Integer)BPartnerSel.getValue());
-			
-//			SwingUtilities.invokeLater( new Runnable() {
-//	            public void run() {
-	            	// Actualizo el modelo. Utilizo newValueOnChange, dado que si utilizo newValue,
-					// obtengo null (o el valor viejo) en este punto del código
-	            	getModel().updateBPartner((Integer)BPartnerSel.getNewValueOnChange());
-					// Actualizo los componentes custom de la interfaz gráfica
-					// relacionados con el cambio de la entidad comercial
-	            	customUpdateBPartnerRelatedComponents(true);
-	            	buscarPagos();
-	            	// Actualizar interfaz grafica para null value
-					if (BPartnerSel.getNewValueOnChange() == null)
-						this.cmdProcess.setEnabled(false); //cmdBPartnerSelActionPerformed(null);
-	            	updatePayAllInvoices(false);
-//	            }
-//	        } );			
+
+        	// Actualizo el modelo. Utilizo newValueOnChange, dado que si utilizo newValue,
+			// obtengo null (o el valor viejo) en este punto del código
+        	getModel().updateBPartner((Integer)BPartnerSel.getNewValueOnChange());
+			// Actualizo los componentes custom de la interfaz gráfica
+			// relacionados con el cambio de la entidad comercial
+        	customUpdateBPartnerRelatedComponents(true);
+        	buscarPagos();
+        	// Actualizar interfaz grafica para null value
+			if (BPartnerSel.getNewValueOnChange() == null)
+				this.cmdProcess.setEnabled(false); //cmdBPartnerSelActionPerformed(null);
+        	updatePayAllInvoices(false);
+		
 		} else if (e.getSource() == cboCurrency) {
 			updateDependent();
 		} else if (e.getSource() == efectivoLibroCaja) {
@@ -1966,14 +1929,11 @@ public class WOrdenPago extends ADForm implements ValueChangeListener, TableMode
 	}
 	
 	protected void updatePaymentsTabsState() {
-		// FEDE:TODO
-//		jTabbedPane2.setEnabledAt(TAB_INDEX_CREDITO, m_model.isNormalPayment());
-//		jTabbedPane2.setEnabledAt(TAB_INDEX_PAGO_ADELANTADO, m_model.isNormalPayment());
-		jTabbedPane2.setEnabled(m_model.isNormalPayment());
-		
+		((Tab)(mpTabs.getChildren().get(TAB_INDEX_CREDITO))).setDisabled(!m_model.isNormalPayment());
+		((Tab)(mpTabs.getChildren().get(TAB_INDEX_PAGO_ADELANTADO))).setDisabled(!m_model.isNormalPayment());		
 		// Refrescar el monto de la pestaña con el total a pagar
 		updatePayAmt(getModel().getSaldoMediosPago());
-//		jTabbedPane2.setSelectedIndex(TAB_INDEX_EFECTIVO);
+//		mpTabbox.setSelectedIndex(TAB_INDEX_EFECTIVO);
 	}
 	
 	protected void updatePagoAdelantadoTab() {
@@ -1995,10 +1955,7 @@ public class WOrdenPago extends ADForm implements ValueChangeListener, TableMode
 		}
 	}
 	
-	/**
-	 * FEDE:TODO: esto debería invocarse desde addCustomPaymentTabs() y no desde agregarTabs()  !!!!
-	 * @return
-	 */
+
 	private Tabpanel createChequeTerceroTab() {
 		panelChequeTercero = new Tabpanel();
 		
@@ -2011,7 +1968,7 @@ public class WOrdenPago extends ADForm implements ValueChangeListener, TableMode
         
         chequeTerceroCuenta.addValueChangeListener(new ValueChangeListener() {
 			public void valueChange(ValueChangeEvent evt) {
-	        		Integer bankAccountID = (Integer)chequeTerceroCuenta.getValue();
+	        		Integer bankAccountID = (Integer)chequeTerceroCuenta.getNewValueOnChange();
 	        		if (bankAccountID == null)
 	        			bankAccountID = 0;
 	        		Env.setContext(m_ctx, m_WindowNo, "C_BankAccount_ID", bankAccountID);
@@ -2027,7 +1984,7 @@ public class WOrdenPago extends ADForm implements ValueChangeListener, TableMode
         
         chequeTercero.addValueChangeListener(new ValueChangeListener() {
 			public void valueChange(ValueChangeEvent evt) {
-				Integer paymentID = (Integer)chequeTercero.getValue();
+				Integer paymentID = (Integer)chequeTercero.getNewValueOnChange();
 				String importe = "";
 				if (paymentID != null)
 					importe = getModel().numberFormat(getModel().getChequeAmt(paymentID));
@@ -2294,7 +2251,7 @@ public class WOrdenPago extends ADForm implements ValueChangeListener, TableMode
 
 		amt = MCurrency.currencyConvert(amt, m_C_Currency_ID, currencyID, new Timestamp(System.currentTimeMillis()), getModel().AD_Org_ID, m_ctx);
 		
-		Integer tabIndexSelected = jTabbedPane2.getIndex();
+		Integer tabIndexSelected = mpTabbox.getSelectedIndex();
 		if(tabIndexSelected.equals(TAB_INDEX_CHEQUE)){
 			txtChequeImporte.setValue(amt.toString());
 		}
@@ -2403,50 +2360,6 @@ public class WOrdenPago extends ADForm implements ValueChangeListener, TableMode
 		return null;
 		
 	}
-
-	/**
-	 * Realiza el movimiento hacia adelante o atrás de la selección de una
-	 * grilla.
-	 * 
-	 * @param forward
-	 *            <code>true</code> para avanzar una fila, <code>false</code>
-	 *            para retroceder.
-	 */
-    /*
-	private void moveTableSelection(JTable table, boolean forward) {
-		if (table.getRowCount() == 0) {
-			return;
-		}
-		int srow = table.getSelectedRow();
-		if (srow == -1) {
-			srow = 0;
-		} else {
-			srow = forward ? srow+1 : srow-1;
-			if (srow < 0) {
-				srow = table.getRowCount() - 1;
-			} else if (srow >= table.getRowCount()) {
-				srow = 0;
-			}
-		}
-		table.requestFocus();
-		table.setRowSelectionInterval(srow, srow);
-		table.setColumnSelectionInterval(table.getColumnCount()-1, table.getColumnCount()-1);
-	}
-	*/
-	/**
-	 * Dispara el evento action performed con el evento parámetro a todos los
-	 * listeners parámetro
-	 * 
-	 * @param listeners
-	 * @param event
-	 */
-    /*
-	protected void fireActionPerformed(ActionListener[] listeners, ActionEvent event){
-		for (ActionListener actionListener : listeners) {
-			actionListener.actionPerformed(event);
-		}
-	}
-	*/
     
 	@Override
 	protected void initForm() {
@@ -2604,6 +2517,25 @@ public class WOrdenPago extends ADForm implements ValueChangeListener, TableMode
 		panelchildren.appendChild(pagosTree);
 		panelchildren.appendChild(cmdEliminar);
 		panelchildren.appendChild(cmdEditar);
+		
+    	Grid gridpanel = GridFactory.newGridLayout();
+		gridpanel.setWidth("100%");
+		
+    	Rows rows = gridpanel.newRows();
+		Row row1 = rows.newRow();
+		row1.appendChild(lblSaldo.rightAlign());
+		row1.appendChild(txtSaldo);
+		Row row2 = rows.newRow();
+		row2.appendChild(lblDifCambio.rightAlign());
+		row2.appendChild(txtDifCambio);
+		row2.appendChild(lblTotalPagar2.rightAlign());
+		row2.appendChild(txtTotalPagar2);
+		Row row3 = rows.newRow();
+		row3.appendChild(lblRetenciones2.rightAlign());
+		row3.appendChild(txtRetenciones2);
+		row3.appendChild(lblMedioPago2.rightAlign());
+		row3.appendChild(txtMedioPago2);
+		panelchildren.appendChild(gridpanel);
 		
 		panel.appendChild(panelchildren);
         return panel;
