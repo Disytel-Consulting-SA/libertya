@@ -263,6 +263,21 @@ public class OrderProduct {
 		return scalePrice(netPrice);
 	}
 	
+	/**
+	 * @param price
+	 *            precio con todos los impuestos, incluído en la tarifa o no y
+	 *            con impuestos extras
+	 * @return Precio neto
+	 */
+	public BigDecimal getNetPriceAllTaxes(BigDecimal taxedPrice){
+		BigDecimal netPrice = taxedPrice.divide(
+				BigDecimal.ONE.add(getTax().getTaxRateMultiplier().add(
+						getSumOtherTaxesRateMultipliers())), 20,
+				BigDecimal.ROUND_HALF_UP);		
+		
+		return scalePrice(netPrice);
+	}
+	
 	public BigDecimal getOtherTaxesAmt(BigDecimal netPrice){
 		BigDecimal otherTaxesAmt = BigDecimal.ZERO;
 		for (Tax otherTax : getOtherTaxes()) {

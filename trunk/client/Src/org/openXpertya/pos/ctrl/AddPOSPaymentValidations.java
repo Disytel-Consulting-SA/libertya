@@ -27,7 +27,7 @@ public class AddPOSPaymentValidations {
 		return result;
 	}
 	
-	public CallResult validateCreditNotePayment(PoSMainForm pmf, BigDecimal balanceAmt, boolean returnCash){
+	public CallResult validateCreditNotePayment(PoSMainForm pmf, BigDecimal balanceAmt, boolean returnCash, BigDecimal returnCashAmt){
 		CallResult result = new CallResult();
 		return result;
 	}
