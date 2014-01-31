@@ -224,7 +224,7 @@ public class VOrdenCobroModel extends VOrdenPagoModel {
 	}
 
 	@Override
-	protected String getReportValue() {
+	public String getReportValue() {
 		return "CustomerReceipt";
 	}
 

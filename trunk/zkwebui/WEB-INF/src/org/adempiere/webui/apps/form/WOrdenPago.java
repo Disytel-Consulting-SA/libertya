@@ -12,13 +12,16 @@ import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.Date;
+import java.util.Enumeration;
 import java.util.Properties;
 import java.util.logging.Level;
 
 import javax.swing.event.TableModelEvent;
 import javax.swing.event.TableModelListener;
 import javax.swing.table.TableModel;
+import javax.swing.tree.DefaultMutableTreeNode;
 
+import org.adempiere.webui.apps.ProcessModalDialog;
 import org.adempiere.webui.component.Button;
 import org.adempiere.webui.component.Checkbox;
 import org.adempiere.webui.component.Column;
@@ -29,6 +32,7 @@ import org.adempiere.webui.component.GridFactory;
 import org.adempiere.webui.component.Label;
 import org.adempiere.webui.component.Row;
 import org.adempiere.webui.component.Rows;
+import org.adempiere.webui.component.SimpleTreeModel;
 import org.adempiere.webui.component.Tab;
 import org.adempiere.webui.component.Tabbox;
 import org.adempiere.webui.component.Tabpanel;
@@ -42,6 +46,9 @@ import org.adempiere.webui.event.ValueChangeEvent;
 import org.adempiere.webui.event.ValueChangeListener;
 import org.adempiere.webui.panel.ADForm;
 import org.adempiere.webui.window.FDialog;
+import org.adempiere.webui.window.ZkJRViewer;
+import org.adempiere.webui.window.ZkJRViewerProvider;
+import org.openXpertya.JasperReport.MJasperReport;
 import org.openXpertya.apps.form.VComponentsFactory;
 import org.openXpertya.apps.form.VModelHelper;
 import org.openXpertya.apps.form.VOrdenPago;
@@ -58,17 +65,26 @@ import org.openXpertya.model.MCurrency;
 import org.openXpertya.model.MLookup;
 import org.openXpertya.model.MLookupFactory;
 import org.openXpertya.model.MLookupInfo;
+import org.openXpertya.model.MPInstance;
+import org.openXpertya.model.MPInstancePara;
+import org.openXpertya.model.MProcess;
 import org.openXpertya.model.MSequence;
+import org.openXpertya.model.RetencionProcessor;
 import org.openXpertya.model.X_C_BankAccountDoc;
-import org.openXpertya.pos.view.KeyUtils;
+import org.openXpertya.process.ProcessInfo;
+import org.openXpertya.util.ASyncProcess;
 import org.openXpertya.util.CLogger;
 import org.openXpertya.util.DB;
 import org.openXpertya.util.DisplayType;
 import org.openXpertya.util.Env;
 import org.openXpertya.util.Msg;
+import org.openXpertya.util.Trx;
+import org.zkoss.lang.Objects;
+import org.zkoss.zk.ui.Executions;
 import org.zkoss.zk.ui.event.Event;
 import org.zkoss.zk.ui.event.EventListener;
 import org.zkoss.zk.ui.event.Events;
+import org.zkoss.zk.ui.util.Clients;
 import org.zkoss.zkex.zul.Borderlayout;
 import org.zkoss.zkex.zul.Center;
 import org.zkoss.zkex.zul.North;
@@ -86,16 +102,18 @@ import org.zkoss.zul.Radio;
 import org.zkoss.zul.Radiogroup;
 import org.zkoss.zul.RowRenderer;
 import org.zkoss.zul.Separator;
+import org.zkoss.zul.SimpleTreeNode;
 import org.zkoss.zul.Space;
 import org.zkoss.zul.Tree;
-import org.zkoss.zul.Treechildren;
+import org.zkoss.zul.Treecell;
 import org.zkoss.zul.Treeitem;
+import org.zkoss.zul.Treerow;
 
 /**
  *
  * @author  usuario
  */
-public class WOrdenPago extends ADForm implements ValueChangeListener, TableModelListener /*implements /*FormPanel,ActionListener,TableModelListener,VetoableChangeListener,ChangeListener,TreeModelListener,MouseListener,CellEditorListener,ASyncProcess*/ {
+public class WOrdenPago extends ADForm implements ValueChangeListener, TableModelListener, EventListener /*implements /*FormPanel,ActionListener,TableModelListener,VetoableChangeListener,ChangeListener,TreeModelListener,MouseListener,CellEditorListener,ASyncProcess*/ {
 
     /** Creates new form WOrdenPago */
     public WOrdenPago() {
@@ -180,7 +198,7 @@ public class WOrdenPago extends ADForm implements ValueChangeListener, TableMode
 
         lblEfectivoImporte = new Label();
         txtEfectivoImporte = new Textbox();
-        txtEfectivoImporte.setConstraint("/^[0-9]+$/");
+//        txtEfectivoImporte.setConstraint("/^[0-9]+$/");
         
 //        jPanel6 = new javax.swing.JPanel();
           lblTransfCtaBancaria = new Label();
@@ -309,7 +327,7 @@ public class WOrdenPago extends ADForm implements ValueChangeListener, TableMode
         cmdEliminar.setLabel("ELIMINAR");
         cmdEliminar.addEventListener("onClick", new EventListener() {
             public void onEvent(Event evt) throws Exception {
-            	cmdEditarActionPerformed(evt);
+            	cmdEliminarActionPerformed(evt);
             }
         });
 
@@ -364,13 +382,9 @@ public class WOrdenPago extends ADForm implements ValueChangeListener, TableMode
             }
         });
         
-//        // Pagos anticipados como medios de pago
-        createPagoAdelantadoTab();  // FEDE:TODO llamado al menos para que instancie los objetos
-//		jTabbedPane2.addTab("PAGO ADELANTADO", createPagoAdelantadoTab());
-//		m_PagoAdelantadoTabIndex = jTabbedPane1.indexOfComponent(panelPagoAdelantado);
-//        
-//        //Agrego un listener para verificar si es null o no, y deshabilitar el boton Siguiente en caso de que sea null
-//        
+        // Pagos anticipados como medios de pago
+        createPagoAdelantadoTab();  // llamado simplemente para evitar posteriores NPE
+        //Agrego un listener para verificar si es null o no, y deshabilitar el boton Siguiente en caso de que sea null    
         BPartnerSel.addValueChangeListener(new ValueChangeListener() {
 			
 			@Override
@@ -547,7 +561,7 @@ public class WOrdenPago extends ADForm implements ValueChangeListener, TableMode
     		
 	    	VOrdenPagoModel.MedioPago mp = null;
 	    	
-	    	switch (jTabbedPane2.getIndex())
+	    	switch (mpTabbox.getSelectedIndex())
 	    	{
 	    	case 0: // Efectivo
 	    		mp = saveCashMedioPago();
@@ -568,13 +582,15 @@ public class WOrdenPago extends ADForm implements ValueChangeListener, TableMode
 	    		mp = savePagoAdelantadoMedioPago();
 	    		break;
 	    	default:
-	    		cmdCustomSaveMedioPago(jTabbedPane2.getIndex());
+	    		cmdCustomSaveMedioPago(mpTabbox.getSelectedIndex());
 	    		break;
 	    	}
 	    	
 	    	if(mp != null){
 	    		m_model.addMedioPago(mp);
 	    	}
+	    	updateTreeModel();
+	    	pagosTree.setModel(getMediosPagoTreeModel());
 	    	clearMediosPago();
 			// Actualizar componentes de interfaz gráfica necesarios luego de
 			// agregar el medio de pago 
@@ -582,10 +598,8 @@ public class WOrdenPago extends ADForm implements ValueChangeListener, TableMode
     	} catch (Exception e) {
     		String title = Msg.getMsg(m_ctx, "Error");
     		String msg = Msg.parseTranslation(m_ctx, "@SaveErrorNotUnique@ \n\n" + e.getMessage() /*"@SaveError@"*/ );
-    		
-    		// TODO: VER
-    		//JOptionPane.showMessageDialog(this, msg, title, JOptionPane.ERROR_MESSAGE);
-    		
+
+    		showError(title + ": " + msg);
     	}
     }//GEN-LAST:event_cmdSavePMActionPerformed
     
@@ -781,45 +795,50 @@ public class WOrdenPago extends ADForm implements ValueChangeListener, TableMode
 		return getModel().addPagoAdelantado(payID, amount, isCash, monedaOriginalID);		
 	}
     
-/*    
-    private VOrdenPagoModel.MyTreeNode darElementoArbolSeleccionado() {
-    	if (jTree1.getSelectionCount() == 1) {
-			TreePath path = jTree1.getSelectionPath();
-			
-			VOrdenPagoModel.MyTreeNode tn = (VOrdenPagoModel.MyTreeNode)path.getLastPathComponent();
+    
+    private MyTreeNode darElementoArbolSeleccionado() {
+    	if (pagosTree.getSelectedCount() == 1) {
+			Treeitem item = pagosTree.getSelectedItem(); // .getSelectionPath();
+
+			MyTreeNode tn = (MyTreeNode)(((SimpleTreeNode)item.getValue()).getData());
 			return tn;
     	}
     	
     	return null;
     }
-*/    
+    
     private void cmdEditarActionPerformed(Event evt) {//GEN-FIRST:event_cmdEditarActionPerformed
-//    	try {
-//			VOrdenPagoModel.MyTreeNode tn = darElementoArbolSeleccionado();
-//			if (tn != null) {
-//				cmdEditMedioPago(tn);
-//				// Actualizar componentes de interfaz gráfica necesarios luego de
-//				// agregar el medio de pago 
-//		    	updateCustomInfoAfterMedioPago(MEDIOPAGO_ACTION_EDIT);
-//			}
-//    	} catch (Exception e) {
-//    		
-//    	}
+    	try {
+			MyTreeNode tn = darElementoArbolSeleccionado();
+			if (tn != null) {
+				cmdEditMedioPago(tn);
+				// Actualizar componentes de interfaz gráfica necesarios luego de
+				// agregar el medio de pago 
+		    	updateCustomInfoAfterMedioPago(MEDIOPAGO_ACTION_EDIT);
+			}
+			updateTreeModel();
+			pagosTree.setModel(getMediosPagoTreeModel());
+    	} catch (Exception e) {
+    		e.printStackTrace();
+    	}
+    	
     }//GEN-LAST:event_cmdEditarActionPerformed
 
     private void cmdEliminarActionPerformed(Event evt) {//GEN-FIRST:event_cmdEliminarActionPerformed
-//    	try {
-//			VOrdenPagoModel.MyTreeNode tn = darElementoArbolSeleccionado();
-//
-//			if (tn != null) {
-//				cmdDeleteMedioPago(tn);
-//				// Actualizar componentes de interfaz gráfica necesarios luego de
-//				// agregar el medio de pago 
-//		    	updateCustomInfoAfterMedioPago(MEDIOPAGO_ACTION_DELETE);
-//			}
-//    	} catch (Exception e) {
-//    		
-//    	}
+    	try {
+			MyTreeNode tn = darElementoArbolSeleccionado();
+
+			if (tn != null) {
+				cmdDeleteMedioPago(tn);
+				// Actualizar componentes de interfaz gráfica necesarios luego de
+				// agregar el medio de pago 
+		    	updateCustomInfoAfterMedioPago(MEDIOPAGO_ACTION_DELETE);
+			}
+			updateTreeModel();
+			pagosTree.setModel(getMediosPagoTreeModel());
+    	} catch (Exception e) {
+    		e.printStackTrace();
+    	}
     }//GEN-LAST:event_cmdEliminarActionPerformed
 
     private void onFechaChange(boolean toPayMoment) {//GEN-FIRST:event_onFechaChange
@@ -892,7 +911,7 @@ public class WOrdenPago extends ADForm implements ValueChangeListener, TableMode
     
     private void cmdProcessActionPerformed(Event evt) {
 
-    	final int idx = jTabbedPane1.getIndex();
+    	final int idx = tabbox.getSelectedIndex();
     	
     	if (idx == 0) {
 
@@ -968,10 +987,10 @@ public class WOrdenPago extends ADForm implements ValueChangeListener, TableMode
     		// Avanza a la siguiente tab
     		m_cambioTab = true;
     		tabbox.setSelectedIndex(1);
-    		m_cambioTab = false;
+//    		m_cambioTab = false;  // <- diferencias con Swing en los tiempos de eventos. Se pone a false en el evento 
     		
     		updatePaymentsTabsState();
-//    		treeUpdated();
+    		treeUpdated();
     		// Actualizar descuento de entidad comercial
     		customUpdateBPartnerRelatedComponents(false);
     		
@@ -1004,16 +1023,43 @@ public class WOrdenPago extends ADForm implements ValueChangeListener, TableMode
     		}
     		
     		if (status == VOrdenPagoModel.PROCERROR_OK)
-    		{
-// FEDE:TODO: Mostrar informe bajo contexto Web!
-//	    		m_model.mostrarInforme(this);
-	    		
+    		{	
+    			// FEDE:TODO refactor pending: similar a VOrdenPagoModel.mostrarInforme
+    			if (m_model.m_newlyCreatedC_AllocationHeader_ID <= 0)
+    				return;
+    	        int proc_ID = DB.getSQLValue( null, "SELECT AD_Process_ID FROM AD_Process WHERE value='" + m_model.getReportValue()+ "' " );
+    	        if( proc_ID > 0 ) {
+
+    	        	MPInstance instance = new MPInstance( Env.getCtx(), proc_ID, 0, null );
+    	            if( !instance.save()) {
+    	            	log.log(Level.SEVERE, "Error at mostrarInforme: instance.save()");
+    	                showError("Error al mostrar informe. " + CLogger.retrieveErrorAsString());
+    	                return;
+    	            }
+    	            ProcessInfo pi = new ProcessInfo( "Orden de Pago",proc_ID );
+    	            pi.setAD_PInstance_ID( instance.getAD_PInstance_ID());
+    	            
+    	            MPInstancePara ip;
+    	            
+    	            ip = new MPInstancePara( instance, 10 );
+    	            ip.setParameter( "C_AllocationHdr_ID",String.valueOf(m_model.m_newlyCreatedC_AllocationHeader_ID ));
+    	            if( !ip.save()) {
+    	            	log.log(Level.SEVERE, "Error at mostrarInforme: ip.save()");
+    	            	showError("Error al mostrar informe. " + CLogger.retrieveErrorAsString());
+    	                return;
+    	            }
+    	            
+    	            MProcess process = new MProcess(Env.getCtx(), proc_ID, null);
+    	            try {
+    	            	MProcess.execute(Env.getCtx(), process, pi, null);
+    	            } catch (Exception e) {
+    	            	showError("Error al mostrar informe. " + e.getMessage());
+    	            	e.printStackTrace();
+    	            }
+    	        }
 	    		// Reset	    		
 	    		reset();
     		}
-    		//else
-    			//m_model.initTrx();
-
     	}    	
     }//GEN-LAST:event_cmdProcessActionPerformed
     
@@ -1163,10 +1209,8 @@ public class WOrdenPago extends ADForm implements ValueChangeListener, TableMode
 
     protected static final int PAGO_ADELANTADO_TYPE_PAYMENT_INDEX = 0;
     protected static final int PAGO_ADELANTADO_TYPE_CASH_INDEX = 1;
-//        
     protected MSequence seq;
     
-    private int m_PagoAdelantadoTabIndex = -1;
     private int m_chequeTerceroTabIndex = -1;
     
     private Tabpanel panelChequeTercero;
@@ -1178,20 +1222,15 @@ public class WOrdenPago extends ADForm implements ValueChangeListener, TableMode
     private WSearchEditor chequeTercero;
     private Textbox txtChequeTerceroImporte;
     private Textbox txtChequeTerceroDescripcion;
-//    
-//    // Variables //
 
-      private boolean m_cambioTab = false;
-//    
-      protected int m_C_Currency_ID = Env.getContextAsInt( Env.getCtx(), "$C_Currency_ID" );
-//
-      private static CLogger log = CLogger.getCLogger( WOrdenPago.class );
-      protected VOrdenPagoModel m_model = new VOrdenPagoModel();
-      protected Properties m_ctx = Env.getCtx();
-      private String m_trxName = m_model.getTrxName();
-    
-      private boolean actualizarNrosChequera = true;
+	private boolean m_cambioTab = false;
+	protected int m_C_Currency_ID = Env.getContextAsInt( Env.getCtx(), "$C_Currency_ID" );
+	private static CLogger log = CLogger.getCLogger( WOrdenPago.class );
+	protected VOrdenPagoModel m_model = new VOrdenPagoModel();
+	protected Properties m_ctx = Env.getCtx();
+	private boolean actualizarNrosChequera = true;
 
+	
     protected static final String GOTO_BPARTNER = "GOTO_BPARTNER";
     protected static final String MOVE_INVOICE_FORWARD = "MOVE_INVOICE_FORWARD";
     protected static final String MOVE_INVOICE_BACKWARD = "MOVE_INVOICE_BACKWARD";
@@ -1352,7 +1391,7 @@ public class WOrdenPago extends ADForm implements ValueChangeListener, TableMode
     	updateTotalAPagar1();
         // Agregado de pestañas con otras formas de pago. Método vacío que deben
         // implementar las subclases en caso de que quieran agregar otras pestañas.
-        addCustomPaymentTabs(jTabbedPane2);
+        addCustomPaymentTabs();
         // Agregado de operaciones luego de crear las pestañas custom
         addCustomOperationAfterTabsDefinition();
         
@@ -1425,17 +1464,11 @@ public class WOrdenPago extends ADForm implements ValueChangeListener, TableMode
 		
 		//
 		
-		cmdProcess.setLabel(Msg.translate(Env.getCtx(), "Processing"));
-		cmdEditar.setLabel(Msg.translate(Env.getCtx(), "Edit"));
-		cmdEliminar.setLabel(Msg.translate(Env.getCtx(), "Delete"));
-		cmdGrabar.setLabel(Msg.translate(Env.getCtx(), "Save"));
-		
 		cmdCancel.setLabel(Msg.getMsg(m_ctx, "Close")/*+" "+KeyUtils.getKeyStr(getActionKeys().get(GOTO_EXIT))*/);
-		
-		cmdEditar.setLabel(Msg.getMsg(m_ctx, "Edit")/*.replace("&", "")+" "+KeyUtils.getKeyStr(getActionKeys().get(EDIT_PAYMENT))*/);
-		cmdEliminar.setLabel(Msg.getMsg(m_ctx, "Delete")/*.replace("&", "")+" "+KeyUtils.getKeyStr(getActionKeys().get(REMOVE_PAYMENT))*/);
-		cmdGrabar.setLabel(Msg.getMsg(m_ctx, "Save")/*.replace("&", "")+" "+KeyUtils.getKeyStr(getActionKeys().get(ADD_PAYMENT))*/);
-		cmdProcess.setLabel(Msg.getElement(m_ctx, "Processing")/*+" "+KeyUtils.getKeyStr(getActionKeys().get(GOTO_PROCESS))*/);
+		cmdEditar.setLabel(Msg.translate(Env.getCtx(), "Edit").replace("&", ""));
+		cmdEliminar.setLabel(Msg.translate(Env.getCtx(), "Delete").replace("&", ""));
+		cmdGrabar.setLabel(Msg.translate(Env.getCtx(), "Save").replace("&", ""));
+		cmdProcess.setLabel(Msg.translate(Env.getCtx(), "Processing"));
 
 		/*
 		
@@ -1483,7 +1516,6 @@ public class WOrdenPago extends ADForm implements ValueChangeListener, TableMode
 		
 		// Traduccion del boton PROCESAR
 		// Actualizar las acciones habilitadas de los atajos para cada pestaña
-		
 		if (tabbox.getSelectedIndex() == 0){
 			cmdProcess.setLabel(Msg.translate(Env.getCtx(), "NextStep"));
 		}
@@ -1573,7 +1605,7 @@ public class WOrdenPago extends ADForm implements ValueChangeListener, TableMode
 			efectivoLibroCaja.setValue(mpe.libroCaja_ID);
 			txtEfectivoImporte.setText(m_model.numberFormat(mpe.importe));
 			
-			jTabbedPane2.setZIndex(TAB_INDEX_EFECTIVO);
+			mpTabbox.setSelectedIndex(TAB_INDEX_EFECTIVO);
 			
 		} else if (mp.getTipoMP().equals(VOrdenPagoModel.MedioPago.TIPOMEDIOPAGO_TRANSFERENCIA)) { // Transferencia - Transfer
 			
@@ -1584,7 +1616,7 @@ public class WOrdenPago extends ADForm implements ValueChangeListener, TableMode
 			txtTransfImporte.setText(m_model.numberFormat(mpt.importe));
 			txtTransfNroTransf.setText(mpt.nroTransf);
 			
-			jTabbedPane2.setZIndex(TAB_INDEX_TRANSFERENCIA);
+			mpTabbox.setSelectedIndex(TAB_INDEX_TRANSFERENCIA);
 			
 		} else if (mp.getTipoMP().equals(VOrdenPagoModel.MedioPago.TIPOMEDIOPAGO_CHEQUE)) { // Cheque - Check
 			
@@ -1600,14 +1632,14 @@ public class WOrdenPago extends ADForm implements ValueChangeListener, TableMode
 			txtChequeCUITLibrador.setText(mpc.cuitLibrador);
 			txtChequeDescripcion.setText(mpc.descripcion);
 			
-			jTabbedPane2.setZIndex(TAB_INDEX_CHEQUE);
+			mpTabbox.setSelectedIndex(TAB_INDEX_CHEQUE);
 		} else if (mp.getTipoMP().equals(VOrdenPagoModel.MedioPago.TIPOMEDIOPAGO_CREDITO)) { // Credito
 			VOrdenPagoModel.MedioPagoCredito mpcm = (VOrdenPagoModel.MedioPagoCredito)mp;
 			creditInvoice.setValue(mpcm.getC_invoice_ID());
 			txtCreditAvailable.setValue(mpcm.getAvailableAmt().toString());
 			txtCreditImporte.setValue(mpcm.getImporte().toString());
 			
-			jTabbedPane2.setZIndex(TAB_INDEX_CREDITO);
+			mpTabbox.setSelectedIndex(TAB_INDEX_CREDITO);
 		} else if (mp.getTipoMP().equals(VOrdenPagoModel.MedioPago.TIPOMEDIOPAGO_PAGOANTICIPADO)) { // Pago adelantado
 			VOrdenPagoModel.MedioPagoAdelantado mpa = (VOrdenPagoModel.MedioPagoAdelantado)mp;
 			cboPagoAdelantadoType.setSelectedIndex(PAGO_ADELANTADO_TYPE_PAYMENT_INDEX);
@@ -1615,7 +1647,7 @@ public class WOrdenPago extends ADForm implements ValueChangeListener, TableMode
 			txtPagoAdelantadoImporte.setValue(mpa.getImporte().toString());
 			txtPagoAdelantadoAvailable.setValue(getModel().getPagoAdelantadoAvailableAmt(mpa.getC_Payment_ID()).toString());
 			
-			jTabbedPane2.setZIndex(TAB_INDEX_PAGO_ADELANTADO);
+			mpTabbox.setSelectedIndex(TAB_INDEX_PAGO_ADELANTADO);
 		} else if (mp.getTipoMP().equals(VOrdenPagoModel.MedioPago.TIPOMEDIOPAGO_EFECTIVOADELANTADO)) { // Efectivo adelantado
 			VOrdenPagoModel.MedioPagoEfectivoAdelantado mpa = (VOrdenPagoModel.MedioPagoEfectivoAdelantado)mp;
 			cboPagoAdelantadoType.setSelectedIndex(PAGO_ADELANTADO_TYPE_CASH_INDEX);
@@ -1623,14 +1655,14 @@ public class WOrdenPago extends ADForm implements ValueChangeListener, TableMode
 			txtPagoAdelantadoImporte.setValue(mpa.getImporte().toString());
 			txtPagoAdelantadoAvailable.setValue(getModel().getCashAdelantadoAvailableAmt(mpa.getCashLineID()).toString());
 			
-			jTabbedPane2.setZIndex(TAB_INDEX_PAGO_ADELANTADO);
+			mpTabbox.setSelectedIndex(TAB_INDEX_PAGO_ADELANTADO);
 		} else if (mp.getTipoMP().equals(VOrdenPagoModel.MedioPago.TIPOMEDIOPAGO_CHEQUETERCERO)) { // Cheque de tercero
 			VOrdenPagoModel.MedioPagoChequeTercero mpct = (VOrdenPagoModel.MedioPagoChequeTercero)mp;
 			chequeTercero.setValue(mpct.getC_Payment_ID());
 			txtChequeTerceroImporte.setValue(mpct.getImporte().toString());
 			txtChequeTerceroDescripcion.setText(mpct.description);
 			
-			jTabbedPane2.setZIndex(m_chequeTerceroTabIndex);
+			mpTabbox.setSelectedIndex(m_chequeTerceroTabIndex);
 		}
 			
 	}
@@ -1715,44 +1747,34 @@ public class WOrdenPago extends ADForm implements ValueChangeListener, TableMode
 	private void updateDependent() {
 		efectivoLibroCaja.setValue(null);
 	}
-/*
-	public void stateChanged(ChangeEvent arg0) {
-		if (arg0.getSource() == jTabbedPane1) {
+
+
+	@Override
+	public void onEvent(Event arg0) throws Exception {
+		if (arg0.getTarget().getParent().getParent() == tabbox) {
 			// TAB principal
-			if (!m_cambioTab && jTabbedPane1.getSelectedIndex() == 1) {
-				jTabbedPane1.setSelectedIndex(0);
+			if (!m_cambioTab && tabbox.getSelectedIndex() == 1) {
+				tabbox.setSelectedIndex(0);
 			}
-			
+			if (m_cambioTab)
+				m_cambioTab = false;
 			updateCaptions();
-				
-			BPartnerSel.setReadWrite(jTabbedPane1.getSelectedIndex() == 0);
-			cboOrg.setReadWrite(jTabbedPane1.getSelectedIndex() == 0);
-			cboDocumentType.setReadWrite(jTabbedPane1.getSelectedIndex() == 0);
-			fldDocumentNo.setReadWrite(jTabbedPane1.getSelectedIndex() == 0);
 			
-		} else if (arg0.getSource() == jTabbedPane2) {
+			BPartnerSel.setReadWrite(tabbox.getSelectedIndex() == 0);
+			cboOrg.setReadWrite(tabbox.getSelectedIndex() == 0);
+			cboDocumentType.setReadWrite(tabbox.getSelectedIndex() == 0);
+			fldDocumentNo.setReadonly(tabbox.getSelectedIndex() == 1);
+		} else if (arg0.getTarget().getParent().getParent() == mpTabbox) {
 			// TAB de medios de pago
 			updateContextValues();
-		} else {
-			// System.out.println("stateChanged: " + arg0);
 		}
 	}
-
+	
 	private void treeUpdated() {
-		
-		// Expand all tree nodes 
-		
-		SwingUtilities.invokeLater( new Runnable() {
-            public void run() {
-            	for (int i = 0; i < jTree1.getRowCount(); i++)
-            		jTree1.expandRow(i);
-            }
-        } );
-		
 		// Update stats text fields
 		updateSummaryInfo();
 	}
-	*/
+
 	/**
 	 * Actualización de la organización
 	 * @param AD_Org_ID id de la organización nueva
@@ -1850,12 +1872,19 @@ public class WOrdenPago extends ADForm implements ValueChangeListener, TableMode
 	 * pago. Aquí se deben agregar las pestañas necesarias por las especializaciones.
 	 * @param tabbedPane Panel de pestaña que contiene los medios de pagos.
 	 */
-	protected void addCustomPaymentTabs(Tabpanel tabbedPane) { 
+	protected void addCustomPaymentTabs() { 
 		// Agregado de pestaña de medio de pago cheques de terceros.
-//		tabbedPane.addTab(getMsg("ThirdPartyCheck"), createChequeTerceroTab());
-		// FEDE:TODO a ambas lineas 
-//		tabbedPane.appendChild(createChequeTerceroTab());
-//		m_chequeTerceroTabIndex = tabbedPane.indexOfComponent(panelChequeTercero);
+		// Incorporar nueva pestaña y panel
+		Tab tab = new Tab(getMsg("ThirdPartyCheck"));
+		mpTabs.appendChild(tab);
+		mpTabpanels.appendChild(createChequeTerceroTab());
+		// Determinar posicion de la pestaña
+		int i = 0;
+		for (Object child : mpTabpanels.getChildren()) {
+			if (child == panelChequeTercero)
+				m_chequeTerceroTabIndex = i;
+			i++;
+		}
 	}
 	
 	/**
@@ -1895,8 +1924,8 @@ public class WOrdenPago extends ADForm implements ValueChangeListener, TableMode
 	/**
 	 * Ingresa en modo de edición el medio de pago seleccionado en el árbol.
 	 */
-    /*
-	protected void cmdEditMedioPago(VOrdenPagoModel.MyTreeNode tn) {
+ 
+	protected void cmdEditMedioPago(MyTreeNode tn) {
 		VOrdenPagoModel.MedioPago mp = (VOrdenPagoModel.MedioPago)tn.getUserObject();
 		
 		if (mp == null)
@@ -1907,12 +1936,12 @@ public class WOrdenPago extends ADForm implements ValueChangeListener, TableMode
 			loadMedioPago(mp);
 		}
 	}
-	*/
+	
 	/**
 	 * Borrado del nodo actual del arbol de medios de pago y retenciones.
 	 */
-    /*
-	protected void cmdDeleteMedioPago(VOrdenPagoModel.MyTreeNode tn) {
+    
+	protected void cmdDeleteMedioPago(MyTreeNode tn) {
 		VOrdenPagoModel.MedioPago mp = (VOrdenPagoModel.MedioPago)tn.getUserObject();
 		
 		if (mp == null)
@@ -1925,21 +1954,19 @@ public class WOrdenPago extends ADForm implements ValueChangeListener, TableMode
 			}
 		}
 	}
-	
+
 	protected boolean confirmDeleteMP(Object mp) {
 		String msg = Msg.parseTranslation(m_ctx, "@DeleteRecord?@\r\n" + mp.toString());
 		String title = Msg.getMsg(m_ctx, "Delete"); 
-		
-		// TODO: VER
-		//return (JOptionPane.showConfirmDialog(this, msg, title, JOptionPane.YES_NO_OPTION) == JOptionPane.YES_OPTION);
-		return false;
+		return FDialog.ask(m_WindowNo, this, title + ": " + msg);
 	}
-*/	
+
 	protected String getMsg(String name) {
 		return Msg.translate(m_ctx, name);
 	}
 	
 	protected void updatePaymentsTabsState() {
+		// FEDE:TODO
 //		jTabbedPane2.setEnabledAt(TAB_INDEX_CREDITO, m_model.isNormalPayment());
 //		jTabbedPane2.setEnabledAt(TAB_INDEX_PAGO_ADELANTADO, m_model.isNormalPayment());
 		jTabbedPane2.setEnabled(m_model.isNormalPayment());
@@ -2072,8 +2099,8 @@ public class WOrdenPago extends ADForm implements ValueChangeListener, TableMode
 		Row row3 = rows.newRow();
 		row3.appendChild(lblChequeFechaEmision.rightAlign());
 		row3.appendChild(chequeFechaEmision.getComponent());
-		row3.appendChild(lblChequeImporte.rightAlign());
-		row3.appendChild(txtChequeImporte);
+		row3.appendChild(lblChequeFechaPago.rightAlign());
+		row3.appendChild(chequeFechaPago.getComponent());
 		Row row4 = rows.newRow();
 		row4.appendChild(lblChequeALaOrden.rightAlign());
 		row4.appendChild(txtChequeALaOrden);
@@ -2161,7 +2188,7 @@ public class WOrdenPago extends ADForm implements ValueChangeListener, TableMode
 	}
 	
 	private void updateContextValues() {
-		if (jTabbedPane2.getIndex() == m_chequeTerceroTabIndex) {
+		if (mpTabbox.getSelectedIndex() == m_chequeTerceroTabIndex) {
 			setIsSOTrxContext("Y");
 			setBPartnerContext(null);
 		} else {
@@ -2456,7 +2483,8 @@ public class WOrdenPago extends ADForm implements ValueChangeListener, TableMode
 		
 	}
 
-
+	Tab tabPaymentSelection;
+	Tab tabPaymentRule;
 	private void zkInit() {
 		Borderlayout layout = new Borderlayout();
 		layout.setHeight("100%");
@@ -2502,15 +2530,16 @@ public class WOrdenPago extends ADForm implements ValueChangeListener, TableMode
 		tabbox.setHeight("100%");
 		tabbox.appendChild(tabs);
 		tabbox.appendChild(tabpanels);
+		tabbox.addEventListener("onSelect", this);
 		
 		createPaymentSelectionTab();
 		createPaymentTab();
 		
-		Tab tabPaymentSelection = new Tab(Msg.getMsg(Env.getCtx(), "PaymentSelection"));
+		tabPaymentSelection = new Tab(Msg.getMsg(Env.getCtx(), "PaymentSelection"));
 		tabpanels.appendChild(jTabbedPane1);
 		tabs.appendChild(tabPaymentSelection);
 		
-		Tab tabPaymentRule = new Tab(Msg.getMsg(Env.getCtx(), "Payment"));
+		tabPaymentRule = new Tab(Msg.getMsg(Env.getCtx(), "Payment"));
 		tabpanels.appendChild(jTabbedPane2);
 		tabs.appendChild(tabPaymentRule);
 		
@@ -2552,33 +2581,27 @@ public class WOrdenPago extends ADForm implements ValueChangeListener, TableMode
         return panel;
 	}
 	
-private Panel agregarTree() {
+	// Nodos base del arbol
+	private MyTreeNode m_nodoRaiz = null;
+	private MyTreeNode m_nodoRetenciones = null;
+	private MyTreeNode m_nodoMediosPago = null;
+	
+	// Arbol de medios de pago
+	protected Tree pagosTree;
+	// Modelo del arbol
+	protected ExtendedTreeModel m_arbolModel;
+	
+	private Panel agregarTree() {
 		
 		Panel panel = new Panel();
 		Panelchildren panelchildren = new Panelchildren();
+
+		pagosTree = new Tree();
+		pagosTree.setRows(15);
+		pagosTree.setModel(getMediosPagoTreeModel());
+		pagosTree.setTreeitemRenderer(m_arbolModel);
 		
-		//panelchildren.setStyle("border: 1px solid red");
-		
-		Treeitem treeitem1 = new Treeitem("Prueba 1");
-		
-		Treeitem treeitem3 = new Treeitem("Prueba 3");
-		Treeitem treeitem4 = new Treeitem("Prueba 4");
-		Treechildren treechildren1 = new Treechildren();
-		treechildren1.appendChild(treeitem3);
-		treechildren1.appendChild(treeitem4);
-		
-		Treeitem treeitem2 = new Treeitem("Prueba 2");
-		treeitem2.appendChild(treechildren1);
-		
-		Treechildren treechildren = new Treechildren();
-		treechildren.appendChild(treeitem1);
-		treechildren.appendChild(treeitem2);
-		
-		Tree tree = new Tree();
-		tree.setRows(15);
-		tree.appendChild(treechildren);
-		
-		panelchildren.appendChild(tree);
+		panelchildren.appendChild(pagosTree);
 		panelchildren.appendChild(cmdEliminar);
 		panelchildren.appendChild(cmdEditar);
 		
@@ -2586,42 +2609,47 @@ private Panel agregarTree() {
         return panel;
 	}
 
+	/** Panel de medios de pago */
+	protected Tabpanels mpTabpanels;
+	/** Pestañas de medios de pago */
+	protected Tabs mpTabs;
+	/** Contenedor de pestañas/paneles de medios de pago */
+	protected Tabbox mpTabbox;
+	
 	private Panel agregarTabs() {
 		
 		Panel panel = new Panel();
 		Panelchildren panelchildren = new Panelchildren();
 		//panelchildren.setStyle("border: 1px solid red");
 	    
-	    Tabpanels tabpanels = new Tabpanels();
-	    tabpanels.appendChild(createPagoAdelantadoTab());
-	    tabpanels.appendChild(createChequeTerceroTab());
-	    tabpanels.appendChild(createCheckTab());
-	    tabpanels.appendChild(createCreditTab());
-	    tabpanels.appendChild(createCashTab());
-	    tabpanels.appendChild(creteTransferTab());
-	 	
-	    Tab tab1 = new Tab("Pago Adelantado");
-	    Tab tab2 = new Tab("Cheque de Tercero");
-	    Tab tab3 = new Tab("Cheque o Talón");
-	    Tab tab4 = new Tab("Crédito");
-	    Tab tab5 = new Tab("Efectivo");
-	    Tab tab6 = new Tab("Transferencia Bancaria");
+		mpTabpanels = new Tabpanels();
+		mpTabpanels.appendChild(createCashTab());
+		mpTabpanels.appendChild(creteTransferTab());
+		mpTabpanels.appendChild(createCheckTab());
+		mpTabpanels.appendChild(createCreditTab());
+		mpTabpanels.appendChild(createPagoAdelantadoTab());
+	    
+	    Tab tab0 = new Tab(VModelHelper.GetReferenceValueTrlFromColumn("C_Order", "PaymentRule", "B", "name"));
+	    Tab tab1 = new Tab(VModelHelper.GetReferenceValueTrlFromColumn("C_Order", "PaymentRule", "Tr", "name"));
+	    Tab tab2 = new Tab(VModelHelper.GetReferenceValueTrlFromColumn("C_Order", "PaymentRule", "S", "name"));
+	    Tab tab3 = new Tab(Msg.translate(m_ctx, "Credit"));
+	    Tab tab4 = new Tab(getMsg("AdvancedPayment"));
 		 
-	    Tabs tabs = new Tabs();
-	    tabs.appendChild(tab1);
-	    tabs.appendChild(tab2);
-	    tabs.appendChild(tab3);
-	    tabs.appendChild(tab4);
-	    tabs.appendChild(tab5);
-	    tabs.appendChild(tab6);
+	    mpTabs = new Tabs();
+	    mpTabs.appendChild(tab0);
+	    mpTabs.appendChild(tab1);
+	    mpTabs.appendChild(tab2);
+	    mpTabs.appendChild(tab3);
+	    mpTabs.appendChild(tab4);
 	 	
-	    Tabbox tabbox = new Tabbox();
-	    tabbox.setMold("accordion");;
-	    tabbox.setHeight("100%");
-		tabbox.appendChild(tabs);
-		tabbox.appendChild(tabpanels);
-	 	
-		panelchildren.appendChild(tabbox);
+	    mpTabbox = new Tabbox();
+	    mpTabbox.setMold("accordion");;
+	    mpTabbox.setHeight("100%");
+	    mpTabbox.appendChild(mpTabs);
+	    mpTabbox.appendChild(mpTabpanels);
+	    mpTabbox.addEventListener("onSelect", this);
+	    
+		panelchildren.appendChild(mpTabbox);
 		panel.appendChild(panelchildren);
 	    
 	    return panel;
@@ -2810,7 +2838,7 @@ private Panel agregarTree() {
 	}
 	
 	/**
-	 * Model para la grilla.  
+	 * Model para la grilla de Facturas
 	 * 
 	 * Esta clase delega la estructura y lógica de determinación de los registros a recuperar al 
 	 * módulo original de Ordenes de Pago, a fin de centralizar la lógica en un único lugar y
@@ -2866,6 +2894,187 @@ private Panel agregarTree() {
 			return model.getColumnName(columnIndex);
 		}
 		
+	}
+
+	/**
+	 * Nodos de pago
+	 */
+	public static class MyTreeNode extends DefaultMutableTreeNode {
+		
+		protected String m_msg;
+		protected boolean m_leaf;
+		
+		public MyTreeNode(String msg, Object obj, boolean leaf) {
+			m_msg = msg;
+			m_leaf = leaf;
+			userObject = obj;
+		}
+		
+		public void setMsg(String msg) {
+			m_msg = msg;
+		}
+		
+		public String toString() {
+			return m_msg != null ? m_msg : userObject.toString();
+		}
+		
+		public boolean isLeaf() {
+			return m_leaf;
+		}
+		
+		public boolean isMedioPago() {
+			return userObject != null && userObject instanceof MedioPago;
+		}
+		
+		public boolean isRetencion() {
+			return userObject != null && !isMedioPago();
+		}
+
+		public Object getUserObject() {
+			return userObject;
+		}
+
+		public void setUserObject(Object userObject) {
+			this.userObject = userObject;
+		}
+	}
+
+	
+	protected void initTreeModel() {
+		String nodoRaizMsg ;
+		String nodoRetencionesMsg = Msg.getElement(m_ctx, "C_Withholding_ID");
+		String nodoMediosPagoMsg = Msg.translate(m_ctx, m_model.getMsgMap().get("TenderType"));
+		String bpName = m_model.BPartner != null ? m_model.BPartner.getName() + " - " : "";
+		
+		String monto = numberFormat(m_model.getSumaTotalPagarFacturas());
+		
+		nodoRaizMsg = bpName + Msg.getElement(m_ctx, "Amount") + ": " + monto;
+		
+		// Crear los nodos base o actualizar sus mensajes
+		
+		if (m_nodoRaiz == null) {
+			m_nodoRaiz = new MyTreeNode(nodoRaizMsg, null, false);
+		} else {
+			m_nodoRaiz.setMsg(nodoRaizMsg);
+			m_nodoRaiz.removeAllChildren();
+		}
+		
+		if (m_nodoRetenciones == null)
+			m_nodoRetenciones = new MyTreeNode(nodoRetencionesMsg, null, false);
+		else
+			m_nodoRetenciones.setMsg(nodoRetencionesMsg);
+		
+		if (m_nodoMediosPago == null)
+			m_nodoMediosPago = new MyTreeNode(nodoMediosPagoMsg, null, false);
+		else
+			m_nodoMediosPago.setMsg(nodoMediosPagoMsg);
+		
+		// Agrego los hijos del nodo raiz
+		
+		if (m_model.m_retenciones.size() > 0) 
+			m_nodoRaiz.add(m_nodoRetenciones);
+		
+		m_nodoRaiz.add(m_nodoMediosPago);
+		
+		// Actualizo el Modelo 
+		
+//		if (m_arbolModel == null)
+			m_arbolModel = ExtendedTreeModel.createFrom(m_nodoRaiz);
+//		else
+//			m_arbolModel.setRoot(m_nodoRaiz);
+	}
+	
+	public void updateTreeModel() {
+		initTreeModel();
+		
+		// Agrego las retenciones
+		
+		if (m_nodoRetenciones != null) {
+			m_nodoRetenciones.removeAllChildren();
+			
+			for (RetencionProcessor r : m_model.m_retenciones)
+				m_nodoRetenciones.add(new MyTreeNode(r.getRetencionTypeName() + ": " + numberFormat( r.getAmount() ), r, true));
+		}
+		
+		// Agrego los medios de pago
+		
+		if (m_nodoMediosPago != null) {
+			m_nodoMediosPago.removeAllChildren();
+			
+			for (MedioPago mp : m_model.m_mediosPago) 
+				m_nodoMediosPago.add(new MyTreeNode(null, mp, true));
+		}
+		
+//		pagosTree.setTreeitemRenderer(getMediosPagoTreeModel()); <- stackoverflow // m_arbolModel.nodeStructureChanged(m_nodoRaiz);
+		treeUpdated();
+	}
+	
+	public SimpleTreeModel getMediosPagoTreeModel() {
+		updateTreeModel();
+		return m_arbolModel;
+	}
+	
+	
+	public static class ExtendedTreeModel extends SimpleTreeModel {
+		
+		public ExtendedTreeModel(SimpleTreeNode root) {
+			super(root);
+		}
+		
+		public static ExtendedTreeModel createFrom(DefaultMutableTreeNode root) {
+			ExtendedTreeModel model = null;
+			Enumeration nodeEnum = root.children();
+		    
+			SimpleTreeNode stRoot = new SimpleTreeNode(root, new ArrayList());
+	        while(nodeEnum.hasMoreElements()) {
+	        	DefaultMutableTreeNode childNode = (DefaultMutableTreeNode)nodeEnum.nextElement();
+	        	SimpleTreeNode stNode = new SimpleTreeNode(childNode, new ArrayList());
+	        	stRoot.getChildren().add(stNode);
+	        	if (childNode.getChildCount() > 0) {
+	        		populate(stNode, childNode);
+	        	}
+	        }
+	        model = new ExtendedTreeModel(stRoot);
+			return model;
+		}
+		
+		private static void populate(SimpleTreeNode stNode, DefaultMutableTreeNode root) {
+			Enumeration nodeEnum = root.children();
+			while(nodeEnum.hasMoreElements()) {
+				DefaultMutableTreeNode childNode = (DefaultMutableTreeNode)nodeEnum.nextElement();
+				SimpleTreeNode stChildNode = new SimpleTreeNode(childNode, new ArrayList());
+				stNode.getChildren().add(stChildNode);
+				if (childNode.getChildCount() > 0) {
+					populate(stChildNode, childNode);
+				}
+			}
+		}
+
+		/**
+		 * @param ti
+		 * @param node
+		 */
+		public void render(Treeitem ti, Object node) {
+			Treecell tc = new Treecell(Objects.toString(node));
+			Treerow tr = null;
+			if(ti.getTreerow()==null){
+				tr = new Treerow();			
+				tr.setParent(ti);
+				if (isItemDraggable()) {
+					tr.setDraggable("true");
+				}
+//				if (!onDropListners.isEmpty()) {
+//					tr.setDroppable("true");
+//					tr.addEventListener(Events.ON_DROP, this);
+//				}
+			}else{
+				tr = ti.getTreerow(); 
+				tr.getChildren().clear();
+			}				
+			tc.setParent(tr);
+			ti.setValue(node);
+			ti.setOpen(true);
+		}
 	}
 
 	
