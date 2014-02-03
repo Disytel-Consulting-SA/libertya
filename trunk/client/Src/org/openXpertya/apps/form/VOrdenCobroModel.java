@@ -713,7 +713,7 @@ public class VOrdenCobroModel extends VOrdenPagoModel {
 	}
 	
 	@Override
-	protected void updateAditionalInfo(){
+	public void updateAditionalInfo(){
 		// Actualizo el descuento de entidad comercial
 		reciboDeCliente.updateBPDiscountSchema();
 	}
@@ -1352,7 +1352,7 @@ public class VOrdenCobroModel extends VOrdenPagoModel {
 	/**
 	 * Verificar si estamos cobrando facturas vencidas
 	 */
-	protected void updateOverdueInvoicesCharge(){
+	public void updateOverdueInvoicesCharge(){
 		Timestamp dueDate = null;
 		existsOverdueInvoices = false;
 		if(m_facturas != null){
@@ -1574,7 +1574,7 @@ public class VOrdenCobroModel extends VOrdenPagoModel {
 	 * 
 	 * @author Equipo de Desarrollo Libertya - Matías Cap
 	 */
-	protected class OpenInvoicesCustomerReceiptsTableModel extends OpenInvoicesTableModel {
+	public class OpenInvoicesCustomerReceiptsTableModel extends OpenInvoicesTableModel {
 		private boolean allowManualAmtEditable = true;
 		public OpenInvoicesCustomerReceiptsTableModel() {
 			super();
