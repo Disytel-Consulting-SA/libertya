@@ -2983,7 +2983,7 @@ public class VOrdenPagoModel {
 	 * @param roundingMode
 	 * @return
 	 */
-	protected BigDecimal scaleAmount(BigDecimal amount, int currencyID, int roundingMode) {
+	public BigDecimal scaleAmount(BigDecimal amount, int currencyID, int roundingMode) {
 		BigDecimal newAmount = amount;
 		int scale = mCurency.getStdPrecision();
 		newAmount = amount.setScale(scale, roundingMode);

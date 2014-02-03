@@ -1,7 +1,5 @@
-/*
+/**
  * VOrdenPago.java
- *
- * Created on 14 de septiembre de 2007, 09:07
  */
 
 package org.adempiere.webui.apps.form;
@@ -21,7 +19,6 @@ import javax.swing.event.TableModelListener;
 import javax.swing.table.TableModel;
 import javax.swing.tree.DefaultMutableTreeNode;
 
-import org.adempiere.webui.apps.ProcessModalDialog;
 import org.adempiere.webui.component.Button;
 import org.adempiere.webui.component.Checkbox;
 import org.adempiere.webui.component.Column;
@@ -46,9 +43,6 @@ import org.adempiere.webui.event.ValueChangeEvent;
 import org.adempiere.webui.event.ValueChangeListener;
 import org.adempiere.webui.panel.ADForm;
 import org.adempiere.webui.window.FDialog;
-import org.adempiere.webui.window.ZkJRViewer;
-import org.adempiere.webui.window.ZkJRViewerProvider;
-import org.openXpertya.JasperReport.MJasperReport;
 import org.openXpertya.apps.form.VComponentsFactory;
 import org.openXpertya.apps.form.VModelHelper;
 import org.openXpertya.apps.form.VOrdenPago;
@@ -72,19 +66,15 @@ import org.openXpertya.model.MSequence;
 import org.openXpertya.model.RetencionProcessor;
 import org.openXpertya.model.X_C_BankAccountDoc;
 import org.openXpertya.process.ProcessInfo;
-import org.openXpertya.util.ASyncProcess;
 import org.openXpertya.util.CLogger;
 import org.openXpertya.util.DB;
 import org.openXpertya.util.DisplayType;
 import org.openXpertya.util.Env;
 import org.openXpertya.util.Msg;
-import org.openXpertya.util.Trx;
 import org.zkoss.lang.Objects;
-import org.zkoss.zk.ui.Executions;
 import org.zkoss.zk.ui.event.Event;
 import org.zkoss.zk.ui.event.EventListener;
 import org.zkoss.zk.ui.event.Events;
-import org.zkoss.zk.ui.util.Clients;
 import org.zkoss.zkex.zul.Borderlayout;
 import org.zkoss.zkex.zul.Center;
 import org.zkoss.zkex.zul.North;
@@ -418,7 +408,6 @@ public class WOrdenPago extends ADForm implements ValueChangeListener, TableMode
 		tabpanel.appendChild(gridpanel);
         return tabpanel;
     }
-	
     
     /**
      * Crea el panel de pagos
@@ -457,22 +446,8 @@ public class WOrdenPago extends ADForm implements ValueChangeListener, TableMode
 		Tablechildren table4 = new Tablechildren(); 
 		//panelchildren4.setStyle("border: 1px solid red");
 		panelchildren4.appendChild(cmdGrabar);
-		panel4.appendChild(panelchildren4);
-		
+		panel4.appendChild(panelchildren4);		
 		table4.appendChild(panel4);
-		/*
-		Panel panel5 = new Panel();
-		Panelchildren panelchildren5 = new Panelchildren();
-		
-		Tablechildren table5 = new Tablechildren(); 
-		//panelchildren4.setStyle("border: 1px solid red");
-		panelchildren5.appendChild(cmdEliminar);
-		panelchildren5.appendChild(cmdEditar);
-		panel5.appendChild(panelchildren5);
-		
-		table5.appendChild(panel5);
-		*/ 
-		/****/
 		
 		tablelayout.appendChild(tableCampProy);
 		tablelayout.appendChild(tableTree);
@@ -484,11 +459,11 @@ public class WOrdenPago extends ADForm implements ValueChangeListener, TableMode
 		jTabbedPane2.appendChild(contenedor);
     }
 
-   
+    protected Tabpanel panelPagoAdelantado;
 	// Uso de un pago adelantado como parte de una orden de pago
 	protected Tabpanel createPagoAdelantadoTab()
 	{
-		Tabpanel panelPagoAdelantado = new Tabpanel();
+		panelPagoAdelantado = new Tabpanel();
 		
 		lblPagoAdelantadoCash = new Label();
 		lblPagoAdelantadoPago = new Label();
@@ -1109,7 +1084,7 @@ public class WOrdenPago extends ADForm implements ValueChangeListener, TableMode
     // Tabs
     private Tabpanel jTabbedPane1 = new Tabpanel();
     private Tabpanel jTabbedPane2 = new Tabpanel();
- 	private Tabbox tabbox = new Tabbox();
+ 	protected Tabbox tabbox = new Tabbox();
  	private Tabs tabs = new Tabs();
  	private Tabpanels tabpanels = new Tabpanels();
     
@@ -1879,11 +1854,11 @@ public class WOrdenPago extends ADForm implements ValueChangeListener, TableMode
 	protected Integer getC_Project_ID() {
 		return (Integer)cboProject.getValue();
 	}
-	/*
-	protected boolean canEditTreeNode(VOrdenPagoModel.MyTreeNode treeNode) {
+	
+	protected boolean canEditTreeNode(MyTreeNode treeNode) {
 		return treeNode.isMedioPago();
 	}
-	*/
+	
 	/**
 	 * Ingresa en modo de edición el medio de pago seleccionado en el árbol.
 	 */
@@ -2099,7 +2074,14 @@ public class WOrdenPago extends ADForm implements ValueChangeListener, TableMode
         return tabpanel;
 	}
 	
-	protected Tabpanel creteTransferTab() {
+	protected Tabpanel createTransferTab() {
+		
+        lblTransfCtaBancaria.setText("CUENTA BANCARIA");
+        lblTransfNroTransf.setText("NRO TRANSFERENCIA");
+        lblTransfImporte.setText("IMPORTE");
+        lblTransfFecha.setText("FECHA");
+        txtTransfImporte.setText("0");
+        
         Tabpanel tabpanel = new Tabpanel();
     	tabpanel.setHeight("150px");
 		
@@ -2556,7 +2538,7 @@ public class WOrdenPago extends ADForm implements ValueChangeListener, TableMode
 	    
 		mpTabpanels = new Tabpanels();
 		mpTabpanels.appendChild(createCashTab());
-		mpTabpanels.appendChild(creteTransferTab());
+		mpTabpanels.appendChild(createTransferTab());
 		mpTabpanels.appendChild(createCheckTab());
 		mpTabpanels.appendChild(createCreditTab());
 		mpTabpanels.appendChild(createPagoAdelantadoTab());

@@ -61,6 +61,34 @@ public class Combobox extends org.zkoss.zul.Combobox
 		}
 	}
 
+	/**
+	 * Removes an item
+	 * @param item item to remove
+	 */
+	public void removeItem(Object item) {
+		int cnt = getItemCount();
+		for (int i = cnt - 1; i >=0; i--) {
+			if (getItemAtIndex(i).getValue() == item) { 
+				removeItemAt(i);
+				break;
+			}
+		}
+	}
+	
+	/**
+	 * Sets selected item based on its Value, passed as parameter
+	 * @param item to select
+	 */
+	public void setSelectedItemValue(Object item) {
+		int cnt = getItemCount();
+		for (int i = cnt - 1; i >=0; i--) {
+			if (getItemAtIndex(i).getValue() == item) { 
+				setSelectedIndex(i);
+				break;
+			}
+		}
+	}
+	
 	public void appendItem(String name, Object value) {
 		ComboItem item = new ComboItem(name, value);
 		this.appendChild(item);
