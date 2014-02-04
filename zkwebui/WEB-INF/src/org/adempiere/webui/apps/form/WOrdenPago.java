@@ -235,13 +235,9 @@ public class WOrdenPago extends ADForm implements ValueChangeListener, TableMode
         lblCampaign = new Label();
         lblProject = new Label();
         lblCurrency = new Label();
-
-        cmdProcess = new Button();
-        
+        cmdProcess = new Button();        
         cmdCancel = new Button();
-        /*
-        jPanel11 = new javax.swing.JPanel();
-        */
+
         lblCreditInvoice = new Label();
         MLookupInfo infoCreditInvoice = VComponentsFactory.MLookupInfoFactory( Env.getCtx(),m_WindowNo, 0, 3484, DisplayType.Search, m_model.getCreditSqlValidation());
         MLookup lookupCreditInvoice = new MLookup(infoCreditInvoice, 0);
@@ -263,17 +259,7 @@ public class WOrdenPago extends ADForm implements ValueChangeListener, TableMode
 				
 			}
 		});
-/*       
-        checkPayAll.addAction("setSelected",
-				KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0),
-				new AbstractAction() {
-					@Override
-					public void actionPerformed(ActionEvent arg0) {
-						checkPayAll.setSelected(!((VCheckBox) arg0.getSource()).isSelected());
-						fireActionPerformed(checkPayAll.getActionListeners(), null);
-					}
-				});
-*/        
+
         lblBPartner.setText("Entidad Comercial");
 
         chequeFechaEmision.setMandatory(true);
@@ -313,6 +299,8 @@ public class WOrdenPago extends ADForm implements ValueChangeListener, TableMode
             }
         });
 
+        
+        
         cmdEliminar.setLabel("ELIMINAR");
         cmdEliminar.addEventListener("onClick", new EventListener() {
             public void onEvent(Event evt) throws Exception {
@@ -381,10 +369,83 @@ public class WOrdenPago extends ADForm implements ValueChangeListener, TableMode
 				cmdBPartnerSelActionPerformed(evt);
 			}
 		}); 
-//        
-//        keyBindingsInit();
+        
+        // Ex-zkInit()
+    	Borderlayout layout = new Borderlayout();
+    	layout.setHeight("100%");
+    	layout.setWidth("100%");
+    	this.appendChild(layout);
+        
+        North north = new North();
+    	layout.appendChild(north);
+    	north.appendChild(jPanel1);
+    	
+    	createPaymentSelectionTopFields();
+    	
+    	Center center = new Center();
+    	layout.appendChild(center);
+    	center.appendChild(tabbox);
+    	
+    	tabbox.setHeight("100%");
+    	tabbox.appendChild(tabs);
+    	tabbox.appendChild(tabpanels);
+    	tabbox.addEventListener("onSelect", this);
+    	
+    	createPaymentSelectionTab();
+    	createPaymentTab();
+    	
+    	tabPaymentSelection = new Tab(Msg.getMsg(Env.getCtx(), "PaymentSelection"));
+    	tabpanels.appendChild(jTabbedPane1);
+    	tabs.appendChild(tabPaymentSelection);
+    	
+    	tabPaymentRule = new Tab(Msg.getMsg(Env.getCtx(), "Payment"));
+    	tabpanels.appendChild(jTabbedPane2);
+    	tabs.appendChild(tabPaymentRule);
+    	
+    	South south = new South();
+    	layout.appendChild(south);
+    	Div divButton = new Div();
+    	divButton.setAlign("end");
+    	divButton.appendChild(cmdProcess);
+    	south.appendChild(divButton);
+        
     }// </editor-fold>//GEN-END:initComponents
 
+    /**
+     * Agrega los campos superiores en la pestaña de facturas a pagar
+     */
+    protected void createPaymentSelectionTopFields() {
+    	Rows rows = jPanel1.newRows();
+    	Row row = rows.newRow();
+    	row.appendChild(lblClient.rightAlign());
+    	row.appendChild(cboClient.getComponent());
+    	
+    	row.appendChild(new Space());
+    	row.appendChild(lblOrg.rightAlign());
+    	row.appendChild(cboOrg.getComponent());
+    	row.appendChild(new Space());
+    	
+    	row = rows.newRow();
+    	row.appendChild(lblBPartner.rightAlign());
+    	row.appendChild(BPartnerSel.getComponent());
+    	row.appendChild(new Space());
+    	row.appendChild(lblDocumentNo.rightAlign());
+    	row.appendChild(fldDocumentNo);
+    	row.appendChild(new Space());
+    	
+    	row = rows.newRow();
+    	row.appendChild(lblDescription.rightAlign());
+    	row.appendChild(txtDescription);
+    	txtDescription.setWidth("100%");
+    	row.appendChild(new Space());
+
+    	row.appendChild(lblDocumentType.rightAlign());
+    	row.appendChild(cboDocumentType.getComponent());
+    	row.appendChild(new Space());
+
+    }
+    
+    
     /**
      * Crea la pestaña de efectivo 
      */
@@ -1057,8 +1118,8 @@ public class WOrdenPago extends ADForm implements ValueChangeListener, TableMode
     protected WSearchEditor BPartnerSel;
     protected Textbox fldDocumentNo;
     
-    private Radiogroup buttonGroup1;
-    private Radiogroup buttonGroup2;
+    protected Radiogroup buttonGroup1;
+    protected Radiogroup buttonGroup2;
    
     protected WTableDirEditor cboCampaign;
     protected WTableDirEditor cboClient;
@@ -1082,8 +1143,8 @@ public class WOrdenPago extends ADForm implements ValueChangeListener, TableMode
     protected Grid jPanel1;
     
     // Tabs
-    private Tabpanel jTabbedPane1 = new Tabpanel();
-    private Tabpanel jTabbedPane2 = new Tabpanel();
+    protected Tabpanel jTabbedPane1 = new Tabpanel();
+    protected Tabpanel jTabbedPane2 = new Tabpanel();
  	protected Tabbox tabbox = new Tabbox();
  	private Tabs tabs = new Tabs();
  	private Tabpanels tabpanels = new Tabpanels();
@@ -1202,6 +1263,9 @@ public class WOrdenPago extends ADForm implements ValueChangeListener, TableMode
 	protected VOrdenPagoModel m_model = new VOrdenPagoModel();
 	protected Properties m_ctx = Env.getCtx();
 	private boolean actualizarNrosChequera = true;
+    
+	Tab tabPaymentSelection;
+	Tab tabPaymentRule;
 
 	
     protected static final String GOTO_BPARTNER = "GOTO_BPARTNER";
@@ -2357,10 +2421,9 @@ public class WOrdenPago extends ADForm implements ValueChangeListener, TableMode
         	};
 			
 			initComponents();
-			zkInit();
-			initTranslations();
 			dynInit();
 			customInitComponents();
+			initTranslations();
 			getModel().m_facturasTableModel.addTableModelListener(this);
 			
 			onTipoPagoChange(false);
@@ -2375,75 +2438,6 @@ public class WOrdenPago extends ADForm implements ValueChangeListener, TableMode
 
 	private void dynInit() {
 		// TODO Auto-generated method stub
-		
-	}
-
-	Tab tabPaymentSelection;
-	Tab tabPaymentRule;
-	private void zkInit() {
-		Borderlayout layout = new Borderlayout();
-		layout.setHeight("100%");
-		layout.setWidth("100%");
-		this.appendChild(layout);
-        
-        North north = new North();
-		layout.appendChild(north);
-		north.appendChild(jPanel1);
-		
-		Rows rows = jPanel1.newRows();
-		Row row = rows.newRow();
-		row.appendChild(lblClient.rightAlign());
-		row.appendChild(cboClient.getComponent());
-		
-		row.appendChild(new Space());
-		row.appendChild(lblOrg.rightAlign());
-		row.appendChild(cboOrg.getComponent());
-		row.appendChild(new Space());
-		
-		row = rows.newRow();
-		row.appendChild(lblBPartner.rightAlign());
-		row.appendChild(BPartnerSel.getComponent());
-		row.appendChild(new Space());
-		row.appendChild(lblDocumentNo.rightAlign());
-		row.appendChild(fldDocumentNo);
-		row.appendChild(new Space());
-		
-		row = rows.newRow();
-		row.appendChild(lblDescription.rightAlign());
-		row.appendChild(txtDescription);
-		txtDescription.setWidth("100%");
-		row.appendChild(new Space());
-
-		row.appendChild(lblDocumentType.rightAlign());
-		row.appendChild(cboDocumentType.getComponent());
-		row.appendChild(new Space());
-		
-		Center center = new Center();
-		layout.appendChild(center);
-		center.appendChild(tabbox);
-		
-		tabbox.setHeight("100%");
-		tabbox.appendChild(tabs);
-		tabbox.appendChild(tabpanels);
-		tabbox.addEventListener("onSelect", this);
-		
-		createPaymentSelectionTab();
-		createPaymentTab();
-		
-		tabPaymentSelection = new Tab(Msg.getMsg(Env.getCtx(), "PaymentSelection"));
-		tabpanels.appendChild(jTabbedPane1);
-		tabs.appendChild(tabPaymentSelection);
-		
-		tabPaymentRule = new Tab(Msg.getMsg(Env.getCtx(), "Payment"));
-		tabpanels.appendChild(jTabbedPane2);
-		tabs.appendChild(tabPaymentRule);
-		
-		South south = new South();
-		layout.appendChild(south);
-		Div divButton = new Div();
-		divButton.setAlign("end");
-		divButton.appendChild(cmdProcess);
-		south.appendChild(divButton);
 		
 	}
 
@@ -2528,7 +2522,7 @@ public class WOrdenPago extends ADForm implements ValueChangeListener, TableMode
 	/** Pestañas de medios de pago */
 	protected Tabs mpTabs;
 	/** Contenedor de pestañas/paneles de medios de pago */
-	protected Tabbox mpTabbox;
+	protected Tabbox mpTabbox = new Tabbox();
 	
 	private Panel agregarTabs() {
 		
@@ -2570,7 +2564,7 @@ public class WOrdenPago extends ADForm implements ValueChangeListener, TableMode
 	}
 
 
-	private void createPaymentSelectionTab() {
+	protected void createPaymentSelectionTab() {
 		Hbox contenedor1 = new Hbox();
 		contenedor1.setWidth("100%");
 		//contenedor1.setStyle("border: 1px solid red");
@@ -2580,9 +2574,7 @@ public class WOrdenPago extends ADForm implements ValueChangeListener, TableMode
 		divButtonGroup1.appendChild(buttonGroup1);
 		
 		Div divCheckPayAll = new Div();
-		divCheckPayAll.setAlign("end");
-		//caja2.setStyle("border: 1px solid red");
-		divCheckPayAll.appendChild(checkPayAll);
+		createPayAllDiv(divCheckPayAll);
 		
 		contenedor1.appendChild(divButtonGroup1);
 		contenedor1.appendChild(divCheckPayAll);
@@ -2596,22 +2588,35 @@ public class WOrdenPago extends ADForm implements ValueChangeListener, TableMode
 		
 		Hbox contenedor2 = new Hbox();
 		contenedor2.setWidth("100%");
-		//contenedor1.setStyle("border: 1px solid red");
 		
 		Div divButtonGroup2 = new Div();
-		//divButtonGroup2.setStyle("border: 1px solid red");
 		divButtonGroup2.appendChild(buttonGroup2);
 		divButtonGroup2.appendChild(invoiceDatePick);
 		
 		Div divTxtEfectivoImporte = new Div();
-		divTxtEfectivoImporte.setAlign("end");
-		//divTxtEfectivoImporte.setStyle("border: 1px solid red");
-		divTxtEfectivoImporte.appendChild(lblTotalPagar1);
-		divTxtEfectivoImporte.appendChild(txtTotalPagar1);
-		
+		setDivTxtTotal(divTxtEfectivoImporte);
+
 		contenedor2.appendChild(divButtonGroup2);
 		contenedor2.appendChild(divTxtEfectivoImporte);
 		jTabbedPane1.appendChild(contenedor2);
+	}
+	
+	/**
+	 * Agrega campo de PayAll (u otros en subclase)
+	 */
+	protected void createPayAllDiv(Div divCheckPayAll) {
+		divCheckPayAll.setAlign("end");
+		divCheckPayAll.appendChild(checkPayAll);
+	}
+	
+	
+	/**
+	 * Seteo de campos en la part inferior derecha
+	 */
+	protected void setDivTxtTotal(Div divTxtEfectivoImporte) {
+		divTxtEfectivoImporte.setAlign("end");
+		divTxtEfectivoImporte.appendChild(lblTotalPagar1);
+		divTxtEfectivoImporte.appendChild(txtTotalPagar1);		
 	}
 	
 	
@@ -2653,6 +2658,7 @@ public class WOrdenPago extends ADForm implements ValueChangeListener, TableMode
 				Column col = new Column();
 				col.setLabel(owner.listModel.getColumnName(i));
 				cols.appendChild(col);
+				col.setVisible(!owner.shouldHideColumn(i));
 			}
 			owner.tblFacturas.appendChild(cols);		
 			
@@ -2688,6 +2694,7 @@ public class WOrdenPago extends ADForm implements ValueChangeListener, TableMode
 					Label aLabel = new Label(_data[i].toString()); 
 					aLabel.setParent(arg0);
 				}
+				arg0.setVisible(!owner.shouldHideColumn(i));
 			}
 
 		}
@@ -2750,6 +2757,14 @@ public class WOrdenPago extends ADForm implements ValueChangeListener, TableMode
 			owner.resetModel();
 		}
 	}
+	
+	/**
+	 * Para que el renderer pueda visualizar o no ciertas columnas (a redefinir por subclases)
+	 */
+	protected boolean shouldHideColumn(int columnNo) {
+		return false;
+	}
+	
 	
 	/**
 	 * Model para la grilla de Facturas
