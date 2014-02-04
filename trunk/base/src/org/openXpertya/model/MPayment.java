@@ -2637,6 +2637,11 @@ public final class MPayment extends X_C_Payment implements DocAction,ProcessCall
         reversal.setPosted( false );
         reversal.setDescription( getDescription());
         reversal.addDescription( "{->" + getDocumentNo() + ")" );
+        
+        // El contradocumento tiene que contener la fecha actual y NO la del documento original
+        reversal.setDateAcct(Env.getDate());
+        reversal.setDateTrx(Env.getDate());
+        
         reversal.save( get_TrxName());
         // No confirmo el trabajo adicional de cuentas corrientes porque se debe
 		// realizar luego de anular la factura
@@ -2724,8 +2729,8 @@ public final class MPayment extends X_C_Payment implements DocAction,ProcessCall
         setProcessed( true );
 
         // Create automatic Allocation
-
-        MAllocationHdr alloc = new MAllocationHdr( getCtx(),false,getDateTrx(),getC_Currency_ID(),Msg.translate( getCtx(),"C_Payment_ID" ) + ": " + reversal.getDocumentNo(),get_TrxName());
+        // 		El contradocumento tiene que contener la fecha actual y NO la del documento original 
+        MAllocationHdr alloc = new MAllocationHdr( getCtx(),false, Env.getDate(), getC_Currency_ID(),Msg.translate( getCtx(),"C_Payment_ID" ) + ": " + reversal.getDocumentNo(),get_TrxName());
 
         if( !alloc.save( get_TrxName())) {
             log.warning( "Automatic allocation - hdr not saved" );
