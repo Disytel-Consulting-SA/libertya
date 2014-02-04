@@ -6497,7 +6497,7 @@ END;
 $BODY$
   LANGUAGE plpgsql VOLATILE
   COST 100;
-ALTER FUNCTION cost_fifo(integer)
+ALTER FUNCTION cost_fifo(integer, timestamp)
   OWNER TO libertya;
 
 --20140121-1600 Nueva columna para gestionar reservados de pedidos y stock, por lo pronto para tipos de documento con base Remito de Salida y signo positivo (1), por ejemplo Devoluciones de Clientes. 
