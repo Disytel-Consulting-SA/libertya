@@ -1619,6 +1619,12 @@ public class FiscalDocumentPrint {
 		// volver a imprimirse.
 		oxpDocument.setFiscalAlreadyPrinted(true);
 		
+		/////////////////////////////////////////////////////////////////
+		// -- Último Documento Impreso por Impresora fiscal --
+		// Se guarda el último documento impreso en el tipo de documento
+		saveLastDocumentPrinted(oxpDocument);
+		/////////////////////////////////////////////////////////////////
+		
 		// Se guardan los cambios realizados.
 		if(canSaveOxpDocument()){
 			oxpDocument.save();
@@ -2200,6 +2206,14 @@ public class FiscalDocumentPrint {
 					1000) : new BigDecimal(maxAmountCFValue));
 		}
 		return maxAmountCF;
+	}
+	
+	public void saveLastDocumentPrinted(MInvoice document){
+		// Actualizar el último documento impreso fiscalmente en el tipo de
+		// documento
+		String sql = "UPDATE c_doctype SET c_invoice_id = " + document.getID()
+				+ " WHERE c_doctype_id = " + document.getC_DocTypeTarget_ID();
+		int no = DB.executeUpdate(sql, getTrxName());
 	}
 
 	/**

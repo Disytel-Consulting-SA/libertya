@@ -6505,3 +6505,9 @@ update ad_system set dummy = (SELECT addcolumnifnotexists('C_DocType','reservest
 
 --20140122-1352 Nueva columna indicar si el remito debe utilizar el mismo almacen que el pedido 
 update ad_system set dummy = (SELECT addcolumnifnotexists('C_DocType','useOrderWarehouse', 'character(1) NOT NULL DEFAULT ''Y''::bpchar'));
+
+--20140204-1045 Nueva columna para registrar la última factura impresa por el controlador fiscal
+update ad_system set dummy = (SELECT addcolumnifnotexists('C_DocType','c_invoice_id', 'integer'));
+ALTER TABLE c_doctype ADD CONSTRAINT lastfiscalprintedinvoice FOREIGN KEY (c_invoice_id)
+      REFERENCES c_invoice (c_invoice_id) MATCH SIMPLE
+      ON UPDATE NO ACTION ON DELETE NO ACTION;

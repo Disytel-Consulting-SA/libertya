@@ -7,7 +7,7 @@ import java.math.*;
 import org.openXpertya.util.*;
 /** Modelo Generado por C_DocType
  *  @author Comunidad de Desarrollo Libertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
- *  @version  - 2014-01-22 14:15:15.739 */
+ *  @version  - 2014-02-04 10:54:05.041 */
 public class X_C_DocType extends org.openXpertya.model.PO
 {
 /** Constructor estándar */
@@ -286,6 +286,22 @@ Document type used for shipments generated from this sales document */
 public int getC_DocTypeShipment_ID() 
 {
 Integer ii = (Integer)get_Value("C_DocTypeShipment_ID");
+if (ii == null) return 0;
+return ii.intValue();
+}
+/** Set Invoice.
+Invoice Identifier */
+public void setC_Invoice_ID (int C_Invoice_ID)
+{
+if (C_Invoice_ID <= 0) set_Value ("C_Invoice_ID", null);
+ else 
+set_Value ("C_Invoice_ID", new Integer(C_Invoice_ID));
+}
+/** Get Invoice.
+Invoice Identifier */
+public int getC_Invoice_ID() 
+{
+Integer ii = (Integer)get_Value("C_Invoice_ID");
 if (ii == null) return 0;
 return ii.intValue();
 }

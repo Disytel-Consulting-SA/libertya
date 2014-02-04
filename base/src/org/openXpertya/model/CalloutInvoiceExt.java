@@ -32,6 +32,7 @@ import org.openXpertya.util.CPreparedStatement;
 import org.openXpertya.util.DB;
 import org.openXpertya.util.DisplayType;
 import org.openXpertya.util.Env;
+import org.openXpertya.util.Msg;
 import org.openXpertya.util.Util;
 
 
@@ -816,9 +817,41 @@ public class CalloutInvoiceExt extends CalloutInvoice {
 				letra = "";
 		}
 		
-		if(comprobante != null && comprobante.toString().length() < 9 && pto != null)
+		if(comprobante != null && comprobante.toString().length() < 9 && pto != null){
 			setNroDoc(mTab, pto.intValue(), comprobante.intValue(), letra, IsSOTrx);
 
+			// Si la factura es manual y el nro de comprobante del último
+			// comprobante impreso fiscalmente del tipo de documento seleccionado es
+			// igual al actual entonces warning por mismo nro de comprobante
+			Boolean manualDocumentNo = null;
+		    Object manualObj = mTab.getValue("ManualDocumentNo");
+		    if(manualObj != null){
+		    	if(manualObj instanceof String){
+		      		manualDocumentNo = ((String)mTab.getValue("ManualDocumentNo")).equals("Y");
+		      	}
+		      	else{
+		      		manualDocumentNo = (Boolean)mTab.getValue("ManualDocumentNo");
+		      	}
+		    }
+			if(manualDocumentNo != null && manualDocumentNo){
+				// Tipo de documento
+				Integer nroComprobante = MDocType
+						.getLastFiscalDocumentNumeroComprobantePrinted(ctx,
+								(Integer) mTab.getValue("C_DocTypeTarget_ID"),
+								trxName);
+				if (nroComprobante != null
+						&& nroComprobante.intValue() + 1 == comprobante.intValue()) {
+					mTab.setCurrentRecordWarning(Msg.getMsg(ctx, "SameLastFiscalDocumentNroCompPrinted"));
+				}
+				else{
+					mTab.clearCurrentRecordWarning();
+				}
+			}
+			else{
+				mTab.clearCurrentRecordWarning();
+			}
+		}
+		
 		return "";
 	}	
 	
