@@ -9,9 +9,12 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.adempiere.webui.apps.form.WOrdenPago.FacturasModel;
 import org.adempiere.webui.component.Combobox;
 import org.adempiere.webui.component.Datebox;
 import org.adempiere.webui.component.Label;
+import org.adempiere.webui.component.Row;
+import org.adempiere.webui.component.Rows;
 import org.adempiere.webui.component.Tab;
 import org.adempiere.webui.component.Tabpanel;
 import org.adempiere.webui.component.Textbox;
@@ -21,6 +24,7 @@ import org.adempiere.webui.event.ValueChangeEvent;
 import org.adempiere.webui.event.ValueChangeListener;
 import org.compiere.swing.CComboBox;
 import org.openXpertya.apps.form.VComponentsFactory;
+import org.openXpertya.apps.form.VModelHelper;
 import org.openXpertya.apps.form.VOrdenCobroModel;
 import org.openXpertya.apps.form.VOrdenCobroModel.OpenInvoicesCustomerReceiptsTableModel;
 import org.openXpertya.apps.form.VOrdenPagoModel;
@@ -46,7 +50,9 @@ import org.openXpertya.util.Util;
 import org.openXpertya.util.ValueNamePair;
 import org.zkoss.zk.ui.event.Event;
 import org.zkoss.zk.ui.event.EventListener;
+import org.zkoss.zul.Div;
 import org.zkoss.zul.Panelchildren;
+import org.zkoss.zul.Space;
 
 
 public class WOrdenCobro extends WOrdenPago {
@@ -61,10 +67,10 @@ public class WOrdenCobro extends WOrdenPago {
 		msgChanges.put("Payment", "CustomerPayment");
 	}
 
-	private Label lblRetencSchema;
-	private Label lblRetencFecha;
-	private Label lblRetencImporte;
-	private Label lblRetencNroRetenc;
+	private Label lblRetencSchema = new Label();
+	private Label lblRetencFecha = new Label();
+	private Label lblRetencImporte = new Label();
+	private Label lblRetencNroRetenc = new Label();
 	protected Label lblTenderType;
 	protected Label lblDiscountAmt;
 	protected Label lblPaymentDiscount;
@@ -95,7 +101,7 @@ public class WOrdenCobro extends WOrdenPago {
 	protected Textbox txtOrgCharge;
 	protected Textbox txtGroupingAmt;
 	protected Combobox cboTenderType;
-	private Textbox txtRetencImporte;
+	private Textbox txtRetencImporte = new Textbox();
 	private Textbox txtRetencNroRetenc;
 	protected Textbox txtDiscountAmt;
 	protected Textbox txtPaymentDiscount;
@@ -105,7 +111,7 @@ public class WOrdenCobro extends WOrdenPago {
 	protected Textbox txtCreditCardCouponNo;
 	protected Textbox txtCuotasCount;
 	protected Textbox txtCuotaAmt;
-	protected Textbox txtCreditCardAmt;
+	protected Textbox txtCreditCardAmt = new Textbox();
 	private Tabpanel panelRetenc;
 	protected Panelchildren panelTenderType;
 	protected Panelchildren panelPaymentDiscount;
@@ -121,13 +127,13 @@ public class WOrdenCobro extends WOrdenPago {
 	protected Map<String, ValueNamePair> tenderTypesComboValues;
 	protected Map<Integer, Combobox> tenderTypeIndexsCombos = new HashMap<Integer, Combobox>();
 
-	protected Combobox cboCreditCardReceiptMedium;
-	protected Combobox cboCheckReceiptMedium;
-	protected Combobox cboCreditReceiptMedium;
-	protected Combobox cboCashReceiptMedium;
-	protected Combobox cboTransferReceiptMedium;
-	protected Combobox cboRetencionReceiptMedium;
-	protected Combobox cboPagoAdelantadoReceiptMedium;
+	protected Combobox cboCreditCardReceiptMedium = new Combobox();
+	protected Combobox cboCheckReceiptMedium = new Combobox();
+	protected Combobox cboCreditReceiptMedium = new Combobox();
+	protected Combobox cboCashReceiptMedium = new Combobox();
+	protected Combobox cboTransferReceiptMedium = new Combobox();
+	protected Combobox cboRetencionReceiptMedium = new Combobox();
+	protected Combobox cboPagoAdelantadoReceiptMedium = new Combobox();
 
 	protected Combobox cboEntidadFinancieraPlans;
 
@@ -229,16 +235,21 @@ public class WOrdenCobro extends WOrdenPago {
 	}
 
 	protected void ocultarCanje() {
-		// FEDE:TODO pendiente de hacer 
-//		if (!getCobroModel().showColumnChange()) {
-//			tblFacturas.getColumnModel().removeColumn(
-//					tblFacturas.getColumnModel().getColumn(
-//							tblFacturas.getColumnModel().getColumnCount() - 3));
-//		}
+		// Lo hace el renderer mediante shouldHideColumn
 	}
-
+	
+	protected boolean shouldHideColumn(int columnNo) { 
+		if (m_model == null || m_model.m_facturasTableModel == null)
+			return false;
+		// Ocultar la columna Canje
+		return columnNo == listModel.getColumnCount() - 3;
+	}
+	
 	@Override
 	protected void addCustomPaymentTabs() {
+		if (mpTabs == null || mpTabpanels == null)
+			return;
+		
 		// Agregado de pestaña de medio de cobro en retenciones.
 		Tab tab = new Tab(getMsg("C_Withholding_ID"));
 		mpTabs.appendChild(tab);
@@ -272,324 +283,19 @@ public class WOrdenCobro extends WOrdenPago {
 		initializeTenderTypeTabsRelations();
 		// Habilito/Deshabilito las pestañas que no esten relacionadas con el
 		// tender type actual
-		processPaymentTabs(
-				cboTenderType.getValue() == null ? null
-						: ((ValueNamePair) cboTenderType.getModel().getElementAt(cboTenderType.getSelectedIndex())).getValue());
-		// Selecciono la primer pestaña de pagos que se encuentre habilitada
+		if (cboTenderType.getSelectedIndex() >= 0) {
+			processPaymentTabs(
+					cboTenderType.getValue() == null ? null
+							: ((ValueNamePair) cboTenderType.getModel().getElementAt(cboTenderType.getSelectedIndex())).getValue());
+			// Selecciono la primer pestaña de pagos que se encuentre habilitada
+		}
 		selectPaymentTab();
 		// Selecciono uno por default
 		if (cboTenderType.getItemCount() > 0) {
 			cboTenderType.setSelectedIndex(0);
 		}
 	}
-	
-	// @Override FEDE:TODO en realidad debería hacer override
-	protected Tabpanel createInvoicesPanel() {
-		txtOrgCharge = new Textbox();
-		txtOrgCharge.setValue(BigDecimal.ZERO.toString());
-		txtOrgCharge.setReadonly(true);
-		txtPOS = new Textbox();
-//		txtPOS.setDisplayType(DisplayType.Integer);
-		// Setear el valor del punto de venta
-		txtPOS.addEventListener("onChange", new EventListener() {			
-			@Override
-			public void onEvent(Event arg0) throws Exception {
-				getCobroModel().setPOS(Integer.parseInt(txtPOS.getValue()));
-				
-			}
-		});
 
-		// Monto de agrupación de la entidad comercial
-		txtGroupingAmt = new Textbox();
-//		txtGroupingAmt.setDisplayType(DisplayType.Amount);
-		txtGroupingAmt.setValue(BigDecimal.ZERO.toString());
-		txtGroupingAmt.addEventListener("onChange", new EventListener() {		
-			@Override
-			public void onEvent(Event arg0) throws Exception {
-				updateGroupingAmt(false);
-				
-			}
-		});
-		
-		Tabpanel invoicesTabPanel = new Tabpanel();
-		
-		
-		// Crear el panel
-//		org.jdesktop.layout.GroupLayout jPanel3Layout = new org.jdesktop.layout.GroupLayout(
-//				jPanel3);
-//		jPanel3.setLayout(jPanel3Layout);
-//		jPanel3Layout
-//				.setHorizontalGroup(jPanel3Layout
-//						.createParallelGroup(
-//								org.jdesktop.layout.GroupLayout.LEADING)
-//						.add(jPanel3Layout
-//								.createSequentialGroup()
-//								.addContainerGap()
-//								.add(jPanel3Layout
-//										.createParallelGroup(
-//												org.jdesktop.layout.GroupLayout.LEADING)
-//										.add(jScrollPane1,
-//												org.jdesktop.layout.GroupLayout.DEFAULT_SIZE,
-//												647, Short.MAX_VALUE)
-//										.add(jPanel3Layout
-//												.createSequentialGroup()
-//												.add(radPayTypeStd)
-//												.addPreferredGap(
-//														org.jdesktop.layout.LayoutStyle.RELATED)
-//												.add(radPayTypeAdv)
-//												.addContainerGap(20,
-//														Short.MAX_VALUE)
-//												.add(lblGroupingAmt)
-//												.addPreferredGap(
-//														org.jdesktop.layout.LayoutStyle.RELATED)
-//												.add(txtGroupingAmt,
-//														org.jdesktop.layout.GroupLayout.PREFERRED_SIZE,
-//														110,
-//														org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-//												.addPreferredGap(
-//														org.jdesktop.layout.LayoutStyle.RELATED)
-//												.add(lblPOS)
-//												.addPreferredGap(
-//														org.jdesktop.layout.LayoutStyle.RELATED)
-//												.add(txtPOS,
-//														org.jdesktop.layout.GroupLayout.PREFERRED_SIZE,
-//														100,
-//														org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-//												.addContainerGap(20,
-//														Short.MAX_VALUE)
-//												.add(checkPayAll,
-//														org.jdesktop.layout.GroupLayout.PREFERRED_SIZE,
-//														135,
-//														org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
-//										.add(org.jdesktop.layout.GroupLayout.TRAILING,
-//												jPanel3Layout
-//														.createSequentialGroup()
-//														.add(rInvoiceAll)
-//														.addPreferredGap(
-//																org.jdesktop.layout.LayoutStyle.RELATED)
-//														.add(rInvoiceDate)
-//														.addPreferredGap(
-//																org.jdesktop.layout.LayoutStyle.RELATED)
-//														.add(invoiceDatePick,
-//																org.jdesktop.layout.GroupLayout.PREFERRED_SIZE,
-//																110,
-//																org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-//														.addPreferredGap(
-//																org.jdesktop.layout.LayoutStyle.RELATED,
-//																179,
-//																Short.MAX_VALUE)
-//														.add(lblOrgCharge)
-//														.addPreferredGap(
-//																org.jdesktop.layout.LayoutStyle.RELATED)
-//														.add(txtOrgCharge,
-//																org.jdesktop.layout.GroupLayout.PREFERRED_SIZE,
-//																95,
-//																org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-//														.addPreferredGap(
-//																org.jdesktop.layout.LayoutStyle.RELATED)
-//														.add(lblTotalPagar1)
-//														.addPreferredGap(
-//																org.jdesktop.layout.LayoutStyle.RELATED)
-//														.add(txtTotalPagar1,
-//																org.jdesktop.layout.GroupLayout.PREFERRED_SIZE,
-//																95,
-//																org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-//														.addPreferredGap(
-//																org.jdesktop.layout.LayoutStyle.RELATED)))
-//								.addContainerGap()));
-//		jPanel3Layout
-//				.setVerticalGroup(jPanel3Layout
-//						.createParallelGroup(
-//								org.jdesktop.layout.GroupLayout.LEADING)
-//						.add(jPanel3Layout
-//								.createSequentialGroup()
-//								.addContainerGap()
-//								.add(jPanel3Layout
-//										.createParallelGroup(
-//												org.jdesktop.layout.GroupLayout.BASELINE)
-//										.add(radPayTypeStd)
-//										.add(radPayTypeAdv)
-//										.add(lblGroupingAmt)
-//										.add(txtGroupingAmt,
-//												org.jdesktop.layout.GroupLayout.PREFERRED_SIZE,
-//												org.jdesktop.layout.GroupLayout.DEFAULT_SIZE,
-//												org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-//										.add(lblPOS)
-//										.add(txtPOS,
-//												org.jdesktop.layout.GroupLayout.PREFERRED_SIZE,
-//												org.jdesktop.layout.GroupLayout.DEFAULT_SIZE,
-//												org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-//										.add(checkPayAll))
-//								.addPreferredGap(
-//										org.jdesktop.layout.LayoutStyle.RELATED)
-//								.add(jScrollPane1,
-//										org.jdesktop.layout.GroupLayout.DEFAULT_SIZE,
-//										260, 440)
-//								.addPreferredGap(
-//										org.jdesktop.layout.LayoutStyle.RELATED)
-//								.add(jPanel3Layout
-//										.createParallelGroup(
-//												org.jdesktop.layout.GroupLayout.BASELINE)
-//										.add(lblTotalPagar1)
-//										.add(rInvoiceAll)
-//										.add(rInvoiceDate)
-//										.add(lblOrgCharge,
-//												org.jdesktop.layout.GroupLayout.PREFERRED_SIZE,
-//												org.jdesktop.layout.GroupLayout.DEFAULT_SIZE,
-//												org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-//										.add(txtOrgCharge,
-//												org.jdesktop.layout.GroupLayout.PREFERRED_SIZE,
-//												org.jdesktop.layout.GroupLayout.DEFAULT_SIZE,
-//												org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-//										.add(txtTotalPagar1,
-//												org.jdesktop.layout.GroupLayout.PREFERRED_SIZE,
-//												org.jdesktop.layout.GroupLayout.DEFAULT_SIZE,
-//												org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-//										.add(invoiceDatePick,
-//												org.jdesktop.layout.GroupLayout.PREFERRED_SIZE,
-//												org.jdesktop.layout.GroupLayout.DEFAULT_SIZE,
-//												org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))));
-		return invoicesTabPanel; // jPanel3;
-	}
-
-	protected void createLeftUpStaticPanel() {
-//		org.jdesktop.layout.GroupLayout jPanel9Layout = new org.jdesktop.layout.GroupLayout(
-//				jPanel9);
-//		jPanel9.setLayout(jPanel9Layout);
-//		jPanel9Layout
-//				.setHorizontalGroup(jPanel9Layout
-//						.createParallelGroup(
-//								org.jdesktop.layout.GroupLayout.LEADING)
-//						.add(jPanel9Layout
-//								.createSequentialGroup()
-//								.addContainerGap()
-//								.add(jPanel9Layout
-//										.createParallelGroup(
-//												org.jdesktop.layout.GroupLayout.LEADING)
-//										.add(lblBPartner).add(lblClient)
-//										.add(lblDocumentNo))
-//								.addPreferredGap(
-//										org.jdesktop.layout.LayoutStyle.RELATED)
-//								.add(jPanel9Layout
-//										.createParallelGroup(
-//												org.jdesktop.layout.GroupLayout.TRAILING)
-//										.add(cboClient, 0, 234, Short.MAX_VALUE)
-//										.add(BPartnerSel,
-//												org.jdesktop.layout.GroupLayout.DEFAULT_SIZE,
-//												234, Short.MAX_VALUE)
-//										.add(fldDocumentNo,
-//												org.jdesktop.layout.GroupLayout.DEFAULT_SIZE,
-//												234, Short.MAX_VALUE))
-//								.addContainerGap()));
-//		jPanel9Layout
-//				.setVerticalGroup(jPanel9Layout
-//						.createParallelGroup(
-//								org.jdesktop.layout.GroupLayout.LEADING)
-//						.add(jPanel9Layout
-//								.createSequentialGroup()
-//								.addContainerGap()
-//								.add(jPanel9Layout
-//										.createParallelGroup(
-//												org.jdesktop.layout.GroupLayout.BASELINE)
-//										.add(lblClient)
-//										.add(cboClient,
-//												org.jdesktop.layout.GroupLayout.PREFERRED_SIZE,
-//												org.jdesktop.layout.GroupLayout.DEFAULT_SIZE,
-//												org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
-//								.addPreferredGap(
-//										org.jdesktop.layout.LayoutStyle.RELATED)
-//								.add(jPanel9Layout
-//										.createParallelGroup(
-//												org.jdesktop.layout.GroupLayout.BASELINE)
-//										.add(lblBPartner)
-//										.add(BPartnerSel,
-//												org.jdesktop.layout.GroupLayout.PREFERRED_SIZE,
-//												org.jdesktop.layout.GroupLayout.DEFAULT_SIZE,
-//												org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
-//								.addPreferredGap(
-//										org.jdesktop.layout.LayoutStyle.RELATED)
-//								.add(jPanel9Layout
-//										.createParallelGroup(
-//												org.jdesktop.layout.GroupLayout.BASELINE)
-//										.add(lblDocumentNo)
-//										.add(fldDocumentNo,
-//												org.jdesktop.layout.GroupLayout.PREFERRED_SIZE,
-//												org.jdesktop.layout.GroupLayout.DEFAULT_SIZE,
-//												org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
-//								.addContainerGap()));
-	}
-
-	protected void createRightUpStaticPanel() {
-		// Descuento de entidad comercial
-		lblBPartnerDiscount = new Label();
-		MLookup lookupBPDiscount = MLookupFactory.get (Env.getCtx(), m_WindowNo, 0, 6581, DisplayType.Search);
-		bPartnerDiscount = new WSearchEditor ("M_DiscountSchema_ID", false, false, true, lookupBPDiscount);
-		bPartnerDiscount.setReadWrite(false);
-
-//		jPanel10.setOpaque(false);
-//		org.jdesktop.layout.GroupLayout jPanel10Layout = new org.jdesktop.layout.GroupLayout(
-//				jPanel10);
-//		jPanel10.setLayout(jPanel10Layout);
-//		jPanel10Layout
-//				.setHorizontalGroup(jPanel10Layout
-//						.createParallelGroup(
-//								org.jdesktop.layout.GroupLayout.LEADING)
-//						.add(jPanel10Layout
-//								.createSequentialGroup()
-//								.addContainerGap()
-//								.add(jPanel10Layout
-//										.createParallelGroup(
-//												org.jdesktop.layout.GroupLayout.LEADING)
-//										.add(lblOrg).add(lblBPartnerDiscount)
-//										.add(lblDocumentType))
-//								.addPreferredGap(
-//										org.jdesktop.layout.LayoutStyle.RELATED)
-//								.add(jPanel10Layout
-//										.createParallelGroup(
-//												org.jdesktop.layout.GroupLayout.TRAILING)
-//										.add(cboOrg, 0, 234, Short.MAX_VALUE)
-//										.add(bPartnerDiscount,
-//												org.jdesktop.layout.GroupLayout.DEFAULT_SIZE,
-//												234, Short.MAX_VALUE)
-//										.add(cboDocumentType, 0, 234,
-//												Short.MAX_VALUE))
-//								.addContainerGap()));
-//		jPanel10Layout
-//				.setVerticalGroup(jPanel10Layout
-//						.createParallelGroup(
-//								org.jdesktop.layout.GroupLayout.LEADING)
-//						.add(jPanel10Layout
-//								.createSequentialGroup()
-//								.addContainerGap()
-//								.add(jPanel10Layout
-//										.createParallelGroup(
-//												org.jdesktop.layout.GroupLayout.BASELINE)
-//										.add(lblOrg)
-//										.add(cboOrg,
-//												org.jdesktop.layout.GroupLayout.PREFERRED_SIZE,
-//												org.jdesktop.layout.GroupLayout.DEFAULT_SIZE,
-//												org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
-//								.addPreferredGap(
-//										org.jdesktop.layout.LayoutStyle.RELATED)
-//								.add(jPanel10Layout
-//										.createParallelGroup(
-//												org.jdesktop.layout.GroupLayout.BASELINE)
-//										.add(lblBPartnerDiscount)
-//										.add(bPartnerDiscount,
-//												org.jdesktop.layout.GroupLayout.PREFERRED_SIZE,
-//												org.jdesktop.layout.GroupLayout.DEFAULT_SIZE,
-//												org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
-//								.addPreferredGap(
-//										org.jdesktop.layout.LayoutStyle.RELATED)
-//								.add(jPanel10Layout
-//										.createParallelGroup(
-//												org.jdesktop.layout.GroupLayout.BASELINE)
-//										.add(lblDocumentType)
-//										.add(cboDocumentType,
-//												org.jdesktop.layout.GroupLayout.PREFERRED_SIZE,
-//												org.jdesktop.layout.GroupLayout.DEFAULT_SIZE,
-//												org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))));
-	}
 
 	@Override
 	protected Tabpanel  createCashTab() {
@@ -2199,6 +1905,8 @@ public class WOrdenCobro extends WOrdenPago {
 	 *            panel de pestañas
 	 */
 	protected void selectPaymentTab() {
+		if (mpTabs == null || mpTabbox == null)
+			return;
 		int tabCount = mpTabs.getChildren().size();
 		boolean found = false;
 		// Itero por todas las pestañas y selecciono la primera que encuentro
@@ -3108,4 +2816,109 @@ public class WOrdenCobro extends WOrdenPago {
 	}
 
 
+    /**
+     * Agrega los campos superiores en la pestaña de facturas a pagar
+     */
+    protected void createPaymentSelectionTopFields() {
+
+    	// Descuento de entidad comercial
+		lblBPartnerDiscount = new Label();
+		MLookup lookupBPDiscount = MLookupFactory.get (Env.getCtx(), m_WindowNo, 0, 6581, DisplayType.Search);
+		bPartnerDiscount = new WSearchEditor ("M_DiscountSchema_ID", false, false, true, lookupBPDiscount);
+		bPartnerDiscount.setReadWrite(false);
+
+    	Rows rows = jPanel1.newRows();
+    	Row row = rows.newRow();
+    	row.appendChild(lblClient.rightAlign());
+    	row.appendChild(cboClient.getComponent());
+    	
+    	row.appendChild(new Space());
+    	row.appendChild(lblOrg.rightAlign());
+    	row.appendChild(cboOrg.getComponent());
+    	row.appendChild(new Space());
+    	
+    	row = rows.newRow();
+    	row.appendChild(lblBPartner.rightAlign());
+    	row.appendChild(BPartnerSel.getComponent());
+    	row.appendChild(new Space());
+    	row.appendChild(lblBPartnerDiscount.rightAlign());
+    	row.appendChild(bPartnerDiscount.getComponent());
+    	row.appendChild(new Space());
+    	
+    	row = rows.newRow();
+    	row.appendChild(lblDocumentNo.rightAlign());
+    	row.appendChild(fldDocumentNo);
+    	txtDescription.setWidth("100%");
+    	row.appendChild(new Space());
+
+    	row.appendChild(lblDocumentType.rightAlign());
+    	row.appendChild(cboDocumentType.getComponent());
+    	row.appendChild(new Space());
+
+    }
+    
+    
+	/**
+	 * Agrega campo de PayAll (u otros en subclase)
+	 */
+	protected void createPayAllDiv(Div divCheckPayAll) {
+		divCheckPayAll.setAlign("end");
+		divCheckPayAll.appendChild(lblPOS);
+		divCheckPayAll.appendChild(txtPOS);
+		divCheckPayAll.appendChild(checkPayAll);
+	}
+    
+	/**
+	 * Seteo de campos en la part inferior derecha
+	 */
+	protected void setDivTxtTotal(Div divTxtEfectivoImporte) {
+		
+		divTxtEfectivoImporte.setAlign("end");
+		divTxtEfectivoImporte.appendChild(lblOrgCharge);
+		divTxtEfectivoImporte.appendChild(txtOrgCharge);
+		divTxtEfectivoImporte.appendChild(lblTotalPagar1);
+		divTxtEfectivoImporte.appendChild(txtTotalPagar1);		
+	}
+
+	
+	protected void initComponents() {
+		
+		// Inicializaciones especificas para WOrdenCobro
+		txtOrgCharge = new Textbox();
+		txtOrgCharge.setValue(BigDecimal.ZERO.toString());
+		txtOrgCharge.setReadonly(true);
+		txtPOS = new Textbox();
+		// Setear el valor del punto de venta
+		txtPOS.addEventListener("onChange", new EventListener() {			
+			@Override
+			public void onEvent(Event arg0) throws Exception {
+				getCobroModel().setPOS(Integer.parseInt(txtPOS.getValue()));
+				
+			}
+		});
+
+		// Monto de agrupación de la entidad comercial
+		txtGroupingAmt = new Textbox();
+		txtGroupingAmt.setValue(BigDecimal.ZERO.toString());
+		txtGroupingAmt.addEventListener("onChange", new EventListener() {		
+			@Override
+			public void onEvent(Event arg0) throws Exception {
+				updateGroupingAmt(false);
+				
+			}
+		});
+
+		
+		// Demas inicializaciones
+		super.initComponents();
+	}
+	
+	
+	/**
+	 * Fuerza el reseteo del modelo de la Grid en base a los datos del modelo de VOrdenPagoModel
+	 */
+	protected void resetModel() {
+		super.resetModel();
+		ocultarCanje();		
+	}
 }
