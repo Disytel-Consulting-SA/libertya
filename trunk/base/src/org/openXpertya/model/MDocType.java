@@ -33,6 +33,7 @@ import org.openXpertya.util.CLogger;
 import org.openXpertya.util.DB;
 import org.openXpertya.util.Env;
 import org.openXpertya.util.Msg;
+import org.openXpertya.util.Util;
 
 /**
  *      Document Type Model
@@ -479,6 +480,18 @@ public class MDocType extends X_C_DocType {
 		format.setMaximumIntegerDigits(4);
 		format.setGroupingUsed(false);
 		return format.format(posNumber);
+	}
+	
+	public static Integer getLastFiscalDocumentNumeroComprobantePrinted(Properties ctx, Integer docTypeID, String trxName){
+		Integer nroComprobante = null;
+		MDocType docType = MDocType.get(ctx, docTypeID, trxName);
+		if (docType.isFiscal()
+				&& !Util.isEmpty(docType.getC_Invoice_ID(), true)) {
+			MInvoice lastFiscalPrintedInvoice = new MInvoice(ctx,
+					docType.getC_Invoice_ID(), trxName);
+			nroComprobante = lastFiscalPrintedInvoice.getNumeroComprobante();
+		}
+		return nroComprobante;
 	}
 
     /**

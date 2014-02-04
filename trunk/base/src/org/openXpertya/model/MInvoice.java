@@ -4629,6 +4629,22 @@ public class MInvoice extends X_C_Invoice implements DocAction {
 			// Valida el límite de consumidor final
 			FiscalDocumentPrint.validateInvoiceCFLimit(getCtx(), bp, this,
 					get_TrxName());
+			
+			// Valida que si el documento es manual y el tipo de documento se
+			// imprime fiscalmente entonces no sobrepase el último nro de
+			// comprobante impreso fiscalmente
+			Integer lastFiscalPrintedNumeroComprobante = MDocType
+					.getLastFiscalDocumentNumeroComprobantePrinted(getCtx(),
+							getC_DocTypeTarget_ID(), get_TrxName());
+			if (requireFiscalPrint()
+					&& isManualDocumentNo()
+					&& lastFiscalPrintedNumeroComprobante != null
+					&& getNumeroComprobante() > lastFiscalPrintedNumeroComprobante
+							.intValue() + 1) {
+				throw new Exception(Msg.getMsg(getCtx(),
+						"NroCompGreaterThanLastFiscalPrinted",
+						new Object[] { lastFiscalPrintedNumeroComprobante }));
+			}
 		} catch (Exception e) {
 			log.saveError("", e.getMessage());
 			return false;
