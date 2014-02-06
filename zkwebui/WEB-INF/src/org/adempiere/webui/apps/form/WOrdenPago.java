@@ -505,8 +505,18 @@ public class WOrdenPago extends ADForm implements ValueChangeListener, TableMode
 		Panelchildren panelchildren4 = new Panelchildren();
 		
 		Tablechildren table4 = new Tablechildren(); 
-		//panelchildren4.setStyle("border: 1px solid red");
-		panelchildren4.appendChild(cmdGrabar);
+		
+		// ---
+		Grid gridpanel = GridFactory.newGridLayout();
+		gridpanel.setWidth("100%");
+		
+    	Rows rows = gridpanel.newRows();
+		Row row = rows.newRow();
+		row.appendChild(cmdGrabar);
+		createPaymentMediumDiscountPanel(rows);
+		// ---
+		
+		panelchildren4.appendChild(gridpanel);
 		panel4.appendChild(panelchildren4);		
 		table4.appendChild(panel4);
 		
@@ -514,12 +524,18 @@ public class WOrdenPago extends ADForm implements ValueChangeListener, TableMode
 		tablelayout.appendChild(tableTree);
 		tablelayout.appendChild(tableTabs);
 		tablelayout.appendChild(table4);
-		//tablelayout.appendChild(table5);
 		
 		contenedor.appendChild(tablelayout);
 		jTabbedPane2.appendChild(contenedor);
     }
 
+    /**
+     * Componentes adicionales al botón de Guardar Cambios (incorporar un medio de pago)
+     */
+    protected void createPaymentMediumDiscountPanel(Rows rows) {
+    	
+    }
+    
     protected Tabpanel panelPagoAdelantado;
 	// Uso de un pago adelantado como parte de una orden de pago
 	protected Tabpanel createPagoAdelantadoTab()
@@ -2442,7 +2458,7 @@ public class WOrdenPago extends ADForm implements ValueChangeListener, TableMode
 	}
 
 	
-	private Panel agregarCampProy() {
+	protected Panel agregarCampProy() {
 		
 		Panel panel = new Panel();
 		Panelchildren panelchildren = new Panelchildren();
@@ -2464,10 +2480,15 @@ public class WOrdenPago extends ADForm implements ValueChangeListener, TableMode
 		row.appendChild(lblCurrency.rightAlign());
 		row.appendChild(cboCurrency.getComponent());
 		
+		addFieldsToCampProy(row);
+		
 		panelchildren.appendChild(gridpanel);
 		panel.appendChild(panelchildren);
-        
+		
         return panel;
+	}
+	
+	protected void addFieldsToCampProy(Row row) {
 	}
 	
 	// Nodos base del arbol
@@ -2480,6 +2501,9 @@ public class WOrdenPago extends ADForm implements ValueChangeListener, TableMode
 	// Modelo del arbol
 	protected ExtendedTreeModel m_arbolModel;
 	
+	/**
+	 * Crea el arbol y resumen totalizado
+	 */
 	private Panel agregarTree() {
 		
 		Panel panel = new Panel();
@@ -2494,6 +2518,7 @@ public class WOrdenPago extends ADForm implements ValueChangeListener, TableMode
 		panelchildren.appendChild(cmdEliminar);
 		panelchildren.appendChild(cmdEditar);
 		
+		// Summary
     	Grid gridpanel = GridFactory.newGridLayout();
 		gridpanel.setWidth("100%");
 		
@@ -2511,12 +2536,21 @@ public class WOrdenPago extends ADForm implements ValueChangeListener, TableMode
 		row3.appendChild(txtRetenciones2);
 		row3.appendChild(lblMedioPago2.rightAlign());
 		row3.appendChild(txtMedioPago2);
+		addSummaryCustomFields(rows);
+		
 		panelchildren.appendChild(gridpanel);
 		
 		panel.appendChild(panelchildren);
         return panel;
 	}
 
+	/**
+	 * Permite agregar campos en el tab summary
+	 */
+	protected void addSummaryCustomFields(Rows rows) {
+		
+	}
+	
 	/** Panel de medios de pago */
 	protected Tabpanels mpTabpanels;
 	/** Pestañas de medios de pago */
