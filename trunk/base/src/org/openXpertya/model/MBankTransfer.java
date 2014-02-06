@@ -59,7 +59,20 @@ public class MBankTransfer extends X_C_BankTransfer implements DocAction {
 		return generarPagos(false);
 	}
 	
+	/**
+	* @Author: Mauro Hernández - Disytel 
+	* @Fecha: 20/12/2013
+	* @Comentario: Se asigna el mismo valor de importe origen a importe destino.
+	* @Parametros:
+	* @Modificado: 
+	*/
 	
+	
+	@Override
+	protected boolean beforeSave(boolean newRecord) {
+		setammount_to(getammount_from());
+		return true;
+	}
 	
 	
 	/**
