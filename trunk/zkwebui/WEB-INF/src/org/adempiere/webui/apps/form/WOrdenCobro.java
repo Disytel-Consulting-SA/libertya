@@ -9,7 +9,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.adempiere.webui.apps.form.WOrdenPago.FacturasModel;
+import org.adempiere.webui.component.ComboItem;
 import org.adempiere.webui.component.Combobox;
 import org.adempiere.webui.component.Datebox;
 import org.adempiere.webui.component.Grid;
@@ -26,7 +26,6 @@ import org.adempiere.webui.event.ValueChangeEvent;
 import org.adempiere.webui.event.ValueChangeListener;
 import org.compiere.swing.CComboBox;
 import org.openXpertya.apps.form.VComponentsFactory;
-import org.openXpertya.apps.form.VModelHelper;
 import org.openXpertya.apps.form.VOrdenCobroModel;
 import org.openXpertya.apps.form.VOrdenCobroModel.OpenInvoicesCustomerReceiptsTableModel;
 import org.openXpertya.apps.form.VOrdenPagoModel;
@@ -53,7 +52,6 @@ import org.openXpertya.util.ValueNamePair;
 import org.zkoss.zk.ui.event.Event;
 import org.zkoss.zk.ui.event.EventListener;
 import org.zkoss.zul.Div;
-import org.zkoss.zul.Panel;
 import org.zkoss.zul.Panelchildren;
 import org.zkoss.zul.Space;
 
@@ -208,18 +206,6 @@ public class WOrdenCobro extends WOrdenPago {
 	protected void customInitComponents() {
 		super.customInitComponents();
 
-		// FEDE:TODO ver si es necesario especificar algo de esto
-//		tblFacturas
-//				.getColumnModel()
-//				.getColumn(tblFacturas.getColumnModel().getColumnCount() - 4)
-//				.setCellRenderer(
-//						new MyNumberTableCellRenderer(getModel()
-//								.getNumberFormat()));
-//
-//		tblFacturas.getColumnModel()
-//				.getColumn(tblFacturas.getColumnModel().getColumnCount() - 3)
-//				.setCellRenderer(new VCellRenderer(DisplayType.YesNo));
-
 		cboCurrency.addValueChangeListener(new ValueChangeListener() {
 			@Override
 			public void valueChange(ValueChangeEvent evt) {
@@ -232,7 +218,6 @@ public class WOrdenCobro extends WOrdenPago {
 		});
 
 		ocultarCanje();
-//		initFormattedTextField((JFormattedTextField) txtRetencImporte);
 	}
 
 	protected void ocultarCanje() {
@@ -301,9 +286,7 @@ public class WOrdenCobro extends WOrdenPago {
 
 	@Override
 	protected Tabpanel  createCashTab() {
-		
-		// FEDE:TODO MIGRAR DISEÑO DESDE VOrdenCobro
-		
+
 		Tabpanel tabpanel = new Tabpanel();
     	tabpanel.setHeight("150px");
 
@@ -319,6 +302,9 @@ public class WOrdenCobro extends WOrdenPago {
 		gridpanel.setWidth("100%");
 		
     	Rows rows = gridpanel.newRows();
+    	Row row0 = rows.newRow();
+    	row0.appendChild(lblCashReceiptMedium.rightAlign());
+    	row0.appendChild(cboCashReceiptMedium);
 		Row row = rows.newRow();
 		row.appendChild(lblEfectivoLibroCaja.rightAlign());
 		row.appendChild(efectivoLibroCaja.getComponent());
@@ -332,9 +318,7 @@ public class WOrdenCobro extends WOrdenPago {
 
 	@Override
 	protected Tabpanel  createTransferTab() {
-		
-		// FEDE:TODO MIGRAR DISEÑO DESDE VOrdenCobro		
-		
+
 		Tabpanel tabpanel = new Tabpanel();
 		lblTransfCtaBancaria.setText("CUENTA BANCARIA");
 		lblTransfNroTransf.setText("NRO TRANSFERENCIA");
@@ -357,11 +341,15 @@ public class WOrdenCobro extends WOrdenPago {
 		gridpanel.setWidth("100%");
 		
     	Rows rows = gridpanel.newRows();
-		Row row = rows.newRow();
-		row.appendChild(lblTransfCtaBancaria.rightAlign());
-		row.appendChild(transfCtaBancaria.getComponent());
-		row.appendChild(lblTransfNroTransf.rightAlign());
-		row.appendChild(txtTransfNroTransf);
+
+    	Row row0 = rows.newRow();
+		row0.appendChild(lblTransferReceiptMedium.rightAlign());
+		row0.appendChild(cboTransferReceiptMedium);
+		Row row1 = rows.newRow();
+		row1.appendChild(lblTransfCtaBancaria.rightAlign());
+		row1.appendChild(transfCtaBancaria.getComponent());
+		row1.appendChild(lblTransfNroTransf.rightAlign());
+		row1.appendChild(txtTransfNroTransf);
 		Row row2 = rows.newRow();
 		row2.appendChild(lblTransfImporte.rightAlign());
 		row2.appendChild(txtTransfImporte);
@@ -378,8 +366,6 @@ public class WOrdenCobro extends WOrdenPago {
 	@Override
 	protected Tabpanel createCheckTab() {
 		
-		// FEDE:TODO MIGRAR DISEÑO DESDE VOrdenCobro
-		
 		Tabpanel tabpanel = new Tabpanel();
 		
         lblChequeChequera.setText("CHEQUERA");
@@ -391,41 +377,7 @@ public class WOrdenCobro extends WOrdenPago {
         lblChequeBanco.setText("BANCO");
         lblChequeCUITLibrador.setText("CUIT LIBRADOR");
         lblChequeDescripcion.setText("DESCRIPCION");      
-
-    	tabpanel.setHeight("150px");
-    	
-    	Grid gridpanel = GridFactory.newGridLayout();
-		gridpanel.setWidth("100%");
-		
-    	Rows rows = gridpanel.newRows();
-		Row row = rows.newRow();
-		row.appendChild(lblChequeChequera.rightAlign());
-		row.appendChild(chequeChequera.getComponent());
-		row.appendChild(lblChequeNroCheque.rightAlign());
-		row.appendChild(txtChequeNroCheque);
-		Row row2 = rows.newRow();
-		row2.appendChild(lblChequeImporte.rightAlign());
-		row2.appendChild(txtChequeImporte);
-		Row row3 = rows.newRow();
-		row3.appendChild(lblChequeFechaEmision.rightAlign());
-		row3.appendChild(chequeFechaEmision.getComponent());
-		row3.appendChild(lblChequeFechaPago.rightAlign());
-		row3.appendChild(chequeFechaPago.getComponent());
-		Row row4 = rows.newRow();
-		row4.appendChild(lblChequeALaOrden.rightAlign());
-		row4.appendChild(txtChequeALaOrden);
-		row4.appendChild(lblChequeBanco.rightAlign());
-		row4.appendChild(txtChequeBanco);
-		Row row5 = rows.newRow();
-		row5.appendChild(lblChequeCUITLibrador.rightAlign());
-		row5.appendChild(txtChequeCUITLibrador);
-		row5.appendChild(lblChequeDescripcion.rightAlign());
-		row5.appendChild(txtChequeDescripcion);
-
-		tabpanel.appendChild(gridpanel);
  
-		
-		
 		lblChequeChequera.setText("CHEQUERA");
 		lblChequeNroCheque.setText("NUMERO DE CHEQUE");
 		lblChequeImporte.setText("IMPORTE");
@@ -448,18 +400,49 @@ public class WOrdenCobro extends WOrdenPago {
 			}
 		});
 		tenderTypeIndexsCombos.put(TAB_INDEX_CHEQUE, cboCheckReceiptMedium);
-		if (cboCheckReceiptMedium.getSelectedIndex() > 0 && cboCheckReceiptMedium.getModel().getElementAt(cboCheckReceiptMedium.getSelectedIndex()) != null)
+		if (cboCheckReceiptMedium.getSelectedIndex() > 0 && cboCheckReceiptMedium.getSelectedItem().getValue() != null)
 			updateBank((MPOSPaymentMedium) cboCheckReceiptMedium.getSelectedItem().getValue());
 
+    	tabpanel.setHeight("150px");
+    	
+    	Grid gridpanel = GridFactory.newGridLayout();
+		gridpanel.setWidth("100%");
+		
+    	Rows rows = gridpanel.newRows();
+		Row row = rows.newRow();
+		row.appendChild(lblCheckReceiptMedium.rightAlign());
+		row.appendChild(cboCheckReceiptMedium);
+		row.appendChild(lblChequeChequera.rightAlign());
+		row.appendChild(chequeChequera.getComponent());
+		Row row2 = rows.newRow();
+		row2.appendChild(lblChequeNroCheque.rightAlign());
+		row2.appendChild(txtChequeNroCheque);
+		row2.appendChild(lblChequeImporte.rightAlign());
+		row2.appendChild(txtChequeImporte);
+		Row row3 = rows.newRow();
+		row3.appendChild(lblChequeFechaEmision.rightAlign());
+		row3.appendChild(chequeFechaEmision.getComponent());
+		row3.appendChild(lblChequeFechaPago.rightAlign());
+		row3.appendChild(chequeFechaPago.getComponent());
+		Row row4 = rows.newRow();
+		row4.appendChild(lblChequeALaOrden.rightAlign());
+		row4.appendChild(txtChequeALaOrden);
+		row4.appendChild(lblChequeBanco.rightAlign());
+		row4.appendChild(txtChequeBanco);
+		Row row5 = rows.newRow();
+		row5.appendChild(lblChequeCUITLibrador.rightAlign());
+		row5.appendChild(txtChequeCUITLibrador);
+		row5.appendChild(lblChequeDescripcion.rightAlign());
+		row5.appendChild(txtChequeDescripcion);
+
+		tabpanel.appendChild(gridpanel);
+		
 		return tabpanel; 
 	}
 
 	@Override
 	protected Tabpanel  createCreditTab() {
 		
-		// FEDE:TODO MIGRAR DISEÑO DESDE VOrdenCobro
-		
-		Tabpanel tabpanel = new Tabpanel();
 		lblCreditInvoice.setText("CREDITO");
 		lblCreditAvailable.setText("DISPONIBLE");
 		lblCreditImporte.setText("IMPORTE");
@@ -469,21 +452,23 @@ public class WOrdenCobro extends WOrdenPago {
 		cboCreditReceiptMedium.addEventListener("onChange", getPaymentMediumItemListener());
 		tenderTypeIndexsCombos.put(TAB_INDEX_CREDITO, cboCreditReceiptMedium);
 
+		Tabpanel tabpanel = new Tabpanel();
     	tabpanel.setHeight("150px");
 		
     	Grid gridpanel = GridFactory.newGridLayout();
 		gridpanel.setWidth("100%");
 		
     	Rows rows = gridpanel.newRows();
-		Row row = rows.newRow();
-		row.appendChild(lblCreditInvoice.rightAlign());
-		row.appendChild(creditInvoice.getComponent());
-		Row row2 = rows.newRow();
-		row2.appendChild(lblCreditAvailable.rightAlign());
-		row2.appendChild(txtCreditAvailable);
-		Row row3 = rows.newRow();
-		row3.appendChild(lblCreditImporte.rightAlign());
-		row3.appendChild(txtCreditImporte);
+		Row row0 = rows.newRow();
+		row0.appendChild(lblCreditReceiptMedium.rightAlign());
+		row0.appendChild(cboCreditReceiptMedium);
+		row0.appendChild(lblCreditInvoice.rightAlign());
+		row0.appendChild(creditInvoice.getComponent());
+		Row row1 = rows.newRow();
+		row1.appendChild(lblCreditAvailable.rightAlign());
+		row1.appendChild(txtCreditAvailable);
+		row1.appendChild(lblCreditImporte.rightAlign());
+		row1.appendChild(txtCreditImporte);
 		
         txtCreditAvailable.setText("0");        
         txtCreditImporte.setText("0");
@@ -494,8 +479,7 @@ public class WOrdenCobro extends WOrdenPago {
 
 	private Tabpanel  createRetencionTab() {
 		panelRetenc = new Tabpanel();
-//		panelRetenc.setOpaque(false);
-
+		panelRetenc.setHeight("150px");
 		lblRetencSchema = new Label();
 		lblRetencSchema.setValue("RETENCION");
 		lblRetencNroRetenc = new Label();
@@ -506,27 +490,41 @@ public class WOrdenCobro extends WOrdenPago {
 		lblRetencFecha.setText("FECHA");
 		txtRetencImporte = new Textbox();
 		txtRetencImporte.setText("0");
-//		initFormattedTextField((JFormattedTextField) txtRetencImporte);
 		txtRetencNroRetenc = new Textbox();
 		MLookupInfo infoRetencSchema = VComponentsFactory.MLookupInfoFactory( Env.getCtx(),m_WindowNo, 0, 1003040, DisplayType.Search, getCobroModel().getRetencionSqlValidation());
 		MLookup lookupRetencSchema = new MLookup(infoRetencSchema, 0);
-		retencSchema = new WSearchEditor("C_DocType_ID", false, false, true, lookupRetencSchema);
-
+		retencSchema = new WSearchEditor("C_RetencionSchema_ID", false, false, true, lookupRetencSchema);
 		
 		retencFecha = new Datebox(); 
 		cboRetencionReceiptMedium = createPaymentMediumCombo(MPOSPaymentMedium.TENDERTYPE_Retencion);
 		cboRetencionReceiptMedium.addEventListener("onChange", getPaymentMediumItemListener());
 
+    	Grid gridpanel = GridFactory.newGridLayout();
+		gridpanel.setWidth("100%");
 		
-		// FEDE:TODO completar
+    	Rows rows = gridpanel.newRows();
+		Row row = rows.newRow();
+		row.appendChild(lblRetencionReceiptMedium.rightAlign());
+		row.appendChild(cboRetencionReceiptMedium);
+		row.appendChild(lblRetencSchema.rightAlign());
+		row.appendChild(retencSchema.getComponent());
+		
+		Row row2 = rows.newRow();
+		row2.appendChild(lblRetencNroRetenc.rightAlign());
+		row2.appendChild(txtRetencNroRetenc);
+		row2.appendChild(lblRetencImporte.rightAlign());
+		row2.appendChild(txtRetencImporte);
+		Row row3 = rows.newRow();
+		row3.appendChild(lblRetencFecha.rightAlign());
+		row3.appendChild(retencFecha);
+		
+		panelRetenc.appendChild(gridpanel);
 		
 		return panelRetenc;
 	}
 
 	protected Tabpanel  createCreditCardTab() {
-		
-		// FEDE:TODO pendiente a migrar de VOrdenCobro
-		
+
 		panelCreditCard = new Tabpanel();
 		lblCreditCardPlan = new Label(getMsg("CreditCardPlan"));
 		lblCreditCardBank = new Label(getMsg("C_Bank_ID"));
@@ -543,7 +541,6 @@ public class WOrdenCobro extends WOrdenPago {
 		txtCreditCardCouponNo = new Textbox();
 		txtCuotasCount = new Textbox();
 		txtCuotaAmt = new Textbox();
-//		initFormattedTextField(txtCuotaAmt);
 		txtCuotaAmt.setReadonly(true);
 		txtCreditCardAmt = new Textbox();
 		txtCreditCardAmt.addEventListener("onChange", new EventListener() {
@@ -569,9 +566,7 @@ public class WOrdenCobro extends WOrdenPago {
 		cboCreditCardReceiptMedium = createPaymentMediumCombo(MPOSPaymentMedium.TENDERTYPE_CreditCard);
 		cboCreditCardReceiptMedium.addEventListener("onChange", getPaymentMediumItemListener());
 		cboEntidadFinancieraPlans = new Combobox();
-//		cboEntidadFinancieraPlans.setPreferredSize(new Dimension(
-//				cboEntidadFinancieraPlans.getPreferredSize().width, 20));
-//		cboEntidadFinancieraPlans.setMandatory(true);
+//		cboEntidadFinancieraPlans.setMandatory(true);	FEDE:TODO
 		cboEntidadFinancieraPlans.addEventListener("onChange", new EventListener() {
 			
 			@Override
@@ -591,17 +586,25 @@ public class WOrdenCobro extends WOrdenPago {
 		
     	Rows rows = gridpanel.newRows();
 		Row row = rows.newRow();
-		row.appendChild(lblCreditInvoice.rightAlign());
-		row.appendChild(creditInvoice.getComponent());
+		row.appendChild(lblCreditCardReceiptMedium.rightAlign());
+		row.appendChild(cboCreditCardReceiptMedium);
+		row.appendChild(lblCreditCardPlan.rightAlign());
+		row.appendChild(cboEntidadFinancieraPlans);
 		Row row2 = rows.newRow();
-		row2.appendChild(lblCreditAvailable.rightAlign());
-		row2.appendChild(txtCreditAvailable);
+		row2.appendChild(lblCreditCardBank.rightAlign());
+		row2.appendChild(cboCreditCardBank.getComponent());
+		row2.appendChild(lblCreditCardNo.rightAlign());
+		row2.appendChild(txtCreditCardNo);
 		Row row3 = rows.newRow();
-		row3.appendChild(lblCreditImporte.rightAlign());
-		row3.appendChild(txtCreditImporte);
-		
-        txtCreditAvailable.setText("0");        
-        txtCreditImporte.setText("0");
+		row3.appendChild(lblCreditCardCouponNo.rightAlign());
+		row3.appendChild(txtCreditCardCouponNo);
+		row3.appendChild(lblCreditCardAmt.rightAlign());
+		row3.appendChild(txtCreditCardAmt);
+		Row row4 = rows.newRow();
+		row4.appendChild(lblCuotasCount.rightAlign());
+		row4.appendChild(txtCuotasCount);
+		row4.appendChild(lblCuotaAmt.rightAlign());
+		row4.appendChild(txtCuotaAmt);
 		
         panelCreditCard.appendChild(gridpanel);
 		return panelCreditCard;
@@ -611,7 +614,6 @@ public class WOrdenCobro extends WOrdenPago {
 	@Override
 	protected Tabpanel  createPagoAdelantadoTab() {
 		panelPagoAdelantado = new Tabpanel();
-//		panelPagoAdelantado.setOpaque(false);
 
 		lblPagoAdelantadoCash = new Label();
 		lblPagoAdelantadoPago = new Label();
@@ -621,7 +623,6 @@ public class WOrdenCobro extends WOrdenPago {
 		lblPagoAdelantadoImporte.setValue("IMPORTE");
 		txtPagoAdelantadoImporte = new Textbox();
 		txtPagoAdelantadoImporte.setValue("0");
-//		initFormattedTextField((JFormattedTextField) txtPagoAdelantadoImporte);
 		MLookupInfo infoPago = VComponentsFactory.MLookupInfoFactory( Env.getCtx(),m_WindowNo, 0, 5043, DisplayType.Search, getModel().getPagoAdelantadoSqlValidation());
 		Lookup lookupPago = new MLookup(infoPago, 0);
 		pagoAdelantado = new WSearchEditor("C_Payment_ID", false, false, true, lookupPago);
@@ -637,9 +638,7 @@ public class WOrdenCobro extends WOrdenPago {
         cboPagoAdelantadoType.appendItem(getMsg("Cash"));		
 
 		// Por defecto pago.
-		cboPagoAdelantadoType
-				.setSelectedIndex(PAGO_ADELANTADO_TYPE_PAYMENT_INDEX);
-//		cboPagoAdelantadoType.setPreferredSize(new Dimension(200, 20));
+		cboPagoAdelantadoType.setSelectedIndex(PAGO_ADELANTADO_TYPE_PAYMENT_INDEX);
 		cboPagoAdelantadoType.addEventListener("onChange", new EventListener() {
 			
 			@Override
@@ -649,14 +648,11 @@ public class WOrdenCobro extends WOrdenPago {
 		});
 		
 		cboPagoAdelantadoReceiptMedium = createPaymentMediumCombo(MPOSPaymentMedium.TENDERTYPE_AdvanceReceipt);
-//		pagoAdelantadoTypePanel = new Panel();
-//		pagoAdelantadoTypePanel.setLayout(new BorderLayout());
 		txtPagoAdelantadoAvailable = new Textbox();
 		txtPagoAdelantadoAvailable.setReadonly(true);
 		lblPagoAdelantadoAvailable = new Label();
 		lblPagoAdelantadoAvailable.setText("PENDIENTE");
-		tenderTypeIndexsCombos.put(TAB_INDEX_PAGO_ADELANTADO,
-				cboPagoAdelantadoReceiptMedium);
+		tenderTypeIndexsCombos.put(TAB_INDEX_PAGO_ADELANTADO, cboPagoAdelantadoReceiptMedium);
 		cboPagoAdelantadoReceiptMedium.addEventListener("onChange", getPaymentMediumItemListener());
 	
         // Por defecto pago
@@ -677,6 +673,8 @@ public class WOrdenCobro extends WOrdenPago {
 		
 		Rows rows = gridpanel.newRows();
 		Row row = rows.newRow();
+		row.appendChild(lblPagoAdelantadoReceiptMedium.rightAlign());
+		row.appendChild(cboPagoAdelantadoReceiptMedium);
 		row.appendChild(lblPagoAdelantadoType.rightAlign());
 		row.appendChild(cboPagoAdelantadoType);
 		
@@ -721,8 +719,7 @@ public class WOrdenCobro extends WOrdenPago {
 	 * Luego se incorpora al panel de Proyecto/Campaña.  Ver addFieldsToCampProy()
 	 */
 	protected void createTenderTypePanel() {
-		
-//		panelTenderType.setOpaque(false);
+
 		lblTenderType = new Label(Msg.translate(m_ctx, "TenderType"));
 		cboTenderType = createTenderTypeCombo();
 //		cboTenderType.setMandatory(true);		// TODO:FEDE ver
@@ -737,7 +734,7 @@ public class WOrdenCobro extends WOrdenPago {
 				updateSummaryInfo();
 				// Actualizar panel A Cobrar
 				
-				updatePaymentMediumCombo(tenderType.getName());
+				updatePaymentMediumCombo(tenderType.getValue());
 				
 				if (mpTabbox.getSelectedIndex() < 0)
 					return;
@@ -758,67 +755,6 @@ public class WOrdenCobro extends WOrdenPago {
 		// Layout del panel
 	}
 
-	protected void createButtonsPanel() {
-//		org.jdesktop.layout.GroupLayout jPanel2Layout = new org.jdesktop.layout.GroupLayout(
-//				jPanel2);
-//		jPanel2.setLayout(jPanel2Layout);
-//		jPanel2Layout.setHorizontalGroup(jPanel2Layout.createParallelGroup(
-//				org.jdesktop.layout.GroupLayout.LEADING).add(
-//				org.jdesktop.layout.GroupLayout.TRAILING,
-//				jPanel2Layout
-//						.createSequentialGroup()
-//						.addContainerGap(424, Short.MAX_VALUE)
-//						.add(cmdCancel)
-//						.addPreferredGap(
-//								org.jdesktop.layout.LayoutStyle.RELATED)
-//						.add(cmdProcess).addContainerGap()));
-//		jPanel2Layout
-//				.setVerticalGroup(jPanel2Layout
-//						.createParallelGroup(
-//								org.jdesktop.layout.GroupLayout.LEADING)
-//						.add(jPanel2Layout
-//								.createSequentialGroup()
-//								.add(jPanel2Layout
-//										.createParallelGroup(
-//												org.jdesktop.layout.GroupLayout.BASELINE)
-//										.add(cmdProcess).add(cmdCancel))));
-	}
-
-
-	protected void addPanelsToFrame() {
-//		org.jdesktop.layout.GroupLayout layout = new org.jdesktop.layout.GroupLayout(
-//				m_frame.getContentPane());
-//		m_frame.getContentPane().setLayout(layout);
-//		layout.setHorizontalGroup(layout
-//				.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-//				.add(jPanel2, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE,
-//						org.jdesktop.layout.GroupLayout.DEFAULT_SIZE,
-//						Short.MAX_VALUE)
-//				.add(jPanel1, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE,
-//						org.jdesktop.layout.GroupLayout.DEFAULT_SIZE,
-//						Short.MAX_VALUE)
-//				.add(jTabbedPane1,
-//						org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 672,
-//						Short.MAX_VALUE));
-//		layout.setVerticalGroup(layout
-//				.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-//				.add(org.jdesktop.layout.GroupLayout.TRAILING,
-//						layout.createSequentialGroup()
-//								.add(jPanel1,
-//										org.jdesktop.layout.GroupLayout.PREFERRED_SIZE,
-//										org.jdesktop.layout.GroupLayout.DEFAULT_SIZE,
-//										org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-//								.add(jTabbedPane1,
-//										org.jdesktop.layout.GroupLayout.DEFAULT_SIZE,
-//										org.jdesktop.layout.GroupLayout.DEFAULT_SIZE,
-//										org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-//								.addPreferredGap(
-//										org.jdesktop.layout.LayoutStyle.RELATED)
-//								.add(jPanel2,
-//										org.jdesktop.layout.GroupLayout.PREFERRED_SIZE,
-//										org.jdesktop.layout.GroupLayout.DEFAULT_SIZE,
-//										org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)));
-	}
 
 	/**
 	 * Crea los componentes para descuento/recargo del documento
@@ -955,9 +891,7 @@ public class WOrdenCobro extends WOrdenPago {
 	protected void processPaymentTabs(String tenderType) {
 		List<Integer> indexRelations = new ArrayList<Integer>();
 		if (tenderType != null) {
-			// Obtengo la lista de índices de pestañas relacionadas con el tipo
-			// de
-			// pago parámetro
+			// Obtengo la lista de índices de pestañas relacionadas con el tipo de pago parámetro
 			indexRelations = tenderTypesTabRelations.get(tenderType);
 		}
 		int tabCount = mpTabs.getChildren().size();
@@ -969,8 +903,6 @@ public class WOrdenCobro extends WOrdenPago {
 			if (indexRelations.contains(i))
 				((Tab)(mpTabs.getChildren().get(i))).setDisabled(false);
 		}
-//		tabbedPane.repaint();
-//		panelPaymentDiscount.repaint();
 	}
 
 	/**
@@ -995,9 +927,6 @@ public class WOrdenCobro extends WOrdenPago {
 		if (found) {
 			mpTabbox.setSelectedIndex(i - 1); 
 		}
-//		tabbedPane.repaint();
-//		panelPaymentDiscount.repaint();
-//		m_frame.repaint();
 	}
 
 	private VOrdenCobroModel getCobroModel() {
@@ -1067,7 +996,9 @@ public class WOrdenCobro extends WOrdenPago {
 
 	private void saveRetencionMedioPago() throws Exception {
 		// Obtengo los datos de la interfaz
-		MPOSPaymentMedium paymentMedium = (MPOSPaymentMedium) cboRetencionReceiptMedium.getModel().getElementAt(cboRetencionReceiptMedium.getSelectedIndex());  
+		if (cboRetencionReceiptMedium == null || cboRetencionReceiptMedium.getSelectedIndex() < 0 )
+			throw new Exception("@Invalid@ @"+Msg.translate(m_ctx, "ReceiptMedium")+"@");
+		MPOSPaymentMedium paymentMedium = (MPOSPaymentMedium) cboRetencionReceiptMedium.getSelectedItem().getValue();  
 		saveBasicValidation(paymentMedium, null);
 		Integer retencionSchemaID = (Integer) retencSchema.getValue();
 		String retencionNumber = txtRetencNroRetenc.getText().trim();
@@ -1085,8 +1016,12 @@ public class WOrdenCobro extends WOrdenPago {
 
 	protected void saveCreditCardMedioPago() throws Exception {
 		// Obtengo la data de la interfaz gráfica
-		MPOSPaymentMedium paymentMedium = (MPOSPaymentMedium) cboCreditCardReceiptMedium.getModel().getElementAt(cboCreditCardReceiptMedium.getSelectedIndex()); 
-		MEntidadFinancieraPlan plan = (MEntidadFinancieraPlan) cboEntidadFinancieraPlans.getModel().getElementAt(cboEntidadFinancieraPlans.getSelectedIndex()); 
+		if (cboCreditCardReceiptMedium == null || cboCreditCardReceiptMedium.getSelectedIndex() < 0 )
+			throw new Exception("@Invalid@ @"+Msg.translate(m_ctx, "ReceiptMedium")+"@");
+		if (cboEntidadFinancieraPlans == null || cboEntidadFinancieraPlans.getSelectedIndex() < 0 )
+			throw new Exception("@Invalid@ @"+Msg.translate(m_ctx, "CreditCardPlan")+"@");
+		MPOSPaymentMedium paymentMedium = (MPOSPaymentMedium) cboCreditCardReceiptMedium.getSelectedItem().getValue(); 
+		MEntidadFinancieraPlan plan = (MEntidadFinancieraPlan)cboEntidadFinancieraPlans.getSelectedItem().getValue(); 
 		saveBasicValidation(paymentMedium, plan);
 		getCobroModel().addCreditCard(
 				paymentMedium,
@@ -1104,7 +1039,7 @@ public class WOrdenCobro extends WOrdenPago {
 	@Override
 	protected MedioPagoCheque saveCheckMedioPago() throws Exception {
 		// Obtengo la data de la interfaz gráfica
-		MPOSPaymentMedium paymentMedium = (MPOSPaymentMedium) cboCheckReceiptMedium.getModel().getElementAt(cboCheckReceiptMedium.getSelectedIndex());
+		MPOSPaymentMedium paymentMedium = (MPOSPaymentMedium) cboCheckReceiptMedium.getSelectedItem().getValue();
 		saveBasicValidation(paymentMedium, null);
 		
 		if (paymentMedium.isMandatoryBank() && Util.isEmpty(getBankName(), true)) {
@@ -1123,6 +1058,12 @@ public class WOrdenCobro extends WOrdenPago {
 		} catch (Exception e) {
 			throw new Exception(cboCurrency.getValue().toString());
 		}
+		try {
+			new Timestamp(((Date)chequeFechaEmision.getValue()).getTime());
+			new Timestamp(((Date)chequeFechaPago.getValue()).getTime());
+		} catch (Exception e) {
+			throw new Exception("@Invalid@ @Date@");
+		}
 		getCobroModel().addCheck(paymentMedium,
 				(Integer) chequeChequera.getValue(),
 				txtChequeNroCheque.getText(), amount,
@@ -1137,10 +1078,12 @@ public class WOrdenCobro extends WOrdenPago {
 
 	@Override
 	protected MedioPagoEfectivo saveCashMedioPago() throws Exception {
-		MedioPagoEfectivo mpe = super.saveCashMedioPago();
 		// Validación para que el monto ingresado no supere el a pagar
 		// toPayValidation();
-		MPOSPaymentMedium paymentMedium = (MPOSPaymentMedium) cboCashReceiptMedium.getModel().getElementAt(cboCashReceiptMedium.getSelectedIndex()); 
+		if (cboCashReceiptMedium == null || cboCashReceiptMedium.getSelectedIndex() < 0)
+			throw new Exception("@Invalid@ @"+Msg.translate(m_ctx, "ReceiptMedium")+"@");
+		MedioPagoEfectivo mpe = super.saveCashMedioPago();
+		MPOSPaymentMedium paymentMedium = (MPOSPaymentMedium) cboCashReceiptMedium.getSelectedItem().getValue(); 
 		saveBasicValidation(paymentMedium, null);
 		mpe.setPaymentMedium(paymentMedium);
 		mpe.setDiscountSchemaToApply(getCobroModel().getCurrentGeneralDiscount());
@@ -1151,8 +1094,15 @@ public class WOrdenCobro extends WOrdenPago {
 
 	@Override
 	protected MedioPagoTransferencia saveTransferMedioPago() throws Exception {
+		if (cboTransferReceiptMedium == null || cboTransferReceiptMedium.getSelectedIndex() < 0)
+			throw new Exception("@Invalid@ @"+Msg.translate(m_ctx, "ReceiptMedium")+"@");
+		try {
+			new Timestamp(((Date)transFecha.getValue()).getTime());
+		} catch (Exception e) {
+			throw new Exception("@Invalid@ @Date@");
+		}
 		MedioPagoTransferencia mpt = super.saveTransferMedioPago();
-		MPOSPaymentMedium paymentMedium = (MPOSPaymentMedium) cboTransferReceiptMedium.getModel().getElementAt(cboTransferReceiptMedium.getSelectedIndex());
+		MPOSPaymentMedium paymentMedium = (MPOSPaymentMedium) cboTransferReceiptMedium.getSelectedItem().getValue();
 		saveBasicValidation(paymentMedium, null);
 		mpt.setPaymentMedium(paymentMedium);
 		mpt.setDiscountSchemaToApply(getCobroModel().getCurrentGeneralDiscount());
@@ -1163,8 +1113,10 @@ public class WOrdenCobro extends WOrdenPago {
 
 	@Override
 	protected MedioPagoCredito saveCreditMedioPago() throws Exception {
+		if (cboCreditReceiptMedium == null || cboCreditReceiptMedium.getSelectedIndex() < 0)
+			throw new Exception("@Invalid@ @"+Msg.translate(m_ctx, "ReceiptMedium")+"@");
 		MedioPagoCredito mpc = super.saveCreditMedioPago();
-		MPOSPaymentMedium paymentMedium = (MPOSPaymentMedium) cboCreditReceiptMedium.getModel().getElementAt(cboCreditReceiptMedium.getSelectedIndex());
+		MPOSPaymentMedium paymentMedium = (MPOSPaymentMedium) cboCreditReceiptMedium.getSelectedItem().getValue();
 		saveBasicValidation(paymentMedium, null);
 		mpc.setPaymentMedium(paymentMedium);
 		mpc.setDiscountSchemaToApply(getCobroModel().getCurrentGeneralDiscount());
@@ -1175,8 +1127,10 @@ public class WOrdenCobro extends WOrdenPago {
 
 	@Override
 	protected MedioPago savePagoAdelantadoMedioPago() throws Exception {
+		if (cboPagoAdelantadoReceiptMedium == null || cboPagoAdelantadoReceiptMedium.getSelectedIndex() < 0)
+			throw new Exception("@Invalid@ @"+Msg.translate(m_ctx, "ReceiptMedium")+"@");
 		MedioPago mp = super.savePagoAdelantadoMedioPago();
-		MPOSPaymentMedium paymentMedium = (MPOSPaymentMedium) cboPagoAdelantadoReceiptMedium.getModel().getElementAt(cboPagoAdelantadoReceiptMedium.getSelectedIndex());
+		MPOSPaymentMedium paymentMedium = (MPOSPaymentMedium) cboPagoAdelantadoReceiptMedium.getSelectedItem().getValue();
 		saveBasicValidation(paymentMedium, null);
 		mp.setPaymentMedium(paymentMedium);
 		mp.setDiscountSchemaToApply(getCobroModel().getCurrentGeneralDiscount());
@@ -1280,8 +1234,8 @@ public class WOrdenCobro extends WOrdenPago {
 			for (MPOSPaymentMedium medium : mediums)
 				combo.appendItem(medium.getName(), medium);
 		}
-//		combo.setMandatory(true);
-//		combo.setPreferredSize(new Dimension(combo.getPreferredSize().width, 20));
+//		combo.setMandatory(true);		// FEDE:TODO
+		
 		return combo;
 	}
 	
@@ -1828,10 +1782,10 @@ public class WOrdenCobro extends WOrdenPago {
     protected void updateCustomPayAmt(BigDecimal amt){
     	Integer tabIndexSelected = mpTabbox.getSelectedIndex();		// jTabbedPane2.getSelectedIndex();
     	if(tabIndexSelected.equals(m_retencTabIndex)){
-    		txtRetencImporte.setValue(amt.toString());
+    		txtRetencImporte.setValue(numberFormat(amt));
     	}
     	else if(tabIndexSelected.equals(m_creditCardTabIndex)){
-    		txtCreditCardAmt.setValue(amt.toString());
+    		txtCreditCardAmt.setValue(numberFormat(amt));
     	}
     }
     
@@ -1858,9 +1812,9 @@ public class WOrdenCobro extends WOrdenPago {
 
 		@Override
 		public void onEvent(Event arg0) throws Exception {
-			if (arg0.getData() == null)
+			if (arg0.getTarget() == null)
 				return;
-			MPOSPaymentMedium paymentMedium = (MPOSPaymentMedium)arg0.getData();
+			MPOSPaymentMedium paymentMedium = (MPOSPaymentMedium)(((ComboItem)(((Combobox)arg0.getTarget()).getSelectedItem())).getValue());
 			loadPaymentMediumInfo(paymentMedium);
 			updateDiscount(paymentMedium);
 			updateBank(paymentMedium);
@@ -2015,4 +1969,9 @@ public class WOrdenCobro extends WOrdenPago {
 		row.appendChild(lblTenderType.rightAlign());
 		row.appendChild(cboTenderType);
 	}
+	
+	
+    protected String getReportName() {
+    	return "Recibo de Cliente";
+    }
 }
