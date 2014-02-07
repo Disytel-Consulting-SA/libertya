@@ -6514,3 +6514,6 @@ ALTER TABLE c_doctype ADD CONSTRAINT lastfiscalprintedinvoice FOREIGN KEY (c_inv
       
  --20140207-0955 Nueva columna para registrar tipo del documento    
  ALTER TABLE i_gljournal ADD COLUMN doctypekey character varying(40);
+ 
+ --20140207-0955 Nueva columna para la fecha de vencimiento    
+ ALTER TABLE t_cuentacorriente ADD COLUMN duedate timestamp without time zone;
