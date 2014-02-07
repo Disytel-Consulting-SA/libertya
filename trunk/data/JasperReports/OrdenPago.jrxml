@@ -6,9 +6,9 @@
 		 columnCount="1"
 		 printOrder="Vertical"
 		 orientation="Portrait"
-		 pageWidth="595"
-		 pageHeight="842"
-		 columnWidth="535"
+		 pageWidth="680"
+		 pageHeight="2000"
+		 columnWidth="620"
 		 columnSpacing="0"
 		 leftMargin="30"
 		 rightMargin="30"
@@ -40,6 +40,186 @@
 	<parameter name="RETENCIONES_AMOUNT" isForPrompting="false" class="java.math.BigDecimal"/>
 	<parameter name="CLIENT_NAME" isForPrompting="false" class="java.lang.String"/>
 	<parameter name="ORG_NAME" isForPrompting="false" class="java.lang.String"/>
+	<parameter name="COMPILED_SUBREPORT_COMPROBANTE_RETENCION" isForPrompting="false" class="java.io.InputStream"/>
+	<parameter name="SUBREPORT_COMPROBANTE_RETENCION_DATASOURCE_1" isForPrompting="false" class="net.sf.jasperreports.engine.JRDataSource"/>
+	<parameter name="SUBREPORT_COMPROBANTE_RETENCION_DATASOURCE_2" isForPrompting="false" class="net.sf.jasperreports.engine.JRDataSource"/>
+	<parameter name="SUBREPORT_COMPROBANTE_RETENCION_DATASOURCE_3" isForPrompting="false" class="net.sf.jasperreports.engine.JRDataSource"/>
+	<parameter name="SUBREPORT_COMPROBANTE_RETENCION_DATASOURCE_4" isForPrompting="false" class="net.sf.jasperreports.engine.JRDataSource"/>
+	<parameter name="SUBREPORT_COMPROBANTE_RETENCION_DATASOURCE_5" isForPrompting="false" class="net.sf.jasperreports.engine.JRDataSource"/>
+	<parameter name="SUBREPORT_COMPROBANTE_RETENCION_DATASOURCE_6" isForPrompting="false" class="net.sf.jasperreports.engine.JRDataSource">
+		<defaultValueExpression ><![CDATA[null]]></defaultValueExpression>
+	</parameter>
+	<parameter name="SUBREPORT_COMPROBANTE_RETENCION_DATASOURCE_7" isForPrompting="false" class="net.sf.jasperreports.engine.JRDataSource">
+		<defaultValueExpression ><![CDATA[null]]></defaultValueExpression>
+	</parameter>
+	<parameter name="RET_SCHEMA_NAME_0" isForPrompting="false" class="java.lang.String"/>
+	<parameter name="RET_RETENTION_TYPE_NAME_0" isForPrompting="false" class="java.lang.String"/>
+	<parameter name="RET_AMOUNT_0" isForPrompting="false" class="java.math.BigDecimal"/>
+	<parameter name="RET_ALLOC_AMOUNT_0" isForPrompting="false" class="java.math.BigDecimal"/>
+	<parameter name="RET_ALLOC_INVOICES_0" isForPrompting="false" class="java.lang.String"/>
+	<parameter name="DIRECCION_ORG_0" isForPrompting="false" class="java.lang.String"/>
+	<parameter name="FECHA_0" isForPrompting="true" class="java.util.Date"/>
+	<parameter name="RAZONSOCIAL_0" isForPrompting="false" class="java.lang.String">
+		<defaultValueExpression ><![CDATA["ARGENTOP S.R.L."]]></defaultValueExpression>
+	</parameter>
+	<parameter name="CUIT_0" isForPrompting="false" class="java.lang.String">
+		<defaultValueExpression ><![CDATA["30-70700706-7"]]></defaultValueExpression>
+	</parameter>
+	<parameter name="DIRECCION_0" isForPrompting="false" class="java.lang.String">
+		<defaultValueExpression ><![CDATA["AVIADOR KINGLEY 1835"]]></defaultValueExpression>
+	</parameter>
+	<parameter name="NRO_OC_0" isForPrompting="false" class="java.lang.String">
+		<defaultValueExpression ><![CDATA["20080918"]]></defaultValueExpression>
+	</parameter>
+	<parameter name="CLIENT_CUIT_0" isForPrompting="false" class="java.lang.String"/>
+	<parameter name="CLIENT_0" isForPrompting="false" class="java.lang.String"/>
+	<parameter name="RET_SCHEMA_NAME_1" isForPrompting="false" class="java.lang.String"/>
+	<parameter name="RET_RETENTION_TYPE_NAME_1" isForPrompting="false" class="java.lang.String"/>
+	<parameter name="RET_AMOUNT_1" isForPrompting="false" class="java.math.BigDecimal"/>
+	<parameter name="RET_ALLOC_AMOUNT_1" isForPrompting="false" class="java.math.BigDecimal"/>
+	<parameter name="RET_ALLOC_INVOICES_1" isForPrompting="false" class="java.lang.String"/>
+	<parameter name="DIRECCION_ORG_1" isForPrompting="false" class="java.lang.String"/>
+	<parameter name="FECHA_1" isForPrompting="true" class="java.util.Date"/>
+	<parameter name="RAZONSOCIAL_1" isForPrompting="false" class="java.lang.String">
+		<defaultValueExpression ><![CDATA["ARGENTOP S.R.L."]]></defaultValueExpression>
+	</parameter>
+	<parameter name="CUIT_1" isForPrompting="false" class="java.lang.String">
+		<defaultValueExpression ><![CDATA["30-70700706-7"]]></defaultValueExpression>
+	</parameter>
+	<parameter name="DIRECCION_1" isForPrompting="false" class="java.lang.String">
+		<defaultValueExpression ><![CDATA["AVIADOR KINGLEY 1835"]]></defaultValueExpression>
+	</parameter>
+	<parameter name="NRO_OC_1" isForPrompting="false" class="java.lang.String">
+		<defaultValueExpression ><![CDATA["20080918"]]></defaultValueExpression>
+	</parameter>
+	<parameter name="CLIENT_CUIT_1" isForPrompting="false" class="java.lang.String"/>
+	<parameter name="CLIENT_1" isForPrompting="false" class="java.lang.String"/>
+	<parameter name="RET_SCHEMA_NAME_2" isForPrompting="false" class="java.lang.String"/>
+	<parameter name="RET_RETENTION_TYPE_NAME_2" isForPrompting="false" class="java.lang.String"/>
+	<parameter name="RET_AMOUNT_2" isForPrompting="false" class="java.math.BigDecimal"/>
+	<parameter name="RET_ALLOC_AMOUNT_2" isForPrompting="false" class="java.math.BigDecimal"/>
+	<parameter name="RET_ALLOC_INVOICES_2" isForPrompting="false" class="java.lang.String"/>
+	<parameter name="DIRECCION_ORG_2" isForPrompting="false" class="java.lang.String"/>
+	<parameter name="FECHA_2" isForPrompting="true" class="java.util.Date"/>
+	<parameter name="RAZONSOCIAL_2" isForPrompting="false" class="java.lang.String">
+		<defaultValueExpression ><![CDATA["ARGENTOP S.R.L."]]></defaultValueExpression>
+	</parameter>
+	<parameter name="CUIT_2" isForPrompting="false" class="java.lang.String">
+		<defaultValueExpression ><![CDATA["30-70700706-7"]]></defaultValueExpression>
+	</parameter>
+	<parameter name="DIRECCION_2" isForPrompting="false" class="java.lang.String">
+		<defaultValueExpression ><![CDATA["AVIADOR KINGLEY 1835"]]></defaultValueExpression>
+	</parameter>
+	<parameter name="NRO_OC_2" isForPrompting="false" class="java.lang.String">
+		<defaultValueExpression ><![CDATA["20080918"]]></defaultValueExpression>
+	</parameter>
+	<parameter name="CLIENT_CUIT_2" isForPrompting="false" class="java.lang.String"/>
+	<parameter name="CLIENT_2" isForPrompting="false" class="java.lang.String"/>
+	<parameter name="RET_SCHEMA_NAME_3" isForPrompting="false" class="java.lang.String"/>
+	<parameter name="RET_RETENTION_TYPE_NAME_3" isForPrompting="false" class="java.lang.String"/>
+	<parameter name="RET_AMOUNT_3" isForPrompting="false" class="java.math.BigDecimal"/>
+	<parameter name="RET_ALLOC_AMOUNT_3" isForPrompting="false" class="java.math.BigDecimal"/>
+	<parameter name="RET_ALLOC_INVOICES_3" isForPrompting="false" class="java.lang.String"/>
+	<parameter name="DIRECCION_ORG_3" isForPrompting="false" class="java.lang.String"/>
+	<parameter name="FECHA_3" isForPrompting="true" class="java.util.Date"/>
+	<parameter name="RAZONSOCIAL_3" isForPrompting="false" class="java.lang.String">
+		<defaultValueExpression ><![CDATA["ARGENTOP S.R.L."]]></defaultValueExpression>
+	</parameter>
+	<parameter name="CUIT_3" isForPrompting="false" class="java.lang.String">
+		<defaultValueExpression ><![CDATA["30-70700706-7"]]></defaultValueExpression>
+	</parameter>
+	<parameter name="DIRECCION_3" isForPrompting="false" class="java.lang.String">
+		<defaultValueExpression ><![CDATA["AVIADOR KINGLEY 1835"]]></defaultValueExpression>
+	</parameter>
+	<parameter name="NRO_OC_3" isForPrompting="false" class="java.lang.String">
+		<defaultValueExpression ><![CDATA["20080918"]]></defaultValueExpression>
+	</parameter>
+	<parameter name="CLIENT_CUIT_3" isForPrompting="false" class="java.lang.String"/>
+	<parameter name="CLIENT_3" isForPrompting="false" class="java.lang.String"/>
+	<parameter name="RET_SCHEMA_NAME_4" isForPrompting="false" class="java.lang.String"/>
+	<parameter name="RET_RETENTION_TYPE_NAME_4" isForPrompting="false" class="java.lang.String"/>
+	<parameter name="RET_AMOUNT_4" isForPrompting="false" class="java.math.BigDecimal"/>
+	<parameter name="RET_ALLOC_AMOUNT_4" isForPrompting="false" class="java.math.BigDecimal"/>
+	<parameter name="RET_ALLOC_INVOICES_4" isForPrompting="false" class="java.lang.String"/>
+	<parameter name="DIRECCION_ORG_4" isForPrompting="false" class="java.lang.String"/>
+	<parameter name="FECHA_4" isForPrompting="true" class="java.util.Date"/>
+	<parameter name="RAZONSOCIAL_4" isForPrompting="false" class="java.lang.String">
+		<defaultValueExpression ><![CDATA["ARGENTOP S.R.L."]]></defaultValueExpression>
+	</parameter>
+	<parameter name="CUIT_4" isForPrompting="false" class="java.lang.String">
+		<defaultValueExpression ><![CDATA["30-70700706-7"]]></defaultValueExpression>
+	</parameter>
+	<parameter name="DIRECCION_4" isForPrompting="false" class="java.lang.String">
+		<defaultValueExpression ><![CDATA["AVIADOR KINGLEY 1835"]]></defaultValueExpression>
+	</parameter>
+	<parameter name="NRO_OC_4" isForPrompting="false" class="java.lang.String">
+		<defaultValueExpression ><![CDATA["20080918"]]></defaultValueExpression>
+	</parameter>
+	<parameter name="CLIENT_CUIT_4" isForPrompting="false" class="java.lang.String"/>
+	<parameter name="CLIENT_4" isForPrompting="false" class="java.lang.String"/>
+	<parameter name="RET_SCHEMA_NAME_5" isForPrompting="false" class="java.lang.String"/>
+	<parameter name="RET_RETENTION_TYPE_NAME_5" isForPrompting="false" class="java.lang.String"/>
+	<parameter name="RET_AMOUNT_5" isForPrompting="false" class="java.math.BigDecimal"/>
+	<parameter name="RET_ALLOC_AMOUNT_5" isForPrompting="false" class="java.math.BigDecimal"/>
+	<parameter name="RET_ALLOC_INVOICES_5" isForPrompting="false" class="java.lang.String"/>
+	<parameter name="DIRECCION_ORG_5" isForPrompting="false" class="java.lang.String"/>
+	<parameter name="FECHA_5" isForPrompting="true" class="java.util.Date"/>
+	<parameter name="RAZONSOCIAL_5" isForPrompting="false" class="java.lang.String">
+		<defaultValueExpression ><![CDATA["ARGENTOP S.R.L."]]></defaultValueExpression>
+	</parameter>
+	<parameter name="CUIT_5" isForPrompting="false" class="java.lang.String">
+		<defaultValueExpression ><![CDATA["30-70700706-7"]]></defaultValueExpression>
+	</parameter>
+	<parameter name="DIRECCION_5" isForPrompting="false" class="java.lang.String">
+		<defaultValueExpression ><![CDATA["AVIADOR KINGLEY 1835"]]></defaultValueExpression>
+	</parameter>
+	<parameter name="NRO_OC_5" isForPrompting="false" class="java.lang.String">
+		<defaultValueExpression ><![CDATA["20080918"]]></defaultValueExpression>
+	</parameter>
+	<parameter name="CLIENT_CUIT_5" isForPrompting="false" class="java.lang.String"/>
+	<parameter name="CLIENT_5" isForPrompting="false" class="java.lang.String"/>
+	<parameter name="RET_SCHEMA_NAME_6" isForPrompting="false" class="java.lang.String"/>
+	<parameter name="RET_RETENTION_TYPE_NAME_6" isForPrompting="false" class="java.lang.String"/>
+	<parameter name="RET_AMOUNT_6" isForPrompting="false" class="java.math.BigDecimal"/>
+	<parameter name="RET_ALLOC_AMOUNT_6" isForPrompting="false" class="java.math.BigDecimal"/>
+	<parameter name="RET_ALLOC_INVOICES_6" isForPrompting="false" class="java.lang.String"/>
+	<parameter name="DIRECCION_ORG_6" isForPrompting="false" class="java.lang.String"/>
+	<parameter name="FECHA_6" isForPrompting="true" class="java.util.Date"/>
+	<parameter name="RAZONSOCIAL_6" isForPrompting="false" class="java.lang.String">
+		<defaultValueExpression ><![CDATA["ARGENTOP S.R.L."]]></defaultValueExpression>
+	</parameter>
+	<parameter name="CUIT_6" isForPrompting="false" class="java.lang.String">
+		<defaultValueExpression ><![CDATA["30-70700706-7"]]></defaultValueExpression>
+	</parameter>
+	<parameter name="DIRECCION_6" isForPrompting="false" class="java.lang.String">
+		<defaultValueExpression ><![CDATA["AVIADOR KINGLEY 1835"]]></defaultValueExpression>
+	</parameter>
+	<parameter name="NRO_OC_6" isForPrompting="false" class="java.lang.String">
+		<defaultValueExpression ><![CDATA["20080918"]]></defaultValueExpression>
+	</parameter>
+	<parameter name="CLIENT_CUIT_6" isForPrompting="false" class="java.lang.String"/>
+	<parameter name="CLIENT_6" isForPrompting="false" class="java.lang.String"/>
+	<parameter name="RET_SCHEMA_NAME_7" isForPrompting="false" class="java.lang.String"/>
+	<parameter name="RET_RETENTION_TYPE_NAME_7" isForPrompting="false" class="java.lang.String"/>
+	<parameter name="RET_AMOUNT_7" isForPrompting="false" class="java.math.BigDecimal"/>
+	<parameter name="RET_ALLOC_AMOUNT_7" isForPrompting="false" class="java.math.BigDecimal"/>
+	<parameter name="RET_ALLOC_INVOICES_7" isForPrompting="false" class="java.lang.String"/>
+	<parameter name="DIRECCION_ORG_7" isForPrompting="false" class="java.lang.String"/>
+	<parameter name="FECHA_7" isForPrompting="true" class="java.util.Date"/>
+	<parameter name="RAZONSOCIAL_7" isForPrompting="false" class="java.lang.String">
+		<defaultValueExpression ><![CDATA["ARGENTOP S.R.L."]]></defaultValueExpression>
+	</parameter>
+	<parameter name="CUIT_7" isForPrompting="false" class="java.lang.String">
+		<defaultValueExpression ><![CDATA["30-70700706-7"]]></defaultValueExpression>
+	</parameter>
+	<parameter name="DIRECCION_7" isForPrompting="false" class="java.lang.String">
+		<defaultValueExpression ><![CDATA["AVIADOR KINGLEY 1835"]]></defaultValueExpression>
+	</parameter>
+	<parameter name="NRO_OC_7" isForPrompting="false" class="java.lang.String">
+		<defaultValueExpression ><![CDATA["20080918"]]></defaultValueExpression>
+	</parameter>
+	<parameter name="CLIENT_CUIT_7" isForPrompting="false" class="java.lang.String"/>
+	<parameter name="CLIENT_7" isForPrompting="false" class="java.lang.String"/>
 
 	<variable name="CITY" class="java.lang.String" resetType="Report" calculation="Nothing">
 		<variableExpression><![CDATA[$P{CITY_NAME} + ", "]]></variableExpression>
@@ -128,7 +308,7 @@
 			</band>
 		</pageFooter>
 		<summary>
-			<band height="498"  isSplitAllowed="true" >
+			<band height="939"  isSplitAllowed="true" >
 				<staticText>
 					<reportElement
 						x="0"
@@ -146,7 +326,7 @@
 				<textField isStretchWithOverflow="false" isBlankWhenNull="false" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
 						x="0"
-						y="480"
+						y="454"
 						width="535"
 						height="18"
 						key="textField"
@@ -173,7 +353,7 @@
 						x="0"
 						y="372"
 						width="535"
-						height="30"
+						height="34"
 						key="subreport-2"
 						positionType="Float"/>
 					<dataSourceExpression><![CDATA[$P{SUBREPORT_OTHER_PAYMENTS_DATASOURCE}]]></dataSourceExpression>
@@ -364,6 +544,932 @@
 						positionType="Float"/>
 					<graphicElement stretchType="NoStretch" pen="Thin"/>
 				</line>
+				<break>
+					<reportElement
+						mode="Opaque"
+						x="0"
+						y="470"
+						width="620"
+						height="0"
+						key="element-1"
+						isRemoveLineWhenBlank="true">
+							<printWhenExpression><![CDATA[new Boolean($P{SUBREPORT_COMPROBANTE_RETENCION_DATASOURCE_1}!=null)]]></printWhenExpression>
+						</reportElement>
+				</break>
+				<subreport  isUsingCache="true">
+					<reportElement
+						x="0"
+						y="472"
+						width="595"
+						height="47"
+						key="subreport-4"
+						isRemoveLineWhenBlank="true">
+							<printWhenExpression><![CDATA[new Boolean($P{SUBREPORT_COMPROBANTE_RETENCION_DATASOURCE_1}!=null)]]></printWhenExpression>
+						</reportElement>
+					<subreportParameter  name="SUBREPORT_DIR">
+						<subreportParameterExpression><![CDATA[$P{SUBREPORT_DIR}]]></subreportParameterExpression>
+					</subreportParameter>
+					<subreportParameter  name="COMPILED_SUBREPORT_CHECKS">
+						<subreportParameterExpression><![CDATA[$P{COMPILED_SUBREPORT_CHECKS}]]></subreportParameterExpression>
+					</subreportParameter>
+					<subreportParameter  name="SUBREPORT_CHECKS_DATASOURCE">
+						<subreportParameterExpression><![CDATA[$P{SUBREPORT_CHECKS_DATASOURCE}]]></subreportParameterExpression>
+					</subreportParameter>
+					<subreportParameter  name="COMPILED_SUBREPORT_OTHER_PAYMENTS">
+						<subreportParameterExpression><![CDATA[$P{COMPILED_SUBREPORT_OTHER_PAYMENTS}]]></subreportParameterExpression>
+					</subreportParameter>
+					<subreportParameter  name="SUBREPORT_OTHER_PAYMENTS_DATASOURCE">
+						<subreportParameterExpression><![CDATA[$P{SUBREPORT_OTHER_PAYMENTS_DATASOURCE}]]></subreportParameterExpression>
+					</subreportParameter>
+					<subreportParameter  name="COMPILED_SUBREPORT_DOCS">
+						<subreportParameterExpression><![CDATA[$P{COMPILED_SUBREPORT_DOCS}]]></subreportParameterExpression>
+					</subreportParameter>
+					<subreportParameter  name="SUBREPORT_DOCS_DATASOURCE">
+						<subreportParameterExpression><![CDATA[$P{SUBREPORT_DOCS_DATASOURCE}]]></subreportParameterExpression>
+					</subreportParameter>
+					<subreportParameter  name="CITY_NAME">
+						<subreportParameterExpression><![CDATA[$P{CITY_NAME}]]></subreportParameterExpression>
+					</subreportParameter>
+					<subreportParameter  name="OP_DATE">
+						<subreportParameterExpression><![CDATA[$P{OP_DATE}]]></subreportParameterExpression>
+					</subreportParameter>
+					<subreportParameter  name="OP_NUMBER">
+						<subreportParameterExpression><![CDATA[$P{OP_NUMBER}]]></subreportParameterExpression>
+					</subreportParameter>
+					<subreportParameter  name="BPARTNER">
+						<subreportParameterExpression><![CDATA[$P{BPARTNER}]]></subreportParameterExpression>
+					</subreportParameter>
+					<subreportParameter  name="OP_AMOUNT">
+						<subreportParameterExpression><![CDATA[$P{OP_AMOUNT}]]></subreportParameterExpression>
+					</subreportParameter>
+					<subreportParameter  name="RETENCIONES_AMOUNT">
+						<subreportParameterExpression><![CDATA[$P{RETENCIONES_AMOUNT}]]></subreportParameterExpression>
+					</subreportParameter>
+					<subreportParameter  name="CLIENT_NAME">
+						<subreportParameterExpression><![CDATA[$P{CLIENT_NAME}]]></subreportParameterExpression>
+					</subreportParameter>
+					<subreportParameter  name="ORG_NAME">
+						<subreportParameterExpression><![CDATA[$P{ORG_NAME}]]></subreportParameterExpression>
+					</subreportParameter>
+					<subreportParameter  name="COMPILED_SUBREPORT_COMPROBANTE_RETENCION">
+						<subreportParameterExpression><![CDATA[$P{COMPILED_SUBREPORT_COMPROBANTE_RETENCION}]]></subreportParameterExpression>
+					</subreportParameter>
+					<subreportParameter  name="SUBREPORT_COMPROBANTE_RETENCION_DATASOURCE_1">
+						<subreportParameterExpression><![CDATA[$P{SUBREPORT_COMPROBANTE_RETENCION_DATASOURCE_1}]]></subreportParameterExpression>
+					</subreportParameter>
+					<subreportParameter  name="SUBREPORT_COMPROBANTE_RETENCION_DATASOURCE_2">
+						<subreportParameterExpression><![CDATA[$P{SUBREPORT_COMPROBANTE_RETENCION_DATASOURCE_2}]]></subreportParameterExpression>
+					</subreportParameter>
+					<subreportParameter  name="SUBREPORT_COMPROBANTE_RETENCION_DATASOURCE_3">
+						<subreportParameterExpression><![CDATA[$P{SUBREPORT_COMPROBANTE_RETENCION_DATASOURCE_3}]]></subreportParameterExpression>
+					</subreportParameter>
+					<subreportParameter  name="SUBREPORT_COMPROBANTE_RETENCION_DATASOURCE_4">
+						<subreportParameterExpression><![CDATA[$P{SUBREPORT_COMPROBANTE_RETENCION_DATASOURCE_4}]]></subreportParameterExpression>
+					</subreportParameter>
+					<subreportParameter  name="SUBREPORT_COMPROBANTE_RETENCION_DATASOURCE_5">
+						<subreportParameterExpression><![CDATA[$P{SUBREPORT_COMPROBANTE_RETENCION_DATASOURCE_5}]]></subreportParameterExpression>
+					</subreportParameter>
+					<subreportParameter  name="SUBREPORT_COMPROBANTE_RETENCION_DATASOURCE_6">
+						<subreportParameterExpression><![CDATA[$P{SUBREPORT_COMPROBANTE_RETENCION_DATASOURCE_6}]]></subreportParameterExpression>
+					</subreportParameter>
+					<subreportParameter  name="SUBREPORT_COMPROBANTE_RETENCION_DATASOURCE_7">
+						<subreportParameterExpression><![CDATA[$P{SUBREPORT_COMPROBANTE_RETENCION_DATASOURCE_7}]]></subreportParameterExpression>
+					</subreportParameter>
+					<subreportParameter  name="RET_SCHEMA_NAME">
+						<subreportParameterExpression><![CDATA[$P{RET_SCHEMA_NAME_0}]]></subreportParameterExpression>
+					</subreportParameter>
+					<subreportParameter  name="RET_RETENTION_TYPE_NAME">
+						<subreportParameterExpression><![CDATA[$P{RET_RETENTION_TYPE_NAME_0}]]></subreportParameterExpression>
+					</subreportParameter>
+					<subreportParameter  name="RET_AMOUNT">
+						<subreportParameterExpression><![CDATA[$P{RET_AMOUNT_0}]]></subreportParameterExpression>
+					</subreportParameter>
+					<subreportParameter  name="RET_ALLOC_AMOUNT">
+						<subreportParameterExpression><![CDATA[$P{RET_ALLOC_AMOUNT_0}]]></subreportParameterExpression>
+					</subreportParameter>
+					<subreportParameter  name="RET_ALLOC_INVOICES">
+						<subreportParameterExpression><![CDATA[$P{RET_ALLOC_INVOICES_0}]]></subreportParameterExpression>
+					</subreportParameter>
+					<subreportParameter  name="DIRECCION_ORG">
+						<subreportParameterExpression><![CDATA[$P{DIRECCION_ORG_0}]]></subreportParameterExpression>
+					</subreportParameter>
+					<subreportParameter  name="FECHA">
+						<subreportParameterExpression><![CDATA[$P{FECHA_0}]]></subreportParameterExpression>
+					</subreportParameter>
+					<subreportParameter  name="RAZONSOCIAL">
+						<subreportParameterExpression><![CDATA[$P{RAZONSOCIAL_0}]]></subreportParameterExpression>
+					</subreportParameter>
+					<subreportParameter  name="CUIT">
+						<subreportParameterExpression><![CDATA[$P{CUIT_0}]]></subreportParameterExpression>
+					</subreportParameter>
+					<subreportParameter  name="DIRECCION">
+						<subreportParameterExpression><![CDATA[$P{DIRECCION_0}]]></subreportParameterExpression>
+					</subreportParameter>
+					<subreportParameter  name="NRO_OC">
+						<subreportParameterExpression><![CDATA[$P{NRO_OC_0}]]></subreportParameterExpression>
+					</subreportParameter>
+					<subreportParameter  name="CLIENT_CUIT">
+						<subreportParameterExpression><![CDATA[$P{CLIENT_CUIT_0}]]></subreportParameterExpression>
+					</subreportParameter>
+					<subreportParameter  name="CLIENT">
+						<subreportParameterExpression><![CDATA[$P{CLIENT_0}]]></subreportParameterExpression>
+					</subreportParameter>
+					<dataSourceExpression><![CDATA[$P{SUBREPORT_COMPROBANTE_RETENCION_DATASOURCE_1}]]></dataSourceExpression>
+					<subreportExpression  class="java.io.InputStream"><![CDATA[$P{COMPILED_SUBREPORT_COMPROBANTE_RETENCION}]]></subreportExpression>
+				</subreport>
+				<subreport  isUsingCache="true">
+					<reportElement
+						mode="Transparent"
+						x="0"
+						y="535"
+						width="595"
+						height="47"
+						key="subreport-5"
+						isRemoveLineWhenBlank="true">
+							<printWhenExpression><![CDATA[new Boolean($P{SUBREPORT_COMPROBANTE_RETENCION_DATASOURCE_2}!=null)]]></printWhenExpression>
+						</reportElement>
+					<subreportParameter  name="SUBREPORT_DIR">
+						<subreportParameterExpression><![CDATA[$P{SUBREPORT_DIR}]]></subreportParameterExpression>
+					</subreportParameter>
+					<subreportParameter  name="COMPILED_SUBREPORT_CHECKS">
+						<subreportParameterExpression><![CDATA[$P{COMPILED_SUBREPORT_CHECKS}]]></subreportParameterExpression>
+					</subreportParameter>
+					<subreportParameter  name="SUBREPORT_CHECKS_DATASOURCE">
+						<subreportParameterExpression><![CDATA[$P{SUBREPORT_CHECKS_DATASOURCE}]]></subreportParameterExpression>
+					</subreportParameter>
+					<subreportParameter  name="COMPILED_SUBREPORT_OTHER_PAYMENTS">
+						<subreportParameterExpression><![CDATA[$P{COMPILED_SUBREPORT_OTHER_PAYMENTS}]]></subreportParameterExpression>
+					</subreportParameter>
+					<subreportParameter  name="SUBREPORT_OTHER_PAYMENTS_DATASOURCE">
+						<subreportParameterExpression><![CDATA[$P{SUBREPORT_OTHER_PAYMENTS_DATASOURCE}]]></subreportParameterExpression>
+					</subreportParameter>
+					<subreportParameter  name="COMPILED_SUBREPORT_DOCS">
+						<subreportParameterExpression><![CDATA[$P{COMPILED_SUBREPORT_DOCS}]]></subreportParameterExpression>
+					</subreportParameter>
+					<subreportParameter  name="SUBREPORT_DOCS_DATASOURCE">
+						<subreportParameterExpression><![CDATA[$P{SUBREPORT_DOCS_DATASOURCE}]]></subreportParameterExpression>
+					</subreportParameter>
+					<subreportParameter  name="CITY_NAME">
+						<subreportParameterExpression><![CDATA[$P{CITY_NAME}]]></subreportParameterExpression>
+					</subreportParameter>
+					<subreportParameter  name="OP_DATE">
+						<subreportParameterExpression><![CDATA[$P{OP_DATE}]]></subreportParameterExpression>
+					</subreportParameter>
+					<subreportParameter  name="OP_NUMBER">
+						<subreportParameterExpression><![CDATA[$P{OP_NUMBER}]]></subreportParameterExpression>
+					</subreportParameter>
+					<subreportParameter  name="BPARTNER">
+						<subreportParameterExpression><![CDATA[$P{BPARTNER}]]></subreportParameterExpression>
+					</subreportParameter>
+					<subreportParameter  name="OP_AMOUNT">
+						<subreportParameterExpression><![CDATA[$P{OP_AMOUNT}]]></subreportParameterExpression>
+					</subreportParameter>
+					<subreportParameter  name="RETENCIONES_AMOUNT">
+						<subreportParameterExpression><![CDATA[$P{RETENCIONES_AMOUNT}]]></subreportParameterExpression>
+					</subreportParameter>
+					<subreportParameter  name="CLIENT_NAME">
+						<subreportParameterExpression><![CDATA[$P{CLIENT_NAME}]]></subreportParameterExpression>
+					</subreportParameter>
+					<subreportParameter  name="ORG_NAME">
+						<subreportParameterExpression><![CDATA[$P{ORG_NAME}]]></subreportParameterExpression>
+					</subreportParameter>
+					<subreportParameter  name="COMPILED_SUBREPORT_COMPROBANTE_RETENCION">
+						<subreportParameterExpression><![CDATA[$P{COMPILED_SUBREPORT_COMPROBANTE_RETENCION}]]></subreportParameterExpression>
+					</subreportParameter>
+					<subreportParameter  name="SUBREPORT_COMPROBANTE_RETENCION_DATASOURCE_1">
+						<subreportParameterExpression><![CDATA[$P{SUBREPORT_COMPROBANTE_RETENCION_DATASOURCE_1}]]></subreportParameterExpression>
+					</subreportParameter>
+					<subreportParameter  name="SUBREPORT_COMPROBANTE_RETENCION_DATASOURCE_2">
+						<subreportParameterExpression><![CDATA[$P{SUBREPORT_COMPROBANTE_RETENCION_DATASOURCE_2}]]></subreportParameterExpression>
+					</subreportParameter>
+					<subreportParameter  name="SUBREPORT_COMPROBANTE_RETENCION_DATASOURCE_3">
+						<subreportParameterExpression><![CDATA[$P{SUBREPORT_COMPROBANTE_RETENCION_DATASOURCE_3}]]></subreportParameterExpression>
+					</subreportParameter>
+					<subreportParameter  name="SUBREPORT_COMPROBANTE_RETENCION_DATASOURCE_4">
+						<subreportParameterExpression><![CDATA[$P{SUBREPORT_COMPROBANTE_RETENCION_DATASOURCE_4}]]></subreportParameterExpression>
+					</subreportParameter>
+					<subreportParameter  name="SUBREPORT_COMPROBANTE_RETENCION_DATASOURCE_5">
+						<subreportParameterExpression><![CDATA[$P{SUBREPORT_COMPROBANTE_RETENCION_DATASOURCE_5}]]></subreportParameterExpression>
+					</subreportParameter>
+					<subreportParameter  name="SUBREPORT_COMPROBANTE_RETENCION_DATASOURCE_6">
+						<subreportParameterExpression><![CDATA[$P{SUBREPORT_COMPROBANTE_RETENCION_DATASOURCE_6}]]></subreportParameterExpression>
+					</subreportParameter>
+					<subreportParameter  name="SUBREPORT_COMPROBANTE_RETENCION_DATASOURCE_7">
+						<subreportParameterExpression><![CDATA[$P{SUBREPORT_COMPROBANTE_RETENCION_DATASOURCE_7}]]></subreportParameterExpression>
+					</subreportParameter>
+					<subreportParameter  name="RET_SCHEMA_NAME">
+						<subreportParameterExpression><![CDATA[$P{RET_SCHEMA_NAME_1}]]></subreportParameterExpression>
+					</subreportParameter>
+					<subreportParameter  name="RET_RETENTION_TYPE_NAME">
+						<subreportParameterExpression><![CDATA[$P{RET_RETENTION_TYPE_NAME_1}]]></subreportParameterExpression>
+					</subreportParameter>
+					<subreportParameter  name="RET_AMOUNT">
+						<subreportParameterExpression><![CDATA[$P{RET_AMOUNT_1}]]></subreportParameterExpression>
+					</subreportParameter>
+					<subreportParameter  name="RET_ALLOC_AMOUNT">
+						<subreportParameterExpression><![CDATA[$P{RET_ALLOC_AMOUNT_1}]]></subreportParameterExpression>
+					</subreportParameter>
+					<subreportParameter  name="RET_ALLOC_INVOICES">
+						<subreportParameterExpression><![CDATA[$P{RET_ALLOC_INVOICES_1}]]></subreportParameterExpression>
+					</subreportParameter>
+					<subreportParameter  name="DIRECCION_ORG">
+						<subreportParameterExpression><![CDATA[$P{DIRECCION_ORG_1}]]></subreportParameterExpression>
+					</subreportParameter>
+					<subreportParameter  name="FECHA">
+						<subreportParameterExpression><![CDATA[$P{FECHA_1}]]></subreportParameterExpression>
+					</subreportParameter>
+					<subreportParameter  name="RAZONSOCIAL">
+						<subreportParameterExpression><![CDATA[$P{RAZONSOCIAL_1}]]></subreportParameterExpression>
+					</subreportParameter>
+					<subreportParameter  name="CUIT">
+						<subreportParameterExpression><![CDATA[$P{CUIT_1}]]></subreportParameterExpression>
+					</subreportParameter>
+					<subreportParameter  name="DIRECCION">
+						<subreportParameterExpression><![CDATA[$P{DIRECCION_1}]]></subreportParameterExpression>
+					</subreportParameter>
+					<subreportParameter  name="NRO_OC">
+						<subreportParameterExpression><![CDATA[$P{NRO_OC_1}]]></subreportParameterExpression>
+					</subreportParameter>
+					<subreportParameter  name="CLIENT_CUIT">
+						<subreportParameterExpression><![CDATA[$P{CLIENT_CUIT_1}]]></subreportParameterExpression>
+					</subreportParameter>
+					<subreportParameter  name="CLIENT">
+						<subreportParameterExpression><![CDATA[$P{CLIENT_1}]]></subreportParameterExpression>
+					</subreportParameter>
+					<dataSourceExpression><![CDATA[$P{SUBREPORT_COMPROBANTE_RETENCION_DATASOURCE_2}]]></dataSourceExpression>
+					<subreportExpression  class="java.io.InputStream"><![CDATA[$P{COMPILED_SUBREPORT_COMPROBANTE_RETENCION}]]></subreportExpression>
+				</subreport>
+				<break>
+					<reportElement
+						x="0"
+						y="528"
+						width="620"
+						height="0"
+						key="element-2"
+						isRemoveLineWhenBlank="true">
+							<printWhenExpression><![CDATA[new Boolean($P{SUBREPORT_COMPROBANTE_RETENCION_DATASOURCE_2}!=null)]]></printWhenExpression>
+						</reportElement>
+				</break>
+				<break>
+					<reportElement
+						x="0"
+						y="590"
+						width="620"
+						height="0"
+						key="element-3"
+						isRemoveLineWhenBlank="true">
+							<printWhenExpression><![CDATA[new Boolean($P{SUBREPORT_COMPROBANTE_RETENCION_DATASOURCE_3}!=null)]]></printWhenExpression>
+						</reportElement>
+				</break>
+				<subreport  isUsingCache="true">
+					<reportElement
+						x="0"
+						y="598"
+						width="595"
+						height="47"
+						key="subreport-6"
+						isRemoveLineWhenBlank="true">
+							<printWhenExpression><![CDATA[new Boolean($P{SUBREPORT_COMPROBANTE_RETENCION_DATASOURCE_3}!=null)]]></printWhenExpression>
+						</reportElement>
+					<subreportParameter  name="SUBREPORT_DIR">
+						<subreportParameterExpression><![CDATA[$P{SUBREPORT_DIR}]]></subreportParameterExpression>
+					</subreportParameter>
+					<subreportParameter  name="COMPILED_SUBREPORT_CHECKS">
+						<subreportParameterExpression><![CDATA[$P{COMPILED_SUBREPORT_CHECKS}]]></subreportParameterExpression>
+					</subreportParameter>
+					<subreportParameter  name="SUBREPORT_CHECKS_DATASOURCE">
+						<subreportParameterExpression><![CDATA[$P{SUBREPORT_CHECKS_DATASOURCE}]]></subreportParameterExpression>
+					</subreportParameter>
+					<subreportParameter  name="COMPILED_SUBREPORT_OTHER_PAYMENTS">
+						<subreportParameterExpression><![CDATA[$P{COMPILED_SUBREPORT_OTHER_PAYMENTS}]]></subreportParameterExpression>
+					</subreportParameter>
+					<subreportParameter  name="SUBREPORT_OTHER_PAYMENTS_DATASOURCE">
+						<subreportParameterExpression><![CDATA[$P{SUBREPORT_OTHER_PAYMENTS_DATASOURCE}]]></subreportParameterExpression>
+					</subreportParameter>
+					<subreportParameter  name="COMPILED_SUBREPORT_DOCS">
+						<subreportParameterExpression><![CDATA[$P{COMPILED_SUBREPORT_DOCS}]]></subreportParameterExpression>
+					</subreportParameter>
+					<subreportParameter  name="SUBREPORT_DOCS_DATASOURCE">
+						<subreportParameterExpression><![CDATA[$P{SUBREPORT_DOCS_DATASOURCE}]]></subreportParameterExpression>
+					</subreportParameter>
+					<subreportParameter  name="CITY_NAME">
+						<subreportParameterExpression><![CDATA[$P{CITY_NAME}]]></subreportParameterExpression>
+					</subreportParameter>
+					<subreportParameter  name="OP_DATE">
+						<subreportParameterExpression><![CDATA[$P{OP_DATE}]]></subreportParameterExpression>
+					</subreportParameter>
+					<subreportParameter  name="OP_NUMBER">
+						<subreportParameterExpression><![CDATA[$P{OP_NUMBER}]]></subreportParameterExpression>
+					</subreportParameter>
+					<subreportParameter  name="BPARTNER">
+						<subreportParameterExpression><![CDATA[$P{BPARTNER}]]></subreportParameterExpression>
+					</subreportParameter>
+					<subreportParameter  name="OP_AMOUNT">
+						<subreportParameterExpression><![CDATA[$P{OP_AMOUNT}]]></subreportParameterExpression>
+					</subreportParameter>
+					<subreportParameter  name="RETENCIONES_AMOUNT">
+						<subreportParameterExpression><![CDATA[$P{RETENCIONES_AMOUNT}]]></subreportParameterExpression>
+					</subreportParameter>
+					<subreportParameter  name="CLIENT_NAME">
+						<subreportParameterExpression><![CDATA[$P{CLIENT_NAME}]]></subreportParameterExpression>
+					</subreportParameter>
+					<subreportParameter  name="ORG_NAME">
+						<subreportParameterExpression><![CDATA[$P{ORG_NAME}]]></subreportParameterExpression>
+					</subreportParameter>
+					<subreportParameter  name="COMPILED_SUBREPORT_COMPROBANTE_RETENCION">
+						<subreportParameterExpression><![CDATA[$P{COMPILED_SUBREPORT_COMPROBANTE_RETENCION}]]></subreportParameterExpression>
+					</subreportParameter>
+					<subreportParameter  name="SUBREPORT_COMPROBANTE_RETENCION_DATASOURCE_1">
+						<subreportParameterExpression><![CDATA[$P{SUBREPORT_COMPROBANTE_RETENCION_DATASOURCE_1}]]></subreportParameterExpression>
+					</subreportParameter>
+					<subreportParameter  name="SUBREPORT_COMPROBANTE_RETENCION_DATASOURCE_2">
+						<subreportParameterExpression><![CDATA[$P{SUBREPORT_COMPROBANTE_RETENCION_DATASOURCE_2}]]></subreportParameterExpression>
+					</subreportParameter>
+					<subreportParameter  name="SUBREPORT_COMPROBANTE_RETENCION_DATASOURCE_3">
+						<subreportParameterExpression><![CDATA[$P{SUBREPORT_COMPROBANTE_RETENCION_DATASOURCE_3}]]></subreportParameterExpression>
+					</subreportParameter>
+					<subreportParameter  name="SUBREPORT_COMPROBANTE_RETENCION_DATASOURCE_4">
+						<subreportParameterExpression><![CDATA[$P{SUBREPORT_COMPROBANTE_RETENCION_DATASOURCE_4}]]></subreportParameterExpression>
+					</subreportParameter>
+					<subreportParameter  name="SUBREPORT_COMPROBANTE_RETENCION_DATASOURCE_5">
+						<subreportParameterExpression><![CDATA[$P{SUBREPORT_COMPROBANTE_RETENCION_DATASOURCE_5}]]></subreportParameterExpression>
+					</subreportParameter>
+					<subreportParameter  name="SUBREPORT_COMPROBANTE_RETENCION_DATASOURCE_6">
+						<subreportParameterExpression><![CDATA[$P{SUBREPORT_COMPROBANTE_RETENCION_DATASOURCE_6}]]></subreportParameterExpression>
+					</subreportParameter>
+					<subreportParameter  name="SUBREPORT_COMPROBANTE_RETENCION_DATASOURCE_7">
+						<subreportParameterExpression><![CDATA[$P{SUBREPORT_COMPROBANTE_RETENCION_DATASOURCE_7}]]></subreportParameterExpression>
+					</subreportParameter>
+					<subreportParameter  name="RET_SCHEMA_NAME">
+						<subreportParameterExpression><![CDATA[$P{RET_SCHEMA_NAME_2}]]></subreportParameterExpression>
+					</subreportParameter>
+					<subreportParameter  name="RET_RETENTION_TYPE_NAME">
+						<subreportParameterExpression><![CDATA[$P{RET_RETENTION_TYPE_NAME_2}]]></subreportParameterExpression>
+					</subreportParameter>
+					<subreportParameter  name="RET_AMOUNT">
+						<subreportParameterExpression><![CDATA[$P{RET_AMOUNT_2}]]></subreportParameterExpression>
+					</subreportParameter>
+					<subreportParameter  name="RET_ALLOC_AMOUNT">
+						<subreportParameterExpression><![CDATA[$P{RET_ALLOC_AMOUNT_2}]]></subreportParameterExpression>
+					</subreportParameter>
+					<subreportParameter  name="RET_ALLOC_INVOICES">
+						<subreportParameterExpression><![CDATA[$P{RET_ALLOC_INVOICES_2}]]></subreportParameterExpression>
+					</subreportParameter>
+					<subreportParameter  name="DIRECCION_ORG">
+						<subreportParameterExpression><![CDATA[$P{DIRECCION_ORG_2}]]></subreportParameterExpression>
+					</subreportParameter>
+					<subreportParameter  name="FECHA">
+						<subreportParameterExpression><![CDATA[$P{FECHA_2}]]></subreportParameterExpression>
+					</subreportParameter>
+					<subreportParameter  name="RAZONSOCIAL">
+						<subreportParameterExpression><![CDATA[$P{RAZONSOCIAL_2}]]></subreportParameterExpression>
+					</subreportParameter>
+					<subreportParameter  name="CUIT">
+						<subreportParameterExpression><![CDATA[$P{CUIT_2}]]></subreportParameterExpression>
+					</subreportParameter>
+					<subreportParameter  name="DIRECCION">
+						<subreportParameterExpression><![CDATA[$P{DIRECCION_2}]]></subreportParameterExpression>
+					</subreportParameter>
+					<subreportParameter  name="NRO_OC">
+						<subreportParameterExpression><![CDATA[$P{NRO_OC_2}]]></subreportParameterExpression>
+					</subreportParameter>
+					<subreportParameter  name="CLIENT_CUIT">
+						<subreportParameterExpression><![CDATA[$P{CLIENT_CUIT_2}]]></subreportParameterExpression>
+					</subreportParameter>
+					<subreportParameter  name="CLIENT">
+						<subreportParameterExpression><![CDATA[$P{CLIENT_2}]]></subreportParameterExpression>
+					</subreportParameter>
+					<dataSourceExpression><![CDATA[$P{SUBREPORT_COMPROBANTE_RETENCION_DATASOURCE_3}]]></dataSourceExpression>
+					<subreportExpression  class="java.io.InputStream"><![CDATA[$P{COMPILED_SUBREPORT_COMPROBANTE_RETENCION}]]></subreportExpression>
+				</subreport>
+				<subreport  isUsingCache="true">
+					<reportElement
+						x="0"
+						y="726"
+						width="595"
+						height="47"
+						key="subreport-7"
+						isRemoveLineWhenBlank="true">
+							<printWhenExpression><![CDATA[new Boolean($P{SUBREPORT_COMPROBANTE_RETENCION_DATASOURCE_5}!=null)]]></printWhenExpression>
+						</reportElement>
+					<subreportParameter  name="SUBREPORT_DIR">
+						<subreportParameterExpression><![CDATA[$P{SUBREPORT_DIR}]]></subreportParameterExpression>
+					</subreportParameter>
+					<subreportParameter  name="COMPILED_SUBREPORT_CHECKS">
+						<subreportParameterExpression><![CDATA[$P{COMPILED_SUBREPORT_CHECKS}]]></subreportParameterExpression>
+					</subreportParameter>
+					<subreportParameter  name="SUBREPORT_CHECKS_DATASOURCE">
+						<subreportParameterExpression><![CDATA[$P{SUBREPORT_CHECKS_DATASOURCE}]]></subreportParameterExpression>
+					</subreportParameter>
+					<subreportParameter  name="COMPILED_SUBREPORT_OTHER_PAYMENTS">
+						<subreportParameterExpression><![CDATA[$P{COMPILED_SUBREPORT_OTHER_PAYMENTS}]]></subreportParameterExpression>
+					</subreportParameter>
+					<subreportParameter  name="SUBREPORT_OTHER_PAYMENTS_DATASOURCE">
+						<subreportParameterExpression><![CDATA[$P{SUBREPORT_OTHER_PAYMENTS_DATASOURCE}]]></subreportParameterExpression>
+					</subreportParameter>
+					<subreportParameter  name="COMPILED_SUBREPORT_DOCS">
+						<subreportParameterExpression><![CDATA[$P{COMPILED_SUBREPORT_DOCS}]]></subreportParameterExpression>
+					</subreportParameter>
+					<subreportParameter  name="SUBREPORT_DOCS_DATASOURCE">
+						<subreportParameterExpression><![CDATA[$P{SUBREPORT_DOCS_DATASOURCE}]]></subreportParameterExpression>
+					</subreportParameter>
+					<subreportParameter  name="CITY_NAME">
+						<subreportParameterExpression><![CDATA[$P{CITY_NAME}]]></subreportParameterExpression>
+					</subreportParameter>
+					<subreportParameter  name="OP_DATE">
+						<subreportParameterExpression><![CDATA[$P{OP_DATE}]]></subreportParameterExpression>
+					</subreportParameter>
+					<subreportParameter  name="OP_NUMBER">
+						<subreportParameterExpression><![CDATA[$P{OP_NUMBER}]]></subreportParameterExpression>
+					</subreportParameter>
+					<subreportParameter  name="BPARTNER">
+						<subreportParameterExpression><![CDATA[$P{BPARTNER}]]></subreportParameterExpression>
+					</subreportParameter>
+					<subreportParameter  name="OP_AMOUNT">
+						<subreportParameterExpression><![CDATA[$P{OP_AMOUNT}]]></subreportParameterExpression>
+					</subreportParameter>
+					<subreportParameter  name="RETENCIONES_AMOUNT">
+						<subreportParameterExpression><![CDATA[$P{RETENCIONES_AMOUNT}]]></subreportParameterExpression>
+					</subreportParameter>
+					<subreportParameter  name="CLIENT_NAME">
+						<subreportParameterExpression><![CDATA[$P{CLIENT_NAME}]]></subreportParameterExpression>
+					</subreportParameter>
+					<subreportParameter  name="ORG_NAME">
+						<subreportParameterExpression><![CDATA[$P{ORG_NAME}]]></subreportParameterExpression>
+					</subreportParameter>
+					<subreportParameter  name="COMPILED_SUBREPORT_COMPROBANTE_RETENCION">
+						<subreportParameterExpression><![CDATA[$P{COMPILED_SUBREPORT_COMPROBANTE_RETENCION}]]></subreportParameterExpression>
+					</subreportParameter>
+					<subreportParameter  name="SUBREPORT_COMPROBANTE_RETENCION_DATASOURCE_1">
+						<subreportParameterExpression><![CDATA[$P{SUBREPORT_COMPROBANTE_RETENCION_DATASOURCE_1}]]></subreportParameterExpression>
+					</subreportParameter>
+					<subreportParameter  name="SUBREPORT_COMPROBANTE_RETENCION_DATASOURCE_2">
+						<subreportParameterExpression><![CDATA[$P{SUBREPORT_COMPROBANTE_RETENCION_DATASOURCE_2}]]></subreportParameterExpression>
+					</subreportParameter>
+					<subreportParameter  name="SUBREPORT_COMPROBANTE_RETENCION_DATASOURCE_3">
+						<subreportParameterExpression><![CDATA[$P{SUBREPORT_COMPROBANTE_RETENCION_DATASOURCE_3}]]></subreportParameterExpression>
+					</subreportParameter>
+					<subreportParameter  name="SUBREPORT_COMPROBANTE_RETENCION_DATASOURCE_4">
+						<subreportParameterExpression><![CDATA[$P{SUBREPORT_COMPROBANTE_RETENCION_DATASOURCE_4}]]></subreportParameterExpression>
+					</subreportParameter>
+					<subreportParameter  name="SUBREPORT_COMPROBANTE_RETENCION_DATASOURCE_5">
+						<subreportParameterExpression><![CDATA[$P{SUBREPORT_COMPROBANTE_RETENCION_DATASOURCE_5}]]></subreportParameterExpression>
+					</subreportParameter>
+					<subreportParameter  name="SUBREPORT_COMPROBANTE_RETENCION_DATASOURCE_6">
+						<subreportParameterExpression><![CDATA[$P{SUBREPORT_COMPROBANTE_RETENCION_DATASOURCE_6}]]></subreportParameterExpression>
+					</subreportParameter>
+					<subreportParameter  name="SUBREPORT_COMPROBANTE_RETENCION_DATASOURCE_7">
+						<subreportParameterExpression><![CDATA[$P{SUBREPORT_COMPROBANTE_RETENCION_DATASOURCE_7}]]></subreportParameterExpression>
+					</subreportParameter>
+					<subreportParameter  name="RET_SCHEMA_NAME">
+						<subreportParameterExpression><![CDATA[$P{RET_SCHEMA_NAME_4}]]></subreportParameterExpression>
+					</subreportParameter>
+					<subreportParameter  name="RET_RETENTION_TYPE_NAME">
+						<subreportParameterExpression><![CDATA[$P{RET_RETENTION_TYPE_NAME_4}]]></subreportParameterExpression>
+					</subreportParameter>
+					<subreportParameter  name="RET_AMOUNT">
+						<subreportParameterExpression><![CDATA[$P{RET_AMOUNT_4}]]></subreportParameterExpression>
+					</subreportParameter>
+					<subreportParameter  name="RET_ALLOC_AMOUNT">
+						<subreportParameterExpression><![CDATA[$P{RET_ALLOC_AMOUNT_4}]]></subreportParameterExpression>
+					</subreportParameter>
+					<subreportParameter  name="RET_ALLOC_INVOICES">
+						<subreportParameterExpression><![CDATA[$P{RET_ALLOC_INVOICES_4}]]></subreportParameterExpression>
+					</subreportParameter>
+					<subreportParameter  name="DIRECCION_ORG">
+						<subreportParameterExpression><![CDATA[$P{DIRECCION_ORG_4}]]></subreportParameterExpression>
+					</subreportParameter>
+					<subreportParameter  name="FECHA">
+						<subreportParameterExpression><![CDATA[$P{FECHA_4}]]></subreportParameterExpression>
+					</subreportParameter>
+					<subreportParameter  name="RAZONSOCIAL">
+						<subreportParameterExpression><![CDATA[$P{RAZONSOCIAL_4}]]></subreportParameterExpression>
+					</subreportParameter>
+					<subreportParameter  name="CUIT">
+						<subreportParameterExpression><![CDATA[$P{CUIT_4}]]></subreportParameterExpression>
+					</subreportParameter>
+					<subreportParameter  name="DIRECCION">
+						<subreportParameterExpression><![CDATA[$P{DIRECCION_4}]]></subreportParameterExpression>
+					</subreportParameter>
+					<subreportParameter  name="NRO_OC">
+						<subreportParameterExpression><![CDATA[$P{NRO_OC_4}]]></subreportParameterExpression>
+					</subreportParameter>
+					<subreportParameter  name="CLIENT_CUIT">
+						<subreportParameterExpression><![CDATA[$P{CLIENT_CUIT_4}]]></subreportParameterExpression>
+					</subreportParameter>
+					<subreportParameter  name="CLIENT">
+						<subreportParameterExpression><![CDATA[$P{CLIENT_4}]]></subreportParameterExpression>
+					</subreportParameter>
+					<dataSourceExpression><![CDATA[$P{SUBREPORT_COMPROBANTE_RETENCION_DATASOURCE_5}]]></dataSourceExpression>
+					<subreportExpression  class="java.io.InputStream"><![CDATA[$P{COMPILED_SUBREPORT_COMPROBANTE_RETENCION}]]></subreportExpression>
+				</subreport>
+				<break>
+					<reportElement
+						x="0"
+						y="718"
+						width="620"
+						height="0"
+						key="element-4"
+						isRemoveLineWhenBlank="true">
+							<printWhenExpression><![CDATA[new Boolean($P{SUBREPORT_COMPROBANTE_RETENCION_DATASOURCE_5}!=null)]]></printWhenExpression>
+						</reportElement>
+				</break>
+				<subreport  isUsingCache="true">
+					<reportElement
+						x="0"
+						y="663"
+						width="595"
+						height="47"
+						key="subreport-8"
+						isRemoveLineWhenBlank="true">
+							<printWhenExpression><![CDATA[new Boolean($P{SUBREPORT_COMPROBANTE_RETENCION_DATASOURCE_4}!=null)]]></printWhenExpression>
+						</reportElement>
+					<subreportParameter  name="SUBREPORT_DIR">
+						<subreportParameterExpression><![CDATA[$P{SUBREPORT_DIR}]]></subreportParameterExpression>
+					</subreportParameter>
+					<subreportParameter  name="COMPILED_SUBREPORT_CHECKS">
+						<subreportParameterExpression><![CDATA[$P{COMPILED_SUBREPORT_CHECKS}]]></subreportParameterExpression>
+					</subreportParameter>
+					<subreportParameter  name="SUBREPORT_CHECKS_DATASOURCE">
+						<subreportParameterExpression><![CDATA[$P{SUBREPORT_CHECKS_DATASOURCE}]]></subreportParameterExpression>
+					</subreportParameter>
+					<subreportParameter  name="COMPILED_SUBREPORT_OTHER_PAYMENTS">
+						<subreportParameterExpression><![CDATA[$P{COMPILED_SUBREPORT_OTHER_PAYMENTS}]]></subreportParameterExpression>
+					</subreportParameter>
+					<subreportParameter  name="SUBREPORT_OTHER_PAYMENTS_DATASOURCE">
+						<subreportParameterExpression><![CDATA[$P{SUBREPORT_OTHER_PAYMENTS_DATASOURCE}]]></subreportParameterExpression>
+					</subreportParameter>
+					<subreportParameter  name="COMPILED_SUBREPORT_DOCS">
+						<subreportParameterExpression><![CDATA[$P{COMPILED_SUBREPORT_DOCS}]]></subreportParameterExpression>
+					</subreportParameter>
+					<subreportParameter  name="SUBREPORT_DOCS_DATASOURCE">
+						<subreportParameterExpression><![CDATA[$P{SUBREPORT_DOCS_DATASOURCE}]]></subreportParameterExpression>
+					</subreportParameter>
+					<subreportParameter  name="CITY_NAME">
+						<subreportParameterExpression><![CDATA[$P{CITY_NAME}]]></subreportParameterExpression>
+					</subreportParameter>
+					<subreportParameter  name="OP_DATE">
+						<subreportParameterExpression><![CDATA[$P{OP_DATE}]]></subreportParameterExpression>
+					</subreportParameter>
+					<subreportParameter  name="OP_NUMBER">
+						<subreportParameterExpression><![CDATA[$P{OP_NUMBER}]]></subreportParameterExpression>
+					</subreportParameter>
+					<subreportParameter  name="BPARTNER">
+						<subreportParameterExpression><![CDATA[$P{BPARTNER}]]></subreportParameterExpression>
+					</subreportParameter>
+					<subreportParameter  name="OP_AMOUNT">
+						<subreportParameterExpression><![CDATA[$P{OP_AMOUNT}]]></subreportParameterExpression>
+					</subreportParameter>
+					<subreportParameter  name="RETENCIONES_AMOUNT">
+						<subreportParameterExpression><![CDATA[$P{RETENCIONES_AMOUNT}]]></subreportParameterExpression>
+					</subreportParameter>
+					<subreportParameter  name="CLIENT_NAME">
+						<subreportParameterExpression><![CDATA[$P{CLIENT_NAME}]]></subreportParameterExpression>
+					</subreportParameter>
+					<subreportParameter  name="ORG_NAME">
+						<subreportParameterExpression><![CDATA[$P{ORG_NAME}]]></subreportParameterExpression>
+					</subreportParameter>
+					<subreportParameter  name="COMPILED_SUBREPORT_COMPROBANTE_RETENCION">
+						<subreportParameterExpression><![CDATA[$P{COMPILED_SUBREPORT_COMPROBANTE_RETENCION}]]></subreportParameterExpression>
+					</subreportParameter>
+					<subreportParameter  name="SUBREPORT_COMPROBANTE_RETENCION_DATASOURCE_1">
+						<subreportParameterExpression><![CDATA[$P{SUBREPORT_COMPROBANTE_RETENCION_DATASOURCE_1}]]></subreportParameterExpression>
+					</subreportParameter>
+					<subreportParameter  name="SUBREPORT_COMPROBANTE_RETENCION_DATASOURCE_2">
+						<subreportParameterExpression><![CDATA[$P{SUBREPORT_COMPROBANTE_RETENCION_DATASOURCE_2}]]></subreportParameterExpression>
+					</subreportParameter>
+					<subreportParameter  name="SUBREPORT_COMPROBANTE_RETENCION_DATASOURCE_3">
+						<subreportParameterExpression><![CDATA[$P{SUBREPORT_COMPROBANTE_RETENCION_DATASOURCE_3}]]></subreportParameterExpression>
+					</subreportParameter>
+					<subreportParameter  name="SUBREPORT_COMPROBANTE_RETENCION_DATASOURCE_4">
+						<subreportParameterExpression><![CDATA[$P{SUBREPORT_COMPROBANTE_RETENCION_DATASOURCE_4}]]></subreportParameterExpression>
+					</subreportParameter>
+					<subreportParameter  name="SUBREPORT_COMPROBANTE_RETENCION_DATASOURCE_5">
+						<subreportParameterExpression><![CDATA[$P{SUBREPORT_COMPROBANTE_RETENCION_DATASOURCE_5}]]></subreportParameterExpression>
+					</subreportParameter>
+					<subreportParameter  name="SUBREPORT_COMPROBANTE_RETENCION_DATASOURCE_6">
+						<subreportParameterExpression><![CDATA[$P{SUBREPORT_COMPROBANTE_RETENCION_DATASOURCE_6}]]></subreportParameterExpression>
+					</subreportParameter>
+					<subreportParameter  name="SUBREPORT_COMPROBANTE_RETENCION_DATASOURCE_7">
+						<subreportParameterExpression><![CDATA[$P{SUBREPORT_COMPROBANTE_RETENCION_DATASOURCE_7}]]></subreportParameterExpression>
+					</subreportParameter>
+					<subreportParameter  name="RET_SCHEMA_NAME">
+						<subreportParameterExpression><![CDATA[$P{RET_SCHEMA_NAME_3}]]></subreportParameterExpression>
+					</subreportParameter>
+					<subreportParameter  name="RET_RETENTION_TYPE_NAME">
+						<subreportParameterExpression><![CDATA[$P{RET_RETENTION_TYPE_NAME_3}]]></subreportParameterExpression>
+					</subreportParameter>
+					<subreportParameter  name="RET_AMOUNT">
+						<subreportParameterExpression><![CDATA[$P{RET_AMOUNT_3}]]></subreportParameterExpression>
+					</subreportParameter>
+					<subreportParameter  name="RET_ALLOC_AMOUNT">
+						<subreportParameterExpression><![CDATA[$P{RET_ALLOC_AMOUNT_3}]]></subreportParameterExpression>
+					</subreportParameter>
+					<subreportParameter  name="RET_ALLOC_INVOICES">
+						<subreportParameterExpression><![CDATA[$P{RET_ALLOC_INVOICES_3}]]></subreportParameterExpression>
+					</subreportParameter>
+					<subreportParameter  name="DIRECCION_ORG">
+						<subreportParameterExpression><![CDATA[$P{DIRECCION_ORG_3}]]></subreportParameterExpression>
+					</subreportParameter>
+					<subreportParameter  name="FECHA">
+						<subreportParameterExpression><![CDATA[$P{FECHA_3}]]></subreportParameterExpression>
+					</subreportParameter>
+					<subreportParameter  name="RAZONSOCIAL">
+						<subreportParameterExpression><![CDATA[$P{RAZONSOCIAL_3}]]></subreportParameterExpression>
+					</subreportParameter>
+					<subreportParameter  name="CUIT">
+						<subreportParameterExpression><![CDATA[$P{CUIT_3}]]></subreportParameterExpression>
+					</subreportParameter>
+					<subreportParameter  name="DIRECCION">
+						<subreportParameterExpression><![CDATA[$P{DIRECCION_3}]]></subreportParameterExpression>
+					</subreportParameter>
+					<subreportParameter  name="NRO_OC">
+						<subreportParameterExpression><![CDATA[$P{NRO_OC_3}]]></subreportParameterExpression>
+					</subreportParameter>
+					<subreportParameter  name="CLIENT_CUIT">
+						<subreportParameterExpression><![CDATA[$P{CLIENT_CUIT_3}]]></subreportParameterExpression>
+					</subreportParameter>
+					<subreportParameter  name="CLIENT">
+						<subreportParameterExpression><![CDATA[$P{CLIENT_3}]]></subreportParameterExpression>
+					</subreportParameter>
+					<dataSourceExpression><![CDATA[$P{SUBREPORT_COMPROBANTE_RETENCION_DATASOURCE_4}]]></dataSourceExpression>
+					<subreportExpression  class="java.io.InputStream"><![CDATA[$P{COMPILED_SUBREPORT_COMPROBANTE_RETENCION}]]></subreportExpression>
+				</subreport>
+				<break>
+					<reportElement
+						x="0"
+						y="656"
+						width="620"
+						height="0"
+						key="element-5"
+						isRemoveLineWhenBlank="true">
+							<printWhenExpression><![CDATA[new Boolean($P{SUBREPORT_COMPROBANTE_RETENCION_DATASOURCE_4}!=null)]]></printWhenExpression>
+						</reportElement>
+				</break>
+				<subreport  isUsingCache="true">
+					<reportElement
+						x="0"
+						y="847"
+						width="595"
+						height="47"
+						key="subreport-9"
+						isRemoveLineWhenBlank="true">
+							<printWhenExpression><![CDATA[new Boolean($P{SUBREPORT_COMPROBANTE_RETENCION_DATASOURCE_7} != null)]]></printWhenExpression>
+						</reportElement>
+					<subreportParameter  name="SUBREPORT_DIR">
+						<subreportParameterExpression><![CDATA[$P{SUBREPORT_DIR}]]></subreportParameterExpression>
+					</subreportParameter>
+					<subreportParameter  name="COMPILED_SUBREPORT_CHECKS">
+						<subreportParameterExpression><![CDATA[$P{COMPILED_SUBREPORT_CHECKS}]]></subreportParameterExpression>
+					</subreportParameter>
+					<subreportParameter  name="SUBREPORT_CHECKS_DATASOURCE">
+						<subreportParameterExpression><![CDATA[$P{SUBREPORT_CHECKS_DATASOURCE}]]></subreportParameterExpression>
+					</subreportParameter>
+					<subreportParameter  name="COMPILED_SUBREPORT_OTHER_PAYMENTS">
+						<subreportParameterExpression><![CDATA[$P{COMPILED_SUBREPORT_OTHER_PAYMENTS}]]></subreportParameterExpression>
+					</subreportParameter>
+					<subreportParameter  name="SUBREPORT_OTHER_PAYMENTS_DATASOURCE">
+						<subreportParameterExpression><![CDATA[$P{SUBREPORT_OTHER_PAYMENTS_DATASOURCE}]]></subreportParameterExpression>
+					</subreportParameter>
+					<subreportParameter  name="COMPILED_SUBREPORT_DOCS">
+						<subreportParameterExpression><![CDATA[$P{COMPILED_SUBREPORT_DOCS}]]></subreportParameterExpression>
+					</subreportParameter>
+					<subreportParameter  name="SUBREPORT_DOCS_DATASOURCE">
+						<subreportParameterExpression><![CDATA[$P{SUBREPORT_DOCS_DATASOURCE}]]></subreportParameterExpression>
+					</subreportParameter>
+					<subreportParameter  name="CITY_NAME">
+						<subreportParameterExpression><![CDATA[$P{CITY_NAME}]]></subreportParameterExpression>
+					</subreportParameter>
+					<subreportParameter  name="OP_DATE">
+						<subreportParameterExpression><![CDATA[$P{OP_DATE}]]></subreportParameterExpression>
+					</subreportParameter>
+					<subreportParameter  name="OP_NUMBER">
+						<subreportParameterExpression><![CDATA[$P{OP_NUMBER}]]></subreportParameterExpression>
+					</subreportParameter>
+					<subreportParameter  name="BPARTNER">
+						<subreportParameterExpression><![CDATA[$P{BPARTNER}]]></subreportParameterExpression>
+					</subreportParameter>
+					<subreportParameter  name="OP_AMOUNT">
+						<subreportParameterExpression><![CDATA[$P{OP_AMOUNT}]]></subreportParameterExpression>
+					</subreportParameter>
+					<subreportParameter  name="RETENCIONES_AMOUNT">
+						<subreportParameterExpression><![CDATA[$P{RETENCIONES_AMOUNT}]]></subreportParameterExpression>
+					</subreportParameter>
+					<subreportParameter  name="CLIENT_NAME">
+						<subreportParameterExpression><![CDATA[$P{CLIENT_NAME}]]></subreportParameterExpression>
+					</subreportParameter>
+					<subreportParameter  name="ORG_NAME">
+						<subreportParameterExpression><![CDATA[$P{ORG_NAME}]]></subreportParameterExpression>
+					</subreportParameter>
+					<subreportParameter  name="COMPILED_SUBREPORT_COMPROBANTE_RETENCION">
+						<subreportParameterExpression><![CDATA[$P{COMPILED_SUBREPORT_COMPROBANTE_RETENCION}]]></subreportParameterExpression>
+					</subreportParameter>
+					<subreportParameter  name="SUBREPORT_COMPROBANTE_RETENCION_DATASOURCE_1">
+						<subreportParameterExpression><![CDATA[$P{SUBREPORT_COMPROBANTE_RETENCION_DATASOURCE_1}]]></subreportParameterExpression>
+					</subreportParameter>
+					<subreportParameter  name="SUBREPORT_COMPROBANTE_RETENCION_DATASOURCE_2">
+						<subreportParameterExpression><![CDATA[$P{SUBREPORT_COMPROBANTE_RETENCION_DATASOURCE_2}]]></subreportParameterExpression>
+					</subreportParameter>
+					<subreportParameter  name="SUBREPORT_COMPROBANTE_RETENCION_DATASOURCE_3">
+						<subreportParameterExpression><![CDATA[$P{SUBREPORT_COMPROBANTE_RETENCION_DATASOURCE_3}]]></subreportParameterExpression>
+					</subreportParameter>
+					<subreportParameter  name="SUBREPORT_COMPROBANTE_RETENCION_DATASOURCE_4">
+						<subreportParameterExpression><![CDATA[$P{SUBREPORT_COMPROBANTE_RETENCION_DATASOURCE_4}]]></subreportParameterExpression>
+					</subreportParameter>
+					<subreportParameter  name="SUBREPORT_COMPROBANTE_RETENCION_DATASOURCE_5">
+						<subreportParameterExpression><![CDATA[$P{SUBREPORT_COMPROBANTE_RETENCION_DATASOURCE_5}]]></subreportParameterExpression>
+					</subreportParameter>
+					<subreportParameter  name="SUBREPORT_COMPROBANTE_RETENCION_DATASOURCE_6">
+						<subreportParameterExpression><![CDATA[$P{SUBREPORT_COMPROBANTE_RETENCION_DATASOURCE_6}]]></subreportParameterExpression>
+					</subreportParameter>
+					<subreportParameter  name="SUBREPORT_COMPROBANTE_RETENCION_DATASOURCE_7">
+						<subreportParameterExpression><![CDATA[$P{SUBREPORT_COMPROBANTE_RETENCION_DATASOURCE_7}]]></subreportParameterExpression>
+					</subreportParameter>
+					<subreportParameter  name="RET_SCHEMA_NAME">
+						<subreportParameterExpression><![CDATA[$P{RET_SCHEMA_NAME_6}]]></subreportParameterExpression>
+					</subreportParameter>
+					<subreportParameter  name="RET_RETENTION_TYPE_NAME">
+						<subreportParameterExpression><![CDATA[$P{RET_RETENTION_TYPE_NAME_6}]]></subreportParameterExpression>
+					</subreportParameter>
+					<subreportParameter  name="RET_AMOUNT">
+						<subreportParameterExpression><![CDATA[$P{RET_AMOUNT_6}]]></subreportParameterExpression>
+					</subreportParameter>
+					<subreportParameter  name="RET_ALLOC_AMOUNT">
+						<subreportParameterExpression><![CDATA[$P{RET_ALLOC_AMOUNT_6}]]></subreportParameterExpression>
+					</subreportParameter>
+					<subreportParameter  name="RET_ALLOC_INVOICES">
+						<subreportParameterExpression><![CDATA[$P{RET_ALLOC_INVOICES_6}]]></subreportParameterExpression>
+					</subreportParameter>
+					<subreportParameter  name="DIRECCION_ORG">
+						<subreportParameterExpression><![CDATA[$P{DIRECCION_ORG_6}]]></subreportParameterExpression>
+					</subreportParameter>
+					<subreportParameter  name="FECHA">
+						<subreportParameterExpression><![CDATA[$P{FECHA_6}]]></subreportParameterExpression>
+					</subreportParameter>
+					<subreportParameter  name="RAZONSOCIAL">
+						<subreportParameterExpression><![CDATA[$P{RAZONSOCIAL_6}]]></subreportParameterExpression>
+					</subreportParameter>
+					<subreportParameter  name="CUIT">
+						<subreportParameterExpression><![CDATA[$P{CUIT_6}]]></subreportParameterExpression>
+					</subreportParameter>
+					<subreportParameter  name="DIRECCION">
+						<subreportParameterExpression><![CDATA[$P{DIRECCION_6}]]></subreportParameterExpression>
+					</subreportParameter>
+					<subreportParameter  name="NRO_OC">
+						<subreportParameterExpression><![CDATA[$P{NRO_OC_6}]]></subreportParameterExpression>
+					</subreportParameter>
+					<subreportParameter  name="CLIENT_CUIT">
+						<subreportParameterExpression><![CDATA[$P{CLIENT_CUIT_6}]]></subreportParameterExpression>
+					</subreportParameter>
+					<subreportParameter  name="CLIENT">
+						<subreportParameterExpression><![CDATA[$P{CLIENT_6}]]></subreportParameterExpression>
+					</subreportParameter>
+					<dataSourceExpression><![CDATA[$P{SUBREPORT_COMPROBANTE_RETENCION_DATASOURCE_7}]]></dataSourceExpression>
+					<subreportExpression  class="java.io.InputStream"><![CDATA[$P{COMPILED_SUBREPORT_COMPROBANTE_RETENCION}]]></subreportExpression>
+				</subreport>
+				<break>
+					<reportElement
+						x="0"
+						y="839"
+						width="620"
+						height="0"
+						key="element-6"
+						isRemoveLineWhenBlank="true">
+							<printWhenExpression><![CDATA[new Boolean($P{SUBREPORT_COMPROBANTE_RETENCION_DATASOURCE_7}!=null)]]></printWhenExpression>
+						</reportElement>
+				</break>
+				<subreport  isUsingCache="true">
+					<reportElement
+						x="0"
+						y="784"
+						width="595"
+						height="47"
+						key="subreport-10"
+						isRemoveLineWhenBlank="true">
+							<printWhenExpression><![CDATA[new Boolean($P{SUBREPORT_COMPROBANTE_RETENCION_DATASOURCE_6}!=null)]]></printWhenExpression>
+						</reportElement>
+					<subreportParameter  name="SUBREPORT_DIR">
+						<subreportParameterExpression><![CDATA[$P{SUBREPORT_DIR}]]></subreportParameterExpression>
+					</subreportParameter>
+					<subreportParameter  name="COMPILED_SUBREPORT_CHECKS">
+						<subreportParameterExpression><![CDATA[$P{COMPILED_SUBREPORT_CHECKS}]]></subreportParameterExpression>
+					</subreportParameter>
+					<subreportParameter  name="SUBREPORT_CHECKS_DATASOURCE">
+						<subreportParameterExpression><![CDATA[$P{SUBREPORT_CHECKS_DATASOURCE}]]></subreportParameterExpression>
+					</subreportParameter>
+					<subreportParameter  name="COMPILED_SUBREPORT_OTHER_PAYMENTS">
+						<subreportParameterExpression><![CDATA[$P{COMPILED_SUBREPORT_OTHER_PAYMENTS}]]></subreportParameterExpression>
+					</subreportParameter>
+					<subreportParameter  name="SUBREPORT_OTHER_PAYMENTS_DATASOURCE">
+						<subreportParameterExpression><![CDATA[$P{SUBREPORT_OTHER_PAYMENTS_DATASOURCE}]]></subreportParameterExpression>
+					</subreportParameter>
+					<subreportParameter  name="COMPILED_SUBREPORT_DOCS">
+						<subreportParameterExpression><![CDATA[$P{COMPILED_SUBREPORT_DOCS}]]></subreportParameterExpression>
+					</subreportParameter>
+					<subreportParameter  name="SUBREPORT_DOCS_DATASOURCE">
+						<subreportParameterExpression><![CDATA[$P{SUBREPORT_DOCS_DATASOURCE}]]></subreportParameterExpression>
+					</subreportParameter>
+					<subreportParameter  name="CITY_NAME">
+						<subreportParameterExpression><![CDATA[$P{CITY_NAME}]]></subreportParameterExpression>
+					</subreportParameter>
+					<subreportParameter  name="OP_DATE">
+						<subreportParameterExpression><![CDATA[$P{OP_DATE}]]></subreportParameterExpression>
+					</subreportParameter>
+					<subreportParameter  name="OP_NUMBER">
+						<subreportParameterExpression><![CDATA[$P{OP_NUMBER}]]></subreportParameterExpression>
+					</subreportParameter>
+					<subreportParameter  name="BPARTNER">
+						<subreportParameterExpression><![CDATA[$P{BPARTNER}]]></subreportParameterExpression>
+					</subreportParameter>
+					<subreportParameter  name="OP_AMOUNT">
+						<subreportParameterExpression><![CDATA[$P{OP_AMOUNT}]]></subreportParameterExpression>
+					</subreportParameter>
+					<subreportParameter  name="RETENCIONES_AMOUNT">
+						<subreportParameterExpression><![CDATA[$P{RETENCIONES_AMOUNT}]]></subreportParameterExpression>
+					</subreportParameter>
+					<subreportParameter  name="CLIENT_NAME">
+						<subreportParameterExpression><![CDATA[$P{CLIENT_NAME}]]></subreportParameterExpression>
+					</subreportParameter>
+					<subreportParameter  name="ORG_NAME">
+						<subreportParameterExpression><![CDATA[$P{ORG_NAME}]]></subreportParameterExpression>
+					</subreportParameter>
+					<subreportParameter  name="COMPILED_SUBREPORT_COMPROBANTE_RETENCION">
+						<subreportParameterExpression><![CDATA[$P{COMPILED_SUBREPORT_COMPROBANTE_RETENCION}]]></subreportParameterExpression>
+					</subreportParameter>
+					<subreportParameter  name="SUBREPORT_COMPROBANTE_RETENCION_DATASOURCE_1">
+						<subreportParameterExpression><![CDATA[$P{SUBREPORT_COMPROBANTE_RETENCION_DATASOURCE_1}]]></subreportParameterExpression>
+					</subreportParameter>
+					<subreportParameter  name="SUBREPORT_COMPROBANTE_RETENCION_DATASOURCE_2">
+						<subreportParameterExpression><![CDATA[$P{SUBREPORT_COMPROBANTE_RETENCION_DATASOURCE_2}]]></subreportParameterExpression>
+					</subreportParameter>
+					<subreportParameter  name="SUBREPORT_COMPROBANTE_RETENCION_DATASOURCE_3">
+						<subreportParameterExpression><![CDATA[$P{SUBREPORT_COMPROBANTE_RETENCION_DATASOURCE_3}]]></subreportParameterExpression>
+					</subreportParameter>
+					<subreportParameter  name="SUBREPORT_COMPROBANTE_RETENCION_DATASOURCE_4">
+						<subreportParameterExpression><![CDATA[$P{SUBREPORT_COMPROBANTE_RETENCION_DATASOURCE_4}]]></subreportParameterExpression>
+					</subreportParameter>
+					<subreportParameter  name="SUBREPORT_COMPROBANTE_RETENCION_DATASOURCE_5">
+						<subreportParameterExpression><![CDATA[$P{SUBREPORT_COMPROBANTE_RETENCION_DATASOURCE_5}]]></subreportParameterExpression>
+					</subreportParameter>
+					<subreportParameter  name="SUBREPORT_COMPROBANTE_RETENCION_DATASOURCE_6">
+						<subreportParameterExpression><![CDATA[$P{SUBREPORT_COMPROBANTE_RETENCION_DATASOURCE_6}]]></subreportParameterExpression>
+					</subreportParameter>
+					<subreportParameter  name="SUBREPORT_COMPROBANTE_RETENCION_DATASOURCE_7">
+						<subreportParameterExpression><![CDATA[$P{SUBREPORT_COMPROBANTE_RETENCION_DATASOURCE_7}]]></subreportParameterExpression>
+					</subreportParameter>
+					<subreportParameter  name="RET_SCHEMA_NAME">
+						<subreportParameterExpression><![CDATA[$P{RET_SCHEMA_NAME_5}]]></subreportParameterExpression>
+					</subreportParameter>
+					<subreportParameter  name="RET_RETENTION_TYPE_NAME">
+						<subreportParameterExpression><![CDATA[$P{RET_RETENTION_TYPE_NAME_5}]]></subreportParameterExpression>
+					</subreportParameter>
+					<subreportParameter  name="RET_AMOUNT">
+						<subreportParameterExpression><![CDATA[$P{RET_AMOUNT_5}]]></subreportParameterExpression>
+					</subreportParameter>
+					<subreportParameter  name="RET_ALLOC_AMOUNT">
+						<subreportParameterExpression><![CDATA[$P{RET_ALLOC_AMOUNT_5}]]></subreportParameterExpression>
+					</subreportParameter>
+					<subreportParameter  name="RET_ALLOC_INVOICES">
+						<subreportParameterExpression><![CDATA[$P{RET_ALLOC_INVOICES_5}]]></subreportParameterExpression>
+					</subreportParameter>
+					<subreportParameter  name="DIRECCION_ORG">
+						<subreportParameterExpression><![CDATA[$P{DIRECCION_ORG_5}]]></subreportParameterExpression>
+					</subreportParameter>
+					<subreportParameter  name="FECHA">
+						<subreportParameterExpression><![CDATA[$P{FECHA_5}]]></subreportParameterExpression>
+					</subreportParameter>
+					<subreportParameter  name="RAZONSOCIAL">
+						<subreportParameterExpression><![CDATA[$P{RAZONSOCIAL_5}]]></subreportParameterExpression>
+					</subreportParameter>
+					<subreportParameter  name="CUIT">
+						<subreportParameterExpression><![CDATA[$P{CUIT_5}]]></subreportParameterExpression>
+					</subreportParameter>
+					<subreportParameter  name="DIRECCION">
+						<subreportParameterExpression><![CDATA[$P{DIRECCION_5}]]></subreportParameterExpression>
+					</subreportParameter>
+					<subreportParameter  name="NRO_OC">
+						<subreportParameterExpression><![CDATA[$P{NRO_OC_5}]]></subreportParameterExpression>
+					</subreportParameter>
+					<subreportParameter  name="CLIENT_CUIT">
+						<subreportParameterExpression><![CDATA[$P{CLIENT_CUIT_5}]]></subreportParameterExpression>
+					</subreportParameter>
+					<subreportParameter  name="CLIENT">
+						<subreportParameterExpression><![CDATA[$P{CLIENT_5}]]></subreportParameterExpression>
+					</subreportParameter>
+					<dataSourceExpression><![CDATA[$P{SUBREPORT_COMPROBANTE_RETENCION_DATASOURCE_6}]]></dataSourceExpression>
+					<subreportExpression  class="java.io.InputStream"><![CDATA[$P{COMPILED_SUBREPORT_COMPROBANTE_RETENCION}]]></subreportExpression>
+				</subreport>
+				<break>
+					<reportElement
+						x="0"
+						y="777"
+						width="620"
+						height="0"
+						key="element-7"
+						isRemoveLineWhenBlank="true">
+							<printWhenExpression><![CDATA[new Boolean($P{SUBREPORT_COMPROBANTE_RETENCION_DATASOURCE_6}!=null)]]></printWhenExpression>
+						</reportElement>
+				</break>
 			</band>
 		</summary>
 </jasperReport>
