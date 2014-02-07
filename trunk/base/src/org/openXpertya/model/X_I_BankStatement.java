@@ -1,13 +1,14 @@
-/** Modelo Generado - NO CAMBIAR MANUALMENTE - Copyright (C) 2006 FUNDESLE */
+/** Modelo Generado - NO CAMBIAR MANUALMENTE - Disytel */
 package org.openXpertya.model;
-import java.util.*;
+import java.util.logging.Level;
+ import java.util.*;
 import java.sql.*;
 import java.math.*;
 import org.openXpertya.util.*;
 /** Modelo Generado por I_BankStatement
- *  @author Comunidad de Desarrollo openXpertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
- *  @version  - 2008-01-03 10:26:34.484 */
-public class X_I_BankStatement extends PO
+ *  @author Comunidad de Desarrollo Libertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
+ *  @version  - 2014-02-07 17:10:05.988 */
+public class X_I_BankStatement extends org.openXpertya.model.PO
 {
 /** Constructor estándar */
 public X_I_BankStatement (Properties ctx, int I_BankStatement_ID, String trxName)
@@ -25,13 +26,13 @@ public X_I_BankStatement (Properties ctx, ResultSet rs, String trxName)
 {
 super (ctx, rs, trxName);
 }
-/** AD_Table_ID=600 */
-public static final int Table_ID=600;
+/** AD_Table_ID */
+public static final int Table_ID = M_Table.getTableID("I_BankStatement");
 
 /** TableName=I_BankStatement */
 public static final String Table_Name="I_BankStatement";
 
-protected static KeyNamePair Model = new KeyNamePair(600,"I_BankStatement");
+protected static KeyNamePair Model = new KeyNamePair(Table_ID,"I_BankStatement");
 protected static BigDecimal AccessLevel = new BigDecimal(2);
 
 /** Load Meta Data */
@@ -45,23 +46,6 @@ public String toString()
 StringBuffer sb = new StringBuffer ("X_I_BankStatement[").append(getID()).append("]");
 return sb.toString();
 }
-/** Set Business Partner Key.
-Key of the Business Partner */
-public void setBPartnerValue (String BPartnerValue)
-{
-if (BPartnerValue != null && BPartnerValue.length() > 40)
-{
-log.warning("Length > 40 - truncated");
-BPartnerValue = BPartnerValue.substring(0,39);
-}
-set_Value ("BPartnerValue", BPartnerValue);
-}
-/** Get Business Partner Key.
-Key of the Business Partner */
-public String getBPartnerValue() 
-{
-return (String)get_Value("BPartnerValue");
-}
 /** Set Bank Account No.
 Bank Account Number */
 public void setBankAccountNo (String BankAccountNo)
@@ -69,7 +53,7 @@ public void setBankAccountNo (String BankAccountNo)
 if (BankAccountNo != null && BankAccountNo.length() > 20)
 {
 log.warning("Length > 20 - truncated");
-BankAccountNo = BankAccountNo.substring(0,19);
+BankAccountNo = BankAccountNo.substring(0,20);
 }
 set_Value ("BankAccountNo", BankAccountNo);
 }
@@ -79,21 +63,22 @@ public String getBankAccountNo()
 {
 return (String)get_Value("BankAccountNo");
 }
-/** Set Business Partner .
-Identifies a Business Partner */
-public void setC_BPartner_ID (int C_BPartner_ID)
+/** Set Business Partner Key.
+Key of the Business Partner */
+public void setBPartnerValue (String BPartnerValue)
 {
-if (C_BPartner_ID <= 0) set_Value ("C_BPartner_ID", null);
- else 
-set_Value ("C_BPartner_ID", new Integer(C_BPartner_ID));
+if (BPartnerValue != null && BPartnerValue.length() > 40)
+{
+log.warning("Length > 40 - truncated");
+BPartnerValue = BPartnerValue.substring(0,40);
 }
-/** Get Business Partner .
-Identifies a Business Partner */
-public int getC_BPartner_ID() 
+set_Value ("BPartnerValue", BPartnerValue);
+}
+/** Get Business Partner Key.
+Key of the Business Partner */
+public String getBPartnerValue() 
 {
-Integer ii = (Integer)get_Value("C_BPartner_ID");
-if (ii == null) return 0;
-return ii.intValue();
+return (String)get_Value("BPartnerValue");
 }
 /** Set Bank Account.
 Account at the Bank */
@@ -108,6 +93,22 @@ Account at the Bank */
 public int getC_BankAccount_ID() 
 {
 Integer ii = (Integer)get_Value("C_BankAccount_ID");
+if (ii == null) return 0;
+return ii.intValue();
+}
+/** Set Bank Statement.
+Bank Statement of account */
+public void setC_BankStatement_ID (int C_BankStatement_ID)
+{
+if (C_BankStatement_ID <= 0) set_Value ("C_BankStatement_ID", null);
+ else 
+set_Value ("C_BankStatement_ID", new Integer(C_BankStatement_ID));
+}
+/** Get Bank Statement.
+Bank Statement of account */
+public int getC_BankStatement_ID() 
+{
+Integer ii = (Integer)get_Value("C_BankStatement_ID");
 if (ii == null) return 0;
 return ii.intValue();
 }
@@ -127,19 +128,19 @@ Integer ii = (Integer)get_Value("C_BankStatementLine_ID");
 if (ii == null) return 0;
 return ii.intValue();
 }
-/** Set Bank Statement.
-Bank Statement of account */
-public void setC_BankStatement_ID (int C_BankStatement_ID)
+/** Set Business Partner .
+Identifies a Business Partner */
+public void setC_BPartner_ID (int C_BPartner_ID)
 {
-if (C_BankStatement_ID <= 0) set_Value ("C_BankStatement_ID", null);
+if (C_BPartner_ID <= 0) set_Value ("C_BPartner_ID", null);
  else 
-set_Value ("C_BankStatement_ID", new Integer(C_BankStatement_ID));
+set_Value ("C_BPartner_ID", new Integer(C_BPartner_ID));
 }
-/** Get Bank Statement.
-Bank Statement of account */
-public int getC_BankStatement_ID() 
+/** Get Business Partner .
+Identifies a Business Partner */
+public int getC_BPartner_ID() 
 {
-Integer ii = (Integer)get_Value("C_BankStatement_ID");
+Integer ii = (Integer)get_Value("C_BPartner_ID");
 if (ii == null) return 0;
 return ii.intValue();
 }
@@ -175,6 +176,52 @@ Integer ii = (Integer)get_Value("C_Currency_ID");
 if (ii == null) return 0;
 return ii.intValue();
 }
+/** Set Charge amount.
+Charge Amount */
+public void setChargeAmt (BigDecimal ChargeAmt)
+{
+set_Value ("ChargeAmt", ChargeAmt);
+}
+/** Get Charge amount.
+Charge Amount */
+public BigDecimal getChargeAmt() 
+{
+BigDecimal bd = (BigDecimal)get_Value("ChargeAmt");
+if (bd == null) return Env.ZERO;
+return bd;
+}
+/** Set Charge Name.
+Name of the Charge */
+public void setChargeName (String ChargeName)
+{
+if (ChargeName != null && ChargeName.length() > 60)
+{
+log.warning("Length > 60 - truncated");
+ChargeName = ChargeName.substring(0,60);
+}
+set_Value ("ChargeName", ChargeName);
+}
+/** Get Charge Name.
+Name of the Charge */
+public String getChargeName() 
+{
+return (String)get_Value("ChargeName");
+}
+/** Set chargevalue */
+public void setChargeValue (String ChargeValue)
+{
+if (ChargeValue != null && ChargeValue.length() > 60)
+{
+log.warning("Length > 60 - truncated");
+ChargeValue = ChargeValue.substring(0,60);
+}
+set_Value ("ChargeValue", ChargeValue);
+}
+/** Get chargevalue */
+public String getChargeValue() 
+{
+return (String)get_Value("ChargeValue");
+}
 /** Set Invoice.
 Invoice Identifier */
 public void setC_Invoice_ID (int C_Invoice_ID)
@@ -207,44 +254,13 @@ Integer ii = (Integer)get_Value("C_Payment_ID");
 if (ii == null) return 0;
 return ii.intValue();
 }
-/** Set Charge amount.
-Charge Amount */
-public void setChargeAmt (BigDecimal ChargeAmt)
-{
-set_Value ("ChargeAmt", ChargeAmt);
-}
-/** Get Charge amount.
-Charge Amount */
-public BigDecimal getChargeAmt() 
-{
-BigDecimal bd = (BigDecimal)get_Value("ChargeAmt");
-if (bd == null) return Env.ZERO;
-return bd;
-}
-/** Set Charge Name.
-Name of the Charge */
-public void setChargeName (String ChargeName)
-{
-if (ChargeName != null && ChargeName.length() > 60)
-{
-log.warning("Length > 60 - truncated");
-ChargeName = ChargeName.substring(0,59);
-}
-set_Value ("ChargeName", ChargeName);
-}
-/** Get Charge Name.
-Name of the Charge */
-public String getChargeName() 
-{
-return (String)get_Value("ChargeName");
-}
 /** Set Create Payment */
 public void setCreatePayment (String CreatePayment)
 {
 if (CreatePayment != null && CreatePayment.length() > 1)
 {
 log.warning("Length > 1 - truncated");
-CreatePayment = CreatePayment.substring(0,0);
+CreatePayment = CreatePayment.substring(0,1);
 }
 set_Value ("CreatePayment", CreatePayment);
 }
@@ -265,6 +281,18 @@ public Timestamp getDateAcct()
 {
 return (Timestamp)get_Value("DateAcct");
 }
+/** Set debe */
+public void setdebe (BigDecimal debe)
+{
+set_Value ("debe", debe);
+}
+/** Get debe */
+public BigDecimal getdebe() 
+{
+BigDecimal bd = (BigDecimal)get_Value("debe");
+if (bd == null) return Env.ZERO;
+return bd;
+}
 /** Set Description.
 Optional short description of the record */
 public void setDescription (String Description)
@@ -272,7 +300,7 @@ public void setDescription (String Description)
 if (Description != null && Description.length() > 255)
 {
 log.warning("Length > 255 - truncated");
-Description = Description.substring(0,254);
+Description = Description.substring(0,255);
 }
 set_Value ("Description", Description);
 }
@@ -303,7 +331,7 @@ public void setEftCheckNo (String EftCheckNo)
 if (EftCheckNo != null && EftCheckNo.length() > 20)
 {
 log.warning("Length > 20 - truncated");
-EftCheckNo = EftCheckNo.substring(0,19);
+EftCheckNo = EftCheckNo.substring(0,20);
 }
 set_Value ("EftCheckNo", EftCheckNo);
 }
@@ -320,7 +348,7 @@ public void setEftCurrency (String EftCurrency)
 if (EftCurrency != null && EftCurrency.length() > 20)
 {
 log.warning("Length > 20 - truncated");
-EftCurrency = EftCurrency.substring(0,19);
+EftCurrency = EftCurrency.substring(0,20);
 }
 set_Value ("EftCurrency", EftCurrency);
 }
@@ -337,7 +365,7 @@ public void setEftMemo (String EftMemo)
 if (EftMemo != null && EftMemo.length() > 2000)
 {
 log.warning("Length > 2000 - truncated");
-EftMemo = EftMemo.substring(0,1999);
+EftMemo = EftMemo.substring(0,2000);
 }
 set_Value ("EftMemo", EftMemo);
 }
@@ -354,7 +382,7 @@ public void setEftPayee (String EftPayee)
 if (EftPayee != null && EftPayee.length() > 255)
 {
 log.warning("Length > 255 - truncated");
-EftPayee = EftPayee.substring(0,254);
+EftPayee = EftPayee.substring(0,255);
 }
 set_Value ("EftPayee", EftPayee);
 }
@@ -371,7 +399,7 @@ public void setEftPayeeAccount (String EftPayeeAccount)
 if (EftPayeeAccount != null && EftPayeeAccount.length() > 40)
 {
 log.warning("Length > 40 - truncated");
-EftPayeeAccount = EftPayeeAccount.substring(0,39);
+EftPayeeAccount = EftPayeeAccount.substring(0,40);
 }
 set_Value ("EftPayeeAccount", EftPayeeAccount);
 }
@@ -388,7 +416,7 @@ public void setEftReference (String EftReference)
 if (EftReference != null && EftReference.length() > 60)
 {
 log.warning("Length > 60 - truncated");
-EftReference = EftReference.substring(0,59);
+EftReference = EftReference.substring(0,60);
 }
 set_Value ("EftReference", EftReference);
 }
@@ -429,7 +457,7 @@ public void setEftStatementReference (String EftStatementReference)
 if (EftStatementReference != null && EftStatementReference.length() > 60)
 {
 log.warning("Length > 60 - truncated");
-EftStatementReference = EftStatementReference.substring(0,59);
+EftStatementReference = EftStatementReference.substring(0,60);
 }
 set_Value ("EftStatementReference", EftStatementReference);
 }
@@ -446,7 +474,7 @@ public void setEftTrxID (String EftTrxID)
 if (EftTrxID != null && EftTrxID.length() > 40)
 {
 log.warning("Length > 40 - truncated");
-EftTrxID = EftTrxID.substring(0,39);
+EftTrxID = EftTrxID.substring(0,40);
 }
 set_Value ("EftTrxID", EftTrxID);
 }
@@ -463,7 +491,7 @@ public void setEftTrxType (String EftTrxType)
 if (EftTrxType != null && EftTrxType.length() > 20)
 {
 log.warning("Length > 20 - truncated");
-EftTrxType = EftTrxType.substring(0,19);
+EftTrxType = EftTrxType.substring(0,20);
 }
 set_Value ("EftTrxType", EftTrxType);
 }
@@ -485,22 +513,17 @@ public Timestamp getEftValutaDate()
 {
 return (Timestamp)get_Value("EftValutaDate");
 }
-/** Set ISO Currency Code.
-Three letter ISO 4217 Code of the Currency */
-public void setISO_Code (String ISO_Code)
+/** Set haber */
+public void sethaber (BigDecimal haber)
 {
-if (ISO_Code != null && ISO_Code.length() > 3)
-{
-log.warning("Length > 3 - truncated");
-ISO_Code = ISO_Code.substring(0,2);
+set_Value ("haber", haber);
 }
-set_Value ("ISO_Code", ISO_Code);
-}
-/** Get ISO Currency Code.
-Three letter ISO 4217 Code of the Currency */
-public String getISO_Code() 
+/** Get haber */
+public BigDecimal gethaber() 
 {
-return (String)get_Value("ISO_Code");
+BigDecimal bd = (BigDecimal)get_Value("haber");
+if (bd == null) return Env.ZERO;
+return bd;
 }
 /** Set Import Bank Statement.
 Import of the Bank Statement */
@@ -523,7 +546,7 @@ public void setI_ErrorMsg (String I_ErrorMsg)
 if (I_ErrorMsg != null && I_ErrorMsg.length() > 2000)
 {
 log.warning("Length > 2000 - truncated");
-I_ErrorMsg = I_ErrorMsg.substring(0,1999);
+I_ErrorMsg = I_ErrorMsg.substring(0,2000);
 }
 set_Value ("I_ErrorMsg", I_ErrorMsg);
 }
@@ -572,7 +595,7 @@ public void setInvoiceDocumentNo (String InvoiceDocumentNo)
 if (InvoiceDocumentNo != null && InvoiceDocumentNo.length() > 30)
 {
 log.warning("Length > 30 - truncated");
-InvoiceDocumentNo = InvoiceDocumentNo.substring(0,29);
+InvoiceDocumentNo = InvoiceDocumentNo.substring(0,30);
 }
 set_Value ("InvoiceDocumentNo", InvoiceDocumentNo);
 }
@@ -581,6 +604,23 @@ Document Number of the Invoice */
 public String getInvoiceDocumentNo() 
 {
 return (String)get_Value("InvoiceDocumentNo");
+}
+/** Set ISO Currency Code.
+Three letter ISO 4217 Code of the Currency */
+public void setISO_Code (String ISO_Code)
+{
+if (ISO_Code != null && ISO_Code.length() > 3)
+{
+log.warning("Length > 3 - truncated");
+ISO_Code = ISO_Code.substring(0,3);
+}
+set_Value ("ISO_Code", ISO_Code);
+}
+/** Get ISO Currency Code.
+Three letter ISO 4217 Code of the Currency */
+public String getISO_Code() 
+{
+return (String)get_Value("ISO_Code");
 }
 /** Set Reversal.
 This is a reversing transaction */
@@ -621,7 +661,7 @@ public void setLineDescription (String LineDescription)
 if (LineDescription != null && LineDescription.length() > 255)
 {
 log.warning("Length > 255 - truncated");
-LineDescription = LineDescription.substring(0,254);
+LineDescription = LineDescription.substring(0,255);
 }
 set_Value ("LineDescription", LineDescription);
 }
@@ -637,7 +677,7 @@ public void setMatchStatement (String MatchStatement)
 if (MatchStatement != null && MatchStatement.length() > 1)
 {
 log.warning("Length > 1 - truncated");
-MatchStatement = MatchStatement.substring(0,0);
+MatchStatement = MatchStatement.substring(0,1);
 }
 set_Value ("MatchStatement", MatchStatement);
 }
@@ -653,7 +693,7 @@ public void setMemo (String Memo)
 if (Memo != null && Memo.length() > 255)
 {
 log.warning("Length > 255 - truncated");
-Memo = Memo.substring(0,254);
+Memo = Memo.substring(0,255);
 }
 set_Value ("Memo", Memo);
 }
@@ -670,7 +710,7 @@ public void setName (String Name)
 if (Name != null && Name.length() > 60)
 {
 log.warning("Length > 60 - truncated");
-Name = Name.substring(0,59);
+Name = Name.substring(0,60);
 }
 set_Value ("Name", Name);
 }
@@ -687,7 +727,7 @@ public void setPaymentDocumentNo (String PaymentDocumentNo)
 if (PaymentDocumentNo != null && PaymentDocumentNo.length() > 30)
 {
 log.warning("Length > 30 - truncated");
-PaymentDocumentNo = PaymentDocumentNo.substring(0,29);
+PaymentDocumentNo = PaymentDocumentNo.substring(0,30);
 }
 set_Value ("PaymentDocumentNo", PaymentDocumentNo);
 }
@@ -738,7 +778,7 @@ public void setReferenceNo (String ReferenceNo)
 if (ReferenceNo != null && ReferenceNo.length() > 40)
 {
 log.warning("Length > 40 - truncated");
-ReferenceNo = ReferenceNo.substring(0,39);
+ReferenceNo = ReferenceNo.substring(0,40);
 }
 set_Value ("ReferenceNo", ReferenceNo);
 }
@@ -755,7 +795,7 @@ public void setRoutingNo (String RoutingNo)
 if (RoutingNo != null && RoutingNo.length() > 20)
 {
 log.warning("Length > 20 - truncated");
-RoutingNo = RoutingNo.substring(0,19);
+RoutingNo = RoutingNo.substring(0,20);
 }
 set_Value ("RoutingNo", RoutingNo);
 }
@@ -817,7 +857,7 @@ BigDecimal bd = (BigDecimal)get_Value("TrxAmt");
 if (bd == null) return Env.ZERO;
 return bd;
 }
-public static final int TRXTYPE_AD_Reference_ID=215;
+public static final int TRXTYPE_AD_Reference_ID = MReference.getReferenceID("C_Payment Trx Type");
 /** Sales = S */
 public static final String TRXTYPE_Sales = "S";
 /** Delayed Capture = D */
@@ -835,11 +875,11 @@ Type of credit card transaction */
 public void setTrxType (String TrxType)
 {
 if (TrxType == null || TrxType.equals("S") || TrxType.equals("D") || TrxType.equals("C") || TrxType.equals("F") || TrxType.equals("A") || TrxType.equals("V"));
- else throw new IllegalArgumentException ("TrxType Invalid value - Reference_ID=215 - S - D - C - F - A - V");
+ else throw new IllegalArgumentException ("TrxType Invalid value - Reference = TRXTYPE_AD_Reference_ID - S - D - C - F - A - V");
 if (TrxType != null && TrxType.length() > 20)
 {
 log.warning("Length > 20 - truncated");
-TrxType = TrxType.substring(0,19);
+TrxType = TrxType.substring(0,20);
 }
 set_Value ("TrxType", TrxType);
 }
