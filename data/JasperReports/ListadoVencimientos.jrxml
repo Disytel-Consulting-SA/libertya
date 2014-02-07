@@ -30,6 +30,7 @@
 	<parameter name="fhasta" isForPrompting="true" class="java.sql.Timestamp"/>
 	<parameter name="TRX_TYPE_NAME" isForPrompting="false" class="java.lang.String"/>
 	<parameter name="DATE_FILTER_NAME" isForPrompting="false" class="java.lang.String"/>
+	<parameter name="subtotales_por" isForPrompting="false" class="java.lang.String"/>
 	<queryString><![CDATA[SELECT * FROM
 (SELECT dt.printname,bp.name as proveedor ,oi.documentno, oi.C_BPartner_ID,oi.C_Invoice_ID,oi.C_InvoicePaySchedule_ID, oi.C_Currency_ID, oi.IsSOTrx, oi.DateInvoiced,
  oi.NetDays,oi.DueDate,oi.DaysDue, case when substring(dt.docbasetype from 3 for 1)='I' then oi.OpenAmt  else oi.OpenAmt*-1 end as OpenAmt , oi.ad_org_id ,
@@ -69,27 +70,64 @@ order by 2,9]]></queryString>
 	<field name="c_invoicepayschedule_id" class="java.lang.Integer"/>
 	<field name="c_currency_id" class="java.lang.Integer"/>
 	<field name="issotrx" class="java.lang.String"/>
-	<field name="dateinvoiced" class="java.sql.Timestamp"/>
+	<field name="dateinvoiced" class="java.util.Date"/>
 	<field name="netdays" class="java.math.BigDecimal"/>
 	<field name="duedate" class="java.sql.Timestamp"/>
 	<field name="daysdue" class="java.lang.Integer"/>
 	<field name="openamt" class="java.math.BigDecimal"/>
 	<field name="ad_org_id" class="java.lang.Integer"/>
 	<field name="estado" class="java.lang.String"/>
+	<field name="description" class="java.lang.String"/>
+	<field name="regla" class="java.lang.String"/>
 
 	<variable name="Saldo_Sum" class="java.math.BigDecimal" resetType="Group" resetGroup="proveedor" calculation="Sum">
 		<variableExpression><![CDATA[$F{openamt}]]></variableExpression>
 	</variable>
 
 		<group  name="proveedor" >
-			<groupExpression><![CDATA[$F{proveedor}]]></groupExpression>
+			<groupExpression><![CDATA[new String("Fecha").equals($P{subtotales_por}) ? $F{dateinvoiced}.toString() : $F{proveedor}]]></groupExpression>
 			<groupHeader>
 			<band height="0"  isSplitAllowed="true" >
+				<printWhenExpression><![CDATA[$P{subtotales}]]></printWhenExpression>
 			</band>
 			</groupHeader>
 			<groupFooter>
 			<band height="20"  isSplitAllowed="true" >
 				<printWhenExpression><![CDATA[$P{subtotales}]]></printWhenExpression>
+				<textField isStretchWithOverflow="false" pattern="" isBlankWhenNull="false" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
+					<reportElement
+						mode="Opaque"
+						x="368"
+						y="1"
+						width="109"
+						height="14"
+						backcolor="#CCCCCC"
+						key="textField">
+							<printWhenExpression><![CDATA[new Boolean(new String("Entidad Comercial").equals($P{subtotales_por}))]]></printWhenExpression>
+						</reportElement>
+					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
+					<textElement>
+						<font/>
+					</textElement>
+				<textFieldExpression   class="java.lang.String"><![CDATA[$F{proveedor}]]></textFieldExpression>
+				</textField>
+				<textField isStretchWithOverflow="false" pattern="dd/MM/yyyy" isBlankWhenNull="false" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
+					<reportElement
+						mode="Opaque"
+						x="368"
+						y="1"
+						width="109"
+						height="14"
+						backcolor="#CCCCCC"
+						key="textField">
+							<printWhenExpression><![CDATA[new Boolean(new String("Fecha").equals($P{subtotales_por}))]]></printWhenExpression>
+						</reportElement>
+					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
+					<textElement>
+						<font/>
+					</textElement>
+				<textFieldExpression   class="java.util.Date"><![CDATA[$F{dateinvoiced}]]></textFieldExpression>
+				</textField>
 				<textField isStretchWithOverflow="false" pattern="###0.00" isBlankWhenNull="false" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
 						mode="Opaque"
@@ -105,21 +143,21 @@ order by 2,9]]></queryString>
 					</textElement>
 				<textFieldExpression   class="java.math.BigDecimal"><![CDATA[$V{Saldo_Sum}]]></textFieldExpression>
 				</textField>
-				<textField isStretchWithOverflow="false" isBlankWhenNull="false" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
+				<staticText>
 					<reportElement
 						mode="Opaque"
-						x="285"
+						x="334"
 						y="1"
-						width="192"
+						width="34"
 						height="14"
 						backcolor="#CCCCCC"
-						key="textField"/>
+						key="staticText-5"/>
 					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
-					<textElement>
-						<font/>
+					<textElement verticalAlignment="Top">
+						<font pdfFontName="Helvetica" size="10" isBold="false"/>
 					</textElement>
-				<textFieldExpression   class="java.lang.String"><![CDATA["Total " + $F{proveedor}]]></textFieldExpression>
-				</textField>
+				<text><![CDATA[Total ]]></text>
+				</staticText>
 			</band>
 			</groupFooter>
 		</group>
@@ -194,7 +232,7 @@ order by 2,9]]></queryString>
 						mode="Opaque"
 						x="0"
 						y="120"
-						width="50"
+						width="39"
 						height="18"
 						forecolor="#FFFFFF"
 						backcolor="#999999"
@@ -203,16 +241,16 @@ order by 2,9]]></queryString>
 						</reportElement>
 					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
 					<textElement verticalAlignment="Middle">
-						<font pdfFontName="Helvetica" size="12" isBold="false"/>
+						<font pdfFontName="Helvetica" size="10" isBold="false"/>
 					</textElement>
 				<text><![CDATA[Tipo]]></text>
 				</staticText>
 				<staticText>
 					<reportElement
 						mode="Opaque"
-						x="50"
+						x="39"
 						y="120"
-						width="70"
+						width="53"
 						height="18"
 						forecolor="#FFFFFF"
 						backcolor="#999999"
@@ -221,16 +259,16 @@ order by 2,9]]></queryString>
 						</reportElement>
 					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
 					<textElement verticalAlignment="Middle">
-						<font pdfFontName="Helvetica" size="12" isBold="false"/>
+						<font pdfFontName="Helvetica" size="10" isBold="false"/>
 					</textElement>
 				<text><![CDATA[Nro. Doc]]></text>
 				</staticText>
 				<staticText>
 					<reportElement
 						mode="Opaque"
-						x="229"
+						x="170"
 						y="120"
-						width="64"
+						width="51"
 						height="18"
 						forecolor="#FFFFFF"
 						backcolor="#999999"
@@ -239,16 +277,16 @@ order by 2,9]]></queryString>
 						</reportElement>
 					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
 					<textElement verticalAlignment="Middle">
-						<font pdfFontName="Helvetica" size="12" isBold="false"/>
+						<font pdfFontName="Helvetica" size="10" isBold="false"/>
 					</textElement>
 				<text><![CDATA[Fecha]]></text>
 				</staticText>
 				<staticText>
 					<reportElement
 						mode="Opaque"
-						x="293"
+						x="221"
 						y="120"
-						width="75"
+						width="56"
 						height="18"
 						forecolor="#FFFFFF"
 						backcolor="#999999"
@@ -257,16 +295,16 @@ order by 2,9]]></queryString>
 						</reportElement>
 					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
 					<textElement verticalAlignment="Middle">
-						<font pdfFontName="Helvetica" size="12" isBold="false"/>
+						<font pdfFontName="Helvetica" size="10" isBold="false"/>
 					</textElement>
 				<text><![CDATA[Fecha Vto.]]></text>
 				</staticText>
 				<staticText>
 					<reportElement
 						mode="Opaque"
-						x="368"
+						x="277"
 						y="120"
-						width="109"
+						width="57"
 						height="18"
 						forecolor="#FFFFFF"
 						backcolor="#999999"
@@ -275,16 +313,16 @@ order by 2,9]]></queryString>
 						</reportElement>
 					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
 					<textElement verticalAlignment="Middle">
-						<font pdfFontName="Helvetica" size="12" isBold="false"/>
+						<font pdfFontName="Helvetica" size="10" isBold="false"/>
 					</textElement>
 				<text><![CDATA[Estado]]></text>
 				</staticText>
 				<staticText>
 					<reportElement
 						mode="Opaque"
-						x="477"
+						x="521"
 						y="120"
-						width="68"
+						width="31"
 						height="18"
 						forecolor="#FFFFFF"
 						backcolor="#999999"
@@ -293,16 +331,16 @@ order by 2,9]]></queryString>
 						</reportElement>
 					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
 					<textElement textAlignment="Right" verticalAlignment="Middle">
-						<font pdfFontName="Helvetica" size="12" isBold="false"/>
+						<font pdfFontName="Helvetica" size="10" isBold="false"/>
 					</textElement>
 				<text><![CDATA[Saldo]]></text>
 				</staticText>
 				<staticText>
 					<reportElement
 						mode="Opaque"
-						x="120"
+						x="92"
 						y="120"
-						width="109"
+						width="78"
 						height="18"
 						forecolor="#FFFFFF"
 						backcolor="#999999"
@@ -311,7 +349,7 @@ order by 2,9]]></queryString>
 						</reportElement>
 					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
 					<textElement verticalAlignment="Middle">
-						<font pdfFontName="Helvetica" size="12" isBold="false"/>
+						<font pdfFontName="Helvetica" size="10" isBold="false"/>
 					</textElement>
 				<text><![CDATA[Ent. Comercial]]></text>
 				</staticText>
@@ -319,7 +357,7 @@ order by 2,9]]></queryString>
 					<reportElement
 						x="0"
 						y="71"
-						width="550"
+						width="270"
 						height="20"
 						key="textField"/>
 					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
@@ -427,6 +465,57 @@ order by 2,9]]></queryString>
 					</textElement>
 				<text><![CDATA[a la actualidad]]></text>
 				</staticText>
+				<staticText>
+					<reportElement
+						mode="Opaque"
+						x="334"
+						y="120"
+						width="130"
+						height="18"
+						forecolor="#FFFFFF"
+						backcolor="#999999"
+						key="staticText">
+							<printWhenExpression><![CDATA[new Boolean(!($P{subtotales}.booleanValue()))]]></printWhenExpression>
+						</reportElement>
+					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
+					<textElement verticalAlignment="Middle">
+						<font pdfFontName="Helvetica" size="10" isBold="false"/>
+					</textElement>
+				<text><![CDATA[Descripción]]></text>
+				</staticText>
+				<staticText>
+					<reportElement
+						mode="Opaque"
+						x="464"
+						y="120"
+						width="58"
+						height="18"
+						forecolor="#FFFFFF"
+						backcolor="#999999"
+						key="staticText-3">
+							<printWhenExpression><![CDATA[new Boolean(!($P{subtotales}.booleanValue()))]]></printWhenExpression>
+						</reportElement>
+					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
+					<textElement verticalAlignment="Middle">
+						<font pdfFontName="Helvetica" size="10" isBold="false"/>
+					</textElement>
+				<text><![CDATA[Programa]]></text>
+				</staticText>
+				<textField isStretchWithOverflow="false" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
+					<reportElement
+						x="270"
+						y="71"
+						width="270"
+						height="20"
+						key="textField-1">
+							<printWhenExpression><![CDATA[$P{subtotales}]]></printWhenExpression>
+						</reportElement>
+					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
+					<textElement textAlignment="Left" verticalAlignment="Middle">
+						<font pdfFontName="Helvetica-BoldOblique" isBold="true" isItalic="true" isUnderline="false"/>
+					</textElement>
+				<textFieldExpression   class="java.lang.String"><![CDATA["Subtotales por: "+$P{subtotales_por}]]></textFieldExpression>
+				</textField>
 			</band>
 		</title>
 		<pageHeader>
@@ -440,7 +529,7 @@ order by 2,9]]></queryString>
 						mode="Opaque"
 						x="0"
 						y="0"
-						width="50"
+						width="39"
 						height="18"
 						forecolor="#FFFFFF"
 						backcolor="#999999"
@@ -449,16 +538,16 @@ order by 2,9]]></queryString>
 						</reportElement>
 					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
 					<textElement verticalAlignment="Middle">
-						<font pdfFontName="Helvetica" size="12" isBold="false"/>
+						<font pdfFontName="Helvetica" size="10" isBold="false"/>
 					</textElement>
 				<text><![CDATA[Tipo]]></text>
 				</staticText>
 				<staticText>
 					<reportElement
 						mode="Opaque"
-						x="50"
+						x="39"
 						y="0"
-						width="70"
+						width="53"
 						height="18"
 						forecolor="#FFFFFF"
 						backcolor="#999999"
@@ -467,16 +556,16 @@ order by 2,9]]></queryString>
 						</reportElement>
 					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
 					<textElement verticalAlignment="Middle">
-						<font pdfFontName="Helvetica" size="12" isBold="false"/>
+						<font pdfFontName="Helvetica" size="10" isBold="false"/>
 					</textElement>
 				<text><![CDATA[Nro. Doc]]></text>
 				</staticText>
 				<staticText>
 					<reportElement
 						mode="Opaque"
-						x="229"
+						x="170"
 						y="0"
-						width="64"
+						width="51"
 						height="18"
 						forecolor="#FFFFFF"
 						backcolor="#999999"
@@ -485,16 +574,16 @@ order by 2,9]]></queryString>
 						</reportElement>
 					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
 					<textElement verticalAlignment="Middle">
-						<font pdfFontName="Helvetica" size="12" isBold="false"/>
+						<font pdfFontName="Helvetica" size="10" isBold="false"/>
 					</textElement>
 				<text><![CDATA[Fecha]]></text>
 				</staticText>
 				<staticText>
 					<reportElement
 						mode="Opaque"
-						x="293"
+						x="221"
 						y="0"
-						width="75"
+						width="56"
 						height="18"
 						forecolor="#FFFFFF"
 						backcolor="#999999"
@@ -503,16 +592,16 @@ order by 2,9]]></queryString>
 						</reportElement>
 					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
 					<textElement verticalAlignment="Middle">
-						<font pdfFontName="Helvetica" size="12" isBold="false"/>
+						<font pdfFontName="Helvetica" size="10" isBold="false"/>
 					</textElement>
 				<text><![CDATA[Fecha Vto.]]></text>
 				</staticText>
 				<staticText>
 					<reportElement
 						mode="Opaque"
-						x="368"
+						x="277"
 						y="0"
-						width="109"
+						width="57"
 						height="18"
 						forecolor="#FFFFFF"
 						backcolor="#999999"
@@ -521,16 +610,16 @@ order by 2,9]]></queryString>
 						</reportElement>
 					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
 					<textElement verticalAlignment="Middle">
-						<font pdfFontName="Helvetica" size="12" isBold="false"/>
+						<font pdfFontName="Helvetica" size="10" isBold="false"/>
 					</textElement>
 				<text><![CDATA[Estado]]></text>
 				</staticText>
 				<staticText>
 					<reportElement
 						mode="Opaque"
-						x="477"
+						x="521"
 						y="0"
-						width="68"
+						width="31"
 						height="18"
 						forecolor="#FFFFFF"
 						backcolor="#999999"
@@ -539,16 +628,16 @@ order by 2,9]]></queryString>
 						</reportElement>
 					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
 					<textElement textAlignment="Right" verticalAlignment="Middle">
-						<font pdfFontName="Helvetica" size="12" isBold="false"/>
+						<font pdfFontName="Helvetica" size="10" isBold="false"/>
 					</textElement>
 				<text><![CDATA[Saldo]]></text>
 				</staticText>
 				<staticText>
 					<reportElement
 						mode="Opaque"
-						x="120"
+						x="92"
 						y="0"
-						width="109"
+						width="78"
 						height="18"
 						forecolor="#FFFFFF"
 						backcolor="#999999"
@@ -557,9 +646,45 @@ order by 2,9]]></queryString>
 						</reportElement>
 					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
 					<textElement verticalAlignment="Middle">
-						<font pdfFontName="Helvetica" size="12" isBold="false"/>
+						<font pdfFontName="Helvetica" size="10" isBold="false"/>
 					</textElement>
 				<text><![CDATA[Ent. Comercial]]></text>
+				</staticText>
+				<staticText>
+					<reportElement
+						mode="Opaque"
+						x="334"
+						y="0"
+						width="130"
+						height="18"
+						forecolor="#FFFFFF"
+						backcolor="#999999"
+						key="staticText">
+							<printWhenExpression><![CDATA[$P{subtotales}]]></printWhenExpression>
+						</reportElement>
+					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
+					<textElement verticalAlignment="Middle">
+						<font pdfFontName="Helvetica" size="10" isBold="false"/>
+					</textElement>
+				<text><![CDATA[Descripción]]></text>
+				</staticText>
+				<staticText>
+					<reportElement
+						mode="Opaque"
+						x="464"
+						y="0"
+						width="57"
+						height="18"
+						forecolor="#FFFFFF"
+						backcolor="#999999"
+						key="staticText-4">
+							<printWhenExpression><![CDATA[$P{subtotales}]]></printWhenExpression>
+						</reportElement>
+					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
+					<textElement verticalAlignment="Middle">
+						<font pdfFontName="Helvetica" size="10" isBold="false"/>
+					</textElement>
+				<text><![CDATA[Programa]]></text>
 				</staticText>
 			</band>
 		</columnHeader>
@@ -569,92 +694,118 @@ order by 2,9]]></queryString>
 					<reportElement
 						x="0"
 						y="0"
-						width="50"
+						width="39"
 						height="13"
 						key="textField"/>
 					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
 					<textElement>
-						<font size="10"/>
+						<font size="8"/>
 					</textElement>
 				<textFieldExpression   class="java.lang.String"><![CDATA[$F{printname}]]></textFieldExpression>
 				</textField>
 				<textField isStretchWithOverflow="false" isBlankWhenNull="false" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
-						x="50"
+						x="39"
 						y="0"
-						width="70"
+						width="53"
 						height="13"
 						key="textField"/>
 					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
 					<textElement>
-						<font size="10"/>
+						<font size="8"/>
 					</textElement>
 				<textFieldExpression   class="java.lang.String"><![CDATA[$F{documentno}]]></textFieldExpression>
 				</textField>
 				<textField isStretchWithOverflow="false" pattern="dd/MM/yyyy" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
-						x="229"
+						x="170"
 						y="0"
-						width="64"
+						width="49"
 						height="13"
 						key="textField"/>
 					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
 					<textElement>
-						<font size="10"/>
+						<font size="8"/>
 					</textElement>
-				<textFieldExpression   class="java.sql.Timestamp"><![CDATA[$F{dateinvoiced}]]></textFieldExpression>
+				<textFieldExpression   class="java.util.Date"><![CDATA[$F{dateinvoiced}]]></textFieldExpression>
 				</textField>
 				<textField isStretchWithOverflow="false" pattern="dd/MM/yyyy" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
-						x="293"
+						x="219"
 						y="0"
-						width="75"
+						width="58"
 						height="13"
 						key="textField"/>
 					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
 					<textElement>
-						<font size="10"/>
+						<font size="8"/>
 					</textElement>
 				<textFieldExpression   class="java.sql.Timestamp"><![CDATA[$F{duedate}]]></textFieldExpression>
 				</textField>
 				<textField isStretchWithOverflow="false" pattern="dd/MM/yyyy" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
-						x="368"
+						x="277"
 						y="0"
-						width="109"
+						width="57"
 						height="13"
 						key="textField"/>
 					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
 					<textElement>
-						<font size="10"/>
+						<font size="8"/>
 					</textElement>
 				<textFieldExpression   class="java.lang.String"><![CDATA[$F{estado}]]></textFieldExpression>
 				</textField>
 				<textField isStretchWithOverflow="false" pattern="###0.00" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
-						x="477"
+						x="521"
 						y="0"
-						width="68"
+						width="29"
 						height="13"
 						key="textField"/>
 					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
 					<textElement textAlignment="Right">
-						<font/>
+						<font size="8"/>
 					</textElement>
 				<textFieldExpression   class="java.math.BigDecimal"><![CDATA[$F{openamt}]]></textFieldExpression>
 				</textField>
 				<textField isStretchWithOverflow="false" isBlankWhenNull="false" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
-						x="120"
+						x="92"
 						y="0"
-						width="109"
+						width="78"
 						height="13"
 						key="textField"/>
 					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
 					<textElement>
-						<font/>
+						<font size="8"/>
 					</textElement>
 				<textFieldExpression   class="java.lang.String"><![CDATA[$F{proveedor}]]></textFieldExpression>
+				</textField>
+				<textField isStretchWithOverflow="false" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
+					<reportElement
+						x="334"
+						y="0"
+						width="130"
+						height="13"
+						key="textField"/>
+					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
+					<textElement>
+						<font size="8"/>
+					</textElement>
+				<textFieldExpression   class="java.lang.String"><![CDATA[$F{description}]]></textFieldExpression>
+				</textField>
+				<textField isStretchWithOverflow="false" isBlankWhenNull="false" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
+					<reportElement
+						x="464"
+						y="0"
+						width="57"
+						height="13"
+						key="textField"/>
+					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
+					<textElement>
+						<font size="8"/>
+					</textElement>
+				<textFieldExpression   class="java.lang.String"><![CDATA[$F{regla}]]></textFieldExpression>
 				</textField>
 			</band>
 		</detail>
