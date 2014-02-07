@@ -1,13 +1,14 @@
-/** Modelo Generado - NO CAMBIAR MANUALMENTE - Copyright (C) 2006 FUNDESLE */
+/** Modelo Generado - NO CAMBIAR MANUALMENTE - Disytel */
 package org.openXpertya.model;
-import java.util.*;
+import java.util.logging.Level;
+ import java.util.*;
 import java.sql.*;
 import java.math.*;
 import org.openXpertya.util.*;
 /** Modelo Generado por I_GLJournal
- *  @author Comunidad de Desarrollo openXpertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
- *  @version  - 2008-01-03 10:26:34.687 */
-public class X_I_GLJournal extends PO
+ *  @author Comunidad de Desarrollo Libertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
+ *  @version  - 2014-02-07 02:04:49.757 */
+public class X_I_GLJournal extends org.openXpertya.model.PO
 {
 /** Constructor estándar */
 public X_I_GLJournal (Properties ctx, int I_GLJournal_ID, String trxName)
@@ -25,13 +26,13 @@ public X_I_GLJournal (Properties ctx, ResultSet rs, String trxName)
 {
 super (ctx, rs, trxName);
 }
-/** AD_Table_ID=599 */
-public static final int Table_ID=599;
+/** AD_Table_ID */
+public static final int Table_ID = M_Table.getTableID("I_GLJournal");
 
 /** TableName=I_GLJournal */
 public static final String Table_Name="I_GLJournal";
 
-protected static KeyNamePair Model = new KeyNamePair(599,"I_GLJournal");
+protected static KeyNamePair Model = new KeyNamePair(Table_ID,"I_GLJournal");
 protected static BigDecimal AccessLevel = new BigDecimal(2);
 
 /** Load Meta Data */
@@ -45,58 +46,7 @@ public String toString()
 StringBuffer sb = new StringBuffer ("X_I_GLJournal[").append(getID()).append("]");
 return sb.toString();
 }
-public static final int AD_ORGDOC_ID_AD_Reference_ID=130;
-/** Set Document Org.
-Document Organization (independent from account organization) */
-public void setAD_OrgDoc_ID (int AD_OrgDoc_ID)
-{
-if (AD_OrgDoc_ID <= 0) set_Value ("AD_OrgDoc_ID", null);
- else 
-set_Value ("AD_OrgDoc_ID", new Integer(AD_OrgDoc_ID));
-}
-/** Get Document Org.
-Document Organization (independent from account organization) */
-public int getAD_OrgDoc_ID() 
-{
-Integer ii = (Integer)get_Value("AD_OrgDoc_ID");
-if (ii == null) return 0;
-return ii.intValue();
-}
-public static final int AD_ORGTRX_ID_AD_Reference_ID=130;
-/** Set Trx Organization.
-Performing or initiating organization */
-public void setAD_OrgTrx_ID (int AD_OrgTrx_ID)
-{
-if (AD_OrgTrx_ID <= 0) set_Value ("AD_OrgTrx_ID", null);
- else 
-set_Value ("AD_OrgTrx_ID", new Integer(AD_OrgTrx_ID));
-}
-/** Get Trx Organization.
-Performing or initiating organization */
-public int getAD_OrgTrx_ID() 
-{
-Integer ii = (Integer)get_Value("AD_OrgTrx_ID");
-if (ii == null) return 0;
-return ii.intValue();
-}
-/** Set Account Key.
-Key of Account Element */
-public void setAccountValue (String AccountValue)
-{
-if (AccountValue != null && AccountValue.length() > 40)
-{
-log.warning("Length > 40 - truncated");
-AccountValue = AccountValue.substring(0,39);
-}
-set_Value ("AccountValue", AccountValue);
-}
-/** Get Account Key.
-Key of Account Element */
-public String getAccountValue() 
-{
-return (String)get_Value("AccountValue");
-}
-public static final int ACCOUNT_ID_AD_Reference_ID=132;
+public static final int ACCOUNT_ID_AD_Reference_ID = MReference.getReferenceID("Account_ID (No Summary)");
 /** Set Account.
 Account used */
 public void setAccount_ID (int Account_ID)
@@ -113,6 +63,23 @@ Integer ii = (Integer)get_Value("Account_ID");
 if (ii == null) return 0;
 return ii.intValue();
 }
+/** Set Account Key.
+Key of Account Element */
+public void setAccountValue (String AccountValue)
+{
+if (AccountValue != null && AccountValue.length() > 40)
+{
+log.warning("Length > 40 - truncated");
+AccountValue = AccountValue.substring(0,40);
+}
+set_Value ("AccountValue", AccountValue);
+}
+/** Get Account Key.
+Key of Account Element */
+public String getAccountValue() 
+{
+return (String)get_Value("AccountValue");
+}
 /** Set Account Schema Name.
 Name of the Accounting Schema */
 public void setAcctSchemaName (String AcctSchemaName)
@@ -120,7 +87,7 @@ public void setAcctSchemaName (String AcctSchemaName)
 if (AcctSchemaName != null && AcctSchemaName.length() > 60)
 {
 log.warning("Length > 60 - truncated");
-AcctSchemaName = AcctSchemaName.substring(0,59);
+AcctSchemaName = AcctSchemaName.substring(0,60);
 }
 set_Value ("AcctSchemaName", AcctSchemaName);
 }
@@ -129,6 +96,40 @@ Name of the Accounting Schema */
 public String getAcctSchemaName() 
 {
 return (String)get_Value("AcctSchemaName");
+}
+public static final int AD_ORGDOC_ID_AD_Reference_ID = MReference.getReferenceID("AD_Org (Trx)");
+/** Set Document Org.
+Document Organization (independent from account organization) */
+public void setAD_OrgDoc_ID (int AD_OrgDoc_ID)
+{
+if (AD_OrgDoc_ID <= 0) set_Value ("AD_OrgDoc_ID", null);
+ else 
+set_Value ("AD_OrgDoc_ID", new Integer(AD_OrgDoc_ID));
+}
+/** Get Document Org.
+Document Organization (independent from account organization) */
+public int getAD_OrgDoc_ID() 
+{
+Integer ii = (Integer)get_Value("AD_OrgDoc_ID");
+if (ii == null) return 0;
+return ii.intValue();
+}
+public static final int AD_ORGTRX_ID_AD_Reference_ID = MReference.getReferenceID("AD_Org (Trx)");
+/** Set Trx Organization.
+Performing or initiating organization */
+public void setAD_OrgTrx_ID (int AD_OrgTrx_ID)
+{
+if (AD_OrgTrx_ID <= 0) set_Value ("AD_OrgTrx_ID", null);
+ else 
+set_Value ("AD_OrgTrx_ID", new Integer(AD_OrgTrx_ID));
+}
+/** Get Trx Organization.
+Performing or initiating organization */
+public int getAD_OrgTrx_ID() 
+{
+Integer ii = (Integer)get_Value("AD_OrgTrx_ID");
+if (ii == null) return 0;
+return ii.intValue();
 }
 /** Set Accounted Credit.
 Accounted Credit Amount */
@@ -186,23 +187,6 @@ BigDecimal bd = (BigDecimal)get_Value("AmtSourceDr");
 if (bd == null) return Env.ZERO;
 return bd;
 }
-/** Set Business Partner Key.
-Key of the Business Partner */
-public void setBPartnerValue (String BPartnerValue)
-{
-if (BPartnerValue != null && BPartnerValue.length() > 40)
-{
-log.warning("Length > 40 - truncated");
-BPartnerValue = BPartnerValue.substring(0,39);
-}
-set_Value ("BPartnerValue", BPartnerValue);
-}
-/** Get Business Partner Key.
-Key of the Business Partner */
-public String getBPartnerValue() 
-{
-return (String)get_Value("BPartnerValue");
-}
 /** Set Batch Description.
 Description of the Batch */
 public void setBatchDescription (String BatchDescription)
@@ -210,7 +194,7 @@ public void setBatchDescription (String BatchDescription)
 if (BatchDescription != null && BatchDescription.length() > 255)
 {
 log.warning("Length > 255 - truncated");
-BatchDescription = BatchDescription.substring(0,254);
+BatchDescription = BatchDescription.substring(0,255);
 }
 set_Value ("BatchDescription", BatchDescription);
 }
@@ -227,7 +211,7 @@ public void setBatchDocumentNo (String BatchDocumentNo)
 if (BatchDocumentNo != null && BatchDocumentNo.length() > 30)
 {
 log.warning("Length > 30 - truncated");
-BatchDocumentNo = BatchDocumentNo.substring(0,29);
+BatchDocumentNo = BatchDocumentNo.substring(0,30);
 }
 set_Value ("BatchDocumentNo", BatchDocumentNo);
 }
@@ -236,6 +220,23 @@ Document Number of the Batch */
 public String getBatchDocumentNo() 
 {
 return (String)get_Value("BatchDocumentNo");
+}
+/** Set Business Partner Key.
+Key of the Business Partner */
+public void setBPartnerValue (String BPartnerValue)
+{
+if (BPartnerValue != null && BPartnerValue.length() > 40)
+{
+log.warning("Length > 40 - truncated");
+BPartnerValue = BPartnerValue.substring(0,40);
+}
+set_Value ("BPartnerValue", BPartnerValue);
+}
+/** Get Business Partner Key.
+Key of the Business Partner */
+public String getBPartnerValue() 
+{
+return (String)get_Value("BPartnerValue");
 }
 /** Set Accounting Schema.
 Rules for accounting */
@@ -268,6 +269,23 @@ public int getC_Activity_ID()
 Integer ii = (Integer)get_Value("C_Activity_ID");
 if (ii == null) return 0;
 return ii.intValue();
+}
+/** Set Category Name.
+Name of the Category */
+public void setCategoryName (String CategoryName)
+{
+if (CategoryName != null && CategoryName.length() > 60)
+{
+log.warning("Length > 60 - truncated");
+CategoryName = CategoryName.substring(0,60);
+}
+set_Value ("CategoryName", CategoryName);
+}
+/** Get Category Name.
+Name of the Category */
+public String getCategoryName() 
+{
+return (String)get_Value("CategoryName");
 }
 /** Set Business Partner .
 Identifies a Business Partner */
@@ -349,7 +367,24 @@ Integer ii = (Integer)get_Value("C_DocType_ID");
 if (ii == null) return 0;
 return ii.intValue();
 }
-public static final int C_LOCFROM_ID_AD_Reference_ID=133;
+/** Set Client Key.
+Key of the Client */
+public void setClientValue (String ClientValue)
+{
+if (ClientValue != null && ClientValue.length() > 40)
+{
+log.warning("Length > 40 - truncated");
+ClientValue = ClientValue.substring(0,40);
+}
+set_Value ("ClientValue", ClientValue);
+}
+/** Get Client Key.
+Key of the Client */
+public String getClientValue() 
+{
+return (String)get_Value("ClientValue");
+}
+public static final int C_LOCFROM_ID_AD_Reference_ID = MReference.getReferenceID("C_Location");
 /** Set Location From.
 Location that inventory was moved from */
 public void setC_LocFrom_ID (int C_LocFrom_ID)
@@ -366,7 +401,7 @@ Integer ii = (Integer)get_Value("C_LocFrom_ID");
 if (ii == null) return 0;
 return ii.intValue();
 }
-public static final int C_LOCTO_ID_AD_Reference_ID=133;
+public static final int C_LOCTO_ID_AD_Reference_ID = MReference.getReferenceID("C_Location");
 /** Set Location To.
 Location that inventory was moved to */
 public void setC_LocTo_ID (int C_LocTo_ID)
@@ -382,6 +417,23 @@ public int getC_LocTo_ID()
 Integer ii = (Integer)get_Value("C_LocTo_ID");
 if (ii == null) return 0;
 return ii.intValue();
+}
+/** Set Currency Type Key.
+Key value for the Currency Conversion Rate Type */
+public void setConversionTypeValue (String ConversionTypeValue)
+{
+if (ConversionTypeValue != null && ConversionTypeValue.length() > 40)
+{
+log.warning("Length > 40 - truncated");
+ConversionTypeValue = ConversionTypeValue.substring(0,40);
+}
+set_Value ("ConversionTypeValue", ConversionTypeValue);
+}
+/** Get Currency Type Key.
+Key value for the Currency Conversion Rate Type */
+public String getConversionTypeValue() 
+{
+return (String)get_Value("ConversionTypeValue");
 }
 /** Set Period.
 Period of the Calendar */
@@ -447,6 +499,20 @@ Integer ii = (Integer)get_Value("C_UOM_ID");
 if (ii == null) return 0;
 return ii.intValue();
 }
+/** Set Rate.
+Currency Conversion Rate */
+public void setCurrencyRate (BigDecimal CurrencyRate)
+{
+set_Value ("CurrencyRate", CurrencyRate);
+}
+/** Get Rate.
+Currency Conversion Rate */
+public BigDecimal getCurrencyRate() 
+{
+BigDecimal bd = (BigDecimal)get_Value("CurrencyRate");
+if (bd == null) return Env.ZERO;
+return bd;
+}
 /** Set Combination.
 Valid Account Combination */
 public void setC_ValidCombination_ID (int C_ValidCombination_ID)
@@ -462,71 +528,6 @@ public int getC_ValidCombination_ID()
 Integer ii = (Integer)get_Value("C_ValidCombination_ID");
 if (ii == null) return 0;
 return ii.intValue();
-}
-/** Set Category Name.
-Name of the Category */
-public void setCategoryName (String CategoryName)
-{
-if (CategoryName != null && CategoryName.length() > 60)
-{
-log.warning("Length > 60 - truncated");
-CategoryName = CategoryName.substring(0,59);
-}
-set_Value ("CategoryName", CategoryName);
-}
-/** Get Category Name.
-Name of the Category */
-public String getCategoryName() 
-{
-return (String)get_Value("CategoryName");
-}
-/** Set Client Key.
-Key of the Client */
-public void setClientValue (String ClientValue)
-{
-if (ClientValue != null && ClientValue.length() > 40)
-{
-log.warning("Length > 40 - truncated");
-ClientValue = ClientValue.substring(0,39);
-}
-set_Value ("ClientValue", ClientValue);
-}
-/** Get Client Key.
-Key of the Client */
-public String getClientValue() 
-{
-return (String)get_Value("ClientValue");
-}
-/** Set Currency Type Key.
-Key value for the Currency Conversion Rate Type */
-public void setConversionTypeValue (String ConversionTypeValue)
-{
-if (ConversionTypeValue != null && ConversionTypeValue.length() > 40)
-{
-log.warning("Length > 40 - truncated");
-ConversionTypeValue = ConversionTypeValue.substring(0,39);
-}
-set_Value ("ConversionTypeValue", ConversionTypeValue);
-}
-/** Get Currency Type Key.
-Key value for the Currency Conversion Rate Type */
-public String getConversionTypeValue() 
-{
-return (String)get_Value("ConversionTypeValue");
-}
-/** Set Rate.
-Currency Conversion Rate */
-public void setCurrencyRate (BigDecimal CurrencyRate)
-{
-set_Value ("CurrencyRate", CurrencyRate);
-}
-/** Get Rate.
-Currency Conversion Rate */
-public BigDecimal getCurrencyRate() 
-{
-BigDecimal bd = (BigDecimal)get_Value("CurrencyRate");
-if (bd == null) return Env.ZERO;
-return bd;
 }
 /** Set Account Date.
 Accounting Date */
@@ -547,7 +548,7 @@ public void setDescription (String Description)
 if (Description != null && Description.length() > 255)
 {
 log.warning("Length > 255 - truncated");
-Description = Description.substring(0,254);
+Description = Description.substring(0,255);
 }
 set_Value ("Description", Description);
 }
@@ -557,6 +558,23 @@ public String getDescription()
 {
 return (String)get_Value("Description");
 }
+/** Set Document Type Key.
+Clave única de identificación del tipo de documento */
+public void setDocTypeKey (String DocTypeKey)
+{
+if (DocTypeKey != null && DocTypeKey.length() > 40)
+{
+log.warning("Length > 40 - truncated");
+DocTypeKey = DocTypeKey.substring(0,40);
+}
+set_Value ("DocTypeKey", DocTypeKey);
+}
+/** Get Document Type Key.
+Clave única de identificación del tipo de documento */
+public String getDocTypeKey() 
+{
+return (String)get_Value("DocTypeKey");
+}
 /** Set Document Type Name.
 Name of the Document Type */
 public void setDocTypeName (String DocTypeName)
@@ -564,7 +582,7 @@ public void setDocTypeName (String DocTypeName)
 if (DocTypeName != null && DocTypeName.length() > 60)
 {
 log.warning("Length > 60 - truncated");
-DocTypeName = DocTypeName.substring(0,59);
+DocTypeName = DocTypeName.substring(0,60);
 }
 set_Value ("DocTypeName", DocTypeName);
 }
@@ -622,22 +640,6 @@ Integer ii = (Integer)get_Value("GL_JournalBatch_ID");
 if (ii == null) return 0;
 return ii.intValue();
 }
-/** Set Journal Line.
-General Ledger Journal Line */
-public void setGL_JournalLine_ID (int GL_JournalLine_ID)
-{
-if (GL_JournalLine_ID <= 0) set_Value ("GL_JournalLine_ID", null);
- else 
-set_Value ("GL_JournalLine_ID", new Integer(GL_JournalLine_ID));
-}
-/** Get Journal Line.
-General Ledger Journal Line */
-public int getGL_JournalLine_ID() 
-{
-Integer ii = (Integer)get_Value("GL_JournalLine_ID");
-if (ii == null) return 0;
-return ii.intValue();
-}
 /** Set Journal.
 General Ledger Journal */
 public void setGL_Journal_ID (int GL_Journal_ID)
@@ -654,22 +656,21 @@ Integer ii = (Integer)get_Value("GL_Journal_ID");
 if (ii == null) return 0;
 return ii.intValue();
 }
-/** Set ISO Currency Code.
-Three letter ISO 4217 Code of the Currency */
-public void setISO_Code (String ISO_Code)
+/** Set Journal Line.
+General Ledger Journal Line */
+public void setGL_JournalLine_ID (int GL_JournalLine_ID)
 {
-if (ISO_Code != null && ISO_Code.length() > 3)
-{
-log.warning("Length > 3 - truncated");
-ISO_Code = ISO_Code.substring(0,2);
+if (GL_JournalLine_ID <= 0) set_Value ("GL_JournalLine_ID", null);
+ else 
+set_Value ("GL_JournalLine_ID", new Integer(GL_JournalLine_ID));
 }
-set_Value ("ISO_Code", ISO_Code);
-}
-/** Get ISO Currency Code.
-Three letter ISO 4217 Code of the Currency */
-public String getISO_Code() 
+/** Get Journal Line.
+General Ledger Journal Line */
+public int getGL_JournalLine_ID() 
 {
-return (String)get_Value("ISO_Code");
+Integer ii = (Integer)get_Value("GL_JournalLine_ID");
+if (ii == null) return 0;
+return ii.intValue();
 }
 /** Set Import Error Message.
 Messages generated from import process */
@@ -678,7 +679,7 @@ public void setI_ErrorMsg (String I_ErrorMsg)
 if (I_ErrorMsg != null && I_ErrorMsg.length() > 2000)
 {
 log.warning("Length > 2000 - truncated");
-I_ErrorMsg = I_ErrorMsg.substring(0,1999);
+I_ErrorMsg = I_ErrorMsg.substring(0,2000);
 }
 set_Value ("I_ErrorMsg", I_ErrorMsg);
 }
@@ -724,6 +725,23 @@ if (oo != null)
 }
 return false;
 }
+/** Set ISO Currency Code.
+Three letter ISO 4217 Code of the Currency */
+public void setISO_Code (String ISO_Code)
+{
+if (ISO_Code != null && ISO_Code.length() > 3)
+{
+log.warning("Length > 3 - truncated");
+ISO_Code = ISO_Code.substring(0,3);
+}
+set_Value ("ISO_Code", ISO_Code);
+}
+/** Get ISO Currency Code.
+Three letter ISO 4217 Code of the Currency */
+public String getISO_Code() 
+{
+return (String)get_Value("ISO_Code");
+}
 /** Set Journal Document No.
 Document number of the Journal */
 public void setJournalDocumentNo (String JournalDocumentNo)
@@ -731,7 +749,7 @@ public void setJournalDocumentNo (String JournalDocumentNo)
 if (JournalDocumentNo != null && JournalDocumentNo.length() > 30)
 {
 log.warning("Length > 30 - truncated");
-JournalDocumentNo = JournalDocumentNo.substring(0,29);
+JournalDocumentNo = JournalDocumentNo.substring(0,30);
 }
 set_Value ("JournalDocumentNo", JournalDocumentNo);
 }
@@ -778,7 +796,7 @@ public void setOrgTrxValue (String OrgTrxValue)
 if (OrgTrxValue != null && OrgTrxValue.length() > 40)
 {
 log.warning("Length > 40 - truncated");
-OrgTrxValue = OrgTrxValue.substring(0,39);
+OrgTrxValue = OrgTrxValue.substring(0,40);
 }
 set_Value ("OrgTrxValue", OrgTrxValue);
 }
@@ -795,7 +813,7 @@ public void setOrgValue (String OrgValue)
 if (OrgValue != null && OrgValue.length() > 40)
 {
 log.warning("Length > 40 - truncated");
-OrgValue = OrgValue.substring(0,39);
+OrgValue = OrgValue.substring(0,40);
 }
 set_Value ("OrgValue", OrgValue);
 }
@@ -805,25 +823,25 @@ public String getOrgValue()
 {
 return (String)get_Value("OrgValue");
 }
-public static final int POSTINGTYPE_AD_Reference_ID=125;
-/** Actual = A */
-public static final String POSTINGTYPE_Actual = "A";
+public static final int POSTINGTYPE_AD_Reference_ID = MReference.getReferenceID("_Posting Type");
 /** Presupuestaria = B */
 public static final String POSTINGTYPE_Presupuestaria = "B";
 /** Pendientes = E */
 public static final String POSTINGTYPE_Pendientes = "E";
 /** Estadisticos = S */
 public static final String POSTINGTYPE_Estadisticos = "S";
+/** Actual = A */
+public static final String POSTINGTYPE_Actual = "A";
 /** Set PostingType.
 The type of amount that this journal updated */
 public void setPostingType (String PostingType)
 {
-if (PostingType == null || PostingType.equals("A") || PostingType.equals("B") || PostingType.equals("E") || PostingType.equals("S"));
- else throw new IllegalArgumentException ("PostingType Invalid value - Reference_ID=125 - A - B - E - S");
+if (PostingType == null || PostingType.equals("B") || PostingType.equals("E") || PostingType.equals("S") || PostingType.equals("A"));
+ else throw new IllegalArgumentException ("PostingType Invalid value - Reference = POSTINGTYPE_AD_Reference_ID - B - E - S - A");
 if (PostingType != null && PostingType.length() > 1)
 {
 log.warning("Length > 1 - truncated");
-PostingType = PostingType.substring(0,0);
+PostingType = PostingType.substring(0,1);
 }
 set_Value ("PostingType", PostingType);
 }
@@ -874,7 +892,7 @@ public void setProductValue (String ProductValue)
 if (ProductValue != null && ProductValue.length() > 40)
 {
 log.warning("Length > 40 - truncated");
-ProductValue = ProductValue.substring(0,39);
+ProductValue = ProductValue.substring(0,40);
 }
 set_Value ("ProductValue", ProductValue);
 }
@@ -891,7 +909,7 @@ public void setProjectValue (String ProjectValue)
 if (ProjectValue != null && ProjectValue.length() > 40)
 {
 log.warning("Length > 40 - truncated");
-ProjectValue = ProjectValue.substring(0,39);
+ProjectValue = ProjectValue.substring(0,40);
 }
 set_Value ("ProjectValue", ProjectValue);
 }
@@ -922,7 +940,7 @@ public void setSKU (String SKU)
 if (SKU != null && SKU.length() > 30)
 {
 log.warning("Length > 30 - truncated");
-SKU = SKU.substring(0,29);
+SKU = SKU.substring(0,30);
 }
 set_Value ("SKU", SKU);
 }
@@ -939,7 +957,7 @@ public void setUPC (String UPC)
 if (UPC != null && UPC.length() > 30)
 {
 log.warning("Length > 30 - truncated");
-UPC = UPC.substring(0,29);
+UPC = UPC.substring(0,30);
 }
 set_Value ("UPC", UPC);
 }
@@ -949,7 +967,7 @@ public String getUPC()
 {
 return (String)get_Value("UPC");
 }
-public static final int USER1_ID_AD_Reference_ID=134;
+public static final int USER1_ID_AD_Reference_ID = MReference.getReferenceID("Account_ID - User1");
 /** Set User1.
 User defined element #1 */
 public void setUser1_ID (int User1_ID)
@@ -966,7 +984,7 @@ Integer ii = (Integer)get_Value("User1_ID");
 if (ii == null) return 0;
 return ii.intValue();
 }
-public static final int USER2_ID_AD_Reference_ID=137;
+public static final int USER2_ID_AD_Reference_ID = MReference.getReferenceID("Account_ID - User2");
 /** Set User2.
 User defined element #2 */
 public void setUser2_ID (int User2_ID)
