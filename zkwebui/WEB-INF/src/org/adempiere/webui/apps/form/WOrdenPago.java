@@ -1086,7 +1086,7 @@ public class WOrdenPago extends ADForm implements ValueChangeListener, TableMode
     	                showError("Error al mostrar informe. " + CLogger.retrieveErrorAsString());
     	                return;
     	            }
-    	            ProcessInfo pi = new ProcessInfo( "Orden de Pago",proc_ID );
+    	            ProcessInfo pi = new ProcessInfo( getReportName(),proc_ID );
     	            pi.setAD_PInstance_ID( instance.getAD_PInstance_ID());
     	            
     	            MPInstancePara ip;
@@ -1112,6 +1112,10 @@ public class WOrdenPago extends ADForm implements ValueChangeListener, TableMode
     		}
     	}    	
     }//GEN-LAST:event_cmdProcessActionPerformed
+    
+    protected String getReportName() {
+    	return "Orden de Pago";
+    }
     
     /**
      * Metodo que determina el valor que se encuentra dentro de la entidad comercial.
@@ -2312,22 +2316,22 @@ public class WOrdenPago extends ADForm implements ValueChangeListener, TableMode
 		int currencyID = ( (Integer) cboCurrency.getValue() == null) ? m_C_Currency_ID : (Integer) cboCurrency.getValue();
 
 		amt = MCurrency.currencyConvert(amt, m_C_Currency_ID, currencyID, new Timestamp(System.currentTimeMillis()), getModel().AD_Org_ID, m_ctx);
-		
+
 		Integer tabIndexSelected = mpTabbox.getSelectedIndex();
 		if(tabIndexSelected.equals(TAB_INDEX_CHEQUE)){
-			txtChequeImporte.setValue(amt.toString());
+			txtChequeImporte.setValue(numberFormat(amt));
 		}
 		else if(tabIndexSelected.equals(TAB_INDEX_CREDITO)){
-			txtCreditImporte.setValue(amt.toString());
+			txtCreditImporte.setValue(numberFormat(amt));
 		}
 		else if(tabIndexSelected.equals(TAB_INDEX_EFECTIVO)){
-			txtEfectivoImporte.setValue(amt.toString());
+			txtEfectivoImporte.setValue(numberFormat(amt));
 		}
 		else if(tabIndexSelected.equals(TAB_INDEX_PAGO_ADELANTADO)){
-			txtPagoAdelantadoImporte.setValue(amt.toString());
+			txtPagoAdelantadoImporte.setValue(numberFormat(amt));
 		}
 		else if(tabIndexSelected.equals(TAB_INDEX_TRANSFERENCIA)){
-			txtTransfImporte.setValue(amt.toString());
+			txtTransfImporte.setValue(numberFormat(amt));
 		}
 		else {
 			updateCustomPayAmt(amt);
@@ -2412,6 +2416,8 @@ public class WOrdenPago extends ADForm implements ValueChangeListener, TableMode
 		
 		m_model.setDocumentNo("");
 		getModel().reset();
+		updateTreeModel();
+		pagosTree.setModel(getMediosPagoTreeModel());
 	}
 	
 	protected String getSeqName()
