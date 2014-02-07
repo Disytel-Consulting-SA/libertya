@@ -201,6 +201,14 @@ public class PostInstallUpgradeFrom1301 extends PluginPostInstallProcess {
 	protected final static String ORDEN_PAGO_JASPER_REPORT_UID = "CORE-AD_JasperReport-1000012";
 	protected final static String ORDEN_PAGO_JASPER_REPORT_FILENAME = "OrdenPago.jasper";
 	
+	/** UID del Reporte Devoluciones a Proveedores */
+	protected final static String DEVOLUCIONES_A_PROVEEDORES_REPORT_UID = "CORE-AD_Process-1010373";
+	protected final static String DEVOLUCIONES_A_PROVEEDORES_REPORT_FILENAME = "report_return_to_vendor.jrxml";
+	
+	/** UID del Reporte Ventas por Subfamilia y Familia */
+	protected final static String VENTAS_POR_SUBFAMILIA_Y_FAMILIA_REPORT_UID = "CORE-AD_Process-1010374";
+	protected final static String VENTAS_POR_SUBFAMILIA_Y_FAMILIA_REPORT_FILENAME = "sales_report_by_subfamily_and_family_articles.jrxml";
+	
 	protected String doIt() throws Exception {
 		super.doIt();
 		
@@ -754,6 +762,28 @@ public class PostInstallUpgradeFrom1301 extends PluginPostInstallProcess {
 				ORDEN_PAGO_JASPER_REPORT_UID, JarHelper.readBinaryFromJar(
 						jarFileURL,
 						getBinaryFileURL(ORDEN_PAGO_JASPER_REPORT_FILENAME)));
+						
+		// Reporte Devoluciones a Proveedores
+		MProcess.addAttachment(
+				get_TrxName(), 
+				getCtx(),
+				DEVOLUCIONES_A_PROVEEDORES_REPORT_UID,
+				DEVOLUCIONES_A_PROVEEDORES_REPORT_FILENAME,
+				JarHelper
+						.readBinaryFromJar(
+								jarFileURL,
+								getBinaryFileURL(DEVOLUCIONES_A_PROVEEDORES_REPORT_FILENAME)));
+	
+		// Reporte Ventas Por Subfamilia y Familia
+		MProcess.addAttachment(
+				get_TrxName(),
+				getCtx(),
+				VENTAS_POR_SUBFAMILIA_Y_FAMILIA_REPORT_UID,
+				VENTAS_POR_SUBFAMILIA_Y_FAMILIA_REPORT_FILENAME,
+				JarHelper
+						.readBinaryFromJar(
+								jarFileURL,
+								getBinaryFileURL(VENTAS_POR_SUBFAMILIA_Y_FAMILIA_REPORT_FILENAME)));
 		
 		return " ";
 	}
