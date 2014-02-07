@@ -193,6 +193,10 @@ public class PostInstallUpgradeFrom1301 extends PluginPostInstallProcess {
 	protected final static String PHYSICAL_INVENTORY_AUDIT_REPORT_UID = "CORE-AD_Process-1010369";
 	protected final static String PHYSICAL_INVENTORY_AUDIT_REPORT_FILENAME = "PhysicalInventoryAudit.jrxml";
 	
+	/** UID del reporte del Informe de Vencimientos */
+	protected final static String VENCIMIENTOS_JASPER_REPORT_UID = "CORE-AD_JasperReport-1010043";
+	protected final static String VENCIMIENTOS_JASPER_REPORT_FILENAME = "ListadoVencimientos.jasper";
+	
 	protected String doIt() throws Exception {
 		super.doIt();
 		
@@ -734,6 +738,12 @@ public class PostInstallUpgradeFrom1301 extends PluginPostInstallProcess {
 						.readBinaryFromJar(
 								jarFileURL,
 								getBinaryFileURL(PHYSICAL_INVENTORY_AUDIT_REPORT_FILENAME)));
+
+		// Informe de vencimientos
+		MJasperReport.updateBinaryData(get_TrxName(), getCtx(),
+				VENCIMIENTOS_JASPER_REPORT_UID, JarHelper.readBinaryFromJar(
+						jarFileURL,
+						getBinaryFileURL(VENCIMIENTOS_JASPER_REPORT_FILENAME)));
 		
 		return " ";
 	}
