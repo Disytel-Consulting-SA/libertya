@@ -6517,3 +6517,10 @@ ALTER TABLE c_doctype ADD CONSTRAINT lastfiscalprintedinvoice FOREIGN KEY (c_inv
  
  --20140207-0955 Nueva columna para la fecha de vencimiento    
  ALTER TABLE t_cuentacorriente ADD COLUMN duedate timestamp without time zone;
+ 
+ -- 20140113 Agrego campo debe y haber a tabla i_bankstatement
+ALTER TABLE i_bankstatement ADD COLUMN debe numeric(20,2) DEFAULT 0;
+ALTER TABLE i_bankstatement ADD COLUMN haber numeric(20,2) DEFAULT 0;
+
+--20140116 Agrego campo chargevalue a tabla i_bankstatement
+ALTER TABLE i_bankstatement ADD COLUMN chargevalue character varying(60);
