@@ -6511,3 +6511,6 @@ update ad_system set dummy = (SELECT addcolumnifnotexists('C_DocType','c_invoice
 ALTER TABLE c_doctype ADD CONSTRAINT lastfiscalprintedinvoice FOREIGN KEY (c_invoice_id)
       REFERENCES c_invoice (c_invoice_id) MATCH SIMPLE
       ON UPDATE NO ACTION ON DELETE NO ACTION;
+      
+ --20140207-0955 Nueva columna para registrar tipo del documento    
+ ALTER TABLE i_gljournal ADD COLUMN doctypekey character varying(40);
