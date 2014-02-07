@@ -25,8 +25,10 @@ public class VencimientoDeFacturasDataSource extends QueryDataSource {
 	private String dateFilter = null;
 	/** Tipo de Transacción */
 	private String trxType = null;
+	/** Subtotales Por */
+	private String subtotales_por = null;
 	
-	public VencimientoDeFacturasDataSource(Properties ctx, Timestamp dateFrom, Timestamp dateTo, Integer orgID, Integer bPartnerID, String dateFilter, String trxType, String trxName) throws DBException{
+	public VencimientoDeFacturasDataSource(Properties ctx, Timestamp dateFrom, Timestamp dateTo, Integer orgID, Integer bPartnerID, String dateFilter, String trxType, String trxName, String subtotales_por) throws DBException{
 		super(trxName);
 		setCtx(ctx);
 		setDateFrom(dateFrom);
@@ -35,7 +37,10 @@ public class VencimientoDeFacturasDataSource extends QueryDataSource {
 		setOrgID(orgID);
 		setBpartnerID(bPartnerID);
 		setTrxType(trxType);
+		setSubtotalesPor(subtotales_por);
 	}
+
+
 
 	@Override
 	protected String getQuery() {
@@ -45,13 +50,15 @@ public class VencimientoDeFacturasDataSource extends QueryDataSource {
 		StringBuffer  var1 = new StringBuffer();
 		var1.append("SELECT dt.printname, ");
 		var1.append("       bp.name AS proveedor, ");
+		var1.append("       pt.name as regla, ");
+		var1.append("       ci.description, ");
 		var1.append("       oi.documentno, ");
 		var1.append("       oi.c_bpartner_id, ");
 		var1.append("       oi.c_invoice_id, ");
 		var1.append("       oi.c_invoicepayschedule_id, ");
 		var1.append("       oi.c_currency_id, ");
 		var1.append("       oi.issotrx, ");
-		var1.append("       oi.dateinvoiced, ");
+		var1.append("       TRUNC(oi.dateinvoiced) as dateinvoiced, ");
 		var1.append("       oi.netdays, ");
 		var1.append("       oi.duedate, ");
 		var1.append("       oi.daysdue, ");
@@ -71,6 +78,10 @@ public class VencimientoDeFacturasDataSource extends QueryDataSource {
 		var1.append("         ON ( oi.c_bpartner_id = bp.c_bpartner_id ) ");
 		var1.append("       INNER JOIN c_doctype dt ");
 		var1.append("         ON ( oi.c_doctypetarget_id = dt.c_doctype_id ) ");
+		var1.append("       INNER JOIN c_paymentterm pt ");
+		var1.append("         ON ( pt.c_paymentterm_id = oi.c_paymentterm_id ) ");
+		var1.append("       INNER JOIN c_invoice ci ");
+		var1.append("         ON ( ci.c_invoice_id = oi.c_invoice_id) "); 
 		var1.append("WHERE  oi.ad_client_id=? ");
 		if(!getTrxType().equals("B")){
 			var1.append(" AND oi.issotrx = '")
@@ -98,13 +109,15 @@ public class VencimientoDeFacturasDataSource extends QueryDataSource {
 		var1.append("UNION ");
 		var1.append("SELECT dt.printname, ");
 		var1.append("       bp.name              AS proveedor, ");
+		var1.append("       pt.name as regla, ");
+		var1.append("       ci.description, ");
 		var1.append("       pi.documentno, ");
 		var1.append("       pi.c_bpartner_id, ");
 		var1.append("       NULL, ");
 		var1.append("       NULL, ");
 		var1.append("       pi.c_currency_id, ");
 		var1.append("       pi.isreceipt, ");
-		var1.append("       pi.datetrx, ");
+		var1.append("       TRUNC(pi.datetrx)  as dateinvoiced, ");
 		var1.append("       0, ");
 		var1.append("       pi.dateacct, ");
 		var1.append("       NULL, ");
@@ -116,6 +129,10 @@ public class VencimientoDeFacturasDataSource extends QueryDataSource {
 		var1.append("         ON ( pi.c_bpartner_id = bp.c_bpartner_id ) ");
 		var1.append("       INNER JOIN c_doctype dt ");
 		var1.append("         ON ( pi.c_doctype_id = dt.c_doctype_id ) ");
+		var1.append("       INNER JOIN c_invoice ci ");
+		var1.append("         ON ( ci.c_invoice_id = pi.c_invoice_id) "); 
+		var1.append("       INNER JOIN c_paymentterm pt ");
+		var1.append("         ON ( pt.c_paymentterm_id = ci.c_paymentterm_id ) ");
 		var1.append("            WHERE  ");
 		var1.append("            pi.docstatus IN ( 'CO', 'CL' ) ");
 		var1.append("            AND pi.ad_client_id = ?  ");
@@ -141,7 +158,13 @@ public class VencimientoDeFacturasDataSource extends QueryDataSource {
 			var1.append(" AND ").append(paymentDateColumn).append(" <= ?::date ");
 		}		
 		var1=new StringBuffer("Select * from (").append(var1);
-		var1.append(") AS T1 ORDER  BY 2,9 ");
+		
+		if (new String ("Fecha").equals(getSubtotales_por())){
+			var1.append(") AS T1 ORDER  BY dateinvoiced ");
+		}else {
+			var1.append(") AS T1 ORDER  BY proveedor ");
+		}
+
 		return var1.toString();
 	}
 
@@ -232,6 +255,14 @@ public class VencimientoDeFacturasDataSource extends QueryDataSource {
 
 	private String getTrxType() {
 		return trxType;
+	}
+	
+	private void setSubtotalesPor(String subtotales_por) {
+		this.subtotales_por = subtotales_por;		
+	}
+	
+	private String getSubtotales_por(){
+		return subtotales_por;
 	}
 
 }
