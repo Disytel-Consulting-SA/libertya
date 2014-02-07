@@ -115,7 +115,8 @@ public class ImportBankStatement extends SvrProcess {
 
     protected String doIt() throws java.lang.Exception {
     	String       clientCheck = " AND AD_Client_ID=" + m_AD_Client_ID;
-    	prepareImportation(clientCheck);
+    	String		 clientCheckToCharge = " AND I_BankStatement.AD_Client_ID=" + m_AD_Client_ID;
+    	prepareImportation(clientCheck, clientCheckToCharge);
     	String res = "";
     	if(doImport){
     		res = importStatements(clientCheck);
@@ -123,7 +124,7 @@ public class ImportBankStatement extends SvrProcess {
     	return res;
     }
     	
-    protected String prepareImportation(String clientCheck) throws java.lang.Exception {
+    protected String prepareImportation(String clientCheck, String clientCheckToCharge) throws java.lang.Exception {
         log.info( "LoadBankStatement.doIt" );
 
         StringBuffer sql         = null;
@@ -271,6 +272,22 @@ public class ImportBankStatement extends SvrProcess {
         if( no != 0 ) {
             log.info( "doIt - Charge Amount=" + no );
         }
+        
+        // Set c_charge_id
+        
+        sql = new StringBuffer( "UPDATE I_BankStatement " 
+        		+ " SET C_Charge_ID=C_Charge.C_Charge_ID" 
+        		+ " FROM C_Charge"
+        		+ " WHERE I_BankStatement.ChargeValue IS NOT NULL"
+        		+ " AND I_BankStatement.ChargeValue=C_Charge.name"
+        		+ " AND I_BankStatement.I_IsImported<>'Y'" ).append( clientCheckToCharge );
+
+        
+        no = DB.executeUpdate( sql.toString());
+
+        if( no != 0 ) {
+            log.info( "doIt - Charge ID =" + no );
+        }
 
         //
 
@@ -283,7 +300,19 @@ public class ImportBankStatement extends SvrProcess {
         if( no != 0 ) {
             log.info( "doIt - Interest Amount=" + no );
         }
+		
+        // Set StmtAmt
 
+        sql = new StringBuffer( "UPDATE I_BankStatement " 
+        		+ "SET StmtAmt=haber-debe " 
+        		+ "WHERE StmtAmt IS NULL OR StmtAmt = 0" 
+        		+ "AND I_IsImported<>'Y'" ).append( clientCheck );
+        no = DB.executeUpdate( sql.toString());
+
+        if( no != 0 ) {
+            log.info( "doIt - Stmt Amount=" + no );
+        }
+        
         //
 
         sql = new StringBuffer( "UPDATE I_BankStatement " 
