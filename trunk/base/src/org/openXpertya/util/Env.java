@@ -1742,7 +1742,7 @@ public final class Env {
 		// Solo obtiene la fecha desde la BD cada 1 hora. De esta forma se
 		// minimizan los accesos a la BD y se maximiza el tiempo de
 		// sincronización de la fecha.
-    	if (elapsedHours < 0 || elapsedHours >= UPDATE_DATE_CONTEXT_EVERY_HOURS) {
+    	if (ctx.getProperty("#Date") == null || ctx.getProperty("#Date").trim().length() == 0 ||  elapsedHours < 0 || elapsedHours >= UPDATE_DATE_CONTEXT_EVERY_HOURS) {
     		Timestamp today = null;
     		if (DB.getDatabase() != null) {
     			today = DB.getSQLValueTimestamp(null, "select ('today'::text)::timestamp");
