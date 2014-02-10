@@ -3721,7 +3721,8 @@ public class MInvoice extends X_C_Invoice implements DocAction {
 					// TODO Decrementar el monto de descuento manual general que se
 					// guarda lineDocumentDiscount
 					if(lineDiscountAmt.compareTo(BigDecimal.ZERO) != 0){
-						documentDiscount = createDocumentDiscount(
+						// Descuento de bonificación padre
+						MDocumentDiscount documentDiscountFather = createDocumentDiscount(
 								baseAmt,
 								mInvoiceLine
 										.amtByTax(lineDiscountAmt, mInvoiceLine
@@ -3733,6 +3734,26 @@ public class MInvoice extends X_C_Invoice implements DocAction {
 								MDocumentDiscount.DISCOUNTKIND_DiscountLine,
 								discountDescription);
 						// Si no se puede guardar aborta la operación
+						if (!documentDiscountFather.save()) {
+							m_processMsg = CLogger.retrieveErrorAsString();
+							return DocAction.STATUS_Invalid;
+						}
+						// Descuento de bonificación de iva
+						documentDiscount = createDocumentDiscount(
+								baseAmt,
+								mInvoiceLine
+										.amtByTax(lineDiscountAmt, mInvoiceLine
+												.getTaxAmt(lineDiscountAmt),
+												isTaxIncluded(), true),
+								taxRate,
+								MDocumentDiscount.CUMULATIVELEVEL_Line,
+								MDocumentDiscount.DISCOUNTAPPLICATION_DiscountToPrice,
+								MDocumentDiscount.DISCOUNTKIND_DiscountLine,
+								discountDescription);
+						documentDiscount
+								.setC_DocumentDiscount_Parent_ID(documentDiscountFather
+										.getID());
+						// Si no se puede guardar aborta la operación
 						if (!documentDiscount.save()) {
 							m_processMsg = CLogger.retrieveErrorAsString();
 							return DocAction.STATUS_Invalid;
@@ -3742,7 +3763,8 @@ public class MInvoice extends X_C_Invoice implements DocAction {
 				// Descuento de bonificación
 				lineBonusAmt = mInvoiceLine.getLineBonusAmt(); 
 				if(lineBonusAmt.compareTo(BigDecimal.ZERO) != 0){
-					documentDiscount = createDocumentDiscount(
+					// Descuento de bonificación padre
+					MDocumentDiscount documentDiscountFather = createDocumentDiscount(
 							baseAmt,
 							mInvoiceLine.amtByTax(lineBonusAmt,
 									mInvoiceLine.getTaxAmt(lineBonusAmt),
@@ -3752,6 +3774,25 @@ public class MInvoice extends X_C_Invoice implements DocAction {
 							MDocumentDiscount.DISCOUNTAPPLICATION_Bonus,
 							MDocumentDiscount.DISCOUNTKIND_DiscountLine,
 							discountDescription);
+					// Si no se puede guardar aborta la operación
+					if (!documentDiscountFather.save()) {
+						m_processMsg = CLogger.retrieveErrorAsString();
+						return DocAction.STATUS_Invalid;
+					}
+					// Descuento de bonificación de iva
+					documentDiscount = createDocumentDiscount(
+							baseAmt,
+							mInvoiceLine.amtByTax(lineBonusAmt,
+									mInvoiceLine.getTaxAmt(lineBonusAmt),
+									isTaxIncluded(), true),
+							taxRate,
+							MDocumentDiscount.CUMULATIVELEVEL_Line,
+							MDocumentDiscount.DISCOUNTAPPLICATION_Bonus,
+							MDocumentDiscount.DISCOUNTKIND_DiscountLine,
+							discountDescription);
+					documentDiscount
+							.setC_DocumentDiscount_Parent_ID(documentDiscountFather
+									.getID());
 					// Si no se puede guardar aborta la operación
 					if (!documentDiscount.save()) {
 						m_processMsg = CLogger.retrieveErrorAsString();
