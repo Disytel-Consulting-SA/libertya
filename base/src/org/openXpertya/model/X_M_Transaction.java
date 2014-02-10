@@ -1,13 +1,14 @@
-/** Modelo Generado - NO CAMBIAR MANUALMENTE - Copyright (C) 2006 FUNDESLE */
+/** Modelo Generado - NO CAMBIAR MANUALMENTE - Disytel */
 package org.openXpertya.model;
-import java.util.*;
+import java.util.logging.Level;
+ import java.util.*;
 import java.sql.*;
 import java.math.*;
 import org.openXpertya.util.*;
 /** Modelo Generado por M_Transaction
- *  @author Comunidad de Desarrollo openXpertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
- *  @version  - 2008-01-03 10:26:39.953 */
-public class X_M_Transaction extends PO
+ *  @author Comunidad de Desarrollo Libertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
+ *  @version  - 2014-02-10 11:39:30.005 */
+public class X_M_Transaction extends org.openXpertya.model.PO
 {
 /** Constructor estándar */
 public X_M_Transaction (Properties ctx, int M_Transaction_ID, String trxName)
@@ -17,11 +18,11 @@ super (ctx, M_Transaction_ID, trxName);
 {
 setM_AttributeSetInstance_ID (0);
 setM_Locator_ID (0);
-setM_Product_ID (0);
-setM_Transaction_ID (0);
 setMovementDate (new Timestamp(System.currentTimeMillis()));
 setMovementQty (Env.ZERO);
 setMovementType (null);
+setM_Product_ID (0);
+setM_Transaction_ID (0);
 }
  */
 }
@@ -30,13 +31,13 @@ public X_M_Transaction (Properties ctx, ResultSet rs, String trxName)
 {
 super (ctx, rs, trxName);
 }
-/** AD_Table_ID=329 */
-public static final int Table_ID=329;
+/** AD_Table_ID */
+public static final int Table_ID = M_Table.getTableID("M_Transaction");
 
 /** TableName=M_Transaction */
 public static final String Table_Name="M_Transaction";
 
-protected static KeyNamePair Model = new KeyNamePair(329,"M_Transaction");
+protected static KeyNamePair Model = new KeyNamePair(Table_ID,"M_Transaction");
 protected static BigDecimal AccessLevel = new BigDecimal(1);
 
 /** Load Meta Data */
@@ -66,35 +67,22 @@ Integer ii = (Integer)get_Value("C_ProjectIssue_ID");
 if (ii == null) return 0;
 return ii.intValue();
 }
-/** Set Order BOM Line ID */
-public void setMPC_Order_BOMLine_ID (int MPC_Order_BOMLine_ID)
+/** Set Description.
+Optional short description of the record */
+public void setDescription (String Description)
 {
-if (MPC_Order_BOMLine_ID <= 0) set_Value ("MPC_Order_BOMLine_ID", null);
- else 
-set_Value ("MPC_Order_BOMLine_ID", new Integer(MPC_Order_BOMLine_ID));
+if (Description != null && Description.length() > 255)
+{
+log.warning("Length > 255 - truncated");
+Description = Description.substring(0,255);
 }
-/** Get Order BOM Line ID */
-public int getMPC_Order_BOMLine_ID() 
-{
-Integer ii = (Integer)get_Value("MPC_Order_BOMLine_ID");
-if (ii == null) return 0;
-return ii.intValue();
+set_Value ("Description", Description);
 }
-/** Set Manufacturing Order.
-Manufacturing Order */
-public void setMPC_Order_ID (int MPC_Order_ID)
+/** Get Description.
+Optional short description of the record */
+public String getDescription() 
 {
-if (MPC_Order_ID <= 0) set_Value ("MPC_Order_ID", null);
- else 
-set_Value ("MPC_Order_ID", new Integer(MPC_Order_ID));
-}
-/** Get Manufacturing Order.
-Manufacturing Order */
-public int getMPC_Order_ID() 
-{
-Integer ii = (Integer)get_Value("MPC_Order_ID");
-if (ii == null) return 0;
-return ii.intValue();
+return (String)get_Value("Description");
 }
 /** Set Attribute Set Instance.
 Product Attribute Set Instance */
@@ -172,6 +160,113 @@ Integer ii = (Integer)get_Value("M_MovementLine_ID");
 if (ii == null) return 0;
 return ii.intValue();
 }
+/** Set Movement Date.
+Date a product was moved in or out of inventory */
+public void setMovementDate (Timestamp MovementDate)
+{
+if (MovementDate == null) throw new IllegalArgumentException ("MovementDate is mandatory");
+set_ValueNoCheck ("MovementDate", MovementDate);
+}
+/** Get Movement Date.
+Date a product was moved in or out of inventory */
+public Timestamp getMovementDate() 
+{
+return (Timestamp)get_Value("MovementDate");
+}
+public KeyNamePair getKeyNamePair() 
+{
+return new KeyNamePair(getID(), String.valueOf(getMovementDate()));
+}
+/** Set Movement Quantity.
+Quantity of a product moved. */
+public void setMovementQty (BigDecimal MovementQty)
+{
+if (MovementQty == null) throw new IllegalArgumentException ("MovementQty is mandatory");
+set_ValueNoCheck ("MovementQty", MovementQty);
+}
+/** Get Movement Quantity.
+Quantity of a product moved. */
+public BigDecimal getMovementQty() 
+{
+BigDecimal bd = (BigDecimal)get_Value("MovementQty");
+if (bd == null) return Env.ZERO;
+return bd;
+}
+public static final int MOVEMENTTYPE_AD_Reference_ID = MReference.getReferenceID("M_Transaction Movement Type");
+/** Vendor Receipts = V+ */
+public static final String MOVEMENTTYPE_VendorReceipts = "V+";
+/** Vendor Returns = V- */
+public static final String MOVEMENTTYPE_VendorReturns = "V-";
+/** Inventory Out = I- */
+public static final String MOVEMENTTYPE_InventoryOut = "I-";
+/** Inventory In = I+ */
+public static final String MOVEMENTTYPE_InventoryIn = "I+";
+/** Movement From = M- */
+public static final String MOVEMENTTYPE_MovementFrom = "M-";
+/** Movement To = M+ */
+public static final String MOVEMENTTYPE_MovementTo = "M+";
+/** Customer Shipment = C- */
+public static final String MOVEMENTTYPE_CustomerShipment = "C-";
+/** Customer Returns = C+ */
+public static final String MOVEMENTTYPE_CustomerReturns = "C+";
+/** Work Order + = W+ */
+public static final String MOVEMENTTYPE_WorkOrderPlus = "W+";
+/** Work Order - = W- */
+public static final String MOVEMENTTYPE_WorkOrder_ = "W-";
+/** Production + = P+ */
+public static final String MOVEMENTTYPE_ProductionPlus = "P+";
+/** Production - = P- */
+public static final String MOVEMENTTYPE_Production_ = "P-";
+/** Set Movement Type.
+Method of moving the inventory */
+public void setMovementType (String MovementType)
+{
+if (MovementType.equals("V+") || MovementType.equals("V-") || MovementType.equals("I-") || MovementType.equals("I+") || MovementType.equals("M-") || MovementType.equals("M+") || MovementType.equals("C-") || MovementType.equals("C+") || MovementType.equals("W+") || MovementType.equals("W-") || MovementType.equals("P+") || MovementType.equals("P-"));
+ else throw new IllegalArgumentException ("MovementType Invalid value - Reference = MOVEMENTTYPE_AD_Reference_ID - V+ - V- - I- - I+ - M- - M+ - C- - C+ - W+ - W- - P+ - P-");
+if (MovementType == null) throw new IllegalArgumentException ("MovementType is mandatory");
+if (MovementType.length() > 2)
+{
+log.warning("Length > 2 - truncated");
+MovementType = MovementType.substring(0,2);
+}
+set_ValueNoCheck ("MovementType", MovementType);
+}
+/** Get Movement Type.
+Method of moving the inventory */
+public String getMovementType() 
+{
+return (String)get_Value("MovementType");
+}
+/** Set Order BOM Line ID */
+public void setMPC_Order_BOMLine_ID (int MPC_Order_BOMLine_ID)
+{
+if (MPC_Order_BOMLine_ID <= 0) set_Value ("MPC_Order_BOMLine_ID", null);
+ else 
+set_Value ("MPC_Order_BOMLine_ID", new Integer(MPC_Order_BOMLine_ID));
+}
+/** Get Order BOM Line ID */
+public int getMPC_Order_BOMLine_ID() 
+{
+Integer ii = (Integer)get_Value("MPC_Order_BOMLine_ID");
+if (ii == null) return 0;
+return ii.intValue();
+}
+/** Set Manufacturing Order.
+Manufacturing Order */
+public void setMPC_Order_ID (int MPC_Order_ID)
+{
+if (MPC_Order_ID <= 0) set_Value ("MPC_Order_ID", null);
+ else 
+set_Value ("MPC_Order_ID", new Integer(MPC_Order_ID));
+}
+/** Get Manufacturing Order.
+Manufacturing Order */
+public int getMPC_Order_ID() 
+{
+Integer ii = (Integer)get_Value("MPC_Order_ID");
+if (ii == null) return 0;
+return ii.intValue();
+}
 /** Set Product.
 Product, Service, Item */
 public void setM_Product_ID (int M_Product_ID)
@@ -213,82 +308,5 @@ public int getM_Transaction_ID()
 Integer ii = (Integer)get_Value("M_Transaction_ID");
 if (ii == null) return 0;
 return ii.intValue();
-}
-/** Set Movement Date.
-Date a product was moved in or out of inventory */
-public void setMovementDate (Timestamp MovementDate)
-{
-if (MovementDate == null) throw new IllegalArgumentException ("MovementDate is mandatory");
-set_ValueNoCheck ("MovementDate", MovementDate);
-}
-/** Get Movement Date.
-Date a product was moved in or out of inventory */
-public Timestamp getMovementDate() 
-{
-return (Timestamp)get_Value("MovementDate");
-}
-public KeyNamePair getKeyNamePair() 
-{
-return new KeyNamePair(getID(), String.valueOf(getMovementDate()));
-}
-/** Set Movement Quantity.
-Quantity of a product moved. */
-public void setMovementQty (BigDecimal MovementQty)
-{
-if (MovementQty == null) throw new IllegalArgumentException ("MovementQty is mandatory");
-set_ValueNoCheck ("MovementQty", MovementQty);
-}
-/** Get Movement Quantity.
-Quantity of a product moved. */
-public BigDecimal getMovementQty() 
-{
-BigDecimal bd = (BigDecimal)get_Value("MovementQty");
-if (bd == null) return Env.ZERO;
-return bd;
-}
-public static final int MOVEMENTTYPE_AD_Reference_ID=189;
-/** Production + = P+ */
-public static final String MOVEMENTTYPE_ProductionPlus = "P+";
-/** Production - = P- */
-public static final String MOVEMENTTYPE_Production_ = "P-";
-/** Customer Shipment = C- */
-public static final String MOVEMENTTYPE_CustomerShipment = "C-";
-/** Customer Returns = C+ */
-public static final String MOVEMENTTYPE_CustomerReturns = "C+";
-/** Work Order + = W+ */
-public static final String MOVEMENTTYPE_WorkOrderPlus = "W+";
-/** Work Order - = W- */
-public static final String MOVEMENTTYPE_WorkOrder_ = "W-";
-/** Vendor Receipts = V+ */
-public static final String MOVEMENTTYPE_VendorReceipts = "V+";
-/** Vendor Returns = V- */
-public static final String MOVEMENTTYPE_VendorReturns = "V-";
-/** Inventory Out = I- */
-public static final String MOVEMENTTYPE_InventoryOut = "I-";
-/** Inventory In = I+ */
-public static final String MOVEMENTTYPE_InventoryIn = "I+";
-/** Movement From = M- */
-public static final String MOVEMENTTYPE_MovementFrom = "M-";
-/** Movement To = M+ */
-public static final String MOVEMENTTYPE_MovementTo = "M+";
-/** Set Movement Type.
-Method of moving the inventory */
-public void setMovementType (String MovementType)
-{
-if (MovementType.equals("P+") || MovementType.equals("P-") || MovementType.equals("C-") || MovementType.equals("C+") || MovementType.equals("W+") || MovementType.equals("W-") || MovementType.equals("V+") || MovementType.equals("V-") || MovementType.equals("I-") || MovementType.equals("I+") || MovementType.equals("M-") || MovementType.equals("M+"));
- else throw new IllegalArgumentException ("MovementType Invalid value - Reference_ID=189 - P+ - P- - C- - C+ - W+ - W- - V+ - V- - I- - I+ - M- - M+");
-if (MovementType == null) throw new IllegalArgumentException ("MovementType is mandatory");
-if (MovementType.length() > 2)
-{
-log.warning("Length > 2 - truncated");
-MovementType = MovementType.substring(0,1);
-}
-set_ValueNoCheck ("MovementType", MovementType);
-}
-/** Get Movement Type.
-Method of moving the inventory */
-public String getMovementType() 
-{
-return (String)get_Value("MovementType");
 }
 }
