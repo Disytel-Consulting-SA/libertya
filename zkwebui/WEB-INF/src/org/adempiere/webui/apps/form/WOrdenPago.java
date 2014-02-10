@@ -730,9 +730,17 @@ public class WOrdenPago extends ADForm implements ValueChangeListener, TableMode
 			mpc.chequera_ID = (Integer)chequeChequera.getValue();
 		} catch (Exception e) {
 			throw new Exception(lblChequeChequera.getValue());
-		}		
-		mpc.fechaEm = Timestamp.valueOf(chequeFechaEmision.getValue().toString());
-		mpc.fechaPago = Timestamp.valueOf(chequeFechaPago.getValue().toString());
+		}	
+		try {
+			mpc.fechaEm = Timestamp.valueOf(chequeFechaEmision.getValue().toString());			
+		} catch (Exception e) {
+			throw new Exception("@Invalid@ @EmittingDate@");
+		}
+		try {
+			mpc.fechaPago = Timestamp.valueOf(chequeFechaPago.getValue().toString());
+		} catch (Exception e) {
+			throw new Exception("@Invalid@ @PayDate@");
+		}
 		try {	    		
 			mpc.importe = numberParse(txtChequeImporte.getText());
 		} catch (Exception e) {
@@ -742,7 +750,8 @@ public class WOrdenPago extends ADForm implements ValueChangeListener, TableMode
 		mpc.banco = txtChequeBanco.getText().trim();
 		mpc.cuitLibrador = txtChequeCUITLibrador.getText().trim();
 		mpc.descripcion = txtChequeDescripcion.getText().trim();
-		
+		Timestamp today = new Timestamp(System.currentTimeMillis());
+		mpc.dateTrx = mpc.fechaPago.before(today)?mpc.fechaPago:today;
 		// A La Orden: Campo no obligatorio
 		//
 		// if (mpc.aLaOrden.trim().equals(""))
@@ -1147,7 +1156,7 @@ public class WOrdenPago extends ADForm implements ValueChangeListener, TableMode
     protected WTableDirEditor cboProject;
     protected WTableDirEditor cboCurrency;
     
-    protected WTableDirEditor chequeChequera;
+    protected WSearchEditor chequeChequera;
     protected WDateEditor chequeFechaEmision;
     protected WDateEditor chequeFechaPago;
     protected Button cmdCancel;
@@ -1852,10 +1861,10 @@ public class WOrdenPago extends ADForm implements ValueChangeListener, TableMode
 		return m_model;
 	}
 	
-	protected WTableDirEditor createChequeChequeraLookup() {
-		MLookupInfo info = VComponentsFactory.MLookupInfoFactory( Env.getCtx(),m_WindowNo, 0, 6188, DisplayType.TableDir, m_model.getChequeChequeraSqlValidation());
+	protected WSearchEditor createChequeChequeraLookup() {
+		MLookupInfo info = VComponentsFactory.MLookupInfoFactory( Env.getCtx(),m_WindowNo, 0, 6188, DisplayType.Search, m_model.getChequeChequeraSqlValidation());
 		MLookup lookup = new MLookup(info, 0);
-		return new WTableDirEditor("C_BankAccountDoc_ID", false, false, true, lookup);
+		return new WSearchEditor("C_BankAccountDoc_ID", false, false, true, lookup);
 	}
 
 	protected WSearchEditor createChequeBancoIDLookup() {

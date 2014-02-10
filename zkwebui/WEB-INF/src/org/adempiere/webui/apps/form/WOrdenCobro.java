@@ -146,11 +146,11 @@ public class WOrdenCobro extends WOrdenPago {
 	}
 
 	@Override
-	protected WTableDirEditor createChequeChequeraLookup() {
+	protected WSearchEditor createChequeChequeraLookup() {
 		// return VComponentsFactory.VLookupFactory("C_BankAccount_ID", "C_BankAccount", m_WindowNo, DisplayType.TableDir, getModel().getChequeChequeraSqlValidation());
         MLookupInfo infoTransf = VComponentsFactory.MLookupInfoFactory(Env.getCtx(),m_WindowNo, 0, 3077, DisplayType.TableDir, m_model.getChequeChequeraSqlValidation());
 		MLookup lookupTransf = new MLookup(infoTransf, 0);
-		return new WTableDirEditor( "C_BankAccount_ID",false,false,true,lookupTransf );
+		return new WSearchEditor( "C_BankAccount_ID",false,false,true,lookupTransf );
 	}
 
 	@Override
@@ -1060,9 +1060,13 @@ public class WOrdenCobro extends WOrdenPago {
 		}
 		try {
 			new Timestamp(((Date)chequeFechaEmision.getValue()).getTime());
+		} catch (Exception e) {
+			throw new Exception("@Invalid@ @EmittingDate@");
+		}
+		try {
 			new Timestamp(((Date)chequeFechaPago.getValue()).getTime());
 		} catch (Exception e) {
-			throw new Exception("@Invalid@ @Date@");
+			throw new Exception("@Invalid@ @PayDate@");
 		}
 		getCobroModel().addCheck(paymentMedium,
 				(Integer) chequeChequera.getValue(),
