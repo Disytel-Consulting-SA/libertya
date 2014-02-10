@@ -3251,14 +3251,14 @@ public class PoSOnline extends PoSConnectionState {
 			"FROM C_POSJournal " +
 			"WHERE AD_Org_ID = ? " +
 			  "AND AD_User_ID = ? " +
-			  "AND DateTrx = ? " +
+			  "AND DateTrx::date = ?::date " +
 			  "AND DocStatus = ? ";
 		
 		PreparedStatement pstmt = null;
 		ResultSet rs = null;
 		
 		try {
-			pstmt = DB.prepareStatement(sql);
+			pstmt = DB.prepareStatement(sql, null, true);
 			int i = 1;
 			pstmt.setInt(i++, orgID);
 			pstmt.setInt(i++, userID);
