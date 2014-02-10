@@ -149,7 +149,8 @@ public class MProjectIssue extends X_C_ProjectIssue {
         MTransaction mTrx = new MTransaction( getCtx(),MTransaction.MOVEMENTTYPE_WorkOrderPlus,getM_Locator_ID(),getM_Product_ID(),getM_AttributeSetInstance_ID(),getMovementQty().negate(),getMovementDate(),get_TrxName());
 
         mTrx.setC_ProjectIssue_ID( getC_ProjectIssue_ID());
-
+        mTrx.setDescription("MProjectIssue.complete() - 1st Transaction Save - Transaction of MTransaction "
+				+ mTrx.get_TrxName());
         //
 
         MLocator loc = MLocator.get( getCtx(),getM_Locator_ID());

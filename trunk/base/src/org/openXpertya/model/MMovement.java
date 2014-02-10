@@ -510,7 +510,8 @@ public class MMovement extends X_M_Movement implements DocAction {
                     trxFrom = new MTransaction( getCtx(),MTransaction.MOVEMENTTYPE_MovementFrom,line.getM_Locator_ID(),line.getM_Product_ID(),ma.getM_AttributeSetInstance_ID(),ma.getMovementQty().negate(),getMovementDate(),get_TrxName());
                     trxFrom.setM_MovementLine_ID( line.getM_MovementLine_ID());
                     trxFrom.setClientOrg(this);
-
+                    trxFrom.setDescription("MMovement.complete() - 1st Transaction Save - Transaction of MTransaction "
+							+ trxFrom.get_TrxName());
                     if( !trxFrom.save()) {
                         m_processMsg = "Transaction From not inserted (MA)";
 
@@ -523,7 +524,8 @@ public class MMovement extends X_M_Movement implements DocAction {
 
                     trxTo.setM_MovementLine_ID( line.getM_MovementLine_ID());
                     trxTo.setClientOrg(this);
-                    
+                    trxTo.setDescription("MMovement.complete() - 2nd Transaction Save - Transaction of MTransaction "
+							+ trxTo.get_TrxName());
                     if( !trxTo.save()) {
                         m_processMsg = "Transaction To not inserted (MA)";
 
@@ -574,7 +576,8 @@ public class MMovement extends X_M_Movement implements DocAction {
                 trxFrom = new MTransaction( getCtx(),MTransaction.MOVEMENTTYPE_MovementFrom,line.getM_Locator_ID(),line.getM_Product_ID(),line.getM_AttributeSetInstance_ID(),line.getMovementQty().negate(),getMovementDate(),get_TrxName());
                 trxFrom.setM_MovementLine_ID( line.getM_MovementLine_ID());
                 trxFrom.setClientOrg(this);
-
+                trxFrom.setDescription("MMovement.complete() - 3rd Transaction Save - Transaction of MTransaction "
+						+ trxFrom.get_TrxName());
                 if( !trxFrom.save()) {
                     m_processMsg = "Transaction From not inserted";
 
@@ -587,7 +590,9 @@ public class MMovement extends X_M_Movement implements DocAction {
 
                 trxTo.setM_MovementLine_ID( line.getM_MovementLine_ID());
                 trxTo.setClientOrg(this);
-
+                trxTo.setDescription("MMovement.complete() - 4th Transaction Save - Transaction of MTransaction "
+						+ trxTo.get_TrxName());
+                
                 if( !trxTo.save()) {
                     m_processMsg = "Transaction To not inserted";
 

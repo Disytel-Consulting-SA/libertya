@@ -6524,3 +6524,6 @@ ALTER TABLE i_bankstatement ADD COLUMN haber numeric(20,2) DEFAULT 0;
 
 --20140116 Agrego campo chargevalue a tabla i_bankstatement
 ALTER TABLE i_bankstatement ADD COLUMN chargevalue character varying(60);
+
+--20140210-1115 Incorporación de campo descripción para, en principio, registrar las transacciones creadas y detectar posibles problemas
+update ad_system set dummy = (SELECT addcolumnifnotexists('M_Transaction','description', 'character varying(255)'));

@@ -685,6 +685,8 @@ public class MInventory extends X_M_Inventory implements DocAction {
 	                trx = new MTransaction( getCtx(),MTransaction.MOVEMENTTYPE_InventoryIn,line.getM_Locator_ID(),line.getM_Product_ID(),line.getM_AttributeSetInstance_ID(),qtyDiff,getMovementDate(),get_TrxName());
 	                trx.setM_InventoryLine_ID( line.getM_InventoryLine_ID());
 	                trx.setClientOrg(this);
+	                trx.setDescription("MInventory.complete() - 1st Transaction Save - Transaction of MTransaction "
+							+ trx.get_TrxName());
 	                
 	                if( !trx.save()) {
 	                    m_processMsg = "Transaction not inserted";
@@ -726,7 +728,8 @@ public class MInventory extends X_M_Inventory implements DocAction {
 							get_TrxName());
 	                trx.setM_InventoryLine_ID( line.getM_InventoryLine_ID());
 	                trx.setClientOrg(this);
-	                
+	                trx.setDescription("MInventory.complete() - 2nd Transaction Save - Transaction of MTransaction "
+							+ trx.get_TrxName());
 	                if( !trx.save()) {
 	                    m_processMsg = "Transaction not inserted";
 	                    return DocAction.STATUS_Invalid;
@@ -755,7 +758,8 @@ public class MInventory extends X_M_Inventory implements DocAction {
 							get_TrxName());
 	                trx.setM_InventoryLine_ID( line.getM_InventoryLine_ID());
 	                trx.setClientOrg(this);
-	                
+	                trx.setDescription("MInventory.complete() - 3rd Transaction Save - Transaction of MTransaction "
+							+ trx.get_TrxName());
 	                if( !trx.save()) {
 	                    m_processMsg = "Transaction not inserted";
 	                    return DocAction.STATUS_Invalid;

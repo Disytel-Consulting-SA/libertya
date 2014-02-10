@@ -296,7 +296,9 @@ public class MMPCCostCollector extends X_MPC_Cost_Collector implements DocAction
                     mtrx	= new MTransaction(getCtx(), MovementType, getM_Locator_ID(), getM_Product_ID(), ma.getM_AttributeSetInstance_ID(), QtyMA, getMovementDate(), get_TrxName());
                     mtrx.setMPC_Order_ID(getMPC_Order_ID());
                     mtrx.setMPC_Order_BOMLine_ID(getMPC_Order_BOMLine_ID());
-
+                    mtrx.setDescription(get_TableName()+".complete() - 1st Transaction Save - Transaction of MTransaction "
+            				+ mtrx.get_TrxName());
+                    
                     if (!mtrx.save(get_TrxName())) {
 
                         m_processMsg	= "Could not create Material Transaction (MA)";
@@ -321,7 +323,8 @@ public class MMPCCostCollector extends X_MPC_Cost_Collector implements DocAction
                 mtrx	= new MTransaction(getCtx(), MovementType, getM_Locator_ID(), getM_Product_ID(), getM_AttributeSetInstance_ID(), Qty, getMovementDate(), get_TrxName());
                 mtrx.setMPC_Order_ID(getMPC_Order_ID());
                 mtrx.setMPC_Order_BOMLine_ID(getMPC_Order_BOMLine_ID());
-
+                mtrx.setDescription(get_TableName()+".complete() - 2nd Transaction Save - Transaction of MTransaction "
+        				+ mtrx.get_TrxName());
                 if (!mtrx.save(get_TrxName())) {
 
                     m_processMsg	= "Could not create Material Transaction";

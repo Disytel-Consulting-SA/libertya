@@ -2350,7 +2350,10 @@ public class MInOut extends X_M_InOut implements DocAction {
                          * Fin adición Matías Cap - Disytel
                          */
                         mtrx.setM_InOutLine_ID( sLine.getM_InOutLine_ID());
-
+                        
+						mtrx.setDescription("MInOut.complete() - 1st Transaction Save - Transaction of MTransaction "
+								+ mtrx.get_TrxName()+ " - MInOutLineMA created "+ma.getCreated()+" , updated "+ma.getUpdated() );
+                        
                         if( !mtrx.save()) {
                             m_processMsg = Msg.translate(getCtx(), "CouldNoCreateMaterialTransaction");
 
@@ -2432,6 +2435,9 @@ public class MInOut extends X_M_InOut implements DocAction {
                      */
                     mtrx.setM_InOutLine_ID( sLine.getM_InOutLine_ID());
 
+                    mtrx.setDescription("MInOut.complete() - 2nd Transaction Save - Transaction of MTransaction "
+								+ mtrx.get_TrxName());
+                    
                     if( !mtrx.save()) {
                         m_processMsg = "Could not create Material Transaction";
 
