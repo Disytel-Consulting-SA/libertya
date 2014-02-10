@@ -288,18 +288,21 @@ public class MInvoiceLine extends X_C_InvoiceLine {
 	        setC_Tax_ID( oLine.getC_Tax_ID());
 	        // Descuento a nivel de línea
 	        if(isDragLineDiscountAmts()){
+	        	Integer tmpPrecision = 10;
 	        	BigDecimal lineDiscountRate = Util.getDiscountRate(oLine
 						.getPriceList().multiply(oLine.getQtyOrdered()), oLine
-						.getLineDiscountAmt(), invoiceCurrency
-						.getStdPrecision());
+						.getLineDiscountAmt(), tmpPrecision);
 	        	BigDecimal bonusDiscountRate = Util.getDiscountRate(oLine
 						.getPriceList().multiply(oLine.getQtyOrdered()), oLine
-						.getLineBonusAmt(), invoiceCurrency
-						.getStdPrecision());
+						.getLineBonusAmt(), tmpPrecision);
 	        	
 	        	BigDecimal totalPriceList = getPriceList().multiply(getQtyInvoiced());
-				setLineBonusAmt(totalPriceList.multiply(bonusDiscountRate));
-		        setLineDiscountAmt(totalPriceList.multiply(lineDiscountRate));
+				setLineBonusAmt((totalPriceList.multiply(bonusDiscountRate))
+						.setScale(invoiceCurrency.getStdPrecision(),
+								BigDecimal.ROUND_HALF_UP));
+				setLineDiscountAmt((totalPriceList.multiply(lineDiscountRate))
+						.setScale(invoiceCurrency.getStdPrecision(),
+								BigDecimal.ROUND_HALF_UP));
 		        if(!isDragOrderPrice()){
 					setPrice(getPriceEntered().subtract(
 							getPriceList().multiply(
@@ -308,12 +311,14 @@ public class MInvoiceLine extends X_C_InvoiceLine {
 	        }
 	        // Descuento a nivel de documento
 	        if(isDragDocumentDiscountAmts()){
+	        	Integer tmpPrecision = 10;
 				BigDecimal documentDiscountRate = Util.getDiscountRate(oLine
 						.getPriceEntered().multiply(oLine.getQtyOrdered()), oLine
-						.getDocumentDiscountAmt(), invoiceCurrency
-						.getStdPrecision());
-				setDocumentDiscountAmt(getPriceEntered().multiply(
-						getQtyInvoiced()).multiply(documentDiscountRate));
+						.getDocumentDiscountAmt(), tmpPrecision);
+				setDocumentDiscountAmt((getPriceEntered().multiply(
+						getQtyInvoiced()).multiply(documentDiscountRate))
+						.setScale(invoiceCurrency.getStdPrecision(),
+								BigDecimal.ROUND_HALF_UP));
 	        }
 	        
 			if (isDragDocumentDiscountAmts()
