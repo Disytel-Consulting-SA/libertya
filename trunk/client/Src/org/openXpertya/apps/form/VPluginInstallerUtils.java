@@ -99,49 +99,49 @@ public class VPluginInstallerUtils  {
 	 * Finalización del proceso de instalación de un plugin (con existencia de postInstall)
 	 * Debe manejar las excepciones correspondientes
 	 */
-	public static void performInstallFinalize(ProcessInfo pi, VPluginInstaller invoker, Properties m_component_props)
+	public static void performInstallFinalize(ProcessInfo pi, VPluginInstaller invoker, Properties m_component_props) throws Exception
 	{
-		try
-		{
-			/* Indicar que no hubo post instalacion */
-			if (pi == null)
-				PluginUtils.appendStatus("Sin post instalacion");
-			
-			/* Contemplar error al ejecutar el proceso de postInstall */
-			if (pi != null && pi.isError())
-				throw new Exception(" Excepcion al ejecutar postInstall - " + pi.getSummary());
-
-			// Almacenar la longitud del log de errores luego de la post-instalacion
-			if (PluginUtils.getErrorStatus() != null && PluginUtils.getErrorStatus().length()>0)
-				postInstallErrorsLength = PluginUtils.getErrorStatus().length();
-
-			// Hubo errores en instalacion o en postinstalacion?
-			boolean errorsOnInstall = installErrorsLength > 0;
-			boolean errorsOnPostInstall = postInstallErrorsLength - installErrorsLength > 0; 
-			boolean errors = errorsOnInstall || errorsOnPostInstall;
-			
-			/* Si hubo errores, solo commitear si corresponde */
-			if (errors && !invoker.confirmCommit(errorsOnInstall, errorsOnPostInstall)) {
-				invoker.handleException("Instalación cancelada.", new Exception(" Instalación cancelada debido a errores en: " + (errorsOnInstall?"INSTALL":"") + " " + (errorsOnPostInstall?"POSTINSTALL":"")));
-				return;
-			}
-			
-			/* Finalizar la transacción y resetear componente global */
-			if (m_trx!=null) {
-				Trx.getTrx(m_trx).commit();
-				Trx.getTrx(m_trx).close();
-				m_trx=null;
-			}
-			PluginUtils.stopInstalation();
+		// Hubo errores en instalacion o en postinstalacion?
+		boolean errorsOnInstall = false;
+		boolean errorsOnPostInstall = false; 
+		boolean errors = false;
 		
-			/* Informar todo OK */
-			PluginUtils.appendStatus(" === Instalación finalizada " + (errors?"con errores":"") + " === ");
-			writeInstallLog(m_component_props);
+		/* Indicar que no hubo post instalacion */
+		if (pi == null)
+			PluginUtils.appendStatus("Sin post instalacion");
+		
+		/* Contemplar error al ejecutar el proceso de postInstall */
+		if (pi != null && pi.isError()) {
+			errorsOnPostInstall = true;
+			throw new Exception(" Excepcion al ejecutar postInstall - " + pi.getSummary());
 		}
-		catch (Exception e)
-		{
-			invoker.handleException("Error al realizar la post-instalación: ", e);	
+
+		// Almacenar la longitud del log de errores luego de la post-instalacion
+		if (PluginUtils.getErrorStatus() != null && PluginUtils.getErrorStatus().length()>0)
+			postInstallErrorsLength = PluginUtils.getErrorStatus().length();
+
+		// Hubo errores en instalacion o en postinstalacion?
+		errorsOnInstall = installErrorsLength > 0;
+		errorsOnPostInstall = postInstallErrorsLength - installErrorsLength > 0; 
+		errors = errorsOnInstall || errorsOnPostInstall;
+		
+		/* Si hubo errores, solo commitear si corresponde */
+		if (errors && !invoker.confirmCommit(errorsOnInstall, errorsOnPostInstall)) {
+			invoker.handleException("Instalación cancelada.", new Exception(" Instalación cancelada debido a errores en: " + (errorsOnInstall?"INSTALL":"") + " " + (errorsOnPostInstall?"POSTINSTALL":"")));
+			return;
 		}
+		
+		/* Finalizar la transacción y resetear componente global */
+		if (m_trx!=null) {
+			Trx.getTrx(m_trx).commit();
+			Trx.getTrx(m_trx).close();
+			m_trx=null;
+		}
+		PluginUtils.stopInstalation();
+	
+		/* Informar todo OK */
+		PluginUtils.appendStatus(" === Instalación finalizada " + (errors?"con errores":"") + " === ");
+		writeInstallLog(m_component_props);
 	}
 
 	

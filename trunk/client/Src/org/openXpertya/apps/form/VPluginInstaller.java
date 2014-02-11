@@ -22,6 +22,7 @@ import org.compiere.swing.CTextPane;
 import org.openXpertya.apps.ADialog;
 import org.openXpertya.apps.SwingWorker;
 import org.openXpertya.grid.ed.VFile;
+import org.openXpertya.model.MSequence;
 import org.openXpertya.plugin.common.PluginConstants;
 import org.openXpertya.plugin.common.PluginUtils;
 import org.openXpertya.plugin.common.PluginUtils.PluginStatusListener;
@@ -355,7 +356,8 @@ public class VPluginInstaller extends CPanel implements FormPanel, ASyncProcess 
 			Env.setContext(m_ctx, PluginConstants.PROP_COPY_TO_CHANGELOG, "N");
 			Env.setContext(m_ctx, PluginConstants.MAP_TO_COMPONENT, "N");
 			Env.setContext(m_ctx, PluginConstants.COMPONENT_SOURCE_PREFIX, "");
-			ReplicationCache.mappedUIDs = new HashMap<String, String>();;
+			ReplicationCache.mappedUIDs = new HashMap<String, String>();
+			MSequence.resetCache();
 		}
 		
 	}
