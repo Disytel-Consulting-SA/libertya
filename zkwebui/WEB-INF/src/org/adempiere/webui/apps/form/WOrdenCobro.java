@@ -179,10 +179,8 @@ public class WOrdenCobro extends WOrdenPago {
 		checkPayAll.setText(Msg.getMsg(m_ctx, "ReceiptAll") /* + " "
 				+ KeyUtils.getKeyStr(getActionKeys().get(GOTO_PAYALL)) */ );
 
-		// FEDE:TODO esto quizás debe estar en zkinit
 		tabPaymentSelection = new Tab(Msg.getMsg(Env.getCtx(), "CustomerPaymentSelection"));  // jTabbedPane1.setTitleAt(0, Msg.translate(m_ctx, "CustomerPaymentSelection"));
 		tabPaymentRule = new Tab(Msg.getMsg(Env.getCtx(), "CustomerPaymentRule")); // jTabbedPane1.setTitleAt(1, Msg.translate(m_ctx, "CustomerPaymentRule"));
-		//
 		
 		lblBPartnerDiscount.setValue(Msg.translate(m_ctx, "M_DiscountSchema_ID"));
 		lblPOS.setValue(Msg.translate(m_ctx, "RealPOS"));
@@ -1455,7 +1453,8 @@ public class WOrdenCobro extends WOrdenPago {
 		if (getCobroModel().LOCALE_AR_ACTIVE) {
 			Integer pos = getCobroModel().getPOS();
 			boolean existsPOS = !Util.isEmpty(pos, true);
-			txtPOS.setValue(Integer.toString(pos));
+			if (pos!=null)
+				txtPOS.setValue(Integer.toString(pos));
 			txtPOS.setReadonly(existsPOS);  // txtPOS.setReadWrite(!existsPOS);
 			// Mensaje dialog en caso que sea posible obtener automáticamente un
 			// nro de pto de venta pero no existe ninguno
