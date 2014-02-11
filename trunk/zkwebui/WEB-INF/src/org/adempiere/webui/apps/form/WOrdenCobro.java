@@ -265,6 +265,11 @@ public class WOrdenCobro extends WOrdenPago {
 	protected void addCustomOperationAfterTabsDefinition() {
 		// Inicializar las relaciones de los tender types con las pestañas
 		initializeTenderTypeTabsRelations();
+		// Por defecto deshabilitar todas las pestañas
+		int tabCount = mpTabs.getChildren().size();
+		for (int i = 0; i < tabCount; i++) {
+			((Tab)(mpTabs.getChildren().get(i))).setDisabled(true);
+		}
 		// Habilito/Deshabilito las pestañas que no esten relacionadas con el
 		// tender type actual
 		if (cboTenderType.getSelectedIndex() >= 0) {
@@ -749,7 +754,8 @@ public class WOrdenCobro extends WOrdenPago {
 		});
 		
 		// Selecciono uno por default
-		cboTenderType.setSelectedIndex(0);  // setSelectedItem(MPOSPaymentMedium.TENDERTYPE_Cash);
+		if (cboTenderType.getItemCount() > 0)
+			cboTenderType.setSelectedIndex(0);  // setSelectedItem(MPOSPaymentMedium.TENDERTYPE_Cash);
 		// Layout del panel
 	}
 
