@@ -172,7 +172,7 @@ public class WOrdenPago extends ADForm implements ValueChangeListener, TableMode
 		rInvoiceAll = new Radio();
 		rInvoiceDate = new Radio();
 
-        invoiceDatePick = new Datebox();
+        invoiceDatePick = new WDateEditor();
 
         cmdEliminar = new Button();
         cmdEditar = new Button();
@@ -903,13 +903,13 @@ public class WOrdenPago extends ADForm implements ValueChangeListener, TableMode
 
     private void onFechaChange(boolean toPayMoment) {//GEN-FIRST:event_onFechaChange
     	if (rInvoiceAll.isSelected()) {
-    		invoiceDatePick.setValue(new Date());
-    		invoiceDatePick.setReadonly(true); // setReadWrite(false);
+    		invoiceDatePick.getComponent().setValue(new Date());
+    		invoiceDatePick.setReadWrite(false); // Readonly(true); // setReadWrite(false);
     	} else {
-    		invoiceDatePick.setReadonly(false); // ReadWrite(true);
+    		invoiceDatePick.setReadWrite(true); // Readonly(false); // ReadWrite(true);
     	}
     	
-    	m_model.setFechaTablaFacturas(new Timestamp(((Date)invoiceDatePick.getValue()).getTime()), rInvoiceAll.isSelected());
+    	m_model.setFechaTablaFacturas(new Timestamp(((Date)invoiceDatePick.getComponent().getValue()).getTime()), rInvoiceAll.isSelected());
     	updatePayAllInvoices(toPayMoment);
     }//GEN-LAST:event_onFechaChange
 
@@ -985,7 +985,8 @@ public class WOrdenPago extends ADForm implements ValueChangeListener, TableMode
     			showError("@SaveErrorNotUnique@ \n\n" + lblTotalPagar1.getValue());
     			
         		txtTotalPagar1.setFocus(true); // .requestFocusInWindow();
-        		txtTotalPagar1.getValue().substring(0, txtTotalPagar1.getText().length() - 1); // .select(0, txtTotalPagar1.getText().length() - 1);
+        		if (txtTotalPagar1.getText().trim().length() > 0) 
+        			txtTotalPagar1.getText().substring(0, txtTotalPagar1.getText().length() - 1); // .select(0, txtTotalPagar1.getText().length() - 1);
         		
         		return;
     		}
@@ -1168,7 +1169,7 @@ public class WOrdenPago extends ADForm implements ValueChangeListener, TableMode
  
     protected WSearchEditor efectivoLibroCaja;    
     
-    protected Datebox invoiceDatePick;
+    protected WDateEditor invoiceDatePick;
     protected Grid jPanel1;
     
     // Tabs
@@ -1325,7 +1326,7 @@ public class WOrdenPago extends ADForm implements ValueChangeListener, TableMode
 		
 		Date d = new Date();
 		
-		invoiceDatePick.setValue(d);
+		invoiceDatePick.getComponent().setValue(d);
 		
 		
 		clearMediosPago();
@@ -1353,7 +1354,7 @@ public class WOrdenPago extends ADForm implements ValueChangeListener, TableMode
 		
 		chequeFechaEmision.addValueChangeListener(this);
 		chequeFechaPago.addValueChangeListener(this);
-		invoiceDatePick.addEventListener("onClick", this); // addValueChangeListener(this);
+		invoiceDatePick.addValueChangeListener(this); // addValueChangeListener(this);
 		transFecha.addValueChangeListener(this);
 		
 		tblFacturas.addEventListener("onChange", this); // addValueChangeListener(this);
@@ -2640,7 +2641,7 @@ public class WOrdenPago extends ADForm implements ValueChangeListener, TableMode
 		
 		Div divButtonGroup2 = new Div();
 		divButtonGroup2.appendChild(buttonGroup2);
-		divButtonGroup2.appendChild(invoiceDatePick);
+		divButtonGroup2.appendChild(invoiceDatePick.getComponent());
 		
 		Div divTxtEfectivoImporte = new Div();
 		setDivTxtTotal(divTxtEfectivoImporte);
