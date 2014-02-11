@@ -2672,12 +2672,10 @@ public class MTable extends AbstractTableModel implements Serializable {
             {
                 if( (rowData[ i ] == null) || (rowData[ i ].toString().length() == 0) ) {
 					if (m_indexProcessedColumn < 0
-							|| (m_indexProcessedColumn >= 0 && !((Boolean) rowData[m_indexProcessedColumn])
-									.booleanValue())
+							|| (m_indexProcessedColumn >= 0 && !("Y".equals(rowData[m_indexProcessedColumn])) )
 							|| (m_indexProcessedColumn >= 0
-									&& ((Boolean) rowData[m_indexProcessedColumn])
-											.booleanValue() && field
-										.isAlwaysUpdateable())) {
+									&& ("Y".equals(rowData[m_indexProcessedColumn]))
+									&& field.isAlwaysUpdateable())) {
 	                    field.setInserting( true );    // set editable otherwise deadlock
 	                    field.setError( true );
 	
