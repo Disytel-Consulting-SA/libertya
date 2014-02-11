@@ -6527,3 +6527,19 @@ ALTER TABLE i_bankstatement ADD COLUMN chargevalue character varying(60);
 
 --20140210-1115 Incorporación de campo descripción para, en principio, registrar las transacciones creadas y detectar posibles problemas
 update ad_system set dummy = (SELECT addcolumnifnotexists('M_Transaction','description', 'character varying(255)'));
+
+--20140211-1255 Cambio en la vista rv_openitem para que sea compatible con las distintas versiones de PostgreSQL
+CREATE OR REPLACE VIEW libertya.rv_openitem AS 
+         SELECT i.ad_org_id, i.ad_client_id, i.documentno, i.c_invoice_id, i.c_order_id, i.c_bpartner_id, i.issotrx, i.dateinvoiced, p.netdays, i.dateinvoiced + ((p.netdays::text || ' days'::text)::interval) AS duedate, libertya.paymenttermduedays(i.c_paymentterm_id, i.dateinvoiced::timestamp with time zone, now()) AS daysdue, i.dateinvoiced + ((p.discountdays::text || ' days'::text)::interval) AS discountdate, round(i.grandtotal * p.discount / 100::numeric, 2) AS discountamt, i.grandtotal, libertya.invoicepaid(i.c_invoice_id, i.c_currency_id, 1) AS paidamt, libertya.invoiceopen(i.c_invoice_id, 0) AS openamt, i.c_currency_id, i.c_conversiontype_id, i.ispayschedulevalid, NULL::unknown AS c_invoicepayschedule_id, i.c_paymentterm_id, i.c_doctypetarget_id, i.docstatus
+           FROM libertya.rv_c_invoice i
+      JOIN libertya.c_paymentterm p ON i.c_paymentterm_id = p.c_paymentterm_id
+     WHERE libertya.invoiceopen(i.c_invoice_id, 0) <> 0::numeric AND i.ispayschedulevalid <> 'Y'::bpchar AND i.docstatus <> 'DR'::bpchar
+UNION 
+         SELECT i.ad_org_id, i.ad_client_id, i.documentno, i.c_invoice_id, i.c_order_id, i.c_bpartner_id, i.issotrx, i.dateinvoiced, libertya.to_days(ips.duedate) - libertya.to_days(i.dateinvoiced) AS netdays, ips.duedate, libertya.to_days(now()::timestamp without time zone) - libertya.to_days(ips.duedate) AS daysdue, ips.discountdate, ips.discountamt, ips.dueamt AS grandtotal, libertya.invoicepaid(i.c_invoice_id, i.c_currency_id, 1) AS paidamt, libertya.invoiceopen(i.c_invoice_id, ips.c_invoicepayschedule_id) AS openamt, i.c_currency_id, i.c_conversiontype_id, i.ispayschedulevalid, ips.c_invoicepayschedule_id, i.c_paymentterm_id, i.c_doctypetarget_id, i.docstatus
+           FROM libertya.rv_c_invoice i
+      JOIN libertya.c_invoicepayschedule ips ON i.c_invoice_id = ips.c_invoice_id
+     WHERE libertya.invoiceopen(i.c_invoice_id, 0) <> 0::numeric AND i.ispayschedulevalid = 'Y'::bpchar AND i.docstatus <> 'DR'::bpchar AND ips.isvalid = 'Y'::bpchar;
+
+ALTER TABLE libertya.rv_openitem
+  OWNER TO libertya;
+
