@@ -6,46 +6,15 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.util.ArrayList;
-import java.util.Calendar;
-import java.util.Date;
-import java.util.Iterator;
-import java.util.Set;
 
 import net.sf.jasperreports.engine.JRDataSource;
 import net.sf.jasperreports.engine.JRException;
 import net.sf.jasperreports.engine.JRField;
 
-import org.openXpertya.JasperReport.LaunchInvoice;
-import org.openXpertya.JasperReport.MJasperReport;
 import org.openXpertya.model.MAllocationHdr;
-import org.openXpertya.model.MBPartner;
-import org.openXpertya.model.MBPartnerLocation;
-import org.openXpertya.model.MClient;
-import org.openXpertya.model.MClientInfo;
-import org.openXpertya.model.MDocType;
-import org.openXpertya.model.MIncotermCode;
 import org.openXpertya.model.MInvoice;
-import org.openXpertya.model.MInvoiceLine;
-import org.openXpertya.model.MInvoicePaySchedule;
-import org.openXpertya.model.MLocation;
-import org.openXpertya.model.MOrder;
-import org.openXpertya.model.MOrg;
-import org.openXpertya.model.MPOSJournal;
-import org.openXpertya.model.MRegion;
-import org.openXpertya.model.MRetencionSchema;
-import org.openXpertya.model.MRetencionType;
-import org.openXpertya.model.MTax;
-import org.openXpertya.model.MUser;
-import org.openXpertya.model.X_C_Invoice;
-import org.openXpertya.model.X_C_POSJournal;
-import org.openXpertya.model.X_M_Retencion_Invoice;
-import org.openXpertya.process.ProcessInfo;
-import org.openXpertya.process.SvrProcess;
-import org.openXpertya.report.NumeroCastellano;
 import org.openXpertya.util.DB;
 import org.openXpertya.util.Env;
-import org.openXpertya.util.Trx;
-import org.openXpertya.util.Util;
 
 public class OrdenPagoDataSource {
 
