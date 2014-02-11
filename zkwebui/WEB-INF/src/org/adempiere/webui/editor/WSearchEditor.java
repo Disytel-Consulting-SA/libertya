@@ -241,14 +241,7 @@ public class WSearchEditor extends WEditor implements ContextMenuListener, Value
 	{
 		if ("FieldValue".equals(evt.getPropertyName()))
 		{
-			if ( evt.getNewValue()== null)
-			{
-				actionRefresh("");
-			}
-			else
-			{
-				actionRefresh(evt.getNewValue());
-			}
+			actionRefresh(evt.getNewValue());
 		}
 	}
 
