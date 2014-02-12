@@ -184,7 +184,7 @@ public abstract class ResumenVentasDataSource extends QueryDataSource {
 	 * @return condición de filtro para informar notas de crédito
 	 */
 	protected String getCreditsNotesFilter(){
-		return " AND (s.trxtype = 'PA' OR EXISTS (SELECT c_invoice_id FROM c_invoice inv INNER JOIN c_doctype doc ON doc.c_doctype_id = inv.c_doctypetarget_id WHERE s.c_invoice_id = inv.c_invoice_id AND doc.docbasetype = '"
+		return " AND (s.trxtype = 'PA' OR EXISTS (SELECT inv.c_invoice_id FROM c_invoice inv INNER JOIN c_doctype doc ON doc.c_doctype_id = inv.c_doctypetarget_id WHERE s.c_invoice_id = inv.c_invoice_id AND doc.docbasetype = '"
 				+ MDocType.DOCBASETYPE_ARCreditMemo + "')) ";
 	}
 	
@@ -192,7 +192,7 @@ public abstract class ResumenVentasDataSource extends QueryDataSource {
 	 * @return condición de filtro para informar notas de crédito
 	 */
 	protected String getDebitsNotesFilter(){
-		return " AND (s.trxtype = 'ND' OR EXISTS (SELECT c_invoice_id FROM c_invoice inv INNER JOIN c_doctype doc ON doc.c_doctype_id = inv.c_doctypetarget_id WHERE s.c_invoice_id = inv.c_invoice_id AND position('CDN' in doc.doctypekey) = 1))";
+		return " AND (s.trxtype = 'ND' OR EXISTS (SELECT inv.c_invoice_id FROM c_invoice inv INNER JOIN c_doctype doc ON doc.c_doctype_id = inv.c_doctypetarget_id WHERE s.c_invoice_id = inv.c_invoice_id AND position('CDN' in doc.doctypekey) = 1))";
 	}
 	
 	/**

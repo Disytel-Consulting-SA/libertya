@@ -34,7 +34,7 @@ public class SalesByHourDataSource extends QueryDataSource {
 					 "		from (select hour, time_ini, time_end, coalesce(grandtotal,0.00) as grandtotal, coalesce(total,0.00) as total, c_invoice_id, coalesce(cant_ticket,0.00) as cant_ticket " +
 					 "				from (select h.hour, coalesce(time_ini,h.date) as time_ini, coalesce(time_end, h.date_to) as time_end, grandtotal, c_invoice_id, cant_ticket " +
 					 "						from c_salesbyhour_hours as h " +
-					 "						left join (select c_invoice_id, " +
+					 "						left join (select i.c_invoice_id, " +
 					 "									(CASE dt.signo_issotrx WHEN 1 THEN 1 ELSE 0 END) as cant_ticket," +
 					 "									grandtotal * dt.signo_issotrx as grandtotal, " +
 					 "									date_trunc('hour', dateinvoiced) as time_ini, " +
