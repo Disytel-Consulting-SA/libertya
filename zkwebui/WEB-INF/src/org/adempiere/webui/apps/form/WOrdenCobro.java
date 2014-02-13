@@ -11,7 +11,6 @@ import java.util.Map;
 
 import org.adempiere.webui.component.ComboItem;
 import org.adempiere.webui.component.Combobox;
-import org.adempiere.webui.component.Datebox;
 import org.adempiere.webui.component.Grid;
 import org.adempiere.webui.component.GridFactory;
 import org.adempiere.webui.component.Label;
@@ -19,8 +18,9 @@ import org.adempiere.webui.component.Row;
 import org.adempiere.webui.component.Rows;
 import org.adempiere.webui.component.Tab;
 import org.adempiere.webui.component.Tabpanel;
-import org.adempiere.webui.component.Textbox;
+import org.adempiere.webui.editor.WDateEditor;
 import org.adempiere.webui.editor.WSearchEditor;
+import org.adempiere.webui.editor.WStringEditor;
 import org.adempiere.webui.editor.WTableDirEditor;
 import org.adempiere.webui.event.ValueChangeEvent;
 import org.adempiere.webui.event.ValueChangeListener;
@@ -68,26 +68,7 @@ public class WOrdenCobro extends WOrdenPago {
 		msgChanges.put("Payment", "CustomerPayment");
 	}
 
-	private Label lblRetencSchema = new Label();
-	private Label lblRetencFecha = new Label();
-	private Label lblRetencImporte = new Label();
-	private Label lblRetencNroRetenc = new Label();
 	protected Label lblTenderType;
-	protected Label lblDiscountAmt;
-	protected Label lblPaymentDiscount;
-	protected Label lblPaymentToPayDiscount;
-	protected Label lblCreditCardBank;
-	protected Label lblCreditCardNo;
-	protected Label lblCreditCardCouponNo;
-	protected Label lblCuotasCount;
-	protected Label lblCuotaAmt;
-	protected Label lblCreditCardPlan;
-	protected Label lblCreditCardAmt;
-	protected Label lblBPartnerDiscount;
-	protected Label lblPOS = new Label();
-	protected Label lblOrgCharge = new Label();
-	protected Label lblGroupingAmt = new Label();
-
 	protected Label lblCreditCardReceiptMedium = new Label();
 	protected Label lblCheckReceiptMedium = new Label();
 	protected Label lblCreditReceiptMedium = new Label();
@@ -95,24 +76,25 @@ public class WOrdenCobro extends WOrdenPago {
 	protected Label lblTransferReceiptMedium = new Label();
 	protected Label lblRetencionReceiptMedium = new Label();
 	protected Label lblPagoAdelantadoReceiptMedium = new Label();
-	private Datebox retencFecha;
+	protected Label lblCreditCardPlan;
+	private WDateEditor retencFecha;
 	private WSearchEditor retencSchema;
 	protected WSearchEditor bPartnerDiscount;
-	protected Textbox txtPOS;
-	protected Textbox txtOrgCharge;
-	protected Textbox txtGroupingAmt;
+	protected WStringEditor txtPOS;
+	protected WStringEditor txtOrgCharge;
+	protected WStringEditor txtGroupingAmt;
 	protected Combobox cboTenderType;
-	private Textbox txtRetencImporte = new Textbox();
-	private Textbox txtRetencNroRetenc;
-	protected Textbox txtDiscountAmt;
-	protected Textbox txtPaymentDiscount;
-	protected Textbox txtPaymentToPayDiscount;
+	private WStringEditor txtRetencImporte = new WStringEditor();
+	private WStringEditor txtRetencNroRetenc;
+	protected WStringEditor txtDiscountAmt;
+	protected WStringEditor txtPaymentDiscount;
+	protected WStringEditor txtPaymentToPayDiscount;
 	protected WTableDirEditor cboCreditCardBank;
-	protected Textbox txtCreditCardNo;
-	protected Textbox txtCreditCardCouponNo;
-	protected Textbox txtCuotasCount;
-	protected Textbox txtCuotaAmt;
-	protected Textbox txtCreditCardAmt = new Textbox();
+	protected WStringEditor txtCreditCardNo;
+	protected WStringEditor txtCreditCardCouponNo;
+	protected WStringEditor txtCuotasCount;
+	protected WStringEditor txtCuotaAmt;
+	protected WStringEditor txtCreditCardAmt = new WStringEditor();
 	private Tabpanel panelRetenc;
 	protected Panelchildren panelSummary;
 	protected Tabpanel panelCreditCard;
@@ -150,7 +132,9 @@ public class WOrdenCobro extends WOrdenPago {
 		// return VComponentsFactory.VLookupFactory("C_BankAccount_ID", "C_BankAccount", m_WindowNo, DisplayType.TableDir, getModel().getChequeChequeraSqlValidation());
         MLookupInfo infoTransf = VComponentsFactory.MLookupInfoFactory(Env.getCtx(),m_WindowNo, 0, 3077, DisplayType.TableDir, m_model.getChequeChequeraSqlValidation());
 		MLookup lookupTransf = new MLookup(infoTransf, 0);
-		return new WSearchEditor( "C_BankAccount_ID",false,false,true,lookupTransf );
+		WSearchEditor editor = new WSearchEditor( "C_BankAccount_ID",false,false,true,lookupTransf );
+		addPopupMenu(editor, true, true, false);
+		return editor;
 	}
 
 	@Override
@@ -163,18 +147,18 @@ public class WOrdenCobro extends WOrdenPago {
 	protected void initTranslations() {
 		super.initTranslations();
 		// Cheques
-		lblChequeChequera.setText(Msg.translate(m_ctx, "C_BankAccount_ID"));
+		chequeChequera.getLabel().setText(Msg.translate(m_ctx, "C_BankAccount_ID"));
 
 		// Retencions
-		lblRetencSchema.setValue(Msg.translate(m_ctx, "C_Withholding_ID"));
-		lblRetencNroRetenc.setValue(Msg.translate(m_ctx, "RetencionNumber"));
-		lblRetencImporte.setValue(Msg.getElement(m_ctx, "Amount"));
-		lblRetencFecha.setValue(Msg.translate(m_ctx, "Date"));
+		retencSchema.getLabel().setValue(Msg.translate(m_ctx, "C_Withholding_ID"));
+		txtRetencNroRetenc.getLabel().setValue(Msg.translate(m_ctx, "RetencionNumber"));
+		txtRetencImporte.getLabel().setValue(Msg.getElement(m_ctx, "Amount"));
+		retencFecha.getLabel().setValue(Msg.translate(m_ctx, "Date"));
 
 		//
 		radPayTypeStd.setValue(Msg.translate(m_ctx, "StandardCustomerPayment"));
 		radPayTypeAdv.setValue(Msg.translate(m_ctx, "AdvancedCustomerPayment"));
-		lblMedioPago2.setValue(Msg.translate(m_ctx, "CustomerTenderType"));
+		txtMedioPago2.getLabel().setValue(Msg.translate(m_ctx, "CustomerTenderType"));
 
 		checkPayAll.setText(Msg.getMsg(m_ctx, "ReceiptAll") /* + " "
 				+ KeyUtils.getKeyStr(getActionKeys().get(GOTO_PAYALL)) */ );
@@ -182,10 +166,10 @@ public class WOrdenCobro extends WOrdenPago {
 		tabPaymentSelection = new Tab(Msg.getMsg(Env.getCtx(), "CustomerPaymentSelection"));  // jTabbedPane1.setTitleAt(0, Msg.translate(m_ctx, "CustomerPaymentSelection"));
 		tabPaymentRule = new Tab(Msg.getMsg(Env.getCtx(), "CustomerPaymentRule")); // jTabbedPane1.setTitleAt(1, Msg.translate(m_ctx, "CustomerPaymentRule"));
 		
-		lblBPartnerDiscount.setValue(Msg.translate(m_ctx, "M_DiscountSchema_ID"));
-		lblPOS.setValue(Msg.translate(m_ctx, "RealPOS"));
-		lblOrgCharge.setValue(Msg.translate(m_ctx, "OrgCharge"));
-		lblGroupingAmt.setValue(Msg.translate(m_ctx, "GroupingAmt"));
+		bPartnerDiscount.getLabel().setValue(Msg.translate(m_ctx, "M_DiscountSchema_ID"));
+		txtPOS.getLabel().setValue(Msg.translate(m_ctx, "RealPOS"));
+		txtOrgCharge.getLabel().setValue(Msg.translate(m_ctx, "OrgCharge"));
+		txtGroupingAmt.getLabel().setValue(Msg.translate(m_ctx, "GroupingAmt"));
 
 		String msgReceiptMedium = Msg.translate(m_ctx, "ReceiptMedium");
 		lblCreditCardReceiptMedium.setValue(msgReceiptMedium);
@@ -293,13 +277,13 @@ public class WOrdenCobro extends WOrdenPago {
 		Tabpanel tabpanel = new Tabpanel();
     	tabpanel.setHeight("150px");
 
-		lblEfectivoLibroCaja.setText("LIBRO DE CAJA");
-		lblEfectivoImporte.setText("IMPORTE");
-		txtEfectivoImporte.setText("0");
+		efectivoLibroCaja.getLabel().setText("LIBRO DE CAJA");
+		txtEfectivoImporte.getLabel().setText("IMPORTE");
+		txtEfectivoImporte.setValue("0");
 		cboCashReceiptMedium = createPaymentMediumCombo(MPOSPaymentMedium.TENDERTYPE_Cash);
 		cboCashReceiptMedium.addEventListener("onChange", getPaymentMediumItemListener());
 		tenderTypeIndexsCombos.put(TAB_INDEX_EFECTIVO, cboCashReceiptMedium);  
-    	txtEfectivoImporte.setText("0");
+    	txtEfectivoImporte.setValue("0");
 	
     	Grid gridpanel = GridFactory.newGridLayout();
 		gridpanel.setWidth("100%");
@@ -309,10 +293,10 @@ public class WOrdenCobro extends WOrdenPago {
     	row0.appendChild(lblCashReceiptMedium.rightAlign());
     	row0.appendChild(cboCashReceiptMedium);
 		Row row = rows.newRow();
-		row.appendChild(lblEfectivoLibroCaja.rightAlign());
+		row.appendChild(efectivoLibroCaja.getLabel().rightAlign());
 		row.appendChild(efectivoLibroCaja.getComponent());
-		row.appendChild(lblEfectivoImporte.rightAlign());
-		row.appendChild(txtEfectivoImporte);
+		row.appendChild(txtEfectivoImporte.getLabel().rightAlign());
+		row.appendChild(txtEfectivoImporte.getComponent());
 		
 		tabpanel.appendChild(gridpanel);
         return tabpanel;
@@ -323,20 +307,14 @@ public class WOrdenCobro extends WOrdenPago {
 	protected Tabpanel  createTransferTab() {
 
 		Tabpanel tabpanel = new Tabpanel();
-		lblTransfCtaBancaria.setText("CUENTA BANCARIA");
-		lblTransfNroTransf.setText("NRO TRANSFERENCIA");
-		lblTransfImporte.setText("IMPORTE");
-		lblTransfFecha.setText("FECHA");
-		txtTransfImporte.setText("0");
+		transfCtaBancaria.getLabel().setText("CUENTA BANCARIA");
+		txtTransfNroTransf.getLabel().setText("NRO TRANSFERENCIA");
+		txtTransfImporte.getLabel().setText("IMPORTE");
+		transFecha.getLabel().setText("FECHA");
+		txtTransfImporte.setValue("0");
 		cboTransferReceiptMedium = createPaymentMediumCombo(MPOSPaymentMedium.TENDERTYPE_DirectDeposit);
 		cboTransferReceiptMedium.addEventListener("onChange", getPaymentMediumItemListener());
 		tenderTypeIndexsCombos.put(TAB_INDEX_TRANSFERENCIA, cboTransferReceiptMedium);
-
-        lblTransfCtaBancaria.setText("CUENTA BANCARIA");
-        lblTransfNroTransf.setText("NRO TRANSFERENCIA");
-        lblTransfImporte.setText("IMPORTE");
-        lblTransfFecha.setText("FECHA");
-        txtTransfImporte.setText("0");
 
     	tabpanel.setHeight("150px");
 		
@@ -349,17 +327,17 @@ public class WOrdenCobro extends WOrdenPago {
 		row0.appendChild(lblTransferReceiptMedium.rightAlign());
 		row0.appendChild(cboTransferReceiptMedium);
 		Row row1 = rows.newRow();
-		row1.appendChild(lblTransfCtaBancaria.rightAlign());
+		row1.appendChild(transfCtaBancaria.getLabel().rightAlign());
 		row1.appendChild(transfCtaBancaria.getComponent());
-		row1.appendChild(lblTransfNroTransf.rightAlign());
-		row1.appendChild(txtTransfNroTransf);
+		row1.appendChild(txtTransfNroTransf.getLabel().rightAlign());
+		row1.appendChild(txtTransfNroTransf.getComponent());
 		Row row2 = rows.newRow();
-		row2.appendChild(lblTransfImporte.rightAlign());
-		row2.appendChild(txtTransfImporte);
-		row2.appendChild(lblTransfFecha.rightAlign());
+		row2.appendChild(txtTransfImporte.getLabel().rightAlign());
+		row2.appendChild(txtTransfImporte.getComponent());
+		row2.appendChild(transFecha.getLabel().rightAlign());
 		row2.appendChild(transFecha.getComponent());
 		
-		txtTransfImporte.setText("0");
+		txtTransfImporte.setValue("0");
 		
 		tabpanel.appendChild(gridpanel);
 
@@ -371,26 +349,16 @@ public class WOrdenCobro extends WOrdenPago {
 		
 		Tabpanel tabpanel = new Tabpanel();
 		
-        lblChequeChequera.setText("CHEQUERA");
-        lblChequeNroCheque.setText("NUMERO DE CHEQUE");
-        lblChequeImporte.setText("IMPORTE");
-        lblChequeFechaEmision.setText("FECHA EMISION");
-        lblChequeFechaPago.setText("FECHA PAGO");
-        lblChequeALaOrden.setText(getModel().isSOTrx()?"LIBRADOR":"A LA ORDEN");
-        lblChequeBanco.setText("BANCO");
-        lblChequeCUITLibrador.setText("CUIT LIBRADOR");
-        lblChequeDescripcion.setText("DESCRIPCION");      
+        chequeChequera.getLabel().setText("CHEQUERA");
+        txtChequeNroCheque.getLabel().setText("NUMERO DE CHEQUE");
+        txtChequeImporte.getLabel().setText("IMPORTE");
+        chequeFechaEmision.getLabel().setText("FECHA EMISION");
+        chequeFechaPago.getLabel().setText("FECHA PAGO");
+        txtChequeALaOrden.getLabel().setText(getModel().isSOTrx()?"LIBRADOR":"A LA ORDEN");
+        txtChequeBanco.getLabel().setText("BANCO");
+        txtChequeCUITLibrador.getLabel().setText("CUIT LIBRADOR");
+        txtChequeDescripcion.getLabel().setText("DESCRIPCION");      
  
-		lblChequeChequera.setText("CHEQUERA");
-		lblChequeNroCheque.setText("NUMERO DE CHEQUE");
-		lblChequeImporte.setText("IMPORTE");
-		lblChequeFechaEmision.setText("FECHA EMISION");
-		lblChequeFechaPago.setText("FECHA PAGO");
-		lblChequeALaOrden.setText(getModel().isSOTrx() ? "LIBRADOR"
-				: "A LA ORDEN");
-		lblChequeBanco.setText("BANCO");
-		lblChequeCUITLibrador.setText("CUIT LIBRADOR");
-		lblChequeDescripcion.setText("DESCRIPCION");
 		cboCheckReceiptMedium = createPaymentMediumCombo(MPOSPaymentMedium.TENDERTYPE_Check);
 		cboCheckReceiptMedium.addEventListener("onChange", getPaymentMediumItemListener());
 		chequeFechaEmision.addValueChangeListener(new ValueChangeListener() {
@@ -415,28 +383,28 @@ public class WOrdenCobro extends WOrdenPago {
 		Row row = rows.newRow();
 		row.appendChild(lblCheckReceiptMedium.rightAlign());
 		row.appendChild(cboCheckReceiptMedium);
-		row.appendChild(lblChequeChequera.rightAlign());
+		row.appendChild(chequeChequera.getLabel().rightAlign());
 		row.appendChild(chequeChequera.getComponent());
 		Row row2 = rows.newRow();
-		row2.appendChild(lblChequeNroCheque.rightAlign());
-		row2.appendChild(txtChequeNroCheque);
-		row2.appendChild(lblChequeImporte.rightAlign());
-		row2.appendChild(txtChequeImporte);
+		row2.appendChild(txtChequeNroCheque.getLabel().rightAlign());
+		row2.appendChild(txtChequeNroCheque.getComponent());
+		row2.appendChild(txtChequeImporte.getLabel().rightAlign());
+		row2.appendChild(txtChequeImporte.getComponent());
 		Row row3 = rows.newRow();
-		row3.appendChild(lblChequeFechaEmision.rightAlign());
+		row3.appendChild(chequeFechaEmision.getLabel().rightAlign());
 		row3.appendChild(chequeFechaEmision.getComponent());
-		row3.appendChild(lblChequeFechaPago.rightAlign());
+		row3.appendChild(chequeFechaPago.getLabel().rightAlign());
 		row3.appendChild(chequeFechaPago.getComponent());
 		Row row4 = rows.newRow();
-		row4.appendChild(lblChequeALaOrden.rightAlign());
-		row4.appendChild(txtChequeALaOrden);
-		row4.appendChild(lblChequeBanco.rightAlign());
-		row4.appendChild(txtChequeBanco);
+		row4.appendChild(txtChequeALaOrden.getLabel().rightAlign());
+		row4.appendChild(txtChequeALaOrden.getComponent());
+		row4.appendChild(txtChequeBanco.getLabel().rightAlign());
+		row4.appendChild(txtChequeBanco.getComponent());
 		Row row5 = rows.newRow();
-		row5.appendChild(lblChequeCUITLibrador.rightAlign());
-		row5.appendChild(txtChequeCUITLibrador);
-		row5.appendChild(lblChequeDescripcion.rightAlign());
-		row5.appendChild(txtChequeDescripcion);
+		row5.appendChild(txtChequeCUITLibrador.getLabel().rightAlign());
+		row5.appendChild(txtChequeCUITLibrador.getComponent());
+		row5.appendChild(txtChequeDescripcion.getLabel().rightAlign());
+		row5.appendChild(txtChequeDescripcion.getComponent());
 
 		tabpanel.appendChild(gridpanel);
 		
@@ -446,11 +414,11 @@ public class WOrdenCobro extends WOrdenPago {
 	@Override
 	protected Tabpanel  createCreditTab() {
 		
-		lblCreditInvoice.setText("CREDITO");
-		lblCreditAvailable.setText("DISPONIBLE");
-		lblCreditImporte.setText("IMPORTE");
-		txtCreditAvailable.setText("0");
-		txtCreditImporte.setText("0");
+		creditInvoice.getLabel().setText("CREDITO");
+		txtCreditAvailable.getLabel().setText("DISPONIBLE");
+		txtCreditImporte.getLabel().setText("IMPORTE");
+		txtCreditAvailable.setValue("0");
+		txtCreditImporte.setValue("0");
 		cboCreditReceiptMedium = createPaymentMediumCombo(MPOSPaymentMedium.TENDERTYPE_CreditNote);
 		cboCreditReceiptMedium.addEventListener("onChange", getPaymentMediumItemListener());
 		tenderTypeIndexsCombos.put(TAB_INDEX_CREDITO, cboCreditReceiptMedium);
@@ -465,16 +433,16 @@ public class WOrdenCobro extends WOrdenPago {
 		Row row0 = rows.newRow();
 		row0.appendChild(lblCreditReceiptMedium.rightAlign());
 		row0.appendChild(cboCreditReceiptMedium);
-		row0.appendChild(lblCreditInvoice.rightAlign());
+		row0.appendChild(creditInvoice.getLabel().rightAlign());
 		row0.appendChild(creditInvoice.getComponent());
 		Row row1 = rows.newRow();
-		row1.appendChild(lblCreditAvailable.rightAlign());
-		row1.appendChild(txtCreditAvailable);
-		row1.appendChild(lblCreditImporte.rightAlign());
-		row1.appendChild(txtCreditImporte);
+		row1.appendChild(txtCreditAvailable.getLabel().rightAlign());
+		row1.appendChild(txtCreditAvailable.getComponent());
+		row1.appendChild(txtCreditImporte.getLabel().rightAlign());
+		row1.appendChild(txtCreditImporte.getComponent());
 		
-        txtCreditAvailable.setText("0");        
-        txtCreditImporte.setText("0");
+        txtCreditAvailable.setValue("0");        
+        txtCreditImporte.setValue("0");
 		
 		tabpanel.appendChild(gridpanel);
 		return tabpanel; // jPanel11;
@@ -483,22 +451,19 @@ public class WOrdenCobro extends WOrdenPago {
 	private Tabpanel  createRetencionTab() {
 		panelRetenc = new Tabpanel();
 		panelRetenc.setHeight("150px");
-		lblRetencSchema = new Label();
-		lblRetencSchema.setValue("RETENCION");
-		lblRetencNroRetenc = new Label();
-		lblRetencNroRetenc.setText("NRO RETENCION");
-		lblRetencImporte = new Label();
-		lblRetencImporte.setText("IMPORTE");
-		lblRetencFecha = new Label();
-		lblRetencFecha.setText("FECHA");
-		txtRetencImporte = new Textbox();
-		txtRetencImporte.setText("0");
-		txtRetencNroRetenc = new Textbox();
+		retencFecha = new WDateEditor(); 
+		retencFecha.getLabel().setText("FECHA");
+		txtRetencImporte = new WStringEditor();
+		txtRetencImporte.getLabel().setText("IMPORTE");
+		txtRetencImporte.setValue("0");
+		txtRetencNroRetenc = new WStringEditor();
+		txtRetencNroRetenc.getLabel().setText("NRO RETENCION");
 		MLookupInfo infoRetencSchema = VComponentsFactory.MLookupInfoFactory( Env.getCtx(),m_WindowNo, 0, 1003040, DisplayType.Search, getCobroModel().getRetencionSqlValidation());
 		MLookup lookupRetencSchema = new MLookup(infoRetencSchema, 0);
 		retencSchema = new WSearchEditor("C_RetencionSchema_ID", false, false, true, lookupRetencSchema);
+		addPopupMenu(retencSchema, true, true, false);
+		retencSchema.getLabel().setValue("RETENCION");
 		
-		retencFecha = new Datebox(); 
 		cboRetencionReceiptMedium = createPaymentMediumCombo(MPOSPaymentMedium.TENDERTYPE_Retencion);
 		cboRetencionReceiptMedium.addEventListener("onChange", getPaymentMediumItemListener());
 
@@ -509,17 +474,17 @@ public class WOrdenCobro extends WOrdenPago {
 		Row row = rows.newRow();
 		row.appendChild(lblRetencionReceiptMedium.rightAlign());
 		row.appendChild(cboRetencionReceiptMedium);
-		row.appendChild(lblRetencSchema.rightAlign());
+		row.appendChild(retencSchema.getLabel().rightAlign());
 		row.appendChild(retencSchema.getComponent());
 		
 		Row row2 = rows.newRow();
-		row2.appendChild(lblRetencNroRetenc.rightAlign());
-		row2.appendChild(txtRetencNroRetenc);
-		row2.appendChild(lblRetencImporte.rightAlign());
-		row2.appendChild(txtRetencImporte);
+		row2.appendChild(txtRetencNroRetenc.getLabel().rightAlign());
+		row2.appendChild(txtRetencNroRetenc.getComponent());
+		row2.appendChild(txtRetencImporte.getLabel().rightAlign());
+		row2.appendChild(txtRetencImporte.getComponent());
 		Row row3 = rows.newRow();
-		row3.appendChild(lblRetencFecha.rightAlign());
-		row3.appendChild(retencFecha);
+		row3.appendChild(retencFecha.getLabel().rightAlign());
+		row3.appendChild(retencFecha.getComponent());
 		
 		panelRetenc.appendChild(gridpanel);
 		
@@ -529,24 +494,27 @@ public class WOrdenCobro extends WOrdenPago {
 	protected Tabpanel  createCreditCardTab() {
 
 		panelCreditCard = new Tabpanel();
+		
+		txtCreditCardNo = new WStringEditor();
+		txtCreditCardCouponNo = new WStringEditor();
+		txtCuotasCount = new WStringEditor();
+		txtCuotaAmt = new WStringEditor();
+		txtCreditCardAmt = new WStringEditor();
+		
 		lblCreditCardPlan = new Label(getMsg("CreditCardPlan"));
-		lblCreditCardBank = new Label(getMsg("C_Bank_ID"));
-		lblCreditCardNo = new Label(getMsg("CreditCardNumber"));
-		lblCreditCardCouponNo = new Label(getMsg("CouponNumber"));
-		lblCuotasCount = new Label(getMsg("CuotasCount"));
-		lblCuotaAmt = new Label(getMsg("CuotaAmt"));
-		lblCreditCardAmt = new Label(getMsg("Amt"));
+		txtCreditCardNo.getLabel().setValue(getMsg("CreditCardNumber"));
+		txtCreditCardCouponNo.getLabel().setValue(getMsg("CouponNumber"));
+		txtCuotasCount.getLabel().setValue(getMsg("CuotasCount"));
+		txtCuotaAmt.getLabel().setValue(getMsg("CuotaAmt"));
+		txtCreditCardAmt.getLabel().setValue(getMsg("Amt"));
 		lblCreditCardReceiptMedium = new Label();
 		MLookup lookupCreditCardBank = MLookupFactory.get (Env.getCtx(), m_WindowNo, 0, 1014558, DisplayType.List); // columna Bank de C_POSPaymentMedium
 		cboCreditCardBank = new WTableDirEditor("Bank", false, false, true, lookupCreditCardBank);
+		cboCreditCardBank.getLabel().setValue(getMsg("C_Bank_ID"));
+		txtCuotaAmt.setReadWrite(false);
+		addPopupMenu(cboCreditCardBank, true, true, false);
 		
-		txtCreditCardNo = new Textbox();
-		txtCreditCardCouponNo = new Textbox();
-		txtCuotasCount = new Textbox();
-		txtCuotaAmt = new Textbox();
-		txtCuotaAmt.setReadonly(true);
-		txtCreditCardAmt = new Textbox();
-		txtCreditCardAmt.addEventListener("onChange", new EventListener() {
+		txtCreditCardAmt.getComponent().addEventListener("onChange", new EventListener() {
 			
 			@Override
 			public void onEvent(Event arg0) throws Exception {
@@ -556,7 +524,7 @@ public class WOrdenCobro extends WOrdenPago {
 			}
 		});
 		
-		txtCreditCardAmt.addEventListener("onChange", new EventListener() {
+		txtCreditCardAmt.getComponent().addEventListener("onChange", new EventListener() {
 			
 			@Override
 			public void onEvent(Event arg0) throws Exception {
@@ -581,7 +549,6 @@ public class WOrdenCobro extends WOrdenPago {
 		});
 		
 		txtCreditCardAmt.setValue(getModel().getSaldoMediosPago().toString());
-
 		panelCreditCard.setHeight("150px");
 		
     	Grid gridpanel = GridFactory.newGridLayout();
@@ -594,20 +561,20 @@ public class WOrdenCobro extends WOrdenPago {
 		row.appendChild(lblCreditCardPlan.rightAlign());
 		row.appendChild(cboEntidadFinancieraPlans);
 		Row row2 = rows.newRow();
-		row2.appendChild(lblCreditCardBank.rightAlign());
+		row2.appendChild(cboCreditCardBank.getLabel().rightAlign());
 		row2.appendChild(cboCreditCardBank.getComponent());
-		row2.appendChild(lblCreditCardNo.rightAlign());
-		row2.appendChild(txtCreditCardNo);
+		row2.appendChild(txtCreditCardNo.getLabel().rightAlign());
+		row2.appendChild(txtCreditCardNo.getComponent());
 		Row row3 = rows.newRow();
-		row3.appendChild(lblCreditCardCouponNo.rightAlign());
-		row3.appendChild(txtCreditCardCouponNo);
-		row3.appendChild(lblCreditCardAmt.rightAlign());
-		row3.appendChild(txtCreditCardAmt);
+		row3.appendChild(txtCreditCardCouponNo.getLabel().rightAlign());
+		row3.appendChild(txtCreditCardCouponNo.getComponent());
+		row3.appendChild(txtCreditCardAmt.getLabel().rightAlign());
+		row3.appendChild(txtCreditCardAmt.getComponent());
 		Row row4 = rows.newRow();
-		row4.appendChild(lblCuotasCount.rightAlign());
-		row4.appendChild(txtCuotasCount);
-		row4.appendChild(lblCuotaAmt.rightAlign());
-		row4.appendChild(txtCuotaAmt);
+		row4.appendChild(txtCuotasCount.getLabel().rightAlign());
+		row4.appendChild(txtCuotasCount.getComponent());
+		row4.appendChild(txtCuotaAmt.getLabel().rightAlign());
+		row4.appendChild(txtCuotaAmt.getComponent());
 		
         panelCreditCard.appendChild(gridpanel);
 		return panelCreditCard;
@@ -618,22 +585,21 @@ public class WOrdenCobro extends WOrdenPago {
 	protected Tabpanel  createPagoAdelantadoTab() {
 		panelPagoAdelantado = new Tabpanel();
 
-		lblPagoAdelantadoCash = new Label();
-		lblPagoAdelantadoPago = new Label();
-		lblPagoAdelantadoCash.setText(getModel().isSOTrx() ? "COBRO" : "PAGO");
-		lblPagoAdelantadoPago.setText(getModel().isSOTrx() ? "COBRO" : "PAGO");
-		lblPagoAdelantadoImporte = new Label();
-		lblPagoAdelantadoImporte.setValue("IMPORTE");
-		txtPagoAdelantadoImporte = new Textbox();
+		txtPagoAdelantadoImporte = new WStringEditor();
+		txtPagoAdelantadoImporte.getLabel().setValue("IMPORTE");
 		txtPagoAdelantadoImporte.setValue("0");
 		MLookupInfo infoPago = VComponentsFactory.MLookupInfoFactory( Env.getCtx(),m_WindowNo, 0, 5043, DisplayType.Search, getModel().getPagoAdelantadoSqlValidation());
 		Lookup lookupPago = new MLookup(infoPago, 0);
 		pagoAdelantado = new WSearchEditor("C_Payment_ID", false, false, true, lookupPago);
-			
+		addPopupMenu(pagoAdelantado, true, true, false);
+		
         MLookupInfo infoCash = VComponentsFactory.MLookupInfoFactory( Env.getCtx(),m_WindowNo, 0, 5283, DisplayType.Search, getModel().getCashAnticipadoSqlValidation());
 		Lookup lookupCash = new MLookup(infoCash, 0);
 		cashAdelantado = new WSearchEditor("C_CashLine_ID", false, false, true, lookupCash);
-
+		addPopupMenu(cashAdelantado, true, true, false);
+		cashAdelantado.getLabel().setText(getModel().isSOTrx() ? "COBRO" : "PAGO");
+		pagoAdelantado.getLabel().setText(getModel().isSOTrx() ? "COBRO" : "PAGO");
+		
 		lblPagoAdelantadoType = new Label();
 		lblPagoAdelantadoType.setText("TIPO");
 		cboPagoAdelantadoType = new Combobox();
@@ -651,10 +617,9 @@ public class WOrdenCobro extends WOrdenPago {
 		});
 		
 		cboPagoAdelantadoReceiptMedium = createPaymentMediumCombo(MPOSPaymentMedium.TENDERTYPE_AdvanceReceipt);
-		txtPagoAdelantadoAvailable = new Textbox();
-		txtPagoAdelantadoAvailable.setReadonly(true);
-		lblPagoAdelantadoAvailable = new Label();
-		lblPagoAdelantadoAvailable.setText("PENDIENTE");
+		txtPagoAdelantadoAvailable = new WStringEditor();
+		txtPagoAdelantadoAvailable.setReadWrite(false);
+		txtPagoAdelantadoAvailable.getLabel().setText("PENDIENTE");
 		tenderTypeIndexsCombos.put(TAB_INDEX_PAGO_ADELANTADO, cboPagoAdelantadoReceiptMedium);
 		cboPagoAdelantadoReceiptMedium.addEventListener("onChange", getPaymentMediumItemListener());
 	
@@ -665,10 +630,9 @@ public class WOrdenCobro extends WOrdenPago {
 				updatePagoAdelantadoTab();
 			}
 		});
-        txtPagoAdelantadoAvailable = new Textbox();
-        txtPagoAdelantadoAvailable.setReadonly(true); 
-        lblPagoAdelantadoAvailable = new Label();
-        lblPagoAdelantadoAvailable.setText("PENDIENTE");
+        txtPagoAdelantadoAvailable = new WStringEditor();
+        txtPagoAdelantadoAvailable.setReadWrite(false); 
+        txtPagoAdelantadoAvailable.getLabel().setText("PENDIENTE");
 		
         Grid gridpanel = GridFactory.newGridLayout();
 		gridpanel.setWidth("100%");
@@ -683,18 +647,18 @@ public class WOrdenCobro extends WOrdenPago {
 		
 		// Uno de los dos (efectivo o pago)
 		Row row2a = rows.newRow();
-		row2a.appendChild(lblPagoAdelantadoPago.rightAlign());
+		row2a.appendChild(pagoAdelantado.getLabel().rightAlign());
 		row2a.appendChild(pagoAdelantado.getComponent());
 		Row row2b = rows.newRow();
-		row2b.appendChild(lblPagoAdelantadoCash.rightAlign());
+		row2b.appendChild(cashAdelantado.getLabel().rightAlign());
 		row2b.appendChild(cashAdelantado.getComponent());
 		
 		Row row3 = rows.newRow();
-		row3.appendChild(lblPagoAdelantadoAvailable.rightAlign());
-		row3.appendChild(txtPagoAdelantadoAvailable);
+		row3.appendChild(txtPagoAdelantadoAvailable.getLabel().rightAlign());
+		row3.appendChild(txtPagoAdelantadoAvailable.getComponent());
 		Row row4 = rows.newRow();
-		row4.appendChild(lblPagoAdelantadoImporte.rightAlign());
-		row4.appendChild(txtPagoAdelantadoImporte);
+		row4.appendChild(txtPagoAdelantadoImporte.getLabel().rightAlign());
+		row4.appendChild(txtPagoAdelantadoImporte.getComponent());
 		
         updatePagoAdelantadoTab();
         panelPagoAdelantado.appendChild(gridpanel);
@@ -764,29 +728,31 @@ public class WOrdenCobro extends WOrdenPago {
 	 * Crea los componentes para descuento/recargo del documento
 	 */
 	protected void createDocumentDiscountComponents() {
-		lblDiscountAmt = new Label(Msg.translate(m_ctx, "DiscountCharge"));
-		txtDiscountAmt = new Textbox();
-		txtDiscountAmt.setReadonly(true);
+		txtDiscountAmt = new WStringEditor();
+		txtDiscountAmt.getLabel().setValue(Msg.translate(m_ctx, "DiscountCharge"));
+		txtDiscountAmt.setReadWrite(false);
 	}
 
 	/**
 	 * Crea el panel de descuentos por medio de pago.  Redefinido desde createPaymentTab()
 	 */
 	protected void createPaymentMediumDiscountPanel(Rows rows) {
-		lblPaymentDiscount = new Label(Msg.translate(m_ctx, "DiscountCharge"));
-		lblPaymentToPayDiscount = new Label(Msg.translate(m_ctx, "DiscountedChargedToPayAmt"));
-		txtPaymentDiscount = new Textbox();
-		txtPaymentDiscount.setReadonly(true);
-		txtPaymentToPayDiscount = new Textbox();
-		txtPaymentToPayDiscount.setReadonly(true);
+		txtPaymentDiscount = new WStringEditor();
+		txtPaymentToPayDiscount = new WStringEditor();
+		txtPaymentDiscount.getLabel().setValue(Msg.translate(m_ctx, "DiscountCharge"));
+		txtPaymentToPayDiscount.getLabel().setValue(Msg.translate(m_ctx, "DiscountedChargedToPayAmt"));
+
+		txtPaymentDiscount.setReadWrite(false);
+		
+		txtPaymentToPayDiscount.setReadWrite(false);
 
 		if (rows == null)	// invocacion al iniciar la ventana 
 			return;
 		Row row = rows.newRow();
-		row.appendChild(lblPaymentDiscount.rightAlign());
-		row.appendChild(txtPaymentDiscount);
-		row.appendChild(lblPaymentToPayDiscount.rightAlign());
-		row.appendChild(txtPaymentToPayDiscount);
+		row.appendChild(txtPaymentDiscount.getLabel().rightAlign());
+		row.appendChild(txtPaymentDiscount.getComponent());
+		row.appendChild(txtPaymentToPayDiscount.getLabel().rightAlign());
+		row.appendChild(txtPaymentToPayDiscount.getComponent());
 	}
 
 	
@@ -795,8 +761,8 @@ public class WOrdenCobro extends WOrdenPago {
 	 */
 	protected void addSummaryCustomFields(Rows rows) {
 		Row row = rows.newRow();
-		row.appendChild(lblDiscountAmt.rightAlign());
-		row.appendChild(txtDiscountAmt);
+		row.appendChild(txtDiscountAmt.getLabel().rightAlign());
+		row.appendChild(txtDiscountAmt.getComponent());
 	}
 	
 
@@ -942,8 +908,8 @@ public class WOrdenCobro extends WOrdenPago {
 		super.clearMediosPago();
 		if (panelCreditCard != null) {
 			txtCreditCardAmt.setValue(Integer.toString(0));
-			txtCreditCardCouponNo.setText("");
-			txtCreditCardNo.setText("");
+			txtCreditCardCouponNo.setValue("");
+			txtCreditCardNo.setValue("");
 			txtCuotaAmt.setValue(Integer.toString(0));
 		}
 		if (retencSchema == null)
@@ -952,8 +918,8 @@ public class WOrdenCobro extends WOrdenPago {
 		Date d = new Date();
 		// Retenciones
 		retencSchema.setValue(null);
-		txtRetencImporte.setText("0");
-		txtRetencNroRetenc.setText("");
+		txtRetencImporte.setValue("0");
+		txtRetencNroRetenc.setValue("");
 		retencFecha.setValue(d);
 		// Caja efectivo de la caja diaria si es que existe
 		setCashJournalToComponent();
@@ -1005,14 +971,20 @@ public class WOrdenCobro extends WOrdenPago {
 		MPOSPaymentMedium paymentMedium = (MPOSPaymentMedium) cboRetencionReceiptMedium.getSelectedItem().getValue();  
 		saveBasicValidation(paymentMedium, null);
 		Integer retencionSchemaID = (Integer) retencSchema.getValue();
-		String retencionNumber = txtRetencNroRetenc.getText().trim();
+		String retencionNumber = txtRetencNroRetenc.getValue().toString().trim();
 		BigDecimal amount = null;
 		try {
-			amount = numberParse(txtRetencImporte.getText());
+			amount = numberParse(txtRetencImporte.getValue().toString());
 		} catch (Exception e) {
 			throw new Exception("@Invalid@ @Amount@");
 		}
-		Timestamp retencionDate = new Timestamp(((Date)retencFecha.getValue()).getTime()); // retencFecha.getTimestamp();
+		Timestamp retencionDate = null;
+		try {
+			retencionDate = new Timestamp(((Date)retencFecha.getValue()).getTime());
+		} catch (Exception e) {
+			throw new Exception("@Invalid@ @"+retencFecha.getLabel().getValue()+"@");
+		}
+		
 		// Se agrega la retención como medio de cobro.
 		getCobroModel().addRetencion(retencionSchemaID, retencionNumber,
 				amount, retencionDate, getC_Campaign_ID(), getC_Project_ID());
@@ -1030,13 +1002,13 @@ public class WOrdenCobro extends WOrdenPago {
 		getCobroModel().addCreditCard(
 				paymentMedium,
 				plan,
-				txtCreditCardNo.getText(),
-				txtCreditCardCouponNo.getText(),
-				new BigDecimal(txtCreditCardAmt.getValue()),
+				txtCreditCardNo.getValue().toString(),
+				txtCreditCardCouponNo.getValue().toString(),
+				new BigDecimal(txtCreditCardAmt.getValue().toString()),
 				(String) cboCreditCardBank.getValue(),
-				Util.isEmpty(txtCuotasCount.getText()) ? 0 : Integer
-						.parseInt(txtCuotasCount.getText()),
-				new BigDecimal(txtCuotaAmt.getValue()), getC_Campaign_ID(),
+				Util.isEmpty(txtCuotasCount.getValue().toString()) ? 0 : Integer
+						.parseInt(txtCuotasCount.getValue().toString()),
+				new BigDecimal(txtCuotaAmt.getValue().toString()), getC_Campaign_ID(),
 				getC_Project_ID(), (Integer) cboCurrency.getValue());
 	}
 
@@ -1053,7 +1025,7 @@ public class WOrdenCobro extends WOrdenPago {
 		BigDecimal amount = null;
 		Integer monedaOriginalID;
 		try {
-			amount = numberParse(txtChequeImporte.getText());
+			amount = numberParse(txtChequeImporte.getValue().toString());
 		} catch (Exception e) {
 			throw new Exception("@Invalid@ @Amount@");
 		}
@@ -1074,12 +1046,12 @@ public class WOrdenCobro extends WOrdenPago {
 		}
 		getCobroModel().addCheck(paymentMedium,
 				(Integer) chequeChequera.getValue(),
-				txtChequeNroCheque.getText(), amount,
+				txtChequeNroCheque.getValue().toString(), amount,
 				new Timestamp(((Date)chequeFechaEmision.getValue()).getTime()), // chequeFechaEmision.getTimestamp(),
 				new Timestamp(((Date)chequeFechaPago.getValue()).getTime()), // chequeFechaPago.getTimestamp(), 
-				txtChequeALaOrden.getText(),
-				getBankName(), txtChequeCUITLibrador.getText(),
-				txtChequeDescripcion.getText(), getC_Campaign_ID(),
+				txtChequeALaOrden.getValue().toString(),
+				getBankName(), txtChequeCUITLibrador.getValue().toString(),
+				txtChequeDescripcion.getValue().toString(), getC_Campaign_ID(),
 				getC_Project_ID(), monedaOriginalID);
 		return null;
 	}
@@ -1178,9 +1150,9 @@ public class WOrdenCobro extends WOrdenPago {
 	private void loadRetencion(RetencionProcessor retencion) {
 		retencSchema.setValue(retencion.getRetencionSchema()
 				.getC_RetencionSchema_ID());
-		txtRetencNroRetenc.setText(retencion.getRetencionNumber());
+		txtRetencNroRetenc.setValue(retencion.getRetencionNumber());
 		txtRetencImporte
-				.setText(getModel().numberFormat(retencion.getAmount()));
+				.setValue(getModel().numberFormat(retencion.getAmount()));
 		retencFecha.setValue(retencion.getDateTrx());
 	}
 
@@ -1205,10 +1177,10 @@ public class WOrdenCobro extends WOrdenPago {
 			MedioPagoTarjetaCredito tarjeta = (MedioPagoTarjetaCredito) mp;
 			cboCreditCardReceiptMedium.setSelectedItemValue(tarjeta.getPaymentMedium());
 			cboEntidadFinancieraPlans.setSelectedItemValue(tarjeta.getEntidadFinancieraPlan());
-			txtCreditCardCouponNo.setText(tarjeta.getCouponNo());
-			txtCreditCardNo.setText(tarjeta.getCreditCardNo());
+			txtCreditCardCouponNo.setValue(tarjeta.getCouponNo());
+			txtCreditCardNo.setValue(tarjeta.getCreditCardNo());
 			txtCreditCardAmt.setValue(tarjeta.getImporte().toString());
-			txtCuotasCount.setText(""
+			txtCuotasCount.setValue(""
 					+ tarjeta.getEntidadFinancieraPlan().getCuotasPago());
 			txtCuotaAmt.setValue(tarjeta.getCuotaAmt().toString());
 			cboCreditCardBank.setValue(tarjeta.getBank());
@@ -1315,8 +1287,8 @@ public class WOrdenCobro extends WOrdenPago {
 				cboCreditCardBank.setReadWrite(true);
 			}
 			// Cuotas
-			txtCuotasCount.setText("" + plan.getCuotasPago());
-			txtCuotasCount.setReadonly(true);
+			txtCuotasCount.setValue("" + plan.getCuotasPago());
+			txtCuotasCount.setReadWrite(false);
 			// Actualizar datos de plan y medio de pago
 			updateDiscount(mp);
 			refreshPaymentMediumAmountInfo(mp);
@@ -1375,7 +1347,7 @@ public class WOrdenCobro extends WOrdenPago {
 			// ingresado por el usuario
 			if (plan != null) {
 				BigDecimal amt = txtCreditCardAmt.getValue() == null ? BigDecimal.ZERO
-						: new BigDecimal(txtCreditCardAmt.getValue());
+						: new BigDecimal(txtCreditCardAmt.getValue().toString());
 				BigDecimal cuotaAmt = amt.divide(
 						new BigDecimal(plan.getCuotasPago()), 10,
 						BigDecimal.ROUND_HALF_UP);
@@ -1403,7 +1375,9 @@ public class WOrdenCobro extends WOrdenPago {
 	 *         tipo tarjeta)
 	 */
 	protected MEntidadFinancieraPlan getSelectedPlan() {
-		return (MEntidadFinancieraPlan) cboEntidadFinancieraPlans.getModel().getElementAt(cboEntidadFinancieraPlans.getSelectedIndex());
+		if (cboEntidadFinancieraPlans.getSelectedIndex() > 0)
+			return (MEntidadFinancieraPlan) cboEntidadFinancieraPlans.getModel().getElementAt(cboEntidadFinancieraPlans.getSelectedIndex());
+		return null;
 	}
 
 	/**
@@ -1415,12 +1389,12 @@ public class WOrdenCobro extends WOrdenPago {
 	protected void loadCheckInfo(MPOSPaymentMedium paymentMedium) {
 		if(!paymentMedium.isNormalizedBank()){
 			if (!Util.isEmpty(paymentMedium.getBank())) {
-				txtChequeBanco.setText(getCobroModel().getBankName(
+				txtChequeBanco.setValue(getCobroModel().getBankName(
 						paymentMedium.getBank()));
-				txtChequeBanco.setReadonly(true);
+				txtChequeBanco.setReadWrite(false);
 			} else {
-				txtChequeBanco.setReadonly(false);
-				txtChequeBanco.setText("");
+				txtChequeBanco.setReadWrite(true);
+				txtChequeBanco.setValue("");
 			}
 		}
 		else{
@@ -1428,8 +1402,8 @@ public class WOrdenCobro extends WOrdenPago {
 				cboChequeBancoID.setValue(paymentMedium.getC_Bank_ID());
 				cboChequeBancoID.setReadWrite(false);
 			} else {
-				txtChequeBanco.setReadonly(false);
-				txtChequeBanco.setText("");
+				txtChequeBanco.setReadWrite(true);
+				txtChequeBanco.setValue("");
 			}
 		}
 		// Obtengo la configuración de días del medio de pago para la fecha de
@@ -1461,7 +1435,7 @@ public class WOrdenCobro extends WOrdenPago {
 			boolean existsPOS = !Util.isEmpty(pos, true);
 			if (pos!=null)
 				txtPOS.setValue(Integer.toString(pos));
-			txtPOS.setReadonly(existsPOS);  // txtPOS.setReadWrite(!existsPOS);
+			txtPOS.setReadWrite(!existsPOS);
 			// Mensaje dialog en caso que sea posible obtener automáticamente un
 			// nro de pto de venta pero no existe ninguno
 			// Comentado para que no muestre el cartel al iniciar la ventana
@@ -1469,7 +1443,7 @@ public class WOrdenCobro extends WOrdenPago {
 			// showInfo(VOrdenCobroModel.POS_ERROR_MSG);
 			// }
 		} else {
-			lblPOS.setVisible(false);
+			txtPOS.getLabel().setVisible(false);
 			txtPOS.setVisible(false);
 		}
 	}
@@ -1497,7 +1471,7 @@ public class WOrdenCobro extends WOrdenPago {
 		// Actualizo el cargo de la organización para facturas vencidas
 		updateOverdueInvoicesCharge();
 		BigDecimal total = getModel().getSumaTotalPagarFacturas();
-		txtTotalPagar1.setText(numberFormat(total));
+		txtTotalPagar1.setValue(numberFormat(total));
 	}
 
     protected void updateCustomPaymentsTabsState(){
@@ -1560,7 +1534,7 @@ public class WOrdenCobro extends WOrdenPago {
 		getCobroModel().updateGeneralDiscount(
 				isApplicable ? discountSchema : null);
 		// Componente de esquema de descuento actual de medio de pago
-		txtPaymentDiscount.setText(isApplicable ? discountSchema.toString()
+		txtPaymentDiscount.setValue(isApplicable ? discountSchema.toString()
 				: null);
 
 		// Indica al modelo que asuma o no que existe un descuento general
@@ -1618,7 +1592,7 @@ public class WOrdenCobro extends WOrdenPago {
 		if (getModel().getBPartner() != null
 				&& getModel().getBPartner().isGroupInvoices()
 				&& radPayTypeStd.isSelected()) {
-			lblGroupingAmt.setVisible(true);
+			txtGroupingAmt.getLabel().setVisible(true);
 			txtGroupingAmt.setVisible(true);
 			((OpenInvoicesCustomerReceiptsTableModel) getModel().m_facturasTableModel)
 					.setAllowManualAmtEditable(false);
@@ -1626,7 +1600,7 @@ public class WOrdenCobro extends WOrdenPago {
 			rInvoiceAll.setVisible(false);
 			invoiceDatePick.setVisible(false);
 		} else {
-			lblGroupingAmt.setVisible(false);
+			txtGroupingAmt.getLabel().setVisible(false);
 			txtGroupingAmt.setVisible(false);
 			((OpenInvoicesCustomerReceiptsTableModel) getModel().m_facturasTableModel)
 					.setAllowManualAmtEditable(true);
@@ -1663,7 +1637,7 @@ public class WOrdenCobro extends WOrdenPago {
 			if (untilActualDueDate) {
 				setDefaultGroupAmtValue();
 			}
-			BigDecimal amt = txtGroupingAmt.getValue() != null ? new BigDecimal(txtGroupingAmt.getValue()) : BigDecimal.ZERO;
+			BigDecimal amt = txtGroupingAmt.getValue() != null ? new BigDecimal(txtGroupingAmt.getValue().toString()) : BigDecimal.ZERO;
 			getCobroModel().updateGroupingAmtInvoices(amt);
 //			repaint();
 //			tblFacturas.repaint();
@@ -1711,7 +1685,7 @@ public class WOrdenCobro extends WOrdenPago {
 	@Override
 	protected void updateSummaryInfo() {
 		// Actualizo el componente visual con el total de descuentos
-		txtDiscountAmt.setText(numberFormat(getCobroModel().getSumaDescuentos()
+		txtDiscountAmt.setValue(numberFormat(getCobroModel().getSumaDescuentos()
 				.negate()));
 		// Actualizo el resumen como se realiza normalmente
 		super.updateSummaryInfo();
@@ -1751,10 +1725,10 @@ public class WOrdenCobro extends WOrdenPago {
 	protected void updateCustomTipoPagoChange() {
 		updateGroupingAmt(false);
 		if (radPayTypeStd.isSelected()) {
-			lblOrgCharge.setVisible(true);
+			txtOrgCharge.getLabel().setVisible(true);
 			txtOrgCharge.setVisible(true);
 		} else {
-			lblOrgCharge.setVisible(false);
+			txtOrgCharge.getLabel().setVisible(false);
 			txtOrgCharge.setVisible(false);
 		}
 	}
@@ -1782,8 +1756,7 @@ public class WOrdenCobro extends WOrdenPago {
 		updateOverdueInvoicesCharge();
 		// Actualizar el total a pagar
 		updateTotalAPagar1();
-		txtGroupingAmt.setReadonly(isSelected);
-//		tblFacturas.repaint();
+		txtGroupingAmt.setReadWrite(!isSelected);
 		resetModel();
 	}
 
@@ -1856,7 +1829,7 @@ public class WOrdenCobro extends WOrdenPago {
 
 	public String getBankName() {
 		if (txtChequeBanco.isVisible())
-			return txtChequeBanco.getText();
+			return txtChequeBanco.getValue().toString();
 		else if(cboChequeBancoID.getValue() == null)
 				return null;
 			else
@@ -1870,36 +1843,36 @@ public class WOrdenCobro extends WOrdenPago {
     protected void createPaymentSelectionTopFields() {
 
     	// Descuento de entidad comercial
-		lblBPartnerDiscount = new Label();
 		MLookup lookupBPDiscount = MLookupFactory.get (Env.getCtx(), m_WindowNo, 0, 6581, DisplayType.Search);
 		bPartnerDiscount = new WSearchEditor ("M_DiscountSchema_ID", false, false, true, lookupBPDiscount);
+		addPopupMenu(bPartnerDiscount, true, true, false);
 		bPartnerDiscount.setReadWrite(false);
 
     	Rows rows = jPanel1.newRows();
     	Row row = rows.newRow();
-    	row.appendChild(lblClient.rightAlign());
+    	row.appendChild(cboClient.getLabel().rightAlign());
     	row.appendChild(cboClient.getComponent());
     	
     	row.appendChild(new Space());
-    	row.appendChild(lblOrg.rightAlign());
+    	row.appendChild(cboOrg.getLabel().rightAlign());
     	row.appendChild(cboOrg.getComponent());
     	row.appendChild(new Space());
     	
     	row = rows.newRow();
-    	row.appendChild(lblBPartner.rightAlign());
+    	row.appendChild(BPartnerSel.getLabel().rightAlign());
     	row.appendChild(BPartnerSel.getComponent());
     	row.appendChild(new Space());
-    	row.appendChild(lblBPartnerDiscount.rightAlign());
+    	row.appendChild(bPartnerDiscount.getLabel().rightAlign());
     	row.appendChild(bPartnerDiscount.getComponent());
     	row.appendChild(new Space());
     	
     	row = rows.newRow();
-    	row.appendChild(lblDocumentNo.rightAlign());
-    	row.appendChild(fldDocumentNo);
-    	txtDescription.setWidth("100%");
+    	row.appendChild(fldDocumentNo.getLabel().rightAlign());
+    	row.appendChild(fldDocumentNo.getComponent());
+    	txtDescription.getComponent().setWidth("100%");
     	row.appendChild(new Space());
 
-    	row.appendChild(lblDocumentType.rightAlign());
+    	row.appendChild(cboDocumentType.getLabel().rightAlign());
     	row.appendChild(cboDocumentType.getComponent());
     	row.appendChild(new Space());
 
@@ -1911,8 +1884,8 @@ public class WOrdenCobro extends WOrdenPago {
 	 */
 	protected void createPayAllDiv(Div divCheckPayAll) {
 		divCheckPayAll.setAlign("end");
-		divCheckPayAll.appendChild(lblPOS);
-		divCheckPayAll.appendChild(txtPOS);
+		divCheckPayAll.appendChild(txtPOS.getLabel());
+		divCheckPayAll.appendChild(txtPOS.getComponent());
 		divCheckPayAll.appendChild(checkPayAll);
 	}
     
@@ -1922,33 +1895,33 @@ public class WOrdenCobro extends WOrdenPago {
 	protected void setDivTxtTotal(Div divTxtEfectivoImporte) {
 		
 		divTxtEfectivoImporte.setAlign("end");
-		divTxtEfectivoImporte.appendChild(lblOrgCharge);
-		divTxtEfectivoImporte.appendChild(txtOrgCharge);
-		divTxtEfectivoImporte.appendChild(lblTotalPagar1);
-		divTxtEfectivoImporte.appendChild(txtTotalPagar1);		
+		divTxtEfectivoImporte.appendChild(txtOrgCharge.getLabel());
+		divTxtEfectivoImporte.appendChild(txtOrgCharge.getComponent());
+		divTxtEfectivoImporte.appendChild(txtTotalPagar1.getLabel());
+		divTxtEfectivoImporte.appendChild(txtTotalPagar1.getComponent());		
 	}
 
 	
 	protected void initComponents() {
 		
 		// Inicializaciones especificas para WOrdenCobro
-		txtOrgCharge = new Textbox();
+		txtOrgCharge = new WStringEditor();
 		txtOrgCharge.setValue(BigDecimal.ZERO.toString());
-		txtOrgCharge.setReadonly(true);
-		txtPOS = new Textbox();
+		txtOrgCharge.setReadWrite(false);
+		txtPOS = new WStringEditor();
 		// Setear el valor del punto de venta
-		txtPOS.addEventListener("onChange", new EventListener() {			
+		txtPOS.getComponent().addEventListener("onChange", new EventListener() {			
 			@Override
 			public void onEvent(Event arg0) throws Exception {
-				getCobroModel().setPOS(Integer.parseInt(txtPOS.getValue()));
+				getCobroModel().setPOS(Integer.parseInt(txtPOS.getValue().toString()));
 				
 			}
 		});
 
 		// Monto de agrupación de la entidad comercial
-		txtGroupingAmt = new Textbox();
+		txtGroupingAmt = new WStringEditor();
 		txtGroupingAmt.setValue(BigDecimal.ZERO.toString());
-		txtGroupingAmt.addEventListener("onChange", new EventListener() {		
+		txtGroupingAmt.getComponent().addEventListener("onChange", new EventListener() {		
 			@Override
 			public void onEvent(Event arg0) throws Exception {
 				updateGroupingAmt(false);

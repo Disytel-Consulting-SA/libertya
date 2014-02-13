@@ -23,7 +23,6 @@ import org.adempiere.webui.component.Button;
 import org.adempiere.webui.component.Checkbox;
 import org.adempiere.webui.component.Column;
 import org.adempiere.webui.component.Columns;
-import org.adempiere.webui.component.Datebox;
 import org.adempiere.webui.component.Grid;
 import org.adempiere.webui.component.GridFactory;
 import org.adempiere.webui.component.Label;
@@ -36,9 +35,14 @@ import org.adempiere.webui.component.Tabpanel;
 import org.adempiere.webui.component.Tabpanels;
 import org.adempiere.webui.component.Tabs;
 import org.adempiere.webui.component.Textbox;
+import org.adempiere.webui.editor.IZoomableEditor;
 import org.adempiere.webui.editor.WDateEditor;
+import org.adempiere.webui.editor.WEditor;
+import org.adempiere.webui.editor.WEditorPopupMenu;
 import org.adempiere.webui.editor.WSearchEditor;
+import org.adempiere.webui.editor.WStringEditor;
 import org.adempiere.webui.editor.WTableDirEditor;
+import org.adempiere.webui.event.ContextMenuListener;
 import org.adempiere.webui.event.ValueChangeEvent;
 import org.adempiere.webui.event.ValueChangeListener;
 import org.adempiere.webui.panel.ADForm;
@@ -98,6 +102,8 @@ import org.zkoss.zul.Tree;
 import org.zkoss.zul.Treecell;
 import org.zkoss.zul.Treeitem;
 import org.zkoss.zul.Treerow;
+import org.zkoss.zul.impl.XulElement;
+
 
 /**
  *
@@ -110,6 +116,40 @@ public class WOrdenPago extends ADForm implements ValueChangeListener, TableMode
 
     }
     
+    /**
+     * Incorpora el menu contextual (Zoom, Refrescar, Preferencias) a un elemento, como por ejemplo WSearchEditr, WTableDirEditor, etc. 
+     */
+    protected void addPopupMenu(Object aComponent, boolean zoom, boolean requery, boolean preferences) {
+        WEditorPopupMenu aPopupMenu = new WEditorPopupMenu(true, true, false);
+        ((XulElement)((WEditor)aComponent).getComponent()).setContext(aPopupMenu);
+        aPopupMenu.addMenuListener((ContextMenuListener)aComponent);
+        appendChild(aPopupMenu);
+	    Label label = ((WEditor)aComponent).getLabel();
+	    if (aPopupMenu.isZoomEnabled() && aComponent instanceof IZoomableEditor)
+	    {
+	    	label.setStyle("cursor: pointer; text-decoration: underline;");
+	          label.addEventListener(Events.ON_CLICK, new ZoomListener((IZoomableEditor) aComponent));
+	    }
+	    label.setContext(aPopupMenu.getId());  
+    }
+    
+    /**
+     *  Migrated from AD_Tabpanel 
+     */
+	class ZoomListener implements EventListener {
+
+		private IZoomableEditor searchEditor;
+
+		ZoomListener(IZoomableEditor editor) {
+			searchEditor = editor;
+		}
+
+		public void onEvent(Event event) throws Exception {
+			if (Events.ON_CLICK.equals(event.getName())) {
+				searchEditor.actionZoom();
+			}
+		}
+	}
     
     /** This method is called from within the constructor to
      * initialize the form.
@@ -124,39 +164,35 @@ public class WOrdenPago extends ADForm implements ValueChangeListener, TableMode
         buttonGroup2 = new Radiogroup();
         
         jPanel1 = GridFactory.newGridLayout();
-		
-        lblBPartner = new Label();
-        lblClient = new Label();
-        lblDocumentNo = new Label();
-        lblDescription = new Label();
-        
+
         MLookup lookupClient = MLookupFactory.get (Env.getCtx(), m_WindowNo, 0, 1014335, DisplayType.TableDir);
         cboClient = new WTableDirEditor("AD_Client_ID", false, false, true, lookupClient);
         cboClient.setValue(Env.getAD_Client_ID(Env.getCtx()));
         cboClient.setReadWrite(false);
+        addPopupMenu(cboClient, true, true, false);
         
         MLookup lookupPartner = MLookupFactory.get (Env.getCtx(), m_WindowNo, 0, 3499, DisplayType.Search);
 		BPartnerSel = new WSearchEditor ("C_BPartner_ID", true, false, true, lookupPartner);
+		addPopupMenu(BPartnerSel, true, true, false);
+//		BPartnerSel.getLabel().setMandatory(true);
 		
-        fldDocumentNo = new Textbox(); 
-        
-        lblOrg = new Label();
+        fldDocumentNo = new WStringEditor(); 
+
         MLookup lookupOrg = MLookupFactory.get (Env.getCtx(), m_WindowNo, 0, 1016168, DisplayType.TableDir);
 		cboOrg = new WTableDirEditor("AD_Org_ID", false, false, true, lookupOrg);
 		cboOrg.setValue(Env.getAD_Org_ID(Env.getCtx()));
+		addPopupMenu(cboOrg, true, true, false);
 		
         radPayTypeStd = new Radio();
         radPayTypeAdv = new Radio();
         radPayTypeStd.setValue("PAGO NORMAL");
         radPayTypeStd.setSelected(true);
         
-        txtDescription = new Textbox();
-
-		
-		lblDocumentType = new Label();
+        txtDescription = new WStringEditor();
 		MLookupInfo infoDocType = VComponentsFactory.MLookupInfoFactory( Env.getCtx(),m_WindowNo, 0, 1016307, DisplayType.TableDir, m_model.getDocumentTypeSqlValidation());
 		MLookup lookupDocType = new MLookup(infoDocType, 0);
 		cboDocumentType = new WTableDirEditor("C_DocType_ID", false, false, true, lookupDocType);
+		addPopupMenu(cboDocumentType, true, true, false);
 		
 		tblFacturas = new Grid();
 		tblFacturas.setHeight("350px");
@@ -165,9 +201,7 @@ public class WOrdenPago extends ADForm implements ValueChangeListener, TableMode
 		tblFacturas.setModel(listModel);
 		tblFacturas.setRowRenderer(renderer);
 		
-        txtTotalPagar1 = new Textbox();
-//        txtTotalPagar1.setConstraint("/^[0-9]+$/");
-        lblTotalPagar1 = new Label();
+        txtTotalPagar1 = new WStringEditor();
         
 		rInvoiceAll = new Radio();
 		rInvoiceDate = new Radio();
@@ -179,75 +213,56 @@ public class WOrdenPago extends ADForm implements ValueChangeListener, TableMode
 
         cmdGrabar = new Button();
 
-        lblEfectivoLibroCaja = new Label();
         
 		MLookupInfo infoLibroCaja = VComponentsFactory.MLookupInfoFactory( Env.getCtx(),m_WindowNo, 0, 5241, DisplayType.Search, m_model.getEfectivoLibroCajaSqlValidation());
 		MLookup lookupLibroCaja = new MLookup(infoLibroCaja, 0);
 		efectivoLibroCaja = new WSearchEditor("C_Cash_ID", false, false, true, lookupLibroCaja);
+		addPopupMenu(efectivoLibroCaja, true, true, false);
+        txtEfectivoImporte = new WStringEditor();
 
-        lblEfectivoImporte = new Label();
-        txtEfectivoImporte = new Textbox();
-//        txtEfectivoImporte.setConstraint("/^[0-9]+$/");
-        
-//        jPanel6 = new javax.swing.JPanel();
-          lblTransfCtaBancaria = new Label();
-        lblTransfNroTransf = new Label();
-        lblTransfImporte = new Label();
-        lblTransfFecha = new Label();
         MLookupInfo infoTransf = VComponentsFactory.MLookupInfoFactory(Env.getCtx(),m_WindowNo, 0, 3077, DisplayType.Search, m_model.getTransfCtaBancariaSqlValidation());
 		MLookup lookupTransf = new MLookup(infoTransf, 0);
 		transfCtaBancaria = new WSearchEditor( "C_BankAccount_ID",false,false,true,lookupTransf );
-	    
-        txtTransfNroTransf = new Textbox();
-        txtTransfImporte = new Textbox();
+		addPopupMenu(transfCtaBancaria, true, true, false);
+		
+        txtTransfNroTransf = new WStringEditor();
+        txtTransfImporte = new WStringEditor();
         transFecha = new WDateEditor(); // VComponentsFactory.VDateFactory();
-//        jPanel7 = new javax.swing.JPanel();
-        lblChequeChequera = new Label();
-        lblChequeNroCheque = new Label();
-        lblChequeImporte = new Label();
-        lblChequeFechaEmision = new Label();
-        lblChequeFechaPago = new Label();
-        lblChequeALaOrden = new Label();
-        lblChequeBanco = new Label();
-        lblChequeCUITLibrador = new Label(); 
-        lblChequeDescripcion = new Label();
         chequeChequera = createChequeChequeraLookup(); 
-        txtChequeImporte = new Textbox();
+        txtChequeImporte = new WStringEditor();
         chequeFechaEmision = new WDateEditor(); // VComponentsFactory.VDateFactory();
         chequeFechaPago = new WDateEditor(); // VComponentsFactory.VDateFactory();
-        txtChequeALaOrden = new Textbox();
-        txtChequeNroCheque = new Textbox();
-        txtChequeBanco = new Textbox();
+        txtChequeALaOrden = new WStringEditor();
+        txtChequeNroCheque = new WStringEditor();
+        txtChequeBanco = new WStringEditor();
         cboChequeBancoID = createChequeBancoIDLookup();
-        txtChequeCUITLibrador = new Textbox();
-        txtChequeDescripcion = new Textbox();     
+        txtChequeCUITLibrador = new WStringEditor();
+        txtChequeDescripcion = new WStringEditor();     
         
         MLookup lookupCampaign = MLookupFactory.get (Env.getCtx(), m_WindowNo, 0, 2570, DisplayType.TableDir);
         cboCampaign = new WTableDirEditor("C_Campaign_ID", false, false, true, lookupCampaign);
+        addPopupMenu(cboCampaign, true, true, false);
         
         MLookup lookupProject = MLookupFactory.get (Env.getCtx(), m_WindowNo, 0, 1349, DisplayType.TableDir);
         cboProject = new WTableDirEditor("C_Project_ID", false, false, true, lookupProject);
+        addPopupMenu(cboProject, true, true, false);
         
         MLookupInfo infoCurrency = VComponentsFactory.MLookupInfoFactory(Env.getCtx(),m_WindowNo, 0, 457, DisplayType.TableDir, m_model.getCurrencySqlValidation());
         MLookup lookupCurrency = new MLookup(infoCurrency, 0);
         cboCurrency = new WTableDirEditor("C_Currency_ID", false, false, true, lookupCurrency);
-            
-        lblCampaign = new Label();
-        lblProject = new Label();
-        lblCurrency = new Label();
+        addPopupMenu(cboCurrency, true, true, false);
+        
         cmdProcess = new Button();        
         cmdCancel = new Button();
 
-        lblCreditInvoice = new Label();
         MLookupInfo infoCreditInvoice = VComponentsFactory.MLookupInfoFactory( Env.getCtx(),m_WindowNo, 0, 3484, DisplayType.Search, m_model.getCreditSqlValidation());
         MLookup lookupCreditInvoice = new MLookup(infoCreditInvoice, 0);
 		creditInvoice = new WSearchEditor("C_Invoice_ID", false, false, true, lookupCreditInvoice);
-        
-        lblCreditAvailable = new Label();
-        txtCreditAvailable = new Textbox();
-        txtCreditAvailable.setReadonly(true); // setEditable(false);
-        lblCreditImporte = new Label();
-        txtCreditImporte = new Textbox();
+		addPopupMenu(creditInvoice, true, true, false);
+		
+        txtCreditAvailable = new WStringEditor();
+        txtCreditAvailable.setReadWrite(false);
+        txtCreditImporte = new WStringEditor();
         
         checkPayAll = new Checkbox();
         checkPayAll.setText("Pagar Todo");
@@ -260,7 +275,7 @@ public class WOrdenPago extends ADForm implements ValueChangeListener, TableMode
 			}
 		});
 
-        lblBPartner.setText("Entidad Comercial");
+        BPartnerSel.getLabel().setText("Entidad Comercial");
 
         chequeFechaEmision.setMandatory(true);
         chequeFechaPago.setMandatory(true);
@@ -278,8 +293,7 @@ public class WOrdenPago extends ADForm implements ValueChangeListener, TableMode
             }
         });
 
-        txtTotalPagar1.setValue("TOTAL A PAGAR");
-        lblTotalPagar1.setValue("TOTAL A PAGAR");
+        txtTotalPagar1.getLabel().setValue("TOTAL A PAGAR");
 
         buttonGroup2.appendChild(rInvoiceAll);      
         rInvoiceAll.setSelected(true);
@@ -315,26 +329,21 @@ public class WOrdenPago extends ADForm implements ValueChangeListener, TableMode
             }
         });
 
-          txtSaldo = new Textbox();
-          txtSaldo.setReadonly(true); // setEditable(false);
-        txtDifCambio = new Textbox();
-        txtDifCambio.setReadonly(true); // (false);
-        lblSaldo = new Label();
-        lblSaldo.setText("SALDO");
-        txtMedioPago2 = new Textbox();
-        txtMedioPago2.setReadonly(true);
-        txtRetenciones2 = new Textbox();
-        txtRetenciones2.setReadonly(true);
-        txtTotalPagar2 = new Textbox();
-        txtTotalPagar2.setReadonly(true);
-        lblTotalPagar2 = new Label();
-        lblTotalPagar2.setText("TOTAL A PAGAR");
-        lblRetenciones2 = new Label();
-        lblRetenciones2.setText("RETENCIONES");
-        lblDifCambio = new Label();
-        lblDifCambio.setText("Diferecia de Cambio");
-        lblMedioPago2 = new Label();
-        lblMedioPago2.setText("MEDIO DE PAGO");
+        txtSaldo = new WStringEditor();
+        txtSaldo.setReadWrite(false); 
+        txtDifCambio = new WStringEditor();
+        txtDifCambio.setReadWrite(false);
+        txtSaldo.getLabel().setText("SALDO");
+        txtMedioPago2 = new WStringEditor();
+        txtMedioPago2.setReadWrite(false);
+        txtRetenciones2 = new WStringEditor();
+        txtRetenciones2.setReadWrite(false);
+        txtTotalPagar2 = new WStringEditor();
+        txtTotalPagar2.setReadWrite(false);
+        txtTotalPagar2.getLabel().setText("TOTAL A PAGAR");
+        txtRetenciones2.getLabel().setText("RETENCIONES");
+        txtDifCambio.getLabel().setText("Diferecia de Cambio");
+        txtMedioPago2.getLabel().setText("MEDIO DE PAGO");
 
         cmdGrabar.setLabel("GRABAR");
         cmdGrabar.addEventListener("onClick", new EventListener() {
@@ -417,29 +426,29 @@ public class WOrdenPago extends ADForm implements ValueChangeListener, TableMode
     protected void createPaymentSelectionTopFields() {
     	Rows rows = jPanel1.newRows();
     	Row row = rows.newRow();
-    	row.appendChild(lblClient.rightAlign());
+    	row.appendChild(cboClient.getLabel().rightAlign());
     	row.appendChild(cboClient.getComponent());
     	
     	row.appendChild(new Space());
-    	row.appendChild(lblOrg.rightAlign());
+    	row.appendChild(cboOrg.getLabel().rightAlign());
     	row.appendChild(cboOrg.getComponent());
     	row.appendChild(new Space());
     	
     	row = rows.newRow();
-    	row.appendChild(lblBPartner.rightAlign());
+    	row.appendChild(BPartnerSel.getLabel().rightAlign());
     	row.appendChild(BPartnerSel.getComponent());
     	row.appendChild(new Space());
-    	row.appendChild(lblDocumentNo.rightAlign());
-    	row.appendChild(fldDocumentNo);
+    	row.appendChild(fldDocumentNo.getLabel().rightAlign());
+    	row.appendChild(fldDocumentNo.getComponent());
     	row.appendChild(new Space());
     	
     	row = rows.newRow();
-    	row.appendChild(lblDescription.rightAlign());
-    	row.appendChild(txtDescription);
-    	txtDescription.setWidth("100%");
+    	row.appendChild(txtDescription.getLabel().rightAlign());
+    	row.appendChild(txtDescription.getComponent());
+    	txtDescription.getComponent().setWidth("100%");
     	row.appendChild(new Space());
 
-    	row.appendChild(lblDocumentType.rightAlign());
+    	row.appendChild(cboDocumentType.getLabel().rightAlign());
     	row.appendChild(cboDocumentType.getComponent());
     	row.appendChild(new Space());
 
@@ -451,7 +460,7 @@ public class WOrdenPago extends ADForm implements ValueChangeListener, TableMode
      */
     protected Tabpanel createCashTab(){
        
-    	txtEfectivoImporte.setText("0");
+    	txtEfectivoImporte.setValue("0");
     	
     	Tabpanel tabpanel = new Tabpanel();
     	tabpanel.setHeight("150px");
@@ -461,10 +470,10 @@ public class WOrdenPago extends ADForm implements ValueChangeListener, TableMode
 		
     	Rows rows = gridpanel.newRows();
 		Row row = rows.newRow();
-		row.appendChild(lblEfectivoLibroCaja.rightAlign());
+		row.appendChild(efectivoLibroCaja.getLabel().rightAlign());
 		row.appendChild(efectivoLibroCaja.getComponent());
-		row.appendChild(lblEfectivoImporte.rightAlign());
-		row.appendChild(txtEfectivoImporte);
+		row.appendChild(txtEfectivoImporte.getLabel().rightAlign());
+		row.appendChild(txtEfectivoImporte.getComponent());
 		
 		tabpanel.appendChild(gridpanel);
         return tabpanel;
@@ -541,25 +550,22 @@ public class WOrdenPago extends ADForm implements ValueChangeListener, TableMode
 	protected Tabpanel createPagoAdelantadoTab()
 	{
 		panelPagoAdelantado = new Tabpanel();
-		
-		lblPagoAdelantadoCash = new Label();
-		lblPagoAdelantadoPago = new Label();
-		lblPagoAdelantadoCash.setText(getModel().isSOTrx()?"COBRO":"PAGO");
-		lblPagoAdelantadoPago.setText(getModel().isSOTrx()?"COBRO":"PAGO");
-        lblPagoAdelantadoImporte = new Label();
-        lblPagoAdelantadoImporte.setText("IMPORTE");
-        txtPagoAdelantadoImporte = new Textbox();
-        txtPagoAdelantadoImporte.setText("0");
-//        initFormattedTextField((JFormattedTextField)txtPagoAdelantadoImporte);      
 		MLookupInfo infoPago = VComponentsFactory.MLookupInfoFactory( Env.getCtx(),m_WindowNo, 0, 5043, DisplayType.Search, getModel().getPagoAdelantadoSqlValidation());
 		Lookup lookupPago = new MLookup(infoPago, 0);
 		pagoAdelantado = new WSearchEditor("C_Payment_ID", false, false, true, lookupPago);
-        
+		addPopupMenu(pagoAdelantado, true, true, false);
+		
         MLookupInfo infoCash = VComponentsFactory.MLookupInfoFactory( Env.getCtx(),m_WindowNo, 0, 5283, DisplayType.Search, getModel().getCashAnticipadoSqlValidation());
 		Lookup lookupCash = new MLookup(infoCash, 0);
 		cashAdelantado = new WSearchEditor("C_CashLine_ID", false, false, true, lookupCash);
-     
-        lblPagoAdelantadoType = new Label();
+		addPopupMenu(cashAdelantado, true, true, false);
+		
+		cashAdelantado.getLabel().setText(getModel().isSOTrx()?"COBRO":"PAGO");
+		pagoAdelantado.getLabel().setText(getModel().isSOTrx()?"COBRO":"PAGO");
+		txtPagoAdelantadoImporte = new WStringEditor();
+		txtPagoAdelantadoImporte.getLabel().setText("IMPORTE");
+        txtPagoAdelantadoImporte.setValue("0");
+
         lblPagoAdelantadoType.setText("TIPO");
         cboPagoAdelantadoType = new Combobox();
         cboPagoAdelantadoType.appendItem(getMsg("Payment"));
@@ -571,10 +577,9 @@ public class WOrdenPago extends ADForm implements ValueChangeListener, TableMode
 				updatePagoAdelantadoTab();
 			}
 		});
-        txtPagoAdelantadoAvailable = new Textbox();
-        txtPagoAdelantadoAvailable.setReadonly(true); 
-        lblPagoAdelantadoAvailable = new Label();
-        lblPagoAdelantadoAvailable.setText("PENDIENTE");
+        txtPagoAdelantadoAvailable = new WStringEditor();
+        txtPagoAdelantadoAvailable.setReadWrite(false);  
+        txtPagoAdelantadoAvailable.getLabel().setText("PENDIENTE");
 		
         Grid gridpanel = GridFactory.newGridLayout();
 		gridpanel.setWidth("100%");
@@ -587,18 +592,18 @@ public class WOrdenPago extends ADForm implements ValueChangeListener, TableMode
 		
 		// Uno de los dos (efectivo o pago)
 		Row row2a = rows.newRow();
-		row2a.appendChild(lblPagoAdelantadoPago.rightAlign());
+		row2a.appendChild(pagoAdelantado.getLabel().rightAlign());
 		row2a.appendChild(pagoAdelantado.getComponent());
 		Row row2b = rows.newRow();
-		row2b.appendChild(lblPagoAdelantadoCash.rightAlign());
+		row2b.appendChild(cashAdelantado.getLabel().rightAlign());
 		row2b.appendChild(cashAdelantado.getComponent());
 		
 		Row row3 = rows.newRow();
-		row3.appendChild(lblPagoAdelantadoAvailable.rightAlign());
-		row3.appendChild(txtPagoAdelantadoAvailable);
+		row3.appendChild(txtPagoAdelantadoAvailable.getLabel().rightAlign());
+		row3.appendChild(txtPagoAdelantadoAvailable.getComponent());
 		Row row4 = rows.newRow();
-		row4.appendChild(lblPagoAdelantadoImporte.rightAlign());
-		row4.appendChild(txtPagoAdelantadoImporte);
+		row4.appendChild(txtPagoAdelantadoImporte.getLabel().rightAlign());
+		row4.appendChild(txtPagoAdelantadoImporte.getComponent());
 		
         updatePagoAdelantadoTab();
         panelPagoAdelantado.appendChild(gridpanel);
@@ -663,17 +668,17 @@ public class WOrdenPago extends ADForm implements ValueChangeListener, TableMode
 			throw new Exception(cboCurrency.getValue().toString());
 		}
 		try {
-			mpe.importe = numberParse(txtEfectivoImporte.getText());
+			mpe.importe = numberParse(txtEfectivoImporte.getValue().toString());
 		} catch (Exception e) {
-			throw new Exception(lblEfectivoImporte.getValue());
+			throw new Exception(txtEfectivoImporte.getLabel().getValue());
 		}		
 		try {
 			mpe.libroCaja_ID = (Integer)efectivoLibroCaja.getValue();
 		} catch (NullPointerException ee) {
-			throw new Exception(lblEfectivoLibroCaja.getValue());
+			throw new Exception(efectivoLibroCaja.getLabel().getValue());
 		}
 		if (mpe.importe.compareTo(new BigDecimal(0.0)) <= 0)
-			throw new Exception(lblEfectivoImporte.getValue());
+			throw new Exception(txtEfectivoImporte.getLabel().getValue());
 
 		mpe.setCampaign(getC_Campaign_ID() == null?0:getC_Campaign_ID());
 		mpe.setProject(getC_Project_ID() == null?0:getC_Project_ID());
@@ -692,24 +697,28 @@ public class WOrdenPago extends ADForm implements ValueChangeListener, TableMode
 		try {
 			mpt.C_BankAccount_ID = (Integer)transfCtaBancaria.getValue();
 		} catch (NullPointerException ee) {
-			throw new Exception(lblTransfCtaBancaria.getValue());
-		}		
-		mpt.fechaTransf = Timestamp.valueOf(transFecha.getValue().toString());		
+			throw new Exception(transfCtaBancaria.getLabel().getValue());
+		}	
 		try {
-			mpt.importe = numberParse(txtTransfImporte.getText());
+			mpt.fechaTransf = Timestamp.valueOf(transFecha.getValue().toString());
 		} catch (Exception e) {
-			throw new Exception(lblTransfImporte.getValue());
+			throw new Exception(transFecha.getLabel().getValue());
+		}
+		try {
+			mpt.importe = numberParse(txtTransfImporte.getValue().toString());
+		} catch (Exception e) {
+			throw new Exception(txtTransfImporte.getLabel().getValue());
 		}		
-		mpt.nroTransf = txtTransfNroTransf.getText();
+		mpt.nroTransf = txtTransfNroTransf.getValue().toString();
 		
 		if (mpt.fechaTransf == null)
-			throw new Exception(lblTransfFecha.getValue());
+			throw new Exception(transFecha.getLabel().getValue());
 		
 		if (mpt.importe.compareTo(new BigDecimal(0.0)) <= 0)
-			throw new Exception(lblTransfImporte.getValue());
+			throw new Exception(txtTransfImporte.getLabel().getValue());
 		
 		if (mpt.nroTransf.trim().equals(""))
-			throw new Exception(lblTransfNroTransf.getValue());
+			throw new Exception(txtTransfImporte.getLabel().getValue());
 		
 		mpt.setCampaign(getC_Campaign_ID() == null?0:getC_Campaign_ID());
 		mpt.setProject(getC_Project_ID() == null?0:getC_Project_ID());
@@ -720,7 +729,7 @@ public class WOrdenPago extends ADForm implements ValueChangeListener, TableMode
     
     protected MedioPagoCheque saveCheckMedioPago() throws Exception{
     	MedioPagoCheque mpc = m_model.getNuevoMedioPagoCheque();		
-		mpc.aLaOrden = txtChequeALaOrden.getText();		
+		mpc.aLaOrden = txtChequeALaOrden.getValue().toString();		
 		try {
 			mpc.monedaOriginalID = (Integer) cboCurrency.getValue();
 		} catch (Exception e) {
@@ -729,7 +738,7 @@ public class WOrdenPago extends ADForm implements ValueChangeListener, TableMode
 		try {
 			mpc.chequera_ID = (Integer)chequeChequera.getValue();
 		} catch (Exception e) {
-			throw new Exception(lblChequeChequera.getValue());
+			throw new Exception(chequeChequera.getLabel().getValue());
 		}	
 		try {
 			mpc.fechaEm = Timestamp.valueOf(chequeFechaEmision.getValue().toString());			
@@ -742,14 +751,14 @@ public class WOrdenPago extends ADForm implements ValueChangeListener, TableMode
 			throw new Exception("@Invalid@ @PayDate@");
 		}
 		try {	    		
-			mpc.importe = numberParse(txtChequeImporte.getText());
+			mpc.importe = numberParse(txtChequeImporte.getValue().toString());
 		} catch (Exception e) {
-			throw new Exception(lblChequeImporte.getValue());
+			throw new Exception(txtChequeImporte.getLabel().getValue());
 		}		
-		mpc.nroCheque = txtChequeNroCheque.getText(); 
-		mpc.banco = txtChequeBanco.getText().trim();
-		mpc.cuitLibrador = txtChequeCUITLibrador.getText().trim();
-		mpc.descripcion = txtChequeDescripcion.getText().trim();
+		mpc.nroCheque = txtChequeNroCheque.getValue().toString(); 
+		mpc.banco = txtChequeBanco.getValue().toString().trim();
+		mpc.cuitLibrador = txtChequeCUITLibrador.getValue().toString().trim();
+		mpc.descripcion = txtChequeDescripcion.getValue().toString().trim();
 		Timestamp today = new Timestamp(System.currentTimeMillis());
 		mpc.dateTrx = mpc.fechaPago.before(today)?mpc.fechaPago:today;
 		// A La Orden: Campo no obligatorio
@@ -758,20 +767,20 @@ public class WOrdenPago extends ADForm implements ValueChangeListener, TableMode
 		// 	throw new Exception("");
 		
 		if (mpc.fechaEm == null)
-			throw new Exception(lblChequeFechaEmision.getValue());
+			throw new Exception(chequeFechaEmision.getLabel().getValue());
 		
 		if (mpc.fechaPago == null)
-			throw new Exception(lblChequeFechaPago.getValue());
+			throw new Exception(chequeFechaPago.getLabel().getValue());
 		
 		if (mpc.fechaPago.compareTo(mpc.fechaEm) < 0) {
 			throw new Exception(getMsg("InvalidCheckDueDate"));
 		}
 		
 		if (mpc.importe.compareTo(new BigDecimal(0.0)) <= 0)
-			throw new Exception(lblChequeImporte.getValue());
+			throw new Exception(txtChequeImporte.getLabel().getValue());
 		
 		if (mpc.nroCheque.trim().equals(""))
-			throw new Exception(lblChequeNroCheque.getValue());
+			throw new Exception(txtChequeNroCheque.getLabel().getValue());
 		
 		mpc.setCampaign(getC_Campaign_ID() == null?0:getC_Campaign_ID());
 		mpc.setProject(getC_Project_ID() == null?0:getC_Project_ID());
@@ -810,19 +819,19 @@ public class WOrdenPago extends ADForm implements ValueChangeListener, TableMode
 		try {
 			mpcm.setC_invoice_ID((Integer)creditInvoice.getValue());
 		} catch (Exception ee) {
-			throw new Exception(lblCreditInvoice.getValue());
+			throw new Exception(creditInvoice.getLabel().getValue());
 		}
 		
 		try {
 			mpcm.setAvailableAmt(getModel().getCreditAvailableAmt(mpcm.getC_invoice_ID() ) );
 		} catch (Exception e) {
-			throw new Exception(lblCreditAvailable.getValue());
+			throw new Exception(txtCreditAvailable.getLabel().getValue());
 		}
 		
 		try {
-			mpcm.setImporte(numberParse(txtCreditImporte.getText()));
+			mpcm.setImporte(numberParse(txtCreditImporte.getValue().toString()));
 		} catch (Exception e) {
-			throw new Exception(lblCreditImporte.getValue());
+			throw new Exception(txtCreditImporte.getLabel().getValue());
 		}
 		
 		mpcm.validate();
@@ -847,7 +856,7 @@ public class WOrdenPago extends ADForm implements ValueChangeListener, TableMode
 			throw new Exception(cboCurrency.getValue().toString());
 		}
 		try {
-			amount = numberParse(txtPagoAdelantadoImporte.getText());
+			amount = numberParse(txtPagoAdelantadoImporte.getValue().toString());
 		} catch (Exception e) {
 			throw new Exception("@Invalid@ @Amount@");
 		}
@@ -903,10 +912,10 @@ public class WOrdenPago extends ADForm implements ValueChangeListener, TableMode
 
     private void onFechaChange(boolean toPayMoment) {//GEN-FIRST:event_onFechaChange
     	if (rInvoiceAll.isSelected()) {
-    		invoiceDatePick.getComponent().setValue(new Date());
-    		invoiceDatePick.setReadWrite(false); // Readonly(true); // setReadWrite(false);
+    		invoiceDatePick.setValue(new Timestamp(new Date().getTime()));
+    		invoiceDatePick.setReadWrite(false);
     	} else {
-    		invoiceDatePick.setReadWrite(true); // Readonly(false); // ReadWrite(true);
+    		invoiceDatePick.setReadWrite(true); 
     	}
     	
     	m_model.setFechaTablaFacturas(new Timestamp(((Date)invoiceDatePick.getComponent().getValue()).getTime()), rInvoiceAll.isSelected());
@@ -915,13 +924,13 @@ public class WOrdenPago extends ADForm implements ValueChangeListener, TableMode
 
     private void onTipoPagoChange(boolean toPayMoment) {//GEN-FIRST:event_onTipoPagoChange
     	if (radPayTypeStd.isSelected()) {
-    		tblFacturas.setAttribute("ReadOnly", "false"); // setEnabled(true);
-    		txtTotalPagar1.setReadonly(true);
+    		tblFacturas.setAttribute("ReadOnly", "false"); 
+    		txtTotalPagar1.setReadWrite(false); 
     		rInvoiceAll.setDisabled(false);
     		rInvoiceDate.setDisabled(false);
     	} else {
-    		tblFacturas.setAttribute("ReadOnly", "true"); // setEnabled(false);
-    		txtTotalPagar1.setReadonly(false);
+    		tblFacturas.setAttribute("ReadOnly", "true"); 
+    		txtTotalPagar1.setReadWrite(true);
     		rInvoiceAll.setSelected(true);
     		rInvoiceAll.setDisabled(false);
     		rInvoiceDate.setDisabled(true);
@@ -980,13 +989,13 @@ public class WOrdenPago extends ADForm implements ValueChangeListener, TableMode
     		BigDecimal monto = null;
     		
     		try {
-    			monto = numberParse(txtTotalPagar1.getText());
+    			monto = numberParse(txtTotalPagar1.getValue().toString());
     		} catch (ParseException e) {
-    			showError("@SaveErrorNotUnique@ \n\n" + lblTotalPagar1.getValue());
+    			showError("@SaveErrorNotUnique@ \n\n" + txtTotalPagar1.getLabel().getValue());
     			
-        		txtTotalPagar1.setFocus(true); // .requestFocusInWindow();
-        		if (txtTotalPagar1.getText().trim().length() > 0) 
-        			txtTotalPagar1.getText().substring(0, txtTotalPagar1.getText().length() - 1); // .select(0, txtTotalPagar1.getText().length() - 1);
+        		txtTotalPagar1.getComponent().setFocus(true); // .requestFocusInWindow();
+        		if (txtTotalPagar1.getValue().toString().trim().length() > 0) 
+        			txtTotalPagar1.getValue().toString().substring(0, txtTotalPagar1.getValue().toString().length() - 1);
         		
         		return;
     		}
@@ -996,7 +1005,7 @@ public class WOrdenPago extends ADForm implements ValueChangeListener, TableMode
     		onTipoPagoChange(true);
     		m_model.setPagoNormal(radPayTypeStd.isSelected(), monto);
     		m_model.setActualizarFacturasAuto(true);
-    		m_model.setDocumentNo(fldDocumentNo.getText());
+    		m_model.setDocumentNo(fldDocumentNo.getValue().toString());
     		// Realizar acciones antes del PreProcesar
     		try {
         		makeOperationsBeforePreProcesar();
@@ -1055,7 +1064,7 @@ public class WOrdenPago extends ADForm implements ValueChangeListener, TableMode
     		customUpdateBPartnerRelatedComponents(false);
     		
     	} else if (idx == 1) {
-    		getModel().setDescription(txtDescription.getText());
+    		getModel().setDescription(txtDescription.getComponent().getText());
     		
     		m_model.setProjectID(getC_Project_ID() == null?0:getC_Project_ID());
     		m_model.setCampaignID(getC_Campaign_ID() == null?0:getC_Campaign_ID());
@@ -1146,7 +1155,7 @@ public class WOrdenPago extends ADForm implements ValueChangeListener, TableMode
     // Declaración de varibales -no modificar//GEN-BEGIN:variables
     
     protected WSearchEditor BPartnerSel;
-    protected Textbox fldDocumentNo;
+    protected WStringEditor fldDocumentNo;
     
     protected Radiogroup buttonGroup1;
     protected Radiogroup buttonGroup2;
@@ -1178,39 +1187,9 @@ public class WOrdenPago extends ADForm implements ValueChangeListener, TableMode
  	protected Tabbox tabbox = new Tabbox();
  	private Tabs tabs = new Tabs();
  	private Tabpanels tabpanels = new Tabpanels();
-    
-    protected Label lblBPartner;
-    protected Label lblCampaign;
-    protected Label lblChequeALaOrden;
-    protected Label lblChequeChequera;
-    protected Label lblChequeFechaEmision;
-    protected Label lblChequeFechaPago;
-    protected Label lblChequeImporte;
-    protected Label lblChequeNroCheque;
-    protected Label lblChequeDescripcion;
-    protected Label lblClient;
-    protected Label lblDocumentNo;
-    private Label lblDescription;
-    protected Label lblDocumentType;
+
     protected WTableDirEditor cboDocumentType;
     
-    protected Label lblEfectivoImporte;
-    protected Label lblEfectivoLibroCaja;
-    protected Label lblMedioPago2;
-    protected Label lblOrg;
-    protected Label lblProject;
-    protected Label lblCurrency;
-    
-    protected Label lblRetenciones2;
-    protected Label lblDifCambio;
-    protected Label lblSaldo;
-    protected Label lblTotalPagar1;
-    
-    protected Label lblTotalPagar2;
-    protected Label lblTransfCtaBancaria;
-    protected Label lblTransfFecha;
-    protected Label lblTransfImporte;
-    protected Label lblTransfNroTransf;
     /*
     protected javax.swing.JPanel panelCamProy;
     */
@@ -1226,50 +1205,41 @@ public class WOrdenPago extends ADForm implements ValueChangeListener, TableMode
     protected WDateEditor transFecha;
     protected WSearchEditor transfCtaBancaria;
 
-    protected Textbox txtDescription;
+    protected WStringEditor txtDescription;
     
-    protected Textbox txtChequeALaOrden;
-    protected Textbox txtChequeImporte;
-    protected Textbox txtChequeNroCheque;
-    protected Textbox txtChequeDescripcion;
+    protected WStringEditor txtChequeALaOrden;
+    protected WStringEditor txtChequeImporte;
+    protected WStringEditor txtChequeNroCheque;
+    protected WStringEditor txtChequeDescripcion;
     
-    protected Textbox txtEfectivoImporte;
+    protected WStringEditor txtEfectivoImporte;
     
-    protected Textbox txtMedioPago2;
-    protected Textbox txtRetenciones2;
-    protected Textbox txtSaldo;
-    protected Textbox txtDifCambio;
+    protected WStringEditor txtMedioPago2;
+    protected WStringEditor txtRetenciones2;
+    protected WStringEditor txtSaldo;
+    protected WStringEditor txtDifCambio;
     
-    protected Textbox txtTotalPagar1;
+    protected WStringEditor txtTotalPagar1;
     
-    protected Textbox txtTotalPagar2;
-    protected Textbox txtTransfImporte;
-    protected Textbox txtTransfNroTransf;
+    protected WStringEditor txtTotalPagar2;
+    protected WStringEditor txtTransfImporte;
+    protected WStringEditor txtTransfNroTransf;
     // Fin de declaraci�n de variables//GEN-END:variables
 
-    protected Label lblCreditInvoice;
     protected WSearchEditor creditInvoice;
-    protected Label lblCreditImporte;
-    protected Textbox txtCreditImporte;
-    protected Label lblCreditAvailable;
-    protected Textbox txtCreditAvailable;
-	protected Label lblChequeBanco;
-	protected Label lblChequeCUITLibrador;
-	protected Textbox txtChequeBanco;
+    protected WStringEditor txtCreditImporte;
+    protected WStringEditor txtCreditAvailable;
+	protected WStringEditor txtChequeBanco;
 	protected WSearchEditor cboChequeBancoID;
-	protected Textbox txtChequeCUITLibrador;
-    protected Label lblPagoAdelantadoCash;
-    protected Label lblPagoAdelantadoPago;
+	protected WStringEditor txtChequeCUITLibrador;
+
+    protected WStringEditor txtPagoAdelantadoImporte;
     
-    protected Label lblPagoAdelantadoImporte;
-    protected Textbox txtPagoAdelantadoImporte;
-    
+    protected Label lblPagoAdelantadoType = new Label();
     protected WSearchEditor pagoAdelantado;
     protected WSearchEditor cashAdelantado;
     protected Combobox cboPagoAdelantadoType;
-    protected Label lblPagoAdelantadoType;
-    protected Label lblPagoAdelantadoAvailable;
-    protected Textbox txtPagoAdelantadoAvailable;
+    protected WStringEditor txtPagoAdelantadoAvailable;
 
     protected static final int PAGO_ADELANTADO_TYPE_PAYMENT_INDEX = 0;
     protected static final int PAGO_ADELANTADO_TYPE_CASH_INDEX = 1;
@@ -1278,14 +1248,10 @@ public class WOrdenPago extends ADForm implements ValueChangeListener, TableMode
     private int m_chequeTerceroTabIndex = -1;
     
     private Tabpanel panelChequeTercero;
-    private Label lblChequeTerceroCuenta;
-    private Label lblChequeTercero;
-    private Label lblChequeTerceroImporte;
-    private Label lblChequeTerceroDescripcion;
     private WSearchEditor chequeTerceroCuenta;
     private WSearchEditor chequeTercero;
-    private Textbox txtChequeTerceroImporte;
-    private Textbox txtChequeTerceroDescripcion;
+    private WStringEditor txtChequeTerceroImporte;
+    private WStringEditor txtChequeTerceroDescripcion;
 
 	private boolean m_cambioTab = false;
 	protected int m_C_Currency_ID = Env.getContextAsInt( Env.getCtx(), "$C_Currency_ID" );
@@ -1333,17 +1299,17 @@ public class WOrdenPago extends ADForm implements ValueChangeListener, TableMode
 		
 		//
 		
-		txtTotalPagar1.setText("");
+		txtTotalPagar1.getLabel().setText("");
 		
-		txtSaldo.setText("");
-		txtDifCambio.setText("");
-		txtTotalPagar2.setText("");
-		txtRetenciones2.setText("");
-		txtMedioPago2.setText("");
-		txtDescription.setText("");
+		txtSaldo.getLabel().setText("");
+		txtDifCambio.getLabel().setText("");
+		txtTotalPagar2.getLabel().setText("");
+		txtRetenciones2.getLabel().setText("");
+		txtMedioPago2.getLabel().setText("");
+		txtDescription.getComponent().setText("");
 
-		txtCreditAvailable.setText("");
-		txtPagoAdelantadoAvailable.setText("");
+		txtCreditAvailable.getLabel().setText("");
+		txtPagoAdelantadoAvailable.getLabel().setText("");
 	
 		//
 		cboCurrency.addValueChangeListener(this);
@@ -1366,19 +1332,6 @@ public class WOrdenPago extends ADForm implements ValueChangeListener, TableMode
 				resetModel();
 			}
 		});
-
-		// tblFacturas.getDefaultEditor(BigDecimal.class).addCellEditorListener(this);
-		// TableCellEditor cellEd = tblFacturas.getDefaultEditor(BigDecimal.class); 
-//		TableCellEditor cellEd = new DecimalEditor(BigDecimal.ZERO, new BigDecimal(Integer.MAX_VALUE), m_model.getNumberFormat());
-//		int cc = tblFacturas.getColumnModel().getColumnCount();
-//		TableColumn tc = tblFacturas.getColumnModel().getColumn(cc - 1);
-//		tc.setCellEditor(cellEd);
-//		cellEd.addCellEditorListener(this); 
-		
-		// TableCellRenderer cellRend = tblFacturas.getDefaultRenderer(Float.class);
-		// tblFacturas.setDefaultRenderer(Number.class, cellRend);
-//		tblFacturas.getColumnModel().getColumn(tblFacturas.getColumnModel().getColumnCount() - 1).setCellRenderer(new MyNumberTableCellRenderer(m_model.getNumberFormat()));
-//		tblFacturas.getColumnModel().getColumn(tblFacturas.getColumnModel().getColumnCount() - 2).setCellRenderer(new MyNumberTableCellRenderer(m_model.getNumberFormat()));		
 
         cboClient.setReadWrite(false);
         cboClient.setValue(Env.getAD_Client_ID(m_ctx));
@@ -1418,7 +1371,7 @@ public class WOrdenPago extends ADForm implements ValueChangeListener, TableMode
 			public void valueChange(ValueChangeEvent evt) {
 				Integer invoiceID = (Integer)creditInvoice.getNewValueOnChange();
 				if (invoiceID != null)
-					txtCreditAvailable.setText(getModel().numberFormat(getModel().getCreditAvailableAmt(invoiceID)));
+					txtCreditAvailable.setValue(getModel().numberFormat(getModel().getCreditAvailableAmt(invoiceID)));
 			}
 		});
         
@@ -1440,7 +1393,7 @@ public class WOrdenPago extends ADForm implements ValueChangeListener, TableMode
 			public void valueChange(ValueChangeEvent evt) {
 				Integer paymentID = (Integer)pagoAdelantado.getNewValueOnChange();
 				if (paymentID != null)
-					txtPagoAdelantadoAvailable.setText(getModel().numberFormat(getModel().getPagoAdelantadoAvailableAmt(paymentID)));
+					txtPagoAdelantadoAvailable.setValue(getModel().numberFormat(getModel().getPagoAdelantadoAvailableAmt(paymentID)));
 			}
 		});
 
@@ -1450,7 +1403,7 @@ public class WOrdenPago extends ADForm implements ValueChangeListener, TableMode
 			public void valueChange(ValueChangeEvent evt) {
 				Integer cashLineID = (Integer)cashAdelantado.getNewValueOnChange();
 				if (cashLineID != null)
-					txtPagoAdelantadoAvailable.setText(getModel().numberFormat(getModel().getCashAdelantadoAvailableAmt(cashLineID)));
+					txtPagoAdelantadoAvailable.setValue(getModel().numberFormat(getModel().getCashAdelantadoAvailableAmt(cashLineID)));
 			}
 		});
         
@@ -1469,46 +1422,46 @@ public class WOrdenPago extends ADForm implements ValueChangeListener, TableMode
 
 		// Efectivo
 		
-		lblEfectivoImporte.setText(Msg.translate(Env.getCtx(), "Amount"));
-		lblEfectivoLibroCaja.setText(Msg.translate(Env.getCtx(), "C_CashBook_ID"));
+		txtEfectivoImporte.getLabel().setText(Msg.translate(Env.getCtx(), "Amount"));
+		efectivoLibroCaja.getLabel().setText(Msg.translate(Env.getCtx(), "C_CashBook_ID"));
 		
 		// Transferencia 
 		
-		lblTransfCtaBancaria.setText(Msg.getElement(m_ctx, "C_BankAccount_ID"));
-		lblTransfFecha.setText(Msg.getMsg(m_ctx, "Date"));
-		lblTransfImporte.setText(Msg.getElement(m_ctx, "Amount"));
-		lblTransfNroTransf.setText(Msg.getMsg(m_ctx, "TransferNumber"));
+		transfCtaBancaria.getLabel().setText(Msg.getElement(m_ctx, "C_BankAccount_ID"));
+		transFecha.getLabel().setText(Msg.getMsg(m_ctx, "Date"));
+		txtTransfImporte.getLabel().setText(Msg.getElement(m_ctx, "Amount"));
+		txtTransfNroTransf.getLabel().setText(Msg.getMsg(m_ctx, "TransferNumber"));
 		
 		// Cheques
 		
-		lblChequeALaOrden.setText(Msg.getMsg(m_ctx, "ALaOrden"));
-		lblChequeChequera.setText(Msg.getElement(m_ctx, "CheckAccount"));
-		lblChequeFechaEmision.setText(Msg.getMsg(m_ctx, "EmittingDate"));
-		lblChequeFechaPago.setText(Msg.getElement(m_ctx, "PayDate"));
-		lblChequeImporte.setText(Msg.getElement(m_ctx, "Amount"));
-		lblChequeNroCheque.setText(Msg.getElement(m_ctx, "CheckNo"));
-		lblChequeBanco.setText(Msg.translate(m_ctx, "C_Bank_ID"));
-		lblChequeCUITLibrador.setText(Msg.translate(m_ctx, "CUITLibrador"));
-		lblChequeDescripcion.setText(getMsg("Description"));
+		txtChequeALaOrden.getLabel().setText(Msg.getMsg(m_ctx, "ALaOrden"));
+		chequeChequera.getLabel().setText(Msg.getElement(m_ctx, "CheckAccount"));
+		chequeFechaEmision.getLabel().setText(Msg.getMsg(m_ctx, "EmittingDate"));
+		chequeFechaPago.getLabel().setText(Msg.getElement(m_ctx, "PayDate"));
+		txtChequeImporte.getLabel().setText(Msg.getElement(m_ctx, "Amount"));
+		txtChequeNroCheque.getLabel().setText(Msg.getElement(m_ctx, "CheckNo"));
+		txtChequeBanco.getLabel().setText(Msg.translate(m_ctx, "C_Bank_ID"));
+		txtChequeCUITLibrador.getLabel().setText(Msg.translate(m_ctx, "CUITLibrador"));
+		txtChequeDescripcion.getLabel().setText(getMsg("Description"));
 		
 		// Credito
-		lblCreditInvoice.setText(Msg.translate(m_ctx, "Credit"));
-		lblCreditAvailable.setText(Msg.translate(m_ctx, "OpenAmt"));
-		lblCreditImporte.setText(Msg.getElement(m_ctx, "Amount"));
+		creditInvoice.getLabel().setText(Msg.translate(m_ctx, "Credit"));
+		txtCreditAvailable.getLabel().setText(Msg.translate(m_ctx, "OpenAmt"));
+		txtCreditImporte.getLabel().setText(Msg.getElement(m_ctx, "Amount"));
 		
-		lblBPartner.setText(Msg.translate(Env.getCtx(), "C_BPartner_ID"));
+		BPartnerSel.getLabel().setText(Msg.translate(Env.getCtx(), "C_BPartner_ID"));
 		
-		lblTotalPagar1.setText(Msg.translate(Env.getCtx(), "Amount"));
+		txtTotalPagar1.getLabel().setText(Msg.translate(Env.getCtx(), "Amount"));
 		
-		lblDescription.setText(Msg.translate(Env.getCtx(), "Description"));
+		txtDescription.getLabel().setText(Msg.translate(Env.getCtx(), "Description"));
 		
 		radPayTypeStd.setLabel(Msg.translate(Env.getCtx(), "StandardPayment"));
 		radPayTypeAdv.setLabel(Msg.translate(Env.getCtx(), "AdvancedPayment"));
 		
-		lblTotalPagar2.setText(Msg.getElement(m_ctx, "Amount"));
-		lblMedioPago2.setText(Msg.getElement(m_ctx, "TenderType"));
-		lblRetenciones2.setText(Msg.getElement(m_ctx, "C_Withholding_ID"));
-		lblDifCambio.setText(Msg.getMsg(m_ctx, "ExchangeDifference"));
+		txtTotalPagar2.getLabel().setText(Msg.getElement(m_ctx, "Amount"));
+		txtMedioPago2.getLabel().setText(Msg.getElement(m_ctx, "TenderType"));
+		txtRetenciones2.getLabel().setText(Msg.getElement(m_ctx, "C_Withholding_ID"));
+		txtDifCambio.getLabel().setText(Msg.getMsg(m_ctx, "ExchangeDifference"));
 		
 		rInvoiceAll.setLabel(Msg.translate(Env.getCtx(), "SearchAND"));
 		//rInvoiceDate.setText(Msg.translate(m_ctx, "DueStart"));
@@ -1518,7 +1471,7 @@ public class WOrdenPago extends ADForm implements ValueChangeListener, TableMode
 		
 		// Saldo Total
 		name = VModelHelper.GetReferenceValueTrlFromColumn("I_ReportLine", "AmountType", "BT", "name");
-		lblSaldo.setText(name != null ? name : "");
+		txtSaldo.getLabel().setText(name != null ? name : "");
 		
 		//
 		
@@ -1528,22 +1481,22 @@ public class WOrdenPago extends ADForm implements ValueChangeListener, TableMode
 		cmdGrabar.setLabel(Msg.translate(Env.getCtx(), "Save").replace("&", ""));
 		cmdProcess.setLabel(Msg.translate(Env.getCtx(), "Processing"));
 
-		lblClient.setText(Msg.translate(Env.getCtx(), "AD_Client_ID"));
-		lblDocumentNo.setText("Nro. Documento");
-        lblOrg.setText(Msg.translate(Env.getCtx(),"AD_Org_ID"));
-        lblDocumentType.setText(Msg.translate(Env.getCtx(),"C_DOCTYPE_ID"));
+		cboClient.getLabel().setText(Msg.translate(Env.getCtx(), "AD_Client_ID"));
+		fldDocumentNo.getLabel().setText("Nro. Documento");
+        cboOrg.getLabel().setText(Msg.translate(Env.getCtx(),"AD_Org_ID"));
+        cboDocumentType.getLabel().setText(Msg.translate(Env.getCtx(),"C_DOCTYPE_ID"));
         
         
-		lblProject.setText(Msg.translate(Env.getCtx(), "C_Project_ID"));
-		lblCurrency.setText(Msg.translate(Env.getCtx(), "C_Currency_ID"));
-		lblCampaign.setText(Msg.translate(Env.getCtx(), "C_Campaign_ID"));
+		cboProject.getLabel().setText(Msg.translate(Env.getCtx(), "C_Project_ID"));
+		cboCurrency.getLabel().setText(Msg.translate(Env.getCtx(), "C_Currency_ID"));
+		cboCampaign.getLabel().setText(Msg.translate(Env.getCtx(), "C_Campaign_ID"));
 		
 		lblPagoAdelantadoType.setText(getMsg("Type"));
-		lblPagoAdelantadoAvailable.setText(Msg.translate(m_ctx, "OpenAmt"));
+		txtPagoAdelantadoAvailable.getLabel().setText(Msg.translate(m_ctx, "OpenAmt"));
 		
 		// Pagos Adelantados
-		lblPagoAdelantadoImporte.setText(Msg.getElement(m_ctx, "Amount"));
-		lblPagoAdelantadoCash.setText(getMsg("Payment"));
+		txtPagoAdelantadoImporte.getLabel().setText(Msg.getElement(m_ctx, "Amount"));
+		cashAdelantado.getLabel().setText(getMsg("Payment"));
 		
         updateCaptions();
         
@@ -1573,14 +1526,14 @@ public class WOrdenPago extends ADForm implements ValueChangeListener, TableMode
 		// Efectivo
 		
 		efectivoLibroCaja.setValue(null);
-		txtEfectivoImporte.setText("0");
+		txtEfectivoImporte.setValue("0");
 		
 		// Transferencia 
 		
 		transfCtaBancaria.setValue(null);
 		transFecha.setValue(d);
-		txtTransfImporte.setText("");
-		txtTransfNroTransf.setText("");
+		txtTransfImporte.setValue("");
+		txtTransfNroTransf.setValue("");
 		
 		// Cheque
 		
@@ -1588,7 +1541,7 @@ public class WOrdenPago extends ADForm implements ValueChangeListener, TableMode
 		chequeFechaEmision.setValue(d);
 		chequeFechaPago.setValue(null);
 		if (getModel().getBPartner() == null) 
-			txtChequeALaOrden.setText("");
+			txtChequeALaOrden.setValue("");
 		// Modified by Matías Cap -Disytel
 		// El campo de cheque a la orden no se limpia cuando se pasan de
 		// pestañas, es mas queda la misma descripción para diferentes OP 
@@ -1602,31 +1555,31 @@ public class WOrdenPago extends ADForm implements ValueChangeListener, TableMode
 //			txtChequeALaOrden.setText(getModel().getBPartner().getName());
 		// -------------------------------------------------------------
 		else
-			txtChequeALaOrden.setText(getModel().getBPartner().getName());
+			txtChequeALaOrden.setValue(getModel().getBPartner().getName());
 		// -------------------------------------------------------------
-		txtChequeImporte.setText("");
-		txtChequeNroCheque.setText("");
-		txtChequeBanco.setText("");
-		txtChequeCUITLibrador.setText("");
-		txtChequeDescripcion.setText("");
+		txtChequeImporte.setValue("");
+		txtChequeNroCheque.setValue("");
+		txtChequeBanco.setValue("");
+		txtChequeCUITLibrador.setValue("");
+		txtChequeDescripcion.setValue("");
 		
 		// Credito
 		creditInvoice.setValue(null);
-		txtCreditAvailable.setText("");
-		txtCreditImporte.setText("");
+		txtCreditAvailable.setValue("");
+		txtCreditImporte.setValue("");
 		
 		// Pago anticipado
 		pagoAdelantado.setValue(null);
-		txtPagoAdelantadoImporte.setText("");
+		txtPagoAdelantadoImporte.setValue("");
 		cashAdelantado.setValue(null);
-		txtPagoAdelantadoAvailable.setText("");
+		txtPagoAdelantadoAvailable.setValue("");
 		
 		// Cheque de tercero
 		if (m_chequeTerceroTabIndex >= 0) { // Está disponible la opcion de cheques de tercero
 			//chequeTerceroCuenta.setValue(null); No se borra la cuenta para la comodidad del usuario, dado que es un campo de filtro.
 			chequeTercero.setValue(null);
-			txtChequeTerceroImporte.setText("");
-			txtChequeTerceroDescripcion.setText("");
+			txtChequeTerceroImporte.setValue("");
+			txtChequeTerceroDescripcion.setValue("");
 		}
 		updatePaymentsTabsState();
 	}
@@ -1640,7 +1593,7 @@ public class WOrdenPago extends ADForm implements ValueChangeListener, TableMode
 			VOrdenPagoModel.MedioPagoEfectivo mpe = (VOrdenPagoModel.MedioPagoEfectivo)mp;
 			
 			efectivoLibroCaja.setValue(mpe.libroCaja_ID);
-			txtEfectivoImporte.setText(m_model.numberFormat(mpe.importe));
+			txtEfectivoImporte.setValue(m_model.numberFormat(mpe.importe));
 			
 			mpTabbox.setSelectedIndex(TAB_INDEX_EFECTIVO);
 			
@@ -1650,8 +1603,8 @@ public class WOrdenPago extends ADForm implements ValueChangeListener, TableMode
 			
 			transfCtaBancaria.setValue(mpt.C_BankAccount_ID);
 			transFecha.setValue(mpt.fechaTransf);
-			txtTransfImporte.setText(m_model.numberFormat(mpt.importe));
-			txtTransfNroTransf.setText(mpt.nroTransf);
+			txtTransfImporte.setValue(m_model.numberFormat(mpt.importe));
+			txtTransfNroTransf.setValue(mpt.nroTransf);
 			
 			mpTabbox.setSelectedIndex(TAB_INDEX_TRANSFERENCIA);
 			
@@ -1662,12 +1615,12 @@ public class WOrdenPago extends ADForm implements ValueChangeListener, TableMode
 			chequeChequera.setValue(mpc.chequera_ID);
 			chequeFechaEmision.setValue(mpc.fechaEm);
 			chequeFechaPago.setValue(mpc.fechaPago);
-			txtChequeALaOrden.setText(mpc.aLaOrden);
-			txtChequeImporte.setText(m_model.numberFormat(mpc.importe));
-			txtChequeNroCheque.setText(mpc.nroCheque);
-			txtChequeBanco.setText(mpc.banco);
-			txtChequeCUITLibrador.setText(mpc.cuitLibrador);
-			txtChequeDescripcion.setText(mpc.descripcion);
+			txtChequeALaOrden.setValue(mpc.aLaOrden);
+			txtChequeImporte.setValue(m_model.numberFormat(mpc.importe));
+			txtChequeNroCheque.setValue(mpc.nroCheque);
+			txtChequeBanco.setValue(mpc.banco);
+			txtChequeCUITLibrador.setValue(mpc.cuitLibrador);
+			txtChequeDescripcion.setValue(mpc.descripcion);
 			
 			mpTabbox.setSelectedIndex(TAB_INDEX_CHEQUE);
 		} else if (mp.getTipoMP().equals(VOrdenPagoModel.MedioPago.TIPOMEDIOPAGO_CREDITO)) { // Credito
@@ -1697,7 +1650,7 @@ public class WOrdenPago extends ADForm implements ValueChangeListener, TableMode
 			VOrdenPagoModel.MedioPagoChequeTercero mpct = (VOrdenPagoModel.MedioPagoChequeTercero)mp;
 			chequeTercero.setValue(mpct.getC_Payment_ID());
 			txtChequeTerceroImporte.setValue(mpct.getImporte().toString());
-			txtChequeTerceroDescripcion.setText(mpct.description);
+			txtChequeTerceroDescripcion.setValue(mpct.description);
 			
 			mpTabbox.setSelectedIndex(m_chequeTerceroTabIndex);
 		}
@@ -1795,7 +1748,7 @@ public class WOrdenPago extends ADForm implements ValueChangeListener, TableMode
 			BPartnerSel.setReadWrite(tabbox.getSelectedIndex() == 0);
 			cboOrg.setReadWrite(tabbox.getSelectedIndex() == 0);
 			cboDocumentType.setReadWrite(tabbox.getSelectedIndex() == 0);
-			fldDocumentNo.setReadonly(tabbox.getSelectedIndex() == 1);
+			fldDocumentNo.setReadWrite(tabbox.getSelectedIndex() == 0);
 		} else if (arg0.getTarget().getParent().getParent() == mpTabbox) {
 			// TAB de medios de pago
 			updateContextValues();
@@ -1826,11 +1779,11 @@ public class WOrdenPago extends ADForm implements ValueChangeListener, TableMode
 	protected void updateSummaryInfo(){
 		BigDecimal sumaMediosPago = m_model.getSumaMediosPago();
 		
-		txtSaldo.setText(numberFormat(m_model.getSaldoMediosPago()));
-		txtDifCambio.setText(numberFormat(getModel().calculateExchangeDifference()));
-		txtTotalPagar2.setText(numberFormat(m_model.getSumaTotalPagarFacturas()));
-		txtRetenciones2.setText(numberFormat(m_model.getSumaRetenciones()));
-		txtMedioPago2.setText(numberFormat(sumaMediosPago));
+		txtSaldo.setValue(numberFormat(m_model.getSaldoMediosPago()));
+		txtDifCambio.setValue(numberFormat(getModel().calculateExchangeDifference()));
+		txtTotalPagar2.setValue(numberFormat(m_model.getSumaTotalPagarFacturas()));
+		txtRetenciones2.setValue(numberFormat(m_model.getSumaRetenciones()));
+		txtMedioPago2.setValue(numberFormat(sumaMediosPago));
 		
 		cboProject.setReadWrite(sumaMediosPago.signum() == 0);
 		cboCampaign.setReadWrite(sumaMediosPago.signum() == 0);
@@ -1865,13 +1818,17 @@ public class WOrdenPago extends ADForm implements ValueChangeListener, TableMode
 	protected WSearchEditor createChequeChequeraLookup() {
 		MLookupInfo info = VComponentsFactory.MLookupInfoFactory( Env.getCtx(),m_WindowNo, 0, 6188, DisplayType.Search, m_model.getChequeChequeraSqlValidation());
 		MLookup lookup = new MLookup(info, 0);
-		return new WSearchEditor("C_BankAccountDoc_ID", false, false, true, lookup);
+		WSearchEditor editor = new WSearchEditor("C_BankAccountDoc_ID", false, false, true, lookup);
+		addPopupMenu(editor, true, true, false);
+		return editor;
 	}
 
 	protected WSearchEditor createChequeBancoIDLookup() {
 		MLookupInfo info = VComponentsFactory.MLookupInfoFactory( Env.getCtx(),m_WindowNo, 0, 3031, DisplayType.Search, null);
 		MLookup lookup = new MLookup(info, 0);
-		return new WSearchEditor("C_Bank_ID", false, false, true, lookup);
+		WSearchEditor editor = new WSearchEditor("C_Bank_ID", false, false, true, lookup);
+		addPopupMenu(editor, true, true, false);
+		return editor;
 	}
 	
 	protected void chequeraChange(ValueChangeEvent e) {
@@ -1879,9 +1836,9 @@ public class WOrdenPago extends ADForm implements ValueChangeListener, TableMode
 		if(C_BankAccountDoc_ID != null && C_BankAccountDoc_ID > 0) {
 			X_C_BankAccountDoc bankAccountDoc = new X_C_BankAccountDoc(Env.getCtx(),C_BankAccountDoc_ID,null);
 			int nextNroCheque = bankAccountDoc.getCurrentNext();
-			txtChequeNroCheque.setText(String.valueOf(nextNroCheque));
+			txtChequeNroCheque.setValue(String.valueOf(nextNroCheque));
 		} else
-			txtChequeNroCheque.setText("");
+			txtChequeNroCheque.setValue("");
 	}
 
 	/**
@@ -2008,19 +1965,19 @@ public class WOrdenPago extends ADForm implements ValueChangeListener, TableMode
 	protected void updatePagoAdelantadoTab() {
 		pagoAdelantado.setValue(null);
 		cashAdelantado.setValue(null);
-		txtPagoAdelantadoAvailable.setText("");
+		txtPagoAdelantadoAvailable.setValue("");
 		if (cboPagoAdelantadoType.getSelectedIndex() == PAGO_ADELANTADO_TYPE_PAYMENT_INDEX) {
 			pagoAdelantado.setVisible(true);
 			cashAdelantado.setVisible(false);
-			lblPagoAdelantadoPago.setText(getMsg("Payment"));
-			lblPagoAdelantadoPago.setVisible(true);
-			lblPagoAdelantadoCash.setVisible(false);
+			pagoAdelantado.getLabel().setText(getMsg("Payment"));
+			pagoAdelantado.getLabel().setVisible(true);
+			cashAdelantado.getLabel().setVisible(false);
 		} else if (cboPagoAdelantadoType.getSelectedIndex() == PAGO_ADELANTADO_TYPE_CASH_INDEX) {
 			cashAdelantado.setVisible(true);
 			pagoAdelantado.setVisible(false);
-			lblPagoAdelantadoCash.setText(getMsg("Cash"));
-			lblPagoAdelantadoCash.setVisible(true);
-			lblPagoAdelantadoPago.setVisible(false);
+			cashAdelantado.getLabel().setText(getMsg("Cash"));
+			cashAdelantado.getLabel().setVisible(true);
+			pagoAdelantado.getLabel().setVisible(false);
 		}
 	}
 	
@@ -2029,12 +1986,11 @@ public class WOrdenPago extends ADForm implements ValueChangeListener, TableMode
 		panelChequeTercero = new Tabpanel();
 		
 		// Cuenta
-		lblChequeTerceroCuenta = new Label();
-		lblChequeTerceroCuenta.setText(getMsg("Account"));
 		MLookupInfo info = VComponentsFactory.MLookupInfoFactory( Env.getCtx(),m_WindowNo, 0, 5283, DisplayType.Search, m_model.getChequeTerceroCuentaSqlValidation());
 		Lookup lookup = new MLookup(info, 0);
 		chequeTerceroCuenta = new WSearchEditor("C_BankAccount_ID", false, false, true, lookup);
-        
+		chequeTerceroCuenta.getLabel().setText(getMsg("Account"));
+		addPopupMenu(chequeTerceroCuenta, true, true, false);
         chequeTerceroCuenta.addValueChangeListener(new ValueChangeListener() {
 			public void valueChange(ValueChangeEvent evt) {
 	        		Integer bankAccountID = (Integer)chequeTerceroCuenta.getNewValueOnChange();
@@ -2045,34 +2001,30 @@ public class WOrdenPago extends ADForm implements ValueChangeListener, TableMode
 		});
         chequeTerceroCuenta.setValue(null);
 		// Cheque
-        lblChequeTercero = new Label();
-        lblChequeTercero.setText(getMsg("Check"));
 		info = VComponentsFactory.MLookupInfoFactory( Env.getCtx(),m_WindowNo, 0, 5043, DisplayType.Search, m_model.getChequeTerceroSqlValidation());
 		lookup = new MLookup(info, 0);
 		chequeTercero = new WSearchEditor("C_Payment_ID", false, false, true, lookup);
-        
+        chequeTercero.getLabel().setText(getMsg("Check"));
+        addPopupMenu(chequeTercero, true, true, false);
         chequeTercero.addValueChangeListener(new ValueChangeListener() {
 			public void valueChange(ValueChangeEvent evt) {
 				Integer paymentID = (Integer)chequeTercero.getNewValueOnChange();
 				String importe = "";
 				if (paymentID != null)
 					importe = getModel().numberFormat(getModel().getChequeAmt(paymentID));
-				txtChequeTerceroImporte.setText(importe);			
+				txtChequeTerceroImporte.setValue(importe);			
 			}
 		}); 
         // Importe
-        lblChequeTerceroImporte = new Label();
-        lblChequeTerceroImporte.setText(Msg.getElement(m_ctx, "Amount"));
-        txtChequeTerceroImporte = new Textbox();
-        txtChequeTerceroImporte.setText("0");
-//        initFormattedTextField((JFormattedTextField)txtChequeTerceroImporte);
+        txtChequeTerceroImporte = new WStringEditor();
+        txtChequeTerceroImporte.getLabel().setText(Msg.getElement(m_ctx, "Amount"));
+        txtChequeTerceroImporte.setValue("0");
         txtChequeTerceroImporte.setValue(null);
-        txtChequeTerceroImporte.setReadonly(true); // Editable(false);
+        txtChequeTerceroImporte.setReadWrite(false);
         // Descripcion
-        lblChequeTerceroDescripcion = new Label();
-        lblChequeTerceroDescripcion.setText(getMsg("Description"));
-        txtChequeTerceroDescripcion = new Textbox();
-		
+        txtChequeTerceroDescripcion = new WStringEditor();
+        txtChequeTerceroDescripcion.getLabel().setText(getMsg("Description"));
+
         panelChequeTercero.setHeight("150px");
     	
     	Grid gridpanel = GridFactory.newGridLayout();
@@ -2080,15 +2032,15 @@ public class WOrdenPago extends ADForm implements ValueChangeListener, TableMode
 		
     	Rows rows = gridpanel.newRows();
 		Row row = rows.newRow();
-		row.appendChild(lblChequeTerceroCuenta.rightAlign());
+		row.appendChild(chequeTerceroCuenta.getLabel().rightAlign());
 		row.appendChild(chequeTerceroCuenta.getComponent());
-		row.appendChild(lblChequeTercero.rightAlign());
+		row.appendChild(chequeTercero.getLabel().rightAlign());
 		row.appendChild(chequeTercero.getComponent());
 		Row row2 = rows.newRow();
-		row2.appendChild(lblChequeTerceroImporte.rightAlign());
-		row2.appendChild(txtChequeTerceroImporte);
-		row2.appendChild(lblChequeTerceroDescripcion.rightAlign());
-		row2.appendChild(txtChequeTerceroDescripcion);
+		row2.appendChild(txtChequeTerceroImporte.getLabel().rightAlign());
+		row2.appendChild(txtChequeTerceroImporte.getComponent());
+		row2.appendChild(txtChequeTerceroDescripcion.getLabel().rightAlign());
+		row2.appendChild(txtChequeTerceroDescripcion.getComponent());
 		
 		panelChequeTercero.appendChild(gridpanel);
 
@@ -2097,15 +2049,15 @@ public class WOrdenPago extends ADForm implements ValueChangeListener, TableMode
 	}
 	
 	protected Tabpanel createCheckTab() {
-        lblChequeChequera.setText("CHEQUERA");
-        lblChequeNroCheque.setText("NUMERO DE CHEQUE");
-        lblChequeImporte.setText("IMPORTE");
-        lblChequeFechaEmision.setText("FECHA EMISION");
-        lblChequeFechaPago.setText("FECHA PAGO");
-        lblChequeALaOrden.setText(getModel().isSOTrx()?"LIBRADOR":"A LA ORDEN");
-        lblChequeBanco.setText("BANCO");
-        lblChequeCUITLibrador.setText("CUIT LIBRADOR");
-        lblChequeDescripcion.setText("DESCRIPCION");      
+        chequeChequera.getLabel().setText("CHEQUERA");
+        txtChequeNroCheque.getLabel().setText("NUMERO DE CHEQUE");
+        txtChequeImporte.getLabel().setText("IMPORTE");
+        chequeFechaEmision.getLabel().setText("FECHA EMISION");
+        chequeFechaPago.getLabel().setText("FECHA PAGO");
+        txtChequeALaOrden.getLabel().setText(getModel().isSOTrx()?"LIBRADOR":"A LA ORDEN");
+        txtChequeBanco.getLabel().setText("BANCO");
+        txtChequeCUITLibrador.getLabel().setText("CUIT LIBRADOR");
+        txtChequeDescripcion.getLabel().setText("DESCRIPCION");      
         
         Tabpanel tabpanel = new Tabpanel();
     	tabpanel.setHeight("150px");
@@ -2115,28 +2067,28 @@ public class WOrdenPago extends ADForm implements ValueChangeListener, TableMode
 		
     	Rows rows = gridpanel.newRows();
 		Row row = rows.newRow();
-		row.appendChild(lblChequeChequera.rightAlign());
+		row.appendChild(chequeChequera.getLabel().rightAlign());
 		row.appendChild(chequeChequera.getComponent());
-		row.appendChild(lblChequeNroCheque.rightAlign());
-		row.appendChild(txtChequeNroCheque);
+		row.appendChild(txtChequeNroCheque.getLabel().rightAlign());
+		row.appendChild(txtChequeNroCheque.getComponent());
 		Row row2 = rows.newRow();
-		row2.appendChild(lblChequeImporte.rightAlign());
-		row2.appendChild(txtChequeImporte);
+		row2.appendChild(txtChequeImporte.getLabel().rightAlign());
+		row2.appendChild(txtChequeImporte.getComponent());
 		Row row3 = rows.newRow();
-		row3.appendChild(lblChequeFechaEmision.rightAlign());
+		row3.appendChild(chequeFechaEmision.getLabel().rightAlign());
 		row3.appendChild(chequeFechaEmision.getComponent());
-		row3.appendChild(lblChequeFechaPago.rightAlign());
+		row3.appendChild(chequeFechaPago.getLabel().rightAlign());
 		row3.appendChild(chequeFechaPago.getComponent());
 		Row row4 = rows.newRow();
-		row4.appendChild(lblChequeALaOrden.rightAlign());
-		row4.appendChild(txtChequeALaOrden);
-		row4.appendChild(lblChequeBanco.rightAlign());
-		row4.appendChild(txtChequeBanco);
+		row4.appendChild(txtChequeALaOrden.getLabel().rightAlign());
+		row4.appendChild(txtChequeALaOrden.getComponent());
+		row4.appendChild(txtChequeBanco.getLabel().rightAlign());
+		row4.appendChild(txtChequeBanco.getComponent());
 		Row row5 = rows.newRow();
-		row5.appendChild(lblChequeCUITLibrador.rightAlign());
-		row5.appendChild(txtChequeCUITLibrador);
-		row5.appendChild(lblChequeDescripcion.rightAlign());
-		row5.appendChild(txtChequeDescripcion);
+		row5.appendChild(txtChequeCUITLibrador.getLabel().rightAlign());
+		row5.appendChild(txtChequeCUITLibrador.getComponent());
+		row5.appendChild(txtChequeDescripcion.getLabel().rightAlign());
+		row5.appendChild(txtChequeDescripcion.getComponent());
 
 		tabpanel.appendChild(gridpanel);
         return tabpanel;
@@ -2152,17 +2104,17 @@ public class WOrdenPago extends ADForm implements ValueChangeListener, TableMode
 		
     	Rows rows = gridpanel.newRows();
 		Row row = rows.newRow();
-		row.appendChild(lblCreditInvoice.rightAlign());
+		row.appendChild(creditInvoice.getLabel().rightAlign());
 		row.appendChild(creditInvoice.getComponent());
 		Row row2 = rows.newRow();
-		row2.appendChild(lblCreditAvailable.rightAlign());
-		row2.appendChild(txtCreditAvailable);
+		row2.appendChild(txtCreditAvailable.getLabel().rightAlign());
+		row2.appendChild(txtCreditAvailable.getComponent());
 		Row row3 = rows.newRow();
-		row3.appendChild(lblCreditImporte.rightAlign());
-		row3.appendChild(txtCreditImporte);
+		row3.appendChild(txtCreditImporte.getLabel().rightAlign());
+		row3.appendChild(txtCreditImporte.getComponent());
 		
-        txtCreditAvailable.setText("0");        
-        txtCreditImporte.setText("0");
+        txtCreditAvailable.setValue("0");        
+        txtCreditImporte.setValue("0");
 		
 		tabpanel.appendChild(gridpanel);
         return tabpanel;
@@ -2170,11 +2122,11 @@ public class WOrdenPago extends ADForm implements ValueChangeListener, TableMode
 	
 	protected Tabpanel createTransferTab() {
 		
-        lblTransfCtaBancaria.setText("CUENTA BANCARIA");
-        lblTransfNroTransf.setText("NRO TRANSFERENCIA");
-        lblTransfImporte.setText("IMPORTE");
-        lblTransfFecha.setText("FECHA");
-        txtTransfImporte.setText("0");
+        transfCtaBancaria.getLabel().setText("CUENTA BANCARIA");
+        txtTransfNroTransf.getLabel().setText("NRO TRANSFERENCIA");
+        txtTransfImporte.getLabel().setText("IMPORTE");
+        transFecha.getLabel().setText("FECHA");
+        txtTransfImporte.setValue("0");
         
         Tabpanel tabpanel = new Tabpanel();
     	tabpanel.setHeight("150px");
@@ -2184,17 +2136,17 @@ public class WOrdenPago extends ADForm implements ValueChangeListener, TableMode
 		
     	Rows rows = gridpanel.newRows();
 		Row row = rows.newRow();
-		row.appendChild(lblTransfCtaBancaria.rightAlign());
+		row.appendChild(transfCtaBancaria.getLabel().rightAlign());
 		row.appendChild(transfCtaBancaria.getComponent());
-		row.appendChild(lblTransfNroTransf.rightAlign());
-		row.appendChild(txtTransfNroTransf);
+		row.appendChild(txtTransfNroTransf.getLabel().rightAlign());
+		row.appendChild(txtTransfNroTransf.getComponent());
 		Row row2 = rows.newRow();
-		row2.appendChild(lblTransfImporte.rightAlign());
-		row2.appendChild(txtTransfImporte);
-		row2.appendChild(lblTransfFecha.rightAlign());
+		row2.appendChild(txtTransfImporte.getLabel().rightAlign());
+		row2.appendChild(txtTransfImporte.getComponent());
+		row2.appendChild(transFecha.getLabel().rightAlign());
 		row2.appendChild(transFecha.getComponent());
 		
-		txtTransfImporte.setText("0");
+		txtTransfImporte.setValue("0");
 		
 		tabpanel.appendChild(gridpanel);
         return tabpanel;
@@ -2212,11 +2164,11 @@ public class WOrdenPago extends ADForm implements ValueChangeListener, TableMode
 			throw new Exception(cboCurrency.getValue().toString());
 		}
 		try {
-			importe = numberParse(txtChequeTerceroImporte.getText());
+			importe = numberParse(txtChequeTerceroImporte.getValue().toString());
 		} catch (Exception e) {
-			throw new Exception(lblChequeTerceroImporte.getValue());
+			throw new Exception(txtChequeTerceroImporte.getLabel().getValue());
 		}
-		String description = txtChequeTerceroDescripcion.getText().trim();
+		String description = txtChequeTerceroDescripcion.getValue().toString().trim();
 		getModel().addChequeTercero(paymentID, importe, description, monedaOriginalID);
 	}
 	
@@ -2287,7 +2239,7 @@ public class WOrdenPago extends ADForm implements ValueChangeListener, TableMode
 	}
 
 	private void viewDescription() {		
-		txtDescription.setText("");
+		txtDescription.getComponent().setText("");
 		Integer value = 0;
 		if (BPartnerSel.getValue() != null) {
 			value = (Integer) BPartnerSel.getValue();
@@ -2296,7 +2248,7 @@ public class WOrdenPago extends ADForm implements ValueChangeListener, TableMode
 				if (bpartner.getDescription().compareTo("") != 0) {
 					String description=bpartner.getDescription();					
 					getModel().setDescription(description);
-					txtDescription.setText(getModel().getDescription());
+					txtDescription.getComponent().setText(getModel().getDescription());
 				}
 			}
 		}
@@ -2306,7 +2258,7 @@ public class WOrdenPago extends ADForm implements ValueChangeListener, TableMode
 	 * Actualizar el total a pagar de la primer pestaña
 	 */    
 	protected void updateTotalAPagar1(){
-		txtTotalPagar1.setText(numberFormat(m_model.getSumaTotalPagarFacturas()));
+		txtTotalPagar1.setValue(numberFormat(m_model.getSumaTotalPagarFacturas()));
 	}
 	
 	/**
@@ -2416,7 +2368,7 @@ public class WOrdenPago extends ADForm implements ValueChangeListener, TableMode
 		m_cambioTab = true;
 		tabbox.setSelectedIndex(0);
 		m_cambioTab = false;
-		txtDescription.setText("");
+		txtDescription.getComponent().setText("");
 		m_model.setDescription("");
 		checkPayAll.setSelected(false);
 		// actualizar secuencia
@@ -2485,15 +2437,15 @@ public class WOrdenPago extends ADForm implements ValueChangeListener, TableMode
 		
 		Rows rows = gridpanel.newRows();
 		Row row = rows.newRow();
-		row.appendChild(lblCampaign.rightAlign());
+		row.appendChild(cboCampaign.getLabel().rightAlign());
 		row.appendChild(cboCampaign.getComponent());
 		
 		//row = rows.newRow();
-		row.appendChild(lblProject.rightAlign());
+		row.appendChild(cboProject.getLabel().rightAlign());
 		row.appendChild(cboProject.getComponent());
 		
 		row = rows.newRow();
-		row.appendChild(lblCurrency.rightAlign());
+		row.appendChild(cboCurrency.getLabel().rightAlign());
 		row.appendChild(cboCurrency.getComponent());
 		
 		addFieldsToCampProy(row);
@@ -2540,18 +2492,18 @@ public class WOrdenPago extends ADForm implements ValueChangeListener, TableMode
 		
     	Rows rows = gridpanel.newRows();
 		Row row1 = rows.newRow();
-		row1.appendChild(lblSaldo.rightAlign());
-		row1.appendChild(txtSaldo);
+		row1.appendChild(txtSaldo.getLabel().rightAlign());
+		row1.appendChild(txtSaldo.getComponent());
 		Row row2 = rows.newRow();
-		row2.appendChild(lblDifCambio.rightAlign());
-		row2.appendChild(txtDifCambio);
-		row2.appendChild(lblTotalPagar2.rightAlign());
-		row2.appendChild(txtTotalPagar2);
+		row2.appendChild(txtDifCambio.getLabel().rightAlign());
+		row2.appendChild(txtDifCambio.getComponent());
+		row2.appendChild(txtTotalPagar2.getLabel().rightAlign());
+		row2.appendChild(txtTotalPagar2.getComponent());
 		Row row3 = rows.newRow();
-		row3.appendChild(lblRetenciones2.rightAlign());
-		row3.appendChild(txtRetenciones2);
-		row3.appendChild(lblMedioPago2.rightAlign());
-		row3.appendChild(txtMedioPago2);
+		row3.appendChild(txtRetenciones2.getLabel().rightAlign());
+		row3.appendChild(txtRetenciones2.getComponent());
+		row3.appendChild(txtMedioPago2.getLabel().rightAlign());
+		row3.appendChild(txtMedioPago2.getComponent());
 		addSummaryCustomFields(rows);
 		
 		panelchildren.appendChild(gridpanel);
@@ -2665,8 +2617,8 @@ public class WOrdenPago extends ADForm implements ValueChangeListener, TableMode
 	 */
 	protected void setDivTxtTotal(Div divTxtEfectivoImporte) {
 		divTxtEfectivoImporte.setAlign("end");
-		divTxtEfectivoImporte.appendChild(lblTotalPagar1);
-		divTxtEfectivoImporte.appendChild(txtTotalPagar1);		
+		divTxtEfectivoImporte.appendChild(txtTotalPagar1.getLabel());
+		divTxtEfectivoImporte.appendChild(txtTotalPagar1.getComponent());		
 	}
 	
 	
@@ -2731,7 +2683,7 @@ public class WOrdenPago extends ADForm implements ValueChangeListener, TableMode
 						});
 					}
 					// Setea toPayCurrency (ultima columna) hacia toPay (anteultima columna)
-					if (i == colCount - 1) {
+					if (i == colCount - 1) {					
 						aTextbox.addEventListener(Events.ON_OK, new EventListener() {
 							@Override
 							public void onEvent(Event evt) throws Exception {
