@@ -157,7 +157,9 @@ public class InvoicesQueryReport extends SvrProcess {
 		StringBuffer finalSQL = new StringBuffer(" SELECT ");
 		finalSQL
 				.append(+getAD_PInstance_ID()
-						+ ", c_invoice_id, "
+						+ ", "
+						+ INVOICE_ALIAS
+						+ ".c_invoice_id, "
 						+ INVOICE_ALIAS
 						+ ".ad_client_id, "
 						+ INVOICE_ALIAS

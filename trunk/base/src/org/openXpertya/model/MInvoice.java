@@ -337,7 +337,7 @@ public class MInvoice extends X_C_Invoice implements DocAction {
 		String docBaseTypeCredit = isSOTrx ? "'"
 				+ MDocType.DOCBASETYPE_ARCreditMemo + "'" : "'"
 				+ MDocType.DOCBASETYPE_APCreditMemo + "'";
-		StringBuffer sql = new StringBuffer("SELECT sum(coalesce(invoiceopen(c_invoice_id,0),0)) as open " +
+		StringBuffer sql = new StringBuffer("SELECT sum(coalesce(invoiceopen(i.c_invoice_id,0),0)) as open " +
 											 "FROM c_invoice as i " +
 											 "INNER JOIN c_doctype as dt ON dt.c_doctype_id = i.c_doctypetarget_id " +
 											 "WHERE i.ad_client_id = ? " +
@@ -509,8 +509,8 @@ public class MInvoice extends X_C_Invoice implements DocAction {
 				+ MDocType.DOCBASETYPE_APInvoice + "'";
 		StringBuffer sql = new StringBuffer();
 		sql.append("SELECT c_invoice_id, open " +
-				   "FROM (SELECT c_invoice_id, " +
-				   "		currencyconvert(invoiceopen(c_invoice_id, 0), i.c_currency_id, ?, ?::date, 0, ?, ?) as open" +
+				   "FROM (SELECT i.c_invoice_id, " +
+				   "		currencyconvert(invoiceopen(i.c_invoice_id, 0), i.c_currency_id, ?, ?::date, 0, ?, ?) as open" +
 				   "		FROM c_invoice as i " +
 				   "		INNER JOIN c_doctype as dt on dt.c_doctype_id = i.c_doctypetarget_id " +
 				   "		WHERE c_bpartner_id = ? " +
@@ -521,10 +521,10 @@ public class MInvoice extends X_C_Invoice implements DocAction {
 		if (CalloutInvoiceExt.ComprobantesFiscalesActivos()
 				&& !Util.isEmpty(creditInvoice.getC_Invoice_Orig_ID(), true)) {
 			if(!Util.isEmpty(orderID, true)){
-				sql.append(" AND (c_invoice_id = ? OR c_order_id = ?)");
+				sql.append(" AND (i.c_invoice_id = ? OR c_order_id = ?)");
 			}
 			else{
-				sql.append(" AND c_invoice_id = ? ");
+				sql.append(" AND i.c_invoice_id = ? ");
 			}
 		}
 		else if(!Util.isEmpty(orderID, true)){
@@ -628,7 +628,7 @@ public class MInvoice extends X_C_Invoice implements DocAction {
 				+ MDocType.DOCBASETYPE_ARInvoice + "'" : "'"
 				+ MDocType.DOCBASETYPE_APInvoice + "'";
 		StringBuffer sql = new StringBuffer();
-		sql.append("SELECT c_invoice_id " +
+		sql.append("SELECT i.c_invoice_id " +
 				   "FROM c_invoice as i " +
 				   "INNER JOIN c_doctype as dt on dt.c_doctype_id = i.c_doctypetarget_id " +
 				   "WHERE c_bpartner_id = ? " +
@@ -638,11 +638,11 @@ public class MInvoice extends X_C_Invoice implements DocAction {
 		if (CalloutInvoiceExt.ComprobantesFiscalesActivos()
 				&& !Util.isEmpty(creditInvoice.getC_Invoice_Orig_ID(), true)) {
 			if(!Util.isEmpty(creditInvoice.getC_Order_ID(), true)){
-				sql.append(" AND (c_invoice_id = ? OR c_order_id = ?)");
+				sql.append(" AND (i.c_invoice_id = ? OR c_order_id = ?)");
 				canSearchByDocument = true;
 			}
 			else{
-				sql.append(" AND c_invoice_id = ? ");
+				sql.append(" AND i.c_invoice_id = ? ");
 				canSearchByDocument = true;
 			}
 		}
