@@ -31,6 +31,7 @@
 	<parameter name="M_Product_Category_ID" isForPrompting="false" class="java.math.BigDecimal"/>
 	<parameter name="M_Product_Lines_ID" isForPrompting="false" class="java.math.BigDecimal"/>
 	<parameter name="C_BPartner_ID" isForPrompting="false" class="java.math.BigDecimal"/>
+	<parameter name="AD_CLIENT_ID" isForPrompting="false" class="java.lang.Integer"/>
 	<queryString><![CDATA[SELECT 	organizacion.name as organizacion,
 	invoice.dateinvoiced as fecha, 
 	invoice.documentno as nro_documento, 
@@ -60,7 +61,8 @@ AND (($P!{C_BPartner_ID} IS NULL) 	OR (entidad_comercial.c_bpartner_id = $P!{C_B
 AND (($P{FechaDesde}::date IS NULL) 	OR (invoice.dateinvoiced::date >= $P{FechaDesde}::date)) 
 AND (($P{FechaHasta}::date IS NULL) 	OR (invoice.dateinvoiced::date <= $P{FechaHasta}::date))
 AND (invoice.docstatus IN ('CO','CL'))
-AND (invoice.issotrx = 'Y')]]></queryString>
+AND (invoice.issotrx = 'Y')
+AND (invoice.AD_CLIENT_ID = $P{AD_CLIENT_ID})]]></queryString>
 
 	<field name="fecha" class="java.util.Date"/>
 	<field name="nro_documento" class="java.lang.String"/>
@@ -315,7 +317,7 @@ AND (invoice.issotrx = 'Y')]]></queryString>
 					<reportElement
 						x="553"
 						y="12"
-						width="75"
+						width="85"
 						height="12"
 						key="staticText-22"/>
 					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
@@ -326,9 +328,9 @@ AND (invoice.issotrx = 'Y')]]></queryString>
 				</staticText>
 				<textField isStretchWithOverflow="false" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
-						x="628"
+						x="638"
 						y="12"
-						width="150"
+						width="143"
 						height="12"
 						key="textField-20">
 							<printWhenExpression><![CDATA[new Boolean($P{C_BPartner_ID}.toString() != "")]]></printWhenExpression>
