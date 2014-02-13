@@ -80,16 +80,16 @@ ORDER BY m_inout.movementdate]]></queryString>
 			<band height="19"  isSplitAllowed="true" >
 				<staticText>
 					<reportElement
-						x="282"
+						x="223"
 						y="-1"
-						width="259"
+						width="318"
 						height="20"
 						key="staticText-1"/>
 					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
-					<textElement>
+					<textElement textAlignment="Center" verticalAlignment="Top">
 						<font size="12" isBold="true"/>
 					</textElement>
-				<text><![CDATA[Reporte de devolucion de proveedores]]></text>
+				<text><![CDATA[Reporte de devolución de proveedores]]></text>
 				</staticText>
 			</band>
 		</title>
