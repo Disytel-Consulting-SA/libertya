@@ -6544,4 +6544,4 @@ ALTER TABLE libertya.rv_openitem
   OWNER TO libertya;
 
 -- 20140214-1525 Permitir opcion RememberMe en la ventana de login
-UPDATE ad_sysconfig SET value = 'P' where name = 'ZK_LOGIN_ALLOW_REMEMBER_ME'
+UPDATE ad_sysconfig SET value = 'P' where name = 'ZK_LOGIN_ALLOW_REMEMBER_ME';
