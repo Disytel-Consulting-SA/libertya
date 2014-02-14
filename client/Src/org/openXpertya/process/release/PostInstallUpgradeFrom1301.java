@@ -355,22 +355,15 @@ public class PostInstallUpgradeFrom1301 extends PluginPostInstallProcess {
 									getBinaryFileURL(REGISTERED_DOCUMENTS_JASPER_REPORT_FILENAME)));
 		
 		// Informe de IVA Ventas General
-		String getID_VentasGeneral_FromUID = " SELECT AD_Process_ID FROM AD_Process WHERE AD_ComponentObjectUID = ?";
-		int ventasGeneral_Process_Record_ID = DB.getSQLValue(get_TrxName(), getID_VentasGeneral_FromUID, IVA_VENTAS_GENERAL_REPORT_UID);
-		
-		String getAttachment_VentasGeneral = "SELECT AD_Attachment_ID FROM AD_Attachment WHERE AD_Table_ID = ? AND Record_ID = ?";
-		int ventasGeneral_Attachment_Record_ID = DB.getSQLValue(get_TrxName(), getAttachment_VentasGeneral, MProcess.Table_ID, ventasGeneral_Process_Record_ID);
-		
-		if(ventasGeneral_Attachment_Record_ID > 0){
-			DB.executeUpdate("DELETE FROM AD_Attachment WHERE AD_Table_ID = "+ MProcess.Table_ID +" AND Record_ID = "+ ventasGeneral_Process_Record_ID, get_TrxName());
-		}
-		MAttachment att  = new MAttachment(getCtx(), 0, get_TrxName()); 
-		att.setAD_Table_ID(MProcess.Table_ID);
-		att.setRecord_ID(ventasGeneral_Process_Record_ID);
-		att.addEntry("Iva_Ventas.jrxml", JarHelper.readBinaryFromJar(jarFileURL,getBinaryFileURL(IVA_VENTAS_GENERAL_REPORT_FILENAME)));
-		if(!att.save()){
-			throw new Exception ("Error al guardar jrxml ");
-		}
+		MProcess.addAttachment(
+				get_TrxName(),
+				getCtx(),
+				IVA_VENTAS_GENERAL_REPORT_UID,
+				IVA_VENTAS_GENERAL_REPORT_FILENAME,
+				JarHelper
+						.readBinaryFromJar(
+								jarFileURL,
+								getBinaryFileURL(IVA_VENTAS_GENERAL_REPORT_FILENAME)));
 		
 		// Subreporte del Informe de Declaración de Valores
 		MJasperReport
@@ -439,40 +432,26 @@ public class PostInstallUpgradeFrom1301 extends PluginPostInstallProcess {
 									getBinaryFileURL(LIBRO_IVA_TAX_SUBREPORT_JASPER_REPORT_FILENAME)));
 		
 		// Informe de Stock Valorizado a Fecha
-		String getID_StockValorizado_FromUID = " SELECT AD_Process_ID FROM AD_Process WHERE AD_ComponentObjectUID = ?";
-		int stockValorizado_Process_Record_ID = DB.getSQLValue(get_TrxName(), getID_StockValorizado_FromUID, STOCK_VALORIZADO_A_FECHA_REPORT_UID);
-		
-		String getAttachment_StockValorizado = "SELECT AD_Attachment_ID FROM AD_Attachment WHERE AD_Table_ID = ? AND Record_ID = ?";
-		int stockValorizado_Attachment_Record_ID = DB.getSQLValue(get_TrxName(), getAttachment_StockValorizado, MProcess.Table_ID, stockValorizado_Process_Record_ID);
-		
-		if(stockValorizado_Attachment_Record_ID > 0){
-			DB.executeUpdate("DELETE FROM AD_Attachment WHERE AD_Table_ID = "+ MProcess.Table_ID +" AND Record_ID = "+ stockValorizado_Process_Record_ID, get_TrxName());
-		}
-		MAttachment att_StockValorizado  = new MAttachment(getCtx(), 0, get_TrxName()); 
-		att_StockValorizado.setAD_Table_ID(MProcess.Table_ID);
-		att_StockValorizado.setRecord_ID(stockValorizado_Process_Record_ID);
-		att_StockValorizado.addEntry("StockValorizadoAFecha.jrxml", JarHelper.readBinaryFromJar(jarFileURL,getBinaryFileURL(STOCK_VALORIZADO_A_FECHA_REPORT_FILENAME)));
-		if(!att_StockValorizado.save()){
-			throw new Exception ("Error al guardar jrxml ");
-		}
+		MProcess.addAttachment(
+				get_TrxName(),
+				getCtx(),
+				STOCK_VALORIZADO_A_FECHA_REPORT_UID,
+				STOCK_VALORIZADO_A_FECHA_REPORT_FILENAME,
+				JarHelper
+						.readBinaryFromJar(
+								jarFileURL,
+								getBinaryFileURL(STOCK_VALORIZADO_A_FECHA_REPORT_FILENAME)));
 		
 		// Informe de Listado de Utilidades por Artículo
-		String getID_ListadoUtilidadesArticulo_FromUID = " SELECT AD_Process_ID FROM AD_Process WHERE AD_ComponentObjectUID = ?";
-		int listadoUtilidadesArticulo_Process_Record_ID = DB.getSQLValue(get_TrxName(), getID_ListadoUtilidadesArticulo_FromUID, LISTADO_DE_UTILIDADES_POR_ARTICULO_REPORT_UID);
-		
-		String getAttachment_ListadoUtilidadesArticulo = "SELECT AD_Attachment_ID FROM AD_Attachment WHERE AD_Table_ID = ? AND Record_ID = ?";
-		int listadoUtilidadesArticulo_Attachment_Record_ID = DB.getSQLValue(get_TrxName(), getAttachment_ListadoUtilidadesArticulo, MProcess.Table_ID, listadoUtilidadesArticulo_Process_Record_ID);
-		
-		if(listadoUtilidadesArticulo_Attachment_Record_ID > 0){
-			DB.executeUpdate("DELETE FROM AD_Attachment WHERE AD_Table_ID = "+ MProcess.Table_ID +" AND Record_ID = "+ listadoUtilidadesArticulo_Process_Record_ID, get_TrxName());
-		}
-		MAttachment att_ListadoUtilidadesArticulo  = new MAttachment(getCtx(), 0, get_TrxName()); 
-		att_ListadoUtilidadesArticulo.setAD_Table_ID(MProcess.Table_ID);
-		att_ListadoUtilidadesArticulo.setRecord_ID(listadoUtilidadesArticulo_Process_Record_ID);
-		att_ListadoUtilidadesArticulo.addEntry("UtilidadesPorArticulo.jrxml", JarHelper.readBinaryFromJar(jarFileURL,getBinaryFileURL(LISTADO_DE_UTILIDADES_POR_ARTICULO_REPORT_FILENAME)));
-		if(!att_ListadoUtilidadesArticulo.save()){
-			throw new Exception ("Error al guardar jrxml ");
-		}
+		MProcess.addAttachment(
+				get_TrxName(),
+				getCtx(),
+				LISTADO_DE_UTILIDADES_POR_ARTICULO_REPORT_UID,
+				LISTADO_DE_UTILIDADES_POR_ARTICULO_REPORT_FILENAME,
+				JarHelper
+						.readBinaryFromJar(
+								jarFileURL,
+								getBinaryFileURL(LISTADO_DE_UTILIDADES_POR_ARTICULO_REPORT_FILENAME)));
 		
 		// Reporte de Movimientos Valorizados
 		MJasperReport
@@ -574,94 +553,60 @@ public class PostInstallUpgradeFrom1301 extends PluginPostInstallProcess {
 										getBinaryFileURL(DECLARACION_VALORES_X_ORG_SUBREPORT_JASPER_REPORT_FILENAME)));
 		
 		// Informe de Historia de Artículos
-		String getID_HistoriaDeArticulos_FromUID = " SELECT AD_Process_ID FROM AD_Process WHERE AD_ComponentObjectUID = ?";
-		int historiaDeArticulos_Process_Record_ID = DB.getSQLValue(get_TrxName(), getID_HistoriaDeArticulos_FromUID, HISTORIA_DE_ARTICULOS_REPORT_UID);
-		
-		String getAttachment_HistoriaDeArticulos = "SELECT AD_Attachment_ID FROM AD_Attachment WHERE AD_Table_ID = ? AND Record_ID = ?";
-		int historiaDeArticulos_Attachment_Record_ID = DB.getSQLValue(get_TrxName(), getAttachment_HistoriaDeArticulos, MProcess.Table_ID, historiaDeArticulos_Process_Record_ID);
-		
-		if(historiaDeArticulos_Attachment_Record_ID > 0){
-			DB.executeUpdate("DELETE FROM AD_Attachment WHERE AD_Table_ID = "+ MProcess.Table_ID +" AND Record_ID = "+ historiaDeArticulos_Process_Record_ID, get_TrxName());
-		}
-		MAttachment att_HistoriaDeArticulos  = new MAttachment(getCtx(), 0, get_TrxName()); 
-		att_HistoriaDeArticulos.setAD_Table_ID(MProcess.Table_ID);
-		att_HistoriaDeArticulos.setRecord_ID(historiaDeArticulos_Process_Record_ID);
-		att_HistoriaDeArticulos.addEntry("HistoriaDeArticulos.jrxml", JarHelper.readBinaryFromJar(jarFileURL,getBinaryFileURL(HISTORIA_DE_ARTICULOS_REPORT_FILENAME)));
-		if(!att_HistoriaDeArticulos.save()){
-			throw new Exception ("Error al guardar jrxml ");
-		}
-		
+		MProcess.addAttachment(
+				get_TrxName(),
+				getCtx(),
+				HISTORIA_DE_ARTICULOS_REPORT_UID,
+				HISTORIA_DE_ARTICULOS_REPORT_FILENAME,
+				JarHelper
+						.readBinaryFromJar(
+								jarFileURL,
+								getBinaryFileURL(HISTORIA_DE_ARTICULOS_REPORT_FILENAME)));
+
 		// Informe de Reporte de Compras
-		String getID_ReporteDeCompras_FromUID = " SELECT AD_Process_ID FROM AD_Process WHERE AD_ComponentObjectUID = ?";
-		int reporteDeCompras_Process_Record_ID = DB.getSQLValue(get_TrxName(), getID_ReporteDeCompras_FromUID, REPORTE_DE_COMPRAS_REPORT_UID);
-		
-		String getAttachment_ReporteDeCompras = "SELECT AD_Attachment_ID FROM AD_Attachment WHERE AD_Table_ID = ? AND Record_ID = ?";
-		int reporteDeCompras_Attachment_Record_ID = DB.getSQLValue(get_TrxName(), getAttachment_ReporteDeCompras, MProcess.Table_ID, reporteDeCompras_Process_Record_ID);
-		
-		if(reporteDeCompras_Attachment_Record_ID > 0){
-			DB.executeUpdate("DELETE FROM AD_Attachment WHERE AD_Table_ID = "+ MProcess.Table_ID +" AND Record_ID = "+ reporteDeCompras_Process_Record_ID, get_TrxName());
-		}
-		MAttachment att_ReporteDeCompras  = new MAttachment(getCtx(), 0, get_TrxName()); 
-		att_ReporteDeCompras.setAD_Table_ID(MProcess.Table_ID);
-		att_ReporteDeCompras.setRecord_ID(reporteDeCompras_Process_Record_ID);
-		att_ReporteDeCompras.addEntry("ReporteDeCompras.jrxml", JarHelper.readBinaryFromJar(jarFileURL,getBinaryFileURL(REPORTE_DE_COMPRAS_REPORT_FILENAME)));
-		if(!att_ReporteDeCompras.save()){
-			throw new Exception ("Error al guardar jrxml ");
-		}
-		
+		MProcess.addAttachment(
+				get_TrxName(),
+				getCtx(),
+				REPORTE_DE_COMPRAS_REPORT_UID,
+				REPORTE_DE_COMPRAS_REPORT_FILENAME,
+				JarHelper
+						.readBinaryFromJar(
+								jarFileURL,
+								getBinaryFileURL(REPORTE_DE_COMPRAS_REPORT_FILENAME)));
+
 		// Informe de Historia de Artículos por Mes / Semana
-		String getID_HistoriaDeArticulosPorMesSemana_FromUID = " SELECT AD_Process_ID FROM AD_Process WHERE AD_ComponentObjectUID = ?";
-		int historiaDeArticulosPorMesSemana_Process_Record_ID = DB.getSQLValue(get_TrxName(), getID_HistoriaDeArticulosPorMesSemana_FromUID, HISTORIA_DE_ARTICULOS_MES_SEMANA_REPORT_UID);
-		
-		String getAttachment_HistoriaDeArticulosPorMesSemana = "SELECT AD_Attachment_ID FROM AD_Attachment WHERE AD_Table_ID = ? AND Record_ID = ?";
-		int historiaDeArticulosPorMesSemana_Attachment_Record_ID = DB.getSQLValue(get_TrxName(), getAttachment_HistoriaDeArticulosPorMesSemana, MProcess.Table_ID, historiaDeArticulosPorMesSemana_Process_Record_ID);
-		
-		if(historiaDeArticulosPorMesSemana_Attachment_Record_ID > 0){
-			DB.executeUpdate("DELETE FROM AD_Attachment WHERE AD_Table_ID = "+ MProcess.Table_ID +" AND Record_ID = "+ historiaDeArticulosPorMesSemana_Process_Record_ID, get_TrxName());
-		}
-		MAttachment att_HistoriaDeArticulosPorMesSemana  = new MAttachment(getCtx(), 0, get_TrxName()); 
-		att_HistoriaDeArticulosPorMesSemana.setAD_Table_ID(MProcess.Table_ID);
-		att_HistoriaDeArticulosPorMesSemana.setRecord_ID(historiaDeArticulosPorMesSemana_Process_Record_ID);
-		att_HistoriaDeArticulosPorMesSemana.addEntry("HistoriaDeArticulosPorMesSemana.jrxml", JarHelper.readBinaryFromJar(jarFileURL,getBinaryFileURL(HISTORIA_DE_ARTICULOS_MES_SEMANA_REPORT_FILENAME)));
-		if(!att_HistoriaDeArticulosPorMesSemana.save()){
-			throw new Exception ("Error al guardar jrxml ");
-		}
+		MProcess.addAttachment(
+				get_TrxName(),
+				getCtx(),
+				HISTORIA_DE_ARTICULOS_MES_SEMANA_REPORT_UID,
+				HISTORIA_DE_ARTICULOS_MES_SEMANA_REPORT_FILENAME,
+				JarHelper
+						.readBinaryFromJar(
+								jarFileURL,
+								getBinaryFileURL(HISTORIA_DE_ARTICULOS_MES_SEMANA_REPORT_FILENAME)));
 		
 		// Informe de Historia de Costos
-		String getID_HistoriaDeCostos_FromUID = " SELECT AD_Process_ID FROM AD_Process WHERE AD_ComponentObjectUID = ?";
-		int historiaDeCostos_Process_Record_ID = DB.getSQLValue(get_TrxName(), getID_HistoriaDeCostos_FromUID, HISTORIA_DE_COSTOS_REPORT_UID);
-		
-		String getAttachment_HistoriaDeCostos = "SELECT AD_Attachment_ID FROM AD_Attachment WHERE AD_Table_ID = ? AND Record_ID = ?";
-		int historiaDeCostos_Attachment_Record_ID = DB.getSQLValue(get_TrxName(), getAttachment_HistoriaDeCostos, MProcess.Table_ID, historiaDeCostos_Process_Record_ID);
-		
-		if(historiaDeCostos_Attachment_Record_ID > 0){
-			DB.executeUpdate("DELETE FROM AD_Attachment WHERE AD_Table_ID = "+ MProcess.Table_ID +" AND Record_ID = "+ historiaDeCostos_Attachment_Record_ID, get_TrxName());
-		}
-		MAttachment att_HistoriaDeCostos  = new MAttachment(getCtx(), 0, get_TrxName()); 
-		att_HistoriaDeCostos.setAD_Table_ID(MProcess.Table_ID);
-		att_HistoriaDeCostos.setRecord_ID(historiaDeCostos_Process_Record_ID);
-		att_HistoriaDeCostos.addEntry("HistoriaDeCostos.jrxml", JarHelper.readBinaryFromJar(jarFileURL,getBinaryFileURL(HISTORIA_DE_COSTOS_REPORT_FILENAME)));
-		if(!att_HistoriaDeCostos.save()){
-			throw new Exception ("Error al guardar jrxml ");
-		}
+		MProcess.addAttachment(
+				get_TrxName(),
+				getCtx(),
+				HISTORIA_DE_COSTOS_REPORT_UID,
+				HISTORIA_DE_COSTOS_REPORT_FILENAME,
+				JarHelper
+						.readBinaryFromJar(
+								jarFileURL,
+								getBinaryFileURL(HISTORIA_DE_COSTOS_REPORT_FILENAME)));
+
 				
 		// Informe de Listado de Utilidades por Marca / Subfamilia / Familia / Línea / Proveedor
-		String getID_ListadoUtilidadesConcepto_FromUID = " SELECT AD_Process_ID FROM AD_Process WHERE AD_ComponentObjectUID = ?";
-		int listadoUtilidadesConcepto_Process_Record_ID = DB.getSQLValue(get_TrxName(), getID_ListadoUtilidadesConcepto_FromUID, LISTADO_DE_UTILIDADES_POR_CONCEPTO_REPORT_UID);
-		
-		String getAttachment_ListadoUtilidadesConcepto = "SELECT AD_Attachment_ID FROM AD_Attachment WHERE AD_Table_ID = ? AND Record_ID = ?";
-		int listadoUtilidadesConcepto_Attachment_Record_ID = DB.getSQLValue(get_TrxName(), getAttachment_ListadoUtilidadesConcepto, MProcess.Table_ID, listadoUtilidadesConcepto_Process_Record_ID);
-		
-		if(listadoUtilidadesConcepto_Attachment_Record_ID > 0){
-			DB.executeUpdate("DELETE FROM AD_Attachment WHERE AD_Table_ID = "+ MProcess.Table_ID +" AND Record_ID = "+ listadoUtilidadesConcepto_Process_Record_ID, get_TrxName());
-		}
-		MAttachment att_ListadoUtilidadesConcepto  = new MAttachment(getCtx(), 0, get_TrxName()); 
-		att_ListadoUtilidadesConcepto.setAD_Table_ID(MProcess.Table_ID);
-		att_ListadoUtilidadesConcepto.setRecord_ID(listadoUtilidadesConcepto_Process_Record_ID);
-		att_ListadoUtilidadesConcepto.addEntry("Listado_de_Utilidades_por_Concepto.jrxml", JarHelper.readBinaryFromJar(jarFileURL,getBinaryFileURL(LISTADO_DE_UTILIDADES_POR_CONCEPTO_REPORT_FILENAME)));
-		if(!att_ListadoUtilidadesConcepto.save()){
-			throw new Exception ("Error al guardar jrxml ");
-		}
+		MProcess.addAttachment(
+				get_TrxName(),
+				getCtx(),
+				LISTADO_DE_UTILIDADES_POR_CONCEPTO_REPORT_UID,
+				LISTADO_DE_UTILIDADES_POR_CONCEPTO_REPORT_FILENAME,
+				JarHelper
+						.readBinaryFromJar(
+								jarFileURL,
+								getBinaryFileURL(LISTADO_DE_UTILIDADES_POR_CONCEPTO_REPORT_FILENAME)));
 		
 		// Informe de Débitos y Créditos de Cliente
 		MProcess.addAttachment(
