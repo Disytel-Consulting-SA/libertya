@@ -19,6 +19,8 @@ package org.openXpertya.model;
 import java.math.BigDecimal;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Properties;
 import java.util.logging.Level;
 
@@ -162,6 +164,27 @@ public class MInvoiceTax extends X_C_InvoiceTax {
 
         return retValue;
     }    // get
+    
+    
+    public static List<MInvoiceTax> getTaxesFromInvoice(MInvoice invoice, boolean manualInvoiceTaxes) throws Exception{
+    	List<MInvoiceTax> invoiceTaxes = new ArrayList<MInvoiceTax>();
+    	StringBuffer sql = new StringBuffer("SELECT it.* FROM c_invoicetax it");
+    	if(manualInvoiceTaxes){
+    		sql.append(" INNER JOIN c_tax t ON t.c_tax_id = it.c_tax_id ");
+    		sql.append(" INNER JOIN c_taxcategory tc ON t.c_taxcategory_id = tc.c_taxcategory_id ");
+    	}
+    	sql.append(" WHERE it.c_invoice_id = ? ");
+    	if(manualInvoiceTaxes){
+    		sql.append(" AND tc.ismanual = 'Y' ");
+    	}
+    	PreparedStatement ps = DB.prepareStatement(sql.toString(), invoice.get_TrxName());
+    	ps.setInt(1, invoice.getID());
+    	ResultSet rs = ps.executeQuery();
+    	while(rs.next()){
+    		invoiceTaxes.add(new MInvoiceTax(invoice.getCtx(), rs, invoice.get_TrxName()));
+    	}
+    	return invoiceTaxes;
+    }
 
     /** Descripción de Campos */
 

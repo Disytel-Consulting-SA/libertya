@@ -204,7 +204,7 @@ public class MInvoice extends X_C_Invoice implements DocAction {
 			int C_DocTypeTarget_ID, boolean isSOTrx, boolean counter,
 			String trxName, boolean setOrder) {
 		return copyFrom(from, dateDoc, C_DocTypeTarget_ID, isSOTrx, counter,
-				trxName, setOrder, false);
+				trxName, setOrder, false, !isSOTrx);
 	} // copyFrom
 
 	/**
@@ -221,7 +221,8 @@ public class MInvoice extends X_C_Invoice implements DocAction {
 	 */
 	public static MInvoice copyFrom(MInvoice from, Timestamp dateDoc,
 			int C_DocTypeTarget_ID, boolean isSOTrx, boolean counter,
-			String trxName, boolean setOrder, boolean copyDocumentDiscounts) {
+			String trxName, boolean setOrder, boolean copyDocumentDiscounts,
+			boolean copyManualInvoiceTaxes) {
 		MInvoice to = new MInvoice(from.getCtx(), 0, null);
 
 		to.set_TrxName(trxName);
@@ -307,6 +308,15 @@ public class MInvoice extends X_C_Invoice implements DocAction {
 
 		if (to.copyLinesFrom(from, counter, setOrder) == 0) {
 			throw new IllegalStateException("Could not create Invoice Lines");
+		}
+		
+		// Descuentos manuales de la factura
+		if(copyManualInvoiceTaxes){
+			try{
+				to.copyManualInvoiceTaxes(from);
+			} catch(Exception e){
+				throw new IllegalStateException(e.getMessage());
+			}
 		}
 		
 		// Copiar los document discounts
@@ -399,6 +409,21 @@ public class MInvoice extends X_C_Invoice implements DocAction {
 		return DB
 				.getSQLValue(trxName,
 						"SELECT ad_process_id FROM ad_process WHERE ad_componentobjectuid = 'CORE-AD_Process-1010286'");
+	}
+	
+	public void copyManualInvoiceTaxes(MInvoice from) throws Exception{
+		List<MInvoiceTax> invoiceTaxes = MInvoiceTax.getTaxesFromInvoice(from, true);
+		MInvoiceTax newInvoiceTax;
+		for (MInvoiceTax mInvoiceTax : invoiceTaxes) {
+			newInvoiceTax = new MInvoiceTax(getCtx(), 0, get_TrxName());
+			newInvoiceTax.setC_Invoice_ID(getID());
+			newInvoiceTax.setC_Tax_ID(mInvoiceTax.getC_Tax_ID());
+			newInvoiceTax.setTaxAmt(mInvoiceTax.getTaxAmt());
+			newInvoiceTax.setTaxBaseAmt(mInvoiceTax.getTaxBaseAmt());
+			if(!newInvoiceTax.save()){
+				throw new Exception(CLogger.retrieveErrorAsString());
+			}
+		}
 	}
 	
 	public void copyDocumentDiscounts(MInvoice from, boolean onlyTotalizedDocumentDiscounts) throws Exception{
@@ -4334,7 +4359,7 @@ public class MInvoice extends X_C_Invoice implements DocAction {
 
 		MInvoice reversal = copyFrom(this, Env.getDate(),
 				reversalDocType.getC_DocType_ID(), isSOTrx(), false,
-				get_TrxName(), true, true);
+				get_TrxName(), true, true, !isSOTrx());
 
 		if (reversal == null) {
 			m_processMsg = "Could not create Invoice Reversal";
@@ -4393,6 +4418,23 @@ public class MInvoice extends X_C_Invoice implements DocAction {
 				if (!rLine.save(get_TrxName())) {
 					m_processMsg = "Could not correct Invoice Reversal Line";
 
+					return false;
+				}
+			}
+			
+			// Invertir los montos de los impuestos manuales
+			if(!isSOTrx()){
+				try{
+					List<MInvoiceTax> manualInvoiceTaxes = MInvoiceTax.getTaxesFromInvoice(this, true);
+					for (MInvoiceTax mInvoiceTax : manualInvoiceTaxes) {
+						mInvoiceTax.setTaxBaseAmt(mInvoiceTax.getTaxBaseAmt().negate());
+						mInvoiceTax.setTaxAmt(mInvoiceTax.getTaxAmt().negate());
+						if(!mInvoiceTax.save(get_TrxName())){
+							throw new Exception(CLogger.retrieveErrorAsString());
+						}
+					}
+				} catch(Exception e){
+					m_processMsg = "Could not create Reversal Manual Invoice Taxes";
 					return false;
 				}
 			}
