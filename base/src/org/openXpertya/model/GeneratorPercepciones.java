@@ -56,12 +56,14 @@ public class GeneratorPercepciones {
 	 * @param trxName
 	 * @throws Exception
 	 */
-	public static void deletePercepciones(Integer invoiceID, String trxName) throws Exception{
-		DB.executeUpdate(
-				"DELETE FROM c_invoicetax WHERE c_invoice_id = "
-						+ invoiceID
-						+ " AND c_tax_id IN (SELECT c_tax_id FROM c_tax WHERE ispercepcion = 'Y')",
-				trxName);
+	public static void deletePercepciones(Integer invoiceID, boolean isSOTrx, String trxName) throws Exception{
+		if(isSOTrx){
+			DB.executeUpdate(
+					"DELETE FROM c_invoicetax WHERE c_invoice_id = "
+							+ invoiceID
+							+ " AND c_tax_id IN (SELECT c_tax_id FROM c_tax WHERE ispercepcion = 'Y')",
+					trxName);
+		}
 	}
 	
 	public GeneratorPercepciones(Properties ctx, String trxName){
@@ -257,7 +259,7 @@ public class GeneratorPercepciones {
 	 */
 	public void recalculatePercepciones(MInvoice invoice) throws Exception{
 		// Eliminar las percepciones de la factura
-		deletePercepciones(invoice.getID(), getTrxName());
+		deletePercepciones(invoice.getID(), invoice.isSOTrx(), getTrxName());
 		// Calcular las percepciones para esta factura
 		calculatePercepciones(invoice);
 	}
@@ -270,7 +272,7 @@ public class GeneratorPercepciones {
 	public void calculatePercepciones(MInvoice invoice) throws Exception{
 		if(!isApplyPercepcion()){
 			// Eliminar las percepciones de la factura
-			deletePercepciones(invoice.getID(), getTrxName());
+			deletePercepciones(invoice.getID(), invoice.isSOTrx(), getTrxName());
 			return;
 		}
 		// Poner todas las percepciones en 0

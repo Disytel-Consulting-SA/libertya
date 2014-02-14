@@ -3173,10 +3173,12 @@ public class MInvoice extends X_C_Invoice implements DocAction {
 
 		// Delete Taxes
 
-		DB.executeUpdate(
-				"DELETE FROM C_InvoiceTax WHERE "
-						+ " C_Tax_ID IN (SELECT c_tax_id FROM C_Tax ct left join C_TaxCategory ctc on ct.c_taxcategory_id = ctc.c_taxcategory_Id WHERE ctc.isManual = 'N') AND"
-						+ " C_Invoice_ID=" + getC_Invoice_ID(), get_TrxName());
+		if(isSOTrx()){
+			DB.executeUpdate(
+					"DELETE FROM C_InvoiceTax WHERE "
+							+ " C_Tax_ID IN (SELECT c_tax_id FROM C_Tax ct left join C_TaxCategory ctc on ct.c_taxcategory_id = ctc.c_taxcategory_Id WHERE ctc.isManual = 'N') AND"
+							+ " C_Invoice_ID=" + getC_Invoice_ID(), get_TrxName());
+		}
 		m_taxes = null;
 
 		// Lines
@@ -4425,7 +4427,7 @@ public class MInvoice extends X_C_Invoice implements DocAction {
 			// Invertir los montos de los impuestos manuales
 			if(!isSOTrx()){
 				try{
-					List<MInvoiceTax> manualInvoiceTaxes = MInvoiceTax.getTaxesFromInvoice(this, true);
+					List<MInvoiceTax> manualInvoiceTaxes = MInvoiceTax.getTaxesFromInvoice(reversal, true);
 					for (MInvoiceTax mInvoiceTax : manualInvoiceTaxes) {
 						mInvoiceTax.setTaxBaseAmt(mInvoiceTax.getTaxBaseAmt().negate());
 						mInvoiceTax.setTaxAmt(mInvoiceTax.getTaxAmt().negate());
