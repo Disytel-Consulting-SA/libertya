@@ -20,6 +20,13 @@
 
 package org.openXpertya.model;
 
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.Properties;
+import java.util.logging.Level;
+
 import org.openXpertya.plugin.common.PluginUtils;
 import org.openXpertya.util.CCache;
 import org.openXpertya.util.CLogMgt;
@@ -28,18 +35,7 @@ import org.openXpertya.util.DB;
 import org.openXpertya.util.DisplayType;
 import org.openXpertya.util.Env;
 import org.openXpertya.util.Language;
-
 //~--- Importaciones JDK ------------------------------------------------------
-
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-
-import java.util.ArrayList;
-import java.util.Properties;
-import java.util.logging.Level;
-
-import javax.swing.JOptionPane;
 
 /**
  *  Create MLookups
@@ -59,6 +55,12 @@ public class MLookupFactory {
 
     //~--- get methods --------------------------------------------------------
 
+    public static MLookup get(Properties ctx, int WindowNo, int TabNo, String columnName, String tableName, int AD_Reference_ID) {
+		return get(ctx, WindowNo, TabNo,
+				M_Column.getColumnID(null, columnName, tableName),
+				AD_Reference_ID);
+    }
+    
     /**
      *  Create MLookup
      *
