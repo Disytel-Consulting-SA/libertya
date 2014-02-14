@@ -165,20 +165,20 @@ public class WOrdenPago extends ADForm implements ValueChangeListener, TableMode
         
         jPanel1 = GridFactory.newGridLayout();
 
-        MLookup lookupClient = MLookupFactory.get (Env.getCtx(), m_WindowNo, 0, 1014335, DisplayType.TableDir);
+        MLookup lookupClient = MLookupFactory.get (Env.getCtx(), m_WindowNo, 0, "AD_Client_ID", "AD_Client", DisplayType.TableDir);
         cboClient = new WTableDirEditor("AD_Client_ID", false, false, true, lookupClient);
         cboClient.setValue(Env.getAD_Client_ID(Env.getCtx()));
         cboClient.setReadWrite(false);
         addPopupMenu(cboClient, true, true, false);
         
-        MLookup lookupPartner = MLookupFactory.get (Env.getCtx(), m_WindowNo, 0, 3499, DisplayType.Search);
+        MLookup lookupPartner = MLookupFactory.get (Env.getCtx(), m_WindowNo, 0, "C_BPartner_ID", "C_BPartner", DisplayType.Search);
 		BPartnerSel = new WSearchEditor ("C_BPartner_ID", true, false, true, lookupPartner);
 		addPopupMenu(BPartnerSel, true, true, false);
 //		BPartnerSel.getLabel().setMandatory(true);
 		
         fldDocumentNo = new WStringEditor(); 
 
-        MLookup lookupOrg = MLookupFactory.get (Env.getCtx(), m_WindowNo, 0, 1016168, DisplayType.TableDir);
+        MLookup lookupOrg = MLookupFactory.get (Env.getCtx(), m_WindowNo, 0, "AD_Org_ID", "AD_Org", DisplayType.TableDir);
 		cboOrg = new WTableDirEditor("AD_Org_ID", false, false, true, lookupOrg);
 		cboOrg.setValue(Env.getAD_Org_ID(Env.getCtx()));
 		addPopupMenu(cboOrg, true, true, false);
@@ -189,7 +189,7 @@ public class WOrdenPago extends ADForm implements ValueChangeListener, TableMode
         radPayTypeStd.setSelected(true);
         
         txtDescription = new WStringEditor();
-		MLookupInfo infoDocType = VComponentsFactory.MLookupInfoFactory( Env.getCtx(),m_WindowNo, 0, 1016307, DisplayType.TableDir, m_model.getDocumentTypeSqlValidation());
+		MLookupInfo infoDocType = VComponentsFactory.MLookupInfoFactory( Env.getCtx(),m_WindowNo, 0, "C_DocType_ID", "C_DocType", DisplayType.TableDir, m_model.getDocumentTypeSqlValidation());
 		MLookup lookupDocType = new MLookup(infoDocType, 0);
 		cboDocumentType = new WTableDirEditor("C_DocType_ID", false, false, true, lookupDocType);
 		addPopupMenu(cboDocumentType, true, true, false);
@@ -214,13 +214,13 @@ public class WOrdenPago extends ADForm implements ValueChangeListener, TableMode
         cmdGrabar = new Button();
 
         
-		MLookupInfo infoLibroCaja = VComponentsFactory.MLookupInfoFactory( Env.getCtx(),m_WindowNo, 0, 5241, DisplayType.Search, m_model.getEfectivoLibroCajaSqlValidation());
+		MLookupInfo infoLibroCaja = VComponentsFactory.MLookupInfoFactory( Env.getCtx(),m_WindowNo, 0, "C_Cash_ID", "C_Cash", DisplayType.Search, m_model.getEfectivoLibroCajaSqlValidation());
 		MLookup lookupLibroCaja = new MLookup(infoLibroCaja, 0);
 		efectivoLibroCaja = new WSearchEditor("C_Cash_ID", false, false, true, lookupLibroCaja);
 		addPopupMenu(efectivoLibroCaja, true, true, false);
         txtEfectivoImporte = new WStringEditor();
 
-        MLookupInfo infoTransf = VComponentsFactory.MLookupInfoFactory(Env.getCtx(),m_WindowNo, 0, 3077, DisplayType.Search, m_model.getTransfCtaBancariaSqlValidation());
+        MLookupInfo infoTransf = VComponentsFactory.MLookupInfoFactory(Env.getCtx(),m_WindowNo, 0, "C_BankAccount_ID", "C_BankAccount", DisplayType.Search, m_model.getTransfCtaBancariaSqlValidation());
 		MLookup lookupTransf = new MLookup(infoTransf, 0);
 		transfCtaBancaria = new WSearchEditor( "C_BankAccount_ID",false,false,true,lookupTransf );
 		addPopupMenu(transfCtaBancaria, true, true, false);
@@ -239,15 +239,15 @@ public class WOrdenPago extends ADForm implements ValueChangeListener, TableMode
         txtChequeCUITLibrador = new WStringEditor();
         txtChequeDescripcion = new WStringEditor();     
         
-        MLookup lookupCampaign = MLookupFactory.get (Env.getCtx(), m_WindowNo, 0, 2570, DisplayType.TableDir);
+        MLookup lookupCampaign = MLookupFactory.get (Env.getCtx(), m_WindowNo, 0, "C_Campaign_ID", "C_Campaign", DisplayType.TableDir);
         cboCampaign = new WTableDirEditor("C_Campaign_ID", false, false, true, lookupCampaign);
         addPopupMenu(cboCampaign, true, true, false);
         
-        MLookup lookupProject = MLookupFactory.get (Env.getCtx(), m_WindowNo, 0, 1349, DisplayType.TableDir);
+        MLookup lookupProject = MLookupFactory.get (Env.getCtx(), m_WindowNo, 0, "C_Project_ID", "C_Project", DisplayType.TableDir);
         cboProject = new WTableDirEditor("C_Project_ID", false, false, true, lookupProject);
         addPopupMenu(cboProject, true, true, false);
         
-        MLookupInfo infoCurrency = VComponentsFactory.MLookupInfoFactory(Env.getCtx(),m_WindowNo, 0, 457, DisplayType.TableDir, m_model.getCurrencySqlValidation());
+        MLookupInfo infoCurrency = VComponentsFactory.MLookupInfoFactory(Env.getCtx(),m_WindowNo, 0, "C_Currency_ID", "C_Currency", DisplayType.TableDir, m_model.getCurrencySqlValidation());
         MLookup lookupCurrency = new MLookup(infoCurrency, 0);
         cboCurrency = new WTableDirEditor("C_Currency_ID", false, false, true, lookupCurrency);
         addPopupMenu(cboCurrency, true, true, false);
@@ -255,7 +255,7 @@ public class WOrdenPago extends ADForm implements ValueChangeListener, TableMode
         cmdProcess = new Button();        
         cmdCancel = new Button();
 
-        MLookupInfo infoCreditInvoice = VComponentsFactory.MLookupInfoFactory( Env.getCtx(),m_WindowNo, 0, 3484, DisplayType.Search, m_model.getCreditSqlValidation());
+        MLookupInfo infoCreditInvoice = VComponentsFactory.MLookupInfoFactory( Env.getCtx(),m_WindowNo, 0, "C_Invoice_ID", "C_Invoice", DisplayType.Search, m_model.getCreditSqlValidation());
         MLookup lookupCreditInvoice = new MLookup(infoCreditInvoice, 0);
 		creditInvoice = new WSearchEditor("C_Invoice_ID", false, false, true, lookupCreditInvoice);
 		addPopupMenu(creditInvoice, true, true, false);
@@ -1816,7 +1816,7 @@ public class WOrdenPago extends ADForm implements ValueChangeListener, TableMode
 	}
 	
 	protected WSearchEditor createChequeChequeraLookup() {
-		MLookupInfo info = VComponentsFactory.MLookupInfoFactory( Env.getCtx(),m_WindowNo, 0, 6188, DisplayType.Search, m_model.getChequeChequeraSqlValidation());
+		MLookupInfo info = VComponentsFactory.MLookupInfoFactory( Env.getCtx(),m_WindowNo, 0, "C_BankAccountDoc_ID", "C_BankAccountDoc", DisplayType.Search, m_model.getChequeChequeraSqlValidation());
 		MLookup lookup = new MLookup(info, 0);
 		WSearchEditor editor = new WSearchEditor("C_BankAccountDoc_ID", false, false, true, lookup);
 		addPopupMenu(editor, true, true, false);
@@ -1824,7 +1824,7 @@ public class WOrdenPago extends ADForm implements ValueChangeListener, TableMode
 	}
 
 	protected WSearchEditor createChequeBancoIDLookup() {
-		MLookupInfo info = VComponentsFactory.MLookupInfoFactory( Env.getCtx(),m_WindowNo, 0, 3031, DisplayType.Search, null);
+		MLookupInfo info = VComponentsFactory.MLookupInfoFactory( Env.getCtx(),m_WindowNo, 0, "C_Bank_ID", "C_Bank", DisplayType.Search, null);
 		MLookup lookup = new MLookup(info, 0);
 		WSearchEditor editor = new WSearchEditor("C_Bank_ID", false, false, true, lookup);
 		addPopupMenu(editor, true, true, false);
@@ -1986,7 +1986,7 @@ public class WOrdenPago extends ADForm implements ValueChangeListener, TableMode
 		panelChequeTercero = new Tabpanel();
 		
 		// Cuenta
-		MLookupInfo info = VComponentsFactory.MLookupInfoFactory( Env.getCtx(),m_WindowNo, 0, 5283, DisplayType.Search, m_model.getChequeTerceroCuentaSqlValidation());
+		MLookupInfo info = VComponentsFactory.MLookupInfoFactory( Env.getCtx(),m_WindowNo, 0, "C_BankAccount_ID", "C_BankAccount", DisplayType.Search, m_model.getChequeTerceroCuentaSqlValidation());
 		Lookup lookup = new MLookup(info, 0);
 		chequeTerceroCuenta = new WSearchEditor("C_BankAccount_ID", false, false, true, lookup);
 		chequeTerceroCuenta.getLabel().setText(getMsg("Account"));
@@ -2001,7 +2001,7 @@ public class WOrdenPago extends ADForm implements ValueChangeListener, TableMode
 		});
         chequeTerceroCuenta.setValue(null);
 		// Cheque
-		info = VComponentsFactory.MLookupInfoFactory( Env.getCtx(),m_WindowNo, 0, 5043, DisplayType.Search, m_model.getChequeTerceroSqlValidation());
+		info = VComponentsFactory.MLookupInfoFactory( Env.getCtx(),m_WindowNo, 0, "C_Payment_ID", "C_Payment", DisplayType.Search, m_model.getChequeTerceroSqlValidation());
 		lookup = new MLookup(info, 0);
 		chequeTercero = new WSearchEditor("C_Payment_ID", false, false, true, lookup);
         chequeTercero.getLabel().setText(getMsg("Check"));

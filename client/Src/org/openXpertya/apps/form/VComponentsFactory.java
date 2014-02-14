@@ -14,6 +14,7 @@ import org.openXpertya.model.MLookup;
 import org.openXpertya.model.MLookupFactory;
 import org.openXpertya.model.MLookupInfo;
 import org.openXpertya.model.MQuery;
+import org.openXpertya.model.M_Column;
 import org.openXpertya.pos.view.VPoSLookup;
 import org.openXpertya.util.CLogger;
 import org.openXpertya.util.DB;
@@ -117,6 +118,12 @@ public class VComponentsFactory {
 					" where c.columnname ilike '" + ColumnName + "' and t.tablename ilike '" + TableName + "' ";
 		
 		return DB.getSQLValue(null, sql);
+	}
+	
+	public static MLookupInfo MLookupInfoFactory(Properties ctx, int WindowNo, int TabNo, String columnName, String tableName, int AD_Reference_ID, String manualValidationCode) {
+		return MLookupInfoFactory(ctx, WindowNo, TabNo,
+				M_Column.getColumnID(null, columnName, tableName),
+				AD_Reference_ID, manualValidationCode);
 	}
 	
 	public static MLookupInfo MLookupInfoFactory(Properties ctx, int WindowNo, int TabNo, int Column_ID, int AD_Reference_ID, String manualValidationCode) {

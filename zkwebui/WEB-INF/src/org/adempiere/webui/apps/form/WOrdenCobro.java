@@ -130,7 +130,7 @@ public class WOrdenCobro extends WOrdenPago {
 	@Override
 	protected WSearchEditor createChequeChequeraLookup() {
 		// return VComponentsFactory.VLookupFactory("C_BankAccount_ID", "C_BankAccount", m_WindowNo, DisplayType.TableDir, getModel().getChequeChequeraSqlValidation());
-        MLookupInfo infoTransf = VComponentsFactory.MLookupInfoFactory(Env.getCtx(),m_WindowNo, 0, 3077, DisplayType.TableDir, m_model.getChequeChequeraSqlValidation());
+        MLookupInfo infoTransf = VComponentsFactory.MLookupInfoFactory(Env.getCtx(),m_WindowNo, 0, "C_BankAccount_ID", "C_BankAccount", DisplayType.TableDir, m_model.getChequeChequeraSqlValidation());
 		MLookup lookupTransf = new MLookup(infoTransf, 0);
 		WSearchEditor editor = new WSearchEditor( "C_BankAccount_ID",false,false,true,lookupTransf );
 		addPopupMenu(editor, true, true, false);
@@ -458,7 +458,7 @@ public class WOrdenCobro extends WOrdenPago {
 		txtRetencImporte.setValue("0");
 		txtRetencNroRetenc = new WStringEditor();
 		txtRetencNroRetenc.getLabel().setText("NRO RETENCION");
-		MLookupInfo infoRetencSchema = VComponentsFactory.MLookupInfoFactory( Env.getCtx(),m_WindowNo, 0, 1003040, DisplayType.Search, getCobroModel().getRetencionSqlValidation());
+		MLookupInfo infoRetencSchema = VComponentsFactory.MLookupInfoFactory( Env.getCtx(),m_WindowNo, 0, "C_RetencionSchema_ID", "C_RetencionSchema", DisplayType.Search, getCobroModel().getRetencionSqlValidation());
 		MLookup lookupRetencSchema = new MLookup(infoRetencSchema, 0);
 		retencSchema = new WSearchEditor("C_RetencionSchema_ID", false, false, true, lookupRetencSchema);
 		addPopupMenu(retencSchema, true, true, false);
@@ -508,7 +508,7 @@ public class WOrdenCobro extends WOrdenPago {
 		txtCuotaAmt.getLabel().setValue(getMsg("CuotaAmt"));
 		txtCreditCardAmt.getLabel().setValue(getMsg("Amt"));
 		lblCreditCardReceiptMedium = new Label();
-		MLookup lookupCreditCardBank = MLookupFactory.get (Env.getCtx(), m_WindowNo, 0, 1014558, DisplayType.List); // columna Bank de C_POSPaymentMedium
+		MLookup lookupCreditCardBank = MLookupFactory.get (Env.getCtx(), m_WindowNo, 0, "C_Bank_ID", "C_Bank", DisplayType.List); // columna Bank de C_POSPaymentMedium
 		cboCreditCardBank = new WTableDirEditor("Bank", false, false, true, lookupCreditCardBank);
 		cboCreditCardBank.getLabel().setValue(getMsg("C_Bank_ID"));
 		txtCuotaAmt.setReadWrite(false);
@@ -588,12 +588,12 @@ public class WOrdenCobro extends WOrdenPago {
 		txtPagoAdelantadoImporte = new WStringEditor();
 		txtPagoAdelantadoImporte.getLabel().setValue("IMPORTE");
 		txtPagoAdelantadoImporte.setValue("0");
-		MLookupInfo infoPago = VComponentsFactory.MLookupInfoFactory( Env.getCtx(),m_WindowNo, 0, 5043, DisplayType.Search, getModel().getPagoAdelantadoSqlValidation());
+		MLookupInfo infoPago = VComponentsFactory.MLookupInfoFactory( Env.getCtx(),m_WindowNo, 0, "C_Payment_ID", "C_Payment", DisplayType.Search, getModel().getPagoAdelantadoSqlValidation());
 		Lookup lookupPago = new MLookup(infoPago, 0);
 		pagoAdelantado = new WSearchEditor("C_Payment_ID", false, false, true, lookupPago);
 		addPopupMenu(pagoAdelantado, true, true, false);
 		
-        MLookupInfo infoCash = VComponentsFactory.MLookupInfoFactory( Env.getCtx(),m_WindowNo, 0, 5283, DisplayType.Search, getModel().getCashAnticipadoSqlValidation());
+        MLookupInfo infoCash = VComponentsFactory.MLookupInfoFactory( Env.getCtx(),m_WindowNo, 0, "C_CashLine_ID", "C_CashLine", DisplayType.Search, getModel().getCashAnticipadoSqlValidation());
 		Lookup lookupCash = new MLookup(infoCash, 0);
 		cashAdelantado = new WSearchEditor("C_CashLine_ID", false, false, true, lookupCash);
 		addPopupMenu(cashAdelantado, true, true, false);
@@ -1843,7 +1843,7 @@ public class WOrdenCobro extends WOrdenPago {
     protected void createPaymentSelectionTopFields() {
 
     	// Descuento de entidad comercial
-		MLookup lookupBPDiscount = MLookupFactory.get (Env.getCtx(), m_WindowNo, 0, 6581, DisplayType.Search);
+		MLookup lookupBPDiscount = MLookupFactory.get (Env.getCtx(), m_WindowNo, 0, "M_DiscountSchema_ID", "M_DiscountSchema", DisplayType.Search);
 		bPartnerDiscount = new WSearchEditor ("M_DiscountSchema_ID", false, false, true, lookupBPDiscount);
 		addPopupMenu(bPartnerDiscount, true, true, false);
 		bPartnerDiscount.setReadWrite(false);
