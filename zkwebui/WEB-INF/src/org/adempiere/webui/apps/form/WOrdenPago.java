@@ -1060,6 +1060,9 @@ public class WOrdenPago extends ADForm implements ValueChangeListener, TableMode
     		
     		updatePaymentsTabsState();
     		treeUpdated();
+    		// Actualizar el arbol para casos donde hay que mostrar retenciones
+	    	updateTreeModel();
+	    	pagosTree.setModel(getMediosPagoTreeModel());
     		// Actualizar descuento de entidad comercial
     		customUpdateBPartnerRelatedComponents(false);
     		
@@ -2704,7 +2707,7 @@ public class WOrdenPago extends ADForm implements ValueChangeListener, TableMode
 		/**
 		 * Setea toPay (anteultima columna) hacia toPayCurrency (ultima columna) 
 		 */
-		protected void toPay2toPayCurrency() {
+		public void toPay2toPayCurrency() {
 			int rows = owner.listModel.model.getRowCount(); 
 			int cols = owner.listModel.model.getColumnCount();
 			ArrayList<BigDecimal> values = new ArrayList<BigDecimal>();
@@ -2733,7 +2736,7 @@ public class WOrdenPago extends ADForm implements ValueChangeListener, TableMode
 		/**
 		 * Setea toPayCurrency (ultima columna) hacia toPay (anteultima columna) 
 		 */
-		protected void toPayCurrency2toPay() {
+		public void toPayCurrency2toPay() {
 			int rows = owner.listModel.model.getRowCount(); 
 			int cols = owner.listModel.model.getColumnCount();
 			ArrayList<BigDecimal> values = new ArrayList<BigDecimal>();

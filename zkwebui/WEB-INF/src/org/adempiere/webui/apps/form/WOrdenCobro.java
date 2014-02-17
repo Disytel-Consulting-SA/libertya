@@ -508,18 +508,18 @@ public class WOrdenCobro extends WOrdenPago {
 		txtCuotaAmt.getLabel().setValue(getMsg("CuotaAmt"));
 		txtCreditCardAmt.getLabel().setValue(getMsg("Amt"));
 		lblCreditCardReceiptMedium = new Label();
-		MLookup lookupCreditCardBank = MLookupFactory.get (Env.getCtx(), m_WindowNo, 0, "C_Bank_ID", "C_Bank", DisplayType.List); // columna Bank de C_POSPaymentMedium
+		MLookup lookupCreditCardBank = MLookupFactory.get (Env.getCtx(), m_WindowNo, 0, "Bank", "C_POSPaymentMedium", DisplayType.List); // columna Bank de C_POSPaymentMedium
 		cboCreditCardBank = new WTableDirEditor("Bank", false, false, true, lookupCreditCardBank);
 		cboCreditCardBank.getLabel().setValue(getMsg("C_Bank_ID"));
 		txtCuotaAmt.setReadWrite(false);
 		addPopupMenu(cboCreditCardBank, true, true, false);
 		
-		txtCreditCardAmt.getComponent().addEventListener("onChange", new EventListener() {
+		txtCreditCardAmt.getComponent().addEventListener("onChanging", new EventListener() {
 			
 			@Override
 			public void onEvent(Event arg0) throws Exception {
-				if (arg0.getData() != null) {
-					refreshPaymentMediumAmountInfo((MPOSPaymentMedium) cboCreditCardReceiptMedium.getModel().getElementAt(cboCreditCardReceiptMedium.getSelectedIndex()));
+				if (arg0.getTarget() != null) {
+					refreshPaymentMediumAmountInfo((MPOSPaymentMedium) cboCreditCardReceiptMedium.getSelectedItem().getValue());
 				}
 			}
 		});
@@ -528,8 +528,8 @@ public class WOrdenCobro extends WOrdenPago {
 			
 			@Override
 			public void onEvent(Event arg0) throws Exception {
-				if (arg0.getData() != null) {
-					refreshPaymentMediumAmountInfo((MPOSPaymentMedium) cboCreditCardReceiptMedium.getModel().getElementAt(cboCreditCardReceiptMedium.getSelectedIndex()));
+				if (arg0.getTarget() != null) {
+					refreshPaymentMediumAmountInfo((MPOSPaymentMedium) cboCreditCardReceiptMedium.getSelectedItem().getValue());
 				}
 			}
 		});
@@ -542,13 +542,13 @@ public class WOrdenCobro extends WOrdenPago {
 			
 			@Override
 			public void onEvent(Event arg0) throws Exception {
-				if (arg0.getData() != null) {
+				if (arg0.getTarget() != null) {
 					loadPlanInfo((MEntidadFinancieraPlan) cboEntidadFinancieraPlans.getSelectedItem().getValue());
 				}
 			}
 		});
 		
-		txtCreditCardAmt.setValue(getModel().getSaldoMediosPago().toString());
+		txtCreditCardAmt.setValue(getModel().numberFormat(getModel().getSaldoMediosPago()));
 		panelCreditCard.setHeight("150px");
 		
     	Grid gridpanel = GridFactory.newGridLayout();
@@ -1004,11 +1004,11 @@ public class WOrdenCobro extends WOrdenPago {
 				plan,
 				txtCreditCardNo.getValue().toString(),
 				txtCreditCardCouponNo.getValue().toString(),
-				new BigDecimal(txtCreditCardAmt.getValue().toString()),
+				getModel().numberParse(txtCreditCardAmt.getValue().toString()),
 				(String) cboCreditCardBank.getValue(),
 				Util.isEmpty(txtCuotasCount.getValue().toString()) ? 0 : Integer
 						.parseInt(txtCuotasCount.getValue().toString()),
-				new BigDecimal(txtCuotaAmt.getValue().toString()), getC_Campaign_ID(),
+				getModel().numberParse(txtCuotaAmt.getValue().toString()), getC_Campaign_ID(),
 				getC_Project_ID(), (Integer) cboCurrency.getValue());
 	}
 
@@ -1179,10 +1179,10 @@ public class WOrdenCobro extends WOrdenPago {
 			cboEntidadFinancieraPlans.setSelectedItemValue(tarjeta.getEntidadFinancieraPlan());
 			txtCreditCardCouponNo.setValue(tarjeta.getCouponNo());
 			txtCreditCardNo.setValue(tarjeta.getCreditCardNo());
-			txtCreditCardAmt.setValue(tarjeta.getImporte().toString());
+			txtCreditCardAmt.setValue(getModel().numberFormat(tarjeta.getImporte()));
 			txtCuotasCount.setValue(""
 					+ tarjeta.getEntidadFinancieraPlan().getCuotasPago());
-			txtCuotaAmt.setValue(tarjeta.getCuotaAmt().toString());
+			txtCuotaAmt.setValue(getModel().numberFormat(tarjeta.getCuotaAmt()));
 			cboCreditCardBank.setValue(tarjeta.getBank());
 		} else {
 			super.loadMedioPago(mp);
@@ -1191,7 +1191,11 @@ public class WOrdenCobro extends WOrdenPago {
 		}
 		// Selección automática de pestañas a partir del tender type
 		int indexSelected = mpTabbox.getSelectedIndex(); // jTabbedPane2.getSelectedIndex();
-		cboTenderType.setSelectedIndex(indexSelected); // .setSelectedItem(tenderTypesComboValues.get(tabsTenderTypeRelations.get(indexSelected)));
+		int cboIdx = -1, i = 0;
+		for (i=0; i < cboTenderType.getItemCount() && cboIdx == -1; i++)
+			if (tabsTenderTypeRelations.get(indexSelected).equals(((ValueNamePair)(cboTenderType.getItemAtIndex(i).getValue())).getValue()) ) 
+				cboIdx = i;
+		cboTenderType.setSelectedIndex(cboIdx);
 		mpTabbox.setSelectedIndex(indexSelected);
 	}
 
@@ -1259,6 +1263,7 @@ public class WOrdenCobro extends WOrdenPago {
 					cboEntidadFinancieraPlans.appendItem(mEntidadFinancieraPlan.getName(), mEntidadFinancieraPlan); // addItem(mEntidadFinancieraPlan);
 				}
 				cboEntidadFinancieraPlans.setSelectedIndex(0);
+				loadPlanInfo((MEntidadFinancieraPlan) cboEntidadFinancieraPlans.getSelectedItem().getValue());
 			}
 		}
 	}
@@ -1275,7 +1280,7 @@ public class WOrdenCobro extends WOrdenPago {
 		// Si tiene banco el MP entonces no puede ser modificado por el usuario.
 		// Obtengo el medio de pago seleccionado
 
-		MPOSPaymentMedium mp = (MPOSPaymentMedium) cboCreditCardReceiptMedium.getModel().getElementAt(cboCreditCardReceiptMedium.getSelectedIndex());
+		MPOSPaymentMedium mp = (MPOSPaymentMedium) cboCreditCardReceiptMedium.getSelectedItem().getValue();
 		if (mp != null){
 			if (mp.getBank() != null) {
 				cboCreditCardBank.setValue(mp.getBank());
@@ -1341,17 +1346,20 @@ public class WOrdenCobro extends WOrdenPago {
 						MPOSPaymentMedium.TENDERTYPE_CreditCard)) {
 			MEntidadFinancieraPlan plan = getSelectedPlan();
 			if (paymentToPayAmt != null) {
-				txtCuotaAmt.setValue(paymentToPayAmt.toString());
+				txtCuotaAmt.setValue(getModel().numberFormat(paymentToPayAmt));
 			}
 			// El importe de la cuota se calcula en base al importe del pago
 			// ingresado por el usuario
 			if (plan != null) {
-				BigDecimal amt = txtCreditCardAmt.getValue() == null ? BigDecimal.ZERO
-						: new BigDecimal(txtCreditCardAmt.getValue().toString());
-				BigDecimal cuotaAmt = amt.divide(
-						new BigDecimal(plan.getCuotasPago()), 10,
-						BigDecimal.ROUND_HALF_UP);
-				txtCuotaAmt.setValue(cuotaAmt.toString());
+				try {
+					BigDecimal amt = txtCreditCardAmt.getValue() == null ? BigDecimal.ZERO
+							: getModel().numberParse(txtCreditCardAmt.getValue().toString());
+					BigDecimal cuotaAmt = amt.divide(
+							new BigDecimal(plan.getCuotasPago()), 10,
+							BigDecimal.ROUND_HALF_UP);
+					txtCuotaAmt.setValue(getModel().numberFormat(cuotaAmt));
+				}
+				catch (Exception e) { e.printStackTrace(); }
 			}
 		}
 		// Refrescar el monto de la pestaña con el total a pagar
@@ -1375,8 +1383,8 @@ public class WOrdenCobro extends WOrdenPago {
 	 *         tipo tarjeta)
 	 */
 	protected MEntidadFinancieraPlan getSelectedPlan() {
-		if (cboEntidadFinancieraPlans.getSelectedIndex() > 0)
-			return (MEntidadFinancieraPlan) cboEntidadFinancieraPlans.getModel().getElementAt(cboEntidadFinancieraPlans.getSelectedIndex());
+		if (cboEntidadFinancieraPlans.getSelectedIndex() >= 0)
+			return (MEntidadFinancieraPlan) cboEntidadFinancieraPlans.getSelectedItem().getValue();
 		return null;
 	}
 
@@ -1614,6 +1622,8 @@ public class WOrdenCobro extends WOrdenPago {
 		updateOverdueInvoicesCharge();
 		// Actualizar el total a pagar
 		updateTotalAPagar1();
+		// Actualizar modelo
+		resetModel();
 	}
 
 	/**
@@ -1637,10 +1647,14 @@ public class WOrdenCobro extends WOrdenPago {
 			if (untilActualDueDate) {
 				setDefaultGroupAmtValue();
 			}
-			BigDecimal amt = txtGroupingAmt.getValue() != null ? new BigDecimal(txtGroupingAmt.getValue().toString()) : BigDecimal.ZERO;
+			BigDecimal amt = BigDecimal.ZERO; 
+			try {
+				amt = (txtGroupingAmt.getValue() != null && txtGroupingAmt.getValue().toString().length() > 0 ? new BigDecimal(txtGroupingAmt.getValue().toString()) : BigDecimal.ZERO);
+			}
+			catch (Exception e) { e.printStackTrace(); } 
 			getCobroModel().updateGroupingAmtInvoices(amt);
-//			repaint();
-//			tblFacturas.repaint();
+			// Actualizar modelo
+			resetModel();		
 		}
 	}
 
@@ -1768,6 +1782,7 @@ public class WOrdenCobro extends WOrdenPago {
     	}
     	else if(tabIndexSelected.equals(m_creditCardTabIndex)){
     		txtCreditCardAmt.setValue(numberFormat(amt));
+    		refreshPaymentMediumAmountInfo((MPOSPaymentMedium) cboCreditCardReceiptMedium.getSelectedItem().getValue());
     	}
     }
     
@@ -1884,6 +1899,8 @@ public class WOrdenCobro extends WOrdenPago {
 	 */
 	protected void createPayAllDiv(Div divCheckPayAll) {
 		divCheckPayAll.setAlign("end");
+		divCheckPayAll.appendChild(txtGroupingAmt.getLabel());
+		divCheckPayAll.appendChild(txtGroupingAmt.getComponent());
 		divCheckPayAll.appendChild(txtPOS.getLabel());
 		divCheckPayAll.appendChild(txtPOS.getComponent());
 		divCheckPayAll.appendChild(checkPayAll);
