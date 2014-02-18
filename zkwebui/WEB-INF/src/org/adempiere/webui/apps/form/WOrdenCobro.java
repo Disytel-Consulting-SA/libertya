@@ -281,6 +281,9 @@ public class WOrdenCobro extends WOrdenPago {
 		txtEfectivoImporte.getLabel().setText("IMPORTE");
 		txtEfectivoImporte.setValue("0");
 		cboCashReceiptMedium = createPaymentMediumCombo(MPOSPaymentMedium.TENDERTYPE_Cash);
+		if (cboCashReceiptMedium.getItemCount() > 0)
+			cboCashReceiptMedium.setSelectedIndex(0);
+		cboCashReceiptMedium.setSelectedIndex(0);
 		cboCashReceiptMedium.addEventListener("onChange", getPaymentMediumItemListener());
 		tenderTypeIndexsCombos.put(TAB_INDEX_EFECTIVO, cboCashReceiptMedium);  
     	txtEfectivoImporte.setValue("0");
@@ -313,6 +316,8 @@ public class WOrdenCobro extends WOrdenPago {
 		transFecha.getLabel().setText("FECHA");
 		txtTransfImporte.setValue("0");
 		cboTransferReceiptMedium = createPaymentMediumCombo(MPOSPaymentMedium.TENDERTYPE_DirectDeposit);
+		if (cboTransferReceiptMedium.getItemCount() > 0)
+			cboTransferReceiptMedium.setSelectedIndex(0);
 		cboTransferReceiptMedium.addEventListener("onChange", getPaymentMediumItemListener());
 		tenderTypeIndexsCombos.put(TAB_INDEX_TRANSFERENCIA, cboTransferReceiptMedium);
 
@@ -358,8 +363,9 @@ public class WOrdenCobro extends WOrdenPago {
         txtChequeBanco.getLabel().setText("BANCO");
         txtChequeCUITLibrador.getLabel().setText("CUIT LIBRADOR");
         txtChequeDescripcion.getLabel().setText("DESCRIPCION");      
- 
 		cboCheckReceiptMedium = createPaymentMediumCombo(MPOSPaymentMedium.TENDERTYPE_Check);
+		if (cboCheckReceiptMedium.getItemCount() > 0)
+			cboCheckReceiptMedium.setSelectedIndex(0);
 		cboCheckReceiptMedium.addEventListener("onChange", getPaymentMediumItemListener());
 		chequeFechaEmision.addValueChangeListener(new ValueChangeListener() {
 			
@@ -420,6 +426,8 @@ public class WOrdenCobro extends WOrdenPago {
 		txtCreditAvailable.setValue("0");
 		txtCreditImporte.setValue("0");
 		cboCreditReceiptMedium = createPaymentMediumCombo(MPOSPaymentMedium.TENDERTYPE_CreditNote);
+		if (cboCreditReceiptMedium.getItemCount() > 0)
+			cboCreditReceiptMedium.setSelectedIndex(0);
 		cboCreditReceiptMedium.addEventListener("onChange", getPaymentMediumItemListener());
 		tenderTypeIndexsCombos.put(TAB_INDEX_CREDITO, cboCreditReceiptMedium);
 
@@ -465,6 +473,8 @@ public class WOrdenCobro extends WOrdenPago {
 		retencSchema.getLabel().setValue("RETENCION");
 		
 		cboRetencionReceiptMedium = createPaymentMediumCombo(MPOSPaymentMedium.TENDERTYPE_Retencion);
+		if (cboRetencionReceiptMedium.getItemCount() > 0)
+			cboRetencionReceiptMedium.setSelectedIndex(0);
 		cboRetencionReceiptMedium.addEventListener("onChange", getPaymentMediumItemListener());
 
     	Grid gridpanel = GridFactory.newGridLayout();
@@ -535,6 +545,8 @@ public class WOrdenCobro extends WOrdenPago {
 		});
 
 		cboCreditCardReceiptMedium = createPaymentMediumCombo(MPOSPaymentMedium.TENDERTYPE_CreditCard);
+		if (cboCreditCardReceiptMedium.getItemCount() > 0)
+			cboCreditCardReceiptMedium.setSelectedIndex(0);
 		cboCreditCardReceiptMedium.addEventListener("onChange", getPaymentMediumItemListener());
 		cboEntidadFinancieraPlans = new Combobox();
 //		cboEntidadFinancieraPlans.setMandatory(true);	FEDE:TODO
@@ -617,6 +629,8 @@ public class WOrdenCobro extends WOrdenPago {
 		});
 		
 		cboPagoAdelantadoReceiptMedium = createPaymentMediumCombo(MPOSPaymentMedium.TENDERTYPE_AdvanceReceipt);
+		if (cboPagoAdelantadoReceiptMedium.getItemCount() > 0)
+			cboPagoAdelantadoReceiptMedium.setSelectedIndex(0);
 		txtPagoAdelantadoAvailable = new WStringEditor();
 		txtPagoAdelantadoAvailable.setReadWrite(false);
 		txtPagoAdelantadoAvailable.getLabel().setText("PENDIENTE");
