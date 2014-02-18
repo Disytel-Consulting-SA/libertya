@@ -1256,6 +1256,8 @@ public class WOrdenCobro extends WOrdenPago {
 				tenderTypeIndexsCombos.get(mpTabbox.getSelectedIndex()).appendItem(medium.getName(), medium); 
 			}
 			//combo = new CComboBox(mediums.toArray());
+			if (tenderTypeIndexsCombos.get(mpTabbox.getSelectedIndex()).getItemCount() > 0)
+				tenderTypeIndexsCombos.get(mpTabbox.getSelectedIndex()).setSelectedIndex(0);
 		} 
 	}
 	
