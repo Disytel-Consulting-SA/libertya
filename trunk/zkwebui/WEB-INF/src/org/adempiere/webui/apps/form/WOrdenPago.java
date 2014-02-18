@@ -1015,6 +1015,7 @@ public class WOrdenPago extends ADForm implements ValueChangeListener, TableMode
 			}
   		
     		int status = m_model.doPreProcesar();
+    		updateTreeModel();
     		
     		switch ( status )
     		{
@@ -1693,6 +1694,7 @@ public class WOrdenPago extends ADForm implements ValueChangeListener, TableMode
 
         	// Actualizo el modelo. Utilizo newValueOnChange, dado que si utilizo newValue,
 			// obtengo null (o el valor viejo) en este punto del código
+			getModel().updateBPartner(null);
         	getModel().updateBPartner((Integer)BPartnerSel.getNewValueOnChange());
 			// Actualizo los componentes custom de la interfaz gráfica
 			// relacionados con el cambio de la entidad comercial
@@ -1778,7 +1780,6 @@ public class WOrdenPago extends ADForm implements ValueChangeListener, TableMode
 	 * Actualización de la información de resumen de pagos, saldo, retenciones,
 	 * etc.
 	 */
-    
 	protected void updateSummaryInfo(){
 		BigDecimal sumaMediosPago = m_model.getSumaMediosPago();
 		
@@ -2696,7 +2697,11 @@ public class WOrdenPago extends ADForm implements ValueChangeListener, TableMode
 					}
 				} 
 				else {
-					Label aLabel = new Label(_data[i].toString()); 
+					Label aLabel = null;
+					if (_data[i] instanceof BigDecimal)
+						aLabel = new Label(owner.numberFormat((BigDecimal)_data[i]));
+					else
+						aLabel = new Label(_data[i].toString()); 
 					aLabel.setParent(arg0);
 				}
 				arg0.setVisible(!owner.shouldHideColumn(i));
