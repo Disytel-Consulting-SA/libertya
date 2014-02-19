@@ -1836,11 +1836,12 @@ public abstract class AbstractADWindowPanel extends AbstractUIPart implements To
 	 */
 	private void actionButton (WButtonEditor wButton)
 	{
-		if (curTab.hasChangedCurrentTabAndParents()) {
-			String msg = CLogger.retrieveErrorString("Please ReQuery Window");
-			FDialog.error(curWindowNo, parent, null, msg);
-			return;
-		}
+        if (curTab.hasChangedCurrentTabAndParents()) {
+            // dREHER En caso de que haya cambiado el registro actual o algun registro
+            // pariente, forzar a refrescar todos los tabs
+            // y continuar
+            curTab.dataRefreshAll();
+        }
 
 		logger.info(wButton.toString());
 
