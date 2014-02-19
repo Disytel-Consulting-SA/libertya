@@ -218,7 +218,7 @@ public class LaunchInvoice extends SvrProcess {
 			Iterator<String> inoutsIt = inouts.iterator();
 			int i = 1;
 			while (inoutsIt.hasNext()) {
-				jasperwrapper.addParameter("NROREMITO_"+i, inoutsIt.next());
+				jasperwrapper.addParameter("NROREMITO_"+(i++), inoutsIt.next());
 			}
 		} catch(Exception e){
 			log.severe("Error loading invoice in outs");
