@@ -527,11 +527,13 @@ public class MOrderLine extends X_C_OrderLine {
             return false;
         }
 
-        if( getQtyInvoiced().signum() != 0 ) {
-            log.saveError( "Error",Msg.translate( getCtx(),"QtyInvoiced" ) + "=" + getQtyInvoiced());
-
-            return false;
-        }
+//        Comentado: No tiene sentido limitar el cambio si el Pedido sólo está facturado
+//        """"""""""
+//        if( getQtyInvoiced().signum() != 0 ) {
+//            log.saveError( "Error",Msg.translate( getCtx(),"QtyInvoiced" ) + "=" + getQtyInvoiced());
+//
+//            return false;
+//        }
 
         if( getQtyReserved().signum() != 0 ) {
             log.saveError( "Error",Msg.translate( getCtx(),"QtyReserved" ) + "=" + getQtyReserved());
