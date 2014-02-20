@@ -339,12 +339,12 @@ public class WLocationDialog extends Window implements EventListener
 		txtCity.fillList();
 		
 		//      sequence of City Postal Region - @P@ @C@ - @C@, @R@ @P@
-		String ds = country.getCaptureSequence();
-		if (ds == null || ds.length() == 0)
-		{
-			log.log(Level.SEVERE, "CaptureSequence empty - " + country);
-			ds = "";    //  @C@,  @P@
-		}
+        String ds = country.getCaptureSequence();
+        if (ds == null || ds.length() == 0)
+        {
+            log.log(Level.SEVERE, "CaptureSequence empty - set default, country=" + country);
+            ds = "@A1@ @A2@ @A3@ @A4@ @C@,  @P@ @CO@ "; // dREHER, por defecto setear configuracion de captura en el caso de que no este definida en C_Country correspondiente
+        }
 		isCityMandatory = false;
 		isRegionMandatory = false;
 		isAddress1Mandatory = false;
