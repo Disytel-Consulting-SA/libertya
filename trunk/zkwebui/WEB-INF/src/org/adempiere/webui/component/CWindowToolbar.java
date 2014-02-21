@@ -472,7 +472,10 @@ public class CWindowToolbar extends FToolbar implements EventListener
 
     public void enableReport(boolean enabled)
     {
-    	this.btnReport.setDisabled(!enabled);
+    	// Por el momento se oculta el botón
+    	this.btnReport.setVisible(false);
+    	this.btnReport.setDisabled(true);
+//    	this.btnReport.setDisabled(!enabled);
     }
 
     public void enableCopy(boolean enabled)
