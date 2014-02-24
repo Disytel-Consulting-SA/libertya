@@ -59,7 +59,9 @@ public class MInOut extends X_M_InOut implements DocAction {
 	protected boolean isTPVInstance = false;
 	
     /**
-     * Descripción de Método
+     * Creación desde Pedido.
+     * 
+     * TODO: Todavía no implementa remisión de servicios!
      *
      *
      * @param order
@@ -125,6 +127,11 @@ public class MInOut extends X_M_InOut implements DocAction {
                 storages = MStorage.getWarehouse( order.getCtx(),order.getM_Warehouse_ID(),oLines[ i ].getM_Product_ID(),oLines[ i ].getM_AttributeSetInstance_ID(),product.getM_AttributeSet_ID(),allAttributeInstances,minGuaranteeDate,MClient.MMPOLICY_FiFo.equals( MMPolicy ),trxName );
             }
 
+            // Imposible continuar si no se puede recuperar un almacén.  ¿El artículo es un servicio?
+            // TODO: Pendiente implementar remisión de servicios.
+            if (storages == null) 
+            	continue;
+            
             if( !forceDelivery ) {
                 BigDecimal maxQty = Env.ZERO;
 
