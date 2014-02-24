@@ -41,13 +41,13 @@ COALESCE(
 WHEN ((SELECT (CASE WHEN (SUM(il.qtyentered) > 0) THEN SUM(priceactual * il.qtyentered) / SUM(il.qtyentered) ELSE 0 END) FROM C_Order o INNER JOIN C_OrderLine ol ON (o.C_Order_ID = ol.C_Order_ID) INNER JOIN M_InOut i ON (o.C_Order_ID = i.C_Order_ID) INNER JOIN M_InOutLine il ON (il.M_InOut_ID = i.M_InOut_ID) WHERE (i.docstatus IN ('CL', 'CO', 'VO', 'RE')) AND (i.Issotrx = 'N') AND (ol.M_Product_ID=p.M_Product_ID) AND (il.qtyentered > 0)) = 0) THEN
 	(SELECT pp.pricestd FROM M_ProductPrice pp WHERE (pp.M_Product_ID=p.M_Product_ID) AND (pp.M_PriceList_Version_ID = (SELECT M_PriceList_Version_ID FROM M_PriceList_Version plv INNER JOIN M_PriceList pl ON plv.M_PriceList_ID = pl.M_PriceList_ID WHERE (IsSoPriceList = 'N') AND (plv.AD_Org_ID = p.AD_Org_ID) ORDER BY plv.Created DESC LIMIT 1)))
 ELSE
-	(SELECT (CASE WHEN (SUM(il.qtyentered) > 0) THEN 
-	SUM(currencyconvert(priceactual, o.c_currency_id, 118, o.dateacct::timestamp with time zone, NULL::integer, o.ad_client_id, o.ad_org_id) * il.qtyentered) / SUM(il.qtyentered) ELSE 0 END) 
+	(SELECT (CASE WHEN (SUM(il.qtyentered * CASE WHEN i.issotrx = 'N' THEN 1 ELSE -1 END) > 0) THEN 
+	SUM(currencyconvert(priceactual, o.c_currency_id, 118, o.dateacct::timestamp with time zone, NULL::integer, o.ad_client_id, o.ad_org_id) * il.qtyentered * CASE WHEN i.issotrx = 'N' THEN 1 ELSE -1 END) / SUM(il.qtyentered * CASE WHEN i.issotrx = 'N' THEN 1 ELSE -1 END) ELSE 0 END) 
 	FROM C_Order o 
 	INNER JOIN C_OrderLine ol ON (o.C_Order_ID = ol.C_Order_ID) 
 	INNER JOIN M_InOut i ON (o.C_Order_ID = i.C_Order_ID) 
 	INNER JOIN M_InOutLine il ON (il.M_InOut_ID = i.M_InOut_ID) 
-	WHERE (i.docstatus IN ('CL', 'CO', 'VO', 'RE')) AND (i.Issotrx = 'N') AND (ol.M_Product_ID=p.M_Product_ID) AND (il.qtyentered > 0))
+	WHERE (i.docstatus IN ('CL', 'CO', 'VO', 'RE')) AND (i.Issotrx IN ('Y', 'N')) AND (ol.M_Product_ID=p.M_Product_ID) AND (il.qtyentered > 0))
 END)
 ,0) AS Costo_PP, -- Finaliza el coalesce
 COALESCE(
