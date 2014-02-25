@@ -9,6 +9,7 @@ Copyright (C) 2009 Idalica Corporation
 	var mainVersion = OpenXpertya.MAIN_VERSION;
 	var dateVersion = OpenXpertya.DATE_VERSION;
 	var dbVersion = OpenXpertya.DB_VERSION;
+	var dbInfo = OpenXpertya.getDatabaseInfo();
 	var vendor = OpenXpertya.getImplementationVendor();
 	var vendorVersion = OpenXpertya.getImplementationVersion();
 	var jvm = OpenXpertya.getJavaInfo();
@@ -43,6 +44,11 @@ Copyright (C) 2009 Idalica Corporation
 			<td align="right">Database Version</td>
 			<td>:</td>
 			<td aligh="left">${dbVersion}</td>
+		</tr>
+		<tr>
+			<td align="right">Database Info</td>
+			<td>:</td>
+			<td aligh="left">${dbInfo}</td>
 		</tr>
 		<tr>
 			<td align="right">Vendor</td>

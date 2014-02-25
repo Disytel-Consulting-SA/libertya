@@ -60,13 +60,13 @@ public final class OpenXpertya {
     static public final String	ID	= "$Id: OpenXpertya.java,v 2.2 $";
 
     /** Descripción de Campo */
-    static public final String	MAIN_VERSION	= "Versi\u00f3n 13.01";
+    static public final String	MAIN_VERSION	= "Versi\u00f3n 14.02";
 
     /** Descripción de Campo */
-    static public final String	DATE_VERSION	= "21-01-2013";
+    static public final String	DATE_VERSION	= "24-02-2014";
 
     /** Descripción de Campo */
-    static public final String	DB_VERSION	= "21-01-2013";
+    static public final String	DB_VERSION	= "24-02-2014";
 
     /** Descripción de Campo */
     static public final String	NAME	= "Libertya \u00AE";
@@ -660,6 +660,41 @@ public final class OpenXpertya {
         }
 
     }		// main
+    
+    
+    /**
+     * dREHER
+     * Descripcion de Metodo
+     *
+     * Devuelve la info de coneccion a la base de datos
+     *
+     * @return
+     */
+    public static String getDatabaseInfo(){
+        String dataConnection = Ini.getProperty(Ini.P_CONNECTION);
+        String dataBaseName = "";
+        String dataDBServer = "";
+        try{
+            int posI = dataConnection.indexOf("DBname=");
+            if( posI > -1){
+                dataBaseName = dataConnection.substring(posI + 7);
+                int posF = dataBaseName.indexOf(",");
+                dataBaseName = dataBaseName.substring(0, posF);
+            }
+            posI = dataConnection.indexOf("DBhost=");
+            if( posI > -1){
+                dataDBServer = dataConnection.substring(posI + 7);
+                int posF = dataDBServer.indexOf(",");
+                dataDBServer = dataDBServer.substring(0, posF);
+            }
+           
+            dataConnection = dataDBServer + ":" + dataBaseName;
+        }catch(Exception ex){
+            log.warning("Error al leer informacion de conexion con BD!");
+        }
+           
+        return dataConnection;
+    }
 }	// OpenXpertya
 
 

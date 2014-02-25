@@ -6892,4 +6892,6 @@ $BODY$
   LANGUAGE 'plpgsql' VOLATILE
   COST 100;
 ALTER FUNCTION invoiceopen(integer, integer) OWNER TO libertya;
-  
+ 
+-- Versionado de BBDD
+UPDATE ad_system SET version = '24-02-2014' WHERE ad_system_id = 0;
