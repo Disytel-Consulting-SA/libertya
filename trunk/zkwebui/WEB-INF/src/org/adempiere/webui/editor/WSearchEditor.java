@@ -77,6 +77,9 @@ public class WSearchEditor extends WEditor implements ContextMenuListener, Value
 		
 		if (lookup != null)
 			columnName = lookup.getColumnName();
+        else
+            // dREHER
+            log.warning("No se pudo crear el lookup - MField=" + mField.getColumnName());
 		
 		init();
 	}
@@ -186,14 +189,22 @@ public class WSearchEditor extends WEditor implements ContextMenuListener, Value
         this.value = value;
 		if (value != null && !"".equals(String.valueOf(value)))
 		{
-		    String text = lookup.getDisplay(value);
-
-            if (text.startsWith("_"))
+            // dREHER, valido que el lookup no sea nulo, ya que el metodo
+            // WSearchEditor (MField mField) no realiza dicha validacion
+            if (lookup != null)
             {
-                text = text.substring(1);
+			    String text = lookup.getDisplay(value);
+	
+	            if (text.startsWith("_"))
+	            {
+	                text = text.substring(1);
+	            }
+	
+	            getComponent().setText(text);
+            }else{
+                log.warning("El lookup es nulo, seteo texto vacio");
+                getComponent().setText("");
             }
-
-            getComponent().setText(text);
 		}
 		else
 		{
