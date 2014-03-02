@@ -4733,21 +4733,29 @@ public class MOrder extends X_C_Order implements DocAction {
 	}
 	
 	// Proceso de Reasignación de almacén del Pedido
-	public void changeOrderWarehouse(Integer M_Warehouse_ID) {
-		if (getDocStatus().compareTo(DOCSTATUS_Drafted) == 0){
-			setM_Warehouse_ID(M_Warehouse_ID);
-		}
-		else{
-			if (getDocStatus().compareTo(DOCSTATUS_Completed) == 0){
-				reActivateIt();
-				setAD_Org_ID( MWarehouse.get( getCtx(),M_Warehouse_ID).getAD_Org_ID());
-				setM_Warehouse_ID(M_Warehouse_ID);
-				save();
-				completeIt();
-				save();
-			}	
-		}
-	}
+    public void changeOrderWarehouse(Integer M_Warehouse_ID) throws Exception {
+        if (getDocStatus().compareTo(DOCSTATUS_Drafted) == 0){
+            setM_Warehouse_ID(M_Warehouse_ID);
+        }
+        else{
+            if (getDocStatus().compareTo(DOCSTATUS_Completed) == 0){
+                // Reactivar el documento para poder modificar el almacen
+                if (!DocumentEngine.processAndSave(this, DOCACTION_Re_Activate, false))
+                    throw new Exception ("Error al reactivar el pedido: " + Msg.parseTranslation(getCtx(), getProcessMsg()));
+                setAD_Org_ID( MWarehouse.get( getCtx(),M_Warehouse_ID).getAD_Org_ID());
+                setM_Warehouse_ID(M_Warehouse_ID);
+                // Setear el warehouse de las líneas
+                for (MOrderLine anOrderLine : getLines()) {
+                    anOrderLine.setM_Warehouse_ID(M_Warehouse_ID);
+                    if (!anOrderLine.save())
+                        throw new Exception ("Error al actualizar las linea de pedido: " + Msg.parseTranslation(getCtx(), CLogger.retrieveErrorAsString()));   
+                }
+                // Completar nuevamente
+                if (!DocumentEngine.processAndSave(this, DOCACTION_Complete, true))
+                    throw new Exception ("Error al completar el pedido: " + Msg.parseTranslation(getCtx(), getProcessMsg()));
+            }   
+        }
+    }
 
 	public boolean isForceReserveStock() {
 		return forceReserveStock;
