@@ -513,9 +513,13 @@ public class FiscalDocumentPrint {
 				// Obtiene la cantidad que falta entregar
 				BigDecimal qtyToDeliver = orderLine.getPendingDeliveredQty();
 				MProduct product = orderLine.getProduct();
-				// Crea la descripción que se mostrará en la línea del documento
+				// Primera línea a imprimir: [cantidad] value del artículo 
 				line = 
-					"[" + qtyToDeliver.setScale(2) + "] " + product.getValue() + " " + product.getName();
+					"[" + qtyToDeliver.setScale(2) + "] " + product.getValue();
+				// Agrega la línea al documento no fiscal
+				nonFiscalDocument.addLine(line);
+				// Segunda línea a imprimir: el nombre el del artículo
+				line = product.getName();
 				// Agrega la línea al documento no fiscal
 				nonFiscalDocument.addLine(line);
 			}
