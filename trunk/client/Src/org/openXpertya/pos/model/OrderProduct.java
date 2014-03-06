@@ -91,7 +91,7 @@ public class OrderProduct {
 	 * @param discount
 	 *            Fija o asigna discount.
 	 */
-	public void setDiscount(BigDecimal discount, DiscountApplication discountApplication) {
+	public void setDiscount(BigDecimal discount, DiscountApplication discountApplication, boolean calculatePrice) {
 		this.discount = discount;
 		this.setDiscountApplication(discountApplication);
 		
@@ -99,9 +99,15 @@ public class OrderProduct {
 			getOrder().addLineManualDiscount(this);
 		}
 		
-		calculatePrice();
+		if(calculatePrice){
+			calculatePrice();
+		}
 	}
 
+	public void setDiscount(BigDecimal discount, DiscountApplication discountApplication){
+		setDiscount(discount, discountApplication, true);
+	}
+	
 	/**
 	 * @return Devuelve el precio de tarifa.
 	 */
