@@ -2922,6 +2922,9 @@ public class MInvoice extends X_C_Invoice implements DocAction {
 			return DocAction.STATUS_Invalid;
 		}
 
+		// Actualiza el neto para corregirlo
+		setNetAmount(getNetAmount(get_TrxName()));
+		
 		createPaySchedule();
 
 		// Modified by Matías Cap - Disytel
@@ -5553,6 +5556,28 @@ public class MInvoice extends X_C_Invoice implements DocAction {
         }
 
         return DB.executeUpdate( sql,trxName);
+	}
+	
+	/**
+	 * El monto neto de la factura es: la suma de todos los TaxBaseAmt para los
+	 * cuales la categoría de impuesto no es manual. Esto descarta las
+	 * percepciones.
+	 * 
+	 * @param trxName
+	 * @return monto neto
+	 */
+	public BigDecimal getNetAmount(String trxName){
+		String sql = null;
+		// El monto neto de la factura es: 
+		// la suma de todos los TaxBaseAmt para los cuales la categoría de impuesto no es manual. Esto descarta las percepciones.		
+		sql = "SELECT COALESCE(SUM(TaxBaseAmt),0) " 
+				+ "FROM C_Tax t "
+				+ "INNER JOIN C_TaxCategory tc ON (tc.C_TaxCategory_ID = t.C_TaxCategory_ID) "
+				+ "INNER JOIN C_InvoiceTax it ON (it.C_Tax_ID = t.C_Tax_ID) "
+				+ "INNER JOIN C_Invoice i ON (i.C_Invoice_ID = it.C_Invoice_ID) "
+				+ "WHERE (i.C_Invoice_ID=?) AND (tc.IsManual = 'N')";
+		
+		return DB.getSQLValueBD(trxName, sql, getC_Invoice_ID());
 	}
 	
 	public Integer updateNetAmount(String trxName){
