@@ -182,7 +182,7 @@ public class LaunchOrdenPago extends SvrProcess {
 						"SELECT AD_JasperReport_ID FROM AD_JasperReport WHERE Name ilike ?",
 						new Object[] { name });
 		if (jasperReport_ID == null || jasperReport_ID == 0)
-			throw new Exception("Jasper Report not found - OrdenPago-Cheques");
+			throw new Exception("Jasper Report not found - "+name);
 
 		MJasperReport jasperReport = new MJasperReport(ctx, jasperReport_ID,
 				get_TrxName());
