@@ -384,7 +384,7 @@ public class TimeUtil {
 
         calTwo.setTimeInMillis( two.getTime());
 
-        if( (calOne.get( Calendar.YEAR ) == calTwo.get( Calendar.YEAR )) && (calOne.get( Calendar.MONTH ) == calTwo.get( Calendar.MONTH )) && (calOne.get( Calendar.DAY_OF_MONTH ) == calTwo.get( Calendar.DAY_OF_YEAR ))) {
+        if( (calOne.get( Calendar.YEAR ) == calTwo.get( Calendar.YEAR )) && (calOne.get( Calendar.MONTH ) == calTwo.get( Calendar.MONTH )) && (calOne.get( Calendar.DAY_OF_MONTH ) == calTwo.get( Calendar.DAY_OF_MONTH ))) {
             return true;
         }
 
