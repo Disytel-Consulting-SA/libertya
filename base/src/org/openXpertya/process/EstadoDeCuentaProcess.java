@@ -104,9 +104,9 @@ public class EstadoDeCuentaProcess extends SvrProcess {
 			"     i.grandtotal AS grandtotalmulticurrency, " +
 			"     invoicepaid(i.c_invoice_id, i.c_currency_id, 1) AS paidamtmulticurrency, " +
 			"     (i.grandtotal - invoicepaid(i.c_invoice_id, i.c_currency_id, 1)) AS openamtmulticurrency, " + 
-			"     getInvoiceAmt(i.c_invoice_id, 118) AS grandtotal, " +
+			"     currencybase(i.grandtotal,i.c_currency_id,i.dateinvoiced, i.ad_client_id, i.ad_org_id) AS grandtotal, " +
 			"     invoicepaid(i.c_invoice_id, "+currencyClient+", 1) AS paidamt, " +
-			"     (getInvoiceAmt(i.c_invoice_id, 118) - invoicepaid(i.c_invoice_id, "+currencyClient+", 1)) AS openamt, " + 		
+			"     invoiceopen(i.c_invoice_id, 0,"+currencyClient+",i.c_conversiontype_id) AS openamt, " + 		
 			"     i.c_currency_id, i.c_conversiontype_id, i.ispayschedulevalid, -1::integer AS c_invoicepayschedule_id, i.c_paymentterm_id " +
 			"	  FROM rv_c_invoice i " +
 			"	  JOIN c_paymentterm p ON i.c_paymentterm_id = p.c_paymentterm_id " +
@@ -133,9 +133,9 @@ public class EstadoDeCuentaProcess extends SvrProcess {
 			"     i.grandtotal AS grandtotalmulticurrency, " +
 			"     invoicepaid(i.c_invoice_id, i.c_currency_id, 1) AS paidamtmulticurrency, " +
 			"     (i.grandtotal - invoicepaid(i.c_invoice_id, i.c_currency_id, 1)) AS openamtmulticurrency, " +
-			"     getInvoiceAmt(i.c_invoice_id, 118) AS grandtotal, " +
+			"     currencybase(i.grandtotal,i.c_currency_id,i.dateinvoiced, i.ad_client_id, i.ad_org_id) AS grandtotal, " +
 			"     invoicepaid(i.c_invoice_id, "+currencyClient+", 1) AS paidamt, " +
-			"     (getInvoiceAmt(i.c_invoice_id, 118) - invoicepaid(i.c_invoice_id, "+currencyClient+", 1)) AS openamt, " +
+			"     invoiceopen(i.c_invoice_id, ips.c_invoicepayschedule_id,"+currencyClient+",i.c_conversiontype_id) AS openamt, " +
 			"     i.c_currency_id, i.c_conversiontype_id, i.ispayschedulevalid, ips.c_invoicepayschedule_id, i.c_paymentterm_id " +
 			"	  FROM rv_c_invoice i " +
 			"	  JOIN c_invoicepayschedule ips ON i.c_invoice_id = ips.c_invoice_id " +
