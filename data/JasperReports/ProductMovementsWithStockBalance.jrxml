@@ -31,6 +31,7 @@
 	<parameter name="DATE_TO" isForPrompting="false" class="java.sql.Timestamp"/>
 	<parameter name="STOCKBALANCE_SUBREPORT_DATASOURCE" isForPrompting="false" class="net.sf.jasperreports.engine.JRDataSource"/>
 	<parameter name="STOCKBALANCE_COMPILED_SUBREPORT" isForPrompting="false" class="java.io.InputStream"/>
+	<parameter name="INITIAL_BALANCE" isForPrompting="false" class="java.math.BigDecimal"/>
 
 	<field name="IO_KIND" class="java.lang.String"/>
 	<field name="MOVEMENTDATE" class="java.sql.Timestamp"/>
@@ -42,6 +43,9 @@
 
 	<variable name="BALANCE" class="java.math.BigDecimal" resetType="Report" calculation="Sum">
 		<variableExpression><![CDATA[$F{QTY}.multiply( $F{IO_KIND_NO_PARSED}.equalsIgnoreCase( "Y" )?new java.math.BigDecimal(1):new java.math.BigDecimal(-1) )]]></variableExpression>
+	</variable>
+	<variable name="REAL_BALANCE" class="java.math.BigDecimal" resetType="Report" calculation="Nothing">
+		<variableExpression><![CDATA[$P{INITIAL_BALANCE}.add($V{BALANCE})]]></variableExpression>
 	</variable>
 		<background>
 			<band height="0"  isSplitAllowed="true" >
@@ -414,7 +418,7 @@
 					<textElement textAlignment="Right" verticalAlignment="Middle">
 						<font size="8"/>
 					</textElement>
-				<textFieldExpression   class="java.math.BigDecimal"><![CDATA[$V{BALANCE}]]></textFieldExpression>
+				<textFieldExpression   class="java.math.BigDecimal"><![CDATA[$V{REAL_BALANCE}]]></textFieldExpression>
 				</textField>
 			</band>
 		</detail>
