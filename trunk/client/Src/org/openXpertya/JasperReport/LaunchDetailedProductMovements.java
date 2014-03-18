@@ -1,13 +1,20 @@
 package org.openXpertya.JasperReport;
 
 import java.io.ByteArrayInputStream;
+import java.math.BigDecimal;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 import java.sql.Timestamp;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
+import java.util.Calendar;
 
 import org.openXpertya.JasperReport.DataSource.DetailedProductMovementsDataDource;
 import org.openXpertya.JasperReport.DataSource.OXPJasperDataSource;
 import org.openXpertya.JasperReport.DataSource.TotalDetailedProductMovementsDataSource;
 import org.openXpertya.model.MProduct;
 import org.openXpertya.model.MWarehouse;
+import org.openXpertya.util.DB;
 
 public class LaunchDetailedProductMovements extends JasperReportLaunch {
 
@@ -41,6 +48,13 @@ public class LaunchDetailedProductMovements extends JasperReportLaunch {
 	
 	@Override
 	protected void loadReportParameters() throws Exception {
+		Calendar calendar = Calendar.getInstance();
+		calendar.setTimeInMillis(getDateFrom().getTime());
+		calendar.add(Calendar.YEAR, -1);
+		calendar.getTime();
+		new Timestamp(calendar.getTimeInMillis());
+		DateFormat format = new SimpleDateFormat("dd/MM/yyyy");
+		format.format(calendar.getTime());
 		// Artículo
 		MProduct product = MProduct.get(getCtx(), getProductID());
 		addReportParameter("PRODUCT_VALUE", product.getValue());
@@ -60,6 +74,8 @@ public class LaunchDetailedProductMovements extends JasperReportLaunch {
 		}
 		DetailedProductMovementsDataDource subreportDS = getStockBalanceSubreportDS();
 		addReportParameter("STOCKBALANCE_SUBREPORT_DATASOURCE", subreportDS);
+		// Saldo inicial
+		addReportParameter("INITIAL_BALANCE", getInitialBalance());
 	}
 
 	@Override
@@ -68,4 +84,35 @@ public class LaunchDetailedProductMovements extends JasperReportLaunch {
 				getProductID(), getWarehouseID(), getDateFrom(), getDateTo());
 	}
 
+	protected BigDecimal getInitialBalance(){
+		BigDecimal balance = BigDecimal.ZERO;
+		if(getDateFrom() != null){
+			String sql = "select sum(qty * (CASE WHEN receiptvalue = 'Y' THEN 1 ELSE -1 END)) as balance " +
+						 "from v_product_movements_detailed " +
+						 "where m_product_id = ? AND m_warehouse_id = ? AND docstatus IN ('CO','CL') AND date_trunc('day',movementdate) < date_trunc('day',?::date)";
+			PreparedStatement ps = null;
+			ResultSet rs = null;
+			try {
+				ps = DB.prepareStatement(sql, get_TrxName());
+				ps.setInt(1, getProductID());
+				ps.setInt(2, getWarehouseID());
+				ps.setTimestamp(3, getDateFrom());
+				rs = ps.executeQuery();
+				if(rs.next()){
+					balance = rs.getBigDecimal("balance");
+				}
+			} catch (Exception e) {
+				e.printStackTrace();
+			} finally{
+				try{
+					if(rs != null)rs.close();
+					if(ps != null)ps.close();
+				} catch(Exception e2){
+					e2.printStackTrace();
+				}
+			}
+		}
+		return balance;
+	}
+	
 }
