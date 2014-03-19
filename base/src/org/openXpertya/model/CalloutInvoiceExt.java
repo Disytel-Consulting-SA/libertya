@@ -1071,7 +1071,7 @@ public class CalloutInvoiceExt extends CalloutInvoice {
 		realDocumentNo = realDocumentNo.replaceFirst(firstLetter, firstLetterMayus);
 		
 		// 2) Por patrones
-		boolean fiscalMatches = Pattern.matches("[ABC]{1}\\d{3}[1-9]{1}\\d{7}[1-9]{1}",
+		boolean fiscalMatches = Pattern.matches("[ABC]{1}\\d{4}\\d{8}{1}",
 				realDocumentNo);
 		if(!fiscalMatches){
 			return false;
@@ -1081,6 +1081,16 @@ public class CalloutInvoiceExt extends CalloutInvoice {
 		Map<String, Object> documentNoParts = DividirDocumentNo(
 				Env.getAD_Client_ID(Env.getCtx()), realDocumentNo);
 		if(documentNoParts.size() < 3){
+			return false;
+		}
+		
+		// 4) El punto de venta no puede ser 0
+		if (((Integer) documentNoParts.get("PuntoDeVenta")).intValue() == 0) {
+			return false;
+		}
+		
+		// 5) El nro de comprobante no puede ser 0
+		if (((Integer) documentNoParts.get("NumeroComprobante")).intValue() == 0) {
 			return false;
 		}
 		
