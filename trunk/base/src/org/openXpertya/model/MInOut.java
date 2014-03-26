@@ -3210,7 +3210,7 @@ public class MInOut extends X_M_InOut implements DocAction {
 	 * @return el filtro de pedidos que se aplica al crear un remito a partir
 	 *         de un pedido
 	 */
-	public static String getOrderFilter(MInOut inout) {
+	public static String getOrderFilter(MInOut inout, boolean addExists) {
 		boolean afterInvoicing = (inout.getDeliveryRule().equals(
 				MInOut.DELIVERYRULE_AfterInvoicing) || inout.getDeliveryRule()
 				.equals(MInOut.DELIVERYRULE_Force_AfterInvoicing))
@@ -3227,8 +3227,10 @@ public class MInOut extends X_M_InOut implements DocAction {
 		// entrega).
 		filter.append("C_Order.IsSOTrx='").append(inout.isSOTrx()?"Y":"N")
 				.append("' AND ")
-				.append("C_Order.DocStatus IN ('CL','CO') AND ")
-				.append("(EXISTS ")
+				.append("C_Order.DocStatus IN ('CL','CO') ")
+				.append(" AND ");
+		if(addExists){
+				filter.append("(EXISTS ")
 				.append("(SELECT ol.C_Order_ID ")
 				.append("FROM C_OrderLine ol ")
 				.append("WHERE C_Order.C_Order_ID = ol.C_Order_ID AND ")
@@ -3244,14 +3246,20 @@ public class MInOut extends X_M_InOut implements DocAction {
 				.append("(C_Order.IsSOTrx='N' AND POSITION('-' IN '")
 				.append(inout.getMovementType()).append("') > 0)")
 				.append(")")
-				.append(" AND ")
-				.append("(C_Order.C_DocType_ID IN ")
-				.append("(SELECT C_DocType_ID ")
-				.append("FROM C_DocType ")
-				.append("WHERE C_DocType.EnableInCreateFromShipment = 'Y'))");
+				.append(" AND ");
+				
+		}
+		filter.append("(C_Order.C_DocType_ID IN ")
+		.append("(SELECT C_DocType_ID ")
+		.append("FROM C_DocType ")
+		.append("WHERE C_DocType.EnableInCreateFromShipment = 'Y'))");
 		return filter.toString();
 	}
 
+	public static String getOrderFilter(MInOut inout){
+		return getOrderFilter(inout, true);
+	}
+	
 	/**
 	 * @return el filtro de facturas que se aplica al crear un remito a partir
 	 *         de una factura
@@ -3278,7 +3286,7 @@ public class MInOut extends X_M_InOut implements DocAction {
 	 * @return el filtro de facturas que se aplica al crear un remito a partir
 	 *         de pedidos asociados a facturas
 	 */
-	public static String getInvoiceOrderFilter(MInOut inout) {
+	public static String getInvoiceOrderFilter(MInOut inout, boolean addExists) {
 		StringBuffer filter = new StringBuffer();
 
 		filter.append("C_Invoice.IsSOTrx='").append(inout.isSOTrx()?"Y":"N")
@@ -3287,10 +3295,14 @@ public class MInOut extends X_M_InOut implements DocAction {
 				.append("C_Invoice.C_Order_ID IS NOT NULL AND ")
 				.append("C_Invoice.C_Order_ID IN (")
 				.append("SELECT C_Order.C_Order_ID ").append("FROM C_Order ")
-				.append("WHERE (").append(getOrderFilter(inout)).append(")")
+				.append("WHERE (").append(getOrderFilter(inout,addExists)).append(")")
 				.append(")");
 
 		return filter.toString();
+	}
+	
+	public static String getInvoiceOrderFilter(MInOut inout){
+		return getInvoiceOrderFilter(inout, true);
 	}
 	
 }    // MInOut
