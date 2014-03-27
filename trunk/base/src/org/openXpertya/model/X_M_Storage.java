@@ -1,13 +1,14 @@
-/** Modelo Generado - NO CAMBIAR MANUALMENTE - Copyright (C) 2006 FUNDESLE */
+/** Modelo Generado - NO CAMBIAR MANUALMENTE - Disytel */
 package org.openXpertya.model;
-import java.util.*;
+import java.util.logging.Level;
+ import java.util.*;
 import java.sql.*;
 import java.math.*;
 import org.openXpertya.util.*;
 /** Modelo Generado por M_Storage
- *  @author Comunidad de Desarrollo openXpertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
- *  @version  - 2008-01-03 10:26:39.843 */
-public class X_M_Storage extends PO
+ *  @author Comunidad de Desarrollo Libertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
+ *  @version  - 2014-03-27 15:06:27.383 */
+public class X_M_Storage extends org.openXpertya.model.PO
 {
 /** Constructor estándar */
 public X_M_Storage (Properties ctx, int M_Storage_ID, String trxName)
@@ -29,13 +30,13 @@ public X_M_Storage (Properties ctx, ResultSet rs, String trxName)
 {
 super (ctx, rs, trxName);
 }
-/** AD_Table_ID=250 */
-public static final int Table_ID=250;
+/** AD_Table_ID */
+public static final int Table_ID = M_Table.getTableID("M_Storage");
 
 /** TableName=M_Storage */
 public static final String Table_Name="M_Storage";
 
-protected static KeyNamePair Model = new KeyNamePair(250,"M_Storage");
+protected static KeyNamePair Model = new KeyNamePair(Table_ID,"M_Storage");
 protected static BigDecimal AccessLevel = new BigDecimal(3);
 
 /** Load Meta Data */
@@ -148,4 +149,65 @@ BigDecimal bd = (BigDecimal)get_Value("QtyReserved");
 if (bd == null) return Env.ZERO;
 return bd;
 }
+
+public boolean insertDirect() 
+{
+ 
+try 
+{
+ 
+ 		 String sql = " INSERT INTO M_Storage(AD_Client_ID,AD_Org_ID,Created,CreatedBy,DateLastInventory,IsActive,M_AttributeSetInstance_ID,M_Locator_ID,M_Product_ID,QtyOnHand,QtyOrdered,QtyReserved,Updated,UpdatedBy) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?) ";
+
+		 if (getAD_Client_ID() == 0) sql = sql.replaceFirst("AD_Client_ID,","").replaceFirst("\\?,", "");
+ 		 if (getAD_Org_ID() == 0) sql = sql.replaceFirst("AD_Org_ID,","").replaceFirst("\\?,", "");
+ 		 if (getCreated() == null) sql = sql.replaceFirst("Created,","").replaceFirst("\\?,", "");
+ 		 if (getCreatedBy() == 0) sql = sql.replaceFirst("CreatedBy,","").replaceFirst("\\?,", "");
+ 		 if (getDateLastInventory() == null) sql = sql.replaceFirst("DateLastInventory,","").replaceFirst("\\?,", "");
+ 		 if (getM_AttributeSetInstance_ID() == 0) sql = sql.replaceFirst("M_AttributeSetInstance_ID,","").replaceFirst("\\?,", "");
+ 		 if (getM_Locator_ID() == 0) sql = sql.replaceFirst("M_Locator_ID,","").replaceFirst("\\?,", "");
+ 		 if (getM_Product_ID() == 0) sql = sql.replaceFirst("M_Product_ID,","").replaceFirst("\\?,", "");
+ 		 if (getQtyOnHand() == null) sql = sql.replaceFirst("QtyOnHand,","").replaceFirst("\\?,", "");
+ 		 if (getQtyOrdered() == null) sql = sql.replaceFirst("QtyOrdered,","").replaceFirst("\\?,", "");
+ 		 if (getQtyReserved() == null) sql = sql.replaceFirst("QtyReserved,","").replaceFirst("\\?,", "");
+ 		 if (getUpdated() == null) sql = sql.replaceFirst("Updated,","").replaceFirst("\\?,", "");
+ 		 if (getUpdatedBy() == 0) sql = sql.replaceFirst("UpdatedBy,","").replaceFirst("\\?,", "");
+ 
+ 		 int col = 1;
+ 
+		 CPreparedStatement pstmt = new CPreparedStatement( ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_UPDATABLE, sql, get_TrxName(), true);
+ 
+		 if (getAD_Client_ID() != 0) pstmt.setInt(col++, getAD_Client_ID());
+		 if (getAD_Org_ID() != 0) pstmt.setInt(col++, getAD_Org_ID());
+		 if (getCreated() != null) pstmt.setTimestamp(col++, getCreated());
+		 if (getCreatedBy() != 0) pstmt.setInt(col++, getCreatedBy());
+		 if (getDateLastInventory() != null) pstmt.setTimestamp(col++, getDateLastInventory());
+		 pstmt.setString(col++, isActive()?"Y":"N");
+		 if (getM_AttributeSetInstance_ID() != 0) pstmt.setInt(col++, getM_AttributeSetInstance_ID());
+		 if (getM_Locator_ID() != 0) pstmt.setInt(col++, getM_Locator_ID());
+		 if (getM_Product_ID() != 0) pstmt.setInt(col++, getM_Product_ID());
+		 if (getQtyOnHand() != null) pstmt.setBigDecimal(col++, getQtyOnHand());
+		 if (getQtyOrdered() != null) pstmt.setBigDecimal(col++, getQtyOrdered());
+		 if (getQtyReserved() != null) pstmt.setBigDecimal(col++, getQtyReserved());
+		 if (getUpdated() != null) pstmt.setTimestamp(col++, getUpdated());
+		 if (getUpdatedBy() != 0) pstmt.setInt(col++, getUpdatedBy());
+
+		pstmt.executeUpdate();
+
+		return true;
+
+	}
+catch (SQLException e) 
+{
+	log.log(Level.SEVERE, "insertDirect", e);
+	log.saveError("Error", DB.getErrorMsg(e) + " - " + e);
+	return false;
+	}
+catch (Exception e2) 
+{
+	log.log(Level.SEVERE, "insertDirect", e2);
+	return false;
+}
+
+}
+
 }

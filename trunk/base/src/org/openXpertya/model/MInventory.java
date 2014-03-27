@@ -22,6 +22,7 @@ import java.sql.ResultSet;
 import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Properties;
 import java.util.logging.Level;
 
@@ -423,14 +424,23 @@ public class MInventory extends X_M_Inventory implements DocAction {
         // -----------------------------------------------------------------------
         
         
-        MInventoryLine[] lines = getLines( true );
+		boolean existsLines = PO.existRecordFor(getCtx(),
+				MInventoryLine.Table_Name, "m_inventory_id = ?",
+				new Object[] { getID() }, get_TrxName());
+//        MInventoryLine[] lines = getLines( true );
+//
+//        if( lines.length == 0 ) {
+//            m_processMsg = "@NoLines@";
+//
+//            return DocAction.STATUS_Invalid;
+//        }
 
-        if( lines.length == 0 ) {
-            m_processMsg = "@NoLines@";
+		if( !existsLines ) {
+          m_processMsg = "@NoLines@";
 
-            return DocAction.STATUS_Invalid;
-        }
-
+          return DocAction.STATUS_Invalid;
+		}
+		
         // TODO: Add up Amounts
         // setApprovalAmt();
         
@@ -576,16 +586,23 @@ public class MInventory extends X_M_Inventory implements DocAction {
 
         //
 
-        MInventoryLine[] lines = getLines( false );
-
+        MInventoryLine[] lines = getLines( true );
+        MInventoryLine line;
+        MTransaction trx = null;
+        MStorage storage = null;
+        BigDecimal qtyDiff, qtyNew;
+        BigDecimal qtyOrdered = BigDecimal.ZERO;
+		BigDecimal qtyReserved = BigDecimal.ZERO;
+		BigDecimal qtyOnHand = BigDecimal.ZERO;
+		List<MStorage> storages;
         for( int i = 0;i < lines.length;i++ ) {
-            MInventoryLine line = lines[ i ];
+            line = lines[ i ];
 
             if( !line.isActive()) {
                 continue;
             }
 
-            MTransaction trx = null;
+            trx = null;
             //Modificado por ConSerTi para el recuento de stock en el inventario físico
            /* if( line.getM_AttributeSetInstance_ID() == 0 ) {
             	log.fine("la línea de inventario no tiene m_attributesetinstace, line="+line.getM_InventoryLine_ID()+", producto="+line.getM_Product_ID());
@@ -649,7 +666,7 @@ public class MInventory extends X_M_Inventory implements DocAction {
 	            	
 	            	// Storage
 	
-	                MStorage storage = MStorage.get( getCtx(),line.getM_Locator_ID(),line.getM_Product_ID(),line.getM_AttributeSetInstance_ID(),get_TrxName());
+	                storage = MStorage.get( getCtx(),line.getM_Locator_ID(),line.getM_Product_ID(),line.getM_AttributeSetInstance_ID(),get_TrxName());
 	
 	                if( storage == null ) {
 	                    storage = MStorage.getCreate( getCtx(),line.getM_Locator_ID(),line.getM_Product_ID(),line.getM_AttributeSetInstance_ID(),get_TrxName());
@@ -657,13 +674,13 @@ public class MInventory extends X_M_Inventory implements DocAction {
 	
 	                //
 	
-	                BigDecimal qtyDiff = line.getQtyInternalUse().negate();
+	                qtyDiff = line.getQtyInternalUse().negate();
 	
 	                if( Env.ZERO.compareTo( qtyDiff ) == 0 ) {
 	                    qtyDiff = line.getQtyCount().subtract( line.getQtyBook());
 	                }
 	
-	                BigDecimal qtyNew = storage.getQtyOnHand().add( qtyDiff );
+	                qtyNew = storage.getQtyOnHand().add( qtyDiff );
 	
 	                log.fine( "Count=" + line.getQtyCount() + ",Book=" + line.getQtyBook() + ", Difference=" + qtyDiff + " - OnHand=" + storage.getQtyOnHand());
 	
@@ -699,11 +716,11 @@ public class MInventory extends X_M_Inventory implements DocAction {
 					// Eliminar todas las ocurrencias de stock que posea ese
 					// artículo, instancia en la ubicación. 
             		// Se deben mantener las cantidades pedidas y reservadas
-            		BigDecimal qtyOrdered = BigDecimal.ZERO;
-            		BigDecimal qtyReserved = BigDecimal.ZERO;
-            		BigDecimal qtyOnHand = BigDecimal.ZERO;
+            		qtyOrdered = BigDecimal.ZERO;
+            		qtyReserved = BigDecimal.ZERO;
+            		qtyOnHand = BigDecimal.ZERO;
             		// Además, hay que guardar estas transacciones
-					List<MStorage> storages = MStorage.getAll(getCtx(),
+					storages = MStorage.getAll(getCtx(),
 							line.getM_Product_ID(), line.getM_Locator_ID(),
 							line.getM_AttributeSetInstance_ID(), get_TrxName());
 					for (MStorage mStorage : storages) {
