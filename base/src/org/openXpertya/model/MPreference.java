@@ -92,6 +92,9 @@ public class MPreference extends X_AD_Preference {
 				if(!Util.isEmpty(userID, true)){
 					sql.append(" AND AD_User_ID = ").append(userID);
 				}
+				else{
+					sql.append(" AND (AD_User_ID IS NULL OR AD_User_ID = 0) ");
+				}
 				Value = (String)DB.getSQLObject(null, sql.toString(), new Object[]{Key});
 				
 				if (Value == null)
