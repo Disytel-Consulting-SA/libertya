@@ -49,6 +49,7 @@ public class ReplicationConstantsWS extends ReplicationConstants {
 		addCyclicColumnToTable(X_C_Cash.Table_Name, 	"C_PosJournal_ID");
 		addCyclicColumnToTable(X_C_Order.Table_Name, 	"C_Payment_ID");
 		addCyclicColumnToTable(X_C_CashLine.Table_Name,	"TransferCashLine_ID");
+		addCyclicColumnToTable(X_C_Order.Table_Name, 	"Ref_Order_ID");
 		
 		// Estados de replicacion en WS
 		replicateStates.clear();
