@@ -950,14 +950,14 @@ public class MWFActivity extends X_AD_WF_Activity implements Runnable {
         }
     }    // run
 
-    public void addJustPreparedDocs(){
+    public synchronized void addJustPreparedDocs(){
 		if (m_po != null && m_po instanceof DocAction
 				&& getNode().getDocAction().equals(DocAction.ACTION_Prepare)) {
     		docs_justPrepared.put(m_po.get_Table_ID()+"_"+m_po.getID(), true);
     	}
     }
     
-    public void removeJustPreparedDocs(boolean onlyComplete){
+    public synchronized void removeJustPreparedDocs(boolean onlyComplete){
 		if (m_po != null && m_po instanceof DocAction
 				&& (!onlyComplete 
 						|| (onlyComplete && getNode().getDocAction().equals(DocAction.ACTION_Complete)))) {
