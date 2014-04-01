@@ -93,6 +93,16 @@ public abstract class PO implements Serializable, Comparator, Evaluatee {
 
 	public static final String SEPARATORUID = "-";
 
+	public static Map<String, Boolean> docs_justPrepared;
+	
+	static{
+		docs_justPrepared = new HashMap<String, Boolean>();
+	}
+	
+	protected boolean existsJustPreparedDoc(){
+		return docs_justPrepared.containsKey(get_Table_ID() + "_" + getID());
+	}
+	
 	private class QueryParam {
 		private String columnName;
 		private Object value;

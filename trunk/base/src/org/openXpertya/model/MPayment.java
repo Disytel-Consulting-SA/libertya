@@ -2013,7 +2013,7 @@ public final class MPayment extends X_C_Payment implements DocAction,ProcessCall
     	setAditionalWorkResult(new HashMap<PO, Object>());
         // Re-Check
 
-        if( !m_justPrepared ) {
+    	if (!m_justPrepared	&& existsJustPreparedDoc()) {
             String status = prepareIt();
 
             if( !DocAction.STATUS_InProgress.equals( status )) {

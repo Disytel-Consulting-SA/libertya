@@ -3377,7 +3377,7 @@ public class MOrder extends X_C_Order implements DocAction {
 
         // Re-Check
 
-        if( !m_justPrepared ) {
+        if (!m_justPrepared	&& existsJustPreparedDoc()) {
             String status = prepareIt();
 
             if( !DocAction.STATUS_InProgress.equals( status )) {
