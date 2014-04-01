@@ -219,7 +219,7 @@ public class MMPCCostCollector extends X_MPC_Cost_Collector implements DocAction
     public String completeIt() {
 
         // Re-Check
-        if (!m_justPrepared) {
+    	if (!m_justPrepared	&& existsJustPreparedDoc()) {
 
             String	status	= prepareIt();
 

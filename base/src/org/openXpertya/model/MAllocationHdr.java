@@ -699,7 +699,7 @@ public class MAllocationHdr extends X_C_AllocationHdr implements DocAction {
 
         // Re-Check
 
-        if( !m_justPrepared ) {
+    	if (!m_justPrepared	&& existsJustPreparedDoc()) {
             String status = prepareIt();
 
             if( !DocAction.STATUS_InProgress.equals( status )) {

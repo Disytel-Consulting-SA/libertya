@@ -1496,14 +1496,15 @@ public class MInOut extends X_M_InOut implements DocAction {
         
 		// Verificar que las lineas tengan asociado un producto.
         if(isSOTrx()){
-        	MInOutLine[] lineas = getLines(true);
-        	MInOutLine linea;
-        	for (int i = 0; i < lineas.length; i++) {
-        		linea = lineas[i];
-				if(linea.getM_Product_ID() == 0){
-					m_processMsg = "@LineNoProduct@";
-		    		return DocAction.STATUS_Invalid;
-				}
+			boolean existsNoProdLines = PO
+					.existRecordFor(
+							getCtx(),
+							X_M_InOutLine.Table_Name,
+							"M_InOut_ID = ? AND M_Product_ID IS NULL OR M_Product_ID <= 0",
+							new Object[] { getID() }, get_TrxName());
+			if(existsNoProdLines){
+				m_processMsg = "@LineNoProduct@";
+	    		return DocAction.STATUS_Invalid;
 			}
         }
 
@@ -1978,11 +1979,12 @@ public class MInOut extends X_M_InOut implements DocAction {
     	ResultSet rs = null;
     	
     	try {
-    		String sql = " select M_Product_ID, M_Warehouse_ID, SUM(QtyEntered), COUNT(*) " +
+    		String sql = " select m_inoutline.M_Product_ID, M_Locator.M_Warehouse_ID, SUM(QtyEntered), COUNT(*) " +
 				" from m_inoutline " +
-				" INNER JOIN M_Locator ON (M_Locator.M_Locator_ID=M_InOutLine.M_Locator_ID) " +  
-				" WHERE M_InOut_ID = ? AND M_AttributeSetInstance_ID = 0 " +
-				" GROUP BY M_Product_ID, M_Warehouse_ID " +
+				" INNER JOIN M_Locator ON (M_Locator.M_Locator_ID=M_InOutLine.M_Locator_ID) " +
+				" INNER JOIN M_Product ON (M_Product.M_Product_ID = m_inoutline.M_Product_ID) " + 
+				" WHERE m_inoutline.M_InOut_ID = ? AND m_inoutline.M_AttributeSetInstance_ID = 0 AND (M_Product.M_AttributeSet_ID IS NOT NULL AND M_Product.M_AttributeSet_ID > 0)" +
+				" GROUP BY m_inoutline.M_Product_ID, M_Locator.M_Warehouse_ID " +
 				" ORDER BY SUM(QtyEntered) DESC ";
     		ps = DB.prepareStatement(sql, get_TrxName());
     		
@@ -2057,7 +2059,7 @@ public class MInOut extends X_M_InOut implements DocAction {
             
     	}
     	
-        if( !m_justPrepared ) {
+    	if (!m_justPrepared	&& !existsJustPreparedDoc()) {
             String status = prepareIt();
 
             if( !DocAction.STATUS_InProgress.equals( status )) {
@@ -2664,15 +2666,17 @@ public class MInOut extends X_M_InOut implements DocAction {
         MClient client       = MClient.get( getCtx());
 
         // Check Lines
+        no=MInOutLineMA.deleteInOutMA(getID(), get_TrxName());
+        log.printDebug(getClass().getName()+".checkMaterialPolicy", "End Delete MA");
     	MInOutLine[] lines = getLines( false );
         for( int i = 0;i < lines.length;i++ ) {
             MInOutLine line     = lines[ i ];
 
             //Cambiado por JorgeV - Disytel para mejorar la performance
-            no=MInOutLineMA.deleteInOutMALine(line,get_TrxName());
-            if( no > 0 ) {
-            	log.config( "Delete old InoutLineMA #" + no );
-            }
+//            no=MInOutLineMA.deleteInOutMALine(line,get_TrxName());
+//            if( no > 0 ) {
+//            	log.config( "Delete old InoutLineMA #" + no );
+//            }
          	// Fin modificacion         
             
             boolean    needSave = false;

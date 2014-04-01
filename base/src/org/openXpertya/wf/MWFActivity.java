@@ -24,6 +24,8 @@ import java.sql.Timestamp;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Properties;
 import java.util.logging.Level;
 
@@ -65,7 +67,7 @@ import org.openXpertya.util.Util;
  */
 
 public class MWFActivity extends X_AD_WF_Activity implements Runnable {
-
+	
     /**
      * Descripción de Método
      *
@@ -907,6 +909,8 @@ public class MWFActivity extends X_AD_WF_Activity implements Runnable {
             // setWFState (done ? StateEngine.STATE_Completed : StateEngine.STATE_Suspended);
             // end vpj-cd e-evolution 03/08/2005 PostgreSQL
 
+            addJustPreparedDocs();
+            
             trx.commit();
             trx.close();
 
@@ -917,6 +921,8 @@ public class MWFActivity extends X_AD_WF_Activity implements Runnable {
                         ?StateEngine.STATE_Completed
                         :StateEngine.STATE_Suspended );
 
+            removeJustPreparedDocs(true);
+            
             // end vpj-cd e-evolution 03/08/2005 PostgreSQL
 
         } catch( Exception e ) {
@@ -924,6 +930,7 @@ public class MWFActivity extends X_AD_WF_Activity implements Runnable {
             trx.close();
 
             //
+            removeJustPreparedDocs(false);
 
             log.log( Level.SEVERE,"run",e );
 
@@ -943,6 +950,21 @@ public class MWFActivity extends X_AD_WF_Activity implements Runnable {
         }
     }    // run
 
+    public void addJustPreparedDocs(){
+		if (m_po != null && m_po instanceof DocAction
+				&& getNode().getDocAction().equals(DocAction.ACTION_Prepare)) {
+    		docs_justPrepared.put(m_po.get_Table_ID()+"_"+m_po.getID(), true);
+    	}
+    }
+    
+    public void removeJustPreparedDocs(boolean onlyComplete){
+		if (m_po != null && m_po instanceof DocAction
+				&& (!onlyComplete 
+						|| (onlyComplete && getNode().getDocAction().equals(DocAction.ACTION_Complete)))) {
+    		docs_justPrepared.remove(m_po.get_Table_ID()+"_"+m_po.getID());
+    	}
+    }
+    
     /**
      * Descripción de Método
      *

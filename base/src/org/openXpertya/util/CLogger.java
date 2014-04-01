@@ -17,6 +17,7 @@
 package org.openXpertya.util;
 
 import java.io.Serializable;
+import java.util.Date;
 import java.util.logging.Level;
 import java.util.logging.LogManager;
 import java.util.logging.Logger;
@@ -274,7 +275,10 @@ public class CLogger extends Logger {
 		return true;
 	}   //  saveWarning
 
-	
+	public void printDebug(String title, String msg){
+		System.out.println("==> " + title + " - " + msg + " - "
+				+ new Date(System.currentTimeMillis()));
+	}
 }    // CLogger
 
 

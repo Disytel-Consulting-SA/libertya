@@ -3438,7 +3438,7 @@ public class MInvoice extends X_C_Invoice implements DocAction {
 				.ComprobantesFiscalesActivos();
 		// Re-Check
 
-		if (!m_justPrepared) {
+		if (!m_justPrepared	&& existsJustPreparedDoc()) {
 			String status = prepareIt();
 
 			if (!DocAction.STATUS_InProgress.equals(status)) {
