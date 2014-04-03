@@ -373,10 +373,16 @@ public class CreateReplicationTriggerProcess extends SvrProcess {
 		DB.executeUpdate(query.toString(), trxName);
 	}
 	
+	/** Sobrecarga para compatibilidad*/
+	public static void invokeReplicationTriggerProcess(String trxName, Properties ctx) throws Exception
+	{
+		invokeReplicationTriggerProcess(trxName, ctx, new String[]{});
+	}
+	
 	/**
 	 * Acceso estático para la invocación de este proceso 
 	 */
-	public static void invokeReplicationTriggerProcess(String trxName, Properties ctx) throws Exception
+	public static void invokeReplicationTriggerProcess(String trxName, Properties ctx, String[] args) throws Exception
 	{
 		int repTriggerProc = DB.getSQLValue(trxName, " SELECT AD_PROCESS_ID FROM AD_PROCESS WHERE AD_ComponentObjectUID = 'CORE-AD_Process-1010219' ");
 		if (repTriggerProc <= 0)
@@ -385,6 +391,14 @@ public class CreateReplicationTriggerProcess extends SvrProcess {
 		// Ejecutarlo únicamente para las tablas configuradas
 		HashMap<String, Object> params = new HashMap<String, Object>();
 		params.put("Scope", CreateReplicationTriggerProcess.SCOPE_CONFIGURED);
+		
+		// Eventual parametro ShouldUpdateRepArrays
+		if (args!=null) {
+			for (String arg : args) {
+				if (arg.toLowerCase().equalsIgnoreCase("Y"))
+					params.put("ShouldUpdateRepArrays", "Y");
+			}
+		}
 		
 		// Invocar a proceso de ampliación estructural en las tablas de replicación
 		System.out.print("\nDropping previous triggers...");
@@ -402,6 +416,16 @@ public class CreateReplicationTriggerProcess extends SvrProcess {
 	 */
 	public static void main(String[] args) 
 	{
+		// Help
+		if (args!=null) {
+			for (String arg : args) {
+				if (arg.toLowerCase().startsWith("-h")) {
+					System.out.println(" Recibe un unico parametro: ShouldUpdateRepArrays (Y/N). Por defecto es N.  Scope siempre es (C)onfigured. ");
+					System.exit(0);
+				}
+			}
+		}
+		
 	  	// OXP_HOME seteada?
 	  	String oxpHomeDir = System.getenv("OXP_HOME"); 
 	  	if (oxpHomeDir == null) { 
@@ -429,7 +453,7 @@ public class CreateReplicationTriggerProcess extends SvrProcess {
 		String trxName = Trx.createTrxName();
 		try {
 			Trx.getTrx(trxName).start();
-			invokeReplicationTriggerProcess(trxName, Env.getCtx());
+			invokeReplicationTriggerProcess(trxName, Env.getCtx(), args);
 			Trx.getTrx(trxName).commit();
 			System.out.println("ReplicationTriggerProcess OK");
 		}
