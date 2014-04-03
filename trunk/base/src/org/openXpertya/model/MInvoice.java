@@ -1684,6 +1684,18 @@ public class MInvoice extends X_C_Invoice implements DocAction {
 		return true;
 	}
 
+	public boolean isCredit(){
+		MDocType docType = MDocType.get(getCtx(), getC_DocTypeTarget_ID());
+		return docType.getDocBaseType().equals(
+				MDocType.DOCBASETYPE_ARCreditMemo)
+				&& !docType.getDocBaseType().equals(
+						MDocType.DOCBASETYPE_APCreditMemo);
+	}
+	
+	public boolean isDebit(){
+		return !isCredit();
+	}
+	
 	/**
 	 * Descripción de Método
 	 * 
@@ -3518,8 +3530,13 @@ public class MInvoice extends X_C_Invoice implements DocAction {
 		int matchPO = 0;
 		MInvoiceLine[] lines = getLines(false);
 		MOrderLine orderLine;
-		MOrder order = null;
+//		MOrder order = null;
 
+		// Si el flag de actualizar cantidades del pedido está marcado y no es
+		// un débito, entonces se debe reabrir el pedido, modificar la línea y
+		// completarlo
+		Map<Integer, BigDecimal> orderLinesToUpdate = new HashMap<Integer, BigDecimal>();
+		BigDecimal orderLineToUpdateQty = null;
 		// Ader: mejoras de logica de documentos; por ahora solo se trata
 		// el caso de facturas de clientes normales; el codigo siguiente al else
 		// trata los siguiente casos como antes. Esta optimización reemplaza,
@@ -3547,15 +3564,26 @@ public class MInvoice extends X_C_Invoice implements DocAction {
 					// necesarias para incrementar la cantidad facturada
 					orderLine = new MOrderLine(getCtx(),
 							line.getC_OrderLine_ID(), get_TrxName());
-					if (order == null
-							|| orderLine.getC_Order_ID() != order
-									.getC_Order_ID()) {
-						order = new MOrder(getCtx(), orderLine.getC_Order_ID(),
-								get_TrxName());
-					}
+//					if (order == null
+//							|| orderLine.getC_Order_ID() != order
+//									.getC_Order_ID()) {
+//						order = new MOrder(getCtx(), orderLine.getC_Order_ID(),
+//								get_TrxName());
+//					}
 					if (isSOTrx() || (line.getM_Product_ID() == 0)) {
 						BigDecimal qtyInvoiced = line.getQtyInvoiced();
 						if (!isDebit) {
+							// Si hay que actualizar todo el pedido entonces
+							// guardarlo en la hash que luego servirá para
+							// realizar esta operación
+							if(isUpdateOrderQty()){
+								orderLineToUpdateQty = orderLinesToUpdate.get(line.getID()); 
+								if(orderLineToUpdateQty == null){
+									orderLineToUpdateQty = BigDecimal.ZERO;
+								}
+								orderLineToUpdateQty = orderLineToUpdateQty.add(qtyInvoiced);
+								orderLinesToUpdate.put(orderLine.getID(), orderLineToUpdateQty);
+							}
 							qtyInvoiced = qtyInvoiced.negate();
 						}
 						orderLine.setQtyInvoiced(orderLine.getQtyInvoiced()
@@ -3601,6 +3629,46 @@ public class MInvoice extends X_C_Invoice implements DocAction {
 				}
 			} // for all lines
 
+			// Reabrir el pedido en el caso que esté marcada para actualizar
+			// cantidades
+			if(isUpdateOrderQty() && orderLinesToUpdate.size() > 0){
+				MOrder order = new MOrder(getCtx(), getC_Order_ID(), get_TrxName());
+				if(!order.processIt(MOrder.DOCACTION_Re_Activate)){
+					setProcessMsg("Error reactivating order to update qty: "+order.getProcessMsg());
+					return DOCSTATUS_Invalid;
+				}
+				int orderUpdated = 0;
+				PreparedStatement ps = null;
+				try{
+					ps = DB.prepareStatement(
+							"UPDATE c_orderline SET qtyordered = qtyordered - ?, qtyentered = qtyentered - ? WHERE c_orderline_id = ?",
+							get_TrxName());
+					for (Integer orderLineID : orderLinesToUpdate.keySet()) {
+						ps.setBigDecimal(1, orderLinesToUpdate.get(orderLineID));
+						ps.setBigDecimal(2, orderLinesToUpdate.get(orderLineID));
+						ps.setInt(3, orderLineID);
+						orderUpdated = ps.executeUpdate();
+						if(orderUpdated != 1){
+							setProcessMsg("Error updating order line ID "+orderLineID);
+							return DOCSTATUS_Invalid;
+						}
+					}
+				} catch(SQLException sqle){
+					setProcessMsg(sqle.getMessage());
+					return DOCSTATUS_Invalid;
+				} finally {
+					try{
+						if(ps != null)ps.close();
+					} catch(SQLException sqle2){
+						setProcessMsg(sqle2.getMessage());
+						return DOCSTATUS_Invalid;
+					}
+				}
+				if(!order.processIt(MOrder.DOCACTION_Complete)){
+					setProcessMsg("Error reactivating order to update qty: "+order.getProcessMsg());
+					return DOCSTATUS_Invalid;
+				}
+			}
 		}// fin else
 
 		// Update BP Statistics

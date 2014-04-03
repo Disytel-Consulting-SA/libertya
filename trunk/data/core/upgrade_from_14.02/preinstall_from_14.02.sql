@@ -247,3 +247,5 @@ INNER JOIN C_OrderLine ol on ol.C_Order_ID = o.C_Order_ID
 WHERE o.docstatus in ('CO', 'CL')
 );
 
+--20140403-1725 Flag para actualizar las cantidades pedidas del pedido 
+update ad_system set dummy = (SELECT addcolumnifnotexists('C_Invoice','updateorderqty', 'character(1) NOT NULL DEFAULT ''N''::bpchar'));
