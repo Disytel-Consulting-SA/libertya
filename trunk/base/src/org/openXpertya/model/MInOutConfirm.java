@@ -406,7 +406,7 @@ public class MInOutConfirm extends X_M_InOutConfirm implements DocAction {
 
         // Re-Check
 
-    	if (!m_justPrepared	&& existsJustPreparedDoc()) {
+    	if (!m_justPrepared	&& !existsJustPreparedDoc()) {
             String status = prepareIt();
 
             if( !DocAction.STATUS_InProgress.equals( status )) {
