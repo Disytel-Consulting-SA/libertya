@@ -7,7 +7,7 @@ import java.math.*;
 import org.openXpertya.util.*;
 /** Modelo Generado por C_Invoice
  *  @author Comunidad de Desarrollo Libertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
- *  @version  - 2013-11-11 17:27:26.43 */
+ *  @version  - 2014-04-03 17:16:35.328 */
 public class X_C_Invoice extends org.openXpertya.model.PO
 {
 /** Constructor estándar */
@@ -58,6 +58,7 @@ setProcessed (false);
 setPuntoDeVenta (0);
 setSendEMail (false);
 setTotalLines (Env.ZERO);
+setUpdateOrderQty (false);
 }
  */
 }
@@ -1559,6 +1560,24 @@ public BigDecimal getTotalLines()
 BigDecimal bd = (BigDecimal)get_Value("TotalLines");
 if (bd == null) return Env.ZERO;
 return bd;
+}
+/** Set Update Order Qty.
+Update qty ordered in the related order  */
+public void setUpdateOrderQty (boolean UpdateOrderQty)
+{
+set_Value ("UpdateOrderQty", new Boolean(UpdateOrderQty));
+}
+/** Get Update Order Qty.
+Update qty ordered in the related order  */
+public boolean isUpdateOrderQty() 
+{
+Object oo = get_Value("UpdateOrderQty");
+if (oo != null) 
+{
+ if (oo instanceof Boolean) return ((Boolean)oo).booleanValue();
+ return "Y".equals(oo);
+}
+return false;
 }
 public static final int USER1_ID_AD_Reference_ID = MReference.getReferenceID("Account_ID - User1");
 /** Set User1.

@@ -5,7 +5,6 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.List;
 
-import org.openXpertya.grid.CreateFromModel.OrderLine;
 import org.openXpertya.model.MDocType;
 import org.openXpertya.model.MInOut;
 import org.openXpertya.model.MInOutLine;
@@ -94,6 +93,7 @@ public class CreateFromInvoiceModel extends CreateFromModel {
 		invoice.setDragDocumentDiscountAmts(docType
 				.isDragOrderDocumentDiscounts());
         log.config( invoice.toString());
+        boolean isDebit = invoice.isDebit();
         // Asociación con el pedido
         if( p_order != null ) {
             invoice.setOrder( p_order, true );    // overwrite header values
@@ -131,7 +131,6 @@ public class CreateFromInvoiceModel extends CreateFromModel {
             BigDecimal  QtyEntered = docLine.remainingQty;
             int C_UOM_ID = docLine.uomID;
             int M_Product_ID = docLine.productID;
-            int C_Charge_ID = 0;
             int C_OrderLine_ID = 0;
             int M_InOutLine_ID = 0;
 
@@ -172,7 +171,7 @@ public class CreateFromInvoiceModel extends CreateFromModel {
                     C_OrderLine_ID = inoutLine.getC_OrderLine_ID();
                     orderLine      = new MOrderLine( Env.getCtx(),C_OrderLine_ID, trxName);
                 }
-            } else {
+            } else if(isDebit){
                 MInOutLine[] lines = MInOutLine.getOfOrderLine( Env.getCtx(),C_OrderLine_ID,null,trxName);
 
                 log.fine( "Receipt Lines with OrderLine = #" + lines.length );
