@@ -238,3 +238,12 @@ UNION ALL
   WHERE al.c_invoice_id = i.c_invoice_id));
 
 ALTER TABLE v_dailysales OWNER TO libertya;
+
+-- 20140403: Calendario de pedidos
+CREATE OR REPLACE VIEW V_OrdersSchedule AS (
+SELECT o.ad_client_id, o.ad_org_id, o.c_order_id, o.documentno as orderdocumentno, o.issotrx, o.c_bpartner_id, o.datepromised::date, o.created::date, ol.c_orderline_id, ol.line, ol.m_product_id, ol.qtyentered, ol.c_uom_id, o.m_warehouse_id
+FROM C_Order o
+INNER JOIN C_OrderLine ol on ol.C_Order_ID = o.C_Order_ID
+WHERE o.docstatus in ('CO', 'CL')
+);
+
