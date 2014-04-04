@@ -140,6 +140,10 @@ class AcctViewerData {
     /** Descripción de Campos */
 
     public boolean displayDocumentInfo = false;
+    
+    /** Descripción de Campos */
+
+    public boolean displayBalance = false;
 
     //
 
@@ -485,6 +489,10 @@ class AcctViewerData {
 
         rm.setFunction( "AmtAcctDr",RModel.FUNCTION_SUM );
         rm.setFunction( "AmtAcctCr",RModel.FUNCTION_SUM );
+        
+        if (displayBalance)
+        	rm.setFunction( "AmtAcctDr - AmtAcctCr",RModel.FUNCTION_SUM );
+        
         rm.query( Env.getCtx(),whereClause.toString(),orderClause.toString());
 
         return rm;
@@ -530,6 +538,10 @@ class AcctViewerData {
         rm.addColumn( new RColumn( ctx,"AmtAcctDr",DisplayType.Amount ));
         rm.addColumn( new RColumn( ctx,"AmtAcctCr",DisplayType.Amount ));
 
+        if( displayBalance ) {
+			rm.addColumn( new RColumn( ctx,"Balance",DisplayType.Amount, "AmtAcctDr - AmtAcctCr" ));
+        }
+        
         if( displaySourceAmt ) {
             if( !keys.contains( "DateTrx" )) {
                 rm.addColumn( new RColumn( ctx,"DateTrx",DisplayType.Date ));
@@ -557,7 +569,8 @@ class AcctViewerData {
 			rm.addColumn(new RColumn(ctx, "AD_Table_ID", DisplayType.ID));
             rm.addColumn( new RColumn( ctx,"Record_ID",DisplayType.ID ));
         }
-
+		
+		
         return rm;
     }    // createRModel
 

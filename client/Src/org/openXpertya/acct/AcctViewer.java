@@ -349,6 +349,8 @@ public class AcctViewer extends JFrame implements ActionListener,ChangeListener 
 
 	private CButton bCopyToClipboard = new CButton(); /* Agregado */
 	
+	private CCheckBox displayBalance = new CCheckBox(); 
+	
     /**
 	 * Static Init.
      *
@@ -411,6 +413,8 @@ public class AcctViewer extends JFrame implements ActionListener,ChangeListener 
         displayDocumentInfo.setValue(true); /* Agregado */
         lSort.setText( Msg.getMsg( Env.getCtx(),"SortBy" ));
         lGroup.setText( Msg.getMsg( Env.getCtx(),"GroupBy" ));
+        
+        displayBalance.setText( Msg.getMsg( Env.getCtx(),"displayBalance" ));
 
         //
 
@@ -428,6 +432,8 @@ public class AcctViewer extends JFrame implements ActionListener,ChangeListener 
         displayPanel.add( sortBy4,new GridBagConstraints( 0,8,1,1,0.0,0.0,GridBagConstraints.WEST,GridBagConstraints.NONE,new Insets( 5,5,0,5 ),0,0 ));
         displayPanel.add( group4,new GridBagConstraints( 1,8,1,1,0.0,0.0,GridBagConstraints.CENTER,GridBagConstraints.NONE,new Insets( 5,5,0,5 ),0,0 ));
 
+        displayPanel.add( displayBalance,new GridBagConstraints( 0,3,1,1,0.0,0.0,GridBagConstraints.WEST,GridBagConstraints.NONE,new Insets( 5,5,0,5 ),0,0 ));  
+        
         //
 
         selectionPanel.add( lacctSchema,new GridBagConstraints( 0,0,1,1,0.0,0.0,GridBagConstraints.EAST,GridBagConstraints.NONE,new Insets( 5,5,5,5 ),0,0 ));
@@ -839,6 +845,9 @@ public class AcctViewer extends JFrame implements ActionListener,ChangeListener 
         para.append( ", Source=" ).append( m_data.displaySourceAmt );
         m_data.displayDocumentInfo = displayDocumentInfo.isSelected();
         para.append( ", Doc=" ).append( m_data.displayDocumentInfo );
+        
+        m_data.displayBalance = displayBalance.isSelected();					
+        para.append(", Display Amount=").append( m_data.displayBalance );	
 
         //
 
