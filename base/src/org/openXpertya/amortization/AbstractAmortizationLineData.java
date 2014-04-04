@@ -15,6 +15,9 @@ public class AbstractAmortizationLineData {
 	/** Nombre del artículo */
 	private String productName;
 	
+	/** Nombre de la clave de búsqueda */
+	private String productValue;
+	
 	/** ID de la instancia del conjunto de atributos */
 	private Integer attributeSetInstanceID;
 	
@@ -307,6 +310,14 @@ public class AbstractAmortizationLineData {
 
 	public void setProductLinesName(String productLinesName) {
 		this.productLinesName = productLinesName;
+	}
+	
+	public String getProductValue() {
+		return this.productValue;
+	}
+	
+	public void setProductValue(String value) {
+		this.productValue = value;
 	}
 
 	public String getProductLinesName() {

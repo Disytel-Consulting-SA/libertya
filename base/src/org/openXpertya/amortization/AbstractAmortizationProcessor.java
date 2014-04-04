@@ -125,7 +125,7 @@ public abstract class AbstractAmortizationProcessor {
 	protected void loadAmortizationLinesData(){
 		boolean existsBeforeAmortization = getBeforeAmortization() != null;
 		// Consulta para obtener los bienes de uso que contienen instancias
-		StringBuffer sql = new StringBuffer("select distinct p.m_product_id, p.product_name, category_id as m_product_category_id, p.category_name, gamas_id as m_product_gamas_id, p.gamas_name, lines_id as m_product_lines_id, p.lines_name, instances.m_attributesetinstance_id, instances.attributesetinstancename, p.m_attributeset_id, product_life as yearlife, product_amortizationperc as amortizationperc ");
+		StringBuffer sql = new StringBuffer("select distinct p.m_product_id, p.product_name, p.product_value, category_id as m_product_category_id, p.category_name, gamas_id as m_product_gamas_id, p.gamas_name, lines_id as m_product_lines_id, p.lines_name, instances.m_attributesetinstance_id, instances.attributesetinstancename, p.m_attributeset_id, product_life as yearlife, product_amortizationperc as amortizationperc ");
 		if(existsBeforeAmortization){
 			sql.append(", m_amortizationline_id ");
 		}
@@ -140,7 +140,7 @@ public abstract class AbstractAmortizationProcessor {
 			sql.append(" left join (select * from m_amortizationline as al where al.m_amortization_id = "+getBeforeAmortization().getID()+") as al ON masi.m_attributesetinstance_id = al.m_attributesetinstance_id ");
 		}
 		sql.append(" where (masi.m_attributesetinstance_id is not null AND masi.m_attributesetinstance_id <> 0) AND masi.ad_client_id = "+Env.getAD_Client_ID(getCtx())+") as instances ");
-		sql.append("inner join (select *, p.name as product_name, pc.m_product_category_id as category_id, pc.name as category_name, pg.m_product_gamas_id as gamas_id,pg.name as gamas_name, pl.m_product_lines_id as lines_id, pl.name as lines_name, p.yearlife as product_life,p.amortizationperc as product_amortizationperc  " +
+		sql.append("inner join (select *, p.name as product_name, p.value AS product_value, pc.m_product_category_id as category_id, pc.name as category_name, pg.m_product_gamas_id as gamas_id,pg.name as gamas_name, pl.m_product_lines_id as lines_id, pl.name as lines_name, p.yearlife as product_life,p.amortizationperc as product_amortizationperc  " +
 								"from m_product as p " +
 								"inner join m_product_category as pc on pc.m_product_category_id = p.m_product_category_id " +
 								"left join m_product_gamas as pg on pg.m_product_gamas_id = pc.m_product_gamas_id " +
@@ -164,6 +164,7 @@ public abstract class AbstractAmortizationProcessor {
 								.getID() : 0);
 				amortizationLineData.setProductID(rs.getInt("m_product_id"));
 				amortizationLineData.setProductName(rs.getString("product_name"));
+				amortizationLineData.setProductValue(rs.getString("product_value"));
 				amortizationLineData.setProductCategoryID(rs.getInt("m_product_category_id"));
 				amortizationLineData.setProductCategoryName(rs.getString("category_name"));
 				amortizationLineData.setProductGamasID(rs.getInt("m_product_gamas_id"));

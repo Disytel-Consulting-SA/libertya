@@ -64,6 +64,9 @@ public class InventoryAssetsReportDataSource implements OXPJasperDataSource {
 		setMethodMapper(new HashMap<String, String>());
 		getMethodMapper().put("M_PRODUCT_LINES_ID", "getProductLinesID");
 		getMethodMapper().put("M_PRODUCT_LINES_NAME", "getProductLinesName");
+		
+		getMethodMapper().put("M_PRODUCT_LINES_VALUE", "getProductValue");
+		
 		getMethodMapper().put("M_PRODUCT_GAMAS_ID", "getProductGamasID");
 		getMethodMapper().put("M_PRODUCT_GAMAS_NAME", "getProductGamasName");
 		getMethodMapper().put("M_PRODUCT_CATEGORY_ID", "getProductCategoryID");
