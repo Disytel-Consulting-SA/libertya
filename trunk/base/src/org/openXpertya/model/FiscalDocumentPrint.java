@@ -21,6 +21,7 @@ import java.util.logging.Level;
 import org.openXpertya.print.OXPFiscalMsgSource;
 import org.openXpertya.print.fiscal.FiscalPrinter;
 import org.openXpertya.print.fiscal.FiscalPrinterEventListener;
+import org.openXpertya.print.fiscal.FiscalPrinterLogRecord;
 import org.openXpertya.print.fiscal.document.CashPayment;
 import org.openXpertya.print.fiscal.document.CreditNote;
 import org.openXpertya.print.fiscal.document.CurrentAccountInfo;
@@ -255,6 +256,8 @@ public class FiscalDocumentPrint {
 			e.printStackTrace();
 
 		} finally {
+			// Guardar Log
+			saveFiscalLog(error);
 			// Si hubo error...
 			if(error) {
 				if (!ask()) {
@@ -2225,6 +2228,38 @@ public class FiscalDocumentPrint {
 	 */
 	public static void setMaxAmountCF(BigDecimal maxAmountCF) {
 		FiscalDocumentPrint.maxAmountCF = maxAmountCF;
+	}
+	
+	/**
+	 * Guardar el lote de comandos de log ejecutados
+	 * @param isError
+	 * @return
+	 */
+	private boolean saveFiscalLog(boolean isError){
+		if (getFiscalPrinter().getFiscalPrinterLogger() != null) {
+			// Guardar el log si es posible
+			if(getFiscalPrinter().getFiscalPrinterLogger().canSaveRecord(isError)){
+				MControladorFiscalLog fiscalLog;
+				String logType = isError ? MControladorFiscalLog.LOGTYPE_Error
+						: MControladorFiscalLog.LOGTYPE_Info;
+				for (FiscalPrinterLogRecord logRecord : getFiscalPrinter()
+						.getFiscalPrinterLogger().getFiscalLogRecords()) {
+					fiscalLog = new MControladorFiscalLog(ctx, 0, getTrxName());
+					fiscalLog.setC_Invoice_ID(getOxpDocument() != null?getOxpDocument().getID():0);
+					fiscalLog.setC_Controlador_Fiscal_ID(cFiscal.getID());
+					fiscalLog.setCommand(logRecord.getCommand());
+					fiscalLog.setResponse(logRecord.getResponse());
+					fiscalLog.setLogType(logType);
+					if(!fiscalLog.save()){
+						log.severe("ERROR saving fiscal log record: "+CLogger.retrieveErrorAsString());
+						return false;
+					}
+				}
+			}
+			// Limpio el lote de registros de log creados
+			getFiscalPrinter().getFiscalPrinterLogger().clearBatchLog();
+		}
+		return true;
 	}
 
 	public boolean isThrowExceptionInCancelCheckStatus() {
