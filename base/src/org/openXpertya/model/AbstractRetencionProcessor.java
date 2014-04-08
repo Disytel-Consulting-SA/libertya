@@ -593,7 +593,7 @@ public abstract class AbstractRetencionProcessor implements RetencionProcessor {
 			c_allocationhdr_id = rs.getInt("c_allocationhdr_id");
 		}
 		
-		sql = "	SELECT ( " +
+		sql = "	SELECT coalesce(( " +
 			  " (SELECT SUM(amount) " +
 			  " FROM C_AllocationLine al " +
 			  "	INNER JOIN C_Invoice i ON (i.C_Invoice_ID = al.C_Invoice_Credit_ID) " +
@@ -603,7 +603,7 @@ public abstract class AbstractRetencionProcessor implements RetencionProcessor {
 			  "	FROM C_AllocationLine al" +
 			  "	LEFT JOIN C_Invoice i ON (i.C_Invoice_ID = al.C_Invoice_Credit_ID)" +
 			  "	WHERE C_AllocationHdr_ID = ? AND ((i.C_Doctype_ID NOT IN (SELECT C_Doctype_ID FROM C_Doctype WHERE doctypekey IN ('RTR', 'RCR', 'RCI', 'RTI'))) OR (al.C_Invoice_Credit_ID IS NULL)))" +
-			  ") AS amountRetention";
+			  "),0) AS amountRetention";
 		ps = DB.prepareStatement(sql, getTrxName());
 		int i = 1;
 		ps.setInt(i++, c_allocationhdr_id);
