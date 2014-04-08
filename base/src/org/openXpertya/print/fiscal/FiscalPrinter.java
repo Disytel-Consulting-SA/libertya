@@ -226,5 +226,28 @@ public interface FiscalPrinter {
 	 */
 	public boolean isDocumentPrintAsk();
 	
+	/**
+	 * Cancelación del documento
+	 * @throws FiscalPrinterIOException
+	 * @throws FiscalPrinterStatusError
+	 */
 	public void cancelCurrentDocument() throws FiscalPrinterIOException, FiscalPrinterStatusError;
+	
+	/**
+	 * Ejecuta un comando fiscal en la impresora y analiza la existencia
+	 * de errores en la respuesta. En caso de que se produzca algún error
+	 * se propagan mediante excepciones.
+	 * @param command Comando a ejecutar.
+	 * @return Retorna un <code>FiscalPacket</code> que contiene la respuesta
+	 * de la impresora.
+	 * @throws FiscalPrinterIOException cuando se producce algún error de
+	 * comunicación con el dispositivo.
+	 * @throws FiscalPrinterStatusError cuando la impresora responde con un
+	 * código de estado de error.
+	 */
+	public FiscalPacket execute(FiscalPacket command) throws FiscalPrinterIOException, FiscalPrinterStatusError;
+	
+	public void setFiscalPrinterLogger(AbstractFiscalPrinterLogger fiscalPrinterLogger);
+	
+	public AbstractFiscalPrinterLogger getFiscalPrinterLogger();
 }

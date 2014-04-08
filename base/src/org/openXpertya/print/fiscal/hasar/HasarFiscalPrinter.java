@@ -578,7 +578,8 @@ public abstract class HasarFiscalPrinter extends BasicFiscalPrinter implements H
 	 * @throws FiscalPrinterStatusError cuando la impresora responde con un
 	 * código de estado de error.
 	 */
-	protected FiscalPacket execute(FiscalPacket command) throws FiscalPrinterIOException, FiscalPrinterStatusError {
+	@Override
+	public FiscalPacket executeCmd(FiscalPacket command) throws FiscalPrinterIOException, FiscalPrinterStatusError {
 		FiscalPacket response = createFiscalPacket();
 		
 		// Se guarda el comando como el último ejecutado.

@@ -7,7 +7,7 @@ import java.math.*;
 import org.openXpertya.util.*;
 /** Modelo Generado por C_Controlador_Fiscal
  *  @author Comunidad de Desarrollo Libertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
- *  @version  - 2014-01-08 09:04:14.183 */
+ *  @version  - 2014-04-08 10:30:28.518 */
 public class X_C_Controlador_Fiscal extends org.openXpertya.model.PO
 {
 /** Constructor estándar */
@@ -178,6 +178,28 @@ if (oo != null)
  return "Y".equals(oo);
 }
 return false;
+}
+public static final int LOGTYPERECORDED_AD_Reference_ID = MReference.getReferenceID("Tipos de log a registrar");
+/** All = A */
+public static final String LOGTYPERECORDED_All = "A";
+/** Only Errors = E */
+public static final String LOGTYPERECORDED_OnlyErrors = "E";
+/** Set Log Type Recorded */
+public void setLogTypeRecorded (String LogTypeRecorded)
+{
+if (LogTypeRecorded == null || LogTypeRecorded.equals("A") || LogTypeRecorded.equals("E"));
+ else throw new IllegalArgumentException ("LogTypeRecorded Invalid value - Reference = LOGTYPERECORDED_AD_Reference_ID - A - E");
+if (LogTypeRecorded != null && LogTypeRecorded.length() > 1)
+{
+log.warning("Length > 1 - truncated");
+LogTypeRecorded = LogTypeRecorded.substring(0,1);
+}
+set_Value ("LogTypeRecorded", LogTypeRecorded);
+}
+/** Get Log Type Recorded */
+public String getLogTypeRecorded() 
+{
+return (String)get_Value("LogTypeRecorded");
 }
 /** Set Name.
 Alphanumeric identifier of the entity */

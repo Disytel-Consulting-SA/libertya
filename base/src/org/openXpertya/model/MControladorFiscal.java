@@ -4,6 +4,7 @@ import java.sql.ResultSet;
 import java.util.Properties;
 
 import org.openXpertya.print.fiscal.FiscalPrinter;
+import org.openXpertya.print.fiscal.FiscalPrinterLoggerManager;
 import org.openXpertya.print.fiscal.comm.FiscalComm;
 import org.openXpertya.print.fiscal.comm.SpoolerTCPComm;
 import org.openXpertya.util.CLogger;
@@ -88,6 +89,8 @@ public class MControladorFiscal extends X_C_Controlador_Fiscal {
 			fiscalPrinter.setFiscalComm(fiscalComm);
 			fiscalPrinter.setCancelBeforePrint(isCmdCancelBeforePrintDocument());
 			fiscalPrinter.setAskWhenError(isAskWhenError());
+			fiscalPrinter.setFiscalPrinterLogger(FiscalPrinterLoggerManager
+					.getFiscalPrinterLogger(this));
 		} catch(Exception e) {
 			log.severe(e.getMessage());
 			throw e;

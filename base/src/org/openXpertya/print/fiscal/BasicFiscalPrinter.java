@@ -4,6 +4,8 @@ import java.io.IOException;
 import java.math.BigDecimal;
 
 import org.openXpertya.print.fiscal.comm.FiscalComm;
+import org.openXpertya.print.fiscal.exception.FiscalPrinterIOException;
+import org.openXpertya.print.fiscal.exception.FiscalPrinterStatusError;
 import org.openXpertya.print.fiscal.msg.FiscalMessages;
 
 /**
@@ -43,6 +45,8 @@ public abstract class BasicFiscalPrinter implements FiscalPrinter {
 	private boolean cancelBeforePrint = false;
 	/** Preguntar cuando hay un error */
 	private boolean askWhenError = false;
+	/** Tipo de log a guardar */
+	private AbstractFiscalPrinterLogger fiscalPrinterLogger;
 	
 	public BasicFiscalPrinter() {
 		super();
@@ -214,6 +218,76 @@ public abstract class BasicFiscalPrinter implements FiscalPrinter {
 		fireOpenDrawerEnded(getMessages());
 	}
 	
+	/**
+	 * Ejecuta un comando fiscal en la impresora y analiza la existencia
+	 * de errores en la respuesta. En caso de que se produzca algún error
+	 * se propagan mediante excepciones.
+	 * @param command Comando a ejecutar.
+	 * @return Retorna un <code>FiscalPacket</code> que contiene la respuesta
+	 * de la impresora.
+	 * @throws FiscalPrinterIOException cuando se producce algún error de
+	 * comunicación con el dispositivo.
+	 * @throws FiscalPrinterStatusError cuando la impresora responde con un
+	 * código de estado de error.
+	 */
+	public abstract FiscalPacket executeCmd(FiscalPacket command)
+			throws FiscalPrinterIOException, FiscalPrinterStatusError;
+	
+	@Override
+	public FiscalPacket execute(FiscalPacket command) throws FiscalPrinterIOException, FiscalPrinterStatusError {
+		FiscalPacket response = null;
+		String responseStr = null;
+		
+		// Log 
+		createLog(command);
+		
+		try{
+			// Ejecutar comando
+			response = executeCmd(command);
+			
+			// Respuesta en string
+			responseStr = response.toString();
+			
+		} catch (FiscalPrinterStatusError fpse){
+			responseStr = fpse.getFullMessage();
+			throw fpse;
+		} catch (FiscalPrinterIOException fpioe){
+			responseStr = fpioe.getFullMessage();
+			throw fpioe;
+		} finally{
+			setLogResponse(responseStr, true, true);
+		}
+		
+		return response;
+	}
+	
+	protected boolean manageLog(){
+		return getFiscalPrinterLogger() != null;
+	}
+	
+	protected void createLog(FiscalPacket command){
+		if(manageLog()){
+			getFiscalPrinterLogger().createLog(command);
+		}
+	}
+	
+	protected void setLogResponse(String response, boolean addToBatch, boolean clearActualLogRecord){
+		if(manageLog()){
+			getFiscalPrinterLogger().setLogResponse(response, addToBatch,
+					clearActualLogRecord);
+		}
+	}
+	
+	protected void clearLog(){
+		if(manageLog()){
+			getFiscalPrinterLogger().clear();
+		}
+	}
+	
+	public boolean canSaveRecord(boolean isError){
+		return manageLog() && getFiscalPrinterLogger().canSaveRecord(isError);
+	}
+	
 	public String getLastDocumentNo() {
 		return lastDocumentNo;
 	}
@@ -354,7 +428,18 @@ public abstract class BasicFiscalPrinter implements FiscalPrinter {
 		return askWhenError;
 	}
 
+	@Override
 	public void setAskWhenError(boolean askWhenError) {
 		this.askWhenError = askWhenError;
+	}
+
+	@Override
+	public AbstractFiscalPrinterLogger getFiscalPrinterLogger() {
+		return fiscalPrinterLogger;
+	}
+
+	@Override
+	public void setFiscalPrinterLogger(AbstractFiscalPrinterLogger fiscalPrinterLogger) {
+		this.fiscalPrinterLogger = fiscalPrinterLogger;
 	}
 }
