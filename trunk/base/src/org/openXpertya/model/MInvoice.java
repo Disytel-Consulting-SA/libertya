@@ -411,6 +411,22 @@ public class MInvoice extends X_C_Invoice implements DocAction {
 						"SELECT ad_process_id FROM ad_process WHERE ad_componentobjectuid = 'CORE-AD_Process-1010286'");
 	}
 	
+	/**
+	 * @param ctx
+	 * @param docTypeID
+	 * @param trxName
+	 * @return el último nro de documento impreso fiscalmente del tipo de documento parámetro
+	 */
+	public static Integer getLastFiscalDocumentNumeroComprobantePrinted(Properties ctx, Integer docTypeID, Integer excludedInvoiceID, String trxName){
+		return DB
+				.getSQLValue(
+						trxName,
+						"select coalesce(max(numerocomprobante),0) as maxnumerocomprobante from c_invoice where fiscalalreadyprinted = 'Y' and c_doctypetarget_id = ?"
+								+ (Util.isEmpty(excludedInvoiceID, true) ? ""
+										: " AND c_invoice_id <> "
+												+ excludedInvoiceID), docTypeID);
+	}
+	
 	public void copyManualInvoiceTaxes(MInvoice from) throws Exception{
 		List<MInvoiceTax> invoiceTaxes = MInvoiceTax.getTaxesFromInvoice(from, true);
 		MInvoiceTax newInvoiceTax;
@@ -2981,16 +2997,6 @@ public class MInvoice extends X_C_Invoice implements DocAction {
 		}
 		// ---------------------------------------------------------------
 
-		// Valida si el documento ya fue impreso mediante un controlador
-		// fiscal, solamente si no se debe ingresar manualmente el nro de documento
-		if (isFiscalAlreadyPrinted()) {
-			if(!isManualDocumentNo()){
-				m_processMsg = "@FiscalAlreadyPrintedError@";
-				return DocAction.STATUS_Invalid;
-			}
-			setIgnoreFiscalPrint(true);
-		}
-
 		// - Validaciones generales (AR)
 		if (!validateInvoice(bp)) {
 			m_processMsg = CLogger.retrieveErrorAsString();
@@ -3458,6 +3464,16 @@ public class MInvoice extends X_C_Invoice implements DocAction {
 			}
 		}
 
+		// Valida si el documento ya fue impreso mediante un controlador
+		// fiscal, solamente si no se debe ingresar manualmente el nro de documento
+		if (isFiscalAlreadyPrinted()) {
+			if(!isManualDocumentNo()){
+				m_processMsg = "@FiscalAlreadyPrintedError@";
+				return DocAction.STATUS_Invalid;
+			}
+			setIgnoreFiscalPrint(true);
+		}
+		
 		// Implicit Approval
 
 		if (!isApproved()) {
@@ -4789,17 +4805,25 @@ public class MInvoice extends X_C_Invoice implements DocAction {
 			// Valida que si el documento es manual y el tipo de documento se
 			// imprime fiscalmente entonces no sobrepase el último nro de
 			// comprobante impreso fiscalmente
-			Integer lastFiscalPrintedNumeroComprobante = MDocType
-					.getLastFiscalDocumentNumeroComprobantePrinted(getCtx(),
-							getC_DocTypeTarget_ID(), get_TrxName());
-			if (requireFiscalPrint()
-					&& isManualDocumentNo()
-					&& lastFiscalPrintedNumeroComprobante != null
-					&& getNumeroComprobante() > lastFiscalPrintedNumeroComprobante
-							.intValue() + 1) {
-				throw new Exception(Msg.getMsg(getCtx(),
-						"NroCompGreaterThanLastFiscalPrinted",
-						new Object[] { lastFiscalPrintedNumeroComprobante }));
+			if (requireFiscalPrint() && isManualDocumentNo()){
+				// FIXME Se comenta por ahora porque no se usa el último comprobante
+				// impreso por una cuestión de performance 
+//				Integer lastFiscalPrintedNumeroComprobante = MDocType
+//						.getLastFiscalDocumentNumeroComprobantePrinted(getCtx(),
+//								getC_DocTypeTarget_ID(), get_TrxName());
+				Integer lastFiscalPrintedNumeroComprobante = getLastFiscalDocumentNumeroComprobantePrinted(
+						getCtx(), getC_DocTypeTarget_ID(), getID(), get_TrxName());
+				if (lastFiscalPrintedNumeroComprobante != null
+						&& getNumeroComprobante() > lastFiscalPrintedNumeroComprobante
+								.intValue() + 1) {
+					throw new Exception(
+							Msg.getMsg(
+									getCtx(),
+									"NroCompGreaterThanLastFiscalPrinted",
+									new Object[] { lastFiscalPrintedNumeroComprobante }));
+				}
+				// TODO hay que guardar el último comprobante impreso
+				// fiscalmente si éste es mayor al último
 			}
 		} catch (Exception e) {
 			log.saveError("", e.getMessage());
