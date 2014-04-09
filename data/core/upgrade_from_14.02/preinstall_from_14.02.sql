@@ -250,6 +250,43 @@ WHERE o.docstatus in ('CO', 'CL')
 --20140403-1725 Flag para actualizar las cantidades pedidas del pedido 
 update ad_system set dummy = (SELECT addcolumnifnotexists('C_Invoice','updateorderqty', 'character(1) NOT NULL DEFAULT ''N''::bpchar'));
 
+--20140408-1000 Nuevas estructuras para registrar el log de comandos fiscales 
+update ad_system set dummy = (SELECT addcolumnifnotexists('C_Controlador_Fiscal','logtyperecorded', 'character(1)'));
+
+CREATE TABLE c_controlador_fiscal_log
+(
+  c_controlador_fiscal_log_id integer NOT NULL,
+  ad_client_id integer NOT NULL,
+  ad_org_id integer NOT NULL,
+  isactive character(1) NOT NULL DEFAULT 'Y'::bpchar,
+  created timestamp without time zone NOT NULL DEFAULT ('now'::text)::timestamp(6) with time zone,
+  createdby integer NOT NULL,
+  updated timestamp without time zone NOT NULL DEFAULT ('now'::text)::timestamp(6) with time zone,
+  updatedby integer NOT NULL,
+  c_controlador_fiscal_id integer NOT NULL,
+  c_invoice_id integer,
+  command character varying(100),
+  response character varying(255),
+  logtype character(1) NOT NULL,
+  CONSTRAINT c_controlador_fiscal_log_key PRIMARY KEY (c_controlador_fiscal_log_id),
+  CONSTRAINT adclient_c_controlador_fiscal_log FOREIGN KEY (ad_client_id)
+      REFERENCES ad_client (ad_client_id) MATCH SIMPLE
+      ON UPDATE NO ACTION ON DELETE NO ACTION,
+  CONSTRAINT adorg_c_controlador_fiscal_log FOREIGN KEY (ad_org_id)
+      REFERENCES ad_org (ad_org_id) MATCH SIMPLE
+      ON UPDATE NO ACTION ON DELETE NO ACTION,
+  CONSTRAINT controladorfiscal_c_controlador_fiscal_log FOREIGN KEY (c_controlador_fiscal_id)
+      REFERENCES c_controlador_fiscal (c_controlador_fiscal_id) MATCH SIMPLE
+      ON UPDATE NO ACTION ON DELETE NO ACTION,
+  CONSTRAINT cinvoice_c_controlador_fiscal_log FOREIGN KEY (c_invoice_id)
+      REFERENCES c_invoice (c_invoice_id) MATCH SIMPLE
+      ON UPDATE NO ACTION ON DELETE NO ACTION
+)
+WITH (
+  OIDS=FALSE
+);
+ALTER TABLE c_controlador_fiscal_log OWNER TO libertya;
+
 --20140409-0900 Nueva columna para registrar si un esquema de retención es manual
 update ad_system set dummy = (SELECT addcolumnifnotexists('C_RetencionSchema ','ismanual ', 'character(1) NOT NULL DEFAULT ''N''::bpchar'));
 
