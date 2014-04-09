@@ -184,7 +184,7 @@ public abstract class ResumenVentasDataSource extends QueryDataSource {
 	 * @return condición de filtro para informar notas de crédito
 	 */
 	protected String getCreditsNotesFilter(){
-		return " AND (s.trxtype = 'PA' OR EXISTS (SELECT inv.c_invoice_id FROM c_invoice inv INNER JOIN c_doctype doc ON doc.c_doctype_id = inv.c_doctypetarget_id WHERE s.c_invoice_id = inv.c_invoice_id AND doc.docbasetype = '"
+		return " AND (s.trxtype IN ('PA','CAIA') OR EXISTS (SELECT inv.c_invoice_id FROM c_invoice inv INNER JOIN c_doctype doc ON doc.c_doctype_id = inv.c_doctypetarget_id WHERE s.c_invoice_id = inv.c_invoice_id AND doc.docbasetype = '"
 				+ MDocType.DOCBASETYPE_ARCreditMemo + "')) ";
 	}
 	

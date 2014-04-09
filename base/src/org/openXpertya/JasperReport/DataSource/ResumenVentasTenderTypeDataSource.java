@@ -22,7 +22,7 @@ public class ResumenVentasTenderTypeDataSource extends
 
 	@Override
 	protected String getDSWhereClause() {
-		return " AND trxtype IN ('CAI','P','NCC','PA','ND') ";
+		return " AND trxtype IN ('CAI','P','NCC','PA','ND','CAIA') ";
 	}
 
 	@Override

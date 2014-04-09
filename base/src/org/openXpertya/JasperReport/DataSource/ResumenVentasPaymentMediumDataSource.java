@@ -26,7 +26,7 @@ public class ResumenVentasPaymentMediumDataSource extends
 
 	@Override
 	protected String getDSWhereClause() {
-		return " AND trxtype IN ('CAI','P','NCC','PA','ND') ";
+		return " AND trxtype IN ('CAI','P','NCC','PA','ND','CAIA') ";
 	}
 
 	@Override
@@ -45,7 +45,7 @@ public class ResumenVentasPaymentMediumDataSource extends
 		String trxType = (String)getCurrentRecord().get("TRXTYPE");
 		String tenderType = (String)getCurrentRecord().get("TENDERTYPE");
 		String description = "";
-		if((trxType != null && trxType.equals("CAI")) || tenderType.equals("CC")){
+		if((trxType != null && (trxType.equals("CAI") || trxType.equals("CAIA"))) || tenderType.equals("CC")){
 			description = "Cuenta Corriente";
 		}
 		else if(tenderType.equals(MPOSPaymentMedium.TENDERTYPE_Credit)){
