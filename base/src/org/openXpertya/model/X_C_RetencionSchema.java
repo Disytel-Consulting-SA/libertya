@@ -7,7 +7,7 @@ import java.math.*;
 import org.openXpertya.util.*;
 /** Modelo Generado por C_RetencionSchema
  *  @author Comunidad de Desarrollo Libertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
- *  @version  - 2011-09-19 14:59:15.957 */
+ *  @version  - 2014-04-09 08:59:30.076 */
 public class X_C_RetencionSchema extends org.openXpertya.model.PO
 {
 /** Constructor estándar */
@@ -20,6 +20,7 @@ setC_BPartner_Recaudador_ID (0);
 setC_RetencionProcessor_ID (0);
 setC_RetencionSchema_ID (0);
 setC_RetencionType_ID (0);
+setIsManual (false);
 setName (null);
 setRetencionApplication (null);	// E
 setValue (null);
@@ -177,6 +178,24 @@ Optional short description of the record */
 public String getDescription() 
 {
 return (String)get_Value("Description");
+}
+/** Set Manual.
+This is a manual process */
+public void setIsManual (boolean IsManual)
+{
+set_Value ("IsManual", new Boolean(IsManual));
+}
+/** Get Manual.
+This is a manual process */
+public boolean isManual() 
+{
+Object oo = get_Value("IsManual");
+if (oo != null) 
+{
+ if (oo instanceof Boolean) return ((Boolean)oo).booleanValue();
+ return "Y".equals(oo);
+}
+return false;
 }
 /** Set Name.
 Alphanumeric identifier of the entity */
