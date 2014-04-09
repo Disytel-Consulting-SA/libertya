@@ -1629,7 +1629,8 @@ public class FiscalDocumentPrint {
 		/////////////////////////////////////////////////////////////////
 		// -- Último Documento Impreso por Impresora fiscal --
 		// Se guarda el último documento impreso en el tipo de documento
-		saveLastDocumentPrinted(oxpDocument);
+		// FIXME Por lo pronto se comenta por cuestiones de performance 
+		// saveLastDocumentPrinted(oxpDocument);
 		/////////////////////////////////////////////////////////////////
 		
 		// Se guardan los cambios realizados.
