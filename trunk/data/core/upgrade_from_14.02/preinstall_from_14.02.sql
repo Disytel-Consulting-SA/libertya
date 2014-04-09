@@ -255,3 +255,6 @@ update ad_system set dummy = (SELECT addcolumnifnotexists('C_RetencionSchema ','
 
 --20140409-0900 Permite que la columna c_retencionprocessor sea null para poder crear retenciones manuales
 ALTER TABLE c_retencionschema ALTER COLUMN c_retencionprocessor_id DROP NOT NULL
+
+--20140409-1030 Nueva columna para registrar el tipo del asiento contable
+update ad_system set dummy = (SELECT addcolumnifnotexists('fact_acct', 'TypeFactAcct', 'character varying(2)'));
