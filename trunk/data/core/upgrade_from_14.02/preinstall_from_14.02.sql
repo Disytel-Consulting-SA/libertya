@@ -249,3 +249,9 @@ WHERE o.docstatus in ('CO', 'CL')
 
 --20140403-1725 Flag para actualizar las cantidades pedidas del pedido 
 update ad_system set dummy = (SELECT addcolumnifnotexists('C_Invoice','updateorderqty', 'character(1) NOT NULL DEFAULT ''N''::bpchar'));
+
+--20140409-0900 Nueva columna para registrar si un esquema de retención es manual
+update ad_system set dummy = (SELECT addcolumnifnotexists('C_RetencionSchema ','ismanual ', 'character(1) NOT NULL DEFAULT ''N''::bpchar'));
+
+--20140409-0900 Permite que la columna c_retencionprocessor sea null para poder crear retenciones manuales
+ALTER TABLE c_retencionschema ALTER COLUMN c_retencionprocessor_id DROP NOT NULL
