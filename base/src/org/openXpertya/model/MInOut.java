@@ -2667,7 +2667,6 @@ public class MInOut extends X_M_InOut implements DocAction {
 
         // Check Lines
         no=MInOutLineMA.deleteInOutMA(getID(), get_TrxName());
-        log.printDebug(getClass().getName()+".checkMaterialPolicy", "End Delete MA");
     	MInOutLine[] lines = getLines( false );
         for( int i = 0;i < lines.length;i++ ) {
             MInOutLine line     = lines[ i ];
