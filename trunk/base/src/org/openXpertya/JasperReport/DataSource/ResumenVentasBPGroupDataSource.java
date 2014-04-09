@@ -21,7 +21,7 @@ public class ResumenVentasBPGroupDataSource extends ResumenVentasDataSource {
 
 	@Override
 	protected String getDSWhereClause() {
-		return " AND trxtype = 'CAI' ";
+		return " AND trxtype IN ('CAI','CAIA') ";
 	}
 
 	@Override
