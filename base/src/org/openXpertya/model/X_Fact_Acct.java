@@ -1,12 +1,13 @@
 /** Modelo Generado - NO CAMBIAR MANUALMENTE - Disytel */
 package org.openXpertya.model;
-import java.util.*;
+import java.util.logging.Level;
+ import java.util.*;
 import java.sql.*;
 import java.math.*;
 import org.openXpertya.util.*;
 /** Modelo Generado por Fact_Acct
  *  @author Comunidad de Desarrollo Libertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
- *  @version  - 2009-12-07 15:45:47.256 */
+ *  @version  - 2014-04-09 10:35:26.081 */
 public class X_Fact_Acct extends org.openXpertya.model.PO
 {
 /** Constructor estándar */
@@ -458,6 +459,18 @@ Integer ii = (Integer)get_Value("GL_Category_ID");
 if (ii == null) return 0;
 return ii.intValue();
 }
+/** Set journalno */
+public void setjournalno (int journalno)
+{
+set_Value ("journalno", new Integer(journalno));
+}
+/** Get journalno */
+public int getjournalno() 
+{
+Integer ii = (Integer)get_Value("journalno");
+if (ii == null) return 0;
+return ii.intValue();
+}
 /** Set Line ID.
 Transaction line ID (internal) */
 public void setLine_ID (int Line_ID)
@@ -562,6 +575,34 @@ public int getRecord_ID()
 Integer ii = (Integer)get_Value("Record_ID");
 if (ii == null) return 0;
 return ii.intValue();
+}
+public static final int TYPEFACTACCT_AD_Reference_ID = MReference.getReferenceID("TypeFactAcct");
+/** Sales = S */
+public static final String TYPEFACTACCT_Sales = "S";
+/** Purchase = P */
+public static final String TYPEFACTACCT_Purchase = "P";
+/** Payments Receipts = PR */
+public static final String TYPEFACTACCT_PaymentsReceipts = "PR";
+/** Vendor Payments = VP */
+public static final String TYPEFACTACCT_VendorPayments = "VP";
+/** Rest = R */
+public static final String TYPEFACTACCT_Rest = "R";
+/** Set TypeFactAcct */
+public void setTypeFactAcct (String TypeFactAcct)
+{
+if (TypeFactAcct == null || TypeFactAcct.equals("S") || TypeFactAcct.equals("P") || TypeFactAcct.equals("PR") || TypeFactAcct.equals("VP") || TypeFactAcct.equals("R"));
+ else throw new IllegalArgumentException ("TypeFactAcct Invalid value - Reference = TYPEFACTACCT_AD_Reference_ID - S - P - PR - VP - R");
+if (TypeFactAcct != null && TypeFactAcct.length() > 2)
+{
+log.warning("Length > 2 - truncated");
+TypeFactAcct = TypeFactAcct.substring(0,2);
+}
+set_Value ("TypeFactAcct", TypeFactAcct);
+}
+/** Get TypeFactAcct */
+public String getTypeFactAcct() 
+{
+return (String)get_Value("TypeFactAcct");
 }
 public static final int USER1_ID_AD_Reference_ID = MReference.getReferenceID("Account_ID - User1");
 /** Set User1.
