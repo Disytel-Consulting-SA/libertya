@@ -2562,7 +2562,7 @@ public class VOrdenCobro extends VOrdenPago {
 
 		MPOSPaymentMedium mp = (MPOSPaymentMedium) cboCreditCardReceiptMedium.getSelectedItem();
 		if (mp != null){
-			if (mp.getBank() != null) {
+			if (!Util.isEmpty(mp.getBank(), true)) {
 				cboCreditCardBank.setValue(mp.getBank());
 				cboCreditCardBank.setReadWrite(false);
 				// Si no tiene banco el combo es editable y deberá elegir una
