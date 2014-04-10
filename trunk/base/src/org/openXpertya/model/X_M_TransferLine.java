@@ -1,12 +1,13 @@
 /** Modelo Generado - NO CAMBIAR MANUALMENTE - Disytel */
 package org.openXpertya.model;
-import java.util.*;
+import java.util.logging.Level;
+ import java.util.*;
 import java.sql.*;
 import java.math.*;
 import org.openXpertya.util.*;
 /** Modelo Generado por M_TransferLine
  *  @author Comunidad de Desarrollo Libertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
- *  @version  - 2010-01-12 14:04:09.098 */
+ *  @version  - 2014-04-10 17:28:14.12 */
 public class X_M_TransferLine extends org.openXpertya.model.PO
 {
 /** Constructor estándar */
@@ -16,11 +17,12 @@ super (ctx, M_TransferLine_ID, trxName);
 /** if (M_TransferLine_ID == 0)
 {
 setConfirmedQty (Env.ZERO);	// 0
-setLine (0);	// @SQL=SELECT NVL(MAX(Line),0)+10 AS DefaultValue FROM M_LocatorTransferLine WHERE M_LocatorTransfer_ID=@M_LocatorTransfer_ID@
-setM_Locator_ID (0);
+setLine (0);	// @SQL=SELECT NVL(MAX(Line),0)+10 AS DefaultValue FROM M_TransferLine WHERE M_Transfer_ID=@M_Transfer_ID@
+setM_Locator_ID (0);	// @SQL=SELECT m_locator_id FROM m_locator where m_warehouse_id = @M_Warehouse_ID@ order by isdefault desc limit 1
 setM_Product_ID (0);
 setM_Transfer_ID (0);	// @M_Transfer_ID@
 setM_TransferLine_ID (0);
+setProcessed (false);
 setQty (Env.ZERO);	// 0
 }
  */
@@ -150,6 +152,24 @@ public int getM_TransferLine_ID()
 Integer ii = (Integer)get_Value("M_TransferLine_ID");
 if (ii == null) return 0;
 return ii.intValue();
+}
+/** Set Processed.
+The document has been processed */
+public void setProcessed (boolean Processed)
+{
+set_Value ("Processed", new Boolean(Processed));
+}
+/** Get Processed.
+The document has been processed */
+public boolean isProcessed() 
+{
+Object oo = get_Value("Processed");
+if (oo != null) 
+{
+ if (oo instanceof Boolean) return ((Boolean)oo).booleanValue();
+ return "Y".equals(oo);
+}
+return false;
 }
 /** Set Quantity.
 Quantity */

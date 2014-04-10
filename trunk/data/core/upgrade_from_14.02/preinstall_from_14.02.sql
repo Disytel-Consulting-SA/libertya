@@ -557,3 +557,9 @@ SELECT 'CAIA' AS trxtype, i.ad_client_id, i.ad_org_id, i.c_invoice_id, date_trun
                     WHERE (cobros.amount IS NULL OR i.grandtotal <> cobros.amount) AND i.initialcurrentaccountamt > 0::numeric AND (dt.docbasetype <> ALL (ARRAY['ARC'::bpchar, 'APC'::bpchar])) AND i.docstatus IN ('VO','RE');
 
 ALTER TABLE v_dailysales OWNER TO libertya;
+
+--20140410-1640 Incorporación de columna Processed a la línea de Transferencias de mercadería. Actualización de columna en base a la cabecera para las transferencias existentes 
+update ad_system set dummy = (SELECT addcolumnifnotexists('m_transferline','processed', 'character(1) NOT NULL DEFAULT ''N''::bpchar'));
+
+update m_transferline as tl
+set processed = (SELECT processed FROM m_transfer as t WHERE t.m_transfer_id = tl.m_transfer_id);
