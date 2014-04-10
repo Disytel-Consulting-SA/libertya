@@ -144,7 +144,7 @@ public class CLogErrorBuffer extends Handler {
      * @param record
      */
 
-    public void publish( LogRecord record ) {
+    public synchronized void publish( LogRecord record ) {
         if( !isLoggable( record ) || (m_logs == null) ) {
             return;
         }
@@ -219,7 +219,7 @@ public class CLogErrorBuffer extends Handler {
      * @throws SecurityException
      */
 
-    public void close() throws SecurityException {
+    public synchronized void close() throws SecurityException {
         if( m_logs != null ) {
             m_logs.clear();
         }
@@ -346,7 +346,7 @@ public class CLogErrorBuffer extends Handler {
      * @param errorsOnly
      */
 
-    public void resetBuffer( boolean errorsOnly ) {
+    public synchronized void resetBuffer( boolean errorsOnly ) {
         synchronized( m_errors ) {
             m_errors.clear();
             m_history.clear();
