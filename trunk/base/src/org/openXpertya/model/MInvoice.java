@@ -2663,7 +2663,7 @@ public class MInvoice extends X_C_Invoice implements DocAction {
 			total = total.negate();
 		}
 
-		boolean test = total.compareTo(alloc) == 0;
+		boolean test = total.compareTo(alloc) <= 0;
 		boolean change = test != isPaid();
 
 		if (change) {
