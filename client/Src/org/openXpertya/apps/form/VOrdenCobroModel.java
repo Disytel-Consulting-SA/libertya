@@ -487,6 +487,7 @@ public class VOrdenCobroModel extends VOrdenPagoModel {
 		if (AD_Org_ID != 0) 
 			sql.append("  AND i.ad_org_id = ?  ");
 		
+		sql.append(" AND i.ispaid = 'N' ");
 		sql.append("  ) as openInvoices ");
 		sql.append(" GROUP BY c_invoice_id, c_invoicepayschedule_id, orgname, documentno, currencyIso, grandTotal, openTotal, dateinvoiced, duedate, convertedamt, openamt, isexchange, C_Currency_ID ");
 		sql.append(" HAVING opentotal > 0.0 ");
