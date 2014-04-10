@@ -185,7 +185,7 @@ public class VPluginInstaller extends CPanel implements FormPanel, ASyncProcess 
 				public Object construct() {
 					try {
 						/* Delegar lógica de instalación (pre, install, post) centralizada */
-						ProcessInfo pi = VPluginInstallerUtils.performInstall(fileChooser.getDisplay(), m_ctx, m_component_props, (VPluginInstaller)currentWorker.getOwner());
+						ProcessInfo pi = VPluginInstallerUtils.performInstall(fileChooser.getDisplay(), m_ctx, m_component_props, (VPluginInstaller)currentWorker.getOwner(), null);
 						if (pi==null) // si el proceso de instalacion no fue invocado, llamar al installFinalize manualmente 
 							performInstallFinalize();
 					} catch (Exception e) {

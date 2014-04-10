@@ -28,6 +28,7 @@ import java.util.logging.Level;
 import org.openXpertya.model.MPInstance;
 import org.openXpertya.model.MRole;
 import org.openXpertya.model.PO;
+import org.openXpertya.plugin.common.PluginConstants;
 import org.openXpertya.plugin.common.PluginUtils;
 import org.openXpertya.util.CLogMgt;
 import org.openXpertya.util.CLogger;
@@ -394,16 +395,22 @@ public abstract class SvrProcess implements ProcessCall {
      */
 
     protected ProcessInfoParameter[] getParameter() {
-        ProcessInfoParameter[] retValue = m_pi.getParameter();
-        //JOptionPane.showMessageDialog( null,"En SvrProcess, getParameter() retValue="+"\n"+retValue,"..Fin", JOptionPane.INFORMATION_MESSAGE );
+    	// Recuperar los parametros actuales (incluyendo eventuales predefinidos desde codigo NO existentes en Metadatos, como por  
+    	// ejemplo los parametros PluginConstants.XML_CONTENT_PARAMETER_NAME y PluginConstants.JAR_FILE_URL en VPluginInstallerUtils)
+        ProcessInfoParameter[] currentParams = m_pi.getParameter();
 
-        if( retValue == null ) {
-            ProcessInfoUtil.setParameterFromDB( m_pi, m_trx.getTrxName() );
-            retValue = m_pi.getParameter();
-            //JOptionPane.showMessageDialog( null,"En SvrProcess,cuando retValue es nul y vuelv de coger los parametros en serParamerFromDB, retValue="+"\n"+retValue,"..Fin", JOptionPane.INFORMATION_MESSAGE );
+        // Recuperar los parametros especificados desde los metadatos
+        ProcessInfoUtil.setParameterFromDB( m_pi, m_trx.getTrxName() );
+        ProcessInfoParameter[] paramsOnDB = m_pi.getParameter();
+
+        // Incorporar a los existentes en metadatos los eventuales predefinidos, omitiendo duplicados
+        if (currentParams != null) {
+        	for (ProcessInfoParameter aParam : currentParams) 
+        		paramsOnDB = ProcessInfoUtil.addToArray(paramsOnDB, aParam);
         }
-
-        return retValue;
+        
+        m_pi.setParameter(paramsOnDB);
+        return paramsOnDB;
     }    // getParameter
 
     /**
