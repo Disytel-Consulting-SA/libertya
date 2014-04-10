@@ -1,12 +1,20 @@
 package org.openXpertya.apps.form;
 
+import java.math.BigDecimal;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.Timestamp;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Properties;
 
 import org.openXpertya.OpenXpertya;
 import org.openXpertya.apps.ProcessCtl;
+import org.openXpertya.apps.ProcessParameter;
 import org.openXpertya.model.MComponent;
 import org.openXpertya.model.MComponentVersion;
+import org.openXpertya.model.MField;
+import org.openXpertya.model.MFieldVO;
 import org.openXpertya.model.MProcess;
 import org.openXpertya.model.POInfo;
 import org.openXpertya.model.X_AD_Plugin;
@@ -15,8 +23,10 @@ import org.openXpertya.plugin.common.PluginUtils;
 import org.openXpertya.plugin.install.PluginXMLUpdater;
 import org.openXpertya.process.ProcessInfo;
 import org.openXpertya.process.ProcessInfoParameter;
+import org.openXpertya.process.ProcessInfoUtil;
 import org.openXpertya.replication.ReplicationCache;
 import org.openXpertya.util.DB;
+import org.openXpertya.util.DisplayType;
 import org.openXpertya.util.Env;
 import org.openXpertya.util.Trx;
 import org.openXpertya.utils.JarHelper;
@@ -52,7 +62,7 @@ public class VPluginInstallerUtils  {
 	 * @return resultado del ProcessInfo de PostInstall
 	 * @throws Exception en caso de error
 	 */
-	public static ProcessInfo performInstall(String jarURL, Properties m_ctx, Properties m_component_props, VPluginInstaller owner) throws Exception 
+	public static ProcessInfo performInstall(String jarURL, Properties m_ctx, Properties m_component_props, VPluginInstaller owner, PluginInstaller consoleOwner) throws Exception 
 	{
 		/* Iniciar la transacción y setear componente global */
 		m_trx = Trx.createTrxName();
@@ -90,7 +100,7 @@ public class VPluginInstallerUtils  {
 		
 		/* PostInstalacion - Invocar proceso genérico o ad-hoc */
 		PluginUtils.appendStatus(" === Disparando proceso de postinstalación === ");
-		return doPostInstall(m_ctx, jarURL, PluginConstants.URL_INSIDE_JAR + PluginConstants.FILENAME_POSTINSTALL, m_component_props, owner);
+		return doPostInstall(m_ctx, jarURL, PluginConstants.URL_INSIDE_JAR + PluginConstants.FILENAME_POSTINSTALL, m_component_props, owner, consoleOwner);
 	}
 	
 
@@ -303,7 +313,7 @@ public class VPluginInstallerUtils  {
 	 * Entrada principal a la ejecución del proceso de PostInstalación
   	 * @throws Exception
 	 */
-	public static ProcessInfo doPostInstall(Properties ctx, String jarURL, String fileURL, Properties props, VPluginInstaller installer) throws Exception
+	public static ProcessInfo doPostInstall(Properties ctx, String jarURL, String fileURL, Properties props, VPluginInstaller installer, PluginInstaller consoleOwner) throws Exception
 	{
 		/* Toma el archivo XML correspondiente, genera las sentencias SQL correspondientes e impacta en la base de datos */
 		String xml = JarHelper.readFromJar(jarURL, fileURL, "", null);
@@ -315,12 +325,12 @@ public class VPluginInstallerUtils  {
 			if (postInstallProcessId <= 0)
 				throw new Exception (" PostInstall process not found!");
 			
-			/* Insertar el parametro para el XML y la ubicación del Jar */
+			/* Insertar el parametro para el XML y la ubicación del Jar (estos dos parametros no son definidos a nivel medatados) */
 	        ProcessInfo pi = new ProcessInfo( " Post Instalacion ", postInstallProcessId);
 	        ProcessInfoParameter xtraParamXMLContent = new ProcessInfoParameter(PluginConstants.XML_CONTENT_PARAMETER_NAME, xml, null, null, null);
 	        ProcessInfoParameter xtraParamJARLocation = new ProcessInfoParameter(PluginConstants.JAR_FILE_URL, jarURL, null, null, null);
-	        pi.setParameter(addToArray(pi.getParameter(), xtraParamXMLContent));
-	        pi.setParameter(addToArray(pi.getParameter(), xtraParamJARLocation));
+	        pi.setParameter(ProcessInfoUtil.addToArray(pi.getParameter(), xtraParamXMLContent));
+	        pi.setParameter(ProcessInfoUtil.addToArray(pi.getParameter(), xtraParamJARLocation));
 	        
 	        /* Si installer no es null, entonces la invocación es gestionada desde una ventana => Asincrónico a fin de requerir eventuales parámetros adicionales definidos en metadatos */
 	        if (installer != null) {
@@ -329,8 +339,21 @@ public class VPluginInstallerUtils  {
 		        if (worker == null)
 		        	throw new Exception (" Instalacion cancelada en post configuracion! ");
 	        }
-	        /* Si installer es null, entonces la invocacion no es gestionada desde una ventana, sino desde terminal => Sincronico (Y SIN SOPORTE DE PARAMS ADICIONALES!) */
+	        /* Si installer es null, entonces la invocacion no es gestionada desde una ventana, sino desde terminal => Sincronico (Y CON SOPORTE BASICO PARA PARAMS ADICIONALES!) */
 	        else {
+	        	// Incorporar eventuales parametros específicos del proceso a ejecutar
+	        	PreparedStatement pstmt = ProcessParameter.GetProcessParameters(postInstallProcessId);
+	        	ResultSet rs = pstmt.executeQuery();
+	        	while (rs.next()) {
+	        		// Recuperar parametro pasado como argumento desde la terminal 
+	        		String paramName = rs.getString("Name");
+	        		Object paramValue = createParamValue(consoleOwner.getAdditionalParams().get(paramName), rs.getInt("AD_Reference_ID"));
+	                if (paramValue == null)
+	                	continue;
+	                // TODO: parameter_To, info_To? Ver ProcessParameter.saveParameters como referencia.
+	        		ProcessInfoParameter aParam = new ProcessInfoParameter(paramName, paramValue, null, null, null);
+	        		pi.setParameter(ProcessInfoUtil.addToArray(pi.getParameter(), aParam));
+	        	}
 	        	MProcess process = new MProcess(ctx, postInstallProcessId, m_trx);
 	        	MProcess.execute(ctx, process, pi, m_trx);
 	        }
@@ -339,7 +362,7 @@ public class VPluginInstallerUtils  {
 		}
 		return null;
 	}
-	
+		
 	
 	/**
 	 * Dispara el proceso de comprobar secuencias a fin de generar las mismas para las nuevas tablas
@@ -415,32 +438,31 @@ public class VPluginInstallerUtils  {
 		
 		return defaultProcessID; 
 	}	
-	
-	/**
-	 * Incorpora un elemento s al array array
-	 * @param array
-	 * @param s
-	 * @return
-	 */
-	private static ProcessInfoParameter[] addToArray(ProcessInfoParameter[] array, ProcessInfoParameter s)
-	{
-		/* Ya tenía parametros?  Si es null se debe a que no contenia parametros */
-		ProcessInfoParameter[] ans = new ProcessInfoParameter[array==null ? 1 : array.length + 1];
-		
-		/* Si hay un único parametro, asignarlo a ans y devolverlo */
-		if (ans.length == 1)
-		{
-			ans[0] = s;
-			return ans;
-		}
-			
-		/*  En caso contrario, concatear este ultimo */
-		System.arraycopy(array, 0, ans, 0, array.length);
-		ans[ans.length - 1] = s;
-		return ans;
-	}
 
-	
+
+	/**
+	 * Retorna el valor del parametro creado segun el tipo de dato (displayType)
+	 */
+	protected static Object createParamValue(String value, int displayType) {
+		Object retValue = null;
+		// Imposible hacer mucho mas si el value es null
+		if (value == null)
+			return null;
+		// Instanciar segun tipo
+        if  (String.class == DisplayType.getClass(displayType, false))
+        	retValue = value;
+        else if (Integer.class == DisplayType.getClass(displayType, false))
+        	retValue = Integer.valueOf(value);
+        else if (BigDecimal.class == DisplayType.getClass(displayType, false))
+        	retValue = new BigDecimal(value);
+        else if (Timestamp.class == DisplayType.getClass(displayType, false)) 
+        	retValue = Timestamp.valueOf(value);
+        else if (byte[].class == DisplayType.getClass(displayType, false))
+        	retValue = value.getBytes(); 
+        // Retornar valor
+        return retValue;
+	}
+		
 	/**
 	 * En caso de error al realizar la instalación rollbackear la trx, detener la instalacion e informar 
 	 */

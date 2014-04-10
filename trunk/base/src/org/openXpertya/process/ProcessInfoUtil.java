@@ -217,13 +217,44 @@ public class ProcessInfoUtil {
         pi.setLogList( null );    // otherwise log entries are twice
     }                             // saveLogToDB
 
+	/**
+	 * Incorpora un elemento s al array array.  Omite duplicados
+	 * @param array
+	 * @param s
+	 * @return
+	 */
+	public static ProcessInfoParameter[] addToArray(ProcessInfoParameter[] array, ProcessInfoParameter s)
+	{
+		/* Ya existe el parámetro en el array? En ese caso omitir incorporación. */
+		if (array != null) {
+			for (ProcessInfoParameter param : array) 
+				if (param.getParameterName().equals(s.getParameterName()))
+					return array;
+		}
+		
+		/* Ya tenía parametros?  Si es null se debe a que no contenia parametros */
+		ProcessInfoParameter[] ans = new ProcessInfoParameter[array==null ? 1 : array.length + 1];
+		
+		/* Si hay un único parametro, asignarlo a ans y devolverlo */
+		if (ans.length == 1)
+		{
+			ans[0] = s;
+			return ans;
+		}
+			
+		/*  En caso contrario, concatear este ultimo */
+		System.arraycopy(array, 0, ans, 0, array.length);
+		ans[ans.length - 1] = s;
+		return ans;
+	}
+    
+    
     /**
      * Descripción de Método
      *
      *
      * @param pi
      */
-
     public static void setParameterFromDB( ProcessInfo pi, String trxName ) {
         ArrayList list = new ArrayList();
         String    sql  = "SELECT p.ParameterName,"                                   // 1

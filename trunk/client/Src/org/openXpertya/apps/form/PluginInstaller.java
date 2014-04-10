@@ -1,5 +1,7 @@
 package org.openXpertya.apps.form;
 
+import java.util.HashMap;
+
 import org.openXpertya.OpenXpertya;
 import org.openXpertya.plugin.common.PluginConstants;
 import org.openXpertya.process.ProcessInfo;
@@ -20,26 +22,33 @@ import org.openXpertya.utils.JarHelper;
  * Ejemplo: java PluginInstaller org.libertya.core.upgrade.jar
  * 
  * IMPORTANTE: 	Si el proceso post-install es uno que en sus metadatos tiene configurado
- * """""""""""	parámetros adicionales a especificar por el usuario durante la instalacion, 
- * 				este instalador NO será de utilidad dado que el mismo tiene por finalidad 
- * 				una instalación desatendida. En ese caso no quedará otra alternativa más  
- * 				que utilizar el instalador de plugins tradicional, desde el cliente Swing.
+ * """""""""""	parámetros adicionales a especificar por el usuario durante la instalacion,
+ * 				será necesario verificar los tipos de dichos parametros, dado que si bien 
+ * 				el proceso soporta la especificación de parámetros, la funcionalidad no es
+ * 				completa.  Por ejemplo:
+ * 					- No hay soporte para parametros de tipo binario 
+ * 					- No hay soporte para parametros de tipo rango 
  */
 
 public class PluginInstaller extends VPluginInstaller {
 
+	/** Commitear con errores en install? */
 	protected static boolean commitWithInstallErrors = false;
+	/** Commitear con errores en postinstall? */
 	protected static boolean commitWithPostinstallErrors = false;
+	/** Parametros a setear específicos del AD_Process de postinstall a ejecutar */
+	protected static HashMap<String, String> additionalParams = new HashMap<String, String>();
 	
 	public static void main(String[] args) {
 		
 		// Sin jar no hay upgrade!
 		if (args.length < 3) {
-			System.err.println("Debe especificar 3 parámetros: ");
+			System.err.println("Debe especificar al menos 3 parámetros: ");
 			System.err.println("\t	1) URL del archivo .jar ");
 			System.err.println("\t	2) Commit con errores en install ");
 			System.err.println("\t	3) Commit con errores en postinstall ");
-			System.err.println("Ejemplo: java -classpath lib/OXP.jar:lib/OXPXLib.jar org.openXpertya.apps.form.PluginInstaller /tmp/ejemplo.jar N Y ");
+			System.err.println("\t	4 en adelante) (Opcionales) Parametros especificos del proceso postinstall a ejecutar, indicando NombreDeParametro=ValorDeParametro, separados por espacio cada uno.");
+			System.err.println("Ejemplo: java -classpath lib/OXP.jar:lib/OXPXLib.jar org.openXpertya.apps.form.PluginInstaller /tmp/ejemplo.jar N Y Edad=23 Coeficiente=4.5 C_BPartner_ID=1092382 Fecha=\"2014-04-10 00:00:00\" ");
 			System.exit(1);
 		}
 			
@@ -66,6 +75,14 @@ public class PluginInstaller extends VPluginInstaller {
 		PluginInstaller installer = new PluginInstaller();
 		commitWithInstallErrors = "Y".equalsIgnoreCase(args[1]);
 		commitWithPostinstallErrors = "Y".equalsIgnoreCase(args[2]);
+		int i = 0;
+		for (String arg : args) {
+			if (++i>=4) {
+				String[] paramKV = arg.split("="); 
+				additionalParams.put(paramKV[0], paramKV[1]);
+			}
+		}
+		
 		installer.showPluginDetails(args[0]);
 		installer.construct(args[0]);
 	}
@@ -94,7 +111,7 @@ public class PluginInstaller extends VPluginInstaller {
 		
 		try {
 			/* Delegar lógica de instalación (pre, install, post) centralizada */
-			ProcessInfo pi = VPluginInstallerUtils.performInstall(jarURL, m_ctx, m_component_props, null);
+			ProcessInfo pi = VPluginInstallerUtils.performInstall(jarURL, m_ctx, m_component_props, null, this);
 			performInstallFinalize(pi);	// fuerza la invocación en todos los casos
 		} catch (Exception e) {
 			handleException("Error en ejecucion.", new Exception(e.toString()));
@@ -138,6 +155,12 @@ public class PluginInstaller extends VPluginInstaller {
 	}
 
 	
+	/**
+	 * Nomina de parametros adicionales, no cargados desde ventana modal
+	 */
+	public HashMap<String, String> getAdditionalParams() {
+		return additionalParams; 
+	}
 	
 }
 
