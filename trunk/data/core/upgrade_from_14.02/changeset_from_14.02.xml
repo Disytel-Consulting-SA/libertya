@@ -1,0 +1,53 @@
+<!-- ===================================================================== -->
+<!-- Cambios en la estructura de archivos Libertya a reflejar en un deploy -->
+<!-- ===================================================================== -->
+
+<!-- 
+
+Ejemplos de cambios
+"""""""""""""""""""
+
+20140401-1330. Eliminar archivo. 
+	<delete file="${OXP_HOME}/OXPXLib.jar" failonerror="no" /> 
+
+20140401-1331. Crear un nuevo directorio:
+	<mkdir dir="${OXP_HOME}/nuevoDir" />
+
+20140402-1400. Nueva version de mail.jar
+	<copy file="${SRC_DIR}/mail.jar" todir="${OXP_HOME}/lib" overwrite="yes" />
+
+20140407-2230. Nueva versión de librería, cambiando su nombre:
+	<copy file="${SRC_DIR}/postgresql82.jar" tofile="${OXP_HOME}/lib/postgresql.jar" overwrite="yes" />
+
+20140410-0925. Invocar un programa externo (inicialmente no habría necesidad de esta funcionalidad):
+	<exec dir="${OXP_HOME}" executable="/ServidorOXP/ConfigurarAuto.sh"
+	
+ -->
+
+
+<project name="deployer" default="deploy" basedir=".">
+    
+    <!-- =============================================== -->
+    <!-- CONSTANTES A UTILIZAR A LO LARGO DEL DESCRIPTOR -->
+    <!-- =============================================== -->
+    
+    <!-- Variables de entorno del SO -->
+    <property environment="env"/>
+
+    <!-- Directorio OXP_HOME debe estar definido en el entorno -->
+	<property name="OXP_HOME" value="${env.OXP_HOME}"/>
+    
+    <!-- Directorio origen donde se encuentran los archivos -->
+	<property name="SRC_DIR" value=""/>
+    	
+    <!-- TARGET DE INVOCACION -->
+    <target name="deploy" description="Actualización de archivos a instalar">
+        
+		<!-- Nomina de cambios a continuación -->
+		
+       
+    </target>
+    
+</project>
+
+
