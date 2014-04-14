@@ -40,5 +40,10 @@ public class ResumenVentasCategoriaIVADataSource extends
 	protected String getLineDescription() {
 		return "Total "+(String)getCurrentRecord().get("CATEGORIANAME");
 	}
+	
+	@Override
+	protected String getDSDataTable(){
+		return "(SELECT * FROM v_dailysales UNION ALL SELECT * FROM v_dailysales_current_account)";
+	}
 
 }

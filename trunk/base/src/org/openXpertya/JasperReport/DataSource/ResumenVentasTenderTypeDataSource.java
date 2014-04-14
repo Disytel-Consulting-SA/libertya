@@ -40,5 +40,9 @@ public class ResumenVentasTenderTypeDataSource extends
 	protected String getLineDescription() {
 		return "Total "+getTenderTypeDescription();
 	}
-
+	
+	@Override
+	protected String getDSDataTable(){
+		return "(SELECT * FROM v_dailysales UNION ALL SELECT * FROM v_dailysales_current_account)";
+	}
 }

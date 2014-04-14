@@ -40,4 +40,8 @@ public class ResumenVentasBPGroupDataSource extends ResumenVentasDataSource {
 		return (String)getCurrentRecord().get("GROUPNAME");
 	}
 
+	@Override
+	protected String getDSDataTable(){
+		return "v_dailysales_current_account";
+	}
 }

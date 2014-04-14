@@ -65,4 +65,9 @@ public class ResumenVentasPaymentMediumDataSource extends
 		return description;
 	}
 	
+	@Override
+	protected String getDSDataTable(){
+		return "(SELECT * FROM v_dailysales UNION ALL SELECT * FROM v_dailysales_current_account)";
+	}
+	
 }

@@ -24,4 +24,9 @@ public class ResumenVentasDocTypeDataSource extends ResumenVentasPaymentMediumDa
 	protected String getDSWhereClause() {
 		return " AND trxtype = 'I' AND tendertype IN ('"+MDocType.DOCBASETYPE_ARInvoice+"','"+MDocType.DOCBASETYPE_ARCreditMemo +"') ";
 	}
+	
+	@Override
+	protected String getDSDataTable(){
+		return "v_dailysales_invoices";
+	}
 }
