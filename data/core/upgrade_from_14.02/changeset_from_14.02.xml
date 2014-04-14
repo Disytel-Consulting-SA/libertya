@@ -45,7 +45,14 @@ Ejemplos de cambios
     <!-- ==================== -->
     <target name="deploy" description="Actualización de archivos a instalar">
         
+        <!-- Esta seteada OXP_HOME? De no estarlo es un problema grave -->
+		<fail message="No se ha seteado OXP_HOME">
+			<condition><not><isset property="OXP_HOME"/></not></condition>
+		</fail>
+        
+		<!-- ================================ -->
 		<!-- Nomina de cambios a continuación -->
+		<!-- ================================ -->
 		
 		<!-- 20140414-0953 Script para simplificar la recuperación del log de replicacion actual -->
 		<copy file="${SRC_DIR}/currentLog.sh" todir="${OXP_HOME}/utils/replicacion" overwrite="yes" />
