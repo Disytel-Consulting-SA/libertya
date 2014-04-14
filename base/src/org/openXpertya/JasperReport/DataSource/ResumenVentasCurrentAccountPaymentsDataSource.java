@@ -23,4 +23,9 @@ public class ResumenVentasCurrentAccountPaymentsDataSource extends
 	protected String getDSWhereClause() {
 		return " AND trxtype = 'PCA' ";
 	}
+	
+	@Override
+	protected String getDSDataTable(){
+		return "v_dailysales_current_account_payments";
+	}
 }

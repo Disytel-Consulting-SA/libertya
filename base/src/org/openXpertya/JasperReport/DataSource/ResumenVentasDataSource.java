@@ -63,7 +63,7 @@ public abstract class ResumenVentasDataSource extends QueryDataSource {
 	protected String getQuery() {
 		String groupFields = getGroupFields();
 		StringBuffer sql = new StringBuffer(
-				"SELECT "+groupFields+", sum(amount) as amount FROM (SELECT s.* FROM v_dailysales as s INNER JOIN c_invoice as i on i.c_invoice_id = s.c_invoice_id INNER JOIN c_doctype as dt on dt.c_doctype_id = i.c_doctypetarget_id WHERE s.ad_client_id = ? AND (i.docstatus IN ('CL','CO') OR (i.docstatus IN ('VO','RE') AND (s.isfiscal is null OR s.isfiscal = 'N' OR (s.isfiscal = 'Y' AND s.fiscalalreadyprinted = 'Y')))) AND s.ad_org_id = ? AND s.issotrx = 'Y' AND dt.doctypekey not in ('RTR', 'RTI', 'RCR', 'RCI') "
+				"SELECT "+groupFields+", sum(amount) as amount FROM (SELECT s.* FROM "+getDSDataTable()+" as s INNER JOIN c_invoice as i on i.c_invoice_id = s.c_invoice_id INNER JOIN c_doctype as dt on dt.c_doctype_id = i.c_doctypetarget_id WHERE s.ad_client_id = ? AND (i.docstatus IN ('CL','CO') OR (i.docstatus IN ('VO','RE') AND (s.isfiscal is null OR s.isfiscal = 'N' OR (s.isfiscal = 'Y' AND s.fiscalalreadyprinted = 'Y')))) AND s.ad_org_id = ? AND s.issotrx = 'Y' AND dt.doctypekey not in ('RTR', 'RTI', 'RCR', 'RCI') "
 						+ getPOSWhereClause()
 						+ getUserWhereClause()
 						+ getDateWhereClause()
@@ -193,6 +193,13 @@ public abstract class ResumenVentasDataSource extends QueryDataSource {
 	 */
 	protected String getDebitsNotesFilter(){
 		return " AND (s.trxtype = 'ND' OR EXISTS (SELECT inv.c_invoice_id FROM c_invoice inv INNER JOIN c_doctype doc ON doc.c_doctype_id = inv.c_doctypetarget_id WHERE s.c_invoice_id = inv.c_invoice_id AND position('CDN' in doc.doctypekey) = 1))";
+	}
+	
+	/**
+	 * @return tabla data source donde obtener la información
+	 */
+	protected String getDSDataTable(){
+		return "v_dailysales";
 	}
 	
 	/**
