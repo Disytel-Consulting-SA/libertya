@@ -4941,7 +4941,7 @@ public class MInvoice extends X_C_Invoice implements DocAction {
 
 	public BigDecimal getTotalLinesNet() {
 		BigDecimal total = Env.ZERO;
-		for (MInvoiceLine invoiceLine : getLines()) {
+		for (MInvoiceLine invoiceLine : getLines(true)) {
 			// Total de líneas sin impuestos
 			total = total.add(invoiceLine.getTotalPriceEnteredNet());	
 		}
@@ -4950,7 +4950,7 @@ public class MInvoice extends X_C_Invoice implements DocAction {
 	
 	public BigDecimal getTotalLinesNetPerceptionIncluded() {
 		BigDecimal total = Env.ZERO;
-		for (MInvoiceLine invoiceLine : getLines()) {
+		for (MInvoiceLine invoiceLine : getLines(true)) {
 			// Total de líneas sin impuestos
 			total = total.add(invoiceLine.getLineNetAmount());
 		}
@@ -4959,7 +4959,7 @@ public class MInvoice extends X_C_Invoice implements DocAction {
 
 	public BigDecimal getTotalLinesNetWithoutDocumentDiscount() {
 		BigDecimal total = Env.ZERO;
-		for (MInvoiceLine invoiceLine : getLines()) {
+		for (MInvoiceLine invoiceLine : getLines(true)) {
 			// Total de líneas sin impuestos
 			total = total.add(invoiceLine.getTotalPriceEnteredNet()).subtract(
 					invoiceLine.getTotalDocumentDiscountUnityAmtNet());
@@ -4969,7 +4969,7 @@ public class MInvoice extends X_C_Invoice implements DocAction {
 	
 	public BigDecimal getTotalLinesNetPerceptionIncludedWithoutDocumentDiscount() {
 		BigDecimal total = Env.ZERO;
-		for (MInvoiceLine invoiceLine : getLines()) {
+		for (MInvoiceLine invoiceLine : getLines(true)) {
 			// Total de líneas sin impuestos
 			total = total.add(invoiceLine.getLineNetAmount()).subtract(
 					invoiceLine.getTotalDocumentDiscountUnityAmtNet());
