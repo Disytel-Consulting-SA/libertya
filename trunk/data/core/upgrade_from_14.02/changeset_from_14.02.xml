@@ -40,11 +40,16 @@ Ejemplos de cambios
     <!-- Directorio origen donde se encuentran los archivos -->
 	<property name="SRC_DIR" value=""/>
     	
+    <!-- ==================== -->
     <!-- TARGET DE INVOCACION -->
+    <!-- ==================== -->
     <target name="deploy" description="Actualización de archivos a instalar">
         
 		<!-- Nomina de cambios a continuación -->
 		
+		<!-- 20140414-0953 Script para simplificar la recuperación del log de replicacion actual -->
+		<copy file="${SRC_DIR}/currentLog.sh" todir="${OXP_HOME}/utils/replicacion" overwrite="yes" />
+
        
     </target>
     
