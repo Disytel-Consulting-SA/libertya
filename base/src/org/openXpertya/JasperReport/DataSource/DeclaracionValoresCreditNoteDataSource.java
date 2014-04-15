@@ -31,4 +31,8 @@ public class DeclaracionValoresCreditNoteDataSource extends
 		return "'CR'";
 	}
 
+	@Override
+	protected String getDSDataTable(){
+		return "c_pos_declaracionvalores_credit";
+	}
 }

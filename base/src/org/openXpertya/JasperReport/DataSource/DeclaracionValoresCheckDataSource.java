@@ -31,4 +31,8 @@ public class DeclaracionValoresCheckDataSource extends
 		return "'K'";
 	}
 
+	@Override
+	protected String getDSDataTable(){
+		return "c_pos_declaracionvalores_payments";
+	}
 }

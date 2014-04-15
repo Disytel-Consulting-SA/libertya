@@ -31,4 +31,8 @@ public class DeclaracionValoresTransferDataSource extends
 		return "'A'";
 	}
 
+	@Override
+	protected String getDSDataTable(){
+		return "c_pos_declaracionvalores_payments";
+	}
 }

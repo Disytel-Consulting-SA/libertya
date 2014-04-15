@@ -31,4 +31,8 @@ public class DeclaracionValoresVentasDataSource extends
 		return "'ARI'";
 	}
 
+	@Override
+	protected String getDSDataTable(){
+		return "c_pos_declaracionvalores_ventas";
+	}
 }

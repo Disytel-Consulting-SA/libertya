@@ -36,4 +36,8 @@ public class DeclaracionValoresVoidedDocumentsDataSource extends
 		return getStdWhereClauseParams();
 	}
 
+	@Override
+	protected String getDSDataTable(){
+		return "c_pos_declaracionvalores_voided";
+	}
 }
