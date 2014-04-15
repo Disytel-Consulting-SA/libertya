@@ -813,10 +813,10 @@ public class FiscalDocumentPrint {
 				observationsOrdered.add(observation);
 			}
 		}
-		// Si la cantidad de observaciones no llega a 10, agrego los guiones
-		// FIXME 10 se toma como límite de cantidad de leyendas al pie del
+		// Si la cantidad de observaciones no llega a 5, agrego los guiones
+		// FIXME 5 se toma como límite de cantidad de leyendas al pie del
 		// ticket, pueden ser menos o más dependiendo del controlador fiscal
-		for (int i = observationsOrdered.size(); i <= 10; i++){
+		for (int i = observationsOrdered.size(); i < 5; i++){
 			observationsOrdered.add("-");
 		}
 		document.setFooterObservations(observationsOrdered);
