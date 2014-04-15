@@ -832,3 +832,9 @@ SELECT 'PCA'::character varying AS trxtype, pjp.ad_client_id, pjp.ad_org_id,
    LEFT JOIN c_doctype dt ON cc.c_doctypetarget_id = dt.c_doctype_id
   WHERE date_trunc('day'::text, i.dateacct) <> date_trunc('day'::text, pjp.allocationdateacct::timestamp with time zone) AND i.initialcurrentaccountamt > 0::numeric AND hdr.isactive = 'Y'::bpchar AND ((dtc.docbasetype <> ALL (ARRAY['ARC'::bpchar, 'APC'::bpchar])) OR (dtc.docbasetype = ANY (ARRAY['ARC'::bpchar, 'APC'::bpchar])) AND pjp.c_invoice_credit_id IS NOT NULL);
 ALTER TABLE v_dailysales_current_account_payments OWNER TO libertya;
+
+--20140414-2315 Incorporación de columna c_elementvalue_to_id a la tabla t_acct_balance.
+update ad_system set dummy = (SELECT addcolumnifnotexists('t_acct_balance','c_elementvalue_to_id', 'integer'));
+
+--20140414-2315 Incorporación de columna c_elementvalue_to_id a la tabla T_SumsAndBalance.
+update ad_system set dummy = (SELECT addcolumnifnotexists('T_SumsAndBalance','c_elementvalue_to_id', 'integer'));

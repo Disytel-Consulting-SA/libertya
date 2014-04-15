@@ -4,6 +4,7 @@ import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.Map;
@@ -21,6 +22,9 @@ public class AccountsHierarchicalReport extends SvrProcess {
 	protected Integer    p_AD_Org_ID = null;
 	/** Organización a consultar */
 	protected Integer    p_C_ElementValue_ID = null;
+	
+	/** Organizacion a consultar (hasta)*/
+	protected Integer    p_C_ElementValue_To_ID = null;
 
 	/** Subindice de ordenamiento de los datos del reporte */
 	private int subindex = 0;
@@ -29,6 +33,9 @@ public class AccountsHierarchicalReport extends SvrProcess {
 	
 	/** Almacena el siguiente código interno a utilizar para un hijo de un nodo */
 	private Map<Integer,BigInteger> nodeChildCode = new HashMap<Integer,BigInteger>();
+	
+	/** Lista de Elements Values */
+	protected ArrayList<Integer> listElementValueId;
 	
 	@Override
 	protected void prepare() {
@@ -41,10 +48,15 @@ public class AccountsHierarchicalReport extends SvrProcess {
         	else if (name.equalsIgnoreCase( "AD_Org_ID" )) {
         		BigDecimal tmp = ( BigDecimal )para[ i ].getParameter();
         		p_AD_Org_ID = tmp == null ? null : tmp.intValue();
-        	} else if (name.equalsIgnoreCase( "C_ElementValue_ID" )) {
+        	} else if (name.equalsIgnoreCase( "C_ElementValue_ID" )) { 
            		BigDecimal tmp = ( BigDecimal )para[ i ].getParameter();
            		p_C_ElementValue_ID = tmp == null ? null : tmp.intValue();
-        	} else if (loadParameter(name, para[i])) ;
+        	} else if (name.equals("C_ElementValue_To_ID"))	{ 
+    			BigDecimal tmp = ( BigDecimal )para[ i ].getParameter();
+           		p_C_ElementValue_To_ID = tmp == null ? null : tmp.intValue();
+    		}
+        	
+        	else if (loadParameter(name, para[i])) ; 
         	   // Carga de párametro en una subclase.
         	  else {	
                 log.log( Level.SEVERE,"prepare - Unknown Parameter: " + name );
@@ -85,11 +97,15 @@ public class AccountsHierarchicalReport extends SvrProcess {
 		// Se carga el árbol completo y se obtiene el nodo raíz.
 		MTree mTree = new MTree(getCtx(), treeID, false,true, get_TrxName());
 		MTreeNode rootNode = mTree.getRoot();
+		
+		// Se inserta p_C_ElementValue_ID en lista de Elements Values.
+		initializeListElementValueID();
+		
 		// Si se especificó un elemento como filtro, entonces el nodo raíz es el que contiene
 		// este elemento parámetro.
-		if (p_C_ElementValue_ID != null)
+		if (p_C_ElementValue_ID != null && p_C_ElementValue_To_ID == null)
 			rootNode = rootNode.findNode(p_C_ElementValue_ID);
-		
+	
 		// A partir del nodo raíz se efectura un Recorrido en Pre Orden para obtner una
 		// enumeración de los nodos adecuada para la creación de las líneas del reporte.
 		Enumeration nodes = rootNode.preorderEnumeration(); 
@@ -98,12 +114,30 @@ public class AccountsHierarchicalReport extends SvrProcess {
 		initLevel = rootNode.getLevel(); 
 		for (; nodes.hasMoreElements() ;) {
 			MTreeNode node = (MTreeNode)nodes.nextElement();
+			// Si se aplico rango y el nodo NO esta dentro de este 
+			if (rangeApplied() &&  !(nodeInRange(node.getNode_ID()))){
+				// Debo hacer getHierarchicalCode para no perder el codigo de jerarquia.
+				getHierarchicalCode(node);    
+				continue;
+	        }
 			createNodeAccountLine(node);
 		}
-		
 		return null;
 	}
 
+	private boolean rangeApplied(){
+		return (p_C_ElementValue_ID != null && p_C_ElementValue_To_ID != null);
+	}
+	
+	private boolean nodeInRange(int nodeID){
+		return (rangeApplied()) && (listElementValueId.contains(nodeID));			
+	}
+	
+	protected void initializeListElementValueID() throws Exception {
+		listElementValueId = new ArrayList<Integer>();
+		listElementValueId.add(p_C_ElementValue_ID);
+	}
+	
 	private void createNodeAccountLine(MTreeNode node) throws Exception {
 		String acctCode        = null;
 		String acctDescription = null;
@@ -142,7 +176,8 @@ public class AccountsHierarchicalReport extends SvrProcess {
 				// elemento filtro ya que luego el Engine de reporte efectua nuevamente el filtro
 				// sobre la tabla temporal, y de poner el ID del elemento original la línea será
 				// filtrada luego por el Engine.
-				p_C_ElementValue_ID != null ? p_C_ElementValue_ID : elementValueID,
+				elementValueID,
+				
 				// Elemento de Cuenta
 				ev, 
 				// Subindice de la cuenta.
@@ -241,6 +276,8 @@ public class AccountsHierarchicalReport extends SvrProcess {
 			this.hierarchicalCode = hierarchicalCode; 
 		}
 
+		
+		
 		public boolean isRoot() {
 			return elementValue == null;
 		}
