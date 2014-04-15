@@ -7,7 +7,7 @@ import java.math.*;
 import org.openXpertya.util.*;
 /** Modelo Generado por T_Acct_Balance
  *  @author Comunidad de Desarrollo Libertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
- *  @version  - 2011-09-15 17:01:17.287 */
+ *  @version  - 2014-03-12 16:09:56.329 */
 public class X_T_Acct_Balance extends org.openXpertya.model.PO
 {
 /** Constructor estándar */
@@ -47,6 +47,20 @@ public String toString()
 StringBuffer sb = new StringBuffer ("X_T_Acct_Balance[").append(getID()).append("]");
 return sb.toString();
 }
+/** Set Process Instance.
+Instance of the process */
+public void setAD_PInstance_ID (int AD_PInstance_ID)
+{
+set_Value ("AD_PInstance_ID", new Integer(AD_PInstance_ID));
+}
+/** Get Process Instance.
+Instance of the process */
+public int getAD_PInstance_ID() 
+{
+Integer ii = (Integer)get_Value("AD_PInstance_ID");
+if (ii == null) return 0;
+return ii.intValue();
+}
 /** Set Account Code */
 public void setAcct_Code (String Acct_Code)
 {
@@ -77,20 +91,6 @@ public String getAcct_Description()
 {
 return (String)get_Value("Acct_Description");
 }
-/** Set Process Instance.
-Instance of the process */
-public void setAD_PInstance_ID (int AD_PInstance_ID)
-{
-set_Value ("AD_PInstance_ID", new Integer(AD_PInstance_ID));
-}
-/** Get Process Instance.
-Instance of the process */
-public int getAD_PInstance_ID() 
-{
-Integer ii = (Integer)get_Value("AD_PInstance_ID");
-if (ii == null) return 0;
-return ii.intValue();
-}
 /** Set Balance */
 public void setBalance (BigDecimal Balance)
 {
@@ -116,6 +116,20 @@ Account Element */
 public int getC_ElementValue_ID() 
 {
 Integer ii = (Integer)get_Value("C_ElementValue_ID");
+if (ii == null) return 0;
+return ii.intValue();
+}
+/** Set C_Elementvalue_To_ID */
+public void setC_Elementvalue_To_ID (int C_Elementvalue_To_ID)
+{
+if (C_Elementvalue_To_ID <= 0) set_Value ("C_Elementvalue_To_ID", null);
+ else 
+set_Value ("C_Elementvalue_To_ID", new Integer(C_Elementvalue_To_ID));
+}
+/** Get C_Elementvalue_To_ID */
+public int getC_Elementvalue_To_ID() 
+{
+Integer ii = (Integer)get_Value("C_Elementvalue_To_ID");
 if (ii == null) return 0;
 return ii.intValue();
 }
