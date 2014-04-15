@@ -1,13 +1,14 @@
-/** Modelo Generado - NO CAMBIAR MANUALMENTE - Copyright (C) 2006 FUNDESLE */
+/** Modelo Generado - NO CAMBIAR MANUALMENTE - Disytel */
 package org.openXpertya.model;
-import java.util.*;
+import java.util.logging.Level;
+ import java.util.*;
 import java.sql.*;
 import java.math.*;
 import org.openXpertya.util.*;
 /** Modelo Generado por T_SumsAndBalance
- *  @author Comunidad de Desarrollo openXpertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
- *  @version  - 2009-06-18 14:08:53.515 */
-public class X_T_SumsAndBalance extends PO
+ *  @author Comunidad de Desarrollo Libertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
+ *  @version  - 2014-04-15 11:58:46.144 */
+public class X_T_SumsAndBalance extends org.openXpertya.model.PO
 {
 /** Constructor estándar */
 public X_T_SumsAndBalance (Properties ctx, int T_SumsAndBalance_ID, String trxName)
@@ -26,13 +27,13 @@ public X_T_SumsAndBalance (Properties ctx, ResultSet rs, String trxName)
 {
 super (ctx, rs, trxName);
 }
-/** AD_Table_ID=1000176 */
-public static final int Table_ID=1000176;
+/** AD_Table_ID */
+public static final int Table_ID = M_Table.getTableID("T_SumsAndBalance");
 
 /** TableName=T_SumsAndBalance */
 public static final String Table_Name="T_SumsAndBalance";
 
-protected static KeyNamePair Model = new KeyNamePair(1000176,"T_SumsAndBalance");
+protected static KeyNamePair Model = new KeyNamePair(Table_ID,"T_SumsAndBalance");
 protected static BigDecimal AccessLevel = new BigDecimal(3);
 
 /** Load Meta Data */
