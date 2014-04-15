@@ -199,7 +199,7 @@ public abstract class ResumenVentasDataSource extends QueryDataSource {
 	 * @return tabla data source donde obtener la información
 	 */
 	protected String getDSDataTable(){
-		return "v_dailysales";
+		return "v_dailysales_v2";
 	}
 	
 	/**
