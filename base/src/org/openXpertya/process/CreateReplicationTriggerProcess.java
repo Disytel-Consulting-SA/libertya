@@ -171,7 +171,7 @@ public class CreateReplicationTriggerProcess extends SvrProcess {
 		}
 		values.replace(values.length()-1, values.length()-1, ")");
 		
-		return count == 0 ? "()" : values.toString().substring(0, values.toString().length()-1);
+		return count == 0 ? "(-1)" : values.toString().substring(0, values.toString().length()-1);
 	}
 	
 	/**
