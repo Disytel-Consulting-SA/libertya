@@ -44,7 +44,7 @@ public abstract class DeclaracionValoresDataSource extends QueryDataSource {
 	
 	protected String getStdSelect(boolean withWhereClause){
 		String select = "SELECT " + getSelect()
-				+ " FROM c_pos_declaracionvalores_v";
+				+ " FROM "+getDSDataTable()+" as pdv";
 		if(withWhereClause){
 			select += " WHERE ";
 		}
@@ -116,6 +116,10 @@ public abstract class DeclaracionValoresDataSource extends QueryDataSource {
 		BigDecimal amt = (BigDecimal) DB.getSQLObject(getTrxName(),
 				sql.toString(), getParameters());
 		return amt == null?BigDecimal.ZERO:amt;
+	}
+	
+	protected String getDSDataTable(){
+		return "c_pos_declaracionvalores_v";
 	}
 	
 	/**
