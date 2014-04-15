@@ -52,7 +52,10 @@ Ejemplos de cambios
 	<!-- ================================ -->
 		
 		<!-- 20140414-0953 Script para simplificar la recuperación del log de replicacion actual -->
-		<copy file="${SRC_DIR}/currentLog.sh" todir="${OXP_HOME}/utils/replicacion" overwrite="yes" />
+		<copy file="${SOURCE_DIR}/currentLog.sh" todir="${TARGET_DIR}/utils/replicacion" overwrite="yes" />
+
+		<!-- 20140414-0953 Script para simplificar la recuperación del log de replicacion actual -->
+		<copy file="${SOURCE_DIR}/restartPostgres.sh" todir="${TARGET_DIR}/utils" overwrite="yes" />
 
     </target>
     
