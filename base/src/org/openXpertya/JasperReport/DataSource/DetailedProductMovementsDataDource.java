@@ -10,7 +10,6 @@ import net.sf.jasperreports.engine.JRField;
 
 import org.openXpertya.model.MRefList;
 import org.openXpertya.model.X_C_Payment;
-import org.openXpertya.model.X_M_Splitting;
 import org.openXpertya.model.X_M_Transfer;
 import org.openXpertya.util.Msg;
 
@@ -95,7 +94,7 @@ public class DetailedProductMovementsDataDource extends QueryDataSource {
 						X_M_Transfer.TRANSFERTYPE_AD_Reference_ID, strValue);
 			}
 			// Si es un fraccionamiento, el elemento de fraccionamiento
-			else if(X_M_Splitting.Table_Name.equalsIgnoreCase(tableName)){
+			else if(strValue.endsWith("_ID")){
 				fieldValue = Msg.getElement(getCtx(), strValue);
 			}
 		}
