@@ -5,6 +5,11 @@ import java.util.HashMap;
 import java.util.logging.Level;
 
 import org.openXpertya.model.MChangeLog;
+import org.openXpertya.model.X_C_Location;
+import org.openXpertya.model.X_C_ValidCombination;
+import org.openXpertya.model.X_M_AttributeSetInstance;
+import org.openXpertya.model.X_M_Locator;
+import org.openXpertya.model.X_S_ResourceAssignment;
 import org.openXpertya.plugin.install.ChangeLogElement;
 import org.openXpertya.util.DB;
 import org.openXpertya.util.DisplayType;
@@ -97,7 +102,23 @@ public class ReplicationBuilderWS extends ReplicationBuilder {
 						}
 						// Las columnas de tipo Cuenta referencian siempre a una entrada dentro de C_ValidCombination
 						if (DisplayType.Account == element.getAD_Reference_ID()) {
-							tableName = "C_ValidCombination";
+							tableName = X_C_ValidCombination.Table_Name;
+						}
+						// Las columnas de tipo Locator referencia siempre a una entrada dentro de M_Locator 
+						else if (DisplayType.Locator == element.getAD_Reference_ID()) {
+							tableName = X_M_Locator.Table_Name; 
+						}
+						// Las columnas de tipo Location referencia siempre a una entrada dentro de C_Location 
+						else if (DisplayType.Location == element.getAD_Reference_ID()) {
+							tableName = X_C_Location.Table_Name;
+						}
+						// Las columnas de tipo Assignment referencia siempre a una entrada dentro de S_ResourceAssignment 
+						else if (DisplayType.Assignment == element.getAD_Reference_ID()) {
+							tableName = X_S_ResourceAssignment.Table_Name;
+						}
+						// Las columnas de tipo PAttribute referencia siempre a una entrada dentro de M_AttributeSetInstance
+						else if (DisplayType.PAttribute == element.getAD_Reference_ID()) {
+							tableName = X_M_AttributeSetInstance.Table_Name;
 						}
 						
 						/**
