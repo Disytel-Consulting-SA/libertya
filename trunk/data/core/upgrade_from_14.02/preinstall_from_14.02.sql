@@ -1430,3 +1430,7 @@ CREATE OR REPLACE VIEW v_product_movements_detailed AS
    LEFT JOIN c_invoice i ON i.c_invoice_id = t.c_invoice_id;
 
 ALTER TABLE v_product_movements_detailed OWNER TO libertya;
+
+-- 20140424-0952 Indice faltante en tabla de eliminiacion de registros para replicación
+DROP INDEX IF EXISTS ad_changelog_replication_retrieveuid;
+CREATE INDEX ad_changelog_replication_retrieveuid ON ad_changelog_replication USING btree (retrieveuid );
