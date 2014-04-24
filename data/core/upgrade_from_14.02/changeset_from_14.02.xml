@@ -59,7 +59,10 @@ Ejemplos de cambios
 
 		<!-- 20140424-1435 CallClass ahora utiliza pasaje de parametros dinamico -->
 		<copy file="${SOURCE_DIR}/CallClass.sh" todir="${TARGET_DIR}/utils" overwrite="yes" />
-		
+
+		<!-- 20140424-1532 PluginInstaller ahora utiliza pasaje de parametros dinamico -->
+		<copy file="${SOURCE_DIR}/PluginInstaller.sh" todir="${TARGET_DIR}/utils" overwrite="yes" />
+				
     </target>
     
 </project>
