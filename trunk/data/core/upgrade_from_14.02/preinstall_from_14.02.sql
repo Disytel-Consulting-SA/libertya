@@ -1350,10 +1350,6 @@ CREATE OR REPLACE VIEW v_dailysales_v2 AS
 ALTER TABLE v_dailysales_v2 OWNER TO libertya;
 
 --20140423-0030 Incorporación de cambio de artículo a la vista de movimientos detallado de artículos
--- View: v_product_movements_detailed
-
--- DROP VIEW v_product_movements_detailed;
-
 CREATE OR REPLACE VIEW v_product_movements_detailed AS 
  SELECT t.movement_table, t.ad_client_id, t.ad_org_id, t.m_locator_id, w.m_warehouse_id, w.value AS warehouse_value, w.name AS warehouse_name, t.receiptvalue, t.movementdate, t.doctypename, t.documentno, t.docstatus, t.m_product_id, t.product_value, t.product_name, t.qty, t.c_invoice_id, i.documentno AS invoice_documentno
    FROM (        (        (        (         SELECT 'M_InOut' AS movement_table, t.ad_client_id, t.ad_org_id, t.m_locator_id, 
