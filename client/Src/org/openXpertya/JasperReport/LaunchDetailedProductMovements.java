@@ -87,9 +87,11 @@ public class LaunchDetailedProductMovements extends JasperReportLaunch {
 	protected BigDecimal getInitialBalance(){
 		BigDecimal balance = BigDecimal.ZERO;
 		if(getDateFrom() != null){
-			String sql = "select sum(qty * (CASE WHEN receiptvalue = 'Y' THEN 1 ELSE -1 END)) as balance " +
-						 "from v_product_movements_detailed " +
-						 "where m_product_id = ? AND m_warehouse_id = ? AND docstatus IN ('CO','CL') AND date_trunc('day',movementdate) < date_trunc('day',?::date)";
+			String sql = "select coalesce(sum(movementqty),0.00) as balance " +
+						 "from m_transaction t " +
+						 "inner join m_locator l on l.m_locator_id = t.m_locator_id " +
+						 "inner join m_warehouse w on w.m_warehouse_id = l.m_warehouse_id " +
+						 "where m_product_id = ? and w.m_warehouse_id = ? AND movementdate::date < ?::date";
 			PreparedStatement ps = null;
 			ResultSet rs = null;
 			try {
