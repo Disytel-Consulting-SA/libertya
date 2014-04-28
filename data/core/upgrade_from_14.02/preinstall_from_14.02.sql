@@ -1437,3 +1437,6 @@ CREATE INDEX ad_changelog_replication_retrieveuid ON ad_changelog_replication US
 
 --20140428-0900 Incorporación de nueva columna para configurar artículos inventariados
 update ad_system set dummy = (SELECT addcolumnifnotexists('M_Product','isinventoried', 'character(1) NOT NULL DEFAULT ''Y''::bpchar'));
+
+--20140428-1900 Incorporación de nueva columna para omitir las acciones de cierre de depósito como el cambio de fecha a la fecha actual y la validación del cierre abierto para el día actual
+update ad_system set dummy = (SELECT addcolumnifnotexists('C_DocType','iswarehouseclosurecontrol', 'character(1) NOT NULL DEFAULT ''Y''::bpchar'));

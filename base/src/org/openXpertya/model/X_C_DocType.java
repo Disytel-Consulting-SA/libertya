@@ -7,7 +7,7 @@ import java.math.*;
 import org.openXpertya.util.*;
 /** Modelo Generado por C_DocType
  *  @author Comunidad de Desarrollo Libertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
- *  @version  - 2014-02-04 10:54:05.041 */
+ *  @version  - 2014-04-28 19:24:56.408 */
 public class X_C_DocType extends org.openXpertya.model.PO
 {
 /** Constructor estándar */
@@ -45,6 +45,7 @@ setIsPrintPreview (true);	// Y
 setIsShipConfirm (false);
 setIsSOTrx (false);
 setIsSplitWhenDifference (false);	// N
+setIsWarehouseClosureControl (false);
 setLinesCountMax (0);
 setName (null);
 setPOSEnableDue (false);
@@ -1057,6 +1058,22 @@ Split document when there is a difference */
 public boolean isSplitWhenDifference() 
 {
 Object oo = get_Value("IsSplitWhenDifference");
+if (oo != null) 
+{
+ if (oo instanceof Boolean) return ((Boolean)oo).booleanValue();
+ return "Y".equals(oo);
+}
+return false;
+}
+/** Set Warehouse Closure Control */
+public void setIsWarehouseClosureControl (boolean IsWarehouseClosureControl)
+{
+set_Value ("IsWarehouseClosureControl", new Boolean(IsWarehouseClosureControl));
+}
+/** Get Warehouse Closure Control */
+public boolean isWarehouseClosureControl() 
+{
+Object oo = get_Value("IsWarehouseClosureControl");
 if (oo != null) 
 {
  if (oo instanceof Boolean) return ((Boolean)oo).booleanValue();

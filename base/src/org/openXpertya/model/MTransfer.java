@@ -398,12 +398,15 @@ public class MTransfer extends X_M_Transfer implements DocAction {
 			return STATUS_Invalid;
 		}
 		
+		MDocType docType = MDocType.get(getCtx(), getC_DocType_ID());
+		
 		// Si la fecha de la transferencia es menor a la fecha actual, se debe actualizar
 		// la fecha de la transferencia si:
 		// 1) Es una transferencia entrante, o
 		// 2) Es una transferencia saliente y está habilitado el control de cierres de
 		//    almacenes.
-		if (getDateTrx().compareTo(Env.getDate()) < 0
+		if (docType.isWarehouseClosureControl()
+				&& getDateTrx().compareTo(Env.getDate()) < 0
 				&& MWarehouseClose.isWarehouseCloseControlActivated()
 				&& !MWarehouseClose.existsWarehouseCloseInProgress(getCtx(),
 						isOutgoing() ? getM_Warehouse_ID()
