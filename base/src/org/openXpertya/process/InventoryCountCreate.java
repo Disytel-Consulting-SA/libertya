@@ -177,7 +177,7 @@ public class InventoryCountCreate extends SvrProcess {
         									+ " 		INNER JOIN M_Product_Category pc ON (pc.M_Product_Category_ID=p.M_Product_Category_ID) "
         									+ " 		LEFT JOIN M_Product_Gamas pg ON (pg.M_Product_Gamas_ID=pc.M_Product_Gamas_ID) "
         									+ " 		LEFT JOIN M_Product_Lines pl ON (pl.M_Product_Lines_ID=pg.M_Product_Lines_ID) "
-        									+ "			WHERE p.IsActive='Y' AND p.IsStocked='Y' AND p.ProductType='I' ");
+        									+ "			WHERE p.IsActive='Y' AND p.IsStocked='Y' AND p.ProductType='I' AND p.IsInventoried = 'Y' ");
         
         if( (p_ProductValue != null) && ( (p_ProductValue.trim().length() == 0) || p_ProductValue.equals( "%" ))) {
             p_ProductValue = null;
