@@ -12,6 +12,7 @@ import org.openXpertya.model.X_C_BPartner_Padron_BsAs;
 import org.openXpertya.util.CPreparedStatement;
 import org.openXpertya.util.DB;
 import org.openXpertya.util.Env;
+import org.openXpertya.util.Util;
 
 
 public class ImportPadronBsAsFromCopy extends SvrProcess {
@@ -120,7 +121,7 @@ public class ImportPadronBsAsFromCopy extends SvrProcess {
 		 * El nombre de AD_Preference es PathPadronCSV
 		 */
 		String preference = MPreference.searchCustomPreferenceValue("PathPadronCSV", getAD_Client_ID(), Env.getAD_Org_ID(getCtx()),Env.getAD_User_ID(getCtx()), true);
-		if(preference == null){
+		if(Util.isEmpty(preference, true)){
 			throw new IllegalArgumentException( "@PathPadronCSVNotFound@" ); 
 			//Error al cargar la preferencia "PathPadronCSV"
 		}
@@ -132,7 +133,7 @@ public class ImportPadronBsAsFromCopy extends SvrProcess {
 		 * El nombre de AD_Preference es SeparadorDeCampoEnCSVPadron
 		 */
 		String preference = MPreference.searchCustomPreferenceValue("SeparadorDeCampoEnCSVPadron", getAD_Client_ID(), Env.getAD_Org_ID(getCtx()),Env.getAD_User_ID(getCtx()), true);
-		if(preference == null){
+		if(Util.isEmpty(preference, true)){
 			throw new IllegalArgumentException( "@SeparadorDeCampoEnCSVPadronNotFound@" ); 
 			//Error al cargar la preferencia "SeparadorDeCampoEnCSVPadron"
 		}
