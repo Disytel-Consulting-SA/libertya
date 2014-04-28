@@ -1434,3 +1434,6 @@ ALTER TABLE v_product_movements_detailed OWNER TO libertya;
 -- 20140424-0952 Indice faltante en tabla de eliminiacion de registros para replicación
 DROP INDEX IF EXISTS ad_changelog_replication_retrieveuid;
 CREATE INDEX ad_changelog_replication_retrieveuid ON ad_changelog_replication USING btree (retrieveuid );
+
+--20140428-0900 Incorporación de nueva columna para configurar artículos inventariados
+update ad_system set dummy = (SELECT addcolumnifnotexists('M_Product','isinventoried', 'character(1) NOT NULL DEFAULT ''Y''::bpchar'));

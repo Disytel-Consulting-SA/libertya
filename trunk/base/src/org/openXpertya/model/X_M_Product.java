@@ -7,7 +7,7 @@ import java.math.*;
 import org.openXpertya.util.*;
 /** Modelo Generado por M_Product
  *  @author Comunidad de Desarrollo Libertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
- *  @version  - 2013-07-10 15:52:17.595 */
+ *  @version  - 2014-04-28 08:51:00.194 */
 public class X_M_Product extends org.openXpertya.model.PO
 {
 /** Constructor estándar */
@@ -22,6 +22,7 @@ setC_TaxCategory_ID (0);
 setC_UOM_ID (0);
 setIsBOM (false);	// N
 setIsDropShip (false);
+setIsInventoried (false);
 setIsInvoicePrintDetails (false);
 setIsPickListPrintDetails (false);
 setIsPurchased (true);	// Y
@@ -431,6 +432,24 @@ set_Value ("IsHelp", new Boolean(IsHelp));
 public boolean isHelp() 
 {
 Object oo = get_Value("IsHelp");
+if (oo != null) 
+{
+ if (oo instanceof Boolean) return ((Boolean)oo).booleanValue();
+ return "Y".equals(oo);
+}
+return false;
+}
+/** Set Is Inventoried.
+Allow include this product in an inventory count generation */
+public void setIsInventoried (boolean IsInventoried)
+{
+set_Value ("IsInventoried", new Boolean(IsInventoried));
+}
+/** Get Is Inventoried.
+Allow include this product in an inventory count generation */
+public boolean isInventoried() 
+{
+Object oo = get_Value("IsInventoried");
 if (oo != null) 
 {
  if (oo instanceof Boolean) return ((Boolean)oo).booleanValue();
