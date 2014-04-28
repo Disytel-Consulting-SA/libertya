@@ -380,27 +380,37 @@ public class MInventory extends X_M_Inventory implements DocAction {
 
     public String prepareIt() {
         log.info( toString());
+        log.printDebug("MInventory.prepareIt()", "Init Model");
         m_processMsg = ModelValidationEngine.get().fireDocValidate( this,ModelValidator.TIMING_BEFORE_PREPARE );
 
         if( m_processMsg != null ) {
             return DocAction.STATUS_Invalid;
         }
 
+        MDocType docType = MDocType.get(getCtx(), getC_DocType_ID());
+        
+        log.printDebug("MInventory.prepareIt()", "End Model");
         // Cuando está activado el control de cierres de almacenes se actualiza la 
         // fecha en caso de que la misma sea menor a la fecha actual. Esto es necesario 
         // para que se pueda completar el documento pasando la validación de cierre. 
         // (además es lógico que la fecha real del inventario sea igual a la fecha 
         // en que se completó el mismo, y no a la fecha en que se creó).
-        if (MWarehouseClose.isWarehouseCloseControlActivated() 
+        log.printDebug("MInventory.prepareIt()", "Init Warehouse Closure control");
+        if (docType.isWarehouseClosureControl()
+        		&& MWarehouseClose.isWarehouseCloseControlActivated() 
         		&& getMovementDate().compareTo(Env.getDate()) < 0
         		&& !MWarehouseClose.existsWarehouseCloseInProgress(getCtx(),
 						getM_Warehouse_ID(), get_TrxName())) {
         	setMovementDate(Env.getDate());
         }
         
+        log.printDebug("MInventory.prepareIt()", "End Warehouse Closure control");
         // Std Period open?
 
-        if( !MPeriod.isOpen( getCtx(),getMovementDate(),MDocType.DOCBASETYPE_MaterialPhysicalInventory,getM_Warehouse_ID() )) {
+        log.printDebug("MInventory.prepareIt()", "Init Period");
+		if (!MPeriod.isOpen(getCtx(), getMovementDate(),
+				MDocType.DOCBASETYPE_MaterialPhysicalInventory,
+				getM_Warehouse_ID(), !docType.isWarehouseClosureControl())) {
             if (MWarehouseClose.isWarehouseCloseControlActivated()) {
             	m_processMsg = "@PeriodClosedOrWarehouseClosed@";
             } else {
@@ -408,7 +418,7 @@ public class MInventory extends X_M_Inventory implements DocAction {
             }
             return DocAction.STATUS_Invalid;
         }
-
+        log.printDebug("MInventory.prepareIt()", "End Period");
         // -----------------------------------------------------------------------
 		// IMPORTANTE: Estas porciones de código se deben dejar antes de las
 		// validaciones de stock 
@@ -569,11 +579,13 @@ public class MInventory extends X_M_Inventory implements DocAction {
         // Re-Check
 
     	if (!m_justPrepared	&& !existsJustPreparedDoc()) {
+    		log.printDebug("MInventory.completeIt()", "Init Re-PrepareIt");
             String status = prepareIt();
 
             if( !DocAction.STATUS_InProgress.equals( status )) {
                 return status;
             }
+            log.printDebug("MInventory.completeIt()", "End Re-PrepareIt");
         }
 
         // Implicit Approval
@@ -594,9 +606,15 @@ public class MInventory extends X_M_Inventory implements DocAction {
         BigDecimal qtyOrdered = BigDecimal.ZERO;
 		BigDecimal qtyReserved = BigDecimal.ZERO;
 		BigDecimal qtyOnHand = BigDecimal.ZERO;
+		PreparedStatement ps = DB.prepareStatement("select coalesce(qtyonhand,0) as qtyonhand from m_storage where m_locator_id = ? and m_product_id = ? and M_AttributeSetInstance_ID = ?", get_TrxName());
+		ResultSet rs = null;
+		PreparedStatement psStorageUpdate = DB.prepareStatement("update m_storage set qtyonhand = ?, DateLastInventory = ? where m_locator_id = ? and m_product_id = ? and M_AttributeSetInstance_ID = ?", get_TrxName());
+		boolean existsStorage = false;
 		List<MStorage> storages;
+		log.printDebug("MInventory.completeIt()", "Init All lines");
         for( int i = 0;i < lines.length;i++ ) {
             line = lines[ i ];
+        	log.printDebug("MInventory.completeIt()", "Init Line "+line.getLine());
 
             if( !line.isActive()) {
                 continue;
@@ -663,53 +681,112 @@ public class MInventory extends X_M_Inventory implements DocAction {
                 // Si no hay que sobreescribir el stock, entonces se hace por la diferencia
             	
             	if(!X_M_InventoryLine.INVENTORYTYPE_OverwriteInventory.equals(line.getInventoryType())){
-	            	
-	            	// Storage
-	
-	                storage = MStorage.get( getCtx(),line.getM_Locator_ID(),line.getM_Product_ID(),line.getM_AttributeSetInstance_ID(),get_TrxName());
-	
-	                if( storage == null ) {
-	                    storage = MStorage.getCreate( getCtx(),line.getM_Locator_ID(),line.getM_Product_ID(),line.getM_AttributeSetInstance_ID(),get_TrxName());
-	                }
-	
-	                //
-	
-	                qtyDiff = line.getQtyInternalUse().negate();
-	
-	                if( Env.ZERO.compareTo( qtyDiff ) == 0 ) {
-	                    qtyDiff = line.getQtyCount().subtract( line.getQtyBook());
-	                }
-	
-	                qtyNew = storage.getQtyOnHand().add( qtyDiff );
-	
-	                log.fine( "Count=" + line.getQtyCount() + ",Book=" + line.getQtyBook() + ", Difference=" + qtyDiff + " - OnHand=" + storage.getQtyOnHand());
-	
-	                //
-	
-	                storage.setQtyOnHand( qtyNew );
-	                storage.setDateLastInventory( getMovementDate());
-	
-	                if( !storage.save( get_TrxName())) {
-	                    m_processMsg = "Storage not updated";
-	
-	                    return DocAction.STATUS_Invalid;
-	                }
-	
-	                log.fine( storage.toString());
-	
-	                // Transaction
-	
-	                trx = new MTransaction( getCtx(),MTransaction.MOVEMENTTYPE_InventoryIn,line.getM_Locator_ID(),line.getM_Product_ID(),line.getM_AttributeSetInstance_ID(),qtyDiff,getMovementDate(),get_TrxName());
-	                trx.setM_InventoryLine_ID( line.getM_InventoryLine_ID());
-	                trx.setClientOrg(this);
-	                trx.setDescription("MInventory.complete() - 1st Transaction Save - Transaction of MTransaction "
-							+ trx.get_TrxName());
-	                
-	                if( !trx.save()) {
-	                    m_processMsg = "Transaction not inserted";
-	
-	                    return DocAction.STATUS_Invalid;
-	                }
+            		log.printDebug("MInventory.completeIt()", "Init Search Storage");
+	            	existsStorage = false;
+            		try{
+            			ps.setInt(1, line.getM_Locator_ID());
+                		ps.setInt(2, line.getM_Product_ID());
+                		ps.setInt(3, line.getM_AttributeSetInstance_ID());
+            			rs = ps.executeQuery();
+            			if(rs.next()){
+            				qtyOnHand = rs.getBigDecimal("qtyonhand");
+            				existsStorage = true;
+            			}
+            		} catch(Exception e){
+            			qtyOnHand = BigDecimal.ZERO;
+            		}
+            		log.printDebug("MInventory.completeIt()", "End Search Storage");
+            		
+            		// Código viejo
+            		if(!existsStorage){
+            			// Storage
+                		log.printDebug("MInventory.completeIt()", "Init Create Storage");
+    	                
+                		storage = MStorage.getCreate( getCtx(),line.getM_Locator_ID(),line.getM_Product_ID(),line.getM_AttributeSetInstance_ID(),get_TrxName());
+    	                
+                		log.printDebug("MInventory.completeIt()", "End Create Storage");
+    	                //
+    	
+    	                qtyDiff = line.getQtyInternalUse().negate();
+    	
+    	                if( Env.ZERO.compareTo( qtyDiff ) == 0 ) {
+    	                    qtyDiff = line.getQtyCount().subtract( line.getQtyBook());
+    	                }
+    	
+    	                qtyNew = storage.getQtyOnHand().add( qtyDiff );
+    	
+    	                log.fine( "Count=" + line.getQtyCount() + ",Book=" + line.getQtyBook() + ", Difference=" + qtyDiff + " - OnHand=" + storage.getQtyOnHand());
+    	
+    	                storage.setQtyOnHand( qtyNew );
+    	                storage.setDateLastInventory( getMovementDate());
+    	                log.printDebug("MInventory.completeIt()", "Init Save Storage");
+    	                if( !storage.save( get_TrxName())) {
+    	                    m_processMsg = "Storage not updated";
+    	
+    	                    return DocAction.STATUS_Invalid;
+    	                }
+    	                log.printDebug("MInventory.prepareIt()", "End Save Storage");
+    	                log.fine( storage.toString());
+    	
+    	                // Transaction
+    	                log.printDebug("MInventory.completeIt()", "Init MTransaction");
+    	                trx = new MTransaction( getCtx(),MTransaction.MOVEMENTTYPE_InventoryIn,line.getM_Locator_ID(),line.getM_Product_ID(),line.getM_AttributeSetInstance_ID(),qtyDiff,getMovementDate(),get_TrxName());
+    	                trx.setM_InventoryLine_ID( line.getM_InventoryLine_ID());
+    	                trx.setClientOrg(this);
+    	                trx.setDescription("MInventory.complete() - 1st Transaction Save - Transaction of MTransaction "
+    							+ trx.get_TrxName());
+    	                
+    	                if( !trx.save()) {
+    	                    m_processMsg = "Transaction not inserted";
+    	
+    	                    return DocAction.STATUS_Invalid;
+    	                }
+    	                log.printDebug("MInventory.completeIt()", "End MTransaction");
+            		}
+            		// Código nuevo + performante
+            		else{
+            			
+    	                qtyDiff = line.getQtyInternalUse().negate();
+    	
+    	                if( Env.ZERO.compareTo( qtyDiff ) == 0 ) {
+    	                    qtyDiff = line.getQtyCount().subtract( line.getQtyBook());
+    	                }
+    	
+    	                qtyNew = qtyOnHand.add( qtyDiff );
+    	                log.printDebug("MInventory.completeIt()", "Init Save Storage");
+    	                
+    	                try{
+    	                	psStorageUpdate.setBigDecimal(1, qtyNew);
+    	                	psStorageUpdate.setTimestamp(2, getMovementDate());
+    	                	psStorageUpdate.setInt(3, line.getM_Locator_ID());
+    	                	psStorageUpdate.setInt(4, line.getM_Product_ID());
+    	                	psStorageUpdate.setInt(5, line.getM_AttributeSetInstance_ID());
+    	                	psStorageUpdate.executeUpdate();
+    	                } catch(Exception e){
+    	                	m_processMsg = "Storage not updated";
+    	                	try{
+    	                    	if(rs != null)rs.close();
+    	                    	if(ps != null)ps.close();
+    	                    	if(psStorageUpdate != null)psStorageUpdate.close();
+    	                    } catch(Exception e1){
+    	                    	e1.printStackTrace();
+    	                    }
+    	                    return DocAction.STATUS_Invalid;
+    	                }
+    	                log.printDebug("MInventory.completeIt()", "End Save Storage");
+    	                // Transaction
+    	                log.printDebug("MInventory.completeIt()", "Init MTransaction");
+    	                trx = new MTransaction( getCtx(),MTransaction.MOVEMENTTYPE_InventoryIn,line.getM_Locator_ID(),line.getM_Product_ID(),line.getM_AttributeSetInstance_ID(),qtyDiff,getMovementDate(),get_TrxName());
+    	                trx.setM_InventoryLine_ID( line.getM_InventoryLine_ID());
+    	                trx.setClientOrg(this);
+    	                trx.setDescription("MInventory.complete() - 1st Transaction Save - Transaction of MTransaction "
+    							+ trx.get_TrxName());
+    	                if( !trx.save()) {
+    	                    m_processMsg = "Transaction not inserted";
+    	                    return DocAction.STATUS_Invalid;
+    	                }
+    	                log.printDebug("MInventory.completeIt()", "End MTransaction");	
+            		}
 	            }    // Fallback
             	// Sobreescribir el stock de ese producto e instancia de atributos en esa ubicación
             	else{
@@ -784,9 +861,19 @@ public class MInventory extends X_M_Inventory implements DocAction {
             	}
             }
         }        // for all lines
-
+        
+        try{
+        	if(rs != null)rs.close();
+        	if(ps != null)ps.close();
+        	if(psStorageUpdate != null)psStorageUpdate.close();
+        } catch(Exception e1){
+        	e1.printStackTrace();
+        }
+        
+        log.printDebug("MInventory.completeIt()", "End All lines");
+        
         // User Validation
-
+        log.printDebug("MInventory.completeIt()", "Init After complete");
         String valid = ModelValidationEngine.get().fireDocValidate( this,ModelValidator.TIMING_AFTER_COMPLETE );
 
         if( valid != null ) {
@@ -794,7 +881,7 @@ public class MInventory extends X_M_Inventory implements DocAction {
 
             return DocAction.STATUS_Invalid;
         }
-
+        log.printDebug("MInventory.completeIt()", "End After complete");
         //
 
         setProcessed( true );

@@ -1374,7 +1374,7 @@ public class MInOut extends X_M_InOut implements DocAction {
         if( m_processMsg != null ) {
             return DocAction.STATUS_Invalid;
         }
-        
+        MDocType dt = MDocType.get( getCtx(),getC_DocType_ID());
         // Cuando está activado el control de cierres de almacenes y es un remito
         // de salida se actualiza la fecha en caso de que la misma sea menor a la
         // fecha actual. Esto es necesario para que se pueda completar el documento
@@ -1384,7 +1384,8 @@ public class MInOut extends X_M_InOut implements DocAction {
 		// Si existe un cierre de almacén en estado En Proceso, significa que
 		// tenemos un cierre de almacén reactivado, en ese caso no debemos
 		// modificar la fecha del comprobante
-        if (MWarehouseClose.isWarehouseCloseControlActivated() 
+        if (dt.isWarehouseClosureControl()
+        		&& MWarehouseClose.isWarehouseCloseControlActivated() 
         		&& isSOTrx() 
         		&& getMovementDate().compareTo(Env.getDate()) < 0
 				&& !MWarehouseClose.existsWarehouseCloseInProgress(getCtx(),
@@ -1393,14 +1394,12 @@ public class MInOut extends X_M_InOut implements DocAction {
         	setMovementDate(Env.getDate());
         	setDateAcct(Env.getDate());
         }
-        
-        MDocType dt = MDocType.get( getCtx(),getC_DocType_ID());
 
         // Std Period open?
 
 		if (!MPeriod.isOpen(getCtx(), getDateAcct(), dt.getDocBaseType(),
 				getM_Warehouse_ID(), 
-				isTPVInstance())) {
+				isTPVInstance() || !dt.isWarehouseClosureControl())) {
             if (MWarehouseClose.isWarehouseCloseControlActivated()) {
             	m_processMsg = "@PeriodClosedOrWarehouseClosed@";
             } else {
