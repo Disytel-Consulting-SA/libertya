@@ -396,9 +396,6 @@ public class DocumentCompleteProcess extends SvrProcess {
 		sql.append(table.getTableName());
 		sql.append(" WHERE ad_org_id = ? AND isactive = 'Y' AND docstatus IN "
 				+ getDocStatusByDocActionSetWhereClause());
-		// TODO Filtro de documentos por fecha. Hay que crear otra hash con
-		// clave tabla y valor el nombre de la columna de fecha del documento ya
-		// que las columnas de fecha tienen nombres diferentes por tabla 
 		if(table != null){
 			sql.append(getDocTypeCondition(table, generalPO));
 			sql.append(getDateCondition(table, generalPO));
