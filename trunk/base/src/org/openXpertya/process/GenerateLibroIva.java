@@ -124,7 +124,10 @@ public class GenerateLibroIva extends SvrProcess {
  			invoiceID = -1;
  			neto = new BigDecimal(0);
  			totalFacturado = new BigDecimal(0);
- 			
+ 			// Para compras se deben intercambiar los signos
+ 			Integer signOfSignInt = "V".equals(transaction)?-1:1;
+ 			BigDecimal signOfSign = new BigDecimal(signOfSignInt);
+ 			BigDecimal realSign = signOfSign;
  			while(rs.next())
  			{
  		        // cargo los datos dentro de la tabla T_LibroIVA
@@ -147,14 +150,15 @@ public class GenerateLibroIva extends SvrProcess {
  				linea.setIIBB(rs.getString("iibb"));
  				linea.setC_Categoriaiva_ID(rs.getInt("c_categoria_iva_id"));
  				linea.setcategoria_name(rs.getString("c_categoria_via_name"));
+ 				realSign = rs.getBigDecimal("signo").multiply(signOfSign);
  				// indicar neto y total unicamente en la primer linea
  				if (invoiceID != linea.getC_Invoice_ID())
  				{
- 					linea.setneto(rs.getBigDecimal("neto").multiply(rs.getBigDecimal("signo")/*.negate()*/));
- 					linea.settotalfacturado(rs.getBigDecimal("total").multiply(rs.getBigDecimal("signo")/*.negate()*/));
+ 					linea.setneto(rs.getBigDecimal("neto").multiply(realSign));
+ 					linea.settotalfacturado(rs.getBigDecimal("total").multiply(realSign));
  				}
  				linea.setitem(rs.getString("item"));
- 				linea.setImporte(rs.getBigDecimal("importe").multiply(rs.getBigDecimal("signo")/*.negate()*/));
+ 				linea.setImporte(rs.getBigDecimal("importe").multiply(realSign));
  				linea.setC_DocType_ID(rs.getInt("C_DocType_ID"));
  				linea.setDateFrom(date_from);
  				linea.setDateTo(date_to);

@@ -75,6 +75,7 @@ public class LibroIVANewDataSource implements JRDataSource {
 	private BigDecimal totalGravado;
 	private BigDecimal totalNoGravado;
 	private BigDecimal totalIVA;
+	private Integer signOfSign;
 
 	/** Utilizado para mapear los campos con las invocaciones de los metodos */
 	HashMap<String, String> methodMapper = new HashMap<String, String>();
@@ -89,6 +90,7 @@ public class LibroIVANewDataSource implements JRDataSource {
 		this.p_transactionType = p_transactionType;
 		this.p_orgID = p_OrgID;
 		this.groupCFInvoices = groupCFInvoices;
+		this.signOfSign = "V".equals(p_transactionType)?-1:1;
 
 		methodMapper.put("AD_CLIENT_ID", "getAd_client_id");
 		methodMapper.put("AD_ORG_ID", "getAd_org_id");
@@ -140,11 +142,11 @@ public class LibroIVANewDataSource implements JRDataSource {
 						+ "			ct.rate, "
 						+ "			coalesce(inv.puntodeventa,0) as puntodeventa, "
 						+ "			cdt.c_doctype_id, "
-						+ "			(currencyconvert(cit.gravado, inv.c_currency_id, 118, inv.dateacct::timestamp with time zone, inv.c_conversiontype_id, inv.ad_client_id, inv.ad_org_id) * cdt.signo::numeric)::numeric(20,2) AS netoGravado,"
-						+ "			(currencyconvert(cit.nogravado, inv.c_currency_id, 118, inv.dateacct::timestamp with time zone, inv.c_conversiontype_id, inv.ad_client_id, inv.ad_org_id) * cdt.signo::numeric)::numeric(20,2) AS netoNoGravado, "
-						+ "			(currencyconvert(inv.grandtotal, inv.c_currency_id, 118, inv.dateacct::timestamp with time zone, inv.c_conversiontype_id, inv.ad_client_id, inv.ad_org_id) * cdt.signo::numeric)::numeric(20,2) AS total, "
+						+ "			(currencyconvert(cit.gravado, inv.c_currency_id, 118, inv.dateacct::timestamp with time zone, inv.c_conversiontype_id, inv.ad_client_id, inv.ad_org_id) * cdt.signo::numeric * "+signOfSign+"::numeric)::numeric(20,2) AS netoGravado,"
+						+ "			(currencyconvert(cit.nogravado, inv.c_currency_id, 118, inv.dateacct::timestamp with time zone, inv.c_conversiontype_id, inv.ad_client_id, inv.ad_org_id) * cdt.signo::numeric * "+signOfSign+"::numeric)::numeric(20,2) AS netoNoGravado, "
+						+ "			(currencyconvert(inv.grandtotal, inv.c_currency_id, 118, inv.dateacct::timestamp with time zone, inv.c_conversiontype_id, inv.ad_client_id, inv.ad_org_id) * cdt.signo::numeric * "+signOfSign+"::numeric)::numeric(20,2) AS total, "
 						+ "			ct.c_tax_name AS item, "
-						+ "			(currencyconvert(cit.importe, inv.c_currency_id, 118, inv.dateacct::timestamp with time zone, inv.c_conversiontype_id, inv.ad_client_id, inv.ad_org_id) * cdt.signo::numeric)::numeric(20,2) AS importe "
+						+ "			(currencyconvert(cit.importe, inv.c_currency_id, 118, inv.dateacct::timestamp with time zone, inv.c_conversiontype_id, inv.ad_client_id, inv.ad_org_id) * cdt.signo::numeric * "+signOfSign+"::numeric)::numeric(20,2) AS importe "
 
 						+ "		FROM ( SELECT c_invoice.c_invoice_id, c_invoice.ad_client_id, c_invoice.ad_org_id, c_invoice.isactive, c_invoice.created, c_invoice.createdby, c_invoice.updated, c_invoice.updatedby, c_invoice.c_currency_id, c_invoice.c_conversiontype_id, c_invoice.documentno, c_invoice.c_bpartner_id, c_invoice.dateacct, c_invoice.dateinvoiced, c_invoice.totallines, c_invoice.grandtotal, c_invoice.issotrx, c_invoice.c_doctype_id, c_invoice.nombrecli, c_invoice.nroidentificcliente, c_invoice.puntodeventa "
 						+ "     	   FROM c_invoice "
@@ -601,8 +603,8 @@ public class LibroIVANewDataSource implements JRDataSource {
 			StringBuffer query = new StringBuffer(
 					"     SELECT "
 							+ "			ct.c_tax_name AS TaxName, "
-							+ "			SUM(currencyconvert(cit.importe, inv.c_currency_id, 118, inv.dateacct::timestamp with time zone, inv.c_conversiontype_id, inv.ad_client_id, inv.ad_org_id) * cdt.signo::numeric)::numeric(20,2) AS TaxAmount, "
-							+ "			SUM(currencyconvert(cit.taxbaseamt, inv.c_currency_id, 118, inv.dateacct::timestamp with time zone, inv.c_conversiontype_id, inv.ad_client_id, inv.ad_org_id) * cdt.signo::numeric)::numeric(20,2) AS TaxBaseAmount, "
+							+ "			SUM(currencyconvert(cit.importe, inv.c_currency_id, 118, inv.dateacct::timestamp with time zone, inv.c_conversiontype_id, inv.ad_client_id, inv.ad_org_id) * cdt.signo::numeric * "+signOfSign+"::numeric)::numeric(20,2) AS TaxAmount, "
+							+ "			SUM(currencyconvert(cit.taxbaseamt, inv.c_currency_id, 118, inv.dateacct::timestamp with time zone, inv.c_conversiontype_id, inv.ad_client_id, inv.ad_org_id) * cdt.signo::numeric * "+signOfSign+"::numeric)::numeric(20,2) AS TaxBaseAmount, "
 							+ "         ct.taxindicator as TaxIndicator, ct.rate as Rate, ct.sopotype as Sopotype, ct.taxtype as TaxType, c_categoria_iva_name "
 							+ "		FROM ( SELECT c_invoice.c_invoice_id, c_invoice.ad_client_id, c_invoice.ad_org_id, c_invoice.isactive, c_invoice.created, c_invoice.createdby, c_invoice.updated, c_invoice.updatedby, c_invoice.c_currency_id, c_invoice.c_conversiontype_id, c_invoice.documentno, c_invoice.c_bpartner_id, c_invoice.dateacct, c_invoice.dateinvoiced, c_invoice.totallines, c_invoice.grandtotal, c_invoice.issotrx, c_invoice.c_doctype_id "
 							+ "     	   FROM c_invoice "
