@@ -40,6 +40,7 @@ public class LibroIVADataSource extends QueryDataSource implements JRDataSource 
 	private BigDecimal totalFacturado;
 	private BigDecimal totalGravado;
 	private BigDecimal totalNoGravado;
+	private Integer signOfSign;
 	
 	public LibroIVADataSource(String trxName)
 	{
@@ -54,6 +55,7 @@ public class LibroIVADataSource extends QueryDataSource implements JRDataSource 
 		p_dateTo = dateTo;
 		p_transactionType = transactionType;
 		p_orgID = orgID;
+		signOfSign = "V".equals(p_transactionType)?-1:1;
 	}
 
 
@@ -84,10 +86,10 @@ public class LibroIVADataSource extends QueryDataSource implements JRDataSource 
              	"		cbp.taxid, " +
              	"		cbp.c_categoria_iva_id, " +
              	"		cci.c_categoria_via_name, " +
-             	"		(currencyconvert((inv.grandtotal-coalesce(taxamtsum,0)), inv.c_currency_id, " + moneda + ", inv.dateacct, c_conversiontype_id, inv.ad_client_id, inv.ad_org_id) * cdt.signo)::numeric(20,2) as neto, " +
-             	"		(currencyconvert(inv.grandtotal, inv.c_currency_id, " + moneda + ", inv.dateacct, c_conversiontype_id, inv.ad_client_id, inv.ad_org_id) * cdt.signo)::numeric(20,2) as total, " +
+             	"		(currencyconvert((inv.grandtotal-coalesce(taxamtsum,0)), inv.c_currency_id, " + moneda + ", inv.dateacct, c_conversiontype_id, inv.ad_client_id, inv.ad_org_id) * cdt.signo * "+signOfSign+")::numeric(20,2) as neto, " +
+             	"		(currencyconvert(inv.grandtotal, inv.c_currency_id, " + moneda + ", inv.dateacct, c_conversiontype_id, inv.ad_client_id, inv.ad_org_id) * cdt.signo * "+signOfSign+")::numeric(20,2) as total, " +
              	"		ct.c_tax_name as item, " +
-             	"       (currencyconvert(cit.importe, inv.c_currency_id, " + moneda + ", inv.dateacct, c_conversiontype_id, inv.ad_client_id, inv.ad_org_id) * cdt.signo)::numeric(20,2) as importe," +
+             	"       (currencyconvert(cit.importe, inv.c_currency_id, " + moneda + ", inv.dateacct, c_conversiontype_id, inv.ad_client_id, inv.ad_org_id) * cdt.signo * "+signOfSign+")::numeric(20,2) as importe," +
              	"       cdt.signo," +
              	"       cit.AD_Client_ID, " +
              	"       cbp.iibb " +
