@@ -75,6 +75,10 @@ public class MRetSchemaConfig extends X_C_RetSchema_Config {
 	protected boolean beforeSave(boolean newRecord){
 		// Si es rango, se anula el valor del campo Valor (utilizado para parámetros
 		// que solo tienen un valor.
+		if(Util.isEmpty(getParamType())){
+			setParamType(PARAMTYPE_Valor);
+			setValor("");
+		}
 		if(getParamType().equals(PARAMTYPE_Rango)) {
 			this.setValor("");
 			this.setIs_Range(true);

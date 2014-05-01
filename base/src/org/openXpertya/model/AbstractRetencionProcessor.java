@@ -290,6 +290,15 @@ public abstract class AbstractRetencionProcessor implements RetencionProcessor {
 		return (value == null ? defaultValue : value);
 	}
 	
+	protected List<String> getPadronTypesParamsValues(){
+		List<MRetSchemaConfig> params = getRetencionSchema().getPadronesList();
+		List<String> padrones = new ArrayList<String>();
+		for (MRetSchemaConfig paramPadron : params) {
+			padrones.add(paramPadron.getPadronType());
+		}
+		return padrones;
+	}
+	
 	/**
 	 * Re calcula el monto de la retención aplicando descuentos de porcentajes
 	 * de excepción asociados a la EC.
@@ -1237,6 +1246,33 @@ public abstract class AbstractRetencionProcessor implements RetencionProcessor {
 			ex.printStackTrace();
 		}
 		return total;
+	}
+	
+	/**
+	 * Devuelve el porcentaje del padrón correspondiente dependiendo los tipos
+	 * de padrón configurados, si no existe ninguno entonces el valor por
+	 * defecto parámetro
+	 * 
+	 * @param padronTypes
+	 *            tipos de padrón
+	 * @param defaultPorcentaje
+	 *            porcentaje devuelto por defecto
+	 * @return primer porcentaje de la lista de padrones parámetro o el valor
+	 *         por defecto si no encuentra ninguno
+	 */
+	protected BigDecimal getPorcentajePadron(List<String> padronTypes, BigDecimal defaultPorcentaje){
+		BigDecimal porcentaje = BigDecimal.ZERO;
+		for (int i = 0; i < padronTypes.size()
+				&& Util.isEmpty(porcentaje, true); i++) {
+			porcentaje = MBPartnerPadronBsAs.getBPartnerPerc("retencion",
+					getBPartner().getTaxID(), Env.getDate(), padronTypes.get(i),
+					getTrxName());
+		}
+		// Si no lo encuentra, entonces el valor por defecto parámetro
+		if(Util.isEmpty(porcentaje, true)){
+			porcentaje = defaultPorcentaje;
+		}
+		return porcentaje;
 	}
 
 	public void setProjectID(Integer projectID) {

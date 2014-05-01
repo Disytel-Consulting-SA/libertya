@@ -84,31 +84,50 @@ public class MRetencionSchema extends X_C_RetencionSchema {
 	 */
 	public void loadParameters() {
 		parameters = new HashMap<String,Object>();
-		
+		PreparedStatement pstmt = null;			
+		ResultSet rs = null;
+		List<MRetSchemaConfig> padronesConfigs = new ArrayList<MRetSchemaConfig>();
 		// Consulta para obtener todos los parámetros del esquema.
 		String sql =
 				" SELECT * " +
 				" FROM C_RetSchema_Config " +
-				" WHERE C_RetencionSchema_ID = ? ";
+				" WHERE C_RetencionSchema_ID = ? " +
+				" ORDER BY orden ";
 		
 		try {
 			// Se ejecuta la consulta.
-			PreparedStatement pstmt = DB.prepareStatement(sql);
+			pstmt = DB.prepareStatement(sql);
 			pstmt.setInt(1,this.getC_RetencionSchema_ID());			
-			ResultSet rs = pstmt.executeQuery();
+			rs = pstmt.executeQuery();
 			
 			while (rs.next()){
 				// Se carga cada configuración del esquema (Parámetros) 
 				MRetSchemaConfig retSchemaConfig = new MRetSchemaConfig(getCtx(), rs, get_TrxName());
-				parameters.put(retSchemaConfig.getName(), retSchemaConfig);
+				// Para la configuración de padrón puede haber más de un valor
+				if(MRetSchemaConfig.NAME_DesdePadron.equals(retSchemaConfig.getName())){
+					padronesConfigs = (List<MRetSchemaConfig>) parameters
+							.get(MRetSchemaConfig.NAME_DesdePadron);
+					if(padronesConfigs == null){
+						padronesConfigs = new ArrayList<MRetSchemaConfig>();
+					}
+					padronesConfigs.add(retSchemaConfig);
+					parameters.put(MRetSchemaConfig.NAME_DesdePadron, padronesConfigs);
+				}
+				else{
+					parameters.put(retSchemaConfig.getName(), retSchemaConfig);
+				}
 			}
 
-			if(pstmt != null) pstmt.close();
-			if(rs != null) rs.close();
-	
 		} catch (Exception ex) {
 			log.warning("Error: Loading Retencion Schema Parameters. " + ex);
 			ex.printStackTrace();
+		} finally{
+			try{
+				if(pstmt != null) pstmt.close();
+				if(rs != null) rs.close();
+			} catch(Exception e){
+				e.printStackTrace();
+			}
 		}
 	}
 	
@@ -301,4 +320,9 @@ public class MRetencionSchema extends X_C_RetencionSchema {
 		return docTypeID;
 	}
 
+	public List<MRetSchemaConfig> getPadronesList(){
+		return (List<MRetSchemaConfig>) getParameters().get(
+				MRetSchemaConfig.NAME_DesdePadron);
+	}
+	
 } // MRetencionSchema

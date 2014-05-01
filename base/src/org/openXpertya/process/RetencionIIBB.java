@@ -1,10 +1,11 @@
 package org.openXpertya.process;
 
 import java.math.BigDecimal;
+import java.util.ArrayList;
+import java.util.List;
 
 import org.openXpertya.model.AbstractRetencionProcessor;
 import org.openXpertya.model.MAllocationHdr;
-import org.openXpertya.model.MBPartner;
 import org.openXpertya.model.MDocType;
 import org.openXpertya.model.MInvoice;
 import org.openXpertya.model.MInvoiceLine;
@@ -35,8 +36,8 @@ public class RetencionIIBB extends AbstractRetencionProcessor {
 	private BigDecimal importeDeterminado = Env.ZERO;
 	/** [N] DescuentoNeto. */
 	private BigDecimal descuentoNeto = Env.ZERO;
-	/** [P] FromPadron. */
-	private String fromPadron = "N";	
+	/** [P] FromPadron. Lista de tipos de padrón ordenado por orden de aplicación */
+	private List<String> padrones = new ArrayList<String>();
 
 	private X_M_Retencion_Invoice retencion = null;
 	
@@ -71,9 +72,8 @@ public class RetencionIIBB extends AbstractRetencionProcessor {
 				getParamValueBigDecimal(MRetSchemaConfig.NAME_DescuentoNeto,
 				Env.ZERO));
 		
-		// Se obtiene el valor del parámetro Mínimo a Retener (MR)
-		setFromPadron( 
-				getParamValueString(MRetSchemaConfig.NAME_DesdePadron, "N"));			
+		// Obtiene los padrones de obtención del porcentaje ordenado por orden
+		setPadrones(getPadronTypesParamsValues());
 
 	} //loadConfig
 
@@ -128,8 +128,7 @@ public class RetencionIIBB extends AbstractRetencionProcessor {
 		BigDecimal importeDeterminado = Env.ZERO; // [ID] Importe determinado
 		BigDecimal importeRetenido = Env.ZERO;    // [IR] Importe a retener.
 		BigDecimal descuentoNeto = Env.ZERO;
-		BigDecimal saldo = Env.ZERO;
-		BigDecimal porcentajeRetencion = getPorcentajeRetencion();
+		BigDecimal saldo = Env.ZERO; 
 		BigDecimal total = getPayNetAmt();
 				
 		// Se calcula la base imponible. (el monto sujeto a la aplicación de la retención).
@@ -145,13 +144,8 @@ public class RetencionIIBB extends AbstractRetencionProcessor {
 		
 		baseImponible = baseImponible.subtract(descuentoNeto);
 		
-		if(getFromPadron().equals("S")){
-			BigDecimal porcentajePadron = MBPartner
-					.getRetencionSegunPadronBsAS(Env.getDate(), getBPartner()
-							.getTaxID(), getTrxName());
-			if ((porcentajePadron != null) && (!porcentajePadron.equals(Env.ZERO)))
-				porcentajeRetencion = porcentajePadron;
-		}
+		BigDecimal porcentajeRetencion = getPorcentajePadron(getPadrones(), getPorcentajeRetencion());
+		
 //			porcentajeRetencion = this.
 		// Se calcula el importe determinado.
 		// ID = BI * T / 100
@@ -353,21 +347,7 @@ public class RetencionIIBB extends AbstractRetencionProcessor {
 	 */
 	protected BigDecimal getDescuentoNeto() {
 		return this.descuentoNeto;
-	}
-	
-	/**
-	 * @param value The importeMinimoRetencion to set.
-	 */
-	protected void setFromPadron(String value) {
-		this.fromPadron = value;
-	}
-	
-	/**
-	 * @return Returns the descuentoNeto.
-	 */
-	protected String getFromPadron() {
-		return this.fromPadron;
-	}		
+	}	
 
 	/**
 	 * @return Returns the importeNoImponible.
@@ -451,6 +431,16 @@ public class RetencionIIBB extends AbstractRetencionProcessor {
 	 */
 	protected void setImporteDeterminado(BigDecimal importeDeterminado) {
 		this.importeDeterminado = importeDeterminado;
+	}
+
+
+	public List<String> getPadrones() {
+		return padrones;
+	}
+
+
+	protected void setPadrones(List<String> padrones) {
+		this.padrones = padrones;
 	}
 	
 	

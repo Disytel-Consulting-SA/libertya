@@ -1440,3 +1440,12 @@ update ad_system set dummy = (SELECT addcolumnifnotexists('M_Product','isinvento
 
 --20140428-1900 Incorporación de nueva columna para omitir las acciones de cierre de depósito como el cambio de fecha a la fecha actual y la validación del cierre abierto para el día actual
 update ad_system set dummy = (SELECT addcolumnifnotexists('C_DocType','iswarehouseclosurecontrol', 'character(1) NOT NULL DEFAULT ''Y''::bpchar'));
+
+--20140501-1500 Retenciones CABA
+update ad_system set dummy = (SELECT addcolumnifnotexists('C_RetSchema_Config','padrontype', 'character(1)'));
+update ad_system set dummy = (SELECT addcolumnifnotexists('C_RetSchema_Config','orden', 'integer NOT NULL DEFAULT 1'));
+update ad_system set dummy = (SELECT addcolumnifnotexists('C_Invoice','C_Region_Delivery_ID', 'integer'));
+
+update c_retschema_config
+set padrontype = 'B', orden = 1
+where ad_client_id = 1010016 and name = 'P';
