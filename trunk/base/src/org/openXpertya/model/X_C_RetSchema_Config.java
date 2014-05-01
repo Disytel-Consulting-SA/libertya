@@ -7,7 +7,7 @@ import java.math.*;
 import org.openXpertya.util.*;
 /** Modelo Generado por C_RetSchema_Config
  *  @author Comunidad de Desarrollo Libertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
- *  @version  - 2011-09-19 14:59:16.002 */
+ *  @version  - 2014-05-01 15:35:22.907 */
 public class X_C_RetSchema_Config extends org.openXpertya.model.PO
 {
 /** Constructor estándar */
@@ -20,6 +20,8 @@ setC_RetencionSchema_ID (0);
 setC_RetSchema_Config_ID (0);
 setIs_Range (false);
 setName (null);
+setOrden (0);	// 1
+setPadronType (null);
 setParamType (null);
 setValor (null);
 }
@@ -64,6 +66,18 @@ set_Value ("AD_ComponentObjectUID", AD_ComponentObjectUID);
 public String getAD_ComponentObjectUID() 
 {
 return (String)get_Value("AD_ComponentObjectUID");
+}
+/** Set Base Amount */
+public void setBaseAmt (BigDecimal BaseAmt)
+{
+set_Value ("BaseAmt", BaseAmt);
+}
+/** Get Base Amount */
+public BigDecimal getBaseAmt() 
+{
+BigDecimal bd = (BigDecimal)get_Value("BaseAmt");
+if (bd == null) return Env.ZERO;
+return bd;
 }
 /** Set Retencion Schema */
 public void setC_RetencionSchema_ID (int C_RetencionSchema_ID)
@@ -122,12 +136,14 @@ public static final String NAME_ImporteFijo = "IF";
 public static final String NAME_ExcedenteDe = "E";
 /** Porcentaje del Excedente = PE */
 public static final String NAME_PorcentajeDelExcedente = "PE";
+/** Por Lugar de Entrega = LE */
+public static final String NAME_PorLugarDeEntrega = "LE";
 /** Set Name.
 Alphanumeric identifier of the entity */
 public void setName (String Name)
 {
-if (Name.equals("N") || Name.equals("P") || Name.equals("INI") || Name.equals("T") || Name.equals("MR") || Name.equals("IF") || Name.equals("E") || Name.equals("PE"));
- else throw new IllegalArgumentException ("Name Invalid value - Reference = NAME_AD_Reference_ID - N - P - INI - T - MR - IF - E - PE");
+if (Name.equals("N") || Name.equals("P") || Name.equals("INI") || Name.equals("T") || Name.equals("MR") || Name.equals("IF") || Name.equals("E") || Name.equals("PE") || Name.equals("LE"));
+ else throw new IllegalArgumentException ("Name Invalid value - Reference = NAME_AD_Reference_ID - N - P - INI - T - MR - IF - E - PE - LE");
 if (Name == null) throw new IllegalArgumentException ("Name is mandatory");
 if (Name.length() > 30)
 {
@@ -145,6 +161,43 @@ return (String)get_Value("Name");
 public KeyNamePair getKeyNamePair() 
 {
 return new KeyNamePair(getID(), String.valueOf(getName()));
+}
+/** Set Orden */
+public void setOrden (int Orden)
+{
+set_Value ("Orden", new Integer(Orden));
+}
+/** Get Orden */
+public int getOrden() 
+{
+Integer ii = (Integer)get_Value("Orden");
+if (ii == null) return 0;
+return ii.intValue();
+}
+public static final int PADRONTYPE_AD_Reference_ID = MReference.getReferenceID("Tipos de Padrón");
+/** Padrón Bs As = B */
+public static final String PADRONTYPE_PadrónBsAs = "B";
+/** Padrón de Alto Riesgo CABA = A */
+public static final String PADRONTYPE_PadrónDeAltoRiesgoCABA = "A";
+/** Régimen Simplificado CABA = S */
+public static final String PADRONTYPE_RégimenSimplificadoCABA = "S";
+/** Set Padron Type */
+public void setPadronType (String PadronType)
+{
+if (PadronType.equals("B") || PadronType.equals("A") || PadronType.equals("S"));
+ else throw new IllegalArgumentException ("PadronType Invalid value - Reference = PADRONTYPE_AD_Reference_ID - B - A - S");
+if (PadronType == null) throw new IllegalArgumentException ("PadronType is mandatory");
+if (PadronType.length() > 1)
+{
+log.warning("Length > 1 - truncated");
+PadronType = PadronType.substring(0,1);
+}
+set_Value ("PadronType", PadronType);
+}
+/** Get Padron Type */
+public String getPadronType() 
+{
+return (String)get_Value("PadronType");
 }
 public static final int PARAMTYPE_AD_Reference_ID = MReference.getReferenceID("Rango Retención");
 /** Rango = RA */

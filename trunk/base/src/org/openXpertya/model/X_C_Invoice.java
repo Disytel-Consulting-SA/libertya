@@ -7,7 +7,7 @@ import java.math.*;
 import org.openXpertya.util.*;
 /** Modelo Generado por C_Invoice
  *  @author Comunidad de Desarrollo Libertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
- *  @version  - 2014-04-03 17:16:35.328 */
+ *  @version  - 2014-05-01 15:34:23.626 */
 public class X_C_Invoice extends org.openXpertya.model.PO
 {
 /** Constructor estándar */
@@ -620,6 +620,21 @@ Process which will generate a new document lines based on an existing document *
 public String getCreateFrom() 
 {
 return (String)get_Value("CreateFrom");
+}
+public static final int C_REGION_DELIVERY_ID_AD_Reference_ID = MReference.getReferenceID("C_Region");
+/** Set Delivery Region */
+public void setC_Region_Delivery_ID (int C_Region_Delivery_ID)
+{
+if (C_Region_Delivery_ID <= 0) set_Value ("C_Region_Delivery_ID", null);
+ else 
+set_Value ("C_Region_Delivery_ID", new Integer(C_Region_Delivery_ID));
+}
+/** Get Delivery Region */
+public int getC_Region_Delivery_ID() 
+{
+Integer ii = (Integer)get_Value("C_Region_Delivery_ID");
+if (ii == null) return 0;
+return ii.intValue();
 }
 /** Set Region.
 Identifies a geographical Region */
