@@ -1812,6 +1812,10 @@ public class VOrdenPago extends CPanel implements FormPanel,ActionListener,Table
     			showError("Debe indicar el tipo de documento");
     			return;
     			
+    		case VOrdenPagoModel.PROCERROR_DOCUMENTNO_INVALID:
+    			showError("El numero de documento no coincide con el esperado en la secuencia (prefijo - valor - sufijo)");
+    			return;
+    			
     		case VOrdenPagoModel.PROCERROR_BOTH_EXCHANGE_INVOICES:
     			showError("@BothExchangeInvoices@");
     			return;
@@ -2644,7 +2648,7 @@ public class VOrdenPago extends CPanel implements FormPanel,ActionListener,Table
 			if(e.getNewValue() != null){
 				m_model.setDocumentType((Integer)e.getNewValue());
 				seq = MSequence.get(m_ctx, getSeqName(), false, Env.getAD_Client_ID(m_ctx));
-				fldDocumentNo.setValue(seq.getCurrentNext());
+				fldDocumentNo.setValue((seq.getPrefix()!=null?seq.getPrefix():"")+seq.getCurrentNext()+(seq.getSuffix()!=null?seq.getSuffix():""));
 			}
 			else{
 				fldDocumentNo.setValue(null);
@@ -3262,7 +3266,7 @@ public class VOrdenPago extends CPanel implements FormPanel,ActionListener,Table
 		// actualizar secuencia
 		seq.setCurrentNext(seq.getCurrentNext().add(BigDecimal.ONE));
 		seq.save();
-		fldDocumentNo.setValue(seq.getCurrentNext());
+		fldDocumentNo.setValue((seq.getPrefix()!=null?seq.getPrefix():"") + seq.getCurrentNext() + (seq.getSuffix()!=null?seq.getSuffix():""));
 		
 		m_model.setDocumentNo("");
 		getModel().reset();

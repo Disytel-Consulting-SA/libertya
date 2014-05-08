@@ -33,6 +33,7 @@ import org.openXpertya.model.MCash;
 import org.openXpertya.model.MCashLine;
 import org.openXpertya.model.MCurrency;
 import org.openXpertya.model.MDiscountSchema;
+import org.openXpertya.model.MDocType;
 import org.openXpertya.model.MEntidadFinanciera;
 import org.openXpertya.model.MEntidadFinancieraPlan;
 import org.openXpertya.model.MInvoice;
@@ -71,6 +72,7 @@ public class VOrdenPagoModel {
 	public static final int PROCERROR_DOCUMENTNO_ALREADY_EXISTS = 6;
 	public static final int PROCERROR_DOCUMENTTYPE_NOT_SET = 7;
 	public static final int PROCERROR_BOTH_EXCHANGE_INVOICES = 8;
+	public static final int PROCERROR_DOCUMENTNO_INVALID = 9;
 	public static final int PROCERROR_UNKNOWN = -1;
 
 	protected static CLogger log = CLogger.getCLogger(VOrdenPagoModel.class);
@@ -1493,6 +1495,11 @@ public class VOrdenPagoModel {
 		if (documentType == null) {
 			return PROCERROR_DOCUMENTTYPE_NOT_SET;
 		}
+		
+		if (!MDocType.validateSequenceLength(documentType, documentNo, m_ctx, trxName)) {
+			return PROCERROR_DOCUMENTNO_INVALID;
+		}
+				
 
 		Vector<BigDecimal> manualAmounts = new Vector<BigDecimal>();
 		Vector<BigDecimal> manualAmountsOriginal = new Vector<BigDecimal>();

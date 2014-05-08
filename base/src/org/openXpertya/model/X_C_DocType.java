@@ -7,7 +7,7 @@ import java.math.*;
 import org.openXpertya.util.*;
 /** Modelo Generado por C_DocType
  *  @author Comunidad de Desarrollo Libertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
- *  @version  - 2014-04-28 19:24:56.408 */
+ *  @version  - 2014-05-08 13:02:45.12 */
 public class X_C_DocType extends org.openXpertya.model.PO
 {
 /** Constructor estándar */
@@ -1256,6 +1256,22 @@ set_Value ("UseOrderWarehouse", new Boolean(UseOrderWarehouse));
 public boolean isUseOrderWarehouse() 
 {
 Object oo = get_Value("UseOrderWarehouse");
+if (oo != null) 
+{
+ if (oo instanceof Boolean) return ((Boolean)oo).booleanValue();
+ return "Y".equals(oo);
+}
+return false;
+}
+/** Set Validate Sequence Length */
+public void setValidateSeqLength (boolean ValidateSeqLength)
+{
+set_Value ("ValidateSeqLength", new Boolean(ValidateSeqLength));
+}
+/** Get Validate Sequence Length */
+public boolean isValidateSeqLength() 
+{
+Object oo = get_Value("ValidateSeqLength");
 if (oo != null) 
 {
  if (oo instanceof Boolean) return ((Boolean)oo).booleanValue();
