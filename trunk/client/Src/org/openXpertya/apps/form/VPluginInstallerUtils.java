@@ -277,7 +277,8 @@ public class VPluginInstallerUtils  {
 		POInfo.clearKey(DB.getSQLValue(m_trx, " SELECT AD_Table_ID FROM AD_Table WHERE tableName = ?", "AD_Plugin"));
 		plugin = new X_AD_Plugin(ctx, plugin.getAD_Plugin_ID(), m_trx);
 		plugin.setComponent_Export_Date((String)m_component_props.get(PluginConstants.PROP_EXPORT_TIMESTAMP));
-		plugin.setComponent_Last_Changelog((String)m_component_props.get(PluginConstants.PROP_LAST_CHANGELOG));
+		if (m_component_props.get(PluginConstants.PROP_LAST_CHANGELOG) != null && !"-1".equals((String)m_component_props.get(PluginConstants.PROP_LAST_CHANGELOG)))
+				plugin.setComponent_Last_Changelog((String)m_component_props.get(PluginConstants.PROP_LAST_CHANGELOG));
 		if (!plugin.save())
 			throw new Exception(" - Error al intentar registrar información adicional del plugin ");
 	}

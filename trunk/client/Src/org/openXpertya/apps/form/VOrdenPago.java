@@ -2594,10 +2594,10 @@ public class VOrdenPago extends CPanel implements FormPanel,ActionListener,Table
 				ResultItemFactura rif = (ResultItemFactura)m_model.m_facturas.get(row);
 				int currency_ID_To = (Integer) m_model.m_facturas.get(row).getItem(m_model.m_facturasTableModel.getCurrencyColIdx());
 				if (arg0.getColumn() == m_model.m_facturasTableModel.getColumnCount() - 1){
-					m_model.actualizarPagarConPagarCurrency(row,rif,currency_ID_To);
+					m_model.actualizarPagarConPagarCurrency(row,rif,currency_ID_To, true);
 				}
 				else{
-					m_model.actualizarPagarCurrencyConPagar(row,rif,currency_ID_To);
+					m_model.actualizarPagarCurrencyConPagar(row,rif,currency_ID_To, true);
 				}
 				m_model.m_facturasTableModel.fireTableDataChanged();	
 			}

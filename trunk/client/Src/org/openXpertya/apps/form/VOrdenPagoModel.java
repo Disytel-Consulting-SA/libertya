@@ -2265,7 +2265,7 @@ public class VOrdenPagoModel {
 	}
 
 	public void actualizarPagarConPagarCurrency(int row, ResultItemFactura rif,
-			int currency_ID_To) {
+			int currency_ID_To, boolean useOpenAmtIfZero) {
 		BigDecimal manualAmtClientCurrency = rif.getManualAmtClientCurrency();
 		BigDecimal openAmt = ((m_facturas.get(row).getItem(m_facturasTableModel
 				.getOpenCurrentAmtColIdx())) == null) ? BigDecimal.ZERO
@@ -2273,7 +2273,10 @@ public class VOrdenPagoModel {
 						m_facturasTableModel.getOpenCurrentAmtColIdx());
 		// Sumar o restar algún monto custom
 		openAmt = openAmt.subtract(rif.getPaymentTermDiscount());
-
+		// Setear el monto pendiente de la factura si se indicó 0
+		if (useOpenAmtIfZero && manualAmtClientCurrency.compareTo(BigDecimal.ZERO) == 0)
+			rif.setManualAmtClientCurrency(openAmt);
+			
 		if (manualAmtClientCurrency == null
 				|| manualAmtClientCurrency.signum() < 0)
 			rif.setManualAmtClientCurrency(BigDecimal.ZERO);
@@ -2287,7 +2290,7 @@ public class VOrdenPagoModel {
 	}
 
 	public void actualizarPagarCurrencyConPagar(int row, ResultItemFactura rif,
-			int currency_ID_To) {
+			int currency_ID_To, boolean useOpenAmtIfZero) {
 		BigDecimal manualAmt = rif.getManualAmount();
 		BigDecimal openAmt = (BigDecimal) m_facturas.get(row).getItem(
 				m_facturasTableModel.getOpenAmtColIdx());
@@ -2296,7 +2299,10 @@ public class VOrdenPagoModel {
 				rif.getPaymentTermDiscount(), C_Currency_ID, currency_ID_To,
 				new Timestamp(System.currentTimeMillis()), 0, getCtx());
 		openAmt = openAmt.subtract(paymentTermDiscount);
-
+		// Setear el monto pendiente de la factura si se indicó 0
+		if (useOpenAmtIfZero && manualAmt.compareTo(BigDecimal.ZERO) == 0)
+			rif.setManualAmount(openAmt);
+		
 		if (manualAmt == null || manualAmt.signum() < 0)
 			rif.setManualAmount(BigDecimal.ZERO);
 		else if (manualAmt.compareTo(openAmt) > 0)
@@ -3297,7 +3303,7 @@ public class VOrdenPagoModel {
 						i,
 						fac,
 						(Integer) m_facturas.get(i).getItem(
-								m_facturasTableModel.getCurrencyColIdx()));
+								m_facturasTableModel.getCurrencyColIdx()), payAll);
 				totalAmt = totalAmt.add(amt);
 			}
 		}

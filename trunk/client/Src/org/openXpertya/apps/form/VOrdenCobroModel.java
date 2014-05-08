@@ -1467,7 +1467,7 @@ public class VOrdenCobroModel extends VOrdenPagoModel {
 					currentManualAmt = toPay;
 				}
 				fac.setManualAmtClientCurrency(currentManualAmt);
-				actualizarPagarConPagarCurrency(i, fac, (Integer) m_facturas.get(i).getItem(m_facturasTableModel.getCurrencyColIdx()));
+				actualizarPagarConPagarCurrency(i, fac, (Integer) m_facturas.get(i).getItem(m_facturasTableModel.getCurrencyColIdx()), false);
 				amt = amt.subtract(currentManualAmt);
 			}
 		}

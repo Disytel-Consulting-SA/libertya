@@ -1677,10 +1677,10 @@ public class WOrdenPago extends ADForm implements ValueChangeListener, TableMode
 				ResultItemFactura rif = (ResultItemFactura)m_model.m_facturas.get(row);
 				int currency_ID_To = (Integer) m_model.m_facturas.get(row).getItem(m_model.m_facturasTableModel.getCurrencyColIdx());
 				if (arg0.getColumn() == m_model.m_facturasTableModel.getColumnCount() - 1){
-					m_model.actualizarPagarConPagarCurrency(row,rif,currency_ID_To);
+					m_model.actualizarPagarConPagarCurrency(row,rif,currency_ID_To, false);
 				}
 				else{
-					m_model.actualizarPagarCurrencyConPagar(row,rif,currency_ID_To);
+					m_model.actualizarPagarCurrencyConPagar(row,rif,currency_ID_To, false);
 				}
 				m_model.m_facturasTableModel.fireTableDataChanged();	
 			}
@@ -2733,7 +2733,7 @@ public class WOrdenPago extends ADForm implements ValueChangeListener, TableMode
 			for (int row = 0; row < rows; row++) {
 				ResultItemFactura rif = (ResultItemFactura)owner.getModel().m_facturas.get(row);
 				int currency_ID_To = (Integer)owner.getModel().m_facturas.get(row).getItem(owner.getModel().m_facturasTableModel.getCurrencyColIdx());
-				owner.getModel().actualizarPagarCurrencyConPagar(row,rif,currency_ID_To);
+				owner.getModel().actualizarPagarCurrencyConPagar(row,rif,currency_ID_To, false);
 			}
 			owner.resetModel();
 		}
@@ -2762,7 +2762,7 @@ public class WOrdenPago extends ADForm implements ValueChangeListener, TableMode
 			for (int row = 0; row < rows; row++) {
 				ResultItemFactura rif = (ResultItemFactura)owner.getModel().m_facturas.get(row);
 				int currency_ID_To = (Integer)owner.getModel().m_facturas.get(row).getItem(owner.getModel().m_facturasTableModel.getCurrencyColIdx());
-				owner.getModel().actualizarPagarConPagarCurrency(row,rif,currency_ID_To);
+				owner.getModel().actualizarPagarConPagarCurrency(row,rif,currency_ID_To, false);
 			}
 			owner.resetModel();
 		}
