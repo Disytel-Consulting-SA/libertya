@@ -1544,3 +1544,6 @@ SELECT 'M_Inventory' AS movement_table, i.ad_client_id, i.ad_org_id, il.m_locato
    LEFT JOIN c_invoice i ON i.c_invoice_id = t.c_invoice_id;
 
 ALTER TABLE v_product_movements_detailed OWNER TO libertya;
+
+--20140508-1245 Check para validar la longitud de la secuencia
+update ad_system set dummy = (SELECT addcolumnifnotexists('C_DocType','validateseqlength', 'character(1) NOT NULL DEFAULT ''N''::bpchar'));
