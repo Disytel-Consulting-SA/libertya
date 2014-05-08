@@ -1046,6 +1046,10 @@ public class WOrdenPago extends ADForm implements ValueChangeListener, TableMode
     			showError("@BothExchangeInvoices@");
     			return;
     			
+    		case VOrdenPagoModel.PROCERROR_DOCUMENTNO_INVALID:
+    			showError("El numero de documento no coincide con el esperado en la secuencia (prefijo - valor - sufijo)");
+    			return;
+    			
     		default:
     			showError("@ValidationError@");
     			return;
@@ -1725,7 +1729,7 @@ public class WOrdenPago extends ADForm implements ValueChangeListener, TableMode
 			if(e.getNewValue() != null){
 				m_model.setDocumentType((Integer)e.getNewValue());
 				seq = MSequence.get(m_ctx, getSeqName(), false, Env.getAD_Client_ID(m_ctx));
-				fldDocumentNo.setValue(seq.getCurrentNext().toString());
+				fldDocumentNo.setValue((seq.getPrefix()!=null?seq.getPrefix():"") + seq.getCurrentNext().toString() + (seq.getSuffix()!=null?seq.getSuffix():""));
 			}
 			else{
 				fldDocumentNo.setValue(null);
@@ -2378,7 +2382,7 @@ public class WOrdenPago extends ADForm implements ValueChangeListener, TableMode
 		// actualizar secuencia
 		seq.setCurrentNext(seq.getCurrentNext().add(BigDecimal.ONE));
 		seq.save();
-		fldDocumentNo.setValue(seq.getCurrentNext().toString());
+		fldDocumentNo.setValue((seq.getPrefix()!=null?seq.getPrefix():"") + seq.getCurrentNext().toString() + (seq.getSuffix()!=null?seq.getSuffix():""));
 		
 		m_model.setDocumentNo("");
 		getModel().reset();

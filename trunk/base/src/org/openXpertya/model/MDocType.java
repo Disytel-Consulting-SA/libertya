@@ -21,6 +21,7 @@
 package org.openXpertya.model;
 
 // import org.apache.catalina.startup.SetContextPropertiesRule;
+import java.math.BigDecimal;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.text.NumberFormat;
@@ -769,6 +770,28 @@ public class MDocType extends X_C_DocType {
 		return result;
 	}
 	
+	
+	/** 
+	 * @return true si no era necesario validar, o si el formato del numero de  
+	 * 		   documento es correcto con respecto al definido en la secuencia (prefijo - nro - sufijo)
+	 */
+	public static boolean validateSequenceLength(int docTypeID, String documentNo, Properties ctx, String trxName) {
+		X_C_DocType dt = new X_C_DocType(ctx, docTypeID, trxName);
+		MSequence seq = new MSequence(ctx, dt.getDocNoSequence_ID(), trxName);
+		
+		// no hay que validar? todo bien, retornar true
+		if (!dt.isValidateSeqLength())
+			return true;
+		
+		// Armar la secuencia esperada prefijo - nro - sufijo
+		StringBuffer seqReference = new StringBuffer();
+		seqReference.append(seq.getPrefix()!=null?seq.getPrefix():"");
+		seqReference.append(seq.getCurrentNext());
+		seqReference.append(seq.getSuffix()!=null?seq.getSuffix():"");
+
+		// Comparar ambos strings
+		return (seqReference.toString().compareTo(documentNo) == 0);
+	}
 	
 }	// MDocType
 

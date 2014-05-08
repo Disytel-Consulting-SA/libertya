@@ -1437,7 +1437,7 @@ public class MAllocationHdr extends X_C_AllocationHdr implements DocAction {
 		count += DB.getSQLValue(null, " SELECT count(1) FROM C_AllocationLine al" +
 										" INNER JOIN C_AllocationHdr ah ON al.C_AllocationHdr_ID = ah.C_AllocationHdr_ID" +
 										" INNER JOIN C_Invoice i ON al.C_Invoice_ID = i.C_Invoice_ID" +
-										" WHERE ah.documentNo = '" + Integer.parseInt(documentNo) + "'" +
+										" WHERE ah.documentNo = '" + documentNo + "'" +
 										" AND ah.C_DocType_ID = " + docTypeID + 
 										" AND ah.AD_Client_ID = " + Env.getAD_Client_ID(ctx) +
 										" AND ah.allocationtype = '" + X_C_AllocationHdr.ALLOCATIONTYPE_Manual + "'" +
