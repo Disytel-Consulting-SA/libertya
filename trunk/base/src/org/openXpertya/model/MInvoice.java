@@ -4099,6 +4099,11 @@ public class MInvoice extends X_C_Invoice implements DocAction {
 					setcaeerror(null);
 					int nroCbte = Integer.parseInt(processor.getNroCbte());
 					this.setNumeroComprobante(nroCbte);
+		
+					// Actualizar la secuencia del tipo de documento de la factura en función del valor recibido en el WS de AFIP					
+					MDocType dt = MDocType.get(getCtx(), getC_DocType_ID(), get_TrxName());
+					MSequence.setFiscalDocTypeNextNroComprobante(dt.getDocNoSequence_ID(), nroCbte + 1, get_TrxName());
+					
 					log.log(Level.SEVERE, "CAE: " + processor.getCAE());
 					log.log(Level.SEVERE, "DATE CAE: " + processor.getDateCae());
 				}
