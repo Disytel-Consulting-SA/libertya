@@ -7,7 +7,7 @@ import java.math.*;
 import org.openXpertya.util.*;
 /** Modelo Generado por AD_ClientInfo
  *  @author Comunidad de Desarrollo Libertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
- *  @version  - 2013-09-20 17:24:32.794 */
+ *  @version  - 2014-05-08 23:56:49.792 */
 public class X_AD_ClientInfo extends org.openXpertya.model.PO
 {
 /** Constructor estándar */
@@ -24,6 +24,7 @@ setIsWarehouseCloseControl (false);
 setPasswordExpirationActive (false);
 setPasswordExpirationDays (0);
 setPaymentsPOSJournalOpen (false);
+setUniqueCuit (false);
 setUniqueKeyActive (false);
 }
  */
@@ -632,6 +633,22 @@ set_Value ("PaymentsPOSJournalOpen", new Boolean(PaymentsPOSJournalOpen));
 public boolean isPaymentsPOSJournalOpen() 
 {
 Object oo = get_Value("PaymentsPOSJournalOpen");
+if (oo != null) 
+{
+ if (oo instanceof Boolean) return ((Boolean)oo).booleanValue();
+ return "Y".equals(oo);
+}
+return false;
+}
+/** Set Unique Cuit */
+public void setUniqueCuit (boolean UniqueCuit)
+{
+set_Value ("UniqueCuit", new Boolean(UniqueCuit));
+}
+/** Get Unique Cuit */
+public boolean isUniqueCuit() 
+{
+Object oo = get_Value("UniqueCuit");
 if (oo != null) 
 {
  if (oo instanceof Boolean) return ((Boolean)oo).booleanValue();
