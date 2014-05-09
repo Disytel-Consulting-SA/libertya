@@ -428,8 +428,10 @@ public class VOrdenPagoModel {
 		public Timestamp dateTrx;
 		public String aLaOrden;
 		public String banco;
+		public Integer bancoID;
 		public String cuitLibrador;
 		public String descripcion;
+		
 
 		public MedioPagoCheque() {
 
