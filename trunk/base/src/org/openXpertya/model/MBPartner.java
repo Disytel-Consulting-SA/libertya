@@ -1223,6 +1223,18 @@ public class MBPartner extends X_C_BPartner {
 					log.saveError("InvalidCUIT", "");
 					return false;
 				}
+				// CUIT Repetido siempre que la configuración de la compañía
+				MClientInfo clientInfo = MClientInfo.get(getCtx(), getAD_Client_ID());
+				if (!Util.isEmpty(cuit, true)
+						&& clientInfo.isUniqueCuit()
+						&& PO.existRecordFor(getCtx(), X_C_BPartner.Table_Name,
+								newRecord ? "taxid = ?"
+										: "taxid = ? AND c_bpartner_id <> "
+												+ getID(),
+								new Object[] { getTaxID() }, get_TrxName())) {
+					log.saveError("SaveError", Msg.getMsg(getCtx(), "SameCUITInBPartner", new Object[]{cuit}));
+					return false;
+				}
 			// Aquí el valor es un DNI
 			} else {
 				

@@ -1547,3 +1547,6 @@ ALTER TABLE v_product_movements_detailed OWNER TO libertya;
 
 --20140508-1245 Check para validar la longitud de la secuencia
 update ad_system set dummy = (SELECT addcolumnifnotexists('C_DocType','validateseqlength', 'character(1) NOT NULL DEFAULT ''N''::bpchar'));
+
+--20140508-2345 Incorporación de nueva parametrización en la Compañía para permitir o no CUITs únicos en EC
+update ad_system set dummy = (SELECT addcolumnifnotexists('AD_ClientInfo','UniqueCuit', 'character(1) NOT NULL DEFAULT ''N''::bpchar'));
