@@ -7,7 +7,7 @@ import java.math.*;
 import org.openXpertya.util.*;
 /** Modelo Generado por C_POSPaymentMedium
  *  @author Comunidad de Desarrollo Libertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
- *  @version  - 2013-07-11 11:37:29.82 */
+ *  @version  - 2014-05-09 17:18:30.132 */
 public class X_C_POSPaymentMedium extends org.openXpertya.model.PO
 {
 /** Constructor estándar */
@@ -188,19 +188,111 @@ public String getBank()
 return (String)get_Value("Bank");
 }
 public static final int BEFORECHECKDEADLINEFROM_AD_Reference_ID = MReference.getReferenceID("C_POSPaymentMedium Check Dead Line");
-/** 30 = 30 */
-public static final String BEFORECHECKDEADLINEFROM_30 = "30";
-/** 60 = 60 */
-public static final String BEFORECHECKDEADLINEFROM_60 = "60";
-/** 90 = 90 */
-public static final String BEFORECHECKDEADLINEFROM_90 = "90";
+/** 090 = 90 */
+public static final String BEFORECHECKDEADLINEFROM_090 = "90";
 /** Today = 0 */
 public static final String BEFORECHECKDEADLINEFROM_Today = "0";
+/** 060 = 60 */
+public static final String BEFORECHECKDEADLINEFROM_060 = "60";
+/** 030 = 30 */
+public static final String BEFORECHECKDEADLINEFROM_030 = "30";
+/** No deadline = 99999 */
+public static final String BEFORECHECKDEADLINEFROM_NoDeadline = "99999";
+/** 120 = 120 */
+public static final String BEFORECHECKDEADLINEFROM_120 = "120";
+/** 150 = 150 */
+public static final String BEFORECHECKDEADLINEFROM_150 = "150";
+/** 180 = 180 */
+public static final String BEFORECHECKDEADLINEFROM_180 = "180";
+/** 210 = 210 */
+public static final String BEFORECHECKDEADLINEFROM_210 = "210";
+/** 240 = 240 */
+public static final String BEFORECHECKDEADLINEFROM_240 = "240";
+/** 270 = 270 */
+public static final String BEFORECHECKDEADLINEFROM_270 = "270";
+/** 300 = 300 */
+public static final String BEFORECHECKDEADLINEFROM_300 = "300";
+/** 330 = 330 */
+public static final String BEFORECHECKDEADLINEFROM_330 = "330";
+/** 360 = 360 */
+public static final String BEFORECHECKDEADLINEFROM_360 = "360";
+/** 390 = 390 */
+public static final String BEFORECHECKDEADLINEFROM_390 = "390";
+/** 420 = 420 */
+public static final String BEFORECHECKDEADLINEFROM_420 = "420";
+/** 450 = 450 */
+public static final String BEFORECHECKDEADLINEFROM_450 = "450";
+/** 480 = 480 */
+public static final String BEFORECHECKDEADLINEFROM_480 = "480";
+/** 510 = 510 */
+public static final String BEFORECHECKDEADLINEFROM_510 = "510";
+/** 540 = 540 */
+public static final String BEFORECHECKDEADLINEFROM_540 = "540";
+/** 570 = 570 */
+public static final String BEFORECHECKDEADLINEFROM_570 = "570";
+/** 600 = 600 */
+public static final String BEFORECHECKDEADLINEFROM_600 = "600";
+/** 630 = 630 */
+public static final String BEFORECHECKDEADLINEFROM_630 = "630";
+/** 660 = 660 */
+public static final String BEFORECHECKDEADLINEFROM_660 = "660";
+/** 690 = 690 */
+public static final String BEFORECHECKDEADLINEFROM_690 = "690";
+/** 720 = 720 */
+public static final String BEFORECHECKDEADLINEFROM_720 = "720";
+/** 015 = 15 */
+public static final String BEFORECHECKDEADLINEFROM_015 = "15";
+/** 045 = 45 */
+public static final String BEFORECHECKDEADLINEFROM_045 = "45";
+/** 075 = 75 */
+public static final String BEFORECHECKDEADLINEFROM_075 = "75";
+/** 105 = 105 */
+public static final String BEFORECHECKDEADLINEFROM_105 = "105";
+/** 135 = 135 */
+public static final String BEFORECHECKDEADLINEFROM_135 = "135";
+/** 165 = 165 */
+public static final String BEFORECHECKDEADLINEFROM_165 = "165";
+/** 195 = 195 */
+public static final String BEFORECHECKDEADLINEFROM_195 = "195";
+/** 225 = 225 */
+public static final String BEFORECHECKDEADLINEFROM_225 = "225";
+/** 255 = 255 */
+public static final String BEFORECHECKDEADLINEFROM_255 = "255";
+/** 285 = 285 */
+public static final String BEFORECHECKDEADLINEFROM_285 = "285";
+/** 315 = 315 */
+public static final String BEFORECHECKDEADLINEFROM_315 = "315";
+/** 345 = 345 */
+public static final String BEFORECHECKDEADLINEFROM_345 = "345";
+/** 375 = 375 */
+public static final String BEFORECHECKDEADLINEFROM_375 = "375";
+/** 405 = 405 */
+public static final String BEFORECHECKDEADLINEFROM_405 = "405";
+/** 435 = 435 */
+public static final String BEFORECHECKDEADLINEFROM_435 = "435";
+/** 465 = 465 */
+public static final String BEFORECHECKDEADLINEFROM_465 = "465";
+/** 495 = 495 */
+public static final String BEFORECHECKDEADLINEFROM_495 = "495";
+/** 525 = 525 */
+public static final String BEFORECHECKDEADLINEFROM_525 = "525";
+/** 555 = 555 */
+public static final String BEFORECHECKDEADLINEFROM_555 = "555";
+/** 585 = 585 */
+public static final String BEFORECHECKDEADLINEFROM_585 = "585";
+/** 615 = 615 */
+public static final String BEFORECHECKDEADLINEFROM_615 = "615";
+/** 645 = 645 */
+public static final String BEFORECHECKDEADLINEFROM_645 = "645";
+/** 675 = 675 */
+public static final String BEFORECHECKDEADLINEFROM_675 = "675";
+/** 705 = 705 */
+public static final String BEFORECHECKDEADLINEFROM_705 = "705";
 /** Set Before Check DeadLine From */
 public void setBeforeCheckDeadLineFrom (String BeforeCheckDeadLineFrom)
 {
-if (BeforeCheckDeadLineFrom.equals("30") || BeforeCheckDeadLineFrom.equals("60") || BeforeCheckDeadLineFrom.equals("90") || BeforeCheckDeadLineFrom.equals("0"));
- else throw new IllegalArgumentException ("BeforeCheckDeadLineFrom Invalid value - Reference = BEFORECHECKDEADLINEFROM_AD_Reference_ID - 30 - 60 - 90 - 0");
+if (BeforeCheckDeadLineFrom.equals("90") || BeforeCheckDeadLineFrom.equals("0") || BeforeCheckDeadLineFrom.equals("60") || BeforeCheckDeadLineFrom.equals("30") || BeforeCheckDeadLineFrom.equals("99999") || BeforeCheckDeadLineFrom.equals("120") || BeforeCheckDeadLineFrom.equals("150") || BeforeCheckDeadLineFrom.equals("180") || BeforeCheckDeadLineFrom.equals("210") || BeforeCheckDeadLineFrom.equals("240") || BeforeCheckDeadLineFrom.equals("270") || BeforeCheckDeadLineFrom.equals("300") || BeforeCheckDeadLineFrom.equals("330") || BeforeCheckDeadLineFrom.equals("360") || BeforeCheckDeadLineFrom.equals("390") || BeforeCheckDeadLineFrom.equals("420") || BeforeCheckDeadLineFrom.equals("450") || BeforeCheckDeadLineFrom.equals("480") || BeforeCheckDeadLineFrom.equals("510") || BeforeCheckDeadLineFrom.equals("540") || BeforeCheckDeadLineFrom.equals("570") || BeforeCheckDeadLineFrom.equals("600") || BeforeCheckDeadLineFrom.equals("630") || BeforeCheckDeadLineFrom.equals("660") || BeforeCheckDeadLineFrom.equals("690") || BeforeCheckDeadLineFrom.equals("720") || BeforeCheckDeadLineFrom.equals("15") || BeforeCheckDeadLineFrom.equals("45") || BeforeCheckDeadLineFrom.equals("75") || BeforeCheckDeadLineFrom.equals("105") || BeforeCheckDeadLineFrom.equals("135") || BeforeCheckDeadLineFrom.equals("165") || BeforeCheckDeadLineFrom.equals("195") || BeforeCheckDeadLineFrom.equals("225") || BeforeCheckDeadLineFrom.equals("255") || BeforeCheckDeadLineFrom.equals("285") || BeforeCheckDeadLineFrom.equals("315") || BeforeCheckDeadLineFrom.equals("345") || BeforeCheckDeadLineFrom.equals("375") || BeforeCheckDeadLineFrom.equals("405") || BeforeCheckDeadLineFrom.equals("435") || BeforeCheckDeadLineFrom.equals("465") || BeforeCheckDeadLineFrom.equals("495") || BeforeCheckDeadLineFrom.equals("525") || BeforeCheckDeadLineFrom.equals("555") || BeforeCheckDeadLineFrom.equals("585") || BeforeCheckDeadLineFrom.equals("615") || BeforeCheckDeadLineFrom.equals("645") || BeforeCheckDeadLineFrom.equals("675") || BeforeCheckDeadLineFrom.equals("705"));
+ else throw new IllegalArgumentException ("BeforeCheckDeadLineFrom Invalid value - Reference = BEFORECHECKDEADLINEFROM_AD_Reference_ID - 90 - 0 - 60 - 30 - 99999 - 120 - 150 - 180 - 210 - 240 - 270 - 300 - 330 - 360 - 390 - 420 - 450 - 480 - 510 - 540 - 570 - 600 - 630 - 660 - 690 - 720 - 15 - 45 - 75 - 105 - 135 - 165 - 195 - 225 - 255 - 285 - 315 - 345 - 375 - 405 - 435 - 465 - 495 - 525 - 555 - 585 - 615 - 645 - 675 - 705");
 if (BeforeCheckDeadLineFrom == null) throw new IllegalArgumentException ("BeforeCheckDeadLineFrom is mandatory");
 if (BeforeCheckDeadLineFrom.length() > 10)
 {
@@ -215,19 +307,111 @@ public String getBeforeCheckDeadLineFrom()
 return (String)get_Value("BeforeCheckDeadLineFrom");
 }
 public static final int BEFORECHECKDEADLINETO_AD_Reference_ID = MReference.getReferenceID("C_POSPaymentMedium Check Dead Line");
-/** 30 = 30 */
-public static final String BEFORECHECKDEADLINETO_30 = "30";
-/** 60 = 60 */
-public static final String BEFORECHECKDEADLINETO_60 = "60";
-/** 90 = 90 */
-public static final String BEFORECHECKDEADLINETO_90 = "90";
+/** 090 = 90 */
+public static final String BEFORECHECKDEADLINETO_090 = "90";
 /** Today = 0 */
 public static final String BEFORECHECKDEADLINETO_Today = "0";
+/** 060 = 60 */
+public static final String BEFORECHECKDEADLINETO_060 = "60";
+/** 030 = 30 */
+public static final String BEFORECHECKDEADLINETO_030 = "30";
+/** No deadline = 99999 */
+public static final String BEFORECHECKDEADLINETO_NoDeadline = "99999";
+/** 120 = 120 */
+public static final String BEFORECHECKDEADLINETO_120 = "120";
+/** 150 = 150 */
+public static final String BEFORECHECKDEADLINETO_150 = "150";
+/** 180 = 180 */
+public static final String BEFORECHECKDEADLINETO_180 = "180";
+/** 210 = 210 */
+public static final String BEFORECHECKDEADLINETO_210 = "210";
+/** 240 = 240 */
+public static final String BEFORECHECKDEADLINETO_240 = "240";
+/** 270 = 270 */
+public static final String BEFORECHECKDEADLINETO_270 = "270";
+/** 300 = 300 */
+public static final String BEFORECHECKDEADLINETO_300 = "300";
+/** 330 = 330 */
+public static final String BEFORECHECKDEADLINETO_330 = "330";
+/** 360 = 360 */
+public static final String BEFORECHECKDEADLINETO_360 = "360";
+/** 390 = 390 */
+public static final String BEFORECHECKDEADLINETO_390 = "390";
+/** 420 = 420 */
+public static final String BEFORECHECKDEADLINETO_420 = "420";
+/** 450 = 450 */
+public static final String BEFORECHECKDEADLINETO_450 = "450";
+/** 480 = 480 */
+public static final String BEFORECHECKDEADLINETO_480 = "480";
+/** 510 = 510 */
+public static final String BEFORECHECKDEADLINETO_510 = "510";
+/** 540 = 540 */
+public static final String BEFORECHECKDEADLINETO_540 = "540";
+/** 570 = 570 */
+public static final String BEFORECHECKDEADLINETO_570 = "570";
+/** 600 = 600 */
+public static final String BEFORECHECKDEADLINETO_600 = "600";
+/** 630 = 630 */
+public static final String BEFORECHECKDEADLINETO_630 = "630";
+/** 660 = 660 */
+public static final String BEFORECHECKDEADLINETO_660 = "660";
+/** 690 = 690 */
+public static final String BEFORECHECKDEADLINETO_690 = "690";
+/** 720 = 720 */
+public static final String BEFORECHECKDEADLINETO_720 = "720";
+/** 015 = 15 */
+public static final String BEFORECHECKDEADLINETO_015 = "15";
+/** 045 = 45 */
+public static final String BEFORECHECKDEADLINETO_045 = "45";
+/** 075 = 75 */
+public static final String BEFORECHECKDEADLINETO_075 = "75";
+/** 105 = 105 */
+public static final String BEFORECHECKDEADLINETO_105 = "105";
+/** 135 = 135 */
+public static final String BEFORECHECKDEADLINETO_135 = "135";
+/** 165 = 165 */
+public static final String BEFORECHECKDEADLINETO_165 = "165";
+/** 195 = 195 */
+public static final String BEFORECHECKDEADLINETO_195 = "195";
+/** 225 = 225 */
+public static final String BEFORECHECKDEADLINETO_225 = "225";
+/** 255 = 255 */
+public static final String BEFORECHECKDEADLINETO_255 = "255";
+/** 285 = 285 */
+public static final String BEFORECHECKDEADLINETO_285 = "285";
+/** 315 = 315 */
+public static final String BEFORECHECKDEADLINETO_315 = "315";
+/** 345 = 345 */
+public static final String BEFORECHECKDEADLINETO_345 = "345";
+/** 375 = 375 */
+public static final String BEFORECHECKDEADLINETO_375 = "375";
+/** 405 = 405 */
+public static final String BEFORECHECKDEADLINETO_405 = "405";
+/** 435 = 435 */
+public static final String BEFORECHECKDEADLINETO_435 = "435";
+/** 465 = 465 */
+public static final String BEFORECHECKDEADLINETO_465 = "465";
+/** 495 = 495 */
+public static final String BEFORECHECKDEADLINETO_495 = "495";
+/** 525 = 525 */
+public static final String BEFORECHECKDEADLINETO_525 = "525";
+/** 555 = 555 */
+public static final String BEFORECHECKDEADLINETO_555 = "555";
+/** 585 = 585 */
+public static final String BEFORECHECKDEADLINETO_585 = "585";
+/** 615 = 615 */
+public static final String BEFORECHECKDEADLINETO_615 = "615";
+/** 645 = 645 */
+public static final String BEFORECHECKDEADLINETO_645 = "645";
+/** 675 = 675 */
+public static final String BEFORECHECKDEADLINETO_675 = "675";
+/** 705 = 705 */
+public static final String BEFORECHECKDEADLINETO_705 = "705";
 /** Set Before Check DeadLine To */
 public void setBeforeCheckDeadLineTo (String BeforeCheckDeadLineTo)
 {
-if (BeforeCheckDeadLineTo == null || BeforeCheckDeadLineTo.equals("30") || BeforeCheckDeadLineTo.equals("60") || BeforeCheckDeadLineTo.equals("90") || BeforeCheckDeadLineTo.equals("0"));
- else throw new IllegalArgumentException ("BeforeCheckDeadLineTo Invalid value - Reference = BEFORECHECKDEADLINETO_AD_Reference_ID - 30 - 60 - 90 - 0");
+if (BeforeCheckDeadLineTo == null || BeforeCheckDeadLineTo.equals("90") || BeforeCheckDeadLineTo.equals("0") || BeforeCheckDeadLineTo.equals("60") || BeforeCheckDeadLineTo.equals("30") || BeforeCheckDeadLineTo.equals("99999") || BeforeCheckDeadLineTo.equals("120") || BeforeCheckDeadLineTo.equals("150") || BeforeCheckDeadLineTo.equals("180") || BeforeCheckDeadLineTo.equals("210") || BeforeCheckDeadLineTo.equals("240") || BeforeCheckDeadLineTo.equals("270") || BeforeCheckDeadLineTo.equals("300") || BeforeCheckDeadLineTo.equals("330") || BeforeCheckDeadLineTo.equals("360") || BeforeCheckDeadLineTo.equals("390") || BeforeCheckDeadLineTo.equals("420") || BeforeCheckDeadLineTo.equals("450") || BeforeCheckDeadLineTo.equals("480") || BeforeCheckDeadLineTo.equals("510") || BeforeCheckDeadLineTo.equals("540") || BeforeCheckDeadLineTo.equals("570") || BeforeCheckDeadLineTo.equals("600") || BeforeCheckDeadLineTo.equals("630") || BeforeCheckDeadLineTo.equals("660") || BeforeCheckDeadLineTo.equals("690") || BeforeCheckDeadLineTo.equals("720") || BeforeCheckDeadLineTo.equals("15") || BeforeCheckDeadLineTo.equals("45") || BeforeCheckDeadLineTo.equals("75") || BeforeCheckDeadLineTo.equals("105") || BeforeCheckDeadLineTo.equals("135") || BeforeCheckDeadLineTo.equals("165") || BeforeCheckDeadLineTo.equals("195") || BeforeCheckDeadLineTo.equals("225") || BeforeCheckDeadLineTo.equals("255") || BeforeCheckDeadLineTo.equals("285") || BeforeCheckDeadLineTo.equals("315") || BeforeCheckDeadLineTo.equals("345") || BeforeCheckDeadLineTo.equals("375") || BeforeCheckDeadLineTo.equals("405") || BeforeCheckDeadLineTo.equals("435") || BeforeCheckDeadLineTo.equals("465") || BeforeCheckDeadLineTo.equals("495") || BeforeCheckDeadLineTo.equals("525") || BeforeCheckDeadLineTo.equals("555") || BeforeCheckDeadLineTo.equals("585") || BeforeCheckDeadLineTo.equals("615") || BeforeCheckDeadLineTo.equals("645") || BeforeCheckDeadLineTo.equals("675") || BeforeCheckDeadLineTo.equals("705"));
+ else throw new IllegalArgumentException ("BeforeCheckDeadLineTo Invalid value - Reference = BEFORECHECKDEADLINETO_AD_Reference_ID - 90 - 0 - 60 - 30 - 99999 - 120 - 150 - 180 - 210 - 240 - 270 - 300 - 330 - 360 - 390 - 420 - 450 - 480 - 510 - 540 - 570 - 600 - 630 - 660 - 690 - 720 - 15 - 45 - 75 - 105 - 135 - 165 - 195 - 225 - 255 - 285 - 315 - 345 - 375 - 405 - 435 - 465 - 495 - 525 - 555 - 585 - 615 - 645 - 675 - 705");
 if (BeforeCheckDeadLineTo != null && BeforeCheckDeadLineTo.length() > 10)
 {
 log.warning("Length > 10 - truncated");
@@ -271,20 +455,112 @@ if (ii == null) return 0;
 return ii.intValue();
 }
 public static final int CHECKDEADLINE_AD_Reference_ID = MReference.getReferenceID("C_POSPaymentMedium Check Dead Line");
-/** 30 = 30 */
-public static final String CHECKDEADLINE_30 = "30";
-/** 60 = 60 */
-public static final String CHECKDEADLINE_60 = "60";
-/** 90 = 90 */
-public static final String CHECKDEADLINE_90 = "90";
+/** 090 = 90 */
+public static final String CHECKDEADLINE_090 = "90";
 /** Today = 0 */
 public static final String CHECKDEADLINE_Today = "0";
+/** 060 = 60 */
+public static final String CHECKDEADLINE_060 = "60";
+/** 030 = 30 */
+public static final String CHECKDEADLINE_030 = "30";
+/** No deadline = 99999 */
+public static final String CHECKDEADLINE_NoDeadline = "99999";
+/** 120 = 120 */
+public static final String CHECKDEADLINE_120 = "120";
+/** 150 = 150 */
+public static final String CHECKDEADLINE_150 = "150";
+/** 180 = 180 */
+public static final String CHECKDEADLINE_180 = "180";
+/** 210 = 210 */
+public static final String CHECKDEADLINE_210 = "210";
+/** 240 = 240 */
+public static final String CHECKDEADLINE_240 = "240";
+/** 270 = 270 */
+public static final String CHECKDEADLINE_270 = "270";
+/** 300 = 300 */
+public static final String CHECKDEADLINE_300 = "300";
+/** 330 = 330 */
+public static final String CHECKDEADLINE_330 = "330";
+/** 360 = 360 */
+public static final String CHECKDEADLINE_360 = "360";
+/** 390 = 390 */
+public static final String CHECKDEADLINE_390 = "390";
+/** 420 = 420 */
+public static final String CHECKDEADLINE_420 = "420";
+/** 450 = 450 */
+public static final String CHECKDEADLINE_450 = "450";
+/** 480 = 480 */
+public static final String CHECKDEADLINE_480 = "480";
+/** 510 = 510 */
+public static final String CHECKDEADLINE_510 = "510";
+/** 540 = 540 */
+public static final String CHECKDEADLINE_540 = "540";
+/** 570 = 570 */
+public static final String CHECKDEADLINE_570 = "570";
+/** 600 = 600 */
+public static final String CHECKDEADLINE_600 = "600";
+/** 630 = 630 */
+public static final String CHECKDEADLINE_630 = "630";
+/** 660 = 660 */
+public static final String CHECKDEADLINE_660 = "660";
+/** 690 = 690 */
+public static final String CHECKDEADLINE_690 = "690";
+/** 720 = 720 */
+public static final String CHECKDEADLINE_720 = "720";
+/** 015 = 15 */
+public static final String CHECKDEADLINE_015 = "15";
+/** 045 = 45 */
+public static final String CHECKDEADLINE_045 = "45";
+/** 075 = 75 */
+public static final String CHECKDEADLINE_075 = "75";
+/** 105 = 105 */
+public static final String CHECKDEADLINE_105 = "105";
+/** 135 = 135 */
+public static final String CHECKDEADLINE_135 = "135";
+/** 165 = 165 */
+public static final String CHECKDEADLINE_165 = "165";
+/** 195 = 195 */
+public static final String CHECKDEADLINE_195 = "195";
+/** 225 = 225 */
+public static final String CHECKDEADLINE_225 = "225";
+/** 255 = 255 */
+public static final String CHECKDEADLINE_255 = "255";
+/** 285 = 285 */
+public static final String CHECKDEADLINE_285 = "285";
+/** 315 = 315 */
+public static final String CHECKDEADLINE_315 = "315";
+/** 345 = 345 */
+public static final String CHECKDEADLINE_345 = "345";
+/** 375 = 375 */
+public static final String CHECKDEADLINE_375 = "375";
+/** 405 = 405 */
+public static final String CHECKDEADLINE_405 = "405";
+/** 435 = 435 */
+public static final String CHECKDEADLINE_435 = "435";
+/** 465 = 465 */
+public static final String CHECKDEADLINE_465 = "465";
+/** 495 = 495 */
+public static final String CHECKDEADLINE_495 = "495";
+/** 525 = 525 */
+public static final String CHECKDEADLINE_525 = "525";
+/** 555 = 555 */
+public static final String CHECKDEADLINE_555 = "555";
+/** 585 = 585 */
+public static final String CHECKDEADLINE_585 = "585";
+/** 615 = 615 */
+public static final String CHECKDEADLINE_615 = "615";
+/** 645 = 645 */
+public static final String CHECKDEADLINE_645 = "645";
+/** 675 = 675 */
+public static final String CHECKDEADLINE_675 = "675";
+/** 705 = 705 */
+public static final String CHECKDEADLINE_705 = "705";
 /** Set Check Dead Line.
 Check Dead Line */
 public void setCheckDeadLine (String CheckDeadLine)
 {
-if (CheckDeadLine.equals("30") || CheckDeadLine.equals("60") || CheckDeadLine.equals("90") || CheckDeadLine.equals("0"));
- else throw new IllegalArgumentException ("CheckDeadLine Invalid value - Reference = CHECKDEADLINE_AD_Reference_ID - 30 - 60 - 90 - 0");
+if (CheckDeadLine.equals("90") || CheckDeadLine.equals("0") || CheckDeadLine.equals("60") || CheckDeadLine.equals("30") || CheckDeadLine.equals("99999") || CheckDeadLine.equals("120") || CheckDeadLine.equals("150") || CheckDeadLine.equals("180") || CheckDeadLine.equals("210") || CheckDeadLine.equals("240") || CheckDeadLine.equals("270") || CheckDeadLine.equals("300") || CheckDeadLine.equals("330") || CheckDeadLine.equals("360") || CheckDeadLine.equals("390") || CheckDeadLine.equals("420") || CheckDeadLine.equals("450") || CheckDeadLine.equals("480") || CheckDeadLine.equals("510") || CheckDeadLine.equals("540") || CheckDeadLine.equals("570") || CheckDeadLine.equals("600") || CheckDeadLine.equals("630") || CheckDeadLine.equals("660") || CheckDeadLine.equals("690") || CheckDeadLine.equals("720") || CheckDeadLine.equals("15") || CheckDeadLine.equals("45") || CheckDeadLine.equals("75") || CheckDeadLine.equals("105") || CheckDeadLine.equals("135") || CheckDeadLine.equals("165") || CheckDeadLine.equals("195") || CheckDeadLine.equals("225") || CheckDeadLine.equals("255") || CheckDeadLine.equals("285") || CheckDeadLine.equals("315") || CheckDeadLine.equals("345") || CheckDeadLine.equals("375") || CheckDeadLine.equals("405") || CheckDeadLine.equals("435") || CheckDeadLine.equals("465") || CheckDeadLine.equals("495") || CheckDeadLine.equals("525") || CheckDeadLine.equals("555") || CheckDeadLine.equals("585") || CheckDeadLine.equals("615") || CheckDeadLine.equals("645") || CheckDeadLine.equals("675") || CheckDeadLine.equals("705"));
+ else throw new IllegalArgumentException ("CheckDeadLine Invalid value - Reference = CHECKDEADLINE_AD_Reference_ID - 90 - 0 - 60 - 30 - 99999 - 120 - 150 - 180 - 210 - 240 - 270 - 300 - 330 - 360 - 390 - 420 - 450 - 480 - 510 - 540 - 570 - 600 - 630 - 660 - 690 - 720 - 15 - 45 - 75 - 105 - 135 - 165 - 195 - 225 - 255 - 285 - 315 - 345 - 375 - 405 - 435 - 465 - 495 - 525 - 555 - 585 - 615 - 645 - 675 - 705");
 if (CheckDeadLine == null) throw new IllegalArgumentException ("CheckDeadLine is mandatory");
 if (CheckDeadLine.length() > 5)
 {
