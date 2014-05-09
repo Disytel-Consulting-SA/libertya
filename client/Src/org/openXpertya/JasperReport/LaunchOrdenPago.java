@@ -222,7 +222,10 @@ public class LaunchOrdenPago extends SvrProcess {
 		String bPartner = (String) DB.getSQLValueString(get_TrxName(),
 				"SELECT Name FROM C_BPartner WHERE C_BPartner_ID = ?",
 				op.getC_BPartner_ID());
-		BigDecimal opAmount = op.getGrandTotal();
+		// Monto de notas de crédito
+		BigDecimal ncAmount  = getCreditsAmount(op);
+		// El monto total debe incluir de manera discriminada las notas de crédito
+		BigDecimal opAmount = op.getGrandTotal().subtract(ncAmount);
 		BigDecimal retencionesAmount = op.getRetencion_Amt();
 
 		// Se asignan los parámetros al wrapper.
@@ -233,6 +236,7 @@ public class LaunchOrdenPago extends SvrProcess {
 		jasperWrapper.addParameter("OP_NUMBER", opNumber);
 		jasperWrapper.addParameter("BPARTNER", bPartner);
 		jasperWrapper.addParameter("OP_AMOUNT", opAmount);
+		jasperWrapper.addParameter("CREDITO_AMOUNT", ncAmount);
 		jasperWrapper.addParameter("RETENCIONES_AMOUNT", retencionesAmount);
 
 		
@@ -396,5 +400,13 @@ public class LaunchOrdenPago extends SvrProcess {
 			e.printStackTrace();
 			return null;
 		}
+	}
+	
+	/**
+	 * Retorna el monto total involucrado en Notas de Credito para este Allocation.
+	 */
+	protected BigDecimal getCreditsAmount(MAllocationHdr allocation) {
+		// En OP por el momento no se discrimina el total del Allocation y las notas de crédito
+		return BigDecimal.ZERO;
 	}
 }

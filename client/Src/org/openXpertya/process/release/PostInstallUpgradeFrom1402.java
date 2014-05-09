@@ -42,6 +42,10 @@ public class PostInstallUpgradeFrom1402 extends PluginPostInstallProcess {
 	/** UID del Informe de Comprobantes por Titular de Tarjeta */
 	protected final static String INVOICES_BY_CREDIT_CARD_OWNER_REPORT_UID = "CORE-AD_Process-1010381";
 	protected final static String INVOICES_BY_CREDIT_CARD_OWNER_REPORT_FILENAME = "InvoicesByCreditCardOwner.jrxml";
+
+	/** Informe de Recibos de Cliente */
+	protected final static String CUSTOMER_RECEIPT_JASPER_REPORT_UID = "CORE-AD_JasperReport-1000016";
+	protected final static String CUSTOMER_RECEIPT_JASPER_REPORT_FILENAME = "ReciboCliente.jasper";
 	
 	protected String doIt() throws Exception {
 		super.doIt();
@@ -152,6 +156,17 @@ public class PostInstallUpgradeFrom1402 extends PluginPostInstallProcess {
 						.readBinaryFromJar(
 								jarFileURL,
 								getBinaryFileURL(INVOICES_BY_CREDIT_CARD_OWNER_REPORT_FILENAME)));
+		
+		// Actualización del reporte de Recibos de cliente
+		MJasperReport
+		.updateBinaryData(
+				get_TrxName(),
+				getCtx(),
+				CUSTOMER_RECEIPT_JASPER_REPORT_UID,
+				JarHelper
+						.readBinaryFromJar(
+								jarFileURL,
+								getBinaryFileURL(CUSTOMER_RECEIPT_JASPER_REPORT_FILENAME)));
 		
 		return " ";
 	}
