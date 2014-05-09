@@ -429,51 +429,10 @@ public class OrdenPagoDataSource {
 					+ "                CashName "
 					+ "        ) "
 					+ "UNION ALL "
-					+ " (SELECT DISTINCT i.C_Invoice_ID, "
-					+ "		 'CREDITO'::CHARACTER VARYING AS PaymentType, "
-					+
-					// "		 (dt.PrintName || ' ' || i.DocumentNo) ::CHARACTER VARYING AS Description, "
-					// +
-					"  CASE "
-					+ "		WHEN ri.C_RetencionSchema_ID IS NOT NULL THEN rs.name "
-					+ "		ELSE (dt.PrintName || ' ' || i.DocumentNo)::CHARACTER VARYING "
-					+ "	END AS Description2, "
-					+ "		 NULL::CHARACTER VARYING AS BankAccount, "
-					+ "		 NULL::CHARACTER VARYING AS RoutingNo, "
-					+ "		 i.DateAcct AS TransferDate, "
-					+ "		 sum(currencyconvert(al.amount, ah.c_currency_id, i.c_currency_id, i.DateAcct::TIMESTAMP WITH TIME zone, NULL::INTEGER, ah.ad_client_id, ah.ad_org_id)) AS Amount, "
-					+
-					// "		 SUM(al.amount) AS Amount,   " +
-					"        i.grandtotal AS PayAmt, "
-					+ "        cu.iso_code AS Currency  "
-					+ " FROM    c_allocationhdr ah "
-					+ "	 INNER JOIN c_allocationline al ON ah.c_allocationhdr_id = al.c_allocationhdr_id "
-					+ "	 INNER JOIN c_invoice i ON al.c_invoice_credit_id = i.c_invoice_id "
-					+ "  	 INNER JOIN c_currency cu ON i.C_Currency_ID = cu.C_Currency_ID "
-					+ " 	 INNER JOIN c_doctype dt ON dt.c_doctype_id = i.c_doctype_id "
-					+ "    LEFT JOIN M_Retencion_Invoice ri ON i.c_invoice_id = ri.c_invoice_id "
-					+ "    LEFT JOIN C_RetencionSchema rs ON ri.c_retencionschema_ID = rs.c_retencionschema_id "
-					+ " WHERE  ah.C_AllocationHdr_ID   = ? "
-					+
-					// Filtro facturas que se hayan utilizado como crédito, pero
-					// que sean retenciones
-					// dado que el reporte no debe mostrar el detalle de
-					// retenciones.
-					// UPDATE 20090219: SE VISUALIZAN A FIN DE MOSTRAR EL
-					// DESGLOSE, POR LO CUAL SE COMENTA
-					/*
-					 * "   AND  NOT EXISTS (SELECT c_invoice_retenc_id " +
-					 * "                    FROM M_Retencion_Invoice ri " +
-					 * "                    WHERE ri.C_AllocationHdr_ID = ah.C_AllocationHdr_ID "
-					 * +
-					 * "                      AND ri.C_Invoice_ID = i.C_Invoice_ID) "
-					 * +
-					 */
-					" GROUP BY i.C_Invoice_ID, PaymentType, Description2, BankAccount, RoutingNo, TransferDate, PayAmt, Currency "
-					+ " ORDER BY Description2, i.DateAcct) ";
+					+ getCreditNotesQuery();
 			return sql;
 		}
-
+		
 		@Override
 		protected void setQueryParameters(PreparedStatement pstmt)
 				throws SQLException {
@@ -528,6 +487,56 @@ public class OrdenPagoDataSource {
 	 */
 	public MAllocationHdr getPaymentOrder() {
 		return paymentOrder;
+	}
+
+	/**
+	 * Query para retornar la nómina de invoices usadas como crédito
+	 * Utilizada también en el Launch para obtener el total de NC del Allocation! 
+	 */
+	public static String getCreditNotesQuery() {
+		return 
+				" (SELECT DISTINCT i.C_Invoice_ID, "
+				+ "		 'CREDITO'::CHARACTER VARYING AS PaymentType, "
+				+
+				// "		 (dt.PrintName || ' ' || i.DocumentNo) ::CHARACTER VARYING AS Description, "
+				// +
+				"  CASE "
+				+ "		WHEN ri.C_RetencionSchema_ID IS NOT NULL THEN rs.name "
+				+ "		ELSE (dt.PrintName || ' ' || i.DocumentNo)::CHARACTER VARYING "
+				+ "	END AS Description2, "
+				+ "		 NULL::CHARACTER VARYING AS BankAccount, "
+				+ "		 NULL::CHARACTER VARYING AS RoutingNo, "
+				+ "		 i.DateAcct AS TransferDate, "
+				+ "		 sum(currencyconvert(al.amount, ah.c_currency_id, i.c_currency_id, i.DateAcct::TIMESTAMP WITH TIME zone, NULL::INTEGER, ah.ad_client_id, ah.ad_org_id)) AS Amount, "
+				+
+				// "		 SUM(al.amount) AS Amount,   " +
+				"        i.grandtotal AS PayAmt, "
+				+ "        cu.iso_code AS Currency  "
+				+ " FROM    c_allocationhdr ah "
+				+ "	 INNER JOIN c_allocationline al ON ah.c_allocationhdr_id = al.c_allocationhdr_id "
+				+ "	 INNER JOIN c_invoice i ON al.c_invoice_credit_id = i.c_invoice_id "
+				+ "  	 INNER JOIN c_currency cu ON i.C_Currency_ID = cu.C_Currency_ID "
+				+ " 	 INNER JOIN c_doctype dt ON dt.c_doctype_id = i.c_doctype_id "
+				+ "    LEFT JOIN M_Retencion_Invoice ri ON i.c_invoice_id = ri.c_invoice_id "
+				+ "    LEFT JOIN C_RetencionSchema rs ON ri.c_retencionschema_ID = rs.c_retencionschema_id "
+				+ " WHERE  ah.C_AllocationHdr_ID   = ? "
+				+
+				// Filtro facturas que se hayan utilizado como crédito, pero
+				// que sean retenciones
+				// dado que el reporte no debe mostrar el detalle de
+				// retenciones.
+				// UPDATE 20090219: SE VISUALIZAN A FIN DE MOSTRAR EL
+				// DESGLOSE, POR LO CUAL SE COMENTA
+				/*
+				 * "   AND  NOT EXISTS (SELECT c_invoice_retenc_id " +
+				 * "                    FROM M_Retencion_Invoice ri " +
+				 * "                    WHERE ri.C_AllocationHdr_ID = ah.C_AllocationHdr_ID "
+				 * +
+				 * "                      AND ri.C_Invoice_ID = i.C_Invoice_ID) "
+				 * +
+				 */
+				" GROUP BY i.C_Invoice_ID, PaymentType, Description2, BankAccount, RoutingNo, TransferDate, PayAmt, Currency "
+				+ " ORDER BY Description2, i.DateAcct) ";
 	}
 
 }
