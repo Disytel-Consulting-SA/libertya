@@ -378,7 +378,7 @@ public class VOrdenCobroModel extends VOrdenPagoModel {
 			String checkNo, BigDecimal amount, Timestamp fechaEmi,
 			Timestamp fechaPago, String chequeALaOrden, String bankName,
 			String CUITLibrador, String checkDescription, Integer campaignID, 
-			Integer projectID, Integer monedaOriginalID) throws Exception {
+			Integer projectID, Integer monedaOriginalID, Integer bankID) throws Exception {
 		// Validaciones iniciales
 		if(Util.isEmpty(chequeraID, true))
 			throw new Exception("@FillMandatory@ @C_BankAccount_ID@");
@@ -405,6 +405,7 @@ public class VOrdenCobroModel extends VOrdenPagoModel {
 				amount, fechaEmi, fechaPago, chequeALaOrden);
 		cheque.setPaymentMedium(paymentMedium);
 		cheque.banco = bankName;
+		cheque.bancoID = bankID;
 		cheque.cuitLibrador = CUITLibrador;
 		cheque.descripcion = checkDescription;
 		cheque.setCampaign(campaignID == null?0:campaignID);

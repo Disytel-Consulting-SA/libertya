@@ -2501,6 +2501,7 @@ public class VOrdenPago extends CPanel implements FormPanel,ActionListener,Table
 			txtChequeTerceroImporte.setText("");
 			txtChequeTerceroDescripcion.setText("");
 		}
+		cboChequeBancoID.setValue(null);
 		updatePaymentsTabsState();
 	}
 	
@@ -2539,9 +2540,9 @@ public class VOrdenPago extends CPanel implements FormPanel,ActionListener,Table
 			txtChequeImporte.setText(m_model.numberFormat(mpc.importe));
 			txtChequeNroCheque.setText(mpc.nroCheque);
 			txtChequeBanco.setText(mpc.banco);
+			cboChequeBancoID.setValue(mpc.bancoID);
 			txtChequeCUITLibrador.setText(mpc.cuitLibrador);
 			txtChequeDescripcion.setText(mpc.descripcion);
-			
 			jTabbedPane2.setSelectedIndex(TAB_INDEX_CHEQUE);
 		} else if (mp.getTipoMP().equals(VOrdenPagoModel.MedioPago.TIPOMEDIOPAGO_CREDITO)) { // Credito
 			VOrdenPagoModel.MedioPagoCredito mpcm = (VOrdenPagoModel.MedioPagoCredito)mp;
@@ -3263,6 +3264,7 @@ public class VOrdenPago extends CPanel implements FormPanel,ActionListener,Table
 		txtDescription.setText("");
 		m_model.setDescription("");
 		checkPayAll.setSelected(false);
+		cboChequeBancoID.setValue(null);
 		// actualizar secuencia
 		seq.setCurrentNext(seq.getCurrentNext().add(BigDecimal.ONE));
 		seq.save();

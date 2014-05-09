@@ -1066,7 +1066,7 @@ public class WOrdenCobro extends WOrdenPago {
 				txtChequeALaOrden.getValue().toString(),
 				getBankName(), txtChequeCUITLibrador.getValue().toString(),
 				txtChequeDescripcion.getValue().toString(), getC_Campaign_ID(),
-				getC_Project_ID(), monedaOriginalID);
+				getC_Project_ID(), monedaOriginalID, cboChequeBancoID!=null?(Integer)cboChequeBancoID.getValue():null);
 		return null;
 	}
 

@@ -2338,7 +2338,7 @@ public class VOrdenCobro extends VOrdenPago {
 				chequeFechaPago.getTimestamp(), txtChequeALaOrden.getText(),
 				getBankName(), txtChequeCUITLibrador.getText(),
 				txtChequeDescripcion.getText(), getC_Campaign_ID(),
-				getC_Project_ID(), monedaOriginalID);
+				getC_Project_ID(), monedaOriginalID, cboChequeBancoID!=null?(Integer)cboChequeBancoID.getValue():null);
 		return null;
 	}
 
