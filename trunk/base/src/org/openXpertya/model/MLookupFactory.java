@@ -330,7 +330,7 @@ public class MLookupFactory {
         }
 
         realSQL.append(" WHERE AD_Ref_List.AD_Reference_ID=").append(AD_Reference_Value_ID);
-        realSQL.append(" ORDER BY 2");
+        realSQL.append(" ORDER BY 3");		// Ordenar Por el name (3) y no por el value (2)!
 
         //
         retValue = new MLookupInfo(realSQL.toString(), "AD_Ref_List", "AD_Ref_List.Value", 101, 101, MQuery.getEqualQuery("AD_Reference_ID", AD_Reference_Value_ID));	// Zoom Window+Query
