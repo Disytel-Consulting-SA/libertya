@@ -734,14 +734,15 @@ public final class MPayment extends X_C_Payment implements DocAction,ProcessCall
         		setDueDate(getDateTrx());
         	}
         	// La fecha de vto debe ser mayor o igual a la fecha de transacción
-        	SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy/MM/dd");
-        	String dueDateFormatted = simpleDateFormat.format(getDueDate());
-        	String dateTrxFormatted = simpleDateFormat.format(getDateTrx());
-			if (getDueDate().compareTo(getDateTrx()) <= 0
-					&& !dueDateFormatted.equals(dateTrxFormatted)) {
-        		log.saveError("SaveError", Msg.translate(getCtx(), "InvalidCheckDueDate"));
-        		return false;
-        	}
+//        	COMENTADO: Debe poder permitir crear un cheque con fecha vto menor al de la trx
+//        	SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy/MM/dd");
+//        	String dueDateFormatted = simpleDateFormat.format(getDueDate());
+//        	String dateTrxFormatted = simpleDateFormat.format(getDateTrx());
+//			if (getDueDate().compareTo(getDateTrx()) <= 0
+//					&& !dueDateFormatted.equals(dateTrxFormatted)) {
+//        		log.saveError("SaveError", Msg.translate(getCtx(), "InvalidCheckDueDate"));
+//        		return false;
+//        	}
         }
         
         int bankAccountCurrency = new MBankAccount(getCtx(), getC_BankAccount_ID(),null).getC_Currency_ID();

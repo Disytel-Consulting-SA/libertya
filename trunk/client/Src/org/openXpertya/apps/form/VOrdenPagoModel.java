@@ -442,19 +442,21 @@ public class VOrdenPagoModel {
 		 */
 		public MedioPagoCheque(boolean isSOTrx) {
 			super(isSOTrx);
+			// Para el MP Cheque debe usarse la fecha del Allocation
+			dateTrx = Env.getDate();
 		}
 
 		public MedioPagoCheque(int chequera_ID, String nroCheque,
 				BigDecimal importe, Timestamp fechaEm, Timestamp fechaPago,
 				String laOrden) {
 			super();
-			Timestamp today = new Timestamp(System.currentTimeMillis());
 			this.chequera_ID = chequera_ID;
 			this.nroCheque = nroCheque;
 			this.importe = importe;
 			this.fechaEm = fechaEm;
 			this.fechaPago = fechaPago;
-			dateTrx = fechaPago.before(today) ? fechaPago : today;
+			// Para el MP Cheque debe usarse la fecha del Allocation
+			dateTrx = Env.getDate();
 			aLaOrden = laOrden;
 		}
 
