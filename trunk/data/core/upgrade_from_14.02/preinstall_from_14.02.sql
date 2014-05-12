@@ -1552,4 +1552,4 @@ update ad_system set dummy = (SELECT addcolumnifnotexists('C_DocType','validates
 update ad_system set dummy = (SELECT addcolumnifnotexists('AD_ClientInfo','UniqueCuit', 'character(1) NOT NULL DEFAULT ''N''::bpchar'));
 
 --20140512-1030 Incorporación de nueva parametrización en proveedores para configurar el monto mínimo de compra (en ordenes de compra)
-ALTER TABLE c_bpartner ADD COLUMN minimumpurchasedamt numeric(22,9) NOT NULL DEFAULT 0;
+update ad_system set dummy = (SELECT addcolumnifnotexists('C_BPartner','minimumpurchasedamt', 'numeric(22,9) NOT NULL DEFAULT 0'));
