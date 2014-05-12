@@ -2283,8 +2283,9 @@ public class VOrdenPagoModel {
 		// Sumar o restar algún monto custom
 		openAmt = openAmt.subtract(rif.getPaymentTermDiscount());
 		// Setear el monto pendiente de la factura si se indicó 0
-		if (useOpenAmtIfZero && manualAmtClientCurrency.compareTo(BigDecimal.ZERO) == 0)
-			rif.setManualAmtClientCurrency(openAmt);
+//		Comentado: si al ser cero completa con el pendiente, nunca puede volver a setearse cero!
+//		if (useOpenAmtIfZero && manualAmtClientCurrency.compareTo(BigDecimal.ZERO) == 0)
+//			rif.setManualAmtClientCurrency(openAmt);
 			
 		if (manualAmtClientCurrency == null
 				|| manualAmtClientCurrency.signum() < 0)
@@ -2309,8 +2310,9 @@ public class VOrdenPagoModel {
 				new Timestamp(System.currentTimeMillis()), 0, getCtx());
 		openAmt = openAmt.subtract(paymentTermDiscount);
 		// Setear el monto pendiente de la factura si se indicó 0
-		if (useOpenAmtIfZero && manualAmt.compareTo(BigDecimal.ZERO) == 0)
-			rif.setManualAmount(openAmt);
+//		Comentado: si al ser cero completa con el pendiente, nunca puede volver a setearse cero!
+//		if (useOpenAmtIfZero && manualAmt.compareTo(BigDecimal.ZERO) == 0)
+//			rif.setManualAmount(openAmt);
 		
 		if (manualAmt == null || manualAmt.signum() < 0)
 			rif.setManualAmount(BigDecimal.ZERO);

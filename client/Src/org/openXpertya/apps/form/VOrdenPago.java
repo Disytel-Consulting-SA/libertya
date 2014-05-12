@@ -632,6 +632,7 @@ public class VOrdenPago extends CPanel implements FormPanel,ActionListener,Table
 		getActionKeys().put(MOVE_PAYMENT_FORWARD, KeyStroke.getKeyStroke(KeyEvent.VK_DOWN, 0));
 		getActionKeys().put(MOVE_PAYMENT_BACKWARD, KeyStroke.getKeyStroke(KeyEvent.VK_UP, 0));
 		getActionKeys().put(GOTO_PAYALL, KeyStroke.getKeyStroke(KeyEvent.VK_F5, 0));
+		getActionKeys().put(COMPLETE_INVOICE_AMT, KeyStroke.getKeyStroke(KeyEvent.VK_F12, 0));
 		
 		// Accion: Foco en Entidad Comercial
 		m_frame.getRootPane().getActionMap().put(GOTO_BPARTNER,
@@ -747,6 +748,22 @@ public class VOrdenPago extends CPanel implements FormPanel,ActionListener,Table
 				}
         	}
         );
+		
+        // Accion: Completar el total abierto de la factura seleccionada
+		m_frame.getRootPane().getActionMap().put(COMPLETE_INVOICE_AMT,
+        	new AbstractAction() {
+        		public void actionPerformed(ActionEvent e) {
+        			// Si estoy en la primer pestaña y hay una fila seleccionada...
+        			if (jTabbedPane1.getSelectedIndex() == 0 && tblFacturas != null && tblFacturas.getSelectedRow() >= 0) {
+        				int cellEdCol = tblFacturas.getColumnModel().getColumnCount() - 1;
+        				tblFacturas.getColumnModel().getColumn(cellEdCol).getCellEditor().cancelCellEditing();
+        				tblFacturas.setValueAt(new BigDecimal(Long.MAX_VALUE), tblFacturas.getSelectedRow(), cellEdCol); 
+        		    	tblFacturas.getColumnModel().getColumn(cellEdCol).getCellEditor().cancelCellEditing();
+        			}
+				}
+        	}
+        );
+        
         
         // Iniciales
         setActionEnabled(GOTO_BPARTNER, true);
@@ -761,6 +778,7 @@ public class VOrdenPago extends CPanel implements FormPanel,ActionListener,Table
 		setActionEnabled(MOVE_INVOICE_FORWARD, true);
 		setActionEnabled(MOVE_INVOICE_BACKWARD, true);
 		setActionEnabled(GOTO_PAYALL, true);
+		setActionEnabled(COMPLETE_INVOICE_AMT, true);
 		
         // Las subclases también deben definir las suyas
         customKeyBindingsInit();
@@ -1720,6 +1738,8 @@ public class VOrdenPago extends CPanel implements FormPanel,ActionListener,Table
     
     protected void updatePayAllInvoices(boolean toPayMoment){
     	getModel().updatePayAllInvoices(checkPayAll.isSelected(), toPayMoment);
+		// Actualizar el total a pagar
+		updateTotalAPagar1();
 		tblFacturas.repaint();
     }
     
@@ -2059,6 +2079,7 @@ public class VOrdenPago extends CPanel implements FormPanel,ActionListener,Table
     protected static final String MOVE_PAYMENT_FORWARD = "MOVE_PAYMENT_FORWARD";
     protected static final String MOVE_PAYMENT_BACKWARD = "MOVE_PAYMENT_BACKWARD";
     protected static final String GOTO_PAYALL = "GOTO_PAYALL";
+    protected static final String COMPLETE_INVOICE_AMT = "COMPLETE_INVOICE_AMT";
     
     protected static final Integer TAB_INDEX_EFECTIVO = 0;
     protected static final Integer TAB_INDEX_TRANSFERENCIA = 1;
