@@ -1819,7 +1819,8 @@ public class MOrder extends X_C_Order implements DocAction {
         }
 
         MDocType dt = MDocType.get( getCtx(),getC_DocTypeTarget_ID());
-
+        MBPartner bpartner = new MBPartner(getCtx(), getC_BPartner_ID(), get_TrxName());
+        
         // Std Period open?
 
         if( !MPeriod.isOpen( getCtx(),getDateAcct(),dt.getDocBaseType())) {
@@ -2026,8 +2027,15 @@ public class MOrder extends X_C_Order implements DocAction {
         		m_processMsg = "@NotPurchasedProductsError@ " + notPurchasedProducts.toString();
         		return DocAction.STATUS_Invalid;
         	}
+        	
+        	// Monto mínimo de compra
+        	if(getGrandTotal().compareTo(bpartner.getMinimumPurchasedAmt()) < 0){
+				m_processMsg = Msg.getMsg(getCtx(),
+						"GrandTotalNotSurpassMinimumPurchaseAmt",
+						new Object[] { bpartner.getMinimumPurchasedAmt() });
+        		return DocAction.STATUS_Invalid;
+        	}
         }
-
         
         m_justPrepared = true;
 

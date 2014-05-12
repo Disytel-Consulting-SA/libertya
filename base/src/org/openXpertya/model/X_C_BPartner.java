@@ -7,7 +7,7 @@ import java.math.*;
 import org.openXpertya.util.*;
 /** Modelo Generado por C_BPartner
  *  @author Comunidad de Desarrollo Libertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
- *  @version  - 2012-11-12 00:25:30.651 */
+ *  @version  - 2014-05-12 11:04:25.073 */
 public class X_C_BPartner extends org.openXpertya.model.PO
 {
 /** Constructor estándar */
@@ -31,6 +31,7 @@ setIsProspect (true);	// Y
 setIsSalesRep (false);
 setIsSummary (false);
 setIsVendor (false);
+setMinimumPurchasedAmt (Env.ZERO);
 setName (null);
 setSecondaryCreditStatus (null);	// OK
 setSendEMail (false);
@@ -911,6 +912,21 @@ public int getM_DiscountSchema_ID()
 Integer ii = (Integer)get_Value("M_DiscountSchema_ID");
 if (ii == null) return 0;
 return ii.intValue();
+}
+/** Set Minimum Purchased Amt.
+Minimum purchased amt allowed */
+public void setMinimumPurchasedAmt (BigDecimal MinimumPurchasedAmt)
+{
+if (MinimumPurchasedAmt == null) throw new IllegalArgumentException ("MinimumPurchasedAmt is mandatory");
+set_Value ("MinimumPurchasedAmt", MinimumPurchasedAmt);
+}
+/** Get Minimum Purchased Amt.
+Minimum purchased amt allowed */
+public BigDecimal getMinimumPurchasedAmt() 
+{
+BigDecimal bd = (BigDecimal)get_Value("MinimumPurchasedAmt");
+if (bd == null) return Env.ZERO;
+return bd;
 }
 /** Set min_order_qty */
 public void setmin_order_qty (BigDecimal min_order_qty)
