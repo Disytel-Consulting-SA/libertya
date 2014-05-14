@@ -1224,15 +1224,20 @@ public class MBPartner extends X_C_BPartner {
 					return false;
 				}
 				// CUIT Repetido siempre que la configuración de la compañía
+				String whereClauseCUIT = newRecord ? "taxid = ? AND ad_client_id = "
+						+ getAD_Client_ID()
+						: "taxid = ? AND ad_client_id = " + getAD_Client_ID()
+								+ " AND c_bpartner_id <> " + getID();
 				MClientInfo clientInfo = MClientInfo.get(getCtx(), getAD_Client_ID());
 				if (!Util.isEmpty(cuit, true)
 						&& clientInfo.isUniqueCuit()
 						&& PO.existRecordFor(getCtx(), X_C_BPartner.Table_Name,
-								newRecord ? "taxid = ?"
-										: "taxid = ? AND c_bpartner_id <> "
-												+ getID(),
-								new Object[] { getTaxID() }, get_TrxName())) {
-					log.saveError("SaveError", Msg.getMsg(getCtx(), "SameCUITInBPartner", new Object[]{cuit}));
+								whereClauseCUIT, new Object[] { getTaxID() },
+								get_TrxName())) {
+					String sameCUITBPname = DB.getSQLValueString(get_TrxName(),
+							"select name from c_bpartner where "
+									+ whereClauseCUIT, getTaxID());
+					log.saveError("SaveError", Msg.getMsg(getCtx(), "SameCUITInBPartner", new Object[]{cuit,sameCUITBPname}));
 					return false;
 				}
 			// Aquí el valor es un DNI
