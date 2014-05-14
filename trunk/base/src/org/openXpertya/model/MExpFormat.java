@@ -23,7 +23,8 @@ public class MExpFormat extends X_AD_ExpFormat {
 	 */
 	public List<MExpFormatRow> getRows() {
 		List<PO> pos = PO.find(getCtx(), X_AD_ExpFormat_Row.Table_Name,
-				"isactive = 'Y'", null, new String[]{"seqno"}, get_TrxName());
+				"isactive = 'Y' and ad_expformat_id = ?", new Object[]{getID()}, 
+				new String[]{"seqno"}, get_TrxName());
 		List<MExpFormatRow> rows = new ArrayList<MExpFormatRow>();
 		for (PO po : pos) {
 			rows.add((MExpFormatRow)po);
@@ -38,7 +39,8 @@ public class MExpFormat extends X_AD_ExpFormat {
 	 */
 	public List<MExpFormatRow> getOrderRows() {
 		List<PO> pos = PO.find(getCtx(), X_AD_ExpFormat_Row.Table_Name,
-				"isactive = 'Y' and isorderfield = 'Y'", null, new String[]{"orderseqno"}, get_TrxName());
+				"isactive = 'Y' and isorderfield = 'Y' and ad_expformat_id = ?", 
+				new Object[]{getID()}, new String[]{"orderseqno"}, get_TrxName());
 		List<MExpFormatRow> rows = new ArrayList<MExpFormatRow>();
 		for (PO po : pos) {
 			rows.add((MExpFormatRow)po);
