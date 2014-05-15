@@ -7,5 +7,5 @@ else
   echo Set JAVA_HOME to the directory of your local JDK.
 fi
 
-$JAVA -classpath ../lib/OXP.jar:../lib/OXPXLib.jar "$@"
+$JAVA -classpath ../lib/OXP.jar:../lib/OXPXLib.jar:../lib/OXPSLib.jar:../lib/JasperReports.jar "$@"
 
