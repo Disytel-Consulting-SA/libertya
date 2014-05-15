@@ -239,6 +239,9 @@ public class ProcessorWSFE {
 			//*****MONTO TOTAL DE PERCEPCIONES
 			line.append(total_Perception+"\n");
 			
+			//*****C_INVOICE_ID para seguimiento
+			line.append(invoice.getC_Invoice_ID()+"\n");
+			
 			File textFile = new File(getPath()+"entrada.txt");
 			FileWriter textOut;
 			textOut = new FileWriter(textFile);
