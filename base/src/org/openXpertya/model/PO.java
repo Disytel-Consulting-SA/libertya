@@ -3100,7 +3100,7 @@ public abstract class PO implements Serializable, Comparator, Evaluatee {
 	 * @param acctBaseTable
 	 *            acct table to get data from
 	 * @param whereClause
-	 *            optional where clause with alisa "p" for acctBaseTable
+	 *            optional where clause with alias "p" for acctBaseTable
 	 * @return true if records inserted
 	 */
 	public boolean insert_Accounting(String acctTable, String acctBaseTable,
@@ -3137,6 +3137,11 @@ public abstract class PO implements Serializable, Comparator, Evaluatee {
 			}
 		}
 
+		// Para C_CashBook_Acct se deben insertar los registros utilizando el AD_Org_ID del C_CashBook
+		String orgID = "0";
+		if (X_C_CashBook_Acct.Table_Name.equalsIgnoreCase(acctTable))
+			orgID = Integer.toString(getAD_Org_ID());
+		
 		// Create SQL Statement - INSERT
 		StringBuffer sb = new StringBuffer("INSERT INTO ")
 				.append(acctTable)
@@ -3148,7 +3153,7 @@ public abstract class PO implements Serializable, Comparator, Evaluatee {
 			sb.append(",").append(s_acctColumns.get(i));
 		// .. SELECT
 		sb.append(") SELECT ").append(getID()).append(
-				", p.C_AcctSchema_ID, p.AD_Client_ID,0,'Y', SysDate,").append(
+				", p.C_AcctSchema_ID, p.AD_Client_ID,").append(orgID).append(",'Y', SysDate,").append(
 				getUpdatedBy()).append(",SysDate,").append(getUpdatedBy());
 		for (int i = 0; i < s_acctColumns.size(); i++)
 			sb.append(",p.").append(s_acctColumns.get(i));
