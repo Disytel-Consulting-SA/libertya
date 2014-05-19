@@ -47,6 +47,10 @@ public class PostInstallUpgradeFrom1402 extends PluginPostInstallProcess {
 	protected final static String CUSTOMER_RECEIPT_JASPER_REPORT_UID = "CORE-AD_JasperReport-1000016";
 	protected final static String CUSTOMER_RECEIPT_JASPER_REPORT_FILENAME = "ReciboCliente.jasper";
 	
+	/** IVA Ventas General */
+	protected final static String IVA_VENTA_GENERAL_REPORT_UID = "CORE-AD_Process-1010324";
+	protected final static String IVA_VENTA_GENERAL_REPORT_FILENAME = "Iva_Ventas.jrxml";
+	
 	protected String doIt() throws Exception {
 		super.doIt();
 		
@@ -167,6 +171,17 @@ public class PostInstallUpgradeFrom1402 extends PluginPostInstallProcess {
 						.readBinaryFromJar(
 								jarFileURL,
 								getBinaryFileURL(CUSTOMER_RECEIPT_JASPER_REPORT_FILENAME)));
+		
+		// Informe IVA Ventas General
+		MProcess.addAttachment(
+				get_TrxName(),
+				getCtx(),
+				IVA_VENTA_GENERAL_REPORT_UID,
+				IVA_VENTA_GENERAL_REPORT_FILENAME,
+				JarHelper
+						.readBinaryFromJar(
+								jarFileURL,
+								getBinaryFileURL(IVA_VENTA_GENERAL_REPORT_FILENAME)));
 		
 		return " ";
 	}
