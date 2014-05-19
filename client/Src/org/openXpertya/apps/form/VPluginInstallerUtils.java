@@ -4,6 +4,7 @@ import java.math.BigDecimal;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.Timestamp;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Properties;
@@ -290,9 +291,13 @@ public class VPluginInstallerUtils  {
 	public static void doPreInstall(Properties ctx, String jarURL, String fileURL) throws Exception
 	{
 		/* Toma el archivo SQL correspondiente e impacta en la base de datos */
-		String sql = JarHelper.readFromJar(jarURL, fileURL, "\n", "--");
-		if (sql != null && sql.length() > 0)
-			PluginXMLUpdater.executeUpdate(sql, m_trx);
+		ArrayList<String> sqls = JarHelper.readPreinstallSQLSentencesFromJar(jarURL, fileURL);
+		int iter = 1;
+		for (String sql : sqls)
+			if (sql != null && sql.length() > 0) {
+				PluginUtils.appendStatus("[" + (iter++) + "] Sentencias SQL de preinstalación", true, false, false, true);
+				PluginXMLUpdater.executeUpdate(sql, m_trx);
+		}
 	}
 	
 	/** 

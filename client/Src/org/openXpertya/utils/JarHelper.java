@@ -4,6 +4,9 @@ import java.io.BufferedReader;
 import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Date;
 import java.util.Properties;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
@@ -129,4 +132,85 @@ public class JarHelper {
 		return line;
 	}
 	
+	
+	/**
+	 * Lee el archivo preinstall.sql y separa las sentencias basado en los comentarios de tipo: --YYYYMMDD-HHMM
+	 * De esta manera es más sencillo realizar el seguimiento de los queries que generan problema
+	 */
+	public static ArrayList<String> readPreinstallSQLSentencesFromJar(String jarURL, String resource) throws Exception
+	{
+		final String sqlComment = "--";
+		ArrayList<String> retValue = new ArrayList<String>();
+		
+	    JarFile jarFile = new JarFile(jarURL);
+	    JarEntry entry = jarFile.getJarEntry(resource);
+	       
+	    /* Si no existe el archivo, retornar null */
+	    if (entry == null)
+	    	return null;
+	       
+	    InputStream input = jarFile.getInputStream(entry);
+	    StringBuilder content = new StringBuilder();
+	    InputStreamReader isr = new InputStreamReader(input);
+	    BufferedReader reader = new BufferedReader(isr);
+
+	    String line;
+	    // iterar por todas las lineas
+	    while ((line = reader.readLine()) != null) {
+	    	// Si la linea contiene informacion, y no es un comentario, incorporarla
+	    	if ( line.length() > 0 ) {
+	    		// Es una linea de separación de sentencias?
+	    		if (isPreinstallSplitComment(line)) {
+	    			// guardar la sentencia previa a la actual
+	    			if (content.toString().length() > 0)
+	    				retValue.add(content.toString());
+	    			// reiniciar para la nueva sentencia
+	    			content = new StringBuilder();
+	    			continue;
+	    		}
+	    		// Si es una linea de comentario tradicional, simplemente omitirla
+	    		line = removeComment(line, sqlComment);
+	    		if (line.length() > 0 && !"".equals(line))
+	    			content.append(line + " ");
+	    	}
+	    }
+		// guardar la sentencia final
+		if (content.toString().length() > 0)
+			retValue.add(content.toString());
+
+		// cierre del archivo
+		jarFile.close();
+	       
+		return retValue;
+	}
+	
+	/**
+	 * Retorna true si el comentario respeta el formato:    --YYYYMMDD-HHMM (o similar teniendo 
+	 * en cuenta eventuales espacios adicionales) de separación de sentencias; o false caso contrario
+	 */
+	protected static boolean isPreinstallSplitComment(String line) {
+		
+		// formato y tamaño a buscar
+		final String dateTimeFormat = "yyyyMMdd-HHmm"; 
+		final int dateTimeLength = dateTimeFormat.length();
+	
+		try {
+			
+			// si directamente no inicia como un comentario, omitir
+			if (!line.trim().startsWith("--"))
+				return false;
+			
+			// remover -- y todos los espacios, dejando la fecha/hora toda junta.
+			line = line.substring(2).replaceAll(" ", "");
+			
+			// remover texto posterior a la fecha-hora
+			line = line.substring(0, dateTimeLength);
+			
+			// Intentar parsear el comentario
+			new SimpleDateFormat(dateTimeFormat).parse(line);
+			return true;
+		} catch (Exception e) {
+			return false;
+		}
+	}
 }
