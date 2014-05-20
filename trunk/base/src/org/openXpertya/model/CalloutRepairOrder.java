@@ -93,7 +93,7 @@ public class CalloutRepairOrder extends CalloutEngine {
                 ResultSet rs = pstmt.executeQuery();
 
                 if( rs.next()) {
-                    AD_Sequence_ID = rs.getInt( 6 );
+                    AD_Sequence_ID = rs.getInt( "AD_Sequence_ID" );
                 }
 
                 rs.close();
