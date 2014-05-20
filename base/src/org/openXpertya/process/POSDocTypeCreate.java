@@ -1,7 +1,6 @@
 package org.openXpertya.process;
 
 import java.math.BigDecimal;
-import java.text.NumberFormat;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Properties;
@@ -12,7 +11,6 @@ import org.openXpertya.util.CLogger;
 import org.openXpertya.util.DB;
 import org.openXpertya.util.Env;
 import org.openXpertya.util.Msg;
-import org.openXpertya.util.Trx;
 
 
 public class POSDocTypeCreate extends SvrProcess {
@@ -183,32 +181,34 @@ public class POSDocTypeCreate extends SvrProcess {
         MSequence sequence;
         
         String posNumber = getFormattedPosNumber();
-        // Se obtiene el prefijo de la secuencia.
-        // Ej. si letra es A y punto de venta es 15,
-        // prefix = A001 (el 5 se pone como numero inicial del número de secuencia)
-        String prefix = dtd.getLetter() + posNumber.substring(0,3);
+        BigDecimal posNro = new BigDecimal(getP_PosNumber());
+        BigDecimal resto;
+        int divideTimes = 0;
         // Se obtiene el número inicial de la secuencia.
         // Ej. 500000001 (el 5 corresponde al punto de venta) esto se hace
         // así dado que el campo es de tipo int y los ceros a la izquierda
         // serían quitados.
-        int startNo;
         BigDecimal currentNext;
-        // Si el punto de venta termina en 0.
-        // El prefijo se calcula con 3 digitos y el currentNext con 10 digitos
+        String prefix;
+        // El punto de venta puede terminar en más de 1 cero
         // Ej. si letra es A y punto de venta es 40,
         // prefix = A00 y currentNext = 4000000000
-        if (Integer.parseInt(posNumber.substring(3,4)) == 0){
-        	prefix = dtd.getLetter() + posNumber.substring(0,2);
-        	startNo = Integer.parseInt(posNumber.substring(2,4) + "0000001");
-        	currentNext = new BigDecimal(posNumber.substring(2,4) + "00000001");
-        }
-        else{
-        	currentNext = new BigDecimal(posNumber.substring(3,4) + "00000001");
-        	startNo = Integer.parseInt(posNumber.substring(3,4) + "00000001");
-        }
+        // El prefijo se calcula con 3 digitos y el currentNext con 10 digitos
+        do {
+        	divideTimes++;
+        	resto = posNro.remainder(BigDecimal.TEN);
+        	posNro = posNro.divide(BigDecimal.TEN, 2, BigDecimal.ROUND_DOWN);
+		} while (resto.compareTo(BigDecimal.ZERO) == 0);
+        
+		prefix = dtd.getLetter()
+				+ posNumber.substring(0, posNumber.length() - divideTimes);
+		currentNext = new BigDecimal(posNumber.substring(posNumber.length()
+				- divideTimes, posNumber.length())
+				+ "00000001");
         
         // Se crea la secuencia con numeración automática.
-        sequence = new MSequence(ctx, getAD_Client_ID(), dtd.getName(), currentNext, startNo, get_TrxName());
+		sequence = new MSequence(ctx, getAD_Client_ID(), dtd.getName(),
+				currentNext, 1, 1, get_TrxName());
         sequence.setPrefix(prefix);
         sequence.setIsAutoSequence(true);
         // Se guarda la secuencia.
