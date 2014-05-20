@@ -125,6 +125,17 @@ public class MSequence extends X_AD_Sequence {
         setCurrentNextSys(StartNo / 10);
 
     }	// Msequence;
+    
+    public MSequence(Properties ctx, int AD_Client_ID, String sequenceName, BigDecimal currentNext, int StartNo, int currentNextSys, String trxName) {
+
+        this(ctx, 0, trxName);
+        setClientOrg(AD_Client_ID, 0);		// Client Ownership
+        setName(sequenceName);
+        setDescription(sequenceName);
+        setStartNo(StartNo);
+        setCurrentNext(currentNext);
+        setCurrentNextSys(currentNextSys);
+    }
 
     /**
      *      Load Constructor
