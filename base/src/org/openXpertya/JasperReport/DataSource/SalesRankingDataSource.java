@@ -13,12 +13,16 @@ public class SalesRankingDataSource extends ProductLinesSalesDataSource {
 	/** Ordenar por precio? */
 	private boolean orderByPrice;
 	
+	/** Proveedor de artículos */
+	private Integer vendorID;
+	
 	public SalesRankingDataSource(String trxName, Integer orgID,
 			Integer productLinesID, Timestamp dateFrom, Timestamp dateTo, 
-			Integer limit, boolean orderByPrice) {
+			Integer limit, boolean orderByPrice, Integer vendorID) {
 		super(trxName, orgID, productLinesID, dateFrom, dateTo);
 		setLimit(limit);
 		setOrderByPrice(orderByPrice);
+		setVendorID(vendorID);
 	}
 
 	@Override
@@ -31,10 +35,16 @@ public class SalesRankingDataSource extends ProductLinesSalesDataSource {
 					 "		left join m_product_gamas as pg on pg.m_product_gamas_id = pc.m_product_gamas_id " +
 					 "		left join m_product_lines as pl on pl.m_product_lines_id = pg.m_product_lines_id " +
 					 "		inner join c_invoice as i on i.c_invoice_id = il.c_invoice_id " +
-					 "		inner join c_doctype as dt on dt.c_doctype_id = i.c_doctypetarget_id " +
-					 "		where i.docstatus IN ('CO','CL') AND i.ad_org_id = ? AND i.issotrx = 'Y' AND dt.docbasetype IN ('"+MDocType.DOCBASETYPE_ARInvoice+"','"+MDocType.DOCBASETYPE_ARCreditMemo+"') AND dt.doctypekey NOT IN ('RCI','RCR') AND date_trunc('day',dateinvoiced) >= date_trunc('day',?::date) AND date_trunc('day',dateinvoiced) <= date_trunc('day',?::date) ");
+					 "		inner join c_doctype as dt on dt.c_doctype_id = i.c_doctypetarget_id ");
+		if(!Util.isEmpty(getVendorID(), true)){
+			sql.append(" inner join m_product_po as po on il.m_product_id = po.m_product_id ");
+		}
+		sql.append(" where i.docstatus IN ('CO','CL') AND i.ad_org_id = ? AND i.issotrx = 'Y' AND dt.docbasetype IN ('"+MDocType.DOCBASETYPE_ARInvoice+"','"+MDocType.DOCBASETYPE_ARCreditMemo+"') AND dt.doctypekey NOT IN ('RCI','RCR') AND date_trunc('day',dateinvoiced) >= date_trunc('day',?::date) AND date_trunc('day',dateinvoiced) <= date_trunc('day',?::date) ");
 		if(!Util.isEmpty(getProductLinesID(), true)){
 			sql.append(" AND pl.m_product_lines_id = ").append(getProductLinesID());
+		}
+		if(!Util.isEmpty(getVendorID(), true)){
+			sql.append(" AND po.c_bpartner_id = ").append(getVendorID());
 		}
 		sql.append(" group by p.m_product_id, p.value, p.name) as s order by ");
 		sql.append(getOrderSQLStatement());
@@ -72,6 +82,14 @@ public class SalesRankingDataSource extends ProductLinesSalesDataSource {
 
 	protected void setOrderByPrice(boolean orderByPrice) {
 		this.orderByPrice = orderByPrice;
+	}
+
+	protected Integer getVendorID() {
+		return vendorID;
+	}
+
+	protected void setVendorID(Integer vendorID) {
+		this.vendorID = vendorID;
 	}
 	
 }

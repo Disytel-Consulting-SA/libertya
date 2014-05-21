@@ -17,7 +17,7 @@
 		 whenNoDataType="NoPages"
 		 isTitleNewPage="false"
 		 isSummaryNewPage="false">
-	<property name="ireport.scriptlethandling" value="2" />
+	<property name="ireport.scriptlethandling" value="0" />
 	<property name="ireport.encoding" value="UTF-8" />
 	<import value="java.util.*" />
 	<import value="net.sf.jasperreports.engine.*" />
@@ -32,6 +32,8 @@
 	<parameter name="DATE_TO" isForPrompting="false" class="java.sql.Timestamp"/>
 	<parameter name="LIMIT" isForPrompting="false" class="java.lang.Integer"/>
 	<parameter name="ALL_PRODUCT_LINES_MSG" isForPrompting="false" class="java.lang.String"/>
+	<parameter name="VENDOR_VALUE" isForPrompting="false" class="java.lang.String"/>
+	<parameter name="VENDOR_NAME" isForPrompting="false" class="java.lang.String"/>
 
 	<field name="PRODUCT_VALUE" class="java.lang.String"/>
 	<field name="PRODUCT_NAME" class="java.lang.String"/>
@@ -42,7 +44,7 @@
 			</band>
 		</background>
 		<title>
-			<band height="107"  isSplitAllowed="true" >
+			<band height="116"  isSplitAllowed="true" >
 				<textField isStretchWithOverflow="false" isBlankWhenNull="false" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
 						x="0"
@@ -75,7 +77,8 @@
 						y="14"
 						width="39"
 						height="14"
-						key="staticText-2"/>
+						key="staticText-2"
+						isRemoveLineWhenBlank="true"/>
 					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
 					<textElement verticalAlignment="Middle">
 						<font/>
@@ -88,7 +91,8 @@
 						y="14"
 						width="56"
 						height="14"
-						key="textField-1"/>
+						key="textField-1"
+						isRemoveLineWhenBlank="true"/>
 					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
 					<textElement verticalAlignment="Middle">
 						<font/>
@@ -114,7 +118,8 @@
 						y="36"
 						width="96"
 						height="14"
-						key="staticText-3"/>
+						key="staticText-3"
+						isRemoveLineWhenBlank="true"/>
 					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
 					<textElement>
 						<font/>
@@ -127,7 +132,8 @@
 						y="50"
 						width="96"
 						height="14"
-						key="staticText-4"/>
+						key="staticText-4"
+						isRemoveLineWhenBlank="true"/>
 					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
 					<textElement>
 						<font/>
@@ -140,9 +146,10 @@
 						y="64"
 						width="96"
 						height="14"
-						key="staticText-5"/>
+						key="staticText-5"
+						isRemoveLineWhenBlank="true"/>
 					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
-					<textElement>
+					<textElement verticalAlignment="Top">
 						<font/>
 					</textElement>
 				<text><![CDATA[Límite del Listado:]]></text>
@@ -153,7 +160,8 @@
 						y="36"
 						width="63"
 						height="14"
-						key="textField-3"/>
+						key="textField-3"
+						isRemoveLineWhenBlank="true"/>
 					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
 					<textElement verticalAlignment="Middle">
 						<font/>
@@ -166,7 +174,8 @@
 						y="36"
 						width="63"
 						height="14"
-						key="textField-4"/>
+						key="textField-4"
+						isRemoveLineWhenBlank="true"/>
 					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
 					<textElement verticalAlignment="Middle">
 						<font/>
@@ -179,7 +188,8 @@
 						y="36"
 						width="17"
 						height="14"
-						key="staticText-6"/>
+						key="staticText-6"
+						isRemoveLineWhenBlank="true"/>
 					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
 					<textElement textAlignment="Center" verticalAlignment="Middle">
 						<font/>
@@ -192,7 +202,8 @@
 						y="22"
 						width="96"
 						height="14"
-						key="staticText-7"/>
+						key="staticText-7"
+						isRemoveLineWhenBlank="true"/>
 					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
 					<textElement verticalAlignment="Middle">
 						<font pdfFontName="Helvetica" isItalic="false"/>
@@ -205,7 +216,8 @@
 						y="22"
 						width="344"
 						height="14"
-						key="textField-5"/>
+						key="textField-5"
+						isRemoveLineWhenBlank="true"/>
 					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
 					<textElement verticalAlignment="Middle">
 						<font pdfFontName="Helvetica" isItalic="false"/>
@@ -218,7 +230,8 @@
 						y="50"
 						width="344"
 						height="14"
-						key="textField-6"/>
+						key="textField-6"
+						isRemoveLineWhenBlank="true"/>
 					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
 					<textElement verticalAlignment="Middle">
 						<font pdfFontName="Helvetica" isItalic="false"/>
@@ -231,9 +244,10 @@
 						y="64"
 						width="94"
 						height="14"
-						key="textField"/>
+						key="textField"
+						isRemoveLineWhenBlank="true"/>
 					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
-					<textElement>
+					<textElement verticalAlignment="Top">
 						<font/>
 					</textElement>
 				<textFieldExpression   class="java.lang.Integer"><![CDATA[$P{LIMIT}]]></textFieldExpression>
@@ -242,7 +256,7 @@
 					<reportElement
 						mode="Opaque"
 						x="0"
-						y="90"
+						y="99"
 						width="96"
 						height="17"
 						backcolor="#EDEBEB"
@@ -257,7 +271,7 @@
 					<reportElement
 						mode="Opaque"
 						x="96"
-						y="90"
+						y="99"
 						width="312"
 						height="17"
 						backcolor="#EDEBEB"
@@ -272,7 +286,7 @@
 					<reportElement
 						mode="Opaque"
 						x="408"
-						y="90"
+						y="99"
 						width="127"
 						height="17"
 						backcolor="#EDEBEB"
@@ -292,6 +306,38 @@
 						key="line-1"/>
 					<graphicElement stretchType="NoStretch" pen="Dotted"/>
 				</line>
+				<staticText>
+					<reportElement
+						x="0"
+						y="78"
+						width="96"
+						height="14"
+						key="staticText-11"
+						isRemoveLineWhenBlank="true">
+							<printWhenExpression><![CDATA[new Boolean($P{VENDOR_VALUE} != null)]]></printWhenExpression>
+						</reportElement>
+					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
+					<textElement verticalAlignment="Top">
+						<font/>
+					</textElement>
+				<text><![CDATA[Proveedor:]]></text>
+				</staticText>
+				<textField isStretchWithOverflow="false" isBlankWhenNull="false" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
+					<reportElement
+						x="96"
+						y="78"
+						width="344"
+						height="14"
+						key="textField"
+						isRemoveLineWhenBlank="true">
+							<printWhenExpression><![CDATA[new Boolean($P{VENDOR_VALUE} != null)]]></printWhenExpression>
+						</reportElement>
+					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
+					<textElement verticalAlignment="Top">
+						<font/>
+					</textElement>
+				<textFieldExpression   class="java.lang.String"><![CDATA[$P{VENDOR_VALUE}+" - "+$P{VENDOR_NAME}]]></textFieldExpression>
+				</textField>
 			</band>
 		</title>
 		<pageHeader>
