@@ -1553,3 +1553,12 @@ update ad_system set dummy = (SELECT addcolumnifnotexists('AD_ClientInfo','Uniqu
 
 --20140512-1030 Incorporación de nueva parametrización en proveedores para configurar el monto mínimo de compra (en ordenes de compra)
 update ad_system set dummy = (SELECT addcolumnifnotexists('C_BPartner','minimumpurchasedamt', 'numeric(22,9) NOT NULL DEFAULT 0'));
+
+--20140520-2330 Incremento del tamaño del campo Name a 255 para las tablas M_Product y  M_Product_Trl. Se hace asi porque al modificar la longitud desde la sintaxis de postgresql se debían eliminar varias vistas del CORE y con posibilidad de errores en instancias custom de clientes  
+UPDATE pg_attribute
+SET atttypmod = 259
+WHERE attrelid = 'm_product'::regclass AND attname = 'name';
+
+UPDATE pg_attribute
+SET atttypmod = 259
+WHERE attrelid = 'm_product_trl'::regclass AND attname = 'name';
