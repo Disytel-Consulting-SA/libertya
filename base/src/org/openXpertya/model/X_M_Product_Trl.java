@@ -1,13 +1,14 @@
-/** Modelo Generado - NO CAMBIAR MANUALMENTE - Copyright (C) 2006 FUNDESLE */
+/** Modelo Generado - NO CAMBIAR MANUALMENTE - Disytel */
 package org.openXpertya.model;
-import java.util.*;
+import java.util.logging.Level;
+ import java.util.*;
 import java.sql.*;
 import java.math.*;
 import org.openXpertya.util.*;
 /** Modelo Generado por M_Product_Trl
- *  @author Comunidad de Desarrollo openXpertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
- *  @version  - 2009-10-22 14:51:37.252 */
-public class X_M_Product_Trl extends PO
+ *  @author Comunidad de Desarrollo Libertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
+ *  @version  - 2014-05-20 23:56:09.614 */
+public class X_M_Product_Trl extends org.openXpertya.model.PO
 {
 /** Constructor estándar */
 public X_M_Product_Trl (Properties ctx, int M_Product_Trl_ID, String trxName)
@@ -27,13 +28,13 @@ public X_M_Product_Trl (Properties ctx, ResultSet rs, String trxName)
 {
 super (ctx, rs, trxName);
 }
-/** AD_Table_ID=312 */
-public static final int Table_ID=312;
+/** AD_Table_ID */
+public static final int Table_ID = M_Table.getTableID("M_Product_Trl");
 
 /** TableName=M_Product_Trl */
 public static final String Table_Name="M_Product_Trl";
 
-protected static KeyNamePair Model = new KeyNamePair(312,"M_Product_Trl");
+protected static KeyNamePair Model = new KeyNamePair(Table_ID,"M_Product_Trl");
 protected static BigDecimal AccessLevel = new BigDecimal(3);
 
 /** Load Meta Data */
@@ -62,7 +63,7 @@ public String getAD_ComponentObjectUID()
 {
 return (String)get_Value("AD_ComponentObjectUID");
 }
-public static final int AD_LANGUAGE_AD_Reference_ID=106;
+public static final int AD_LANGUAGE_AD_Reference_ID = MReference.getReferenceID("AD_Language");
 /** Set Language.
 Language for this entity */
 public void setAD_Language (String AD_Language)
@@ -152,10 +153,10 @@ Alphanumeric identifier of the entity */
 public void setName (String Name)
 {
 if (Name == null) throw new IllegalArgumentException ("Name is mandatory");
-if (Name.length() > 60)
+if (Name.length() > 255)
 {
-log.warning("Length > 60 - truncated");
-Name = Name.substring(0,60);
+log.warning("Length > 255 - truncated");
+Name = Name.substring(0,255);
 }
 set_Value ("Name", Name);
 }

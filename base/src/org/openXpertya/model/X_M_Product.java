@@ -7,7 +7,7 @@ import java.math.*;
 import org.openXpertya.util.*;
 /** Modelo Generado por M_Product
  *  @author Comunidad de Desarrollo Libertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
- *  @version  - 2014-04-28 08:51:00.194 */
+ *  @version  - 2014-05-20 23:56:00.362 */
 public class X_M_Product extends org.openXpertya.model.PO
 {
 /** Constructor estándar */
@@ -770,10 +770,10 @@ Alphanumeric identifier of the entity */
 public void setName (String Name)
 {
 if (Name == null) throw new IllegalArgumentException ("Name is mandatory");
-if (Name.length() > 60)
+if (Name.length() > 255)
 {
-log.warning("Length > 60 - truncated");
-Name = Name.substring(0,60);
+log.warning("Length > 255 - truncated");
+Name = Name.substring(0,255);
 }
 set_Value ("Name", Name);
 }
