@@ -51,6 +51,10 @@ public class PostInstallUpgradeFrom1402 extends PluginPostInstallProcess {
 	protected final static String IVA_VENTA_GENERAL_REPORT_UID = "CORE-AD_Process-1010324";
 	protected final static String IVA_VENTA_GENERAL_REPORT_FILENAME = "Iva_Ventas.jrxml";
 	
+	/** UID del Informe de Ranking de Ventas */
+	protected final static String SALES_RANKING_JASPER_REPORT_UID = "CORE-AD_JasperReport-1010099";
+	protected final static String SALES_RANKING_JASPER_REPORT_FILENAME = "SalesRanking.jasper";
+	
 	protected String doIt() throws Exception {
 		super.doIt();
 		
@@ -182,6 +186,17 @@ public class PostInstallUpgradeFrom1402 extends PluginPostInstallProcess {
 						.readBinaryFromJar(
 								jarFileURL,
 								getBinaryFileURL(IVA_VENTA_GENERAL_REPORT_FILENAME)));
+		
+		// Informe de Ranking de Ventas
+		MJasperReport
+			.updateBinaryData(
+					get_TrxName(),
+					getCtx(),
+					SALES_RANKING_JASPER_REPORT_UID,
+					JarHelper
+							.readBinaryFromJar(
+									jarFileURL,
+									getBinaryFileURL(SALES_RANKING_JASPER_REPORT_FILENAME)));
 		
 		return " ";
 	}
