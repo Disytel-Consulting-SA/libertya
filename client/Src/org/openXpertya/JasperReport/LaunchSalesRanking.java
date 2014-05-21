@@ -28,7 +28,7 @@ public class LaunchSalesRanking extends LaunchProductLinesSales {
 	}
 	
 	protected boolean isOrderByPrice(){
-		return/opt/iReport-2.0.1/bin/SalesRanking.jasper/opt/iReport-2.0.1/bin/SalesRanking.jasper/opt/iReport-2.0.1/bin/SalesRanking.jasper/opt/iReport-2.0.1/bin/SalesRanking.jasper/opt/iReport-2.0.1/bin/SalesRanking.jasperring)getParameterValue("Order")).equals("P");
+		return ((String)getParameterValue("Order")).equals("P");
 	}
 	
 	protected Integer getLimit(){
