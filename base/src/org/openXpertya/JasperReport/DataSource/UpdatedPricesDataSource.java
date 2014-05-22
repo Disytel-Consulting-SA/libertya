@@ -40,7 +40,7 @@ public class UpdatedPricesDataSource extends QueryDataSource {
 					 "			product_value, " +
 					 "			product_name, " +
 					 "			m_product_id, " +
-					 "			price::numeric(11,2) as price, " +
+					 "			price::numeric(22,4) as price, " +
 					 "			updated " +
 					 " from (select (CASE WHEN pl.value is null THEN 'SD' ELSE pl.value END) as lines_value, " +
 					 "				(CASE WHEN pl.name is null THEN 'SIN DESCRIPCION' ELSE pl.name END) as lines_name, " +
