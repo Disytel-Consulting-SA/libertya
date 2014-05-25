@@ -95,7 +95,8 @@ public class MElectronicInvoice extends X_E_ElectronicInvoice {
 		setTaxBaseAmt(MCurrency.currencyConvert(getInvoiceTaxBaseAmt(inv.getC_Invoice_ID()), inv.getC_Currency_ID(), currencyClient, inv.getDateAcct(), inv.getAD_Org_ID(),getCtx())); 			// Suma los taxbaseamt de la factura
 		MLetraComprobante letra = new MLetraComprobante(getCtx(), inv.getC_Letra_Comprobante_ID(), get_TrxName());
 		if (letra.getLetra().equalsIgnoreCase(exento)){
-			setTotalLines(BigDecimal.ZERO);	
+			setTotalLines(BigDecimal.ZERO);
+			setOtros(MCurrency.currencyConvert(inv.getGrandTotal(), inv.getC_Currency_ID(), currencyClient, inv.getDateAcct(), inv.getAD_Org_ID(),getCtx()));
 		}
 		else{
 			setTotalLines(MCurrency.currencyConvert(inv.getNetAmount(), inv.getC_Currency_ID(), currencyClient, inv.getDateAcct(), inv.getAD_Org_ID(),getCtx()));	
@@ -129,7 +130,8 @@ public class MElectronicInvoice extends X_E_ElectronicInvoice {
 		setImpuestosInternos(BigDecimal.ZERO);											// No se usa
 		
 		if (inv.getDocStatus().equalsIgnoreCase("VO") || inv.getDocStatus().equalsIgnoreCase("RE")){
-			setDateVoid(inv.getUpdated());
+			setDateVoid(null);
+			//setDateVoid(inv.getUpdated());
 		}
 		setIsSOTrx(inv.isSOTrx());
 		setC_Invoice_ID(inv.getC_Invoice_ID());

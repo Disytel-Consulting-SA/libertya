@@ -667,4 +667,17 @@ BigDecimal bd = (BigDecimal)get_Value("Transporte");
 if (bd == null) return Env.ZERO;
 return bd;
 }
+/** Set Otros */
+public void setOtros (BigDecimal Otros)
+{
+if (Otros == null) throw new IllegalArgumentException ("Otros is mandatory");
+set_Value ("Otros", Otros);
+}
+/** Get Otros */
+public BigDecimal getOtros() 
+{
+BigDecimal bd = (BigDecimal)get_Value("Otros");
+if (bd == null) return Env.ZERO;
+return bd;
+}
 }
