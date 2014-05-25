@@ -1,11 +1,8 @@
 package org.openXpertya.process;
 
-import java.io.BufferedWriter;
-import java.io.FileOutputStream;
-import java.io.FileWriter;
-import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.math.BigDecimal;
+import java.nio.charset.Charset;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -72,7 +69,9 @@ public class ExportElectronicInvoiceToFile extends SvrProcess {
 				" (select sum(impuestosmunicipales * TotalSign) from e_electronicinvoice where dateinvoiced >= '"+periodo.getStartDate()+"' and date_trunc('day',dateinvoiced) <= '"+periodo.getEndDate()+"' and issotrx = 'N' and (AD_Client_ID = "+ getAD_Client_ID() +") and (createdby = "+ getAD_User_ID()+")) as compraimpuestosmunicipales, "+
 				" (select sum(impuestosinternos * TotalSign) from e_electronicinvoice where dateinvoiced >= '"+periodo.getStartDate()+"' and date_trunc('day',dateinvoiced) <= '"+periodo.getEndDate()+"' and (AD_Client_ID = "+ getAD_Client_ID() +") and (createdby = "+ getAD_User_ID()+")) as factimpuestosinternos, "+
 				" (select sum(impuestosinternos * TotalSign) from e_electronicinvoice where dateinvoiced >= '"+periodo.getStartDate()+"' and date_trunc('day',dateinvoiced) <= '"+periodo.getEndDate()+"' and issotrx = 'Y' and (AD_Client_ID = "+ getAD_Client_ID() +") and (createdby = "+ getAD_User_ID()+")) as ventaimpuestosinternos, "+
-				" (select sum(impuestosinternos * TotalSign) from e_electronicinvoice where dateinvoiced >= '"+periodo.getStartDate()+"' and date_trunc('day',dateinvoiced) <= '"+periodo.getEndDate()+"' and issotrx = 'N' and (AD_Client_ID = "+ getAD_Client_ID() +") and (createdby = "+ getAD_User_ID()+")) as compraimpuestosinternos, "+
+				" (select sum(impuestosinternos * TotalSign) from e_electronicinvoice where dateinvoiced >= '"+periodo.getStartDate()+"' and date_trunc('day',dateinvoiced) <= '"+periodo.getEndDate()+"' and issotrx = 'N' and (AD_Client_ID = "+ getAD_Client_ID() +") and (createdby = "+ getAD_User_ID()+")) as compraimpuestosinternos, "+		
+				// Sumatoria de columna OTROS
+				" (select sum(otros * TotalSign) from e_electronicinvoice where dateinvoiced >= '"+periodo.getStartDate()+"' and date_trunc('day',dateinvoiced) <= '"+periodo.getEndDate()+"' and issotrx = 'Y' and (AD_Client_ID = "+ getAD_Client_ID() +") and (createdby = "+ getAD_User_ID()+")) as sumotros, "+
 				" hdr.identif_comprador," +
 				" hdr.identif_vendedor," +
 				" hdr.multiplyrate," +
@@ -110,6 +109,7 @@ public class ExportElectronicInvoiceToFile extends SvrProcess {
 				" hdr.impuestosmunicipales," +
 				" hdr.impuestosinternos," +
 				" hdr.jurimpuestosmunicipales," +
+				" hdr.otros," +
 				" ln.istaxexempt," +
 				" ln.indica_anulacion, " +
 				" ln.diseno_libre, " +
@@ -202,6 +202,9 @@ public class ExportElectronicInvoiceToFile extends SvrProcess {
 				
 				eInv.setLineNetAmt(rs.getBigDecimal("linenetamt"));
 				
+				eInv.setSumOtros(rs.getBigDecimal("sumotros"));
+				
+				eInv.setOtros(rs.getBigDecimal("otros"));
 				eInv.setC_Invoice_ID(rs.getInt("c_invoice_id"));
 				eInv.setCod_Moneda(rs.getString("cod_moneda"));
 				eInv.setNumeroComprobante(rs.getInt("numerocomprobante"));
@@ -414,13 +417,13 @@ public class ExportElectronicInvoiceToFile extends SvrProcess {
 	
 	// Armo el archivo
 	private int escribeArchivo(String line, String file){
-		FileWriter fichero = null;
+		org.zkoss.io.FileWriter fichero = null;
         PrintWriter pw = null;
         try
         {
-            fichero = new FileWriter(file, true);
+            fichero = new org.zkoss.io.FileWriter(file, "ascii", true);
             pw = new PrintWriter(fichero);
-            pw.println(line);
+            pw.print(line.concat("\r\n"));
         } catch (Exception e) {
             e.printStackTrace();
         } finally {

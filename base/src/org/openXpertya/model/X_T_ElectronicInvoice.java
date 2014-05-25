@@ -3,6 +3,7 @@ package org.openXpertya.model;
 import java.util.*;
 import java.sql.*;
 import java.math.*;
+
 import org.openXpertya.util.*;
 /** Modelo Generado por T_ElectronicInvoice
  *  @author Comunidad de Desarrollo Libertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
@@ -1257,6 +1258,31 @@ set_Value ("VentaTotalLines", VentaTotalLines);
 public BigDecimal getVentaTotalLines() 
 {
 BigDecimal bd = (BigDecimal)get_Value("VentaTotalLines");
+if (bd == null) return Env.ZERO;
+return bd;
+}
+/** Set SumOtros */
+public void setSumOtros (BigDecimal SumOtros)
+{
+set_Value ("SumOtros", SumOtros);
+}
+/** Get SumOtros */
+public BigDecimal getSumOtros() 
+{
+BigDecimal bd = (BigDecimal)get_Value("SumOtros");
+if (bd == null) return Env.ZERO;
+return bd;
+}
+/** Set Otros */
+public void setOtros (BigDecimal Otros)
+{
+if (Otros == null) throw new IllegalArgumentException ("Otros is mandatory");
+set_Value ("Otros", Otros);
+}
+/** Get Otros */
+public BigDecimal getOtros() 
+{
+BigDecimal bd = (BigDecimal)get_Value("Otros");
 if (bd == null) return Env.ZERO;
 return bd;
 }
