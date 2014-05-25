@@ -1562,3 +1562,8 @@ WHERE attrelid = 'm_product'::regclass AND attname = 'name';
 UPDATE pg_attribute
 SET atttypmod = 259
 WHERE attrelid = 'm_product_trl'::regclass AND attname = 'name';
+
+--20140524-2145 Incorporación de nuevas columnas para exportación RG1361
+update ad_system set dummy = (SELECT addcolumnifnotexists('e_electronicinvoice','otros', 'numeric(20,2) NOT NULL DEFAULT 0'));
+update ad_system set dummy = (SELECT addcolumnifnotexists('t_electronicinvoice','sumotros', 'numeric(20,2) NOT NULL DEFAULT 0'));
+update ad_system set dummy = (SELECT addcolumnifnotexists('t_electronicinvoice','otros', 'numeric(20,2) NOT NULL DEFAULT 0'));
