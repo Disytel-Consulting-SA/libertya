@@ -256,6 +256,7 @@ public class InvoiceHistory extends Window implements EventListener
 			+ " INNER JOIN AD_Org o ON (i.AD_Org_ID=o.AD_Org_ID)"
 			+ " INNER JOIN M_Product p  ON (l.M_Product_ID=p.M_Product_ID) "
 			+ "WHERE i.C_BPartner_ID=? "
+			+ "AND i.docStatus IN ('CO', 'CL') "
 			+ "ORDER BY i.DateInvoiced DESC";
 
 		Vector<Vector<Object>> data = fillTable (sql, m_C_BPartner_ID);
@@ -280,6 +281,7 @@ public class InvoiceHistory extends Window implements EventListener
 			+ " INNER JOIN AD_Org o ON (i.AD_Org_ID=o.AD_Org_ID)"
 			+ " INNER JOIN C_BPartner bp ON (i.C_BPartner_ID=bp.C_BPartner_ID) "
 			+ "WHERE l.M_Product_ID=? " 
+			+ "AND i.docStatus IN ('CO', 'CL') "
 			+ "ORDER BY i.DateInvoiced DESC";
 
 		Vector<Vector<Object>> data = fillTable (sql, m_M_Product_ID);
@@ -412,6 +414,7 @@ public class InvoiceHistory extends Window implements EventListener
 				+ "WHERE ol.QtyReserved<>0"
 				+ " AND ol.M_Product_ID=?"
 				+ " AND o.IsSOTrx=" + (reserved ? "'Y'" : "'N'")
+				+ " AND o.docStatus IN ('CO', 'CL') "
 				+ " ORDER BY o.DateOrdered";
 			data = fillTable (sql, m_M_Product_ID);	//	Product By BPartner
 		}
@@ -429,6 +432,7 @@ public class InvoiceHistory extends Window implements EventListener
 				+ "WHERE ol.QtyReserved<>0"
 				+ " AND o.C_BPartner_ID=?"
 				+ " AND o.IsSOTrx=" + (reserved ? "'Y'" : "'N'")
+				+ " AND o.docStatus IN ('CO', 'CL') "
 				+ " ORDER BY o.DateOrdered";
 			data = fillTable (sql, m_C_BPartner_ID);//	Product of BP
 		}

@@ -283,7 +283,17 @@ public class InvoiceHistory extends JDialog implements ActionListener,ChangeList
      */
 
     private Vector queryProduct() {
-        String sql = "SELECT p.Name,l.PriceActual,l.PriceList,l.QtyInvoiced," + "i.DateInvoiced,dt.PrintName || ' ' || i.DocumentNo As DocumentNo," + "o.Name, i.DateOrdered " + "FROM C_Invoice i" + " INNER JOIN C_InvoiceLine l ON (i.C_Invoice_ID=l.C_Invoice_ID)" + " INNER JOIN C_DocType dt ON (i.C_DocType_ID=dt.C_DocType_ID)" + " INNER JOIN AD_Org o ON (i.AD_Org_ID=o.AD_Org_ID)" + " INNER JOIN M_Product p  ON (l.M_Product_ID=p.M_Product_ID) " + "WHERE i.C_BPartner_ID=? " + "ORDER BY i.DateInvoiced DESC";
+        String sql = "SELECT p.Name,l.PriceActual,l.PriceList,l.QtyInvoiced," 
+        		+ "i.DateInvoiced,dt.PrintName || ' ' || i.DocumentNo As DocumentNo," 
+        		+ "o.Name, i.DateOrdered " 
+        		+ "FROM C_Invoice i" 
+        		+ " INNER JOIN C_InvoiceLine l ON (i.C_Invoice_ID=l.C_Invoice_ID)" 
+        		+ " INNER JOIN C_DocType dt ON (i.C_DocType_ID=dt.C_DocType_ID)" 
+        		+ " INNER JOIN AD_Org o ON (i.AD_Org_ID=o.AD_Org_ID)" 
+        		+ " INNER JOIN M_Product p  ON (l.M_Product_ID=p.M_Product_ID) " 
+        		+ "WHERE i.C_BPartner_ID=? " 
+        		+ "AND i.docStatus IN ('CO', 'CL') "
+        		+ "ORDER BY i.DateInvoiced DESC";
         Vector data = fillTable( sql,m_C_BPartner_ID );
 
         sql = "SELECT Name from C_BPartner WHERE C_BPartner_ID=?";
@@ -302,7 +312,15 @@ public class InvoiceHistory extends JDialog implements ActionListener,ChangeList
     private Vector queryBPartner() {
         String sql = "SELECT bp.Name,l.PriceActual,l.PriceList,l.QtyInvoiced,"    // 1,2,3,4
                      + "i.DateInvoiced,dt.PrintName || ' ' || i.DocumentNo As DocumentNo,"    // 5,6
-                     + "o.Name,i.DateOrdered " + "FROM C_Invoice i" + " INNER JOIN C_InvoiceLine l ON (i.C_Invoice_ID=l.C_Invoice_ID)" + " INNER JOIN C_DocType dt ON (i.C_DocType_ID=dt.C_DocType_ID)" + " INNER JOIN AD_Org o ON (i.AD_Org_ID=o.AD_Org_ID)" + " INNER JOIN C_BPartner bp ON (i.C_BPartner_ID=bp.C_BPartner_ID) " + "WHERE l.M_Product_ID=? " + "ORDER BY i.DateInvoiced DESC";
+                     + "o.Name,i.DateOrdered " 
+                     + "FROM C_Invoice i" 
+                     + " INNER JOIN C_InvoiceLine l ON (i.C_Invoice_ID=l.C_Invoice_ID)" 
+                     + " INNER JOIN C_DocType dt ON (i.C_DocType_ID=dt.C_DocType_ID)" 
+                     + " INNER JOIN AD_Org o ON (i.AD_Org_ID=o.AD_Org_ID)" 
+                     + " INNER JOIN C_BPartner bp ON (i.C_BPartner_ID=bp.C_BPartner_ID) " 
+                     + "WHERE l.M_Product_ID=? " 
+                     + "AND i.docStatus IN ('CO', 'CL') "     
+                     + "ORDER BY i.DateInvoiced DESC";
         Vector data = fillTable( sql,m_M_Product_ID );
 
         sql = "SELECT Name from M_Product WHERE M_Product_ID=?";
@@ -470,16 +488,34 @@ public class InvoiceHistory extends JDialog implements ActionListener,ChangeList
         Vector data = null;
 
         if( m_C_BPartner_ID == 0 ) {
-            String sql = "SELECT bp.Name, ol.PriceActual,ol.PriceList,ol.QtyReserved," + "o.DateOrdered,dt.PrintName || ' ' || o.DocumentNo As DocumentNo, " + "w.Name, o.datepromised " + "FROM C_Order o" + " INNER JOIN C_OrderLine ol ON (o.C_Order_ID=ol.C_Order_ID)" + " INNER JOIN C_DocType dt ON (o.C_DocType_ID=dt.C_DocType_ID)" + " INNER JOIN M_Warehouse w ON (ol.M_Warehouse_ID=w.M_Warehouse_ID)" + " INNER JOIN C_BPartner bp  ON (o.C_BPartner_ID=bp.C_BPartner_ID) " + "WHERE ol.QtyReserved<>0" + " AND ol.M_Product_ID=?" + " AND o.IsSOTrx=" + ( reserved
-                    ?"'Y'"
-                    :"'N'" ) + " ORDER BY o.DateOrdered";
-
+            String sql = "SELECT bp.Name, ol.PriceActual,ol.PriceList,ol.QtyReserved," 
+            			+ "o.DateOrdered,dt.PrintName || ' ' || o.DocumentNo As DocumentNo, " 
+            			+ "w.Name, o.datepromised " 
+            			+ "FROM C_Order o" 
+            			+ " INNER JOIN C_OrderLine ol ON (o.C_Order_ID=ol.C_Order_ID)" 
+            			+ " INNER JOIN C_DocType dt ON (o.C_DocType_ID=dt.C_DocType_ID)" 
+            			+ " INNER JOIN M_Warehouse w ON (ol.M_Warehouse_ID=w.M_Warehouse_ID)" 
+            			+ " INNER JOIN C_BPartner bp  ON (o.C_BPartner_ID=bp.C_BPartner_ID) " 
+            			+ "WHERE ol.QtyReserved<>0" 
+            			+ " AND ol.M_Product_ID=?" 
+            			+ " AND o.IsSOTrx=" + ( reserved ? "'Y'" : "'N'" )
+            			+ " AND o.docStatus IN ('CO', 'CL') "
+            			+ " ORDER BY o.DateOrdered";
             data = fillTable( sql,m_M_Product_ID );    // Product By BPartner
         } else {
-            String sql = "SELECT p.Name, ol.PriceActual,ol.PriceList,ol.QtyReserved," + "o.DateOrdered,dt.PrintName || ' ' || o.DocumentNo As DocumentNo, " + "w.Name, o.datepromised " + "FROM C_Order o" + " INNER JOIN C_OrderLine ol ON (o.C_Order_ID=ol.C_Order_ID)" + " INNER JOIN C_DocType dt ON (o.C_DocType_ID=dt.C_DocType_ID)" + " INNER JOIN M_Warehouse w ON (ol.M_Warehouse_ID=w.M_Warehouse_ID)" + " INNER JOIN M_Product p  ON (ol.M_Product_ID=p.M_Product_ID) " + "WHERE ol.QtyReserved<>0" + " AND o.C_BPartner_ID=?" + " AND o.IsSOTrx=" + ( reserved
-                    ?"'Y'"
-                    :"'N'" ) + " ORDER BY o.DateOrdered";
-
+            String sql = "SELECT p.Name, ol.PriceActual,ol.PriceList,ol.QtyReserved," 
+            			+ "o.DateOrdered,dt.PrintName || ' ' || o.DocumentNo As DocumentNo, " 
+            			+ "w.Name, o.datepromised " 
+            			+ "FROM C_Order o" 
+            			+ " INNER JOIN C_OrderLine ol ON (o.C_Order_ID=ol.C_Order_ID)" 
+            			+ " INNER JOIN C_DocType dt ON (o.C_DocType_ID=dt.C_DocType_ID)" 
+            			+ " INNER JOIN M_Warehouse w ON (ol.M_Warehouse_ID=w.M_Warehouse_ID)" 
+            			+ " INNER JOIN M_Product p  ON (ol.M_Product_ID=p.M_Product_ID) " 
+            			+ "WHERE ol.QtyReserved<>0" 
+            			+ " AND o.C_BPartner_ID=?" 
+            			+ " AND o.IsSOTrx=" + ( reserved ? "'Y'" : "'N'" )
+            			+ " AND o.docStatus IN ('CO', 'CL') "
+            			+ " ORDER BY o.DateOrdered";
             data = fillTable( sql,m_C_BPartner_ID );    // Product of BP
         }
 
@@ -544,10 +580,36 @@ public class InvoiceHistory extends JDialog implements ActionListener,ChangeList
         int    parameter = 0;
 
         if( m_C_BPartner_ID == 0 ) {
-            sql = "SELECT bp.Name," + " CASE WHEN io.IsSOTrx='Y' THEN iol.MovementQty*-1 ELSE iol.MovementQty END AS MovementQty," + " io.MovementDate,io.IsSOTrx," + " dt.PrintName || ' ' || io.DocumentNo As DocumentNo," + " w.Name " + "FROM M_InOutLine iol" + " INNER JOIN M_InOut io ON (iol.M_InOut_ID=io.M_InOut_ID)" + " INNER JOIN C_BPartner bp  ON (io.C_BPartner_ID=bp.C_BPartner_ID)" + " INNER JOIN C_DocType dt ON (io.C_DocType_ID=dt.C_DocType_ID)" + " INNER JOIN M_Warehouse w ON (io.M_Warehouse_ID=w.M_Warehouse_ID)" + " INNER JOIN M_InOutLineConfirm lc ON (iol.M_InOutLine_ID=lc.M_InOutLine_ID) " + "WHERE iol.M_Product_ID=?" + " AND lc.Processed='N' " + "ORDER BY io.MovementDate,io.IsSOTrx";
+            sql = "SELECT bp.Name," 
+            		+ " CASE WHEN io.IsSOTrx='Y' THEN iol.MovementQty*-1 ELSE iol.MovementQty END AS MovementQty," 
+            		+ " io.MovementDate,io.IsSOTrx," 
+            		+ " dt.PrintName || ' ' || io.DocumentNo As DocumentNo," 
+            		+ " w.Name " 
+            		+ "FROM M_InOutLine iol" 
+            		+ " INNER JOIN M_InOut io ON (iol.M_InOut_ID=io.M_InOut_ID)" 
+            		+ " INNER JOIN C_BPartner bp  ON (io.C_BPartner_ID=bp.C_BPartner_ID)" 
+            		+ " INNER JOIN C_DocType dt ON (io.C_DocType_ID=dt.C_DocType_ID)" 
+            		+ " INNER JOIN M_Warehouse w ON (io.M_Warehouse_ID=w.M_Warehouse_ID)" 
+            		+ " INNER JOIN M_InOutLineConfirm lc ON (iol.M_InOutLine_ID=lc.M_InOutLine_ID) " 
+            		+ "WHERE iol.M_Product_ID=?" 
+            		+ " AND lc.Processed='N' " 
+            		+ "ORDER BY io.MovementDate,io.IsSOTrx";
             parameter = m_M_Product_ID;
         } else {
-            sql = "SELECT p.Name," + " CASE WHEN io.IsSOTrx='Y' THEN iol.MovementQty*-1 ELSE iol.MovementQty END AS MovementQty," + " io.MovementDate,io.IsSOTrx," + " dt.PrintName || ' ' || io.DocumentNo As DocumentNo," + " w.Name " + "FROM M_InOutLine iol" + " INNER JOIN M_InOut io ON (iol.M_InOut_ID=io.M_InOut_ID)" + " INNER JOIN M_Product p  ON (iol.M_Product_ID=p.M_Product_ID)" + " INNER JOIN C_DocType dt ON (io.C_DocType_ID=dt.C_DocType_ID)" + " INNER JOIN M_Warehouse w ON (io.M_Warehouse_ID=w.M_Warehouse_ID)" + " INNER JOIN M_InOutLineConfirm lc ON (iol.M_InOutLine_ID=lc.M_InOutLine_ID) " + "WHERE io.C_BPartner_ID=?" + " AND lc.Processed='N' " + "ORDER BY io.MovementDate,io.IsSOTrx";
+            sql = "SELECT p.Name," 
+            		+ " CASE WHEN io.IsSOTrx='Y' THEN iol.MovementQty*-1 ELSE iol.MovementQty END AS MovementQty," 
+            		+ " io.MovementDate,io.IsSOTrx," 
+            		+ " dt.PrintName || ' ' || io.DocumentNo As DocumentNo," 
+            		+ " w.Name " 
+            		+ "FROM M_InOutLine iol" 
+            		+ " INNER JOIN M_InOut io ON (iol.M_InOut_ID=io.M_InOut_ID)" 
+            		+ " INNER JOIN M_Product p  ON (iol.M_Product_ID=p.M_Product_ID)" 
+            		+ " INNER JOIN C_DocType dt ON (io.C_DocType_ID=dt.C_DocType_ID)" 
+            		+ " INNER JOIN M_Warehouse w ON (io.M_Warehouse_ID=w.M_Warehouse_ID)" 
+            		+ " INNER JOIN M_InOutLineConfirm lc ON (iol.M_InOutLine_ID=lc.M_InOutLine_ID) " 
+            		+ "WHERE io.C_BPartner_ID=?" 
+            		+ " AND lc.Processed='N' " 
+            		+ "ORDER BY io.MovementDate,io.IsSOTrx";
             parameter = m_C_BPartner_ID;
         }
 
