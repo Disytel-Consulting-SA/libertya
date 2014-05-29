@@ -7,7 +7,7 @@ import java.math.*;
 import org.openXpertya.util.*;
 /** Modelo Generado por AD_TableReplication
  *  @author Comunidad de Desarrollo Libertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
- *  @version  - 2012-05-02 11:47:56.023 */
+ *  @version  - 2014-05-29 17:00:48.573 */
 public class X_AD_TableReplication extends org.openXpertya.model.PO
 {
 /** Constructor estándar */
@@ -18,6 +18,7 @@ super (ctx, AD_TableReplication_ID, trxName);
 {
 setAD_Table_ID (0);
 setAD_TableReplication_ID (0);
+setCheckReferences (false);	// N
 setReplicationArray (null);
 }
  */
@@ -101,6 +102,22 @@ public int getAD_TableReplication_ID()
 Integer ii = (Integer)get_Value("AD_TableReplication_ID");
 if (ii == null) return 0;
 return ii.intValue();
+}
+/** Set Check References */
+public void setCheckReferences (boolean CheckReferences)
+{
+set_Value ("CheckReferences", new Boolean(CheckReferences));
+}
+/** Get Check References */
+public boolean isCheckReferences() 
+{
+Object oo = get_Value("CheckReferences");
+if (oo != null) 
+{
+ if (oo instanceof Boolean) return ((Boolean)oo).booleanValue();
+ return "Y".equals(oo);
+}
+return false;
 }
 /** Set CreateReplicationTrigger */
 public void setCreateReplicationTrigger (String CreateReplicationTrigger)
