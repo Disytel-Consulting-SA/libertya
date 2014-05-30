@@ -16,6 +16,7 @@
 
 package org.openXpertya.model;
 
+import java.math.BigDecimal;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -25,6 +26,7 @@ import java.util.logging.Level;
 
 import org.openXpertya.util.CLogger;
 import org.openXpertya.util.DB;
+import org.openXpertya.util.Util;
 
 /**
  * Descripción de Clase
@@ -107,6 +109,32 @@ public class MProductPO extends X_M_Product_PO {
 								+ Table_Name
 								+ " WHERE m_product_id = ? AND IsActive='Y' ORDER BY IsCurrentVendor DESC, updated desc",
 						productID);
+    }
+    
+    
+    public static BigDecimal dameOrderMin(Properties ctx, Integer M_Product_ID, Integer C_BPartner_ID, Integer C_UOM_ID, BigDecimal QtyEntered, String trxName) {    	
+    	// Convertir a la unidad del ARTICULO
+		if (Util.isEmpty(C_UOM_ID, true) || Util.isEmpty(C_BPartner_ID, true))
+    		return null;
+    	
+		QtyEntered = MUOMConversion.convertProductFrom(ctx, M_Product_ID,
+				C_UOM_ID, QtyEntered);
+    	
+    	if (QtyEntered == null)
+    		return null;
+    	
+    	BigDecimal orderMin = null;
+    	
+        MProductPO po = MProductPO.get(ctx, M_Product_ID, C_BPartner_ID, trxName);
+        if (po != null) {
+        	orderMin = po.getOrder_Min();
+	        if (orderMin != null) {
+				orderMin = MUOMConversion.convertProductFrom(ctx, M_Product_ID,
+						po.getC_UOM_ID(), orderMin);
+	        }
+        }
+        
+        return orderMin;    	
     }
     
     /** Descripción de Campos */
