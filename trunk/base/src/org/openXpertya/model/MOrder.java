@@ -3298,6 +3298,26 @@ public class MOrder extends X_C_Order implements DocAction {
         for( int lineIndex = 0;lineIndex < lines.length;lineIndex++ ) {
             MOrderLine sLine   = lines[ lineIndex ];
             
+			// Si es pedido de compra, entonces la cantidad no puede ser menor a
+			// la mínima de compra
+			if (!isSOTrx()
+					&& dt.getDocTypeKey()
+							.equals(MDocType.DOCTYPE_PurchaseOrder)) {
+				MProductPO po = MProductPO.get(getCtx(),
+						sLine.getM_Product_ID(), sLine.getC_BPartner_ID(),
+						get_TrxName());
+				if (po != null
+						&& sLine.getQtyEntered().compareTo(po.getOrder_Min()) < 0) {
+					MProduct prod = MProduct.get(getCtx(), sLine.getM_Product_ID());
+					m_processMsg = Msg.getMsg(
+							getCtx(),
+							"QtyEnteredLessThanOrderMinQty",
+							new Object[] { prod.getValue(), prod.getName(),
+									po.getOrder_Min(), sLine.getQtyEntered() });
+	            	return DocAction.STATUS_InProgress;
+            	}
+            }
+            
             // La cantidad pedida no puede ser menor a la cantidad entregada + la
     		// cantidad transferida
 			if (sLine.getQtyOrdered().compareTo(

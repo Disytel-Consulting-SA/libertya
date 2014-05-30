@@ -1224,8 +1224,10 @@ public class CalloutOrder extends CalloutEngine {
         if (res !=null && "".equals(res) && m != null)
         {
         	BigDecimal theMinimum = dameOrderMin(mTab, M_Product_ID, Env.getContextAsInt( ctx,WindowNo,"C_BPartner_ID" ));
-    		mTab.setValue( "QtyEntered", theMinimum);        	
-        	return m;
+    		mTab.setValue( "QtyEntered", theMinimum);
+			// No se devuelve el mensaje ya que se controlarán las cantidades
+			// mínimas al completar
+        	return "";
         }
         else
         	return res;
@@ -1434,43 +1436,18 @@ public class CalloutOrder extends CalloutEngine {
     }    // tax
 
     public static BigDecimal dameOrderMin(MTab mTab, int M_Product_ID, int C_BPartner_ID) {
-    	Integer UomID = (Integer)mTab.getValue("C_UOM_ID");
-    	BigDecimal QtyEntered = (BigDecimal)mTab.getValue("QtyEntered");
     	
     	if ("Y".equals( Env.getContext( Env.getCtx(), mTab.getWindowNo(),"IsSOTrx" )))
     		return null;
     	
+    	Integer UomID = (Integer)mTab.getValue("C_UOM_ID");
+    	BigDecimal QtyEntered = (BigDecimal)mTab.getValue("QtyEntered");
     	
-    	// Convertir a la unidad del ARTICULO
-    	
-    	if (UomID == null)
-    		return null;
-    	
-    	QtyEntered = MUOMConversion.convertProductFrom(Env.getCtx(), M_Product_ID, UomID, QtyEntered);
-    	
-    	if (QtyEntered == null)
-    		return null;
-    	
-        MProductPO[] pos = MProductPO.getOfProduct(Env.getCtx(), M_Product_ID, null);
-        if (QtyEntered != null && pos.length > 0) {
-        	for (MProductPO p : pos) {
-        		if (p.getC_BPartner_ID() == C_BPartner_ID) {
-	        		BigDecimal OrderMin = p.getOrder_Min();
-	        		if (OrderMin != null) {
-	        			OrderMin = MUOMConversion.convertProductFrom(Env.getCtx(), M_Product_ID, p.getC_UOM_ID(), OrderMin);
-	        			return OrderMin;
-	        		}
-	        		
-	        		// Puede haber como maximo uno solo
-	        		// CONSTRAINT m_product_po_key PRIMARY KEY (c_bpartner_id, m_product_id),
-	        		break;  
-        		}
-        	}
-        }
-        
-        return null;	
-    	
+		return MProductPO.dameOrderMin(Env.getCtx(), M_Product_ID,
+				C_BPartner_ID, UomID, QtyEntered, null);    	
     }
+    
+    
     
     public static String validarOrderMin(MTab mTab, int M_Product_ID, int C_BPartner_ID) {
     	BigDecimal OrderMin = dameOrderMin(mTab, M_Product_ID, C_BPartner_ID);
@@ -1812,20 +1789,6 @@ public class CalloutOrder extends CalloutEngine {
             if( QtyOrdered == null ) {
                 QtyOrdered = QtyEntered;
             }
-            //Da una alerta si se intenta hace un pedido inferior al marcado y se setea el minimo
-            if(M_Product_ID!=0)//Temenos Producto
-            {
-            	//Vemos si tiene definino un minimo de pedido.
-            	m = validarOrderMin(mTab, M_Product_ID, Env.getContextAsInt( ctx,WindowNo, "C_BPartner_ID" ));
-            	if (m != null && !"".equals(m)) 
-            	{
-            		QtyEntered = dameOrderMin(mTab, M_Product_ID, Env.getContextAsInt( ctx,WindowNo,"C_BPartner_ID" ));
-            		mTab.setValue( "QtyEntered",QtyEntered );
-             		QtyOrdered = QtyEntered;
-            	 }
-               	
-            }//if
-            //Fin del añadido.
 
             boolean conversion = QtyEntered.compareTo( QtyOrdered ) != 0;
 
