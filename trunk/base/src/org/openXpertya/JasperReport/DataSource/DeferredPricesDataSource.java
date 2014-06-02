@@ -3,6 +3,7 @@ package org.openXpertya.JasperReport.DataSource;
 import java.util.Properties;
 
 import org.openXpertya.util.Env;
+import org.openXpertya.util.Util;
 
 public class DeferredPricesDataSource extends QueryDataSource {
 
@@ -15,16 +16,35 @@ public class DeferredPricesDataSource extends QueryDataSource {
 	/** ID de Lista de Precios Diferida */
 	private Integer deferredPriceListID;
 	
+	/** Línea de Artículo */
+	private Integer productLinesID;
+	
+	/** Familia */
+	private Integer productGamasID;
+	
+	/** SubFamilia */
+	private Integer productCategoryID;
+	
+	/** Marca */
+	private Integer productFamilyID;
+	
 	public DeferredPricesDataSource(String trxName) {
 		super(trxName);
 		// TODO Auto-generated constructor stub
 	}
 
-	public DeferredPricesDataSource(Properties ctx, Integer priceListID, Integer deferredPriceListID, String trxName) {
+	public DeferredPricesDataSource(Properties ctx, Integer priceListID,
+			Integer deferredPriceListID, Integer productLinesID,
+			Integer productGamasID, Integer productCategoryID,
+			Integer productFamilyID, String trxName) {
 		this(trxName);
 		setCtx(ctx);
 		setPriceListID(priceListID);
 		setDeferredPriceListID(deferredPriceListID);
+		setProductLinesID(productLinesID);
+		setProductGamasID(productGamasID);
+		setProductCategoryID(productCategoryID);
+		setProductFamilyID(productFamilyID);
 	}
 	
 	@Override
@@ -41,8 +61,8 @@ public class DeferredPricesDataSource extends QueryDataSource {
 					 "			product_value, " +
 					 "			product_name, " +
 					 "			m_product_id, " +
-					 "			price::numeric(11,2), " +
-					 "			deferredPrice::numeric(11,2), " +
+					 "			price::numeric(22,4), " +
+					 "			deferredPrice::numeric(22,4), " +
 					 "			(CASE WHEN deferredPrice >= price THEN '+' ELSE '-' END) as sign, " +
 					 "			((CASE WHEN (deferredPrice = 0 OR price = 0) THEN 1 ELSE abs(((CASE WHEN deferredPrice >= price THEN price ELSE deferredPrice END)/(CASE WHEN deferredPrice >= price THEN deferredPrice ELSE price END))-1) END) * 100)::numeric(11,2) as proportionPerc " +
 					 " from (select (CASE WHEN pl.value is null THEN 'SD' ELSE pl.value END) as lines_value, " +
@@ -74,8 +94,30 @@ public class DeferredPricesDataSource extends QueryDataSource {
 					 "			from m_product as p " +
 					 "			inner join m_product_category as pc on pc.m_product_category_id = p.m_product_category_id " +
 					 "			left join m_product_gamas as pg on pg.m_product_gamas_id = pc.m_product_gamas_id " +
-					 "			left join m_product_lines as pl on pl.m_product_lines_id = pg.m_product_lines_id " +
-					 "			where p.ad_client_id = ?) as prices " +
+					 "			left join m_product_lines as pl on pl.m_product_lines_id = pg.m_product_lines_id ";
+		// Si existe parámetro de marca agrego el join
+		if(!Util.isEmpty(getProductFamilyID(), true)){
+			sql += "			inner join m_product_family as pf on pf.m_product_family_id = p.m_product_family_id ";
+		}
+		sql += "			where p.ad_client_id = ? ";
+		// Línea de Artículo
+		if(!Util.isEmpty(getProductLinesID(), true)){
+			sql += " AND pl.m_product_lines_id = "+getProductLinesID();
+		}
+		// Familia
+		if(!Util.isEmpty(getProductGamasID(), true)){
+			sql += " AND pg.m_product_gamas_id = "+getProductGamasID();
+		}
+		// SubFamilia
+		if(!Util.isEmpty(getProductCategoryID(), true)){
+			sql += " AND pc.m_product_category_id = "+getProductCategoryID();
+		}
+		// Marca
+		if(!Util.isEmpty(getProductFamilyID(), true)){
+			sql += " AND pf.m_product_family_id = "+getProductFamilyID();
+		}
+		
+		sql += " ) as prices " +
 					 " where price <> deferredPrice " +
 					 " order by lines_value, gamas_value, category_value, product_value";
 		return sql;
@@ -109,6 +151,38 @@ public class DeferredPricesDataSource extends QueryDataSource {
 
 	protected Integer getDeferredPriceListID() {
 		return deferredPriceListID;
+	}
+
+	protected Integer getProductLinesID() {
+		return productLinesID;
+	}
+
+	protected void setProductLinesID(Integer productLinesID) {
+		this.productLinesID = productLinesID;
+	}
+
+	protected Integer getProductGamasID() {
+		return productGamasID;
+	}
+
+	protected void setProductGamasID(Integer productGamasID) {
+		this.productGamasID = productGamasID;
+	}
+
+	protected Integer getProductCategoryID() {
+		return productCategoryID;
+	}
+
+	protected void setProductCategoryID(Integer productCategoryID) {
+		this.productCategoryID = productCategoryID;
+	}
+
+	protected Integer getProductFamilyID() {
+		return productFamilyID;
+	}
+
+	protected void setProductFamilyID(Integer productFamilyID) {
+		this.productFamilyID = productFamilyID;
 	}
 
 }
