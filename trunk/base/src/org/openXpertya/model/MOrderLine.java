@@ -680,6 +680,12 @@ public class MOrderLine extends X_C_OrderLine {
 
         MOrder o = new MOrder( getCtx(),getC_Order_ID(),get_TrxName());
 
+        // En caso de tener una preferencia en el campo m_warehouse_id de la cabecera, se setea incorrectamente
+        // ese valor por más de que se haya especificado un valor diferente en dicho campo.  Por lo tanto se
+        // fuerza el almacén en la línea a partir del almacén de la cabecera. 
+        if (getM_Warehouse_ID() != o.getM_Warehouse_ID())
+        	setM_Warehouse_ID(o.getM_Warehouse_ID());
+        
         if( (getC_BPartner_ID() == 0) || (getC_BPartner_Location_ID() == 0) || (getM_Warehouse_ID() == 0) || (getC_Currency_ID() == 0) ) {
             setOrder( o );
         }
