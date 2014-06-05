@@ -4,14 +4,13 @@
 ## path: /etc/init.d/libertyad
 ## author: Hermann D. Schimpf
 
-# Comentado: Debería utilizarse un usuario diferente a root por temas de seguridad
 # verificamos si el usuario es root
-#if [ $EUID -ne 0 ] ;then
-# mostramos un mensaje
-#echo "Se requiere ejecutar como root" 2>&1
-# salimos de la ejecucion
-#exit 1
-#fi
+if [ $EUID -ne 0 ] ;then
+ mostramos un mensaje
+echo "Se requiere ejecutar como root" 2>&1
+ salimos de la ejecucion
+exit 1
+fi
 
 # creamos una funcion
 function findLogs() {
@@ -43,7 +42,7 @@ else
 # mostramos un mensaje
 echo -n "Iniciando Servidor Libertya "
 # iniciamos el servidor de aplicaciones como demonio
-start-stop-daemon --start --background -m --pidfile $PID --exec $STARTLIBERTYA
+start-stop-daemon --start --chuid libertya --background -m --pidfile $PID --exec $STARTLIBERTYA
 # obtenemos la cantidad actual de ficheros
 findLogs cantLogs
 # obtenemos la cantidad actual de ficheros

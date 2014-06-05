@@ -69,6 +69,7 @@ Ejemplos de cambios
 		<copy file="${SOURCE_DIR}/jboss-web.xml" todir="${TARGET_DIR}/jboss/server/openXpertya/deploy/jmx-console.war/WEB-INF" overwrite="yes" />
 
 		<!-- 20140528-1335 Permitir iniciar servidor con usuario distinto a root -->
+		<!-- 20140605-1307 El inicio lo gestiona root, pero luego lo delega al usuario libertya -->
 		<copy file="${SOURCE_DIR}/libertyad_centos.sh" todir="${TARGET_DIR}/utils/unix" overwrite="yes" />
 		<copy file="${SOURCE_DIR}/libertyad_fedora.sh" todir="${TARGET_DIR}/utils/unix" overwrite="yes" />
 		<copy file="${SOURCE_DIR}/libertyad_ubuntu-debian.sh" todir="${TARGET_DIR}/utils/unix" overwrite="yes" />
