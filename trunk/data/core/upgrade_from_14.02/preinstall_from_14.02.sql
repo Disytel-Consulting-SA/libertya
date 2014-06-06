@@ -1807,3 +1807,9 @@ $BODY$
   LANGUAGE 'plpgsql' VOLATILE
   COST 100;
 ALTER FUNCTION replication_event() OWNER TO libertya;
+
+--20140606-1121 Desactivar las alertas que actualmente no tienen utilidad  
+UPDATE AD_Alert SET isactive = 'N' WHERE AD_Alert_ID IN (100, 1000001);
+
+--20140606-1212 Reducir la frecuencia del procesador de alertas
+UPDATE ad_alertprocessor SET frequency = 10 WHERE ad_alertprocessor_id = 100 AND frequency = 1;

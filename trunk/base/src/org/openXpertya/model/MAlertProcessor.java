@@ -191,22 +191,20 @@ public class MAlertProcessor extends X_AD_AlertProcessor implements ProcesadorOX
         return retValue;
     }    // getLogs
 
-    /**
-     * Descripción de Método
-     *
-     *
-     * @return
-     */
-
-    public int deleteLog() {
-        if( getKeepLogDays() < 1 ) {
-            return 0;
-        }
-
-        String sql = "DELETE AD_AlertProcessorLog " + "WHERE AD_AlertProcessor_ID=" + getAD_AlertProcessor_ID() + " AND Created+ cast(cast(" + getKeepLogDays() + "as text)|| 'days' as interval) < SysDate";
-
-        return 0;
-    }    // deleteLog
+	/**
+	 * 	Delete old Request Log
+	 *	@return number of records
+	 */
+	public int deleteLog()
+	{
+		if (getKeepLogDays() < 1)
+			return 0;
+		String sql = 	" DELETE FROM AD_AlertProcessorLog " +
+						" WHERE AD_AlertProcessor_ID=" + getAD_AlertProcessor_ID() + 
+						" AND Created < ('now'::text)::timestamp(6) - interval '" + getKeepLogDays() + " days'";
+		int no = DB.executeUpdate(sql, get_TrxName());
+		return no;
+	}	//	deleteLog
 
     /**
      * Descripción de Método
@@ -222,7 +220,7 @@ public class MAlertProcessor extends X_AD_AlertProcessor implements ProcesadorOX
             return m_alerts;
         }
 
-        String sql = "SELECT * FROM AD_Alert " + "WHERE AD_AlertProcessor_ID=?";
+        String sql = "SELECT * FROM AD_Alert " + "WHERE AD_AlertProcessor_ID=? AND isActive = 'Y'";
         ArrayList         list  = new ArrayList();
         PreparedStatement pstmt = null;
 
