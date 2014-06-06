@@ -916,6 +916,7 @@ public class ReportStarter implements ProcessCall // , ClientProcess
         File reportDir = reportFile.getParentFile();
 
         //test if the compiled report exists
+        log.info("Report File Dir: "+reportDir.getAbsolutePath());
         File jasperFile = new File( reportDir.getAbsolutePath(), jasperName+".jasper");
         if (jasperFile.exists()) { // test time
             if (reportFile.lastModified() == jasperFile.lastModified()) {
@@ -1038,6 +1039,8 @@ public class ReportStarter implements ProcessCall // , ClientProcess
 		URL jasperreportsAbsoluteURL = Thread.currentThread().getContextClassLoader().getResource("net/sf/jasperreports/engine");
 		String jasperreportsAbsolutePath = "";
 
+		log.info("1 Absolute URL "+jasperreportsAbsoluteURL);
+		
 		if(jasperreportsAbsoluteURL.toString().startsWith("jar:http:") || jasperreportsAbsoluteURL.toString().startsWith("jar:https:"))
 		{
 			// Jasper classes are deployed to a webserver (Java Webstart)
@@ -1081,10 +1084,13 @@ public class ReportStarter implements ProcessCall // , ClientProcess
 			jasperreportsAbsolutePath = jasperreportsAbsoluteURL.toString().split("!")[0].split("file:")[1];
 		}
 
+		log.info("2 Absolute URL "+jasperreportsAbsoluteURL);
+		
 		if(jasperreportsAbsolutePath != null && !jasperreportsAbsolutePath.trim().equals(""))
 		{
 			// Check whether the current CLASSPATH already contains our
 			// jasper libraries and dependencies or not.
+			log.info("ClassPath "+System.getProperty("java.class.path"));
 			if(System.getProperty("java.class.path").indexOf(jasperreportsAbsolutePath) < 0)
 			{
 			System.setProperty("java.class.path",
@@ -1107,6 +1113,8 @@ public class ReportStarter implements ProcessCall // , ClientProcess
     	JWScorrectClassPath();
         JasperReport compiledJasperReport = null;
         try {
+        	log.info("compileReport "+reportFile.getAbsolutePath());
+        	log.info("compileReport "+jasperFile.getAbsolutePath());
           	JasperCompileManager.compileReportToFile ( reportFile.getAbsolutePath(), jasperFile.getAbsolutePath() );
             jasperFile.setLastModified( reportFile.lastModified()); //Synchronize Dates
             compiledJasperReport =  (JasperReport)JRLoader.loadObject(jasperFile);
