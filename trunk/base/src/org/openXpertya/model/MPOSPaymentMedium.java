@@ -473,10 +473,20 @@ public class MPOSPaymentMedium extends X_C_POSPaymentMedium {
 		}
 		
 		// El MP Tarjeta de Crédito requiere la Entidad Financiera.
-		if (TENDERTYPE_CreditCard.equals(getTenderType()) 
-				&& getM_EntidadFinanciera_ID() == 0) {
-			log.saveError("SaveError", Msg.translate(getCtx(), "CreditCardNeedEntidadFinanciera"));
-			return false;
+		if (TENDERTYPE_CreditCard.equals(getTenderType())) {
+			if(getM_EntidadFinanciera_ID() == 0){
+				log.saveError("SaveError", Msg.translate(getCtx(), "CreditCardNeedEntidadFinanciera"));
+				return false;
+			}
+			// La entidad financiera tiene que tener la misma organización que
+			// el medio de cobro o *
+			MEntidadFinanciera ef = new MEntidadFinanciera(getCtx(),
+					getM_EntidadFinanciera_ID(), get_TrxName());
+			if (ef.getAD_Org_ID() != getAD_Org_ID() && ef.getAD_Org_ID() != 0) {
+				log.saveError("SaveError",
+						Msg.getMsg(getCtx(), "EntidadFinancieraOrgNotCompatibleWithPM"));
+				return false;
+			}
 		}
 		
 		// Validaciones a nivel de cheque
