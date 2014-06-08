@@ -59,6 +59,14 @@ public class PostInstallUpgradeFrom1402 extends PluginPostInstallProcess {
 	protected final static String DEFERRED_PRICES_JASPER_REPORT_UID = "CORE-AD_JasperReport-1010078";
 	protected final static String DEFERRED_PRICES_JASPER_REPORT_FILENAME = "DeferredPrices.jasper";
 	
+	/** UID del Informe de Venta/Compra de Entidades Financieras */
+	protected final static String ENTIDADES_FINANCIERAS_SALES_PURCHASES_REPORT_UID = "CORE-AD_Process-1010358";
+	protected final static String ENTIDADES_FINANCIERAS_SALES_PURCHASES_REPORT_FILENAME = "EntidadFinancieraSalesPurchases.jrxml";
+	
+	/** UID del Informe de Cuenta Corriente de Entidades Financieras */
+	protected final static String ENTIDADES_FINANCIERAS_CURRENT_ACCOUNT_REPORT_UID = "CORE-AD_Process-1010360";
+	protected final static String ENTIDADES_FINANCIERAS_CURRENT_ACCOUNT_REPORT_FILENAME = "EntidadFinancieraCuentaCorriente.jrxml";
+	
 	protected String doIt() throws Exception {
 		super.doIt();
 		
@@ -213,6 +221,28 @@ public class PostInstallUpgradeFrom1402 extends PluginPostInstallProcess {
 									jarFileURL,
 									getBinaryFileURL(DEFERRED_PRICES_JASPER_REPORT_FILENAME)));
 		
+		// Informe de Cuenta Corriente de EF
+		MProcess.addAttachment(
+				get_TrxName(),
+				getCtx(),
+				ENTIDADES_FINANCIERAS_CURRENT_ACCOUNT_REPORT_UID,
+				ENTIDADES_FINANCIERAS_CURRENT_ACCOUNT_REPORT_FILENAME,
+				JarHelper
+						.readBinaryFromJar(
+								jarFileURL,
+								getBinaryFileURL(ENTIDADES_FINANCIERAS_CURRENT_ACCOUNT_REPORT_FILENAME)));
+
+		// Informe de Cuenta Corriente de EF
+		MProcess.addAttachment(
+				get_TrxName(),
+				getCtx(),
+				ENTIDADES_FINANCIERAS_SALES_PURCHASES_REPORT_UID,
+				ENTIDADES_FINANCIERAS_SALES_PURCHASES_REPORT_FILENAME,
+				JarHelper
+						.readBinaryFromJar(
+								jarFileURL,
+								getBinaryFileURL(ENTIDADES_FINANCIERAS_SALES_PURCHASES_REPORT_FILENAME)));
+
 		return " ";
 	}
 
