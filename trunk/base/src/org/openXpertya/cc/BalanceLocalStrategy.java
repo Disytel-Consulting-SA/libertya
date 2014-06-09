@@ -129,7 +129,7 @@ public class BalanceLocalStrategy extends CurrentAccountBalanceStrategy {
 		if(stateException == null){
 			// Camino normal, estado de la entidad comercial
 			try {
-				status = updateCreditStatus(ctx,bp,trxName);
+				status = updateCreditStatus(ctx, bp, trxName);
 			} catch (Exception e) {
 				String msg = e.getMessage() != null ? e.getMessage() : e
 						.getCause().getMessage();
@@ -436,5 +436,13 @@ public class BalanceLocalStrategy extends CurrentAccountBalanceStrategy {
 		// independientemente
 		result.setResult(bp.getSOCreditStatus());
 		return result;
+	}
+
+	@Override
+	public CallResult validateCurrentAccountStatus(Properties ctx,
+			String orgColumnNameUID, Object orgColumnValueUID,
+			String bPartnerColumnNameUID, Object bPartnerColumnValueUID,
+			String creditStatus, String trxName) {
+		return new CallResult();
 	}
 }

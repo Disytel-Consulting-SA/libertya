@@ -24,9 +24,11 @@ import org.openXpertya.util.CCache;
 import org.openXpertya.util.CLogger;
 import org.openXpertya.util.DB;
 import org.openXpertya.util.Env;
+import org.openXpertya.util.Msg;
 
 //~--- Importaciones JDK ------------------------------------------------------
 
+import java.math.BigDecimal;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -255,6 +257,30 @@ public class MClientInfo extends X_AD_ClientInfo {
         return m_acctSchema;
 
     }		// getMAcctSchema1
+    
+    @Override
+    protected boolean beforeSave(boolean newRecord) {
+		// El valor de la columna de límite de crédito no puede ser menor a la
+		// suma de todos los límites de las organizaciones
+		if (is_ValueChanged("CuitControlCheckLimit")
+				&& getCuitControlCheckLimit() != null) {
+			BigDecimal checkLimitAllOrgs = DB
+					.getSQLValueBD(
+							get_TrxName(),
+							"SELECT coalesce(sum(initialchecklimit),0) FROM ad_orginfo WHERE ad_client_id = ?",
+							getAD_Client_ID());
+			checkLimitAllOrgs = checkLimitAllOrgs != null ? checkLimitAllOrgs
+					: BigDecimal.ZERO;
+			if(checkLimitAllOrgs.compareTo(getCuitControlCheckLimit()) > 0){
+				log.saveError("SaveError", Msg
+						.getMsg(getCtx(),
+								"CUITControlClientCheckLimitSurpassOrgs",
+								new Object[] { getCuitControlCheckLimit(),
+										checkLimitAllOrgs }));
+			}
+    	}
+		return true;
+	} 
 }	// MClientInfo
 
 

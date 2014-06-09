@@ -2984,8 +2984,8 @@ public class MInvoice extends X_C_Invoice implements DocAction {
 			}
 			// Verificar la situación de crédito de la entidad comercial
 			try{
-				result = manager.validateCurrentAccountStatus(getCtx(),
-						(String) result.getResult(), get_TrxName());
+				result = manager.validateCurrentAccountStatus(getCtx(), org,
+						bp, (String) result.getResult(), get_TrxName());
 			} catch(Exception e){
 				result.setMsg(e.getMessage(), true);
 			} 
