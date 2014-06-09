@@ -22,13 +22,13 @@ public abstract class CurrentAccountManager {
 
 	/** Prefijo de los mensajes por estado de crédito */
 
-	protected static final String CREDIT_STATUS_MSG_PREFIX = "Credit_Status_";
+	public static final String CREDIT_STATUS_MSG_PREFIX = "Credit_Status_";
 
 	/**
 	 * Clave de mensaje default para mensajes de estados de crédito inexistentes
 	 */
 
-	protected static final String CREDIT_STATUS_MSG_DEFAULT = CREDIT_STATUS_MSG_PREFIX
+	public static final String CREDIT_STATUS_MSG_DEFAULT = CREDIT_STATUS_MSG_PREFIX
 			+ "Default";
 
 	// Variables de instancia
@@ -352,28 +352,44 @@ public abstract class CurrentAccountManager {
 	 *            nombre de la transacción
 	 * @return resultado de la llamada
 	 */
-	public CallResult validateCurrentAccountStatus(Properties ctx,
-			String creditStatus, String trxName) throws Exception{
+	public CallResult validateCurrentAccountStatus(Properties ctx, MOrg org,
+			MBPartner bpartner, String creditStatus, String trxName)
+			throws Exception {
 		CallResult result = new CallResult();
 		// Validaciones principales del estado del crédito
 		// Error es cuando el estado no es NORMAL
 		boolean error = !creditStatus.equals(MBPartner.SOCREDITSTATUS_CreditOK);
-		// Existe un mensaje por cada valor de la lista de estado de crédito. Si
-		// el valor de crédito parámetro (que corresponde con el value) es D,
-		// entonces el AD_Message es el prefijo predefinido + D, en el caso que
-		// no exista entonces se toma el default
-		String AD_Message = CREDIT_STATUS_MSG_PREFIX + creditStatus.trim();
-		String msg = Msg.getMsg(ctx, AD_Message);
-		// Si el mensaje obtenido es igual al pasado como parámetro es porque no
-		// encontró ninguno con ese nombre, por lo tanto colocar un default
-		if (msg.equals(AD_Message)) {
-			// Obtener el nombre de la validación de lista para esa clave
-			String name = MRefList.getListName(ctx,
-					MBPartner.SOCREDITSTATUS_AD_Reference_ID, creditStatus);
-			// Obtengo el mensaje default como parámetro ese nombre de estado de
-			// crédito
-			msg = Msg.getMsg(ctx, CREDIT_STATUS_MSG_DEFAULT,
-					new Object[] { name });
+		String msg = null;
+		// Error directamente en la organización actual
+		if(error){
+			// Existe un mensaje por cada valor de la lista de estado de crédito. Si
+			// el valor de crédito parámetro (que corresponde con el value) es D,
+			// entonces el AD_Message es el prefijo predefinido + D, en el caso que
+			// no exista entonces se toma el default
+			String AD_Message = CREDIT_STATUS_MSG_PREFIX + creditStatus.trim();
+			msg = Msg.getMsg(ctx, AD_Message);
+			// Si el mensaje obtenido es igual al pasado como parámetro es porque no
+			// encontró ninguno con ese nombre, por lo tanto colocar un default
+			if (msg.equals(AD_Message)) {
+				// Obtener el nombre de la validación de lista para esa clave
+				String name = MRefList.getListName(ctx,
+						MBPartner.SOCREDITSTATUS_AD_Reference_ID, creditStatus);
+				// Obtengo el mensaje default como parámetro ese nombre de estado de
+				// crédito
+				msg = Msg.getMsg(ctx, CREDIT_STATUS_MSG_DEFAULT,
+						new Object[] { name });
+			}
+		}
+		else{
+			// Verificar si la estrategia tiene otras formas de controlar por el estado
+			CallResult resultStrategy = getBalanceStrategy()
+					.validateCurrentAccountStatus(ctx,
+							getUIDColumnName(org),
+							getUIDColumnValue(org),
+							getUIDColumnName(bpartner),
+							getUIDColumnValue(bpartner), creditStatus, trxName);
+			msg = resultStrategy.getMsg();
+			error = resultStrategy.isError();
 		}
 		// Seteo el resultado
 		result.setMsg(msg, error);

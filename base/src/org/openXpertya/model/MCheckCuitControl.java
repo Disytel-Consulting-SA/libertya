@@ -106,13 +106,39 @@ public class MCheckCuitControl extends X_C_CheckCuitControl {
 		
 		// Si se modificó el monto, no se debe permitir que sobrepase el límite
 		// asignado por perfil
-		MRole role = MRole.get(getCtx(), Env.getAD_Role_ID(getCtx()));
-		if ((newRecord || is_ValueChanged("CheckLimit"))
-				&& role.getControlCUITLimit().compareTo(BigDecimal.ZERO) > 0
-				&& getCheckLimit().compareTo(role.getControlCUITLimit()) > 0) {
-			log.saveError(Msg.getMsg(getCtx(), "CheckLimitSurpassRoleLimit",
-					new Object[] { role.getControlCUITLimit() }), "");
-			return false;
+		if (newRecord || is_ValueChanged("CheckLimit")) {
+			MRole role = MRole.get(getCtx(), Env.getAD_Role_ID(getCtx()));
+			if(role.getControlCUITLimit().compareTo(BigDecimal.ZERO) > 0
+					&& getCheckLimit().compareTo(role.getControlCUITLimit()) > 0){
+				log.saveError(Msg.getMsg(getCtx(), "CheckLimitSurpassRoleLimit",
+						new Object[] { role.getControlCUITLimit() }), "");
+				return false;
+			}
+			// La suma de todos los límites del mismo cuit en las organizaciones,
+			// más la org actual, no puede superar el límite por compañía
+			MClientInfo clientInfo = MClientInfo.get(getCtx(), getAD_Client_ID());
+			BigDecimal sumCheckLimits = DB.getSQLValueBD(get_TrxName(),
+					"SELECT coalesce(sum(checklimit),0) FROM "
+							+ get_TableName()
+							+ " WHERE cuit = '"
+							+ getCUIT()
+							+ "' AND ad_client_id = ?"
+							+ (newRecord ? "" : " AND ad_org_id <> "
+									+ getAD_Org_ID()), getAD_Client_ID());
+			sumCheckLimits = sumCheckLimits != null ? sumCheckLimits: BigDecimal.ZERO;
+			sumCheckLimits = sumCheckLimits.add(getCheckLimit());
+			if(clientInfo.getCuitControlCheckLimit().compareTo(sumCheckLimits) < 0){
+				log.saveError("SaveError", Msg.getMsg(
+						getCtx(),
+						"CUITControlOrgsCheckLimitSurpassClient",
+						new Object[] {
+								getCUIT(),
+								clientInfo.getCuitControlCheckLimit(),
+								clientInfo.getCuitControlCheckLimit().subtract(
+										sumCheckLimits
+												.subtract(getCheckLimit())) }));
+				return false;
+			}
 		}
 		
 		return true;

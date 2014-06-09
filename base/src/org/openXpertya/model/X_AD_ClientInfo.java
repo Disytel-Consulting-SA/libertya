@@ -7,7 +7,7 @@ import java.math.*;
 import org.openXpertya.util.*;
 /** Modelo Generado por AD_ClientInfo
  *  @author Comunidad de Desarrollo Libertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
- *  @version  - 2014-05-08 23:56:49.792 */
+ *  @version  - 2014-06-08 20:49:45.482 */
 public class X_AD_ClientInfo extends org.openXpertya.model.PO
 {
 /** Constructor estándar */
@@ -18,6 +18,7 @@ super (ctx, AD_ClientInfo_ID, trxName);
 {
 setAcct2_Active (false);
 setAcct3_Active (false);
+setCuitControlCheckLimit (Env.ZERO);
 setIsDiscountLineAmt (false);
 setIsPOSJournalActive (false);
 setIsWarehouseCloseControl (false);
@@ -382,6 +383,19 @@ set_Value ("CUIT", CUIT);
 public String getCUIT() 
 {
 return (String)get_Value("CUIT");
+}
+/** Set Cuit Control Check Limit */
+public void setCuitControlCheckLimit (BigDecimal CuitControlCheckLimit)
+{
+if (CuitControlCheckLimit == null) throw new IllegalArgumentException ("CuitControlCheckLimit is mandatory");
+set_Value ("CuitControlCheckLimit", CuitControlCheckLimit);
+}
+/** Get Cuit Control Check Limit */
+public BigDecimal getCuitControlCheckLimit() 
+{
+BigDecimal bd = (BigDecimal)get_Value("CuitControlCheckLimit");
+if (bd == null) return Env.ZERO;
+return bd;
 }
 public static final int C_UOM_LENGTH_ID_AD_Reference_ID = MReference.getReferenceID("C_UOM");
 /** Set UOM for Length.

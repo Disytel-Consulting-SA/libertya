@@ -1016,7 +1016,7 @@ public class PoSOnline extends PoSConnectionState {
 						&& tenderTypesAllowed.contains(pay.getTenderType())) {
 					shouldUpdateBPBalance = true;
 					// Verificar la situación de crédito de la entidad comercial
-					result = manager.validateCurrentAccountStatus(getCtx(),
+					result = manager.validateCurrentAccountStatus(getCtx(), org, bp, 
 							creditStatus, getTrxName());
 					// Si hubo error, obtengo el mensaje y tiro la excepción
 					if (result.isError()) {

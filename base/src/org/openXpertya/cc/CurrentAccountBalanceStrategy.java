@@ -465,5 +465,22 @@ public abstract class CurrentAccountBalanceStrategy extends
 			String orgColumnNameUID, Object orgColumnValueUID,
 			String paymentRule, String trxName);
 	
+	/**
+	 * Validar el estado de crédito dependiendo la estrategia
+	 * 
+	 * @param ctx
+	 * @param bPartnerColumnNameUID
+	 * @param bPartnerColumnValueUID
+	 * @param orgColumnNameUID
+	 * @param orgColumnValueUID
+	 * @param creditStatus
+	 * @param trxName
+	 * @return
+	 */
+	public abstract CallResult validateCurrentAccountStatus(Properties ctx,
+			String orgColumnNameUID, Object orgColumnValueUID,
+			String bPartnerColumnNameUID, Object bPartnerColumnValueUID,
+			String creditStatus, String trxName);
+	
 	// ****************************************************************
 }

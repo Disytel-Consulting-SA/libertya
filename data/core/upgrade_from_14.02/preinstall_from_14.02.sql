@@ -1813,3 +1813,6 @@ UPDATE AD_Alert SET isactive = 'N' WHERE AD_Alert_ID IN (100, 1000001);
 
 --20140606-1212 Reducir la frecuencia del procesador de alertas
 UPDATE ad_alertprocessor SET frequency = 10 WHERE ad_alertprocessor_id = 100 AND frequency = 1;
+
+--20140608-2000 Incorporación de nueva configuración de límite de cuit de cheque por compañía
+update ad_system set dummy = (SELECT addcolumnifnotexists('AD_ClientInfo','cuitcontrolchecklimit', 'numeric(20,2) NOT NULL DEFAULT 0'));
