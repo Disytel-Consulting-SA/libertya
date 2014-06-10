@@ -1,13 +1,14 @@
-/** Modelo Generado - NO CAMBIAR MANUALMENTE - Copyright (C) 2006 FUNDESLE */
+/** Modelo Generado - NO CAMBIAR MANUALMENTE - Disytel */
 package org.openXpertya.model;
-import java.util.*;
+import java.util.logging.Level;
+ import java.util.*;
 import java.sql.*;
 import java.math.*;
 import org.openXpertya.util.*;
 /** Modelo Generado por C_AcctProcessor
- *  @author Comunidad de Desarrollo openXpertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
- *  @version  - 2009-10-22 14:51:29.752 */
-public class X_C_AcctProcessor extends PO
+ *  @author Comunidad de Desarrollo Libertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
+ *  @version  - 2014-06-10 15:40:18.549 */
+public class X_C_AcctProcessor extends org.openXpertya.model.PO
 {
 /** Constructor estándar */
 public X_C_AcctProcessor (Properties ctx, int C_AcctProcessor_ID, String trxName)
@@ -29,13 +30,13 @@ public X_C_AcctProcessor (Properties ctx, ResultSet rs, String trxName)
 {
 super (ctx, rs, trxName);
 }
-/** AD_Table_ID=695 */
-public static final int Table_ID=695;
+/** AD_Table_ID */
+public static final int Table_ID = M_Table.getTableID("C_AcctProcessor");
 
 /** TableName=C_AcctProcessor */
 public static final String Table_Name="C_AcctProcessor";
 
-protected static KeyNamePair Model = new KeyNamePair(695,"C_AcctProcessor");
+protected static KeyNamePair Model = new KeyNamePair(Table_ID,"C_AcctProcessor");
 protected static BigDecimal AccessLevel = new BigDecimal(2);
 
 /** Load Meta Data */
@@ -165,19 +166,21 @@ Integer ii = (Integer)get_Value("Frequency");
 if (ii == null) return 0;
 return ii.intValue();
 }
-public static final int FREQUENCYTYPE_AD_Reference_ID=221;
+public static final int FREQUENCYTYPE_AD_Reference_ID = MReference.getReferenceID("_Frequency Type");
 /** Minute = M */
 public static final String FREQUENCYTYPE_Minute = "M";
 /** Hour = H */
 public static final String FREQUENCYTYPE_Hour = "H";
 /** Day = D */
 public static final String FREQUENCYTYPE_Day = "D";
+/** Seconds = S */
+public static final String FREQUENCYTYPE_Seconds = "S";
 /** Set Frequency Type.
 Frequency of event */
 public void setFrequencyType (String FrequencyType)
 {
-if (FrequencyType.equals("M") || FrequencyType.equals("H") || FrequencyType.equals("D"));
- else throw new IllegalArgumentException ("FrequencyType Invalid value - Reference_ID=221 - M - H - D");
+if (FrequencyType.equals("M") || FrequencyType.equals("H") || FrequencyType.equals("D") || FrequencyType.equals("S"));
+ else throw new IllegalArgumentException ("FrequencyType Invalid value - Reference = FREQUENCYTYPE_AD_Reference_ID - M - H - D - S");
 if (FrequencyType == null) throw new IllegalArgumentException ("FrequencyType is mandatory");
 if (FrequencyType.length() > 1)
 {
@@ -244,7 +247,7 @@ if (oo != null)
 }
 return false;
 }
-public static final int SUPERVISOR_ID_AD_Reference_ID=286;
+public static final int SUPERVISOR_ID_AD_Reference_ID = MReference.getReferenceID("AD_User - Internal");
 /** Set Supervisor.
 Supervisor for this user/organization - used for escalation and approval */
 public void setSupervisor_ID (int Supervisor_ID)

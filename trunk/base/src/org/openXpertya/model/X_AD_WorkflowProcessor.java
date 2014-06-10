@@ -1,13 +1,14 @@
-/** Modelo Generado - NO CAMBIAR MANUALMENTE - Copyright (C) 2006 FUNDESLE */
+/** Modelo Generado - NO CAMBIAR MANUALMENTE - Disytel */
 package org.openXpertya.model;
-import java.util.*;
+import java.util.logging.Level;
+ import java.util.*;
 import java.sql.*;
 import java.math.*;
 import org.openXpertya.util.*;
 /** Modelo Generado por AD_WorkflowProcessor
- *  @author Comunidad de Desarrollo openXpertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
- *  @version  - 2008-01-03 10:26:26.562 */
-public class X_AD_WorkflowProcessor extends PO
+ *  @author Comunidad de Desarrollo Libertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
+ *  @version  - 2014-06-10 15:40:11.801 */
+public class X_AD_WorkflowProcessor extends org.openXpertya.model.PO
 {
 /** Constructor estándar */
 public X_AD_WorkflowProcessor (Properties ctx, int AD_WorkflowProcessor_ID, String trxName)
@@ -29,13 +30,13 @@ public X_AD_WorkflowProcessor (Properties ctx, ResultSet rs, String trxName)
 {
 super (ctx, rs, trxName);
 }
-/** AD_Table_ID=697 */
-public static final int Table_ID=697;
+/** AD_Table_ID */
+public static final int Table_ID = M_Table.getTableID("AD_WorkflowProcessor");
 
 /** TableName=AD_WorkflowProcessor */
 public static final String Table_Name="AD_WorkflowProcessor";
 
-protected static KeyNamePair Model = new KeyNamePair(697,"AD_WorkflowProcessor");
+protected static KeyNamePair Model = new KeyNamePair(Table_ID,"AD_WorkflowProcessor");
 protected static BigDecimal AccessLevel = new BigDecimal(4);
 
 /** Load Meta Data */
@@ -108,7 +109,7 @@ public void setDescription (String Description)
 if (Description != null && Description.length() > 255)
 {
 log.warning("Length > 255 - truncated");
-Description = Description.substring(0,254);
+Description = Description.substring(0,255);
 }
 set_Value ("Description", Description);
 }
@@ -132,24 +133,26 @@ Integer ii = (Integer)get_Value("Frequency");
 if (ii == null) return 0;
 return ii.intValue();
 }
-public static final int FREQUENCYTYPE_AD_Reference_ID=221;
+public static final int FREQUENCYTYPE_AD_Reference_ID = MReference.getReferenceID("_Frequency Type");
 /** Minute = M */
 public static final String FREQUENCYTYPE_Minute = "M";
 /** Hour = H */
 public static final String FREQUENCYTYPE_Hour = "H";
 /** Day = D */
 public static final String FREQUENCYTYPE_Day = "D";
+/** Seconds = S */
+public static final String FREQUENCYTYPE_Seconds = "S";
 /** Set Frequency Type.
 Frequency of event */
 public void setFrequencyType (String FrequencyType)
 {
-if (FrequencyType.equals("M") || FrequencyType.equals("H") || FrequencyType.equals("D"));
- else throw new IllegalArgumentException ("FrequencyType Invalid value - Reference_ID=221 - M - H - D");
+if (FrequencyType.equals("M") || FrequencyType.equals("H") || FrequencyType.equals("D") || FrequencyType.equals("S"));
+ else throw new IllegalArgumentException ("FrequencyType Invalid value - Reference = FREQUENCYTYPE_AD_Reference_ID - M - H - D - S");
 if (FrequencyType == null) throw new IllegalArgumentException ("FrequencyType is mandatory");
 if (FrequencyType.length() > 1)
 {
 log.warning("Length > 1 - truncated");
-FrequencyType = FrequencyType.substring(0,0);
+FrequencyType = FrequencyType.substring(0,1);
 }
 set_Value ("FrequencyType", FrequencyType);
 }
@@ -195,7 +198,7 @@ if (Name == null) throw new IllegalArgumentException ("Name is mandatory");
 if (Name.length() > 60)
 {
 log.warning("Length > 60 - truncated");
-Name = Name.substring(0,59);
+Name = Name.substring(0,60);
 }
 set_Value ("Name", Name);
 }
@@ -239,7 +242,7 @@ Integer ii = (Integer)get_Value("RemindDays");
 if (ii == null) return 0;
 return ii.intValue();
 }
-public static final int SUPERVISOR_ID_AD_Reference_ID=316;
+public static final int SUPERVISOR_ID_AD_Reference_ID = MReference.getReferenceID("AD_User - Supervisor");
 /** Set Supervisor.
 Supervisor for this user/organization - used for escalation and approval */
 public void setSupervisor_ID (int Supervisor_ID)

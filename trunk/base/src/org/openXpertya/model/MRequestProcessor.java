@@ -258,12 +258,14 @@ public class MRequestProcessor extends X_R_RequestProcessor implements Procesado
         if( getKeepLogDays() < 1 ) {
             return 0;
         }
+        
+		String sql = 	" DELETE FROM R_RequestProcessorLog " +
+						" WHERE R_RequestProcessor_ID=" + getR_RequestProcessor_ID() + 
+						" AND Created < ('now'::text)::timestamp(6) - interval '" + getKeepLogDays() + " days'";
 
-        String sql = "DELETE R_RequestProcessorLog " + "WHERE R_RequestProcessor_ID=" + getR_RequestProcessor_ID() + " AND Created+ cast(cast(" + getKeepLogDays() + "as text)|| 'days' as interval) < SysDate";
-        //cast(cast(1000000as text)|| 'days' as interval)
         int no = DB.executeUpdate( sql,get_TrxName());
 
-        return 0;
+        return no;
     }    // deleteLog
 
     /**

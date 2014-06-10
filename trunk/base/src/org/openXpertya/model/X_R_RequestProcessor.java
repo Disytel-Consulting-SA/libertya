@@ -1,13 +1,14 @@
-/** Modelo Generado - NO CAMBIAR MANUALMENTE - Copyright (C) 2006 FUNDESLE */
+/** Modelo Generado - NO CAMBIAR MANUALMENTE - Disytel */
 package org.openXpertya.model;
-import java.util.*;
+import java.util.logging.Level;
+ import java.util.*;
 import java.sql.*;
 import java.math.*;
 import org.openXpertya.util.*;
 /** Modelo Generado por R_RequestProcessor
- *  @author Comunidad de Desarrollo openXpertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
- *  @version  - 2008-01-03 10:26:41.156 */
-public class X_R_RequestProcessor extends PO
+ *  @author Comunidad de Desarrollo Libertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
+ *  @version  - 2014-06-10 15:44:00.953 */
+public class X_R_RequestProcessor extends org.openXpertya.model.PO
 {
 /** Constructor estándar */
 public X_R_RequestProcessor (Properties ctx, int R_RequestProcessor_ID, String trxName)
@@ -22,8 +23,8 @@ setKeepLogDays (0);	// 7
 setName (null);
 setOverdueAlertDays (0);	// 0
 setOverdueAssignDays (0);	// 0
-setR_RequestProcessor_ID (0);
 setRemindDays (0);	// 0
+setR_RequestProcessor_ID (0);
 setSupervisor_ID (0);
 }
  */
@@ -33,13 +34,13 @@ public X_R_RequestProcessor (Properties ctx, ResultSet rs, String trxName)
 {
 super (ctx, rs, trxName);
 }
-/** AD_Table_ID=420 */
-public static final int Table_ID=420;
+/** AD_Table_ID */
+public static final int Table_ID = M_Table.getTableID("R_RequestProcessor");
 
 /** TableName=R_RequestProcessor */
 public static final String Table_Name="R_RequestProcessor";
 
-protected static KeyNamePair Model = new KeyNamePair(420,"R_RequestProcessor");
+protected static KeyNamePair Model = new KeyNamePair(Table_ID,"R_RequestProcessor");
 protected static BigDecimal AccessLevel = new BigDecimal(3);
 
 /** Load Meta Data */
@@ -84,7 +85,7 @@ public void setDescription (String Description)
 if (Description != null && Description.length() > 255)
 {
 log.warning("Length > 255 - truncated");
-Description = Description.substring(0,254);
+Description = Description.substring(0,255);
 }
 set_Value ("Description", Description);
 }
@@ -108,24 +109,26 @@ Integer ii = (Integer)get_Value("Frequency");
 if (ii == null) return 0;
 return ii.intValue();
 }
-public static final int FREQUENCYTYPE_AD_Reference_ID=221;
+public static final int FREQUENCYTYPE_AD_Reference_ID = MReference.getReferenceID("_Frequency Type");
 /** Minute = M */
 public static final String FREQUENCYTYPE_Minute = "M";
 /** Hour = H */
 public static final String FREQUENCYTYPE_Hour = "H";
 /** Day = D */
 public static final String FREQUENCYTYPE_Day = "D";
+/** Seconds = S */
+public static final String FREQUENCYTYPE_Seconds = "S";
 /** Set Frequency Type.
 Frequency of event */
 public void setFrequencyType (String FrequencyType)
 {
-if (FrequencyType.equals("M") || FrequencyType.equals("H") || FrequencyType.equals("D"));
- else throw new IllegalArgumentException ("FrequencyType Invalid value - Reference_ID=221 - M - H - D");
+if (FrequencyType.equals("M") || FrequencyType.equals("H") || FrequencyType.equals("D") || FrequencyType.equals("S"));
+ else throw new IllegalArgumentException ("FrequencyType Invalid value - Reference = FREQUENCYTYPE_AD_Reference_ID - M - H - D - S");
 if (FrequencyType == null) throw new IllegalArgumentException ("FrequencyType is mandatory");
 if (FrequencyType.length() > 1)
 {
 log.warning("Length > 1 - truncated");
-FrequencyType = FrequencyType.substring(0,0);
+FrequencyType = FrequencyType.substring(0,1);
 }
 set_Value ("FrequencyType", FrequencyType);
 }
@@ -171,7 +174,7 @@ if (Name == null) throw new IllegalArgumentException ("Name is mandatory");
 if (Name.length() > 60)
 {
 log.warning("Length > 60 - truncated");
-Name = Name.substring(0,59);
+Name = Name.substring(0,60);
 }
 set_Value ("Name", Name);
 }
@@ -229,6 +232,20 @@ if (oo != null)
 }
 return false;
 }
+/** Set Reminder Days.
+Days between sending Reminder Emails for a due or inactive Document */
+public void setRemindDays (int RemindDays)
+{
+set_Value ("RemindDays", new Integer(RemindDays));
+}
+/** Get Reminder Days.
+Days between sending Reminder Emails for a due or inactive Document */
+public int getRemindDays() 
+{
+Integer ii = (Integer)get_Value("RemindDays");
+if (ii == null) return 0;
+return ii.intValue();
+}
 /** Set Request Processor.
 Processor for Requests */
 public void setR_RequestProcessor_ID (int R_RequestProcessor_ID)
@@ -259,21 +276,7 @@ Integer ii = (Integer)get_Value("R_RequestType_ID");
 if (ii == null) return 0;
 return ii.intValue();
 }
-/** Set Reminder Days.
-Days between sending Reminder Emails for a due or inactive Document */
-public void setRemindDays (int RemindDays)
-{
-set_Value ("RemindDays", new Integer(RemindDays));
-}
-/** Get Reminder Days.
-Days between sending Reminder Emails for a due or inactive Document */
-public int getRemindDays() 
-{
-Integer ii = (Integer)get_Value("RemindDays");
-if (ii == null) return 0;
-return ii.intValue();
-}
-public static final int SUPERVISOR_ID_AD_Reference_ID=286;
+public static final int SUPERVISOR_ID_AD_Reference_ID = MReference.getReferenceID("AD_User - Internal");
 /** Set Supervisor.
 Supervisor for this user/organization - used for escalation and approval */
 public void setSupervisor_ID (int Supervisor_ID)

@@ -28,6 +28,7 @@ import org.openXpertya.model.MScheduler;
 import org.openXpertya.model.MSystem;
 import org.openXpertya.model.ProcesadorLogOXP;
 import org.openXpertya.model.ProcesadorOXP;
+import org.openXpertya.model.X_AD_Scheduler;
 import org.openXpertya.util.CLogger;
 import org.openXpertya.util.Env;
 import org.openXpertya.util.TimeUtil;
@@ -422,6 +423,8 @@ public abstract class ServidorOXP extends Thread {
 
         if( frequencyType == null ) {
             typeSec = 300;    // 5 minutes
+        } else if( MRequestProcessor.FREQUENCYTYPE_Seconds.equals( frequencyType )) {
+            typeSec = 1;
         } else if( MRequestProcessor.FREQUENCYTYPE_Minute.equals( frequencyType )) {
             typeSec = 60;
         } else if( MRequestProcessor.FREQUENCYTYPE_Hour.equals( frequencyType )) {

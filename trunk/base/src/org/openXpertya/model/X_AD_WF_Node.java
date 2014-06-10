@@ -1,13 +1,14 @@
-/** Modelo Generado - NO CAMBIAR MANUALMENTE - Copyright (C) 2006 FUNDESLE */
+/** Modelo Generado - NO CAMBIAR MANUALMENTE - Disytel */
 package org.openXpertya.model;
-import java.util.*;
+import java.util.logging.Level;
+ import java.util.*;
 import java.sql.*;
 import java.math.*;
 import org.openXpertya.util.*;
 /** Modelo Generado por AD_WF_Node
- *  @author Comunidad de Desarrollo openXpertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
- *  @version  - 2009-10-22 14:51:29.007 */
-public class X_AD_WF_Node extends PO
+ *  @author Comunidad de Desarrollo Libertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
+ *  @version  - 2014-06-10 15:40:01.995 */
+public class X_AD_WF_Node extends org.openXpertya.model.PO
 {
 /** Constructor estándar */
 public X_AD_WF_Node (Properties ctx, int AD_WF_Node_ID, String trxName)
@@ -38,13 +39,13 @@ public X_AD_WF_Node (Properties ctx, ResultSet rs, String trxName)
 {
 super (ctx, rs, trxName);
 }
-/** AD_Table_ID=129 */
-public static final int Table_ID=129;
+/** AD_Table_ID */
+public static final int Table_ID = M_Table.getTableID("AD_WF_Node");
 
 /** TableName=AD_WF_Node */
 public static final String Table_Name="AD_WF_Node";
 
-protected static KeyNamePair Model = new KeyNamePair(129,"AD_WF_Node");
+protected static KeyNamePair Model = new KeyNamePair(Table_ID,"AD_WF_Node");
 protected static BigDecimal AccessLevel = new BigDecimal(6);
 
 /** Load Meta Data */
@@ -58,7 +59,7 @@ public String toString()
 StringBuffer sb = new StringBuffer ("X_AD_WF_Node[").append(getID()).append("]");
 return sb.toString();
 }
-public static final int ACTION_AD_Reference_ID=302;
+public static final int ACTION_AD_Reference_ID = MReference.getReferenceID("WF_Action");
 /** User Choice = C */
 public static final String ACTION_UserChoice = "C";
 /** Apps Report = R */
@@ -86,7 +87,7 @@ Indicates the Action to be performed */
 public void setAction (String Action)
 {
 if (Action.equals("C") || Action.equals("R") || Action.equals("P") || Action.equals("B") || Action.equals("T") || Action.equals("D") || Action.equals("X") || Action.equals("Z") || Action.equals("F") || Action.equals("V") || Action.equals("W"));
- else throw new IllegalArgumentException ("Action Invalid value - Reference_ID=302 - C - R - P - B - T - D - X - Z - F - V - W");
+ else throw new IllegalArgumentException ("Action Invalid value - Reference = ACTION_AD_Reference_ID - C - R - P - B - T - D - X - Z - F - V - W");
 if (Action == null) throw new IllegalArgumentException ("Action is mandatory");
 if (Action.length() > 1)
 {
@@ -368,7 +369,7 @@ public String getDescription()
 {
 return (String)get_Value("Description");
 }
-public static final int DOCACTION_AD_Reference_ID=135;
+public static final int DOCACTION_AD_Reference_ID = MReference.getReferenceID("_Document Action");
 /** Approve = AP */
 public static final String DOCACTION_Approve = "AP";
 /** Close = CL */
@@ -402,7 +403,7 @@ The targeted status of the document */
 public void setDocAction (String DocAction)
 {
 if (DocAction == null || DocAction.equals("AP") || DocAction.equals("CL") || DocAction.equals("PR") || DocAction.equals("IN") || DocAction.equals("CO") || DocAction.equals("--") || DocAction.equals("RC") || DocAction.equals("RJ") || DocAction.equals("RA") || DocAction.equals("WC") || DocAction.equals("XL") || DocAction.equals("RE") || DocAction.equals("PO") || DocAction.equals("VO"));
- else throw new IllegalArgumentException ("DocAction Invalid value - Reference_ID=135 - AP - CL - PR - IN - CO - -- - RC - RJ - RA - WC - XL - RE - PO - VO");
+ else throw new IllegalArgumentException ("DocAction Invalid value - Reference = DOCACTION_AD_Reference_ID - AP - CL - PR - IN - CO - -- - RC - RJ - RA - WC - XL - RE - PO - VO");
 if (DocAction != null && DocAction.length() > 2)
 {
 log.warning("Length > 2 - truncated");
@@ -458,19 +459,21 @@ BigDecimal bd = (BigDecimal)get_Value("DynPriorityChange");
 if (bd == null) return Env.ZERO;
 return bd;
 }
-public static final int DYNPRIORITYUNIT_AD_Reference_ID=221;
+public static final int DYNPRIORITYUNIT_AD_Reference_ID = MReference.getReferenceID("_Frequency Type");
 /** Minute = M */
 public static final String DYNPRIORITYUNIT_Minute = "M";
 /** Hour = H */
 public static final String DYNPRIORITYUNIT_Hour = "H";
 /** Day = D */
 public static final String DYNPRIORITYUNIT_Day = "D";
+/** Seconds = S */
+public static final String DYNPRIORITYUNIT_Seconds = "S";
 /** Set Dynamic Priority Unit.
 Change of priority when Activity is suspended waiting for user */
 public void setDynPriorityUnit (String DynPriorityUnit)
 {
-if (DynPriorityUnit == null || DynPriorityUnit.equals("M") || DynPriorityUnit.equals("H") || DynPriorityUnit.equals("D"));
- else throw new IllegalArgumentException ("DynPriorityUnit Invalid value - Reference_ID=221 - M - H - D");
+if (DynPriorityUnit == null || DynPriorityUnit.equals("M") || DynPriorityUnit.equals("H") || DynPriorityUnit.equals("D") || DynPriorityUnit.equals("S"));
+ else throw new IllegalArgumentException ("DynPriorityUnit Invalid value - Reference = DYNPRIORITYUNIT_AD_Reference_ID - M - H - D - S");
 if (DynPriorityUnit != null && DynPriorityUnit.length() > 1)
 {
 log.warning("Length > 1 - truncated");
@@ -484,7 +487,7 @@ public String getDynPriorityUnit()
 {
 return (String)get_Value("DynPriorityUnit");
 }
-public static final int ENTITYTYPE_AD_Reference_ID=245;
+public static final int ENTITYTYPE_AD_Reference_ID = MReference.getReferenceID("_Entity Type");
 /** Applications Integrated with openXpertya = A */
 public static final String ENTITYTYPE_ApplicationsIntegratedWithOpenXpertya = "A";
 /** Country Version = C */
@@ -501,7 +504,7 @@ Dictionary Entity Type;
 public void setEntityType (String EntityType)
 {
 if (EntityType.equals("A") || EntityType.equals("C") || EntityType.equals("D") || EntityType.equals("U") || EntityType.equals("CUST"));
- else throw new IllegalArgumentException ("EntityType Invalid value - Reference_ID=245 - A - C - D - U - CUST");
+ else throw new IllegalArgumentException ("EntityType Invalid value - Reference = ENTITYTYPE_AD_Reference_ID - A - C - D - U - CUST");
 if (EntityType == null) throw new IllegalArgumentException ("EntityType is mandatory");
 if (EntityType.length() > 4)
 {
@@ -517,7 +520,7 @@ public String getEntityType()
 {
 return (String)get_Value("EntityType");
 }
-public static final int FINISHMODE_AD_Reference_ID=303;
+public static final int FINISHMODE_AD_Reference_ID = MReference.getReferenceID("WF_Start-Finish Mode");
 /** Automatic = A */
 public static final String FINISHMODE_Automatic = "A";
 /** Manual = M */
@@ -527,7 +530,7 @@ Workflow Activity Finish Mode */
 public void setFinishMode (String FinishMode)
 {
 if (FinishMode == null || FinishMode.equals("A") || FinishMode.equals("M"));
- else throw new IllegalArgumentException ("FinishMode Invalid value - Reference_ID=303 - A - M");
+ else throw new IllegalArgumentException ("FinishMode Invalid value - Reference = FINISHMODE_AD_Reference_ID - A - M");
 if (FinishMode != null && FinishMode.length() > 1)
 {
 log.warning("Length > 1 - truncated");
@@ -612,7 +615,7 @@ if (oo != null)
 }
 return false;
 }
-public static final int JOINELEMENT_AD_Reference_ID=301;
+public static final int JOINELEMENT_AD_Reference_ID = MReference.getReferenceID("WF_Join_Split");
 /** AND = A */
 public static final String JOINELEMENT_AND = "A";
 /** XOR = X */
@@ -622,7 +625,7 @@ Semantics for multiple incoming Transitions */
 public void setJoinElement (String JoinElement)
 {
 if (JoinElement.equals("A") || JoinElement.equals("X"));
- else throw new IllegalArgumentException ("JoinElement Invalid value - Reference_ID=301 - A - X");
+ else throw new IllegalArgumentException ("JoinElement Invalid value - Reference = JOINELEMENT_AD_Reference_ID - A - X");
 if (JoinElement == null) throw new IllegalArgumentException ("JoinElement is mandatory");
 if (JoinElement.length() > 1)
 {
@@ -725,7 +728,7 @@ Integer ii = (Integer)get_Value("SetupTime");
 if (ii == null) return 0;
 return ii.intValue();
 }
-public static final int SPLITELEMENT_AD_Reference_ID=301;
+public static final int SPLITELEMENT_AD_Reference_ID = MReference.getReferenceID("WF_Join_Split");
 /** AND = A */
 public static final String SPLITELEMENT_AND = "A";
 /** XOR = X */
@@ -735,7 +738,7 @@ Semantics for multiple outgoing Transitions */
 public void setSplitElement (String SplitElement)
 {
 if (SplitElement.equals("A") || SplitElement.equals("X"));
- else throw new IllegalArgumentException ("SplitElement Invalid value - Reference_ID=301 - A - X");
+ else throw new IllegalArgumentException ("SplitElement Invalid value - Reference = SPLITELEMENT_AD_Reference_ID - A - X");
 if (SplitElement == null) throw new IllegalArgumentException ("SplitElement is mandatory");
 if (SplitElement.length() > 1)
 {
@@ -766,7 +769,7 @@ Integer ii = (Integer)get_Value("S_Resource_ID");
 if (ii == null) return 0;
 return ii.intValue();
 }
-public static final int STARTMODE_AD_Reference_ID=303;
+public static final int STARTMODE_AD_Reference_ID = MReference.getReferenceID("WF_Start-Finish Mode");
 /** Automatic = A */
 public static final String STARTMODE_Automatic = "A";
 /** Manual = M */
@@ -776,7 +779,7 @@ Workflow Activity Start Mode  */
 public void setStartMode (String StartMode)
 {
 if (StartMode == null || StartMode.equals("A") || StartMode.equals("M"));
- else throw new IllegalArgumentException ("StartMode Invalid value - Reference_ID=303 - A - M");
+ else throw new IllegalArgumentException ("StartMode Invalid value - Reference = STARTMODE_AD_Reference_ID - A - M");
 if (StartMode != null && StartMode.length() > 1)
 {
 log.warning("Length > 1 - truncated");
@@ -790,7 +793,7 @@ public String getStartMode()
 {
 return (String)get_Value("StartMode");
 }
-public static final int SUBFLOWEXECUTION_AD_Reference_ID=307;
+public static final int SUBFLOWEXECUTION_AD_Reference_ID = MReference.getReferenceID("WF_SubFlow Execution");
 /** Asynchronously = A */
 public static final String SUBFLOWEXECUTION_Asynchronously = "A";
 /** Synchronously = S */
@@ -800,7 +803,7 @@ Mode how the sub-workflow is executed */
 public void setSubflowExecution (String SubflowExecution)
 {
 if (SubflowExecution == null || SubflowExecution.equals("A") || SubflowExecution.equals("S"));
- else throw new IllegalArgumentException ("SubflowExecution Invalid value - Reference_ID=307 - A - S");
+ else throw new IllegalArgumentException ("SubflowExecution Invalid value - Reference = SUBFLOWEXECUTION_AD_Reference_ID - A - S");
 if (SubflowExecution != null && SubflowExecution.length() > 1)
 {
 log.warning("Length > 1 - truncated");
@@ -896,7 +899,7 @@ Integer ii = (Integer)get_Value("WaitTime");
 if (ii == null) return 0;
 return ii.intValue();
 }
-public static final int WORKFLOW_ID_AD_Reference_ID=174;
+public static final int WORKFLOW_ID_AD_Reference_ID = MReference.getReferenceID("AD_Workflow");
 /** Set Workflow.
 Workflow or tasks */
 public void setWorkflow_ID (int Workflow_ID)
