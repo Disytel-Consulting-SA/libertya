@@ -22,7 +22,7 @@ function findLogs() {
 }
 
 # almacenamos el nombre del fichero PID para el demonio Libertya
-PID=/var/run/libertya.pid
+PID=/var/run/libertya/libertya.pid
 # almacenamos la ruta al script a ejecutar para iniciar el demonio Libertya
 STARTLIBERTYA=/ServidorOXP/utils/IniciarServidor.sh
 # almacenamos la ruta al script para detener el demonio Libertya
