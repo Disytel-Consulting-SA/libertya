@@ -199,10 +199,12 @@ public class MScheduler extends X_AD_Scheduler implements ProcesadorOXP {
             return 0;
         }
 
-        String sql = "DELETE AD_SchedulerLog " + "WHERE AD_Scheduler_ID=" + getAD_Scheduler_ID() + " AND Created+ cast(cast(" + getKeepLogDays() + "as text)|| 'days' as interval) < SysDate";
+		String sql = 	" DELETE FROM AD_SchedulerLog " +
+						" WHERE AD_Scheduler_ID=" + getAD_Scheduler_ID() + 
+						" AND Created < ('now'::text)::timestamp(6) - interval '" + getKeepLogDays() + " days'";
         int no = DB.executeUpdate( sql,get_TrxName());
 
-        return 0;
+        return no;
     }    // deleteLog
 }    // MScheduler
 

@@ -1,12 +1,13 @@
 /** Modelo Generado - NO CAMBIAR MANUALMENTE - Disytel */
 package org.openXpertya.model;
-import java.util.*;
+import java.util.logging.Level;
+ import java.util.*;
 import java.sql.*;
 import java.math.*;
 import org.openXpertya.util.*;
 /** Modelo Generado por AD_Scheduler
  *  @author Comunidad de Desarrollo Libertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
- *  @version  - 2010-07-21 16:24:30.061 */
+ *  @version  - 2014-06-10 15:39:34.883 */
 public class X_AD_Scheduler extends org.openXpertya.model.PO
 {
 /** Constructor estándar */
@@ -199,12 +200,14 @@ public static final String FREQUENCYTYPE_Minute = "M";
 public static final String FREQUENCYTYPE_Hour = "H";
 /** Day = D */
 public static final String FREQUENCYTYPE_Day = "D";
+/** Seconds = S */
+public static final String FREQUENCYTYPE_Seconds = "S";
 /** Set Frequency Type.
 Frequency of event */
 public void setFrequencyType (String FrequencyType)
 {
-if (FrequencyType.equals("M") || FrequencyType.equals("H") || FrequencyType.equals("D"));
- else throw new IllegalArgumentException ("FrequencyType Invalid value - Reference = FREQUENCYTYPE_AD_Reference_ID - M - H - D");
+if (FrequencyType.equals("M") || FrequencyType.equals("H") || FrequencyType.equals("D") || FrequencyType.equals("S"));
+ else throw new IllegalArgumentException ("FrequencyType Invalid value - Reference = FREQUENCYTYPE_AD_Reference_ID - M - H - D - S");
 if (FrequencyType == null) throw new IllegalArgumentException ("FrequencyType is mandatory");
 if (FrequencyType.length() > 1)
 {
