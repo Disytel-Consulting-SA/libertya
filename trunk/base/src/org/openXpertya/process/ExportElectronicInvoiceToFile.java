@@ -2,7 +2,6 @@ package org.openXpertya.process;
 
 import java.io.PrintWriter;
 import java.math.BigDecimal;
-import java.nio.charset.Charset;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
