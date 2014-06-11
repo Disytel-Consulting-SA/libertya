@@ -25,6 +25,8 @@ import java.awt.FlowLayout;
 import java.awt.Frame;
 import java.awt.Image;
 import java.awt.Point;
+import java.awt.Toolkit;
+import java.awt.datatransfer.StringSelection;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.InputEvent;
@@ -244,7 +246,7 @@ public final class APanel extends CPanel implements DataStatusListener,ChangeLis
 
     /** Descripción de Campos */
 
-    private AppsAction aPrevious,aNext,aParent,aDetail,aFirst,aLast,aNew,aCopy,aDelete,aIgnore,aPrint,aRefresh,aHistory,aAttachment,aMulti,aFind,aWorkflow,aZoomAcross,aRequest,aWinSize,aArchive;
+    private AppsAction aPrevious,aNext,aParent,aDetail,aFirst,aLast,aNew,aCopy,aDelete,aIgnore,aPrint,aRefresh,aHistory,aAttachment,aMulti,aFind,aWorkflow,aZoomAcross,aRequest,aWinSize,aArchive,aExport;
 
     /** Descripción de Campos */
 
@@ -291,6 +293,7 @@ public final class APanel extends CPanel implements DataStatusListener,ChangeLis
         aDelete = addAction( "Delete",mEdit,KeyStroke.getKeyStroke( KeyEvent.VK_X,Event.CTRL_MASK ),false );
         aIgnore = addAction( "Ignore",mEdit,KeyStroke.getKeyStroke( KeyEvent.VK_ESCAPE,0 ),false );
         aRefresh = addAction( "Refresh",mEdit,KeyStroke.getKeyStroke( KeyEvent.VK_F5,0 ),false );
+        aExport = addAction( "Export",mEdit,KeyStroke.getKeyStroke( KeyEvent.VK_E,Event.CTRL_MASK ),true );
         mEdit.addSeparator();
         aFind = addAction( "Find",mEdit,KeyStroke.getKeyStroke( KeyEvent.VK_F,Event.CTRL_MASK ),true );    // toggle
 
@@ -434,6 +437,10 @@ public final class APanel extends CPanel implements DataStatusListener,ChangeLis
         getInputMap( c ).put( KeyStroke.getKeyStroke( KeyEvent.VK_F9,0 ),aHistory.getName());
         getActionMap().put( aHistory.getName(),aHistory );
         
+        // F11 = Export
+        
+        getInputMap( c ).put( KeyStroke.getKeyStroke( KeyEvent.VK_F11,0 ),aExport.getName());
+        getActionMap().put( aExport.getName(),aExport );
         
         toolBar.add( aIgnore.getButton());     // ESC
         toolBar.addSeparator();
@@ -474,6 +481,7 @@ public final class APanel extends CPanel implements DataStatusListener,ChangeLis
 
         toolBar.add( aRequest.getButton());
 //        toolBar.add( aProduct.getButton());
+        toolBar.add(aExport.getButton());
         toolBar.addSeparator();
         
         toolBar.add( aEnd.getButton());
@@ -1081,6 +1089,7 @@ public final class APanel extends CPanel implements DataStatusListener,ChangeLis
 		aParent.setEnabled(((m_curTabIndex != 0) && (m_curWinTab.getTabCount() > 1))
 				&& !aSave.isEnabled());
         
+        aExport.setEnabled(!changed);
         
         // Transaction info
 
@@ -1585,6 +1594,8 @@ public final class APanel extends CPanel implements DataStatusListener,ChangeLis
 
                 // General Commands (Environment)
 
+            } else if(cmd.equals( aExport.getName())){
+            	cmd_export();
             } else if( !AEnv.actionPerformed( e.getActionCommand(),m_curWindowNo,this )) {
                 log.log( Level.SEVERE,"No action for: " + cmd );
             }
@@ -2069,6 +2080,14 @@ public final class APanel extends CPanel implements DataStatusListener,ChangeLis
         hlp.setVisible( true );
     }    // cmd_help
 
+    
+    private void cmd_export(){
+    	String valores = m_curGC.getClipboardData();
+    	StringSelection ss = new StringSelection(valores);
+    	Toolkit.getDefaultToolkit().getSystemClipboard().setContents(ss, null);
+    	ADialog.info(m_curWindowNo, this, "DataCopiedToClipboard");
+    }
+    
     /**
      * Descripción de Método
      *

@@ -30,6 +30,7 @@ import java.beans.PropertyChangeListener;
 import java.beans.PropertyVetoException;
 import java.beans.VetoableChangeListener;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.logging.Level;
 
@@ -163,6 +164,9 @@ public class GridController extends CPanel implements DataStatusListener,ListSel
 
     private VPanel vPanel = new VPanel();
 
+    /** Asociación entre editores y campos */
+    private Map<MField, VEditor> fieldEditors;
+    
     /**
      * Descripción de Método
      *
@@ -325,7 +329,8 @@ public class GridController extends CPanel implements DataStatusListener,ListSel
         m_mTab         = mTab;
         m_WindowNo     = WindowNo;
         m_onlyMultiRow = onlyMultiRow;
-
+        fieldEditors = new HashMap<MField, VEditor>();
+        
         // Set up Multi Row Table
 
         vTable.setModel( m_mTab.getTableModel());
@@ -369,6 +374,8 @@ public class GridController extends CPanel implements DataStatusListener,ListSel
                     if( (mField.getDisplayType() == DisplayType.Button) && (aPanel != null) ) {
                         (( JButton )vEditor ).addActionListener( aPanel );
                     }
+                    
+                    fieldEditors.put(mField, vEditor);
                 }
             }    // for all fields
 
@@ -527,7 +534,7 @@ public class GridController extends CPanel implements DataStatusListener,ListSel
      */
 
     private int setupVTable( APanel aPanel,MTab mTab,VTable table ) {
-        if( !mTab.isDisplayed()) {
+    	if( !mTab.isDisplayed()) {
             return 0;
         }
 
@@ -1235,6 +1242,49 @@ public class GridController extends CPanel implements DataStatusListener,ListSel
                 }
             }
         }    // all components
+    }
+    
+    public String getClipboardData(){
+    	int size = m_mTab.getFieldCount();
+    	int currentRow = m_mTab.getCurrentRow();
+    	
+    	StringBuffer header = new StringBuffer();
+    	StringBuffer body = new StringBuffer();
+    	StringBuffer data = new StringBuffer();
+    	
+		boolean justCreatedHeader = false;
+    	MField mField;
+    	String value;
+    	for( int row = 0;row < m_mTab.getRowCount() ;row++ ) {
+	        for( int i = 0;i < size;i++ ) {
+	            mField = m_mTab.getField(i);
+	            
+	            if( mField.isDisplayed()) {
+	            	if(!justCreatedHeader){
+	            		header.append(mField.getHeader()).append("\t");
+	            	}
+					fieldEditors.get(mField).setValue(
+							m_mTab.getValue(row, mField.getColumnName()));
+					value = fieldEditors.get(mField).getValue() != null ? fieldEditors
+							.get(mField).getDisplay() : "";
+	            	body.append(value).append("\t");
+	            }
+	        }
+	        justCreatedHeader = true;
+            body.append("\n");
+    	}
+    	
+    	// Restaurar datos de la fila actual
+    	for( int i = 0;i < size;i++ ) {
+    		mField = m_mTab.getField(i);
+    		if( mField.isDisplayed()) {
+				fieldEditors.get(mField).setValue(
+						m_mTab.getValue(currentRow, mField.getColumnName()));
+    		}
+    	}
+    	
+        data.append(header).append("\n").append(body);
+    	return data.toString();
     }
 }    // GridController
 
