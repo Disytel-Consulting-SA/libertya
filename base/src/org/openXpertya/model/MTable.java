@@ -2796,7 +2796,12 @@ public class MTable extends AbstractTableModel implements Serializable {
                 MField field      = ( MField )m_fields.get( i );
                 String columnName = field.getColumnName();
 
-                if( field.isVirtualColumn()) {
+                // Omitir copiar UID y versión de componente.
+                // Omitir copiar RepArray, RetrieveUID e IncluideInReplication (campos de replicación).
+                if ("AD_ComponentVersion_ID".equalsIgnoreCase(columnName) || "AD_ComponentObjectUID".equalsIgnoreCase(columnName) || 
+                	"RepArray".equalsIgnoreCase(columnName) || "RetrieveUID".equalsIgnoreCase(columnName) || "IncludeInReplication".equalsIgnoreCase(columnName))
+                	;
+                else if( field.isVirtualColumn()) {
                     ;
                 } else if( field.isKey() || columnName.equals( "AD_Client_ID" )
 
