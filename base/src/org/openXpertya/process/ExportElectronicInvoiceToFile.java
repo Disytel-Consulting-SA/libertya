@@ -1,5 +1,6 @@
 package org.openXpertya.process;
 
+import java.io.FileWriter;
 import java.io.PrintWriter;
 import java.math.BigDecimal;
 import java.sql.PreparedStatement;
@@ -416,11 +417,12 @@ public class ExportElectronicInvoiceToFile extends SvrProcess {
 	
 	// Armo el archivo
 	private int escribeArchivo(String line, String file){
-		org.zkoss.io.FileWriter fichero = null;
+		FileWriter fichero = null;
         PrintWriter pw = null;
         try
         {
-            fichero = new org.zkoss.io.FileWriter(file, "ascii", true);
+            fichero = new FileWriter(file, true);
+            pw = new PrintWriter(fichero);
             pw = new PrintWriter(fichero);
             pw.print(line.concat("\r\n"));
         } catch (Exception e) {
