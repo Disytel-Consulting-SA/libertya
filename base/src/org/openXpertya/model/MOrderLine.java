@@ -679,7 +679,7 @@ public class MOrderLine extends X_C_OrderLine {
         // Get Defaults from Parent
 
         MOrder o = new MOrder( getCtx(),getC_Order_ID(),get_TrxName());
-
+        		
         // En caso de tener una preferencia en el campo m_warehouse_id de la cabecera, se setea incorrectamente
         // ese valor por más de que se haya especificado un valor diferente en dicho campo.  Por lo tanto se
         // fuerza el almacén en la línea a partir del almacén de la cabecera. 
@@ -734,6 +734,19 @@ public class MOrderLine extends X_C_OrderLine {
         		return false;
         	}
             
+            MDocType docType = MDocType.get(getCtx(), o.getC_DocTypeTarget_ID());
+        	
+        	// Para pedidos a proveedor no se permite tener artículos repetidos
+        	String whereClause = "c_order_id = ? AND m_product_id = ?";
+        	whereClause += newRecord?"":" AND c_orderline_id <> "+getC_OrderLine_ID();
+			if (MDocType.DOCTYPE_PurchaseOrder.equals(docType.getDocTypeKey())
+					&& PO.existRecordFor(getCtx(), get_TableName(),
+							whereClause, new Object[] { getC_Order_ID(), getM_Product_ID() },
+							get_TrxName())) {
+        		log.saveError("AlreadyExistsProductInADocumentLine", "");
+        		return false;
+        	}
+        	
         	// Set Price if Actual = 0
 
             if( (m_productPrice == null) && (Env.ZERO.compareTo( getPriceActual()) == 0) && (Env.ZERO.compareTo( getPriceList()) == 0) ) {
@@ -754,7 +767,6 @@ public class MOrderLine extends X_C_OrderLine {
             
             // Verificación de restricción del lugar de retiro del artículo según lo indicado
             // por el tipo de documento.
-            MDocType docType = MDocType.get(Env.getCtx(), o.getC_DocTypeTarget_ID());
             if(docType.isCheckoutPlaceRestricted()
             		&& !o.isProcessed() 
             		&& MProduct.CHECKOUTPLACE_PointOfSale.equals(getProduct().getCheckoutPlace())) {
