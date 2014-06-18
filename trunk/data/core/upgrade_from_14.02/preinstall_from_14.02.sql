@@ -1916,3 +1916,6 @@ CREATE OR REPLACE VIEW v_product_movements_detailed AS
    LEFT JOIN c_invoice i ON i.c_invoice_id = t.c_invoice_id;
 
 ALTER TABLE v_product_movements_detailed OWNER TO libertya;
+
+--20140618-1008 Eliminar funcion invoiceopen incorrectamente creada en schema public (si es que existe)
+DROP FUNCTION IF EXISTS public.invoiceopen(integer, integer);
