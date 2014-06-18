@@ -145,9 +145,9 @@ public class JarHelper {
 	    JarFile jarFile = new JarFile(jarURL);
 	    JarEntry entry = jarFile.getJarEntry(resource);
 	       
-	    /* Si no existe el archivo, retornar null */
+	    /* Si no existe el archivo, retornar la lista vacía */
 	    if (entry == null)
-	    	return null;
+	    	return retValue;
 	       
 	    InputStream input = jarFile.getInputStream(entry);
 	    StringBuilder content = new StringBuilder();
