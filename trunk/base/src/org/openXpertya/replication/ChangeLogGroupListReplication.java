@@ -165,7 +165,7 @@ public class ChangeLogGroupListReplication extends ChangeLogGroupList {
 			doc = builder.parse(new InputSource(new StringReader("<?xml version=\"1.0\" encoding=\"UTF-8\" ?> <columns> "+columnValuesXML+" </columns> ")));
 		}
 		catch (Exception e) {
-			System.out.println("Error insertando en XML de replicación.  Tabla: " + group.getTableName() + ". Registro: " + group.getAd_componentObjectUID());
+			System.out.println("Error insertando en XML de replicación.  Tabla: " + group.getTableName() + ". Registro: " + group.getAd_componentObjectUID() + ". " + e);
 			e.printStackTrace();
 			return 0;
 		}
