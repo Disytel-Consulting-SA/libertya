@@ -31,6 +31,7 @@ import java.util.logging.Level;
 
 import org.openXpertya.model.MInvoiceLine;
 import org.openXpertya.model.MMenu;
+import org.openXpertya.model.MPreference;
 import org.openXpertya.model.MStorage;
 import org.openXpertya.model.M_Window;
 import org.openXpertya.model.PO;
@@ -766,8 +767,16 @@ public class MWorkflow extends X_AD_Workflow {
      */
 
     public MWFProcess startWait( ProcessInfo pi ) {
-        final int SLEEP    = 500;    // 1/2 sec
-        final int MAXLOOPS = 30;     // 15 sec
+    	// Tiempo para esperar que el proceso finalice antes de separarse del worker (0 = sin limite)
+    	int WAIT_FOR_WORKER_SECONDS = 60;	// por defecto, limite de 60 segundos
+    	try {	
+    		// Buscar la preferencia a nivel sistema
+    		WAIT_FOR_WORKER_SECONDS = Integer.parseInt(MPreference.GetCustomPreferenceValue("WAIT_FOR_WORKER_SECONDS", null, null, null, false));
+    	} catch (Exception e) {	/* Sin preferencia */  	}
+    	// 1/2 sec. Intervalo entre evaluación y evaluación
+        final int SLEEP_MS    = 500;    									
+        // loops hasta interrumpir la espera
+        final int MAXLOOPS = WAIT_FOR_WORKER_SECONDS * (1000 / SLEEP_MS);  
 
         //
 
@@ -783,8 +792,8 @@ public class MWorkflow extends X_AD_Workflow {
         int         loops = 0;
 
         while( !state.isClosed() &&!state.isSuspended()) {
-            if( loops > MAXLOOPS ) {
-                log.warning( "Timeout after sec " + (( SLEEP * MAXLOOPS ) / 1000 ));
+            if( MAXLOOPS > 0 && loops > MAXLOOPS ) {
+                log.warning( "Timeout after sec " + (( SLEEP_MS * MAXLOOPS ) / 1000 ));
                 pi.setSummary( Msg.parseTranslation(Env.getCtx(), "@StillRunning@") );
 
                 return process;
@@ -793,7 +802,7 @@ public class MWorkflow extends X_AD_Workflow {
             // System.out.println("--------------- " + loops + ": " + state);
 
             try {
-                Thread.sleep( SLEEP );
+                Thread.sleep( SLEEP_MS );
                 loops++;
             } catch( InterruptedException e ) {
                 log.log( Level.SEVERE,"startWait interrupted",e );
