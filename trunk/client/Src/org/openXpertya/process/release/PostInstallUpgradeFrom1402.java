@@ -67,6 +67,10 @@ public class PostInstallUpgradeFrom1402 extends PluginPostInstallProcess {
 	protected final static String ENTIDADES_FINANCIERAS_CURRENT_ACCOUNT_REPORT_UID = "CORE-AD_Process-1010360";
 	protected final static String ENTIDADES_FINANCIERAS_CURRENT_ACCOUNT_REPORT_FILENAME = "EntidadFinancieraCuentaCorriente.jrxml";
 	
+	/** UID del Informe de Saldos de Entidades Financieras */
+	protected final static String ENTIDADES_FINANCIERAS_BALANCES_REPORT_UID = "CORE-AD_Process-1010361";
+	protected final static String ENTIDADES_FINANCIERAS_BALANCES_REPORT_FILENAME = "EntidadFinancieraBalances.jrxml";
+	
 	protected String doIt() throws Exception {
 		super.doIt();
 		
