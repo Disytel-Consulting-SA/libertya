@@ -122,6 +122,8 @@ public class BalanceReport extends SvrProcess {
 		if(p_DateTrx_To != null){
 			sqlDoc.append(" 	AND d.truedatetrx <= ?::timestamp");
 		}
+		sqlDoc.append(p_AccountType.equalsIgnoreCase("C") ? " AND bp.iscustomer = 'Y' "
+				: " AND bp.isvendor = 'Y' ");
 		sqlDoc.append(" ) AS T ");
 		sqlDoc.append(" GROUP BY T.c_bpartner_id, T.name, T.C_BP_Group_ID, T.so_description ");
 		sqlDoc.append(" ORDER BY ");
