@@ -77,7 +77,7 @@ public class ImportPadronBsAsFromCopy extends SvrProcess {
 		
 		/** Se copia el contenido del padrón a la tabla i_padron_sujeto_aux */
 		sql = new StringBuffer();
-		sql.append("COPY i_padron_sujeto_aux FROM '"+ getPath() + p_NameCsvFile + "' WITH DELIMITER '" + getSeparatorCharacterCSV() + "'");
+		sql.append("COPY i_padron_sujeto_aux_new FROM '"+ getPath() + p_NameCsvFile + "' WITH DELIMITER '" + getSeparatorCharacterCSV() + "'");
 		DB.executeUpdate(sql.toString());
 		
 		/** Se ejecuta el proceso de mantenimiento de padrón eliminando aquellos padrones que ya no se usan */
@@ -219,10 +219,10 @@ public class ImportPadronBsAsFromCopy extends SvrProcess {
 		sql.append(" TIPO_CONTR_INSC                                 , \n");
 		sql.append(" ALTA_BAJA                                       , \n");
 		sql.append(" CBIO_ALICUOTA                                   , \n");
-		sql.append(" to_number(PERCEPCION, '9999999D99')             , \n");
-		sql.append(" to_number(RETENCION, '9999999D99')              , \n");
-		sql.append(" NRO_GRUPO_RET                                   , \n");
-		sql.append(" NRO_GRUPO_PER                                   , \n");
+		sql.append(" to_number((CASE regimen WHEN 'P' THEN alicuota ELSE '0,00' END), '9999999D99')             , \n");
+		sql.append(" to_number((CASE regimen WHEN 'R' THEN alicuota ELSE '0,00' END), '9999999D99')              , \n");
+		sql.append(" (CASE regimen WHEN 'R' THEN NRO_GRUPO ELSE 0 END), \n");
+		sql.append(" (CASE regimen WHEN 'P' THEN NRO_GRUPO ELSE 0 END), \n");
 		sql.append(" " + ad_Client_ID + "                            , \n");
 		sql.append(" " + p_AD_Org_ID + "                             , \n");
 		sql.append(" 'Y'                                             , \n");
@@ -231,7 +231,7 @@ public class ImportPadronBsAsFromCopy extends SvrProcess {
 		sql.append(" " + ad_User_ID + "                              , \n");
 		sql.append(" " + ad_User_ID + "                              , \n");
 		sql.append(" '" + p_PadronType + "'                                  ");
-		sql.append(" FROM   i_padron_sujeto_aux                       \n ");
+		sql.append(" FROM   i_padron_sujeto_aux_new                    \n ");
 		/* 
 		 * Se debe permitir insertar registros con CUITs iguales
 		sql.append("WHERE cuit NOT IN \n");
