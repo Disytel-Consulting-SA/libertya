@@ -1919,3 +1919,22 @@ ALTER TABLE v_product_movements_detailed OWNER TO libertya;
 
 --20140618-1008 Eliminar funcion invoiceopen incorrectamente creada en schema public (si es que existe)
 DROP FUNCTION IF EXISTS public.invoiceopen(integer, integer);
+
+--20140625-0956 Nueva tabla para soporte de nuevo formato de padrones de percepciones y retenciones de ARBA
+CREATE TABLE i_padron_sujeto_aux_new
+(
+  regimen character(1),
+  fecha_publicacion character varying(8),
+  fecha_desde character varying(8),
+  fecha_hasta character varying(8),
+  cuit character varying(11),
+  tipo_contr_insc character(1),
+  alta_baja character(1),
+  cbio_alicuota character(1),
+  alicuota character varying(6),
+  nro_grupo integer
+)
+WITH (
+  OIDS=TRUE
+);
+ALTER TABLE i_padron_sujeto_aux_new OWNER TO libertya;
