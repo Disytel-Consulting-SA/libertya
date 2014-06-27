@@ -1938,3 +1938,6 @@ WITH (
   OIDS=TRUE
 );
 ALTER TABLE i_padron_sujeto_aux_new OWNER TO libertya;
+
+--20140627-1750 Nueva columna a la tabla de nuevo formato de padrones ya que el archivo exportado contiene un ; adicional
+update ad_system set dummy = (SELECT addcolumnifnotexists('i_padron_sujeto_aux_new','last_column', 'character(1)'));
