@@ -45,6 +45,7 @@ public class RetencionIIBB extends AbstractRetencionProcessor {
 		// Se asigna el esquema de retención a utilizar.
 		setRetencionSchema(retSchema);		
 		
+		
 		// Se obtiene la tasa de impuesto exento para la creación de la nota
 		// de crédito.
 //		Se comenta esta opción para recuperar el ID del Tax exento, dado que el uso de roles desde acceso WS lo imposibilita.  De todas maneras, no pareciera ser necesario pasar por accesos de perfil para obtener el C_Tax_ID		
@@ -52,29 +53,32 @@ public class RetencionIIBB extends AbstractRetencionProcessor {
 		String sql = " SELECT C_Tax_ID FROM C_Tax WHERE isactive = 'Y' AND istaxexempt = 'Y' AND to_country_id IS NULL AND rate = 0.0 AND AD_Client_ID = " + Env.getContextAsInt(Env.getCtx(), "#AD_Client_ID");
 		taxExenc = DB.getSQLValue(null, sql);
 		
-		// Se obtiene el valor del parámetro Importe No Imponible (INI)
-		setImporteNoImponible(
-				getParamValueBigDecimal(MRetSchemaConfig.NAME_ImporteNoImponible,
-				Env.ZERO));
+		if(!retSchema.isSufferedRetencion()){
 		
-		// Se obtiene el valor del parámetro Porcentaje a Retener (T)
-		setPorcentajeRetencion(
-				getParamValueBigDecimal(MRetSchemaConfig.NAME_PorcentajeARetener,
-				Env.ZERO));
-		
-		// Se obtiene el valor del parámetro Mínimo a Retener (MR)
-		setImporteMinimoRetencion( 
-				getParamValueBigDecimal(MRetSchemaConfig.NAME_MinimoARetener,
-				Env.ZERO));
-		
-		// Se obtiene el valor del parámetro Mínimo a Retener (MR)
-		setDescuentoNeto( 
-				getParamValueBigDecimal(MRetSchemaConfig.NAME_DescuentoNeto,
-				Env.ZERO));
-		
-		// Obtiene los padrones de obtención del porcentaje ordenado por orden
-		setPadrones(getPadronTypesParamsValues());
+			// Se obtiene el valor del parámetro Importe No Imponible (INI)
+			setImporteNoImponible(
+					getParamValueBigDecimal(MRetSchemaConfig.NAME_ImporteNoImponible,
+					Env.ZERO));
+			
+			// Se obtiene el valor del parámetro Porcentaje a Retener (T)
+			setPorcentajeRetencion(
+					getParamValueBigDecimal(MRetSchemaConfig.NAME_PorcentajeARetener,
+					Env.ZERO));
+			
+			// Se obtiene el valor del parámetro Mínimo a Retener (MR)
+			setImporteMinimoRetencion( 
+					getParamValueBigDecimal(MRetSchemaConfig.NAME_MinimoARetener,
+					Env.ZERO));
+			
+			// Se obtiene el valor del parámetro Mínimo a Retener (MR)
+			setDescuentoNeto( 
+					getParamValueBigDecimal(MRetSchemaConfig.NAME_DescuentoNeto,
+					Env.ZERO));
+			
+			// Obtiene los padrones de obtención del porcentaje ordenado por orden
+			setPadrones(getPadronTypesParamsValues());
 
+		}
 	} //loadConfig
 
 
