@@ -72,7 +72,7 @@ public class ImportPadronBsAsFromCopy extends SvrProcess {
 	protected String doIt() throws Exception {
 		/** Se elimina el contenido de la tabla i_padron_sujeto_aux */
 		sql = new StringBuffer();
-		sql.append("DELETE FROM i_padron_sujeto_aux");
+		sql.append("DELETE FROM i_padron_sujeto_aux_new");
 		DB.executeUpdate(sql.toString());
 		
 		/** Se copia el contenido del padrón a la tabla i_padron_sujeto_aux */
