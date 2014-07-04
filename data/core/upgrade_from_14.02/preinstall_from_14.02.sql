@@ -1978,3 +1978,34 @@ WHERE (dt.docbasetype = ANY (ARRAY['API'::bpchar, 'APC'::bpchar]))
 
 ALTER TABLE rv_c_tax_iibb_sufridas
   OWNER TO libertya;
+  
+--20140704-1720 Vista para obtener las percepciones IIBB Buenos Aires Emitidas
+CREATE OR REPLACE VIEW rv_c_tax_iibb_emitidas_bsas AS 
+SELECT it.ad_org_id,
+       it.ad_client_id,
+       bp.taxid AS CUIT,
+       it.created AS date,
+       CASE
+            WHEN dt.doctypekey like 'CDN%' THEN 'D'::bpchar
+            WHEN dt.doctypekey like 'CI%' THEN 'F'::bpchar
+            WHEN dt.doctypekey like 'CCN%' THEN 'C'::bpchar
+            ELSE 'O'::bpchar
+       END as TipoComprobante,
+       lc.letra AS LetraComprobante,
+       lpad(cast(i.puntodeventa as varchar), 8, '0') AS NumeroSucursal,
+       lpad(cast(i.numerocomprobante as varchar), 8, '0') AS NumeroEmision,
+       it.taxbaseamt AS MontoImponible,
+       it.taxamt AS ImportePercepcion,
+       'A' AS TipoDeOperacion
+FROM C_Invoicetax it
+INNER JOIN c_tax t ON (t.c_tax_id = it.c_tax_id)
+INNER JOIN c_invoice i ON (it.c_invoice_id = i.c_invoice_id)
+INNER JOIN c_letra_comprobante lc ON (lc.c_letra_comprobante_id = i.c_letra_comprobante_id)
+INNER JOIN c_doctype dt ON (dt.c_doctype_id = i.c_doctype_id)
+INNER JOIN c_region r ON (r.c_region_id = i.c_region_id)
+INNER JOIN c_bpartner bp ON (bp.c_bpartner_id = i.c_bpartner_id)
+WHERE (dt.docbasetype IN ('ARI',
+                          'ARC')
+       AND (t.ispercepcion = 'Y')
+       AND (t.perceptiontype = 'B')
+       AND (r.c_region_id = 1000083));
