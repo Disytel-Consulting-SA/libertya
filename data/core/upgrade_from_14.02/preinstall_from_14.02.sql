@@ -1941,3 +1941,40 @@ ALTER TABLE i_padron_sujeto_aux_new OWNER TO libertya;
 
 --20140627-1750 Nueva columna a la tabla de nuevo formato de padrones ya que el archivo exportado contiene un ; adicional
 update ad_system set dummy = (SELECT addcolumnifnotexists('i_padron_sujeto_aux_new','last_column', 'character(1)'));
+
+--20140704-1640 Nueva columna para indicar el código de jurisdicción.
+update ad_system set dummy = (SELECT addcolumnifnotexists('c_region', 'jurisdictioncode', 'integer'));
+
+--20140704-1640 Nueva columna para indicar a que tipo pertence la percepción.
+update ad_system set dummy = (SELECT addcolumnifnotexists('c_tax', 'perceptiontype', 'character(1)'));
+
+--20140704-1640 Vista para obtener las percepciones IIBB sufridas
+CREATE OR REPLACE VIEW rv_c_tax_iibb_sufridas AS 
+SELECT it.ad_org_id,
+       it.ad_client_id,
+       r.jurisdictioncode AS codigojurisdiccion,
+       bp.taxid AS cuit,
+       it.created AS date,
+       lpad(cast(i.puntodeventa as varchar), 4, '0') AS numerodesucursal,
+       i.numerocomprobante AS numerodeconstancia,
+       CASE
+            WHEN dt.doctypekey = 'VDN' THEN 'D'::bpchar
+            WHEN dt.doctypekey = 'VI' THEN 'F'::bpchar
+            WHEN dt.doctypekey = 'VCN' THEN 'C'::bpchar
+            ELSE 'O'::bpchar
+       END AS TipoComprobante, 
+       lc.letra AS letracomprobante,
+       it.taxamt AS importepercibido
+FROM c_invoicetax it
+JOIN c_tax t ON t.c_tax_id = it.c_tax_id
+JOIN c_invoice i ON it.c_invoice_id = i.c_invoice_id
+JOIN c_letra_comprobante lc ON lc.c_letra_comprobante_id = i.c_letra_comprobante_id
+JOIN c_doctype dt ON dt.c_doctype_id = i.c_doctype_id
+JOIN c_region r ON r.c_region_id = i.c_region_id
+JOIN c_bpartner bp ON bp.c_bpartner_id = i.c_bpartner_id
+WHERE (dt.docbasetype = ANY (ARRAY['API'::bpchar, 'APC'::bpchar]))
+  AND t.ispercepcion = 'Y'::bpchar
+  AND t.perceptiontype = 'B'::bpchar;
+
+ALTER TABLE rv_c_tax_iibb_sufridas
+  OWNER TO libertya;
