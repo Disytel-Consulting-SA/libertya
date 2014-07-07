@@ -7,7 +7,7 @@ import java.math.*;
 import org.openXpertya.util.*;
 /** Modelo Generado por C_Tax
  *  @author Comunidad de Desarrollo Libertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
- *  @version  - 2013-03-28 18:55:47.772 */
+ *  @version  - 2014-07-07 10:12:13.629 */
 public class X_C_Tax extends org.openXpertya.model.PO
 {
 /** Constructor estándar */
@@ -340,6 +340,34 @@ public int getParent_Tax_ID()
 Integer ii = (Integer)get_Value("Parent_Tax_ID");
 if (ii == null) return 0;
 return ii.intValue();
+}
+public static final int PERCEPTIONTYPE_AD_Reference_ID = MReference.getReferenceID("Retention - Perception Type");
+/** Ganancias = G */
+public static final String PERCEPTIONTYPE_Ganancias = "G";
+/** SIJP = J */
+public static final String PERCEPTIONTYPE_SIJP = "J";
+/** Suss = S */
+public static final String PERCEPTIONTYPE_Suss = "S";
+/** IVA = I */
+public static final String PERCEPTIONTYPE_IVA = "I";
+/** Ingresos Brutos = B */
+public static final String PERCEPTIONTYPE_IngresosBrutos = "B";
+/** Set PerceptionType */
+public void setPerceptionType (String PerceptionType)
+{
+if (PerceptionType == null || PerceptionType.equals("G") || PerceptionType.equals("J") || PerceptionType.equals("S") || PerceptionType.equals("I") || PerceptionType.equals("B"));
+ else throw new IllegalArgumentException ("PerceptionType Invalid value - Reference = PERCEPTIONTYPE_AD_Reference_ID - G - J - S - I - B");
+if (PerceptionType != null && PerceptionType.length() > 1)
+{
+log.warning("Length > 1 - truncated");
+PerceptionType = PerceptionType.substring(0,1);
+}
+set_Value ("PerceptionType", PerceptionType);
+}
+/** Get PerceptionType */
+public String getPerceptionType() 
+{
+return (String)get_Value("PerceptionType");
 }
 /** Set Rate.
 Rate or Tax or Exchange */

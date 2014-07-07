@@ -1,13 +1,14 @@
-/** Modelo Generado - NO CAMBIAR MANUALMENTE - Copyright (C) 2006 FUNDESLE */
+/** Modelo Generado - NO CAMBIAR MANUALMENTE - Disytel */
 package org.openXpertya.model;
-import java.util.*;
+import java.util.logging.Level;
+ import java.util.*;
 import java.sql.*;
 import java.math.*;
 import org.openXpertya.util.*;
 /** Modelo Generado por C_Region
- *  @author Comunidad de Desarrollo openXpertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
- *  @version  - 2009-10-22 14:51:32.854 */
-public class X_C_Region extends PO
+ *  @author Comunidad de Desarrollo Libertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
+ *  @version  - 2014-07-07 10:12:06.501 */
+public class X_C_Region extends org.openXpertya.model.PO
 {
 /** Constructor estándar */
 public X_C_Region (Properties ctx, int C_Region_ID, String trxName)
@@ -26,13 +27,13 @@ public X_C_Region (Properties ctx, ResultSet rs, String trxName)
 {
 super (ctx, rs, trxName);
 }
-/** AD_Table_ID=164 */
-public static final int Table_ID=164;
+/** AD_Table_ID */
+public static final int Table_ID = M_Table.getTableID("C_Region");
 
 /** TableName=C_Region */
 public static final String Table_Name="C_Region";
 
-protected static KeyNamePair Model = new KeyNamePair(164,"C_Region");
+protected static KeyNamePair Model = new KeyNamePair(Table_ID,"C_Region");
 protected static BigDecimal AccessLevel = new BigDecimal(6);
 
 /** Load Meta Data */
@@ -137,6 +138,18 @@ if (oo != null)
  return "Y".equals(oo);
 }
 return false;
+}
+/** Set JurisdictionCode */
+public void setJurisdictionCode (int JurisdictionCode)
+{
+set_Value ("JurisdictionCode", new Integer(JurisdictionCode));
+}
+/** Get JurisdictionCode */
+public int getJurisdictionCode() 
+{
+Integer ii = (Integer)get_Value("JurisdictionCode");
+if (ii == null) return 0;
+return ii.intValue();
 }
 /** Set Name.
 Alphanumeric identifier of the entity */
