@@ -2009,3 +2009,34 @@ WHERE (dt.docbasetype IN ('ARI',
        AND (t.ispercepcion = 'Y')
        AND (t.perceptiontype = 'B')
        AND (r.c_region_id = 1000083));
+       
+--20140707-1021 Nueva columna para indicar a que tipo pertence la retencion.
+update ad_system set dummy = (SELECT addcolumnifnotexists('c_retenciontype', 'retentiontype', 'character(1)'));
+
+--20140707-1022 Vista para obtener las retenciones de IIBB Buenos Aires emitidas
+CREATE OR REPLACE VIEW RV_C_Invoice_Reten_IIBB_BsAs_Emitidas AS 
+SELECT ri.ad_org_id,
+       ri.ad_client_id,
+       bp.taxid AS CUIT,
+       0 AS ImporteRetencion,
+       ri.created AS date,
+       iPagada.puntodeventa AS NumeroSucursal,
+       iPagada.numerocomprobante as NumeroEmision,
+       'A' AS TipoOperacion
+FROM m_retencion_invoice ri
+INNER JOIN c_invoice i ON (i.c_invoice_id = ri.c_invoice_id)
+INNER JOIN c_allocationline al ON (al.c_allocationhdr_id = ri.c_allocationhdr_id)
+INNER JOIN c_invoice iPagada ON (iPagada.c_invoice_id = al.c_invoice_id)
+INNER JOIN c_bpartner bp ON (bp.c_bpartner_id = i.c_bpartner_id)
+INNER JOIN c_retencionschema rs ON (rs.c_retencionschema_id = ri.c_retencionschema_id)
+INNER JOIN c_retenciontype rt ON (rt.c_retenciontype_id = rs.c_retenciontype_id)
+INNER JOIN c_doctype dt ON (dt.c_doctype_id = i.c_doctype_id)
+INNER JOIN ad_clientinfo ci ON (ci.ad_client_id = ri.ad_client_id)
+WHERE ((rt.retentiontype = 'B')
+       AND (dt.docbasetype IN ('API',
+                               'APC',
+                               'APP'))
+       AND (i.c_region_id = 1000083));
+
+ALTER TABLE RV_C_Invoice_Reten_IIBB_BsAs_Emitidas
+  OWNER TO libertya;

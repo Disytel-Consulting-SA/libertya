@@ -1,13 +1,14 @@
-/** Modelo Generado - NO CAMBIAR MANUALMENTE - Copyright (C) 2006 FUNDESLE */
+/** Modelo Generado - NO CAMBIAR MANUALMENTE - Disytel */
 package org.openXpertya.model;
-import java.util.*;
+import java.util.logging.Level;
+ import java.util.*;
 import java.sql.*;
 import java.math.*;
 import org.openXpertya.util.*;
 /** Modelo Generado por C_RetencionType
- *  @author Comunidad de Desarrollo openXpertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
- *  @version  - 2009-10-22 14:51:33.117 */
-public class X_C_RetencionType extends PO
+ *  @author Comunidad de Desarrollo Libertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
+ *  @version  - 2014-07-07 10:36:09.519 */
+public class X_C_RetencionType extends org.openXpertya.model.PO
 {
 /** Constructor estándar */
 public X_C_RetencionType (Properties ctx, int C_RetencionType_ID, String trxName)
@@ -27,13 +28,13 @@ public X_C_RetencionType (Properties ctx, ResultSet rs, String trxName)
 {
 super (ctx, rs, trxName);
 }
-/** AD_Table_ID=1000140 */
-public static final int Table_ID=1000140;
+/** AD_Table_ID */
+public static final int Table_ID = M_Table.getTableID("C_RetencionType");
 
 /** TableName=C_RetencionType */
 public static final String Table_Name="C_RetencionType";
 
-protected static KeyNamePair Model = new KeyNamePair(1000140,"C_RetencionType");
+protected static KeyNamePair Model = new KeyNamePair(Table_ID,"C_RetencionType");
 protected static BigDecimal AccessLevel = new BigDecimal(3);
 
 /** Load Meta Data */
@@ -142,5 +143,33 @@ return (String)get_Value("Name");
 public KeyNamePair getKeyNamePair() 
 {
 return new KeyNamePair(getID(), getName());
+}
+public static final int RETENTIONTYPE_AD_Reference_ID = MReference.getReferenceID("Retention - Perception Type");
+/** Ganancias = G */
+public static final String RETENTIONTYPE_Ganancias = "G";
+/** SIJP = J */
+public static final String RETENTIONTYPE_SIJP = "J";
+/** Suss = S */
+public static final String RETENTIONTYPE_Suss = "S";
+/** IVA = I */
+public static final String RETENTIONTYPE_IVA = "I";
+/** Ingresos Brutos = B */
+public static final String RETENTIONTYPE_IngresosBrutos = "B";
+/** Set RetentionType */
+public void setRetentionType (String RetentionType)
+{
+if (RetentionType == null || RetentionType.equals("G") || RetentionType.equals("J") || RetentionType.equals("S") || RetentionType.equals("I") || RetentionType.equals("B"));
+ else throw new IllegalArgumentException ("RetentionType Invalid value - Reference = RETENTIONTYPE_AD_Reference_ID - G - J - S - I - B");
+if (RetentionType != null && RetentionType.length() > 1)
+{
+log.warning("Length > 1 - truncated");
+RetentionType = RetentionType.substring(0,1);
+}
+set_Value ("RetentionType", RetentionType);
+}
+/** Get RetentionType */
+public String getRetentionType() 
+{
+return (String)get_Value("RetentionType");
 }
 }
