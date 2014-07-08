@@ -260,9 +260,11 @@ public class LibroIVANewDataSource implements JRDataSource {
 				invoiceID = rs.getInt("c_invoice_id");
 				String c_categoria_via_name = rs.getString("i_tipo_iva");
 				String item = rs.getString("item");
-				if (rs.getBigDecimal("rate").compareTo(BigDecimal.ZERO) == 0) {
+				if ((item.toLowerCase().indexOf("iva") > -1) && (rs.getBigDecimal("rate").compareTo(BigDecimal.ZERO) == 0) )
 					item = "Exento";
-				}
+			/*	if (rs.getBigDecimal("rate").compareTo(BigDecimal.ZERO) == 0) {
+					item = "Exento";
+				}*/
 				// BigDecimal neto=rs.getBigDecimal("neto");
 				BigDecimal netoNoGravado = rs.getBigDecimal("netoNoGravado");
 				// BigDecimal netoGravado= new BigDecimal(0);
@@ -687,9 +689,9 @@ public class LibroIVANewDataSource implements JRDataSource {
 				this.taxIndicator = taxIndicator;
 				this.rate = rate;
 				
-				if (this.rate.compareTo(BigDecimal.ZERO) == 0) 
+				/*if (this.rate.compareTo(BigDecimal.ZERO) == 0) 
 					this.taxName = "Exento";
-				
+				*/
 				this.sopoType = sopoType;
 				this.taxType = taxType;
 				this.taxBaseAmt = taxBaseAmt;
