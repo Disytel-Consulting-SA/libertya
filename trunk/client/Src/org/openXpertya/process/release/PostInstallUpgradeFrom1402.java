@@ -71,6 +71,11 @@ public class PostInstallUpgradeFrom1402 extends PluginPostInstallProcess {
 	protected final static String ENTIDADES_FINANCIERAS_BALANCES_REPORT_UID = "CORE-AD_Process-1010361";
 	protected final static String ENTIDADES_FINANCIERAS_BALANCES_REPORT_FILENAME = "EntidadFinancieraBalances.jrxml";
 	
+	/** UID del Informe de Comprobante de Retención */
+	protected final static String RPT_COMPROBANTE_RETENCION_JASPER_REPORT_UID = "CORE-AD_JasperReport-1010081";
+	protected final static String RPT_COMPROBANTE_RETENCION_JASPER_REPORT_FILENAME = "rpt_Comprobante_Retencion.jasper";
+	
+	@Override
 	protected String doIt() throws Exception {
 		super.doIt();
 		
@@ -246,6 +251,17 @@ public class PostInstallUpgradeFrom1402 extends PluginPostInstallProcess {
 						.readBinaryFromJar(
 								jarFileURL,
 								getBinaryFileURL(ENTIDADES_FINANCIERAS_SALES_PURCHASES_REPORT_FILENAME)));
+		
+		// Informe de Comprobante de Retención
+		MJasperReport
+			.updateBinaryData(
+					get_TrxName(),
+					getCtx(),
+					RPT_COMPROBANTE_RETENCION_JASPER_REPORT_UID,
+					JarHelper
+							.readBinaryFromJar(
+									jarFileURL,
+									getBinaryFileURL(RPT_COMPROBANTE_RETENCION_JASPER_REPORT_FILENAME)));
 
 		return " ";
 	}
