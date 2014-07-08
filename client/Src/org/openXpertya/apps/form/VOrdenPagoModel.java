@@ -2109,14 +2109,19 @@ public class VOrdenPagoModel {
 			MInvoice invoice = new MInvoice(m_ctx, rs.getInt(1), getTrxName());
 			MedioPagoCreditoRetencion rc = new MedioPagoCreditoRetencion(
 					invoice);
+			Vector<MedioPago> mpe = new Vector<VOrdenPagoModel.MedioPago>();
 			// Elimino el crédito si es Retención Manual.
 			for (MedioPago mp : pagos) {
 				if (mp.getTipoMP().equals(MedioPago.TIPOMEDIOPAGO_CREDITO)) {
 					MedioPagoCredito mpc = (MedioPagoCredito) mp;
 					if (mpc.C_invoice_ID == invoice.getC_Invoice_ID()) {
-						pagos.remove(mpc);
+						// pagos.remove(mpc);
+						mpe.add(mpc);
 					}
 				}
+			}
+			for (MedioPago mpc : mpe) {
+				pagos.remove(mpc);
 			}
 			pagos.add(rc);
 		}
