@@ -4070,8 +4070,8 @@ public class MInvoice extends X_C_Invoice implements DocAction {
 		// LOCALIZACION ARGENTINA
 		// Emisión de la factura por controlador fiscal
 		if (requireFiscalPrint() && !isIgnoreFiscalPrint()) {
-			setDateInvoiced(Env.getDate());
-			setDateAcct(Env.getDate());
+			setDateInvoiced(new Timestamp(System.currentTimeMillis()));
+			setDateAcct(new Timestamp(System.currentTimeMillis()));
 			CallResult callResult = doFiscalPrint();
 			if (callResult.isError()) {
 				m_processMsg = callResult.getMsg();
@@ -4098,8 +4098,8 @@ public class MInvoice extends X_C_Invoice implements DocAction {
 				} else {
 					setcae(processor.getCAE());
 					setvtocae(processor.getDateCae());
-					setDateInvoiced(Env.getDate());
-					setDateAcct(Env.getDate());
+					setDateInvoiced(new Timestamp(System.currentTimeMillis()));
+					setDateAcct(new Timestamp(System.currentTimeMillis()));
 					setcaeerror(null);
 					int nroCbte = Integer.parseInt(processor.getNroCbte());
 					this.setNumeroComprobante(nroCbte);
