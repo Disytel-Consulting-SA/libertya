@@ -4772,6 +4772,11 @@ public class MOrder extends X_C_Order implements DocAction {
                     throw new Exception ("Error al reactivar el pedido: " + Msg.parseTranslation(getCtx(), getProcessMsg()));
                 setAD_Org_ID( MWarehouse.get( getCtx(),M_Warehouse_ID).getAD_Org_ID());
                 setM_Warehouse_ID(M_Warehouse_ID);
+                // Guardar la cabecera de pedido antes de modificar las líneas, dado que las líneas recuperan la cabecera
+                // a fin de determinar si es necesario modificar el warehouse a partir de la información de la cabecera
+                if (!save()) {
+                	throw new Exception ("Error al actualizar la cabecera de pedido: " + Msg.parseTranslation(getCtx(), CLogger.retrieveErrorAsString()));
+                }
                 // Setear el warehouse de las líneas
                 for (MOrderLine anOrderLine : getLines()) {
                     anOrderLine.setM_Warehouse_ID(M_Warehouse_ID);
