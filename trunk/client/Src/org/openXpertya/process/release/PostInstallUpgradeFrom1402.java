@@ -79,6 +79,10 @@ public class PostInstallUpgradeFrom1402 extends PluginPostInstallProcess {
 	protected final static String PRODUCT_SALES_PURCHASE_MOVEMENTS_JASPER_REPORT_UID = "CORE-AD_JasperReport-1010090";
 	protected final static String PRODUCT_SALES_PURCHASE_MOVEMENTS_JASPER_REPORT_FILENAME = "ProductSalesPurchaseMovements.jasper";
 	
+	/** UID de la impresión de Factura Electrónica */
+	protected final static String ELETRONIC_INVOICE_JASPER_REPORT_UID = "CORE-AD_JasperReport-1010118";
+	protected final static String ELETRONIC_INVOICE_JASPER_REPORT_FILENAME = "rpt_Factura_Electronica.jasper";
+	
 	@Override
 	protected String doIt() throws Exception {
 		super.doIt();
@@ -277,6 +281,17 @@ public class PostInstallUpgradeFrom1402 extends PluginPostInstallProcess {
 								.readBinaryFromJar(
 										jarFileURL,
 										getBinaryFileURL(PRODUCT_SALES_PURCHASE_MOVEMENTS_JASPER_REPORT_FILENAME)));
+		
+		// Impresión de Factura Electrónica
+		MJasperReport
+				.updateBinaryData(
+						get_TrxName(),
+						getCtx(),
+						ELETRONIC_INVOICE_JASPER_REPORT_UID,
+						JarHelper
+								.readBinaryFromJar(
+										jarFileURL,
+										getBinaryFileURL(ELETRONIC_INVOICE_JASPER_REPORT_FILENAME)));
 		
 		return " ";
 	}

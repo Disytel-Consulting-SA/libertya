@@ -38,6 +38,7 @@ import org.openXpertya.process.SvrProcess;
 import org.openXpertya.report.NumeroCastellano;
 import org.openXpertya.util.DB;
 import org.openXpertya.util.Env;
+import org.openXpertya.util.FacturaElectronicaBarcodeGenerator;
 import org.openXpertya.util.Util;
 
 public class LaunchInvoice extends SvrProcess {
@@ -149,14 +150,15 @@ public class LaunchInvoice extends SvrProcess {
 		if (location.getC_Region_ID() > 0)
 			region = new MRegion(getCtx(), location.getC_Region_ID(), null);
 
-
+		MDocType docType = new MDocType(getCtx(), invoice.getC_DocTypeTarget_ID(), get_TrxName());
+		
 		// Descuentos aplicados totales
 		jasperwrapper.addParameter("NROCOMPROBANTE", invoice.getNumeroDeDocumento());
 		jasperwrapper.addParameter("TIPOCOMPROBANTE", JasperReportsUtil
 			.getDocTypeName(getCtx(), invoice.getC_DocTypeTarget_ID(),
 					"FACTURA", get_TrxName()));
 		
-		jasperwrapper.addParameter("DOCTYPEKEY", (new MDocType(getCtx(), invoice.getC_DocTypeTarget_ID(), get_TrxName())).getDocTypeKey());
+		jasperwrapper.addParameter("DOCTYPEKEY", docType.getDocTypeKey());
 				
 		jasperwrapper.addParameter("FECHA", invoice.getDateInvoiced());
 		Calendar c = Calendar.getInstance();
@@ -324,6 +326,7 @@ public class LaunchInvoice extends SvrProcess {
 		jasperwrapper.addParameter("INVOICE_DESCRIPTION", invoice.getDescription());
 		jasperwrapper.addParameter("DOC_STATUS", invoice.getDocStatusName());
 		jasperwrapper.addParameter("ID_CAE", invoice.getidcae());
+		jasperwrapper.addParameter("SUBTYPE_CAE", docType.getdocsubtypecae());
 		jasperwrapper.addParameter(
 			"PRICE_LIST",
 			JasperReportsUtil.getPriceListName(getCtx(),
@@ -375,8 +378,8 @@ public class LaunchInvoice extends SvrProcess {
 		// dREHER, cambie el llamado de estos metodos por el del cliente
 		// que incluye la logica en cascada de busqueda org hoja, org carpeta, client (compania)
 				
-				
-		jasperwrapper.addParameter("CLIENT_CUIT",client.getCUIT(invoice.getAD_Org_ID()));
+		String clientCUIT = client.getCUIT(invoice.getAD_Org_ID());
+		jasperwrapper.addParameter("CLIENT_CUIT",clientCUIT);
 		jasperwrapper.addParameter(
 					"CLIENT_CATEGORIA_IVA",
 					JasperReportsUtil.getCategoriaIVAName(getCtx(),
@@ -452,6 +455,9 @@ public class LaunchInvoice extends SvrProcess {
 			// Comprobante/s que origina/n la retención. (Números de Documento de las facturas en el Recibo) 
 			jasperwrapper.addParameter("RET_ALLOC_INVOICES", get_Retencion_Invoices(allocation));	
 		}
+		
+		// Código de barras de Factura Electrónica
+		addElectronicInvoiceBarcode(jasperwrapper, invoice, docType, clientCUIT);
 	}
 	
 	
@@ -582,4 +588,29 @@ public class LaunchInvoice extends SvrProcess {
 			return null;
 		}
 	}
+	
+	/**
+	 * Agrega la imagen de código de barras de FE como parámetro al reporte si
+	 * es que la factura es electrónica
+	 * 
+	 * @param jasperWrapper
+	 *            reporte jasper
+	 * @param invoice
+	 *            factura
+	 * @param docType
+	 *            tipo de documento de la factura
+	 * @param clientCUIT
+	 *            cuit emisora
+	 */
+	protected void addElectronicInvoiceBarcode(MJasperReport jasperWrapper, MInvoice invoice, MDocType docType, String clientCUIT){
+		if(MDocType.isElectronicDocType(invoice.getC_DocTypeTarget_ID())){
+			FacturaElectronicaBarcodeGenerator feBarcodeGenerator = new FacturaElectronicaBarcodeGenerator(
+					invoice, docType, clientCUIT);
+			jasperWrapper.addParameter("FACTURA_ELECTRONICA_BARCODE",
+					feBarcodeGenerator.getBarcodeImage(true));
+			jasperWrapper.addParameter("FACTURA_ELECTRONICA_CODE", feBarcodeGenerator.getCode());
+		}
+	}
+	
+	
 }
