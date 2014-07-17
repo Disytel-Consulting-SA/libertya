@@ -298,7 +298,7 @@ public abstract class ServidorOXP extends Thread {
             //
 
             m_sleepMS  = calculateSleep();
-            m_nextWork = now + m_sleepMS;
+            m_nextWork = p_startWork + m_sleepMS;
 
             //
 
