@@ -166,6 +166,9 @@
 	<parameter name="BP_LOCATION_ISDN" isForPrompting="false" class="java.lang.String"/>
 	<parameter name="LOC_CITY" isForPrompting="false" class="java.lang.String"/>
 	<parameter name="REFERENCE" isForPrompting="false" class="java.lang.String"/>
+	<parameter name="FACTURA_ELECTRONICA_CODE" isForPrompting="false" class="java.lang.String"/>
+	<parameter name="FACTURA_ELECTRONICA_BARCODE" isForPrompting="false" class="java.awt.Image"/>
+	<parameter name="SUBTYPE_CAE" isForPrompting="false" class="java.lang.String"/>
 
 	<field name="ITEM" class="java.lang.String"/>
 	<field name="CODARTICULO" class="java.lang.String"/>
@@ -1170,7 +1173,7 @@ $V{LETRA}.equals("A") && $P{TIPOCOMPROBANTE}.equalsIgnoreCase("NOTA DE CREDITO")
 			</band>
 		</pageFooter>
 		<lastPageFooter>
-			<band height="130"  isSplitAllowed="true" >
+			<band height="186"  isSplitAllowed="true" >
 				<rectangle>
 					<reportElement
 						mode="Transparent"
@@ -1475,6 +1478,20 @@ $V{LETRA}.equals("A") && $P{TIPOCOMPROBANTE}.equalsIgnoreCase("NOTA DE CREDITO")
 					</textElement>
 				<text><![CDATA[FACTURA ELECTRONICA]]></text>
 				</staticText>
+				<image  scaleImage="RetainShape" vAlign="Top" hAlign="Left" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
+					<reportElement
+						mode="Opaque"
+						x="92"
+						y="136"
+						width="360"
+						height="50"
+						forecolor="#000000"
+						backcolor="#FFFFFF"
+						key="barcode-1"/>
+					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
+					<graphicElement stretchType="NoStretch" pen="None" fill="Solid" />
+					<imageExpression class="java.awt.Image"><![CDATA[it.businesslogic.ireport.barcode.BcImage.getBarcodeImage(13,$P{FACTURA_ELECTRONICA_CODE},true,false,null,0,100)]]></imageExpression>
+				</image>
 			</band>
 		</lastPageFooter>
 		<summary>
