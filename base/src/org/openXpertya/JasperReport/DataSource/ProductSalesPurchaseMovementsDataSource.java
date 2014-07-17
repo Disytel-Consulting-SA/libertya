@@ -41,11 +41,12 @@ public class ProductSalesPurchaseMovementsDataSource extends QueryDataSource {
 
 	@Override
 	protected String getQuery() {
-		StringBuffer sql = new StringBuffer("select i.dateinvoiced, dt.name as doctypename, i.c_invoice_id, i.documentno, coalesce(i.nombrecli,bp.name) as bpartner_name, sum(qtyinvoiced*(CASE WHEN i.issotrx = 'N' AND signo_issotrx = -1 THEN 1 WHEN i.issotrx = 'N' AND signo_issotrx = 1 THEN -1 ELSE signo_issotrx END)) as qty, sum(linenetamount+taxamt) as linetotalamt " +
+		StringBuffer sql = new StringBuffer("select i.dateinvoiced, dt.name as doctypename, i.c_invoice_id, i.documentno, o.documentno as order, coalesce(i.nombrecli,bp.name) as bpartner_name, sum(qtyinvoiced*(CASE WHEN i.issotrx = 'N' AND signo_issotrx = -1 THEN 1 WHEN i.issotrx = 'N' AND signo_issotrx = 1 THEN -1 ELSE signo_issotrx END)) as qty, sum(linenetamount+taxamt) as linetotalamt " +
 											"from c_invoiceline as il " +
 											"inner join c_invoice as i on il.c_invoice_id = i.c_invoice_id " +
 											"inner join c_doctype as dt on i.c_doctypetarget_id = dt.c_doctype_id " +
 											"inner join c_bpartner as bp on i.c_bpartner_id = bp.c_bpartner_id " +
+											"left join c_order as o on o.c_order_id = i.c_order_id " +
 											"where m_product_id = ? AND i.docstatus IN ('CL','CO','RE','VO') AND i.issotrx = '"+getIsSOTrx()+"'");
 		if(!Util.isEmpty(getOrgID(), true)){
 			sql.append(" AND i.ad_org_id = ? ");
@@ -56,7 +57,7 @@ public class ProductSalesPurchaseMovementsDataSource extends QueryDataSource {
 		if(getDateTo() != null){
 			sql.append(" AND (date_trunc('day', i.dateinvoiced) <= date_trunc('day', ?::date)) ");
 		}
-		sql.append(" group by i.dateinvoiced, dt.name, i.c_invoice_id, i.documentno, bp.name, i.nombrecli ");
+		sql.append(" group by i.dateinvoiced, dt.name, i.c_invoice_id, i.documentno, o.documentno, bp.name, i.nombrecli ");
 		sql.append(" order by i.dateinvoiced, i.documentno ");
 		
 		return sql.toString();
