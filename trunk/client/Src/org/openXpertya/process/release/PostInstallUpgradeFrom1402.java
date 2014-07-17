@@ -75,6 +75,10 @@ public class PostInstallUpgradeFrom1402 extends PluginPostInstallProcess {
 	protected final static String RPT_COMPROBANTE_RETENCION_JASPER_REPORT_UID = "CORE-AD_JasperReport-1010081";
 	protected final static String RPT_COMPROBANTE_RETENCION_JASPER_REPORT_FILENAME = "rpt_Comprobante_Retencion.jasper";
 	
+	/** UID del informe de movimientos de compra/venta por artículo */
+	protected final static String PRODUCT_SALES_PURCHASE_MOVEMENTS_JASPER_REPORT_UID = "CORE-AD_JasperReport-1010090";
+	protected final static String PRODUCT_SALES_PURCHASE_MOVEMENTS_JASPER_REPORT_FILENAME = "ProductSalesPurchaseMovements.jasper";
+	
 	@Override
 	protected String doIt() throws Exception {
 		super.doIt();
@@ -263,6 +267,17 @@ public class PostInstallUpgradeFrom1402 extends PluginPostInstallProcess {
 									jarFileURL,
 									getBinaryFileURL(RPT_COMPROBANTE_RETENCION_JASPER_REPORT_FILENAME)));
 
+		// Movimientos de venta/compra de artículo
+		MJasperReport
+				.updateBinaryData(
+						get_TrxName(),
+						getCtx(),
+						PRODUCT_SALES_PURCHASE_MOVEMENTS_JASPER_REPORT_UID,
+						JarHelper
+								.readBinaryFromJar(
+										jarFileURL,
+										getBinaryFileURL(PRODUCT_SALES_PURCHASE_MOVEMENTS_JASPER_REPORT_FILENAME)));
+		
 		return " ";
 	}
 
