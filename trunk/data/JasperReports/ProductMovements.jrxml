@@ -37,6 +37,7 @@
 	<field name="DESCRIPTION" class="java.lang.String"/>
 	<field name="AD_ORG_ID" class="java.lang.Integer"/>
 	<field name="M_PRODUCT_ID" class="java.lang.Integer"/>
+	<field name="ORDER_DOCUMENTNO" class="java.lang.String"/>
 
 
 		<group  name="PRODUCT" >
@@ -96,7 +97,7 @@
 						mode="Opaque"
 						x="0"
 						y="16"
-						width="100"
+						width="80"
 						height="14"
 						backcolor="#E3DCDC"
 						key="staticText-5"/>
@@ -109,9 +110,9 @@
 				<staticText>
 					<reportElement
 						mode="Opaque"
-						x="100"
+						x="179"
 						y="16"
-						width="277"
+						width="217"
 						height="14"
 						backcolor="#E3DCDC"
 						key="staticText-6"/>
@@ -124,7 +125,7 @@
 				<staticText>
 					<reportElement
 						mode="Opaque"
-						x="377"
+						x="79"
 						y="16"
 						width="100"
 						height="14"
@@ -150,6 +151,21 @@
 						<font pdfFontName="Helvetica-Bold" isBold="true"/>
 					</textElement>
 				<text><![CDATA[Cantidad]]></text>
+				</staticText>
+				<staticText>
+					<reportElement
+						mode="Opaque"
+						x="396"
+						y="16"
+						width="81"
+						height="14"
+						backcolor="#E3DCDC"
+						key="staticText-9"/>
+					<box topBorder="Thin" topBorderColor="#000000" leftBorder="Thin" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="Thin" bottomBorderColor="#000000"/>
+					<textElement textAlignment="Center" verticalAlignment="Middle">
+						<font pdfFontName="Helvetica-Bold" isBold="true"/>
+					</textElement>
+				<text><![CDATA[Nro. Pedido]]></text>
 				</staticText>
 			</band>
 			</groupHeader>
@@ -275,7 +291,7 @@
 					<reportElement
 						x="0"
 						y="0"
-						width="100"
+						width="80"
 						height="11"
 						key="textField"
 						isPrintWhenDetailOverflows="true"/>
@@ -287,9 +303,9 @@
 				</textField>
 				<textField isStretchWithOverflow="true" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
-						x="100"
+						x="179"
 						y="0"
-						width="277"
+						width="217"
 						height="11"
 						key="textField"
 						isPrintWhenDetailOverflows="true"/>
@@ -301,7 +317,7 @@
 				</textField>
 				<textField isStretchWithOverflow="true" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
-						x="377"
+						x="79"
 						y="0"
 						width="100"
 						height="11"
@@ -326,6 +342,19 @@
 						<font size="8"/>
 					</textElement>
 				<textFieldExpression   class="java.math.BigDecimal"><![CDATA[$F{QTY}]]></textFieldExpression>
+				</textField>
+				<textField isStretchWithOverflow="false" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
+					<reportElement
+						x="396"
+						y="0"
+						width="81"
+						height="11"
+						key="textField"/>
+					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
+					<textElement textAlignment="Center" verticalAlignment="Middle">
+						<font size="8"/>
+					</textElement>
+				<textFieldExpression   class="java.lang.String"><![CDATA[$F{ORDER_DOCUMENTNO}]]></textFieldExpression>
 				</textField>
 			</band>
 		</detail>
