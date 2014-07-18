@@ -1,0 +1,507 @@
+<!-- ====================================================== -->
+<!-- Instalando Libertya                                                                       -->
+<!-- ====================================================== -->
+
+<project name="setup" default="setup" basedir=".">
+
+  <description>
+	Este archivo se usa para establecer las Variables de Libertya.
+  </description>
+
+  <property environment="env"/>
+  <property name="envFile" value="LibertyaEnv.properties"/>
+
+  <!-- ==================================================== -->
+  <!-- Iniciando                                                                                           -->
+  <!-- ==================================================== -->
+  <target name="setupInit"
+	  description="Punto inicial de entrada">
+
+	<echo message="Instalacion del Servidor Libertya ==================="/>
+	<echo message="OXP_HOME = ${env.OXP_HOME}"/>
+  	
+	<!-- crear la marca de tiempo y el entorno -->
+	<tstamp/>
+	<available file="${envFile}" property="envFileExists" />
+	<fail message="**** Por Favor, vaya al directorio ServidorOXP, y arranque Configurar.exe o Configurar.sh ****" 
+		unless="envFileExists" />
+	<property file="${envFile}"/>
+	<filter filtersfile="${envFile}"/>
+  	
+	<echo message="Variables de entorno     = ${envFile}"/>
+	<echo message="Tipo de Java VM          = ${TIPO_JAVA_OXP}"/>
+	<echo message="Base de datos            = ${TIPO_BD_OXP}"/>
+	<echo message="Servidor de Apps         = ${TIPO_APPS_OXP}"/>
+	<echo message="Despliegue de Apps       = ${DEPLOY_APPS_OXP}"/>
+
+
+	<!-- Variables de entorno -->
+	<condition property="isWindows">
+	  <os family="windows"/>
+	</condition>
+	<condition property="isAppsJBoss">
+	  <equals arg1="jboss" arg2="${TIPO_APPS_OXP}"/>
+	</condition>
+
+	<echo message="Windows=${isWindows} JBoss=${isAppsJBoss}"/>
+
+  </target>
+
+  <!-- ==================================================== -->
+  <!-- Configurar para Windows                                                          -->
+  <!-- ==================================================== -->
+  <target name="setupWin" depends="setupInit" if="isWindows"
+	  description="Windows Setup">
+
+	<!--	Filtra ficheros, No sobreescribir	-->
+<!--	<copy file="utils/PlantillaCopiarBD.bat"
+	  tofile="utils/CopiarBD.bat" filtering="yes" overwrite="no"/> -->
+
+	<!--	Filtra ficheros, sobreescribir		--> 
+	<copy file="utils/PlantillaVariables.bat"
+	  tofile="utils/VariablesOXP.bat" filtering="yes" overwrite="yes"/>
+
+	<!-- <copy file="utils/PlantillaObtenerOXP.bat"
+	  tofile="utils/ObtenerOXP.bat" filtering="yes" overwrite="yes"/>
+	<copy file="utils/PlantillaSubirExportacion.bat"
+	  tofile="utils/SubirExportacion.bat" filtering="yes" overwrite="yes"/>		--> 
+	<copy file="utils/PlantillaVariablesWindows.bat"
+	  tofile="utils/VariablesWindows.bat" filtering="yes" overwrite="yes"/>
+	<!--	<copy file="utils/openxpertya.exe"
+	  tofile="openxpertya.exe" filtering="yes" overwrite="yes"/>-->
+	<delete> 
+	  <fileset dir="." includes="**/*.sh" excludes="Libertya.sh"/>
+	</delete>
+
+  </target>
+
+
+  <!-- ==================================================== -->
+  <!-- Configurar para NO-Windows (resto)                   -->
+  <!-- ==================================================== -->
+  <target name="setupNonWin" depends="setupInit" unless="isWindows"
+	  description="Non Windows Setup">
+
+	<!--	Filtra ficheros, No sobreescribir	-->
+<!--	<copy file="utils/PlantillaCopiarBD.sh"
+	  tofile="utils/CopiarBD.sh" filtering="yes" overwrite="no"/>-->
+
+	<!--	Filtra ficheros, sobreescribir	    --> 
+	<copy file="utils/PlantillaVariables.sh"
+	  tofile="utils/Variables.sh" filtering="yes" overwrite="yes"/>
+
+	<!-- <copy file="utils/PlantillaObtenerOXP.sh"
+	  tofile="utils/ObtenerOXP.sh" filtering="yes" overwrite="yes"/>
+	<copy file="utils/PlantillaSubirExportacion.sh"
+	  tofile="utils/SubirExportacion.sh" filtering="yes" overwrite="yes"/> 		--> 
+	<copy file="utils/PlantillaVariablesUnix.sh"
+	  tofile="utils/VariablesUnix.sh" filtering="yes" overwrite="yes"/>
+	<copy file="utils/Libertya.sh"
+	  tofile="Libertya.sh" filtering="yes" overwrite="yes"/>
+	<!--	Soluciona peculiaridades de algunos SOs	-->
+	<fixcrlf srcdir="."
+		eol="lf" eof="remove"
+		includes="**/*.sh"/>
+	<chmod dir="."
+	  perm="ugo+x"
+	  includes="**/*.sh"/>
+  	<!--<delete>
+	  <fileset dir="." includes="*.bat"/>
+	  <fileset dir="." includes="*.exe"/>
+	  <fileset dir="utils" includes="**/*.bat"/>
+	  <fileset dir="utils" includes="**/*.exe"/>
+	</delete> -->
+
+  </target>
+
+  <!-- ==================================================== -->
+  <!-- Libreria del Cliente Libertya                        -->
+  <!-- ==================================================== -->
+  <target name="setupCLib" depends="setupInit"
+	  description="Instalacion de la Libreria del Cliente Libertya">
+
+    <!-- Borra las viejas		-->
+    <delete file="lib/OXPXLib.jar" failonerror="no"/>
+    <delete file="lib/CClient.jar" failonerror="no"/>
+    <delete file="lib/OXPTools.jar" failonerror="no"/>
+
+	<mkdir dir="construirOXPLIB"/>
+    <unjar src="lib/XOXPTools.jar" dest="construirOXPLIB" />
+  	<unjar src="lib/jbossmq.jar" dest="construirOXPLIB" />
+  	<unjar src="lib/jbossall-client.jar" dest="construirOXPLIB" />
+  	<!--cambios para PostgreSQL-->
+  	<!--para cualquier base de datos se requiere la clase del JDBC -->
+    <!--unjar src="lib/${TIPO_BD_OXP}.jar" dest="construirOXPLIB" /-->    
+    <unjar src="lib/oracle.jar" dest="construirOXPLIB" />
+  	<unjar src="lib/sybase.jar" dest="construirOXPLIB" />
+  	<unjar src="lib/postgresql.jar" dest="construirOXPLIB" />  	
+	<unjar src="lib/swing-layout-1.0.jar" dest="construirOXPLIB" />
+	<unjar src="lib/pdfviewer.jar" dest="construirOXPLIB" />
+	<unjar src="lib/PDFRenderer.jar" dest="construirOXPLIB" />
+  	<unjar src="lib/itext_1.5.4.jar" dest="construirOXPLIB" />
+  	<unjar src="lib/AxisJar.jar" dest="construirOXPLIB" />
+
+
+    <!--fin cambios para PostgreSQL -->    
+    <unjar src="lib/${TIPO_APPS_OXP}.jar" dest="construirOXPLIB" />
+
+    <!-- Crea fichero OXPXLib.jar 	-->
+    <jar jarfile="lib/OXPXLib.jar" index="yes">
+      <fileset dir="construirOXPLIB"/>
+      <manifest>
+		<attribute name="Specification-Title" value="Librerias_Cliente_Libertya"/>
+		<attribute name="Specification-Version" value="${VERSION_PRINCIPAL_OXP}"/>
+		<attribute name="Specification-Vendor" value="(C) 2014 DISYTEL."/>
+		<attribute name="Implementation-Title" value="OXPXLib ${VERSION_PRINCIPAL_OXP}"/>
+		<attribute name="Implementation-Version" value="${VERSION_PRINCIPAL_OXP} ${DSTAMP}-${TSTAMP}"/>
+		<attribute name="Implementation-Vendor" value="${env.CONSULTORA_OXP}"/>
+		<attribute name="Implementation-URL" value="http://www.libertya.org"/>
+      </manifest>
+    </jar>
+  	
+    <!-- ======================== Incorporar plugins a OXP.jar, OXPRoot.jar ============================ -->
+
+	<!-- Crear directorio temporal para generar el OXP.jar definitivo con plugins -->
+  	<mkdir dir="nuevosComponents"/>
+  	<mkdir dir="nuevoOXP"/>
+  	<mkdir dir="nuevoOXPRoot"/>
+
+	<!-- Descomprimir los actuales OXP.jar y OXPRoot.jar -->	
+    <unjar src="lib/OXP.jar" dest="nuevoOXP" />
+  	<unjar src="lib/OXPRoot.jar" dest="nuevoOXPRoot" />
+  	
+	<!-- Descomprimir todos los plugins -->	
+	<unzip dest="nuevosComponents">
+	    <fileset dir="lib/plugins">
+	        <include name="**/*.jar" />
+	    </fileset>    
+	</unzip> 
+
+	<!-- Eliminar la informacion de metadatos del ultimo plugin descomprimido -->
+    <delete file="nuevosComponents/preinstall.sql" failonerror="no"/>
+    <delete file="nuevosComponents/install.xml" failonerror="no"/>
+    <delete file="nuevosComponents/postinstall.xml" failonerror="no"/>
+    <delete file="nuevosComponents/manifest.properties" failonerror="no"/>
+
+  	<!-- Mover las clases especificas de serverRoot a OXPRoot -->
+    <move todir="nuevoOXPRoot" failonerror="no">
+      <fileset dir="nuevosComponents/serverRoot">
+        <include name="**/*.class"/>
+      </fileset>
+    </move>
+  	
+  	<!-- Las clases de serverRoot ya fueron copiadas, no se requieren --> 
+  	<delete dir="nuevosComponents/serverRoot" failonerror="no"/>
+  	
+  	<!-- Mover las clases especificas de cliente a OXP -->
+    <move todir="nuevoOXP" failonerror="no">
+      <fileset dir="nuevosComponents">
+        <include name="**/*.class"/>
+      </fileset>
+    </move>
+
+  	
+	<!-- Generar el OXP.jar definitivo con plugins incluidos -->	
+    <jar jarfile="lib/OXP.jar" index="yes">
+      <fileset dir="nuevoOXP"/>
+      <manifest>
+		<attribute name="Specification-Title" value="Cliente_Libertya"/>
+		<attribute name="Specification-Version" value="${VERSION_PRINCIPAL_OXP}"/>
+		<attribute name="Specification-Vendor" value="(C) 2014 DISYTEL."/>
+		<attribute name="Implementation-Title" value="OXP ${VERSION_PRINCIPAL_OXP}"/>
+		<attribute name="Implementation-Version" value="${VERSION_PRINCIPAL_OXP} ${DSTAMP}-${TSTAMP}"/>
+		<attribute name="Implementation-Vendor" value="${env.CONSULTORA_OXP}"/>
+		<attribute name="Implementation-URL" value="http://www.libertya.org"/>
+      </manifest>
+    </jar>
+
+  	<!-- Generar el OXPRoot.jar definitivo con plugins incluidos -->
+  	<jar jarfile="lib/OXPRoot.jar">
+		<fileset dir="nuevoOXPRoot"/>
+			<manifest>
+	  			<attribute name="Specification-Title" value="OXPRoot"/>
+				<attribute name="Specification-Version" value="${VERSION_PRINCIPAL_OXP}"/>
+				<attribute name="Specification-Vendor" value="(C) 2014 DISYTEL."/>
+				<attribute name="Implementation-Title" value="OXP ${VERSION_PRINCIPAL_OXP}"/>
+				<attribute name="Implementation-Version" value="${VERSION_PRINCIPAL_OXP} ${DSTAMP}-${TSTAMP}"/>
+				<attribute name="Implementation-Vendor" value="${env.CONSULTORA_OXP}"/>
+				<attribute name="Implementation-URL" value="http://www.libertya.org"/>
+  	      </manifest>
+	</jar>
+  	
+  	<!-- Actualizar OXPRootBase.war -->
+  	<unjar src="lib/OXPRootBase.war" dest="nuevoOXPRootBase" />
+  	
+  	<copy todir="nuevoOXPRootBase/WEB-INF/lib" failonerror="no">
+      <fileset dir="lib">
+        <include name="OXPRoot.jar"/>
+      </fileset>
+    </copy>
+    
+  	<jar jarfile="lib/OXPRootBase.war">
+		<fileset dir="nuevoOXPRootBase"/>
+			<manifest>
+	  			<attribute name="Specification-Title" value="OXPRootWar"/>
+				<attribute name="Specification-Version" value="${VERSION_PRINCIPAL_OXP}"/>
+				<attribute name="Specification-Vendor" value="(C) 2014 DISYTEL."/>
+				<attribute name="Implementation-Title" value="OXP ${VERSION_PRINCIPAL_OXP}"/>
+				<attribute name="Implementation-Version" value="${VERSION_PRINCIPAL_OXP} ${DSTAMP}-${TSTAMP}"/>
+				<attribute name="Implementation-Vendor" value="${env.CONSULTORA_OXP}"/>
+				<attribute name="Implementation-URL" value="http://www.libertya.org"/>
+				<attribute name="Class-Path" value="OXP.jar OXPSLib.jar"/>
+  	      </manifest>
+	</jar>
+  	
+	<!-- Eliminar directorios temporales  -->
+    <delete dir="nuevoOXP" failonerror="no"/>
+  	<delete dir="nuevoOXPRoot" failonerror="no"/>
+  	<delete dir="nuevoOXPRootBase" failonerror="no"/>
+  	<delete dir="nuevosComponents" failonerror="no"/>
+
+    <!-- ===================== FIN Incorporar plugins a OXP.jar, OXPRoot.jar ===========================	-->
+  	
+  	
+    <echo message="KeyStore=${KEYSTORE_OXP} - Alias=${CODIGOALIASKEYSTORE_OXP}"/>
+    <!-- Firmar OXPXLib Jar 		-->
+    <signjar jar="lib/OXPXLib.jar"
+      alias="${CODIGOALIASKEYSTORE_OXP}"
+      storepass="${KEYSTOREPASS_OXP}" keystore="${KEYSTORE_OXP}" />
+
+    <!-- Firmar OXP1 Jar 		-->
+    <copy file="lib/OXP.jar" tofile="construirOXPLIB/OXP1.jar" overwrite="yes"/>
+    <signjar jar="construirOXPLIB/OXP1.jar"
+      alias="${CODIGOALIASKEYSTORE_OXP}"
+      storepass="${KEYSTOREPASS_OXP}" keystore="${KEYSTORE_OXP}" />
+    <copy file="construirOXPLIB/OXP1.jar" tofile="lib/OXP.jar" overwrite="yes"/>
+  		
+	<!-- Firmar JasperReports Jar 		-->
+    <signjar jar="lib/JasperReports.jar"
+      alias="${CODIGOALIASKEYSTORE_OXP}"
+      storepass="${KEYSTOREPASS_OXP}" keystore="${KEYSTORE_OXP}" />
+
+
+
+  	<delete dir="construirOXPLIB" />
+  </target>
+	
+  <!-- ==================================================== -->
+  <!-- Liberia del Servidor OXP                             -->
+  <!-- ==================================================== -->
+  <target name="setupSLib" depends="setupInit"
+	  description="Instalacion de la Libreria del Servidor OXP">
+
+    <!-- Borra las viejas	-->
+    <delete file="lib/OXPSLib.jar" failonerror="no"/>
+    <delete file="lib/CServer.jar" failonerror="no"/>
+		
+    <mkdir dir="buildSLib"/>
+    <unjar src="lib/CSTools.jar" dest="buildSLib" />
+  	<!--cambios para PostgreSQL-->
+  	<!--para cualquier base de datos se requiere la clase de conexión-->
+    <!--unjar src="lib/${TIPO_BD_OXP}.jar" dest="buildSLib" /-->    
+    <unjar src="lib/oracle.jar" dest="buildSLib" />
+  	<unjar src="lib/sybase.jar" dest="buildSLib" />
+  	<unjar src="lib/postgresql.jar" dest="buildSLib" />  	
+    <!--Fin cambios para PostgreSQL -->     	
+
+    <!-- Crea el fichero OXPSLib.jar 	-->
+    <jar jarfile="lib/OXPSLib.jar" index="yes" >
+      <fileset dir="buildSLib"/>
+      <manifest>
+		<attribute name="Specification-Title" value="Librerias_Servidor_Libertya"/>
+		<attribute name="Specification-Version" value="${VERSION_PRINCIPAL_OXP}"/>
+		<attribute name="Specification-Vendor" value="(C) 2005-2007 FUNDESLE."/>
+		<attribute name="Implementation-Title" value="OXPSLib ${VERSION_PRINCIPAL_OXP}"/>
+		<attribute name="Implementation-Version" value="${VERSION_PRINCIPAL_OXP} ${DSTAMP}-${TSTAMP}"/>
+		<attribute name="Implementation-Vendor" value="${env.CONSULTORA_OXP}"/>
+		<attribute name="Implementation-URL" value="http://www.libertya.org"/>
+      </manifest>
+    </jar>
+
+    <!-- Firma OXPSLib Jar 		-->
+    <signjar jar="lib/OXPSLib.jar"
+      alias="${CODIGOALIASKEYSTORE_OXP}"
+      storepass="${KEYSTOREPASS_OXP}" keystore="${KEYSTORE_OXP}" />
+      	
+  	<delete dir="buildSLib" /> 
+  </target>
+	
+	
+  <!-- ==================================================== -->
+  <!-- Instalar Lib                                         -->
+  <!-- ==================================================== -->
+  <target name="setupLib" 
+	depends="setupInit, setupWin, setupNonWin, setupCLib, setupSLib"
+	description="Instalacion de la Carpeta Lib Libertya">
+
+	<!--	Filter files Overwrite			-->
+<!--	<copy file="${basedir}/utils/PlantillaSubirExportacion.txt"
+	  	tofile="${basedir}/utils/SubirFTPExportacion.txt" filtering="yes" overwrite="yes"/>-->
+<!--	<copy file="${basedir}/utils/PlantillaFTPDescargarOXP.txt"
+	  	tofile="${basedir}/utils/FTPDescargarOXP.txt" filtering="yes" overwrite="yes"/>-->
+<!--	<copy file="${basedir}/utils/PlantillaOXP.jnlp"
+	  	tofile="${basedir}/lib/OXPDirect.jnlp" filtering="yes" overwrite="yes"/>-->
+
+	<!--	Crear Cliente ZIP		-->
+	<zip zipfile="${basedir}/lib/ClienteLBY.zip">
+	  <zipfileset dir="." prefix="ClienteLBY"
+		includes="*.html"/>
+	  <zipfileset dir="." prefix="ClienteLBY"
+	  	includes="libertya.exe,Licencia.xhtml,Libertya.sh"/>
+	  <zipfileset dir="utils" prefix="ClienteLBY"
+	  	includes="WinEnv.js"/>
+	  <!--zipfileset dir="lib" prefix="ClienteLBY/lib"	  	
+		includes="OpenXpertya.exe,*.ico,OXP.jar,OXPXLib.jar,OXPDirect.jnlp,index.html,*.0"/-->
+	  <zipfileset dir="lib" prefix="ClienteLBY/lib"	  	
+		includes="*.ico,OXP.jar,OXPXLib.jar,OXPDirect.jnlp,index.html,Licencia.xhtml,*.0,JasperReports.jar"/>
+	</zip>
+
+	<!--	Guarda los ficheros de propiedades	-->
+	<copy file="LibertyaEnv.properties"
+	  	tofile="LibertyaEnv.properties.save"/>
+	<copy file="Libertya.properties"
+	  	tofile="Libertya.properties.save"/>
+  </target>
+
+	
+  <!-- ==================================================== -->
+  <!-- Instalar Librerias EAR                               -->
+  <!-- ==================================================== -->
+  <target name="setupEAR" depends="setupLib"
+	  description="Instalar Librerias EAR OXP">
+
+	<!-- Crea OXPRoot war		-->
+	<zip destfile="${basedir}/lib/OXPRoot.war">
+		<!-- copia Base	-->
+		<zipfileset src="${basedir}/lib/OXPRootBase.war" />
+		<!-- copia a to OXPHome	-->
+				<!--zipfileset dir="${basedir}/lib" 
+		 		includes="ClienteLBY.zip,OXP.jar,OXPXLib.jar,*.jnlp,*.0,*.html"
+				prefix="OXPHome"/-->
+			<zipfileset dir="${basedir}/lib" 
+				includes="ClienteLBY.zip,OXP.jar,OXPXLib.jar,*.jnlp,*.0,*.html,JasperReports.jar"
+				prefix="OXPHome"/>
+	</zip>
+
+	<!-- Construye OXPRoot ear		-->
+	<ear 
+	    	destfile="${basedir}/lib/OXPRoot.ear" 
+	    	appxml="${basedir}/lib/OXPRoot.xml">
+		  	<!--fileset dir="${basedir}/lib" 	  	
+		includes="OXPRoot.jar,OXPRoot.war,OXP.jar,OXPSLib.jar"/-->
+	  	<fileset dir="${basedir}/lib" 	  	
+		includes="OXPRoot.jar,OXPRoot.war,OXP.jar,OXPSLib.jar"/>
+	  <manifest>
+		<attribute name="Specification-Title" value="Libertya"/>
+		<attribute name="Specification-Version" value="V14.02"/>
+		<attribute name="Specification-Vendor" value="(C) 2014 DISYTEL."/>
+		<attribute name="Implementation-Title" value="libertya"/>
+		<attribute name="Implementation-Version" value="V2 ${DSTAMP}-${TSTAMP}"/>
+		<attribute name="Implementation-URL" value="http://www.libertya.org"/>
+		<!--attribute name="Class-Path" value="OXPRoot.jar OXP.jar OXPSLib.jar"/-->
+	  	<attribute name="Class-Path" value="OXPRoot.jar OXP.jar OXPSLib.jar"/>
+	  </manifest>
+	</ear>
+
+	<!-- Construye OXPApps ear		-->
+	<ear 
+	    	destfile="${basedir}/lib/OXPApps.ear" 
+    		appxml="${basedir}/lib/OXPApps.xml">
+		    <!--fileset dir="${basedir}/lib" 	  	
+		 includes="OXPApps.war,OXP.jar,OXPSLib.jar"/-->
+	    <fileset dir="${basedir}/lib" 	  	
+		 includes="OXPApps.war,OXP.jar,OXPSLib.jar"/>
+	  <manifest>
+		<attribute name="Specification-Title" value="ServidorAplicacionesLibertya"/>
+		<attribute name="Specification-Version" value="V2"/>
+		<attribute name="Specification-Vendor" value="(C) 2005-2007 FUNDESLE."/>
+		<attribute name="Implementation-Title" value="ServidorAplicacionesLibertya"/>
+		<attribute name="Implementation-Version" value="V2 ${DSTAMP}-${TSTAMP}"/>
+		<attribute name="Implementation-URL" value="http://www.libertya.org"/>
+	  	<!--attribute name="Class-Path" value="OXP.jar OXPSLib.jar"/-->
+	  	<attribute name="Class-Path" value="OXP.jar OXPSLib.jar"/>
+	  </manifest>
+	</ear>
+    
+	<!-- Construye TiendaWebOXP ear		-->
+	<ear 
+    		destfile="${basedir}/lib/TiendaWebOXP.ear" 
+    		appxml="${basedir}/lib/TiendaWebOXP.xml">
+		<!--fileset dir="${basedir}/lib" 
+				includes="TiendaWebOXP.war,OXP.jar,OXPSLib.jar,OXPApps.jar"/-->
+	  <fileset dir="${basedir}/lib" 
+		includes="TiendaWebOXP.war,OXP.jar,OXPSLib.jar,OXPApps.jar"/>
+	  <manifest>
+		<attribute name="Specification-Title" value="TiendaWebLibertya"/>
+		<attribute name="Specification-Version" value="v2"/>
+		<attribute name="Specification-Vendor" value="(C) 2014 DISYTEL."/>
+		<attribute name="Implementation-Title" value="TiendaWebLibertya"/>
+		<attribute name="Implementation-Version" value="V2 ${DSTAMP}-${TSTAMP}"/>
+		<attribute name="Implementation-URL" value="http://www.libertya.org"/>
+	  	<!--attribute name="Class-Path" value="OXP.jar OXPSLib.jar OXPApps.jar"/-->
+	  	<attribute name="Class-Path" value="OXP.jar OXPSLib.jar OXPApps.jar"/>
+	  </manifest>
+	</ear>
+	
+  </target>
+	
+		
+  <!-- ==================================================== -->
+  <!-- Instalacion del Servidor JBoss                       -->
+  <!-- ==================================================== -->
+  <target name="setupJBoss" depends="setupLib" if="isAppsJBoss"
+	  description="Setup JBoss Application Server">
+
+	<!-- Filter JBoss Templates Conf	-->
+	<copy file="${basedir}/jboss/server/openXpertya/conf/jboss-serviceTemplate.xml"
+	    tofile="${basedir}/jboss/server/openXpertya/conf/jboss-service.xml" filtering="yes" overwrite="yes"/>
+	<!--copy file="${basedir}/jboss/server/openXpertya/conf/login-configTemplate.xml"
+	    tofile="${basedir}/jboss/server/openXpertya/conf/login-config.xml" filtering="yes" overwrite="yes"/-->
+	
+	<!-- Filter JBoss Templates HTTP Invoker	-->
+	<copy file="${basedir}/jboss/server/openXpertya/deploy/http-invoker.sar/META-INF/jboss-serviceTemplate.xml"
+	    tofile="${basedir}/jboss/server/openXpertya/deploy/http-invoker.sar/META-INF/jboss-service.xml" filtering="yes" overwrite="yes"/>
+	 	
+	<!-- cambios necesarios para  java1.5-->
+	<!-- Cambios para Tomcat 5.5		-->
+	<!--copy file="${basedir}/jboss/server/openXpertya/deploy/jbossweb-tomcat41.sar/META-INF/jboss-serviceTemplate.xml"
+	    tofile="${basedir}/jboss/server/openXpertya/deploy/jbossweb-tomcat41.sar/META-INF/jboss-service.xml" filtering="yes" overwrite="yes"/-->
+	<copy file="${basedir}/jboss/server/openXpertya/deploy/jbossweb-tomcat55.sar/serverTemplate.xml"
+	    tofile="${basedir}/jboss/server/openXpertya/deploy/jbossweb-tomcat55.sar/server.xml" filtering="yes" overwrite="yes"/>   
+        <!--copy file="${basedir}/jboss/server/openXpertya/deploy/jbossweb-tomcat50.sar/META-INF/jboss-serviceTemplate.xml"
+            tofile="${basedir}/jboss/server/openXpertya/deploy/jbossweb-tomcat50.sar/META-INF/jboss-service.xml" filtering="yes" overwrite="yes"/-->
+    <!-- fin cambios necesarios para java1.5-->
+
+    <!-- Borrar los viejos		-->
+    <delete file="${basedir}/jboss/server/openXpertya/lib/CClient.jar" failonerror="no"/>
+    <delete file="${basedir}/jboss/server/openXpertya/lib/CSTools.jar" failonerror="no"/>
+    <delete file="${basedir}/jboss/server/openXpertya/lib/CServer.jar" failonerror="no"/>
+    <delete file="${basedir}/jboss/server/openXpertya/lib/oracle.jar" failonerror="no"/>
+
+  </target>
+
+	
+  <!-- ==================================================== -->
+  <!-- Deploy J2EE Server                                   -->
+  <!-- ==================================================== -->
+  <target name="setupDeploy" depends="setupEAR, setupJBoss"
+	  description="Deploy Servidor de Aplicaciones Libertya">
+  	
+	<echo message="AppsDeployment= ${DEPLOY_APPS_OXP}"/>
+  	
+	<copy file="${basedir}/lib/OXPRoot.ear" todir="${DEPLOY_APPS_OXP}"/>
+	<copy file="${basedir}/lib/OXPApps.ear" todir="${DEPLOY_APPS_OXP}"/>
+	<copy file="${basedir}/lib/webui.war" todir="${DEPLOY_APPS_OXP}"/>
+	  	
+  </target>
+		
+	
+  <!-- ==================================================== -->
+  <!-- Instalar                                             -->
+  <!-- ==================================================== -->
+  <target name="setup" depends="setupDeploy"
+	  	description="Instalar Libertya">
+  </target>
+
+
+</project>
