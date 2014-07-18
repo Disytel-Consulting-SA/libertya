@@ -229,9 +229,33 @@
   	      </manifest>
 	</jar>
   	
+  	<!-- Actualizar OXPRootBase.war -->
+  	<unjar src="lib/OXPRootBase.war" dest="nuevoOXPRootBase" />
+  	
+  	<copy todir="nuevoOXPRootBase/WEB-INF/lib" failonerror="no">
+      <fileset dir="lib">
+        <include name="OXPRoot.jar"/>
+      </fileset>
+    </copy>
+    
+  	<jar jarfile="lib/OXPRootBase.war">
+		<fileset dir="nuevoOXPRootBase"/>
+			<manifest>
+	  			<attribute name="Specification-Title" value="OXPRootWar"/>
+				<attribute name="Specification-Version" value="${VERSION_PRINCIPAL_OXP}"/>
+				<attribute name="Specification-Vendor" value="(C) 2014 DISYTEL."/>
+				<attribute name="Implementation-Title" value="OXP ${VERSION_PRINCIPAL_OXP}"/>
+				<attribute name="Implementation-Version" value="${VERSION_PRINCIPAL_OXP} ${DSTAMP}-${TSTAMP}"/>
+				<attribute name="Implementation-Vendor" value="${env.CONSULTORA_OXP}"/>
+				<attribute name="Implementation-URL" value="http://www.libertya.org"/>
+				<attribute name="Class-Path" value="OXP.jar OXPSLib.jar"/>
+  	      </manifest>
+	</jar>
+  	
 	<!-- Eliminar directorios temporales  -->
     <delete dir="nuevoOXP" failonerror="no"/>
   	<delete dir="nuevoOXPRoot" failonerror="no"/>
+  	<delete dir="nuevoOXPRootBase" failonerror="no"/>
   	<delete dir="nuevosComponents" failonerror="no"/>
 
     <!-- ===================== FIN Incorporar plugins a OXP.jar, OXPRoot.jar ===========================	-->
