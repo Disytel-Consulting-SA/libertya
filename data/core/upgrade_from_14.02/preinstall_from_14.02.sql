@@ -2040,3 +2040,7 @@ WHERE ((rt.retentiontype = 'B')
 
 ALTER TABLE RV_C_Invoice_Reten_IIBB_BsAs_Emitidas
   OWNER TO libertya;
+  
+-- 20140717-1008 Habilitar el seteo manual de datenextrun para uso en schedule semanal. Omitir además tipos de schedule no implementados en código. 
+update ad_field set isreadonly = 'N' where ad_componentobjectuid = 'CORE-AD_Field-9438';
+update ad_field set isreadonly = 'Y' where ad_componentobjectuid = 'CORE-AD_Field-10051';
