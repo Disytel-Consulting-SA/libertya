@@ -70,7 +70,8 @@ public class ProductMovementsDataSource extends QueryDataSource {
 									"				c_charge_id, " +
 									"				chargename, " +
 									"				productname, " +
-									"				productvalue " +
+									"				productvalue, " +
+									"				order_documentno " +
 									"FROM v_product_movements " +
 									"WHERE docstatus IN ('CL','CO') " +
 									"		AND ad_client_id = ? ");
