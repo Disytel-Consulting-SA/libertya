@@ -293,6 +293,8 @@ public abstract class AbstractRetencionProcessor implements RetencionProcessor {
 	protected List<String> getPadronTypesParamsValues(){
 		List<MRetSchemaConfig> params = getRetencionSchema().getPadronesList();
 		List<String> padrones = new ArrayList<String>();
+		if (params == null)
+			return padrones;
 		for (MRetSchemaConfig paramPadron : params) {
 			padrones.add(paramPadron.getPadronType());
 		}
