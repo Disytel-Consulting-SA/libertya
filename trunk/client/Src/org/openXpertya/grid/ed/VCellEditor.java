@@ -30,6 +30,7 @@ import javax.swing.UIManager;
 import javax.swing.table.TableCellEditor;
 
 import org.compiere.plaf.CompierePLAF;
+import org.openXpertya.grid.GridController;
 import org.openXpertya.model.MField;
 import org.openXpertya.model.MTable;
 import org.openXpertya.util.CLogger;
@@ -52,13 +53,23 @@ public final class VCellEditor extends AbstractCellEditor implements TableCellEd
      */
 
     public VCellEditor( MField mField ) {
-        super();
+    	super();
         m_mField = mField;
 
         // Click
 
     }    // VCellEditor
 
+    /**
+     * Constructor que recibe el gridController a fin de poder propagarle el vetoableChange
+     */
+    public VCellEditor( MField mField, GridController owner ) {
+    	this(mField);
+    	gridController = owner;
+        // Click
+
+    }    // VCellEditor
+    
     /** Descripción de Campos */
 
     private MField m_mField = null;
@@ -79,6 +90,9 @@ public final class VCellEditor extends AbstractCellEditor implements TableCellEd
 
     private static CLogger log = CLogger.getCLogger( VCellEditor.class );
 
+    /** Owner indirecto para propagar vetoableChange */
+    private GridController gridController;
+    
     /**
      * Descripción de Método
      *
@@ -206,8 +220,17 @@ public final class VCellEditor extends AbstractCellEditor implements TableCellEd
 
         log.fine( e.getPropertyName() + "=" + e.getNewValue());
 
-        //
-
+        try {
+        	// https://code.google.com/p/libertya/issues/detail?id=17
+        	// Los VCellEditors consumen el vetoableChange, y es por ésto que el evento nunca llega al gridController.
+        	// Este es el motivo por el cual no se actualizan los valores de los lookups en modo grilla (Issue Google Code GC-17).
+        	if (gridController != null && e.getSource() instanceof VLookup) 
+        		gridController.vetoableChange(e);
+        }
+        catch (Exception ex) {
+        	// No quedan muchas alternativas en caso de excepción
+        	ex.printStackTrace();
+        }
         (( MTable )m_table.getModel()).setChanged( true );
     }    // vetoableChange
 

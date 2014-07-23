@@ -1842,8 +1842,11 @@ public class VLookup extends JComponent implements VEditor,ActionListener,FocusL
         ip.setVisible(true);
         cancelled  = ip.isCancelled();
         result     = ip.getSelectedKey();
-        resetValue = true;
-        ip.requestFocus();
+// Comentadas las siguientes dos líneas. Las mismas generaban el problema de 
+// que en modo grilla no se seteaba el valor en los campos de tipo busqueda
+// para columnas que referenciaban a artículos (relacionado con Google Code Issue 17). 
+        //resetValue = true;
+        //ip.requestFocus();
     }
     
     protected void showInfoBPartner(String queryValue, String whereClause) {

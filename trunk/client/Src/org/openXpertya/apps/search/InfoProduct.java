@@ -31,6 +31,7 @@ import java.util.Properties;
 import java.util.logging.Level;
 
 import javax.swing.JCheckBox;
+import javax.swing.JFrame;
 import javax.swing.SwingUtilities;
 
 import org.compiere.plaf.CompierePLAF;
@@ -89,6 +90,7 @@ public class InfoProduct extends Info implements ActionListener {
 
     public InfoProduct( Frame frame,boolean modal,int WindowNo,int M_Warehouse_ID,int M_PriceList_ID,String value,boolean multiSelection,String whereClause ) {
         super( frame,modal,WindowNo,"p","M_Product_ID",multiSelection,whereClause );
+        this.setDefaultCloseOperation( JFrame.DO_NOTHING_ON_CLOSE );
         log.info( value + ", Wh=" + M_Warehouse_ID + ", PL=" + M_PriceList_ID + ", WHERE=" + whereClause );
         setTitle( Msg.getMsg( Env.getCtx(),"InfoProduct" ));
 
