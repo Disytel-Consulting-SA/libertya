@@ -2254,6 +2254,12 @@ public class VOrdenPago extends CPanel implements FormPanel,ActionListener,Table
 				Integer invoiceID = (Integer)creditInvoice.getValue();
 				if (invoiceID != null)
 					txtCreditAvailable.setText(getModel().numberFormat(getModel().getCreditAvailableAmt(invoiceID)));
+					// Setear el mínimo entre el monto pendiente de la NC y el total pendiente a pagar 
+					try {
+						double min = Math.min(	getModel().numberParse(txtCreditAvailable.getText()).doubleValue(),
+												getModel().numberParse(txtSaldo.getText()).doubleValue() );
+						txtCreditImporte.setText(getModel().numberFormat(BigDecimal.valueOf(min)));
+					} catch (Exception ex) { }
 			}
         	
         });
