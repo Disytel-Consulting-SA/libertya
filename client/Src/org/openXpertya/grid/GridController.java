@@ -558,7 +558,7 @@ public class GridController extends CPanel implements DataStatusListener,ListSel
                     if( mField.isDisplayed() && mField.isDisplayedInGrid()) {
                         tc.setCellRenderer( new VCellRenderer( mField ));
 
-                        VCellEditor ce = new VCellEditor( mField );
+                        VCellEditor ce = new VCellEditor( mField, this );
 
                         tc.setCellEditor( ce );
 
