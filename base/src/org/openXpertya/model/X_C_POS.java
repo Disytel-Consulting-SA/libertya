@@ -7,7 +7,7 @@ import java.math.*;
 import org.openXpertya.util.*;
 /** Modelo Generado por C_POS
  *  @author Comunidad de Desarrollo Libertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
- *  @version  - 2013-08-28 13:23:47.043 */
+ *  @version  - 2014-07-24 00:27:22.844 */
 public class X_C_POS extends org.openXpertya.model.PO
 {
 /** Constructor estándar */
@@ -26,6 +26,7 @@ setC_OrderDocType_ID (0);
 setC_POS_ID (0);
 setDraftedInOut (false);
 setInitialPOSAuthorization (false);
+setIsAllowCreditCardCashRetirement (false);
 setIsCreateInvoice (false);
 setIsDeliverOrderInWarehouse (false);	// N
 setIsModifyPrice (false);	// N
@@ -236,6 +237,53 @@ Integer ii = (Integer)get_Value("C_POSKeyLayout_ID");
 if (ii == null) return 0;
 return ii.intValue();
 }
+public static final int CREDITCARDCASHRETIREMENT_CHARGE_ID_AD_Reference_ID = MReference.getReferenceID("C_Charge");
+/** Set Credit Card Cash Retirement Charge.
+Credit Card Cash Retirement Charge */
+public void setCreditCardCashRetirement_Charge_ID (int CreditCardCashRetirement_Charge_ID)
+{
+if (CreditCardCashRetirement_Charge_ID <= 0) set_Value ("CreditCardCashRetirement_Charge_ID", null);
+ else 
+set_Value ("CreditCardCashRetirement_Charge_ID", new Integer(CreditCardCashRetirement_Charge_ID));
+}
+/** Get Credit Card Cash Retirement Charge.
+Credit Card Cash Retirement Charge */
+public int getCreditCardCashRetirement_Charge_ID() 
+{
+Integer ii = (Integer)get_Value("CreditCardCashRetirement_Charge_ID");
+if (ii == null) return 0;
+return ii.intValue();
+}
+public static final int CREDITCARDCASHRETIREMENT_DOCTYPE_ID_AD_Reference_ID = MReference.getReferenceID("C_DocType");
+/** Set Credit Card Cash Retirement DocType */
+public void setCreditCardCashRetirement_DocType_ID (int CreditCardCashRetirement_DocType_ID)
+{
+if (CreditCardCashRetirement_DocType_ID <= 0) set_Value ("CreditCardCashRetirement_DocType_ID", null);
+ else 
+set_Value ("CreditCardCashRetirement_DocType_ID", new Integer(CreditCardCashRetirement_DocType_ID));
+}
+/** Get Credit Card Cash Retirement DocType */
+public int getCreditCardCashRetirement_DocType_ID() 
+{
+Integer ii = (Integer)get_Value("CreditCardCashRetirement_DocType_ID");
+if (ii == null) return 0;
+return ii.intValue();
+}
+public static final int CREDITCARDCASHRETIREMENT_PRODUCT_ID_AD_Reference_ID = MReference.getReferenceID("M_Product (no summary)");
+/** Set Credit Card Cash Retirement Product */
+public void setCreditCardCashRetirement_Product_ID (int CreditCardCashRetirement_Product_ID)
+{
+if (CreditCardCashRetirement_Product_ID <= 0) set_Value ("CreditCardCashRetirement_Product_ID", null);
+ else 
+set_Value ("CreditCardCashRetirement_Product_ID", new Integer(CreditCardCashRetirement_Product_ID));
+}
+/** Get Credit Card Cash Retirement Product */
+public int getCreditCardCashRetirement_Product_ID() 
+{
+Integer ii = (Integer)get_Value("CreditCardCashRetirement_Product_ID");
+if (ii == null) return 0;
+return ii.intValue();
+}
 /** Set Description.
 Optional short description of the record */
 public void setDescription (String Description)
@@ -297,6 +345,22 @@ set_Value ("InitialPOSAuthorization", new Boolean(InitialPOSAuthorization));
 public boolean isInitialPOSAuthorization() 
 {
 Object oo = get_Value("InitialPOSAuthorization");
+if (oo != null) 
+{
+ if (oo instanceof Boolean) return ((Boolean)oo).booleanValue();
+ return "Y".equals(oo);
+}
+return false;
+}
+/** Set Allow Credit Card Cash Retirement */
+public void setIsAllowCreditCardCashRetirement (boolean IsAllowCreditCardCashRetirement)
+{
+set_Value ("IsAllowCreditCardCashRetirement", new Boolean(IsAllowCreditCardCashRetirement));
+}
+/** Get Allow Credit Card Cash Retirement */
+public boolean isAllowCreditCardCashRetirement() 
+{
+Object oo = get_Value("IsAllowCreditCardCashRetirement");
 if (oo != null) 
 {
  if (oo instanceof Boolean) return ((Boolean)oo).booleanValue();

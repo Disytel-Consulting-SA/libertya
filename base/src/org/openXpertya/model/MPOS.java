@@ -28,6 +28,7 @@ import org.openXpertya.util.CLogger;
 import org.openXpertya.util.DB;
 import org.openXpertya.util.Env;
 import org.openXpertya.util.Msg;
+import org.openXpertya.util.Util;
 
 /**
  * Descripción de Clase
@@ -264,6 +265,34 @@ public class MPOS extends X_C_POS {
         // asigna a false).
         if (getC_InoutDocType_ID() == 0) {
         	setIsDeliverOrderInWarehouse(false);
+        }
+        
+		// Si está marcado el flag para permitir retiro de efectivo para tarjeta
+		// de crédito entonces el cargo del efectivo, tipo de documento del
+		// débito y el artículo de la línea del débito deben estar cargados
+        if(isAllowCreditCardCashRetirement()){
+        	StringBuffer msg = new StringBuffer();
+        	if(Util.isEmpty(getCreditCardCashRetirement_Charge_ID(), true)){
+        		msg.append("@CreditCardCashRetirement_Charge_ID@");
+        	}
+        	if(Util.isEmpty(getCreditCardCashRetirement_DocType_ID(), true)){
+        		if(msg.length() > 0){
+            		msg.append(", ");
+        		}
+        		msg.append("@CreditCardCashRetirement_DocType_ID@");
+        	}
+        	if(Util.isEmpty(getCreditCardCashRetirement_Product_ID(), true)){
+        		if(msg.length() > 0){
+            		msg.append(", ");
+        		}
+        		msg.append("@CreditCardCashRetirement_Product_ID@");
+        	}
+        	if(msg.length() > 0){
+				String message = "@CreditCardCashRetirementMandatoryFields@"
+						+ msg.toString();
+				log.saveError("SaveError", Msg.parseTranslation(getCtx(), message));
+				return false;
+        	}
         }
        
         return true;

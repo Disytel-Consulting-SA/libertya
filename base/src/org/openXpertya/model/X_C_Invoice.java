@@ -7,7 +7,7 @@ import java.math.*;
 import org.openXpertya.util.*;
 /** Modelo Generado por C_Invoice
  *  @author Comunidad de Desarrollo Libertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
- *  @version  - 2014-05-01 15:34:23.626 */
+ *  @version  - 2014-07-24 00:26:51.256 */
 public class X_C_Invoice extends org.openXpertya.model.PO
 {
 /** Constructor estándar */
@@ -45,6 +45,7 @@ setIsSelfService (false);
 setIsSOTrx (false);	// @IsSOTrx@
 setIsTaxIncluded (false);
 setIsTransferred (false);
+setIsVoidable (false);
 setManageDragOrderDiscounts (false);
 setManualDocumentNo (false);
 setManualGeneralDiscount (Env.ZERO);
@@ -1173,6 +1174,22 @@ Transferred to General Ledger (i.e. accounted) */
 public boolean isTransferred() 
 {
 Object oo = get_Value("IsTransferred");
+if (oo != null) 
+{
+ if (oo instanceof Boolean) return ((Boolean)oo).booleanValue();
+ return "Y".equals(oo);
+}
+return false;
+}
+/** Set Is Voidable */
+public void setIsVoidable (boolean IsVoidable)
+{
+set_Value ("IsVoidable", new Boolean(IsVoidable));
+}
+/** Get Is Voidable */
+public boolean isVoidable() 
+{
+Object oo = get_Value("IsVoidable");
 if (oo != null) 
 {
  if (oo instanceof Boolean) return ((Boolean)oo).booleanValue();

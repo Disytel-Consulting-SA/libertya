@@ -1,5 +1,7 @@
 package org.openXpertya.pos.model;
 
+import java.math.BigDecimal;
+
 
 public class CreditCardPayment extends Payment {
 
@@ -25,7 +27,8 @@ public class CreditCardPayment extends Payment {
 	 * @param couponNumber
 	 */
 	public CreditCardPayment(EntidadFinancieraPlan plan, String creditCardNumber,
-			String couponNumber, String bankName, String posnet, String couponBatchNumber) {
+			String couponNumber, String bankName, String posnet, String couponBatchNumber,
+			BigDecimal cashRetirementAmt) {
 		this();
 		this.plan = plan;
 		this.creditCardNumber = creditCardNumber;
@@ -33,6 +36,7 @@ public class CreditCardPayment extends Payment {
 		this.bankName = bankName;
 		this.posnet = posnet;
 		this.couponBatchNumber = couponBatchNumber;
+		setChangeAmt(cashRetirementAmt);
 	}
 
 	/**

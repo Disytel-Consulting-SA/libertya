@@ -60,6 +60,10 @@ public class PoSConfig {
 	private boolean voidDocuments;
 	private Map<String, Integer> posNumberLetters;
 	private boolean draftedInOut;
+	private boolean allowCreditCardCashRetirement;
+	private Integer creditCardCashRetirementChargeID;
+	private Integer creditCardCashRetirementProductID;
+	private Integer creditCardCashRetirementDocTypeID;
 	
 	// Del sistema
 	private int currencyID;
@@ -132,6 +136,11 @@ public class PoSConfig {
 			setPosNumberLetters(MPOSLetter.getPOSLetters(pos.getID(), null));
 			
 			setDraftedInOut(pos.isDraftedInOut());
+			
+			setAllowCreditCardCashRetirement(pos.isAllowCreditCardCashRetirement());
+			setCreditCardCashRetirementChargeID(pos.getCreditCardCashRetirement_Charge_ID());
+			setCreditCardCashRetirementDocTypeID(pos.getCreditCardCashRetirement_DocType_ID());
+			setCreditCardCashRetirementProductID(pos.getCreditCardCashRetirement_Product_ID());
 		}	
 	}
 	
@@ -775,5 +784,38 @@ public class PoSConfig {
 
 	public void setDraftedInOut(boolean draftedInOut) {
 		this.draftedInOut = draftedInOut;
+	}
+
+	public boolean isAllowCreditCardCashRetirement() {
+		return allowCreditCardCashRetirement;
+	}
+
+	public void setAllowCreditCardCashRetirement(
+			boolean allowCreditCardCashRetirement) {
+		this.allowCreditCardCashRetirement = allowCreditCardCashRetirement;
+	}
+
+	public Integer getCreditCardCashRetirementChargeID() {
+		return creditCardCashRetirementChargeID;
+	}
+
+	public void setCreditCardCashRetirementChargeID(Integer CreditCardCashRetirementChargeID) {
+		this.creditCardCashRetirementChargeID = CreditCardCashRetirementChargeID;
+	}
+
+	public Integer getCreditCardCashRetirementProductID() {
+		return creditCardCashRetirementProductID;
+	}
+
+	public void setCreditCardCashRetirementProductID(Integer CreditCardCashRetirementProductID) {
+		this.creditCardCashRetirementProductID = CreditCardCashRetirementProductID;
+	}
+
+	public Integer getCreditCardCashRetirementDocTypeID() {
+		return creditCardCashRetirementDocTypeID;
+	}
+
+	public void setCreditCardCashRetirementDocTypeID(Integer CreditCardCashRetirementDocTypeID) {
+		this.creditCardCashRetirementDocTypeID = CreditCardCashRetirementDocTypeID;
 	}
 }

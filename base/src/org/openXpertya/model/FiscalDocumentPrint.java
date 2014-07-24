@@ -23,6 +23,7 @@ import org.openXpertya.print.fiscal.FiscalPrinter;
 import org.openXpertya.print.fiscal.FiscalPrinterEventListener;
 import org.openXpertya.print.fiscal.FiscalPrinterLogRecord;
 import org.openXpertya.print.fiscal.document.CashPayment;
+import org.openXpertya.print.fiscal.document.CashRetirementPayment;
 import org.openXpertya.print.fiscal.document.CreditNote;
 import org.openXpertya.print.fiscal.document.CurrentAccountInfo;
 import org.openXpertya.print.fiscal.document.Customer;
@@ -1324,6 +1325,7 @@ public class FiscalDocumentPrint {
 			// Pago que se crea en caso de que la imputación no entre en la clase
 			// Efectivo u Otros Pagos.
 			Payment payment = null;
+			Payment creditCardCashRetirementPayment = null;
 			while (rs.next()) {
 				// Obtiene los IDs de los documentos para determinar cual es el que
 				// se utilizó para el pago
@@ -1334,12 +1336,22 @@ public class FiscalDocumentPrint {
 				changeAmt = rs.getBigDecimal("ChangeAmt");
 				description = null;
 				payment = null;
+				creditCardCashRetirementPayment = null;
 				
 				// 1. Imputación con un C_Payment.
 				if (paymentID > 0) {
 					// Obtiene la descripción.
-					description = getInvoicePaymentDescription(new MPayment(
-							mInvoice.getCtx(), paymentID, getTrxName()));
+					MPayment mPayment = new MPayment(mInvoice.getCtx(), paymentID, getTrxName());
+					description = getInvoicePaymentDescription(mPayment);
+					// Retiro de efectivo de tarjeta de crédito
+					if (MPayment.TENDERTYPE_CreditCard.equals(mPayment
+							.getTenderType()) && !Util.isEmpty(changeAmt, true)) {
+						creditCardCashRetirementPayment = new CashRetirementPayment(
+								BigDecimal.ZERO, "["+changeAmt+"] "
+										+ Msg.getMsg(ctx, "Retirement")
+										+ description);
+						changeAmt = BigDecimal.ZERO;
+					}
 				// 2. Imputación con Línea de Caja
 				} else if (cashLineID > 0) {
 					// Todas las imputaciones con líneas de caja se suman al pago
@@ -1367,6 +1379,9 @@ public class FiscalDocumentPrint {
 				// según el mayor importe.
 				if (payment != null) {
 					payments.add(payment);
+				}
+				if(creditCardCashRetirementPayment != null){
+					payments.add(creditCardCashRetirementPayment);
 				}
 				
 				totalPaidAmt = totalPaidAmt.add(paidAmt).add(changeAmt);

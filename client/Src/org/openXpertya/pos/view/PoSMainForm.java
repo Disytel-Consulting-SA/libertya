@@ -363,7 +363,9 @@ public class PoSMainForm extends CPanel implements FormPanel, ASyncProcess, Disp
 	private VNumber cDocumentDiscountAmt = null;
 	private CLabel cGeneralDiscountLabel = null;
 	private VNumber cGeneralDiscountPercText = null;
-	
+	private CPanel cCashReturnPanel = null;
+	private CLabel cCashReturnAmtLabel = null;
+	private VNumber cCashReturnAmtText = null;
 	
 //	private AUserAuth cCashRetunAuthPanel = null;
 	private AuthorizationDialog authDialog = null;
@@ -493,7 +495,8 @@ public class PoSMainForm extends CPanel implements FormPanel, ASyncProcess, Disp
 	private String MSG_HAS_CREDIT_AVAILABLE;
 	private String MSG_USE_CREDIT_MANDATORY;
 	private String MSG_DUPLICATED_POS_INSTANCE;
-		
+	private String MSG_CASH_RETIREMENT;
+	
 	/**
 	 * This method initializes 
 	 * 
@@ -790,6 +793,7 @@ public class PoSMainForm extends CPanel implements FormPanel, ASyncProcess, Disp
 		MSG_HAS_CREDIT_AVAILABLE = getMsg("CustomerHasCreditToUse");
 		MSG_USE_CREDIT_MANDATORY = getMsg("CustomerCreditMandatoryToUse");
 		MSG_DUPLICATED_POS_INSTANCE = getMsg("DuplicatedPOSInstance");
+		MSG_CASH_RETIREMENT = getMsg("CashRetirement");
 		
 		// Estos mensajes no se asignan a variables de instancias dado que son mensajes
 		// devueltos por el modelo del TPV, pero se realiza la invocación a getMsg(...) para
@@ -2179,6 +2183,10 @@ public class PoSMainForm extends CPanel implements FormPanel, ASyncProcess, Disp
 			gridBagConstraints51.gridy = 1;
 			gridBagConstraints51.gridx = 1;
 			gridBagConstraints51.anchor = GridBagConstraints.NORTH;
+			GridBagConstraints gridBagConstraints52 = new GridBagConstraints();
+			gridBagConstraints52.gridy = 1;
+			gridBagConstraints52.gridx = 2;
+			gridBagConstraints52.anchor = GridBagConstraints.NORTH;
 
 			cAddTenderTypePanel = new CPanel();
 			cAddTenderTypePanel.setLayout(new GridBagLayout());
@@ -2186,6 +2194,7 @@ public class PoSMainForm extends CPanel implements FormPanel, ASyncProcess, Disp
 			cAddTenderTypePanel.add(getCSelectTenderTypeContentPanel(), gridBagConstraints48);
 			cAddTenderTypePanel.add(getCPaymentMediumInfoPanel(), gridBagConstraints51);
 			cAddTenderTypePanel.add(getCAddTenderTypeButton(), gridBagConstraints50);
+			cAddTenderTypePanel.add(getCCashReturnPanel(), gridBagConstraints52);
 			
 		}
 		return cAddTenderTypePanel;
@@ -4160,6 +4169,45 @@ public class PoSMainForm extends CPanel implements FormPanel, ASyncProcess, Disp
 	}
 
 
+	private CPanel getCCashReturnPanel() {
+		if (cCashReturnPanel == null) {
+			GridBagConstraints gridBagConstraints1 = new GridBagConstraints();
+			gridBagConstraints1.gridx = 0;
+			gridBagConstraints1.gridy = 0;
+			gridBagConstraints1.anchor = GridBagConstraints.WEST;
+			gridBagConstraints1.insets = new Insets(3, 0, 0, 0);
+			GridBagConstraints gridBagConstraints2 = new GridBagConstraints();
+			gridBagConstraints2.gridx = 0;
+			gridBagConstraints2.gridy = 1;
+			gridBagConstraints2.anchor = GridBagConstraints.WEST;
+			gridBagConstraints2.insets = new Insets(9, 0, 0, 0);
+			cCashReturnAmtLabel = new CLabel();
+			cCashReturnAmtLabel.setText(MSG_CASH_RETIREMENT);
+			cCashReturnPanel = new CPanel();
+			cCashReturnPanel.setBorder(BorderFactory.createCompoundBorder(
+					BorderFactory.createEmptyBorder(0, 6, 0, 0),
+					BorderFactory.createCompoundBorder(BorderFactory
+							.createEtchedBorder(EtchedBorder.LOWERED),
+							BorderFactory.createEmptyBorder(0, 5, 5, 5))));
+			cCashReturnPanel.setLayout(new GridBagLayout());
+			cCashReturnPanel.add(cCashReturnAmtLabel, gridBagConstraints1);
+			cCashReturnPanel.add(getCCashReturnAmtText(), gridBagConstraints2);
+		}
+		return cCashReturnPanel;
+	}
+	
+	private VNumber getCCashReturnAmtText(){
+		if(cCashReturnAmtText == null){
+			cCashReturnAmtText = new VNumber();
+			cCashReturnAmtText.setDisplayType(DisplayType.Amount);
+			cCashReturnAmtText.setPreferredSize(new java.awt.Dimension(S_PAYMENT_FIELD_WIDTH,20));
+			cCashReturnAmtText.setValue(0);
+			cCashReturnAmtText.setMandatory(false);
+			FocusUtils.addFocusHighlight(cCashReturnAmtText);
+		}
+		return cCashReturnAmtText;
+	}
+	
 	private void setCurrencySelectionEnabled(boolean enabled) {
 		getCCurrencyCombo().setReadWrite(enabled);
 		if(!enabled)
@@ -4630,6 +4678,7 @@ public class PoSMainForm extends CPanel implements FormPanel, ASyncProcess, Disp
 	private void updateCreditCardTenderTypeComponents() {
 		showTenderTypeParamsPanel(getCCreditCardParamsPanel(), getCCreditCardInfoPanel());
 		getCCreditCardInfoPanel().setVisible(true);
+		getCCashReturnPanel().setVisible(getModel().getPoSConfig().isAllowCreditCardCashRetirement());
 		EntidadFinancieraPlan currentPlan = getSelectedCreditCardPlan();
 		getCAmountText().setReadWrite(currentPlan != null);
 		if (currentPlan == null) {
@@ -4802,6 +4851,9 @@ public class PoSMainForm extends CPanel implements FormPanel, ASyncProcess, Disp
 			String creditCardNumber = getCCreditCardNumberText().getText();
 			String couponNumber = getCCouponNumberText().getText();
 			String couponBatchNumber = getCCouponBatchNumberText().getText();
+			BigDecimal cashRetirementAmt = (BigDecimal)getCCashReturnAmtText().getValue();
+			cashRetirementAmt = cashRetirementAmt == null?BigDecimal.ZERO:cashRetirementAmt;
+			
 			// Es necesario un plan de tarjeta
 			if (getSelectedCreditCardPlan() == null) {
 				errorMsg(MSG_NO_CREDIT_CARD_PLAN_ERROR);
@@ -4817,14 +4869,14 @@ public class PoSMainForm extends CPanel implements FormPanel, ASyncProcess, Disp
 			}
 			extraValidationsResult = getExtraPOSPaymentAddValidations()
 					.validateCreditCardPayment(this, creditCardNumber,
-							couponNumber, couponBatchNumber);
+							couponNumber, couponBatchNumber, cashRetirementAmt);
 			if(extraValidationsResult.isError()){
 				errorMsg(extraValidationsResult.getMsg());
 				return;
 			}
 			
 			payment = new CreditCardPayment(creditCardPlan, creditCardNumber,
-					couponNumber, bankName, posnet, couponBatchNumber);
+					couponNumber, bankName, posnet, couponBatchNumber, cashRetirementAmt);
 						
 			payment.setTypeName(paymentMedium.getName());
 			
@@ -4833,6 +4885,7 @@ public class PoSMainForm extends CPanel implements FormPanel, ASyncProcess, Disp
 			getCCouponNumberText().setText("");
 			getCCouponBatchNumberText().setText("");
 			getCCardText().setText("");
+			getCCashReturnAmtText().setValue(BigDecimal.ZERO);
 			clearBankCombo();
 
 		} else if (MPOSPaymentMedium.TENDERTYPE_CreditNote.equals(tenderType)) {
@@ -5740,6 +5793,7 @@ public class PoSMainForm extends CPanel implements FormPanel, ASyncProcess, Disp
     	getCCreditCardCuotaAmt().setValue(null);
     	if(updateComponents){
     		getCCreditCardInfoPanel().setVisible(false);
+    		getCCashReturnPanel().setVisible(false);
     	}
     }
 
