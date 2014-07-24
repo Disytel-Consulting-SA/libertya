@@ -1349,7 +1349,7 @@ public class FiscalDocumentPrint {
 						creditCardCashRetirementPayment = new CashRetirementPayment(
 								BigDecimal.ZERO, "["+changeAmt+"] "
 										+ Msg.getMsg(ctx, "Retirement")
-										+ description);
+										+ " " + description);
 						changeAmt = BigDecimal.ZERO;
 					}
 				// 2. Imputación con Línea de Caja
