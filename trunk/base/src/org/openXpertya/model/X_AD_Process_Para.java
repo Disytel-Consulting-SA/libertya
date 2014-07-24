@@ -7,7 +7,7 @@ import java.math.*;
 import org.openXpertya.util.*;
 /** Modelo Generado por AD_Process_Para
  *  @author Comunidad de Desarrollo Libertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
- *  @version  - 2013-07-04 18:37:04.504 */
+ *  @version  - 2014-07-24 12:28:45.166 */
 public class X_AD_Process_Para extends org.openXpertya.model.PO
 {
 /** Constructor estándar */
@@ -199,10 +199,10 @@ Default value hierarchy, separated by ;
  */
 public void setDefaultValue (String DefaultValue)
 {
-if (DefaultValue != null && DefaultValue.length() > 60)
+if (DefaultValue != null && DefaultValue.length() > 2000)
 {
-log.warning("Length > 60 - truncated");
-DefaultValue = DefaultValue.substring(0,60);
+log.warning("Length > 2000 - truncated");
+DefaultValue = DefaultValue.substring(0,2000);
 }
 set_Value ("DefaultValue", DefaultValue);
 }
