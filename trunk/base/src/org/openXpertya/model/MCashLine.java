@@ -1052,20 +1052,21 @@ public class MCashLine extends X_C_CashLine implements DocAction {
 			} catch (Exception e) {}
 		}
 		
+		// Si hay solo una asignación para esta línea, solo se puede anular si
+		// es la asignación generada por una línea que es un pago de factura
+		// (getC_AllocationHdr_ID), o si es la asignación que está anulando esta
+		// línea de caja (OP/RC)
+		if (allocations.size() == 1
+				&& (!allocations.contains(getVoiderAllocationID()) || !allocations
+						.contains(getC_AllocationHdr_ID()))) {
+			
+		}
 		// Si hay mas de una asignación (cualquiera sea el tipo de efectivo de esta línea),
 		// no es posible anular la línea.
-		if (allocations.size() > 1
-				// Si hay solo una asignación para esta línea, solo se puede anular si
-				// es la asignación generada por una línea que es un pago de factura
-				// (getC_AllocationHdr_ID), o si es la asignación que está anulando esta
-				// línea de caja (OP/RC)
-				|| (allocations.size() == 1 
-					&& !allocations.contains(getVoiderAllocationID()) 
-					&& !allocations.contains(getC_AllocationHdr_ID()))
+		else if(allocations.size() > 1 
 				// Si hay al menos una asignación y esta línea no es un Pago a Factura, no es
 				// válida la anulación de la línea (primero hay que revertir las asignaciones).
-				|| (allocations.size() > 0 && !CASHTYPE_Invoice.equals(getCashType()))) {
-			
+				|| (allocations.size() > 0 && !CASHTYPE_Invoice.equals(getCashType()))){
 			m_processMsg = "@CashLineWithAllocationsVoidError@";
 			valid = false;
 		}

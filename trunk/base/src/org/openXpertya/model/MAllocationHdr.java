@@ -1051,13 +1051,15 @@ public class MAllocationHdr extends X_C_AllocationHdr implements DocAction {
        
         // Si hay pagos conciliados, no se puede anular.
         MPayment payment = null;
+        Set<Integer> voidedPaysIDs = new HashSet<Integer>();
         for (int i = 0; i < lines.length; i++ ) {
         	int C_Payment_ID = lines[i].getC_Payment_ID();
-        	if (C_Payment_ID != 0) {
+        	if (C_Payment_ID != 0 && !voidedPaysIDs.contains(C_Payment_ID)) {
         		payment = new MPayment(getCtx(), C_Payment_ID, get_TrxName());
         		pays.add(payment);
         		if (payment.isReconciled()) 
         			throw new Exception("@PaymentsReconciledError@");
+        		voidedPaysIDs.add(C_Payment_ID);
         	}
         }
 

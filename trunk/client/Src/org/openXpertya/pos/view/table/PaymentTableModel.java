@@ -29,7 +29,11 @@ public class PaymentTableModel extends AbstractPoSTableModel {
 			case 0: 
 				return payment.getTypeName();
 			case 1: 
-				return payment.getConvertedAmount().setScale(2,BigDecimal.ROUND_HALF_UP);
+			return payment
+					.getConvertedAmount()
+					.setScale(2, BigDecimal.ROUND_HALF_UP)
+					.add(payment.isCreditCardPayment() ? payment.getChangeAmt()
+							: BigDecimal.ZERO);
 			default: 
 				return null;
 		}

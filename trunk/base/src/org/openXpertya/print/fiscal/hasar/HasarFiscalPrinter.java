@@ -846,7 +846,8 @@ public abstract class HasarFiscalPrinter extends BasicFiscalPrinter implements H
 			// Se ingresan los pagos realizados por el comprador.
 			// Comando: @TotalTender
 			for (Payment payment : invoice.getPayments()) {
-				hasCashPayments = hasCashPayments || payment.isCash();
+				hasCashPayments = hasCashPayments || payment.isCash()
+						|| payment.isCashRetirement();
 				response = execute(cmdTotalTender(
 					payment.getDescription(), 
 					payment.getAmount(), 

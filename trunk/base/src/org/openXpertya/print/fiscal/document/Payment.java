@@ -72,8 +72,8 @@ public class Payment implements Serializable{
 	 */
 	public void validate() throws DocumentException {
 		// Validar monto mayor que 0.
-		Document.validateNumber(getAmount(), ">", BigDecimal.ZERO,
-			"InvalidPaymentAmount");
+//		Document.validateNumber(getAmount(), ">", BigDecimal.ZERO,
+//			"InvalidPaymentAmount");
 		
 		// Validar descripción.
 		Document.validateText(getDescription(),"InvalidPaymentDescription");
@@ -83,6 +83,13 @@ public class Payment implements Serializable{
 	 * @return true si este pago es efectivo, false caso contrario
 	 */
 	public boolean isCash(){
+		return false;
+	}
+	
+	/**
+	 * @return true si este pago es un retiro de efectivo, false caso contrario
+	 */
+	public boolean isCashRetirement(){
 		return false;
 	}
 }

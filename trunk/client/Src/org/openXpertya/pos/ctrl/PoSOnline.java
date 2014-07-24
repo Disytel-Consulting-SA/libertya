@@ -195,6 +195,8 @@ public class PoSOnline extends PoSConnectionState {
 	
 	private MDocType paymentDocType = null;
 	
+	private MTax taxExento = null;
+	
 	public PoSOnline() {
 		super();
 		setCreatePOSPaymentValidations(new CreatePOSPaymentValidations());
@@ -204,6 +206,7 @@ public class PoSOnline extends PoSConnectionState {
 		getGeneratorPercepciones().setTPVInstance(true);
 		setPaymentDocType(MDocType.getDocType(ctx,
 				MDocType.DOCTYPE_CustomerReceipt, null));
+		setTaxExento(MTax.getTaxExemptRate(ctx, null));
 	}
 	
 	private static void throwIfFalse(boolean b, DocAction sourceDocActionPO, Class posExceptionClass) throws PosException {
@@ -1747,8 +1750,13 @@ public class PoSOnline extends PoSConnectionState {
 	 * @throws PosException
 	 */
 	private MAllocationLine createOxpMAllocationLine(Integer debitInvoiceID, Payment p, MPayment pay, MCashLine cashLine, Integer creditInvoiceID) throws PosException {
-		
-		BigDecimal allocLineAmt = currencyConvert(p.getAmount().abs(), p.getCurrencyId(), allocHdr.getC_Currency_ID());
+		return createOxpMAllocationLine(debitInvoiceID, p, pay, cashLine, creditInvoiceID, null);
+	}
+	
+	private MAllocationLine createOxpMAllocationLine(Integer debitInvoiceID, Payment p, MPayment pay, MCashLine cashLine, Integer creditInvoiceID, BigDecimal amount) throws PosException {
+		BigDecimal allocLineAmt = currencyConvert(amount == null ? p
+				.getAmount().abs() : amount.abs(), p.getCurrencyId(),
+				allocHdr.getC_Currency_ID());
 		BigDecimal changeAmt = p.getChangeAmt().abs();
 		BigDecimal writeOffAmt = BigDecimal.ZERO;
 		
@@ -1827,7 +1835,7 @@ public class PoSOnline extends PoSConnectionState {
 				true, true);
 	}
 	
-	private MCashLine createOxpCashPayment(Integer debitInvoiceID, CashPayment p, boolean addToCashLineList, boolean addToAllocation) throws PosException {
+	private MCashLine createOxpCashPayment(Integer debitInvoiceID, CashPayment p, Integer chargeID, boolean addToCashLineList, boolean addToAllocation) throws PosException {
 		// MCashBook cashBook = new MCashBook(ctx, posConfig.getC_CashBook_ID(), trxName);
 		MCash cash = null;
 		// Si el config tiene asociado el Cash entonces se usa ese (Cajas Diarias)
@@ -1851,8 +1859,15 @@ public class PoSOnline extends PoSConnectionState {
 			cashType = Util.isEmpty(cashType, true)?MCashLine.CASHTYPE_Invoice:cashType;
 			cashLine.setC_Invoice_ID(debitInvoiceID);
 		}
-		else
-			cashType = Util.isEmpty(cashType, true)?MCashLine.CASHTYPE_GeneralReceipts:cashType;
+		else{
+			if(!Util.isEmpty(chargeID, true)){
+				cashType = Util.isEmpty(cashType, true)?MCashLine.CASHTYPE_Charge:cashType;
+				cashLine.setC_Charge_ID(chargeID);
+			}
+			else{
+				cashType = Util.isEmpty(cashType, true)?MCashLine.CASHTYPE_GeneralReceipts:cashType;
+			}
+		}
 		
 		cashLine.setCashType(cashType);
 		cashLine.setUpdateBPBalance(false);
@@ -1880,6 +1895,10 @@ public class PoSOnline extends PoSConnectionState {
 			MAllocationLine allocLine = createOxpMAllocationLine(p, cashLine);
 		}
 		return cashLine;
+	}
+	
+	private MCashLine createOxpCashPayment(Integer debitInvoiceID, CashPayment p, boolean addToCashLineList, boolean addToAllocation) throws PosException {
+		return createOxpCashPayment(debitInvoiceID, p, null, addToCashLineList, addToAllocation);
 	}
 	
 	private void createOxpCheckPayment(CheckPayment p) throws PosException {
@@ -1912,8 +1931,13 @@ public class PoSOnline extends PoSConnectionState {
 	}
 	
 	private void createOxpCreditCardPayment(CreditCardPayment p, Order order) throws PosException {
+		// El monto de cupón es el monto del cobro + el monto de retiro
+		BigDecimal amount = p.getAmount();
+		amount = amount
+				.add(Util.isEmpty(p.getChangeAmt(), true) ? BigDecimal.ZERO : p
+						.getChangeAmt());
 		
-		MPayment pay = createOxpMPayment(MPayment.TENDERTYPE_CreditCard, getClientCurrencyID(), p.getAmount(), p.getCouponNumber());
+		MPayment pay = createOxpMPayment(MPayment.TENDERTYPE_CreditCard, getClientCurrencyID(), amount, p.getCouponNumber());
 		MEntidadFinanciera entidadFinanciera = new MEntidadFinanciera(ctx, p.getEntidadFinancieraID(), null);  
 		
 		String CreditCardType = entidadFinanciera.getCreditCardType();
@@ -1937,6 +1961,91 @@ public class PoSOnline extends PoSConnectionState {
 		throwIfFalse(pay.save(), pay);
 		mpayments.put(pay.getC_Payment_ID(), pay);
 		createOxpMAllocationLine(p, pay);
+		
+		// Si el cobro posee retiro de efectivo entonces creo el débito y lo
+		// asocio en el allocation
+		createCreditCardRetirementInvoice(p, pay, order);
+	}
+	
+	private void createCreditCardRetirementInvoice(CreditCardPayment p, MPayment pay, Order order) throws PosException{
+		if(Util.isEmpty(p.getChangeAmt(), true)){
+			return;
+		}
+		// Crear el débito
+		MInvoice creditCardRetirementInvoice = new MInvoice(getCtx(), 0, getTrxName());
+		MBPartner bPartner = new MBPartner(getCtx(), order.getBusinessPartner().getId(), getTrxName());		
+		creditCardRetirementInvoice.setBPartner(bPartner);
+		creditCardRetirementInvoice.setCUIT(bPartner.getTaxID());
+		creditCardRetirementInvoice.setNombreCli(order.getBusinessPartner().getCustomerName());
+		creditCardRetirementInvoice.setInvoice_Adress(order.getBusinessPartner().getCustomerAddress());
+		creditCardRetirementInvoice.setNroIdentificCliente(order.getBusinessPartner().getCustomerIdentification());
+		creditCardRetirementInvoice.setPaymentRule(MInvoice.PAYMENTRULE_CreditCard);
+		// Tipo de documento de retiro de efectivo de tarjeta de crédito de la
+		// config del tpv
+		creditCardRetirementInvoice.setC_DocTypeTarget_ID(getPoSCOnfig()
+				.getCreditCardCashRetirementDocTypeID());
+		creditCardRetirementInvoice.setC_DocType_ID(getPoSCOnfig()
+				.getCreditCardCashRetirementDocTypeID());
+		creditCardRetirementInvoice.setCreateCashLine(false);
+		creditCardRetirementInvoice.setSkipManualGeneralDiscount(true);
+		creditCardRetirementInvoice.setTPVInstance(true);
+		creditCardRetirementInvoice.setIsVoidable(true);
+		creditCardRetirementInvoice.setDocAction(MInvoice.DOCACTION_Complete);
+		creditCardRetirementInvoice.setDocStatus(MInvoice.DOCSTATUS_Drafted);
+		// Guardo la factura
+		throwIfFalse(creditCardRetirementInvoice.save(),
+				creditCardRetirementInvoice, InvoiceCreateException.class);
+		// Crear la línea con un artículo en particular
+		MInvoiceLine creditCardRetirementInvoiceLine = new MInvoiceLine(creditCardRetirementInvoice);
+		
+		creditCardRetirementInvoiceLine.setDirectInsert(true);
+		creditCardRetirementInvoiceLine.setQty(BigDecimal.ONE);
+		creditCardRetirementInvoiceLine.setLine(10);
+		creditCardRetirementInvoiceLine.setPrice(p.getChangeAmt());
+		creditCardRetirementInvoiceLine.setC_Project_ID(creditCardRetirementInvoice.getC_Project_ID());
+		// Artículo de retiro de efectivo de tarjeta de crédito de la config del tpv
+		creditCardRetirementInvoiceLine.setM_Product_ID(getPoSCOnfig()
+				.getCreditCardCashRetirementProductID());
+		
+		// Impuesto Exento
+		creditCardRetirementInvoiceLine
+				.setC_Tax_ID(getTaxExento() != null ? getTaxExento().getID()
+						: 0);
+		creditCardRetirementInvoiceLine.setSkipManualGeneralDiscount(true);
+		
+		// Guardo la línea
+		throwIfFalse(creditCardRetirementInvoiceLine.save(),
+				InvoiceCreateException.class);
+		// Completo la factura
+		throwIfFalse(
+				creditCardRetirementInvoice
+						.processIt(DocAction.ACTION_Complete),
+				creditCardRetirementInvoice, InvoiceCreateException.class);
+		// Guardo la factura
+		throwIfFalse(creditCardRetirementInvoice.save(),
+				creditCardRetirementInvoice, InvoiceCreateException.class);
+		// Creo la línea del allocation
+		createOxpMAllocationLine(creditCardRetirementInvoice.getID(), p, pay,
+				null, null, p.getChangeAmt());
+		
+		// Crear la línea del efectivo para el retiro de la caja
+		CashPayment cashPayment = new CashPayment(p.getChangeAmt().negate());
+		cashPayment.setCashType(MCashLine.CASHTYPE_Charge);
+		cashPayment.setCurrencyId(p.getCurrencyId());
+		cashPayment.setAmount(p.getChangeAmt().negate());
+		cashPayment.setDescription(Msg.parseTranslation(
+				getCtx(),
+				"@CashRetirement@" + " " + "@CouponNumber@" + " " 
+						+ p.getCouponNumber()));
+		// Cargo de retiro de efectivo de tarjeta de crédito de la config del tpv
+		MCashLine cashLine = createOxpCashPayment(0, cashPayment,
+				getPoSCOnfig().getCreditCardCashRetirementChargeID(), false,
+				false);
+		// Asocio la línea de caja con el pago de tarjeta para futuras consultas
+		cashLine.setC_Payment_ID(pay.getID());
+		throwIfFalse(cashLine.save(), cashLine);
+		// Agregar al allocation de manera unidireccional
+		createOxpMAllocationLine(0, cashPayment, null, cashLine, null);
 	}
 	
 	private void createOxpCreditPayment(CreditPayment p) throws PosException {
@@ -3762,5 +3871,13 @@ public class PoSOnline extends PoSConnectionState {
 
 	private void setPaymentDocType(MDocType paymentDocType) {
 		this.paymentDocType = paymentDocType;
+	}
+
+	public MTax getTaxExento() {
+		return taxExento;
+	}
+
+	public void setTaxExento(MTax taxExento) {
+		this.taxExento = taxExento;
 	}
 }

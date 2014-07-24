@@ -1,10 +1,14 @@
 package org.openXpertya.process;
 
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
+import java.util.Set;
 
 import org.openXpertya.cc.CurrentAccountManager;
 import org.openXpertya.cc.CurrentAccountManagerFactory;
@@ -34,13 +38,12 @@ public class InvoiceGlobalVoiding extends SvrProcess {
 	/** Factura a anular */
 	private MInvoice invoice;
 	
-	/* DEPRECATED: No se anulan los débitos/créditos de los allocation de la factura parámetro
 	/**
 	 * Débitos y Créditos imputados dentro de los allocation hdrs relacionados
 	 * con la factura
-	 *
-	private Set<MInvoice> debitsCredits;
-	*/
+	 */
+	private Set<MInvoice> debits;
+	
 	
 	/** Lista de los allocation hdrs donde se encuentra imputada esta factura */
 	private List<MAllocationHdr> allocHdrs;
@@ -141,10 +144,8 @@ public class InvoiceGlobalVoiding extends SvrProcess {
 		// Anular la factura
 		voidInvoice();
 		
-		// DEPRECATED: No se anulan los débitos/créditos de los allocation de la factura parámetro
-		// Anular los débitos/créditos que se encuentran referenciadas por los
-		// allocations de la factura parámetro
-//		voidDebitsCredits();
+		// Anular los débitos anulables asociados
+		voidOtherDebits();
 		
 		// Anular el pedido
 		voidOrder();
@@ -173,6 +174,8 @@ public class InvoiceGlobalVoiding extends SvrProcess {
         initInOut();
         // Caja Diaria
  		initPOSJournal();
+ 		// Otros débitos
+ 		initOtherDebits();
 	}
 	
 	/**
@@ -267,31 +270,26 @@ public class InvoiceGlobalVoiding extends SvrProcess {
 		}
 	}	
 	
+	protected void voidInvoice(MInvoice invoice) throws Exception{
+		voidInvoice(invoice, true);
+	}
+	
 	/**
-	 * Anula la factura
+	 * Anula la factura y los débitos relacionados
 	 * 
 	 * @throws Exception
 	 *             en caso de error
 	 */
 	protected void voidInvoice() throws Exception{
-		// Anulo la factura
-		voidInvoice(getInvoice(), true);
+		// Anulo la factura y los débitos relacionados
+		voidInvoice(getInvoice());
 	}
-
-	/* DEPRECATED: No se anulan los débitos/créditos de los allocation de la factura parámetro
-	/**
-	 * Anular los débitos y créditos que están referenciados e imputados dentro
-	 * de los allocations que referencian a la factura parámetro (NO SE ANULAN
-	 * LOS PEDIDOS Y REMITOS DE LOS DÉBITOS/CRÉDITOS INDICADOS)
-	 * 
-	 * @throws Exception en caso de errores
-	 *
-	protected void voidDebitsCredits() throws Exception{
-		// Iterar por los débitos/créditos y anularlos
-		for (MInvoice invoice : getDebitsCredits()) {
+	
+	protected void voidOtherDebits() throws Exception{
+		for (MInvoice invoice : getDebits()) {
 			voidInvoice(invoice);
 		}
-	}*/
+	}
 	
 	/**
 	 * Anula el pedido relacionado a la factura si es que existe alguno
@@ -453,9 +451,9 @@ public class InvoiceGlobalVoiding extends SvrProcess {
 					// una de las facturas de débito y crédito
 					debitsCount = DB.getSQLValue(get_TrxName(),
 							getInvoiceDebitAllocationHdrQuery(), mAllocationHdr.getID());
-					// Si es mayor a 1 significa que ese allocation contiene más de 1
-					// débito, o sea, otro débito excluyendo a la factura a anular
-					// parámetro al proceso
+					// Si la cantidad de débitos no anulables del allocation
+					// supera a 1, entonces hay más de 1 débito no anulable en
+					// el allocation, por lo tanto no se puede anular
 					if(debitsCount > 1){
 						throw new Exception(getMsg("ExistsAnotherDebitsInAllocation"));
 					}
@@ -465,53 +463,6 @@ public class InvoiceGlobalVoiding extends SvrProcess {
 		}
 		setAllocHdrs(realAllocHdrs);
 	}
-	
-	/* DEPRECATED: No anular ni los débitos ni créditos de los allocations de la factura
-	/**
-	 * Inicialización de los allocations hdrs de la factura y de los débitos y
-	 * créditos que poseen cada una de ellas. Si alguno de esos débitos o
-	 * créditos se encuentra imputada en otro allocation distinto a los que
-	 * posee la factura parámetro, entonces se tira una excepción con un mensaje
-	 * de error indicando tal motivo.
-	 * 
-	 * @throws Exception
-	 *             en caso que se cumpla lo indicado
-	 *
-	protected void initAllocationHdrs() throws Exception{
-		// Obtener los allocation hdrs donde se encuentra esta factura
-		MAllocationHdr[] allocHdrs = MAllocationHdr.getOfInvoice(getCtx(),
-				invoiceID, get_TrxName());
-		// Obtener la lista de ids de allocation hdrs
-		Set<Integer> allocHdrsIDs = new HashSet<Integer>();
-		for (MAllocationHdr mAllocationHdr : allocHdrs) {
-			allocHdrsIDs.add(mAllocationHdr.getID());
-		}
-		// Obtengo los ids de débitos y créditos 
-		Set<Integer> debsCreds = getDebitsCreditsIDs(allocHdrsIDs);
-		Set<MInvoice> debsCredsInvoices = new HashSet<MInvoice>();
-		MInvoice debCred;
-		int allocHdrCount;
-		for (Integer debCredID : debsCreds) {
-			debCred = new MInvoice(getCtx(), debCredID, get_TrxName());
-			// Obtener la cantidad de allocations hdrs donde se encuentran cada
-			// una de las facturas de débito y crédito
-			allocHdrCount = DB.getSQLValue(get_TrxName(),
-					getAllocationHdrInvoicesQuery(allocHdrsIDs), debCredID,
-					debCredID);
-			// Si es mayor a 0 significa que no solo los allocation de la
-			// factura parámetro contienen a ese débito/crédito sino que
-			// pertenece a otros, entonces error
-			if(allocHdrCount > 0){
-				throw new Exception(
-						"La factura de debito o credito con nro "
-								+ debCred.getDocumentNo()
-								+ ", que la referencia una imputacion de la factura parametro, contiene otras imputaciones que no referencian a la factura parametro.");
-			}
-			debsCredsInvoices.add(debCred);
-		}
-		setAllocHdrs(Arrays.asList(allocHdrs));
-		setDebitsCredits(debsCredsInvoices);
-	}*/
 	
 	/**
 	 * Inicializo el pedido relacionado a esta factura
@@ -604,6 +555,18 @@ public class InvoiceGlobalVoiding extends SvrProcess {
 		}
 	}
 
+	protected void initOtherDebits() throws Exception{
+		Set<Integer> allocHrdIDs = new HashSet<Integer>();
+		for (MAllocationHdr allocation : getAllocHdrs()) {
+			allocHrdIDs.add(allocation.getID());
+		}
+		Set<Integer> debitsIDs = getDebitsIDs(allocHrdIDs);
+		setDebits(new HashSet<MInvoice>());
+		for (Integer debitID : debitsIDs) {
+			getDebits().add(new MInvoice(getCtx(), debitID, get_TrxName()));
+		}
+	}
+	
 	/**
 	 * Verificar existencias de remitos. Primero se verifica la cantidad de
 	 * remitos que existen para los criterios actuales, si existe mas de uno
@@ -661,7 +624,6 @@ public class InvoiceGlobalVoiding extends SvrProcess {
 		return inoutID;
 	}
 
-	/* DEPRECTED: No se anulan los débitos/créditos de los allocation de la factura parámetro
 	/**
 	 * Obtener los débitos y créditos imputados dentro de los allocation
 	 * parámetro, se excluye la factura parámetro al proceso
@@ -671,35 +633,31 @@ public class InvoiceGlobalVoiding extends SvrProcess {
 	 * @return lista distinta de ids de facturas
 	 * @throws Exception
 	 *             en caso de error
-	 *
-	protected Set<Integer> getDebitsCreditsIDs(Set<Integer> allocationHdrIDs) throws Exception{
+	 */
+	protected Set<Integer> getDebitsIDs(Set<Integer> allocationHdrIDs) throws Exception{
 		Set<Integer> ids = new HashSet<Integer>();
 		if(allocationHdrIDs == null || allocationHdrIDs.size() <= 0) return ids;
 		String allocationHdrIDsSet = allocationHdrIDs.toString().replace('[',
 				'(').replace(']', ')');
-		String sql = "SELECT c_invoice_id, c_invoice_credit_id " +
+		String sql = "SELECT distinct c_invoice_id " +
 					 "FROM c_allocationhdr as ah " +
 					 "INNER JOIN c_allocationline as al ON (al.c_allocationhdr_id = ah.c_allocationhdr_id) " +
-					 "WHERE (docstatus IN ('CO','CL')) AND (al.c_invoice_id <> ?) AND (al.c_invoice_credit_id <> ?) AND ah.c_allocationhdr_id IN "+allocationHdrIDsSet; 
+					 "WHERE (docstatus IN ('CO','CL')) AND (al.c_invoice_id <> ?) AND (al.c_invoice_credit_id is null or al.c_invoice_credit_id <> ?) AND ah.c_allocationhdr_id IN "+allocationHdrIDsSet; 
 		PreparedStatement ps = DB.prepareStatement(sql, get_TrxName());
 		ps.setInt(1, getInvoice().getID());
 		ps.setInt(2, getInvoice().getID());
 		ResultSet rs = ps.executeQuery();
-		Integer debitID, creditID;
+		Integer debitID;
 		while(rs.next()){
 			debitID = rs.getInt("c_invoice_id");
-			creditID = rs.getInt("c_invoice_credit_id");
 			if(!Util.isEmpty(debitID, true)){
 				ids.add(debitID);
-			}
-			if(!Util.isEmpty(creditID, true)){
-				ids.add(creditID);
 			}
 		}
 		ps.close();
 		rs.close();
 		return ids;
-	}*/
+	}
 
 	/**
 	 * @return query que determina la cantidad de débitos que contiene un
@@ -716,7 +674,8 @@ public class InvoiceGlobalVoiding extends SvrProcess {
 	/**
 	 * @return query que determina la cantidad de débitos que contiene un
 	 *         allocation hdr particular que se le debe pasar como parámetro.
-	 *         Estos débitos deben ser realmente débitos y no créditos
+	 *         Estos débitos deben ser realmente débitos y no créditos, también
+	 *         deben ser no anulables
 	 */
 	protected String getInvoiceDebitAllocationHdrQuery(){
 		String sql = "SELECT count(distinct al.c_invoice_id) as cant " +
@@ -724,7 +683,7 @@ public class InvoiceGlobalVoiding extends SvrProcess {
 					 "INNER JOIN c_allocationline as al ON (ah.c_allocationhdr_id = al.c_allocationhdr_id) " +
 					 "INNER JOIN c_invoice as i ON (i.c_invoice_id = al.c_invoice_id) " +
 					 "INNER JOIN c_doctype as dt ON (dt.c_doctype_id = i.c_doctypetarget_id) " +
-					 "WHERE ah.c_allocationhdr_id = ? AND dt.docbasetype IN ('ARI', 'API')";
+					 "WHERE ah.c_allocationhdr_id = ? AND dt.docbasetype IN ('ARI', 'API') AND i.isvoidable = 'N'";
 		return sql;
 	} 
 	
@@ -1020,5 +979,13 @@ public class InvoiceGlobalVoiding extends SvrProcess {
 
 	public void setPosJournalPaymentID(Integer posJournalPaymentID) {
 		this.posJournalPaymentID = posJournalPaymentID;
+	}
+
+	public Set<MInvoice> getDebits() {
+		return debits;
+	}
+
+	public void setDebits(Set<MInvoice> debits) {
+		this.debits = debits;
 	}
 }
