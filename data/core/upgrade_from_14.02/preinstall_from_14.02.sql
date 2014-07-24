@@ -2718,3 +2718,7 @@ UNION ALL
   WHERE (ji.docstatus = ANY (ARRAY['VO'::bpchar, 'RE'::bpchar])) AND (ji.isfiscal IS NULL OR ji.isfiscal = 'N'::bpchar OR ji.isfiscal = 'Y'::bpchar AND ji.fiscalalreadyprinted = 'Y'::bpchar);
 
 ALTER TABLE c_pos_declaracionvalores_v OWNER TO libertya;
+
+--20140724-1134 Issue Google Code GC-24: No pueden utilizarse instrucciones SQL como lógica predeterminada en parámetros de informes
+alter table ad_process_para alter column defaultvalue type character varying(2000);
+
