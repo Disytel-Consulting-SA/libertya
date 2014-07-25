@@ -1487,7 +1487,9 @@ $V{LETRA}.equals("A") && $P{TIPOCOMPROBANTE}.equalsIgnoreCase("NOTA DE CREDITO")
 						height="50"
 						forecolor="#000000"
 						backcolor="#FFFFFF"
-						key="barcode-1"/>
+						key="barcode-1">
+							<printWhenExpression><![CDATA[new Boolean($P{FACTURA_ELECTRONICA_CODE} != null && $P{FACTURA_ELECTRONICA_CODE}.length() > 0)]]></printWhenExpression>
+						</reportElement>
 					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
 					<graphicElement stretchType="NoStretch" pen="None" fill="Solid" />
 					<imageExpression class="java.awt.Image"><![CDATA[it.businesslogic.ireport.barcode.BcImage.getBarcodeImage(13,$P{FACTURA_ELECTRONICA_CODE},true,false,null,0,100)]]></imageExpression>
