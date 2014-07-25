@@ -2772,3 +2772,110 @@ WITH (
   OIDS=FALSE
 );
 ALTER TABLE t_product OWNER TO libertya;
+
+--20140725-1455 Incorporación de branch GC_33 realizado por Saulo Gil: Modificación de importación de padrón por cambios en los formatos
+CREATE INDEX i_padron_sujeto_aux_new_cuit
+  ON libertya.i_padron_sujeto_aux_new
+  USING btree
+  (cuit);
+
+CREATE OR REPLACE FUNCTION libertya.update_bpartner_padron_bsas(p_ad_org_id integer, p_ad_client_id integer, p_ad_user_id integer, p_padrontype char(1), p_offset integer, p_chunksize integer)
+RETURNS void AS
+$BODY$
+DECLARE
+	aux RECORD;
+BEGIN
+
+	FOR AUX IN
+		SELECT * FROM i_padron_sujeto_aux_new
+		ORDER BY cuit
+		OFFSET p_offset
+		LIMIT p_chunksize
+	LOOP
+		UPDATE
+			c_bpartner_padron_bsas padron
+		SET
+			FECHA_DESDE = to_timestamp(aux.FECHA_DESDE, 'DDMMYYYY') 
+			, FECHA_HASTA = to_timestamp(aux.FECHA_HASTA, 'DDMMYYYY') 
+			, TIPO_CONTR_INSC = aux.TIPO_CONTR_INSC 
+			, ALTA_BAJA = aux.ALTA_BAJA 
+			, CBIO_ALICUOTA = aux.CBIO_ALICUOTA 
+			, PERCEPCION = (CASE aux.regimen WHEN 'P' THEN to_number(aux.alicuota , '9999999D99') ELSE padron.percepcion END) 
+			, RETENCION = (CASE aux.regimen WHEN 'R' THEN to_number(aux.alicuota, '9999999D99') ELSE padron.retencion END) 
+			, NRO_GRUPO_RET = (CASE aux.regimen WHEN 'R' THEN aux.NRO_GRUPO ELSE padron.NRO_GRUPO_RET END)
+			, NRO_GRUPO_PER = (CASE aux.regimen WHEN 'P' THEN aux.NRO_GRUPO ELSE padron.NRO_GRUPO_PER END)
+			, ISACTIVE = 'Y' 
+			, UPDATED = CURRENT_DATE 
+			, UPDATEDBY = p_ad_user_id
+		WHERE
+			padron.CUIT = aux.CUIT
+			AND padron.padrontype = p_padrontype   	
+			AND padron.FECHA_PUBLICACION = to_timestamp(aux.FECHA_PUBLICACION, 'DDMMYYYY')
+			AND AD_CLIENT_ID = p_ad_client_id
+			AND AD_ORG_ID = p_ad_org_id			
+			AND (
+				( 
+					aux.regimen = 'R' 
+					AND (padron.NRO_GRUPO_RET = aux.NRO_GRUPO  OR padron.NRO_GRUPO_RET = 0)
+				)
+				OR 
+				( 
+					aux.regimen = 'P' 
+					AND (padron.NRO_GRUPO_PER = aux.NRO_GRUPO OR padron.NRO_GRUPO_PER = 0) 
+				)
+			)
+		;
+
+		IF FOUND = FALSE THEN
+			INSERT
+			INTO c_bpartner_padron_bsas
+			(      
+				c_bpartner_padron_bsas_ID
+				, FECHA_PUBLICACION        
+				, FECHA_DESDE              
+				, FECHA_HASTA              
+				, CUIT                     
+				, TIPO_CONTR_INSC          
+				, ALTA_BAJA                
+				, CBIO_ALICUOTA            
+				, PERCEPCION               
+				, RETENCION                
+				, NRO_GRUPO_RET            
+				, NRO_GRUPO_PER            
+				, AD_CLIENT_ID             
+				, AD_ORG_ID                
+				, ISACTIVE                 
+				, CREATED                  
+				, UPDATED                  
+				, CREATEDBY                
+				, UPDATEDBY                
+				, padrontype                 
+			) 
+			VALUES
+			( 
+				nextval('seq_c_bpartner_padron_bsas')     
+				, to_timestamp(aux.FECHA_PUBLICACION, 'DDMMYYYY')     
+				, to_timestamp(aux.FECHA_DESDE, 'DDMMYYYY')           
+				, to_timestamp(aux.FECHA_HASTA, 'DDMMYYYY')           
+				, aux.CUIT
+				, aux.TIPO_CONTR_INSC                                 
+				, aux.ALTA_BAJA                                       
+				, aux.CBIO_ALICUOTA                                   
+				, to_number((CASE aux.regimen WHEN 'P' THEN aux.alicuota ELSE '0,00' END), '9999999D99')             
+				, to_number((CASE aux.regimen WHEN 'R' THEN aux.alicuota ELSE '0,00' END), '9999999D99')              
+				, (CASE aux.regimen WHEN 'R' THEN aux.NRO_GRUPO ELSE 0 END)
+				, (CASE aux.regimen WHEN 'P' THEN aux.NRO_GRUPO ELSE 0 END)
+				, p_ad_client_id
+				, p_ad_org_id
+				, 'Y'                                             
+				, CURRENT_DATE                                    
+				, CURRENT_DATE                                    
+				, p_ad_user_id
+				, p_ad_user_id
+				, p_padrontype
+			);
+		END IF;
+	END LOOP;
+END;
+$BODY$
+LANGUAGE 'plpgsql' VOLATILE; 
