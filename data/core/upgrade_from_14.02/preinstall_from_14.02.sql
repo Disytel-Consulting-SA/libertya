@@ -2722,3 +2722,53 @@ ALTER TABLE c_pos_declaracionvalores_v OWNER TO libertya;
 --20140724-1134 Issue Google Code GC-24: No pueden utilizarse instrucciones SQL como lógica predeterminada en parámetros de informes
 alter table ad_process_para alter column defaultvalue type character varying(2000);
 
+--20140725-0100 Nueva tabla temporal para reporte de exportación de artículos
+CREATE TABLE t_product
+(
+  ad_pinstance_id integer NOT NULL,
+  m_product_id integer NOT NULL,
+  ad_client_id integer NOT NULL,
+  ad_org_id integer NOT NULL,
+  isactive character(1) NOT NULL DEFAULT 'Y'::bpchar,
+  created timestamp without time zone NOT NULL DEFAULT ('now'::text)::timestamp(6) with time zone,
+  createdby integer NOT NULL,
+  updated timestamp without time zone NOT NULL DEFAULT ('now'::text)::timestamp(6) with time zone,
+  updatedby integer NOT NULL,
+  "value" character varying(40) NOT NULL,
+  "name" character varying(255) NOT NULL,
+  description character varying(255),
+  upc character varying(30),
+  ispurchased character(1) NOT NULL DEFAULT 'Y'::bpchar,
+  issold character(1) NOT NULL DEFAULT 'Y'::bpchar,
+  orgvalue character varying(40),
+  orgname character varying(60),
+  c_uom_id integer,
+  x12de355 character varying(4),
+  uomsymbol character varying(10),
+  m_product_category_id integer,
+  productcategory_value character varying(40),
+  productcategory_name character varying(60),
+  m_product_gamas_id integer,
+  productgamas_value character varying(100),
+  productgamas_name character varying(60),
+  m_product_lines_id integer,
+  productlines_value character varying(40),
+  productlines_name character varying(60),
+  m_product_family_id integer,
+  productfamily_value character varying(60),
+  productfamily_name character varying(60),
+  c_taxcategory_id integer,
+  c_taxcategory_name character varying(60),
+  producttype character(1) NOT NULL DEFAULT 'I'::bpchar,
+  checkoutplace character(1) NOT NULL DEFAULT 'B'::bpchar,
+  c_bpartner_id integer,
+  bpartner_value character varying(40),
+  bpartner_name character varying(60),
+  CONSTRAINT adpinstance_tproduct FOREIGN KEY (ad_pinstance_id)
+      REFERENCES ad_pinstance (ad_pinstance_id) MATCH SIMPLE
+      ON UPDATE NO ACTION ON DELETE CASCADE
+)
+WITH (
+  OIDS=FALSE
+);
+ALTER TABLE t_product OWNER TO libertya;
