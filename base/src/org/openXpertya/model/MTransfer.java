@@ -736,6 +736,7 @@ public class MTransfer extends X_M_Transfer implements DocAction {
         transfer.setTransferType(transferType);
         transfer.setMovementType(MTransfer.MOVEMENTTYPE_Outgoing);
         transfer.setC_Order_ID(order.getC_Order_ID());
+        transfer.setAD_Org_ID(order.getAD_Org_ID());
         
         /** Almacén Origen */
         transfer.setM_Warehouse_ID(M_Warehouse_Origin_ID);
