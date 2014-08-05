@@ -224,7 +224,7 @@ public class MAcctProcessor extends X_C_AcctProcessor implements ProcesadorOXP {
         }
 
 		String sql = 	" DELETE FROM C_AcctProcessorLog " +
-						" WHERE C_AcctProcessor_ID_ID=" + getC_AcctProcessor_ID() + 
+						" WHERE C_AcctProcessor_ID=" + getC_AcctProcessor_ID() + 
 						" AND Created < ('now'::text)::timestamp(6) - interval '" + getKeepLogDays() + " days'";
         int no = DB.executeUpdate( sql,get_TrxName());
 
