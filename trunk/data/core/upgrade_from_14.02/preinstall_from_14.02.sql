@@ -2878,4 +2878,377 @@ BEGIN
 	END LOOP;
 END;
 $BODY$
-LANGUAGE 'plpgsql' VOLATILE; 
+LANGUAGE 'plpgsql' VOLATILE;
+
+--20140804-2230 Eliminar función update_bpartner_padron_bsas si es que existe
+DROP FUNCTION IF EXISTS libertya.update_bpartner_padron_bsas(p_ad_org_id integer, p_ad_client_id integer, p_ad_user_id integer, p_padrontype char(1), p_offset integer, p_chunksize integer);
+--20140804-2230 Eliminar tabla i_padron_sujeto_aux si es que existe
+DROP TABLE IF EXISTS libertya.i_padron_sujeto_aux;
+--20140804-2230 Eliminar tabla i_padron_sujeto_aux_new si es que existe
+DROP TABLE IF EXISTS libertya.i_padron_sujeto_aux_new;
+
+--20140804-2230 Nueva tabla para soporte de nuevo formato de padrones de percepciones y retenciones de ARBA
+CREATE TABLE i_padron_bs_as
+(
+  regimen character(1),
+  fecha_publicacion character varying(8),
+  fecha_desde character varying(8),
+  fecha_hasta character varying(8),
+  cuit character varying(11),
+  tipo_contr_insc character(1),
+  alta_baja character(1),
+  cbio_alicuota character(1),
+  alicuota character varying(6),
+  nro_grupo integer,
+  last_column character(1)
+)
+WITH (
+  OIDS=TRUE
+);
+ALTER TABLE i_padron_bs_as OWNER TO libertya;
+
+--20140804-2230 Crear índice i_padron_bs_as_cuit
+CREATE INDEX i_padron_bs_as_cuit
+  ON libertya.i_padron_bs_as
+  USING btree
+  (cuit);
+
+--20140804-2230 Tabla para soporte de formato de padrón ALTO RIESGO - AGIP
+CREATE TABLE i_padron_caba_alto_riesgo
+(
+  fecha_publicacion character varying(10),
+  fecha_desde character varying(10),
+  fecha_hasta character varying(10),
+  cuit character varying(11),
+  tipo_contr_insc character(1),
+  alta_baja character(1),
+  cbio_alicuota character(1),
+  percepcion character varying(6),
+  retencion character varying(6),
+  nro_grupo_ret integer,
+  nro_grupo_per integer,
+  name_entidad_comercial character varying(255)
+)
+WITH (
+  OIDS=TRUE
+);
+ALTER TABLE i_padron_caba_alto_riesgo OWNER TO libertya;
+GRANT ALL ON TABLE i_padron_caba_alto_riesgo TO libertya;
+
+--20140804-2230 Incorporación de índice a la tabla i_padron_caba_alto_riesgo_cuit
+CREATE INDEX i_padron_caba_alto_riesgo_cuit
+  ON libertya.i_padron_caba_alto_riesgo
+  USING btree
+  (cuit);
+
+--20140804-2230 Tabla para soporte de formato de padrón REGIMEN SIMPLICADO - AGIP
+CREATE TABLE i_padron_caba_regimen_simplificado
+(
+  fecha_publicacion character varying(10),
+  fecha_desde character varying(10),
+  fecha_hasta character varying(10),
+  cuit character varying(11),
+  tipo_contr_insc character(1),
+  alta_baja character(1),
+  cbio_alicuota character(1),
+  percepcion character varying(6),
+  retencion character varying(6),
+  nro_grupo_ret integer,
+  nro_grupo_per integer,
+  name_entidad_comercial character varying(255)
+)
+WITH (
+  OIDS=TRUE
+);
+ALTER TABLE i_padron_caba_regimen_simplificado OWNER TO libertya;
+GRANT ALL ON TABLE i_padron_caba_regimen_simplificado TO libertya;
+
+--20140804-2230 Incorporación de índice a la tabla i_padron_caba_regimen_simplificado
+CREATE INDEX i_padron_caba_regimen_simplificado_cuit
+  ON libertya.i_padron_caba_regimen_simplificado
+  USING btree
+  (cuit);
+
+--20140804-2230 Crear función update_bpartner_padron_bsas from i_padron_bs_as
+CREATE OR REPLACE FUNCTION libertya.update_padron_from_i_padron_bs_as(p_ad_org_id integer, p_ad_client_id integer, p_ad_user_id integer, p_padrontype char(1), p_offset integer, p_chunksize integer)
+RETURNS void AS
+$BODY$
+DECLARE
+	aux RECORD;
+BEGIN
+
+	FOR AUX IN
+		SELECT * FROM i_padron_bs_as
+		ORDER BY cuit
+		OFFSET p_offset
+		LIMIT p_chunksize
+	LOOP
+		UPDATE
+			c_bpartner_padron_bsas padron
+		SET
+			FECHA_DESDE = to_timestamp(aux.FECHA_DESDE, 'DDMMYYYY') 
+			, FECHA_HASTA = to_timestamp(aux.FECHA_HASTA, 'DDMMYYYY') 
+			, TIPO_CONTR_INSC = aux.TIPO_CONTR_INSC 
+			, ALTA_BAJA = aux.ALTA_BAJA 
+			, CBIO_ALICUOTA = aux.CBIO_ALICUOTA 
+			, PERCEPCION = (CASE aux.regimen WHEN 'P' THEN to_number(aux.alicuota , '9999999D99') ELSE padron.percepcion END) 
+			, RETENCION = (CASE aux.regimen WHEN 'R' THEN to_number(aux.alicuota, '9999999D99') ELSE padron.retencion END) 
+			, NRO_GRUPO_RET = (CASE aux.regimen WHEN 'R' THEN aux.NRO_GRUPO ELSE padron.NRO_GRUPO_RET END)
+			, NRO_GRUPO_PER = (CASE aux.regimen WHEN 'P' THEN aux.NRO_GRUPO ELSE padron.NRO_GRUPO_PER END)
+			, ISACTIVE = 'Y' 
+			, UPDATED = CURRENT_DATE 
+			, UPDATEDBY = p_ad_user_id
+		WHERE
+			padron.CUIT = aux.CUIT
+			AND padron.padrontype = p_padrontype   	
+			AND padron.FECHA_PUBLICACION = to_timestamp(aux.FECHA_PUBLICACION, 'DDMMYYYY')
+			AND AD_CLIENT_ID = p_ad_client_id
+			AND AD_ORG_ID = p_ad_org_id			
+			AND (
+				( 
+					aux.regimen = 'R' 
+					AND (padron.NRO_GRUPO_RET = aux.NRO_GRUPO  OR padron.NRO_GRUPO_RET = 0)
+				)
+				OR 
+				( 
+					aux.regimen = 'P' 
+					AND (padron.NRO_GRUPO_PER = aux.NRO_GRUPO OR padron.NRO_GRUPO_PER = 0) 
+				)
+			)
+		;
+
+		IF FOUND = FALSE THEN
+			INSERT
+			INTO c_bpartner_padron_bsas
+			(      
+				c_bpartner_padron_bsas_ID
+				, FECHA_PUBLICACION        
+				, FECHA_DESDE              
+				, FECHA_HASTA              
+				, CUIT                     
+				, TIPO_CONTR_INSC          
+				, ALTA_BAJA                
+				, CBIO_ALICUOTA            
+				, PERCEPCION               
+				, RETENCION                
+				, NRO_GRUPO_RET            
+				, NRO_GRUPO_PER            
+				, AD_CLIENT_ID             
+				, AD_ORG_ID                
+				, ISACTIVE                 
+				, CREATED                  
+				, UPDATED                  
+				, CREATEDBY                
+				, UPDATEDBY                
+				, padrontype                 
+			) 
+			VALUES
+			( 
+				nextval('seq_c_bpartner_padron_bsas')     
+				, to_timestamp(aux.FECHA_PUBLICACION, 'DDMMYYYY')     
+				, to_timestamp(aux.FECHA_DESDE, 'DDMMYYYY')           
+				, to_timestamp(aux.FECHA_HASTA, 'DDMMYYYY')           
+				, aux.CUIT
+				, aux.TIPO_CONTR_INSC                                 
+				, aux.ALTA_BAJA                                       
+				, aux.CBIO_ALICUOTA                                   
+				, to_number((CASE aux.regimen WHEN 'P' THEN aux.alicuota ELSE '0,00' END), '9999999D99')             
+				, to_number((CASE aux.regimen WHEN 'R' THEN aux.alicuota ELSE '0,00' END), '9999999D99')              
+				, (CASE aux.regimen WHEN 'R' THEN aux.NRO_GRUPO ELSE 0 END)
+				, (CASE aux.regimen WHEN 'P' THEN aux.NRO_GRUPO ELSE 0 END)
+				, p_ad_client_id
+				, p_ad_org_id
+				, 'Y'                                             
+				, CURRENT_DATE                                    
+				, CURRENT_DATE                                    
+				, p_ad_user_id
+				, p_ad_user_id
+				, p_padrontype
+			);
+		END IF;
+	END LOOP;
+END;
+$BODY$
+LANGUAGE 'plpgsql' VOLATILE;
+
+--20140804-2230 Crear función update_bpartner_padron_bsas from i_padron_caba_alto_riesgo
+CREATE OR REPLACE FUNCTION libertya.update_padron_from_i_padron_caba_alto_riesgo(p_ad_org_id integer, p_ad_client_id integer, p_ad_user_id integer, p_padrontype char(1), p_offset integer, p_chunksize integer)
+RETURNS void AS
+$BODY$
+DECLARE
+	aux RECORD;
+BEGIN
+
+	FOR AUX IN
+		SELECT * FROM i_padron_caba_alto_riesgo
+		ORDER BY cuit
+		OFFSET p_offset
+		LIMIT p_chunksize
+	LOOP
+		UPDATE
+			c_bpartner_padron_bsas padron
+		SET
+			FECHA_DESDE = to_timestamp(to_number(aux.FECHA_DESDE , '99999999999')::text, 'DDMMYYYY')
+			, FECHA_HASTA = to_timestamp(to_number(aux.FECHA_HASTA , '99999999999')::text, 'DDMMYYYY')
+			, TIPO_CONTR_INSC = aux.TIPO_CONTR_INSC 
+			, ALTA_BAJA = aux.ALTA_BAJA 
+			, CBIO_ALICUOTA = aux.CBIO_ALICUOTA 
+			, PERCEPCION = to_number(aux.PERCEPCION , '9999999D99') 
+			, RETENCION = to_number(aux.RETENCION , '9999999D99') 
+			, NRO_GRUPO_RET = aux.NRO_GRUPO_RET
+			, NRO_GRUPO_PER = aux.NRO_GRUPO_PER
+			, ISACTIVE = 'Y' 
+			, UPDATED = CURRENT_DATE 
+			, UPDATEDBY = p_ad_user_id
+		WHERE
+			padron.CUIT = aux.CUIT
+			AND padron.padrontype = p_padrontype   	
+			AND padron.FECHA_PUBLICACION = to_timestamp(aux.FECHA_PUBLICACION, 'DDMMYYYY')
+			AND AD_CLIENT_ID = p_ad_client_id
+			AND AD_ORG_ID = p_ad_org_id
+		;
+
+		IF FOUND = FALSE THEN
+			INSERT
+			INTO c_bpartner_padron_bsas
+			(      
+				c_bpartner_padron_bsas_ID
+				, FECHA_PUBLICACION        
+				, FECHA_DESDE              
+				, FECHA_HASTA              
+				, CUIT                     
+				, TIPO_CONTR_INSC          
+				, ALTA_BAJA                
+				, CBIO_ALICUOTA            
+				, PERCEPCION               
+				, RETENCION                
+				, NRO_GRUPO_RET            
+				, NRO_GRUPO_PER            
+				, AD_CLIENT_ID             
+				, AD_ORG_ID                
+				, ISACTIVE                 
+				, CREATED                  
+				, UPDATED                  
+				, CREATEDBY                
+				, UPDATEDBY                
+				, padrontype                 
+			) 
+			VALUES
+			( 
+				nextval('seq_c_bpartner_padron_bsas')     
+				, to_timestamp(to_number(aux.FECHA_PUBLICACION , '99999999999')::text, 'DDMMYYYY')
+				, to_timestamp(to_number(aux.FECHA_DESDE , '99999999999')::text, 'DDMMYYYY')      
+				, to_timestamp(to_number(aux.FECHA_HASTA , '99999999999')::text, 'DDMMYYYY')
+				, aux.CUIT
+				, aux.TIPO_CONTR_INSC                                 
+				, aux.ALTA_BAJA                                       
+				, aux.CBIO_ALICUOTA                                   
+				, to_number(aux.PERCEPCION , '9999999D99')       
+				, to_number(aux.RETENCION , '9999999D99')          
+				, aux.NRO_GRUPO_RET
+				, aux.NRO_GRUPO_PER
+				, p_ad_client_id
+				, p_ad_org_id
+				, 'Y'                                             
+				, CURRENT_DATE                                    
+				, CURRENT_DATE                                    
+				, p_ad_user_id
+				, p_ad_user_id
+				, p_padrontype
+			);
+		END IF;
+	END LOOP;
+END;
+$BODY$
+LANGUAGE 'plpgsql' VOLATILE;
+
+--20140804-2230 Crear función update_bpartner_padron_bsas from i_padron_regimen_simplificado
+CREATE OR REPLACE FUNCTION libertya.update_padron_from_i_padron_caba_regimen_simplificado(p_ad_org_id integer, p_ad_client_id integer, p_ad_user_id integer, p_padrontype char(1), p_offset integer, p_chunksize integer)
+RETURNS void AS
+$BODY$
+DECLARE
+	aux RECORD;
+BEGIN
+
+	FOR AUX IN
+		SELECT * FROM i_padron_caba_regimen_simplificado
+		ORDER BY cuit
+		OFFSET p_offset
+		LIMIT p_chunksize
+	LOOP
+		UPDATE
+			c_bpartner_padron_bsas padron
+		SET
+			FECHA_DESDE = to_timestamp(to_number(aux.FECHA_DESDE , '99999999999')::text, 'DDMMYYYY')
+			, FECHA_HASTA = to_timestamp(to_number(aux.FECHA_HASTA , '99999999999')::text, 'DDMMYYYY')
+			, TIPO_CONTR_INSC = aux.TIPO_CONTR_INSC 
+			, ALTA_BAJA = aux.ALTA_BAJA 
+			, CBIO_ALICUOTA = aux.CBIO_ALICUOTA 
+			, PERCEPCION = to_number(aux.PERCEPCION , '9999999D99') 
+			, RETENCION = to_number(aux.RETENCION , '9999999D99') 
+			, NRO_GRUPO_RET = aux.NRO_GRUPO_RET
+			, NRO_GRUPO_PER = aux.NRO_GRUPO_PER
+			, ISACTIVE = 'Y' 
+			, UPDATED = CURRENT_DATE 
+			, UPDATEDBY = p_ad_user_id
+		WHERE
+			padron.CUIT = aux.CUIT
+			AND padron.padrontype = p_padrontype   	
+			AND padron.FECHA_PUBLICACION = to_timestamp(aux.FECHA_PUBLICACION, 'DDMMYYYY')
+			AND AD_CLIENT_ID = p_ad_client_id
+			AND AD_ORG_ID = p_ad_org_id
+		;
+
+		IF FOUND = FALSE THEN
+			INSERT
+			INTO c_bpartner_padron_bsas
+			(      
+				c_bpartner_padron_bsas_ID
+				, FECHA_PUBLICACION        
+				, FECHA_DESDE              
+				, FECHA_HASTA              
+				, CUIT                     
+				, TIPO_CONTR_INSC          
+				, ALTA_BAJA                
+				, CBIO_ALICUOTA            
+				, PERCEPCION               
+				, RETENCION                
+				, NRO_GRUPO_RET            
+				, NRO_GRUPO_PER            
+				, AD_CLIENT_ID             
+				, AD_ORG_ID                
+				, ISACTIVE                 
+				, CREATED                  
+				, UPDATED                  
+				, CREATEDBY                
+				, UPDATEDBY                
+				, padrontype                 
+			) 
+			VALUES
+			( 
+				nextval('seq_c_bpartner_padron_bsas')     
+				, to_timestamp(to_number(aux.FECHA_PUBLICACION , '99999999999')::text, 'DDMMYYYY')
+				, to_timestamp(to_number(aux.FECHA_DESDE , '99999999999')::text, 'DDMMYYYY')      
+				, to_timestamp(to_number(aux.FECHA_HASTA , '99999999999')::text, 'DDMMYYYY')
+				, aux.CUIT
+				, aux.TIPO_CONTR_INSC                                 
+				, aux.ALTA_BAJA                                       
+				, aux.CBIO_ALICUOTA                                   
+				, to_number(aux.PERCEPCION , '9999999D99')       
+				, to_number(aux.RETENCION , '9999999D99')          
+				, aux.NRO_GRUPO_RET
+				, aux.NRO_GRUPO_PER
+				, p_ad_client_id
+				, p_ad_org_id
+				, 'Y'                                             
+				, CURRENT_DATE                                    
+				, CURRENT_DATE                                    
+				, p_ad_user_id
+				, p_ad_user_id
+				, p_padrontype
+			);
+		END IF;
+	END LOOP;
+END;
+$BODY$
+LANGUAGE 'plpgsql' VOLATILE;

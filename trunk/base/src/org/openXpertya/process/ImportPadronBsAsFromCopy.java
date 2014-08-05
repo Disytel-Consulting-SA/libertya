@@ -27,7 +27,11 @@ public class ImportPadronBsAsFromCopy extends SvrProcess {
          * atrás, y así sucesivamente. El resto de registros anteriores se
          * eliminarán.
          */
-        private static final String MANTENIMIENTO_PADRON = "MantenimientoPadron";
+        private static final String MANTENIMIENTO_PADRON = "MantenimientoPadron";        
+        
+        private static final String TABLA_PADRON_ALTO_RIESGO = "i_padron_caba_alto_riesgo";
+        private static final String TABLA_PADRON_REGIMEN_SIMPLIFICADO = "i_padron_caba_regimen_simplificado";
+        private static final String TABLA_PADRON_BS_AS = "i_padron_bs_as";
         
         private int p_AD_Org_ID = 0;
         private int p_ChunkSize = 50000;        
@@ -45,7 +49,7 @@ public class ImportPadronBsAsFromCopy extends SvrProcess {
         private int regDeleted; 
         
         private StringBuffer sql;
-
+        private String table_aux = null;
         
          
         @Override
@@ -75,40 +79,52 @@ public class ImportPadronBsAsFromCopy extends SvrProcess {
         
         @Override
         protected String doIt() throws Exception {
-                /** Se elimina el contenido de la tabla i_padron_sujeto_aux */
-                sql = new StringBuffer();
-                sql.append("DELETE FROM i_padron_sujeto_aux_new");
-                DB.executeUpdate(sql.toString());
-                
-                /** Se copia el contenido del padrón a la tabla i_padron_sujeto_aux */
-                long time  = System.currentTimeMillis();
-                sql = new StringBuffer();
-                sql.append("COPY i_padron_sujeto_aux_new FROM '"+ getPath() + p_NameCsvFile + "' WITH DELIMITER '" + getSeparatorCharacterCSV() + "'");
-                DB.executeUpdate(sql.toString());
-                time = System.currentTimeMillis() - time;
-                log.info("Se importó el archivo " + p_NameCsvFile + " en " + time + " ms");
-                
-                /** Se ejecuta el proceso de mantenimiento de padrón eliminando aquellos padrones que ya no se usan */
-                regDeleted = maintainPadronTable();
-                
-                /** Se insertan los registros a la tabla c_bpartner_padron_bsas */
-                time  = System.currentTimeMillis();             
-                actualizarPadron();
-                time = System.currentTimeMillis() - time;
-                log.info("Se actualizó el padrón en " + time + " ms");
-                
-                /** Se actualiza el campo c_bpartner_id de la tabla c_bpartner_padron_bsas*/
-                updateCBPartner();
+        	
+        	/* Seleccionar tabla auxiliar segun tipo de padron */
+        	if( p_PadronType.compareTo(X_C_BPartner_Padron_BsAs.PADRONTYPE_PadrónBsAs) == 0 ) {
+        		table_aux = ImportPadronBsAsFromCopy.TABLA_PADRON_BS_AS;
+            } else if( p_PadronType.compareTo(X_C_BPartner_Padron_BsAs.PADRONTYPE_PadrónDeAltoRiesgoCABA) == 0 ) {
+            	table_aux = ImportPadronBsAsFromCopy.TABLA_PADRON_ALTO_RIESGO;
+            } else if( p_PadronType.compareTo(X_C_BPartner_Padron_BsAs.PADRONTYPE_RégimenSimplificadoCABA) == 0 ) {
+            	table_aux = ImportPadronBsAsFromCopy.TABLA_PADRON_REGIMEN_SIMPLIFICADO;
+            } else {
+                log.log( Level.SEVERE,"Unknown Table for: " + p_PadronType );
+            }
+    	
+            /** Se elimina el contenido de la tabla temporal */
+            sql = new StringBuffer();
+            sql.append("DELETE FROM " + table_aux );
+            DB.executeUpdate(sql.toString());
+                       
+            /** Se copia el contenido del padrón a la tabla temporal */
+            long time  = System.currentTimeMillis();
+            sql = new StringBuffer();
+            sql.append("COPY " + table_aux + " FROM '"+ getPath() + p_NameCsvFile + "' WITH DELIMITER '" + getSeparatorCharacterCSV() + "'");
+            DB.executeUpdate(sql.toString());
+            time = System.currentTimeMillis() - time;
+            log.info("Se importó el archivo " + p_NameCsvFile + " en " + time + " ms");
+                       
+            /** Se ejecuta el proceso de mantenimiento de padrón eliminando aquellos padrones que ya no se usan */
+            regDeleted = maintainPadronTable();
+            
+            /** Se insertan los registros a la tabla c_bpartner_padron_bsas */
+            time  = System.currentTimeMillis();             
+            actualizarPadron();
+            time = System.currentTimeMillis() - time;
+            log.info("Se actualizó el padrón en " + time + " ms");
+            
+            /** Se actualiza el campo c_bpartner_id de la tabla c_bpartner_padron_bsas*/
+            updateCBPartner();
 
-                log.log (Level.SEVERE,"doIt - Entidades Comerciales NO Encontradas =" + (regInserted - partnerFound));
-                
-                
-                addLog (0, null, new BigDecimal (regDeleted), "Registros eliminados por Mantenimiento de Padron");
-                addLog (0, null, new BigDecimal (partnerFound), "Entidades Comerciales Encontrados");
-                addLog (0, null, new BigDecimal (regInserted - partnerFound), "Entidades Comerciales No Encontrados");
-                addLog (0, null, new BigDecimal (regInserted), "Entidades Comerciales insertados");
+            log.log (Level.SEVERE,"doIt - Entidades Comerciales NO Encontradas =" + (regInserted - partnerFound));
+            
+            
+            addLog (0, null, new BigDecimal (regDeleted), "Registros eliminados por Mantenimiento de Padron");
+            addLog (0, null, new BigDecimal (partnerFound), "Entidades Comerciales Encontrados");
+            addLog (0, null, new BigDecimal (regInserted - partnerFound), "Entidades Comerciales No Encontrados");
+            addLog (0, null, new BigDecimal (regInserted), "Entidades Comerciales insertados");
 
-                return "Proceso finalizado satisfactoriamente";
+            return "Proceso finalizado satisfactoriamente";
         }
 
         private void updateCBPartner() {
@@ -191,7 +207,7 @@ public class ImportPadronBsAsFromCopy extends SvrProcess {
         }
         
         /**
-         * Copia registros desde la tabla i_padron_sujeto_aux a la
+         * Copia registros desde la tabla temporal a la
          * tabla c_bpartner_padron_bsas
          * 
          * @throws Exception
@@ -203,20 +219,20 @@ public class ImportPadronBsAsFromCopy extends SvrProcess {
 
                 int qty = contarRegistrosAux();
                 
-                String sql = "{ call update_bpartner_padron_bsas(?, ?, ?, ?, ?, ?) }";
+                String sql = "{ call update_padron_from_" + table_aux + "(?, ?, ?, ?, ?, ?) }";
 
         for(int offset = 0; offset < qty; offset += p_ChunkSize)
         {
 
-                        try {
-                                time = System.currentTimeMillis();                              
-                                trxName = Trx.createTrxName();
-                                Trx.getTrx(trxName).start();
-                                
-                                cs = DB.prepareCall(sql, ResultSet.CONCUR_UPDATABLE, true, trxName);                            
+                try {
+                        time = System.currentTimeMillis();                              
+                        trxName = Trx.createTrxName();
+                        Trx.getTrx(trxName).start();
+                        
+                        cs = DB.prepareCall(sql, ResultSet.CONCUR_UPDATABLE, true, trxName);                            
 
-                                int i = 0;
-                                DB.setParameter(cs, ++i, p_AD_Org_ID);
+                        int i = 0;
+                        DB.setParameter(cs, ++i, p_AD_Org_ID);
                         DB.setParameter(cs, ++i, ad_Client_ID);
                         DB.setParameter(cs, ++i, ad_User_ID);
                         DB.setParameter(cs, ++i, p_PadronType);
@@ -241,11 +257,12 @@ public class ImportPadronBsAsFromCopy extends SvrProcess {
         }
                         
                 log.log (Level.SEVERE,"doIt - Registros Pasados al sistema =" + qty);
+                regInserted = qty;
         }
         
         protected int contarRegistrosAux(){
                 int c = 0;
-                String sql = "select coalesce(count(*),0) from i_padron_sujeto_aux_new";
+                String sql = "select coalesce(count(*),0) from " + table_aux;
                 PreparedStatement ps = DB.prepareStatement(sql.toString());
                 
                 try {
