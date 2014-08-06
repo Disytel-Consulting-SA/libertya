@@ -120,7 +120,7 @@ public class BalanceReport extends SvrProcess {
 		sqlDoc.append(" 	AND d.AD_Client_ID = ").append(getAD_Client_ID()); 
 		sqlDoc.append(" 	AND bp.isactive = 'Y' ");
 		if(p_DateTrx_To != null){
-			sqlDoc.append(" 	AND d.truedatetrx <= ?::timestamp");
+			sqlDoc.append(" 	AND d.truedatetrx::date <= ?::date");
 		}
 		sqlDoc.append(p_AccountType.equalsIgnoreCase("C") ? " AND bp.iscustomer = 'Y' "
 				: " AND bp.isvendor = 'Y' ");
@@ -135,7 +135,7 @@ public class BalanceReport extends SvrProcess {
 			sqlDoc.append("fecha_fact_antigua");		
 		
 		// ejecutar la consulta y cargar la tabla temporal
-		PreparedStatement pstmt = DB.prepareStatement(sqlDoc.toString(), get_TrxName());
+		PreparedStatement pstmt = DB.prepareStatement(sqlDoc.toString(), get_TrxName(), true);
 		int i = 1;
 		// Parámetros de sqlDoc
 		if(p_DateTrx_To != null){
