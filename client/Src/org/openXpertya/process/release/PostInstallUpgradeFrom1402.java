@@ -87,6 +87,11 @@ public class PostInstallUpgradeFrom1402 extends PluginPostInstallProcess {
 	protected final static String PRODUCT_MOVEMENTS_JASPER_REPORT_UID = "CORE-AD_JasperReport-1010079";
 	protected final static String PRODUCT_MOVEMENTS_JASPER_REPORT_FILENAME = "ProductMovements.jasper";
 	
+	/** UID del informe Historia de Artículos*/
+	protected final static String HISTORIA_DE_ARTICULOS_REPORT_UID = "CORE-AD_Process-1010341";
+	/** Nombre del .jrxml del informe Historia de Artículos*/
+	protected final static String HISTORIA_DE_ARTICULOS_REPORT_FILENAME = "HistoriaDeArticulos.jrxml";
+	
 	@Override
 	protected String doIt() throws Exception {
 		super.doIt();
@@ -307,7 +312,18 @@ public class PostInstallUpgradeFrom1402 extends PluginPostInstallProcess {
 						.readBinaryFromJar(
 								jarFileURL,
 								getBinaryFileURL(PRODUCT_MOVEMENTS_JASPER_REPORT_FILENAME)));
-		
+
+		// Informe de Historia de Artículos
+		MProcess.addAttachment(
+				get_TrxName(),
+				getCtx(),
+				HISTORIA_DE_ARTICULOS_REPORT_UID,
+				HISTORIA_DE_ARTICULOS_REPORT_FILENAME,
+				JarHelper
+						.readBinaryFromJar(
+								jarFileURL,
+								getBinaryFileURL(HISTORIA_DE_ARTICULOS_REPORT_FILENAME)));
+				
 		return " ";
 	}
 
