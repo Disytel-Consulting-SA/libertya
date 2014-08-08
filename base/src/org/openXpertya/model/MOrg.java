@@ -20,20 +20,19 @@
 
 package org.openXpertya.model;
 
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Properties;
+import java.util.logging.Level;
+
 import org.openXpertya.util.CCache;
 import org.openXpertya.util.DB;
 import org.openXpertya.util.Env;
 import org.openXpertya.util.Msg;
-
 //~--- Importaciones JDK ------------------------------------------------------
-
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-
-import java.util.ArrayList;
-import java.util.Properties;
-import java.util.logging.Level;
 
 /**
  *      Organization Model
@@ -274,41 +273,33 @@ public class MOrg extends X_AD_Org {
 			}
 		}
 		
-		// Pasar a org Padre una org con documentos asociados
-		if(this.isSummary()){
-			String sql = "SELECT COUNT(o.*) + COUNT(i.*) + COUNT(p.*) + COUNT(m.*) + COUNT(b.*) + COUNT(r.*) + COUNT(w.*) " +
-
-			" FROM C_Invoice i " +
-
-			" LEFT JOIN C_Order o ON o.AD_Org_ID= " + this.getAD_Org_ID() +
-			" LEFT JOIN C_Payment p ON p.AD_Org_ID= " + this.getAD_Org_ID() +
-			" LEFT JOIN M_InOut m ON m.AD_Org_ID= " + this.getAD_Org_ID() +
-			" LEFT JOIN C_BPartner b ON b.AD_Org_ID= " + this.getAD_Org_ID() +
-			" LEFT JOIN M_Product r ON r.AD_Org_ID= " + this.getAD_Org_ID() +
-			" LEFT JOIN M_WareHouse w ON w.AD_Org_ID= " + this.getAD_Org_ID() +
-
-			" WHERE i.AD_Org_ID = " + this.getAD_Org_ID() + 
-			" OR o.AD_Org_ID = " + this.getAD_Org_ID() +
-			" OR p.AD_Org_ID = " + this.getAD_Org_ID() +
-			" OR m.AD_Org_ID = " + this.getAD_Org_ID() +
-			" OR b.AD_Org_ID = " + this.getAD_Org_ID() +
-			" OR r.AD_Org_ID = " + this.getAD_Org_ID() +
-			" OR w.AD_Org_ID = " + this.getAD_Org_ID() +
-			"";
-			int poseeDocumentos = DB.getSQLValue(get_TrxName(), sql);
-			if(poseeDocumentos > 0){
-				log.saveError("SaveError", Msg.translate(Env.getCtx(),"No se puede convertir a organizacion 'Padre' una organizacion que contiene documentos asociados!"));
-				return false;
+		if(!newRecord && is_ValueChanged("IsSummary")){
+			// Pasar a org Padre una org con documentos asociados
+			if(isSummary()){
+				List<String> documentTableNames = new ArrayList<String>();
+				documentTableNames.add(X_C_Order.Table_Name);
+				documentTableNames.add(X_C_Invoice.Table_Name);
+				documentTableNames.add(X_C_Payment.Table_Name);
+				documentTableNames.add(X_M_InOut.Table_Name);
+				documentTableNames.add(X_M_Warehouse.Table_Name);
+				boolean poseeDocumentos = false;
+				for (int i = 0; i < documentTableNames.size() && !poseeDocumentos; i++) {
+					poseeDocumentos = PO.existRecordFor(getCtx(),
+							documentTableNames.get(i), "ad_org_id = ?",
+							new Object[]{getAD_Org_ID()}, get_TrxName());
+				}
+				if(poseeDocumentos){
+					log.saveError("SaveError", Msg.translate(Env.getCtx(),"No se puede convertir a organizacion 'Padre' una organizacion que contiene documentos asociados!"));
+					return false;
+				}
 			}
-		}
-		
-		// Pasar a org hija una org padre que ya contiene hijas
-		if(!this.isSummary()){
-			log.fine("Va a guardar organizacion hija, verificar si antes no era padre...");
-			ArrayList<MOrg> hijas = this.getOrgsChilds();
-			if(hijas.size() > 0){
-				log.saveError("SaveError", Msg.translate(Env.getCtx(), "No se puede convertir a organizacion 'Hija' una organizacion que ya contiene organizaciones 'hijas!'"));
-				return false;
+			else{
+				// Pasar a org hija una org padre que ya contiene hijas
+				ArrayList<MOrg> hijas = this.getOrgsChilds();
+				if(hijas.size() > 0){
+					log.saveError("SaveError", Msg.translate(Env.getCtx(), "No se puede convertir a organizacion 'Hija' una organizacion que ya contiene organizaciones 'hijas!'"));
+					return false;
+				}
 			}
 		}
 		
