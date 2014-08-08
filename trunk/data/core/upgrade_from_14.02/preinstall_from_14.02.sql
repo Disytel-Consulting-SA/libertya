@@ -3252,3 +3252,45 @@ BEGIN
 END;
 $BODY$
 LANGUAGE 'plpgsql' VOLATILE;
+
+--20140808-2045 Crear función calculateCostOrderPrice
+CREATE OR REPLACE FUNCTION calculateCostOrderPrice(p_m_product_id integer, p_fecha_corte timestamp with time zone, p_ad_client_id integer, p_ad_org_id integer)
+  RETURNS numeric AS
+$BODY$
+DECLARE
+	v_Amount		NUMERIC;
+BEGIN
+	IF (p_fecha_corte IS NULL OR p_m_product_id = 0 OR p_ad_client_id = 0 OR p_ad_org_id = 0) THEN
+		return null;
+	END IF;
+
+	SELECT currencyconvert(priceactual, o.c_currency_id, 118, o.dateacct::timestamp with time zone, NULL::integer, o.ad_client_id, o.ad_org_id) AS precio
+	INTO 	v_Amount
+	FROM C_Order o 
+	INNER JOIN C_OrderLine ol ON (o.C_Order_ID = ol.C_Order_ID) 
+	WHERE (ol.M_Product_ID=p_m_product_id) AND (o.IsSoTrx = 'N') AND (o.DocStatus IN ('CO','CL')) AND (ol.DateOrdered::date <= p_fecha_corte::date) AND (o.AD_Client_ID = p_ad_client_id) AND (o.AD_Org_ID = p_ad_org_id)
+	ORDER BY ol.DateOrdered DESC LIMIT 1;
+
+	IF NOT FOUND THEN 
+		SELECT COALESCE(pp.pricestd, 0) 
+		INTO 	v_Amount
+		FROM M_ProductPrice pp 
+		WHERE (pp.M_Product_ID=p_m_product_id) 
+		     AND (pp.M_PriceList_Version_ID = (SELECT M_PriceList_Version_ID 
+						       FROM M_PriceList_Version plv 
+						       INNER JOIN M_PriceList pl ON plv.M_PriceList_ID = pl.M_PriceList_ID 
+						       WHERE (IsSoPriceList = 'N') AND (plv.AD_Org_ID = p_ad_org_id) 
+						       ORDER BY plv.Created 
+						       DESC LIMIT 1));
+		IF NOT FOUND THEN 
+			RETURN null; 
+		END IF;	
+	END IF;	
+	
+        RETURN v_Amount;
+END;
+
+$BODY$
+  LANGUAGE 'plpgsql' VOLATILE
+  COST 100;
+ALTER FUNCTION calculateCostOrderPrice(integer, timestamp with time zone, integer, integer) OWNER TO libertya;
