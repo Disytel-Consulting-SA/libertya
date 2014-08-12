@@ -1101,7 +1101,7 @@ public class VOrdenCobroModel extends VOrdenPagoModel {
 				if(Util.isEmpty(getPOS(),true)) throw new Exception(getMsg("NotExistPOSNumber"));
 				Integer posNumber = Integer.valueOf(getPOS());
 				// Se obtiene el tipo de documento para la factura.
-				documentType = MDocType.getDocType(getCtx(), docTypeKey,
+				documentType = MDocType.getDocType(getCtx(), invoice.getAD_Org_ID(), docTypeKey,
 						letra.getLetra(), posNumber, getTrxName());
 				if (documentType == null) {
 					throw new Exception(Msg.getMsg(getCtx(),

@@ -11,6 +11,7 @@ import org.openXpertya.model.MPOSJournal;
 import org.openXpertya.model.MRefList;
 import org.openXpertya.reflection.CallResult;
 import org.openXpertya.util.AUserAuthModel;
+import org.openXpertya.util.Env;
 import org.openXpertya.util.Msg;
 import org.openXpertya.util.UserAuthConstants;
 import org.openXpertya.util.UserAuthData;
@@ -73,7 +74,7 @@ public class OpenDrawerProcess extends SvrProcess {
 		if(Util.isEmpty(getPosNumber(), true)){
 			throw new Exception(Msg.getMsg(getCtx(), "CanGetPOSNumber"));
 		}
-		MDocType docType = MDocType.getDocType(getCtx(), DOCTYPE_BASE_KEY,
+		MDocType docType = MDocType.getDocType(getCtx(), Env.getAD_Org_ID(getCtx()), DOCTYPE_BASE_KEY,
 				LETTER, getPosNumber(), get_TrxName());
 		// Si tiene configurado una impresora fiscal, entonces abro el cajón de
 		// dinero

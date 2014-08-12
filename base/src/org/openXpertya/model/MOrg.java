@@ -33,6 +33,7 @@ import org.openXpertya.util.DB;
 import org.openXpertya.util.Env;
 import org.openXpertya.util.Msg;
 //~--- Importaciones JDK ------------------------------------------------------
+import org.openXpertya.util.Util;
 
 /**
  *      Organization Model
@@ -387,8 +388,29 @@ public class MOrg extends X_AD_Org {
      	 
       }
 
+      public static Integer getOrgParentID(Properties ctx, Integer orgID, String trxName){
+		return DB.getSQLValue(trxName, "select getnodepadre(?, ?, '"
+				+ X_AD_Tree.TREETYPE_Organization + "')",
+				Env.getAD_Client_ID(ctx), orgID);
+      }
     
-    
+	  public static List<Integer> getParentOrgs(Properties ctx, Integer orgID, boolean includeItIfIsFolder, String trxName){
+		  List<Integer> parentOrgsID = new ArrayList<Integer>();
+		  if(includeItIfIsFolder){
+			  MOrg org = MOrg.get(ctx, orgID);
+			  if(org.isSummary()){
+				  parentOrgsID.add(orgID);
+			  }
+		  }
+		  Integer orgParentID = 0;
+		  Integer auxOrgID = orgID;
+		  do {
+			  orgParentID = MOrg.getOrgParentID(ctx, auxOrgID, trxName);
+			  parentOrgsID.add(orgParentID);
+			  auxOrgID = orgParentID;
+		  } while (orgParentID != null && orgParentID >= 0);
+		  return parentOrgsID;
+	}
 }	// MOrg
 
 

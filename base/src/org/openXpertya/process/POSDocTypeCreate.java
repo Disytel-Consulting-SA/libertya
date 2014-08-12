@@ -6,11 +6,14 @@ import java.util.List;
 import java.util.Properties;
 
 import org.openXpertya.model.MDocType;
+import org.openXpertya.model.MOrg;
+import org.openXpertya.model.MOrgInfo;
 import org.openXpertya.model.MSequence;
 import org.openXpertya.util.CLogger;
 import org.openXpertya.util.DB;
 import org.openXpertya.util.Env;
 import org.openXpertya.util.Msg;
+import org.openXpertya.util.Util;
 
 
 public class POSDocTypeCreate extends SvrProcess {
@@ -37,7 +40,18 @@ public class POSDocTypeCreate extends SvrProcess {
 	private int p_PosNumber;
 	/** Datos de los tipos de documentos que se van a generar */
 	private List<DocTypeData> newDocTypes; 
-	
+	/** Organización de los tipos de documento a crear */
+	private int orgID = 0;
+
+	/**
+	 * CUIT de la organización carpeta parámetro o de la organización padre de
+	 * la organización parámetro. Si la organización parámetro no tiene padre,
+	 * entonces no se obtiene ningún CUIT. Esto permite tener tipos de documento
+	 * por organizaciones padre, es decir el tipo de documento A001 se puede
+	 * crear para distintas organizaciones carpeta, concatenando el cuit de la
+	 * org padre en el campo clave del tipo de documento
+	 */
+	private String orgParentCUIT;
 	
 	@Override
 	protected void prepare() {
@@ -49,6 +63,8 @@ public class POSDocTypeCreate extends SvrProcess {
                 ;
             else if(name.equals("POSNumber"))
                 p_PosNumber = ((BigDecimal)para[i].getParameter()).intValue();
+            else if(name.equals("AD_Org_ID"))
+                setOrgID(((BigDecimal)para[i].getParameter()).intValue());
 		}
 	}
 
@@ -63,6 +79,10 @@ public class POSDocTypeCreate extends SvrProcess {
 		String docTypesCreatedNames = "";
 		
 		try {
+			// Inicializar el CUIT a concatenar en la clave del tipo de
+			// documento en caso que la org parámetro sea padre o tenga una org
+			// padre distinta de 0
+			initOrgParentCUIT();
 			// Por cada tipo de documento a crear... 
 			for (DocTypeData docTypeData : getNewDocTypes()) {
 				// Solo se crea si se verifica que el mismo no existe 
@@ -101,6 +121,37 @@ public class POSDocTypeCreate extends SvrProcess {
 					 "[" + docTypesCreatedNames + "]";
 		}
 		return retMsg;
+	}
+	
+	private void initOrgParentCUIT(){
+		String cuit = "";
+		MOrgInfo orgInfo = null;
+		// Si la organización parámetro es 0, entonces no busco cuit porque es a
+		// nivel compañía
+		if(getOrgID() > 0){
+			// Si la organización parámetro es organización carpeta, entonces
+			// tomar el CUIT de esta
+			MOrg org = MOrg.get(getCtx(), getOrgID());
+			if(org.isSummary()){
+				orgInfo = MOrgInfo.get(getCtx(), getOrgID());				
+			}
+			// Si es organización concreta, obtener la organización padre de la
+			// organización parámetro
+			else{
+				Integer orgParentID = MOrg.getOrgParentID(getCtx(), getOrgID(),
+						get_TrxName());
+				// Si el padre es una organización distinta de 0, entonces
+				// obtengo el cuit de ese
+				if(orgParentID > 0){
+					orgInfo = MOrgInfo.get(getCtx(), orgParentID);
+				}
+			}
+		}
+		if(orgInfo != null){
+			cuit = Util.isEmpty(orgInfo.getCUIT(), true) ? "" : orgInfo
+					.getCUIT().replace("-", "").replace(" ", "");
+		}
+		setOrgParentCUIT(cuit);
 	}
 	
 	/**
@@ -209,6 +260,7 @@ public class POSDocTypeCreate extends SvrProcess {
         // Se crea la secuencia con numeración automática.
 		sequence = new MSequence(ctx, getAD_Client_ID(), dtd.getName(),
 				currentNext, 1, 1, get_TrxName());
+		sequence.setClientOrg(Env.getAD_Client_ID(ctx), getOrgID());
         sequence.setPrefix(prefix);
         sequence.setIsAutoSequence(true);
         // Se guarda la secuencia.
@@ -219,6 +271,7 @@ public class POSDocTypeCreate extends SvrProcess {
         
         // Se crea el tipo de documento.
         MDocType dt = new MDocType( ctx ,dtd.getDocBaseType(), dtd.getName(), get_TrxName());
+        dt.setClientOrg(Env.getAD_Client_ID(ctx), getOrgID());
         // Se asigna el nombre de impresión.
         if( (dtd.getPrintName() != null) && (dtd.getPrintName().length() > 0) )
             dt.setPrintName(dtd.getPrintName());    // Defaults to name
@@ -253,7 +306,8 @@ public class POSDocTypeCreate extends SvrProcess {
 	 */
 	private boolean docTypeExists(DocTypeData dtd) {
 		String sql = "SELECT C_DocType_ID FROM C_DocType WHERE AD_Client_ID = ? AND DocTypeKey = ?";
-		Integer docTypeID = (Integer)DB.getSQLObject(get_TrxName(), sql, new Object[] {getAD_Client_ID(), dtd.getDocTypeKey()});
+		Integer docTypeID = (Integer) DB.getSQLObject(get_TrxName(), sql,
+				new Object[] { getAD_Client_ID(), dtd.getDocTypeKey() });
 		return docTypeID != null;
 	}
 
@@ -277,7 +331,7 @@ public class POSDocTypeCreate extends SvrProcess {
 				// Tipos de Doc para Facturas.
 				docTypeName = DT_INVOICE_NAME + " " + letter + "-" + posNumber; 
 				printName   = DT_INVOICE_NAME + " " + letter;
-				newDocTypes.add(new DocTypeData(
+				newDocTypes.add(new DocTypeData(getOrgID(), getOrgParentCUIT(),
 						docTypeName, printName, MDocType.DOCBASETYPE_ARInvoice,
 						GL_ARI, MDocType.SIGNO_ISSOTRX_1, letter, 
 						MDocType.FISCALDOCUMENT_Invoice,
@@ -287,7 +341,7 @@ public class POSDocTypeCreate extends SvrProcess {
 				// Tipos de Doc para Notas de Débito.
 				docTypeName = DT_DEBIT_NOTE_NAME + " " + letter + "-" + posNumber; 
 				printName   = DT_DEBIT_NOTE_NAME + " " + letter;
-				newDocTypes.add(new DocTypeData(
+				newDocTypes.add(new DocTypeData(getOrgID(), getOrgParentCUIT(),
 						docTypeName, printName, MDocType.DOCBASETYPE_ARInvoice,
 						GL_ARI, MDocType.SIGNO_ISSOTRX_1, letter, 
 						MDocType.FISCALDOCUMENT_DebitNote,
@@ -297,7 +351,7 @@ public class POSDocTypeCreate extends SvrProcess {
 				// Tipos de Doc para Notas de Crédito.
 				docTypeName = DT_CREDIT_NOTE_NAME + " " + letter + "-" + posNumber; 
 				printName   = DT_CREDIT_NOTE_NAME + " " + letter;
-				newDocTypes.add(new DocTypeData(
+				newDocTypes.add(new DocTypeData(getOrgID(), getOrgParentCUIT(),
 						docTypeName, printName, MDocType.DOCBASETYPE_ARCreditMemo,
 						GL_ARI, MDocType.SIGNO_ISSOTRX__1, letter,
 						MDocType.FISCALDOCUMENT_CreditNote,
@@ -320,6 +374,22 @@ public class POSDocTypeCreate extends SvrProcess {
 		this.trxName = trxName;
 	}
 	
+	protected int getOrgID() {
+		return orgID;
+	}
+
+	protected void setOrgID(int orgID) {
+		this.orgID = orgID;
+	}
+
+	protected String getOrgParentCUIT() {
+		return orgParentCUIT;
+	}
+
+	protected void setOrgParentCUIT(String orgParentCUIT) {
+		this.orgParentCUIT = orgParentCUIT;
+	}
+
 	/**
 	 * POJO para tipos de documentos a crear.
 	 */
@@ -332,19 +402,35 @@ public class POSDocTypeCreate extends SvrProcess {
 		private String letter;
 		private String fiscalDocument;
 		private String docTypeOriginalKey;
+		private int orgID;
+		private String orgCUIT;
 	
 		/**
 		 * Constructor de la clase.
-		 * @param name Nombre del tipo de documento y secuencia.
-		 * @param printName Nombre de impresión.
-		 * @param docBaseType Tipo de documento base.
-		 * @param glCategoryID Categoría GL.
-		 * @param signo Signo del tipo de documento.
-		 * @param letter Letra del tipo de documento.
-		 * @param fiscalDocument Tipo de comprobante.
-		 * @param docTypeOriginalKey Clave base para el tipo de documento.
+		 * 
+		 * @param orgID
+		 *            id de la organización del tipo de doc
+		 * @param orgCUIT
+		 *            cuit de la organización a concatenar en la clave del tipo
+		 *            de doc
+		 * @param name
+		 *            Nombre del tipo de documento y secuencia.
+		 * @param printName
+		 *            Nombre de impresión.
+		 * @param docBaseType
+		 *            Tipo de documento base.
+		 * @param glCategoryID
+		 *            Categoría GL.
+		 * @param signo
+		 *            Signo del tipo de documento.
+		 * @param letter
+		 *            Letra del tipo de documento.
+		 * @param fiscalDocument
+		 *            Tipo de comprobante.
+		 * @param docTypeOriginalKey
+		 *            Clave base para el tipo de documento.
 		 */
-		public DocTypeData(String name, String printName, String docBaseType, int glCategoryID, String signo, String letter, String fiscalDocument, String docTypeOriginalKey) {
+		public DocTypeData(int orgID, String orgCUIT, String name, String printName, String docBaseType, int glCategoryID, String signo, String letter, String fiscalDocument, String docTypeOriginalKey) {
 			super();
 			this.name = name;
 			this.printName = printName;
@@ -354,10 +440,12 @@ public class POSDocTypeCreate extends SvrProcess {
 			this.letter = letter;
 			this.fiscalDocument = fiscalDocument;
 			this.docTypeOriginalKey = docTypeOriginalKey;
+			this.orgID = orgID;
+			this.orgCUIT = orgCUIT;
 		}
 		
 		public String getDocTypeKey() {
-			return getDocTypeOriginalKey() + getLetter() + getFormattedPosNumber();
+			return getDocTypeOriginalKey() + getLetter() + getFormattedPosNumber() + getOrgCUIT();
 		}
 
 		public String getDocBaseType() {
@@ -394,6 +482,14 @@ public class POSDocTypeCreate extends SvrProcess {
 
 		public void setDocTypeOriginalKey(String docTypeOriginalKey) {
 			this.docTypeOriginalKey = docTypeOriginalKey;
+		}
+		
+		public int getOrgID(){
+			return this.orgID;
+		}
+		
+		public String getOrgCUIT(){
+			return this.orgCUIT;
 		}
 	}
 }
