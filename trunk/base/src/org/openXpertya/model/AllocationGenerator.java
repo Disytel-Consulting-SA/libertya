@@ -1463,7 +1463,7 @@ public class AllocationGenerator {
 
 			if(Util.isEmpty(posNumber,true)) throw new Exception(getMsg("NotExistPOSNumber"));
 			// Se obtiene el tipo de documento para la factura.
-			documentType = MDocType.getDocType(getCtx(), docTypeKey,letra.getLetra(), posNumber, getTrxName());
+			documentType = MDocType.getDocType(getCtx(), invoice.getAD_Org_ID(), docTypeKey,letra.getLetra(), posNumber, getTrxName());
 			if (documentType == null) {
 				throw new Exception(Msg.getMsg(getCtx(),
 						"NonexistentPOSDocType", new Object[] { letra,

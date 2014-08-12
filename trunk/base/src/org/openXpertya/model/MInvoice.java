@@ -1844,7 +1844,7 @@ public class MInvoice extends X_C_Invoice implements DocAction {
 		// Si el Tipo de Documento Destino es 0, se calcula a partir del Nro de Punto de Venta y el Tipo de Comprobante (FC, NC, ND)
 		if (locale_ar){
 			if (getC_DocTypeTarget_ID() == 0) {
-				MDocType docType = MDocType.getDocType(getCtx(), getDocTypeBaseKey(getTipoComprobante()), getLetra(), getPuntoDeVenta(), get_TrxName());
+				MDocType docType = MDocType.getDocType(getCtx(), getAD_Org_ID(), getDocTypeBaseKey(getTipoComprobante()), getLetra(), getPuntoDeVenta(), get_TrxName());
 				if (docType != null){
 					setC_DocTypeTarget_ID(docType.getC_DocType_ID());
 				}
@@ -4439,7 +4439,7 @@ public class MInvoice extends X_C_Invoice implements DocAction {
 					ptoVenta = getPuntoDeVenta();
 				}
 				// Se obtiene el tipo de documento del contramovimiento.
-				reversalDocType = MDocType.getDocType(getCtx(),
+				reversalDocType = MDocType.getDocType(getCtx(), getAD_Org_ID(),
 						reversalDocTypeBaseKey, getLetra(), ptoVenta,
 						get_TrxName());
 			}

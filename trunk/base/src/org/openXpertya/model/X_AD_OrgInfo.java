@@ -7,7 +7,7 @@ import java.math.*;
 import org.openXpertya.util.*;
 /** Modelo Generado por AD_OrgInfo
  *  @author Comunidad de Desarrollo Libertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
- *  @version  - 2012-12-11 16:58:27.752 */
+ *  @version  - 2014-08-07 15:17:44.383 */
 public class X_AD_OrgInfo extends org.openXpertya.model.PO
 {
 /** Constructor estándar */
@@ -82,6 +82,21 @@ if (oo != null)
 }
 return false;
 }
+public static final int C_CATEGORIA_IVA_ID_AD_Reference_ID = MReference.getReferenceID("C_Categoria_IVA");
+/** Set C_Categoria_IVA_ID */
+public void setC_Categoria_IVA_ID (int C_Categoria_IVA_ID)
+{
+if (C_Categoria_IVA_ID <= 0) set_Value ("C_Categoria_IVA_ID", null);
+ else 
+set_Value ("C_Categoria_IVA_ID", new Integer(C_Categoria_IVA_ID));
+}
+/** Get C_Categoria_IVA_ID */
+public int getC_Categoria_IVA_ID() 
+{
+Integer ii = (Integer)get_Value("C_Categoria_IVA_ID");
+if (ii == null) return 0;
+return ii.intValue();
+}
 /** Set Check CUIT Control */
 public void setCheckCuitControl (boolean CheckCuitControl)
 {
@@ -125,6 +140,21 @@ public int getCod_INE()
 Integer ii = (Integer)get_Value("Cod_INE");
 if (ii == null) return 0;
 return ii.intValue();
+}
+/** Set CUIT */
+public void setCUIT (String CUIT)
+{
+if (CUIT != null && CUIT.length() > 13)
+{
+log.warning("Length > 13 - truncated");
+CUIT = CUIT.substring(0,13);
+}
+set_Value ("CUIT", CUIT);
+}
+/** Get CUIT */
+public String getCUIT() 
+{
+return (String)get_Value("CUIT");
 }
 /** Set D-U-N-S.
 Dun & Bradstreet Number */

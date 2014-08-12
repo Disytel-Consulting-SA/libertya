@@ -1539,7 +1539,7 @@ public class PoSOnline extends PoSConnectionState {
 		}
 		
 		// Se obtiene el tipo de documento para la factura.
-		MDocType mDocType = MDocType.getDocType(ctx,
+		MDocType mDocType = MDocType.getDocType(ctx, Env.getAD_Org_ID(getCtx()),
 				MDocType.DOCTYPE_CustomerInvoice, letra, posNumber,
 				getTrxName());
 		if (mDocType == null) 
@@ -3655,8 +3655,8 @@ public class PoSOnline extends PoSConnectionState {
 		}
 		
 		// Se obtiene el tipo de documento para la factura.
-		return MDocType.getDocType(ctx, MDocType.DOCTYPE_CustomerInvoice,
-				mLetraComprobante.getLetra(), posNumber,
+		return MDocType.getDocType(ctx, Env.getAD_Org_ID(getCtx()), 
+				MDocType.DOCTYPE_CustomerInvoice, mLetraComprobante.getLetra(), posNumber,
 				getTrxName());
 	}
 

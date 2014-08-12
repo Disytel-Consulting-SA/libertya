@@ -26,6 +26,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.text.NumberFormat;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Properties;
 import java.util.logging.Level;
 
@@ -438,6 +439,7 @@ public class MDocType extends X_C_DocType {
      * utilizando estos valores e intenta instanciar un tipo de documento
      * con dicha clave única.
      * @param ctx Contexto de la aplicación.
+     * @param orgID id de la organización
      * @param docTypeBaseKey Clave base del tipo de documento (<code>MDocType.DOCTYPE_XXX</code>).
      * @param letter Letra del comprobante (A,B,C,E,etc.)
      * @param posNumber Número del punto de venta (<code>1 - 9999</code>).
@@ -445,10 +447,32 @@ public class MDocType extends X_C_DocType {
      * @return El <code>MDocType</code> en caso de que exista la clave,
      * <code>null</code> en caso contrario.
      */
-    public static MDocType getDocType(Properties ctx, String docTypeBaseKey, String letter, int posNumber, String trxName) {
+    public static MDocType getDocType(Properties ctx, Integer orgID, String docTypeBaseKey, String letter, int posNumber, String trxName) {
+    	// Obtengo las organizaciones padres de la organización parámetro
+    	List<Integer> parentOrgs = MOrg.getParentOrgs(ctx, orgID, true, trxName);
     	String sPosNumber = formatPosNumber(posNumber);
     	String docTypeKey = docTypeBaseKey + letter + sPosNumber;
-    	return getDocType(ctx, docTypeKey, trxName);
+    	MDocType docType = null;
+    	MOrgInfo orgInfo;
+		// Buscar el tipo de documento con el cuit de la organización, si no
+		// existe seguir buscando por los padres hasta que finalmente sea el
+		// tipo de doc con org 0 (Compañía)
+    	for (int i = 0; i < parentOrgs.size() && docType == null; i++) {
+			if(parentOrgs.get(i).intValue() > 0){
+				orgInfo = MOrgInfo.get(ctx, parentOrgs.get(i));
+				if(!Util.isEmpty(orgInfo.getCUIT(), true)){
+					docType = getDocType(
+							ctx,
+							docTypeKey
+									+ (orgInfo.getCUIT().replace("-", "")
+											.replace(" ", "")), trxName);
+				}
+			}
+		}
+    	if(docType == null){
+    		docType = getDocType(ctx, docTypeKey, trxName);
+    	}
+    	return docType;
     }
 
 	/**
@@ -705,6 +729,12 @@ public class MDocType extends X_C_DocType {
 		// Se quita el número de punto de venta y la letra en caso de existir.
 		key = (posNumber != null? key.substring(0, key.length() - 4) : key);
 		key = (letter != null? key.substring(0, key.length() - 1) : key);
+		// Si la clave resultante tiene más de 10 dígitos, entonces contiene el
+		// CUIT de la organización y hay que sacarsela
+		if(key.length() >= 10){
+			String orgCUIT = key.substring(key.length()-11, key.length());
+			key = key.substring(0, key.indexOf(orgCUIT));
+		}
 		return key;
 	}
 	
