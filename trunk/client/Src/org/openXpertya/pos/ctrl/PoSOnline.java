@@ -2265,7 +2265,7 @@ public class PoSOnline extends PoSConnectionState {
 	 */
 	public void loadEntidadesFinancieras(){
 		List<EntidadFinanciera> entidades = new ArrayList<EntidadFinanciera>();
-		String sql = "SELECT M_EntidadFinanciera_ID, Name, CardMask " +
+		String sql = "SELECT M_EntidadFinanciera_ID, Name, CardMask, isallowcreditcardcashretirement, creditcardcashretirementlimit " +
 			 	     "FROM M_EntidadFinanciera " + 
 			 	     "WHERE ((C_City_ID IS NULL) OR (C_City_ID = ?)) AND (AD_Org_ID = ? OR AD_Org_ID = 0) AND IsActive = 'Y' ";
 		
@@ -2286,7 +2286,9 @@ public class PoSOnline extends PoSConnectionState {
 				String name = rs.getString(2);
 				
 				EntidadFinanciera entidad = new EntidadFinanciera(
-						c_EntidadFinanciera_ID, name, rs.getString("CardMask"));
+						c_EntidadFinanciera_ID, name, rs.getString("CardMask"),
+						rs.getString("isallowcreditcardcashretirement").equals(
+								"Y"), rs.getBigDecimal("creditcardcashretirementlimit"));
 				entidades.add(entidad);
 			}
 
