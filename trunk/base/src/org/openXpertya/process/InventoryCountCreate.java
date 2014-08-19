@@ -368,14 +368,14 @@ public class InventoryCountCreate extends SvrProcess {
         boolean success = line.save();
 
         // Add MA
-
-        if( success && (asi == 0) ) {
+        // Se comenta esta funcionalidad inventoryLineMA ya que no se está utilizando en otro lugar
+        /*if( success && (asi == 0) ) {
             MInventoryLineMA ma = new MInventoryLineMA( line,M_AttributeSetInstance_ID,QtyOnHand );
 
             if( !ma.save()) {
                 ;
             }
-        }
+        }*/
 
         if( success && added ) {
             return 1;
