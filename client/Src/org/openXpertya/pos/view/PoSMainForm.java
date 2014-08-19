@@ -496,6 +496,7 @@ public class PoSMainForm extends CPanel implements FormPanel, ASyncProcess, Disp
 	private String MSG_USE_CREDIT_MANDATORY;
 	private String MSG_DUPLICATED_POS_INSTANCE;
 	private String MSG_CASH_RETIREMENT;
+	private String MSG_CASH_RETIREMENT_EXCEEDS_LIMIT;
 	
 	/**
 	 * This method initializes 
@@ -794,6 +795,7 @@ public class PoSMainForm extends CPanel implements FormPanel, ASyncProcess, Disp
 		MSG_USE_CREDIT_MANDATORY = getMsg("CustomerCreditMandatoryToUse");
 		MSG_DUPLICATED_POS_INSTANCE = getMsg("DuplicatedPOSInstance");
 		MSG_CASH_RETIREMENT = getMsg("CashRetirement");
+		MSG_CASH_RETIREMENT_EXCEEDS_LIMIT = getMsg("CashRetirementExceedsLimit");
 		
 		// Estos mensajes no se asignan a variables de instancias dado que son mensajes
 		// devueltos por el modelo del TPV, pero se realiza la invocación a getMsg(...) para
@@ -4678,7 +4680,15 @@ public class PoSMainForm extends CPanel implements FormPanel, ASyncProcess, Disp
 	private void updateCreditCardTenderTypeComponents() {
 		showTenderTypeParamsPanel(getCCreditCardParamsPanel(), getCCreditCardInfoPanel());
 		getCCreditCardInfoPanel().setVisible(true);
-		getCCashReturnPanel().setVisible(getModel().getPoSConfig().isAllowCreditCardCashRetirement());
+		getCCashReturnPanel()
+				.setVisible(
+						getModel().getPoSConfig()
+								.isAllowCreditCardCashRetirement()
+								&& (getSelectedPaymentMedium() != null
+										&& getSelectedPaymentMedium()
+												.getEntidadFinanciera() != null && getSelectedPaymentMedium()
+										.getEntidadFinanciera()
+										.isCashRetirement()));
 		EntidadFinancieraPlan currentPlan = getSelectedCreditCardPlan();
 		getCAmountText().setReadWrite(currentPlan != null);
 		if (currentPlan == null) {
@@ -4865,6 +4875,11 @@ public class PoSMainForm extends CPanel implements FormPanel, ASyncProcess, Disp
 			// El importe no puede superar el saldo pendiente del pedido
 			} else if (!validatePaymentAmount(amount, null)) {
 				errorMsg(MSG_INVALID_CARD_AMOUNT_ERROR);
+				return;
+			// El importe de retiro de efectivo es mayor al límite configurado
+			} else if (cashRetirementAmt.compareTo(paymentMedium
+					.getEntidadFinanciera().getCashRetirementLimit()) > 0) {
+				errorMsg(MSG_CASH_RETIREMENT_EXCEEDS_LIMIT);
 				return;
 			}
 			extraValidationsResult = getExtraPOSPaymentAddValidations()

@@ -1,12 +1,15 @@
 package org.openXpertya.pos.model;
 
-import org.openXpertya.util.Util;
+import java.math.BigDecimal;
+
 
 public class EntidadFinanciera {
 
 	private int id;
 	private String name;
 	private String cardMask;
+	private boolean cashRetirement;
+	private BigDecimal cashRetirementLimit;
 	
 	/**
 	 * 
@@ -20,13 +23,16 @@ public class EntidadFinanciera {
 	 * @param entidadFinancieraId
 	 * @param name
 	 */
-	public EntidadFinanciera(int entidadFinancieraId, String name, String cardMask) {
+	public EntidadFinanciera(int entidadFinancieraId, String name, String cardMask, boolean isCashRetirement, BigDecimal cashRetirementLimit) {
 		super();
 		// TODO Auto-generated constructor stub
 		this.id = entidadFinancieraId;
 		this.name = name;
 		this.cardMask = cardMask;
+		setCashRetirement(isCashRetirement);
+		setCashRetirementLimit(cashRetirementLimit);
 	}
+	
 	public int getId() {
 		return id;
 	}
@@ -51,5 +57,21 @@ public class EntidadFinanciera {
 
 	public String getCardMask() {
 		return cardMask;
+	}
+
+	public boolean isCashRetirement() {
+		return cashRetirement;
+	}
+
+	public void setCashRetirement(boolean cashRetirement) {
+		this.cashRetirement = cashRetirement;
+	}
+
+	public BigDecimal getCashRetirementLimit() {
+		return cashRetirementLimit;
+	}
+
+	public void setCashRetirementLimit(BigDecimal cashRetirementLimit) {
+		this.cashRetirementLimit = cashRetirementLimit;
 	}	
 }

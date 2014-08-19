@@ -7,7 +7,7 @@ import java.math.*;
 import org.openXpertya.util.*;
 /** Modelo Generado por M_EntidadFinanciera
  *  @author Comunidad de Desarrollo Libertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
- *  @version  - 2012-04-13 14:36:47.483 */
+ *  @version  - 2014-08-18 23:30:03.83 */
 public class X_M_EntidadFinanciera extends org.openXpertya.model.PO
 {
 /** Constructor estándar */
@@ -18,7 +18,9 @@ super (ctx, M_EntidadFinanciera_ID, trxName);
 {
 setC_BankAccount_ID (0);
 setC_BPartner_ID (0);
+setCreditCardCashRetirementLimit (Env.ZERO);
 setCreditCardType (null);
+setIsAllowCreditCardCashRetirement (false);
 setM_EntidadFinanciera_ID (0);
 setName (null);
 setValue (null);
@@ -37,7 +39,7 @@ public static final int Table_ID = M_Table.getTableID("M_EntidadFinanciera");
 public static final String Table_Name="M_EntidadFinanciera";
 
 protected static KeyNamePair Model = new KeyNamePair(Table_ID,"M_EntidadFinanciera");
-protected static BigDecimal AccessLevel = new BigDecimal(2);
+protected static BigDecimal AccessLevel = new BigDecimal(3);
 
 /** Load Meta Data */
 protected POInfo initPO (Properties ctx)
@@ -125,6 +127,21 @@ Integer ii = (Integer)get_Value("C_City_ID");
 if (ii == null) return 0;
 return ii.intValue();
 }
+/** Set Cash Retirement Limit.
+Credit Card Cash Retirement Limit */
+public void setCreditCardCashRetirementLimit (BigDecimal CreditCardCashRetirementLimit)
+{
+if (CreditCardCashRetirementLimit == null) throw new IllegalArgumentException ("CreditCardCashRetirementLimit is mandatory");
+set_Value ("CreditCardCashRetirementLimit", CreditCardCashRetirementLimit);
+}
+/** Get Cash Retirement Limit.
+Credit Card Cash Retirement Limit */
+public BigDecimal getCreditCardCashRetirementLimit() 
+{
+BigDecimal bd = (BigDecimal)get_Value("CreditCardCashRetirementLimit");
+if (bd == null) return Env.ZERO;
+return bd;
+}
 public static final int CREDITCARDTYPE_AD_Reference_ID = MReference.getReferenceID("C_Payment CreditCard Type");
 /** Diners = D */
 public static final String CREDITCARDTYPE_Diners = "D";
@@ -159,6 +176,22 @@ Credit Card (Visa, MC, AmEx) */
 public String getCreditCardType() 
 {
 return (String)get_Value("CreditCardType");
+}
+/** Set Allow Credit Card Cash Retirement */
+public void setIsAllowCreditCardCashRetirement (boolean IsAllowCreditCardCashRetirement)
+{
+set_Value ("IsAllowCreditCardCashRetirement", new Boolean(IsAllowCreditCardCashRetirement));
+}
+/** Get Allow Credit Card Cash Retirement */
+public boolean isAllowCreditCardCashRetirement() 
+{
+Object oo = get_Value("IsAllowCreditCardCashRetirement");
+if (oo != null) 
+{
+ if (oo instanceof Boolean) return ((Boolean)oo).booleanValue();
+ return "Y".equals(oo);
+}
+return false;
 }
 /** Set Entidad Financiera */
 public void setM_EntidadFinanciera_ID (int M_EntidadFinanciera_ID)
