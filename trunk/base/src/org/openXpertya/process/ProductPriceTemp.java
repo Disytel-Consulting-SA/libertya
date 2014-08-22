@@ -19,17 +19,11 @@ package org.openXpertya.process;
 
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
+import java.util.Properties;
 import java.util.logging.Level;
 
-import javax.swing.JOptionPane;
-
-
-
-
-
-
-
 import org.openXpertya.model.MDiscountSchemaLine;
+import org.openXpertya.model.MPriceListVersion;
 import org.openXpertya.util.DB;
 import org.openXpertya.util.Env;
 import org.openXpertya.util.Util;
@@ -43,15 +37,6 @@ import org.openXpertya.util.Util;
  */
 
 public class ProductPriceTemp extends SvrProcess {
-
-    /**
-     * Constructor de la clase ...
-     *
-     */
-
-    public ProductPriceTemp() {
-        super();
-    }    // ProductPriceTemp
 
     /** Descripción de Campos */
 
@@ -93,11 +78,30 @@ public class ProductPriceTemp extends SvrProcess {
 
     private int m_StdPrecision;
 
+    private String localTrx = null;
+    private Properties localCtx = null;
+    
     /**
-     * Descripción de Método
+     * Constructor de la clase ...
      *
      */
 
+    public ProductPriceTemp() {
+        super();
+    }    // ProductPriceTemp
+    
+	public ProductPriceTemp(Properties ctx, Integer clientID, Integer orgID,
+			Integer priceListVersionID, Integer priceListVersionBaseID,
+			Integer discountSchemaID, String trxName) {
+		localCtx = ctx;
+		localTrx = trxName;
+    	m_Client_ID = clientID;
+    	m_Org_ID = orgID;
+    	m_PriceList_Version_ID = priceListVersionID;
+    	m_PriceList_Version_Base_ID = priceListVersionBaseID;
+    	m_DiscountSchema_ID = discountSchemaID;
+    }
+    
     protected void prepare() {
     	log.info( " currupio Estoy ProductPriceTemp.Prepare" );
         ProcessInfoParameter[] para = getParameter();
@@ -134,8 +138,6 @@ public class ProductPriceTemp extends SvrProcess {
      */
 
     protected String doIt() {
-    	log.info( " currupio Estoy ProductPriceTemp.doIT" );
-
         // Checking Prerequisites
 
         if( !updatePricesMProductPO() ||!defaultCurrentVendor()) {
@@ -166,10 +168,12 @@ public class ProductPriceTemp extends SvrProcess {
 
 //        setSelectedPriceDefault();
 
-        updatePriceVariations(m_PriceList_Version_ID, null);
+        updatePriceVariations(m_PriceList_Version_ID, null, null);
         
+		MPriceListVersion priceListVersion = new MPriceListVersion(getCtx(),
+				m_PriceList_Version_ID, null);
        
-        return "";
+        return priceListVersion.getName();
     }    // doIt
 
     // PO Prices must exists
@@ -180,18 +184,18 @@ public class ProductPriceTemp extends SvrProcess {
      * pudiendo especificar tanto la versión de lista de precio como el registro 
      * de la tabla I_ProductPrice a fin de filtrar adecuadamente la actualización 
      */
-    public static void updatePriceVariations(Integer priceListVersionID, Integer recordNo)
+    public static void updatePriceVariations(Integer priceListVersionID, Integer recordNo, String trxName)
     {
     	// actualizar las variaciones
 	    DB.executeUpdate(	" UPDATE I_ProductPrice " + 
-				" SET variationpricelist = pricelist / previouspricelist, " +
-				" 		variationpricelimit = pricelimit / previouspricelimit, " +
-				" 		variationpricestd = pricestd / previouspricestd " +
+				" SET variationpricelist = (CASE WHEN previouspricelist is not null AND previouspricelist <> 0 THEN pricelist / previouspricelist ELSE pricelist END), " +
+				" 		variationpricelimit = (CASE WHEN previouspricelimit is not null AND previouspricelimit <> 0 THEN pricelimit / previouspricelimit ELSE pricelimit END), " +
+				" 		variationpricestd = (CASE WHEN previouspricestd is not null AND previouspricestd <> 0 THEN pricestd / previouspricestd ELSE pricestd END) " +
 				" WHERE " + getUserSQLCheck() + 
 				" AND i_isimported = 'N' AND processed = 'N' " +
 				(priceListVersionID == null ? "" : " AND M_PriceList_Version_ID = " + priceListVersionID) +
 				(recordNo == null ? "" : " AND I_ProductPrice_ID = " + recordNo) ,
-				 true, null, true);
+				 true, trxName, true);
     }
     
     /**
@@ -202,20 +206,27 @@ public class ProductPriceTemp extends SvrProcess {
      */
 
     private boolean updatePricesMProductPO() {
-    	log.info( "currupio Estoy ProductPriceTemp.updatePricesMOroducPO" );
         ResultStr = "CorrectingProductPO";
 
         try {
-            no = DB.executeUpdate( "UPDATE M_Product_PO" + " SET PriceList = 0 " + " WHERE PriceList IS NULL" );
-            no = no + DB.executeUpdate( "UPDATE M_Product_PO" + " SET PriceLastPO = 0" + " WHERE PriceLastPo IS NULL" );
-            no = no + DB.executeUpdate( "UPDATE M_Product_PO" + " SET PricePO = PriceLastPO" + " WHERE (PricePO IS NULL OR PricePO = 0) AND PriceLastPO <> 0" );
-            no = no + DB.executeUpdate( "UPDATE M_Product_PO" + " SET PricePO = 0" + " WHERE PricePo IS NULL" );
+			no = DB.executeUpdate("UPDATE M_Product_PO" + " SET PriceList = 0 "
+					+ " WHERE PriceList IS NULL",  null);
+			no += DB.executeUpdate("UPDATE M_Product_PO"
+					+ " SET PriceLastPO = 0" + " WHERE PriceLastPo IS NULL",
+					null);
+			no += DB.executeUpdate(
+					"UPDATE M_Product_PO"
+							+ " SET PricePO = PriceLastPO"
+							+ " WHERE (PricePO IS NULL OR PricePO = 0) AND PriceLastPO <> 0",
+							null);
+			no += DB.executeUpdate("UPDATE M_Product_PO" + " SET PricePO = 0"
+					+ " WHERE PricePo IS NULL", null);
             Message = "Updated " + no + " Prices ";
 
             return true;
         } catch( Exception e ) {
             ResultStr = "ERROR \t" + ResultStr + ":" + e.getMessage() + " " + Message;
-            log.log( Level.SEVERE,ResultStr );
+            log.severe( ResultStr );
 
             return false;
         }
@@ -231,20 +242,52 @@ public class ProductPriceTemp extends SvrProcess {
      */
 
     private boolean defaultCurrentVendor() {
-    	log.info( "currupio Estoy ProductPriceTemp.defaultCurrentVendor" );
+    	boolean ok = true;
         ResultStr = "defaultCurrentVendor";
-
+        PreparedStatement ps = null;
+        ResultSet rs = null;
         try {
-            no = DB.executeUpdate( "UPDATE M_Product_PO p" + " SET IsCurrentVendor = 'Y'" + " WHERE IsCurrentVendor = 'N'" + " AND NOT EXISTS" + " (SELECT z.M_Product_ID FROM M_Product_PO z" + " WHERE z.M_Product_ID = p.M_Product_ID" + " GROUP BY z.M_Product_ID HAVING COUNT(*) > 1)" );
-            Message = "Updated " + no + "Current Vendors";
-
-            return true;
+			// Obtengo los artículos que están asociados a proveedores que no
+			// están marcados como proveedor actual 
+        	String query = "select distinct m_product_id " +
+        				   "from m_product_po " +
+        				   "where ad_client_id = ? " +
+        				   "except " +
+        				   "select distinct m_product_id " +
+        				   "from m_product_po " +
+        				   "where ad_client_id = ? and iscurrentvendor = 'Y' and isactive = 'Y'";
+        	ps = DB.prepareStatement(query, null);
+        	ps.setInt(1, Env.getAD_Client_ID(getCtx()));
+        	ps.setInt(2, Env.getAD_Client_ID(getCtx()));
+        	rs = ps.executeQuery();
+        	Integer productID;
+			// Actualizo el proveedor actual para aquellos artículos que no
+			// tiene ninguno marcado
+        	while(rs.next()){
+        		productID = rs.getInt("m_product_id");
+				no += DB.executeUpdate("update m_product_po "
+						+ "set iscurrentvendor = 'Y' "
+						+ "where m_product_id = " + productID
+						+ " and c_bpartner_id = (select c_bpartner_id "
+						+ "from m_product_po where isactive = 'Y' and m_product_id = " + productID
+						+ "order by created desc " 
+						+ "limit 1)", null);
+        	}
+            Message = "Updated " + no + " Current Vendors";
         } catch( Exception e ) {
             ResultStr = "ERROR \t" + ResultStr + ":" + e.getMessage() + " " + Message;
-            log.log( Level.SEVERE,"\n " + ResultStr );
-
-            return false;
+            log.severe( ResultStr );
+            ok = false;
+        } finally {
+        	try {
+        		if(rs != null) rs.close();
+				if(ps != null) ps.close();
+			} catch (Exception e2) {
+				ResultStr = "ERROR \t" + ResultStr + ":" + e2.getMessage() + " " + Message;
+	            log.severe( ResultStr );
+			}
         }
+        return ok;
     }    // DefaultCurrentVendor
 
     /**
@@ -253,7 +296,6 @@ public class ProductPriceTemp extends SvrProcess {
      */
 
     private void correctingDuplicates() {
-    	log.info( " currupio Estoy ProductPriceTemp.correctingDuplicates" );
         ResultStr = "correctingDuplicates";
 
         String sql   = null;
@@ -261,38 +303,54 @@ public class ProductPriceTemp extends SvrProcess {
 
         // All duplicates products
 
-        sql = "SELECT DISTINCT M_Product_ID" + " FROM M_Product_PO po" + " WHERE IsCurrentVendor = 'Y' AND IsActive = 'Y'" + " AND EXISTS (SELECT M_Product_ID FROM M_Product_PO x" + " WHERE x.M_Product_ID = po.M_Product_ID" + " GROUP BY M_Product_ID HAVING COUNT(*) > 1)" + " ORDER BY 1";
+        sql = "select m_product_id, count(*) " +
+        		"from m_product_po " +
+        		"where ad_client_id = ? and iscurrentvendor = 'Y' and isactive = 'Y' " +
+        		"group by m_product_id " +
+        		"having count(*) > 1";
 
         PreparedStatement pstmt   = null;
         PreparedStatement c_pstmt = null;
-        ResultSet         rs;
-        ResultSet         c_rs;
+        ResultSet         rs = null;
+        ResultSet         c_rs = null;
 
         try {
-            pstmt = DB.prepareStatement( sql );
+            pstmt = DB.prepareStatement( sql, null);
+            pstmt.setInt(1, Env.getAD_Client_ID(getCtx()));
             rs    = pstmt.executeQuery();
-
+			// La fecha de creación es la que se toma para determinar el
+			// actual provedor 
             while( rs.next()) {
-                c_sql = "SELECT M_Product_ID, C_BPartner_ID" + " FROM M_Product_PO" + " WHERE IsCurrentVendor = 'Y' AND IsActive = 'Y'" + " AND M_Product_ID = " + rs.getInt( 1 ) + " ORDER BY PriceList DESC";
-                c_pstmt = DB.prepareStatement( c_sql );
+                c_sql = "select m_product_id, c_bpartner_id " +
+                		"from m_product_po " +
+                		"where m_product_id = ? and iscurrentvendor = 'Y' and isactive = 'Y' " +
+                		"order by created desc " +
+                		"limit 1";
+                c_pstmt = DB.prepareStatement( c_sql, null );
+                c_pstmt.setInt(1, rs.getInt("m_product_id"));
                 c_rs    = c_pstmt.executeQuery();
-                c_rs.next();    // Leave first
-
-                while( c_rs.next()) {
-                    no = DB.executeUpdate( "UPDATE M_Product_PO" + " SET IsCurrentVendor = 'N'" + " WHERE M_Product_ID = " + c_rs.getInt( 1 ) + " AND C_BPartner_ID = " + c_rs.getInt( 2 ));
+                if(c_rs.next()){
+					no += DB.executeUpdate("update m_product_po "
+							+ "set iscurrentvendor = 'N' "
+							+ "where m_product_id = "
+							+ c_rs.getInt("m_product_id")
+							+ " and c_bpartner_id <> "
+							+ c_rs.getInt("c_bpartner_id"), null);
                 }
-
-                c_rs.close();
-                c_pstmt.close();
-                c_pstmt = null;
             }
-
-            rs.close();
-            pstmt.close();
-            pstmt = null;
         } catch( Exception e ) {
             ResultStr = ResultStr + ":" + e.getMessage() + " " + Message;
-            log.log( Level.SEVERE,"\n " + ResultStr );
+            log.severe( ResultStr );
+        } finally{
+        	try {
+				if(c_rs != null)c_rs.close();
+				if(c_pstmt != null)c_pstmt.close();
+				if(rs != null)rs.close();
+				if(pstmt != null)pstmt.close();
+			} catch (Exception e2) {
+				ResultStr = ResultStr + ":" + e2.getMessage() + " " + Message;
+	            log.severe( ResultStr );
+			}
         }
     }    // CorrectingDuplicates
 
@@ -304,93 +362,95 @@ public class ProductPriceTemp extends SvrProcess {
      */
 
     private void priceListInfo() {
-    	log.info( "currupio Estoy ProductPriceTemp.priceListInfo" );
         ResultStr = "priceListInfo";
 
-        String sql = new String( "SELECT p.C_Currency_ID, c.StdPrecision" + " FROM M_PriceList p, M_PriceList_Version v, C_Currency c" + " WHERE p.M_PriceList_ID = v.M_PriceList_ID" + " AND p.C_Currency_ID = c.C_Currency_ID" + " AND v.M_PriceList_Version_ID = " + m_PriceList_Version_ID );
+		String sql = new String("SELECT p.C_Currency_ID, c.StdPrecision"
+				+ " FROM M_PriceList p, M_PriceList_Version v, C_Currency c"
+				+ " WHERE p.M_PriceList_ID = v.M_PriceList_ID"
+				+ " AND p.C_Currency_ID = c.C_Currency_ID"
+				+ " AND v.M_PriceList_Version_ID = " + m_PriceList_Version_ID);
         PreparedStatement pstmt = null;
-        ResultSet         rs;
+        ResultSet         rs = null;
 
         try {
-            pstmt = DB.prepareStatement( sql );
+            pstmt = DB.prepareStatement( sql, null );
             rs    = pstmt.executeQuery();
 
             if( rs.next()) {
                 m_Currency_ID  = rs.getInt( 1 );
                 m_StdPrecision = rs.getInt( 2 );
             }
-
-            rs.close();
-            pstmt.close();
         } catch( Exception e ) {
             ResultStr = ResultStr + ":" + e.getMessage() + " " + sql;
-            log.log( Level.SEVERE,"\nERROR PriceListInfo " + ResultStr );
+            log.severe( "ERROR PriceListInfo " + ResultStr );
+        } finally {
+        	try {
+        		if(rs != null) rs.close();
+				if(pstmt != null) pstmt.close();
+			} catch (Exception e2) {
+				ResultStr = "ERROR \t" + ResultStr + ":" + e2.getMessage() + " " + Message;
+	            log.severe( ResultStr );
+			}
         }
     }    // PriceListInfo
 
     // Create de Selection for all discount schema line
 
+    protected String getDiscountSchemaLinesQuery(){
+		StringBuffer sql = new StringBuffer("SELECT dsl.* "
+				+ "FROM M_DiscountSchemaLine dsl "
+				+ "INNER JOIN m_discountschemaline_org_application_v dsloav "
+				+ "on dsloav.m_discountschemaline_id = dsl.m_discountschemaline_id "
+				+ "WHERE dsloav.M_DiscountSchema_ID = " + m_DiscountSchema_ID
+				+ " and dsloav.ad_org_id = " + m_Org_ID + " ORDER BY dsl.SeqNo");
+    	return sql.toString();
+    }
+    
     /**
      * Descripción de Método
      *
      */
 
     private void discountLine() {
-    	log.info( "currupio Estoy ProductPriceTemp.disconuntLine" );
-    	//JOptionPane.showMessageDialog( null,"Paramos para ver lo datos de la tabla temporal en descountLine con m_dicountShema_ID= "+ m_DiscountSchema_ID ,"..Fin", JOptionPane.INFORMATION_MESSAGE );
-        String sql = new String( "SELECT *" + " FROM M_DiscountSchemaLine" + " WHERE M_DiscountSchema_ID = " + m_DiscountSchema_ID + " AND IsActive = 'Y'" + " ORDER BY SeqNo" );
+        String sql = getDiscountSchemaLinesQuery();
         PreparedStatement pstmt = null;
-        ResultSet         rs;
+        ResultSet         rs = null;
 
         try {
         	// Eliminar solo registros del usuario en cuestión (luego en la importación también se filtra por dicho criterio)
-            no    = DB.executeUpdate( "DELETE FROM I_ProductPrice WHERE " + getUserSQLCheck() );
-            pstmt = DB.prepareStatement( sql );
+			no = DB.executeUpdate("DELETE FROM I_ProductPrice WHERE "
+					+ getUserSQLCheck() + " AND m_pricelist_version_id = "+m_PriceList_Version_ID, null);
+            pstmt = DB.prepareStatement( sql, null );
             rs    = pstmt.executeQuery();
 
             while( rs.next()) {
                 ResultStr = " Parameter Seq = " + rs.getInt( "SeqNo" );
-
-                // Log.print(ResultStr);
-                // Clear Temporary Table
-                //JOptionPane.showMessageDialog( null,"Paramos  para ver los datos de la tabla temporal antes de createSlection= "+ m_DiscountSchema_ID+ "and isstrong= " +rs.getString( "IsStrong" )+" M_discountSchemaline_ID= "+rs.getString("m_discountschemaline_id"),"..Fin", JOptionPane.INFORMATION_MESSAGE );
+                // Inserción de precios
                 createSelection( rs );
-                //JOptionPane.showMessageDialog( null,"Paramos  para ver los datos de la tabla temporal despues de createSlection= "+ m_DiscountSchema_ID+ "and isstrong= " +rs.getString( "IsStrong" )+" M_discountSchemaline_ID= "+rs.getString("m_discountschemaline_id"),"..Fin", JOptionPane.INFORMATION_MESSAGE );
-
                 if( "N".equals( rs.getString( "IsStrong" ))) {
-                	//JOptionPane.showMessageDialog( null,"Paramos  para ver los datos de la tabla temporal NO ISSTRONG antes de deleteTemparySelcctiondespues de createSlection= "+ m_DiscountSchema_ID+ "and isstrong= " +rs.getString( "IsStrong" )+" M_discountSchemaline_ID= "+rs.getString("m_discountschemaline_id"),"..Fin", JOptionPane.INFORMATION_MESSAGE );
                     deleteTemporarySelection( rs );
-                    //JOptionPane.showMessageDialog( null,"Paramos  para ver los datos de la tabla temporal NO ISSTRONG desde de deleteTemparySelcctiondespues de createSlection= "+ m_DiscountSchema_ID+ "and isstrong= " +rs.getString( "IsStrong" )+" M_discountSchemaline_ID= "+rs.getString("m_discountschemaline_id"),"..Fin", JOptionPane.INFORMATION_MESSAGE );
                 }
-                //JOptionPane.showMessageDialog( null,"Paramos  para ver los datos de la tabla temporal antes del copipryces en descountLine con m_dicountShema_ID= "+ m_DiscountSchema_ID+ "and isstrong= " +rs.getString( "IsStrong" )+" M_discountSchemaline_ID= "+rs.getString("m_discountschemaline_id"),"..Fin", JOptionPane.INFORMATION_MESSAGE );
+                // Copia de precios
                 copyPrices( rs );
-                //JOptionPane.showMessageDialog( null,"Paramos  para ver los datos de la tabla temporal despues del copipryces en descountLine con m_dicountShema_ID= "+ m_DiscountSchema_ID+ "and isstrong= " +rs.getString( "IsStrong" )+" M_discountSchemaline_ID= "+rs.getString("m_discountschemaline_id"),"..Fin", JOptionPane.INFORMATION_MESSAGE );
-
-                if( "Y".equals( rs.getString( "IsStrong" ))) {
-                	//JOptionPane.showMessageDialog( null,"Paramos  para ver los datos de la tabla temporal   es ISSTRONG antes del updatDiscount ,con m_dicountShema_ID= "+ m_DiscountSchema_ID+ "and isstrong= " +rs.getString( "IsStrong" )+" M_discountSchemaline_ID= "+rs.getString("m_discountschemaline_id"),"..Fin", JOptionPane.INFORMATION_MESSAGE );       	
+                if( "Y".equals( rs.getString( "IsStrong" ))) {       	
                     updateDiscountStrong( rs );
-                    //JOptionPane.showMessageDialog( null,"Paramos  para ver los datos de la tabla temporal   es ISSTRONG despues  del updatDiscount y antes del deleteTemporarySelection,con m_dicountShema_ID= "+ m_DiscountSchema_ID+ "and isstrong= " +rs.getString( "IsStrong" )+" M_discountSchemaline_ID= "+rs.getString("m_discountschemaline_id"),"..Fin", JOptionPane.INFORMATION_MESSAGE );
                     deleteTemporarySelection( rs );
-                    //JOptionPane.showMessageDialog( null,"Paramos  para ver los datos de la tabla temporal   es ISSTRONG despues del deleteTemporarySelection,con m_dicountShema_ID= "+ m_DiscountSchema_ID+ "and isstrong= " +rs.getString( "IsStrong" )+" M_discountSchemaline_ID= "+rs.getString("m_discountschemaline_id"),"..Fin", JOptionPane.INFORMATION_MESSAGE );
                 }
-
+                // Cálculos de regla de precios
                 calculation( rs );
-                //JOptionPane.showMessageDialog( null,"Paramos  para ver los datos de la tabla temporal despues del calculation en descountLine con m_dicountShema_ID= "+ m_DiscountSchema_ID+ "and isstrong= " +rs.getString( "IsStrong" )+" M_discountSchemaline_ID= "+rs.getString("m_discountschemaline_id"),"..Fin", JOptionPane.INFORMATION_MESSAGE );
-
-                // Log Info
-
                 Message = "";
-            }    // For all DiscountLines
-
-            rs.close();
-            pstmt.close();
-            pstmt = null;
-
-            // Delete Temporary Selection
-
+            }
         } catch( Exception e ) {
             ResultStr = ResultStr + ":" + e.getMessage() + " " + Message;
-            log.log( Level.SEVERE,"\n " + ResultStr );
+            log.severe( ResultStr );
+        } finally {
+        	try {
+        		if(rs != null) rs.close();
+				if(pstmt != null) pstmt.close();
+			} catch (Exception e2) {
+				ResultStr = "ERROR \t" + ResultStr + ":" + e2.getMessage() + " " + Message;
+	            log.severe( ResultStr );
+			}
         }
     }            // DiscountLine
 
@@ -402,9 +462,9 @@ public class ProductPriceTemp extends SvrProcess {
      */
 
     private void createSelection( ResultSet rs ) {
-    	log.info( "currupio Estoy ProductPriceTemp.createSelection" );
         ResultStr = "create selection";
-        StringBuffer optionalRestrictions = setOptionalRestrictions(rs, m_PriceList_Version_Base_ID == 0); 
+		StringBuffer optionalRestrictions = setOptionalRestrictions(rs,
+				m_PriceList_Version_Base_ID == 0); 
         
         try {
             if( m_PriceList_Version_Base_ID == 0 ) {
@@ -417,37 +477,52 @@ public class ProductPriceTemp extends SvrProcess {
                 										" INNER JOIN M_Product_PO po ON p.M_Product_ID = po.M_Product_ID  " +
                 										" INNER JOIN M_AttributeSet aset ON p.M_AttributeSet_ID = aset.M_AttributeSet_ID " +
                 										" INNER JOIN M_AttributeSetInstance aseti ON aset.M_AttributeSet_ID = aseti.M_AttributeSet_ID " +
+                										" INNER JOIN M_Product_Category pc on pc.M_Product_Category_ID = p.M_Product_Category_ID " + 
+                										" LEFT JOIN M_Product_Gamas pg ON pg.M_Product_Gamas_ID = pc.M_Product_Gamas_ID " +
+                										" LEFT JOIN M_Product_Lines pl ON pl.M_Product_Lines_ID = pg.M_Product_Lines_ID " +
                 										" WHERE p.M_Product_ID = po.M_Product_ID " + " AND (p.AD_Client_ID = " + m_Client_ID + " OR p.AD_Client_ID = 0 )" + " AND p.IsActive = 'Y' AND po.IsActive = 'Y' AND po.IsCurrentVendor = 'Y'"  +
                 										optionalRestrictions.toString() +
                 										" UNION " +
                 										" SELECT DISTINCT p.AD_Client_ID, p.AD_Org_ID, " + Env.getAD_User_ID(getCtx()) + ", " + Env.getAD_User_ID(getCtx()) + ", po.M_Product_ID, " + rs.getInt( "M_DiscountSchemaLine_ID" )  + ", " + m_PriceList_Version_ID + ", null::int " + 
-                										" FROM M_Product p, M_Product_PO po" + " WHERE p.M_Product_ID = po.M_Product_ID" + " AND (p.AD_Client_ID = " + m_Client_ID + " OR p.AD_Client_ID = 0 )" + " AND p.IsActive = 'Y' AND po.IsActive = 'Y' AND po.IsCurrentVendor = 'Y' AND p.M_AttributeSet_ID IS NULL " + 
+                										" FROM M_Product p " +
+                										" INNER JOIN M_Product_PO po ON p.M_Product_ID = po.M_Product_ID " +
+                										" INNER JOIN M_Product_Category pc on pc.M_Product_Category_ID = p.M_Product_Category_ID " + 
+                										" LEFT JOIN M_Product_Gamas pg ON pg.M_Product_Gamas_ID = pc.M_Product_Gamas_ID " +
+                										" LEFT JOIN M_Product_Lines pl ON pl.M_Product_Lines_ID = pg.M_Product_Lines_ID " +
+                										" WHERE (p.AD_Client_ID = " + m_Client_ID + " OR p.AD_Client_ID = 0 )" + " AND p.IsActive = 'Y' AND po.IsActive = 'Y' AND po.IsCurrentVendor = 'Y' AND p.M_AttributeSet_ID IS NULL " + 
                 										optionalRestrictions.toString() ); 
 
-                no = DB.executeUpdate( sql.toString());
+                no = DB.executeUpdate( sql.toString(), null);
             } else {
 
                 // Create Selection from existing PriceList
 
-                StringBuffer sql = new StringBuffer(  	" INSERT INTO I_ProductPrice (AD_Client_ID, AD_Org_ID, CreatedBy, UpdatedBy, M_Product_ID, M_DiscountSchemaLine_ID, M_AttributeSetInstance_ID) " + 
-                										" SELECT DISTINCT p.AD_Client_ID, p.AD_Org_ID, " + Env.getAD_User_ID(getCtx()) + ", " + Env.getAD_User_ID(getCtx()) + ", p.M_Product_ID, " + rs.getInt( "M_DiscountSchemaLine_ID" ) + ", null::integer FROM M_Product p, M_ProductPrice z " + " WHERE p.M_Product_ID = z.M_Product_ID" + " AND z.M_PriceList_Version_ID = " + m_PriceList_Version_Base_ID + " AND p.IsActive = 'Y' AND z.IsActive = 'Y'" +
+                StringBuffer sql = new StringBuffer(  	" INSERT INTO I_ProductPrice (AD_Client_ID, AD_Org_ID, CreatedBy, UpdatedBy, M_Product_ID, M_DiscountSchemaLine_ID, M_AttributeSetInstance_ID, m_pricelist_version_id) " + 
+                										" SELECT DISTINCT p.AD_Client_ID, p.AD_Org_ID, " + Env.getAD_User_ID(getCtx()) + ", " + Env.getAD_User_ID(getCtx()) + ", p.M_Product_ID, " + rs.getInt( "M_DiscountSchemaLine_ID" ) + ", null::integer, " +m_PriceList_Version_ID +
+                										" FROM M_Product p " +
+                										" INNER JOIN M_ProductPrice z ON p.M_Product_ID = z.M_Product_ID " + 
+                										" INNER JOIN M_Product_Category pc on pc.M_Product_Category_ID = p.M_Product_Category_ID " + 
+                										" LEFT JOIN M_Product_Gamas pg ON pg.M_Product_Gamas_ID = pc.M_Product_Gamas_ID " +
+                										" LEFT JOIN M_Product_Lines pl ON pl.M_Product_Lines_ID = pg.M_Product_Lines_ID " +
+                										" WHERE z.M_PriceList_Version_ID = " + m_PriceList_Version_Base_ID + " AND p.IsActive = 'Y' AND z.IsActive = 'Y'" +
                 										optionalRestrictions.toString() +
                 										" UNION " +
-                										" SELECT DISTINCT p.AD_Client_ID, p.AD_Org_ID, " + Env.getAD_User_ID(getCtx()) + ", " + Env.getAD_User_ID(getCtx()) + ", p.M_Product_ID, " + rs.getInt( "M_DiscountSchemaLine_ID" ) + ", z.M_AttributeSetInstance_ID FROM M_Product p, M_ProductPriceInstance z " + " WHERE p.M_Product_ID = z.M_Product_ID" + " AND z.M_PriceList_Version_ID = " + m_PriceList_Version_Base_ID + " AND p.IsActive = 'Y' AND z.IsActive = 'Y'" +  
+                										" SELECT DISTINCT p.AD_Client_ID, p.AD_Org_ID, " + Env.getAD_User_ID(getCtx()) + ", " + Env.getAD_User_ID(getCtx()) + ", p.M_Product_ID, " + rs.getInt( "M_DiscountSchemaLine_ID" ) + ", z.M_AttributeSetInstance_ID, " +m_PriceList_Version_ID +
+                										" FROM M_Product p " +
+                										" INNER JOIN M_ProductPriceInstance z ON p.M_Product_ID = z.M_Product_ID " + 
+                										" INNER JOIN M_Product_Category pc on pc.M_Product_Category_ID = p.M_Product_Category_ID " + 
+                										" LEFT JOIN M_Product_Gamas pg ON pg.M_Product_Gamas_ID = pc.M_Product_Gamas_ID " +
+                										" LEFT JOIN M_Product_Lines pl ON pl.M_Product_Lines_ID = pg.M_Product_Lines_ID " +
+                										" WHERE z.M_PriceList_Version_ID = " + m_PriceList_Version_Base_ID + " AND p.IsActive = 'Y' AND z.IsActive = 'Y'" +  
                 										optionalRestrictions.toString());
 
-                no = DB.executeUpdate( sql.toString());
+                no = DB.executeUpdate( sql.toString(), null);
             }
-
             Message = Message + " @SELECTED@ = " + no;
-
-            // Log.print(Message);
-
         } catch( Exception e ) {
             ResultStr = ResultStr + ":" + e.getMessage() + " " + Message;
-            log.log( Level.SEVERE,"\n " + ResultStr );
+            log.severe( ResultStr );
         }
-        //JOptionPane.showMessageDialog( null,null,"Paramos para ver datos de tabla temporal, I_ProductPrice", JOptionPane.INFORMATION_MESSAGE );
     }    // CreateSelection
 
     
@@ -472,7 +547,10 @@ public class ProductPriceTemp extends SvrProcess {
                 sql.append( " AND p.M_Product_Family_ID = " + rs.getInt( "M_Product_Family_ID" ));
             // familia
             if( rs.getInt( "M_Product_Gamas_ID" ) != 0 )
-                sql.append( " AND p.M_Product_Gamas_ID = " + rs.getInt( "M_Product_Gamas_ID" ));
+                sql.append( " AND pg.M_Product_Gamas_ID = " + rs.getInt( "M_Product_Gamas_ID" ));
+            // Línea de artículo
+            if(rs.getInt( "M_Product_Lines_ID" ) != 0)
+            	sql.append( " AND pl.M_Product_Lines_ID = " + rs.getInt( "M_Product_Lines_ID" ));
             // entidad comercial
 	    	if (poBased) {
 	            if( rs.getInt( "C_BPartner_ID" ) != 0 )
@@ -511,19 +589,26 @@ public class ProductPriceTemp extends SvrProcess {
      */
 
     private void deleteTemporarySelection( ResultSet rs ) {
-    	log.info( "currupio Estoy ProductPriceTemp.deleteTemporarySelection " );
         ResultStr = "Delete temporary selection";
 
         try {
-            //no = DB.executeUpdate( "DELETE I_ProductPrice " + " WHERE M_Product_ID IN " + " (SELECT M_Product_ID FROM I_ProductPrice WHERE M_DiscountSchemaLine_ID = " + rs.getInt( "M_DiscountSchemaLine_ID" ) + ")" + " AND M_DiscountSchemaLine_ID <> " + rs.getInt( "M_DiscountSchemaLine_ID" ));
-        	no = DB.executeUpdate( "DELETE I_ProductPrice " + " WHERE " + getUserSQLCheck() + " AND M_Product_ID IN " + " (SELECT M_Product_ID FROM I_ProductPrice WHERE M_DiscountSchemaLine_ID = " + rs.getInt( "M_DiscountSchemaLine_ID" ) + ")" + " AND M_DiscountSchemaLine_ID <> " + rs.getInt( "M_DiscountSchemaLine_ID" ));
+			no = DB.executeUpdate("DELETE I_ProductPrice pp "
+					+ " WHERE "
+					+ getUserSQLCheck()
+					+ " AND m_pricelist_version_id =  "+m_PriceList_Version_ID
+					+ " AND EXISTS "
+					+ " (SELECT M_Product_ID FROM I_ProductPrice pp2 WHERE M_DiscountSchemaLine_ID = "
+					+ rs.getInt("M_DiscountSchemaLine_ID") + " AND pp2.M_Product_ID = pp.M_Product_ID "
+					+ " AND m_pricelist_version_id =  "+m_PriceList_Version_ID
+					+")"
+					+ " AND M_DiscountSchemaLine_ID <> "
+					+ rs.getInt("M_DiscountSchemaLine_ID"), null);
         } catch( Exception e ) {
             ResultStr = ResultStr + ":" + e.getMessage() + " " + Message;
-            log.log( Level.SEVERE,"\n " + ResultStr );
+            log.severe( ResultStr );
         }
 
         Message = ", @Deleted@" + no;
-        log.log(Level.FINE,Message);
     }    // deleteTemporarySelection
 
     /**
@@ -534,94 +619,131 @@ public class ProductPriceTemp extends SvrProcess {
      */
 
     private void copyPrices( ResultSet rs ) {
-    	log.info( "currupio Estoy ProductPriceTemp.copyPrices, con la sql convertida " );
     	 PreparedStatement pstmt = null;
-    	 ResultSet         rs1;
+    	 ResultSet         rs1 = null;
  
-    	// si no hay definido una version base de tarifa, se utiliza la información de M_Product_PO
-        if( m_PriceList_Version_Base_ID == 0 ) {
-        	log.info( "Estoy ProductPriceTemp.copyPrices,Creando una version nueva." );
-
-            // Copy and Convert from Product_PO
-
-            ResultStr = "CopyPrices_PO";
-            
-            
-            
-
-            try {
-            	//Nuevo .
-                //Problema: La consulta de actualizacion, devuelve multiples valores.Hay que hacer la actualizacion para cada
-                //producto. 
-                //Solucion: Seleccionamos todos los productos de la tabla temporal, y los vamos actualizando.
-            	
-            	// Por el momento M_Product_PO no brinda soporte para ASET, por lo tanto no hay información de precio para artíuclos con instancia de atributos
-                String sql1 = new String( "SELECT  m_product_id" + " FROM I_ProductPrice WHERE i_isimported <> 'Y' AND M_AttributeSetInstance_ID IS NULL AND " + getUserSQLCheck() );
-                
-                pstmt = DB.prepareStatement( sql1);
-                rs1    = pstmt.executeQuery();
-                while( rs1.next()) {
-          
-              	
-                //Fin nuevo
-            	//Nueva consulta sql, con la estructura del posgres
-            	String sql= "Update I_ProductPrice SET"
-            		+ " Pricelist=(select COALESCE(currencyconvert( po.PriceList, po.C_Currency_ID, " + m_Currency_ID + ", mdsl.ConversionDate" + ", " + rs.getInt( "C_ConversionType_ID" ) + ", " + m_Client_ID + ", " + m_Org_ID+"),0)"+" FROM M_Product_PO po" + ", M_DiscountSchemaLine mdsl" +",I_ProductPrice tpp" +", M_Product p WHERE p.M_Product_ID = po.M_Product_ID AND po.M_Product_ID = tpp.M_Product_ID"+" AND tpp.M_Product_ID="+rs1.getInt("m_product_id") + " AND po.IsCurrentVendor = 'Y' AND po.IsActive = 'Y'" + " AND mdsl.M_DiscountSchemaLine_ID=" + rs.getInt( "M_DiscountSchemaLine_ID" ) + " AND p.M_AttributeSet_ID is null)," 
-            		+ " PriceStd=(select COALESCE(currencyconvert( po.PriceList, po.C_Currency_ID, " + m_Currency_ID + ", mdsl.ConversionDate" + ", " + rs.getInt( "C_ConversionType_ID" ) + ", " + m_Client_ID + ", " + m_Org_ID + ") , 0)"+" FROM M_Product_PO po" + ", M_DiscountSchemaLine mdsl" +",I_ProductPrice tpp" + ", M_Product p WHERE p.M_Product_ID = po.M_Product_ID AND po.M_Product_ID = tpp.M_Product_ID" +" AND tpp.M_Product_ID="+rs1.getInt("m_product_id")+ " AND po.IsCurrentVendor = 'Y' AND po.IsActive = 'Y'" + " AND mdsl.M_DiscountSchemaLine_ID=" + rs.getInt( "M_DiscountSchemaLine_ID" ) + " AND p.M_AttributeSet_ID is null)," 
-            		+ " PriceLimit=(select COALESCE(currencyconvert( po.PricePO, po.C_Currency_ID, " + m_Currency_ID + ", mdsl.ConversionDate" + ", " + rs.getInt( "C_ConversionType_ID" ) + ", " + m_Client_ID + ", " + m_Org_ID + ") , 0)" + " FROM M_Product_PO po" + ", M_DiscountSchemaLine mdsl" +",I_ProductPrice tpp" + ", M_Product p WHERE p.M_Product_ID = po.M_Product_ID AND po.M_Product_ID = tpp.M_Product_ID" +" AND tpp.M_Product_ID="+rs1.getInt("m_product_id")+ " AND po.IsCurrentVendor = 'Y' AND po.IsActive = 'Y'" + " AND mdsl.M_DiscountSchemaLine_ID=" + rs.getInt( "M_DiscountSchemaLine_ID" ) + " AND p.M_AttributeSet_ID is null)"
-            		+" WHERE " + getUserSQLCheck() + " AND M_DiscountSchemaLine_ID=" + rs.getInt( "M_DiscountSchemaLine_ID" )+" AND I_ProductPrice.m_product_id= " + rs1.getInt("m_product_id");
-                //While
-                
-                no = DB.executeUpdate( sql );
-                }//while
-            } catch( Exception e ) {
-                ResultStr = ResultStr + ":" + e.getMessage() + " " + Message;
-                log.log( Level.SEVERE,"\n " + ResultStr );
-            }
-           
-        // Si se definió una tarifa base... 
-        } else {
-
-            // Copy and Convert from other PriceList_Version
-        	log.info( "Estoy ProductPriceTemp.copyPrices,Modificando una version existente." );
-
-            ResultStr = "CopyPrices_PL";
-
-            try {
-            	//Modificado por ConSerti, mal sentencia update para Postgres.
-            	String sql1 = new String( "SELECT  m_product_id, M_AttributeSetInstance_ID FROM I_ProductPrice WHERE i_isimported <> 'Y' AND " + getUserSQLCheck() );
-                pstmt = DB.prepareStatement( sql1);
-                rs1    = pstmt.executeQuery();
-                while( rs1.next()) {
-            	String sql= "Update I_ProductPrice SET"
-            		+ " previouspricelist = (select pp.PriceList FROM M_ProductPrice pp WHERE pp.M_PriceList_Version_ID = " + m_PriceList_Version_Base_ID + " AND M_Product_ID = " + rs1.getInt("m_product_id")  + ")," 
-            		+ " previouspricestd = (select pp.PriceStd FROM M_ProductPrice pp WHERE pp.M_PriceList_Version_ID = " + m_PriceList_Version_Base_ID + " AND M_Product_ID = " + rs1.getInt("m_product_id")  + "),"
-            		+ " previouspricelimit = (select pp.Pricelimit FROM M_ProductPrice pp WHERE pp.M_PriceList_Version_ID = " + m_PriceList_Version_Base_ID + " AND M_Product_ID = " + rs1.getInt("m_product_id")  + "),"            		
-            		+ " Pricelist=( select COALESCE((" +	getSubQuery(rs, rs1, "M_ProductPriceInstance pp", "pp.PriceList", rs1.getInt("M_AttributeSetInstance_ID"))  
-            						  + "),("
-            						  +	getSubQuery(rs, rs1, "M_ProductPrice pp", "pp.PriceList", null) + " ))), "
-            		+ " PriceStd =( select COALESCE((" +	getSubQuery(rs, rs1, "M_ProductPriceInstance pp", "pp.PriceStd", rs1.getInt("M_AttributeSetInstance_ID"))  
-              						  + "),("
-              						  +	getSubQuery(rs, rs1, "M_ProductPrice pp", "pp.PriceStd", null) + " ))), "            						  
-            		+ " PriceLimit=( select COALESCE(("+	getSubQuery(rs, rs1, "M_ProductPriceInstance pp", "pp.PriceLimit", rs1.getInt("M_AttributeSetInstance_ID")) 
-            						  + "),("
-            						  +	getSubQuery(rs, rs1, "M_ProductPrice pp", "pp.PriceLimit", null) + " ))), "            						  
-					+ " M_PriceList_Version_ID = " + m_PriceList_Version_ID
-            		+ " WHERE I_ProductPrice." + getUserSQLCheck() + " AND M_DiscountSchemaLine_ID=" + rs.getInt( "M_DiscountSchemaLine_ID" )+" AND I_ProductPrice.m_product_id= " + rs1.getInt("m_product_id") 
-            		+ (rs1.getInt("M_AttributeSetInstance_ID") == 0 ? "AND M_AttributeSetInstance_id isnull" : " AND I_ProductPrice.M_AttributeSetInstance_ID = " + rs1.getInt("M_AttributeSetInstance_ID")); 
-            	
-            	    log.fine("Em execut update con sql= "+ sql);
-            	    no = DB.executeUpdate( sql );
-                
-              }//while
-        	    
-            } catch( Exception e ) {
-                ResultStr = ResultStr + ":" + e.getMessage() + " " + Message;
-                log.log( Level.SEVERE,"\n " + ResultStr );
-            }
+    	 try{
+    	 
+	    	 // si no hay definido una version base de tarifa, se utiliza la información de M_Product_PO
+	    	 if( m_PriceList_Version_Base_ID == 0 ) {
+	    		 // Copy and Convert from Product_PO
+	    		 ResultStr = "CopyPrices_PO";
+	            	//Nuevo .
+	                //Problema: La consulta de actualizacion, devuelve multiples valores.Hay que hacer la actualizacion para cada
+	                //producto. 
+	                //Solucion: Seleccionamos todos los productos de la tabla temporal, y los vamos actualizando.
+	            	
+	            	// Por el momento M_Product_PO no brinda soporte para ASET, por lo tanto no hay información de precio para artíuclos con instancia de atributos
+					String sql1 = new String(
+							"SELECT  m_product_id"
+									+ " FROM I_ProductPrice WHERE i_isimported <> 'Y' AND M_AttributeSetInstance_ID IS NULL AND "
+									+ getUserSQLCheck());
+	                
+	                pstmt = DB.prepareStatement( sql1, null);
+	                rs1    = pstmt.executeQuery();
+	                while( rs1.next()) {
+		            	String sql= "Update I_ProductPrice SET"
+		            		+ " Pricelist=(select COALESCE(currencyconvert( po.PriceList, po.C_Currency_ID, " + m_Currency_ID + ", mdsl.ConversionDate" + ", " + rs.getInt( "C_ConversionType_ID" ) + ", " + m_Client_ID + ", " + m_Org_ID+"),0)"+" FROM M_Product_PO po" + ", M_DiscountSchemaLine mdsl" +",I_ProductPrice tpp" +", M_Product p WHERE p.M_Product_ID = po.M_Product_ID AND po.M_Product_ID = tpp.M_Product_ID"+" AND tpp.M_Product_ID="+rs1.getInt("m_product_id") + " AND po.IsCurrentVendor = 'Y' AND po.IsActive = 'Y'" + " AND mdsl.M_DiscountSchemaLine_ID=" + rs.getInt( "M_DiscountSchemaLine_ID" ) + " AND p.M_AttributeSet_ID is null)," 
+		            		+ " PriceStd=(select COALESCE(currencyconvert( po.PriceList, po.C_Currency_ID, " + m_Currency_ID + ", mdsl.ConversionDate" + ", " + rs.getInt( "C_ConversionType_ID" ) + ", " + m_Client_ID + ", " + m_Org_ID + ") , 0)"+" FROM M_Product_PO po" + ", M_DiscountSchemaLine mdsl" +",I_ProductPrice tpp" + ", M_Product p WHERE p.M_Product_ID = po.M_Product_ID AND po.M_Product_ID = tpp.M_Product_ID" +" AND tpp.M_Product_ID="+rs1.getInt("m_product_id")+ " AND po.IsCurrentVendor = 'Y' AND po.IsActive = 'Y'" + " AND mdsl.M_DiscountSchemaLine_ID=" + rs.getInt( "M_DiscountSchemaLine_ID" ) + " AND p.M_AttributeSet_ID is null)," 
+		            		+ " PriceLimit=(select COALESCE(currencyconvert( po.PricePO, po.C_Currency_ID, " + m_Currency_ID + ", mdsl.ConversionDate" + ", " + rs.getInt( "C_ConversionType_ID" ) + ", " + m_Client_ID + ", " + m_Org_ID + ") , 0)" + " FROM M_Product_PO po" + ", M_DiscountSchemaLine mdsl" +",I_ProductPrice tpp" + ", M_Product p WHERE p.M_Product_ID = po.M_Product_ID AND po.M_Product_ID = tpp.M_Product_ID" +" AND tpp.M_Product_ID="+rs1.getInt("m_product_id")+ " AND po.IsCurrentVendor = 'Y' AND po.IsActive = 'Y'" + " AND mdsl.M_DiscountSchemaLine_ID=" + rs.getInt( "M_DiscountSchemaLine_ID" ) + " AND p.M_AttributeSet_ID is null)"
+		            		+" WHERE " + getUserSQLCheck() + " AND M_DiscountSchemaLine_ID=" + rs.getInt( "M_DiscountSchemaLine_ID" )+" AND I_ProductPrice.m_product_id= " + rs1.getInt("m_product_id");
+		                
+		                no = DB.executeUpdate( sql, null);
+	                }//while
+	        // Si se definió una tarifa base... 
+	        } else {
+	            // Copy and Convert from other PriceList_Version
+	            ResultStr = "CopyPrices_PL";
+		    	//Modificado por ConSerti, mal sentencia update para Postgres.
+				String sql = new String("SELECT  ipp.m_product_id, " +
+												"ipp.M_AttributeSetInstance_ID, " +
+												"COALESCE(pp.pricelist,0.00) as previouspricelist, " +
+												"COALESCE(pp.pricestd,0.00) as previouspricestd, " +
+												"COALESCE(pp.pricelimit,0.00) as previouspricelimit, " +
+												"COALESCE(currencyconvert( COALESCE(ppi.PriceList, pp.PriceList), COALESCE(pli.C_Currency_ID, pl.C_Currency_ID), "
+																				+ m_Currency_ID
+																				+ ", mdsl.ConversionDate, "
+																				+ rs.getInt("C_ConversionType_ID")
+																				+ ", "
+																				+ m_Client_ID
+																				+ ", "
+																				+ m_Org_ID
+																				+ "),0) as pricelist, "
+																				+
+												"COALESCE(currencyconvert( COALESCE(ppi.PriceStd, pp.PriceStd), COALESCE(pli.C_Currency_ID, pl.C_Currency_ID), "
+																				+ m_Currency_ID
+																				+ ", mdsl.ConversionDate, "
+																				+ rs.getInt("C_ConversionType_ID")
+																				+ ", "
+																				+ m_Client_ID
+																				+ ", "
+																				+ m_Org_ID
+																				+ "),0) as pricestd, "
+																				+
+												"COALESCE(currencyconvert( COALESCE(ppi.PriceLimit, pp.PriceLimit), COALESCE(pli.C_Currency_ID, pl.C_Currency_ID), "
+																				+ m_Currency_ID
+																				+ ", mdsl.ConversionDate, "
+																				+ rs.getInt("C_ConversionType_ID")
+																				+ ", "
+																				+ m_Client_ID
+																				+ ", "
+																				+ m_Org_ID
+																				+ "),0) as pricelimit "
+																				+
+											"FROM I_ProductPrice as ipp " +
+											"LEFT JOIN M_ProductPrice as pp ON pp.m_product_id = ipp.m_product_id " +
+											"LEFT JOIN M_ProductPriceInstance as ppi ON ppi.m_product_id = ipp.m_product_id AND ppi.M_AttributeSetInstance_ID = ipp.M_AttributeSetInstance_ID " +
+											"LEFT JOIN M_PriceList_Version as plv ON pp.M_PriceList_Version_ID = plv.M_PriceList_Version_ID " +
+											"LEFT JOIN M_PriceList as pl ON plv.M_PriceList_ID = pl.M_PriceList_ID " +
+											"LEFT JOIN M_PriceList_Version as plvi ON ppi.M_PriceList_Version_ID = plvi.M_PriceList_Version_ID " +
+											"LEFT JOIN M_PriceList as pli ON plvi.M_PriceList_ID = pli.M_PriceList_ID, M_DiscountSchemaLine mdsl " +
+											"WHERE i_isimported <> 'Y' " +
+													"AND (CASE WHEN ipp.m_attributesetinstance_id is null " +
+																"THEN pp.M_PriceList_Version_ID = " + m_PriceList_Version_Base_ID +
+																"ELSE ppi.M_PriceList_Version_ID = " + m_PriceList_Version_Base_ID + " END)" +
+													"AND (CASE WHEN ipp.m_attributesetinstance_id is null " +
+																"THEN pp.IsActive = 'Y' " +
+																"ELSE ppi.IsActive = 'Y' END) " +
+													"AND mdsl.M_DiscountSchemaLine_ID = "+rs.getInt("M_DiscountSchemaLine_ID") + 
+													" AND ipp."+getUserSQLCheck());
+		        pstmt = DB.prepareStatement( sql, null);
+		        rs1    = pstmt.executeQuery();
+		        StringBuffer sqlUpdate;
+		        while( rs1.next()) {
+		        	sqlUpdate = new StringBuffer("Update I_ProductPrice SET ");
+		        	sqlUpdate.append(" previouspricelist = ").append(rs1.getBigDecimal("previouspricelist")).append(" , ");
+		        	sqlUpdate.append(" previouspricestd = ").append(rs1.getBigDecimal("previouspricestd")).append(" , ");
+		        	sqlUpdate.append(" previouspricelimit = ").append(rs1.getBigDecimal("previouspricelimit")).append(" , ");
+		        	sqlUpdate.append(" pricelist = ").append(rs1.getBigDecimal("pricelist")).append(" , ");
+		        	sqlUpdate.append(" pricestd = ").append(rs1.getBigDecimal("pricestd")).append(" , ");
+		        	sqlUpdate.append(" pricelimit = ").append(rs1.getBigDecimal("pricelimit"));
+		        	sqlUpdate.append(" WHERE ");
+		        	sqlUpdate.append(" m_product_id = ").append(rs1.getInt("m_product_id"));
+					sqlUpdate
+							.append(" AND ")
+							.append(rs1.getInt("M_AttributeSetInstance_ID") == 0 ? " M_AttributeSetInstance_id is null "
+									: " M_AttributeSetInstance_ID = "
+											+ rs1.getInt("M_AttributeSetInstance_ID"));
+		        	sqlUpdate.append(" AND ").append(getUserSQLCheck());
+					sqlUpdate.append(" AND M_DiscountSchemaLine_ID="
+							+ rs.getInt("M_DiscountSchemaLine_ID"));
+					sqlUpdate.append(" AND M_PriceList_Version_ID = ").append(m_PriceList_Version_ID);
+					
+		    	    no = DB.executeUpdate( sqlUpdate.toString(),null );
+		        }//while
+	        }
+        } catch( Exception e ) {
+            ResultStr = ResultStr + ":" + e.getMessage() + " " + Message;
+            log.severe( ResultStr );
+        } finally {
+        	try {
+        		if(rs1 != null) rs1.close();
+				if(pstmt != null) pstmt.close();
+			} catch (Exception e2) {
+				ResultStr = "ERROR \t" + ResultStr + ":" + e2.getMessage() + " " + Message;
+	            log.severe( ResultStr );
+			}
         }
-        //JOptionPane.showMessageDialog( null,null,"Paramos para ver datos despues, I_ProductPrice", JOptionPane.INFORMATION_MESSAGE );
-
         Message = Message + ", @Inserted@ = " + no;
     }    // CopyPrices
 
@@ -649,9 +771,8 @@ public class ProductPriceTemp extends SvrProcess {
      */
 
     private void updateDiscountStrong( ResultSet rs ) {
-    	log.info( "currupio Estoy ProductPriceTemp.updateDisconuntStrong, con la sql convertida " );
     	PreparedStatement pstmt = null;
-   	 	ResultSet         rs1;
+   	 	ResultSet         rs1 = null;
 
         // Update I_ProductPrice for DiscountSchemaLine strong
 
@@ -663,35 +784,47 @@ public class ProductPriceTemp extends SvrProcess {
         	String sql ="select * from I_ProductPrice t " 
         	+ " WHERE " + getUserSQLCheck() + " AND M_DiscountSchemaLine_ID = " 
         	+ rs.getInt( "M_DiscountSchemaLine_ID" ) 
-        	+ " AND EXISTS (SELECT t.M_Product_ID " 
-        	+ "FROM I_ProductPrice t " 
-        	+ "WHERE t.M_Product_ID = M_Product_ID " 
+        	+ " AND EXISTS (SELECT t2.M_Product_ID " 
+        	+ "FROM I_ProductPrice t2 " 
+        	+ "WHERE t.M_Product_ID = t2.M_Product_ID " 
         	+ "AND " + getUserSQLCheck() 
-        	+ "AND t.M_DiscountSchemaLine_ID <> "
-        	+ rs.getInt( "M_DiscountSchemaLine_ID" ) + ")";
-        	pstmt = DB.prepareStatement(sql);
+        	+ "AND t2.M_DiscountSchemaLine_ID <> "
+        	+ rs.getInt( "M_DiscountSchemaLine_ID" )
+        	+" AND t2.m_pricelist_version_id = "+m_PriceList_Version_ID 
+        	+ ")" 
+        	+" AND m_pricelist_version_id = "+m_PriceList_Version_ID ;
+        	pstmt = DB.prepareStatement(sql, null);
             rs1    = pstmt.executeQuery();
             while( rs1.next()) {
             	 String sql1 = "UPDATE I_ProductPrice set Pricelist= "
-            		           +"(Select Pricelist from I_ProductPrice where " + getUserSQLCheck() + " AND M_Product_ID="+ rs1.getInt("M_Product_ID")
+            		           +"coalesce((Select Pricelist from I_ProductPrice where " + getUserSQLCheck() + " AND M_Product_ID="+ rs1.getInt("M_Product_ID")
             		           +" and M_DiscountSchemaLine_ID<>" + rs.getInt( "M_DiscountSchemaLine_ID" )
-            		           + ") , PriceStd = "
-            		           +"(Select PriceStd from I_ProductPrice where " + getUserSQLCheck() + " AND M_Product_ID="+ rs1.getInt("M_Product_ID")
+            		           +" AND m_pricelist_version_id = "+m_PriceList_Version_ID
+            		           + "),0.00) , PriceStd = "
+            		           +"coalesce((Select PriceStd from I_ProductPrice where " + getUserSQLCheck() + " AND M_Product_ID="+ rs1.getInt("M_Product_ID")
             		           +" and M_DiscountSchemaLine_ID<>" + rs.getInt( "M_DiscountSchemaLine_ID" )
-            		           + "), PriceLimit = "
-            		           +"(Select PriceLimit from I_ProductPrice where " + getUserSQLCheck() + "AND M_Product_ID="+ rs1.getInt("M_Product_ID")
+            		           +" AND m_pricelist_version_id = "+m_PriceList_Version_ID 
+            		           + "),0.00) , PriceLimit = "
+            		           +"coalesce((Select PriceLimit from I_ProductPrice where " + getUserSQLCheck() + "AND M_Product_ID="+ rs1.getInt("M_Product_ID")
             		           +" and M_DiscountSchemaLine_ID<>" + rs.getInt( "M_DiscountSchemaLine_ID" )
-            		           +")"
+            		           +" AND m_pricelist_version_id = "+m_PriceList_Version_ID 
+            		           +"), 0.00)"
             		           +" where " + getUserSQLCheck() + " AND M_DiscountSchemaLine_ID =" + rs.getInt( "M_DiscountSchemaLine_ID" )
-            		           +" and M_Product_ID="+ rs1.getInt("M_Product_ID") ;
-            	 log.fine ("Actualizando = "+ sql1);
-            	 no = DB.executeUpdate( sql1);
+            		           +" and M_Product_ID="+ rs1.getInt("M_Product_ID")
+            	 			   +" AND m_pricelist_version_id = "+m_PriceList_Version_ID;
+            	 no = DB.executeUpdate( sql1, null);
             }
-        	
-           log.fine("Se actualizaron en el updateDiscountStrong ---- "+no+" registros."+ sql );
         } catch( Exception e ) {
             ResultStr = ResultStr + ":" + e.getMessage() + " " + Message;
-            log.log( Level.SEVERE,"\n " + ResultStr );
+            log.severe( ResultStr );
+        } finally {
+        	try {
+        		if(rs1 != null) rs1.close();
+				if(pstmt != null) pstmt.close();
+			} catch (Exception e2) {
+				ResultStr = "ERROR \t" + ResultStr + ":" + e2.getMessage() + " " + Message;
+	            log.severe( ResultStr );
+			}
         }
     }
 
@@ -703,7 +836,6 @@ public class ProductPriceTemp extends SvrProcess {
      */
 
     private void calculation( ResultSet rs ) {
-    	log.info( "currupio Estoy ProductPriceTemp.calculation, con la sql convertida " );
         ResultStr = "Calculation";
 
         try {
@@ -741,10 +873,13 @@ public class ProductPriceTemp extends SvrProcess {
                 sql.append( "(PriceLimit + " );
             }
 
-            sql.append( rs.getBigDecimal( "Limit_AddAmt" ) + ") * (1 - " + rs.getBigDecimal( "Limit_Discount" ) + "/100)" );
-            sql.append( " WHERE " + getUserSQLCheck() + " AND M_DiscountSchemaLine_ID = " + rs.getInt( "M_DiscountSchemaLine_ID" ));
-            no = DB.executeUpdate( sql.toString());
-            rounding( rs );
+			sql.append(rs.getBigDecimal("Limit_AddAmt") + ") * (1 - "
+					+ rs.getBigDecimal("Limit_Discount") + "/100)");
+			sql.append(" WHERE " + getUserSQLCheck()
+					+ " AND M_DiscountSchemaLine_ID = "
+					+ rs.getInt("M_DiscountSchemaLine_ID"));
+			sql.append(" AND m_pricelist_version_id = ").append(m_PriceList_Version_ID);
+            no = DB.executeUpdate( sql.toString(), null);
 
             // Fixed Price overwrite
 
@@ -769,8 +904,11 @@ public class ProductPriceTemp extends SvrProcess {
                 sql.append( "PriceLimit" );
             }
 
-            sql.append( " WHERE " + getUserSQLCheck() + " AND p.M_DiscountSchemaLine_ID = " + rs.getInt( "M_DiscountSchemaLine_ID" ));
-            no = DB.executeUpdate( sql.toString());
+			sql.append(" WHERE " + getUserSQLCheck()
+					+ " AND p.M_DiscountSchemaLine_ID = "
+					+ rs.getInt("M_DiscountSchemaLine_ID"));
+			sql.append(" AND m_pricelist_version_id = ").append(m_PriceList_Version_ID);
+            no = DB.executeUpdate( sql.toString(), null);
             
 			boolean addTax = rs.getString("List_AddProductTax")
 					.equalsIgnoreCase("Y")
@@ -804,12 +942,16 @@ public class ProductPriceTemp extends SvrProcess {
 	            }
 	            
 	            sql.append( " WHERE " + getUserSQLCheck() + " AND p.M_DiscountSchemaLine_ID = " + rs.getInt( "M_DiscountSchemaLine_ID" ));
-	            no = DB.executeUpdate( sql.toString());				
+	            sql.append(" AND m_pricelist_version_id = ").append(m_PriceList_Version_ID);
+	            no = DB.executeUpdate( sql.toString(), null);				
 			}
+			
+			// Redondeo al final de todo
+            rounding( rs );
 			
         } catch( Exception e ) {
             ResultStr = ResultStr + ":" + e.getMessage() + " " + Message;
-            log.log( Level.SEVERE,"\n " + ResultStr );
+            log.severe( ResultStr );
         }
     }    // Calculation
 
@@ -821,72 +963,59 @@ public class ProductPriceTemp extends SvrProcess {
      */
 
     private void rounding( ResultSet rs ) {
-    	log.info( "currupio Estoy ProductPriceTemp.rounding, con la sql convertida " );
         ResultStr = ResultStr + ", Round";
 
         try {
-            StringBuffer sql = new StringBuffer( "UPDATE I_ProductPrice p SET PriceList = " );
+            StringBuffer sql = new StringBuffer( "UPDATE I_ProductPrice p SET " );
+            sql.append(" PriceList = ");
+            sql.append(getRoundingSQL(rs.getString("List_Rounding"), "PriceList"));
+            sql.append(" , ");
+            sql.append(" PriceStd = ");
+            sql.append(getRoundingSQL(rs.getString("Std_Rounding"), "PriceStd"));
+            sql.append( " , " );
+            sql.append(" PriceLimit = ");
+            sql.append(getRoundingSQL(rs.getString("Limit_Rounding"), "PriceLimit"));
 
-            if( rs.getString( "List_Rounding" ) == "N" ) {
-                sql.append( "PriceList" );
-            } else if( rs.getString( "List_Rounding" ) == "0" ) {
-                sql.append( "ROUND(PriceList, 0)" );
-            } else if( rs.getString( "List_Rounding" ) == "D" ) {
-                sql.append( "ROUND(PriceList, 1)" );
-            } else if( rs.getString( "List_Rounding" ) == "T" ) {
-                sql.append( "ROUND(PriceList, -1)" );
-            } else if( rs.getString( "List_Rounding" ) == "5" ) {
-                sql.append( "ROUND(PriceList * 20, 0)" );
-            } else if( rs.getString( "List_Rounding" ) == "Q" ) {
-                sql.append( "ROUND(PriceList * 4, 0)" );
-            } else {
-                sql.append( "ROUND(PriceList," + m_StdPrecision + ")" );
-            }
-
-            sql.append( ", PriceStd = " );
-
-            if( rs.getString( "Std_Rounding" ) == "N" ) {
-                sql.append( "PriceStd" );
-            } else if( rs.getString( "Std_Rounding" ) == "0" ) {
-                sql.append( "ROUND(PriceStd, 0)" );
-            } else if( rs.getString( "Std_Rounding" ) == "D" ) {
-                sql.append( "ROUND(PriceStd, 1)" );
-            } else if( rs.getString( "Std_Rounding" ) == "T" ) {
-                sql.append( "ROUND(PriceStd, -1)" );
-            } else if( rs.getString( "Std_Rounding" ) == "5" ) {
-                sql.append( "ROUND(PriceStd * 20, 0)" );
-            } else if( rs.getString( "Std_Rounding" ) == "Q" ) {
-                sql.append( "ROUND(PriceStd * 4, 0)" );
-            } else {
-                sql.append( "ROUND(PriceStd, " + m_StdPrecision + ")" );
-            }
-
-            sql.append( ", PriceLimit = " );
-
-            if( rs.getString( "Limit_Rounding" ) == "N" ) {
-                sql.append( "PriceLimit" );
-            } else if( rs.getString( "Limit_Rounding" ) == "0" ) {
-                sql.append( "ROUND(PriceLimit, 0)" );
-            } else if( rs.getString( "Limit_Rounding" ) == "D" ) {
-                sql.append( "ROUND(PriceLimit, 1)" );
-            } else if( rs.getString( "Limit_Rounding" ) == "T" ) {
-                sql.append( "ROUND(PriceLimit, -1)" );
-            } else if( rs.getString( "Limit_Rounding" ) == "5" ) {
-                sql.append( "ROUND(PriceLimit * 20, 0)" );
-            } else if( rs.getString( "Limit_Rounding" ) == "Q" ) {
-                sql.append( "ROUND(PriceLimit * 4, 0)" );
-            } else {
-                sql.append( "ROUND(PriceLimit, " + m_StdPrecision + ")" );
-            }
-
-            sql.append( " WHERE " + getUserSQLCheck() + " AND M_DiscountSchemaLine_ID=" + rs.getInt( "M_DiscountSchemaLine_ID" ));
-            no      = DB.executeUpdate( sql.toString());
+			sql.append(" WHERE " + getUserSQLCheck()
+					+ " AND M_DiscountSchemaLine_ID="
+					+ rs.getInt("M_DiscountSchemaLine_ID"));
+			sql.append(" AND m_pricelist_version_id = ").append(m_PriceList_Version_ID);
+            no      = DB.executeUpdate( sql.toString(), null);
             Message = Message + ", @Updated@ = " + no;
         } catch( Exception e ) {
             ResultStr = ResultStr + ":" + e.getMessage() + " " + Message;
-            log.log( Level.SEVERE,"\n " + ResultStr );
+            log.severe( ResultStr );
         }
     }    // Rounding
+    
+    protected String getRoundingSQL(String roundingOption, String numericColumnName){
+    	StringBuffer sql = new StringBuffer();
+    	if( roundingOption.equals(MDiscountSchemaLine.LIST_ROUNDING_NoRounding) ) {
+            sql.append( "?" );
+        } else if( roundingOption.equals(MDiscountSchemaLine.LIST_ROUNDING_WholeNumber00) ) {
+            sql.append( "ROUND(?, 0)" );
+        } else if( roundingOption.equals(MDiscountSchemaLine.LIST_ROUNDING_Dime102030)) {
+            sql.append( "ROUND(?, 1)" );
+        } else if( roundingOption.equals(MDiscountSchemaLine.LIST_ROUNDING_Ten10002000) ) {
+            sql.append( "ROUND(?, -1)" );
+        } else if( roundingOption.equals(MDiscountSchemaLine.LIST_ROUNDING_Nickel051015) ) {
+            sql.append( " (CASE WHEN trunc(?, 2) - trunc(?, 1) < 0.03 THEN trunc(?, 1) " +
+            					"ELSE trunc(?, 1) + 0.05 END) " );
+        } else if( roundingOption.equals(MDiscountSchemaLine.LIST_ROUNDING_Quarter255075) ) {
+			sql.append(" (CASE WHEN trunc(?, 2) - trunc(?) BETWEEN 0.13 AND 0.37 THEN trunc(?) + 0.25 " +
+							"WHEN trunc(?, 2) - trunc(?) BETWEEN 0.38 AND 0.62 THEN trunc(?) + 0.5 " +
+							"WHEN trunc(?, 2) - trunc(?) BETWEEN 0.63 AND 0.87 THEN trunc(?) + 0.75	" +
+							"WHEN trunc(?, 2) - trunc(?) >= 0.88 THEN trunc(?) + 1 " +
+							"ELSE trunc(?) END) ");
+        } else if( roundingOption.equals(MDiscountSchemaLine.LIST_ROUNDING_090RoundUp) ) {
+        	sql.append(" CASE WHEN trunc(?, 2) - trunc(?) >= 0.90 THEN trunc(?) + 1 " +
+        					"ELSE ? END ");
+        } else {
+            sql.append( "ROUND(?," + m_StdPrecision + ")" );
+        }
+    	String sqlReal = sql.toString().replace("?", numericColumnName); 
+    	return sqlReal;
+    }
 
     /**
      * Descripción de Método
@@ -914,6 +1043,20 @@ public class ProductPriceTemp extends SvrProcess {
     	return " CreatedBy = " + Env.getAD_User_ID(Env.getCtx()) + " ";
     }
     
+    @Override
+    public Properties getCtx(){
+    	if(localCtx != null){
+    		return localCtx;
+    	}
+    	return super.getCtx();
+    }
+    
+    protected String get_TrxName(){
+    	if(localTrx != null){
+    		return localTrx;
+    	}
+    	return super.get_TrxName();
+    }
 }    // ProductPriceTemp
 
 
