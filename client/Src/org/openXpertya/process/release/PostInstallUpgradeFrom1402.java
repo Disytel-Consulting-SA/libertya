@@ -92,6 +92,10 @@ public class PostInstallUpgradeFrom1402 extends PluginPostInstallProcess {
 	/** Nombre del .jrxml del informe Historia de Artículos*/
 	protected final static String HISTORIA_DE_ARTICULOS_REPORT_FILENAME = "HistoriaDeArticulos.jrxml";
 	
+	/** UID del Informe de Cambio de Precios */
+	protected final static String PRICE_CHANGING_JASPER_REPORT_UID = "CORE-AD_JasperReport-1010121";
+	protected final static String PRICE_CHANGING_JASPER_REPORT_FILENAME = "PriceChanging.jasper";
+	
 	@Override
 	protected String doIt() throws Exception {
 		super.doIt();
