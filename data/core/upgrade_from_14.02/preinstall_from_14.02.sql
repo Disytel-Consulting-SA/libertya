@@ -3336,3 +3336,76 @@ $BODY$
   LANGUAGE 'plpgsql' VOLATILE
   COST 100;
 ALTER FUNCTION calculateCostOrderPrice(integer, timestamp with time zone, integer, integer) OWNER TO libertya;
+
+--20140821-2315 Nuevas incorporaciones a las reglas de precios por nuevo proceso de importación de precios
+ALTER TABLE m_discountschemaline ADD COLUMN "name" character varying(255);
+
+UPDATE m_discountschemaline dsl
+SET name = (SELECT name FROM m_discountschema ds WHERE ds.m_discountschema_id = dsl.m_discountschema_id) || '_' || seqno;
+
+ALTER TABLE m_discountschemaline ALTER COLUMN "name" SET NOT NULL;
+
+ALTER TABLE m_discountschemaline ADD COLUMN description character varying(255);
+ALTER TABLE m_discountschemaline ADD COLUMN m_product_lines_id integer;
+
+CREATE TABLE m_discountschemaline_application
+(
+  m_discountschemaline_application_id integer NOT NULL,
+  ad_client_id integer NOT NULL,
+  ad_org_id integer NOT NULL,
+  isactive character(1) NOT NULL DEFAULT 'Y'::bpchar,
+  created timestamp without time zone NOT NULL DEFAULT ('now'::text)::timestamp(6) with time zone,
+  createdby integer NOT NULL,
+  updated timestamp without time zone NOT NULL DEFAULT ('now'::text)::timestamp(6) with time zone,
+  updatedby integer NOT NULL,
+  m_discountschemaline_id integer NOT NULL,
+  CONSTRAINT m_discountschemaline_application_key PRIMARY KEY (m_discountschemaline_application_id),
+  CONSTRAINT m_discountschemaline_application_discountschemaline_fk FOREIGN KEY (m_discountschemaline_id)
+      REFERENCES m_discountschemaline (m_discountschemaline_id) MATCH SIMPLE
+      ON UPDATE NO ACTION ON DELETE NO ACTION
+)
+WITH (
+  OIDS=TRUE
+);
+ALTER TABLE m_discountschemaline_application OWNER TO libertya;
+
+
+CREATE TABLE m_discountschemaline_exception
+(
+  m_discountschemaline_exception_id integer NOT NULL,
+  ad_client_id integer NOT NULL,
+  ad_org_id integer NOT NULL,
+  isactive character(1) NOT NULL DEFAULT 'Y'::bpchar,
+  created timestamp without time zone NOT NULL DEFAULT ('now'::text)::timestamp(6) with time zone,
+  createdby integer NOT NULL,
+  updated timestamp without time zone NOT NULL DEFAULT ('now'::text)::timestamp(6) with time zone,
+  updatedby integer NOT NULL,
+  m_discountschemaline_id integer NOT NULL,
+  CONSTRAINT m_discountschemaline_exception_key PRIMARY KEY (m_discountschemaline_exception_id),
+  CONSTRAINT m_discountschemaline_exception_discountschemaline_fk FOREIGN KEY (m_discountschemaline_id)
+      REFERENCES m_discountschemaline (m_discountschemaline_id) MATCH SIMPLE
+      ON UPDATE NO ACTION ON DELETE NO ACTION
+)
+WITH (
+  OIDS=TRUE
+);
+ALTER TABLE m_discountschemaline_exception OWNER TO libertya;
+
+
+CREATE OR REPLACE VIEW m_discountschemaline_org_application_v AS 
+select *
+from (select distinct o.ad_client_id, o.ad_org_id, o.value as orgvalue, o.name as orgname, dsl.m_discountschemaline_id, dsl.name, dsl.m_discountschema_id
+	from ad_org as o, m_discountschemaline dsl
+	where o.ad_client_id = dsl.ad_client_id and dsl.isactive = 'Y') as a
+where not exists (select m_discountschemaline_id 
+			from m_discountschemaline_exception as dsle 
+			where dsle.ad_org_id = a.ad_org_id and dsle.m_discountschemaline_id = a.m_discountschemaline_id and isactive = 'Y') 		
+
+	and (not exists (select m_discountschemaline_id 
+			from m_discountschemaline_application dsla 
+			where dsla.m_discountschemaline_id = a.m_discountschemaline_id and isactive = 'Y')
+
+	or exists (select m_discountschemaline_id 
+			from m_discountschemaline_application dsla 
+			where dsla.m_discountschemaline_id = a.m_discountschemaline_id and (dsla.ad_org_id = 0 or dsla.ad_org_id = a.ad_org_id) and isactive = 'Y'));
+ALTER TABLE m_discountschemaline_org_application_v OWNER TO libertya;

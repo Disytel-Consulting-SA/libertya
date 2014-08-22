@@ -7,7 +7,7 @@ import java.math.*;
 import org.openXpertya.util.*;
 /** Modelo Generado por M_DiscountSchemaLine
  *  @author Comunidad de Desarrollo Libertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
- *  @version  - 2013-10-21 11:33:24.83 */
+ *  @version  - 2014-08-21 23:53:33.88 */
 public class X_M_DiscountSchemaLine extends org.openXpertya.model.PO
 {
 /** Constructor estándar */
@@ -34,6 +34,7 @@ setList_MinAmt (Env.ZERO);
 setList_Rounding (null);	// C
 setM_DiscountSchema_ID (0);
 setM_DiscountSchemaLine_ID (0);
+setName (null);
 setSeqNo (0);	// @SQL=SELECT NVL(MAX(SeqNo),0)+10 AS DefaultValue FROM M_DiscountSchemaLine WHERE M_DiscountSchema_ID=@M_DiscountSchema_ID@
 setStd_AddAmt (Env.ZERO);
 setStd_AddProductTax (false);
@@ -127,6 +128,23 @@ Date for selecting conversion rate */
 public Timestamp getConversionDate() 
 {
 return (Timestamp)get_Value("ConversionDate");
+}
+/** Set Description.
+Optional short description of the record */
+public void setDescription (String Description)
+{
+if (Description != null && Description.length() > 255)
+{
+log.warning("Length > 255 - truncated");
+Description = Description.substring(0,255);
+}
+set_Value ("Description", Description);
+}
+/** Get Description.
+Optional short description of the record */
+public String getDescription() 
+{
+return (String)get_Value("Description");
 }
 /** Set IsStrong */
 public void setIsStrong (boolean IsStrong)
@@ -284,12 +302,14 @@ public static final String LIMIT_ROUNDING_Dime102030 = "D";
 public static final String LIMIT_ROUNDING_Nickel051015 = "5";
 /** Ten 10.00, 20.00, .. = T */
 public static final String LIMIT_ROUNDING_Ten10002000 = "T";
+/** 0.90 round up = U */
+public static final String LIMIT_ROUNDING_090RoundUp = "U";
 /** Set Limit price Rounding.
 Rounding of the final result */
 public void setLimit_Rounding (String Limit_Rounding)
 {
-if (Limit_Rounding.equals("C") || Limit_Rounding.equals("0") || Limit_Rounding.equals("N") || Limit_Rounding.equals("Q") || Limit_Rounding.equals("D") || Limit_Rounding.equals("5") || Limit_Rounding.equals("T"));
- else throw new IllegalArgumentException ("Limit_Rounding Invalid value - Reference = LIMIT_ROUNDING_AD_Reference_ID - C - 0 - N - Q - D - 5 - T");
+if (Limit_Rounding.equals("C") || Limit_Rounding.equals("0") || Limit_Rounding.equals("N") || Limit_Rounding.equals("Q") || Limit_Rounding.equals("D") || Limit_Rounding.equals("5") || Limit_Rounding.equals("T") || Limit_Rounding.equals("U"));
+ else throw new IllegalArgumentException ("Limit_Rounding Invalid value - Reference = LIMIT_ROUNDING_AD_Reference_ID - C - 0 - N - Q - D - 5 - T - U");
 if (Limit_Rounding == null) throw new IllegalArgumentException ("Limit_Rounding is mandatory");
 if (Limit_Rounding.length() > 1)
 {
@@ -440,12 +460,14 @@ public static final String LIST_ROUNDING_Dime102030 = "D";
 public static final String LIST_ROUNDING_Nickel051015 = "5";
 /** Ten 10.00, 20.00, .. = T */
 public static final String LIST_ROUNDING_Ten10002000 = "T";
+/** 0.90 round up = U */
+public static final String LIST_ROUNDING_090RoundUp = "U";
 /** Set List price Rounding.
 Rounding rule for final list price */
 public void setList_Rounding (String List_Rounding)
 {
-if (List_Rounding.equals("C") || List_Rounding.equals("0") || List_Rounding.equals("N") || List_Rounding.equals("Q") || List_Rounding.equals("D") || List_Rounding.equals("5") || List_Rounding.equals("T"));
- else throw new IllegalArgumentException ("List_Rounding Invalid value - Reference = LIST_ROUNDING_AD_Reference_ID - C - 0 - N - Q - D - 5 - T");
+if (List_Rounding.equals("C") || List_Rounding.equals("0") || List_Rounding.equals("N") || List_Rounding.equals("Q") || List_Rounding.equals("D") || List_Rounding.equals("5") || List_Rounding.equals("T") || List_Rounding.equals("U"));
+ else throw new IllegalArgumentException ("List_Rounding Invalid value - Reference = LIST_ROUNDING_AD_Reference_ID - C - 0 - N - Q - D - 5 - T - U");
 if (List_Rounding == null) throw new IllegalArgumentException ("List_Rounding is mandatory");
 if (List_Rounding.length() > 1)
 {
@@ -548,6 +570,42 @@ Integer ii = (Integer)get_Value("M_Product_ID");
 if (ii == null) return 0;
 return ii.intValue();
 }
+/** Set Product Line */
+public void setM_Product_Lines_ID (int M_Product_Lines_ID)
+{
+if (M_Product_Lines_ID <= 0) set_Value ("M_Product_Lines_ID", null);
+ else 
+set_Value ("M_Product_Lines_ID", new Integer(M_Product_Lines_ID));
+}
+/** Get Product Line */
+public int getM_Product_Lines_ID() 
+{
+Integer ii = (Integer)get_Value("M_Product_Lines_ID");
+if (ii == null) return 0;
+return ii.intValue();
+}
+/** Set Name.
+Alphanumeric identifier of the entity */
+public void setName (String Name)
+{
+if (Name == null) throw new IllegalArgumentException ("Name is mandatory");
+if (Name.length() > 255)
+{
+log.warning("Length > 255 - truncated");
+Name = Name.substring(0,255);
+}
+set_Value ("Name", Name);
+}
+/** Get Name.
+Alphanumeric identifier of the entity */
+public String getName() 
+{
+return (String)get_Value("Name");
+}
+public KeyNamePair getKeyNamePair() 
+{
+return new KeyNamePair(getID(), getName());
+}
 /** Set Sequence.
 Method of ordering records;
  lowest number comes first */
@@ -563,10 +621,6 @@ public int getSeqNo()
 Integer ii = (Integer)get_Value("SeqNo");
 if (ii == null) return 0;
 return ii.intValue();
-}
-public KeyNamePair getKeyNamePair() 
-{
-return new KeyNamePair(getID(), String.valueOf(getSeqNo()));
 }
 public static final int SOLDPURCHASEDOPTION_AD_Reference_ID = MReference.getReferenceID("Sold/Purchased Options");
 /** Sold = S */
@@ -728,12 +782,14 @@ public static final String STD_ROUNDING_Dime102030 = "D";
 public static final String STD_ROUNDING_Nickel051015 = "5";
 /** Ten 10.00, 20.00, .. = T */
 public static final String STD_ROUNDING_Ten10002000 = "T";
+/** 0.90 round up = U */
+public static final String STD_ROUNDING_090RoundUp = "U";
 /** Set Standard price Rounding.
 Rounding rule for calculated price */
 public void setStd_Rounding (String Std_Rounding)
 {
-if (Std_Rounding.equals("C") || Std_Rounding.equals("0") || Std_Rounding.equals("N") || Std_Rounding.equals("Q") || Std_Rounding.equals("D") || Std_Rounding.equals("5") || Std_Rounding.equals("T"));
- else throw new IllegalArgumentException ("Std_Rounding Invalid value - Reference = STD_ROUNDING_AD_Reference_ID - C - 0 - N - Q - D - 5 - T");
+if (Std_Rounding.equals("C") || Std_Rounding.equals("0") || Std_Rounding.equals("N") || Std_Rounding.equals("Q") || Std_Rounding.equals("D") || Std_Rounding.equals("5") || Std_Rounding.equals("T") || Std_Rounding.equals("U"));
+ else throw new IllegalArgumentException ("Std_Rounding Invalid value - Reference = STD_ROUNDING_AD_Reference_ID - C - 0 - N - Q - D - 5 - T - U");
 if (Std_Rounding == null) throw new IllegalArgumentException ("Std_Rounding is mandatory");
 if (Std_Rounding.length() > 1)
 {
