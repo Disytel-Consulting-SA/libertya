@@ -3560,7 +3560,7 @@ public class MInvoice extends X_C_Invoice implements DocAction {
 		// facturas creadas a partir de peidods N*6 accesos por solo 1 (N siendo
 		// la cantidad de lineas).
 		if (isSOTrx() && isDebit) {
-			boolean ok = updateOrderIsSOTrxDebit(lines);
+			boolean ok = updateOrderIsSOTrxDebit(lines, orderLinesToUpdate);
 			if (!ok) {
 				m_processMsg = "Could not update Order Line";
 				return DocAction.STATUS_Invalid;
@@ -3644,49 +3644,53 @@ public class MInvoice extends X_C_Invoice implements DocAction {
 					}
 				}
 			} // for all lines
+		}// fin else
 
-			// Reabrir el pedido en el caso que esté marcada para actualizar
-			// cantidades
-			if(isUpdateOrderQty() && orderLinesToUpdate.size() > 0){
-				MOrder order = new MOrder(getCtx(), getC_Order_ID(), get_TrxName());
-				if(!order.processIt(MOrder.DOCACTION_Re_Activate)){
-					setProcessMsg("Error reactivating order to update qty: "+order.getProcessMsg());
-					return DOCSTATUS_Invalid;
-				}
-				int orderUpdated = 0;
-				PreparedStatement ps = null;
-				try{
-					ps = DB.prepareStatement(
-							"UPDATE c_orderline SET qtyordered = qtyordered - ?, qtyentered = qtyentered - ? WHERE c_orderline_id = ?",
-							get_TrxName());
-					for (Integer orderLineID : orderLinesToUpdate.keySet()) {
-						ps.setBigDecimal(1, orderLinesToUpdate.get(orderLineID));
-						ps.setBigDecimal(2, orderLinesToUpdate.get(orderLineID));
-						ps.setInt(3, orderLineID);
-						orderUpdated = ps.executeUpdate();
-						if(orderUpdated != 1){
-							setProcessMsg("Error updating order line ID "+orderLineID);
-							return DOCSTATUS_Invalid;
-						}
-					}
-				} catch(SQLException sqle){
-					setProcessMsg(sqle.getMessage());
-					return DOCSTATUS_Invalid;
-				} finally {
-					try{
-						if(ps != null)ps.close();
-					} catch(SQLException sqle2){
-						setProcessMsg(sqle2.getMessage());
+		// Reabrir el pedido en el caso que esté marcada para actualizar
+		// cantidades
+		if(isUpdateOrderQty() && orderLinesToUpdate.size() > 0){
+			MOrder order = new MOrder(getCtx(), getC_Order_ID(), get_TrxName());
+			if(!order.processIt(MOrder.DOCACTION_Re_Activate)){
+				setProcessMsg("Error reactivating order to update qty: "+order.getProcessMsg());
+				return DOCSTATUS_Invalid;
+			}
+			int orderUpdated = 0;
+			PreparedStatement ps = null;
+			try{
+				String operator = docType.getsigno_issotrx().equals(
+						MDocType.SIGNO_ISSOTRX_1) ? "+" : "-";
+				ps = DB.prepareStatement(
+						"UPDATE c_orderline SET qtyordered = qtyordered "
+								+ operator + " ?, qtyentered = qtyentered "
+								+ operator + " ? WHERE c_orderline_id = ?",
+						get_TrxName());
+				for (Integer orderLineID : orderLinesToUpdate.keySet()) {
+					ps.setBigDecimal(1, orderLinesToUpdate.get(orderLineID));
+					ps.setBigDecimal(2, orderLinesToUpdate.get(orderLineID));
+					ps.setInt(3, orderLineID);
+					orderUpdated = ps.executeUpdate();
+					if(orderUpdated != 1){
+						setProcessMsg("Error updating order line ID "+orderLineID);
 						return DOCSTATUS_Invalid;
 					}
 				}
-				if(!order.processIt(MOrder.DOCACTION_Complete)){
-					setProcessMsg("Error reactivating order to update qty: "+order.getProcessMsg());
+			} catch(SQLException sqle){
+				setProcessMsg(sqle.getMessage());
+				return DOCSTATUS_Invalid;
+			} finally {
+				try{
+					if(ps != null)ps.close();
+				} catch(SQLException sqle2){
+					setProcessMsg(sqle2.getMessage());
 					return DOCSTATUS_Invalid;
 				}
 			}
-		}// fin else
-
+			if(!order.processIt(MOrder.DOCACTION_Complete)){
+				setProcessMsg("Error reactivating order to update qty: "+order.getProcessMsg());
+				return DOCSTATUS_Invalid;
+			}
+		}
+		
 		// Update BP Statistics
 
 		MBPartner bp = new MBPartner(getCtx(), getC_BPartner_ID(),
@@ -5287,7 +5291,7 @@ public class MInvoice extends X_C_Invoice implements DocAction {
 	 *            lienas de factura a partir de las cuales
 	 * @return false si no la actualizacion fallo por algun motivo
 	 */
-	private boolean updateOrderIsSOTrxDebit(MInvoiceLine[] lines) {
+	private boolean updateOrderIsSOTrxDebit(MInvoiceLine[] lines, Map<Integer, BigDecimal> orderLinesToUpdate) {
 		// Ok, teoricamente no deberia poder haber 2 MInvoiceLIne de la misma
 		// factura refiriendo a la misma MOrderLine; auqneu no parece
 		// ser un restricción muy importante, se va a permitir esto (el codigo
@@ -5295,7 +5299,7 @@ public class MInvoice extends X_C_Invoice implements DocAction {
 
 		// C_OrderLine_ID -> incremeto en QtyInvoiced
 		HashMap<Integer, BigDecimal> molQtyInvoiced = new HashMap<Integer, BigDecimal>();
-
+		BigDecimal orderLineToUpdateQty = null;
 		for (int i = 0; i < lines.length; i++) {
 			MInvoiceLine il = lines[i];
 			if (il.getC_OrderLine_ID() <= 0)
@@ -5320,6 +5324,15 @@ public class MInvoice extends X_C_Invoice implements DocAction {
 				molQtyInvoiced.put(C_OrderLine_ID, qtyInvoiced);
 			}
 
+			if(isUpdateOrderQty()){
+				orderLineToUpdateQty = orderLinesToUpdate.get(il.getID()); 
+				if(orderLineToUpdateQty == null){
+					orderLineToUpdateQty = BigDecimal.ZERO;
+				}
+				orderLineToUpdateQty = orderLineToUpdateQty.add(qtyInvoiced);
+				orderLinesToUpdate.put(il.getC_OrderLine_ID(), orderLineToUpdateQty);
+			}
+			
 		}
 
 		// se crea la sentencia update
@@ -5352,7 +5365,7 @@ public class MInvoice extends X_C_Invoice implements DocAction {
 
 		if (qtyUpdated != listIds.size())
 			return false; // algo raro paso...
-
+		
 		return true;
 	}
 
