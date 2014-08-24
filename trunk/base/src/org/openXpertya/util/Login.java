@@ -941,7 +941,12 @@ public class Login {
             Env.setContext( m_ctx,"#M_Warehouse_ID",warehouse.getKey());
             Ini.setProperty( Ini.P_WAREHOUSE,warehouse.getName());
         }
-
+        
+        /* Existe la posibilidad que el usuario cargado en el contexto no pertenezca a la compañía del contexto. 
+         * En la primer pestaña del login se obtiene el usuario a partir del name y password. 
+         * En caso de que existan varios usuarios con el mismo name y password se elige uno y se carga en el contexto. */
+        updateUserFromClient();        
+        
         // Disytel - FB - 2010-12-23
         // Ahora la fecha actual #Date se administra internamente en el Env. 
         // El mismo se encarga de obtener la fecha del servidor de BD y setear
@@ -1078,7 +1083,62 @@ public class Login {
         return retValue;
     }    // loadPreferences
 
-    /**
+    private void updateUserFromClient() {
+    	/*Obtengo los datos del usuario cargado en el contexto*/
+        String paramName = null;
+        String paramPassword = null;
+        int adClientUserID = 0;
+        
+        String sql = "SELECT AD_User.Name, AD_User.Password, AD_User.AD_Client_ID" +
+		   		     " FROM AD_User" + 
+		   		     " WHERE AD_User.AD_User_ID=?";
+
+        PreparedStatement pstmt = null;
+        try {
+	        pstmt = DB.prepareStatement( sql );
+	        pstmt.setInt( 1, Env.getContextAsInt( m_ctx,"#AD_User_ID" ) );
+	
+	        ResultSet rs = pstmt.executeQuery();
+	        if( rs.next()) {
+	        	paramName = rs.getString( 1 );
+	        	paramPassword = rs.getString( 2 );
+	        	adClientUserID = rs.getInt( 3 );
+	        }
+	
+	        rs.close();
+	        pstmt.close();
+        } catch( SQLException e ) {
+            log.log( Level.SEVERE,"User Error",e );
+        }         
+        /* Si el usuario existente en el contexto pertenece a una compañía (AD_CLIENT_ID ) diferente a la selecionada en el login:
+         * Entonces busco un usuario para la compañía seleccionada, con el mismo name, password y que este activo. 
+         * En caso se existir, actualizo el Contexto. */
+        if (adClientUserID != Env.getContextAsInt( m_ctx,"#AD_Client_ID" )) {
+        	sql = "SELECT AD_User.AD_User_ID" +
+                    " FROM AD_User" + 
+                    " WHERE AD_User.AD_Client_ID=? AND AD_User.Name=? AND AD_User.Password=? AND AD_User.IsActive='Y'";
+         
+        	pstmt = null;
+        	try {
+        		pstmt = DB.prepareStatement( sql );
+			    pstmt.setInt( 1, Env.getContextAsInt( m_ctx,"#AD_Client_ID" ) );
+			    pstmt.setString( 2, paramName );
+			    pstmt.setString( 3, paramPassword );
+			  
+			    ResultSet rs = pstmt.executeQuery();
+			    if( rs.next()) {
+			    	Env.setContext( m_ctx,"#AD_User_ID",rs.getInt(1));
+			    }
+			
+			    rs.close();
+			    pstmt.close();
+			} catch( SQLException e ) {
+			    log.log( Level.SEVERE,"User Error",e );
+			}	
+        }
+	}
+
+	/**
      * Descripción de Método
      *
      *
