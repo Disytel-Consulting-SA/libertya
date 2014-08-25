@@ -3,8 +3,12 @@ package org.openXpertya.process;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
+import org.openXpertya.model.MProcess;
+import org.openXpertya.model.X_I_ProductPrice;
 import org.openXpertya.util.DB;
 import org.openXpertya.util.Env;
 import org.openXpertya.util.Trx;
@@ -81,6 +85,13 @@ public class ProductPriceTempGlobal extends SvrProcess {
 				generatedPriceListVersions.add(ppTemp.doIt());
 				Trx.getTrx(get_TrxName()).commit();
 			}
+			// Tirar la importación de precios
+			Trx.getTrx(get_TrxName()).start();
+			Map<String, Object> importParams = new HashMap<String, Object>();
+			importParams.put("AD_Org_ID", getOrgID());
+			MProcess.execute(getCtx(), getImportPriceListProcessID(),
+					X_I_ProductPrice.Table_ID, importParams, get_TrxName());
+			Trx.getTrx(get_TrxName()).commit();
 		} catch(Exception e){
 			Trx.getTrx(get_TrxName()).rollback();
 			throw e;
@@ -97,6 +108,12 @@ public class ProductPriceTempGlobal extends SvrProcess {
 		return generatedPriceListVersions.toString();
 	}
 
+	protected Integer getImportPriceListProcessID(){
+		return DB
+				.getSQLValue(get_TrxName(),
+						"SELECT ad_process_id FROM ad_process WHERE value = 'ImportPriceList' LIMIT 1");
+	}
+	
 	public Integer getOrgID() {
 		return orgID;
 	}

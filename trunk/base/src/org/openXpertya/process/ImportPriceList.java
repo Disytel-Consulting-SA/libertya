@@ -1,5 +1,6 @@
 package org.openXpertya.process;
 
+import java.math.BigDecimal;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 
@@ -23,7 +24,8 @@ public class ImportPriceList extends AbstractImportProcess {
 	@Override
 	protected void prepareImport() {
 		// Parámetro: Organización
-		m_AD_Org_ID = (Integer)getParameterValue("AD_Org_ID", 0);
+		m_AD_Org_ID = ((BigDecimal) getParameterValue("AD_Org_ID",
+				BigDecimal.ZERO)).intValue();
 		
 		// Se crea la consulta para obtener los ProducPrices existentes.
 		productPricePstmt = DB.prepareStatement(
