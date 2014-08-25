@@ -726,7 +726,7 @@ public class MProcess extends X_AD_Process {
     }
     
     
-    public static ProcessInfo execute(Properties ctx,int AD_Process_ID, Map<String, Object> parameters, String trxName){
+    public static ProcessInfo execute(Properties ctx,int AD_Process_ID, int tableID, Map<String, Object> parameters, String trxName){
     	// Obtengo el proceso con ese id
     	MProcess process = MProcess.get(ctx, AD_Process_ID, trxName);
     	if(process == null){
@@ -741,6 +741,7 @@ public class MProcess extends X_AD_Process {
     	// Creo el process info de este proceso
     	ProcessInfo pi = new ProcessInfo(process.getName(),process.getID());
     	pi.setAD_PInstance_ID(instance.getID());
+    	pi.setTable_ID(tableID);
     	
     	// Procesamiento de parametros
     	
@@ -827,6 +828,10 @@ public class MProcess extends X_AD_Process {
     	
     	MProcess.execute(ctx,process,pi,trxName);
     	return pi;
+    }
+    
+    public static ProcessInfo execute(Properties ctx,int AD_Process_ID, Map<String, Object> parameters, String trxName){
+    	return execute(ctx, AD_Process_ID, 0, parameters, trxName);
     }
     
 	/**
