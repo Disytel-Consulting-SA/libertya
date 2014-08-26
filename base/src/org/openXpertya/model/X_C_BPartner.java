@@ -7,7 +7,7 @@ import java.math.*;
 import org.openXpertya.util.*;
 /** Modelo Generado por C_BPartner
  *  @author Comunidad de Desarrollo Libertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
- *  @version  - 2014-05-12 11:04:25.073 */
+ *  @version  - 2014-08-26 17:22:53.544 */
 public class X_C_BPartner extends org.openXpertya.model.PO
 {
 /** Constructor estándar */
@@ -22,6 +22,7 @@ setC_BP_Group_ID (0);
 setCreditMinimumAmt (Env.ZERO);
 setDiscountContext (null);	// B
 setDUNS (null);
+setIsConvenioMultilateral (false);
 setIsCustomer (false);
 setIsEmployee (false);
 setIsGroupInvoices (false);
@@ -697,6 +698,24 @@ set_Value ("IsCompoundtax", new Boolean(IsCompoundtax));
 public boolean isCompoundtax() 
 {
 Object oo = get_Value("IsCompoundtax");
+if (oo != null) 
+{
+ if (oo instanceof Boolean) return ((Boolean)oo).booleanValue();
+ return "Y".equals(oo);
+}
+return false;
+}
+/** Set Convenio Multilateral.
+Entidades comerciales en Convenio Multilateral */
+public void setIsConvenioMultilateral (boolean IsConvenioMultilateral)
+{
+set_Value ("IsConvenioMultilateral", new Boolean(IsConvenioMultilateral));
+}
+/** Get Convenio Multilateral.
+Entidades comerciales en Convenio Multilateral */
+public boolean isConvenioMultilateral() 
+{
+Object oo = get_Value("IsConvenioMultilateral");
 if (oo != null) 
 {
  if (oo instanceof Boolean) return ((Boolean)oo).booleanValue();

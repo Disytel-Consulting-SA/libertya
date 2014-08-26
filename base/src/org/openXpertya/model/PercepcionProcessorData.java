@@ -1,5 +1,7 @@
 package org.openXpertya.model;
 
+import java.math.BigDecimal;
+
 import org.openXpertya.model.DiscountCalculator.IDocument;
 
 public class PercepcionProcessorData {
@@ -15,6 +17,12 @@ public class PercepcionProcessorData {
 	
 	/** Impuesto */
 	private MTax tax;
+	
+	/** Alicuota de la config de la percepción */
+	private BigDecimal alicuota;
+	
+	/** Es Convenio Multilateral */
+	private boolean isConvenioMultilateral;
 	
 	public PercepcionProcessorData() {
 		
@@ -50,6 +58,22 @@ public class PercepcionProcessorData {
 
 	public void setTax(MTax tax) {
 		this.tax = tax;
+	}
+
+	public BigDecimal getAlicuota() {
+		return alicuota;
+	}
+
+	public void setAlicuota(BigDecimal alicuota) {
+		this.alicuota = alicuota;
+	}
+
+	public boolean isConvenioMultilateral() {
+		return isConvenioMultilateral;
+	}
+
+	public void setConvenioMultilateral(boolean isConvenioMultilateral) {
+		this.isConvenioMultilateral = isConvenioMultilateral;
 	}
 
 }

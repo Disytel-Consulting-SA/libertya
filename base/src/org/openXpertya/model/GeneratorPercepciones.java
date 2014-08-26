@@ -115,6 +115,8 @@ public class GeneratorPercepciones {
 			data.setDocument(getDocument());
 			data.setBpartner(getBpartner());
 			data.setCategoriaIVA(getCategoriaIVA());
+			data.setAlicuota(orgPercepcion.getAlicuota());
+			data.setConvenioMultilateral(orgPercepcion.isConvenioMultilateral());
 			tax = new MTax(getCtx(), orgPercepcion.getC_Tax_ID(), getTrxName());
 			data.setTax(tax);
 			try{

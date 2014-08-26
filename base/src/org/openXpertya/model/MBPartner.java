@@ -45,6 +45,9 @@ import org.openXpertya.util.Util;
 
 public class MBPartner extends X_C_BPartner {
 
+	public static final int IIBB_CONVENIO_MULTILATERAL_MINIMO = 901;
+	public static final int IIBB_CONVENIO_MULTILATERAL_MAXIMO = 924;
+	
     /**
      * Descripción de Método
      *
@@ -1372,6 +1375,11 @@ public class MBPartner extends X_C_BPartner {
 			setSalesRep_ID(salesRepID);
 		}
 		
+		// Marcar convenio multilateral
+		if(!Util.isEmpty(getIIBB(), true)){
+			setIsConvenioMultilateral(isConvenioMultilateral(getIIBB()));
+		}
+		
 		return true;
 	}
 
@@ -1402,6 +1410,30 @@ public class MBPartner extends X_C_BPartner {
 	public boolean isConsumidorFinal(){
 		MCategoriaIva categoria = new MCategoriaIva(getCtx(),getC_Categoria_Iva_ID(),get_TrxName());
 		return categoria.getName().equalsIgnoreCase("Consumidor Final");
+	}
+	
+	/**
+	 * Contribuyentes Locales y en Convenio Multilateral, los contribuyentes en
+	 * Convenio se identifican por su N°de inscripción cuyo inicio comprende del
+	 * 901 al 924 los demás son contribuyentes locales
+	 * 
+	 * @param iibb
+	 *            nro de IIBB
+	 * @return true si está en convenio, false caso contrario
+	 */
+	public static boolean isConvenioMultilateral(String iibb){
+		int initialIIBBInt = 0;
+		if(!Util.isEmpty(iibb, true) && iibb.length() > 3){
+			String initialIIBB = iibb.substring(0, 3);
+			try{
+				initialIIBBInt = Integer.parseInt(initialIIBB);
+			} catch(Exception e){
+				initialIIBBInt = 0;
+			}
+		}
+
+		return initialIIBBInt >= IIBB_CONVENIO_MULTILATERAL_MINIMO
+				&& initialIIBBInt <= IIBB_CONVENIO_MULTILATERAL_MAXIMO;
 	}
 	
 
