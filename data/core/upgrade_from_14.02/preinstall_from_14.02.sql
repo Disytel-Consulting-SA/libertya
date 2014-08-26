@@ -3411,6 +3411,6 @@ where not exists (select m_discountschemaline_id
 ALTER TABLE m_discountschemaline_org_application_v OWNER TO libertya;
 
 --20140826-1700 Ampliaciones a la configuración de percepciones de iib de provincias
-update ad_system set dummy = (SELECT addcolumnifnotexists('ad_org_percepcion', 'alicuota', 'NOT NULL DEFAULT 0'));
+update ad_system set dummy = (SELECT addcolumnifnotexists('ad_org_percepcion', 'alicuota', 'numeric(9,2) NOT NULL DEFAULT 0'));
 update ad_system set dummy = (SELECT addcolumnifnotexists('ad_org_percepcion', 'isconveniomultilateral', 'character(1) NOT NULL DEFAULT ''N''::bpchar'));
 update ad_system set dummy = (SELECT addcolumnifnotexists('c_bpartner', 'isconveniomultilateral', 'character(1) NOT NULL DEFAULT ''N''::bpchar'));
