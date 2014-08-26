@@ -3,6 +3,7 @@ package org.openXpertya.model;
 import java.math.BigDecimal;
 
 import org.openXpertya.util.Env;
+import org.openXpertya.util.Util;
 
 public class PercepcionStandard extends AbstractPercepcionProcessor {
 
@@ -18,7 +19,11 @@ public class PercepcionStandard extends AbstractPercepcionProcessor {
 
 	@Override
 	public BigDecimal getPercepcionPercToApply() {
-		return getPercepcionData().getTax().getRate();
+		BigDecimal perc = getPercepcionData().getAlicuota();
+		if(Util.isEmpty(perc, true)){
+			perc = getPercepcionData().getTax().getRate();
+		}
+		return perc;
 	}
 
 	@Override

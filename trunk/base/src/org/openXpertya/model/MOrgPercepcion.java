@@ -54,18 +54,6 @@ public class MOrgPercepcion extends X_AD_Org_Percepcion {
 	}
 
 	protected boolean beforeSave(boolean newRecord) {
-		// No puede existir un registro repetido por organización e impuesto
-		StringBuffer sql = new StringBuffer("SELECT count(*) as cant FROM "
-				+ get_TableName() + " WHERE ad_org_id = " + getAD_Org_ID()
-				+ " AND c_tax_id = " + getC_Tax_ID());
-		if(!Util.isEmpty(getID(), true)){
-			sql.append(" AND ("+get_TableName()+"_ID <> "+getID()+")");
-		}
-		if(DB.getSQLValue(get_TrxName(), sql.toString()) > 0){
-			log.saveError("OrgPercepcionRepeated", "");
-			return false;
-		}
-		
 		// dREHER, si la organizacion es Padre, no permitir guardar registro y mostrar error
 		
 		int AD_Org_ID = this.getAD_Org_ID();
@@ -76,6 +64,13 @@ public class MOrgPercepcion extends X_AD_Org_Percepcion {
 				log.saveError("OrgPercepcionInOrgSummary", "No se pueden configurar percepciones en organizaciones del tipo carpeta!");
 				return false;
 			}
+		}
+		// Si el procesador está marcado como que soporta padrón, entonces no se
+		// marca como convenio multilateral
+		MRetencionProcessor processor = new MRetencionProcessor(getCtx(),
+				getC_RetencionProcessor_ID(), get_TrxName());
+		if(processor.isSupportRegister()){
+			setIsConvenioMultilateral(false);
 		}
 		return true;
 	}	

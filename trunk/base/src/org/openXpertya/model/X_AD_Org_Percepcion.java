@@ -7,7 +7,7 @@ import java.math.*;
 import org.openXpertya.util.*;
 /** Modelo Generado por AD_Org_Percepcion
  *  @author Comunidad de Desarrollo Libertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
- *  @version  - 2013-09-12 18:05:08.85 */
+ *  @version  - 2014-08-26 17:21:37.613 */
 public class X_AD_Org_Percepcion extends org.openXpertya.model.PO
 {
 /** Constructor estándar */
@@ -17,8 +17,10 @@ super (ctx, AD_Org_Percepcion_ID, trxName);
 /** if (AD_Org_Percepcion_ID == 0)
 {
 setAD_Org_Percepcion_ID (0);
+setAlicuota (Env.ZERO);
 setC_RetencionProcessor_ID (0);
 setC_Tax_ID (0);
+setIsConvenioMultilateral (false);
 setMinimumNetAmount (Env.ZERO);
 setName (null);
 }
@@ -60,6 +62,19 @@ public int getAD_Org_Percepcion_ID()
 Integer ii = (Integer)get_Value("AD_Org_Percepcion_ID");
 if (ii == null) return 0;
 return ii.intValue();
+}
+/** Set Alicuota */
+public void setAlicuota (BigDecimal Alicuota)
+{
+if (Alicuota == null) throw new IllegalArgumentException ("Alicuota is mandatory");
+set_Value ("Alicuota", Alicuota);
+}
+/** Get Alicuota */
+public BigDecimal getAlicuota() 
+{
+BigDecimal bd = (BigDecimal)get_Value("Alicuota");
+if (bd == null) return Env.ZERO;
+return bd;
 }
 /** Set Retencion Processor */
 public void setC_RetencionProcessor_ID (int C_RetencionProcessor_ID)
@@ -103,6 +118,24 @@ Optional short description of the record */
 public String getDescription() 
 {
 return (String)get_Value("Description");
+}
+/** Set Convenio Multilateral.
+Entidades comerciales en Convenio Multilateral */
+public void setIsConvenioMultilateral (boolean IsConvenioMultilateral)
+{
+set_Value ("IsConvenioMultilateral", new Boolean(IsConvenioMultilateral));
+}
+/** Get Convenio Multilateral.
+Entidades comerciales en Convenio Multilateral */
+public boolean isConvenioMultilateral() 
+{
+Object oo = get_Value("IsConvenioMultilateral");
+if (oo != null) 
+{
+ if (oo instanceof Boolean) return ((Boolean)oo).booleanValue();
+ return "Y".equals(oo);
+}
+return false;
 }
 /** Set Minimum Net Amount */
 public void setMinimumNetAmount (BigDecimal MinimumNetAmount)
