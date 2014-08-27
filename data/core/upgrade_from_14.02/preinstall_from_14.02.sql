@@ -3414,3 +3414,7 @@ ALTER TABLE m_discountschemaline_org_application_v OWNER TO libertya;
 update ad_system set dummy = (SELECT addcolumnifnotexists('ad_org_percepcion', 'alicuota', 'numeric(9,2) NOT NULL DEFAULT 0'));
 update ad_system set dummy = (SELECT addcolumnifnotexists('ad_org_percepcion', 'isconveniomultilateral', 'character(1) NOT NULL DEFAULT ''N''::bpchar'));
 update ad_system set dummy = (SELECT addcolumnifnotexists('c_bpartner', 'isconveniomultilateral', 'character(1) NOT NULL DEFAULT ''N''::bpchar'));
+
+--20140827-0900 Columnas faltantes de commit 1028. Incorporaciones de límite y restricción en la entidad financiera
+update ad_system set dummy = (SELECT addcolumnifnotexists('m_entidadfinanciera', 'isallowcreditcardcashretirement', 'character(1) NOT NULL DEFAULT ''N''::bpchar'));
+update ad_system set dummy = (SELECT addcolumnifnotexists('m_entidadfinanciera', 'creditcardcashretirementlimit', 'numeric(9,2) NOT NULL DEFAULT 0'));
