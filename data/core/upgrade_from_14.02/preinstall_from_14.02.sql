@@ -3418,3 +3418,53 @@ update ad_system set dummy = (SELECT addcolumnifnotexists('c_bpartner', 'isconve
 --20140827-0900 Columnas faltantes de commit 1028. Incorporaciones de límite y restricción en la entidad financiera
 update ad_system set dummy = (SELECT addcolumnifnotexists('m_entidadfinanciera', 'isallowcreditcardcashretirement', 'character(1) NOT NULL DEFAULT ''N''::bpchar'));
 update ad_system set dummy = (SELECT addcolumnifnotexists('m_entidadfinanciera', 'creditcardcashretirementlimit', 'numeric(9,2) NOT NULL DEFAULT 0'));
+
+--20140827-1200 Mejoras a vistas del reporte de Declaración de Valores por baja de performance en base de datos con cantidad alta de registros
+CREATE INDEX c_cashline_payment_id
+  ON c_cashline
+  USING btree
+  (c_payment_id);
+
+DROP VIEW c_pos_declaracionvalores_ventas;
+
+CREATE OR REPLACE VIEW c_pos_declaracionvalores_ventas AS 
+ SELECT i.ad_client_id, i.ad_org_id, i.c_posjournal_id, i.ad_user_id, i.c_currency_id, i.dateinvoiced AS datetrx, i.docstatus, NULL::unknown AS category, dt.docbasetype AS tendertype, (i.documentno::text || ' '::text) || COALESCE(i.description, ''::character varying)::text AS description, i.c_charge_id, i.chargename, i.c_invoice_id AS doc_id, 
+        CASE dt.signo_issotrx
+            WHEN 1 THEN i.ca_amount
+            WHEN (-1) THEN 0::numeric
+            ELSE NULL::numeric
+        END::numeric(22,2) AS ingreso, 
+        CASE dt.signo_issotrx
+            WHEN 1 THEN 0::numeric
+            WHEN (-1) THEN abs(i.ca_amount)
+            ELSE NULL::numeric
+        END::numeric(22,2) AS egreso, i.c_invoice_id, i.documentno AS invoice_documentno, i.total AS invoice_grandtotal, NULL::unknown AS entidadfinanciera_value, NULL::unknown AS entidadfinanciera_name, NULL::unknown AS bp_entidadfinanciera_value, NULL::unknown AS bp_entidadfinanciera_name, NULL::unknown AS cupon, NULL::unknown AS creditcard, NULL::unknown AS generated_invoice_documentno, i.allocation_active, i.c_pos_id, i.posname
+   FROM ( SELECT DISTINCT i.ad_client_id, i.ad_org_id, i.documentno, inv.description, i.c_posjournal_id, pj.ad_user_id, i.c_invoice_id, i.c_currency_id, i.docstatus, i.dateinvoiced::date AS dateinvoiced, i.c_bpartner_id, i.c_doctype_id, ch.c_charge_id, ch.name AS chargename, currencybase(i.grandtotal, i.c_currency_id, i.dateinvoiced::timestamp with time zone, i.ad_client_id, i.ad_org_id)::numeric(22,2) AS total, COALESCE(ds.amount, 0::numeric)::numeric(22,2) AS ca_amount, i.allocation_active, pos.c_pos_id, pos.name AS posname
+           FROM c_posjournalinvoices_v i
+      JOIN c_posjournal pj ON pj.c_posjournal_id = i.c_posjournal_id
+   JOIN c_pos pos ON pos.c_pos_id = pj.c_pos_id
+   JOIN c_invoice inv ON i.c_invoice_id = inv.c_invoice_id
+   LEFT JOIN ( SELECT al.c_invoice_id, ah.c_posjournal_id, sum(al.amount) AS amount
+    FROM c_allocationhdr ah
+   JOIN c_allocationline al ON al.c_allocationhdr_id = ah.c_allocationhdr_id
+   INNER JOIN c_invoice as i on i.c_invoice_id = al.c_invoice_id
+  WHERE ah.isactive = 'Y'::bpchar and i.isvoidable = 'N'
+  GROUP BY al.c_invoice_id, ah.c_posjournal_id) ds ON ds.c_invoice_id = inv.c_invoice_id AND pj.c_posjournal_id = ds.c_posjournal_id
+   LEFT JOIN c_charge ch ON ch.c_charge_id = inv.c_charge_id
+  ORDER BY i.ad_client_id, i.ad_org_id, i.documentno, inv.description, i.c_posjournal_id, pj.ad_user_id, i.c_invoice_id, i.c_currency_id, i.docstatus, i.dateinvoiced::date, i.c_bpartner_id, i.c_doctype_id, ch.c_charge_id, ch.name, currencybase(i.grandtotal, i.c_currency_id, i.dateinvoiced::timestamp with time zone, i.ad_client_id, i.ad_org_id)::numeric(22,2), COALESCE(ds.amount, 0::numeric)::numeric(22,2), i.allocation_active, pos.c_pos_id, pos.name) i
+   JOIN c_doctype dt ON i.c_doctype_id = dt.c_doctype_id;
+ALTER TABLE c_pos_declaracionvalores_ventas OWNER TO libertya;
+
+DROP VIEW c_pos_declaracionvalores_voided;
+
+CREATE OR REPLACE VIEW c_pos_declaracionvalores_voided AS 
+ SELECT ji.ad_client_id, ji.ad_org_id, ji.c_posjournal_id, pj.ad_user_id, ji.c_currency_id, ji.dateinvoiced AS datetrx, ji.docstatus, NULL::unknown AS category, ji.docbasetype AS tendertype, (ji.documentno::text || ' '::text) || COALESCE(ji.description, ''::character varying)::text AS description, NULL::unknown AS c_charge_id, NULL::unknown AS chargename, ji.c_invoice_id AS doc_id, (ji.signo_issotrx::numeric * ji.grandtotal) + coalesce((select sum(al2.changeamt) from c_allocationline al2 inner join c_payment as p2 on p2.c_payment_id = al2.c_payment_id inner join c_cashline cl on cl.c_payment_id = p2.c_payment_id where al2.c_invoice_id = ji.c_invoice_id and tendertype = 'C' and al2.isactive = 'N'),0) AS ingreso, 0::numeric(22,2) AS egreso, ji.c_invoice_id, ji.documentno AS invoice_documentno, ji.grandtotal AS invoice_grandtotal, NULL::unknown AS entidadfinanciera_value, NULL::unknown AS entidadfinanciera_name, NULL::unknown AS bp_entidadfinanciera_value, NULL::unknown AS bp_entidadfinanciera_name, NULL::unknown AS cupon, NULL::unknown AS creditcard, ic.documentno AS generated_invoice_documentno, ji.allocation_active, pos.c_pos_id, pos.name AS posname
+   FROM c_posjournalinvoices_v ji
+   JOIN c_posjournal pj ON ji.c_posjournal_id = pj.c_posjournal_id
+   JOIN c_pos pos ON pos.c_pos_id = pj.c_pos_id
+   JOIN c_allocationline al ON al.c_allocationhdr_id = ji.c_allocationhdr_id
+   INNER JOIN c_invoice as i on i.c_invoice_id = al.c_invoice_id
+   JOIN c_invoice ic ON al.c_invoice_credit_id = ic.c_invoice_id
+  WHERE (ji.docstatus = ANY (ARRAY['VO'::bpchar, 'RE'::bpchar])) AND (ji.isfiscal IS NULL OR ji.isfiscal = 'N'::bpchar OR ji.isfiscal = 'Y'::bpchar AND ji.fiscalalreadyprinted = 'Y'::bpchar) AND i.isvoidable = 'N';
+
+ALTER TABLE c_pos_declaracionvalores_voided OWNER TO libertya;
