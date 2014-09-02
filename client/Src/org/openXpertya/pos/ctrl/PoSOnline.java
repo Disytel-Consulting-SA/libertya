@@ -1062,6 +1062,7 @@ public class PoSOnline extends PoSConnectionState {
 			for (Payment payment : order.getPayments()) {
 				if(payment.isCheckPayment()){
 					auxCuit = ((CheckPayment)payment).getCuitLibrador().trim();
+					auxCuit.replace("-", "");
 					cuits.put(
 							auxCuit,
 							payment.getAmount()
@@ -1074,24 +1075,10 @@ public class PoSOnline extends PoSConnectionState {
 			MCheckCuitControl cuitControl;
 			BigDecimal balance;
 			for (String cuit : cuits.keySet()) {
-				// Obtener el control para el cuit y organización
-				cuitControl = (MCheckCuitControl) PO.findFirst(getCtx(),
-						X_C_CheckCuitControl.Table_Name,
-						"ad_org_id = ? AND upper(trim(cuit)) = upper(trim('"
-								+ cuit + "'))",
-						new Object[] { Env.getAD_Org_ID(getCtx()) }, null,
-						getTrxName());
-				// Si no existe lo creo
-				if(cuitControl == null){
-					cuitControl = new MCheckCuitControl(getCtx(), 0, getTrxName());
-					cuitControl.setCUIT(cuit);
-					cuitControl.setCheckLimit(MCheckCuitControl
-							.getInitialCheckLimit(Env.getAD_Org_ID(getCtx()),
-									getTrxName()));
-					if(!cuitControl.save()){
-						throw new Exception(CLogger.retrieveErrorAsString());
-					}
-				}
+				// Obtener el control para el cuit y organización *
+				cuitControl = createCheckCUITControl(0, cuit);
+				// Obtener el control para el cuit y organización actual
+				cuitControl = createCheckCUITControl(Env.getAD_Org_ID(getCtx()), cuit);				
 				// Verificar si está activo y no supera el límite impuesto en el
 				// control
 				if(!cuitControl.isActive()){
@@ -2110,6 +2097,30 @@ public class PoSOnline extends PoSConnectionState {
 		return hdr;
 	}
 
+	protected MCheckCuitControl createCheckCUITControl(Integer orgID, String cuit) throws Exception{
+		// Obtener el control para el cuit y organización *
+		MCheckCuitControl cuitControl = (MCheckCuitControl) PO
+				.findFirst(
+						getCtx(),
+						X_C_CheckCuitControl.Table_Name,
+						"ad_org_id = ? AND translate(upper(trim(cuit)), '-', '') = translate(upper(trim('"
+								+ cuit + "')), '-', '')",
+						new Object[] { orgID }, null, getTrxName());
+		// Si no existe lo creo 
+		if(cuitControl == null){
+			cuitControl = new MCheckCuitControl(getCtx(), 0, getTrxName());
+			cuitControl.setCUIT(cuit);
+			cuitControl.setCheckLimit(MCheckCuitControl
+					.getInitialCheckLimit(Env.getAD_Org_ID(getCtx()),
+							getTrxName()));
+			cuitControl.setClientOrg(Env.getAD_Client_ID(getCtx()),	orgID);
+			if(!cuitControl.save()){
+				throw new Exception(CLogger.retrieveErrorAsString());
+			}
+		}
+		return cuitControl;
+	}
+	
 	private void doCompleteAllocation() throws PosException {
 		
 		
