@@ -79,6 +79,9 @@ Ejemplos de cambios
 		<!-- Regeneración de OXPRootBase.war al reconfigurar.  Este build.xml de los fuentes originalmente ubicado en install/ServidorOXP -->
 		<copy file="${SOURCE_DIR}/build.xml" todir="${TARGET_DIR}/" overwrite="yes" />
 
+		<!-- 20140903-1755 Incorporación de parámetro java.awt.headless a la llamada al SilentSetup por errores en el Toolkit -->
+		<copy file="${SOURCE_DIR}/ConfigurarAuto.sh" todir="${TARGET_DIR}" overwrite="yes" />
+		
     </target>
     
 </project>
