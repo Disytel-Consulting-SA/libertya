@@ -30,21 +30,12 @@ import org.openXpertya.model.X_M_Warehouse;
 import org.openXpertya.plugin.install.ChangeLogElement;
 import org.openXpertya.replication.ChangeLogGroupReplication;
 import org.openXpertya.replication.ReplicationConstants;
-import org.openXpertya.util.DB;
 import org.openXpertya.util.Env;
 
 public class TransferReplicationFilter extends ReplicationFilter {
 
-	public static final int CENTRAL_REPARRAY_POS = 1;
-	
-	public static int thisHostPos = -1;
-	
 	@Override
 	public void applyFilter(String trxName, ChangeLogGroupReplication group) throws Exception {
-		
-		// Recuperar por única vez la posicion de este host dentro del repArray
-		if (thisHostPos == -1)
-			thisHostPos = DB.getSQLValue(trxName, " SELECT replicationarraypos FROM AD_ReplicationHost WHERE thisHost = 'Y' ");
 		
 		// Unicamente tablas de transferencia
 		String tableName = group.getTableName(); 
