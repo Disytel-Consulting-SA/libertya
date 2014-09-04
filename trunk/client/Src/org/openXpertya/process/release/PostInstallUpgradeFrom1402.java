@@ -96,6 +96,10 @@ public class PostInstallUpgradeFrom1402 extends PluginPostInstallProcess {
 	protected final static String PRICE_CHANGING_JASPER_REPORT_UID = "CORE-AD_JasperReport-1010121";
 	protected final static String PRICE_CHANGING_JASPER_REPORT_FILENAME = "PriceChanging.jasper";
 	
+	/** UID del Informe de Cambio de Reglas de Precios */
+	protected final static String UPDATED_DISCOUNT_SCHEMAS_REPORT_UID = "CORE-AD_Process-1010392";
+	protected final static String UPDATED_DISCOUNT_SCHEMAS_REPORT_FILENAME = "UpdatedDiscountSchemas.jrxml";
+	
 	@Override
 	protected String doIt() throws Exception {
 		super.doIt();
@@ -327,7 +331,18 @@ public class PostInstallUpgradeFrom1402 extends PluginPostInstallProcess {
 						.readBinaryFromJar(
 								jarFileURL,
 								getBinaryFileURL(HISTORIA_DE_ARTICULOS_REPORT_FILENAME)));
-				
+		
+		// Informe de Cambio de Reglas de Precio
+		MProcess.addAttachment(
+				get_TrxName(),
+				getCtx(),
+				UPDATED_DISCOUNT_SCHEMAS_REPORT_UID,
+				UPDATED_DISCOUNT_SCHEMAS_REPORT_FILENAME,
+				JarHelper
+						.readBinaryFromJar(
+								jarFileURL,
+								getBinaryFileURL(UPDATED_DISCOUNT_SCHEMAS_REPORT_FILENAME)));
+		
 		return " ";
 	}
 
