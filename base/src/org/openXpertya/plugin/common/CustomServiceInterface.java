@@ -21,7 +21,7 @@ public interface CustomServiceInterface {
 	 * 	trxName el nombre de la transacción
 	 * @return 
 	 * 	el resultado correspondiente de la invocación, en la que se debe cargar
-	 * 	no solo los valores resultantes, sino tambien los valores irError y errorMsg
+	 * 	no solo los valores resultantes, sino tambien los valores isError y errorMsg
 	 */
 	public DynamicResult execute(DynamicArgument args, Properties ctx, String trxName);
 	
