@@ -3468,3 +3468,48 @@ CREATE OR REPLACE VIEW c_pos_declaracionvalores_voided AS
   WHERE (ji.docstatus = ANY (ARRAY['VO'::bpchar, 'RE'::bpchar])) AND (ji.isfiscal IS NULL OR ji.isfiscal = 'N'::bpchar OR ji.isfiscal = 'Y'::bpchar AND ji.fiscalalreadyprinted = 'Y'::bpchar) AND i.isvoidable = 'N';
 
 ALTER TABLE c_pos_declaracionvalores_voided OWNER TO libertya;
+
+--20140905-0250 Vista de pedidos
+CREATE OR REPLACE VIEW v_order as
+select o.ad_client_id, 
+	o.ad_org_id, 
+	o.c_order_id, 
+	o.documentno,
+	o.c_doctypetarget_id,
+	o.issotrx,
+	o.c_bpartner_id,
+	o.dateordered,
+	o.grandtotal,
+	(CASE WHEN qtyordered <> qtydelivered THEN 'Y' ELSE 'N' END) as partial,
+	(select movementdate 
+	from m_inout io
+	inner join c_doctype dt on io.c_doctype_id = dt.c_doctype_id
+	where io.c_order_id = o.c_order_id and docstatus in ('CO','CL') and (CASE WHEN o.issotrx = 'Y' THEN dt.signo_issotrx = -1 ELSE dt.signo_issotrx = 1 END)
+	order by io.updated desc
+	limit 1) as lastmovementdate
+from (select o.ad_client_id, 
+	o.ad_org_id, 
+	o.c_order_id, 
+	o.documentno,
+	o.c_doctypetarget_id,
+	o.issotrx,
+	o.c_bpartner_id,
+	o.grandtotal,
+	o.dateordered,
+	sum(qtyordered) as qtyordered,
+	sum(qtyordered) as qtyreserved,
+	sum(qtydelivered) as qtydelivered
+from c_order o
+inner join c_orderline ol on o.c_order_id = ol.c_order_id
+where docstatus in ('CO','CL')
+group by o.ad_client_id, 
+	o.ad_org_id, 
+	o.c_order_id, 
+	o.documentno,
+	o.c_doctypetarget_id,
+	o.issotrx,
+	o.c_bpartner_id,
+	o.grandtotal,
+	o.dateordered) as o
+order by o.dateordered;
+ALTER TABLE v_order OWNER TO libertya;
