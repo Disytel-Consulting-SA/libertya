@@ -1002,7 +1002,7 @@ public class MInvoiceLine extends X_C_InvoiceLine {
 	        // Seteo el precio de costo
 			setCostPrice(MProductPricing.getCostPrice(getCtx(), getAD_Org_ID(),
 					getM_Product_ID(), getC_BPartner_Vendor_ID(),
-					invoice.getC_Currency_ID(), invoice.getDateInvoiced(), true, 
+					invoice.getC_Currency_ID(), invoice.getDateInvoiced(), false, 
 					isTaxIncluded(), getTaxRate(), isPerceptionsIncluded(),
 					get_TrxName()));
         }
