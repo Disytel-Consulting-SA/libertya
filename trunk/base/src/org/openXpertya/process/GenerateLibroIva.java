@@ -100,7 +100,7 @@ public class GenerateLibroIva extends SvrProcess {
          }
          String dateOrder = isPurchase() ? "inv.dateinvoiced" : "inv.dateacct";		
          sqlReal.append(") inv " +
-         	"     left join (select c_doctype_id, name as c_doctype_name,docbasetype , signo_issotrx as signo, doctypekey, isfiscal " +
+         	"     left join (select c_doctype_id, name as c_doctype_name,docbasetype , signo_issotrx as signo, doctypekey, isfiscal, isfiscaldocument " +
          	"				from c_docType) cdt on cdt.c_doctype_id = inv.c_doctypetarget_id " +
          	"     left join (Select c_tax_id, c_invoice_id, taxamt as importe, ad_client_id " +
          	" 		        from c_invoicetax) cit 	on cit.c_invoice_id = inv.c_invoice_id " +
@@ -110,7 +110,7 @@ public class GenerateLibroIva extends SvrProcess {
          	" 				from c_bpartner) cbp on inv.c_bpartner_id = cbp.c_bpartner_id " +
          	"     left join (Select c_categoria_iva_id, name as c_categoria_via_name " +
          	"				from c_categoria_iva) cci 	on cbp.c_categoria_iva_id = cci.c_categoria_iva_id " +
-         	"	  WHERE cdt.doctypekey not in ('RTR', 'RTI', 'RCR', 'RCI') AND (cdt.isfiscal is null OR cdt.isfiscal = 'N' OR (cdt.isfiscal = 'Y' AND inv.fiscalalreadyprinted = 'Y')) " +
+         	"	  WHERE cdt.doctypekey not in ('RTR', 'RTI', 'RCR', 'RCI') AND isfiscaldocument = 'Y' AND (cdt.isfiscal is null OR cdt.isfiscal = 'N' OR (cdt.isfiscal = 'Y' AND inv.fiscalalreadyprinted = 'Y')) " +
          	"     ORDER BY "+ dateOrder +", inv.c_invoice_id, cbp.taxid, inv.c_doctypetarget_id, inv.documentno ASC");
         
  		PreparedStatement pstmt = null;
