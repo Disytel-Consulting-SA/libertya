@@ -3513,3 +3513,31 @@ group by o.ad_client_id,
 	o.dateordered) as o
 order by o.dateordered;
 ALTER TABLE v_order OWNER TO libertya;
+
+--20140908-2340 Vista de pedidos modificada la columna de parcial tomando en cuenta los valores de una lista
+DROP VIEW v_order;
+
+CREATE OR REPLACE VIEW v_order AS 
+ SELECT o.ad_client_id, o.ad_org_id, o.c_order_id, o.documentno, o.c_doctypetarget_id, o.issotrx, o.c_bpartner_id, date_trunc('day'::text, o.dateordered) AS dateordered, o.grandtotal, 
+        (CASE
+            WHEN o.qtydelivered = 0 THEN 'N'
+            WHEN o.qtyordered <> o.qtydelivered THEN 'P'
+            ELSE 'C'
+        END)::text AS partial, ( SELECT io.movementdate
+           FROM m_inout io
+      JOIN c_doctype dt ON io.c_doctype_id = dt.c_doctype_id
+     WHERE io.c_order_id = o.c_order_id AND (io.docstatus = ANY (ARRAY['CO'::bpchar, 'CL'::bpchar])) AND 
+           CASE
+               WHEN o.issotrx = 'Y'::bpchar THEN dt.signo_issotrx = (-1)
+               ELSE dt.signo_issotrx = 1
+           END
+     ORDER BY io.updated DESC
+    LIMIT 1) AS lastmovementdate
+   FROM ( SELECT o.ad_client_id, o.ad_org_id, o.c_order_id, o.documentno, o.c_doctypetarget_id, o.issotrx, o.c_bpartner_id, o.grandtotal, o.dateordered, sum(ol.qtyordered) AS qtyordered, sum(ol.qtyordered) AS qtyreserved, sum(ol.qtydelivered) AS qtydelivered
+           FROM c_order o
+      JOIN c_orderline ol ON o.c_order_id = ol.c_order_id
+     WHERE o.docstatus = ANY (ARRAY['CO'::bpchar, 'CL'::bpchar])
+     GROUP BY o.ad_client_id, o.ad_org_id, o.c_order_id, o.documentno, o.c_doctypetarget_id, o.issotrx, o.c_bpartner_id, o.grandtotal, o.dateordered) o
+  ORDER BY o.dateordered;
+
+ALTER TABLE v_order OWNER TO libertya;
