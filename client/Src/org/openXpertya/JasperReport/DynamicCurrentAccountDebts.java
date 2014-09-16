@@ -16,9 +16,7 @@ public class DynamicCurrentAccountDebts extends DynamicJasperReport {
 		if(!Util.isEmpty(bpGroup, true)){
 			MBPGroup group = MBPGroup.get(ctx, bpGroup.intValue());
 			params.put("BP_GROUP_VALUE", group.getValue());
-			params.put("BP_GROUCurrent Account Debts/** UID del Informe de Cambio de Reglas de Precios */
-	protected final static String UPDATED_DISCOUNT_SCHEMAS_REPORT_UID = "CORE-AD_Process-1010392";
-	protected final static String UPDATED_DISCOUNT_SCHEMAS_REPORT_FILENAME = "UpdatedDiscountSchemas.jrxml";CurrentAccountDebtsP_NAME", group.getName());
+			params.put("BP_GROUP_NAME", group.getName());
 		}
 		BigDecimal orgID = (BigDecimal)params.get("AD_Org_ID"); 
 		if(!Util.isEmpty(orgID, true)){
