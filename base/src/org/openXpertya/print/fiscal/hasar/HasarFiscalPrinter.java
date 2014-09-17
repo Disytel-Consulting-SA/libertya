@@ -26,6 +26,7 @@ import org.openXpertya.print.fiscal.exception.FiscalPrinterStatusError;
 import org.openXpertya.print.fiscal.msg.FiscalMessage;
 import org.openXpertya.print.fiscal.msg.FiscalMessages;
 import org.openXpertya.print.fiscal.msg.MsgRepository;
+import org.openXpertya.util.Util;
 
 /**
  * Impresora Fiscal Hasar. Funcionalidad común a todos los modelos de Hasar. 
@@ -777,6 +778,8 @@ public abstract class HasarFiscalPrinter extends BasicFiscalPrinter implements H
 	public void printDocument(Invoice invoice) throws FiscalPrinterStatusError, FiscalPrinterIOException, DocumentException {
 		Customer customer = invoice.getCustomer();
 		FiscalPacket response;
+		BigDecimal cashRetirementAmt = BigDecimal.ZERO;
+		Integer footerInitIndex = 11;
 		// Se valida la factura.
 		invoice.validate();
 		boolean hasCashPayments = false;
@@ -848,12 +851,18 @@ public abstract class HasarFiscalPrinter extends BasicFiscalPrinter implements H
 			for (Payment payment : invoice.getPayments()) {
 				hasCashPayments = hasCashPayments || payment.isCash()
 						|| payment.isCashRetirement();
-				response = execute(cmdTotalTender(
-					payment.getDescription(), 
-					payment.getAmount(), 
-					false, 
-					null)
-				);
+				if(!payment.isCashRetirement()){
+					response = execute(cmdTotalTender(
+						payment.getDescription(), 
+						payment.getAmount(), 
+						false, 
+						null)
+					);
+				}
+				else{
+					cashRetirementAmt = cashRetirementAmt.add(payment
+							.getAmount());
+				}
 				setCancelAllowed(false);
 			}
 			
@@ -873,7 +882,14 @@ public abstract class HasarFiscalPrinter extends BasicFiscalPrinter implements H
 			}
 			
 			// Agrego los nuevos datos de la cola de impresión, previo a eliminar lo de la cola
-			addFooterObservations(11, 20, invoice.getFooterObservations(),
+			// Primeramente se imprime el extracash si es que existe. 
+			if(!Util.isEmpty(cashRetirementAmt, true)){
+				execute(cmdSetHeaderTrailer(footerInitIndex, "["
+						+ cashRetirementAmt + "]"
+						+ " Retiro de Efectivo por Tarjeta"));
+				footerInitIndex = 12;
+			}			
+			addFooterObservations(footerInitIndex, 20, invoice.getFooterObservations(),
 					false, -2);
 			
 			//////////////////////////////////////////////////////////////
