@@ -1347,7 +1347,7 @@ public class FiscalDocumentPrint {
 					if (MPayment.TENDERTYPE_CreditCard.equals(mPayment
 							.getTenderType()) && !Util.isEmpty(changeAmt, true)) {
 						creditCardCashRetirementPayment = new CashRetirementPayment(
-								BigDecimal.ZERO, "["+changeAmt+"] "
+								changeAmt, "["+changeAmt+"] "
 										+ Msg.getMsg(ctx, "Retirement")
 										+ " " + description);
 						changeAmt = BigDecimal.ZERO;
