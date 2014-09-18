@@ -223,9 +223,9 @@ public class MInvoice extends X_C_Invoice implements DocAction {
 			int C_DocTypeTarget_ID, boolean isSOTrx, boolean counter,
 			String trxName, boolean setOrder, boolean copyDocumentDiscounts,
 			boolean copyManualInvoiceTaxes) {
-		MInvoice to = new MInvoice(from.getCtx(), 0, null);
+		MInvoice to = new MInvoice(from.getCtx(), 0, trxName);
 
-		to.set_TrxName(trxName);
+		
 		PO.copyValues(from, to, from.getAD_Client_ID(), from.getAD_Org_ID());
 		to.setC_Invoice_ID(0);
 		to.set_ValueNoCheck("DocumentNo", null);
@@ -4680,7 +4680,7 @@ public class MInvoice extends X_C_Invoice implements DocAction {
 			allocHdr.setC_POSJournal_ID(reversal.getC_POSJournal_ID());
 
 			if (!allocHdr.save()) {
-				m_processMsg = "Could not create reversal allocation header";
+				m_processMsg = "Could not create reversal allocation header: " + CLogger.retrieveErrorAsString();
 				return false;
 			}
 			// Se crea la línea de imputación.
