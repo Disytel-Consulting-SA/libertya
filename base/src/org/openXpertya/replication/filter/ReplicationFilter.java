@@ -103,6 +103,6 @@ public abstract class ReplicationFilter {
 		// No enviar a ninguna sucursal...
 		group.setRepArray(repArraySetValueAllPositions(group.getRepArray(), ReplicationConstants.REPLICATION_CONFIGURATION_NO_ACTION));
 		// ...pero a central sí enviar
-		group.setRepArray(repArraySetValueAtPosition(group.getRepArray(), 0, previousState));	
+		group.setRepArray(repArraySetValueAtPosition(group.getRepArray(), CENTRAL_REPARRAY_POS-1, previousState));	
 	}
 }
