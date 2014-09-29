@@ -370,6 +370,7 @@ public class LaunchOrder extends SvrProcess {
 			jasperwrapper.addParameter("DOC_STATUS", JasperReportsUtil.getListName(
 				getCtx(), X_C_Order.DOCSTATUS_AD_Reference_ID,
 				order.getDocStatus()));
+			jasperwrapper.addParameter("DOC_STATUS_VALUE", order.getDocStatus());
 			jasperwrapper.addParameter("FREIGHT_AMT", order.getFreightAmt());
 			jasperwrapper.addParameter("FREIGHT_COST_RULE", JasperReportsUtil
 				.getListName(getCtx(),
