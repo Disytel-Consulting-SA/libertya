@@ -3541,3 +3541,9 @@ CREATE OR REPLACE VIEW v_order AS
   ORDER BY o.dateordered;
 
 ALTER TABLE v_order OWNER TO libertya;
+
+--20141004-0237 Incorporación de columnas necesarias para el proceso de rechazo de cheques
+ALTER TABLE c_payment ADD COLUMN checkstatus character(1);
+ALTER TABLE c_payment ADD COLUMN rejecteddate timestamp without time zone;
+ALTER TABLE c_payment ADD COLUMN rejectedcomments character varying(1000);
+ALTER TABLE ad_clientinfo ADD COLUMN m_product_rejectedcheck_id integer; 

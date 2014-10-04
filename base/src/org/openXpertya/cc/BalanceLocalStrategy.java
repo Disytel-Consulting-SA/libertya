@@ -20,6 +20,7 @@ import org.openXpertya.reflection.CallResult;
 import org.openXpertya.util.CLogger;
 import org.openXpertya.util.DB;
 import org.openXpertya.util.Env;
+import org.openXpertya.util.Msg;
 import org.openXpertya.util.Util;
 
 public class BalanceLocalStrategy extends CurrentAccountBalanceStrategy {
@@ -164,11 +165,18 @@ public class BalanceLocalStrategy extends CurrentAccountBalanceStrategy {
 	 */
 	protected String updateCreditStatus(Properties ctx, MBPartner bp, String trxName) throws Exception{
 		String creditStatus = bp.getSOCreditStatus();
+		// El estado inhabilitado es un estado de crédito que sólo puede
+		// modificarse manualmente, por lo tanto no puede modificarse
+		// automáticamente. Todo cliente que se encuentre en ese estado, para
+		// poder realizar transacciones se le debe modificar manualmente el
+		// estado
+		if(creditStatus.equals(MBPartner.SOCREDITSTATUS_CreditDisabled)){
+			throw new Exception(Msg.getMsg(ctx, "CreditDisabledIsManual"));
+		}
 		// Si el monto mínimo de bloqueo es menor al saldo de la entidad
 		// comercial entonces le seteo el estado de crédito primario y
 		// secundario Normal, siempre que el estado actual no esté deshabilitado o no tenga crédito
 		if (!creditStatus.equals(MBPartner.SOCREDITSTATUS_NoCreditCheck)
-				&& !creditStatus.equals(MBPartner.SOCREDITSTATUS_CreditDisabled)
 				&& bp.getTotalOpenBalance().compareTo(bp.getCreditMinimumAmt()) <= 0) {
 			// Cambiar el estado a normal
 			String old_primaryCreditStatus = bp.getSOCreditStatus();

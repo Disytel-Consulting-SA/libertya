@@ -7,7 +7,7 @@ import java.math.*;
 import org.openXpertya.util.*;
 /** Modelo Generado por AD_ClientInfo
  *  @author Comunidad de Desarrollo Libertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
- *  @version  - 2014-06-08 20:49:45.482 */
+ *  @version  - 2014-10-04 01:58:10.681 */
 public class X_AD_ClientInfo extends org.openXpertya.model.PO
 {
 /** Constructor estándar */
@@ -591,6 +591,21 @@ set_Value ("M_ProductFreight_ID", new Integer(M_ProductFreight_ID));
 public int getM_ProductFreight_ID() 
 {
 Integer ii = (Integer)get_Value("M_ProductFreight_ID");
+if (ii == null) return 0;
+return ii.intValue();
+}
+public static final int M_PRODUCT_REJECTEDCHECK_ID_AD_Reference_ID = MReference.getReferenceID("C_Product");
+/** Set Rejected Check Document Product */
+public void setM_Product_RejectedCheck_ID (int M_Product_RejectedCheck_ID)
+{
+if (M_Product_RejectedCheck_ID <= 0) set_Value ("M_Product_RejectedCheck_ID", null);
+ else 
+set_Value ("M_Product_RejectedCheck_ID", new Integer(M_Product_RejectedCheck_ID));
+}
+/** Get Rejected Check Document Product */
+public int getM_Product_RejectedCheck_ID() 
+{
+Integer ii = (Integer)get_Value("M_Product_RejectedCheck_ID");
 if (ii == null) return 0;
 return ii.intValue();
 }
