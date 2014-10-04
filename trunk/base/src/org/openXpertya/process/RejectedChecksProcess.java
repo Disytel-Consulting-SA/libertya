@@ -127,6 +127,10 @@ public class RejectedChecksProcess extends AbstractSvrProcess {
 	 * @throws Exception
 	 */
 	protected void initializeData() throws Exception{
+		// Cheque
+		Integer docTypeID = ((Integer) getParametersValues().get(
+				"C_DOCTYPE_ID")).intValue();
+		setDocTypeID(docTypeID);
 		// Obtengo la EC del cheque
 		MBPartner checkBP = new MBPartner(getCtx(), getCheck()
 				.getC_BPartner_ID(), get_TrxName()); 
