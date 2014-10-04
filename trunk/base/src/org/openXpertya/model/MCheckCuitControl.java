@@ -6,6 +6,7 @@ import java.sql.ResultSet;
 import java.sql.Timestamp;
 import java.util.Properties;
 
+import org.openXpertya.util.CLogger;
 import org.openXpertya.util.DB;
 import org.openXpertya.util.Env;
 import org.openXpertya.util.Msg;
@@ -86,6 +87,23 @@ public class MCheckCuitControl extends X_C_CheckCuitControl {
 						new Object[] { orgID }, null, trxName);
 	}
 	
+	public static MCheckCuitControl get(Properties ctx, Integer orgID, String cuit, boolean create, BigDecimal limit, String trxName) throws Exception{
+		MCheckCuitControl cuitControl = get(ctx, orgID, cuit, trxName);
+		// Si no existe lo creo 
+		if(cuitControl == null && create){
+			// Si el límite es null, entonces obtengo el de la org parámetro
+			BigDecimal checkLimit = limit != null ? limit : MCheckCuitControl
+					.getInitialCheckLimit(orgID, trxName);
+			cuitControl = new MCheckCuitControl(ctx, 0, trxName);
+			cuitControl.setCUIT(cuit);
+			cuitControl.setCheckLimit(checkLimit);
+			cuitControl.setClientOrg(Env.getAD_Client_ID(ctx),	orgID);
+			if(!cuitControl.save()){
+				throw new Exception(CLogger.retrieveErrorAsString());
+			}
+		}
+		return cuitControl;
+	}
 	
 	public MCheckCuitControl(Properties ctx, int C_CheckCuitControl_ID,
 			String trxName) {

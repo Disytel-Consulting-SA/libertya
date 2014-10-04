@@ -7,7 +7,7 @@ import java.math.*;
 import org.openXpertya.util.*;
 /** Modelo Generado por C_Payment
  *  @author Comunidad de Desarrollo Libertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
- *  @version  - 2013-05-30 13:45:17.305 */
+ *  @version  - 2014-10-04 02:00:38.326 */
 public class X_C_Payment extends org.openXpertya.model.PO
 {
 /** Constructor estándar */
@@ -516,6 +516,32 @@ Check Number */
 public String getCheckNo() 
 {
 return (String)get_Value("CheckNo");
+}
+public static final int CHECKSTATUS_AD_Reference_ID = MReference.getReferenceID("Check status");
+/** Rejected = R */
+public static final String CHECKSTATUS_Rejected = "R";
+/** Change of Check = C */
+public static final String CHECKSTATUS_ChangeOfCheck = "C";
+/** In Managment = M */
+public static final String CHECKSTATUS_InManagment = "M";
+/** To Sales Debtors = D */
+public static final String CHECKSTATUS_ToSalesDebtors = "D";
+/** Set Check Status */
+public void setCheckStatus (String CheckStatus)
+{
+if (CheckStatus == null || CheckStatus.equals("R") || CheckStatus.equals("C") || CheckStatus.equals("M") || CheckStatus.equals("D"));
+ else throw new IllegalArgumentException ("CheckStatus Invalid value - Reference = CHECKSTATUS_AD_Reference_ID - R - C - M - D");
+if (CheckStatus != null && CheckStatus.length() > 1)
+{
+log.warning("Length > 1 - truncated");
+CheckStatus = CheckStatus.substring(0,1);
+}
+set_Value ("CheckStatus", CheckStatus);
+}
+/** Get Check Status */
+public String getCheckStatus() 
+{
+return (String)get_Value("CheckStatus");
 }
 /** Set Invoice.
 Invoice Identifier */
@@ -1464,6 +1490,31 @@ public int getRef_Payment_ID()
 Integer ii = (Integer)get_Value("Ref_Payment_ID");
 if (ii == null) return 0;
 return ii.intValue();
+}
+/** Set Rejected Comments */
+public void setRejectedComments (String RejectedComments)
+{
+if (RejectedComments != null && RejectedComments.length() > 1000)
+{
+log.warning("Length > 1000 - truncated");
+RejectedComments = RejectedComments.substring(0,1000);
+}
+set_Value ("RejectedComments", RejectedComments);
+}
+/** Get Rejected Comments */
+public String getRejectedComments() 
+{
+return (String)get_Value("RejectedComments");
+}
+/** Set Rejected Date */
+public void setRejectedDate (Timestamp RejectedDate)
+{
+set_Value ("RejectedDate", RejectedDate);
+}
+/** Get Rejected Date */
+public Timestamp getRejectedDate() 
+{
+return (Timestamp)get_Value("RejectedDate");
 }
 /** Set Info.
 Response info */
