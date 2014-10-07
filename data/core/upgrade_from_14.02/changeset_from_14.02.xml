@@ -82,6 +82,9 @@ Ejemplos de cambios
 		<!-- 20140903-1755 Incorporación de parámetro java.awt.headless a la llamada al SilentSetup por errores en el Toolkit -->
 		<copy file="${SOURCE_DIR}/ConfigurarAuto.sh" todir="${TARGET_DIR}" overwrite="yes" />
 		
+		<!-- 20141007-1432 Reglas de filtrado para MultiOrgTransactionFilter -->
+		<mkdir dir="${TARGET_DIR}/utils/replicacion/filters" />
+		<copy file="${SOURCE_DIR}/MultiOrgTransactionFilterRules.properties" todir="${TARGET_DIR}/utils/replicacion/filters" overwrite="yes" />
     </target>
     
 </project>
