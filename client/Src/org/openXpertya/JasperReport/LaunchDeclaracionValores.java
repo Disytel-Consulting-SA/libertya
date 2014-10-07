@@ -28,6 +28,7 @@ import org.openXpertya.model.MPOSJournal;
 import org.openXpertya.model.M_Table;
 import org.openXpertya.model.PO;
 import org.openXpertya.model.X_C_POSJournal;
+import org.openXpertya.util.Env;
 import org.openXpertya.util.Msg;
 import org.openXpertya.util.Util;
 
@@ -341,7 +342,8 @@ public class LaunchDeclaracionValores extends JasperReportLaunch {
 			orgID = getPosJournal().getAD_Org_ID();
 		}
 		else{
-			orgID = getParameterValue("AD_Org_ID") != null?(Integer)getParameterValue("AD_Org_ID"):orgID;		
+			orgID = getParameterValue("AD_Org_ID") != null ? (Integer) getParameterValue("AD_Org_ID")
+					: Env.getAD_Org_ID(getCtx());
 		}
 		return orgID;
 	}
