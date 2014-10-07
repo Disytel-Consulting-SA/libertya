@@ -15,6 +15,7 @@ package org.openXpertya.replication;
  */
 
 import java.lang.reflect.Constructor;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Vector;
 
@@ -80,9 +81,80 @@ public class ReplicationFilterFactory {
 	 */
 	public static void applyFilters(String trxName, ChangeLogGroupReplication group) throws Exception
 	{
-		for (ReplicationFilter filter : getFiltersForTable(trxName, group.getTableName().toLowerCase()))
-			if (filter != null)
+		// Si no hay filtros, continuar
+		if (getFiltersForTable(trxName, group.getTableName().toLowerCase()).size() == 0)
+			return;
+				
+		// repArray original
+		String originalRepArray = group.getRepArray();
+		
+		// Listado de repArrays resultantes de aplicar cada filtro sobre el repArray original
+		ArrayList<String> filteredRepArrays = new ArrayList<String>();
+		
+		// Iterar por los filtros e ir aplicando cada uno de ellos sobre el repArray original
+		for (ReplicationFilter filter : getFiltersForTable(trxName, group.getTableName().toLowerCase())) {
+			// Cada filtro debe recibir el repArray original, y filtrar según los criterios específicos de cada uno
+			if (filter != null) {
+				// Pasarle el repArray original
+				group.setRepArray(originalRepArray);
+				
+				// Aplicar el filtro
 				filter.applyFilter(trxName, group);
+				
+				// Acumular en la nomina de filtros resultantes
+				filteredRepArrays.add(group.getRepArray());
+			}	
+		}
+		
+		// Ningún repArray resultante? (por ejemplo si filter==null dentro de la iteración de filtros)
+		if (filteredRepArrays.size() == 0) {
+			group.setRepArray(originalRepArray);
+			return;
+		}
+		// Si hay un solo repArray resultante.. pasarle éste
+		else if (filteredRepArrays.size() == 1) {
+			group.setRepArray(filteredRepArrays.get(0));
+			return;
+		}
+
+		// Caso en el que hay más de un repArray resultante, aplicar "OR lógico"
+		String finalRepArray = filteredRepArrays.get(0);
+		for (int i=1; i<filteredRepArrays.size(); i++)
+			finalRepArray = repArrayOR(finalRepArray, filteredRepArrays.get(i));
+		group.setRepArray(finalRepArray);		
+	}
+	
+	/**
+	 * Aplica una especie de "OR lógico" entre repArrayA y repArrayB, para cada posición de éstos.  Esto es: si para una posición dada
+	 * alguno de los repArrays tiene un valor distinto de REPLICATION_CONFIGURATION_NO_ACTION, entonces deberá ser parte del repArray resultante.
+	 * Sin embargo, si en ambas posiciones se presenta REPLICATION_CONFIGURATION_NO_ACTION, entonces deberá quedar este valor en el repArray resultante.
+	 * Ejemplo:
+	 * 		repArrayA = 0013, repArrayB = 0110  => retorna 0113
+	 * @param repArrayA operando 1
+	 * @param repArrayB operando 2
+	 * @return el resultado de aplicar la lógica correspondiente
+	 * @throws Exception en caso de que alguno de los repArrays sean nulos, tengan longitud cero, o distinta longitud
+	 */
+	protected static String repArrayOR(String repArrayA, String repArrayB) throws Exception {
+		// Validaciones
+		if (repArrayA == null || repArrayB == null)
+			throw new Exception("repArrayOR: Reparray resultante de aplicar filtro es null");
+		if (repArrayA.length() == 0 || repArrayB.length() == 0)
+			throw new Exception("repArrayOR: Reparray resultante de aplicar filtro tiene longitud cero");
+		if (repArrayA.length() != repArrayB.length())
+			throw new Exception("repArrayOR: repArrays tienen distinta longitud");
+		
+		// Recorrer y apliar el "OR lógico" por posición
+		StringBuilder sb = new StringBuilder(repArrayA);
+		for (int i=0; i<sb.length(); i++) {
+			if (repArrayA.charAt(i) != ReplicationConstants.REPLICATION_CONFIGURATION_NO_ACTION)
+				sb.setCharAt(i, repArrayA.charAt(i));
+			else if (repArrayB.charAt(i) != ReplicationConstants.REPLICATION_CONFIGURATION_NO_ACTION)
+				sb.setCharAt(i, repArrayB.charAt(i));
+			else
+				sb.setCharAt(i, ReplicationConstants.REPLICATION_CONFIGURATION_NO_ACTION);
+		}
+		return sb.toString();
 	}
 	
 }
