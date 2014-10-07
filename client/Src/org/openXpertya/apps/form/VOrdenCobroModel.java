@@ -788,6 +788,7 @@ public class VOrdenCobroModel extends VOrdenPagoModel {
 	@Override
 	public void updateOrg(int orgID){
 		super.updateOrg(orgID);
+		orgID = orgID != 0?orgID:Env.getAD_Org_ID(getCtx());
 		orgInfo = MOrgInfo.get(getCtx(), orgID);
 		// Tomar la configuración de descuentos de la organización seleccionada
 		reciboDeCliente.updateOrg(orgID);
