@@ -3547,3 +3547,6 @@ ALTER TABLE c_payment ADD COLUMN checkstatus character(1);
 ALTER TABLE c_payment ADD COLUMN rejecteddate timestamp without time zone;
 ALTER TABLE c_payment ADD COLUMN rejectedcomments character varying(1000);
 ALTER TABLE ad_clientinfo ADD COLUMN m_product_rejectedcheck_id integer; 
+
+--20141007-1350 Ampliar longitud de column value en AD_Preference (originalmente en apenas 60 caracteres)
+ALTER TABLE AD_Preference ALTER COLUMN Value TYPE VARCHAR(1024);
