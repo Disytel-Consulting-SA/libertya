@@ -1,13 +1,14 @@
-/** Modelo Generado - NO CAMBIAR MANUALMENTE - Copyright (C) 2006 FUNDESLE */
+/** Modelo Generado - NO CAMBIAR MANUALMENTE - Disytel */
 package org.openXpertya.model;
-import java.util.*;
+import java.util.logging.Level;
+ import java.util.*;
 import java.sql.*;
 import java.math.*;
 import org.openXpertya.util.*;
 /** Modelo Generado por AD_Preference
- *  @author Comunidad de Desarrollo openXpertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
- *  @version  - 2008-01-03 10:26:23.515 */
-public class X_AD_Preference extends PO
+ *  @author Comunidad de Desarrollo Libertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
+ *  @version  - 2014-10-07 13:59:30.22 */
+public class X_AD_Preference extends org.openXpertya.model.PO
 {
 /** Constructor estándar */
 public X_AD_Preference (Properties ctx, int AD_Preference_ID, String trxName)
@@ -26,13 +27,13 @@ public X_AD_Preference (Properties ctx, ResultSet rs, String trxName)
 {
 super (ctx, rs, trxName);
 }
-/** AD_Table_ID=195 */
-public static final int Table_ID=195;
+/** AD_Table_ID */
+public static final int Table_ID = M_Table.getTableID("AD_Preference");
 
 /** TableName=AD_Preference */
 public static final String Table_Name="AD_Preference";
 
-protected static KeyNamePair Model = new KeyNamePair(195,"AD_Preference");
+protected static KeyNamePair Model = new KeyNamePair(Table_ID,"AD_Preference");
 protected static BigDecimal AccessLevel = new BigDecimal(7);
 
 /** Load Meta Data */
@@ -45,6 +46,35 @@ public String toString()
 {
 StringBuffer sb = new StringBuffer ("X_AD_Preference[").append(getID()).append("]");
 return sb.toString();
+}
+/** Set AD_ComponentObjectUID */
+public void setAD_ComponentObjectUID (String AD_ComponentObjectUID)
+{
+if (AD_ComponentObjectUID != null && AD_ComponentObjectUID.length() > 100)
+{
+log.warning("Length > 100 - truncated");
+AD_ComponentObjectUID = AD_ComponentObjectUID.substring(0,100);
+}
+set_Value ("AD_ComponentObjectUID", AD_ComponentObjectUID);
+}
+/** Get AD_ComponentObjectUID */
+public String getAD_ComponentObjectUID() 
+{
+return (String)get_Value("AD_ComponentObjectUID");
+}
+/** Set Component Version Identifier */
+public void setAD_ComponentVersion_ID (int AD_ComponentVersion_ID)
+{
+if (AD_ComponentVersion_ID <= 0) set_Value ("AD_ComponentVersion_ID", null);
+ else 
+set_Value ("AD_ComponentVersion_ID", new Integer(AD_ComponentVersion_ID));
+}
+/** Get Component Version Identifier */
+public int getAD_ComponentVersion_ID() 
+{
+Integer ii = (Integer)get_Value("AD_ComponentVersion_ID");
+if (ii == null) return 0;
+return ii.intValue();
 }
 /** Set Preference.
 Personal Value Preference */
@@ -99,7 +129,7 @@ if (Attribute == null) throw new IllegalArgumentException ("Attribute is mandato
 if (Attribute.length() > 60)
 {
 log.warning("Length > 60 - truncated");
-Attribute = Attribute.substring(0,59);
+Attribute = Attribute.substring(0,60);
 }
 set_Value ("Attribute", Attribute);
 }
@@ -117,10 +147,10 @@ Search key for the record in the format required - must be unique */
 public void setValue (String Value)
 {
 if (Value == null) throw new IllegalArgumentException ("Value is mandatory");
-if (Value.length() > 60)
+if (Value.length() > 1024)
 {
-log.warning("Length > 60 - truncated");
-Value = Value.substring(0,59);
+log.warning("Length > 1024 - truncated");
+Value = Value.substring(0,1024);
 }
 set_Value ("Value", Value);
 }
