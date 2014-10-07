@@ -59,7 +59,7 @@ public abstract class ReplicationFilter {
 	 * @param columnName criterio de busqueda del elemento a eliminar
 	 * @return true si fue removido o false en caso contrario
 	 */
-	protected boolean removeElement(ChangeLogGroupReplication group, String columnName) {
+	public static boolean removeElement(ChangeLogGroupReplication group, String columnName) {
 		// Buscar la columna
 		int pos = -1;
 		for (ChangeLogElement element : group.getElements()) {
@@ -78,31 +78,43 @@ public abstract class ReplicationFilter {
 	
 	
 	/**
-	 * Retorna nuevo repArray con value en todas las posiciones de group
+	 * Setea el repArray del group con value en todas las posiciones de group
 	 */
-	protected String repArraySetValueAllPositions(String repArray, char value) {
-		StringBuilder sb = new StringBuilder(repArray);
+	public static void repArraySetValueAllPositions(ChangeLogGroupReplication group, char value) {
+		StringBuilder sb = new StringBuilder(group.getRepArray());
 		for (int i=0; i<sb.length(); i++)
 			sb.setCharAt(i, value);
-		return sb.toString();
+		group.setRepArray(sb.toString());
 	}
 	
 	/**
-	 * Retorna nuevo repArray con value modificado en la posicion index
+	 * Setea el repArray del group con value modificado en la posicion index
 	 */
-	protected String repArraySetValueAtPosition(String repArray, int index, char value) {
-		StringBuilder sb = new StringBuilder(repArray);
+	public static void repArraySetValueAtPosition(ChangeLogGroupReplication group, int index, char value) {
+		StringBuilder sb = new StringBuilder(group.getRepArray());
 		sb.setCharAt(index, value);
-		return sb.toString();
+		group.setRepArray(sb.toString());
 	}
 	
-	/**  Modifica el repArray para que envie unicamente a central */
-	protected void repArraySendToCentralOnly(ChangeLogGroupReplication group)  {
+	/** 
+	 * Modifica el repArray para que envie unicamente a central 
+	 */
+	public static void repArraySendToCentralOnly(ChangeLogGroupReplication group)  {
 		// Estado previo para central
 		char previousState = group.getRepArray().charAt(CENTRAL_REPARRAY_POS-1);
 		// No enviar a ninguna sucursal...
-		group.setRepArray(repArraySetValueAllPositions(group.getRepArray(), ReplicationConstants.REPLICATION_CONFIGURATION_NO_ACTION));
+		repArraySetValueAllPositions(group, ReplicationConstants.REPLICATION_CONFIGURATION_NO_ACTION);
 		// ...pero a central sí enviar
-		group.setRepArray(repArraySetValueAtPosition(group.getRepArray(), CENTRAL_REPARRAY_POS-1, previousState));	
+		repArraySetValueAtPosition(group, CENTRAL_REPARRAY_POS-1, previousState);	
+	}
+	
+	/** 
+	 * Retorna true si el changegroup fue originado en el host actual, o false si fue originado en otro host 
+	 */
+	public static boolean atSource(ChangeLogGroupReplication group) {
+		// Determinar si el registro se originó en este host o estoy en el host destino (a partir del retrieveUID)
+		String retrieveUID = group.getAd_componentObjectUID();
+		int groupOwner = Integer.parseInt(retrieveUID.substring(1, retrieveUID.indexOf("_")));
+		return (groupOwner == thisHostPos);
 	}
 }

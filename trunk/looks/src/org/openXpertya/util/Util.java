@@ -23,6 +23,8 @@ package org.openXpertya.util;
 import java.awt.Color;
 import java.awt.font.TextAttribute;
 
+import java.io.FileInputStream;
+import java.io.IOException;
 import java.math.BigDecimal;
 import java.text.AttributedCharacterIterator;
 import java.text.AttributedString;
@@ -31,6 +33,7 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.Properties;
 import java.util.Set;
 
 import javax.swing.Action;
@@ -724,6 +727,22 @@ public class Util {
 		return sb.toString();
 	}
 	
+	/**
+	 * Carga un archivo .properties
+	 * @param URL ubicación del archivo
+	 * @return una instancia de Properties cargado
+	 * @throws Exception en caso de error
+	 */
+	public static Properties loadProperties(String URL) throws Exception {
+		// Cargar el Properties
+		FileInputStream input = null;
+		input = new FileInputStream(URL);
+		Properties prop = new Properties();
+		prop.load(input);
+		if (input!=null)
+			input.close();
+		return prop;
+	}
 }	// Util
 
 

@@ -54,7 +54,7 @@ public class TicketReplicationFilter extends ReplicationFilter {
 			return;
 		
 		// estamos en el origen o en el destino? esto se determina en función del retrieveUID del registro 
-		boolean atSource;
+		boolean atSource = atSource(group);
 		// Es un ticket transferible o transferido?
 		boolean transferido = false;
 		// organización de origen
@@ -67,11 +67,6 @@ public class TicketReplicationFilter extends ReplicationFilter {
 		// Recuperar info del pedido y el tipo de documento
 		X_C_Order anOrder = getOrder(group, trxName);
 		MDocType docType = new MDocType(Env.getCtx(), anOrder.getC_DocType_ID(), trxName);
-
-		// Determinar si el registro se originó en este host o estoy en el host destino (a partir del retrieveUID)
-		String retrieveUID = group.getAd_componentObjectUID();
-		int groupOwner = Integer.parseInt(retrieveUID.substring(1, retrieveUID.indexOf("_")));
-		atSource = (groupOwner == thisHostPos);
 		
 		// Es un ticket transferible?
 		if (MDocType.DOCTYPE_Pedido_Transferible.equalsIgnoreCase(docType.getDocTypeKey())) {
