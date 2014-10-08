@@ -98,7 +98,10 @@ public class MLookupInfo implements Serializable, Cloneable {
 
     /** Zoom Window */
     public int	ZoomWindowPO;
-
+    
+    /** Add Security Validation */
+    public boolean addSecurityValidation = true;
+    
     /**
      *  Constructor.
      *      (called from MLookupFactory)

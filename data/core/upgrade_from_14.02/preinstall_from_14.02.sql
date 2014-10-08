@@ -3550,3 +3550,8 @@ ALTER TABLE ad_clientinfo ADD COLUMN m_product_rejectedcheck_id integer;
 
 --20141007-1350 Ampliar longitud de column value en AD_Preference (originalmente en apenas 60 caracteres)
 ALTER TABLE AD_Preference ALTER COLUMN Value TYPE VARCHAR(1024);
+
+--20141008-0400 Incorporación de configuración de acceso con seguridad de usuario para los campos de nota de crédito de TPV, Nota de Crédito en OP/RC y Crear Desde de Remitos
+update ad_system set dummy = (SELECT addcolumnifnotexists('ad_role', 'addsecurityvalidation_pos_nc', 'character(1) NOT NULL DEFAULT ''Y''::bpchar'));
+update ad_system set dummy = (SELECT addcolumnifnotexists('ad_role', 'addsecurityvalidation_oprc_nc', 'character(1) NOT NULL DEFAULT ''Y''::bpchar'));
+update ad_system set dummy = (SELECT addcolumnifnotexists('ad_role', 'addsecurityvalidation_createfromshipment', 'character(1) NOT NULL DEFAULT ''Y''::bpchar'));

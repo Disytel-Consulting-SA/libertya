@@ -99,7 +99,7 @@ public abstract class Info extends CDialog implements ListSelectionListener {
      * @return
      */
 
-    public static Info create( Frame frame,boolean modal,int WindowNo,String tableName,String keyColumn,String value,boolean multiSelection,String whereClause ) {
+    public static Info create( Frame frame,boolean modal,int WindowNo,String tableName,String keyColumn,String value,boolean multiSelection,String whereClause, boolean addSecurityValidation ) {
         Info info = null;
         
         /**
@@ -144,6 +144,7 @@ public abstract class Info extends CDialog implements ListSelectionListener {
         }
 
         //
+        info.setAddSecurityValidation(addSecurityValidation);
 
         AEnv.positionCenterWindow( frame,info );
 
@@ -494,6 +495,9 @@ public abstract class Info extends CDialog implements ListSelectionListener {
     protected JComponent getCenterComponent() {
     	return scrollPane;
     }
+    
+    /** Add Security Validation */
+    private boolean addSecurityValidation = true;
     
     /**
      * Descripción de Método
@@ -1341,8 +1345,9 @@ public abstract class Info extends CDialog implements ListSelectionListener {
             String xSql = Msg.parseTranslation( Env.getCtx(),sql.toString());    // Variables
 
             // log.finer(xSql);
-
-            xSql = MRole.getDefault().addAccessSQL( xSql,getTableName(),MRole.SQL_FULLYQUALIFIED,MRole.SQL_RO );
+            if(addSecurityValidation){
+            	xSql = MRole.getDefault().addAccessSQL( xSql,getTableName(),MRole.SQL_FULLYQUALIFIED,MRole.SQL_RO );
+            }
             log.finer( "------------ xSql = "+xSql );
             
             try {
@@ -1632,6 +1637,14 @@ public abstract class Info extends CDialog implements ListSelectionListener {
     protected int getInfoWidth() {
     	return INFO_WIDTH;
     }
+
+	protected boolean isAddSecurityValidation() {
+		return addSecurityValidation;
+	}
+
+	protected void setAddSecurityValidation(boolean addSecurityValidation) {
+		this.addSecurityValidation = addSecurityValidation;
+	}
 }        // Info
 
 

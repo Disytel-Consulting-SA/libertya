@@ -974,7 +974,7 @@ public class AcctViewer extends JFrame implements ActionListener,ChangeListener 
         }
 
         String tableName = lookupColumn.substring( 0,lookupColumn.length() - 3 );
-        Info info = Info.create( this,true,m_data.WindowNo,tableName,lookupColumn,"",false,"" );
+        Info info = Info.create( this,true,m_data.WindowNo,tableName,lookupColumn,"",false,"",true );
 
         if( !info.loadedOK()) {
             info.dispose();

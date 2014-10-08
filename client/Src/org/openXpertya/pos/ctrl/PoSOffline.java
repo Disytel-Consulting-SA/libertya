@@ -302,4 +302,10 @@ public class PoSOffline extends PoSConnectionState {
 		// TODO Auto-generated method stub
 		return false;
 	}
+
+	@Override
+	public boolean addSecurityValidationToCN() {
+		// TODO Auto-generated method stub
+		return true;
+	}
 }

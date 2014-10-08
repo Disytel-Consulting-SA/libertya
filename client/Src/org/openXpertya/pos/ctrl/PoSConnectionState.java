@@ -127,6 +127,8 @@ public abstract class PoSConnectionState {
 	
 	public abstract boolean reprintInvoice(Order order, FiscalDocumentPrint fdp);
 	
+	public abstract boolean addSecurityValidationToCN();
+	
 	/**
 	 * @param checkDeadLineToCompare
 	 *            plazo a comparar

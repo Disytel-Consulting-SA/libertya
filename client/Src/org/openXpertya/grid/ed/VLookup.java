@@ -1327,8 +1327,12 @@ public class VLookup extends JComponent implements VEditor,ActionListener,FocusL
                 sql.append( " AND IsActive='Y'" );
 
             log.finest( "(predefined) " + sql.toString());
-
-            return MRole.getDefault().addAccessSQL( sql.toString(),m_tableName,MRole.SQL_NOTQUALIFIED,MRole.SQL_RO );
+            
+            if(m_lookup.addSecurityValidation()){
+            	sql = new StringBuffer(MRole.getDefault().addAccessSQL( sql.toString(),m_tableName,MRole.SQL_NOTQUALIFIED,MRole.SQL_RO ));
+            }
+            
+            return sql.toString();
         }
     	
     	return sql.toString();
@@ -1884,7 +1888,9 @@ public class VLookup extends JComponent implements VEditor,ActionListener,FocusL
                 getDirectAccessSQL( "*" );
             }
 
-            Info ig = Info.create( frame,true,m_lookup.getWindowNo(),m_tableName,m_keyColumnName,queryValue,false,whereClause );
+			Info ig = Info.create(frame, true, m_lookup.getWindowNo(),
+					m_tableName, m_keyColumnName, queryValue, false,
+					whereClause, m_lookup.addSecurityValidation());
 
             ig.setVisible(true);
             cancelled = ig.isCancelled();

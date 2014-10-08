@@ -470,6 +470,10 @@ public abstract class Lookup extends AbstractListModel implements MutableComboBo
         return true;
     }		// isValidated
 
+    public boolean addSecurityValidation(){
+    	return true;
+    }
+    
     //~--- set methods --------------------------------------------------------
 
     /**

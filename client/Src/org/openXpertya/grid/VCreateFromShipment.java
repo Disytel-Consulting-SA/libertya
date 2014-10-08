@@ -489,7 +489,8 @@ public class VCreateFromShipment extends VCreateFrom {
 		String whereClause = getInvoiceFilter();
 		invoiceField = VComponentsFactory
 				.VLookupFactory("C_Invoice_ID", "C_Invoice", p_WindowNo,
-						DisplayType.Search, whereClause, false);
+						DisplayType.Search, whereClause, false, 
+						getRole().isAddSecurityValidation_CreateFromShipment());
 		invoiceField.addVetoableChangeListener(new VetoableChangeListener() {
 
 			@Override
@@ -515,7 +516,8 @@ public class VCreateFromShipment extends VCreateFrom {
 		String whereClause = getInvoiceOrderFilter();
 		invoiceOrderField = VComponentsFactory
 				.VLookupFactory("C_Invoice_ID", "C_Invoice", p_WindowNo,
-						DisplayType.Search, whereClause, false);
+						DisplayType.Search, whereClause, false, 
+						getRole().isAddSecurityValidation_CreateFromShipment());
 		invoiceOrderField
 				.addVetoableChangeListener(new VetoableChangeListener() {
 
@@ -785,6 +787,11 @@ public class VCreateFromShipment extends VCreateFrom {
 
 	protected void setDocType(MDocType docType) {
 		this.docType = docType;
+	}
+
+	@Override
+	protected boolean addSecurityValidation() {
+		return getRole().isAddSecurityValidation_CreateFromShipment();
 	}
 
 } // VCreateFromShipment

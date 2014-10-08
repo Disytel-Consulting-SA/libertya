@@ -174,16 +174,18 @@ public class MLookupFactory {
      *  @return lookup info structure
      */
     static public MLookupInfo getLookupInfo(Properties ctx, int WindowNo, int Column_ID, int AD_Reference_ID, Language language, String ColumnName, int AD_Reference_Value_ID, boolean IsParent, String ValidationCode) {
+    	return getLookupInfo(ctx, WindowNo, Column_ID, AD_Reference_ID, language, ColumnName, AD_Reference_Value_ID, IsParent, ValidationCode, true);
+    }		// createLookupInfo
 
-        MLookupInfo	info			= null;
-        boolean		needToAddSecurity	= true;
+    static public MLookupInfo getLookupInfo(Properties ctx, int WindowNo, int Column_ID, int AD_Reference_ID, Language language, String ColumnName, int AD_Reference_Value_ID, boolean IsParent, String ValidationCode, boolean addSecurity) {
+    	MLookupInfo	info			= null;
 
         // List
         if (AD_Reference_ID == DisplayType.List)	// 17
         {
 
             info		= getLookup_List(language, AD_Reference_Value_ID);
-            needToAddSecurity	= false;
+            addSecurity	= false;
         }
 
         // Table or Search with Reference_Value
@@ -291,21 +293,21 @@ public class MLookupFactory {
         if(ColumnName.equalsIgnoreCase("M_WarehouseTo_ID") 
         		|| ColumnName.equals("AD_Org_Transfer_ID")
         		|| ColumnName.equals("M_Warehouse_Transfer_ID")){
-        	needToAddSecurity = false;
+        	addSecurity = false;
         }
         
         // Add Security - unicamente si no existe una instalacion en curso de un plugin
-        if (!PluginUtils.isInstallingPlugin() && needToAddSecurity) {
+        if (!PluginUtils.isInstallingPlugin() && addSecurity) {
             info.Query	= MRole.getDefault(ctx, false).addAccessSQL(info.Query, info.TableName, MRole.SQL_FULLYQUALIFIED, MRole.SQL_RO);
         }
 
+        info.addSecurityValidation = addSecurity;
         //
         // s_log.finest("Query:  " + info.Query);
         // s_log.finest("Direct: " + info.QueryDirect);
         return info;
-
-    }		// createLookupInfo
-
+    }
+    
     /**
      *      Get Lookup SQL for Lists
      *  @param language report language
