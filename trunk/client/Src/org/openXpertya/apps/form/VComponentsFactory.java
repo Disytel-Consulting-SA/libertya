@@ -48,12 +48,16 @@ public class VComponentsFactory {
 	}
 	
 	public static VLookup VLookupFactory(String ColumnName, String TableName, int WindowNo, int displayType, String whereClause, boolean mandatory) {
+		return VLookupFactory(ColumnName, TableName, WindowNo, displayType, whereClause, mandatory, true);
+	}
+	
+	public static VLookup VLookupFactory(String ColumnName, String TableName, int WindowNo, int displayType, String whereClause, boolean mandatory, boolean addSecurityValidation) {
         // = 4917;    // C_BankStatement.C_BankAccount_ID, 
 		int AD_Column_ID = DarColID(ColumnName, TableName);
 		
 		int TabNo = 0;
 		
-		MLookupInfo info = MLookupInfoFactory( Env.getCtx(),WindowNo,TabNo,AD_Column_ID, displayType, whereClause );
+		MLookupInfo info = MLookupInfoFactory( Env.getCtx(),WindowNo,TabNo,AD_Column_ID, displayType, whereClause, addSecurityValidation );
 		info.ZoomQuery = new MQuery();
 		
         MLookup lookup       = new MLookup(info, TabNo);
@@ -127,6 +131,10 @@ public class VComponentsFactory {
 	}
 	
 	public static MLookupInfo MLookupInfoFactory(Properties ctx, int WindowNo, int TabNo, int Column_ID, int AD_Reference_ID, String manualValidationCode) {
+		return MLookupInfoFactory(ctx, WindowNo, TabNo, Column_ID, AD_Reference_ID, manualValidationCode, true);
+	}
+	
+	public static MLookupInfo MLookupInfoFactory(Properties ctx, int WindowNo, int TabNo, int Column_ID, int AD_Reference_ID, String manualValidationCode, boolean addSecurityValidation) {
 
         String	ColumnName		= "";
         int	AD_Reference_Value_ID	= 0;
@@ -187,7 +195,10 @@ public class VComponentsFactory {
         pstmt	= null;
 
         //
-        MLookupInfo	info	= MLookupFactory.getLookupInfo(ctx, WindowNo, Column_ID, AD_Reference_ID, Env.getLanguage(ctx), ColumnName, AD_Reference_Value_ID, IsParent, ValidationCode);
+		MLookupInfo info = MLookupFactory.getLookupInfo(ctx, WindowNo,
+				Column_ID, AD_Reference_ID, Env.getLanguage(ctx), ColumnName,
+				AD_Reference_Value_ID, IsParent, ValidationCode,
+				addSecurityValidation);
 
         return info;
 

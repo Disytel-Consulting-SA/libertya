@@ -316,6 +316,12 @@ public class VCreateFromStatement extends VCreateFrom implements VetoableChangeL
 		// TODO Auto-generated method stub
 		
 	}
+
+
+	@Override
+	protected boolean addSecurityValidation() {
+		return true;
+	}
 }    // VCreateFromStatement
 
 

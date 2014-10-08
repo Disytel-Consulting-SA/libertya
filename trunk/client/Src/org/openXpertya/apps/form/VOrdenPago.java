@@ -389,7 +389,10 @@ public class VOrdenPago extends CPanel implements FormPanel,ActionListener,Table
         jPanel11 = new javax.swing.JPanel();
         
         lblCreditInvoice = new javax.swing.JLabel();
-        creditInvoice = VComponentsFactory.VLookupFactory("C_Invoice_ID", "C_Invoice", m_WindowNo, DisplayType.Search, m_model.getCreditSqlValidation() );
+		creditInvoice = VComponentsFactory.VLookupFactory("C_Invoice_ID",
+				"C_Invoice", m_WindowNo, DisplayType.Search,
+				m_model.getCreditSqlValidation(), true, 
+				m_model.addSecurityValidationToNC());
         lblCreditAvailable = new javax.swing.JLabel();
         txtCreditAvailable = new JFormattedTextField();
         txtCreditAvailable.setEditable(false);

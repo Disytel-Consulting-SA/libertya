@@ -7,7 +7,7 @@ import java.math.*;
 import org.openXpertya.util.*;
 /** Modelo Generado por AD_Role
  *  @author Comunidad de Desarrollo Libertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
- *  @version  - 2013-05-20 12:34:38.373 */
+ *  @version  - 2014-10-08 02:31:57.426 */
 public class X_AD_Role extends org.openXpertya.model.PO
 {
 /** Constructor estándar */
@@ -16,6 +16,9 @@ public X_AD_Role (Properties ctx, int AD_Role_ID, String trxName)
 super (ctx, AD_Role_ID, trxName);
 /** if (AD_Role_ID == 0)
 {
+setAddSecurityValidation_CreateFromShipment (false);
+setAddSecurityValidation_OPRC_NC (false);
+setAddSecurityValidation_POS_NC (false);
 setAD_Role_ID (0);
 setAllow_Info_Account (true);	// Y
 setAllow_Info_Asset (true);	// Y
@@ -84,6 +87,54 @@ public String toString()
 {
 StringBuffer sb = new StringBuffer ("X_AD_Role[").append(getID()).append("]");
 return sb.toString();
+}
+/** Set Create From Shipment */
+public void setAddSecurityValidation_CreateFromShipment (boolean AddSecurityValidation_CreateFromShipment)
+{
+set_Value ("AddSecurityValidation_CreateFromShipment", new Boolean(AddSecurityValidation_CreateFromShipment));
+}
+/** Get Create From Shipment */
+public boolean isAddSecurityValidation_CreateFromShipment() 
+{
+Object oo = get_Value("AddSecurityValidation_CreateFromShipment");
+if (oo != null) 
+{
+ if (oo instanceof Boolean) return ((Boolean)oo).booleanValue();
+ return "Y".equals(oo);
+}
+return false;
+}
+/** Set Credit Note - OP - RC */
+public void setAddSecurityValidation_OPRC_NC (boolean AddSecurityValidation_OPRC_NC)
+{
+set_Value ("AddSecurityValidation_OPRC_NC", new Boolean(AddSecurityValidation_OPRC_NC));
+}
+/** Get Credit Note - OP - RC */
+public boolean isAddSecurityValidation_OPRC_NC() 
+{
+Object oo = get_Value("AddSecurityValidation_OPRC_NC");
+if (oo != null) 
+{
+ if (oo instanceof Boolean) return ((Boolean)oo).booleanValue();
+ return "Y".equals(oo);
+}
+return false;
+}
+/** Set Credit Note - POS */
+public void setAddSecurityValidation_POS_NC (boolean AddSecurityValidation_POS_NC)
+{
+set_Value ("AddSecurityValidation_POS_NC", new Boolean(AddSecurityValidation_POS_NC));
+}
+/** Get Credit Note - POS */
+public boolean isAddSecurityValidation_POS_NC() 
+{
+Object oo = get_Value("AddSecurityValidation_POS_NC");
+if (oo != null) 
+{
+ if (oo instanceof Boolean) return ((Boolean)oo).booleanValue();
+ return "Y".equals(oo);
+}
+return false;
 }
 /** Set Role.
 Responsibility Role */

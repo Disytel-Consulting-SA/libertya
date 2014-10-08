@@ -411,6 +411,12 @@ public class VCreateFromInvoice extends VCreateFrom {
 		return false;
 	}
 
+
+	@Override
+	protected boolean addSecurityValidation() {
+		return true;
+	}
+
 }    // VCreateFromInvoice
 
 

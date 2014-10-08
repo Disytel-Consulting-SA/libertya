@@ -827,4 +827,8 @@ public class PoSModel {
 	public boolean reprintInvoice(FiscalDocumentPrint fdp){
 		return getConnectionState().reprintInvoice(getOrder(),fdp);
 	}
+	
+	public boolean addSecurityValidationToCN(){
+		return getConnectionState().addSecurityValidationToCN();
+	}
 }

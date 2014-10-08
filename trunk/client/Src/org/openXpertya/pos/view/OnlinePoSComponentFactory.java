@@ -217,8 +217,8 @@ public class OnlinePoSComponentFactory extends PoSComponentFactory {
 					"AND EXISTS (SELECT C_DocType_ID " +
 				                 "FROM C_DocType dt " +
 				                 "WHERE C_Invoice.C_DocType_ID = dt.C_DocType_ID " +
-				                   "AND dt.Signo_IsSOTrx = -1)"
-			);
+				                   "AND dt.Signo_IsSOTrx = -1)",
+                   true, getPoSModel().addSecurityValidationToCN());
 		return bankLookup;
 	}
 }

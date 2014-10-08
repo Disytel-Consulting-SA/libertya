@@ -855,6 +855,10 @@ public final class MLookup extends Lookup implements Serializable {
         return "<" + key.toString() + ">";
     }
 
+    public boolean addSecurityValidation(){
+    	return m_info.addSecurityValidation;
+    }
+    
     /**
      *      MLookup Loader
      */

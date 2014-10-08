@@ -63,6 +63,7 @@ import org.openXpertya.minigrid.MiniTable;
 import org.openXpertya.model.MLookup;
 import org.openXpertya.model.MLookupFactory;
 import org.openXpertya.model.MOrder;
+import org.openXpertya.model.MRole;
 import org.openXpertya.model.MTab;
 import org.openXpertya.plugin.common.PluginCreateFromUtils;
 import org.openXpertya.util.CLogger;
@@ -132,7 +133,8 @@ public abstract class VCreateFrom extends JDialog implements ActionListener,Tabl
         log.info( mTab.toString());
         p_WindowNo = mTab.getWindowNo();
         p_mTab     = mTab;
-
+        setRole(MRole.get(getCtx(), Env.getAD_Role_ID(getCtx())));
+        
         try {
         	initOrderLookup();
         	
@@ -296,7 +298,9 @@ public abstract class VCreateFrom extends JDialog implements ActionListener,Tabl
     /** Helper para centralizar lógica de modelo */
     protected CreateFromModel helper = new CreateFromModel();
     
-    
+    /** Perfil actual */
+	private MRole role;
+	
     /**
      * Descripción de Método
      *
@@ -725,7 +729,8 @@ public abstract class VCreateFrom extends JDialog implements ActionListener,Tabl
      */
     private void initOrderLookup() {
     	String whereClause = getOrderFilter(); 
-    	orderField = VComponentsFactory.VLookupFactory("C_Order_ID", "C_Order", p_WindowNo, DisplayType.Search, whereClause, false);
+		orderField = VComponentsFactory.VLookupFactory("C_Order_ID", "C_Order",
+				p_WindowNo, DisplayType.Search, whereClause, false, addSecurityValidation());
     	orderField.addVetoableChangeListener(new VetoableChangeListener() {
 			
 			@Override
@@ -946,10 +951,20 @@ public abstract class VCreateFrom extends JDialog implements ActionListener,Tabl
     
     protected abstract boolean lazyEvaluation();
     
+    protected abstract boolean addSecurityValidation();
+    
     // ==========================================================================================================================
     // Table model y demas clases adicionales
     // ==========================================================================================================================
 	
+	protected MRole getRole() {
+		return role;
+	}
+
+	protected void setRole(MRole role) {
+		this.role = role;
+	}
+
 	/**
      * Modelo de la Tabla que muestra las Entidades Origen. Esta clase es abstracta
      * y contiene toda la funcionalidad común que necesitarán las subclases concretas.<br><br>

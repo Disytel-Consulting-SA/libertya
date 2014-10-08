@@ -43,6 +43,7 @@ import org.openXpertya.model.MPInstancePara;
 import org.openXpertya.model.MPOSPaymentMedium;
 import org.openXpertya.model.MPayment;
 import org.openXpertya.model.MPreference;
+import org.openXpertya.model.MRole;
 import org.openXpertya.model.PO;
 import org.openXpertya.model.POCRGenerator;
 import org.openXpertya.model.POCRGenerator.POCRType;
@@ -1069,13 +1070,17 @@ public class VOrdenPagoModel {
 	private Integer documentType;
 
 	private String description = "";
-
+	
+	/** Perfil actual */
+	private MRole role;
+	
 	public VOrdenPagoModel() {
 		getMsgMap().put("TenderType", "TenderType");
 		// initTrx(); <-- COMENTADO: La trx debe iniciarse al confirmar el pago
 		// unicamente
 		m_facturasTableModel = getInvoicesTableModel();
 		setPoGenerator(new POCRGenerator(getCtx(), getPOCRType(), getTrxName()));
+		setRole(MRole.get(getCtx(), Env.getAD_Role_ID(getCtx())));
 	}
 
 	/**
@@ -3504,4 +3509,16 @@ public class VOrdenPagoModel {
 				getTrxName());
 	}
 
+	protected MRole getRole() {
+		return role;
+	}
+
+	protected void setRole(MRole role) {
+		this.role = role;
+	}
+
+	public boolean addSecurityValidationToNC(){
+		return getRole().isAddSecurityValidation_OPRC_NC();
+	}
+	
 }

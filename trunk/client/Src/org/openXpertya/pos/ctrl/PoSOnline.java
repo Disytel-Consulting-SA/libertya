@@ -197,6 +197,9 @@ public class PoSOnline extends PoSConnectionState {
 	
 	private MTax taxExento = null;
 	
+	/** Perfil actual */
+	private MRole role = null;
+	
 	public PoSOnline() {
 		super();
 		setCreatePOSPaymentValidations(new CreatePOSPaymentValidations());
@@ -207,6 +210,7 @@ public class PoSOnline extends PoSConnectionState {
 		setPaymentDocType(MDocType.getDocType(ctx,
 				MDocType.DOCTYPE_CustomerReceipt, null));
 		setTaxExento(MTax.getTaxExemptRate(ctx, null));
+		setRole(MRole.get(getCtx(), Env.getAD_Role_ID(getCtx())));
 	}
 	
 	private static void throwIfFalse(boolean b, DocAction sourceDocActionPO, Class posExceptionClass) throws PosException {
@@ -3892,5 +3896,18 @@ public class PoSOnline extends PoSConnectionState {
 
 	public void setTaxExento(MTax taxExento) {
 		this.taxExento = taxExento;
+	}
+
+	@Override
+	public boolean addSecurityValidationToCN() {
+		return getRole().isAddSecurityValidation_POS_NC();
+	}
+
+	protected MRole getRole() {
+		return role;
+	}
+
+	protected void setRole(MRole role) {
+		this.role = role;
 	}
 }
