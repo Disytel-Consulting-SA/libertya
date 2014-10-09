@@ -3555,3 +3555,43 @@ ALTER TABLE AD_Preference ALTER COLUMN Value TYPE VARCHAR(1024);
 update ad_system set dummy = (SELECT addcolumnifnotexists('ad_role', 'addsecurityvalidation_pos_nc', 'character(1) NOT NULL DEFAULT ''Y''::bpchar'));
 update ad_system set dummy = (SELECT addcolumnifnotexists('ad_role', 'addsecurityvalidation_oprc_nc', 'character(1) NOT NULL DEFAULT ''Y''::bpchar'));
 update ad_system set dummy = (SELECT addcolumnifnotexists('ad_role', 'addsecurityvalidation_createfromshipment', 'character(1) NOT NULL DEFAULT ''Y''::bpchar'));
+
+--20141008-2131 Nueva vista con mejoras a la query de cuenta corriente, se muestran las transacciones de la organización parámetro
+CREATE OR REPLACE VIEW v_documents_org AS 
+        (         SELECT distinct 'C_Invoice' AS documenttable, i.c_invoice_id AS document_id, i.ad_client_id, i.ad_org_id, i.isactive, i.created, i.createdby, i.updated, i.updatedby, i.c_bpartner_id, i.c_doctype_id, dt.signo_issotrx, dt.name AS doctypename, dt.printname AS doctypeprintname, i.documentno, i.issotrx, i.docstatus, 
+                        CASE
+                            WHEN i.c_invoicepayschedule_id IS NOT NULL THEN ips.duedate
+                            ELSE i.dateinvoiced
+                        END AS datetrx, i.dateacct, i.c_currency_id, i.c_conversiontype_id, i.grandtotal AS amount, i.c_invoicepayschedule_id, ips.duedate, i.dateinvoiced AS truedatetrx
+                   FROM c_invoice_v i
+              JOIN c_doctype dt ON i.c_doctypetarget_id = dt.c_doctype_id
+         LEFT JOIN c_invoicepayschedule ips ON i.c_invoicepayschedule_id = ips.c_invoicepayschedule_id
+        UNION ALL 
+                 SELECT distinct 'C_Payment' AS documenttable, p.c_payment_id AS document_id, p.ad_client_id, coalesce(i.ad_org_id, p.ad_org_id) as ad_org_id, p.isactive, p.created, p.createdby, p.updated, p.updatedby, p.c_bpartner_id, p.c_doctype_id, dt.signo_issotrx, dt.name AS doctypename, dt.printname AS doctypeprintname, p.documentno, p.issotrx, p.docstatus, p.datetrx, p.dateacct, p.c_currency_id, p.c_conversiontype_id, p.payamt AS amount, NULL::integer AS c_invoicepayschedule_id, p.duedate, p.datetrx AS truedatetrx
+                   FROM c_payment p
+                   INNER JOIN c_doctype dt ON p.c_doctype_id = dt.c_doctype_id
+                   LEFT JOIN c_allocationline al ON al.c_payment_id = p.c_payment_id
+                   LEFT JOIN c_invoice i ON i.c_invoice_id = al.c_invoice_id
+		WHERE (CASE WHEN i.ad_org_id is not null AND i.ad_org_id <> p.ad_org_id THEN p.docstatus IN ('CO','CL') ELSE 1=1 END))
+UNION ALL 
+         SELECT distinct 'C_CashLine' AS documenttable, cl.c_cashline_id AS document_id, cl.ad_client_id, coalesce(i.ad_org_id, cl.ad_org_id) as ad_org_id, cl.isactive, cl.created, cl.createdby, cl.updated, cl.updatedby, 
+                CASE
+                    WHEN cl.c_bpartner_id IS NOT NULL THEN cl.c_bpartner_id
+                    ELSE i.c_bpartner_id
+                END AS c_bpartner_id, dt.c_doctype_id, 
+                CASE
+                    WHEN cl.amount < 0.0 THEN 1
+                    ELSE (-1)
+                END AS signo_issotrx, dt.name AS doctypename, dt.printname AS doctypeprintname, '@line@'::text || cl.line::character varying::text AS documentno, 
+                CASE
+                    WHEN cl.amount < 0.0 THEN 'N'::bpchar
+                    ELSE 'Y'::bpchar
+                END AS issotrx, cl.docstatus, c.statementdate AS datetrx, c.dateacct, cl.c_currency_id, NULL::integer AS c_conversiontype_id, abs(cl.amount) AS amount, NULL::integer AS c_invoicepayschedule_id, NULL::timestamp without time zone AS duedate, c.statementdate AS truedatetrx
+           FROM c_cashline cl
+      JOIN c_cash c ON cl.c_cash_id = c.c_cash_id
+   JOIN ( SELECT d.ad_client_id, d.c_doctype_id, d.name, d.printname
+              FROM c_doctype d
+             WHERE d.doctypekey::text = 'CMC'::text) dt ON cl.ad_client_id = dt.ad_client_id
+   LEFT JOIN c_invoice i ON cl.c_invoice_id = i.c_invoice_id
+   WHERE (CASE WHEN i.ad_org_id is not null AND i.ad_org_id <> cl.ad_org_id THEN cl.docstatus IN ('CO','CL') ELSE 1=1 END);
+ALTER TABLE v_documents_org OWNER TO libertya;
