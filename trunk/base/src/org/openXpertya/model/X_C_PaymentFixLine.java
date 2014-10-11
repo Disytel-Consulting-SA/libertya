@@ -7,7 +7,7 @@ import java.math.*;
 import org.openXpertya.util.*;
 /** Modelo Generado por C_PaymentFixLine
  *  @author Comunidad de Desarrollo Libertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
- *  @version  - 2011-02-16 12:17:33.743 */
+ *  @version  - 2014-10-10 23:52:03.775 */
 public class X_C_PaymentFixLine extends org.openXpertya.model.PO
 {
 /** Constructor estándar */
@@ -78,7 +78,6 @@ public String getAction()
 {
 return (String)get_Value("Action");
 }
-public static final int C_ALLOCATIONLINE_ID_AD_Reference_ID = MReference.getReferenceID("C_POSJournalPayments_V");
 /** Set Allocation Line.
 Allocation Line */
 public void setC_AllocationLine_ID (int C_AllocationLine_ID)

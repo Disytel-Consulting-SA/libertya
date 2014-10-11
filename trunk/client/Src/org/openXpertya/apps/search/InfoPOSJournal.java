@@ -108,7 +108,8 @@ public class InfoPOSJournal extends Info {
 		prepareTable(
 				s_posJournalLayout,
 				"C_POSJournal INNER JOIN C_POS ON (C_POSJournal.C_POS_ID = C_POS.C_POS_ID) INNER JOIN AD_User ON (AD_User.AD_User_ID = C_POSJournal.AD_User_ID)",
-				"", "C_POSJournal.DateTrx DESC, C_POS.Name");
+				Util.isEmpty(p_whereClause, true)?"":p_whereClause, 
+				"C_POSJournal.DateTrx DESC, C_POS.Name");
 		
         return true;
     }    // initInfo
@@ -117,7 +118,9 @@ public class InfoPOSJournal extends Info {
 	protected String getSQLWhere() {
 		StringBuffer whereClause = new StringBuffer();
 		
-		whereClause.append(" (1=1) ");
+		if(Util.isEmpty(p_whereClause, true)){
+			whereClause.append(" (1=1) ");
+		}
 		
 		if(!Util.isEmpty(fPOS.getText(), true)){
 			whereClause.append(" AND UPPER(C_POS.Name) LIKE ? ");

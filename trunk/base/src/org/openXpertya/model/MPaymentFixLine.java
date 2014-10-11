@@ -54,7 +54,7 @@ public class MPaymentFixLine extends X_C_PaymentFixLine {
 			documentID = allocationLineID;
 			sql = 
 				"SELECT Amount " +
-				"FROM C_POSJournalPayments_V " +
+				"FROM C_AllocationLine " +
 				"WHERE C_AllocationLine_ID = ?";
 		// Si es asignación, obtiene el pendiente de la línea de caja o pago
 		// según corresponda.
@@ -416,7 +416,7 @@ public class MPaymentFixLine extends X_C_PaymentFixLine {
 		String description = null;
 		// Descripción del cobro asociado a la línea de imputación
 		if (isVoidAction()) {
-			String sql = "SELECT Info FROM C_POSJournalPayments_V WHERE C_AllocationLine_ID = ?";
+			String sql = "SELECT Line_Description FROM C_AllocationLine WHERE C_AllocationLine_ID = ?";
 			description = DB.getSQLValueString(get_TrxName(), sql, getC_AllocationLine_ID());
 		// Descripción del Payment o Línea de Caja asociada a la línea de corrección. 
 		} else if (isAllocateAction()) {
