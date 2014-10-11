@@ -20,12 +20,15 @@ import java.math.BigDecimal;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.Timestamp;
+import java.text.SimpleDateFormat;
 import java.util.Properties;
 import java.util.logging.Level;
 
 import org.openXpertya.util.CLogger;
 import org.openXpertya.util.DB;
+import org.openXpertya.util.DisplayUtil;
 import org.openXpertya.util.Env;
+import org.openXpertya.util.Util;
 
 /**
  * Descripción de Clase
@@ -270,6 +273,48 @@ public class MAllocationLine extends X_C_AllocationLine {
             setC_Order_ID( getInvoice().getC_Order_ID());
         }
 
+        if(Util.isEmpty(getLine_Description(), true)){
+        	// Armar la descripción de la línea con:
+        	// Nro del allocation hdr
+        	// Fecha del allocation hdr
+        	// Monto de la línea
+        	// Identificadores de la factura
+        	// Identificadores del cobro involucrado
+			MAllocationHdr allocHdr = new MAllocationHdr(getCtx(),
+					getC_AllocationHdr_ID(), get_TrxName());
+        	StringBuffer description = new StringBuffer(allocHdr.getDocumentNo());
+        	description.append("_");
+			description.append((new SimpleDateFormat("yyyy-MM-dd"))
+					.format(allocHdr.getDateTrx()));
+        	description.append("_");
+        	description.append(getAmount());
+        	if(!Util.isEmpty(getC_Invoice_ID(), true)){
+        		description.append("_");
+        		MInvoice invoice = new MInvoice(getCtx(), getC_Invoice_ID(), get_TrxName());
+				description.append(DisplayUtil.getDisplayByIdentifiers(
+						getCtx(), invoice, MInvoice.Table_ID, get_TrxName()));
+        	}
+        	if(!Util.isEmpty(getC_Payment_ID(), true)){
+        		description.append("_");
+        		MPayment payment = new MPayment(getCtx(), getC_Payment_ID(), get_TrxName());
+				description.append(DisplayUtil.getDisplayByIdentifiers(
+						getCtx(), payment, MPayment.Table_ID, get_TrxName()));
+        	}
+        	if(!Util.isEmpty(getC_CashLine_ID(), true)){
+        		description.append("_");
+        		MCashLine cashLine = new MCashLine(getCtx(), getC_CashLine_ID(), get_TrxName());
+				description.append(DisplayUtil.getDisplayByIdentifiers(
+						getCtx(), cashLine, MCashLine.Table_ID, get_TrxName()));
+        	}
+        	if(!Util.isEmpty(getC_Invoice_Credit_ID(), true)){
+        		description.append("_");
+        		MInvoice invoiceCredit = new MInvoice(getCtx(), getC_Invoice_Credit_ID(), get_TrxName());
+				description.append(DisplayUtil.getDisplayByIdentifiers(
+						getCtx(), invoiceCredit, MInvoice.Table_ID, get_TrxName()));
+        	}
+        	setLine_Description(description.toString());
+        }
+        
         //
 
         return true;

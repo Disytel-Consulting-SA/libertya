@@ -7,7 +7,7 @@ import java.math.*;
 import org.openXpertya.util.*;
 /** Modelo Generado por C_AllocationLine
  *  @author Comunidad de Desarrollo Libertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
- *  @version  - 2012-05-17 17:47:26.748 */
+ *  @version  - 2014-10-10 23:51:10.369 */
 public class X_C_AllocationLine extends org.openXpertya.model.PO
 {
 /** Constructor estándar */
@@ -277,6 +277,21 @@ if (oo != null)
  return "Y".equals(oo);
 }
 return false;
+}
+/** Set Line description */
+public void setLine_Description (String Line_Description)
+{
+if (Line_Description != null && Line_Description.length() > 255)
+{
+log.warning("Length > 255 - truncated");
+Line_Description = Line_Description.substring(0,255);
+}
+set_Value ("Line_Description", Line_Description);
+}
+/** Get Line description */
+public String getLine_Description() 
+{
+return (String)get_Value("Line_Description");
 }
 /** Set Over/Under Payment.
 Over-Payment (unallocated) or Under-Payment (partial payment) Amount */
