@@ -2515,7 +2515,9 @@ public class MInvoice extends X_C_Invoice implements DocAction {
 		// Si se modificó el campo del esquema de vencimientos entonces
 		// actualizo el esquema de pagos de la factura
 		if (!isSkipApplyPaymentTerm()
-				&& (is_ValueChanged("C_PaymentTerm_ID") || recalculateIPS)) {
+				&& (is_ValueChanged("C_PaymentTerm_ID")
+						|| is_ValueChanged("DateRecepted")
+						|| recalculateIPS)) {
 			// Vuelvo a cargar la factura desde BD
 			MInvoice invoiceUpdated = new MInvoice(getCtx(), getID(), get_TrxName());
 			MPaymentTerm pt = new MPaymentTerm(getCtx(), invoiceUpdated.getC_PaymentTerm_ID(),

@@ -7,7 +7,7 @@ import java.math.*;
 import org.openXpertya.util.*;
 /** Modelo Generado por C_Invoice
  *  @author Comunidad de Desarrollo Libertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
- *  @version  - 2014-07-24 00:26:51.256 */
+ *  @version  - 2014-10-11 02:57:10.177 */
 public class X_C_Invoice extends org.openXpertya.model.PO
 {
 /** Constructor estándar */
@@ -727,6 +727,16 @@ Date the document was printed. */
 public Timestamp getDatePrinted() 
 {
 return (Timestamp)get_Value("DatePrinted");
+}
+/** Set Date recepted */
+public void setDateRecepted (Timestamp DateRecepted)
+{
+set_Value ("DateRecepted", DateRecepted);
+}
+/** Get Date recepted */
+public Timestamp getDateRecepted() 
+{
+return (Timestamp)get_Value("DateRecepted");
 }
 /** Set Description.
 Optional short description of the record */
