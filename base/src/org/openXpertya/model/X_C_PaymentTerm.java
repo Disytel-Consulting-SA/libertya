@@ -7,7 +7,7 @@ import java.math.*;
 import org.openXpertya.util.*;
 /** Modelo Generado por C_PaymentTerm
  *  @author Comunidad de Desarrollo Libertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
- *  @version  - 2011-01-19 17:17:30.177 */
+ *  @version  - 2014-10-11 02:57:25.222 */
 public class X_C_PaymentTerm extends org.openXpertya.model.PO
 {
 /** Constructor estándar */
@@ -17,6 +17,7 @@ super (ctx, C_PaymentTerm_ID, trxName);
 /** if (C_PaymentTerm_ID == 0)
 {
 setAfterDelivery (false);
+setApplicationDate (null);	// Y
 setC_PaymentTerm_ID (0);
 setDiscount (Env.ZERO);
 setDiscount2 (Env.ZERO);
@@ -89,6 +90,29 @@ if (oo != null)
  return "Y".equals(oo);
 }
 return false;
+}
+public static final int APPLICATIONDATE_AD_Reference_ID = MReference.getReferenceID("Payment term application date");
+/** Invoice date = I */
+public static final String APPLICATIONDATE_InvoiceDate = "I";
+/** Reception date = R */
+public static final String APPLICATIONDATE_ReceptionDate = "R";
+/** Set Application date */
+public void setApplicationDate (String ApplicationDate)
+{
+if (ApplicationDate.equals("I") || ApplicationDate.equals("R"));
+ else throw new IllegalArgumentException ("ApplicationDate Invalid value - Reference = APPLICATIONDATE_AD_Reference_ID - I - R");
+if (ApplicationDate == null) throw new IllegalArgumentException ("ApplicationDate is mandatory");
+if (ApplicationDate.length() > 1)
+{
+log.warning("Length > 1 - truncated");
+ApplicationDate = ApplicationDate.substring(0,1);
+}
+set_Value ("ApplicationDate", ApplicationDate);
+}
+/** Get Application date */
+public String getApplicationDate() 
+{
+return (String)get_Value("ApplicationDate");
 }
 /** Set Payment Term.
 The terms for Payment of this transaction */

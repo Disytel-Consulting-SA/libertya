@@ -495,17 +495,22 @@ public class MPaymentTerm extends X_C_PaymentTerm {
         
         // Vencimiento
         
-		// Determinar la fecha de vencimiento, si existe esquema de pagos, le
-		// sumo la cantidad de días configuradas a la fecha de la factura, sino
-		// tomo la fecha de la factura
-        Timestamp invoiceDate = invoice.getDateInvoiced();
-		Timestamp dueDate = paySchedule != null ? TimeUtil.addDays(invoiceDate,
-				paySchedule.getNetDays()) : invoiceDate;
 		// Verificar cada tipo de vencimiento dependiendo de los parámetros que
 		// tiene el esquema de vencimientos parámetro, sino tomo el que tiene el esquema de pagos
 		MPaymentTerm realPaymentTerm = paymentTerm != null ? paymentTerm
 				: new MPaymentTerm(ctx, paySchedule.getC_PaymentTerm_ID(),
 						trxName);
+		// Determinar la fecha de vencimiento, si existe esquema de pagos, le
+		// sumo la cantidad de días configuradas a la fecha de la factura o a la
+		// fecha de recepción dependiendo de la configuración de fecha de
+		// aplicación
+		Timestamp invoiceDate = MPaymentTerm.APPLICATIONDATE_InvoiceDate
+				.equals(realPaymentTerm.getApplicationDate()) ? invoice
+				.getDateInvoiced()
+				: (invoice.getDateRecepted() != null ? invoice
+						.getDateRecepted() : invoice.getDateInvoiced());
+		Timestamp dueDate = paySchedule != null ? TimeUtil.addDays(invoiceDate,
+				paySchedule.getNetDays()) : invoiceDate;
 		ips.setDueDate(getRealDueDate(dueDate, realPaymentTerm));
 		
 		// Día de descuento

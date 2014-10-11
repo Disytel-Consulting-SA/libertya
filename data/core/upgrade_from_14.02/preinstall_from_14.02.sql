@@ -3681,3 +3681,7 @@ UNION ALL
   ORDER BY p.tendertype::character varying(2), p.documentno);
 
 ALTER TABLE c_posjournalpayments_v OWNER TO libertya;
+
+--20141011-0240 Incorporación de fecha de recepción a la factura y fecha de aplicación (fecha de factura o recepción) para aplicar el esquema de vencimientos
+update ad_system set dummy = (SELECT addcolumnifnotexists('c_invoice', 'daterecepted', 'timestamp without time zone'));
+update ad_system set dummy = (SELECT addcolumnifnotexists('c_paymentterm', 'applicationdate', 'character(1) NOT NULL DEFAULT ''I'''));
