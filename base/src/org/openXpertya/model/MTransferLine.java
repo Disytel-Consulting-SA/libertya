@@ -61,12 +61,13 @@ public class MTransferLine extends X_M_TransferLine {
 					new Object[] { Msg.translate(getCtx(), "Quantity"), "0" }));
 			return false;
 		}
-		
-		// No es posible ingresar dos o mas líneas con el mismo artículo y ubicación origen.
-		if (!validateDuplicateLine()) {
-			log.saveError("SaveError", Msg.translate(getCtx(), "DuplicateMaterialTransferLine"));
-			return false;
-		}
+
+		/* COMENTADO: Flexibilizar la gestión de líneas de transferencia (por ejemplo: números de serie requieren una unidad por línea) */ 
+//		// No es posible ingresar dos o mas líneas con el mismo artículo y ubicación origen.
+//		if (!validateDuplicateLine()) {
+//			log.saveError("SaveError", Msg.translate(getCtx(), "DuplicateMaterialTransferLine"));
+//			return false;
+//		}
 		
 		// Obtiene el número de línea si no ha sido asignado aún
         if (getLine() == 0) {
