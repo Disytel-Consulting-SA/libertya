@@ -652,34 +652,17 @@ public class MInOutLine extends X_M_InOutLine {
 			setC_Project_ID(inout.getC_Project_ID());
 
 		// Validación para no cargar dos líneas de remito
-		// asignadas a la misma línea de pedido
+		// asignadas a la misma línea de pedido (Se valida por cantidad del artículo, y no por número de líneas)
 		if (!isTPVInstance && newRecord && inout.isSOTrx()
 				&& !isProductionMovement(inout.getMovementType())) {
-			String sql = "SELECT count(*) "
+			String sql = "SELECT sum(movementqty) "
 					+ "FROM m_inout as io "
 					+ "INNER JOIN m_inoutline as iol ON (io.m_inout_id = iol.m_inout_id) "
 					+ "WHERE io.m_inout_id = ? AND iol.c_orderline_id = ?";
-			int cants = DB.getSQLValue(get_TrxName(), sql, getM_InOut_ID(),
-					getC_OrderLine_ID());
-			if (cants > 0) {
+			int cantsInOut = DB.getSQLValue(get_TrxName(), sql, getM_InOut_ID(), getC_OrderLine_ID());
+			int cantsOrder = DB.getSQLValue(get_TrxName(), "SELECT qtyEntered FROM C_OrderLine WHERE C_OrderLine_ID = " + getC_OrderLine_ID());
+			if (new BigDecimal(cantsInOut).add(getMovementQty()).compareTo(new BigDecimal(cantsOrder)) > 0) {
 				log.saveError("ExistsDocumentLineWithOrderLine", "");
-				return false;
-			}
-		}
-
-		// La cantidad de líneas del remito de salida
-		// no puede superar la cantidad de líneas del pedido
-		if (!isTPVInstance && newRecord && inout.isSOTrx()
-				&& !isProductionMovement(inout.getMovementType())) {
-			String sql = "SELECT count(*) " + "FROM c_orderline "
-					+ "WHERE c_order_id = ?";
-			int cantOrderLines = DB.getSQLValue(get_TrxName(), sql,
-					inout.getC_Order_ID());
-			// Si la cantidad de líneas del pedido es igual
-			// a la cantidad de líneas del remito
-			// entonces no se puede guardar una nueva
-			if (cantOrderLines == inout.getLines(true).length) {
-				log.saveError("DocumentLinesExceedOrderLines", "");
 				return false;
 			}
 		}
