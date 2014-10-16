@@ -315,9 +315,15 @@ public class VOrdenPago extends CPanel implements FormPanel,ActionListener,Table
         radPayTypeAdv = new javax.swing.JRadioButton();
         jScrollPane1 = new javax.swing.JScrollPane();
         txtDescription = new javax.swing.JTextField();
-		txtDescription.setEditable(true);		
+		txtDescription.setEditable(true);	
 		lblDocumentType = new javax.swing.JLabel();
 		cboDocumentType = VComponentsFactory.VLookupFactory("C_DOCTYPE_ID", "C_DOCTYPE", m_WindowNo, DisplayType.Table,m_model.getDocumentTypeSqlValidation(),false);
+		lblDateTrx = new javax.swing.JLabel();
+		dateTrx = VComponentsFactory.VDateFactory();
+		dateTrx.setValue(new Date());
+		dateTrx.setMandatory(true);
+		//dateTrx.setReadWrite(false);
+	
         tblFacturas = new javax.swing.JTable(getFacturasTableModel());
         txtTotalPagar1 = new JFormattedTextField();
         lblTotalPagar1 = new javax.swing.JLabel();
@@ -885,7 +891,8 @@ public class VOrdenPago extends CPanel implements FormPanel,ActionListener,Table
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                 .add(jPanel10Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
                     .add(lblDocumentType)
-                    .add(cboDocumentType, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)))
+                    .add(cboDocumentType, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                    ))
         );
     }
 
@@ -903,13 +910,17 @@ public class VOrdenPago extends CPanel implements FormPanel,ActionListener,Table
                 .addContainerGap()
                 .add(jPanel9Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
                     .add(lblBPartner)
-                    .add(lblClient)
-                    .add(lblDescription))
+                    .add(lblClient)  
+                    .add(lblDateTrx)
+                    .add(lblDescription)
+                    )
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                 .add(jPanel9Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.TRAILING)
                     .add(cboClient, 0, 234, Short.MAX_VALUE)
                     .add(BPartnerSel, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 234, Short.MAX_VALUE)
-                    .add(txtDescription,org.jdesktop.layout.GroupLayout.DEFAULT_SIZE,234,Short.MAX_VALUE))
+                    .add(dateTrx, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 234, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                    .add(txtDescription,org.jdesktop.layout.GroupLayout.DEFAULT_SIZE,234,Short.MAX_VALUE)
+                		)
                 .addContainerGap())
         );
         jPanel9Layout.setVerticalGroup(
@@ -925,8 +936,13 @@ public class VOrdenPago extends CPanel implements FormPanel,ActionListener,Table
                     .add(BPartnerSel, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
             	.add(jPanel9Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
-                        .add(lblDescription)
-                        .add(txtDescription,org.jdesktop.layout.GroupLayout.PREFERRED_SIZE,org.jdesktop.layout.GroupLayout.DEFAULT_SIZE,org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
+            			.add(lblDateTrx)
+            			.add(dateTrx,org.jdesktop.layout.GroupLayout.PREFERRED_SIZE,org.jdesktop.layout.GroupLayout.DEFAULT_SIZE,org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
+                  .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                  .add(jPanel9Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
+                		.add(lblDescription)
+                		.add(txtDescription,org.jdesktop.layout.GroupLayout.PREFERRED_SIZE,org.jdesktop.layout.GroupLayout.DEFAULT_SIZE,org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                		)
                 .addContainerGap())
         );
     }
@@ -1851,6 +1867,7 @@ public class VOrdenPago extends CPanel implements FormPanel,ActionListener,Table
 			// Actualizo componentes gráficos antes de pasar a la siguiente
 			// pestaña
     		updateComponentsPreProcesar();
+    		dateTrx.setReadWrite(false);
     		// Avanza a la siguiente tab
     		m_cambioTab = true;
     		jTabbedPane1.setSelectedIndex(1);
@@ -1860,6 +1877,7 @@ public class VOrdenPago extends CPanel implements FormPanel,ActionListener,Table
     		treeUpdated();
     		// Actualizar descuento de entidad comercial
     		customUpdateBPartnerRelatedComponents(false);
+    		m_model.setFechaOP(dateTrx.getTimestamp());
     		
     	} else if (idx == 1) {
     		getModel().setDescription(txtDescription.getText());
@@ -1926,6 +1944,7 @@ public class VOrdenPago extends CPanel implements FormPanel,ActionListener,Table
     private javax.swing.ButtonGroup buttonGroup1;
     private javax.swing.ButtonGroup buttonGroup2;
     protected VLookup cboCampaign;
+    protected VDate dateTrx;
     protected VLookup cboClient;
     protected VLookup cboOrg;
     protected VLookup cboProject;
@@ -1970,6 +1989,8 @@ public class VOrdenPago extends CPanel implements FormPanel,ActionListener,Table
     
     protected javax.swing.JLabel lblDocumentType;
     protected VLookup cboDocumentType;
+    
+    protected javax.swing.JLabel lblDateTrx;
     
     protected javax.swing.JLabel lblEfectivoImporte;
     protected javax.swing.JLabel lblEfectivoLibroCaja;
@@ -2137,13 +2158,14 @@ public class VOrdenPago extends CPanel implements FormPanel,ActionListener,Table
 		//
 		
 		txtTotalPagar1.setText("");
-		
+		lblDateTrx.setText(getModel().isSOTrx()?"Fecha del recibo:":"Fecha de la O/P:");		
 		txtSaldo.setText("");
 		txtDifCambio.setText("");
 		txtTotalPagar2.setText("");
 		txtRetenciones2.setText("");
 		txtMedioPago2.setText("");
 		txtDescription.setText("");
+
 		//
 		
 		jTree1.setCellRenderer(new MyRenderer());
@@ -2354,6 +2376,7 @@ public class VOrdenPago extends CPanel implements FormPanel,ActionListener,Table
 		lblBPartner.setText(Msg.getElement(m_ctx, "C_BPartner_ID")+" "+KeyUtils.getKeyStr(getActionKeys().get(GOTO_BPARTNER)));
 		lblTotalPagar1.setText(Msg.getElement(m_ctx, "Amount"));
 		lblDescription.setText(Msg.getElement(m_ctx, "Description"));
+		//lblDateTrx.setText("Fecha");
 		
 		radPayTypeStd.setText(Msg.getMsg(m_ctx, "StandardPayment"));
 		radPayTypeAdv.setText(Msg.getMsg(m_ctx, "AdvancedPayment"));
@@ -2481,14 +2504,16 @@ public class VOrdenPago extends CPanel implements FormPanel,ActionListener,Table
 		// Transferencia 
 		
 		transfCtaBancaria.setValue(null);
-		transFecha.setValue(d);
+		//transFecha.setValue(d);
+		transFecha.setValue(dateTrx.getValue());
 		txtTransfImporte.setText("");
 		txtTransfNroTransf.setText("");
 		
 		// Cheque
 		
 		chequeChequera.setValue(null);
-		chequeFechaEmision.setValue(d);
+		//chequeFechaEmision.setValue(d);
+		chequeFechaEmision.setValue(dateTrx.getValue());
 		chequeFechaPago.setValue(null);
 		if (getModel().getBPartner() == null) 
 			txtChequeALaOrden.setText("");
@@ -2705,6 +2730,7 @@ public class VOrdenPago extends CPanel implements FormPanel,ActionListener,Table
 			cboOrg.setReadWrite(jTabbedPane1.getSelectedIndex() == 0);
 			cboDocumentType.setReadWrite(jTabbedPane1.getSelectedIndex() == 0);
 			fldDocumentNo.setReadWrite(jTabbedPane1.getSelectedIndex() == 0);
+			dateTrx.setReadWrite(jTabbedPane1.getSelectedIndex() == 0);
 			
 		} else if (arg0.getSource() == jTabbedPane2) {
 			// TAB de medios de pago
@@ -3292,6 +3318,7 @@ public class VOrdenPago extends CPanel implements FormPanel,ActionListener,Table
 		jTabbedPane1.setSelectedIndex(0);
 		m_cambioTab = false;
 		txtDescription.setText("");
+
 		m_model.setDescription("");
 		checkPayAll.setSelected(false);
 		cboChequeBancoID.setValue(null);

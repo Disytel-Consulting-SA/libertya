@@ -455,7 +455,8 @@ public class VOrdenCobro extends VOrdenPago {
 										.createParallelGroup(
 												org.jdesktop.layout.GroupLayout.LEADING)
 										.add(lblBPartner).add(lblClient)
-										.add(lblDocumentNo))
+										.add(lblDocumentNo)
+										.add(lblDateTrx))
 								.addPreferredGap(
 										org.jdesktop.layout.LayoutStyle.RELATED)
 								.add(jPanel9Layout
@@ -467,7 +468,10 @@ public class VOrdenCobro extends VOrdenPago {
 												234, Short.MAX_VALUE)
 										.add(fldDocumentNo,
 												org.jdesktop.layout.GroupLayout.DEFAULT_SIZE,
-												234, Short.MAX_VALUE))
+												234, Short.MAX_VALUE)
+										.add(dateTrx,org.jdesktop.layout.GroupLayout.DEFAULT_SIZE,
+												234, Short.MAX_VALUE)
+										)
 								.addContainerGap()));
 		jPanel9Layout
 				.setVerticalGroup(jPanel9Layout
@@ -501,6 +505,16 @@ public class VOrdenCobro extends VOrdenPago {
 												org.jdesktop.layout.GroupLayout.BASELINE)
 										.add(lblDocumentNo)
 										.add(fldDocumentNo,
+												org.jdesktop.layout.GroupLayout.PREFERRED_SIZE,
+												org.jdesktop.layout.GroupLayout.DEFAULT_SIZE,
+												org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
+								.addPreferredGap(
+										org.jdesktop.layout.LayoutStyle.RELATED)
+								.add(jPanel9Layout
+										.createParallelGroup(
+												org.jdesktop.layout.GroupLayout.BASELINE)
+										.add(lblDateTrx)
+										.add(dateTrx,
 												org.jdesktop.layout.GroupLayout.PREFERRED_SIZE,
 												org.jdesktop.layout.GroupLayout.DEFAULT_SIZE,
 												org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
