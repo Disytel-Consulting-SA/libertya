@@ -51,10 +51,14 @@ public class CurrentAccountQuery {
 
 	/** Moneda de la compañía */
 	private Integer currencyID;
+	
+	/** Sólo comprobantes en cuenta corriente */
+	private boolean onlyCurrrentAccoundDocuments;
 
 	public CurrentAccountQuery(Properties ctx, Integer orgID,
 			Integer docTypeID, Boolean detailReceiptsPayments,
-			Timestamp dateFrom, Timestamp dateTo) {
+			Timestamp dateFrom, Timestamp dateTo,
+			Boolean onlyCurrentAccountDocuments) {
 		setCtx(ctx);
 		setOrgID(orgID);
 		setDocTypeID(docTypeID);
@@ -62,6 +66,7 @@ public class CurrentAccountQuery {
 		setDateFrom(dateFrom);
 		setDateTo(dateTo);
 		setCurrencyID(Env.getContextAsInt(getCtx(), "$C_Currency_ID"));
+		setOnlyCurrrentAccoundDocuments(onlyCurrentAccountDocuments);
 	}
 
 	/**
@@ -120,6 +125,9 @@ public class CurrentAccountQuery {
 			sqlDoc.append(" WHERE d.DocStatus IN ('CO','CL', 'RE', 'VO') ");
 			sqlDoc.append("   AND d.AD_Client_ID = ? ");
 			sqlDoc.append("   AND d.C_Bpartner_ID = ? ");
+			if(onlyCurrrentAccoundDocuments){
+				sqlDoc.append("   AND d.initialcurrentaccountamt > 0 ");
+			}
 			sqlAppend("   AND d.AD_Org_ID = ? ", orgID, sqlDoc);
 			sqlAppend("   AND d.C_DocType_ID = ? ", docTypeID, sqlDoc);
 		} else {
@@ -174,6 +182,9 @@ public class CurrentAccountQuery {
 			sqlDoc.append(" 	WHERE d.DocStatus IN ('CO','CL', 'RE', 'VO') ");
 			sqlDoc.append("     AND d.AD_Client_ID = ? ");
 			sqlDoc.append("   AND d.C_Bpartner_ID = ? ");
+			if(onlyCurrrentAccoundDocuments){
+				sqlDoc.append("   AND d.initialcurrentaccountamt > 0 ");
+			}
 			sqlAppend("   AND d.AD_Org_ID = ? ", orgID, sqlDoc);
 			sqlAppend("   AND d.C_DocType_ID = ? ", docTypeID, sqlDoc);
 		}
@@ -293,6 +304,14 @@ public class CurrentAccountQuery {
 
 	public void setCurrencyID(Integer currencyID) {
 		this.currencyID = currencyID;
+	}
+
+	public boolean isOnlyCurrrentAccoundDocuments() {
+		return onlyCurrrentAccoundDocuments;
+	}
+
+	public void setOnlyCurrrentAccoundDocuments(boolean onlyCurrrentAccoundDocuments) {
+		this.onlyCurrrentAccoundDocuments = onlyCurrrentAccoundDocuments;
 	}
 
 }
