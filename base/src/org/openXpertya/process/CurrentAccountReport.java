@@ -59,6 +59,9 @@ public class CurrentAccountReport extends SvrProcess {
 	/** Generador de consultas de cuenta corriente */
 	private CurrentAccountQuery currentAccountQuery;
 
+	/** Sólo comprobantes en cuenta corriente */
+	private boolean onlyCurrentAccountDocuments;
+	
 	/** Tipos de documento segun columna documenttable de v_documents */
 	protected static final String DOC_INVOICE = "C_Invoice";
 	protected static final String DOC_PAYMENT = "C_Payment";
@@ -96,6 +99,8 @@ public class CurrentAccountReport extends SvrProcess {
 			} else if (name.equalsIgnoreCase("C_DocType_ID")) {
 				BigDecimal tmp = (BigDecimal) para[i].getParameter();
 				p_C_DocType_ID = tmp == null ? null : tmp.intValue();
+			} else if (name.equalsIgnoreCase("OnlyCurrentAccountDocuments")) {
+				setOnlyCurrentAccountDocuments("Y".equals((String) para[i].getParameter()));
 			} else {
 				log.log(Level.SEVERE, "prepare - Unknown Parameter: " + name);
 			}
@@ -117,7 +122,7 @@ public class CurrentAccountReport extends SvrProcess {
 		// Generador de consulta de cuenta corriente
 		setCurrentAccountQuery(new CurrentAccountQuery(getCtx(), p_AD_Org_ID,
 				p_C_DocType_ID, p_ShowDetailedReceiptsPayments, p_DateTrx_From,
-				p_DateTrx_To));
+				p_DateTrx_To, isOnlyCurrentAccountDocuments()));
 	}
 
 	@Override
@@ -172,7 +177,7 @@ public class CurrentAccountReport extends SvrProcess {
 				subIndice++;
 				// insert first row: before query balance period
 				// Field used for 'date field' in temporary table: DATETRX
-				usql.append(" INSERT INTO T_CUENTACORRIENTE (SUBINDICE, IncludeOpenOrders, ShowDetailedReceiptsPayments, AD_CLIENT_ID, AD_ORG_ID, AD_PINSTANCE_ID, ISO_CODE, AMOUNT, DEBE, HABER, SALDO, NUMEROCOMPROBANTE, C_BPARTNER_ID, ACCOUNTTYPE, DATETRX, C_DOCTYPE_ID) "
+				usql.append(" INSERT INTO T_CUENTACORRIENTE (SUBINDICE, IncludeOpenOrders, ShowDetailedReceiptsPayments, AD_CLIENT_ID, AD_ORG_ID, AD_PINSTANCE_ID, ISO_CODE, AMOUNT, DEBE, HABER, SALDO, NUMEROCOMPROBANTE, C_BPARTNER_ID, ACCOUNTTYPE, DATETRX, C_DOCTYPE_ID, OnlyCurrentAccountDocuments) "
 						+ " VALUES ("
 						+ subIndice
 						+ ", '"
@@ -199,7 +204,10 @@ public class CurrentAccountReport extends SvrProcess {
 						+ ", '"
 						+ p_AccountType
 						+ "', '"
-						+ p_DateTrx_From + "', NULL);");
+						+ p_DateTrx_From + "', NULL"
+						+ "', "
+						+ "'"+(isOnlyCurrentAccountDocuments()?"Y":"N")+"'"
+						+ ");");
 			}
 
 			BigDecimal credit = null;
@@ -247,7 +255,7 @@ public class CurrentAccountReport extends SvrProcess {
 				// ANTONIO: La cuenta es al reves acumBalance =
 				// acumBalance.add(credit.subtract(debit));
 				acumBalance = acumBalance.add(debit.subtract(credit));
-				usql.append(" INSERT INTO T_CUENTACORRIENTE (SUBINDICE, IncludeOpenOrders, ShowDetailedReceiptsPayments, AD_CLIENT_ID, AD_ORG_ID, AD_PINSTANCE_ID, ISO_CODE, AMOUNT, DEBE, HABER, SALDO, NUMEROCOMPROBANTE, C_BPARTNER_ID, ACCOUNTTYPE, DATETRX, C_DOCTYPE_ID, C_INVOICE_ID, C_PAYMENT_ID, C_CASHLINE_ID, C_ALLOCATIONHDR_ID, duedate) "
+				usql.append(" INSERT INTO T_CUENTACORRIENTE (SUBINDICE, IncludeOpenOrders, ShowDetailedReceiptsPayments, AD_CLIENT_ID, AD_ORG_ID, AD_PINSTANCE_ID, ISO_CODE, AMOUNT, DEBE, HABER, SALDO, NUMEROCOMPROBANTE, C_BPARTNER_ID, ACCOUNTTYPE, DATETRX, C_DOCTYPE_ID, C_INVOICE_ID, C_PAYMENT_ID, C_CASHLINE_ID, C_ALLOCATIONHDR_ID, duedate, OnlyCurrentAccountDocuments) "
 						+ " VALUES ("
 						+ subIndice
 						+ ", '"
@@ -280,7 +288,8 @@ public class CurrentAccountReport extends SvrProcess {
 						+ "', '"
 						+ rs.getTimestamp("DateTrx")
 						+ "', "
-						+ rs.getInt("C_DocType_ID") + ", ");
+						+ rs.getInt("C_DocType_ID") 
+						+ ", ");
 
 				// La linea es de una factura?
 				usql.append(
@@ -308,7 +317,8 @@ public class CurrentAccountReport extends SvrProcess {
 					usql.append("'" + fechaVencimiento + "'");
 				} else
 					usql.append("NULL");
-
+				
+				usql.append(" , '"+(isOnlyCurrentAccountDocuments()?"Y":"N")+"'");
 				usql.append(" ); ");
 
 			}
@@ -432,7 +442,7 @@ public class CurrentAccountReport extends SvrProcess {
 		StringBuffer usql = new StringBuffer();
 		while (rs.next()) {
 			subIndice++;
-			usql.append(" INSERT INTO T_CUENTACORRIENTE (SUBINDICE, IncludeOpenOrders, ShowDetailedReceiptsPayments, AD_CLIENT_ID, AD_ORG_ID, AD_PINSTANCE_ID, ISO_CODE, AMOUNT, DEBE, HABER, SALDO, NUMEROCOMPROBANTE, C_BPARTNER_ID, ACCOUNTTYPE, DATETRX, C_DOCTYPE_ID, C_INVOICE_ID, C_PAYMENT_ID, C_CASHLINE_ID) "
+			usql.append(" INSERT INTO T_CUENTACORRIENTE (SUBINDICE, IncludeOpenOrders, ShowDetailedReceiptsPayments, AD_CLIENT_ID, AD_ORG_ID, AD_PINSTANCE_ID, ISO_CODE, AMOUNT, DEBE, HABER, SALDO, NUMEROCOMPROBANTE, C_BPARTNER_ID, ACCOUNTTYPE, DATETRX, C_DOCTYPE_ID, C_INVOICE_ID, C_PAYMENT_ID, C_CASHLINE_ID, OnlyCurrentAccountDocuments) "
 					+ " VALUES ("
 					+ subIndice
 					+ ", '"
@@ -468,7 +478,10 @@ public class CurrentAccountReport extends SvrProcess {
 					+ "', '"
 					+ rs.getTimestamp("DateAcct")
 					+ "', "
-					+ rs.getInt("C_DocType_ID") + ", " + " null, null, null); ");
+					+ rs.getInt("C_DocType_ID") + ", " + " null, null, null"
+					+ " , "
+					+ "'"+(isOnlyCurrentAccountDocuments()?"Y":"N")+"'"
+					+ "); ");
 		}
 
 		return usql;
@@ -480,6 +493,15 @@ public class CurrentAccountReport extends SvrProcess {
 
 	protected void setCurrentAccountQuery(CurrentAccountQuery currentAccountQuery) {
 		this.currentAccountQuery = currentAccountQuery;
+	}
+
+	protected boolean isOnlyCurrentAccountDocuments() {
+		return onlyCurrentAccountDocuments;
+	}
+
+	protected void setOnlyCurrentAccountDocuments(
+			boolean onlyCurrentAccountDocuments) {
+		this.onlyCurrentAccountDocuments = onlyCurrentAccountDocuments;
 	}
 
 }

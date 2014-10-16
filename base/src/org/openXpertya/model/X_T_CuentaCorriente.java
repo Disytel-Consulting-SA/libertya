@@ -7,7 +7,7 @@ import java.math.*;
 import org.openXpertya.util.*;
 /** Modelo Generado por T_CuentaCorriente
  *  @author Comunidad de Desarrollo Libertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
- *  @version  - 2014-02-07 02:05:55.566 */
+ *  @version  - 2014-10-16 02:16:13.275 */
 public class X_T_CuentaCorriente extends org.openXpertya.model.PO
 {
 /** Constructor estándar */
@@ -20,6 +20,7 @@ setAD_PInstance_ID (0);
 setDateAcct (new Timestamp(System.currentTimeMillis()));
 setDateCreated (new Timestamp(System.currentTimeMillis()));
 setDateTrx (new Timestamp(System.currentTimeMillis()));
+setOnlyCurrentAccountDocuments (false);
 }
  */
 }
@@ -354,6 +355,22 @@ set_Value ("NumeroComprobante", NumeroComprobante);
 public String getNumeroComprobante() 
 {
 return (String)get_Value("NumeroComprobante");
+}
+/** Set Only Current Account Documents */
+public void setOnlyCurrentAccountDocuments (boolean OnlyCurrentAccountDocuments)
+{
+set_Value ("OnlyCurrentAccountDocuments", new Boolean(OnlyCurrentAccountDocuments));
+}
+/** Get Only Current Account Documents */
+public boolean isOnlyCurrentAccountDocuments() 
+{
+Object oo = get_Value("OnlyCurrentAccountDocuments");
+if (oo != null) 
+{
+ if (oo instanceof Boolean) return ((Boolean)oo).booleanValue();
+ return "Y".equals(oo);
+}
+return false;
 }
 /** Set Saldo */
 public void setsaldo (BigDecimal saldo)
