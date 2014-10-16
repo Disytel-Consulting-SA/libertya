@@ -24,7 +24,7 @@ public class ResumenVentasDocumentsDataSource extends
 
 	@Override
 	protected String getGroupFields() {
-		return "c_invoice_id, documentno";
+		return "documentno";
 	}
 	
 	@Override
