@@ -3870,5 +3870,11 @@ ALTER TABLE v_projectedpayments OWNER TO libertya;
 --20141016-01:40 Creación de columna en la tabla temporal de cuenta corriente para el nuevo filtro
 ALTER TABLE t_cuentacorriente ADD COLUMN OnlyCurrentAccountDocuments character(1) NOT NULL DEFAULT 'N'::bpchar;
 
---20141016-09:07 Columna para nuevo boton que sirve para crear transferencias a partir de pedidos
+--20141016-0907 Columna para nuevo boton que sirve para crear transferencias a partir de pedidos
 update ad_system set dummy = (SELECT addcolumnifnotexists('m_transfer', 'crearpedidodesde', 'character(1)'));
+
+--20141016-1002 Columna para a Actualizar Precios con Factura de Compra
+update ad_system set dummy = (SELECT addcolumnifnotexists('m_pricelist', 'ActualizarPreciosconFacturadeCompra', 'character(1)'));
+
+--20141016-1002 Columna para indicar Fecha de TC para Actualizar Precios
+update ad_system set dummy = (SELECT addcolumnifnotexists('c_invoice', 'FechadeTCparaActualizarPrecios', 'timestamp without time zone')); 

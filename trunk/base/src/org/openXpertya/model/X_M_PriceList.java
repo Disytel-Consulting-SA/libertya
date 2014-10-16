@@ -7,7 +7,7 @@ import java.math.*;
 import org.openXpertya.util.*;
 /** Modelo Generado por M_PriceList
  *  @author Comunidad de Desarrollo Libertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
- *  @version  - 2012-12-09 21:11:58.317 */
+ *  @version  - 2014-10-16 10:04:41.131 */
 public class X_M_PriceList extends org.openXpertya.model.PO
 {
 /** Constructor estándar */
@@ -52,6 +52,22 @@ public String toString()
 {
 StringBuffer sb = new StringBuffer ("X_M_PriceList[").append(getID()).append("]");
 return sb.toString();
+}
+/** Set ActualizarPreciosConFacturaDeCompra */
+public void setActualizarPreciosConFacturaDeCompra (boolean ActualizarPreciosConFacturaDeCompra)
+{
+set_Value ("ActualizarPreciosConFacturaDeCompra", new Boolean(ActualizarPreciosConFacturaDeCompra));
+}
+/** Get ActualizarPreciosConFacturaDeCompra */
+public boolean isActualizarPreciosConFacturaDeCompra() 
+{
+Object oo = get_Value("ActualizarPreciosConFacturaDeCompra");
+if (oo != null) 
+{
+ if (oo instanceof Boolean) return ((Boolean)oo).booleanValue();
+ return "Y".equals(oo);
+}
+return false;
 }
 public static final int BASEPRICELIST_ID_AD_Reference_ID = MReference.getReferenceID("M_PriceList");
 /** Set Base Pricelist.

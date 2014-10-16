@@ -7,7 +7,7 @@ import java.math.*;
 import org.openXpertya.util.*;
 /** Modelo Generado por C_Invoice
  *  @author Comunidad de Desarrollo Libertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
- *  @version  - 2014-10-11 02:57:10.177 */
+ *  @version  - 2014-10-16 10:03:36.442 */
 public class X_C_Invoice extends org.openXpertya.model.PO
 {
 /** Constructor estándar */
@@ -30,6 +30,7 @@ setDateInvoiced (new Timestamp(System.currentTimeMillis()));	// @#Date@
 setDocAction (null);	// CO
 setDocStatus (null);	// DR
 setDocumentNo (null);
+setFechadeTCparaActualizarPrecios (new Timestamp(System.currentTimeMillis()));
 setFiscalAlreadyPrinted (false);
 setGrandTotal (Env.ZERO);
 setInitialCurrentAccountAmt (Env.ZERO);
@@ -870,6 +871,17 @@ return (String)get_Value("DocumentNo");
 public KeyNamePair getKeyNamePair() 
 {
 return new KeyNamePair(getID(), getDocumentNo());
+}
+/** Set FechadeTCparaActualizarPrecios */
+public void setFechadeTCparaActualizarPrecios (Timestamp FechadeTCparaActualizarPrecios)
+{
+if (FechadeTCparaActualizarPrecios == null) throw new IllegalArgumentException ("FechadeTCparaActualizarPrecios is mandatory");
+set_Value ("FechadeTCparaActualizarPrecios", FechadeTCparaActualizarPrecios);
+}
+/** Get FechadeTCparaActualizarPrecios */
+public Timestamp getFechadeTCparaActualizarPrecios() 
+{
+return (Timestamp)get_Value("FechadeTCparaActualizarPrecios");
 }
 /** Set Already printed */
 public void setFiscalAlreadyPrinted (boolean FiscalAlreadyPrinted)
