@@ -112,6 +112,10 @@ public class PostInstallUpgradeFrom1402 extends PluginPostInstallProcess {
 	protected final static String REJECTED_CHECKS_REPORT_JASPER_REPORT_UID = "CORE-AD_JasperReport-1010123";
 	protected final static String REJECTED_CHECKS_REPORT_JASPER_REPORT_FILENAME = "RejectedChecks.jasper";
 	
+	/** UID del Informe de Ventas por Region */
+	protected final static String VENTAS_POR_REGION_REPORT_UID = "CORE-AD_Process-1010399";
+	protected final static String VENTAS_POR_REGION_REPORT_FILENAME = "VentasPorRegion.jrxml";
+	
 	@Override
 	protected String doIt() throws Exception {
 		super.doIt();
@@ -387,6 +391,17 @@ public class PostInstallUpgradeFrom1402 extends PluginPostInstallProcess {
 							.readBinaryFromJar(
 									jarFileURL,
 									getBinaryFileURL(REJECTED_CHECKS_REPORT_JASPER_REPORT_FILENAME)));
+		
+		// Informe de Ventas por Region
+		MProcess.addAttachment(
+				get_TrxName(),
+				getCtx(),
+				VENTAS_POR_REGION_REPORT_UID,
+				VENTAS_POR_REGION_REPORT_FILENAME,
+				JarHelper
+						.readBinaryFromJar(
+								jarFileURL,
+								getBinaryFileURL(VENTAS_POR_REGION_REPORT_FILENAME)));
 		
 		return " ";
 	}
