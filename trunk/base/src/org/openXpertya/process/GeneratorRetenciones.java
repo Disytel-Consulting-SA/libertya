@@ -1,6 +1,7 @@
 package org.openXpertya.process;
 
 import java.math.BigDecimal;
+import java.sql.Timestamp;
 import java.util.Properties;
 import java.util.Vector;
 
@@ -42,7 +43,7 @@ public class GeneratorRetenciones {
 	Vector<RetencionProcessor> lista_retenciones = new Vector<RetencionProcessor>();
 	
 	/* Constructores */
-	public GeneratorRetenciones(int C_BPartner_ID, Vector<Integer> m_factura, Vector<BigDecimal> m_facturaManualAmount,BigDecimal amttotal, boolean isSOTrx){
+	public GeneratorRetenciones(int C_BPartner_ID, Vector<Integer> m_factura, Vector<BigDecimal> m_facturaManualAmount,BigDecimal amttotal, boolean isSOTrx){	
 		// seteo de variables
 		this.setC_BPartner_ID(C_BPartner_ID);
 		this.m_facturas = m_factura;
@@ -55,7 +56,20 @@ public class GeneratorRetenciones {
 		this.setM_C_Currency_ID(currency);
 		this.setPago_anticipado(m_facturas.isEmpty());
 	}
-	
+	public GeneratorRetenciones(int C_BPartner_ID, Vector<Integer> m_factura, Vector<BigDecimal> m_facturaManualAmount,BigDecimal amttotal, boolean isSOTrx, Timestamp dateTrx){
+		// seteo de variables
+		this.setC_BPartner_ID(C_BPartner_ID);
+		this.m_facturas = m_factura;
+		this.m_facturasManualAmounts = m_facturaManualAmount;
+		this.pago_anticipado =(m_factura.isEmpty() | m_factura == null);
+		this.isSOTrx = isSOTrx;
+		this.setM_FacturasTotalPagar(amttotal);
+		int C_Currency_ID = Env.getContextAsInt(Env.getCtx(), "$C_Currency_ID"); //
+		MCurrency currency = new MCurrency(Env.getCtx(),C_Currency_ID,null);
+		this.setM_C_Currency_ID(currency);
+		this.setPago_anticipado(m_facturas.isEmpty());
+		this.vfechaPago = dateTrx;
+	}
 	private void setM_C_Currency_ID(MCurrency currency) {	
 		m_C_Currency_ID = currency.getC_Currency_ID();
 		
@@ -199,6 +213,7 @@ public class GeneratorRetenciones {
 			}
 			retProcessor.setIsSOTrx(isSOTrx());
 			retProcessor.loadConfig(retSchema);
+			retProcessor.setDateTrx(vfechaPago);
 			retProcessor.setBPartner(new MBPartner(Env.getCtx(),getC_BPartner_ID(), getTrxName()));		
 			retProcessor.setCurrency(new MCurrency(getM_ctx(),getM_C_Currency_ID().intValue(),getTrxName()));
 			retProcessor.setRetencionSchema(retSchema);

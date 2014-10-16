@@ -137,7 +137,8 @@ public class VOrdenPagoModel {
 			// Es correcto que se convierta a la fecha Actual
 			return MCurrency.currencyConvert(getImporteMonedaOriginal(),
 					getMonedaOriginalID(), C_Currency_ID,
-					new Timestamp(System.currentTimeMillis()),
+				//	new Timestamp(System.currentTimeMillis()),
+					m_fechaTrx,
 					Env.getAD_Org_ID(Env.getCtx()), m_ctx);
 		}
 
@@ -304,9 +305,12 @@ public class VOrdenPagoModel {
 
 		@Override
 		public Timestamp getDateTrx() {
+			/*
 			return VModelHelper.getSQLValueTimestamp(null,
 					" select statementdate from c_cash where c_cash_id = ? ",
 					libroCaja_ID);
+					*/
+			return m_fechaTrx;
 		}
 
 		@Override
@@ -380,7 +384,8 @@ public class VOrdenPagoModel {
 
 		@Override
 		public Timestamp getDateTrx() {
-			return fechaTransf;
+			//return fechaTransf;
+			return m_fechaTrx;
 		}
 
 		@Override
@@ -604,9 +609,11 @@ public class VOrdenPagoModel {
 
 		@Override
 		public Timestamp getDateTrx() {
-			return VModelHelper.getSQLValueTimestamp(getTrxName(),
+		/*	return VModelHelper.getSQLValueTimestamp(getTrxName(),
 					" select datetrx from c_invoice where c_invoice_id = ? ",
 					C_invoice_ID);
+					*/
+			return m_fechaTrx;
 		}
 
 		@Override
@@ -710,7 +717,8 @@ public class VOrdenPagoModel {
 
 		@Override
 		public Timestamp getDateTrx() {
-			return today;
+			//return today;
+			return m_fechaTrx;
 		}
 
 		@Override
@@ -999,7 +1007,8 @@ public class VOrdenPagoModel {
 							.getItem(m_facturasTableModel.getCurrencyColIdx());
 					if (MCurrency.currencyConvert(new BigDecimal(1),
 							C_Currency_ID, currency_ID_To,
-							new Timestamp(System.currentTimeMillis()), 0,
+							//new Timestamp(System.currentTimeMillis()), 0,
+							m_fechaTrx,0,
 							getCtx()) == null) {
 						((ResultItemFactura) x)
 								.setManualAmount(BigDecimal.ZERO);
@@ -1019,6 +1028,7 @@ public class VOrdenPagoModel {
 
 	// Main
 	public Timestamp m_fechaFacturas = null;
+	protected Timestamp m_fechaTrx = new Timestamp(new java.util.Date().getTime());
 	public boolean m_allInvoices = true;
 	public int C_BPartner_ID = 0;
 	public int AD_Org_ID = 0;
@@ -1188,6 +1198,9 @@ public class VOrdenPagoModel {
 		m_allInvoices = all;
 		if (m_actualizarFacturasAuto)
 			actualizarFacturas();
+	}
+	public void setFechaOP(Timestamp fecha) {
+				m_fechaTrx = fecha;
 	}
 
 	/**
@@ -1555,8 +1568,10 @@ public class VOrdenPagoModel {
 		updateAditionalInfo();
 		// Calcula las retenciones a aplicarle a la entidad comercial
 		if (!isSOTrx() || m_retenciones == null || m_retenciones.size() == 0) {
-			m_retGen = new GeneratorRetenciones(C_BPartner_ID,
+		/*	m_retGen = new GeneratorRetenciones(C_BPartner_ID,
 					facturasProcesar, manualAmounts, total, isSOTrx());
+		*/
+			m_retGen = new GeneratorRetenciones(C_BPartner_ID, facturasProcesar, manualAmounts, total, isSOTrx(), m_fechaTrx);
 			m_retGen.setTrxName(getTrxName());
 			calculateRetencions();
 			m_retenciones = m_retGen.getRetenciones();
@@ -2307,6 +2322,7 @@ public class VOrdenPagoModel {
 		BigDecimal manualAmt = MCurrency.currencyConvert(
 				rif.getManualAmtClientCurrency(), C_Currency_ID,
 				currency_ID_To, new Timestamp(System.currentTimeMillis()), 0,
+				//	currency_ID_To, m_fechaTrx, 0,
 				getCtx());
 		rif.setManualAmount(manualAmt);
 	}
@@ -2320,6 +2336,7 @@ public class VOrdenPagoModel {
 		BigDecimal paymentTermDiscount = MCurrency.currencyConvert(
 				rif.getPaymentTermDiscount(), C_Currency_ID, currency_ID_To,
 				new Timestamp(System.currentTimeMillis()), 0, getCtx());
+		//	m_fechaTrx, 0, getCtx());
 		openAmt = openAmt.subtract(paymentTermDiscount);
 		// Setear el monto pendiente de la factura si se indicó 0
 //		Comentado: si al ser cero completa con el pendiente, nunca puede volver a setearse cero!
@@ -2332,7 +2349,8 @@ public class VOrdenPagoModel {
 			rif.setManualAmount(openAmt);
 		BigDecimal manualAmtClientCurrency = MCurrency.currencyConvert(
 				rif.getManualAmount(), currency_ID_To, C_Currency_ID,
-				new Timestamp(System.currentTimeMillis()), 0, getCtx());
+				//new Timestamp(System.currentTimeMillis()), 0, getCtx());
+				m_fechaTrx, 0, getCtx());
 		rif.setManualAmtClientCurrency(manualAmtClientCurrency);
 	}
 
@@ -2444,8 +2462,9 @@ public class VOrdenPagoModel {
 			return currencyConvert(AvailableamountToConvert, DB.getSQLValue(
 					null,
 					"SELECT C_Currency_ID From C_Invoice where C_Invoice_ID = "
-							+ invoiceID), getC_Currency_ID(), new Timestamp(
-					new java.util.Date().getTime()));
+							+ invoiceID), getC_Currency_ID(),
+							//new Timestamp(new java.util.Date().getTime()));
+							m_fechaTrx);
 		} catch (Exception e) {
 			return null;
 		}
@@ -2501,9 +2520,10 @@ public class VOrdenPagoModel {
 
 		@Override
 		public Timestamp getDateTrx() {
-			return VModelHelper.getSQLValueTimestamp(null,
+		/*	return VModelHelper.getSQLValueTimestamp(null,
 					" SELECT datetrx FROM c_payment WHERE C_Payment_ID = ? ",
-					C_Payment_ID);
+					C_Payment_ID);*/
+			return m_fechaTrx;
 		}
 
 		@Override
@@ -2583,8 +2603,10 @@ public class VOrdenPagoModel {
 		hdr.setC_BPartner_ID(C_BPartner_ID);
 		hdr.setC_Currency_ID(C_Currency_ID);
 
-		hdr.setDateAcct(m_fechaFacturas);
-		hdr.setDateTrx(m_fechaFacturas);
+		//hdr.setDateAcct(m_fechaFacturas);
+		//hdr.setDateTrx(m_fechaFacturas);
+		hdr.setDateAcct(m_fechaTrx);
+		hdr.setDateTrx(m_fechaTrx);
 
 		hdr.setDescription(HdrDescription);
 		hdr.setIsManual(false);
@@ -2616,8 +2638,9 @@ public class VOrdenPagoModel {
 			return currencyConvert(AvailableamountToConvert, DB.getSQLValue(
 					null,
 					"SELECT C_Currency_ID From C_Payment where C_Payment_ID = "
-							+ paymentID), getC_Currency_ID(), new Timestamp(
-					new java.util.Date().getTime()));
+							+ paymentID), getC_Currency_ID(), 
+							//new Timestamp(new java.util.Date().getTime()));
+							m_fechaTrx);
 		} catch (Exception e) {
 			return null;
 		}
@@ -2633,7 +2656,8 @@ public class VOrdenPagoModel {
 					DB.getSQLValue(null,
 							"SELECT C_Currency_ID From C_CashLine where C_CashLine_ID = "
 									+ cashLineID), getC_Currency_ID(),
-					new Timestamp(new java.util.Date().getTime())).abs();
+					//new Timestamp(new java.util.Date().getTime())).abs();
+									m_fechaTrx);
 		} catch (Exception e) {
 			return null;
 		}
@@ -2678,11 +2702,13 @@ public class VOrdenPagoModel {
 
 		@Override
 		public Timestamp getDateTrx() {
-			return VModelHelper
+			/*return VModelHelper
 					.getSQLValueTimestamp(
 							null,
 							" SELECT statementdate FROM c_cashline cl INNER JOIN c_cash c ON (cl.c_cash_id = c.c_cash_id) WHERE C_CashLine_ID = ? ",
 							cashLineID);
+							*/
+			return m_fechaTrx;
 		}
 
 		@Override
@@ -2788,8 +2814,9 @@ public class VOrdenPagoModel {
 					new Object[] { paymentID });
 			return currencyConvert(amtToConvert, DB.getSQLValue(null,
 					"SELECT C_Currency_ID From C_Payment where C_Payment_ID = "
-							+ paymentID), getC_Currency_ID(), new Timestamp(
-					new java.util.Date().getTime()));
+							+ paymentID), getC_Currency_ID(), 
+							//new Timestamp(new java.util.Date().getTime()));
+							m_fechaTrx);
 		} catch (Exception e) {
 			return null;
 		}
@@ -3155,7 +3182,8 @@ public class VOrdenPagoModel {
 					BigDecimal manualAmtClientCurrency = MCurrency
 							.currencyConvert(amount,
 									invoice.getC_Currency_ID(), C_Currency_ID,
-									new Timestamp(System.currentTimeMillis()),
+								//	new Timestamp(System.currentTimeMillis()),
+									m_fechaTrx,
 									0, getCtx());
 					rif.setManualAmtClientCurrency(manualAmtClientCurrency);
 					rif.setManualAmount(amount);
