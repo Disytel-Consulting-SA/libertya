@@ -120,6 +120,10 @@ public class PostInstallUpgradeFrom1402 extends PluginPostInstallProcess {
 	protected final static String COMPRAS_POR_REGION_REPORT_UID = "CORE-AD_Process-1010400";
 	protected final static String COMPRAS_POR_REGION_REPORT_FILENAME = "ComprasPorRegion.jrxml";
 	
+	/** UID del Informe de Cobranzas y Pagos */
+	protected final static String INFORME_DE_COBRANZAS_Y_PAGOS_REPORT_UID = "CORE-AD_Process-1010401";
+	protected final static String INFORME_DE_COBRANZAS_Y_PAGOS_REPORT_FILENAME = "InformeDeCobranzasYPagos.jrxml";
+	
 	@Override
 	protected String doIt() throws Exception {
 		super.doIt();
@@ -417,6 +421,17 @@ public class PostInstallUpgradeFrom1402 extends PluginPostInstallProcess {
 						.readBinaryFromJar(
 								jarFileURL,
 								getBinaryFileURL(COMPRAS_POR_REGION_REPORT_FILENAME)));
+		
+		// Informe de Cobranzas y Pagos
+		MProcess.addAttachment(
+				get_TrxName(),
+				getCtx(),
+				INFORME_DE_COBRANZAS_Y_PAGOS_REPORT_UID,
+				INFORME_DE_COBRANZAS_Y_PAGOS_REPORT_FILENAME,
+				JarHelper
+						.readBinaryFromJar(
+								jarFileURL,
+								getBinaryFileURL(INFORME_DE_COBRANZAS_Y_PAGOS_REPORT_FILENAME)));
 		
 		return " ";
 	}
