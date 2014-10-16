@@ -7,7 +7,7 @@ import java.math.*;
 import org.openXpertya.util.*;
 /** Modelo Generado por M_Transfer
  *  @author Comunidad de Desarrollo Libertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
- *  @version  - 2013-12-16 16:07:14.389 */
+ *  @version  - 2014-10-16 09:19:50.101 */
 public class X_M_Transfer extends org.openXpertya.model.PO
 {
 /** Constructor estándar */
@@ -115,6 +115,21 @@ public int getC_Order_ID()
 Integer ii = (Integer)get_Value("C_Order_ID");
 if (ii == null) return 0;
 return ii.intValue();
+}
+/** Set CrearPedidoDesde */
+public void setCrearPedidoDesde (String CrearPedidoDesde)
+{
+if (CrearPedidoDesde != null && CrearPedidoDesde.length() > 1)
+{
+log.warning("Length > 1 - truncated");
+CrearPedidoDesde = CrearPedidoDesde.substring(0,1);
+}
+set_Value ("CrearPedidoDesde", CrearPedidoDesde);
+}
+/** Get CrearPedidoDesde */
+public String getCrearPedidoDesde() 
+{
+return (String)get_Value("CrearPedidoDesde");
 }
 /** Set Transaction Date.
 Transaction Date */
