@@ -55,7 +55,6 @@ public class UpdateBPartnerBalance extends SvrProcess {
             	setBpartnerID(para[i].getParameterAsInt());
             }
         }
-		setBpartner(new MBPartner(getCtx(), getBpartnerID(), get_TrxName()));
 	}
 	
 	@Override
@@ -112,12 +111,17 @@ public class UpdateBPartnerBalance extends SvrProcess {
 		return trxName;
 	}
 	
+	public String doProcess() throws Exception{
+		return doIt();
+	}
+	
 	protected Integer getBpartnerID() {
 		return bpartnerID;
 	}
 
 	protected void setBpartnerID(Integer bpartnerID) {
 		this.bpartnerID = bpartnerID;
+		setBpartner(new MBPartner(getCtx(), bpartnerID, get_TrxName()));
 	}
 
 	public Properties getLocalCtx() {
