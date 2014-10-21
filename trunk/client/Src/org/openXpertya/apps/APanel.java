@@ -2424,6 +2424,28 @@ public final class APanel extends CPanel implements DataStatusListener,ChangeLis
 
             return;
         }    // Posted
+        else if( col.equals( "CopyParameters" ))
+        {
+
+            // m_curWindowNo
+
+            VCreateFrom vcf = VCreateFrom.create( m_curTab );
+
+            if( vcf != null ) {
+                if( vcf.isInitOK()) {
+                	vcf.pack();
+                    vcf.setVisible( true );
+                    vcf.dispose();
+                    m_curTab.dataRefresh();
+                } else {
+                    vcf.dispose();
+                }
+
+                return;
+            }
+            // else may start process
+
+        }  
 
         log.config( "Process_ID=" + vButton.getProcess_ID() + ", Record_ID=" + record_ID +" y la ventana en la que lanza el proceso es="+m_curWindowNo);
 
