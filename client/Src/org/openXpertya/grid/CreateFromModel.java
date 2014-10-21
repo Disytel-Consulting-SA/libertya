@@ -436,6 +436,19 @@ public class CreateFromModel {
     
     }
     
+    /**
+     * Entidad Orígen: Pagos
+     */
+    public static class ProcessParameter extends DocumentLine {
+    	/** ID del parámetro del proceso */
+    	public int processParaID = 0;
+    	/** Nro de secuencia */
+    	public Integer seqNo = null;
+    	/** Nombre */
+    	public String name = null;
+        /** Nombre de la columna */
+    	public String columnName = null;    
+    }
     
 	// =============================================================================================
 	// Excepciones al persistir

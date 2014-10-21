@@ -65,6 +65,8 @@ import org.openXpertya.model.MLookupFactory;
 import org.openXpertya.model.MOrder;
 import org.openXpertya.model.MRole;
 import org.openXpertya.model.MTab;
+import org.openXpertya.model.X_AD_Process;
+import org.openXpertya.model.X_C_Payment;
 import org.openXpertya.plugin.common.PluginCreateFromUtils;
 import org.openXpertya.util.CLogger;
 import org.openXpertya.util.DB;
@@ -111,6 +113,8 @@ public abstract class VCreateFrom extends JDialog implements ActionListener,Tabl
             retValue = new VCreateFromShipment( mTab );
         } else if( AD_Table_ID == 426 ) {    // C_PaySelection
             return null;                     // ignore - will call process C_PaySelection_CreateFrom
+        } else if(X_AD_Process.Table_ID == AD_Table_ID){
+        	retValue = new VCreateFromProcessParameter(mTab);
         } else                               // Not supported CreateFrom
         {
             log.log( Level.SEVERE,"Unsupported AD_Table_ID=" + AD_Table_ID );
@@ -301,6 +305,14 @@ public abstract class VCreateFrom extends JDialog implements ActionListener,Tabl
     /** Perfil actual */
 	private MRole role;
 	
+	protected JLabel processLabel;
+	
+	protected VLookup processLookup;
+	
+	protected CPanel parameterProcessPanel = new CPanel();
+	
+	protected GridBagLayout parameterProcessLayout = new GridBagLayout();
+	
     /**
      * Descripción de Método
      *
@@ -313,7 +325,7 @@ public abstract class VCreateFrom extends JDialog implements ActionListener,Tabl
         parameterPanel.setLayout( parameterLayout );
         parameterStdPanel.setLayout( parameterStdLayout );
         parameterBankPanel.setLayout( parameterBankLayout );
-
+        parameterProcessPanel.setLayout( parameterProcessLayout );
         //
 
         bankAccountLabel.setText( Msg.translate( Env.getCtx(),"C_BankAccount_ID" ));
@@ -366,6 +378,19 @@ public abstract class VCreateFrom extends JDialog implements ActionListener,Tabl
         }
 	    parameterStdPanel.add(automatico, new GridBagConstraints(1, y2, 1, 1, 0.0, 0.0
     			,GridBagConstraints.EAST, GridBagConstraints.NONE, new Insets(5, 5, 5, 5), 0, 0));
+	    
+	    if(processLookup != null){
+	    	parameterPanel.remove(parameterBankPanel);
+	    	parameterProcessPanel.add(processLabel, new GridBagConstraints(0, 0, 1,
+					1, 0.0, 0.0, GridBagConstraints.EAST,
+					GridBagConstraints.NONE, new Insets(5, 5, 5, 5), 0, 0));
+	    	parameterProcessPanel.add(processLookup,
+					new GridBagConstraints(1, 0, 1, 1, 0.0, 0.0,
+							GridBagConstraints.WEST,
+							GridBagConstraints.HORIZONTAL, new Insets(5, 0, 5,
+									5), 0, 0));
+	    	parameterPanel.add( parameterProcessPanel,BorderLayout.NORTH );
+	    }
 	    
         this.getContentPane().add( dataPane,BorderLayout.CENTER );
         dataPane.getViewport().add( dataTable,null );

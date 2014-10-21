@@ -5,8 +5,10 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.Timestamp;
 
+import org.openXpertya.model.MPayment;
 import org.openXpertya.util.DB;
 import org.openXpertya.util.Env;
+import org.openXpertya.util.Util;
 
 public class BalanceReport extends SvrProcess {
 
@@ -30,6 +32,12 @@ public class BalanceReport extends SvrProcess {
 	private String isSOtrx = "Y";
 	/** Moneda en la que trabaja la compañía */
 	private int client_Currency_ID;
+	/** Clave de búsqueda desde */
+	private String valueFrom;
+	/** Clave de búsqueda hasta */
+	private String valueTo;
+	/** Sólo mostrar con crédito activado */
+	private boolean onlyCurentAccounts;
 	
 	@Override
 	protected void prepare() {
@@ -52,6 +60,12 @@ public class BalanceReport extends SvrProcess {
         		p_DateTrx_To = ( Timestamp )para[ i ].getParameter();
         	} else if( name.equalsIgnoreCase( "AccountType" )) {
         		p_AccountType = ( String )para[ i ].getParameter();
+        	} else if( name.equalsIgnoreCase( "OnlyCurrentAccounts" )) {
+        		onlyCurentAccounts = ((String)para[ i ].getParameter()).equals("Y");
+        	} else if( name.equalsIgnoreCase( "ValueFrom" )) {
+        		valueFrom = (String)para[ i ].getParameter();
+        	} else if( name.equalsIgnoreCase( "ValueTo" )) {
+        		valueTo = (String)para[ i ].getParameter();
         	}
         }
         
@@ -80,27 +94,68 @@ public class BalanceReport extends SvrProcess {
 
 		// calcular el estado de cuenta de cada E.C.
 		StringBuffer sqlDoc = new StringBuffer();
-		sqlDoc.append(" SELECT T.C_BPARTNER_ID, T.NAME, C_BP_Group_ID, COALESCE(T.so_description,'') AS so_description, COALESCE(SUM(t.Credit),0.0) AS Credit, COALESCE(SUM(t.Debit),0.0) AS Debit, COALESCE(SUM(t.Debit),0.0) - COALESCE(SUM(t.Credit),0.0) AS balance,  ");
+		sqlDoc.append(" SELECT T.C_BPARTNER_ID, T.NAME, C_BP_Group_ID, COALESCE(T.so_description,'') AS so_description, coalesce(T.totalopenbalance,0.00) as actualbalance, COALESCE(SUM(t.Credit),0.0) AS Credit, COALESCE(SUM(t.Debit),0.0) AS Debit, COALESCE(SUM(t.Debit),0.0) - COALESCE(SUM(t.Credit),0.0) AS balance,  ");
 		sqlDoc.append(" 	( SELECT dateacct FROM C_INVOICE WHERE issotrx = ")
 				.append(isSOtrx)
 				.append(" AND invoiceopen(c_invoice_id, 0) > 0	AND C_BPartner_id = t.c_bpartner_id ORDER BY DATEACCT asc LIMIT 1 ) as fecha_fact_antigua, ");
 		sqlDoc.append(" 	( SELECT dateacct FROM C_INVOICE WHERE issotrx = ")
 				.append(isSOtrx)
-				.append(" AND invoiceopen(c_invoice_id, 0) > 0	AND C_BPartner_id = t.c_bpartner_id ORDER BY DATEACCT desc LIMIT 1 ) as fecha_fact_reciente ");
+				.append(" AND invoiceopen(c_invoice_id, 0) > 0	AND C_BPartner_id = t.c_bpartner_id ORDER BY DATEACCT desc LIMIT 1 ) as fecha_fact_reciente, ");
+		sqlDoc.append(" (select coalesce(sum(invoiceopen(c_invoice_id, c_invoicepayschedule_id)),0.00) as duedebt " +
+						"from c_invoice_v as i " +
+						"where i.duedate::date <= ?::date " +
+						"		and i.c_bpartner_id = T.c_bpartner_id " +
+						"		and i.docstatus not in ('DR','IN')");
+		if (p_AD_Org_ID > 0){
+			sqlDoc.append(" AND AD_Org_ID = ").append(p_AD_Org_ID);
+		}
+		sqlDoc.append(" AND AD_Client_ID = ").append(Env.getAD_Client_ID(getCtx()));
+		sqlDoc.append(") as duedebt, ");
+		sqlDoc.append(" (select coalesce(sum(paymentavailable(c_payment_id)),0.00) as duedebt " +
+						"from c_payment " +
+						"where duedate::date <= ?::date " +
+						"		and c_bpartner_id = T.c_bpartner_id " +
+						"		and docstatus not in ('DR','IN') " +
+						"		and tendertype = '"+MPayment.TENDERTYPE_Check+"'");
+		if (p_AD_Org_ID > 0){
+			sqlDoc.append(" AND AD_Org_ID = ").append(p_AD_Org_ID);
+		}
+		sqlDoc.append(" AND AD_Client_ID = ").append(Env.getAD_Client_ID(getCtx()));
+		sqlDoc.append(") as chequesencartera ");
 		sqlDoc.append(" FROM ");
+		if(!Util.isEmpty(valueFrom, true)){
+			sqlDoc.append(" (SELECT min(value) as minvalue " +
+						" FROM c_bpartner " +
+						" WHERE ad_client_id = " + Env.getAD_Client_ID(getCtx()) +
+						"		and (('"+valueFrom+"' is null OR length(trim('"+valueFrom+"'::character varying)) = 0) " +
+						"				OR (CASE WHEN position('%' in '"+valueFrom+"'::character varying) > 0	" +
+						"						THEN value ilike trim('"+valueFrom+"'::character varying) " +
+						"						ELSE upper(value) >= upper(trim('"+valueFrom+"'::character varying)) END))) min, ");
+		}
+		if(!Util.isEmpty(valueTo, true)){
+			sqlDoc.append(" (SELECT max(value) as maxvalue " +
+						" FROM c_bpartner " +
+						" WHERE ad_client_id = " + Env.getAD_Client_ID(getCtx()) +
+						"		AND (('"+valueTo+"' is null OR length(trim('"+valueTo+"'::character varying)) = 0) " +
+								"		OR (CASE WHEN position('%' in '"+valueTo+"'::character varying) > 0 " +
+								"				THEN value ilike trim('"+valueTo+"'::character varying) " +
+								"				ELSE upper(value) <= upper(trim('"+valueTo+"'::character varying)) END))) max, ");
+		}
 		sqlDoc.append(" ( ");
 		sqlDoc.append(" 	SELECT " ); 
 		sqlDoc.append(" 		d.c_bpartner_id, ");
+		sqlDoc.append(" 		bp.value, ");
 		sqlDoc.append(" 		bp.name, ");
 		sqlDoc.append(" 		bp.C_BP_Group_ID, ");
 		sqlDoc.append(" 		bp.so_description, "); 
+		sqlDoc.append(" 		bp.totalopenbalance, ");
 		sqlDoc.append(" 		CASE WHEN d.signo_issotrx = ").append(debit_signo_issotrx).append(" THEN "); 
 		sqlDoc.append(" 			currencyconvert(d.amount, d.c_currency_id, ").append(client_Currency_ID).append(", ('"+ ((p_DateTrx_To != null) ? p_DateTrx_To + "'" : "now'::text") +")::timestamp(6) with time zone, COALESCE(c_conversiontype_id,0), d.ad_client_id, d.ad_org_id) "); 
 		sqlDoc.append(" 		ELSE 0.0 END AS Debit, "); 
 		sqlDoc.append(" 		CASE WHEN d.signo_issotrx = ").append(credit_signo_issotrx).append(" THEN "); 
 		sqlDoc.append(" 			currencyconvert(d.amount, d.c_currency_id, ").append(client_Currency_ID).append(", ('"+ ((p_DateTrx_To != null) ? p_DateTrx_To + "'" : "now'::text") +")::timestamp(6) with time zone, COALESCE(c_conversiontype_id,0), d.ad_client_id, d.ad_org_id) "); 
 		sqlDoc.append(" 		ELSE 0.0 END AS Credit ");
-		sqlDoc.append(" 	FROM V_Documents d "); 
+		sqlDoc.append(" 	FROM V_Documents_Org d "); 
 		sqlDoc.append(" 	INNER JOIN c_bpartner bp on d.c_bpartner_id = bp.c_bpartner_id ");
 		sqlDoc.append(" 	WHERE d.DocStatus IN ('CO', 'CL', 'RE', 'VO') ");
 		if (p_AD_Org_ID > 0)			// filtrar comprobantes para una organizacion especifica (o no)
@@ -117,15 +172,23 @@ public class BalanceReport extends SvrProcess {
 					.append(isSOtrx).append(" AND AD_Client_ID = ")
 					.append(getAD_Client_ID()).append(")");
 		}
-		sqlDoc.append(" 	AND d.AD_Client_ID = ").append(getAD_Client_ID()); 
+		sqlDoc.append(" 	AND d.AD_Client_ID = ").append(Env.getAD_Client_ID(getCtx())); 
 		sqlDoc.append(" 	AND bp.isactive = 'Y' ");
 		if(p_DateTrx_To != null){
 			sqlDoc.append(" 	AND d.truedatetrx::date <= ?::date");
 		}
 		sqlDoc.append(p_AccountType.equalsIgnoreCase("C") ? " AND bp.iscustomer = 'Y' "
 				: " AND bp.isvendor = 'Y' ");
+		sqlDoc.append(onlyCurentAccounts?" AND d.socreditstatus <> 'X' ":"");
 		sqlDoc.append(" ) AS T ");
-		sqlDoc.append(" GROUP BY T.c_bpartner_id, T.name, T.C_BP_Group_ID, T.so_description ");
+		sqlDoc.append(" WHERE (1=1) ");
+		if(!Util.isEmpty(valueFrom, true)){
+			sqlDoc.append(" AND T.value >= minvalue ");
+		}
+		if(!Util.isEmpty(valueTo, true)){
+			sqlDoc.append(" AND T.value <= maxvalue ");
+		}
+		sqlDoc.append(" GROUP BY T.c_bpartner_id, T.name, T.C_BP_Group_ID, T.so_description, T.totalopenbalance ");
 		sqlDoc.append(" ORDER BY ");
 		if ("BP".equals(p_Sort_Criteria))
 			sqlDoc.append("T.name");
@@ -138,6 +201,10 @@ public class BalanceReport extends SvrProcess {
 		PreparedStatement pstmt = DB.prepareStatement(sqlDoc.toString(), get_TrxName(), true);
 		int i = 1;
 		// Parámetros de sqlDoc
+		pstmt.setTimestamp(i++,
+				p_DateTrx_To != null ? p_DateTrx_To : Env.getDate());
+		pstmt.setTimestamp(i++,
+				p_DateTrx_To != null ? p_DateTrx_To : Env.getDate());
 		if(p_DateTrx_To != null){
 			pstmt.setTimestamp(i++, p_DateTrx_To);
 		}
@@ -148,7 +215,8 @@ public class BalanceReport extends SvrProcess {
 		{
 			subindice++;
 			usql.append(" INSERT INTO T_BALANCEREPORT (ad_pinstance_id, ad_client_id, ad_org_id, subindice, c_bpartner_id, observaciones, ");
-			usql.append("								credit, debit, balance, date_oldest_open_invoice, date_newest_open_invoice, sortcriteria, scope, c_bp_group_id, truedatetrx, accounttype ) ");
+			usql.append("								credit, debit, balance, date_oldest_open_invoice, date_newest_open_invoice, sortcriteria, scope, c_bp_group_id, truedatetrx, accounttype, ");
+			usql.append("								onlycurrentaccounts, valuefrom, valueto, duedebt, actualbalance, chequesencartera, generalbalance ) ");
 			usql.append(" VALUES ( ")	.append(getAD_PInstance_ID()).append(",")
 										.append(getAD_Client_ID()).append(",")
 										.append(p_AD_Org_ID).append(",")
@@ -174,12 +242,31 @@ public class BalanceReport extends SvrProcess {
 			else
 				usql.append("null, ");
 			usql.append("'").append(p_AccountType).append("'");
+			usql.append(" , ");
+			usql.append(onlyCurentAccounts?"'Y'":"'N'");
+			usql.append(" , ");
+			usql.append("'"+valueFrom+"'");
+			usql.append(" , ");
+			usql.append("'"+valueTo+"'");
+			usql.append(" , ");
+			usql.append(rs.getBigDecimal("duedebt"));
+			usql.append(" , ");
+			usql.append(rs.getBigDecimal("actualbalance"));
+			usql.append(" , ");
+			usql.append(rs.getBigDecimal("chequesencartera"));
+			usql.append(" , ");
+			usql.append(rs.getBigDecimal("actualbalance").add(
+					rs.getBigDecimal("chequesencartera")));
 			usql.append(" ); ");
 		}
 		
 		// si no hubo entradas directamente no se ejecuta sentencia de insercion alguna
-		if (subindice > 0)
-			DB.executeUpdate(usql.toString(), get_TrxName());
+		if (subindice > 0){
+			int no = DB.executeUpdate(usql.toString(), get_TrxName());
+			if(no == 0){
+				throw new Exception("Error insertando datos en la tabla temporal");
+			}
+		}
 		
 		return "OK";
 		
