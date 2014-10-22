@@ -29,6 +29,7 @@ import java.util.Properties;
 import java.util.Set;
 import java.util.logging.Level;
 
+import org.openXpertya.plugin.common.PluginProcessUtils;
 import org.openXpertya.process.ProcessCall;
 import org.openXpertya.process.ProcessInfo;
 import org.openXpertya.util.CCache;
@@ -251,7 +252,8 @@ public class MProcess extends X_AD_Process {
         boolean	ok	= false;
 
         // Java Class
-        String	Classname	= getClassname();
+		String Classname = Util.isEmpty(pi.getClassName(), true) ? getClassname()
+				: pi.getClassName();
 
         if ((Classname != null) && (Classname.length() > 0)) {
             ok	= startClass(ctx,Classname, pi, trx);
@@ -725,8 +727,11 @@ public class MProcess extends X_AD_Process {
     	return execute(ctx, AD_Process_ID, parameters, null);
     }
     
-    
     public static ProcessInfo execute(Properties ctx,int AD_Process_ID, int tableID, Map<String, Object> parameters, String trxName){
+    	return execute(ctx, AD_Process_ID, tableID, parameters, trxName, null);
+    }
+    
+    public static ProcessInfo execute(Properties ctx,int AD_Process_ID, int tableID, Map<String, Object> parameters, String trxName, Integer recordID){
     	// Obtengo el proceso con ese id
     	MProcess process = MProcess.get(ctx, AD_Process_ID, trxName);
     	if(process == null){
@@ -742,6 +747,15 @@ public class MProcess extends X_AD_Process {
     	ProcessInfo pi = new ProcessInfo(process.getName(),process.getID());
     	pi.setAD_PInstance_ID(instance.getID());
     	pi.setTable_ID(tableID);
+    	if(!Util.isEmpty(recordID, true)){
+    		pi.setRecord_ID(recordID);
+    	}
+		// Logica para plugins, verificar si existe una clase que redefina el
+		// proceso original 
+		String pluginProcessClassName = PluginProcessUtils
+				.findPluginProcessClass(process.getClassname());
+        if (pluginProcessClassName != null)
+        	pi.setClassName(pluginProcessClassName);
     	
     	// Procesamiento de parametros
     	

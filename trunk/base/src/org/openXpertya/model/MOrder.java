@@ -2002,10 +2002,10 @@ public class MOrder extends X_C_Order implements DocAction {
         */
         
         //Ader, Mejora II: reservación de stock mejorada
-		boolean isOrderTransferred = dt.getDocTypeKey().equalsIgnoreCase(
+		boolean isOrderTransferable = dt.getDocTypeKey().equalsIgnoreCase(
 				MDocType.DOCTYPE_Pedido_Transferible);
-		// Para pedidos transferidos no se debe reservar stock
-        if(!isOrderTransferred && !reserveStockII( dt )) {
+		// Para pedidos transferibles no se debe reservar stock
+        if(!isOrderTransferable && !reserveStockII( dt )) {
             m_processMsg = "@CannotReserveStock@";
             return DocAction.STATUS_Invalid;
         }
@@ -4867,13 +4867,14 @@ public class MOrder extends X_C_Order implements DocAction {
 			
 			newOrderLine.setC_Order_ID(newOrder.getID());
 			newOrderLine.setQty(pendingQty);
-			newOrderLine.setQtyReserved(pendingQty);
+			newOrderLine.setQtyReserved(BigDecimal.ZERO);
 			newOrderLine.setQtyInvoiced(pendingQty);
 			newOrderLine.setQtyDelivered(BigDecimal.ZERO);
 			newOrderLine.setQtyTransferred(BigDecimal.ZERO);
 			newOrderLine.setPrice(orderLine.getPriceEntered());
 			newOrderLine.setRef_OrderLine_ID(orderLine.getID());
 			newOrderLine.setProcessed(false);
+			newOrderLine.setM_Warehouse_ID(newOrder.getM_Warehouse_ID());
 			if(!newOrderLine.save()){
 				throw new Exception(CLogger.retrieveErrorAsString());
 			}
