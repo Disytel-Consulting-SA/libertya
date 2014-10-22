@@ -3287,7 +3287,7 @@ public class MOrder extends X_C_Order implements DocAction {
     public String completeIt() {
         MDocType dt           = MDocType.get( getCtx(),getC_DocType_ID());
         String   DocSubTypeSO = dt.getDocSubTypeSO();
-        boolean isOrderTransferred = dt.getDocTypeKey().equalsIgnoreCase(
+        boolean isOrderTransferable = dt.getDocTypeKey().equalsIgnoreCase(
 				MDocType.DOCTYPE_Pedido_Transferible);
         // Just prepare
         
@@ -3526,10 +3526,10 @@ public class MOrder extends X_C_Order implements DocAction {
 			}
         }
 
-        // Para pedidos transferidos, se debe controlar que la cantidad de
+        // Para pedidos transferibles, se debe controlar que la cantidad de
 		// la línea no supere el pendiente a entregar del pedido original
 		// relacionado y setear la cantidad transferida a la pedida
-        if (isOrderTransferred){
+        if (isOrderTransferable){
 			int locatorID = MWarehouse.getDefaultLocatorID(getM_Warehouse_ID(),
 					get_TrxName());
 	    	for (MOrderLine orderLine : lines) {
@@ -3565,6 +3565,16 @@ public class MOrder extends X_C_Order implements DocAction {
 		                 return DocAction.STATUS_Invalid;
 					}
 		        }
+	    	}
+			// Crear el documento transferido a partir del transferible
+			// automáticamente
+	    	try{
+				createTransferOrder(MDocType.getDocType(getCtx(),
+						MDocType.DOCTYPE_Pedido_Transferido, get_TrxName())
+						.getID());
+	    	} catch(Exception e){
+	    		m_processMsg = e.getMessage();
+	    		return DOCSTATUS_Invalid;
 	    	}
     	}
 
@@ -4823,6 +4833,52 @@ public class MOrder extends X_C_Order implements DocAction {
 				+ ") from c_orderline where c_order_id = ?";
 		BigDecimal amt = DB.getSQLValueBD(get_TrxName(), sql, getID());
 		return Util.isEmpty(amt, false)?BigDecimal.ZERO:amt;
+	}
+	
+	/**
+	 * Se crea el pedido transferido o transferible a partir del pedido.
+	 */
+	public MOrder createTransferOrder(Integer newDocTypeID) throws Exception{
+		// Crear el pedido idéntico
+		MOrder newOrder = new MOrder(getCtx(), 0, get_TrxName());
+		MOrder.copyValues(this, newOrder);
+		newOrder.setC_DocTypeTarget_ID(newDocTypeID);
+		newOrder.setC_DocType_ID(newDocTypeID);
+		// Intercambiar el depósito y organización origen por destino 
+		newOrder.setAD_Org_ID(getAD_Org_Transfer_ID());
+		newOrder.setAD_Org_Transfer_ID(getAD_Org_ID());
+		newOrder.setM_Warehouse_ID(getM_Warehouse_Transfer_ID());
+		newOrder.setM_Warehouse_Transfer_ID(getM_Warehouse_ID());
+		newOrder.setRef_Order_ID(getID());
+		newOrder.setDocStatus(DOCSTATUS_Drafted);
+		newOrder.setDocAction(DOCACTION_Complete);
+		newOrder.setProcessed(false);
+		// Guardar
+		if(!newOrder.save()){
+			throw new Exception(CLogger.retrieveErrorAsString());
+		}
+		// Copiar las líneas
+		MOrderLine newOrderLine;
+		BigDecimal pendingQty;
+		for (MOrderLine orderLine : getLines(true)) {
+			newOrderLine = new MOrderLine(getCtx(), 0, get_TrxName());
+			MOrderLine.copyValues(orderLine, newOrderLine);
+			pendingQty = orderLine.getQtyOrdered().subtract(orderLine.getQtyDelivered());
+			
+			newOrderLine.setC_Order_ID(newOrder.getID());
+			newOrderLine.setQty(pendingQty);
+			newOrderLine.setQtyReserved(pendingQty);
+			newOrderLine.setQtyInvoiced(pendingQty);
+			newOrderLine.setQtyDelivered(BigDecimal.ZERO);
+			newOrderLine.setQtyTransferred(BigDecimal.ZERO);
+			newOrderLine.setPrice(orderLine.getPriceEntered());
+			newOrderLine.setRef_OrderLine_ID(orderLine.getID());
+			newOrderLine.setProcessed(false);
+			if(!newOrderLine.save()){
+				throw new Exception(CLogger.retrieveErrorAsString());
+			}
+		}
+		return newOrder;
 	}
 }    // MOrder
 
