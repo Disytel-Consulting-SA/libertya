@@ -7,7 +7,7 @@ import java.math.*;
 import org.openXpertya.util.*;
 /** Modelo Generado por C_BPartner
  *  @author Comunidad de Desarrollo Libertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
- *  @version  - 2014-08-26 17:22:53.544 */
+ *  @version  - 2014-10-23 14:22:15.184 */
 public class X_C_BPartner extends org.openXpertya.model.PO
 {
 /** Constructor estándar */
@@ -34,6 +34,7 @@ setIsSummary (false);
 setIsVendor (false);
 setMinimumPurchasedAmt (Env.ZERO);
 setName (null);
+setSearchUnallocatedPayments (false);
 setSecondaryCreditStatus (null);	// OK
 setSendEMail (false);
 setSO_CreditLimit (Env.ZERO);
@@ -1318,6 +1319,22 @@ public int getSalesVolume()
 Integer ii = (Integer)get_Value("SalesVolume");
 if (ii == null) return 0;
 return ii.intValue();
+}
+/** Set Search unallocated payments */
+public void setSearchUnallocatedPayments (boolean SearchUnallocatedPayments)
+{
+set_Value ("SearchUnallocatedPayments", new Boolean(SearchUnallocatedPayments));
+}
+/** Get Search unallocated payments */
+public boolean isSearchUnallocatedPayments() 
+{
+Object oo = get_Value("SearchUnallocatedPayments");
+if (oo != null) 
+{
+ if (oo instanceof Boolean) return ((Boolean)oo).booleanValue();
+ return "Y".equals(oo);
+}
+return false;
 }
 public static final int SECONDARYCREDITSTATUS_AD_Reference_ID = MReference.getReferenceID("Secondary credit status");
 /** OK = OK */
