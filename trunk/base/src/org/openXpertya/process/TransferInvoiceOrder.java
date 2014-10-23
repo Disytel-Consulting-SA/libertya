@@ -19,13 +19,18 @@ public class TransferInvoiceOrder extends AbstractSvrProcess {
 	@Override
 	protected String doIt() throws Exception {
 		Integer invoiceID = (Integer)getParametersValues().get("C_INVOICE_ID");
+		Integer transferredOrderID = (Integer)getParametersValues().get("C_ORDER_ID");
 		Integer orgID = (Integer)getParametersValues().get("AD_ORG_ID");
 		Integer warehouseID = (Integer)getParametersValues().get("M_WAREHOUSE_ID");
-		MInvoice invoice = new MInvoice(getCtx(), invoiceID, get_TrxName());
+		MInvoice invoice = null;
+		if(!Util.isEmpty(invoiceID, true)){
+			invoice = new MInvoice(getCtx(), invoiceID, get_TrxName());
+		}
 		MOrder transferableOrder;
 		ProcessInfo info = null;
 		// Pedido de la factura
-		Integer orderID = invoice.getC_Order_ID();
+		Integer orderID = invoice != null ? invoice.getC_Order_ID()
+				: transferredOrderID;
 		if(!Util.isEmpty(orderID, true)){
 			MOrder order = new MOrder(getCtx(), orderID, get_TrxName());
 			transferableOrder = new MOrder(getCtx(), 0, get_TrxName());
@@ -44,13 +49,25 @@ public class TransferInvoiceOrder extends AbstractSvrProcess {
 				throw new Exception(CLogger.retrieveErrorAsString());
 			}
 			Map<String, Object> parameters = new HashMap<String, Object>();
-			parameters.put("C_Invoice_ID", invoiceID);
+			if(invoice != null){
+				parameters.put("C_Invoice_ID", invoiceID);
+			}
+			else{
+				parameters.put("C_Order_ID", orderID);
+			}
 			parameters.put("CopyHeader", "Y");
 			info = MProcess.execute(getCtx(),
 					getCopyFromOrderProcessID(), X_C_Order.Table_ID, parameters,
 					get_TrxName(), transferableOrder.getID());
 			// Recargar el pedido transferible
 			transferableOrder = new MOrder(getCtx(), transferableOrder.getID(), get_TrxName());
+			transferableOrder.setAD_Org_ID(order.getAD_Org_ID());
+			transferableOrder.setM_Warehouse_ID(order.getM_Warehouse_ID());
+			transferableOrder.setAD_Org_Transfer_ID(orgID);
+			transferableOrder.setM_Warehouse_Transfer_ID(warehouseID);
+			if(!transferableOrder.save()){
+				throw new Exception(CLogger.retrieveErrorAsString());
+			}
 			// Completarlo
 			if(!DocumentEngine.processAndSave(transferableOrder, MOrder.DOCACTION_Complete, false)){
 				throw new Exception(transferableOrder.getProcessMsg());
