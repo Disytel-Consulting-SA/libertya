@@ -4082,3 +4082,6 @@ UNION ALL
   WHERE p.issotrx = 'N'::bpchar AND p.tendertype = 'K'::bpchar AND p.datetrx < p.duedate AND (v.docstatus = 'CO'::bpchar OR v.docstatus = 'CL'::bpchar);
 
 ALTER TABLE v_projectedpayments OWNER TO libertya;
+
+--20141023-1430 Incorporación de configuración que permite o no buscar pagos/cobros sin asignar en OP/RC 
+update ad_system set dummy = (SELECT addcolumnifnotexists('c_bpartner', 'searchunallocatedpayments', 'character(1) NOT NULL DEFAULT ''Y''::bpchar'));
