@@ -54,12 +54,9 @@ public abstract class ReplicationFilter {
 	}
 
 	/**
-	 * Remueve de los elementos el especificado bajo el nombre columnName
-	 * @param group grupo de elementos
-	 * @param columnName criterio de busqueda del elemento a eliminar
-	 * @return true si fue removido o false en caso contrario
+	 *	Retorna la posicion de un elemento en un changegroup a partir del columnname, o -1 si no lo encuentra 
 	 */
-	public static boolean removeElement(ChangeLogGroupReplication group, String columnName) {
+	protected static int getElementPos(ChangeLogGroupReplication group, String columnName) {
 		// Buscar la columna
 		int pos = -1;
 		for (ChangeLogElement element : group.getElements()) {
@@ -67,9 +64,40 @@ public abstract class ReplicationFilter {
 			if (columnName.equalsIgnoreCase(element.getColumnName()))
 				break;
 		}
+		return pos;
+	}
+	
+	/**
+	 * Remueve de los elementos el especificado bajo el nombre columnName
+	 * @param group grupo de elementos
+	 * @param columnName criterio de busqueda del elemento a eliminar
+	 * @return true si fue removido o false en caso contrario
+	 */
+	public static boolean removeElement(ChangeLogGroupReplication group, String columnName) {
+		// Buscar la columna
+		int pos = getElementPos(group, columnName);
 		// Si está, eliminarla 
 		if (pos>0) {
 			group.getElements().remove(pos);
+			return true;
+		}
+		// Si no está retornar false
+		return false;
+	}
+	
+	/**
+	 * Agrega un host destino a la nómina de hosts donde debe replicarse esta columna.
+	 * @param group grupo de elementos
+	 * @param columnName criterio de busqueda del elemento a eleminar
+	 * @param target host destino donde debe replicarse esta columna
+	 * @return true si fue removido o false en caso contrario
+	 */
+	public static boolean addTargetOnly(ChangeLogGroupReplication group, String columnName, Integer target) {
+		// Buscar la columna
+		int pos = getElementPos(group, columnName);
+		// Si está, incorporar el target
+		if (pos>0) {
+			group.getElements().get(pos).addTarget(target);
 			return true;
 		}
 		// Si no está retornar false

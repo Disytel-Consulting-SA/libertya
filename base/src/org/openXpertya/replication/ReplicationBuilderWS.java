@@ -81,6 +81,14 @@ public class ReplicationBuilderWS extends ReplicationBuilder {
 					m_replicationXMLData.append(" name=\"").append(element.getColumnName()).append("\"");
 					m_replicationXMLData.append(" type=\"").append(element.getAD_Reference_ID()).append("\"");
 					
+					// Filtrar el elemento solo para los hosts indicados (si no hay ningungo especificado, va para todos)
+					if (element.getTargetOnly().size() > 0) {
+						m_replicationXMLData.append(" target=\"");
+						for (Integer host : element.getTargetOnly())
+							m_replicationXMLData.append(host).append(",");
+						m_replicationXMLData.replace(m_replicationXMLData.length()-1, m_replicationXMLData.length(), "\"");
+					}
+					
 					// Si es de tipo referencia a una tabla o de tipo Entero con _ID, 
 					// coloco los atributos específicos
 					isTableReference = isTableReference(element);
