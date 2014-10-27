@@ -1,5 +1,10 @@
 package org.openXpertya.plugin.install;
 
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+
 import org.openXpertya.replication.ReplicationCache;
 import org.openXpertya.util.DisplayType;
 
@@ -12,6 +17,8 @@ public class ChangeLogElement {
 	private int AD_Reference_ID;
 	private int AD_Reference_Value_ID;
 	private boolean isKey;
+	// Exclusivo para replicación: hosts destino donde replicar un elemento (si la colección esta vacía, se interpreta que es para todos los hosts)
+	private Set<Integer> targetOnly = new HashSet<Integer>();
 	
 	/** Old value */
 	
@@ -130,9 +137,17 @@ public class ChangeLogElement {
 		AD_Changelog_ID = aDChangelogID;
 	}
 
+	public Set<Integer> getTargetOnly() {
+		return targetOnly;
+	}
 
+	public void setTargetOnly(Set<Integer> targetOnly) {
+		this.targetOnly = targetOnly;
+	}
 
-
+	public void addTarget(Integer target) {
+		this.targetOnly.add(target);
+	}
 
 
 }

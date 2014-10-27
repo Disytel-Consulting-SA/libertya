@@ -87,7 +87,7 @@ public class ReplicationFilterFactory {
 				
 		// repArray original
 		String originalRepArray = group.getRepArray();
-		
+				
 		// Listado de repArrays resultantes de aplicar cada filtro sobre el repArray original
 		ArrayList<String> filteredRepArrays = new ArrayList<String>();
 		

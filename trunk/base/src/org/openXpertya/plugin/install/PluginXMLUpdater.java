@@ -4,6 +4,8 @@ import java.io.StringReader;
 import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.Savepoint;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.Vector;
 
 import javax.xml.parsers.DocumentBuilder;
@@ -99,7 +101,6 @@ public class PluginXMLUpdater {
 		Document doc = builder.parse(new InputSource(new StringReader(xml)));
 		
 		// Guardar el documento parseado en estructura auxiliar
-		this.new XMLUpdateDocument(doc);
 		updateDocument = new XMLUpdateDocument(doc);	
 	}
 	
@@ -792,7 +793,13 @@ public class PluginXMLUpdater {
 		private String algorithm = null;
 		private String refTable = null;
 		private String refUID = null;
+		// Replicacion: Hosts destino unicamente
+		private Set<Integer> targetOnly = new HashSet<Integer>();
 		
+		public Column(String name, String type, String algorithm, String oldValue, String newValue, String refTable, String refUID, Set<Integer> targetOnly) {
+			this(name, type, algorithm, oldValue, newValue, refTable, refUID);
+			this.targetOnly = targetOnly;
+		}
 		
 		/* Constructor */
 		public Column(String name, String type, String algorithm, String oldValue, String newValue, String refTable, String refUID)
@@ -821,6 +828,8 @@ public class PluginXMLUpdater {
 		public void setRefTable(String refTable)	{			this.refTable = refTable;		}
 		public String getRefUID()					{			return refUID;					}
 		public void setRefUID(String refUID) 		{			this.refUID = refUID;			}
+		public Set<Integer> getTargetOnly() 		{			return targetOnly;				}
+		public void setTargetOnly(Set<Integer> targetOnly) {	this.targetOnly = targetOnly;	}
 	}
 
 
@@ -942,6 +951,15 @@ public class PluginXMLUpdater {
 			String newValue = null;
 			String refUID = null;
 			String refTable = elem.getAttribute("refTable");
+			Set<Integer> targetHosts = new HashSet<Integer>();
+			
+			// Replicacion: Guardar hosts destinos donde replicar este elemento, en caso que venga definido. 
+			// Si no esta definido, esta columna es para cualquier host (ejemplo: target="1,5,8")
+			if (elem.getAttribute("target")!=null && elem.getAttribute("target").length()>0) {
+				String[] hosts = elem.getAttribute("target").split(",");
+				for (String host : hosts)
+					targetHosts.add(Integer.parseInt(host));
+			}
 			
 			// Obtener old & new value
 			NodeList list = elem.getChildNodes();
@@ -964,7 +982,7 @@ public class PluginXMLUpdater {
 			}
 
 			// retornar el changeGroup completo
-			Column aColumn = new Column(elem.getAttribute("name"), elem.getAttribute("type"), elem.getAttribute("algorithm"), oldValue, newValue, refTable, refUID);
+			Column aColumn = new Column(elem.getAttribute("name"), elem.getAttribute("type"), elem.getAttribute("algorithm"), oldValue, newValue, refTable, refUID, targetHosts);
 			return aColumn;
 
 		}

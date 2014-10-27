@@ -87,10 +87,11 @@ public class MultiOrgTransactionFilter extends ReplicationFilter {
 	@Override
 	public void applyFilter(String trxName, ChangeLogGroupReplication group) throws Exception {
 		
-		// Omitir columnas a replicar según configuración 
+		// Omitir columnas a replicar según configuración  
 		if (skipColumns.get(group.getTableName().toLowerCase()) != null) {
 			for (String columnName : skipColumns.get(group.getTableName().toLowerCase())) {
-				removeElement(group, columnName);
+				// removeElement(group, columnName);  <-- Cambiado. En lugar de remover la columna, indicar destino unicamente central
+				addTargetOnly(group, columnName, CENTRAL_REPARRAY_POS);
 			}
 		}
 		

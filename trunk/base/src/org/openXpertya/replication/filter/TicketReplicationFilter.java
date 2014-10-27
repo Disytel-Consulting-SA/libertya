@@ -124,7 +124,7 @@ public class TicketReplicationFilter extends ReplicationFilter {
 	/**
 	 * Recupera la cabecera del pedido
 	 */
-	protected X_C_Order getOrder(ChangeLogGroupReplication group, String trxName) throws Exception {
+	public static X_C_Order getOrder(ChangeLogGroupReplication group, String trxName) throws Exception {
 		String query = " SELECT C_Order_ID FROM " + group.getTableName() + " WHERE retrieveUID = ?";
 		
 		// Si es un query especial, recuperarlo y redefinir

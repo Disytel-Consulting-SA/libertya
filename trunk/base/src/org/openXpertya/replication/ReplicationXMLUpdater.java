@@ -35,6 +35,9 @@ public class ReplicationXMLUpdater extends PluginXMLUpdater {
 
 	/** Sucursal origen de la cual se está replicando */
 	protected int m_AD_Org_ID = -1;
+
+	/** Sucursal origen de la cual se está replicando */
+	protected int thisHostPos = -1;
 	
 	/** Realizar una sola pasada o doble pasada sobre el changeGroup? */
 	protected boolean doublePass = false;
@@ -47,12 +50,13 @@ public class ReplicationXMLUpdater extends PluginXMLUpdater {
 
 	
 	/**
-	 * Constructor con ID de organizacion origen
+	 * Constructor con ID de organizacion origen, y posicion de este hosts
 	 */
-	public ReplicationXMLUpdater(String xml, String trxName, int AD_Org_ID) throws Exception
+	public ReplicationXMLUpdater(String xml, String trxName, int AD_Org_ID, int thisHostPos) throws Exception
 	{
 		super(xml, trxName, true);
 		m_AD_Org_ID = AD_Org_ID;
+		this.thisHostPos = thisHostPos;
 	}
 	
 
@@ -277,6 +281,14 @@ public class ReplicationXMLUpdater extends PluginXMLUpdater {
 		boolean retValue = false;
 		String quotes = (useQuotes?"'":"");
 		
+		/* Validar si esta columna debe ser incluida para este host */
+		if (column.getTargetOnly().size() > 0) {
+			// Si la definicion de hosts destinos no es vacia, y este host no aparece en la nómina, entonces setear null en la columna
+			if (!column.getTargetOnly().contains(thisHostPos)) {
+				query.append("null");
+				retValue = true;
+			}
+		}
 		/* En la tabla C_BPartner se almacena el campo AD_Language, los cuales no son para replicacion, debido a que ya existen con anterioridad */
 		if (tableName.equalsIgnoreCase("C_BPartner") && column.getName().equalsIgnoreCase("AD_Language") && (column.getRefUID() == null || column.getRefUID().length() == 0))
 		{

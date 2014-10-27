@@ -130,7 +130,7 @@ public class ReplicationTargetProcess extends AbstractReplicationProcess {
 		        		Trx.getTrx(rep_trxName).start();
 
 		            	// ...Procesar el XML recibido y actualizar el repArray
-		            	ReplicationXMLUpdater replicationXMLUpdater = new ReplicationXMLUpdater("<?xml version=\"1.0\" encoding=\"UTF-8\"?> <root> " + completeXML.toString() + " </root> ", rep_trxName, sourceOrgID);
+		            	ReplicationXMLUpdater replicationXMLUpdater = new ReplicationXMLUpdater("<?xml version=\"1.0\" encoding=\"UTF-8\"?> <root> " + completeXML.toString() + " </root> ", rep_trxName, sourceOrgID, thisOrgPos);
 		                replicationXMLUpdater.processChangeLog();
 		                if (replicationXMLUpdater.getEventLog().size() > 0)
 		                	sendAcksToSourceHost(sourceOrgID, replicationXMLUpdater.getEventLog());
