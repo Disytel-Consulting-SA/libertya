@@ -28,4 +28,8 @@ public class ResumenVentasCurrentAccountPaymentsDataSource extends
 	protected String getDSDataTable(){
 		return "v_dailysales_current_account_payments";
 	}
+	
+	protected boolean addInvoiceDateClause(){
+		return false;
+	}
 }

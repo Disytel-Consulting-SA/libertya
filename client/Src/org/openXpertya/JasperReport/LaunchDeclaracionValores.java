@@ -58,6 +58,9 @@ public class LaunchDeclaracionValores extends JasperReportLaunch {
 		valoresDTO.setJournalIDs(journalIDs);
 		valoresDTO.setUserID(userID);
 		setValoresDTO(valoresDTO);
+		valoresDTO.setDateFrom(getDateFrom());
+		valoresDTO.setDateTo(getDateTo());
+		valoresDTO.setOrgID(getOrgID());
 		// Parámetros adicionales
 		addReportParameter("TITLE", getTitle());
 		addReportParameter("DATE_FROM", getDateFrom());
@@ -189,10 +192,7 @@ public class LaunchDeclaracionValores extends JasperReportLaunch {
 		// Se agregan los datasources de los subreportes
 		addReportParameter("SUBREPORT_VALORES_DATASOURCE", valoresDS);
 		//////////////////////////////////////
-		// FIXME Cargar el total de la declaración de valores como parámetro ya
-		// que no está funcionando el valor de retorno del subreporte. Sacar
-		// esto y modificar el reporte para tomar ese valor cuando se actualice
-		// la librería de jasper, quizás venga por ahí el problema.
+		//	Totales
 		addReportParameter("TOTAL_DECLARACION_VALORES", valoresDS != null?valoresDS.getDeclaracionValoresTotalAmt():null);
 		addReportParameter("TOTAL_CUPON", cuponDS != null?cuponDS.getTotalAmt():null);
 		addReportParameter("TOTAL_VENTA", ventaDS != null?ventaDS.getTotalAmt():null);
