@@ -1,5 +1,6 @@
 package org.openXpertya.JasperReport.DataSource;
 
+import java.math.BigDecimal;
 import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.List;
@@ -10,6 +11,7 @@ import net.sf.jasperreports.engine.JRField;
 
 import org.openXpertya.model.MDocType;
 import org.openXpertya.model.MPOSPaymentMedium;
+import org.openXpertya.util.DB;
 import org.openXpertya.util.Env;
 import org.openXpertya.util.Util;
 
@@ -80,12 +82,14 @@ public abstract class ResumenVentasDataSource extends QueryDataSource {
 		List<Object> params = new ArrayList<Object>();
 		params.add(Env.getAD_Client_ID(getCtx()));
 		params.add(getOrgID());
-		params.add(getDateFrom());
-		if(getDateTo() != null){
-			params.add(getDateTo());
-		}
-		else{
+		if(addInvoiceDateClause()){
 			params.add(getDateFrom());
+			if(getDateTo() != null){
+				params.add(getDateTo());
+			}
+			else{
+				params.add(getDateFrom());
+			}
 		}
 		params.add(getDateFrom());
 		if(getDateTo() != null){
@@ -104,12 +108,15 @@ public abstract class ResumenVentasDataSource extends QueryDataSource {
 	 * @return la cláusula where de las fechas
 	 */
 	protected String getDateWhereClause(){
-		StringBuffer dateClause = new StringBuffer(" AND date_trunc('day', invoicedateacct) >= date_trunc('day', ?::date) ");
-		if(getDateTo() != null){
-			dateClause.append("  AND date_trunc('day', invoicedateacct) <= date_trunc('day', ?::date) ");
-		}
-		else{
-			dateClause.append("  AND date_trunc('day', invoicedateacct) <= date_trunc('day', ?::date) ");
+		StringBuffer dateClause = new StringBuffer();
+		if(addInvoiceDateClause()){
+			dateClause = new StringBuffer(" AND date_trunc('day', invoicedateacct) >= date_trunc('day', ?::date) ");
+			if(getDateTo() != null){
+				dateClause.append("  AND date_trunc('day', invoicedateacct) <= date_trunc('day', ?::date) ");
+			}
+			else{
+				dateClause.append("  AND date_trunc('day', invoicedateacct) <= date_trunc('day', ?::date) ");
+			}
 		}
 		dateClause.append(" AND date_trunc('day', datetrx) >= date_trunc('day', ?::date) ");
 		if(getDateTo() != null){
@@ -203,6 +210,19 @@ public abstract class ResumenVentasDataSource extends QueryDataSource {
 	}
 	
 	/**
+	 * @return suma del resultado de la query
+	 * @throws Exception
+	 */
+	public BigDecimal getTotalAmt() throws Exception{
+		StringBuffer sql = new StringBuffer("select sum(amount) as amount FROM (");
+		sql.append(getQuery());
+		sql.append(") as ce ");
+		BigDecimal amt = (BigDecimal) DB.getSQLObject(getTrxName(),
+				sql.toString(), getParameters());
+		return amt == null?BigDecimal.ZERO:amt;
+	}
+	
+	/**
 	 * @return cláusula where con condiciones propias de las subclases
 	 */
 	protected abstract String getDSWhereClause();
@@ -288,4 +308,7 @@ public abstract class ResumenVentasDataSource extends QueryDataSource {
 		this.onlyDN = onlyDN;
 	}
 
+	protected boolean addInvoiceDateClause(){
+		return true;
+	}
 }

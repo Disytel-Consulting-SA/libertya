@@ -126,6 +126,19 @@ public class ResumenVentasDocTypeBaseKeyDataSource extends
 		return amtsByDocTypeBaseKey;
 	}
 
+	/**
+	 * @return suma del resultado de la query
+	 * @throws Exception
+	 */
+	public BigDecimal getTotalAmt() throws Exception{
+		BigDecimal totalAmt = BigDecimal.ZERO;
+		loadData();
+		for (String key : getAmtsByDocTypeBaseKey().keySet()) {
+			totalAmt = totalAmt.add(getAmtsByDocTypeBaseKey().get(key));
+		}
+		return totalAmt;
+	}
+	
 	protected void setAmtsByDocTypeBaseKey(Map<String, BigDecimal> amtsByDocTypeBaseKey) {
 		this.amtsByDocTypeBaseKey = amtsByDocTypeBaseKey;
 	}
