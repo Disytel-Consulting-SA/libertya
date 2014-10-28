@@ -35,13 +35,6 @@ import java.util.logging.Level;
 
 import javax.swing.event.EventListenerList;
 
-import org.openXpertya.model.DataStatusEvent;
-import org.openXpertya.util.DisplayType;
-import org.openXpertya.model.MField;
-import org.openXpertya.model.StateChangeListener;
-import org.openXpertya.model.StateChangeEvent;
-import org.openXpertya.model.MWindow;
-import org.openXpertya.model.MTab;
 import org.openXpertya.plugin.CalloutPluginEngine;
 import org.openXpertya.plugin.MPluginStatus;
 import org.openXpertya.plugin.MPluginStatusCallout;
@@ -49,6 +42,7 @@ import org.openXpertya.plugin.common.PluginCalloutUtils;
 import org.openXpertya.util.CLogMgt;
 import org.openXpertya.util.CLogger;
 import org.openXpertya.util.DB;
+import org.openXpertya.util.DisplayType;
 import org.openXpertya.util.Env;
 import org.openXpertya.util.Evaluatee;
 import org.openXpertya.util.Evaluator;
@@ -2588,15 +2582,15 @@ public class MTab implements DataStatusListener,Evaluatee,Serializable {
         int newRow = verifyRow( targetRow );
 
         // Check, if we have old uncommitted data
-
-        if (m_mTable.dataSave( newRow,false )) 
-        
-        	// Se mueve a la nueva posición solo si no hay errores al guardar.
-        	return setCurrentRow( newRow,true );
-
-        else
-        	// Si hay errores no se mueve y retorna la fila actual.
-        	return m_currentRow;
+        if(!isReadOnly()){
+        	if(!m_mTable.dataSave( newRow,false )){
+        		return m_currentRow;
+        	}
+        }
+        else{
+        	dataIgnore();
+        }
+        return setCurrentRow( newRow,true );
     }    // navigate
 
     /**
