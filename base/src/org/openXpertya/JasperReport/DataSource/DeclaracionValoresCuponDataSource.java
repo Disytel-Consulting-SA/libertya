@@ -15,6 +15,12 @@ public class DeclaracionValoresCuponDataSource extends
 			String orderBy, String trxName) {
 		super(ctx, valoresDTO, select, groupBy, orderBy, trxName);
 	}
+	
+	public DeclaracionValoresCuponDataSource(Properties ctx,
+			DeclaracionValoresDTO valoresDTO, String select, String groupBy,
+			String orderBy, String additionalWhereClause, String trxName) {
+		super(ctx, valoresDTO, select, groupBy, orderBy, additionalWhereClause, trxName);
+	}
 
 	@Override
 	protected String getQuery() {

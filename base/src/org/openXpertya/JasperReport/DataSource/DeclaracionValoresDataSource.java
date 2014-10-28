@@ -26,6 +26,9 @@ public abstract class DeclaracionValoresDataSource extends QueryDataSource {
 	/** String con los campos del ORDER BY de la query */
 	private String orderBy;
 	
+	/** Claúsula where adicional que deseen agregar las subclases */
+	private String additionalWhereClause;
+	
 	public DeclaracionValoresDataSource(String trxName) {
 		super(trxName);
 	}
@@ -40,6 +43,14 @@ public abstract class DeclaracionValoresDataSource extends QueryDataSource {
 				: select);
 		setGroupBy(groupBy);
 		setOrderBy(orderBy);
+		setAdditionalWhereClause(null);
+	}
+	
+	public DeclaracionValoresDataSource(Properties ctx,
+			DeclaracionValoresDTO valoresDTO, String select, String groupBy,
+			String orderBy, String additionalWhereClause, String trxName) {
+		this(ctx, valoresDTO, select, groupBy, orderBy, trxName);
+		setAdditionalWhereClause(additionalWhereClause);
 	}
 	
 	protected String getStdSelect(boolean withWhereClause){
@@ -82,6 +93,9 @@ public abstract class DeclaracionValoresDataSource extends QueryDataSource {
 		}
 		if(withAllocationActive){
 			stdWhere.append(" AND allocation_active = 'Y' ");
+		}
+		if(!Util.isEmpty(getAdditionalWhereClause(), true)){
+			stdWhere.append(getAdditionalWhereClause());
 		}
 		return Util.removeInitialAND(stdWhere.toString());
 	}
@@ -165,5 +179,13 @@ public abstract class DeclaracionValoresDataSource extends QueryDataSource {
 	
 	public String getOrderBy(){
 		return orderBy;
+	}
+
+	protected String getAdditionalWhereClause() {
+		return additionalWhereClause;
+	}
+
+	protected void setAdditionalWhereClause(String additionalWhereClause) {
+		this.additionalWhereClause = additionalWhereClause;
 	}
 }
