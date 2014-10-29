@@ -8,6 +8,7 @@ import org.openXpertya.JasperReport.DataSource.DeclaracionValoresCuponDataSource
 import org.openXpertya.JasperReport.DataSource.DeclaracionValoresTransferDataSource;
 import org.openXpertya.JasperReport.DataSource.ResumenVentasCurrentAccountPaymentsDataSource;
 import org.openXpertya.JasperReport.DataSource.ResumenVentasDocTypeBaseKeyDataSource;
+import org.openXpertya.model.MDocType;
 
 
 public class LaunchDeclaracionValoresXOrg extends LaunchDeclaracionValores {
@@ -42,7 +43,10 @@ public class LaunchDeclaracionValoresXOrg extends LaunchDeclaracionValores {
 		ResumenVentasCurrentAccountPaymentsDataSource capDS = getCurrentAccountPaymentsDS();
 		// Agregar subreportes
 		addReportParameter("TOTAL_CUPON", cuponDS != null?cuponDS.getTotalAmt():null);
-		addReportParameter("TOTAL_VENTA", ventaDS != null?ventaDS.getTotalAmt():null);
+		addReportParameter(
+				"TOTAL_VENTA",
+				ventaDS != null ? ventaDS
+						.getTotalAmt(MDocType.DOCTYPE_CustomerInvoice) : null);
 		addReportParameter("TOTAL_EFECTIVO", cashDS != null?cashDS.getTotalAmt():null);
 		addReportParameter("TOTAL_CHEQUE", checkDS != null?checkDS.getTotalAmt():null);
 		addReportParameter("TOTAL_TRANSFER", transferDS != null?transferDS.getTotalAmt():null);

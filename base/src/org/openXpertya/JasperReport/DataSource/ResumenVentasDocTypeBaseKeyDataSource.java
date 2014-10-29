@@ -17,6 +17,7 @@ import org.openXpertya.model.MDocType;
 import org.openXpertya.util.DB;
 import org.openXpertya.util.Env;
 import org.openXpertya.util.Msg;
+import org.openXpertya.util.Util;
 
 public class ResumenVentasDocTypeBaseKeyDataSource extends
 		ResumenVentasDocTypeDataSource {
@@ -130,11 +131,16 @@ public class ResumenVentasDocTypeBaseKeyDataSource extends
 	 * @return suma del resultado de la query
 	 * @throws Exception
 	 */
-	public BigDecimal getTotalAmt() throws Exception{
+	public BigDecimal getTotalAmt(String docBaseKey) throws Exception{
 		BigDecimal totalAmt = BigDecimal.ZERO;
 		loadData();
 		for (String key : getAmtsByDocTypeBaseKey().keySet()) {
-			totalAmt = totalAmt.add(getAmtsByDocTypeBaseKey().get(key));
+			if(Util.isEmpty(docBaseKey, true)){
+				totalAmt = totalAmt.add(getAmtsByDocTypeBaseKey().get(key));
+			}
+			else if(docBaseKey.equalsIgnoreCase(key)) {
+				totalAmt = totalAmt.add(getAmtsByDocTypeBaseKey().get(key));
+			}
 		}
 		return totalAmt;
 	}
