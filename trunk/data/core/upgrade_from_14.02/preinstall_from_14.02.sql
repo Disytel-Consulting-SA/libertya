@@ -4085,3 +4085,38 @@ ALTER TABLE v_projectedpayments OWNER TO libertya;
 
 --20141023-1430 Incorporación de configuración que permite o no buscar pagos/cobros sin asignar en OP/RC 
 update ad_system set dummy = (SELECT addcolumnifnotexists('c_bpartner', 'searchunallocatedpayments', 'character(1) NOT NULL DEFAULT ''Y''::bpchar'));
+
+--20141028-2345 Incorporación de columna m_entidadfinanciera_id
+DROP VIEW c_pos_declaracionvalores_payments;
+
+CREATE OR REPLACE VIEW c_pos_declaracionvalores_payments AS 
+ SELECT p.ad_client_id, p.ad_org_id, p.c_posjournal_id, p.ad_user_id, p.c_currency_id, p.datetrx, p.docstatus, NULL::text AS category, p.tendertype, (p.documentno::text || ' '::text) || COALESCE(p.description, ''::character varying)::text AS description, p.c_charge_id, p.chargename, p.c_payment_id AS doc_id, 
+        CASE p.isreceipt
+            WHEN 'Y'::bpchar THEN p.total
+            ELSE 0::numeric
+        END::numeric(22,2) AS ingreso, 
+        CASE p.isreceipt
+            WHEN 'N'::bpchar THEN abs(p.total)
+            ELSE 0::numeric
+        END::numeric(22,2) AS egreso, p.c_invoice_id, p.invoice_documentno, p.invoice_grandtotal, p.entidadfinanciera_value, p.entidadfinanciera_name, p.bp_entidadfinanciera_value, p.bp_entidadfinanciera_name, p.cupon, p.creditcard, NULL::unknown AS generated_invoice_documentno, p.allocation_active, p.c_pos_id, p.posname, p.m_entidadfinanciera_id
+   FROM ( SELECT p.ad_client_id, p.ad_org_id, p.c_payment_id, p.c_posjournal_id, pj.ad_user_id, p.c_currency_id, p.datetrx::date AS datetrx, p.docstatus, p.documentno, p.description, p.isreceipt, p.tendertype, ch.c_charge_id, ch.name AS chargename, sum(pjp.amount + 
+                CASE
+                    WHEN p.tendertype = 'C'::bpchar THEN pjp.changeamt
+                    ELSE 0::numeric
+                END)::numeric(22,2) AS total, pjp.invoice_documentno, (pjp.invoice_grandtotal + 
+                CASE
+                    WHEN p.tendertype = 'C'::bpchar THEN pjp.changeamt
+                    ELSE 0::numeric
+                END)::numeric(20,2) AS invoice_grandtotal, pjp.entidadfinanciera_value, pjp.entidadfinanciera_name, pjp.bp_entidadfinanciera_value, pjp.bp_entidadfinanciera_name, pjp.cupon, pjp.creditcard, pjp.isactive AS allocation_active, pjp.c_invoice_id, pos.c_pos_id, pos.name AS posname, pjp.m_entidadfinanciera_id
+           FROM c_payment p
+      JOIN c_posjournal_c_payment_v pjp ON pjp.c_payment_id = p.c_payment_id
+   JOIN c_posjournal pj ON pj.c_posjournal_id = p.c_posjournal_id
+   JOIN c_pos pos ON pos.c_pos_id = pj.c_pos_id
+   LEFT JOIN c_charge ch ON ch.c_charge_id = p.c_charge_id
+   LEFT JOIN c_invoice i ON i.c_invoice_id = pjp.c_invoice_id
+  WHERE i.c_invoice_id IS NULL OR NOT (EXISTS ( SELECT cl.c_cashline_id
+   FROM c_cashline cl
+  WHERE cl.c_payment_id = p.c_payment_id AND i.isvoidable = 'Y'::bpchar))
+  GROUP BY p.ad_client_id, p.ad_org_id, p.c_payment_id, p.c_posjournal_id, pj.ad_user_id, p.c_currency_id, p.datetrx::date, p.docstatus, p.documentno, p.description, p.isreceipt, p.tendertype, ch.c_charge_id, ch.name, pjp.invoice_documentno, pjp.invoice_grandtotal, pjp.changeamt, pjp.entidadfinanciera_value, pjp.entidadfinanciera_name, pjp.bp_entidadfinanciera_value, pjp.bp_entidadfinanciera_name, pjp.cupon, pjp.creditcard, pjp.isactive, pjp.c_invoice_id, pos.c_pos_id, pos.name, pjp.m_entidadfinanciera_id) p;
+
+ALTER TABLE c_pos_declaracionvalores_payments OWNER TO libertya;
