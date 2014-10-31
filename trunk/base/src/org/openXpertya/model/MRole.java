@@ -1610,7 +1610,7 @@ public final class MRole extends X_AD_Role
 	 *	@return				updated SQL statement
 	 */
 	public String addAccessSQL (String SQL, String TableNameIn, 
-		boolean fullyQualified, boolean rw)
+		boolean fullyQualified, boolean rw, boolean addWhereClause)
 	{
 		log.fine("En addAccessSQL de MRole");
 		StringBuffer retSQL = new StringBuffer();
@@ -1692,7 +1692,7 @@ public final class MRole extends X_AD_Role
 		//Fin añadido
 		
 		//  Do we have to add WHERE or AND
-		if (asp.getMainSql().indexOf(" WHERE ") == -1)
+		if (addWhereClause && asp.getMainSql().indexOf(" WHERE ") == -1)
 			retSQL.append(" WHERE ");
 		else
 			retSQL.append(" AND ");
@@ -1806,6 +1806,12 @@ public final class MRole extends X_AD_Role
 		log.finest(retSQL.toString());
 		return retSQL.toString();
 	}	//	addAccessSQL
+	
+	public String addAccessSQL (String SQL, String TableNameIn, 
+			boolean fullyQualified, boolean rw)
+		{
+			return addAccessSQL(SQL, TableNameIn, fullyQualified, rw, true);
+		}	//	addAccessSQL
 
 	/**
 	 * 	Get Dependent Record Where clause
