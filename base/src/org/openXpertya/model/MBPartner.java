@@ -1205,6 +1205,10 @@ public class MBPartner extends X_C_BPartner {
 		// Validaciones para la localización Argentina.
 		if (CalloutInvoiceExt.ComprobantesFiscalesActivos()) {
 			MCategoriaIva mCategoriaIva = new MCategoriaIva(getCtx(), getC_Categoria_Iva_ID(), get_TrxName());
+			
+			// Se quitan espacios, puntos y guiones (no tiene sentido almacenarlos
+			if (getTaxID()!=null)
+				setTaxID(getTaxID().trim().replace("-", "").replace(".", ""));
 			String cuit = getTaxID();
 			
 			// Validación del existencia de CUIT para categorías que requieren CUIT.
