@@ -1272,7 +1272,7 @@ public final class APanel extends CPanel implements DataStatusListener,ChangeLis
 
                 // has anything changed?
 
-                if( m_curTab.needSave( true,false )) {       // do we have real change
+                if( !m_curTab.isReadOnly() && m_curTab.needSave( true,false )) {       // do we have real change
                     if( m_curTab.needSave( true,true )) {    // explicitly ask when changing tabs
                         if( ADialog.ask( m_curWindowNo,this,"SaveChanges?",m_curTab.getCommitWarning())) {    // yes we want to save
                             if( !m_curTab.dataSave( true )) {    // there is a problem, so we go back
