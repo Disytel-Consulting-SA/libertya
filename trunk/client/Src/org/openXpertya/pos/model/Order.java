@@ -53,6 +53,12 @@ public class Order  {
 	
 	/** Medio de cobro a crédito */
 	private Integer creditPOSPaymentMediumID = null;
+	
+	/** Determina si se debe dejar exceder el monto agregado con lo pendiente para efectivo */
+	private boolean allowSurpassCashAmount = true;
+	
+	/** Determina si se debe dejar exceder el monto agregado con lo pendiente para cheques */
+	private boolean allowSurpassCheckAmount = true;
 		
 	private Order() {
 		super();
@@ -767,9 +773,13 @@ public class Order  {
 		// FIXME se debería pasar la comparación del tipo de pago al modelo
 		BigDecimal openAmt = amt == null
 				|| (amt.compareTo(orderOpenAmt) > 0
-						&& !MPOSPaymentMedium.TENDERTYPE_Cash
-								.equals(paymentMediumInfo.getTenderType()) && !MPOSPaymentMedium.TENDERTYPE_Check
-							.equals(paymentMediumInfo.getTenderType())) ? orderOpenAmt
+						&& (!MPOSPaymentMedium.TENDERTYPE_Cash
+								.equals(paymentMediumInfo.getTenderType()) || (MPOSPaymentMedium.TENDERTYPE_Cash
+										.equals(paymentMediumInfo.getTenderType()) && isAllowSurpassCashAmount())) 
+						&& (!MPOSPaymentMedium.TENDERTYPE_Check
+								.equals(paymentMediumInfo.getTenderType()) || (MPOSPaymentMedium.TENDERTYPE_Check
+										.equals(paymentMediumInfo.getTenderType()) && isAllowSurpassCheckAmount()))
+							) ? orderOpenAmt
 				: amt;
 		
 		if (paymentMediumInfo != null) {
@@ -1122,5 +1132,21 @@ public class Order  {
 
 	public void setCreditPOSPaymentMediumID(Integer creditPOSPaymentMediumID) {
 		this.creditPOSPaymentMediumID = creditPOSPaymentMediumID;
+	}
+
+	public boolean isAllowSurpassCashAmount() {
+		return allowSurpassCashAmount;
+	}
+
+	public void setAllowSurpassCashAmount(boolean allowSurpassCashAmount) {
+		this.allowSurpassCashAmount = allowSurpassCashAmount;
+	}
+
+	public boolean isAllowSurpassCheckAmount() {
+		return allowSurpassCheckAmount;
+	}
+
+	public void setAllowSurpassCheckAmount(boolean allowSurpassCheckAmount) {
+		this.allowSurpassCheckAmount = allowSurpassCheckAmount;
 	}
 }
