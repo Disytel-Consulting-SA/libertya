@@ -90,6 +90,9 @@ public class RegisteredDocumentsDataSource implements OXPJasperDataSource {
 		// Estado de documentos
 		whereClause.append(" AND ").append(tableAlias)
 				.append("docstatus NOT IN ('IP','DR') ");
+		// Filtrar anulables
+		whereClause.append(" AND ").append(tableAlias)
+		.append("isvoidable = 'N' ");
 		// Agregar las condiciones dependiendo la opción de filtrado
 		if(!getFilterOption().equals("A")){
 			if(getFilterOption().equals("Y") || getFilterOption().equals("M")){
