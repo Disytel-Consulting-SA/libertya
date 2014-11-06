@@ -281,16 +281,13 @@ public class ReplicationXMLUpdater extends PluginXMLUpdater {
 		boolean retValue = false;
 		String quotes = (useQuotes?"'":"");
 		
-		/* Validar si esta columna debe ser incluida para este host */
-		if (column.getTargetOnly().size() > 0) {
-			// Si la definicion de hosts destinos no es vacia, y este host no aparece en la nómina, entonces setear null en la columna
-			if (!column.getTargetOnly().contains(thisHostPos)) {
-				query.append("null");
-				retValue = true;
-			}
+		/* Validar si esta columna debe ser incluida para este host. Si la definicion de hosts destinos no es vacia, y este host no aparece en la nómina, entonces setear null en la columna */
+		if (column.getTargetOnly().size() > 0 && !column.getTargetOnly().contains(thisHostPos)) {
+			query.append("null");
+			retValue = true;
 		}
 		/* En la tabla C_BPartner se almacena el campo AD_Language, los cuales no son para replicacion, debido a que ya existen con anterioridad */
-		if (tableName.equalsIgnoreCase("C_BPartner") && column.getName().equalsIgnoreCase("AD_Language") && (column.getRefUID() == null || column.getRefUID().length() == 0))
+		else if (tableName.equalsIgnoreCase("C_BPartner") && column.getName().equalsIgnoreCase("AD_Language") && (column.getRefUID() == null || column.getRefUID().length() == 0))
 		{
 			query.append( "null".equalsIgnoreCase(column.getNewValue()) ? "null" : quotes + column.getNewValue() + quotes);
 			retValue = true;
