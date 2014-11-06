@@ -4120,3 +4120,29 @@ CREATE OR REPLACE VIEW c_pos_declaracionvalores_payments AS
   GROUP BY p.ad_client_id, p.ad_org_id, p.c_payment_id, p.c_posjournal_id, pj.ad_user_id, p.c_currency_id, p.datetrx::date, p.docstatus, p.documentno, p.description, p.isreceipt, p.tendertype, ch.c_charge_id, ch.name, pjp.invoice_documentno, pjp.invoice_grandtotal, pjp.changeamt, pjp.entidadfinanciera_value, pjp.entidadfinanciera_name, pjp.bp_entidadfinanciera_value, pjp.bp_entidadfinanciera_name, pjp.cupon, pjp.creditcard, pjp.isactive, pjp.c_invoice_id, pos.c_pos_id, pos.name, pjp.m_entidadfinanciera_id) p;
 
 ALTER TABLE c_pos_declaracionvalores_payments OWNER TO libertya;
+
+--20141106-1330 Incorporación de columna isvoidable a la vista c_invoice_bydoctype_v para que no se visualicen en el informe de ventas los documentos anulables como por ejemplo los de retiro de efectivo por tarjeta 
+DROP VIEW c_invoice_bydoctype_v;
+
+CREATE OR REPLACE VIEW c_invoice_bydoctype_v AS 
+ SELECT i.c_invoice_id, i.ad_client_id, i.ad_org_id, i.isactive, i.created, i.createdby, i.updated, i.updatedby, i.issotrx, i.documentno, i.docstatus, i.docaction, i.processing, i.processed, i.c_doctype_id, i.c_doctypetarget_id, i.c_order_id, i.description, i.isapproved, i.istransferred, i.salesrep_id, i.dateinvoiced, i.dateprinted, i.dateacct, i.c_bpartner_id, i.c_bpartner_location_id, i.ad_user_id, i.poreference, i.dateordered, i.c_currency_id, i.c_conversiontype_id, i.paymentrule, i.c_paymentterm_id, i.c_charge_id, i.m_pricelist_id, i.c_campaign_id, i.c_project_id, i.c_activity_id, i.isprinted, i.isdiscountprinted, i.ispaid, i.isindispute, i.ispayschedulevalid, i.chargeamt, (i.chargeamt * d.signo_issotrx::numeric(9,2))::numeric(20,2) AS chargeamt_withsign, (i.chargeamt * 
+        CASE
+            WHEN "substring"(d.docbasetype::text, 3, 3) = 'I'::text THEN 1::numeric
+            ELSE - 1::numeric
+        END)::numeric(20,2) AS chargeamt_withmultiplier, i.totallines, (i.totallines * d.signo_issotrx::numeric(9,2))::numeric(20,2) AS totallines_withsign, (i.totallines * 
+        CASE
+            WHEN "substring"(d.docbasetype::text, 3, 3) = 'I'::text THEN 1::numeric
+            ELSE - 1::numeric
+        END)::numeric(20,2) AS totallines_withmultiplier, i.grandtotal, (i.grandtotal * d.signo_issotrx::numeric(9,2))::numeric(20,2) AS grandtotal_withsign, (i.grandtotal * 
+        CASE
+            WHEN "substring"(d.docbasetype::text, 3, 3) = 'I'::text THEN 1::numeric
+            ELSE - 1::numeric
+        END)::numeric(20,2) AS grandtotal_withmultiplier, d.signo_issotrx, 
+        CASE
+            WHEN "substring"(d.docbasetype::text, 3, 3) = 'I'::text THEN 1::numeric
+            ELSE - 1::numeric
+        END AS multiplier, d.docbasetype, d.doctypekey, d.name AS doctypename, i.nombrecli, i.isvoidable
+   FROM c_invoice i
+   JOIN c_doctype d ON i.c_doctypetarget_id = d.c_doctype_id;
+
+ALTER TABLE c_invoice_bydoctype_v OWNER TO libertya;
