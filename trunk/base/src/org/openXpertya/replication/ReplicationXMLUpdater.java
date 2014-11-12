@@ -388,12 +388,14 @@ public class ReplicationXMLUpdater extends PluginXMLUpdater {
 		return false;
 	}
 	
-	/** Redefinicion, no elevar excepcion si el registro en cuestion ya existía */
-	protected void handleRecordExistsOnInsert(ChangeGroup changeGroup) throws Exception	{
+	/** Redefinicion, no elevar excepcion si el registro en cuestion ya existía.  Generar sentencia de actualizacion en su lugar */
+	protected StringBuffer handleRecordExistsOnInsert(ChangeGroup changeGroup) throws Exception	{
+		return processInsertModify(changeGroup);
 	}
 	
 	/** Redefinicion, no elevar excepcion si el registro en cuestion no existía */
-	protected void handleRecordNotExistsOnDelete(ChangeGroup changeGroup) throws Exception	{
+	protected StringBuffer handleRecordNotExistsOnDelete(ChangeGroup changeGroup) throws Exception	{
+		return null;
 	}
 	
 	/**

@@ -229,10 +229,10 @@ public class PluginXMLUpdater {
 		/* Creación del sql para el insert */
 		StringBuffer sql = new StringBuffer("");
 
-		/* Si el registro ya existe, no insertarlo nuevamente */
+		/* Si el registro ya existe, no insertarlo nuevamente (subclases implemenarán segun sea necesario) */
 		if ( recordExists(changeGroup) ) {
-			handleRecordExistsOnInsert(changeGroup);
-			return sql;
+			StringBuffer result = handleRecordExistsOnInsert(changeGroup);
+			return (result != null ? result : sql);
 		}
 		
 		/* Obtener la columna clave de la tabla */
@@ -267,10 +267,10 @@ public class PluginXMLUpdater {
 		/* Creación del sql para el update */
 		StringBuffer sql = new StringBuffer("");
 		
-		/* Si el regitro no existe, presentar el error correspondiente  */
+		/* Si el regitro no existe, presentar el error correspondiente (subclases implemenarán segun sea necesario) */
 		if ( !recordExists(changeGroup) ) {
-			handleRecordNotExistsOnModify(changeGroup);
-			return sql;
+			StringBuffer result = handleRecordNotExistsOnModify(changeGroup);
+			return (result != null ? result : sql);
 		}
 		
 		/* Obtener la columna clave de la tabla */
@@ -305,10 +305,10 @@ public class PluginXMLUpdater {
 		/* Creación del sql para el delete */
 		StringBuffer sql = new StringBuffer("");		
 		
-		/* Si el registro no existe, no intentar eliminarlo */
+		/* Si el registro no existe, no intentar eliminarlo (subclases implemenarán segun sea necesario) */
 		if ( !recordExists(changeGroup) ) {
-			handleRecordNotExistsOnDelete(changeGroup);
-			return sql;
+			StringBuffer result = handleRecordNotExistsOnDelete(changeGroup);
+			return (result != null ? result : sql);
 		}
 
 		/* Definir sentencia y devolver la misma */
@@ -325,7 +325,7 @@ public class PluginXMLUpdater {
 	 * 	En caso de existir, ejecutará una sentencia de actualización.  
 	 * 	En caso de no existir, ejecutará una sentencia de inserción.
 	 */
-	private StringBuffer processInsertModify(ChangeGroup changeGroup)  throws Exception
+	protected StringBuffer processInsertModify(ChangeGroup changeGroup)  throws Exception
 	{
 		if (recordExists(changeGroup))
 			return processModify(changeGroup);
@@ -333,18 +333,21 @@ public class PluginXMLUpdater {
 	}
 	
 	/** Eleva una excepcion a fin de notificar que el intento de inserción no fue llevado a cabo dado que el registro en cuestion ya existía */
-	protected void handleRecordExistsOnInsert(ChangeGroup changeGroup) throws Exception	{
+	protected StringBuffer handleRecordExistsOnInsert(ChangeGroup changeGroup) throws Exception	{
 		raiseException(WARNING_UID_ALREADY_EXISTS + " Referencia: (" + getUniversalReference(changeGroup) + ") en tabla: " + changeGroup.getTableName() );
+		return null;
 	}
 
 	/** Eleva una excepcion a fin de notificar que el intento de modificación no fue llevado a cabo dado que el registro en cuestion no existía */
-	protected void handleRecordNotExistsOnModify(ChangeGroup changeGroup) throws Exception	{
+	protected StringBuffer handleRecordNotExistsOnModify(ChangeGroup changeGroup) throws Exception	{
 		raiseException(WARNING_UID_NOT_EXISTS_UPDATE + " Referencia: " + getUniversalReference(changeGroup) + ". Tabla:" + changeGroup.getTableName());
+		return null;
 	}
 	
 	/** Eleva una excepcion a fin de notificar que el intento de eliminaciòn no fue llevado a cabo dado que el registro en cuestion no existía */
-	protected void handleRecordNotExistsOnDelete(ChangeGroup changeGroup) throws Exception	{
+	protected StringBuffer handleRecordNotExistsOnDelete(ChangeGroup changeGroup) throws Exception	{
 		raiseException(WARNING_UID_NOT_EXISTS_DELETE + " Referencia: (" + getUniversalReference(changeGroup) + ") .Tabla: " + changeGroup.getTableName() );
+		return null;
 	}
 	
 	/**
