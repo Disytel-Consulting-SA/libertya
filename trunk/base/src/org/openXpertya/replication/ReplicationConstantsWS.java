@@ -21,6 +21,8 @@ public class ReplicationConstantsWS extends ReplicationConstants {
 	public static int TIME_OUT_EXTRA_FACTOR = 100;
 	/** Limite de aceptacion para envio de alerta por cantidad excesiva de registros pendientes a replicar */
 	public static int WARNING_LIMIT = 20000;
+	/** Omite la aplicación de filtros? */
+	public static boolean SKIP_FILTERS = false;
 	/** Nombre del atributo en AD_Preference que almacena el mail destinatario por problemas de replicacion */
 	public static String REPLICATION_ADMIN = "ReplicationAdmin";
 	
