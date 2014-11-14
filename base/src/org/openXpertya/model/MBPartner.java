@@ -412,6 +412,7 @@ public class MBPartner extends X_C_BPartner {
         setIsCustomer(impBP.isCustomer());
         setIsVendor(impBP.isVendor());
         setIsEmployee(impBP.isEmployee());
+        setIsMultiCUIT(impBP.isMultiCUIT());
         
         // Estado de crédito de cliente
         if (impBP.isCustomer()) {
@@ -1231,13 +1232,14 @@ public class MBPartner extends X_C_BPartner {
 					return false;
 				}
 				// CUIT Repetido siempre que la configuración de la compañía
-				String whereClauseCUIT = newRecord ? "taxid = ? AND ad_client_id = "
+				String whereClauseCUIT = newRecord ? "trim(translate(taxid,'-','')) = trim(translate(?,'-','')) AND ad_client_id = "
 						+ getAD_Client_ID()
-						: "taxid = ? AND ad_client_id = " + getAD_Client_ID()
+						: "trim(translate(taxid,'-','')) = trim(translate(?,'-','')) AND ad_client_id = " + getAD_Client_ID()
 								+ " AND c_bpartner_id <> " + getID();
 				MClientInfo clientInfo = MClientInfo.get(getCtx(), getAD_Client_ID());
 				if (!Util.isEmpty(cuit, true)
 						&& clientInfo.isUniqueCuit()
+						&& !isMultiCUIT()
 						&& PO.existRecordFor(getCtx(), X_C_BPartner.Table_Name,
 								whereClauseCUIT, new Object[] { getTaxID() },
 								get_TrxName())) {

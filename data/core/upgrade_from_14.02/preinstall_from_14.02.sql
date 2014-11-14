@@ -4390,3 +4390,7 @@ $BODY$
   LANGUAGE 'plpgsql' VOLATILE
   COST 100;
 ALTER FUNCTION replication_event() OWNER TO libertya;
+
+--20141114-1045 Incorporación de flag para determinar si la EC puede poseer un cuit repetido
+update ad_system set dummy = (SELECT addcolumnifnotexists('c_bpartner', 'ismulticuit', 'character(1) NOT NULL DEFAULT ''N''::bpchar'));
+update ad_system set dummy = (SELECT addcolumnifnotexists('i_bpartner', 'ismulticuit', 'character(1) NOT NULL DEFAULT ''N''::bpchar'));
