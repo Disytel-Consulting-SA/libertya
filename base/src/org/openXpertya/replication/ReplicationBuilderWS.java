@@ -196,7 +196,7 @@ public class ReplicationBuilderWS extends ReplicationBuilder {
 				for (int arrayPos = 0; arrayPos < group.getRepArray().length(); arrayPos++)
 					// En las posiciones que corresponde, se envia a replicacion 
 					// En caso de estar reenviando todos los registros, se envia a todo el repArray (menos donde se indique sin accion)
-					if (ReplicationConstantsWS.replicateStates.contains(group.getRepArray().charAt(arrayPos)) && (ReplicationTableManager.filterHost==null || ReplicationTableManager.filterHost == arrayPos+1))
+					if (ReplicationConstantsWS.replicateStates.contains(group.getRepArray().charAt(arrayPos)) && (ReplicationTableManager.filterHost==null || ReplicationTableManager.filterHost.contains(arrayPos+1)))
 						alreadyAdded = addActionsForHost(arrayPos+1, group, alreadyAdded);
 			}
 			catch (Exception e) 	{

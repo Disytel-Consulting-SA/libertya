@@ -80,7 +80,8 @@ public class ChangeLogGroupListReplication extends ChangeLogGroupList {
 					{
 						// Aplicar filtrados adicionales de replicacion por registro
 						String beforeFilter = group.getRepArray();
-						ReplicationFilterFactory.applyFilters(trxName, group);
+						if (!ReplicationConstantsWS.SKIP_FILTERS)
+							ReplicationFilterFactory.applyFilters(trxName, group);
 						String includeInRep = null;
 						// Una vez filtrado, quedan hosts destino donde enviar este registro? De ser así incorporar a la nomina de grupos,
 						// En caso contrario ignorar este registro y actualizar a N su includeInReplication

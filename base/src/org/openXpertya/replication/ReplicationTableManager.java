@@ -3,6 +3,7 @@ package org.openXpertya.replication;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
+import java.util.HashSet;
 import java.util.Vector;
 
 import org.openXpertya.util.DB;
@@ -21,7 +22,7 @@ public class ReplicationTableManager {
 	/** filtrar replicacion de un registro especifico */
 	public static String filterRecord = null;
 	/** filtrar replicacion solo hacia un host */
-	public static Integer filterHost = null;
+	public static HashSet<Integer> filterHost = null;
 	
 	/** trxName */
 	protected String trxName = null;
