@@ -7,7 +7,7 @@ import java.math.*;
 import org.openXpertya.util.*;
 /** Modelo Generado por C_BPartner
  *  @author Comunidad de Desarrollo Libertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
- *  @version  - 2014-10-23 14:22:15.184 */
+ *  @version  - 2014-11-14 10:57:53.602 */
 public class X_C_BPartner extends org.openXpertya.model.PO
 {
 /** Constructor estándar */
@@ -27,6 +27,7 @@ setIsCustomer (false);
 setIsEmployee (false);
 setIsGroupInvoices (false);
 setisiso (false);
+setIsMultiCUIT (false);
 setIsOneTime (false);
 setIsProspect (true);	// Y
 setIsSalesRep (false);
@@ -803,6 +804,24 @@ set_Value ("isiso", new Boolean(isiso));
 public boolean isiso() 
 {
 Object oo = get_Value("isiso");
+if (oo != null) 
+{
+ if (oo instanceof Boolean) return ((Boolean)oo).booleanValue();
+ return "Y".equals(oo);
+}
+return false;
+}
+/** Set CUIT/CUIL múltiple.
+El CUIT/CUIL ingresado puede repetirse dentro del sistema */
+public void setIsMultiCUIT (boolean IsMultiCUIT)
+{
+set_Value ("IsMultiCUIT", new Boolean(IsMultiCUIT));
+}
+/** Get CUIT/CUIL múltiple.
+El CUIT/CUIL ingresado puede repetirse dentro del sistema */
+public boolean isMultiCUIT() 
+{
+Object oo = get_Value("IsMultiCUIT");
 if (oo != null) 
 {
  if (oo instanceof Boolean) return ((Boolean)oo).booleanValue();

@@ -1,15 +1,13 @@
 /** Modelo Generado - NO CAMBIAR MANUALMENTE - Disytel */
 package org.openXpertya.model;
-import java.math.BigDecimal;
-import java.sql.ResultSet;
-import java.sql.Timestamp;
-import java.util.Properties;
-
-import org.openXpertya.util.Env;
-import org.openXpertya.util.KeyNamePair;
+import java.util.logging.Level;
+ import java.util.*;
+import java.sql.*;
+import java.math.*;
+import org.openXpertya.util.*;
 /** Modelo Generado por I_BPartner
  *  @author Comunidad de Desarrollo Libertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
- *  @version  - 2012-11-19 02:09:05.811 */
+ *  @version  - 2014-11-14 11:00:54.413 */
 public class X_I_BPartner extends org.openXpertya.model.PO
 {
 /** Constructor estándar */
@@ -22,6 +20,7 @@ setI_BPartner_ID (0);
 setI_IsImported (false);	// N
 setIsCustomer (false);
 setIsEmployee (false);
+setIsMultiCUIT (false);
 setIsProspect (false);
 setIsVendor (false);
 }
@@ -120,6 +119,7 @@ public String getAddress4()
 {
 return (String)get_Value("Address4");
 }
+public static final int AD_ORG_CONTACT_ID_AD_Reference_ID = MReference.getReferenceID("AD_Org (all)");
 /** Set AD_Org_Contact_ID */
 public void setAD_Org_Contact_ID (int AD_Org_Contact_ID)
 {
@@ -656,6 +656,24 @@ Indicates if  this Business Partner is an employee */
 public boolean isEmployee() 
 {
 Object oo = get_Value("IsEmployee");
+if (oo != null) 
+{
+ if (oo instanceof Boolean) return ((Boolean)oo).booleanValue();
+ return "Y".equals(oo);
+}
+return false;
+}
+/** Set CUIT/CUIL múltiple.
+El CUIT/CUIL ingresado puede repetirse dentro del sistema */
+public void setIsMultiCUIT (boolean IsMultiCUIT)
+{
+set_Value ("IsMultiCUIT", new Boolean(IsMultiCUIT));
+}
+/** Get CUIT/CUIL múltiple.
+El CUIT/CUIL ingresado puede repetirse dentro del sistema */
+public boolean isMultiCUIT() 
+{
+Object oo = get_Value("IsMultiCUIT");
 if (oo != null) 
 {
  if (oo instanceof Boolean) return ((Boolean)oo).booleanValue();

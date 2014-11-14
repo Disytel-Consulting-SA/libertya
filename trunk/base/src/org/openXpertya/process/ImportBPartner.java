@@ -285,7 +285,8 @@ public class ImportBPartner extends SvrProcess {
         			",Updated=current_timestamp"+
         			",UpdatedBy=aux.UpdatedBy" +
         			",IIBB=aux.IIBB" +
-        			" from (SELECT Value,Name,Name2,Description,DUNS,TaxID,TaxIdType,NAICS,C_BP_Group_ID,UpdatedBy,IIBB FROM I_BPartner WHERE I_BPartner_ID=?) as aux" 
+        			",ismulticuit=aux.ismulticuit" +
+        			" from (SELECT Value,Name,Name2,Description,DUNS,TaxID,TaxIdType,NAICS,C_BP_Group_ID,UpdatedBy,IIBB,ismulticuit FROM I_BPartner WHERE I_BPartner_ID=?) as aux" 
         			+ " WHERE C_BPartner_ID=?" );
             
             log.info("En importBPartbner despues de hacer el update en c_BPartner");
