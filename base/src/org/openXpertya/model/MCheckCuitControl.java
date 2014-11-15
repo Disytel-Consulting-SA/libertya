@@ -124,6 +124,10 @@ public class MCheckCuitControl extends X_C_CheckCuitControl {
 			log.saveError("InvalidCUIT",Msg.translate(getCtx(),"RequiredCUIT"));
 			return false;
 		}
+		// Eliminar guiones
+		if(getCUIT().contains("-")){
+			setCUIT(getCUIT().replace("-", ""));
+		}
 		// CUIT válido
 		if(!CalloutInvoiceExt.ValidarCUIT(getCUIT().trim())){ 
 			log.saveError("InvalidCUIT", "");
