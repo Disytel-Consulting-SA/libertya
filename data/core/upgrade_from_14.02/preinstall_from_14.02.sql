@@ -4394,3 +4394,6 @@ ALTER FUNCTION replication_event() OWNER TO libertya;
 --20141114-1045 Incorporación de flag para determinar si la EC puede poseer un cuit repetido
 update ad_system set dummy = (SELECT addcolumnifnotexists('c_bpartner', 'ismulticuit', 'character(1) NOT NULL DEFAULT ''N''::bpchar'));
 update ad_system set dummy = (SELECT addcolumnifnotexists('i_bpartner', 'ismulticuit', 'character(1) NOT NULL DEFAULT ''N''::bpchar'));
+
+--20141117-1130 Incorporación que permite buscar por nro de identificación a las entidades comerciales en el importador de facturas
+update ad_system set dummy = (SELECT addcolumnifnotexists('i_invoice', 'taxid', 'character varying(20)'));
