@@ -246,6 +246,24 @@ public class ImportInvoice extends SvrProcess {
         	log.log(Level.SEVERE,"doIt - BP Not Found=" + no);
         }
         
+        // También se busca por taxid
+		sql = new StringBuffer( 
+				"UPDATE I_Invoice o " + 
+				"SET C_BPartner_ID=" +
+					"(SELECT C_BPartner_ID FROM C_BPartner bp" + 
+					" WHERE trim(translate(o.taxid,'-',''))=trim(translate(bp.taxid,'-','')) AND o.AD_Client_ID=bp.AD_Client_ID AND ROWNUM=1) " + 
+				"WHERE t IS NOT NULL AND I_IsImported<>'Y'" ).append( clientCheck );
+		
+		no = DB.executeUpdate( sql.toString());
+		log.log(Level.FINE,"doIt - Set BP from Value=" + no);
+
+		sql = new StringBuffer("UPDATE I_Invoice " + "SET I_IsImported='E', I_ErrorMsg=I_ErrorMsg || '"+ getMsg("ImportInvInvalidBPartner")+". ' " + "WHERE C_BPartner_ID IS NULL AND I_IsImported<>'Y'" ).append( clientCheck );		
+		no = DB.executeUpdate( sql.toString());
+        if( no != 0 ) {
+        	log.log(Level.SEVERE,"doIt - BP Not Found=" + no);
+        }
+        
+        
 		// La Dirección de la EC no se setea ya que se obtiene en MInvoice según
 		// los valores seteados en la EC si existe. De todas formas se valida si
 		// la EC tiene al menos una dirección si no se marca como error

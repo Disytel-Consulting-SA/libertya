@@ -7,7 +7,7 @@ import java.math.*;
 import org.openXpertya.util.*;
 /** Modelo Generado por I_Invoice
  *  @author Comunidad de Desarrollo Libertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
- *  @version  - 2012-09-11 21:29:45.804 */
+ *  @version  - 2014-11-17 11:34:19.974 */
 public class X_I_Invoice extends org.openXpertya.model.PO
 {
 /** Constructor estándar */
@@ -963,6 +963,23 @@ public BigDecimal getTaxAmt()
 BigDecimal bd = (BigDecimal)get_Value("TaxAmt");
 if (bd == null) return Env.ZERO;
 return bd;
+}
+/** Set Tax ID.
+Tax Identification */
+public void setTaxID (String TaxID)
+{
+if (TaxID != null && TaxID.length() > 20)
+{
+log.warning("Length > 20 - truncated");
+TaxID = TaxID.substring(0,20);
+}
+set_Value ("TaxID", TaxID);
+}
+/** Get Tax ID.
+Tax Identification */
+public String getTaxID() 
+{
+return (String)get_Value("TaxID");
 }
 /** Set Tax Indicator.
 Short form for Tax to be printed on documents */
