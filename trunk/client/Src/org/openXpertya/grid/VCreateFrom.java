@@ -708,7 +708,7 @@ public abstract class VCreateFrom extends JDialog implements ActionListener,Tabl
 			if(bPartnerField.getValue() == null 
 					|| (Integer)bPartnerField.getValue() != p_order.getC_BPartner_ID()){
 				bPartnerField.setValue(p_order.getC_BPartner_ID());
-				updateBPDetails(p_order.getC_BPartner_ID(), true);
+				updateBPDetails(p_order.getC_BPartner_ID(), p_order.getID() <= 0);
 			}
 		}
     }    // LoadOrder

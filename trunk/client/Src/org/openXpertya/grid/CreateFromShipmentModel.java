@@ -131,7 +131,11 @@ public class CreateFromShipmentModel extends CreateFromModel {
 			inout.setDateOrdered(p_order.getDateOrdered());
 			inout.setC_Project_ID(p_order.getC_Project_ID());
 			inout.setPOReference(p_order.getPOReference());
-			inout.setAD_Org_ID(p_order.getAD_Org_ID());
+			// Si no se debe utilizar el depósito del pedido, entonces tampoco
+			// su organización sino hay una inconsistencia de los datos
+			if(isUseOrderWarehouse(inout, trxName)){
+				inout.setAD_Org_ID(p_order.getAD_Org_ID());
+			}
 			inout.setAD_OrgTrx_ID(p_order.getAD_OrgTrx_ID());
 			inout.setC_Campaign_ID(p_order.getC_Campaign_ID());
 			inout.setUser1_ID(p_order.getUser1_ID());
@@ -308,11 +312,21 @@ public class CreateFromShipmentModel extends CreateFromModel {
 	 * o bien si todavía este dato no se encuentra especificado
 	 */
 	protected void setWarehouse(MInOut inOut, MOrder order, String trxName) {
-		// Recuperar tipo de documento
-		X_C_DocType inOutDocType = new X_C_DocType(ctx, inOut.getC_DocType_ID(), trxName);
 		// Si no esta seteado o bien hay que forzar el warehouse del pedido, setearlo
-		if ((inOut.getM_Warehouse_ID() <= 0) || inOutDocType.isUseOrderWarehouse()) {
+		if ((inOut.getM_Warehouse_ID() <= 0) || isUseOrderWarehouse(inOut, trxName)) {
 			inOut.setM_Warehouse_ID(order.getM_Warehouse_ID());
 		}
+	}
+	
+	/**
+	 * @param inOut
+	 * @param trxName
+	 * @return true si el tipo de documento del remito parámetro está marcado para que
+	 *         copie el almacén del pedido
+	 */
+	protected boolean isUseOrderWarehouse(MInOut inOut, String trxName){
+		// Recuperar tipo de documento
+		X_C_DocType inOutDocType = new X_C_DocType(ctx, inOut.getC_DocType_ID(), trxName);
+		return inOutDocType.isUseOrderWarehouse();
 	}
 }
