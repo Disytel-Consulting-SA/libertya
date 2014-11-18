@@ -655,13 +655,17 @@ public class MInOutLine extends X_M_InOutLine {
 		// asignadas a la misma línea de pedido (Se valida por cantidad del artículo, y no por número de líneas)
 		if (!isTPVInstance && newRecord && inout.isSOTrx()
 				&& !isProductionMovement(inout.getMovementType())) {
-			String sql = "SELECT sum(movementqty) "
+			String sql = "SELECT coalesce(sum(movementqty), 0.00) "
 					+ "FROM m_inout as io "
 					+ "INNER JOIN m_inoutline as iol ON (io.m_inout_id = iol.m_inout_id) "
-					+ "WHERE io.m_inout_id = ? AND iol.c_orderline_id = ?";
-			int cantsInOut = DB.getSQLValue(get_TrxName(), sql, getM_InOut_ID(), getC_OrderLine_ID());
-			int cantsOrder = DB.getSQLValue(get_TrxName(), "SELECT qtyEntered FROM C_OrderLine WHERE C_OrderLine_ID = " + getC_OrderLine_ID());
-			if (new BigDecimal(cantsInOut).add(getMovementQty()).compareTo(new BigDecimal(cantsOrder)) > 0) {
+					+ "WHERE io.m_inout_id = "+getM_InOut_ID()+" AND iol.c_orderline_id = ?";
+			BigDecimal cantsInOut = DB.getSQLValueBD(get_TrxName(), sql, getC_OrderLine_ID() );
+			BigDecimal cantsOrder = DB
+					.getSQLValueBD(
+							get_TrxName(),
+							"SELECT coalesce(qtyEntered,0.00) FROM C_OrderLine WHERE C_OrderLine_ID = ? ",
+							getC_OrderLine_ID());
+			if (getMovementQty().add(cantsInOut).compareTo(cantsOrder) > 0) {
 				log.saveError("ExistsDocumentLineWithOrderLine", "");
 				return false;
 			}
