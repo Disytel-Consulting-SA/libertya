@@ -205,7 +205,7 @@ public class CurrentAccountReport extends SvrProcess {
 						+ p_AccountType
 						+ "', '"
 						+ p_DateTrx_From + "', NULL"
-						+ "', "
+						+ ", "
 						+ "'"+(isOnlyCurrentAccountDocuments()?"Y":"N")+"'"
 						+ ");");
 			}
