@@ -160,6 +160,13 @@ public class PaymentMedium implements IPaymentMediumInfo {
 	}
 	
 	/**
+	 * @return Indica si este medio de pago es de tipo Efectivo
+	 */
+	public boolean isCash() {
+		return getTenderType().equals(MPOSPaymentMedium.TENDERTYPE_Cash);
+	}
+	
+	/**
 	 * @return the checkDeadLine
 	 */
 	public Integer getCheckDeadLine() {
