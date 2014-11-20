@@ -775,10 +775,10 @@ public class Order  {
 				|| (amt.compareTo(orderOpenAmt) > 0
 						&& (!MPOSPaymentMedium.TENDERTYPE_Cash
 								.equals(paymentMediumInfo.getTenderType()) || (MPOSPaymentMedium.TENDERTYPE_Cash
-										.equals(paymentMediumInfo.getTenderType()) && isAllowSurpassCashAmount())) 
+										.equals(paymentMediumInfo.getTenderType()) && !isAllowSurpassCashAmount())) 
 						&& (!MPOSPaymentMedium.TENDERTYPE_Check
 								.equals(paymentMediumInfo.getTenderType()) || (MPOSPaymentMedium.TENDERTYPE_Check
-										.equals(paymentMediumInfo.getTenderType()) && isAllowSurpassCheckAmount()))
+										.equals(paymentMediumInfo.getTenderType()) && !isAllowSurpassCheckAmount()))
 							) ? orderOpenAmt
 				: amt;
 		
