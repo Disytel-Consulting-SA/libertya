@@ -5922,6 +5922,11 @@ public class PoSMainForm extends CPanel implements FormPanel, ASyncProcess, Disp
 		if(paymentMedium.isCreditNote()){
 			updateCreditNoteBalance();
 		}
+		// Si estamos pagando con efectivo entonces se debe refrescar lo de
+		// efectivo
+		if(paymentMedium.isCash()){
+			updateConvertedAmount();
+		}
     }
     
     /**
