@@ -440,7 +440,7 @@ public class ImportInventory extends SvrProcess {
 		// Set Inventory
 		//////////////////////////////////////////////////////////////////////////////////////
 		MDocType docTypePI = MDocType.getDocType(getCtx(),
-				MDocType.DOCTYPE_MaterialPhysicalInventory, get_TrxName());
+				MDocType.DOCTYPE_MaterialPhysicalInventory, null);
         sql = new StringBuffer("UPDATE I_Inventory i " +
         		"SET M_Inventory_ID = (SELECT m.m_inventory_id " +
         		"						FROM m_inventory m " +
@@ -664,7 +664,7 @@ public class ImportInventory extends SvrProcess {
 		toleranceDate.add(Calendar.MONTH, months);
 		PreparedStatement ps = new CPreparedStatement(
 				ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_UPDATABLE, sql,
-				get_TrxName(), true);
+				null, true);
 		ps.setTimestamp(1, new Timestamp(toleranceDate.getTimeInMillis()));
 		return ps.executeUpdate();
 	}
