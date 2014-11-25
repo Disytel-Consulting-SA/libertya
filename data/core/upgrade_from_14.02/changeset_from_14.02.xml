@@ -85,6 +85,10 @@ Ejemplos de cambios
 		<!-- 20141007-1432 Reglas de filtrado para MultiOrgTransactionFilter -->
 		<mkdir dir="${TARGET_DIR}/utils/replicacion/filters" />
 		<copy file="${SOURCE_DIR}/MultiOrgTransactionFilterRules.properties" todir="${TARGET_DIR}/utils/replicacion/filters" overwrite="yes" />
+		
+		<!-- 20141125-1140 El cliente de replicacion sufrio ampliaciones (especificar mas de un host, omitir filtros) -->
+		<copy file="${SOURCE_DIR}/repClient.jar" todir="${TARGET_DIR}/utils/replicacion/lib" overwrite="yes" />
+		
     </target>
     
 </project>
