@@ -143,7 +143,7 @@ public class MCheckCuitControl extends X_C_CheckCuitControl {
 		// No se permite agregar mismo CUIT para la misma Organización
 		if (PO.existRecordFor(
 				getCtx(),
-				get_TableName(),
+				get_TableName(),	
 				"ad_org_id = ? AND translate(upper(trim(cuit)), '-', '') = translate(upper(trim('"
 						+ getCUIT()
 						+ "')), '-', '')"
@@ -233,5 +233,20 @@ public class MCheckCuitControl extends X_C_CheckCuitControl {
 		rs.close();
 		ps.close();
 		return balance;
+	}
+	
+	@Override
+	protected boolean afterSave(boolean newRecord, boolean success) {
+		// Crear el de la organización * si no existe
+		if(success){
+			try{
+				MCheckCuitControl cuitControlOrg0 = get(getCtx(), 0, getCUIT(),
+						true, getCheckLimit(), get_TrxName());
+			} catch(Exception e){
+				success = false;
+				e.printStackTrace();
+			}
+		}
+		return success;
 	}
 }
