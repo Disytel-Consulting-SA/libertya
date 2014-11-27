@@ -6,9 +6,9 @@
 		 columnCount="1"
 		 printOrder="Vertical"
 		 orientation="Landscape"
-		 pageWidth="842"
+		 pageWidth="1150"
 		 pageHeight="595"
-		 columnWidth="782"
+		 columnWidth="1090"
 		 columnSpacing="0"
 		 leftMargin="30"
 		 rightMargin="30"
@@ -35,7 +35,7 @@
 	<parameter name="FechaHasta" isForPrompting="false" class="java.util.Date"/>
 	<parameter name="C_BPartnerCustomer_ID" isForPrompting="false" class="java.math.BigDecimal"/>
 	<queryString><![CDATA[SELECT Compania, Organizacion, Linea_de_Producto, Familia, Subfamlia, Marca, Codigo_Prod, Nombre_Prod, movementdate, Precio,
-Entrada, Salida, Saldo, Tipo_De_Documento, Nro_De_Documento, Factura_Asociada, Cod_Cliente, Nombre_Cliente, Nombre_Proveedor
+Entrada, Salida, Saldo, Tipo_De_Documento, Nro_De_Documento, Factura_Asociada, Cod_Cliente, Nombre_Cliente, Nombre_Proveedor, TipoInventario, Cargo
 FROM (
 (SELECT 
 a.value AS Compania, 
@@ -55,7 +55,9 @@ i.DocumentNo AS Nro_De_Documento,
 inv.DocumentNo AS Factura_Asociada,
 bp.value AS Cod_Cliente,
 (CASE WHEN (i.Issotrx = 'Y') THEN bp.name ELSE NULL END) AS Nombre_Cliente,
-(CASE WHEN (i.Issotrx = 'Y') THEN bpp.name ELSE NULL END) AS Nombre_Proveedor
+(CASE WHEN (i.Issotrx = 'Y') THEN bpp.name ELSE NULL END) AS Nombre_Proveedor,
+NULL AS TipoInventario,
+NULL AS Cargo
 FROM M_InOutLine il
 INNER JOIN M_InOut i ON (i.M_InOut_ID = il.M_InOut_ID)
 INNER JOIN M_Product p ON (p.M_Product_ID = il.M_Product_ID)
@@ -102,7 +104,12 @@ iv.DocumentNo AS Nro_De_Documento,
 NULL AS Factura_Asociada,
 NULL AS Cod_Cliente,
 NULL AS Nombre_Cliente,
-bpp.name AS Nombre_Proveedor
+bpp.name AS Nombre_Proveedor,
+(SELECT rft.name 
+FROM AD_Ref_List rf
+INNER JOIN AD_Ref_List_Trl rft ON (rf.AD_Ref_List_ID = rft.AD_Ref_List_ID) AND (AD_Language = 'es_ES')
+WHERE value = ivl.inventorytype AND AD_Reference_ID = (SELECT AD_Reference_ID FROM AD_Reference WHERE name = 'M_Inventory Type')) AS TipoInventario,
+CASE WHEN (ivl.inventorytype = 'C') THEN c.name ELSE ('') END AS Cargo
 FROM M_InventoryLine ivl
 INNER JOIN M_Inventory iv ON (iv.M_Inventory_ID = ivl.M_Inventory_ID)
 INNER JOIN M_Product p ON (p.M_Product_ID = ivl.M_Product_ID)
@@ -115,6 +122,7 @@ LEFT JOIN M_Product_Lines pl ON (pl.M_Product_Lines_ID = pg.M_Product_Lines_ID)
 LEFT JOIN M_Product_Family pf ON (pf.M_Product_Family_ID = p.M_Product_Family_ID) 
 LEFT JOIN M_Product_PO po ON (po.M_Product_ID = p.M_Product_ID)
 LEFT JOIN C_BPartner bpp ON (bpp.C_BPartner_ID = po.C_BPartner_ID)
+LEFT JOIN C_Charge c ON (c.C_Charge_ID = ivl.C_Charge_ID)
 WHERE (iv.docstatus IN ('CO','CL'))
 AND (($P{AD_CLIENT_ID} IS NULL) OR (iv.AD_CLIENT_ID = $P{AD_CLIENT_ID})) 
 AND (($P{AD_Org_ID} IS NULL) OR (iv.AD_Org_ID = $P{AD_Org_ID})) 
@@ -149,6 +157,8 @@ ORDER BY movementdate DESC]]></queryString>
 	<field name="cod_cliente" class="java.lang.String"/>
 	<field name="nombre_cliente" class="java.lang.String"/>
 	<field name="nombre_proveedor" class="java.lang.String"/>
+	<field name="tipoinventario" class="java.lang.String"/>
+	<field name="cargo" class="java.lang.String"/>
 
 		<background>
 			<band height="0"  isSplitAllowed="true" >
@@ -237,7 +247,7 @@ ORDER BY movementdate DESC]]></queryString>
 					<reportElement
 						x="0"
 						y="90"
-						width="50"
+						width="48"
 						height="10"
 						key="staticText-12"/>
 					<box topBorder="Thin" topBorderColor="#000000" leftBorder="Thin" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" rightPadding="1" bottomBorder="Thin" bottomBorderColor="#000000"/>
@@ -248,9 +258,9 @@ ORDER BY movementdate DESC]]></queryString>
 				</staticText>
 				<staticText>
 					<reportElement
-						x="50"
+						x="48"
 						y="90"
-						width="216"
+						width="276"
 						height="10"
 						key="staticText-16"/>
 					<box topBorder="Thin" topBorderColor="#000000" leftBorder="Thin" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" rightPadding="1" bottomBorder="Thin" bottomBorderColor="#000000"/>
@@ -261,9 +271,9 @@ ORDER BY movementdate DESC]]></queryString>
 				</staticText>
 				<staticText>
 					<reportElement
-						x="266"
+						x="325"
 						y="90"
-						width="45"
+						width="40"
 						height="10"
 						key="staticText-17"/>
 					<box topBorder="Thin" topBorderColor="#000000" leftBorder="Thin" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" rightPadding="1" bottomBorder="Thin" bottomBorderColor="#000000"/>
@@ -274,16 +284,29 @@ ORDER BY movementdate DESC]]></queryString>
 				</staticText>
 				<staticText>
 					<reportElement
-						x="514"
+						x="559"
 						y="90"
-						width="60"
+						width="55"
 						height="10"
 						key="staticText-18"/>
 					<box topBorder="Thin" topBorderColor="#000000" leftBorder="Thin" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" rightPadding="1" bottomBorder="Thin" bottomBorderColor="#000000"/>
 					<textElement textAlignment="Right" verticalAlignment="Middle">
 						<font pdfFontName="Helvetica-Bold" size="6" isBold="true"/>
 					</textElement>
-				<text><![CDATA[Nro. Documento]]></text>
+				<text><![CDATA[Nº Documento]]></text>
+				</staticText>
+				<staticText>
+					<reportElement
+						x="559"
+						y="90"
+						width="55"
+						height="10"
+						key="staticText-18"/>
+					<box topBorder="Thin" topBorderColor="#000000" leftBorder="Thin" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" rightPadding="1" bottomBorder="Thin" bottomBorderColor="#000000"/>
+					<textElement textAlignment="Right" verticalAlignment="Middle">
+						<font pdfFontName="Helvetica-Bold" size="6" isBold="true"/>
+					</textElement>
+				<text><![CDATA[Nº Documento]]></text>
 				</staticText>
 				<staticText>
 					<reportElement
@@ -343,7 +366,7 @@ ORDER BY movementdate DESC]]></queryString>
 				</textField>
 				<staticText>
 					<reportElement
-						x="574"
+						x="614"
 						y="90"
 						width="68"
 						height="10"
@@ -356,7 +379,7 @@ ORDER BY movementdate DESC]]></queryString>
 				</staticText>
 				<staticText>
 					<reportElement
-						x="311"
+						x="365"
 						y="90"
 						width="39"
 						height="10"
@@ -453,7 +476,7 @@ ORDER BY movementdate DESC]]></queryString>
 				</textField>
 				<staticText>
 					<reportElement
-						x="642"
+						x="682"
 						y="90"
 						width="48"
 						height="10"
@@ -466,7 +489,7 @@ ORDER BY movementdate DESC]]></queryString>
 				</staticText>
 				<staticText>
 					<reportElement
-						x="350"
+						x="404"
 						y="90"
 						width="30"
 						height="10"
@@ -479,7 +502,7 @@ ORDER BY movementdate DESC]]></queryString>
 				</staticText>
 				<staticText>
 					<reportElement
-						x="380"
+						x="434"
 						y="90"
 						width="28"
 						height="10"
@@ -492,7 +515,7 @@ ORDER BY movementdate DESC]]></queryString>
 				</staticText>
 				<staticText>
 					<reportElement
-						x="408"
+						x="462"
 						y="90"
 						width="27"
 						height="10"
@@ -505,9 +528,9 @@ ORDER BY movementdate DESC]]></queryString>
 				</staticText>
 				<staticText>
 					<reportElement
-						x="435"
+						x="489"
 						y="90"
-						width="79"
+						width="70"
 						height="10"
 						key="staticText-70"/>
 					<box topBorder="Thin" topBorderColor="#000000" leftBorder="Thin" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" rightPadding="1" bottomBorder="Thin" bottomBorderColor="#000000"/>
@@ -574,12 +597,12 @@ ORDER BY movementdate DESC]]></queryString>
 				</textField>
 				<staticText>
 					<reportElement
-						x="690"
+						x="730"
 						y="90"
-						width="92"
+						width="100"
 						height="10"
 						key="staticText-73"/>
-					<box topBorder="Thin" topBorderColor="#000000" leftBorder="Thin" leftBorderColor="#000000" rightBorder="Thin" rightBorderColor="#000000" rightPadding="1" bottomBorder="Thin" bottomBorderColor="#000000"/>
+					<box topBorder="Thin" topBorderColor="#000000" leftBorder="Thin" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" rightPadding="1" bottomBorder="Thin" bottomBorderColor="#000000"/>
 					<textElement textAlignment="Right" verticalAlignment="Middle">
 						<font pdfFontName="Helvetica-Bold" size="6" isBold="true"/>
 					</textElement>
@@ -613,6 +636,32 @@ ORDER BY movementdate DESC]]></queryString>
 					</textElement>
 				<textFieldExpression   class="java.lang.String"><![CDATA[$F{nombre_cliente}]]></textFieldExpression>
 				</textField>
+				<staticText>
+					<reportElement
+						x="830"
+						y="90"
+						width="75"
+						height="10"
+						key="staticText-75"/>
+					<box topBorder="Thin" topBorderColor="#000000" leftBorder="Thin" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" rightPadding="1" bottomBorder="Thin" bottomBorderColor="#000000"/>
+					<textElement textAlignment="Right" verticalAlignment="Middle">
+						<font pdfFontName="Helvetica-Bold" size="6" isBold="true"/>
+					</textElement>
+				<text><![CDATA[Tipo Inventario]]></text>
+				</staticText>
+				<staticText>
+					<reportElement
+						x="905"
+						y="90"
+						width="185"
+						height="10"
+						key="staticText-76"/>
+					<box topBorder="Thin" topBorderColor="#000000" leftBorder="Thin" leftBorderColor="#000000" rightBorder="Thin" rightBorderColor="#000000" rightPadding="1" bottomBorder="Thin" bottomBorderColor="#000000"/>
+					<textElement textAlignment="Right" verticalAlignment="Middle">
+						<font pdfFontName="Helvetica-Bold" size="6" isBold="true"/>
+					</textElement>
+				<text><![CDATA[Cargo]]></text>
+				</staticText>
 			</band>
 		</columnHeader>
 		<detail>
@@ -621,9 +670,10 @@ ORDER BY movementdate DESC]]></queryString>
 					<reportElement
 						x="0"
 						y="0"
-						width="50"
+						width="48"
 						height="10"
-						key="textField-7"/>
+						key="textField-7"
+						stretchType="RelativeToBandHeight"/>
 					<box topBorder="None" topBorderColor="#000000" leftBorder="Thin" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" rightPadding="1" bottomBorder="Thin" bottomBorderColor="#000000"/>
 					<textElement textAlignment="Right">
 						<font size="6"/>
@@ -632,11 +682,12 @@ ORDER BY movementdate DESC]]></queryString>
 				</textField>
 				<textField isStretchWithOverflow="true" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
-						x="50"
+						x="48"
 						y="0"
-						width="216"
+						width="276"
 						height="10"
-						key="textField-11"/>
+						key="textField-11"
+						stretchType="RelativeToBandHeight"/>
 					<box topBorder="None" topBorderColor="#000000" leftBorder="Thin" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" rightPadding="1" bottomBorder="Thin" bottomBorderColor="#000000"/>
 					<textElement textAlignment="Right">
 						<font size="6"/>
@@ -645,11 +696,12 @@ ORDER BY movementdate DESC]]></queryString>
 				</textField>
 				<textField isStretchWithOverflow="true" pattern="dd/MM/yyyy" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
-						x="266"
+						x="325"
 						y="0"
-						width="45"
+						width="40"
 						height="10"
-						key="textField-12"/>
+						key="textField-12"
+						stretchType="RelativeToBandHeight"/>
 					<box topBorder="None" topBorderColor="#000000" leftBorder="Thin" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" rightPadding="1" bottomBorder="Thin" bottomBorderColor="#000000"/>
 					<textElement textAlignment="Right">
 						<font size="6"/>
@@ -658,11 +710,12 @@ ORDER BY movementdate DESC]]></queryString>
 				</textField>
 				<textField isStretchWithOverflow="true" pattern="#,##0.00" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
-						x="514"
+						x="559"
 						y="0"
-						width="60"
+						width="55"
 						height="10"
-						key="textField-13"/>
+						key="textField-13"
+						stretchType="RelativeToBandHeight"/>
 					<box topBorder="None" topBorderColor="#000000" leftBorder="Thin" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" rightPadding="1" bottomBorder="Thin" bottomBorderColor="#000000"/>
 					<textElement textAlignment="Right">
 						<font size="6"/>
@@ -671,11 +724,12 @@ ORDER BY movementdate DESC]]></queryString>
 				</textField>
 				<textField isStretchWithOverflow="true" pattern="#,##0.00" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
-						x="574"
+						x="614"
 						y="0"
 						width="68"
 						height="10"
-						key="textField-80"/>
+						key="textField-80"
+						stretchType="RelativeToBandHeight"/>
 					<box topBorder="None" topBorderColor="#000000" leftBorder="Thin" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" rightPadding="1" bottomBorder="Thin" bottomBorderColor="#000000"/>
 					<textElement textAlignment="Right">
 						<font size="6"/>
@@ -684,11 +738,12 @@ ORDER BY movementdate DESC]]></queryString>
 				</textField>
 				<textField isStretchWithOverflow="true" pattern="#,##0.00" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
-						x="311"
+						x="365"
 						y="0"
 						width="39"
 						height="10"
-						key="textField-81"/>
+						key="textField-81"
+						stretchType="RelativeToBandHeight"/>
 					<box topBorder="None" topBorderColor="#000000" leftBorder="Thin" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" rightPadding="1" bottomBorder="Thin" bottomBorderColor="#000000"/>
 					<textElement textAlignment="Right">
 						<font size="6"/>
@@ -697,11 +752,12 @@ ORDER BY movementdate DESC]]></queryString>
 				</textField>
 				<textField isStretchWithOverflow="true" pattern="#,##0.00" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
-						x="642"
+						x="682"
 						y="0"
 						width="48"
 						height="10"
-						key="textField-87"/>
+						key="textField-87"
+						stretchType="RelativeToBandHeight"/>
 					<box topBorder="None" topBorderColor="#000000" leftBorder="Thin" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" rightPadding="1" bottomBorder="Thin" bottomBorderColor="#000000"/>
 					<textElement textAlignment="Right">
 						<font size="6"/>
@@ -710,11 +766,12 @@ ORDER BY movementdate DESC]]></queryString>
 				</textField>
 				<textField isStretchWithOverflow="true" pattern="###0" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
-						x="350"
+						x="404"
 						y="0"
 						width="30"
 						height="10"
-						key="textField-89"/>
+						key="textField-89"
+						stretchType="RelativeToBandHeight"/>
 					<box topBorder="None" topBorderColor="#000000" leftBorder="Thin" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" rightPadding="1" bottomBorder="Thin" bottomBorderColor="#000000"/>
 					<textElement textAlignment="Right">
 						<font size="6"/>
@@ -723,11 +780,12 @@ ORDER BY movementdate DESC]]></queryString>
 				</textField>
 				<textField isStretchWithOverflow="true" pattern="###0" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
-						x="380"
+						x="434"
 						y="0"
 						width="28"
 						height="10"
-						key="textField-90"/>
+						key="textField-90"
+						stretchType="RelativeToBandHeight"/>
 					<box topBorder="None" topBorderColor="#000000" leftBorder="Thin" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" rightPadding="1" bottomBorder="Thin" bottomBorderColor="#000000"/>
 					<textElement textAlignment="Right">
 						<font size="6"/>
@@ -736,11 +794,12 @@ ORDER BY movementdate DESC]]></queryString>
 				</textField>
 				<textField isStretchWithOverflow="true" pattern="###0" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
-						x="408"
+						x="462"
 						y="0"
 						width="27"
 						height="10"
-						key="textField-91"/>
+						key="textField-91"
+						stretchType="RelativeToBandHeight"/>
 					<box topBorder="None" topBorderColor="#000000" leftBorder="Thin" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" rightPadding="1" bottomBorder="Thin" bottomBorderColor="#000000"/>
 					<textElement textAlignment="Right">
 						<font size="6"/>
@@ -749,11 +808,12 @@ ORDER BY movementdate DESC]]></queryString>
 				</textField>
 				<textField isStretchWithOverflow="true" pattern="#,##0.00" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
-						x="435"
+						x="489"
 						y="0"
-						width="79"
+						width="70"
 						height="10"
-						key="textField-92"/>
+						key="textField-92"
+						stretchType="RelativeToBandHeight"/>
 					<box topBorder="None" topBorderColor="#000000" leftBorder="Thin" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" rightPadding="1" bottomBorder="Thin" bottomBorderColor="#000000"/>
 					<textElement textAlignment="Right">
 						<font size="6"/>
@@ -762,16 +822,45 @@ ORDER BY movementdate DESC]]></queryString>
 				</textField>
 				<textField isStretchWithOverflow="true" pattern="#,##0.00" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
-						x="690"
+						x="730"
 						y="0"
-						width="92"
+						width="100"
 						height="10"
-						key="textField-95"/>
-					<box topBorder="None" topBorderColor="#000000" leftBorder="Thin" leftBorderColor="#000000" rightBorder="Thin" rightBorderColor="#000000" rightPadding="1" bottomBorder="Thin" bottomBorderColor="#000000"/>
+						key="textField-95"
+						stretchType="RelativeToBandHeight"/>
+					<box topBorder="None" topBorderColor="#000000" leftBorder="Thin" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" rightPadding="1" bottomBorder="Thin" bottomBorderColor="#000000"/>
 					<textElement textAlignment="Right">
 						<font size="6"/>
 					</textElement>
 				<textFieldExpression   class="java.lang.String"><![CDATA[$F{nombre_cliente}]]></textFieldExpression>
+				</textField>
+				<textField isStretchWithOverflow="true" pattern="#,##0.00" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
+					<reportElement
+						x="830"
+						y="0"
+						width="75"
+						height="10"
+						key="textField-97"
+						stretchType="RelativeToBandHeight"/>
+					<box topBorder="None" topBorderColor="#000000" leftBorder="Thin" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" rightPadding="1" bottomBorder="Thin" bottomBorderColor="#000000"/>
+					<textElement textAlignment="Right">
+						<font size="6"/>
+					</textElement>
+				<textFieldExpression   class="java.lang.String"><![CDATA[$F{tipoinventario}]]></textFieldExpression>
+				</textField>
+				<textField isStretchWithOverflow="true" pattern="#,##0.00" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
+					<reportElement
+						x="905"
+						y="0"
+						width="185"
+						height="10"
+						key="textField-98"
+						stretchType="RelativeToBandHeight"/>
+					<box topBorder="None" topBorderColor="#000000" leftBorder="Thin" leftBorderColor="#000000" rightBorder="Thin" rightBorderColor="#000000" rightPadding="1" bottomBorder="Thin" bottomBorderColor="#000000"/>
+					<textElement textAlignment="Right">
+						<font size="6"/>
+					</textElement>
+				<textFieldExpression   class="java.lang.String"><![CDATA[$F{cargo}]]></textFieldExpression>
 				</textField>
 			</band>
 		</detail>
