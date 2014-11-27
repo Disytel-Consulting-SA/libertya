@@ -1079,8 +1079,6 @@ public class PoSOnline extends PoSConnectionState {
 			MCheckCuitControl cuitControl;
 			BigDecimal balance;
 			for (String cuit : cuits.keySet()) {
-				// Obtener el control para el cuit y organización *
-				cuitControl = createCheckCUITControl(0, cuit);
 				// Obtener el control para el cuit y organización actual
 				cuitControl = createCheckCUITControl(Env.getAD_Org_ID(getCtx()), cuit);				
 				// Verificar si está activo y no supera el límite impuesto en el
