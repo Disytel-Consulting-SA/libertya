@@ -58,6 +58,10 @@ public class MInOut extends X_M_InOut implements DocAction {
 	// TPV
 	protected boolean isTPVInstance = false;
 	
+	
+	// flag especial para indicar si el remito es una anulación
+	protected boolean isReversal = false;
+		
     /**
      * Creación desde Pedido.
      * 
@@ -295,8 +299,9 @@ public class MInOut extends X_M_InOut implements DocAction {
             }
         }
 
-        //
-
+        // Se indica que el Remito es una anulación.
+        to.setReversal(isReverseCopy);
+        
         if( !to.save( trxName )) {
             throw new IllegalStateException( "Could not create Shipment" );
         }
@@ -2970,7 +2975,6 @@ public class MInOut extends X_M_InOut implements DocAction {
         log.info( toString());
 
         // Deep Copy
-
         MInOut reversal = copyFrom( this,getMovementDate(),getC_DocType_ID(),isSOTrx(),false,get_TrxName(),true, true );
 
         if( reversal == null ) {
@@ -2978,6 +2982,8 @@ public class MInOut extends X_M_InOut implements DocAction {
 
             return false;
         }
+        
+        reversal.setReversal(true);
 
         // Reverse Line Qty
 
@@ -3039,7 +3045,7 @@ public class MInOut extends X_M_InOut implements DocAction {
         m_processMsg = reversal.getDocumentNo();
         setProcessed( true );
         setDocAction( DOCACTION_None );
-
+        
         return true;
     }    // reverseCorrectionIt
 
@@ -3207,6 +3213,14 @@ public class MInOut extends X_M_InOut implements DocAction {
 		this.isTPVInstance = isTPVInstance;
 	}
 	
+	public boolean isReversal() {
+		return isReversal;
+	}
+
+	public void setReversal(boolean isReversal) {
+		this.isReversal = isReversal;
+	}
+
 	/**
 	 * 
 	 * @return el filtro de pedidos que se aplica al crear un remito a partir
