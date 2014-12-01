@@ -19,12 +19,17 @@ public abstract class ReplicationFilter {
 	public static final int CENTRAL_REPARRAY_POS = 1;
 	/** Posicion de este host dentro del anillo de replicacion */
 	public static int thisHostPos = -1;
+	/** AD_Org_ID de este host dentro del anillo de replicacion */
+	public static int thisHostOrg = -1;
 
 	
 	static {
 		// Recuperar por única vez la posicion de este host dentro del repArray
 		if (thisHostPos == -1)
 			thisHostPos = DB.getSQLValue(null, " SELECT replicationarraypos FROM AD_ReplicationHost WHERE thisHost = 'Y' ");
+		// Recuperar por única vez la posicion de este host dentro del repArray
+		if (thisHostOrg == -1)
+			thisHostOrg = DB.getSQLValue(null, " SELECT ad_org_id FROM AD_ReplicationHost WHERE thisHost = 'Y' ");
 	}
 	
 	/**
