@@ -66,6 +66,8 @@ public class TicketReplicationFilter extends ReplicationFilter {
 		
 		// Recuperar info del pedido y el tipo de documento
 		X_C_Order anOrder = getOrder(group, trxName);
+		if (anOrder==null)
+			return;
 		MDocType docType = new MDocType(Env.getCtx(), anOrder.getC_DocType_ID(), trxName);
 		
 		// Es un ticket transferible?

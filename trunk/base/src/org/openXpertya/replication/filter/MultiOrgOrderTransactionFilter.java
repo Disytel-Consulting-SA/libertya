@@ -42,6 +42,8 @@ public class MultiOrgOrderTransactionFilter extends MultiOrgTransactionFilter {
 		
 		// Recuperar pedido y tipo de documento del mismo
 		X_C_Order anOrder = TicketReplicationFilter.getOrder(group, trxName);
+		if (anOrder==null)
+			return;
 		MDocType docType = new MDocType(Env.getCtx(), anOrder.getC_DocType_ID(), trxName);
 
 		// Es uno de los 3 casos en que se debe enviar únicamente a central?
