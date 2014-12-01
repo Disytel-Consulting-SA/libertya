@@ -3,6 +3,7 @@ package org.openXpertya.replication.filter;
 import org.openXpertya.model.X_M_Locator;
 import org.openXpertya.replication.ChangeLogGroupReplication;
 import org.openXpertya.replication.ReplicationConstants;
+import org.openXpertya.util.Env;
 
 public class StorageReplicationFilter extends ReplicationFilter {
 
@@ -14,10 +15,11 @@ public class StorageReplicationFilter extends ReplicationFilter {
 				return;
 			
 			// Obtener la Org del Locator al cual apunta el Storage
-			int locatorOrgID = Integer.parseInt((String)getNewValueForElement(group, "M_Locator_ID"));
+			int locatorID = Integer.parseInt((String)getNewValueForElement(group, "M_Locator_ID"));
+			X_M_Locator aLocator = new X_M_Locator(Env.getCtx(), locatorID, trxName);
 			
 			// Si la org del locator no es igual a la org de este host => NO REPLICAR A CENTRAL 	
-			if (locatorOrgID != thisHostOrg)
+			if (aLocator.getAD_Org_ID() != thisHostOrg)
 				repArraySetValueAllPositions(group, ReplicationConstants.REPLICATION_CONFIGURATION_NO_ACTION);
 
 		} catch (Exception e) {
