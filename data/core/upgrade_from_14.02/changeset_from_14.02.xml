@@ -88,7 +88,11 @@ Ejemplos de cambios
 		
 		<!-- 20141125-1140 El cliente de replicacion sufrio ampliaciones (especificar mas de un host, omitir filtros) -->
 		<copy file="${SOURCE_DIR}/repClient.jar" todir="${TARGET_DIR}/utils/replicacion/lib" overwrite="yes" />
+
+		<!-- 20141201-0934 El script se posiciona en el directorio correcto a fin de hacer flock adecuadamente -->
+		<copy file="${SOURCE_DIR}/repClient.sh" todir="${TARGET_DIR}/utils/replicacion" overwrite="yes" />
 		
+				
     </target>
     
 </project>
