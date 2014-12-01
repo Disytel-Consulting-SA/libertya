@@ -1232,9 +1232,9 @@ public class MBPartner extends X_C_BPartner {
 					return false;
 				}
 				// CUIT Repetido siempre que la configuración de la compañía
-				String whereClauseCUIT = newRecord ? "trim(translate(taxid,'-','')) = trim(translate(?,'-','')) AND ad_client_id = "
+				String whereClauseCUIT = newRecord ? "isactive = 'Y' AND trim(translate(taxid,'-','')) = trim(translate(?,'-','')) AND ad_client_id = "
 						+ getAD_Client_ID()
-						: "trim(translate(taxid,'-','')) = trim(translate(?,'-','')) AND ad_client_id = " + getAD_Client_ID()
+						: "isactive = 'Y' AND trim(translate(taxid,'-','')) = trim(translate(?,'-','')) AND ad_client_id = " + getAD_Client_ID()
 								+ " AND c_bpartner_id <> " + getID();
 				MClientInfo clientInfo = MClientInfo.get(getCtx(), getAD_Client_ID());
 				if (!Util.isEmpty(cuit, true)
