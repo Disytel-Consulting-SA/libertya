@@ -3677,7 +3677,7 @@ public class MInvoice extends X_C_Invoice implements DocAction {
 								.add(qtyInvoiced));
 						orderLine.setControlStock(false);
 						if (!orderLine.save()) {
-							m_processMsg = "Could not update Order Line";
+							m_processMsg = CLogger.retrieveErrorAsString();
 							return DocAction.STATUS_Invalid;
 						}
 					}
@@ -3690,7 +3690,7 @@ public class MInvoice extends X_C_Invoice implements DocAction {
 						MMatchPO po = new MMatchPO(line, getDateInvoiced(),
 								matchQty);
 						if (!po.save(get_TrxName())) {
-							m_processMsg = "Could not create PO Matching";
+							m_processMsg = CLogger.retrieveErrorAsString();
 							return DocAction.STATUS_Invalid;
 						} else {
 							matchPO++;
@@ -3707,7 +3707,7 @@ public class MInvoice extends X_C_Invoice implements DocAction {
 							matchQty);
 
 					if (!inv.save(get_TrxName())) {
-						m_processMsg = "Could not create Invoice Matching";
+						m_processMsg = CLogger.retrieveErrorAsString();
 
 						return DocAction.STATUS_Invalid;
 					} else {
@@ -3815,7 +3815,7 @@ public class MInvoice extends X_C_Invoice implements DocAction {
 					+ getDocumentNo());
 
 			if (!user.save(get_TrxName())) {
-				m_processMsg = "Could not update Business Partner User";
+				m_processMsg = CLogger.retrieveErrorAsString();
 
 				return DocAction.STATUS_Invalid;
 			}
@@ -3849,7 +3849,7 @@ public class MInvoice extends X_C_Invoice implements DocAction {
 			project.setInvoicedAmt(newAmt);
 
 			if (!project.save(get_TrxName())) {
-				m_processMsg = "Could not update Project";
+				m_processMsg = CLogger.retrieveErrorAsString();
 
 				return DocAction.STATUS_Invalid;
 			}
