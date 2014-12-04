@@ -141,6 +141,9 @@ public class PluginXMLUpdater {
 				if (shouldSkipCurrentChangeGroup(changeGroup))
 					continue;
 				
+				// Validar si ciertas columnas deben omitirse 
+				checkForColumnsToSkip(changeGroup);
+				
 				sentence = "";
 				currentChangeGroup = changeGroup;
 				PluginUtils.appendStatus("[" + iter + "]" + animation[iter++%animation.length], true, false, false, false);
@@ -181,7 +184,13 @@ public class PluginXMLUpdater {
 	{
 		return false;
 	}
-	
+
+	/* En esta clase actualmente se deben procesar todas las columnas.
+	 * Se deja la posibilidad de redefinicion para las subclases */
+	protected void checkForColumnsToSkip(ChangeGroup changeGroup)
+	{
+		return;
+	}
 	
 	/**
 	 * Envia al log correspondiente la sentencia a ejecutar
