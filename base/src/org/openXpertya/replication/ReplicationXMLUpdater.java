@@ -27,6 +27,7 @@ import org.openXpertya.model.X_C_Order;
 import org.openXpertya.model.X_M_Transfer;
 import org.openXpertya.plugin.common.PluginUtils;
 import org.openXpertya.plugin.install.PluginXMLUpdater;
+import org.openXpertya.plugin.install.PluginXMLUpdater.ChangeGroup;
 import org.openXpertya.process.CreateReplicationTriggerProcess;
 import org.openXpertya.util.DB;
 
@@ -281,13 +282,8 @@ public class ReplicationXMLUpdater extends PluginXMLUpdater {
 		boolean retValue = false;
 		String quotes = (useQuotes?"'":"");
 		
-		/* Validar si esta columna debe ser incluida para este host. Si la definicion de hosts destinos no es vacia, y este host no aparece en la nómina, entonces setear null en la columna */
-		if (column.getTargetOnly().size() > 0 && !column.getTargetOnly().contains(thisHostPos)) {
-			query.append("null");
-			retValue = true;
-		}
 		/* En la tabla C_BPartner se almacena el campo AD_Language, los cuales no son para replicacion, debido a que ya existen con anterioridad */
-		else if (tableName.equalsIgnoreCase("C_BPartner") && column.getName().equalsIgnoreCase("AD_Language") && (column.getRefUID() == null || column.getRefUID().length() == 0))
+		if (tableName.equalsIgnoreCase("C_BPartner") && column.getName().equalsIgnoreCase("AD_Language") && (column.getRefUID() == null || column.getRefUID().length() == 0))
 		{
 			query.append( "null".equalsIgnoreCase(column.getNewValue()) ? "null" : quotes + column.getNewValue() + quotes);
 			retValue = true;
@@ -329,26 +325,6 @@ public class ReplicationXMLUpdater extends PluginXMLUpdater {
 			retValue = true;
 		}
 		/*
-		 * Omision de referencias ciclicas en inserción.  Solo se omite en la inserción inicial para 
-		 * solucionar la doble referencia, a fin de que un posterior update setee el valor correctamente
-		 */
-		else if (ReplicationConstantsWS.cyclicReferences.get(tableName.toLowerCase()) != null && ReplicationConstantsWS.cyclicReferences.get(tableName.toLowerCase()).contains(column.getName().toLowerCase()) && (MChangeLog.OPERATIONTYPE_Insertion.equals(changeGroup.getOperation()) || changeGroup.getOperation().startsWith(MChangeLog.OPERATIONTYPE_InsertionModification))) 
-		{
-			query.append("null");
-			retValue = true;
-		}	
-		/*
-		 * Los representantes de ventas son inherentes a las organizaciones, con lo cual probablemente genere
-		 * un error intentar recuperar el AD_User, dado que el mismo podría no existir en otros hosts.
-		 * Por otra parte las listas de precio en general pertenecen a una unica organizacion, con lo cual replicar
-		 * la lista de precio de las entidades comerciales entre sucursales va a presentar un error. 
-		 */
-		else if (X_C_BPartner.Table_Name.equalsIgnoreCase(tableName) && ("salesrep_id".equalsIgnoreCase(column.getName()) || "m_pricelist_id".equalsIgnoreCase(column.getName())))
-		{
-			query.append("null");
-			retValue = true;
-		}
-		/*
 		 * No modificar el valor actual de los campos currentnext y currentnextsys de las secuencias a fin de evitar pisar los valores actuales 
 		 */
 		else if (MChangeLog.OPERATIONTYPE_Modification.equals(changeGroup.getOperation()) && X_AD_Sequence.Table_Name.equalsIgnoreCase(tableName))
@@ -363,13 +339,6 @@ public class ReplicationXMLUpdater extends PluginXMLUpdater {
 			}
 			else 
 				retValue = false;
-		}
-		/*
-		 * No replicar el campo M_Inventory_ID para la tabla M_Transfer
-		 */
-		else if (X_M_Transfer.Table_Name.equalsIgnoreCase(tableName) && "m_inventory_id".equalsIgnoreCase(column.getName())) {
-			query.append("null");
-			retValue = true;
 		}
 		/* Si es una columna especial, concatenar la coma final */
 		if (retValue)
@@ -412,6 +381,50 @@ public class ReplicationXMLUpdater extends PluginXMLUpdater {
 	protected boolean shouldSkipCurrentChangeGroup(ChangeGroup changeGroup)
 	{
 		return changeGroup.isProcessed();
+	}
+	
+	
+	/**
+	 * Quitar ciertas columnas del changeGroup si así se considera necesario segun las siguientes reglas
+	 */
+	protected void checkForColumnsToSkip(ChangeGroup changeGroup)
+	{
+		// Nombre de tabla
+		String tableName = changeGroup.getTableName();
+		// Numero original de columnas
+		int initialColumnSize = changeGroup.getColumns().size();
+		for (int i = initialColumnSize-1; i>=0; i--) {
+			Column column = changeGroup.getColumns().get(i); 
+			/* 
+			 * Si alguna columna tiene especificado destinos en particular, y esos destinos 
+			 * no incluyen a este host, entonces directamente quitar la columna del query 
+			 */
+			if (column.getTargetOnly() != null && column.getTargetOnly().size() > 0 && !column.getTargetOnly().contains(thisHostPos)) {
+				changeGroup.getColumns().remove(i);
+			}	
+			/*
+			 * Omision de referencias ciclicas en inserción.  Solo se omite en la inserción inicial para 
+			 * solucionar la doble referencia, a fin de que un posterior update setee el valor correctamente
+			 */
+			else if (ReplicationConstantsWS.cyclicReferences.get(tableName.toLowerCase()) != null && ReplicationConstantsWS.cyclicReferences.get(tableName.toLowerCase()).contains(column.getName().toLowerCase()) && (MChangeLog.OPERATIONTYPE_Insertion.equals(changeGroup.getOperation()) || changeGroup.getOperation().startsWith(MChangeLog.OPERATIONTYPE_InsertionModification))) {
+				changeGroup.getColumns().remove(i);
+			}
+			/*
+			 * Los representantes de ventas son inherentes a las organizaciones, con lo cual probablemente genere
+			 * un error intentar recuperar el AD_User, dado que el mismo podría no existir en otros hosts.
+			 * Por otra parte las listas de precio en general pertenecen a una unica organizacion, con lo cual replicar
+			 * la lista de precio de las entidades comerciales entre sucursales va a presentar un error. 
+			 */
+			else if (X_C_BPartner.Table_Name.equalsIgnoreCase(tableName) && ("salesrep_id".equalsIgnoreCase(column.getName()) || "m_pricelist_id".equalsIgnoreCase(column.getName()))) {
+				changeGroup.getColumns().remove(i);
+			}
+			/*
+			 * No replicar el campo M_Inventory_ID para la tabla M_Transfer
+			 */
+			else if (X_M_Transfer.Table_Name.equalsIgnoreCase(tableName) && "m_inventory_id".equalsIgnoreCase(column.getName())) {
+				changeGroup.getColumns().remove(i);
+			}
+		}
 	}
 	
 }
