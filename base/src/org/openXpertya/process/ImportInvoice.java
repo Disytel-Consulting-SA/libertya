@@ -252,7 +252,7 @@ public class ImportInvoice extends SvrProcess {
 				"SET C_BPartner_ID=" +
 					"(SELECT C_BPartner_ID FROM C_BPartner bp" + 
 					" WHERE trim(translate(o.taxid,'-',''))=trim(translate(bp.taxid,'-','')) AND o.AD_Client_ID=bp.AD_Client_ID AND ROWNUM=1) " + 
-				"WHERE t IS NOT NULL AND I_IsImported<>'Y'" ).append( clientCheck );
+				"WHERE taxid IS NOT NULL and c_bpartner_id is null AND I_IsImported<>'Y'" ).append( clientCheck );
 		
 		no = DB.executeUpdate( sql.toString());
 		log.log(Level.FINE,"doIt - Set BP from Value=" + no);
