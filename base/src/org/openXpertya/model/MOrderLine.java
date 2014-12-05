@@ -56,6 +56,9 @@ public class MOrderLine extends X_C_OrderLine {
 	 */
 	private boolean controlStock = true;
 	
+	/** Bypass para que no actualice el precio al guardar la línea */
+	private boolean updatePriceInSave = true;
+	
 	/**
 	 * Lugar de Retiro. Utilizado para evitar reserva de stock en pedidos que se
 	 * retiran por TPV. Por defecto el lugar de retiro es Almacén lo cual
@@ -164,7 +167,7 @@ public class MOrderLine extends X_C_OrderLine {
 
     /** Descripción de Campos */
 
-    private int m_M_PriceList_ID = 0;
+    public int m_M_PriceList_ID = 0;
 
     //
 
@@ -215,7 +218,7 @@ public class MOrderLine extends X_C_OrderLine {
 
     public void setHeaderInfo( MOrder order ) {
         m_precision      = new Integer( order.getPrecision());
-        m_M_PriceList_ID = order.getM_PriceList_ID();
+        m_M_PriceList_ID = order.getM_PriceList_ID(); 
         m_IsSOTrx        = order.isSOTrx();
     }    // setHeaderInfo
 
@@ -722,48 +725,49 @@ public class MOrderLine extends X_C_OrderLine {
 
         } else    // Set/check Product Price
         {
-
-        	// Validación de precios positivos.
-        	if(getPriceActual().compareTo(BigDecimal.ZERO) < 0) {
-        		log.saveError( "Error",Msg.getMsg( getCtx(),"PriceUnderZero" ));
-        		return false;
-        	}
+        	MDocType docType = MDocType.get(getCtx(), o.getC_DocTypeTarget_ID());
         	
-        	if(getPriceList().compareTo(BigDecimal.ZERO) < 0) {
-        		log.saveError( "Error",Msg.parseTranslation( getCtx(),"@PriceUnderZero@ (@PriceList@)" ));
-        		return false;
+        	if(isUpdatePriceInSave()){
+	        	// Validación de precios positivos.
+	        	if(getPriceActual().compareTo(BigDecimal.ZERO) < 0) {
+	        		log.saveError( "Error",Msg.getMsg( getCtx(),"PriceUnderZero" ));
+	        		return false;
+	        	}
+	        	
+	        	if(getPriceList().compareTo(BigDecimal.ZERO) < 0) {
+	        		log.saveError( "Error",Msg.parseTranslation( getCtx(),"@PriceUnderZero@ (@PriceList@)" ));
+	        		return false;
+	        	}
+	        	
+	        	// Para pedidos a proveedor no se permite tener artículos repetidos
+	        	String whereClause = "c_order_id = ? AND m_product_id = ?";
+	        	whereClause += newRecord?"":" AND c_orderline_id <> "+getC_OrderLine_ID();
+				if (MDocType.DOCTYPE_PurchaseOrder.equals(docType.getDocTypeKey())
+						&& PO.existRecordFor(getCtx(), get_TableName(),
+								whereClause, new Object[] { getC_Order_ID(), getM_Product_ID() },
+								get_TrxName())) {
+	        		log.saveError("AlreadyExistsProductInADocumentLine", "");
+	        		return false;
+	        	}
+	        	
+	        	// Set Price if Actual = 0
+	
+	            if( (m_productPrice == null) && (Env.ZERO.compareTo( getPriceActual()) == 0) && (Env.ZERO.compareTo( getPriceList()) == 0) ) {
+	                setPrice();
+	            }
+	
+	            // Check if on Price list
+	
+	            if( m_productPrice == null ) {
+	                getProductPricing( m_M_PriceList_ID );
+	            }
+	
+	            if( !m_productPrice.isCalculated()) {
+	                log.saveError( "Error",Msg.getMsg( getCtx(),"ProductNotOnPriceList" ));
+	
+	                return false;
+	            }
         	}
-            
-            MDocType docType = MDocType.get(getCtx(), o.getC_DocTypeTarget_ID());
-        	
-        	// Para pedidos a proveedor no se permite tener artículos repetidos
-        	String whereClause = "c_order_id = ? AND m_product_id = ?";
-        	whereClause += newRecord?"":" AND c_orderline_id <> "+getC_OrderLine_ID();
-			if (MDocType.DOCTYPE_PurchaseOrder.equals(docType.getDocTypeKey())
-					&& PO.existRecordFor(getCtx(), get_TableName(),
-							whereClause, new Object[] { getC_Order_ID(), getM_Product_ID() },
-							get_TrxName())) {
-        		log.saveError("AlreadyExistsProductInADocumentLine", "");
-        		return false;
-        	}
-        	
-        	// Set Price if Actual = 0
-
-            if( (m_productPrice == null) && (Env.ZERO.compareTo( getPriceActual()) == 0) && (Env.ZERO.compareTo( getPriceList()) == 0) ) {
-                setPrice();
-            }
-
-            // Check if on Price list
-
-            if( m_productPrice == null ) {
-                getProductPricing( m_M_PriceList_ID );
-            }
-
-            if( !m_productPrice.isCalculated()) {
-                log.saveError( "Error",Msg.getMsg( getCtx(),"ProductNotOnPriceList" ));
-
-                return false;
-            }
             
             // Verificación de restricción del lugar de retiro del artículo según lo indicado
             // por el tipo de documento.
@@ -1741,6 +1745,14 @@ public class MOrderLine extends X_C_OrderLine {
 
 	public void setControlStock(boolean controlStock) {
 		this.controlStock = controlStock;
+	}
+
+	public boolean isUpdatePriceInSave() {
+		return updatePriceInSave;
+	}
+
+	public void setUpdatePriceInSave(boolean updatePriceInSave) {
+		this.updatePriceInSave = updatePriceInSave;
 	}
 }    // MOrderLine
 

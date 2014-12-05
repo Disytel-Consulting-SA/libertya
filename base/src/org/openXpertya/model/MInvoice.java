@@ -135,6 +135,12 @@ public class MInvoice extends X_C_Invoice implements DocAction {
 	 */
 	private boolean skipManualGeneralDiscountValidation = false;
 
+	/***
+	 * Boolean que determina si es posible setear la lista de precio del pedido
+	 * al setearlo
+	 */
+	private boolean allowSetOrderPriceList = true;
+	
 	/**
 	 * Descripción de Método
 	 * 
@@ -1148,7 +1154,9 @@ public class MInvoice extends X_C_Invoice implements DocAction {
 		// Preserva la moneda ya que al cambiar la tarifa cambia la moneda
 		// tambien
 		int currentCurrencyID = getC_Currency_ID();
-		setM_PriceList_ID(order.getM_PriceList_ID());
+		if(isAllowSetOrderPriceList()){
+			setM_PriceList_ID(order.getM_PriceList_ID());
+		}
 		setC_Currency_ID(currentCurrencyID);
 
 		setIsTaxIncluded(order.isTaxIncluded());
@@ -3676,6 +3684,10 @@ public class MInvoice extends X_C_Invoice implements DocAction {
 						orderLine.setQtyInvoiced(orderLine.getQtyInvoiced()
 								.add(qtyInvoiced));
 						orderLine.setControlStock(false);
+						orderLine.setUpdatePriceInSave(false);
+						if(!isAllowSetOrderPriceList()){
+							orderLine.m_M_PriceList_ID = getM_PriceList_ID();
+						}
 						if (!orderLine.save()) {
 							m_processMsg = CLogger.retrieveErrorAsString();
 							return DocAction.STATUS_Invalid;
@@ -5989,6 +6001,14 @@ public class MInvoice extends X_C_Invoice implements DocAction {
 	public void setSkipManualGeneralDiscountValidation(
 			boolean skipManualGeneralDiscountValidation) {
 		this.skipManualGeneralDiscountValidation = skipManualGeneralDiscountValidation;
+	}
+
+	public boolean isAllowSetOrderPriceList() {
+		return allowSetOrderPriceList;
+	}
+
+	public void setAllowSetOrderPriceList(boolean allowSetOrderPriceList) {
+		this.allowSetOrderPriceList = allowSetOrderPriceList;
 	}
 
 } // MInvoice
