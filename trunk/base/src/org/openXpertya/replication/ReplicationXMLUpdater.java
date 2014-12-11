@@ -24,6 +24,7 @@ import org.openXpertya.model.X_C_Cash;
 import org.openXpertya.model.X_C_CashLine;
 import org.openXpertya.model.X_C_Invoice;
 import org.openXpertya.model.X_C_Order;
+import org.openXpertya.model.X_C_OrderLine;
 import org.openXpertya.model.X_M_Transfer;
 import org.openXpertya.plugin.common.PluginUtils;
 import org.openXpertya.plugin.install.PluginXMLUpdater;
@@ -422,6 +423,12 @@ public class ReplicationXMLUpdater extends PluginXMLUpdater {
 			 * No replicar el campo M_Inventory_ID para la tabla M_Transfer
 			 */
 			else if (X_M_Transfer.Table_Name.equalsIgnoreCase(tableName) && "m_inventory_id".equalsIgnoreCase(column.getName())) {
+				changeGroup.getColumns().remove(i);
+			}
+			/*
+			 * No replicar el campo Ref_OrderLine_ID para la tabla C_OrderLine_ID
+			 */
+			else if (X_C_OrderLine.Table_Name.equalsIgnoreCase(tableName) && "ref_orderline_id".equalsIgnoreCase(column.getName())) {
 				changeGroup.getColumns().remove(i);
 			}
 		}
