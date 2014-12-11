@@ -986,7 +986,9 @@ public class MCash extends X_C_Cash implements DocAction {
     	if(processAction.equals(MCash.DOCACTION_Complete) && status){
 			// Guardar la caja con el nuevo estado a fin de recalcular
 			// correctamente el credito disponible
-    		this.save();
+    		if(!save()){
+				log.severe(CLogger.retrieveErrorAsString());
+			}
     		// Actualizar el crédito de las entidades comerciales    
     		Set<Integer> keys = getCcBPUpdates().keySet();
     		Map<PO, Object> aditionalResults;
