@@ -3004,7 +3004,9 @@ public final class MPayment extends X_C_Payment implements DocAction,ProcessCall
 				&& status) {
 			// Guardar el payment con el nuevo estado a fin de recalcular
 			// correctamente el crédito de la entidad comercial
-			this.save();
+			if(!save()){
+				log.severe(CLogger.retrieveErrorAsString());
+			}
 			// Si debo actualizar el saldo de la entidad comercial
 			if(isUpdateBPBalance() && isConfirmAditionalWorks()){
 				MBPartner bp = new MBPartner(getCtx(), getC_BPartner_ID(), get_TrxName());

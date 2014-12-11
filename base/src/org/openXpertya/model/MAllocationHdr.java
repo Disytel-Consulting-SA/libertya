@@ -1256,7 +1256,10 @@ public class MAllocationHdr extends X_C_AllocationHdr implements DocAction {
 				&& status) {
 			// Guardar el payment con el nuevo estado a fin de recalcular
 			// correctamente el crédito de la entidad comercial
-			this.save();
+			if(!save()){
+				log.severe(CLogger.retrieveErrorAsString());
+			}
+			
 			if (!Util.isEmpty(getC_BPartner_ID(), true) && isUpdateBPBalance()) {
 				MBPartner bp = new MBPartner(getCtx(), getC_BPartner_ID(), get_TrxName());
 				// Obtengo el manager actual

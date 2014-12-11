@@ -3460,7 +3460,9 @@ public class MInvoice extends X_C_Invoice implements DocAction {
 
 			// Guardar la factura con el nuevo estado a fin de recalcular
 			// correctamente el credito disponible
-			this.save();
+			if(!save()){
+				log.severe(CLogger.retrieveErrorAsString());
+			}
 
 			// Si es pedido de ventas y se paga a crédito, setear el crédito
 			// recalculado
