@@ -84,7 +84,7 @@ Ejemplos de cambios
 		
 		<!-- 20141007-1432 Reglas de filtrado para MultiOrgTransactionFilter -->
 		<mkdir dir="${TARGET_DIR}/utils/replicacion/filters" />
-		<copy file="${SOURCE_DIR}/MultiOrgTransactionFilterRules.properties" todir="${TARGET_DIR}/utils/replicacion/filters" overwrite="yes" />
+		<copy file="${SOURCE_DIR}/MultiOrgTransactionFilterRulesTemplate.properties" todir="${TARGET_DIR}/utils/replicacion/filters" overwrite="yes" />
 		
 		<!-- 20141125-1140 El cliente de replicacion sufrio ampliaciones (especificar mas de un host, omitir filtros) -->
 		<copy file="${SOURCE_DIR}/repClient.jar" todir="${TARGET_DIR}/utils/replicacion/lib" overwrite="yes" />
@@ -92,6 +92,8 @@ Ejemplos de cambios
 		<!-- 20141201-0934 El script se posiciona en el directorio correcto a fin de hacer flock adecuadamente -->
 		<copy file="${SOURCE_DIR}/repClient.sh" todir="${TARGET_DIR}/utils/replicacion" overwrite="yes" />
 		
+		<!-- 20141211-0741 Propagar OXP.jar y OXPSLib.jar a LYWeb y LYWS para independencia del contexto. -->
+		<copy file="${SOURCE_DIR}/build.xml" todir="${TARGET_DIR}/" overwrite="yes" />
 				
     </target>
     
