@@ -279,7 +279,7 @@ public class MAllocationHdr extends X_C_AllocationHdr implements DocAction {
 
             // setDocumentNo (null);
 
-            setDateTrx( new Timestamp( System.currentTimeMillis()));
+            setDateTrx( Env.getDate());
             setDateAcct( getDateTrx());
             setDocAction( DOCACTION_Complete );    // CO
             setDocStatus( DOCSTATUS_Drafted );     // DR

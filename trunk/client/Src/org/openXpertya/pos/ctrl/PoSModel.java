@@ -12,6 +12,7 @@ import java.util.Set;
 
 import org.openXpertya.model.FiscalDocumentPrint;
 import org.openXpertya.model.FiscalDocumentPrintListener;
+import org.openXpertya.model.MCreditException;
 import org.openXpertya.model.MPOSJournal;
 import org.openXpertya.model.MProduct;
 import org.openXpertya.pos.exceptions.InsufficientBalanceException;
@@ -40,6 +41,7 @@ import org.openXpertya.pos.model.User;
 import org.openXpertya.print.fiscal.FiscalPrinterEventListener;
 import org.openXpertya.process.DocActionStatusListener;
 import org.openXpertya.util.ASyncProcess;
+import org.openXpertya.util.Env;
 import org.openXpertya.util.Util;
 
 public class PoSModel {
@@ -189,7 +191,7 @@ public class PoSModel {
 	public String validateSearchToday(){		
 		String where = "";		
 		if (getConnectionState().getPoSCOnfig().isSearchToday()==true){
-			Date TODAY = new Date(System.currentTimeMillis());
+			Date TODAY = new Date(Env.getDate().getTime());
 			SimpleDateFormat sdf = new SimpleDateFormat("yyyy/MM/dd");
 			where = " AND date_trunc('day',C_Order.DateOrdered) = '"+sdf.format(TODAY)+"'::date ";
 		}

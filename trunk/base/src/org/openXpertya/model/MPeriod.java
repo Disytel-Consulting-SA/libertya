@@ -556,7 +556,7 @@ public class MPeriod extends X_C_Period implements ITime{
 
             Timestamp first = TimeUtil.addDays( getStartDate(),-as.getPeriod_OpenFuture());
             Timestamp last = TimeUtil.addDays( getEndDate(),as.getPeriod_OpenHistory());
-            Timestamp today = new Timestamp( System.currentTimeMillis());
+            Timestamp today = Env.getDate();
 
             if( today.before( first )) {
                 log.warning( "Today before first day - " + first );
