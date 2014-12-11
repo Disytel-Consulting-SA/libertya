@@ -491,8 +491,20 @@
   	
 	<copy file="${basedir}/lib/OXPRoot.ear" todir="${DEPLOY_APPS_OXP}"/>
 	<copy file="${basedir}/lib/OXPApps.ear" todir="${DEPLOY_APPS_OXP}"/>
+	
+	<!-- Incluir OXP.jar y OXPSLib.jar en LYWeb (si es que existe) para independencia del contexto. Archivo default: webui.war -->
+	<war destfile="${basedir}/lib/webui.war" update="true" >
+		<lib dir="${basedir}/lib">
+			<include name="OXP.jar"/>
+			<include name="OXPSLib.jar"/>
+		</lib>
+   	</war>
 	<copy file="${basedir}/lib/webui.war" todir="${DEPLOY_APPS_OXP}"/>
-	  	
+
+	<!-- Incluir OXP.jar y OXPSLib.jar en LYWS (exista o no) para independencia del contexto.  Directorio default: axis.war -->
+	<copy file="${basedir}/lib/OXP.jar" todir="${DEPLOY_APPS_OXP}/axis.war/WEB-INF/lib" overwrite="yes" failonerror="no"/>
+	<copy file="${basedir}/lib/OXPSLib.jar" todir="${DEPLOY_APPS_OXP}/axis.war/WEB-INF/lib" overwrite="yes" failonerror="no"/>
+		
   </target>
 		
 	
