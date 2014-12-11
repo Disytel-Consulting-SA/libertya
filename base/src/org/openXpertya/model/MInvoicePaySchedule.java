@@ -494,7 +494,7 @@ public class MInvoicePaySchedule extends X_C_InvoicePaySchedule {
      */
 
     public boolean isVencido() {
-    	return isVencido(new Timestamp(System.currentTimeMillis()));
+    	return isVencido(Env.getDate());
     }
 
 	/**

@@ -35,6 +35,7 @@ import org.openXpertya.model.MCashLine;
 import org.openXpertya.model.MCategoriaIva;
 import org.openXpertya.model.MCheckCuitControl;
 import org.openXpertya.model.MConversionRate;
+import org.openXpertya.model.MCreditException;
 import org.openXpertya.model.MDocType;
 import org.openXpertya.model.MEntidadFinanciera;
 import org.openXpertya.model.MEntidadFinancieraPlan;
@@ -573,7 +574,7 @@ public class PoSOnline extends PoSConnectionState {
 	private void clearState(Order order) {
 		
 		ctx = Env.getCtx();
-		invoiceDate = new Timestamp(System.currentTimeMillis());
+		invoiceDate = Env.getDate();
 		
 //		if (trx != null) {
 //			try {
@@ -2571,7 +2572,7 @@ public class PoSOnline extends PoSConnectionState {
 
 	@Override
 	public Tax getProductTax(int productId, int locationID) {
-		Timestamp now = new Timestamp(System.currentTimeMillis());
+		Timestamp now = Env.getDate();
 		BigDecimal taxRate;
 		
 		// Se obtiene el Tax del producto.
@@ -2782,7 +2783,7 @@ public class PoSOnline extends PoSConnectionState {
         }
         // Today
         if( priceDate == null ) {
-            priceDate = new Timestamp( System.currentTimeMillis());
+            priceDate = Env.getDate();
         }
         int versionID = 0;
         PriceListVersion version = null;

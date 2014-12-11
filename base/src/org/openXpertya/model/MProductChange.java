@@ -346,7 +346,7 @@ public class MProductChange extends X_M_ProductChange implements DocAction {
 		// artículos. Es posible que sea necesario cambiar esto por la fecha del cambio
 		// o tal vez que depende de alguna configuración externa, que indique que fecha
 		// utilizar para los precios.
-		return new Timestamp(System.currentTimeMillis());
+		return Env.getDate();
 	}
 	
 	/**
