@@ -33,22 +33,19 @@ public class MassiveUpdateBPartnerBalance extends SvrProcess {
 		Integer updated = 0;
 		Map<String, String> errors = new HashMap<String, String>();
 		MBPartner bpartner;
-		log.printDebug("All BP", "Inicio");
 		try{
 			while(rs.next()){
 				Trx.getTrx(get_TrxName()).start();
 				bpartner = new MBPartner(getCtx(), rs.getInt("C_BPartner_ID"), get_TrxName());
 				bpartnerBalanceProcess.setBpartner(bpartner);
-				log.printDebug(bpartner.getValue(), "Inicio");
 				try{
 					bpartnerBalanceProcess.doIt();
 					updated++;
 					Trx.getTrx(get_TrxName()).commit();
 				} catch(Exception e1){
-					errors.put(bpartner.getValue(), e1.getMessage());
+					errors.put(bpartner.getValue(), bpartner.getValue()+": "+e1.getMessage());
 					Trx.getTrx(get_TrxName()).rollback();
 				}
-				log.printDebug(bpartner.getValue(), "End");
 			}
 		} catch(Exception e){
 			throw e;
@@ -60,7 +57,6 @@ public class MassiveUpdateBPartnerBalance extends SvrProcess {
 				throw e2;
 			}
 		}
-		log.printDebug("All BP", "End");
 		return getMsg(updated, errors);
 	}
 
