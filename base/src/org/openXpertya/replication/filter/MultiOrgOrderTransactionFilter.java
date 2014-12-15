@@ -46,10 +46,9 @@ public class MultiOrgOrderTransactionFilter extends MultiOrgTransactionFilter {
 			return;
 		MDocType docType = new MDocType(Env.getCtx(), anOrder.getC_DocType_ID(), trxName);
 
-		// Es uno de los 3 casos en que se debe enviar únicamente a central?
+		// Es uno de los 2 casos en que se debe enviar únicamente a central?
 		if (MDocType.DOCTYPE_Proposal.equals(docType.getDocTypeKey()) ||
-				MDocType.DOCTYPE_Pedido_Transferible.equals(docType.getDocTypeKey()) ||
-				MDocType.DOCTYPE_Pedido_Transferido.equals(docType.getDocTypeKey())) {
+				MDocType.DOCTYPE_Pedido_Transferible.equals(docType.getDocTypeKey())) {
 			repArraySendToCentralOnly(group);
 		} else {
 			super.applyFilter(trxName, group);
