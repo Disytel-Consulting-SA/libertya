@@ -24,6 +24,7 @@ import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
@@ -759,6 +760,16 @@ public final class MPayment extends X_C_Payment implements DocAction,ProcessCall
 			log.saveError("MandatoryCreditCardPlan", "");
 			return false;
 		}
+		
+		//Para los pagos con tarjeta de credito, seteo en duedate la fecha de transacción sumando los días 
+		//de acreditación para el plan de financiación si es que tiene.
+			if (getTenderType().equals("C")){
+				MEntidadFinancieraPlan mentidadfinancieraplan = new MEntidadFinancieraPlan(getCtx(), getM_EntidadFinancieraPlan_ID(), get_TrxName());
+				Calendar calendario = Calendar.getInstance();
+				calendario.setTimeInMillis(getDateAcct().getTime());
+				calendario.add(Calendar.DATE, mentidadfinancieraplan.getAccreditationDays());
+				setDueDate(new Timestamp(calendario.getTimeInMillis()));
+			}
                 
         return true;
     }    // beforeSave
