@@ -33,14 +33,11 @@ import org.openXpertya.grid.CreateFromModel.CreateFromSaveException;
 import org.openXpertya.grid.CreateFromModel.Payment;
 import org.openXpertya.grid.CreateFromModel.SourceEntity;
 import org.openXpertya.grid.ed.VLookup;
-import org.openXpertya.model.MBankStatement;
-import org.openXpertya.model.MBankStatementLine;
+import org.openXpertya.grid.ed.VNumber;
 import org.openXpertya.model.MLookup;
 import org.openXpertya.model.MLookupFactory;
-import org.openXpertya.model.MPayment;
 import org.openXpertya.model.MTab;
 import org.openXpertya.model.PO;
-import org.openXpertya.util.CLogger;
 import org.openXpertya.util.DB;
 import org.openXpertya.util.DisplayType;
 import org.openXpertya.util.Env;
@@ -156,11 +153,12 @@ public class VCreateFromStatement extends VCreateFrom implements VetoableChangeL
     private void loadBankAccount( int C_BankAccount_ID ) {
         log.config( "C_BankAccount_ID=" + C_BankAccount_ID );
 
-        List<Payment> data = new ArrayList<Payment>();
+    //    List<Payment> data = new ArrayList<Payment>();
         StringBuffer sql = getHelper().loadBankAccountQuery(); 
+        loadBank(sql, C_BankAccount_ID, null);
 
         // Get StatementDate
-        Timestamp ts = ( Timestamp )p_mTab.getValue( "StatementDate" );
+    /*    Timestamp ts = ( Timestamp )p_mTab.getValue( "StatementDate" );
 
         if( ts == null ) {
             ts = new Timestamp( System.currentTimeMillis());
@@ -191,7 +189,7 @@ public class VCreateFromStatement extends VCreateFrom implements VetoableChangeL
     		}	catch (Exception e) {}
     	}
 
-    	loadTable(data);
+    	loadTable(data);*/
     }    // loadBankAccount
 
     /**
@@ -221,7 +219,7 @@ public class VCreateFromStatement extends VCreateFrom implements VetoableChangeL
 
     protected void save() throws CreateFromSaveException {
     	int C_BankStatement_ID = (( Integer )p_mTab.getValue( "C_BankStatement_ID" )).intValue();
-    	getHelper().save(C_BankStatement_ID, getTrxName(), getSelectedSourceEntities(), this);
+    	getHelper().save(C_BankStatement_ID, getTrxName(), getSelectedSourceEntities(), this, (Integer) nroLote.getValue());
     }    // save
     
 	@Override
@@ -317,11 +315,92 @@ public class VCreateFromStatement extends VCreateFrom implements VetoableChangeL
 		
 	}
 
-
 	@Override
 	protected boolean addSecurityValidation() {
 		return true;
 	}
+
+	protected void filtrar(VNumber numeroLote, Boolean agrupacioncupones) {
+		int C_BankAccount_ID = Env.getContextAsInt(Env.getCtx(), p_WindowNo,
+				"C_BankAccount_ID");
+	 	if (numeroLote.getValue() == null){
+	 		if (agrupacioncupones){
+	 			loadBankAccountGrouped(C_BankAccount_ID);
+	 		}
+	 		else
+	 			loadBankAccount(C_BankAccount_ID);
+	 	}
+	 	else {
+	 		if (agrupacioncupones)
+	 			loadBankAccountWithFilterGrouped(C_BankAccount_ID,(Integer)numeroLote.getValue());
+	 		else
+	 			loadBankAccountWithFilter(C_BankAccount_ID,(Integer)numeroLote.getValue());
+	 	}
+	}
+
+	private void loadBankAccountWithFilterGrouped(int C_BankAccount_ID,
+			Integer numerolote) {
+		StringBuffer sql = getHelper().loadBankAccountWithFilterGrouped();
+		loadBank(sql,C_BankAccount_ID,numerolote);
+	}
+
+	private void loadBankAccountGrouped(int C_BankAccount_ID) {
+		StringBuffer sql = getHelper().loadBankAccountGrouped();
+		loadBank(sql,C_BankAccount_ID,null);
+	}
+
+	private void loadBankAccountWithFilter(int C_BankAccount_ID, Integer nrolote) {
+		StringBuffer sql = getHelper().loadBankAccountQueryWithFilter();
+		loadBank(sql,C_BankAccount_ID,nrolote);
+	}
+	
+	private void loadBank(StringBuffer sql, int C_BankAccount_ID, Integer nrolote) {
+		List<Payment> data = new ArrayList<Payment>();
+		// Get StatementDate
+		Timestamp ts = (Timestamp) p_mTab.getValue("StatementDate");
+
+		if (ts == null) {
+			ts = new Timestamp(System.currentTimeMillis());
+		}
+		PreparedStatement pstmt = null;
+		ResultSet rs = null;
+
+		try {
+			pstmt = DB.prepareStatement(sql.toString());
+			pstmt.setTimestamp(1, ts);
+			pstmt.setInt(2, C_BankAccount_ID);
+			if (nrolote != null)
+				pstmt.setString(3, nrolote.toString());
+			rs = pstmt.executeQuery();
+
+			while (rs.next()) {
+				Payment payment = new Payment();
+				getHelper().loadPayment(payment, rs);
+				data.add(payment);
+			}
+
+			rs.close();
+			pstmt.close();
+		} catch (SQLException e) {
+			log.log(Level.SEVERE, sql.toString(), e);
+		} finally {
+			try {
+				if (rs != null)
+					rs.close();
+				if (pstmt != null)
+					pstmt.close();
+			} catch (Exception e) {
+			}
+		}
+
+		loadTable(data);
+	}
+
+	@Override
+	protected void agruparPorCupones() {
+		
+	}
+	
 }    // VCreateFromStatement
 
 

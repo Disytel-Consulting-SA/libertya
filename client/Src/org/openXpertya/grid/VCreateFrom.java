@@ -59,6 +59,7 @@ import org.openXpertya.grid.CreateFromModel.SourceEntity;
 import org.openXpertya.grid.VCreateFromShipment.DocumentLineTableModelFromShipment;
 import org.openXpertya.grid.ed.VLocator;
 import org.openXpertya.grid.ed.VLookup;
+import org.openXpertya.grid.ed.VNumber;
 import org.openXpertya.minigrid.MiniTable;
 import org.openXpertya.model.MLookup;
 import org.openXpertya.model.MLookupFactory;
@@ -66,7 +67,6 @@ import org.openXpertya.model.MOrder;
 import org.openXpertya.model.MRole;
 import org.openXpertya.model.MTab;
 import org.openXpertya.model.X_AD_Process;
-import org.openXpertya.model.X_C_Payment;
 import org.openXpertya.plugin.common.PluginCreateFromUtils;
 import org.openXpertya.util.CLogger;
 import org.openXpertya.util.DB;
@@ -208,6 +208,10 @@ public abstract class VCreateFrom extends JDialog implements ActionListener,Tabl
 
     private JLabel bankAccountLabel = new JLabel();
 
+    private JLabel nroLoteLabel = new JLabel();
+    
+    protected VNumber nroLote = new VNumber();
+    
     /** Descripción de Campos */
 
     protected CPanel parameterStdPanel = new CPanel();
@@ -219,6 +223,8 @@ public abstract class VCreateFrom extends JDialog implements ActionListener,Tabl
     /** Descripción de Campos */
 
     protected VLookup bankAccountField;
+    
+    protected CCheckBox agrupacionporcupones = new CCheckBox();
 
     protected CCheckBox automatico = new CCheckBox();
     
@@ -329,6 +335,12 @@ public abstract class VCreateFrom extends JDialog implements ActionListener,Tabl
         //
 
         bankAccountLabel.setText( Msg.translate( Env.getCtx(),"C_BankAccount_ID" ));
+        nroLoteLabel.setText("Nro de Lote");
+ //       nroLote.setColumns(3); 
+        nroLote.setDisplayType(DisplayType.Integer);
+        nroLote.addActionListener(this);
+        agrupacionporcupones.setText("Agrupación por cupones");
+        agrupacionporcupones.addActionListener(this);
         bPartnerLabel.setText( Msg.getElement( Env.getCtx(),"C_BPartner_ID" ));
         orderLabel.setText( Msg.getElement( Env.getCtx(),"C_Order_ID",false ));
         invoiceLabel.setText( Msg.getElement( Env.getCtx(),"C_Invoice_ID",false ));
@@ -344,7 +356,10 @@ public abstract class VCreateFrom extends JDialog implements ActionListener,Tabl
         this.getContentPane().add( parameterPanel,BorderLayout.NORTH );
         parameterPanel.add( parameterBankPanel,BorderLayout.NORTH );
         parameterBankPanel.add( bankAccountLabel,new GridBagConstraints( 0,0,1,1,0.0,0.0,GridBagConstraints.EAST,GridBagConstraints.NONE,new Insets( 5,5,5,5 ),0,0 ));
-
+        parameterBankPanel.add( nroLoteLabel,new GridBagConstraints( 3,0,1,1,0.0,0.0,GridBagConstraints.EAST,GridBagConstraints.NONE,new Insets( 5,5,5,5 ),0,0 ));
+        parameterBankPanel.add( nroLote, new GridBagConstraints( 4,0,1,1,0.0,0.0,GridBagConstraints.EAST,GridBagConstraints.NONE,new Insets( 5,5,5,5 ),0,0 ));
+        parameterBankPanel.add( agrupacionporcupones, new GridBagConstraints(5, 0, 1, 1, 0.0, 0.0
+    			,GridBagConstraints.EAST, GridBagConstraints.NONE, new Insets(5, 5, 5, 5), 0, 0));
         if( bankAccountField != null ) {
             parameterBankPanel.add( bankAccountField,new GridBagConstraints( 1,0,1,1,0.0,0.0,GridBagConstraints.WEST,GridBagConstraints.HORIZONTAL,new Insets( 5,0,5,5 ),0,0 ));
         }
@@ -482,6 +497,13 @@ public abstract class VCreateFrom extends JDialog implements ActionListener,Tabl
 		if (e.getSource().equals(automatico))
 					selectall();
 		//  OK - Save
+		
+		if (e.getSource().equals(agrupacionporcupones))
+			filtrar(nroLote, (Boolean)agrupacionporcupones.getValue());
+		
+		if (e.getSource().equals(nroLote))
+		//	filtrarPorNroDeLote((Integer)nroLote.getValue());
+			filtrar(nroLote, (Boolean)agrupacionporcupones.getValue());
 
         if( e.getActionCommand().equals( ConfirmPanel.A_OK )) {
         	doSave();
@@ -497,7 +519,19 @@ public abstract class VCreateFrom extends JDialog implements ActionListener,Tabl
 
     }    // actionPerformed
 
-    /**
+    protected void filtrar(VNumber nroLote2, Boolean agrupacionporcupones2) {
+    	//Acá filtra
+	};
+
+	protected void filtrarPorNroDeLote(Integer nrolote){
+    	//Acá filtra por número de lote
+    };
+
+    protected void agruparPorCupones(){
+    	//Acá agrupa por cupones
+    };
+
+	/**
      * Descripción de Método
      *
      *
