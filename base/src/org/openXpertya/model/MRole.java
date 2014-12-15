@@ -236,6 +236,19 @@ public final class MRole extends X_AD_Role
 		super(ctx, rs, trxName);
 	}	//	MRole
 
+	@Override
+	protected boolean beforeSave(boolean newRecord) {
+		setAllow_Info_Asset(isInfoAssetAccess());
+		setAllow_Info_BPartner(isInfoBPartnerAccess());
+		setAllow_Info_CashJournal(isInfoCashLineAccess());
+		setAllow_Info_InOut(isInfoInOutAccess());
+		setAllow_Info_Invoice(isInfoInvoiceAccess());
+		setAllow_Info_Order(isInfoOrderAccess());
+		setAllow_Info_Payment(isInfoPaymentAccess());
+		setAllow_Info_Product(isInfoProductAccess());
+		setAllow_Info_Schedule(isInfoScheduleAccess());
+		return true;
+	}
 	
 	/**
 	 * 	After Save
