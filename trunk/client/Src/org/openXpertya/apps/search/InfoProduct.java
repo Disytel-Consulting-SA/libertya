@@ -1265,7 +1265,7 @@ public class InfoProduct extends Info implements ActionListener {
 		return Integer.parseInt(pair.getID());
 	}
 	
-	private boolean validateListPrice(int pricelist){
+	public static boolean validateListPrice(int pricelist){
 		boolean res=false;
 		MPriceListVersion plv= new MPriceListVersion(Env.getCtx(),pricelist,null);
 		MRole mrole=new MRole(Env.getCtx(),Env.getAD_Role_ID(Env.getCtx()),null);
