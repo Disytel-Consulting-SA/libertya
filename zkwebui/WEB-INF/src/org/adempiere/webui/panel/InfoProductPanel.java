@@ -718,12 +718,16 @@ public class InfoProductPanel extends InfoPanel implements EventListener
 			+ " ORDER BY M_PriceList_Version.Name";
 		try
 		{
-			pickPriceList.appendItem("",new Integer(0));
+			// TODO: Mejorar MVC.  Actualmente se apoya en el validateListPrice de InfoProduct
+			if (InfoProduct.validateListPrice(0))
+				pickPriceList.appendItem("",new Integer(0));
+			
 			PreparedStatement pstmt = DB.prepareStatement(SQL, null);
 			ResultSet rs = pstmt.executeQuery();
 			while (rs.next())
 			{
-				pickPriceList.appendItem(rs.getString(2),new Integer(rs.getInt(1)));
+				if (InfoProduct.validateListPrice(rs.getInt(1)))
+					pickPriceList.appendItem(rs.getString(2),new Integer(rs.getInt(1)));
 			}
 			rs.close();
 			pstmt.close();
@@ -1282,7 +1286,7 @@ public class InfoProductPanel extends InfoPanel implements EventListener
 		if ("FRIE".equals(client.getValue()))
 		{
 			final ColumnInfo[] frieLayout = {
-				new ColumnInfo(" ", "p.M_Product_ID", IDColumn.class),
+				new ColumnInfo(" ", "DISTINCT(p.M_Product_ID)", IDColumn.class),
 				new ColumnInfo(Msg.translate(Env.getCtx(), "Name"), "p.Name", String.class),
 				new ColumnInfo(Msg.translate(Env.getCtx(), "QtyAvailable"), "bomQtyAvailable(p.M_Product_ID,?,0) AS QtyAvailable", Double.class, true, true, null),
 				new ColumnInfo(Msg.translate(Env.getCtx(), "PriceList"), "bomPriceList(p.M_Product_ID, pr.M_PriceList_Version_ID) AS PriceList",  BigDecimal.class),
