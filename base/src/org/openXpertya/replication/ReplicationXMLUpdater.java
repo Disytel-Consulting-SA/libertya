@@ -431,6 +431,12 @@ public class ReplicationXMLUpdater extends PluginXMLUpdater {
 			else if (X_C_OrderLine.Table_Name.equalsIgnoreCase(tableName) && "ref_orderline_id".equalsIgnoreCase(column.getName())) {
 				changeGroup.getColumns().remove(i);
 			}
+			/*
+			 * No replicar el campo Ref_Order_ID para la tabla C_Order_ID
+			 */
+			else if (X_C_Order.Table_Name.equalsIgnoreCase(tableName) && "ref_order_id".equalsIgnoreCase(column.getName())) {
+				changeGroup.getColumns().remove(i);
+			}
 		}
 	}
 	
