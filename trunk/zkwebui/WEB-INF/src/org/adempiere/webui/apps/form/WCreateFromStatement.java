@@ -18,19 +18,14 @@ import org.adempiere.webui.editor.WSearchEditor;
 import org.adempiere.webui.event.ValueChangeEvent;
 import org.adempiere.webui.event.ValueChangeListener;
 import org.adempiere.webui.window.FDialog;
-import org.openXpertya.grid.CreateFromStatementModel;
 import org.openXpertya.grid.CreateFromModel.CreateFromSaveException;
 import org.openXpertya.grid.CreateFromModel.ListedSourceEntityInterface;
 import org.openXpertya.grid.CreateFromModel.Payment;
-import org.openXpertya.grid.CreateFromModel.SourceEntity;
-import org.openXpertya.model.MBankStatement;
-import org.openXpertya.model.MBankStatementLine;
+import org.openXpertya.grid.CreateFromStatementModel;
 import org.openXpertya.model.MLookup;
 import org.openXpertya.model.MLookupFactory;
-import org.openXpertya.model.MPayment;
 import org.openXpertya.model.MTab;
 import org.openXpertya.model.PO;
-import org.openXpertya.util.CLogger;
 import org.openXpertya.util.DB;
 import org.openXpertya.util.DisplayType;
 import org.openXpertya.util.Env;
@@ -91,7 +86,6 @@ public class WCreateFromStatement  extends WCreateFrom {
 		        // BankAccount
 		        if( e.getPropertyName() == "C_BankAccount_ID" ) {
 		            int C_BankAccount_ID = (( Integer )e.getNewValue()).intValue();
-		            loadBankAccount( C_BankAccount_ID );
 		        }
 		        window.tableChanged( null );
 			}
@@ -136,11 +130,13 @@ public class WCreateFromStatement  extends WCreateFrom {
     private void loadBankAccount( int C_BankAccount_ID ) {
         log.config( "C_BankAccount_ID=" + C_BankAccount_ID );
 
-        List<Payment> data = new ArrayList<Payment>();
-        StringBuffer sql = getHelper().loadBankAccountQuery();
+   //     List<Payment> data = new ArrayList<Payment>();
+  
+       StringBuffer sql = getHelper().loadBankAccountQuery();
+       loadBank(sql, C_BankAccount_ID, null);
 
         // Get StatementDate
-        Timestamp ts = ( Timestamp )p_mTab.getValue( "StatementDate" );
+  /*      Timestamp ts = ( Timestamp )p_mTab.getValue( "StatementDate" );
 
         if( ts == null ) {
             ts = new Timestamp( System.currentTimeMillis());
@@ -171,7 +167,7 @@ public class WCreateFromStatement  extends WCreateFrom {
     		}	catch (Exception e) {}
     	}
 
-    	loadTable(data);
+    	loadTable(data);*/
     }    // loadBankAccount
 
     /**
@@ -189,9 +185,9 @@ public class WCreateFromStatement  extends WCreateFrom {
 
     protected void save() throws CreateFromSaveException {
     	int C_BankStatement_ID = (( Integer )p_mTab.getValue( "C_BankStatement_ID" )).intValue();
-    	getHelper().save(C_BankStatement_ID, getTrxName(), getSelectedSourceEntities(), this);
+    	getHelper().save(C_BankStatement_ID, getTrxName(), getSelectedSourceEntities(), this, getNroLote());
     }    // save
-    
+
 	@Override
 	protected CreateFromTableModel createTableModelInstance() {
 		return new PaymentTableModel();
@@ -314,6 +310,9 @@ public class WCreateFromStatement  extends WCreateFrom {
 		Row row = rows.newRow();
 		row.appendChild(bankAccountLabel.rightAlign());
 		row.appendChild(bankAccountField.getComponent());
+		row.appendChild(nroLote.getLabel().rightAlign());
+		row.appendChild(nroLote.getComponent());
+		row.appendChild(agrupacionporcupones);
 		window.getParameterPanel().appendChild(parameterStdLayout);
 
 	}
@@ -340,4 +339,86 @@ public class WCreateFromStatement  extends WCreateFrom {
 		
 	}
 	
+	protected void filtrar() {
+		int C_BankAccount_ID = Env.getContextAsInt(Env.getCtx(), p_WindowNo,
+				"C_BankAccount_ID");
+		Integer numeroLote = getNroLote();
+		if (numeroLote == null) {
+			if (agrupacionporcupones.isChecked())
+				loadBankAccountGrouped(C_BankAccount_ID);
+			else
+				loadBankAccount(C_BankAccount_ID);
+		} else {
+			if (agrupacionporcupones.isChecked())
+				loadBankAccountWithFilterGrouped(C_BankAccount_ID, numeroLote);
+			else
+				loadBankAccountWithFilter(C_BankAccount_ID, numeroLote);
+		}
+	}
+
+	private void loadBankAccountGrouped(int C_BankAccount_ID) {
+		StringBuffer sql = getHelper().loadBankAccountGrouped();
+		loadBank(sql,C_BankAccount_ID,null);
+	}
+	
+	private void loadBankAccountWithFilterGrouped(int C_BankAccount_ID,
+			Integer numerolote) {
+		StringBuffer sql = getHelper().loadBankAccountWithFilterGrouped();
+		loadBank(sql,C_BankAccount_ID,numerolote);
+	}
+	
+	private void loadBankAccountWithFilter(int C_BankAccount_ID, Integer nrolote) {
+		StringBuffer sql = getHelper().loadBankAccountQueryWithFilter();
+		loadBank(sql,C_BankAccount_ID,nrolote);
+	}
+    
+	private void loadBank(StringBuffer sql, int C_BankAccount_ID, Integer nrolote) {
+		List<Payment> data = new ArrayList<Payment>();
+		// Get StatementDate
+		Timestamp ts = (Timestamp) p_mTab.getValue("StatementDate");
+		if (ts == null) {
+			ts = new Timestamp(System.currentTimeMillis());
+		}
+		PreparedStatement pstmt = null;
+		ResultSet rs = null;
+
+		try {
+			pstmt = DB.prepareStatement(sql.toString());
+			pstmt.setTimestamp(1, ts);
+			pstmt.setInt(2, C_BankAccount_ID);
+			if (nrolote != null)
+				pstmt.setString(3, nrolote.toString());
+			rs = pstmt.executeQuery();
+
+			while (rs.next()) {
+				PaymentListImpl payment = new PaymentListImpl();
+				getHelper().loadPayment(payment, rs);
+				data.add(payment);
+			}
+
+			rs.close();
+			pstmt.close();
+		} catch (SQLException e) {
+			log.log(Level.SEVERE, sql.toString(), e);
+		} finally {
+			try {
+				if (rs != null)
+					rs.close();
+				if (pstmt != null)
+					pstmt.close();
+			} catch (Exception e) {
+			}
+		}
+
+		loadTable(data);
+	}
+	
+	private Integer getNroLote() {
+		if ((nroLote.getValue() == null)
+				|| ("".equals(nroLote.getValue().toString()))) 
+			return null;
+		else 
+			return Integer.parseInt((String)nroLote.getValue());
+	}
+
 }

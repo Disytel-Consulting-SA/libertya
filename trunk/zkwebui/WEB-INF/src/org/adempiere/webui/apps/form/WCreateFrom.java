@@ -24,6 +24,7 @@ import org.adempiere.webui.component.Row;
 import org.adempiere.webui.component.Rows;
 import org.adempiere.webui.editor.WLocatorEditor;
 import org.adempiere.webui.editor.WSearchEditor;
+import org.adempiere.webui.editor.WStringEditor;
 import org.adempiere.webui.event.ValueChangeEvent;
 import org.adempiere.webui.event.ValueChangeListener;
 import org.adempiere.webui.panel.ADForm;
@@ -51,6 +52,7 @@ import org.openXpertya.util.Env;
 import org.openXpertya.util.KeyNamePair;
 import org.openXpertya.util.Msg;
 import org.openXpertya.util.Trx;
+import org.zkoss.zk.ui.event.Event;
 import org.zkoss.zk.ui.event.EventListener;
 import org.zkoss.zkex.zul.Borderlayout;
 import org.zkoss.zkex.zul.Center;
@@ -162,6 +164,10 @@ public abstract class WCreateFrom extends ADForm implements EventListener, Creat
     /** Descripción de Campos */
 
     protected Label bankAccountLabel = new Label();
+    
+    protected WStringEditor nroLote = new WStringEditor();
+    
+    protected Checkbox agrupacionporcupones = new Checkbox();
 
     /** Descripción de Campos */
 
@@ -237,6 +243,21 @@ public abstract class WCreateFrom extends ADForm implements EventListener, Creat
 
     private void zkInit() throws Exception {
         bankAccountLabel.setText( Msg.translate( Env.getCtx(),"C_BankAccount_ID" ));
+        nroLote.getLabel().setText("Nro de Lote");
+        nroLote.setValue("");
+        nroLote.addValueChangeListener(new ValueChangeListener() {
+			@Override
+			public void valueChange(ValueChangeEvent e) {
+				filtrar();
+			}
+		});
+        agrupacionporcupones.setText("Agrupación por cupones");
+        agrupacionporcupones.addActionListener(new EventListener() {
+			@Override
+			public void onEvent(Event arg0) throws Exception {
+				filtrar();
+			}
+        });
         bPartnerLabel.setText( Msg.getElement( Env.getCtx(),"C_BPartner_ID" ));
         orderLabel.setText( Msg.getElement( Env.getCtx(),"C_Order_ID",false ));
         invoiceLabel.setText( Msg.getElement( Env.getCtx(),"C_Invoice_ID",false ));
@@ -301,7 +322,11 @@ public abstract class WCreateFrom extends ADForm implements EventListener, Creat
         customizarPanel();
     }    // jbInit
 
-    // El siguiente método permite customizar el panel en las correspondientes subclases.
+    protected void filtrar() {
+		//Acá filtra
+	}
+
+	// El siguiente método permite customizar el panel en las correspondientes subclases.
     protected abstract void customizarPanel();
 
 	/**
@@ -493,6 +518,7 @@ public abstract class WCreateFrom extends ADForm implements EventListener, Creat
     
      protected void loadTable(List<? extends SourceEntity> data) {
         // Se obtiene el modelo de la tabla y se asigna la nueva lista de líneas de documento.
+    	((CreateFromTableModel)window.getDataTable().getModel()).clear();
     	((CreateFromTableModel)window.getDataTable().getModel()).setSourceEntities(data);
     	window.getDataTable().autoSize();
         loadTableOIS(data);
@@ -1175,6 +1201,4 @@ public abstract class WCreateFrom extends ADForm implements EventListener, Creat
 		}
     }
     
-
-	
 }
