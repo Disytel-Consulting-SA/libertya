@@ -130,6 +130,11 @@ public class PostInstallUpgradeFrom1402 extends PluginPostInstallProcess {
 	protected final static String DECLARACION_VALORES_X_ORG_JASPER_REPORT_UID = "CORE-AD_JasperReport-1010105";
 	protected final static String DECLARACION_VALORES_X_ORG_JASPER_REPORT_FILENAME = "DeclaracionDeValoresXOrg.jasper";
 	
+	/** UID del Listado de Cupones de Tarjeta */
+	protected final static String LISTADO_DE_CUPONES_DE_TARJETA_REPORT_UID = "CORE-AD_Process-1010405";
+	protected final static String LISTADO_DE_CUPONES_DE_TARJETA_REPORT_FILENAME = "ListadoCuponesTarjeta.jrxml";
+
+	
 	@Override
 	protected String doIt() throws Exception {
 		super.doIt();
@@ -467,6 +472,17 @@ public class PostInstallUpgradeFrom1402 extends PluginPostInstallProcess {
 		if(!att_HistoriaDeArticulos.save()){
 			throw new Exception ("Error al guardar jrxml ");
 		}
+		
+		// Listado de Cupones de Tarjeta
+				MProcess.addAttachment(
+						get_TrxName(),
+						getCtx(),
+						LISTADO_DE_CUPONES_DE_TARJETA_REPORT_UID,
+						LISTADO_DE_CUPONES_DE_TARJETA_REPORT_FILENAME,
+						JarHelper
+								.readBinaryFromJar(
+										jarFileURL,
+										getBinaryFileURL(LISTADO_DE_CUPONES_DE_TARJETA_REPORT_FILENAME)));
 				
 		return " ";
 	}
