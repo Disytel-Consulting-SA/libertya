@@ -288,7 +288,7 @@ public class InfoPayment extends Info {
             where.append( " AND " ).append( Util.replace( p_whereClause,"C_Payment.","p." ));
         }
 
-        prepareTable( s_paymentLayout," C_Payment_v p",where.toString(),"2,3,4" );
+        prepareTable( s_paymentLayout," C_Payment p",where.toString(),"2,3,4" );
 
         //
 
