@@ -15,8 +15,8 @@ PG_DAT=/usr/local/pgsql/data
 PG_CMD=pg_ctl
 PG_STARTING_RESULT_FILE=$HOME/resultStartingPostgres.txt
 LY_STATUS_RESULT_FILE=$HOME/resultStatusLibertya.txt
-PG_LOCKS_FILE=$HOME/locks.sql
-PG_ACTIVITY_FILE=$HOME/activity.sql
+PG_LOCKS_FILE=$HOME/locks_$(date +\%Y\%m\%d-\%H\%M\%S).sql
+PG_ACTIVITY_FILE=$HOME/activity_$(date +\%Y\%m\%d-\%H\%M\%S).sql
 OXP_HOME=/ServidorOXP
 
 
