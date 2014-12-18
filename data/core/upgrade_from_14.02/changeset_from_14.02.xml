@@ -94,7 +94,10 @@ Ejemplos de cambios
 		
 		<!-- 20141211-0741 Propagar OXP.jar y OXPSLib.jar a LYWeb y LYWS para independencia del contexto. -->
 		<copy file="${SOURCE_DIR}/build.xml" todir="${TARGET_DIR}/" overwrite="yes" />
-				
+
+		<!-- 20141218-0809 Incorporar timestamp a la salida de activity y locks -->
+		<copy file="${SOURCE_DIR}/restartPostgres.sh" todir="${TARGET_DIR}/utils" overwrite="yes" />
+						
     </target>
     
 </project>
