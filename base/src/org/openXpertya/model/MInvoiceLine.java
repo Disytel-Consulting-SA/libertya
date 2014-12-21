@@ -81,7 +81,7 @@ public class MInvoiceLine extends X_C_InvoiceLine {
         PreparedStatement pstmt    = null;
 
         try {
-            pstmt = DB.prepareStatement( sql,sLine.get_TableName());
+            pstmt = DB.prepareStatement( sql,sLine.get_TrxName());
             pstmt.setInt( 1,sLine.getM_InOutLine_ID());
 
             ResultSet rs = pstmt.executeQuery();
