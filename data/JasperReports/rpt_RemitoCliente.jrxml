@@ -179,9 +179,9 @@
 				<rectangle>
 					<reportElement
 						mode="Transparent"
-						x="382"
+						x="260"
 						y="5"
-						width="200"
+						width="322"
 						height="104"
 						forecolor="#FFFFFF"
 						key="rectangle-1"/>
@@ -224,13 +224,13 @@
 				</textField>
 				<textField isStretchWithOverflow="false" isBlankWhenNull="false" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
-						x="462"
+						x="290"
 						y="31"
-						width="116"
+						width="288"
 						height="18"
 						key="textField-3"/>
 					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
-					<textElement textAlignment="Center" verticalAlignment="Bottom">
+					<textElement textAlignment="Right" verticalAlignment="Bottom">
 						<font fontName="8Pin Matrix" size="12"/>
 					</textElement>
 				<textFieldExpression   class="java.lang.String"><![CDATA[$P{TIPOCOMPROBANTE}]]></textFieldExpression>
