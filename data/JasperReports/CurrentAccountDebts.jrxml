@@ -17,7 +17,7 @@
 		 whenNoDataType="NoPages"
 		 isTitleNewPage="false"
 		 isSummaryNewPage="false">
-	<property name="ireport.scriptlethandling" value="2" />
+	<property name="ireport.scriptlethandling" value="0" />
 	<property name="ireport.encoding" value="UTF-8" />
 	<import value="java.util.*" />
 	<import value="net.sf.jasperreports.engine.*" />
@@ -42,8 +42,8 @@ from (select i.ad_org_id,
 		bp.value as bpartner_value,
 		bp.name as bpartner_name,
 		ips.duedate::date,
-		(CASE WHEN ips.duedate::date < $P{CutDate}::date THEN invoiceopen(i.c_invoice_id,ips.c_invoicepayschedule_id) ELSE 0.00 END) as dueamt, 
-		(CASE WHEN ips.duedate::date < $P{CutDate}::date THEN 0.00 ELSE invoiceopen(i.c_invoice_id,ips.c_invoicepayschedule_id) END) as todueamt
+		(CASE WHEN ips.duedate::date <= $P{CutDate}::date THEN invoiceopen(i.c_invoice_id,ips.c_invoicepayschedule_id) ELSE 0.00 END) as dueamt, 
+		(CASE WHEN ips.duedate::date <= $P{CutDate}::date THEN 0.00 ELSE invoiceopen(i.c_invoice_id,ips.c_invoicepayschedule_id) END) as todueamt
 	from c_invoice i
 	inner join c_invoicepayschedule ips on i.c_invoice_id = ips.c_invoice_id
 	inner join c_doctype dt on dt.c_doctype_id = i.c_doctypetarget_id
