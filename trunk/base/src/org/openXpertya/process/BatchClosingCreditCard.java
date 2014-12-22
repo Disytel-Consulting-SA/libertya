@@ -3,10 +3,10 @@ package org.openXpertya.process;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.logging.Level;
 
 import org.openXpertya.model.MPayment;
-import org.openXpertya.process.ProcessInfoParameter;
-import org.openXpertya.process.SvrProcess;
+import org.openXpertya.util.CLogger;
 import org.openXpertya.util.DB;
 import org.openXpertya.util.Msg;
 
@@ -53,34 +53,62 @@ public class BatchClosingCreditCard extends SvrProcess {
 	@Override
 	protected String doIt() {
 		if (!existeOrganizacion(getOrganizacion())) {
-			return getMsg("OrgIsMandatoryOrNoExist");
+			try {
+				throw new Exception(getMsg("OrgIsMandatoryOrNoExist"));
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
 		}
 		if (!existeEntidadFinanciera(getEntidadFinanciera())) {
-			return getMsg("EntidadFinancieraIsMandatoryOrNoExist");
+			try {
+				throw new Exception(
+						getMsg("EntidadFinancieraIsMandatoryOrNoExist"));
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
 		}
 		if ((getCouponBatchNumber() == null)
 				|| ("".equals(getCouponBatchNumber()))) {
-			return getMsg("CouponBatchNumberMandatory");
+			try {
+				throw new Exception(getMsg("CouponBatchNumberMandatory"));
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
 		}
 		String sql = "SELECT p.* FROM c_payment p INNER JOIN m_entidadfinancieraplan efp ON (efp.m_entidadfinancieraplan_id = p.m_entidadfinancieraplan_id) WHERE p.ad_org_id=? AND efp.m_entidadfinanciera_id=? AND couponbatchnumber IS NULL";
 		PreparedStatement pstmt = null;
 		pstmt = DB.prepareStatement(sql);
+		ResultSet rs = null;
 		try {
 			pstmt.setInt(1, getOrganizacion());
 			pstmt.setInt(2, getEntidadFinanciera());
-			ResultSet rs = pstmt.executeQuery();
+			rs = pstmt.executeQuery();
 			while (rs.next()) {
-				payment = new MPayment(getCtx(), rs, null);
+				payment = new MPayment(getCtx(), rs, get_TrxName());
 				payment.setCouponBatchNumber(getCouponBatchNumber());
-				payment.save();
+				if (!payment.save()) {
+					throw new Exception("Error actualizando el pago: "
+							+ payment.getDocumentNo() + ". Motivo: "
+							+ CLogger.retrieveErrorAsString());
+				}
 			}
-			rs.close();
 			pstmt.close();
-		} catch (SQLException e) {
-			// TODO Auto-generated catch block
+			rs.close();
+		} catch (Exception e) {
+			log.warning("Error actualizando el pago");
 			e.printStackTrace();
+		} finally {
+			try {
+				if (pstmt != null)
+					pstmt.close();
+				if (rs != null)
+					rs.close();
+				pstmt = null;
+				rs = null;
+			} catch (SQLException e) {
+				log.log(Level.SEVERE, "Cannot close statement or resultset");
+			}
 		}
-		pstmt = null;
 		return getMsg("ProcessOK");
 	}
 
