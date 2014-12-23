@@ -479,7 +479,7 @@ public class ProcessorWSFE {
 		/**
 		 * El nombre de AD_Preference a consultar se forma concatenando el valor WSFE_PV y el Nro de Punto de Venta
 		 */
-		MPreference preference = MPreference.getUserPreference(Env.getCtx(), "WSFE_PV"+docType.getPosNumber(), getTrxName());
+		MPreference preference = MPreference.getUserPreference(Env.getCtx(), "WSFE_PV"+docType.getPosNumber(), getTrxName(), docType.getAD_Org_ID());
 		if(preference == null){
 			// En el caso que no se haya encontrado ninguna preferencia a partir del Nro de Punto de Venta se busca utilizando el valor por defecto que es: WSFE
 			preference = MPreference.getUserPreference(Env.getCtx(), "WSFE", getTrxName());
