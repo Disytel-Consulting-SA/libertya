@@ -51,29 +51,15 @@ public class BatchClosingCreditCard extends SvrProcess {
 	}
 
 	@Override
-	protected String doIt() {
+	protected String doIt() throws Exception {
 		if (!existeOrganizacion(getOrganizacion())) {
-			try {
-				throw new Exception(getMsg("OrgIsMandatoryOrNoExist"));
-			} catch (Exception e) {
-				e.printStackTrace();
-			}
+			throw new Exception(getMsg("OrgIsMandatoryOrNoExist"));
 		}
 		if (!existeEntidadFinanciera(getEntidadFinanciera())) {
-			try {
-				throw new Exception(
-						getMsg("EntidadFinancieraIsMandatoryOrNoExist"));
-			} catch (Exception e) {
-				e.printStackTrace();
-			}
+			throw new Exception(getMsg("EntidadFinancieraIsMandatoryOrNoExist"));
 		}
-		if ((getCouponBatchNumber() == null)
-				|| ("".equals(getCouponBatchNumber()))) {
-			try {
-				throw new Exception(getMsg("CouponBatchNumberMandatory"));
-			} catch (Exception e) {
-				e.printStackTrace();
-			}
+		if ((getCouponBatchNumber() == null) || ("".equals(getCouponBatchNumber()))) {
+			throw new Exception(getMsg("CouponBatchNumberMandatory"));
 		}
 		String sql = "SELECT p.* FROM c_payment p INNER JOIN m_entidadfinancieraplan efp ON (efp.m_entidadfinancieraplan_id = p.m_entidadfinancieraplan_id) WHERE p.ad_org_id=? AND efp.m_entidadfinanciera_id=? AND couponbatchnumber IS NULL";
 		PreparedStatement pstmt = null;
@@ -95,8 +81,9 @@ public class BatchClosingCreditCard extends SvrProcess {
 			pstmt.close();
 			rs.close();
 		} catch (Exception e) {
-			log.warning("Error actualizando el pago");
-			e.printStackTrace();
+			String errorMsg = "Error actualizando el pago" + e.getMessage(); 
+			log.warning(errorMsg);
+			throw new Exception(errorMsg);
 		} finally {
 			try {
 				if (pstmt != null)
@@ -106,7 +93,7 @@ public class BatchClosingCreditCard extends SvrProcess {
 				pstmt = null;
 				rs = null;
 			} catch (SQLException e) {
-				log.log(Level.SEVERE, "Cannot close statement or resultset");
+				log.severe("Cannot close statement or resultset");
 			}
 		}
 		return getMsg("ProcessOK");
