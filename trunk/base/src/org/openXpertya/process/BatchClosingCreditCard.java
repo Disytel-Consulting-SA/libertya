@@ -3,7 +3,6 @@ package org.openXpertya.process;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.logging.Level;
 
 import org.openXpertya.model.MPayment;
 import org.openXpertya.util.CLogger;
@@ -61,13 +60,17 @@ public class BatchClosingCreditCard extends SvrProcess {
 		if ((getCouponBatchNumber() == null) || ("".equals(getCouponBatchNumber()))) {
 			throw new Exception(getMsg("CouponBatchNumberMandatory"));
 		}
-		String sql = "SELECT p.* FROM c_payment p INNER JOIN m_entidadfinancieraplan efp ON (efp.m_entidadfinancieraplan_id = p.m_entidadfinancieraplan_id) WHERE p.ad_org_id=? AND efp.m_entidadfinanciera_id=? AND couponbatchnumber IS NULL";
+		String sql = "SELECT p.* FROM c_payment p INNER JOIN m_entidadfinancieraplan efp ON (efp.m_entidadfinancieraplan_id = p.m_entidadfinancieraplan_id) WHERE efp.m_entidadfinanciera_id=? AND couponbatchnumber IS NULL";
+		if (getOrganizacion()>0)
+			sql = sql + " p.ad_org_id=?";
 		PreparedStatement pstmt = null;
 		pstmt = DB.prepareStatement(sql);
 		ResultSet rs = null;
 		try {
-			pstmt.setInt(1, getOrganizacion());
-			pstmt.setInt(2, getEntidadFinanciera());
+			int i = 1;
+			pstmt.setInt(i++, getEntidadFinanciera());
+			if (getOrganizacion()>0)
+				pstmt.setInt(i++, getOrganizacion());
 			rs = pstmt.executeQuery();
 			while (rs.next()) {
 				payment = new MPayment(getCtx(), rs, get_TrxName());
@@ -81,8 +84,8 @@ public class BatchClosingCreditCard extends SvrProcess {
 			pstmt.close();
 			rs.close();
 		} catch (Exception e) {
-			String errorMsg = "Error actualizando el pago" + e.getMessage(); 
-			log.warning(errorMsg);
+			String errorMsg = e.getMessage(); 
+			log.severe(errorMsg);
 			throw new Exception(errorMsg);
 		} finally {
 			try {
