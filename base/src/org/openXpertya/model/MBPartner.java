@@ -1052,13 +1052,14 @@ public class MBPartner extends X_C_BPartner {
     				"        createdby, updated, updatedby, c_retencionschema_id, c_bpartner_id, " +
     				"       description, taxid " +
     				" FROM c_bpartner_retencion " +
-    				" WHERE isactive = 'Y' and c_bpartner_id = ? ";
+    				" WHERE isactive = 'Y' and c_bpartner_id = ? and (ad_org_id = ? or ad_org_id = '0')";
     	
     	PreparedStatement pstmt = null;
 
         try {
             pstmt = DB.prepareStatement( sql );
             pstmt.setInt( 1,getC_BPartner_ID());
+            pstmt.setInt(2, Env.getAD_Org_ID(getCtx()));
 
             ResultSet rs = pstmt.executeQuery();
 
