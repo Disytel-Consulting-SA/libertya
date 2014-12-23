@@ -365,6 +365,28 @@ public class MUOM extends X_C_UOM {
     }    // getUOMfromCache
 
     /**
+	 * @param ctx
+	 * @param uomID
+	 * @param qty
+	 * @param trxName
+	 * @return true si se permite ingresar decimales en la cantidad parámetro o
+	 *         no se permite pero no tiene decimaes mayores a 0, false caso
+	 *         contrario
+	 */
+    public static boolean isAllowedQty(Properties ctx, Integer uomID, BigDecimal qty, String trxName){
+    	boolean allowedQty = true;
+    	MUOM uom = MUOM.get(ctx, uomID);
+		// Si no permite decimales, entonces verificar si existen decimales en
+		// la cantidad parámetro
+    	if(!uom.isAllowDecimals()){
+    		int intQty = qty.intValue();
+			allowedQty = qty.subtract(new BigDecimal(intQty)).compareTo(
+					BigDecimal.ZERO) == 0;
+    	}
+    	return allowedQty;
+    }
+    
+    /**
      * Descripción de Método
      *
      *
