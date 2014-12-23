@@ -670,6 +670,14 @@ public class MInOutLine extends X_M_InOutLine {
 				return false;
 			}
 		}
+		
+		// Controlar cantidades por unidad de medida
+        if(!MUOM.isAllowedQty(getCtx(), getC_UOM_ID(), getQtyEntered(), get_TrxName())){
+			log.saveError(Msg.getMsg(getCtx(), "UOMNotAllowedQty",
+					new Object[] { MUOM.get(getCtx(), getC_UOM_ID()).getName(),
+							getQtyEntered() }), "");
+			return false;
+        }
 
 		return true;
 	} // beforeSave

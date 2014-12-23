@@ -1,13 +1,14 @@
-/** Modelo Generado - NO CAMBIAR MANUALMENTE - Copyright (C) 2006 FUNDESLE */
+/** Modelo Generado - NO CAMBIAR MANUALMENTE - Disytel */
 package org.openXpertya.model;
-import java.util.*;
+import java.util.logging.Level;
+ import java.util.*;
 import java.sql.*;
 import java.math.*;
 import org.openXpertya.util.*;
 /** Modelo Generado por C_UOM
- *  @author Comunidad de Desarrollo openXpertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
- *  @version  - 2009-10-22 14:51:33.559 */
-public class X_C_UOM extends PO
+ *  @author Comunidad de Desarrollo Libertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
+ *  @version  - 2014-12-23 13:59:41.151 */
+public class X_C_UOM extends org.openXpertya.model.PO
 {
 /** Constructor estándar */
 public X_C_UOM (Properties ctx, int C_UOM_ID, String trxName)
@@ -15,6 +16,7 @@ public X_C_UOM (Properties ctx, int C_UOM_ID, String trxName)
 super (ctx, C_UOM_ID, trxName);
 /** if (C_UOM_ID == 0)
 {
+setAllowDecimals (false);
 setCostingPrecision (0);
 setC_UOM_ID (0);
 setIsDefault (false);
@@ -29,13 +31,13 @@ public X_C_UOM (Properties ctx, ResultSet rs, String trxName)
 {
 super (ctx, rs, trxName);
 }
-/** AD_Table_ID=146 */
-public static final int Table_ID=146;
+/** AD_Table_ID */
+public static final int Table_ID = M_Table.getTableID("C_UOM");
 
 /** TableName=C_UOM */
 public static final String Table_Name="C_UOM";
 
-protected static KeyNamePair Model = new KeyNamePair(146,"C_UOM");
+protected static KeyNamePair Model = new KeyNamePair(Table_ID,"C_UOM");
 protected static BigDecimal AccessLevel = new BigDecimal(7);
 
 /** Load Meta Data */
@@ -64,6 +66,24 @@ public String getAD_ComponentObjectUID()
 {
 return (String)get_Value("AD_ComponentObjectUID");
 }
+/** Set Allow Decimals.
+Allow decimals in quantitys of document lines */
+public void setAllowDecimals (boolean AllowDecimals)
+{
+set_Value ("AllowDecimals", new Boolean(AllowDecimals));
+}
+/** Get Allow Decimals.
+Allow decimals in quantitys of document lines */
+public boolean isAllowDecimals() 
+{
+Object oo = get_Value("AllowDecimals");
+if (oo != null) 
+{
+ if (oo instanceof Boolean) return ((Boolean)oo).booleanValue();
+ return "Y".equals(oo);
+}
+return false;
+}
 /** Set Costing Precision.
 Rounding used costing calculations */
 public void setCostingPrecision (int CostingPrecision)
@@ -78,7 +98,7 @@ Integer ii = (Integer)get_Value("CostingPrecision");
 if (ii == null) return 0;
 return ii.intValue();
 }
-public static final int C_UOM_GROUP_ID_AD_Reference_ID=1000045;
+public static final int C_UOM_GROUP_ID_AD_Reference_ID = MReference.getReferenceID("c_uom_group_id");
 /** Set C_UOM_Group_ID */
 public void setC_UOM_Group_ID (int C_UOM_Group_ID)
 {

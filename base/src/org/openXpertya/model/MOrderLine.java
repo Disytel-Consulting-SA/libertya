@@ -849,6 +849,14 @@ public class MOrderLine extends X_C_OrderLine {
         	// setC_Project_ID(DB.getSQLValue(get_TrxName(), " SELECT C_Project_ID FROM C_Order WHERE C_Order_ID = " + getC_Order_ID()));
         	setC_Project_ID(o.getC_Project_ID());
         
+        // Controlar cantidades por unidad de medida
+        if(!MUOM.isAllowedQty(getCtx(), getC_UOM_ID(), getQtyEntered(), get_TrxName())){
+			log.saveError(Msg.getMsg(getCtx(), "UOMNotAllowedQty",
+					new Object[] { MUOM.get(getCtx(), getC_UOM_ID()).getName(),
+							getQtyEntered() }), "");
+			return false;
+        }
+        
         return true;
     }    // beforeSave
 
