@@ -4486,4 +4486,4 @@ END, cl.docstatus, c.statementdate, c.dateacct, cl.c_currency_id, NULL::integer,
 ALTER TABLE v_documents_org OWNER TO libertya;
 
 --20141223-1235 Incorporación de flag en la unidad de medida para permitir o no decimales en las cantidades de líneas de pedido, facturas y remitos.
-update ad_system set dummy = (SELECT addcolumnifnotexists('c_uom', 'allowdecimals', 'character(1) NOT NULL DEFAULT 'Y'::bpchar'));
+update ad_system set dummy = (SELECT addcolumnifnotexists('c_uom', 'allowdecimals', 'character(1) NOT NULL DEFAULT ''Y''::bpchar'));
