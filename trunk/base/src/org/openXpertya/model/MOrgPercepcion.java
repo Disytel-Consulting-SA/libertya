@@ -12,6 +12,12 @@ import org.openXpertya.util.Util;
 
 public class MOrgPercepcion extends X_AD_Org_Percepcion {
 
+	public static boolean existsOrgPercepcion(Properties ctx, Integer orgID, String trxName){
+		return PO.existRecordFor(ctx, Table_Name,
+				"ad_org_id = ? and isactive = 'Y'", new Object[] { orgID },
+				trxName);
+	}
+	
 	public static List<MOrgPercepcion> getOrgPercepciones(Properties ctx, String trxName){
 		return getOrgPercepciones(ctx, Env.getAD_Org_ID(ctx), trxName);
 	}
