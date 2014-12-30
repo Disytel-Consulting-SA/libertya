@@ -5687,7 +5687,9 @@ public class MInvoice extends X_C_Invoice implements DocAction {
 
 	public void calculatePercepciones() throws Exception {
 		MDocType docType = MDocType.get(getCtx(), getC_DocTypeTarget_ID());
-		if (docType.isFiscalDocument()) {
+		if (docType.isFiscalDocument()
+				&& MOrgPercepcion.existsOrgPercepcion(getCtx(), getAD_Org_ID(),
+						get_TrxName())) {
 			GeneratorPercepciones generator = new GeneratorPercepciones(
 					getCtx(), getDiscountableWrapper(), get_TrxName());
 			generator.calculatePercepciones(this);
@@ -5696,7 +5698,9 @@ public class MInvoice extends X_C_Invoice implements DocAction {
 
 	public void recalculatePercepciones() throws Exception {
 		MDocType docType = MDocType.get(getCtx(), getC_DocTypeTarget_ID());
-		if (docType.isFiscalDocument()) {
+		if (docType.isFiscalDocument()
+				&& MOrgPercepcion.existsOrgPercepcion(getCtx(), getAD_Org_ID(),
+						get_TrxName())) {
 			GeneratorPercepciones generator = new GeneratorPercepciones(
 					getCtx(), getDiscountableWrapper(), get_TrxName());
 			generator.recalculatePercepciones(this);
