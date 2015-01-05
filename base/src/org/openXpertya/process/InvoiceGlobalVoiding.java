@@ -639,10 +639,12 @@ public class InvoiceGlobalVoiding extends SvrProcess {
 		if(allocationHdrIDs == null || allocationHdrIDs.size() <= 0) return ids;
 		String allocationHdrIDsSet = allocationHdrIDs.toString().replace('[',
 				'(').replace(']', ')');
-		String sql = "SELECT distinct c_invoice_id " +
+		String sql = "SELECT distinct al.c_invoice_id " +
 					 "FROM c_allocationhdr as ah " +
 					 "INNER JOIN c_allocationline as al ON (al.c_allocationhdr_id = ah.c_allocationhdr_id) " +
-					 "WHERE (docstatus IN ('CO','CL')) AND (al.c_invoice_id <> ?) AND (al.c_invoice_credit_id is null or al.c_invoice_credit_id <> ?) AND ah.c_allocationhdr_id IN "+allocationHdrIDsSet; 
+					 "INNER JOIN c_invoice as i on i.c_invoice_id = al.c_invoice_id " +
+					 "INNER JOIN c_doctype as dt on dt.c_doctype_id = i.c_doctypetarget_id " +
+					 "WHERE (ah.docstatus IN ('CO','CL')) AND (al.c_invoice_id <> ?) AND dt.docbasetype IN ('ARI', 'API') AND (al.c_invoice_credit_id is null or al.c_invoice_credit_id <> ?) AND ah.c_allocationhdr_id IN "+allocationHdrIDsSet; 
 		PreparedStatement ps = DB.prepareStatement(sql, get_TrxName());
 		ps.setInt(1, getInvoice().getID());
 		ps.setInt(2, getInvoice().getID());
