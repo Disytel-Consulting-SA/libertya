@@ -344,14 +344,14 @@ public class CurrentAccountReport extends SvrProcess {
 				.append(" SELECT COALESCE(SUM(t.Credit),0.0) AS Credit, COALESCE(SUM(t.Debit),0.0) AS Debit ");
 		sqlBalance.append(" FROM ( ");
 		sqlBalance.append(getCurrentAccountQuery().getAllDocumentsQuery())
-				.append(" AND d.DateTrx < ? ");
+				.append(" AND d.DateAcct::date < ?::date ");
 		sqlBalance.append(" ) t");
 
 		PreparedStatement pstmt = null;
 		ResultSet rs = null;
 
 		try {
-			pstmt = DB.prepareStatement(sqlBalance.toString(), get_TrxName());
+			pstmt = DB.prepareStatement(sqlBalance.toString(), get_TrxName(), true);
 			// Parámetros de sqlDoc
 			int i = 1;
 			pstmt.setInt(i++, debit_signo_issotrx);
