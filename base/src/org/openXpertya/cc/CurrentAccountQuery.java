@@ -109,7 +109,7 @@ public class CurrentAccountQuery {
 			sqlDoc.append("     ELSE (select (CASE WHEN SUM(al.amount) IS NULL THEN 0.0 ELSE SUM(al.amount) END) FROM C_AllocationLine al WHERE (al.c_payment_id = d.document_id) AND (al.isactive = 'Y')) END) ");
 			// sqlDoc.append("		          currencyconvert(d.amount, d.c_currency_id, ?, ('now'::text)::timestamp(6) with time zone, COALESCE(c_conversiontype_id,0), d.ad_client_id, d.ad_org_id) ");
 			sqlDoc.append("     + ");
-			sqlDoc.append("     abs(SELECT currencyconvert ( CASE WHEN d.documenttable = 'C_Invoice' THEN ");
+			sqlDoc.append("     abs((SELECT currencyconvert ( CASE WHEN d.documenttable = 'C_Invoice' THEN ");
 			sqlDoc.append("     invoiceOpen(d.document_id, coalesce(d.c_invoicepayschedule_id,0)) ");
 			sqlDoc.append("     WHEN d.documenttable = 'C_CashLine' THEN ");
 			sqlDoc.append("     cashlineavailable(d.document_id) ");
