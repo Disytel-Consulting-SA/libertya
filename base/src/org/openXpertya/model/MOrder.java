@@ -4875,6 +4875,7 @@ public class MOrder extends X_C_Order implements DocAction {
 			newOrderLine.setRef_OrderLine_ID(orderLine.getID());
 			newOrderLine.setProcessed(false);
 			newOrderLine.setM_Warehouse_ID(newOrder.getM_Warehouse_ID());
+			newOrderLine.setAD_Org_ID(newOrder.getAD_Org_ID());
 			if(!newOrderLine.save()){
 				throw new Exception(CLogger.retrieveErrorAsString());
 			}
