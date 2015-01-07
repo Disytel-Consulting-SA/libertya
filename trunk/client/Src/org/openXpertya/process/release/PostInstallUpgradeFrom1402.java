@@ -134,6 +134,9 @@ public class PostInstallUpgradeFrom1402 extends PluginPostInstallProcess {
 	protected final static String LISTADO_DE_CUPONES_DE_TARJETA_REPORT_UID = "CORE-AD_Process-1010405";
 	protected final static String LISTADO_DE_CUPONES_DE_TARJETA_REPORT_FILENAME = "ListadoCuponesTarjeta.jrxml";
 
+	/** UID del Reporte Consulta de CUIT de Cheque */
+	protected final static String CONSULTA_CUIT_CHEQUE_JASPER_REPORT_UID = "CORE-AD_JasperReport-1010124";
+	protected final static String CONSULTA_CUIT_CHEQUE_JASPER_REPORT_FILENAME = "ConsultaCUITCheque.jasper";
 	
 	@Override
 	protected String doIt() throws Exception {
@@ -474,16 +477,27 @@ public class PostInstallUpgradeFrom1402 extends PluginPostInstallProcess {
 		}
 		
 		// Listado de Cupones de Tarjeta
-				MProcess.addAttachment(
-						get_TrxName(),
-						getCtx(),
-						LISTADO_DE_CUPONES_DE_TARJETA_REPORT_UID,
-						LISTADO_DE_CUPONES_DE_TARJETA_REPORT_FILENAME,
-						JarHelper
-								.readBinaryFromJar(
-										jarFileURL,
-										getBinaryFileURL(LISTADO_DE_CUPONES_DE_TARJETA_REPORT_FILENAME)));
-				
+		MProcess.addAttachment(
+				get_TrxName(),
+				getCtx(),
+				LISTADO_DE_CUPONES_DE_TARJETA_REPORT_UID,
+				LISTADO_DE_CUPONES_DE_TARJETA_REPORT_FILENAME,
+				JarHelper
+						.readBinaryFromJar(
+								jarFileURL,
+								getBinaryFileURL(LISTADO_DE_CUPONES_DE_TARJETA_REPORT_FILENAME)));
+		
+		// Consulta de CUIT de Cheque
+		MJasperReport
+			.updateBinaryData(
+					get_TrxName(),
+					getCtx(),
+					CONSULTA_CUIT_CHEQUE_JASPER_REPORT_UID,
+					JarHelper
+							.readBinaryFromJar(
+									jarFileURL,
+									getBinaryFileURL(CONSULTA_CUIT_CHEQUE_JASPER_REPORT_FILENAME)));
+		
 		return " ";
 	}
 

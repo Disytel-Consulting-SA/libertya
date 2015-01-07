@@ -216,11 +216,14 @@ public class MCheckCuitControl extends X_C_CheckCuitControl {
 	 */
 	public BigDecimal getBalance(Timestamp toDate) throws Exception{
 		String sql = "SELECT coalesce(sum(payamt),0) as balance "
-				+ "FROM c_payment " + "WHERE tendertype = 'K' "
+				+ "FROM c_payment " 
+				+ "WHERE tendertype = 'K' "
 				+ "		AND isreceipt = 'Y' " 
 				+ "		AND ad_org_id = ? "
 				+ " 	AND docstatus NOT IN ('DR') "
-				+ "		AND upper(trim(a_cuit)) = upper('" + getCUIT() + "') "
+				+ "		AND translate(upper(trim(a_cuit)), '-', '') = translate(upper(trim('"
+				+ getCUIT()
+				+ "')), '-', '') "
 				+ " 	AND date_trunc('day', duedate) >= date_trunc('day', ?::timestamp) ";
 		PreparedStatement ps = DB.prepareStatement(sql, get_TrxName());
 		ps.setInt(1, getAD_Org_ID());
