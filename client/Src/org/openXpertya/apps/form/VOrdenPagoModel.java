@@ -3364,6 +3364,24 @@ public class VOrdenPagoModel {
 		}
 		return totalAmt;
 	}
+	
+	public BigDecimal updatePayInvoice(boolean pay, int row, boolean toPayMoment) {
+		BigDecimal totalAmt = BigDecimal.ZERO;
+		ResultItemFactura fac = (ResultItemFactura) m_facturas.get(row);
+		BigDecimal amt = pay ? fac.getToPayAmt(true) : BigDecimal.ZERO;
+		// Solamente cambio el valor cuando no estamos en el momento de
+		// pagar
+		if (!toPayMoment) {
+			fac.setManualAmtClientCurrency(amt);
+			actualizarPagarConPagarCurrency(
+					row,
+					fac,
+					(Integer) m_facturas.get(row).getItem(
+							m_facturasTableModel.getCurrencyColIdx()), pay);
+			totalAmt = totalAmt.add(amt);
+		}
+		return totalAmt;
+	}
 
 	/**
 	 * Clase que permite tener creados allocation lines online para la OP/RC
