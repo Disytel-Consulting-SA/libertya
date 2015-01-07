@@ -225,7 +225,7 @@ public class VQueryBuilder extends CPanel implements FormPanel, ActionListener {
             QueryS	= "CREATE OR REPLACE VIEW " + VName + " AS Select " + querya + ".AD_Client_ID," + querya + ".AD_Org_ID," + querya + ".Created," + querya + ".CreatedBy," + querya + ".IsActive," + querya + ".Updated," + querya + ".UpdatedBy," + QueryS.substring(7);
             QueryP	= "SELECT AD_Client_ID,AD_Org_ID,Created,CreatedBy,IsActive,Updated,UpdatedBy,DocumentNo FROM C_Order";
             System.out.println("create view ********** " + QueryS);
-            System.out.println("Bien ******" + DB.executeUpdate(QueryS, "AD_Table"));
+            System.out.println("Bien ******" + DB.executeUpdate(QueryS, null));
 
             try {
 
