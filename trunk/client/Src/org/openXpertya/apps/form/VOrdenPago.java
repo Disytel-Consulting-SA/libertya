@@ -13,6 +13,7 @@ import java.awt.Dimension;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
+import java.awt.event.KeyListener;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.beans.PropertyChangeEvent;
@@ -1762,6 +1763,13 @@ public class VOrdenPago extends CPanel implements FormPanel,ActionListener,Table
 		tblFacturas.repaint();
     }
     
+    protected void updatePayInvoice(boolean pay, int row, boolean toPayMoment){
+    	getModel().updatePayInvoice(pay, row, toPayMoment);
+		// Actualizar el total a pagar
+		updateTotalAPagar1();
+		tblFacturas.repaint();
+    }
+    
     private void cmdCancelActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdCancelActionPerformed
 
     	dispose();
@@ -2207,15 +2215,27 @@ public class VOrdenPago extends CPanel implements FormPanel,ActionListener,Table
 		// tblFacturas.getDefaultEditor(BigDecimal.class).addCellEditorListener(this);
 		// TableCellEditor cellEd = tblFacturas.getDefaultEditor(BigDecimal.class); 
 		TableCellEditor cellEd = new DecimalEditor(BigDecimal.ZERO, new BigDecimal(Integer.MAX_VALUE), m_model.getNumberFormat());
+		TableCellEditor cellEd2 = new DecimalEditor(BigDecimal.ZERO, new BigDecimal(Integer.MAX_VALUE), m_model.getNumberFormat());
 		int cc = tblFacturas.getColumnModel().getColumnCount();
 		TableColumn tc = tblFacturas.getColumnModel().getColumn(cc - 1);
+		TableColumn tc2 = tblFacturas.getColumnModel().getColumn(cc - 2);
 		tc.setCellEditor(cellEd);
-		cellEd.addCellEditorListener(this); 
+		tc2.setCellEditor(cellEd2);
+		cellEd.addCellEditorListener(this);
+		cellEd2.addCellEditorListener(this);
 		
 		// TableCellRenderer cellRend = tblFacturas.getDefaultRenderer(Float.class);
 		// tblFacturas.setDefaultRenderer(Number.class, cellRend);
-		tblFacturas.getColumnModel().getColumn(tblFacturas.getColumnModel().getColumnCount() - 1).setCellRenderer(new MyNumberTableCellRenderer(m_model.getNumberFormat()));
-		tblFacturas.getColumnModel().getColumn(tblFacturas.getColumnModel().getColumnCount() - 2).setCellRenderer(new MyNumberTableCellRenderer(m_model.getNumberFormat()));
+		tblFacturas
+				.getColumnModel()
+				.getColumn(tblFacturas.getColumnModel().getColumnCount() - 1)
+				.setCellRenderer(
+						new MyNumberTableCellRenderer(m_model.getNumberFormat()));
+		tblFacturas
+				.getColumnModel()
+				.getColumn(tblFacturas.getColumnModel().getColumnCount() - 2)
+				.setCellRenderer(
+						new MyNumberTableCellRenderer(m_model.getNumberFormat()));
 		// Deshabilito los atajos F4 y F8 del jtable ya que sino me los toma ahí
 		tblFacturas.getInputMap(JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT).put(
 	              KeyStroke.getKeyStroke(java.awt.event.KeyEvent.VK_F4,0), "none");
@@ -2223,6 +2243,37 @@ public class VOrdenPago extends CPanel implements FormPanel,ActionListener,Table
 	              KeyStroke.getKeyStroke(java.awt.event.KeyEvent.VK_F6,0), "none");
 		tblFacturas.getInputMap(JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT).put(
 	              KeyStroke.getKeyStroke(java.awt.event.KeyEvent.VK_F8,0), "none");
+		tblFacturas.setSurrendersFocusOnKeystroke(true);
+		tblFacturas.addKeyListener(new KeyListener() {
+			
+			@Override
+			public void keyTyped(KeyEvent arg0) {
+				// TODO Auto-generated method stub
+				
+			}
+			
+			@Override
+			public void keyReleased(KeyEvent arg0) {
+				// TODO Auto-generated method stub
+				
+			}
+			
+			@Override
+			public void keyPressed(KeyEvent arg0) {
+				if(arg0.getKeyCode() == arg0.VK_ENTER){
+					// Si hay alguna celda en edición se corta la edición y luego
+					if(tblFacturas.getEditingRow() == -1 && tblFacturas.getSelectedRow() >= 0){
+						updatePayInvoice(true, tblFacturas.getSelectedRow(), false);
+						// Seleccionar la próxima fila
+						if(tblFacturas.getSelectedRow() < tblFacturas.getRowCount()-1){
+							tblFacturas.setRowSelectionInterval(
+									tblFacturas.getSelectedRow(),
+									tblFacturas.getSelectedRow());
+						}
+					}
+				}				
+			}
+		});
 		
 		jTree1.addVetoableChangeListener(this);
 		jTree1.getModel().addTreeModelListener(this);
