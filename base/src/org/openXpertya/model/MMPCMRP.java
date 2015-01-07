@@ -565,7 +565,7 @@ public class MMPCMRP extends X_MPC_MRP {
 
         if( delete ) {
             sql = "DELETE FROM MPC_MRP WHERE M_RequisitionLine_ID = " + rl.getM_RequisitionLine_ID() + " AND AD_Client_ID = " + rl.getAD_Client_ID();
-            DB.executeUpdate( trxName,sql );
+            DB.executeUpdate( sql,trxName );
 
             return 0;
         }
