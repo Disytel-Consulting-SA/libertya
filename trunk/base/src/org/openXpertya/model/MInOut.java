@@ -846,6 +846,7 @@ public class MInOut extends X_M_InOut implements DocAction {
 
         MInOutLine[] fromLines = otherShipment.getLines( true );
         int          count     = 0;
+        String errorMsg = null;
 
         for( int i = 0;i < fromLines.length;i++ ) {
             MInOutLine line = new MInOutLine( this );
@@ -913,6 +914,18 @@ public class MInOut extends X_M_InOut implements DocAction {
                 count++;
             }
 
+        	// Al anular un remito de entrada, no se crean los mmatchinv del inverso
+			// ya que no queda relacionada con la factura. Se debe
+			// relacionar la línea de la factura de este remito con el
+			// anulado ya que luego lo toma el completar para crear el matchinv inverso.
+            if(isReverseCopy){
+            	MInvoiceLine invoiceLine = MInvoiceLine.getOfInOutLine(fromLines[ i ]);
+            	invoiceLine.setM_InOutLine_ID(line.getID());
+            	if(!invoiceLine.save()){
+            		errorMsg = CLogger.retrieveErrorAsString();
+            	}
+            }
+            
             // Cross Link
 
             if( counter ) {
@@ -922,7 +935,9 @@ public class MInOut extends X_M_InOut implements DocAction {
         }
 
         if( fromLines.length != count ) {
-            log.log( Level.SEVERE,"copyLinesFrom - Line difference - From=" + fromLines.length + " <> Saved=" + count );
+			log.log(Level.SEVERE, "copyLinesFrom - Line difference - From="
+					+ fromLines.length + " <> Saved=" + count
+					+ (errorMsg != null ? " - Error= " + errorMsg : ""));
         }
 
         return count;
