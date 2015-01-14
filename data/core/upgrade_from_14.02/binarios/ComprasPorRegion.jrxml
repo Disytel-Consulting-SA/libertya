@@ -24,20 +24,22 @@
 	<import value="net.sf.jasperreports.engine.data.*" />
 
 	<parameter name="AD_Org_ID" isForPrompting="false" class="java.math.BigDecimal">
-		<defaultValueExpression ><![CDATA[new BigDecimal(0)]]></defaultValueExpression>
+		<defaultValueExpression ><![CDATA[null]]></defaultValueExpression>
 	</parameter>
 	<parameter name="FechaDesde" isForPrompting="false" class="java.util.Date">
-		<defaultValueExpression ><![CDATA[new Date()]]></defaultValueExpression>
+		<defaultValueExpression ><![CDATA[null]]></defaultValueExpression>
 	</parameter>
-	<parameter name="AD_CLIENT_ID" isForPrompting="false" class="java.lang.Integer"/>
+	<parameter name="AD_CLIENT_ID" isForPrompting="false" class="java.lang.Integer">
+		<defaultValueExpression ><![CDATA[null]]></defaultValueExpression>
+	</parameter>
 	<parameter name="FechaHasta" isForPrompting="false" class="java.util.Date">
-		<defaultValueExpression ><![CDATA[new Date()]]></defaultValueExpression>
+		<defaultValueExpression ><![CDATA[null]]></defaultValueExpression>
 	</parameter>
 	<parameter name="grupo_ec" isForPrompting="false" class="java.lang.Integer">
-		<defaultValueExpression ><![CDATA[new Integer(0)]]></defaultValueExpression>
+		<defaultValueExpression ><![CDATA[null]]></defaultValueExpression>
 	</parameter>
 	<parameter name="M_Product_Category_ID" isForPrompting="false" class="java.math.BigDecimal">
-		<defaultValueExpression ><![CDATA[BigDecimal.ZERO]]></defaultValueExpression>
+		<defaultValueExpression ><![CDATA[null]]></defaultValueExpression>
 	</parameter>
 	<queryString><![CDATA[SELECT 
 ad_org_id,
@@ -82,15 +84,17 @@ INNER JOIN m_product_category pc ON (pc.m_product_category_id = p.m_product_cate
 INNER JOIN c_invoicetax it ON (i.c_invoice_id = it.c_invoice_id)
 INNER JOIN c_bpartner bp ON (bp.c_bpartner_id = i.c_bpartner_id)
 INNER JOIN c_bp_group bpg ON (bpg.c_bp_group_id = bp.c_bp_group_id)
-INNER JOIN c_location l ON (l.c_location_id = bp.c_location_id)
+INNER JOIN c_bpartner_location bpl ON (bpl.c_bpartner_id = bp.c_bpartner_id)
+INNER JOIN c_location l ON (l.c_location_id = bpl.c_location_id)
 INNER JOIN c_region r ON (r.c_region_id = l.c_region_id)
 INNER JOIN c_doctype dt ON (dt.c_doctype_id = i.c_doctype_id)
 INNER JOIN ad_org ado ON (ado.ad_org_id = i.ad_org_id)
 WHERE (i.issotrx = 'N') 
 AND (dt.docbasetype in ('APC','API'))
 order by i.c_invoice_id) AS VentasPorRegion
-WHERE (ad_org_id = $P{AD_Org_ID})
-AND (fecha BETWEEN $P{FechaDesde} AND $P{FechaHasta}) 
+WHERE (($P{AD_Org_ID} IS NULL) OR (ad_org_id = $P{AD_Org_ID}))
+AND (($P{FechaDesde}::date IS NULL) OR (fecha::date >= $P{FechaDesde}::date)) 
+AND (($P{FechaHasta}::date IS NULL) OR (fecha::date <= $P{FechaHasta}::date)) 
 AND (($P{grupo_ec} IS NULL) OR (group_ec = $P{grupo_ec}))
 AND (($P{M_Product_Category_ID} IS NULL) OR (subfamiliaID = $P{M_Product_Category_ID}))]]></queryString>
 
