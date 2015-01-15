@@ -2380,7 +2380,7 @@ public class PoSOnline extends PoSConnectionState {
 			// Si el tipo de documento no tiene un informe asociado, se utiliza el
 			// informe configurado para la ventana de Facturas de Clientes.
 			} else {
-				processID = new M_Tab(ctx, INVOICE_TAB_ID, getTrxName())
+				processID = new M_Tab(ctx, INVOICE_TAB_ID, null)
 						.getAD_Process_ID();
 			}
 			tableID = MInvoice.Table_ID;
@@ -3094,7 +3094,8 @@ public class PoSOnline extends PoSConnectionState {
 				fdp.setPrinterEventListener(getFiscalPrinterEventListener());
 				// Se recarga el pedido para no interferir con transacciones
 				MOrder orderAux = new MOrder(getCtx(), morder.getID(), null);
-				if(!fdp.printDeliveryDocument(docType.getC_Controlador_Fiscal_ID(), orderAux, invoice)) {
+				MInvoice invoiceAux = new MInvoice(getCtx(), invoice.getID(), null);
+				if(!fdp.printDeliveryDocument(docType.getC_Controlador_Fiscal_ID(), orderAux, invoiceAux)) {
 					
 				}
 			}
@@ -3105,8 +3106,8 @@ public class PoSOnline extends PoSConnectionState {
 				params.put("C_Order_ID", morder.getID());
 				params.put("C_Invoice_ID", invoice.getID());
 				ProcessInfo info = MProcess.execute(getCtx(), MInvoice
-						.getWarehouseDeliverDocumentProcessID(getTrxName()),
-						params, getTrxName());
+						.getWarehouseDeliverDocumentProcessID(null),
+						params, null);
 				if(info.isError()){
 					
 				}
@@ -3133,7 +3134,7 @@ public class PoSOnline extends PoSConnectionState {
 						.getBusinessPartner().isAutomaticCreditNote() && sumaCreditNotePayments
 						.compareTo(BigDecimal.ZERO) > 0))) {
 			MBPartner partner = new MBPartner(getCtx(), order
-					.getBusinessPartner().getId(), getTrxName());
+					.getBusinessPartner().getId(), null);
 			// Itero por las condiciones de venta de cuenta corriente
 			for (String paymentRule : currentAccountSalesConditions.keySet()) {
 				currentAccountInfo = new CurrentAccountInfo(null,
@@ -3171,8 +3172,9 @@ public class PoSOnline extends PoSConnectionState {
 				FiscalDocumentPrint fdp = new FiscalDocumentPrint();
 				fdp.addDocumentPrintListener(getFiscalDocumentPrintListener());
 				fdp.setPrinterEventListener(getFiscalPrinterEventListener());
+				MInvoice invoiceAux = new MInvoice(getCtx(), invoice.getID(), null);
 				if (!fdp.printCurrentAccountDocument(
-						docType.getC_Controlador_Fiscal_ID(), partner, invoice, infos)) {
+						docType.getC_Controlador_Fiscal_ID(), partner, invoiceAux, infos)) {
 					
 				}
 			}
@@ -3197,8 +3199,8 @@ public class PoSOnline extends PoSConnectionState {
 						infoOnCredit != null ? infoOnCredit.getAmount()
 								: currentAccountInfo.getAmount());
 				ProcessInfo info = MProcess.execute(getCtx(), MInvoice
-						.getCurrentAccountDocumentProcessID(getTrxName()),
-						params, getTrxName());
+						.getCurrentAccountDocumentProcessID(null),
+						params, null);
 				if(info.isError()){
 					
 				}
