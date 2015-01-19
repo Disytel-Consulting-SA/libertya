@@ -142,9 +142,14 @@ public class PostInstallUpgradeFrom1402 extends PluginPostInstallProcess {
 	protected final static String INVOICES_WITHOUT_INOUT_JASPER_REPORT_UID = "CORE-AD_JasperReport-1010125";
 	protected final static String INVOICES_WITHOUT_INOUT_JASPER_REPORT_FILENAME = "InvoicesWithoutInOut.jasper";
 	
-	/** UID del Listado de Control de Facturas sin Remitos */
+	/** UID del Listado de Recibos de Cliente/Ordenes de Pago */
 	protected final static String RECEIVE_ORDER_PAYMENT_LIST_JASPER_REPORT_UID = "CORE-AD_JasperReport-1010126";
 	protected final static String RECEIVE_ORDER_PAYMENT_LIST_JASPER_REPORT_FILENAME = "OrderReceivesPaymentReport.jasper";
+	
+	/** UID del Listado de Cheques por Entidad Comercial */
+	protected final static String CHECKS_BY_BUSINESS_JASPER_REPORT_UID = "CORE-AD_JasperReport-1010128";
+	protected final static String CHECKS_BY_BUSINESS_JASPER_REPORT_FILENAME = "ChecksByBusiness.jasper";
+	
 	@Override
 	protected String doIt() throws Exception {
 		super.doIt();
@@ -516,7 +521,7 @@ public class PostInstallUpgradeFrom1402 extends PluginPostInstallProcess {
 									jarFileURL,
 									getBinaryFileURL(INVOICES_WITHOUT_INOUT_JASPER_REPORT_FILENAME)));
 		
-		// Listado de Control de Facturas sin Remito
+		// Listado de Recibos de Cliente/Ordenes de Pago
 		MJasperReport
 			.updateBinaryData(
 					get_TrxName(),
@@ -526,7 +531,18 @@ public class PostInstallUpgradeFrom1402 extends PluginPostInstallProcess {
 							.readBinaryFromJar(
 									jarFileURL,
 									getBinaryFileURL(RECEIVE_ORDER_PAYMENT_LIST_JASPER_REPORT_FILENAME)));
-				
+		
+		// Cheques por Entidad Comercial
+		MJasperReport
+			.updateBinaryData(
+					get_TrxName(),
+					getCtx(),
+					CHECKS_BY_BUSINESS_JASPER_REPORT_UID,
+					JarHelper
+							.readBinaryFromJar(
+									jarFileURL,
+									getBinaryFileURL(CHECKS_BY_BUSINESS_JASPER_REPORT_FILENAME)));
+		
 		return " ";
 	}
 
