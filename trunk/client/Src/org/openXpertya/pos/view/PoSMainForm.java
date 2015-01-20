@@ -4809,7 +4809,7 @@ public class PoSMainForm extends CPanel implements FormPanel, ASyncProcess, Disp
 					return;
 				}
 			}
-			extraValidationsResult = getExtraPOSPaymentAddValidations().validateCheckPayment(this, amount);
+			extraValidationsResult = getExtraPOSPaymentAddValidations().validateCheckPayment(this, realAmount);
 			if(extraValidationsResult.isError()){
 				errorMsg(extraValidationsResult.getMsg());
 				return;
@@ -4821,6 +4821,7 @@ public class PoSMainForm extends CPanel implements FormPanel, ASyncProcess, Disp
 			
 			payment = new CheckPayment(bankName, checkNumber, emissionDate,
 					acctDate, bankAccountID, paymentMedium.getCheckDeadLine());
+			payment.setTenderType(tenderType);
 			payment.setTypeName(paymentMedium.getName());
 			((CheckPayment)payment).setCuitLibrador(cuitLibrador); // Si locale AR no está activo esto es null;
 			
@@ -4864,6 +4865,8 @@ public class PoSMainForm extends CPanel implements FormPanel, ASyncProcess, Disp
 			String couponBatchNumber = getCCouponBatchNumberText().getText();
 			BigDecimal cashRetirementAmt = (BigDecimal)getCCashReturnAmtText().getValue();
 			cashRetirementAmt = cashRetirementAmt == null?BigDecimal.ZERO:cashRetirementAmt;
+			cashRetirementAmt = paymentMedium.getEntidadFinanciera()
+					.isCashRetirement() ? cashRetirementAmt : BigDecimal.ZERO;
 			
 			// Es necesario un plan de tarjeta
 			if (getSelectedCreditCardPlan() == null) {
@@ -4971,6 +4974,7 @@ public class PoSMainForm extends CPanel implements FormPanel, ASyncProcess, Disp
 			}
 			
 			payment = new CreditNotePayment(invoiceID, availableAmt, balanceAmt, returnCash, returnCashAmt);
+			payment.setTenderType(tenderType);
 			payment.setTypeName(paymentMedium.getName());
 
 			// Se limpian los campos para ingresar un nuevo pago.
