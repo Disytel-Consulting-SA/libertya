@@ -920,9 +920,11 @@ public class MInOut extends X_M_InOut implements DocAction {
 			// anulado ya que luego lo toma el completar para crear el matchinv inverso.
             if(isReverseCopy){
             	MInvoiceLine invoiceLine = MInvoiceLine.getOfInOutLine(fromLines[ i ]);
-            	invoiceLine.setM_InOutLine_ID(line.getID());
-            	if(!invoiceLine.save()){
-            		errorMsg = CLogger.retrieveErrorAsString();
+            	if(invoiceLine != null){
+	            	invoiceLine.setM_InOutLine_ID(line.getID());
+	            	if(!invoiceLine.save()){
+	            		errorMsg = CLogger.retrieveErrorAsString();
+	            	}
             	}
             }
             
