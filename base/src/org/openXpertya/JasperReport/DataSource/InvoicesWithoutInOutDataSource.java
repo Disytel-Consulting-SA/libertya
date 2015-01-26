@@ -85,6 +85,7 @@ public class InvoicesWithoutInOutDataSource extends QueryDataSource {
 	protected String getWhereClause(){
 		StringBuffer whereClause = new StringBuffer(" i.ad_client_id = ? ");
 		whereClause.append(" AND i.issotrx = '").append(getIsSOTrx().booleanValue()?"Y":"N").append("'");
+		whereClause.append(" AND dt.docbasetype IN ('API','ARI') ");
 		if(!Util.isEmpty(getOrgID(), true)){
 			whereClause.append(" AND i.ad_org_id = ? ");
 		}
