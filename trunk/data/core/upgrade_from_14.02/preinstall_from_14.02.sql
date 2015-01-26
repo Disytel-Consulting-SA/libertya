@@ -4487,3 +4487,88 @@ ALTER TABLE v_documents_org OWNER TO libertya;
 
 --20141223-1235 Incorporación de flag en la unidad de medida para permitir o no decimales en las cantidades de líneas de pedido, facturas y remitos.
 update ad_system set dummy = (SELECT addcolumnifnotexists('c_uom', 'allowdecimals', 'character(1) NOT NULL DEFAULT ''Y''::bpchar'));
+
+--20150126-1330 Fix a la vista de cuenta corriente de organización ya que en efectivo no estaba trayendo realmente las facturas que pagaba una línea en efectivo cuando eran varias
+CREATE OR REPLACE VIEW v_documents_org AS 
+(( SELECT DISTINCT 'C_Invoice'::text AS documenttable, i.c_invoice_id AS document_id, i.ad_client_id, i.ad_org_id, i.isactive, i.created, i.createdby, i.updated, i.updatedby, i.c_bpartner_id, i.c_doctype_id, dt.signo_issotrx, dt.name AS doctypename, dt.printname AS doctypeprintname, i.documentno, i.issotrx, i.docstatus, 
+        CASE
+            WHEN i.c_invoicepayschedule_id IS NOT NULL THEN ips.duedate
+            ELSE i.dateinvoiced
+        END AS datetrx, i.dateacct, i.c_currency_id, i.c_conversiontype_id, i.grandtotal AS amount, i.c_invoicepayschedule_id, ips.duedate, i.dateinvoiced AS truedatetrx, i.initialcurrentaccountamt, bp.socreditstatus
+   FROM c_invoice_v i
+   JOIN c_doctype dt ON i.c_doctypetarget_id = dt.c_doctype_id
+   JOIN c_bpartner bp ON bp.c_bpartner_id = i.c_bpartner_id
+   LEFT JOIN c_invoicepayschedule ips ON i.c_invoicepayschedule_id = ips.c_invoicepayschedule_id
+  ORDER BY 'C_Invoice'::text, i.c_invoice_id, i.ad_client_id, i.ad_org_id, i.isactive, i.created, i.createdby, i.updated, i.updatedby, i.c_bpartner_id, i.c_doctype_id, dt.signo_issotrx, dt.name, dt.printname, i.documentno, i.issotrx, i.docstatus, 
+CASE
+    WHEN i.c_invoicepayschedule_id IS NOT NULL THEN ips.duedate
+    ELSE i.dateinvoiced
+END, i.dateacct, i.c_currency_id, i.c_conversiontype_id, i.grandtotal, i.c_invoicepayschedule_id, ips.duedate, i.dateinvoiced, i.initialcurrentaccountamt, bp.socreditstatus)
+UNION ALL 
+( SELECT DISTINCT 'C_Payment'::text AS documenttable, p.c_payment_id AS document_id, p.ad_client_id, COALESCE(il.ad_org_id, p.ad_org_id) AS ad_org_id, p.isactive, p.created, p.createdby, p.updated, p.updatedby, p.c_bpartner_id, p.c_doctype_id, dt.signo_issotrx, dt.name AS doctypename, dt.printname AS doctypeprintname, p.documentno, p.issotrx, p.docstatus, p.datetrx, p.dateacct, p.c_currency_id, p.c_conversiontype_id, p.payamt AS amount, NULL::integer AS c_invoicepayschedule_id, p.duedate, p.datetrx AS truedatetrx, COALESCE(i.initialcurrentaccountamt, 0.00) AS initialcurrentaccountamt, bp.socreditstatus
+   FROM c_payment p
+   JOIN c_doctype dt ON p.c_doctype_id = dt.c_doctype_id
+   JOIN c_bpartner bp ON p.c_bpartner_id = bp.c_bpartner_id
+   LEFT JOIN ( SELECT di.c_payment_id, sum(di.initialcurrentaccountamt) AS initialcurrentaccountamt
+   FROM ( SELECT DISTINCT al.c_payment_id, al.c_invoice_id, i.initialcurrentaccountamt
+           FROM c_allocationline al
+      JOIN c_invoice i ON i.c_invoice_id = al.c_invoice_id
+     ORDER BY al.c_payment_id, al.c_invoice_id, i.initialcurrentaccountamt) di
+  GROUP BY di.c_payment_id) i ON i.c_payment_id = p.c_payment_id
+   LEFT JOIN c_allocationline al ON al.c_payment_id = p.c_payment_id
+   LEFT JOIN c_invoice il ON il.c_invoice_id = al.c_invoice_id
+  WHERE 
+CASE
+    WHEN il.ad_org_id IS NOT NULL AND il.ad_org_id <> p.ad_org_id THEN p.docstatus = ANY (ARRAY['CO'::bpchar, 'CL'::bpchar])
+    ELSE 1 = 1
+END
+  ORDER BY 'C_Payment'::text, p.c_payment_id, p.ad_client_id, COALESCE(il.ad_org_id, p.ad_org_id), p.isactive, p.created, p.createdby, p.updated, p.updatedby, p.c_bpartner_id, p.c_doctype_id, dt.signo_issotrx, dt.name, dt.printname, p.documentno, p.issotrx, p.docstatus, p.datetrx, p.dateacct, p.c_currency_id, p.c_conversiontype_id, p.payamt, NULL::integer, p.duedate, p.datetrx, COALESCE(i.initialcurrentaccountamt, 0.00), bp.socreditstatus))
+UNION ALL 
+( SELECT DISTINCT 'C_CashLine'::text AS documenttable, cl.c_cashline_id AS document_id, cl.ad_client_id, COALESCE(il.ad_org_id, cl.ad_org_id) AS ad_org_id, cl.isactive, cl.created, cl.createdby, cl.updated, cl.updatedby, 
+        CASE
+            WHEN cl.c_bpartner_id IS NOT NULL THEN cl.c_bpartner_id
+            ELSE il.c_bpartner_id
+        END AS c_bpartner_id, dt.c_doctype_id, 
+        CASE
+            WHEN cl.amount < 0.0 THEN 1
+            ELSE (-1)
+        END AS signo_issotrx, dt.name AS doctypename, dt.printname AS doctypeprintname, '@line@'::text || cl.line::character varying::text AS documentno, 
+        CASE
+            WHEN cl.amount < 0.0 THEN 'N'::bpchar
+            ELSE 'Y'::bpchar
+        END AS issotrx, cl.docstatus, c.statementdate AS datetrx, c.dateacct, cl.c_currency_id, NULL::integer AS c_conversiontype_id, abs(cl.amount) AS amount, NULL::integer AS c_invoicepayschedule_id, NULL::timestamp without time zone AS duedate, c.statementdate AS truedatetrx, COALESCE(i.initialcurrentaccountamt, 0.00) AS initialcurrentaccountamt, COALESCE(bp.socreditstatus, bp2.socreditstatus) AS socreditstatus
+   FROM c_cashline cl
+   JOIN c_cash c ON cl.c_cash_id = c.c_cash_id
+   LEFT JOIN c_bpartner bp ON cl.c_bpartner_id = bp.c_bpartner_id
+   JOIN ( SELECT d.ad_client_id, d.c_doctype_id, d.name, d.printname
+   FROM c_doctype d
+  WHERE d.doctypekey::text = 'CMC'::text) dt ON cl.ad_client_id = dt.ad_client_id
+   LEFT JOIN ( SELECT di.c_cashline_id, sum(di.initialcurrentaccountamt) AS initialcurrentaccountamt
+   FROM ( SELECT DISTINCT lc.c_cashline_id, lc.c_invoice_id, i.initialcurrentaccountamt
+           FROM c_cashline lc
+      JOIN c_invoice i ON i.c_invoice_id = lc.c_invoice_id
+     ORDER BY lc.c_cashline_id, lc.c_invoice_id, i.initialcurrentaccountamt) di
+  GROUP BY di.c_cashline_id) i ON i.c_cashline_id = cl.c_cashline_id
+   LEFT JOIN c_allocationline al ON al.c_cashline_id = cl.c_cashline_id
+   LEFT JOIN c_invoice il ON il.c_invoice_id = al.c_invoice_id
+   LEFT JOIN c_bpartner bp2 ON il.c_bpartner_id = bp2.c_bpartner_id
+  WHERE 
+CASE
+    WHEN il.ad_org_id IS NOT NULL AND il.ad_org_id <> cl.ad_org_id THEN cl.docstatus = ANY (ARRAY['CO'::bpchar, 'CL'::bpchar])
+    ELSE 1 = 1
+END
+  ORDER BY 'C_CashLine'::text, cl.c_cashline_id, cl.ad_client_id, COALESCE(il.ad_org_id, cl.ad_org_id), cl.isactive, cl.created, cl.createdby, cl.updated, cl.updatedby, 
+CASE
+    WHEN cl.c_bpartner_id IS NOT NULL THEN cl.c_bpartner_id
+    ELSE il.c_bpartner_id
+END, dt.c_doctype_id, 
+CASE
+    WHEN cl.amount < 0.0 THEN 1
+    ELSE (-1)
+END, dt.name, dt.printname, '@line@'::text || cl.line::character varying::text, 
+CASE
+    WHEN cl.amount < 0.0 THEN 'N'::bpchar
+    ELSE 'Y'::bpchar
+END, cl.docstatus, c.statementdate, c.dateacct, cl.c_currency_id, NULL::integer, abs(cl.amount), NULL::timestamp without time zone, NULL::integer, c.statementdate, COALESCE(i.initialcurrentaccountamt, 0.00), COALESCE(bp.socreditstatus, bp2.socreditstatus));
+
+ALTER TABLE v_documents_org OWNER TO libertya;
