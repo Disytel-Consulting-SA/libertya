@@ -220,9 +220,9 @@ public class MOrder extends X_C_Order implements DocAction {
             super.setProcessed( false );
             setProcessing( false );
             setPosted( false );
-            setDateAcct(Env.getDate());
-            setDatePromised(Env.getDate());
-            setDateOrdered(Env.getDate());
+            setDateOrdered(Env.getTimestamp());
+            setDateAcct(getDateOrdered());
+            setDatePromised(getDateOrdered());
             setFreightAmt( Env.ZERO );
             setChargeAmt( Env.ZERO );
             setTotalLines( Env.ZERO );

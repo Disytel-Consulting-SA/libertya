@@ -574,7 +574,7 @@ public class PoSOnline extends PoSConnectionState {
 	private void clearState(Order order) {
 		
 		ctx = Env.getCtx();
-		invoiceDate = Env.getDate();
+		invoiceDate = Env.getTimestamp();
 		
 //		if (trx != null) {
 //			try {

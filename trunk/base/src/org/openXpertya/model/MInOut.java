@@ -372,7 +372,7 @@ public class MInOut extends X_M_InOut implements DocAction {
             // setC_DocType_ID (0);
 
             setIsSOTrx( false );
-            setMovementDate( Env.getDate());
+            setMovementDate( Env.getTimestamp());
             setDateAcct( getMovementDate());
 
             // setMovementType (MOVEMENTTYPE_CustomerShipment);

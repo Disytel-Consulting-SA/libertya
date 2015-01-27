@@ -1460,7 +1460,7 @@ public abstract class PO implements Serializable, Comparator, Evaluatee {
 				m_newValues[i] = new Integer(Env.getContextAsInt(p_ctx,
 						"#AD_User_ID"));
 			else if (colName.equals("Created") || colName.equals("Updated"))
-				m_newValues[i] = Env.getDate();
+				m_newValues[i] = Env.getTimestamp();
 			else if (colName.equals(p_info.getTableName() + "_ID")) // KeyColumn
 				m_newValues[i] = I_ZERO;
 			else if (colName.equals("IsActive"))

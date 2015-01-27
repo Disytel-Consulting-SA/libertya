@@ -331,7 +331,7 @@ public class MCash extends X_C_Cash implements DocAction {
 
             //
 
-            Timestamp today = Env.getDate();
+            Timestamp today = Env.getTimestamp();
 
             setStatementDate( today );                                                  // @#Date@
             setDateAcct( today );                                                       // @#Date@
