@@ -13,6 +13,7 @@ import org.openXpertya.cc.CurrentAccountQuery;
 import org.openXpertya.model.MCurrency;
 import org.openXpertya.util.DB;
 import org.openXpertya.util.Env;
+import org.openXpertya.util.Util;
 
 public class CurrentAccountReport extends SvrProcess {
 
@@ -218,8 +219,12 @@ public class CurrentAccountReport extends SvrProcess {
 			String documentKey;
 			// process rs & insert rows in table
 			while (rs.next()) {
-				documentKey = rs.getString("documenttable") + "_"
-						+ rs.getString("document_id");
+				documentKey = rs.getString("documenttable")
+						+ "_"
+						+ rs.getString("document_id")
+						+ (Util.isEmpty(rs.getInt("c_invoicepayschedule_id"),
+								true) ? "" : "_"
+								+ rs.getInt("c_invoicepayschedule_id"));
 				if(documents.get(documentKey) == null){
 					Timestamp fechaVencimiento = null;
 					if (!p_ShowDetailedReceiptsPayments) {
