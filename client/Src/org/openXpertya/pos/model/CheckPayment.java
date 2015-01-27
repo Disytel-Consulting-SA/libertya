@@ -2,7 +2,6 @@ package org.openXpertya.pos.model;
 
 import java.sql.Timestamp;
 
-import org.openXpertya.model.MCreditException;
 import org.openXpertya.util.Env;
 
 public class CheckPayment extends Payment {
@@ -158,11 +157,11 @@ public class CheckPayment extends Payment {
 	}
 	
 	public Timestamp getDateTrx(){
-		return Env.getDate();	
+		return Env.getTimestamp();	
 	}
 	
 	public Timestamp getDateAcct(){
-		return Env.getDate();	
+		return Env.getTimestamp();	
 	}
 	
 	

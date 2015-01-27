@@ -196,7 +196,7 @@ public final class MPayment extends X_C_Payment implements DocAction,ProcessCall
 
             //
 
-            setDateTrx(Env.getDate());
+            setDateTrx(Env.getTimestamp());
             setDateAcct( getDateTrx());
             setTenderType( TENDERTYPE_Check );
         }

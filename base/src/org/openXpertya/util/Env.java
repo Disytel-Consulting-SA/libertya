@@ -1681,6 +1681,14 @@ public final class Env {
     	return Env.getContextAsDate(ctx != null?ctx:Env.getCtx(), "#Date");
     }
     
+    /***
+	 * @return la fecha actual del server, incluye hora, minutos, segundos y
+	 *         milisegundos.
+	 */
+    public static final Timestamp getTimestamp() {
+    	return (Timestamp)DB.getDBTimestamp(null);
+    }
+    
     /**
 	 * Retorna el dia actual en formato anio mes dia
 	 */

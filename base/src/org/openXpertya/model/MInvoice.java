@@ -800,8 +800,8 @@ public class MInvoice extends X_C_Invoice implements DocAction {
 			//
 
 			setPaymentRule(PAYMENTRULE_OnCredit); // Payment Terms
-			setDateInvoiced(Env.getDate());
-			setDateAcct(Env.getDate());
+			setDateInvoiced(Env.getTimestamp());
+			setDateAcct(getDateInvoiced());
 
 			//
 
