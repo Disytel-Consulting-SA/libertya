@@ -2145,7 +2145,7 @@ public abstract class PO implements Serializable, Comparator, Evaluatee {
 				 */
 
 				if (!updated) {
-					Timestamp now = Env.getDate();
+					Timestamp now = Env.getTimestamp();
 					consulta.setTimestamp(colIdx++, now);
 				}
 
