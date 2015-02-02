@@ -4657,3 +4657,64 @@ CASE
 END, cl.docstatus, c.statementdate, c.dateacct, cl.c_currency_id, NULL::integer, abs(cl.amount), NULL::timestamp without time zone, COALESCE(i.initialcurrentaccountamt, 0.00), COALESCE(bp.socreditstatus, bp2.socreditstatus));
 
 ALTER TABLE v_documents_org OWNER TO libertya;
+
+
+--20150201-1033 Tablas de soporte para LY Conversations
+CREATE TABLE C_SocialConversation (
+  C_SocialConversation_ID integer NOT NULL,
+  ad_client_id integer NOT NULL,
+  ad_org_id integer NOT NULL,
+  isactive character(1) NOT NULL DEFAULT 'Y'::bpchar,
+  created timestamp without time zone NOT NULL DEFAULT ('now'::text)::timestamp(6) with time zone,
+  createdby integer NOT NULL,
+  updated timestamp without time zone NOT NULL DEFAULT ('now'::text)::timestamp(6) with time zone,
+  updatedby integer NOT NULL,
+  started timestamp NULL,
+  startedby integer NULL,
+  subject varchar(255),
+  ad_table_id integer null,
+  ad_window_id integer null,
+  ad_tab_id integer null,
+  recordid integer NULL,
+  markasread character(1) NOT NULL DEFAULT 'X',
+  markasnotread character(1) NOT NULL DEFAULT 'X',
+  subscribe character(1) NOT NULL DEFAULT 'X',
+  unsubscribe character(1) NOT NULL DEFAULT 'X',
+  CONSTRAINT C_SocialConversation_key PRIMARY KEY (C_SocialConversation_ID)
+);
+
+CREATE TABLE C_SocialMessage (
+  C_SocialMessage_ID integer NOT NULL,
+  ad_client_id integer NOT NULL,
+  ad_org_id integer NOT NULL,
+  isactive character(1) NOT NULL DEFAULT 'Y'::bpchar,
+  created timestamp without time zone NOT NULL DEFAULT ('now'::text)::timestamp(6) with time zone,
+  createdby integer NOT NULL,
+  updated timestamp without time zone NOT NULL DEFAULT ('now'::text)::timestamp(6) with time zone,
+  updatedby integer NOT NULL,
+  C_SocialConversation_ID integer NOT NULL,
+  inthisconversation varchar(1024) NULL,
+  newparticipant integer NULL,
+  msgcontent varchar NOT NULL,
+  sent timestamp without time zone NOT NULL DEFAULT now(),
+  sentby integer NOT NULL,
+  CONSTRAINT C_SocialMessage_key PRIMARY KEY (C_SocialMessage_ID),
+  CONSTRAINT C_SocialConversation_FK FOREIGN KEY (C_SocialConversation_ID) REFERENCES C_SocialConversation (C_SocialConversation_ID) MATCH SIMPLE ON DELETE CASCADE
+);
+
+CREATE TABLE C_SocialSubscription (
+  C_SocialSubscription_ID integer NOT NULL,
+  ad_client_id integer NOT NULL,
+  ad_org_id integer NOT NULL,
+  isactive character(1) NOT NULL DEFAULT 'Y'::bpchar,
+  created timestamp without time zone NOT NULL DEFAULT ('now'::text)::timestamp(6) with time zone,
+  createdby integer NOT NULL,
+  updated timestamp without time zone NOT NULL DEFAULT ('now'::text)::timestamp(6) with time zone,
+  updatedby integer NOT NULL,
+  C_SocialConversation_ID integer NOT NULL,
+  ad_user_id integer NOT NULL,
+  read character(1) NOT NULL DEFAULT 'N',
+  CONSTRAINT C_SocialSubscription_key PRIMARY KEY (C_SocialSubscription_ID),
+  CONSTRAINT C_SocialConversation_FK FOREIGN KEY (C_SocialConversation_ID) REFERENCES C_SocialConversation (C_SocialConversation_ID) MATCH SIMPLE ON DELETE CASCADE
+);
+
