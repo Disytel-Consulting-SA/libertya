@@ -4754,4 +4754,32 @@ public abstract class PO implements Serializable, Comparator, Evaluatee {
 	{
 		return p_info.getAD_Table_ID();
 	}   //  get_TableID
+	
+	/**
+	 * Retorna los nombres de las columnas que están marcadas como isidentifier para este PO
+	 */
+	public ArrayList<String> getIdentifiersColumnNames() {
+		ArrayList<String> identifierColumnNames = new ArrayList<String>();
+		try {
+			PreparedStatement pstmt = DB.prepareStatement("SELECT columnname FROM AD_Column WHERE AD_Table_ID = " + get_Table_ID() + " AND isidentifier = 'Y'", get_TrxName());
+			ResultSet rs = pstmt.executeQuery();
+			while (rs.next())
+				identifierColumnNames.add(rs.getString("columnname"));
+		} catch (Exception e) {
+			log.log(Level.SEVERE, "Error al recuperar las columnas identificadoras: " + e.getMessage());
+		}
+		return identifierColumnNames;
+	}
+	
+	/**
+	 * Retorna los valores de las columnas marcadas como isidentifier para este PO
+	 */
+	public ArrayList<String> getIdentifierValues() {
+		ArrayList<String> values = new ArrayList<String>();
+		for (String aColumnName : getIdentifiersColumnNames()) {
+			values.add(get_ValueAsString(aColumnName));
+		}
+		return values;
+	}
+	
 } // PO

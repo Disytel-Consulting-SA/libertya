@@ -60,6 +60,8 @@ import org.compiere.swing.CPanel;
 import org.compiere.swing.CScrollPane;
 import org.compiere.swing.CTabbedPane;
 import org.openXpertya.OpenXpertya;
+import org.openXpertya.apps.form.FormFrame;
+import org.openXpertya.apps.form.VSocialConversation;
 import org.openXpertya.apps.wf.WFActivity;
 import org.openXpertya.apps.wf.WFPanel;
 import org.openXpertya.db.CConnection;
@@ -67,6 +69,7 @@ import org.openXpertya.grid.tree.VTreePanel;
 import org.openXpertya.model.MClient;
 import org.openXpertya.model.MRole;
 import org.openXpertya.model.MSession;
+import org.openXpertya.model.MSocialConversation;
 import org.openXpertya.model.MTreeNode;
 import org.openXpertya.reflection.CallResult;
 import org.openXpertya.util.CLogger;
@@ -318,6 +321,8 @@ public final class AMenu extends JFrame implements ActionListener,PropertyChange
     /** Descripción de Campos */
 
     private CButton bTasks = new CButton();
+    
+    protected CButton bConversations = new CButton();
 
     /** Descripción de Campos */
 
@@ -382,6 +387,11 @@ public final class AMenu extends JFrame implements ActionListener,PropertyChange
         bTasks.setIcon( Env.getImageIcon( "Request24.gif" ));
         bTasks.setMargin( new Insets( 0,0,0,0 ));
 
+        bConversations.setRequestFocusEnabled( false );
+        bConversations.setActionCommand( "Conversations" );
+        bConversations.addActionListener( this );
+        bConversations.setIcon( Env.getImageIcon( "Conversation24.gif" ));
+        bConversations.setMargin( new Insets( 0,0,0,0 ));        
         //
 
         southLayout.setHgap( 0 );
@@ -423,7 +433,8 @@ public final class AMenu extends JFrame implements ActionListener,PropertyChange
         //
 
         infoPanel.add( bNotes,null );
-        infoPanel.add( bTasks,null );
+        // infoPanel.add( bTasks,null );		// Comentado: se prioriza nueva funcionalidad de conversaciones para mensajería interna
+        infoPanel.add( bConversations,null );
         infoPanel.add( memoryBar,null );
 
         //
@@ -680,6 +691,8 @@ public final class AMenu extends JFrame implements ActionListener,PropertyChange
             gotoNotes();
         } else if( e.getSource() == bTasks ) {
             gotoTasks();
+        } else if( e.getSource() == bConversations ) {
+            gotoConversations();
         } else if( !AEnv.actionPerformed( e.getActionCommand(),m_WindowNo,this )) {
             log.log( Level.SEVERE,"unknown action=" + e.getActionCommand());
         }
@@ -774,6 +787,12 @@ public final class AMenu extends JFrame implements ActionListener,PropertyChange
         return retValue;
     }    // getRequests
 
+    
+    // Conversaciones no leidas
+    private int getConversations() {
+    	return MSocialConversation.getNotReadConversationsCountForUser(Env.getAD_User_ID(Env.getCtx()));
+    }
+    
     /**
      * Descripción de Método
      *
@@ -794,6 +813,22 @@ public final class AMenu extends JFrame implements ActionListener,PropertyChange
         ( new AMenuStartItem( m_request_Menu_ID,true,Msg.translate( m_ctx,"R_Request_ID" ),this )).start();    // async load
     }    // gotoTasks
 
+    
+    private void gotoConversations() {
+//    	Aunque no tenga conversaciones pendientes, se le permite acceder 
+//    	a la ventana por si el usuario desea crear una conversación
+//    	if (getConversations() <= 0) {
+//    		ADialog.info( m_WindowNo, this, "Sin conversaciones pendientes!" );
+//    		return;
+//    	}
+    	FormFrame ff = new FormFrame();
+    	VSocialConversation m_panel = new VSocialConversation();
+		ff.setFormPanel(m_panel);
+		m_panel.init(ff.getWindowNo(), ff);
+		ff.pack();
+		AEnv.showCenterScreen(ff);
+    }
+    
     /**
      * Descripción de Método
      *
@@ -833,6 +868,8 @@ public final class AMenu extends JFrame implements ActionListener,PropertyChange
         int requests = getRequests();
 
         bTasks.setText( Msg.translate( m_ctx,"R_Request_ID" ) + ": " + requests );
+        
+        bConversations.setText( "Conversaciones: " + getConversations() );
 
         // Memo
 

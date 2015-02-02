@@ -2243,6 +2243,15 @@ public class MTab implements DataStatusListener,Evaluatee,Serializable {
     }    // canHaveAttachment
 
     /**
+     * Retorna true o false si puede o no tener conversacion una tabla dada
+     */
+    public boolean canHaveConversation() {
+    	// Las mismas tablas de conversacion obviamente no pueden tener conversacion
+    	// Las tablas que pueden tener conversacion son las que tiene PK unica, al igual que para los adjuntos
+    	return !m_mTable.getTableName().startsWith("C_Social") && canHaveAttachment() && m_vo.TabNo == 0 && getRecord_ID() > 0;
+    }
+    
+    /**
      * Descripción de Método
      *
      *
@@ -2265,6 +2274,16 @@ public class MTab implements DataStatusListener,Evaluatee,Serializable {
         return m_Attachment.containsKey( key );
     }    // hasAttachment
 
+    
+    
+    public boolean hasConversation() {
+    	return 1 == DB.getSQLValue(null, 	" SELECT count(1) " +
+    										" FROM C_SocialConversation " +
+			    							" WHERE AD_Table_ID = " + M_Table.getID(m_mTable.getTableName()) +
+			    							" AND RecordID = " + m_mTable.getKeyID( m_currentRow ));    	
+    }
+    
+    
     /**
      * Descripción de Método
      *
