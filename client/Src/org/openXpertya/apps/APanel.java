@@ -58,6 +58,7 @@ import org.openXpertya.apps.form.VInvoiceRemGen;
 import org.openXpertya.apps.form.VOrderMatrixDetail;
 import org.openXpertya.apps.form.VPriceInstanceMatrix;
 import org.openXpertya.apps.form.VProdPricGen;
+import org.openXpertya.apps.form.VSocialConversation;
 import org.openXpertya.apps.form.VUpcInstanceMatrix;
 import org.openXpertya.apps.search.Find;
 import org.openXpertya.grid.APanelTab;
@@ -72,6 +73,7 @@ import org.openXpertya.grid.ed.VButton;
 import org.openXpertya.grid.ed.VDocAction;
 import org.openXpertya.model.DataStatusEvent;
 import org.openXpertya.model.DataStatusListener;
+import org.openXpertya.model.MCash;
 import org.openXpertya.model.MDocType;
 import org.openXpertya.model.MField;
 import org.openXpertya.model.MPriceListVersion;
@@ -81,8 +83,10 @@ import org.openXpertya.model.MTab;
 import org.openXpertya.model.MWindow;
 import org.openXpertya.model.MWindowVO;
 import org.openXpertya.model.MWorkbench;
+import org.openXpertya.model.M_Table;
 import org.openXpertya.model.M_Window;
 import org.openXpertya.model.X_C_OrderLine;
+import org.openXpertya.model.X_C_SocialConversation;
 import org.openXpertya.model.X_M_InOutLine;
 import org.openXpertya.print.AReport;
 import org.openXpertya.process.ProcessInfo;
@@ -90,6 +94,7 @@ import org.openXpertya.process.ProcessInfoUtil;
 import org.openXpertya.util.ASyncProcess;
 import org.openXpertya.util.CLogMgt;
 import org.openXpertya.util.CLogger;
+import org.openXpertya.util.DB;
 import org.openXpertya.util.Env;
 import org.openXpertya.util.Language;
 import org.openXpertya.util.Msg;
@@ -246,7 +251,7 @@ public final class APanel extends CPanel implements DataStatusListener,ChangeLis
 
     /** Descripción de Campos */
 
-    private AppsAction aPrevious,aNext,aParent,aDetail,aFirst,aLast,aNew,aCopy,aDelete,aIgnore,aPrint,aRefresh,aHistory,aAttachment,aMulti,aFind,aWorkflow,aZoomAcross,aRequest,aWinSize,aArchive,aExport;
+    private AppsAction aPrevious,aNext,aParent,aDetail,aFirst,aLast,aNew,aCopy,aDelete,aIgnore,aPrint,aRefresh,aHistory,aAttachment,aMulti,aFind,aWorkflow,aZoomAcross,aRequest,aWinSize,aArchive,aExport,aConversation;
 
     /** Descripción de Campos */
 
@@ -351,7 +356,7 @@ public final class APanel extends CPanel implements DataStatusListener,ChangeLis
         aRequest    = addAction( "Request",mGo,null,false );
         aArchive    = addAction( "Archive",mGo,null,false );
         aHome       = addAction( "Home",mGo,null,false );
-
+        aConversation = addAction ( "Conversation", mGo, null, true);
         // Tools
 
         JMenu mTools = AEnv.getMenu( "Tools" );
@@ -486,6 +491,7 @@ public final class APanel extends CPanel implements DataStatusListener,ChangeLis
         
         toolBar.add( aEnd.getButton());
 
+        toolBar.add( aConversation.getButton());
         //
 
         if( CLogMgt.isLevelFinest()) {
@@ -1102,6 +1108,7 @@ public final class APanel extends CPanel implements DataStatusListener,ChangeLis
         // Check Attachment
 
         boolean canHaveAttachment = m_curTab.canHaveAttachment();    // not single _ID column
+        boolean canHaveConversation = m_curTab.canHaveConversation();    // not single _ID column
 
         //
 
@@ -1126,6 +1133,15 @@ public final class APanel extends CPanel implements DataStatusListener,ChangeLis
             aLock.setPressed( m_curTab.isLocked());
         }
 
+        if( canHaveConversation) {
+        	aConversation.setPressed(m_curTab.hasConversation());
+        	aConversation.setEnabled(true);
+        } else {
+        	aConversation.setEnabled(false);
+        }
+        
+       	
+        
         updateTabsState();
         // log.info( "APanel.dataStatusChanged - fini", e.getMessage());
 
@@ -1573,7 +1589,8 @@ public final class APanel extends CPanel implements DataStatusListener,ChangeLis
                 cmd_request();
             } else if( cmd.equals( aArchive.getName())) {
                 cmd_archive();
-
+            } else if( cmd.equals( aConversation.getName())) {
+                cmd_conversation();
                 // Tools
 
             } else if( (aWorkflow != null) && cmd.equals( aWorkflow.getName())) {
@@ -1883,6 +1900,66 @@ public final class APanel extends CPanel implements DataStatusListener,ChangeLis
         new AArchive( aArchive.getButton(),AD_Table_ID,record_ID );
     }    // cmd_archive
 
+ 
+    /**
+     * Abre la ventana de conversaciones para un registro dado (ventana Swing)
+     */
+    private void cmd_conversation() {
+    	FormFrame ff = new FormFrame();
+    	VSocialConversation m_panel = new VSocialConversation(m_curTab);
+		ff.setFormPanel(m_panel);
+		m_panel.init(ff.getWindowNo(), ff);
+		ff.pack();
+		AEnv.showCenterScreen(ff);
+		aConversation.setPressed(m_curTab.hasConversation());
+    }
+    
+    
+//    /**
+//     * Abre la ventana de conversaciones para un registro dado (ventana No Swing)
+//     */
+//    private void cmd_conversation_noSwing() {
+//    	// Recuperar tabla y registro
+//    	int record_ID = m_curTab.getRecord_ID();
+//        if( record_ID <= 0 ) {
+//            return;
+//        }
+//        int AD_Table_ID = m_curTab.getAD_Table_ID();
+//      
+//        // Filtrar por tabla y registro
+//        AWindow frame = new AWindow();
+//        MQuery query = new MQuery( X_C_SocialConversation.Table_Name);
+//        query.addRestriction("AD_Table_ID", MQuery.EQUAL, AD_Table_ID);
+//        query.addRestriction("recordid", MQuery.EQUAL, record_ID);
+//
+//        // Abrir la ventana
+//        if (!frame.initWindow(conversationWindowID, query)) {
+//        	ADialog.error(  m_curWindowNo, this , null, "Error al acceder a la conversacion");
+//        }
+//        else {
+//        	
+//        	APanel panel = frame.getAPanel();
+//        	panel.setCurrentTab(0);	// Pestaña cabecera de conversacion
+//        	MTab tab = panel.getCurrentTab();
+//        	
+//        	// Si todavía no existe un registro, setear tabla y registro.
+//        	if (tab.isInserting()) {
+//            	tab.setValue("AD_Table_ID", AD_Table_ID);
+//            	tab.setValue("RecordID", record_ID);
+//            	// TODO: Mensajes para I18N
+//        		tab.setValue("Subject", "Conversación para registro " + record_ID + " de tabla " + M_Table.getTableName(m_ctx, AD_Table_ID));
+//        	} else {
+//            	// Si ya existe el registro, ir directamente a los mensajes
+//        		panel.setCurrentTab(1);
+//        	}
+//        	
+//        	AEnv.showCenterScreen( frame );    
+//        }
+//        
+//    }
+//    // TODO: Actualizar AD_ComponentObjectUID con valor definitivo!
+//    static int conversationWindowID = DB.getSQLValue(null, "SELECT AD_Window_ID FROM AD_Window WHERE AD_ComponentObjectUID = 'CORE-AD_Window-1010177'");
+    
     /**
      * Descripción de Método
      *
@@ -2589,6 +2666,10 @@ public final class APanel extends CPanel implements DataStatusListener,ChangeLis
         return m_curTab;
     }    // getCurrentTab
 
+    public void setCurrentTab(int tabNo) {
+    	m_curWinTab.setSelectedIndex(tabNo);
+    }
+    
     /**
      * Descripción de Método
      *
