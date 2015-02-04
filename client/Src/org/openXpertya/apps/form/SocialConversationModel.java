@@ -7,16 +7,10 @@ import java.util.ArrayList;
 import javax.swing.table.AbstractTableModel;
 
 import org.openXpertya.model.MClient;
-import org.openXpertya.model.MOrg;
-import org.openXpertya.model.MPreference;
 import org.openXpertya.model.MSocialConversation;
 import org.openXpertya.model.MSocialMessage;
 import org.openXpertya.model.MSocialSubscription;
 import org.openXpertya.model.MUser;
-import org.openXpertya.model.MUserMail;
-import org.openXpertya.model.M_Table;
-import org.openXpertya.model.PO;
-import org.openXpertya.replication.ReplicationConstantsWS;
 import org.openXpertya.util.CLogger;
 import org.openXpertya.util.DB;
 import org.openXpertya.util.EMail;
@@ -206,12 +200,32 @@ public class SocialConversationModel {
 	    												" ORDER BY sm.sent DESC");
 	    	ResultSet rs = ps.executeQuery();
 	    	while (rs.next()) {
+	    		
+	    		// Primera fila
 	    		ArrayList<Object> aRow = new ArrayList<Object>();
 	    		aRow.add("El " + rs.getString("sent") + " " + rs.getString("name") + " dijo:");
 	    		rowData.add(aRow);
-	    		ArrayList<Object> aRowMsj = new ArrayList<Object>();
-	    		aRowMsj.add(rs.getString("message"));
-	    		rowData.add(aRowMsj);
+	    		
+	    		// Filas de contenido	    		
+	    		String message = rs.getString("message");
+	    		if (message == null)
+	    			message = "";
+	    		int maxLong = 120;
+	    		while (message.length() > 0) {	// Crear líneas a fin de visualizar el contenido completo
+	    			int chunk = maxLong < message.length() ? maxLong : message.length();
+	    			int xtra = message.indexOf(" ", chunk);	// Llegar hasta encontrar un espacio (si es que existe)
+	    			if (xtra > chunk)
+	    				chunk = xtra;
+	    			String line = message.substring(0, chunk);
+	    			if (line.trim().length()>0) {
+	    				ArrayList<Object> aRowMsj = new ArrayList<Object>();
+		    			aRowMsj.add(line.toString());
+		    			rowData.add(aRowMsj);
+	    			}
+		    		message = message.substring(chunk);	// Actualizar pendiente del mensaje 
+	    		}	
+	    		
+	    		// Fila de separación
 	    		ArrayList<Object> aRowFoot = new ArrayList<Object>();
 	    		aRowFoot.add("");
 	    		rowData.add(aRowFoot);
@@ -223,7 +237,9 @@ public class SocialConversationModel {
 	    	rs = null;
 	    	ps = null;
 	    }
-
+	     
 	}
+	
+	
 
 }

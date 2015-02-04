@@ -32,7 +32,6 @@ import org.openXpertya.model.MField;
 import org.openXpertya.model.MQuery;
 import org.openXpertya.model.MSocialConversation;
 import org.openXpertya.model.MTab;
-import org.openXpertya.model.M_Tab;
 import org.openXpertya.model.M_Table;
 import org.openXpertya.model.X_C_SocialConversation;
 import org.openXpertya.util.CLogger;
@@ -93,7 +92,7 @@ public class VSocialConversation extends CPanel  implements FormPanel {
     protected CButton    buttonUnsubscribe = new CButton();
     protected CButton    buttonAttach = new CButton();
     protected CButton    buttonSend = new CButton();
-	protected JTable	 tblConversation = null;
+	protected JTable	 tblConversation = null;	// Se implementa bajo una tabla para soportar eventuales ampliaciones a futuro
     protected CButton    buttonPrevious = new CButton();
     protected CButton    buttonNext = new CButton();
     protected CButton    buttonGoToRecord = new CButton();

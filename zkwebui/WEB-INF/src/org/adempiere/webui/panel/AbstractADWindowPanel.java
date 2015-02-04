@@ -37,6 +37,7 @@ import org.adempiere.webui.apps.ProcessModalDialog;
 import org.adempiere.webui.apps.WReport;
 import org.adempiere.webui.apps.form.WCreateFrom;
 import org.adempiere.webui.apps.form.WPayment;
+import org.adempiere.webui.apps.form.WSocialConversation;
 import org.adempiere.webui.component.CWindowToolbar;
 import org.adempiere.webui.component.IADTab;
 import org.adempiere.webui.component.IADTabList;
@@ -864,6 +865,26 @@ public abstract class AbstractADWindowPanel extends AbstractUIPart implements To
 		focusToActivePanel();
 	}
 
+    /**
+     * @see ToolbarListener#onConversation()
+     */
+    public void onConversation() {
+		int record_ID = curTab.getRecord_ID();
+		logger.info("Record_ID=" + record_ID);
+
+		if (record_ID == -1)	//	No Key
+		{
+			//aAttachment.setEnabled(false);
+			return;
+		}
+
+		WSocialConversation aConv = new WSocialConversation(curWindowNo, curTab);
+		AEnv.showWindow(aConv);
+		toolbar.getButton("Conversation").setPressed(curTab.hasConversation());
+		focusToActivePanel();    	
+    }
+    
+    
     /**
      * @see ToolbarListener#onToggle()
      */

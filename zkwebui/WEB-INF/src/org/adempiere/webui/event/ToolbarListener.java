@@ -139,4 +139,9 @@ public interface ToolbarListener
      * View product info
      */
     public void onProductInfo();    
+    
+    /**
+     * Show conversations for this record
+     */
+    public void onConversation();
 }
