@@ -484,14 +484,14 @@ public final class APanel extends CPanel implements DataStatusListener,ChangeLis
             toolBar.add( aWorkflow.getButton());
         }
 
-        toolBar.add( aRequest.getButton());
+//        toolBar.add( aRequest.getButton());   Se comenta a fin de priorizar el uso de conversaciones
 //        toolBar.add( aProduct.getButton());
         toolBar.add(aExport.getButton());
+        toolBar.add( aConversation.getButton());
         toolBar.addSeparator();
         
         toolBar.add( aEnd.getButton());
 
-        toolBar.add( aConversation.getButton());
         //
 
         if( CLogMgt.isLevelFinest()) {

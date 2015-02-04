@@ -77,6 +77,8 @@ public class CWindowToolbar extends FToolbar implements EventListener
 
     private ToolBarButton btnZoomAcross, btnActiveWorkflows, btnRequests, btnProductInfo;
 
+    private ToolBarButton btnConversation;
+    
     private HashMap<String, ToolBarButton> buttons = new HashMap<String, ToolBarButton>();
 
 //    private ToolBarButton btnExit;
@@ -152,9 +154,13 @@ public class CWindowToolbar extends FToolbar implements EventListener
 		btnZoomAcross = createButton("ZoomAcross", "ZoomAcross", "ZoomAcross");
         btnActiveWorkflows = createButton("ActiveWorkflows", "WorkFlow", "WorkFlow");
         btnRequests = createButton("Requests", "Request", "Request");
+        btnRequests.setVisible(false);	// Se oculta a fin de priorizar el uso de conversaciones
+        btnConversation = createButton("Conversation", "Conversation", "Conversation");
+        btnConversation.setDisabled(false);
         btnProductInfo = createButton("ProductInfo", "Product", "InfoProduct");
         btnProductInfo.setVisible(isAllowProductInfo);
 
+        
         // Help and Exit should always be enabled
         btnHelp.setDisabled(false);
         btnGridToggle.setDisabled(false);
