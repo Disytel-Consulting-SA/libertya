@@ -4718,3 +4718,99 @@ CREATE TABLE C_SocialSubscription (
   CONSTRAINT C_SocialConversation_FK FOREIGN KEY (C_SocialConversation_ID) REFERENCES C_SocialConversation (C_SocialConversation_ID) MATCH SIMPLE ON DELETE CASCADE
 );
 
+--20150204-0915 Función para redireccionar documentos de una entidad comercial a otra
+CREATE OR REPLACE FUNCTION redirect_duplicated_bpartners(value_from character varying, value_to character varying)
+  RETURNS integer AS
+$BODY$
+DECLARE
+fromBP record;            -- bpartner a redireccionar
+fromBPLocation record;        -- bpartnerlocation de la ec a redireccionar
+currentTaxID int;            -- taxID del bpartner a redireccionar
+toBP record;            -- bpartner hacia donde tiene que ser redireccionado
+toBPLocation record;        -- bpartnerLocation hacia donde tiene que ser redireccionado
+currentQuery varchar;            -- query de modificacion;
+revertQuery varchar;            -- query para undo;
+columnsToBP record;            -- tabla/columnas que apuntan a BP
+thisHostOrg int;            -- orgID en el anillo de replicación
+BEGIN
+
+    -- OrgID de la sucursal
+    -- SELECT INTO thisHostOrg AD_Org_ID FROM AD_ReplicationHost WHERE thisHost = 'Y';
+
+    -- Recuperar el bpartnerID desde el cual se debe redireccionar
+    SELECT INTO fromBP C_BPartner_ID
+    FROM C_BPartner f
+    WHERE f.value = value_from
+    ORDER BY updated desc
+    LIMIT 1;
+
+    -- Recuperar el bpartnerID hacia el cual se debe redireccionar
+    SELECT INTO toBP C_BPartner_ID
+    FROM C_BPartner t
+    WHERE t.value = value_to 
+    ORDER BY updated desc
+    LIMIT 1;
+
+    -- Si no hay bPartner origen, no se puede hacer mucho más
+    IF fromBP.C_BPartner_ID IS NULL THEN
+	RAISE NOTICE 'ERROR AL RECUPERAR REDIRECCION PARA value: % ', value_from;
+	continue;
+    END IF;
+
+    -- Si no hay bPartner destino, no se puede hacer mucho más
+    IF toBP.C_BPartner_ID IS NULL THEN
+	RAISE NOTICE 'ERROR AL RECUPERAR REDIRECCION PARA value: % ', value_to;
+	continue;
+    END IF;
+
+    -- Iterar por todas las tablas a actualizar que posean una columna que apunta a C_BPartner.C_BPartner_ID
+    FOR columnsToBP IN (select * from columnas_bpartner where tablename  in ('C_AllocationHdr', 'C_AllocationLine', 'C_BPartner_Percepcion', 'C_BPartner_PercExenc', 'C_CashLine', 'C_CCAC_BPartner_PaymentRules', 'C_CreditException', 'C_Invoice', 'C_Order', 'C_OrderLine', 'C_Payment', 'C_PaySelectionCheck', 'M_BoletaDeposito', 'M_EntidadFinanciera', 'M_InOut', 'M_Transfer')) LOOP
+	currentQuery := ' UPDATE ' || columnsToBP.tablename || ' SET ' || columnsToBP.columnname || ' = ' || toBP.C_BPartner_ID || ' WHERE ' || columnsToBP.columnname || ' = ' || fromBP.C_BPartner_ID;
+	revertQuery :=  ' UPDATE ' || columnsToBP.tablename || ' SET ' || columnsToBP.columnname || ' = ' || fromBP.C_BPartner_ID || ' WHERE ' || columnsToBP.columnname || ' = ' || toBP.C_BPartner_ID;
+	IF (columnsToBP.tablename = 'M_InOut') THEN
+		currentQuery := currentQuery || ' AND issotrx = ''Y'' ';
+		revertQuery := revertQuery || ' AND issotrx = ''Y'' ';
+	END IF;
+	currentQuery := currentQuery || ';';
+	revertQuery := revertQuery || ';';
+	RAISE NOTICE 'Query: % | Undo: % ' , currentQuery, revertQuery;
+	BEGIN
+		EXECUTE currentQuery;
+		EXCEPTION WHEN OTHERS THEN RAISE NOTICE 'Revento con query %' , currentQuery;
+	END;
+	END LOOP;
+
+	-- Reasignar también el BPartnerLocation
+	SELECT INTO fromBPLocation C_BPartner_Location_ID FROM C_BPartner_Location WHERE C_BPartner_ID = fromBP.C_BPartner_ID LIMIT 1;
+	SELECT INTO toBPLocation C_BPartner_Location_ID FROM C_BPartner_Location WHERE C_BPartner_ID = toBP.C_BPartner_ID LIMIT 1;       
+
+	-- Si no hay BPartner_Location, no se puede hacer mucho más
+	IF fromBPLocation.C_BPartner_Location_ID IS NULL THEN
+	    RAISE NOTICE 'ERROR AL RECUPERAR BPartner_Location PARA fromBP. C_BPartner_ID %', fromBP.C_BPartner_ID;
+	    continue;
+	END IF;
+	IF toBPLocation.C_BPartner_Location_ID IS NULL THEN
+	    RAISE NOTICE 'ERROR AL RECUPERAR BPartner_Location PARA toBP. C_BPartner_ID %', toBP.C_BPartner_ID;
+	    continue;
+	END IF;
+
+	currentQuery := ' UPDATE C_Order   SET C_BPartner_Location_ID = ' || toBPLocation.C_BPartner_Location_ID || ' WHERE issotrx = ''Y'' AND C_BPartner_Location_ID = ' || fromBPLocation.C_BPartner_Location_ID || ';';
+	revertQuery  := ' UPDATE C_Order   SET C_BPartner_Location_ID = ' || fromBPLocation.C_BPartner_Location_ID || ' WHERE issotrx = ''Y'' AND C_BPartner_Location_ID = ' || toBPLocation.C_BPartner_Location_ID || ';';
+	RAISE NOTICE 'Query: % | Undo: % ' , currentQuery, revertQuery;
+	 EXECUTE currentQuery;
+
+	currentQuery := ' UPDATE C_Invoice SET C_BPartner_Location_ID = ' || toBPLocation.C_BPartner_Location_ID || ' WHERE issotrx = ''Y'' AND C_BPartner_Location_ID = ' || fromBPLocation.C_BPartner_Location_ID || ';';
+	revertQuery  := ' UPDATE C_Invoice SET C_BPartner_Location_ID = ' || fromBPLocation.C_BPartner_Location_ID || ' WHERE issotrx = ''Y'' AND C_BPartner_Location_ID = ' || toBPLocation.C_BPartner_Location_ID || ';';
+	RAISE NOTICE 'Query: % | Undo: % ' , currentQuery, revertQuery;
+	 EXECUTE currentQuery;
+
+	currentQuery := ' UPDATE M_InOut   SET C_BPartner_Location_ID = ' || toBPLocation.C_BPartner_Location_ID || ' WHERE issotrx = ''Y'' AND C_BPartner_Location_ID = ' || fromBPLocation.C_BPartner_Location_ID || ';';
+	revertQuery  := ' UPDATE M_InOut   SET C_BPartner_Location_ID = ' || fromBPLocation.C_BPartner_Location_ID || ' WHERE issotrx = ''Y'' AND C_BPartner_Location_ID = ' || toBPLocation.C_BPartner_Location_ID || ';';
+	RAISE NOTICE 'Query: % | Undo: % ' , currentQuery, revertQuery;
+	 EXECUTE currentQuery;
+    RETURN 0;
+END
+$BODY$
+  LANGUAGE 'plpgsql' VOLATILE
+  COST 100;
+ALTER FUNCTION redirect_duplicated_bpartners(character varying, character varying) OWNER TO libertya;
