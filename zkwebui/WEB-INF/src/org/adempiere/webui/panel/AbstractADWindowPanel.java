@@ -1091,6 +1091,7 @@ public abstract class AbstractADWindowPanel extends AbstractUIPart implements To
 		        curTabIndex < (adTab.getTabCount() - 1));
 
 		toolbar.getButton("Attachment").setPressed(curTab.hasAttachment());
+		toolbar.getButton("Conversation").setPressed(curTab.hasAttachment());
 		if (isFirstTab())
         {
             toolbar.getButton("HistoryRecords").setPressed(!curTab.isOnlyCurrentRows());
@@ -1237,6 +1238,7 @@ public abstract class AbstractADWindowPanel extends AbstractUIPart implements To
 
         //  Check Attachment
         boolean canHaveAttachment = curTab.canHaveAttachment();       //  not single _ID column
+        boolean canHaveConversation = curTab.canHaveConversation();       //  not single _ID column
         //
         if (canHaveAttachment && e.isLoading() &&
                 curTab.getCurrentRow() > e.getLoadedRows())
@@ -1257,6 +1259,15 @@ public abstract class AbstractADWindowPanel extends AbstractUIPart implements To
             toolbar.enableAttachment(false);
         }
 
+        
+        if( canHaveConversation) {
+        	toolbar.getButton("Conversation").setPressed(curTab.hasConversation());
+        	toolbar.enableConversation(true);
+        } else {
+        	toolbar.enableConversation(false);
+        }
+
+        
         toolbar.getButton("Find").setPressed(curTab.isQueryActive());
 
         // Elaine 2008/12/05

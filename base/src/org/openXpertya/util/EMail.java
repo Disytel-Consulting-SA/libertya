@@ -313,7 +313,7 @@ public final class EMail implements Serializable {
             if (m_useSSL) {
                 props.put("mail.smtp.starttls.enable","true");
             }
-            session = Session.getDefaultInstance( props,getAuthenticator());
+            session = Session.getInstance( props,getAuthenticator());
         } catch( Exception e ) {
             log.log( Level.SEVERE,"Auth=" + m_auth,e );
             m_sentMsg = e.toString();

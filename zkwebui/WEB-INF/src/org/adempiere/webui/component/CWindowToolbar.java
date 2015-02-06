@@ -471,6 +471,11 @@ public class CWindowToolbar extends FToolbar implements EventListener
         this.btnAttachment.setDisabled(!enabled);
     }
 
+    public void enableConversation(boolean enabled)
+    {
+        this.btnConversation.setDisabled(!enabled);
+    }
+    
     public void enablePrint(boolean enabled)
     {
     	this.btnPrint.setDisabled(!enabled);

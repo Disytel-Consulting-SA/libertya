@@ -1544,6 +1544,14 @@ public class MField implements Serializable,Evaluatee {
     }    // setReadOnly
     // Fin desarrollo Dataware S.L.
     
+    public void setUpdateable(boolean updateable) {
+    	m_vo.IsUpdateable = updateable;
+    }
+    
+    public void setDisplayType(int displayType) {
+    	m_vo.displayType = displayType;
+    }
+    
     /**
      * Descripción de Método
      *

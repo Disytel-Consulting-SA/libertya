@@ -1,10 +1,17 @@
 package org.adempiere.webui.apps.form;
 
 import java.util.ArrayList;
+import java.util.Comparator;
 
 import javax.swing.UIManager;
+import javax.swing.event.TableModelEvent;
+import javax.swing.event.TableModelListener;
+import javax.swing.table.TableModel;
 
+import org.adempiere.webui.apps.AEnv;
 import org.adempiere.webui.component.Button;
+import org.adempiere.webui.component.Column;
+import org.adempiere.webui.component.Columns;
 import org.adempiere.webui.component.Grid;
 import org.adempiere.webui.component.GridFactory;
 import org.adempiere.webui.component.Label;
@@ -13,18 +20,29 @@ import org.adempiere.webui.component.Rows;
 import org.adempiere.webui.component.Window;
 import org.adempiere.webui.editor.WSearchEditor;
 import org.adempiere.webui.editor.WStringEditor;
+import org.adempiere.webui.event.ValueChangeEvent;
+import org.adempiere.webui.event.ValueChangeListener;
+import org.adempiere.webui.panel.WAttachment;
 import org.adempiere.webui.window.FDialog;
+import org.adempiere.webui.window.FindWindow;
 import org.openXpertya.apps.form.SocialConversationModel;
+import org.openXpertya.model.MField;
 import org.openXpertya.model.MLookup;
 import org.openXpertya.model.MLookupFactory;
 import org.openXpertya.model.MSocialConversation;
 import org.openXpertya.model.MTab;
+import org.openXpertya.model.M_Table;
+import org.openXpertya.model.X_C_SocialConversation;
+import org.openXpertya.util.DB;
 import org.openXpertya.util.DisplayType;
 import org.openXpertya.util.Env;
 import org.zkoss.zk.ui.event.Event;
 import org.zkoss.zk.ui.event.EventListener;
 import org.zkoss.zkex.zul.Borderlayout;
 import org.zkoss.zkex.zul.Center;
+import org.zkoss.zul.AbstractListModel;
+import org.zkoss.zul.ListModelExt;
+import org.zkoss.zul.RowRenderer;
 import org.zkoss.zul.Space;
 
 
@@ -88,9 +106,13 @@ public class WSocialConversation extends Window  implements EventListener  {
     protected Button    buttonNewConversation = new Button();
     protected Button    buttonFindConversation = new Button();
 	
+    protected GridRenderer renderer;
+    MessagesModel listModel = null;
+    
     /** Creates new form WSocialConversation */
     public WSocialConversation() {
     	conversations = MSocialConversation.getNotReadConversationsForUser(Env.getAD_User_ID(Env.getCtx()));
+    	initForm();
     }
     
     public WSocialConversation( int windowNo, MTab mTab ) {
@@ -161,6 +183,8 @@ public class WSocialConversation extends Window  implements EventListener  {
 			// Conversacion actual a partir de una tabla/registro
 			currentConversation = MSocialConversation.getForTableAndRecord(Env.getCtx(), tableID, recordID, windowID, tabID, null);
 		}		
+		if (currentConversation.getC_SocialConversation_ID() > 0)
+			setTitle("Conversación " + currentConversation.getC_SocialConversation_ID());
 	}
 	
     protected void initComponents() {
@@ -171,9 +195,14 @@ public class WSocialConversation extends Window  implements EventListener  {
         	// Table & model
         	tableModel = new SocialConversationModel.ConversationTableModel();
     		tableModel.reload(currentConversation);
-
+    		
+    		// Grilla web
 	    	tblConversation = new Grid();
-//	    	tblConversation.setModel(tableModel);
+	    	listModel = new MessagesModel(tableModel, m_WindowNo);
+	    	tblConversation.setModel(listModel);
+	    	renderer = new GridRenderer(this);
+	    	tblConversation.setRowRenderer(renderer);
+	    	
 //	    	tblConversation.getColumnModel().getColumn(COLUMN_MESSAGE).setPreferredWidth(DEF_WIDTH);
 	    	//tblConversation.setRowHeight(20);
 //	    	tblConversation.setShowHorizontalLines(false);
@@ -216,79 +245,108 @@ public class WSocialConversation extends Window  implements EventListener  {
 	    	// Definiciones visuales adicionales
 //	    	txtMessage.setAlignmentY(Component.TOP_ALIGNMENT);
 //	    	txtMessage.setPreferredSize(new Dimension(DEF_WIDTH, 80));
-//	    	txtMessage.setLineWrap(true);
+	    	txtMessage.getComponent().setRows(3);
+	    	txtMessage.getComponent().setMultiline(true); // .setLineWrap(true);
 //	    	txtMessage.setWrapStyleWord(true);
 	    	
+	    	String defComponentWidth = "" + (int)((DEF_WIDTH - 50) / 5) + "px"; 	// 5 columnas de componentes
+	    	String defComponentWidthDouble = "" + (int)((DEF_WIDTH - 50) / 2.5) + "px";
+			this.setMaximizable(true);
+			this.setWidth(DEF_WIDTH+"px");
+			this.setHeight(DEF_HEIGHT+"px");
+			this.setClosable(true);
+			this.setSizable(true);
+			this.setBorder("normal");
+			
+			buttonGoToRecord.setWidth(defComponentWidth);
+			buttonPrevious.setWidth(defComponentWidth);
+			buttonNext.setWidth(defComponentWidth);
+			buttonFindConversation.setWidth(defComponentWidth);
+			buttonNewConversation.setWidth(defComponentWidth);
+			
+			txtSubject.getComponent().setWidth("99%");
+	    	
+			txtRecordDetail.getComponent().setWidth(defComponentWidthDouble);
+			txtStarted.getComponent().setWidth(defComponentWidth);
+			
+			txtMessage.getComponent().setWidth("99%");
+			txtMessage.getComponent().setHeight("60px");
+			
+			buttonAttach.setWidth(defComponentWidthDouble);
+			buttonSend.setWidth(defComponentWidthDouble);
+			
+			buttonMarkAsRead.setWidth(defComponentWidth);
+			buttonMarkAsNotRead.setWidth(defComponentWidth);
+			buttonSubscribe.setWidth(defComponentWidth);
+			buttonUnsubscribe.setWidth(defComponentWidth);
+	    	
+	    	
 	    	// Eventos
-//	    	buttonSend.addActionListener(new ActionListener() {
-//				public void actionPerformed(ActionEvent e) {
-//					sendMessage();
-//				}
-//			});
-//	    	buttonSubscribe.addActionListener(new ActionListener() {
-//				public void actionPerformed(ActionEvent e) {
-//					subscribe(true);
-//				}
-//			});
-//	    	buttonUnsubscribe.addActionListener(new ActionListener() {
-//				public void actionPerformed(ActionEvent e) {
-//					subscribe(false);
-//				}
-//			});
-//	    	buttonMarkAsRead.addActionListener(new ActionListener() {
-//				public void actionPerformed(ActionEvent e) {
-//					markAsRead(true);
-//				}
-//			});
-//	    	buttonMarkAsNotRead.addActionListener(new ActionListener() {
-//				public void actionPerformed(ActionEvent e) {
-//					markAsRead(false);
-//				}
-//			});
-//	    	buttonNext.addActionListener(new ActionListener() {
-//				public void actionPerformed(ActionEvent e) {
-//					nextConversation();
-//				}
-//			});
-//	    	buttonPrevious.addActionListener(new ActionListener() {
-//				public void actionPerformed(ActionEvent e) {
-//					previousConversation();
-//				}
-//			});
-//	    	buttonGoToRecord.addActionListener(new ActionListener() {
-//				public void actionPerformed(ActionEvent e) {
-//					goToRecord();
-//				}
-//			});
-//	    	buttonNewConversation.addActionListener(new ActionListener() {
-//				public void actionPerformed(ActionEvent e) {
-//					newConversation();
-//				}
-//			});
-//	    	buttonFindConversation.addActionListener(new ActionListener() {
-//				public void actionPerformed(ActionEvent e) {
-//					findConversation();
-//				}
-//			});
-//	    	buttonAttach.addActionListener(new ActionListener() {
-//				public void actionPerformed(ActionEvent e) {
-//					attach();
-//				}
-//			});	   
-//	    	cboNewParcitipant.addActionListener(new ActionListener() {
-//				public void actionPerformed(ActionEvent e) { 
-//					newParticipant();
-//				}
-//			});
-//	    	txtMessage.addKeyListener(new KeyListener() {
-//				public void keyTyped(KeyEvent e) {
-//				}
-//				public void keyReleased(KeyEvent e) {
-//					toggleComponents(true);
-//				}
-//				public void keyPressed(KeyEvent e) {
-//				}
-//			});
+	    	buttonSend.addActionListener(new EventListener() {
+				public void onEvent(Event e) throws Exception {
+					sendMessage();				
+				}
+			});
+	    	buttonSubscribe.addActionListener(new EventListener() {
+				public void onEvent(Event e) {
+					subscribe(true);
+				}
+			});
+	    	buttonUnsubscribe.addActionListener(new EventListener() {
+				public void onEvent(Event e) {
+					subscribe(false);
+				}
+			});
+	    	buttonMarkAsRead.addActionListener(new EventListener() {
+				public void onEvent(Event e) {
+					markAsRead(true);
+				}
+			});
+	    	buttonMarkAsNotRead.addActionListener(new EventListener() {
+				public void onEvent(Event e) {
+					markAsRead(false);
+				}
+			});
+	    	buttonNext.addActionListener(new EventListener() {
+				public void onEvent(Event e) {
+					nextConversation();
+				}
+			});
+	    	buttonPrevious.addActionListener(new EventListener() {
+				public void onEvent(Event e) {
+					previousConversation();
+				}
+			});
+	    	buttonGoToRecord.addActionListener(new EventListener() {
+				public void onEvent(Event e) {
+					goToRecord();
+				}
+			});
+	    	buttonNewConversation.addActionListener(new EventListener() {
+				public void onEvent(Event e) {
+					newConversation();
+				}
+			});
+	    	buttonFindConversation.addActionListener(new EventListener() {
+				public void onEvent(Event e) {
+					findConversation();
+				}
+			});
+	    	buttonAttach.addActionListener(new EventListener() {
+				public void onEvent(Event e) {
+					attach();
+				}
+			});	   
+	    	cboNewParcitipant.addValueChangeListener(new ValueChangeListener() {
+				public void valueChange(ValueChangeEvent evt) {
+					newParticipant();
+				}
+			});
+	    	txtMessage.addValueChangeListener(new ValueChangeListener() {
+				public void valueChange(ValueChangeEvent evt) {
+					toggleComponents(true);	
+				}
+			});
 	    	
     	} catch (Exception e) {
     		FDialog.error(m_WindowNo, this, e.getMessage());
@@ -298,15 +356,6 @@ public class WSocialConversation extends Window  implements EventListener  {
     
 
     protected void addComponents() {
-    	String defComponentWidth = "" + (int)((DEF_WIDTH - 50) / 5) + "px"; 	// 5 columnas de componentes
-    	String defComponentWidthDouble = "" + (int)((DEF_WIDTH - 50) / 2.5) + "px";
-		this.setMaximizable(true);
-		this.setWidth(DEF_WIDTH+"px");
-		this.setHeight(DEF_HEIGHT+"px");
-		this.setTitle("Conversaciones");
-		this.setClosable(true);
-		this.setSizable(true);
-		this.setBorder("normal");
     	
     	// Definición de layout de la ventana
     	Borderlayout mainPanel = new Borderlayout();
@@ -321,11 +370,6 @@ public class WSocialConversation extends Window  implements EventListener  {
 		
        	// Navigate panel
 		Row navigateRow = rows.newRow();
-		buttonGoToRecord.setWidth(defComponentWidth);
-		buttonPrevious.setWidth(defComponentWidth);
-		buttonNext.setWidth(defComponentWidth);
-		buttonFindConversation.setWidth(defComponentWidth);
-		buttonNewConversation.setWidth(defComponentWidth);
 		navigateRow.appendChild(buttonGoToRecord);
 		navigateRow.appendChild(buttonPrevious);
 		navigateRow.appendChild(buttonNext);
@@ -343,7 +387,6 @@ public class WSocialConversation extends Window  implements EventListener  {
     	// Asunto
 		Row subjectRow = rows.newRow();
 		subjectRow.setSpans("5");
-		txtSubject.getComponent().setWidth("99%");
 		subjectRow.appendChild(txtSubject.getComponent());
 		
     	// Detalle Head
@@ -357,8 +400,6 @@ public class WSocialConversation extends Window  implements EventListener  {
     	// Detalle
 		Row detailRow = rows.newRow();
 		detailRow.setSpans("1,2");
-		txtRecordDetail.getComponent().setWidth(defComponentWidthDouble);
-		txtStarted.getComponent().setWidth(defComponentWidth);
 		detailRow.appendChild(cboTab.getComponent());
 		detailRow.appendChild(txtRecordDetail.getComponent());
 		detailRow.appendChild(txtStarted.getComponent());
@@ -371,8 +412,6 @@ public class WSocialConversation extends Window  implements EventListener  {
     	// Message panel 
 		Row messageRow = rows.newRow();
 		messageRow.setSpans("5");
-		txtMessage.getComponent().setWidth("99%");
-		txtMessage.getComponent().setHeight("60px");
 		messageRow.appendChild(txtMessage.getComponent());
 		
     	// InThisConv Head panel 
@@ -391,8 +430,6 @@ public class WSocialConversation extends Window  implements EventListener  {
 		
     	// To panel
 		Row toRow = rows.newRow();
-		buttonAttach.setWidth(defComponentWidthDouble);
-		buttonSend.setWidth(defComponentWidthDouble);
 		toRow.setSpans("1,2,2");
 		toRow.appendChild(cboNewParcitipant.getComponent());
 		toRow.appendChild(buttonAttach);
@@ -411,10 +448,7 @@ public class WSocialConversation extends Window  implements EventListener  {
 		
     	// Actions panel
 		Row actionsRow = rows.newRow();
-		buttonMarkAsRead.setWidth(defComponentWidth);
-		buttonMarkAsNotRead.setWidth(defComponentWidth);
-		buttonSubscribe.setWidth(defComponentWidth);
-		buttonUnsubscribe.setWidth(defComponentWidth);
+
 		actionsRow.appendChild(buttonMarkAsRead);
 		actionsRow.appendChild(buttonMarkAsNotRead);
 		actionsRow.appendChild(new Space());
@@ -458,7 +492,8 @@ public class WSocialConversation extends Window  implements EventListener  {
     protected void toggleComponents(boolean buttonSendOnly) {
     	
     	// Hay texto?
-    	buttonSend.setEnabled(txtMessage.getValue() != null && txtMessage.getValue().toString() != null && txtMessage.getValue().toString().trim().length() > 0);
+    	buttonSend.setEnabled(true);
+//    	buttonSend.setEnabled(txtMessage.getValue() != null && txtMessage.getValue().toString() != null && txtMessage.getValue().toString().trim().length() > 0);
     	if (buttonSendOnly)
     		return;
     	
@@ -486,6 +521,13 @@ public class WSocialConversation extends Window  implements EventListener  {
     	cboTab.setVisible(tableID > 0);
     	// txtRecord.setVisible(recordID > 0); Comentado: no es agregado al panel directamente.  Se opto por mostrar un detalle del registro (mas intuitivo que el recordID) 
     	txtRecordDetail.setVisible(recordID > 0);
+    	
+    	// Actualizar mensajes
+    	listModel = new MessagesModel(tableModel, m_WindowNo);
+    	tblConversation.setModel(listModel);
+    	
+		if (currentConversation.getC_SocialConversation_ID() > 0)
+			setTitle("Conversación " + currentConversation.getC_SocialConversation_ID());
     }
 
 	@Override
@@ -494,5 +536,247 @@ public class WSocialConversation extends Window  implements EventListener  {
 		
 	}
     
-    
+	protected void sendMessage() {
+		try {
+			if (txtMessage.getValue() == null || txtMessage.getValue().toString() == null || txtMessage.getValue().toString().trim().length() == 0)
+				return;
+			SocialConversationModel.sendMessage(currentConversation, txtSubject.getValue().toString(), txtMessage.getValue().toString(), (Integer)cboTable.getValue(), Integer.parseInt(txtRecord.getValue().toString()), windowID, tabID);
+			SocialConversationModel.subscribe(currentConversation, Env.getAD_User_ID(Env.getCtx()), true, false, true);
+			txtInThisConversation.setValue(currentConversation.getParticipantsNames());
+
+			// Si todo ok -> Resetear campos
+    		txtMessage.setValue("");
+    		tableModel.reload(currentConversation);
+    		toggleComponents(false);
+		} catch (Exception e) {
+			FDialog.error(m_WindowNo, this, e.getMessage());
+		}
+	}
+	
+	protected void subscribe(boolean actionSubscribe) {
+		try {
+			SocialConversationModel.subscribe(currentConversation, Env.getAD_User_ID(Env.getCtx()), actionSubscribe, true, true);
+			txtInThisConversation.setValue(currentConversation.getParticipantsNames());
+			toggleComponents(false);
+		} catch (Exception e) {
+			FDialog.error(m_WindowNo, this, e.getMessage());
+		}
+	}
+	
+	protected void markAsRead(boolean asRead) {
+		try {
+			SocialConversationModel.markAsReadNotRead(currentConversation, Env.getAD_User_ID(Env.getCtx()), asRead);
+			toggleComponents(false);
+		} catch (Exception e) {
+			FDialog.error(m_WindowNo, this, e.getMessage());
+		}	
+	}
+
+	protected void newParticipant() {
+		try {
+			if (cboNewParcitipant.getNewValueOnChange() != null && (Integer)cboNewParcitipant.getNewValueOnChange() > 0) {
+				SocialConversationModel.subscribe(currentConversation, (Integer)cboNewParcitipant.getNewValueOnChange(), true, false, false);
+				txtInThisConversation.setValue(currentConversation.getParticipantsNames());
+			}
+		} catch (Exception e) {
+			FDialog.error(m_WindowNo, this, e.getMessage());
+		}
+	}
+	
+	protected void nextConversation() {
+		if (conversations.size()-1 > conversationPos) {
+			try {
+				conversationPos++;
+				loadConversation();
+				loadValues(); 
+				tableModel.reload(currentConversation);
+				toggleComponents(false);
+			}
+			catch (Exception e) {
+				FDialog.error(m_WindowNo, this, e.getMessage());
+			}
+		}
+	}
+	
+	protected void previousConversation() {
+		if (conversationPos > 0) {
+			try {
+				conversationPos--;
+				loadConversation();
+				loadValues(); 
+				tableModel.reload(currentConversation);
+				toggleComponents(false);
+			}
+			catch (Exception e) {
+				FDialog.error(m_WindowNo, this, e.getMessage());
+			}
+		}		
+	}
+	
+	protected void goToRecord() {
+		AEnv.zoom(tableID, recordID);
+		dispose();
+	}
+	
+	protected void newConversation() {
+		try {
+			currentConversation = new MSocialConversation(Env.getCtx(), 0, null);
+			conversations = new ArrayList<Integer>();
+			conversationPos = 0;
+			tableID = -1;
+			tabID = -1;
+			recordID = -1;
+			windowID = -1;
+			loadValues();
+			tableModel.reload(currentConversation);
+			toggleComponents(false);
+			setTitle("Nueva conversación...");
+		} catch (Exception e) {
+			FDialog.error(m_WindowNo, this, e.getMessage());
+		}
+	}
+	
+	protected void attach() {
+        int record_ID = currentConversation.getC_SocialConversation_ID();
+
+        if( record_ID <= 0 )    // No Key
+            return;
+
+        WAttachment va = new WAttachment(  m_WindowNo, currentConversation.getAttachmentID(), M_Table.getTableID("C_SocialConversation"), record_ID, null );       
+        buttonAttach.setLabel(SocialConversationModel.getAttachmentCountStr(ATTACH_BUTTON_TEXT, currentConversation));
+	}
+	
+	protected void findConversation() {
+		try {
+			int tab = DB.getSQLValue(null, "select ad_tab_id from ad_tab where ad_componentobjectuid = 'CORE-AD_Tab-1010346' ");
+	        MField[] findFields = MField.createFields( Env.getCtx(), m_WindowNo, 0, tab);
+	        // Forzar el uso de campo tipo entero
+	        for (MField aField : findFields) {
+	        	if ("C_SocialConversation_ID".equals(aField.getColumnName()))
+	        		aField.setDisplayType(DisplayType.Integer);
+	        }
+	        FindWindow find = new FindWindow( m_WindowNo, "Buscar", X_C_SocialConversation.Table_ID, X_C_SocialConversation.Table_Name, null, findFields, 1, tab );
+	        if (find.getQuery() == null)
+	        	return;
+			conversations = MSocialConversation.getConversations(	" SELECT C_SocialConversation_ID " +
+																	" FROM C_SocialConversation " +
+																	" WHERE " + (find.getQuery().getWhereClause().trim().length() > 0 ? find.getQuery().getWhereClause() : "1=1") +																	
+																	" AND AD_Client_ID = " + Env.getAD_Client_ID(Env.getCtx()) + 
+																	" ORDER BY C_SocialConversation_ID ");
+			
+			conversationPos = 0;
+			loadConversation();
+			loadValues();
+			tableModel.reload(currentConversation);
+			toggleComponents(false);
+		} catch (Exception e) {
+			FDialog.error(m_WindowNo, this, e.getMessage());
+		}
+	}
+	
+	
+	// =======================================================================================================
+	
+	/**
+	 * Model para la grilla de Mensajes
+	 * 
+	 * Esta clase delega la estructura y lógica de determinación de los registros a recuperar al 
+	 * módulo original de Conversaciones, a fin de centralizar la lógica en un único lugar y
+	 * simplificar ademas la complejidad de WSocialConversation.
+	 */
+	public static class MessagesModel extends AbstractListModel implements TableModelListener, ListModelExt {
+
+		public TableModel model = null;
+		
+		public MessagesModel(TableModel model, int windowNo) {
+			this.model = model;
+		}
+
+		@Override
+		public Object getElementAt(int rowIndex) {
+			if (model==null)
+				return null;
+			int columnCount = model.getColumnCount();
+			Object[] values = new Object[columnCount];
+			for (int i = 0; i < columnCount; i++) {
+					values[i] = model.getValueAt(rowIndex, i);
+				}		
+			return values;
+		}
+
+		public Object getElementAt(int row, int col) {
+			return model.getValueAt(row, col);
+		}
+		
+		@Override
+		public int getSize() {
+			if (model==null)
+				return 0;
+			return model.getRowCount();
+		}
+
+		@Override
+		public void sort(Comparator arg0, boolean arg1) {
+			System.out.println("Sorted!");
+			
+		}
+
+		@Override
+		public void tableChanged(TableModelEvent e) {
+			System.out.println("Changed!");		
+		}	
+		
+		public int getColumnCount() {
+			return model.getColumnCount();
+		}
+		
+		public String getColumnName(int columnIndex) {
+			return model.getColumnName(columnIndex);
+		}
+		
+	}
+	
+	
+	/**
+	 * Encargada de renderizar la grilla de facturas a pagar
+	 */
+	public static class GridRenderer implements RowRenderer {
+
+		WSocialConversation owner = null;
+		Columns cols = new Columns();
+
+		public GridRenderer(WSocialConversation owner) {
+			this.owner = owner;
+		}
+		
+		@Override
+		public void render(org.zkoss.zul.Row arg0, Object arg1) throws Exception {	
+			// Si no hay modelo, nada para dibujar
+			if (owner.listModel == null)
+				return;
+			// Si no hay columnas, nada para dibujar
+			if (owner.listModel.getColumnCount() == 0)
+				return;
+
+			// Resetear las columnas
+			owner.tblConversation.removeChild(cols);
+			cols = new Columns();
+			int colCount = owner.listModel.getColumnCount();
+			for (int i=0; i < colCount; i++) {
+				Column col = new Column();
+				col.setLabel(owner.listModel.getColumnName(i));
+				cols.appendChild(col);
+				col.setVisible(true);
+			}
+			owner.tblConversation.appendChild(cols);		
+			
+			// Setear la fila
+			Object[] _data = (Object[])arg1;
+			for (int i = 0; i < colCount; i++) {
+				Label aLabel = new Label(_data[i].toString() + "\u00A0");
+				aLabel.setParent(arg0);
+			}
+
+		}
+	}
 }
