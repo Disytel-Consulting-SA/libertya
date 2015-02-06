@@ -7,7 +7,7 @@ import java.math.*;
 import org.openXpertya.util.*;
 /** Modelo Generado por AD_User
  *  @author Comunidad de Desarrollo Libertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
- *  @version  - 2012-11-22 13:10:38.398 */
+ *  @version  - 2015-02-06 09:42:19.753 */
 public class X_AD_User extends org.openXpertya.model.PO
 {
 /** Constructor estándar */
@@ -21,6 +21,7 @@ setIsLDAPAuthorized (false);	// N
 setIsSystemAccess (false);
 setName (null);
 setNotificationType (null);	// E
+setNotifyOnConversationActivity (false);
 }
  */
 }
@@ -424,6 +425,22 @@ Type of Notifications */
 public String getNotificationType() 
 {
 return (String)get_Value("NotificationType");
+}
+/** Set Notify On Conversation Activity */
+public void setNotifyOnConversationActivity (boolean NotifyOnConversationActivity)
+{
+set_Value ("NotifyOnConversationActivity", new Boolean(NotifyOnConversationActivity));
+}
+/** Get Notify On Conversation Activity */
+public boolean isNotifyOnConversationActivity() 
+{
+Object oo = get_Value("NotifyOnConversationActivity");
+if (oo != null) 
+{
+ if (oo instanceof Boolean) return ((Boolean)oo).booleanValue();
+ return "Y".equals(oo);
+}
+return false;
 }
 /** Set Goal.
 Performance Goal */

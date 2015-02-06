@@ -107,7 +107,7 @@ public class SocialConversationModel {
 	}
 	
 	/**
-	 * Envío asincrónico del mail, unicamente al destinatarion indicado en userIDOnly
+	 * Envío asincrónico del mail, unicamente al destinatario indicado en userIDOnly
 	 */
 	public static void sendEmail(MSocialConversation aConversation, Integer userIDOnly) {
 		Emailer emailer = new Emailer();
@@ -141,14 +141,14 @@ public class SocialConversationModel {
 			
 			// Recuperar informacion para incorporar al cuerpo del mail
 			MClient client = new MClient(Env.getCtx(), Env.getAD_Client_ID(Env.getCtx()), null);
-			String to = 		userIDOnly != null && userIDOnly > 0 && MUser.get(Env.getCtx(), userIDOnly) != null ? 
-									MUser.get(Env.getCtx(), userIDOnly).getEMail() : 
-									currentConversation.getEmailTo(false);
+			String to = 		getTo();
+			String subject = 	getSubject(client.getName());  
+			String body = 		getBody();
+
 			// Hay efectivamente algún destinatario?
-			if (to.length()==0)
+			if (to==null || to.length()==0)
 				return;
-			String subject = 	currentConversation.getEmailSubject();  
-			String body = 		currentConversation.getEmailBody();
+			
 			// Enviar mail, loggear y presentar en consola
 			EMail mail = new EMail( client, null, to, subject, body);
 			String response = mail.send();
@@ -156,8 +156,36 @@ public class SocialConversationModel {
 				CLogger.getCLogger("Social Emailer").warning("Error al enviar mail:" + response);
 			}
 		}	
+		
+		
+		protected String getTo() {
+			// Es para un usuario o para muchos?
+			if (userIDOnly==null || userIDOnly <= 0)
+				return currentConversation.getEmailTo(false);
+			
+			// Si es para un usuario en particular, verificar si quiere que se reciba mail bajo actividad
+			MUser aUser = MUser.get(Env.getCtx(), userIDOnly);
+			if (aUser == null)
+				return null;
+			
+			if (aUser.isNotifyOnConversationActivity() && aUser.getEMail() != null && aUser.getEMail().length() > 0)
+				return MUser.get(Env.getCtx(), userIDOnly).getEMail();
+			
+			// En cualquier otro caso, retornar null
+			return null;
+		}
+		
+		protected String getSubject(String clientName) {
+			StringBuffer subject = new StringBuffer();
+			subject.append("[LYC:").append(clientName).append("] ").append(currentConversation.getEmailSubject());
+			return subject.toString();
+		}
+		
+		protected String getBody() {
+			return currentConversation.getEmailBody();
+		}
+		
 	}
-	
 	
 	
 	// =====================================================================================

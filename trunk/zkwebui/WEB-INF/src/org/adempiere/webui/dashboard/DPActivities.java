@@ -17,10 +17,13 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.util.logging.Level;
 
+import org.adempiere.webui.apps.AEnv;
+import org.adempiere.webui.apps.form.WSocialConversation;
 import org.adempiere.webui.component.Button;
 import org.adempiere.webui.session.SessionManager;
 import org.adempiere.webui.util.ServerPushTemplate;
 import org.openXpertya.model.MRole;
+import org.openXpertya.model.MSocialConversation;
 import org.openXpertya.util.CLogger;
 import org.openXpertya.util.DB;
 import org.openXpertya.util.Env;
@@ -46,13 +49,15 @@ public class DPActivities extends DashboardPanel implements EventListener {
 
 	private static final CLogger logger = CLogger.getCLogger(DPActivities.class);
 
-	private Button btnNotice, btnRequest, btnWorkflow;
+	private Button btnNotice, btnRequest, btnWorkflow, btnConversation;
 
 	private int noOfNotice;
 
 	private int noOfRequest;
 
 	private int noOfWorkflow;
+	
+	private int noOfConversations;
 
 	public DPActivities()
 	{
@@ -74,13 +79,20 @@ public class DPActivities extends DashboardPanel implements EventListener {
         btnNotice.addEventListener(Events.ON_CLICK, this);
 
         btnRequest = new Button();
-        vbox.appendChild(btnRequest);
+//        vbox.appendChild(btnRequest);  Se comenta a fin de priorizar el uso de conversaciones
         btnRequest.setLabel(Msg.translate(Env.getCtx(), "R_Request_ID") + " : 0");
         btnRequest.setTooltiptext(Msg.translate(Env.getCtx(), "R_Request_ID"));
         btnRequest.setImage("/images/Request16.png");
         AD_Menu_ID = DB.getSQLValue(null, "SELECT AD_Menu_ID FROM AD_Menu WHERE Name = 'Request' AND IsSummary = 'N'");
         btnRequest.setName(String.valueOf(AD_Menu_ID));
         btnRequest.addEventListener(Events.ON_CLICK, this);
+        
+        btnConversation = new Button();
+        vbox.appendChild(btnConversation);  
+        btnConversation.setLabel("Conversaciones: " + getConversations());
+        btnConversation.setTooltiptext("Conversaciones");
+        btnConversation.setImage("/images/Conversation16.png");
+		btnConversation.addEventListener(Events.ON_CLICK, this); 
 
         btnWorkflow = new Button();
         vbox.appendChild(btnWorkflow);
@@ -94,6 +106,11 @@ public class DPActivities extends DashboardPanel implements EventListener {
         return vbox;
 	}
 
+    // Conversaciones no leidas
+    private int getConversations() {
+    	return MSocialConversation.getNotReadConversationsCountForUser(Env.getAD_User_ID(Env.getCtx()));
+    }
+	
 	/**
 	 * Get notice count
 	 * @return number of notice
@@ -180,7 +197,8 @@ public class DPActivities extends DashboardPanel implements EventListener {
     	noOfNotice = getNoticeCount();
     	noOfRequest = getRequestCount();
     	noOfWorkflow = getWorkflowCount();
-
+    	noOfConversations = getConversations();
+    	
     	template.execute(this);
 	}
 
@@ -196,6 +214,7 @@ public class DPActivities extends DashboardPanel implements EventListener {
     	btnNotice.setLabel(Msg.translate(Env.getCtx(), "AD_Note_ID") + " : " + noOfNotice);
 		btnRequest.setLabel(Msg.translate(Env.getCtx(), "R_Request_ID") + " : " + noOfRequest);
 		btnWorkflow.setLabel(Msg.getMsg (Env.getCtx(), "WorkflowActivities") + " : " + noOfWorkflow);
+		btnConversation.setLabel("Conversaciones: " + getConversations());
 	}
 
 	public void onEvent(Event event)
@@ -203,6 +222,15 @@ public class DPActivities extends DashboardPanel implements EventListener {
         Component comp = event.getTarget();
         String eventName = event.getName();
 
+        // Conversaciones?
+        if (event.getTarget().equals(btnConversation)) {
+        	WSocialConversation conv = new WSocialConversation();
+        	btnConversation.setLabel("Conversaciones: " + getConversations());
+        	AEnv.showWindow(conv);  
+        	return;
+        }
+        
+        // Gestion tradicional
         if(eventName.equals(Events.ON_CLICK))
         {
             if(comp instanceof Button)

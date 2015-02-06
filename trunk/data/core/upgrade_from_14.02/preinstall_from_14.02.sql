@@ -4814,3 +4814,6 @@ $BODY$
   LANGUAGE 'plpgsql' VOLATILE
   COST 100;
 ALTER FUNCTION redirect_duplicated_bpartners(character varying, character varying) OWNER TO libertya;
+
+--20150206-0920 Nueva columna para Conversaciones LY
+UPDATE AD_System SET dummy = (SELECT addcolumnifnotexists('AD_User', 'NotifyOnConversationActivity', 'character(1) NOT NULL DEFAULT ''N''::bpchar'));

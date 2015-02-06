@@ -26,6 +26,7 @@ import org.openXpertya.apps.ADialog;
 import org.openXpertya.apps.AEnv;
 import org.openXpertya.apps.AWindow;
 import org.openXpertya.apps.Attachment;
+import org.openXpertya.apps.form.SocialConversationModel.ConversationTableModel;
 import org.openXpertya.apps.search.Find;
 import org.openXpertya.grid.ed.VLookup;
 import org.openXpertya.model.MField;
@@ -99,6 +100,8 @@ public class VSocialConversation extends CPanel  implements FormPanel {
     protected CButton    buttonNewConversation = new CButton();
     protected CButton    buttonFindConversation = new CButton();
     
+    protected ConversationTableModel listModel;
+    
     public VSocialConversation() {
     	conversations = MSocialConversation.getNotReadConversationsForUser(Env.getAD_User_ID(Env.getCtx()));	
     }
@@ -169,7 +172,9 @@ public class VSocialConversation extends CPanel  implements FormPanel {
 		} else {
 			// Conversacion actual a partir de una tabla/registro
 			currentConversation = MSocialConversation.getForTableAndRecord(Env.getCtx(), tableID, recordID, windowID, tabID, null);
-		}		
+		}	
+		if (currentConversation.getC_SocialConversation_ID() > 0)
+			m_frame.setTitle("Conversación " + currentConversation.getC_SocialConversation_ID());
 	}
 	
 
@@ -482,6 +487,10 @@ public class VSocialConversation extends CPanel  implements FormPanel {
     	cboTab.setVisible(tableID > 0);
     	// txtRecord.setVisible(recordID > 0); Comentado: no es agregado al panel directamente.  Se opto por mostrar un detalle del registro (mas intuitivo que el recordID) 
     	txtRecordDetail.setVisible(recordID > 0);
+    	
+		if (currentConversation.getC_SocialConversation_ID() > 0)
+			m_frame.setTitle("Conversación " + currentConversation.getC_SocialConversation_ID());
+
     }
     
     
@@ -595,6 +604,7 @@ public class VSocialConversation extends CPanel  implements FormPanel {
 			windowID = -1;
 			loadValues();
 			tableModel.reload(currentConversation);
+			m_frame.setTitle("Nueva conversación...");
 		} catch (Exception e) {
 			ADialog.error(m_WindowNo, this, e.getMessage());
 		}
@@ -614,13 +624,19 @@ public class VSocialConversation extends CPanel  implements FormPanel {
 		try {
 			int tab = DB.getSQLValue(null, "select ad_tab_id from ad_tab where ad_componentobjectuid = 'CORE-AD_Tab-1010346' ");
 	        MField[] findFields = MField.createFields( Env.getCtx(), m_WindowNo, 0, tab);
+	        // Forzar el uso de campo tipo entero
+	        for (MField aField : findFields) {
+	        	if ("C_SocialConversation_ID".equals(aField.getColumnName()))
+	        		aField.setDisplayType(DisplayType.Integer);
+	        }
 	        Find find = new Find( Env.getFrame( this ),m_WindowNo, "Buscar", X_C_SocialConversation.Table_ID, X_C_SocialConversation.Table_Name, null, findFields, 1 );
 	        if (find.getQuery() == null)
 	        	return;
 			conversations = MSocialConversation.getConversations(	" SELECT C_SocialConversation_ID " +
 																	" FROM C_SocialConversation " +
 																	" WHERE " + (find.getQuery().getWhereClause().trim().length() > 0 ? find.getQuery().getWhereClause() : "1=1") +																	
-																	" AND AD_Client_ID = " + Env.getAD_Client_ID(Env.getCtx()));
+																	" AND AD_Client_ID = " + Env.getAD_Client_ID(Env.getCtx()) + 
+																	" ORDER BY C_SocialConversation_ID ");
 			
 			conversationPos = 0;
 			loadConversation();

@@ -208,9 +208,10 @@ public class MSocialConversation extends X_C_SocialConversation {
 			MUser user = MUser.get(getCtx(), aSubscription.getAD_User_ID());
 			if (user==null)
 				continue;
-			// Si el usuario recuperado es el logueado, omitir?
-			if (!includeThisUser && Env.getAD_User_ID(getCtx()) == user.getAD_User_ID())
+			// Si el usuario recuperado no quiere recibir notificaciones o bien es el logueado, entonces omitir
+			if (!user.isNotifyOnConversationActivity() || (!includeThisUser && Env.getAD_User_ID(getCtx()) == user.getAD_User_ID()))
 				continue;
+			
 			String address = user.getEMail();
 			if (address == null || address.trim().length() == 0)
 				continue;
@@ -224,7 +225,7 @@ public class MSocialConversation extends X_C_SocialConversation {
 	 * Retorna el subject para uso en un mail
 	 */
 	public String getEmailSubject() {
-		return " Nueva actividad en conversación Libertya. " + getSubject();
+		return " Nueva actividad en conversación. " + getSubject();
 	}
 	
 	/**
@@ -243,7 +244,8 @@ public class MSocialConversation extends X_C_SocialConversation {
 		}
 		
 		return 
-				"Conversación: " + subject + "\n\n" +
+				"Conversación: " + getC_SocialConversation_ID() + "\n\n" +
+				"Asunto: " + subject + "\n\n" +
 				"Tabla: " + tabla + "\n\n" + 
 				"Registro: " + registro + "\n\n" +
 				"Mensajes: " + "\n\n" + mensajes.toString();
