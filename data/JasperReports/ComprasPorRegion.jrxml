@@ -23,15 +23,25 @@
 	<import value="net.sf.jasperreports.engine.*" />
 	<import value="net.sf.jasperreports.engine.data.*" />
 
+<<<<<<< .mine
+	<parameter name="AD_Org_ID" isForPrompting="false" class="java.math.BigDecimal"/>
+	<parameter name="FechaDesde" isForPrompting="false" class="java.util.Date"/>
+=======
 	<parameter name="AD_Org_ID" isForPrompting="false" class="java.math.BigDecimal">
 		<defaultValueExpression ><![CDATA[null]]></defaultValueExpression>
 	</parameter>
 	<parameter name="FechaDesde" isForPrompting="false" class="java.util.Date">
 		<defaultValueExpression ><![CDATA[null]]></defaultValueExpression>
 	</parameter>
+>>>>>>> .r1191
 	<parameter name="AD_CLIENT_ID" isForPrompting="false" class="java.lang.Integer">
 		<defaultValueExpression ><![CDATA[null]]></defaultValueExpression>
 	</parameter>
+<<<<<<< .mine
+	<parameter name="FechaHasta" isForPrompting="false" class="java.util.Date"/>
+	<parameter name="grupo_ec" isForPrompting="false" class="java.lang.Integer"/>
+	<parameter name="M_Product_Category_ID" isForPrompting="false" class="java.math.BigDecimal"/>
+=======
 	<parameter name="FechaHasta" isForPrompting="false" class="java.util.Date">
 		<defaultValueExpression ><![CDATA[null]]></defaultValueExpression>
 	</parameter>
@@ -41,8 +51,10 @@
 	<parameter name="M_Product_Category_ID" isForPrompting="false" class="java.math.BigDecimal">
 		<defaultValueExpression ><![CDATA[null]]></defaultValueExpression>
 	</parameter>
+>>>>>>> .r1191
 	<queryString><![CDATA[SELECT 
 ad_org_id,
+ad_client_id,
 organization,
 group_ec,
 group_ec_value,
@@ -53,50 +65,62 @@ entidad_comercial,
 importe_neto,
 impuestos,
 percepciones, 
-importe_neto + impuestos + percepciones as importe_total,
+COALESCE(importe_neto + impuestos + percepciones,0) as importe_total,
 articulo,
 subfamilia,
 region
 FROM (
 SELECT 
 i.ad_org_id,
+i.ad_client_id,
 ado.value as organization,
 bp.c_bp_group_id as group_ec,
 bpg.value as group_ec_value,
 i.dateinvoiced as fecha,
 dt.name as tipo_de_documento,
 i.documentno as nro_de_documento,
-bp.value as entidad_comercial,
-i.grandtotal - i.totallines as importe_neto,
-il.SumaTaxAmt as impuestos,
-case when i.totallines > 0 then (((iline.linetotalamt / i.totallines)*(it.taxamt))+iline.linetotalamt)
-else 0 
-end as percepciones,
+bp.name as entidad_comercial,
+COALESCE(iline.linenetamount*dt.signo_issotrx,0) as importe_neto,
+COALESCE(iline.taxamt*dt.signo_issotrx,0) as impuestos,
+COALESCE(((SumaPercepciones/i.netamount)*iline.linenetamount)*dt.signo_issotrx,0) as percepciones,
 p.name as articulo,
 pc.value as subfamilia,
 pc.m_product_category_id as subfamiliaID,
 r.name as region
 FROM c_invoice i
-INNER JOIN (select il.c_invoice_id, SUM(taxamt) as SumaTaxAmt from c_invoiceline il group by il.c_invoice_id) as il ON (il.c_invoice_id = i.c_invoice_id)
+LEFT JOIN (select ita.c_invoice_id, SUM(ita.taxamt) as SumaPercepciones from c_invoicetax ita INNER JOIN c_tax ta ON (ita.c_tax_id = ta.c_tax_id) AND (ta.ispercepcion = 'Y') group by ita.c_invoice_id) as ita ON (ita.c_invoice_id = i.c_invoice_id)
 INNER JOIN c_invoiceline iline ON (iline.c_invoice_id = i.c_invoice_id)
 INNER JOIN m_product p ON (p.m_product_id = iline.m_product_id)
 INNER JOIN m_product_category pc ON (pc.m_product_category_id = p.m_product_category_id)
-INNER JOIN c_invoicetax it ON (i.c_invoice_id = it.c_invoice_id)
 INNER JOIN c_bpartner bp ON (bp.c_bpartner_id = i.c_bpartner_id)
 INNER JOIN c_bp_group bpg ON (bpg.c_bp_group_id = bp.c_bp_group_id)
+<<<<<<< .mine
+INNER JOIN c_bpartner_location bpl ON (bpl.c_location_id = bp.c_bpartner_id)
+INNER JOIN c_location l ON (l.c_location_id = bpl.c_location_id)
+=======
 INNER JOIN c_bpartner_location bpl ON (bpl.c_bpartner_id = bp.c_bpartner_id)
 INNER JOIN c_location l ON (l.c_location_id = bpl.c_location_id)
+>>>>>>> .r1191
 INNER JOIN c_region r ON (r.c_region_id = l.c_region_id)
 INNER JOIN c_doctype dt ON (dt.c_doctype_id = i.c_doctype_id)
 INNER JOIN ad_org ado ON (ado.ad_org_id = i.ad_org_id)
 WHERE (i.issotrx = 'N') 
 AND (dt.docbasetype in ('APC','API'))
+<<<<<<< .mine
+AND (i.docstatus in ('CO','CL','VO','RE'))
+AND (dt.doctypekey not in ('RTR', 'RTI', 'RCR', 'RCI'))
+order by i.c_invoice_id) AS ComprasPorRegion
+WHERE ((($P{AD_Org_ID} IS NULL) OR ($P{AD_Org_ID} = 0)) OR (ad_org_id = $P{AD_Org_ID}))
+AND (($P{FechaDesde}::date IS NULL) OR (fecha::date >= $P{FechaDesde}::date)) 
+AND (($P{FechaHasta}::date IS NULL) OR (fecha::date <= $P{FechaHasta}::date)) 
+=======
 order by i.c_invoice_id) AS VentasPorRegion
 WHERE (($P{AD_Org_ID} IS NULL) OR (ad_org_id = $P{AD_Org_ID}))
 AND (($P{FechaDesde}::date IS NULL) OR (fecha::date >= $P{FechaDesde}::date)) 
 AND (($P{FechaHasta}::date IS NULL) OR (fecha::date <= $P{FechaHasta}::date)) 
+>>>>>>> .r1191
 AND (($P{grupo_ec} IS NULL) OR (group_ec = $P{grupo_ec}))
-AND (($P{M_Product_Category_ID} IS NULL) OR (subfamiliaID = $P{M_Product_Category_ID}))]]></queryString>
+AND ($P{AD_CLIENT_ID} = ad_client_id)]]></queryString>
 
 	<field name="ad_org_id" class="java.lang.Integer"/>
 	<field name="organization" class="java.lang.String"/>
@@ -127,11 +151,11 @@ AND (($P{M_Product_Category_ID} IS NULL) OR (subfamiliaID = $P{M_Product_Categor
 			</band>
 		</pageHeader>
 		<columnHeader>
-			<band height="61"  isSplitAllowed="true" >
+			<band height="62"  isSplitAllowed="true" >
 				<textField isStretchWithOverflow="false" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
 						x="70"
-						y="15"
+						y="13"
 						width="150"
 						height="12"
 						key="textField-3">
@@ -146,7 +170,7 @@ AND (($P{M_Product_Category_ID} IS NULL) OR (subfamiliaID = $P{M_Product_Categor
 				<staticText>
 					<reportElement
 						x="4"
-						y="3"
+						y="1"
 						width="200"
 						height="12"
 						key="staticText-2"/>
@@ -159,7 +183,7 @@ AND (($P{M_Product_Category_ID} IS NULL) OR (subfamiliaID = $P{M_Product_Categor
 				<staticText>
 					<reportElement
 						x="4"
-						y="15"
+						y="13"
 						width="66"
 						height="12"
 						key="staticText-4"/>
@@ -176,7 +200,7 @@ AND (($P{M_Product_Category_ID} IS NULL) OR (subfamiliaID = $P{M_Product_Categor
 						width="50"
 						height="10"
 						key="staticText-12"/>
-					<box topBorder="Thin" topBorderColor="#000000" leftBorder="Thin" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" rightPadding="1" bottomBorder="Thin" bottomBorderColor="#000000"/>
+					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
 					<textElement textAlignment="Right" verticalAlignment="Middle">
 						<font pdfFontName="Helvetica-Bold" size="6" isBold="true"/>
 					</textElement>
@@ -189,7 +213,7 @@ AND (($P{M_Product_Category_ID} IS NULL) OR (subfamiliaID = $P{M_Product_Categor
 						width="138"
 						height="10"
 						key="staticText-16"/>
-					<box topBorder="Thin" topBorderColor="#000000" leftBorder="Thin" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" rightPadding="1" bottomBorder="Thin" bottomBorderColor="#000000"/>
+					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
 					<textElement textAlignment="Right" verticalAlignment="Middle">
 						<font pdfFontName="Helvetica-Bold" size="6" isBold="true"/>
 					</textElement>
@@ -202,7 +226,7 @@ AND (($P{M_Product_Category_ID} IS NULL) OR (subfamiliaID = $P{M_Product_Categor
 						width="82"
 						height="10"
 						key="staticText-17"/>
-					<box topBorder="Thin" topBorderColor="#000000" leftBorder="Thin" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" rightPadding="1" bottomBorder="Thin" bottomBorderColor="#000000"/>
+					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
 					<textElement textAlignment="Right" verticalAlignment="Middle">
 						<font pdfFontName="Helvetica-Bold" size="6" isBold="true"/>
 					</textElement>
@@ -215,7 +239,7 @@ AND (($P{M_Product_Category_ID} IS NULL) OR (subfamiliaID = $P{M_Product_Categor
 						width="60"
 						height="10"
 						key="staticText-18"/>
-					<box topBorder="Thin" topBorderColor="#000000" leftBorder="Thin" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" rightPadding="1" bottomBorder="Thin" bottomBorderColor="#000000"/>
+					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
 					<textElement textAlignment="Right" verticalAlignment="Middle">
 						<font pdfFontName="Helvetica-Bold" size="6" isBold="true"/>
 					</textElement>
@@ -228,7 +252,7 @@ AND (($P{M_Product_Category_ID} IS NULL) OR (subfamiliaID = $P{M_Product_Categor
 						width="68"
 						height="10"
 						key="staticText-60"/>
-					<box topBorder="1Point" topBorderColor="#000000" leftBorder="1Point" leftBorderColor="#000000" rightBorder="1Point" rightBorderColor="#000000" bottomBorder="1Point" bottomBorderColor="#000000"/>
+					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
 					<textElement textAlignment="Right" verticalAlignment="Middle">
 						<font pdfFontName="Helvetica-Bold" size="6" isBold="true"/>
 					</textElement>
@@ -241,7 +265,7 @@ AND (($P{M_Product_Category_ID} IS NULL) OR (subfamiliaID = $P{M_Product_Categor
 						width="80"
 						height="10"
 						key="staticText-61"/>
-					<box topBorder="Thin" topBorderColor="#000000" leftBorder="Thin" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" rightPadding="1" bottomBorder="Thin" bottomBorderColor="#000000"/>
+					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
 					<textElement textAlignment="Right" verticalAlignment="Middle">
 						<font pdfFontName="Helvetica-Bold" size="6" isBold="true"/>
 					</textElement>
@@ -254,7 +278,7 @@ AND (($P{M_Product_Category_ID} IS NULL) OR (subfamiliaID = $P{M_Product_Categor
 						width="58"
 						height="10"
 						key="staticText-67"/>
-					<box topBorder="Thin" topBorderColor="#000000" leftBorder="Thin" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" rightPadding="1" bottomBorder="Thin" bottomBorderColor="#000000"/>
+					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
 					<textElement textAlignment="Right" verticalAlignment="Middle">
 						<font pdfFontName="Helvetica-Bold" size="6" isBold="true"/>
 					</textElement>
@@ -267,7 +291,7 @@ AND (($P{M_Product_Category_ID} IS NULL) OR (subfamiliaID = $P{M_Product_Categor
 						width="42"
 						height="10"
 						key="staticText-69"/>
-					<box topBorder="Thin" topBorderColor="#000000" leftBorder="Thin" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" rightPadding="1" bottomBorder="Thin" bottomBorderColor="#000000"/>
+					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
 					<textElement textAlignment="Right" verticalAlignment="Middle">
 						<font pdfFontName="Helvetica-Bold" size="6" isBold="true"/>
 					</textElement>
@@ -280,7 +304,7 @@ AND (($P{M_Product_Category_ID} IS NULL) OR (subfamiliaID = $P{M_Product_Categor
 						width="64"
 						height="10"
 						key="staticText-70"/>
-					<box topBorder="Thin" topBorderColor="#000000" leftBorder="Thin" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" rightPadding="1" bottomBorder="Thin" bottomBorderColor="#000000"/>
+					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
 					<textElement textAlignment="Right" verticalAlignment="Middle">
 						<font pdfFontName="Helvetica-Bold" size="6" isBold="true"/>
 					</textElement>
@@ -289,7 +313,7 @@ AND (($P{M_Product_Category_ID} IS NULL) OR (subfamiliaID = $P{M_Product_Categor
 				<staticText>
 					<reportElement
 						x="4"
-						y="27"
+						y="25"
 						width="44"
 						height="12"
 						key="staticText-71"/>
@@ -302,7 +326,7 @@ AND (($P{M_Product_Category_ID} IS NULL) OR (subfamiliaID = $P{M_Product_Categor
 				<textField isStretchWithOverflow="false" pattern="dd/MM/yyyy" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
 						x="48"
-						y="27"
+						y="25"
 						width="81"
 						height="12"
 						key="textField-93">
@@ -317,9 +341,9 @@ AND (($P{M_Product_Category_ID} IS NULL) OR (subfamiliaID = $P{M_Product_Categor
 				<staticText>
 					<reportElement
 						x="129"
-						y="27"
+						y="26"
 						width="41"
-						height="12"
+						height="11"
 						key="staticText-72"/>
 					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
 					<textElement>
@@ -330,7 +354,7 @@ AND (($P{M_Product_Category_ID} IS NULL) OR (subfamiliaID = $P{M_Product_Categor
 				<textField isStretchWithOverflow="false" pattern="dd/MM/yyyy" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
 						x="170"
-						y="27"
+						y="25"
 						width="81"
 						height="12"
 						key="textField-94">
@@ -345,7 +369,7 @@ AND (($P{M_Product_Category_ID} IS NULL) OR (subfamiliaID = $P{M_Product_Categor
 				<staticText>
 					<reportElement
 						x="4"
-						y="39"
+						y="37"
 						width="125"
 						height="12"
 						key="staticText-74"/>
@@ -358,7 +382,7 @@ AND (($P{M_Product_Category_ID} IS NULL) OR (subfamiliaID = $P{M_Product_Categor
 				<textField isStretchWithOverflow="false" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
 						x="129"
-						y="39"
+						y="37"
 						width="150"
 						height="12"
 						key="textField-96">
@@ -377,7 +401,7 @@ AND (($P{M_Product_Category_ID} IS NULL) OR (subfamiliaID = $P{M_Product_Categor
 						width="64"
 						height="10"
 						key="staticText-75"/>
-					<box topBorder="Thin" topBorderColor="#000000" leftBorder="Thin" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" rightPadding="1" bottomBorder="Thin" bottomBorderColor="#000000"/>
+					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
 					<textElement textAlignment="Right" verticalAlignment="Middle">
 						<font pdfFontName="Helvetica-Bold" size="6" isBold="true"/>
 					</textElement>
@@ -390,24 +414,151 @@ AND (($P{M_Product_Category_ID} IS NULL) OR (subfamiliaID = $P{M_Product_Categor
 						width="82"
 						height="10"
 						key="staticText-76"/>
-					<box topBorder="Thin" topBorderColor="#000000" leftBorder="Thin" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" rightPadding="1" bottomBorder="Thin" bottomBorderColor="#000000"/>
+					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
 					<textElement textAlignment="Right" verticalAlignment="Middle">
 						<font pdfFontName="Helvetica-Bold" size="6" isBold="true"/>
 					</textElement>
 				<text><![CDATA[Artículo]]></text>
 				</staticText>
+				<line direction="TopDown">
+					<reportElement
+						x="0"
+						y="61"
+						width="790"
+						height="0"
+						key="line-1"/>
+					<graphicElement stretchType="NoStretch"/>
+				</line>
+				<line direction="TopDown">
+					<reportElement
+						x="0"
+						y="50"
+						width="790"
+						height="1"
+						key="line-3"/>
+					<graphicElement stretchType="NoStretch"/>
+				</line>
+				<line direction="TopDown">
+					<reportElement
+						x="790"
+						y="50"
+						width="0"
+						height="12"
+						key="line-4"/>
+					<graphicElement stretchType="NoStretch"/>
+				</line>
+				<line direction="TopDown">
+					<reportElement
+						x="722"
+						y="50"
+						width="0"
+						height="11"
+						key="line-5"/>
+					<graphicElement stretchType="NoStretch"/>
+				</line>
+				<line direction="TopDown">
+					<reportElement
+						x="662"
+						y="50"
+						width="0"
+						height="11"
+						key="line-6"/>
+					<graphicElement stretchType="NoStretch"/>
+				</line>
+				<line direction="TopDown">
+					<reportElement
+						x="598"
+						y="50"
+						width="0"
+						height="11"
+						key="line-7"/>
+					<graphicElement stretchType="NoStretch"/>
+				</line>
+				<line direction="TopDown">
+					<reportElement
+						x="556"
+						y="50"
+						width="0"
+						height="11"
+						key="line-8"/>
+					<graphicElement stretchType="NoStretch"/>
+				</line>
+				<line direction="TopDown">
+					<reportElement
+						x="498"
+						y="51"
+						width="0"
+						height="11"
+						key="line-9"/>
+					<graphicElement stretchType="NoStretch"/>
+				</line>
+				<line direction="TopDown">
+					<reportElement
+						x="415"
+						y="50"
+						width="0"
+						height="11"
+						key="line-10"/>
+					<graphicElement stretchType="NoStretch"/>
+				</line>
+				<line direction="TopDown">
+					<reportElement
+						x="350"
+						y="50"
+						width="0"
+						height="11"
+						key="line-11"/>
+					<graphicElement stretchType="NoStretch"/>
+				</line>
+				<line direction="TopDown">
+					<reportElement
+						x="270"
+						y="50"
+						width="0"
+						height="11"
+						key="line-12"/>
+					<graphicElement stretchType="NoStretch"/>
+				</line>
+				<line direction="TopDown">
+					<reportElement
+						x="188"
+						y="50"
+						width="0"
+						height="11"
+						key="line-13"/>
+					<graphicElement stretchType="NoStretch"/>
+				</line>
+				<line direction="TopDown">
+					<reportElement
+						x="0"
+						y="51"
+						width="0"
+						height="11"
+						key="line-14"/>
+					<graphicElement stretchType="NoStretch"/>
+				</line>
+				<line direction="TopDown">
+					<reportElement
+						x="50"
+						y="50"
+						width="0"
+						height="11"
+						key="line-15"/>
+					<graphicElement stretchType="NoStretch"/>
+				</line>
 			</band>
 		</columnHeader>
 		<detail>
-			<band height="10"  isSplitAllowed="true" >
-				<textField isStretchWithOverflow="true" pattern="" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
+			<band height="11"  isSplitAllowed="true" >
+				<textField isStretchWithOverflow="true" pattern="dd/MM/yyyy" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
 						x="0"
 						y="0"
 						width="50"
 						height="10"
-						key="textField-7"/>
-					<box topBorder="None" topBorderColor="#000000" leftBorder="Thin" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" rightPadding="1" bottomBorder="Thin" bottomBorderColor="#000000"/>
+						key="textField-7"
+						stretchType="RelativeToBandHeight"/>
+					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
 					<textElement textAlignment="Right">
 						<font size="6"/>
 					</textElement>
@@ -419,21 +570,23 @@ AND (($P{M_Product_Category_ID} IS NULL) OR (subfamiliaID = $P{M_Product_Categor
 						y="0"
 						width="138"
 						height="10"
-						key="textField-11"/>
-					<box topBorder="None" topBorderColor="#000000" leftBorder="Thin" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" rightPadding="1" bottomBorder="Thin" bottomBorderColor="#000000"/>
+						key="textField-11"
+						stretchType="RelativeToBandHeight"/>
+					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
 					<textElement textAlignment="Right">
 						<font size="6"/>
 					</textElement>
 				<textFieldExpression   class="java.lang.String"><![CDATA[$F{tipo_de_documento}]]></textFieldExpression>
 				</textField>
-				<textField isStretchWithOverflow="true" pattern="dd/MM/yyyy" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
+				<textField isStretchWithOverflow="true" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
 						x="188"
 						y="0"
 						width="82"
 						height="10"
-						key="textField-12"/>
-					<box topBorder="None" topBorderColor="#000000" leftBorder="Thin" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" rightPadding="1" bottomBorder="Thin" bottomBorderColor="#000000"/>
+						key="textField-12"
+						stretchType="RelativeToBandHeight"/>
+					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
 					<textElement textAlignment="Right">
 						<font size="6"/>
 					</textElement>
@@ -445,60 +598,65 @@ AND (($P{M_Product_Category_ID} IS NULL) OR (subfamiliaID = $P{M_Product_Categor
 						y="0"
 						width="60"
 						height="10"
-						key="textField-13"/>
-					<box topBorder="None" topBorderColor="#000000" leftBorder="Thin" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" rightPadding="1" bottomBorder="Thin" bottomBorderColor="#000000"/>
+						key="textField-13"
+						stretchType="RelativeToBandHeight"/>
+					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
 					<textElement textAlignment="Right">
 						<font size="6"/>
 					</textElement>
 				<textFieldExpression   class="java.math.BigDecimal"><![CDATA[$F{importe_total}]]></textFieldExpression>
 				</textField>
-				<textField isStretchWithOverflow="true" pattern="#,##0.00" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
+				<textField isStretchWithOverflow="true" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
 						x="722"
 						y="0"
 						width="68"
 						height="10"
-						key="textField-80"/>
-					<box topBorder="1Point" topBorderColor="#000000" leftBorder="1Point" leftBorderColor="#000000" rightBorder="1Point" rightBorderColor="#000000" bottomBorder="1Point" bottomBorderColor="#000000"/>
+						key="textField-80"
+						stretchType="RelativeToBandHeight"/>
+					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
 					<textElement textAlignment="Right">
 						<font size="6"/>
 					</textElement>
 				<textFieldExpression   class="java.lang.String"><![CDATA[$F{region}]]></textFieldExpression>
 				</textField>
-				<textField isStretchWithOverflow="true" pattern="#,##0.00" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
+				<textField isStretchWithOverflow="true" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
 						x="270"
 						y="0"
 						width="80"
 						height="10"
-						key="textField-81"/>
-					<box topBorder="None" topBorderColor="#000000" leftBorder="Thin" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" rightPadding="1" bottomBorder="Thin" bottomBorderColor="#000000"/>
+						key="textField-81"
+						stretchType="RelativeToBandHeight"/>
+					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
 					<textElement textAlignment="Right">
 						<font size="6"/>
 					</textElement>
 				<textFieldExpression   class="java.lang.String"><![CDATA[$F{entidad_comercial}]]></textFieldExpression>
 				</textField>
-				<textField isStretchWithOverflow="true" pattern="###0" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
+				<textField isStretchWithOverflow="true" pattern="#,##0.00" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
 						x="498"
 						y="0"
 						width="58"
 						height="10"
-						key="textField-89"/>
-					<box topBorder="None" topBorderColor="#000000" leftBorder="Thin" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" rightPadding="1" bottomBorder="Thin" bottomBorderColor="#000000"/>
+						key="textField-89"
+						stretchType="RelativeToBandHeight"/>
+					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
 					<textElement textAlignment="Right">
 						<font size="6"/>
 					</textElement>
 				<textFieldExpression   class="java.math.BigDecimal"><![CDATA[$F{importe_neto}]]></textFieldExpression>
 				</textField>
-				<textField isStretchWithOverflow="true" pattern="###0" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
+				<textField isStretchWithOverflow="true" pattern="###0.00;-###0.00" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
 						x="556"
 						y="0"
 						width="42"
 						height="10"
-						key="textField-91"/>
-					<box topBorder="None" topBorderColor="#000000" leftBorder="Thin" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" rightPadding="1" bottomBorder="Thin" bottomBorderColor="#000000"/>
+						key="textField-91"
+						stretchType="RelativeToBandHeight"/>
+					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
 					<textElement textAlignment="Right">
 						<font size="6"/>
 					</textElement>
@@ -510,39 +668,159 @@ AND (($P{M_Product_Category_ID} IS NULL) OR (subfamiliaID = $P{M_Product_Categor
 						y="0"
 						width="64"
 						height="10"
-						key="textField-92"/>
-					<box topBorder="None" topBorderColor="#000000" leftBorder="Thin" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" rightPadding="1" bottomBorder="Thin" bottomBorderColor="#000000"/>
+						key="textField-92"
+						stretchType="RelativeToBandHeight"/>
+					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
 					<textElement textAlignment="Right">
 						<font size="6"/>
 					</textElement>
 				<textFieldExpression   class="java.math.BigDecimal"><![CDATA[$F{percepciones}]]></textFieldExpression>
 				</textField>
-				<textField isStretchWithOverflow="true" pattern="###0" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
+				<textField isStretchWithOverflow="true" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
 						x="350"
 						y="0"
 						width="64"
 						height="10"
-						key="textField-97"/>
-					<box topBorder="None" topBorderColor="#000000" leftBorder="Thin" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" rightPadding="1" bottomBorder="Thin" bottomBorderColor="#000000"/>
+						key="textField-97"
+						stretchType="RelativeToBandHeight"/>
+					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
 					<textElement textAlignment="Right">
 						<font size="6"/>
 					</textElement>
 				<textFieldExpression   class="java.lang.String"><![CDATA[$F{subfamilia}]]></textFieldExpression>
 				</textField>
-				<textField isStretchWithOverflow="true" pattern="###0" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
+				<textField isStretchWithOverflow="true" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
 						x="415"
 						y="0"
 						width="82"
 						height="10"
-						key="textField-98"/>
-					<box topBorder="None" topBorderColor="#000000" leftBorder="Thin" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" rightPadding="1" bottomBorder="Thin" bottomBorderColor="#000000"/>
+						key="textField-98"
+						stretchType="RelativeToBandHeight"/>
+					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
 					<textElement textAlignment="Right">
 						<font size="6"/>
 					</textElement>
 				<textFieldExpression   class="java.lang.String"><![CDATA[$F{articulo}]]></textFieldExpression>
 				</textField>
+				<line direction="TopDown">
+					<reportElement
+						x="0"
+						y="10"
+						width="790"
+						height="1"
+						key="line-2"/>
+					<graphicElement stretchType="NoStretch"/>
+				</line>
+				<line direction="TopDown">
+					<reportElement
+						x="0"
+						y="0"
+						width="0"
+						height="10"
+						key="line-16"/>
+					<graphicElement stretchType="NoStretch"/>
+				</line>
+				<line direction="TopDown">
+					<reportElement
+						x="50"
+						y="0"
+						width="0"
+						height="10"
+						key="line-17"/>
+					<graphicElement stretchType="NoStretch"/>
+				</line>
+				<line direction="TopDown">
+					<reportElement
+						x="188"
+						y="0"
+						width="0"
+						height="10"
+						key="line-18"/>
+					<graphicElement stretchType="NoStretch"/>
+				</line>
+				<line direction="TopDown">
+					<reportElement
+						x="270"
+						y="0"
+						width="0"
+						height="10"
+						key="line-19"/>
+					<graphicElement stretchType="NoStretch"/>
+				</line>
+				<line direction="TopDown">
+					<reportElement
+						x="350"
+						y="0"
+						width="0"
+						height="10"
+						key="line-20"/>
+					<graphicElement stretchType="NoStretch"/>
+				</line>
+				<line direction="TopDown">
+					<reportElement
+						x="415"
+						y="0"
+						width="0"
+						height="10"
+						key="line-21"/>
+					<graphicElement stretchType="NoStretch"/>
+				</line>
+				<line direction="TopDown">
+					<reportElement
+						x="498"
+						y="0"
+						width="0"
+						height="10"
+						key="line-22"/>
+					<graphicElement stretchType="NoStretch"/>
+				</line>
+				<line direction="TopDown">
+					<reportElement
+						x="556"
+						y="0"
+						width="0"
+						height="10"
+						key="line-23"/>
+					<graphicElement stretchType="NoStretch"/>
+				</line>
+				<line direction="TopDown">
+					<reportElement
+						x="598"
+						y="0"
+						width="0"
+						height="10"
+						key="line-24"/>
+					<graphicElement stretchType="NoStretch"/>
+				</line>
+				<line direction="TopDown">
+					<reportElement
+						x="662"
+						y="0"
+						width="0"
+						height="10"
+						key="line-25"/>
+					<graphicElement stretchType="NoStretch"/>
+				</line>
+				<line direction="TopDown">
+					<reportElement
+						x="722"
+						y="0"
+						width="0"
+						height="10"
+						key="line-26"/>
+					<graphicElement stretchType="NoStretch"/>
+				</line>
+				<line direction="TopDown">
+					<reportElement
+						x="790"
+						y="-2"
+						width="0"
+						height="13"
+						key="line-27"/>
+					<graphicElement stretchType="NoStretch"/>
+				</line>
 			</band>
 		</detail>
 		<columnFooter>
