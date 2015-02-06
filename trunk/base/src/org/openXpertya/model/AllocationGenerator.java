@@ -1191,6 +1191,21 @@ public class AllocationGenerator {
 				Document doc = getDebits().get(getDebits().size() - 1);
 				MInvoice debInv = new MInvoice(ctx, doc.getId(), trxName);
 				
+				char issotrx='N';
+				if (debInv.isSOTrx())
+					issotrx = 'Y';
+				//Settear M_PriceList
+				int priceListID = DB.getSQLValue(trxName, "SELECT M_PriceList_ID FROM M_PriceList pl WHERE pl.issopricelist = '" + issotrx
+						+ "' AND (pl.AD_Org_ID = " + getAllocationHdr().getAD_Org_ID() + " OR pl.AD_Org_ID = 0) AND pl.C_Currency_ID = " + Env.getContextAsInt( getCtx(), "$C_Currency_ID" )
+						+ " AND pl.AD_Client_ID = " + getAllocationHdr().getAD_Client_ID() + " AND pl.isActive = 'Y'"
+						+ " ORDER BY pl.AD_Org_ID desc,pl.isDefault desc");
+				
+				if (priceListID <= 0) {
+					String iso_code =DB.getSQLValueString(trxName, "SELECT iso_Code FROM C_Currency WHERE C_Currency_ID = ?" , Env.getContextAsInt( getCtx(), "$C_Currency_ID" ));
+					throw new Exception(Msg.getMsg(getCtx(), "ErrorCreatingCreditDebit", new Object[]{getMsg("Purchase"), iso_code}));
+				}
+				inv.setM_PriceList_ID(priceListID);
+					
 				inv.setC_Project_ID(debInv.getC_Project_ID());
 				inv.setC_Campaign_ID(debInv.getC_Campaign_ID());
 				if(!inv.save()){
