@@ -632,11 +632,7 @@ public class VSocialConversation extends CPanel  implements FormPanel {
 	        Find find = new Find( Env.getFrame( this ),m_WindowNo, "Buscar", X_C_SocialConversation.Table_ID, X_C_SocialConversation.Table_Name, null, findFields, 1 );
 	        if (find.getQuery() == null)
 	        	return;
-			conversations = MSocialConversation.getConversations(	" SELECT C_SocialConversation_ID " +
-																	" FROM C_SocialConversation " +
-																	" WHERE " + (find.getQuery().getWhereClause().trim().length() > 0 ? find.getQuery().getWhereClause() : "1=1") +																	
-																	" AND AD_Client_ID = " + Env.getAD_Client_ID(Env.getCtx()) + 
-																	" ORDER BY C_SocialConversation_ID ");
+			conversations = MSocialConversation.getConversationsForSearch(find.getQuery().getWhereClause().trim().length() > 0 ? find.getQuery().getWhereClause() : "1=1");
 			
 			conversationPos = 0;
 			loadConversation();

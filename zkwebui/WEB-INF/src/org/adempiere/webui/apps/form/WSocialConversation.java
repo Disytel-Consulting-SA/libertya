@@ -272,7 +272,7 @@ public class WSocialConversation extends Window  implements EventListener  {
 			txtMessage.getComponent().setWidth("99%");
 			txtMessage.getComponent().setHeight("60px");
 			
-			buttonAttach.setWidth(defComponentWidthDouble);
+			buttonAttach.setWidth(defComponentWidth);
 			buttonSend.setWidth(defComponentWidthDouble);
 			
 			buttonMarkAsRead.setWidth(defComponentWidth);
@@ -430,9 +430,10 @@ public class WSocialConversation extends Window  implements EventListener  {
 		
     	// To panel
 		Row toRow = rows.newRow();
-		toRow.setSpans("1,2,2");
+		toRow.setSpans("1,1,1,2");
 		toRow.appendChild(cboNewParcitipant.getComponent());
 		toRow.appendChild(buttonAttach);
+		toRow.appendChild(new Space());
 		toRow.appendChild(buttonSend);
 		
     	// Conversation head panel
@@ -658,11 +659,7 @@ public class WSocialConversation extends Window  implements EventListener  {
 	        FindWindow find = new FindWindow( m_WindowNo, "Buscar", X_C_SocialConversation.Table_ID, X_C_SocialConversation.Table_Name, null, findFields, 1, tab );
 	        if (find.getQuery() == null)
 	        	return;
-			conversations = MSocialConversation.getConversations(	" SELECT C_SocialConversation_ID " +
-																	" FROM C_SocialConversation " +
-																	" WHERE " + (find.getQuery().getWhereClause().trim().length() > 0 ? find.getQuery().getWhereClause() : "1=1") +																	
-																	" AND AD_Client_ID = " + Env.getAD_Client_ID(Env.getCtx()) + 
-																	" ORDER BY C_SocialConversation_ID ");
+			conversations = MSocialConversation.getConversationsForSearch(find.getQuery().getWhereClause().trim().length() > 0 ? find.getQuery().getWhereClause() : "1=1");
 			
 			conversationPos = 0;
 			loadConversation();

@@ -142,9 +142,18 @@ public class MSocialConversation extends X_C_SocialConversation {
 									" AND ss.read = 'N' ");
 	}
 
+	/** Retorna la nómina de IDs de conversaciones filtrando según whereClause */ 
+	public static ArrayList<Integer> getConversationsForSearch(String whereClause) {
+		return getConversations(" SELECT C_SocialConversation_ID " +
+								" FROM C_SocialConversation " +
+								" WHERE " + whereClause +																	
+								" AND AD_Client_ID = " + Env.getAD_Client_ID(Env.getCtx()) + 
+								" ORDER BY C_SocialConversation_ID ");
+	}
+	
 	/** Retorna la nómina de IDs de conversaciones según query.
 	 * @param query DEBE contener como SELECT el campo C_SocialConversation_ID */
-	public static ArrayList<Integer> getConversations(String query) {
+	protected static ArrayList<Integer> getConversations(String query) {
 		ArrayList<Integer> ids = new ArrayList<Integer>();
 		PreparedStatement ps = null;
 		ResultSet rs = null;
