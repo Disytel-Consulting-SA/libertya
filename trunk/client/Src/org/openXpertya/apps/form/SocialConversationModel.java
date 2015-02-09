@@ -75,6 +75,22 @@ public class SocialConversationModel {
 		sendEmail(currentConversation);
 
 	}
+
+	/**
+	 * Valida si el usuario puede se agregado a la conversación según los permisos de acceso a la ventana
+	 */
+	public static boolean canBeSubscribed(MSocialConversation currentConversation, int userID) {
+		// Si no referencia a una ventana/tabla en particular, entonces no hay limitaciones
+		if (currentConversation.getAD_Window_ID() <= 0)
+			return true;
+		int count = DB.getSQLValue(null, 	" SELECT count(1) " +
+											" FROM AD_User_Roles ur " +
+											" INNER JOIN AD_Window_Access wa ON ur.AD_Role_ID = wa.AD_Role_ID " +
+											" WHERE wa.AD_Window_ID = " + currentConversation.getAD_Window_ID() + 
+											" AND ur.AD_User_ID = " + userID + 
+											" AND ur.AD_Client_ID = " + Env.getAD_Client_ID(Env.getCtx()));
+		return count > 0;
+	}
 	
 	/**
 	 * Suscribe/desuscribe de conversación
