@@ -132,23 +132,53 @@ public class MSocialConversation extends X_C_SocialConversation {
 		}
 		return subscriptions;
 	}
-
+	
 	/** Retorna el número de conversaciones no leidas para un usario dado */
 	public static int getNotReadConversationsCountForUser(int userID) {
-		return DB.getSQLValue(null, " SELECT count(1) " +
-									" FROM C_SocialSubscription ss " +
-									" INNER JOIN C_SocialConversation sc ON sc.C_SocialConversation_ID = ss.C_SocialConversation_ID " +
-									" WHERE ss.AD_User_ID = " + userID + 
-									" AND ss.read = 'N' ");
+		return getNotReadConversationsForUser(userID).size();
 	}
 
+	/** Retorna la nómina de IDs de conversaciones no leidas */
+	public static ArrayList<Integer> getNotReadConversationsForUser(int userID) {
+		return getConversations(" SELECT sc.C_SocialConversation_ID " +
+								" FROM C_SocialSubscription ss " +
+								" INNER JOIN C_SocialConversation sc ON sc.C_SocialConversation_ID = ss.C_SocialConversation_ID " +
+								" WHERE ss.AD_User_ID = " + userID +
+								" AND sc.AD_Client_ID = " + Env.getAD_Client_ID(Env.getCtx()) + 
+								" AND sc.C_SocialConversation_ID IN ( " + getConversationAccessSQLFilter() + " ) " +
+								" AND ss.read = 'N'" +
+								" ORDER BY sc.C_SocialConversation_ID ");
+	}
+	
 	/** Retorna la nómina de IDs de conversaciones filtrando según whereClause */ 
 	public static ArrayList<Integer> getConversationsForSearch(String whereClause) {
 		return getConversations(" SELECT C_SocialConversation_ID " +
 								" FROM C_SocialConversation " +
 								" WHERE " + whereClause +																	
 								" AND AD_Client_ID = " + Env.getAD_Client_ID(Env.getCtx()) + 
+								" AND C_SocialConversation_ID IN ( " + getConversationAccessSQLFilter() + " ) " +
 								" ORDER BY C_SocialConversation_ID ");
+	}
+	
+	/** Retorna el subquery encargado de filtrar según acceso */
+	public static String getConversationAccessSQLFilter() {
+		return
+				// Conversacion sin referencia a registro (el usuario debe ser parte de la conversación)
+				" SELECT DISTINCT sc.C_SocialConversation_ID " +
+				" FROM C_SocialConversation sc" +
+				" INNER JOIN C_SocialSubscription ss ON sc.C_SocialConversation_ID = ss.C_SocialConversation_ID " +
+				" WHERE ss.AD_User_ID = " + Env.getAD_User_ID(Env.getCtx()) +
+				" AND sc.AD_Client_ID = " + Env.getAD_Client_ID(Env.getCtx()) + 
+				" AND sc.AD_Window_ID IS NULL " +
+				" UNION " +
+				// Conversción con referencia a registro (el perfil de login del usuario debe poseer acceso al registro mediante la ventana)
+				" SELECT DISTINCT sc.C_SocialConversation_ID " +
+				" FROM C_SocialConversation sc" +
+				" INNER JOIN AD_Window_Access wa ON sc.AD_Window_ID = wa.AD_Window_ID " +
+				" INNER JOIN AD_User_Roles ur ON ur.AD_Role_ID = wa.AD_Role_ID " +
+				" WHERE ur.AD_Role_ID = " + Env.getAD_Role_ID(Env.getCtx()) + 
+				" AND sc.AD_Client_ID = " + Env.getAD_Client_ID(Env.getCtx()) +
+				" AND sc.AD_Window_ID IS NOT NULL ";			
 	}
 	
 	/** Retorna la nómina de IDs de conversaciones según query.
@@ -174,14 +204,6 @@ public class MSocialConversation extends X_C_SocialConversation {
 		return ids;
 	}
 	
-	/** Retorna la nómina de IDs de conversaciones no leidas */
-	public static ArrayList<Integer> getNotReadConversationsForUser(int userID) {
-		return getConversations(" SELECT sc.C_SocialConversation_ID " +
-								" FROM C_SocialSubscription ss " +
-								" INNER JOIN C_SocialConversation sc ON sc.C_SocialConversation_ID = ss.C_SocialConversation_ID " +
-								" WHERE ss.AD_User_ID = " + userID + 
-								" AND ss.read = 'N'");
-	}
 	
 	/**
 	 * Retorna el detalle a mostrar para el registro en cuestión,

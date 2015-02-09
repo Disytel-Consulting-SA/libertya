@@ -432,6 +432,10 @@ public class VSocialConversation extends CPanel  implements FormPanel {
     
     /** Cargar los valores de los componentes */
     protected void loadValues() {
+    	cboTable.setValue(tableID);
+    	cboTab.setValue(tabID);
+    	txtRecord.setText(""+recordID);
+    	txtRecordDetail.setText(MSocialConversation.getDetailFrom(tableID, recordID, true));
     	// Cargar los valores de cabecera segun si estos ya existen o no
     	if (currentConversation.getC_SocialConversation_ID() > 0) {
     		txtSubject.setText(currentConversation.getSubject());
@@ -441,17 +445,13 @@ public class VSocialConversation extends CPanel  implements FormPanel {
     		lblStatus.setText(conversations.size() > 0 ? "[Conversación " + (conversationPos+1) + " de " + conversations.size() + "]" : "[Conversación 1 de 1]");
     	}
     	else {
-    		txtSubject.setText("");
+    		txtSubject.setText(cboTab.getValue() != null ? txtRecordDetail.getText() + " @ " + cboTab.getDisplay() : "");
 	    	cboStartedBy.setValue(Env.getAD_User_ID(Env.getCtx()));
 	    	txtStarted.setText(Env.getDateTime("yyyy-MM-dd HH:mm:ss.SSS"));
 	    	txtMessage.setText("");
 	    	txtInThisConversation.setText("");
 	    	lblStatus.setText("[Escriba un mensaje...]");	    	
     	}
-    	cboTable.setValue(tableID);
-    	cboTab.setValue(tabID);
-    	txtRecord.setText(""+recordID);
-    	txtRecordDetail.setText(MSocialConversation.getDetailFrom(tableID, recordID, true));
     	toggleComponents(false);
     }
 
@@ -539,6 +539,12 @@ public class VSocialConversation extends CPanel  implements FormPanel {
 	protected void newParticipant() {
 		try {
 			if (cboNewParcitipant.getValue() != null && (Integer)cboNewParcitipant.getValue() > 0) {
+				// Verificar si el usuario puede ser incorporado a la conversación
+				if (!SocialConversationModel.canBeSubscribed(currentConversation, (Integer)cboNewParcitipant.getValue())) {
+					cboNewParcitipant.setValue(null);
+					throw new Exception("El usuario no puede ser incorporado a la conversación dado que no posee permisos de acceso al registro");
+				}
+				// Suscribirlo y actualizar los participantes
 				SocialConversationModel.subscribe(currentConversation, (Integer)cboNewParcitipant.getValue(), true, false, false);
 				txtInThisConversation.setText(currentConversation.getParticipantsNames());
 			}
@@ -629,7 +635,7 @@ public class VSocialConversation extends CPanel  implements FormPanel {
 	        	if ("C_SocialConversation_ID".equals(aField.getColumnName()))
 	        		aField.setDisplayType(DisplayType.Integer);
 	        }
-	        Find find = new Find( Env.getFrame( this ),m_WindowNo, "Buscar", X_C_SocialConversation.Table_ID, X_C_SocialConversation.Table_Name, null, findFields, 1 );
+	        Find find = new Find( Env.getFrame( this ),m_WindowNo, "Buscar", X_C_SocialConversation.Table_ID, X_C_SocialConversation.Table_Name, "C_SocialConversation_ID IN (" + MSocialConversation.getConversationAccessSQLFilter() + ")", findFields, 1 );
 	        if (find.getQuery() == null)
 	        	return;
 			conversations = MSocialConversation.getConversationsForSearch(find.getQuery().getWhereClause().trim().length() > 0 ? find.getQuery().getWhereClause() : "1=1");

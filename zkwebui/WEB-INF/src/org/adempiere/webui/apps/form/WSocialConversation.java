@@ -466,6 +466,10 @@ public class WSocialConversation extends Window  implements EventListener  {
     
     /** Cargar los valores de los componentes */
     protected void loadValues() {
+    	cboTable.setValue(tableID);
+    	cboTab.setValue(tabID);
+    	txtRecord.setValue(""+recordID);
+    	txtRecordDetail.setValue(MSocialConversation.getDetailFrom(tableID, recordID, true));
     	// Cargar los valores de cabecera segun si estos ya existen o no
     	if (currentConversation.getC_SocialConversation_ID() > 0) {
     		txtSubject.setValue(currentConversation.getSubject());
@@ -475,17 +479,13 @@ public class WSocialConversation extends Window  implements EventListener  {
     		lblStatus.setText(conversations.size() > 0 ? "[Conversación " + (conversationPos+1) + " de " + conversations.size() + "]" : "[Conversación 1 de 1]");
     	}
     	else {
-    		txtSubject.setValue("");
+    		txtSubject.setValue(cboTab.getValue() != null && (Integer)cboTab.getValue() > 0 ? txtRecordDetail.getValue() + " @ " + cboTab.getDisplay() : "");
 	    	cboStartedBy.setValue(Env.getAD_User_ID(Env.getCtx()));
 	    	txtStarted.setValue(Env.getDateTime("yyyy-MM-dd HH:mm:ss.SSS"));
 	    	txtMessage.setValue("");
 	    	txtInThisConversation.setValue("");
 	    	lblStatus.setText("[Escriba un mensaje...]");	    	
     	}
-    	cboTable.setValue(tableID);
-    	cboTab.setValue(tabID);
-    	txtRecord.setValue(""+recordID);
-    	txtRecordDetail.setValue(MSocialConversation.getDetailFrom(tableID, recordID, true));
     	toggleComponents(false);
     }
 
@@ -576,6 +576,12 @@ public class WSocialConversation extends Window  implements EventListener  {
 	protected void newParticipant() {
 		try {
 			if (cboNewParcitipant.getNewValueOnChange() != null && (Integer)cboNewParcitipant.getNewValueOnChange() > 0) {
+				// Verificar si el usuario puede ser incorporado a la conversación
+				if (!SocialConversationModel.canBeSubscribed(currentConversation, (Integer)cboNewParcitipant.getNewValueOnChange())) {
+					cboNewParcitipant.setValue(null);
+					throw new Exception("El usuario no puede ser incorporado a la conversación dado que no posee permisos de acceso al registro");
+				}
+				// Suscribirlo y actualizar los participantes
 				SocialConversationModel.subscribe(currentConversation, (Integer)cboNewParcitipant.getNewValueOnChange(), true, false, false);
 				txtInThisConversation.setValue(currentConversation.getParticipantsNames());
 			}
@@ -656,7 +662,7 @@ public class WSocialConversation extends Window  implements EventListener  {
 	        	if ("C_SocialConversation_ID".equals(aField.getColumnName()))
 	        		aField.setDisplayType(DisplayType.Integer);
 	        }
-	        FindWindow find = new FindWindow( m_WindowNo, "Buscar", X_C_SocialConversation.Table_ID, X_C_SocialConversation.Table_Name, null, findFields, 1, tab );
+	        FindWindow find = new FindWindow( m_WindowNo, "Buscar", X_C_SocialConversation.Table_ID, X_C_SocialConversation.Table_Name, "C_SocialConversation_ID IN (" + MSocialConversation.getConversationAccessSQLFilter() + ")", findFields, 1, tab );
 	        if (find.getQuery() == null)
 	        	return;
 			conversations = MSocialConversation.getConversationsForSearch(find.getQuery().getWhereClause().trim().length() > 0 ? find.getQuery().getWhereClause() : "1=1");
