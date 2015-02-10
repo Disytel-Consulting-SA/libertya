@@ -69,8 +69,8 @@ public final class MRole extends X_AD_Role
 	{
 		int AD_Role_ID = Env.getContextAsInt(ctx, "#AD_Role_ID");
 		int AD_User_ID = Env.getContextAsInt(ctx, "#AD_User_ID");
-		if (!Ini.isClient())	//	none for Server
-			AD_User_ID = 0;
+//		if (!Ini.isClient())	//	none for Server
+//			AD_User_ID = 0;
 		if (reload || s_defaultRole == null)
 		{
 			s_defaultRole = get (ctx, AD_Role_ID, AD_User_ID, reload);
