@@ -869,7 +869,7 @@ public final class AMenu extends JFrame implements ActionListener,PropertyChange
 
         bTasks.setText( Msg.translate( m_ctx,"R_Request_ID" ) + ": " + requests );
         
-        bConversations.setText( "Conversaciones: " + getConversations() );
+        bConversations.setText( Msg.translate(Env.getCtx(), "Conversations") + ": " + getConversations() );
 
         // Memo
 

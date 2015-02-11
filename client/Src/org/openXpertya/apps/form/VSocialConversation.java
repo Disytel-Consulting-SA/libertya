@@ -39,6 +39,7 @@ import org.openXpertya.util.CLogger;
 import org.openXpertya.util.DB;
 import org.openXpertya.util.DisplayType;
 import org.openXpertya.util.Env;
+import org.openXpertya.util.Msg;
 import org.openXpertya.util.ValueNamePair;
 
 public class VSocialConversation extends CPanel  implements FormPanel {
@@ -48,7 +49,7 @@ public class VSocialConversation extends CPanel  implements FormPanel {
 	protected static final int DEF_HEIGHT = 600;
 	protected static final int COLUMN_MESSAGE = 0;
 	protected static final int COLUMN_ATTACH = 1;
-	protected static final String ATTACH_BUTTON_TEXT = "Archivos adjuntos (0)";
+	protected static final String ATTACH_BUTTON_TEXT = Msg.translate(Env.getCtx(), "Attachment") + " (0)";
 	
 	
 	// Miembros de la clase
@@ -136,28 +137,28 @@ public class VSocialConversation extends CPanel  implements FormPanel {
 	
 	protected void initTexts() {
 		// Labels
-		lblSubject.setText("Asunto");
-		lblStarted.setText("Iniciado");
-		lblStartedBy.setText("Iniciado Por");
-		lblTable.setText("Documento (Tabla)");
-		lblRecord.setText("Documento (Registro)");
-		lblInThisConversation.setText("Participantes de esta conversacion");
-		lblMessage.setText("Escribir mensaje");
-		lblNewParticipant.setText("Agregar participante");
-		lblConversation.setText("Conversación");
+		lblSubject.setText(Msg.translate(Env.getCtx(), "Subject"));
+		lblStarted.setText(Msg.translate(Env.getCtx(), "Started"));
+		lblStartedBy.setText(Msg.translate(Env.getCtx(), "Started"));
+		lblTable.setText(Msg.translate(Env.getCtx(), "Document") + "(" + Msg.translate(Env.getCtx(), "AD_Table_ID") + ")");
+		lblRecord.setText(Msg.translate(Env.getCtx(), "Document") + "(" + Msg.translate(Env.getCtx(), "Record") + ")");
+		lblInThisConversation.setText(Msg.translate(Env.getCtx(), "InThisConversation"));
+		lblMessage.setText(Msg.translate(Env.getCtx(), "WriteMessage"));
+		lblNewParticipant.setText(Msg.translate(Env.getCtx(), "NewParticipant"));
+		lblConversation.setText(Msg.translate(Env.getCtx(), "Conversation"));
 		
 		// Botones
-		buttonMarkAsRead.setText("Marcar conversación leida");
-		buttonMarkAsNotRead.setText("Marcar conversación no leida");
-		buttonSubscribe.setText("Suscribirse a la conversación");
-		buttonUnsubscribe.setText("Desuscribirse de la conversación");
-		buttonAttach.setText("Archivos adjuntos (0)");
-		buttonSend.setText("Agregar mensaje");
+		buttonMarkAsRead.setText(Msg.translate(Env.getCtx(), "MarkAsRead"));
+		buttonMarkAsNotRead.setText(Msg.translate(Env.getCtx(), "MarkAsNotRead"));
+		buttonSubscribe.setText(Msg.translate(Env.getCtx(), "Subscribe"));
+		buttonUnsubscribe.setText(Msg.translate(Env.getCtx(), "Unsubscribe"));
+		buttonAttach.setText(ATTACH_BUTTON_TEXT);
+		buttonSend.setText(Msg.translate(Env.getCtx(), "AddMessage"));
 		buttonPrevious.setText("<<");
 		buttonNext.setText(">>");
-		buttonGoToRecord.setText("Documento relacionado");
-		buttonNewConversation.setText("Iniciar otra conversación");
-		buttonFindConversation.setText("Buscar conversaciones");
+		buttonGoToRecord.setText(Msg.translate(Env.getCtx(), "RelatedDocument"));
+		buttonNewConversation.setText(Msg.translate(Env.getCtx(), "StartAnotherConversation"));
+		buttonFindConversation.setText(Msg.translate(Env.getCtx(), "FindConversations"));
 	}
 	
 	protected void loadConversation() {
@@ -174,7 +175,9 @@ public class VSocialConversation extends CPanel  implements FormPanel {
 			currentConversation = MSocialConversation.getForTableAndRecord(Env.getCtx(), tableID, recordID, windowID, tabID, null);
 		}	
 		if (currentConversation.getC_SocialConversation_ID() > 0)
-			m_frame.setTitle("Conversación " + currentConversation.getC_SocialConversation_ID());
+			m_frame.setTitle(Msg.translate(Env.getCtx(), "Conversation") + " " + currentConversation.getC_SocialConversation_ID());
+		else 
+			m_frame.setTitle(Msg.translate(Env.getCtx(), "Conversations"));
 	}
 	
 
@@ -442,7 +445,7 @@ public class VSocialConversation extends CPanel  implements FormPanel {
     		cboStartedBy.setValue(currentConversation.getStartedBy());
     		txtStarted.setText(currentConversation.getStarted().toString());
     		txtInThisConversation.setText(currentConversation.getParticipantsNames());
-    		lblStatus.setText(conversations.size() > 0 ? "[Conversación " + (conversationPos+1) + " de " + conversations.size() + "]" : "[Conversación 1 de 1]");
+    		lblStatus.setText(conversations.size() > 0 ? "[" + Msg.translate(Env.getCtx(), "Conversation") + " " + (conversationPos+1) + " " +  Msg.translate(Env.getCtx(), "of") + " " + conversations.size() + "]" : "[" + Msg.translate(Env.getCtx(), "Conversation") + " 1 " + Msg.translate(Env.getCtx(), "of") + " 1]");
     	}
     	else {
     		txtSubject.setText(cboTab.getValue() != null ? txtRecordDetail.getText() + " @ " + cboTab.getDisplay() : "");
@@ -450,7 +453,7 @@ public class VSocialConversation extends CPanel  implements FormPanel {
 	    	txtStarted.setText(Env.getDateTime("yyyy-MM-dd HH:mm:ss.SSS"));
 	    	txtMessage.setText("");
 	    	txtInThisConversation.setText("");
-	    	lblStatus.setText("[Escriba un mensaje...]");	    	
+	    	lblStatus.setText("[" + Msg.translate(Env.getCtx(), "WriteAMessage") + "]");	    	
     	}
     	toggleComponents(false);
     }
@@ -489,7 +492,7 @@ public class VSocialConversation extends CPanel  implements FormPanel {
     	txtRecordDetail.setVisible(recordID > 0);
     	
 		if (currentConversation.getC_SocialConversation_ID() > 0)
-			m_frame.setTitle("Conversación " + currentConversation.getC_SocialConversation_ID());
+			m_frame.setTitle(Msg.translate(Env.getCtx(), "Conversation") + " " + currentConversation.getC_SocialConversation_ID());
 
     }
     
@@ -542,7 +545,7 @@ public class VSocialConversation extends CPanel  implements FormPanel {
 				// Verificar si el usuario puede ser incorporado a la conversación
 				if (!SocialConversationModel.canBeSubscribed(currentConversation, (Integer)cboNewParcitipant.getValue())) {
 					cboNewParcitipant.setValue(null);
-					throw new Exception("El usuario no puede ser incorporado a la conversación dado que no posee permisos de acceso al registro");
+					throw new Exception(Msg.translate(Env.getCtx(), "AddParticipantErrorUserNotAllowed"));
 				}
 				// Suscribirlo y actualizar los participantes
 				SocialConversationModel.subscribe(currentConversation, (Integer)cboNewParcitipant.getValue(), true, false, false);
@@ -610,7 +613,7 @@ public class VSocialConversation extends CPanel  implements FormPanel {
 			windowID = -1;
 			loadValues();
 			tableModel.reload(currentConversation);
-			m_frame.setTitle("Nueva conversación...");
+			m_frame.setTitle(Msg.translate(Env.getCtx(), "NewConversation"));
 		} catch (Exception e) {
 			ADialog.error(m_WindowNo, this, e.getMessage());
 		}
@@ -635,11 +638,14 @@ public class VSocialConversation extends CPanel  implements FormPanel {
 	        	if ("C_SocialConversation_ID".equals(aField.getColumnName()))
 	        		aField.setDisplayType(DisplayType.Integer);
 	        }
-	        Find find = new Find( Env.getFrame( this ),m_WindowNo, "Buscar", X_C_SocialConversation.Table_ID, X_C_SocialConversation.Table_Name, "C_SocialConversation_ID IN (" + MSocialConversation.getConversationAccessSQLFilter() + ")", findFields, 1 );
+	        // Aplicar la busqueda de conversaciones, contemplando si la política de seguridad de conversaciones se encuentra activa o no
+	        String additionalWhereClause = MSocialConversation.isEnabledConversationSecurityPolicy() ? "C_SocialConversation_ID IN (" + MSocialConversation.getConversationAccessSQLFilter() + ")" : null;
+	        Find find = new Find( Env.getFrame( this ),m_WindowNo, Msg.translate(Env.getCtx(), "Find"), X_C_SocialConversation.Table_ID, X_C_SocialConversation.Table_Name, additionalWhereClause, findFields, 1 );
 	        if (find.getQuery() == null)
 	        	return;
-			conversations = MSocialConversation.getConversationsForSearch(find.getQuery().getWhereClause().trim().length() > 0 ? find.getQuery().getWhereClause() : "1=1");
 			
+	        // Recuperar las conversaciones	        
+	        conversations = MSocialConversation.getConversationsForSearch(find.getQuery().getWhereClause().trim().length() > 0 ? find.getQuery().getWhereClause() : "1=1");
 			conversationPos = 0;
 			loadConversation();
 			loadValues();

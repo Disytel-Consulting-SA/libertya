@@ -36,6 +36,7 @@ import org.openXpertya.model.X_C_SocialConversation;
 import org.openXpertya.util.DB;
 import org.openXpertya.util.DisplayType;
 import org.openXpertya.util.Env;
+import org.openXpertya.util.Msg;
 import org.zkoss.zk.ui.event.Event;
 import org.zkoss.zk.ui.event.EventListener;
 import org.zkoss.zkex.zul.Borderlayout;
@@ -53,7 +54,7 @@ public class WSocialConversation extends Window  implements EventListener  {
 	protected static final int DEF_HEIGHT = 600;
 	protected static final int COLUMN_MESSAGE = 0;
 	protected static final int COLUMN_ATTACH = 1;
-	protected static final String ATTACH_BUTTON_TEXT = "Archivos adjuntos (0)";
+	protected static final String ATTACH_BUTTON_TEXT = Msg.translate(Env.getCtx(), "Attachment") + " (0)";
 	
 	
 	// Miembros de la clase
@@ -146,28 +147,28 @@ public class WSocialConversation extends Window  implements EventListener  {
 	
 	protected void initTexts() {
 		// Labels
-		lblSubject.setText("Asunto");
-		lblStarted.setText("Iniciado");
-		lblStartedBy.setText("Iniciado Por");
-		lblTable.setText("Documento (Tabla)");
-		lblRecord.setText("Documento (Registro)");
-		lblInThisConversation.setText("Participantes de esta conversacion");
-		lblMessage.setText("Escribir mensaje");
-		lblNewParticipant.setText("Agregar participante");
-		lblConversation.setText("Conversación");
+		lblSubject.setText(Msg.translate(Env.getCtx(), "Subject"));
+		lblStarted.setText(Msg.translate(Env.getCtx(), "Started"));
+		lblStartedBy.setText(Msg.translate(Env.getCtx(), "StartedBy"));
+		lblTable.setText(Msg.translate(Env.getCtx(), "Document") + " (" + Msg.translate(Env.getCtx(), "AD_Table_ID") + ")");
+		lblRecord.setText(Msg.translate(Env.getCtx(), "Document") + " (" + Msg.translate(Env.getCtx(), "Record") + ")");
+		lblInThisConversation.setText(Msg.translate(Env.getCtx(), "InThisConversation"));
+		lblMessage.setText(Msg.translate(Env.getCtx(), "WriteMessage"));
+		lblNewParticipant.setText(Msg.translate(Env.getCtx(), "NewParticipant"));
+		lblConversation.setText(Msg.translate(Env.getCtx(), "Conversation"));
 		
 		// Botones
-		buttonMarkAsRead.setLabel("Marcar conversación leida");
-		buttonMarkAsNotRead.setLabel("Marcar conversación no leida");
-		buttonSubscribe.setLabel("Suscribirse a la conversación");
-		buttonUnsubscribe.setLabel("Desuscribirse de la conversación");
-		buttonAttach.setLabel("Archivos adjuntos (0)");
-		buttonSend.setLabel("Agregar mensaje");
+		buttonMarkAsRead.setLabel(Msg.translate(Env.getCtx(), "MarkAsRead"));
+		buttonMarkAsNotRead.setLabel(Msg.translate(Env.getCtx(), "MarkAsNotRead"));
+		buttonSubscribe.setLabel(Msg.translate(Env.getCtx(), "Subscribe"));
+		buttonUnsubscribe.setLabel(Msg.translate(Env.getCtx(), "Unsubscribe"));
+		buttonAttach.setLabel(ATTACH_BUTTON_TEXT);
+		buttonSend.setLabel(Msg.translate(Env.getCtx(), "AddMessage"));
 		buttonPrevious.setLabel("<<");
 		buttonNext.setLabel(">>");
-		buttonGoToRecord.setLabel("Documento relacionado");
-		buttonNewConversation.setLabel("Iniciar otra conversación");
-		buttonFindConversation.setLabel("Buscar conversaciones");
+		buttonGoToRecord.setLabel(Msg.translate(Env.getCtx(), "RelatedDocument"));
+		buttonNewConversation.setLabel(Msg.translate(Env.getCtx(), "StartAnotherConversation"));
+		buttonFindConversation.setLabel(Msg.translate(Env.getCtx(), "FindConversations"));
 	}
 	
 	protected void loadConversation() {
@@ -184,7 +185,9 @@ public class WSocialConversation extends Window  implements EventListener  {
 			currentConversation = MSocialConversation.getForTableAndRecord(Env.getCtx(), tableID, recordID, windowID, tabID, null);
 		}		
 		if (currentConversation.getC_SocialConversation_ID() > 0)
-			setTitle("Conversación " + currentConversation.getC_SocialConversation_ID());
+			setTitle(Msg.translate(Env.getCtx(), "Conversation") + " " + currentConversation.getC_SocialConversation_ID());
+		else 
+			setTitle(Msg.translate(Env.getCtx(), "Conversations"));
 	}
 	
     protected void initComponents() {
@@ -202,22 +205,7 @@ public class WSocialConversation extends Window  implements EventListener  {
 	    	tblConversation.setModel(listModel);
 	    	renderer = new GridRenderer(this);
 	    	tblConversation.setRowRenderer(renderer);
-	    	
-//	    	tblConversation.getColumnModel().getColumn(COLUMN_MESSAGE).setPreferredWidth(DEF_WIDTH);
-	    	//tblConversation.setRowHeight(20);
-//	    	tblConversation.setShowHorizontalLines(false);
-//	    	tblConversation.setShowVerticalLines(false);
-//	    	tblConversation.setFocusable(false);
-//	    	tblConversation.setRowSelectionAllowed(false);
-	    	
-	    	// Botones
-//	    	buttonGoToRecord.setBackground(UIManager.getColor("Button.shadow"));
-//	    	buttonMarkAsRead.setBackground(UIManager.getColor("Button.shadow"));
-//	    	buttonMarkAsNotRead.setBackground(UIManager.getColor("Button.shadow"));
-//	    	buttonSubscribe.setBackground(UIManager.getColor("Button.shadow"));
-//	    	buttonUnsubscribe.setBackground(UIManager.getColor("Button.shadow"));
-//	    	buttonSend.setBackground(new Color(250,120,50));	
-	    	
+	    		
 	    	// Combos
 	    	MLookup lookupStartedBy = MLookupFactory.get (Env.getCtx(), m_WindowNo, 0, "AD_User_ID", "AD_User", DisplayType.Search);
 	    	cboStartedBy = new WSearchEditor("AD_User_ID", true, true, true, lookupStartedBy);
@@ -230,7 +218,6 @@ public class WSocialConversation extends Window  implements EventListener  {
 
    			MLookup lookupNewParticipant = MLookupFactory.get (Env.getCtx(), m_WindowNo, 0, "AD_User_ID", "AD_User", DisplayType.Search);
 	    	cboNewParcitipant = new WSearchEditor("AD_User_ID", false, false, true, lookupNewParticipant);
-//	    	cboNewParcitipant.setBackground(UIManager.getColor("TextField.background"));
 	    	
 	    	// Campos solo lectura
 	    	cboTable.setReadWrite(false);
@@ -243,11 +230,8 @@ public class WSocialConversation extends Window  implements EventListener  {
 	    	txtInThisConversation.setBackground(UIManager.getColor("TextField.background"));
 	    	
 	    	// Definiciones visuales adicionales
-//	    	txtMessage.setAlignmentY(Component.TOP_ALIGNMENT);
-//	    	txtMessage.setPreferredSize(new Dimension(DEF_WIDTH, 80));
 	    	txtMessage.getComponent().setRows(3);
-	    	txtMessage.getComponent().setMultiline(true); // .setLineWrap(true);
-//	    	txtMessage.setWrapStyleWord(true);
+	    	txtMessage.getComponent().setMultiline(true); 
 	    	
 	    	String defComponentWidth = "" + (int)((DEF_WIDTH - 50) / 5) + "px"; 	// 5 columnas de componentes
 	    	String defComponentWidthDouble = "" + (int)((DEF_WIDTH - 50) / 2.5) + "px";
@@ -476,7 +460,7 @@ public class WSocialConversation extends Window  implements EventListener  {
     		cboStartedBy.setValue(currentConversation.getStartedBy());
     		txtStarted.setValue(currentConversation.getStarted().toString());
     		txtInThisConversation.setValue(currentConversation.getParticipantsNames());
-    		lblStatus.setText(conversations.size() > 0 ? "[Conversación " + (conversationPos+1) + " de " + conversations.size() + "]" : "[Conversación 1 de 1]");
+    		lblStatus.setText(conversations.size() > 0 ? "[" + Msg.translate(Env.getCtx(), "Conversation") + " " + (conversationPos+1) + " " + Msg.translate(Env.getCtx(), "of") + " " + conversations.size() + "]" : "[" + Msg.translate(Env.getCtx(), "Conversation") + " 1 " + Msg.translate(Env.getCtx(), "of") + " 1]");
     	}
     	else {
     		txtSubject.setValue(cboTab.getValue() != null && (Integer)cboTab.getValue() > 0 ? txtRecordDetail.getValue() + " @ " + cboTab.getDisplay() : "");
@@ -484,7 +468,7 @@ public class WSocialConversation extends Window  implements EventListener  {
 	    	txtStarted.setValue(Env.getDateTime("yyyy-MM-dd HH:mm:ss.SSS"));
 	    	txtMessage.setValue("");
 	    	txtInThisConversation.setValue("");
-	    	lblStatus.setText("[Escriba un mensaje...]");	    	
+	    	lblStatus.setText("[" + Msg.translate(Env.getCtx(), "WriteAMessage") + "]");	    	
     	}
     	toggleComponents(false);
     }
@@ -528,7 +512,7 @@ public class WSocialConversation extends Window  implements EventListener  {
     	tblConversation.setModel(listModel);
     	
 		if (currentConversation.getC_SocialConversation_ID() > 0)
-			setTitle("Conversación " + currentConversation.getC_SocialConversation_ID());
+			setTitle(Msg.translate(Env.getCtx(), "Conversation") + " " + currentConversation.getC_SocialConversation_ID());
     }
 
 	@Override
@@ -579,7 +563,7 @@ public class WSocialConversation extends Window  implements EventListener  {
 				// Verificar si el usuario puede ser incorporado a la conversación
 				if (!SocialConversationModel.canBeSubscribed(currentConversation, (Integer)cboNewParcitipant.getNewValueOnChange())) {
 					cboNewParcitipant.setValue(null);
-					throw new Exception("El usuario no puede ser incorporado a la conversación dado que no posee permisos de acceso al registro");
+					throw new Exception(Msg.translate(Env.getCtx(), "AddParticipantErrorUserNotAllowed"));
 				}
 				// Suscribirlo y actualizar los participantes
 				SocialConversationModel.subscribe(currentConversation, (Integer)cboNewParcitipant.getNewValueOnChange(), true, false, false);
@@ -637,7 +621,7 @@ public class WSocialConversation extends Window  implements EventListener  {
 			loadValues();
 			tableModel.reload(currentConversation);
 			toggleComponents(false);
-			setTitle("Nueva conversación...");
+			setTitle(Msg.translate(Env.getCtx(), "NewConversation"));
 		} catch (Exception e) {
 			FDialog.error(m_WindowNo, this, e.getMessage());
 		}
@@ -662,11 +646,14 @@ public class WSocialConversation extends Window  implements EventListener  {
 	        	if ("C_SocialConversation_ID".equals(aField.getColumnName()))
 	        		aField.setDisplayType(DisplayType.Integer);
 	        }
-	        FindWindow find = new FindWindow( m_WindowNo, "Buscar", X_C_SocialConversation.Table_ID, X_C_SocialConversation.Table_Name, "C_SocialConversation_ID IN (" + MSocialConversation.getConversationAccessSQLFilter() + ")", findFields, 1, tab );
+	        // Aplicar la busqueda de conversaciones, contemplando si la política de seguridad de conversaciones se encuentra activa o no
+	        String additionalWhereClause = MSocialConversation.isEnabledConversationSecurityPolicy() ? "C_SocialConversation_ID IN (" + MSocialConversation.getConversationAccessSQLFilter() + ")" : null;
+	        FindWindow find = new FindWindow( m_WindowNo, Msg.translate(Env.getCtx(), "Find"), X_C_SocialConversation.Table_ID, X_C_SocialConversation.Table_Name, additionalWhereClause, findFields, 1, tab );
 	        if (find.getQuery() == null)
 	        	return;
-			conversations = MSocialConversation.getConversationsForSearch(find.getQuery().getWhereClause().trim().length() > 0 ? find.getQuery().getWhereClause() : "1=1");
-			
+	        
+	        // Recuperar las conversaciones
+			conversations = MSocialConversation.getConversationsForSearch(find.getQuery().getWhereClause().trim().length() > 0 ? find.getQuery().getWhereClause() : "1=1");			
 			conversationPos = 0;
 			loadConversation();
 			loadValues();
