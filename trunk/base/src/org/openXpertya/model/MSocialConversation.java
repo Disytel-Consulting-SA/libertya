@@ -33,6 +33,23 @@ public class MSocialConversation extends X_C_SocialConversation {
 		return true;
 	}
 	
+	/** Attribute de preferencia para la politica de seguridad de conversaciones */
+	public static String CONVERSATION_SECURITY_POLICY_PREFERENCE_KEY 			= "ConversationSecurityPolicy";
+	/** Value de preferencia activo = Y para la politica de seguridad de conversaciones */
+	public static String CONVERSATION_SECURITY_POLICY_PREFERENCE_VALUE_ENABLED 	= "E";
+	/** Value de preferencia activo = N para la politica de seguridad de conversaciones */
+	public static String CONVERSATION_SECURITY_POLICY_PREFERENCE_VALUE_DISABLED = "D";
+	
+	/**
+	 * Retorna true si la política de seguridad para conversaciones se encuentra activada, 
+	 * limitando el acceso a las conversaciones según los permisos de visualización de registros
+	 * @return true si se encuentra activada o false en caso contrario (por defecto siempre devuelve activa si la preferencia no existe)
+	 */
+	public static boolean isEnabledConversationSecurityPolicy() {
+		return !CONVERSATION_SECURITY_POLICY_PREFERENCE_VALUE_DISABLED.equalsIgnoreCase(MPreference.GetCustomPreferenceValue(CONVERSATION_SECURITY_POLICY_PREFERENCE_KEY));
+	}	
+	
+	
 	/**
 	 * Retorna una conversación a partir de una tabla y registro dado.  Si la misma no existe, la genera
 	 */
@@ -140,27 +157,37 @@ public class MSocialConversation extends X_C_SocialConversation {
 
 	/** Retorna la nómina de IDs de conversaciones no leidas */
 	public static ArrayList<Integer> getNotReadConversationsForUser(int userID) {
+		// Filtrado adicional, omitiendo registros que no puede acceder (no está referenciado o no puede visualizar la tabla/ventana)
+		String additionalWhereClause = MSocialConversation.isEnabledConversationSecurityPolicy() ?
+				" AND sc.C_SocialConversation_ID IN ( " + getConversationAccessSQLFilter() + " ) " : 
+				"";
+		
 		return getConversations(" SELECT sc.C_SocialConversation_ID " +
 								" FROM C_SocialSubscription ss " +
 								" INNER JOIN C_SocialConversation sc ON sc.C_SocialConversation_ID = ss.C_SocialConversation_ID " +
 								" WHERE ss.AD_User_ID = " + userID +
 								" AND sc.AD_Client_ID = " + Env.getAD_Client_ID(Env.getCtx()) + 
-								" AND sc.C_SocialConversation_ID IN ( " + getConversationAccessSQLFilter() + " ) " +
+								additionalWhereClause + 
 								" AND ss.read = 'N'" +
 								" ORDER BY sc.C_SocialConversation_ID ");
 	}
 	
 	/** Retorna la nómina de IDs de conversaciones filtrando según whereClause */ 
 	public static ArrayList<Integer> getConversationsForSearch(String whereClause) {
+		// Filtrado adicional, omitiendo registros que no puede acceder (no está referenciado o no puede visualizar la tabla/ventana)
+		String additionalWhereClause = MSocialConversation.isEnabledConversationSecurityPolicy() ?
+				" AND C_SocialConversation_ID IN ( " + getConversationAccessSQLFilter() + " ) " : 
+				"";
+
 		return getConversations(" SELECT C_SocialConversation_ID " +
 								" FROM C_SocialConversation " +
 								" WHERE " + whereClause +																	
 								" AND AD_Client_ID = " + Env.getAD_Client_ID(Env.getCtx()) + 
-								" AND C_SocialConversation_ID IN ( " + getConversationAccessSQLFilter() + " ) " +
+								additionalWhereClause +
 								" ORDER BY C_SocialConversation_ID ");
 	}
-	
-	/** Retorna el subquery encargado de filtrar según acceso */
+
+	/** Retorna el subquery encargado de filtrar según acceso. El mismo obtiene el SELECT bajo la columna C_SocialConversation_ID */
 	public static String getConversationAccessSQLFilter() {
 		return
 				// Conversacion sin referencia a registro (el usuario debe ser parte de la conversación)
@@ -263,23 +290,23 @@ public class MSocialConversation extends X_C_SocialConversation {
 	 * Retorna el body para uso en un mail
 	 */
 	public String getEmailBody() {
-		String subject = (getSubject()!=null && getSubject().trim().length()>0 ? getSubject():"(sin asunto)") ;
-		String tabla = getAD_Tab_ID() > 0 ? new M_Tab(getCtx(), getAD_Tab_ID(), get_TrxName()).get_Translation("Name")  : "(sin referencia)";
-		String registro = getRecordID() > 0 ? MSocialConversation.getDetailFrom(getAD_Table_ID(), getRecordID(), true) : "(sin referencia)";
+		String subject = (getSubject()!=null && getSubject().trim().length()>0 ? getSubject() : "("+Msg.translate(getCtx(), "NoSubject")+")" );
+		String tabla = getAD_Tab_ID() > 0 ? new M_Tab(getCtx(), getAD_Tab_ID(), get_TrxName()).get_Translation("Name")  : "("+Msg.translate(getCtx(), "NoReference"+")");
+		String registro = getRecordID() > 0 ? MSocialConversation.getDetailFrom(getAD_Table_ID(), getRecordID(), true) : "("+Msg.translate(getCtx(), "NoReference")+")";
 		StringBuffer mensajes = new StringBuffer();
 		for (MSocialMessage aMessage : getMessages(false)) {
-			mensajes.append("El ").append(aMessage.getSent()).append(" ")
-					.append(MUser.get(getCtx(), aMessage.getSentBy()).getName()).append(" dijo ").append("\n")
+			mensajes.append(aMessage.getSent()).append(" ")
+					.append(MUser.get(getCtx(), aMessage.getSentBy()).getName()).append(" ").append(Msg.translate(getCtx(), "said")).append(" \n")
 					.append(aMessage.getMsgContent()).append("\n")
 					.append("\n");
 		}
 		
 		return 
-				"Conversación: " + getC_SocialConversation_ID() + "\n\n" +
-				"Asunto: " + subject + "\n\n" +
-				"Tabla: " + tabla + "\n\n" + 
-				"Registro: " + registro + "\n\n" +
-				"Mensajes: " + "\n\n" + mensajes.toString();
+				Msg.translate(getCtx(), "C_SocialConversation_ID") + ": " + getC_SocialConversation_ID() + "\n\n" +
+				Msg.translate(getCtx(), "Subject")				   + ": " + subject + "\n\n" +
+				Msg.translate(getCtx(), "AD_Table_ID")			   + ": " + tabla + "\n\n" + 
+				Msg.translate(getCtx(), "Record")				   + ": " + registro + "\n\n" +
+				Msg.translate(getCtx(), "Messages")				   + ": " + "\n\n" + mensajes.toString();
 	}
 	
 	

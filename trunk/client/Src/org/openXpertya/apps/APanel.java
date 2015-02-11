@@ -1916,7 +1916,7 @@ public final class APanel extends CPanel implements DataStatusListener,ChangeLis
     
     
 //    /**
-//     * Abre la ventana de conversaciones para un registro dado (ventana No Swing)
+//     * Abre la ventana de conversaciones para un registro dado (ventana No Swing).  DEPRECADO
 //     */
 //    private void cmd_conversation_noSwing() {
 //    	// Recuperar tabla y registro

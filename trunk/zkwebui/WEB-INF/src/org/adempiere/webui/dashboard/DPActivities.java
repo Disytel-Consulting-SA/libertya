@@ -89,8 +89,8 @@ public class DPActivities extends DashboardPanel implements EventListener {
         
         btnConversation = new Button();
         vbox.appendChild(btnConversation);  
-        btnConversation.setLabel("Conversaciones: " + getConversations());
-        btnConversation.setTooltiptext("Conversaciones");
+        btnConversation.setLabel(Msg.translate(Env.getCtx(), "Conversations") + ": " + getConversations());
+        btnConversation.setTooltiptext(Msg.translate(Env.getCtx(), "Conversations"));
         btnConversation.setImage("/images/Conversation16.png");
 		btnConversation.addEventListener(Events.ON_CLICK, this); 
 
@@ -214,7 +214,7 @@ public class DPActivities extends DashboardPanel implements EventListener {
     	btnNotice.setLabel(Msg.translate(Env.getCtx(), "AD_Note_ID") + " : " + noOfNotice);
 		btnRequest.setLabel(Msg.translate(Env.getCtx(), "R_Request_ID") + " : " + noOfRequest);
 		btnWorkflow.setLabel(Msg.getMsg (Env.getCtx(), "WorkflowActivities") + " : " + noOfWorkflow);
-		btnConversation.setLabel("Conversaciones: " + getConversations());
+		btnConversation.setLabel(Msg.translate(Env.getCtx(), "Conversations") + ": " + getConversations());
 	}
 
 	public void onEvent(Event event)
@@ -225,7 +225,7 @@ public class DPActivities extends DashboardPanel implements EventListener {
         // Conversaciones?
         if (event.getTarget().equals(btnConversation)) {
         	WSocialConversation conv = new WSocialConversation();
-        	btnConversation.setLabel("Conversaciones: " + getConversations());
+        	btnConversation.setLabel(Msg.translate(Env.getCtx(), "Conversations") + ": " + getConversations());
         	AEnv.showWindow(conv);  
         	return;
         }

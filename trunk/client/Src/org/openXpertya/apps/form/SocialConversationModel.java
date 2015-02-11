@@ -7,6 +7,7 @@ import java.util.ArrayList;
 import javax.swing.table.AbstractTableModel;
 
 import org.openXpertya.model.MClient;
+import org.openXpertya.model.MPreference;
 import org.openXpertya.model.MSocialConversation;
 import org.openXpertya.model.MSocialMessage;
 import org.openXpertya.model.MSocialSubscription;
@@ -15,6 +16,7 @@ import org.openXpertya.util.CLogger;
 import org.openXpertya.util.DB;
 import org.openXpertya.util.EMail;
 import org.openXpertya.util.Env;
+import org.openXpertya.util.Msg;
 
 public class SocialConversationModel {
 
@@ -45,13 +47,13 @@ public class SocialConversationModel {
 
 		// Hay mensaje a enviar?
 		if (message == null || message.trim().length() == 0)
-			throw new Exception("Debe escribir un mensaje!");
+			throw new Exception(Msg.translate(Env.getCtx(), "MustWriteAMessage"));
 			
 		initConversation(currentConversation, tableID, recordID, windowID, tabID);
 		
 		currentConversation.setSubject(conversationSubject);
 		if (!currentConversation.save()) 
-			throw new Exception("Error al crear la conversacion: " + CLogger.retrieveErrorAsString());
+			throw new Exception(Msg.translate(Env.getCtx(), "ErrorCreatingConversation") + ": " + CLogger.retrieveErrorAsString());
 		
 		// Crear mensaje
 		MSocialMessage aSocialMessage = new MSocialMessage(Env.getCtx(), 0, null);
@@ -60,7 +62,7 @@ public class SocialConversationModel {
 		aSocialMessage.setC_SocialConversation_ID(currentConversation.getC_SocialConversation_ID());
 		aSocialMessage.setSentBy(Env.getAD_User_ID(Env.getCtx()));
 		if (!aSocialMessage.save()) 
-			throw new Exception("Error al enviar mensaje: " + CLogger.retrieveErrorAsString());
+			throw new Exception(Msg.translate(Env.getCtx(), "ErrorSendingMessage") + ": " + CLogger.retrieveErrorAsString());
 		
 		// Marcar la conversacion como no leida para quienes están suscriptos
 		for (MSocialSubscription aSubs : currentConversation.getSubscriptions()) {
@@ -69,7 +71,7 @@ public class SocialConversationModel {
 				continue;
 			aSubs.setRead(false);
 			if (!aSubs.save())
-				throw new Exception("Error al actualizar suscripciones: " + CLogger.retrieveErrorAsString());
+				throw new Exception(Msg.translate(Env.getCtx(), "ErrorUpdatingSubscription") + ": " + CLogger.retrieveErrorAsString());
 		}
 		
 		sendEmail(currentConversation);
@@ -80,6 +82,11 @@ public class SocialConversationModel {
 	 * Valida si el usuario puede se agregado a la conversación según los permisos de acceso a la ventana
 	 */
 	public static boolean canBeSubscribed(MSocialConversation currentConversation, int userID) {
+		
+		// Si no hay política de seguridad aplicada, entonces puede suscribir cualquier usuario
+		if (!MSocialConversation.isEnabledConversationSecurityPolicy())
+			return true;
+		
 		// Si no referencia a una ventana/tabla en particular, entonces no hay limitaciones
 		if (currentConversation.getAD_Window_ID() <= 0)
 			return true;
@@ -169,7 +176,7 @@ public class SocialConversationModel {
 			EMail mail = new EMail( client, null, to, subject, body);
 			String response = mail.send();
 			if (!EMail.SENT_OK.equals(response)) {
-				CLogger.getCLogger("Social Emailer").warning("Error al enviar mail:" + response);
+				CLogger.getCLogger("Social Emailer").warning(Msg.translate(Env.getCtx(), "ErrorSendingMail") + ": " + response);
 			}
 		}	
 		
@@ -208,7 +215,7 @@ public class SocialConversationModel {
 	
 	public static class ConversationTableModel extends AbstractTableModel {
 		
-		String[] columnNames = {"Mensaje"};
+		String[] columnNames = {Msg.translate(Env.getCtx(), "Message")};
 		ArrayList<ArrayList<Object>> rowData = new ArrayList<ArrayList<Object>>();
 		
 	    public String getColumnName(int col) {
@@ -247,7 +254,7 @@ public class SocialConversationModel {
 	    		
 	    		// Primera fila
 	    		ArrayList<Object> aRow = new ArrayList<Object>();
-	    		aRow.add("El " + rs.getString("sent") + " " + rs.getString("name") + " dijo:");
+	    		aRow.add(rs.getString("sent") + " " + rs.getString("name") + " " + Msg.translate(Env.getCtx(), "said") + ":");
 	    		rowData.add(aRow);
 	    		
 	    		// Filas de contenido	    		
