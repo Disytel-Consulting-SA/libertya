@@ -26,23 +26,15 @@
 	<parameter name="AD_Org_ID" isForPrompting="false" class="java.math.BigDecimal">
 		<defaultValueExpression ><![CDATA[null]]></defaultValueExpression>
 	</parameter>
-<<<<<<< .mine
-	<parameter name="FechaDesde" isForPrompting="false" class="java.util.Date"/>
-=======
 	<parameter name="FechaDesde" isForPrompting="false" class="java.util.Date">
 		<defaultValueExpression ><![CDATA[null]]></defaultValueExpression>
 	</parameter>
->>>>>>> .r1191
 	<parameter name="AD_CLIENT_ID" isForPrompting="false" class="java.lang.Integer">
 		<defaultValueExpression ><![CDATA[null]]></defaultValueExpression>
 	</parameter>
-<<<<<<< .mine
-	<parameter name="FechaHasta" isForPrompting="false" class="java.util.Date"/>
-=======
 	<parameter name="FechaHasta" isForPrompting="false" class="java.util.Date">
 		<defaultValueExpression ><![CDATA[null]]></defaultValueExpression>
 	</parameter>
->>>>>>> .r1191
 	<parameter name="grupo_ec" isForPrompting="false" class="java.lang.Integer">
 		<defaultValueExpression ><![CDATA[null]]></defaultValueExpression>
 	</parameter>
@@ -65,16 +57,10 @@ LEFT JOIN (select it.c_invoice_id, SUM(it.taxamt) as SumaPercepciones from c_inv
 LEFT JOIN (select ita.c_invoice_id, SUM(ita.taxamt) as SumaImpuestos from c_invoicetax ita INNER JOIN c_tax ta ON (ita.c_tax_id = ta.c_tax_id) AND (ta.ispercepcion = 'N') group by ita.c_invoice_id) as ita ON (ita.c_invoice_id = i.c_invoice_id)
 INNER JOIN c_bpartner bp ON (bp.c_bpartner_id = i.c_bpartner_id)
 INNER JOIN c_bp_group bpg ON (bpg.c_bp_group_id = bp.c_bp_group_id)
-<<<<<<< .mine
-INNER JOIN c_bpartner_location bpl ON (bpl.c_location_id = bp.c_bpartner_id)
-INNER JOIN c_location l ON (l.c_location_id = bpl.c_location_id)
-=======
 INNER JOIN c_bpartner_location bpl ON (bpl.c_bpartner_id = bp.c_bpartner_id)
 INNER JOIN c_location l ON (l.c_location_id = bpl.c_location_id)
->>>>>>> .r1191
 INNER JOIN c_region r ON (r.c_region_id = l.c_region_id)
 INNER JOIN c_doctype dt ON (dt.c_doctype_id = i.c_doctype_id)
-<<<<<<< .mine
 INNER JOIN ad_org ado ON (ado.ad_org_id = i.ad_org_id)
 WHERE (i.issotrx = 'Y') 
 AND (dt.docbasetype in ('ARC','ARI'))
@@ -85,13 +71,6 @@ AND (($P{FechaDesde}::date IS NULL) OR (i.dateinvoiced::date >= $P{FechaDesde}::
 AND (($P{FechaHasta}::date IS NULL) OR (i.dateinvoiced::date <= $P{FechaHasta}::date)) 
 AND (($P{grupo_ec} IS NULL) OR (bpg.c_bp_group_id = $P{grupo_ec}))
 AND ($P{AD_CLIENT_ID} = i.ad_client_id)]]></queryString>
-=======
-INNER JOIN ad_org ado ON (ado.ad_org_id = i.ad_org_id)) AS VentasPorRegion
-WHERE (($P{AD_Org_ID} IS NULL) OR (ad_org_id = $P{AD_Org_ID}))
-AND (($P{FechaDesde}::date IS NULL) OR (fecha::date >= $P{FechaDesde}::date)) 
-AND (($P{FechaHasta}::date IS NULL) OR (fecha::date <= $P{FechaHasta}::date)) 
-AND (($P{grupo_ec} IS NULL) OR (group_ec = $P{grupo_ec}))]]></queryString>
->>>>>>> .r1191
 
 	<field name="ad_org_id" class="java.lang.Integer"/>
 	<field name="organization" class="java.lang.String"/>
@@ -120,7 +99,7 @@ AND (($P{grupo_ec} IS NULL) OR (group_ec = $P{grupo_ec}))]]></queryString>
 			</band>
 		</pageHeader>
 		<columnHeader>
-			<band height="61"  isSplitAllowed="true" >
+			<band height="67"  isSplitAllowed="true" >
 				<textField isStretchWithOverflow="false" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
 						x="70"
@@ -165,7 +144,7 @@ AND (($P{grupo_ec} IS NULL) OR (group_ec = $P{grupo_ec}))]]></queryString>
 				<staticText>
 					<reportElement
 						x="0"
-						y="51"
+						y="56"
 						width="50"
 						height="10"
 						key="staticText-12"/>
@@ -178,7 +157,7 @@ AND (($P{grupo_ec} IS NULL) OR (group_ec = $P{grupo_ec}))]]></queryString>
 				<staticText>
 					<reportElement
 						x="50"
-						y="51"
+						y="56"
 						width="138"
 						height="10"
 						key="staticText-16"/>
@@ -191,7 +170,7 @@ AND (($P{grupo_ec} IS NULL) OR (group_ec = $P{grupo_ec}))]]></queryString>
 				<staticText>
 					<reportElement
 						x="188"
-						y="51"
+						y="56"
 						width="82"
 						height="10"
 						key="staticText-17"/>
@@ -204,7 +183,7 @@ AND (($P{grupo_ec} IS NULL) OR (group_ec = $P{grupo_ec}))]]></queryString>
 				<staticText>
 					<reportElement
 						x="514"
-						y="51"
+						y="56"
 						width="60"
 						height="10"
 						key="staticText-18"/>
@@ -217,7 +196,7 @@ AND (($P{grupo_ec} IS NULL) OR (group_ec = $P{grupo_ec}))]]></queryString>
 				<staticText>
 					<reportElement
 						x="574"
-						y="51"
+						y="56"
 						width="68"
 						height="10"
 						key="staticText-60"/>
@@ -230,7 +209,7 @@ AND (($P{grupo_ec} IS NULL) OR (group_ec = $P{grupo_ec}))]]></queryString>
 				<staticText>
 					<reportElement
 						x="270"
-						y="51"
+						y="56"
 						width="80"
 						height="10"
 						key="staticText-61"/>
@@ -243,7 +222,7 @@ AND (($P{grupo_ec} IS NULL) OR (group_ec = $P{grupo_ec}))]]></queryString>
 				<staticText>
 					<reportElement
 						x="350"
-						y="51"
+						y="56"
 						width="58"
 						height="10"
 						key="staticText-67"/>
@@ -256,7 +235,7 @@ AND (($P{grupo_ec} IS NULL) OR (group_ec = $P{grupo_ec}))]]></queryString>
 				<staticText>
 					<reportElement
 						x="408"
-						y="51"
+						y="56"
 						width="42"
 						height="10"
 						key="staticText-69"/>
@@ -269,7 +248,7 @@ AND (($P{grupo_ec} IS NULL) OR (group_ec = $P{grupo_ec}))]]></queryString>
 				<staticText>
 					<reportElement
 						x="450"
-						y="51"
+						y="56"
 						width="64"
 						height="10"
 						key="staticText-70"/>
@@ -366,97 +345,88 @@ AND (($P{grupo_ec} IS NULL) OR (group_ec = $P{grupo_ec}))]]></queryString>
 				<line direction="BottomUp">
 					<reportElement
 						x="0"
-						y="60"
-						width="645"
+						y="66"
+						width="642"
 						height="0"
-						key="line-2"/>
+						key="line-1"/>
 					<graphicElement stretchType="NoStretch"/>
 				</line>
 				<line direction="BottomUp">
 					<reportElement
 						x="0"
-						y="51"
-						width="645"
+						y="56"
+						width="642"
 						height="0"
-						key="line-3"/>
+						key="line-2"/>
 					<graphicElement stretchType="NoStretch"/>
 				</line>
 				<line direction="TopDown">
 					<reportElement
 						x="0"
-						y="51"
+						y="56"
 						width="0"
-						height="9"
+						height="10"
 						key="line-4"/>
 					<graphicElement stretchType="NoStretch"/>
 				</line>
 				<line direction="TopDown">
 					<reportElement
-						x="350"
-						y="51"
+						x="50"
+						y="56"
 						width="0"
-						height="9"
-						key="line-5"/>
-					<graphicElement stretchType="NoStretch"/>
-				</line>
-				<line direction="TopDown">
-					<reportElement
-						x="270"
-						y="51"
-						width="0"
-						height="9"
+						height="10"
 						key="line-6"/>
 					<graphicElement stretchType="NoStretch"/>
 				</line>
 				<line direction="TopDown">
 					<reportElement
-						x="50"
-						y="51"
+						x="188"
+						y="56"
 						width="0"
-						height="9"
+						height="10"
 						key="line-7"/>
 					<graphicElement stretchType="NoStretch"/>
 				</line>
 				<line direction="TopDown">
 					<reportElement
-						x="188"
-						y="51"
+						x="270"
+						y="56"
 						width="0"
-						height="9"
+						height="10"
 						key="line-8"/>
 					<graphicElement stretchType="NoStretch"/>
 				</line>
 				<line direction="TopDown">
 					<reportElement
-						x="408"
-						y="51"
+						x="350"
+						y="56"
 						width="0"
-						height="9"
+						height="10"
 						key="line-9"/>
 					<graphicElement stretchType="NoStretch"/>
 				</line>
 				<line direction="TopDown">
 					<reportElement
-						x="450"
-						y="51"
+						x="408"
+						y="56"
 						width="0"
-						height="9"
+						height="10"
 						key="line-10"/>
 					<graphicElement stretchType="NoStretch"/>
 				</line>
 				<line direction="TopDown">
 					<reportElement
-						x="574"
-						y="51"
+						x="450"
+						y="56"
 						width="0"
-						height="9"
+						height="10"
 						key="line-11"/>
 					<graphicElement stretchType="NoStretch"/>
 				</line>
 				<line direction="TopDown">
 					<reportElement
-						x="645"
-						y="51"
+						x="514"
+						y="56"
 						width="0"
 						height="10"
 						key="line-12"/>
@@ -464,23 +434,32 @@ AND (($P{grupo_ec} IS NULL) OR (group_ec = $P{grupo_ec}))]]></queryString>
 				</line>
 				<line direction="TopDown">
 					<reportElement
-						x="514"
-						y="51"
+						x="574"
+						y="56"
 						width="0"
-						height="9"
+						height="10"
 						key="line-13"/>
+					<graphicElement stretchType="NoStretch"/>
+				</line>
+				<line direction="TopDown">
+					<reportElement
+						x="642"
+						y="56"
+						width="0"
+						height="11"
+						key="line-14"/>
 					<graphicElement stretchType="NoStretch"/>
 				</line>
 			</band>
 		</columnHeader>
 		<detail>
-			<band height="11"  isSplitAllowed="true" >
+			<band height="10"  isSplitAllowed="true" >
 				<textField isStretchWithOverflow="true" pattern="dd/MM/yyyy" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
 						x="0"
 						y="0"
 						width="50"
-						height="10"
+						height="9"
 						key="textField-7"/>
 					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
 					<textElement textAlignment="Right">
@@ -491,7 +470,7 @@ AND (($P{grupo_ec} IS NULL) OR (group_ec = $P{grupo_ec}))]]></queryString>
 				<textField isStretchWithOverflow="true" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
 						x="50"
-						y="0"
+						y="-1"
 						width="138"
 						height="10"
 						key="textField-11"/>
@@ -504,7 +483,7 @@ AND (($P{grupo_ec} IS NULL) OR (group_ec = $P{grupo_ec}))]]></queryString>
 				<textField isStretchWithOverflow="true" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
 						x="188"
-						y="0"
+						y="-1"
 						width="82"
 						height="10"
 						key="textField-12"/>
@@ -514,10 +493,10 @@ AND (($P{grupo_ec} IS NULL) OR (group_ec = $P{grupo_ec}))]]></queryString>
 					</textElement>
 				<textFieldExpression   class="java.lang.String"><![CDATA[$F{nro_de_documento}]]></textFieldExpression>
 				</textField>
-				<textField isStretchWithOverflow="true" pattern="#,##0.00" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
+				<textField isStretchWithOverflow="true" pattern="#,##0.00;-#,##0.00" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
 						x="514"
-						y="0"
+						y="-1"
 						width="60"
 						height="10"
 						key="textField-13"/>
@@ -530,7 +509,7 @@ AND (($P{grupo_ec} IS NULL) OR (group_ec = $P{grupo_ec}))]]></queryString>
 				<textField isStretchWithOverflow="true" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
 						x="574"
-						y="0"
+						y="-1"
 						width="68"
 						height="10"
 						key="textField-80"/>
@@ -543,7 +522,7 @@ AND (($P{grupo_ec} IS NULL) OR (group_ec = $P{grupo_ec}))]]></queryString>
 				<textField isStretchWithOverflow="true" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
 						x="270"
-						y="0"
+						y="-1"
 						width="80"
 						height="10"
 						key="textField-81"/>
@@ -553,10 +532,10 @@ AND (($P{grupo_ec} IS NULL) OR (group_ec = $P{grupo_ec}))]]></queryString>
 					</textElement>
 				<textFieldExpression   class="java.lang.String"><![CDATA[$F{entidad_comercial}]]></textFieldExpression>
 				</textField>
-				<textField isStretchWithOverflow="true" pattern="#,##0.00" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
+				<textField isStretchWithOverflow="true" pattern="#,##0.00;-#,##0.00" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
 						x="350"
-						y="0"
+						y="-1"
 						width="58"
 						height="10"
 						key="textField-89"/>
@@ -566,10 +545,10 @@ AND (($P{grupo_ec} IS NULL) OR (group_ec = $P{grupo_ec}))]]></queryString>
 					</textElement>
 				<textFieldExpression   class="java.math.BigDecimal"><![CDATA[$F{importe_neto}]]></textFieldExpression>
 				</textField>
-				<textField isStretchWithOverflow="true" pattern="#,##0.00" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
+				<textField isStretchWithOverflow="true" pattern="#,##0.00;-#,##0.00" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
 						x="408"
-						y="0"
+						y="-1"
 						width="42"
 						height="10"
 						key="textField-91"/>
@@ -579,10 +558,10 @@ AND (($P{grupo_ec} IS NULL) OR (group_ec = $P{grupo_ec}))]]></queryString>
 					</textElement>
 				<textFieldExpression   class="java.math.BigDecimal"><![CDATA[$F{impuestos}]]></textFieldExpression>
 				</textField>
-				<textField isStretchWithOverflow="true" pattern="#,##0.00" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
+				<textField isStretchWithOverflow="true" pattern="#,##0.00;-#,##0.00" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
 						x="450"
-						y="0"
+						y="-1"
 						width="64"
 						height="10"
 						key="textField-92"/>
@@ -595,73 +574,10 @@ AND (($P{grupo_ec} IS NULL) OR (group_ec = $P{grupo_ec}))]]></queryString>
 				<line direction="BottomUp">
 					<reportElement
 						x="0"
-						y="10"
-						width="645"
+						y="9"
+						width="642"
 						height="0"
-						key="line-1"/>
-					<graphicElement stretchType="NoStretch"/>
-				</line>
-				<line direction="TopDown">
-					<reportElement
-						x="645"
-						y="0"
-						width="0"
-						height="11"
-						key="line-14"/>
-					<graphicElement stretchType="NoStretch"/>
-				</line>
-				<line direction="TopDown">
-					<reportElement
-						x="574"
-						y="0"
-						width="0"
-						height="10"
-						key="line-15"/>
-					<graphicElement stretchType="NoStretch"/>
-				</line>
-				<line direction="TopDown">
-					<reportElement
-						x="514"
-						y="0"
-						width="0"
-						height="10"
-						key="line-16"/>
-					<graphicElement stretchType="NoStretch"/>
-				</line>
-				<line direction="TopDown">
-					<reportElement
-						x="408"
-						y="0"
-						width="0"
-						height="10"
-						key="line-17"/>
-					<graphicElement stretchType="NoStretch"/>
-				</line>
-				<line direction="TopDown">
-					<reportElement
-						x="450"
-						y="0"
-						width="0"
-						height="10"
-						key="line-18"/>
-					<graphicElement stretchType="NoStretch"/>
-				</line>
-				<line direction="TopDown">
-					<reportElement
-						x="350"
-						y="0"
-						width="0"
-						height="10"
-						key="line-19"/>
-					<graphicElement stretchType="NoStretch"/>
-				</line>
-				<line direction="TopDown">
-					<reportElement
-						x="270"
-						y="0"
-						width="0"
-						height="10"
-						key="line-20"/>
+						key="line-3"/>
 					<graphicElement stretchType="NoStretch"/>
 				</line>
 				<line direction="TopDown">
@@ -670,7 +586,16 @@ AND (($P{grupo_ec} IS NULL) OR (group_ec = $P{grupo_ec}))]]></queryString>
 						y="0"
 						width="0"
 						height="10"
-						key="line-21"/>
+						key="line-5"/>
+					<graphicElement stretchType="NoStretch"/>
+				</line>
+				<line direction="TopDown">
+					<reportElement
+						x="50"
+						y="0"
+						width="0"
+						height="10"
+						key="line-15"/>
 					<graphicElement stretchType="NoStretch"/>
 				</line>
 				<line direction="TopDown">
@@ -679,12 +604,66 @@ AND (($P{grupo_ec} IS NULL) OR (group_ec = $P{grupo_ec}))]]></queryString>
 						y="0"
 						width="0"
 						height="10"
+						key="line-16"/>
+					<graphicElement stretchType="NoStretch"/>
+				</line>
+				<line direction="TopDown">
+					<reportElement
+						x="270"
+						y="0"
+						width="0"
+						height="10"
+						key="line-17"/>
+					<graphicElement stretchType="NoStretch"/>
+				</line>
+				<line direction="TopDown">
+					<reportElement
+						x="350"
+						y="0"
+						width="0"
+						height="10"
+						key="line-18"/>
+					<graphicElement stretchType="NoStretch"/>
+				</line>
+				<line direction="TopDown">
+					<reportElement
+						x="408"
+						y="0"
+						width="0"
+						height="10"
+						key="line-19"/>
+					<graphicElement stretchType="NoStretch"/>
+				</line>
+				<line direction="TopDown">
+					<reportElement
+						x="450"
+						y="0"
+						width="0"
+						height="10"
+						key="line-20"/>
+					<graphicElement stretchType="NoStretch"/>
+				</line>
+				<line direction="TopDown">
+					<reportElement
+						x="514"
+						y="0"
+						width="0"
+						height="10"
+						key="line-21"/>
+					<graphicElement stretchType="NoStretch"/>
+				</line>
+				<line direction="TopDown">
+					<reportElement
+						x="574"
+						y="0"
+						width="0"
+						height="10"
 						key="line-22"/>
 					<graphicElement stretchType="NoStretch"/>
 				</line>
 				<line direction="TopDown">
 					<reportElement
-						x="50"
+						x="642"
 						y="0"
 						width="0"
 						height="10"
