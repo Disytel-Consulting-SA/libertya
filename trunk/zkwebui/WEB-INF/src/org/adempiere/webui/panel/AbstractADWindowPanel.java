@@ -1091,7 +1091,7 @@ public abstract class AbstractADWindowPanel extends AbstractUIPart implements To
 		        curTabIndex < (adTab.getTabCount() - 1));
 
 		toolbar.getButton("Attachment").setPressed(curTab.hasAttachment());
-		toolbar.getButton("Conversation").setPressed(curTab.hasAttachment());
+		toolbar.getButton("Conversation").setPressed(curTab.hasConversation());
 		if (isFirstTab())
         {
             toolbar.getButton("HistoryRecords").setPressed(!curTab.isOnlyCurrentRows());
