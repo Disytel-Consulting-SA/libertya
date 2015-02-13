@@ -177,7 +177,6 @@ public class LaunchOrder extends SvrProcess {
 			jasperwrapper.addParameter(
 				"PAIS",
 				JasperReportsUtil.coalesce(location.getCountry().getName(), ""));
-			jasperwrapper.addParameter("REFERENCIA", ""  ); // FIXME: ver que campo es
 			jasperwrapper.addParameter("VENDEDOR", salesUserName);
 			if (order.getSalesRep_ID() > 0) {
 				MUser salesRepUser = new MUser(getCtx(), order.getSalesRep_ID(),
@@ -272,6 +271,22 @@ public class LaunchOrder extends SvrProcess {
 				jasperwrapper.addParameter("CONTACT_PHONE3", contact.getphone3());
 				jasperwrapper.addParameter("CONTACT_FAX", contact.getFax());
 				jasperwrapper.addParameter("CONTACT_EMAIL", contact.getEMail());
+				jasperwrapper
+						.addParameter(
+								"REFERENCIA",
+								""
+										+ JasperReportsUtil.coalesce(
+												contact.getName(), " ", "")
+										+ JasperReportsUtil.coalesce(
+												contact.getPhone(), " ", "")
+										+ JasperReportsUtil.coalesce(
+												contact.getPhone2(), " ", "")
+										+ JasperReportsUtil.coalesce(
+												contact.getphone3(), " ", "")
+										+ JasperReportsUtil.coalesce(
+												contact.getFax(), " ", "")
+										+ JasperReportsUtil.coalesce(
+												contact.getEMail(), " ", ""));
 			}
 			jasperwrapper.addParameter("APPROVAL_AMT", order.getApprovalAmt());
 			if(!Util.isEmpty(order.getBill_BPartner_ID(), true)){
@@ -437,6 +452,7 @@ public class LaunchOrder extends SvrProcess {
 			jasperwrapper.addParameter("BP_LOCATION_PHONE2", bpLocation.getPhone2());
 			jasperwrapper.addParameter("BP_LOCATION_FAX", bpLocation.getFax());
 			jasperwrapper.addParameter("BP_LOCATION_ISDN", bpLocation.getISDN());
+			jasperwrapper.addParameter("BP_LOCATION_EMAIL", bpLocation.getEMail());
 
 			try {
 				jasperwrapper.fillReport(ds);

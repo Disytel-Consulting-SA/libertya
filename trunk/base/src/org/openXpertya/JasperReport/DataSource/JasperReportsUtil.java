@@ -331,6 +331,23 @@ public class JasperReportsUtil {
 			return defValue;
 		return object;
 	}
+	
+	/**
+	 * Si string no es null, devuelvo ese objeto concatenado con el sufijo
+	 * parámetro. Caso contrario si es null, devuelvo el valor por defecto.
+	 * 
+	 * @param string
+	 *            cadena a verificar
+	 * @param sufix sufijo a concatenar
+	 * @param defValue
+	 *            valor por defecto
+	 * @return el objeto + sufijo si no es null, caso contrario el valor por defecto
+	 */
+	public static String coalesce(String object, String sufix, String defValue){
+		if (object == null)
+			return defValue;
+		return object+sufix;
+	}
 
 	/**
 	 * Determina el nombre del tipo de documento. El nombre por defecto

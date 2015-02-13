@@ -30,6 +30,7 @@ import org.openXpertya.util.CCache;
 import org.openXpertya.util.CLogger;
 import org.openXpertya.util.DB;
 import org.openXpertya.util.Env;
+import org.openXpertya.util.Util;
 
 /**
  * Descripción de Clase
@@ -149,6 +150,34 @@ public class MPriceList extends X_M_PriceList {
 
         return retValue;
     }    // getDefault
+    
+    public static MPriceList getPriceList(Properties ctx, Integer orgID, boolean IsSOPriceList, String trxName){
+    	MPriceList priceList = null;
+		String sql = "select * from m_pricelist where ad_client_id = ? "
+				+ (Util.isEmpty(orgID, true) ? "" : "and ad_org_id = " + orgID)
+				+ " and issopricelist = '" + (IsSOPriceList ? "Y" : "N")
+				+ "' and isactive = 'Y' order by isdefault desc limit 1";
+		PreparedStatement ps = null;
+		ResultSet rs = null;
+		try {
+			ps = DB.prepareStatement(sql, trxName);
+			ps.setInt(1, Env.getAD_Client_ID(ctx));
+			rs = ps.executeQuery();
+			if(rs.next()){
+				priceList = new MPriceList(ctx, rs, trxName);
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
+		} finally{
+			try {
+				if(rs != null)rs.close();
+				if(ps != null)ps.close();
+			} catch (Exception e2) {
+				e2.printStackTrace();
+			}
+		}
+		return priceList;
+    }
     
     /**
      * Get price lists of client
