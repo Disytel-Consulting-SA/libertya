@@ -229,16 +229,21 @@ public class MWarehouse extends X_M_Warehouse {
 
     }		// getLocators
 
+    public static MWarehouse[] getForOrg(Properties ctx, int AD_Org_ID) {
+    	return getForOrg(ctx, AD_Org_ID, false);
+    }
+    
     /**
      *      Get Warehouses for Org
      *      @param ctx context
      *      @param AD_Org_ID id
      *      @return warehouse
      */
-    public static MWarehouse[] getForOrg(Properties ctx, int AD_Org_ID) {
+    public static MWarehouse[] getForOrg(Properties ctx, int AD_Org_ID, boolean onlyOne) {
 
         ArrayList	list	= new ArrayList();
-        String		sql	= "SELECT * FROM M_Warehouse WHERE AD_Org_ID=? ORDER BY Created";
+		String sql = "SELECT * FROM M_Warehouse WHERE AD_Org_ID=? AND isactive = 'Y' ORDER BY Created"
+				+ (onlyOne ? " LIMIT 1 " : "");
         PreparedStatement	pstmt	= null;
 
         try {
