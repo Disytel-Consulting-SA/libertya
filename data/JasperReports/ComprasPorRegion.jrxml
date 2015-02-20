@@ -69,9 +69,9 @@ i.dateinvoiced as fecha,
 dt.name as tipo_de_documento,
 i.documentno as nro_de_documento,
 bp.name as entidad_comercial,
-COALESCE(iline.linenetamount*dt.signo_issotrx,0) as importe_neto,
-COALESCE(iline.taxamt*dt.signo_issotrx,0) as impuestos,
-COALESCE(((SumaPercepciones/i.netamount)*iline.linenetamount)*dt.signo_issotrx,0) as percepciones,
+COALESCE(currencyconvert(iline.linenetamount,i.c_currency_id,acc.c_currency_id,i.dateacct, i.c_conversiontype_id, i.ad_client_id,i.ad_org_id)*dt.signo_issotrx,0) as importe_neto,
+COALESCE(currencyconvert(iline.taxamt,i.c_currency_id,acc.c_currency_id,i.dateacct, i.c_conversiontype_id, i.ad_client_id,i.ad_org_id)*dt.signo_issotrx,0) as impuestos,
+COALESCE(currencyconvert(((SumaPercepciones/i.netamount)*iline.linenetamount),i.c_currency_id,acc.c_currency_id,i.dateacct, i.c_conversiontype_id, i.ad_client_id,i.ad_org_id)*dt.signo_issotrx,0) as percepciones,
 p.name as articulo,
 pc.value as subfamilia,
 pc.m_product_category_id as subfamiliaID,
@@ -83,11 +83,12 @@ INNER JOIN m_product p ON (p.m_product_id = iline.m_product_id)
 INNER JOIN m_product_category pc ON (pc.m_product_category_id = p.m_product_category_id)
 INNER JOIN c_bpartner bp ON (bp.c_bpartner_id = i.c_bpartner_id)
 INNER JOIN c_bp_group bpg ON (bpg.c_bp_group_id = bp.c_bp_group_id)
-INNER JOIN c_bpartner_location bpl ON (bpl.c_location_id = bp.c_bpartner_id)
+INNER JOIN c_bpartner_location bpl ON (bpl.c_bpartner_id = bp.c_bpartner_id)
 INNER JOIN c_location l ON (l.c_location_id = bpl.c_location_id)
 INNER JOIN c_region r ON (r.c_region_id = l.c_region_id)
 INNER JOIN c_doctype dt ON (dt.c_doctype_id = i.c_doctype_id)
 INNER JOIN ad_org ado ON (ado.ad_org_id = i.ad_org_id)
+INNER JOIN c_acctschema acc ON (acc.ad_client_id = i.ad_client_id)
 WHERE (i.issotrx = 'N') 
 AND (dt.docbasetype in ('APC','API'))
 AND (i.docstatus in ('CO','CL','VO','RE'))
