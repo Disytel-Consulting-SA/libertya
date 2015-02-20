@@ -47,10 +47,10 @@ i.dateinvoiced as fecha,
 dt.name as tipo_de_documento,
 i.documentno as nro_de_documento,
 bp.name as entidad_comercial,
-COALESCE(i.netamount*dt.signo_issotrx,0) as importe_neto,
-COALESCE(ita.SumaImpuestos*dt.signo_issotrx,0) as impuestos,
-COALESCE(it.SumaPercepciones*dt.signo_issotrx,0) as percepciones, 
-COALESCE(i.grandtotal*dt.signo_issotrx,0) as importe_total,
+COALESCE(currencyconvert(i.netamount,i.c_currency_id,acc.c_currency_id,i.dateacct, i.c_conversiontype_id, i.ad_client_id,i.ad_org_id)*dt.signo_issotrx,0) as importe_neto,
+COALESCE(currencyconvert(ita.SumaImpuestos,i.c_currency_id,acc.c_currency_id,i.dateacct, i.c_conversiontype_id, i.ad_client_id,i.ad_org_id)*dt.signo_issotrx,0) as impuestos,
+COALESCE(currencyconvert(it.SumaPercepciones,i.c_currency_id,acc.c_currency_id,i.dateacct, i.c_conversiontype_id, i.ad_client_id,i.ad_org_id)*dt.signo_issotrx,0) as percepciones, 
+COALESCE(currencyconvert(i.grandtotal,i.c_currency_id,acc.c_currency_id,i.dateacct, i.c_conversiontype_id, i.ad_client_id,i.ad_org_id)*dt.signo_issotrx,0) as importe_total,
 r.name as region
 FROM c_invoice i
 LEFT JOIN (select it.c_invoice_id, SUM(it.taxamt) as SumaPercepciones from c_invoicetax it INNER JOIN c_tax t ON (it.c_tax_id = t.c_tax_id) AND (t.ispercepcion = 'Y') group by it.c_invoice_id) as it ON (it.c_invoice_id = i.c_invoice_id)
@@ -62,6 +62,7 @@ INNER JOIN c_location l ON (l.c_location_id = bpl.c_location_id)
 INNER JOIN c_region r ON (r.c_region_id = l.c_region_id)
 INNER JOIN c_doctype dt ON (dt.c_doctype_id = i.c_doctype_id)
 INNER JOIN ad_org ado ON (ado.ad_org_id = i.ad_org_id)
+INNER JOIN c_acctschema acc ON (acc.ad_client_id = i.ad_client_id)
 WHERE (i.issotrx = 'Y') 
 AND (dt.docbasetype in ('ARC','ARI'))
 AND (i.docstatus in ('CO','CL','VO','RE'))
