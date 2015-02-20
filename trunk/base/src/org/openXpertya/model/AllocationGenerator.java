@@ -1202,7 +1202,7 @@ public class AllocationGenerator {
 				
 				if (priceListID <= 0) {
 					String iso_code =DB.getSQLValueString(trxName, "SELECT iso_Code FROM C_Currency WHERE C_Currency_ID = ?" , Env.getContextAsInt( getCtx(), "$C_Currency_ID" ));
-					throw new Exception(Msg.getMsg(getCtx(), "ErrorCreatingCreditDebit", new Object[]{getMsg((debInv.isSOTrx()?"Purchase":"Sales")), iso_code}));
+					throw new Exception(Msg.getMsg(getCtx(), "ErrorCreatingCreditDebit", new Object[]{getMsg((debInv.isSOTrx()?"Sales":"Purchase")), iso_code}));
 				}
 				inv.setM_PriceList_ID(priceListID);
 					
