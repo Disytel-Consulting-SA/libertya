@@ -43,6 +43,8 @@ public class Trx implements VetoableChangeListener {
 	protected static final String OPEN_TRX_TIMEOUT_MS_PREFERENCE 	= "OpenTrxTimeOutMS";
 	/** Entrada en AD_Preference de tipo Entero  */
 	protected static final String OPEN_TRX_UPPER_LIMIT_PREFERENCE 	= "OpenTrxUpperLimit";
+	/** Entrada en AD_Preference para determinar si logear actividad de transacciones */
+	protected static final String LOG_TRX_EVENTS					= "LogTransactionEvents";
 	
 	/** Numero maximo de transacciones abiertas.  Sin embargo, si el tiempo de vida de una Trx es menor a OPEN_TRX_TIMEOUT_MS    
 	 *  (o sea que son recientes), entonces podrán existir hasta OPEN_TRX_UPPER_LIMIT conexiones) */
@@ -181,7 +183,9 @@ public class Trx implements VetoableChangeListener {
     private Trx( String trxName,Connection con ) {
 
         // log.info (trxName);
-
+    	logTrxEvent("NEW: " + trxName);
+    	
+    	
         setTrxName( trxName );
         setConnection( con );
         setCreated( System.currentTimeMillis() );
@@ -344,6 +348,8 @@ public class Trx implements VetoableChangeListener {
      */
 
     public boolean rollback() {
+    	logTrxEvent("ROL: " + m_trxName);
+    	
         try {
             if( m_connection != null ) {
                 if( m_savepoint == null ) {
@@ -376,6 +382,9 @@ public class Trx implements VetoableChangeListener {
      */
 
     public boolean commit() {
+    	
+    	logTrxEvent("COM: " + m_trxName);
+    	
         try {
             if( m_connection != null ) {
                 m_connection.commit();
@@ -402,6 +411,9 @@ public class Trx implements VetoableChangeListener {
 	 **/
 	public boolean commit(boolean throwException) throws SQLException
 	{
+		
+		logTrxEvent("COM: " + m_trxName);
+		
 		//local
 		try
 		{
@@ -434,6 +446,9 @@ public class Trx implements VetoableChangeListener {
      */
 
     public boolean close() {
+    	
+    	logTrxEvent("CLO: " + m_trxName);
+    	
         if( s_cache != null ) {
             s_cache.remove( getTrxName());
         }
@@ -635,6 +650,9 @@ public class Trx implements VetoableChangeListener {
 	 */
 	public boolean rollback(Savepoint savepoint) throws SQLException
 	{
+		
+		logTrxEvent("ROL: " + m_trxName);
+		
 		//local
 		try
 		{
@@ -659,6 +677,9 @@ public class Trx implements VetoableChangeListener {
 	 */
 	public boolean rollback(boolean throwException) throws SQLException
 	{
+		
+		logTrxEvent("ROL: " + m_trxName);
+		
 		//local
 		try
 		{
@@ -683,6 +704,19 @@ public class Trx implements VetoableChangeListener {
 		return false;
 	}	//	rollback
 
+	
+	/**
+	 * Bitácora de eventos de gestión de transacciones
+	 */
+	protected static void logTrxEvent(String action) {
+		try {
+			String trxLogActive = MPreference.searchCustomPreferenceValue(LOG_TRX_EVENTS, 0, 0, 0, true);
+			if ("Y".equalsIgnoreCase(trxLogActive))
+				Util.saveToLogFile(System.getProperty("user.home"), "trxInfo" + Env.getDateTime("yyyyMMdd") + ".log", "trxInfo", action, true, true, true, true, "|");
+		} catch (Exception e) {
+			CLogger.getLogger(Trx.class.toString()).log(Level.WARNING, "Error bajo logTrxEvent: " + e.getMessage());			
+		}
+	}
 	
 }    // Trx
 
