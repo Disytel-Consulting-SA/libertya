@@ -97,6 +97,10 @@ Ejemplos de cambios
 
 		<!-- 20141218-0809 Incorporar timestamp a la salida de activity y locks -->
 		<copy file="${SOURCE_DIR}/restartPostgres.sh" todir="${TARGET_DIR}/utils" overwrite="yes" />
+		
+		<!-- 20150225-1052 Script para daemon que evalua/finaliza conexiones IDLE in transaction -->
+		<copy file="${SOURCE_DIR}/trxTimeOut.sh" todir="${TARGET_DIR}/utils" overwrite="yes" />
+		<copy file="${SOURCE_DIR}/trxTimeOut.sql" todir="${TARGET_DIR}/utils" overwrite="yes" />
 						
     </target>
     

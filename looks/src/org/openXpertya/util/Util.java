@@ -22,13 +22,13 @@ package org.openXpertya.util;
 
 import java.awt.Color;
 import java.awt.font.TextAttribute;
-
+import java.io.BufferedWriter;
+import java.io.File;
 import java.io.FileInputStream;
-import java.io.IOException;
+import java.io.FileWriter;
 import java.math.BigDecimal;
 import java.text.AttributedCharacterIterator;
 import java.text.AttributedString;
-
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -41,6 +41,8 @@ import javax.swing.ActionMap;
 import javax.swing.InputMap;
 import javax.swing.JComponent;
 import javax.swing.KeyStroke;
+
+import org.openXpertya.plugin.common.PluginPOUtils;
 
 /**
  * Descripción de Clase
@@ -743,6 +745,109 @@ public class Util {
 			input.close();
 		return prop;
 	}
+	
+	
+	/**
+	 * Escribe data al archivo de log especificado con el siguiente formato:<br>
+	 * <br>
+	 * timeStamp|sessionID|userID|label|data|stackTrace <br>
+	 * <br>
+	 * Algunos datos son optativos.  El separador puede ser redefinido.
+	 * 
+	 * 
+	 * @param path 
+	 * 		ubicación del archivo
+	 * @param fileName 
+	 * 		nombre del archivo
+	 * @param label 
+	 * 		tag de la entrada de log
+	 * @param data
+	 * 		entrada a guardar
+	 * @param includeTimeStamp
+	 * 		incluir timestamp (previo a label y data)
+	 * @param includeSessionID
+	 * 		incluir ID de sesión (previo a label y data, posterior a timestamp si está incluido)
+	 * @param includeUserID
+	 * 		incluir ID de usuario (previo a label y data, posterior a includeSessionID si está incluido)
+	 * @param includeStackTrace
+	 * 		incluir stackTrace de invocación (posterior a label y entrada)
+	 * @param separator
+	 * 		separador entre campos
+	 */
+	protected synchronized static boolean saveToLogFile(String path, String fileName, String label, String data, boolean includeTimeStamp, boolean includeSessionID, boolean includeUserID, boolean includeStackTrace, String separator)
+	{
+		if (separator == null)
+			separator = "|";
+		
+		try
+		{
+			File file = new File(path + File.separator + fileName);
+			if(!file.exists()) 	{
+				System.out.println("Creando archivo de log en: " + file.getPath() );
+				file.createNewFile();
+			}
+			FileWriter fileWritter = new FileWriter(file.getPath(), true);
+			BufferedWriter bufferWritter = new BufferedWriter(fileWritter);
+			StringBuffer buf = new StringBuffer();
+			buf.append((includeTimeStamp ? Env.getDateTime("yyyy-MM-dd HH:mm:ss") + separator : ""))
+				.append(includeSessionID ? Env.getContextAsInt(Env.getCtx(), "#AD_Session_ID") + separator : "" )
+				.append(includeUserID ? Env.getAD_User_ID(Env.getCtx()) + separator : "")
+				.append(label).append(separator)
+				.append(data).append(separator)
+				.append(includeStackTrace ? getStackTrace() + separator : "")
+				.append("\n");
+				
+		    bufferWritter.write(buf.toString());
+		    bufferWritter.flush();
+		    bufferWritter.close();
+		    return true;
+		}
+		catch (Exception e)
+		{
+			e.printStackTrace();
+			return false;
+		}
+	}
+
+	protected static String getStackTrace() {
+		
+		/** Armar el trace, incluyendo unicamente clases cuyo paquete sea de interes */
+		StringBuffer value = new StringBuffer();
+		int i = 0;
+		for (StackTraceElement elem : Thread.currentThread().getStackTrace()) {
+			// Omitir en el stack: getStackTrace, este método y su invocador
+			if (i++ < 3)
+				continue;
+			if (shouldIncludeInTrace(elem))
+				value.append(elem.toString()).append(", ");
+		}
+		value.replace(value.length()-2, value.length()-1, ".");
+		
+		return value.toString();
+	}
+	
+	/** Determina si el elemento debe ser incluido en el trace a logear */
+	protected static boolean shouldIncludeInTrace(StackTraceElement elem) {
+		
+		// Si el elemento es nullo o no tiene valor, no incluirlo
+		if (elem == null || elem.toString() == null)
+			return false;
+		
+		// Si son packages principales del proyecto (packages libertya, openXpetya, compiere, adempiere), incluir el elemento 
+		String stackTraceElem = elem.toString(); 
+		if (stackTraceElem.toLowerCase().contains("ertya") || stackTraceElem.toLowerCase().contains("mpiere"))
+			return true;
+		
+		// Si el elemento contiene un package de plugin, incluirlo
+		for (String aPackagePlugin : PluginPOUtils.getActivePluginPackages()) {
+			if (stackTraceElem.contains(aPackagePlugin))
+				return true;
+		}
+		
+		// En caso contrario, omitir
+		return false;
+	}
+	
 }	// Util
 
 
