@@ -57,7 +57,7 @@ public class MMPCOrderNode extends X_MPC_Order_Node {
             return retValue;
         }
 
-        retValue	= new MMPCOrderNode(ctx, MPC_Order_Node_ID, "MPC_Order_Node");
+        retValue	= new MMPCOrderNode(ctx, MPC_Order_Node_ID, trxName);
 
         if (retValue.getID() != 0) {
             s_cache.put(key, retValue);
