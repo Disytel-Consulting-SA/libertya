@@ -36,7 +36,7 @@ public class DocVO {
      *
      */
 
-    protected DocVO() {
+    public DocVO() {
 
         // Amounts
 
