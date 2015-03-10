@@ -298,10 +298,29 @@ public class MDocType extends X_C_DocType {
      *      @return document type
      */
     static public MDocType get(Properties ctx, int C_DocType_ID, String trxName) {
+    	// Evitar eventuales conexiones IDLE In Transaction debido al uso de trxName en la cache.
+    	// """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+    	// No es posible almacenar POs en la cache cuyo trxName != null, dado que trae aparejado
+    	// eventuales problemas con la gestión de conexiones a BBDD, si el PO cacheado luego es 
+    	// recuperado y utilizado en una operación con un trxName distinto al que contiene el PO 
+    	// en la cache.
+    	// Por otra parte, tampoco es factible instanciar en todas las ocasiones con trxName en null,
+    	// dado que un proceso podría estar gestionando el PO en cuestión, y por ende necesitar 
+    	// notificarse de los cambios involucrados en la transacción indicada.
+    	// Por consiguiente se adopta la siguiente convención:
+    	//   - Bajo una trxName, siempre se recupera el objeto sin uso de la cache
+    	//   - Bajo trxName == null, se utiliza la cache
+    	// De esta manera, se adopta una solución de compromiso, en la cual si bien puede existir
+    	// una degradación de la performance (mayor número de accesos a BBDD), se garantiza la 
+    	// consistencia y se evitan leaks de conexiones, las cuales en el peor de los casos llevan
+    	// a eventuales bloqueos por locks no liberados.
+        if (trxName != null)
+        	return new MDocType(ctx, C_DocType_ID, trxName);
+
         Integer		key		= new Integer(C_DocType_ID);
         MDocType	retValue	= (MDocType) s_cache.get(key);
         if (retValue == null) {
-            retValue	= new MDocType(ctx, C_DocType_ID, trxName);
+            retValue	= new MDocType(ctx, C_DocType_ID, null);
             s_cache.put(key, retValue);
         }
         return retValue;
