@@ -181,7 +181,7 @@ order by product_lines_value, product_gamas_value, product_category_value, produ
 					<reportElement
 						x="514"
 						y="0"
-						width="45"
+						width="51"
 						height="16"
 						key="textField"/>
 					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
@@ -192,7 +192,7 @@ order by product_lines_value, product_gamas_value, product_category_value, produ
 				</textField>
 				<textField isStretchWithOverflow="false" pattern="##0.00" isBlankWhenNull="false" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
-						x="559"
+						x="565"
 						y="0"
 						width="41"
 						height="16"
@@ -205,7 +205,7 @@ order by product_lines_value, product_gamas_value, product_category_value, produ
 				</textField>
 				<textField isStretchWithOverflow="false" pattern="##0.00" isBlankWhenNull="false" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
-						x="600"
+						x="606"
 						y="0"
 						width="68"
 						height="16"
@@ -218,7 +218,7 @@ order by product_lines_value, product_gamas_value, product_category_value, produ
 				</textField>
 				<textField isStretchWithOverflow="false" pattern="##0.00" isBlankWhenNull="false" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
-						x="668"
+						x="674"
 						y="0"
 						width="68"
 						height="16"
@@ -231,9 +231,9 @@ order by product_lines_value, product_gamas_value, product_category_value, produ
 				</textField>
 				<textField isStretchWithOverflow="false" pattern="##0.00" isBlankWhenNull="false" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
-						x="736"
+						x="742"
 						y="0"
-						width="46"
+						width="40"
 						height="16"
 						key="textField"/>
 					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
@@ -429,14 +429,14 @@ order by product_lines_value, product_gamas_value, product_category_value, produ
 			</band>
 		</title>
 		<pageHeader>
-			<band height="30"  isSplitAllowed="true" >
+			<band height="35"  isSplitAllowed="true" >
 				<staticText>
 					<reportElement
 						mode="Opaque"
 						x="0"
 						y="0"
 						width="80"
-						height="30"
+						height="35"
 						backcolor="#EEEEEE"
 						key="staticText-8"/>
 					<box topBorder="Thin" topBorderColor="#000000" leftBorder="Thin" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="Thin" bottomBorderColor="#000000"/>
@@ -451,7 +451,7 @@ order by product_lines_value, product_gamas_value, product_category_value, produ
 						x="80"
 						y="0"
 						width="90"
-						height="30"
+						height="35"
 						backcolor="#EEEEEE"
 						key="staticText-9"/>
 					<box topBorder="Thin" topBorderColor="#000000" leftBorder="Thin" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="Thin" bottomBorderColor="#000000"/>
@@ -466,7 +466,7 @@ order by product_lines_value, product_gamas_value, product_category_value, produ
 						x="170"
 						y="0"
 						width="124"
-						height="30"
+						height="35"
 						backcolor="#EEEEEE"
 						key="staticText-10"/>
 					<box topBorder="Thin" topBorderColor="#000000" leftBorder="Thin" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="Thin" bottomBorderColor="#000000"/>
@@ -481,7 +481,7 @@ order by product_lines_value, product_gamas_value, product_category_value, produ
 						x="294"
 						y="0"
 						width="170"
-						height="30"
+						height="35"
 						backcolor="#EEEEEE"
 						key="staticText-11"/>
 					<box topBorder="Thin" topBorderColor="#000000" leftBorder="Thin" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="Thin" bottomBorderColor="#000000"/>
@@ -496,7 +496,7 @@ order by product_lines_value, product_gamas_value, product_category_value, produ
 						x="464"
 						y="0"
 						width="50"
-						height="30"
+						height="35"
 						backcolor="#EEEEEE"
 						key="staticText-12"/>
 					<box topBorder="Thin" topBorderColor="#000000" leftBorder="Thin" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="Thin" bottomBorderColor="#000000"/>
@@ -510,8 +510,8 @@ order by product_lines_value, product_gamas_value, product_category_value, produ
 						mode="Opaque"
 						x="514"
 						y="0"
-						width="45"
-						height="30"
+						width="51"
+						height="35"
 						backcolor="#EEEEEE"
 						key="staticText-13"/>
 					<box topBorder="Thin" topBorderColor="#000000" leftBorder="Thin" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="Thin" bottomBorderColor="#000000"/>
@@ -524,10 +524,10 @@ Sistema]]></text>
 				<staticText>
 					<reportElement
 						mode="Opaque"
-						x="559"
+						x="565"
 						y="0"
 						width="41"
-						height="30"
+						height="35"
 						backcolor="#EEEEEE"
 						key="staticText-14"/>
 					<box topBorder="Thin" topBorderColor="#000000" leftBorder="Thin" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="Thin" bottomBorderColor="#000000"/>
@@ -539,10 +539,10 @@ Sistema]]></text>
 				<staticText>
 					<reportElement
 						mode="Opaque"
-						x="600"
+						x="606"
 						y="0"
 						width="68"
-						height="30"
+						height="35"
 						backcolor="#EEEEEE"
 						key="staticText-15"/>
 					<box topBorder="Thin" topBorderColor="#000000" leftBorder="Thin" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="Thin" bottomBorderColor="#000000"/>
@@ -555,10 +555,10 @@ Contada]]></text>
 				<staticText>
 					<reportElement
 						mode="Opaque"
-						x="668"
+						x="674"
 						y="0"
 						width="68"
-						height="30"
+						height="35"
 						backcolor="#EEEEEE"
 						key="staticText-16"/>
 					<box topBorder="Thin" topBorderColor="#000000" leftBorder="Thin" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="Thin" bottomBorderColor="#000000"/>
@@ -571,10 +571,10 @@ Sistema]]></text>
 				<staticText>
 					<reportElement
 						mode="Opaque"
-						x="736"
+						x="742"
 						y="0"
-						width="46"
-						height="30"
+						width="40"
+						height="35"
 						backcolor="#EEEEEE"
 						key="staticText-17"/>
 					<box topBorder="Thin" topBorderColor="#000000" leftBorder="Thin" leftBorderColor="#000000" rightBorder="Thin" rightBorderColor="#000000" bottomBorder="Thin" bottomBorderColor="#000000"/>
@@ -669,7 +669,7 @@ Dif.]]></text>
 					<reportElement
 						x="514"
 						y="0"
-						width="45"
+						width="51"
 						height="12"
 						key="textField"/>
 					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
@@ -680,7 +680,7 @@ Dif.]]></text>
 				</textField>
 				<textField isStretchWithOverflow="false" pattern="##0.00" isBlankWhenNull="false" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
-						x="559"
+						x="565"
 						y="0"
 						width="41"
 						height="12"
@@ -693,7 +693,7 @@ Dif.]]></text>
 				</textField>
 				<textField isStretchWithOverflow="false" pattern="##0.00" isBlankWhenNull="false" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
-						x="600"
+						x="606"
 						y="0"
 						width="68"
 						height="12"
@@ -706,7 +706,7 @@ Dif.]]></text>
 				</textField>
 				<textField isStretchWithOverflow="false" pattern="##0.00" isBlankWhenNull="false" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
-						x="668"
+						x="674"
 						y="0"
 						width="68"
 						height="12"
@@ -719,9 +719,9 @@ Dif.]]></text>
 				</textField>
 				<textField isStretchWithOverflow="false" pattern="##0.00" isBlankWhenNull="false" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
-						x="736"
+						x="742"
 						y="0"
-						width="46"
+						width="40"
 						height="12"
 						key="textField"/>
 					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
@@ -740,9 +740,9 @@ Dif.]]></text>
 			<band height="18"  isSplitAllowed="true" >
 				<textField isStretchWithOverflow="false" isBlankWhenNull="false" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
-						x="736"
+						x="742"
 						y="0"
-						width="46"
+						width="40"
 						height="18"
 						key="textField-3"/>
 					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
@@ -757,9 +757,9 @@ Dif.]]></text>
 			<band height="18"  isSplitAllowed="true" >
 				<textField isStretchWithOverflow="false" isBlankWhenNull="false" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
-						x="736"
+						x="742"
 						y="0"
-						width="46"
+						width="40"
 						height="18"
 						key="textField-4"/>
 					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
@@ -804,7 +804,7 @@ Dif.]]></text>
 					<reportElement
 						x="514"
 						y="0"
-						width="45"
+						width="51"
 						height="16"
 						key="textField"/>
 					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
@@ -815,7 +815,7 @@ Dif.]]></text>
 				</textField>
 				<textField isStretchWithOverflow="false" pattern="##0.00" isBlankWhenNull="false" evaluationTime="Band" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
-						x="559"
+						x="565"
 						y="0"
 						width="41"
 						height="16"
@@ -828,7 +828,7 @@ Dif.]]></text>
 				</textField>
 				<textField isStretchWithOverflow="false" pattern="##0.00" isBlankWhenNull="false" evaluationTime="Band" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
-						x="600"
+						x="606"
 						y="0"
 						width="68"
 						height="16"
@@ -841,7 +841,7 @@ Dif.]]></text>
 				</textField>
 				<textField isStretchWithOverflow="false" pattern="##0.00" isBlankWhenNull="false" evaluationTime="Band" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
-						x="668"
+						x="674"
 						y="0"
 						width="68"
 						height="16"
@@ -854,9 +854,9 @@ Dif.]]></text>
 				</textField>
 				<textField isStretchWithOverflow="false" pattern="##0.00" isBlankWhenNull="false" evaluationTime="Band" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
-						x="736"
+						x="742"
 						y="0"
-						width="46"
+						width="40"
 						height="16"
 						key="textField"/>
 					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
