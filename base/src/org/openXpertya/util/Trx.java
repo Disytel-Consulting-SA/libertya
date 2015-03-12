@@ -710,14 +710,13 @@ public class Trx implements VetoableChangeListener {
 	 */
 	protected static void logTrxEvent(String action) {
 		try {
-			String trxLogActive = MPreference.searchCustomPreferenceValue(LOG_TRX_EVENTS, 0, 0, 0, true);
-			if ("Y".equalsIgnoreCase(trxLogActive))
+			if (trxLogActive)
 				Util.saveToLogFile(System.getProperty("user.home"), "trxInfo" + Env.getDateTime("yyyyMMdd") + ".log", "trxInfo", action, true, true, true, true, "|");
 		} catch (Exception e) {
 			CLogger.getLogger(Trx.class.toString()).log(Level.WARNING, "Error bajo logTrxEvent: " + e.getMessage());			
 		}
 	}
-	
+	static Boolean trxLogActive = "Y".equalsIgnoreCase(MPreference.searchCustomPreferenceValue(LOG_TRX_EVENTS, 0, 0, 0, true));
 }    // Trx
 
 
