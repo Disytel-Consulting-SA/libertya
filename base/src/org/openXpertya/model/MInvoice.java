@@ -3734,48 +3734,43 @@ public class MInvoice extends X_C_Invoice implements DocAction {
 		// Reabrir el pedido en el caso que esté marcada para actualizar
 		// cantidades
 		if (isUpdateOrderQty() && orderLinesToUpdate.size() > 0) {
+			// Reactivar el pedido
 			MOrder order = new MOrder(getCtx(), getC_Order_ID(), get_TrxName());
 			if (!order.processIt(MOrder.DOCACTION_Re_Activate)) {
 				setProcessMsg("Error reactivating order to update qty: "
 						+ order.getProcessMsg());
 				return DOCSTATUS_Invalid;
 			}
-			int orderUpdated = 0;
-			PreparedStatement ps = null;
-			try {
-				String operator = docType.getsigno_issotrx().equals(
-						MDocType.SIGNO_ISSOTRX_1) ? "+" : "-";
-				ps = DB.prepareStatement(
-						"UPDATE c_orderline SET qtyordered = qtyordered "
-								+ operator + " ?, qtyentered = qtyentered "
-								+ operator + " ? WHERE c_orderline_id = ?",
-						get_TrxName());
-				for (Integer orderLineID : orderLinesToUpdate.keySet()) {
-					ps.setBigDecimal(1, orderLinesToUpdate.get(orderLineID));
-					ps.setBigDecimal(2, orderLinesToUpdate.get(orderLineID));
-					ps.setInt(3, orderLineID);
-					orderUpdated = ps.executeUpdate();
-					if (orderUpdated != 1) {
-						setProcessMsg("Error updating order line ID "
-								+ orderLineID);
-						return DOCSTATUS_Invalid;
-					}
-				}
-			} catch (SQLException sqle) {
-				setProcessMsg(sqle.getMessage());
+			if(!order.save()){
+				setProcessMsg(CLogger.retrieveErrorAsString());
 				return DOCSTATUS_Invalid;
-			} finally {
-				try {
-					if (ps != null)
-						ps.close();
-				} catch (SQLException sqle2) {
-					setProcessMsg(sqle2.getMessage());
+			}
+			// Actualizar las cantidades
+			BigDecimal sign = new BigDecimal(docType.getsigno_issotrx());
+			BigDecimal qtySign;
+			MOrderLine orderLineToUpdate;
+			for (Integer orderLineID : orderLinesToUpdate.keySet()) {
+				orderLineToUpdate = new MOrderLine(getCtx(), orderLineID, get_TrxName());
+				qtySign = orderLinesToUpdate.get(orderLineID).multiply(sign);
+				orderLineToUpdate.setQtyEntered(orderLineToUpdate
+						.getQtyEntered().add(qtySign));
+				orderLineToUpdate.setQtyOrdered(orderLineToUpdate
+						.getQtyOrdered().add(qtySign));
+				if (!orderLineToUpdate.save()) {
+					setProcessMsg(CLogger.retrieveErrorAsString());
 					return DOCSTATUS_Invalid;
 				}
 			}
+			// Recargar el pedido
+			order = new MOrder(getCtx(), getC_Order_ID(), get_TrxName());
+			// Completarlo
 			if (!order.processIt(MOrder.DOCACTION_Complete)) {
 				setProcessMsg("Error reactivating order to update qty: "
 						+ order.getProcessMsg());
+				return DOCSTATUS_Invalid;
+			}
+			if(!order.save()){
+				setProcessMsg(CLogger.retrieveErrorAsString());
 				return DOCSTATUS_Invalid;
 			}
 		}

@@ -333,6 +333,9 @@ public class MOrder extends X_C_Order implements DocAction {
  	/** Flag que forza la reserva de stock */
  	private boolean forceReserveStock = false; 
     
+ 	/** Actualización del monto de descuento a nivel del documento */
+ 	private boolean updateChargeAmt = false;
+ 	
     /**
      * Descripción de Método
      *
@@ -4500,6 +4503,12 @@ public class MOrder extends X_C_Order implements DocAction {
 			updateOk = false;
 		// Se obtuvieron ambos importes
 		} else {
+			// Actualización del monto de descuento de la cabecera del pedido
+			if(isUpdateChargeAmt()){
+				BigDecimal chargeAmt = getTotalDocumentDiscountAmtFromLines();
+				chargeAmt = Util.isEmpty(chargeAmt, true)?BigDecimal.ZERO:chargeAmt.negate(); 
+				setChargeAmt(chargeAmt);
+			}
 			BigDecimal grandTotal = null;    // Total del pedido calculado
 			BigDecimal chargeAmt =           // Importe del cargo (descuentos) 
 				getChargeAmt() != null ? getChargeAmt() : BigDecimal.ZERO;
@@ -4881,6 +4890,14 @@ public class MOrder extends X_C_Order implements DocAction {
 			}
 		}
 		return newOrder;
+	}
+
+	public boolean isUpdateChargeAmt() {
+		return updateChargeAmt;
+	}
+
+	public void setUpdateChargeAmt(boolean updateChargeAmt) {
+		this.updateChargeAmt = updateChargeAmt;
 	}
 }    // MOrder
 
