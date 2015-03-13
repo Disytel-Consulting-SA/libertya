@@ -811,6 +811,43 @@ public class MOrderLine extends X_C_OrderLine {
 
             setLine( ii );
         }
+        
+		// Fix descuentos a nivel de línea o documento en el caso que se hayan
+		// modificado la cantidad o el monto
+        if(!newRecord 
+        		&& (is_ValueChanged("QtyEntered") || is_ValueChanged("PriceEntered"))){
+			BigDecimal oldQty = is_ValueChanged("QtyEntered") ? (BigDecimal) get_ValueOld("QtyEntered")
+					: getQtyEntered();
+			BigDecimal oldPrice = is_ValueChanged("PriceEntered") ? (BigDecimal) get_ValueOld("PriceEntered")
+					: getPriceEntered();
+			BigDecimal oldAmount = oldPrice.multiply(oldQty);
+			BigDecimal actualAmount = getPriceEntered().multiply(getQtyEntered());
+			Integer tmpPrecision = 10;
+			BigDecimal totalPriceList = getPriceList().multiply(getQtyEntered());
+			BigDecimal oldTotalPriceList = getPriceList().multiply(oldQty);
+        	if(!Util.isEmpty(getDocumentDiscountAmt(), true)){
+				BigDecimal documentDiscountRate = Util.getDiscountRate(
+						oldAmount, getDocumentDiscountAmt(), tmpPrecision);
+				setDocumentDiscountAmt((actualAmount
+						.multiply(documentDiscountRate)).setScale(2,
+						BigDecimal.ROUND_HALF_UP));
+				getOrder().setUpdateChargeAmt(true);
+        	}
+        	if(!Util.isEmpty(getLineDiscountAmt(), true)){
+				BigDecimal lineDiscountRate = Util.getDiscountRate(
+						oldTotalPriceList, getLineDiscountAmt(),
+						tmpPrecision);
+    			setLineDiscountAmt((totalPriceList.multiply(lineDiscountRate))
+    					.setScale(2,BigDecimal.ROUND_HALF_UP));
+        	}
+        	if(!Util.isEmpty(getLineBonusAmt(), true)){
+				BigDecimal bonusDiscountRate = Util.getDiscountRate(
+						oldTotalPriceList, getLineBonusAmt(),
+						tmpPrecision);
+    			setLineBonusAmt((totalPriceList.multiply(bonusDiscountRate))
+    					.setScale(2, BigDecimal.ROUND_HALF_UP));
+        	}
+        }
 
         // Calculations & Rounding
 
