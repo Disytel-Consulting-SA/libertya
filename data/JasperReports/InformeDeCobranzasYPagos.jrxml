@@ -29,11 +29,12 @@
 	<parameter name="FechaDesde" isForPrompting="false" class="java.util.Date"/>
 	<parameter name="AD_CLIENT_ID" isForPrompting="false" class="java.lang.Integer"/>
 	<parameter name="FechaHasta" isForPrompting="false" class="java.util.Date"/>
-	<parameter name="grupoec" isForPrompting="false" class="java.lang.Integer"/>
+	<parameter name="C_BP_Group_ID" isForPrompting="false" class="java.math.BigDecimal"/>
 	<parameter name="Mostrar" isForPrompting="false" class="java.lang.String"/>
-	<parameter name="EntidadComercial" isForPrompting="false" class="java.math.BigDecimal"/>
+	<parameter name="C_BPartner_ID" isForPrompting="false" class="java.math.BigDecimal"/>
 	<queryString><![CDATA[SELECT
 c_allocationhdr_id,
+ad_client_id,
 organization,
 grupo_ec,
 fecha,
@@ -44,6 +45,7 @@ tipo,
 monto
 FROM((select
 a.c_allocationhdr_id,
+a.ad_client_id,
 a.ad_org_id,
 bp.c_bp_group_id,
 o.name as organization,
@@ -61,17 +63,18 @@ inner join ad_org o on (o.ad_org_id = a.ad_org_id)
 inner join c_bpartner bp on (bp.c_bpartner_id = a.c_bpartner_id)
 inner join c_bp_group bpg on (bpg.c_bp_group_id = bp.c_bp_group_id)
 inner join c_doctype dt on (dt.c_doctype_id = a.c_doctype_id)
-left join m_retencion_invoice mri on (mri.c_allocationhdr_id = a.c_allocationhdr_id)
-left join c_retencionschema rs on (rs.c_retencionschema_id = mri.c_retencionschema_id)
+inner join m_retencion_invoice mri on (mri.c_allocationhdr_id = a.c_allocationhdr_id)
+inner join c_retencionschema rs on (rs.c_retencionschema_id = mri.c_retencionschema_id)
 where docstatus in ('CO')
 AND (case $P{Mostrar} when (cast ('P' as varchar)) then dt.docbasetype in ('APP') 
 else dt.docbasetype in ('ARR') end)
-AND (($P{grupoec} IS NULL) OR (bpg.c_bp_group_id = $P{grupoec}))
-AND (($P{EntidadComercial} IS NULL) OR (bp.c_bpartner_id = $P{EntidadComercial}))
+AND (($P{C_BP_Group_ID} IS NULL) OR (bpg.c_bp_group_id = $P{C_BP_Group_ID}))
+AND (($P{C_BPartner_ID} IS NULL) OR (bp.c_bpartner_id = $P{C_BPartner_ID}))
 )
 UNION
 (select
 a.c_allocationhdr_id,
+a.ad_client_id,
 a.ad_org_id,
 bp.c_bp_group_id,
 o.name as organization,
@@ -93,12 +96,13 @@ inner join c_payment p on (p.c_payment_id = al.c_payment_id)
 where (al.c_allocationhdr_id = a.c_allocationhdr_id) and (p.tendertype in ('K'))
 AND (case $P{Mostrar} when (cast ('P' as varchar)) then dt.docbasetype in ('APP') 
 else dt.docbasetype in ('ARR') end)
-AND (($P{grupoec} IS NULL) OR (bpg.c_bp_group_id = $P{grupoec}))
-AND (($P{EntidadComercial} IS NULL) OR (bp.c_bpartner_id = $P{EntidadComercial}))
+AND (($P{C_BP_Group_ID} IS NULL) OR (bpg.c_bp_group_id = $P{C_BP_Group_ID}))
+AND (($P{C_BPartner_ID} IS NULL) OR (bp.c_bpartner_id = $P{C_BPartner_ID}))
 )
 UNION
 (select
 a.c_allocationhdr_id,
+a.ad_client_id,
 a.ad_org_id,
 bp.c_bp_group_id,
 o.name as organization,
@@ -120,12 +124,13 @@ inner join c_payment p on (p.c_payment_id = al.c_payment_id)
 where (al.c_allocationhdr_id = a.c_allocationhdr_id) and (p.tendertype in ('A'))
 AND (case $P{Mostrar} when (cast ('P' as varchar)) then dt.docbasetype in ('APP') 
 else dt.docbasetype in ('ARR') end)
-AND (($P{grupoec} IS NULL) OR (bpg.c_bp_group_id = $P{grupoec}))
-AND (($P{EntidadComercial} IS NULL) OR (bp.c_bpartner_id = $P{EntidadComercial}))
+AND (($P{C_BP_Group_ID} IS NULL) OR (bpg.c_bp_group_id = $P{C_BP_Group_ID}))
+AND (($P{C_BPartner_ID} IS NULL) OR (bp.c_bpartner_id = $P{C_BPartner_ID}))
 )
 UNION
 (select
 a.c_allocationhdr_id,
+a.ad_client_id,
 a.ad_org_id,
 bp.c_bp_group_id,
 o.name as organization,
@@ -147,12 +152,13 @@ inner join c_cashline c on (c.c_cashline_id = al.c_cashline_id)
 where (al.c_allocationhdr_id = a.c_allocationhdr_id)
 AND (case $P{Mostrar} when (cast ('P' as varchar)) then dt.docbasetype in ('APP') 
 else dt.docbasetype in ('ARR') end)
-AND (($P{grupoec} IS NULL) OR (bpg.c_bp_group_id = $P{grupoec}))
-AND (($P{EntidadComercial} IS NULL) OR (bp.c_bpartner_id = $P{EntidadComercial}))
+AND (($P{C_BP_Group_ID} IS NULL) OR (bpg.c_bp_group_id = $P{C_BP_Group_ID}))
+AND (($P{C_BPartner_ID} IS NULL) OR (bp.c_bpartner_id = $P{C_BPartner_ID}))
 )
 UNION
 (select
 al.c_allocationhdr_id,
+al.ad_client_id,
 null as ad_org_id,
 null as c_bp_group_id,
 null as organization,
@@ -174,6 +180,7 @@ cast((select value from ad_preference where attribute = 'DIF_CAMBIO_ARTICULO') a
 UNION
 (select
 al.c_allocationhdr_id,
+al.ad_client_id,
 null as ad_org_id,
 null as c_bp_group_id,
 null as organization,
@@ -195,6 +202,7 @@ and (i.c_invoice_id not in (select c_invoice_id from m_retencion_invoice))
 UNION
 (select
 a.c_allocationhdr_id,
+a.ad_client_id,
 a.ad_org_id,
 bp.c_bp_group_id,
 o.name as organization,
@@ -216,12 +224,13 @@ inner join c_payment p on (p.c_payment_id = al.c_payment_id)
 where (al.c_allocationhdr_id = a.c_allocationhdr_id) and (p.tendertype in ('C'))
 AND (case $P{Mostrar} when (cast ('P' as varchar)) then dt.docbasetype in ('APP') 
 else dt.docbasetype in ('ARR') end)
-AND (($P{grupoec} IS NULL) OR (bpg.c_bp_group_id = $P{grupoec}))
-AND (($P{EntidadComercial} IS NULL) OR (bp.c_bpartner_id = $P{EntidadComercial}))
+AND (($P{C_BP_Group_ID} IS NULL) OR (bpg.c_bp_group_id = $P{C_BP_Group_ID}))
+AND (($P{C_BPartner_ID} IS NULL) OR (bp.c_bpartner_id = $P{C_BPartner_ID}))
 )
 UNION
 (select
 al.c_allocationhdr_id,
+al.ad_client_id,
 null as ad_org_id,
 null as c_bp_group_id,
 null as organization,
@@ -241,8 +250,10 @@ where (i.issotrx <> dt.issotrx)
 AND (case $P{Mostrar} when (cast ('P' as varchar)) then dt.docbasetype in ('APP') 
 else dt.docbasetype in ('ARR') end)
 )) as subconsulta
-WHERE (($P{AD_Org_ID} IS NULL) OR (ad_org_id = $P{AD_Org_ID}))
-AND (($P{FechaDesde} IS NULL) OR (Fecha BETWEEN $P{FechaDesde} AND $P{FechaHasta}))
+WHERE (($P{AD_Org_ID} IS NULL) OR ($P{AD_Org_ID} = 0) OR (ad_org_id = $P{AD_Org_ID}))
+AND (ad_client_id = $P{AD_CLIENT_ID})
+AND (($P{FechaDesde}::date IS NULL) OR (Fecha > $P{FechaDesde}::date)) 
+AND (($P{FechaHasta}::date IS NULL) OR (Fecha < $P{FechaHasta}::date))
 ORDER BY c_allocationhdr_id]]></queryString>
 
 	<field name="c_allocationhdr_id" class="java.lang.Integer"/>
@@ -386,7 +397,7 @@ ORDER BY c_allocationhdr_id]]></queryString>
 						width="150"
 						height="12"
 						key="textField-96">
-							<printWhenExpression><![CDATA[new Boolean($P{grupoec}!= null)]]></printWhenExpression>
+							<printWhenExpression><![CDATA[new Boolean($P{C_BP_Group_ID}!= null)]]></printWhenExpression>
 						</reportElement>
 					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
 					<textElement>
@@ -401,7 +412,7 @@ ORDER BY c_allocationhdr_id]]></queryString>
 						width="150"
 						height="12"
 						key="textField-102">
-							<printWhenExpression><![CDATA[new Boolean($P{grupoec}!= null)]]></printWhenExpression>
+							<printWhenExpression><![CDATA[new Boolean($P{C_BP_Group_ID}!= null)]]></printWhenExpression>
 						</reportElement>
 					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
 					<textElement>
@@ -471,7 +482,7 @@ ORDER BY c_allocationhdr_id]]></queryString>
 					<textElement textAlignment="Center" verticalAlignment="Middle">
 						<font/>
 					</textElement>
-				<text><![CDATA[C_Allocationhdr_ID]]></text>
+				<text><![CDATA[Nro. Doc. Int.]]></text>
 				</staticText>
 				<staticText>
 					<reportElement
@@ -546,7 +557,7 @@ ORDER BY c_allocationhdr_id]]></queryString>
 						<crosstabRowHeader>
 						<cellContents mode="Transparent">
 					<box topBorder="None" topBorderColor="#000000" leftBorder="1Point" leftBorderColor="#000000" rightBorder="1Point" rightBorderColor="#000000" bottomBorder="1Point" bottomBorderColor="#000000"/>
-				<textField isStretchWithOverflow="false" isBlankWhenNull="false" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
+				<textField isStretchWithOverflow="false" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
 						x="0"
 						y="0"
@@ -600,7 +611,7 @@ ORDER BY c_allocationhdr_id]]></queryString>
 						<crosstabRowHeader>
 						<cellContents mode="Transparent">
 					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
-				<textField isStretchWithOverflow="false" isBlankWhenNull="false" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
+				<textField isStretchWithOverflow="false" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
 						x="0"
 						y="0"
@@ -613,7 +624,7 @@ ORDER BY c_allocationhdr_id]]></queryString>
 					</textElement>
 				<textFieldExpression   class="java.lang.String"><![CDATA[$V{entidadcomercial}]]></textFieldExpression>
 				</textField>
-				<textField isStretchWithOverflow="false" isBlankWhenNull="false" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
+				<textField isStretchWithOverflow="false" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
 						x="0"
 						y="0"
@@ -636,7 +647,7 @@ ORDER BY c_allocationhdr_id]]></queryString>
 						<crosstabRowHeader>
 						<cellContents mode="Transparent">
 					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
-				<textField isStretchWithOverflow="false" isBlankWhenNull="false" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
+				<textField isStretchWithOverflow="false" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
 						x="0"
 						y="0"
@@ -659,7 +670,7 @@ ORDER BY c_allocationhdr_id]]></queryString>
 						<crosstabRowHeader>
 						<cellContents mode="Transparent">
 					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
-				<textField isStretchWithOverflow="false" isBlankWhenNull="false" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
+				<textField isStretchWithOverflow="false" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
 						x="0"
 						y="0"
@@ -682,7 +693,7 @@ ORDER BY c_allocationhdr_id]]></queryString>
 						<crosstabRowHeader>
 						<cellContents mode="Transparent">
 					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
-				<textField isStretchWithOverflow="false" pattern="dd/MM/yyyy" isBlankWhenNull="false" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
+				<textField isStretchWithOverflow="false" pattern="dd/MM/yyyy" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
 						x="0"
 						y="0"
@@ -705,7 +716,7 @@ ORDER BY c_allocationhdr_id]]></queryString>
 						<crosstabColumnHeader>
 						<cellContents mode="Transparent">
 					<box topBorder="1Point" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="1Point" rightBorderColor="#000000" bottomBorder="1Point" bottomBorderColor="#000000"/>
-				<textField isStretchWithOverflow="false" isBlankWhenNull="false" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
+				<textField isStretchWithOverflow="false" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
 						x="0"
 						y="0"
@@ -746,7 +757,7 @@ ORDER BY c_allocationhdr_id]]></queryString>
 					<crosstabCell width="84" height="30">
 						<cellContents mode="Transparent">
 					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="1Point" rightBorderColor="#000000" bottomBorder="1Point" bottomBorderColor="#000000"/>
-				<textField isStretchWithOverflow="false" pattern="###0.00" isBlankWhenNull="false" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
+				<textField isStretchWithOverflow="false" pattern="###0.00" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
 						x="0"
 						y="0"
@@ -764,7 +775,7 @@ ORDER BY c_allocationhdr_id]]></queryString>
 					<crosstabCell width="101" height="30" columnTotalGroup="tipo">
 						<cellContents mode="Transparent">
 					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="1Point" rightBorderColor="#000000" bottomBorder="1Point" bottomBorderColor="#000000"/>
-				<textField isStretchWithOverflow="false" pattern="###0.00" isBlankWhenNull="false" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
+				<textField isStretchWithOverflow="false" pattern="###0.00" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
 						x="0"
 						y="0"
@@ -782,7 +793,7 @@ ORDER BY c_allocationhdr_id]]></queryString>
 					<crosstabCell width="84" height="30" rowTotalGroup="c_allocationhdr_id">
 						<cellContents mode="Transparent">
 					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="1Point" rightBorderColor="#000000" bottomBorder="1Point" bottomBorderColor="#000000"/>
-				<textField isStretchWithOverflow="false" pattern="###0.00" isBlankWhenNull="false" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
+				<textField isStretchWithOverflow="false" pattern="###0.00" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
 						x="0"
 						y="0"
@@ -800,7 +811,7 @@ ORDER BY c_allocationhdr_id]]></queryString>
 					<crosstabCell width="101" height="30" rowTotalGroup="c_allocationhdr_id" columnTotalGroup="tipo">
 						<cellContents mode="Transparent">
 					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="1Point" rightBorderColor="#000000" bottomBorder="1Point" bottomBorderColor="#000000"/>
-				<textField isStretchWithOverflow="false" pattern="###0.00" isBlankWhenNull="false" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
+				<textField isStretchWithOverflow="false" pattern="###0.00" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
 						x="0"
 						y="0"
