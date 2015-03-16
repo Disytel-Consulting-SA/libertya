@@ -323,6 +323,15 @@ public class VOrdenPago extends CPanel implements FormPanel,ActionListener,Table
 		dateTrx = VComponentsFactory.VDateFactory();
 		dateTrx.setValue(new Date());
 		dateTrx.setMandatory(true);
+		dateTrx.addVetoableChangeListener(new VetoableChangeListener() {
+			
+			@Override
+			public void vetoableChange(PropertyChangeEvent evt)
+					throws PropertyVetoException {
+				m_model.setFechaOP(dateTrx.getTimestamp());
+				m_model.actualizarFacturas();
+			}
+		});
 		//dateTrx.setReadWrite(false);
 	
         tblFacturas = new javax.swing.JTable(getFacturasTableModel());
@@ -1319,7 +1328,7 @@ public class VOrdenPago extends CPanel implements FormPanel,ActionListener,Table
         jPanel2Layout.setVerticalGroup(
             jPanel2Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
             .add(jPanel2Layout.createSequentialGroup()
-                .addContainerGap()
+               // .addContainerGap()
                 .add(jPanel2Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
                     .add(cmdProcess)
                     .add(cmdCancel))
