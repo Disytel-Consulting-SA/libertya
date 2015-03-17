@@ -1,0 +1,56 @@
+<!-- ===================================================================== -->
+<!-- Cambios en la estructura de archivos Libertya a reflejar en un deploy -->
+<!-- ===================================================================== -->
+
+<!-- 
+
+Ejemplos de cambios
+"""""""""""""""""""
+
+20140401-1330. Eliminar archivo. 
+	<delete file="${TARGET_DIR}/OXPXLib.jar" failonerror="no" /> 
+
+20140401-1331. Crear un nuevo directorio:
+	<mkdir dir="${TARGET_DIR}/nuevoDir" />
+
+20140402-1400. Nueva version de mail.jar
+	<copy file="${SOURCE_DIR}/mail.jar" todir="${TARGET_DIR}/lib" overwrite="yes" />
+
+20140407-2230. Nueva versión de librería, cambiando su nombre:
+	<copy file="${SOURCE_DIR}/postgresql82.jar" tofile="${TARGET_DIR}/lib/postgresql.jar" overwrite="yes" />
+
+20140410-0925. Invocar un programa externo (inicialmente no habría necesidad de esta funcionalidad):
+	<exec dir="${TARGET_DIR}" executable="/ServidorOXP/ConfigurarAuto.sh"
+	
+ -->
+
+
+<project name="deployer" default="deploy" basedir=".">
+    
+    <!-- =============================================== -->
+    <!-- CONSTANTES A UTILIZAR A LO LARGO DEL DESCRIPTOR -->
+    <!-- =============================================== -->
+    
+    <!-- Directorio destino se hereda de la configuración de unattendedUpgrade -->
+    <property name="TARGET_DIR" value="${oxpDir}${upgradeSuffix}"/>
+    
+    <!-- Directorio origen donde se encuentran los archivos -->
+    <property name="SOURCE_DIR" value="changeset"/>
+    	
+    <!-- ==================== -->
+    <!-- TARGET DE INVOCACION -->
+    <!-- ==================== -->
+    <target name="deploy" description="Actualización de archivos a instalar">
+        
+        <!-- Esta seteada TARGET_DIR? De no estarlo es un problema grave -->
+	<fail message="No se ha seteado TARGET_DIR">
+		<condition><not><isset property="TARGET_DIR"/></not></condition>
+	</fail>
+        
+	<!-- ================================ -->
+	<!-- Nomina de cambios a continuación -->
+	<!-- ================================ -->
+			
+    </target>
+    
+</project>
