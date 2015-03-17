@@ -67,8 +67,19 @@ public class PluginXMLUpdater {
 	/** Save point por errores */
 	protected final static String savePointName = "installSavePoint";
 	
-	/** Indicador de actividad */
-	protected String[] animation = {":.........", ".:........", "..:.......", "...:......", "....:.....", ".....:....", "......:...", ".......:..", "........:.", ".........:", "........:.", ".......:..", "......:...", ".....:....", "....:.....", "...:......", "..:.......", ".:........"}; // {"-", "\\", "|", "/"};
+	/** Indicador de actividad. Version optimizada para disfrutar la instalacion. */
+	protected String[] animation = {"__________", "_________I", "________I_", "_______I__", "______I___", "_____I____", "____I_____", "___I______", "__I_______", "_I________", 
+									"I_________", "I________N", "I_______N_", "I______N__", "I_____N___", "I____N____", "I___N_____", "I__N______", "I_N_______",  
+									"IN________", "IN_______S", "IN______S_", "IN_____S__", "IN____S___", "IN___S____", "IN__S_____", "IN_S______", 
+									"INS_______", "INS______T", "INS_____T_", "INS____T__", "INS___T___", "INS__T____", "INS_T_____", 
+									"INST______", "INST_____A", "INST____A_", "INST___A__", "INST__A___", "INST_A____", 
+									"INSTA_____", "INSTA____L", "INSTA___L_", "INSTA__L__", "INSTA_L___", 
+									"INSTAL____", "INSTAL___L", "INSTAL__L_", "INSTAL_L__", 
+									"INSTALL___", "INSTALL__I", "INSTALL_I_", 
+									"INSTALLI__", "INSTALLI_N",
+									"INSTALLIN_", 
+									"INSTALLING", "INSTALLING", "INSTALLING", "INSTALLING", "INSTALLING",
+									"NSTALLING_", "STALLING__", "TALLING___", "ALLING____", "LLING_____", "LING______", "ING_______", "NG________", "G_________", "__________" }; // {"-", "\\", "|", "/"};
 	
 	/** Si esta activado, la instalacion de un componente implicará no solo impactar en las tablas, sino que tambien copiará 
 	 *  la instalación en el changelog, quedando la base de datos destino como lista a exportar dicho componente */

@@ -101,7 +101,11 @@ Ejemplos de cambios
 		<!-- 20150225-1052 Script para daemon que evalua/finaliza conexiones IDLE in transaction -->
 		<copy file="${SOURCE_DIR}/trxTimeOut.sh" todir="${TARGET_DIR}/utils" overwrite="yes" />
 		<copy file="${SOURCE_DIR}/trxTimeOut.sql" todir="${TARGET_DIR}/utils" overwrite="yes" />
-						
+
+		<!--  20150313-0901 Cambios de versiones por nuevo release 15.03 -->
+		<copy file="${SOURCE_DIR}/build.xml" todir="${TARGET_DIR}/" overwrite="yes" />
+		<copy file="${SOURCE_DIR}/libertya.jnlp" todir="${TARGET_DIR}/lib" overwrite="yes" />
+		<copy file="${SOURCE_DIR}/Libertya.sh" todir="${TARGET_DIR}/utils" overwrite="yes" />		
     </target>
     
 </project>
