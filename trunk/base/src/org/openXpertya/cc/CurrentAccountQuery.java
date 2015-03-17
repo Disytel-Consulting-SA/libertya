@@ -76,8 +76,9 @@ public class CurrentAccountQuery {
 	public String getAllDocumentsQuery() {
 		StringBuffer sqlDoc = new StringBuffer();
 		if (detailReceiptsPayments) {
-			sqlDoc.append(" SELECT ");
+			sqlDoc.append(" SELECT distinct ");
 			sqlDoc.append(" 	d.Dateacct::date as DateTrx, ");
+			sqlDoc.append(" 	d.Created as createdghost, ");
 			sqlDoc.append(" 	d.C_DocType_ID, ");
 			sqlDoc.append(" 	d.DocumentNo, ");
 			sqlDoc.append(" 	d.duedate, ");
@@ -131,8 +132,9 @@ public class CurrentAccountQuery {
 			sqlAppend("   AND d.AD_Org_ID = ? ", orgID, sqlDoc);
 			sqlAppend("   AND d.C_DocType_ID = ? ", docTypeID, sqlDoc);
 		} else {
-			sqlDoc.append("     SELECT ");
-			sqlDoc.append("     	date_trunc('day',d.Dateacct) as DateTrx, ");
+			sqlDoc.append("     SELECT distinct ");
+			sqlDoc.append("     	d.Dateacct::date as DateTrx, ");
+			sqlDoc.append("     	d.Created as createdghost, ");
 			sqlDoc.append("     	d.C_DocType_ID, ");
 			sqlDoc.append("     	COALESCE((SELECT a.documentno FROM C_AllocationHdr a WHERE (a.C_AllocationHdr_ID = (SELECT al.C_AllocationHdr_ID FROM C_AllocationLine al WHERE ( ((d.documenttable = 'C_Payment') AND (al.C_Payment_ID = d.document_id)) OR ((d.documenttable = 'C_Invoice') AND (al.C_Invoice_Credit_ID = d.document_id)) OR ((d.documenttable = 'C_CashLine') AND (al.C_CashLine_ID = d.document_id)) ) LIMIT 1))),DocumentNo) AS DocumentNo, ");
 			sqlDoc.append("     	ABS((CASE WHEN d.signo_issotrx = ? THEN ");
@@ -201,7 +203,7 @@ public class CurrentAccountQuery {
 		sql.append(sqlDoc); // Consulta de todos los comprobantes
 		sqlAppend("   AND ?::date <= d.Dateacct::date ", getDateFrom(), sql);
 		sqlAppend("   AND d.Dateacct::date <= ?::date ", getDateTo(), sql);
-		sql.append(" ORDER BY d.Dateacct, d.Created");
+		sql.append(" ORDER BY d.Dateacct::date, d.Created");
 
 		if (!detailReceiptsPayments) {
 			StringBuffer sqlGroupBy = new StringBuffer();
