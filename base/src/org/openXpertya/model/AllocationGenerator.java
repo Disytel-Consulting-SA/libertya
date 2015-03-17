@@ -1131,23 +1131,23 @@ public class AllocationGenerator {
 		}
 	}
 	
-	public static BigDecimal getExchangeDifference(HashMap<Integer, BigDecimal> facts, ArrayList<PaymentMediumInfo> pays, Properties ctx, String trxName) {
+	public static BigDecimal getExchangeDifference(HashMap<Integer, BigDecimal> facts, ArrayList<PaymentMediumInfo> pays, Properties ctx, String trxName, Date allocDate) {
 		BigDecimal sumaPayments = new BigDecimal(0);
-		BigDecimal sumaPaymentsToday = new BigDecimal(0);
+		BigDecimal sumaPaymentsAllocDate = new BigDecimal(0);
 		for (PaymentMediumInfo mp : pays){
-			sumaPaymentsToday = sumaPaymentsToday.add(MCurrency.currencyConvert(mp.getAmount(), mp.getCurrencyId(), Env.getContextAsInt(ctx, "$C_Currency_ID"), new Timestamp(System.currentTimeMillis()), Env.getAD_Org_ID(ctx), ctx));
+			sumaPaymentsAllocDate = sumaPaymentsAllocDate.add(MCurrency.currencyConvert(mp.getAmount(), mp.getCurrencyId(), Env.getContextAsInt(ctx, "$C_Currency_ID"), allocDate, Env.getAD_Org_ID(ctx), ctx));
 			sumaPayments = sumaPayments.add(MCurrency.currencyConvert(mp.getAmount(), mp.getCurrencyId(), Env.getContextAsInt(ctx, "$C_Currency_ID"), mp.getDate(), Env.getAD_Org_ID(ctx), ctx));
 		}
 		
 		BigDecimal sumInvoices = new BigDecimal(0);
-		BigDecimal sumInvoicesToday = new BigDecimal(0);
+		BigDecimal sumInvoicesAllocDate = new BigDecimal(0);
 		for (Integer id : facts.keySet()){
 			MInvoice invoice = new MInvoice(ctx, id, trxName);
 		
-			sumInvoicesToday = sumInvoicesToday.add(MCurrency.currencyConvert(facts.get(id), invoice.getC_Currency_ID(), Env.getContextAsInt(ctx, "$C_Currency_ID"), new Timestamp(System.currentTimeMillis()), Env.getAD_Org_ID(ctx), ctx));
+			sumInvoicesAllocDate = sumInvoicesAllocDate.add(MCurrency.currencyConvert(facts.get(id), invoice.getC_Currency_ID(), Env.getContextAsInt(ctx, "$C_Currency_ID"), allocDate, Env.getAD_Org_ID(ctx), ctx));
 			sumInvoices = sumInvoices.add(MCurrency.currencyConvert(facts.get(id), invoice.getC_Currency_ID(), Env.getContextAsInt(ctx, "$C_Currency_ID"), invoice.getDateAcct(), Env.getAD_Org_ID(ctx), ctx));
 		}
-		return sumaPayments.add(sumInvoicesToday).subtract(sumaPaymentsToday).subtract(sumInvoices);
+		return sumaPayments.add(sumInvoicesAllocDate).subtract(sumaPaymentsAllocDate).subtract(sumInvoices);
 	}
 	
 	public HashMap<Integer, BigDecimal> generateDebitsForExchangeDifference() {
@@ -1173,8 +1173,8 @@ public class AllocationGenerator {
 	}
 	
 	public void generateDebitCreditExchangeDifference() throws Exception{
-		BigDecimal amt = getExchangeDifference(generateDebitsForExchangeDifference(), generateCreditsForExchangeDifference(), ctx, trxName);
-		MInvoice credit = null;
+		BigDecimal amt = getExchangeDifference(generateDebitsForExchangeDifference(), generateCreditsForExchangeDifference(), ctx, trxName, getAllocationHdr().getDateAcct());
+		MInvoice credit = null; 
 		MInvoice debit = null;
 		MInvoice inv = null; 
 		MInvoiceLine invoiceLine = null; 
@@ -1190,21 +1190,6 @@ public class AllocationGenerator {
 				
 				Document doc = getDebits().get(getDebits().size() - 1);
 				MInvoice debInv = new MInvoice(ctx, doc.getId(), trxName);
-				
-				char issotrx='N';
-				if (debInv.isSOTrx())
-					issotrx = 'Y';
-				//Settear M_PriceList
-				int priceListID = DB.getSQLValue(trxName, "SELECT M_PriceList_ID FROM M_PriceList pl WHERE pl.issopricelist = '" + issotrx
-						+ "' AND (pl.AD_Org_ID = " + getAllocationHdr().getAD_Org_ID() + " OR pl.AD_Org_ID = 0) AND pl.C_Currency_ID = " + Env.getContextAsInt( getCtx(), "$C_Currency_ID" )
-						+ " AND pl.AD_Client_ID = " + getAllocationHdr().getAD_Client_ID() + " AND pl.isActive = 'Y'"
-						+ " ORDER BY pl.AD_Org_ID desc,pl.isDefault desc");
-				
-				if (priceListID <= 0) {
-					String iso_code =DB.getSQLValueString(trxName, "SELECT iso_Code FROM C_Currency WHERE C_Currency_ID = ?" , Env.getContextAsInt( getCtx(), "$C_Currency_ID" ));
-					throw new Exception(Msg.getMsg(getCtx(), "ErrorCreatingCreditDebit", new Object[]{getMsg((debInv.isSOTrx()?"Sales":"Purchase")), iso_code}));
-				}
-				inv.setM_PriceList_ID(priceListID);
 					
 				inv.setC_Project_ID(debInv.getC_Project_ID());
 				inv.setC_Campaign_ID(debInv.getC_Campaign_ID());
