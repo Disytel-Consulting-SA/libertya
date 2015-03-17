@@ -20,8 +20,8 @@ public class TransferInvoiceOrder extends AbstractSvrProcess {
 	protected String doIt() throws Exception {
 		Integer invoiceID = (Integer)getParametersValues().get("C_INVOICE_ID");
 		Integer transferredOrderID = (Integer)getParametersValues().get("C_ORDER_ID");
-		Integer orgID = (Integer)getParametersValues().get("AD_ORG_ID");
-		Integer warehouseID = (Integer)getParametersValues().get("M_WAREHOUSE_ID");
+		Integer orgID = (Integer)getParametersValues().get("AD_ORG_TRANSFER_ID");
+		Integer warehouseID = (Integer)getParametersValues().get("M_WAREHOUSE_TRANSFER_ID");
 		MInvoice invoice = null;
 		if(!Util.isEmpty(invoiceID, true)){
 			invoice = new MInvoice(getCtx(), invoiceID, get_TrxName());
