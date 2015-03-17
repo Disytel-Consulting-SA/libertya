@@ -45,7 +45,7 @@ public class DetailedProductMovementsDataDource extends QueryDataSource {
 	}
 
 	protected String getSQLOrderBy(){
-		return " ORDER BY movementdate ";
+		return " ORDER BY movementdate, updated ";
 	}
 	
 	@Override
