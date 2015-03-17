@@ -393,7 +393,7 @@
 		includes="OXPRoot.jar,OXPRoot.war,OXP.jar,OXPSLib.jar"/>
 	  <manifest>
 		<attribute name="Specification-Title" value="Libertya"/>
-		<attribute name="Specification-Version" value="V14.02"/>
+		<attribute name="Specification-Version" value="V15.03"/>
 		<attribute name="Specification-Vendor" value="(C) 2014 DISYTEL."/>
 		<attribute name="Implementation-Title" value="libertya"/>
 		<attribute name="Implementation-Version" value="V2 ${DSTAMP}-${TSTAMP}"/>

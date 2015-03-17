@@ -4817,3 +4817,6 @@ ALTER FUNCTION redirect_duplicated_bpartners(character varying, character varyin
 
 --20150206-0920 Nueva columna para Conversaciones LY
 UPDATE AD_System SET dummy = (SELECT addcolumnifnotexists('AD_User', 'NotifyOnConversationActivity', 'character(1) NOT NULL DEFAULT ''N''::bpchar'));
+
+-- Versionado de BBDD
+UPDATE ad_system SET version = '20-03-2015' WHERE ad_system_id = 0;
