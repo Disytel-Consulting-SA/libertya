@@ -436,8 +436,10 @@ public class MCashLine extends X_C_CashLine implements DocAction {
             setCashType( CASHTYPE_GeneralExpense );
         }
 
+        // Si no existe el cargo al cargar una línea de tipo cargo, entonces error.
         if( CASHTYPE_Charge.equals( getCashType()) && (getC_Charge_ID() == 0) ) {
-            setCashType( CASHTYPE_GeneralExpense );
+            log.saveError("ChargeMandatory", "");
+            return false;
         }
         
         // Transferencia entre cajas
