@@ -18,7 +18,6 @@ import java.util.HashMap;
 import org.openXpertya.model.MTableReplication;
 import org.openXpertya.model.X_C_BPartner;
 import org.openXpertya.model.X_C_Location;
-import org.openXpertya.plugin.install.PluginXMLUpdater.ChangeGroup;
 import org.openXpertya.replication.ChangeLogGroupReplication;
 import org.openXpertya.replication.ReplicationConstantsWS;
 import org.openXpertya.util.DB;
@@ -46,6 +45,18 @@ public class BPartnerReplicationFilter extends ReplicationFilter {
 	@Override
 	public void applyFilter(String trxName, ChangeLogGroupReplication group) throws Exception {
 
+		// =================================== Logica para central =================================
+		
+		// Si estoy en central omitir siempre los datos a continuación par la tabla C_BPartner
+		if (thisHostPos == CENTRAL_REPARRAY_POS && X_C_BPartner.Table_Name.equalsIgnoreCase(group.getTableName())) {
+			removeElement(group, "TotalOpenBalance");
+			removeElement(group, "SOCreditStatus");
+			removeElement(group, "SO_CreditUsed");
+			return;
+		}
+		
+		// =================================== Logica para sucursales ==============================
+		
 		// Recuperar el BPartner
 		X_C_BPartner aBPartner = getBPartner(group, trxName);
 		if (aBPartner==null)
