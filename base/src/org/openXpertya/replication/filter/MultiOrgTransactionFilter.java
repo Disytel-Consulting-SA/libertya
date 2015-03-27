@@ -54,13 +54,14 @@ public class MultiOrgTransactionFilter extends ReplicationFilter {
 			for (Entry<Object, Object> e : prop.entrySet()) {
 				// Es una regla de definición de sub-anillos? 
 				if (e.getKey().toString().startsWith(RULE_SUBRINGS_PREFIX)) {
+					Set<Integer> currentSubRingHosts = new HashSet<Integer>();
 					// Recorrer la nómina de hosts para un subanillo y agregar todos los hosts del mismo
 					String[] hosts = e.getValue().toString().toLowerCase().split(",");
 					for (String host : hosts)
-						thisHostSubRingHosts.add(Integer.parseInt(host.trim()));		
-					// Si esta regla de sub-anillo no contiene este host, entonces limpiar la colección
-					if (!thisHostSubRingHosts.contains(thisHostPos))
-						thisHostSubRingHosts.clear();
+						currentSubRingHosts.add(Integer.parseInt(host.trim()));		
+					// Si esta regla de sub-anillo contiene este host, entonces incorporar a la colección
+					if (currentSubRingHosts.contains(thisHostPos))
+						thisHostSubRingHosts.addAll(currentSubRingHosts);
 				}
 				// Es una regla de definición de omisión de columnas?
 				else if (e.getKey().toString().startsWith(RULE_SKIPCOLS_PREFIX)) {
