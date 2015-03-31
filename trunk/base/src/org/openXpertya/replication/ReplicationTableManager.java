@@ -108,10 +108,11 @@ public class ReplicationTableManager {
 				else
 				{
 					columnValue = recordRS.getObject(i).toString()
-															.replaceAll("<",  "&#x3C;")
-															.replaceAll(">",  "&#x3E;")
-															.replaceAll("&",  "&#x26;amp;")
-															.replaceAll("\"", "&#x22;");
+															.replaceAll("&",  "&#x26;amp;")								
+															.replaceAll("<",  "&#x26;#x3C;")
+															.replaceAll(">",  "&#x26;#x3E;")
+															.replaceAll("\"", "&#x26;#x22;")
+															.replaceAll("'",  "&#x26;#x27;");
 					nullValue = "";
 				}
 
