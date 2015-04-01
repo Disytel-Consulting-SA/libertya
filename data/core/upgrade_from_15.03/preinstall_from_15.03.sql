@@ -121,3 +121,28 @@ CREATE OR REPLACE VIEW v_product_movements_detailed AS
    LEFT JOIN c_invoice i ON i.c_invoice_id = t.c_invoice_id;
 
 ALTER TABLE v_product_movements_detailed OWNER TO libertya;
+
+--20150401-0133 Función de actualización masiva de stock
+
+CREATE OR REPLACE FUNCTION update_stock(clientID integer, orgID integer)
+  RETURNS void AS
+$BODY$
+/***********
+Actualiza el stock de los depósitos de la compañía y organización parametro, 
+siempre y cuando existan los regitros en m_storage
+*/
+DECLARE
+	r record;
+BEGIN
+	-- Pisar el stock de todos los artículos dentro de las ubicaciones de cada organización
+	update m_storage as s
+	set qtyonhand = coalesce((select sum(t.movementqty) as qty
+				from m_transaction as t 
+				where t.m_locator_id = s.m_locator_id and t.m_product_id = s.m_product_id),0)
+	where ad_client_id = clientID
+		and (orgID = 0 OR ad_org_id = orgID);
+END;
+$BODY$
+  LANGUAGE 'plpgsql' VOLATILE
+  COST 100;
+ALTER FUNCTION update_stock(integer, integer) OWNER TO libertya;
