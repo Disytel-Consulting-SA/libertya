@@ -377,10 +377,10 @@ ContextMenuListener, IZoomableEditor
 				lookup.fillComboBox(isMandatory(), true, true, false, false);
 			}
             refreshList();
-            if (curValue != null)
-            {
+//            if (curValue != null)
+//            {
             	setValue(curValue);
-            }
+//            }
         }
     }
     
