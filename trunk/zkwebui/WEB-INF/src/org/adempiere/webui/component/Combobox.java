@@ -90,6 +90,10 @@ public class Combobox extends org.zkoss.zul.Combobox
 	}
 	
 	public void appendItem(String name, Object value) {
+		if (value==null || value.equals("") )
+			value = -1;
+		if (name==null || name.equals(""))
+			name = " ";
 		ComboItem item = new ComboItem(name, value);
 		this.appendChild(item);
 	}
@@ -106,6 +110,7 @@ public class Combobox extends org.zkoss.zul.Combobox
         
         if (value == null)
         {
+        	setSelectedItem(null);	
             return ;
         }
         
