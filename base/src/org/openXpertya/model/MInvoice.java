@@ -3630,6 +3630,9 @@ public class MInvoice extends X_C_Invoice implements DocAction {
 		// un débito, entonces se debe reabrir el pedido, modificar la línea y
 		// completarlo
 		Map<Integer, BigDecimal> orderLinesToUpdate = new HashMap<Integer, BigDecimal>();
+		Map<Integer, BigDecimal> orderLinesDocumentDiscountToUpdate = new HashMap<Integer, BigDecimal>();
+		Map<Integer, BigDecimal> orderLinesLineDiscountToUpdate = new HashMap<Integer, BigDecimal>();
+		Map<Integer, BigDecimal> orderLinesBonusDiscountToUpdate = new HashMap<Integer, BigDecimal>();
 		BigDecimal orderLineToUpdateQty = null;
 		// Ader: mejoras de logica de documentos; por ahora solo se trata
 		// el caso de facturas de clientes normales; el codigo siguiente al else
@@ -3638,7 +3641,7 @@ public class MInvoice extends X_C_Invoice implements DocAction {
 		// facturas creadas a partir de peidods N*6 accesos por solo 1 (N siendo
 		// la cantidad de lineas).
 		if (isSOTrx() && isDebit) {
-			boolean ok = updateOrderIsSOTrxDebit(lines, orderLinesToUpdate);
+			boolean ok = updateOrderIsSOTrxDebit(lines, orderLinesToUpdate, orderLinesDocumentDiscountToUpdate, orderLinesLineDiscountToUpdate, orderLinesBonusDiscountToUpdate);
 			if (!ok) {
 				m_processMsg = "Could not update Order Line";
 				return DocAction.STATUS_Invalid;
@@ -3671,15 +3674,7 @@ public class MInvoice extends X_C_Invoice implements DocAction {
 							// guardarlo en la hash que luego servirá para
 							// realizar esta operación
 							if (isUpdateOrderQty()) {
-								orderLineToUpdateQty = orderLinesToUpdate
-										.get(line.getID());
-								if (orderLineToUpdateQty == null) {
-									orderLineToUpdateQty = BigDecimal.ZERO;
-								}
-								orderLineToUpdateQty = orderLineToUpdateQty
-										.add(qtyInvoiced);
-								orderLinesToUpdate.put(orderLine.getID(),
-										orderLineToUpdateQty);
+								addToMap(qtyInvoiced, orderLine.getID(), orderLinesToUpdate);
 							}
 							qtyInvoiced = qtyInvoiced.negate();
 						}
@@ -3752,6 +3747,22 @@ public class MInvoice extends X_C_Invoice implements DocAction {
 			for (Integer orderLineID : orderLinesToUpdate.keySet()) {
 				orderLineToUpdate = new MOrderLine(getCtx(), orderLineID, get_TrxName());
 				qtySign = orderLinesToUpdate.get(orderLineID).multiply(sign);
+				// Si es débito, la cantidad del pedido es 0 y se deben manejar
+				// los descuentos del pedido, entonces setearle el monto de
+				// descuentos que tiene este débito para que se pueda seguir
+				// arrastrando el descuento/recargo del pedido
+				if (isDebit
+						&& Util.isEmpty(orderLineToUpdate.getQtyEntered(), true)) {
+					orderLineToUpdate
+							.setDocumentDiscountAmt(orderLinesDocumentDiscountToUpdate
+									.get(orderLineID));
+					orderLineToUpdate
+							.setLineDiscountAmt(orderLinesLineDiscountToUpdate
+									.get(orderLineID));
+					orderLineToUpdate
+							.setLineBonusAmt(orderLinesBonusDiscountToUpdate
+									.get(orderLineID));
+				}
 				orderLineToUpdate.setQtyEntered(orderLineToUpdate
 						.getQtyEntered().add(qtySign));
 				orderLineToUpdate.setQtyOrdered(orderLineToUpdate
@@ -5425,7 +5436,10 @@ public class MInvoice extends X_C_Invoice implements DocAction {
 	 * @return false si no la actualizacion fallo por algun motivo
 	 */
 	private boolean updateOrderIsSOTrxDebit(MInvoiceLine[] lines,
-			Map<Integer, BigDecimal> orderLinesToUpdate) {
+			Map<Integer, BigDecimal> orderLinesToUpdate,
+			Map<Integer, BigDecimal> orderLinesDocumentDiscountToUpdate,
+			Map<Integer, BigDecimal> orderLinesLineDiscountToUpdate,
+			Map<Integer, BigDecimal> orderLinesBonusDiscountToUpdate) {
 		// Ok, teoricamente no deberia poder haber 2 MInvoiceLIne de la misma
 		// factura refiriendo a la misma MOrderLine; auqneu no parece
 		// ser un restricción muy importante, se va a permitir esto (el codigo
@@ -5459,13 +5473,24 @@ public class MInvoice extends X_C_Invoice implements DocAction {
 			}
 
 			if (isUpdateOrderQty()) {
-				orderLineToUpdateQty = orderLinesToUpdate.get(il.getID());
-				if (orderLineToUpdateQty == null) {
-					orderLineToUpdateQty = BigDecimal.ZERO;
-				}
-				orderLineToUpdateQty = orderLineToUpdateQty.add(qtyInvoiced);
-				orderLinesToUpdate.put(il.getC_OrderLine_ID(),
-						orderLineToUpdateQty);
+				// Cantidades
+				addToMap(qtyInvoiced, il.getC_OrderLine_ID(), orderLinesToUpdate);
+				// Descuento/Recargo a nivel documento
+				addToMap(
+						(Util.isEmpty(il.getDocumentDiscountAmt(), false) ? BigDecimal.ZERO
+								: il.getDocumentDiscountAmt()),
+						il.getC_OrderLine_ID(),
+						orderLinesDocumentDiscountToUpdate);
+				// Descuento/Recargo a nivel linea
+				addToMap(
+						(Util.isEmpty(il.getLineDiscountAmt(), false) ? BigDecimal.ZERO
+								: il.getLineDiscountAmt()),
+						il.getC_OrderLine_ID(), orderLinesLineDiscountToUpdate);
+				// Descuento/Recargo a nivel bonus
+				addToMap(
+						(Util.isEmpty(il.getLineBonusAmt(), false) ? BigDecimal.ZERO
+								: il.getLineBonusAmt()),
+						il.getC_OrderLine_ID(), orderLinesBonusDiscountToUpdate);
 			}
 
 		}
@@ -5504,6 +5529,15 @@ public class MInvoice extends X_C_Invoice implements DocAction {
 		return true;
 	}
 
+	private void addToMap(BigDecimal amt, Integer key, Map<Integer, BigDecimal> mapeo){
+		BigDecimal number = mapeo.get(key);
+		if (number == null) {
+			number = BigDecimal.ZERO;
+		}
+		number = number.add(amt);
+		mapeo.put(key, number);
+	}
+	
 	// Ader: Manjejo de caches mutidocumentos, tambien de utilidad por ej, para
 	// que reportes
 	// no tarden tanto
