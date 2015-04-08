@@ -816,9 +816,13 @@ public class MOrderLine extends X_C_OrderLine {
 		// modificado la cantidad o el monto
         if(!newRecord 
         		&& (is_ValueChanged("QtyEntered") || is_ValueChanged("PriceEntered"))){
-			BigDecimal oldQty = is_ValueChanged("QtyEntered") ? (BigDecimal) get_ValueOld("QtyEntered")
+			BigDecimal oldQty = is_ValueChanged("QtyEntered")
+					&& BigDecimal.ZERO
+							.compareTo((BigDecimal) get_ValueOld("QtyEntered")) != 0 ? (BigDecimal) get_ValueOld("QtyEntered")
 					: getQtyEntered();
-			BigDecimal oldPrice = is_ValueChanged("PriceEntered") ? (BigDecimal) get_ValueOld("PriceEntered")
+			BigDecimal oldPrice = is_ValueChanged("PriceEntered") 
+					&& BigDecimal.ZERO
+							.compareTo((BigDecimal) get_ValueOld("PriceEntered")) != 0 ? (BigDecimal) get_ValueOld("PriceEntered")
 					: getPriceEntered();
 			BigDecimal oldAmount = oldPrice.multiply(oldQty);
 			BigDecimal actualAmount = getPriceEntered().multiply(getQtyEntered());
