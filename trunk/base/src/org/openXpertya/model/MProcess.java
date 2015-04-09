@@ -536,7 +536,7 @@ public class MProcess extends X_AD_Process {
 
         try {
 
-            pstmt	= DB.prepareStatement(sql);
+            pstmt	= DB.prepareStatement(sql, get_TrxName());
             pstmt.setInt(1, getAD_Process_ID());
 
             ResultSet	rs	= pstmt.executeQuery();
