@@ -71,7 +71,7 @@ Ejemplos de cambios
 		<!-- 20140528-1335 Permitir iniciar servidor con usuario distinto a root -->
 		<!-- 20140605-1307 El inicio lo gestiona root, pero luego lo delega al usuario libertya -->
 		<!-- 20140610-1615 Bajo algunas distros de linux, /var/run puede ser escrito solo por root, incluso mediante 
-		     start-stop-daemon --chuid libertya, con lo cual se cambia el directorio del PID a /var/run/libertya -->
+		     start-stop-daemon chuid libertya, con lo cual se cambia el directorio del PID a /var/run/libertya -->
 		<copy file="${SOURCE_DIR}/libertyad_centos.sh" todir="${TARGET_DIR}/utils/unix" overwrite="yes" />
 		<copy file="${SOURCE_DIR}/libertyad_fedora.sh" todir="${TARGET_DIR}/utils/unix" overwrite="yes" />
 		<copy file="${SOURCE_DIR}/libertyad_ubuntu-debian.sh" todir="${TARGET_DIR}/utils/unix" overwrite="yes" />
