@@ -481,3 +481,57 @@ UNION ALL
   WHERE (cobros.amount IS NULL OR i.grandtotal <> cobros.amount) AND i.initialcurrentaccountamt > 0::numeric AND (dt.docbasetype <> ALL (ARRAY['ARC'::bpchar, 'APC'::bpchar])) AND "position"(dt.doctypekey::text, 'CDN'::text) < 1 AND (i.docstatus = ANY (ARRAY['VO'::bpchar, 'RE'::bpchar]));
 
 ALTER TABLE v_dailysales OWNER TO libertya;
+
+--20150408-1615 Incorporación de nueva funcionalidad de confección de folletos
+CREATE TABLE m_brochure
+(
+  m_brochure_id integer NOT NULL,
+  ad_client_id integer NOT NULL,
+  ad_org_id integer NOT NULL,
+  isactive character(1) NOT NULL DEFAULT 'Y'::bpchar,
+  created timestamp without time zone NOT NULL DEFAULT ('now'::text)::timestamp(6) with time zone,
+  createdby integer NOT NULL,
+  updated timestamp without time zone NOT NULL DEFAULT ('now'::text)::timestamp(6) with time zone,
+  updatedby integer NOT NULL,
+  documentno character varying(30) NOT NULL,
+  description character varying(255),
+  datefrom date not null,
+  dateto date not null,
+  processing character(1),
+  processed character(1) NOT NULL DEFAULT 'N'::bpchar,
+  docaction character(2) NOT NULL,
+  docstatus character(2) NOT NULL,
+  CONSTRAINT m_brochure_key PRIMARY KEY (m_brochure_id)
+)
+WITH (
+  OIDS=TRUE
+);
+ALTER TABLE m_brochure OWNER TO libertya;
+
+CREATE TABLE m_brochureline
+(
+  m_brochureline_id integer NOT NULL,
+  ad_client_id integer NOT NULL,
+  ad_org_id integer NOT NULL,
+  isactive character(1) NOT NULL DEFAULT 'Y'::bpchar,
+  created timestamp without time zone NOT NULL DEFAULT ('now'::text)::timestamp(6) with time zone,
+  createdby integer NOT NULL,
+  updated timestamp without time zone NOT NULL DEFAULT ('now'::text)::timestamp(6) with time zone,
+  updatedby integer NOT NULL,
+  m_brochure_id integer NOT NULL,
+  line numeric(18,0) NOT NULL,   
+  m_product_id integer NOT NULL,
+  description character varying(255), 
+  processed character(1) NOT NULL DEFAULT 'N'::bpchar,
+  CONSTRAINT m_brochureline_key PRIMARY KEY (m_brochureline_id),
+  CONSTRAINT m_brochureline_m_brochure_fk FOREIGN KEY (m_brochure_id)
+      REFERENCES m_brochure (m_brochure_id) MATCH SIMPLE
+      ON UPDATE NO ACTION ON DELETE NO ACTION,
+  CONSTRAINT m_brochureline_m_product_fk FOREIGN KEY (m_product_id)
+      REFERENCES m_product (m_product_id) MATCH SIMPLE
+      ON UPDATE NO ACTION ON DELETE NO ACTION
+)
+WITH (
+  OIDS=TRUE
+);
+ALTER TABLE m_brochureline OWNER TO libertya;
