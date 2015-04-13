@@ -364,7 +364,7 @@ public abstract class AbstractRetencionProcessor implements RetencionProcessor {
 		// se convierte el monto del pago hacia esta moneda.
 		if (getCurrency().getC_Currency_ID() != currencyID)
 			payamt = currencyConvert(payamt, getCurrency().getC_Currency_ID(),
-					currencyID, Env.getContextAsDate(Env.getCtx(), "#Date"));
+					currencyID, getDateTrx());
 
 		// Se suma el importe al total.
 		setPayTotalAmount(getPayTotalAmount().add(payamt));
