@@ -14,6 +14,7 @@ import org.openXpertya.model.MRetencionSchema;
 import org.openXpertya.model.X_M_Retencion_Invoice;
 import org.openXpertya.util.DB;
 import org.openXpertya.util.Env;
+import org.openXpertya.util.Msg;
 
 public class RetencionIIBB extends AbstractRetencionProcessor {
 
@@ -240,6 +241,21 @@ public class RetencionIIBB extends AbstractRetencionProcessor {
 		recaudador_fac.setC_Project_ID(getProjectID());
 		recaudador_fac.setC_Campaign_ID(getCampaignID());
 		
+		char issotrx='N';
+		if (recaudador_fac.isSOTrx())
+			issotrx = 'Y';
+		//Settear M_PriceList
+		int priceListID = DB.getSQLValue(getTrxName(), "SELECT M_PriceList_ID FROM M_PriceList pl WHERE pl.issopricelist = '" + issotrx
+				+ "' AND (pl.AD_Org_ID = " + recaudador_fac.getAD_Org_ID() + " OR pl.AD_Org_ID = 0) AND pl.C_Currency_ID = " + Env.getContextAsInt( Env.getCtx(), "$C_Currency_ID" )
+				+ " AND pl.AD_Client_ID = " + getAD_Client_ID() + " AND pl.isActive = 'Y'"
+				+ " ORDER BY pl.AD_Org_ID desc,pl.isDefault desc");
+		
+		if (priceListID <= 0) {
+			String iso_code =DB.getSQLValueString(getTrxName(), "SELECT iso_Code FROM C_Currency WHERE C_Currency_ID = ?" , Env.getContextAsInt( Env.getCtx(), "$C_Currency_ID" ));
+			throw new Exception(Msg.getMsg(Env.getCtx(), "ErrorCreatingCreditDebit", new Object[]{getMsg((recaudador_fac.isSOTrx()?"Purchase":"Sales")), iso_code}));
+		}
+		recaudador_fac.setM_PriceList_ID(priceListID);
+		
 		if (!recaudador_fac.save())  
 			 throw new Exception( "@CollectorInvoiceSaveError@");
 		
@@ -298,6 +314,21 @@ public class RetencionIIBB extends AbstractRetencionProcessor {
 		
 		if (getRetencionNumber() != null &&  !getRetencionNumber().trim().equals(""))
 			credito_prov.setDocumentNo(getRetencionNumber());
+		
+		char issotrx='N';
+		if (credito_prov.isSOTrx())
+			issotrx = 'Y';
+		//Settear M_PriceList
+		int priceListID = DB.getSQLValue(getTrxName(), "SELECT M_PriceList_ID FROM M_PriceList pl WHERE pl.issopricelist = '" + issotrx
+				+ "' AND (pl.AD_Org_ID = " + credito_prov.getAD_Org_ID() + " OR pl.AD_Org_ID = 0) AND pl.C_Currency_ID = " + Env.getContextAsInt( Env.getCtx(), "$C_Currency_ID" )
+				+ " AND pl.AD_Client_ID = " + getAD_Client_ID() + " AND pl.isActive = 'Y'"
+				+ " ORDER BY pl.AD_Org_ID desc,pl.isDefault desc");
+		
+		if (priceListID <= 0) {
+			String iso_code =DB.getSQLValueString(getTrxName(), "SELECT iso_Code FROM C_Currency WHERE C_Currency_ID = ?" , Env.getContextAsInt( Env.getCtx(), "$C_Currency_ID" ));
+			//throw new Exception(Msg.getMsg(Env.getCtx(), "ErrorCreatingCreditDebit", new Object[]{getMsg((recaudador_fac.isSOTrx()?"Purchase":"Sales")), iso_code}));
+		}
+		credito_prov.setM_PriceList_ID(priceListID);
 		
 		if(!credito_prov.save())		   
 			throw new Exception("@VendorRetencionDocSaveError@");
@@ -447,5 +478,7 @@ public class RetencionIIBB extends AbstractRetencionProcessor {
 		this.padrones = padrones;
 	}
 	
-	
+	protected String getMsg(String msg) {
+		return Msg.translate(Env.getCtx(), msg);
+	}
 }
