@@ -6,9 +6,9 @@
 		 columnCount="1"
 		 printOrder="Vertical"
 		 orientation="Landscape"
-		 pageWidth="2000"
+		 pageWidth="1400"
 		 pageHeight="595"
-		 columnWidth="1940"
+		 columnWidth="1340"
 		 columnSpacing="0"
 		 leftMargin="30"
 		 rightMargin="30"
@@ -412,7 +412,7 @@ ORDER BY c_allocationhdr_id]]></queryString>
 						width="150"
 						height="12"
 						key="textField-102">
-							<printWhenExpression><![CDATA[new Boolean($P{C_BPartner_ID}!= null)]]></printWhenExpression>
+							<printWhenExpression><![CDATA[new Boolean($P{C_BP_Group_ID}!= null)]]></printWhenExpression>
 						</reportElement>
 					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
 					<textElement>
@@ -453,7 +453,7 @@ ORDER BY c_allocationhdr_id]]></queryString>
 					<reportElement
 						x="6"
 						y="13"
-						width="1934"
+						width="1334"
 						height="99"
 						key="crosstab-1"/>
 					<crosstabHeaderCell>						<cellContents mode="Transparent">
