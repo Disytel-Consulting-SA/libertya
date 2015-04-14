@@ -6,9 +6,9 @@
 		 columnCount="1"
 		 printOrder="Vertical"
 		 orientation="Landscape"
-		 pageWidth="1000"
+		 pageWidth="705"
 		 pageHeight="595"
-		 columnWidth="940"
+		 columnWidth="645"
 		 columnSpacing="0"
 		 leftMargin="30"
 		 rightMargin="30"
@@ -23,16 +23,26 @@
 	<import value="net.sf.jasperreports.engine.*" />
 	<import value="net.sf.jasperreports.engine.data.*" />
 
-	<parameter name="AD_Org_ID" isForPrompting="false" class="java.math.BigDecimal"/>
-	<parameter name="FechaDesde" isForPrompting="false" class="java.util.Date"/>
-	<parameter name="AD_CLIENT_ID" isForPrompting="false" class="java.lang.Integer"/>
-	<parameter name="FechaHasta" isForPrompting="false" class="java.util.Date"/>
-	<parameter name="C_BP_Group_ID" isForPrompting="false" class="java.math.BigDecimal"/>
+	<parameter name="AD_Org_ID" isForPrompting="false" class="java.math.BigDecimal">
+		<defaultValueExpression ><![CDATA[null]]></defaultValueExpression>
+	</parameter>
+	<parameter name="FechaDesde" isForPrompting="false" class="java.util.Date">
+		<defaultValueExpression ><![CDATA[null]]></defaultValueExpression>
+	</parameter>
+	<parameter name="AD_CLIENT_ID" isForPrompting="false" class="java.lang.Integer">
+		<defaultValueExpression ><![CDATA[null]]></defaultValueExpression>
+	</parameter>
+	<parameter name="FechaHasta" isForPrompting="false" class="java.util.Date">
+		<defaultValueExpression ><![CDATA[null]]></defaultValueExpression>
+	</parameter>
+	<parameter name="grupo_ec" isForPrompting="false" class="java.lang.Integer">
+		<defaultValueExpression ><![CDATA[null]]></defaultValueExpression>
+	</parameter>
 	<queryString><![CDATA[SELECT 
 i.ad_org_id,
-ado.name as organization,
+ado.value as organization,
 bp.c_bp_group_id as group_ec,
-bpg.name as group_ec_value,
+bpg.value as group_ec_value,
 i.dateinvoiced as fecha,
 dt.name as tipo_de_documento,
 i.documentno as nro_de_documento,
@@ -60,7 +70,7 @@ AND (dt.doctypekey not in ('RTR', 'RTI', 'RCR', 'RCI'))
 AND ((($P{AD_Org_ID} IS NULL) OR ($P{AD_Org_ID} = 0)) OR (i.ad_org_id = $P{AD_Org_ID}))
 AND (($P{FechaDesde}::date IS NULL) OR (i.dateinvoiced::date >= $P{FechaDesde}::date)) 
 AND (($P{FechaHasta}::date IS NULL) OR (i.dateinvoiced::date <= $P{FechaHasta}::date)) 
-AND (($P{C_BP_Group_ID} IS NULL) OR (bpg.c_bp_group_id = $P{C_BP_Group_ID}))
+AND (($P{grupo_ec} IS NULL) OR (bpg.c_bp_group_id = $P{grupo_ec}))
 AND ($P{AD_CLIENT_ID} = i.ad_client_id)]]></queryString>
 
 	<field name="ad_org_id" class="java.lang.Integer"/>
@@ -98,7 +108,7 @@ AND ($P{AD_CLIENT_ID} = i.ad_client_id)]]></queryString>
 						width="150"
 						height="12"
 						key="textField-3">
-							<printWhenExpression><![CDATA[new Boolean($P{AD_Org_ID}!=null)]]></printWhenExpression>
+							<printWhenExpression><![CDATA[new Boolean($P{AD_Org_ID}.toString() != "")]]></printWhenExpression>
 						</reportElement>
 					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
 					<textElement>
@@ -173,7 +183,7 @@ AND ($P{AD_CLIENT_ID} = i.ad_client_id)]]></queryString>
 				</staticText>
 				<staticText>
 					<reportElement
-						x="651"
+						x="514"
 						y="56"
 						width="60"
 						height="10"
@@ -186,9 +196,9 @@ AND ($P{AD_CLIENT_ID} = i.ad_client_id)]]></queryString>
 				</staticText>
 				<staticText>
 					<reportElement
-						x="711"
+						x="574"
 						y="56"
-						width="228"
+						width="68"
 						height="10"
 						key="staticText-60"/>
 					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
@@ -201,7 +211,7 @@ AND ($P{AD_CLIENT_ID} = i.ad_client_id)]]></queryString>
 					<reportElement
 						x="270"
 						y="56"
-						width="216"
+						width="80"
 						height="10"
 						key="staticText-61"/>
 					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
@@ -212,7 +222,7 @@ AND ($P{AD_CLIENT_ID} = i.ad_client_id)]]></queryString>
 				</staticText>
 				<staticText>
 					<reportElement
-						x="487"
+						x="350"
 						y="56"
 						width="58"
 						height="10"
@@ -225,7 +235,7 @@ AND ($P{AD_CLIENT_ID} = i.ad_client_id)]]></queryString>
 				</staticText>
 				<staticText>
 					<reportElement
-						x="545"
+						x="408"
 						y="56"
 						width="42"
 						height="10"
@@ -238,7 +248,7 @@ AND ($P{AD_CLIENT_ID} = i.ad_client_id)]]></queryString>
 				</staticText>
 				<staticText>
 					<reportElement
-						x="587"
+						x="450"
 						y="56"
 						width="64"
 						height="10"
@@ -318,13 +328,15 @@ AND ($P{AD_CLIENT_ID} = i.ad_client_id)]]></queryString>
 					</textElement>
 				<text><![CDATA[Grupo de Entidad Comercial=]]></text>
 				</staticText>
-				<textField isStretchWithOverflow="false" isBlankWhenNull="false" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
+				<textField isStretchWithOverflow="false" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
 						x="129"
 						y="39"
-						width="221"
+						width="150"
 						height="12"
-						key="textField-96"/>
+						key="textField-96">
+							<printWhenExpression><![CDATA[new Boolean($P{grupo_ec}!= null)]]></printWhenExpression>
+						</reportElement>
 					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
 					<textElement>
 						<font pdfFontName="Helvetica" size="8" isBold="false"/>
@@ -335,7 +347,7 @@ AND ($P{AD_CLIENT_ID} = i.ad_client_id)]]></queryString>
 					<reportElement
 						x="0"
 						y="66"
-						width="940"
+						width="642"
 						height="0"
 						key="line-1"/>
 					<graphicElement stretchType="NoStretch"/>
@@ -344,7 +356,7 @@ AND ($P{AD_CLIENT_ID} = i.ad_client_id)]]></queryString>
 					<reportElement
 						x="0"
 						y="56"
-						width="940"
+						width="642"
 						height="0"
 						key="line-2"/>
 					<graphicElement stretchType="NoStretch"/>
@@ -387,7 +399,7 @@ AND ($P{AD_CLIENT_ID} = i.ad_client_id)]]></queryString>
 				</line>
 				<line direction="TopDown">
 					<reportElement
-						x="487"
+						x="350"
 						y="56"
 						width="0"
 						height="10"
@@ -396,7 +408,7 @@ AND ($P{AD_CLIENT_ID} = i.ad_client_id)]]></queryString>
 				</line>
 				<line direction="TopDown">
 					<reportElement
-						x="545"
+						x="408"
 						y="56"
 						width="0"
 						height="10"
@@ -405,7 +417,7 @@ AND ($P{AD_CLIENT_ID} = i.ad_client_id)]]></queryString>
 				</line>
 				<line direction="TopDown">
 					<reportElement
-						x="587"
+						x="450"
 						y="56"
 						width="0"
 						height="10"
@@ -414,7 +426,7 @@ AND ($P{AD_CLIENT_ID} = i.ad_client_id)]]></queryString>
 				</line>
 				<line direction="TopDown">
 					<reportElement
-						x="651"
+						x="514"
 						y="56"
 						width="0"
 						height="10"
@@ -423,7 +435,7 @@ AND ($P{AD_CLIENT_ID} = i.ad_client_id)]]></queryString>
 				</line>
 				<line direction="TopDown">
 					<reportElement
-						x="711"
+						x="574"
 						y="56"
 						width="0"
 						height="10"
@@ -432,7 +444,7 @@ AND ($P{AD_CLIENT_ID} = i.ad_client_id)]]></queryString>
 				</line>
 				<line direction="TopDown">
 					<reportElement
-						x="939"
+						x="642"
 						y="56"
 						width="0"
 						height="11"
@@ -449,9 +461,7 @@ AND ($P{AD_CLIENT_ID} = i.ad_client_id)]]></queryString>
 						y="0"
 						width="50"
 						height="9"
-						key="textField-7"
-						stretchType="RelativeToTallestObject"
-						positionType="Float"/>
+						key="textField-7"/>
 					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
 					<textElement textAlignment="Right">
 						<font size="6"/>
@@ -464,9 +474,7 @@ AND ($P{AD_CLIENT_ID} = i.ad_client_id)]]></queryString>
 						y="-1"
 						width="138"
 						height="10"
-						key="textField-11"
-						stretchType="RelativeToTallestObject"
-						positionType="Float"/>
+						key="textField-11"/>
 					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
 					<textElement textAlignment="Right">
 						<font size="6"/>
@@ -479,9 +487,7 @@ AND ($P{AD_CLIENT_ID} = i.ad_client_id)]]></queryString>
 						y="-1"
 						width="82"
 						height="10"
-						key="textField-12"
-						stretchType="RelativeToTallestObject"
-						positionType="Float"/>
+						key="textField-12"/>
 					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
 					<textElement textAlignment="Right">
 						<font size="6"/>
@@ -490,13 +496,11 @@ AND ($P{AD_CLIENT_ID} = i.ad_client_id)]]></queryString>
 				</textField>
 				<textField isStretchWithOverflow="true" pattern="#,##0.00;-#,##0.00" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
-						x="651"
+						x="514"
 						y="-1"
 						width="60"
 						height="10"
-						key="textField-13"
-						stretchType="RelativeToTallestObject"
-						positionType="Float"/>
+						key="textField-13"/>
 					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
 					<textElement textAlignment="Right">
 						<font size="6"/>
@@ -505,13 +509,11 @@ AND ($P{AD_CLIENT_ID} = i.ad_client_id)]]></queryString>
 				</textField>
 				<textField isStretchWithOverflow="true" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
-						x="711"
+						x="574"
 						y="-1"
-						width="228"
+						width="68"
 						height="10"
-						key="textField-80"
-						stretchType="RelativeToTallestObject"
-						positionType="Float"/>
+						key="textField-80"/>
 					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
 					<textElement textAlignment="Right">
 						<font size="6"/>
@@ -522,11 +524,9 @@ AND ($P{AD_CLIENT_ID} = i.ad_client_id)]]></queryString>
 					<reportElement
 						x="270"
 						y="-1"
-						width="216"
+						width="80"
 						height="10"
-						key="textField-81"
-						stretchType="RelativeToTallestObject"
-						positionType="Float"/>
+						key="textField-81"/>
 					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
 					<textElement textAlignment="Right">
 						<font size="6"/>
@@ -535,13 +535,11 @@ AND ($P{AD_CLIENT_ID} = i.ad_client_id)]]></queryString>
 				</textField>
 				<textField isStretchWithOverflow="true" pattern="#,##0.00;-#,##0.00" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
-						x="487"
+						x="350"
 						y="-1"
 						width="58"
 						height="10"
-						key="textField-89"
-						stretchType="RelativeToTallestObject"
-						positionType="Float"/>
+						key="textField-89"/>
 					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
 					<textElement textAlignment="Right">
 						<font size="6"/>
@@ -550,13 +548,11 @@ AND ($P{AD_CLIENT_ID} = i.ad_client_id)]]></queryString>
 				</textField>
 				<textField isStretchWithOverflow="true" pattern="#,##0.00;-#,##0.00" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
-						x="545"
+						x="408"
 						y="-1"
 						width="42"
 						height="10"
-						key="textField-91"
-						stretchType="RelativeToTallestObject"
-						positionType="Float"/>
+						key="textField-91"/>
 					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
 					<textElement textAlignment="Right">
 						<font size="6"/>
@@ -565,13 +561,11 @@ AND ($P{AD_CLIENT_ID} = i.ad_client_id)]]></queryString>
 				</textField>
 				<textField isStretchWithOverflow="true" pattern="#,##0.00;-#,##0.00" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
-						x="587"
+						x="450"
 						y="-1"
 						width="64"
 						height="10"
-						key="textField-92"
-						stretchType="RelativeToTallestObject"
-						positionType="Float"/>
+						key="textField-92"/>
 					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
 					<textElement textAlignment="Right">
 						<font size="6"/>
@@ -582,10 +576,9 @@ AND ($P{AD_CLIENT_ID} = i.ad_client_id)]]></queryString>
 					<reportElement
 						x="0"
 						y="9"
-						width="940"
+						width="642"
 						height="0"
-						key="line-3"
-						positionType="FixRelativeToBottom"/>
+						key="line-3"/>
 					<graphicElement stretchType="NoStretch"/>
 				</line>
 				<line direction="TopDown">
@@ -594,10 +587,8 @@ AND ($P{AD_CLIENT_ID} = i.ad_client_id)]]></queryString>
 						y="0"
 						width="0"
 						height="10"
-						key="line-5"
-						stretchType="RelativeToTallestObject"
-						positionType="Float"/>
-					<graphicElement stretchType="RelativeToTallestObject"/>
+						key="line-5"/>
+					<graphicElement stretchType="NoStretch"/>
 				</line>
 				<line direction="TopDown">
 					<reportElement
@@ -605,10 +596,8 @@ AND ($P{AD_CLIENT_ID} = i.ad_client_id)]]></queryString>
 						y="0"
 						width="0"
 						height="10"
-						key="line-15"
-						stretchType="RelativeToTallestObject"
-						positionType="Float"/>
-					<graphicElement stretchType="RelativeToTallestObject"/>
+						key="line-15"/>
+					<graphicElement stretchType="NoStretch"/>
 				</line>
 				<line direction="TopDown">
 					<reportElement
@@ -616,10 +605,8 @@ AND ($P{AD_CLIENT_ID} = i.ad_client_id)]]></queryString>
 						y="0"
 						width="0"
 						height="10"
-						key="line-16"
-						stretchType="RelativeToTallestObject"
-						positionType="Float"/>
-					<graphicElement stretchType="RelativeToTallestObject"/>
+						key="line-16"/>
+					<graphicElement stretchType="NoStretch"/>
 				</line>
 				<line direction="TopDown">
 					<reportElement
@@ -627,76 +614,62 @@ AND ($P{AD_CLIENT_ID} = i.ad_client_id)]]></queryString>
 						y="0"
 						width="0"
 						height="10"
-						key="line-17"
-						stretchType="RelativeToTallestObject"
-						positionType="Float"/>
-					<graphicElement stretchType="RelativeToTallestObject"/>
+						key="line-17"/>
+					<graphicElement stretchType="NoStretch"/>
 				</line>
 				<line direction="TopDown">
 					<reportElement
-						x="487"
+						x="350"
 						y="0"
 						width="0"
 						height="10"
-						key="line-18"
-						stretchType="RelativeToTallestObject"
-						positionType="Float"/>
-					<graphicElement stretchType="RelativeToTallestObject"/>
+						key="line-18"/>
+					<graphicElement stretchType="NoStretch"/>
 				</line>
 				<line direction="TopDown">
 					<reportElement
-						x="545"
+						x="408"
 						y="0"
 						width="0"
 						height="10"
-						key="line-19"
-						stretchType="RelativeToTallestObject"
-						positionType="Float"/>
-					<graphicElement stretchType="RelativeToTallestObject"/>
+						key="line-19"/>
+					<graphicElement stretchType="NoStretch"/>
 				</line>
 				<line direction="TopDown">
 					<reportElement
-						x="587"
+						x="450"
 						y="0"
 						width="0"
 						height="10"
-						key="line-20"
-						stretchType="RelativeToTallestObject"
-						positionType="Float"/>
-					<graphicElement stretchType="RelativeToTallestObject"/>
+						key="line-20"/>
+					<graphicElement stretchType="NoStretch"/>
 				</line>
 				<line direction="TopDown">
 					<reportElement
-						x="651"
+						x="514"
 						y="0"
 						width="0"
 						height="10"
-						key="line-21"
-						stretchType="RelativeToTallestObject"
-						positionType="Float"/>
-					<graphicElement stretchType="RelativeToTallestObject"/>
+						key="line-21"/>
+					<graphicElement stretchType="NoStretch"/>
 				</line>
 				<line direction="TopDown">
 					<reportElement
-						x="711"
+						x="574"
 						y="0"
 						width="0"
 						height="10"
-						key="line-22"
-						stretchType="RelativeToTallestObject"
-						positionType="Float"/>
-					<graphicElement stretchType="RelativeToTallestObject"/>
+						key="line-22"/>
+					<graphicElement stretchType="NoStretch"/>
 				</line>
 				<line direction="TopDown">
 					<reportElement
-						x="939"
-						y="-1"
+						x="642"
+						y="0"
 						width="0"
 						height="10"
-						key="line-23"
-						stretchType="RelativeToTallestObject"
-						positionType="Float"/>
-					<graphicElement stretchType="RelativeToTallestObject"/>
+						key="line-23"/>
+					<graphicElement stretchType="NoStretch"/>
 				</line>
 			</band>
 		</detail>
