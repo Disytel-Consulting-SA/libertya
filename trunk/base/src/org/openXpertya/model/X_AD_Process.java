@@ -7,7 +7,7 @@ import java.math.*;
 import org.openXpertya.util.*;
 /** Modelo Generado por AD_Process
  *  @author Comunidad de Desarrollo Libertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
- *  @version  - 2013-10-15 12:42:33.719 */
+ *  @version  - 2015-04-14 13:07:41.174 */
 public class X_AD_Process extends org.openXpertya.model.PO
 {
 /** Constructor estándar */
@@ -18,6 +18,7 @@ super (ctx, AD_Process_ID, trxName);
 {
 setAccessLevel (null);
 setAD_Process_ID (0);
+setConcurrentExecution (null);	// N
 setEntityType (null);	// U
 setIsBetaFunctionality (false);
 setIsReport (false);
@@ -235,6 +236,31 @@ Java Classname */
 public String getClassname() 
 {
 return (String)get_Value("Classname");
+}
+public static final int CONCURRENTEXECUTION_AD_Reference_ID = MReference.getReferenceID("ConcurrentExecutionAccess");
+/** No restrictions = N */
+public static final String CONCURRENTEXECUTION_NoRestrictions = "N";
+/** Client = C */
+public static final String CONCURRENTEXECUTION_Client = "C";
+/** Global = G */
+public static final String CONCURRENTEXECUTION_Global = "G";
+/** Set ConcurrentExecution */
+public void setConcurrentExecution (String ConcurrentExecution)
+{
+if (ConcurrentExecution.equals("N") || ConcurrentExecution.equals("C") || ConcurrentExecution.equals("G"));
+ else throw new IllegalArgumentException ("ConcurrentExecution Invalid value - Reference = CONCURRENTEXECUTION_AD_Reference_ID - N - C - G");
+if (ConcurrentExecution == null) throw new IllegalArgumentException ("ConcurrentExecution is mandatory");
+if (ConcurrentExecution.length() > 1)
+{
+log.warning("Length > 1 - truncated");
+ConcurrentExecution = ConcurrentExecution.substring(0,1);
+}
+set_Value ("ConcurrentExecution", ConcurrentExecution);
+}
+/** Get ConcurrentExecution */
+public String getConcurrentExecution() 
+{
+return (String)get_Value("ConcurrentExecution");
 }
 /** Set Copy Parameters.
 Copy parameters from other process */
