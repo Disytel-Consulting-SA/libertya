@@ -535,3 +535,6 @@ WITH (
   OIDS=TRUE
 );
 ALTER TABLE m_brochureline OWNER TO libertya;
+
+--20150414 1247 Nueva columna para acceso concurrente
+update ad_system set dummy = (SELECT addcolumnifnotexists('AD_Process','ConcurrentExecution','character(1) default ''N''::bpchar'));
