@@ -56,17 +56,6 @@ public class MBrochure extends X_M_Brochure implements DocAction {
 
 	@Override
 	public String prepareIt() {
-		// No puede existir por un folleto con mismo nro por organización
-		String whereClause = "ad_org_id = ? and m_brochure_id <> ? and documentno = '"
-				+ getDocumentNo() + "'";
-		if (existRecordFor(getCtx(), get_TableName(), whereClause,
-				new Object[] { getAD_Org_ID(), getID() }, get_TrxName())) {
-			MOrg org = MOrg.get(getCtx(), getAD_Org_ID());
-			m_processMsg = Msg.getMsg(getCtx(), "ExistsDocumentNoInOrg",
-					new Object[] { getDocumentNo(),
-							org.getValue() + " - " + org.getName() });
-			return DocAction.STATUS_Invalid;
-		}
 		// No existen líneas
 		String whereClauseLines = "m_brochure_id = ?";
 		if (!existRecordFor(getCtx(), X_M_BrochureLine.Table_Name,
