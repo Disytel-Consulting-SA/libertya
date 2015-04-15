@@ -1,5 +1,6 @@
 package org.openXpertya.process.release;
 
+import org.openXpertya.JasperReport.MJasperReport;
 import org.openXpertya.model.MProcess;
 import org.openXpertya.process.PluginPostInstallProcess;
 import org.openXpertya.utils.JarHelper;
@@ -17,6 +18,10 @@ public class PostInstallUpgradeFrom1503 extends PluginPostInstallProcess {
 	/** UID del Informe de Cobranzas y Pagos */
 	protected final static String INFORME_DE_COBRANZAS_Y_PAGOS_REPORT_UID = "CORE-AD_Process-1010401";
 	protected final static String INFORME_DE_COBRANZAS_Y_PAGOS_REPORT_FILENAME = "InformeDeCobranzasYPagos.jrxml";
+	
+	/** UID del informe de Seguimiento de Folletos */
+	protected final static String BROCHURE_REPORT_UID = "CORE-AD_JasperReport-1010129";
+	protected final static String BROCHURE_REPORT_FILENAME = "BrochureReport.jasper";
 	
 	@Override
 	protected String doIt() throws Exception {
@@ -62,6 +67,18 @@ public class PostInstallUpgradeFrom1503 extends PluginPostInstallProcess {
 						.readBinaryFromJar(
 								jarFileURL,
 								getBinaryFileURL(INFORME_DE_COBRANZAS_Y_PAGOS_REPORT_FILENAME)));
+		
+		// Seguimiento de Folletos
+		MJasperReport
+				.updateBinaryData(
+						get_TrxName(),
+						getCtx(),
+						BROCHURE_REPORT_UID,
+						JarHelper
+								.readBinaryFromJar(
+										jarFileURL,
+										getBinaryFileURL(BROCHURE_REPORT_FILENAME)));
+		
 		return " ";
 	}
 	
