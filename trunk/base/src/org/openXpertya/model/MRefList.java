@@ -106,14 +106,13 @@ public class MRefList extends X_AD_Ref_List {
     public static MRefList get(Properties ctx, int AD_Reference_ID, String Value, String trxName) {
 
         MRefList	retValue	= null;
-        String		sql		= "SELECT * FROM AD_Ref_List " + "WHERE AD_Reference_ID=? AND Value=?";
+        String		sql		= "SELECT * FROM AD_Ref_List " + "WHERE AD_Reference_ID=? AND Value='"+Value+"'";
         PreparedStatement	pstmt	= null;
 
         try {
 
             pstmt	= DB.prepareStatement(sql, trxName);
             pstmt.setInt(1, AD_Reference_ID);
-            pstmt.setString(2, Value);
 
             ResultSet	rs	= pstmt.executeQuery();
 
