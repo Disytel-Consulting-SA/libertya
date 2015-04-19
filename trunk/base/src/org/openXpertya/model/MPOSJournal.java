@@ -91,12 +91,19 @@ public class MPOSJournal extends X_C_POSJournal implements DocAction {
 	 *         encontró ninguna caja diaria con esas condiciones.
 	 */
 	public static MPOSJournal get(Properties ctx, int userID, Timestamp date, String[] docStatus, String trxName) {
+		return get(ctx, userID, null, date, docStatus, trxName);
+	}
+	
+	public static MPOSJournal get(Properties ctx, int userID, Integer posID, Timestamp date, String[] docStatus, String trxName) {
 		MPOSJournal journal = null;
 		StringBuffer sql = new StringBuffer(); 
 		sql.append("SELECT * ")
 		   .append("FROM C_POSJournal ")
 		   .append("WHERE AD_User_ID = ? ")
 		   .append(  "AND date_trunc('day',DateTrx) = date_trunc('day',?::date) ");
+		if(!Util.isEmpty(posID, true)){
+			sql.append(" AND c_pos_id = ").append(posID).append(" ");
+		}
 		
 		// Filtro de los dosStatus
 		if (docStatus != null && docStatus.length > 0) {
