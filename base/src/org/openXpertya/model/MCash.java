@@ -1059,6 +1059,34 @@ public class MCash extends X_C_Cash implements DocAction {
 	public void setPOSJournalCash(boolean isPOSJournalCash) {
 		this.isPOSJournalCash = isPOSJournalCash;
 	}
+	
+	public boolean updateAmts() {
+		String sql = "UPDATE C_Cash c"
+				+ " SET StatementDifference="
+				+ "(SELECT COALESCE(SUM(currencyConvert(cl.Amount, cl.C_Currency_ID, cb.C_Currency_ID, c.DateAcct, null, c.AD_Client_ID, c.AD_Org_ID)),0) "
+				+ "FROM C_CashLine cl, C_CashBook cb "
+				+ "WHERE cb.C_CashBook_ID=c.C_CashBook_ID"
+				+ " AND cl.C_Cash_ID=c.C_Cash_ID AND cl.IsActive = 'Y' AND (cl.docstatus NOT IN ('DR','IP'))) " 
+				+ "WHERE C_Cash_ID=" + getC_Cash_ID();
+        int no = DB.executeUpdate( sql,get_TrxName());
+
+        if( no != 1 ) {
+            log.warning( "updateHeader - Difference #" + no );
+        }
+
+        // Ending Balance
+
+        sql = "UPDATE C_Cash" 
+        		+ " SET EndingBalance = BeginningBalance + StatementDifference " 
+        		+ " WHERE C_Cash_ID=" + getC_Cash_ID();
+        no = DB.executeUpdate( sql,get_TrxName());
+
+        if( no != 1 ) {
+            log.warning( "updateHeader - Balance #" + no );
+        }
+
+        return no == 1;
+    }    // updateHeader
 }    // MCash
 
 
