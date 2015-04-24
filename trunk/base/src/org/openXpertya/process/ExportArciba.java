@@ -3,6 +3,7 @@ package org.openXpertya.process;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.math.BigDecimal;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -171,41 +172,41 @@ public class ExportArciba extends SvrProcess {
 		// 3 - Fecha de Reten/Percep - Fecha(10) - 10
 		sqlReal.append("To_char(i.dateinvoiced,'dd/MM/yyyy') AS FECHA_DE_RETEN_PERC, ");
 		// 4 - Tipo de comprobante - Número(2) - 2
-		sqlReal.append("(CASE WHEN (d.docbasetype = 'ARI' AND doctypekey ILIKE 'CI%') THEN (CASE WHEN (SELECT value FROM AD_Preference WHERE attribute = 'TIPO_DE_COMPROBANTE_FACTURA_ARCIBA') IS NULL THEN '01' ELSE (SELECT value FROM AD_Preference WHERE attribute = 'TIPO_DE_COMPROBANTE_FACTURA_ARCIBA') END) WHEN (d.docbasetype = 'ARI' AND doctypekey ILIKE 'CND%') THEN (CASE WHEN (SELECT value FROM AD_Preference WHERE attribute = 'TIPO_DE_COMPROBANTE_NOTA_DEBITO_ARCIBA') IS NULL THEN '02' ELSE (SELECT value FROM AD_Preference WHERE attribute = 'TIPO_DE_COMPROBANTE_NOTA_DEBITO_ARCIBA') END) ELSE (CASE WHEN (SELECT value FROM AD_Preference WHERE attribute = 'TIPO_DE_COMPROBANTE_OTRO_ARCIBA') IS NULL THEN '09' ELSE (SELECT value FROM AD_Preference WHERE attribute = 'TIPO_DE_COMPROBANTE_OTRO_ARCIBA') END) END) AS TIPO_DE_COMPROBANTE, ");
+		sqlReal.append("(CASE WHEN (d.docbasetype = 'ARI' AND doctypekey ILIKE 'CI%') THEN (CASE WHEN (SELECT value FROM AD_Preference WHERE attribute = 'TIPO_DE_COMPROBANTE_FACTURA_ARCIBA') IS NULL THEN '01' ELSE (SELECT value FROM AD_Preference WHERE attribute = 'TIPO_DE_COMPROBANTE_FACTURA_ARCIBA') END) WHEN (d.docbasetype = 'ARI' AND doctypekey ILIKE 'CDN%') THEN (CASE WHEN (SELECT value FROM AD_Preference WHERE attribute = 'TIPO_DE_COMPROBANTE_NOTA_DEBITO_ARCIBA') IS NULL THEN '09' ELSE (SELECT value FROM AD_Preference WHERE attribute = 'TIPO_DE_COMPROBANTE_NOTA_DEBITO_ARCIBA') END) ELSE (CASE WHEN (SELECT value FROM AD_Preference WHERE attribute = 'TIPO_DE_COMPROBANTE_OTRO_ARCIBA') IS NULL THEN '09' ELSE (SELECT value FROM AD_Preference WHERE attribute = 'TIPO_DE_COMPROBANTE_OTRO_ARCIBA') END) END) AS TIPO_DE_COMPROBANTE, ");
 		// 5 - Letra de comprobante - Texto(1) - 1
 		sqlReal.append("lc.letra AS LETRA_DE_COMPROBANTE, ");
-		// 6 - Nro. de comprobante - Texto(15) - 15
-		sqlReal.append("rpad(i.documentno,15,' ') AS NRO_DE_COMPROBANTE, ");
+		// 6 - Nro. de comprobante - Número(16) - 16
+		sqlReal.append("lpad(substring(i.documentno from 2 for 13),'16','0') AS NRO_DE_COMPROBANTE, ");
 		// 7 - Fecha de comprobante - Fecha(10) - 10
 		sqlReal.append("To_char(i.dateinvoiced,'dd/MM/yyyy') AS FECHA_DE_COMPROBANTE, ");
-		// 8 - Monto - Número(9,2) - 12
-		sqlReal.append("replace(lpad((CASE WHEN lc.letra = 'A' THEN i.grandtotal ELSE i.netamount END)::text,12,'0'),'.',',') AS MONTO, ");
+		// 8 - Monto - Número(13,2) - 16
+		sqlReal.append("replace(lpad(i.grandtotal::text,16,'0'),'.',',') AS MONTO, ");
 		// 9 - Nro de Certificado Propio - Texto(16) - 16 - CONSTANTE BLANCO EN PERC
 		sqlReal.append("rpad('',16,' ') AS NRO_DE_CERTIFICADO_PROPIO, ");
 		// 10 - Tipo documento - Número(1) - 1
 		sqlReal.append("bp.taxidtype AS TIPO_DOCUMENTO, ");
-		// 11 - Número de Documento - Texto(11) - 11
-		sqlReal.append("rpad(bp.taxid,'11',' ') AS NRO_DE_DOCUMENTO, ");
-		// 12 - Situación Ingresos Brutos - Numérico(1) - 1 - CONSTANTE 0
-		sqlReal.append("(CASE WHEN (SELECT value FROM AD_Preference WHERE attribute = 'SITUACION_IIBB_FACTURA_ARCIBA') IS NULL THEN '0' ELSE (SELECT value FROM AD_Preference WHERE attribute = 'SITUACION_IIBB_FACTURA_ARCIBA') END) AS SITUACION_IIBB, ");
-		// 13 - Nro. Inscripción IB - Numérico(10) - 10 - CONSTANTE 0000000000
-		sqlReal.append("(CASE WHEN (SELECT value FROM AD_Preference WHERE attribute = 'NRO_INCRIPCION_IIBB_FACTURA_ARCIBA') IS NULL THEN '0000000000' ELSE (SELECT value FROM AD_Preference WHERE attribute = 'NRO_INCRIPCION_IIBB_FACTURA_ARCIBA') END) AS NRO_INCRIPCION_IIBB, ");
+		// 11 - Número de Documento - Número(11) - 11
+		sqlReal.append("lpad(trim(bp.taxid),'11','0') AS NRO_DE_DOCUMENTO, ");
+		// 12 - Situación Ingresos Brutos - Numérico(1) - 1 - CONSTANTE 4
+		sqlReal.append("(CASE WHEN (SELECT value FROM AD_Preference WHERE attribute = 'SITUACION_IIBB_FACTURA_ARCIBA') IS NULL THEN '4' ELSE (SELECT value FROM AD_Preference WHERE attribute = 'SITUACION_IIBB_FACTURA_ARCIBA') END) AS SITUACION_IIBB, ");
+		// 13 - Nro. Inscripción IB - Numérico(11) - 10 - CONSTANTE 00000000000
+		sqlReal.append("(CASE WHEN (SELECT value FROM AD_Preference WHERE attribute = 'NRO_INCRIPCION_IIBB_FACTURA_ARCIBA') IS NULL THEN '00000000000' ELSE (SELECT value FROM AD_Preference WHERE attribute = 'NRO_INCRIPCION_IIBB_FACTURA_ARCIBA') END) AS NRO_INCRIPCION_IIBB, ");
 		// 14 - Situación IVA - Numérico(1) - 1
 		sqlReal.append("(CASE WHEN (ci.codigo = 2) THEN '1' WHEN (ci.codigo = 3) THEN '2' WHEN (ci.codigo = 4) THEN '3' WHEN (ci.codigo = 5) THEN '4' WHEN (ci.codigo = 7) THEN '0' ELSE '5' END) AS SITUACION_IVA, ");		
 		// 15 - Razón social del retenido - Texto(30) - 30
 		sqlReal.append("rpad(bp.name,'30',' ') AS RAZON_SOCIAL_DEL_RETENIDO, ");
-		// 16 - Otros Conceptos - Numero(7,2) -	10 - CONSTANTE 0000000,00
-		sqlReal.append("(CASE WHEN (SELECT value FROM AD_Preference WHERE attribute = 'OTROS_CONCEPTOS_FACTURA_ARCIBA') IS NULL THEN '0000000,00' ELSE (SELECT value FROM AD_Preference WHERE attribute = 'OTROS_CONCEPTOS_FACTURA_ARCIBA') END) AS OTROS_CONCEPTOS, ");
-		// 17 - IVA	- Numero(7,2) - 10
-		sqlReal.append("replace(lpad((SELECT SUM(ita.taxamt) AS IVA FROM C_InvoiceTax ita LEFT JOIN C_Tax ta ON (ta.C_Tax_ID = ita.C_Tax_ID) WHERE (ta.IsPercepcion = 'N') AND ita.C_Invoice_ID = i.C_Invoice_ID)::text,10,'0'),'.',',') AS IVA, ");
-		// 18 - Monto Sujeto a Ret/Percep - Numero(9,2) - 12
-		sqlReal.append("replace(lpad(it.taxbaseamt::text,12,'0'),'.',',') AS MONTO_SUJETO_A_PERCEP_RETEN, ");
+		// 16 - Otros Conceptos - Numero(13,2) - 16 - SE INDICA EL MONTO DE RETENCION/PERCEPCION PRACTICADA
+		sqlReal.append("(CASE WHEN (lc.letra = 'A' OR lc.letra = 'M') THEN replace(lpad(it.taxamt::text,16,'0'),'.',',') ELSE replace(lpad(( it.taxamt + (SELECT SUM(ita.taxamt) AS IVA FROM C_InvoiceTax ita LEFT JOIN C_Tax ta ON (ta.C_Tax_ID = ita.C_Tax_ID) WHERE (ta.IsPercepcion = 'N') AND ita.C_Invoice_ID = i.C_Invoice_ID) )::text,16,'0'),'.',',') END) AS  OTROS_CONCEPTOS, ");
+		// 17 - IVA	- Numero(13,2) - 16
+		sqlReal.append("(CASE WHEN (lc.letra = 'A' OR lc.letra = 'M') THEN replace(lpad((SELECT SUM(ita.taxamt) AS IVA FROM C_InvoiceTax ita LEFT JOIN C_Tax ta ON (ta.C_Tax_ID = ita.C_Tax_ID) WHERE (ta.IsPercepcion = 'N') AND ita.C_Invoice_ID = i.C_Invoice_ID)::text,16,'0'),'.',',') ELSE '0000000000000,00' END) AS IVA, ");
+		// 18 - Monto Sujeto a Ret/Percep - Numero(13,2) - 16
+		sqlReal.append("replace(lpad(i.netamount::text,16,'0'),'.',',') AS MONTO_SUJETO_A_PERCEP_RETEN, ");
 		// 19 - Alícuota - Numero(2,2) - 5
 		sqlReal.append("lpad(substring(it.rate::text from 1 for position('.' in it.rate::text) - 1),2,'0')  || ',' || rpad(substring(it.rate::text from position('.' in it.rate::text) + 1 for 5),2,'0') AS ALICUOTA, ");		
-		// 20 - Ret/Percep Practicadas - Numero(9,2) - 12
-		sqlReal.append("replace(lpad(it.taxamt::text,12,'0'),'.',',') AS RET_PERCEP_PRACTICADAS, "); 
-		// 21 - Total Monto Retenido - Numero(9,2) - 12
-		sqlReal.append("replace(lpad(it.taxamt::text,12,'0'),'.',',') AS TOTAL_MONTO_RETENIDO ");
+		// 20 - Ret/Percep Practicadas - Numero(13,2) - 16
+		sqlReal.append("replace(lpad(it.taxamt::text,16,'0'),'.',',') AS RET_PERCEP_PRACTICADAS, "); 
+		// 21 - Total Monto Retenido - Numero(13,2) - 16
+		sqlReal.append("replace(lpad(it.taxamt::text,16,'0'),'.',',') AS TOTAL_MONTO_RETENIDO ");
 		
 		sqlReal.append("FROM C_Invoice i ");
 		sqlReal.append("LEFT JOIN C_InvoiceTax it ON (i.C_Invoice_ID = it.C_Invoice_ID) ");
@@ -241,17 +242,27 @@ public class ExportArciba extends SvrProcess {
 		sqlReal.append("substring(i.documentno from 2 for 13) AS NRO_DE_NOTA_DE_CREDITO, ");
 		// 3 - Fecha de Nota de Credito - Texto(10) - 10
 		sqlReal.append("To_char(i.dateinvoiced,'dd/MM/yyyy') AS FECHA_NOTA_DE_CREDITO, ");
-		// 4 - Monto de Nota de Credito - Número(12) - 12
-		sqlReal.append("replace(lpad(i.grandtotal::text,12,'0'),'.',',') AS MONTO_NOTA_DE_CREDITO, ");
+		// 4 - Monto de Nota de Credito - Número(16) - 16
+		sqlReal.append("replace(lpad(i.grandtotal::text,16,'0'),'.',',') AS MONTO_NOTA_DE_CREDITO, ");
 		// 5 - Nro Certificado Propio - Texto(16) - 16 - Texto en Blanco
 		sqlReal.append("rpad('',16,' ') AS NRO_DE_CERTIFICADO_PROPIO, ");
 		// 6 - Tipo Comprobante Origen - Número(2) - 2
 		sqlReal.append("(SELECT (CASE WHEN (doc.docbasetype = 'ARI' AND doc.doctypekey ILIKE 'CI%') THEN (CASE WHEN (SELECT value FROM AD_Preference WHERE attribute = 'TIPO_DE_COMPROBANTE_FACTURA_ARCIBA') IS NULL THEN '01' ELSE (SELECT value FROM AD_Preference WHERE attribute = 'TIPO_DE_COMPROBANTE_FACTURA_ARCIBA') END) WHEN (doc.docbasetype = 'ARI' AND doc.doctypekey ILIKE 'CND%') THEN (CASE WHEN (SELECT value FROM AD_Preference WHERE attribute = 'TIPO_DE_COMPROBANTE_NOTA_DEBITO_ARCIBA') IS NULL THEN '02' ELSE (SELECT value FROM AD_Preference WHERE attribute = 'TIPO_DE_COMPROBANTE_NOTA_DEBITO_ARCIBA') END) ELSE (CASE WHEN (SELECT value FROM AD_Preference WHERE attribute = 'TIPO_DE_COMPROBANTE_OTRO_ARCIBA') IS NULL THEN '09' ELSE (SELECT value FROM AD_Preference WHERE attribute = 'TIPO_DE_COMPROBANTE_OTRO_ARCIBA') END) END) FROM C_Invoice inv LEFT JOIN C_DocType doc ON (inv.C_DocType_ID = doc.C_DocType_ID) WHERE inv.C_Invoice_ID = i.C_Invoice_Orig_ID) AS TIPO_DE_COMPROBANTE_ORIGEN, ");
 		// 7 - Letra de Comprobante - Texto(1) - 1
 		sqlReal.append("(SELECT lc.letra FROM C_Invoice inv LEFT JOIN C_Letra_Comprobante lec ON (inv.C_Letra_Comprobante_ID = lec.C_Letra_Comprobante_ID) WHERE inv.C_Invoice_ID = i.C_Invoice_Orig_ID) AS LETRA_DE_COMPROBANTE, ");
-		// 8 - Número de Comprobante - Texto(15) - 15
-		sqlReal.append("(SELECT lpad(substring(inv.documentno from 2 for 13),'15',' ') FROM C_Invoice inv WHERE inv.C_Invoice_ID = i.C_Invoice_Orig_ID) AS NRO_DE_COMPROBANTE, ");
-		// 9 - Fecha de Comprobante Origen - Utilizada para filtrar
+		// 8 - Número de Comprobante - Texto(16) - 16
+		sqlReal.append("(SELECT lpad(substring(inv.documentno from 2 for 13),'16','0') FROM C_Invoice inv WHERE inv.C_Invoice_ID = i.C_Invoice_Orig_ID) AS NRO_DE_COMPROBANTE, ");
+		// 9 - Número de Documento del Retenido- Número(11) - 11
+		sqlReal.append("lpad(trim(bp.taxid),'11','0') AS NRO_DE_DOCUMENTO, ");
+		// 10 - Código de Norma - Número(3) - 3
+		sqlReal.append("lpad((SELECT itax.arcibanormcode::text FROM C_InvoiceTax itax WHERE itax.C_Invoice_ID = i.C_Invoice_Orig_ID AND itax.arcibanormcode IS NOT NULL),3,'0') AS CODIGO_DE_NORMA, ");
+		// 11 - Fecha de Reten/Percep - Fecha(10) - 10
+		sqlReal.append("To_char((SELECT inv.dateinvoiced FROM C_Invoice inv WHERE inv.C_Invoice_ID = i.C_Invoice_Orig_ID),'dd/MM/yyyy') AS FECHA_DE_RETEN_PERC, ");
+		// 12 - Ret/Percep Practicadas - Numero(13,2) - 16
+		sqlReal.append("replace(lpad(((i.grandtotal * it.rate / 100)::numeric(16,2))::text,16,'0'),'.',',') AS RET_PERCEP_PRACTICADAS, ");
+		// 13 - Alícuota - Numero(2,2) - 5
+		sqlReal.append("lpad(substring(it.rate::text from 1 for position('.' in it.rate::text) - 1),2,'0')  || ',' || rpad(substring(it.rate::text from position('.' in it.rate::text) + 1 for 5),2,'0') AS ALICUOTA, ");			
+		// 99 - Fecha de Comprobante Origen - Utilizada para filtrar		
 		sqlReal.append("(SELECT inv.dateinvoiced FROM C_Invoice inv WHERE inv.C_Invoice_ID = i.C_Invoice_Orig_ID) AS FECHA_COMPROBANTE_ORIGEN ");
 		sqlReal.append("FROM C_Invoice i ");
 		sqlReal.append("LEFT JOIN C_InvoiceTax it ON (i.C_Invoice_ID = it.C_Invoice_ID) ");
@@ -311,26 +322,50 @@ public class ExportArciba extends SvrProcess {
 			s.append(rs.getString(2));
 			s.append(rs.getString(3));
 			s.append(rs.getString(4));
-			// La letra no la agrego porque la proxima columna es Nro. de Comprobante con Letra al inicio
-			//s.append(rs.getString(5));
+			/* En PERCEPCION: Si Tipo Comprobante = (01,06,07): A,B,C,M sino 1 dígito blanco. */
+			if ( (rs.getString(4).compareTo("01") == 0) || (rs.getString(4).compareTo("06") == 0) || (rs.getString(4).compareTo("07") == 0) ){
+				s.append(rs.getString(5));	
+			}
+			else{
+				s.append(" ");
+			}
 			s.append(rs.getString(6));
-			// Concateno 1 espacio en blanco por el lugar que ocupa la letra 
-			s.append(" ");
 			s.append(rs.getString(7));
 			s.append(rs.getString(8));
 			s.append(rs.getString(9));
+			/* 1: CDI, 2: CUIL, 3: CUIT */ 
 			if (rs.getString(10).compareTo(X_C_BPartner.TAXIDTYPE_DNI) == 0){s.append("1");}
-			else{if (rs.getString(10).compareTo(X_C_BPartner.TAXIDTYPE_CUIT) == 0){s.append("2");}
-			     else{if (rs.getString(10).compareTo(X_C_BPartner.TAXIDTYPE_CUIL) == 0){s.append("3");}
+			else{if (rs.getString(10).compareTo(X_C_BPartner.TAXIDTYPE_CUIT) == 0){s.append("3");}
+			     else{if (rs.getString(10).compareTo(X_C_BPartner.TAXIDTYPE_CUIL) == 0){s.append("2");}
 			          else{s.append("7");}}}
 			s.append(rs.getString(11));
+			/* Si Tipo de Documento=3: Situación IB del Retenido=(1,2,4,5)
+			 * Si Tipo de Documento=(1,2): Situación IB del Retenido=4
+			 * DONDE:
+			 * 1: Local, 2: Convenio Multilateral, 4: No inscripto, 5: Reg.Simplificado 
+			 */
 			s.append(rs.getString(12));
 			s.append(rs.getString(13));
 			s.append(rs.getString(14));
 			s.append(rs.getString(15));
 			s.append(rs.getString(16));
 			s.append(rs.getString(17));
-			s.append(rs.getString(18));
+			/* TODO
+			 * Ajuste del campo Monto Sujeto a Ret/Percep
+			 * Se debería analizar por qué se genera un diferencia de 1 centavo. 
+			*/
+			BigDecimal montoSujetoARetencion = new BigDecimal(rs.getString(18).replace(",", "."));
+			BigDecimal montoTotal = new BigDecimal(rs.getString(8).replace(",", "."));
+			BigDecimal otrosConceptos = new BigDecimal(rs.getString(16).replace(",", "."));
+			BigDecimal importeIva = new BigDecimal(rs.getString(17).replace(",", "."));
+			BigDecimal montoAux = montoTotal.subtract(otrosConceptos).subtract(importeIva);
+			if ( montoSujetoARetencion.subtract(montoAux).abs().compareTo(new BigDecimal("0.03")) <= 0){
+				String monto = montoAux.toString();
+				s.append(("0000000000000000".substring(monto.length()) + monto).replace(".", ","));
+			}
+			else{
+				s.append(rs.getString(18));	
+			}
 			s.append(rs.getString(19));
 			s.append(rs.getString(20));
 			s.append(rs.getString(21));
