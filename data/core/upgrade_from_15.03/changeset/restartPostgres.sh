@@ -97,21 +97,21 @@ sleep 30;
 # =====================================================================================================================
 
 # Reiniciar también el servidor de aplicaciones (en caso de que el mismo estaba corriendo)
-service libertyad status > $LY_STATUS_RESULT_FILE
+/sbin/service libertyad status > $LY_STATUS_RESULT_FILE
 LYSTARTED=`cat $LY_STATUS_RESULT_FILE`
 
 if [[ "$LYSTARTED" == "1" ]]; then
 	if [[ $1 == "Y" ]]; then
 	    echo === libertyad estaba corriendo, se reinicia ===
 		# Bajar el server de manera normal
-		service libertyad stop; 
+		/sbin/service libertyad stop; 
 		echo Esperando un rato...
 		sleep 30; 
 		# Matar posibles existencias del server.  Eliminar eventual existencia del PID generado por libertyad. (si aparece un solo proceso no es problema, es el grep)
 		$OXP_HOME/utils/killEmAll.sh $OXP_HOME/jboss
 		rm -f /var/run/libertya.pid
 		# Iniciar normalmente
-		service libertyad start;
+		/sbin/service libertyad start;
 		echo Esperando un rato mas...
 		sleep 30; 
 	else
