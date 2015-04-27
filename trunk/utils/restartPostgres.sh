@@ -61,7 +61,7 @@ sleep 30;
 
 # Matar toda posible existencia de postgres anterior (si aparece un solo proceso no es problema, es el grep)
 echo === Eliminando eventuales procesos postgres remanentes ===
-./killEmAll.sh $PG_BIN/postgres
+$OXP_HOME/utils/killEmAll.sh $PG_BIN/postgres
 
 # Darle tiempo al kill
 echo Esperando otro rato...
@@ -108,7 +108,7 @@ if [[ "$LYSTARTED" == "1" ]]; then
 		echo Esperando un rato...
 		sleep 30; 
 		# Matar posibles existencias del server.  Eliminar eventual existencia del PID generado por libertyad. (si aparece un solo proceso no es problema, es el grep)
-		./killEmAll.sh $OXP_HOME/jboss
+		$OXP_HOME/utils/killEmAll.sh $OXP_HOME/jboss
 		rm -f /var/run/libertya.pid
 		# Iniciar normalmente
 		service libertyad start;
