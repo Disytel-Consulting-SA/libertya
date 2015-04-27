@@ -50,6 +50,7 @@ Ejemplos de cambios
 	<!-- ================================ -->
 	<!-- Nomina de cambios a continuación -->
 	<!-- ================================ -->
+	<copy file="${SOURCE_DIR}/restartPostgres.sh" todir="${TARGET_DIR}/utils" overwrite="yes" />
 			
     </target>
     
