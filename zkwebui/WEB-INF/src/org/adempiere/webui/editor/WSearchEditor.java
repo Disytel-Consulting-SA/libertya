@@ -497,87 +497,89 @@ public class WSearchEditor extends WEditor implements ContextMenuListener, Value
 		log.fine(col + ", Zoom=" + lookup.getZoom() + " (" + whereClause + ")");
 
 		// boolean resetValue = false;	// Reset value so that is always treated as new entry
-
-		if (col.equals("M_Product_ID"))
-		{
-			m_tableName = "M_Product";
-			//	Reset
-			Env.setContext(Env.getCtx(), lookup.getWindowNo(), Env.TAB_INFO, "M_Product_ID", "0");
-			Env.setContext(Env.getCtx(), lookup.getWindowNo(), Env.TAB_INFO, "M_AttributeSetInstance_ID", "0");
-			Env.setContext(Env.getCtx(), lookup.getWindowNo(), Env.TAB_INFO, "M_Lookup_ID", "0");
-
-			//  Replace Value with name if no value exists
-			if (queryValue.length() == 0 && getComponent().getText().length() > 0)
-				queryValue = "@" + getComponent().getText() + "@";   //  Name indicator - otherwise Value
-
-			int M_Warehouse_ID = Env.getContextAsInt(Env.getCtx(), lookup.getWindowNo(), "M_Warehouse_ID");
-			int M_PriceList_ID = Env.getContextAsInt(Env.getCtx(), lookup.getWindowNo(), "M_PriceList_ID");
-
-			//	Show Info
-			// InfoProductPanel ip = new InfoProductPanel (lookup.getWindowNo(), M_Warehouse_ID, M_PriceList_ID, true, queryValue, whereClause);
-			InfoPanel ip = InfoPanel.create(lookup.getWindowNo(), m_tableName,m_keyColumnName,queryValue, false, whereClause, M_Warehouse_ID, M_PriceList_ID);
-
-			ip.setVisible(true);
-			ip.setTitle("Product Info");
-			ip.setStyle("border: 2px");
-			ip.setClosable(true);
-			ip.setAttribute("mode", "modal");
-			ip.addValueChangeListener(this);
-			infoPanel = ip;
-			AEnv.showWindow(ip);
-			
-			cancelled = ip.isCancelled();
-			result = ip.getSelectedKeys();
+		
+		if (isShowInfo()) {
+			if (col.equals("M_Product_ID"))
+			{
+				m_tableName = "M_Product";
+				//	Reset
+				Env.setContext(Env.getCtx(), lookup.getWindowNo(), Env.TAB_INFO, "M_Product_ID", "0");
+				Env.setContext(Env.getCtx(), lookup.getWindowNo(), Env.TAB_INFO, "M_AttributeSetInstance_ID", "0");
+				Env.setContext(Env.getCtx(), lookup.getWindowNo(), Env.TAB_INFO, "M_Lookup_ID", "0");
+	
+				//  Replace Value with name if no value exists
+				if (queryValue.length() == 0 && getComponent().getText().length() > 0)
+					queryValue = "@" + getComponent().getText() + "@";   //  Name indicator - otherwise Value
+	
+				int M_Warehouse_ID = Env.getContextAsInt(Env.getCtx(), lookup.getWindowNo(), "M_Warehouse_ID");
+				int M_PriceList_ID = Env.getContextAsInt(Env.getCtx(), lookup.getWindowNo(), "M_PriceList_ID");
+	
+				//	Show Info
+				// InfoProductPanel ip = new InfoProductPanel (lookup.getWindowNo(), M_Warehouse_ID, M_PriceList_ID, true, queryValue, whereClause);
+				InfoPanel ip = InfoPanel.create(lookup.getWindowNo(), m_tableName,m_keyColumnName,queryValue, false, whereClause, M_Warehouse_ID, M_PriceList_ID);
+	
+				ip.setVisible(true);
+				ip.setTitle("Product Info");
+				ip.setStyle("border: 2px");
+				ip.setClosable(true);
+				ip.setAttribute("mode", "modal");
+				ip.addValueChangeListener(this);
+				infoPanel = ip;
+				AEnv.showWindow(ip);
+				
+				cancelled = ip.isCancelled();
+				result = ip.getSelectedKeys();
+			}
+			else if (col.equals("C_BPartner_ID"))
+			{
+				m_tableName = "C_BPartner";
+				//  Replace Value with name if no value exists
+				if (queryValue.length() == 0 && getComponent().getText().length() > 0)
+					queryValue = getComponent().getText();
+	
+				boolean isSOTrx = true;     //  default
+	
+				if (Env.getContext(Env.getCtx(), lookup.getWindowNo(), "IsSOTrx").equals("N"))
+					isSOTrx = false;
+	
+				// InfoBPartnerPanel ip = new InfoBPartnerPanel(lookup.getWindowNo(), queryValue, isSOTrx,false, whereClause);
+				InfoPanel ip = InfoPanel.create(lookup.getWindowNo(), m_tableName,m_keyColumnName,queryValue, false, whereClause, isSOTrx);
+				
+				ip.setVisible(true);
+				ip.setTitle("Business Partner Info");
+				ip.setStyle("border: 2px");
+				ip.setClosable(true);
+				ip.setAttribute("mode", "modal");
+				ip.addValueChangeListener(this);
+				infoPanel = ip;
+				AEnv.showWindow(ip);
+	
+				cancelled = ip.isCancelled();
+				result = ip.getSelectedKeys();
+			}
+			else	//	General Info
+			{
+				if (m_tableName == null)	//	sets table name & key column
+					getDirectAccessSQL("*");
+	
+	            if (queryValue.length() == 0 && getComponent().getText().length() > 0)
+	                queryValue = getComponent().getText();
+	
+				InfoPanel ig = InfoPanel.create(lookup.getWindowNo(), m_tableName,m_keyColumnName,queryValue, false, whereClause);
+				ig.setVisible(true);
+				ig.setStyle("border: 2px");
+				ig.setClosable(true);
+				ig.setAttribute("mode", "modal");
+				ig.addValueChangeListener(this);
+				infoPanel = ig;
+				AEnv.showWindow(ig);
+	
+				cancelled = ig.isCancelled();
+				result = ig.getSelectedKeys();
+	
+			}
 		}
-		else if (col.equals("C_BPartner_ID"))
-		{
-			m_tableName = "C_BPartner";
-			//  Replace Value with name if no value exists
-			if (queryValue.length() == 0 && getComponent().getText().length() > 0)
-				queryValue = getComponent().getText();
-
-			boolean isSOTrx = true;     //  default
-
-			if (Env.getContext(Env.getCtx(), lookup.getWindowNo(), "IsSOTrx").equals("N"))
-				isSOTrx = false;
-
-			// InfoBPartnerPanel ip = new InfoBPartnerPanel(lookup.getWindowNo(), queryValue, isSOTrx,false, whereClause);
-			InfoPanel ip = InfoPanel.create(lookup.getWindowNo(), m_tableName,m_keyColumnName,queryValue, false, whereClause, isSOTrx);
-			
-			ip.setVisible(true);
-			ip.setTitle("Business Partner Info");
-			ip.setStyle("border: 2px");
-			ip.setClosable(true);
-			ip.setAttribute("mode", "modal");
-			ip.addValueChangeListener(this);
-			infoPanel = ip;
-			AEnv.showWindow(ip);
-
-			cancelled = ip.isCancelled();
-			result = ip.getSelectedKeys();
-		}
-		else	//	General Info
-		{
-			if (m_tableName == null)	//	sets table name & key column
-				getDirectAccessSQL("*");
-
-            if (queryValue.length() == 0 && getComponent().getText().length() > 0)
-                queryValue = getComponent().getText();
-
-			InfoPanel ig = InfoPanel.create(lookup.getWindowNo(), m_tableName,m_keyColumnName,queryValue, false, whereClause);
-			ig.setVisible(true);
-			ig.setStyle("border: 2px");
-			ig.setClosable(true);
-			ig.setAttribute("mode", "modal");
-			ig.addValueChangeListener(this);
-			infoPanel = ig;
-			AEnv.showWindow(ig);
-
-			cancelled = ig.isCancelled();
-			result = ig.getSelectedKeys();
-
-		}
-
+	
 		infoPanel = null;
 		//  Result
 		if (result != null && result.length > 0)
@@ -937,5 +939,21 @@ public class WSearchEditor extends WEditor implements ContextMenuListener, Value
 
 	public void setNewValueOnChange(Object newValueOnChange) {
 		this.newValueOnChange = newValueOnChange;
+	}
+	
+	private boolean showInfo = true;
+
+	/**
+	 * @return the showInfo
+	 */
+	public boolean isShowInfo() {
+		return showInfo;
+	}
+
+	/**
+	 * @param showInfo the showInfo to set
+	 */
+	public void setShowInfo(boolean showInfo) {
+		this.showInfo = showInfo;
 	}
 }
