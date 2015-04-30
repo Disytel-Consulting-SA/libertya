@@ -982,7 +982,7 @@ public class DocumentEngine implements DocAction {
 	 * @return Number of valid options
 	 */
 	public static int getValidActions(String docStatus, Object processing, 
-			String orderType, String isSOTrx, int AD_Table_ID, String[] docAction, String[] options)
+			String orderType, String isSOTrx, int AD_Table_ID, String[] docAction, String[] options, int recordID)
 	{
 		if (options == null)
 			throw new IllegalArgumentException("Option array parameter is null");
