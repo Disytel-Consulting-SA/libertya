@@ -372,6 +372,10 @@ public abstract class WCreateFrom extends ADForm implements EventListener, Creat
     abstract void save() throws CreateFromSaveException; 
    
 
+    public void selectall ()	{
+		window.selectAll();
+	}
+    
     /**
      * Descripción de Método
      *

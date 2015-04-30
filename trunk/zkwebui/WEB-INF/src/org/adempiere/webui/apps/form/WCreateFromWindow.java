@@ -140,16 +140,20 @@ public class WCreateFromWindow extends Window implements EventListener, WTableMo
 		// Select All
 		// Trifon
 		else if (e.getTarget().getId().equals(SELECT_ALL)) {
-			ListModelTable model = dataTable.getModel();
-			int rows = model.getSize();
-			for (int i = 0; i < rows; i++) {
-				Boolean newValue = !(Boolean)dataTable.getValueAt(i, 0);
-				dataTable.setValueAt(newValue, i, 0);
-			}
-			info();
+			selectAll();
 		}
 	}
 
+	public void selectAll() {
+		ListModelTable model = dataTable.getModel();
+		int rows = model.getSize();
+		for (int i = 0; i < rows; i++) {
+			Boolean newValue = !(Boolean)dataTable.getValueAt(i, 0);
+			dataTable.setValueAt(newValue, i, 0);
+		}
+		info();		
+	}
+	
 	public void tableChanged (WTableModelEvent e)
 	{
 		int type = -1;
