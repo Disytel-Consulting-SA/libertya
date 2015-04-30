@@ -55,6 +55,7 @@ import org.adempiere.webui.window.FindWindow;
 import org.adempiere.webui.window.WRecordAccessDialog;
 import org.openXpertya.model.DataStatusEvent;
 import org.openXpertya.model.DataStatusListener;
+import org.openXpertya.model.MDocType;
 import org.openXpertya.model.MField;
 import org.openXpertya.model.MTab;
 import org.openXpertya.model.MTabVO;
@@ -1687,11 +1688,29 @@ public abstract class AbstractADWindowPanel extends AbstractUIPart implements To
      * @see ToolbarListener#onPrint()
      */
 	public void onPrint() {
-		//Get process defined for this tab
-		int AD_Process_ID = curTab.getAD_Process_ID();
+		
+		/* Priorizar informacion en C_DocType para la impresion de reportes */
+        int AD_Process_ID = 0;
+        MField field = null;
+        
 		//log.info("ID=" + AD_Process_ID);
 
+        // Busco si existe alguna columna que se llame "C_DocTypeTarget_ID" y obtengo el id.
+        // Si no encuentro busco si existe alguna columna que se llame "C_DocType_ID" y obtengo el id.        
+		field = curTab.getField("C_DocTypeTarget_ID");
+        if (field == null)
+        	field = curTab.getField("C_DocType_ID");
+
+        if (field != null)
+        {
+        	int C_DocType_ID = ((Integer)field.getValue() == null) ? 0 : (Integer)field.getValue();
+        	MDocType DocType = new MDocType(ctx, C_DocType_ID, null);
+       		AD_Process_ID = DocType.getAD_Process_ID();
+       	}
+		
 		//	No report defined
+		if (AD_Process_ID == 0) { AD_Process_ID = curTab.getAD_Process_ID(); }
+		
 		if (AD_Process_ID == 0)
 		{
 			onReport();
