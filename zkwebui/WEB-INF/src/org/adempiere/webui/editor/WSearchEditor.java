@@ -685,8 +685,9 @@ public class WSearchEditor extends WEditor implements ContextMenuListener, Value
 			
 			log.finest(m_columnName + " (predefined) " + sql.toString());
 			
-			return MRole.getDefault().addAccessSQL(sql.toString(),
-				m_tableName, MRole.SQL_NOTQUALIFIED, MRole.SQL_RO);
+
+			return lookup.addSecurityValidation()?MRole.getDefault().addAccessSQL(sql.toString(),
+				m_tableName, MRole.SQL_NOTQUALIFIED, MRole.SQL_RO):sql.toString();
 		}
 		
 		//	Check if it is a Table Reference
@@ -758,8 +759,8 @@ public class WSearchEditor extends WEditor implements ContextMenuListener, Value
 					
 					log.finest(m_columnName + " (Table) " + sql.toString());
 					
-					return MRole.getDefault().addAccessSQL(sql.toString(),
-								m_tableName, MRole.SQL_NOTQUALIFIED, MRole.SQL_RO);
+					return lookup.addSecurityValidation()?MRole.getDefault().addAccessSQL(sql.toString(),
+								m_tableName, MRole.SQL_NOTQUALIFIED, MRole.SQL_RO):sql.toString();
 				}
 			} // Table Reference
 		} // MLookup
