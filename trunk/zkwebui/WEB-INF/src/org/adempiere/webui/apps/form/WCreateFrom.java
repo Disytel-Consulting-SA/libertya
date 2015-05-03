@@ -44,6 +44,7 @@ import org.openXpertya.model.MLookupFactory;
 import org.openXpertya.model.MLookupInfo;
 import org.openXpertya.model.MOrder;
 import org.openXpertya.model.MQuery;
+import org.openXpertya.model.MRole;
 import org.openXpertya.model.MTab;
 import org.openXpertya.util.CLogger;
 import org.openXpertya.util.DB;
@@ -80,7 +81,6 @@ public abstract class WCreateFrom extends ADForm implements EventListener, Creat
         // dynamic init preparation
         int AD_Table_ID = Env.getContextAsInt( Env.getCtx(),mTab.getWindowNo(),"BaseTable_ID" );
         WCreateFrom retValue = null;
-
         // Busca una definición de CreateFrom en los plugins activos
         retValue = PluginWCreateFromUtils.getCreateFrom(mTab);
         
@@ -117,7 +117,8 @@ public abstract class WCreateFrom extends ADForm implements EventListener, Creat
         p_mTab     = mTab;
 		window = new WCreateFromWindow(this, mTab.getWindowNo());
 		window.setTitle(Msg.translate( Env.getCtx(),"CreateFrom"));
-
+		setRole(MRole.get(Env.getCtx(), Env.getAD_Role_ID(Env.getCtx())));
+		
         try {
         	initOrderLookup();
         	
@@ -232,7 +233,17 @@ public abstract class WCreateFrom extends ADForm implements EventListener, Creat
 	
     /** Helper para centralizar lógica de modelo */
 	protected CreateFromModel helper = new CreateFromModel();
+	
+	/** Perfil actual */
+	private MRole role;
+	
+	protected MRole getRole() {
+		return role;
+	}
 
+	protected void setRole(MRole role) {
+		this.role = role;
+	}
 	
     /**
      * Descripción de Método
