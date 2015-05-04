@@ -50,7 +50,11 @@ Ejemplos de cambios
 	<!-- ================================ -->
 	<!-- Nomina de cambios a continuación -->
 	<!-- ================================ -->
+	<!-- 20150427-1153 URL Completa para invocacion a script -->
 	<copy file="${SOURCE_DIR}/restartPostgres.sh" todir="${TARGET_DIR}/utils" overwrite="yes" />
+	
+	<!-- 20150504-1326 Ampliar valores de gestion de memoria para JBoss -->
+	<copy file="${SOURCE_DIR}/LibertyaEnvTemplate.properties" todir="${TARGET_DIR}" overwrite="yes" />
 			
     </target>
     
