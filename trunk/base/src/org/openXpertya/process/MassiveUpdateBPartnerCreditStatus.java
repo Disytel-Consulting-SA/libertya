@@ -7,4 +7,7 @@ public class MassiveUpdateBPartnerCreditStatus extends MassiveUpdateBPartnerBala
 		return false;
 	}
 	
+	protected boolean isUpdateStatus(){
+		return true;
+	}
 }
