@@ -83,6 +83,6 @@ public class MassiveUpdateBPartnerBalance extends SvrProcess {
 	}
 	
 	protected boolean isUpdateStatus(){
-		return true;
+		return false;
 	}
 }
