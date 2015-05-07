@@ -17,7 +17,7 @@
 		 whenNoDataType="NoPages"
 		 isTitleNewPage="false"
 		 isSummaryNewPage="false">
-	<property name="ireport.scriptlethandling" value="2" />
+	<property name="ireport.scriptlethandling" value="0" />
 	<property name="ireport.encoding" value="UTF-8" />
 	<import value="java.util.*" />
 	<import value="net.sf.jasperreports.engine.*" />
@@ -332,13 +332,13 @@
 			</band>
 		</columnHeader>
 		<detail>
-			<band height="12"  isSplitAllowed="true" >
+			<band height="15"  isSplitAllowed="true" >
 				<textField isStretchWithOverflow="false" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
 						x="0"
 						y="0"
 						width="90"
-						height="10"
+						height="15"
 						key="textField"/>
 					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
 					<textElement verticalAlignment="Middle">
@@ -351,7 +351,7 @@
 						x="430"
 						y="0"
 						width="100"
-						height="10"
+						height="15"
 						key="textField"/>
 					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
 					<textElement textAlignment="Center" verticalAlignment="Middle">
@@ -364,7 +364,7 @@
 						x="360"
 						y="0"
 						width="70"
-						height="10"
+						height="15"
 						key="textField"/>
 					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
 					<textElement verticalAlignment="Middle">
@@ -377,7 +377,7 @@
 						x="230"
 						y="0"
 						width="130"
-						height="10"
+						height="15"
 						key="textField">
 							<printWhenExpression><![CDATA[new Boolean($F{M_WAREHOUSETO_ID}.intValue() > 0)]]></printWhenExpression>
 						</reportElement>
@@ -392,7 +392,7 @@
 						x="230"
 						y="0"
 						width="130"
-						height="10"
+						height="15"
 						key="textField">
 							<printWhenExpression><![CDATA[new Boolean($F{C_BPARTNER_ID}.intValue() > 0)]]></printWhenExpression>
 						</reportElement>
@@ -407,7 +407,7 @@
 						x="90"
 						y="0"
 						width="140"
-						height="10"
+						height="15"
 						key="textField"
 						positionType="Float">
 							<printWhenExpression><![CDATA[new Boolean($F{M_WAREHOUSETO_ID}.intValue() > 0 || $F{C_BPARTNER_ID}.intValue() > 0)]]></printWhenExpression>
@@ -423,7 +423,7 @@
 						x="90"
 						y="0"
 						width="140"
-						height="10"
+						height="15"
 						key="textField-5">
 							<printWhenExpression><![CDATA[new Boolean($F{M_WAREHOUSETO_ID}.intValue() == 0 && $F{C_BPARTNER_ID}.intValue() == 0)]]></printWhenExpression>
 						</reportElement>
@@ -436,7 +436,7 @@
 				<line direction="TopDown">
 					<reportElement
 						x="0"
-						y="10"
+						y="14"
 						width="530"
 						height="0"
 						key="line-3"/>
