@@ -23,6 +23,10 @@ public class PostInstallUpgradeFrom1503 extends PluginPostInstallProcess {
 	protected final static String BROCHURE_REPORT_UID = "CORE-AD_JasperReport-1010129";
 	protected final static String BROCHURE_REPORT_FILENAME = "BrochureReport.jasper";
 	
+	/** UID del Reporte de Correcciones de Comprobantes */
+	protected final static String CHANGE_INVOICE_DATA_REPORT_UID = "CORE-AD_Process-1010414";
+	protected final static String CHANGE_INVOICE_DATA_REPORT_FILENAME = "ChangeInvoiceDataAudit.jrxml";
+	
 	@Override
 	protected String doIt() throws Exception {
 		super.doIt();
@@ -78,6 +82,17 @@ public class PostInstallUpgradeFrom1503 extends PluginPostInstallProcess {
 								.readBinaryFromJar(
 										jarFileURL,
 										getBinaryFileURL(BROCHURE_REPORT_FILENAME)));
+		
+		// Reporte de Correcciones de Comprobantes
+		MProcess.addAttachment(
+				get_TrxName(),
+				getCtx(),
+				CHANGE_INVOICE_DATA_REPORT_UID,
+				CHANGE_INVOICE_DATA_REPORT_FILENAME,
+				JarHelper
+						.readBinaryFromJar(
+								jarFileURL,
+								getBinaryFileURL(CHANGE_INVOICE_DATA_REPORT_FILENAME)));
 		
 		return " ";
 	}
