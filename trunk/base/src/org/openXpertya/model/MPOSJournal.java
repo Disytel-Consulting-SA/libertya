@@ -525,7 +525,7 @@ public class MPOSJournal extends X_C_POSJournal implements DocAction {
 	 *         configurado en el Terminal TPV asociado a esta Caja Diaria.
 	 */
 	public MCashBook getCashBook() {
-		return MCashBook.get(getCtx(), getPOS().getC_CashBook_ID(), get_TrxName());
+		return MCashBook.get(getCtx(), getPOS(true).getC_CashBook_ID(), get_TrxName());
 	}
 	
 	/**
