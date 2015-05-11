@@ -34,8 +34,8 @@
 	<parameter name="C_BPartner_ID" isForPrompting="false" class="java.math.BigDecimal"/>
 	<queryString><![CDATA[SELECT
 c_allocationhdr_id,
-ad_client_id,
-organization,
+subconsulta.ad_client_id,
+o.name as organization,
 grupo_ec,
 fecha,
 entidadcomercial,
@@ -159,23 +159,30 @@ UNION
 (select
 al.c_allocationhdr_id,
 al.ad_client_id,
-null as ad_org_id,
-null as c_bp_group_id,
-null as organization,
-null as grupo_ec,
-null as Fecha,
-null as EntidadComercialID,
-null as EntidadComercial,
-null as NroRecibo,
-null as TipoDeRecibo,
+a.ad_org_id,
+bp.c_bp_group_id,
+o.name as organization,
+bpg.name as grupo_ec,
+a.datetrx as Fecha,
+bp.c_bpartner_id as EntidadComercialID,
+bp.name as EntidadComercial,
+a.documentno as NroRecibo,
+dt.name as TipoDeRecibo,
 'Diferencia de Caja' as Tipo,
-al.amount - allo.amount as Monto
+al.amount
 from c_invoice i
 inner join c_invoiceline il on (il.c_invoice_id = i.c_invoice_id)
 left join c_allocationline al on (al.c_invoice_id = i.c_invoice_id)
+left join c_allocationhdr a on (a.c_allocationhdr_id = al.c_allocationhdr_id)
+inner join ad_org o on (o.ad_org_id = a.ad_org_id)
+inner join c_bpartner bp on (bp.c_bpartner_id = a.c_bpartner_id)
+inner join c_bp_group bpg on (bpg.c_bp_group_id = bp.c_bp_group_id)
+inner join c_doctype dt on (dt.c_doctype_id = a.c_doctype_id)
 left join c_allocationline allo on (allo.c_invoice_credit_id = i.c_invoice_id)
 where il.m_product_id = 
 cast((select value from ad_preference where attribute = 'DIF_CAMBIO_ARTICULO') as INTEGER)
+AND (case $P{Mostrar} when (cast ('P' as varchar)) then dt.docbasetype in ('APP') 
+else dt.docbasetype in ('ARR') end)
 )
 UNION
 (select
@@ -212,7 +219,7 @@ bp.c_bpartner_id as EntidadComercialID,
 bp.name as EntidadComercial,
 a.documentno as NroRecibo,
 dt.name as TipoDeRecibo,
-'Transferencia Bancaria' as Tipo,
+'Tarjeta de crédito' as Tipo,
 al.amount as Monto
 from c_allocationhdr a
 inner join c_allocationline al on (al.c_allocationhdr_id = a.c_allocationhdr_id)
@@ -250,8 +257,9 @@ where (i.issotrx <> dt.issotrx)
 AND (case $P{Mostrar} when (cast ('P' as varchar)) then dt.docbasetype in ('APP') 
 else dt.docbasetype in ('ARR') end)
 )) as subconsulta
-WHERE (($P{AD_Org_ID} IS NULL) OR ($P{AD_Org_ID} = 0) OR (ad_org_id = $P{AD_Org_ID}))
-AND (ad_client_id = $P{AD_CLIENT_ID})
+inner join ad_org o on (o.ad_org_id = $P{AD_Org_ID})
+WHERE (($P{AD_Org_ID} IS NULL) OR ($P{AD_Org_ID} = 0) OR (subconsulta.ad_org_id = $P{AD_Org_ID}))
+AND (subconsulta.ad_client_id = $P{AD_CLIENT_ID})
 AND (($P{FechaDesde}::date IS NULL) OR (Fecha > $P{FechaDesde}::date)) 
 AND (($P{FechaHasta}::date IS NULL) OR (Fecha < $P{FechaHasta}::date))
 ORDER BY c_allocationhdr_id]]></queryString>
@@ -460,19 +468,6 @@ ORDER BY c_allocationhdr_id]]></queryString>
 					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
 				<staticText>
 					<reportElement
-						x="200"
-						y="0"
-						width="100"
-						height="25"
-						key="staticText-81"/>
-					<box topBorder="1Point" topBorderColor="#000000" leftBorder="1Point" leftBorderColor="#000000" rightBorder="1Point" rightBorderColor="#000000" bottomBorder="1Point" bottomBorderColor="#000000"/>
-					<textElement textAlignment="Center" verticalAlignment="Middle">
-						<font/>
-					</textElement>
-				<text><![CDATA[Nro Recibo]]></text>
-				</staticText>
-				<staticText>
-					<reportElement
 						x="0"
 						y="0"
 						width="100"
@@ -483,19 +478,6 @@ ORDER BY c_allocationhdr_id]]></queryString>
 						<font/>
 					</textElement>
 				<text><![CDATA[Nro. Doc. Int.]]></text>
-				</staticText>
-				<staticText>
-					<reportElement
-						x="300"
-						y="0"
-						width="100"
-						height="25"
-						key="staticText-81"/>
-					<box topBorder="1Point" topBorderColor="#000000" leftBorder="1Point" leftBorderColor="#000000" rightBorder="1Point" rightBorderColor="#000000" bottomBorder="1Point" bottomBorderColor="#000000"/>
-					<textElement textAlignment="Center" verticalAlignment="Middle">
-						<font/>
-					</textElement>
-				<text><![CDATA[Tipo de Recibo]]></text>
 				</staticText>
 				<staticText>
 					<reportElement
@@ -588,19 +570,6 @@ ORDER BY c_allocationhdr_id]]></queryString>
 					</textElement>
 				<textFieldExpression   class="java.lang.String"><![CDATA["TOTAL"]]></textFieldExpression>
 				</textField>
-				<textField isStretchWithOverflow="false" isBlankWhenNull="false" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
-					<reportElement
-						x="0"
-						y="0"
-						width="100"
-						height="30"
-						key="textField"/>
-					<box topBorder="1Point" topBorderColor="#000000" leftBorder="1Point" leftBorderColor="#000000" rightBorder="1Point" rightBorderColor="#000000" bottomBorder="1Point" bottomBorderColor="#000000"/>
-					<textElement textAlignment="Center" verticalAlignment="Middle">
-						<font/>
-					</textElement>
-				<textFieldExpression   class="java.lang.String"><![CDATA["TOTAL"]]></textFieldExpression>
-				</textField>
 						</cellContents>
 						</crosstabTotalRowHeader>
 					</rowGroup>
@@ -611,19 +580,6 @@ ORDER BY c_allocationhdr_id]]></queryString>
 						<crosstabRowHeader>
 						<cellContents mode="Transparent">
 					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
-				<textField isStretchWithOverflow="false" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
-					<reportElement
-						x="0"
-						y="0"
-						width="100"
-						height="30"
-						key="textField"/>
-					<box topBorder="1Point" topBorderColor="#000000" leftBorder="1Point" leftBorderColor="#000000" rightBorder="1Point" rightBorderColor="#000000" bottomBorder="1Point" bottomBorderColor="#000000"/>
-					<textElement textAlignment="Center" verticalAlignment="Middle">
-						<font/>
-					</textElement>
-				<textFieldExpression   class="java.lang.String"><![CDATA[$V{entidadcomercial}]]></textFieldExpression>
-				</textField>
 				<textField isStretchWithOverflow="false" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
 						x="0"
