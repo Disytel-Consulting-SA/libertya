@@ -201,7 +201,7 @@ AND ($P{AD_CLIENT_ID} = i.ad_client_id)]]></queryString>
 					<reportElement
 						x="270"
 						y="56"
-						width="216"
+						width="217"
 						height="10"
 						key="staticText-61"/>
 					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
@@ -324,7 +324,9 @@ AND ($P{AD_CLIENT_ID} = i.ad_client_id)]]></queryString>
 						y="39"
 						width="221"
 						height="12"
-						key="textField-96"/>
+						key="textField-96">
+							<printWhenExpression><![CDATA[new Boolean($P{C_BP_Group_ID} != null)]]></printWhenExpression>
+						</reportElement>
 					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
 					<textElement>
 						<font pdfFontName="Helvetica" size="8" isBold="false"/>
@@ -335,7 +337,7 @@ AND ($P{AD_CLIENT_ID} = i.ad_client_id)]]></queryString>
 					<reportElement
 						x="0"
 						y="66"
-						width="940"
+						width="939"
 						height="0"
 						key="line-1"/>
 					<graphicElement stretchType="NoStretch"/>
@@ -461,9 +463,9 @@ AND ($P{AD_CLIENT_ID} = i.ad_client_id)]]></queryString>
 				<textField isStretchWithOverflow="true" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
 						x="50"
-						y="-1"
+						y="0"
 						width="138"
-						height="10"
+						height="9"
 						key="textField-11"
 						stretchType="RelativeToTallestObject"
 						positionType="Float"/>
@@ -476,9 +478,9 @@ AND ($P{AD_CLIENT_ID} = i.ad_client_id)]]></queryString>
 				<textField isStretchWithOverflow="true" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
 						x="188"
-						y="-1"
+						y="0"
 						width="82"
-						height="10"
+						height="9"
 						key="textField-12"
 						stretchType="RelativeToTallestObject"
 						positionType="Float"/>
@@ -491,9 +493,9 @@ AND ($P{AD_CLIENT_ID} = i.ad_client_id)]]></queryString>
 				<textField isStretchWithOverflow="true" pattern="#,##0.00;-#,##0.00" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
 						x="651"
-						y="-1"
+						y="0"
 						width="60"
-						height="10"
+						height="9"
 						key="textField-13"
 						stretchType="RelativeToTallestObject"
 						positionType="Float"/>
@@ -506,9 +508,9 @@ AND ($P{AD_CLIENT_ID} = i.ad_client_id)]]></queryString>
 				<textField isStretchWithOverflow="true" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
 						x="711"
-						y="-1"
+						y="0"
 						width="228"
-						height="10"
+						height="9"
 						key="textField-80"
 						stretchType="RelativeToTallestObject"
 						positionType="Float"/>
@@ -521,9 +523,9 @@ AND ($P{AD_CLIENT_ID} = i.ad_client_id)]]></queryString>
 				<textField isStretchWithOverflow="true" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
 						x="270"
-						y="-1"
-						width="216"
-						height="10"
+						y="0"
+						width="217"
+						height="9"
 						key="textField-81"
 						stretchType="RelativeToTallestObject"
 						positionType="Float"/>
@@ -536,9 +538,9 @@ AND ($P{AD_CLIENT_ID} = i.ad_client_id)]]></queryString>
 				<textField isStretchWithOverflow="true" pattern="#,##0.00;-#,##0.00" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
 						x="487"
-						y="-1"
+						y="0"
 						width="58"
-						height="10"
+						height="9"
 						key="textField-89"
 						stretchType="RelativeToTallestObject"
 						positionType="Float"/>
@@ -551,9 +553,9 @@ AND ($P{AD_CLIENT_ID} = i.ad_client_id)]]></queryString>
 				<textField isStretchWithOverflow="true" pattern="#,##0.00;-#,##0.00" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
 						x="545"
-						y="-1"
+						y="0"
 						width="42"
-						height="10"
+						height="9"
 						key="textField-91"
 						stretchType="RelativeToTallestObject"
 						positionType="Float"/>
@@ -566,9 +568,9 @@ AND ($P{AD_CLIENT_ID} = i.ad_client_id)]]></queryString>
 				<textField isStretchWithOverflow="true" pattern="#,##0.00;-#,##0.00" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
 						x="587"
-						y="-1"
+						y="0"
 						width="64"
-						height="10"
+						height="9"
 						key="textField-92"
 						stretchType="RelativeToTallestObject"
 						positionType="Float"/>
