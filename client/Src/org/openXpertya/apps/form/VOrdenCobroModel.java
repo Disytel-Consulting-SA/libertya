@@ -143,7 +143,7 @@ public class VOrdenCobroModel extends VOrdenPagoModel {
 
 	@Override
 	public String getChequeChequeraSqlValidation() {
-		return " C_BankAccount.BankAccountType = 'C' AND C_BankAccount.C_Currency_ID = @C_Currency_ID@ ";
+		return " C_BankAccount.BankAccountType = 'C' AND C_BankAccount.IsChequesEnCartera = 'Y' AND C_BankAccount.C_Currency_ID = @C_Currency_ID@ ";
 	}
 	
 	public String getRetencionSqlValidation() {
