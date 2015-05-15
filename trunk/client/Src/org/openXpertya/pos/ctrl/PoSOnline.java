@@ -1079,9 +1079,14 @@ public class PoSOnline extends PoSConnectionState {
 			// Verificar que no superen el límite impuesto en el control y que estén activos
 			MCheckCuitControl cuitControl;
 			BigDecimal balance;
+			int orgID = Env.getAD_Org_ID(getCtx());
+			BigDecimal initialCheckLimit = MCheckCuitControl
+					.getInitialCheckLimit(Env.getAD_Org_ID(getCtx()),
+							getTrxName());
 			for (String cuit : cuits.keySet()) {
 				// Obtener el control para el cuit y organización actual
-				cuitControl = createCheckCUITControl(Env.getAD_Org_ID(getCtx()), cuit);				
+				cuitControl = MCheckCuitControl.get(getCtx(), orgID, cuit,
+						true, initialCheckLimit, getTrxName());			
 				// Verificar si está activo y no supera el límite impuesto en el
 				// control
 				if(!cuitControl.isActive()){
@@ -2098,30 +2103,6 @@ public class PoSOnline extends PoSConnectionState {
 		throwIfFalse(hdr.save(), hdr);
 		
 		return hdr;
-	}
-
-	protected MCheckCuitControl createCheckCUITControl(Integer orgID, String cuit) throws Exception{
-		// Obtener el control para el cuit y organización *
-		MCheckCuitControl cuitControl = (MCheckCuitControl) PO
-				.findFirst(
-						getCtx(),
-						X_C_CheckCuitControl.Table_Name,
-						"ad_org_id = ? AND translate(upper(trim(cuit)), '-', '') = translate(upper(trim('"
-								+ cuit + "')), '-', '')",
-						new Object[] { orgID }, null, getTrxName());
-		// Si no existe lo creo 
-		if(cuitControl == null){
-			cuitControl = new MCheckCuitControl(getCtx(), 0, getTrxName());
-			cuitControl.setCUIT(cuit);
-			cuitControl.setCheckLimit(MCheckCuitControl
-					.getInitialCheckLimit(Env.getAD_Org_ID(getCtx()),
-							getTrxName()));
-			cuitControl.setClientOrg(Env.getAD_Client_ID(getCtx()),	orgID);
-			if(!cuitControl.save()){
-				throw new Exception(CLogger.retrieveErrorAsString());
-			}
-		}
-		return cuitControl;
 	}
 	
 	private void doCompleteAllocation() throws PosException {
