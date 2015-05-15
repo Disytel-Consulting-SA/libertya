@@ -15,6 +15,12 @@ import org.openXpertya.util.Util;
 public class MCheckCuitControl extends X_C_CheckCuitControl {
 
 	/**
+	 * Bypass para no controlar límite de perfil cuando es un registro de la org
+	 * *
+	 */
+	private boolean controlRoleLimitClient = true;
+	
+	/**
 	 * @param orgID
 	 * @param trxName
 	 * @return El monto límite inicial para cheque por CUIT 
@@ -95,9 +101,10 @@ public class MCheckCuitControl extends X_C_CheckCuitControl {
 			BigDecimal checkLimit = limit != null ? limit : MCheckCuitControl
 					.getInitialCheckLimit(orgID, trxName);
 			cuitControl = new MCheckCuitControl(ctx, 0, trxName);
-			cuitControl.setCUIT(cuit);
+			cuitControl.set_ValueNoCheck("CUIT", cuit);
 			cuitControl.setCheckLimit(checkLimit);
 			cuitControl.setClientOrg(Env.getAD_Client_ID(ctx),	orgID);
+			cuitControl.setControlRoleLimitClient(false);
 			if(!cuitControl.save()){
 				throw new Exception(CLogger.retrieveErrorAsString());
 			}
@@ -154,55 +161,69 @@ public class MCheckCuitControl extends X_C_CheckCuitControl {
 			return false;
 		}
 		
-		// Si se modificó el monto, no se debe permitir que sobrepase el límite
-		// asignado por perfil
-		if (getAD_Org_ID() != 0 && (newRecord || is_ValueChanged("CheckLimit"))) {
+		// Validaciones a nivel límite de cuit de cheque
+		if (newRecord || is_ValueChanged("CheckLimit")) {
 			MRole role = MRole.get(getCtx(), Env.getAD_Role_ID(getCtx()));
-			if(role.getControlCUITLimit().compareTo(BigDecimal.ZERO) > 0
-					&& getCheckLimit().compareTo(role.getControlCUITLimit()) > 0){
-				log.saveError(Msg.getMsg(getCtx(), "CheckLimitSurpassRoleLimit",
-						new Object[] { role.getControlCUITLimit() }), "");
-				return false;
+			if(getAD_Org_ID() != 0){
+				// Si se modificó el monto, no se debe permitir que sobrepase el límite
+				// asignado por perfil
+				if(role.getControlCUITLimit().compareTo(BigDecimal.ZERO) > 0
+						&& getCheckLimit().compareTo(role.getControlCUITLimit()) > 0){
+					log.saveError(Msg.getMsg(getCtx(), "CheckLimitSurpassRoleLimit",
+							new Object[] { role.getControlCUITLimit() }), "");
+					return false;
+				}
+				// La suma de todos los límites del mismo cuit en las organizaciones,
+				// más la org actual, no puede superar el límite por compañía
+				MClientInfo clientInfo = MClientInfo.get(getCtx(), getAD_Client_ID());
+				BigDecimal sumCheckLimits = DB.getSQLValueBD(get_TrxName(),
+						"SELECT coalesce(sum(checklimit),0) FROM "
+								+ get_TableName()
+								+ " WHERE translate(upper(trim(cuit)), '-', '') = translate(upper(trim('"
+								+ getCUIT()
+								+ "')), '-', '') AND ad_client_id = ? AND ad_org_id <> 0 "
+								+ " AND ad_org_id <> "+ getAD_Org_ID(), getAD_Client_ID());
+				sumCheckLimits = sumCheckLimits != null ? sumCheckLimits: BigDecimal.ZERO;
+				sumCheckLimits = sumCheckLimits.add(getCheckLimit());
+				// Límite de cheques en la configuración de la compañía
+				if(clientInfo.getCuitControlCheckLimit().compareTo(sumCheckLimits) < 0){
+					log.saveError("SaveError", Msg.getMsg(
+							getCtx(),
+							"CUITControlOrgsCheckLimitSurpassClient",
+							new Object[] {
+									getCUIT(),
+									clientInfo.getCuitControlCheckLimit(),
+									clientInfo.getCuitControlCheckLimit().subtract(
+											sumCheckLimits
+													.subtract(getCheckLimit())) }));
+					return false;
+				}
+				// Límite de cheque a nivel de compañía (Registro con Organización *)
+				MCheckCuitControl cuitControl0 = get(getCtx(), 0, getCUIT(), get_TrxName());
+				if (cuitControl0 != null
+						&& cuitControl0.getCheckLimit().compareTo(sumCheckLimits) < 0) {
+					log.saveError("SaveError", Msg.getMsg(
+							getCtx(),
+							"CUITControlOrgsCheckLimitSurpassOrg0",
+							new Object[] {
+									getCUIT(),
+									cuitControl0.getCheckLimit(),
+									cuitControl0.getCheckLimit().subtract(
+											sumCheckLimits
+													.subtract(getCheckLimit())) }));
+					return false;
+				}
 			}
-			// La suma de todos los límites del mismo cuit en las organizaciones,
-			// más la org actual, no puede superar el límite por compañía
-			MClientInfo clientInfo = MClientInfo.get(getCtx(), getAD_Client_ID());
-			BigDecimal sumCheckLimits = DB.getSQLValueBD(get_TrxName(),
-					"SELECT coalesce(sum(checklimit),0) FROM "
-							+ get_TableName()
-							+ " WHERE translate(upper(trim(cuit)), '-', '') = translate(upper(trim('"
-							+ getCUIT()
-							+ "')), '-', '') AND ad_client_id = ? AND ad_org_id <> 0 "
-							+ " AND ad_org_id <> "+ getAD_Org_ID(), getAD_Client_ID());
-			sumCheckLimits = sumCheckLimits != null ? sumCheckLimits: BigDecimal.ZERO;
-			sumCheckLimits = sumCheckLimits.add(getCheckLimit());
-			// Límite de cheques en la configuración de la compañía
-			if(clientInfo.getCuitControlCheckLimit().compareTo(sumCheckLimits) < 0){
-				log.saveError("SaveError", Msg.getMsg(
-						getCtx(),
-						"CUITControlOrgsCheckLimitSurpassClient",
-						new Object[] {
-								getCUIT(),
-								clientInfo.getCuitControlCheckLimit(),
-								clientInfo.getCuitControlCheckLimit().subtract(
-										sumCheckLimits
-												.subtract(getCheckLimit())) }));
-				return false;
-			}
-			// Límite de cheque a nivel de compañía (Registro con Organización *)
-			MCheckCuitControl cuitControl0 = get(getCtx(), 0, getCUIT(), get_TrxName());
-			if (cuitControl0 != null
-					&& cuitControl0.getCheckLimit().compareTo(sumCheckLimits) < 0) {
-				log.saveError("SaveError", Msg.getMsg(
-						getCtx(),
-						"CUITControlOrgsCheckLimitSurpassOrg0",
-						new Object[] {
-								getCUIT(),
-								cuitControl0.getCheckLimit(),
-								cuitControl0.getCheckLimit().subtract(
-										sumCheckLimits
-												.subtract(getCheckLimit())) }));
-				return false;
+			else{
+				// Si se modificó el monto, no se debe permitir que sobrepase el límite
+				// asignado por perfil para la organización *
+				if (isControlRoleLimitClient()
+						&& getCheckLimit().compareTo(
+								role.getControlCUITLimitClient()) > 0) {
+					log.saveError(Msg.getMsg(getCtx(), "ClientCheckLimitSurpassRoleLimit",
+							new Object[] { role.getControlCUITLimitClient() }), "");
+					return false;
+				}
 			}
 		}
 		
@@ -251,5 +272,13 @@ public class MCheckCuitControl extends X_C_CheckCuitControl {
 			}
 		}
 		return success;
+	}
+
+	public boolean isControlRoleLimitClient() {
+		return controlRoleLimitClient;
+	}
+
+	public void setControlRoleLimitClient(boolean controlRoleLimitClient) {
+		this.controlRoleLimitClient = controlRoleLimitClient;
 	}
 }

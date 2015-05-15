@@ -7,7 +7,7 @@ import java.math.*;
 import org.openXpertya.util.*;
 /** Modelo Generado por AD_Role
  *  @author Comunidad de Desarrollo Libertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
- *  @version  - 2014-10-08 02:31:57.426 */
+ *  @version  - 2015-05-15 00:47:12.911 */
 public class X_AD_Role extends org.openXpertya.model.PO
 {
 /** Constructor estándar */
@@ -35,6 +35,7 @@ setAllow_Info_Resource (true);	// Y
 setAllow_Info_Schedule (true);	// Y
 setConfirmQueryRecords (0);
 setControlCUITLimit (Env.ZERO);
+setControlCUITLimitClient (Env.ZERO);
 setIsAccessAllOrgs (false);	// N
 setIsCanApproveOwnDoc (false);
 setIsCanExport (true);	// Y
@@ -444,6 +445,19 @@ set_Value ("ControlCUITLimit", ControlCUITLimit);
 public BigDecimal getControlCUITLimit() 
 {
 BigDecimal bd = (BigDecimal)get_Value("ControlCUITLimit");
+if (bd == null) return Env.ZERO;
+return bd;
+}
+/** Set Control CUIT Limit Client */
+public void setControlCUITLimitClient (BigDecimal ControlCUITLimitClient)
+{
+if (ControlCUITLimitClient == null) throw new IllegalArgumentException ("ControlCUITLimitClient is mandatory");
+set_Value ("ControlCUITLimitClient", ControlCUITLimitClient);
+}
+/** Get Control CUIT Limit Client */
+public BigDecimal getControlCUITLimitClient() 
+{
+BigDecimal bd = (BigDecimal)get_Value("ControlCUITLimitClient");
 if (bd == null) return Env.ZERO;
 return bd;
 }
