@@ -4452,7 +4452,9 @@ public class MInvoice extends X_C_Invoice implements DocAction {
 			// Set lines to 0
 
 			MInvoiceLine[] lines = getLines(false);
-
+			MDocType docType = MDocType.get(getCtx(), getC_DocTypeTarget_ID());
+			boolean isCredit = docType.getDocBaseType().equals(
+					MDocType.DOCBASETYPE_ARCreditMemo);
 			for (int i = 0; i < lines.length; i++) {
 				MInvoiceLine line = lines[i];
 				BigDecimal old = line.getQtyInvoiced();
@@ -4466,8 +4468,8 @@ public class MInvoice extends X_C_Invoice implements DocAction {
 							+ old + ")");
 
 					// Unlink Shipment
-
-					if (line.getM_InOutLine_ID() != 0) {
+					
+					if (!isCredit && line.getM_InOutLine_ID() != 0) {
 						MInOutLine ioLine = new MInOutLine(getCtx(),
 								line.getM_InOutLine_ID(), get_TrxName());
 
@@ -4532,9 +4534,10 @@ public class MInvoice extends X_C_Invoice implements DocAction {
 
 		boolean localeARActive = CalloutInvoiceExt
 				.ComprobantesFiscalesActivos();
-		MDocType docType = MDocType.get(getCtx(), getC_DocType_ID());
+		MDocType docType = MDocType.get(getCtx(), getC_DocTypeTarget_ID());
 		MDocType reversalDocType = docType;
-
+		boolean isCredit = docType.getDocBaseType().equals(
+				MDocType.DOCBASETYPE_ARCreditMemo);
 		// ////////////////////////////////////////////////////////////////
 		// LOCALIZACIÓN ARGENTINA
 		// Para la localización argentina es necesario contemplar el tipo
@@ -4730,23 +4733,28 @@ public class MInvoice extends X_C_Invoice implements DocAction {
 		addDescription("(" + reversal.getDocumentNo() + "<-)");
 
 		// Clean up Reversed (this) [thanks Victor!]
-
-		MInvoiceLine[] iLines = getLines(false);
-
-		for (int i = 0; i < iLines.length; i++) {
-			MInvoiceLine iLine = iLines[i];
-
-			if (iLine.getM_InOutLine_ID() != 0) {
-				MInOutLine ioLine = new MInOutLine(getCtx(),
-						iLine.getM_InOutLine_ID(), get_TrxName());
-
-				ioLine.setIsInvoiced(false);
-				ioLine.save(get_TrxName());
-
-				// Reconsiliation
-
-				iLine.setM_InOutLine_ID(0);
-				iLine.save(get_TrxName());
+		// Modificado por Matías Cap
+		// Sólo para tipos de doc que no son créditos ya que serían devoluciones
+		// y no se marcan como facturados. Tampoco se debería perder la
+		// asociación con la devolución
+		if(!isCredit){
+			MInvoiceLine[] iLines = getLines(false);
+	
+			for (int i = 0; i < iLines.length; i++) {
+				MInvoiceLine iLine = iLines[i];
+	
+				if (iLine.getM_InOutLine_ID() != 0) {
+					MInOutLine ioLine = new MInOutLine(getCtx(),
+							iLine.getM_InOutLine_ID(), get_TrxName());
+	
+					ioLine.setIsInvoiced(false);
+					ioLine.save(get_TrxName());
+	
+					// Reconsiliation
+	
+					iLine.setM_InOutLine_ID(0);
+					iLine.save(get_TrxName());
+				}
 			}
 		}
 
