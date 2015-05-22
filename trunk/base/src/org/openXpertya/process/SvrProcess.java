@@ -18,17 +18,19 @@ package org.openXpertya.process;
 
 import java.lang.reflect.Method;
 import java.math.BigDecimal;
+import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
+import java.util.HashSet;
 import java.util.Properties;
 import java.util.logging.Level;
 
 import org.openXpertya.model.MPInstance;
 import org.openXpertya.model.MRole;
 import org.openXpertya.model.PO;
-import org.openXpertya.plugin.common.PluginConstants;
+import org.openXpertya.model.X_AD_Process;
 import org.openXpertya.plugin.common.PluginUtils;
 import org.openXpertya.util.CLogMgt;
 import org.openXpertya.util.CLogger;
@@ -88,6 +90,76 @@ public abstract class SvrProcess implements ProcessCall {
 
     protected static String MSG_InvalidArguments = "@InvalidArguments@";
 
+    /** Nómina de procesos en ejecución definidos con limitacion de acceso concurrente por cliente LY */
+    protected static HashSet<Integer> processCurrentlyExecuting = new HashSet<Integer>();
+    
+    /**
+     * Validación de ejecución concurrente según la configuración del proceso 
+     * en AD_Process,bajo el campo ConcurrentExecution
+     * @return true si puede ejecutar correctamente, o false en cc
+     */
+    protected synchronized boolean checkConcurrentAccess(Properties ctx, ProcessInfo pi) {
+    	X_AD_Process aProcess = new X_AD_Process(ctx, pi.getAD_Process_ID(), null);
+    	
+    	// Si no hay restricciones, todo ok
+    	if (X_AD_Process.CONCURRENTEXECUTION_NoRestrictions.equals(aProcess.getConcurrentExecution()))
+    		return true;
+
+    	// Restricción por cliente Libertya
+    	if (X_AD_Process.CONCURRENTEXECUTION_Client.equals(aProcess.getConcurrentExecution())) {
+    		if (processCurrentlyExecuting.contains(pi.getAD_Process_ID()))
+    			return false;
+    		processCurrentlyExecuting.add(pi.getAD_Process_ID());
+    		return true;
+    	}
+    	
+    	// Restricciones global    	
+    	if (X_AD_Process.CONCURRENTEXECUTION_Global.equals(aProcess.getConcurrentExecution())) {
+    		
+    		Connection		conn	= null;
+    		PreparedStatement	pstmt	= null;
+    		ResultSet rs = null;
+    		try {
+    			// Lockear entrada para el proceso en cuestión.  
+    			// Importante: Utilizamos el registro de AD_Process_Trl es_AR porque sabemos que no es referenciado al ejecutar el proceso
+    			// (a diferencia de AD_Process que sí es referenciado, y conlleva eventuales bloqueos).  Adicionalmente, sabemos que la entrada existe siempre.
+    			// Esto evita la problemática de tener una tabla independiente de validación de accesos a procesos en la cual sería necesario o bien
+    			// insertar un nuevo registro cada vez que se genera un nuevo proceso (a fin de garantizar su existencia pero con riesgos de bloqueos al querer 
+    			// insertar y que ya exista), o bien tener una tabla en la que ante cualquier inserción en ad_process se genere su correspondiente entrada
+    			// de validación de acceso concurrente.  Esto último es lo que se hace con AD_Process_Trl cada vez que se crea un nuevo proceso, con lo cual
+    			// no es realmente necesario crear una tabla con información redundante para la finalidad del caso.  Usamos es_AR aunque pdría ser alguna otra, es lo mismo.
+    			String selectSQL = "SELECT * FROM AD_Process_Trl WHERE AD_Language = 'es_AR' AND AD_Process_ID = " + aProcess.getAD_Process_ID() + " FOR UPDATE NOWAIT";
+	    		Trx	trx	= Trx.get(get_TrxName(), false);
+	            conn	= (trx != null ? trx.getConnection() : DB.getConnectionID());
+	    		pstmt	= conn.prepareStatement(selectSQL, ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_UPDATABLE);
+	            rs = pstmt.executeQuery();
+	            return true;
+    		}
+    		catch (Exception e) {
+    			log.log( Level.SEVERE, e.getMessage(), e.getCause());
+    			return false;	
+    		} finally {
+    			try {
+	    			if (pstmt!=null)
+	    				pstmt.close();
+	    			if (rs!=null)
+	    				rs.close();
+	    			pstmt=null;
+	    			rs=null;
+	    		} 
+    			catch (Exception e) {
+    				log.log( Level.SEVERE, e.getMessage(), e.getCause());
+	    		}
+    		}
+    		
+    		
+    		// return 0 == DB.getSQLValue(null, "SELECT count(1) FROM AD_PInstance WHERE IsProcessing='Y' AND AD_PInstance_ID=" + pi.getAD_PInstance_ID());
+    	}
+    	
+    	return true;
+    	
+    }
+    
     /**
      * Descripción de Método
      *
@@ -98,7 +170,6 @@ public abstract class SvrProcess implements ProcessCall {
      *
      * @return
      */
-
     public final boolean startProcess( Properties ctx,ProcessInfo pi,Trx trx ) {
 
         // Preparation
@@ -108,6 +179,13 @@ public abstract class SvrProcess implements ProcessCall {
                 :ctx;
         m_pi  = pi;
         m_trx = trx;
+
+    	// Validación de acceso concurrente
+    	if (!checkConcurrentAccess(ctx, pi)) {
+    		pi.setSummary("Error de acceso concurrente.  Ya existe una ejecución activa del proceso.  Puede revisar la configuración de acceso concurrente en la definición de Informe/Proceso.", true);
+    		return !pi.isError();
+    	}
+        
         lock();
 
         //
@@ -470,6 +548,8 @@ public abstract class SvrProcess implements ProcessCall {
 
     private void lock() {
         log.fine( "AD_PInstance_ID=" + m_pi.getAD_PInstance_ID());
+        // La utilidad semántica de este lock quedó deprecada.  Ver: checkConcurrentAccess().
+        // Se deja solo por eventual referencia de otras funcionalidades existentes no consideradas.
         DB.executeUpdate( "UPDATE AD_PInstance SET IsProcessing='Y' WHERE AD_PInstance_ID=" + m_pi.getAD_PInstance_ID(), get_TrxName());
     }    // lock
 
@@ -492,6 +572,9 @@ public abstract class SvrProcess implements ProcessCall {
         mpi.setErrorMsg( m_pi.getSummary());
         mpi.save();
         log.fine( mpi.toString());
+        
+        // Acceso concurrente a ejecución de proceso.  Ejecución única por instancia: Quitar la entrada de ejecución del proceso (ya finalizó) 
+        processCurrentlyExecuting.remove(m_pi.getAD_Process_ID());
     }    // unlock
 
     /**
