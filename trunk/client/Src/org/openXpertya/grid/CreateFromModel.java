@@ -9,6 +9,7 @@ import java.util.Date;
 import java.util.Properties;
 import java.util.logging.Level;
 
+import org.openXpertya.model.MInOut;
 import org.openXpertya.model.MOrder;
 import org.openXpertya.model.MUOM;
 import org.openXpertya.model.PO;
@@ -81,8 +82,9 @@ public class CreateFromModel {
 		// esta condición para remitos
 		String compareColumn = forInvoice ? "l.QtyInvoiced"
 				: "(l.QtyDelivered+l.QtyTransferred)"
-						+ (allowDeliveryReturns ? ""
-								: " + coalesce((select sum(iol.movementqty) as qty from c_orderline as ol inner join m_inoutline as iol on iol.c_orderline_id = ol.c_orderline_id inner join m_inout as io on io.m_inout_id = iol.m_inout_id inner join c_doctype as dt on dt.c_doctype_id = io.c_doctype_id where ol.c_orderline_id = l.c_orderline_id AND dt.doctypekey = 'DC' and io.docstatus IN ('CL','CO')),0)");
+						+ (allowDeliveryReturns ? "" : " + coalesce(("
+								+ MInOut.getNotAllowedQtyReturnedSumQuery()
+								+ "),0)");
     	return "l.QtyOrdered-"+compareColumn;
 	}
 	
