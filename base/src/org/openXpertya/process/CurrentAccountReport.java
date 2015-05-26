@@ -125,7 +125,7 @@ public class CurrentAccountReport extends SvrProcess {
 		// Generador de consulta de cuenta corriente
 		setCurrentAccountQuery(new CurrentAccountQuery(getCtx(), p_AD_Org_ID,
 				p_C_DocType_ID, p_ShowDetailedReceiptsPayments, p_DateTrx_From,
-				p_DateTrx_To, isOnlyCurrentAccountDocuments()));
+				p_DateTrx_To, isOnlyCurrentAccountDocuments(), p_C_BPartnerID));
 	}
 
 	@Override
