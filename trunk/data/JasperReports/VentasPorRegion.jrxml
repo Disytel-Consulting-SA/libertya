@@ -47,12 +47,14 @@ LEFT JOIN (select it.c_invoice_id, SUM(it.taxamt) as SumaPercepciones from c_inv
 LEFT JOIN (select ita.c_invoice_id, SUM(ita.taxamt) as SumaImpuestos from c_invoicetax ita INNER JOIN c_tax ta ON (ita.c_tax_id = ta.c_tax_id) AND (ta.ispercepcion = 'N') group by ita.c_invoice_id) as ita ON (ita.c_invoice_id = i.c_invoice_id)
 INNER JOIN c_bpartner bp ON (bp.c_bpartner_id = i.c_bpartner_id)
 INNER JOIN c_bp_group bpg ON (bpg.c_bp_group_id = bp.c_bp_group_id)
-INNER JOIN c_bpartner_location bpl ON (bpl.c_bpartner_id = bp.c_bpartner_id)
+INNER JOIN c_bpartner_location bpl ON (bpl.c_bpartner_location_id = i.c_bpartner_location_id)
 INNER JOIN c_location l ON (l.c_location_id = bpl.c_location_id)
 INNER JOIN c_region r ON (r.c_region_id = l.c_region_id)
 INNER JOIN c_doctype dt ON (dt.c_doctype_id = i.c_doctype_id)
 INNER JOIN ad_org ado ON (ado.ad_org_id = i.ad_org_id)
 INNER JOIN c_acctschema acc ON (acc.ad_client_id = i.ad_client_id)
+INNER JOIN c_invoiceline il on (il.c_invoice_id = i.c_invoice_id)
+INNER JOIN m_product p on (p.m_product_id =il.m_product_id)
 WHERE (i.issotrx = 'Y') 
 AND (dt.docbasetype in ('ARC','ARI'))
 AND (i.docstatus in ('CO','CL','VO','RE'))
@@ -61,7 +63,8 @@ AND ((($P{AD_Org_ID} IS NULL) OR ($P{AD_Org_ID} = 0)) OR (i.ad_org_id = $P{AD_Or
 AND (($P{FechaDesde}::date IS NULL) OR (i.dateinvoiced::date >= $P{FechaDesde}::date)) 
 AND (($P{FechaHasta}::date IS NULL) OR (i.dateinvoiced::date <= $P{FechaHasta}::date)) 
 AND (($P{C_BP_Group_ID} IS NULL) OR (bpg.c_bp_group_id = $P{C_BP_Group_ID}))
-AND ($P{AD_CLIENT_ID} = i.ad_client_id)]]></queryString>
+AND ($P{AD_CLIENT_ID} = i.ad_client_id)
+AND il.m_product_id <> cast((select value from ad_preference where attribute = 'DIF_CAMBIO_ARTICULO') as INTEGER)]]></queryString>
 
 	<field name="ad_org_id" class="java.lang.Integer"/>
 	<field name="organization" class="java.lang.String"/>
