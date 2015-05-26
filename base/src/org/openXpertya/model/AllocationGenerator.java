@@ -1434,24 +1434,70 @@ public class AllocationGenerator {
 	 * @param isCredit
 	 *            true si estamos ante un crédito, false caso contrario
 	 * @return
+	 * @throws Exception 
 	 */
-	protected String getRealDocTypeKey(boolean isCredit){
+	protected String getRealDocTypeKey(boolean isCredit) throws Exception{
 		// La lista de tipos de documento generales tiene como value los doc
 		// type keys de los tipos de documento
 		String docTypeKey = null;
-		// Para Locale AR, Abono de Cliente es Nota de Crédito o Nota de Débito
-		// dependiendo si estamos creando un crédito o un débito respectivamente 
-		if(LOCALE_AR_ACTIVE){
-			// Nota de Crédito
-			if (isCredit) {	docTypeKey = MDocType.DOCTYPE_CustomerCreditNote; }
-			// Nota de Débito
-			else{ docTypeKey = MDocType.DOCTYPE_CustomerDebitNote; }
+		
+		// Obtengo los doctype a partir de las nuevas preferences para poder
+		// diferenciar Créditos y Débitos para clientes y proveedores.
+		Document doc = getDebits().get(getDebits().size() - 1);
+		MInvoice debInv = new MInvoice(ctx, doc.getId(), trxName);
+		if (debInv.isSOTrx()) {
+			if (isCredit)
+				docTypeKey = String.valueOf(MPreference
+						.GetCustomPreferenceValue("DIF_CAMBIO_DOCTYPE_RC_CRED",
+								Env.getAD_Client_ID(getCtx())));
+			else
+				docTypeKey = String.valueOf(MPreference
+						.GetCustomPreferenceValue("DIF_CAMBIO_DOCTYPE_RC_DEB",
+								Env.getAD_Client_ID(getCtx())));
+		} else {
+			if (isCredit)
+				docTypeKey = String.valueOf(MPreference
+						.GetCustomPreferenceValue("DIF_CAMBIO_DOCTYPE_OP_CRED",
+								Env.getAD_Client_ID(getCtx())));
+			else
+				docTypeKey = String.valueOf(MPreference
+						.GetCustomPreferenceValue("DIF_CAMBIO_DOCTYPE_OP_DEB",
+								Env.getAD_Client_ID(getCtx())));
 		}
-		else{
-			// Nota de Crédito
-			if (isCredit) {	docTypeKey = "CreditDocumentType"; }
-			// Nota de Débito
-			else{ docTypeKey = "DebitDocumentType";	}
+		//Si no existen las nuevas preferencias, sigue ejecutando como estaba pero solo para clientes
+		if ((docTypeKey == null) || ("".equals(docTypeKey))) {
+			// Para Locale AR, Abono de Cliente es Nota de Crédito o Nota de Débito
+			// dependiendo si estamos creando un crédito o un débito respectivamente
+			if (LOCALE_AR_ACTIVE && debInv.isSOTrx()) {
+				// Nota de Crédito
+				if (isCredit) {
+					docTypeKey = MDocType.DOCTYPE_CustomerCreditNote;
+				}
+				// Nota de Débito
+				else {
+					docTypeKey = MDocType.DOCTYPE_CustomerDebitNote;
+				}
+			}
+			//El siguiente código se comenta, ya que si o si se necesita la configuracion de las preferencias para proveedores
+			/*else {
+				// Nota de Crédito
+				if (isCredit) {
+					docTypeKey = "CreditDocumentType";
+				}
+				// Nota de Débito
+				else {
+					docTypeKey = "DebitDocumentType";
+				}
+			}*/
+		}
+		//Si no es un crédtio o débito de cliente, el doctype quedará vacío y se tira una excepción
+		if ((docTypeKey == null) || ("".equals(docTypeKey))){
+			if (debInv.isSOTrx())
+				throw new Exception(
+						"No se pudo determinar el Tipo de Documento para el comprobante de Diferencia de Cambio. Se deben configurar las variables DIF_CAMBIO_DOCTYPE_RC_CRED, y DIF_CAMBIO_DOCTYPE_RC_DEB");
+			else
+				throw new Exception(
+						"No se pudo determinar el Tipo de Documento para el comprobante de Diferencia de Cambio. Se deben configurar las variables DIF_CAMBIO_DOCTYPE_OP_CRED, y DIF_CAMBIO_DOCTYPE_OP_DEB");
 		}
 		return docTypeKey;
 	}
@@ -1469,28 +1515,45 @@ public class AllocationGenerator {
 	protected MInvoice setDocType(MInvoice invoice, boolean isCredit) throws Exception{
 		MDocType documentType = null;
 
+		//buscar los doctype a partir de las nuevas preferencias
+		//si encuentra setea doctype y return
+		//Si no:
 		// Obtener la clave del tipo de documento a general
 		String docTypeKey = getRealDocTypeKey(isCredit);
-		// Si está activo locale_ar entonces se debe obtener en base al pto de venta y la letra
-		if(LOCALE_AR_ACTIVE){
-			MLetraComprobante letra = getLetraComprobante(new MBPartner(getCtx(), invoice.getC_BPartner_ID(), getTrxName()));
-			Integer posNumber = Integer.valueOf(MPreference.GetCustomPreferenceValue("DIF_CAMBIO_PTO_VENTA", Env.getAD_Client_ID(getCtx())));
+		//Si hay nuevas preferencias se guarda el doctype, sino se ejecuta el código de siempre
+		if ((isCredit && docTypeKey != MDocType.DOCTYPE_CustomerCreditNote)
+				|| (!isCredit && docTypeKey != MDocType.DOCTYPE_CustomerDebitNote)) {
+			documentType = MDocType.getDocType(getCtx(), docTypeKey,
+					getTrxName());
+		} else {
+			// Si está activo locale_ar entonces se debe obtener en base al pto
+			// de venta y la letra
+			if (LOCALE_AR_ACTIVE) {
+				MLetraComprobante letra = getLetraComprobante(new MBPartner(
+						getCtx(), invoice.getC_BPartner_ID(), getTrxName()));
+				Integer posNumber = Integer.valueOf(MPreference
+						.GetCustomPreferenceValue("DIF_CAMBIO_PTO_VENTA",
+								Env.getAD_Client_ID(getCtx())));
 
-			if(Util.isEmpty(posNumber,true)) throw new Exception(getMsg("NotExistPOSNumber"));
-			// Se obtiene el tipo de documento para la factura.
-			documentType = MDocType.getDocType(getCtx(), invoice.getAD_Org_ID(), docTypeKey,letra.getLetra(), posNumber, getTrxName());
-			if (documentType == null) {
-				throw new Exception(Msg.getMsg(getCtx(),
-						"NonexistentPOSDocType", new Object[] { letra,
-								posNumber }));
+				if (Util.isEmpty(posNumber, true))
+					throw new Exception(getMsg("NotExistPOSNumber"));
+				// Se obtiene el tipo de documento para la factura.
+				documentType = MDocType.getDocType(getCtx(),
+						invoice.getAD_Org_ID(), docTypeKey, letra.getLetra(),
+						posNumber, getTrxName());
+				if (documentType == null) {
+					throw new Exception(Msg.getMsg(getCtx(),
+							"NonexistentPOSDocType", new Object[] { letra,
+									posNumber }));
+				}
+				if (!Util.isEmpty(posNumber, true)) {
+					invoice.setPuntoDeVenta(posNumber);
+				}
+			} else {
+				// Tipo de documento en base a la key
+				documentType = MDocType.getDocType(getCtx(), docTypeKey,
+						getTrxName());
 			}
-			if(!Util.isEmpty(posNumber,true)){
-				invoice.setPuntoDeVenta(posNumber);
-			}
-		}
-		else{
-			// Tipo de documento en base a la key
-			documentType = MDocType.getDocType(getCtx(), docTypeKey, getTrxName()); 
 		}
 		
 		invoice.setC_DocTypeTarget_ID(documentType.getID());
