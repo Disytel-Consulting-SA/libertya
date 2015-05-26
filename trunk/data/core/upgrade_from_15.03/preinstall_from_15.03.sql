@@ -705,24 +705,6 @@ END
 $body$
 language plpgsql;
 
-
--- Eliminar temporalmente v_projectedpayments dado que es referenciada por v_documents
-DROP VIEW v_projectedpayments;
-
--- Se regenera v_documents simplemente apuntando a v_documents_org con los argumentos necesarios para que muestre todo el detalle 
-drop view v_documents;
-create or replace view v_documents as select * from v_documents_org_filtered(-1, false);
-
--- Se regenera v_projectedpayments
-CREATE OR REPLACE VIEW v_projectedpayments AS 
-         SELECT v.documenttable, v.document_id, v.ad_client_id, v.ad_org_id, v.isactive, v.created, v.createdby, v.updated, v.updatedby, v.c_bpartner_id, v.c_doctype_id, v.signo_issotrx, v.doctypename, v.doctypeprintname, v.documentno, v.issotrx, v.docstatus, v.datetrx, v.dateacct, v.c_currency_id, v.c_conversiontype_id, v.amount * v.signo_issotrx::numeric * (-1)::numeric AS amount, v.c_invoicepayschedule_id, v.duedate, i.ispaid, NULL::character varying(20) AS checkno, invoiceopen(i.c_invoice_id, 0) * v.signo_issotrx::numeric * (-1)::numeric AS openamount, i.c_invoice_id, NULL::integer AS c_payment_id, ip.duedate AS filterdate
-           FROM v_documents v
-      JOIN c_invoice i ON i.c_invoice_id = v.document_id
-   JOIN c_invoicepayschedule ip ON ip.c_invoice_id = v.document_id AND ip.c_invoicepayschedule_id = v.c_invoicepayschedule_id
-  WHERE i.issotrx = 'N'::bpchar AND v.documenttable = 'C_Invoice'::text AND (v.docstatus = 'CO'::bpchar OR v.docstatus = 'CL'::bpchar)
-UNION ALL 
-         SELECT v.documenttable, v.document_id, v.ad_client_id, v.ad_org_id, v.isactive, v.created, v.createdby, v.updated, v.updatedby, v.c_bpartner_id, v.c_doctype_id, v.signo_issotrx, 'Cheque' AS doctypename, v.doctypeprintname, v.documentno, v.issotrx, v.docstatus, v.datetrx, v.dateacct, v.c_currency_id, v.c_conversiontype_id, v.amount * v.signo_issotrx::numeric * (-1)::numeric AS amount, v.c_invoicepayschedule_id, v.duedate, NULL::character(1) AS ispaid, p.checkno, paymentavailable(p.c_payment_id) * v.signo_issotrx::numeric * (-1)::numeric AS openamount, NULL::integer AS c_invoice_id, p.c_payment_id, p.duedate AS filterdate
-           FROM v_documents v
-      JOIN c_payment p ON p.c_payment_id = v.document_id
-     WHERE p.issotrx = 'N'::bpchar AND p.tendertype = 'K'::bpchar AND p.datetrx < p.duedate AND (v.docstatus = 'CO'::bpchar OR v.docstatus = 'CL'::bpchar);
-
+-- Se regenera v_documents_org simplemente apuntando a v_documents_org_filtered con los argumentos necesarios para que muestre todo el detalle 
+drop view v_documents_org;
+create or replace view v_documents_org as select * from v_documents_org_filtered(-1, false);

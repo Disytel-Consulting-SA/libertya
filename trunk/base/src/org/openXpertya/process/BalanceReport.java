@@ -155,7 +155,7 @@ public class BalanceReport extends SvrProcess {
 		sqlDoc.append(" 		CASE WHEN d.signo_issotrx = ").append(credit_signo_issotrx).append(" THEN "); 
 		sqlDoc.append(" 			currencyconvert(d.amount, d.c_currency_id, ").append(client_Currency_ID).append(", ('"+ ((p_DateTrx_To != null) ? p_DateTrx_To + "'" : "now'::text") +")::timestamp(6) with time zone, COALESCE(c_conversiontype_id,0), d.ad_client_id, d.ad_org_id) "); 
 		sqlDoc.append(" 		ELSE 0.0 END AS Credit ");
-		sqlDoc.append(" 	FROM V_Documents_Org d "); 
+		sqlDoc.append(" 	FROM V_Documents_Org_filtered(-1, false) d "); 
 		sqlDoc.append(" 	INNER JOIN c_bpartner bp on d.c_bpartner_id = bp.c_bpartner_id ");
 		sqlDoc.append(" 	WHERE d.DocStatus IN ('CO', 'CL', 'RE', 'VO') ");
 		if (p_AD_Org_ID > 0)			// filtrar comprobantes para una organizacion especifica (o no)
