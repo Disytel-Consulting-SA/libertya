@@ -54,11 +54,14 @@ public class CurrentAccountQuery {
 	
 	/** Sólo comprobantes en cuenta corriente */
 	private boolean onlyCurrrentAccoundDocuments;
+	
+	/** Entidad Comercial */
+	private Integer bPartnerID;
 
 	public CurrentAccountQuery(Properties ctx, Integer orgID,
 			Integer docTypeID, Boolean detailReceiptsPayments,
 			Timestamp dateFrom, Timestamp dateTo,
-			Boolean onlyCurrentAccountDocuments) {
+			Boolean onlyCurrentAccountDocuments, Integer bPartnerID) {
 		setCtx(ctx);
 		setOrgID(orgID);
 		setDocTypeID(docTypeID);
@@ -67,6 +70,7 @@ public class CurrentAccountQuery {
 		setDateTo(dateTo);
 		setCurrencyID(Env.getContextAsInt(getCtx(), "$C_Currency_ID"));
 		setOnlyCurrrentAccoundDocuments(onlyCurrentAccountDocuments);
+		setbPartnerID(bPartnerID);
 	}
 
 	/**
@@ -122,7 +126,7 @@ public class CurrentAccountQuery {
 			sqlDoc.append("  	d.documenttable, ");
 			sqlDoc.append("  	d.document_id, ");
 			sqlDoc.append(" 	d.c_invoicepayschedule_id ");
-			sqlDoc.append(" FROM V_Documents_Org d ");
+			sqlDoc.append(" FROM V_Documents_Org_Filtered (" + (bPartnerID != null ? bPartnerID : -1) + ", false)  d ");
 			sqlDoc.append(" WHERE d.DocStatus IN ('CO','CL', 'RE', 'VO') ");
 			sqlDoc.append("   AND d.AD_Client_ID = ? ");
 			sqlDoc.append("   AND d.C_Bpartner_ID = ? ");
@@ -180,7 +184,7 @@ public class CurrentAccountQuery {
 			sqlDoc.append(" 		(CASE WHEN ((SELECT al.C_AllocationHdr_ID FROM C_AllocationLine al WHERE ( ((d.documenttable = 'C_Payment') AND (al.C_Payment_ID = d.document_id)) OR ((d.documenttable = 'C_Invoice') AND (al.C_Invoice_Credit_ID = d.document_id)) OR ((d.documenttable = 'C_CashLine') AND (al.C_CashLine_ID = d.document_id)) ) LIMIT 1) IS NOT NULL) THEN 'C_AllocationHdr' ELSE d.documenttable END) AS documenttable, ");
 			sqlDoc.append(" 		(CASE WHEN ((SELECT al.C_AllocationHdr_ID FROM C_AllocationLine al WHERE ( ((d.documenttable = 'C_Payment') AND (al.C_Payment_ID = d.document_id)) OR ((d.documenttable = 'C_Invoice') AND (al.C_Invoice_Credit_ID = d.document_id)) OR ((d.documenttable = 'C_CashLine') AND (al.C_CashLine_ID = d.document_id)) ) LIMIT 1) IS NOT NULL) THEN (SELECT al.C_AllocationHdr_ID FROM C_AllocationLine al WHERE ( ((d.documenttable = 'C_Payment') AND (al.C_Payment_ID = d.document_id)) OR ((d.documenttable = 'C_Invoice') AND (al.C_Invoice_Credit_ID = d.document_id)) OR ((d.documenttable = 'C_CashLine') AND (al.C_CashLine_ID = d.document_id)) ) LIMIT 1) ELSE d.document_id END) AS document_id, ");
 			sqlDoc.append(" 	d.c_invoicepayschedule_id ");
-			sqlDoc.append(" 	FROM V_Documents_org d ");
+			sqlDoc.append(" 	FROM V_Documents_Org_Filtered (" + (bPartnerID != null ? bPartnerID : -1) + ", false)  d ");
 			sqlDoc.append(" 	WHERE d.DocStatus IN ('CO','CL', 'RE', 'VO') ");
 			sqlDoc.append("     AND d.AD_Client_ID = ? ");
 			sqlDoc.append("   AND d.C_Bpartner_ID = ? ");
@@ -314,6 +318,14 @@ public class CurrentAccountQuery {
 
 	public void setOnlyCurrrentAccoundDocuments(boolean onlyCurrrentAccoundDocuments) {
 		this.onlyCurrrentAccoundDocuments = onlyCurrrentAccoundDocuments;
+	}
+
+	public Integer getbPartnerID() {
+		return bPartnerID;
+	}
+
+	public void setbPartnerID(Integer bPartnerID) {
+		this.bPartnerID = bPartnerID;
 	}
 
 }
