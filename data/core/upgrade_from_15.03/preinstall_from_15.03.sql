@@ -1227,7 +1227,7 @@ BEGIN
    JOIN c_bp_group bpg ON bpg.c_bp_group_id = bp.c_bp_group_id
    LEFT JOIN c_categoria_iva ci ON ci.c_categoria_iva_id = bp.c_categoria_iva_id
   WHERE ' || whereClauseStd ||
-  ' NOT (EXISTS ( SELECT al.c_allocationline_id
+  ' AND NOT (EXISTS ( SELECT al.c_allocationline_id
    FROM c_allocationline al
    JOIN c_payment p ON p.c_payment_id = al.c_payment_id
    JOIN c_cashline cl ON cl.c_payment_id = p.c_payment_id
