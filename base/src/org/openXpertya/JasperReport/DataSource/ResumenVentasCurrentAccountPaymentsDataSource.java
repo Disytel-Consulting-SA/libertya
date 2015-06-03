@@ -26,7 +26,11 @@ public class ResumenVentasCurrentAccountPaymentsDataSource extends
 	
 	@Override
 	protected String getDSDataTable(){
-		return "v_dailysales_current_account_payments";
+		return "v_dailysales_current_account_payments_filtered("
+				+ getOrgIDParameterCall() + ", " + getPOSIDParameterCall()
+				+ ", " + getUserIDParameterCall() + ", "
+				+ getDateFromParameterCall() + ", " + getDateToParameterCall()
+				+ ")";
 	}
 	
 	protected boolean addInvoiceDateClause(){
