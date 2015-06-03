@@ -2,6 +2,8 @@ package org.openXpertya.JasperReport.DataSource;
 
 import java.math.BigDecimal;
 import java.sql.Timestamp;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Properties;
@@ -41,6 +43,9 @@ public abstract class ResumenVentasDataSource extends QueryDataSource {
 	/** Sólo Notas de Débito */
 	private boolean onlyDN = false;
 	
+	/** Formatter para las fechas para las llamadas a las funciones */
+	private DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
+	
 	public ResumenVentasDataSource(String trxName, Properties ctx,
 			Integer orgID, Timestamp dateFrom, Timestamp dateTo, Integer posID,
 			Integer userID) {
@@ -65,11 +70,10 @@ public abstract class ResumenVentasDataSource extends QueryDataSource {
 	protected String getQuery() {
 		String groupFields = getGroupFields();
 		StringBuffer sql = new StringBuffer(
-				"SELECT "+groupFields+", sum(amount) as amount FROM (SELECT s.* FROM "+getDSDataTable()+" as s INNER JOIN c_invoice as i on i.c_invoice_id = s.c_invoice_id INNER JOIN c_doctype as dt on dt.c_doctype_id = i.c_doctypetarget_id WHERE s.ad_client_id = ? AND (i.docstatus = 'CO' or i.docstatus = 'CL' or i.docstatus = 'RE' or i.docstatus = 'VO' OR i.docstatus = '??') AND dt.isfiscaldocument = 'Y' AND (s.isfiscal is null OR s.isfiscal = 'N' OR (s.isfiscal = 'Y' AND s.fiscalalreadyprinted = 'Y')) AND dt.isfiscaldocument = 'Y' AND s.ad_org_id = ? AND s.issotrx = 'Y' AND dt.doctypekey not in ('RTR', 'RTI', 'RCR', 'RCI') "
-						+ getPOSWhereClause()
-						+ getUserWhereClause()
-						+ getDateWhereClause()
-						+ getDocumentsWhereClause());
+				"SELECT "+groupFields+", sum(amount) as amount " +
+				"FROM (SELECT s.* " +
+				"		FROM "+getDSDataTable()+" as s " +
+				"		WHERE s.ad_client_id = ? " + getDocumentsWhereClause());
 		sql.append(getDSWhereClause() == null?"":getDSWhereClause());
 		sql.append(" ) as ventas ");
 		sql.append(" GROUP BY ").append(groupFields);
@@ -81,63 +85,44 @@ public abstract class ResumenVentasDataSource extends QueryDataSource {
 	protected Object[] getParameters() {
 		List<Object> params = new ArrayList<Object>();
 		params.add(Env.getAD_Client_ID(getCtx()));
-		params.add(getOrgID());
-		if(addInvoiceDateClause()){
-			params.add(getDateFrom());
-			if(getDateTo() != null){
-				params.add(getDateTo());
-			}
-			else{
-				params.add(getDateFrom());
-			}
-		}
-		params.add(getDateFrom());
-		if(getDateTo() != null){
-			params.add(getDateTo());
-		}
-		else{
-			params.add(getDateFrom());
-		}
 		if(getDSWhereClauseParams() != null){
 			params.addAll(getDSWhereClauseParams());
 		}
  		return params.toArray();
 	}
 	
-	/**
-	 * @return la cláusula where de las fechas
-	 */
-	protected String getDateWhereClause(){
-		StringBuffer dateClause = new StringBuffer();
-		if(addInvoiceDateClause()){
-			dateClause = new StringBuffer(" AND date_trunc('day', invoicedateacct) >= date_trunc('day', ?::date) ");
-			if(getDateTo() != null){
-				dateClause.append("  AND date_trunc('day', invoicedateacct) <= date_trunc('day', ?::date) ");
-			}
-			else{
-				dateClause.append("  AND date_trunc('day', invoicedateacct) <= date_trunc('day', ?::date) ");
-			}
-		}
-		dateClause.append(" AND date_trunc('day', datetrx) >= date_trunc('day', ?::date) ");
-		if(getDateTo() != null){
-			dateClause.append("  AND date_trunc('day', datetrx) <= date_trunc('day', ?::date) ");
-		}
-		else{
-			dateClause.append("  AND date_trunc('day', datetrx) <= date_trunc('day', ?::date) ");
-		}
-		return dateClause.toString();
+	protected Integer getOrgIDParameterCall(){
+		return !Util.isEmpty(getOrgID(), true)?getOrgID():-1;
 	}
 	
-	protected String getPOSWhereClause(){
-		return Util.isEmpty(getPosID(), true) ? ""
-				: " AND (s.c_pos_id is not null AND s.c_pos_id = "
-						+ getPosID() + ") ";
+	protected Integer getPOSIDParameterCall(){
+		return !Util.isEmpty(getPosID(), true)?getPosID():-1;
 	}
-
-	protected String getUserWhereClause(){
-		return Util.isEmpty(getUserID(), true) ? ""
-				: " AND (s.ad_user_id is not null AND s.ad_user_id = "
-						+ getUserID() + ") ";
+	
+	protected Integer getUserIDParameterCall(){
+		return !Util.isEmpty(getUserID(), true)?getUserID():-1;
+	}
+	
+	protected String getDateParameterCall(Timestamp date){
+		StringBuffer parameter = new StringBuffer();
+		if(date != null){
+			parameter.append("'");
+			parameter.append(getDateFormat().format(date));
+			parameter.append("'");
+		}
+		else{
+			parameter.append("null");
+		}
+		parameter.append("::date");
+		return parameter.toString();
+	}
+	
+	protected String getDateFromParameterCall(){
+		return getDateParameterCall(getDateFrom());
+	}
+	
+	protected String getDateToParameterCall(){
+		return getDateParameterCall(getDateTo());
 	}
 	
 	protected String getDocumentsWhereClause(){
@@ -206,7 +191,16 @@ public abstract class ResumenVentasDataSource extends QueryDataSource {
 	 * @return tabla data source donde obtener la información
 	 */
 	protected String getDSDataTable(){
-		return "v_dailysales_v2";
+		return getParametersCall("v_dailysales_v2_filtered");
+	}
+	
+	protected String getParametersCall(String functionName){
+		return functionName+"("+getOrgIDParameterCall() + ", "
+				+ getPOSIDParameterCall() + ", " + getUserIDParameterCall()
+				+ ", " + getDateFromParameterCall() + ", "
+				+ getDateToParameterCall() + ", " + getDateFromParameterCall()
+				+ ", " + getDateToParameterCall() + ", "
+				+ addInvoiceDateClause()+")";
 	}
 	
 	/**
@@ -220,6 +214,11 @@ public abstract class ResumenVentasDataSource extends QueryDataSource {
 		BigDecimal amt = (BigDecimal) DB.getSQLObject(getTrxName(),
 				sql.toString(), getParameters());
 		return amt == null?BigDecimal.ZERO:amt;
+	}
+	
+	@Override
+	protected boolean isQueryNoConvert(){
+		return true;
 	}
 	
 	/**
@@ -310,5 +309,13 @@ public abstract class ResumenVentasDataSource extends QueryDataSource {
 
 	protected boolean addInvoiceDateClause(){
 		return true;
+	}
+
+	protected DateFormat getDateFormat() {
+		return dateFormat;
+	}
+
+	protected void setDateFormat(DateFormat dateFormat) {
+		this.dateFormat = dateFormat;
 	}
 }

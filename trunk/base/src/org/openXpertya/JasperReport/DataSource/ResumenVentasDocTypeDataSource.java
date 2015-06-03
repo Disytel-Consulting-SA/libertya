@@ -27,6 +27,6 @@ public class ResumenVentasDocTypeDataSource extends ResumenVentasPaymentMediumDa
 	
 	@Override
 	protected String getDSDataTable(){
-		return "v_dailysales_invoices";
+		return getParametersCall("v_dailysales_invoices_filtered");
 	}
 }

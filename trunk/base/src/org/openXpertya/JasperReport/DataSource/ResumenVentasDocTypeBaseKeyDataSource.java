@@ -72,7 +72,7 @@ public class ResumenVentasDocTypeBaseKeyDataSource extends
 					getTrxName(), isQueryNoConvert());
 			int i = 1;
 			for (Object parameterValue : getParameters()) {
-				pstmt.setObject(i++, parameterValue);				
+				pstmt.setObject(i++, parameterValue);
 			}
 			
 			rs = pstmt.executeQuery();

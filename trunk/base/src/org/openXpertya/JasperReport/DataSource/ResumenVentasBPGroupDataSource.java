@@ -42,6 +42,6 @@ public class ResumenVentasBPGroupDataSource extends ResumenVentasDataSource {
 
 	@Override
 	protected String getDSDataTable(){
-		return "v_dailysales_current_account";
+		return getParametersCall("v_dailysales_current_account_filtered");
 	}
 }
