@@ -154,7 +154,7 @@ public class CurrentAccountReport extends SvrProcess {
 
 		try {
 			pstmt = DB.prepareStatement(getCurrentAccountQuery().getQuery(),
-					get_TrxName());
+					get_TrxName(), true);
 			int i = 1;
 			// Parámetros de sqlDoc
 			pstmt.setInt(i++, debit_signo_issotrx);
