@@ -81,7 +81,7 @@ WHERE (i.issotrx = 'N')
 AND (dt.docbasetype in ('APC','API'))
 AND (i.docstatus in ('CO','CL','VO','RE'))
 AND (dt.doctypekey not in ('RTR', 'RTI', 'RCR', 'RCI'))
-AND iline.m_product_id <> cast((select value from ad_preference where attribute = 'DIF_CAMBIO_ARTICULO') as INTEGER)
+AND p.value <> (select value from ad_preference where attribute = 'DIF_CAMBIO_ARTICULO' order by created desc limit 1)
 order by i.c_invoice_id) AS ComprasPorRegion
 WHERE ((($P{AD_Org_ID} IS NULL) OR ($P{AD_Org_ID} = 0)) OR (ad_org_id = $P{AD_Org_ID}))
 AND (($P{FechaDesde}::date IS NULL) OR (fecha::date >= $P{FechaDesde}::date)) 
@@ -126,12 +126,13 @@ AND ($P{AD_CLIENT_ID} = ad_client_id)]]></queryString>
 						y="15"
 						width="150"
 						height="12"
-						key="textField-3">
+						key="textField-3"
+						isRemoveLineWhenBlank="true">
 							<printWhenExpression><![CDATA[new Boolean($P{AD_Org_ID}.toString() != "")]]></printWhenExpression>
 						</reportElement>
 					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
 					<textElement>
-						<font pdfFontName="Helvetica" size="8" isBold="false"/>
+						<font pdfFontName="Helvetica" size="7" isBold="false"/>
 					</textElement>
 				<textFieldExpression   class="java.lang.String"><![CDATA[$F{organization}]]></textFieldExpression>
 				</textField>
@@ -154,10 +155,13 @@ AND ($P{AD_CLIENT_ID} = ad_client_id)]]></queryString>
 						y="15"
 						width="66"
 						height="12"
-						key="staticText-4"/>
+						key="staticText-4"
+						isRemoveLineWhenBlank="true">
+							<printWhenExpression><![CDATA[new Boolean($P{AD_Org_ID}.toString() != "")]]></printWhenExpression>
+						</reportElement>
 					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
 					<textElement>
-						<font pdfFontName="Helvetica" size="8" isBold="false"/>
+						<font pdfFontName="Helvetica" size="7" isBold="false"/>
 					</textElement>
 				<text><![CDATA[Organización =]]></text>
 				</staticText>
@@ -284,10 +288,13 @@ AND ($P{AD_CLIENT_ID} = ad_client_id)]]></queryString>
 						y="27"
 						width="44"
 						height="12"
-						key="staticText-71"/>
+						key="staticText-71"
+						isRemoveLineWhenBlank="true">
+							<printWhenExpression><![CDATA[new Boolean($P{FechaDesde} != null)]]></printWhenExpression>
+						</reportElement>
 					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
 					<textElement>
-						<font pdfFontName="Helvetica" size="8" isBold="false"/>
+						<font pdfFontName="Helvetica" size="7" isBold="false"/>
 					</textElement>
 				<text><![CDATA[Desde =]]></text>
 				</staticText>
@@ -297,12 +304,13 @@ AND ($P{AD_CLIENT_ID} = ad_client_id)]]></queryString>
 						y="27"
 						width="81"
 						height="12"
-						key="textField-93">
+						key="textField-93"
+						isRemoveLineWhenBlank="true">
 							<printWhenExpression><![CDATA[new Boolean($P{FechaDesde} != null)]]></printWhenExpression>
 						</reportElement>
 					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
 					<textElement>
-						<font pdfFontName="Helvetica" size="8" isBold="false"/>
+						<font pdfFontName="Helvetica" size="7" isBold="false"/>
 					</textElement>
 				<textFieldExpression   class="java.util.Date"><![CDATA[$P{FechaDesde}]]></textFieldExpression>
 				</textField>
@@ -312,10 +320,12 @@ AND ($P{AD_CLIENT_ID} = ad_client_id)]]></queryString>
 						y="27"
 						width="41"
 						height="12"
-						key="staticText-72"/>
+						key="staticText-72">
+							<printWhenExpression><![CDATA[new Boolean($P{FechaHasta} != null)]]></printWhenExpression>
+						</reportElement>
 					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
 					<textElement>
-						<font pdfFontName="Helvetica" size="8" isBold="false"/>
+						<font pdfFontName="Helvetica" size="7" isBold="false"/>
 					</textElement>
 				<text><![CDATA[Hasta =]]></text>
 				</staticText>
@@ -325,12 +335,13 @@ AND ($P{AD_CLIENT_ID} = ad_client_id)]]></queryString>
 						y="27"
 						width="81"
 						height="12"
-						key="textField-94">
+						key="textField-94"
+						isRemoveLineWhenBlank="true">
 							<printWhenExpression><![CDATA[new Boolean($P{FechaHasta} != null)]]></printWhenExpression>
 						</reportElement>
 					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
 					<textElement>
-						<font pdfFontName="Helvetica" size="8" isBold="false"/>
+						<font pdfFontName="Helvetica" size="7" isBold="false"/>
 					</textElement>
 				<textFieldExpression   class="java.util.Date"><![CDATA[$P{FechaHasta}]]></textFieldExpression>
 				</textField>
@@ -340,10 +351,13 @@ AND ($P{AD_CLIENT_ID} = ad_client_id)]]></queryString>
 						y="39"
 						width="125"
 						height="12"
-						key="staticText-74"/>
+						key="staticText-74"
+						isRemoveLineWhenBlank="true">
+							<printWhenExpression><![CDATA[new Boolean($P{C_BP_Group_ID}!= null)]]></printWhenExpression>
+						</reportElement>
 					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
 					<textElement>
-						<font pdfFontName="Helvetica" size="8" isBold="false"/>
+						<font pdfFontName="Helvetica" size="7" isBold="false"/>
 					</textElement>
 				<text><![CDATA[Grupo de Entidad Comercial=]]></text>
 				</staticText>
@@ -353,12 +367,13 @@ AND ($P{AD_CLIENT_ID} = ad_client_id)]]></queryString>
 						y="39"
 						width="150"
 						height="12"
-						key="textField-96">
+						key="textField-96"
+						isRemoveLineWhenBlank="true">
 							<printWhenExpression><![CDATA[new Boolean($P{C_BP_Group_ID}!= null)]]></printWhenExpression>
 						</reportElement>
 					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
 					<textElement>
-						<font pdfFontName="Helvetica" size="8" isBold="false"/>
+						<font pdfFontName="Helvetica" size="7" isBold="false"/>
 					</textElement>
 				<textFieldExpression   class="java.lang.String"><![CDATA[$F{group_ec_value}]]></textFieldExpression>
 				</textField>
@@ -403,7 +418,8 @@ AND ($P{AD_CLIENT_ID} = ad_client_id)]]></queryString>
 						y="51"
 						width="1140"
 						height="0"
-						key="line-3"/>
+						key="line-3"
+						isRemoveLineWhenBlank="true"/>
 					<graphicElement stretchType="NoStretch"/>
 				</line>
 				<line direction="TopDown">
@@ -520,10 +536,13 @@ AND ($P{AD_CLIENT_ID} = ad_client_id)]]></queryString>
 						y="39"
 						width="50"
 						height="12"
-						key="staticText-77"/>
+						key="staticText-77"
+						isRemoveLineWhenBlank="true">
+							<printWhenExpression><![CDATA[new Boolean($P{M_Product_Category_ID}!= null)]]></printWhenExpression>
+						</reportElement>
 					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
 					<textElement>
-						<font pdfFontName="Helvetica" size="8" isBold="false"/>
+						<font pdfFontName="Helvetica" size="7" isBold="false"/>
 					</textElement>
 				<text><![CDATA[Subfamilia=]]></text>
 				</staticText>
@@ -533,12 +552,13 @@ AND ($P{AD_CLIENT_ID} = ad_client_id)]]></queryString>
 						y="39"
 						width="150"
 						height="12"
-						key="textField-99">
+						key="textField-99"
+						isRemoveLineWhenBlank="true">
 							<printWhenExpression><![CDATA[new Boolean($P{M_Product_Category_ID}!= null)]]></printWhenExpression>
 						</reportElement>
 					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
 					<textElement>
-						<font pdfFontName="Helvetica" size="8" isBold="false"/>
+						<font pdfFontName="Helvetica" size="7" isBold="false"/>
 					</textElement>
 				<textFieldExpression   class="java.lang.String"><![CDATA[$F{subfamilia}]]></textFieldExpression>
 				</textField>
