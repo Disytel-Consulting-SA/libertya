@@ -89,18 +89,18 @@ case when al.amount = 0 then a.grandtotal else al.amount end as Monto
 from c_allocationhdr a
 inner join c_allocationline al on (al.c_allocationhdr_id = a.c_allocationhdr_id)
 inner join c_invoiceline il on (il.c_invoice_id = al.c_invoice_id)
+inner join m_product pr on (il.m_product_id = pr.m_product_id)
 inner join ad_org o on (o.ad_org_id = a.ad_org_id)
 inner join c_bpartner bp on (bp.c_bpartner_id = a.c_bpartner_id)
 inner join c_bp_group bpg on (bpg.c_bp_group_id = bp.c_bp_group_id)
 inner join c_doctype dt on (dt.c_doctype_id = a.c_doctype_id)
 inner join c_payment p on (p.c_payment_id = al.c_payment_id)
 where (al.c_allocationhdr_id = a.c_allocationhdr_id) and (p.tendertype in ('K'))
-AND (case $P{Mostrar} when (cast ('P' as varchar)) then dt.docbasetype in ('APP') 
-else dt.docbasetype in ('ARR') end)
+AND (case $P{Mostrar} when (cast ('P' as varchar)) then p.isreceipt = 'N'
+else p.isreceipt = 'Y' end)
 AND (($P{C_BP_Group_ID} IS NULL) OR (bpg.c_bp_group_id = $P{C_BP_Group_ID}))
 AND (($P{C_BPartner_ID} IS NULL) OR (bp.c_bpartner_id = $P{C_BPartner_ID}))
-AND il.m_product_id <> 
-cast((select value from ad_preference where attribute = 'DIF_CAMBIO_ARTICULO') as INTEGER)
+AND pr.value <> (select value from ad_preference where attribute = 'DIF_CAMBIO_ARTICULO' order by created desc limit 1)
 )
 UNION
 (select
@@ -120,18 +120,18 @@ case when al.amount = 0 then a.grandtotal else al.amount end as Monto
 from c_allocationhdr a
 inner join c_allocationline al on (al.c_allocationhdr_id = a.c_allocationhdr_id)
 inner join c_invoiceline il on (il.c_invoice_id = al.c_invoice_id)
+inner join m_product pr on (il.m_product_id = pr.m_product_id)
 inner join ad_org o on (o.ad_org_id = a.ad_org_id)
 inner join c_bpartner bp on (bp.c_bpartner_id = a.c_bpartner_id)
 inner join c_bp_group bpg on (bpg.c_bp_group_id = bp.c_bp_group_id)
 inner join c_doctype dt on (dt.c_doctype_id = a.c_doctype_id)
 inner join c_payment p on (p.c_payment_id = al.c_payment_id)
 where (al.c_allocationhdr_id = a.c_allocationhdr_id) and (p.tendertype in ('A'))
-AND (case $P{Mostrar} when (cast ('P' as varchar)) then dt.docbasetype in ('APP') 
-else dt.docbasetype in ('ARR') end)
+AND (case $P{Mostrar} when (cast ('P' as varchar)) then p.isreceipt = 'N'
+else p.isreceipt = 'Y' end)
 AND (($P{C_BP_Group_ID} IS NULL) OR (bpg.c_bp_group_id = $P{C_BP_Group_ID}))
 AND (($P{C_BPartner_ID} IS NULL) OR (bp.c_bpartner_id = $P{C_BPartner_ID}))
-AND il.m_product_id <> 
-cast((select value from ad_preference where attribute = 'DIF_CAMBIO_ARTICULO') as INTEGER)
+AND pr.value <> (select value from ad_preference where attribute = 'DIF_CAMBIO_ARTICULO' order by created desc limit 1)
 )
 UNION
 (select
@@ -151,18 +151,18 @@ case when al.amount = 0 then a.grandtotal else al.amount end as Monto
 from c_allocationhdr a
 inner join c_allocationline al on (al.c_allocationhdr_id = a.c_allocationhdr_id)
 inner join c_invoiceline il on (il.c_invoice_id = al.c_invoice_id)
+inner join m_product pr on (il.m_product_id = pr.m_product_id)
 inner join ad_org o on (o.ad_org_id = a.ad_org_id)
 inner join c_bpartner bp on (bp.c_bpartner_id = a.c_bpartner_id)
 inner join c_bp_group bpg on (bpg.c_bp_group_id = bp.c_bp_group_id)
 inner join c_doctype dt on (dt.c_doctype_id = a.c_doctype_id)
 inner join c_cashline c on (c.c_cashline_id = al.c_cashline_id)
 where (al.c_allocationhdr_id = a.c_allocationhdr_id)
-AND (case $P{Mostrar} when (cast ('P' as varchar)) then dt.docbasetype in ('APP') 
-else dt.docbasetype in ('ARR') end)
+AND (case $P{Mostrar} when (cast ('P' as varchar)) then c.amount < 0 
+else c.amount > 0  end)
 AND (($P{C_BP_Group_ID} IS NULL) OR (bpg.c_bp_group_id = $P{C_BP_Group_ID}))
 AND (($P{C_BPartner_ID} IS NULL) OR (bp.c_bpartner_id = $P{C_BPartner_ID}))
-AND il.m_product_id <> 
-cast((select value from ad_preference where attribute = 'DIF_CAMBIO_ARTICULO') as INTEGER)
+AND pr.value <> (select value from ad_preference where attribute = 'DIF_CAMBIO_ARTICULO' order by created desc limit 1)
 )
 UNION
 (select
@@ -177,23 +177,23 @@ bp.c_bpartner_id as EntidadComercialID,
 bp.name as EntidadComercial,
 a.documentno as NroRecibo,
 dt.name as TipoDeRecibo,
-'Diferencia de Caja' as Tipo,
+'Diferencia de Cambio' as Tipo,
 case when al.amount = 0 then a.grandtotal else al.amount end as Monto
 from c_allocationhdr a
 inner join c_allocationline al on (al.c_allocationhdr_id = a.c_allocationhdr_id)
-inner join c_invoiceline il on (il.c_invoice_id = al.c_invoice_id)
+inner join c_invoiceline il on (il.c_invoice_id = al.c_invoice_credit_id)
+inner join c_invoice i on (i.c_invoice_id = il.c_invoice_id)
+inner join m_product pr on (il.m_product_id = pr.m_product_id)
 inner join ad_org o on (o.ad_org_id = a.ad_org_id)
 inner join c_bpartner bp on (bp.c_bpartner_id = a.c_bpartner_id)
 inner join c_bp_group bpg on (bpg.c_bp_group_id = bp.c_bp_group_id)
-inner join c_doctype dt on (dt.c_doctype_id = a.c_doctype_id)
-inner join c_cashline c on (c.c_cashline_id = al.c_cashline_id)
+inner join c_doctype dt on (dt.c_doctype_id = i.c_doctype_id)
 where (al.c_allocationhdr_id = a.c_allocationhdr_id)
-AND (case $P{Mostrar} when (cast ('P' as varchar)) then dt.docbasetype in ('APP') 
-else dt.docbasetype in ('ARR') end)
+AND (case $P{Mostrar} when (cast ('P' as varchar)) then dt.docbasetype in ('APC','API') 
+else dt.docbasetype in ('ARC','ARI') end)
 AND (($P{C_BP_Group_ID} IS NULL) OR (bpg.c_bp_group_id = $P{C_BP_Group_ID}))
 AND (($P{C_BPartner_ID} IS NULL) OR (bp.c_bpartner_id = $P{C_BPartner_ID}))
-AND il.m_product_id =
-cast((select value from ad_preference where attribute = 'DIF_CAMBIO_ARTICULO') as INTEGER)
+AND pr.value = (select value from ad_preference where attribute = 'DIF_CAMBIO_ARTICULO' order by created desc limit 1)
 )
 UNION
 (select
@@ -213,46 +213,19 @@ i.grandtotal as Monto
 from c_invoice i
 inner join c_invoiceline il on (il.c_invoice_id = i.c_invoice_id)
 inner join c_allocationline al on (al.c_invoice_credit_id = i.c_invoice_id)
+inner join m_product pr on (il.m_product_id = pr.m_product_id)
 inner join c_allocationhdr a on (a.c_allocationhdr_id = al.c_allocationhdr_id)
 inner join ad_org o on (o.ad_org_id = a.ad_org_id)
 inner join c_bpartner bp on (bp.c_bpartner_id = a.c_bpartner_id)
 inner join c_bp_group bpg on (bpg.c_bp_group_id = bp.c_bp_group_id)
-inner join c_doctype dt on (dt.c_doctype_id = a.c_doctype_id)
-where il.m_product_id = 
-cast((select value from ad_preference where attribute = 'DIF_CAMBIO_ARTICULO') as INTEGER)
+inner join c_doctype dt on (dt.c_doctype_id = i.c_doctype_id)
+where pr.value <> (select value from ad_preference where attribute = 'DIF_CAMBIO_ARTICULO' order by created desc limit 1)
 and (i.c_invoice_id not in (select c_invoice_id from m_retencion_invoice))
 AND (($P{C_BP_Group_ID} IS NULL) OR (bpg.c_bp_group_id = $P{C_BP_Group_ID}))
 AND (($P{C_BPartner_ID} IS NULL) OR (bp.c_bpartner_id = $P{C_BPartner_ID}))
+AND (case $P{Mostrar} when (cast ('P' as varchar)) then dt.docbasetype in ('API','APC') 
+else dt.docbasetype in ('ARI','ARC') end)
 )
-UNION
-(select
-al.c_allocationhdr_id,
-al.ad_client_id,
-al.ad_org_id as ad_org_id,
-bpg.c_bp_group_id as c_bp_group_id,
-o.name as organization,
-bpg.name as grupo_ec,
-a.datetrx as Fecha,
-bp.c_bpartner_id as EntidadComercialID,
-bp.name as EntidadComercial,
-a.documentno as NroRecibo,
-dt.name as TipoDeRecibo,
-'Nota de Credito' as Tipo,
-i.grandtotal as Monto
-from c_invoice i
-inner join c_invoiceline il on (il.c_invoice_id = i.c_invoice_id)
-inner join c_allocationline al on (al.c_invoice_credit_id = i.c_invoice_id)
-inner join c_allocationhdr a on (a.c_allocationhdr_id = al.c_allocationhdr_id)
-inner join ad_org o on (o.ad_org_id = a.ad_org_id)
-inner join c_bpartner bp on (bp.c_bpartner_id = a.c_bpartner_id)
-inner join c_bp_group bpg on (bpg.c_bp_group_id = bp.c_bp_group_id)
-inner join c_doctype dt on (dt.c_doctype_id = a.c_doctype_id)
-where il.m_product_id <> 
-cast((select value from ad_preference where attribute = 'DIF_CAMBIO_ARTICULO') as INTEGER)
-and (i.c_invoice_id not in (select c_invoice_id from m_retencion_invoice))
-AND (($P{C_BP_Group_ID} IS NULL) OR (bpg.c_bp_group_id = $P{C_BP_Group_ID}))
-AND (($P{C_BPartner_ID} IS NULL) OR (bp.c_bpartner_id = $P{C_BPartner_ID}))
-) 
 UNION
 (select
 a.c_allocationhdr_id,
@@ -271,18 +244,18 @@ case when al.amount = 0 then a.grandtotal else al.amount end as Monto
 from c_allocationhdr a
 inner join c_allocationline al on (al.c_allocationhdr_id = a.c_allocationhdr_id)
 inner join c_invoiceline il on (il.c_invoice_id = al.c_invoice_id)
+inner join m_product pr on (il.m_product_id = pr.m_product_id)
 inner join ad_org o on (o.ad_org_id = a.ad_org_id)
 inner join c_bpartner bp on (bp.c_bpartner_id = a.c_bpartner_id)
 inner join c_bp_group bpg on (bpg.c_bp_group_id = bp.c_bp_group_id)
 inner join c_doctype dt on (dt.c_doctype_id = a.c_doctype_id)
 inner join c_payment p on (p.c_payment_id = al.c_payment_id)
 where (al.c_allocationhdr_id = a.c_allocationhdr_id) and (p.tendertype in ('C'))
-AND (case $P{Mostrar} when (cast ('P' as varchar)) then dt.docbasetype in ('APP') 
-else dt.docbasetype in ('ARR') end)
+AND (case $P{Mostrar} when (cast ('P' as varchar)) then p.isreceipt = 'N' 
+else p.isreceipt = 'Y'  end)
 AND (($P{C_BP_Group_ID} IS NULL) OR (bpg.c_bp_group_id = $P{C_BP_Group_ID}))
 AND (($P{C_BPartner_ID} IS NULL) OR (bp.c_bpartner_id = $P{C_BPartner_ID}))
-AND il.m_product_id <> 
-cast((select value from ad_preference where attribute = 'DIF_CAMBIO_ARTICULO') as INTEGER)
+AND pr.value <> (select value from ad_preference where attribute = 'DIF_CAMBIO_ARTICULO' order by created desc limit 1)
 )
 UNION
 (select
