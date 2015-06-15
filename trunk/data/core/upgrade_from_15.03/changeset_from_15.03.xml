@@ -43,19 +43,24 @@ Ejemplos de cambios
     <target name="deploy" description="Actualización de archivos a instalar">
         
         <!-- Esta seteada TARGET_DIR? De no estarlo es un problema grave -->
-	<fail message="No se ha seteado TARGET_DIR">
-		<condition><not><isset property="TARGET_DIR"/></not></condition>
-	</fail>
-        
-	<!-- ================================ -->
-	<!-- Nomina de cambios a continuación -->
-	<!-- ================================ -->
-	<!-- 20150427-1153 URL Completa para invocacion a script -->
-	<copy file="${SOURCE_DIR}/restartPostgres.sh" todir="${TARGET_DIR}/utils" overwrite="yes" />
-	
-	<!-- 20150504-1326 Ampliar valores de gestion de memoria para JBoss -->
-	<copy file="${SOURCE_DIR}/LibertyaEnvTemplate.properties" todir="${TARGET_DIR}" overwrite="yes" />
+		<fail message="No se ha seteado TARGET_DIR">
+			<condition><not><isset property="TARGET_DIR"/></not></condition>
+		</fail>
+	        
+		<!-- ================================ -->
+		<!-- Nomina de cambios a continuación -->
+		<!-- ================================ -->
+		<!-- 20150427-1153 URL Completa para invocacion a script -->
+		<copy file="${SOURCE_DIR}/restartPostgres.sh" todir="${TARGET_DIR}/utils" overwrite="yes" />
+		
+		<!-- 20150504-1326 Ampliar valores de gestion de memoria para JBoss -->
+		<copy file="${SOURCE_DIR}/LibertyaEnvTemplate.properties" todir="${TARGET_DIR}" overwrite="yes" />
 			
+		<!-- Faltaban comentarios en el script --> 
+		<copy file="${SOURCE_DIR}/libertyad_centos.sh" todir="${TARGET_DIR}/utils/unix" overwrite="yes" />
+		<copy file="${SOURCE_DIR}/libertyad_fedora.sh" todir="${TARGET_DIR}/utils/unix" overwrite="yes" />
+		<copy file="${SOURCE_DIR}/libertyad_ubuntu-debian.sh" todir="${TARGET_DIR}/utils/unix" overwrite="yes" />
+		
     </target>
     
 </project>

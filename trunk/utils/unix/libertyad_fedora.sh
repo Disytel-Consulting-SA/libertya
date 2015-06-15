@@ -9,9 +9,9 @@
 
 # verificamos si el usuario es root
 if [ $EUID -ne 0 ] ;then
- mostramos un mensaje
+# mostramos un mensaje
 echo "Se requiere ejecutar como root" 2>&1
- salimos de la ejecucion
+# salimos de la ejecucion
 exit 1
 fi
 
