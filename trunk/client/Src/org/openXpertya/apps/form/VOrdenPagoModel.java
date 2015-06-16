@@ -2325,8 +2325,8 @@ public class VOrdenPagoModel {
 			rif.setManualAmtClientCurrency(openAmt);
 		BigDecimal manualAmt = MCurrency.currencyConvert(
 				rif.getManualAmtClientCurrency(), C_Currency_ID,
-				currency_ID_To, new Timestamp(System.currentTimeMillis()), 0,
-				//	currency_ID_To, m_fechaTrx, 0,
+			//	currency_ID_To, new Timestamp(System.currentTimeMillis()), 0,
+					currency_ID_To, m_fechaTrx, 0,
 				getCtx());
 		rif.setManualAmount(manualAmt);
 	}
