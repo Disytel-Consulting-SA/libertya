@@ -45,6 +45,8 @@ else
 # mostramos un mensaje
 echo -n "Iniciando Servidor Libertya "
 # iniciamos el servidor de aplicaciones como demonio
+mkdir /var/run/libertya/
+chown libertya.libertya /var/run/libertya/
 start-stop-daemon --start --chuid libertya --background -m --pidfile $PID --exec $STARTLIBERTYA
 # obtenemos la cantidad actual de ficheros
 findLogs cantLogs
