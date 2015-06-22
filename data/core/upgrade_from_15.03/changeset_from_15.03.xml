@@ -54,6 +54,7 @@ Ejemplos de cambios
 		<copy file="${SOURCE_DIR}/restartPostgres.sh" todir="${TARGET_DIR}/utils" overwrite="yes" />
 		
 		<!-- 20150504-1326 Ampliar valores de gestion de memoria para JBoss -->
+		<!-- 20150622-1106 Forzar encoding a UTF8 -->
 		<copy file="${SOURCE_DIR}/LibertyaEnvTemplate.properties" todir="${TARGET_DIR}" overwrite="yes" />
 			
 		<!-- Faltaban comentarios en el script --> 
@@ -61,6 +62,8 @@ Ejemplos de cambios
 		<copy file="${SOURCE_DIR}/libertyad_fedora.sh" todir="${TARGET_DIR}/utils/unix" overwrite="yes" />
 		<copy file="${SOURCE_DIR}/libertyad_ubuntu-debian.sh" todir="${TARGET_DIR}/utils/unix" overwrite="yes" />
 		
+		<!-- 20150622-1106 Forzar encoding a UTF8 del cliente de replicacion -->
+		<copy file="${SOURCE_DIR}/repClient.sh" todir="${TARGET_DIR}/utils/replicacion" overwrite="yes" />
     </target>
     
 </project>
