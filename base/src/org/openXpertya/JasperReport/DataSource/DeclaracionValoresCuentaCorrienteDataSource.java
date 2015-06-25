@@ -24,7 +24,8 @@ public class DeclaracionValoresCuentaCorrienteDataSource extends
 		// Monto pendiente de la facturas
 		StringBuffer superSql = new StringBuffer("SELECT invoice_documentno, invoice_grandtotal, open as ingreso, egreso, open as total   FROM (");
 		StringBuffer sql = new StringBuffer("SELECT dv.*,invoice_grandtotal-coalesce(ds.amount,0) as open  " +
-											"FROM c_pos_declaracionvalores_ventas as dv LEFT JOIN (select c_invoice_id as alloc_invoice_id, c_posjournal_id as alloc_journal_id, sum(amount) as amount " +
+											"FROM "+getDSFunView("c_pos_declaracionvalores_ventas_filtered")+" as dv " +
+											"LEFT JOIN (select c_invoice_id as alloc_invoice_id, c_posjournal_id as alloc_journal_id, sum(amount) as amount " +
 																								"from c_allocationhdr as ah " +
 																								"inner join c_allocationline as al on al.c_allocationhdr_id = ah.c_allocationhdr_id " +
 																								"where ah.isactive = 'Y' " +
@@ -35,7 +36,10 @@ public class DeclaracionValoresCuentaCorrienteDataSource extends
 		superSql.append(" WHERE (open > 0) ");
 		// NC libres
 		superSql.append(" UNION ALL ");
-		superSql.append(" SELECT invoice_documentno, invoice_grandtotal, ingreso, egreso, egreso * -1 as total FROM c_pos_declaracionvalores_v WHERE ");
+		superSql.append(" SELECT invoice_documentno, invoice_grandtotal, ingreso, egreso, egreso * -1 as total ");
+		superSql.append(" FROM ");
+		superSql.append(getDSFunView("c_pos_declaracionvalores_v_filtered"));
+		superSql.append(" WHERE ");
 		superSql.append(getStdWhereClause(false));
 		superSql.append(" AND (tendertype = 'ARC') ");
 		superSql.append(" ORDER BY invoice_documentno");

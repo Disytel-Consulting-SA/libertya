@@ -33,6 +33,6 @@ public class DeclaracionValoresCreditNoteDataSource extends
 
 	@Override
 	protected String getDSDataTable(){
-		return "c_pos_declaracionvalores_credit";
+		return getDSFunView("c_pos_declaracionvalores_credit_filtered");
 	}
 }

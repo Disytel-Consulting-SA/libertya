@@ -37,8 +37,9 @@ public abstract class AuditoriaDataSource extends DeclaracionValoresDataSource {
 		StringBuffer sql = new StringBuffer("SELECT i.c_invoice_id, (i.documentno::text || ' '::text) || COALESCE(i.description, ''::character varying)::text AS description, pjp.amount, currencyconvert(pjp.amount, dv.c_currency_id, ?, dv.datetrx, 0, dv.ad_client_id, dv.ad_org_id) as amountanothercurrency, pjp.description as observacion FROM ("); 
 		sql.append(getStdQuery(true));
 		sql.append(" ) as dv ");
-		sql.append(" INNER JOIN c_posjournalpayments_v as pjp ON pjp."
-				+ trxColumn + " = dv.doc_id");
+		sql.append(" INNER JOIN ");
+		sql.append(getDSFunView("c_posjournalpayments_v_filtered"));
+		sql.append(" as pjp ON pjp." + trxColumn + " = dv.doc_id ");
 		sql.append(" INNER JOIN c_invoice as i ON i.c_invoice_id = pjp.c_invoice_id ");
 		sql.append(" ORDER BY i.documentno ");
 		return sql.toString();

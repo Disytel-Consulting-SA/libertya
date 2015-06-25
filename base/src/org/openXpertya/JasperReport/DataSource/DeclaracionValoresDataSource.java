@@ -78,12 +78,18 @@ public abstract class DeclaracionValoresDataSource extends QueryDataSource {
 		else{
 			tableAlias = "";
 		}
-		if(addDocStatus){
-			stdWhere.append(tableAlias).append("docstatus IN ('CO','CL') AND ");
-		}
-		if(!getValoresDTO().getJournalIDs().isEmpty()){
-			stdWhere.append(tableAlias).append("c_posjournal_id IN ").append(getValoresDTO().getJournalIDs().toString()
-					.replaceAll("]", ")").replaceAll("\\[", "("));
+		// Modificaciones por nuevas funviews
+		// No se agrega como condiciones las siguientes sentencias ya que se
+		// agregan en la funviews, siempre y cuando el DS de esta instancia se
+		// realice bajo las mismas
+		if(!isFunView()){
+			if(addDocStatus){
+				stdWhere.append(tableAlias).append("docstatus IN ('CO','CL') AND ");
+			}
+			if(!getValoresDTO().getJournalIDs().isEmpty()){
+				stdWhere.append(tableAlias).append("c_posjournal_id IN ").append(getValoresDTO().getJournalIDs().toString()
+						.replaceAll("]", ")").replaceAll("\\[", "("));
+			}
 		}
 		if (!Util.isEmpty(getValoresDTO().getUserID(), true)) {
 			stdWhere.append(" AND ("+tableAlias+"ad_user_id = ?) ");
@@ -132,8 +138,20 @@ public abstract class DeclaracionValoresDataSource extends QueryDataSource {
 		return amt == null?BigDecimal.ZERO:amt;
 	}
 	
+	protected String getDSFunView(String funViewName){
+		return funViewName+"("+getValoresDTO().getJournalIDsSQLArray()+")";
+	}
+	
 	protected String getDSDataTable(){
-		return "c_pos_declaracionvalores_v";
+		return getDSFunView("c_pos_declaracionvalores_v_filtered");
+	}
+	
+	/**
+	 * @return true si la subclase se realiza a partir de una funview o false si
+	 *         no se utilizan fun views
+	 */
+	protected boolean isFunView(){
+		return true;
 	}
 	
 	/**

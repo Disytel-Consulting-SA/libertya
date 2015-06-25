@@ -94,4 +94,8 @@ public class ValoresDataSource extends DeclaracionValoresDataSource {
 		}
 		return value;
 	}
+	
+	protected boolean isFunView(){
+		return false;
+	}
 }

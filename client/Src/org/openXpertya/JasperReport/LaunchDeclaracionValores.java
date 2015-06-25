@@ -230,7 +230,7 @@ public class LaunchDeclaracionValores extends JasperReportLaunch {
 	}
 	
 	protected Boolean isShowVoidDocuments(){
-		Boolean showVoidDocuments = false;
+		Boolean showVoidDocuments = true;
 		if(getPosJournal() == null){
 			showVoidDocuments = getParameterValue("ShowVoidDocuments") != null ? getParameterValue(
 					"ShowVoidDocuments").equals("Y")
