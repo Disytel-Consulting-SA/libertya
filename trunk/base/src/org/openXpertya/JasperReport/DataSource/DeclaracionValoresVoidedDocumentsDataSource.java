@@ -38,6 +38,6 @@ public class DeclaracionValoresVoidedDocumentsDataSource extends
 
 	@Override
 	protected String getDSDataTable(){
-		return "c_pos_declaracionvalores_voided";
+		return getDSFunView("c_pos_declaracionvalores_voided_filtered");
 	}
 }

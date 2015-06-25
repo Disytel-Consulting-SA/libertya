@@ -33,6 +33,6 @@ public class DeclaracionValoresVentasDataSource extends
 
 	@Override
 	protected String getDSDataTable(){
-		return "c_pos_declaracionvalores_ventas";
+		return getDSFunView("c_pos_declaracionvalores_ventas_filtered");
 	}
 }

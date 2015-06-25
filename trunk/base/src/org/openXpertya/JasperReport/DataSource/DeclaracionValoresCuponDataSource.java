@@ -39,6 +39,6 @@ public class DeclaracionValoresCuponDataSource extends
 
 	@Override
 	protected String getDSDataTable(){
-		return "c_pos_declaracionvalores_payments";
+		return getDSFunView("c_pos_declaracionvalores_payments_filtered");
 	}
 }
