@@ -2461,6 +2461,14 @@ public class MInvoice extends X_C_Invoice implements DocAction {
 			return false;
 		}
 
+		// No controlar cuando son comprobantes de retención
+		MDocType docType = MDocType.get(getCtx(), getC_DocTypeTarget_ID());
+		if (docType.getDocTypeKey().equals(MDocType.DOCTYPE_Retencion_Receipt)
+				|| docType.getDocTypeKey().equals(
+						MDocType.DOCTYPE_Retencion_ReceiptCustomer)) {
+			return false;
+		}
+		
 		// Condiciones comunes entre issotrx=Y y issotrx=N
 		StringBuffer whereClause = new StringBuffer();
 		whereClause
