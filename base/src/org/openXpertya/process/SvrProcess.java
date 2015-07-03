@@ -99,7 +99,7 @@ public abstract class SvrProcess implements ProcessCall {
      * @return true si puede ejecutar correctamente, o false en cc
      */
     protected synchronized boolean checkConcurrentAccess(Properties ctx, ProcessInfo pi) {
-    	X_AD_Process aProcess = new X_AD_Process(ctx, pi.getAD_Process_ID(), null);
+    	X_AD_Process aProcess = new X_AD_Process(ctx, pi.getAD_Process_ID(), get_TrxName());
     	
     	// Si no hay restricciones, todo ok
     	if (X_AD_Process.CONCURRENTEXECUTION_NoRestrictions.equals(aProcess.getConcurrentExecution()))
