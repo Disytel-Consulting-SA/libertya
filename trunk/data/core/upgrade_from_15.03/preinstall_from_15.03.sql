@@ -2298,3 +2298,6 @@ ALTER TABLE c_posjournal_c_payment_v OWNER TO libertya;
 CREATE OR REPLACE VIEW c_posjournalinvoices_v AS 
  select * from c_posjournalinvoices_v_filtered(array[-1]);
 ALTER TABLE c_posjournalinvoices_v OWNER TO libertya;
+
+--20150708-1511 Mejora de performance al abrir ventana de Facturas
+UPDATE AD_Column SET AD_Reference_ID = 30 WHERE AD_ComponentObjectUID = 'CORE-AD_Column-10788';
