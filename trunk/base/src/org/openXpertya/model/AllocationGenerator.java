@@ -1557,6 +1557,7 @@ public class AllocationGenerator {
 		}
 		
 		invoice.setC_DocTypeTarget_ID(documentType.getID());
+		invoice.setIsSOTrx(documentType.isSOTrx());
 		return invoice;
 	}
 	
