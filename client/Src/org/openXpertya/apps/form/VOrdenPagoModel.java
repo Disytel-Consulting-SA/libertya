@@ -2653,7 +2653,7 @@ public class VOrdenPagoModel {
 	public BigDecimal getCashAdelantadoAvailableAmt(int cashLineID) {
 		try {
 			BigDecimal AvailableamountToConvert = (BigDecimal) DB.getSQLObject(
-					null, "SELECT cashLineAvailable(?)",
+					null, "SELECT abs(cashLineAvailable(?))",
 					new Object[] { cashLineID });
 			return currencyConvert(
 					AvailableamountToConvert,
