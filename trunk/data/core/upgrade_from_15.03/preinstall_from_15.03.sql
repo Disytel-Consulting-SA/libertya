@@ -2301,3 +2301,6 @@ ALTER TABLE c_posjournalinvoices_v OWNER TO libertya;
 
 --20150708-1511 Mejora de performance al abrir ventana de Facturas
 UPDATE AD_Column SET AD_Reference_ID = 30 WHERE AD_ComponentObjectUID = 'CORE-AD_Column-10788';
+
+--20150710-1251 Mejora de performance al abrir ventana de Facturas (cont)
+UPDATE AD_Column SET AD_Reference_ID = 30 WHERE AD_ComponentObjectUID = 'CORE-AD_Column-10805';
