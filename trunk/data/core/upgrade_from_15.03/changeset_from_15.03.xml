@@ -64,6 +64,9 @@ Ejemplos de cambios
 		
 		<!-- 20150622-1106 Forzar encoding a UTF8 del cliente de replicacion -->
 		<copy file="${SOURCE_DIR}/repClient.sh" todir="${TARGET_DIR}/utils/replicacion" overwrite="yes" />
+		
+		<!-- 20150715-0758 Script de reinicio de JBoss -->
+		<copy file="${SOURCE_DIR}/restartJBoss.sh" todir="${TARGET_DIR}/utils" overwrite="yes" />
     </target>
     
 </project>
