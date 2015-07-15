@@ -40,6 +40,8 @@ public class BusinessPartner {
 	
 	private boolean automaticCreditNote;
 	
+	private Tax tax = null;
+	
 	public BusinessPartner() {
 		super();
 	}
@@ -309,5 +311,13 @@ public class BusinessPartner {
 
 	public void setAutomaticCreditNote(boolean automaticCreditNote) {
 		this.automaticCreditNote = automaticCreditNote;
+	}
+
+	public Tax getTax() {
+		return tax;
+	}
+
+	public void setTax(Tax tax) {
+		this.tax = tax;
 	}
 }

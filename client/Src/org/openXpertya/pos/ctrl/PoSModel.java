@@ -12,7 +12,6 @@ import java.util.Set;
 
 import org.openXpertya.model.FiscalDocumentPrint;
 import org.openXpertya.model.FiscalDocumentPrintListener;
-import org.openXpertya.model.MCreditException;
 import org.openXpertya.model.MPOSJournal;
 import org.openXpertya.model.MProduct;
 import org.openXpertya.pos.exceptions.InsufficientBalanceException;
@@ -207,13 +206,7 @@ public class PoSModel {
 	}
 	
 	private OrderProduct createOrderProduct(Product product) {
-		Tax productTax;
-		if (getOrder().getBusinessPartner() != null)
-			productTax = getConnectionState().getProductTax(
-					product.getId(), getOrder().getBusinessPartner().getLocationId());
-		else
-			productTax = getConnectionState().getProductTax(product.getId());
-		
+		Tax productTax = getProductTax(product);
 		String checkoutPlace;
 		// Si el TPV crea el remito entonces la entrega se hace en el TPV
 		if (getConfig().isCreateInOut()) {
@@ -290,15 +283,23 @@ public class PoSModel {
 		return getConnectionState().getCurrentUser();
 	}
 	
+	public Tax getProductTax(Product product){
+		Tax productTax;
+		if (getOrder().getBusinessPartner() != null){
+			productTax = getOrder().getBusinessPartner().getTax() != null ? getOrder()
+					.getBusinessPartner().getTax() : getConnectionState()
+					.getProductTax(product.getId(),
+							getOrder().getBusinessPartner().getLocationId());
+		}
+		else
+			productTax = getConnectionState().getProductTax(product.getId());
+		return productTax;
+	}
+	
 	public void recalculateOrderTotal() {
-		// Se obtiene la localización del cliente.
-		int locationID = getOrder().getBusinessPartner().getLocationId();
 		// Se recalcula la tasa de impuesto para cada producto del pedido.
 		for (OrderProduct orderProduct : getOrder().getOrderProducts()) {
-			Tax newTax = getConnectionState().getProductTax(
-						orderProduct.getProduct().getId(),
-						locationID);
-			orderProduct.setTax(newTax);
+			orderProduct.setTax(getProductTax(orderProduct.getProduct()));
 		}
 	}
 	

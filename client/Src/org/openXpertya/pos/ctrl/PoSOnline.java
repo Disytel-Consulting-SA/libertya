@@ -35,7 +35,6 @@ import org.openXpertya.model.MCashLine;
 import org.openXpertya.model.MCategoriaIva;
 import org.openXpertya.model.MCheckCuitControl;
 import org.openXpertya.model.MConversionRate;
-import org.openXpertya.model.MCreditException;
 import org.openXpertya.model.MDocType;
 import org.openXpertya.model.MEntidadFinanciera;
 import org.openXpertya.model.MEntidadFinancieraPlan;
@@ -71,7 +70,6 @@ import org.openXpertya.model.MUser;
 import org.openXpertya.model.M_Tab;
 import org.openXpertya.model.PO;
 import org.openXpertya.model.PrintInfo;
-import org.openXpertya.model.X_C_CheckCuitControl;
 import org.openXpertya.pos.exceptions.FiscalPrintException;
 import org.openXpertya.pos.exceptions.InsufficientBalanceException;
 import org.openXpertya.pos.exceptions.InsufficientCreditException;
@@ -2179,6 +2177,11 @@ public class PoSOnline extends PoSConnectionState {
 			MCategoriaIva catIva = new MCategoriaIva(getCtx(), mBPartner.getC_Categoria_Iva_ID(), null);
 			codigoIVA = catIva.getCodigo();
 			isPercepcionLiable = catIva.isPercepcionLiable();
+			if(!Util.isEmpty(catIva.getC_Tax_ID(), true)){
+				MTax mTax = MTax.get(getCtx(), catIva.getC_Tax_ID(), null);
+				rBPartner.setTax(new Tax(mTax.getID(), mTax.getRate(), mTax
+						.isPercepcion()));
+			}
 		}
 		rBPartner.setIVACategory(codigoIVA);
 		rBPartner.setPercepcionLiable(isPercepcionLiable);
