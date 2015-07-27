@@ -351,6 +351,21 @@ public class MInOut extends X_M_InOut implements DocAction {
 						selfEmpty ? transferParams1 : transferParams2);
 	}
     
+	public static String getDCMovementQtyQuery(){
+		return "select sum(iol.movementqty) as movementqty " +
+				"from m_inoutline as iol " +
+				"inner join m_inout as io on io.m_inout_id = iol.m_inout_id " +
+				"inner join c_doctype as dt on dt.c_doctype_id = io.c_doctype_id " +
+				"where dt.doctypekey = 'DC'	" +
+				"		and io.docstatus in ('CO','CL') " +
+				"		and iol.c_orderline_id = ?";
+	}
+	
+	public static BigDecimal getDCMovementQty(Integer orderLineID, String trxName) {
+		BigDecimal movementQty = BigDecimal.ZERO;
+		movementQty = DB.getSQLValueBD(trxName, MInOut.getDCMovementQtyQuery(), orderLineID);
+		return movementQty;
+	}
     /**
      * Constructor de la clase ...
      *
