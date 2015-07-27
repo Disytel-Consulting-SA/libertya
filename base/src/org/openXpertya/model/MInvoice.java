@@ -3123,12 +3123,18 @@ public class MInvoice extends X_C_Invoice implements DocAction {
 					// Si la cantidad facturada es menor a la cantidad
 					// pendiente, se controla la cantidad facturada, sino la
 					// pendiente.
-					boolean reservedGreater = orderLine
-							.getPendingDeliveredQty().compareTo(
-									orderLine.getQtyInvoiced()) > 0;
+					// Las cantidades de Devoluciones de Cliente sin Notas de
+					// Crédito asociadas no se pueden sacar sobre notas de
+					// crédito por mercadería no retirada ya que luego no
+					// concuerdan los movimientos de mercadería con lo facturado
+					BigDecimal dcNoNC = isUpdateOrderQty() ? MInOut
+							.getDCMovementQty(orderLine.getID(),
+									get_TrxName()) : null;
+					dcNoNC = dcNoNC != null && dcNoNC.compareTo(BigDecimal.ZERO) > 0?dcNoNC:BigDecimal.ZERO;
+					BigDecimal pending = orderLine.getPendingDeliveredQty().subtract(dcNoNC);
+					boolean reservedGreater = pending.compareTo(orderLine.getQtyInvoiced()) > 0;
 					BigDecimal qtyToCompare = reservedGreater ? orderLine
-							.getQtyInvoiced() : orderLine
-							.getPendingDeliveredQty();
+							.getQtyInvoiced() : pending;
 					String lastMsgDescription = reservedGreater ? "Invoiced"
 							: "Reserved";
 					if (line.getQtyInvoiced().compareTo(qtyToCompare) > 0) {

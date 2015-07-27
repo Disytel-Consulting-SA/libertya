@@ -253,7 +253,19 @@ public class VCreateFromInvoice extends VCreateFrom {
     protected String getRemainingQtySQLLine(boolean forInvoice, boolean allowDeliveryReturns){
     	String sqlLine = super.getRemainingQtySQLLine(forInvoice, allowDeliveryReturns);
     	if(!forInvoice){
-    		sqlLine = " (CASE WHEN (l.QtyOrdered - l.QtyDelivered - l.QtyTransferred) > l.QtyInvoiced THEN l.QtyInvoiced ELSE (l.QtyOrdered - l.QtyDelivered- l.QtyTransferred) END) ";
+    		sqlLine = " (CASE WHEN (l.QtyOrdered - l.QtyDelivered - l.QtyTransferred - (select sum(iol.movementqty) as movementqty " +
+    				"																	from m_inoutline as iol " +
+    				"																	inner join m_inout as io on io.m_inout_id = iol.m_inout_id " +
+    				"																	inner join c_doctype as dt on dt.c_doctype_id = io.c_doctype_id " +
+    				"																	where dt.doctypekey = 'DC' " +
+    				"																			and io.docstatus in ('CO','CL')" +
+    				"																			and iol.c_orderline_id = l.c_orderline_id)) > l.QtyInvoiced THEN l.QtyInvoiced ELSE (l.QtyOrdered - l.QtyDelivered- l.QtyTransferred - (select sum(iol.movementqty) as movementqty " +
+																																				    				"																	from m_inoutline as iol " +
+																																				    				"																	inner join m_inout as io on io.m_inout_id = iol.m_inout_id " +
+																																				    				"																	inner join c_doctype as dt on dt.c_doctype_id = io.c_doctype_id " +
+																																				    				"																	where dt.doctypekey = 'DC' " +
+																																				    				"																			and io.docstatus in ('CO','CL')" +
+																																				    				"																			and iol.c_orderline_id = l.c_orderline_id)) END) ";
     	}
     	return sqlLine;
     }
