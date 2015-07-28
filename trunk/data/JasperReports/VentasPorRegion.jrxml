@@ -53,8 +53,6 @@ INNER JOIN c_region r ON (r.c_region_id = l.c_region_id)
 INNER JOIN c_doctype dt ON (dt.c_doctype_id = i.c_doctype_id)
 INNER JOIN ad_org ado ON (ado.ad_org_id = i.ad_org_id)
 INNER JOIN c_acctschema acc ON (acc.ad_client_id = i.ad_client_id)
-INNER JOIN c_invoiceline il on (il.c_invoice_id = i.c_invoice_id)
-INNER JOIN m_product p on (p.m_product_id =il.m_product_id)
 WHERE (i.issotrx = 'Y') 
 AND (dt.docbasetype in ('ARC','ARI'))
 AND (i.docstatus in ('CO','CL','VO','RE'))
@@ -64,7 +62,11 @@ AND (($P{FechaDesde}::date IS NULL) OR (i.dateinvoiced::date >= $P{FechaDesde}::
 AND (($P{FechaHasta}::date IS NULL) OR (i.dateinvoiced::date <= $P{FechaHasta}::date)) 
 AND (($P{C_BP_Group_ID} IS NULL) OR (bpg.c_bp_group_id = $P{C_BP_Group_ID}))
 AND ($P{AD_CLIENT_ID} = i.ad_client_id)
-AND p.value <> (select value from ad_preference where attribute = 'DIF_CAMBIO_ARTICULO' order by created desc LIMIT 1) ]]></queryString>
+AND (i.c_invoice_id NOT IN 
+(SELECT c_invoice_id 
+FROM c_invoiceline il 
+INNER JOIN m_product p on (p.m_product_id =il.m_product_id) 
+WHERE p.value = (select value from ad_preference where attribute = 'DIF_CAMBIO_ARTICULO' order by created desc LIMIT 1)))]]></queryString>
 
 	<field name="ad_org_id" class="java.lang.Integer"/>
 	<field name="organization" class="java.lang.String"/>
