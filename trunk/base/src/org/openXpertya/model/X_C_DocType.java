@@ -7,7 +7,7 @@ import java.math.*;
 import org.openXpertya.util.*;
 /** Modelo Generado por C_DocType
  *  @author Comunidad de Desarrollo Libertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
- *  @version  - 2014-05-08 13:02:45.12 */
+ *  @version  - 2015-07-28 18:57:55.505 */
 public class X_C_DocType extends org.openXpertya.model.PO
 {
 /** Constructor estándar */
@@ -586,10 +586,10 @@ return ii.intValue();
 Additional information for a Document */
 public void setDocumentNote (String DocumentNote)
 {
-if (DocumentNote != null && DocumentNote.length() > 2000)
+if (DocumentNote != null && DocumentNote.length() > 2500)
 {
-log.warning("Length > 2000 - truncated");
-DocumentNote = DocumentNote.substring(0,2000);
+log.warning("Length > 2500 - truncated");
+DocumentNote = DocumentNote.substring(0,2500);
 }
 set_Value ("DocumentNote", DocumentNote);
 }

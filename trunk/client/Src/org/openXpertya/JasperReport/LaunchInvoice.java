@@ -151,6 +151,10 @@ public class LaunchInvoice extends SvrProcess {
 			region = new MRegion(getCtx(), location.getC_Region_ID(), null);
 
 		MDocType docType = new MDocType(getCtx(), invoice.getC_DocTypeTarget_ID(), get_TrxName());
+		MOrder order = null;
+		if(!Util.isEmpty(invoice.getC_Order_ID(), true)){
+			order = new MOrder(getCtx(), invoice.getC_Order_ID(), get_TrxName());
+		}
 		
 		// Descuentos aplicados totales
 		jasperwrapper.addParameter("NROCOMPROBANTE", invoice.getNumeroDeDocumento());
@@ -159,6 +163,7 @@ public class LaunchInvoice extends SvrProcess {
 					"FACTURA", get_TrxName()));
 		
 		jasperwrapper.addParameter("DOCTYPEKEY", docType.getDocTypeKey());
+		jasperwrapper.addParameter("DOCTYPENOTES", docType.getDocumentNote());
 				
 		jasperwrapper.addParameter("FECHA", invoice.getDateInvoiced());
 		Calendar c = Calendar.getInstance();
@@ -202,11 +207,19 @@ public class LaunchInvoice extends SvrProcess {
 								get_TrxName()) 
 						: salesRepUser.getName());
 		}
-		jasperwrapper.addParameter("NRODOCORIG", JasperReportsUtil.coalesce(invoice.getPOReference(), "") );
-		if(!Util.isEmpty(invoice.getC_Order_ID(), true)){
-			jasperwrapper.addParameter("NRO_OC", JasperReportsUtil.coalesce(
-				(new MOrder(getCtx(), invoice.getC_Order_ID(),
-						get_TrxName())).getDocumentNo(), ""));
+		jasperwrapper.addParameter("NRODOCORIG",
+				JasperReportsUtil.coalesce(invoice.getPOReference(), ""));
+		if(order != null){
+			jasperwrapper.addParameter("NRO_OC",
+					JasperReportsUtil.coalesce(order.getDocumentNo(), ""));
+			jasperwrapper.addParameter(
+					"ORDER_CURRENCY",
+					JasperReportsUtil.getCurrencyDescription(getCtx(),
+							order.getC_Currency_ID(), get_TrxName()));
+			jasperwrapper.addParameter(
+					"ORDER_CURRENCY_SIMBOL",
+					JasperReportsUtil.getCurrencySymbol(getCtx(),
+							order.getC_Currency_ID(), get_TrxName()));
 		} 
 		String fechaVto = (String)JasperReportsUtil.coalesce(getFechaVto(invoice), invoice.getDateInvoiced().toString());
 		fechaVto = fechaVto.substring(0, 11); // quitamos la hora del string

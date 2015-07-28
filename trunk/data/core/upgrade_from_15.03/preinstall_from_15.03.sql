@@ -2304,3 +2304,12 @@ UPDATE AD_Column SET AD_Reference_ID = 30 WHERE AD_ComponentObjectUID = 'CORE-AD
 
 --20150710-1251 Mejora de performance al abrir ventana de Facturas (cont)
 UPDATE AD_Column SET AD_Reference_ID = 30 WHERE AD_ComponentObjectUID = 'CORE-AD_Column-10805';
+
+--20150728-1850 Incremento de tamaño de la columna DocumentNote de la tabla C_DocType
+UPDATE pg_attribute
+SET atttypmod = 2504
+WHERE attrelid = 'c_doctype'::regclass AND attname = 'documentnote';
+
+UPDATE ad_column
+SET fieldlength = 2500, ad_reference_id = 14
+where ad_componentobjectuid IN ('CORE-AD_Column-3025');
