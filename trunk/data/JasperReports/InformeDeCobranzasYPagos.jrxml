@@ -57,7 +57,7 @@ a.documentno as NroRecibo,
 dt.name as TipoDeRecibo,
 rs.name as Tipo,
 --mri.amt_retenc as Monto
-currencyconvert(mri.amt_retenc, a.c_currency_id, 118, current_timestamp::timestamp with time zone, null, a.ad_client_id, a.ad_org_id) as Monto
+ABS(currencyconvert(mri.amt_retenc, a.c_currency_id, 118, current_timestamp::timestamp with time zone, null, a.ad_client_id, a.ad_org_id)) as Monto
 from c_allocationhdr a
 inner join c_allocationline al on (al.c_allocationhdr_id = a.c_allocationhdr_id)
 inner join ad_org o on (o.ad_org_id = a.ad_org_id)
@@ -86,8 +86,8 @@ bp.name as EntidadComercial,
 a.documentno as NroRecibo,
 dt.name as TipoDeRecibo,
 'Cheque' as Tipo,
-case when al.amount = 0 then currencyconvert(p.payamt, p.c_currency_id, 118, p.datetrx::timestamp with time zone, null, a.ad_client_id, a.ad_org_id) 
-else currencyconvert(al.amount, a.c_currency_id, 118, a.datetrx::timestamp with time zone, null, a.ad_client_id, a.ad_org_id)
+case when al.amount = 0 then ABS(currencyconvert(p.payamt, p.c_currency_id, 118, p.datetrx::timestamp with time zone, null, a.ad_client_id, a.ad_org_id))
+else ABS(currencyconvert(al.amount, a.c_currency_id, 118, a.datetrx::timestamp with time zone, null, a.ad_client_id, a.ad_org_id))
 end as Monto
 from c_allocationhdr a
 inner join c_allocationline al on (al.c_allocationhdr_id = a.c_allocationhdr_id)
@@ -103,7 +103,6 @@ AND (case $P{Mostrar} when (cast ('P' as varchar)) then p.isreceipt = 'N'
 else p.isreceipt = 'Y' end)
 AND (($P{C_BP_Group_ID} IS NULL) OR (bpg.c_bp_group_id = $P{C_BP_Group_ID}))
 AND (($P{C_BPartner_ID} IS NULL) OR (bp.c_bpartner_id = $P{C_BPartner_ID}))
-AND ((pr.value is null) or (pr.value <> (select value from ad_preference where attribute = 'DIF_CAMBIO_ARTICULO' order by created desc limit 1)))
 )
 UNION
 (select
@@ -119,8 +118,8 @@ bp.name as EntidadComercial,
 a.documentno as NroRecibo,
 dt.name as TipoDeRecibo,
 'Transferencia Bancaria' as Tipo,
-case when al.amount = 0 then currencyconvert(p.payamt, p.c_currency_id, 118, p.datetrx::timestamp with time zone, null, a.ad_client_id, a.ad_org_id) 
-else currencyconvert(al.amount, a.c_currency_id, 118, a.datetrx::timestamp with time zone, null, a.ad_client_id, a.ad_org_id)
+case when al.amount = 0 then ABS(currencyconvert(p.payamt, p.c_currency_id, 118, p.datetrx::timestamp with time zone, null, a.ad_client_id, a.ad_org_id)) 
+else ABS(currencyconvert(al.amount, a.c_currency_id, 118, a.datetrx::timestamp with time zone, null, a.ad_client_id, a.ad_org_id))
 end as Monto
 from c_allocationhdr a
 inner join c_allocationline al on (al.c_allocationhdr_id = a.c_allocationhdr_id)
@@ -136,7 +135,6 @@ AND (case $P{Mostrar} when (cast ('P' as varchar)) then p.isreceipt = 'N'
 else p.isreceipt = 'Y' end)
 AND (($P{C_BP_Group_ID} IS NULL) OR (bpg.c_bp_group_id = $P{C_BP_Group_ID}))
 AND (($P{C_BPartner_ID} IS NULL) OR (bp.c_bpartner_id = $P{C_BPartner_ID}))
-AND ((pr.value is null) or (pr.value <> (select value from ad_preference where attribute = 'DIF_CAMBIO_ARTICULO' order by created desc limit 1)))
 )
 UNION
 (select
@@ -152,8 +150,8 @@ bp.name as EntidadComercial,
 a.documentno as NroRecibo,
 dt.name as TipoDeRecibo,
 'Caja' as Tipo,
-case when al.amount = 0 then currencyconvert(c.amount, c.c_currency_id, 118, c.created::timestamp with time zone, null, a.ad_client_id, a.ad_org_id) 
-else currencyconvert(al.amount, a.c_currency_id, 118, a.datetrx::timestamp with time zone, null, a.ad_client_id, a.ad_org_id)
+case when al.amount = 0 then ABS(currencyconvert(c.amount, c.c_currency_id, 118, c.created::timestamp with time zone, null, a.ad_client_id, a.ad_org_id)) 
+else ABS(currencyconvert(al.amount, a.c_currency_id, 118, a.datetrx::timestamp with time zone, null, a.ad_client_id, a.ad_org_id))
 end as Monto
 from c_allocationhdr a
 inner join c_allocationline al on (al.c_allocationhdr_id = a.c_allocationhdr_id)
@@ -169,7 +167,6 @@ AND (case $P{Mostrar} when (cast ('P' as varchar)) then c.amount < 0
 else c.amount > 0  end)
 AND (($P{C_BP_Group_ID} IS NULL) OR (bpg.c_bp_group_id = $P{C_BP_Group_ID}))
 AND (($P{C_BPartner_ID} IS NULL) OR (bp.c_bpartner_id = $P{C_BPartner_ID}))
-AND ((pr.value is null) or (pr.value <> (select value from ad_preference where attribute = 'DIF_CAMBIO_ARTICULO' order by created desc limit 1)))
 )
 UNION
 (select
@@ -186,47 +183,12 @@ a.documentno as NroRecibo,
 dt.name as TipoDeRecibo,
 'Diferencia de Cambio' as Tipo,
 --case when al.amount = 0 then a.grandtotal else al.amount end as Monto
-case when al.amount = 0 then currencyconvert(a.grandtotal, a.c_currency_id, 118, current_timestamp::timestamp with time zone, null, a.ad_client_id, a.ad_org_id) 
-else currencyconvert(al.amount, a.c_currency_id, 118, current_timestamp::timestamp with time zone, null, a.ad_client_id, a.ad_org_id)
+case when al.amount = 0 then ABS(currencyconvert(a.grandtotal, a.c_currency_id, 118, current_timestamp::timestamp with time zone, null, a.ad_client_id, a.ad_org_id)) 
+else ABS(currencyconvert(al.amount, a.c_currency_id, 118, current_timestamp::timestamp with time zone, null, a.ad_client_id, a.ad_org_id))
 end as Monto
 from c_allocationhdr a
 inner join c_allocationline al on (al.c_allocationhdr_id = a.c_allocationhdr_id)
 inner join c_invoiceline il on (il.c_invoice_id = al.c_invoice_credit_id)
-inner join c_invoice i on (i.c_invoice_id = il.c_invoice_id)
-inner join m_product pr on (il.m_product_id = pr.m_product_id)
-inner join ad_org o on (o.ad_org_id = a.ad_org_id)
-inner join c_bpartner bp on (bp.c_bpartner_id = a.c_bpartner_id)
-inner join c_bp_group bpg on (bpg.c_bp_group_id = bp.c_bp_group_id)
-inner join c_doctype dt on (dt.c_doctype_id = a.c_doctype_id)
-inner join c_doctype dti on (dti.c_doctype_id = i.c_doctypetarget_id)
-where (al.c_allocationhdr_id = a.c_allocationhdr_id)
-AND (case $P{Mostrar} when (cast ('P' as varchar)) then dti.docbasetype in ('APC','API') 
-else dt.docbasetype in ('ARC','ARI') end)
-AND (($P{C_BP_Group_ID} IS NULL) OR (bpg.c_bp_group_id = $P{C_BP_Group_ID}))
-AND (($P{C_BPartner_ID} IS NULL) OR (bp.c_bpartner_id = $P{C_BPartner_ID}))
-AND pr.value = (select value from ad_preference where attribute = 'DIF_CAMBIO_ARTICULO' order by created desc limit 1)
-)
-UNION
-(select
-a.c_allocationhdr_id,
-a.ad_client_id,
-a.ad_org_id,
-bp.c_bp_group_id,
-o.name as organization,
-bpg.name as grupo_ec,
-a.datetrx as Fecha,
-bp.c_bpartner_id as EntidadComercialID,
-bp.name as EntidadComercial,
-a.documentno as NroRecibo,
-dt.name as TipoDeRecibo,
-'Diferencia de Cambio' as Tipo,
---case when al.amount = 0 then a.grandtotal else al.amount end as Monto
-case when al.amount = 0 then currencyconvert(a.grandtotal, a.c_currency_id, 118, current_timestamp::timestamp with time zone, null, a.ad_client_id, a.ad_org_id) 
-else currencyconvert(al.amount, a.c_currency_id, 118, current_timestamp::timestamp with time zone, null, a.ad_client_id, a.ad_org_id)
-end as Monto
-from c_allocationhdr a
-inner join c_allocationline al on (al.c_allocationhdr_id = a.c_allocationhdr_id)
-inner join c_invoiceline il on (il.c_invoice_id = al.c_invoice_id)
 inner join c_invoice i on (i.c_invoice_id = il.c_invoice_id)
 inner join m_product pr on (il.m_product_id = pr.m_product_id)
 inner join ad_org o on (o.ad_org_id = a.ad_org_id)
@@ -256,7 +218,7 @@ a.documentno as NroRecibo,
 dt.name as TipoDeRecibo,
 'Nota de Credito' as Tipo,
 --i.grandtotal as Monto
-currencyconvert(i.grandtotal, a.c_currency_id, 118, current_timestamp::timestamp with time zone, null, a.ad_client_id, a.ad_org_id) as Monto
+ABS(currencyconvert(i.grandtotal, a.c_currency_id, 118, current_timestamp::timestamp with time zone, null, a.ad_client_id, a.ad_org_id)) as Monto
 from c_invoice i
 inner join c_invoiceline il on (il.c_invoice_id = i.c_invoice_id)
 left join c_allocationline al on (al.c_invoice_credit_id = i.c_invoice_id)
@@ -266,12 +228,12 @@ inner join ad_org o on (o.ad_org_id = a.ad_org_id)
 inner join c_bpartner bp on (bp.c_bpartner_id = a.c_bpartner_id)
 inner join c_bp_group bpg on (bpg.c_bp_group_id = bp.c_bp_group_id)
 inner join c_doctype dt on (dt.c_doctype_id = a.c_doctype_id)
-where pr.value <> (select value from ad_preference where attribute = 'DIF_CAMBIO_ARTICULO' order by created desc limit 1)
-and (i.c_invoice_id not in (select c_invoice_id from m_retencion_invoice))
+where (i.c_invoice_id not in (select c_invoice_id from m_retencion_invoice))
 AND (($P{C_BP_Group_ID} IS NULL) OR (bpg.c_bp_group_id = $P{C_BP_Group_ID}))
 AND (($P{C_BPartner_ID} IS NULL) OR (bp.c_bpartner_id = $P{C_BPartner_ID}))
-AND (case $P{Mostrar} when (cast ('P' as varchar)) then dt.docbasetype in ('API','APC') 
-else dt.docbasetype in ('ARI','ARC') end)
+AND (case $P{Mostrar} when (cast ('P' as varchar)) then dt.docbasetype in ('APP','API','APC') 
+else dt.docbasetype in ('ARR','ARI','ARC') end)
+AND pr.value <> (select value from ad_preference where attribute = 'DIF_CAMBIO_ARTICULO' order by created desc limit 1)
 )
 UNION
 (select
@@ -287,8 +249,8 @@ bp.name as EntidadComercial,
 a.documentno as NroRecibo,
 dt.name as TipoDeRecibo,
 'Tarjeta de crédito' as Tipo,
-case when al.amount = 0 then currencyconvert(p.payamt, p.c_currency_id, 118, p.datetrx::timestamp with time zone, null, a.ad_client_id, a.ad_org_id) 
-else currencyconvert(al.amount, a.c_currency_id, 118, a.datetrx::timestamp with time zone, null, a.ad_client_id, a.ad_org_id)
+case when al.amount = 0 then ABS(currencyconvert(p.payamt, p.c_currency_id, 118, p.datetrx::timestamp with time zone, null, a.ad_client_id, a.ad_org_id)) 
+else ABS(currencyconvert(al.amount, a.c_currency_id, 118, a.datetrx::timestamp with time zone, null, a.ad_client_id, a.ad_org_id))
 end as Monto
 from c_allocationhdr a
 inner join c_allocationline al on (al.c_allocationhdr_id = a.c_allocationhdr_id)
@@ -304,7 +266,6 @@ AND (case $P{Mostrar} when (cast ('P' as varchar)) then p.isreceipt = 'N'
 else p.isreceipt = 'Y'  end)
 AND (($P{C_BP_Group_ID} IS NULL) OR (bpg.c_bp_group_id = $P{C_BP_Group_ID}))
 AND (($P{C_BPartner_ID} IS NULL) OR (bp.c_bpartner_id = $P{C_BPartner_ID}))
-AND ((pr.value is null) or (pr.value <> (select value from ad_preference where attribute = 'DIF_CAMBIO_ARTICULO' order by created desc limit 1)))
 )
 UNION
 (select
@@ -320,7 +281,7 @@ null as EntidadComercial,
 null as NroRecibo,
 null as TipoDeRecibo,
 'Otro' as Tipo,
-i.grandtotal as Monto
+ABS(i.grandtotal) as Monto
 from c_invoice i
 inner join c_allocationline al on (al.c_invoice_credit_id = i.c_invoice_id)
 inner join c_allocationhdr a on (a.c_allocationhdr_id = al.c_allocationhdr_id) 
@@ -489,7 +450,7 @@ ORDER BY c_allocationhdr_id]]></queryString>
 					<reportElement
 						x="363"
 						y="39"
-						width="150"
+						width="293"
 						height="12"
 						key="textField-102">
 							<printWhenExpression><![CDATA[new Boolean($P{C_BPartner_ID}!= null)]]></printWhenExpression>
@@ -540,12 +501,14 @@ ORDER BY c_allocationhdr_id]]></queryString>
 					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
 				<staticText>
 					<reportElement
+						mode="Opaque"
 						x="0"
 						y="0"
-						width="100"
+						width="71"
 						height="25"
+						backcolor="#D9D9D9"
 						key="staticText-81"/>
-					<box topBorder="1Point" topBorderColor="#000000" leftBorder="1Point" leftBorderColor="#000000" rightBorder="1Point" rightBorderColor="#000000" bottomBorder="1Point" bottomBorderColor="#000000"/>
+					<box topBorder="1Point" topBorderColor="#000000" leftBorder="1Point" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="1Point" bottomBorderColor="#000000"/>
 					<textElement textAlignment="Center" verticalAlignment="Middle">
 						<font/>
 					</textElement>
@@ -553,12 +516,14 @@ ORDER BY c_allocationhdr_id]]></queryString>
 				</staticText>
 				<staticText>
 					<reportElement
-						x="100"
+						mode="Opaque"
+						x="71"
 						y="0"
-						width="100"
+						width="190"
 						height="25"
+						backcolor="#D9D9D9"
 						key="staticText-81"/>
-					<box topBorder="1Point" topBorderColor="#000000" leftBorder="1Point" leftBorderColor="#000000" rightBorder="1Point" rightBorderColor="#000000" bottomBorder="1Point" bottomBorderColor="#000000"/>
+					<box topBorder="1Point" topBorderColor="#000000" leftBorder="1Point" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="1Point" bottomBorderColor="#000000"/>
 					<textElement textAlignment="Center" verticalAlignment="Middle">
 						<font/>
 					</textElement>
@@ -566,12 +531,14 @@ ORDER BY c_allocationhdr_id]]></queryString>
 				</staticText>
 				<staticText>
 					<reportElement
-						x="200"
+						mode="Opaque"
+						x="261"
 						y="0"
-						width="100"
+						width="70"
 						height="25"
+						backcolor="#D9D9D9"
 						key="staticText-81"/>
-					<box topBorder="1Point" topBorderColor="#000000" leftBorder="1Point" leftBorderColor="#000000" rightBorder="1Point" rightBorderColor="#000000" bottomBorder="1Point" bottomBorderColor="#000000"/>
+					<box topBorder="1Point" topBorderColor="#000000" leftBorder="1Point" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="1Point" bottomBorderColor="#000000"/>
 					<textElement textAlignment="Center" verticalAlignment="Middle">
 						<font/>
 					</textElement>
@@ -579,12 +546,14 @@ ORDER BY c_allocationhdr_id]]></queryString>
 				</staticText>
 				<staticText>
 					<reportElement
-						x="300"
+						mode="Opaque"
+						x="331"
 						y="0"
 						width="100"
 						height="25"
+						backcolor="#D9D9D9"
 						key="staticText-81"/>
-					<box topBorder="1Point" topBorderColor="#000000" leftBorder="1Point" leftBorderColor="#000000" rightBorder="1Point" rightBorderColor="#000000" bottomBorder="1Point" bottomBorderColor="#000000"/>
+					<box topBorder="1Point" topBorderColor="#000000" leftBorder="1Point" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="1Point" bottomBorderColor="#000000"/>
 					<textElement textAlignment="Center" verticalAlignment="Middle">
 						<font/>
 					</textElement>
@@ -592,10 +561,12 @@ ORDER BY c_allocationhdr_id]]></queryString>
 				</staticText>
 				<staticText>
 					<reportElement
-						x="400"
+						mode="Opaque"
+						x="431"
 						y="0"
-						width="100"
+						width="59"
 						height="25"
+						backcolor="#D9D9D9"
 						key="staticText-81"/>
 					<box topBorder="1Point" topBorderColor="#000000" leftBorder="1Point" leftBorderColor="#000000" rightBorder="1Point" rightBorderColor="#000000" bottomBorder="1Point" bottomBorderColor="#000000"/>
 					<textElement textAlignment="Center" verticalAlignment="Middle">
@@ -604,7 +575,7 @@ ORDER BY c_allocationhdr_id]]></queryString>
 				<text><![CDATA[Fecha]]></text>
 				</staticText>
 						</cellContents>
-					</crosstabHeaderCell>					<rowGroup name="c_allocationhdr_id" width="100" totalPosition="End">
+					</crosstabHeaderCell>					<rowGroup name="c_allocationhdr_id" width="71" totalPosition="End">
 						<bucket>
 							<bucketExpression class="java.lang.Integer"><![CDATA[$F{c_allocationhdr_id}]]></bucketExpression>
 						</bucket>
@@ -615,12 +586,12 @@ ORDER BY c_allocationhdr_id]]></queryString>
 					<reportElement
 						x="0"
 						y="0"
-						width="100"
-						height="30"
+						width="71"
+						height="16"
 						key="textField"/>
-					<box topBorder="1Point" topBorderColor="#000000" leftBorder="1Point" leftBorderColor="#000000" rightBorder="1Point" rightBorderColor="#000000" bottomBorder="1Point" bottomBorderColor="#000000"/>
+					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
 					<textElement textAlignment="Center" verticalAlignment="Middle">
-						<font/>
+						<font size="8"/>
 					</textElement>
 				<textFieldExpression   class="java.lang.Integer"><![CDATA[$V{c_allocationhdr_id}]]></textFieldExpression>
 				</textField>
@@ -633,19 +604,19 @@ ORDER BY c_allocationhdr_id]]></queryString>
 					<reportElement
 						x="0"
 						y="0"
-						width="100"
-						height="30"
+						width="490"
+						height="16"
 						key="textField"/>
-					<box topBorder="1Point" topBorderColor="#000000" leftBorder="1Point" leftBorderColor="#000000" rightBorder="1Point" rightBorderColor="#000000" bottomBorder="1Point" bottomBorderColor="#000000"/>
+					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
 					<textElement textAlignment="Center" verticalAlignment="Middle">
-						<font/>
+						<font pdfFontName="Helvetica-Bold" size="8" isBold="true"/>
 					</textElement>
 				<textFieldExpression   class="java.lang.String"><![CDATA["TOTAL"]]></textFieldExpression>
 				</textField>
 						</cellContents>
 						</crosstabTotalRowHeader>
 					</rowGroup>
-					<rowGroup name="entidadcomercial" width="100">
+					<rowGroup name="entidadcomercial" width="190">
 						<bucket>
 							<bucketExpression class="java.lang.String"><![CDATA[$F{entidadcomercial}]]></bucketExpression>
 						</bucket>
@@ -656,19 +627,19 @@ ORDER BY c_allocationhdr_id]]></queryString>
 					<reportElement
 						x="0"
 						y="0"
-						width="100"
-						height="30"
+						width="190"
+						height="16"
 						key="textField"/>
-					<box topBorder="1Point" topBorderColor="#000000" leftBorder="1Point" leftBorderColor="#000000" rightBorder="1Point" rightBorderColor="#000000" bottomBorder="1Point" bottomBorderColor="#000000"/>
+					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="1Point" bottomBorderColor="#000000"/>
 					<textElement textAlignment="Center" verticalAlignment="Middle">
-						<font/>
+						<font size="8"/>
 					</textElement>
 				<textFieldExpression   class="java.lang.String"><![CDATA[$V{entidadcomercial}]]></textFieldExpression>
 				</textField>
 						</cellContents>
 						</crosstabRowHeader>
 					</rowGroup>
-					<rowGroup name="nrorecibo" width="100">
+					<rowGroup name="nrorecibo" width="70">
 						<bucket>
 							<bucketExpression class="java.lang.String"><![CDATA[$F{nrorecibo}]]></bucketExpression>
 						</bucket>
@@ -679,12 +650,12 @@ ORDER BY c_allocationhdr_id]]></queryString>
 					<reportElement
 						x="0"
 						y="0"
-						width="100"
-						height="30"
+						width="70"
+						height="16"
 						key="textField"/>
-					<box topBorder="1Point" topBorderColor="#000000" leftBorder="1Point" leftBorderColor="#000000" rightBorder="1Point" rightBorderColor="#000000" bottomBorder="1Point" bottomBorderColor="#000000"/>
+					<box topBorder="None" topBorderColor="#000000" leftBorder="1Point" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="1Point" bottomBorderColor="#000000"/>
 					<textElement textAlignment="Center" verticalAlignment="Middle">
-						<font/>
+						<font size="8"/>
 					</textElement>
 				<textFieldExpression   class="java.lang.String"><![CDATA[$V{nrorecibo}]]></textFieldExpression>
 				</textField>
@@ -703,18 +674,18 @@ ORDER BY c_allocationhdr_id]]></queryString>
 						x="0"
 						y="0"
 						width="100"
-						height="30"
+						height="16"
 						key="textField"/>
-					<box topBorder="1Point" topBorderColor="#000000" leftBorder="1Point" leftBorderColor="#000000" rightBorder="1Point" rightBorderColor="#000000" bottomBorder="1Point" bottomBorderColor="#000000"/>
+					<box topBorder="None" topBorderColor="#000000" leftBorder="1Point" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="1Point" bottomBorderColor="#000000"/>
 					<textElement textAlignment="Center" verticalAlignment="Middle">
-						<font/>
+						<font size="8"/>
 					</textElement>
 				<textFieldExpression   class="java.lang.String"><![CDATA[$V{tipoderecibo}]]></textFieldExpression>
 				</textField>
 						</cellContents>
 						</crosstabRowHeader>
 					</rowGroup>
-					<rowGroup name="Fecha" width="100">
+					<rowGroup name="Fecha" width="59">
 						<bucket>
 							<bucketExpression class="java.util.Date"><![CDATA[$F{fecha}]]></bucketExpression>
 						</bucket>
@@ -725,12 +696,12 @@ ORDER BY c_allocationhdr_id]]></queryString>
 					<reportElement
 						x="0"
 						y="0"
-						width="100"
-						height="30"
+						width="59"
+						height="16"
 						key="textField"/>
-					<box topBorder="1Point" topBorderColor="#000000" leftBorder="1Point" leftBorderColor="#000000" rightBorder="1Point" rightBorderColor="#000000" bottomBorder="1Point" bottomBorderColor="#000000"/>
+					<box topBorder="None" topBorderColor="#000000" leftBorder="1Point" leftBorderColor="#000000" rightBorder="1Point" rightBorderColor="#000000" bottomBorder="1Point" bottomBorderColor="#000000"/>
 					<textElement textAlignment="Center" verticalAlignment="Middle">
-						<font/>
+						<font size="8"/>
 					</textElement>
 				<textFieldExpression   class="java.util.Date"><![CDATA[$V{Fecha}]]></textFieldExpression>
 				</textField>
@@ -746,12 +717,14 @@ ORDER BY c_allocationhdr_id]]></queryString>
 					<box topBorder="1Point" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="1Point" rightBorderColor="#000000" bottomBorder="1Point" bottomBorderColor="#000000"/>
 				<textField isStretchWithOverflow="false" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
+						mode="Opaque"
 						x="0"
 						y="0"
 						width="84"
 						height="25"
+						backcolor="#D9D9D9"
 						key="textField"/>
-					<box topBorder="1Point" topBorderColor="#000000" leftBorder="1Point" leftBorderColor="#000000" rightBorder="1Point" rightBorderColor="#000000" bottomBorder="1Point" bottomBorderColor="#000000"/>
+					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="Thin" bottomBorderColor="#000000"/>
 					<textElement textAlignment="Center" verticalAlignment="Middle">
 						<font/>
 					</textElement>
@@ -764,12 +737,14 @@ ORDER BY c_allocationhdr_id]]></queryString>
 					<box topBorder="1Point" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="1Point" rightBorderColor="#000000" bottomBorder="1Point" bottomBorderColor="#000000"/>
 				<textField isStretchWithOverflow="false" isBlankWhenNull="false" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
+						mode="Opaque"
 						x="0"
 						y="0"
 						width="101"
 						height="25"
+						backcolor="#C1C1C1"
 						key="textField"/>
-					<box topBorder="1Point" topBorderColor="#000000" leftBorder="1Point" leftBorderColor="#000000" rightBorder="1Point" rightBorderColor="#000000" bottomBorder="1Point" bottomBorderColor="#000000"/>
+					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="Thin" bottomBorderColor="#000000"/>
 					<textElement textAlignment="Center" verticalAlignment="Middle">
 						<font/>
 					</textElement>
@@ -782,7 +757,7 @@ ORDER BY c_allocationhdr_id]]></queryString>
 					<measure name="monto_Sum" class="java.math.BigDecimal" calculation="Sum">
 						<measureExpression><![CDATA[$F{monto}]]></measureExpression>
 					</measure>
-					<crosstabCell width="84" height="30">
+					<crosstabCell width="84" height="16">
 						<cellContents mode="Transparent">
 					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="1Point" rightBorderColor="#000000" bottomBorder="1Point" bottomBorderColor="#000000"/>
 				<textField isStretchWithOverflow="false" pattern="###0.00" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
@@ -790,17 +765,17 @@ ORDER BY c_allocationhdr_id]]></queryString>
 						x="0"
 						y="0"
 						width="84"
-						height="30"
+						height="16"
 						key="textField"/>
-					<box topBorder="1Point" topBorderColor="#000000" leftBorder="1Point" leftBorderColor="#000000" rightBorder="1Point" rightBorderColor="#000000" bottomBorder="1Point" bottomBorderColor="#000000"/>
+					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
 					<textElement textAlignment="Center" verticalAlignment="Middle">
-						<font/>
+						<font size="8"/>
 					</textElement>
 				<textFieldExpression   class="java.math.BigDecimal"><![CDATA[$V{monto_Sum}]]></textFieldExpression>
 				</textField>
 						</cellContents>
 					</crosstabCell>
-					<crosstabCell width="101" height="30" columnTotalGroup="tipo">
+					<crosstabCell width="101" height="16" columnTotalGroup="tipo">
 						<cellContents mode="Transparent">
 					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="1Point" rightBorderColor="#000000" bottomBorder="1Point" bottomBorderColor="#000000"/>
 				<textField isStretchWithOverflow="false" pattern="###0.00" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
@@ -808,17 +783,17 @@ ORDER BY c_allocationhdr_id]]></queryString>
 						x="0"
 						y="0"
 						width="101"
-						height="30"
+						height="16"
 						key="textField"/>
-					<box topBorder="1Point" topBorderColor="#000000" leftBorder="1Point" leftBorderColor="#000000" rightBorder="1Point" rightBorderColor="#000000" bottomBorder="1Point" bottomBorderColor="#000000"/>
+					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
 					<textElement textAlignment="Center" verticalAlignment="Middle">
-						<font/>
+						<font size="8"/>
 					</textElement>
 				<textFieldExpression   class="java.math.BigDecimal"><![CDATA[$V{monto_Sum}]]></textFieldExpression>
 				</textField>
 						</cellContents>
 					</crosstabCell>
-					<crosstabCell width="84" height="30" rowTotalGroup="c_allocationhdr_id">
+					<crosstabCell width="84" height="16" rowTotalGroup="c_allocationhdr_id">
 						<cellContents mode="Transparent">
 					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="1Point" rightBorderColor="#000000" bottomBorder="1Point" bottomBorderColor="#000000"/>
 				<textField isStretchWithOverflow="false" pattern="###0.00" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
@@ -826,17 +801,17 @@ ORDER BY c_allocationhdr_id]]></queryString>
 						x="0"
 						y="0"
 						width="84"
-						height="30"
+						height="16"
 						key="textField"/>
-					<box topBorder="1Point" topBorderColor="#000000" leftBorder="1Point" leftBorderColor="#000000" rightBorder="1Point" rightBorderColor="#000000" bottomBorder="1Point" bottomBorderColor="#000000"/>
+					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
 					<textElement textAlignment="Center" verticalAlignment="Middle">
-						<font/>
+						<font pdfFontName="Helvetica-Bold" size="8" isBold="true"/>
 					</textElement>
 				<textFieldExpression   class="java.math.BigDecimal"><![CDATA[$V{monto_Sum}]]></textFieldExpression>
 				</textField>
 						</cellContents>
 					</crosstabCell>
-					<crosstabCell width="101" height="30" rowTotalGroup="c_allocationhdr_id" columnTotalGroup="tipo">
+					<crosstabCell width="101" height="16" rowTotalGroup="c_allocationhdr_id" columnTotalGroup="tipo">
 						<cellContents mode="Transparent">
 					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="1Point" rightBorderColor="#000000" bottomBorder="1Point" bottomBorderColor="#000000"/>
 				<textField isStretchWithOverflow="false" pattern="###0.00" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
@@ -844,11 +819,11 @@ ORDER BY c_allocationhdr_id]]></queryString>
 						x="0"
 						y="0"
 						width="101"
-						height="30"
+						height="16"
 						key="textField"/>
-					<box topBorder="1Point" topBorderColor="#000000" leftBorder="1Point" leftBorderColor="#000000" rightBorder="1Point" rightBorderColor="#000000" bottomBorder="1Point" bottomBorderColor="#000000"/>
+					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
 					<textElement textAlignment="Center" verticalAlignment="Middle">
-						<font/>
+						<font pdfFontName="Helvetica-Bold" size="8" isBold="true"/>
 					</textElement>
 				<textFieldExpression   class="java.math.BigDecimal"><![CDATA[$V{monto_Sum}]]></textFieldExpression>
 				</textField>
