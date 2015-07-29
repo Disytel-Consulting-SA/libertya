@@ -42,7 +42,8 @@ entidadcomercial,
 nrorecibo,
 tipoderecibo,
 tipo,
-monto
+monto,
+(CASE WHEN tipo = 'Anticipo' OR tipo = 'Nota de Credito' THEN monto ELSE 0 END) as restante
 FROM((select
 a.c_allocationhdr_id,
 a.ad_client_id,
@@ -85,7 +86,15 @@ bp.c_bpartner_id as EntidadComercialID,
 bp.name as EntidadComercial,
 a.documentno as NroRecibo,
 dt.name as TipoDeRecibo,
-'Cheque' as Tipo,
+(CASE WHEN EXISTS (select al2.c_payment_id 
+		FROM c_allocationline as al2
+		INNER JOIN c_allocationhdr as ah on ah.c_allocationhdr_id = al2.c_allocationhdr_id
+		where al2.c_payment_id = al.c_payment_id
+			and ah.c_allocationhdr_id <> al.c_allocationhdr_id
+			and ah.docstatus in ('CO','CL') 
+			and (case $P{Mostrar} when (cast ('P' as varchar)) then ah.allocationtype = 'OPA' 
+				else ah.allocationtype = 'RCA'  end)) THEN 'Anticipo' 
+ELSE 'Cheque' END) as Tipo,
 case when al.amount = 0 then ABS(currencyconvert(p.payamt, p.c_currency_id, 118, p.datetrx::timestamp with time zone, null, a.ad_client_id, a.ad_org_id))
 else ABS(currencyconvert(al.amount, a.c_currency_id, 118, a.datetrx::timestamp with time zone, null, a.ad_client_id, a.ad_org_id))
 end as Monto
@@ -117,7 +126,15 @@ bp.c_bpartner_id as EntidadComercialID,
 bp.name as EntidadComercial,
 a.documentno as NroRecibo,
 dt.name as TipoDeRecibo,
-'Transferencia Bancaria' as Tipo,
+(CASE WHEN EXISTS (select al2.c_payment_id 
+		FROM c_allocationline as al2
+		INNER JOIN c_allocationhdr as ah on ah.c_allocationhdr_id = al2.c_allocationhdr_id
+		where al2.c_payment_id = al.c_payment_id
+			and ah.c_allocationhdr_id <> al.c_allocationhdr_id
+			and ah.docstatus in ('CO','CL') 
+			and (case $P{Mostrar} when (cast ('P' as varchar)) then ah.allocationtype = 'OPA' 
+				else ah.allocationtype = 'RCA'  end)) THEN 'Anticipo' 
+ELSE 'Transferencia Bancaria' END) as Tipo,
 case when al.amount = 0 then ABS(currencyconvert(p.payamt, p.c_currency_id, 118, p.datetrx::timestamp with time zone, null, a.ad_client_id, a.ad_org_id)) 
 else ABS(currencyconvert(al.amount, a.c_currency_id, 118, a.datetrx::timestamp with time zone, null, a.ad_client_id, a.ad_org_id))
 end as Monto
@@ -149,7 +166,15 @@ bp.c_bpartner_id as EntidadComercialID,
 bp.name as EntidadComercial,
 a.documentno as NroRecibo,
 dt.name as TipoDeRecibo,
-'Caja' as Tipo,
+(CASE WHEN EXISTS (select al2.c_cashline_id
+		FROM c_allocationline as al2
+		INNER JOIN c_allocationhdr as ah on ah.c_allocationhdr_id = al2.c_allocationhdr_id
+		where al2.c_cashline_id = al.c_cashline_id
+			and ah.c_allocationhdr_id <> al.c_allocationhdr_id
+			and ah.docstatus in ('CO','CL') 
+			and (case $P{Mostrar} when (cast ('P' as varchar)) then ah.allocationtype = 'OPA' 
+				else ah.allocationtype = 'RCA'  end)) THEN 'Anticipo' 
+ELSE 'Caja' END) as Tipo,
 case when al.amount = 0 then ABS(currencyconvert(c.amount, c.c_currency_id, 118, c.created::timestamp with time zone, null, a.ad_client_id, a.ad_org_id)) 
 else ABS(currencyconvert(al.amount, a.c_currency_id, 118, a.datetrx::timestamp with time zone, null, a.ad_client_id, a.ad_org_id))
 end as Monto
@@ -181,7 +206,15 @@ bp.c_bpartner_id as EntidadComercialID,
 bp.name as EntidadComercial,
 a.documentno as NroRecibo,
 dt.name as TipoDeRecibo,
-'Diferencia de Cambio' as Tipo,
+(CASE WHEN EXISTS (select al2.c_invoice_credit_id
+		FROM c_allocationline as al2
+		INNER JOIN c_allocationhdr as ah on ah.c_allocationhdr_id = al2.c_allocationhdr_id
+		where al2.c_invoice_credit_id = al.c_invoice_credit_id
+			and ah.c_allocationhdr_id <> al.c_allocationhdr_id
+			and ah.docstatus in ('CO','CL') 
+			and (case $P{Mostrar} when (cast ('P' as varchar)) then ah.allocationtype = 'OPA' 
+				else ah.allocationtype = 'RCA'  end)) THEN 'Anticipo' 
+ELSE 'Diferencia de Cambio' END) as Tipo,
 --case when al.amount = 0 then a.grandtotal else al.amount end as Monto
 case when al.amount = 0 then ABS(currencyconvert(a.grandtotal, a.c_currency_id, 118, current_timestamp::timestamp with time zone, null, a.ad_client_id, a.ad_org_id)) 
 else ABS(currencyconvert(al.amount, a.c_currency_id, 118, current_timestamp::timestamp with time zone, null, a.ad_client_id, a.ad_org_id))
@@ -216,7 +249,15 @@ bp.c_bpartner_id as EntidadComercialID,
 bp.name as EntidadComercial,
 a.documentno as NroRecibo,
 dt.name as TipoDeRecibo,
-'Nota de Credito' as Tipo,
+(CASE WHEN EXISTS (select al2.c_invoice_credit_id
+		FROM c_allocationline as al2
+		INNER JOIN c_allocationhdr as ah on ah.c_allocationhdr_id = al2.c_allocationhdr_id
+		where al2.c_invoice_credit_id = al.c_invoice_credit_id
+			and ah.c_allocationhdr_id <> al.c_allocationhdr_id
+			and ah.docstatus in ('CO','CL') 
+			and (case $P{Mostrar} when (cast ('P' as varchar)) then ah.allocationtype = 'OPA' 
+				else ah.allocationtype = 'RCA'  end)) THEN 'Anticipo' 
+ELSE 'Nota de Credito' END) as Tipo,
 --i.grandtotal as Monto
 ABS(currencyconvert(i.grandtotal, a.c_currency_id, 118, current_timestamp::timestamp with time zone, null, a.ad_client_id, a.ad_org_id)) as Monto
 from c_invoice i
@@ -248,7 +289,15 @@ bp.c_bpartner_id as EntidadComercialID,
 bp.name as EntidadComercial,
 a.documentno as NroRecibo,
 dt.name as TipoDeRecibo,
-'Tarjeta de crédito' as Tipo,
+(CASE WHEN EXISTS (select al2.c_payment_id 
+		FROM c_allocationline as al2
+		INNER JOIN c_allocationhdr as ah on ah.c_allocationhdr_id = al2.c_allocationhdr_id
+		where al2.c_payment_id = al.c_payment_id
+			and ah.c_allocationhdr_id <> al.c_allocationhdr_id
+			and ah.docstatus in ('CO','CL') 
+			and (case $P{Mostrar} when (cast ('P' as varchar)) then ah.allocationtype = 'OPA' 
+				else ah.allocationtype = 'RCA'  end)) THEN 'Anticipo' 
+ELSE 'Tarjeta de crédito' END) as Tipo,
 case when al.amount = 0 then ABS(currencyconvert(p.payamt, p.c_currency_id, 118, p.datetrx::timestamp with time zone, null, a.ad_client_id, a.ad_org_id)) 
 else ABS(currencyconvert(al.amount, a.c_currency_id, 118, a.datetrx::timestamp with time zone, null, a.ad_client_id, a.ad_org_id))
 end as Monto
@@ -306,6 +355,7 @@ ORDER BY c_allocationhdr_id]]></queryString>
 	<field name="tipoderecibo" class="java.lang.String"/>
 	<field name="tipo" class="java.lang.String"/>
 	<field name="monto" class="java.math.BigDecimal"/>
+	<field name="restante" class="java.math.BigDecimal"/>
 
 		<background>
 			<band height="0"  isSplitAllowed="true" >
@@ -757,6 +807,9 @@ ORDER BY c_allocationhdr_id]]></queryString>
 					<measure name="monto_Sum" class="java.math.BigDecimal" calculation="Sum">
 						<measureExpression><![CDATA[$F{monto}]]></measureExpression>
 					</measure>
+					<measure name="restante" class="java.math.BigDecimal" calculation="Sum">
+						<measureExpression><![CDATA[$F{restante}]]></measureExpression>
+					</measure>
 					<crosstabCell width="84" height="16">
 						<cellContents mode="Transparent">
 					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="1Point" rightBorderColor="#000000" bottomBorder="1Point" bottomBorderColor="#000000"/>
@@ -789,7 +842,7 @@ ORDER BY c_allocationhdr_id]]></queryString>
 					<textElement textAlignment="Center" verticalAlignment="Middle">
 						<font size="8"/>
 					</textElement>
-				<textFieldExpression   class="java.math.BigDecimal"><![CDATA[$V{monto_Sum}]]></textFieldExpression>
+				<textFieldExpression   class="java.math.BigDecimal"><![CDATA[$V{monto_Sum}.subtract($V{restante})]]></textFieldExpression>
 				</textField>
 						</cellContents>
 					</crosstabCell>
@@ -825,7 +878,7 @@ ORDER BY c_allocationhdr_id]]></queryString>
 					<textElement textAlignment="Center" verticalAlignment="Middle">
 						<font pdfFontName="Helvetica-Bold" size="8" isBold="true"/>
 					</textElement>
-				<textFieldExpression   class="java.math.BigDecimal"><![CDATA[$V{monto_Sum}]]></textFieldExpression>
+				<textFieldExpression   class="java.math.BigDecimal"><![CDATA[$V{monto_Sum}.subtract($V{restante})]]></textFieldExpression>
 				</textField>
 						</cellContents>
 					</crosstabCell>
