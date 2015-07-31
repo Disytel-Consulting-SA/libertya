@@ -220,6 +220,14 @@
 	</parameter>
 	<parameter name="CLIENT_CUIT_7" isForPrompting="false" class="java.lang.String"/>
 	<parameter name="CLIENT_7" isForPrompting="false" class="java.lang.String"/>
+	<parameter name="DOCUMENTNO_0" isForPrompting="false" class="java.lang.String"/>
+	<parameter name="DOCUMENTNO_1" isForPrompting="false" class="java.lang.String"/>
+	<parameter name="DOCUMENTNO_2" isForPrompting="false" class="java.lang.String"/>
+	<parameter name="DOCUMENTNO_3" isForPrompting="false" class="java.lang.String"/>
+	<parameter name="DOCUMENTNO_4" isForPrompting="false" class="java.lang.String"/>
+	<parameter name="DOCUMENTNO_5" isForPrompting="false" class="java.lang.String"/>
+	<parameter name="DOCUMENTNO_6" isForPrompting="false" class="java.lang.String"/>
+	<parameter name="DOCUMENTNO_7" isForPrompting="false" class="java.lang.String"/>
 
 	<variable name="CITY" class="java.lang.String" resetType="Report" calculation="Nothing">
 		<variableExpression><![CDATA[$P{CITY_NAME} + ", "]]></variableExpression>
@@ -674,6 +682,9 @@
 					<subreportParameter  name="CLIENT">
 						<subreportParameterExpression><![CDATA[$P{CLIENT_0}]]></subreportParameterExpression>
 					</subreportParameter>
+					<subreportParameter  name="DOCUMENTNO">
+						<subreportParameterExpression><![CDATA[$P{DOCUMENTNO_0}]]></subreportParameterExpression>
+					</subreportParameter>
 					<dataSourceExpression><![CDATA[$P{SUBREPORT_COMPROBANTE_RETENCION_DATASOURCE_1}]]></dataSourceExpression>
 					<subreportExpression  class="java.io.InputStream"><![CDATA[$P{COMPILED_SUBREPORT_COMPROBANTE_RETENCION}]]></subreportExpression>
 				</subreport>
@@ -795,6 +806,9 @@
 					</subreportParameter>
 					<subreportParameter  name="CLIENT">
 						<subreportParameterExpression><![CDATA[$P{CLIENT_1}]]></subreportParameterExpression>
+					</subreportParameter>
+					<subreportParameter  name="DOCUMENTNO">
+						<subreportParameterExpression><![CDATA[$P{DOCUMENTNO_1}]]></subreportParameterExpression>
 					</subreportParameter>
 					<dataSourceExpression><![CDATA[$P{SUBREPORT_COMPROBANTE_RETENCION_DATASOURCE_2}]]></dataSourceExpression>
 					<subreportExpression  class="java.io.InputStream"><![CDATA[$P{COMPILED_SUBREPORT_COMPROBANTE_RETENCION}]]></subreportExpression>
@@ -939,6 +953,9 @@
 					<subreportParameter  name="CLIENT">
 						<subreportParameterExpression><![CDATA[$P{CLIENT_2}]]></subreportParameterExpression>
 					</subreportParameter>
+					<subreportParameter  name="DOCUMENTNO">
+						<subreportParameterExpression><![CDATA[$P{DOCUMENTNO_2}]]></subreportParameterExpression>
+					</subreportParameter>
 					<dataSourceExpression><![CDATA[$P{SUBREPORT_COMPROBANTE_RETENCION_DATASOURCE_3}]]></dataSourceExpression>
 					<subreportExpression  class="java.io.InputStream"><![CDATA[$P{COMPILED_SUBREPORT_COMPROBANTE_RETENCION}]]></subreportExpression>
 				</subreport>
@@ -1059,6 +1076,9 @@
 					</subreportParameter>
 					<subreportParameter  name="CLIENT">
 						<subreportParameterExpression><![CDATA[$P{CLIENT_4}]]></subreportParameterExpression>
+					</subreportParameter>
+					<subreportParameter  name="DOCUMENTNO">
+						<subreportParameterExpression><![CDATA[$P{DOCUMENTNO_4}]]></subreportParameterExpression>
 					</subreportParameter>
 					<dataSourceExpression><![CDATA[$P{SUBREPORT_COMPROBANTE_RETENCION_DATASOURCE_5}]]></dataSourceExpression>
 					<subreportExpression  class="java.io.InputStream"><![CDATA[$P{COMPILED_SUBREPORT_COMPROBANTE_RETENCION}]]></subreportExpression>
@@ -1192,6 +1212,9 @@
 					<subreportParameter  name="CLIENT">
 						<subreportParameterExpression><![CDATA[$P{CLIENT_3}]]></subreportParameterExpression>
 					</subreportParameter>
+					<subreportParameter  name="DOCUMENTNO">
+						<subreportParameterExpression><![CDATA[$P{DOCUMENTNO_3}]]></subreportParameterExpression>
+					</subreportParameter>
 					<dataSourceExpression><![CDATA[$P{SUBREPORT_COMPROBANTE_RETENCION_DATASOURCE_4}]]></dataSourceExpression>
 					<subreportExpression  class="java.io.InputStream"><![CDATA[$P{COMPILED_SUBREPORT_COMPROBANTE_RETENCION}]]></subreportExpression>
 				</subreport>
@@ -1324,6 +1347,9 @@
 					<subreportParameter  name="CLIENT">
 						<subreportParameterExpression><![CDATA[$P{CLIENT_6}]]></subreportParameterExpression>
 					</subreportParameter>
+					<subreportParameter  name="DOCUMENTNO">
+						<subreportParameterExpression><![CDATA[$P{DOCUMENTNO_6}]]></subreportParameterExpression>
+					</subreportParameter>
 					<dataSourceExpression><![CDATA[$P{SUBREPORT_COMPROBANTE_RETENCION_DATASOURCE_7}]]></dataSourceExpression>
 					<subreportExpression  class="java.io.InputStream"><![CDATA[$P{COMPILED_SUBREPORT_COMPROBANTE_RETENCION}]]></subreportExpression>
 				</subreport>
@@ -1455,6 +1481,9 @@
 					</subreportParameter>
 					<subreportParameter  name="CLIENT">
 						<subreportParameterExpression><![CDATA[$P{CLIENT_5}]]></subreportParameterExpression>
+					</subreportParameter>
+					<subreportParameter  name="DOCUMENTNO">
+						<subreportParameterExpression><![CDATA[$P{DOCUMENTNO_5}]]></subreportParameterExpression>
 					</subreportParameter>
 					<dataSourceExpression><![CDATA[$P{SUBREPORT_COMPROBANTE_RETENCION_DATASOURCE_6}]]></dataSourceExpression>
 					<subreportExpression  class="java.io.InputStream"><![CDATA[$P{COMPILED_SUBREPORT_COMPROBANTE_RETENCION}]]></subreportExpression>

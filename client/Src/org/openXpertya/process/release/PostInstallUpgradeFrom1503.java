@@ -31,6 +31,14 @@ public class PostInstallUpgradeFrom1503 extends PluginPostInstallProcess {
 	protected final static String WAREHOUSE_CLOSE_JASPER_REPORT_UID = "CORE-AD_JasperReport-1010045";
 	protected final static String WAREHOUSE_CLOSE_JASPER_REPORT_FILENAME = "WarehouseClose.jasper";
 	
+	/** UID del Informe de Comprobante de Retención */
+	protected final static String RPT_COMPROBANTE_RETENCION_JASPER_REPORT_UID = "CORE-AD_JasperReport-1010081";
+	protected final static String RPT_COMPROBANTE_RETENCION_JASPER_REPORT_FILENAME = "rpt_Comprobante_Retencion.jasper";
+	
+	/** UID del reporte del Orden de Pago*/
+	protected final static String ORDEN_PAGO_JASPER_REPORT_UID = "CORE-AD_JasperReport-1000012";
+	protected final static String ORDEN_PAGO_JASPER_REPORT_FILENAME = "OrdenPago.jasper";
+	
 	@Override
 	protected String doIt() throws Exception {
 		super.doIt();
@@ -108,6 +116,25 @@ public class PostInstallUpgradeFrom1503 extends PluginPostInstallProcess {
 								.readBinaryFromJar(
 										jarFileURL,
 										getBinaryFileURL(WAREHOUSE_CLOSE_JASPER_REPORT_FILENAME)));
+		
+		
+		
+		// Informe de Orden de Pago
+		MJasperReport.updateBinaryData(get_TrxName(), getCtx(),
+				ORDEN_PAGO_JASPER_REPORT_UID, JarHelper.readBinaryFromJar(
+						jarFileURL,
+						getBinaryFileURL(ORDEN_PAGO_JASPER_REPORT_FILENAME)));
+		
+		// Informe de Comprobante de Retención
+		MJasperReport
+			.updateBinaryData(
+					get_TrxName(),
+					getCtx(),
+					RPT_COMPROBANTE_RETENCION_JASPER_REPORT_UID,
+					JarHelper
+							.readBinaryFromJar(
+									jarFileURL,
+									getBinaryFileURL(RPT_COMPROBANTE_RETENCION_JASPER_REPORT_FILENAME)));
 		
 		return " ";
 	}
