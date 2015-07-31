@@ -161,7 +161,7 @@ public class LaunchInvoice extends SvrProcess {
 		jasperwrapper.addParameter("TIPOCOMPROBANTE", JasperReportsUtil
 			.getDocTypeName(getCtx(), invoice.getC_DocTypeTarget_ID(),
 					"FACTURA", get_TrxName()));
-		
+		jasperwrapper.addParameter("DOCUMENTNO", invoice.getDocumentNo());
 		jasperwrapper.addParameter("DOCTYPEKEY", docType.getDocTypeKey());
 		jasperwrapper.addParameter("DOCTYPENOTES", docType.getDocumentNote());
 				
@@ -461,12 +461,15 @@ public class LaunchInvoice extends SvrProcess {
 			jasperwrapper.addParameter("RET_RETENTION_TYPE_NAME", (new MRetencionType(getCtx(), retencionSchema.getC_RetencionType_ID(), null).getName()) );
 			// Monto de la Retención
 			jasperwrapper.addParameter("RET_AMOUNT", retencion_invoice.getamt_retenc());
-
-			MAllocationHdr allocation = new MAllocationHdr(getCtx(), retencion_invoice.getC_AllocationHdr_ID(), null);
+			// Se comenta ya que se debe tomar de los datos de la retención
 			// Monto del Recibo
-			jasperwrapper.addParameter("RET_ALLOC_AMOUNT", allocation.getGrandTotal());
+			//jasperwrapper.addParameter("RET_ALLOC_AMOUNT", allocation.getGrandTotal());
+			MAllocationHdr allocation = new MAllocationHdr(getCtx(), retencion_invoice.getC_AllocationHdr_ID(), null);
+			// Monto del pago actual
+			jasperwrapper.addParameter("RET_ALLOC_AMOUNT", LaunchOrdenPago
+					.getPayNetAmt(getCtx(), allocation, get_TrxName())); 
 			// Comprobante/s que origina/n la retención. (Números de Documento de las facturas en el Recibo) 
-			jasperwrapper.addParameter("RET_ALLOC_INVOICES", get_Retencion_Invoices(allocation));	
+			jasperwrapper.addParameter("RET_ALLOC_INVOICES", get_Retencion_Invoices(allocation));
 		}
 		
 		// Código de barras de Factura Electrónica

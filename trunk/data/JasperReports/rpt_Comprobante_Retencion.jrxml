@@ -152,6 +152,7 @@
 	<parameter name="RET_ALLOC_AMOUNT" isForPrompting="false" class="java.math.BigDecimal"/>
 	<parameter name="RET_ALLOC_INVOICES" isForPrompting="false" class="java.lang.String"/>
 	<parameter name="DIRECCION_ORG" isForPrompting="false" class="java.lang.String"/>
+	<parameter name="DOCUMENTNO" isForPrompting="false" class="java.lang.String"/>
 
 	<field name="ITEM" class="java.lang.String"/>
 	<field name="CODARTICULO" class="java.lang.String"/>
@@ -212,7 +213,9 @@
 						y="453"
 						width="270"
 						height="17"
-						key="textField-5"/>
+						key="textField-5">
+							<printWhenExpression><![CDATA[new Boolean($P{RET_ALLOC_AMOUNT} != null && $P{RET_ALLOC_AMOUNT}.compareTo(java.math.BigDecimal.ZERO) != 0)]]></printWhenExpression>
+						</reportElement>
 					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
 					<textElement verticalAlignment="Middle">
 						<font fontName="Times New Roman" size="13"/>
@@ -303,7 +306,9 @@
 						y="470"
 						width="270"
 						height="17"
-						key="textField-12"/>
+						key="textField-12">
+							<printWhenExpression><![CDATA[new Boolean($P{RET_AMOUNT} != null && $P{RET_AMOUNT}.compareTo(java.math.BigDecimal.ZERO) != 0)]]></printWhenExpression>
+						</reportElement>
 					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
 					<textElement>
 						<font fontName="Times New Roman" size="13"/>
@@ -321,7 +326,7 @@
 					<textElement verticalAlignment="Top">
 						<font fontName="Times New Roman" size="13"/>
 					</textElement>
-				<textFieldExpression   class="java.lang.String"><![CDATA[$P{NRO_OC}]]></textFieldExpression>
+				<textFieldExpression   class="java.lang.String"><![CDATA[$P{DOCUMENTNO}]]></textFieldExpression>
 				</textField>
 				<textField isStretchWithOverflow="false" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
@@ -587,14 +592,14 @@
 					<reportElement
 						x="57"
 						y="557"
-						width="130"
+						width="57"
 						height="17"
 						key="staticText-21"/>
 					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
 					<textElement>
 						<font fontName="Times New Roman" size="13" isBold="true"/>
 					</textElement>
-				<text><![CDATA[Firma del Agente de]]></text>
+				<text><![CDATA[Firma:]]></text>
 				</staticText>
 				<staticText>
 					<reportElement
@@ -613,7 +618,7 @@
 					<reportElement
 						x="57"
 						y="628"
-						width="110"
+						width="57"
 						height="17"
 						key="staticText-23"/>
 					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
@@ -633,7 +638,37 @@
 					<textElement verticalAlignment="Top">
 						<font fontName="Times New Roman" size="13"/>
 					</textElement>
-				<textFieldExpression   class="java.lang.String"><![CDATA[$P{RET_ALLOC_INVOICES}]]></textFieldExpression>
+				<textFieldExpression   class="java.lang.String"><![CDATA[$P{RET_ALLOC_INVOICES} != null && $P{RET_ALLOC_INVOICES}.trim().length() > 0?$P{RET_ALLOC_INVOICES}:"--"]]></textFieldExpression>
+				</textField>
+				<textField isStretchWithOverflow="false" pattern="" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
+					<reportElement
+						x="290"
+						y="453"
+						width="270"
+						height="17"
+						key="textField-18">
+							<printWhenExpression><![CDATA[new Boolean($P{RET_ALLOC_AMOUNT} == null || $P{RET_ALLOC_AMOUNT}.compareTo(java.math.BigDecimal.ZERO) == 0)]]></printWhenExpression>
+						</reportElement>
+					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
+					<textElement verticalAlignment="Middle">
+						<font fontName="Times New Roman" size="13"/>
+					</textElement>
+				<textFieldExpression   class="java.lang.String"><![CDATA["--"]]></textFieldExpression>
+				</textField>
+				<textField isStretchWithOverflow="false" pattern="" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
+					<reportElement
+						x="290"
+						y="470"
+						width="270"
+						height="17"
+						key="textField-19">
+							<printWhenExpression><![CDATA[new Boolean($P{RET_AMOUNT} == null || $P{RET_AMOUNT}.compareTo(java.math.BigDecimal.ZERO) == 0)]]></printWhenExpression>
+						</reportElement>
+					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
+					<textElement>
+						<font fontName="Times New Roman" size="13"/>
+					</textElement>
+				<textFieldExpression   class="java.lang.String"><![CDATA["--"]]></textFieldExpression>
 				</textField>
 			</band>
 		</columnHeader>

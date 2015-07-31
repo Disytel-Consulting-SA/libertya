@@ -265,7 +265,9 @@ public class LaunchOrdenPago extends SvrProcess {
 
 				jasperWrapper.addParameter("FECHA_" + j,
 						invoice.getDateInvoiced());
-				jasperWrapper.addParameter("RAZONSOCIAL", JasperReportsUtil
+				jasperWrapper.addParameter("DOCUMENTNO_" + j,
+						invoice.getDocumentNo());
+				jasperWrapper.addParameter("RAZONSOCIAL_" + j, JasperReportsUtil
 						.coalesce(invoice.getNombreCli(), bpartner.getName()));
 				jasperWrapper.addParameter("DIRECCION_" + j, JasperReportsUtil
 						.coalesce(invoice.getInvoice_Adress(),
@@ -322,15 +324,15 @@ public class LaunchOrdenPago extends SvrProcess {
 							(new MRetencionType(getCtx(), retencionSchema
 									.getC_RetencionType_ID(), null).getName()));
 					// Monto de la Retención
-					jasperWrapper.addParameter("RET_AMOUNT_" + j,netOP);
+					jasperWrapper.addParameter("RET_ALLOC_AMOUNT_" + j,netOP);
 							//invoice.getNetAmount());
 					// retencion_invoice.getamt_retenc());
 
 					MAllocationHdr allocation = new MAllocationHdr(getCtx(),
 							retencion_invoice.getC_AllocationHdr_ID(), null);
 					// Monto del Recibo
-					jasperWrapper.addParameter("RET_ALLOC_AMOUNT_" + j,
-							invoice.getNetAmount());
+					jasperWrapper.addParameter("RET_AMOUNT_" + j,
+							retencion_invoice.getamt_retenc());
 							//allocation.getGrandTotal());
 					// Comprobante/s que origina/n la retención. (Números de
 					// Documento de las facturas en el Recibo)
@@ -347,31 +349,39 @@ public class LaunchOrdenPago extends SvrProcess {
 	}
 
 	private BigDecimal getPayNetAmt(int c_AllocationHdr_ID) throws SQLException {
-		String sqlAllocationLine = " SELECT c_allocationline_id, al.c_invoice_id "
-				+ " FROM c_allocationline al "
-				+ " INNER JOIN c_invoice i ON (i.c_invoice_id = al.c_invoice_id) "
-				+ " WHERE al.c_allocationhdr_id= " + +c_AllocationHdr_ID;
+		return getPayNetAmt(getCtx(), getAllocationHdr(), get_TrxName());
+	}
 
-		PreparedStatement pstmtAllocationLine = DB
-				.prepareStatement(sqlAllocationLine);
-		ResultSet rsAllocationLine = pstmtAllocationLine.executeQuery();
-		BigDecimal netTotal = Env.ZERO;
-		BigDecimal totalLines, grandTotal;
-		while (rsAllocationLine.next()) {
-			MAllocationLine allocationline = new MAllocationLine(getCtx(),
-					rsAllocationLine.getInt("c_allocationline_id"),
-					get_TrxName());
-			MInvoice invoiceOrig = new MInvoice(getCtx(),
-					rsAllocationLine.getInt("c_invoice_id"), get_TrxName());
-			totalLines = invoiceOrig.getTotalLinesNet();
-			grandTotal = invoiceOrig.getGrandTotal();
-			netTotal = netTotal.add(totalLines.multiply(
-					allocationline.getAmount()).divide(grandTotal, 2,
-					BigDecimal.ROUND_HALF_EVEN));
+	protected static BigDecimal getPayNetAmt(Properties ctx, MAllocationHdr allocationHdr, String trxName) throws SQLException {
+		BigDecimal netTotal = allocationHdr.getGrandTotal();
+		// Si es adelantado, entonces es el monto total del allocation
+		if (!("OPA".equals(allocationHdr.getAllocationType())
+				|| "RCA".equals(allocationHdr.getAllocationType()))) {
+			String sqlAllocationLine = " SELECT c_allocationline_id, al.c_invoice_id "
+					+ " FROM c_allocationline al "
+					+ " INNER JOIN c_invoice i ON (i.c_invoice_id = al.c_invoice_id) "
+					+ " WHERE al.c_allocationhdr_id= " + allocationHdr.getID();
+			netTotal = BigDecimal.ZERO;
+			PreparedStatement pstmtAllocationLine = DB
+					.prepareStatement(sqlAllocationLine);
+			ResultSet rsAllocationLine = pstmtAllocationLine.executeQuery();
+			BigDecimal totalLines, grandTotal;
+			while (rsAllocationLine.next()) {
+				MAllocationLine allocationline = new MAllocationLine(ctx,
+						rsAllocationLine.getInt("c_allocationline_id"),
+						trxName);
+				MInvoice invoiceOrig = new MInvoice(ctx,
+						rsAllocationLine.getInt("c_invoice_id"), trxName);
+				totalLines = invoiceOrig.getTotalLinesNet();
+				grandTotal = invoiceOrig.getGrandTotal();
+				netTotal = netTotal.add(totalLines.multiply(
+						allocationline.getAmount()).divide(grandTotal, 2,
+						BigDecimal.ROUND_HALF_EVEN));
+			}
 		}
 		return netTotal;
 	}
-
+	
 	protected int getAllocationHdrID() {
 		return p_C_AllocationHdr_ID;
 	}
