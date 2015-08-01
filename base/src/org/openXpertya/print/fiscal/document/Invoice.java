@@ -24,6 +24,8 @@ public class Invoice extends Document {
 	private boolean validCFInvoice;
 	/** Cambio o vuelto de la factura */
 	private BigDecimal changeAmt;
+	/** Flag que determina si siempre se debe abrir el cajón de dinero */
+	private boolean alwaysOpenDrawer = false;
 	
 	public Invoice() {
 		super();
@@ -148,5 +150,13 @@ public class Invoice extends Document {
 
 	public BigDecimal getChangeAmt() {
 		return changeAmt;
+	}
+
+	public boolean isAlwaysOpenDrawer() {
+		return alwaysOpenDrawer;
+	}
+
+	public void setAlwaysOpenDrawer(boolean alwaysOpenDrawer) {
+		this.alwaysOpenDrawer = alwaysOpenDrawer;
 	}
 }
