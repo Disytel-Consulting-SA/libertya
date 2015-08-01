@@ -94,6 +94,10 @@ public class FiscalDocumentPrint {
 	 * nro de documento.
 	 */
 	private static final String COMPROBANTE_ORIGINAL_NC_TIPOS_DOCUMENTO_PEDIDOS_PREFERENCE_NAME = "NCFiscal_ComprobanteOriginal_ClaveTiposDocumentoPedido";
+	
+	/** Preference que permite abrir siempre el cajón de dinero */
+	protected static final String ALWAYS_OPEN_DRAWER_PREFERENCE_VALUE = "FiscalPrinter_Always_Open_Drawer";
+	
 	/** Manejador de eventos de la impresora fiscal */
 	private FiscalPrinterEventListener printerEventListener;
 	/** Manejador de eventos del estado del Controlador Fiscal de OXP */
@@ -135,6 +139,12 @@ public class FiscalDocumentPrint {
 	
 	/** Indica si está permitido preguntar en este momento */	
 	private boolean askMoment = false;
+	
+	/**
+	 * Indica si siempre se debe abrir el cajón de dinero al imprimir un
+	 * documento
+	 */
+	private boolean alwaysOpenDrawer = false;
 
 	public FiscalDocumentPrint() {
 		super();
@@ -415,6 +425,9 @@ public class FiscalDocumentPrint {
 		// de las impresoras fiscales asignado al tipo de documento de oxp
 		fireActionStarted(FiscalDocumentPrintListener.AC_PRINT_DOCUMENT);
 		
+		// Inicializar flag para que siempre se abra el cajón de dinero
+		initAlwaysOpenDrawer();
+		
 		// Emisión de una factura.
 		if(getPrinterDocType().equals(MDocType.FISCALDOCUMENT_Invoice)) {
 			printInvoice(documentPrintable);
@@ -433,6 +446,19 @@ public class FiscalDocumentPrint {
 		
 		// Se actualiza la secuencia del tipo de documento emitido.
 		updateDocTypeSequence(document);
+	}
+	
+	/**
+	 * Inicialización de flag que determina si se debe abrir siempre el cajón de
+	 * dinero al imprimir un documento
+	 */
+	private void initAlwaysOpenDrawer(){
+		String alwaysOpenDrawerPreferenceValue = MPreference
+				.searchCustomPreferenceValue(
+						ALWAYS_OPEN_DRAWER_PREFERENCE_VALUE,
+						Env.getAD_Client_ID(ctx), Env.getAD_Org_ID(ctx), 
+						Env.getAD_User_ID(ctx), true);
+		setAlwaysOpenDrawer("Y".equals(alwaysOpenDrawerPreferenceValue));
 	}
 	
 	// *************************
@@ -1063,6 +1089,7 @@ public class FiscalDocumentPrint {
 		Invoice invoice = document != null ? (Invoice) document
 				: createInvoice(mInvoice);
 		setDocument(invoice);
+		invoice.setAlwaysOpenDrawer(isAlwaysOpenDrawer());
 		// Se manda a imprimir la factura a la impresora fiscal.
 		getFiscalPrinter().printDocument(invoice);
 		// Se actualizan los datos de la factura de oxp.
@@ -2309,5 +2336,13 @@ public class FiscalDocumentPrint {
 
 	public void setAskMoment(boolean askMoment) {
 		this.askMoment = askMoment;
+	}
+
+	protected boolean isAlwaysOpenDrawer() {
+		return alwaysOpenDrawer;
+	}
+
+	protected void setAlwaysOpenDrawer(boolean alwaysOpenDrawer) {
+		this.alwaysOpenDrawer = alwaysOpenDrawer;
 	}
 }

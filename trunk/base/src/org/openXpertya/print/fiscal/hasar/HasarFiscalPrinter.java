@@ -871,8 +871,10 @@ public abstract class HasarFiscalPrinter extends BasicFiscalPrinter implements H
 			// Comando: @OpenDrawer
 			// El cajón de dinero se abre si tenemos cambio en la factura,
 			// existen pagos en efectivo ó si el último pago agregado tiene
-			// vuelto
-			if (hasCashPayments
+			// vuelto. A menos que la factura contenga el flag positivo para
+			// siempre abrir el cajón. 
+			if (invoice.isAlwaysOpenDrawer()
+					|| hasCashPayments
 					|| invoice.getChangeAmt().compareTo(BigDecimal.ZERO) > 0
 					|| response.getBigDecimal(3).compareTo(BigDecimal.ZERO) < 0) {
 				// Sólo las impresoras que soportan el comando
