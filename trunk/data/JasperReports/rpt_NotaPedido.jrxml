@@ -124,6 +124,7 @@
 	<parameter name="NROREMITO_2" isForPrompting="false" class="java.lang.String"/>
 	<parameter name="NROREMITO_3" isForPrompting="false" class="java.lang.String"/>
 	<parameter name="PERCEPCION_TOTAL_AMT" isForPrompting="false" class="java.math.BigDecimal"/>
+	<parameter name="FECHA_ENTREGA" isForPrompting="false" class="java.sql.Timestamp"/>
 
 	<field name="FECHA_ENTREGA" class="java.util.Date"/>
 	<field name="CODARTICULO" class="java.lang.String"/>
@@ -191,33 +192,33 @@
 				<staticText>
 					<reportElement
 						x="327"
-						y="19"
+						y="45"
 						width="88"
-						height="15"
+						height="12"
 						key="staticText-2"/>
 					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
 					<textElement verticalAlignment="Middle">
-						<font/>
+						<font size="8"/>
 					</textElement>
 				<text><![CDATA[Comprobante Nº:]]></text>
 				</staticText>
 				<staticText>
 					<reportElement
 						x="327"
-						y="34"
+						y="57"
 						width="88"
-						height="16"
+						height="12"
 						key="staticText-3"/>
 					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
 					<textElement textAlignment="Left" verticalAlignment="Middle">
-						<font/>
+						<font size="8"/>
 					</textElement>
 				<text><![CDATA[Fecha:]]></text>
 				</staticText>
 				<staticText>
 					<reportElement
 						x="216"
-						y="10"
+						y="29"
 						width="20"
 						height="18"
 						key="staticText-31"/>
@@ -230,7 +231,7 @@
 				<staticText>
 					<reportElement
 						x="190"
-						y="29"
+						y="48"
 						width="74"
 						height="26"
 						key="staticText-32"/>
@@ -243,7 +244,7 @@
 				<textField isStretchWithOverflow="false" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
 						x="0"
-						y="26"
+						y="41"
 						width="117"
 						height="12"
 						key="textField-1"/>
@@ -256,9 +257,9 @@
 				<textField isStretchWithOverflow="false" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
 						x="1"
-						y="38"
+						y="53"
 						width="181"
-						height="50"
+						height="35"
 						key="textField-2"/>
 					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
 					<textElement>
@@ -269,9 +270,9 @@
 				<textField isStretchWithOverflow="false" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
 						x="415"
-						y="19"
+						y="45"
 						width="118"
-						height="15"
+						height="12"
 						key="textField-13"/>
 					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
 					<textElement textAlignment="Right" verticalAlignment="Middle">
@@ -282,9 +283,9 @@
 				<textField isStretchWithOverflow="false" pattern="dd/MM/yyyy" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
 						x="415"
-						y="34"
+						y="57"
 						width="118"
-						height="16"
+						height="12"
 						key="textField-14"/>
 					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
 					<textElement textAlignment="Right" verticalAlignment="Middle">
@@ -295,9 +296,9 @@
 				<textField isStretchWithOverflow="false" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
 						mode="Opaque"
-						x="375"
-						y="1"
-						width="120"
+						x="363"
+						y="29"
+						width="132"
 						height="15"
 						backcolor="#CCCCCC"
 						key="textField-30"/>
@@ -307,32 +308,32 @@
 					</textElement>
 				<textFieldExpression   class="java.lang.String"><![CDATA[$P{TIPOCOMPROBANTE}]]></textFieldExpression>
 				</textField>
-				<textField isStretchWithOverflow="false" pattern="dd/MM/yyyy" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
+				<staticText>
+					<reportElement
+						x="327"
+						y="69"
+						width="88"
+						height="12"
+						key="staticText-36"/>
+					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
+					<textElement textAlignment="Left" verticalAlignment="Middle">
+						<font size="8"/>
+					</textElement>
+				<text><![CDATA[Válido hasta:]]></text>
+				</staticText>
+				<textField isStretchWithOverflow="false" pattern="dd/MM/yyyy" isBlankWhenNull="false" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
 						x="415"
-						y="50"
+						y="69"
 						width="118"
-						height="16"
-						key="textField-37"/>
+						height="12"
+						key="textField"/>
 					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
 					<textElement textAlignment="Right" verticalAlignment="Middle">
 						<font size="8"/>
 					</textElement>
-				<textFieldExpression   class="java.util.Date"><![CDATA[$F{FECHA_ENTREGA}]]></textFieldExpression>
+				<textFieldExpression   class="java.sql.Timestamp"><![CDATA[$P{VALID_TO}]]></textFieldExpression>
 				</textField>
-				<staticText>
-					<reportElement
-						x="327"
-						y="50"
-						width="88"
-						height="16"
-						key="staticText-33"/>
-					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
-					<textElement textAlignment="Left" verticalAlignment="Middle">
-						<font/>
-					</textElement>
-				<text><![CDATA[Fecha Prometida:]]></text>
-				</staticText>
 			</band>
 		</pageHeader>
 		<columnHeader>
@@ -345,7 +346,7 @@
 						height="11"
 						key="staticText-4"/>
 					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
-					<textElement verticalAlignment="Top">
+					<textElement verticalAlignment="Middle">
 						<font fontName="Tahoma" size="7"/>
 					</textElement>
 				<text><![CDATA[Señor/es:]]></text>
@@ -358,7 +359,7 @@
 						height="11"
 						key="staticText-5"/>
 					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
-					<textElement verticalAlignment="Top">
+					<textElement verticalAlignment="Middle">
 						<font fontName="Tahoma" size="7"/>
 					</textElement>
 				<text><![CDATA[Calle y Nro:]]></text>
@@ -371,7 +372,7 @@
 						height="11"
 						key="staticText-6"/>
 					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
-					<textElement verticalAlignment="Top">
+					<textElement verticalAlignment="Middle">
 						<font fontName="Tahoma" size="7"/>
 					</textElement>
 				<text><![CDATA[Teléfono:]]></text>
@@ -384,7 +385,7 @@
 						height="11"
 						key="staticText-7"/>
 					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
-					<textElement verticalAlignment="Top">
+					<textElement verticalAlignment="Middle">
 						<font fontName="Tahoma" size="7"/>
 					</textElement>
 				<text><![CDATA[Localidad:]]></text>
@@ -397,7 +398,7 @@
 						height="11"
 						key="staticText-8"/>
 					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
-					<textElement verticalAlignment="Top">
+					<textElement verticalAlignment="Middle">
 						<font fontName="Tahoma" size="7"/>
 					</textElement>
 				<text><![CDATA[Referencia:]]></text>
@@ -410,7 +411,7 @@
 						height="11"
 						key="staticText-9"/>
 					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
-					<textElement verticalAlignment="Top">
+					<textElement verticalAlignment="Middle">
 						<font fontName="Tahoma" size="7"/>
 					</textElement>
 				<text><![CDATA[Cód.Cliente:]]></text>
@@ -423,7 +424,7 @@
 						height="11"
 						key="staticText-10"/>
 					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
-					<textElement verticalAlignment="Top">
+					<textElement verticalAlignment="Middle">
 						<font fontName="Tahoma" size="7"/>
 					</textElement>
 				<text><![CDATA[IVA:]]></text>
@@ -436,7 +437,7 @@
 						height="11"
 						key="staticText-11"/>
 					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
-					<textElement verticalAlignment="Top">
+					<textElement verticalAlignment="Middle">
 						<font fontName="Tahoma" size="7"/>
 					</textElement>
 				<text><![CDATA[DNI/CUIT:]]></text>
@@ -449,7 +450,7 @@
 						height="11"
 						key="staticText-12"/>
 					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
-					<textElement verticalAlignment="Top">
+					<textElement verticalAlignment="Middle">
 						<font fontName="Tahoma" size="7"/>
 					</textElement>
 				<text><![CDATA[Ing. Brutos:]]></text>
@@ -462,7 +463,7 @@
 						height="11"
 						key="staticText-13"/>
 					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
-					<textElement verticalAlignment="Top">
+					<textElement verticalAlignment="Middle">
 						<font fontName="Tahoma" size="7"/>
 					</textElement>
 				<text><![CDATA[O.de Compra:]]></text>
@@ -475,7 +476,7 @@
 						height="11"
 						key="textField-3"/>
 					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
-					<textElement verticalAlignment="Top">
+					<textElement verticalAlignment="Middle">
 						<font fontName="Tahoma" size="7"/>
 					</textElement>
 				<textFieldExpression   class="java.lang.String"><![CDATA[$P{RAZONSOCIAL}]]></textFieldExpression>
@@ -488,7 +489,7 @@
 						height="11"
 						key="textField-4"/>
 					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
-					<textElement verticalAlignment="Top">
+					<textElement verticalAlignment="Middle">
 						<font fontName="Tahoma" size="7"/>
 					</textElement>
 				<textFieldExpression   class="java.lang.String"><![CDATA[$P{DIRECCION}]]></textFieldExpression>
@@ -501,7 +502,7 @@
 						height="11"
 						key="textField-5"/>
 					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
-					<textElement verticalAlignment="Top">
+					<textElement verticalAlignment="Middle">
 						<font fontName="Tahoma" size="7"/>
 					</textElement>
 				<textFieldExpression   class="java.lang.String"><![CDATA[$P{TELEFONO}]]></textFieldExpression>
@@ -514,7 +515,7 @@
 						height="11"
 						key="textField-6"/>
 					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
-					<textElement verticalAlignment="Top">
+					<textElement verticalAlignment="Middle">
 						<font fontName="Tahoma" size="7"/>
 					</textElement>
 				<textFieldExpression   class="java.lang.String"><![CDATA[$P{LOCALIDAD}]]></textFieldExpression>
@@ -527,7 +528,7 @@
 						height="11"
 						key="textField-7"/>
 					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
-					<textElement verticalAlignment="Top">
+					<textElement verticalAlignment="Middle">
 						<font fontName="Tahoma" size="7"/>
 					</textElement>
 				<textFieldExpression   class="java.lang.String"><![CDATA[$P{REFERENCIA }]]></textFieldExpression>
@@ -540,7 +541,7 @@
 						height="11"
 						key="textField-8"/>
 					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
-					<textElement verticalAlignment="Top">
+					<textElement verticalAlignment="Middle">
 						<font fontName="Tahoma" size="7"/>
 					</textElement>
 				<textFieldExpression   class="java.lang.String"><![CDATA[$P{CODIGO}]]></textFieldExpression>
@@ -553,7 +554,7 @@
 						height="11"
 						key="textField-9"/>
 					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
-					<textElement verticalAlignment="Top">
+					<textElement verticalAlignment="Middle">
 						<font fontName="Tahoma" size="7"/>
 					</textElement>
 				<textFieldExpression   class="java.lang.String"><![CDATA[$P{TIPO_IVA}]]></textFieldExpression>
@@ -566,7 +567,7 @@
 						height="11"
 						key="textField-10"/>
 					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
-					<textElement verticalAlignment="Top">
+					<textElement verticalAlignment="Middle">
 						<font fontName="Tahoma" size="7"/>
 					</textElement>
 				<textFieldExpression   class="java.lang.String"><![CDATA[$P{DNI_CUIT}]]></textFieldExpression>
@@ -579,7 +580,7 @@
 						height="11"
 						key="textField-11"/>
 					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
-					<textElement verticalAlignment="Top">
+					<textElement verticalAlignment="Middle">
 						<font fontName="Tahoma" size="7"/>
 					</textElement>
 				<textFieldExpression   class="java.lang.String"><![CDATA[$P{INGBRUTO}]]></textFieldExpression>
@@ -592,7 +593,7 @@
 						height="11"
 						key="textField-12"/>
 					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
-					<textElement verticalAlignment="Top">
+					<textElement verticalAlignment="Middle">
 						<font fontName="Tahoma" size="7"/>
 					</textElement>
 				<textFieldExpression   class="java.lang.String"><![CDATA[$P{NRO_OC}]]></textFieldExpression>
