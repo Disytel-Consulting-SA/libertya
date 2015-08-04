@@ -1094,6 +1094,13 @@ public class MOrderLine extends X_C_OrderLine {
     		return getProduct().getValue();
     	return "";
     }    
+    
+    public String getProductUPC()
+    {
+    	if (getProduct() != null)
+    		return getProduct().getUPC();
+    	return "";
+    }   
 
     public String getUOMName()
     {
