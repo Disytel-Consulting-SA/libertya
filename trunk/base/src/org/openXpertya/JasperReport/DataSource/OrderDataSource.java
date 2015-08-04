@@ -5,12 +5,13 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.HashMap;
 import java.util.Properties;
-import org.openXpertya.model.MOrder;
-import org.openXpertya.model.MOrderLine;
 
 import net.sf.jasperreports.engine.JRDataSource;
 import net.sf.jasperreports.engine.JRException;
 import net.sf.jasperreports.engine.JRField;
+
+import org.openXpertya.model.MOrder;
+import org.openXpertya.model.MOrderLine;
 
 
 public class OrderDataSource implements JRDataSource  {
@@ -45,6 +46,7 @@ public class OrderDataSource implements JRDataSource  {
 		methodMapper.put("ITEM", "getLineStr");
 		methodMapper.put("UNIDAD", "getUOMName");
 		methodMapper.put("X12DE355", "getX12DE355");
+		methodMapper.put("UPC", "getProductUPC");
 		
 		methodMapper.put("CHARGE", "getChargeName");
 		methodMapper.put("TAX_RATE", "getTaxRate");
