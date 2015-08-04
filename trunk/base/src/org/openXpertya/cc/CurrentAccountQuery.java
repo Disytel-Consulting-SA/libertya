@@ -80,8 +80,6 @@ public class CurrentAccountQuery {
 	public String getAllDocumentsQuery() {
 		StringBuffer sqlDoc = new StringBuffer();
 		if (detailReceiptsPayments) {
-			sqlDoc.append(" select * ");
-			sqlDoc.append(" from ( ");
 			sqlDoc.append(" SELECT distinct ");
 			sqlDoc.append(" 	d.Dateacct::date as DateTrx, ");
 			sqlDoc.append(" 	d.Created as createdghost, ");
@@ -137,59 +135,43 @@ public class CurrentAccountQuery {
 			}
 			sqlAppend("   AND d.AD_Org_ID = ? ", orgID, sqlDoc);
 			sqlAppend("   AND d.C_DocType_ID = ? ", docTypeID, sqlDoc);
-			sqlDoc.append(" ) as d ");
 		} else {
-			sqlDoc.append(" select * ");
-			sqlDoc.append(" from ( ");
 			sqlDoc.append("     SELECT distinct ");
-			sqlDoc.append("     	(CASE WHEN ((SELECT al.C_AllocationHdr_ID FROM C_AllocationLine al WHERE ( ((d.documenttable = 'C_Payment') AND (al.C_Payment_ID = d.document_id)) OR ((d.documenttable = 'C_Invoice') AND (al.C_Invoice_Credit_ID = d.document_id)) OR ((d.documenttable = 'C_CashLine') AND (al.C_CashLine_ID = d.document_id)) ) LIMIT 1) IS NOT NULL) THEN (SELECT ah.dateacct::date FROM C_AllocationLine al INNER JOIN C_AllocationHdr as ah on ah.c_allocationhdr_id = al.c_allocationhdr_id WHERE ( ((d.documenttable = 'C_Payment') AND (al.C_Payment_ID = d.document_id))	OR ((d.documenttable = 'C_Invoice') AND (al.C_Invoice_Credit_ID = d.document_id)) OR ((d.documenttable = 'C_CashLine') AND (al.C_CashLine_ID = d.document_id)) ) LIMIT 1) ELSE d.Dateacct END)::date as DateTrx, ");
+			sqlDoc.append("     	d.Dateacct::date, ");
+			
+			sqlDoc.append("     	COALESCE( ");
+			sqlDoc.append("     	(CASE WHEN d.documenttable = 'C_CashLine' THEN (SELECT a.Dateacct::date FROM C_AllocationHdr a WHERE (a.C_AllocationHdr_ID = (SELECT al.C_AllocationHdr_ID FROM C_AllocationLine al WHERE (d.documenttable = 'C_CashLine' AND al.C_CashLine_ID = d.document_id) ORDER BY al.C_AllocationHdr_ID ASC LIMIT 1))) " );
+			sqlDoc.append("               WHEN d.documenttable = 'C_Payment' THEN (SELECT a.Dateacct::date FROM C_AllocationHdr a WHERE (a.C_AllocationHdr_ID = (SELECT al.C_AllocationHdr_ID FROM C_AllocationLine al WHERE (d.documenttable = 'C_Payment' AND al.C_Payment_ID = d.document_id) ORDER BY al.C_AllocationHdr_ID ASC LIMIT 1))) " );
+			sqlDoc.append("               WHEN d.documenttable = 'C_Invoice' THEN (SELECT a.Dateacct::date FROM C_AllocationHdr a WHERE (a.C_AllocationHdr_ID = (SELECT al.C_AllocationHdr_ID FROM C_AllocationLine al WHERE (d.documenttable = 'C_Invoice' AND al.C_Invoice_Credit_ID = d.document_id) ORDER BY al.C_AllocationHdr_ID ASC LIMIT 1))) " );
+			sqlDoc.append("		    ELSE d.Dateacct::date END)" );
+			sqlDoc.append("		    ,d.Dateacct::date) as DateTrx, ");
+			
 			sqlDoc.append("     	d.Created as createdghost, ");
-			sqlDoc.append("     	d.C_DocType_ID, ");
-			sqlDoc.append("     	COALESCE((SELECT a.documentno FROM C_AllocationHdr a WHERE (a.C_AllocationHdr_ID = (SELECT al.C_AllocationHdr_ID FROM C_AllocationLine al WHERE ( ((d.documenttable = 'C_Payment') AND (al.C_Payment_ID = d.document_id)) OR ((d.documenttable = 'C_Invoice') AND (al.C_Invoice_Credit_ID = d.document_id)) OR ((d.documenttable = 'C_CashLine') AND (al.C_CashLine_ID = d.document_id)) ) LIMIT 1))),DocumentNo) AS DocumentNo, ");
+			
+			sqlDoc.append("     	COALESCE((CASE WHEN d.documenttable = 'C_CashLine' THEN (SELECT a.C_Doctype_ID FROM C_AllocationHdr a WHERE (a.C_AllocationHdr_ID = (SELECT al.C_AllocationHdr_ID FROM C_AllocationLine al WHERE ( d.documenttable = 'C_CashLine' AND al.C_CashLine_ID = d.document_id) ORDER BY al.C_AllocationHdr_ID ASC LIMIT 1)))  " );
+			sqlDoc.append("     		  WHEN d.documenttable = 'C_Payment' THEN (SELECT a.C_Doctype_ID FROM C_AllocationHdr a WHERE (a.C_AllocationHdr_ID = (SELECT al.C_AllocationHdr_ID FROM C_AllocationLine al WHERE (d.documenttable = 'C_Payment' AND al.C_Payment_ID = d.document_id) ORDER BY al.C_AllocationHdr_ID ASC LIMIT 1)))  " );
+			sqlDoc.append("     	ELSE d.C_DocType_ID END), d.C_DocType_ID) as C_DocType_ID, ");
+			
+			sqlDoc.append("     	COALESCE((SELECT a.documentno FROM C_AllocationHdr a WHERE (a.C_AllocationHdr_ID = (SELECT al.C_AllocationHdr_ID FROM C_AllocationLine al WHERE ( ((d.documenttable = 'C_Payment') AND (al.C_Payment_ID = d.document_id)) OR ((d.documenttable = 'C_Invoice') AND (al.C_Invoice_Credit_ID = d.document_id)) OR ((d.documenttable = 'C_CashLine') AND (al.C_CashLine_ID = d.document_id)) ) ORDER BY al.C_AllocationHdr_ID ASC LIMIT 1))),DocumentNo) AS DocumentNo, ");
 			sqlDoc.append("     	ABS((CASE WHEN d.signo_issotrx = ? THEN ");
-			sqlDoc.append(" 		(SELECT CASE ");
-			// sqlDoc.append(" 		WHEN d.documenttable = 'C_Invoice' THEN (select (CASE WHEN SUM(al.amount) IS NULL THEN 0.0 ELSE SUM(al.amount + (CASE WHEN al.c_invoice_credit_id IS NULL THEN 0.0 ELSE (al.writeoffamt + al.discountamt) END )) END) FROM C_AllocationLine al WHERE ((al.c_invoice_id = d.document_id) OR (al.c_invoice_credit_id = d.document_id)) AND (al.isactive = 'Y')) ");
-			sqlDoc.append("			WHEN d.documenttable = 'C_Invoice' THEN (sign(d.amount) * ( abs(currencyConvert(d.amount, d.c_currency_id, "
-					+ getCurrencyID()
-					+ ", ('now'::text)::timestamp(6) with time zone, COALESCE(c_conversiontype_id,0), d.ad_client_id, d.ad_org_id)) - abs(invoiceOpen(d.document_id, d.c_invoicepayschedule_id, "
-					+ getCurrencyID() + " , 0)) ) )");
-			sqlDoc.append(" 		WHEN d.documenttable = 'C_CashLine' THEN (select (CASE WHEN SUM(al.amount) IS NULL THEN 0.0 ELSE SUM(al.amount) END) FROM C_AllocationLine al WHERE (al.c_cashline_id = d.document_id) AND (al.isactive = 'Y')) ");
-			sqlDoc.append(" 		ELSE (select (CASE WHEN SUM(al.amount) IS NULL THEN 0.0 ELSE SUM(al.amount) END) FROM C_AllocationLine al WHERE (al.c_payment_id = d.document_id) AND (al.isactive = 'Y')) END) ");
-			sqlDoc.append(" 		+ ");
-			sqlDoc.append(" 		abs((SELECT currencyconvert ( CASE WHEN d.documenttable = 'C_Invoice' THEN ");
-			sqlDoc.append(" 		invoiceOpen(d.document_id, coalesce(d.c_invoicepayschedule_id,0)) ");
-			sqlDoc.append(" 		WHEN d.documenttable = 'C_CashLine' THEN cashlineavailable(d.document_id) ");
-			sqlDoc.append(" 		ELSE paymentavailable(d.document_id) END, d.c_currency_id, ?, ('now'::text)::timestamp(6) with time zone, COALESCE(d.c_conversiontype_id,0), d.ad_client_id, d.ad_org_id ))) ELSE 0.0 END)) * SIGN(d.amount)::numeric AS Debit, ");
+			sqlDoc.append(			this.sqlTotalAmount(null));
+			sqlDoc.append("			ELSE 0.0 END)) * SIGN(d.amount)::numeric AS Debit, ");	
 			sqlDoc.append(" 		ABS((CASE WHEN d.signo_issotrx = ? THEN ");
-			sqlDoc.append(" 		(SELECT CASE ");
-			// sqlDoc.append(" 		WHEN d.documenttable = 'C_Invoice' THEN (select (CASE WHEN SUM(al.amount) IS NULL THEN 0.0 ELSE SUM(al.amount + (CASE WHEN al.c_invoice_credit_id IS NULL THEN 0.0 ELSE (al.writeoffamt + al.discountamt) END )) END) FROM C_AllocationLine al WHERE ((al.c_invoice_id = d.document_id) OR (al.c_invoice_credit_id = d.document_id)) AND (al.isactive = 'Y')) ");
-			sqlDoc.append("			WHEN d.documenttable = 'C_Invoice' THEN (sign(d.amount) * ( abs(currencyConvert(d.amount, d.c_currency_id, "
-					+ getCurrencyID()
-					+ ", ('now'::text)::timestamp(6) with time zone, COALESCE(c_conversiontype_id,0), d.ad_client_id, d.ad_org_id)) - abs(invoiceOpen(d.document_id, d.c_invoicepayschedule_id, "
-					+ getCurrencyID() + " , 0)) ) )");
-			sqlDoc.append(" 		WHEN d.documenttable = 'C_CashLine' THEN (select (CASE WHEN SUM(al.amount) IS NULL THEN 0.0 ELSE SUM(al.amount) END) FROM C_AllocationLine al WHERE (al.c_cashline_id = d.document_id) AND (al.isactive = 'Y')) ");
-			sqlDoc.append(" 		ELSE (select (CASE WHEN SUM(al.amount) IS NULL THEN 0.0 ELSE SUM(al.amount) END) FROM C_AllocationLine al WHERE (al.c_payment_id = d.document_id) AND (al.isactive = 'Y')) END) ");
-			sqlDoc.append(" 		+ ");
-			sqlDoc.append(" 		abs((SELECT currencyconvert ( CASE WHEN d.documenttable = 'C_Invoice' THEN ");
-			sqlDoc.append(" 		invoiceOpen(d.document_id, coalesce(d.c_invoicepayschedule_id,0)) ");
-			sqlDoc.append(" 		WHEN d.documenttable = 'C_CashLine' THEN ");
-			sqlDoc.append(" 		cashlineavailable(d.document_id) ");
-			sqlDoc.append(" 		ELSE paymentavailable(d.document_id) END, d.c_currency_id, ?, ('now'::text)::timestamp(6) with time zone, COALESCE(d.c_conversiontype_id,0), d.ad_client_id, d.ad_org_id ))) ELSE 0.0 END)) * SIGN(d.amount)::numeric AS Credit, ");
+			sqlDoc.append(			this.sqlTotalAmount(null));
+			sqlDoc.append("			ELSE 0.0 END)) * SIGN(d.amount)::numeric AS Credit, ");
 			sqlDoc.append(" 		date_trunc('day',d.Created) AS Created, ");
-			sqlDoc.append(" 		(CASE WHEN ((SELECT al.C_AllocationHdr_ID FROM C_AllocationLine al WHERE ( ((d.documenttable = 'C_Payment') AND (al.C_Payment_ID = d.document_id)) OR ((d.documenttable = 'C_Invoice') AND (al.C_Invoice_Credit_ID = d.document_id)) OR ((d.documenttable = 'C_CashLine') AND (al.C_CashLine_ID = d.document_id)) ) LIMIT 1) IS NOT NULL) THEN '118' ELSE d.C_Currency_ID END) AS C_Currency_ID, ");
-			sqlDoc.append(" 		(CASE WHEN ((SELECT al.C_AllocationHdr_ID FROM C_AllocationLine al WHERE ( ((d.documenttable = 'C_Payment') AND (al.C_Payment_ID = d.document_id) AND (al.isActive = 'Y')) OR ((d.documenttable = 'C_Invoice') AND (al.C_Invoice_Credit_ID = d.document_id) AND (al.isActive = 'Y')) OR ((d.documenttable = 'C_CashLine') AND (al.C_CashLine_ID = d.document_id) AND (al.isActive = 'Y')) ) LIMIT 1) IS NOT NULL) THEN (CASE WHEN d.signo_issotrx = '1' THEN (SELECT CASE WHEN d.documenttable = 'C_Invoice' THEN ( sign(d.amount) * ( abs(currencyConvert(d.amount, d.c_currency_id, "
-					+ getCurrencyID()
-					+ ", ('now'::text)::timestamp(6) with time zone, COALESCE(c_conversiontype_id,0), d.ad_client_id, d.ad_org_id)) - abs(invoiceOpen(d.document_id, d.c_invoicepayschedule_id, "
-					+ getCurrencyID()
-					+ " , 0)) )  ) WHEN d.documenttable = 'C_CashLine' THEN (select (CASE WHEN SUM(al.amount) IS NULL THEN 0.0 ELSE SUM(al.amount) END) FROM C_AllocationLine al WHERE (al.c_cashline_id = d.document_id) AND (al.isActive = 'Y')) ELSE (select (CASE WHEN SUM(al.amount) IS NULL THEN 0.0 ELSE SUM(al.amount) END) FROM C_AllocationLine al WHERE (al.c_payment_id = d.document_id) AND (al.isActive = 'Y')) END) + abs((SELECT currencyconvert ( CASE WHEN d.documenttable = 'C_Invoice' THEN invoiceOpen(d.document_id, coalesce(d.c_invoicepayschedule_id,0)) WHEN d.documenttable = 'C_CashLine' THEN cashlineavailable(d.document_id) ELSE paymentavailable(d.document_id) END, d.c_currency_id, '118', ('now'::text)::timestamp(6) with time zone, COALESCE(d.c_conversiontype_id,0), d.ad_client_id, d.ad_org_id ))) ELSE 0.0 END) + (CASE WHEN d.signo_issotrx = '-1' THEN (SELECT CASE WHEN d.documenttable = 'C_Invoice' THEN ( sign(d.amount) * ( abs(currencyConvert(d.amount, d.c_currency_id, "
-					+ getCurrencyID()
-					+ ", ('now'::text)::timestamp(6) with time zone, COALESCE(c_conversiontype_id,0), d.ad_client_id, d.ad_org_id)) - abs(invoiceOpen(d.document_id, d.c_invoicepayschedule_id, "
-					+ getCurrencyID()
-					+ " , 0)) )  ) WHEN d.documenttable = 'C_CashLine' THEN (select (CASE WHEN SUM(al.amount) IS NULL THEN 0.0 ELSE SUM(al.amount) END) FROM C_AllocationLine al WHERE (al.c_cashline_id = d.document_id) AND (al.isActive = 'Y')) ELSE (select (CASE WHEN SUM(al.amount) IS NULL THEN 0.0 ELSE SUM(al.amount) END) FROM C_AllocationLine al WHERE (al.c_payment_id = d.document_id) AND (al.isActive = 'Y')) END) + abs((SELECT currencyconvert ( CASE WHEN d.documenttable = 'C_Invoice' THEN invoiceOpen(d.document_id, coalesce(d.c_invoicepayschedule_id,0)) WHEN d.documenttable = 'C_CashLine' THEN cashlineavailable(d.document_id) ELSE paymentavailable(d.document_id) END, d.c_currency_id, '118', ('now'::text)::timestamp(6) with time zone, COALESCE(d.c_conversiontype_id,0), d.ad_client_id, d.ad_org_id ))) ELSE 0.0 END) ELSE d.amount END) AS amount, ");
-			sqlDoc.append(" 		(CASE WHEN ((SELECT al.C_AllocationHdr_ID FROM C_AllocationLine al WHERE ( ((d.documenttable = 'C_Payment') AND (al.C_Payment_ID = d.document_id)) OR ((d.documenttable = 'C_Invoice') AND (al.C_Invoice_Credit_ID = d.document_id)) OR ((d.documenttable = 'C_CashLine') AND (al.C_CashLine_ID = d.document_id)) ) LIMIT 1) IS NOT NULL) THEN 'C_AllocationHdr' ELSE d.documenttable END) AS documenttable, ");
-			sqlDoc.append(" 		(CASE WHEN ((SELECT al.C_AllocationHdr_ID FROM C_AllocationLine al WHERE ( ((d.documenttable = 'C_Payment') AND (al.C_Payment_ID = d.document_id)) OR ((d.documenttable = 'C_Invoice') AND (al.C_Invoice_Credit_ID = d.document_id)) OR ((d.documenttable = 'C_CashLine') AND (al.C_CashLine_ID = d.document_id)) ) LIMIT 1) IS NOT NULL) THEN (SELECT al.C_AllocationHdr_ID FROM C_AllocationLine al WHERE ( ((d.documenttable = 'C_Payment') AND (al.C_Payment_ID = d.document_id)) OR ((d.documenttable = 'C_Invoice') AND (al.C_Invoice_Credit_ID = d.document_id)) OR ((d.documenttable = 'C_CashLine') AND (al.C_CashLine_ID = d.document_id)) ) LIMIT 1) ELSE d.document_id END) AS document_id, ");
+			sqlDoc.append(" 		(CASE WHEN ((SELECT al.C_AllocationHdr_ID FROM C_AllocationLine al WHERE ( ((d.documenttable = 'C_Payment') AND (al.C_Payment_ID = d.document_id)) OR ((d.documenttable = 'C_Invoice') AND (al.C_Invoice_Credit_ID = d.document_id)) OR ((d.documenttable = 'C_CashLine') AND (al.C_CashLine_ID = d.document_id)) ) ORDER BY al.C_AllocationHdr_ID ASC LIMIT 1) IS NOT NULL) THEN '118' ELSE d.C_Currency_ID END) AS C_Currency_ID, ");
+			sqlDoc.append(" 		(CASE WHEN ((SELECT al.C_AllocationHdr_ID FROM C_AllocationLine al WHERE ( ((d.documenttable = 'C_Payment') AND (al.C_Payment_ID = d.document_id) AND (al.isActive = 'Y')) OR ((d.documenttable = 'C_Invoice') AND (al.C_Invoice_Credit_ID = d.document_id) AND (al.isActive = 'Y')) OR ((d.documenttable = 'C_CashLine') AND (al.C_CashLine_ID = d.document_id) AND (al.isActive = 'Y')) ) ORDER BY al.C_AllocationHdr_ID ASC LIMIT 1) IS NOT NULL) THEN ");
+			sqlDoc.append("			(CASE WHEN d.signo_issotrx = '1' THEN ");
+			sqlDoc.append(			this.sqlTotalAmount("118"));
+			sqlDoc.append("			ELSE 0.0 END) + "); 
+			sqlDoc.append("			(CASE WHEN d.signo_issotrx = '-1' THEN ");
+			sqlDoc.append(			this.sqlTotalAmount("118"));
+			sqlDoc.append("			ELSE 0.0 END) ELSE d.amount END) AS amount, ");
+			sqlDoc.append(" 		(CASE WHEN ((SELECT al.C_AllocationHdr_ID FROM C_AllocationLine al WHERE ( ((d.documenttable = 'C_Payment') AND (al.C_Payment_ID = d.document_id)) OR ((d.documenttable = 'C_Invoice') AND (al.C_Invoice_Credit_ID = d.document_id)) OR ((d.documenttable = 'C_CashLine') AND (al.C_CashLine_ID = d.document_id)) ) ORDER BY al.C_AllocationHdr_ID ASC LIMIT 1) IS NOT NULL) THEN 'C_AllocationHdr' ELSE d.documenttable END) AS documenttable, ");
+			sqlDoc.append(" 		(CASE WHEN ((SELECT al.C_AllocationHdr_ID FROM C_AllocationLine al WHERE ( ((d.documenttable = 'C_Payment') AND (al.C_Payment_ID = d.document_id)) OR ((d.documenttable = 'C_Invoice') AND (al.C_Invoice_Credit_ID = d.document_id)) OR ((d.documenttable = 'C_CashLine') AND (al.C_CashLine_ID = d.document_id)) ) ORDER BY al.C_AllocationHdr_ID ASC LIMIT 1) IS NOT NULL) THEN (SELECT al.C_AllocationHdr_ID FROM C_AllocationLine al WHERE ( ((d.documenttable = 'C_Payment') AND (al.C_Payment_ID = d.document_id)) OR ((d.documenttable = 'C_Invoice') AND (al.C_Invoice_Credit_ID = d.document_id)) OR ((d.documenttable = 'C_CashLine') AND (al.C_CashLine_ID = d.document_id)) ) ORDER BY al.C_AllocationHdr_ID ASC LIMIT 1) ELSE d.document_id END) AS document_id, ");
 			sqlDoc.append(" 	d.c_invoicepayschedule_id ");
-			sqlDoc.append(" 	FROM V_Documents_Org_Filtered (" + (bPartnerID != null ? bPartnerID : -1) + ", true)  d ");
+			sqlDoc.append(" 	FROM V_Documents_Org_Filtered (" + (bPartnerID != null ? bPartnerID : -1) + ", false)  d ");
 			sqlDoc.append(" 	WHERE d.DocStatus IN ('CO','CL', 'RE', 'VO') ");
 			sqlDoc.append("     AND d.AD_Client_ID = ? ");
 			sqlDoc.append("   AND d.C_Bpartner_ID = ? ");
@@ -198,7 +180,6 @@ public class CurrentAccountQuery {
 			}
 			sqlAppend("   AND d.AD_Org_ID = ? ", orgID, sqlDoc);
 			sqlAppend("   AND d.C_DocType_ID = ? ", docTypeID, sqlDoc);
-			sqlDoc.append(" ) as d ");
 		}
 		return sqlDoc.toString();
 	}
@@ -211,9 +192,9 @@ public class CurrentAccountQuery {
 		StringBuffer sql = new StringBuffer();
 
 		sql.append(sqlDoc); // Consulta de todos los comprobantes
-		sqlAppend("   AND ?::date <= d.DateTrx::date ", getDateFrom(), sql);
-		sqlAppend("   AND d.DateTrx::date <= ?::date ", getDateTo(), sql);
-		sql.append(" ORDER BY d.DateTrx::date, d.Created");
+		sqlAppend("   AND ?::date <= d.Dateacct::date ", getDateFrom(), sql);
+		sqlAppend("   AND d.Dateacct::date <= ?::date ", getDateTo(), sql);
+		sql.append(" ORDER BY d.Dateacct::date, d.Created");
 
 		if (!detailReceiptsPayments) {
 			StringBuffer sqlGroupBy = new StringBuffer();
@@ -334,4 +315,45 @@ public class CurrentAccountQuery {
 		this.bPartnerID = bPartnerID;
 	}
 
+	public String sqlTotalAmount(String C_Currency_ID_To){
+		StringBuffer sql = new StringBuffer();
+		sql.append("	(SELECT CASE ");
+		sql.append("		WHEN (" + this.sqlIsRCA_VO() + ") THEN ");
+		sql.append("			d.amount ");
+		sql.append("		ELSE ");
+		sql.append("			(SELECT CASE ");
+		sql.append("			    WHEN d.documenttable = 'C_Invoice' THEN ");
+		sql.append("					(sign(d.amount) * ( abs(currencyConvert(d.amount, d.c_currency_id, " + getCurrencyID() + ", ('now'::text)::timestamp(6) with time zone, COALESCE(c_conversiontype_id,0), d.ad_client_id, d.ad_org_id)) - abs(invoiceOpen(d.document_id, d.c_invoicepayschedule_id, " + getCurrencyID() + " , 0)) ) )");
+		sql.append(" 				WHEN d.documenttable = 'C_CashLine' THEN ");
+		sql.append("					(select (CASE WHEN SUM(al.amount) IS NULL THEN 0.0 ELSE SUM(al.amount) END) FROM C_AllocationLine al WHERE (al.c_cashline_id = d.document_id) AND (al.isactive = 'Y')) ");
+		sql.append(" 				ELSE ");
+		sql.append("					(select (CASE WHEN SUM(al.amount) IS NULL THEN 0.0 ELSE SUM(al.amount) END) FROM C_AllocationLine al WHERE (al.c_payment_id = d.document_id) AND (al.isactive = 'Y')) END) ");
+		sql.append(" 				+ ");
+		sql.append(" 				abs((SELECT currencyconvert ( CASE ");
+		sql.append(" 											  WHEN d.documenttable = 'C_Invoice' THEN ");
+		sql.append(" 												  invoiceOpen(d.document_id, coalesce(d.c_invoicepayschedule_id,0)) ");
+		sql.append("	 										  WHEN d.documenttable = 'C_CashLine' THEN ");
+		sql.append("												  cashlineavailable(d.document_id) ");
+		sql.append(" 											  ELSE ");
+		sql.append("												  paymentavailable(d.document_id) ");
+		sql.append("        	                	              END, d.c_currency_id, " + ((C_Currency_ID_To == null) ? "?" : C_Currency_ID_To) + ", ('now'::text)::timestamp(6) with time zone, COALESCE(d.c_conversiontype_id,0), d.ad_client_id, d.ad_org_id ))) ");
+		sql.append("		END) ");
+		
+		return sql.toString();
+	}
+	
+	public String sqlIsRCA_VO(){
+		String sql = 
+		"	((SELECT al.C_AllocationHdr_ID	FROM C_AllocationLine al " +
+										  " INNER JOIN C_AllocationHdr a ON (al.C_AllocationHdr_ID = a.C_AllocationHdr_ID) " +
+										  "	WHERE ( ((d.documenttable = 'C_Payment') AND (al.C_Payment_ID = d.document_id)) OR " + 
+										  		  "	((d.documenttable = 'C_Invoice') AND (al.C_Invoice_Credit_ID = d.document_id)) OR " + 
+										  		  "	((d.documenttable = 'C_CashLine') AND (al.C_CashLine_ID = d.document_id)) ) " +
+										  		  " AND (a.allocationtype = 'RCA') AND (a.docstatus = 'VO') " +
+			" ORDER BY al.C_AllocationHdr_ID ASC LIMIT 1) IS NOT NULL) ";
+		
+		return sql;
+	}
+	
+	
 }
