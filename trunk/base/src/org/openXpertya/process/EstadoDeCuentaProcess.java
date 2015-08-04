@@ -103,7 +103,7 @@ public class EstadoDeCuentaProcess extends SvrProcess {
 			//"     i.grandtotal, invoicepaid(i.c_invoice_id, i.c_currency_id, 1) AS paidamt, invoiceopen(i.c_invoice_id, 0) AS openamt, " +
 			"     i.grandtotal AS grandtotalmulticurrency, " +
 			"     invoicepaid(i.c_invoice_id, i.c_currency_id, 1) AS paidamtmulticurrency, " +
-			"     (i.grandtotal - invoicepaid(i.c_invoice_id, i.c_currency_id, 1)) AS openamtmulticurrency, " + 
+			"     invoiceopen(i.c_invoice_id, 0, i.c_currency_id,i.c_conversiontype_id) AS openamtmulticurrency, " +  
 			"     currencybase(i.grandtotal,i.c_currency_id,i.dateinvoiced, i.ad_client_id, i.ad_org_id) AS grandtotal, " +
 			"     invoicepaid(i.c_invoice_id, "+currencyClient+", 1) AS paidamt, " +
 			"     invoiceopen(i.c_invoice_id, 0,"+currencyClient+",i.c_conversiontype_id) AS openamt, " + 		
@@ -132,7 +132,7 @@ public class EstadoDeCuentaProcess extends SvrProcess {
 			//"     ips.dueamt * dt.signo_issotrx AS grandtotal, invoicepaid(i.c_invoice_id, i.c_currency_id, 1) * dt.signo_issotrx AS paidamt, invoiceopen(i.c_invoice_id, ips.c_invoicepayschedule_id) * dt.signo_issotrx AS openamt, " +
 			"     i.grandtotal AS grandtotalmulticurrency, " +
 			"     invoicepaid(i.c_invoice_id, i.c_currency_id, 1) AS paidamtmulticurrency, " +
-			"     (i.grandtotal - invoicepaid(i.c_invoice_id, i.c_currency_id, 1)) AS openamtmulticurrency, " +
+			"     invoiceopen(i.c_invoice_id, ips.c_invoicepayschedule_id ,i.c_currency_id,i.c_conversiontype_id) AS openamtmulticurrency, " +
 			"     currencybase(i.grandtotal,i.c_currency_id,i.dateinvoiced, i.ad_client_id, i.ad_org_id) AS grandtotal, " +
 			"     invoicepaid(i.c_invoice_id, "+currencyClient+", 1) AS paidamt, " +
 			"     invoiceopen(i.c_invoice_id, ips.c_invoicepayschedule_id,"+currencyClient+",i.c_conversiontype_id) AS openamt, " +
