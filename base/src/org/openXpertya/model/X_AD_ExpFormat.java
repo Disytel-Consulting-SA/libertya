@@ -7,7 +7,7 @@ import java.math.*;
 import org.openXpertya.util.*;
 /** Modelo Generado por AD_ExpFormat
  *  @author Comunidad de Desarrollo Libertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
- *  @version  - 2013-10-14 14:58:27.786 */
+ *  @version  - 2015-08-01 21:46:28.907 */
 public class X_AD_ExpFormat extends org.openXpertya.model.PO
 {
 /** Constructor estándar */
@@ -19,9 +19,14 @@ super (ctx, AD_ExpFormat_ID, trxName);
 setAD_ExpFormat_ID (0);
 setAD_Table_ID (0);
 setConcatenateTimestamp (false);
+setDelimiter (null);
+setEncodingType (null);	// U
+setEndLineType (null);	// W
+setExtension (null);	// C
 setFileName (null);
 setFormatType (null);
 setName (null);
+setTimestampPattern (null);
 setValue (null);
 }
  */
@@ -127,7 +132,8 @@ return false;
 /** Set Delimiter */
 public void setDelimiter (String Delimiter)
 {
-if (Delimiter != null && Delimiter.length() > 1)
+if (Delimiter == null) throw new IllegalArgumentException ("Delimiter is mandatory");
+if (Delimiter.length() > 1)
 {
 log.warning("Length > 1 - truncated");
 Delimiter = Delimiter.substring(0,1);
@@ -155,6 +161,75 @@ Optional short description of the record */
 public String getDescription() 
 {
 return (String)get_Value("Description");
+}
+public static final int ENCODINGTYPE_AD_Reference_ID = MReference.getReferenceID("AD_ImpFormat EncodingType");
+/** 8859_1 = I */
+public static final String ENCODINGTYPE_8859_1 = "I";
+/** UTF-8 = U */
+public static final String ENCODINGTYPE_UTF_8 = "U";
+/** Set Encoding Type */
+public void setEncodingType (String EncodingType)
+{
+if (EncodingType.equals("I") || EncodingType.equals("U"));
+ else throw new IllegalArgumentException ("EncodingType Invalid value - Reference = ENCODINGTYPE_AD_Reference_ID - I - U");
+if (EncodingType == null) throw new IllegalArgumentException ("EncodingType is mandatory");
+if (EncodingType.length() > 1)
+{
+log.warning("Length > 1 - truncated");
+EncodingType = EncodingType.substring(0,1);
+}
+set_Value ("EncodingType", EncodingType);
+}
+/** Get Encoding Type */
+public String getEncodingType() 
+{
+return (String)get_Value("EncodingType");
+}
+public static final int ENDLINETYPE_AD_Reference_ID = MReference.getReferenceID("AD_ImpFormat EndLineType");
+/** Windows = W */
+public static final String ENDLINETYPE_Windows = "W";
+/** Unix = U */
+public static final String ENDLINETYPE_Unix = "U";
+/** Set End Line Type */
+public void setEndLineType (String EndLineType)
+{
+if (EndLineType.equals("W") || EndLineType.equals("U"));
+ else throw new IllegalArgumentException ("EndLineType Invalid value - Reference = ENDLINETYPE_AD_Reference_ID - W - U");
+if (EndLineType == null) throw new IllegalArgumentException ("EndLineType is mandatory");
+if (EndLineType.length() > 1)
+{
+log.warning("Length > 1 - truncated");
+EndLineType = EndLineType.substring(0,1);
+}
+set_Value ("EndLineType", EndLineType);
+}
+/** Get End Line Type */
+public String getEndLineType() 
+{
+return (String)get_Value("EndLineType");
+}
+public static final int EXTENSION_AD_Reference_ID = MReference.getReferenceID("AD_ImpFormat Extension");
+/** CSV = C */
+public static final String EXTENSION_CSV = "C";
+/** TXT = T */
+public static final String EXTENSION_TXT = "T";
+/** Set Extension */
+public void setExtension (String Extension)
+{
+if (Extension.equals("C") || Extension.equals("T"));
+ else throw new IllegalArgumentException ("Extension Invalid value - Reference = EXTENSION_AD_Reference_ID - C - T");
+if (Extension == null) throw new IllegalArgumentException ("Extension is mandatory");
+if (Extension.length() > 3)
+{
+log.warning("Length > 3 - truncated");
+Extension = Extension.substring(0,3);
+}
+set_Value ("Extension", Extension);
+}
+/** Get Extension */
+public String getExtension() 
+{
+return (String)get_Value("Extension");
 }
 /** Set File Name.
 Name of the local file or URL */
@@ -229,7 +304,8 @@ return new KeyNamePair(getID(), getName());
 Date/Time pattern concatenated to the filename.  */
 public void setTimestampPattern (String TimestampPattern)
 {
-if (TimestampPattern != null && TimestampPattern.length() > 40)
+if (TimestampPattern == null) throw new IllegalArgumentException ("TimestampPattern is mandatory");
+if (TimestampPattern.length() > 40)
 {
 log.warning("Length > 40 - truncated");
 TimestampPattern = TimestampPattern.substring(0,40);

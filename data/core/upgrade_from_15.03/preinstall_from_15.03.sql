@@ -2313,3 +2313,96 @@ WHERE attrelid = 'c_doctype'::regclass AND attname = 'documentnote';
 UPDATE ad_column
 SET fieldlength = 2500, ad_reference_id = 14
 where ad_componentobjectuid IN ('CORE-AD_Column-3025');
+
+--20150804 2030 Nuevas columnas para Formato de Exportación
+UPDATE ad_system SET dummy = (SELECT addcolumnifnotexists('AD_ExpFormat','EncodingType','character(1)'));
+UPDATE ad_system SET dummy = (SELECT addcolumnifnotexists('AD_ExpFormat','EndLineType','character(1)'));
+UPDATE ad_system SET dummy = (SELECT addcolumnifnotexists('AD_ExpFormat','Extension','character(1)'));
+UPDATE ad_system SET dummy = (SELECT addcolumnifnotexists('AD_ExpFormat_Row','NoDecimalPoint','character(1) default ''N''::bpchar'));
+UPDATE AD_ExpFormat SET encodingtype = 'U', endlinetype='U', extension = 'C';
+
+--20150804 2100 Nueva función utilizada en Exportación - Régimen de Información
+CREATE OR REPLACE FUNCTION getimporteoperacionesexentas(p_c_invoice_id integer)
+  RETURNS numeric AS
+$BODY$
+DECLARE
+    	v_Amount        	NUMERIC;
+BEGIN
+    SELECT COALESCE(SUM(it.TaxBaseAmt), 0)
+    INTO v_Amount
+    FROM C_Invoicetax it
+    INNER JOIN C_Tax t ON (t.C_Tax_ID = it.C_Tax_ID)
+    WHERE (t.rate = 0 OR t.IsTaxExempt = 'Y') AND C_Invoice_ID = p_c_invoice_id;
+    
+    RETURN v_Amount;
+END;
+
+$BODY$
+  LANGUAGE 'plpgsql' VOLATILE
+  COST 100;
+ALTER FUNCTION getimporteoperacionesexentas(integer) OWNER TO libertya;
+
+--20150804 2100 Nueva función utilizada en Exportación - Régimen de Información
+CREATE OR REPLACE FUNCTION getimportepercepcionesiibb(p_c_invoice_id integer)
+  RETURNS numeric AS
+$BODY$
+DECLARE
+    	v_Amount        	NUMERIC;
+BEGIN
+    SELECT COALESCE(SUM(it.TaxAmt), 0)
+    INTO v_Amount
+    FROM C_Invoicetax it
+    WHERE C_Invoice_ID = p_c_invoice_id AND C_Tax_ID IN (SELECT C_Tax_ID FROM C_Tax Where perceptionType = 'B');   
+
+    RETURN v_Amount;
+END;
+
+$BODY$
+  LANGUAGE 'plpgsql' VOLATILE
+  COST 100;
+ALTER FUNCTION getimportepercepcionesiibb(integer) OWNER TO libertya;
+
+--20150804 2100 Nueva función utilizada en Exportación - Régimen de Información
+CREATE OR REPLACE FUNCTION getcantidadalicuotasiva(p_c_invoice_id integer)
+  RETURNS numeric AS
+$BODY$
+DECLARE
+    	v_Cant        	NUMERIC;
+BEGIN
+    SELECT COUNT(*)
+    INTO v_Cant
+    FROM C_Invoicetax it
+    INNER JOIN C_Tax t ON (t.C_Tax_ID = it.C_Tax_ID)
+    WHERE (C_Invoice_ID = p_c_invoice_id) AND (isPercepcion = 'N');
+
+    RETURN v_Cant;
+END;
+
+$BODY$
+  LANGUAGE 'plpgsql' VOLATILE
+  COST 100;
+ALTER FUNCTION getcantidadalicuotasiva(integer) OWNER TO libertya;
+
+--20150804 2100 Nueva vista utilizada en Exportación - Régimen de Información
+CREATE OR REPLACE VIEW reginfo_ventas_cbte_v AS 
+ SELECT i.ad_client_id, i.ad_org_id, i.c_invoice_id, date_trunc('day'::text, i.dateinvoiced) AS date, date_trunc('day'::text, i.dateinvoiced) AS fechadecomprobante, ei.codigo AS tipodecomprobante, i.puntodeventa, i.numerocomprobante AS nrocomprobante, i.numerocomprobante AS nrocomprobantehasta, bp.taxidtype AS codigodoccomprador, bp.taxid AS nroidentificacioncomprador, bp.name AS nombrecomprador, currencyconvert(i.grandtotal, i.c_currency_id, 118, i.dateacct::timestamp with time zone, NULL::integer, i.ad_client_id, i.ad_org_id)::numeric(20,2) AS imptotal, currencyconvert(i.grandtotal - i.netamount, i.c_currency_id, 118, i.dateacct::timestamp with time zone, NULL::integer, i.ad_client_id, i.ad_org_id)::numeric(20,2) AS impconceptosnoneto, 0::numeric(20,2) AS imppercepnocategorizados, currencyconvert(getimporteoperacionesexentas(i.c_invoice_id), i.c_currency_id, 118, i.dateacct::timestamp with time zone, NULL::integer, i.ad_client_id, i.ad_org_id)::numeric(20,2) AS impopeexentas, 0::numeric(20,2) AS imppercepopagosdeimpunac, currencyconvert(getimportepercepcionesiibb(i.c_invoice_id), i.c_currency_id, 118, i.dateacct::timestamp with time zone, NULL::integer, i.ad_client_id, i.ad_org_id)::numeric(20,2) AS imppercepiibb, 0::numeric(20,2) AS imppercepimpumuni, 0::numeric(20,2) AS impimpuinternos, cu.wsfecode AS codmoneda, currencyrate(i.c_currency_id, 118, i.dateacct::timestamp with time zone, NULL::integer, i.ad_client_id, i.ad_org_id)::numeric(10,6) AS tipodecambio, getcantidadalicuotasiva(i.c_invoice_id) AS cantalicuotasiva, NULL::character varying(1) AS codigooperacion, 0::numeric(20,2) AS impotrostributos, NULL::timestamp without time zone AS fechavencimientopago
+   FROM c_invoice i
+   JOIN c_doctype dt ON dt.c_doctype_id = i.c_doctype_id
+   LEFT JOIN e_electronicinvoiceref ei ON dt.doctypekey::text ~~* (ei.clave_busqueda::text || '%'::text) AND ei.tabla_ref::text = 'TCOM'::text
+   JOIN c_bpartner bp ON bp.c_bpartner_id = i.c_bpartner_id
+   JOIN c_currency cu ON cu.c_currency_id = i.c_currency_id
+  WHERE (i.docstatus = ANY (ARRAY['CL'::bpchar, 'CO'::bpchar, 'VO'::bpchar, 'RE'::bpchar])) AND i.issotrx = 'Y'::bpchar AND i.isactive = 'Y'::bpchar AND (dt.doctypekey::text <> ALL (ARRAY['RTR'::character varying::text, 'RTI'::character varying::text, 'RCR'::character varying::text, 'RCI'::character varying::text])) AND dt.isfiscaldocument = 'Y'::bpchar AND (dt.isfiscal IS NULL OR dt.isfiscal = 'N'::bpchar OR dt.isfiscal = 'Y'::bpchar AND i.fiscalalreadyprinted = 'Y'::bpchar);
+
+ALTER TABLE reginfo_ventas_cbte_v OWNER TO libertya;
+
+--20150804 2230 Nueva vista utilizada en Exportación - Régimen de Información
+CREATE OR REPLACE VIEW reginfo_ventas_alicuotas_v AS 
+ SELECT i.ad_client_id, i.ad_org_id, i.c_invoice_id, date_trunc('day'::text, i.dateinvoiced) AS date, date_trunc('day'::text, i.dateinvoiced) AS fechadecomprobante, ei.codigo AS tipodecomprobante, i.puntodeventa, i.numerocomprobante AS nrocomprobante, currencyconvert(it.taxbaseamt, i.c_currency_id, 118, i.dateacct::timestamp with time zone, NULL::integer, i.ad_client_id, i.ad_org_id)::numeric(20,2) AS impnetogravado, t.wsfecode AS alicuotaiva, currencyconvert(it.taxamt, i.c_currency_id, 118, i.dateacct::timestamp with time zone, NULL::integer, i.ad_client_id, i.ad_org_id)::numeric(20,2) AS impuestoliquidado
+   FROM c_invoice i
+   JOIN c_doctype dt ON dt.c_doctype_id = i.c_doctype_id
+   LEFT JOIN e_electronicinvoiceref ei ON dt.doctypekey::text ~~* (ei.clave_busqueda::text || '%'::text) AND ei.tabla_ref::text = 'TCOM'::text
+   JOIN c_invoicetax it ON i.c_invoice_id = it.c_invoice_id
+   JOIN c_tax t ON t.c_tax_id = it.c_tax_id
+  WHERE t.ispercepcion = 'N'::bpchar AND (i.docstatus = ANY (ARRAY['CL'::bpchar, 'CO'::bpchar, 'VO'::bpchar, 'RE'::bpchar])) AND i.issotrx = 'Y'::bpchar AND i.isactive = 'Y'::bpchar AND (dt.doctypekey::text <> ALL (ARRAY['RTR'::character varying::text, 'RTI'::character varying::text, 'RCR'::character varying::text, 'RCI'::character varying::text])) AND dt.isfiscaldocument = 'Y'::bpchar AND (dt.isfiscal IS NULL OR dt.isfiscal = 'N'::bpchar OR dt.isfiscal = 'Y'::bpchar AND i.fiscalalreadyprinted = 'Y'::bpchar);
+
+ALTER TABLE reginfo_ventas_alicuotas_v OWNER TO libertya;

@@ -37,9 +37,13 @@ public class ExportProcessGeneral extends SvrProcess {
 		HashMap<String, Object> parameters = new HashMap<String, Object>();
 		List<String> parametersNames = new ArrayList<String>();
 		HashMap<String, Integer> parametersClass = new HashMap<String, Integer>();
-		parameters.put("AD_Org_ID", getAD_Org_ID());
-		parametersNames.add("AD_Org_ID");
-		parametersClass.put("AD_Org_ID", DisplayType.Integer);
+		
+		if ( (getAD_Org_ID() != null) && (getAD_Org_ID() > 0) ){
+			parameters.put("AD_Org_ID", getAD_Org_ID());
+			parametersNames.add("AD_Org_ID");
+			parametersClass.put("AD_Org_ID", DisplayType.Integer);	
+		}
+		
 		if (getDate() != null) {
 			parameters.put("Date", getDate());
 			parametersNames.add("Date");
