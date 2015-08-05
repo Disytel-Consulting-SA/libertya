@@ -2,8 +2,9 @@ package org.openXpertya.process;
 
 import java.io.BufferedWriter;
 import java.io.File;
-import java.io.FileWriter;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.io.Writer;
 import java.math.BigDecimal;
@@ -23,6 +24,7 @@ import org.openXpertya.model.MProcess;
 import org.openXpertya.model.MProcessPara;
 import org.openXpertya.model.M_Column;
 import org.openXpertya.model.M_Table;
+import org.openXpertya.model.X_AD_ExpFormat;
 import org.openXpertya.util.DB;
 import org.openXpertya.util.DisplayType;
 import org.openXpertya.util.Env;
@@ -32,9 +34,16 @@ import org.openXpertya.util.Util;
 public class ExportProcess extends SvrProcess {
 	
 	/** Separador de líneas */
-	private static final String ROW_SEPARATOR = "\n";
+	private static final String ROW_SEPARATOR_UNIX = "\n";
+	private static final String ROW_SEPARATOR_WINDOWS = "\r\n";
+	
+	/** Codificación */
+	private static final String ENCODE_UTF8 = "UTF-8";
+	private static final String ENCODE_8859_1 = "8859_1";
+
 	/** Extensión del archivo exportado */
-	private static final String FILE_EXTENSION = "csv";
+	private static final String FILE_EXTENSION_CSV = "csv";
+	private static final String FILE_EXTENSION_TXT = "txt";
 	
 	/** Formato de exportación */
 	private MExpFormat exportFormat;
@@ -141,9 +150,37 @@ public class ExportProcess extends SvrProcess {
 	 * @return extensión del archivo resultante (sin el .)
 	 */
 	protected String getFileExtension(){
-		return FILE_EXTENSION;
+		if (getExportFormat().getExtension() != null){
+			if (this.getExportFormat().getExtension().equals(X_AD_ExpFormat.EXTENSION_CSV)) return FILE_EXTENSION_CSV;
+			else
+				if (this.getExportFormat().getExtension().equals(X_AD_ExpFormat.EXTENSION_TXT)) return FILE_EXTENSION_TXT;
+		}
+		return FILE_EXTENSION_CSV;
 	}
 	
+	/**
+	 * @return separador de línea
+	 */
+	public String getRowSeparator() {
+		if (this.getExportFormat().getEndLineType() != null)
+			if (this.getExportFormat().getEndLineType().equals(X_AD_ExpFormat.ENDLINETYPE_Unix)) return ROW_SEPARATOR_UNIX;
+			else 
+				if (this.getExportFormat().getEndLineType().equals(X_AD_ExpFormat.ENDLINETYPE_Windows)) return ROW_SEPARATOR_WINDOWS;
+		return ROW_SEPARATOR_UNIX;
+	}
+	
+	/**
+	 * @return Codificación del archivo
+	 */
+	public String getEncodingType() {
+		if (this.getExportFormat().getEncodingType() != null){
+			if (this.getExportFormat().getEncodingType().equals(X_AD_ExpFormat.ENCODINGTYPE_8859_1)) return ENCODE_8859_1;
+			else
+				if (this.getExportFormat().getEndLineType().equals(X_AD_ExpFormat.ENCODINGTYPE_UTF_8)) return ENCODE_UTF8;
+		}
+		return ENCODE_UTF8;
+	}
+
 	/**
 	 * @return Path absoluto del archivo exportado
 	 */
@@ -168,8 +205,11 @@ public class ExportProcess extends SvrProcess {
 	 */
 	protected void createDocument() throws IOException {
 		setExportFile(new File(getFilePath()));
-	    FileWriter fw = new FileWriter(getExportFile());
-	    BufferedWriter bw = new BufferedWriter(fw);
+		
+	    FileOutputStream fos = new FileOutputStream(getFilePath());
+	    OutputStreamWriter osw = new OutputStreamWriter(fos, this.getEncodingType());
+	    BufferedWriter bw = new BufferedWriter(osw);
+	    
 	    setFileWriter(new PrintWriter(bw));	
 	}
 	
@@ -322,6 +362,9 @@ public class ExportProcess extends SvrProcess {
 						&& !expFormatRow.getDecimalPoint().equals(".")) {
 					data = data.replace(".", expFormatRow.getDecimalPoint());
 				}
+				if (expFormatRow.isNoDecimalPoint()) {
+					data = data.replace(".", "");
+				}
 			}
 			else if(MExpFormatRow.DATATYPE_String.equals(expFormatRow.getDataType())){
 				data = (String)value;
@@ -391,7 +434,7 @@ public class ExportProcess extends SvrProcess {
 	}
 	
 	protected void writeRowSeparator() throws IOException{
-		getFileWriter().write(ROW_SEPARATOR);
+		getFileWriter().write(getRowSeparator());
 	}
 	
 	

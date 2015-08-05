@@ -7,7 +7,7 @@ import java.math.*;
 import org.openXpertya.util.*;
 /** Modelo Generado por AD_ExpFormat_Row
  *  @author Comunidad de Desarrollo Libertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
- *  @version  - 2013-10-21 18:23:38.961 */
+ *  @version  - 2015-08-01 21:46:28.959 */
 public class X_AD_ExpFormat_Row extends org.openXpertya.model.PO
 {
 /** Constructor estándar */
@@ -21,6 +21,7 @@ setAD_ExpFormat_Row_ID (0);
 setDataType (null);
 setIsOrderField (false);
 setName (null);
+setNoDecimalPoint (false);	// N
 setSeqNo (0);	// @SQL=SELECT NVL(MAX(SeqNo),0)+10 AS DefaultValue FROM AD_ExpFormat_Row WHERE AD_ExpFormat_ID=@AD_ExpFormat_ID@
 }
  */
@@ -313,6 +314,22 @@ set_Value ("Negative_Position", Negative_Position);
 public String getNegative_Position() 
 {
 return (String)get_Value("Negative_Position");
+}
+/** Set No Decimal Point */
+public void setNoDecimalPoint (boolean NoDecimalPoint)
+{
+set_Value ("NoDecimalPoint", new Boolean(NoDecimalPoint));
+}
+/** Get No Decimal Point */
+public boolean isNoDecimalPoint() 
+{
+Object oo = get_Value("NoDecimalPoint");
+if (oo != null) 
+{
+ if (oo instanceof Boolean) return ((Boolean)oo).booleanValue();
+ return "Y".equals(oo);
+}
+return false;
 }
 public static final int ORDERDIRECTION_AD_Reference_ID = MReference.getReferenceID("Order of a List");
 /** Ascending = A */
