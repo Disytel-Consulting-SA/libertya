@@ -356,8 +356,7 @@ public class CurrentAccountReport extends SvrProcess {
 		sqlBalance
 				.append(" SELECT COALESCE(SUM(t.Credit),0.0) AS Credit, COALESCE(SUM(t.Debit),0.0) AS Debit ");
 		sqlBalance.append(" FROM ( ");
-		sqlBalance.append(getCurrentAccountQuery().getAllDocumentsQuery())
-				.append(" AND d.DateAcct::date < ?::date ");
+		sqlBalance.append(getCurrentAccountQuery().getAllDocumentsQuery(" AND d.DateTrx::date < ?::date "));
 		sqlBalance.append(" ) t");
 
 		PreparedStatement pstmt = null;
