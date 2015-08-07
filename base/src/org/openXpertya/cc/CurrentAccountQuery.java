@@ -4,6 +4,7 @@ import java.sql.Timestamp;
 import java.util.Properties;
 
 import org.openXpertya.util.Env;
+import org.openXpertya.util.Util;
 
 /**
  * Clase generadora de consulta de cuenta corriente. Se centraliza para tener
@@ -78,10 +79,21 @@ public class CurrentAccountQuery {
 	 *         fechas
 	 */
 	public String getAllDocumentsQuery() {
+		return getAllDocumentsQuery(null);
+	}
+	
+	/**
+	 * @param whereClause cláusula where adicional
+	 * @return Query de cuenta corriente de todos los documentos, sin filtros de
+	 *         fechas
+	 */
+	public String getAllDocumentsQuery(String whereClause) {
+		whereClause = Util.isEmpty(whereClause, true) ? "" : whereClause;
+		whereClause = "WHERE (1 = 1) " + whereClause;
 		StringBuffer sqlDoc = new StringBuffer();
+		sqlDoc.append(" select * ");
+		sqlDoc.append(" from ( ");
 		if (detailReceiptsPayments) {
-			sqlDoc.append(" select * ");
-			sqlDoc.append(" from ( ");
 			sqlDoc.append(" SELECT distinct ");
 			sqlDoc.append(" 	d.Dateacct::date as DateTrx, ");
 			sqlDoc.append(" 	d.Created as createdghost, ");
@@ -137,10 +149,7 @@ public class CurrentAccountQuery {
 			}
 			sqlAppend("   AND d.AD_Org_ID = ? ", orgID, sqlDoc);
 			sqlAppend("   AND d.C_DocType_ID = ? ", docTypeID, sqlDoc);
-			sqlDoc.append(" ) as d ");
 		} else {
-			sqlDoc.append(" select * ");
-			sqlDoc.append(" from ( ");
 			sqlDoc.append("     SELECT distinct ");
 			sqlDoc.append("     	(CASE WHEN ((SELECT al.C_AllocationHdr_ID FROM C_AllocationLine al WHERE ( ((d.documenttable = 'C_Payment') AND (al.C_Payment_ID = d.document_id)) OR ((d.documenttable = 'C_Invoice') AND (al.C_Invoice_Credit_ID = d.document_id)) OR ((d.documenttable = 'C_CashLine') AND (al.C_CashLine_ID = d.document_id)) ) LIMIT 1) IS NOT NULL) THEN (SELECT ah.dateacct::date FROM C_AllocationLine al INNER JOIN C_AllocationHdr as ah on ah.c_allocationhdr_id = al.c_allocationhdr_id WHERE ( ((d.documenttable = 'C_Payment') AND (al.C_Payment_ID = d.document_id))	OR ((d.documenttable = 'C_Invoice') AND (al.C_Invoice_Credit_ID = d.document_id)) OR ((d.documenttable = 'C_CashLine') AND (al.C_CashLine_ID = d.document_id)) ) LIMIT 1) ELSE d.Dateacct END)::date as DateTrx, ");
 			sqlDoc.append("     	d.Created as createdghost, ");
@@ -198,8 +207,9 @@ public class CurrentAccountQuery {
 			}
 			sqlAppend("   AND d.AD_Org_ID = ? ", orgID, sqlDoc);
 			sqlAppend("   AND d.C_DocType_ID = ? ", docTypeID, sqlDoc);
-			sqlDoc.append(" ) as d ");
 		}
+		sqlDoc.append(" ) as d ");
+		sqlDoc.append(whereClause);
 		return sqlDoc.toString();
 	}
 
@@ -207,12 +217,12 @@ public class CurrentAccountQuery {
 	 * @return Query de cuenta corriente con todos los filtros
 	 */
 	public String getQuery() {
-		String sqlDoc = getAllDocumentsQuery();
+		String whereClause = getSqlAppend("   AND ?::date <= d.DateTrx::date ", getDateFrom()) 
+							+ getSqlAppend("   AND d.DateTrx::date <= ?::date ", getDateTo());
+		String sqlDoc = getAllDocumentsQuery(whereClause);
 		StringBuffer sql = new StringBuffer();
 
 		sql.append(sqlDoc); // Consulta de todos los comprobantes
-		sqlAppend("   AND ?::date <= d.DateTrx::date ", getDateFrom(), sql);
-		sqlAppend("   AND d.DateTrx::date <= ?::date ", getDateTo(), sql);
 		sql.append(" ORDER BY d.DateTrx::date, d.Created");
 
 		if (!detailReceiptsPayments) {
@@ -234,12 +244,12 @@ public class CurrentAccountQuery {
 	 * @return Query con el saldo acumulado a la fecha desde
 	 */
 	public String getAcumBalanceQuery() {
-		String sqlDoc = getAllDocumentsQuery();
+		String sqlDoc = getAllDocumentsQuery(" AND d.DateTrx::date < ?::date ");
 		StringBuffer sqlBalance = new StringBuffer();
 		sqlBalance
 				.append(" SELECT COALESCE(SUM(t.Credit),0.0) AS Credit, COALESCE(SUM(t.Debit),0.0) AS Debit ");
 		sqlBalance.append(" FROM ( ");
-		sqlBalance.append(sqlDoc).append(" AND d.DateTrx < ? ");
+		sqlBalance.append(sqlDoc);
 		sqlBalance.append(" ) t");
 		return sqlBalance.toString();
 	}
@@ -260,6 +270,13 @@ public class CurrentAccountQuery {
 	private void sqlAppend(String clause, Object value, StringBuffer sql) {
 		if (value != null)
 			sql.append(clause);
+	}
+	
+	private String getSqlAppend(String clause, Object value) {
+		String append = "";
+		if (value != null)
+			append = clause;
+		return append;
 	}
 
 	public Integer getOrgID() {
