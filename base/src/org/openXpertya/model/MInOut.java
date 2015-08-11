@@ -425,6 +425,11 @@ public class MInOut extends X_M_InOut implements DocAction {
     }    // MInOut
     
     public static String getNotAllowedQtyReturnedSumQuery(){
+    	return getNotAllowedQtyReturnedSumQuery("l");
+    }
+    
+    
+    public static String getNotAllowedQtyReturnedSumQuery(String tableAlias){
     	return "select sum(movementqty - (CASE WHEN qtyinvoiced > movementqty THEN movementqty ELSE qtyinvoiced END)) as qty " +
     			"from (select iol.m_inoutline_id, iol.movementqty, sum(coalesce(il.qtyinvoiced,0)) as qtyinvoiced " +
     			"from c_orderline as ol " +
@@ -433,7 +438,7 @@ public class MInOut extends X_M_InOut implements DocAction {
     			"inner join c_doctype as dt on dt.c_doctype_id = io.c_doctype_id " +
     			"left join c_invoiceline as il on il.m_inoutline_id = iol.m_inoutline_id " +
     			"left join c_invoice as i on i.c_invoice_id = il.c_invoice_id " +
-    			"where ol.c_orderline_id = l.c_orderline_id AND dt.doctypekey = 'DC' and io.docstatus IN ('CL','CO') " +
+    			"where ol.c_orderline_id = "+tableAlias+".c_orderline_id AND dt.doctypekey = 'DC' and io.docstatus IN ('CL','CO') " +
     			"group by iol.m_inoutline_id, iol.movementqty "+
     			") as i";
     }
@@ -3296,15 +3301,15 @@ public class MInOut extends X_M_InOut implements DocAction {
 				.append(" AND ");
 		if(addExists){
 				filter.append("(EXISTS ")
-				.append("(SELECT ol.C_Order_ID ")
-				.append("FROM C_OrderLine ol ")
-				.append("WHERE C_Order.C_Order_ID = ol.C_Order_ID AND ")
-				.append(afterInvoicing ? " ol.QtyInvoiced > "
-						: " ol.QtyOrdered > ")
-				.append(" ol.QtyDelivered+ol.QtyTransferred")
+				.append("(SELECT col.C_Order_ID ")
+				.append("FROM C_OrderLine col ")
+				.append("WHERE C_Order.C_Order_ID = col.C_Order_ID AND ")
+				.append(afterInvoicing ? " col.QtyInvoiced > "
+						: " col.QtyOrdered > ")
+				.append(" col.QtyDelivered+col.QtyTransferred")
 					.append(docType.isAllowDeliveryReturned() ? ""
 							: "+coalesce(("
-									+ MInOut.getNotAllowedQtyReturnedSumQuery()
+									+ MInOut.getNotAllowedQtyReturnedSumQuery("col")
 									+ "),0)")
 				.append(") ")
 				.append("OR ")
