@@ -33,7 +33,7 @@ import org.openXpertya.grid.ed.VDate;
 import org.openXpertya.grid.ed.VLookup;
 import org.openXpertya.grid.ed.VNumber;
 import org.openXpertya.minigrid.IDColumn;
-import org.openXpertya.model.MAllocationLine;
+import org.openXpertya.model.MInvoice;
 import org.openXpertya.model.MLookupFactory;
 import org.openXpertya.model.MQuery;
 import org.openXpertya.util.DisplayType;
@@ -41,7 +41,6 @@ import org.openXpertya.util.Env;
 import org.openXpertya.util.KeyNamePair;
 import org.openXpertya.util.Msg;
 import org.openXpertya.util.Util;
-import org.openXpertya.model.CalloutPayment;
 /**
  * Descripción de Clase
  *
@@ -210,6 +209,7 @@ public class InfoInvoice extends Info {
         new Info_Column( " ","i.C_Invoice_ID",IDColumn.class ),
         new Info_Column( Msg.translate( Env.getCtx(),"C_BPartner_ID" ),"(SELECT Name FROM C_BPartner bp WHERE bp.C_BPartner_ID=i.C_BPartner_ID)",String.class ),
         new Info_Column( Msg.translate( Env.getCtx(),"DateInvoiced" ),"i.DateInvoiced",Timestamp.class ),
+        new Info_Column( Msg.translate( Env.getCtx(),"C_DocType_ID" ),"(SELECT name FROM c_doctype d WHERE d.c_doctype_id = i.c_doctypetarget_id)",String.class ),
         new Info_Column( Msg.translate( Env.getCtx(),"DocumentNo" ),"i.DocumentNo",String.class ),
         new Info_Column( Msg.translate( Env.getCtx(),"C_Currency_ID" ),"(SELECT ISO_Code FROM C_Currency c WHERE c.C_Currency_ID=i.C_Currency_ID)",String.class ),
         new Info_Column( Msg.translate( Env.getCtx(),"GrandTotal" ),"i.GrandTotal",BigDecimal.class ),
@@ -217,6 +217,14 @@ public class InfoInvoice extends Info {
         new Info_Column( Msg.translate( Env.getCtx(),"OpenAmt" ),"invoiceOpen(C_Invoice_ID,C_InvoicePaySchedule_ID)",BigDecimal.class),
         new Info_Column( Msg.translate( Env.getCtx(),"IsPaid" ),"i.IsPaid",Boolean.class ),
         new Info_Column( Msg.translate( Env.getCtx(),"IsSOTrx" ),"i.IsSOTrx",Boolean.class ),
+			new Info_Column(
+					Msg.translate(Env.getCtx(), "DocStatus"),
+					"(SELECT "+(Env.isBaseLanguage(Env.getCtx(), "C_Invoice") ? "rl.name":"rlt.name")+" FROM ad_ref_list rl " +
+					"INNER JOIN ad_ref_list_trl rlt ON rl.ad_ref_list_id = rlt.ad_ref_list_id " +
+					"WHERE rl.ad_reference_id = " + MInvoice.DOCSTATUS_AD_Reference_ID + 
+						" AND rl.value = i.docstatus " + 
+					(Env.isBaseLanguage(Env.getCtx(), "C_Invoice") ? "": " AND ad_language = '"+ Env.getAD_Language(Env.getCtx())+ "'") + 
+					" limit 1)", String.class),
         new Info_Column( Msg.translate( Env.getCtx(),"Description" ),"i.Description",String.class ),
         new Info_Column( Msg.translate( Env.getCtx(),"POReference" ),"i.POReference",String.class ),
        //Modificado
