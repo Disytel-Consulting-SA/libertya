@@ -15,6 +15,8 @@ import org.openXpertya.model.MOrderLine;
 import org.openXpertya.util.CLogger;
 import org.openXpertya.util.DB;
 import org.openXpertya.util.Env;
+import org.openXpertya.util.Msg;
+import org.openXpertya.util.Util;
 
 
 public class CreateFromInvoiceModel extends CreateFromModel {
@@ -110,7 +112,10 @@ public class CreateFromInvoiceModel extends CreateFromModel {
 			}
 			invoice.setIsExchange(p_order.isExchange());
             if (!invoice.save()) {
-            	throw new CreateFromSaveException(CLogger.retrieveErrorAsString());
+            	String msg = CLogger.retrieveErrorAsString();
+				msg = Util.isEmpty(msg, true) ? Msg.parseTranslation(Env.getCtx(),
+						"@InvoiceSaveError@. @SeeTheLog@.") : msg;
+            	throw new CreateFromSaveException(msg);
             }
         }
         // Asocia el remito con la factura si es que se está creando a partir
