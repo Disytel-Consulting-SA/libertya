@@ -273,6 +273,8 @@ public class MPaymentTerm extends X_C_PaymentTerm {
         }
 
         if( !isValid()) {
+			log.log(Level.SEVERE, Msg.getMsg(getCtx(), "InvalidPaymentTerm")
+					+ " : " + getName());
             return applyNoSchedule( invoice );
         }
 
