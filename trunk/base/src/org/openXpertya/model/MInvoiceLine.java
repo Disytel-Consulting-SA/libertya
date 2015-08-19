@@ -558,7 +558,7 @@ public class MInvoiceLine extends X_C_InvoiceLine {
 
         //
 
-        m_priceSet = true;
+        setM_priceSet(true);
     }    // setPrice
 
     /**
@@ -905,7 +905,7 @@ public class MInvoiceLine extends X_C_InvoiceLine {
             }
         } else    // Set Product Price
         {
-            if( !m_priceSet && (Env.ZERO.compareTo( getPriceActual()) == 0) && (Env.ZERO.compareTo( getPriceList()) == 0) ) {
+            if( !isM_priceSet() && (Env.ZERO.compareTo( getPriceActual()) == 0) && (Env.ZERO.compareTo( getPriceList()) == 0) ) {
                 setPrice();
             }
         }
@@ -1927,6 +1927,14 @@ public class MInvoiceLine extends X_C_InvoiceLine {
 			getInvoice().setNetAmount(grandTotal.subtract(taxamt));
 			DB.executeUpdate(queryUpdate, get_TrxName());
     	  }
+	}
+
+	public boolean isM_priceSet() {
+		return m_priceSet;
+	}
+
+	public void setM_priceSet(boolean m_priceSet) {
+		this.m_priceSet = m_priceSet;
 	}
     
 }    // MInvoiceLine
