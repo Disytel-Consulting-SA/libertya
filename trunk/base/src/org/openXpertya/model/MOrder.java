@@ -3323,14 +3323,17 @@ public class MOrder extends X_C_Order implements DocAction {
             
             // La cantidad pedida no puede ser menor a la cantidad entregada + la
     		// cantidad transferida
-			if (sLine.getQtyOrdered().compareTo(
-					sLine.getQtyDelivered().add(sLine.getQtyTransferred())) < 0) {
+			BigDecimal qtyDeliveredTransferred = sLine.getQtyDelivered().add(
+					sLine.getQtyTransferred());
+			if (!Util.isEmpty(qtyDeliveredTransferred, true)
+					&& sLine.getQtyOrdered().compareTo(qtyDeliveredTransferred) < 0) {
 				m_processMsg = "@LinesWithQtyOrderedMinorToQtyDelivered@";
             	return DocAction.STATUS_InProgress;
         	}
 			
 			// La cantidad pedida no puede ser menor a la cantidad facturada
-			if (sLine.getQtyOrdered().compareTo(sLine.getQtyInvoiced()) < 0) {
+			if (!Util.isEmpty(sLine.getQtyInvoiced(), true)
+					&& sLine.getQtyOrdered().compareTo(sLine.getQtyInvoiced()) < 0) {
 				m_processMsg = "@LinesWithQtyOrderedMinorToQtyInvoiced@";
             	return DocAction.STATUS_InProgress;
         	}
