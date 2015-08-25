@@ -3578,4 +3578,21 @@ public class VOrdenPagoModel {
 		return true;
 	}
 	
+	public boolean getPartialPayment() {
+		if ((m_esPagoNormal) && (BPartner != null && !BPartner.isAllowPartialPayment())){
+			if (m_facturas != null) {
+				for (ResultItem x : m_facturas) {
+					ResultItemFactura rif = (ResultItemFactura) x;
+					if (rif.getManualAmtClientCurrency().compareTo(
+							BigDecimal.ZERO) == 1) {
+						if (rif.getManualAmtClientCurrency().compareTo(
+								rif.getToPayAmt(true)) == -1)
+							return true;
+					}
+				}
+			}
+		}
+		return false;
+	}
+	
 }

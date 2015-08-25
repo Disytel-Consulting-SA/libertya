@@ -1810,6 +1810,11 @@ public class VOrdenPago extends CPanel implements FormPanel,ActionListener,Table
     	
     	if (idx == 0) {
 
+			// Aviso si la OP tiene pagos parciales
+			if ((m_model.getPartialPayment()) && (!ADialog.ask(m_WindowNo, this,
+					Msg.getMsg(Env.getCtx(), "PartialPayment"))))
+				return;
+    		
     		clearMediosPago();
     		// Procesar
     		
