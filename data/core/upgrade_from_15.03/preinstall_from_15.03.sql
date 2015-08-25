@@ -2512,3 +2512,123 @@ $BODY$
   COST 100
   ROWS 1000;
 ALTER FUNCTION c_posjournal_c_payment_v_filtered(anyarray) OWNER TO libertya;
+
+-- 20150823-1645 Nueva columna para indicar el tipo de exportación al exterior (Facturación Electrónica).
+UPDATE ad_system SET dummy = (SELECT addcolumnifnotexists('AD_OrgInfo', 'exporttypefe', 'character(1)'));
+UPDATE AD_OrgInfo SET exporttypefe = '4';
+
+-- 20150823-1645 Nueva columna para indicar el tipo de exportación al exterior (Facturación Electrónica).
+UPDATE ad_system SET dummy = (SELECT addcolumnifnotexists('AD_ClientInfo', 'exporttypefe', 'character(1)'));
+UPDATE AD_ClientInfo SET exporttypefe = '4';
+
+-- 20150823-1645 Nueva columna para indicar si se tiene permiso de embarque para exportación al exterior (Facturación Electrónica).
+UPDATE ad_system SET dummy = (SELECT addcolumnifnotexists('AD_OrgInfo','shipmentpermitfe', 'character(1) NOT NULL DEFAULT ''N''::bpchar'));
+
+-- 20150823-1645 Nueva columna para indicar si se tiene permiso de embarque para exportación al exterior (Facturación Electrónica).
+UPDATE ad_system SET dummy = (SELECT addcolumnifnotexists('AD_ClientInfo','shipmentpermitfe', 'character(1) NOT NULL DEFAULT ''N''::bpchar'));
+
+-- 20150823-1715 Nueva columna para indicar el código de país que asigna la AFIP (Facturación Electrónica).
+UPDATE ad_system SET dummy = (SELECT addcolumnifnotexists('c_country','countrycodefe', 'character varying(10)'));
+-- 401	ALBANIA
+UPDATE c_country SET countrycodefe = '401' WHERE c_country_id = 111;
+-- 200	ARGENTINA
+UPDATE c_country SET countrycodefe = '200' WHERE c_country_id = 119;
+-- 202	BOLIVIA
+UPDATE c_country SET countrycodefe = '202' WHERE c_country_id = 135;
+-- 203	BRASIL
+UPDATE c_country SET countrycodefe = '203' WHERE c_country_id = 139;
+-- 204	CANADA
+UPDATE c_country SET countrycodefe = '204' WHERE c_country_id = 109;	
+-- 205	COLOMBIA
+UPDATE c_country SET countrycodefe = '205' WHERE c_country_id = 156;	
+-- 206	COSTA RICA
+UPDATE c_country SET countrycodefe = '206' WHERE c_country_id = 161;
+-- 207	CUBA
+UPDATE c_country SET countrycodefe = '207' WHERE c_country_id = 164;
+-- 208	CHILE
+UPDATE c_country SET countrycodefe = '208' WHERE c_country_id = 152;
+-- 210	ECUADOR
+UPDATE c_country SET countrycodefe = '210' WHERE c_country_id = 171;	
+-- 211	EL SALVADOR
+UPDATE c_country SET countrycodefe = '211' WHERE c_country_id = 173;		
+-- 212	ESTADOS UNIDOS
+UPDATE c_country SET countrycodefe = '212' WHERE c_country_id = 100;
+-- 213	GUATEMALA
+UPDATE c_country SET countrycodefe = '213' WHERE c_country_id = 197;
+-- 214	GUYANA
+UPDATE c_country SET countrycodefe = '214' WHERE c_country_id = 200;	
+-- 215	HAITI
+UPDATE c_country SET countrycodefe = '215' WHERE c_country_id = 201;
+-- 216	HONDURAS
+UPDATE c_country SET countrycodefe = '216' WHERE c_country_id = 204;
+-- 217	JAMAICA
+UPDATE c_country SET countrycodefe = '217' WHERE c_country_id = 215;
+-- 218	MEXICO
+UPDATE c_country SET countrycodefe = '218' WHERE c_country_id = 247;
+-- 219	NICARAGUA
+UPDATE c_country SET countrycodefe = '219' WHERE c_country_id = 265;
+-- 220	PANAMA
+UPDATE c_country SET countrycodefe = '220' WHERE c_country_id = 274;
+-- 221	PARAGUAY
+UPDATE c_country SET countrycodefe = '221' WHERE c_country_id = 276;
+-- 222	PERU
+UPDATE c_country SET countrycodefe = '222' WHERE c_country_id = 277;
+-- 223	PUERTO RICO
+UPDATE c_country SET countrycodefe = '223' WHERE c_country_id = 282;
+-- 224	TRINIDAD Y TOBAGO
+UPDATE c_country SET countrycodefe = '224' WHERE c_country_id = 324;
+-- 225	URUGUAY
+UPDATE c_country SET countrycodefe = '225' WHERE c_country_id = 336;
+-- 226	VENEZUELA
+UPDATE c_country SET countrycodefe = '226' WHERE c_country_id = 339;
+-- 310	CHINA
+UPDATE c_country SET countrycodefe = '310' WHERE c_country_id = 153;
+-- 313	TAIWAN
+UPDATE c_country SET countrycodefe = '313' WHERE c_country_id = 316;
+-- 315	INDIA
+UPDATE c_country SET countrycodefe = '315' WHERE c_country_id = 208;
+-- 320	JAPON
+UPDATE c_country SET countrycodefe = '320' WHERE c_country_id = 216;
+-- 406	BELGICA
+UPDATE c_country SET countrycodefe = '406' WHERE c_country_id = 103;
+-- 407	BULGARIA
+UPDATE c_country SET countrycodefe = '407' WHERE c_country_id = 142;
+-- 410	ESPAÑA
+UPDATE c_country SET countrycodefe = '410' WHERE c_country_id = 106;
+-- 412	FRANCIA
+UPDATE c_country SET countrycodefe = '412' WHERE c_country_id = 102;
+-- 413	GRECIA
+UPDATE c_country SET countrycodefe = '413' WHERE c_country_id = 192;
+-- 415	IRLANDA
+UPDATE c_country SET countrycodefe = '415' WHERE c_country_id = 212;
+-- 417	ITALIA
+UPDATE c_country SET countrycodefe = '417' WHERE c_country_id = 214;
+-- 424	POLONIA
+UPDATE c_country SET countrycodefe = '424' WHERE c_country_id = 280;
+-- 425	PORTUGAL
+UPDATE c_country SET countrycodefe = '425' WHERE c_country_id = 281;
+-- 429	SUECIA
+UPDATE c_country SET countrycodefe = '429' WHERE c_country_id = 313;
+-- 436	TURQUIA
+UPDATE c_country SET countrycodefe = '436' WHERE c_country_id = 326;
+-- 444	RUSIA
+UPDATE c_country SET countrycodefe = '444' WHERE c_country_id = 286;
+-- 445	UCRANIA
+UPDATE c_country SET countrycodefe = '445' WHERE c_country_id = 331;
+
+-- 20150823-1735 Nueva columna para indicar el código de unidad de medida que asigna la AFIP (Facturación Electrónica).
+UPDATE ad_system SET dummy = (SELECT addcolumnifnotexists('C_UOM','uomcodefe', 'character varying(10)'));
+-- 1	kg
+UPDATE C_UOM SET uomcodefe = '1' WHERE name = 'kg';
+-- 5	LT
+UPDATE C_UOM SET uomcodefe = '5' WHERE name = 'LT';
+-- 7	Unidad
+UPDATE C_UOM SET uomcodefe = '7' WHERE name = 'Unidad';
+-- 2	Metro
+UPDATE C_UOM SET uomcodefe = '2' WHERE name = 'Metro';
+-- 20	Centimetro
+UPDATE C_UOM SET uomcodefe = '20' WHERE name = 'Centimetro';
+-- 14	Gramo
+UPDATE C_UOM SET uomcodefe = '14' WHERE name = 'Gramo';
+-- 3	Metro Cuadrado
+UPDATE C_UOM SET uomcodefe = '3' WHERE name = 'Metro Cuadrado';
