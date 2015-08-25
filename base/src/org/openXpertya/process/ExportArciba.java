@@ -1,8 +1,12 @@
 package org.openXpertya.process;
 
+import java.io.BufferedWriter;
 import java.io.File;
-import java.io.FileWriter;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.OutputStreamWriter;
+import java.io.PrintWriter;
+import java.io.Writer;
 import java.math.BigDecimal;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -22,6 +26,13 @@ public class ExportArciba extends SvrProcess {
 	private Timestamp date_from;
     private Timestamp date_to;
     private int ad_org_id;
+    
+    /** Archivo a exportar */
+	private File exportFile;
+	/** Buffer de escritura del archivo */
+	private Writer fileWriter;
+	
+    private static final String ENCODE_UTF8 = "UTF-8";
     
 	@Override
 	protected void prepare() {
@@ -56,109 +67,125 @@ public class ExportArciba extends SvrProcess {
 		
 		createInvoiceTxt();
 		createCreditNoteTxt();
-		String result = createCreditNoteNotImputedTxt();
+		createCreditNoteNotImputedTxt();
 
- 		return result;
+ 		return "Exportación Finalizada";
 	}
 	
-	private String createInvoiceTxt() throws Exception {
-		String result ="";
-		String filename = directorio+"ARCIBA_FACTURA_DEBITO" + getDate() + ".txt";
+	private void createInvoiceTxt() {
+		String fullFileName = directorio+"ARCIBA_FACTURA_DEBITO" + getDate() + ".txt";
 		String sql = null;
-	    FileWriter fw=null;
 	    PreparedStatement pstmt = null;
 	    ResultSet rs = null;
-		try	{		
-			fw = new FileWriter(filename);
+
+		try	{
+			this.createDocument(fullFileName);
 			sql = getSqlArcibaInvoice();		        	         	 		
 			pstmt = DB.prepareStatement(sql);	
 			rs = pstmt.executeQuery();
-			putRsInFileInvoice(fw,rs);
-			fw.close();
-			rs.close();
-			pstmt.close();
-			pstmt = null;
+			putRsInFileInvoice(rs);
+			this.saveDocument();
 		}
 		catch (Exception e){ 
 			log.saveError("Exportacion ARCIBA - Prepare", e);
 			e.printStackTrace();
-			try {
-			if(fw != null)fw.close();
-			if(pstmt != null)pstmt.close();
-			if(rs != null)rs.close();					
-		} catch (IOException e1) {
-			result = "Error al generar el archivo - ARCIBA_FACTURA_DEBITO - de exportación ARCIBA .";
-			e1.printStackTrace();
-		}
 		}	
-		return result;
+		finally{
+			try{
+				if(pstmt != null){
+					pstmt.close();
+				}
+				if(rs != null){
+					rs.close();
+				}
+			} catch(Exception e2){
+				log.saveError("Exportacion ARCIBA - Prepare", e2);
+				e2.printStackTrace();
+			}
+		}
 	}
 	
-	private String createCreditNoteTxt() throws Exception {
-		String result ="";
-		String filename = directorio+"ARCIBA_NOTA_DE_CREDITO" + getDate() + ".txt";
+	/**
+	 * Creación del documento de exportación
+	 * 
+	 * @throws Exception
+	 *             en caso de error en la creación del archivo
+	 */
+	protected void createDocument(String fullFileName) throws IOException {
+		setExportFile(new File(fullFileName));
+		
+	    FileOutputStream fos = new FileOutputStream(fullFileName);
+	    OutputStreamWriter osw = new OutputStreamWriter(fos, ENCODE_UTF8);
+	    BufferedWriter bw = new BufferedWriter(osw);
+	    
+	    setFileWriter(new PrintWriter(bw));	
+	}
+	
+	private void createCreditNoteTxt() {
+		String fullFileName = directorio+"ARCIBA_NOTA_DE_CREDITO" + getDate() + ".txt";
 		String sql = null;
-	    FileWriter fw=null;
 	    PreparedStatement pstmt = null;
 	    ResultSet rs = null;
-		try	{		
-			fw = new FileWriter(filename);
+	    
+		try	{
+			this.createDocument(fullFileName);
 			sql = getSqlArcibaCreditNote(true);		        	         	 		
 			pstmt = DB.prepareStatement(sql);	
 			rs = pstmt.executeQuery();
-			putRsInFileCreditNote(fw, rs);
-			fw.close();
-			rs.close();
+			putRsInFileCreditNote(rs);
+			this.saveDocument();
 			pstmt.close();
-			pstmt = null;
 		}
 		catch (Exception e){ 
 			log.saveError("Exportacion ARCIBA - Prepare", e);
 			e.printStackTrace();
-			try {
-			if(fw != null)fw.close();
-			if(pstmt != null)pstmt.close();
-			if(rs != null)rs.close();					
-		} catch (IOException e1) {
-			result = "Error al generar el archivo - ARCIBA_NOTA_DE_CREDITO - de exportación ARCIBA .";
-			e1.printStackTrace();
-		}
 		}	
-		return result;
+		finally{
+			try{
+				if(pstmt != null){
+					pstmt.close();
+				}
+				if(rs != null){
+					rs.close();
+				}
+			} catch(Exception e2){
+				log.saveError("Exportacion ARCIBA - Prepare", e2);
+				e2.printStackTrace();
+			}
+		}
 	}
 	
-	private String createCreditNoteNotImputedTxt() throws Exception {
-		String result ="";
-		String filename = directorio+"ARCIBA_NC_NO_IMPUTADAS" + getDate() + ".txt";
+	private void createCreditNoteNotImputedTxt() {
+		String fullFileName = directorio+"ARCIBA_NC_NO_IMPUTADAS" + getDate() + ".txt";
 		String sql = null;
-	    FileWriter fw=null;
 	    PreparedStatement pstmt = null;
 	    ResultSet rs = null;
+	    
 		try	{		
-			fw = new FileWriter(filename);
+		    this.createDocument(fullFileName);
 			sql = getSqlArcibaCreditNote(false);		        	         	 		
 			pstmt = DB.prepareStatement(sql);	
 			rs = pstmt.executeQuery();
-			putRsInFileCreditNote(fw, rs);
-			fw.close();
-			result = "Exportación Finalizada";
-			rs.close();
-			pstmt.close();
-			pstmt = null;
+			putRsInFileCreditNote(rs);
+			this.saveDocument();
 		}
 		catch (Exception e){ 
 			log.saveError("Exportacion ARCIBA - Prepare", e);
 			e.printStackTrace();
-			try {
-			if(fw != null)fw.close();
-			if(pstmt != null)pstmt.close();
-			if(rs != null)rs.close();					
-		} catch (IOException e1) {
-			result = "Error al generar el archivo - ARCIBA_NOTA_DE_CREDITO - de exportación ARCIBA .";
-			e1.printStackTrace();
-		}
 		}	
-		return result;
+		finally{
+			try{
+				if(pstmt != null){
+					pstmt.close();
+				}
+				if(rs != null){
+					rs.close();
+				}
+			} catch(Exception e2){
+				log.saveError("Exportacion ARCIBA - Prepare", e2);
+				e2.printStackTrace();
+			}
+		}
 	}
  		
 	private String getSqlArcibaInvoice() {
@@ -308,7 +335,7 @@ public class ExportArciba extends SvrProcess {
 		return sqlReal.toString();
 	}
 	
-	private int putRsInFileInvoice(FileWriter fw , ResultSet rs) throws IOException, SQLException{
+	private int putRsInFileInvoice(ResultSet rs) throws IOException, SQLException{
 		String lineSeparator = System.getProperty("line.separator");
 		
 		int cant=0;
@@ -371,7 +398,7 @@ public class ExportArciba extends SvrProcess {
 			s.append(rs.getString(21));
 			
 			s.append(lineSeparator);		
-			fw.write(s.toString());
+			this.getFileWriter().write(s.toString());
 			s=null;
 			cant++;
 		}
@@ -379,7 +406,7 @@ public class ExportArciba extends SvrProcess {
 		return cant;
 	}
 	
-	private int putRsInFileCreditNote(FileWriter fw , ResultSet rs) throws IOException, SQLException{
+	private int putRsInFileCreditNote(ResultSet rs) throws IOException, SQLException{
 		String lineSeparator = System.getProperty("line.separator");
 		
 		int cant=0;
@@ -392,7 +419,7 @@ public class ExportArciba extends SvrProcess {
 				s.append(rs.getString(i));	
 			}
 			s.append(lineSeparator);		
-			fw.write(s.toString());
+			this.getFileWriter().write(s.toString());
 			s=null;
 			cant++;
 		}
@@ -407,6 +434,39 @@ public class ExportArciba extends SvrProcess {
         DateFormat dateFormat = new SimpleDateFormat("ddMMyyyy");
         Date date = new Date();
         return dateFormat.format(date);
-    }       
+    }
+
+	/**
+	 * @return the exportFile
+	 */
+	public File getExportFile() {
+		return exportFile;
+	}
+
+	/**
+	 * @param exportFile the exportFile to set
+	 */
+	public void setExportFile(File exportFile) {
+		this.exportFile = exportFile;
+	}
+
+	/**
+	 * @return the fileWriter
+	 */
+	public Writer getFileWriter() {
+		return fileWriter;
+	}
+
+	/**
+	 * @param fileWriter the fileWriter to set
+	 */
+	public void setFileWriter(Writer fileWriter) {
+		this.fileWriter = fileWriter;
+	}       
+    
+	protected void saveDocument() throws Exception {
+		// Cierro el archivo
+		getFileWriter().close();
+	}
     
 }
