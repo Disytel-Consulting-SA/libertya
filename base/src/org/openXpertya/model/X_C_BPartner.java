@@ -7,7 +7,7 @@ import java.math.*;
 import org.openXpertya.util.*;
 /** Modelo Generado por C_BPartner
  *  @author Comunidad de Desarrollo Libertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
- *  @version  - 2015-08-25 14:30:54.94 */
+ *  @version  - 2015-08-25 14:55:27.412 */
 public class X_C_BPartner extends org.openXpertya.model.PO
 {
 /** Constructor estándar */
@@ -17,6 +17,7 @@ super (ctx, C_BPartner_ID, trxName);
 /** if (C_BPartner_ID == 0)
 {
 setAllowAdvancedPaymentReceipts (false);
+setAllowPartialPayment (false);
 setAutomaticCreditNotes (false);
 setC_BPartner_ID (0);
 setC_BP_Group_ID (0);
@@ -157,6 +158,22 @@ set_Value ("AllowAdvancedPaymentReceipts", new Boolean(AllowAdvancedPaymentRecei
 public boolean isAllowAdvancedPaymentReceipts() 
 {
 Object oo = get_Value("AllowAdvancedPaymentReceipts");
+if (oo != null) 
+{
+ if (oo instanceof Boolean) return ((Boolean)oo).booleanValue();
+ return "Y".equals(oo);
+}
+return false;
+}
+/** Set Allow Partial Payment */
+public void setAllowPartialPayment (boolean AllowPartialPayment)
+{
+set_Value ("AllowPartialPayment", new Boolean(AllowPartialPayment));
+}
+/** Get Allow Partial Payment */
+public boolean isAllowPartialPayment() 
+{
+Object oo = get_Value("AllowPartialPayment");
 if (oo != null) 
 {
  if (oo instanceof Boolean) return ((Boolean)oo).booleanValue();
