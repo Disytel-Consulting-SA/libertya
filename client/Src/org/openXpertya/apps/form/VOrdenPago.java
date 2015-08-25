@@ -2742,6 +2742,14 @@ public class VOrdenPago extends CPanel implements FormPanel,ActionListener,Table
 					if (BPartnerSel.getValue() == null)
 						cmdBPartnerSelActionPerformed(null);
 	            	updatePayAllInvoices(false);
+	            	
+					// Activo/Desactivo pestaña de Pagos Adelantados dependiendo
+					// que el proveedor permitao no, OP Anticipadas
+					boolean allow = getModel().isAllowAdvancedPayment();
+					radPayTypeAdv.setEnabled(allow);
+					if (!allow) {
+						radPayTypeStd.setSelected(true);
+					}	
 	            }
 	        } );			
 		} else if (e.getSource() == cboCurrency) {

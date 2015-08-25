@@ -2780,3 +2780,6 @@ $BODY$
   COST 100
   ROWS 1000;
 ALTER FUNCTION v_documents_org_filtered(integer, boolean) OWNER TO libertya;
+
+--20150825-1437 Nueva columna para permitir, o no, pagos/recibos anticipados
+UPDATE ad_system SET dummy = (SELECT addcolumnifnotexists('C_BPartner','allowadvancedpaymentreceipts','character(1) NOT NULL default ''Y''::bpchar'));

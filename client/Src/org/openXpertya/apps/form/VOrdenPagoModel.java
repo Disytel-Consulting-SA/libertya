@@ -3570,5 +3570,12 @@ public class VOrdenPagoModel {
 	public boolean addSecurityValidationToNC(){
 		return getRole().isAddSecurityValidation_OPRC_NC();
 	}
+
+	public boolean isAllowAdvancedPayment() {
+		if (BPartner != null) {
+			return BPartner.isAllowAdvancedPaymentReceipts();
+		} 
+		return true;
+	}
 	
 }
