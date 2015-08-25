@@ -7,7 +7,7 @@ import java.math.*;
 import org.openXpertya.util.*;
 /** Modelo Generado por C_BPartner
  *  @author Comunidad de Desarrollo Libertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
- *  @version  - 2014-11-14 10:57:53.602 */
+ *  @version  - 2015-08-25 14:30:54.94 */
 public class X_C_BPartner extends org.openXpertya.model.PO
 {
 /** Constructor estándar */
@@ -16,6 +16,7 @@ public X_C_BPartner (Properties ctx, int C_BPartner_ID, String trxName)
 super (ctx, C_BPartner_ID, trxName);
 /** if (C_BPartner_ID == 0)
 {
+setAllowAdvancedPaymentReceipts (false);
 setAutomaticCreditNotes (false);
 setC_BPartner_ID (0);
 setC_BP_Group_ID (0);
@@ -146,6 +147,22 @@ The Business Partner is another Organization for explicit Inter-Org transactions
 public String getAD_OrgBP_ID() 
 {
 return (String)get_Value("AD_OrgBP_ID");
+}
+/** Set Allow Advanced Payment Receipts */
+public void setAllowAdvancedPaymentReceipts (boolean AllowAdvancedPaymentReceipts)
+{
+set_Value ("AllowAdvancedPaymentReceipts", new Boolean(AllowAdvancedPaymentReceipts));
+}
+/** Get Allow Advanced Payment Receipts */
+public boolean isAllowAdvancedPaymentReceipts() 
+{
+Object oo = get_Value("AllowAdvancedPaymentReceipts");
+if (oo != null) 
+{
+ if (oo instanceof Boolean) return ((Boolean)oo).booleanValue();
+ return "Y".equals(oo);
+}
+return false;
 }
 /** Set Automatic Credit Notes */
 public void setAutomaticCreditNotes (boolean AutomaticCreditNotes)
