@@ -7,7 +7,7 @@ import java.math.*;
 import org.openXpertya.util.*;
 /** Modelo Generado por C_Country
  *  @author Comunidad de Desarrollo Libertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
- *  @version  - 2013-04-03 11:02:36.478 */
+ *  @version  - 2015-08-23 17:44:27.29 */
 public class X_C_Country extends org.openXpertya.model.PO
 {
 /** Constructor estándar */
@@ -164,6 +164,21 @@ Upper-case two-letter alphanumeric ISO Country code according to ISO 3166-1 - ht
 public String getCountryCode() 
 {
 return (String)get_Value("CountryCode");
+}
+/** Set Country Code FE */
+public void setCountryCodeFE (String CountryCodeFE)
+{
+if (CountryCodeFE != null && CountryCodeFE.length() > 10)
+{
+log.warning("Length > 10 - truncated");
+CountryCodeFE = CountryCodeFE.substring(0,10);
+}
+set_Value ("CountryCodeFE", CountryCodeFE);
+}
+/** Get Country Code FE */
+public String getCountryCodeFE() 
+{
+return (String)get_Value("CountryCodeFE");
 }
 /** Set Description.
 Optional short description of the record */

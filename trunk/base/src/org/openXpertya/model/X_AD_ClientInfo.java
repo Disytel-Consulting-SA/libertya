@@ -7,7 +7,7 @@ import java.math.*;
 import org.openXpertya.util.*;
 /** Modelo Generado por AD_ClientInfo
  *  @author Comunidad de Desarrollo Libertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
- *  @version  - 2014-10-04 01:58:10.681 */
+ *  @version  - 2015-08-23 17:43:18.473 */
 public class X_AD_ClientInfo extends org.openXpertya.model.PO
 {
 /** Constructor estándar */
@@ -25,6 +25,7 @@ setIsWarehouseCloseControl (false);
 setPasswordExpirationActive (false);
 setPasswordExpirationDays (0);
 setPaymentsPOSJournalOpen (false);
+setShipmentPermitFE (false);
 setUniqueCuit (false);
 setUniqueKeyActive (false);
 }
@@ -482,6 +483,30 @@ public String getEMail()
 {
 return (String)get_Value("EMail");
 }
+public static final int EXPORTTYPEFE_AD_Reference_ID = MReference.getReferenceID("Tipo de Exportación Electrónica");
+/** Exportación definitiva de Bienes = 1 */
+public static final String EXPORTTYPEFE_ExportaciónDefinitivaDeBienes = "1";
+/** Servicios = 2 */
+public static final String EXPORTTYPEFE_Servicios = "2";
+/** Otros = 4 */
+public static final String EXPORTTYPEFE_Otros = "4";
+/** Set Export Type FE */
+public void setExportTypeFE (String ExportTypeFE)
+{
+if (ExportTypeFE == null || ExportTypeFE.equals("1") || ExportTypeFE.equals("2") || ExportTypeFE.equals("4"));
+ else throw new IllegalArgumentException ("ExportTypeFE Invalid value - Reference = EXPORTTYPEFE_AD_Reference_ID - 1 - 2 - 4");
+if (ExportTypeFE != null && ExportTypeFE.length() > 1)
+{
+log.warning("Length > 1 - truncated");
+ExportTypeFE = ExportTypeFE.substring(0,1);
+}
+set_Value ("ExportTypeFE", ExportTypeFE);
+}
+/** Get Export Type FE */
+public String getExportTypeFE() 
+{
+return (String)get_Value("ExportTypeFE");
+}
 /** Set Número de Ingresos Brutos */
 public void setIIBB (String IIBB)
 {
@@ -662,6 +687,22 @@ set_Value ("PaymentsPOSJournalOpen", new Boolean(PaymentsPOSJournalOpen));
 public boolean isPaymentsPOSJournalOpen() 
 {
 Object oo = get_Value("PaymentsPOSJournalOpen");
+if (oo != null) 
+{
+ if (oo instanceof Boolean) return ((Boolean)oo).booleanValue();
+ return "Y".equals(oo);
+}
+return false;
+}
+/** Set Shipment Permit FE */
+public void setShipmentPermitFE (boolean ShipmentPermitFE)
+{
+set_Value ("ShipmentPermitFE", new Boolean(ShipmentPermitFE));
+}
+/** Get Shipment Permit FE */
+public boolean isShipmentPermitFE() 
+{
+Object oo = get_Value("ShipmentPermitFE");
 if (oo != null) 
 {
  if (oo instanceof Boolean) return ((Boolean)oo).booleanValue();

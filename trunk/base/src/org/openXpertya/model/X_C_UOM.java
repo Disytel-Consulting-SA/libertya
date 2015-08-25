@@ -7,7 +7,7 @@ import java.math.*;
 import org.openXpertya.util.*;
 /** Modelo Generado por C_UOM
  *  @author Comunidad de Desarrollo Libertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
- *  @version  - 2014-12-23 13:59:41.151 */
+ *  @version  - 2015-08-23 17:45:08.64 */
 public class X_C_UOM extends org.openXpertya.model.PO
 {
 /** Constructor estándar */
@@ -197,6 +197,21 @@ public int getStdPrecision()
 Integer ii = (Integer)get_Value("StdPrecision");
 if (ii == null) return 0;
 return ii.intValue();
+}
+/** Set UOM Code FE */
+public void setUOMCodeFE (String UOMCodeFE)
+{
+if (UOMCodeFE != null && UOMCodeFE.length() > 10)
+{
+log.warning("Length > 10 - truncated");
+UOMCodeFE = UOMCodeFE.substring(0,10);
+}
+set_Value ("UOMCodeFE", UOMCodeFE);
+}
+/** Get UOM Code FE */
+public String getUOMCodeFE() 
+{
+return (String)get_Value("UOMCodeFE");
 }
 /** Set Symbol.
 Symbol for a Unit of Measure */

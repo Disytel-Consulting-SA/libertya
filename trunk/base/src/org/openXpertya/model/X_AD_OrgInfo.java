@@ -7,7 +7,7 @@ import java.math.*;
 import org.openXpertya.util.*;
 /** Modelo Generado por AD_OrgInfo
  *  @author Comunidad de Desarrollo Libertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
- *  @version  - 2014-08-07 15:17:44.383 */
+ *  @version  - 2015-08-23 17:43:31.245 */
 public class X_AD_OrgInfo extends org.openXpertya.model.PO
 {
 /** Constructor estándar */
@@ -21,6 +21,7 @@ setCheckCuitControl (false);
 setDUNS (null);
 setInitialCheckLimit (Env.ZERO);
 setOverdueInvoicesCharge (Env.ZERO);
+setShipmentPermitFE (false);
 setTaxID (null);
 }
  */
@@ -174,6 +175,30 @@ public String getDUNS()
 {
 return (String)get_Value("DUNS");
 }
+public static final int EXPORTTYPEFE_AD_Reference_ID = MReference.getReferenceID("Tipo de Exportación Electrónica");
+/** Exportación definitiva de Bienes = 1 */
+public static final String EXPORTTYPEFE_ExportaciónDefinitivaDeBienes = "1";
+/** Servicios = 2 */
+public static final String EXPORTTYPEFE_Servicios = "2";
+/** Otros = 4 */
+public static final String EXPORTTYPEFE_Otros = "4";
+/** Set Export Type FE */
+public void setExportTypeFE (String ExportTypeFE)
+{
+if (ExportTypeFE == null || ExportTypeFE.equals("1") || ExportTypeFE.equals("2") || ExportTypeFE.equals("4"));
+ else throw new IllegalArgumentException ("ExportTypeFE Invalid value - Reference = EXPORTTYPEFE_AD_Reference_ID - 1 - 2 - 4");
+if (ExportTypeFE != null && ExportTypeFE.length() > 1)
+{
+log.warning("Length > 1 - truncated");
+ExportTypeFE = ExportTypeFE.substring(0,1);
+}
+set_Value ("ExportTypeFE", ExportTypeFE);
+}
+/** Get Export Type FE */
+public String getExportTypeFE() 
+{
+return (String)get_Value("ExportTypeFE");
+}
 /** Set faxnumber */
 public void setfaxnumber (String faxnumber)
 {
@@ -278,6 +303,22 @@ set_Value ("Register_Info", Register_Info);
 public String getRegister_Info() 
 {
 return (String)get_Value("Register_Info");
+}
+/** Set Shipment Permit FE */
+public void setShipmentPermitFE (boolean ShipmentPermitFE)
+{
+set_Value ("ShipmentPermitFE", new Boolean(ShipmentPermitFE));
+}
+/** Get Shipment Permit FE */
+public boolean isShipmentPermitFE() 
+{
+Object oo = get_Value("ShipmentPermitFE");
+if (oo != null) 
+{
+ if (oo instanceof Boolean) return ((Boolean)oo).booleanValue();
+ return "Y".equals(oo);
+}
+return false;
 }
 public static final int SUPERVISOR_ID_AD_Reference_ID = MReference.getReferenceID("AD_User - Internal");
 /** Set Supervisor.

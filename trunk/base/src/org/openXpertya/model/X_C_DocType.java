@@ -7,7 +7,7 @@ import java.math.*;
 import org.openXpertya.util.*;
 /** Modelo Generado por C_DocType
  *  @author Comunidad de Desarrollo Libertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
- *  @version  - 2015-07-28 18:57:55.505 */
+ *  @version  - 2015-08-23 17:44:29.434 */
 public class X_C_DocType extends org.openXpertya.model.PO
 {
 /** Constructor estándar */
@@ -469,11 +469,17 @@ public static final String DOCSUBTYPECAE_NotasDeCreditoB = "08";
 public static final String DOCSUBTYPECAE_RecibosB = "09";
 /** Notas de Venta al contado B = 10 */
 public static final String DOCSUBTYPECAE_NotasDeVentaAlContadoB = "10";
+/** Nota de Débito por Operaciones en el Exterior = 20 */
+public static final String DOCSUBTYPECAE_NotaDeDébitoPorOperacionesEnElExterior = "20";
+/** Factura de Exportación E = 19 */
+public static final String DOCSUBTYPECAE_FacturaDeExportaciónE = "19";
+/** Nota de Crédito por Operaciones en el Exterior = 21 */
+public static final String DOCSUBTYPECAE_NotaDeCréditoPorOperacionesEnElExterior = "21";
 /** Set docsubtypecae */
 public void setdocsubtypecae (String docsubtypecae)
 {
-if (docsubtypecae == null || docsubtypecae.equals("01") || docsubtypecae.equals("02") || docsubtypecae.equals("03") || docsubtypecae.equals("04") || docsubtypecae.equals("05") || docsubtypecae.equals("06") || docsubtypecae.equals("07") || docsubtypecae.equals("08") || docsubtypecae.equals("09") || docsubtypecae.equals("10"));
- else throw new IllegalArgumentException ("docsubtypecae Invalid value - Reference = DOCSUBTYPECAE_AD_Reference_ID - 01 - 02 - 03 - 04 - 05 - 06 - 07 - 08 - 09 - 10");
+if (docsubtypecae == null || docsubtypecae.equals("01") || docsubtypecae.equals("02") || docsubtypecae.equals("03") || docsubtypecae.equals("04") || docsubtypecae.equals("05") || docsubtypecae.equals("06") || docsubtypecae.equals("07") || docsubtypecae.equals("08") || docsubtypecae.equals("09") || docsubtypecae.equals("10") || docsubtypecae.equals("20") || docsubtypecae.equals("19") || docsubtypecae.equals("21"));
+ else throw new IllegalArgumentException ("docsubtypecae Invalid value - Reference = DOCSUBTYPECAE_AD_Reference_ID - 01 - 02 - 03 - 04 - 05 - 06 - 07 - 08 - 09 - 10 - 20 - 19 - 21");
 if (docsubtypecae != null && docsubtypecae.length() > 2)
 {
 log.warning("Length > 2 - truncated");
