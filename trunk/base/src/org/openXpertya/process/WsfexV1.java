@@ -120,9 +120,9 @@ public class WsfexV1 extends Wsfe{
 			
 			//*****PERMISO DE EMBARQUE
 			String shipmentPermitFE="";
-			// Si el tipo de exportación es "Exportación definitiva de Bienes" y el tipo de comprobante es Factura, entonces el campo Permiso de Embarque debe ser vacío
-			// En caso contrario tomamos el valor de la configuración de Organización / Compañía
-			if (!( (exportTypeFE.compareTo(MClientInfo.EXPORTTYPEFE_ExportaciónDefinitivaDeBienes) == 0) && (docType.getdocsubtypecae().compareTo(MDocType.DOCSUBTYPECAE_FacturaDeExportaciónE) == 0))){
+			// “vacío” si el campo Cbte_Tipo es 20 ó 21 o si Cbte_Tipo es igual a 19 y el campo Tipo_expo es igual a 2 ó 4.
+			// Si el tipo de exportación es "Exportación definitiva de Bienes" y el tipo de comprobante es Factura, entonces tomamos el valor de la configuración de Organización / Compañía
+			if ((exportTypeFE.compareTo(MClientInfo.EXPORTTYPEFE_ExportaciónDefinitivaDeBienes) == 0) && (docType.getdocsubtypecae().compareTo(MDocType.DOCSUBTYPECAE_FacturaDeExportaciónE) == 0)){
 				/* Veo si la configuración es a nivel de organización. */
 				if(!Util.isEmpty(orgInfo.getExportTypeFE())){
 					shipmentPermitFE = (orgInfo.isShipmentPermitFE() ? "S" : "N");
