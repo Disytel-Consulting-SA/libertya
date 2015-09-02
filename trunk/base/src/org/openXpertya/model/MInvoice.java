@@ -3900,18 +3900,12 @@ public class MInvoice extends X_C_Invoice implements DocAction {
 			return DocAction.STATUS_Invalid;
 		}
 
-		MCurrency currency = MCurrency.get(getCtx(), getC_Currency_ID());
-		BigDecimal totalPriceListLines = getSumColumnLines("PriceList * QtyInvoiced");
-		BigDecimal manualGeneralDiscountAmt = BigDecimal.ZERO;
-		BigDecimal manualGeneralAmtRate = getManualGeneralDiscount().divide(
-				new BigDecimal(100), currency.getStdPrecision(),
-				BigDecimal.ROUND_HALF_UP);
 		// Crear el document discount a partir del descuento manual general de
 		// la cabecera
 		if (isSOTrx()
 				&& getManualGeneralDiscount().compareTo(BigDecimal.ZERO) != 0) {
-			manualGeneralDiscountAmt = totalPriceListLines
-					.multiply(manualGeneralAmtRate);
+			BigDecimal totalPriceListLines = getSumColumnLines("PriceList * QtyInvoiced");
+			BigDecimal manualGeneralDiscountAmt = getSumColumnLines("LineDiscountAmt");
 			MDocumentDiscount documentDiscount = createDocumentDiscount(
 					totalPriceListLines, manualGeneralDiscountAmt, null,
 					MDocumentDiscount.CUMULATIVELEVEL_Document,
