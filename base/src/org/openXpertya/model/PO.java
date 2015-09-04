@@ -1160,11 +1160,13 @@ public abstract class PO implements Serializable, Comparator, Evaluatee {
 					|| colName.startsWith("Updated")
 					// || colName.equals(from.getTableName() + "_ID") //
 					// KeyColumn
-					|| from.p_info.isColumnKey(i) || colName.equals("IsActive")
+					|| from.p_info.isColumnKey(i) 
+					|| colName.equals("IsActive")
 					|| colName.equals("AD_Client_ID")
 					|| colName.equals("AD_Org_ID")
 					|| colName.equals("AD_ComponentVersion_ID")
 					|| colName.equals("AD_ComponentObjectUID")
+					|| colName.equals("Posted")
 					|| (excludedColumnsName != null && excludedColumnsName
 							.contains(colName)))
 				; // ignore
