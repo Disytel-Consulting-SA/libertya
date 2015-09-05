@@ -22,17 +22,11 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.Vector;
 import java.util.logging.Level;
-
-import javax.swing.JOptionPane;
 
 import org.openXpertya.model.MAcctSchema;
 import org.openXpertya.model.MCurrency;
-import org.openXpertya.model.MInvoiceLine;
 import org.openXpertya.model.MTax;
-import org.openXpertya.model.PO;
-import org.openXpertya.model.X_C_Invoice;
 import org.openXpertya.util.CPreparedStatement;
 import org.openXpertya.util.DB;
 import org.openXpertya.util.Env;
@@ -638,13 +632,16 @@ public class Doc_Invoice extends Doc implements DocProjectSplitterInterface {
     
     
     @Override
-    public String applyCustomSettings( Fact fact )
+    public String applyCustomSettings( Fact fact, int index )
     {
     	DocProjectSplitter projectSplitter = new DocProjectSplitter(this);
-    	if (projectSplitter.splitLinesByProject(fact))
-    		return STATUS_Posted;
-    	else
+    	if (!projectSplitter.splitLinesByProject(fact))
     		return STATUS_Error;
+    	
+    	// Realizar nuevamente el balanceo
+    	doBalancing(index, projectSplitter.getLastProjectID());
+    	
+    	return STATUS_Posted;
     }
     
 

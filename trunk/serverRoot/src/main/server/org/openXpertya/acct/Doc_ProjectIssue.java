@@ -301,7 +301,7 @@ public class Doc_ProjectIssue extends Doc {
     }    // getLaborCost
 
 	@Override
-	public String applyCustomSettings(Fact fact) {
+	public String applyCustomSettings( Fact fact, int index ) {
 		// TODO Auto-generated method stub
 		return null;
 	}

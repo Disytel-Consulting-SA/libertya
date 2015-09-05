@@ -340,12 +340,15 @@ public class Doc_Cash extends Doc implements DocProjectSplitterInterface   {
     }    // createFact
 
 	@Override
-	public String applyCustomSettings(Fact fact) {
+	public String applyCustomSettings( Fact fact, int index ) {
     	DocProjectSplitter projectSplitter = new DocProjectSplitter(this);
-    	if (projectSplitter.splitLinesByProject(fact))
-    		return STATUS_Posted;
-    	else
+    	if (!projectSplitter.splitLinesByProject(fact))
     		return STATUS_Error;
+    	
+    	// Realizar nuevamente el balanceo
+    	doBalancing(index, projectSplitter.getLastProjectID());
+    	
+    	return STATUS_Posted;
 	}
 
 	

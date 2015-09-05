@@ -254,7 +254,7 @@ public class Doc_MatchPO extends Doc {
     }    // updateProductInfo
 
 	@Override
-	public String applyCustomSettings(Fact fact) {
+	public String applyCustomSettings( Fact fact, int index ) {
 		// TODO Auto-generated method stub
 		return null;
 	}

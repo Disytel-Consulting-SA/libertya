@@ -284,7 +284,7 @@ public final class Fact {
         }
 
         BigDecimal balance  = getSourceBalance();
-        boolean    retValue = balance.compareTo( Env.ZERO ) == 0;
+        boolean    retValue = balance.compareTo( BigDecimal.ZERO ) == 0;
 
         if( retValue ) {
             log.finer( toString());
@@ -303,7 +303,7 @@ public final class Fact {
      */
 
     protected BigDecimal getSourceBalance() {
-        BigDecimal result = Env.ZERO;
+        BigDecimal result = BigDecimal.ZERO;
 
         for( int i = 0;i < m_lines.size();i++ ) {
             FactLine line = ( FactLine )m_lines.get( i );
@@ -324,6 +324,10 @@ public final class Fact {
      */
 
     public FactLine balanceSource() {
+    	return balanceSource(0);
+    }
+    
+    public FactLine balanceSource(int projectID) {
         if( !m_acctSchema.isSuspenseBalancing() || m_docVO.MultiCurrency ) {
             return null;
         }
@@ -341,16 +345,16 @@ public final class Fact {
 
         // Amount
 
-        if( diff.compareTo( Env.ZERO ) < 0 ) {    // negative balance => DR
-            line.setAmtSource( m_docVO.C_Currency_ID,diff.abs(),Env.ZERO );
+        if( diff.compareTo( BigDecimal.ZERO ) < 0 ) {    // negative balance => DR
+            line.setAmtSource( m_docVO.C_Currency_ID,diff.abs(),BigDecimal.ZERO );
         } else {                                  // positive balance => CR
-            line.setAmtSource( m_docVO.C_Currency_ID,Env.ZERO,diff );
+            line.setAmtSource( m_docVO.C_Currency_ID,BigDecimal.ZERO,diff );
         }
 
         // Account
 
         line.setAccount( m_acctSchema,m_acctSchema.getSuspenseBalancing_Acct());
-
+        line.setC_Project_ID(projectID);
         // Convert
 
         line.convert();
@@ -428,7 +432,7 @@ public final class Fact {
             while( values.hasNext()) {
                 BigDecimal bal = ( BigDecimal )values.next();
 
-                if( bal.compareTo( Env.ZERO ) != 0 ) {
+                if( bal.compareTo( BigDecimal.ZERO ) != 0 ) {
                     map.clear();
                     log.warning( "(" + segmentType + ") NO - " + toString() + ", Balance=" + bal );
 
@@ -453,6 +457,10 @@ public final class Fact {
      */
 
     public void balanceSegments() {
+    	balanceSegments(0);
+    }
+    
+    public void balanceSegments(int projectID) {
         MAcctSchemaElement[] elements = m_acctSchema.getAcctSchemaElements();
 
         // check all balancing segments
@@ -461,7 +469,7 @@ public final class Fact {
             MAcctSchemaElement ase = elements[ i ];
 
             if( ase.isBalanced()) {
-                balanceSegment( ase.getElementType());
+                balanceSegment( ase.getElementType(), projectID);
             }
         }
     }    // balanceSegments
@@ -472,8 +480,11 @@ public final class Fact {
      *
      * @param elementType
      */
+    public FactLine balanceSegment( String elementType ) {
+    	return balanceSource(0);
+    }
 
-    private void balanceSegment( String elementType ) {
+    private void balanceSegment( String elementType, int projectID ) {
 
         // no lines -> balanced
 
@@ -538,7 +549,7 @@ public final class Fact {
 
                     line.convert();
                     line.setAD_Org_ID( key.intValue());
-
+                    line.setC_Project_ID(projectID);
                     //
 
                     m_lines.add( line );
@@ -566,7 +577,7 @@ public final class Fact {
         }
 
         BigDecimal balance  = getAcctBalance();
-        boolean    retValue = balance.compareTo( Env.ZERO ) == 0;
+        boolean    retValue = balance.compareTo( BigDecimal.ZERO ) == 0;
 
         if( retValue ) {
             log.finer( toString());
@@ -585,7 +596,7 @@ public final class Fact {
      */
 
     protected BigDecimal getAcctBalance() {
-        BigDecimal result = Env.ZERO;
+        BigDecimal result = BigDecimal.ZERO;
 
         for( int i = 0;i < m_lines.size();i++ ) {
             FactLine line = ( FactLine )m_lines.get( i );
@@ -606,6 +617,10 @@ public final class Fact {
      */
 
     public FactLine balanceAccounting() {
+    	return balanceAccounting(0);
+    }
+    
+    public FactLine balanceAccounting(int projectID) {
         BigDecimal diff = getAcctBalance();
 
         log.fine( "Balance=" + diff + ", CurrBal=" + m_acctSchema.isCurrencyBalancing() + " - " + toString());
@@ -622,13 +637,13 @@ public final class Fact {
 
             // Amount
 
-            line.setAmtSource( m_docVO.C_Currency_ID,Env.ZERO,Env.ZERO );
+            line.setAmtSource( m_docVO.C_Currency_ID,BigDecimal.ZERO,BigDecimal.ZERO );
             line.convert();
 
-            if( diff.compareTo( Env.ZERO ) < 0 ) {
-                line.setAmtAcct( diff.abs(),Env.ZERO );
+            if( diff.compareTo( BigDecimal.ZERO ) < 0 ) {
+                line.setAmtAcct( diff.abs(),BigDecimal.ZERO );
             } else {
-                line.setAmtAcct( Env.ZERO,diff.abs());
+                line.setAmtAcct( BigDecimal.ZERO,diff.abs());
             }
 
             log.fine( line.toString());
@@ -638,9 +653,9 @@ public final class Fact {
         // Adjust biggest (Balance Sheet) line amount
 
         {
-            BigDecimal BSamount = Env.ZERO;
+            BigDecimal BSamount = BigDecimal.ZERO;
             FactLine   BSline   = null;
-            BigDecimal PLamount = Env.ZERO;
+            BigDecimal PLamount = BigDecimal.ZERO;
             FactLine   PLline   = null;
 
             // Find line
@@ -674,7 +689,8 @@ public final class Fact {
         }    // correct biggest amount
 
         // Debug info only
-
+        line.setC_Project_ID(projectID);
+        
         this.isAcctBalanced();
 
         return line;

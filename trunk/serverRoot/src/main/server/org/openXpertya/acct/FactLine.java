@@ -592,11 +592,11 @@ public final class FactLine extends X_Fact_Acct {
 
     public BigDecimal getSourceBalance() {
         if( getAmtSourceDr() == null ) {
-            setAmtSourceDr( Env.ZERO );
+            setAmtSourceDr( BigDecimal.ZERO );
         }
 
         if( getAmtSourceCr() == null ) {
-            setAmtSourceCr( Env.ZERO );
+            setAmtSourceCr( BigDecimal.ZERO );
         }
 
         //

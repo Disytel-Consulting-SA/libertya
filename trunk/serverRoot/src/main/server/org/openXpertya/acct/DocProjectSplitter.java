@@ -1,19 +1,17 @@
 package org.openXpertya.acct;
 
 import java.math.BigDecimal;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
 import java.util.HashMap;
 import java.util.Vector;
 
 import org.openXpertya.model.MAcctSchema;
 import org.openXpertya.model.PO;
-import org.openXpertya.model.X_C_Invoice;
-import org.openXpertya.util.DB;
 
 public class DocProjectSplitter {
 
 	DocProjectSplitterInterface m_doc = null;
+	
+	private int lastProjectID = 0;
 	
 	public DocProjectSplitter(DocProjectSplitterInterface aDoc)
 	{
@@ -35,6 +33,8 @@ public class DocProjectSplitter {
     	MAcctSchema as = MAcctSchema.get( factLine.getCtx(), factLine.getC_AcctSchema_ID());
 		int precision = as.getStdPrecision();
 
+		int lastProjectID = 0;
+		
     	// Iterar por todas las lineas de la fact, spliteando cada una de estas
     	int length = fact.getLines().length;
     	for (int i = 0; i < length; i++)
@@ -78,10 +78,13 @@ public class DocProjectSplitter {
     			// Deberemos setear también los valores para la linea original.  La misma sera para el proyecto 0.  
     			setProportionalValue(factLine, percents.get(0), precision, BigDecimal.ROUND_HALF_EVEN);
     			factLine.setC_Project_ID(projects.get(0));
-    		}
-    			
+    			// Registrar el último proyecto
+    			if(lastProjectID == 0){
+    				lastProjectID = projects.get(projectsNo-1);
+    			}
+    		}	
     	}
-
+    	setLastProjectID(lastProjectID);
     	// Todo ok
     	return true;
     }
@@ -99,6 +102,14 @@ public class DocProjectSplitter {
 		factLine.setAmtSource(factLine.getC_Currency_ID(), factLine.getAmtSourceDr().multiply(value).setScale(precision, roundMode), factLine.getAmtSourceCr().multiply(value).setScale(precision, roundMode));
 		factLine.setAmtAcct(factLine.getAmtAcctDr().multiply(value).setScale(precision, roundMode), factLine.getAmtAcctCr().multiply(value).setScale(precision, roundMode));
     }
+
+	public int getLastProjectID() {
+		return lastProjectID;
+	}
+
+	protected void setLastProjectID(int lastProjectID) {
+		this.lastProjectID = lastProjectID;
+	}
     
 	
 }
