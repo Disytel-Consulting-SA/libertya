@@ -152,7 +152,7 @@ public class Doc_Amortization extends Doc {
 	}
 
 	@Override
-	public String applyCustomSettings(Fact fact) {
+	public String applyCustomSettings( Fact fact, int index ) {
 		// TODO Auto-generated method stub
 		return null;
 	}

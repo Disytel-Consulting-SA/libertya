@@ -318,7 +318,7 @@ public class Doc_Order extends Doc {
     }    // updateProductInfo
 
 	@Override
-	public String applyCustomSettings(Fact fact) {
+	public String applyCustomSettings( Fact fact, int index ) {
 		return null;
 	}
 

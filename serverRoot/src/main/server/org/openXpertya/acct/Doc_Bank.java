@@ -264,7 +264,7 @@ public class Doc_Bank extends Doc {
     }    // createFact
 
 	@Override
-	public String applyCustomSettings(Fact fact) {
+	public String applyCustomSettings( Fact fact, int index ) {
 		// TODO Auto-generated method stub
 		return null;
 	}

@@ -1219,33 +1219,45 @@ public abstract class Doc {
             return STATUS_Error;
         }
 
-        // balanceSource
-
-        if( !m_fact.get(index).isSourceBalanced()) {
-            m_fact.get(index).balanceSource();
-        }
-
-        // balanceSegments
-
-        if( !m_fact.get(index).isSegmentBalanced()) {
-            m_fact.get(index).balanceSegments();
-        }
-
-        // balanceAccounting
-
-        if( !m_fact.get(index).isAcctBalanced()) {
-            m_fact.get(index).balanceAccounting();
-        }
+        // Balanceo del asiento
+        doBalancing(index);
 
         // Modificaciones custom para cada tipo de documento
 
-        String status = applyCustomSettings(m_fact.get(index));
+        String status = applyCustomSettings(m_fact.get(index), index);
         if (status != null)
         	return status;
         
         return STATUS_Posted;
     }    // postLogic
 
+    /**
+     * Realiza acciones de balanceo sobre el asiento contable
+     * @param index índice del esquema contable
+     */
+    protected void doBalancing(int index){
+    	doBalancing(index, 0);
+    }
+    
+    protected void doBalancing(int index, int projectID){
+    	// balanceSource
+    	if( !m_fact.get(index).isSourceBalanced()) {
+    		m_fact.get(index).balanceSource(projectID);
+    	}
+
+    	// balanceSegments
+
+    	if( !m_fact.get(index).isSegmentBalanced()) {
+    		m_fact.get(index).balanceSegments(projectID);
+    	}
+
+    	// balanceAccounting
+
+    	if( !m_fact.get(index).isAcctBalanced()) {
+    		m_fact.get(index).balanceAccounting(projectID);
+    	}
+    }
+    
     /**
      * Descripción de Método
      *
@@ -2201,9 +2213,10 @@ public abstract class Doc {
     /**
      * Permite realizar modificaciones custom en el paso inmediatamente previo a la persistencia de los asientos
      * @param fact el asiento con sus lineas a pa
+     * @param index índice del esquema contable
      * @return Debe devolver un STATUS (STATUS_Posted, STATUS_Error, etc).
      */
-    public abstract String applyCustomSettings( Fact fact );
+    public abstract String applyCustomSettings( Fact fact, int index );
     
 	/**
 	 *  Load Document Details
