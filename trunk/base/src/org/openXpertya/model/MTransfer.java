@@ -559,9 +559,8 @@ public class MTransfer extends X_M_Transfer implements DocAction {
 					// ubicación
 					// origen. Para esto se hace negativa la cantidad del
 					// artículo.
-					(isOutgoing() ? line.getM_Locator_ID() : line
-							.getM_Locator_To_ID()), (isOutgoing() ? line
-							.getQty().negate() : line.getQty()),
+					(isOutgoing() ? line.getM_Locator_ID() : line.getM_Locator_To_ID()), 
+					(isOutgoing() ? line.getQty().negate() : line.getQty()),
 					getC_Charge_ID());
 		}
 		// Finalmente, se completa el inventario creado. Si se produce algún
@@ -821,29 +820,31 @@ public class MTransfer extends X_M_Transfer implements DocAction {
 			BigDecimal MovementQty = oLine.getQtyOrdered().subtract(
 					oLine.getQtyDelivered());
 
-			// Location Origin
-			int M_Locator_Origin_ID = MStorage.getM_Locator_ID(
-					transfer.getM_Warehouse_ID(), oLine.getM_Product_ID(),
-					oLine.getM_AttributeSetInstance_ID(), MovementQty, trxName);
-			if (M_Locator_Origin_ID == 0) { // Get default Location
+			if(MovementQty.signum() > 0){
+				// Location Origin
+				int M_Locator_Origin_ID = MStorage.getM_Locator_ID(
+						transfer.getM_Warehouse_ID(), oLine.getM_Product_ID(),
+						oLine.getM_AttributeSetInstance_ID(), MovementQty, trxName);
+				if (M_Locator_Origin_ID == 0) { // Get default Location
+					MWarehouse wh = MWarehouse.get(order.getCtx(),
+							transfer.getM_Warehouse_ID());
+					M_Locator_Origin_ID = wh.getDefaultLocator().getM_Locator_ID();
+				}
+	
+				// Location Destination
 				MWarehouse wh = MWarehouse.get(order.getCtx(),
-						transfer.getM_Warehouse_ID());
-				M_Locator_Origin_ID = wh.getDefaultLocator().getM_Locator_ID();
+						transfer.getM_WarehouseTo_ID());
+				int M_Locator_Destination_ID = wh.getDefaultLocator()
+						.getM_Locator_ID();
+	
+				tLine.setOrderLine(oLine, M_Locator_Origin_ID,
+						M_Locator_Destination_ID, MovementQty);
+				tLine.setQty(MovementQty);
+	
+				if (!tLine.save(trxName))
+					throw new Exception("Error creando linea de transferencia: "
+							+ CLogger.retrieveErrorAsString());
 			}
-
-			// Location Destination
-			MWarehouse wh = MWarehouse.get(order.getCtx(),
-					transfer.getM_WarehouseTo_ID());
-			int M_Locator_Destination_ID = wh.getDefaultLocator()
-					.getM_Locator_ID();
-
-			tLine.setOrderLine(oLine, M_Locator_Origin_ID,
-					M_Locator_Destination_ID, MovementQty);
-			tLine.setQty(MovementQty);
-
-			if (!tLine.save(trxName))
-				throw new Exception("Error creando linea de transferencia: "
-						+ CLogger.retrieveErrorAsString());
 		}
 
 	}
