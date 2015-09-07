@@ -2786,3 +2786,6 @@ UPDATE ad_system SET dummy = (SELECT addcolumnifnotexists('C_BPartner','allowadv
 
 --20150825-1500 Nueva columna para permitir, o no, pagos/cobros parciales
 UPDATE ad_system SET dummy = (SELECT addcolumnifnotexists('C_BPartner','allowpartialpayment','character(1) NOT NULL default ''Y''::bpchar'));
+
+--20150907-0100 Nueva columna de configuración para tipos de documento para validar números de documento únicos 
+UPDATE ad_system SET dummy = (SELECT addcolumnifnotexists('C_DocType','uniquedocumentno','character(1) NOT NULL default ''N''::bpchar'));
