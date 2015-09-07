@@ -7,7 +7,7 @@ import java.math.*;
 import org.openXpertya.util.*;
 /** Modelo Generado por C_DocType
  *  @author Comunidad de Desarrollo Libertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
- *  @version  - 2015-08-23 17:44:29.434 */
+ *  @version  - 2015-09-07 01:12:19.082 */
 public class X_C_DocType extends org.openXpertya.model.PO
 {
 /** Constructor estándar */
@@ -53,6 +53,7 @@ setPOSEnableDueDays (0);
 setPrintName (null);
 setReserveStockManagment (false);
 setsigno_issotrx (null);
+setUniqueDocumentno (false);
 setUseOrderWarehouse (true);	// Y
 }
  */
@@ -1252,6 +1253,22 @@ set_Value ("signo_issotrx", signo_issotrx);
 public String getsigno_issotrx() 
 {
 return (String)get_Value("signo_issotrx");
+}
+/** Set Unique Documentno */
+public void setUniqueDocumentno (boolean UniqueDocumentno)
+{
+set_Value ("UniqueDocumentno", new Boolean(UniqueDocumentno));
+}
+/** Get Unique Documentno */
+public boolean isUniqueDocumentno() 
+{
+Object oo = get_Value("UniqueDocumentno");
+if (oo != null) 
+{
+ if (oo instanceof Boolean) return ((Boolean)oo).booleanValue();
+ return "Y".equals(oo);
+}
+return false;
 }
 /** Set UseOrderWarehouse */
 public void setUseOrderWarehouse (boolean UseOrderWarehouse)
