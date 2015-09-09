@@ -67,6 +67,9 @@ Ejemplos de cambios
 		
 		<!-- 20150715-0758 Script de reinicio de JBoss -->
 		<copy file="${SOURCE_DIR}/restartJBoss.sh" todir="${TARGET_DIR}/utils" overwrite="yes" />
+		
+		<!-- 20150909-1304 Soporte para pisado de clases de CORE en LYWeb al ejecutar Configurar.sh -->
+		<copy file="${SOURCE_DIR}/build.xml" todir="${TARGET_DIR}" overwrite="yes" />
     </target>
     
 </project>
