@@ -1,6 +1,8 @@
 package org.openXpertya.JasperReport;
 
 
+import java.io.ByteArrayInputStream;
+import java.io.InputStream;
 import java.math.BigDecimal;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -155,6 +157,9 @@ public class LaunchInvoice extends SvrProcess {
 		if(!Util.isEmpty(invoice.getC_Order_ID(), true)){
 			order = new MOrder(getCtx(), invoice.getC_Order_ID(), get_TrxName());
 		}
+		
+		InputStream logo = new ByteArrayInputStream(client.getLogoImg());
+		jasperwrapper.addParameter("LOGO",(InputStream)logo);
 		
 		// Descuentos aplicados totales
 		jasperwrapper.addParameter("NROCOMPROBANTE", invoice.getNumeroDeDocumento());
