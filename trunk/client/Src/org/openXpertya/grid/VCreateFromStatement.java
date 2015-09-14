@@ -241,6 +241,7 @@ public class VCreateFromStatement extends VCreateFrom implements VetoableChangeL
     	public static final int COL_IDX_CURRENCY   = 4;
     	public static final int COL_IDX_AMT        = 5;
     	public static final int COL_IDX_CONVAMT    = 6;
+    	public static final int COL_IDX_DUEDATE    = 7;
     	    	
 		@Override
 		protected void setColumnClasses() {
@@ -250,6 +251,7 @@ public class VCreateFromStatement extends VCreateFrom implements VetoableChangeL
 	        setColumnClass(COL_IDX_CURRENCY, String.class);
 	        setColumnClass(COL_IDX_AMT, BigDecimal.class);
 	        setColumnClass(COL_IDX_CONVAMT, BigDecimal.class);
+	        setColumnClass(COL_IDX_DUEDATE, Timestamp.class);
 		}
 
 		@Override
@@ -260,6 +262,7 @@ public class VCreateFromStatement extends VCreateFrom implements VetoableChangeL
 	        setColumnName(COL_IDX_CURRENCY, Msg.translate( Env.getCtx(),"C_Currency_ID" ));
 	        setColumnName(COL_IDX_AMT, Msg.translate( Env.getCtx(),"Amount" ));
 	        setColumnName(COL_IDX_CONVAMT, Msg.translate( Env.getCtx(),"ConvertedAmount" ));
+	        setColumnName(COL_IDX_DUEDATE, Msg.translate(Env.getCtx(), "DueDate"));
 		}
 
 		@Override
@@ -279,6 +282,8 @@ public class VCreateFromStatement extends VCreateFrom implements VetoableChangeL
 					value = payment.payAmt; break;
 				case COL_IDX_CONVAMT:
 					value = payment.convertedAmt; break;
+				case COL_IDX_DUEDATE:
+					value=payment.dueDate; break;
 				default:
 					value = super.getValueAt(rowIndex, colIndex); break;
 			}
