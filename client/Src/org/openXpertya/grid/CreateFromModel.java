@@ -435,7 +435,10 @@ public class CreateFromModel {
     	public BigDecimal payAmt = BigDecimal.ZERO;
         /** Importe del pago convertido a la moneda de la cuenta bancaria a la que pertence*/
     	public BigDecimal convertedAmt = BigDecimal.ZERO;
-    
+    	/** Fecha de vencimiento */
+    	public Timestamp dueDate=null;
+    	/** Tipo del Pago */
+    	protected String tenderType = null;
     }
     
     /**

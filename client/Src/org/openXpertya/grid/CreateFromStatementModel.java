@@ -15,6 +15,7 @@ import org.openXpertya.model.MPayment;
 import org.openXpertya.util.CLogger;
 import org.openXpertya.util.DB;
 import org.openXpertya.util.Env;
+import org.openXpertya.util.Util;
 
 public class CreateFromStatementModel extends CreateFromModel {
 
@@ -34,6 +35,8 @@ public class CreateFromStatementModel extends CreateFromModel {
            .append(   "p.C_Currency_ID, ")
            .append(   "c.ISO_Code, ")
            .append(   "p.PayAmt, ")
+           .append(   "p.duedate, ")
+           .append(   "cp.tendertype, ")
            .append(   "currencyConvert(p.PayAmt,p.C_Currency_ID,ba.C_Currency_ID,?,null,p.AD_Client_ID,p.AD_Org_ID) AS ConvertedAmt, ")
            .append(   "bp.Name AS BPartnerName ")
            
@@ -41,7 +44,8 @@ public class CreateFromStatementModel extends CreateFromModel {
            .append("INNER JOIN C_Payment_v p ON (p.C_BankAccount_ID=ba.C_BankAccount_ID) ")
            .append("INNER JOIN C_Currency c ON (p.C_Currency_ID=c.C_Currency_ID) ")
            .append("INNER JOIN C_BPartner bp ON (p.C_BPartner_ID=bp.C_BPartner_ID) ")
-        		   
+           .append("INNER JOIN C_Payment cp ON (p.C_Payment_ID=cp.C_Payment_ID) ")
+           
            .append("WHERE p.Processed='Y' ")
            .append(  "AND p.IsReconciled='N' ")
            .append(  "AND p.DocStatus IN ('CO','CL','RE') ")
@@ -64,7 +68,12 @@ public class CreateFromStatementModel extends CreateFromModel {
         payment.currencyISO = rs.getString("ISO_Code");
         payment.payAmt = rs.getBigDecimal("PayAmt");
         payment.convertedAmt = rs.getBigDecimal("ConvertedAmt");
-        payment.bPartnerName = rs.getString("BPartnerName"); 
+        payment.bPartnerName = rs.getString("BPartnerName");
+        payment.tenderType = rs.getString("tendertype");
+		if (!Util.isEmpty(payment.tenderType)
+				&& MPayment.TENDERTYPE_Check.equals(payment.tenderType)) {
+	        payment.dueDate=rs.getTimestamp("duedate");
+		}
 	}
 	
 	
@@ -80,7 +89,7 @@ public class CreateFromStatementModel extends CreateFromModel {
         // Lines
         for (SourceEntity sourceEntity : selectedSourceEntities) {
         	Payment payment = (Payment)sourceEntity;	
-            Timestamp trxDate = payment.dateTrx;
+            Timestamp trxDate = payment.dueDate != null?payment.dueDate:payment.dateTrx;
             int C_Payment_ID = payment.paymentID;
             int C_Currency_ID = payment.currencyID;
             BigDecimal TrxAmt  = payment.payAmt;
@@ -121,6 +130,8 @@ public class CreateFromStatementModel extends CreateFromModel {
            .append(   "p.C_Currency_ID, ")
            .append(   "c.ISO_Code, ")
            .append(   "p.PayAmt, ")
+           .append(   "p.duedate, ")
+           .append(   "cp.tendertype, ")
            .append(   "currencyConvert(p.PayAmt,p.C_Currency_ID,ba.C_Currency_ID,?,null,p.AD_Client_ID,p.AD_Org_ID) AS ConvertedAmt, ")
            .append(   "bp.Name AS BPartnerName ")
            
@@ -128,6 +139,7 @@ public class CreateFromStatementModel extends CreateFromModel {
            .append("INNER JOIN C_Payment p ON (p.C_BankAccount_ID=ba.C_BankAccount_ID) ")
            .append("INNER JOIN C_Currency c ON (p.C_Currency_ID=c.C_Currency_ID) ")
            .append("INNER JOIN C_BPartner bp ON (p.C_BPartner_ID=bp.C_BPartner_ID) ")
+           .append("INNER JOIN C_Payment cp ON (p.C_Payment_ID=cp.C_Payment_ID) ")
         		   
            .append("WHERE p.Processed='Y' ")
            .append(  "AND p.IsReconciled='N' ")
@@ -153,6 +165,8 @@ public class CreateFromStatementModel extends CreateFromModel {
            .append(	  "NULL AS DocumentNo, ")
            .append(   "p.C_Currency_ID, ")
            .append(   "c.ISO_Code, ")
+           .append(   "p.duedate, ")
+           .append(   "cp.tendertype, ")
            .append(   "SUM(p.PayAmt) as PayAmt , ")
            .append(   "SUM(currencyConvert(p.PayAmt,p.C_Currency_ID,ba.C_Currency_ID,?,null,p.AD_Client_ID,p.AD_Org_ID)) AS ConvertedAmt, ")
            .append(   "bp.Name AS BPartnerName ")
@@ -161,7 +175,8 @@ public class CreateFromStatementModel extends CreateFromModel {
            .append("INNER JOIN C_Payment p ON (p.C_BankAccount_ID=ba.C_BankAccount_ID) ")
            .append("INNER JOIN C_Currency c ON (p.C_Currency_ID=c.C_Currency_ID) ")
            .append("INNER JOIN C_BPartner bp ON (p.C_BPartner_ID=bp.C_BPartner_ID) ")
-        		   
+           .append("INNER JOIN C_Payment cp ON (p.C_Payment_ID=cp.C_Payment_ID) ")
+           
            .append("WHERE p.Processed='Y' ")
            .append(  "AND p.IsReconciled='N' ")
            .append(  "AND p.DocStatus IN ('CO','CL','RE') ")
@@ -171,7 +186,7 @@ public class CreateFromStatementModel extends CreateFromModel {
            .append(      "(SELECT * FROM C_BankStatementLine l ")
            // Voided Bank Statements have 0 StmtAmt
            .append(       "WHERE p.C_Payment_ID=l.C_Payment_ID AND l.StmtAmt <> 0) ")
-           .append(  "GROUP BY DateTrx,p.C_Currency_ID,ISO_Code,BPartnerName ");
+           .append(  "GROUP BY p.DateTrx,p.C_Currency_ID,ISO_Code,p.duedate, cp.tendertype, BPartnerName ");
         return sql;
 	}
 
@@ -186,6 +201,8 @@ public class CreateFromStatementModel extends CreateFromModel {
            .append(	  "NULL AS DocumentNo, ")
            .append(   "p.C_Currency_ID, ")
            .append(   "c.ISO_Code, ")
+           .append(   "p.duedate, ")
+           .append(   "cp.tendertype, ")
            .append(   "SUM(p.PayAmt) as PayAmt , ")
            .append(   "SUM(currencyConvert(p.PayAmt,p.C_Currency_ID,ba.C_Currency_ID,?,null,p.AD_Client_ID,p.AD_Org_ID)) AS ConvertedAmt, ")
            .append(   "bp.Name AS BPartnerName ")
@@ -194,7 +211,8 @@ public class CreateFromStatementModel extends CreateFromModel {
            .append("INNER JOIN C_Payment p ON (p.C_BankAccount_ID=ba.C_BankAccount_ID) ")
            .append("INNER JOIN C_Currency c ON (p.C_Currency_ID=c.C_Currency_ID) ")
            .append("INNER JOIN C_BPartner bp ON (p.C_BPartner_ID=bp.C_BPartner_ID) ")
-        		   
+           .append("INNER JOIN C_Payment cp ON (p.C_Payment_ID=cp.C_Payment_ID) ")
+           
            .append("WHERE p.Processed='Y' ")
            .append(  "AND p.IsReconciled='N' ")
            .append(  "AND p.DocStatus IN ('CO','CL','RE') ")
@@ -205,7 +223,7 @@ public class CreateFromStatementModel extends CreateFromModel {
            .append(      "(SELECT * FROM C_BankStatementLine l ")
            // Voided Bank Statements have 0 StmtAmt
            .append(       "WHERE p.C_Payment_ID=l.C_Payment_ID AND l.StmtAmt <> 0)")
-           .append(  "GROUP BY DateTrx,p.C_Currency_ID,ISO_Code,BPartnerName ");
+           .append(  "GROUP BY p.DateTrx,p.C_Currency_ID,ISO_Code,p.duedate, cp.tendertype, BPartnerName ");
         return sql;
 	}
 	
@@ -224,7 +242,7 @@ public class CreateFromStatementModel extends CreateFromModel {
 					sql = loadBankAccountQuery();
 				else
 					sql = loadBankAccountQueryWithFilter();
-				sql.append(" AND datetrx = '" + payment.dateTrx +"'");
+				sql.append(" AND p.datetrx = '" + payment.dateTrx +"'");
 				if (ts == null) {
 					ts = new Timestamp(System.currentTimeMillis());
 				}
