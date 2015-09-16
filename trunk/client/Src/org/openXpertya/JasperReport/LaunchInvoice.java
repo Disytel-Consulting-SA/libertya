@@ -158,8 +158,10 @@ public class LaunchInvoice extends SvrProcess {
 			order = new MOrder(getCtx(), invoice.getC_Order_ID(), get_TrxName());
 		}
 		
-		InputStream logo = new ByteArrayInputStream(client.getLogoImg());
-		jasperwrapper.addParameter("LOGO",(InputStream)logo);
+		if(client.getLogoImg() != null){
+			InputStream logo = new ByteArrayInputStream(client.getLogoImg());
+			jasperwrapper.addParameter("LOGO",(InputStream)logo);
+		}
 		
 		// Descuentos aplicados totales
 		jasperwrapper.addParameter("NROCOMPROBANTE", invoice.getNumeroDeDocumento());
