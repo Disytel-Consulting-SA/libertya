@@ -1578,7 +1578,9 @@ public class MInvoiceLine extends X_C_InvoiceLine {
 	 * @return monto por unidad
 	 */
     public BigDecimal getUnityAmt(BigDecimal amt){
-		return amt.divide(getQtyEntered(), amt.scale(),	BigDecimal.ROUND_HALF_EVEN);
+		return amt.compareTo(BigDecimal.ZERO) == 0 ? BigDecimal.ZERO : amt
+				.divide(getQtyEntered(), amt.scale(),
+						BigDecimal.ROUND_HALF_EVEN);
     }
 
 	/**
