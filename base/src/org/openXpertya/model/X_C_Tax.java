@@ -7,7 +7,7 @@ import java.math.*;
 import org.openXpertya.util.*;
 /** Modelo Generado por C_Tax
  *  @author Comunidad de Desarrollo Libertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
- *  @version  - 2014-07-07 10:12:13.629 */
+ *  @version  - 2015-09-20 23:16:28.43 */
 public class X_C_Tax extends org.openXpertya.model.PO
 {
 /** Constructor estándar */
@@ -119,6 +119,34 @@ public int getC_Country_ID()
 Integer ii = (Integer)get_Value("C_Country_ID");
 if (ii == null) return 0;
 return ii.intValue();
+}
+public static final int CODIGOOPERACION_AD_Reference_ID = MReference.getReferenceID("Operation Code");
+/** Exportaciones a la zona franca = Z */
+public static final String CODIGOOPERACION_ExportacionesALaZonaFranca = "Z";
+/** Exportaciones al Exterior = X */
+public static final String CODIGOOPERACION_ExportacionesAlExterior = "X";
+/** Operaciones Exentas = E */
+public static final String CODIGOOPERACION_OperacionesExentas = "E";
+/** No Gravado = N */
+public static final String CODIGOOPERACION_NoGravado = "N";
+/** Operaciones de Canje = C */
+public static final String CODIGOOPERACION_OperacionesDeCanje = "C";
+/** Set Código Operación */
+public void setCodigoOperacion (String CodigoOperacion)
+{
+if (CodigoOperacion == null || CodigoOperacion.equals("Z") || CodigoOperacion.equals("X") || CodigoOperacion.equals("E") || CodigoOperacion.equals("N") || CodigoOperacion.equals("C"));
+ else throw new IllegalArgumentException ("CodigoOperacion Invalid value - Reference = CODIGOOPERACION_AD_Reference_ID - Z - X - E - N - C");
+if (CodigoOperacion != null && CodigoOperacion.length() > 1)
+{
+log.warning("Length > 1 - truncated");
+CodigoOperacion = CodigoOperacion.substring(0,1);
+}
+set_Value ("CodigoOperacion", CodigoOperacion);
+}
+/** Get Código Operación */
+public String getCodigoOperacion() 
+{
+return (String)get_Value("CodigoOperacion");
 }
 public static final int C_REGION_ID_AD_Reference_ID = MReference.getReferenceID("C_Region");
 /** Set Region.

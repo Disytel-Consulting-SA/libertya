@@ -2987,3 +2987,44 @@ create or replace view v_documents_org as select * from v_documents_org_filtered
 --20150920-2100 Nuevas columnas utilizadas en reporte Estado de Cuenta de EC
 update ad_system set dummy = (SELECT addcolumnifnotexists('T_EstadoDeCuenta', 'DateAcct', 'timestamp without time zone'));
 update ad_system set dummy = (SELECT addcolumnifnotexists('T_EstadoDeCuenta', 'DateToDays', 'timestamp without time zone'));
+
+--20150920-2300 Incorporar columnas codigoOperacion a C_Tax
+UPDATE ad_system SET dummy = (SELECT addcolumnifnotexists('C_Tax', 'codigoOperacion', 'character(1)'));
+UPDATE C_Tax SET codigoOperacion = 'E' WHERE rate = 0;
+
+--20150920-2300 Eliminar View reginfo_ventas_cbte_v
+DROP VIEW reginfo_ventas_cbte_v;
+
+--20150920-2300 Crear función getCodigoOperacion(p_c_invoice_id integer)
+CREATE OR REPLACE FUNCTION getCodigoOperacion(p_c_invoice_id integer)
+  RETURNS character(1) AS
+$BODY$
+DECLARE
+    	v_CodigoOperacion        	character(1);
+BEGIN
+    SELECT CASE WHEN (COUNT(*) >= 1) THEN t.codigooperacion ELSE NULL END
+    INTO v_CodigoOperacion
+    FROM C_Invoicetax it
+    INNER JOIN C_Tax t ON (t.C_Tax_ID = it.C_Tax_ID)
+    WHERE (C_Invoice_ID = p_c_invoice_id) AND t.rate = 0
+    GROUP BY t.codigooperacion;
+
+    RETURN v_CodigoOperacion;
+END;
+
+$BODY$
+  LANGUAGE 'plpgsql' VOLATILE
+  COST 100;
+ALTER FUNCTION getCodigoOperacion(integer) OWNER TO libertya;
+
+--20150920-2300 Crear nuevamente la view reginfo_ventas_cbte_v
+CREATE OR REPLACE VIEW reginfo_ventas_cbte_v AS 
+ SELECT i.ad_client_id, i.ad_org_id, i.c_invoice_id, date_trunc('day'::text, i.dateinvoiced) AS date, date_trunc('day'::text, i.dateinvoiced) AS fechadecomprobante, ei.codigo AS tipodecomprobante, i.puntodeventa, i.numerocomprobante AS nrocomprobante, i.numerocomprobante AS nrocomprobantehasta, bp.taxidtype AS codigodoccomprador, bp.taxid AS nroidentificacioncomprador, bp.name AS nombrecomprador, currencyconvert(i.grandtotal, i.c_currency_id, 118, i.dateacct::timestamp with time zone, NULL::integer, i.ad_client_id, i.ad_org_id)::numeric(20,2) AS imptotal, 0::numeric(20,2) AS impconceptosnoneto, 0::numeric(20,2) AS imppercepnocategorizados, 0::numeric(20,2) AS impopeexentas, 0::numeric(20,2) AS imppercepopagosdeimpunac, currencyconvert(getimportepercepcionesiibb(i.c_invoice_id), i.c_currency_id, 118, i.dateacct::timestamp with time zone, NULL::integer, i.ad_client_id, i.ad_org_id)::numeric(20,2) AS imppercepiibb, 0::numeric(20,2) AS imppercepimpumuni, 0::numeric(20,2) AS impimpuinternos, cu.wsfecode AS codmoneda, currencyrate(i.c_currency_id, 118, i.dateacct::timestamp with time zone, NULL::integer, i.ad_client_id, i.ad_org_id)::numeric(10,6) AS tipodecambio, getcantidadalicuotasiva(i.c_invoice_id) AS cantalicuotasiva, getCodigoOperacion(i.C_Invoice_ID)::character varying(1) AS codigooperacion, 0::numeric(20,2) AS impotrostributos, NULL::timestamp without time zone AS fechavencimientopago
+   FROM c_invoice i
+   JOIN c_doctype dt ON dt.c_doctype_id = i.c_doctype_id
+   LEFT JOIN e_electronicinvoiceref ei ON dt.doctypekey::text ~~* (ei.clave_busqueda::text || '%'::text) AND ei.tabla_ref::text = 'TCOM'::text
+   JOIN c_bpartner bp ON bp.c_bpartner_id = i.c_bpartner_id
+   JOIN c_currency cu ON cu.c_currency_id = i.c_currency_id
+  WHERE (i.docstatus = ANY (ARRAY['CL'::bpchar, 'CO'::bpchar, 'VO'::bpchar, 'RE'::bpchar])) AND i.issotrx = 'Y'::bpchar AND i.isactive = 'Y'::bpchar AND (dt.doctypekey::text <> ALL (ARRAY['RTR'::character varying::text, 'RTI'::character varying::text, 'RCR'::character varying::text, 'RCI'::character varying::text])) AND dt.isfiscaldocument = 'Y'::bpchar AND (dt.isfiscal IS NULL OR dt.isfiscal = 'N'::bpchar OR dt.isfiscal = 'Y'::bpchar AND i.fiscalalreadyprinted = 'Y'::bpchar);
+
+ALTER TABLE reginfo_ventas_cbte_v OWNER TO libertya;
