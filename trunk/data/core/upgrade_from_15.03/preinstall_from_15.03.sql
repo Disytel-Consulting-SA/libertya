@@ -3028,3 +3028,8 @@ CREATE OR REPLACE VIEW reginfo_ventas_cbte_v AS
   WHERE (i.docstatus = ANY (ARRAY['CL'::bpchar, 'CO'::bpchar, 'VO'::bpchar, 'RE'::bpchar])) AND i.issotrx = 'Y'::bpchar AND i.isactive = 'Y'::bpchar AND (dt.doctypekey::text <> ALL (ARRAY['RTR'::character varying::text, 'RTI'::character varying::text, 'RCR'::character varying::text, 'RCI'::character varying::text])) AND dt.isfiscaldocument = 'Y'::bpchar AND (dt.isfiscal IS NULL OR dt.isfiscal = 'N'::bpchar OR dt.isfiscal = 'Y'::bpchar AND i.fiscalalreadyprinted = 'Y'::bpchar);
 
 ALTER TABLE reginfo_ventas_cbte_v OWNER TO libertya;
+
+--20150921-1250 No estaba codificada la actualización del processed de las líneas de la transferencia y se podían eliminar sin problemas luego de completado.
+update m_transferline tl
+set processed = 'Y'
+where tl.processed = 'N' and exists (select m_transfer_id from m_transfer as t where t.m_transfer_id = tl.m_transfer_id and processed = 'Y');
