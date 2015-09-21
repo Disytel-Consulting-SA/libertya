@@ -96,7 +96,7 @@ public class LaunchMayor extends SvrProcess {
 			throw new RuntimeException ("No se han podido rellenar el informe.", e);
 		}
 		
-		return "doIt";
+		return "";
 
 	}
 	
