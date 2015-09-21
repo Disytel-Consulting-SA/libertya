@@ -861,4 +861,18 @@ public class MTransfer extends X_M_Transfer implements DocAction {
 	public MTransfer(MOrder order) {
 		this(order.getCtx(), 0, order.get_TrxName());
 	} // MTransfer
+	
+	@Override 
+	public void setProcessed( boolean processed ) {
+        super.setProcessed( processed );
+
+        if( getID() == 0 ) {
+            return;
+        }
+
+        String set = "SET Processed='" + ( processed
+                                           ?"Y"
+                                           :"N" ) + "' WHERE M_Transfer_ID=" + getID();
+        DB.executeUpdate( "UPDATE M_TransferLine " + set,get_TrxName());
+    }    // setProcessed
 }
