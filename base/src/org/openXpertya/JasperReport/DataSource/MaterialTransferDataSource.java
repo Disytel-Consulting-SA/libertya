@@ -28,7 +28,8 @@ public class MaterialTransferDataSource extends QueryDataSource {
 					 "LEFT JOIN m_locator as lt ON (lt.m_locator_id = tl.m_locator_to_id) " +
 					 "INNER JOIN ad_user as uc ON (uc.ad_user_id = tl.createdby) " +
 					 "INNER JOIN ad_user as uu ON (uu.ad_user_id = tl.updatedby) " +
-					 "WHERE tl.m_transfer_id = ?";
+					 "WHERE tl.m_transfer_id = ? " +
+		 			 "ORDER BY tl.line";
 		return sql;
 	}
 
