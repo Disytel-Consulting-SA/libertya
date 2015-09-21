@@ -1382,15 +1382,18 @@ public class MOrder extends X_C_Order implements DocAction {
         
         MDocType docType = MDocType.get(getCtx(), getC_DocTypeTarget_ID(), get_TrxName());
         
-		// Nro de documento existente, entonces colocar corchetes al principio y
-		// final para que genere uno nuevo
-        String whereClause = "ad_client_id = ? and ad_org_id = ? and c_doctypetarget_id = ? and docstatus in ('CO','CL')";
-        whereClause += newRecord?"":" and documentno = '"+getDocumentNo()+"'";
-		if (docType.isUniqueDocumentno()
-				&& existRecordFor(getCtx(), get_TableName(), whereClause,
-						new Object[] { getAD_Client_ID(), getAD_Org_ID(),
-								getC_DocTypeTarget_ID() }, get_TrxName())) {
-        	setDocumentNo("<"+getDocumentNo()+">");
+        // Se valida el nro de documento único cuando este documento está en Borrador solamente
+        if(MOrder.DOCSTATUS_Drafted.equals(getDocStatus())){
+    		// Nro de documento existente, entonces colocar corchetes al principio y
+    		// final para que genere uno nuevo
+            String whereClause = "ad_client_id = ? and ad_org_id = ? and c_doctypetarget_id = ? and docstatus in ('CO','CL')";
+            whereClause += newRecord?"":" and documentno = '"+getDocumentNo()+"'";
+    		if (docType.isUniqueDocumentno()
+    				&& existRecordFor(getCtx(), get_TableName(), whereClause,
+    						new Object[] { getAD_Client_ID(), getAD_Org_ID(),
+    								getC_DocTypeTarget_ID() }, get_TrxName())) {
+            	setDocumentNo("<"+getDocumentNo()+">");
+            }
         }
         
         //si el registro es nuevo, no pueden haber lineas, no tiene sentido el chequeo
