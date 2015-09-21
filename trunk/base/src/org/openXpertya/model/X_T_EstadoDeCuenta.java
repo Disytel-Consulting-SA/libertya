@@ -7,7 +7,7 @@ import java.math.*;
 import org.openXpertya.util.*;
 /** Modelo Generado por T_EstadoDeCuenta
  *  @author Comunidad de Desarrollo Libertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
- *  @version  - 2013-06-26 15:40:53.353 */
+ *  @version  - 2015-09-20 21:29:50.695 */
 public class X_T_EstadoDeCuenta extends org.openXpertya.model.PO
 {
 /** Constructor estándar */
@@ -200,6 +200,18 @@ Integer ii = (Integer)get_Value("C_PaymentTerm_ID");
 if (ii == null) return 0;
 return ii.intValue();
 }
+/** Set Account Date.
+Accounting Date */
+public void setDateAcct (Timestamp DateAcct)
+{
+set_Value ("DateAcct", DateAcct);
+}
+/** Get Account Date.
+Accounting Date */
+public Timestamp getDateAcct() 
+{
+return (Timestamp)get_Value("DateAcct");
+}
 /** Set Document Date.
 Date of the Document */
 public void setDateDoc (Timestamp DateDoc)
@@ -211,6 +223,16 @@ Date of the Document */
 public Timestamp getDateDoc() 
 {
 return (Timestamp)get_Value("DateDoc");
+}
+/** Set Date to Days */
+public void setDateToDays (Timestamp DateToDays)
+{
+set_Value ("DateToDays", DateToDays);
+}
+/** Get Date to Days */
+public Timestamp getDateToDays() 
+{
+return (Timestamp)get_Value("DateToDays");
 }
 /** Set Days due.
 Number of days due (negative: due in number of days) */
