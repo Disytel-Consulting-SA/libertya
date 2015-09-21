@@ -67,16 +67,16 @@ public class DiarioMayorJasperDataSource implements JRDataSource {
         
 		// Añadimos restricciones
 		sql.append( " AD_Client_ID=").append(Env.getAD_Client_ID(p_ctx));
-		sql.append(" AND DateAcct BETWEEN ").append(DB.TO_DATE(p_DateAcct_From)).append(" AND ").append(DB.TO_DATE(p_DateAcct_To));
+		sql.append(" AND DateAcct::date BETWEEN ").append(DB.TO_DATE(p_DateAcct_From)).append(" AND ").append(DB.TO_DATE(p_DateAcct_To));
 		
 		
 		// Obtenemos la clausula de las cuentas basandonos en el nombre.
 		if (p_1_ElementValue_ID > 0  && p_2_ElementValue_ID > 0)	{
 
-			String ev1_rest = "(select name from c_elementvalue where c_elementvalue_id="+ p_1_ElementValue_ID+")";			
-			String ev2_rest = "(select name from c_elementvalue where c_elementvalue_id="+ p_2_ElementValue_ID+")";
+			String ev1_rest = "(select value from c_elementvalue where c_elementvalue_id="+ p_1_ElementValue_ID+")";			
+			String ev2_rest = "(select value from c_elementvalue where c_elementvalue_id="+ p_2_ElementValue_ID+")";
 			
-			sql.append(" AND Name BETWEEN ").append(ev1_rest).append( " AND ").append(ev2_rest);
+			sql.append(" AND Value BETWEEN ").append(ev1_rest).append( " AND ").append(ev2_rest);
 		}
 		else if (p_1_ElementValue_ID > 0)	{
 			sql.append("AND C_ElementValue_ID = ").append(p_1_ElementValue_ID);
@@ -100,15 +100,15 @@ public class DiarioMayorJasperDataSource implements JRDataSource {
 		sql.append("  FROM fact_acct ac, c_elementvalue ev");
 		sql.append(" WHERE ac.account_id=ev.c_elementvalue_id ");
 		sql.append(" AND ac.AD_Client_ID=").append(Env.getAD_Client_ID(p_ctx));
-		sql.append(" AND ac.DateAcct < ").append(DB.TO_DATE(p_DateAcct_From));
+		sql.append(" AND ac.DateAcct::date < ").append(DB.TO_DATE(p_DateAcct_From));
 		
 		// Obtenemos la clausula de las cuentas basandonos en el nombre.
 		if (p_1_ElementValue_ID > 0  && p_2_ElementValue_ID > 0)	{
 
-			String ev1_rest = "(select name from c_elementvalue where c_elementvalue_id="+ p_1_ElementValue_ID+")";			
-			String ev2_rest = "(select name from c_elementvalue where c_elementvalue_id="+ p_2_ElementValue_ID+")";
+			String ev1_rest = "(select value from c_elementvalue where c_elementvalue_id="+ p_1_ElementValue_ID+")";			
+			String ev2_rest = "(select value from c_elementvalue where c_elementvalue_id="+ p_2_ElementValue_ID+")";
 			
-			sql.append(" AND ev.Name BETWEEN ").append(ev1_rest).append( " AND ").append(ev2_rest);
+			sql.append(" AND ev.Value BETWEEN ").append(ev1_rest).append( " AND ").append(ev2_rest);
 		}
 		else if (p_1_ElementValue_ID > 0)	{
 			sql.append(" AND ac.account_id = ").append(p_1_ElementValue_ID);
@@ -125,7 +125,7 @@ public class DiarioMayorJasperDataSource implements JRDataSource {
 		m_saldos = new HashMap();
 		
 		try	{
-			PreparedStatement pstmt = DB.prepareStatement(getSQLSaldos());
+			PreparedStatement pstmt = DB.prepareStatement(getSQLSaldos(), null, true);
 			ResultSet rs = pstmt.executeQuery();
 			while (rs.next())	{
 				M_DiarioMayor line = new M_DiarioMayor(rs.getInt("C_ElementValue_ID"), rs.getString("Name"), rs.getString("Value"));
@@ -158,7 +158,7 @@ public class DiarioMayorJasperDataSource implements JRDataSource {
 		ArrayList list = new ArrayList();
 		
 		try {
-			PreparedStatement pstmt = DB.prepareStatement(getSQLData());
+			PreparedStatement pstmt = DB.prepareStatement(getSQLData(), null, true);
 			ResultSet rs = pstmt.executeQuery();
 			
 			BigDecimal saldo = Env.ZERO;
