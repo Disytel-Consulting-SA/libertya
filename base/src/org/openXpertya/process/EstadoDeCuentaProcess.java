@@ -4,6 +4,9 @@ import java.math.BigDecimal;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.Timestamp;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.Map.Entry;
 import java.util.logging.Level;
 
 import org.openXpertya.model.MClient;
@@ -24,6 +27,8 @@ public class EstadoDeCuentaProcess extends SvrProcess {
 	
 	int daysfrom = (-1) * MAX_DUE_DAYS;
 	int daysto   = MAX_DUE_DAYS;
+	Timestamp dateToDays = null;
+	boolean useDaysDue = false;
 	int bPartnerID;
 	int orgID;
 	String accountType;
@@ -32,62 +37,90 @@ public class EstadoDeCuentaProcess extends SvrProcess {
 	String showDocuments = "O";
 	Timestamp dateTrxFrom = null;
 	Timestamp dateTrxTo = null;
+	Timestamp dateConvert = null;
 	int currencyID;
 	
 	@Override
 	protected void prepare() {
-		ProcessInfoParameter[] para = getParameter();
-		 for( int i = 0;i < para.length;i++ ) {
-	            log.fine( "prepare - " + para[ i ] );
+		
+		ProcessInfoParameter[] para = getParameter();	
+		for( int i = 0;i < para.length;i++ ) {
+			log.fine( "prepare - " + para[ i ] );
 
-	            String name = para[ i ].getParameterName();
+			String name = para[ i ].getParameterName();
 
-	            if( para[ i ].getParameter() == null ) {
-	                ;
-	            } else if( name.equalsIgnoreCase( "daysdue" )) {
-	                BigDecimal tmpDaysFrom = (BigDecimal)para[i].getParameter();
-	                BigDecimal tmpDaysTo = (BigDecimal)para[i].getParameter_To();
-	                // Si los días de vencimiento (inicio y fin) son null entonces
-	                // se setea el máximo de días posible para que el filtro incluya todos
-	                // los vencimientos. Esto amplía la flexibilidad del informe.
-	                daysfrom = tmpDaysFrom == null ? (-1) * MAX_DUE_DAYS : tmpDaysFrom.intValue();
-	                daysto   = tmpDaysTo == null ? MAX_DUE_DAYS : tmpDaysTo.intValue(); 
-	            } else if( name.equalsIgnoreCase( "C_BPartner_ID" )) {
-	            	bPartnerID = para[ i ].getParameterAsInt();
-	            } else if( name.equalsIgnoreCase( "accountType" )) {
-	            	accountType = (String)para[ i ].getParameter();
-	            } else if( name.equalsIgnoreCase( "AD_Org_ID" )) {
-	            	orgID = para[ i ].getParameterAsInt();
-	            // Nuevo parámetro: Vendedor
-	            } else if( name.equalsIgnoreCase( "SalesRep_ID" )) {
-	            	salesRepID = para[ i ].getParameterAsInt();
-	            // Nuevo parámetro: Mostrar Documentos
-	            } else if( name.equalsIgnoreCase( "ShowDocuments" )) {
-	            	showDocuments = (String)para[ i ].getParameter();
-	            // Nuevo parámetro: Período de Fechas (ShowDocuments = By Date)
-	            } else if( name.equalsIgnoreCase( "DateDoc" )) {
-	            	dateTrxFrom = (Timestamp)para[i].getParameter();
-	            	dateTrxTo = (Timestamp)para[i].getParameter_To();
-	            } else if( name.equalsIgnoreCase( "C_Currency_ID" )) {
-	            	currencyID = para[ i ].getParameterAsInt();
-	            } else {
-	                log.log( Level.SEVERE,"prepare - Unknown Parameter: " + name );
-	            }
-	        }
-
+			if( para[ i ].getParameter() == null ) {
+				;
+			} else if( name.equalsIgnoreCase( "daysdue" )) {
+				BigDecimal tmpDaysFrom = (BigDecimal)para[i].getParameter();
+				BigDecimal tmpDaysTo = (BigDecimal)para[i].getParameter_To();
+                // Si los días de vencimiento (inicio y fin) son null entonces
+                // se setea el máximo de días posible para que el filtro incluya todos
+                // los vencimientos. Esto amplía la flexibilidad del informe.
+                daysfrom = tmpDaysFrom == null ? (-1) * MAX_DUE_DAYS : tmpDaysFrom.intValue();
+                daysto   = tmpDaysTo == null ? MAX_DUE_DAYS : tmpDaysTo.intValue();
+                useDaysDue = true;
+            } else if( name.equalsIgnoreCase( "DateToDays" )) {
+            	dateToDays = (Timestamp)para[i].getParameter();
+                // Si se ingreso un valor en el parámetro "Vencidas al" se calculan los días de inicio y fin.
+                // Notar que no se filtra por la columna fecha sino que se reutiliza el filtro por días.
+           		long diferenciaEn_ms = Env.getDate().getTime() - dateToDays.getTime();
+           		long dias = diferenciaEn_ms / (1000 * 60 * 60 * 24);
+                daysfrom = (int) dias;
+                daysto   = MAX_DUE_DAYS;            	
+            } else if( name.equalsIgnoreCase( "C_BPartner_ID" )) {
+            	bPartnerID = para[ i ].getParameterAsInt();
+            } else if( name.equalsIgnoreCase( "accountType" )) {
+            	accountType = (String)para[ i ].getParameter();
+            } else if( name.equalsIgnoreCase( "AD_Org_ID" )) {
+            	orgID = para[ i ].getParameterAsInt();
+            // Nuevo parámetro: Vendedor
+            } else if( name.equalsIgnoreCase( "SalesRep_ID" )) {
+            	salesRepID = para[ i ].getParameterAsInt();
+            // Nuevo parámetro: Mostrar Documentos
+            } else if( name.equalsIgnoreCase( "ShowDocuments" )) {
+            	showDocuments = (String)para[ i ].getParameter();
+            // Nuevo parámetro: Período de Fechas (ShowDocuments = By Date)
+            } else if( name.equalsIgnoreCase( "DateDoc" )) {
+            	dateTrxFrom = (Timestamp)para[i].getParameter();
+            	dateTrxTo = (Timestamp)para[i].getParameter_To();
+            } else if( name.equalsIgnoreCase( "C_Currency_ID" )) {
+            	currencyID = para[ i ].getParameterAsInt();
+            } else {
+                log.log( Level.SEVERE,"prepare - Unknown Parameter: " + name );
+            }
+		}
 	}
 	
-	
+	private void validateParameters() throws Exception {
+		if (useDaysDue && dateToDays != null) {
+            log.log( Level.SEVERE,"Se produjo un error al obtener los filtros del reporte." );
+            throw new Exception("@UseDaysDueAndDateToDaysError@");
+        }
+	}
+
 	@Override
 	protected String doIt() throws Exception {
-
+		validateParameters();
+		calculateDateConvert();
 		deleteOldEntries();
 		fillTable();
 		
 		return null;
 	}
 
-	
+	private void calculateDateConvert() {
+		/*
+		1)	Si es Saldo Pendiente, la fecha de conversión debe ser al día de generación.
+		2)	Si es Por Fechas, la fecha de conversión debe ser la ingresada en el parámetro Hasta. 
+			Si no cargamos fecha hasta, entonces la fecha de conversión debe ser al día de generación.
+		**/
+		this.dateConvert = Env.getDate();
+		if (this.isShowByDate() && this.dateTrxTo != null) {
+			this.dateConvert = this.dateTrxTo;
+		}
+	}
+
 	private void deleteOldEntries()
 	{
 		String	sql	= "DELETE FROM T_EstadoDeCuenta WHERE AD_Client_ID = "+ getAD_Client_ID()+" AND AD_PInstance_ID = " + getAD_PInstance_ID() + " OR CREATED < ('now'::text)::timestamp(6) - interval '3 days'";
@@ -241,22 +274,43 @@ public class EstadoDeCuentaProcess extends SvrProcess {
 		
 		int bPartner = -1;
 		int bPartnerOld = -1;
+		
 		BigDecimal saldo = new BigDecimal(0);
 		BigDecimal subSaldo = new BigDecimal(0);
 		BigDecimal saldogral = new BigDecimal(0);
 		
-		while (rs.next())
-		{
+		String clientISO = MCurrency.getISO_Code(getCtx(), currencyClient);
+		
+		HashMap<String, BigDecimal> saldosMultimoneda = new HashMap<String, BigDecimal>();
+		saldosMultimoneda.put(clientISO, BigDecimal.ZERO);
+		
+		HashMap<String, BigDecimal> saldosGeneralMultimoneda = new HashMap<String, BigDecimal>();
+		saldosGeneralMultimoneda.put(clientISO, BigDecimal.ZERO);
+		
+		while (rs.next()) {
 			bPartner = rs.getInt("c_bpartner_id");
 			if (bPartner != bPartnerOld)
 			{
 				if (bPartnerOld != -1){ 
-					insertTotalForBPartnerOld(bPartner, saldo);
+					insertTotalForBPartnerOld(bPartner, saldosMultimoneda);
 					insertTotalForBPartnerChecks(bPartner);
 				}
 				saldogral=saldogral.add(saldo);
 				bPartnerOld = bPartner;
 				saldo = new BigDecimal(0);
+				
+				Iterator it = saldosMultimoneda.entrySet().iterator();
+				while (it.hasNext()) {
+					Entry<String, BigDecimal> e = (Entry<String, BigDecimal>) it.next();
+					
+					if (!saldosGeneralMultimoneda.containsKey(e.getKey())) {
+						saldosGeneralMultimoneda.put(e.getKey(), BigDecimal.ZERO);
+					}
+					saldosGeneralMultimoneda.put(e.getKey(), saldosGeneralMultimoneda.get(e.getKey()).add(e.getValue()));	
+				}
+				
+				saldosMultimoneda = new HashMap<String, BigDecimal>();
+				saldosMultimoneda.put(clientISO, BigDecimal.ZERO);
 			}
 			
 			X_T_EstadoDeCuenta ec = new X_T_EstadoDeCuenta(getCtx(), 0, get_TrxName());
@@ -270,7 +324,7 @@ public class EstadoDeCuentaProcess extends SvrProcess {
 			ec.setC_BPartner_ID(rs.getInt("c_bpartner_id"));
 			ec.setbpartner(rs.getString("bpartner"));
 			ec.setIsSOTrx(rs.getString("issotrx").equalsIgnoreCase("Y"));
-			ec.setDateDoc(rs.getTimestamp("datedoc"));
+			ec.setDateAcct(rs.getTimestamp("dateacct"));
 			ec.setNetDays(rs.getBigDecimal("netdays"));
 			ec.setDaysDue(rs.getInt("daysdue"));
 			ec.setDateDoc(rs.getTimestamp("datedoc"));
@@ -279,18 +333,38 @@ public class EstadoDeCuentaProcess extends SvrProcess {
 			ec.setGrandTotalMulticurrency(rs.getBigDecimal("grandtotalmulticurrency"));
 			ec.setPaidAmtMulticurrency(rs.getBigDecimal("paidamtmulticurrency"));
 			ec.setOpenAmtMulticurrency(rs.getBigDecimal("openamtmulticurrency"));
+			
 			ec.setGrandTotal(rs.getBigDecimal("grandtotal"));
 			ec.setPaidAmt(rs.getBigDecimal("paidamt"));
 			ec.setOpenAmt(rs.getBigDecimal("openamt"));
+			
+			BigDecimal rate = MConversionRate.getRate(rs.getInt("c_currency_id"), currencyClient, this.dateConvert, rs.getInt("c_conversiontype_id"), getAD_Client_ID(), 0);
+			String fromISO = MCurrency.getISO_Code(getCtx(), rs.getInt("c_currency_id"));
+			
+			if (!saldosMultimoneda.containsKey(fromISO)) {
+				saldosMultimoneda.put(fromISO, BigDecimal.ZERO);
+			}
+			saldosMultimoneda.put(fromISO, saldosMultimoneda.get(fromISO).add(ec.getOpenAmtMulticurrency()));
+			
+			if (rate == null) {
+				String toISO = MCurrency.getISO_Code(getCtx(), currencyClient);
+				log.severe("No Currency Conversion from " + fromISO	+ " to " + toISO);
+				throw new Exception("@NoCurrencyConversion@ (" + fromISO + "->" + toISO + ")");
+			}
+			
+			ec.setOpenAmt(rs.getBigDecimal("openamtmulticurrency").multiply(rate));
+			ec.setGrandTotal(ec.getPaidAmt().add(ec.getOpenAmt()));
+			
 			ec.setC_Currency_ID(rs.getInt("c_currency_id"));
 			ec.setC_ConversionType_ID(rs.getInt("c_conversiontype_id"));
-			ec.setConversionRate(MConversionRate.getRate(rs.getInt("c_currency_id"), currencyClient, rs.getTimestamp("dateacct"), rs.getInt("c_conversiontype_id"), getAD_Client_ID(), rs.getInt("c_order_id")));
+			ec.setConversionRate(MConversionRate.getRate(rs.getInt("c_currency_id"), currencyClient, this.dateConvert, rs.getInt("c_conversiontype_id"), getAD_Client_ID(), rs.getInt("c_order_id")));
 			ec.setIsPayScheduleValid(rs.getString("ispayschedulevalid")!=null && rs.getString("ispayschedulevalid").equalsIgnoreCase("Y")); 
 			ec.setC_InvoicePaySchedule_ID(rs.getInt("c_invoicepayschedule_id"));
 			ec.setC_PaymentTerm_ID(rs.getInt("c_paymentterm_id"));
 			ec.setAccountType(accountType);
 			ec.setShowDocuments(showDocuments);
 			ec.setSalesRep_ID(salesRepID);
+			ec.setDateToDays(dateToDays);
 			ec.save();
 			
 			subSaldo = ec.getOpenAmt();
@@ -301,38 +375,42 @@ public class EstadoDeCuentaProcess extends SvrProcess {
 			saldo = saldo.add(subSaldo);
 		}
 		if (bPartner != -1)
-		{	insertTotalForBPartnerOld(bPartner, saldo);
+		{	insertTotalForBPartnerOld(bPartner, saldosMultimoneda);
 			insertTotalForBPartnerChecks(bPartner);
 			saldogral=saldogral.add(saldo);
-			insertTotalGral(saldogral);
+			insertTotalGral(saldogral, saldosGeneralMultimoneda);
 		}
 		
 	}
 	
-	private void insertTotalForBPartnerOld(int bPartner, BigDecimal saldo)
-	{
-		X_T_EstadoDeCuenta ec = new X_T_EstadoDeCuenta(getCtx(), 0, get_TrxName());
-		ec.setAD_PInstance_ID(getAD_PInstance_ID());
-		ec.setC_BPartner_ID(bPartner);
-		ec.setbpartner("             TOTAL:");
-		ec.setOpenAmt(saldo);
-		if (daysfrom != MAX_DUE_DAYS*-1 || daysto != MAX_DUE_DAYS) {
-			ec.setDaysDue(daysfrom);
+	private void insertTotalForBPartnerOld(int bPartner, HashMap<String, BigDecimal> saldosMultimoneda)	{
+		Iterator it = saldosMultimoneda.entrySet().iterator();
+		while (it.hasNext()) {
+			Entry<String, BigDecimal> e = (Entry<String, BigDecimal>) it.next();
+			
+			X_T_EstadoDeCuenta ec = new X_T_EstadoDeCuenta(getCtx(), 0, get_TrxName());
+			ec.setAD_PInstance_ID(getAD_PInstance_ID());
+			ec.setC_BPartner_ID(bPartner);
+			ec.setbpartner("             TOTAL " + e.getKey() + ":");
+			ec.setOpenAmt(e.getValue());
+			if (daysfrom != MAX_DUE_DAYS*-1 || daysto != MAX_DUE_DAYS) {
+				ec.setDaysDue(daysfrom);
+			}
+			ec.setAccountType(accountType);
+			ec.setShowDocuments(showDocuments);
+			ec.setSalesRep_ID(salesRepID);
+			ec.setDateToDays(dateToDays);
+			ec.setDocumentNo("");
+			if (dateTrxTo != null) {
+				ec.setDateDoc(dateTrxTo);
+			} else if (dateTrxFrom != null) {
+				ec.setDateDoc(dateTrxFrom);
+			} 
+			ec.save();
 		}
-		ec.setAccountType(accountType);
-		ec.setShowDocuments(showDocuments);
-		ec.setSalesRep_ID(salesRepID);
-		ec.setDocumentNo("");
-		if (dateTrxTo != null) {
-			ec.setDateDoc(dateTrxTo);
-		} else if (dateTrxFrom != null) {
-			ec.setDateDoc(dateTrxFrom);
-		} 
-		ec.save();
 	}
 	
-	private void insertTotalForBPartnerChecks(int bPartner)
-	{
+	private void insertTotalForBPartnerChecks(int bPartner)	{
 		X_T_EstadoDeCuenta ec = new X_T_EstadoDeCuenta(getCtx(), 0, get_TrxName());
 		ec.setAD_PInstance_ID(getAD_PInstance_ID());
 		ec.setC_BPartner_ID(bPartner);
@@ -358,6 +436,7 @@ public class EstadoDeCuentaProcess extends SvrProcess {
 		ec.setAccountType(accountType);
 		ec.setShowDocuments(showDocuments);
 		ec.setSalesRep_ID(salesRepID);
+		ec.setDateToDays(dateToDays);
 		ec.setDocumentNo("");
 		if (dateTrxTo != null) {
 			ec.setDateDoc(dateTrxTo);
@@ -372,8 +451,32 @@ public class EstadoDeCuentaProcess extends SvrProcess {
 		return accountType.equalsIgnoreCase("C")?"isCustomer":"isVendor";
 	}
 	
-	private void insertTotalGral(BigDecimal saldo)
-	{
+	private void insertTotalGral(BigDecimal saldo, HashMap<String, BigDecimal> saldosGeneralMultimoneda) {
+		Iterator it = saldosGeneralMultimoneda.entrySet().iterator();
+		while (it.hasNext()) {
+			Entry<String, BigDecimal> e = (Entry<String, BigDecimal>) it.next();
+			
+			X_T_EstadoDeCuenta ec = new X_T_EstadoDeCuenta(getCtx(), 0, get_TrxName());
+			ec.setAD_PInstance_ID(getAD_PInstance_ID());
+			ec.setC_BPartner_ID(0);
+			ec.setbpartner("             TOTAL GENERAL " + e.getKey() + ":");
+			ec.setOpenAmt(e.getValue());
+			if (daysfrom != MAX_DUE_DAYS*-1  || daysto != MAX_DUE_DAYS) {
+				ec.setDaysDue(daysfrom);
+			}
+			ec.setAccountType(accountType);
+			ec.setShowDocuments(showDocuments);
+			ec.setSalesRep_ID(salesRepID);
+			ec.setDateToDays(dateToDays);
+			ec.setDocumentNo("");
+			if (dateTrxTo != null) {
+				ec.setDateDoc(dateTrxTo);
+			} else if (dateTrxFrom != null) {
+				ec.setDateDoc(dateTrxFrom);
+			} 
+			ec.save();
+		}
+				
 		X_T_EstadoDeCuenta ec = new X_T_EstadoDeCuenta(getCtx(), 0, get_TrxName());
 		ec.setAD_PInstance_ID(getAD_PInstance_ID());
 		ec.setC_BPartner_ID(0);
@@ -385,6 +488,7 @@ public class EstadoDeCuentaProcess extends SvrProcess {
 		ec.setAccountType(accountType);
 		ec.setShowDocuments(showDocuments);
 		ec.setSalesRep_ID(salesRepID);
+		ec.setDateToDays(dateToDays);
 		ec.setDocumentNo("");
 		if (dateTrxTo != null) {
 			ec.setDateDoc(dateTrxTo);

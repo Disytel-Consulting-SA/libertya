@@ -2615,6 +2615,34 @@ UPDATE c_country SET countrycodefe = '436' WHERE c_country_id = 326;
 UPDATE c_country SET countrycodefe = '444' WHERE c_country_id = 286;
 -- 445	UCRANIA
 UPDATE c_country SET countrycodefe = '445' WHERE c_country_id = 331;
+-- ISRAEL
+UPDATE c_country SET countrycodefe = '319' WHERE c_country_id = 213;
+-- HONG KONG
+UPDATE c_country SET countrycodefe = '341' WHERE c_country_id = 205;
+-- SWITZERLAND
+UPDATE c_country SET countrycodefe = '430' WHERE c_country_id = 107;
+-- SINGAPORE
+UPDATE c_country SET countrycodefe = '333' WHERE c_country_id = 300;
+-- MALTA
+UPDATE c_country SET countrycodefe = '420' WHERE c_country_id = 241;
+-- BRUNEI DARUSSALAM
+UPDATE c_country SET countrycodefe = '346' WHERE c_country_id = 141;
+-- GERMANY - DEUSTSCHLAND
+UPDATE c_country SET countrycodefe = '438' WHERE c_country_id = 101;
+-- LUXEMBOURG
+UPDATE c_country SET countrycodefe = '419' WHERE c_country_id = 233;
+-- TAHITI POLINESIA FRANCESA
+UPDATE c_country SET countrycodefe = '147' WHERE c_country_id = 1010101;
+-- UNITED KINGDOM
+UPDATE c_country SET countrycodefe = '426' WHERE c_country_id = 333;
+-- NEDERLANDS
+UPDATE c_country SET countrycodefe = '423' WHERE c_country_id = 105;
+-- DOMINICAN REPUBLICAN
+UPDATE c_country SET countrycodefe = '209' WHERE c_country_id = 170;
+-- JERSEY
+UPDATE c_country SET countrycodefe = '509' WHERE c_country_id = 1010056;
+-- CYPRUS
+UPDATE c_country SET countrycodefe = '435' WHERE c_country_id = 165;
 
 -- 20150823-1735 Nueva columna para indicar el código de unidad de medida que asigna la AFIP (Facturación Electrónica).
 UPDATE ad_system SET dummy = (SELECT addcolumnifnotexists('C_UOM','uomcodefe', 'character varying(10)'));
@@ -2955,3 +2983,7 @@ language plpgsql;
 
 --Creación de vista v_documents_org
 create or replace view v_documents_org as select * from v_documents_org_filtered(-1, false);
+
+--20150920-2100 Nuevas columnas utilizadas en reporte Estado de Cuenta de EC
+update ad_system set dummy = (SELECT addcolumnifnotexists('T_EstadoDeCuenta', 'DateAcct', 'timestamp without time zone'));
+update ad_system set dummy = (SELECT addcolumnifnotexists('T_EstadoDeCuenta', 'DateToDays', 'timestamp without time zone'));
