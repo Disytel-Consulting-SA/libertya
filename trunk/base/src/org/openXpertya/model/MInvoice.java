@@ -4204,7 +4204,7 @@ public class MInvoice extends X_C_Invoice implements DocAction {
 			if (getcaecbte() != getNumeroComprobante()) {
 				ProcessorWSFE processor = new ProcessorWSFE(this);
 				String errorMsg = processor.generateCAE();
-				if (errorMsg != null) {
+				if (Util.isEmpty(processor.getCAE())) {
 					setcaeerror(errorMsg);
 					m_processMsg = errorMsg;
 					log.log(Level.SEVERE, "CAE Error: " + errorMsg);
@@ -4212,7 +4212,7 @@ public class MInvoice extends X_C_Invoice implements DocAction {
 				} else {
 					setcae(processor.getCAE());
 					setvtocae(processor.getDateCae());
-					setcaeerror(null);
+					setcaeerror(errorMsg);
 					int nroCbte = Integer.parseInt(processor.getNroCbte());
 					this.setNumeroComprobante(nroCbte);
 
