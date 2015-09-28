@@ -40,6 +40,7 @@ public abstract class Wsfe {
 	public Wsfe(MInvoice inv) {
 		this.invoice = inv;
 		setTrxName(invoice.get_TrxName());
+		this.wsfeResult = new WsfeResult();
 	}
 	
 	/* Getters y Setters */
@@ -98,7 +99,7 @@ public abstract class Wsfe {
 		/**
 		 * El nombre de AD_Preference a consultar se forma concatenando el valor WSFE_PV y el Nro de Punto de Venta
 		 */
-		MPreference preference = MPreference.getUserPreference(Env.getCtx(), "WSFE_PV"+docType.getPosNumber(), getTrxName(), docType.getAD_Org_ID());
+		MPreference preference = MPreference.getUserPreference(Env.getCtx(), "WSFE_PV"+docType.getPosNumber(), getTrxName());
 		if(preference == null){
 			// En el caso que no se haya encontrado ninguna preferencia a partir del Nro de Punto de Venta se busca utilizando el valor por defecto que es: WSFE
 			preference = MPreference.getUserPreference(Env.getCtx(), "WSFE", getTrxName());
@@ -231,7 +232,6 @@ public abstract class Wsfe {
 	protected void setValues(){
 		try{
 			String[] values = getOutputLine().split(":");
-			wsfeResult = new WsfeResult();
 			wsfeResult.setAcepted(values[0]);
 			wsfeResult.setCae(values[1]);
 			wsfeResult.setNroCbte(values[2]);
