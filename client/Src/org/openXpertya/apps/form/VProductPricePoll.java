@@ -10,8 +10,14 @@ import java.math.BigDecimal;
 
 import javax.swing.BoxLayout;
 import javax.swing.JFrame;
-import javax.swing.JTextArea;
+import javax.swing.JTextField;
+import javax.swing.JTextPane;
 import javax.swing.SwingConstants;
+import javax.swing.text.BadLocationException;
+import javax.swing.text.SimpleAttributeSet;
+import javax.swing.text.StyleConstants;
+import javax.swing.text.StyledDocument;
+import javax.swing.text.Utilities;
 
 import org.compiere.swing.CLabel;
 import org.compiere.swing.CPanel;
@@ -25,15 +31,15 @@ import org.openXpertya.util.Env;
 public class VProductPricePoll extends FormFrame  {
 
 	// Labels
-	CLabel valueLabel = new CLabel("Codigo:");
-	CLabel upcLabel = new CLabel("UPC:");
-	CLabel nameLabel = new CLabel("Articulo:");
-	CLabel priceLabel = new CLabel("Precio:");
+	CLabel valueLabel = new CLabel("CODIGO");
+	CLabel upcLabel = new CLabel("UPC");
+	CLabel nameLabel = new CLabel("ARTICULO");
+	CLabel priceLabel = new CLabel("PRECIO");
 	
 	// Campos
 	CTextField upcField = new CTextField();
 	CTextField valueField = new CTextField(); 
-	JTextArea nameField = new JTextArea();
+	JTextPane nameField = new JTextPane();
 	CTextField priceField = new CTextField();
 	
 	//dimensiones
@@ -54,16 +60,24 @@ public class VProductPricePoll extends FormFrame  {
 	// Thread para el vaciado de datos del display
 	DisplayTimer timer = null;
 	
+	/** Omision de argumento Version Lista de precio */
+	public static String SKIP_PLV_ARGUMENT = "-1";
+	
+	protected static Color backColor = new Color(150, 0, 100);
+	protected static Color nameColor = Color.WHITE;
+	protected static Color priceColor = Color.YELLOW;
+	
 	public VProductPricePoll() {
 		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		setTitle("Consulta de precio");
 		setExtendedState(JFrame.MAXIMIZED_BOTH);
-		//setUndecorated(true);
+//		setUndecorated(true);
 		setPreferredSize(screenSize);
 		
 		loadComponents();
 		startTimer();
 		
+		setJMenuBar(null);
 		AEnv.showCenterScreen(this);
 	}
 
@@ -102,7 +116,7 @@ public class VProductPricePoll extends FormFrame  {
 		namePanel.setLayout(new BoxLayout(namePanel, BoxLayout.X_AXIS));
 		namePanel.setPreferredSize(new Dimension(screenSize.width, labelHeight));
 		namePanel.setMaximumSize(new Dimension(screenSize.width, labelHeight));
-		nameLabel.setHorizontalAlignment(SwingConstants.LEFT);
+		nameLabel.setPreferredSize(new Dimension(screenSize.width, labelHeight));
 		namePanel.add(nameLabel);
 		getContentPane().add(namePanel);
 		
@@ -115,7 +129,7 @@ public class VProductPricePoll extends FormFrame  {
 		pricePanel.setLayout(new BoxLayout(pricePanel, BoxLayout.X_AXIS));
 		pricePanel.setPreferredSize(new Dimension(screenSize.width, labelHeight));
 		pricePanel.setMaximumSize(new Dimension(screenSize.width, labelHeight));
-		priceLabel.setHorizontalAlignment(SwingConstants.LEFT);
+		priceLabel.setPreferredSize(new Dimension(screenSize.width, labelHeight));
 		pricePanel.add(priceLabel);
 		getContentPane().add(pricePanel);
 						
@@ -136,27 +150,38 @@ public class VProductPricePoll extends FormFrame  {
 		priceField.setFont(new Font(nameField.getName(), Font.BOLD, fontSizeFieldGiant));
 
 		// Colores componentes
-		Color backColor = new Color(220, 220, 220);
 		upcField.setBackground(backColor);
 		valueField.setBackground(backColor);
 		nameField.setBackground(backColor);
 		priceField.setBackground(backColor);
 		
-		upcField.setForeground(Color.GRAY);
-		valueField.setForeground(Color.BLACK);
-		nameField.setForeground(Color.BLUE);
-		priceField.setForeground(Color.RED);
+		upcField.setForeground(nameColor);
+		valueField.setForeground(nameColor);
+		nameField.setForeground(nameColor);
+		priceField.setForeground(priceColor);
+		
+		// Alineacion
+		upcLabel.setHorizontalAlignment(JTextField.CENTER);
+		valueLabel.setHorizontalAlignment(JTextField.CENTER);
+		nameLabel.setHorizontalAlignment(JTextField.CENTER);
+		priceLabel.setHorizontalAlignment(JTextField.CENTER);
+
+		upcField.setHorizontalAlignment(JTextField.CENTER);
+		valueField.setHorizontalAlignment(JTextField.CENTER);
+		priceField.setHorizontalAlignment(JTextField.CENTER);
+		
+		StyledDocument doc = nameField.getStyledDocument();
+		SimpleAttributeSet center = new SimpleAttributeSet();
+		StyleConstants.setAlignment(center, StyleConstants.ALIGN_CENTER);
+		doc.setParagraphAttributes(0, doc.getLength(), center, false);
 		
 		// Configuraciones adicionales 
 		upcField.setCaretColor(backColor);
 		upcField.setBorder(null);
-		nameField.setLineWrap(true);
-		nameField.setWrapStyleWord(true);
 		valueField.setEditable(false);
 		valueField.setBorder(null);
 		nameField.setEditable(false);
 		priceField.setEditable(false);
-		
 		
 		// Cargar los componentes
 		resetDisplay(true);
@@ -213,7 +238,7 @@ public class VProductPricePoll extends FormFrame  {
 		
 		if (upcField == null || upcField.getText() == null || upcField.getText().length() == 0 || productID == -1) {
 			valueField.setText("");
-			nameField.setText("ARTICULO INEXISTENTE");
+			setTextNameField("ARTICULO INEXISTENTE");
 			priceField.setText("");
 			return;
 		}
@@ -221,11 +246,11 @@ public class VProductPricePoll extends FormFrame  {
 		// Datos artículo
 		MProduct aProduct = new MProduct(Env.getCtx(), productID, null);
 		valueField.setText(aProduct.getValue());
-		nameField.setText(aProduct.getName());
+		setTextNameField(aProduct.getName());
 		
 		// Precio
 		BigDecimal price = 
-				DB.getSQLValueBD(null, 	" SELECT pricelist " +
+				DB.getSQLValueBD(null, 	" SELECT pricestd " +
 										" FROM m_productprice " +
 										" WHERE m_product_id = " + productID + 
 										" AND m_pricelist_version_id = ? ", Env.getContextAsInt(Env.getCtx(), "#M_PriceList_Version_ID"));
@@ -236,6 +261,7 @@ public class VProductPricePoll extends FormFrame  {
 		}
 		
 		priceField.setText("$" + price.setScale(2, BigDecimal.ROUND_HALF_EVEN).toString());
+
 	}
 	
 	// Inicia el contador 
@@ -250,9 +276,33 @@ public class VProductPricePoll extends FormFrame  {
 		if (cleanUPC)
 			upcField.setText("");
 		valueField.setText(""); 
-		nameField.setText("PASE EL ARTICULO POR EL LECTOR");
+		setTextNameField("CONSULTA DE PRECIO\nPASE EL ARTICULO POR EL LECTOR");
 		priceField.setText("");
 		displaying = false;
+	}
+	
+	// Seteo del campo name
+	protected void setTextNameField(String text) {
+		nameField.setText((getNameFieldRowCount() <= 2 ? "\n" : "") + text);
+	}
+	
+	// Workaround basico para lograr al menos un centrado vertical rudimentario en el campo name, 
+	// suponiendo resoluciones de visualización en pantallas tradicionales.
+	protected int getNameFieldRowCount() {
+		int totalCharacters = nameField.getText().length(); 
+		int lineCount = (totalCharacters == 0) ? 1 : 0;
+
+		try {
+		   int offset = totalCharacters; 
+		   while (offset > 0) {
+		      offset = Utilities.getRowStart(nameField, offset) - 1;
+		      lineCount++;
+		   }
+		   return lineCount;
+		} catch (BadLocationException e) {
+		    e.printStackTrace();
+		    return lineCount;
+		} 
 	}
 	
 	
@@ -275,8 +325,9 @@ public class VProductPricePoll extends FormFrame  {
 				if (currentCount >= DISPLAY_TIME_SECONDS) {
 					currentCount = 0;
 					if (handler.displaying)
-						// No se vacia el UPC dado que justo podría estar cargandose los números del nuevo UPC a consultar
-						handler.resetDisplay(false);
+						// Originalmente en false. De esta manera, no se vaciaba el UPC dado que justo podría estar cargandose los números del nuevo UPC a consultar
+						// Sin embargo, como es con lector de codigo de barras, ésto no debería presentar retardo alguno.
+						handler.resetDisplay(true);
 				} else { 
 					try {
 						Thread.sleep(1000);
@@ -299,8 +350,12 @@ public class VProductPricePoll extends FormFrame  {
 	public static void main(String[] args)
 	{
 		System.out.println(	"Iniciando...  Argumentos soportados: \n" +
-							" 				1) M_PriceList_Version_ID. Se puede omitir no indicándolo o bien indicando -1 si es necesario indicar demas argumentos. Si no se especifica o se indica -1 lo determina segun configuración. \n" +
-							" 				2) Duración de display.  Por defecto " + DisplayTimer.DISPLAY_TIME_SECONDS + " segundos. Opcional. \n ");
+							" 				1) M_PriceList_Version_ID. Opcional si no se especifican más argumentos.  Se puede omitir indicando " + SKIP_PLV_ARGUMENT + " si es necesario indicar demas argumentos. Si no se especifica o se indica " + SKIP_PLV_ARGUMENT + " determina la organización segun configuración de replicación. \n" +
+							" 				2) Duración de display.  Por defecto " + DisplayTimer.DISPLAY_TIME_SECONDS + " segundos. Opcional si no se especifican más argumentos. \n " + 
+							" 				3) Color de fondo en formato RRGGBB hexadecimal. Opcional si no se especifican más argumentos. \n " + 
+							" 				4) Color de nombre de artículo en formato RRGGBB hexadecimal. Opcional si no se especifican más argumentos. \n " +
+							" 				5) Color de precio en formato RRGGBB hexadecimal. Opcional si no se especifican más argumentos. \n  " +
+							" 				Ejemplo para omitir PLV, indicar 5 segundos y configurar colores: VProductPricePoll -1 5 000000 15FF15 2050FF "); 
 		
 	  	String oxpHomeDir = System.getenv("OXP_HOME"); 
 	  	if (oxpHomeDir == null) {
@@ -313,7 +368,6 @@ public class VProductPricePoll extends FormFrame  {
 	  		System.err.println("ERROR: Error al iniciar la configuracion (postgres esta corriendo?) ");
 	  		System.exit(1);
 	  	}
-
 	  	
 	  	// Configuracion de compañía y organización.  Por defecto se toma a partir de la configuración de replicacion.
 	  	int clientId = DB.getSQLValue(null, " SELECT AD_Client_ID FROM AD_ReplicationHost WHERE thisHost = 'Y' ");
@@ -321,7 +375,7 @@ public class VProductPricePoll extends FormFrame  {
 	  	int priceListVersionID = -1;
 
 	  	// Si se recibe la version de la lista de precio por argumento, se redefine la compañía y organización a partir de la version 
-	  	if (args.length > 0 && args[0] != null && args[0].length() > 0 && !"-1".equals(args[0])) {
+	  	if (args.length > 0 && args[0] != null && args[0].length() > 0 && !SKIP_PLV_ARGUMENT.equals(args[0])) {
 	  		priceListVersionID = Integer.parseInt(args[0]);
 	  		clientId = DB.getSQLValue(null, "SELECT AD_Client_ID FROM M_PriceList_Version WHERE M_PriceList_Version_ID = " + priceListVersionID);
 	  		orgId = DB.getSQLValue(null, "SELECT AD_Org_ID FROM M_PriceList_Version WHERE M_PriceList_Version_ID = " + priceListVersionID);
@@ -333,7 +387,9 @@ public class VProductPricePoll extends FormFrame  {
 		  						 						" FROM m_pricelist_version plv " +
 		  						 						" INNER JOIN m_pricelist pl ON plv.m_pricelist_id = pl.m_pricelist_id " +
 		  						 						" WHERE pl.issopricelist = 'Y' " +
-		  						 						" AND plv.ad_org_id = ?", orgId);	
+		  						 						" AND plv.ad_org_id = ?" +
+		  						 						" ORDER BY plv.UPDATED desc " +
+		  						 						" LIMIT 1", orgId);	
 	  	}
 	  	
 	  	// Setear valores en contexto 
@@ -345,6 +401,21 @@ public class VProductPricePoll extends FormFrame  {
 	  	// Redefinicion de tiempo de visualizacion?
 	  	if (args.length > 1 && args[1] != null && args[1].length() > 0) {
 	  		DisplayTimer.DISPLAY_TIME_SECONDS = Integer.parseInt(args[1]);
+	  	}
+
+	  	// Redefinicion de color de fondo
+	  	if (args.length > 2 && args[2] != null && args[2].length() > 0) {
+	  		backColor = Color.decode("0x" + args[2]);
+	  	}
+	  	
+	  	// Redefinicion de color de campo nombre
+	  	if (args.length > 3 && args[3] != null && args[3].length() > 0) {
+	  		nameColor = Color.decode("0x" + args[3]);
+	  	}
+	  	
+	  	// Redefinicion de color de campo precio
+	  	if (args.length > 4 && args[4] != null && args[4].length() > 0) {
+	  		priceColor = Color.decode("0x" + args[4]);
 	  	}
 	  	
 	  	System.out.println("ClientID:" + clientId + " OrgID:" + orgId + " PriceListVersionID:" + priceListVersionID + " DisplayTime:" + DisplayTimer.DISPLAY_TIME_SECONDS);
