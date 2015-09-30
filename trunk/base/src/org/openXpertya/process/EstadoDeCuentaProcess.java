@@ -40,6 +40,10 @@ public class EstadoDeCuentaProcess extends SvrProcess {
 	Timestamp dateConvert = null;
 	int currencyID;
 	
+	private String clientISO;
+	private HashMap<String, BigDecimal> saldosMultimoneda = new HashMap<String, BigDecimal>();
+	private HashMap<String, BigDecimal> saldosGeneralMultimoneda = new HashMap<String, BigDecimal>();
+	
 	@Override
 	protected void prepare() {
 		
@@ -279,12 +283,8 @@ public class EstadoDeCuentaProcess extends SvrProcess {
 		BigDecimal subSaldo = new BigDecimal(0);
 		BigDecimal saldogral = new BigDecimal(0);
 		
-		String clientISO = MCurrency.getISO_Code(getCtx(), currencyClient);
-		
-		HashMap<String, BigDecimal> saldosMultimoneda = new HashMap<String, BigDecimal>();
+		clientISO = MCurrency.getISO_Code(getCtx(), currencyClient);	
 		saldosMultimoneda.put(clientISO, BigDecimal.ZERO);
-		
-		HashMap<String, BigDecimal> saldosGeneralMultimoneda = new HashMap<String, BigDecimal>();
 		saldosGeneralMultimoneda.put(clientISO, BigDecimal.ZERO);
 		
 		while (rs.next()) {
@@ -292,25 +292,14 @@ public class EstadoDeCuentaProcess extends SvrProcess {
 			if (bPartner != bPartnerOld)
 			{
 				if (bPartnerOld != -1){ 
-					insertTotalForBPartnerOld(bPartner, saldosMultimoneda);
+					insertTotalForBPartnerOld(bPartner);
 					insertTotalForBPartnerChecks(bPartner);
 				}
 				saldogral=saldogral.add(saldo);
 				bPartnerOld = bPartner;
 				saldo = new BigDecimal(0);
 				
-				Iterator it = saldosMultimoneda.entrySet().iterator();
-				while (it.hasNext()) {
-					Entry<String, BigDecimal> e = (Entry<String, BigDecimal>) it.next();
-					
-					if (!saldosGeneralMultimoneda.containsKey(e.getKey())) {
-						saldosGeneralMultimoneda.put(e.getKey(), BigDecimal.ZERO);
-					}
-					saldosGeneralMultimoneda.put(e.getKey(), saldosGeneralMultimoneda.get(e.getKey()).add(e.getValue()));	
-				}
-				
-				saldosMultimoneda = new HashMap<String, BigDecimal>();
-				saldosMultimoneda.put(clientISO, BigDecimal.ZERO);
+				incrementarSaldosGeneralMultimoneda();
 			}
 			
 			X_T_EstadoDeCuenta ec = new X_T_EstadoDeCuenta(getCtx(), 0, get_TrxName());
@@ -340,11 +329,7 @@ public class EstadoDeCuentaProcess extends SvrProcess {
 			
 			BigDecimal rate = MConversionRate.getRate(rs.getInt("c_currency_id"), currencyClient, this.dateConvert, rs.getInt("c_conversiontype_id"), getAD_Client_ID(), 0);
 			String fromISO = MCurrency.getISO_Code(getCtx(), rs.getInt("c_currency_id"));
-			
-			if (!saldosMultimoneda.containsKey(fromISO)) {
-				saldosMultimoneda.put(fromISO, BigDecimal.ZERO);
-			}
-			saldosMultimoneda.put(fromISO, saldosMultimoneda.get(fromISO).add(ec.getOpenAmtMulticurrency()));
+			this.incrementarSaldosMultimoneda(ec, fromISO);
 			
 			if (rate == null) {
 				String toISO = MCurrency.getISO_Code(getCtx(), currencyClient);
@@ -375,15 +360,45 @@ public class EstadoDeCuentaProcess extends SvrProcess {
 			saldo = saldo.add(subSaldo);
 		}
 		if (bPartner != -1)
-		{	insertTotalForBPartnerOld(bPartner, saldosMultimoneda);
+		{	insertTotalForBPartnerOld(bPartner);
 			insertTotalForBPartnerChecks(bPartner);
+			
+			incrementarSaldosGeneralMultimoneda();
+			
 			saldogral=saldogral.add(saldo);
-			insertTotalGral(saldogral, saldosGeneralMultimoneda);
+			insertTotalGral(saldogral);
 		}
 		
 	}
 	
-	private void insertTotalForBPartnerOld(int bPartner, HashMap<String, BigDecimal> saldosMultimoneda)	{
+	private void incrementarSaldosMultimoneda(X_T_EstadoDeCuenta ec, String fromISO){
+		if (!saldosMultimoneda.containsKey(fromISO)) {
+			saldosMultimoneda.put(fromISO, BigDecimal.ZERO);
+		}
+		BigDecimal saldoMultimoneda = ec.getOpenAmtMulticurrency();
+		if (!ec.gettipodoc().equalsIgnoreCase(libroDeCaja)) 
+			saldoMultimoneda = saldoMultimoneda.multiply(new BigDecimal(ec.getsigno_issotrx()));
+		else
+			saldoMultimoneda = saldoMultimoneda.abs().multiply(new BigDecimal(ec.getsigno_issotrx()));					
+		saldosMultimoneda.put(fromISO, saldosMultimoneda.get(fromISO).add(saldoMultimoneda));
+	}
+	
+	private void incrementarSaldosGeneralMultimoneda(){
+		Iterator it = saldosMultimoneda.entrySet().iterator();
+		while (it.hasNext()) {
+			Entry<String, BigDecimal> e = (Entry<String, BigDecimal>) it.next();
+			
+			if (!saldosGeneralMultimoneda.containsKey(e.getKey())) {
+				saldosGeneralMultimoneda.put(e.getKey(), BigDecimal.ZERO);
+			}
+			saldosGeneralMultimoneda.put(e.getKey(), saldosGeneralMultimoneda.get(e.getKey()).add(e.getValue()));	
+		}
+		
+		saldosMultimoneda = new HashMap<String, BigDecimal>();
+		saldosMultimoneda.put(clientISO, BigDecimal.ZERO);
+	}
+	
+	private void insertTotalForBPartnerOld(int bPartner)	{
 		Iterator it = saldosMultimoneda.entrySet().iterator();
 		while (it.hasNext()) {
 			Entry<String, BigDecimal> e = (Entry<String, BigDecimal>) it.next();
@@ -451,7 +466,7 @@ public class EstadoDeCuentaProcess extends SvrProcess {
 		return accountType.equalsIgnoreCase("C")?"isCustomer":"isVendor";
 	}
 	
-	private void insertTotalGral(BigDecimal saldo, HashMap<String, BigDecimal> saldosGeneralMultimoneda) {
+	private void insertTotalGral(BigDecimal saldo) {
 		Iterator it = saldosGeneralMultimoneda.entrySet().iterator();
 		while (it.hasNext()) {
 			Entry<String, BigDecimal> e = (Entry<String, BigDecimal>) it.next();
