@@ -70,15 +70,17 @@ public class VProductPricePoll extends FormFrame  {
 	public VProductPricePoll() {
 		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		setTitle("Consulta de precio");
-		setExtendedState(JFrame.MAXIMIZED_BOTH);
-//		setUndecorated(true);
 		setPreferredSize(screenSize);
+//		setUndecorated(true);
+		
 		
 		loadComponents();
 		startTimer();
 		
 		setJMenuBar(null);
 		AEnv.showCenterScreen(this);
+		
+		setExtendedState(JFrame.MAXIMIZED_BOTH);
 	}
 
 	
@@ -216,6 +218,10 @@ public class VProductPricePoll extends FormFrame  {
 				}
 			}
 		});
+		
+		valueField.setFocusable(false);
+		nameField.setFocusable(false);
+		priceField.setFocusable(false);
 		
 		upcField.requestFocus();
 	}
