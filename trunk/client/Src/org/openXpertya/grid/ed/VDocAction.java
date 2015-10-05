@@ -378,6 +378,7 @@ public class VDocAction extends JDialog implements ActionListener {
             if( DocStatus.equals( DocumentEngine.STATUS_Completed )) {
                 options[ index++ ] = DocumentEngine.ACTION_Reverse_Correct;
                 options[ index++ ] = DocumentEngine.ACTION_Reverse_Accrual;
+                options[ index++ ] = DocumentEngine.ACTION_Void;
             }
         } else if( m_AD_Table_ID == MAllocationHdr.Table_ID ) {
         	// -------------------------------------------------------------------------------

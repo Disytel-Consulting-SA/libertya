@@ -21,7 +21,10 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.Properties;
 import java.util.logging.Level;
 
@@ -31,6 +34,7 @@ import org.openXpertya.util.CLogger;
 import org.openXpertya.util.DB;
 import org.openXpertya.util.Env;
 import org.openXpertya.util.Msg;
+import org.openXpertya.util.Util;
 
 /**
  * Descripción de Clase
@@ -43,6 +47,9 @@ import org.openXpertya.util.Msg;
 public class MJournalBatch extends X_GL_JournalBatch implements DocAction {
 
 	private static CLogger s_log = CLogger.getCLogger(MJournalBatch.class);
+	
+	private static final String REVERSECORRECTIT_REVERSEACTION = "reverseAccrualIt";
+	private static final String REVERSEACCRUALIT_REVERSEACTION = "reverseCorrectIt";
 	
     /**
      * Descripción de Método
@@ -401,7 +408,7 @@ public class MJournalBatch extends X_GL_JournalBatch implements DocAction {
 
         // Add up Amounts & prepare them
 
-        MJournal[] journals = getJournals( false );
+        MJournal[] journals = getJournals( true );
 
         if( journals.length == 0 ) {
             m_processMsg = "@NoLines@";
@@ -639,22 +646,51 @@ public class MJournalBatch extends X_GL_JournalBatch implements DocAction {
      *
      * @return
      */
-	public boolean voidIt()
-	{
-		MJournal[] journals = getJournals(true);
-		for (int i = 0; i < journals.length; i++)
-		{
-			MJournal journal = journals[i];
-			if (journal.voidIt())
-				journal.save();
-			else
+	public boolean voidIt() {
+		// Si el período es el actual, entonces eliminar las entradas fact del
+		// asiento manual actual
+		Timestamp actualDate = Env.getTimestamp();
+		int actualPeriodID = MPeriod.getC_Period_ID(getCtx(), actualDate);
+		DateFormat actualDateFormat = new SimpleDateFormat("dd-MM-yyyy");
+		String actualDateFormatted = actualDateFormat.format(new Date(actualDate.getTime()));
+		// No existe período para la fecha actual
+		if(Util.isEmpty(actualPeriodID, true)){
+			m_processMsg = Msg.getMsg(getCtx(), "PeriodNotFoundForDate", new Object[]{actualDateFormatted});
+    		return false;
+		}
+		// El período actual es el período del asiento actual? 
+		if(getC_Period_ID() == actualPeriodID){
+			MJournal[] journals = getJournals(true);
+			for (int i = 0; i < journals.length; i++)
 			{
-				m_processMsg = journal.getProcessMsg();
-        		return false;
+				MJournal journal = journals[i];
+				if (journal.voidIt()){
+					journal.setTotalCr(BigDecimal.ZERO);
+					journal.setTotalDr(BigDecimal.ZERO);
+					if(!journal.save()){
+						m_processMsg = CLogger.retrieveErrorAsString();
+		        		return false;
+					}
+				}
+				else
+				{
+					m_processMsg = journal.getProcessMsg();
+	        		return false;
+				}
+			}
+			setProcessed(true);
+			setDocAction(DOCACTION_None);
+		}
+		// Se debe revertir a la fecha actual
+		else{
+	        try {
+				reverse(REVERSECORRECTIT_REVERSEACTION, actualPeriodID, actualDate, actualDate, DOCSTATUS_Voided, true);
+			} catch (Exception e) {
+				m_processMsg = e.getMessage();
+				return false;
 			}
 		}
-		setProcessed(true);
-		setDocAction(DOCACTION_None);
+		
 		return true;
     }    // voidIt
 
@@ -714,72 +750,15 @@ public class MJournalBatch extends X_GL_JournalBatch implements DocAction {
      */
 
     public boolean reverseCorrectIt() {
-        log.info( "reverseCorrectIt - " + toString());
-
-        MJournal[] journals = getJournals( true );
-
-        // check prerequisites
-
-        for( int i = 0;i < journals.length;i++ ) {
-            MJournal journal = journals[ i ];
-
-            if( !journal.isActive()) {
-                continue;
-            }
-
-            // All need to be closed/Completed
-
-            if( DOCSTATUS_Completed.equals( journal.getDocStatus())) {
-                ;
-            } else {
-                m_processMsg = "All Journals need to be Compleded: " + journal.getSummary();
-
-                return false;
-            }
-        }
-
-        // Reverse it
-
-        MJournalBatch reverse = new MJournalBatch( this );
-
-        reverse.setDateDoc( getDateDoc());
-        reverse.setC_Period_ID( getC_Period_ID());
-        reverse.setDateAcct( getDateAcct());
-
-        // Reverse indicator
-
-        String description = reverse.getDescription();
-
-        if( description == null ) {
-            description = "** " + getDocumentNo() + " **";
-        } else {
-            description += " ** " + getDocumentNo() + " **";
-        }
-
-        reverse.setDescription( description );
-        reverse.save();
-
-        //
-
-        // Reverse Journals
-
-        for( int i = 0;i < journals.length;i++ ) {
-            MJournal journal = journals[ i ];
-
-            if( !journal.isActive()) {
-                continue;
-            }
-
-            if( journal.reverseCorrectIt( reverse.getGL_JournalBatch_ID()) == null ) {
-                m_processMsg = "Could not reverse " + journal;
-
-                return false;
-            }
-
-            journal.save();
-        }
-
-        return true;
+    	boolean result = true;
+        try {
+        	Timestamp actualDate = Env.getTimestamp();
+			reverse(REVERSECORRECTIT_REVERSEACTION, 0, actualDate, actualDate, true);
+		} catch (Exception e) {
+			m_processMsg = e.getMessage();
+			result = false;
+		}
+        return result;
     }    // reverseCorrectionIt
 
     /**
@@ -790,7 +769,23 @@ public class MJournalBatch extends X_GL_JournalBatch implements DocAction {
      */
 
     public boolean reverseAccrualIt() {
-        log.info( "reverseAccrualIt - " + toString());
+        boolean result = true;
+        try {
+        	Timestamp actualDate = Env.getTimestamp();
+			reverse(REVERSEACCRUALIT_REVERSEACTION, 0, actualDate, actualDate, false);
+		} catch (Exception e) {
+			m_processMsg = e.getMessage();
+			result = false;
+		}
+        return result;
+    }    // reverseAccrualIt
+
+    protected void reverse(String reverseAction, int periodID, Timestamp dateDoc, Timestamp dateAcct, boolean completeReverse) throws Exception{
+    	reverse(reverseAction, periodID, dateDoc, dateAcct, null, completeReverse);
+    }
+    
+    protected void reverse(String reverseAction, int periodID, Timestamp dateDoc, Timestamp dateAcct, String resultDocStatus, boolean completeReverse) throws Exception{
+    	log.info( "reverseAccrualIt - " + toString());
 
         MJournal[] journals = getJournals( true );
 
@@ -808,9 +803,7 @@ public class MJournalBatch extends X_GL_JournalBatch implements DocAction {
             if( DOCSTATUS_Completed.equals( journal.getDocStatus())) {
                 ;
             } else {
-                m_processMsg = "All Journals need to be Compleded: " + journal.getSummary();
-
-                return false;
+            	throw new Exception("All Journals need to be Compleded: " + journal.getSummary());
             }
         }
 
@@ -818,9 +811,9 @@ public class MJournalBatch extends X_GL_JournalBatch implements DocAction {
 
         MJournalBatch reverse = new MJournalBatch( this );
 
-        reverse.setC_Period_ID( 0 );
-        reverse.setDateDoc( new Timestamp( System.currentTimeMillis()));
-        reverse.setDateAcct( reverse.getDateDoc());
+        reverse.setC_Period_ID(periodID);
+        reverse.setDateDoc(dateDoc);
+        reverse.setDateAcct(dateAcct);
 
         // Reverse indicator
 
@@ -833,7 +826,9 @@ public class MJournalBatch extends X_GL_JournalBatch implements DocAction {
         }
 
         reverse.setDescription( description );
-        reverse.save();
+        if(!reverse.save()){
+        	throw new Exception(CLogger.retrieveErrorAsString());
+        }
 
         // Reverse Journals
 
@@ -844,18 +839,37 @@ public class MJournalBatch extends X_GL_JournalBatch implements DocAction {
                 continue;
             }
 
-            if( journal.reverseAccrualIt( reverse.getGL_JournalBatch_ID()) == null ) {
-                m_processMsg = "Could not reverse " + journal;
-
-                return false;
+            if(REVERSEACCRUALIT_REVERSEACTION.equals(reverseAction)){
+            	if( journal.reverseAccrualIt( reverse.getGL_JournalBatch_ID()) == null ) {
+            		throw new Exception("Could not reverse " + journal);
+                }
             }
-
-            journal.save();
+            else{
+                if( journal.reverseCorrectIt( reverse.getGL_JournalBatch_ID()) == null ) {
+                	throw new Exception("Could not reverse " + journal);
+                }
+            }
+            
+            if(!journal.save()){
+            	throw new Exception(CLogger.retrieveErrorAsString());
+            }
         }
-
-        return true;
-    }    // reverseAccrualIt
-
+        
+        if(completeReverse){        
+	        // Cargar nuevamente el batch
+			reverse = new MJournalBatch(getCtx(), reverse.getID(), get_TrxName());
+	        // Completar el batch
+	        if(!DocumentEngine.processAndSave(reverse, DOCACTION_Complete, false)){
+	        	throw new Exception(reverse.getProcessMsg());
+	        }
+	
+			reverse.setDocStatus(Util.isEmpty(resultDocStatus, true) ? DOCSTATUS_Reversed : resultDocStatus);
+	        reverse.setDocAction(DOCACTION_None);
+	        if(!reverse.save()){
+	        	throw new Exception(CLogger.retrieveErrorAsString());
+	        }
+        }
+    }
     
 	protected boolean beforeSave(boolean newRecord) {
 		if (getControlAmt().compareTo(Env.ZERO) < 0) {
