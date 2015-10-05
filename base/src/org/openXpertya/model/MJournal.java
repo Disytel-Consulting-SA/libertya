@@ -27,6 +27,7 @@ import java.util.logging.Level;
 
 import org.openXpertya.process.DocAction;
 import org.openXpertya.process.DocumentEngine;
+import org.openXpertya.util.CLogger;
 import org.openXpertya.util.DB;
 import org.openXpertya.util.Env;
 import org.openXpertya.util.Msg;
@@ -261,7 +262,7 @@ public class MJournal extends X_GL_Journal implements DocAction {
         }
 
         int            count     = 0;
-        MJournalLine[] fromLines = fromJournal.getLines( false );
+        MJournalLine[] fromLines = fromJournal.getLines( true );
 
         for( int i = 0;i < fromLines.length;i++ ) {
             MJournalLine toLine = new MJournalLine( getCtx(),0,fromJournal.get_TrxName());
@@ -277,21 +278,24 @@ public class MJournal extends X_GL_Journal implements DocAction {
 
             // Amounts
 
-            if( typeCR == 'C' )    // correct
+            /*if( typeCR == 'C' )    // correct
             {
                 toLine.setAmtSourceDr( fromLines[ i ].getAmtSourceDr().negate());
                 toLine.setAmtSourceCr( fromLines[ i ].getAmtSourceCr().negate());
             } else if( typeCR == 'R' )    // reverse
-            {
+            {*/
                 toLine.setAmtSourceDr( fromLines[ i ].getAmtSourceCr());
                 toLine.setAmtSourceCr( fromLines[ i ].getAmtSourceDr());
-            }
+            //}
 
             toLine.setIsGenerated( true );
             toLine.setProcessed( false );
 
             if( toLine.save()) {
                 count++;
+            }
+            else{
+				log.log(Level.SEVERE, CLogger.retrieveErrorAsString());
             }
         }
 
@@ -663,6 +667,12 @@ public class MJournal extends X_GL_Journal implements DocAction {
 				return false;	//	could not delete
         	}
 		}
+		
+		// Dejar las líneas en 0
+		DB.executeUpdate("UPDATE " + MJournalLine.Table_Name
+				+ " SET amtsourcedr = 0, amtsourcecr = 0, amtacctdr = 0, amtacctcr = 0 " + "  WHERE gl_journal_id = "
+				+ getID(), get_TrxName());		
+		
 		setProcessed(true);
 		setDocStatus(DOCSTATUS_Voided);
 		setDocAction(DOCACTION_None);

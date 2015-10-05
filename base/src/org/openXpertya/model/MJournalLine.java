@@ -309,9 +309,9 @@ public class MJournalLine extends X_GL_JournalLine {
 			return false;
 		}
 		
-		if(getAmtSourceCr().compareTo(BigDecimal.ZERO) <= 0 
-				&& getAmtSourceDr().compareTo(BigDecimal.ZERO) <= 0) {
-			log.saveError("SaveError", "Al menos una de las columnas debe ser mayor a 0");
+		if(getAmtSourceCr().compareTo(BigDecimal.ZERO) == 0 
+				&& getAmtSourceDr().compareTo(BigDecimal.ZERO) == 0) {
+			log.saveError("SaveError", "Al menos una de las columnas debe ser distinta a 0");
 			return false;
 		}
 		
