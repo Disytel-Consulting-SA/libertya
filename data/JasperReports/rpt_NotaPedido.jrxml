@@ -808,11 +808,11 @@
 			</band>
 		</detail>
 		<columnFooter>
-			<band height="98"  isSplitAllowed="true" >
+			<band height="106"  isSplitAllowed="true" >
 				<staticText>
 					<reportElement
-						x="1"
-						y="19"
+						x="2"
+						y="6"
 						width="73"
 						height="14"
 						key="staticText-21"
@@ -820,15 +820,15 @@
 						isPrintInFirstWholeBand="true"
 						isPrintWhenDetailOverflows="true"/>
 					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
-					<textElement>
+					<textElement verticalAlignment="Top">
 						<font size="8"/>
 					</textElement>
 				<text><![CDATA[Observaciones:]]></text>
 				</staticText>
 				<staticText>
 					<reportElement
-						x="0"
-						y="32"
+						x="2"
+						y="35"
 						width="73"
 						height="14"
 						key="staticText-22"
@@ -836,15 +836,15 @@
 						isPrintInFirstWholeBand="true"
 						isPrintWhenDetailOverflows="true"/>
 					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
-					<textElement>
+					<textElement verticalAlignment="Top">
 						<font size="8"/>
 					</textElement>
-				<text><![CDATA[ATENDIÓ:]]></text>
+				<text><![CDATA[Atendió:]]></text>
 				</staticText>
 				<staticText>
 					<reportElement
-						x="0"
-						y="46"
+						x="2"
+						y="49"
 						width="73"
 						height="14"
 						key="staticText-23"
@@ -852,7 +852,7 @@
 						isPrintInFirstWholeBand="true"
 						isPrintWhenDetailOverflows="true"/>
 					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
-					<textElement>
+					<textElement verticalAlignment="Top">
 						<font size="8"/>
 					</textElement>
 				<text><![CDATA[Transporte:]]></text>
@@ -860,7 +860,7 @@
 				<staticText>
 					<reportElement
 						x="109"
-						y="61"
+						y="76"
 						width="46"
 						height="14"
 						key="staticText-24"
@@ -876,7 +876,7 @@
 				<staticText>
 					<reportElement
 						x="109"
-						y="77"
+						y="92"
 						width="46"
 						height="12"
 						key="staticText-25"
@@ -890,34 +890,32 @@
 					</textElement>
 				<text><![CDATA[DNI:]]></text>
 				</staticText>
-				<textField isStretchWithOverflow="false" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
+				<textField isStretchWithOverflow="true" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
-						x="73"
-						y="32"
-						width="266"
+						x="75"
+						y="35"
+						width="285"
 						height="14"
 						key="textField-15"
 						positionType="Float"
-						isPrintInFirstWholeBand="true"
 						isPrintWhenDetailOverflows="true"/>
 					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
-					<textElement verticalAlignment="Middle">
+					<textElement verticalAlignment="Top">
 						<font size="8"/>
 					</textElement>
 				<textFieldExpression   class="java.lang.String"><![CDATA[$P{RESPONSABLE}]]></textFieldExpression>
 				</textField>
-				<textField isStretchWithOverflow="false" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
+				<textField isStretchWithOverflow="true" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
-						x="73"
-						y="46"
-						width="266"
+						x="75"
+						y="49"
+						width="285"
 						height="14"
 						key="textField-16"
 						positionType="Float"
-						isPrintInFirstWholeBand="true"
 						isPrintWhenDetailOverflows="true"/>
 					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
-					<textElement verticalAlignment="Middle">
+					<textElement verticalAlignment="Top">
 						<font size="8"/>
 					</textElement>
 				<textFieldExpression   class="java.lang.String"><![CDATA[$P{TRANSPORTE}]]></textFieldExpression>
@@ -936,18 +934,17 @@
 						isPrintWhenDetailOverflows="true"/>
 					<graphicElement stretchType="NoStretch"/>
 				</rectangle>
-				<textField isStretchWithOverflow="false" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
+				<textField isStretchWithOverflow="true" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
-						x="73"
-						y="19"
-						width="266"
-						height="14"
+						x="75"
+						y="6"
+						width="285"
+						height="29"
 						key="textField-29"
 						positionType="Float"
-						isPrintInFirstWholeBand="true"
 						isPrintWhenDetailOverflows="true"/>
 					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
-					<textElement verticalAlignment="Middle">
+					<textElement verticalAlignment="Top">
 						<font size="8"/>
 					</textElement>
 				<textFieldExpression   class="java.lang.String"><![CDATA[$P{OBSERVACION}]]></textFieldExpression>
