@@ -14,6 +14,7 @@ import org.compiere.swing.CTextPane;
 import org.openXpertya.apps.ADialog;
 import org.openXpertya.apps.AEnv;
 import org.openXpertya.apps.AUserAuth;
+import org.openXpertya.apps.AuthContainer;
 import org.openXpertya.images.ImageFactory;
 import org.openXpertya.pos.model.AuthManager;
 import org.openXpertya.pos.model.AuthOperation;
@@ -35,7 +36,8 @@ public class AuthorizationDialog extends CDialog {
 	private AuthManager authManager;
 	
 	/** Formulario del TPV para tener relacionado */
-	private PoSMainForm posMainForm;
+//	private PoSMainForm posMainForm;
+	private AuthContainer authContainer;
 	
 	/** Autorización */
 	private AUserAuth userAuth;
@@ -64,15 +66,15 @@ public class AuthorizationDialog extends CDialog {
 	/** Operaciones actuales a autorizar */
 	private List<AuthOperation> currentAuthOperations;
 	
-	public AuthorizationDialog(PoSMainForm posMainForm) {
+	public AuthorizationDialog(AuthContainer authContainer) {
 		setAuthManager(new AuthManager());
-		setPosMainForm(posMainForm);
+		setAuthContainer(authContainer);
 		initMsgs();
 	}
 	
 	private void initMsgs(){
-		MSG_OK = getPosMainForm().getMsg("OK");
-		MSG_CANCEL = getPosMainForm().getMsg("Cancel");
+		MSG_OK = getAuthContainer().getMsg("OK");
+		MSG_CANCEL = getAuthContainer().getMsg("Cancel");
 	}
 	
 	private void initComponents(){
@@ -210,10 +212,10 @@ public class AuthorizationDialog extends CDialog {
 					Integer userID = getUserAuth().getUserID();
 					User user = null;
 					if(userID != null){
-						user = getPosMainForm().getUser(userID);
+						user = getAuthContainer().getUser(userID);
 					}
 					UserAuthData authData = new UserAuthData();
-					authData.setForPOS(getPosMainForm() != null);
+					authData.setForPOS(getAuthContainer() != null);
 					authData.setAuthOperations(getCurrentAuthorizationOperations());
 					authData.setPosSupervisor(user == null? false : user.isPoSSupervisor());
 					setAuthorizeResult(getUserAuth().validateAuthorization(authData));
@@ -318,12 +320,12 @@ public class AuthorizationDialog extends CDialog {
 		return userAuth;
 	}
 
-	public void setPosMainForm(PoSMainForm posMainForm) {
-		this.posMainForm = posMainForm;
+	public void setAuthContainer(AuthContainer authContainer) {
+		this.authContainer = authContainer;
 	}
 
-	public PoSMainForm getPosMainForm() {
-		return posMainForm;
+	public AuthContainer getAuthContainer() {
+		return authContainer;
 	}
 
 	public void setAuthorizeResult(CallResult authorizeResult) {

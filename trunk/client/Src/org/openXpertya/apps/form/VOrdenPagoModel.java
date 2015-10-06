@@ -38,6 +38,7 @@ import org.openXpertya.model.MEntidadFinanciera;
 import org.openXpertya.model.MEntidadFinancieraPlan;
 import org.openXpertya.model.MInvoice;
 import org.openXpertya.model.MOrg;
+import org.openXpertya.model.MOrgInfo;
 import org.openXpertya.model.MPInstance;
 import org.openXpertya.model.MPInstancePara;
 import org.openXpertya.model.MPOSPaymentMedium;
@@ -1033,6 +1034,7 @@ public class VOrdenPagoModel {
 	public int C_BPartner_ID = 0;
 	public int AD_Org_ID = 0;
 	public MBPartner BPartner = null;
+	private Integer paymentAmount;
 	public int C_Currency_ID = Env.getContextAsInt(Env.getCtx(),
 			"$C_Currency_ID");
 	public MCurrency mCurency = MCurrency.get(m_ctx, C_Currency_ID);
@@ -1381,7 +1383,7 @@ public class VOrdenPagoModel {
 			return res;
 		}
 		
-		for (int i = 0; i < 3; i++) {
+		for (int i = 0; i < 4; i++) {
 			StringBuffer sql = new StringBuffer();
 			if (i == 0) {
 				sql.append(" SELECT COUNT(*)");
@@ -1390,8 +1392,8 @@ public class VOrdenPagoModel {
 				sql.append(" WHERE i.IsActive = 'Y' AND i.DocStatus IN ('CO', 'CL') ");
 				sql.append(" AND i.C_BPartner_ID = ? ");
 				sql.append(" AND dt.DocTypeKey = 'VP'");
-				sql.append(" AND libertya.paymentavailable(i.c_payment_id) > 0");
-				sql.append(" AND i.ad_org_id = ?  ");
+				sql.append(" AND libertya.paymentavailable(i.c_payment_id) > 0 ");
+				//sql.append(" AND i.ad_org_id = ?  ");
 			}
 			if (i == 1) {
 				sql.append(" SELECT COUNT(*)");
@@ -1401,7 +1403,7 @@ public class VOrdenPagoModel {
 				sql.append(" AND i.C_BPartner_ID = ? ");
 				sql.append(" AND dt.DocBaseType = 'APC'");
 				sql.append(" AND libertya.invoiceopen(i.c_invoice_id,null) > 0");
-				sql.append(" AND i.ad_org_id = ?  ");
+				//sql.append(" AND i.ad_org_id = ?  ");
 				sql.append(" AND dt.signo_issotrx=1 ");
 			}
 			if (i == 2) {
@@ -1411,14 +1413,26 @@ public class VOrdenPagoModel {
 				sql.append(" AND i.C_BPartner_ID = ? ");
 				sql.append(" AND SIGN(i.amount)<0 ");
 				sql.append(" AND libertya.cashlineavailable(i.c_cashline_id) <> 0 ");
-				sql.append(" AND i.ad_org_id = ?  ");
+				//sql.append(" AND i.ad_org_id = ?  ");
+			}
+			if (i==3){
+				// Se agrega consulta para saber si existen notas de débitos de cliente a proveedor sin cancelar
+				sql.append(" SELECT COUNT(*) ");
+				sql.append(" FROM libertya.c_invoice i ");
+				sql.append(" INNER JOIN libertya.C_DocType AS dt ON (dt.C_DocType_ID=i.C_DocType_ID) ");
+				sql.append(" WHERE i.DocStatus IN ('CO', 'CL') ");
+				sql.append(" AND i.C_BPartner_ID = ? ");
+				sql.append(" AND dt.DocBaseType = 'ARI' ");
+				sql.append(" AND dt.DocTypeKey like 'CDN%' ");
+				sql.append(" AND libertya.invoiceopen(i.c_invoice_id,null) > 0");
+				//sql.append(" AND i.ad_org_id = ?  ");
 			}
 			CPreparedStatement ps = null;
 			ResultSet rs = null;
 			try {
 				ps = DB.prepareStatement(sql.toString(), getTrxName());
 				ps.setInt(1, bpartner);
-				ps.setInt(2, AD_Org_ID);
+				//ps.setInt(2, AD_Org_ID);
 				rs = ps.executeQuery();
 				while (rs.next()) {
 					cantidadPagos += rs.getInt(1);
@@ -1440,6 +1454,7 @@ public class VOrdenPagoModel {
 		if (cantidadPagos > 0) {
 			res = true;
 		}
+		setPaymentAmount(cantidadPagos);
 		return res;
 	}
 
@@ -3594,5 +3609,30 @@ public class VOrdenPagoModel {
 		}
 		return false;
 	}
-	
+
+	public Integer getPaymentAmount() {
+		return paymentAmount;
+	}
+
+	public void setPaymentAmount(Integer paymentAmount) {
+		this.paymentAmount = paymentAmount;
+	}
+
+	public Integer getAmountAdvancedPayment() {
+		Integer cantidad=0;
+		for (MedioPago pago : getMediosPago()) {
+			if (pago.getTipoMP().equals(
+					MedioPago.TIPOMEDIOPAGO_EFECTIVOADELANTADO)
+					|| pago.getTipoMP().equals(
+							MedioPago.TIPOMEDIOPAGO_PAGOANTICIPADO)
+							|| pago.getTipoMP().equals(
+									MedioPago.TIPOMEDIOPAGO_CREDITO))
+				cantidad++;
+		}
+		return cantidad;
+	}
+
+	public boolean isAuthorizations() {
+		return (MOrgInfo.get(getCtx(), Env.getAD_Org_ID(getCtx()))).isAuthorizations();
+	}
 }
