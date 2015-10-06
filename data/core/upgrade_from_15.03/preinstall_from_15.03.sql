@@ -3033,3 +3033,6 @@ ALTER TABLE reginfo_ventas_cbte_v OWNER TO libertya;
 update m_transferline tl
 set processed = 'Y'
 where tl.processed = 'N' and exists (select m_transfer_id from m_transfer as t where t.m_transfer_id = tl.m_transfer_id and processed = 'Y');
+
+--20151006-1130 Columna para activar, o no, las autorizaciones por organización.
+UPDATE ad_system SET dummy = (SELECT addcolumnifnotexists('AD_OrgInfo','authorizations','character(1) NOT NULL default ''N''::bpchar'));

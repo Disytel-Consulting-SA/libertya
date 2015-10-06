@@ -65,6 +65,7 @@ import javax.swing.tree.TreePath;
 import org.compiere.swing.CPanel;
 import org.openXpertya.OpenXpertya;
 import org.openXpertya.apps.ADialog;
+import org.openXpertya.apps.AuthContainer;
 import org.openXpertya.apps.form.VOrdenPagoModel.MedioPago;
 import org.openXpertya.apps.form.VOrdenPagoModel.MedioPagoCheque;
 import org.openXpertya.apps.form.VOrdenPagoModel.MedioPagoCredito;
@@ -79,22 +80,29 @@ import org.openXpertya.images.ImageFactory;
 import org.openXpertya.model.MBPartner;
 import org.openXpertya.model.MCurrency;
 import org.openXpertya.model.MSequence;
+import org.openXpertya.model.MUser;
 import org.openXpertya.model.RetencionProcessor;
 import org.openXpertya.model.X_C_BankAccountDoc;
+import org.openXpertya.pos.model.AuthOperation;
+import org.openXpertya.pos.model.User;
+import org.openXpertya.pos.view.AuthorizationDialog;
 import org.openXpertya.pos.view.KeyUtils;
 import org.openXpertya.process.ProcessInfo;
+import org.openXpertya.reflection.CallResult;
 import org.openXpertya.util.ASyncProcess;
 import org.openXpertya.util.CLogger;
 import org.openXpertya.util.DB;
 import org.openXpertya.util.DisplayType;
 import org.openXpertya.util.Env;
 import org.openXpertya.util.Msg;
+import org.openXpertya.util.UserAuthConstants;
+import org.openXpertya.util.Util;
 
 /**
  *
  * @author  usuario
  */
-public class VOrdenPago extends CPanel implements FormPanel,ActionListener,TableModelListener,VetoableChangeListener,ChangeListener,TreeModelListener,MouseListener,CellEditorListener,ASyncProcess {
+public class VOrdenPago extends CPanel implements FormPanel,ActionListener,TableModelListener,VetoableChangeListener,ChangeListener,TreeModelListener,MouseListener,CellEditorListener,ASyncProcess,AuthContainer {
     
 	public class DecimalEditor extends DefaultCellEditor {
 	    JFormattedTextField ftf;
@@ -627,6 +635,8 @@ public class VOrdenPago extends CPanel implements FormPanel,ActionListener,Table
                 cmdBPartnerSelActionPerformed(evt);
             }
         });
+        
+        setAuthDialog(new AuthorizationDialog(this));
         
         keyBindingsInit();
     }// </editor-fold>//GEN-END:initComponents
@@ -1902,6 +1912,17 @@ public class VOrdenPago extends CPanel implements FormPanel,ActionListener,Table
     		m_model.setFechaOP(dateTrx.getTimestamp());
     		
     	} else if (idx == 1) {
+    		
+    		//Autorización para OP si existen pagos anticipados
+    		CallResult res = validateDebitNote();
+
+    		if ((res != null )&& (res.isError())){
+				if(!Util.isEmpty(res.getMsg(), true)){
+					showError(res.getMsg());
+				}
+				return;
+			}
+    		
     		getModel().setDescription(txtDescription.getText());
     		
     		m_model.setProjectID(getC_Project_ID() == null?0:getC_Project_ID());
@@ -1942,7 +1963,26 @@ public class VOrdenPago extends CPanel implements FormPanel,ActionListener,Table
     	}    	
     }//GEN-LAST:event_cmdProcessActionPerformed
     
-    /**
+	protected CallResult validateDebitNote() {
+		CallResult result = null; 
+		// Aviso si la OP tiene Nota de débitos a clientes
+		// Si es no es un pago adelantado, existen pagos sin imputar y tiene el check de autorizaciones, pido autorización
+		if (!radPayTypeAdv.isSelected()
+				&& (getModel().getPaymentAmount() > getModel().getAmountAdvancedPayment())
+				&& (getModel().isAuthorizations())) {
+			AuthOperation authOperation = new AuthOperation(
+					UserAuthConstants.ADVANCED_OP_RC_UID,
+					Msg.getMsg(m_ctx,"AdvancedOPRCAuth"),
+					UserAuthConstants.OPRC_FINISH_MOMENT);
+			getAuthDialog().addAuthOperation(authOperation);
+			getAuthDialog().authorizeOperation(
+					UserAuthConstants.OPRC_FINISH_MOMENT);
+			result = getAuthDialog().getAuthorizeResult(true);
+		}
+		return result;
+	}
+
+	/**
      * Metodo que determina el valor que se encuentra dentro de la entidad comercial.
      * Si es null y está seteado el radio button de pago anticipado, no se puede pasar a Siguiente.
      * Para que el boton Siguiente se encuentre habilitado, debería ingresar una entidad comercial en el VLookUP
@@ -2136,6 +2176,8 @@ public class VOrdenPago extends CPanel implements FormPanel,ActionListener,Table
     protected static final Integer MEDIOPAGO_ACTION_INSERT = 0;
     protected static final Integer MEDIOPAGO_ACTION_EDIT = 1;
     protected static final Integer MEDIOPAGO_ACTION_DELETE = 2;
+    
+    private AuthorizationDialog authDialog = null;
     
 	public void init(int WindowNo, FormFrame frame) {
         m_WindowNo = WindowNo;
@@ -3056,7 +3098,7 @@ public class VOrdenPago extends CPanel implements FormPanel,ActionListener,Table
 
 	}
 	
-	protected String getMsg(String name) {
+	public String getMsg(String name) {
 		return Msg.translate(m_ctx, name);
 	}
 	
@@ -3400,6 +3442,8 @@ public class VOrdenPago extends CPanel implements FormPanel,ActionListener,Table
 		seq.save();
 		fldDocumentNo.setValue((seq.getPrefix()!=null?seq.getPrefix():"") + seq.getCurrentNext() + (seq.getSuffix()!=null?seq.getSuffix():""));
 		
+		getAuthDialog().markAuthorized(UserAuthConstants.OPRC_FINISH_MOMENT, true);
+		
 		m_model.setDocumentNo("");
 		getModel().reset();
 	}
@@ -3580,8 +3624,30 @@ public class VOrdenPago extends CPanel implements FormPanel,ActionListener,Table
 		updateTreeModel();
 		return m_arbolModel;
 	}
+
 	
-	
-	
+	public boolean isForPos() {
+		return false;
+	}
+
+
+	public User getUser(int userID) {
+		MUser mUser = MUser.get(Env.getCtx(), userID);
+		// Validación de usuario.
+		if (mUser == null)
+			return null;
+		User user = new User(mUser.getName(), mUser.getPassword());
+		user.setOverwriteLimitPrice(false);
+		user.setPoSSupervisor(false);
+		return user;
+	}
+
+	public AuthorizationDialog getAuthDialog() {
+		return authDialog;
+	}
+
+	public void setAuthDialog(AuthorizationDialog authDialog) {
+		this.authDialog = authDialog;
+	}
 	
 }

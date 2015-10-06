@@ -48,6 +48,7 @@ import org.openXpertya.model.MEntidadFinancieraPlan;
 import org.openXpertya.model.MPOSPaymentMedium;
 import org.openXpertya.model.RetencionProcessor;
 import org.openXpertya.pos.view.KeyUtils;
+import org.openXpertya.reflection.CallResult;
 import org.openXpertya.util.DisplayType;
 import org.openXpertya.util.Env;
 import org.openXpertya.util.Msg;
@@ -2449,7 +2450,7 @@ public class VOrdenCobro extends VOrdenPago {
 	}
 
 	@Override
-	protected String getMsg(String name) {
+	public String getMsg(String name) {
 		if (msgChanges.containsKey(name))
 			name = msgChanges.get(name);
 		return super.getMsg(name);
@@ -3124,6 +3125,12 @@ public class VOrdenCobro extends VOrdenPago {
 				return null;
 			else
 				return getModel().getBank((Integer) cboChequeBancoID.getValue());		
+	}
+	
+	
+	@Override
+    protected CallResult validateDebitNote() {
+		return new CallResult();
 	}
 
 }

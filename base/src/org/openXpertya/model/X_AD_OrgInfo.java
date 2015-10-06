@@ -7,7 +7,7 @@ import java.math.*;
 import org.openXpertya.util.*;
 /** Modelo Generado por AD_OrgInfo
  *  @author Comunidad de Desarrollo Libertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
- *  @version  - 2015-08-23 17:43:31.245 */
+ *  @version  - 2015-10-06 11:47:22.888 */
 public class X_AD_OrgInfo extends org.openXpertya.model.PO
 {
 /** Constructor estándar */
@@ -17,6 +17,7 @@ super (ctx, AD_OrgInfo_ID, trxName);
 /** if (AD_OrgInfo_ID == 0)
 {
 setAllowAutomaticAllocation (false);
+setAuthorizations (false);
 setCheckCuitControl (false);
 setDUNS (null);
 setInitialCheckLimit (Env.ZERO);
@@ -76,6 +77,22 @@ set_Value ("AllowAutomaticAllocation", new Boolean(AllowAutomaticAllocation));
 public boolean isAllowAutomaticAllocation() 
 {
 Object oo = get_Value("AllowAutomaticAllocation");
+if (oo != null) 
+{
+ if (oo instanceof Boolean) return ((Boolean)oo).booleanValue();
+ return "Y".equals(oo);
+}
+return false;
+}
+/** Set Authorizations */
+public void setAuthorizations (boolean Authorizations)
+{
+set_Value ("Authorizations", new Boolean(Authorizations));
+}
+/** Get Authorizations */
+public boolean isAuthorizations() 
+{
+Object oo = get_Value("Authorizations");
 if (oo != null) 
 {
  if (oo instanceof Boolean) return ((Boolean)oo).booleanValue();

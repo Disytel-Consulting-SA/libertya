@@ -18,6 +18,8 @@ public class UserAuthConstants {
 	 * el comprobante)
 	 */
 	public static final String POS_VOID_DOCUMENT = "POS_VOID_DOCUMENT";
+	/** Momento de finalizar la OP/RC */
+	public static final String OPRC_FINISH_MOMENT = "OPRC_FINISH_MOMENT";
 	
 	/*
 	 * Claves de búsqueda de los procesos que hacen las veces de operaciones a
@@ -38,6 +40,8 @@ public class UserAuthConstants {
 	public static final String POS_VOID_DOCUMENTS_UID = "CORE-AD_Process-1010296";
 	/** Autorización de Apertura del cajón de dinero */
 	public static final String OPEN_DRAWER_UID = "CORE-AD_Process-1010337";
+	/** Autorización de OP/RC si existen OPA/RCA */
+	public static final String ADVANCED_OP_RC_UID = "CORE-AD_Process-1010416";
 	
 	/** Asociación de uids de procesos con sus values */
 	public static Map<String, String> processValues = new HashMap<String, String>(); 
@@ -50,6 +54,7 @@ public class UserAuthConstants {
 		processValues.put(POS_MANUAL_GENERAL_DISCOUNT_UID, "POSManualGeneralDiscountAuth");
 		processValues.put(POS_VOID_DOCUMENTS_UID, "POSVoidDocumentsAuth");
 		processValues.put(OPEN_DRAWER_UID, "OpenDrawerAuthorization");
+		processValues.put(ADVANCED_OP_RC_UID, "AdvancedOPRCAuth");
 	}
 	
 	public static String getProcessValue(String key){

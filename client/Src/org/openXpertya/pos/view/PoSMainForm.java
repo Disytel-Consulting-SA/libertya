@@ -65,6 +65,7 @@ import org.compiere.swing.CTextField;
 import org.openXpertya.apps.ADialog;
 import org.openXpertya.apps.AEnv;
 import org.openXpertya.apps.AInfoFiscalPrinter;
+import org.openXpertya.apps.AuthContainer;
 import org.openXpertya.apps.StatusBar;
 import org.openXpertya.apps.SwingWorker;
 import org.openXpertya.apps.form.FormFrame;
@@ -79,7 +80,6 @@ import org.openXpertya.images.ImageFactory;
 import org.openXpertya.minigrid.MiniTable;
 import org.openXpertya.model.CalloutInvoiceExt;
 import org.openXpertya.model.FiscalDocumentPrint;
-import org.openXpertya.model.MCreditException;
 import org.openXpertya.model.MPOSPaymentMedium;
 import org.openXpertya.pos.ctrl.AddPOSPaymentValidations;
 import org.openXpertya.pos.ctrl.PoSConfig;
@@ -138,7 +138,7 @@ import org.openXpertya.util.ValueNamePair;
 import org.openXpertya.utils.Disposable;
 import org.openXpertya.utils.LYCloseWindowAdapter;
 
-public class PoSMainForm extends CPanel implements FormPanel, ASyncProcess, Disposable {
+public class PoSMainForm extends CPanel implements FormPanel, ASyncProcess, Disposable, AuthContainer {
 
 	/** Singleton */
 	private static PoSMainForm instance = null;
@@ -6565,5 +6565,9 @@ public class PoSMainForm extends CPanel implements FormPanel, ASyncProcess, Disp
 			
 		}
 		
+	}
+
+	public boolean isForPos() {
+		return true;
 	}
 }  //  @jve:decl-index=0:visual-constraint="10,10"
