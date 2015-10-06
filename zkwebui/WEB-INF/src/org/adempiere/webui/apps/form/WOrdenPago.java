@@ -417,7 +417,7 @@ public class WOrdenPago extends ADForm implements ValueChangeListener, TableMode
     	divButton.setAlign("end");
     	divButton.appendChild(cmdProcess);
     	south.appendChild(divButton);
-        
+
     }// </editor-fold>//GEN-END:initComponents
 
     /**
@@ -983,6 +983,11 @@ public class WOrdenPago extends ADForm implements ValueChangeListener, TableMode
     	
     	if (idx == 0) {
 
+			// Aviso si la OP tiene pagos parciales
+			if ((m_model.getPartialPayment()) && (!FDialog.ask(m_WindowNo, this,
+					Msg.getMsg(Env.getCtx(), "PartialPayment"))))
+				return;
+    		
     		clearMediosPago();
     		// Procesar
     		
@@ -1294,7 +1299,6 @@ public class WOrdenPago extends ADForm implements ValueChangeListener, TableMode
     protected static final Integer MEDIOPAGO_ACTION_INSERT = 0;
     protected static final Integer MEDIOPAGO_ACTION_EDIT = 1;
     protected static final Integer MEDIOPAGO_ACTION_DELETE = 2;
-
     
 	protected void customInitComponents() {
 		
@@ -1708,6 +1712,15 @@ public class WOrdenPago extends ADForm implements ValueChangeListener, TableMode
 			if (BPartnerSel.getNewValueOnChange() == null)
 				this.cmdProcess.setEnabled(false); //cmdBPartnerSelActionPerformed(null);
         	updatePayAllInvoices(false);
+        	
+			// Activo/Desactivo pestaña de Pagos Adelantados dependiendo
+			// que el proveedor permitao no, OP Anticipadas
+			boolean allow = getModel().isAllowAdvancedPayment();
+			radPayTypeAdv.setDisabled(!allow);
+			if (!allow) {
+				radPayTypeStd.setSelected(true);
+				onTipoPagoChange(false);
+			}	
 		
 		} else if (e.getSource() == cboCurrency) {
 			updateDependent();
@@ -2383,7 +2396,7 @@ public class WOrdenPago extends ADForm implements ValueChangeListener, TableMode
 		seq.setCurrentNext(seq.getCurrentNext().add(BigDecimal.ONE));
 		seq.save();
 		fldDocumentNo.setValue((seq.getPrefix()!=null?seq.getPrefix():"") + seq.getCurrentNext().toString() + (seq.getSuffix()!=null?seq.getSuffix():""));
-		
+				
 		m_model.setDocumentNo("");
 		getModel().reset();
 		updateTreeModel();
@@ -3020,5 +3033,4 @@ public class WOrdenPago extends ADForm implements ValueChangeListener, TableMode
 		}
 	}
 
-	
 }
