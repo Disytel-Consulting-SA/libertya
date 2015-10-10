@@ -154,8 +154,12 @@ public abstract class ResumenVentasDataSource extends QueryDataSource {
 		String tenderType = (String)getCurrentRecord().get("TENDERTYPE");
 		String trxType = (String)getCurrentRecord().get("TRXTYPE");
 		String tenderTypeDescription = "";
+		// Si es null, va Otros
+		if(Util.isEmpty(tenderType, true)){
+			tenderTypeDescription = "Otros";
+		}
 		// Es cuenta corriente,
-		if(tenderType.equals("CC")){
+		else if(tenderType.equals("CC")){
 			tenderTypeDescription = "Cuenta Corriente";
 		}
 		else if(trxType != null && trxType.equals("I")){

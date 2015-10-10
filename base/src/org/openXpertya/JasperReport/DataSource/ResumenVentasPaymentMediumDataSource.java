@@ -45,7 +45,10 @@ public class ResumenVentasPaymentMediumDataSource extends
 		String trxType = (String)getCurrentRecord().get("TRXTYPE");
 		String tenderType = (String)getCurrentRecord().get("TENDERTYPE");
 		String description = "";
-		if((trxType != null && (trxType.equals("CAI") || trxType.equals("CAIA"))) || tenderType.equals("CC")){
+		if(Util.isEmpty(tenderType, true)){
+			description = "Otros";
+		}
+		else if((trxType != null && (trxType.equals("CAI") || trxType.equals("CAIA"))) || tenderType.equals("CC")){
 			description = "Cuenta Corriente";
 		}
 		else if(tenderType.equals(MPOSPaymentMedium.TENDERTYPE_Credit)){
