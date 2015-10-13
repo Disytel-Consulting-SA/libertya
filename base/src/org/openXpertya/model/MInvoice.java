@@ -4292,7 +4292,7 @@ public class MInvoice extends X_C_Invoice implements DocAction {
 		documentDiscount.setDiscountAmt(discountAmt);
 		documentDiscount.setCumulativeLevel(cumulativeLevel);
 		documentDiscount.setDiscountApplication(discountApplication);
-		documentDiscount.setTaxRate(null);
+		documentDiscount.setTaxRate(taxRate);
 		documentDiscount.setDiscountKind(discountKind);
 		documentDiscount.setDescription(description);
 		return documentDiscount;
