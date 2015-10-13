@@ -2,7 +2,7 @@
 <!-- Created with iReport - A designer for JasperReports -->
 <!DOCTYPE jasperReport PUBLIC "//JasperReports//DTD Report Design//EN" "http://jasperreports.sourceforge.net/dtds/jasperreport.dtd">
 <jasperReport
-		 name="rpt_FactA"
+		 name="rpt_Comprobante_Retencion"
 		 columnCount="1"
 		 printOrder="Vertical"
 		 orientation="Portrait"
@@ -376,7 +376,7 @@
 						key="staticText-1"/>
 					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
 					<textElement textAlignment="Center" verticalAlignment="Middle">
-						<font fontName="Times New Roman" pdfFontName="Helvetica-Bold" size="22" isBold="true"/>
+						<font fontName="Times New Roman" pdfFontName="Helvetica-Bold" size="18" isBold="true"/>
 					</textElement>
 				<text><![CDATA[Comprobante de Retención]]></text>
 				</staticText>
@@ -554,13 +554,13 @@
 						x="57"
 						y="419"
 						width="233"
-						height="17"
+						height="34"
 						key="staticText-18"/>
 					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
 					<textElement>
 						<font fontName="Times New Roman" size="13" isBold="true"/>
 					</textElement>
-				<text><![CDATA[Comprobante que origina la Retención :]]></text>
+				<text><![CDATA[Comprobantes que originan la Retención :]]></text>
 				</staticText>
 				<staticText>
 					<reportElement
