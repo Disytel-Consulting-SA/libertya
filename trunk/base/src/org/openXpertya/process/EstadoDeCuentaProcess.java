@@ -292,7 +292,7 @@ public class EstadoDeCuentaProcess extends SvrProcess {
 			if (bPartner != bPartnerOld)
 			{
 				if (bPartnerOld != -1){ 
-					insertTotalForBPartnerOld(bPartner);
+					insertTotalForBPartnerOld(bPartner, saldo);
 					insertTotalForBPartnerChecks(bPartner);
 				}
 				saldogral=saldogral.add(saldo);
@@ -360,7 +360,7 @@ public class EstadoDeCuentaProcess extends SvrProcess {
 			saldo = saldo.add(subSaldo);
 		}
 		if (bPartner != -1)
-		{	insertTotalForBPartnerOld(bPartner);
+		{	insertTotalForBPartnerOld(bPartner, saldo);
 			insertTotalForBPartnerChecks(bPartner);
 			
 			incrementarSaldosGeneralMultimoneda();
@@ -398,7 +398,7 @@ public class EstadoDeCuentaProcess extends SvrProcess {
 		saldosMultimoneda.put(clientISO, BigDecimal.ZERO);
 	}
 	
-	private void insertTotalForBPartnerOld(int bPartner)	{
+	private void insertTotalForBPartnerOld(int bPartner, BigDecimal saldo)	{
 		Iterator it = saldosMultimoneda.entrySet().iterator();
 		while (it.hasNext()) {
 			Entry<String, BigDecimal> e = (Entry<String, BigDecimal>) it.next();
@@ -423,6 +423,26 @@ public class EstadoDeCuentaProcess extends SvrProcess {
 			} 
 			ec.save();
 		}
+		
+		X_T_EstadoDeCuenta ec = new X_T_EstadoDeCuenta(getCtx(), 0, get_TrxName());
+		ec.setAD_PInstance_ID(getAD_PInstance_ID());
+		ec.setC_BPartner_ID(bPartner);
+		ec.setbpartner("             TOTAL:");
+		ec.setOpenAmt(saldo);
+		if (daysfrom != MAX_DUE_DAYS*-1 || daysto != MAX_DUE_DAYS) {
+			ec.setDaysDue(daysfrom);
+		}
+		ec.setAccountType(accountType);
+		ec.setShowDocuments(showDocuments);
+		ec.setSalesRep_ID(salesRepID);
+		ec.setDateToDays(dateToDays);
+		ec.setDocumentNo("");
+		if (dateTrxTo != null) {
+			ec.setDateDoc(dateTrxTo);
+		} else if (dateTrxFrom != null) {
+			ec.setDateDoc(dateTrxFrom);
+		} 
+		ec.save();
 	}
 	
 	private void insertTotalForBPartnerChecks(int bPartner)	{
