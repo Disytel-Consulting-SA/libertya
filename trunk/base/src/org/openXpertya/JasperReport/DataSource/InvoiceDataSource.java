@@ -14,7 +14,7 @@ import org.openXpertya.model.MInvoice;
 import org.openXpertya.model.MInvoiceLine;
 
 
-public class InvoiceDataSource implements JRDataSource  {
+public class InvoiceDataSource implements OXPJasperDataSource  {
 
 	/**	Properties				*/
 	private Properties p_ctx = null;	

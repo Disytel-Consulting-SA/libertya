@@ -12,7 +12,9 @@ import java.util.Iterator;
 import java.util.Set;
 
 import org.openXpertya.JasperReport.DataSource.InvoiceDataSource;
+import org.openXpertya.JasperReport.DataSource.InvoicePerceptionsDataSource;
 import org.openXpertya.JasperReport.DataSource.JasperReportsUtil;
+import org.openXpertya.JasperReport.DataSource.OXPJasperDataSource;
 import org.openXpertya.model.MAllocationHdr;
 import org.openXpertya.model.MBPartner;
 import org.openXpertya.model.MBPartnerLocation;
@@ -111,7 +113,7 @@ public class LaunchInvoice extends SvrProcess {
 		//Ader mejora de caches
 		invoice.initCaches();
 		
-		InvoiceDataSource ds = new InvoiceDataSource(getCtx(), invoice);
+		OXPJasperDataSource ds = getDataSource(invoice);
 		
 		 try {
 				ds.loadData();
@@ -133,6 +135,10 @@ public class LaunchInvoice extends SvrProcess {
 			}
 			
 			return "";
+	}
+	
+	protected OXPJasperDataSource getDataSource(MInvoice invoice){
+		return new InvoiceDataSource(getCtx(), invoice);
 	}
 	
 	protected Integer getInvoiceID(){
@@ -481,6 +487,15 @@ public class LaunchInvoice extends SvrProcess {
 		
 		// Código de barras de Factura Electrónica
 		addElectronicInvoiceBarcode(jasperwrapper, invoice, docType, clientCUIT);
+		
+		// Subreporte de otros tributos/percepciones
+		MJasperReport perceptionSubreport = getPerceptionSubreport();
+		if(perceptionSubreport != null && perceptionSubreport.getBinaryData() != null){
+			jasperwrapper.addParameter("COMPILED_SUBREPORT_PERCEPCIONES", new ByteArrayInputStream(perceptionSubreport.getBinaryData()));
+			InvoicePerceptionsDataSource perceptionDS = getPerceptionsDataSource(invoice);
+			jasperwrapper.addParameter("SUBREPORT_PERCEPCIONES_DATASOURCE", perceptionDS);
+			jasperwrapper.addParameter("PERCEPCION_TOTAL_AMT", perceptionDS.getTotalAmt());
+		}
 	}
 	
 	
@@ -635,5 +650,26 @@ public class LaunchInvoice extends SvrProcess {
 		}
 	}
 	
+	protected MJasperReport getJasperReport(String name) throws Exception {
+		Integer jasperReport_ID = (Integer) DB
+				.getSQLObject(
+						get_TrxName(),
+						"SELECT AD_JasperReport_ID FROM AD_JasperReport WHERE Name ilike ?",
+						new Object[] { name });
+		if (jasperReport_ID == null || jasperReport_ID == 0)
+			throw new Exception("Jasper Report not found - " + name);
+
+		MJasperReport jasperReport = new MJasperReport(getCtx(), jasperReport_ID, get_TrxName());
+		return jasperReport;
+	}
 	
+	protected MJasperReport getPerceptionSubreport() throws Exception {
+		return getJasperReport("Factura Electronica - Subreporte");
+	}
+	
+	protected InvoicePerceptionsDataSource getPerceptionsDataSource(MInvoice invoice) throws Exception{
+		InvoicePerceptionsDataSource ds = new InvoicePerceptionsDataSource(getCtx(), invoice.getID(), get_TrxName());
+		ds.loadData();
+		return ds;
+	}
 }
