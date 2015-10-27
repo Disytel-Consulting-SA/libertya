@@ -145,7 +145,17 @@ public class CurrentAccountQuery {
 			sqlDoc.append("   AND d.AD_Client_ID = ? ");
 			sqlDoc.append("   AND d.C_Bpartner_ID = ? ");
 			if(onlyCurrrentAccoundDocuments){
-				sqlDoc.append("   AND d.initialcurrentaccountamt > 0 ");
+				sqlDoc.append("  AND (d.initialcurrentaccountamt > 0 ");
+				sqlDoc.append(" 	OR (d.documenttable = 'C_Invoice' AND "
+									+ "EXISTS (select ic.c_invoice_id "
+									+ "from c_invoice as ic "
+									+ "inner join c_doctype as dt on dt.c_doctype_id = ic.c_doctypetarget_id "
+									+ "where d.c_order_id = ic.c_order_id "
+									+ "		and d.document_id <> ic.c_invoice_id "
+									+ "		and ic.docstatus NOT IN ('DR','IP') "
+									+ "		and ic.initialcurrentaccountamt > 0 "
+									+ "		and dt.signo_issotrx = ? "
+									+ "		and dt.doctypekey not ilike 'CDN%'))) ");
 			}
 			sqlAppend("   AND d.AD_Org_ID = ? ", orgID, sqlDoc);
 			sqlAppend("   AND d.C_DocType_ID = ? ", docTypeID, sqlDoc);
@@ -203,7 +213,17 @@ public class CurrentAccountQuery {
 			sqlDoc.append("     AND d.AD_Client_ID = ? ");
 			sqlDoc.append("   AND d.C_Bpartner_ID = ? ");
 			if(onlyCurrrentAccoundDocuments){
-				sqlDoc.append("   AND d.initialcurrentaccountamt > 0 ");
+				sqlDoc.append("  AND (d.initialcurrentaccountamt > 0 ");
+				sqlDoc.append(" 	OR (d.documenttable = 'C_Invoice' AND "
+									+ "EXISTS (select ic.c_invoice_id "
+									+ "from c_invoice as ic "
+									+ "inner join c_doctype as dt on dt.c_doctype_id = ic.c_doctypetarget_id "
+									+ "where d.c_order_id = ic.c_order_id "
+									+ "		and d.document_id <> ic.c_invoice_id "
+									+ "		and ic.docstatus NOT IN ('DR','IP') "
+									+ "		and ic.initialcurrentaccountamt > 0 "
+									+ "		and dt.signo_issotrx = ? "
+									+ "		and dt.doctypekey not ilike 'CDN%'))) ");
 			}
 			sqlAppend("   AND d.AD_Org_ID = ? ", orgID, sqlDoc);
 			sqlAppend("   AND d.C_DocType_ID = ? ", docTypeID, sqlDoc);

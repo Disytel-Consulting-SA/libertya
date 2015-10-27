@@ -163,6 +163,9 @@ public class CurrentAccountReport extends SvrProcess {
 			pstmt.setInt(i++, client_Currency_ID);
 			pstmt.setInt(i++, getAD_Client_ID());
 			pstmt.setInt(i++, p_C_BPartnerID);
+			if(isOnlyCurrentAccountDocuments()){
+				pstmt.setInt(i++, debit_signo_issotrx);
+			}
 			i = pstmtSetParam(i, p_AD_Org_ID, pstmt);
 			i = pstmtSetParam(i, p_C_DocType_ID, pstmt);
 			// Parámetros para el filtro de fechas
@@ -372,6 +375,9 @@ public class CurrentAccountReport extends SvrProcess {
 			pstmt.setInt(i++, client_Currency_ID);
 			pstmt.setInt(i++, getAD_Client_ID());
 			pstmt.setInt(i++, p_C_BPartnerID);
+			if(isOnlyCurrentAccountDocuments()){
+				pstmt.setInt(i++, debit_signo_issotrx);
+			}
 			i = pstmtSetParam(i, p_AD_Org_ID, pstmt);
 			i = pstmtSetParam(i, p_C_DocType_ID, pstmt);
 			// Parámetros de sqlBalance
