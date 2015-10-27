@@ -3259,3 +3259,13 @@ ALTER FUNCTION v_documents_org_filtered(integer, boolean)
   OWNER TO libertya;
 
 create or replace view v_documents_org as select * from v_documents_org_filtered(-1, false);
+
+--20151027-0055 Incorporación de parámetro Sólo Comprobantes en Cuenta Corriente al Informe de Saldos
+update ad_system set dummy = (SELECT addcolumnifnotexists('T_BalanceReport', 'onlycurrentaccountdocuments', 'character(1) NOT NULL DEFAULT ''N''::bpchar'));
+--Eliminación del parámetro nuevo a insertar para instancias donde este parche ya fue instalado
+DELETE FROM ad_process_para_trl WHERE ad_componentobjectuid = 'CORE-AD_Process_Para_Trl-es_AR-1011054';
+DELETE FROM ad_process_para_trl WHERE ad_componentobjectuid = 'CORE-AD_Process_Para_Trl-es_ES-1011054';
+DELETE FROM ad_process_para_trl WHERE ad_componentobjectuid = 'CORE-AD_Process_Para_Trl-es_MX-1011054';
+DELETE FROM ad_process_para_trl WHERE ad_componentobjectuid = 'CORE-AD_Process_Para_Trl-es_PY-1011054';
+
+DELETE FROM ad_process_para WHERE ad_componentobjectuid = 'CORE-AD_Process_Para-1011054';
