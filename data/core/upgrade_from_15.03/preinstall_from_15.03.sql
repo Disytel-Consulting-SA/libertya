@@ -3269,3 +3269,11 @@ DELETE FROM ad_process_para_trl WHERE ad_componentobjectuid = 'CORE-AD_Process_P
 DELETE FROM ad_process_para_trl WHERE ad_componentobjectuid = 'CORE-AD_Process_Para_Trl-es_PY-1011054';
 
 DELETE FROM ad_process_para WHERE ad_componentobjectuid = 'CORE-AD_Process_Para-1011054';
+
+--Eliminación de la columna del reporte de Informe de Saldos donde este parche ya fue instalado
+DELETE FROM ad_column_trl WHERE ad_componentobjectuid = 'CORE-AD_Column_Trl-1016755-es_AR';
+DELETE FROM ad_column_trl WHERE ad_componentobjectuid = 'CORE-AD_Column_Trl-1016755-es_ES';
+DELETE FROM ad_column_trl WHERE ad_componentobjectuid = 'CORE-AD_Column_Trl-1016755-es_MX';
+DELETE FROM ad_column_trl WHERE ad_componentobjectuid = 'CORE-AD_Column_Trl-1016755-es_PY';
+
+DELETE FROM ad_column WHERE ad_componentobjectuid = 'CORE-AD_Column-1016755';
