@@ -7,7 +7,7 @@ import java.math.*;
 import org.openXpertya.util.*;
 /** Modelo Generado por T_BalanceReport
  *  @author Comunidad de Desarrollo Libertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
- *  @version  - 2014-10-21 13:58:56.318 */
+ *  @version  - 2015-10-27 01:16:21.549 */
 public class X_T_BalanceReport extends org.openXpertya.model.PO
 {
 /** Constructor estándar */
@@ -18,6 +18,7 @@ super (ctx, T_BalanceReport_ID, trxName);
 {
 setAD_PInstance_ID (0);
 setDateCreated (new Timestamp(System.currentTimeMillis()));
+setOnlyCurrentAccountDocuments (false);
 setOnlyCurrentAccounts (false);
 }
  */
@@ -71,12 +72,12 @@ public String getAccountType()
 {
 return (String)get_Value("AccountType");
 }
-/** Set Actual Balance */
+/** Set Actual balance */
 public void setActualBalance (BigDecimal ActualBalance)
 {
 set_Value ("ActualBalance", ActualBalance);
 }
-/** Get Actual Balance */
+/** Get Actual balance */
 public BigDecimal getActualBalance() 
 {
 BigDecimal bd = (BigDecimal)get_Value("ActualBalance");
@@ -141,14 +142,12 @@ Integer ii = (Integer)get_Value("C_BP_Group_ID");
 if (ii == null) return 0;
 return ii.intValue();
 }
-/** Set Cheques en cartera.
-Monto de cheques en cartera */
+/** Set Cheques en cartera */
 public void setChequesEnCartera (BigDecimal ChequesEnCartera)
 {
 set_Value ("ChequesEnCartera", ChequesEnCartera);
 }
-/** Get Cheques en cartera.
-Monto de cheques en cartera */
+/** Get Cheques en cartera */
 public BigDecimal getChequesEnCartera() 
 {
 BigDecimal bd = (BigDecimal)get_Value("ChequesEnCartera");
@@ -249,12 +248,30 @@ public String getObservaciones()
 {
 return (String)get_Value("Observaciones");
 }
-/** Set Only current accounts */
+/** Set Only Current Account Documents */
+public void setOnlyCurrentAccountDocuments (boolean OnlyCurrentAccountDocuments)
+{
+set_Value ("OnlyCurrentAccountDocuments", new Boolean(OnlyCurrentAccountDocuments));
+}
+/** Get Only Current Account Documents */
+public boolean isOnlyCurrentAccountDocuments() 
+{
+Object oo = get_Value("OnlyCurrentAccountDocuments");
+if (oo != null) 
+{
+ if (oo instanceof Boolean) return ((Boolean)oo).booleanValue();
+ return "Y".equals(oo);
+}
+return false;
+}
+/** Set Only current accounts.
+Only business partner with current account activated */
 public void setOnlyCurrentAccounts (boolean OnlyCurrentAccounts)
 {
 set_Value ("OnlyCurrentAccounts", new Boolean(OnlyCurrentAccounts));
 }
-/** Get Only current accounts */
+/** Get Only current accounts.
+Only business partner with current account activated */
 public boolean isOnlyCurrentAccounts() 
 {
 Object oo = get_Value("OnlyCurrentAccounts");
@@ -317,7 +334,8 @@ public Timestamp getTrueDateTrx()
 {
 return (Timestamp)get_Value("TrueDateTrx");
 }
-/** Set Value from */
+/** Set Value From.
+Initial value of search key in range */
 public void setValueFrom (String ValueFrom)
 {
 if (ValueFrom != null && ValueFrom.length() > 42)
@@ -327,12 +345,14 @@ ValueFrom = ValueFrom.substring(0,42);
 }
 set_Value ("ValueFrom", ValueFrom);
 }
-/** Get Value from */
+/** Get Value From.
+Initial value of search key in range */
 public String getValueFrom() 
 {
 return (String)get_Value("ValueFrom");
 }
-/** Set Value to */
+/** Set Value To.
+End value of search key in range */
 public void setValueTo (String ValueTo)
 {
 if (ValueTo != null && ValueTo.length() > 42)
@@ -342,7 +362,8 @@ ValueTo = ValueTo.substring(0,42);
 }
 set_Value ("ValueTo", ValueTo);
 }
-/** Get Value to */
+/** Get Value To.
+End value of search key in range */
 public String getValueTo() 
 {
 return (String)get_Value("ValueTo");

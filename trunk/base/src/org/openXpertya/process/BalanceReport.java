@@ -38,6 +38,8 @@ public class BalanceReport extends SvrProcess {
 	private String valueTo;
 	/** Sólo mostrar con crédito activado */
 	private boolean onlyCurentAccounts;
+	/** Sólo comprobantes en cuenta corriente */
+	private boolean onlyCurrentAccountDocuments;
 	
 	@Override
 	protected void prepare() {
@@ -66,7 +68,9 @@ public class BalanceReport extends SvrProcess {
         		valueFrom = (String)para[ i ].getParameter();
         	} else if( name.equalsIgnoreCase( "ValueTo" )) {
         		valueTo = (String)para[ i ].getParameter();
-        	}
+        	} else if (name.equalsIgnoreCase("OnlyCurrentAccountDocuments")) {
+				setOnlyCurrentAccountDocuments("Y".equals((String) para[i].getParameter()));
+			}
         }
         
         // Reporte de Cta Corriente de Cliente o Proveedor.
@@ -180,6 +184,19 @@ public class BalanceReport extends SvrProcess {
 		sqlDoc.append(p_AccountType.equalsIgnoreCase("C") ? " AND bp.iscustomer = 'Y' "
 				: " AND bp.isvendor = 'Y' ");
 		sqlDoc.append(onlyCurentAccounts?" AND d.socreditstatus <> 'X' ":"");
+		if(isOnlyCurrentAccountDocuments()){
+			sqlDoc.append("  AND (d.initialcurrentaccountamt > 0 ");
+			sqlDoc.append(" 	OR (d.documenttable = 'C_Invoice' AND "
+								+ "EXISTS (select ic.c_invoice_id "
+								+ "from c_invoice as ic "
+								+ "inner join c_doctype as dt on dt.c_doctype_id = ic.c_doctypetarget_id "
+								+ "where d.c_order_id = ic.c_order_id "
+								+ "		and d.document_id <> ic.c_invoice_id "
+								+ "		and ic.docstatus NOT IN ('DR','IP') "
+								+ "		and ic.initialcurrentaccountamt > 0 "
+								+ "		and dt.signo_issotrx = ? "
+								+ "		and dt.doctypekey not ilike 'CDN%'))) ");
+		}
 		sqlDoc.append(" ) AS T ");
 		sqlDoc.append(" WHERE (1=1) ");
 		if(!Util.isEmpty(valueFrom, true)){
@@ -208,6 +225,9 @@ public class BalanceReport extends SvrProcess {
 		if(p_DateTrx_To != null){
 			pstmt.setTimestamp(i++, p_DateTrx_To);
 		}
+		if(isOnlyCurrentAccountDocuments()){
+			pstmt.setInt(i++, debit_signo_issotrx);
+		}
 		ResultSet rs = pstmt.executeQuery();
 		int subindice=0;
 		StringBuffer usql = new StringBuffer();
@@ -216,7 +236,7 @@ public class BalanceReport extends SvrProcess {
 			subindice++;
 			usql.append(" INSERT INTO T_BALANCEREPORT (ad_pinstance_id, ad_client_id, ad_org_id, subindice, c_bpartner_id, observaciones, ");
 			usql.append("								credit, debit, balance, date_oldest_open_invoice, date_newest_open_invoice, sortcriteria, scope, c_bp_group_id, truedatetrx, accounttype, ");
-			usql.append("								onlycurrentaccounts, valuefrom, valueto, duedebt, actualbalance, chequesencartera, generalbalance ) ");
+			usql.append("								onlycurrentaccounts, valuefrom, valueto, duedebt, actualbalance, chequesencartera, generalbalance, onlycurrentaccountdocuments ) ");
 			usql.append(" VALUES ( ")	.append(getAD_PInstance_ID()).append(",")
 										.append(getAD_Client_ID()).append(",")
 										.append(p_AD_Org_ID).append(",")
@@ -257,6 +277,8 @@ public class BalanceReport extends SvrProcess {
 			usql.append(" , ");
 			usql.append(rs.getBigDecimal("actualbalance").add(
 					rs.getBigDecimal("chequesencartera")));
+			usql.append(" , ");
+			usql.append(isOnlyCurrentAccountDocuments()?"'Y'":"'N'");
 			usql.append(" ); ");
 		}
 		
@@ -270,6 +292,16 @@ public class BalanceReport extends SvrProcess {
 		
 		return "OK";
 		
+	}
+
+
+	protected boolean isOnlyCurrentAccountDocuments() {
+		return onlyCurrentAccountDocuments;
+	}
+
+
+	protected void setOnlyCurrentAccountDocuments(boolean onlyCurrentAccountDocuments) {
+		this.onlyCurrentAccountDocuments = onlyCurrentAccountDocuments;
 	}
 
 
