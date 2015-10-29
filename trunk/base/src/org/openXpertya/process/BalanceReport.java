@@ -5,6 +5,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.Timestamp;
 
+import org.openXpertya.cc.CurrentAccountQuery;
 import org.openXpertya.model.MPayment;
 import org.openXpertya.util.DB;
 import org.openXpertya.util.Env;
@@ -185,17 +186,7 @@ public class BalanceReport extends SvrProcess {
 				: " AND bp.isvendor = 'Y' ");
 		sqlDoc.append(onlyCurentAccounts?" AND d.socreditstatus <> 'X' ":"");
 		if(isOnlyCurrentAccountDocuments()){
-			sqlDoc.append("  AND (d.initialcurrentaccountamt > 0 ");
-			sqlDoc.append(" 	OR (d.documenttable = 'C_Invoice' AND "
-								+ "EXISTS (select ic.c_invoice_id "
-								+ "from c_invoice as ic "
-								+ "inner join c_doctype as dt on dt.c_doctype_id = ic.c_doctypetarget_id "
-								+ "where d.c_order_id = ic.c_order_id "
-								+ "		and d.document_id <> ic.c_invoice_id "
-								+ "		and ic.docstatus NOT IN ('DR','IP') "
-								+ "		and ic.initialcurrentaccountamt > 0 "
-								+ "		and dt.signo_issotrx = ? "
-								+ "		and dt.doctypekey not ilike 'CDN%'))) ");
+			sqlDoc.append(CurrentAccountQuery.getCurrentAccountWhereClause());
 		}
 		sqlDoc.append(" ) AS T ");
 		sqlDoc.append(" WHERE (1=1) ");
