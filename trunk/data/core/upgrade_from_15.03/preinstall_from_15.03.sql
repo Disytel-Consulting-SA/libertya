@@ -3277,3 +3277,22 @@ DELETE FROM ad_column_trl WHERE ad_componentobjectuid = 'CORE-AD_Column_Trl-1016
 DELETE FROM ad_column_trl WHERE ad_componentobjectuid = 'CORE-AD_Column_Trl-1016755-es_PY';
 
 DELETE FROM ad_column WHERE ad_componentobjectuid = 'CORE-AD_Column-1016755';
+
+-- 20151101 1900 LOS REGISTROS DE LA TABLA e_electronicinvoiceref SON GLOBALES PARA TODAS LAS COMPAÑÍAS/ORGANIZACIONES
+UPDATE e_electronicinvoiceref SET AD_Client_ID = 0, AD_Org_ID = 0;
+
+--20151101 1900 Nueva vista utilizada en Exportación - Régimen de Información
+CREATE OR REPLACE VIEW reginfo_compras_alicuotas_v AS 
+ SELECT i.ad_client_id, i.ad_org_id, i.c_invoice_id, date_trunc('day'::text, i.dateinvoiced) AS date, date_trunc('day'::text, i.dateinvoiced) AS fechadecomprobante, ei.codigo AS tipodecomprobante, i.puntodeventa, i.numerocomprobante AS nrocomprobante, bp.taxidtype AS codigodocvendedor, bp.taxid AS nroidentificacionvendedor, currencyconvert(it.taxbaseamt, i.c_currency_id, 118, i.dateacct::timestamp with time zone, NULL::integer, i.ad_client_id, i.ad_org_id)::numeric(20,2) AS impnetogravado, t.wsfecode AS alicuotaiva, currencyconvert(it.taxamt, i.c_currency_id, 118, i.dateacct::timestamp with time zone, NULL::integer, i.ad_client_id, i.ad_org_id)::numeric(20,2) AS impuestoliquidado
+   FROM c_invoice i
+   JOIN c_doctype dt ON dt.c_doctype_id = i.c_doctype_id
+   LEFT JOIN e_electronicinvoiceref ei ON dt.doctypekey::text ~~* (ei.clave_busqueda::text || '%'::text) AND ei.tabla_ref::text = 'TCOM'::text
+   JOIN c_bpartner bp ON bp.c_bpartner_id = i.c_bpartner_id
+   JOIN c_invoicetax it ON i.c_invoice_id = it.c_invoice_id
+   JOIN c_tax t ON t.c_tax_id = it.c_tax_id
+  WHERE t.ispercepcion = 'N'::bpchar AND (i.docstatus = ANY (ARRAY['CL'::bpchar, 'CO'::bpchar, 'VO'::bpchar, 'RE'::bpchar])) AND i.issotrx = 'N'::bpchar AND i.isactive = 'Y'::bpchar AND (dt.doctypekey::text <> ALL (ARRAY['RTR'::character varying::text, 'RTI'::character varying::text, 'RCR'::character varying::text, 'RCI'::character varying::text])) AND dt.isfiscaldocument = 'Y'::bpchar AND (dt.isfiscal IS NULL OR dt.isfiscal = 'N'::bpchar OR dt.isfiscal = 'Y'::bpchar AND i.fiscalalreadyprinted = 'Y'::bpchar);
+
+ALTER TABLE reginfo_compras_alicuotas_v OWNER TO libertya;
+
+--20151101 2100 Nueva campo en la tabla C_Tax
+UPDATE ad_system SET dummy = (SELECT addcolumnifnotexists('C_Tax','TaxAreaType','character(1)'));
