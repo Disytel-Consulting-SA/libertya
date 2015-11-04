@@ -7,7 +7,7 @@ import java.math.*;
 import org.openXpertya.util.*;
 /** Modelo Generado por C_Tax
  *  @author Comunidad de Desarrollo Libertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
- *  @version  - 2015-09-20 23:16:28.43 */
+ *  @version  - 2015-11-03 22:44:53.623 */
 public class X_C_Tax extends org.openXpertya.model.PO
 {
 /** Constructor estándar */
@@ -482,6 +482,32 @@ Tax acussation method */
 public String getTaxAccusation() 
 {
 return (String)get_Value("TaxAccusation");
+}
+public static final int TAXAREATYPE_AD_Reference_ID = MReference.getReferenceID("Tax Area Type");
+/** Nacional = N */
+public static final String TAXAREATYPE_Nacional = "N";
+/** Provincial = P */
+public static final String TAXAREATYPE_Provincial = "P";
+/** Municipal = M */
+public static final String TAXAREATYPE_Municipal = "M";
+/** Interno = I */
+public static final String TAXAREATYPE_Interno = "I";
+/** Set Tax Area Type */
+public void setTaxAreaType (String TaxAreaType)
+{
+if (TaxAreaType == null || TaxAreaType.equals("N") || TaxAreaType.equals("P") || TaxAreaType.equals("M") || TaxAreaType.equals("I"));
+ else throw new IllegalArgumentException ("TaxAreaType Invalid value - Reference = TAXAREATYPE_AD_Reference_ID - N - P - M - I");
+if (TaxAreaType != null && TaxAreaType.length() > 1)
+{
+log.warning("Length > 1 - truncated");
+TaxAreaType = TaxAreaType.substring(0,1);
+}
+set_Value ("TaxAreaType", TaxAreaType);
+}
+/** Get Tax Area Type */
+public String getTaxAreaType() 
+{
+return (String)get_Value("TaxAreaType");
 }
 /** Set Tax Indicator.
 Short form for Tax to be printed on documents */
