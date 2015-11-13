@@ -7,7 +7,7 @@ import java.math.*;
 import org.openXpertya.util.*;
 /** Modelo Generado por C_Invoice
  *  @author Comunidad de Desarrollo Libertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
- *  @version  - 2014-10-16 10:03:36.442 */
+ *  @version  - 2015-11-12 23:03:30.641 */
 public class X_C_Invoice extends org.openXpertya.model.PO
 {
 /** Constructor estándar */
@@ -872,13 +872,15 @@ public KeyNamePair getKeyNamePair()
 {
 return new KeyNamePair(getID(), getDocumentNo());
 }
-/** Set FechadeTCparaActualizarPrecios */
+/** Set FechadeTCparaActualizarPrecios.
+Fecha de TC para Actualizar Precios de Tarifa */
 public void setFechadeTCparaActualizarPrecios (Timestamp FechadeTCparaActualizarPrecios)
 {
 if (FechadeTCparaActualizarPrecios == null) throw new IllegalArgumentException ("FechadeTCparaActualizarPrecios is mandatory");
 set_Value ("FechadeTCparaActualizarPrecios", FechadeTCparaActualizarPrecios);
 }
-/** Get FechadeTCparaActualizarPrecios */
+/** Get FechadeTCparaActualizarPrecios.
+Fecha de TC para Actualizar Precios de Tarifa */
 public Timestamp getFechadeTCparaActualizarPrecios() 
 {
 return (Timestamp)get_Value("FechadeTCparaActualizarPrecios");
@@ -960,6 +962,21 @@ set_Value ("idcae", idcae);
 public String getidcae() 
 {
 return (String)get_Value("idcae");
+}
+/** Set Import Clearance */
+public void setImportClearance (String ImportClearance)
+{
+if (ImportClearance != null && ImportClearance.length() > 30)
+{
+log.warning("Length > 30 - truncated");
+ImportClearance = ImportClearance.substring(0,30);
+}
+set_Value ("ImportClearance", ImportClearance);
+}
+/** Get Import Clearance */
+public String getImportClearance() 
+{
+return (String)get_Value("ImportClearance");
 }
 /** Set Initial Current Account Amt */
 public void setInitialCurrentAccountAmt (BigDecimal InitialCurrentAccountAmt)
