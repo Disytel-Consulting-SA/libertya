@@ -3296,3 +3296,273 @@ ALTER TABLE reginfo_compras_alicuotas_v OWNER TO libertya;
 
 --20151101 2100 Nueva campo en la tabla C_Tax
 UPDATE ad_system SET dummy = (SELECT addcolumnifnotexists('C_Tax','TaxAreaType','character(1)'));
+
+-- 20151112-2015 Nueva columna para indicar el código de despacho de importación.
+UPDATE ad_system SET dummy = (SELECT addcolumnifnotexists('C_Invoice','ImportClearance', 'character varying(30)'));
+
+-- 20151112-2045 Nueva función utilizada en la exportación Régimen de Información.
+CREATE OR REPLACE FUNCTION getImporteOtrosTributos(p_c_invoice_id integer)
+  RETURNS numeric AS
+$BODY$
+DECLARE
+    	v_Amount        	NUMERIC;
+BEGIN
+    SELECT COALESCE(SUM(it.TaxAmt), 0)
+    INTO v_Amount
+    FROM C_Invoicetax it
+    -- Se consigna el total de tributos no informados en otros campos. Por lo tanto debemos excluir:
+    -- Impuestos Nacionales, Municipales e Internos.
+    -- Impuestos de IIBB (perceptionType = 'B') ni IVA (perceptionType = 'I')
+    WHERE C_Invoice_ID = p_c_invoice_id AND C_Tax_ID IN (SELECT C_Tax_ID FROM C_Tax 
+							 Where taxareatype NOT IN ('N', 'M', 'I') AND (perceptionType IS NULL OR perceptionType NOT IN ('B', 'I')));   
+
+    RETURN v_Amount;
+END;
+
+$BODY$
+  LANGUAGE 'plpgsql' VOLATILE
+  COST 100;
+ALTER FUNCTION getImporteOtrosTributos(p_c_invoice_id integer) OWNER TO libertya;
+
+-- 20151112-2045 Nueva función utilizada en la exportación Régimen de Información.
+CREATE OR REPLACE FUNCTION getTaxAmountByAreaType(p_c_invoice_id integer, p_tax_area_type character(1))
+  RETURNS numeric AS
+$BODY$
+DECLARE
+    	v_Amount        	NUMERIC;
+BEGIN
+    SELECT COALESCE(SUM(it.TaxAmt), 0)
+    INTO v_Amount
+    FROM C_Invoicetax it
+    -- No hay que tener en cuenta los impuestos de IIBB (perceptionType = 'B') ni IVA (perceptionType = 'I')
+    WHERE C_Invoice_ID = p_c_invoice_id AND C_Tax_ID IN (SELECT C_Tax_ID FROM C_Tax 
+							 Where taxareatype = p_tax_area_type AND (perceptionType IS NULL OR perceptionType NOT IN ('B', 'I')));   
+
+    RETURN v_Amount;
+END;
+
+$BODY$
+  LANGUAGE 'plpgsql' VOLATILE
+  COST 100;
+ALTER FUNCTION getTaxAmountByAreaType(p_c_invoice_id integer, p_tax_area_type character(1)) OWNER TO libertya;
+
+-- 20151112-2045 Nueva función utilizada en la exportación Régimen de Información.
+CREATE OR REPLACE FUNCTION getTaxAmountByPerceptionType(p_c_invoice_id integer, p_perception_type character(1))
+  RETURNS numeric AS
+$BODY$
+DECLARE
+    	v_Amount        	NUMERIC;
+BEGIN
+    SELECT COALESCE(SUM(it.TaxAmt), 0)
+    INTO v_Amount
+    FROM C_Invoicetax it
+    WHERE C_Invoice_ID = p_c_invoice_id AND C_Tax_ID IN (SELECT C_Tax_ID FROM C_Tax Where perceptionType = p_perception_type);   
+
+    RETURN v_Amount;
+END;
+
+$BODY$
+  LANGUAGE 'plpgsql' VOLATILE
+  COST 100;
+ALTER FUNCTION getTaxAmountByPerceptionType(p_c_invoice_id integer, p_tax_area_type character(1)) OWNER TO libertya;
+
+-- 20151112-2045 Nueva función utilizada en la exportación Régimen de Información.
+CREATE OR REPLACE FUNCTION getImporteOperacionExentas(p_c_invoice_id integer)
+  RETURNS numeric AS
+$BODY$
+DECLARE
+    	v_Amount        	NUMERIC;
+BEGIN
+    SELECT COALESCE(SUM(it.taxbaseamt), 0)
+    INTO v_Amount
+    FROM C_Invoicetax it
+    INNER JOIN C_Tax t ON (t.C_Tax_ID = it.C_Tax_ID)
+    WHERE (C_Invoice_ID = p_c_invoice_id) AND getcantidadalicuotasiva(p_c_invoice_id) > 1 AND (isPercepcion = 'N') AND t.rate = 0;   
+
+    RETURN v_Amount;
+END;
+
+$BODY$
+  LANGUAGE 'plpgsql' VOLATILE
+  COST 100;
+ALTER FUNCTION getImporteOperacionExentas(p_c_invoice_id integer) OWNER TO libertya;
+
+-- 20151112-2045 Nueva función utilizada en la exportación Régimen de Información.
+CREATE OR REPLACE FUNCTION getTipoDeComprobante(p_doctypekey character varying(40), p_letra character(1))
+  RETURNS character varying AS
+$BODY$
+DECLARE
+    	v_result	character varying;
+BEGIN
+    SELECT ei.codigo 
+    INTO v_result
+    FROM e_electronicinvoiceref ei 
+    WHERE (p_doctypekey || p_letra) ~~* (ei.clave_busqueda::text || '%'::text) AND ei.tabla_ref::text = 'TCOM'::text 
+    LIMIT 1;   
+
+    RETURN v_result;
+END;
+
+$BODY$
+  LANGUAGE 'plpgsql' VOLATILE
+  COST 100;
+ALTER FUNCTION getTipoDeComprobante(p_doctypekey character varying(40), p_letra character(1)) OWNER TO libertya;
+
+-- 20151112-2045 Nueva función utilizada en la exportación Régimen de Información.
+CREATE OR REPLACE FUNCTION getcantidadalicuotasiva(p_c_invoice_id integer)
+  RETURNS numeric AS
+$BODY$
+DECLARE
+    	v_Cant        	NUMERIC;
+BEGIN
+    SELECT COUNT(*)
+    INTO v_Cant
+    FROM C_Invoicetax it
+    INNER JOIN C_Tax t ON (t.C_Tax_ID = it.C_Tax_ID)
+    WHERE (C_Invoice_ID = p_c_invoice_id) AND (isPercepcion = 'N')
+	  -- No se informan aquellas líneas donde el importe del impuesto es 0 y el taxrate es distinto de 0
+	  AND NOT (it.taxamt = 0 AND t.rate <> 0);
+
+    RETURN v_Cant;
+END;
+
+$BODY$
+  LANGUAGE 'plpgsql' VOLATILE
+  COST 100;
+ALTER FUNCTION getcantidadalicuotasiva(integer) OWNER TO libertya;
+
+-- 20151112-2045 Eliminar view reginfo_compras_cbte_v por cambio de tipo de datos.
+DROP VIEW reginfo_compras_cbte_v;
+
+-- 20151112-2045 Actualización de view reginfo_compras_cbte_v.
+CREATE OR REPLACE VIEW reginfo_compras_cbte_v AS 
+  SELECT i.ad_client_id, i.ad_org_id, i.c_invoice_id, date_trunc('day'::text, i.dateinvoiced) AS date, date_trunc('day'::text, i.dateinvoiced) AS fechadecomprobante, 
+ getTipoDeComprobante(dt.doctypekey, l.letra)::character varying(15) AS tipodecomprobante, 
+ -- Si el tipo de comprobante es despacho de importación, entonces el punto de venta debe ser 0.
+ (CASE WHEN (getTipoDeComprobante(dt.doctypekey, l.letra) = '66') THEN 0 ELSE  i.puntodeventa END) AS puntodeventa, 
+ -- Si el tipo de comprobante es despacho de importación, entonces el número de comprobante debe ser 0.
+ (CASE WHEN (getTipoDeComprobante(dt.doctypekey, l.letra) = '66') THEN 0 ELSE  i.numerocomprobante END) AS nrocomprobante, 
+ -- Si el tipo de comprobante es despacho de importación, entonces es necesario inormar el código de despacho de importación.
+ (CASE WHEN (getTipoDeComprobante(dt.doctypekey, l.letra) = '66') THEN i.ImportClearance ELSE NULL END)::character varying(30) AS despachoimportacion, 
+ bp.taxidtype AS codigodocvendedor, bp.taxid AS nroidentificacionvendedor, bp.name AS nombrevendedor, 
+ currencyconvert(i.grandtotal, i.c_currency_id, 118, i.dateacct::timestamp with time zone, NULL::integer, i.ad_client_id, i.ad_org_id)::numeric(20,2) AS imptotal, 
+ 0::numeric(20,2) AS impconceptosnoneto, 
+ -- Si la factura es 'B' o 'C' y no es un Despacho de Importación, se informa 0.
+ (CASE WHEN (l.letra IN ('B', 'C') AND i.ImportClearance IS NULL) THEN 0 ELSE currencyconvert(getImporteOperacionExentas(i.c_invoice_id), i.c_currency_id, 118, i.dateacct::timestamp with time zone, NULL::integer, i.ad_client_id, i.ad_org_id) END)::numeric(20,2) AS impopeexentas, 
+ -- Importe por Impuestos de IVA
+ currencyconvert(getTaxAmountByPerceptionType(i.c_invoice_id, 'I'), i.c_currency_id, 118, i.dateacct::timestamp with time zone, NULL::integer, i.ad_client_id, i.ad_org_id)::numeric(20,2) AS imppercepopagosvaloragregado, 
+ -- Importe por Impuestos Nacionales
+ currencyconvert(getTaxAmountByAreaType(i.c_invoice_id, 'N'), i.c_currency_id, 118, i.dateacct::timestamp with time zone, NULL::integer, i.ad_client_id, i.ad_org_id)::numeric(20,2) AS imppercepopagosdeimpunac, 
+ -- Importe por Impuestos de IIBB
+ currencyconvert(getTaxAmountByPerceptionType(i.c_invoice_id, 'B'), i.c_currency_id, 118, i.dateacct::timestamp with time zone, NULL::integer, i.ad_client_id, i.ad_org_id)::numeric(20,2) AS imppercepiibb, 
+ -- Importe por Impuestos Municipales
+ currencyconvert(getTaxAmountByAreaType(i.c_invoice_id, 'M'), i.c_currency_id, 118, i.dateacct::timestamp with time zone, NULL::integer, i.ad_client_id, i.ad_org_id)::numeric(20,2) AS imppercepimpumuni, 
+ -- Importe por Impuestos Internos
+ currencyconvert(getTaxAmountByAreaType(i.c_invoice_id, 'I'), i.c_currency_id, 118, i.dateacct::timestamp with time zone, NULL::integer, i.ad_client_id, i.ad_org_id)::numeric(20,2) AS impimpuinternos, 
+ cu.wsfecode AS codmoneda, 
+ currencyrate(i.c_currency_id, 118, i.dateacct::timestamp with time zone, NULL::integer, i.ad_client_id, i.ad_org_id)::numeric(10,6) AS tipodecambio, 
+ -- Si la factura es 'B' o 'C' se informa 0. A excepción de los Despachos de Importación.
+ -- Notar que si el importe de operaciones exentas es distinto a 0, entonces se resta 1 a la cantidad de alícuotas, ya que este campo informa el importe y no sale el registro en el detalle de alícuotas.
+ (CASE WHEN (l.letra IN ('B', 'C') AND (getTipoDeComprobante(dt.doctypekey, l.letra) <> '66')) THEN 0 ELSE (CASE WHEN getImporteOperacionExentas(i.c_invoice_id) <> 0 THEN getcantidadalicuotasiva(i.c_invoice_id) -1 ELSE getcantidadalicuotasiva(i.c_invoice_id) END) END) AS cantalicuotasiva, 
+ getcodigooperacion(i.c_invoice_id)::character varying(1) AS codigooperacion, 
+ 0::numeric(20,2) AS impcreditofiscalcomputable, 
+ -- Importe Otros Tributos
+ currencyconvert(getImporteOtrosTributos(i.c_invoice_id), i.c_currency_id, 118, i.dateacct::timestamp with time zone, NULL::integer, i.ad_client_id, i.ad_org_id)::numeric(20,2) AS impotrostributos, 
+ NULL::character varying(20) AS cuitemisorcorredor, 
+ NULL::character varying(60) AS denominacionemisorcorredor, 
+ 0::numeric(20,2) AS ivacomision
+   FROM c_invoice i
+   JOIN c_doctype dt ON dt.c_doctype_id = i.c_doctype_id
+   LEFT JOIN c_letra_comprobante l ON l.c_letra_comprobante_id = i.c_letra_comprobante_id
+   JOIN c_bpartner bp ON bp.c_bpartner_id = i.c_bpartner_id
+   JOIN c_currency cu ON cu.c_currency_id = i.c_currency_id
+  WHERE (i.docstatus = ANY (ARRAY['CL'::bpchar, 'CO'::bpchar, 'VO'::bpchar, 'RE'::bpchar])) AND i.issotrx = 'N'::bpchar AND i.isactive = 'Y'::bpchar AND (dt.doctypekey::text <> ALL (ARRAY['RTR'::character varying::text, 'RTI'::character varying::text, 'RCR'::character varying::text, 'RCI'::character varying::text])) AND dt.isfiscaldocument = 'Y'::bpchar AND (dt.isfiscal IS NULL OR dt.isfiscal = 'N'::bpchar OR dt.isfiscal = 'Y'::bpchar AND i.fiscalalreadyprinted = 'Y'::bpchar);
+
+ALTER TABLE reginfo_compras_cbte_v OWNER TO libertya;
+
+-- 20151112-2045 Actualización de view reginfo_compras_alicuotas_v.
+CREATE OR REPLACE VIEW reginfo_compras_alicuotas_v AS 
+ SELECT i.ad_client_id, i.ad_org_id, i.c_invoice_id, date_trunc('day'::text, i.dateinvoiced) AS date, date_trunc('day'::text, i.dateinvoiced) AS fechadecomprobante, 
+  getTipoDeComprobante(dt.doctypekey, l.letra)::character varying(15) AS tipodecomprobante, 
+ -- Si el tipo de comprobante es despacho de importación, entonces el punto de venta debe ser 0.
+ (CASE WHEN (getTipoDeComprobante(dt.doctypekey, l.letra) = '66') THEN 0 ELSE  i.puntodeventa END) AS puntodeventa, 
+ -- Si el tipo de comprobante es despacho de importación, entonces el número de comprobante debe ser 0.
+ (CASE WHEN (getTipoDeComprobante(dt.doctypekey, l.letra) = '66') THEN 0 ELSE  i.numerocomprobante END) AS nrocomprobante, 
+ bp.taxidtype AS codigodocvendedor, bp.taxid AS nroidentificacionvendedor, currencyconvert(it.taxbaseamt, i.c_currency_id, 118, i.dateacct::timestamp with time zone, NULL::integer, i.ad_client_id, i.ad_org_id)::numeric(20,2) AS impnetogravado, t.wsfecode AS alicuotaiva, currencyconvert(it.taxamt, i.c_currency_id, 118, i.dateacct::timestamp with time zone, NULL::integer, i.ad_client_id, i.ad_org_id)::numeric(20,2) AS impuestoliquidado
+   FROM c_invoice i
+   JOIN c_doctype dt ON dt.c_doctype_id = i.c_doctype_id
+   LEFT JOIN c_letra_comprobante l ON l.c_letra_comprobante_id = i.c_letra_comprobante_id
+   JOIN c_bpartner bp ON bp.c_bpartner_id = i.c_bpartner_id
+   JOIN c_invoicetax it ON i.c_invoice_id = it.c_invoice_id
+   JOIN c_tax t ON t.c_tax_id = it.c_tax_id
+  WHERE t.ispercepcion = 'N'::bpchar AND (i.docstatus = ANY (ARRAY['CL'::bpchar, 'CO'::bpchar, 'VO'::bpchar, 'RE'::bpchar])) AND i.issotrx = 'N'::bpchar AND i.isactive = 'Y'::bpchar AND (dt.doctypekey::text <> ALL (ARRAY['RTR'::character varying::text, 'RTI'::character varying::text, 'RCR'::character varying::text, 'RCI'::character varying::text])) AND dt.isfiscaldocument = 'Y'::bpchar AND (dt.isfiscal IS NULL OR dt.isfiscal = 'N'::bpchar OR dt.isfiscal = 'Y'::bpchar AND i.fiscalalreadyprinted = 'Y'::bpchar) AND
+	l.letra NOT IN ('B', 'C')
+	-- Notar que si el importe de operaciones exentas es distinto a 0, entonces este campo informa el importe y no debe salir el registro en el detalle de alícuotas.
+	AND ((getImporteOperacionExentas(i.c_invoice_id) <> 0 AND t.rate <> 0) OR getImporteOperacionExentas(i.c_invoice_id) = 0)
+	-- No se informan aquellas líneas donde el importe del impuesto es 0 y el taxrate es distinto de 0
+	AND NOT (it.taxamt = 0 AND t.rate <> 0);
+
+ALTER TABLE reginfo_compras_alicuotas_v OWNER TO libertya;
+
+-- 20151112-2045 Actualización de view reginfo_compras_importaciones_v.
+CREATE OR REPLACE VIEW reginfo_compras_importaciones_v AS 
+ SELECT i.ad_client_id, i.ad_org_id, i.c_invoice_id, date_trunc('day'::text, i.dateinvoiced) AS date, date_trunc('day'::text, i.dateinvoiced) AS fechadecomprobante, 
+ i.ImportClearance::character varying(30) AS despachoimportacion, 
+ currencyconvert(it.taxbaseamt, i.c_currency_id, 118, i.dateacct::timestamp with time zone, NULL::integer, i.ad_client_id, i.ad_org_id)::numeric(20,2) AS impnetogravado, 
+ t.wsfecode AS alicuotaiva, 
+ currencyconvert(it.taxamt, i.c_currency_id, 118, i.dateacct::timestamp with time zone, NULL::integer, i.ad_client_id, i.ad_org_id)::numeric(20,2) AS impuestoliquidado
+   FROM c_invoice i
+   JOIN c_doctype dt ON dt.c_doctype_id = i.c_doctype_id
+   LEFT JOIN c_letra_comprobante l ON l.c_letra_comprobante_id = i.c_letra_comprobante_id
+   JOIN c_bpartner bp ON bp.c_bpartner_id = i.c_bpartner_id
+   JOIN c_invoicetax it ON i.c_invoice_id = it.c_invoice_id
+   JOIN c_tax t ON t.c_tax_id = it.c_tax_id
+  WHERE t.ispercepcion = 'N'::bpchar AND (i.docstatus = ANY (ARRAY['CL'::bpchar, 'CO'::bpchar, 'VO'::bpchar, 'RE'::bpchar])) AND i.issotrx = 'N'::bpchar AND i.isactive = 'Y'::bpchar AND (dt.doctypekey::text <> ALL (ARRAY['RTR'::character varying::text, 'RTI'::character varying::text, 'RCR'::character varying::text, 'RCI'::character varying::text])) AND dt.isfiscaldocument = 'Y'::bpchar AND (dt.isfiscal IS NULL OR dt.isfiscal = 'N'::bpchar OR dt.isfiscal = 'Y'::bpchar AND i.fiscalalreadyprinted = 'Y'::bpchar) AND
+	i.ImportClearance IS NOT NULL
+	-- Notar que si el importe de operaciones exentas es distinto a 0, entonces este campo informa el importe y no debe salir el registro en el detalle de alícuotas.
+	AND ((getImporteOperacionExentas(i.c_invoice_id) <> 0 AND t.rate <> 0) OR getImporteOperacionExentas(i.c_invoice_id) = 0)
+	-- No se informan aquellas líneas donde el importe del impuesto es 0 y el taxrate es distinto de 0
+	AND NOT (it.taxamt = 0 AND t.rate <> 0);
+
+ALTER TABLE reginfo_compras_importaciones_v OWNER TO libertya;
+
+-- 20151112-2045 Actualización de view reginfo_ventas_cbte_v.
+CREATE OR REPLACE VIEW reginfo_ventas_cbte_v AS 
+ SELECT i.ad_client_id, i.ad_org_id, i.c_invoice_id, date_trunc('day'::text, i.dateinvoiced) AS date, date_trunc('day'::text, i.dateinvoiced) AS fechadecomprobante, ei.codigo AS tipodecomprobante, i.puntodeventa, i.numerocomprobante AS nrocomprobante, i.numerocomprobante AS nrocomprobantehasta, bp.taxidtype AS codigodoccomprador, bp.taxid AS nroidentificacioncomprador, bp.name AS nombrecomprador, currencyconvert(i.grandtotal, i.c_currency_id, 118, i.dateacct::timestamp with time zone, NULL::integer, i.ad_client_id, i.ad_org_id)::numeric(20,2) AS imptotal, 0::numeric(20,2) AS impconceptosnoneto, 0::numeric(20,2) AS imppercepnocategorizados, 
+ currencyconvert(getImporteOperacionExentas(i.c_invoice_id), i.c_currency_id, 118, i.dateacct::timestamp with time zone, NULL::integer, i.ad_client_id, i.ad_org_id)::numeric(20,2) AS impopeexentas, 
+ -- Importe por Impuestos Nacionales
+ currencyconvert(getTaxAmountByAreaType(i.c_invoice_id, 'N'), i.c_currency_id, 118, i.dateacct::timestamp with time zone, NULL::integer, i.ad_client_id, i.ad_org_id)::numeric(20,2) AS imppercepopagosdeimpunac, 
+ -- Importe por Impuestos de IIBB
+ currencyconvert(getTaxAmountByPerceptionType(i.c_invoice_id, 'B'), i.c_currency_id, 118, i.dateacct::timestamp with time zone, NULL::integer, i.ad_client_id, i.ad_org_id)::numeric(20,2) AS imppercepiibb, 
+ -- Importe por Impuestos Municipales
+ currencyconvert(getTaxAmountByAreaType(i.c_invoice_id, 'M'), i.c_currency_id, 118, i.dateacct::timestamp with time zone, NULL::integer, i.ad_client_id, i.ad_org_id)::numeric(20,2) AS imppercepimpumuni, 
+ -- Importe por Impuestos Internos
+ currencyconvert(getTaxAmountByAreaType(i.c_invoice_id, 'I'), i.c_currency_id, 118, i.dateacct::timestamp with time zone, NULL::integer, i.ad_client_id, i.ad_org_id)::numeric(20,2) AS impimpuinternos, 
+ cu.wsfecode AS codmoneda, currencyrate(i.c_currency_id, 118, i.dateacct::timestamp with time zone, NULL::integer, i.ad_client_id, i.ad_org_id)::numeric(10,6) AS tipodecambio, getcantidadalicuotasiva(i.c_invoice_id) AS cantalicuotasiva, getCodigoOperacion(i.C_Invoice_ID)::character varying(1) AS codigooperacion, 
+  -- Importe Otros Tributos
+ currencyconvert(getImporteOtrosTributos(i.c_invoice_id), i.c_currency_id, 118, i.dateacct::timestamp with time zone, NULL::integer, i.ad_client_id, i.ad_org_id)::numeric(20,2) AS impotrostributos, 
+ NULL::timestamp without time zone AS fechavencimientopago
+   FROM c_invoice i
+   JOIN c_doctype dt ON dt.c_doctype_id = i.c_doctype_id
+   LEFT JOIN e_electronicinvoiceref ei ON dt.doctypekey::text ~~* (ei.clave_busqueda::text || '%'::text) AND ei.tabla_ref::text = 'TCOM'::text
+   JOIN c_bpartner bp ON bp.c_bpartner_id = i.c_bpartner_id
+   JOIN c_currency cu ON cu.c_currency_id = i.c_currency_id
+  WHERE (i.docstatus = ANY (ARRAY['CL'::bpchar, 'CO'::bpchar, 'VO'::bpchar, 'RE'::bpchar])) AND i.issotrx = 'Y'::bpchar AND i.isactive = 'Y'::bpchar AND (dt.doctypekey::text <> ALL (ARRAY['RTR'::character varying::text, 'RTI'::character varying::text, 'RCR'::character varying::text, 'RCI'::character varying::text])) AND dt.isfiscaldocument = 'Y'::bpchar AND (dt.isfiscal IS NULL OR dt.isfiscal = 'N'::bpchar OR dt.isfiscal = 'Y'::bpchar AND i.fiscalalreadyprinted = 'Y'::bpchar);
+
+ALTER TABLE reginfo_ventas_cbte_v OWNER TO libertya;
+
+-- 20151112-2045 Actualización de view reginfo_ventas_alicuotas_v.
+CREATE OR REPLACE VIEW reginfo_ventas_alicuotas_v AS 
+ SELECT i.ad_client_id, i.ad_org_id, i.c_invoice_id, date_trunc('day'::text, i.dateinvoiced) AS date, date_trunc('day'::text, i.dateinvoiced) AS fechadecomprobante, ei.codigo AS tipodecomprobante, i.puntodeventa, i.numerocomprobante AS nrocomprobante, currencyconvert(it.taxbaseamt, i.c_currency_id, 118, i.dateacct::timestamp with time zone, NULL::integer, i.ad_client_id, i.ad_org_id)::numeric(20,2) AS impnetogravado, t.wsfecode AS alicuotaiva, currencyconvert(it.taxamt, i.c_currency_id, 118, i.dateacct::timestamp with time zone, NULL::integer, i.ad_client_id, i.ad_org_id)::numeric(20,2) AS impuestoliquidado
+   FROM c_invoice i
+   JOIN c_doctype dt ON dt.c_doctype_id = i.c_doctype_id
+   LEFT JOIN e_electronicinvoiceref ei ON dt.doctypekey::text ~~* (ei.clave_busqueda::text || '%'::text) AND ei.tabla_ref::text = 'TCOM'::text
+   JOIN c_invoicetax it ON i.c_invoice_id = it.c_invoice_id
+   JOIN c_tax t ON t.c_tax_id = it.c_tax_id
+  WHERE t.ispercepcion = 'N'::bpchar AND (i.docstatus = ANY (ARRAY['CL'::bpchar, 'CO'::bpchar, 'VO'::bpchar, 'RE'::bpchar])) AND i.issotrx = 'Y'::bpchar AND i.isactive = 'Y'::bpchar AND (dt.doctypekey::text <> ALL (ARRAY['RTR'::character varying::text, 'RTI'::character varying::text, 'RCR'::character varying::text, 'RCI'::character varying::text])) AND dt.isfiscaldocument = 'Y'::bpchar AND (dt.isfiscal IS NULL OR dt.isfiscal = 'N'::bpchar OR dt.isfiscal = 'Y'::bpchar AND i.fiscalalreadyprinted = 'Y'::bpchar)
+  	-- Notar que si el importe de operaciones exentas es distinto a 0, entonces este campo informa el importe y no debe salir el registro en el detalle de alícuotas.
+	AND ((getImporteOperacionExentas(i.c_invoice_id) <> 0 AND t.rate <> 0) OR getImporteOperacionExentas(i.c_invoice_id) = 0)
+	-- No se informan aquellas líneas donde el importe del impuesto es 0 y el taxrate es distinto de 0
+	AND NOT (it.taxamt = 0 AND t.rate <> 0);
+
+ALTER TABLE reginfo_ventas_alicuotas_v OWNER TO libertya;
