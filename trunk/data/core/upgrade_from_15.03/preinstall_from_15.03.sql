@@ -3566,3 +3566,10 @@ CREATE OR REPLACE VIEW reginfo_ventas_alicuotas_v AS
 	AND NOT (it.taxamt = 0 AND t.rate <> 0);
 
 ALTER TABLE reginfo_ventas_alicuotas_v OWNER TO libertya;
+
+-- 20151201-1624 Nueva columna-boton que permite gestionar la factura en caso de ser electronica.  Si la misma se encuentra IP, puede ser que igualmente haya llegado a una instancia
+--               en donde la misma ya fue registrada en AFIP.  A fin de evitar doble registracion en AFIP, se incluye este boton que habilita opciones para continuar con el completado de la misma.
+update ad_system set dummy = (SELECT addcolumnifnotexists('C_Invoice','ManageElectronicInvoice', 'character(1) default ''N''::bpchar'));
+
+-- 20151201-1624 Nueva columna que permite omitir validacion de existencia de CAE en Facturas Electronicas si eldocstatus de la misma es IP (en progreso).
+update ad_system set dummy = (SELECT addcolumnifnotexists('C_Invoice','SkipIPNoCAEValidation','character(1) default ''N''::bpchar'));

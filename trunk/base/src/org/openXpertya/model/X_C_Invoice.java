@@ -7,7 +7,7 @@ import java.math.*;
 import org.openXpertya.util.*;
 /** Modelo Generado por C_Invoice
  *  @author Comunidad de Desarrollo Libertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
- *  @version  - 2015-11-12 23:03:30.641 */
+ *  @version  - 2015-12-01 17:45:28.012 */
 public class X_C_Invoice extends org.openXpertya.model.PO
 {
 /** Constructor estándar */
@@ -1252,6 +1252,21 @@ if (oo != null)
 }
 return false;
 }
+/** Set ManageElectronicInvoice */
+public void setManageElectronicInvoice (String ManageElectronicInvoice)
+{
+if (ManageElectronicInvoice != null && ManageElectronicInvoice.length() > 1)
+{
+log.warning("Length > 1 - truncated");
+ManageElectronicInvoice = ManageElectronicInvoice.substring(0,1);
+}
+set_Value ("ManageElectronicInvoice", ManageElectronicInvoice);
+}
+/** Get ManageElectronicInvoice */
+public String getManageElectronicInvoice() 
+{
+return (String)get_Value("ManageElectronicInvoice");
+}
 /** Set Manual DocumentNo */
 public void setManualDocumentNo (boolean ManualDocumentNo)
 {
@@ -1586,6 +1601,22 @@ Enable sending Document EMail */
 public boolean isSendEMail() 
 {
 Object oo = get_Value("SendEMail");
+if (oo != null) 
+{
+ if (oo instanceof Boolean) return ((Boolean)oo).booleanValue();
+ return "Y".equals(oo);
+}
+return false;
+}
+/** Set SkipIPNoCaeValidation */
+public void setSkipIPNoCaeValidation (boolean SkipIPNoCaeValidation)
+{
+set_Value ("SkipIPNoCaeValidation", new Boolean(SkipIPNoCaeValidation));
+}
+/** Get SkipIPNoCaeValidation */
+public boolean isSkipIPNoCaeValidation() 
+{
+Object oo = get_Value("SkipIPNoCaeValidation");
 if (oo != null) 
 {
  if (oo instanceof Boolean) return ((Boolean)oo).booleanValue();
