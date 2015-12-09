@@ -1,13 +1,17 @@
 package org.adempiere.webui.apps.form;
 
+import java.math.BigDecimal;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.Date;
+import java.util.Iterator;
 import java.util.List;
 import java.util.logging.Level;
 
 import org.adempiere.webui.apps.AEnv;
+import org.adempiere.webui.component.Checkbox;
 import org.adempiere.webui.editor.WSearchEditor;
 import org.adempiere.webui.event.ValueChangeEvent;
 import org.adempiere.webui.event.ValueChangeListener;
@@ -31,6 +35,8 @@ import org.openXpertya.util.DB;
 import org.openXpertya.util.DisplayType;
 import org.openXpertya.util.Env;
 import org.openXpertya.util.KeyNamePair;
+import org.openXpertya.util.Msg;
+import org.zkoss.zk.ui.event.Event;
 
 public class WCreateFromInvoice extends WCreateFrom {
 
@@ -43,6 +49,8 @@ public class WCreateFromInvoice extends WCreateFrom {
 	
     /** Descripción de Campos */
     private MInOut m_inout = null;
+    
+    //protected Checkbox allInOut;
     
     /** Factura que invoca este Crear Desde */
     private MInvoice invoice = null;
@@ -89,6 +97,13 @@ public class WCreateFromInvoice extends WCreateFrom {
 				// Se limpia la selección de remito
 				shipmentField.setValue(null);
 				shipmentChanged(0);
+				// Si el check allOrder esta seleccionado se muestran todos los
+				// pedidos del proveedor
+				// que fue seleccionado.
+				if (allInOut != null && allInOut.isSelected()) {
+					bPartnerField.setValue(evt.getNewValue());
+					showAllOrder();
+				}
 			}
 		});
         
@@ -390,10 +405,17 @@ public class WCreateFromInvoice extends WCreateFrom {
 		}
 	}
 
+	// El método agrega el check al panel parameterStdPanel
 	@Override
 	protected void customizarPanel() {
-		// TODO Auto-generated method stub
-		
+		// Si es Perfil Compras agrego el check Ver todos los pedidos
+		if (!isSOTrx()) {
+			allInOut = new Checkbox();
+			allInOut.setText("Ver todos los pedidos");
+			allInOut.addActionListener(this);
+			window.getParameterPanel().appendChild(allInOut);
+		}
+
 	}
 
 	protected void setDocType(MDocType docType) {
@@ -431,5 +453,198 @@ public class WCreateFromInvoice extends WCreateFrom {
 	{
 		window.dispose();
 	}
+	
+	public void onEvent(Event e) throws Exception {
+		log.config("Action=" + e.getName());
+
+		// Si selecciona el check "Seleccionar
+		if (e.getTarget().equals(allInOut))
+			showAllOrder();
+		else
+			super.onEvent(e);
+
+	} // actionPerformed
+
+	
+	// El siguiente método limpia los campos (invoiceField, orderField,
+	// invoiceField) y los desactiva cuando
+	// se selecciona el check "Seleccionar todos los pedidos".
+	public void activeDesactiveField(boolean state) {
+		if (!state) {
+			shipmentField.setValue("");
+			orderField.setValue("");
+			invoiceOrderField.setValue("");
+		}
+		orderField.setReadWrite(state);
+		invoiceOrderField.setReadWrite(state);
+		shipmentField.setReadWrite(state);
+	}
+	
+	// El método muestra todos los pedidos del proveedor seleccionado
+		public void showAllOrder() {
+			activeDesactiveField(!allInOut.isSelected());
+			if (allInOut.isSelected()) {
+				StringBuffer sql;
+
+				// La consulta obtiene los pedidos, del proveedor seleccionado
+				// aplicando el filtro getOrderFilter.
+				sql = new StringBuffer();
+				sql.append(
+						"select * from C_Order where C_BPartner_ID = "
+								+ bPartnerField.getValue() + " AND ").append(
+						getOrderFilter());
+
+				log.finer(sql.toString());
+
+				PreparedStatement pstmt = null;
+				ResultSet rs = null;
+
+				try {
+					pstmt = DB.prepareStatement(sql.toString());
+					rs = pstmt.executeQuery();
+					List<OrderLine> dataAux = new ArrayList<OrderLine>();
+					// Itero por cada uno de los pedidos almacenando en dataAux
+					// todas las lineas de todos los pedidos retornados en
+					// la consulta anterior.
+					while (rs.next()) {
+						loadOrder(rs.getInt("C_Order_ID"), isForInvoice(), allowDeliveryReturned(), false);
+						List<OrderLine> data = (List<OrderLine>) ((CreateFromTableModel) window.getDataTable().getModel()).getSourceEntities();
+						Iterator<? extends SourceEntity> it = data.iterator();
+						while (it.hasNext()) {
+							dataAux.add((OrderLine) it.next());
+						}
+					}
+					initDataTable();
+					filtrarColumnaInstanceName(dataAux);
+					loadTable(dataAux);
+
+				} catch (Exception e) {
+					log.log(Level.SEVERE, sql.toString(), e);
+				} finally {
+					try {
+						if (rs != null)
+							rs.close();
+						if (pstmt != null)
+							pstmt.close();
+					} catch (Exception e) {
+					}
+				}
+			}
+			else {
+				// Debe inicializarse nuevamente a fin de que se vacie la grilla
+				initDataTable();
+				window.tableChanged(null);
+			}
+		}
+		
+		// Si el check de mostrar todos los pedidos esta seleccionado crea el modelo
+		// de tabla para líneas de remitos.
+		// En caso contratio crea el modelo de tabla para líneas de documentos
+		// (Pedidos, Remitos, Facturas)
+		protected CreateFromTableModel createTableModelInstance() {
+			if (!isSOTrx() && allInOut != null && allInOut.isSelected()) {
+				return new DocumentLineTableModelFromInvoice();
+			} else {
+				return new DocumentLineTableModel();
+			}
+		}
+		
+		/**
+		 * Modelo de tabla para líneas de pedidos.
+		 */
+		public class DocumentLineTableModelFromInvoice extends
+				DocumentLineTableModel {
+			// Constantes de índices de las columnas en la grilla.
+			// Constantes de índices de las columnas en la grilla.
+			public static final int COL_IDX_LINE = 3;
+			public static final int COL_IDX_ITEM_CODE = 4;
+			public static final int COL_IDX_PRODUCT = 5;
+			public static final int COL_IDX_UOM = 7;
+			public static final int COL_IDX_QTY = 8;
+			public static final int COL_IDX_REMAINING = 9;
+
+			public static final int COL_IDX_ORDER = 1;
+			public static final int COL_IDX_DATE = 2;
+			public static final int COL_IDX_INSTANCE_NAME = 6;
+			
+			public int visibles = 10;
+
+			@Override
+			protected void setColumnNames() {
+				setColumnName(COL_IDX_LINE, Msg.getElement(getCtx(), "Line"));
+				setColumnName(COL_IDX_ITEM_CODE,
+						Msg.translate(Env.getCtx(), "Value"));
+				setColumnName(COL_IDX_PRODUCT,
+						Msg.translate(Env.getCtx(), "M_Product_ID"));
+				setColumnName(COL_IDX_UOM, Msg.translate(Env.getCtx(), "C_UOM_ID"));
+				setColumnName(COL_IDX_QTY, Msg.translate(Env.getCtx(), "Quantity"));
+				setColumnName(COL_IDX_REMAINING,
+						Msg.translate(Env.getCtx(), "RemainingQty"));
+
+				setColumnName(COL_IDX_ORDER, Msg.getElement(getCtx(), "C_Order_ID"));
+				setColumnName(COL_IDX_INSTANCE_NAME,
+						Msg.translate(Env.getCtx(), "Attributes"));
+				setColumnName(COL_IDX_DATE,
+						Msg.translate(Env.getCtx(), "DateOrdered"));
+			}
+
+			@Override
+			protected void setColumnClasses() {
+				setColumnClass(COL_IDX_LINE, Integer.class);
+				setColumnClass(COL_IDX_ITEM_CODE, String.class);
+				setColumnClass(COL_IDX_PRODUCT, String.class);
+				setColumnClass(COL_IDX_UOM, String.class);
+				setColumnClass(COL_IDX_QTY, BigDecimal.class);
+				setColumnClass(COL_IDX_REMAINING, BigDecimal.class);
+
+				setColumnClass(COL_IDX_ORDER, String.class);
+				setColumnClass(COL_IDX_INSTANCE_NAME, String.class);
+				setColumnClass(COL_IDX_DATE, Date.class);
+			}
+
+			@Override
+			public Object getValueAt(int rowIndex, int colIndex) {
+				OrderLine docLine = (OrderLine)getDocumentLine(rowIndex);
+				Object value = null;
+				switch (colIndex) {
+				case COL_IDX_LINE:
+					value = docLine.lineNo;
+					break;
+				case COL_IDX_ITEM_CODE:
+					value = docLine.itemCode;
+					break;
+				case COL_IDX_PRODUCT:
+					value = docLine.productName;
+					break;
+				case COL_IDX_UOM:
+					value = docLine.uomName;
+					break;
+				case COL_IDX_QTY:
+					value = docLine.lineQty;
+					break;
+				case COL_IDX_REMAINING:
+					value = docLine.remainingQty;
+					break;
+				case COL_IDX_ORDER:
+					value = docLine.documentNo;
+					break;
+				case COL_IDX_INSTANCE_NAME:
+					value = docLine.instanceName;
+					break;
+				case COL_IDX_DATE:
+					value = docLine.dateOrderLine;
+					break;
+				default:
+					value = super.getValueAt(rowIndex, colIndex);
+					break;
+				}
+				return value;
+			}
+
+			@Override
+			public int getColumnCount() {
+				return visibles;
+			}
+		}
 	
 }

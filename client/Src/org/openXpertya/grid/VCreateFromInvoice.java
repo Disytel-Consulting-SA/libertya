@@ -16,6 +16,9 @@
 
 package org.openXpertya.grid;
 
+import java.awt.GridBagConstraints;
+import java.awt.Insets;
+import java.awt.event.ActionEvent;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyVetoException;
 import java.beans.VetoableChangeListener;
@@ -24,15 +27,18 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 import java.util.logging.Level;
 
+import org.compiere.swing.CCheckBox;
 import org.openXpertya.apps.form.VComponentsFactory;
 import org.openXpertya.grid.CreateFromModel.CreateFromSaveException;
 import org.openXpertya.grid.CreateFromModel.DocumentLine;
 import org.openXpertya.grid.CreateFromModel.InOutLine;
 import org.openXpertya.grid.CreateFromModel.OrderLine;
 import org.openXpertya.grid.CreateFromModel.SourceEntity;
+import org.openXpertya.grid.VCreateFrom.CreateFromTableModel;
 import org.openXpertya.model.MDocType;
 import org.openXpertya.model.MInOut;
 import org.openXpertya.model.MInOutLine;
@@ -70,6 +76,8 @@ public class VCreateFromInvoice extends VCreateFrom {
         log.info( mTab.toString());
     }    // VCreateFromInvoice
 
+	protected CCheckBox allOrder;
+    
     /** Descripción de Campos */
     private MInOut m_inout = null;
     
@@ -122,6 +130,15 @@ public class VCreateFromInvoice extends VCreateFrom {
 				// Se limpia la selección de remito
 				shipmentField.setValue(null);
 				shipmentChanged(0);
+				
+				// Si el check allOrder esta seleccionado se muestran todos los
+				// pedidos del proveedor
+				// que fue seleccionado.
+				if (allOrder != null && allOrder.isSelected()) {
+					bPartnerField.setValue(evt.getNewValue());
+					showAllOrder();
+				}
+				
 			}
 		});
         
@@ -393,11 +410,29 @@ public class VCreateFromInvoice extends VCreateFrom {
         loadShipment(shipmentID);
 	}
 	
-	@Override
+
 	protected void customizarPanel() {
-		// TODO Auto-generated method stub
-		
+		// Si es Perfil Compras agrego el check Ver todos los pedidos
+		if (!isSOTrx()) {
+			allOrder = new CCheckBox();
+			allOrder.setText("Ver todos los pedidos");
+			allOrder.addActionListener(this);
+			parameterStdPanel.add(allOrder, new GridBagConstraints(0, 1, 1, 1,
+					0.0, 0.0, GridBagConstraints.EAST, GridBagConstraints.NONE,
+					new Insets(5, 5, 5, 5), 0, 0));
+		}
 	}
+	
+	public void actionPerformed(ActionEvent e) {
+		log.config("Action=" + e.getActionCommand());
+
+		// Si selecciona el check "Seleccionar
+		if (e.getSource().equals(allOrder))
+			showAllOrder();
+		else
+			super.actionPerformed(e);
+
+	} // actionPerformed
 
 	protected void setDocType(MDocType docType) {
 		this.docType = docType;
@@ -428,6 +463,80 @@ public class VCreateFromInvoice extends VCreateFrom {
 	protected boolean addSecurityValidation() {
 		return true;
 	}
+
+	// El siguiente método limpia los campos (invoiceField, orderField,
+	// invoiceField) y los desactiva cuando
+	// se selecciona el check "Seleccionar todos los pedidos".
+	public void activeDesactiveField(boolean state) {
+		if (!state) {
+			shipmentField.setValue("");
+			orderField.setValue("");
+			invoiceOrderField.setValue("");
+		}
+		orderField.setReadWrite(state);
+		orderField.getM_button().setVisible(state);
+		orderField.setShowInfo(state);
+		invoiceOrderField.setReadWrite(state);
+		invoiceOrderField.getM_button().setVisible(state);
+		invoiceOrderField.setShowInfo(state);
+		shipmentField.setReadWrite(state);
+		shipmentField.getM_button().setVisible(state);
+		shipmentField.setShowInfo(state);
+	}
+	
+	// El método muestra todos los pedidos del proveedor seleccionado
+		public void showAllOrder() {
+			activeDesactiveField(!allOrder.isSelected());
+			initDataTable();
+			if (allOrder.isSelected()) {
+				StringBuffer sql;
+
+				// La consulta obtiene los pedidos, del proveedor seleccionado
+				// aplicando el filtro getOrderFilter.
+				sql = new StringBuffer();
+				sql.append(
+						"select * from C_Order where C_BPartner_ID = "
+								+ bPartnerField.getValue() + " AND ").append(
+						getOrderFilter());
+
+				log.finer(sql.toString());
+
+				PreparedStatement pstmt = null;
+				ResultSet rs = null;
+
+				try {
+					pstmt = DB.prepareStatement(sql.toString());
+					rs = pstmt.executeQuery();
+					List<OrderLine> dataAux = new ArrayList<OrderLine>();
+					// Itero por cada uno de los pedidos almacenando en dataAux
+					// todas las lineas de todos los pedidos retornados en
+					// la consulta anterior.
+					while (rs.next()) {
+						loadOrder(rs.getInt("C_Order_ID"), isForInvoice(), allowDeliveryReturned(), false);
+						List<OrderLine> data = (List<OrderLine>) ((CreateFromTableModel) dataTable
+								.getModel()).getSourceEntities();
+						Iterator<? extends SourceEntity> it = data.iterator();
+						while (it.hasNext()) {
+							dataAux.add((OrderLine) it.next());
+						}
+					}
+					filtrarColumnaInstanceName(dataAux);
+					loadTable(dataAux);
+
+				} catch (Exception e) {
+					log.log(Level.SEVERE, sql.toString(), e);
+				} finally {
+					try {
+						if (rs != null)
+							rs.close();
+						if (pstmt != null)
+							pstmt.close();
+					} catch (Exception e) {
+					}
+				}
+			}
+		}
+
 
 }    // VCreateFromInvoice
 
