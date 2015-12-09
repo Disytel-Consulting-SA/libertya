@@ -744,7 +744,23 @@ public final class MPayment extends X_C_Payment implements DocAction,ProcessCall
 //        		log.saveError("SaveError", Msg.translate(getCtx(), "InvalidCheckDueDate"));
 //        		return false;
 //        	}
-        }
+        	
+        	//La fecha de emisión no puede ser vacía
+			if (getDateEmissionCheck() == null) {
+				log.saveError("SaveError",Msg.translate(getCtx(), "MandatoryEmissionDate"));
+				return false;
+			}
+			
+			// La fecha de vencimiento debe ser mayor o igual a la fecha de emisión
+			SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy/MM/dd");
+			String dueDateFormatted = simpleDateFormat.format(getDueDate());
+			String dateEmissionFormatted = simpleDateFormat.format(getDateEmissionCheck());
+			if (getDueDate().compareTo(getDateEmissionCheck()) <= 0
+					&& !dueDateFormatted.equals(dateEmissionFormatted)) {
+				log.saveError("SaveError",Msg.translate(getCtx(), "InvalidCheckDueDate"));
+				return false;
+			}
+		}
         
         int bankAccountCurrency = new MBankAccount(getCtx(), getC_BankAccount_ID(),null).getC_Currency_ID();
 		if (bankAccountCurrency != getC_Currency_ID()){
