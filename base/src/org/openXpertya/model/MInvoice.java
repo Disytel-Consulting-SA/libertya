@@ -3178,6 +3178,19 @@ public class MInvoice extends X_C_Invoice implements DocAction {
 			return DocAction.STATUS_Invalid;
 		}
 
+		// === Lógica adicional para evitar doble notificación a AFIP. ===
+		if (CalloutInvoiceExt.ComprobantesFiscalesActivos() && MDocType.isElectronicDocType(getC_DocTypeTarget_ID())) {
+			// Si la factura se encuentra en estado En Proceso...
+			// ¿Se debe informar al usuario que la factura se encontraba en IP y que no tenía un CAE (requiere validar en AFIP si está registrada),
+			// o bien debe dejar continuar (skip de la validacion dado que ya fue gestionada por el usuario) para que genere el CAE al completar?
+			if ((getcae() == null || getcae().length() == 0) && DocAction.STATUS_InProgress.equals(getDocStatus()) && !isSkipIPNoCaeValidation()) {
+				m_processMsg = "Factura de tipo electrónica con estado en proceso.  Validar registración de la misma en AFIP y posteriormente utilizar funcionalidad Gestionar Factura Electronica";
+				log.log(Level.SEVERE, m_processMsg);
+				return DocAction.STATUS_Invalid;
+			}
+			
+		}
+		
 		return DocAction.STATUS_InProgress;
 	} // prepareIt
 
@@ -4201,7 +4214,10 @@ public class MInvoice extends X_C_Invoice implements DocAction {
 		 */
 		if (localeARActive
 				& MDocType.isElectronicDocType(getC_DocTypeTarget_ID())) {
-			if (getcaecbte() != getNumeroComprobante()) {
+			
+			// === Lógica adicional para evitar doble notificación a AFIP. ===
+			// Si tiene CAE asignado, no debe generarlo nuevamente
+			if ((getcae() == null || getcae().length() == 0) && getcaecbte() != getNumeroComprobante()) {
 				ProcessorWSFE processor = new ProcessorWSFE(this);
 				String errorMsg = processor.generateCAE();
 				if (Util.isEmpty(processor.getCAE())) {
