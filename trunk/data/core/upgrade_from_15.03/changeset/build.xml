@@ -537,10 +537,25 @@
 		
 	
   <!-- ==================================================== -->
-  <!-- Instalar                                             -->
+  <!-- Instalar (instancia tradicional)                     -->
   <!-- ==================================================== -->
-  <target name="setup" depends="setupDeploy"
-	  	description="Instalar Libertya">
+  <target name="setup" depends="setupDeploy" description="Instalar Libertya">
+  </target>
+  
+  <!-- ==================================================== -->
+  <!-- Instalar (instancia SaaS)                            -->
+  <!-- ==================================================== -->
+  <target name="setupSaaS" depends="setup" description="Instalar Libertya SaaS">
+     
+	<echo message="Configuracion especial de puertos del Servidor Libertya SaaS." />   
+	<echo message="Instancia: ${instanceID}"/>
+	<echo message="Directorio binarios SaaS: ${portShiftDir}"/>
+	<echo message="Ejecutando binario: ${portShiftScript}"/>
+	
+	<!-- Invocados desde Configurar visual (ConfigurationPanel) o ConfigurarAuto (SilentSetup) -->
+	<exec dir="${portShiftDir}" executable="${portShiftDir}/${portShiftScript}" >
+	    <arg value="${instanceID}" />
+	</exec>      
   </target>
 
 

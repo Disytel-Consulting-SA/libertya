@@ -21,6 +21,7 @@
 package org.openXpertya.install;
 
 import org.apache.tools.ant.Main;
+import org.apache.tools.ant.launch.AntMain;
 
 import org.compiere.swing.CButton;
 import org.compiere.swing.CCheckBox;
@@ -32,6 +33,8 @@ import org.compiere.swing.CTextField;
 
 import org.openXpertya.OpenXpertya;
 import org.openXpertya.apps.SwingWorker;
+import org.openXpertya.saas.Constants;
+import org.openXpertya.saas.SaaSUtils;
 import org.openXpertya.util.CLogger;
 
 //~--- Importaciones JDK ------------------------------------------------------
@@ -45,7 +48,12 @@ import java.awt.GridBagLayout;
 import java.awt.Insets;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.InputStream;
 
+import java.util.Properties;
 import java.util.ResourceBundle;
 import java.util.logging.Level;
 
@@ -388,7 +396,19 @@ public class ConfigurationPanel extends CPanel implements ActionListener {
      * @return
      */
     public boolean dynInit() {
-        return m_data.load();
+        boolean loadResult  = m_data.load();
+
+        // LY SaaS. Si es una instancia SaaS, no debe poder configurar los puertos manualmente
+        if (loadResult && SaaSUtils.isSaasInstance()) {
+           	fWebPort.setEnabled(false);
+           	fWebPort.setText("8080");
+           	fSSLPort.setEnabled(false);
+           	fSSLPort.setText("8443");
+           	fJNPPort.setEnabled(false);
+           	fJNPPort.setText("1099");
+        }
+    
+        return loadResult;
     }		// dynInit
 
     /**
@@ -607,8 +627,7 @@ public class ConfigurationPanel extends CPanel implements ActionListener {
      * Descripción de Método
      *
      */
-    private void save() {
-
+    private void save() { 
         if (!m_success) {
             return;
         }
@@ -630,12 +649,16 @@ public class ConfigurationPanel extends CPanel implements ActionListener {
             System.setProperty("ant.home", ".");
 
             String[]	args	= new String[] { "setup" };
+            
+            if (SaaSUtils.isSaasInstance() && SaaSUtils.getInstanceID() > 0) {
+            	args	= new String[] { "setupSaaS", "-DportShiftDir="+SaaSUtils.getSaasGeneralDir()+Constants.SUBDIR_SAAS_GENERAL_BIN, "-DportShiftScript="+Constants.EXEC_INSTANCE_PORTS, "-DinstanceID=" + SaaSUtils.getInstanceID() };
+            }
 
             // Launcher.main (args);   //      calls System.exit
             Main	antMain	= new Main();
 
             antMain.startAnt(args, null, null);
-
+            
         } catch (Exception e) {
             CLogger.get().log(Level.SEVERE, "ant", e);
         }
@@ -792,6 +815,11 @@ public class ConfigurationPanel extends CPanel implements ActionListener {
     protected void setStatusBar(String text) {
         m_statusBar.setText(text);
     }		// setStatusBar
+    
+    
+
+    
+
 }	// ConfigurationPanel
 
 

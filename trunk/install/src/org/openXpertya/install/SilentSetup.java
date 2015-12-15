@@ -5,6 +5,8 @@ import java.util.logging.Handler;
 import java.util.logging.Level;
 
 import org.apache.tools.ant.Main;
+import org.openXpertya.saas.Constants;
+import org.openXpertya.saas.SaaSUtils;
 import org.openXpertya.util.CLogFile;
 import org.openXpertya.util.CLogMgt;
 import org.openXpertya.util.CLogger;
@@ -46,6 +48,12 @@ public class SilentSetup {
 			System.setProperty("ant.home", ".");
 			//System.setProperty("ant.home", Ini.getOXPHome());
 			String[] 	args = new String[] {"setup"};
+			
+            if (SaaSUtils.isSaasInstance() && SaaSUtils.getInstanceID() > 0) {
+            	args	= new String[] { "setupSaaS", "-DportShiftDir="+SaaSUtils.getSaasGeneralDir()+Constants.SUBDIR_SAAS_GENERAL_BIN, "-DportShiftScript="+Constants.EXEC_INSTANCE_PORTS, "-DinstanceID=" + SaaSUtils.getInstanceID() };
+            }
+
+			
 		//	Launcher.main (args);	//	calls System.exit
 			Main antMain = new Main();
 			antMain.startAnt(args, null, null);
