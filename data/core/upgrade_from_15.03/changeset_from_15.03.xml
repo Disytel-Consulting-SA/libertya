@@ -70,6 +70,14 @@ Ejemplos de cambios
 		
 		<!-- 20150909-1304 Soporte para pisado de clases de CORE en LYWeb al ejecutar Configurar.sh -->
 		<copy file="${SOURCE_DIR}/build.xml" todir="${TARGET_DIR}" overwrite="yes" />
+		
+		<!-- 20151215-1318 Nueva version build.xml con soporte para configuracion LYSaaS -->
+		<copy file="${SOURCE_DIR}/build.xml" todir="${TARGET_DIR}" overwrite="yes" />
+		
+		<!-- 20150909-1304 Archivo de configuracion de instancia LYSaaS -->
+		<mkdir dir="${TARGET_DIR}/utils/saas"/>
+		<mkdir dir="${TARGET_DIR}/utils/saas/cfg"/>
+		<copy file="${SOURCE_DIR}/InstanceConfiguration.cfg" todir="${TARGET_DIR}/utils/saas/cfg" overwrite="yes" />
     </target>
     
 </project>
