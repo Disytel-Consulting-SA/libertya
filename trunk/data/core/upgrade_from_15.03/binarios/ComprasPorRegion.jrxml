@@ -106,6 +106,18 @@ AND ($P{AD_CLIENT_ID} = ad_client_id)]]></queryString>
 	<field name="subfamilia" class="java.lang.String"/>
 	<field name="region" class="java.lang.String"/>
 
+	<variable name="SUM_NETO" class="java.math.BigDecimal" resetType="Report" calculation="Sum">
+		<variableExpression><![CDATA[$F{importe_neto}]]></variableExpression>
+	</variable>
+	<variable name="SUM_IMPUESTOS" class="java.math.BigDecimal" resetType="Report" calculation="Sum">
+		<variableExpression><![CDATA[$F{impuestos}]]></variableExpression>
+	</variable>
+	<variable name="SUM_PERCEPCIONES" class="java.math.BigDecimal" resetType="Report" calculation="Sum">
+		<variableExpression><![CDATA[$F{percepciones}]]></variableExpression>
+	</variable>
+	<variable name="SUM_TOTAL" class="java.math.BigDecimal" resetType="Report" calculation="Sum">
+		<variableExpression><![CDATA[$F{importe_total}]]></variableExpression>
+	</variable>
 		<background>
 			<band height="0"  isSplitAllowed="true" >
 			</band>
@@ -123,9 +135,9 @@ AND ($P{AD_CLIENT_ID} = ad_client_id)]]></queryString>
 				<textField isStretchWithOverflow="false" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
 						x="70"
-						y="15"
+						y="18"
 						width="150"
-						height="12"
+						height="11"
 						key="textField-3"
 						isRemoveLineWhenBlank="true">
 							<printWhenExpression><![CDATA[new Boolean($P{AD_Org_ID}.toString() != "")]]></printWhenExpression>
@@ -138,23 +150,23 @@ AND ($P{AD_CLIENT_ID} = ad_client_id)]]></queryString>
 				</textField>
 				<staticText>
 					<reportElement
-						x="4"
-						y="3"
-						width="200"
-						height="12"
+						x="0"
+						y="0"
+						width="129"
+						height="15"
 						key="staticText-2"/>
-					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
+					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="Thin" bottomBorderColor="#000000"/>
 					<textElement>
-						<font pdfFontName="Helvetica-Bold" size="8" isBold="true" isUnderline="false"/>
+						<font pdfFontName="Helvetica-Bold" size="10" isBold="true" isUnderline="false"/>
 					</textElement>
-				<text><![CDATA[Parámetros del Informe]]></text>
+				<text><![CDATA[Compras por Región]]></text>
 				</staticText>
 				<staticText>
 					<reportElement
 						x="4"
-						y="15"
+						y="18"
 						width="66"
-						height="12"
+						height="11"
 						key="staticText-4"
 						isRemoveLineWhenBlank="true">
 							<printWhenExpression><![CDATA[new Boolean($P{AD_Org_ID}.toString() != "")]]></printWhenExpression>
@@ -285,9 +297,9 @@ AND ($P{AD_CLIENT_ID} = ad_client_id)]]></queryString>
 				<staticText>
 					<reportElement
 						x="4"
-						y="27"
+						y="29"
 						width="44"
-						height="12"
+						height="11"
 						key="staticText-71"
 						isRemoveLineWhenBlank="true">
 							<printWhenExpression><![CDATA[new Boolean($P{FechaDesde} != null)]]></printWhenExpression>
@@ -301,9 +313,9 @@ AND ($P{AD_CLIENT_ID} = ad_client_id)]]></queryString>
 				<textField isStretchWithOverflow="false" pattern="dd/MM/yyyy" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
 						x="48"
-						y="27"
+						y="29"
 						width="81"
-						height="12"
+						height="11"
 						key="textField-93"
 						isRemoveLineWhenBlank="true">
 							<printWhenExpression><![CDATA[new Boolean($P{FechaDesde} != null)]]></printWhenExpression>
@@ -317,9 +329,9 @@ AND ($P{AD_CLIENT_ID} = ad_client_id)]]></queryString>
 				<staticText>
 					<reportElement
 						x="129"
-						y="27"
+						y="29"
 						width="41"
-						height="12"
+						height="11"
 						key="staticText-72">
 							<printWhenExpression><![CDATA[new Boolean($P{FechaHasta} != null)]]></printWhenExpression>
 						</reportElement>
@@ -332,9 +344,9 @@ AND ($P{AD_CLIENT_ID} = ad_client_id)]]></queryString>
 				<textField isStretchWithOverflow="false" pattern="dd/MM/yyyy" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
 						x="170"
-						y="27"
+						y="29"
 						width="81"
-						height="12"
+						height="11"
 						key="textField-94"
 						isRemoveLineWhenBlank="true">
 							<printWhenExpression><![CDATA[new Boolean($P{FechaHasta} != null)]]></printWhenExpression>
@@ -348,9 +360,9 @@ AND ($P{AD_CLIENT_ID} = ad_client_id)]]></queryString>
 				<staticText>
 					<reportElement
 						x="4"
-						y="39"
+						y="40"
 						width="125"
-						height="12"
+						height="11"
 						key="staticText-74"
 						isRemoveLineWhenBlank="true">
 							<printWhenExpression><![CDATA[new Boolean($P{C_BP_Group_ID}!= null)]]></printWhenExpression>
@@ -364,9 +376,9 @@ AND ($P{AD_CLIENT_ID} = ad_client_id)]]></queryString>
 				<textField isStretchWithOverflow="false" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
 						x="129"
-						y="39"
+						y="40"
 						width="150"
-						height="12"
+						height="11"
 						key="textField-96"
 						isRemoveLineWhenBlank="true">
 							<printWhenExpression><![CDATA[new Boolean($P{C_BP_Group_ID}!= null)]]></printWhenExpression>
@@ -533,9 +545,9 @@ AND ($P{AD_CLIENT_ID} = ad_client_id)]]></queryString>
 				<staticText>
 					<reportElement
 						x="279"
-						y="39"
+						y="40"
 						width="50"
-						height="12"
+						height="11"
 						key="staticText-77"
 						isRemoveLineWhenBlank="true">
 							<printWhenExpression><![CDATA[new Boolean($P{M_Product_Category_ID}!= null)]]></printWhenExpression>
@@ -549,9 +561,9 @@ AND ($P{AD_CLIENT_ID} = ad_client_id)]]></queryString>
 				<textField isStretchWithOverflow="false" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
 						x="329"
-						y="39"
+						y="40"
 						width="150"
-						height="12"
+						height="11"
 						key="textField-99"
 						isRemoveLineWhenBlank="true">
 							<printWhenExpression><![CDATA[new Boolean($P{M_Product_Category_ID}!= null)]]></printWhenExpression>
@@ -910,7 +922,59 @@ AND ($P{AD_CLIENT_ID} = ad_client_id)]]></queryString>
 			</band>
 		</pageFooter>
 		<summary>
-			<band height="0"  isSplitAllowed="true" >
+			<band height="13"  isSplitAllowed="true" >
+				<textField isStretchWithOverflow="false" pattern="##0.00" isBlankWhenNull="false" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
+					<reportElement
+						x="751"
+						y="0"
+						width="58"
+						height="13"
+						key="textField-100"/>
+					<box topBorder="None" topBorderColor="#000000" leftBorder="1Point" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="1Point" bottomBorderColor="#000000"/>
+					<textElement textAlignment="Right" verticalAlignment="Middle">
+						<font size="6"/>
+					</textElement>
+				<textFieldExpression   class="java.math.BigDecimal"><![CDATA[$V{SUM_NETO}]]></textFieldExpression>
+				</textField>
+				<textField isStretchWithOverflow="false" pattern="##0.00" isBlankWhenNull="false" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
+					<reportElement
+						x="809"
+						y="0"
+						width="42"
+						height="13"
+						key="textField-101"/>
+					<box topBorder="None" topBorderColor="#000000" leftBorder="1Point" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="1Point" bottomBorderColor="#000000"/>
+					<textElement textAlignment="Right" verticalAlignment="Middle">
+						<font size="6"/>
+					</textElement>
+				<textFieldExpression   class="java.math.BigDecimal"><![CDATA[$V{SUM_IMPUESTOS}]]></textFieldExpression>
+				</textField>
+				<textField isStretchWithOverflow="false" pattern="##0.00" isBlankWhenNull="false" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
+					<reportElement
+						x="851"
+						y="0"
+						width="64"
+						height="13"
+						key="textField-102"/>
+					<box topBorder="None" topBorderColor="#000000" leftBorder="1Point" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="1Point" bottomBorderColor="#000000"/>
+					<textElement textAlignment="Right" verticalAlignment="Middle">
+						<font size="6"/>
+					</textElement>
+				<textFieldExpression   class="java.math.BigDecimal"><![CDATA[$V{SUM_PERCEPCIONES}]]></textFieldExpression>
+				</textField>
+				<textField isStretchWithOverflow="false" pattern="##0.00" isBlankWhenNull="false" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
+					<reportElement
+						x="915"
+						y="0"
+						width="60"
+						height="13"
+						key="textField-103"/>
+					<box topBorder="None" topBorderColor="#000000" leftBorder="1Point" leftBorderColor="#000000" rightBorder="1Point" rightBorderColor="#000000" bottomBorder="1Point" bottomBorderColor="#000000"/>
+					<textElement textAlignment="Right" verticalAlignment="Middle">
+						<font size="6"/>
+					</textElement>
+				<textFieldExpression   class="java.math.BigDecimal"><![CDATA[$V{SUM_TOTAL}]]></textFieldExpression>
+				</textField>
 			</band>
 		</summary>
 </jasperReport>
