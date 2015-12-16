@@ -82,6 +82,18 @@ WHERE p.value = (select value from ad_preference where attribute = 'DIF_CAMBIO_A
 	<field name="importe_total" class="java.math.BigDecimal"/>
 	<field name="region" class="java.lang.String"/>
 
+	<variable name="SUM_NETO" class="java.math.BigDecimal" resetType="Report" calculation="Sum">
+		<variableExpression><![CDATA[$F{importe_neto}]]></variableExpression>
+	</variable>
+	<variable name="SUM_IMPUESTOS" class="java.math.BigDecimal" resetType="Report" calculation="Sum">
+		<variableExpression><![CDATA[$F{impuestos}]]></variableExpression>
+	</variable>
+	<variable name="SUM_PERCEPCIONES" class="java.math.BigDecimal" resetType="Report" calculation="Sum">
+		<variableExpression><![CDATA[$F{percepciones}]]></variableExpression>
+	</variable>
+	<variable name="SUM_TOTAL" class="java.math.BigDecimal" resetType="Report" calculation="Sum">
+		<variableExpression><![CDATA[$F{importe_total}]]></variableExpression>
+	</variable>
 		<background>
 			<band height="0"  isSplitAllowed="true" >
 			</band>
@@ -99,7 +111,7 @@ WHERE p.value = (select value from ad_preference where attribute = 'DIF_CAMBIO_A
 				<textField isStretchWithOverflow="false" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
 						x="66"
-						y="15"
+						y="18"
 						width="150"
 						height="12"
 						key="textField-3"
@@ -116,19 +128,19 @@ WHERE p.value = (select value from ad_preference where attribute = 'DIF_CAMBIO_A
 					<reportElement
 						x="0"
 						y="0"
-						width="200"
-						height="12"
+						width="137"
+						height="16"
 						key="staticText-2"/>
-					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
+					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="Thin" bottomBorderColor="#000000"/>
 					<textElement>
-						<font pdfFontName="Helvetica-Bold" size="8" isBold="true" isUnderline="false"/>
+						<font pdfFontName="Helvetica-Bold" size="10" isBold="true" isUnderline="false"/>
 					</textElement>
-				<text><![CDATA[Parámetros del Informe]]></text>
+				<text><![CDATA[Ventas por Región]]></text>
 				</staticText>
 				<staticText>
 					<reportElement
 						x="0"
-						y="15"
+						y="18"
 						width="66"
 						height="12"
 						key="staticText-4"
@@ -261,7 +273,7 @@ WHERE p.value = (select value from ad_preference where attribute = 'DIF_CAMBIO_A
 				<staticText>
 					<reportElement
 						x="0"
-						y="27"
+						y="30"
 						width="44"
 						height="12"
 						key="staticText-71"
@@ -277,7 +289,7 @@ WHERE p.value = (select value from ad_preference where attribute = 'DIF_CAMBIO_A
 				<textField isStretchWithOverflow="false" pattern="dd/MM/yyyy" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
 						x="44"
-						y="27"
+						y="30"
 						width="81"
 						height="12"
 						key="textField-93"
@@ -293,7 +305,7 @@ WHERE p.value = (select value from ad_preference where attribute = 'DIF_CAMBIO_A
 				<staticText>
 					<reportElement
 						x="125"
-						y="27"
+						y="30"
 						width="41"
 						height="12"
 						key="staticText-72"
@@ -309,7 +321,7 @@ WHERE p.value = (select value from ad_preference where attribute = 'DIF_CAMBIO_A
 				<textField isStretchWithOverflow="false" pattern="dd/MM/yyyy" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
 						x="166"
-						y="27"
+						y="30"
 						width="81"
 						height="12"
 						key="textField-94"
@@ -325,7 +337,7 @@ WHERE p.value = (select value from ad_preference where attribute = 'DIF_CAMBIO_A
 				<staticText>
 					<reportElement
 						x="0"
-						y="39"
+						y="42"
 						width="125"
 						height="12"
 						key="staticText-74"
@@ -341,7 +353,7 @@ WHERE p.value = (select value from ad_preference where attribute = 'DIF_CAMBIO_A
 				<textField isStretchWithOverflow="false" isBlankWhenNull="false" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
 						x="125"
-						y="39"
+						y="42"
 						width="221"
 						height="12"
 						key="textField-96"
@@ -758,7 +770,59 @@ WHERE p.value = (select value from ad_preference where attribute = 'DIF_CAMBIO_A
 			</band>
 		</pageFooter>
 		<summary>
-			<band height="0"  isSplitAllowed="true" >
+			<band height="13"  isSplitAllowed="true" >
+				<textField isStretchWithOverflow="false" pattern="##0.00" isBlankWhenNull="false" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
+					<reportElement
+						x="487"
+						y="0"
+						width="58"
+						height="13"
+						key="textField"/>
+					<box topBorder="None" topBorderColor="#000000" leftBorder="1Point" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="1Point" bottomBorderColor="#000000"/>
+					<textElement textAlignment="Right" verticalAlignment="Middle">
+						<font size="6"/>
+					</textElement>
+				<textFieldExpression   class="java.math.BigDecimal"><![CDATA[$V{SUM_NETO}]]></textFieldExpression>
+				</textField>
+				<textField isStretchWithOverflow="false" pattern="##0.00" isBlankWhenNull="false" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
+					<reportElement
+						x="545"
+						y="0"
+						width="42"
+						height="13"
+						key="textField"/>
+					<box topBorder="None" topBorderColor="#000000" leftBorder="1Point" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="1Point" bottomBorderColor="#000000"/>
+					<textElement textAlignment="Right" verticalAlignment="Middle">
+						<font size="6"/>
+					</textElement>
+				<textFieldExpression   class="java.math.BigDecimal"><![CDATA[$V{SUM_IMPUESTOS}]]></textFieldExpression>
+				</textField>
+				<textField isStretchWithOverflow="false" pattern="##0.00" isBlankWhenNull="false" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
+					<reportElement
+						x="587"
+						y="0"
+						width="64"
+						height="13"
+						key="textField"/>
+					<box topBorder="None" topBorderColor="#000000" leftBorder="1Point" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="1Point" bottomBorderColor="#000000"/>
+					<textElement textAlignment="Right" verticalAlignment="Middle">
+						<font size="6"/>
+					</textElement>
+				<textFieldExpression   class="java.math.BigDecimal"><![CDATA[$V{SUM_PERCEPCIONES}]]></textFieldExpression>
+				</textField>
+				<textField isStretchWithOverflow="false" pattern="##0.00" isBlankWhenNull="false" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
+					<reportElement
+						x="651"
+						y="0"
+						width="60"
+						height="13"
+						key="textField"/>
+					<box topBorder="None" topBorderColor="#000000" leftBorder="1Point" leftBorderColor="#000000" rightBorder="1Point" rightBorderColor="#000000" bottomBorder="1Point" bottomBorderColor="#000000"/>
+					<textElement textAlignment="Right" verticalAlignment="Middle">
+						<font size="6"/>
+					</textElement>
+				<textFieldExpression   class="java.math.BigDecimal"><![CDATA[$V{SUM_TOTAL}]]></textFieldExpression>
+				</textField>
 			</band>
 		</summary>
 </jasperReport>
