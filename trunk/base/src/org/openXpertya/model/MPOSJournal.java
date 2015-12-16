@@ -17,6 +17,8 @@ import org.openXpertya.process.DocumentEngine;
 import org.openXpertya.util.CLogger;
 import org.openXpertya.util.DB;
 import org.openXpertya.util.Env;
+import org.openXpertya.util.HTMLMsg;
+import org.openXpertya.util.HTMLMsg.HTMLList;
 import org.openXpertya.util.Msg;
 import org.openXpertya.util.Util;
 
@@ -429,6 +431,23 @@ public class MPOSJournal extends X_C_POSJournal implements DocAction {
 
 	@Override
 	public boolean closeIt() {
+		
+		// No se debe permitir cerrar la caja cuando existen líneas de caja de
+		// la caja diaria no procesadas
+		List<PO> cashLinesNotProcessed = find(getCtx(), X_C_CashLine.Table_Name,
+				"c_cash_id = ? and docstatus in ('DR','IP')", new Object[] { getC_Cash_ID() }, new String[]{"line"}, get_TrxName());
+		if(cashLinesNotProcessed.size() > 0){
+			HTMLMsg msg = new HTMLMsg();
+			HTMLList list = msg.new HTMLList("cashlines", "ul", Msg.getMsg(getCtx(), "POSExistsCashLinesNotProcessed"));
+			MCashLine cashLine;
+			for (PO po : cashLinesNotProcessed) {
+				cashLine = (MCashLine)po;
+				msg.createAndAddListElement("" + cashLine.getID(), "" + cashLine.getLine(), list);
+			}
+			msg.addList(list);
+			m_processMsg = msg.toString();
+			return false;
+		}
 		
 		// Se requiere el libro de caja destino para poder transferir el saldo
 		// del libro de la caja diaria a este libro destino antes de cerrar la
