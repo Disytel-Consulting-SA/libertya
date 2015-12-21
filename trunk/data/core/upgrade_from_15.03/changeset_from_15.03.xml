@@ -78,6 +78,15 @@ Ejemplos de cambios
 		<mkdir dir="${TARGET_DIR}/utils/saas"/>
 		<mkdir dir="${TARGET_DIR}/utils/saas/cfg"/>
 		<copy file="${SOURCE_DIR}/InstanceConfiguration.cfg" todir="${TARGET_DIR}/utils/saas/cfg" overwrite="yes" />
+		
+		<!-- 20151221-0934 Modificaciones a fin de unificar la utilizacion de variables y argumentos --> 
+		<copy file="${SOURCE_DIR}/libertyad_centos.sh" todir="${TARGET_DIR}/utils/unix" overwrite="yes" />
+		<copy file="${SOURCE_DIR}/libertyad_fedora.sh" todir="${TARGET_DIR}/utils/unix" overwrite="yes" />
+		<copy file="${SOURCE_DIR}/libertyad_ubuntu-debian.sh" todir="${TARGET_DIR}/utils/unix" overwrite="yes" />
+
+		<!-- 20151221-0936 Fix necesario para poder detener el servidor si el puerto JNP no era el tradicional (1099) -->
+		<copy file="${SOURCE_DIR}/DetenerServidor.sh" todir="${TARGET_DIR}/utils" overwrite="yes" />
+				
     </target>
     
 </project>

@@ -18,20 +18,21 @@ fi
 # creamos una funcion
 function findLogs() {
 # esta funcion retorna la cantidad de ficheros log del directorio de Libertya
-(( $1 = `find /ServidorOXP/log/ServidorOXP_\`date +%Y-%m-%d\`_* -type f -exec ls -l {} \; 2> /dev/null | wc -l` ))
+(( $1 = `find $2/log/ServidorOXP_\`date +%Y-%m-%d\`_* -type f -exec ls -l {} \; 2> /dev/null | wc -l` ))
 }
-
-# almacenamos el nombre del fichero PID para el demonio Libertya
-PID=/var/run/libertya/libertya.pid
-# almacenamos la ruta al script a ejecutar para iniciar el demonio Libertya
-STARTLIBERTYA=/ServidorOXP/utils/IniciarServidor.sh
-# almacenamos la ruta al script para detener el demonio Libertya
-STOPLIBERTYA=/ServidorOXP/utils/DetenerServidor.sh
 
 # exportamos la variable con la ruta a java
 export JAVA_HOME=/usr/lib/jvm/java-6-sun
 # exportamos la variable con la ruta al servidor de aplicaciones
 export OXP_HOME=/ServidorOXP
+
+# almacenamos el nombre del fichero PID para el demonio Libertya
+PID=/var/run/libertya/libertya.pid
+# almacenamos la ruta al script a ejecutar para iniciar el demonio Libertya
+STARTLIBERTYA=$OXP_HOME/utils/IniciarServidor.sh
+# almacenamos la ruta al script para detener el demonio Libertya
+STOPLIBERTYA=$OXP_HOME/utils/DetenerServidor.sh
+
 
 # ingresamos a un case para verificar que accion tomamos
 case "$1" in
@@ -49,16 +50,16 @@ mkdir /var/run/libertya/
 chown libertya.libertya /var/run/libertya/
 start-stop-daemon --start --chuid libertya --background -m --pidfile $PID --exec $STARTLIBERTYA
 # obtenemos la cantidad actual de ficheros
-findLogs cantLogs
+findLogs cantLogs $OXP_HOME
 # obtenemos la cantidad actual de ficheros
-findLogs cantLogsNew
+findLogs cantLogsNew $OXP_HOME
 # ingresamos a un bucle, mientras exista la misma cantidad de ficheros
 while [ $cantLogs = $cantLogsNew ]; do
 # esperamos 900 milisegundos
 sleep 0.9
 echo -n "."
 # volvemos a obtener la cantidad de ficheros
-findLogs cantLogsNew
+findLogs cantLogsNew $OXP_HOME
 done
 # mostramos ok al mensaje
 echo "[OK]"
