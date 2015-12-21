@@ -1031,6 +1031,7 @@ public class DocumentEngine implements DocAction {
 		else if (docStatus.equals(DocumentEngine.STATUS_WaitingPayment)
 			|| docStatus.equals(DocumentEngine.STATUS_WaitingConfirmation))
 		{
+			options[index++] = DocumentEngine.ACTION_Complete;
 			options[index++] = DocumentEngine.ACTION_Void;
 			options[index++] = DocumentEngine.ACTION_Prepare;
 		}

@@ -3573,3 +3573,121 @@ update ad_system set dummy = (SELECT addcolumnifnotexists('C_Invoice','ManageEle
 
 -- 20151201-1624 Nueva columna que permite omitir validacion de existencia de CAE en Facturas Electronicas si eldocstatus de la misma es IP (en progreso).
 update ad_system set dummy = (SELECT addcolumnifnotexists('C_Invoice','SkipIPNoCAEValidation','character(1) default ''N''::bpchar'));
+
+-- 20151221-1034 Nuevas tablas para el manejo de cadenas de autorización
+CREATE TABLE libertya.m_authorizationchain
+(
+  m_authorizationchain_id integer NOT NULL,
+  ad_client_id integer NOT NULL,
+  ad_org_id integer NOT NULL,
+  isactive character(1) NOT NULL DEFAULT 'Y'::bpchar,
+  created timestamp without time zone NOT NULL DEFAULT ('now'::text)::timestamp(6) with time zone,
+  createdby integer NOT NULL,
+  updated timestamp without time zone NOT NULL DEFAULT ('now'::text)::timestamp(6) with time zone,
+  updatedby integer NOT NULL,
+  C_DocType_ID integer NOT NULL,
+  value character varying(40) NOT NULL,
+  name character varying(60) NOT NULL,
+  description character varying(255),
+  predetermined character(1) NOT NULL DEFAULT 'Y'::bpchar,
+  c_currency_id integer NOT NULL,
+ CONSTRAINT m_authorization_key PRIMARY KEY (m_authorizationchain_id),
+ CONSTRAINT adorg_mauthorizationchain FOREIGN KEY (ad_org_id)
+      REFERENCES libertya.ad_org (ad_org_id) MATCH SIMPLE
+      ON UPDATE NO ACTION ON DELETE NO ACTION,
+ CONSTRAINT ccurrency_mauthorizationchain FOREIGN KEY (c_currency_id)
+      REFERENCES libertya.c_currency (c_currency_id) MATCH SIMPLE,
+  CONSTRAINT cdoctype_mauthorizationchain FOREIGN KEY (c_doctype_id)
+      REFERENCES libertya.c_doctype (c_doctype_id) MATCH SIMPLE
+      ON UPDATE NO ACTION ON DELETE NO ACTION
+)
+WITH (
+  OIDS=TRUE
+);
+ALTER TABLE libertya.m_authorizationchain
+  OWNER TO libertya;
+
+CREATE TABLE libertya.m_authorizationchainlink
+(
+  m_authorizationchainlink_id integer NOT NULL,
+  ad_client_id integer NOT NULL,
+  ad_org_id integer NOT NULL,
+  isactive character(1) NOT NULL DEFAULT 'Y'::bpchar,
+  created timestamp without time zone NOT NULL DEFAULT ('now'::text)::timestamp(6) with time zone,
+  createdby integer NOT NULL,
+  updated timestamp without time zone NOT NULL DEFAULT ('now'::text)::timestamp(6) with time zone,
+  updatedby integer NOT NULL,
+  description character varying(255),
+  m_authorizationchain_id integer NOT NULL,
+  linknumber integer NOT NULL,
+  minimumamount numeric NOT NULL DEFAULT 0,
+  maximumamount numeric,
+  mandatory character(1) NOT NULL DEFAULT 'Y'::bpchar,  
+ CONSTRAINT m_authorizationchainlink_key PRIMARY KEY (m_authorizationchainlink_id),
+ CONSTRAINT mauthorizationchain_mauthorizationchainlink FOREIGN KEY (m_authorizationchain_id)
+      REFERENCES libertya.m_authorizationchain (m_authorizationchain_id) MATCH SIMPLE
+)
+WITH (
+  OIDS=TRUE
+);
+ALTER TABLE libertya.m_authorizationchainlink
+  OWNER TO libertya;
+
+CREATE TABLE libertya.m_authorizationchainlinkuser
+(
+  m_authorizationchainlinkuser_id integer NOT NULL,
+  ad_client_id integer NOT NULL,
+  ad_org_id integer NOT NULL,
+  isactive character(1) NOT NULL DEFAULT 'Y'::bpchar,
+  created timestamp without time zone NOT NULL DEFAULT ('now'::text)::timestamp(6) with time zone,
+  createdby integer NOT NULL,
+  updated timestamp without time zone NOT NULL DEFAULT ('now'::text)::timestamp(6) with time zone,
+  updatedby integer NOT NULL,
+  m_authorizationchainlink_id integer NOT NULL,
+  ad_user_id integer NOT NULL,
+  startdate timestamp without time zone,
+  enddate timestamp without time zone,
+ CONSTRAINT m_authorizationchainlinkuser_key PRIMARY KEY (m_authorizationchainlinkuser_id),
+ CONSTRAINT mauthorizationchainlink_mauthorizationchainlinkuser FOREIGN KEY (m_authorizationchainlink_id)
+      REFERENCES libertya.m_authorizationchainlink (m_authorizationchainlink_id) MATCH SIMPLE,
+ CONSTRAINT aduser_mauthorizationchainlinkuser FOREIGN KEY (ad_user_id)
+      REFERENCES libertya.ad_user (ad_user_id) MATCH SIMPLE
+)
+WITH (
+  OIDS=TRUE
+);
+ALTER TABLE libertya.m_authorizationchainlinkuser
+  OWNER TO libertya;
+
+CREATE TABLE libertya.m_authorizationchaindocument
+(
+  m_authorizationchaindocument_id integer NOT NULL,
+  ad_client_id integer NOT NULL,
+  ad_org_id integer NOT NULL,
+  isactive character(1) NOT NULL DEFAULT 'Y'::bpchar,
+  created timestamp without time zone NOT NULL DEFAULT ('now'::text)::timestamp(6) with time zone,
+  createdby integer NOT NULL,
+  updatedby integer NOT NULL,
+  updated timestamp without time zone NOT NULL DEFAULT ('now'::text)::timestamp(6) with time zone,
+  ad_user_id integer,
+  c_order_id integer,
+  c_invoice_id integer,
+  authorizationdate timestamp without time zone,
+  status character(1),
+  m_authorizationchainlink_id integer NOT NULL,
+ CONSTRAINT m_authorizationchaindocument_key PRIMARY KEY (m_authorizationchaindocument_id),
+ CONSTRAINT maduser_mauthorizationchaindocument FOREIGN KEY (ad_user_id)
+	REFERENCES libertya.ad_user (ad_user_id) MATCH SIMPLE
+)
+WITH (
+  OIDS=TRUE
+);
+ALTER TABLE libertya.m_authorizationchaindocument
+  OWNER TO libertya;
+
+UPDATE ad_system SET dummy = (SELECT addcolumnifnotexists('C_Invoice','m_authorizationchain_id','integer'));
+UPDATE ad_system SET dummy = (SELECT addcolumnifnotexists('C_Invoice','Authorize','character(1)'));
+UPDATE ad_system SET dummy = (SELECT addcolumnifnotexists('C_Invoice','OldGrandTotal','numeric(20,2) DEFAULT 0'));
+UPDATE ad_system SET dummy = (SELECT addcolumnifnotexists('C_Order','m_authorizationchain_id','integer'));
+UPDATE ad_system SET dummy = (SELECT addcolumnifnotexists('C_Order','Authorize','character(1)'));
+UPDATE ad_system SET dummy = (SELECT addcolumnifnotexists('C_Order','OldGrandTotal','numeric(20,2) DEFAULT 0'));

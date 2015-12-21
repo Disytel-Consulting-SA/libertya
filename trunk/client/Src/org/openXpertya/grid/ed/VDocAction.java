@@ -315,6 +315,7 @@ public class VDocAction extends JDialog implements ActionListener {
         // Waiting Payment
 
         else if( DocStatus.equals( DocumentEngine.STATUS_WaitingPayment ) || DocStatus.equals( DocumentEngine.STATUS_WaitingConfirmation )) {
+        	options[ index++ ] = DocumentEngine.ACTION_Complete;
             options[ index++ ] = DocumentEngine.ACTION_Void;
             options[ index++ ] = DocumentEngine.ACTION_Prepare;
         }
