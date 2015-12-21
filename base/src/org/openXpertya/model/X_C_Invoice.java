@@ -7,7 +7,7 @@ import java.math.*;
 import org.openXpertya.util.*;
 /** Modelo Generado por C_Invoice
  *  @author Comunidad de Desarrollo Libertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
- *  @version  - 2015-12-01 17:45:28.012 */
+ *  @version  - 2015-12-21 14:32:19.302 */
 public class X_C_Invoice extends org.openXpertya.model.PO
 {
 /** Constructor estándar */
@@ -168,6 +168,21 @@ if (oo != null)
  return "Y".equals(oo);
 }
 return false;
+}
+/** Set Authorize */
+public void setAuthorize (String Authorize)
+{
+if (Authorize != null && Authorize.length() > 1)
+{
+log.warning("Length > 1 - truncated");
+Authorize = Authorize.substring(0,1);
+}
+set_Value ("Authorize", Authorize);
+}
+/** Get Authorize */
+public String getAuthorize() 
+{
+return (String)get_Value("Authorize");
 }
 /** Set Activity.
 Business Activity */
@@ -1296,6 +1311,20 @@ BigDecimal bd = (BigDecimal)get_Value("ManualGeneralDiscount");
 if (bd == null) return Env.ZERO;
 return bd;
 }
+/** Set M_AuthorizationChain_ID */
+public void setM_AuthorizationChain_ID (int M_AuthorizationChain_ID)
+{
+if (M_AuthorizationChain_ID <= 0) set_Value ("M_AuthorizationChain_ID", null);
+ else 
+set_Value ("M_AuthorizationChain_ID", new Integer(M_AuthorizationChain_ID));
+}
+/** Get M_AuthorizationChain_ID */
+public int getM_AuthorizationChain_ID() 
+{
+Integer ii = (Integer)get_Value("M_AuthorizationChain_ID");
+if (ii == null) return 0;
+return ii.intValue();
+}
 /** Set Price List.
 Unique identifier of a Price List */
 public void setM_PriceList_ID (int M_PriceList_ID)
@@ -1413,6 +1442,18 @@ set_Value ("NumeroDeDocumento", NumeroDeDocumento);
 public String getNumeroDeDocumento() 
 {
 return (String)get_Value("NumeroDeDocumento");
+}
+/** Set OldGrandTotal */
+public void setOldGrandTotal (BigDecimal OldGrandTotal)
+{
+set_Value ("OldGrandTotal", OldGrandTotal);
+}
+/** Get OldGrandTotal */
+public BigDecimal getOldGrandTotal() 
+{
+BigDecimal bd = (BigDecimal)get_Value("OldGrandTotal");
+if (bd == null) return Env.ZERO;
+return bd;
 }
 public static final int PAYMENTRULE_AD_Reference_ID = MReference.getReferenceID("All_Payment Rule");
 /** Transfer = Tr */

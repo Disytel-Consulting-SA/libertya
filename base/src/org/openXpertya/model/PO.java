@@ -4649,7 +4649,8 @@ public abstract class PO implements Serializable, Comparator, Evaluatee {
         String docStatusHeader = DB.getSQLValueString(get_TrxName(), sql, headerRecordID);
         
         return DocAction.STATUS_Drafted.equals(docStatusHeader) ||
-                DocAction.STATUS_InProgress.equals(docStatusHeader);
+                DocAction.STATUS_InProgress.equals(docStatusHeader) ||
+                DocAction.STATUS_WaitingConfirmation.equals(docStatusHeader);
         
     }
 

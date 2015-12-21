@@ -61,7 +61,7 @@ import org.openXpertya.util.Util;
  * @author Equipo de Desarrollo de openXpertya
  */
 
-public class MInvoice extends X_C_Invoice implements DocAction {
+public class MInvoice extends X_C_Invoice implements DocAction,Authorization {
 
 	/**
 	 * 
@@ -3555,6 +3555,24 @@ public class MInvoice extends X_C_Invoice implements DocAction {
 	 */
 
 	public String completeIt() {
+
+		if (!Util.isEmpty(this.getM_AuthorizationChain_ID(), true)) {
+			AuthorizationChainManager authorizationChainManager = new AuthorizationChainManager(
+					this, getCtx(), get_TrxName());
+
+			try {
+				if (authorizationChainManager
+						.loadAuthorizationChain(reactiveInvoice())) {
+					m_processMsg = Msg.getMsg(getCtx(), "ExistsAuthorizationChainLink");
+					this.setProcessed(true);
+					return DOCSTATUS_WaitingConfirmation;
+				}
+			} catch (Exception e) {
+				m_processMsg = e.getMessage();
+				return DocAction.STATUS_Invalid;
+			}
+		}
+
 		setAditionalWorkResult(new HashMap<PO, Object>());
 		boolean localeARActive = CalloutInvoiceExt
 				.ComprobantesFiscalesActivos();
@@ -4285,6 +4303,10 @@ public class MInvoice extends X_C_Invoice implements DocAction {
 
 		return DocAction.STATUS_Completed;
 	} // completeIt
+
+	private Boolean reactiveInvoice() {
+		return !Util.isEmpty(getOldGrandTotal(), true) && (!this.getGrandTotal().equals(this.getOldGrandTotal()));
+	}
 
 	private MDocumentDiscount createDocumentDiscount(BigDecimal baseAmt,
 			BigDecimal discountPerc, Integer scale, BigDecimal taxRate,
@@ -6076,6 +6098,21 @@ public class MInvoice extends X_C_Invoice implements DocAction {
 
 	public void setAllowSetOrderPriceList(boolean allowSetOrderPriceList) {
 		this.allowSetOrderPriceList = allowSetOrderPriceList;
+	}
+
+	@Override
+	public int getAuthorizationID() {
+		return this.getM_AuthorizationChain_ID();
+	}
+
+	@Override
+	public void setDocumentID(X_M_AuthorizationChainDocument authDocument) {
+		authDocument.setC_Invoice_ID(this.getC_Invoice_ID());
+	}
+
+	@Override
+	public Integer getDocTypeID() {
+		return MInvoice.this.getC_DocTypeTarget_ID();
 	}
 
 } // MInvoice

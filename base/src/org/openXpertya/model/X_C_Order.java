@@ -7,7 +7,7 @@ import java.math.*;
 import org.openXpertya.util.*;
 /** Modelo Generado por C_Order
  *  @author Comunidad de Desarrollo Libertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
- *  @version  - 2012-10-18 13:48:18.107 */
+ *  @version  - 2015-12-21 14:32:26.441 */
 public class X_C_Order extends org.openXpertya.model.PO
 {
 /** Constructor estándar */
@@ -145,6 +145,37 @@ Integer ii = (Integer)get_Value("AD_User_ID");
 if (ii == null) return 0;
 return ii.intValue();
 }
+/** Set Allow Change Price List */
+public void setAllowChangePriceList (boolean AllowChangePriceList)
+{
+throw new IllegalArgumentException ("AllowChangePriceList is virtual column");
+}
+/** Get Allow Change Price List */
+public boolean isAllowChangePriceList() 
+{
+Object oo = get_Value("AllowChangePriceList");
+if (oo != null) 
+{
+ if (oo instanceof Boolean) return ((Boolean)oo).booleanValue();
+ return "Y".equals(oo);
+}
+return false;
+}
+/** Set Authorize */
+public void setAuthorize (String Authorize)
+{
+if (Authorize != null && Authorize.length() > 1)
+{
+log.warning("Length > 1 - truncated");
+Authorize = Authorize.substring(0,1);
+}
+set_Value ("Authorize", Authorize);
+}
+/** Get Authorize */
+public String getAuthorize() 
+{
+return (String)get_Value("Authorize");
+}
 public static final int BILL_BPARTNER_ID_AD_Reference_ID = MReference.getReferenceID("C_BPartner (No Summary)");
 /** Set Invoice Partner.
 Business Partner to be invoiced */
@@ -226,7 +257,6 @@ Integer ii = (Integer)get_Value("C_BPartner_ID");
 if (ii == null) return 0;
 return ii.intValue();
 }
-public static final int C_BPARTNER_LOCATION_ID_AD_Reference_ID = MReference.getReferenceID("C_BPartner_Location_V");
 /** Set Partner Location.
 Identifies the (ship to) address for this Business Partner */
 public void setC_BPartner_Location_ID (int C_BPartner_Location_ID)
@@ -1110,6 +1140,20 @@ if (oo != null)
 }
 return false;
 }
+/** Set M_AuthorizationChain_ID */
+public void setM_AuthorizationChain_ID (int M_AuthorizationChain_ID)
+{
+if (M_AuthorizationChain_ID <= 0) set_Value ("M_AuthorizationChain_ID", null);
+ else 
+set_Value ("M_AuthorizationChain_ID", new Integer(M_AuthorizationChain_ID));
+}
+/** Get M_AuthorizationChain_ID */
+public int getM_AuthorizationChain_ID() 
+{
+Integer ii = (Integer)get_Value("M_AuthorizationChain_ID");
+if (ii == null) return 0;
+return ii.intValue();
+}
 /** Set Price List.
 Unique identifier of a Price List */
 public void setM_PriceList_ID (int M_PriceList_ID)
@@ -1198,6 +1242,18 @@ Número de DNI, Cédula, Libreta de Enrolamiento, Pasaporte o Libreta Cívica de
 public String getNroIdentificCliente() 
 {
 return (String)get_Value("NroIdentificCliente");
+}
+/** Set OldGrandTotal */
+public void setOldGrandTotal (BigDecimal OldGrandTotal)
+{
+set_Value ("OldGrandTotal", OldGrandTotal);
+}
+/** Get OldGrandTotal */
+public BigDecimal getOldGrandTotal() 
+{
+BigDecimal bd = (BigDecimal)get_Value("OldGrandTotal");
+if (bd == null) return Env.ZERO;
+return bd;
 }
 public static final int PAY_BPARTNER_ID_AD_Reference_ID = MReference.getReferenceID("C_BPartner (No Summary)");
 /** Set Payment BPartner.

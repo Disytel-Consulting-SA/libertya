@@ -55,7 +55,7 @@ import org.openXpertya.util.Util;
  * @author     Equipo de Desarrollo de openXpertya    
  */
 
-public class MOrder extends X_C_Order implements DocAction {
+public class MOrder extends X_C_Order implements DocAction, Authorization  {
 
     /**
      * Descripción de Método
@@ -2059,7 +2059,6 @@ public class MOrder extends X_C_Order implements DocAction {
 
         // if (!DOCACTION_Complete.equals(getDocAction()))         don't set for just prepare
         // setDocAction(DOCACTION_Complete);
-
         
         return DocAction.STATUS_InProgress;
     }    // prepareIt
@@ -3303,6 +3302,23 @@ public class MOrder extends X_C_Order implements DocAction {
     
    
     public String completeIt() {
+    	
+		if (!Util.isEmpty(this.getM_AuthorizationChain_ID(), true)) {
+			AuthorizationChainManager authorizationChainManager = new AuthorizationChainManager(
+					this, getCtx(), get_TrxName());
+			try {
+				if (authorizationChainManager
+						.loadAuthorizationChain(reactiveOrder())) {
+					m_processMsg = Msg.getMsg(getCtx(), "ExistsAuthorizationChainLink");
+					this.setProcessed(true);
+					return DOCSTATUS_WaitingConfirmation;
+				}
+			} catch (Exception e) {
+				m_processMsg = e.getMessage();
+				return DocAction.STATUS_Invalid;
+			}
+		}
+    	
         MDocType dt           = MDocType.get( getCtx(),getC_DocType_ID());
         String   DocSubTypeSO = dt.getDocSubTypeSO();
         boolean isOrderTransferable = dt.getDocTypeKey().equalsIgnoreCase(
@@ -3335,7 +3351,7 @@ public class MOrder extends X_C_Order implements DocAction {
 	            	return DocAction.STATUS_InProgress;
             	}
             }
-            
+			
             // La cantidad pedida no puede ser menor a la cantidad entregada + la
     		// cantidad transferida
 			BigDecimal qtyDeliveredTransferred = sLine.getQtyDelivered().add(
@@ -3618,7 +3634,11 @@ public class MOrder extends X_C_Order implements DocAction {
         return DocAction.STATUS_Completed;
     }    // completeIt
     
-    protected String getNotaPedidoValue(){
+    private Boolean reactiveOrder() {
+		return !Util.isEmpty(getOldGrandTotal(), true) && (!this.getGrandTotal().equals(this.getOldGrandTotal()));
+	}
+
+	protected String getNotaPedidoValue(){
 		return "Nota de Pedido (Impresión)";
 	}
     
@@ -4917,6 +4937,22 @@ public class MOrder extends X_C_Order implements DocAction {
 	public void setUpdateChargeAmt(boolean updateChargeAmt) {
 		this.updateChargeAmt = updateChargeAmt;
 	}
+
+	@Override
+	public int getAuthorizationID() {
+		return this.getM_AuthorizationChain_ID();
+	}
+
+	@Override
+	public void setDocumentID(X_M_AuthorizationChainDocument authDocument) {
+		authDocument.setC_Order_ID(this.getC_Order_ID());
+	}
+
+	@Override
+	public Integer getDocTypeID() {
+		return MOrder.this.getC_DocTypeTarget_ID();
+	}
+
 }    // MOrder
 
 
