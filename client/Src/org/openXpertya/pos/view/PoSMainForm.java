@@ -2938,7 +2938,7 @@ public class PoSMainForm extends CPanel implements FormPanel, ASyncProcess, Disp
 					// Si el valor ingresado supera el pendiente del pedido,
 					// entonces se usa el pendiente
 					if (getCAmountText().getValue() == null) {
-						getCAmountText().setValue(getOrder().getOpenAmount());
+						getCAmountText().setValue(getCurrencyOrderOpenAmount());
 					}
 					updateConvertedAmount();
 					refreshPaymentMediumInfo((BigDecimal) getCAmountText()
@@ -2952,7 +2952,7 @@ public class PoSMainForm extends CPanel implements FormPanel, ASyncProcess, Disp
 				@Override
 				public void actionPerformed(ActionEvent arg0) {
 					if (getCAmountText().getValue() == null) {
-						getCAmountText().setValue(getOrder().getOpenAmount());
+						getCAmountText().setValue(getCurrencyOrderOpenAmount());
 					}
 				}
 			});
@@ -5022,6 +5022,7 @@ public class PoSMainForm extends CPanel implements FormPanel, ASyncProcess, Disp
 		payment.setCurrencyId(currencyId);
 		payment.setAmount(amount);
 		payment.setRealAmount(realAmount);
+		payment.setRealAmountConverted(getModel().currencyConvert(realAmount, currencyId, getCurrencyBaseID()));
 		// Se asocia el medio de pago con el pago concreto.
 		payment.setPaymentMedium(paymentMedium);
 		
@@ -5899,6 +5900,8 @@ public class PoSMainForm extends CPanel implements FormPanel, ASyncProcess, Disp
 		// componente.
 		BigDecimal paymentToPayAmt = getOrder().getToPayAmount(
 				getSelectedPaymentMediumInfo(), amt);
+		paymentToPayAmt = amt == null?getModel().currencyConvert(paymentToPayAmt, getCurrencyBaseID(),
+				((Integer) getCCurrencyCombo().getValue()).intValue()):paymentToPayAmt;
 		
 		getCPaymentToPayAmt()
 				.setValue(paymentToPayAmt.compareTo(BigDecimal.ZERO) > 0 
@@ -5908,7 +5911,7 @@ public class PoSMainForm extends CPanel implements FormPanel, ASyncProcess, Disp
 //		BigDecimal paymentRealAmt = getOrder().getPaymentRealAmount(paymentToPayAmt,
 //				getSelectedPaymentMediumInfo());
 //		getCAmountText().setValue(paymentRealAmt);
-		amt = amt == null?getOrder().getOpenAmount():amt;
+		amt = amt == null?getCurrencyOrderOpenAmount():amt;
 		getCAmountText().setValue(amt);
 		
 		// Si es un pago con tarjeta de crédito se calcula y muestra el importe
@@ -6539,6 +6542,16 @@ public class PoSMainForm extends CPanel implements FormPanel, ASyncProcess, Disp
 		newOrder();
 		getFrame().setBusy(false);
 		mNormal();
+	}
+	
+	protected int getCurrencyBaseID(){
+		return getModel().getPoSConfig().getCurrencyID();
+	}
+	
+	protected BigDecimal getCurrencyOrderOpenAmount(){
+		return getModel().currencyConvert(getOrder().getOpenAmount(),
+				getCurrencyBaseID(),
+				((Integer) getCCurrencyCombo().getValue()).intValue());
 	}
 	
 	private class SwingWorkerRePrintDocument extends SwingWorker{

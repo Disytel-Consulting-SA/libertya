@@ -675,7 +675,7 @@ public class PoSOnline extends PoSConnectionState {
 		return currencyConvert(amount, fromCurrency, getPoSCOnfig().getCurrencyID());
 	}
 	
-	private BigDecimal currencyConvert(BigDecimal amount, int fromCurrency, int toCurrency) {
+	public BigDecimal currencyConvert(BigDecimal amount, int fromCurrency, int toCurrency) {
 		return VModelHelper.currencyConvert(amount, fromCurrency, toCurrency, invoiceDate);
 	}
 	
@@ -819,11 +819,12 @@ public class PoSOnline extends PoSConnectionState {
 		}
 		
 		// El cambio de efectivo se debe agregar a los cobros de efectivo
-		BigDecimal changeAux;
+		BigDecimal changeAux, convertedAmt;
 		for (int c = 0; c < cashPayments.size()
 				&& cashChange.compareTo(BigDecimal.ZERO) > 0; c++) {
-			changeAux = cashPayments.get(c).getAmount().compareTo(cashChange) >= 0 ? cashChange
-					: cashPayments.get(c).getAmount();
+			convertedAmt = currencyConvert(cashPayments.get(c).getAmount(), cashPayments.get(c).getCurrencyId());
+			changeAux = convertedAmt.compareTo(cashChange) >= 0 ? cashChange
+					: convertedAmt;
 			cashPayments.get(c).setChangeAmt(changeAux);
 			cashChange = cashChange.subtract(changeAux); 
 		}

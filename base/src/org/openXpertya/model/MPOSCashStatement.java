@@ -122,9 +122,10 @@ public class MPOSCashStatement extends X_C_POSCashStatement {
 			"FROM C_POSCashStatement " +
 			"WHERE CashValue = ? " +
 			  "AND C_POSJournal_ID = ? " +
+			  "AND C_Currency_ID = ? " +
 			  "AND C_POSCashStatement_ID <> ?";
 		long count = (Long) DB.getSQLObject(get_TrxName(), sql, new Object[] {
-				getCashValue(), getC_POSJournal_ID(),
+				getCashValue(), getC_POSJournal_ID(), getC_Currency_ID(), 
 				getC_POSCashStatement_ID() });
 		return count == 0;
 	}

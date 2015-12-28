@@ -13,6 +13,9 @@ public abstract class Payment {
 
 	/** Importe real (bruto) del pago */
 	private BigDecimal realAmount;
+
+	/** Importe real (bruto) del pago convertido a moneda de la config */
+	private BigDecimal realAmountConverted;
 	
 	/** Cambio de este pago */
 	private BigDecimal changeAmt = BigDecimal.ZERO;	
@@ -129,6 +132,26 @@ public abstract class Payment {
 		setAmount(getAmount().add(amount));
 		return getAmount();
 	}
+	
+	/**
+	 * Suma un importe real al importe real de este pago
+	 * @param realAmount Importe a sumar
+	 * @return Devuelve el importe resultante de aplicar la suma.
+	 */
+	public BigDecimal addRealAmount(BigDecimal realAmount) {
+		setRealAmount(getRealAmount().add(realAmount));
+		return getRealAmount();
+	}
+	
+	/**
+	 * Suma un importe real al importe real convertido de este pago
+	 * @param realAmountConverted Importe a sumar
+	 * @return Devuelve el importe resultante de aplicar la suma.
+	 */
+	public BigDecimal addRealAmountConverted(BigDecimal realAmountConverted) {
+		setRealAmountConverted(getRealAmountConverted().add(realAmountConverted));
+		return getRealAmountConverted();
+	}
 
 	/**
 	 * @return La instancia de {@link IPaymentMediumInfo} que representa la
@@ -179,6 +202,14 @@ public abstract class Payment {
 
 	public BigDecimal getChangeAmt() {
 		return changeAmt;
+	}
+
+	public BigDecimal getRealAmountConverted() {
+		return realAmountConverted;
+	}
+
+	public void setRealAmountConverted(BigDecimal realAmountConverted) {
+		this.realAmountConverted = realAmountConverted;
 	}
 
 	

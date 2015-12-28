@@ -178,6 +178,10 @@ public class PoSModel {
 		return getConnectionState().currencyConvert(amount,fromCurrencyId);
 	}
 	
+	public BigDecimal currencyConvert(BigDecimal amount, int fromCurrencyId, int toCurrencyID) {
+		return getConnectionState().currencyConvert(amount,fromCurrencyId,toCurrencyID);
+	}
+	
 	private boolean productStockValidate(Product product, BigDecimal count) {
 		boolean valid = true;
 		if (!getConnectionState().getPoSCOnfig().isSellWithoutStock())

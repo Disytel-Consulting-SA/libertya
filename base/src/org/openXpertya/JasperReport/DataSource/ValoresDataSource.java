@@ -38,8 +38,8 @@ public class ValoresDataSource extends DeclaracionValoresDataSource {
 		if(!Util.isEmpty(whereClause, true)){
 			sql.append(where).append(whereClause);
 		}
-		sql.append(" GROUP BY cashvalue, cs.c_currency_id, iso_code, description ");
-		sql.append(" ORDER BY cashvalue ");
+		sql.append(" GROUP BY cs.c_currency_id, cashvalue, iso_code, description ");
+		sql.append(" ORDER BY cs.c_currency_id, cashvalue ");
 		return sql.toString();
 	}
 

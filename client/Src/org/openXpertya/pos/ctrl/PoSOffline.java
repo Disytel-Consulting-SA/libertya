@@ -308,4 +308,10 @@ public class PoSOffline extends PoSConnectionState {
 		// TODO Auto-generated method stub
 		return true;
 	}
+
+	@Override
+	public BigDecimal currencyConvert(BigDecimal amount, int fromCurrencyId, int toCurrency) {
+		// TODO Auto-generated method stub
+		return null;
+	}
 }
