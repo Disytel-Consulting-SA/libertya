@@ -305,7 +305,7 @@ public class MInvoice extends X_C_Invoice implements DocAction,Authorization {
 		}
 
 		if (!to.save(trxName)) {
-			throw new IllegalStateException("Could not create Invoice");
+			throw new IllegalStateException("Could not create Invoice: " + CLogger.retrieveErrorAsString());
 		}
 
 		if (counter) {
