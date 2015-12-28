@@ -24,6 +24,7 @@
 	<import value="net.sf.jasperreports.engine.data.*" />
 
 	<parameter name="TITLE" isForPrompting="false" class="java.lang.String"/>
+	<parameter name="TOTAL_DECLARACION_VALORES" isForPrompting="false" class="java.math.BigDecimal"/>
 
 	<field name="cashValue" class="java.lang.String"/>
 	<field name="qty" class="java.lang.Integer"/>
@@ -38,8 +39,8 @@
 	<variable name="amount_sum" class="java.math.BigDecimal" resetType="Group" resetGroup="CURRENCY" calculation="Sum">
 		<variableExpression><![CDATA[$F{amount}]]></variableExpression>
 	</variable>
-	<variable name="total" class="java.math.BigDecimal" resetType="None" calculation="Nothing">
-		<variableExpression><![CDATA[$V{amount_converted_sum} != null?$V{amount_converted_sum}:java.math.BigDecimal.ZERO]]></variableExpression>
+	<variable name="total" class="java.math.BigDecimal" resetType="None" calculation="Sum">
+		<variableExpression><![CDATA[$F{amount_converted}]]></variableExpression>
 	</variable>
 	<variable name="amount_converted_sum" class="java.math.BigDecimal" resetType="Group" resetGroup="CURRENCY" calculation="Sum">
 		<variableExpression><![CDATA[$F{amount_converted}]]></variableExpression>
@@ -275,7 +276,7 @@
 					<textElement textAlignment="Right" verticalAlignment="Middle">
 						<font pdfFontName="Helvetica-Bold" size="10" isBold="true"/>
 					</textElement>
-				<textFieldExpression   class="java.math.BigDecimal"><![CDATA[$V{amount_converted_sum}]]></textFieldExpression>
+				<textFieldExpression   class="java.math.BigDecimal"><![CDATA[$P{TOTAL_DECLARACION_VALORES} != null?$P{TOTAL_DECLARACION_VALORES}:BigDecimal.ZERO]]></textFieldExpression>
 				</textField>
 			</band>
 		</summary>

@@ -1152,7 +1152,9 @@ public class VOrdenPagoModel {
 	}
 
 	public String getEfectivoLibroCajaSqlValidation() {
-		return " C_Cash.DocStatus = 'DR' AND (C_Cash.C_Cashbook_ID IN (SELECT C_Cashbook_ID FROM C_Cashbook cb WHERE cb.C_Currency_ID = @C_Currency_ID@ AND isactive = 'Y')) ";
+		// Se permite agregar efectivo de cualquier caja, sin importar la moneda
+		//return " C_Cash.DocStatus = 'DR' AND (C_Cash.C_Cashbook_ID IN (SELECT C_Cashbook_ID FROM C_Cashbook cb WHERE cb.C_Currency_ID = @C_Currency_ID@ AND isactive = 'Y')) ";
+		return " C_Cash.DocStatus = 'DR' ";
 	}
 
 	public String getTransfCtaBancariaSqlValidation() {

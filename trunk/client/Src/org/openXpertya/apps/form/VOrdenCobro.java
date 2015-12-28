@@ -2462,6 +2462,11 @@ public class VOrdenCobro extends VOrdenPago {
 		updateCustomPaymentsTabsState();
 		updatePayAmt(getModel().getSaldoMediosPago());
 	}
+	
+	@Override
+	protected void updateDependent() {
+		updateCustomPaymentsTabsState();
+	}
 
 	@Override
 	protected void loadMedioPago(VOrdenPagoModel.MedioPago mp) {

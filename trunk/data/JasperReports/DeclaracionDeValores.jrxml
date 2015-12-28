@@ -281,6 +281,9 @@
 					<subreportParameter  name="TITLE">
 						<subreportParameterExpression><![CDATA["DECLARACIÓN DE EFECTIVO"]]></subreportParameterExpression>
 					</subreportParameter>
+					<subreportParameter  name="TOTAL_DECLARACION_VALORES">
+						<subreportParameterExpression><![CDATA[$P{TOTAL_DECLARACION_VALORES}]]></subreportParameterExpression>
+					</subreportParameter>
 					<dataSourceExpression><![CDATA[$P{SUBREPORT_VALORES_DATASOURCE}]]></dataSourceExpression>
 					<returnValue subreportVariable="total" toVariable="total_valores"/>
 					<subreportExpression  class="java.io.InputStream"><![CDATA[$P{COMPILED_SUBREPORT_VALORES}]]></subreportExpression>

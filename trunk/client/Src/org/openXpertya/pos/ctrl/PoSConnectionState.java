@@ -51,6 +51,8 @@ public abstract class PoSConnectionState {
 	
 	public abstract BigDecimal currencyConvert(BigDecimal amount, int fromCurrencyId);
 	
+	public abstract BigDecimal currencyConvert(BigDecimal amount, int fromCurrencyId, int toCurrency);
+	
 	public abstract BusinessPartner getBPartner(int bPartnerID);
 	
 	public abstract List<Location> getBPartnerLocations(int bPartnerID);

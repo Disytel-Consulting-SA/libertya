@@ -268,6 +268,8 @@ public class Order  {
 			CashPayment existentCashPayment = findCashPaymentLike(payment);
 			if (existentCashPayment != null) {
 				existentCashPayment.addAmount(payment.getAmount());
+				existentCashPayment.addRealAmount(payment.getRealAmount());
+				existentCashPayment.addRealAmountConverted(payment.getRealAmountConverted());
 				existentCashPayment.addConvertedAmount(payment.getConvertedAmount());
 				existentPayment = existentCashPayment;
 			}
@@ -276,6 +278,8 @@ public class Order  {
 			CreditPayment existentCreditPayment = findCreditPaymentLike(payment);
 			if (existentCreditPayment != null) {
 				existentCreditPayment.addAmount(payment.getAmount());
+				existentCreditPayment.addRealAmount(payment.getRealAmount());
+				existentCreditPayment.addRealAmountConverted(payment.getRealAmountConverted());
 				existentPayment = existentCreditPayment;
 			}
 			// Asocio el paymentTerm al pedido
@@ -309,12 +313,12 @@ public class Order  {
 		// medio de pago.
 		Integer discountID = payment.getPaymentMedium().getInternalID(payment);
 		if (getDiscountCalculator().containsDiscount(discountID)) {
-			getDiscountCalculator().addDiscountBaseAmount(discountID, payment.getRealAmount());
+			getDiscountCalculator().addDiscountBaseAmount(discountID, payment.getRealAmountConverted());
 		} else {
 			discountID = getDiscountCalculator().addGeneralDiscount(
 					payment.getDiscountSchema(),
 					GeneralDiscountKind.PaymentMedium,
-					payment.getRealAmount(),
+					payment.getRealAmountConverted(),
 					payment.getPaymentMedium().getName());
 			payment.getPaymentMedium().setInternalID(discountID, payment);
 		}
@@ -517,8 +521,8 @@ public class Order  {
 	public void removePayment(Payment payment) {
 		getPayments().remove(payment);
 		paymentRemoved(payment);
-		getDiscountCalculator().subtractDiscountBaseAmount(
-				payment.getPaymentMedium().getInternalID(payment), payment.getRealAmount());
+		getDiscountCalculator().subtractDiscountBaseAmount(payment.getPaymentMedium().getInternalID(payment),
+				payment.getRealAmountConverted());
 		updateDiscounts();
 	}
 
@@ -566,6 +570,15 @@ public class Order  {
 				realPaidAmt = realPaidAmt.add(payment.getRealAmount());
 		}
 		return realPaidAmt;
+	}
+
+	private BigDecimal getRealPaidAmountConverted() {
+		BigDecimal realPaidAmtConverted = BigDecimal.ZERO;
+		for (Payment payment : getPayments()) {
+			if (payment!=null && payment.getRealAmountConverted() != null)
+				realPaidAmtConverted = realPaidAmtConverted.add(payment.getRealAmountConverted());
+		}
+		return realPaidAmtConverted;
 	}
 	
 	public BigDecimal getCashPaidAmount() {
@@ -721,7 +734,7 @@ public class Order  {
 			//toPay = getOrderProductsTotalAmt().subtract(getPaidAmount());
 			toPay = getOrderProductsTotalAmt()
 					.subtract(getTotalManualGeneralDiscount())
-					.subtract(getRealPaidAmount())
+					.subtract(getRealPaidAmountConverted())
 					.subtract(getTotalBPartnerDiscount());
 		}
 		return toPay;

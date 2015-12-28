@@ -2828,7 +2828,7 @@ public class VOrdenPago extends CPanel implements FormPanel,ActionListener,Table
 		} 
 	}
 
-	private void updateDependent() {
+	protected void updateDependent() {
 		efectivoLibroCaja.setValue(null);
 	}
 

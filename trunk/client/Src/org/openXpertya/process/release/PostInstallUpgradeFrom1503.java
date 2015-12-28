@@ -43,6 +43,14 @@ public class PostInstallUpgradeFrom1503 extends PluginPostInstallProcess {
 	protected final static String CHECKS_ISSUED_BY_BANK_REPORT_UID = "CORE-AD_Process-1010415";
 	protected final static String CHECKS_ISSUED_BY_BANK_REPORT_FILENAME = "ChecksIssuedByBank.jrxml";
 	
+	/** UID del Informe de Declaración de Valores */
+	protected final static String DECLARACION_VALORES_JASPER_REPORT_UID = "CORE-AD_JasperReport-1010047";
+	protected final static String DECLARACION_VALORES_JASPER_REPORT_FILENAME = "DeclaracionDeValores.jasper";
+	
+	/** UID del Subreporte de Valores del Informe de Declaración de Valores */
+	protected final static String DECLARACION_VALORES_SUBREPORT_VALORES_JASPER_REPORT_UID = "CORE-AD_JasperReport-1010049";
+	protected final static String DECLARACION_VALORES_SUBREPORT_VALORES_JASPER_REPORT_FILENAME = "DeclaracionDeValores_Subreport_Valores.jasper";
+	
 	@Override
 	protected String doIt() throws Exception {
 		super.doIt();
@@ -150,6 +158,28 @@ public class PostInstallUpgradeFrom1503 extends PluginPostInstallProcess {
 						.readBinaryFromJar(
 								jarFileURL,
 								getBinaryFileURL(CHECKS_ISSUED_BY_BANK_REPORT_FILENAME)));
+		
+		// Informe de Declaración de Valores
+		MJasperReport
+			.updateBinaryData(
+					get_TrxName(),
+					getCtx(),
+					DECLARACION_VALORES_JASPER_REPORT_UID,
+					JarHelper
+							.readBinaryFromJar(
+									jarFileURL,
+									getBinaryFileURL(DECLARACION_VALORES_JASPER_REPORT_FILENAME)));
+		
+		// Subreporte de Valores del Informe de Declaración de Valores
+		MJasperReport
+			.updateBinaryData(
+					get_TrxName(),
+					getCtx(),
+					DECLARACION_VALORES_SUBREPORT_VALORES_JASPER_REPORT_UID,
+					JarHelper
+							.readBinaryFromJar(
+									jarFileURL,
+									getBinaryFileURL(DECLARACION_VALORES_SUBREPORT_VALORES_JASPER_REPORT_FILENAME)));
 		
 		return " ";
 	}
