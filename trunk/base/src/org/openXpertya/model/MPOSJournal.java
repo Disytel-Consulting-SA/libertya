@@ -605,7 +605,7 @@ public class MPOSJournal extends X_C_POSJournal implements DocAction {
 	 */
 	public void setCashStatementAmt() {
 		String sql = 
-			"SELECT COALESCE(SUM(currencyconvert(pcs.Amount, pcs.c_currency_id, cb.c_currency_id, pj.datetrx, null, pcs.ad_client_id, psc.ad_org_id)),0) " + 
+			"SELECT COALESCE(SUM(currencyconvert(pcs.Amount, pcs.c_currency_id, cb.c_currency_id, pj.datetrx, null, pcs.ad_client_id, pcs.ad_org_id)),0) " + 
 			"FROM C_POSCashStatement pcs " +
 			"INNER JOIN C_POSJournal as pj ON pj.c_posjournal_id = pcs.c_posjournal_id " +
 			"INNER JOIN C_Cash as c ON c.c_cash_id = pj.c_cash_id " + 
