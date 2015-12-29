@@ -55,6 +55,10 @@ public class PostInstallUpgradeFrom1503 extends PluginPostInstallProcess {
 	protected final static String AUTHORIZED_INVOICE_TO_PAY_REPORT_UID = "CORE-AD_Process-1010421";
 	protected final static String AUTHORIZED_INVOICE_TO_PAY_REPORT_FILENAME = "ReportAuthorizedInvoiceToPay.jrxml";
 	
+	/** UID del Reporte de Remitos */
+	protected final static String IN_OUT_REPORT_UID = "CORE-AD_Process-1010422";
+	protected final static String IN_OUT_REPORT_FILENAME = "InOutReport.jrxml";
+	
 	@Override
 	protected String doIt() throws Exception {
 		super.doIt();
@@ -195,6 +199,17 @@ public class PostInstallUpgradeFrom1503 extends PluginPostInstallProcess {
 						.readBinaryFromJar(
 								jarFileURL,
 								getBinaryFileURL(AUTHORIZED_INVOICE_TO_PAY_REPORT_FILENAME)));
+		
+		// Reporte de Remitos
+		MProcess.addAttachment(
+				get_TrxName(),
+				getCtx(),
+				IN_OUT_REPORT_UID,
+				IN_OUT_REPORT_FILENAME,
+				JarHelper
+						.readBinaryFromJar(
+								jarFileURL,
+								getBinaryFileURL(IN_OUT_REPORT_FILENAME)));
 		
 		return " ";
 	}
