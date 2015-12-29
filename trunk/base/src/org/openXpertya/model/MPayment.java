@@ -746,19 +746,26 @@ public final class MPayment extends X_C_Payment implements DocAction,ProcessCall
 //        	}
         	
         	//La fecha de emisión no puede ser vacía
-			if (getDateEmissionCheck() == null) {
-				log.saveError("SaveError",Msg.translate(getCtx(), "MandatoryEmissionDate"));
-				return false;
-			}
-			
-			// La fecha de vencimiento debe ser mayor o igual a la fecha de emisión
-			SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy/MM/dd");
-			String dueDateFormatted = simpleDateFormat.format(getDueDate());
-			String dateEmissionFormatted = simpleDateFormat.format(getDateEmissionCheck());
-			if (getDueDate().compareTo(getDateEmissionCheck()) <= 0
-					&& !dueDateFormatted.equals(dateEmissionFormatted)) {
-				log.saveError("SaveError",Msg.translate(getCtx(), "InvalidCheckDueDate"));
-				return false;
+			if (isReceipt()) {
+				if (getDateEmissionCheck() == null) {
+					log.saveError("SaveError",
+							Msg.translate(getCtx(), "MandatoryEmissionDate"));
+					return false;
+				}
+
+				// La fecha de vencimiento debe ser mayor o igual a la fecha de
+				// emisión
+				SimpleDateFormat simpleDateFormat = new SimpleDateFormat(
+						"yyyy/MM/dd");
+				String dueDateFormatted = simpleDateFormat.format(getDueDate());
+				String dateEmissionFormatted = simpleDateFormat
+						.format(getDateEmissionCheck());
+				if (getDueDate().compareTo(getDateEmissionCheck()) <= 0
+						&& !dueDateFormatted.equals(dateEmissionFormatted)) {
+					log.saveError("SaveError",
+							Msg.translate(getCtx(), "InvalidCheckDueDate"));
+					return false;
+				}
 			}
 		}
         
