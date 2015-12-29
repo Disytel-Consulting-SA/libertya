@@ -1034,7 +1034,7 @@ public class VOrdenPagoModel {
 	public int C_BPartner_ID = 0;
 	public int AD_Org_ID = 0;
 	public MBPartner BPartner = null;
-	private Integer paymentAmount;
+	private Integer paymentAmount = 0;
 	public int C_Currency_ID = Env.getContextAsInt(Env.getCtx(),
 			"$C_Currency_ID");
 	public MCurrency mCurency = MCurrency.get(m_ctx, C_Currency_ID);
