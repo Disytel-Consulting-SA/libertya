@@ -3691,3 +3691,12 @@ UPDATE ad_system SET dummy = (SELECT addcolumnifnotexists('C_Invoice','OldGrandT
 UPDATE ad_system SET dummy = (SELECT addcolumnifnotexists('C_Order','m_authorizationchain_id','integer'));
 UPDATE ad_system SET dummy = (SELECT addcolumnifnotexists('C_Order','Authorize','character(1)'));
 UPDATE ad_system SET dummy = (SELECT addcolumnifnotexists('C_Order','OldGrandTotal','numeric(20,2) DEFAULT 0'));
+
+-- 20151229-1300 Permite concatenar valores en un arreglo y mostrarlo en columnas. Se agrega ya que no existe en PostgreSQL 8.3
+CREATE AGGREGATE array_agg(anyelement) (
+   SFUNC = array_append,
+   STYPE = anyarray,
+   INITCOND = '{}'
+);
+
+ALTER AGGREGATE libertya.array_agg(anyelement) OWNER TO libertya;
