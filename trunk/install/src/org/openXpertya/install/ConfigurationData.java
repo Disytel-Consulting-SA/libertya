@@ -535,7 +535,7 @@ public class ConfigurationData {
 
         // Default Java Options
         if (!p_properties.containsKey(OPCIONES_JAVA_OXP)) {
-            p_properties.setProperty(OPCIONES_JAVA_OXP, "-Xms64M -Xmx512M");
+            p_properties.setProperty(OPCIONES_JAVA_OXP, "-Xms1024M -Xmx1536M -XX:MaxPermSize=1024M -Dfile.encoding=UTF-8");
         }
 
         // Web Alias
