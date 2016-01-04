@@ -86,7 +86,11 @@ Ejemplos de cambios
 
 		<!-- 20151221-0936 Fix necesario para poder detener el servidor si el puerto JNP no era el tradicional (1099) -->
 		<copy file="${SOURCE_DIR}/DetenerServidor.sh" todir="${TARGET_DIR}/utils" overwrite="yes" />
-				
+		
+		<!-- 20160104-0957 Reglas de filtrado para SkipColumnsFilter -->
+		<mkdir dir="${TARGET_DIR}/utils/replicacion/filters" />
+		<copy file="${SOURCE_DIR}/SkipColumnsFilterRulesTemplate.properties" todir="${TARGET_DIR}/utils/replicacion/filters" overwrite="yes" />
+						
     </target>
     
 </project>
