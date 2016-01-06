@@ -641,6 +641,14 @@ public class PoSMainForm extends CPanel implements FormPanel, ASyncProcess, Disp
 		}
 		// Tarifa
 		status.append(MSG_PRICE_LIST+" : "+getModel().getPriceList().getName());
+		// Tasa de Conversión Dólar
+		BigDecimal dolarConversion = getModel().currencyConvert(BigDecimal.ONE, getModel().getDolarCurrencyID());
+		if(dolarConversion != null){
+			status.append(STATUS_DB_SEPARATOR);
+			status.append(" 1 " + getCCurrencyCombo().getM_lookup().getDisplay(getModel().getDolarCurrencyID()) + " = "
+					+ dolarConversion + " "
+					+ getCCurrencyCombo().getM_lookup().getDisplay(getModel().getCompanyCurrencyID()));
+		}
 		getStatusBar().setStatusDB(status.toString());
 	}
 	
@@ -5898,10 +5906,12 @@ public class PoSMainForm extends CPanel implements FormPanel, ASyncProcess, Disp
 		// Calcula el importe a pagar (aplicando descuentos / recargos del
 		// medio de pago actualmente seleccionad) y lo muestra en el
 		// componente.
-		BigDecimal paymentToPayAmt = getOrder().getToPayAmount(
+		BigDecimal oldPaymentToPayAmt = getOrder().getToPayAmount(
 				getSelectedPaymentMediumInfo(), amt);
-		paymentToPayAmt = amt == null?getModel().currencyConvert(paymentToPayAmt, getCurrencyBaseID(),
-				((Integer) getCCurrencyCombo().getValue()).intValue()):paymentToPayAmt;
+		BigDecimal paymentToPayAmt = amt == null?getModel().currencyConvert(oldPaymentToPayAmt, getCurrencyBaseID(),
+				((Integer) getCCurrencyCombo().getValue()).intValue()):oldPaymentToPayAmt;
+		
+		paymentToPayAmt = paymentToPayAmt == null? oldPaymentToPayAmt : paymentToPayAmt;  
 		
 		getCPaymentToPayAmt()
 				.setValue(paymentToPayAmt.compareTo(BigDecimal.ZERO) > 0 

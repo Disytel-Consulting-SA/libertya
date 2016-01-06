@@ -35,6 +35,7 @@ import org.openXpertya.model.MCashLine;
 import org.openXpertya.model.MCategoriaIva;
 import org.openXpertya.model.MCheckCuitControl;
 import org.openXpertya.model.MConversionRate;
+import org.openXpertya.model.MCurrency;
 import org.openXpertya.model.MDocType;
 import org.openXpertya.model.MEntidadFinanciera;
 import org.openXpertya.model.MEntidadFinancieraPlan;
@@ -198,6 +199,8 @@ public class PoSOnline extends PoSConnectionState {
 	
 	/** Perfil actual */
 	private MRole role = null;
+	
+	private int dolarCurrencyID = 0;
 	
 	public PoSOnline() {
 		super();
@@ -1757,6 +1760,11 @@ public class PoSOnline extends PoSConnectionState {
 		if (faltantePorRedondeo != null) {
 			writeOffAmt = faltantePorRedondeo;
 			faltantePorRedondeo = null;
+		}
+		
+		// Si el monto de la línea del allocation es distinto al total del payment, entonces va a writeoff
+		if((allocLineAmt.add(changeAmt)).compareTo(p.getConvertedAmount()) != 0){
+			writeOffAmt = writeOffAmt.add(p.getConvertedAmount().subtract((allocLineAmt.add(changeAmt))));
 		}
 		
 		MAllocationLine allocLine = new MAllocationLine(allocHdr, allocLineAmt, BigDecimal.ZERO, writeOffAmt, BigDecimal.ZERO);
@@ -3895,5 +3903,13 @@ public class PoSOnline extends PoSConnectionState {
 
 	protected void setRole(MRole role) {
 		this.role = role;
+	}
+
+	@Override
+	public int getDolarCurrencyID() {
+		if(dolarCurrencyID == 0){
+			dolarCurrencyID = MCurrency.get(getCtx(), "USD").getID();
+		}
+		return dolarCurrencyID;
 	}
 }

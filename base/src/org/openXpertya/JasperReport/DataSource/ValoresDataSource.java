@@ -42,6 +42,10 @@ public class ValoresDataSource extends DeclaracionValoresDataSource {
 		sql.append(" ORDER BY cs.c_currency_id, cashvalue ");
 		return sql.toString();
 	}
+	
+	public String getTheQuery(){
+		return getQuery();
+	}
 
 	@Override
 	protected Object[] getParameters() {

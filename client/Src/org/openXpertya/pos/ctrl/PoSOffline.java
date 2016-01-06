@@ -314,4 +314,10 @@ public class PoSOffline extends PoSConnectionState {
 		// TODO Auto-generated method stub
 		return null;
 	}
+
+	@Override
+	public int getDolarCurrencyID() {
+		// TODO Auto-generated method stub
+		return 0;
+	}
 }
