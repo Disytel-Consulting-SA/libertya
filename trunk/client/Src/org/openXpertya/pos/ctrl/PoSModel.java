@@ -170,6 +170,10 @@ public class PoSModel {
 		return getConnectionState().getClientCurrencyID();
 	}
 	
+	public int getDolarCurrencyID() {
+		return getConnectionState().getDolarCurrencyID();
+	}
+	
 	public boolean balanceValidate() {
 		return getConnectionState().balanceValidate(getOrder());
 	}

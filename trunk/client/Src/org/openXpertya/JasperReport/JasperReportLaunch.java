@@ -250,7 +250,7 @@ public abstract class JasperReportLaunch extends SvrProcess {
 		Integer jasperReport_ID = (Integer) DB.getSQLValue(get_TrxName(),
 				"SELECT AD_JasperReport_ID FROM AD_JasperReport WHERE Name ilike '"
 						+ name + "'");
-		if(jasperReport_ID == null || jasperReport_ID == 0)
+		if(jasperReport_ID == null || jasperReport_ID.intValue() <= 0)
 			throw new Exception("Jasper Report "+name+" not found");
 		
 		MJasperReport jasperReport = new MJasperReport(ctx, jasperReport_ID, get_TrxName());

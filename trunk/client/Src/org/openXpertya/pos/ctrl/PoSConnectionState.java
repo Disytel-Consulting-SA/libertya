@@ -131,6 +131,8 @@ public abstract class PoSConnectionState {
 	
 	public abstract boolean addSecurityValidationToCN();
 	
+	public abstract int getDolarCurrencyID();
+	
 	/**
 	 * @param checkDeadLineToCompare
 	 *            plazo a comparar
