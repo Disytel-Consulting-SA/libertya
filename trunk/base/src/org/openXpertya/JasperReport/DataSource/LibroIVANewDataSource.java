@@ -642,16 +642,16 @@ public class LibroIVANewDataSource implements JRDataSource {
 					+ "						c_invoicetax.ad_client_id "
 					+ "					 FROM c_invoicetax) cit ON cit.c_invoice_id = inv.c_invoice_id "
 					+ "		LEFT JOIN ( SELECT c_doctype.c_doctype_id, c_doctype.name AS c_doctype_name, c_doctype.docbasetype, c_doctype.signo_issotrx AS signo, c_doctype.doctypekey, c_doctype.printname, c_doctype.isfiscaldocument "
-					+ " 				FROM c_doctype) cdt ON cdt.c_doctype_id = inv.c_doctype_id "
+					+ " 				FROM c_doctype WHERE isfiscaldocument = 'Y') cdt ON cdt.c_doctype_id = inv.c_doctype_id "  	// <- Clausula incluida
 					+ "		LEFT JOIN ( SELECT c_tax.c_tax_id, c_tax.name AS c_tax_name, taxindicator, rate, sopotype, taxtype, issummary "
-					+ " 				FROM c_tax) ct ON ct.c_tax_id = cit.c_tax_id "
+					+ " 				FROM c_tax WHERE issummary = 'N') ct ON ct.c_tax_id = cit.c_tax_id "  	// <- Clausula incluida
 					+ "		LEFT JOIN ( SELECT c_bpartner.c_bpartner_id, c_bpartner.name AS c_bpartner_name, c_bpartner.c_categoria_iva_id,c_bpartner.taxid, c_bpartner.iibb "
 					+ " 				FROM c_bpartner) cbp ON inv.c_bpartner_id = cbp.c_bpartner_id "
 					+ "		LEFT JOIN ( SELECT c_categoria_iva.c_categoria_iva_id, c_categoria_iva.name AS c_categoria_iva_name, c_categoria_iva.codigo AS codiva, c_categoria_iva.i_tipo_iva "
 					+ " 				FROM c_categoria_iva) cci ON cbp.c_categoria_iva_id = cci.c_categoria_iva_id "
 					+ " 	WHERE cdt.doctypekey::text <> ALL (ARRAY['RTR'::character varying, 'RTI'::character varying, 'RCR'::character varying, 'RCI'::character varying]::text[])"
-					+ "       AND cdt.isfiscaldocument = 'Y' "
-					+ "       AND ct.issummary = 'N' "
+//					+ "       AND cdt.isfiscaldocument = 'Y' " // Comentado: La clausula en esta posicion en lugar del SELECT no ayuda a postgre para optimizar el query.  Se incluye dentro del SELECT
+//					+ "       AND ct.issummary = 'N' "  // Comentado: La clausula en esta posicion en lugar del SELECT no ayuda a postgre para optimizar el query. Se incluye dentro del SELECT
 					+ "     GROUP BY ct.c_tax_name, ct.taxindicator, ct.rate, ct.sopotype, ct.taxtype, c_categoria_iva_name  "
 					+ " 	ORDER BY c_categoria_iva_name, ct.rate ");
 			return query.toString();
