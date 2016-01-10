@@ -7,7 +7,7 @@ import java.math.*;
 import org.openXpertya.util.*;
 /** Modelo Generado por C_BPartner
  *  @author Comunidad de Desarrollo Libertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
- *  @version  - 2015-08-25 14:55:27.412 */
+ *  @version  - 2016-01-09 19:48:20.36 */
 public class X_C_BPartner extends org.openXpertya.model.PO
 {
 /** Constructor estándar */
@@ -679,6 +679,32 @@ set_Value ("IIBB", IIBB);
 public String getIIBB() 
 {
 return (String)get_Value("IIBB");
+}
+public static final int IIBBTYPE_AD_Reference_ID = MReference.getReferenceID("IIBB Type");
+/** Local = 1 */
+public static final String IIBBTYPE_Local = "1";
+/** Convenio Multilateral = 2 */
+public static final String IIBBTYPE_ConvenioMultilateral = "2";
+/** No inscripto = 4 */
+public static final String IIBBTYPE_NoInscripto = "4";
+/** Reg.Simplificado = 5 */
+public static final String IIBBTYPE_RegSimplificado = "5";
+/** Set IIBB Type */
+public void setIIBBType (String IIBBType)
+{
+if (IIBBType == null || IIBBType.equals("1") || IIBBType.equals("2") || IIBBType.equals("4") || IIBBType.equals("5"));
+ else throw new IllegalArgumentException ("IIBBType Invalid value - Reference = IIBBTYPE_AD_Reference_ID - 1 - 2 - 4 - 5");
+if (IIBBType != null && IIBBType.length() > 1)
+{
+log.warning("Length > 1 - truncated");
+IIBBType = IIBBType.substring(0,1);
+}
+set_Value ("IIBBType", IIBBType);
+}
+/** Get IIBB Type */
+public String getIIBBType() 
+{
+return (String)get_Value("IIBBType");
 }
 public static final int INVOICE_PRINTFORMAT_ID_AD_Reference_ID = MReference.getReferenceID("AD_PrintFormat Invoice");
 /** Set Invoice Print Format.

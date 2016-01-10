@@ -1382,6 +1382,31 @@ public class MBPartner extends X_C_BPartner {
 			setSalesRep_ID(salesRepID);
 		}
 		
+		// Si ingreso Situacion de IIBB y la misma no es "No inscripto", entonces el numero de IIBB no puede ser vacio
+		if (!Util.isEmpty(getIIBBType(), true) && X_C_BPartner.IIBBTYPE_NoInscripto.compareTo(getIIBBType()) != 0) {
+			// Si no ingreso Nro. de IIBB
+			if (Util.isEmpty(getIIBB(), true)) {
+				log.saveError("SaveError", Msg.translate(getCtx(), "IIBBRequired"));
+				return false;
+			}
+		}
+		
+		// Si ingreso Nro. de IIBB
+		if (!Util.isEmpty(getIIBB(), true)) {
+			// Debe ingresar Tipo de Situación (y ser diferente a No Inscripto)
+			if (Util.isEmpty(getIIBBType(), true) || getIIBBType().compareTo(X_C_BPartner.IIBBTYPE_NoInscripto) == 0) {
+				log.saveError("SaveError", Msg.translate(getCtx(), "TypeIIBBRequired"));
+				return false;
+			}
+			// Si Tipo de Situación es 2 (Convenio Multilateral), el nro de IIBB debe comenzar con 9.
+			if (X_C_BPartner.IIBBTYPE_ConvenioMultilateral.compareTo(getIIBBType()) == 0) {
+				if(getIIBB().substring(0,1).compareTo("9") != 0){
+					log.saveError("SaveError", Msg.translate(getCtx(), "IIBBMultilateralInvalid"));
+					return false;
+				}
+			}
+		}
+		
 		// Marcar convenio multilateral
 		if(!Util.isEmpty(getIIBB(), true)){
 			setIsConvenioMultilateral(isConvenioMultilateral(getIIBB()));

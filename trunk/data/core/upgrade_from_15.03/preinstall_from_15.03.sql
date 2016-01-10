@@ -3700,3 +3700,7 @@ CREATE AGGREGATE array_agg(anyelement) (
 );
 
 ALTER AGGREGATE libertya.array_agg(anyelement) OWNER TO libertya;
+
+-- 20161001-1630 Incorporar columna Situación IB del Retenido a la tabla Entidad Comercial.
+UPDATE ad_system SET dummy = (SELECT addcolumnifnotexists('C_BPartner','IIBBType','character(1)'));
+
