@@ -214,10 +214,10 @@ public class ExportArciba extends SvrProcess {
 		sqlReal.append("bp.taxidtype AS TIPO_DOCUMENTO, ");
 		// 11 - Número de Documento - Número(11) - 11
 		sqlReal.append("lpad(trim(bp.taxid),'11','0') AS NRO_DE_DOCUMENTO, ");
-		// 12 - Situación Ingresos Brutos - Numérico(1) - 1 - CONSTANTE 4
-		sqlReal.append("(CASE WHEN (SELECT value FROM AD_Preference WHERE attribute = 'SITUACION_IIBB_FACTURA_ARCIBA') IS NULL THEN '4' ELSE (SELECT value FROM AD_Preference WHERE attribute = 'SITUACION_IIBB_FACTURA_ARCIBA') END) AS SITUACION_IIBB, ");
+		// 12 - Situación Ingresos Brutos - Numérico(1) - 1 - 1: Local, 2: Convenio Multilateral, 4: No inscripto, 5: Reg.Simplificado
+		sqlReal.append("COALESCE(bp.IIBBType,'4') AS SITUACION_IIBB, ");
 		// 13 - Nro. Inscripción IB - Numérico(11) - 10 - CONSTANTE 00000000000
-		sqlReal.append("(CASE WHEN (SELECT value FROM AD_Preference WHERE attribute = 'NRO_INCRIPCION_IIBB_FACTURA_ARCIBA') IS NULL THEN '00000000000' ELSE (SELECT value FROM AD_Preference WHERE attribute = 'NRO_INCRIPCION_IIBB_FACTURA_ARCIBA') END) AS NRO_INCRIPCION_IIBB, ");
+		sqlReal.append("COALESCE(lpad(replace(bp.iibb,'-',''),'11','0'),'00000000000') AS NRO_INCRIPCION_IIBB, ");
 		// 14 - Situación IVA - Numérico(1) - 1
 		sqlReal.append("(CASE WHEN (ci.codigo = 2) THEN '1' WHEN (ci.codigo = 3) THEN '2' WHEN (ci.codigo = 4) THEN '3' WHEN (ci.codigo = 5) THEN '4' WHEN (ci.codigo = 7) THEN '0' ELSE '5' END) AS SITUACION_IVA, ");		
 		// 15 - Razón social del retenido - Texto(30) - 30
