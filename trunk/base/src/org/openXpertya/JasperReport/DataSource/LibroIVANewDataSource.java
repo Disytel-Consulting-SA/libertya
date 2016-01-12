@@ -14,16 +14,17 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
 
-import net.sf.jasperreports.engine.JRDataSource;
-import net.sf.jasperreports.engine.JRException;
-import net.sf.jasperreports.engine.JRField;
-
+import org.openXpertya.model.MDocType;
 import org.openXpertya.model.MLocation;
 import org.openXpertya.model.MPreference;
 import org.openXpertya.util.CPreparedStatement;
 import org.openXpertya.util.DB;
 import org.openXpertya.util.Env;
 import org.openXpertya.util.Util;
+
+import net.sf.jasperreports.engine.JRDataSource;
+import net.sf.jasperreports.engine.JRException;
+import net.sf.jasperreports.engine.JRField;
 
 public class LibroIVANewDataSource implements JRDataSource {
 
@@ -547,6 +548,24 @@ public class LibroIVANewDataSource implements JRDataSource {
 		ds.loadData();
 		return ds;
 	}
+	
+	public JRDataSource getTotalGeneralDataSource() {
+		DocumentsDataSource ds = new DocumentsDataSource();
+		ds.loadData();
+		return ds;
+	}
+	
+	public JRDataSource getTotalCreditsDataSource() {
+		CreditsDataSource ds = new CreditsDataSource();
+		ds.loadData();
+		return ds;
+	}
+	
+	public JRDataSource getTotalDebitsDataSource() {
+		DebitsDataSource ds = new DebitsDataSource();
+		ds.loadData();
+		return ds;
+	}
 
 	/*
 	 *  *********************************************************** /
@@ -652,6 +671,7 @@ public class LibroIVANewDataSource implements JRDataSource {
 					+ " 	WHERE cdt.doctypekey::text <> ALL (ARRAY['RTR'::character varying, 'RTI'::character varying, 'RCR'::character varying, 'RCI'::character varying]::text[])"
 //					+ "       AND cdt.isfiscaldocument = 'Y' " // Comentado: La clausula en esta posicion en lugar del SELECT no ayuda a postgre para optimizar el query.  Se incluye dentro del SELECT
 //					+ "       AND ct.issummary = 'N' "  // Comentado: La clausula en esta posicion en lugar del SELECT no ayuda a postgre para optimizar el query. Se incluye dentro del SELECT
+					+ getAdditionalWhereClause()
 					+ "     GROUP BY ct.c_tax_name, ct.taxindicator, ct.rate, ct.sopotype, ct.taxtype, c_categoria_iva_name  "
 					+ " 	ORDER BY c_categoria_iva_name, ct.rate ");
 			return query.toString();
@@ -664,10 +684,49 @@ public class LibroIVANewDataSource implements JRDataSource {
 			pstmt.setTimestamp(j++, new Timestamp(p_dateTo.getTime()));
 		}
 
+		protected String getAdditionalWhereClause(){
+			return "";
+		}
+		
+		protected String getCategoriaIVATotalQuery(String columnAmt, String categoriaIVA){
+			StringBuffer query = new StringBuffer("select c_categoria_iva_name, sum("+columnAmt+") as "+columnAmt+" FROM (");
+			query.append(getDataSQL());
+			query.append(" ) as total ");
+			query.append(" WHERE c_categoria_iva_name = '").append(categoriaIVA).append("'");
+			query.append(" group by c_categoria_iva_name ");
+			query.append(" order by c_categoria_iva_name ");
+			return query.toString();
+		}
+		
+		public BigDecimal getCategoriaIVATotal(String columnAmt, String categoriaIVA, String trxName){
+			BigDecimal total = BigDecimal.ZERO;
+			PreparedStatement ps = null;
+			ResultSet rs = null;
+			try {
+				ps = DB.prepareStatement(getCategoriaIVATotalQuery(columnAmt, categoriaIVA), trxName, true);
+				setQueryParameters(ps);
+				rs = ps.executeQuery();
+				if(rs.next()){
+					total = rs.getBigDecimal(columnAmt);
+				}
+			} catch (Exception e) {
+				System.out.println(
+						"Error al obtener el total de la categoria iva " + categoriaIVA + ". " + e.getMessage());
+				try{
+					if(ps != null)ps.close();
+					if(rs != null)rs.close();
+				} catch(Exception e2){
+					System.out.println(
+							"Error al obtener el total de la categoria iva " + categoriaIVA + ". " + e2.getMessage());
+				}
+			}
+			return total;
+		}
+		
 		/**
 		 * POJO de Impuesto.
 		 */
-		private class M_Tax {
+		protected class M_Tax {
 
 			protected String taxName;
 			protected BigDecimal taxAmount;
@@ -739,6 +798,56 @@ public class LibroIVANewDataSource implements JRDataSource {
 
 	}
 
+	
+	class DocumentsDataSource extends TaxDataSource{
+		
+		@Override
+		protected Object getFieldValue(String name, Object record)
+				throws JRException {
+			M_Tax tax = (M_Tax) record;
+			if (name.equalsIgnoreCase("c_categoria_iva_name")) {
+				return tax.categoriaIVAName + getAdditionalCategoriaIVANameDescription();
+			}
+			else if(name.equalsIgnoreCase("total_categoria_iva_base_amt")){
+				return getCategoriaIVATotal("TaxBaseAmount", tax.categoriaIVAName, null);
+			}
+			else{
+				return super.getFieldValue(name, record);
+			}
+		}
+		
+		protected String getAdditionalCategoriaIVANameDescription(){
+			return "";
+		}
+	}
+	
+	class DebitsDataSource extends DocumentsDataSource{
+		
+		@Override
+		protected String getAdditionalWhereClause(){
+			return "AND cdt.docbasetype IN ('" + MDocType.DOCBASETYPE_APInvoice + "','"
+					+ MDocType.DOCBASETYPE_ARInvoice + "')";
+		}
+		
+		@Override		
+		protected String getAdditionalCategoriaIVANameDescription(){
+			return " - DEBITOS";
+		}
+	}
+	
+	class CreditsDataSource extends DocumentsDataSource{
+		
+		@Override
+		protected String getAdditionalWhereClause(){
+			return "AND cdt.docbasetype IN ('" + MDocType.DOCBASETYPE_APCreditMemo + "','"
+					+ MDocType.DOCBASETYPE_ARCreditMemo + "')";
+		}
+		
+		@Override		
+		protected String getAdditionalCategoriaIVANameDescription(){
+			return " - CREDITOS";
+		}
+	}
 }
 
 class MLibroIVALine {
