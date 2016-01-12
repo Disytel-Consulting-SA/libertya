@@ -3704,3 +3704,6 @@ ALTER AGGREGATE libertya.array_agg(anyelement) OWNER TO libertya;
 -- 20161001-1630 Incorporar columna Situación IB del Retenido a la tabla Entidad Comercial.
 UPDATE ad_system SET dummy = (SELECT addcolumnifnotexists('C_BPartner','IIBBType','character(1)'));
 
+-- 20160112-1200 Eliminación del jasper subreporte de totales del informe libro de iva
+DELETE FROM ad_jasperreport
+WHERE name = 'Total - Libro IVA';
