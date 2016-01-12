@@ -40,6 +40,10 @@
 	<parameter name="SUBREPORT_TAXS_DATASOURCE" isForPrompting="false" class="net.sf.jasperreports.engine.JRDataSource"/>
 	<parameter name="ORG_NAME" isForPrompting="false" class="java.lang.String"/>
 	<parameter name="ORG_LOCALIZATION" isForPrompting="false" class="java.lang.String"/>
+	<parameter name="COMPILED_SUBREPORT_TOTAL" isForPrompting="false" class="java.io.InputStream"/>
+	<parameter name="SUBREPORT_TOTAL_GENERAL_DATASOURCE" isForPrompting="false" class="net.sf.jasperreports.engine.JRDataSource"/>
+	<parameter name="SUBREPORT_TOTAL_CREDITS_DATASOURCE" isForPrompting="false" class="net.sf.jasperreports.engine.JRDataSource"/>
+	<parameter name="SUBREPORT_TOTAL_DEBITS_DATASOURCE" isForPrompting="false" class="net.sf.jasperreports.engine.JRDataSource"/>
 
 	<field name="DATEACCT" class="java.util.Date"/>
 	<field name="TIPODOCNAME" class="java.lang.String"/>
@@ -702,7 +706,7 @@
 			</band>
 		</pageFooter>
 		<summary>
-			<band height="84"  isSplitAllowed="true" >
+			<band height="186"  isSplitAllowed="true" >
 				<textField isStretchWithOverflow="false" pattern="##0.00" isBlankWhenNull="false" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
 						x="79"
@@ -862,6 +866,48 @@
 						positionType="Float"/>
 					<dataSourceExpression><![CDATA[$P{SUBREPORT_TAXS_DATASOURCE}]]></dataSourceExpression>
 					<subreportExpression  class="java.io.InputStream"><![CDATA[$P{COMPILED_SUBREPORT_TAXS}]]></subreportExpression>
+				</subreport>
+				<subreport  isUsingCache="true">
+					<reportElement
+						x="0"
+						y="85"
+						width="535"
+						height="28"
+						key="subreport-2"
+						positionType="Float"/>
+					<subreportParameter  name="TITLE">
+						<subreportParameterExpression><![CDATA["DETALLE DE NETO E IVA POR CATEGORIA DE CLIENTE - GENERAL"]]></subreportParameterExpression>
+					</subreportParameter>
+					<dataSourceExpression><![CDATA[$P{SUBREPORT_TOTAL_GENERAL_DATASOURCE}]]></dataSourceExpression>
+					<subreportExpression  class="java.io.InputStream"><![CDATA[$P{COMPILED_SUBREPORT_TOTAL}]]></subreportExpression>
+				</subreport>
+				<subreport  isUsingCache="true">
+					<reportElement
+						x="0"
+						y="121"
+						width="535"
+						height="28"
+						key="subreport-3"
+						positionType="Float"/>
+					<subreportParameter  name="TITLE">
+						<subreportParameterExpression><![CDATA["DETALLE DE NETO E IVA POR CATEGORIA DE CLIENTE - NOTAS DE CREDITOS"]]></subreportParameterExpression>
+					</subreportParameter>
+					<dataSourceExpression><![CDATA[$P{SUBREPORT_TOTAL_CREDITS_DATASOURCE}]]></dataSourceExpression>
+					<subreportExpression  class="java.io.InputStream"><![CDATA[$P{COMPILED_SUBREPORT_TOTAL}]]></subreportExpression>
+				</subreport>
+				<subreport  isUsingCache="true">
+					<reportElement
+						x="0"
+						y="156"
+						width="535"
+						height="28"
+						key="subreport-4"
+						positionType="Float"/>
+					<subreportParameter  name="TITLE">
+						<subreportParameterExpression><![CDATA["DETALLE DE NETO E IVA POR CATEGORIA DE CLIENTE - FACTURAS Y NOTAS DE DEBITO"]]></subreportParameterExpression>
+					</subreportParameter>
+					<dataSourceExpression><![CDATA[$P{SUBREPORT_TOTAL_DEBITS_DATASOURCE}]]></dataSourceExpression>
+					<subreportExpression  class="java.io.InputStream"><![CDATA[$P{COMPILED_SUBREPORT_TOTAL}]]></subreportExpression>
 				</subreport>
 			</band>
 		</summary>

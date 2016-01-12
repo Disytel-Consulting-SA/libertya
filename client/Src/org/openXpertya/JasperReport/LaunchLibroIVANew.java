@@ -106,11 +106,26 @@ import org.openXpertya.util.Util;
 			
 			///////////////////////////////////////
 			// Subreporte de Impuestos.
-			MJasperReport documentsSubreport = getTaxSubreport(); 
+			MJasperReport taxSubreport = getTaxSubreport(); 
 			// Se agrega el informe compilado como parámetro.
-			jasperwrapper.addParameter("COMPILED_SUBREPORT_TAXS", new ByteArrayInputStream(documentsSubreport.getBinaryData()));
+			jasperwrapper.addParameter("COMPILED_SUBREPORT_TAXS", new ByteArrayInputStream(taxSubreport.getBinaryData()));
 			// Se agrega el datasource del subreporte.
 			jasperwrapper.addParameter("SUBREPORT_TAXS_DATASOURCE", ds.getTaxDataSource());
+			///////////////////////////////////////
+			// Subreporte de Totales 
+			MJasperReport documentsSubreport = getTotalSubreport(); 
+			// Se agrega el informe compilado como parámetro.
+			jasperwrapper.addParameter("COMPILED_SUBREPORT_TOTAL", new ByteArrayInputStream(documentsSubreport.getBinaryData()));
+			// Se agrega el datasource del subreporte.
+			jasperwrapper.addParameter("SUBREPORT_TOTAL_GENERAL_DATASOURCE", ds.getTotalGeneralDataSource());
+			///////////////////////////////////////
+			// Subreporte de Totales de Créditos
+			// Se agrega el datasource del subreporte.
+			jasperwrapper.addParameter("SUBREPORT_TOTAL_CREDITS_DATASOURCE", ds.getTotalCreditsDataSource());
+			///////////////////////////////////////
+			// Subreporte de Totales de Débitos
+			// Se agrega el datasource del subreporte.
+			jasperwrapper.addParameter("SUBREPORT_TOTAL_DEBITS_DATASOURCE", ds.getTotalDebitsDataSource());			
 			
 			 try {
 					ds.loadData();
@@ -166,6 +181,10 @@ import org.openXpertya.util.Util;
 		
 		protected MJasperReport getTaxSubreport() throws Exception {
 			return getJasperReport("Tax - Libro IVA");
+		}
+		
+		protected MJasperReport getTotalSubreport() throws Exception {
+			return getJasperReport("Total - Libro IVA");
 		}
 		
 		/**
