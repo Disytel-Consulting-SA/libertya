@@ -3707,3 +3707,14 @@ UPDATE ad_system SET dummy = (SELECT addcolumnifnotexists('C_BPartner','IIBBType
 -- 20160112-1200 Eliminación del jasper subreporte de totales del informe libro de iva
 DELETE FROM ad_jasperreport
 WHERE name = 'Total - Libro IVA';
+
+--20160114-1458 Vista para nuevo reporte de pagos no reconciliados
+CREATE OR REPLACE VIEW libertya.rv_unreconciled_payment AS 
+SELECT p.AD_Org_ID,p.AD_Client_ID, p.datetrx as fechapago, p.dateemissioncheck as fechaemision, p.documentno as nrocheque, (select documentno from c_allocationline al inner join c_allocationhdr a on a.c_allocationhdr_id = al.c_allocationhdr_id where al.c_payment_id = p.c_payment_id and a.docstatus in ('CO','CL') order by a.datetrx asc limit 1) as nroop, bp.name as entidadcomercial, p.payamt as monto, ba.c_bankaccount_id
+FROM c_payment p   
+INNER JOIN c_bpartner bp ON bp.c_bpartner_id = p.c_bpartner_id
+INNER JOIN c_bankaccount ba ON ba.c_bankaccount_ID = p.c_bankaccount_ID
+WHERE p.IsReconciled='N' AND p.DocStatus in ('CO','CL')  AND p.TenderType in('K') AND p.IsReceipt = 'N';
+
+ALTER TABLE libertya.rv_unreconciled_payment
+  OWNER TO libertya;
