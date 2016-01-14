@@ -12,7 +12,6 @@ import org.openXpertya.process.DocAction;
 import org.openXpertya.process.DocumentEngine;
 import org.openXpertya.util.CLogger;
 import org.openXpertya.util.DB;
-import org.openXpertya.util.Env;
 import org.openXpertya.util.Msg;
 /**
  *  Boleta de deposito
@@ -425,7 +424,8 @@ public class MBoletaDeposito extends X_M_BoletaDeposito implements DocAction {
 			// Se asigna la fecha del contra-movimiento
 			reversalCheck.setDateTrx(getDocumentDate());
 			reversalCheck.setDateAcct(getDocumentDate());
-			reversalCheck.setDueDate(getDocumentDate());
+			reversalCheck.setDueDate(getFechaAcreditacion() == null? getDocumentDate() : getFechaAcreditacion()); //Fecha de vcto es la fecha de acreditación
+			reversalCheck.setDateEmissionCheck(check.getDateEmissionCheck()); //Fecha de emisión es la misma que la del cheque original
 			reversalCheck.setIsReconciled(true);			// incidencia 4324 - conciliado con check
 			// Se asigna la EC de la boleta
 			reversalCheck.setC_BPartner_ID(getC_BPartner_ID());
@@ -508,6 +508,8 @@ public class MBoletaDeposito extends X_M_BoletaDeposito implements DocAction {
 		payment.setTenderType(MPayment.TENDERTYPE_Check);
 		payment.setDateTrx(getDocumentDate());
 		payment.setDateAcct(getDocumentDate());
+		payment.setDueDate(getFechaAcreditacion() == null? getDocumentDate() : getFechaAcreditacion()); //La fecha de vcto es la fecha de acreditación
+		payment.setDateEmissionCheck(getFechaDeposito()); // La fecha de emisión es la fecha de depósito
 		payment.setAD_Org_ID(getAD_Org_ID());
 		
 		// Se asigna el Tipo de Documento indicado en la boleta (si existe)
@@ -550,9 +552,12 @@ public class MBoletaDeposito extends X_M_BoletaDeposito implements DocAction {
 			String error = null;
 			PO.copyValues(check, newCheck);
 			// Se asigna la fecha del nuevo cheque
-			newCheck.setDateTrx(check.getDateTrx()); // incidencia 4324 - Si se usa el tilde de "crear un payment por cheque", la fecha de emisión y Vto se deberían mantener.
+			//newCheck.setDateTrx(check.getDateTrx()); // incidencia 4324 - Si se usa el tilde de "crear un payment por cheque", la fecha de emisión y Vto se deberían mantener.
+			newCheck.setDateTrx(getDocumentDate()); // Se definió que la fecha de transacción es la fecha de depósito
 			newCheck.setDateAcct(getDocumentDate());
-			newCheck.setDueDate(check.getDueDate()); // incidencia 4324 - Si se usa el tilde de "crear un payment por cheque", la fecha de emisión y Vto se deberían mantener.
+			//newCheck.setDueDate(check.getDueDate()); // incidencia 4324 - Si se usa el tilde de "crear un payment por cheque", la fecha de emisión y Vto se deberían mantener.
+			newCheck.setDueDate(getFechaAcreditacion() == null? getDocumentDate() : getFechaAcreditacion());// Se definió que la fecha de vto es la fecha de acreditación
+			newCheck.setDateEmissionCheck(check.getDateEmissionCheck()); // La fecha de emisión es la misma que la del cheque original
 			newCheck.setIsReconciled(false);		 // incidencia 4324 - el nuevo cheque no se encuentra inicialmente conciliado
 			// Se asigna los datos de la boleta
 			newCheck.setC_BPartner_ID(getC_BPartner_ID());
