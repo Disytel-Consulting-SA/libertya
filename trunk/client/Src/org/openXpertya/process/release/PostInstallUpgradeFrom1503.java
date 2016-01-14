@@ -67,6 +67,10 @@ public class PostInstallUpgradeFrom1503 extends PluginPostInstallProcess {
 	protected final static String INFORME_LIBRO_TOTAL_IVA_REPORT_UID = "CORE-AD_JasperReport-1010131";
 	protected final static String INFORME_LIBRO_IVA_TOTAL_REPORT_FILENAME = "InformeLibreIVA_Total.jasper";
 	
+	/** UID del Reporte de cheques sin Conciliar */
+	protected final static String CHEQUES_SIN_CONCILIAR_REPORT_UID = "CORE-AD_Process-1010424";
+	protected final static String CHEQUES_SIN_CONCILIAR_REPORT_FILENAME = "UnreconciledCheksReport.jrxml";
+	
 	@Override
 	protected String doIt() throws Exception {
 		super.doIt();
@@ -240,6 +244,17 @@ public class PostInstallUpgradeFrom1503 extends PluginPostInstallProcess {
 							.readBinaryFromJar(
 									jarFileURL,
 									getBinaryFileURL(INFORME_LIBRO_IVA_TOTAL_REPORT_FILENAME)));
+		
+		// Reporte de cheques sin Conciliar
+				MProcess.addAttachment(
+						get_TrxName(),
+						getCtx(),
+						CHEQUES_SIN_CONCILIAR_REPORT_UID,
+						CHEQUES_SIN_CONCILIAR_REPORT_FILENAME,
+						JarHelper
+								.readBinaryFromJar(
+										jarFileURL,
+										getBinaryFileURL(CHEQUES_SIN_CONCILIAR_REPORT_FILENAME)));
 		
 		return " ";
 	}
