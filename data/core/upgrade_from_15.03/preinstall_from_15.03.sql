@@ -3718,3 +3718,17 @@ WHERE p.IsReconciled='N' AND p.DocStatus in ('CO','CL')  AND p.TenderType in('K'
 
 ALTER TABLE libertya.rv_unreconciled_payment
   OWNER TO libertya;
+  
+--20160115 0920 Vista para nuevo reporte de impuestos bancarios
+CREATE OR REPLACE VIEW libertya.rv_charge_bankstatement AS 
+SELECT b.AD_Org_ID,b.AD_Client_ID,DateACCT AS fecha_Contable,STMTAMT AS importe,
+STATEMENTDATE AS FECHA_EXTRACTO,C.NAME  AS IMPUESTO,c.c_charge_id,b.c_bankaccount_id, b.dc AS clave
+,l.DESCRIPTION,'es_AR' AS AD_LANGUAGE, l.c_currency_id            
+FROM C_BANKSTATEMENTLINE l
+INNER JOIN C_BANKSTATEMENT h ON h.c_bankstatement_id = l.c_bankstatement_id  
+INNER JOIN C_CHARGE c ON c.c_charge_id = l.c_charge_id
+INNER JOIN C_BANKACCOUNT b ON h.c_bankaccount_id = b.c_bankaccount_id 
+WHERE h.docstatus IN ('CO','CL');
+
+ALTER TABLE libertya.rv_charge_bankstatement
+  OWNER TO libertya;
