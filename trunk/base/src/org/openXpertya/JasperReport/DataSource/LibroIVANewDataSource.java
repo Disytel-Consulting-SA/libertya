@@ -181,11 +181,11 @@ public class LibroIVANewDataSource implements JRDataSource {
 				+ "					    END AS gravado, "
 				+ "						c_invoicetax.ad_client_id "
 				+ "					 FROM c_invoicetax) cit ON cit.c_invoice_id = inv.c_invoice_id "
-				+ "		LEFT JOIN ( SELECT c_doctype.c_doctype_id, c_doctype.name AS c_doctype_name, c_doctype.docbasetype, c_doctype.signo_issotrx AS signo, c_doctype.doctypekey, c_doctype.printname, c_doctype.isfiscaldocument, c_doctype.isfiscal "
+				+ "		INNER JOIN ( SELECT c_doctype.c_doctype_id, c_doctype.name AS c_doctype_name, c_doctype.docbasetype, c_doctype.signo_issotrx AS signo, c_doctype.doctypekey, c_doctype.printname, c_doctype.isfiscaldocument, c_doctype.isfiscal "
 				+ " 				FROM c_doctype) cdt ON cdt.c_doctype_id = inv.c_doctype_id "
-				+ "		LEFT JOIN ( SELECT c_tax.c_tax_id, c_tax.name AS c_tax_name, c_tax.c_taxcategory_id, c_tax.rate "
+				+ "		INNER JOIN ( SELECT c_tax.c_tax_id, c_tax.name AS c_tax_name, c_tax.c_taxcategory_id, c_tax.rate "
 				+ " 				FROM c_tax) ct ON ct.c_tax_id = cit.c_tax_id "
-				+ "		LEFT JOIN ( SELECT c_taxcategory_id, c_taxcategory.ismanual "
+				+ "		INNER JOIN ( SELECT c_taxcategory_id, c_taxcategory.ismanual "
 				+ "					FROM c_taxcategory) ctc ON ctc.c_taxcategory_id = ct.c_taxcategory_id"	
 				+ "		LEFT JOIN ( SELECT c_bpartner.c_bpartner_id, c_bpartner.name AS c_bpartner_name, c_bpartner.c_categoria_iva_id,c_bpartner.taxid, c_bpartner.iibb "
 				+ " 				FROM c_bpartner) cbp ON inv.c_bpartner_id = cbp.c_bpartner_id "
@@ -621,13 +621,17 @@ public class LibroIVANewDataSource implements JRDataSource {
 		}
 
 		protected String getDataSQL() {
+			return getDataSQL(true);
+		}
+		
+		protected String getDataSQL(boolean withPerceptions) {
 			StringBuffer query = new StringBuffer(
 					"     SELECT "
 							+ "			ct.c_tax_name AS TaxName, "
 							+ "			SUM(currencyconvert(cit.importe, inv.c_currency_id, 118, inv.dateacct::timestamp with time zone, inv.c_conversiontype_id, inv.ad_client_id, inv.ad_org_id) * cdt.signo::numeric * "+signOfSign+"::numeric)::numeric(20,2) AS TaxAmount, "
 							+ "			SUM(currencyconvert(cit.taxbaseamt, inv.c_currency_id, 118, inv.dateacct::timestamp with time zone, inv.c_conversiontype_id, inv.ad_client_id, inv.ad_org_id) * cdt.signo::numeric * "+signOfSign+"::numeric)::numeric(20,2) AS TaxBaseAmount, "
 							+ "         ct.taxindicator as TaxIndicator, ct.rate as Rate, ct.sopotype as Sopotype, ct.taxtype as TaxType, c_categoria_iva_name "
-							+ "		FROM ( SELECT c_invoice.c_invoice_id, c_invoice.ad_client_id, c_invoice.ad_org_id, c_invoice.isactive, c_invoice.created, c_invoice.createdby, c_invoice.updated, c_invoice.updatedby, c_invoice.c_currency_id, c_invoice.c_conversiontype_id, c_invoice.documentno, c_invoice.c_bpartner_id, c_invoice.dateacct, c_invoice.dateinvoiced, c_invoice.totallines, c_invoice.grandtotal, c_invoice.issotrx, c_invoice.c_doctype_id "
+							+ "		FROM ( SELECT c_invoice.c_invoice_id, c_invoice.ad_client_id, c_invoice.ad_org_id, c_invoice.isactive, c_invoice.created, c_invoice.createdby, c_invoice.updated, c_invoice.updatedby, c_invoice.c_currency_id, c_invoice.c_conversiontype_id, c_invoice.documentno, c_invoice.c_bpartner_id, c_invoice.dateacct, c_invoice.dateinvoiced, c_invoice.totallines, c_invoice.grandtotal, c_invoice.issotrx, c_invoice.c_doctype_id, fiscalalreadyprinted "
 							+ "     	   FROM c_invoice "
 							+ "     	   WHERE (c_invoice.docstatus = 'CO'::bpchar OR c_invoice.docstatus = 'CL'::bpchar OR c_invoice.docstatus = 'RE'::bpchar OR c_invoice.docstatus = 'VO'::bpchar) AND c_invoice.isactive = 'Y'::bpchar "
 							+ " 		     AND (dateacct::date between ? ::date and ? ::date) "
@@ -660,15 +664,16 @@ public class LibroIVANewDataSource implements JRDataSource {
 					+ "						c_invoicetax.taxbaseamt, "
 					+ "						c_invoicetax.ad_client_id "
 					+ "					 FROM c_invoicetax) cit ON cit.c_invoice_id = inv.c_invoice_id "
-					+ "		LEFT JOIN ( SELECT c_doctype.c_doctype_id, c_doctype.name AS c_doctype_name, c_doctype.docbasetype, c_doctype.signo_issotrx AS signo, c_doctype.doctypekey, c_doctype.printname, c_doctype.isfiscaldocument "
+					+ "		INNER JOIN ( SELECT c_doctype.c_doctype_id, c_doctype.name AS c_doctype_name, c_doctype.docbasetype, c_doctype.signo_issotrx AS signo, c_doctype.doctypekey, c_doctype.printname, c_doctype.isfiscaldocument, isfiscal "
 					+ " 				FROM c_doctype WHERE isfiscaldocument = 'Y') cdt ON cdt.c_doctype_id = inv.c_doctype_id "  	// <- Clausula incluida
-					+ "		LEFT JOIN ( SELECT c_tax.c_tax_id, c_tax.name AS c_tax_name, taxindicator, rate, sopotype, taxtype, issummary "
-					+ " 				FROM c_tax WHERE issummary = 'N') ct ON ct.c_tax_id = cit.c_tax_id "  	// <- Clausula incluida
+					+ "		INNER JOIN ( SELECT c_tax.c_tax_id, c_tax.name AS c_tax_name, taxindicator, rate, sopotype, taxtype, issummary "
+					+ " 				FROM c_tax WHERE issummary = 'N' " + (withPerceptions?"":" AND c_tax.ispercepcion = 'N' ") + ") ct ON ct.c_tax_id = cit.c_tax_id "  	// <- Clausula incluida
 					+ "		LEFT JOIN ( SELECT c_bpartner.c_bpartner_id, c_bpartner.name AS c_bpartner_name, c_bpartner.c_categoria_iva_id,c_bpartner.taxid, c_bpartner.iibb "
 					+ " 				FROM c_bpartner) cbp ON inv.c_bpartner_id = cbp.c_bpartner_id "
 					+ "		LEFT JOIN ( SELECT c_categoria_iva.c_categoria_iva_id, c_categoria_iva.name AS c_categoria_iva_name, c_categoria_iva.codigo AS codiva, c_categoria_iva.i_tipo_iva "
 					+ " 				FROM c_categoria_iva) cci ON cbp.c_categoria_iva_id = cci.c_categoria_iva_id "
 					+ " 	WHERE cdt.doctypekey::text <> ALL (ARRAY['RTR'::character varying, 'RTI'::character varying, 'RCR'::character varying, 'RCI'::character varying]::text[])"
+					+ "		  AND (cdt.isfiscal is null OR cdt.isfiscal = 'N' OR (cdt.isfiscal = 'Y' AND inv.fiscalalreadyprinted = 'Y')) "
 //					+ "       AND cdt.isfiscaldocument = 'Y' " // Comentado: La clausula en esta posicion en lugar del SELECT no ayuda a postgre para optimizar el query.  Se incluye dentro del SELECT
 //					+ "       AND ct.issummary = 'N' "  // Comentado: La clausula en esta posicion en lugar del SELECT no ayuda a postgre para optimizar el query. Se incluye dentro del SELECT
 					+ getAdditionalWhereClause()
@@ -688,39 +693,29 @@ public class LibroIVANewDataSource implements JRDataSource {
 			return "";
 		}
 		
-		protected String getCategoriaIVATotalQuery(String columnAmt, String categoriaIVA){
-			StringBuffer query = new StringBuffer("select c_categoria_iva_name, sum("+columnAmt+") as "+columnAmt+" FROM (");
-			query.append(getDataSQL());
-			query.append(" ) as total ");
-			query.append(" WHERE c_categoria_iva_name = '").append(categoriaIVA).append("'");
-			query.append(" group by c_categoria_iva_name ");
-			query.append(" order by c_categoria_iva_name ");
-			return query.toString();
-		}
-		
-		public BigDecimal getCategoriaIVATotal(String columnAmt, String categoriaIVA, String trxName){
-			BigDecimal total = BigDecimal.ZERO;
-			PreparedStatement ps = null;
-			ResultSet rs = null;
+		public void loadData() {
+
+			// ArrayList donde se guardan los datos del informe.
+			ArrayList<Object> list = new ArrayList<Object>();
+
 			try {
-				ps = DB.prepareStatement(getCategoriaIVATotalQuery(columnAmt, categoriaIVA), trxName, true);
-				setQueryParameters(ps);
-				rs = ps.executeQuery();
-				if(rs.next()){
-					total = rs.getBigDecimal(columnAmt);
+				PreparedStatement pstmt = DB.prepareStatement(getDataSQL(),
+						null, true);
+				setQueryParameters(pstmt);
+				ResultSet rs = pstmt.executeQuery();
+				while (rs.next()) {
+					Object line = createRecord(rs);
+					list.add(line);
 				}
-			} catch (Exception e) {
-				System.out.println(
-						"Error al obtener el total de la categoria iva " + categoriaIVA + ". " + e.getMessage());
-				try{
-					if(ps != null)ps.close();
-					if(rs != null)rs.close();
-				} catch(Exception e2){
-					System.out.println(
-							"Error al obtener el total de la categoria iva " + categoriaIVA + ". " + e2.getMessage());
-				}
+
+			} catch (SQLException e) {
+				throw new RuntimeException(
+						"No se puede ejecutar la consulta para crear las lineas del informe.");
 			}
-			return total;
+
+			// Se guarda la lista de líneas en el arreglo de líneas del reporte.
+			m_reportLines = new Object[list.size()];
+			list.toArray(m_reportLines);
 		}
 		
 		/**
@@ -771,35 +766,12 @@ public class LibroIVANewDataSource implements JRDataSource {
 			
 		}
 
-		public void loadData() {
-
-			// ArrayList donde se guardan los datos del informe.
-			ArrayList<Object> list = new ArrayList<Object>();
-
-			try {
-				PreparedStatement pstmt = DB.prepareStatement(getDataSQL(),
-						null, true);
-				setQueryParameters(pstmt);
-				ResultSet rs = pstmt.executeQuery();
-				while (rs.next()) {
-					Object line = createRecord(rs);
-					list.add(line);
-				}
-
-			} catch (SQLException e) {
-				throw new RuntimeException(
-						"No se puede ejecutar la consulta para crear las lineas del informe.");
-			}
-
-			// Se guarda la lista de líneas en el arreglo de líneas del reporte.
-			m_reportLines = new Object[list.size()];
-			list.toArray(m_reportLines);
-		}
-
 	}
 
-	
 	class DocumentsDataSource extends TaxDataSource{
+		
+		/** Totales por categoría de iva */
+		protected Map<String, BigDecimal> categoriaIVATotales = new HashMap<String, BigDecimal>();
 		
 		@Override
 		protected Object getFieldValue(String name, Object record)
@@ -809,7 +781,7 @@ public class LibroIVANewDataSource implements JRDataSource {
 				return tax.categoriaIVAName + getAdditionalCategoriaIVANameDescription();
 			}
 			else if(name.equalsIgnoreCase("total_categoria_iva_base_amt")){
-				return getCategoriaIVATotal("TaxBaseAmount", tax.categoriaIVAName, null);
+				return categoriaIVATotales.get(tax.categoriaIVAName);
 			}
 			else{
 				return super.getFieldValue(name, record);
@@ -818,6 +790,63 @@ public class LibroIVANewDataSource implements JRDataSource {
 		
 		protected String getAdditionalCategoriaIVANameDescription(){
 			return "";
+		}
+		
+		protected String getCategoriaIVATotalQuery(String columnAmt){
+			StringBuffer query = new StringBuffer("select c_categoria_iva_name, sum("+columnAmt+") as "+columnAmt+" FROM (");
+			query.append(getDataSQL(false));
+			query.append(" ) as total ");
+			query.append(" group by c_categoria_iva_name ");
+			query.append(" order by c_categoria_iva_name ");
+			return query.toString();
+		}
+		
+		/**
+		 * Carga los totales por categoria de iva de la columna parámetro
+		 * @param columnAmt
+		 * @param trxName
+		 */
+		public void loadCategoriaIVATotales(String columnAmt, String trxName){
+			PreparedStatement ps = null;
+			ResultSet rs = null;
+			BigDecimal totalCategoriaIVA = null; 
+			String categoriaIVAName = null;
+			try {
+				ps = DB.prepareStatement(getCategoriaIVATotalQuery(columnAmt), trxName, true);
+				setQueryParameters(ps);
+				rs = ps.executeQuery();
+				while(rs.next()){
+					categoriaIVAName = rs.getString("c_categoria_iva_name");
+					totalCategoriaIVA = categoriaIVATotales.get(categoriaIVAName);
+					if(totalCategoriaIVA == null){
+						totalCategoriaIVA = rs.getBigDecimal(columnAmt);
+						categoriaIVATotales.put(categoriaIVAName, totalCategoriaIVA);
+					}
+				}
+			} catch (Exception e) {
+				System.out.println(
+						"Error al obtener el total por categoria iva. " + e.getMessage());
+				try{
+					if(ps != null)ps.close();
+					if(rs != null)rs.close();
+				} catch(Exception e2){
+					System.out.println(
+							"Error al obtener el total por categoria iva. " + e2.getMessage());
+				}
+			}
+		}
+		
+		@Override
+		public void loadData() {
+			// Cargar los datos
+			super.loadData();
+			
+			// Cargar los totales neto por Categoría de IVA
+			loadTotalTaxBaseAmounts();
+		}
+		
+		protected void loadTotalTaxBaseAmounts(){
+			loadCategoriaIVATotales("TaxBaseAmount", null);
 		}
 	}
 	
