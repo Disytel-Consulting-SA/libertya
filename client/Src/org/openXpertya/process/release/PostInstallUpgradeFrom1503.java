@@ -71,6 +71,10 @@ public class PostInstallUpgradeFrom1503 extends PluginPostInstallProcess {
 	protected final static String CHEQUES_SIN_CONCILIAR_REPORT_UID = "CORE-AD_Process-1010424";
 	protected final static String CHEQUES_SIN_CONCILIAR_REPORT_FILENAME = "UnreconciledCheksReport.jrxml";
 	
+	/** Listado de OC que Recibieron Mercadería y no Poseen Factura Cargada */
+	protected final static String PURCHASE_ORDER_WITH_INOUT_WITH_OUT_INVOICE_REPORT_UID = "CORE-AD_Process-1010426";
+	protected final static String PURCHASE_ORDER_WITH_INOUT_WITH_OUT_INVOICE_REPORT_FILENAME = "PurchaseOrderWithInOutWithOutInvoice.jrxml";
+	
 	@Override
 	protected String doIt() throws Exception {
 		super.doIt();
@@ -246,16 +250,27 @@ public class PostInstallUpgradeFrom1503 extends PluginPostInstallProcess {
 									getBinaryFileURL(INFORME_LIBRO_IVA_TOTAL_REPORT_FILENAME)));
 		
 		// Reporte de cheques sin Conciliar
-				MProcess.addAttachment(
-						get_TrxName(),
-						getCtx(),
-						CHEQUES_SIN_CONCILIAR_REPORT_UID,
-						CHEQUES_SIN_CONCILIAR_REPORT_FILENAME,
-						JarHelper
-								.readBinaryFromJar(
-										jarFileURL,
-										getBinaryFileURL(CHEQUES_SIN_CONCILIAR_REPORT_FILENAME)));
-		
+		MProcess.addAttachment(
+				get_TrxName(),
+				getCtx(),
+				CHEQUES_SIN_CONCILIAR_REPORT_UID,
+				CHEQUES_SIN_CONCILIAR_REPORT_FILENAME,
+				JarHelper
+						.readBinaryFromJar(
+								jarFileURL,
+								getBinaryFileURL(CHEQUES_SIN_CONCILIAR_REPORT_FILENAME)));
+				
+		// Listado de OC que Recibieron Mercadería y no Poseen Factura Cargada
+		MProcess.addAttachment(
+				get_TrxName(),
+				getCtx(),
+				PURCHASE_ORDER_WITH_INOUT_WITH_OUT_INVOICE_REPORT_UID,
+				PURCHASE_ORDER_WITH_INOUT_WITH_OUT_INVOICE_REPORT_FILENAME,
+				JarHelper
+						.readBinaryFromJar(
+								jarFileURL,
+								getBinaryFileURL(PURCHASE_ORDER_WITH_INOUT_WITH_OUT_INVOICE_REPORT_FILENAME)));
+
 		return " ";
 	}
 	
