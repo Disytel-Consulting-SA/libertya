@@ -1,0 +1,509 @@
+<?xml version="1.0" encoding="UTF-8"  ?>
+<!-- Created with iReport - A designer for JasperReports -->
+<!DOCTYPE jasperReport PUBLIC "//JasperReports//DTD Report Design//EN" "http://jasperreports.sourceforge.net/dtds/jasperreport.dtd">
+<jasperReport
+		 name="PurchaseOrderWithInOutWithOutInvoice"
+		 columnCount="1"
+		 printOrder="Vertical"
+		 orientation="Portrait"
+		 pageWidth="540"
+		 pageHeight="595"
+		 columnWidth="480"
+		 columnSpacing="0"
+		 leftMargin="30"
+		 rightMargin="30"
+		 topMargin="20"
+		 bottomMargin="20"
+		 whenNoDataType="NoPages"
+		 isTitleNewPage="false"
+		 isSummaryNewPage="false">
+	<property name="ireport.scriptlethandling" value="0" />
+	<property name="ireport.encoding" value="UTF-8" />
+	<import value="java.util.*" />
+	<import value="net.sf.jasperreports.engine.*" />
+	<import value="net.sf.jasperreports.engine.data.*" />
+
+	<parameter name="AD_Org_ID" isForPrompting="false" class="java.math.BigDecimal"/>
+	<parameter name="FechaDesde" isForPrompting="false" class="java.util.Date"/>
+	<parameter name="AD_CLIENT_ID" isForPrompting="false" class="java.lang.Integer"/>
+	<parameter name="C_BPartner_ID" isForPrompting="false" class="java.math.BigDecimal"/>
+	<parameter name="FechaHasta" isForPrompting="false" class="java.util.Date"/>
+	<queryString><![CDATA[SELECT 
+org.name as organizacion,
+o.c_order_id,
+o.dateordered as fechapedido, 
+o.documentno as pedido,
+io.movementdate as fecharemito, 
+io.documentno as remito,
+bp.name as proveedor,
+Facturado,
+array_agg(COALESCE(fr.documentno,'')) as factura
+from (select rp.c_orderline_id, rp.m_inoutline_id, Facturado
+    from (SELECT iol.m_inoutline_id, iol.c_orderline_id, case when (COALESCE(cantmatchinv.qty,0) = 0) then 'N' else (case when (cantmatchinv.qty < iol.movementqty) then 'FP' else 'Y' end) end as Facturado
+	FROM m_inoutline iol
+	LEFT JOIN (
+	SELECT minv.m_inoutline_id, SUM(qty) AS qty
+	    FROM m_matchinv minv
+	    INNER JOIN c_invoiceline il ON (il.c_invoiceline_id = minv.c_invoiceline_id)
+	    INNER JOIN c_invoice i ON (i.c_invoice_id = il.c_invoice_id)
+	    INNER JOIN c_doctype dti ON (dti.c_doctype_id = i.c_doctype_id)
+	    INNER JOIN m_inoutline iol ON (iol.m_inoutline_id = minv.m_inoutline_id)
+	    INNER JOIN m_inout io ON (io.m_inout_id = iol.m_inout_id)
+	    INNER JOIN c_doctype dtio ON (dtio.c_doctype_id = io.c_doctype_id)
+	    WHERE dti.docbasetype IN ('API') AND dtio.docbasetype IN ('MMR') AND dtio.signo_issotrx = 1
+	    GROUP BY minv.m_inoutline_id
+	    ORDER BY minv.m_inoutline_id desc) as cantmatchinv
+	ON (iol.m_inoutline_id = cantmatchinv.m_inoutline_id)
+	--WHERE iol.movementqty > COALESCE(cantmatchinv.qty,0)
+	) as cp
+    --Remitos de los pedidos
+    INNER join (select distinct c_orderline_id, m_inoutline_id
+            from m_matchpo as po
+            where m_inoutline_id is not null) as rp on rp.m_inoutline_id = cp.m_inoutline_id) as todo --on rp.c_orderline_id = cp.c_orderline_id) as todo
+INNER JOIN c_orderline ol on (ol.c_orderline_id = todo.c_orderline_id)
+INNER JOIN c_order o ON (o.c_order_id = ol.c_order_id)
+INNER JOIN m_inoutline iol ON (iol.m_inoutline_id = todo.m_inoutline_id)
+INNER JOIN m_inout io ON (io.m_inout_id = iol.m_inout_id)
+INNER JOIN AD_Org org ON (org.AD_Org_ID = o.AD_Org_ID)
+INNER JOIN AD_Client cli ON (cli.AD_Client_ID = o.AD_Client_ID)
+INNER JOIN C_Bpartner bp ON (bp.C_BPartner_ID = o.C_Bpartner_ID)
+-- Facturas de esos remitos (al ser left join los remitos sin factura te van a aparecer)
+left join (select distinct inv.m_inoutline_id, i.documentno
+       from m_matchinv as inv
+       inner join c_invoiceline il on (il.c_invoiceline_id = inv.c_invoiceline_id)
+       inner join c_invoice i on (i.c_invoice_id = il.c_invoice_id)
+       ) as fr on fr.m_inoutline_id = todo.m_inoutline_id
+WHERE (($P{AD_Org_ID} IS NULL) OR (0 = $P{AD_Org_ID}) OR (org.ad_org_id = $P{AD_Org_ID}))
+	AND (($P{AD_CLIENT_ID} IS NULL) OR (cli.ad_client_id = $P{AD_CLIENT_ID}))
+	AND (($P{FechaDesde}::date IS NULL) OR (o.dateordered::date >= $P{FechaDesde}::date)) 
+	AND (($P{FechaHasta}::date IS NULL) OR (o.dateordered::date <= $P{FechaHasta}::date))
+	AND (($P{C_BPartner_ID} IS NULL) OR (bp.c_bpartner_id = $P{C_BPartner_ID}))
+	AND Facturado <> 'Y'
+GROUP BY org.name,o.c_order_id,o.dateordered, o.documentno,io.movementdate, io.documentno,bp.name,facturado,io.created 
+ORDER BY io.created desc]]></queryString>
+
+	<field name="organizacion" class="java.lang.String"/>
+	<field name="c_order_id" class="java.lang.Integer"/>
+	<field name="fechapedido" class="java.sql.Timestamp"/>
+	<field name="pedido" class="java.lang.String"/>
+	<field name="fecharemito" class="java.sql.Timestamp"/>
+	<field name="remito" class="java.lang.String"/>
+	<field name="proveedor" class="java.lang.String"/>
+	<field name="facturado" class="java.lang.String"/>
+	<field name="factura" class="java.lang.String"/>
+
+
+		<group  name="Order_ID" >
+			<groupExpression><![CDATA[$F{c_order_id}]]></groupExpression>
+			<groupHeader>
+			<band height="10"  isSplitAllowed="true" >
+				<textField isStretchWithOverflow="true" pattern="" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
+					<reportElement
+						x="0"
+						y="0"
+						width="110"
+						height="10"
+						key="textField-7"
+						stretchType="RelativeToBandHeight"/>
+					<box topBorder="Thin" topBorderColor="#000000" leftBorder="Thin" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="Thin" bottomBorderColor="#000000"/>
+					<textElement textAlignment="Right" verticalAlignment="Middle">
+						<font size="6"/>
+					</textElement>
+				<textFieldExpression   class="java.lang.String"><![CDATA[$F{pedido}]]></textFieldExpression>
+				</textField>
+				<textField isStretchWithOverflow="true" pattern="dd/MM/yyyy" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
+					<reportElement
+						x="110"
+						y="0"
+						width="40"
+						height="10"
+						key="textField-12"
+						stretchType="RelativeToBandHeight"/>
+					<box topBorder="Thin" topBorderColor="#000000" leftBorder="Thin" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="Thin" bottomBorderColor="#000000"/>
+					<textElement textAlignment="Right" verticalAlignment="Middle">
+						<font size="6"/>
+					</textElement>
+				<textFieldExpression   class="java.util.Date"><![CDATA[$F{fechapedido}]]></textFieldExpression>
+				</textField>
+				<textField isStretchWithOverflow="true" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
+					<reportElement
+						x="150"
+						y="0"
+						width="84"
+						height="10"
+						key="textField-81"
+						stretchType="RelativeToBandHeight"/>
+					<box topBorder="Thin" topBorderColor="#000000" leftBorder="Thin" leftBorderColor="#000000" rightBorder="Thin" rightBorderColor="#000000" bottomBorder="Thin" bottomBorderColor="#000000"/>
+					<textElement textAlignment="Right" verticalAlignment="Middle">
+						<font size="6"/>
+					</textElement>
+				<textFieldExpression   class="java.lang.String"><![CDATA[$F{proveedor}]]></textFieldExpression>
+				</textField>
+			</band>
+			</groupHeader>
+			<groupFooter>
+			<band height="0"  isSplitAllowed="true" >
+			</band>
+			</groupFooter>
+		</group>
+		<background>
+			<band height="0"  isSplitAllowed="true" >
+			</band>
+		</background>
+		<title>
+			<band height="0"  isSplitAllowed="true" >
+			</band>
+		</title>
+		<pageHeader>
+			<band height="0"  isSplitAllowed="true" >
+			</band>
+		</pageHeader>
+		<columnHeader>
+			<band height="81"  isSplitAllowed="true" >
+				<textField isStretchWithOverflow="false" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
+					<reportElement
+						x="104"
+						y="15"
+						width="178"
+						height="12"
+						key="textField-3"
+						isRemoveLineWhenBlank="true">
+							<printWhenExpression><![CDATA[new Boolean($P{AD_Org_ID} != null)]]></printWhenExpression>
+						</reportElement>
+					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
+					<textElement>
+						<font pdfFontName="Helvetica" size="8" isBold="false"/>
+					</textElement>
+				<textFieldExpression   class="java.lang.String"><![CDATA[$F{organizacion}]]></textFieldExpression>
+				</textField>
+				<textField isStretchWithOverflow="false" isBlankWhenNull="false" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
+					<reportElement
+						x="4"
+						y="3"
+						width="465"
+						height="12"
+						key="textField-97"/>
+					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
+					<textElement>
+						<font pdfFontName="Helvetica-Bold" size="8" isBold="true" isUnderline="false"/>
+					</textElement>
+				<textFieldExpression   class="java.lang.String"><![CDATA["Listado de OC que Recibieron Mercadería y no Poseen Factura Cargada"]]></textFieldExpression>
+				</textField>
+				<staticText>
+					<reportElement
+						x="4"
+						y="15"
+						width="100"
+						height="12"
+						key="staticText-4"
+						isRemoveLineWhenBlank="true">
+							<printWhenExpression><![CDATA[new Boolean($P{AD_Org_ID} != null)]]></printWhenExpression>
+						</reportElement>
+					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
+					<textElement>
+						<font pdfFontName="Helvetica" size="8" isBold="false"/>
+					</textElement>
+				<text><![CDATA[Organización:]]></text>
+				</staticText>
+				<staticText>
+					<reportElement
+						mode="Opaque"
+						x="0"
+						y="71"
+						width="110"
+						height="10"
+						backcolor="#B9B9B9"
+						key="staticText-12"/>
+					<box topBorder="Thin" topBorderColor="#000000" leftBorder="Thin" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" rightPadding="1" bottomBorder="None" bottomBorderColor="#000000"/>
+					<textElement textAlignment="Right" verticalAlignment="Middle">
+						<font pdfFontName="Helvetica-Bold" size="6" isBold="true"/>
+					</textElement>
+				<text><![CDATA[Número de OC]]></text>
+				</staticText>
+				<staticText>
+					<reportElement
+						mode="Opaque"
+						x="110"
+						y="71"
+						width="40"
+						height="10"
+						backcolor="#B9B9B9"
+						key="staticText-17"/>
+					<box topBorder="Thin" topBorderColor="#000000" leftBorder="Thin" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" rightPadding="1" bottomBorder="None" bottomBorderColor="#000000"/>
+					<textElement textAlignment="Right" verticalAlignment="Middle">
+						<font pdfFontName="Helvetica-Bold" size="6" isBold="true"/>
+					</textElement>
+				<text><![CDATA[Fecha]]></text>
+				</staticText>
+				<staticText>
+					<reportElement
+						mode="Opaque"
+						x="150"
+						y="71"
+						width="84"
+						height="10"
+						backcolor="#B9B9B9"
+						key="staticText-61"/>
+					<box topBorder="Thin" topBorderColor="#000000" leftBorder="Thin" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" rightPadding="1" bottomBorder="None" bottomBorderColor="#000000"/>
+					<textElement textAlignment="Right" verticalAlignment="Middle">
+						<font pdfFontName="Helvetica-Bold" size="6" isBold="true"/>
+					</textElement>
+				<text><![CDATA[Proveedor]]></text>
+				</staticText>
+				<staticText>
+					<reportElement
+						mode="Opaque"
+						x="234"
+						y="71"
+						width="66"
+						height="10"
+						backcolor="#B9B9B9"
+						key="staticText-67"/>
+					<box topBorder="Thin" topBorderColor="#000000" leftBorder="Thin" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" rightPadding="1" bottomBorder="Thin" bottomBorderColor="#000000"/>
+					<textElement textAlignment="Right" verticalAlignment="Middle">
+						<font pdfFontName="Helvetica-Bold" size="6" isBold="true"/>
+					</textElement>
+				<text><![CDATA[Fecha del remito]]></text>
+				</staticText>
+				<staticText>
+					<reportElement
+						mode="Opaque"
+						x="300"
+						y="71"
+						width="60"
+						height="10"
+						backcolor="#B9B9B9"
+						key="staticText-68"/>
+					<box topBorder="Thin" topBorderColor="#000000" leftBorder="Thin" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" rightPadding="1" bottomBorder="Thin" bottomBorderColor="#000000"/>
+					<textElement textAlignment="Right" verticalAlignment="Middle">
+						<font pdfFontName="Helvetica-Bold" size="6" isBold="true"/>
+					</textElement>
+				<text><![CDATA[Nro. Remito]]></text>
+				</staticText>
+				<staticText>
+					<reportElement
+						mode="Opaque"
+						x="360"
+						y="71"
+						width="49"
+						height="10"
+						backcolor="#B9B9B9"
+						key="staticText-69"/>
+					<box topBorder="Thin" topBorderColor="#000000" leftBorder="Thin" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" rightPadding="1" bottomBorder="Thin" bottomBorderColor="#000000"/>
+					<textElement textAlignment="Right" verticalAlignment="Middle">
+						<font pdfFontName="Helvetica-Bold" size="6" isBold="true"/>
+					</textElement>
+				<text><![CDATA[Facturado]]></text>
+				</staticText>
+				<staticText>
+					<reportElement
+						mode="Opaque"
+						x="409"
+						y="71"
+						width="70"
+						height="10"
+						backcolor="#B9B9B9"
+						key="staticText-70"/>
+					<box topBorder="Thin" topBorderColor="#000000" leftBorder="Thin" leftBorderColor="#000000" rightBorder="Thin" rightBorderColor="#000000" rightPadding="1" bottomBorder="Thin" bottomBorderColor="#000000"/>
+					<textElement textAlignment="Right" verticalAlignment="Middle">
+						<font pdfFontName="Helvetica-Bold" size="6" isBold="true"/>
+					</textElement>
+				<text><![CDATA[Nro. Factura]]></text>
+				</staticText>
+				<staticText>
+					<reportElement
+						x="4"
+						y="27"
+						width="100"
+						height="12"
+						key="staticText-71"
+						isRemoveLineWhenBlank="true">
+							<printWhenExpression><![CDATA[new Boolean($P{FechaDesde} != null)]]></printWhenExpression>
+						</reportElement>
+					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
+					<textElement>
+						<font pdfFontName="Helvetica" size="8" isBold="false"/>
+					</textElement>
+				<text><![CDATA[Desde:]]></text>
+				</staticText>
+				<textField isStretchWithOverflow="false" pattern="dd/MM/yyyy" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
+					<reportElement
+						x="104"
+						y="27"
+						width="178"
+						height="12"
+						key="textField-93"
+						isRemoveLineWhenBlank="true">
+							<printWhenExpression><![CDATA[new Boolean($P{FechaDesde} != null)]]></printWhenExpression>
+						</reportElement>
+					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
+					<textElement>
+						<font pdfFontName="Helvetica" size="8" isBold="false"/>
+					</textElement>
+				<textFieldExpression   class="java.util.Date"><![CDATA[$P{FechaDesde}]]></textFieldExpression>
+				</textField>
+				<staticText>
+					<reportElement
+						x="4"
+						y="39"
+						width="100"
+						height="12"
+						key="staticText-72"
+						isRemoveLineWhenBlank="true">
+							<printWhenExpression><![CDATA[new Boolean($P{FechaHasta} != null)]]></printWhenExpression>
+						</reportElement>
+					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
+					<textElement>
+						<font pdfFontName="Helvetica" size="8" isBold="false"/>
+					</textElement>
+				<text><![CDATA[Hasta:]]></text>
+				</staticText>
+				<textField isStretchWithOverflow="false" pattern="dd/MM/yyyy" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
+					<reportElement
+						x="104"
+						y="39"
+						width="178"
+						height="12"
+						key="textField-94"
+						isRemoveLineWhenBlank="true">
+							<printWhenExpression><![CDATA[new Boolean($P{FechaHasta} != null)]]></printWhenExpression>
+						</reportElement>
+					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
+					<textElement>
+						<font pdfFontName="Helvetica" size="8" isBold="false"/>
+					</textElement>
+				<textFieldExpression   class="java.util.Date"><![CDATA[$P{FechaHasta}]]></textFieldExpression>
+				</textField>
+				<staticText>
+					<reportElement
+						x="4"
+						y="51"
+						width="100"
+						height="12"
+						key="staticText-74"
+						isRemoveLineWhenBlank="true">
+							<printWhenExpression><![CDATA[new Boolean($P{C_BPartner_ID}.toString() != "")]]></printWhenExpression>
+						</reportElement>
+					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
+					<textElement>
+						<font pdfFontName="Helvetica" size="8" isBold="false"/>
+					</textElement>
+				<text><![CDATA[Entidad Comercial:]]></text>
+				</staticText>
+				<textField isStretchWithOverflow="false" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
+					<reportElement
+						x="104"
+						y="51"
+						width="178"
+						height="12"
+						key="textField-96"
+						isRemoveLineWhenBlank="true">
+							<printWhenExpression><![CDATA[new Boolean($P{C_BPartner_ID}.toString() != "")]]></printWhenExpression>
+						</reportElement>
+					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
+					<textElement>
+						<font pdfFontName="Helvetica" size="8" isBold="false"/>
+					</textElement>
+				<textFieldExpression   class="java.lang.String"><![CDATA[$F{proveedor}]]></textFieldExpression>
+				</textField>
+			</band>
+		</columnHeader>
+		<detail>
+			<band height="10"  isSplitAllowed="true" >
+				<textField isStretchWithOverflow="true" pattern="dd/MM/yyyy" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
+					<reportElement
+						x="234"
+						y="0"
+						width="66"
+						height="10"
+						key="textField-89"
+						stretchType="RelativeToBandHeight"/>
+					<box topBorder="Thin" topBorderColor="#000000" leftBorder="Thin" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="Thin" bottomBorderColor="#000000"/>
+					<textElement textAlignment="Right" verticalAlignment="Middle">
+						<font size="6"/>
+					</textElement>
+				<textFieldExpression   class="java.util.Date"><![CDATA[$F{fecharemito}]]></textFieldExpression>
+				</textField>
+				<textField isStretchWithOverflow="true" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
+					<reportElement
+						x="300"
+						y="0"
+						width="60"
+						height="10"
+						key="textField-90"
+						stretchType="RelativeToBandHeight"/>
+					<box topBorder="Thin" topBorderColor="#000000" leftBorder="Thin" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="Thin" bottomBorderColor="#000000"/>
+					<textElement textAlignment="Right" verticalAlignment="Middle">
+						<font size="6"/>
+					</textElement>
+				<textFieldExpression   class="java.lang.String"><![CDATA[$F{remito}]]></textFieldExpression>
+				</textField>
+				<textField isStretchWithOverflow="true" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
+					<reportElement
+						x="360"
+						y="0"
+						width="49"
+						height="10"
+						key="textField-91"
+						stretchType="RelativeToBandHeight"/>
+					<box topBorder="Thin" topBorderColor="#000000" leftBorder="Thin" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="Thin" bottomBorderColor="#000000"/>
+					<textElement textAlignment="Center" verticalAlignment="Middle">
+						<font size="6"/>
+					</textElement>
+				<textFieldExpression   class="java.lang.String"><![CDATA[$F{facturado}.equals("Y")? "S" : $F{facturado}]]></textFieldExpression>
+				</textField>
+				<textField isStretchWithOverflow="true" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
+					<reportElement
+						x="409"
+						y="0"
+						width="70"
+						height="10"
+						key="textField-92"
+						stretchType="RelativeToBandHeight"/>
+					<box topBorder="Thin" topBorderColor="#000000" leftBorder="Thin" leftBorderColor="#000000" rightBorder="Thin" rightBorderColor="#000000" bottomBorder="Thin" bottomBorderColor="#000000"/>
+					<textElement textAlignment="Right" verticalAlignment="Middle">
+						<font size="6"/>
+					</textElement>
+				<textFieldExpression   class="java.lang.String"><![CDATA[$F{factura}.replace( "{", "" ).replace( "}", "" ).replace( "\"", "" )]]></textFieldExpression>
+				</textField>
+			</band>
+		</detail>
+		<columnFooter>
+			<band height="0"  isSplitAllowed="true" >
+			</band>
+		</columnFooter>
+		<pageFooter>
+			<band height="20"  isSplitAllowed="true" >
+				<textField isStretchWithOverflow="false" pattern="###0" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
+					<reportElement
+						x="45"
+						y="8"
+						width="25"
+						height="10"
+						key="textField-76"/>
+					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
+					<textElement textAlignment="Left">
+						<font size="5"/>
+					</textElement>
+				<textFieldExpression   class="java.lang.Integer"><![CDATA[$V{PAGE_NUMBER}]]></textFieldExpression>
+				</textField>
+				<staticText>
+					<reportElement
+						x="0"
+						y="8"
+						width="45"
+						height="10"
+						key="staticText-56"/>
+					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
+					<textElement verticalAlignment="Top">
+						<font pdfFontName="Helvetica-Bold" size="6" isBold="true"/>
+					</textElement>
+				<text><![CDATA[Nro. Página:]]></text>
+				</staticText>
+			</band>
+		</pageFooter>
+		<summary>
+			<band height="0"  isSplitAllowed="true" >
+			</band>
+		</summary>
+</jasperReport>
