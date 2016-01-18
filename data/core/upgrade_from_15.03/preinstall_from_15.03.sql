@@ -3719,7 +3719,7 @@ WHERE p.IsReconciled='N' AND p.DocStatus in ('CO','CL')  AND p.TenderType in('K'
 ALTER TABLE libertya.rv_unreconciled_payment
   OWNER TO libertya;
   
---20160115 0920 Vista para nuevo reporte de impuestos bancarios
+--20160115-0920 Vista para nuevo reporte de impuestos bancarios
 CREATE OR REPLACE VIEW libertya.rv_charge_bankstatement AS 
 SELECT b.AD_Org_ID,b.AD_Client_ID,DateACCT AS fecha_Contable,STMTAMT AS importe,
 STATEMENTDATE AS FECHA_EXTRACTO,C.NAME  AS IMPUESTO,c.c_charge_id,b.c_bankaccount_id, b.dc AS clave
@@ -3732,3 +3732,29 @@ WHERE h.docstatus IN ('CO','CL');
 
 ALTER TABLE libertya.rv_charge_bankstatement
   OWNER TO libertya;
+  
+--20150118-0930 Modificaciones a la vista de percepciones para informe
+DROP VIEW c_invoice_percepciones_v;
+
+CREATE OR REPLACE VIEW c_invoice_percepciones_v AS 
+ SELECT i.ad_client_id, i.ad_org_id, dt.c_doctype_id, dt.name AS doctypename, 
+        CASE
+            WHEN dt.signo_issotrx = 1 THEN 'F'::text
+            ELSE 'C'::text
+        END AS doctypechar, 
+        CASE
+            WHEN substring(dt.doctypekey from 1 for 2) = 'CI' THEN 'F'::text
+            WHEN substring(dt.doctypekey from 1 for 2) = 'CC' THEN 'NC'::text
+            ELSE 'ND'::text
+        END AS doctypenameshort,
+        i.c_invoice_id, i.documentno, date_trunc('day'::text, i.dateinvoiced) AS dateinvoiced, lc.letra, i.puntodeventa, i.numerocomprobante, i.grandtotal, bp.c_bpartner_id, bp.value AS bpartner_value, bp.name AS bpartner_name, bp.taxid, ((("substring"(replace(bp.taxid::text, '-'::text, ''::text), 1, 2) || '-'::text) || "substring"(replace(bp.taxid::text, '-'::text, ''::text), 3, 8)) || '-'::text) || "substring"(replace(bp.taxid::text, '-'::text, ''::text), 11, 1) AS taxid_with_script, COALESCE(i.nombrecli, bp.name) AS nombrecli, COALESCE(i.nroidentificcliente, bp.taxid) AS nroidentificcliente, ((("substring"(replace(bp.taxid::text, '-'::text, ''::text), 1, 2) || '-'::text) || "substring"(replace(bp.taxid::text, '-'::text, ''::text), 3, 8)) || '-'::text) || "substring"(replace(bp.taxid::text, '-'::text, ''::text), 11, 1) AS nroidentificcliente_with_script, t.c_tax_id, t.name AS percepcionname, it.taxbaseamt, it.taxamt, it.rate, c.iso_code, i.issotrx, date_trunc('day'::text, i.dateacct) AS dateacct, (case when i.issotrx = 'Y' then 'E' else 'S' end) as aplicacion
+   FROM c_invoicetax it
+   JOIN c_invoice i ON i.c_invoice_id = it.c_invoice_id
+   JOIN c_letra_comprobante lc ON lc.c_letra_comprobante_id = i.c_letra_comprobante_id
+   JOIN c_doctype dt ON dt.c_doctype_id = i.c_doctypetarget_id
+   JOIN c_bpartner bp ON bp.c_bpartner_id = i.c_bpartner_id
+   JOIN c_tax t ON t.c_tax_id = it.c_tax_id
+   JOIN c_currency c on c.c_currency_id = i.c_currency_id
+  WHERE t.ispercepcion = 'Y'::bpchar AND ((i.docstatus = ANY (ARRAY['CL'::bpchar, 'CO'::bpchar])) OR (i.docstatus = ANY (ARRAY['VO'::bpchar, 'RE'::bpchar])) AND dt.isfiscal = 'Y'::bpchar AND i.fiscalalreadyprinted = 'Y'::bpchar);
+
+ALTER TABLE c_invoice_percepciones_v OWNER TO libertya;
