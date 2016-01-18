@@ -75,6 +75,10 @@ public class PostInstallUpgradeFrom1503 extends PluginPostInstallProcess {
 	protected final static String PURCHASE_ORDER_WITH_INOUT_WITH_OUT_INVOICE_REPORT_UID = "CORE-AD_Process-1010426";
 	protected final static String PURCHASE_ORDER_WITH_INOUT_WITH_OUT_INVOICE_REPORT_FILENAME = "PurchaseOrderWithInOutWithOutInvoice.jrxml";
 	
+	/** UID del Informe de Libro Diario */
+	protected final static String REPORT_JOURNAL_BOOK_REPORT_UID = "CORE-AD_Process-1010379";
+	protected final static String REPORT_JOURNAL_BOOK_REPORT_FILENAME = "LibroDiario.jrxml";
+	
 	@Override
 	protected String doIt() throws Exception {
 		super.doIt();
@@ -270,6 +274,17 @@ public class PostInstallUpgradeFrom1503 extends PluginPostInstallProcess {
 						.readBinaryFromJar(
 								jarFileURL,
 								getBinaryFileURL(PURCHASE_ORDER_WITH_INOUT_WITH_OUT_INVOICE_REPORT_FILENAME)));
+		
+		// Informe de Libro Diario
+		MProcess.addAttachment(
+				get_TrxName(),
+				getCtx(),
+				REPORT_JOURNAL_BOOK_REPORT_UID,
+				REPORT_JOURNAL_BOOK_REPORT_FILENAME,
+				JarHelper
+						.readBinaryFromJar(
+								jarFileURL,
+								getBinaryFileURL(REPORT_JOURNAL_BOOK_REPORT_FILENAME)));
 
 		return " ";
 	}
