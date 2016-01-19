@@ -3924,15 +3924,15 @@ BEGIN
 
 				-- Cambiar los 2 (replicado) por 3 (modificado).
 				-- Adicionalmente para JMS: 4 (espera ack) por 5 (cambios luego de ack)
-				-- Ademas: Cambiar 1 (replicar) por A (insertar o modificar segun existencia en destino).  
+				-- Ademas: Cambiar 1 (replicar) por a (re-replicar luego de insertar o modificar segun existencia en destino).  
 				--	   Puede darse el caso que se realiza una modificacion a un registro replicado en ciertos hosts pero no en otros.
 				--	   Este cambio debería garantizar el reenvio del registro en caso de que un ack omita sin querer la modificacion.
 				NEW.repArray := replace(NEW.repArray, '2', '3');
 				NEW.repArray := replace(NEW.repArray, '4', '5');
-				NEW.repArray := replace(NEW.repArray, '1', 'A');
-				-- Si el registro deberá replicar hacia otros hosts (hay al menos un 3 o una A)
+				NEW.repArray := replace(NEW.repArray, '1', 'a');
+				-- Si el registro deberá replicar hacia otros hosts (hay al menos un 3 o una A/a)
 				-- entonces debe incluirse en replicacion y hay que check referencias
-				IF (position('3' in NEW.repArray) > 0 OR position('A' in NEW.repArray) > 0) THEN
+				IF (position('3' in NEW.repArray) > 0 OR position('A' in NEW.repArray) > 0 OR position('a' in NEW.repArray) > 0) THEN
 					NEW.includeInReplication = 'Y';
 					shouldcheckreferences := true;
 				END IF;
