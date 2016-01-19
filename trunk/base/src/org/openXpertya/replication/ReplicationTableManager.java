@@ -23,6 +23,8 @@ public class ReplicationTableManager {
 	public static String filterRecord = null;
 	/** filtrar replicacion solo hacia un host */
 	public static HashSet<Integer> filterHost = null;
+	/** omitir registros con antiguedad menor al tiempo especificado (segundos) */
+	public static Integer delayRecords = null;
 	
 	/** trxName */
 	protected String trxName = null;
@@ -219,6 +221,10 @@ public class ReplicationTableManager {
 				// Incluir eventual filtro por nombre de registro
 				if (filterRecord!=null && filterRecord.length()>0)
 					query.append(" AND retrieveUID = '" + filterRecord + "'");
+				// Contemplar los registros con cierta antiguedad segun el argumento recibido (segundos). LAS TABLAS INVOLUCRADAS DEBEN CONTENER ESTE CAMPO!
+				if (delayRecords != null) {
+					query.append(" AND age(NOW(), created) > '" + delayRecords + " seconds' ");
+				}
 				query.append(" UNION ALL ");
 			}
 			// Finalizacion del query
@@ -238,6 +244,7 @@ public class ReplicationTableManager {
 		filterTable = null;
 		filterRecord = null;
 		filterHost = null;
+		delayRecords = null;
 	}
 	
 	/**

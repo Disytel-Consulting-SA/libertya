@@ -61,7 +61,7 @@ public class ReplicationConstants {
 	public static Character REPARRAY_RETRY10 					= 'J';
 	public static Character REPARRAY_NO_RETRY 					= 'X';
 	/** Replicar nuevamente el registro si luego de un reintento se replico correctamente */
-	public static Character REPARRAY_REPLICATE_AFTER_RETRY1		= 'a';
+	public static Character REPARRAY_REPLICATE_AFTER_RETRY1		= 'a';		// WS: Forzar re-replicacion post ACK de un registro con UPDATE luego de INSERT 
 	public static Character REPARRAY_REPLICATE_AFTER_RETRY2		= 'b';
 	public static Character REPARRAY_REPLICATE_AFTER_RETRY3		= 'c';
 	public static Character REPARRAY_REPLICATE_AFTER_RETRY4		= 'd';
