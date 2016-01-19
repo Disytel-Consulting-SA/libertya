@@ -237,6 +237,8 @@ public class ReplicationBuilderWS extends ReplicationBuilder {
 				actionXML = m_replicationXMLData.toString().replaceFirst("operation=\"\"", "operation=\""+MChangeLog.OPERATIONTYPE_Insertion+"\"");
 			else if (ReplicationConstants.REPARRAY_REPLICATE_MODIFICATION == state)
 				actionXML = m_replicationXMLData.toString().replaceFirst("operation=\"\"", "operation=\""+MChangeLog.OPERATIONTYPE_Modification+"\"");
+			else if (ReplicationConstants.REPARRAY_REPLICATE_AFTER_RETRY1 == state)	// <- Caso UPDATE post INSERT, el trigger cambia 1 por a, para luego re-replicar al recibick ACK
+				actionXML = m_replicationXMLData.toString().replaceFirst("operation=\"\"", "operation=\""+MChangeLog.OPERATIONTYPE_InsertionModification+ReplicationConstants.REPARRAY_RETRY1+"\"");
 			else if (ReplicationConstants.errorStates.contains(state))
 				actionXML = m_replicationXMLData.toString().replaceFirst("operation=\"\"", "operation=\""+MChangeLog.OPERATIONTYPE_InsertionModification+ReplicationConstants.REPARRAY_RETRY1+"\"");
 			else

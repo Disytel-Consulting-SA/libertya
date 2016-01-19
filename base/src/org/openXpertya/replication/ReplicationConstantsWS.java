@@ -58,6 +58,7 @@ public class ReplicationConstantsWS extends ReplicationConstants {
 		replicateStates.add(REPARRAY_REPLICATE_INSERT);
 		replicateStates.add(REPARRAY_REPLICATE_MODIFICATION);
 		replicateStates.add(REPARRAY_RETRY1);
+		replicateStates.add(REPARRAY_REPLICATE_AFTER_RETRY1);
 		
 		// Estados de error
 		errorStates.clear();
@@ -68,13 +69,14 @@ public class ReplicationConstantsWS extends ReplicationConstants {
 		nextStatusWhenOK.put(ReplicationConstants.REPARRAY_REPLICATE_INSERT, ReplicationConstants.REPARRAY_REPLICATED);
 		nextStatusWhenOK.put(ReplicationConstants.REPARRAY_REPLICATE_MODIFICATION, ReplicationConstants.REPARRAY_REPLICATED);
 		nextStatusWhenOK.put(ReplicationConstants.REPARRAY_RETRY1, ReplicationConstants.REPARRAY_REPLICATED);
+		nextStatusWhenOK.put(ReplicationConstants.REPARRAY_REPLICATE_AFTER_RETRY1, ReplicationConstants.REPARRAY_RETRY1); // Secuencia todo OK: a -> A -> 2
 
 		// Si recibimos un ERROR y dado un estado, el siguiente estado será...
 		nextStatusWhenERR.clear();
 		nextStatusWhenERR.put(ReplicationConstants.REPARRAY_REPLICATE_INSERT, ReplicationConstants.REPARRAY_RETRY1);
 		nextStatusWhenERR.put(ReplicationConstants.REPARRAY_REPLICATE_MODIFICATION, ReplicationConstants.REPARRAY_RETRY1);
 		nextStatusWhenERR.put(ReplicationConstants.REPARRAY_RETRY1, ReplicationConstants.REPARRAY_RETRY1);
-
+		nextStatusWhenERR.put(ReplicationConstants.REPARRAY_REPLICATE_AFTER_RETRY1, ReplicationConstants.REPARRAY_RETRY1);
 	}
 	
 	
