@@ -83,6 +83,10 @@ public class PostInstallUpgradeFrom1503 extends PluginPostInstallProcess {
 	protected final static String PRINT_FORMAT_FOR_JOURNAL_MANUALS_REPORT_UID = "CORE-AD_Process-1010427";
 	protected final static String PRINT_FORMAT_FOR_JOURNAL_MANUALS_REPORT_FILENAME = "PrintFormatforJornalManuals.jrxml";
 	
+	/** UID del Informe de Libro Diario Resumido */
+	protected final static String LIBRO_DIARIO_RESUMIDO_REPORT_UID = "CORE-AD_Process-1010428";
+	protected final static String LIBRO_DIARIO_RESUMIDO_REPORT_FILENAME = "LibroDiarioResumido.jrxml";
+	
 	@Override
 	protected String doIt() throws Exception {
 		super.doIt();
@@ -300,6 +304,17 @@ public class PostInstallUpgradeFrom1503 extends PluginPostInstallProcess {
 						.readBinaryFromJar(
 								jarFileURL,
 								getBinaryFileURL(PRINT_FORMAT_FOR_JOURNAL_MANUALS_REPORT_FILENAME)));
+		
+		// Informe de Asientos Manuales 
+		MProcess.addAttachment(
+				get_TrxName(),
+				getCtx(),
+				LIBRO_DIARIO_RESUMIDO_REPORT_UID,
+				LIBRO_DIARIO_RESUMIDO_REPORT_FILENAME,
+				JarHelper
+						.readBinaryFromJar(
+								jarFileURL,
+								getBinaryFileURL(LIBRO_DIARIO_RESUMIDO_REPORT_FILENAME)));
 		
 		return " ";
 	}
