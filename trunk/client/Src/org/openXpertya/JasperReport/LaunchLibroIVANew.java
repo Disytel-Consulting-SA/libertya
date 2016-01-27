@@ -102,7 +102,14 @@ import org.openXpertya.util.Util;
 			
 			LibroIVANewDataSource ds = new LibroIVANewDataSource(getCtx(),
 					(Date) p_dateFrom, (Date) p_dateTo, p_transactionType, p_OrgID,
-					groupCFInvoices);
+					groupCFInvoices, get_TrxName());
+			
+			try {
+				ds.loadData();
+			}
+			catch (RuntimeException e)	{
+				throw new RuntimeException("No se pueden cargar los datos del informe", e);
+			}
 			
 			///////////////////////////////////////
 			// Subreporte de Impuestos.
@@ -127,56 +134,49 @@ import org.openXpertya.util.Util;
 			// Se agrega el datasource del subreporte.
 			jasperwrapper.addParameter("SUBREPORT_TOTAL_DEBITS_DATASOURCE", ds.getTotalDebitsDataSource());			
 			
-			 try {
-					ds.loadData();
-				}
-				catch (RuntimeException e)	{
-					throw new RuntimeException("No se pueden cargar los datos del informe", e);
-				}
+			// Establecemos parametros
+		 	Integer clientID = Env.getAD_Client_ID(getCtx());
+			jasperwrapper.addParameter("AD_Client_ID", clientID);
+			jasperwrapper.addParameter("TOTALCOMPROBANTES", ds.getTotalFacturado());
+			jasperwrapper.addParameter("TOTALIMPORTES", ds.getTotalIVA());
+			jasperwrapper.addParameter("TOTALGRAVADOS", ds.getTotalGravado());
+			jasperwrapper.addParameter("TOTALNOGRAVADOS", ds.getTotalNoGravado());
+			jasperwrapper.addParameter("HOJA", p_hoja);
+			MOrder order = new MOrder(getCtx(), 0, null);
+			jasperwrapper.addParameter("COMPANIA", JasperReportsUtil.getClientName(getCtx(), clientID));
+			jasperwrapper.addParameter("LOCALIZACION", ds.getLocalizacion(clientID));
+			if(!Util.isEmpty(p_OrgID, true)){
+				jasperwrapper.addParameter("ORG_NAME",
+						JasperReportsUtil.getOrgName(getCtx(), p_OrgID));
+				jasperwrapper.addParameter("ORG_LOCALIZATION",
+						JasperReportsUtil.getLocalizacion(getCtx(), clientID,
+								p_OrgID, get_TrxName()));
+			}
+			jasperwrapper.addParameter("REPORT_NAME", p_reportName);
+			jasperwrapper.addParameter("FECHADESDE", (Date)p_dateFrom);
+			jasperwrapper.addParameter("FECHAHASTA",(Date) p_dateTo);
+			if(!p_transactionType.equals("B")){
+            	 //Si es transacción de ventas, C = Customer(Cliente)
+            	 if(p_transactionType.equals("C")){
+            		 p_tipoLibro = "VENTAS";
+            	 }
+            	 else{
+            		//Si es transacción de compra
+            		 p_tipoLibro="COMPRAS";
+            	 }
+             }
+			jasperwrapper.addParameter("TIPOLIBRO", p_tipoLibro);
+			
+			try {
+				jasperwrapper.fillReport(ds);
+				jasperwrapper.showReport(getProcessInfo());
+			}
 				
-				// Establecemos parametros
-			 	Integer clientID = Env.getAD_Client_ID(getCtx());
-				jasperwrapper.addParameter("AD_Client_ID", clientID);
-				jasperwrapper.addParameter("TOTALCOMPROBANTES", ds.getTotalFacturado());
-				jasperwrapper.addParameter("TOTALIMPORTES", ds.getTotalIVA());
-				jasperwrapper.addParameter("TOTALGRAVADOS", ds.getTotalGravado());
-				jasperwrapper.addParameter("TOTALNOGRAVADOS", ds.getTotalNoGravado());
-				jasperwrapper.addParameter("HOJA", p_hoja);
-				MOrder order = new MOrder(getCtx(), 0, null);
-				jasperwrapper.addParameter("COMPANIA", JasperReportsUtil.getClientName(getCtx(), clientID));
-				jasperwrapper.addParameter("LOCALIZACION", ds.getLocalizacion(clientID));
-				if(!Util.isEmpty(p_OrgID, true)){
-					jasperwrapper.addParameter("ORG_NAME",
-							JasperReportsUtil.getOrgName(getCtx(), p_OrgID));
-					jasperwrapper.addParameter("ORG_LOCALIZATION",
-							JasperReportsUtil.getLocalizacion(getCtx(), clientID,
-									p_OrgID, get_TrxName()));
-				}
-				jasperwrapper.addParameter("REPORT_NAME", p_reportName);
-				jasperwrapper.addParameter("FECHADESDE", (Date)p_dateFrom);
-				jasperwrapper.addParameter("FECHAHASTA",(Date) p_dateTo);
-				if(!p_transactionType.equals("B")){
-	            	 //Si es transacción de ventas, C = Customer(Cliente)
-	            	 if(p_transactionType.equals("C")){
-	            		 p_tipoLibro = "VENTAS";
-	            	 }
-	            	 else{
-	            		//Si es transacción de compra
-	            		 p_tipoLibro="COMPRAS";
-	            	 }
-	             }
-				jasperwrapper.addParameter("TIPOLIBRO", p_tipoLibro);
-				
-				try {
-					jasperwrapper.fillReport(ds);
-					jasperwrapper.showReport(getProcessInfo());
-				}
-					
-				catch (RuntimeException e)	{
-					throw new RuntimeException ("No se ha podido rellenar el informe.", e);
-				}
-				
-				return "doIt";
+			catch (RuntimeException e)	{
+				throw new RuntimeException ("No se ha podido rellenar el informe.", e);
+			}
+			
+			return "doIt";
 		}
 		
 		protected MJasperReport getTaxSubreport() throws Exception {
