@@ -87,9 +87,13 @@ public class PostInstallUpgradeFrom1503 extends PluginPostInstallProcess {
 	protected final static String LIBRO_DIARIO_RESUMIDO_REPORT_UID = "CORE-AD_Process-1010428";
 	protected final static String LIBRO_DIARIO_RESUMIDO_REPORT_FILENAME = "LibroDiarioResumido.jrxml";
 	
-	/** UID del Informe de Libro Diario Resumido */
+	/** UID del Informe de OPA */
 	protected final static String INFORME_OPA_REPORT_UID = "CORE-AD_Process-1010429";
 	protected final static String INFORME_OPA_REPORT_FILENAME = "OPAnticipadas.jrxml";
+	
+	/** UID del Informe de Relacion OC-Remito-Factura */
+	protected final static String TRAZABILIDAD_DE_DOCUMENTOS_REPORT_UID = "CORE-AD_Process-1010430";
+	protected final static String TRAZABILIDAD_DE_DOCUMENTOS_REPORT_FILENAME = "TrazabilidadDeDocumentos.jrxml";
 	
 	@Override
 	protected String doIt() throws Exception {
@@ -309,7 +313,7 @@ public class PostInstallUpgradeFrom1503 extends PluginPostInstallProcess {
 								jarFileURL,
 								getBinaryFileURL(PRINT_FORMAT_FOR_JOURNAL_MANUALS_REPORT_FILENAME)));
 		
-		// Informe de Asientos Manuales 
+		// Informe de Libro diario resumido
 		MProcess.addAttachment(
 				get_TrxName(),
 				getCtx(),
@@ -320,7 +324,7 @@ public class PostInstallUpgradeFrom1503 extends PluginPostInstallProcess {
 								jarFileURL,
 								getBinaryFileURL(LIBRO_DIARIO_RESUMIDO_REPORT_FILENAME)));
 		
-		// Informe de Asientos Manuales 
+		// Informe de OPA
 		MProcess.addAttachment(
 				get_TrxName(),
 				getCtx(),
@@ -330,6 +334,17 @@ public class PostInstallUpgradeFrom1503 extends PluginPostInstallProcess {
 						.readBinaryFromJar(
 								jarFileURL,
 								getBinaryFileURL(INFORME_OPA_REPORT_FILENAME)));
+		
+		// Informe de Relacion OC-Remito-Factura
+		MProcess.addAttachment(
+				get_TrxName(),
+				getCtx(),
+				TRAZABILIDAD_DE_DOCUMENTOS_REPORT_UID,
+				TRAZABILIDAD_DE_DOCUMENTOS_REPORT_FILENAME,
+				JarHelper
+						.readBinaryFromJar(
+								jarFileURL,
+								getBinaryFileURL(TRAZABILIDAD_DE_DOCUMENTOS_REPORT_FILENAME)));
 		
 		return " ";
 	}
