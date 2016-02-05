@@ -87,6 +87,10 @@ public class PostInstallUpgradeFrom1503 extends PluginPostInstallProcess {
 	protected final static String LIBRO_DIARIO_RESUMIDO_REPORT_UID = "CORE-AD_Process-1010428";
 	protected final static String LIBRO_DIARIO_RESUMIDO_REPORT_FILENAME = "LibroDiarioResumido.jrxml";
 	
+	/** UID del Informe de Libro Diario Resumido */
+	protected final static String INFORME_OPA_REPORT_UID = "CORE-AD_Process-1010429";
+	protected final static String INFORME_OPA_REPORT_FILENAME = "OPAnticipadas.jrxml";
+	
 	@Override
 	protected String doIt() throws Exception {
 		super.doIt();
@@ -315,6 +319,17 @@ public class PostInstallUpgradeFrom1503 extends PluginPostInstallProcess {
 						.readBinaryFromJar(
 								jarFileURL,
 								getBinaryFileURL(LIBRO_DIARIO_RESUMIDO_REPORT_FILENAME)));
+		
+		// Informe de Asientos Manuales 
+		MProcess.addAttachment(
+				get_TrxName(),
+				getCtx(),
+				INFORME_OPA_REPORT_UID,
+				INFORME_OPA_REPORT_FILENAME,
+				JarHelper
+						.readBinaryFromJar(
+								jarFileURL,
+								getBinaryFileURL(INFORME_OPA_REPORT_FILENAME)));
 		
 		return " ";
 	}
