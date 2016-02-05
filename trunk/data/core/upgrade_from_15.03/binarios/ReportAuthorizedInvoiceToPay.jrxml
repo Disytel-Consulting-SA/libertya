@@ -6,9 +6,9 @@
 		 columnCount="1"
 		 printOrder="Vertical"
 		 orientation="Landscape"
-		 pageWidth="688"
+		 pageWidth="770"
 		 pageHeight="595"
-		 columnWidth="628"
+		 columnWidth="710"
 		 columnSpacing="0"
 		 leftMargin="30"
 		 rightMargin="30"
@@ -30,12 +30,14 @@
 	<parameter name="FechaHasta" isForPrompting="false" class="java.util.Date"/>
 	<parameter name="AD_User_ID" isForPrompting="false" class="java.math.BigDecimal"/>
 	<parameter name="StatusAuthorization" isForPrompting="false" class="java.lang.String"/>
-	<queryString><![CDATA[SELECT sub.organizacion,sub.fechaFactura, sub.documentno, sub.bpartner,autorizada, sub.grandtotal, sub.totallines, 
+	<queryString><![CDATA[SELECT sub.organizacion,sub.fechaFactura, sub.documentno, sub.codprov, sub.bpartner,autorizada, sub.grandtotal, sub.totallines, sub.balance,
 	sub.usuario, sub.proximousuario
 FROM
 (SELECT org.name as organizacion, 
 i.dateinvoiced as fechaFactura, 
 i.documentno,
+invoiceopen(i.c_invoice_id,0) as balance,
+bp.value as codprov,
 bp.name bpartner, 
 i.c_invoice_id,
 (CASE WHEN (SELECT COUNT(*) 
@@ -68,6 +70,7 @@ LEFT JOIN (SELECT array_agg (u.name) as proximoUsuario, array_agg (u.AD_User_ID)
 	) acd ON (acd.C_Invoice_ID = i.C_Invoice_ID)
 WHERE (($P{AD_Org_ID} IS NULL) OR (0 = $P{AD_Org_ID}) OR (i.ad_org_id = $P{AD_Org_ID}))
 	AND (($P{AD_CLIENT_ID} IS NULL) OR (i.ad_client_id = $P{AD_CLIENT_ID}))
+	AND invoiceopen(i.c_invoice_id,0) > 0
 	AND i.docstatus in ('CL','CO','WC')
 	AND dt.DocBaseType IN ('API')
 	AND (($P{C_BPartner_ID} IS NULL) OR (bp.c_bpartner_id = $P{C_BPartner_ID}))
@@ -86,6 +89,8 @@ WHERE (CASE WHEN $P{StatusAuthorization} = 'P' THEN Autorizada='N' ELSE Autoriza
 	<field name="totallines" class="java.math.BigDecimal"/>
 	<field name="usuario" class="java.lang.String"/>
 	<field name="proximousuario" class="java.lang.String"/>
+	<field name="codprov" class="java.lang.String"/>
+	<field name="balance" class="java.math.BigDecimal"/>
 
 		<background>
 			<band height="0"  isSplitAllowed="true" >
@@ -179,7 +184,7 @@ WHERE (CASE WHEN $P{StatusAuthorization} = 'P' THEN Autorizada='N' ELSE Autoriza
 				<staticText>
 					<reportElement
 						mode="Opaque"
-						x="479"
+						x="562"
 						y="106"
 						width="80"
 						height="10"
@@ -258,13 +263,13 @@ WHERE (CASE WHEN $P{StatusAuthorization} = 'P' THEN Autorizada='N' ELSE Autoriza
 				<staticText>
 					<reportElement
 						mode="Opaque"
-						x="559"
+						x="642"
 						y="106"
 						width="68"
 						height="10"
 						backcolor="#B9B9B9"
 						key="staticText-60"/>
-					<box topBorder="Thin" topBorderColor="#000000" leftBorder="Thin" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" rightPadding="1" bottomBorder="Thin" bottomBorderColor="#000000"/>
+					<box topBorder="Thin" topBorderColor="#000000" leftBorder="Thin" leftBorderColor="#000000" rightBorder="Thin" rightBorderColor="#000000" rightPadding="1" bottomBorder="Thin" bottomBorderColor="#000000"/>
 					<textElement textAlignment="Left" verticalAlignment="Middle">
 						<font pdfFontName="Helvetica-Bold" size="6" isBold="true"/>
 					</textElement>
@@ -288,7 +293,7 @@ WHERE (CASE WHEN $P{StatusAuthorization} = 'P' THEN Autorizada='N' ELSE Autoriza
 				<staticText>
 					<reportElement
 						mode="Opaque"
-						x="234"
+						x="289"
 						y="106"
 						width="84"
 						height="10"
@@ -303,7 +308,7 @@ WHERE (CASE WHEN $P{StatusAuthorization} = 'P' THEN Autorizada='N' ELSE Autoriza
 				<staticText>
 					<reportElement
 						mode="Opaque"
-						x="318"
+						x="373"
 						y="106"
 						width="42"
 						height="10"
@@ -318,7 +323,7 @@ WHERE (CASE WHEN $P{StatusAuthorization} = 'P' THEN Autorizada='N' ELSE Autoriza
 				<staticText>
 					<reportElement
 						mode="Opaque"
-						x="360"
+						x="415"
 						y="106"
 						width="49"
 						height="10"
@@ -333,9 +338,9 @@ WHERE (CASE WHEN $P{StatusAuthorization} = 'P' THEN Autorizada='N' ELSE Autoriza
 				<staticText>
 					<reportElement
 						mode="Opaque"
-						x="409"
+						x="464"
 						y="106"
-						width="70"
+						width="49"
 						height="10"
 						backcolor="#B9B9B9"
 						key="staticText-70"/>
@@ -441,15 +446,6 @@ WHERE (CASE WHEN $P{StatusAuthorization} = 'P' THEN Autorizada='N' ELSE Autoriza
 					</textElement>
 				<textFieldExpression   class="java.lang.String"><![CDATA[$F{bpartner}]]></textFieldExpression>
 				</textField>
-				<line direction="TopDown">
-					<reportElement
-						x="627"
-						y="106"
-						width="0"
-						height="10"
-						key="line-1"/>
-					<graphicElement stretchType="NoStretch"/>
-				</line>
 				<staticText>
 					<reportElement
 						x="4"
@@ -482,6 +478,36 @@ WHERE (CASE WHEN $P{StatusAuthorization} = 'P' THEN Autorizada='N' ELSE Autoriza
 					</textElement>
 				<textFieldExpression   class="java.lang.String"><![CDATA[$F{usuario}]]></textFieldExpression>
 				</textField>
+				<staticText>
+					<reportElement
+						mode="Opaque"
+						x="513"
+						y="106"
+						width="49"
+						height="10"
+						backcolor="#B9B9B9"
+						key="staticText-76"/>
+					<box topBorder="Thin" topBorderColor="#000000" leftBorder="Thin" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" rightPadding="1" bottomBorder="Thin" bottomBorderColor="#000000"/>
+					<textElement textAlignment="Right" verticalAlignment="Middle">
+						<font pdfFontName="Helvetica-Bold" size="6" isBold="true"/>
+					</textElement>
+				<text><![CDATA[Saldo]]></text>
+				</staticText>
+				<staticText>
+					<reportElement
+						mode="Opaque"
+						x="234"
+						y="106"
+						width="55"
+						height="10"
+						backcolor="#B9B9B9"
+						key="staticText-77"/>
+					<box topBorder="Thin" topBorderColor="#000000" leftBorder="Thin" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" rightPadding="1" bottomBorder="Thin" bottomBorderColor="#000000"/>
+					<textElement textAlignment="Left" verticalAlignment="Middle">
+						<font pdfFontName="Helvetica-Bold" size="6" isBold="true"/>
+					</textElement>
+				<text><![CDATA[Cod. Prov.]]></text>
+				</staticText>
 			</band>
 		</columnHeader>
 		<detail>
@@ -516,7 +542,7 @@ WHERE (CASE WHEN $P{StatusAuthorization} = 'P' THEN Autorizada='N' ELSE Autoriza
 				</textField>
 				<textField isStretchWithOverflow="true" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
-						x="479"
+						x="562"
 						y="0"
 						width="80"
 						height="10"
@@ -530,13 +556,13 @@ WHERE (CASE WHEN $P{StatusAuthorization} = 'P' THEN Autorizada='N' ELSE Autoriza
 				</textField>
 				<textField isStretchWithOverflow="true" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
-						x="559"
+						x="642"
 						y="0"
 						width="68"
 						height="10"
 						key="textField-80"
 						stretchType="RelativeToBandHeight"/>
-					<box topBorder="None" topBorderColor="#000000" leftBorder="Thin" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" rightPadding="1" bottomBorder="Thin" bottomBorderColor="#000000"/>
+					<box topBorder="None" topBorderColor="#000000" leftBorder="Thin" leftBorderColor="#000000" rightBorder="Thin" rightBorderColor="#000000" rightPadding="1" bottomBorder="Thin" bottomBorderColor="#000000"/>
 					<textElement textAlignment="Left">
 						<font size="6"/>
 					</textElement>
@@ -558,7 +584,7 @@ WHERE (CASE WHEN $P{StatusAuthorization} = 'P' THEN Autorizada='N' ELSE Autoriza
 				</textField>
 				<textField isStretchWithOverflow="true" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
-						x="234"
+						x="289"
 						y="0"
 						width="84"
 						height="10"
@@ -572,7 +598,7 @@ WHERE (CASE WHEN $P{StatusAuthorization} = 'P' THEN Autorizada='N' ELSE Autoriza
 				</textField>
 				<textField isStretchWithOverflow="true" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
-						x="318"
+						x="373"
 						y="0"
 						width="42"
 						height="10"
@@ -586,7 +612,7 @@ WHERE (CASE WHEN $P{StatusAuthorization} = 'P' THEN Autorizada='N' ELSE Autoriza
 				</textField>
 				<textField isStretchWithOverflow="true" pattern="###0.00;-###0.00" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
-						x="360"
+						x="415"
 						y="0"
 						width="49"
 						height="10"
@@ -600,9 +626,9 @@ WHERE (CASE WHEN $P{StatusAuthorization} = 'P' THEN Autorizada='N' ELSE Autoriza
 				</textField>
 				<textField isStretchWithOverflow="true" pattern="###0.00;-###0.00" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
-						x="409"
+						x="464"
 						y="0"
-						width="70"
+						width="49"
 						height="10"
 						key="textField-92"
 						stretchType="RelativeToBandHeight"/>
@@ -612,16 +638,34 @@ WHERE (CASE WHEN $P{StatusAuthorization} = 'P' THEN Autorizada='N' ELSE Autoriza
 					</textElement>
 				<textFieldExpression   class="java.math.BigDecimal"><![CDATA[$F{totallines}]]></textFieldExpression>
 				</textField>
-				<line direction="TopDown">
+				<textField isStretchWithOverflow="true" pattern="###0.00;-###0.00" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
-						x="627"
+						x="513"
 						y="0"
-						width="0"
+						width="49"
 						height="10"
-						key="line-2"
+						key="textField-98"
 						stretchType="RelativeToBandHeight"/>
-					<graphicElement stretchType="RelativeToBandHeight"/>
-				</line>
+					<box topBorder="None" topBorderColor="#000000" leftBorder="Thin" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" rightPadding="1" bottomBorder="Thin" bottomBorderColor="#000000"/>
+					<textElement textAlignment="Right">
+						<font size="6"/>
+					</textElement>
+				<textFieldExpression   class="java.math.BigDecimal"><![CDATA[$F{balance}]]></textFieldExpression>
+				</textField>
+				<textField isStretchWithOverflow="true" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
+					<reportElement
+						x="234"
+						y="0"
+						width="55"
+						height="10"
+						key="textField-99"
+						stretchType="RelativeToBandHeight"/>
+					<box topBorder="None" topBorderColor="#000000" leftBorder="Thin" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" rightPadding="1" bottomBorder="Thin" bottomBorderColor="#000000"/>
+					<textElement textAlignment="Left">
+						<font size="6"/>
+					</textElement>
+				<textFieldExpression   class="java.lang.String"><![CDATA[$F{codprov}]]></textFieldExpression>
+				</textField>
 			</band>
 		</detail>
 		<columnFooter>
