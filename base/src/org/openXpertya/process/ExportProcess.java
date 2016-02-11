@@ -233,7 +233,7 @@ public class ExportProcess extends SvrProcess {
 	
 	protected String getQuery(){
 		// SELECT
-		StringBuffer sql = new StringBuffer("SELECT ");
+		StringBuffer sql = new StringBuffer("SELECT DISTINCT ");
 		String columnName;
 		// Concatenar los nombres de las columnas del select
 		for (MExpFormatRow expFormatRow : getExportFormatRows()) {
@@ -294,6 +294,12 @@ public class ExportProcess extends SvrProcess {
 		}
 		whereClause.append(" ad_client_id = ").append(
 				Env.getAD_Client_ID(getCtx()));
+		// Levantar el filtro sql definido
+		String sqlFilter = getExportFormat().getFilterSQL();
+		if(!Util.isEmpty(sqlFilter, true)){
+			whereClause.append(" AND ");
+			whereClause.append(sqlFilter);
+		}
 		return whereClause.toString();
 	}
 	

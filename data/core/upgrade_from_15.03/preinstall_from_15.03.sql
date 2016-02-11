@@ -4007,3 +4007,381 @@ $BODY$
   LANGUAGE 'plpgsql' VOLATILE
   COST 100;
 ALTER FUNCTION replication_event() OWNER TO libertya;
+
+--20160211-1020 Mejoras a la exportación de datos y nuevos formatos de exportación de percepciones
+CREATE TABLE ad_expformat_filter
+(
+  ad_expformat_filter_id integer NOT NULL,
+  ad_client_id integer NOT NULL,
+  ad_org_id integer NOT NULL,
+  isactive character(1) NOT NULL DEFAULT 'Y'::bpchar,
+  created timestamp without time zone NOT NULL DEFAULT ('now'::text)::timestamp(6) with time zone,
+  createdby integer NOT NULL,
+  updated timestamp without time zone NOT NULL DEFAULT ('now'::text)::timestamp(6) with time zone,
+  updatedby integer NOT NULL,
+  ad_expformat_id integer NOT NULL,
+  filter character varying(2500) NOT NULL,
+  ad_componentobjectuid character varying(100),
+  ad_componentversion_id integer,
+  CONSTRAINT ad_expformat_filter_key PRIMARY KEY (ad_expformat_filter_id),
+  CONSTRAINT adclient_adexpformatfilter FOREIGN KEY (ad_client_id)
+      REFERENCES ad_client (ad_client_id) MATCH SIMPLE
+      ON UPDATE NO ACTION ON DELETE NO ACTION,
+  CONSTRAINT adorg_adexpformatfilter FOREIGN KEY (ad_org_id)
+      REFERENCES ad_org (ad_org_id) MATCH SIMPLE
+      ON UPDATE NO ACTION ON DELETE NO ACTION,
+  CONSTRAINT adexpformat_adexpformatfilter FOREIGN KEY (ad_expformat_id)
+      REFERENCES ad_expformat (ad_expformat_id) MATCH SIMPLE
+      ON UPDATE NO ACTION ON DELETE NO ACTION
+)
+WITH (
+  OIDS=FALSE
+);
+ALTER TABLE ad_expformat_filter
+  OWNER TO libertya;
+
+--Mejoras a la vista de percepciones
+DROP VIEW c_invoice_percepciones_v;
+
+CREATE OR REPLACE VIEW c_invoice_percepciones_v AS 
+ SELECT i.ad_client_id, i.ad_org_id, dt.c_doctype_id, dt.name AS doctypename, 
+        CASE
+            WHEN dt.signo_issotrx = 1 THEN 'F'::text
+            ELSE 'C'::text
+        END AS doctypechar, 
+        CASE
+            WHEN "substring"(dt.doctypekey::text, 1, 2) = 'CI'::text THEN 'F'::text
+            WHEN "substring"(dt.doctypekey::text, 1, 2) = 'CC'::text THEN 'NC'::text
+            ELSE 'ND'::text
+        END AS doctypenameshort, 
+        CASE
+            WHEN "substring"(dt.doctypekey::text, 1, 2) = 'CI'::text THEN 'T'::character(1)
+            WHEN "substring"(dt.doctypekey::text, 1, 2) = 'CC'::text THEN 'R'::character(1)
+            ELSE 'D'::character(1)
+        END AS doctypenameshort_aditional, 
+        dt.docbasetype,
+        i.c_invoice_id, 
+        i.documentno, 
+        date_trunc('day'::text, i.dateinvoiced) AS dateinvoiced, 
+        date_trunc('day'::text, i.dateacct) AS dateacct, 
+        date_trunc('day'::text, i.dateinvoiced) AS date, 
+        lc.letra, 
+        i.puntodeventa, 
+        i.numerocomprobante, 
+        i.grandtotal, 
+        bp.c_bpartner_id, 
+        bp.value AS bpartner_value, 
+        bp.name AS bpartner_name, 
+        replace(bp.taxid, '-', '') as taxid,
+        iibb,
+        CASE WHEN length(iibb) > 7 THEN 1 ELSE 0 END as tipo_contribuyente,
+        ((("substring"(replace(bp.taxid::text, '-'::text, ''::text), 1, 2) || '-'::text) || "substring"(replace(bp.taxid::text, '-'::text, ''::text), 3, 8)) || '-'::text) || "substring"(replace(bp.taxid::text, '-'::text, ''::text), 11, 1) AS taxid_with_script, 
+        COALESCE(i.nombrecli, bp.name) AS nombrecli, 
+        COALESCE(i.nroidentificcliente, bp.taxid) AS nroidentificcliente, 
+        ((("substring"(replace(bp.taxid::text, '-'::text, ''::text), 1, 2) || '-'::text) || "substring"(replace(bp.taxid::text, '-'::text, ''::text), 3, 8)) || '-'::text) || "substring"(replace(bp.taxid::text, '-'::text, ''::text), 11, 1) AS nroidentificcliente_with_script, 
+        (select l.address1 
+		from c_bpartner_location as bpl 
+		inner join c_location as l on l.c_location_id = bpl.c_location_id
+		where bpl.c_bpartner_id = bp.c_bpartner_id
+		order by bpl.updated desc
+		limit 1) as address1,
+        t.c_tax_id, 
+        t.name AS percepcionname, 
+        it.taxbaseamt, 
+        it.taxamt, 
+        (it.taxbaseamt * dt.signo_issotrx::numeric)::numeric(20,2) AS taxbaseamt_with_sign, 
+        (it.taxamt * dt.signo_issotrx::numeric)::numeric(20,2) AS taxamt_with_sign,
+        (CASE WHEN it.taxbaseamt <> 0 THEN (it.taxamt * 100) / it.taxbaseamt ELSE 0 END)::numeric(20,2) as alicuota,
+        lo.city as org_city,
+        lo.postal as org_postal_code
+   FROM c_invoicetax it
+   JOIN c_invoice i ON i.c_invoice_id = it.c_invoice_id
+   JOIN c_letra_comprobante lc ON lc.c_letra_comprobante_id = i.c_letra_comprobante_id
+   JOIN c_doctype dt ON dt.c_doctype_id = i.c_doctypetarget_id
+   JOIN c_bpartner bp ON bp.c_bpartner_id = i.c_bpartner_id
+   JOIN c_tax t ON t.c_tax_id = it.c_tax_id
+   JOIN ad_orginfo as oi on oi.ad_org_id = i.ad_org_id
+   LEFT JOIN c_location as lo on lo.c_location_id = oi.c_location_id
+  WHERE t.ispercepcion = 'Y'::bpchar 
+	AND i.issotrx = 'Y'::bpchar 
+	AND ((i.docstatus = ANY (ARRAY['CL'::bpchar, 'CO'::bpchar])) OR ((i.docstatus = ANY (ARRAY['VO'::bpchar, 'RE'::bpchar])) AND dt.isfiscal = 'Y'::bpchar AND i.fiscalalreadyprinted = 'Y'::bpchar));
+
+ALTER TABLE c_invoice_percepciones_v
+  OWNER TO libertya;
+  
+--Eliminación de los metadatos incorporados en estos nuevos cambios por parches instalados 
+DELETE FROM AD_ExpFormat_Filter WHERE ad_componentobjectuid = 'CORE-AD_ExpFormat_Filter-1000004';
+DELETE FROM AD_ExpFormat_Row WHERE ad_componentobjectuid = 'CORE-AD_ExpFormat_Row-1010176';
+DELETE FROM AD_ExpFormat_Row WHERE ad_componentobjectuid = 'CORE-AD_ExpFormat_Row-1010175';
+DELETE FROM AD_ExpFormat_Row WHERE ad_componentobjectuid = 'CORE-AD_ExpFormat_Row-1010174';
+DELETE FROM AD_ExpFormat_Row WHERE ad_componentobjectuid = 'CORE-AD_ExpFormat_Row-1010173';
+DELETE FROM AD_ExpFormat_Row WHERE ad_componentobjectuid = 'CORE-AD_ExpFormat_Row-1010172';
+DELETE FROM AD_ExpFormat_Row WHERE ad_componentobjectuid = 'CORE-AD_ExpFormat_Row-1010171';
+DELETE FROM AD_ExpFormat_Row WHERE ad_componentobjectuid = 'CORE-AD_ExpFormat_Row-1010170';
+DELETE FROM AD_ExpFormat_Row WHERE ad_componentobjectuid = 'CORE-AD_ExpFormat_Row-1010169';
+DELETE FROM AD_ExpFormat WHERE ad_componentobjectuid = 'CORE-AD_ExpFormat-1010018';
+DELETE FROM AD_ExpFormat_Filter WHERE ad_componentobjectuid = 'CORE-AD_ExpFormat_Filter-1000003';
+DELETE FROM AD_ExpFormat_Row WHERE ad_componentobjectuid = 'CORE-AD_ExpFormat_Row-1010168';
+DELETE FROM AD_ExpFormat_Row WHERE ad_componentobjectuid = 'CORE-AD_ExpFormat_Row-1010167';
+DELETE FROM AD_ExpFormat_Row WHERE ad_componentobjectuid = 'CORE-AD_ExpFormat_Row-1010166';
+DELETE FROM AD_ExpFormat_Row WHERE ad_componentobjectuid = 'CORE-AD_ExpFormat_Row-1010165';
+DELETE FROM AD_ExpFormat_Row WHERE ad_componentobjectuid = 'CORE-AD_ExpFormat_Row-1010164';
+DELETE FROM AD_ExpFormat_Row WHERE ad_componentobjectuid = 'CORE-AD_ExpFormat_Row-1010163';
+DELETE FROM AD_ExpFormat WHERE ad_componentobjectuid = 'CORE-AD_ExpFormat-1010017';
+DELETE FROM AD_ExpFormat_Row WHERE ad_componentobjectuid = 'CORE-AD_ExpFormat_Row-1010162';
+DELETE FROM AD_ExpFormat_Row WHERE ad_componentobjectuid = 'CORE-AD_ExpFormat_Row-1010161';
+DELETE FROM AD_ExpFormat_Row WHERE ad_componentobjectuid = 'CORE-AD_ExpFormat_Row-1010160';
+DELETE FROM AD_ExpFormat_Row WHERE ad_componentobjectuid = 'CORE-AD_ExpFormat_Row-1010159';
+DELETE FROM AD_ExpFormat_Row WHERE ad_componentobjectuid = 'CORE-AD_ExpFormat_Row-1010158';
+DELETE FROM AD_ExpFormat_Row WHERE ad_componentobjectuid = 'CORE-AD_ExpFormat_Row-1010157';
+DELETE FROM AD_ExpFormat_Row WHERE ad_componentobjectuid = 'CORE-AD_ExpFormat_Row-1010156';
+DELETE FROM AD_ExpFormat_Row WHERE ad_componentobjectuid = 'CORE-AD_ExpFormat_Row-1010155';
+DELETE FROM AD_ExpFormat_Row WHERE ad_componentobjectuid = 'CORE-AD_ExpFormat_Row-1010154';
+DELETE FROM AD_ExpFormat_Row WHERE ad_componentobjectuid = 'CORE-AD_ExpFormat_Row-1010153';
+DELETE FROM AD_ExpFormat_Row WHERE ad_componentobjectuid = 'CORE-AD_ExpFormat_Row-1010152';
+DELETE FROM AD_ExpFormat_Row WHERE ad_componentobjectuid = 'CORE-AD_ExpFormat_Row-1010151';
+DELETE FROM AD_ExpFormat_Row WHERE ad_componentobjectuid = 'CORE-AD_ExpFormat_Row-1010150';
+DELETE FROM AD_ExpFormat_Row WHERE ad_componentobjectuid = 'CORE-AD_ExpFormat_Row-1010149';
+DELETE FROM AD_ExpFormat_Row WHERE ad_componentobjectuid = 'CORE-AD_ExpFormat_Row-1010148';
+DELETE FROM AD_ExpFormat WHERE ad_componentobjectuid = 'CORE-AD_ExpFormat-1010016';
+DELETE FROM AD_ExpFormat_Row WHERE ad_componentobjectuid = 'CORE-AD_ExpFormat_Row-1010147';
+DELETE FROM AD_ExpFormat_Row WHERE ad_componentobjectuid = 'CORE-AD_ExpFormat_Row-1010146';
+DELETE FROM AD_ExpFormat_Row WHERE ad_componentobjectuid = 'CORE-AD_ExpFormat_Row-1010145';
+DELETE FROM AD_ExpFormat_Row WHERE ad_componentobjectuid = 'CORE-AD_ExpFormat_Row-1010144';
+DELETE FROM AD_ExpFormat_Row WHERE ad_componentobjectuid = 'CORE-AD_ExpFormat_Row-1010143';
+DELETE FROM AD_ExpFormat_Row WHERE ad_componentobjectuid = 'CORE-AD_ExpFormat_Row-1010142';
+DELETE FROM AD_ExpFormat_Row WHERE ad_componentobjectuid = 'CORE-AD_ExpFormat_Row-1010141';
+DELETE FROM AD_ExpFormat WHERE ad_componentobjectuid = 'CORE-AD_ExpFormat-1010015';
+DELETE FROM AD_ExpFormat_Row WHERE ad_componentobjectuid = 'CORE-AD_ExpFormat_Row-1010140';
+DELETE FROM AD_ExpFormat_Row WHERE ad_componentobjectuid = 'CORE-AD_ExpFormat_Row-1010139';
+DELETE FROM AD_ExpFormat_Row WHERE ad_componentobjectuid = 'CORE-AD_ExpFormat_Row-1010138';
+DELETE FROM AD_ExpFormat_Row WHERE ad_componentobjectuid = 'CORE-AD_ExpFormat_Row-1010137';
+DELETE FROM AD_ExpFormat_Row WHERE ad_componentobjectuid = 'CORE-AD_ExpFormat_Row-1010136';
+DELETE FROM AD_ExpFormat_Row WHERE ad_componentobjectuid = 'CORE-AD_ExpFormat_Row-1010135';
+DELETE FROM AD_ExpFormat_Row WHERE ad_componentobjectuid = 'CORE-AD_ExpFormat_Row-1010134';
+DELETE FROM AD_ExpFormat_Row WHERE ad_componentobjectuid = 'CORE-AD_ExpFormat_Row-1010133';
+DELETE FROM AD_ExpFormat_Row WHERE ad_componentobjectuid = 'CORE-AD_ExpFormat_Row-1010132';
+DELETE FROM AD_ExpFormat_Row WHERE ad_componentobjectuid = 'CORE-AD_ExpFormat_Row-1010131';
+DELETE FROM AD_ExpFormat_Row WHERE ad_componentobjectuid = 'CORE-AD_ExpFormat_Row-1010130';
+DELETE FROM AD_ExpFormat_Row WHERE ad_componentobjectuid = 'CORE-AD_ExpFormat_Row-1010129';
+DELETE FROM AD_ExpFormat WHERE ad_componentobjectuid = 'CORE-AD_ExpFormat-1010014';
+DELETE FROM AD_ExpFormat_Filter WHERE ad_componentobjectuid = 'CORE-AD_ExpFormat_Filter-1000002';
+DELETE FROM AD_ExpFormat_Row WHERE ad_componentobjectuid = 'CORE-AD_ExpFormat_Row-1010128';
+DELETE FROM AD_ExpFormat_Row WHERE ad_componentobjectuid = 'CORE-AD_ExpFormat_Row-1010127';
+DELETE FROM AD_ExpFormat_Row WHERE ad_componentobjectuid = 'CORE-AD_ExpFormat_Row-1010126';
+DELETE FROM AD_ExpFormat_Row WHERE ad_componentobjectuid = 'CORE-AD_ExpFormat_Row-1010125';
+DELETE FROM AD_ExpFormat_Row WHERE ad_componentobjectuid = 'CORE-AD_ExpFormat_Row-1010124';
+DELETE FROM AD_ExpFormat_Row WHERE ad_componentobjectuid = 'CORE-AD_ExpFormat_Row-1010123';
+DELETE FROM AD_ExpFormat WHERE ad_componentobjectuid = 'CORE-AD_ExpFormat-1010013';
+DELETE FROM AD_ExpFormat_Filter WHERE ad_componentobjectuid = 'CORE-AD_ExpFormat_Filter-1000001';
+DELETE FROM AD_ExpFormat_Row WHERE ad_componentobjectuid = 'CORE-AD_ExpFormat_Row-1010122';
+DELETE FROM AD_ExpFormat_Row WHERE ad_componentobjectuid = 'CORE-AD_ExpFormat_Row-1010121';
+DELETE FROM AD_ExpFormat_Row WHERE ad_componentobjectuid = 'CORE-AD_ExpFormat_Row-1010120';
+DELETE FROM AD_ExpFormat_Row WHERE ad_componentobjectuid = 'CORE-AD_ExpFormat_Row-1010119';
+DELETE FROM AD_ExpFormat_Row WHERE ad_componentobjectuid = 'CORE-AD_ExpFormat_Row-1010118';
+DELETE FROM AD_ExpFormat_Row WHERE ad_componentobjectuid = 'CORE-AD_ExpFormat_Row-1010117';
+DELETE FROM AD_ExpFormat_Row WHERE ad_componentobjectuid = 'CORE-AD_ExpFormat_Row-1010116';
+DELETE FROM AD_ExpFormat_Row WHERE ad_componentobjectuid = 'CORE-AD_ExpFormat_Row-1010115';
+DELETE FROM AD_ExpFormat WHERE ad_componentobjectuid = 'CORE-AD_ExpFormat-1010012';
+DELETE FROM AD_ExpFormat_Row WHERE ad_componentobjectuid = 'CORE-AD_ExpFormat_Row-1010114';
+DELETE FROM AD_ExpFormat_Row WHERE ad_componentobjectuid = 'CORE-AD_ExpFormat_Row-1010113';
+DELETE FROM AD_ExpFormat_Row WHERE ad_componentobjectuid = 'CORE-AD_ExpFormat_Row-1010112';
+DELETE FROM AD_ExpFormat_Row WHERE ad_componentobjectuid = 'CORE-AD_ExpFormat_Row-1010111';
+DELETE FROM AD_ExpFormat_Row WHERE ad_componentobjectuid = 'CORE-AD_ExpFormat_Row-1010110';
+DELETE FROM AD_ExpFormat_Row WHERE ad_componentobjectuid = 'CORE-AD_ExpFormat_Row-1010109';
+DELETE FROM AD_ExpFormat_Row WHERE ad_componentobjectuid = 'CORE-AD_ExpFormat_Row-1010108';
+DELETE FROM AD_ExpFormat_Row WHERE ad_componentobjectuid = 'CORE-AD_ExpFormat_Row-1010107';
+DELETE FROM AD_ExpFormat_Row WHERE ad_componentobjectuid = 'CORE-AD_ExpFormat_Row-1010106';
+DELETE FROM AD_ExpFormat_Row WHERE ad_componentobjectuid = 'CORE-AD_ExpFormat_Row-1010105';
+DELETE FROM AD_ExpFormat_Row WHERE ad_componentobjectuid = 'CORE-AD_ExpFormat_Row-1010104';
+DELETE FROM AD_ExpFormat_Row WHERE ad_componentobjectuid = 'CORE-AD_ExpFormat_Row-1010103';
+DELETE FROM AD_ExpFormat_Row WHERE ad_componentobjectuid = 'CORE-AD_ExpFormat_Row-1010102';
+DELETE FROM AD_ExpFormat_Row WHERE ad_componentobjectuid = 'CORE-AD_ExpFormat_Row-1010101';
+DELETE FROM AD_ExpFormat_Row WHERE ad_componentobjectuid = 'CORE-AD_ExpFormat_Row-1010100';
+DELETE FROM AD_ExpFormat WHERE ad_componentobjectuid = 'CORE-AD_ExpFormat-1010011';
+DELETE FROM AD_TableSchemaLine WHERE ad_componentobjectuid = 'CORE-AD_TableSchemaLine-1011142';
+DELETE FROM AD_Field_Trl WHERE ad_componentobjectuid = 'CORE-AD_Field_Trl-1017990-es_PY';
+DELETE FROM AD_Field_Trl WHERE ad_componentobjectuid = 'CORE-AD_Field_Trl-1017990-es_MX';
+DELETE FROM AD_Field_Trl WHERE ad_componentobjectuid = 'CORE-AD_Field_Trl-1017990-es_AR';
+DELETE FROM AD_Field_Trl WHERE ad_componentobjectuid = 'CORE-AD_Field_Trl-1017990-es_ES';
+DELETE FROM AD_Field WHERE ad_componentobjectuid = 'CORE-AD_Field-1017990';
+DELETE FROM AD_Field_Trl WHERE ad_componentobjectuid = 'CORE-AD_Field_Trl-1017989-es_PY';
+DELETE FROM AD_Field_Trl WHERE ad_componentobjectuid = 'CORE-AD_Field_Trl-1017989-es_MX';
+DELETE FROM AD_Field_Trl WHERE ad_componentobjectuid = 'CORE-AD_Field_Trl-1017989-es_AR';
+DELETE FROM AD_Field_Trl WHERE ad_componentobjectuid = 'CORE-AD_Field_Trl-1017989-es_ES';
+DELETE FROM AD_Field WHERE ad_componentobjectuid = 'CORE-AD_Field-1017989';
+DELETE FROM AD_Field_Trl WHERE ad_componentobjectuid = 'CORE-AD_Field_Trl-1017988-es_PY';
+DELETE FROM AD_Field_Trl WHERE ad_componentobjectuid = 'CORE-AD_Field_Trl-1017988-es_MX';
+DELETE FROM AD_Field_Trl WHERE ad_componentobjectuid = 'CORE-AD_Field_Trl-1017988-es_AR';
+DELETE FROM AD_Field_Trl WHERE ad_componentobjectuid = 'CORE-AD_Field_Trl-1017988-es_ES';
+DELETE FROM AD_Field WHERE ad_componentobjectuid = 'CORE-AD_Field-1017988';
+DELETE FROM AD_Field_Trl WHERE ad_componentobjectuid = 'CORE-AD_Field_Trl-1017987-es_PY';
+DELETE FROM AD_Field_Trl WHERE ad_componentobjectuid = 'CORE-AD_Field_Trl-1017987-es_MX';
+DELETE FROM AD_Field_Trl WHERE ad_componentobjectuid = 'CORE-AD_Field_Trl-1017987-es_AR';
+DELETE FROM AD_Field_Trl WHERE ad_componentobjectuid = 'CORE-AD_Field_Trl-1017987-es_ES';
+DELETE FROM AD_Field WHERE ad_componentobjectuid = 'CORE-AD_Field-1017987';
+DELETE FROM AD_Field_Trl WHERE ad_componentobjectuid = 'CORE-AD_Field_Trl-1017986-es_PY';
+DELETE FROM AD_Field_Trl WHERE ad_componentobjectuid = 'CORE-AD_Field_Trl-1017986-es_MX';
+DELETE FROM AD_Field_Trl WHERE ad_componentobjectuid = 'CORE-AD_Field_Trl-1017986-es_AR';
+DELETE FROM AD_Field_Trl WHERE ad_componentobjectuid = 'CORE-AD_Field_Trl-1017986-es_ES';
+DELETE FROM AD_Field WHERE ad_componentobjectuid = 'CORE-AD_Field-1017986';
+DELETE FROM AD_Field_Trl WHERE ad_componentobjectuid = 'CORE-AD_Field_Trl-1017985-es_PY';
+DELETE FROM AD_Field_Trl WHERE ad_componentobjectuid = 'CORE-AD_Field_Trl-1017985-es_MX';
+DELETE FROM AD_Field_Trl WHERE ad_componentobjectuid = 'CORE-AD_Field_Trl-1017985-es_AR';
+DELETE FROM AD_Field_Trl WHERE ad_componentobjectuid = 'CORE-AD_Field_Trl-1017985-es_ES';
+DELETE FROM AD_Field WHERE ad_componentobjectuid = 'CORE-AD_Field-1017985';
+DELETE FROM AD_Field_Trl WHERE ad_componentobjectuid = 'CORE-AD_Field_Trl-1017984-es_PY';
+DELETE FROM AD_Field_Trl WHERE ad_componentobjectuid = 'CORE-AD_Field_Trl-1017984-es_MX';
+DELETE FROM AD_Field_Trl WHERE ad_componentobjectuid = 'CORE-AD_Field_Trl-1017984-es_AR';
+DELETE FROM AD_Field_Trl WHERE ad_componentobjectuid = 'CORE-AD_Field_Trl-1017984-es_ES';
+DELETE FROM AD_Field WHERE ad_componentobjectuid = 'CORE-AD_Field-1017984';
+DELETE FROM AD_Field_Trl WHERE ad_componentobjectuid = 'CORE-AD_Field_Trl-1017983-es_PY';
+DELETE FROM AD_Field_Trl WHERE ad_componentobjectuid = 'CORE-AD_Field_Trl-1017983-es_MX';
+DELETE FROM AD_Field_Trl WHERE ad_componentobjectuid = 'CORE-AD_Field_Trl-1017983-es_AR';
+DELETE FROM AD_Field_Trl WHERE ad_componentobjectuid = 'CORE-AD_Field_Trl-1017983-es_ES';
+DELETE FROM AD_Field WHERE ad_componentobjectuid = 'CORE-AD_Field-1017983';
+DELETE FROM AD_Tab_Trl WHERE ad_componentobjectuid = 'CORE-AD_Tab_Trl-es_PY-1010356';
+DELETE FROM AD_Tab_Trl WHERE ad_componentobjectuid = 'CORE-AD_Tab_Trl-es_MX-1010356';
+DELETE FROM AD_Tab_Trl WHERE ad_componentobjectuid = 'CORE-AD_Tab_Trl-es_AR-1010356';
+DELETE FROM AD_Tab_Trl WHERE ad_componentobjectuid = 'CORE-AD_Tab_Trl-es_ES-1010356';
+DELETE FROM AD_Tab WHERE ad_componentobjectuid = 'CORE-AD_Tab-1010356';
+DELETE FROM AD_Column_Trl WHERE ad_componentobjectuid = 'CORE-AD_Column_Trl-1016889-es_PY';
+DELETE FROM AD_Column_Trl WHERE ad_componentobjectuid = 'CORE-AD_Column_Trl-1016889-es_MX';
+DELETE FROM AD_Column_Trl WHERE ad_componentobjectuid = 'CORE-AD_Column_Trl-1016889-es_AR';
+DELETE FROM AD_Column_Trl WHERE ad_componentobjectuid = 'CORE-AD_Column_Trl-1016889-es_ES';
+DELETE FROM AD_Column WHERE ad_componentobjectuid = 'CORE-AD_Column-1016889';
+DELETE FROM AD_Column_Trl WHERE ad_componentobjectuid = 'CORE-AD_Column_Trl-1016888-es_PY';
+DELETE FROM AD_Column_Trl WHERE ad_componentobjectuid = 'CORE-AD_Column_Trl-1016888-es_MX';
+DELETE FROM AD_Column_Trl WHERE ad_componentobjectuid = 'CORE-AD_Column_Trl-1016888-es_AR';
+DELETE FROM AD_Column_Trl WHERE ad_componentobjectuid = 'CORE-AD_Column_Trl-1016888-es_ES';
+DELETE FROM AD_Column WHERE ad_componentobjectuid = 'CORE-AD_Column-1016888';
+DELETE FROM AD_Column_Trl WHERE ad_componentobjectuid = 'CORE-AD_Column_Trl-1016887-es_PY';
+DELETE FROM AD_Column_Trl WHERE ad_componentobjectuid = 'CORE-AD_Column_Trl-1016887-es_MX';
+DELETE FROM AD_Column_Trl WHERE ad_componentobjectuid = 'CORE-AD_Column_Trl-1016887-es_AR';
+DELETE FROM AD_Column_Trl WHERE ad_componentobjectuid = 'CORE-AD_Column_Trl-1016887-es_ES';
+DELETE FROM AD_Column WHERE ad_componentobjectuid = 'CORE-AD_Column-1016887';
+DELETE FROM AD_Element_Trl WHERE ad_componentobjectuid = 'CORE-AD_Element_Trl-1011609-es_PY';
+DELETE FROM AD_Element_Trl WHERE ad_componentobjectuid = 'CORE-AD_Element_Trl-1011609-es_MX';
+DELETE FROM AD_Element_Trl WHERE ad_componentobjectuid = 'CORE-AD_Element_Trl-1011609-es_AR';
+DELETE FROM AD_Element_Trl WHERE ad_componentobjectuid = 'CORE-AD_Element_Trl-1011609-es_ES';
+DELETE FROM AD_Element WHERE ad_componentobjectuid = 'CORE-AD_Element-1011609';
+DELETE FROM AD_Column_Trl WHERE ad_componentobjectuid = 'CORE-AD_Column_Trl-1016886-es_PY';
+DELETE FROM AD_Column_Trl WHERE ad_componentobjectuid = 'CORE-AD_Column_Trl-1016886-es_MX';
+DELETE FROM AD_Column_Trl WHERE ad_componentobjectuid = 'CORE-AD_Column_Trl-1016886-es_AR';
+DELETE FROM AD_Column_Trl WHERE ad_componentobjectuid = 'CORE-AD_Column_Trl-1016886-es_ES';
+DELETE FROM AD_Column WHERE ad_componentobjectuid = 'CORE-AD_Column-1016886';
+DELETE FROM AD_Column_Trl WHERE ad_componentobjectuid = 'CORE-AD_Column_Trl-1016885-es_PY';
+DELETE FROM AD_Column_Trl WHERE ad_componentobjectuid = 'CORE-AD_Column_Trl-1016885-es_MX';
+DELETE FROM AD_Column_Trl WHERE ad_componentobjectuid = 'CORE-AD_Column_Trl-1016885-es_AR';
+DELETE FROM AD_Column_Trl WHERE ad_componentobjectuid = 'CORE-AD_Column_Trl-1016885-es_ES';
+DELETE FROM AD_Column WHERE ad_componentobjectuid = 'CORE-AD_Column-1016885';
+DELETE FROM AD_Column_Trl WHERE ad_componentobjectuid = 'CORE-AD_Column_Trl-1016884-es_PY';
+DELETE FROM AD_Column_Trl WHERE ad_componentobjectuid = 'CORE-AD_Column_Trl-1016884-es_MX';
+DELETE FROM AD_Column_Trl WHERE ad_componentobjectuid = 'CORE-AD_Column_Trl-1016884-es_AR';
+DELETE FROM AD_Column_Trl WHERE ad_componentobjectuid = 'CORE-AD_Column_Trl-1016884-es_ES';
+DELETE FROM AD_Column WHERE ad_componentobjectuid = 'CORE-AD_Column-1016884';
+DELETE FROM AD_Column_Trl WHERE ad_componentobjectuid = 'CORE-AD_Column_Trl-1016883-es_PY';
+DELETE FROM AD_Column_Trl WHERE ad_componentobjectuid = 'CORE-AD_Column_Trl-1016883-es_MX';
+DELETE FROM AD_Column_Trl WHERE ad_componentobjectuid = 'CORE-AD_Column_Trl-1016883-es_AR';
+DELETE FROM AD_Column_Trl WHERE ad_componentobjectuid = 'CORE-AD_Column_Trl-1016883-es_ES';
+DELETE FROM AD_Column WHERE ad_componentobjectuid = 'CORE-AD_Column-1016883';
+DELETE FROM AD_Column_Trl WHERE ad_componentobjectuid = 'CORE-AD_Column_Trl-1016882-es_PY';
+DELETE FROM AD_Column_Trl WHERE ad_componentobjectuid = 'CORE-AD_Column_Trl-1016882-es_MX';
+DELETE FROM AD_Column_Trl WHERE ad_componentobjectuid = 'CORE-AD_Column_Trl-1016882-es_AR';
+DELETE FROM AD_Column_Trl WHERE ad_componentobjectuid = 'CORE-AD_Column_Trl-1016882-es_ES';
+DELETE FROM AD_Column WHERE ad_componentobjectuid = 'CORE-AD_Column-1016882';
+DELETE FROM AD_Column_Trl WHERE ad_componentobjectuid = 'CORE-AD_Column_Trl-1016881-es_PY';
+DELETE FROM AD_Column_Trl WHERE ad_componentobjectuid = 'CORE-AD_Column_Trl-1016881-es_MX';
+DELETE FROM AD_Column_Trl WHERE ad_componentobjectuid = 'CORE-AD_Column_Trl-1016881-es_AR';
+DELETE FROM AD_Column_Trl WHERE ad_componentobjectuid = 'CORE-AD_Column_Trl-1016881-es_ES';
+DELETE FROM AD_Column WHERE ad_componentobjectuid = 'CORE-AD_Column-1016881';
+DELETE FROM AD_Column_Trl WHERE ad_componentobjectuid = 'CORE-AD_Column_Trl-1016880-es_PY';
+DELETE FROM AD_Column_Trl WHERE ad_componentobjectuid = 'CORE-AD_Column_Trl-1016880-es_MX';
+DELETE FROM AD_Column_Trl WHERE ad_componentobjectuid = 'CORE-AD_Column_Trl-1016880-es_AR';
+DELETE FROM AD_Column_Trl WHERE ad_componentobjectuid = 'CORE-AD_Column_Trl-1016880-es_ES';
+DELETE FROM AD_Column WHERE ad_componentobjectuid = 'CORE-AD_Column-1016880';
+DELETE FROM AD_Column_Trl WHERE ad_componentobjectuid = 'CORE-AD_Column_Trl-1016879-es_PY';
+DELETE FROM AD_Column_Trl WHERE ad_componentobjectuid = 'CORE-AD_Column_Trl-1016879-es_MX';
+DELETE FROM AD_Column_Trl WHERE ad_componentobjectuid = 'CORE-AD_Column_Trl-1016879-es_AR';
+DELETE FROM AD_Column_Trl WHERE ad_componentobjectuid = 'CORE-AD_Column_Trl-1016879-es_ES';
+DELETE FROM AD_Column WHERE ad_componentobjectuid = 'CORE-AD_Column-1016879';
+DELETE FROM AD_Column_Trl WHERE ad_componentobjectuid = 'CORE-AD_Column_Trl-1016878-es_PY';
+DELETE FROM AD_Column_Trl WHERE ad_componentobjectuid = 'CORE-AD_Column_Trl-1016878-es_MX';
+DELETE FROM AD_Column_Trl WHERE ad_componentobjectuid = 'CORE-AD_Column_Trl-1016878-es_AR';
+DELETE FROM AD_Column_Trl WHERE ad_componentobjectuid = 'CORE-AD_Column_Trl-1016878-es_ES';
+DELETE FROM AD_Column WHERE ad_componentobjectuid = 'CORE-AD_Column-1016878';
+DELETE FROM AD_Element_Trl WHERE ad_componentobjectuid = 'CORE-AD_Element_Trl-1011608-es_PY';
+DELETE FROM AD_Element_Trl WHERE ad_componentobjectuid = 'CORE-AD_Element_Trl-1011608-es_MX';
+DELETE FROM AD_Element_Trl WHERE ad_componentobjectuid = 'CORE-AD_Element_Trl-1011608-es_AR';
+DELETE FROM AD_Element_Trl WHERE ad_componentobjectuid = 'CORE-AD_Element_Trl-1011608-es_ES';
+DELETE FROM AD_Element WHERE ad_componentobjectuid = 'CORE-AD_Element-1011608';
+DELETE FROM AD_Table_Trl WHERE ad_componentobjectuid = 'CORE-AD_Table_Trl-es_PY-1010361';
+DELETE FROM AD_Table_Trl WHERE ad_componentobjectuid = 'CORE-AD_Table_Trl-es_MX-1010361';
+DELETE FROM AD_Table_Trl WHERE ad_componentobjectuid = 'CORE-AD_Table_Trl-es_AR-1010361';
+DELETE FROM AD_Table_Trl WHERE ad_componentobjectuid = 'CORE-AD_Table_Trl-es_ES-1010361';
+DELETE FROM AD_Table WHERE ad_componentobjectuid = 'CORE-AD_Table-1010361';
+DELETE FROM AD_Column_Trl WHERE ad_componentobjectuid = 'CORE-AD_Column_Trl-1016877-es_PY';
+DELETE FROM AD_Column_Trl WHERE ad_componentobjectuid = 'CORE-AD_Column_Trl-1016877-es_MX';
+DELETE FROM AD_Column_Trl WHERE ad_componentobjectuid = 'CORE-AD_Column_Trl-1016877-es_AR';
+DELETE FROM AD_Column_Trl WHERE ad_componentobjectuid = 'CORE-AD_Column_Trl-1016877-es_ES';
+DELETE FROM AD_Column WHERE ad_componentobjectuid = 'CORE-AD_Column-1016877';
+DELETE FROM AD_Element_Trl WHERE ad_componentobjectuid = 'CORE-AD_Element_Trl-1011607-es_PY';
+DELETE FROM AD_Element_Trl WHERE ad_componentobjectuid = 'CORE-AD_Element_Trl-1011607-es_MX';
+DELETE FROM AD_Element_Trl WHERE ad_componentobjectuid = 'CORE-AD_Element_Trl-1011607-es_AR';
+DELETE FROM AD_Element_Trl WHERE ad_componentobjectuid = 'CORE-AD_Element_Trl-1011607-es_ES';
+DELETE FROM AD_Element WHERE ad_componentobjectuid = 'CORE-AD_Element-1011607';
+DELETE FROM AD_Column_Trl WHERE ad_componentobjectuid = 'CORE-AD_Column_Trl-1016876-es_PY';
+DELETE FROM AD_Column_Trl WHERE ad_componentobjectuid = 'CORE-AD_Column_Trl-1016876-es_MX';
+DELETE FROM AD_Column_Trl WHERE ad_componentobjectuid = 'CORE-AD_Column_Trl-1016876-es_AR';
+DELETE FROM AD_Column_Trl WHERE ad_componentobjectuid = 'CORE-AD_Column_Trl-1016876-es_ES';
+DELETE FROM AD_Column WHERE ad_componentobjectuid = 'CORE-AD_Column-1016876';
+DELETE FROM AD_Element_Trl WHERE ad_componentobjectuid = 'CORE-AD_Element_Trl-1011606-es_PY';
+DELETE FROM AD_Element_Trl WHERE ad_componentobjectuid = 'CORE-AD_Element_Trl-1011606-es_MX';
+DELETE FROM AD_Element_Trl WHERE ad_componentobjectuid = 'CORE-AD_Element_Trl-1011606-es_AR';
+DELETE FROM AD_Element_Trl WHERE ad_componentobjectuid = 'CORE-AD_Element_Trl-1011606-es_ES';
+DELETE FROM AD_Element WHERE ad_componentobjectuid = 'CORE-AD_Element-1011606';
+DELETE FROM AD_Column_Trl WHERE ad_componentobjectuid = 'CORE-AD_Column_Trl-1016875-es_PY';
+DELETE FROM AD_Column_Trl WHERE ad_componentobjectuid = 'CORE-AD_Column_Trl-1016875-es_MX';
+DELETE FROM AD_Column_Trl WHERE ad_componentobjectuid = 'CORE-AD_Column_Trl-1016875-es_AR';
+DELETE FROM AD_Column_Trl WHERE ad_componentobjectuid = 'CORE-AD_Column_Trl-1016875-es_ES';
+DELETE FROM AD_Column WHERE ad_componentobjectuid = 'CORE-AD_Column-1016875';
+DELETE FROM AD_Column_Trl WHERE ad_componentobjectuid = 'CORE-AD_Column_Trl-1016874-es_PY';
+DELETE FROM AD_Column_Trl WHERE ad_componentobjectuid = 'CORE-AD_Column_Trl-1016874-es_MX';
+DELETE FROM AD_Column_Trl WHERE ad_componentobjectuid = 'CORE-AD_Column_Trl-1016874-es_AR';
+DELETE FROM AD_Column_Trl WHERE ad_componentobjectuid = 'CORE-AD_Column_Trl-1016874-es_ES';
+DELETE FROM AD_Column WHERE ad_componentobjectuid = 'CORE-AD_Column-1016874';
+DELETE FROM AD_Column_Trl WHERE ad_componentobjectuid = 'CORE-AD_Column_Trl-1016873-es_PY';
+DELETE FROM AD_Column_Trl WHERE ad_componentobjectuid = 'CORE-AD_Column_Trl-1016873-es_MX';
+DELETE FROM AD_Column_Trl WHERE ad_componentobjectuid = 'CORE-AD_Column_Trl-1016873-es_AR';
+DELETE FROM AD_Column_Trl WHERE ad_componentobjectuid = 'CORE-AD_Column_Trl-1016873-es_ES';
+DELETE FROM AD_Column WHERE ad_componentobjectuid = 'CORE-AD_Column-1016873';
+DELETE FROM AD_Element_Trl WHERE ad_componentobjectuid = 'CORE-AD_Element_Trl-1011605-es_PY';
+DELETE FROM AD_Element_Trl WHERE ad_componentobjectuid = 'CORE-AD_Element_Trl-1011605-es_MX';
+DELETE FROM AD_Element_Trl WHERE ad_componentobjectuid = 'CORE-AD_Element_Trl-1011605-es_AR';
+DELETE FROM AD_Element_Trl WHERE ad_componentobjectuid = 'CORE-AD_Element_Trl-1011605-es_ES';
+DELETE FROM AD_Element WHERE ad_componentobjectuid = 'CORE-AD_Element-1011605';
+DELETE FROM AD_Column_Trl WHERE ad_componentobjectuid = 'CORE-AD_Column_Trl-1016872-es_PY';
+DELETE FROM AD_Column_Trl WHERE ad_componentobjectuid = 'CORE-AD_Column_Trl-1016872-es_MX';
+DELETE FROM AD_Column_Trl WHERE ad_componentobjectuid = 'CORE-AD_Column_Trl-1016872-es_AR';
+DELETE FROM AD_Column_Trl WHERE ad_componentobjectuid = 'CORE-AD_Column_Trl-1016872-es_ES';
+DELETE FROM AD_Column WHERE ad_componentobjectuid = 'CORE-AD_Column-1016872';
+DELETE FROM AD_Column_Trl WHERE ad_componentobjectuid = 'CORE-AD_Column_Trl-1016871-es_PY';
+DELETE FROM AD_Column_Trl WHERE ad_componentobjectuid = 'CORE-AD_Column_Trl-1016871-es_MX';
+DELETE FROM AD_Column_Trl WHERE ad_componentobjectuid = 'CORE-AD_Column_Trl-1016871-es_AR';
+DELETE FROM AD_Column_Trl WHERE ad_componentobjectuid = 'CORE-AD_Column_Trl-1016871-es_ES';
+DELETE FROM AD_Column WHERE ad_componentobjectuid = 'CORE-AD_Column-1016871';
+DELETE FROM AD_Column_Trl WHERE ad_componentobjectuid = 'CORE-AD_Column_Trl-1016870-es_PY';
+DELETE FROM AD_Column_Trl WHERE ad_componentobjectuid = 'CORE-AD_Column_Trl-1016870-es_MX';
+DELETE FROM AD_Column_Trl WHERE ad_componentobjectuid = 'CORE-AD_Column_Trl-1016870-es_AR';
+DELETE FROM AD_Column_Trl WHERE ad_componentobjectuid = 'CORE-AD_Column_Trl-1016870-es_ES';
+DELETE FROM AD_Column WHERE ad_componentobjectuid = 'CORE-AD_Column-1016870';
+DELETE FROM AD_Column_Trl WHERE ad_componentobjectuid = 'CORE-AD_Column_Trl-1016869-es_PY';
+DELETE FROM AD_Column_Trl WHERE ad_componentobjectuid = 'CORE-AD_Column_Trl-1016869-es_MX';
+DELETE FROM AD_Column_Trl WHERE ad_componentobjectuid = 'CORE-AD_Column_Trl-1016869-es_AR';
+DELETE FROM AD_Column_Trl WHERE ad_componentobjectuid = 'CORE-AD_Column_Trl-1016869-es_ES';
+DELETE FROM AD_Column WHERE ad_componentobjectuid = 'CORE-AD_Column-1016869';
+DELETE FROM AD_Element_Trl WHERE ad_componentobjectuid = 'CORE-AD_Element_Trl-1011604-es_PY';
+DELETE FROM AD_Element_Trl WHERE ad_componentobjectuid = 'CORE-AD_Element_Trl-1011604-es_MX';
+DELETE FROM AD_Element_Trl WHERE ad_componentobjectuid = 'CORE-AD_Element_Trl-1011604-es_AR';
+DELETE FROM AD_Element_Trl WHERE ad_componentobjectuid = 'CORE-AD_Element_Trl-1011604-es_ES';
+DELETE FROM AD_Element WHERE ad_componentobjectuid = 'CORE-AD_Element-1011604';
