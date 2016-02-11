@@ -5,6 +5,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Properties;
 
+import org.openXpertya.util.DB;
+
 public class MExpFormat extends X_AD_ExpFormat {
 
 	public MExpFormat(Properties ctx, int AD_ExpFormat_ID, String trxName) {
@@ -16,7 +18,7 @@ public class MExpFormat extends X_AD_ExpFormat {
 		super(ctx, rs, trxName);
 		// TODO Auto-generated constructor stub
 	}
-
+	
 	/**
 	 * @return Las columnas activas del formato de exportación ordenados por nro
 	 *         de secuencia
@@ -46,5 +48,13 @@ public class MExpFormat extends X_AD_ExpFormat {
 			rows.add((MExpFormatRow)po);
 		}
 		return rows;
+	}
+	
+	/**
+	 * @return filtro sql del formato de exportación
+	 */
+	public String getFilterSQL(){
+		return DB.getSQLValueString(get_TrxName(),
+				"SELECT filter FROM ad_expformat_filter WHERE ad_expformat_id = ? AND isactive = 'Y'", getID());
 	}
 }

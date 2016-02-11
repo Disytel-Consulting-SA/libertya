@@ -34,8 +34,9 @@ public class ExportProcessGeneralFormat extends ExportProcess {
 		int processID = DB.getSQLValue(null,
 				"SELECT AD_Process_ID FROM AD_Process WHERE ad_expformat_id='"
 						+ expFor + "' LIMIT 1 ");
-
-		this.localProcessInfo = new ProcessInfo(trxName, processID);
+		if(processID > 0){
+			this.localProcessInfo = new ProcessInfo(trxName, processID);
+		}
 		setParametersNames(parametersNames);
 		setParametersClass(parametersClass);
 	}
@@ -67,6 +68,7 @@ public class ExportProcessGeneralFormat extends ExportProcess {
 		}
 	}
 
+	@Override
 	protected String getWhereClause() {
 		StringBuffer whereClause = new StringBuffer();
 		setWhereClauseParams(new ArrayList<Object>());
@@ -98,6 +100,12 @@ public class ExportProcessGeneralFormat extends ExportProcess {
 		}
 		whereClause.append(" ad_client_id = ").append(
 				Env.getAD_Client_ID(getCtx()));
+		// Levantar el filtro sql definido
+		String sqlFilter = getExportFormat().getFilterSQL();
+		if(!Util.isEmpty(sqlFilter, true)){
+			whereClause.append(" AND ");
+			whereClause.append(sqlFilter);
+		}
 		return whereClause.toString();
 	}
 
