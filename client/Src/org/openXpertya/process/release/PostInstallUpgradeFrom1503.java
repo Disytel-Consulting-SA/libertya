@@ -95,6 +95,10 @@ public class PostInstallUpgradeFrom1503 extends PluginPostInstallProcess {
 	protected final static String TRAZABILIDAD_DE_DOCUMENTOS_REPORT_UID = "CORE-AD_Process-1010430";
 	protected final static String TRAZABILIDAD_DE_DOCUMENTOS_REPORT_FILENAME = "TrazabilidadDeDocumentos.jrxml";
 	
+	/** UID del Reporte de Deudas de Cuentas Corrientes */
+	protected final static String CURRENT_ACCOUNT_DEBTS_REPORT_UID = "CORE-AD_Process-1010394";
+	protected final static String CURRENT_ACCOUNT_DEBTS_REPORT_FILENAME = "CurrentAccountDebts.jrxml";
+	
 	@Override
 	protected String doIt() throws Exception {
 		super.doIt();
@@ -345,6 +349,17 @@ public class PostInstallUpgradeFrom1503 extends PluginPostInstallProcess {
 						.readBinaryFromJar(
 								jarFileURL,
 								getBinaryFileURL(TRAZABILIDAD_DE_DOCUMENTOS_REPORT_FILENAME)));
+		
+		// Reporte de Deudas de Cuenta Corriente
+		MProcess.addAttachment(
+				get_TrxName(),
+				getCtx(),
+				CURRENT_ACCOUNT_DEBTS_REPORT_UID,
+				CURRENT_ACCOUNT_DEBTS_REPORT_FILENAME,
+				JarHelper
+						.readBinaryFromJar(
+								jarFileURL,
+								getBinaryFileURL(CURRENT_ACCOUNT_DEBTS_REPORT_FILENAME)));
 		
 		return " ";
 	}
