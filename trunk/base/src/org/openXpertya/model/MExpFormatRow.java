@@ -3,6 +3,9 @@ package org.openXpertya.model;
 import java.sql.ResultSet;
 import java.util.Properties;
 
+import org.openXpertya.util.Msg;
+import org.openXpertya.util.Util;
+
 public class MExpFormatRow extends X_AD_ExpFormat_Row {
 
 	public MExpFormatRow(Properties ctx, int AD_ExpFormat_Row_ID, String trxName) {
@@ -18,11 +21,27 @@ public class MExpFormatRow extends X_AD_ExpFormat_Row {
 	
 	@Override
     protected boolean beforeSave(boolean newRecord) {
+		// Mismo nombre que otro campo del mismo formato
+		String newRecordWhereClause = newRecord?"":" AND AD_ExpFormat_Row_ID <> "+getID();
+		PO founded = findFirst(getCtx(), get_TableName(), "AD_ExpFormat_ID = ? AND Name = '" + getName() + "'"+newRecordWhereClause,
+				new Object[] { getAD_ExpFormat_ID() }, null, get_TrxName());
+		if(founded != null){
+			MExpFormatRow actualFounded = (MExpFormatRow)founded;
+			log.saveError("SaveError", Msg.getMsg(getCtx(), "SameExpFormatRowWithName",
+					new Object[] { actualFounded.getName(), actualFounded.getSeqNo() }));
+			return false;
+		}
+		// Si es secuencial, entonces no debe tener columna asignada
+		if(isSeqNumber()){
+			setAD_Column_ID(0);
+			setIsOrderField(false);
+		}
 		// La longitud es obligatoria para formato de posición fija
 		MExpFormat exportFormat = new MExpFormat(getCtx(),
 				getAD_ExpFormat_ID(), get_TrxName());
-		if (MExpFormat.FORMATTYPE_FixedPosition.equals(exportFormat
-				.getFormatType()) && getLength() <= 0) {
+		if (Util.isEmpty(exportFormat.getDelimiter()) 
+				&& MExpFormat.FORMATTYPE_FixedPosition.equals(exportFormat.getFormatType()) 
+				&& getLength() <= 0) {
 			log.saveError("LengthIsMandatory", "");
 			return false;
 		}

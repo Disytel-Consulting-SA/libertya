@@ -4385,3 +4385,110 @@ DELETE FROM AD_Element_Trl WHERE ad_componentobjectuid = 'CORE-AD_Element_Trl-10
 DELETE FROM AD_Element_Trl WHERE ad_componentobjectuid = 'CORE-AD_Element_Trl-1011604-es_AR';
 DELETE FROM AD_Element_Trl WHERE ad_componentobjectuid = 'CORE-AD_Element_Trl-1011604-es_ES';
 DELETE FROM AD_Element WHERE ad_componentobjectuid = 'CORE-AD_Element-1011604';
+
+--20160307-1400 Asignación del número de jurisdicción por región
+UPDATE C_Region SET jurisdictioncode = '901' WHERE ad_componentobjectuid = 'CORE-C_Region-1000082';
+UPDATE C_Region SET jurisdictioncode = '902' WHERE ad_componentobjectuid = 'CORE-C_Region-1000083';
+UPDATE C_Region SET jurisdictioncode = '903' WHERE ad_componentobjectuid = 'CORE-C_Region-1000084';
+UPDATE C_Region SET jurisdictioncode = '904' WHERE ad_componentobjectuid = 'CORE-C_Region-1000087';
+UPDATE C_Region SET jurisdictioncode = '905' WHERE ad_componentobjectuid = 'CORE-C_Region-1000088';
+UPDATE C_Region SET jurisdictioncode = '906' WHERE ad_componentobjectuid = 'CORE-C_Region-1000085';
+UPDATE C_Region SET jurisdictioncode = '907' WHERE ad_componentobjectuid = 'CORE-C_Region-1000086';
+UPDATE C_Region SET jurisdictioncode = '908' WHERE ad_componentobjectuid = 'CORE-C_Region-1000089';
+UPDATE C_Region SET jurisdictioncode = '909' WHERE ad_componentobjectuid = 'CORE-C_Region-1000090';
+UPDATE C_Region SET jurisdictioncode = '910' WHERE ad_componentobjectuid = 'CORE-C_Region-1000091';
+UPDATE C_Region SET jurisdictioncode = '911' WHERE ad_componentobjectuid = 'CORE-C_Region-1000092';
+UPDATE C_Region SET jurisdictioncode = '912' WHERE ad_componentobjectuid = 'CORE-C_Region-1000093';
+UPDATE C_Region SET jurisdictioncode = '913' WHERE ad_componentobjectuid = 'CORE-C_Region-1000094';
+UPDATE C_Region SET jurisdictioncode = '914' WHERE ad_componentobjectuid = 'CORE-C_Region-1000095';
+UPDATE C_Region SET jurisdictioncode = '915' WHERE ad_componentobjectuid = 'CORE-C_Region-1000096';
+UPDATE C_Region SET jurisdictioncode = '916' WHERE ad_componentobjectuid = 'CORE-C_Region-1000097';
+UPDATE C_Region SET jurisdictioncode = '917' WHERE ad_componentobjectuid = 'CORE-C_Region-1000098';
+UPDATE C_Region SET jurisdictioncode = '918' WHERE ad_componentobjectuid = 'CORE-C_Region-1000099';
+UPDATE C_Region SET jurisdictioncode = '919' WHERE ad_componentobjectuid = 'CORE-C_Region-1000100';
+UPDATE C_Region SET jurisdictioncode = '920' WHERE ad_componentobjectuid = 'CORE-C_Region-1000101';
+UPDATE C_Region SET jurisdictioncode = '921' WHERE ad_componentobjectuid = 'CORE-C_Region-1000102';
+UPDATE C_Region SET jurisdictioncode = '922' WHERE ad_componentobjectuid = 'CORE-C_Region-1000103';
+UPDATE C_Region SET jurisdictioncode = '923' WHERE ad_componentobjectuid = 'CORE-C_Region-1000104';
+UPDATE C_Region SET jurisdictioncode = '924' WHERE ad_componentobjectuid = 'CORE-C_Region-1000105';
+
+--20160308-1725 Incorporaciones para soporte de campos de secuencias en formatos de exportación
+UPDATE ad_system SET dummy = (SELECT addcolumnifnotexists('AD_ExpFormat_Row','isseqnumber','character(1) NOT NULL DEFAULT ''N''::bpchar'));
+UPDATE ad_system SET dummy = (SELECT addcolumnifnotexists('AD_ExpFormat_Row','initialseqnumber','integer NOT NULL DEFAULT 1'));
+UPDATE ad_system SET dummy = (SELECT addcolumnifnotexists('AD_ExpFormat_Row','seqincrement','integer NOT NULL DEFAULT 1'));
+
+-- Incorporación de nuevas columnas a la vista de percepciones por nuevas exportaciones de percepciones
+DROP VIEW c_invoice_percepciones_v;
+
+CREATE OR REPLACE VIEW c_invoice_percepciones_v AS 
+ SELECT i.ad_client_id, i.ad_org_id, dt.c_doctype_id, dt.name AS doctypename, 
+        CASE
+            WHEN dt.signo_issotrx = 1 THEN 'F'::text
+            ELSE 'C'::text
+        END AS doctypechar, 
+        CASE
+            WHEN "substring"(dt.doctypekey::text, 1, 2) = 'CI'::text THEN 'F'::text
+            WHEN "substring"(dt.doctypekey::text, 1, 2) = 'CC'::text THEN 'NC'::text
+            ELSE 'ND'::text
+        END AS doctypenameshort, 
+        CASE
+            WHEN "substring"(dt.doctypekey::text, 1, 2) = 'CI'::text THEN 'T'::character(1)
+            WHEN "substring"(dt.doctypekey::text, 1, 2) = 'CC'::text THEN 'R'::character(1)
+            ELSE 'D'::character(1)
+        END AS doctypenameshort_aditional, 
+        CASE
+            WHEN "substring"(dt.doctypekey::text, 1, 2) = 'CI'::text THEN 1
+            WHEN "substring"(dt.doctypekey::text, 1, 2) = 'CC'::text THEN 102
+            ELSE 2
+        END AS tipo_de_documento_reg_neuquen, 
+        dt.docbasetype,
+        i.c_invoice_id, 
+        i.documentno, 
+        date_trunc('day'::text, i.dateinvoiced) AS dateinvoiced, 
+        date_trunc('day'::text, i.dateacct) AS dateacct, 
+        date_trunc('day'::text, i.dateinvoiced) AS date, 
+        lc.letra, 
+        i.puntodeventa, 
+        i.numerocomprobante, 
+        i.grandtotal, 
+        bp.c_bpartner_id, 
+        bp.value AS bpartner_value, 
+        bp.name AS bpartner_name, 
+        replace(bp.taxid, '-', '') as taxid,
+        iibb,
+        CASE WHEN length(iibb) > 7 THEN 1 ELSE 0 END as tipo_contribuyente,
+        ((("substring"(replace(bp.taxid::text, '-'::text, ''::text), 1, 2) || '-'::text) || "substring"(replace(bp.taxid::text, '-'::text, ''::text), 3, 8)) || '-'::text) || "substring"(replace(bp.taxid::text, '-'::text, ''::text), 11, 1) AS taxid_with_script, 
+        COALESCE(i.nombrecli, bp.name) AS nombrecli, 
+        COALESCE(i.nroidentificcliente, bp.taxid) AS nroidentificcliente, 
+        ((("substring"(replace(bp.taxid::text, '-'::text, ''::text), 1, 2) || '-'::text) || "substring"(replace(bp.taxid::text, '-'::text, ''::text), 3, 8)) || '-'::text) || "substring"(replace(bp.taxid::text, '-'::text, ''::text), 11, 1) AS nroidentificcliente_with_script, 
+        (select l.address1 
+		from c_bpartner_location as bpl 
+		inner join c_location as l on l.c_location_id = bpl.c_location_id
+		where bpl.c_bpartner_id = bp.c_bpartner_id
+		order by bpl.updated desc
+		limit 1) as address1,
+        t.c_tax_id, 
+        t.name AS percepcionname, 
+        it.taxbaseamt, 
+        it.taxamt, 
+        (it.taxbaseamt * dt.signo_issotrx::numeric)::numeric(20,2) AS taxbaseamt_with_sign, 
+        (it.taxamt * dt.signo_issotrx::numeric)::numeric(20,2) AS taxamt_with_sign,
+        (CASE WHEN it.taxbaseamt <> 0 THEN (it.taxamt * 100) / it.taxbaseamt ELSE 0 END)::numeric(20,2) as alicuota,
+        lo.city as org_city,
+        lo.postal as org_postal_code,
+        r.jurisdictioncode
+   FROM c_invoicetax it
+   JOIN c_invoice i ON i.c_invoice_id = it.c_invoice_id
+   JOIN c_letra_comprobante lc ON lc.c_letra_comprobante_id = i.c_letra_comprobante_id
+   JOIN c_doctype dt ON dt.c_doctype_id = i.c_doctypetarget_id
+   JOIN c_bpartner bp ON bp.c_bpartner_id = i.c_bpartner_id
+   JOIN c_tax t ON t.c_tax_id = it.c_tax_id
+   JOIN ad_orginfo as oi on oi.ad_org_id = i.ad_org_id
+   LEFT JOIN c_location as lo on lo.c_location_id = oi.c_location_id
+   LEFT JOIN c_region as r on r.c_region_id = lo.c_region_id
+  WHERE t.ispercepcion = 'Y'::bpchar 
+	AND i.issotrx = 'Y'::bpchar 
+	AND ((i.docstatus = ANY (ARRAY['CL'::bpchar, 'CO'::bpchar])) OR ((i.docstatus = ANY (ARRAY['VO'::bpchar, 'RE'::bpchar])) AND dt.isfiscal = 'Y'::bpchar AND i.fiscalalreadyprinted = 'Y'::bpchar));
+
+ALTER TABLE c_invoice_percepciones_v
+  OWNER TO libertya;

@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.Properties;
 
 import org.openXpertya.util.DB;
+import org.openXpertya.util.Util;
 
 public class MExpFormat extends X_AD_ExpFormat {
 
@@ -56,5 +57,17 @@ public class MExpFormat extends X_AD_ExpFormat {
 	public String getFilterSQL(){
 		return DB.getSQLValueString(get_TrxName(),
 				"SELECT filter FROM ad_expformat_filter WHERE ad_expformat_id = ? AND isactive = 'Y'", getID());
+	}
+	
+	@Override
+    protected boolean beforeSave(boolean newRecord) {
+		// Si el tipo de exportación es por separador de campos, entonces el
+		// delimitador debe ser obligatorio
+		if (MExpFormat.FORMATTYPE_CommaSeparated.equals(getFormatType()) 
+				&& Util.isEmpty(getDelimiter())) {
+			log.saveError("DelimiterIsMandatory", "");
+			return false;
+		}
+		return true;
 	}
 }

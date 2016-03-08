@@ -70,6 +70,8 @@ public class ExportProcess extends SvrProcess {
 	private Writer fileWriter;
 	/** Cantidad de líneas exportadas */
 	private int exportedLines = 0;
+	/** Campos de secuencia */
+	private Map<String, Integer> sequenceNumbers = new HashMap<String, Integer>();
 	
 	@Override
 	protected void prepare() {
@@ -346,8 +348,7 @@ public class ExportProcess extends SvrProcess {
 		}
 		if(!Util.isEmpty(getFieldSeparator(), true)){
 			row = new StringBuffer(row.substring(0,
-					row.lastIndexOf(getFieldSeparator())
-							- getFieldSeparator().length()));
+					row.lastIndexOf(getFieldSeparator())));
 		}
 		getFileWriter().write(row.toString());
 	}
@@ -356,6 +357,17 @@ public class ExportProcess extends SvrProcess {
 		String data = new String();
 		if(MExpFormatRow.DATATYPE_Constant.equals(expFormatRow.getDataType())){
 			data = expFormatRow.getConstantValue();
+		}
+		else if (expFormatRow.isSeqNumber()) {
+			Integer seqNumber = getSequenceNumbers().get(expFormatRow.getName());
+			if(seqNumber == null){
+				seqNumber = expFormatRow.getInitialSeqNumber();
+			}
+			else{
+				seqNumber += expFormatRow.getSeqIncrement();
+			}
+			data = String.valueOf(seqNumber);
+			getSequenceNumbers().put(expFormatRow.getName(), seqNumber);
 		}
 		else if(value != null){
 			if(MExpFormatRow.DATATYPE_Date.equals(expFormatRow.getDataType())){
@@ -384,7 +396,7 @@ public class ExportProcess extends SvrProcess {
 		// condiciones configuradas en la columna
 		String newData = data;
 		if (MExpFormat.FORMATTYPE_FixedPosition.equals(getExportFormat()
-				.getFormatType())) {
+				.getFormatType()) && expFormatRow.getLength() > 0) {
 			if(newData.length() >= expFormatRow.getLength()){
 				newData = newData.substring(0, expFormatRow.getLength());
 			}
@@ -428,13 +440,12 @@ public class ExportProcess extends SvrProcess {
 	 */
 	private void loadFieldSeparator(){
 		String separator = "";
-		if(MExpFormat.FORMATTYPE_CommaSeparated.equals(getExportFormat()
-				.getFormatType())){
-			separator = getExportFormat().getDelimiter();
-		}
-		else if(MExpFormat.FORMATTYPE_TabSeparated.equals(getExportFormat()
+		if(MExpFormat.FORMATTYPE_TabSeparated.equals(getExportFormat()
 				.getFormatType())){
 			separator = "	";
+		}
+		else if(!Util.isEmpty(getExportFormat().getDelimiter())){
+			separator = getExportFormat().getDelimiter();
 		}
 		setFieldSeparator(separator);
 	}
@@ -535,5 +546,13 @@ public class ExportProcess extends SvrProcess {
 
 	protected void setParametersNames(List<String> parametersNames) {
 		this.parametersNames = parametersNames;
+	}
+
+	protected Map<String, Integer> getSequenceNumbers() {
+		return sequenceNumbers;
+	}
+
+	protected void setSequenceNumbers(Map<String, Integer> sequenceNumbers) {
+		this.sequenceNumbers = sequenceNumbers;
 	}
 }
