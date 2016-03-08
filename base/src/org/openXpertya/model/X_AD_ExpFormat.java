@@ -7,7 +7,7 @@ import java.math.*;
 import org.openXpertya.util.*;
 /** Modelo Generado por AD_ExpFormat
  *  @author Comunidad de Desarrollo Libertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
- *  @version  - 2015-08-01 21:46:28.907 */
+ *  @version  - 2016-03-08 18:00:13.708 */
 public class X_AD_ExpFormat extends org.openXpertya.model.PO
 {
 /** Constructor estándar */
@@ -19,7 +19,6 @@ super (ctx, AD_ExpFormat_ID, trxName);
 setAD_ExpFormat_ID (0);
 setAD_Table_ID (0);
 setConcatenateTimestamp (false);
-setDelimiter (null);
 setEncodingType (null);	// U
 setEndLineType (null);	// W
 setExtension (null);	// C
@@ -132,8 +131,7 @@ return false;
 /** Set Delimiter */
 public void setDelimiter (String Delimiter)
 {
-if (Delimiter == null) throw new IllegalArgumentException ("Delimiter is mandatory");
-if (Delimiter.length() > 1)
+if (Delimiter != null && Delimiter.length() > 1)
 {
 log.warning("Length > 1 - truncated");
 Delimiter = Delimiter.substring(0,1);
@@ -186,15 +184,15 @@ public String getEncodingType()
 return (String)get_Value("EncodingType");
 }
 public static final int ENDLINETYPE_AD_Reference_ID = MReference.getReferenceID("AD_ImpFormat EndLineType");
-/** Windows = W */
-public static final String ENDLINETYPE_Windows = "W";
 /** Unix = U */
 public static final String ENDLINETYPE_Unix = "U";
+/** Windows = W */
+public static final String ENDLINETYPE_Windows = "W";
 /** Set End Line Type */
 public void setEndLineType (String EndLineType)
 {
-if (EndLineType.equals("W") || EndLineType.equals("U"));
- else throw new IllegalArgumentException ("EndLineType Invalid value - Reference = ENDLINETYPE_AD_Reference_ID - W - U");
+if (EndLineType.equals("U") || EndLineType.equals("W"));
+ else throw new IllegalArgumentException ("EndLineType Invalid value - Reference = ENDLINETYPE_AD_Reference_ID - U - W");
 if (EndLineType == null) throw new IllegalArgumentException ("EndLineType is mandatory");
 if (EndLineType.length() > 1)
 {
@@ -219,10 +217,10 @@ public void setExtension (String Extension)
 if (Extension.equals("C") || Extension.equals("T"));
  else throw new IllegalArgumentException ("Extension Invalid value - Reference = EXTENSION_AD_Reference_ID - C - T");
 if (Extension == null) throw new IllegalArgumentException ("Extension is mandatory");
-if (Extension.length() > 3)
+if (Extension.length() > 1)
 {
-log.warning("Length > 3 - truncated");
-Extension = Extension.substring(0,3);
+log.warning("Length > 1 - truncated");
+Extension = Extension.substring(0,1);
 }
 set_Value ("Extension", Extension);
 }

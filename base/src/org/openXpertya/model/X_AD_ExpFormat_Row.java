@@ -7,7 +7,7 @@ import java.math.*;
 import org.openXpertya.util.*;
 /** Modelo Generado por AD_ExpFormat_Row
  *  @author Comunidad de Desarrollo Libertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
- *  @version  - 2015-08-01 21:46:28.959 */
+ *  @version  - 2016-03-08 18:00:14.392 */
 public class X_AD_ExpFormat_Row extends org.openXpertya.model.PO
 {
 /** Constructor estándar */
@@ -19,9 +19,12 @@ super (ctx, AD_ExpFormat_Row_ID, trxName);
 setAD_ExpFormat_ID (0);	// @AD_ExpFormat_ID@
 setAD_ExpFormat_Row_ID (0);
 setDataType (null);
+setInitialSeqNumber (0);
 setIsOrderField (false);
+setIsSeqNumber (false);
 setName (null);
 setNoDecimalPoint (false);	// N
+setSeqIncrement (0);
 setSeqNo (0);	// @SQL=SELECT NVL(MAX(SeqNo),0)+10 AS DefaultValue FROM AD_ExpFormat_Row WHERE AD_ExpFormat_ID=@AD_ExpFormat_ID@
 }
  */
@@ -241,6 +244,18 @@ public String getFillCharacter()
 {
 return (String)get_Value("FillCharacter");
 }
+/** Set Initial sequence number */
+public void setInitialSeqNumber (int InitialSeqNumber)
+{
+set_Value ("InitialSeqNumber", new Integer(InitialSeqNumber));
+}
+/** Get Initial sequence number */
+public int getInitialSeqNumber() 
+{
+Integer ii = (Integer)get_Value("InitialSeqNumber");
+if (ii == null) return 0;
+return ii.intValue();
+}
 /** Set Is Order Field */
 public void setIsOrderField (boolean IsOrderField)
 {
@@ -250,6 +265,24 @@ set_Value ("IsOrderField", new Boolean(IsOrderField));
 public boolean isOrderField() 
 {
 Object oo = get_Value("IsOrderField");
+if (oo != null) 
+{
+ if (oo instanceof Boolean) return ((Boolean)oo).booleanValue();
+ return "Y".equals(oo);
+}
+return false;
+}
+/** Set Is sequence.
+Is sequencial number */
+public void setIsSeqNumber (boolean IsSeqNumber)
+{
+set_Value ("IsSeqNumber", new Boolean(IsSeqNumber));
+}
+/** Get Is sequence.
+Is sequencial number */
+public boolean isSeqNumber() 
+{
+Object oo = get_Value("IsSeqNumber");
 if (oo != null) 
 {
  if (oo instanceof Boolean) return ((Boolean)oo).booleanValue();
@@ -364,6 +397,20 @@ set_Value ("OrderSeqNo", new Integer(OrderSeqNo));
 public int getOrderSeqNo() 
 {
 Integer ii = (Integer)get_Value("OrderSeqNo");
+if (ii == null) return 0;
+return ii.intValue();
+}
+/** Set Increment.
+Secuencial Increment */
+public void setSeqIncrement (int SeqIncrement)
+{
+set_Value ("SeqIncrement", new Integer(SeqIncrement));
+}
+/** Get Increment.
+Secuencial Increment */
+public int getSeqIncrement() 
+{
+Integer ii = (Integer)get_Value("SeqIncrement");
 if (ii == null) return 0;
 return ii.intValue();
 }
