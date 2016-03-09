@@ -4652,3 +4652,17 @@ CREATE OR REPLACE VIEW c_invoice_percepciones_v AS
 
 ALTER TABLE c_invoice_percepciones_v
   OWNER TO libertya;
+
+--20160309-1740 Eliminación de metadatos por parche de exportación de percepciones de commit anterior
+DELETE FROM AD_ExpFormat_Row WHERE ad_componentobjectuid = 'CORE-AD_ExpFormat_Row-1010188';
+DELETE FROM AD_ExpFormat_Row WHERE ad_componentobjectuid = 'CORE-AD_ExpFormat_Row-1010187';
+DELETE FROM AD_Column_Trl WHERE ad_componentobjectuid = 'CORE-AD_Column_Trl-1016895-es_PY';
+DELETE FROM AD_Column_Trl WHERE ad_componentobjectuid = 'CORE-AD_Column_Trl-1016895-es_MX';
+DELETE FROM AD_Column_Trl WHERE ad_componentobjectuid = 'CORE-AD_Column_Trl-1016895-es_AR';
+DELETE FROM AD_Column_Trl WHERE ad_componentobjectuid = 'CORE-AD_Column_Trl-1016895-es_ES';
+DELETE FROM AD_Column WHERE ad_componentobjectuid = 'CORE-AD_Column-1016895';
+DELETE FROM AD_Element_Trl WHERE ad_componentobjectuid = 'CORE-AD_Element_Trl-1011614-es_PY';
+DELETE FROM AD_Element_Trl WHERE ad_componentobjectuid = 'CORE-AD_Element_Trl-1011614-es_MX';
+DELETE FROM AD_Element_Trl WHERE ad_componentobjectuid = 'CORE-AD_Element_Trl-1011614-es_AR';
+DELETE FROM AD_Element_Trl WHERE ad_componentobjectuid = 'CORE-AD_Element_Trl-1011614-es_ES';
+DELETE FROM AD_Element WHERE ad_componentobjectuid = 'CORE-AD_Element-1011614';  
