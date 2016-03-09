@@ -4575,3 +4575,80 @@ DELETE FROM AD_Element_Trl WHERE ad_componentobjectuid = 'CORE-AD_Element_Trl-10
 DELETE FROM AD_Element_Trl WHERE ad_componentobjectuid = 'CORE-AD_Element_Trl-1011610-es_AR';
 DELETE FROM AD_Element_Trl WHERE ad_componentobjectuid = 'CORE-AD_Element_Trl-1011610-es_ES';
 DELETE FROM AD_Element WHERE ad_componentobjectuid = 'CORE-AD_Element-1011610';
+
+--20160309-1720 Nueva columna con el nro de documento sin la letra
+DROP VIEW c_invoice_percepciones_v;
+
+CREATE OR REPLACE VIEW c_invoice_percepciones_v AS 
+ SELECT i.ad_client_id, i.ad_org_id, dt.c_doctype_id, dt.name AS doctypename, 
+        CASE
+            WHEN dt.signo_issotrx = 1 THEN 'F'::text
+            ELSE 'C'::text
+        END AS doctypechar, 
+        CASE
+            WHEN "substring"(dt.doctypekey::text, 1, 2) = 'CI'::text THEN 'F'::text
+            WHEN "substring"(dt.doctypekey::text, 1, 2) = 'CC'::text THEN 'NC'::text
+            ELSE 'ND'::text
+        END AS doctypenameshort, 
+        CASE
+            WHEN "substring"(dt.doctypekey::text, 1, 2) = 'CI'::text THEN 'T'::character(1)
+            WHEN "substring"(dt.doctypekey::text, 1, 2) = 'CC'::text THEN 'R'::character(1)
+            ELSE 'D'::character(1)
+        END AS doctypenameshort_aditional, 
+        CASE
+            WHEN "substring"(dt.doctypekey::text, 1, 2) = 'CI'::text THEN 1
+            WHEN "substring"(dt.doctypekey::text, 1, 2) = 'CC'::text THEN 102
+            ELSE 2
+        END AS tipo_de_documento_reg_neuquen, 
+        dt.docbasetype,
+        i.c_invoice_id, 
+        i.documentno, 
+        date_trunc('day'::text, i.dateinvoiced) AS dateinvoiced, 
+        date_trunc('day'::text, i.dateacct) AS dateacct, 
+        date_trunc('day'::text, i.dateinvoiced) AS date, 
+        lc.letra, 
+        i.puntodeventa, 
+        i.numerocomprobante, 
+        i.grandtotal, 
+        bp.c_bpartner_id, 
+        bp.value AS bpartner_value, 
+        bp.name AS bpartner_name, 
+        replace(bp.taxid, '-', '') as taxid,
+        iibb,
+        CASE WHEN length(iibb) > 7 THEN 1 ELSE 0 END as tipo_contribuyente,
+        ((("substring"(replace(bp.taxid::text, '-'::text, ''::text), 1, 2) || '-'::text) || "substring"(replace(bp.taxid::text, '-'::text, ''::text), 3, 8)) || '-'::text) || "substring"(replace(bp.taxid::text, '-'::text, ''::text), 11, 1) AS taxid_with_script, 
+        COALESCE(i.nombrecli, bp.name) AS nombrecli, 
+        COALESCE(i.nroidentificcliente, bp.taxid) AS nroidentificcliente, 
+        ((("substring"(replace(bp.taxid::text, '-'::text, ''::text), 1, 2) || '-'::text) || "substring"(replace(bp.taxid::text, '-'::text, ''::text), 3, 8)) || '-'::text) || "substring"(replace(bp.taxid::text, '-'::text, ''::text), 11, 1) AS nroidentificcliente_with_script, 
+        (select l.address1 
+		from c_bpartner_location as bpl 
+		inner join c_location as l on l.c_location_id = bpl.c_location_id
+		where bpl.c_bpartner_id = bp.c_bpartner_id
+		order by bpl.updated desc
+		limit 1) as address1,
+        t.c_tax_id, 
+        t.name AS percepcionname, 
+        it.taxbaseamt, 
+        it.taxamt, 
+        (it.taxbaseamt * dt.signo_issotrx::numeric)::numeric(20,2) AS taxbaseamt_with_sign, 
+        (it.taxamt * dt.signo_issotrx::numeric)::numeric(20,2) AS taxamt_with_sign,
+        (CASE WHEN it.taxbaseamt <> 0 THEN (it.taxamt * 100) / it.taxbaseamt ELSE 0 END)::numeric(20,2) as alicuota,
+        lo.city as org_city,
+        lo.postal as org_postal_code,
+        r.jurisdictioncode,
+        translate(i.documentno, letra, '')::character varying(30) as documentno_without_letter
+   FROM c_invoicetax it
+   JOIN c_invoice i ON i.c_invoice_id = it.c_invoice_id
+   JOIN c_letra_comprobante lc ON lc.c_letra_comprobante_id = i.c_letra_comprobante_id
+   JOIN c_doctype dt ON dt.c_doctype_id = i.c_doctypetarget_id
+   JOIN c_bpartner bp ON bp.c_bpartner_id = i.c_bpartner_id
+   JOIN c_tax t ON t.c_tax_id = it.c_tax_id
+   JOIN ad_orginfo as oi on oi.ad_org_id = i.ad_org_id
+   LEFT JOIN c_location as lo on lo.c_location_id = oi.c_location_id
+   LEFT JOIN c_region as r on r.c_region_id = lo.c_region_id
+  WHERE t.ispercepcion = 'Y'::bpchar 
+	AND i.issotrx = 'Y'::bpchar 
+	AND ((i.docstatus = ANY (ARRAY['CL'::bpchar, 'CO'::bpchar])) OR ((i.docstatus = ANY (ARRAY['VO'::bpchar, 'RE'::bpchar])) AND dt.isfiscal = 'Y'::bpchar AND i.fiscalalreadyprinted = 'Y'::bpchar));
+
+ALTER TABLE c_invoice_percepciones_v
+  OWNER TO libertya;
