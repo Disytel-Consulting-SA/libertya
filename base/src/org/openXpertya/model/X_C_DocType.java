@@ -7,7 +7,7 @@ import java.math.*;
 import org.openXpertya.util.*;
 /** Modelo Generado por C_DocType
  *  @author Comunidad de Desarrollo Libertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
- *  @version  - 2015-09-07 01:12:19.082 */
+ *  @version  - 2016-03-11 16:41:27.0 */
 public class X_C_DocType extends org.openXpertya.model.PO
 {
 /** Constructor estándar */
@@ -476,11 +476,21 @@ public static final String DOCSUBTYPECAE_NotaDeDébitoPorOperacionesEnElExterior
 public static final String DOCSUBTYPECAE_FacturaDeExportaciónE = "19";
 /** Nota de Crédito por Operaciones en el Exterior = 21 */
 public static final String DOCSUBTYPECAE_NotaDeCréditoPorOperacionesEnElExterior = "21";
+/** Facturas C = 11 */
+public static final String DOCSUBTYPECAE_FacturasC = "11";
+/** Notas de Debito C = 12 */
+public static final String DOCSUBTYPECAE_NotasDeDebitoC = "12";
+/** Notas de Credito C = 13 */
+public static final String DOCSUBTYPECAE_NotasDeCreditoC = "13";
+/** Notas de Venta al contado C = 16 */
+public static final String DOCSUBTYPECAE_NotasDeVentaAlContadoC = "16";
+/** Recibos C = 15 */
+public static final String DOCSUBTYPECAE_RecibosC = "15";
 /** Set docsubtypecae */
 public void setdocsubtypecae (String docsubtypecae)
 {
-if (docsubtypecae == null || docsubtypecae.equals("01") || docsubtypecae.equals("02") || docsubtypecae.equals("03") || docsubtypecae.equals("04") || docsubtypecae.equals("05") || docsubtypecae.equals("06") || docsubtypecae.equals("07") || docsubtypecae.equals("08") || docsubtypecae.equals("09") || docsubtypecae.equals("10") || docsubtypecae.equals("20") || docsubtypecae.equals("19") || docsubtypecae.equals("21"));
- else throw new IllegalArgumentException ("docsubtypecae Invalid value - Reference = DOCSUBTYPECAE_AD_Reference_ID - 01 - 02 - 03 - 04 - 05 - 06 - 07 - 08 - 09 - 10 - 20 - 19 - 21");
+if (docsubtypecae == null || docsubtypecae.equals("01") || docsubtypecae.equals("02") || docsubtypecae.equals("03") || docsubtypecae.equals("04") || docsubtypecae.equals("05") || docsubtypecae.equals("06") || docsubtypecae.equals("07") || docsubtypecae.equals("08") || docsubtypecae.equals("09") || docsubtypecae.equals("10") || docsubtypecae.equals("20") || docsubtypecae.equals("19") || docsubtypecae.equals("21") || docsubtypecae.equals("11") || docsubtypecae.equals("12") || docsubtypecae.equals("13") || docsubtypecae.equals("16") || docsubtypecae.equals("15"));
+ else throw new IllegalArgumentException ("docsubtypecae Invalid value - Reference = DOCSUBTYPECAE_AD_Reference_ID - 01 - 02 - 03 - 04 - 05 - 06 - 07 - 08 - 09 - 10 - 20 - 19 - 21 - 11 - 12 - 13 - 16 - 15");
 if (docsubtypecae != null && docsubtypecae.length() > 2)
 {
 log.warning("Length > 2 - truncated");
