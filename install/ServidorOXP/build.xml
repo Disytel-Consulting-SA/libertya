@@ -163,6 +163,7 @@
 
 	<!-- Crear directorio temporal para generar el OXP.jar definitivo con plugins -->
   	<mkdir dir="nuevosComponents"/>
+  	<mkdir dir="nuevosComponents/lib"/>
   	<mkdir dir="nuevoOXP"/>
   	<mkdir dir="nuevoOXPRoot"/>
   	<mkdir dir="nuevoWEBUI"/>
@@ -179,6 +180,14 @@
 	    </fileset>    
 	</unzip> 
 
+	<!-- Descomprimir todas librerias incluidas en cada uno de los plugins (almacenados 
+	     como jars dentro del directorio lib del jar del plugin) para incorporarlo a OXP -->	
+	<unzip dest="nuevosComponents">
+	    <fileset dir="nuevosComponents/lib">
+	        <include name="**/*.jar" />
+	    </fileset>    
+	</unzip> 
+	
 	<!-- Eliminar la informacion de metadatos del ultimo plugin descomprimido -->
     <delete file="nuevosComponents/preinstall.sql" failonerror="no"/>
     <delete file="nuevosComponents/install.xml" failonerror="no"/>
