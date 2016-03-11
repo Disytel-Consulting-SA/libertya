@@ -62,6 +62,7 @@ import org.openXpertya.model.MQuery;
 import org.openXpertya.model.MRole;
 import org.openXpertya.model.X_C_AllocationLine;
 import org.openXpertya.model.X_C_POSJournal;
+import org.openXpertya.model.X_M_EntidadFinancieraPlan;
 import org.openXpertya.plugin.common.PluginInfoUtils;
 import org.openXpertya.plugin.common.PluginUtils;
 import org.openXpertya.pos.view.PoSInfoProduct;
@@ -141,6 +142,8 @@ public abstract class Info extends CDialog implements ListSelectionListener {
             info = new InfoPOSJournal( frame,modal,WindowNo,tableName,keyColumn,multiSelection,whereClause );
         } else if( tableName.equals( X_C_AllocationLine.Table_Name )) {
         	info = new InfoAllocationLine(frame, modal, WindowNo, tableName, keyColumn, multiSelection, whereClause);
+        } else if( tableName.equals( X_M_EntidadFinancieraPlan.Table_Name )) {
+            info = new InfoEntidadFinancieraPlan( frame,modal,WindowNo,tableName,keyColumn,multiSelection,whereClause );
         } else {
         	// System.out.println("creando info otros..");
             info = new InfoGeneral( frame,modal,WindowNo,value,tableName,keyColumn,multiSelection,whereClause );
