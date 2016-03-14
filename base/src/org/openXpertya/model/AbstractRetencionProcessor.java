@@ -664,11 +664,11 @@ public abstract class AbstractRetencionProcessor implements RetencionProcessor {
 				+ "			p.AD_Client_ID = ? AND ";
 		// Fecha desde
 		if (dateFrom != null) {
-			sql += "			DateTrx >= to_date(?,'YYYY-mm-dd') AND ";
+			sql += "			DateTrx::date >= ?::date AND ";
 		}
 		// Fecha hasta
 		if (dateTo != null) {
-			sql += "			DateTrx <= to_date(?,'YYYY-mm-dd') AND ";
+			sql += "			DateTrx::date <= ?::date AND ";
 		}
 		sql += "			(NOT EXISTS (SELECT c_payment_id "
 				+ "							FROM c_allocationhdr as ah "
@@ -686,7 +686,7 @@ public abstract class AbstractRetencionProcessor implements RetencionProcessor {
 				+ "                        		bpr.IsActive = 'Y' AND "
 				+ "                        		exc.IsActive = 'Y' AND "
 				+ "                        		p.DateTrx BETWEEN exc.Date_From AND exc.Date_To)";
-		PreparedStatement ps = DB.prepareStatement(sql, getTrxName());
+		PreparedStatement ps = DB.prepareStatement(sql, getTrxName(), true);
 		int i = 1;
 		// Entidad Comercial
 		ps.setInt(i++, bpartner.getID());
@@ -745,11 +745,11 @@ public abstract class AbstractRetencionProcessor implements RetencionProcessor {
 				+ "			p.AD_Client_ID = ? AND ";
 		// Fecha desde
 		if (dateFrom != null) {
-			sql += "			DateTrx >= to_date(?,'YYYY-mm-dd') AND ";
+			sql += "			DateTrx::date >= ?::date AND ";
 		}
 		// Fecha hasta
 		if (dateTo != null) {
-			sql += "			DateTrx <= to_date(?,'YYYY-mm-dd') AND ";
+			sql += "			DateTrx::date <= ?::date AND ";
 		}
 		sql += "				EXISTS (SELECT c_payment_id "
 				+ "							FROM c_allocationhdr as ah "
@@ -763,7 +763,7 @@ public abstract class AbstractRetencionProcessor implements RetencionProcessor {
 				+ "                        		bpr.IsActive = 'Y' AND "
 				+ "                        		exc.IsActive = 'Y' AND "
 				+ "                        		p.DateTrx BETWEEN exc.Date_From AND exc.Date_To)";
-		PreparedStatement ps = DB.prepareStatement(sql, getTrxName());
+		PreparedStatement ps = DB.prepareStatement(sql, getTrxName(), true);
 		int i = 1;
 		// Entidad Comercial
 		ps.setInt(i++, bpartner.getID());
@@ -842,11 +842,11 @@ public abstract class AbstractRetencionProcessor implements RetencionProcessor {
 				+ "			cl.AD_Client_ID = ? AND ";
 		// Fecha desde
 		if (dateFrom != null) {
-			sql += "			c.statementDate >= to_date(?,'YYYY-mm-dd') AND ";
+			sql += "			c.statementDate::date >= ?::date AND ";
 		}
 		// Fecha hasta
 		if (dateTo != null) {
-			sql += "			c.statementDate <= to_date(?,'YYYY-mm-dd') AND ";
+			sql += "			c.statementDate::date <= ?::date AND ";
 		}
 		sql += "			(NOT EXISTS (SELECT c_cashline_id "
 				+ "						FROM c_allocationline as al "
@@ -864,7 +864,7 @@ public abstract class AbstractRetencionProcessor implements RetencionProcessor {
 				+ "                        		bpr.IsActive = 'Y' AND "
 				+ "                        		exc.IsActive = 'Y' AND "
 				+ "                        		c.statementdate BETWEEN exc.Date_From AND exc.Date_To)";
-		PreparedStatement ps = DB.prepareStatement(sql, getTrxName());
+		PreparedStatement ps = DB.prepareStatement(sql, getTrxName(), true);
 		int i = 1;
 		// Entidad Comercial
 		ps.setInt(i++, bpartner.getID());
@@ -929,11 +929,11 @@ public abstract class AbstractRetencionProcessor implements RetencionProcessor {
 				+ "			cl.AD_Client_ID = ? AND ";
 		// Fecha desde
 		if (dateFrom != null) {
-			sql += "			c.statementDate >= to_date(?,'YYYY-mm-dd') AND ";
+			sql += "			c.statementDate::date >= ?::date AND ";
 		}
 		// Fecha hasta
 		if (dateTo != null) {
-			sql += "			c.statementDate <= to_date(?,'YYYY-mm-dd') AND ";
+			sql += "			c.statementDate::date <= ?::date AND ";
 		}
 		sql += "			EXISTS (SELECT c_cashline_id "
 				+ "						FROM c_allocationline as al "
@@ -948,7 +948,7 @@ public abstract class AbstractRetencionProcessor implements RetencionProcessor {
 				+ "                        		bpr.IsActive = 'Y' AND "
 				+ "                        		exc.IsActive = 'Y' AND "
 				+ "                        		c.statementdate BETWEEN exc.Date_From AND exc.Date_To)";
-		PreparedStatement ps = DB.prepareStatement(sql, getTrxName());
+		PreparedStatement ps = DB.prepareStatement(sql, getTrxName(), true);
 		int i = 1;
 		// Entidad Comercial
 		ps.setInt(i++, bpartner.getID());
@@ -1094,11 +1094,11 @@ public abstract class AbstractRetencionProcessor implements RetencionProcessor {
 				+ "			i.c_bpartner_id = ? AND " + "			i.ad_client_id = ? AND ";
 		// Fecha desde
 		if (dateFrom != null) {
-			sql += "			i.dateinvoiced >= to_date(?,'YYYY-mm-dd') AND ";
+			sql += "			i.dateinvoiced::date >= to_date(?,'YYYY-mm-dd') AND ";
 		}
 		// Fecha hasta
 		if (dateTo != null) {
-			sql += "			i.dateinvoiced <= to_date(?,'YYYY-mm-dd') AND ";
+			sql += "			i.dateinvoiced::date <= ?::date AND ";
 		}
 		sql += "			NOT EXISTS(SELECT bpr.C_BPartner_Retencion_ID "
 				+ "						FROM C_BPartner_Retencion bpr "
@@ -1108,7 +1108,7 @@ public abstract class AbstractRetencionProcessor implements RetencionProcessor {
 				+ "                        		bpr.IsActive = 'Y' AND "
 				+ "                        		exc.IsActive = 'Y' AND "
 				+ "                        		i.dateinvoiced BETWEEN exc.Date_From AND exc.Date_To)";
-		PreparedStatement ps = DB.prepareStatement(sql, getTrxName());
+		PreparedStatement ps = DB.prepareStatement(sql, getTrxName(), true);
 		int i = 1;
 		// Entidad Comercial
 		ps.setInt(i++, bpartner.getID());
@@ -1238,11 +1238,13 @@ public abstract class AbstractRetencionProcessor implements RetencionProcessor {
 			total = total.add(getSumAmts(new ArrayList<BigDecimal>(cashlines
 					.values())));
 			// 3) Retenciones
-			Map<Integer, BigDecimal> retenciones = getSumaRetencionesPagosAnteriores(
+			// Se comenta ya que los algoritmos no restan las retenciones como
+			// parte de los pagos anteriores, sino al final
+			/*Map<Integer, BigDecimal> retenciones = getSumaRetencionesPagosAnteriores(
 					getBPartner(), clientID, dateFrom, dateTo,
 					getRetencionSchema());
 			total = total.add(getSumAmts(new ArrayList<BigDecimal>(retenciones
-					.values())));
+					.values())));*/
 		} catch (Exception ex) {
 			log.info("Error al buscar el total del monto pagado en el mes !!!! ");
 			ex.printStackTrace();

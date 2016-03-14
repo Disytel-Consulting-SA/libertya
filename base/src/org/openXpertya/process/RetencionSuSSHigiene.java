@@ -9,7 +9,6 @@ import org.openXpertya.model.MInvoice;
 import org.openXpertya.model.MInvoiceLine;
 import org.openXpertya.model.MRetSchemaConfig;
 import org.openXpertya.model.MRetencionSchema;
-import org.openXpertya.model.MRole;
 import org.openXpertya.model.X_M_Retencion_Invoice;
 import org.openXpertya.util.DB;
 import org.openXpertya.util.Env;
