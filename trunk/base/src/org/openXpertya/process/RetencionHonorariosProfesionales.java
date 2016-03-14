@@ -14,7 +14,6 @@ import org.openXpertya.model.MInvoice;
 import org.openXpertya.model.MInvoiceLine;
 import org.openXpertya.model.MRetSchemaConfig;
 import org.openXpertya.model.MRetencionSchema;
-import org.openXpertya.model.MRole;
 import org.openXpertya.model.X_M_Retencion_Invoice;
 import org.openXpertya.util.CLogger;
 import org.openXpertya.util.DB;
@@ -350,13 +349,13 @@ public class RetencionHonorariosProfesionales extends AbstractRetencionProcessor
        	      "               WHERE mri.c_invoice_id = ci.c_invoice_id AND " +
        	      "                     c_bpartner_id = ? AND " +
        	      "                     ci.DocStatus IN ('CO','CL') AND " +
-       	      "                     date_trunc('day',dateInvoiced) BETWEEN ?::timestamp AND ?::timestamp)";
+       	      "                     date_trunc('day',dateInvoiced) BETWEEN ?::date AND ?::date)";
 		
         PreparedStatement pstmt = null;
         ResultSet rs = null;
 		try {
 		
-			pstmt = DB.prepareStatement(sql);
+			pstmt = DB.prepareStatement(sql, null, true);
 			pstmt.setInt(1,getBPartner().getC_BPartner_ID());
 			pstmt.setTimestamp(2,vDesde);
 			pstmt.setTimestamp(3,vFecha);
