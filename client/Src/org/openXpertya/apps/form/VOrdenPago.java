@@ -1485,6 +1485,8 @@ public class VOrdenPago extends CPanel implements FormPanel,ActionListener,Table
 	    	}
 	    	
 	    	if(mp != null){
+	    		if (!m_model.validateCurrentConversionRate((Integer) cboCurrency.getValue()))
+	    			throw new InterruptedException("@NoCurrencyConvertError@");
 	    		m_model.addMedioPago(mp);
 	    	}
 	    	updateTreeModel();
@@ -1492,6 +1494,10 @@ public class VOrdenPago extends CPanel implements FormPanel,ActionListener,Table
 			// Actualizar componentes de interfaz gráfica necesarios luego de
 			// agregar el medio de pago 
 	    	updateCustomInfoAfterMedioPago(MEDIOPAGO_ACTION_INSERT);
+    	} catch (InterruptedException e) {
+    		String title = Msg.getMsg(m_ctx, "Error");
+    		String msg = Msg.parseTranslation(m_ctx, e.getMessage());
+    		JOptionPane.showMessageDialog(this, msg, title, JOptionPane.ERROR_MESSAGE);
     	} catch (Exception e) {
     		String title = Msg.getMsg(m_ctx, "Error");
     		String msg = Msg.parseTranslation(m_ctx, "@SaveErrorNotUnique@ \n\n" + e.getMessage() /*"@SaveError@"*/ );
