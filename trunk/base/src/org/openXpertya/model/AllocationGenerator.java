@@ -1188,6 +1188,10 @@ public class AllocationGenerator {
 				// Crear la factura
 				inv = createCreditDebitInvoice(isCredit);
 				
+				inv.setDateInvoiced(getAllocationHdr().getDateAcct());
+				inv.setDateAcct(getAllocationHdr().getDateAcct());
+				inv.setFechadeTCparaActualizarPrecios(getAllocationHdr().getDateAcct());
+				
 				Document doc = getDebits().get(getDebits().size() - 1);
 				MInvoice debInv = new MInvoice(ctx, doc.getId(), trxName);
 				
