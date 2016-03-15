@@ -77,11 +77,11 @@ INNER JOIN c_region r ON (r.c_region_id = l.c_region_id)
 INNER JOIN c_doctype dt ON (dt.c_doctype_id = i.c_doctype_id)
 INNER JOIN ad_org ado ON (ado.ad_org_id = i.ad_org_id)
 INNER JOIN c_acctschema acc ON (acc.ad_client_id = i.ad_client_id)
-WHERE (i.issotrx = 'N') 
+WHERE (i.issotrx = 'N')
+AND dt.isfiscaldocument = 'Y'
 AND (dt.docbasetype in ('APC','API'))
 AND (i.docstatus in ('CO','CL','VO','RE'))
 AND (dt.doctypekey not in ('RTR', 'RTI', 'RCR', 'RCI'))
-AND p.value <> (select value from ad_preference where attribute = 'DIF_CAMBIO_ARTICULO' order by created desc limit 1)
 order by i.c_invoice_id) AS ComprasPorRegion
 WHERE ((($P{AD_Org_ID} IS NULL) OR ($P{AD_Org_ID} = 0)) OR (ad_org_id = $P{AD_Org_ID}))
 AND (($P{FechaDesde}::date IS NULL) OR (fecha::date >= $P{FechaDesde}::date)) 
