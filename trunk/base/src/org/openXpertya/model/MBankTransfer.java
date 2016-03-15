@@ -101,7 +101,7 @@ public class MBankTransfer extends X_C_BankTransfer implements DocAction {
 			pagoOrigen.setAD_Org_ID(getAD_Org_ID());
 			pagoOrigen.setTenderType(MPayment.TENDERTYPE_DirectDeposit);
 			pagoOrigen.setC_BankAccount_ID(getC_bankaccount_from_ID());
-			pagoOrigen.setAmount(getC_currency_from_ID(), getammount_from());
+			pagoOrigen.setAmount(getC_currency_from_ID(), getammount_from().negate());
 			pagoOrigen.setDateTrx(getDateTrx());
 			pagoOrigen.setDateAcct(getDateTrx());
 			pagoOrigen.setC_BPartner_ID(getC_BPartner_ID());
@@ -157,8 +157,8 @@ public class MBankTransfer extends X_C_BankTransfer implements DocAction {
 			pagoDestino.setC_Project_ID(getC_Project_ID());
 			// Se toma el tipo de documento para transferencias salientes configurado
 			// para la compañía.
-			if (clientInfo.getC_IncomingTransfer_DT_ID() != 0)
-				pagoDestino.setC_DocType_ID(clientInfo.getC_IncomingTransfer_DT_ID());
+			if (clientInfo.getC_OutgoingTransfer_DT_ID() != 0)
+				pagoDestino.setC_DocType_ID(clientInfo.getC_OutgoingTransfer_DT_ID());
 			// Si no tiene el tipo de doc configura, se toma el tipo a partir del flag isReceipt. 
 			else
 				pagoDestino.setC_DocType_ID(pagoDestino.isReceipt());
