@@ -1184,7 +1184,7 @@ public class VOrdenPagoModel {
 				+ C_Currency_ID
 				+ ") OR (c_currency_id_to = "
 				+ C_Currency_ID
-				+ ")) AND (validfrom <= current_date) AND (validto >= current_date) "
+				+ "))"
 				+ "UNION "
 				+ "SELECT c_currency_id_to FROM C_Conversion_Rate cr WHERE (isActive = 'Y') AND (ad_client_id = "
 				+ Env.getAD_Client_ID(m_ctx)
@@ -1194,7 +1194,54 @@ public class VOrdenPagoModel {
 				+ C_Currency_ID
 				+ ") OR (c_currency_id_to = "
 				+ C_Currency_ID
-				+ ")) AND (validfrom <= current_date) AND (validto >= current_date)) ";
+				+ "))) ";
+	}
+	
+	public boolean validateCurrentConversionRate(Integer c_currency_id) {
+		boolean ret = false;
+		String sql = "SELECT " + c_currency_id + " IN (SELECT " + C_Currency_ID + " UNION "
+				+ "SELECT c_currency_id FROM C_Conversion_Rate cr WHERE (isActive = 'Y') AND (ad_client_id = "
+				+ Env.getAD_Client_ID(m_ctx)
+				+ ") AND ((ad_org_id = "
+				+ Env.getAD_Org_ID(m_ctx)
+				+ ") OR (ad_org_id = 0)) AND ((c_currency_id = "
+				+ C_Currency_ID
+				+ ") OR (c_currency_id_to = "
+				+ C_Currency_ID
+				+ ")) AND (validfrom <= '" + m_fechaTrx + "') AND (validto >= '" + m_fechaTrx + "') "
+				+ "UNION "
+				+ "SELECT c_currency_id_to FROM C_Conversion_Rate cr WHERE (isActive = 'Y') AND (ad_client_id = "
+				+ Env.getAD_Client_ID(m_ctx)
+				+ ") AND ((ad_org_id = "
+				+ Env.getAD_Org_ID(m_ctx)
+				+ ") OR (ad_org_id = 0)) AND ((c_currency_id = "
+				+ C_Currency_ID
+				+ ") OR (c_currency_id_to = "
+				+ C_Currency_ID
+				+ ")) AND (validfrom <= '" + m_fechaTrx + "') AND (validto >= '" + m_fechaTrx + "')) ";
+		
+		CPreparedStatement ps = null;
+		ResultSet rs = null;
+		try {
+			ps = DB.prepareStatement(sql.toString(), getTrxName());
+			rs = ps.executeQuery();
+			while (rs.next()) {
+				ret = rs.getBoolean(1);
+			}
+		} catch (Exception e) {
+			log.log(Level.SEVERE, "Error al buscar pagos. ", e);
+		} finally {
+			try {
+				if (rs != null)
+					rs.close();
+				if (ps != null)
+					ps.close();
+			} catch (Exception e) {
+				log.log(Level.SEVERE, "", e);
+			}
+		}
+		return ret;
+		
 	}
 
 	public void setFechaTablaFacturas(Timestamp fecha, boolean all) {
