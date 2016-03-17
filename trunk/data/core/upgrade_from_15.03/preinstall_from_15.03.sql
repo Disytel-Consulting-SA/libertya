@@ -4773,3 +4773,189 @@ CREATE OR REPLACE VIEW reginfo_ventas_alicuotas_v AS
 
 ALTER TABLE reginfo_ventas_alicuotas_v OWNER TO libertya;
 
+-- 20160316-2126 Eliminación de metadatos por parche de exportación CITI
+DELETE FROM e_electronicinvoiceref WHERE ad_componentobjectuid = 'CORE-E_ElectronicInvoiceRef-1010088';
+
+-- 20160316-2126 Creación de función getCreditoFiscalComputable.
+CREATE OR REPLACE FUNCTION getCreditoFiscalComputable(p_c_invoice_id integer)
+  RETURNS numeric AS
+$BODY$
+DECLARE
+    	v_Amount        	NUMERIC;
+	v_TipoCreditoFiscal    	TEXT;
+BEGIN
+
+    SELECT codigo
+    INTO v_TipoCreditoFiscal
+    FROM e_electronicinvoiceref
+    WHERE tabla_ref = 'TCOM' AND clave_busqueda = 'TIPO_CREDITO_FISCAL_COMPUTABLE'
+    LIMIT 1;
+
+    IF (v_TipoCreditoFiscal = 'C'::TEXT) THEN
+        SELECT COALESCE(SUM(it.TaxAmt), 0)
+	INTO v_Amount
+        FROM c_invoicetax it
+        JOIN c_tax t ON t.c_tax_id = it.c_tax_id
+        WHERE it.C_Invoice_ID = p_c_invoice_id AND t.ispercepcion = 'N'::bpchar
+	    -- Notar que si el importe de operaciones exentas es distinto a 0, entonces este campo informa el importe y no debe salir el registro en el detalle de alícuotas.
+	    AND ((getImporteOperacionExentas(p_c_invoice_id) <> 0 AND t.rate <> 0) OR getImporteOperacionExentas(p_c_invoice_id) = 0)
+	    -- No se informan aquellas líneas donde el importe del impuesto es 0 y el taxrate es distinto de 0
+	    AND NOT (it.taxamt = 0 AND t.rate <> 0);
+    ELSE
+    	v_Amount := 0;
+    END IF;
+    RETURN v_Amount;
+END;
+
+$BODY$
+  LANGUAGE 'plpgsql' VOLATILE
+  COST 100;
+ALTER FUNCTION getCreditoFiscalComputable(p_c_invoice_id integer) OWNER TO libertya;
+
+-- 20160316-2126 Actualizacion de view reginfo_ventas_cbte_v.
+CREATE OR REPLACE VIEW reginfo_ventas_cbte_v AS 
+ SELECT i.ad_client_id, i.ad_org_id, i.c_invoice_id, date_trunc('day'::text, i.dateacct) AS date, date_trunc('day'::text, i.dateacct) AS fechadecomprobante, ei.codigo AS tipodecomprobante, i.puntodeventa, i.numerocomprobante AS nrocomprobante, i.numerocomprobante AS nrocomprobantehasta, 
+ -- Cuando la factura supera los 1000 pesos, el taxidtype no puede ser 99. Se indica 96 (DNI)
+ (CASE WHEN (bp.taxidtype = '99' AND i.grandtotal > 1000) THEN '96' ELSE bp.taxidtype END)::character(2) AS codigodoccomprador, 
+ -- Se invoca a la funcion getTaxID para obtener el Nro. de Identificacion
+ getTaxID(bp.taxid, bp.taxidtype, bp.C_Categoria_Iva_ID, i.NroIdentificCliente, i.GrandTotal)::character varying(20) AS nroidentificacioncomprador, 
+ bp.name AS nombrecomprador, 
+ currencyconvert(i.grandtotal, i.c_currency_id, 118, i.dateacct::timestamp with time zone, NULL::integer, i.ad_client_id, i.ad_org_id)::numeric(20,2) AS imptotal, 
+ 0::numeric(20,2) AS impconceptosnoneto, 0::numeric(20,2) AS imppercepnocategorizados, 
+ currencyconvert(getImporteOperacionExentas(i.c_invoice_id), i.c_currency_id, 118, i.dateacct::timestamp with time zone, NULL::integer, i.ad_client_id, i.ad_org_id)::numeric(20,2) AS impopeexentas, 
+ -- Importe por Impuestos Nacionales
+ currencyconvert(getTaxAmountByAreaType(i.c_invoice_id, 'N'), i.c_currency_id, 118, i.dateacct::timestamp with time zone, NULL::integer, i.ad_client_id, i.ad_org_id)::numeric(20,2) AS imppercepopagosdeimpunac, 
+ -- Importe por Impuestos de IIBB
+ currencyconvert(getTaxAmountByPerceptionType(i.c_invoice_id, 'B'), i.c_currency_id, 118, i.dateacct::timestamp with time zone, NULL::integer, i.ad_client_id, i.ad_org_id)::numeric(20,2) AS imppercepiibb, 
+ -- Importe por Impuestos Municipales
+ currencyconvert(getTaxAmountByAreaType(i.c_invoice_id, 'M'), i.c_currency_id, 118, i.dateacct::timestamp with time zone, NULL::integer, i.ad_client_id, i.ad_org_id)::numeric(20,2) AS imppercepimpumuni, 
+ -- Importe por Impuestos Internos
+ currencyconvert(getTaxAmountByAreaType(i.c_invoice_id, 'I'), i.c_currency_id, 118, i.dateacct::timestamp with time zone, NULL::integer, i.ad_client_id, i.ad_org_id)::numeric(20,2) AS impimpuinternos, 
+ cu.wsfecode AS codmoneda, currencyrate(i.c_currency_id, 118, i.dateacct::timestamp with time zone, NULL::integer, i.ad_client_id, i.ad_org_id)::numeric(10,6) AS tipodecambio, 
+ -- Notar que si el importe de operaciones exentas es distinto a 0, entonces se resta 1 a la cantidad de alí­cuotas, ya que este campo informa el importe y no sale el registro en el detalle de alícuotas.
+ (CASE WHEN getImporteOperacionExentas(i.c_invoice_id) <> 0 THEN getcantidadalicuotasiva(i.c_invoice_id) -1 ELSE getcantidadalicuotasiva(i.c_invoice_id) END) AS cantalicuotasiva, 
+getCodigoOperacion(i.C_Invoice_ID)::character varying(1) AS codigooperacion, 
+  -- Importe Otros Tributos
+ currencyconvert(getImporteOtrosTributos(i.c_invoice_id), i.c_currency_id, 118, i.dateacct::timestamp with time zone, NULL::integer, i.ad_client_id, i.ad_org_id)::numeric(20,2) AS impotrostributos, 
+ NULL::timestamp without time zone AS fechavencimientopago
+   FROM c_invoice i
+   JOIN c_doctype dt ON dt.c_doctype_id = i.c_doctype_id
+   LEFT JOIN e_electronicinvoiceref ei ON dt.doctypekey::text ~~* (ei.clave_busqueda::text || '%'::text) AND ei.tabla_ref::text = 'TCOM'::text
+   JOIN c_bpartner bp ON bp.c_bpartner_id = i.c_bpartner_id
+   JOIN c_currency cu ON cu.c_currency_id = i.c_currency_id
+  WHERE (i.docstatus = ANY (ARRAY['CL'::bpchar, 'CO'::bpchar, 'VO'::bpchar, 'RE'::bpchar])) AND i.issotrx = 'Y'::bpchar AND i.isactive = 'Y'::bpchar AND (dt.doctypekey::text <> ALL (ARRAY['RTR'::character varying::text, 'RTI'::character varying::text, 'RCR'::character varying::text, 'RCI'::character varying::text])) AND dt.isfiscaldocument = 'Y'::bpchar AND (dt.isfiscal IS NULL OR dt.isfiscal = 'N'::bpchar OR dt.isfiscal = 'Y'::bpchar AND i.fiscalalreadyprinted = 'Y'::bpchar)
+	-- Se descartan aquellas facturas de 1 centavo. Este tipo de factura se crean para actualizar el controlador fiscal, pero no deben informarse.
+	AND (i.grandtotal <> 0.01);
+
+ALTER TABLE reginfo_ventas_cbte_v OWNER TO libertya;
+
+-- 20160316-2126 Actualizacion de view reginfo_ventas_alicuotas_v.
+CREATE OR REPLACE VIEW reginfo_ventas_alicuotas_v AS 
+ SELECT i.ad_client_id, i.ad_org_id, i.c_invoice_id, date_trunc('day'::text, i.dateacct) AS date, date_trunc('day'::text, i.dateacct) AS fechadecomprobante, ei.codigo AS tipodecomprobante, i.puntodeventa, i.numerocomprobante AS nrocomprobante, currencyconvert(it.taxbaseamt, i.c_currency_id, 118, i.dateacct::timestamp with time zone, NULL::integer, i.ad_client_id, i.ad_org_id)::numeric(20,2) AS impnetogravado, t.wsfecode AS alicuotaiva, currencyconvert(it.taxamt, i.c_currency_id, 118, i.dateacct::timestamp with time zone, NULL::integer, i.ad_client_id, i.ad_org_id)::numeric(20,2) AS impuestoliquidado
+   FROM c_invoice i
+   JOIN c_doctype dt ON dt.c_doctype_id = i.c_doctype_id
+   LEFT JOIN e_electronicinvoiceref ei ON dt.doctypekey::text ~~* (ei.clave_busqueda::text || '%'::text) AND ei.tabla_ref::text = 'TCOM'::text
+   JOIN c_invoicetax it ON i.c_invoice_id = it.c_invoice_id
+   JOIN c_tax t ON t.c_tax_id = it.c_tax_id
+  WHERE t.ispercepcion = 'N'::bpchar AND (i.docstatus = ANY (ARRAY['CL'::bpchar, 'CO'::bpchar, 'VO'::bpchar, 'RE'::bpchar])) AND i.issotrx = 'Y'::bpchar AND i.isactive = 'Y'::bpchar AND (dt.doctypekey::text <> ALL (ARRAY['RTR'::character varying::text, 'RTI'::character varying::text, 'RCR'::character varying::text, 'RCI'::character varying::text])) AND dt.isfiscaldocument = 'Y'::bpchar AND (dt.isfiscal IS NULL OR dt.isfiscal = 'N'::bpchar OR dt.isfiscal = 'Y'::bpchar AND i.fiscalalreadyprinted = 'Y'::bpchar)
+  	-- Notar que si el importe de operaciones exentas es distinto a 0, entonces este campo informa el importe y no debe salir el registro en el detalle de alicuotas.
+	AND ((getImporteOperacionExentas(i.c_invoice_id) <> 0 AND t.rate <> 0) OR getImporteOperacionExentas(i.c_invoice_id) = 0)
+	-- No se informan aquellas lineas donde el importe del impuesto es 0 y el taxrate es distinto de 0
+	AND NOT (it.taxamt = 0 AND t.rate <> 0)
+	-- Se descartan aquellas facturas de 1 centavo. Este tipo de factura se crean para actualizar el controlador fiscal, pero no deben informarse.
+	AND (i.grandtotal <> 0.01);
+
+ALTER TABLE reginfo_ventas_alicuotas_v OWNER TO libertya;
+
+-- 20160316-2126 Actualización de view reginfo_compras_cbte_v.
+CREATE OR REPLACE VIEW reginfo_compras_cbte_v AS 
+  SELECT i.ad_client_id, i.ad_org_id, i.c_invoice_id, date_trunc('day'::text, i.dateacct) AS date, date_trunc('day'::text, i.dateinvoiced) AS fechadecomprobante, 
+ getTipoDeComprobante(dt.doctypekey, l.letra)::character varying(15) AS tipodecomprobante, 
+ -- Si el tipo de comprobante es despacho de importación, entonces el punto de venta debe ser 0.
+ (CASE WHEN (getTipoDeComprobante(dt.doctypekey, l.letra) = '66') THEN 0 ELSE  i.puntodeventa END) AS puntodeventa, 
+ -- Si el tipo de comprobante es despacho de importación, entonces el número de comprobante debe ser 0.
+ (CASE WHEN (getTipoDeComprobante(dt.doctypekey, l.letra) = '66') THEN 0 ELSE  i.numerocomprobante END) AS nrocomprobante, 
+ -- Si el tipo de comprobante es despacho de importación, entonces es necesario inormar el código de despacho de importación.
+ (CASE WHEN (getTipoDeComprobante(dt.doctypekey, l.letra) = '66') THEN i.ImportClearance ELSE NULL END)::character varying(30) AS despachoimportacion, 
+ bp.taxidtype AS codigodocvendedor, bp.taxid AS nroidentificacionvendedor, bp.name AS nombrevendedor, 
+ currencyconvert(i.grandtotal, i.c_currency_id, 118, i.dateacct::timestamp with time zone, NULL::integer, i.ad_client_id, i.ad_org_id)::numeric(20,2) AS imptotal, 
+ 0::numeric(20,2) AS impconceptosnoneto, 
+ -- Si la factura es 'B' o 'C' y no es un Despacho de Importación, se informa 0.
+ (CASE WHEN (l.letra IN ('B', 'C') AND i.ImportClearance IS NULL) THEN 0 ELSE currencyconvert(getImporteOperacionExentas(i.c_invoice_id), i.c_currency_id, 118, i.dateacct::timestamp with time zone, NULL::integer, i.ad_client_id, i.ad_org_id) END)::numeric(20,2) AS impopeexentas, 
+ -- Importe por Impuestos de IVA
+ currencyconvert(getTaxAmountByPerceptionType(i.c_invoice_id, 'I'), i.c_currency_id, 118, i.dateacct::timestamp with time zone, NULL::integer, i.ad_client_id, i.ad_org_id)::numeric(20,2) AS imppercepopagosvaloragregado, 
+ -- Importe por Impuestos Nacionales
+ currencyconvert(getTaxAmountByAreaType(i.c_invoice_id, 'N'), i.c_currency_id, 118, i.dateacct::timestamp with time zone, NULL::integer, i.ad_client_id, i.ad_org_id)::numeric(20,2) AS imppercepopagosdeimpunac, 
+ -- Importe por Impuestos de IIBB
+ currencyconvert(getTaxAmountByPerceptionType(i.c_invoice_id, 'B'), i.c_currency_id, 118, i.dateacct::timestamp with time zone, NULL::integer, i.ad_client_id, i.ad_org_id)::numeric(20,2) AS imppercepiibb, 
+ -- Importe por Impuestos Municipales
+ currencyconvert(getTaxAmountByAreaType(i.c_invoice_id, 'M'), i.c_currency_id, 118, i.dateacct::timestamp with time zone, NULL::integer, i.ad_client_id, i.ad_org_id)::numeric(20,2) AS imppercepimpumuni, 
+ -- Importe por Impuestos Internos
+ currencyconvert(getTaxAmountByAreaType(i.c_invoice_id, 'I'), i.c_currency_id, 118, i.dateacct::timestamp with time zone, NULL::integer, i.ad_client_id, i.ad_org_id)::numeric(20,2) AS impimpuinternos, 
+ cu.wsfecode AS codmoneda, 
+ currencyrate(i.c_currency_id, 118, i.dateacct::timestamp with time zone, NULL::integer, i.ad_client_id, i.ad_org_id)::numeric(10,6) AS tipodecambio, 
+ -- Si la factura es 'B' o 'C' se informa 0. A excepción de los Despachos de Importación.
+ -- Notar que si el importe de operaciones exentas es distinto a 0, entonces se resta 1 a la cantidad de alícuotas, ya que este campo informa el importe y no sale el registro en el detalle de alícuotas.
+ (CASE WHEN (l.letra IN ('B', 'C') AND (getTipoDeComprobante(dt.doctypekey, l.letra) <> '66')) THEN 0 ELSE (CASE WHEN getImporteOperacionExentas(i.c_invoice_id) <> 0 THEN getcantidadalicuotasiva(i.c_invoice_id) -1 ELSE getcantidadalicuotasiva(i.c_invoice_id) END) END) AS cantalicuotasiva, 
+ getcodigooperacion(i.c_invoice_id)::character varying(1) AS codigooperacion, 
+ currencyconvert(getCreditoFiscalComputable(i.c_invoice_id), i.c_currency_id, 118, i.dateacct::timestamp with time zone, NULL::integer, i.ad_client_id, i.ad_org_id)::numeric(20,2) AS impcreditofiscalcomputable, 
+ -- Importe Otros Tributos
+ currencyconvert(getImporteOtrosTributos(i.c_invoice_id), i.c_currency_id, 118, i.dateacct::timestamp with time zone, NULL::integer, i.ad_client_id, i.ad_org_id)::numeric(20,2) AS impotrostributos, 
+ NULL::character varying(20) AS cuitemisorcorredor, 
+ NULL::character varying(60) AS denominacionemisorcorredor, 
+ 0::numeric(20,2) AS ivacomision
+   FROM c_invoice i
+   JOIN c_doctype dt ON dt.c_doctype_id = i.c_doctype_id
+   LEFT JOIN c_letra_comprobante l ON l.c_letra_comprobante_id = i.c_letra_comprobante_id
+   JOIN c_bpartner bp ON bp.c_bpartner_id = i.c_bpartner_id
+   JOIN c_currency cu ON cu.c_currency_id = i.c_currency_id
+  WHERE (i.docstatus = ANY (ARRAY['CL'::bpchar, 'CO'::bpchar, 'VO'::bpchar, 'RE'::bpchar])) AND i.issotrx = 'N'::bpchar AND i.isactive = 'Y'::bpchar AND (dt.doctypekey::text <> ALL (ARRAY['RTR'::character varying::text, 'RTI'::character varying::text, 'RCR'::character varying::text, 'RCI'::character varying::text])) AND dt.isfiscaldocument = 'Y'::bpchar AND (dt.isfiscal IS NULL OR dt.isfiscal = 'N'::bpchar OR dt.isfiscal = 'Y'::bpchar AND i.fiscalalreadyprinted = 'Y'::bpchar);
+
+ALTER TABLE reginfo_compras_cbte_v OWNER TO libertya;
+
+-- 20160316-2126 Actualización de view reginfo_compras_alicuotas_v.
+CREATE OR REPLACE VIEW reginfo_compras_alicuotas_v AS 
+ SELECT i.ad_client_id, i.ad_org_id, i.c_invoice_id, date_trunc('day'::text, i.dateacct) AS date, date_trunc('day'::text, i.dateinvoiced) AS fechadecomprobante, 
+  getTipoDeComprobante(dt.doctypekey, l.letra)::character varying(15) AS tipodecomprobante, 
+ -- Si el tipo de comprobante es despacho de importación, entonces el punto de venta debe ser 0.
+ (CASE WHEN (getTipoDeComprobante(dt.doctypekey, l.letra) = '66') THEN 0 ELSE  i.puntodeventa END) AS puntodeventa, 
+ -- Si el tipo de comprobante es despacho de importación, entonces el número de comprobante debe ser 0.
+ (CASE WHEN (getTipoDeComprobante(dt.doctypekey, l.letra) = '66') THEN 0 ELSE  i.numerocomprobante END) AS nrocomprobante, 
+ bp.taxidtype AS codigodocvendedor, bp.taxid AS nroidentificacionvendedor, currencyconvert(it.taxbaseamt, i.c_currency_id, 118, i.dateacct::timestamp with time zone, NULL::integer, i.ad_client_id, i.ad_org_id)::numeric(20,2) AS impnetogravado, t.wsfecode AS alicuotaiva, 
+ currencyconvert(it.taxamt, i.c_currency_id, 118, i.dateacct::timestamp with time zone, NULL::integer, i.ad_client_id, i.ad_org_id)::numeric(20,2) AS impuestoliquidado
+   FROM c_invoice i
+   JOIN c_doctype dt ON dt.c_doctype_id = i.c_doctype_id
+   LEFT JOIN c_letra_comprobante l ON l.c_letra_comprobante_id = i.c_letra_comprobante_id
+   JOIN c_bpartner bp ON bp.c_bpartner_id = i.c_bpartner_id
+   JOIN c_invoicetax it ON i.c_invoice_id = it.c_invoice_id
+   JOIN c_tax t ON t.c_tax_id = it.c_tax_id
+  WHERE t.ispercepcion = 'N'::bpchar AND (i.docstatus = ANY (ARRAY['CL'::bpchar, 'CO'::bpchar, 'VO'::bpchar, 'RE'::bpchar])) AND i.issotrx = 'N'::bpchar AND i.isactive = 'Y'::bpchar AND (dt.doctypekey::text <> ALL (ARRAY['RTR'::character varying::text, 'RTI'::character varying::text, 'RCR'::character varying::text, 'RCI'::character varying::text])) AND dt.isfiscaldocument = 'Y'::bpchar AND (dt.isfiscal IS NULL OR dt.isfiscal = 'N'::bpchar OR dt.isfiscal = 'Y'::bpchar AND i.fiscalalreadyprinted = 'Y'::bpchar) AND
+	l.letra NOT IN ('B', 'C')
+	-- Notar que si el importe de operaciones exentas es distinto a 0, entonces este campo informa el importe y no debe salir el registro en el detalle de alícuotas.
+	AND ((getImporteOperacionExentas(i.c_invoice_id) <> 0 AND t.rate <> 0) OR getImporteOperacionExentas(i.c_invoice_id) = 0)
+	-- No se informan aquellas líneas donde el importe del impuesto es 0 y el taxrate es distinto de 0
+	AND NOT (it.taxamt = 0 AND t.rate <> 0);
+
+ALTER TABLE reginfo_compras_alicuotas_v OWNER TO libertya;
+
+-- 20160316-2126 Actualización de view reginfo_compras_importaciones_v.
+CREATE OR REPLACE VIEW reginfo_compras_importaciones_v AS 
+ SELECT i.ad_client_id, i.ad_org_id, i.c_invoice_id, date_trunc('day'::text, i.dateacct) AS date, date_trunc('day'::text, i.dateinvoiced) AS fechadecomprobante, 
+ i.ImportClearance::character varying(30) AS despachoimportacion, 
+ currencyconvert(it.taxbaseamt, i.c_currency_id, 118, i.dateacct::timestamp with time zone, NULL::integer, i.ad_client_id, i.ad_org_id)::numeric(20,2) AS impnetogravado, 
+ t.wsfecode AS alicuotaiva, 
+ currencyconvert(it.taxamt, i.c_currency_id, 118, i.dateacct::timestamp with time zone, NULL::integer, i.ad_client_id, i.ad_org_id)::numeric(20,2) AS impuestoliquidado
+   FROM c_invoice i
+   JOIN c_doctype dt ON dt.c_doctype_id = i.c_doctype_id
+   LEFT JOIN c_letra_comprobante l ON l.c_letra_comprobante_id = i.c_letra_comprobante_id
+   JOIN c_bpartner bp ON bp.c_bpartner_id = i.c_bpartner_id
+   JOIN c_invoicetax it ON i.c_invoice_id = it.c_invoice_id
+   JOIN c_tax t ON t.c_tax_id = it.c_tax_id
+  WHERE t.ispercepcion = 'N'::bpchar AND (i.docstatus = ANY (ARRAY['CL'::bpchar, 'CO'::bpchar, 'VO'::bpchar, 'RE'::bpchar])) AND i.issotrx = 'N'::bpchar AND i.isactive = 'Y'::bpchar AND (dt.doctypekey::text <> ALL (ARRAY['RTR'::character varying::text, 'RTI'::character varying::text, 'RCR'::character varying::text, 'RCI'::character varying::text])) AND dt.isfiscaldocument = 'Y'::bpchar AND (dt.isfiscal IS NULL OR dt.isfiscal = 'N'::bpchar OR dt.isfiscal = 'Y'::bpchar AND i.fiscalalreadyprinted = 'Y'::bpchar) AND
+	i.ImportClearance IS NOT NULL
+	-- Notar que si el importe de operaciones exentas es distinto a 0, entonces este campo informa el importe y no debe salir el registro en el detalle de alícuotas.
+	AND ((getImporteOperacionExentas(i.c_invoice_id) <> 0 AND t.rate <> 0) OR getImporteOperacionExentas(i.c_invoice_id) = 0)
+	-- No se informan aquellas líneas donde el importe del impuesto es 0 y el taxrate es distinto de 0
+	AND NOT (it.taxamt = 0 AND t.rate <> 0);
+
+ALTER TABLE reginfo_compras_importaciones_v OWNER TO libertya;
