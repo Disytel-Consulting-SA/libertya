@@ -3348,7 +3348,7 @@ public class MOrder extends X_C_Order implements DocAction, Authorization  {
 							"QtyEnteredLessThanOrderMinQty",
 							new Object[] { prod.getValue(), prod.getName(),
 									po.getOrder_Min(), sLine.getQtyEntered() });
-	            	return DocAction.STATUS_InProgress;
+	            	return DocAction.STATUS_Invalid;
             	}
             }
 			
@@ -3359,14 +3359,14 @@ public class MOrder extends X_C_Order implements DocAction, Authorization  {
 			if (!Util.isEmpty(qtyDeliveredTransferred, true)
 					&& sLine.getQtyOrdered().compareTo(qtyDeliveredTransferred) < 0) {
 				m_processMsg = "@LinesWithQtyOrderedMinorToQtyDelivered@";
-            	return DocAction.STATUS_InProgress;
+            	return DocAction.STATUS_Invalid;
         	}
 			
 			// La cantidad pedida no puede ser menor a la cantidad facturada
 			if (!Util.isEmpty(sLine.getQtyInvoiced(), true)
 					&& sLine.getQtyOrdered().compareTo(sLine.getQtyInvoiced()) < 0) {
 				m_processMsg = "@LinesWithQtyOrderedMinorToQtyInvoiced@";
-            	return DocAction.STATUS_InProgress;
+            	return DocAction.STATUS_Invalid;
         	}
             
             //MProduct   product = sLine.getProduct(); -> depende de la cache en MProduct, que expira cada 5 min..
