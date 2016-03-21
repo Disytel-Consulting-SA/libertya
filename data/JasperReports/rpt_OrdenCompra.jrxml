@@ -693,13 +693,14 @@
 					</textElement>
 				<textFieldExpression   class="java.math.BigDecimal"><![CDATA[($F{CODARTICULO}.equalsIgnoreCase("TX")? null: $F{CANTIDAD})]]></textFieldExpression>
 				</textField>
-				<textField isStretchWithOverflow="false" pattern="" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
+				<textField isStretchWithOverflow="true" pattern="" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
 						x="136"
 						y="1"
 						width="246"
 						height="12"
-						key="textField-25"/>
+						key="textField-25"
+						isPrintWhenDetailOverflows="true"/>
 					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
 					<textElement verticalAlignment="Top">
 						<font size="7"/>
