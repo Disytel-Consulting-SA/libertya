@@ -4959,3 +4959,17 @@ CREATE OR REPLACE VIEW reginfo_compras_importaciones_v AS
 	AND NOT (it.taxamt = 0 AND t.rate <> 0);
 
 ALTER TABLE reginfo_compras_importaciones_v OWNER TO libertya;
+
+-- 20160404-1217 Vista simplificada para consulta de facturas por caja diaria
+CREATE OR REPLACE VIEW c_posjournalinvoices_v_simple AS
+SELECT i.c_posjournal_id, ah.c_allocationhdr_id, ah.allocationtype, i.c_invoice_id, i.ad_client_id, i.ad_org_id, i.isactive, i.created, i.createdby, i.updated, i.updatedby, i.documentno, i.c_doctype_id, i.dateinvoiced, i.dateacct, i.c_bpartner_id, i.description, i.docstatus, i.processed, i.c_currency_id, i.grandtotal, sum(COALESCE(currencyconvert(al.amount + al.discountamt + al.writeoffamt, ah.c_currency_id, i.c_currency_id, NULL::timestamp with time zone, NULL::integer, ah.ad_client_id, ah.ad_org_id), 0::numeric(20,2)))::numeric(20,2) AS paidamt, dt.name, dt.docbasetype, dt.signo_issotrx, dt.isfiscaldocument, dt.isfiscal, i.fiscalalreadyprinted, ah.isactive AS allocation_active, ah.created AS allocation_created, ah.updated AS allocation_updated, i.c_invoice_orig_id    
+FROM c_invoice i    
+JOIN c_doctype dt ON dt.c_doctype_id = i.c_doctypetarget_id    
+LEFT JOIN c_allocationline al ON al.c_invoice_id = i.c_invoice_id    
+LEFT JOIN c_allocationhdr ah ON al.c_allocationhdr_id = ah.c_allocationhdr_id   
+WHERE i.issotrx = 'Y'::bpchar                                                            
+AND (ah.c_allocationhdr_id IS NULL OR (ah.allocationtype::text = ANY (ARRAY['STX'::character varying::text, 'MAN'::character varying::text, 'RC'::character varying::text])))   
+GROUP BY i.documentno, i.c_posjournal_id, ah.c_allocationhdr_id, ah.allocationtype, i.c_invoice_id, i.ad_client_id, i.ad_org_id, i.isactive, i.created, i.createdby, i.updated, i.updatedby, i.c_doctype_id, i.dateinvoiced, i.dateacct, i.c_bpartner_id, i.description, i.docstatus, i.processed, i.c_currency_id, i.grandtotal, dt.name, dt.docbasetype, dt.signo_issotrx, dt.isfiscaldocument, dt.isfiscal, i.fiscalalreadyprinted, ah.isactive, ah.created, ah.updated, i.c_invoice_orig_id   
+ORDER BY i.documentno;
+
+
