@@ -38,11 +38,11 @@ public class EstadoDeCuentaProcess extends SvrProcess {
 	Timestamp dateTrxFrom = null;
 	Timestamp dateTrxTo = null;
 	Timestamp dateConvert = null;
-	int currencyID;
+	int currencyID = 0;
 	
-	private String clientISO;
-	private HashMap<String, BigDecimal> saldosMultimoneda = new HashMap<String, BigDecimal>();
-	private HashMap<String, BigDecimal> saldosGeneralMultimoneda = new HashMap<String, BigDecimal>();
+	private Integer currencyClient;
+	private HashMap<Integer, BigDecimal> saldosMultimoneda = new HashMap<Integer, BigDecimal>();
+	private HashMap<Integer, BigDecimal> saldosGeneralMultimoneda = new HashMap<Integer, BigDecimal>();
 	
 	@Override
 	protected void prepare() {
@@ -134,7 +134,7 @@ public class EstadoDeCuentaProcess extends SvrProcess {
 	private void fillTable() throws Exception
 	{
 		MClientInfo ci = MClient.get(getCtx()).getInfo();
-		int currencyClient = ci.getC_Currency_ID();
+		currencyClient = ci.getC_Currency_ID();
 		StringBuffer query = new StringBuffer (
 			"     SELECT dt.signo_issotrx, dt.name as tipodoc, i.ad_org_id, i.ad_client_id, i.documentno, i.c_invoice_id as doc_id, i.c_order_id, i.c_bpartner_id, bp.name as bpartner, i.issotrx, i.dateacct, i.dateinvoiced as datedoc, p.netdays, i.dateinvoiced + (p.netdays::text || ' days'::text)::interval AS duedate, paymenttermduedays(i.c_paymentterm_id, i.dateinvoiced::timestamp with time zone, now()) AS daysdue, i.dateinvoiced + (p.discountdays::text || ' days'::text)::interval AS discountdate, round(i.grandtotal * p.discount * 0.01::numeric, 2) AS discountamt, " +
 			//"     i.grandtotal, invoicepaid(i.c_invoice_id, i.c_currency_id, 1) AS paidamt, invoiceopen(i.c_invoice_id, 0) AS openamt, " +
@@ -342,10 +342,9 @@ public class EstadoDeCuentaProcess extends SvrProcess {
 		BigDecimal saldo = new BigDecimal(0);
 		BigDecimal subSaldo = new BigDecimal(0);
 		BigDecimal saldogral = new BigDecimal(0);
-		
-		clientISO = MCurrency.getISO_Code(getCtx(), currencyClient);	
-		saldosMultimoneda.put(clientISO, BigDecimal.ZERO);
-		saldosGeneralMultimoneda.put(clientISO, BigDecimal.ZERO);
+
+		saldosMultimoneda.put(currencyClient, BigDecimal.ZERO);
+		saldosGeneralMultimoneda.put(currencyClient, BigDecimal.ZERO);
 		
 		while (rs.next()) {
 			bPartner = rs.getInt("c_bpartner_id");
@@ -388,10 +387,10 @@ public class EstadoDeCuentaProcess extends SvrProcess {
 			ec.setOpenAmt(rs.getBigDecimal("openamt"));
 			
 			BigDecimal rate = MConversionRate.getRate(rs.getInt("c_currency_id"), currencyClient, this.dateConvert, rs.getInt("c_conversiontype_id"), getAD_Client_ID(), 0);
-			String fromISO = MCurrency.getISO_Code(getCtx(), rs.getInt("c_currency_id"));
-			this.incrementarSaldosMultimoneda(ec, fromISO);
+			this.incrementarSaldosMultimoneda(ec, rs.getInt("c_currency_id"));
 			
 			if (rate == null) {
+				String fromISO = MCurrency.getISO_Code(getCtx(), rs.getInt("c_currency_id"));
 				String toISO = MCurrency.getISO_Code(getCtx(), currencyClient);
 				log.severe("No Currency Conversion from " + fromISO	+ " to " + toISO);
 				throw new Exception("@NoCurrencyConversion@ (" + fromISO + "->" + toISO + ")");
@@ -431,22 +430,22 @@ public class EstadoDeCuentaProcess extends SvrProcess {
 		
 	}
 	
-	private void incrementarSaldosMultimoneda(X_T_EstadoDeCuenta ec, String fromISO){
-		if (!saldosMultimoneda.containsKey(fromISO)) {
-			saldosMultimoneda.put(fromISO, BigDecimal.ZERO);
+	private void incrementarSaldosMultimoneda(X_T_EstadoDeCuenta ec, Integer c_Currency_ID){
+		if (!saldosMultimoneda.containsKey(c_Currency_ID)) {
+			saldosMultimoneda.put(c_Currency_ID, BigDecimal.ZERO);
 		}
 		BigDecimal saldoMultimoneda = ec.getOpenAmtMulticurrency();
 		if (!ec.gettipodoc().equalsIgnoreCase(libroDeCaja)) 
 			saldoMultimoneda = saldoMultimoneda.multiply(new BigDecimal(ec.getsigno_issotrx()));
 		else
 			saldoMultimoneda = saldoMultimoneda.abs().multiply(new BigDecimal(ec.getsigno_issotrx()));					
-		saldosMultimoneda.put(fromISO, saldosMultimoneda.get(fromISO).add(saldoMultimoneda));
+		saldosMultimoneda.put(c_Currency_ID, saldosMultimoneda.get(c_Currency_ID).add(saldoMultimoneda));
 	}
 	
 	private void incrementarSaldosGeneralMultimoneda(){
 		Iterator it = saldosMultimoneda.entrySet().iterator();
 		while (it.hasNext()) {
-			Entry<String, BigDecimal> e = (Entry<String, BigDecimal>) it.next();
+			Entry<Integer, BigDecimal> e = (Entry<Integer, BigDecimal>) it.next();
 			
 			if (!saldosGeneralMultimoneda.containsKey(e.getKey())) {
 				saldosGeneralMultimoneda.put(e.getKey(), BigDecimal.ZERO);
@@ -454,19 +453,19 @@ public class EstadoDeCuentaProcess extends SvrProcess {
 			saldosGeneralMultimoneda.put(e.getKey(), saldosGeneralMultimoneda.get(e.getKey()).add(e.getValue()));	
 		}
 		
-		saldosMultimoneda = new HashMap<String, BigDecimal>();
-		saldosMultimoneda.put(clientISO, BigDecimal.ZERO);
+		saldosMultimoneda = new HashMap<Integer, BigDecimal>();
+		saldosMultimoneda.put(currencyClient, BigDecimal.ZERO);
 	}
 	
 	private void insertTotalForBPartnerOld(int bPartner, BigDecimal saldo)	{
 		Iterator it = saldosMultimoneda.entrySet().iterator();
 		while (it.hasNext()) {
-			Entry<String, BigDecimal> e = (Entry<String, BigDecimal>) it.next();
+			Entry<Integer, BigDecimal> e = (Entry<Integer, BigDecimal>) it.next();
 			
 			X_T_EstadoDeCuenta ec = new X_T_EstadoDeCuenta(getCtx(), 0, get_TrxName());
 			ec.setAD_PInstance_ID(getAD_PInstance_ID());
 			ec.setC_BPartner_ID(bPartner);
-			ec.setbpartner("             TOTAL " + e.getKey() + ":");
+			ec.setbpartner("             TOTAL " + MCurrency.getISO_Code(getCtx(), e.getKey()) + ":");
 			ec.setOpenAmt(e.getValue());
 			if (daysfrom != MAX_DUE_DAYS*-1 || daysto != MAX_DUE_DAYS) {
 				ec.setDaysDue(daysfrom);
@@ -476,6 +475,7 @@ public class EstadoDeCuentaProcess extends SvrProcess {
 			ec.setSalesRep_ID(salesRepID);
 			ec.setDateToDays(dateToDays);
 			ec.setDocumentNo("");
+			ec.setC_Currency_ID(e.getKey());
 			if (dateTrxTo != null) {
 				ec.setDateDoc(dateTrxTo);
 			} else if (dateTrxFrom != null) {
@@ -483,26 +483,30 @@ public class EstadoDeCuentaProcess extends SvrProcess {
 			} 
 			ec.save();
 		}
-		
-		X_T_EstadoDeCuenta ec = new X_T_EstadoDeCuenta(getCtx(), 0, get_TrxName());
-		ec.setAD_PInstance_ID(getAD_PInstance_ID());
-		ec.setC_BPartner_ID(bPartner);
-		ec.setbpartner("             TOTAL:");
-		ec.setOpenAmt(saldo);
-		if (daysfrom != MAX_DUE_DAYS*-1 || daysto != MAX_DUE_DAYS) {
-			ec.setDaysDue(daysfrom);
+
+		// La fila totalizadora por EC, se visualiza sólo si el filtro Moneda está vacío.
+		if (currencyID == 0) {
+			X_T_EstadoDeCuenta ec = new X_T_EstadoDeCuenta(getCtx(), 0, get_TrxName());
+			ec.setAD_PInstance_ID(getAD_PInstance_ID());
+			ec.setC_BPartner_ID(bPartner);
+			ec.setbpartner("             TOTAL:");
+			ec.setOpenAmt(saldo);
+			if (daysfrom != MAX_DUE_DAYS*-1 || daysto != MAX_DUE_DAYS) {
+				ec.setDaysDue(daysfrom);
+			}
+			ec.setAccountType(accountType);
+			ec.setShowDocuments(showDocuments);
+			ec.setSalesRep_ID(salesRepID);
+			ec.setDateToDays(dateToDays);
+			ec.setDocumentNo("");
+			ec.setC_Currency_ID(currencyClient);	
+			if (dateTrxTo != null) {
+				ec.setDateDoc(dateTrxTo);
+			} else if (dateTrxFrom != null) {
+				ec.setDateDoc(dateTrxFrom);
+			} 
+			ec.save();
 		}
-		ec.setAccountType(accountType);
-		ec.setShowDocuments(showDocuments);
-		ec.setSalesRep_ID(salesRepID);
-		ec.setDateToDays(dateToDays);
-		ec.setDocumentNo("");
-		if (dateTrxTo != null) {
-			ec.setDateDoc(dateTrxTo);
-		} else if (dateTrxFrom != null) {
-			ec.setDateDoc(dateTrxFrom);
-		} 
-		ec.save();
 	}
 	
 	private void insertTotalForBPartnerChecks(int bPartner)	{
@@ -533,6 +537,7 @@ public class EstadoDeCuentaProcess extends SvrProcess {
 		ec.setSalesRep_ID(salesRepID);
 		ec.setDateToDays(dateToDays);
 		ec.setDocumentNo("");
+		ec.setC_Currency_ID(currencyClient);
 		if (dateTrxTo != null) {
 			ec.setDateDoc(dateTrxTo);
 		} else if (dateTrxFrom != null) {
@@ -549,12 +554,12 @@ public class EstadoDeCuentaProcess extends SvrProcess {
 	private void insertTotalGral(BigDecimal saldo) {
 		Iterator it = saldosGeneralMultimoneda.entrySet().iterator();
 		while (it.hasNext()) {
-			Entry<String, BigDecimal> e = (Entry<String, BigDecimal>) it.next();
+			Entry<Integer, BigDecimal> e = (Entry<Integer, BigDecimal>) it.next();
 			
 			X_T_EstadoDeCuenta ec = new X_T_EstadoDeCuenta(getCtx(), 0, get_TrxName());
 			ec.setAD_PInstance_ID(getAD_PInstance_ID());
 			ec.setC_BPartner_ID(0);
-			ec.setbpartner("             TOTAL GENERAL " + e.getKey() + ":");
+			ec.setbpartner("             TOTAL GENERAL " + MCurrency.getISO_Code(getCtx(), e.getKey()) + ":");
 			ec.setOpenAmt(e.getValue());
 			if (daysfrom != MAX_DUE_DAYS*-1  || daysto != MAX_DUE_DAYS) {
 				ec.setDaysDue(daysfrom);
@@ -564,6 +569,7 @@ public class EstadoDeCuentaProcess extends SvrProcess {
 			ec.setSalesRep_ID(salesRepID);
 			ec.setDateToDays(dateToDays);
 			ec.setDocumentNo("");
+			ec.setC_Currency_ID(e.getKey());
 			if (dateTrxTo != null) {
 				ec.setDateDoc(dateTrxTo);
 			} else if (dateTrxFrom != null) {
@@ -571,26 +577,30 @@ public class EstadoDeCuentaProcess extends SvrProcess {
 			} 
 			ec.save();
 		}
-				
-		X_T_EstadoDeCuenta ec = new X_T_EstadoDeCuenta(getCtx(), 0, get_TrxName());
-		ec.setAD_PInstance_ID(getAD_PInstance_ID());
-		ec.setC_BPartner_ID(0);
-		ec.setbpartner("             TOTAL GENERAL:");
-		ec.setOpenAmt(saldo);
-		if (daysfrom != MAX_DUE_DAYS*-1  || daysto != MAX_DUE_DAYS) {
-			ec.setDaysDue(daysfrom);
+		
+		// La fila totalizadora para todas las EC, se visualiza sólo si el filtro Moneda está vacío.
+		if (currencyID == 0) {
+			X_T_EstadoDeCuenta ec = new X_T_EstadoDeCuenta(getCtx(), 0, get_TrxName());
+			ec.setAD_PInstance_ID(getAD_PInstance_ID());
+			ec.setC_BPartner_ID(0);
+			ec.setbpartner("             TOTAL GENERAL:");
+			ec.setOpenAmt(saldo);
+			if (daysfrom != MAX_DUE_DAYS*-1  || daysto != MAX_DUE_DAYS) {
+				ec.setDaysDue(daysfrom);
+			}
+			ec.setAccountType(accountType);
+			ec.setShowDocuments(showDocuments);
+			ec.setSalesRep_ID(salesRepID);
+			ec.setDateToDays(dateToDays);
+			ec.setDocumentNo("");
+			ec.setC_Currency_ID(currencyClient);
+			if (dateTrxTo != null) {
+				ec.setDateDoc(dateTrxTo);
+			} else if (dateTrxFrom != null) {
+				ec.setDateDoc(dateTrxFrom);
+			} 
+			ec.save();
 		}
-		ec.setAccountType(accountType);
-		ec.setShowDocuments(showDocuments);
-		ec.setSalesRep_ID(salesRepID);
-		ec.setDateToDays(dateToDays);
-		ec.setDocumentNo("");
-		if (dateTrxTo != null) {
-			ec.setDateDoc(dateTrxTo);
-		} else if (dateTrxFrom != null) {
-			ec.setDateDoc(dateTrxFrom);
-		} 
-		ec.save();
 	}
 	
 	protected boolean isShowOpenBalance() {
