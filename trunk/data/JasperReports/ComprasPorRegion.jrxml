@@ -36,6 +36,7 @@ organization,
 group_ec,
 group_ec_value,
 fecha,
+fecha_acct,
 tipo_de_documento,
 nro_de_documento,
 entidad_comercial,
@@ -54,6 +55,7 @@ ado.name as organization,
 bp.c_bp_group_id as group_ec,
 bpg.value as group_ec_value,
 i.dateinvoiced as fecha,
+i.dateacct as fecha_acct,
 dt.name as tipo_de_documento,
 i.documentno as nro_de_documento,
 bp.name as entidad_comercial,
@@ -84,8 +86,8 @@ AND (i.docstatus in ('CO','CL','VO','RE'))
 AND (dt.doctypekey not in ('RTR', 'RTI', 'RCR', 'RCI'))
 order by i.c_invoice_id) AS ComprasPorRegion
 WHERE ((($P{AD_Org_ID} IS NULL) OR ($P{AD_Org_ID} = 0)) OR (ad_org_id = $P{AD_Org_ID}))
-AND (($P{FechaDesde}::date IS NULL) OR (fecha::date >= $P{FechaDesde}::date)) 
-AND (($P{FechaHasta}::date IS NULL) OR (fecha::date <= $P{FechaHasta}::date)) 
+AND (($P{FechaDesde}::date IS NULL) OR (fecha_acct::date >= $P{FechaDesde}::date))
+AND (($P{FechaHasta}::date IS NULL) OR (fecha_acct::date <= $P{FechaHasta}::date))
 AND (($P{C_BP_Group_ID} IS NULL) OR (group_ec = $P{C_BP_Group_ID}))
 AND (($P{M_Product_Category_ID} IS NULL) OR (subfamiliaID = $P{M_Product_Category_ID}))
 AND ($P{AD_CLIENT_ID} = ad_client_id)]]></queryString>
