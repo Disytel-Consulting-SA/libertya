@@ -10,6 +10,7 @@ import java.util.Properties;
 import org.openXpertya.util.CLogger;
 import org.openXpertya.util.DB;
 import org.openXpertya.util.Env;
+import org.openXpertya.util.Msg;
 import org.openXpertya.util.Util;
 
 
@@ -82,7 +83,14 @@ public class MRetSchemaConfig extends X_C_RetSchema_Config {
 		if(getParamType().equals(PARAMTYPE_Rango)) {
 			this.setValor("");
 			this.setIs_Range(true);
-		} 		
+		}
+		//Si el parámetro es "Por Región Origen Y Destino" y el valor es 'Y'
+		// no debe permitir guardar el parámetro si el esquema de retención no tiene región seteada
+		MRetencionSchema retencionSchema = new MRetencionSchema(getCtx(), getC_RetencionSchema_ID(), get_TrxName());
+		if(getName().equals(NAME_PorRegionOrigenYDestino) && getValor().equals("Y") && (retencionSchema.getC_Region_ID() == 0)){
+			log.saveError(Msg.getMsg(getCtx(), "RetentionSchemaWithOutRegionParameter"),"");
+			return false;
+		}
 		return true;		
 	}
 
