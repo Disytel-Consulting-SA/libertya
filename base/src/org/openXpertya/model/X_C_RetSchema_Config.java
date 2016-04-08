@@ -7,7 +7,7 @@ import java.math.*;
 import org.openXpertya.util.*;
 /** Modelo Generado por C_RetSchema_Config
  *  @author Comunidad de Desarrollo Libertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
- *  @version  - 2014-05-01 15:35:22.907 */
+ *  @version  - 2016-04-08 14:58:47.551 */
 public class X_C_RetSchema_Config extends org.openXpertya.model.PO
 {
 /** Constructor estándar */
@@ -138,12 +138,14 @@ public static final String NAME_ExcedenteDe = "E";
 public static final String NAME_PorcentajeDelExcedente = "PE";
 /** Por Lugar de Entrega = LE */
 public static final String NAME_PorLugarDeEntrega = "LE";
+/** Por Region Origen y Destino = OD */
+public static final String NAME_PorRegionOrigenYDestino = "OD";
 /** Set Name.
 Alphanumeric identifier of the entity */
 public void setName (String Name)
 {
-if (Name.equals("N") || Name.equals("P") || Name.equals("INI") || Name.equals("T") || Name.equals("MR") || Name.equals("IF") || Name.equals("E") || Name.equals("PE") || Name.equals("LE"));
- else throw new IllegalArgumentException ("Name Invalid value - Reference = NAME_AD_Reference_ID - N - P - INI - T - MR - IF - E - PE - LE");
+if (Name.equals("N") || Name.equals("P") || Name.equals("INI") || Name.equals("T") || Name.equals("MR") || Name.equals("IF") || Name.equals("E") || Name.equals("PE") || Name.equals("LE") || Name.equals("OD"));
+ else throw new IllegalArgumentException ("Name Invalid value - Reference = NAME_AD_Reference_ID - N - P - INI - T - MR - IF - E - PE - LE - OD");
 if (Name == null) throw new IllegalArgumentException ("Name is mandatory");
 if (Name.length() > 30)
 {

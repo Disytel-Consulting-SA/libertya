@@ -11,6 +11,7 @@ import java.util.Properties;
 
 import org.openXpertya.util.DB;
 import org.openXpertya.util.Env;
+import org.openXpertya.util.Msg;
 
 public class MRetencionSchema extends X_C_RetencionSchema {
 
@@ -325,4 +326,13 @@ public class MRetencionSchema extends X_C_RetencionSchema {
 				MRetSchemaConfig.NAME_DesdePadron);
 	}
 	
+	protected boolean beforeSave(boolean newRecord){
+		if (getParameters().get(MRetSchemaConfig.NAME_PorRegionOrigenYDestino) != null
+				&& getParameter(MRetSchemaConfig.NAME_PorRegionOrigenYDestino).getValor().equals("Y")
+				&& getC_Region_ID() == 0){
+			log.saveError(Msg.getMsg(getCtx(), "RetentionSchemaWithOutRegion"),"");
+			return false;
+		}
+		return true;
+	}
 } // MRetencionSchema
