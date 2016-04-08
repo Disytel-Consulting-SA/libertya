@@ -416,7 +416,8 @@ public class RetencionGanancias extends AbstractRetencionProcessor {
 
 		sql = " SELECT SUM(amt_retenc) as total "
 				+ " FROM m_retencion_invoice mri "
-				+ " WHERE EXISTS( SELECT c_invoice_id "
+				+ " WHERE mri.c_retencionschema_id = ? "
+				+ " AND EXISTS( SELECT c_invoice_id "
 				+ "               FROM c_invoice ci "
 				+ "               WHERE mri.c_invoice_id = ci.c_invoice_id AND "
 				+ "                     c_bpartner_id = ? AND "
@@ -428,9 +429,11 @@ public class RetencionGanancias extends AbstractRetencionProcessor {
 		try {
 
 			pstmt = DB.prepareStatement(sql, null, true);
-			pstmt.setInt(1, getBPartner().getC_BPartner_ID());
-			pstmt.setTimestamp(2, vDesde);
-			pstmt.setTimestamp(3, vFecha);
+			int i = 1;
+			pstmt.setInt(i++, getRetencionSchema().getID());
+			pstmt.setInt(i++, getBPartner().getC_BPartner_ID());
+			pstmt.setTimestamp(i++, vDesde);
+			pstmt.setTimestamp(i++, vFecha);
 			rs = pstmt.executeQuery();
 			if (rs.next()) {
 				if (rs.getBigDecimal("total") != null) {
