@@ -4248,7 +4248,14 @@ public class MInvoice extends X_C_Invoice implements DocAction,Authorization {
 					setvtocae(processor.getDateCae());
 					setcaeerror(errorMsg);
 					int nroCbte = Integer.parseInt(processor.getNroCbte());
+					boolean updateDocumentNo = getNumeroComprobante()!= nroCbte && this.skipAfterAndBeforeSave;
 					this.setNumeroComprobante(nroCbte);
+					
+					if(updateDocumentNo)
+						setDocumentNo(CalloutInvoiceExt
+								.GenerarNumeroDeDocumento(getPuntoDeVenta(),
+										getNumeroComprobante(), getLetra(),
+										isSOTrx(), false));
 
 					// Actualizar la secuencia del tipo de documento de la
 					// factura en función del valor recibido en el WS de AFIP
