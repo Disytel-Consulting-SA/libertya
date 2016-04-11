@@ -5017,3 +5017,55 @@ UNION
 
 ALTER TABLE v_bankbalances
   OWNER TO libertya;
+  
+-- 20160411-1040 Vista simplificada para consulta de pagos de facturas por caja diaria
+CREATE OR REPLACE VIEW c_posjournalpayments_v_simple AS
+SELECT al.c_allocationhdr_id, al.c_allocationline_id, al.ad_client_id, al.ad_org_id, al.isactive, al.created, al.createdby, al.updated, al.updatedby, al.c_invoice_id, al.c_payment_id, al.c_cashline_id, al.c_invoice_credit_id, 
+	CASE
+	    WHEN al.c_payment_id IS NOT NULL THEN p.tendertype::character varying
+	    WHEN al.c_cashline_id IS NOT NULL THEN 'CA'::character varying
+	    WHEN al.c_invoice_credit_id IS NOT NULL THEN 'CR'::character varying
+	    ELSE NULL::character varying
+	END::character varying(2) AS tendertype, 
+	CASE
+	    WHEN al.c_payment_id IS NOT NULL THEN p.documentno
+	    WHEN al.c_invoice_credit_id IS NOT NULL THEN ic.documentno
+	    ELSE NULL::character varying
+	END::character varying(30) AS documentno, 
+	CASE
+	    WHEN al.c_payment_id IS NOT NULL THEN p.description
+	    WHEN al.c_cashline_id IS NOT NULL THEN cl.description
+	    WHEN al.c_invoice_credit_id IS NOT NULL THEN ic.description
+	    ELSE NULL::character varying
+	END::character varying(255) AS description, 
+	CASE
+	    WHEN al.c_payment_id IS NOT NULL THEN ((p.documentno::text || '_'::text) || to_char(p.datetrx, 'DD/MM/YYYY'::text))::character varying
+	    WHEN al.c_cashline_id IS NOT NULL THEN ((c.name::text || '_'::text) || cl.line::text)::character varying
+	    WHEN al.c_invoice_credit_id IS NOT NULL THEN ic.documentno
+	    ELSE NULL::character varying
+	END::character varying(255) AS info, COALESCE(currencyconvert(al.amount + al.discountamt + al.writeoffamt, ah.c_currency_id, i.c_currency_id, NULL::timestamp with time zone, NULL::integer, ah.ad_client_id, ah.ad_org_id), 0::numeric)::numeric(20,2) AS amount, cl.c_cash_id, cl.line, ic.c_doctype_id, p.checkno, p.a_bank, p.checkno AS transferno, p.creditcardtype, p.m_entidadfinancieraplan_id, ep.m_entidadfinanciera_id, p.couponnumber, date_trunc('day'::text, ah.datetrx) AS allocationdate, 
+	CASE
+	    WHEN al.c_payment_id IS NOT NULL THEN p.docstatus
+	    WHEN al.c_cashline_id IS NOT NULL THEN cl.docstatus
+	    WHEN al.c_invoice_credit_id IS NOT NULL THEN ic.docstatus
+	    ELSE NULL::character(2)
+	END AS docstatus, 
+	CASE
+	    WHEN al.c_payment_id IS NOT NULL THEN p.dateacct::date
+	    WHEN al.c_cashline_id IS NOT NULL THEN c.dateacct::date
+	    WHEN al.c_invoice_credit_id IS NOT NULL THEN ic.dateacct::date
+	    ELSE NULL::date
+	END AS dateacct, i.documentno AS invoice_documentno, i.grandtotal AS invoice_grandtotal, ef.value AS entidadfinanciera_value, ef.name AS entidadfinanciera_name, bp.value AS bp_entidadfinanciera_value, bp.name AS bp_entidadfinanciera_name, p.couponnumber AS cupon, p.creditcardnumber AS creditcard, dt.isfiscaldocument, dt.isfiscal, ic.fiscalalreadyprinted, date_trunc('day'::text, ah.datetrx) AS allocationdateacct
+FROM c_allocationline al
+JOIN c_allocationhdr ah ON al.c_allocationhdr_id = ah.c_allocationhdr_id
+LEFT JOIN c_invoice i ON al.c_invoice_id = i.c_invoice_id				
+LEFT JOIN c_payment p ON al.c_payment_id = p.c_payment_id
+LEFT JOIN m_entidadfinancieraplan ep ON p.m_entidadfinancieraplan_id = ep.m_entidadfinancieraplan_id
+LEFT JOIN m_entidadfinanciera ef ON ef.m_entidadfinanciera_id = ep.m_entidadfinanciera_id
+LEFT JOIN c_bpartner bp ON bp.c_bpartner_id = ef.c_bpartner_id
+LEFT JOIN c_cashline cl ON al.c_cashline_id = cl.c_cashline_id
+LEFT JOIN c_cash c ON cl.c_cash_id = c.c_cash_id
+LEFT JOIN c_invoice ic ON al.c_invoice_credit_id = ic.c_invoice_id               
+LEFT JOIN c_doctype dt ON dt.c_doctype_id = ic.c_doctypetarget_id;
+
+  
