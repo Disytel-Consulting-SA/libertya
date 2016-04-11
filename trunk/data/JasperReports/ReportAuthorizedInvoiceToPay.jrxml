@@ -30,7 +30,7 @@
 	<parameter name="FechaHasta" isForPrompting="false" class="java.util.Date"/>
 	<parameter name="AD_User_ID" isForPrompting="false" class="java.math.BigDecimal"/>
 	<parameter name="StatusAuthorization" isForPrompting="false" class="java.lang.String"/>
-	<queryString><![CDATA[SELECT sub.organizacion,sub.fechaFactura, sub.documentno, sub.codprov, sub.bpartner,autorizada, sub.grandtotal, sub.totallines, sub.balance,
+	<queryString><![CDATA[SELECT sub.organizacion,sub.fechaFactura, sub.documentno, sub.codprov, sub.bpartner,autorizada, sub.grandtotal, sub.netamount, sub.balance,
 	sub.usuario, sub.proximousuario
 FROM
 (SELECT org.name as organizacion, 
@@ -44,7 +44,7 @@ i.c_invoice_id,
 		FROM M_AuthorizationChainDocument acd 
 		WHERE acd.C_Invoice_ID = i.C_Invoice_ID AND Status = 'P') > 0 THEN 'N' ELSE 'Y' END) As Autorizada,
 i.grandtotal,
-i.totallines,
+i.netamount,
 (SELECT u.name FROM AD_User u
 	INNER JOIN M_AuthorizationChainDocument acd ON (acd.AD_User_ID = u.AD_User_ID) 
 	INNER JOIN M_AuthorizationChainLink acl ON (acd.M_AuthorizationChainLink_ID = acl.M_AuthorizationChainLink_ID)
@@ -86,7 +86,7 @@ WHERE (CASE WHEN $P{StatusAuthorization} = 'P' THEN Autorizada='N' ELSE Autoriza
 	<field name="bpartner" class="java.lang.String"/>
 	<field name="autorizada" class="java.lang.String"/>
 	<field name="grandtotal" class="java.math.BigDecimal"/>
-	<field name="totallines" class="java.math.BigDecimal"/>
+	<field name="netamount" class="java.math.BigDecimal"/>
 	<field name="usuario" class="java.lang.String"/>
 	<field name="proximousuario" class="java.lang.String"/>
 	<field name="codprov" class="java.lang.String"/>
@@ -636,7 +636,7 @@ WHERE (CASE WHEN $P{StatusAuthorization} = 'P' THEN Autorizada='N' ELSE Autoriza
 					<textElement textAlignment="Right">
 						<font size="6"/>
 					</textElement>
-				<textFieldExpression   class="java.math.BigDecimal"><![CDATA[$F{totallines}]]></textFieldExpression>
+				<textFieldExpression   class="java.math.BigDecimal"><![CDATA[$F{netamount}]]></textFieldExpression>
 				</textField>
 				<textField isStretchWithOverflow="true" pattern="###0.00;-###0.00" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
