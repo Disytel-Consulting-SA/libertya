@@ -5068,4 +5068,57 @@ LEFT JOIN c_cash c ON cl.c_cash_id = c.c_cash_id
 LEFT JOIN c_invoice ic ON al.c_invoice_credit_id = ic.c_invoice_id               
 LEFT JOIN c_doctype dt ON dt.c_doctype_id = ic.c_doctypetarget_id;
 
+-- 20160412-1410 Modificaciones al Reporte de Remitos Facturados para que se puedan filtrar los remitos por estado de facturación
+DROP VIEW rv_inout_without_invoice;
+
+CREATE OR REPLACE VIEW rv_inout_without_invoice AS 
+SELECT Organization,AD_Org_ID,InOutNumber,BPartnerName,C_BPartner_id,MovementDate,M_InOut_id,AD_Client_ID,
+WarehouseName,FacturadoParcial,case when SUM(qty) is null then 'N' else 'Y' end as facturado
+FROM(
+SELECT 
+org.name as Organization,
+org.ad_org_id as AD_Org_ID,
+documentno as InOutNumber,
+bp.name as BPartnerName,
+bp.c_bpartner_id as C_BPartner_id,
+io.movementdate as MovementDate,
+io.m_inout_id as M_InOut_id,
+io.ad_client_id as AD_Client_ID,
+w.name as WarehouseName,
+iol.m_inoutline_id,
+qty,
+case when (qty < iol.movementqty) then 'Y'
+		else 'N'
+end as FacturadoParcial
+FROM m_inoutline iol
+INNER JOIN m_inout io ON (iol.m_inout_id = io.m_inout_id)
+INNER JOIN ad_org org ON (io.ad_org_id = org.ad_org_id)
+INNER JOIN c_bpartner bp ON (bp.c_bpartner_id = io.c_bpartner_id)
+INNER JOIN m_warehouse w ON (w.m_warehouse_id = io.m_warehouse_id)
+INNER JOIN c_doctype dt ON (dt.c_doctype_id = io.c_doctype_id)
+LEFT JOIN (
+	SELECT minv.m_inoutline_id, SUM(qty) AS qty 
+	FROM m_matchinv minv
+	INNER JOIN c_invoiceline il ON (il.c_invoiceline_id = minv.c_invoiceline_id)
+	INNER JOIN c_invoice i ON (i.c_invoice_id = il.c_invoice_id)
+	INNER JOIN c_doctype dti ON (dti.c_doctype_id = i.c_doctype_id)
+	INNER JOIN m_inoutline iol ON (iol.m_inoutline_id = minv.m_inoutline_id)
+	INNER JOIN m_inout io ON (io.m_inout_id = iol.m_inout_id)
+	INNER JOIN c_doctype dtio ON (dtio.c_doctype_id = io.c_doctype_id)
+	WHERE dti.docbasetype IN ('API') AND dtio.docbasetype IN ('MMR') AND dtio.signo_issotrx = 1
+	GROUP BY minv.m_inoutline_id) as cantmatchinv
+ON (iol.m_inoutline_id = cantmatchinv.m_inoutline_id)
+WHERE io.isActive = 'Y' 
+AND io.docstatus IN ('CL','CO')
+AND dt.docbasetype IN ('MMR')
+AND dt.signo_issotrx = 1
+) as sq
+group by m_inout_id,organization,ad_org_id,InOutNumber,BPartnerName,c_bpartner_id,
+movementdate,ad_client_id,WarehouseName,FacturadoParcial
+ORDER BY movementdate DESC;
+
+ALTER TABLE rv_inout_without_invoice
+  OWNER TO libertya;
+
+
   
