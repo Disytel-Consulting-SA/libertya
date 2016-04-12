@@ -364,6 +364,7 @@ public class EstadoDeCuentaProcess extends SvrProcess {
 			X_T_EstadoDeCuenta ec = new X_T_EstadoDeCuenta(getCtx(), 0, get_TrxName());
 			
 			ec.setAD_PInstance_ID(getAD_PInstance_ID());
+			ec.setAD_Org_ID(rs.getInt("ad_org_id"));
 			ec.setsigno_issotrx(rs.getInt("signo_issotrx"));
 			ec.settipodoc(rs.getString("tipodoc"));
 			ec.setDocumentNo(rs.getString("documentno"));
@@ -464,6 +465,7 @@ public class EstadoDeCuentaProcess extends SvrProcess {
 			
 			X_T_EstadoDeCuenta ec = new X_T_EstadoDeCuenta(getCtx(), 0, get_TrxName());
 			ec.setAD_PInstance_ID(getAD_PInstance_ID());
+			ec.setAD_Org_ID(orgID);
 			ec.setC_BPartner_ID(bPartner);
 			ec.setbpartner("             TOTAL " + MCurrency.getISO_Code(getCtx(), e.getKey()) + ":");
 			ec.setOpenAmt(e.getValue());
@@ -488,6 +490,7 @@ public class EstadoDeCuentaProcess extends SvrProcess {
 		if (currencyID == 0) {
 			X_T_EstadoDeCuenta ec = new X_T_EstadoDeCuenta(getCtx(), 0, get_TrxName());
 			ec.setAD_PInstance_ID(getAD_PInstance_ID());
+			ec.setAD_Org_ID(orgID);
 			ec.setC_BPartner_ID(bPartner);
 			ec.setbpartner("             TOTAL:");
 			ec.setOpenAmt(saldo);
@@ -512,6 +515,7 @@ public class EstadoDeCuentaProcess extends SvrProcess {
 	private void insertTotalForBPartnerChecks(int bPartner)	{
 		X_T_EstadoDeCuenta ec = new X_T_EstadoDeCuenta(getCtx(), 0, get_TrxName());
 		ec.setAD_PInstance_ID(getAD_PInstance_ID());
+		ec.setAD_Org_ID(orgID);
 		ec.setC_BPartner_ID(bPartner);
 		ec.setbpartner("             TOTAL CHEQUES CARTERA:");
 		
@@ -558,6 +562,7 @@ public class EstadoDeCuentaProcess extends SvrProcess {
 			
 			X_T_EstadoDeCuenta ec = new X_T_EstadoDeCuenta(getCtx(), 0, get_TrxName());
 			ec.setAD_PInstance_ID(getAD_PInstance_ID());
+			ec.setAD_Org_ID(orgID);
 			ec.setC_BPartner_ID(0);
 			ec.setbpartner("             TOTAL GENERAL " + MCurrency.getISO_Code(getCtx(), e.getKey()) + ":");
 			ec.setOpenAmt(e.getValue());
@@ -582,6 +587,7 @@ public class EstadoDeCuentaProcess extends SvrProcess {
 		if (currencyID == 0) {
 			X_T_EstadoDeCuenta ec = new X_T_EstadoDeCuenta(getCtx(), 0, get_TrxName());
 			ec.setAD_PInstance_ID(getAD_PInstance_ID());
+			ec.setAD_Org_ID(orgID);
 			ec.setC_BPartner_ID(0);
 			ec.setbpartner("             TOTAL GENERAL:");
 			ec.setOpenAmt(saldo);
