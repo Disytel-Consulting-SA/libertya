@@ -287,6 +287,7 @@ public class CreateFromInvoiceModel extends CreateFromModel {
 	     	.append(   "SELECT sl.M_InOut_ID ")
 	     	.append(   "FROM M_InOutLine sl ")
 	     	.append(   "LEFT OUTER JOIN M_MatchInv mi ON (sl.M_InOutLine_ID=mi.M_InOutLine_ID) ")
+	     	.append(   "WHERE sl.M_InOut_ID = M_InOut.M_InOut_ID ") // Los M_InOut que devuelve la query interna luego tienen que respetar el criterio de la query externa, por lo tanto este filtrado mejora la performance de la query interna
 	     	.append(   "GROUP BY sl.M_InOut_ID,mi.M_InOutLine_ID,sl.MovementQty ")
 	     	.append(   "HAVING (sl.MovementQty<>SUM(mi.Qty) AND mi.M_InOutLine_ID IS NOT NULL) OR mi.M_InOutLine_ID IS NULL) ");
      	
