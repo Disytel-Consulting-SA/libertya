@@ -5121,4 +5121,13 @@ ALTER TABLE rv_inout_without_invoice
   OWNER TO libertya;
 
 
+-- 20160413-1431 Mejora en performance: Cambiar el tipo de dato, de Tabla a Busqueda.  De esta manera 
+-- el tiempo de carga de los Lookups es minimo dado que no debe precargar entradas en combos. 
+-- Se aplica para columnas Ref_Order_ID y Ref_OrderLine_ID que pertenezcan al CORE de libertya unicamente.
+UPDATE AD_Column 
+SET AD_Reference_ID = 30 -- Search
+WHERE AD_Reference_ID = 18 -- Table
+AND columnname in ('Ref_Order_ID', 'Ref_OrderLine_ID')
+AND AD_ComponentObjectUID like 'CORE%';
+
   
