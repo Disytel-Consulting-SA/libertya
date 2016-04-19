@@ -200,7 +200,7 @@ public class Doc_Payment extends Doc implements DocProjectSplitterInterface {
 			" 		SELECT 	al.c_allocationline_id as alloc_line, " +
 			"				al.amount as amount, " +
 			"				il.c_project_id as Project, " +
-			"				al.c_invoice_id, sum(currencyConvert(il.linenetamt, i.C_Currency_ID, "+getSchemaCurrency(factLine)+", i.DateAcct, null, i.AD_Client_ID, i.AD_Org_ID) * (1 + (t.rate + COALESCE((SELECT SUM (COALESCE(ita.rate,ta.rate)) FROM C_InvoiceTax it INNER JOIN C_Tax ta ON (ta.C_tax_ID = it.C_tax_ID) INNER JOIN C_InvoiceTax ita ON (ta.C_tax_ID = ita.C_tax_ID) AND (ita.C_Invoice_ID = il.C_Invoice_ID) WHERE it.C_Invoice_ID = il.C_Invoice_ID AND ta.ispercepcion = 'Y'),0)) / 100) / currencyConvert(i.grandtotal, i.C_Currency_ID, "+getSchemaCurrency(factLine)+", i.DateAcct, null, i.AD_Client_ID, i.AD_Org_ID))  as Percentage " +
+			"				al.c_invoice_id, sum(currencyConvert(il.linenetamount, i.C_Currency_ID, "+getSchemaCurrency(factLine)+", i.DateAcct, null, i.AD_Client_ID, i.AD_Org_ID) * (1 + (t.rate + COALESCE((SELECT SUM (COALESCE(ita.rate,ta.rate)) FROM C_InvoiceTax it INNER JOIN C_Tax ta ON (ta.C_tax_ID = it.C_tax_ID) INNER JOIN C_InvoiceTax ita ON (ta.C_tax_ID = ita.C_tax_ID) AND (ita.C_Invoice_ID = il.C_Invoice_ID) WHERE it.C_Invoice_ID = il.C_Invoice_ID AND ta.ispercepcion = 'Y'),0)) / 100) / currencyConvert(i.grandtotal, i.C_Currency_ID, "+getSchemaCurrency(factLine)+", i.DateAcct, null, i.AD_Client_ID, i.AD_Org_ID))  as Percentage " +
 			" 		FROM C_InvoiceLine il   " +
 			" 		INNER JOIN C_Invoice i ON il.c_invoice_id = i.c_invoice_id " +  
 			" 		INNER JOIN C_Tax t ON il.C_Tax_ID = t.C_Tax_ID  " +
