@@ -443,7 +443,9 @@ public class ImportAccount extends SvrProcess {
         }
 
         int[]  counts = new int[]{ 0,0,0 };
-        String sql    = "SELECT i.C_ElementValue_ID, t.TableName, c.ColumnName, i.I_ElementValue_ID " + "FROM I_ElementValue i" + " INNER JOIN AD_Column c ON (i.AD_Column_ID=c.AD_Column_ID)" + " INNER JOIN AD_Table t ON (c.AD_Table_ID=t.AD_Table_ID) " + "WHERE i.I_IsImported='Y' AND i.Processed='Y' AND Processing='Y'" + " AND i.C_ElementValue_ID IS NOT NULL AND C_Element_ID=?";
+        // Aporte de Saulo Gil segun: https://sourceforge.net/p/libertya/tickets/15/  
+        // #15 Importación de Cuentas Contables - No se actualizan cuentas por default 
+        String sql    = "SELECT i.C_ElementValue_ID, t.TableName, c.ColumnName, i.I_ElementValue_ID " + "FROM I_ElementValue i" + " INNER JOIN AD_Column c ON (i.AD_Column_ID=c.AD_Column_ID)" + " INNER JOIN AD_Table t ON (c.AD_Table_ID=t.AD_Table_ID) " + "WHERE i.I_IsImported='Y' " + /*" AND i.Processed='Y' AND Processing='Y'" +*/ " AND i.C_ElementValue_ID IS NOT NULL AND C_Element_ID=?";
 
         try {
             PreparedStatement pstmt = DB.prepareStatement( sql, get_TrxName());
