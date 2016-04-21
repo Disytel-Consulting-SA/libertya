@@ -721,6 +721,7 @@ public class MCashLine extends X_C_CashLine implements DocAction {
             // Se seteaba la organización de login en vez de la de línea
             // lo cual tiraba un error al crear el allocation hdr
             alloc.setClientOrg(getAD_Client_ID(), getAD_Org_ID());
+            alloc.setC_BPartner_ID(DB.getSQLValue( get_TrxName(),"SELECT C_BPartner_ID FROM C_Invoice WHERE C_Invoice_ID=?",getC_Invoice_ID()));
             // ------------------------------
             if (!alloc.save(get_TrxName())) {
 				throw new Exception("@AllocationSaveError@: "
