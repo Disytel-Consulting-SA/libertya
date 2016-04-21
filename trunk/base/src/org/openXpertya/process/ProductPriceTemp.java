@@ -24,6 +24,7 @@ import java.util.logging.Level;
 
 import org.openXpertya.model.MDiscountSchemaLine;
 import org.openXpertya.model.MPriceListVersion;
+import org.openXpertya.model.X_M_PriceList_Version;
 import org.openXpertya.util.DB;
 import org.openXpertya.util.Env;
 import org.openXpertya.util.Util;
@@ -127,6 +128,47 @@ public class ProductPriceTemp extends SvrProcess {
             }
         }
 
+        /*
+         * Según:
+         * 		https://sourceforge.net/p/libertya/tickets/54/
+         * 		http://www.libertya.org/forums/topic/generacion-de-listas-de-precios-via-web-no-funciona/
+         * 
+         * El boton "Crear" en la pestaña Versión de la ventana Tarifas era capturado en el 
+         * actionButton() de la clase APanel.  Bajo el criterio col.equals("ProcCreate"), se
+         * invocaba a VProdPricGen la cual se encargaba de instanciar ProductPriceTemp, e 
+         * inyectar los argumentos correspondientes del caso.
+         * 
+         * Dado que no es correcto la captura del evento e invocación desde APanel, se opta por adecuar
+         * el botón a finde invocar directamente a esta clase sin intereacción por parte de APanel.
+         * El problema es que este proceso NO cuenta con los argumentos a nivel metadatos y por lo tanto
+         * para poder determinar la compañía, organización, etc. se deben determinar a partir del
+         * registro en donde el usuario está ubicado, y a partir de allí especificarlos.
+         * 
+         * Sin embargo, es posible que este proceso sea invocado desde otras ubicaciones y en esos
+         * casos no deberían (re)definirse los valores de los argumentos si es que los mismos son 
+         * inyectados de manera similar quelo hace VProdPricGen.
+         * 
+         * Por lo tanto: unicamente SI nos encontramos en la ventana de Versión de Lista de Precio 
+         * y SI estamos ubicados en un registro en particular, deducir los valores de los parámetros 
+         * a partir de la información contenida en el registro en cuestión.
+         * 
+         * De esta manera es posible omitir el código de APanel y también evitar implementar este
+         * tipo de solución en la clase AbstractADWindowPanel de Libertya WEB.
+         */
+        if (X_M_PriceList_Version.Table_ID == getTable_ID() && getRecord_ID() > 0) {
+        	X_M_PriceList_Version plv = new X_M_PriceList_Version (getCtx(), getRecord_ID(), null);
+        	if (m_Client_ID <= 0)
+        		m_Client_ID = plv.getAD_Client_ID();
+        	if (m_PriceList_Version_ID <= 0)
+        		m_PriceList_Version_ID = plv.getM_PriceList_Version_ID();
+        	if (m_Org_ID <= 0)
+        		m_Org_ID = plv.getAD_Org_ID();
+        	if (m_DiscountSchema_ID <= 0) 
+        		m_DiscountSchema_ID = plv.getM_DiscountSchema_ID();
+        	if (m_PriceList_Version_Base_ID <= 0)
+        		m_PriceList_Version_Base_ID = plv.getM_Pricelist_Version_Base_ID();
+        }
+        
         log.equals( m_PriceList_Version_ID + "-" + m_Org_ID + "-" + m_Client_ID + "-" + m_DiscountSchema_ID + "-" + m_PriceList_Version_Base_ID );
     }    // prepare
 

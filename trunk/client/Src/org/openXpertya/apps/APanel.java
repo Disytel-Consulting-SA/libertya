@@ -2265,37 +2265,44 @@ public final class APanel extends CPanel implements DataStatusListener,ChangeLis
             return;
         }
      
-        if (col.equals("ProcCreate"))
-		{
-    		
-			if (m_curTab.getAD_Table_ID() == MPriceListVersion.Table_ID)
-			{
-				FormFrame ff = new FormFrame();
-
-				// Validar que el usuario este de acuerdo con la generacion de 
-				// entradas en la tabla de importación de listas de precios
-				if (!ADialog.ask(m_curWindowNo, this, "ConfirmProductPriceGeneration"))
-					return;
-				
-				try
-				{
-					//	Create instance w/o parameters
-					FormPanel m_panel= null;
-					m_panel = new VProdPricGen(m_curTab);
-					ff.setFormPanel(m_panel);
-					m_panel.init(ff.getWindowNo(), ff);
-					//ff.pack();
-					//AEnv.showCenterScreen(ff);
-					return;
-				}
-				catch (Exception e)
-				{
-					log.log(Level.SEVERE,"ProdPricGen.openForm =" + e);
-				}
-			}
-
-        // Zoom
-		}//If (col.equals("ProcCreate"))
+/*
+ * Comentado según:
+ * 		https://sourceforge.net/p/libertya/tickets/54/
+ * 		http://www.libertya.org/forums/topic/generacion-de-listas-de-precios-via-web-no-funciona/
+ * 
+ * Ver clase ProductPriceTemp.prepareIt() para mas detalles.
+ */        
+//        if (col.equals("ProcCreate"))
+//		{
+//    		
+//			if (m_curTab.getAD_Table_ID() == MPriceListVersion.Table_ID)
+//			{
+//				FormFrame ff = new FormFrame();
+//
+//				// Validar que el usuario este de acuerdo con la generacion de 
+//				// entradas en la tabla de importación de listas de precios
+//				if (!ADialog.ask(m_curWindowNo, this, "ConfirmProductPriceGeneration"))
+//					return;
+//				
+//				try
+//				{
+//					//	Create instance w/o parameters
+//					FormPanel m_panel= null;
+//					m_panel = new VProdPricGen(m_curTab);
+//					ff.setFormPanel(m_panel);
+//					m_panel.init(ff.getWindowNo(), ff);
+//					//ff.pack();
+//					//AEnv.showCenterScreen(ff);
+//					return;
+//				}
+//				catch (Exception e)
+//				{
+//					log.log(Level.SEVERE,"ProdPricGen.openForm =" + e);
+//				}
+//			}
+//
+//        // Zoom
+//		}//If (col.equals("ProcCreate"))
        
         if( col.equals( "Record_ID" ))
         {
