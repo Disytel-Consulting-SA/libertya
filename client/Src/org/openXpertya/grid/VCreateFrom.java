@@ -56,7 +56,9 @@ import org.openXpertya.grid.CreateFromModel.CreateFromSaveException;
 import org.openXpertya.grid.CreateFromModel.DocumentLine;
 import org.openXpertya.grid.CreateFromModel.OrderLine;
 import org.openXpertya.grid.CreateFromModel.SourceEntity;
+import org.openXpertya.grid.VCreateFromInvoice.DocumentLineTableModelFromInvoice;
 import org.openXpertya.grid.VCreateFromShipment.DocumentLineTableModelFromShipment;
+import org.openXpertya.grid.ed.VComboBox;
 import org.openXpertya.grid.ed.VLocator;
 import org.openXpertya.grid.ed.VLookup;
 import org.openXpertya.grid.ed.VNumber;
@@ -1001,8 +1003,14 @@ public abstract class VCreateFrom extends JDialog implements ActionListener,Tabl
         			dataTable.getColumnModel().removeColumn(dataTable.getColumnModel().getColumn(DocumentLineTableModelFromShipment.COL_IDX_INSTANCE_NAME));	
     			}
     			else{
+        			if( (dataTable.getModel()) instanceof DocumentLineTableModelFromInvoice ){
+        				((DocumentLineTableModelFromInvoice)dataTable.getModel()).visibles = ((DocumentLineTableModelFromInvoice) dataTable.getModel()).visibles - 1; 
+            			dataTable.getColumnModel().removeColumn(dataTable.getColumnModel().getColumn(DocumentLineTableModelFromInvoice.COL_IDX_INSTANCE_NAME));	
+        			}
+        			else {
     				((DocumentLineTableModel)dataTable.getModel()).visibles = ((DocumentLineTableModel) dataTable.getModel()).visibles - 1; 
-        			dataTable.getColumnModel().removeColumn(dataTable.getColumnModel().getColumn(DocumentLineTableModel.COL_IDX_INSTANCE_NAME));	
+        			dataTable.getColumnModel().removeColumn(dataTable.getColumnModel().getColumn(DocumentLineTableModel.COL_IDX_INSTANCE_NAME));
+        			}
     			}
     		}
     	}
