@@ -27,6 +27,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
 import java.util.logging.Level;
@@ -34,21 +35,15 @@ import java.util.logging.Level;
 import org.compiere.swing.CCheckBox;
 import org.openXpertya.apps.form.VComponentsFactory;
 import org.openXpertya.grid.CreateFromModel.CreateFromSaveException;
-import org.openXpertya.grid.CreateFromModel.DocumentLine;
 import org.openXpertya.grid.CreateFromModel.InOutLine;
 import org.openXpertya.grid.CreateFromModel.OrderLine;
 import org.openXpertya.grid.CreateFromModel.SourceEntity;
-import org.openXpertya.grid.VCreateFrom.CreateFromTableModel;
 import org.openXpertya.model.MDocType;
 import org.openXpertya.model.MInOut;
-import org.openXpertya.model.MInOutLine;
 import org.openXpertya.model.MInvoice;
-import org.openXpertya.model.MInvoiceLine;
 import org.openXpertya.model.MOrder;
-import org.openXpertya.model.MOrderLine;
 import org.openXpertya.model.MTab;
 import org.openXpertya.model.PO;
-import org.openXpertya.util.CLogger;
 import org.openXpertya.util.DB;
 import org.openXpertya.util.DisplayType;
 import org.openXpertya.util.Env;
@@ -434,13 +429,6 @@ public class VCreateFromInvoice extends VCreateFrom {
 
 	} // actionPerformed
 
-	protected void setDocType(MDocType docType) {
-		this.docType = docType;
-	}
-
-	protected MDocType getDocType() {
-		return docType;
-	}
 	
 	public MInOut getM_inout() {
 		return m_inout;
@@ -450,19 +438,6 @@ public class VCreateFromInvoice extends VCreateFrom {
 		this.m_inout = m_inout;
 	}
 	
-	public void customMethod(PO ol, PO iol) {
-	}
-
-	@Override
-	protected boolean lazyEvaluation() {
-		return false;
-	}
-
-
-	@Override
-	protected boolean addSecurityValidation() {
-		return true;
-	}
 
 	// El siguiente método limpia los campos (invoiceField, orderField,
 	// invoiceField) y los desactiva cuando
@@ -535,6 +510,137 @@ public class VCreateFromInvoice extends VCreateFrom {
 					}
 				}
 			}
+		}
+		// Si el check de mostrar todos los pedidos esta seleccionado crea el modelo
+		// de tabla para líneas de remitos.
+		// En caso contratio crea el modelo de tabla para líneas de documentos
+		// (Pedidos, Remitos, Facturas)
+		protected CreateFromTableModel createTableModelInstance() {
+			if (!isSOTrx() && allOrder != null && allOrder.isSelected()) {
+				return new DocumentLineTableModelFromInvoice();
+			} else {
+				return new DocumentLineTableModel();
+			}
+		}
+
+		/**
+		 * Modelo de tabla para líneas de facturas.
+		 */
+		public class DocumentLineTableModelFromInvoice extends
+				DocumentLineTableModel {
+			// Constantes de índices de las columnas en la grilla.
+			public static final int COL_IDX_LINE = 3;
+			public static final int COL_IDX_ITEM_CODE = 4;
+			public static final int COL_IDX_PRODUCT = 5;
+			public static final int COL_IDX_UOM = 7;
+			public static final int COL_IDX_QTY = 8;
+			public static final int COL_IDX_REMAINING = 9;
+
+			public static final int COL_IDX_ORDER = 1;
+			public static final int COL_IDX_DATE = 2;
+			public static final int COL_IDX_INSTANCE_NAME = 6;
+
+			public int visibles = 10;
+
+			@Override
+			protected void setColumnNames() {
+				setColumnName(COL_IDX_LINE, Msg.getElement(getCtx(), "Line"));
+				setColumnName(COL_IDX_ITEM_CODE,
+						Msg.translate(Env.getCtx(), "Value"));
+				setColumnName(COL_IDX_PRODUCT,
+						Msg.translate(Env.getCtx(), "M_Product_ID"));
+				setColumnName(COL_IDX_UOM, Msg.translate(Env.getCtx(), "C_UOM_ID"));
+				setColumnName(COL_IDX_QTY, Msg.translate(Env.getCtx(), "Quantity"));
+				setColumnName(COL_IDX_REMAINING,
+						Msg.translate(Env.getCtx(), "RemainingQty"));
+
+				setColumnName(COL_IDX_ORDER, Msg.getElement(getCtx(), "C_Order_ID"));
+				setColumnName(COL_IDX_INSTANCE_NAME,
+						Msg.translate(Env.getCtx(), "Attributes"));
+				setColumnName(COL_IDX_DATE,
+						Msg.translate(Env.getCtx(), "DateOrdered"));
+			}
+
+			@Override
+			protected void setColumnClasses() {
+				setColumnClass(COL_IDX_LINE, Integer.class);
+				setColumnClass(COL_IDX_ITEM_CODE, String.class);
+				setColumnClass(COL_IDX_PRODUCT, String.class);
+				setColumnClass(COL_IDX_UOM, String.class);
+				setColumnClass(COL_IDX_QTY, BigDecimal.class);
+				setColumnClass(COL_IDX_REMAINING, BigDecimal.class);
+
+				setColumnClass(COL_IDX_ORDER, String.class);
+				setColumnClass(COL_IDX_INSTANCE_NAME, String.class);
+				setColumnClass(COL_IDX_DATE, Date.class);
+			}
+
+			@Override
+			public Object getValueAt(int rowIndex, int colIndex) {
+				OrderLine docLine = (OrderLine) getDocumentLine(rowIndex);
+				Object value = null;
+				switch (colIndex) {
+				case COL_IDX_LINE:
+					value = docLine.lineNo;
+					break;
+				case COL_IDX_ITEM_CODE:
+					value = docLine.itemCode;
+					break;
+				case COL_IDX_PRODUCT:
+					value = docLine.productName;
+					break;
+				case COL_IDX_UOM:
+					value = docLine.uomName;
+					break;
+				case COL_IDX_QTY:
+					value = docLine.lineQty;
+					break;
+				case COL_IDX_REMAINING:
+					value = docLine.remainingQty;
+					break;
+				case COL_IDX_ORDER:
+					value = docLine.documentNo;
+					break;
+				case COL_IDX_INSTANCE_NAME:
+					value = docLine.instanceName;
+					break;
+				case COL_IDX_DATE:
+					value = docLine.dateOrderLine;
+					break;
+				default:
+					value = super.getValueAt(rowIndex, colIndex);
+					break;
+				}
+				return value;
+			}
+
+			@Override
+			public int getColumnCount() {
+				return visibles;
+			}
+		}
+		
+		// El siguiente metodo podrá ser redefinido por un plugin para agregar una funcionalidad particular.
+		// El metodo es invocado antes de hacer el save de la linea
+		public void customMethod(PO ol, PO iol) {
+		} 
+		
+		@Override
+		protected boolean lazyEvaluation() {
+			return false;
+		}
+
+		protected MDocType getDocType() {
+			return docType;
+		}
+
+		protected void setDocType(MDocType docType) {
+			this.docType = docType;
+		}
+
+		@Override
+		protected boolean addSecurityValidation() {
+			return getRole().isAddSecurityValidation_CreateFromShipment();
 		}
 
 
