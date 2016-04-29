@@ -101,7 +101,7 @@ public class MBankTransfer extends X_C_BankTransfer implements DocAction {
 			pagoOrigen.setAD_Org_ID(getAD_Org_ID());
 			pagoOrigen.setTenderType(MPayment.TENDERTYPE_DirectDeposit);
 			pagoOrigen.setC_BankAccount_ID(getC_bankaccount_from_ID());
-			pagoOrigen.setAmount(getC_currency_from_ID(), getammount_from().negate());
+			pagoOrigen.setAmount(getC_currency_from_ID(), getammount_from().multiply(anular?BigDecimal.ONE:minusOne));
 			pagoOrigen.setDateTrx(getDateTrx());
 			pagoOrigen.setDateAcct(getDateTrx());
 			pagoOrigen.setC_BPartner_ID(getC_BPartner_ID());
@@ -149,7 +149,7 @@ public class MBankTransfer extends X_C_BankTransfer implements DocAction {
 			pagoDestino.setAD_Org_ID(getAD_Org_ID());
 			pagoDestino.setTenderType(MPayment.TENDERTYPE_DirectDeposit);
 			pagoDestino.setC_BankAccount_ID(getC_bankaccount_to_ID());
-			pagoDestino.setAmount(getC_currency_to_ID(), getammount_to());
+			pagoDestino.setAmount(getC_currency_to_ID(), getammount_to().multiply(anular?minusOne:BigDecimal.ONE));
 			pagoDestino.setDateTrx(getDateTrx());
 			pagoDestino.setDateAcct(getDateTrx());
 			pagoDestino.setC_BPartner_ID(getC_BPartner_ID());
