@@ -91,7 +91,7 @@ public class CurrentAccountReport extends SvrProcess {
 						.getParameter();
 				p_ShowDetailedReceiptsPayments = "Y".equals((String) para[i]
 						.getParameter());
-			} else if (name.equalsIgnoreCase("datetrx")) {
+			} else if (name.equalsIgnoreCase("DateTrx")) {
 				p_DateTrx_From = (Timestamp) para[i].getParameter();
 				p_DateTrx_To = (Timestamp) para[i].getParameter_To();
 			} else if (name.equalsIgnoreCase("accounttype")) {

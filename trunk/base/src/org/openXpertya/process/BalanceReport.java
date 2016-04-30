@@ -106,7 +106,7 @@ public class BalanceReport extends SvrProcess {
 		sqlDoc.append(" 	( SELECT dateacct FROM C_INVOICE WHERE issotrx = ")
 				.append(isSOtrx)
 				.append(" AND invoiceopen(c_invoice_id, 0) > 0	AND C_BPartner_id = t.c_bpartner_id ORDER BY DATEACCT desc LIMIT 1 ) as fecha_fact_reciente, ");
-		sqlDoc.append(" (select coalesce(sum(invoiceopen(c_invoice_id, c_invoicepayschedule_id)),0.00) as duedebt " +
+		sqlDoc.append(" (select coalesce(sum(currencyconvert(invoiceopen(c_invoice_id, c_invoicepayschedule_id), c_currency_id, ").append(client_Currency_ID).append(", ('"+ ((p_DateTrx_To != null) ? p_DateTrx_To + "'" : "now'::text") +")::timestamp(6) with time zone, COALESCE(c_conversiontype_id,0), ad_client_id, ad_org_id)),0.00) as duedebt " +
 						"from c_invoice_v as i " +
 						"where i.duedate::date <= ?::date " +
 						"		and i.c_bpartner_id = T.c_bpartner_id " +
@@ -116,7 +116,7 @@ public class BalanceReport extends SvrProcess {
 		}
 		sqlDoc.append(" AND AD_Client_ID = ").append(Env.getAD_Client_ID(getCtx()));
 		sqlDoc.append(") as duedebt, ");
-		sqlDoc.append(" (select coalesce(sum(paymentavailable(c_payment_id)),0.00) as duedebt " +
+		sqlDoc.append(" (select coalesce(sum(currencyconvert(paymentavailable(c_payment_id), c_currency_id, ").append(client_Currency_ID).append(", ('"+ ((p_DateTrx_To != null) ? p_DateTrx_To + "'" : "now'::text") +")::timestamp(6) with time zone, COALESCE(c_conversiontype_id,0), ad_client_id, ad_org_id)),0.00) as duedebt " +
 						"from c_payment " +
 						"where duedate::date <= ?::date " +
 						"		and c_bpartner_id = T.c_bpartner_id " +
