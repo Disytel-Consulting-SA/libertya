@@ -6,6 +6,7 @@ import java.sql.ResultSet;
 import java.sql.Timestamp;
 import java.util.logging.Level;
 
+import org.openXpertya.model.MPreference;
 import org.openXpertya.model.X_T_LibroIva;
 import org.openXpertya.util.CPreparedStatement;
 import org.openXpertya.util.DB;
@@ -15,6 +16,9 @@ import org.openXpertya.util.Env;
 
 public class GenerateLibroIva extends SvrProcess {
     
+	/** Preferencia optativa para limitar numero de dias maximo a consultar */
+	public static final String PREFERENCE_MAX_DAYS_LIMIT = "GenerateLibroIvaMaxDaysLimit";
+	
     private Timestamp date_from;
     private Timestamp date_to;
     private String transaction;
@@ -51,6 +55,20 @@ public class GenerateLibroIva extends SvrProcess {
 	}
 	
 	protected String doIt() throws java.lang.Exception {
+		
+		// Validar que el intervalo de dias a consultar sea uno aceptable, en funcion de la preferencia
+		// Se adiciona 1 día dado que el intervalo de fechas es inclusivo (ejemplo: del 5 al 6 en realidad son 2 días de reporte)
+		String limitPref = MPreference.GetCustomPreferenceValue(PREFERENCE_MAX_DAYS_LIMIT);
+		if (limitPref != null && limitPref.length() > 0) {
+			int limit = Integer.parseInt(limitPref);
+			int days = (int)((date_to.getTime() - date_from.getTime()) / (1000 * 60 * 60 * 24)) + 1;
+
+			// Si el numero de dias especificado supera el limite -> impedir ejecucion
+			if (days > limit) {
+				throw new Exception("El intervalo de fechas especificado (" + days + " dias) es superior al limite permitido (" + limit + " dias)");
+			}
+		}
+		
 		
 		// delete all rows older than a week
     	// borro la antigua consulta si la hay
