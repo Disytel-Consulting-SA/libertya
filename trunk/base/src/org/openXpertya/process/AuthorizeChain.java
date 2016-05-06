@@ -67,7 +67,7 @@ public class AuthorizeChain extends SvrProcess {
 				+ " FROM m_authorizationchainlinkuser aclu " 
 				+ " WHERE aclu.M_AuthorizationChainLink_ID = acl.M_AuthorizationChainLink_ID " 
 				+ " AND aclu.AD_User_ID = " + getAD_User_ID()  
-				+ " AND (case when aclu.StartDate is null then true else current_date >= aclu.EndDate end) "
+				+ " AND (case when aclu.StartDate is null then true else current_date >= aclu.StartDate end) "
 				+ " AND (case when aclu.EndDate is null then true else current_date <= aclu.EndDate end)) ";
 		if (DB.getSQLValue(get_TrxName(), sql)>0)
 			throw new Exception(Msg.getMsg(getCtx(), "Can'tAuthorize"));
