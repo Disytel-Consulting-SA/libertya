@@ -126,7 +126,25 @@ public class LaunchInOut extends SvrProcess {
 			throw new RuntimeException(
 					"No se pueden cargar los datos del informe", e);
 		}
+		
+		//Agrego los parámetros al reporte
+		addReportParameter(jasperwrapper, bpartner);
+		
+		try {
+			jasperwrapper.fillReport(ds);
+			jasperwrapper.showReport(getProcessInfo());
+		}
 
+		catch (RuntimeException e) {
+			throw new RuntimeException("No se ha podido rellenar el informe.",
+					e);
+		}
+
+		return "doIt";
+	}
+
+	protected void addReportParameter(MJasperReport jasperwrapper,
+			MBPartner bpartner) {
 		// Inicializar los montos necesarios para pasar como parámetro
 		initializeAmts(getOrder(), getInvoice());
 		BigDecimal totalNetLineDiscounts = linesTotalBonusNetAmt.add(
@@ -134,23 +152,22 @@ public class LaunchInOut extends SvrProcess {
 				linesTotalLineDiscountsNetAmt);
 		BigDecimal totalLineDiscounts = linesTotalBonusAmt.add(
 				linesTotalDocumentDiscountsAmt).add(linesTotalLineDiscountsAmt);
-		BPLocation = new MBPartnerLocation(getCtx(),
-				getInout().getC_BPartner_Location_ID(), null);
-		location = new MLocation(getCtx(),
-				BPLocation.getC_Location_ID(), null);
+		BPLocation = new MBPartnerLocation(getCtx(), getInout()
+				.getC_BPartner_Location_ID(), null);
+		location = new MLocation(getCtx(), BPLocation.getC_Location_ID(), null);
 		MRegion region = null;
 		if (location.getC_Region_ID() > 0)
 			region = new MRegion(getCtx(), location.getC_Region_ID(), null);
-		MClient client = JasperReportsUtil.getClient(getCtx(),
-				getInout().getAD_Client_ID());
+		MClient client = JasperReportsUtil.getClient(getCtx(), getInout()
+				.getAD_Client_ID());
 		MClientInfo clientInfo = client.getInfo();
 
-		jasperwrapper.addParameter(
-				"TIPOCOMPROBANTE",
-				JasperReportsUtil.getDocTypeName(getCtx(),
-						getInout().getC_DocType_ID(), "REMITO", get_TrxName()));
+		jasperwrapper.addParameter("TIPOCOMPROBANTE", JasperReportsUtil
+				.getDocTypeName(getCtx(), getInout().getC_DocType_ID(),
+						"REMITO", get_TrxName()));
 		jasperwrapper.addParameter("FECHA", getInout().getMovementDate());
-		jasperwrapper.addParameter("MOVEMENT_DATE", getInout().getMovementDate());
+		jasperwrapper.addParameter("MOVEMENT_DATE", getInout()
+				.getMovementDate());
 		jasperwrapper.addParameter("RAZONSOCIAL", bpartner.getName());
 		jasperwrapper.addParameter("RAZONSOCIAL2", bpartner.getName2());
 		jasperwrapper.addParameter("CODIGO", bpartner.getValue());
@@ -159,6 +176,8 @@ public class LaunchInOut extends SvrProcess {
 		jasperwrapper.addParameter("BP_LOCATION_NAME", BPLocation.getName());
 		jasperwrapper.addParameter("CIUDAD",
 				JasperReportsUtil.coalesce(location.getCity(), ""));
+		jasperwrapper.addParameter("PROVINCIA",
+				JasperReportsUtil.coalesce(location.getRegionName(), ""));
 		jasperwrapper
 				.addParameter("PAIS", JasperReportsUtil.coalesce(location
 						.getCountry().getName(), ""));
@@ -171,38 +190,34 @@ public class LaunchInOut extends SvrProcess {
 		jasperwrapper.addParameter("CUIT", bpartner.getTaxID());
 		jasperwrapper.addParameter("INGBRUTO", bpartner.getIIBB());
 		if (!Util.isEmpty(getInout().getSalesRep_ID(), true)) {
-			MUser salesRepUser = new MUser(getCtx(), getInout().getSalesRep_ID(),
-					get_TrxName());
-			jasperwrapper.addParameter("VENDEDOR",salesRepUser.getName());
-			
+			MUser salesRepUser = new MUser(getCtx(), getInout()
+					.getSalesRep_ID(), get_TrxName());
+			jasperwrapper.addParameter("VENDEDOR", salesRepUser.getName());
+
 			// FB - Nombre de la EC asociada al Usuario Vendedor (a veces el
 			// nombre de usuario suele ser todo en minúsculas y es mas correcto
 			// mostrar Nombre y Apellido de la EC que es un empleado)
 			jasperwrapper.addParameter(
-				"SALESREP_BP_NAME",
-				salesRepUser.getC_BPartner_ID() > 0 ? JasperReportsUtil
-						.getBPartnerName(getCtx(),
-								salesRepUser.getC_BPartner_ID(),
-								get_TrxName()) 
-						: salesRepUser.getName());
+					"SALESREP_BP_NAME",
+					salesRepUser.getC_BPartner_ID() > 0 ? JasperReportsUtil
+							.getBPartnerName(getCtx(),
+									salesRepUser.getC_BPartner_ID(),
+									get_TrxName()) : salesRepUser.getName());
 		}
 		jasperwrapper.addParameter("NRODOCORIG",
 				JasperReportsUtil.coalesce(getInout().getPOReference(), ""));
 		jasperwrapper.addParameter("NRO_OC", getOrder() == null ? ""
 				: JasperReportsUtil.coalesce(getOrder().getDocumentNo(), ""));
-		if(getInvoice() != null){
+		if (getInvoice() != null) {
 			String fechaVto = (String) JasperReportsUtil.coalesce(
-					getFechaVto(getInvoice()), getInvoice().getDateInvoiced().toString());
+					getFechaVto(getInvoice()), getInvoice().getDateInvoiced()
+							.toString());
 			fechaVto = fechaVto.substring(0, 11); // quitamos la hora del string
-			jasperwrapper.addParameter("VCTO","Vencimiento: "+ fechaVto);
-		}
-		else if(getOrder() != null){
-			jasperwrapper.addParameter(
-					"VCTO",
-					"Vencimiento: "
-							+ getInout().getDateOrdered() == null ? ""
-									: (getInout().getDateOrdered().toString()
-											.substring(0, 11)));
+			jasperwrapper.addParameter("VCTO", "Vencimiento: " + fechaVto);
+		} else if (getOrder() != null) {
+			jasperwrapper.addParameter("VCTO", "Vencimiento: "
+					+ getInout().getDateOrdered() == null ? "" : (getInout()
+					.getDateOrdered().toString().substring(0, 11)));
 		}
 		jasperwrapper.addParameter("NROREMITO", getInout().getDocumentNo());
 		jasperwrapper.addParameter("SUBTOTAL", linesTotalNetAmt);
@@ -221,34 +236,32 @@ public class LaunchInOut extends SvrProcess {
 				getTaxAmt(getOrder(), getInvoice(), new BigDecimal(21)));
 		jasperwrapper.addParameter("SUBDESC", totalLineDiscounts);
 		jasperwrapper.addParameter("TOTAL", grandTotal);
-		jasperwrapper.addParameter("LETRA_PESOS", NumeroCastellano.numeroACastellano(grandTotal));
+		jasperwrapper.addParameter("LETRA_PESOS",
+				NumeroCastellano.numeroACastellano(grandTotal));
 		jasperwrapper.addParameter(
 				"CODVTA",
-				getOrder() == null ? "" : JasperReportsUtil.getListName(getCtx(),
-						MInvoice.PAYMENTRULE_AD_Reference_ID,
+				getOrder() == null ? "" : JasperReportsUtil.getListName(
+						getCtx(), MInvoice.PAYMENTRULE_AD_Reference_ID,
 						getOrder().getPaymentRule()));
 		if (getInvoice() != null) {
-			jasperwrapper.addParameter("NROCOMPROBANTE",
-					getInvoice().getDocumentNo());
+			jasperwrapper.addParameter("NROCOMPROBANTE", getInvoice()
+					.getDocumentNo());
 			jasperwrapper.addParameter("INVOICE", JasperReportsUtil
 					.getPODisplayByIdentifiers(getCtx(), getInvoice(),
 							X_C_Invoice.Table_ID, get_TrxName()));
 		}
 		if (!Util.isEmpty(getInout().getM_Shipper_ID(), true)) {
-			jasperwrapper.addParameter(
-					"TRANSPORTISTA",
-					JasperReportsUtil.getShipperData(getCtx(),
-							getInout().getM_Shipper_ID(), get_TrxName()));
+			jasperwrapper.addParameter("TRANSPORTISTA", JasperReportsUtil
+					.getShipperData(getCtx(), getInout().getM_Shipper_ID(),
+							get_TrxName()));
 		}
 		if (!Util.isEmpty(getInout().getC_Currency_ID(), true)) {
-			jasperwrapper.addParameter(
-					"MONEDA",
-					JasperReportsUtil.getCurrencyDescription(getCtx(),
-							getInout().getC_Currency_ID(), get_TrxName()));
-			jasperwrapper.addParameter(
-					"CURRENCY_SYMBOL",
-					JasperReportsUtil.getCurrencySymbol(getCtx(),
-							getInout().getC_Currency_ID(), get_TrxName()));
+			jasperwrapper.addParameter("MONEDA", JasperReportsUtil
+					.getCurrencyDescription(getCtx(), getInout()
+							.getC_Currency_ID(), get_TrxName()));
+			jasperwrapper.addParameter("CURRENCY_SYMBOL", JasperReportsUtil
+					.getCurrencySymbol(getCtx(), getInout().getC_Currency_ID(),
+							get_TrxName()));
 		}
 		jasperwrapper
 				.addParameter(
@@ -264,94 +277,86 @@ public class LaunchInOut extends SvrProcess {
 				"CLIENT_CATEGORIA_IVA",
 				JasperReportsUtil.getCategoriaIVAName(getCtx(),
 						clientInfo.getC_Categoria_Iva_ID(), get_TrxName()));
-		jasperwrapper.addParameter("ORG",
-				JasperReportsUtil.getOrgName(getCtx(), getInout().getAD_Org_ID()));
+		jasperwrapper.addParameter("ORG", JasperReportsUtil.getOrgName(
+				getCtx(), getInout().getAD_Org_ID()));
 		jasperwrapper.addParameter("ORG_LOCATION_DESCRIPTION",
-				JasperReportsUtil.getLocalizacion(getCtx(),
-						getInout().getAD_Client_ID(), getInout().getAD_Org_ID(),
+				JasperReportsUtil.getLocalizacion(getCtx(), getInout()
+						.getAD_Client_ID(), getInout().getAD_Org_ID(),
 						get_TrxName()));
 		if (!Util.isEmpty(getInout().getAD_OrgTrx_ID(), true)) {
-			jasperwrapper.addParameter(
-					"ORGTRX_NAME",
-					JasperReportsUtil.getOrgName(getCtx(),
-							getInout().getAD_OrgTrx_ID()));
+			jasperwrapper.addParameter("ORGTRX_NAME", JasperReportsUtil
+					.getOrgName(getCtx(), getInout().getAD_OrgTrx_ID()));
 		}
 		if (!Util.isEmpty(getInout().getAD_User_ID(), true)) {
-			jasperwrapper.addParameter(
-					"USER",
-					JasperReportsUtil.getUserName(getCtx(),
-							getInout().getAD_User_ID(), get_TrxName()));
+			jasperwrapper.addParameter("USER", JasperReportsUtil.getUserName(
+					getCtx(), getInout().getAD_User_ID(), get_TrxName()));
 		}
 		jasperwrapper.addParameter("APPROVAL_AMT", getInout().getApprovalAmt());
 		// Actividad
 		if (!Util.isEmpty(getInout().getC_Activity_ID(), true)) {
-			jasperwrapper.addParameter(
-					"ACTIVITY",
-					JasperReportsUtil.getActivityName(getCtx(),
-							getInout().getC_Activity_ID(), get_TrxName()));
+			jasperwrapper.addParameter("ACTIVITY", JasperReportsUtil
+					.getActivityName(getCtx(), getInout().getC_Activity_ID(),
+							get_TrxName()));
 		}
 		// Campaña
 		if (!Util.isEmpty(getInout().getC_Campaign_ID(), true)) {
-			jasperwrapper.addParameter(
-					"CAMPAIGN",
-					JasperReportsUtil.getCampaignName(getCtx(),
-							getInout().getC_Campaign_ID(), get_TrxName()));
+			jasperwrapper.addParameter("CAMPAIGN", JasperReportsUtil
+					.getCampaignName(getCtx(), getInout().getC_Campaign_ID(),
+							get_TrxName()));
 		}
 		// Proyecto
 		if (!Util.isEmpty(getInout().getC_Project_ID(), true)) {
-			jasperwrapper.addParameter(
-					"PROJECT",
-					JasperReportsUtil.getProjectName(getCtx(),
-							getInout().getC_Project_ID(), get_TrxName()));
+			jasperwrapper.addParameter("PROJECT", JasperReportsUtil
+					.getProjectName(getCtx(), getInout().getC_Project_ID(),
+							get_TrxName()));
 		}
 		// Cargo
 		if (!Util.isEmpty(getInout().getC_Charge_ID(), true)) {
-			jasperwrapper.addParameter(
-					"CHARGE",
-					JasperReportsUtil.getChargeName(getCtx(),
-							getInout().getC_Charge_ID(), get_TrxName()));
+			jasperwrapper.addParameter("CHARGE", JasperReportsUtil
+					.getChargeName(getCtx(), getInout().getC_Charge_ID(),
+							get_TrxName()));
 		}
 		// Tipo de documento
 		if (!Util.isEmpty(getInout().getC_DocType_ID(), true)) {
-			jasperwrapper.addParameter(
-					"DOCTYPE",
-					JasperReportsUtil.getDocTypeName(getCtx(),
-							getInout().getC_DocType_ID(), "REMITO", get_TrxName()));
+			jasperwrapper.addParameter("DOCTYPE", JasperReportsUtil
+					.getDocTypeName(getCtx(), getInout().getC_DocType_ID(),
+							"REMITO", get_TrxName()));
 		}
 		jasperwrapper.addParameter("CHARGE_AMT", getInout().getChargeAmt());
 		jasperwrapper.addParameter("DATE_ACCT", getInout().getDateAcct());
-		jasperwrapper.addParameter("DATE_RECEIVED", getInout().getDateReceived());
+		jasperwrapper.addParameter("DATE_RECEIVED", getInout()
+				.getDateReceived());
 		jasperwrapper.addParameter("DELIVERY_RULE", JasperReportsUtil
 				.getListName(getCtx(), X_M_InOut.DELIVERYRULE_AD_Reference_ID,
 						getInout().getDeliveryRule()));
 		jasperwrapper.addParameter("DELIVERY_VIA_RULE", JasperReportsUtil
 				.getListName(getCtx(),
-						X_M_InOut.DELIVERYVIARULE_AD_Reference_ID,
-						getInout().getDeliveryViaRule()));
-		jasperwrapper.addParameter("INOUT_DESCRIPTION", getInout().getDescription());
+						X_M_InOut.DELIVERYVIARULE_AD_Reference_ID, getInout()
+								.getDeliveryViaRule()));
+		jasperwrapper.addParameter("INOUT_DESCRIPTION", getInout()
+				.getDescription());
 		if (!Util.isEmpty(getInout().getDoc_User_ID(), true)) {
-			jasperwrapper.addParameter(
-					"DOC_USER",
-					JasperReportsUtil.getUserName(getCtx(),
-							getInout().getDoc_User_ID(), get_TrxName()));
+			jasperwrapper.addParameter("DOC_USER", JasperReportsUtil
+					.getUserName(getCtx(), getInout().getDoc_User_ID(),
+							get_TrxName()));
 		}
 		jasperwrapper.addParameter("DOC_STATUS", JasperReportsUtil.getListName(
-				getCtx(), X_M_InOut.DOCSTATUS_AD_Reference_ID,
-				getInout().getDocStatus()));
-		jasperwrapper.addParameter("DOC_STATUS_VALUE", getInout().getDocStatus());
+				getCtx(), X_M_InOut.DOCSTATUS_AD_Reference_ID, getInout()
+						.getDocStatus()));
+		jasperwrapper.addParameter("DOC_STATUS_VALUE", getInout()
+				.getDocStatus());
 		jasperwrapper.addParameter("FREIGHT_AMT", getInout().getFreightAmt());
 		jasperwrapper.addParameter("FREIGHT_COST_RULE", JasperReportsUtil
 				.getListName(getCtx(),
-						X_M_InOut.FREIGHTCOSTRULE_AD_Reference_ID,
-						getInout().getFreightCostRule()));
+						X_M_InOut.FREIGHTCOSTRULE_AD_Reference_ID, getInout()
+								.getFreightCostRule()));
 		jasperwrapper.addParameter("INOUT_DATE", getInout().getInOutDate());
-		jasperwrapper.addParameter("INOUT_RECEPTION_DATE",
-				getInout().getInOutReceptionDate());
+		jasperwrapper.addParameter("INOUT_RECEPTION_DATE", getInout()
+				.getInOutReceptionDate());
 		if (!Util.isEmpty(getInout().getM_Warehouse_ID(), true)) {
-			jasperwrapper.addParameter(
-					"WAREHOUSE",
-					JasperReportsUtil.getWarehouseName(getCtx(),
-							getInout().getM_Warehouse_ID(), get_TrxName()));
+			jasperwrapper.addParameter("WAREHOUSE", JasperReportsUtil
+					.getWarehouseName(getCtx(), getInout().getM_Warehouse_ID(),
+							get_TrxName()));
 		}
 		jasperwrapper.addParameter("MOVEMENT_TYPE", JasperReportsUtil
 				.getListName(getCtx(), X_M_InOut.MOVEMENTTYPE_AD_Reference_ID,
@@ -360,10 +365,11 @@ public class LaunchInOut extends SvrProcess {
 		jasperwrapper.addParameter("PRIORITY_RULE", JasperReportsUtil
 				.getListName(getCtx(), X_M_InOut.PRIORITYRULE_AD_Reference_ID,
 						getInout().getPriorityRule()));
-		jasperwrapper.addParameter("RECEPTION_DATE", getInout().getReceptionDate());
+		jasperwrapper.addParameter("RECEPTION_DATE", getInout()
+				.getReceptionDate());
 		if (!Util.isEmpty(getInout().getRef_InOut_ID(), true)) {
-			MInOut refInOut = new MInOut(getCtx(), getInout().getRef_InOut_ID(),
-					get_TrxName());
+			MInOut refInOut = new MInOut(getCtx(),
+					getInout().getRef_InOut_ID(), get_TrxName());
 			jasperwrapper.addParameter("REF_INOUT", JasperReportsUtil
 					.getPODisplayByIdentifiers(getCtx(), refInOut,
 							X_M_InOut.Table_ID, get_TrxName()));
@@ -371,9 +377,9 @@ public class LaunchInOut extends SvrProcess {
 		jasperwrapper.addParameter("SHIP_DATE", getInout().getShipDate());
 		jasperwrapper.addParameter("TRACKINGNO", getInout().getTrackingNo());
 		// Contacto (AD_User_ID)
-		if(!Util.isEmpty(getInout().getAD_User_ID(), true)) {
+		if (!Util.isEmpty(getInout().getAD_User_ID(), true)) {
 			MUser contact = new MUser(getCtx(), getInout().getAD_User_ID(),
-				get_TrxName());
+					get_TrxName());
 			// FB - Nuevos parámetros de contacto
 			jasperwrapper.addParameter("CONTACT_NAME", contact.getName());
 			jasperwrapper.addParameter("CONTACT_PHONE", contact.getPhone());
@@ -382,7 +388,7 @@ public class LaunchInOut extends SvrProcess {
 			jasperwrapper.addParameter("CONTACT_FAX", contact.getFax());
 			jasperwrapper.addParameter("CONTACT_EMAIL", contact.getEMail());
 		}
-		
+
 		if (!Util.isEmpty(getInout().getUser1_ID(), true)) {
 			jasperwrapper.addParameter("USER1", JasperReportsUtil.getUserName(
 					getCtx(), getInout().getUser1_ID(), get_TrxName()));
@@ -398,7 +404,7 @@ public class LaunchInOut extends SvrProcess {
 		jasperwrapper.addParameter("IS_POSTED", getInout().isPosted());
 		jasperwrapper.addParameter("ISSOTRX", getInout().isSOTrx());
 
-		// Datos de Localización 
+		// Datos de Localización
 		MLocation loc = BPLocation.getLocation(false);
 		jasperwrapper.addParameter("LOC_ADDRESS1", loc.getAddress1());
 		jasperwrapper.addParameter("LOC_ADDRESS2", loc.getAddress2());
@@ -407,48 +413,39 @@ public class LaunchInOut extends SvrProcess {
 		jasperwrapper.addParameter("LOC_PLAZA", loc.getPlaza());
 		jasperwrapper.addParameter("LOC_CITY", loc.getCity());
 		jasperwrapper.addParameter("LOC_POSTAL", loc.getPostal());
-		jasperwrapper.addParameter("LOC_REGION", loc.getC_Region_ID() > 0 ? loc.getRegion().getName() : "");
-		jasperwrapper.addParameter("LOC_COUNTRY", loc.getC_City_ID() > 0 ? loc.getCountry().getName() : "");
-		
+		jasperwrapper.addParameter("LOC_REGION", loc.getC_Region_ID() > 0 ? loc
+				.getRegion().getName() : "");
+		jasperwrapper.addParameter("LOC_COUNTRY", loc.getC_City_ID() > 0 ? loc
+				.getCountry().getName() : "");
+
 		jasperwrapper.addParameter("BP_LOCATION_PHONE", BPLocation.getPhone());
-		jasperwrapper.addParameter("BP_LOCATION_PHONE2", BPLocation.getPhone2());
+		jasperwrapper
+				.addParameter("BP_LOCATION_PHONE2", BPLocation.getPhone2());
 		jasperwrapper.addParameter("BP_LOCATION_FAX", BPLocation.getFax());
 		jasperwrapper.addParameter("BP_LOCATION_ISDN", BPLocation.getISDN());
 
 		// Agregar datos del cliente en el caso que sea consumidor final
-		if(getInvoice() != null || getOrder() != null){
-			jasperwrapper.addParameter(
-					"CUSTOMER_NAME",
-					getInvoice() != null ? getInvoice().getNombreCli() : getOrder()
-							.getNombreCli());
-			jasperwrapper.addParameter(
-					"CUSTOMER_ADDRESS",
-					getInvoice() != null ? getInvoice().getInvoice_Adress() : getOrder()
-							.getInvoice_Adress());
-			jasperwrapper.addParameter(
-					"CUSTOMER_NROIDENTIFIC_CLIENTE",
-					getInvoice() != null ? getInvoice().getNroIdentificCliente() : getOrder()
+		if (getInvoice() != null || getOrder() != null) {
+			jasperwrapper.addParameter("CUSTOMER_NAME",
+					getInvoice() != null ? getInvoice().getNombreCli()
+							: getOrder().getNombreCli());
+			jasperwrapper.addParameter("CUSTOMER_ADDRESS",
+					getInvoice() != null ? getInvoice().getInvoice_Adress()
+							: getOrder().getInvoice_Adress());
+			jasperwrapper.addParameter("CUSTOMER_NROIDENTIFIC_CLIENTE",
+					getInvoice() != null ? getInvoice()
+							.getNroIdentificCliente() : getOrder()
 							.getNroIdentificCliente());
 			jasperwrapper.addParameter("CUSTOMER_CUIT",
-					getInvoice() != null ? getInvoice().getCUIT() : getOrder().getCUIT());
+					getInvoice() != null ? getInvoice().getCUIT() : getOrder()
+							.getCUIT());
 		}
-		
+
 		jasperwrapper.addParameter("CREATEDBY", JasperReportsUtil.getUserName(
 				getCtx(), getInout().getCreatedBy(), get_TrxName()));
 		jasperwrapper.addParameter("UPDATEDBY", JasperReportsUtil.getUserName(
 				getCtx(), getInout().getUpdatedBy(), get_TrxName()));
-		
-		try {
-			jasperwrapper.fillReport(ds);
-			jasperwrapper.showReport(getProcessInfo());
-		}
 
-		catch (RuntimeException e) {
-			throw new RuntimeException("No se ha podido rellenar el informe.",
-					e);
-		}
-
-		return "doIt";
 	}
 
 	protected void initializeAmts(MOrder order, MInvoice invoice) {

@@ -86,6 +86,10 @@ public class InOutDataSource implements JRDataSource {
 		methodMapper.put("DOCUMENTDISCOUNT_UNITY_NET", "getDocumentDiscountUnityAmtNet");
 		methodMapper.put("TOTAL_DOCUMENTDISCOUNT", "getTotalDocumentDiscountUnityAmtWithTax");
 		methodMapper.put("TOTAL_DOCUMENTDISCOUNT_NET", "getTotalDocumentDiscountUnityAmtNet");
+		
+		methodMapper.put("PRICESTDCOST", "getPriceStdCost");
+		methodMapper.put("PRICESTDSALES", "getPriceStdSales");
+
 	}
 	
 	public void loadData() throws RuntimeException {

@@ -1389,6 +1389,20 @@ public class MInOutLine extends X_M_InOutLine {
 		// inout has orderline and both has the same UOM
 		return true;
 	}
+		
+	/**
+	 * @return precio std de tarifa costo.
+	 */
+	public BigDecimal getPriceStdCost(){
+		return DB.getSQLValueBD(get_TrxName(), "SELECT * FROM determineproductpricestd(?,"+getAD_Org_ID()+",'N')", getM_Product_ID());
+	}
+	
+	/**
+	 * @return precio std de tarifa venta.
+	 */
+	public BigDecimal getPriceStdSales(){
+		return DB.getSQLValueBD(get_TrxName(), "SELECT * FROM determineproductpricestd(?,"+getAD_Org_ID()+",'Y')", getM_Product_ID());
+	}
 
 } // MInOutLine
 
