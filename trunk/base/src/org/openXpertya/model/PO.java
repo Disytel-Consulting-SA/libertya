@@ -3757,11 +3757,17 @@ public abstract class PO implements Serializable, Comparator, Evaluatee {
 		return true;
 	}
 
+	/** Sobrecarga para compatibilidad con resto de invocaciones */
 	public static int getID(String tableName) {
+		return getID(tableName, null);
+	}
+	
+	/** Sobrecarga para compatibilidad con PluginXMLUpdater (requiere trxName) */
+	public static int getID(String tableName, String trxName) {
 		int id = 0;
 		String sql = "select AD_TABLE_ID from AD_TABLE where upper(tablename) = upper(?)";
 		try {
-			PreparedStatement pstmt = DB.prepareStatement(sql);
+			PreparedStatement pstmt = DB.prepareStatement(sql, trxName);
 			pstmt.setString(1, tableName);
 			ResultSet rs = pstmt.executeQuery();
 			if (rs.next())
