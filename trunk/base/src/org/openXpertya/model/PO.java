@@ -4791,4 +4791,77 @@ public abstract class PO implements Serializable, Comparator, Evaluatee {
 		return values;
 	}
 	
+	/**
+	 * Suma la columna con nombre columnName de la tabla con nombre tableName 
+	 * que cumplen con las condiciones dadas en la cláusula where parámetro. 
+	 * Esta cláusula puede tener parámetros (notación ?) que luego serán 
+	 * cargados al Prepared Statement. Estos parámetros (whereParams) 
+	 * que llevará el where deben pasarse en el orden de aparición en la 
+	 * cláusula. Por ejemplo, el primer parámetro dentro de la cláusula, 
+	 * debe ser el primer elemento dentro del array de objetos whereParams, 
+	 * y así sucesivamente.
+	 * <strong>NOTAS:</strong> No agregar WHERE a la cláusula parámetro, se
+	 * agrega automáticamente.
+	 * 
+	 * @param ctx
+	 *            el contexto se utilizará para crear los PO.
+	 * @param tableName
+	 *            nombre de la tabla involucrada.
+	 * @param columnName
+	 *            nombre de la columna involucrada.
+	 * @param whereClause
+	 *            cláusula where, en el caso de colocar algunas condiciones.
+	 * @param whereParams
+	 *            parámetros de la cláusula where, en el caso que hubiere.
+	 * @param trxName
+	 *            nombre de la transacción actual.
+	 * @return Retorna la suma de la columna indicada, BigDecimal.ZERO
+	 * 			en caso de no se encuentren registros para sumar.
+	 * @author Gabriel Hernández - Disytel versión 1.0
+	 */
+	public static BigDecimal getSumColumn(Properties ctx, String tableName, String columnName,
+			String whereClause, Object[] whereParams, String trxName) {
+		// Armar la consulta sql
+		StringBuffer sql = new StringBuffer("SELECT SUM(").append(columnName).append(") as ").append(columnName).append(" FROM ").append(tableName);
+		// Si hay cláusula where, entonces coloco el where parámetro
+		if ((whereClause != null) && (whereClause.trim().length() > 0)) {
+			sql.append(" WHERE ");
+			sql.append(whereClause);
+		}
+		PreparedStatement ps = null;
+		ResultSet rs = null;
+		BigDecimal res= BigDecimal.ZERO;
+		try {
+			ps = DB.prepareStatement(sql.toString(),
+					ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_UPDATABLE,
+					trxName);
+			if (whereParams != null) {
+				int p = 1;
+				for (int i = 0; i < whereParams.length; i++) {
+					ps.setObject(p++, whereParams[i]);
+				}
+			}
+			rs = ps.executeQuery();
+			if (rs.next()) {
+				res = rs.getBigDecimal(columnName);
+			}
+		} catch (Exception e) {
+			s_log.severe("ERROR finding from table " + tableName);
+			e.printStackTrace();
+		} finally {
+			try {
+				if (ps != null)
+					ps.close();
+				if (rs != null)
+					rs.close();
+			} catch (Exception e) {
+				s_log.severe("ERROR finding from table " + tableName);
+				e.printStackTrace();
+			}
+		}
+
+		return res;
+	}
+
+	
 } // PO
