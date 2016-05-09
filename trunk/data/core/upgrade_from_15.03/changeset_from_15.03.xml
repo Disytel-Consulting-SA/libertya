@@ -90,7 +90,12 @@ Ejemplos de cambios
 		<!-- 20160104-0957 Reglas de filtrado para SkipColumnsFilter -->
 		<mkdir dir="${TARGET_DIR}/utils/replicacion/filters" />
 		<copy file="${SOURCE_DIR}/SkipColumnsFilterRulesTemplate.properties" todir="${TARGET_DIR}/utils/replicacion/filters" overwrite="yes" />
-						
+		
+		<!--  20160506-1330 Cambios de versiones por nuevo release 16.04 -->
+		<copy file="${SOURCE_DIR}/build.xml" todir="${TARGET_DIR}/" overwrite="yes" />
+		<copy file="${SOURCE_DIR}/libertya.jnlp" todir="${TARGET_DIR}/lib" overwrite="yes" />
+		<copy file="${SOURCE_DIR}/Libertya.sh" todir="${TARGET_DIR}/utils" overwrite="yes" />
+    	
     </target>
     
 </project>

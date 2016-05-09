@@ -151,7 +151,7 @@
       <manifest>
 		<attribute name="Specification-Title" value="Librerias_Cliente_Libertya"/>
 		<attribute name="Specification-Version" value="${VERSION_PRINCIPAL_OXP}"/>
-		<attribute name="Specification-Vendor" value="(C) 2015 DISYTEL."/>
+		<attribute name="Specification-Vendor" value="(C) 2016 DISYTEL."/>
 		<attribute name="Implementation-Title" value="OXPXLib ${VERSION_PRINCIPAL_OXP}"/>
 		<attribute name="Implementation-Version" value="${VERSION_PRINCIPAL_OXP} ${DSTAMP}-${TSTAMP}"/>
 		<attribute name="Implementation-Vendor" value="${env.CONSULTORA_OXP}"/>
@@ -228,7 +228,7 @@
       <manifest>
 		<attribute name="Specification-Title" value="Cliente_Libertya"/>
 		<attribute name="Specification-Version" value="${VERSION_PRINCIPAL_OXP}"/>
-		<attribute name="Specification-Vendor" value="(C) 2015 DISYTEL."/>
+		<attribute name="Specification-Vendor" value="(C) 2016 DISYTEL."/>
 		<attribute name="Implementation-Title" value="OXP ${VERSION_PRINCIPAL_OXP}"/>
 		<attribute name="Implementation-Version" value="${VERSION_PRINCIPAL_OXP} ${DSTAMP}-${TSTAMP}"/>
 		<attribute name="Implementation-Vendor" value="${env.CONSULTORA_OXP}"/>
@@ -242,7 +242,7 @@
 			<manifest>
 	  			<attribute name="Specification-Title" value="OXPRoot"/>
 				<attribute name="Specification-Version" value="${VERSION_PRINCIPAL_OXP}"/>
-				<attribute name="Specification-Vendor" value="(C) 2015 DISYTEL."/>
+				<attribute name="Specification-Vendor" value="(C) 2016 DISYTEL."/>
 				<attribute name="Implementation-Title" value="OXP ${VERSION_PRINCIPAL_OXP}"/>
 				<attribute name="Implementation-Version" value="${VERSION_PRINCIPAL_OXP} ${DSTAMP}-${TSTAMP}"/>
 				<attribute name="Implementation-Vendor" value="${env.CONSULTORA_OXP}"/>
@@ -256,7 +256,7 @@
 			<manifest>
 	  			<attribute name="Specification-Title" value="WEBUI"/>
 				<attribute name="Specification-Version" value="${VERSION_PRINCIPAL_OXP}"/>
-				<attribute name="Specification-Vendor" value="(C) 2015 DISYTEL."/>
+				<attribute name="Specification-Vendor" value="(C) 2016 DISYTEL."/>
 				<attribute name="Implementation-Title" value="OXP ${VERSION_PRINCIPAL_OXP}"/>
 				<attribute name="Implementation-Version" value="${VERSION_PRINCIPAL_OXP} ${DSTAMP}-${TSTAMP}"/>
 				<attribute name="Implementation-Vendor" value="${env.CONSULTORA_OXP}"/>
@@ -279,7 +279,7 @@
 			<manifest>
 	  			<attribute name="Specification-Title" value="OXPRootWar"/>
 				<attribute name="Specification-Version" value="${VERSION_PRINCIPAL_OXP}"/>
-				<attribute name="Specification-Vendor" value="(C) 2015 DISYTEL."/>
+				<attribute name="Specification-Vendor" value="(C) 2016 DISYTEL."/>
 				<attribute name="Implementation-Title" value="OXP ${VERSION_PRINCIPAL_OXP}"/>
 				<attribute name="Implementation-Version" value="${VERSION_PRINCIPAL_OXP} ${DSTAMP}-${TSTAMP}"/>
 				<attribute name="Implementation-Vendor" value="${env.CONSULTORA_OXP}"/>
@@ -430,8 +430,8 @@
 		includes="OXPRoot.jar,OXPRoot.war,OXP.jar,OXPSLib.jar"/>
 	  <manifest>
 		<attribute name="Specification-Title" value="Libertya"/>
-		<attribute name="Specification-Version" value="V15.03"/>
-		<attribute name="Specification-Vendor" value="(C) 2015 DISYTEL."/>
+		<attribute name="Specification-Version" value="V16.04"/>
+		<attribute name="Specification-Vendor" value="(C) 2016 DISYTEL."/>
 		<attribute name="Implementation-Title" value="libertya"/>
 		<attribute name="Implementation-Version" value="V2 ${DSTAMP}-${TSTAMP}"/>
 		<attribute name="Implementation-URL" value="http://www.libertya.org"/>
@@ -471,7 +471,7 @@
 	  <manifest>
 		<attribute name="Specification-Title" value="TiendaWebLibertya"/>
 		<attribute name="Specification-Version" value="v2"/>
-		<attribute name="Specification-Vendor" value="(C) 2015 DISYTEL."/>
+		<attribute name="Specification-Vendor" value="(C) 2016 DISYTEL."/>
 		<attribute name="Implementation-Title" value="TiendaWebLibertya"/>
 		<attribute name="Implementation-Version" value="V2 ${DSTAMP}-${TSTAMP}"/>
 		<attribute name="Implementation-URL" value="http://www.libertya.org"/>

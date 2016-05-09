@@ -5133,4 +5133,5 @@ AND AD_ComponentObjectUID like 'CORE%';
 -- 20160421-1414 Cambiar la definicion de la columna ProcCreate de la tabla M_PriceList_Version a fin de que apunte al proceso correcto ProductPriceTemp en lugar de ProductPriceGen
 UPDATE AD_Column SET AD_Process_ID = (SELECT AD_Process_ID FROM AD_Process WHERE AD_ComponentObjectUID = 'CORE-AD_Process-1000105') WHERE AD_ComponentObjectUID = 'CORE-AD_Column-3744' AND AD_Process_ID = (SELECT AD_Process_ID FROM AD_Process WHERE AD_ComponentObjectUID = 'CORE-AD_Process-1000106');
 
-
+-- 20160509-0956 Versionado de BBDD
+UPDATE ad_system SET version = '09-05-2016' WHERE ad_system_id = 0;
