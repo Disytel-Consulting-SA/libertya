@@ -197,7 +197,7 @@
   	<!-- Mover las clases especificas de serverRoot a OXPRoot -->
     <move todir="nuevoOXPRoot" failonerror="no">
       <fileset dir="nuevosComponents/serverRoot">
-        <include name="**/*.class"/>
+        <include name="**/*"/>
       </fileset>
     </move>
 
@@ -217,7 +217,7 @@
   	<!-- Mover las clases especificas de cliente a OXP -->
     <move todir="nuevoOXP" failonerror="no">
       <fileset dir="nuevosComponents">
-        <include name="**/*.class"/>
+        <include name="**/*"/>
       </fileset>
     </move>
 
