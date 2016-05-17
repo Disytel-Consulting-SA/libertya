@@ -51,6 +51,9 @@ Ejemplos de cambios
 		<!-- Nomina de cambios a continuación -->
 		<!-- ================================ -->
 
+		<!-- 20160517-1010 Soporte para copia/pisado de cualquier tipo de archivos (no solo clases) en Configurar.sh para OXP.jar y OXPRoot.jar -->
+		<copy file="${SOURCE_DIR}/build.xml" todir="${TARGET_DIR}" overwrite="yes" />
+    	
     </target>
     
 </project>
