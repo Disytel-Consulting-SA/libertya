@@ -186,7 +186,7 @@ public class ExportProcess extends SvrProcess {
 	/**
 	 * @return Path absoluto del archivo exportado
 	 */
-	private String getFilePath(){
+	protected String getFilePath(){
 		StringBuffer filepath = new StringBuffer(getExportFormat().getFileName());
 		if(getExportFormat().isConcatenateTimestamp()){
 			SimpleDateFormat dateFormat = new SimpleDateFormat(
@@ -224,12 +224,8 @@ public class ExportProcess extends SvrProcess {
 		ResultSet rs = ps.executeQuery();
 		// Iterar por los resultados
 		while(rs.next()){
-			// Obtener el string de cada columna a exportar
-			writeRow(rs);		
-			// Meter el separador de línea
-			writeRowSeparator();
-			// Aumentar la cantidad de líneas exportadas
-			setExportedLines(getExportedLines()+1);
+			// Escribe al línea en el archivo
+			writeLine(rs);
 		}
 	}
 	
@@ -336,6 +332,15 @@ public class ExportProcess extends SvrProcess {
 		getFileWriter().close();
 	}
 	
+	protected void writeLine(ResultSet rs) throws Exception{
+		// Obtener el string de cada columna a exportar
+		writeRow(rs);		
+		// Meter el separador de línea
+		writeRowSeparator();
+		// Aumentar la cantidad de líneas exportadas
+		setExportedLines(getExportedLines()+1);
+	}
+	
 	protected void writeRow(ResultSet rs) throws Exception{
 		// Iterar por las columnas del formato y obtener el nombre de la columna
 		StringBuffer row = new StringBuffer();
@@ -350,7 +355,13 @@ public class ExportProcess extends SvrProcess {
 			row = new StringBuffer(row.substring(0,
 					row.lastIndexOf(getFieldSeparator())));
 		}
-		getFileWriter().write(row.toString());
+		write(row.toString());
+	}
+	
+	protected void write(String line) throws Exception{
+		if(line != null) {
+			getFileWriter().write(line);
+		}
 	}
 	
 	protected String formatDataColumn(MExpFormatRow expFormatRow, Object value){
@@ -409,27 +420,39 @@ public class ExportProcess extends SvrProcess {
 				String alignment = Util.isEmpty(expFormatRow.getAlignment(),
 						true) ? MExpFormatRow.ALIGNMENT_Left : expFormatRow
 						.getAlignment();
-				int dataLength = newData.length();
-				StringBuffer filling = new StringBuffer();
-				while ((dataLength+filling.length()) < expFormatRow.getLength()) {
-					filling.append(fillCharacter);
-				}
-				newData = (MExpFormatRow.ALIGNMENT_Left.equals(alignment) ? newData
-						+ filling.toString()
-						: filling.toString() + newData);
-				// Posición del negativo
-				if(!Util.isEmpty(expFormatRow.getNegative_Position(), true)){
-					if (data.contains("-")
-							&& (expFormatRow.getAlignment() != null && expFormatRow
-									.getAlignment().equals(
-											MExpFormatRow.ALIGNMENT_Right)) 
-							&& expFormatRow
-									.getNegative_Position()
-									.equals(MExpFormatRow.NEGATIVE_POSITION_BeforeFilling)) {
-						newData = newData.replace("-", fillCharacter);
-						newData = newData.replaceFirst(fillCharacter, "-");
-					}
-				}
+				newData = fillField(newData, fillCharacter, alignment, expFormatRow.getLength(),
+						expFormatRow.getNegative_Position());
+			}
+		}
+		return newData;
+	}
+	
+	/***
+	 * Rellena el campo con el caracter de relleno
+	 * @param data
+	 * @param fillCharacter
+	 * @param alignment
+	 * @param fieldLength
+	 * @param negativePosition
+	 * @return
+	 */
+	protected String fillField(String data, String fillCharacter, String alignment, Integer fieldLength, String negativePosition){
+		String newData = data;
+		int dataLength = data.length();
+		StringBuffer filling = new StringBuffer();
+		while ((dataLength+filling.length()) < fieldLength) {
+			filling.append(fillCharacter);
+		}
+		newData = (MExpFormatRow.ALIGNMENT_Left.equals(alignment) ? newData
+				+ filling.toString()
+				: filling.toString() + newData);
+		// Posición del negativo
+		if(!Util.isEmpty(negativePosition, true)){
+			if (data.contains("-")
+					&& (alignment != null && alignment.equals(MExpFormatRow.ALIGNMENT_Right)) 
+					&& negativePosition.equals(MExpFormatRow.NEGATIVE_POSITION_BeforeFilling)) {
+				newData = newData.replace("-", fillCharacter);
+				newData = newData.replaceFirst(fillCharacter, "-");
 			}
 		}
 		return newData;

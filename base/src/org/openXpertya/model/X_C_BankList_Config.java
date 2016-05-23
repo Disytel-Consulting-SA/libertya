@@ -1,0 +1,135 @@
+/** Modelo Generado - NO CAMBIAR MANUALMENTE - Disytel */
+package org.openXpertya.model;
+import java.util.logging.Level;
+ import java.util.*;
+import java.sql.*;
+import java.math.*;
+import org.openXpertya.util.*;
+/** Modelo Generado por C_BankList_Config
+ *  @author Comunidad de Desarrollo Libertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
+ *  @version  - 2016-05-23 10:58:58.639 */
+public class X_C_BankList_Config extends org.openXpertya.model.PO
+{
+/** Constructor estándar */
+public X_C_BankList_Config (Properties ctx, int C_BankList_Config_ID, String trxName)
+{
+super (ctx, C_BankList_Config_ID, trxName);
+/** if (C_BankList_Config_ID == 0)
+{
+setC_BankList_Config_ID (0);
+setC_DocType_ID (0);
+}
+ */
+}
+/** Load Constructor */
+public X_C_BankList_Config (Properties ctx, ResultSet rs, String trxName)
+{
+super (ctx, rs, trxName);
+}
+/** AD_Table_ID */
+public static final int Table_ID = M_Table.getTableID("C_BankList_Config");
+
+/** TableName=C_BankList_Config */
+public static final String Table_Name="C_BankList_Config";
+
+protected static KeyNamePair Model = new KeyNamePair(Table_ID,"C_BankList_Config");
+protected static BigDecimal AccessLevel = new BigDecimal(3);
+
+/** Load Meta Data */
+protected POInfo initPO (Properties ctx)
+{
+POInfo poi = POInfo.getPOInfo (ctx, Table_ID);
+return poi;
+}
+public String toString()
+{
+StringBuffer sb = new StringBuffer ("X_C_BankList_Config[").append(getID()).append("]");
+return sb.toString();
+}
+/** Set C_BankList_Config_ID */
+public void setC_BankList_Config_ID (int C_BankList_Config_ID)
+{
+set_ValueNoCheck ("C_BankList_Config_ID", new Integer(C_BankList_Config_ID));
+}
+/** Get C_BankList_Config_ID */
+public int getC_BankList_Config_ID() 
+{
+Integer ii = (Integer)get_Value("C_BankList_Config_ID");
+if (ii == null) return 0;
+return ii.intValue();
+}
+/** Set Document Type.
+Document type or rules */
+public void setC_DocType_ID (int C_DocType_ID)
+{
+set_Value ("C_DocType_ID", new Integer(C_DocType_ID));
+}
+/** Get Document Type.
+Document type or rules */
+public int getC_DocType_ID() 
+{
+Integer ii = (Integer)get_Value("C_DocType_ID");
+if (ii == null) return 0;
+return ii.intValue();
+}
+/** Set Client Acronym */
+public void setClientAcronym (String ClientAcronym)
+{
+if (ClientAcronym != null && ClientAcronym.length() > 10)
+{
+log.warning("Length > 10 - truncated");
+ClientAcronym = ClientAcronym.substring(0,10);
+}
+set_Value ("ClientAcronym", ClientAcronym);
+}
+/** Get Client Acronym */
+public String getClientAcronym() 
+{
+return (String)get_Value("ClientAcronym");
+}
+/** Set Client Name */
+public void setClientName (String ClientName)
+{
+if (ClientName != null && ClientName.length() > 40)
+{
+log.warning("Length > 40 - truncated");
+ClientName = ClientName.substring(0,40);
+}
+set_Value ("ClientName", ClientName);
+}
+/** Get Client Name */
+public String getClientName() 
+{
+return (String)get_Value("ClientName");
+}
+/** Set Register Number */
+public void setRegisterNumber (String RegisterNumber)
+{
+if (RegisterNumber != null && RegisterNumber.length() > 60)
+{
+log.warning("Length > 60 - truncated");
+RegisterNumber = RegisterNumber.substring(0,60);
+}
+set_Value ("RegisterNumber", RegisterNumber);
+}
+/** Get Register Number */
+public String getRegisterNumber() 
+{
+return (String)get_Value("RegisterNumber");
+}
+/** Set Sucursal Default */
+public void setSucursalDefault (String SucursalDefault)
+{
+if (SucursalDefault != null && SucursalDefault.length() > 10)
+{
+log.warning("Length > 10 - truncated");
+SucursalDefault = SucursalDefault.substring(0,10);
+}
+set_Value ("SucursalDefault", SucursalDefault);
+}
+/** Get Sucursal Default */
+public String getSucursalDefault() 
+{
+return (String)get_Value("SucursalDefault");
+}
+}

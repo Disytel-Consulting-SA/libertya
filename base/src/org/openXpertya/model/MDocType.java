@@ -204,6 +204,12 @@ public class MDocType extends X_C_DocType {
     /** Orden de Pago = POSEC01 (Orden de Pago) */
     public static final String DOCTYPE_Orden_De_Pago = "POSEC01";
     
+    /** Lista Galicia */
+    public static final String DOCTYPE_Lista_Galicia = "LG";
+
+    /** Lista Patagonia */
+    public static final String DOCTYPE_Lista_Patagonia = "LP";
+    
     /**
      *      Standard Constructor
      *      @param ctx context
