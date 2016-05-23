@@ -1,13 +1,14 @@
-/** Modelo Generado - NO CAMBIAR MANUALMENTE - Copyright (C) 2006 FUNDESLE */
+/** Modelo Generado - NO CAMBIAR MANUALMENTE - Disytel */
 package org.openXpertya.model;
-import java.util.*;
+import java.util.logging.Level;
+ import java.util.*;
 import java.sql.*;
 import java.math.*;
 import org.openXpertya.util.*;
 /** Modelo Generado por C_BankAccount
- *  @author Comunidad de Desarrollo openXpertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
- *  @version  - 2009-10-22 14:51:29.994 */
-public class X_C_BankAccount extends PO
+ *  @author Comunidad de Desarrollo Libertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
+ *  @version  - 2016-05-23 10:58:56.788 */
+public class X_C_BankAccount extends org.openXpertya.model.PO
 {
 /** Constructor estándar */
 public X_C_BankAccount (Properties ctx, int C_BankAccount_ID, String trxName)
@@ -37,13 +38,13 @@ public X_C_BankAccount (Properties ctx, ResultSet rs, String trxName)
 {
 super (ctx, rs, trxName);
 }
-/** AD_Table_ID=297 */
-public static final int Table_ID=297;
+/** AD_Table_ID */
+public static final int Table_ID = M_Table.getTableID("C_BankAccount");
 
 /** TableName=C_BankAccount */
 public static final String Table_Name="C_BankAccount";
 
-protected static KeyNamePair Model = new KeyNamePair(297,"C_BankAccount");
+protected static KeyNamePair Model = new KeyNamePair(Table_ID,"C_BankAccount");
 protected static BigDecimal AccessLevel = new BigDecimal(3);
 
 /** Load Meta Data */
@@ -90,7 +91,7 @@ public String getAD_ComponentObjectUID()
 {
 return (String)get_Value("AD_ComponentObjectUID");
 }
-public static final int BANKACCOUNTTYPE_AD_Reference_ID=216;
+public static final int BANKACCOUNTTYPE_AD_Reference_ID = MReference.getReferenceID("C_Bank Account Type");
 /** Savings = S */
 public static final String BANKACCOUNTTYPE_Savings = "S";
 /** Checking = C */
@@ -100,7 +101,7 @@ Bank Account Type */
 public void setBankAccountType (String BankAccountType)
 {
 if (BankAccountType.equals("S") || BankAccountType.equals("C"));
- else throw new IllegalArgumentException ("BankAccountType Invalid value - Reference_ID=216 - S - C");
+ else throw new IllegalArgumentException ("BankAccountType Invalid value - Reference = BANKACCOUNTTYPE_AD_Reference_ID - S - C");
 if (BankAccountType == null) throw new IllegalArgumentException ("BankAccountType is mandatory");
 if (BankAccountType.length() > 1)
 {
@@ -143,6 +144,20 @@ Account at the Bank */
 public int getC_BankAccount_ID() 
 {
 Integer ii = (Integer)get_Value("C_BankAccount_ID");
+if (ii == null) return 0;
+return ii.intValue();
+}
+/** Set C_BankAccount_Location_ID */
+public void setC_BankAccount_Location_ID (int C_BankAccount_Location_ID)
+{
+if (C_BankAccount_Location_ID <= 0) set_Value ("C_BankAccount_Location_ID", null);
+ else 
+set_Value ("C_BankAccount_Location_ID", new Integer(C_BankAccount_Location_ID));
+}
+/** Get C_BankAccount_Location_ID */
+public int getC_BankAccount_Location_ID() 
+{
+Integer ii = (Integer)get_Value("C_BankAccount_Location_ID");
 if (ii == null) return 0;
 return ii.intValue();
 }

@@ -568,6 +568,14 @@ public class MSequence extends X_AD_Sequence {
 
     }		// nextID
 
+    public static String getPrefix(Integer sequenceID, String trxName){
+		return DB.getSQLValueString(trxName, "SELECT prefix FROM ad_sequence WHERE ad_sequence_id = ?", sequenceID);
+    }
+    
+    public static String getSuffix(Integer sequenceID, String trxName){
+		return DB.getSQLValueString(trxName, "SELECT suffix FROM ad_sequence WHERE ad_sequence_id = ?", sequenceID);
+    }
+    
     /**
      *      Validate Table Sequence Values
      *      @return true if updated
