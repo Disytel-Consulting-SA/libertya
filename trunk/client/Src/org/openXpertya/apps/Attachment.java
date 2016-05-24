@@ -44,6 +44,7 @@ import org.compiere.plaf.CompierePLAF;
 import org.compiere.swing.CButton;
 import org.compiere.swing.CComboBox;
 import org.openXpertya.apps.RTFScaledEditorPane;
+import org.openXpertya.attachment.AttachmentIntegrationInterface;
 import org.compiere.swing.CPanel;
 import org.compiere.swing.CTextArea;
 import org.openXpertya.model.MAttachment;
@@ -209,6 +210,13 @@ public final class Attachment extends JDialog implements ActionListener {
 
     private CTextArea info = new CTextArea();
 
+    /** Guardar adjunto en externo */
+    private CButton externalUpload = new CButton();
+    
+    /** Eliminar adjunto de externo */
+    private CButton externalDelete = new CButton();
+    
+    
     /**
      * Descripción de Método
      *
@@ -229,6 +237,10 @@ public final class Attachment extends JDialog implements ActionListener {
         toolBar.add( bSave );
         toolBar.add( bOpen );
         toolBar.add( cbContent );
+        if (MAttachment.isExternalAttachmentEnabled()) {
+        	toolBar.add( externalUpload );
+        	toolBar.add( externalDelete );
+        }
         mainPanel.add( northPanel,BorderLayout.NORTH );
 
         //
@@ -261,6 +273,20 @@ public final class Attachment extends JDialog implements ActionListener {
         bDelete.setToolTipText( Msg.getMsg( Env.getCtx(),"Delete" ));
         bDelete.addActionListener( this );
 
+        //
+
+        externalUpload.setIcon( Env.getImageIcon( "ExternalUpload24.gif" ));
+        externalUpload.setMargin( new Insets( 0,2,0,2 ));
+        externalUpload.setToolTipText( "Cargar en repositorio externo" );
+        externalUpload.addActionListener( this );
+
+        //
+
+        externalDelete.setIcon( Env.getImageIcon( "ExternalDelete24.gif" ));
+        externalDelete.setMargin( new Insets( 0,2,0,2 ));
+        externalDelete.setToolTipText( "Eliminar de repositorio externo" );
+        externalDelete.addActionListener( this );
+        
         //
 
         Dimension size = cbContent.getPreferredSize();
@@ -374,21 +400,25 @@ public final class Attachment extends JDialog implements ActionListener {
         } else {
             bOpen.setEnabled( true );
             bSave.setEnabled( true );
-            bDelete.setEnabled( true );
+            bDelete.setEnabled( entry.getM_UID() == null );
+            externalDelete.setEnabled(entry.getM_UID() != null);
             log.config( entry.toStringX());
 
             //
-
-            info.setText( entry.toStringX());
+            System.out.println("Entrada: " + entry.toStringX());
+            
+           	info.setText( entry.toStringX());
 
             if( entry.isPDF()) {
                 try {
                     graphPanel.getInsets();
 
-                    PdfPanel pdfpanel = PdfPanel.loadPdf( entry.getFile(),graphPanel,false,false,true,true,true,true );
+                    File f = entry.getFile();
+
+                    PdfPanel pdfpanel = PdfPanel.loadPdf( f,graphPanel,false,false,true,true,true,true );
 
                     size = pdfpanel.getSize();
-
+                    f.delete();
                     //
 
                 } catch( Exception e ) {
@@ -420,6 +450,7 @@ public final class Attachment extends JDialog implements ActionListener {
                 BufferedImage bufImg = null;
                 try{
                 	bufImg = ImageIO.read(f);
+                	f.delete();		// <- Faltaba eliminar el archivo temporal luego de ser leido
                 }catch(Exception e){
                 	log.log(Level.SEVERE,"Invalid Image");
                 }
@@ -453,12 +484,14 @@ public final class Attachment extends JDialog implements ActionListener {
             			textPanel = new RTFScaledEditorPane(entry.getInputStream(), graphPanel);
             		else
             		{
-            			textPanel = new JEditorPane( "file:///" + entry.getFile().getAbsolutePath() );
+            			File f = entry.getFile();
+            			textPanel = new JEditorPane( "file:///" + f.getAbsolutePath() );
             			JScrollPane jScrollPane = new JScrollPane();
             			textPanel.setEditable(false); 
             			jScrollPane.setViewportView(textPanel);
             			textPanel.setPreferredSize(new Dimension(800,600));
             			graphPanel.add(jScrollPane,BorderLayout.CENTER);
+            			f.delete();
             		}
             	}
             	catch (Exception e){ log.severe("txt html rtf attachment Exception:" + e.getMessage()); }
@@ -554,8 +587,7 @@ public final class Attachment extends JDialog implements ActionListener {
         }
 
         // Delete individual entry and Return
-
-        else if( e.getSource() == bDelete ) {
+        else if( e.getSource() == bDelete || e.getSource() == externalDelete) {
             deleteAttachmentEntry();
 
             // Show Data
@@ -565,8 +597,13 @@ public final class Attachment extends JDialog implements ActionListener {
 
             // Load Attachment
 
-        } else if( e.getSource() == bLoad ) {
-            loadFile();
+        } else if( e.getSource() == bLoad) {
+            loadFile(null);
+
+            // Open Attachment
+
+        } else if( e.getSource() == externalUpload) {
+            loadFile(MAttachment.getIntegrationImpl());
 
             // Open Attachment
 
@@ -587,7 +624,7 @@ public final class Attachment extends JDialog implements ActionListener {
      *
      */
 
-    private void loadFile() {
+    private void loadFile(AttachmentIntegrationInterface handler) {
         log.info( "" );
 
         JFileChooser chooser = new JFileChooser();
@@ -609,7 +646,7 @@ public final class Attachment extends JDialog implements ActionListener {
 
         File file = chooser.getSelectedFile();
 
-        if( m_attachment.addEntry( file )) {
+        if( m_attachment.addEntry( file, handler )) {
             cbContent.addItem( fileName );
             cbContent.setSelectedIndex( cbContent.getItemCount() - 1 );
             m_change = true;
@@ -670,8 +707,8 @@ public final class Attachment extends JDialog implements ActionListener {
         }
 
         String fileName = getFileName( index );
-        String ext      = fileName.substring( fileName.lastIndexOf( "." ));
-
+        String ext      = fileName.lastIndexOf( "." ) > 0 ? fileName.substring( fileName.lastIndexOf( "." )) : "";
+        
         log.config( "Ext=" + ext );
 
         JFileChooser chooser = new JFileChooser();

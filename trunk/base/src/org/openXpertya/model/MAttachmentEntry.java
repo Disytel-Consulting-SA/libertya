@@ -20,19 +20,17 @@
 
 package org.openXpertya.model;
 
-import org.openXpertya.util.CLogger;
-import org.openXpertya.util.MimeType;
-
-//~--- Importaciones JDK ------------------------------------------------------
-
 import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-
 import java.util.Random;
 import java.util.logging.Level;
+
+import org.openXpertya.attachment.AttachmentIntegrationInterface;
+import org.openXpertya.util.CLogger;
+import org.openXpertya.util.MimeType;
 
 /**
  *      Individual Attachment Entry of MAttachment
@@ -53,6 +51,12 @@ public class MAttachmentEntry {
     /** The Name */
     private String	m_name	= "?";
 
+    /** Posible UID externo */
+    private String	m_UID	= null;
+
+    /** Manejador externo */
+    private AttachmentIntegrationInterface	m_handler	= null;
+    
     /** Index */
     private int	m_index	= 0;
 
@@ -76,6 +80,7 @@ public class MAttachmentEntry {
      *      @param name name
      *      @param data binary data
      *      @param index optional index
+     *      @param handler posible manejador externo
      */
     public MAttachmentEntry(String name, byte[] data, int index) {
 
@@ -166,6 +171,11 @@ public class MAttachmentEntry {
      */
     public String toStringX() {
 
+    	// Es un adjunto externo?
+    	if (m_UID != null) {
+    		return "[Adjunto externo] UID: " + m_UID;
+    	}
+    	
         StringBuffer	sb	= new StringBuffer(m_name);
 
         if (m_data != null) {
@@ -215,6 +225,9 @@ public class MAttachmentEntry {
      * @return Returns the data.
      */
     public byte[] getData() {
+    	// Si es un archivo externo, recuperarlo remotamente
+    	if (m_handler != null && m_UID != null)
+    		return m_handler.retrieveEntry(m_UID);
         return m_data;
     }
 
@@ -225,6 +238,8 @@ public class MAttachmentEntry {
     public File getFile() {
         return getFile(getName());
     }		// getFile
+    
+    
 
     /**
      *      Get File
@@ -240,7 +255,14 @@ public class MAttachmentEntry {
         try {
             FileOutputStream	fos	= new FileOutputStream(file);
 
-            fos.write(m_data);
+            byte[] data = m_data;
+            
+            // Es una referencia externa?  En ese caso recuperar la info remotamente.
+            if (m_UID != null) {
+            	data = m_handler.retrieveEntry(m_UID);
+            }
+            
+            fos.write(data);
             fos.close();
 
         } catch (IOException ioe) {
@@ -294,6 +316,7 @@ public class MAttachmentEntry {
     public String getName() {
         return m_name;
     }
+    
 
     /**
      *      Isattachment entry a Graphic
@@ -333,6 +356,12 @@ public class MAttachmentEntry {
     public boolean isHTML() {
         return m_name.toLowerCase().endsWith(".html") || m_name.toLowerCase().endsWith(".htm");
     }		// isPDF    
+
+    /** Retorna true si es una entrada externa (no almacenada en la bbdd) */
+    public boolean isExternalEntry() {
+    	// handler 
+        return m_handler != null || m_UID != null;
+    }		// isPDF  
     
     //~--- set methods --------------------------------------------------------
 
@@ -357,6 +386,24 @@ public class MAttachmentEntry {
         }
 
     }		// setName
+
+    /** Recupera el posible manejador externo */
+	public AttachmentIntegrationInterface getM_handler() {
+		return m_handler;
+	}
+
+	/** Setea el posible manejador externo */
+	public void setM_handler(AttachmentIntegrationInterface m_handler) {
+		this.m_handler = m_handler;
+	}
+
+	public String getM_UID() {
+		return m_UID;
+	}
+
+	public void setM_UID(String m_UID) {
+		this.m_UID = m_UID;
+	}
 }	// MAttachmentItem
 
 

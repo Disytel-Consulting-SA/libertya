@@ -29,6 +29,7 @@ import org.adempiere.webui.component.Panel;
 import org.adempiere.webui.component.Textbox;
 import org.adempiere.webui.component.Window;
 import org.adempiere.webui.window.FDialog;
+import org.openXpertya.attachment.AttachmentIntegrationInterface;
 import org.openXpertya.model.MAttachment;
 import org.openXpertya.model.MAttachmentEntry;
 import org.openXpertya.util.CLogger;
@@ -100,6 +101,13 @@ public class WAttachment extends Window implements EventListener
 	private Hbox confirmPanel = new Hbox();
 
 	private int displayIndex;
+	
+	/** Guardar adjunto en externo */	
+	private Button externalUpload = new Button();
+	
+	/** Eliminar adjunto de externo */
+	private Button externalDelete = new Button();
+
 
 	/**
 	 *	Constructor.
@@ -195,6 +203,10 @@ public class WAttachment extends Window implements EventListener
 		toolBar.appendChild(bDelete);
 		toolBar.appendChild(bSave);
 		toolBar.appendChild(cbContent);
+        if (MAttachment.isExternalAttachmentEnabled()) {
+        	toolBar.appendChild(externalUpload);
+			toolBar.appendChild(externalDelete);
+        }
 		
 		mainPanel.appendChild(northPanel);
 		Div div = new Div();
@@ -217,6 +229,14 @@ public class WAttachment extends Window implements EventListener
 		bDelete.setTooltiptext(Msg.getMsg(Env.getCtx(), "Delete"));
 		bDelete.addEventListener(Events.ON_CLICK, this);
 
+		externalUpload.setImage("/images/ExternalUpload24.gif");
+		externalUpload.setTooltiptext("Cargar en repositorio externo");
+		externalUpload.addEventListener(Events.ON_CLICK, this);
+
+		externalDelete.setImage("/images/ExternalDelete24.gif");
+		externalDelete.setTooltiptext("Eliminar de repositorio externo");
+		externalDelete.addEventListener(Events.ON_CLICK, this);
+		
 		previewPanel.appendChild(preview);
 		preview.setHeight("100%");
 		preview.setWidth("100%");
@@ -321,9 +341,18 @@ public class WAttachment extends Window implements EventListener
 		if (entry != null && entry.getData() != null)
 		{
 			bSave.setEnabled(true);
-			bDelete.setEnabled(true);
+			bDelete.setEnabled(entry.getM_UID() == null);
+			externalDelete.setEnabled(entry.getM_UID() != null);
 			
 			log.config(entry.toStringX());
+
+			
+			text.setText( entry.toStringX());
+			
+			// No continuar si no se puede previsualizar el tipo de archivo
+			if (!isPreviewable(entry)) {
+				return;
+			}
 
 			try
 			{
@@ -339,6 +368,13 @@ public class WAttachment extends Window implements EventListener
 			}
 		}
 	}
+	
+	
+	/** Retorna true si es un tipo de dato que puede previsualizarse, false en caso contrario */
+	protected boolean isPreviewable(MAttachmentEntry entry) {
+		return entry.isGraphic() || entry.isHTML() || entry.isPDF();
+	}
+	
 	
 	/**
 	 * 	Get File Name with index
@@ -415,7 +451,7 @@ public class WAttachment extends Window implements EventListener
 		
 		//	Delete individual entry and Return
 		
-		else if (e.getTarget() == bDelete)
+		else if (e.getTarget() == bDelete || e.getTarget() == externalDelete)
 			deleteAttachmentEntry();
 		
 		//	Show Data
@@ -426,7 +462,12 @@ public class WAttachment extends Window implements EventListener
 		//	Load Attachment
 		
 		else if (e.getTarget() == bLoad)
-			loadFile();
+			loadFile(null);
+		
+		//	Load external Attachment
+		
+		else if (e.getTarget() == externalUpload)
+			loadFile(MAttachment.getIntegrationImpl());
 		
 		//	Open Attachment
 		
@@ -444,7 +485,7 @@ public class WAttachment extends Window implements EventListener
 	 *	Load file for attachment
 	 */
 	
-	private void loadFile()
+	private void loadFile(AttachmentIntegrationInterface handler)
 	{
 		log.info("");
 		
@@ -491,7 +532,7 @@ public class WAttachment extends Window implements EventListener
 		}
 		
 		//new		
-		if (m_attachment.addEntry(fileName, getMediaData(media)))
+		if (m_attachment.addEntry(fileName, getMediaData(media), handler))
 		{
 			cbContent.appendItem(media.getName(), media.getName());
 			cbContent.setSelectedIndex(cbContent.getItemCount()-1);

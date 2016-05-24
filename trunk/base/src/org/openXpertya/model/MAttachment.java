@@ -20,6 +20,8 @@
 
 package org.openXpertya.model;
 
+import org.openXpertya.attachment.AttachmentIntegrationInterface;
+import org.openXpertya.attachment.IntegrationMockImpl;
 import org.openXpertya.util.CLogger;
 import org.openXpertya.util.DB;
 import org.openXpertya.util.Env;
@@ -72,6 +74,16 @@ public class MAttachment extends X_AD_Attachment {
     /** List of Entry Data */
     private ArrayList	m_items	= null;
 
+    /** Prefijo almacenado en las entradas con almacenamiento externo */
+    public static final String EXTERNAL_ATTACHMENT_PREFIX = "ExternalUID=";
+    
+    /** Atributo en donde se define el handler para adjuntos externos */
+    public static final String EXTERNAL_ATTACHMENT_IMPLEMENTATION_KEY = "ExternalAttachmentImplementation"; 
+    
+    /** Atributo que define si hay soporte de adjuntos externos habilitado*/
+    public static final String EXTERNAL_ATTACHMENT_ENABLED = "ExternalAttachmentEnabled"; 
+    
+    
     /**
      *      Standard Constructor
      *      @param ctx context
@@ -107,12 +119,18 @@ public class MAttachment extends X_AD_Attachment {
 
     }		// MAttachment
 
+    
+    /** Sobrecarga para compatibilidad */
+    public boolean addEntry(File file) {
+    	return addEntry(file, null);
+    }
+    
     /**
      *      Add new Data Entry
      *      @param file file
      *      @return true if added
      */
-    public boolean addEntry(File file) {
+    public boolean addEntry(File file, AttachmentIntegrationInterface handler) {
 
         if (file == null) {
 
@@ -153,7 +171,7 @@ public class MAttachment extends X_AD_Attachment {
             log.log(Level.SEVERE, "addEntry (file)", ioe);
         }
 
-        return addEntry(name, data);
+        return addEntry(name, data, handler);
 
     }		// addEntry
 
@@ -183,19 +201,27 @@ public class MAttachment extends X_AD_Attachment {
 
     }		// addEntry
 
+    
+    /** Sobrecarga por compatibilidad */
+    public boolean addEntry(String name, byte[] data) {
+    	return addEntry(name, data, null);
+    }
+    
     /**
      *      Add new Data Entry
      *      @param name name
      *      @param data data
      *      @return true if added
      */
-    public boolean addEntry(String name, byte[] data) {
+    public boolean addEntry(String name, byte[] data, AttachmentIntegrationInterface handler) {
 
         if ((name == null) || (data == null)) {
             return false;
         }
 
-        return addEntry(new MAttachmentEntry(name, data));	// random index
+        MAttachmentEntry newEntry = new MAttachmentEntry(name, data);
+        newEntry.setM_handler(handler);
+        return addEntry(newEntry);	// random index
 
     }								// addEntry
 
@@ -230,6 +256,23 @@ public class MAttachment extends X_AD_Attachment {
 
     }					// beforeSave
 
+    
+    @Override
+    protected boolean beforeDelete() {
+
+    	// Eliminar todos los documentos externos
+        for (int i = 0; i < m_items.size(); i++) {
+        	if (m_items.get(i) == null || ((MAttachmentEntry)m_items.get(i)).getM_UID() == null) 
+        		continue;
+        	((MAttachmentEntry)m_items.get(i)).getM_handler().deleteEntry(((MAttachmentEntry)m_items.get(i)).getM_UID());
+        }
+    	
+    	return super.beforeDelete();
+    }
+    
+    /** nomina temporal de entradas remotas marcadas para su eliminacion */
+    protected ArrayList<MAttachmentEntry> remoteEntriesMarkedForDeletion = new ArrayList<MAttachmentEntry>(); 
+    
     /**
      *      Delete Entry
      *      @param index index
@@ -239,6 +282,13 @@ public class MAttachment extends X_AD_Attachment {
 
         if ((index >= 0) && (index < m_items.size())) {
 
+        	// Las entradas remotas no se deben eliminar en este momento, sino marcarlas para su eliminacion
+        	// Si luego el usuario confirma la eliminacion entonces se eliminará al
+        	// actualizar el LOBData (saveLOBData) al aceptar la ventana general
+        	if (((MAttachmentEntry)m_items.get(index)).getM_UID() != null) {
+        		remoteEntriesMarkedForDeletion.add((MAttachmentEntry)m_items.get(index));
+        	}
+        	
             m_items.remove(index);
             log.config("Index=" + index + " - NewSize=" + m_items.size());
 
@@ -280,7 +330,10 @@ public class MAttachment extends X_AD_Attachment {
      *      @return true if success
      */
     private boolean loadLOBData() {
-
+    	
+    	// Vaciar la nomina de entradas remotas marcadas para su eliminacion
+    	remoteEntriesMarkedForDeletion = new ArrayList<MAttachmentEntry>();
+    	
         // Reset
         m_items	= new ArrayList();
 
@@ -330,7 +383,16 @@ public class MAttachment extends X_AD_Attachment {
                 log.fine(name + " - size=" + dataEntry.length + " - zip=" + entry.getCompressedSize() + "(" + entry.getSize() + ") " + (entry.getCompressedSize() * 100 / entry.getSize()) + "%");
 
                 //
-                m_items.add(new MAttachmentEntry(name, dataEntry, m_items.size() + 1));
+                MAttachmentEntry newEntry = new MAttachmentEntry(name, dataEntry, m_items.size() + 1);
+                m_items.add(newEntry);
+                
+                // El zip entry es una referencia a un documento externo?
+                String extras = (entry.getExtra() != null ? new String(entry.getExtra()) : null);
+                if (extras != null && extras.startsWith(EXTERNAL_ATTACHMENT_PREFIX)) {
+                	newEntry.setM_UID(extras.substring(EXTERNAL_ATTACHMENT_PREFIX.length()));
+                	newEntry.setM_handler(getIntegrationImpl());
+                }
+                
                 entry	= zip.getNextEntry();
             }
 
@@ -418,6 +480,13 @@ public class MAttachment extends X_AD_Attachment {
 
         //
         try {
+        	
+        	// Si hay entradas marcadas para su eliminacion remota, eliminarlas
+        	for (MAttachmentEntry aRemoteEntry : remoteEntriesMarkedForDeletion) {
+        		aRemoteEntry.getM_handler().deleteEntry(aRemoteEntry.getM_UID());
+        	}
+        	// Vaciar la nomina
+        	remoteEntriesMarkedForDeletion = new ArrayList<MAttachmentEntry>();
 
             for (int i = 0; i < m_items.size(); i++) {
 
@@ -426,10 +495,18 @@ public class MAttachment extends X_AD_Attachment {
 
                 entry.setTime(System.currentTimeMillis());
                 entry.setMethod(ZipEntry.DEFLATED);
-                zip.putNextEntry(entry);
 
                 byte[]	data	= item.getData();
+                
+                // Si es una entrada externa, en realidad hay que: 1) Persistir remotamente y 2) localmente almacenar el UID 
+                if (item.isExternalEntry()) {
+                	String extUID = item.getM_handler().insertEntry(data); 				// Interaccion con el manejador externo
+                	item.setM_UID(extUID);												// Seteamos el UID recibido como respuesta
+                	data = (EXTERNAL_ATTACHMENT_PREFIX + extUID).getBytes();			// Almacenamos la referencia como datos del binario
+                	entry.setExtra((EXTERNAL_ATTACHMENT_PREFIX + extUID).getBytes());	// Y tambien como comentario extra
+                }
 
+                zip.putNextEntry(entry);
                 zip.write(data, 0, data.length);
                 zip.closeEntry();
                 log.fine(entry.getName() + " - " + entry.getCompressedSize() + " (" + entry.getSize() + ") " + (entry.getCompressedSize() * 100 / entry.getSize()) + "%");
@@ -673,6 +750,40 @@ public class MAttachment extends X_AD_Attachment {
         return msg.trim();
 
     }		// setTextMsg
+
+    
+    /** Instancia de gestion externa de documentos, como por ejemplo un gestionador de documentos remoto */
+    protected static AttachmentIntegrationInterface externalImpl = null;
+    
+    /** 
+     * Devuelve la implementación a utilizar para la gestion remota de adjuntos
+     */
+    public static AttachmentIntegrationInterface getIntegrationImpl() {
+    	// Ya está cacheada? Retornarla
+    	if (externalImpl != null)
+    		return externalImpl;
+    	
+    	// Obtener la preferencia.  Si no existe, retornar clase mock
+	    String className = MPreference.GetCustomPreferenceValue(EXTERNAL_ATTACHMENT_IMPLEMENTATION_KEY);
+	    if (className == null || className.length() == 0) {
+	    	externalImpl = new IntegrationMockImpl();
+	    } else {
+		    try {
+		    	// Instanciar la clase manejadora externa
+			    Class clazz = Class.forName(className);
+			    externalImpl = (AttachmentIntegrationInterface)clazz.newInstance();
+	    	} catch (Exception e) {
+	    		s_log.severe("Error al instanciar manejador de adjuntos remotos: " + e.getMessage());
+	    	}	    	
+	    }
+	    return externalImpl;
+    }
+    
+
+    /** Visualizar la botonera de adjuntos externos unicamente si no se está utilizando la clase mock */
+    public static boolean isExternalAttachmentEnabled() {
+    	return "Y".equalsIgnoreCase(MPreference.GetCustomPreferenceValue(EXTERNAL_ATTACHMENT_ENABLED));  
+    }
 }	// MAttachment
 
 
