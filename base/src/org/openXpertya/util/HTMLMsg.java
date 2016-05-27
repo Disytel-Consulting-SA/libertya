@@ -197,7 +197,7 @@ public class HTMLMsg {
 
 		public HTMLList(String listID, String listType, String msg){
 			this(listID, listType);
-			getHeader().setMsg(msg);
+			setMsg(msg);
 		}
 		
 		/**
@@ -224,6 +224,10 @@ public class HTMLMsg {
 
 		public List<HTMLListElement> getElements() {
 			return elements;
+		}
+		
+		public void setMsg(String msg){
+			getHeader().setMsg(msg);
 		}
 		
 		@Override
