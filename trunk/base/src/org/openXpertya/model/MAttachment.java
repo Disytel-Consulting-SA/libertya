@@ -264,9 +264,20 @@ public class MAttachment extends X_AD_Attachment {
         for (int i = 0; i < m_items.size(); i++) {
         	if (m_items.get(i) == null || ((MAttachmentEntry)m_items.get(i)).getM_UID() == null) 
         		continue;
-        	((MAttachmentEntry)m_items.get(i)).getM_handler().deleteEntry(((MAttachmentEntry)m_items.get(i)).getM_UID());
+        	if (!((MAttachmentEntry)m_items.get(i)).getM_handler().deleteEntry(((MAttachmentEntry)m_items.get(i)).getM_UID())) {
+        		log.saveError("Error", "Error al eliminar el archivo adjunto remoto");
+    			return false;
+        	}
         }
     	
+    	// Si hay previas entradas marcadas para su eliminacion remota, eliminarlas
+    	for (MAttachmentEntry aRemoteEntry : remoteEntriesMarkedForDeletion) {
+    		if (!aRemoteEntry.getM_handler().deleteEntry(aRemoteEntry.getM_UID())) {
+    			log.saveError("Error", "Error al eliminar el archivo adjunto remoto");
+    			return false;
+    		}
+    	}
+        
     	return super.beforeDelete();
     }
     
@@ -498,10 +509,14 @@ public class MAttachment extends X_AD_Attachment {
 
                 byte[]	data	= item.getData();
                 
-                // Si es una entrada externa, en realidad hay que: 1) Persistir remotamente y 2) localmente almacenar el UID 
-                if (item.isExternalEntry()) {
-                	String extUID = item.getM_handler().insertEntry(data); 				// Interaccion con el manejador externo
+                // Si es una entrada externa todavía no existente, hay que: 1) Persistir remotamente y 2) localmente almacenar el UID
+                String extUID = null;
+                if (item.isExternalEntry() && item.getM_UID() == null) {
+                	extUID = item.getM_handler().insertEntry(data); 					// Interaccion con el manejador externo
                 	item.setM_UID(extUID);												// Seteamos el UID recibido como respuesta
+                }
+                if (item.getM_UID() != null) {
+                	extUID = item.getM_UID();
                 	data = (EXTERNAL_ATTACHMENT_PREFIX + extUID).getBytes();			// Almacenamos la referencia como datos del binario
                 	entry.setExtra((EXTERNAL_ATTACHMENT_PREFIX + extUID).getBytes());	// Y tambien como comentario extra
                 }
