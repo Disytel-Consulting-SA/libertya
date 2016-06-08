@@ -395,8 +395,10 @@ public final class Attachment extends JDialog implements ActionListener {
 
         // no attachment
 
-        if( (entry == null) || (entry.getData() == null) ) {
-            info.setText( "-" );
+        if (entry == null) {
+        	info.setText( "-" );
+        } else if (entry.getData() == null)  {
+            info.setText( (entry.getRetrieveError() != null) ? entry.getRetrieveError() : "-" );
         } else {
             bOpen.setEnabled( true );
             bSave.setEnabled( true );
@@ -561,16 +563,24 @@ public final class Attachment extends JDialog implements ActionListener {
                 m_change = !newText.equals( oldText );
             }
 
+            boolean shouldDispose = true;
             if( (newText.length() > 0) || (m_attachment.getEntryCount() > 0) ) {
                 if( m_change ) {
                     m_attachment.setTextMsg( text.getText());
-                    m_attachment.save();
+                    if (!m_attachment.save()) {
+                    	ADialog.error(m_WindowNo, this, "Error al guardar adjuntos. " + CLogger.retrieveErrorAsString() + ". Reintente o cancele.");
+                    	shouldDispose = false;
+                    } 
                 }
             } else {
-                m_attachment.delete( true );
+            	if (!m_attachment.delete( true )) {
+            		ADialog.error(m_WindowNo, this, "Error al eliminar adjuntos. " + CLogger.retrieveErrorAsString() + ". Reintente o cancele.");
+            		shouldDispose = false;
+            	} 
             }
 
-            dispose();
+            if (shouldDispose)
+            	dispose();
         }
 
         // Cancel
@@ -662,7 +672,9 @@ public final class Attachment extends JDialog implements ActionListener {
         log.info( "" );
 
         if( ADialog.ask( m_WindowNo,this,"AttachmentDelete?" )) {
-            m_attachment.delete( true );
+            if (!m_attachment.delete( true )) {
+            	ADialog.error(m_WindowNo, this, "Error al eliminar todos los adjuntos. " + CLogger.retrieveErrorAsString());
+            }
         }
     }    // deleteAttachment
 

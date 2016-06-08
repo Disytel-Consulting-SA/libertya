@@ -63,6 +63,8 @@ public class MAttachmentEntry {
     /** The Data */
     private byte[]	m_data	= null;
 
+    protected String retrieveError = null;
+    
     /** Logger */
     protected CLogger	log	= CLogger.getCLogger(getClass());
 
@@ -226,9 +228,17 @@ public class MAttachmentEntry {
      */
     public byte[] getData() {
     	// Si es un archivo externo, recuperarlo remotamente
-    	if (m_handler != null && m_UID != null)
-    		return m_handler.retrieveEntry(m_UID);
-        return m_data;
+    	try {
+	    	if (m_handler != null && m_UID != null) {
+	    		retrieveError = null; 	// inicialmente estimamos que no hay error
+	    		return m_handler.retrieveEntry(m_UID);
+	    	}
+	        return m_data;
+    	} catch (Exception e) {
+    		retrieveError = "Error recuperando adjunto: " + e.getMessage();
+    		log.severe("Error recuperando adjunto: " + e.getMessage());
+    		return null;
+    	}
     }
 
     /**
@@ -267,6 +277,8 @@ public class MAttachmentEntry {
 
         } catch (IOException ioe) {
             log.log(Level.SEVERE, "getFile", ioe);
+        } catch (Exception e) {
+        	log.severe("Excepcion recuperando adjunto: " + e.getMessage());
         }
 
         return file;
@@ -403,6 +415,14 @@ public class MAttachmentEntry {
 
 	public void setM_UID(String m_UID) {
 		this.m_UID = m_UID;
+	}
+
+	public String getRetrieveError() {
+		return retrieveError;
+	}
+
+	public void setRetrieveError(String retrieveError) {
+		this.retrieveError = retrieveError;
 	}
 }	// MAttachmentItem
 

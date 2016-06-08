@@ -338,8 +338,12 @@ public class WAttachment extends Window implements EventListener
 	public void displaySelected() {
 		MAttachmentEntry entry = m_attachment.getEntry(displayIndex); 
 		log.config("Index=" + displayIndex + " - " + entry);
-		if (entry != null && entry.getData() != null)
-		{
+		
+		if (entry == null) {
+        	text.setText( "-" );
+		} else if (entry.getData() == null)  {
+            text.setText( (entry.getRetrieveError() != null) ? entry.getRetrieveError() : "-" );
+		} else {
 			bSave.setEnabled(true);
 			bDelete.setEnabled(entry.getM_UID() == null);
 			externalDelete.setEnabled(entry.getM_UID() != null);
@@ -419,19 +423,27 @@ public class WAttachment extends Window implements EventListener
 			if (!m_change)
 				m_change = !newText.equals(oldText);
 			
+			boolean shouldDispose = true;
 			if (newText.length() > 0 || m_attachment.getEntryCount() > 0)
 			{
 				if (m_change)
 				{
 					m_attachment.setBinaryData(new byte[0]); // ATTENTION! HEAVY HACK HERE... Else it will not save :(
 					m_attachment.setTextMsg(text.getText());
-					m_attachment.save();
+					if (!m_attachment.save()) {
+						FDialog.error(m_WindowNo, "Error al guardar adjuntos. " + CLogger.retrieveErrorAsString() + ". Reintente o cancele.");
+						shouldDispose = false;
+					}
 				}
 			}
-			else
-				m_attachment.delete(true);
-			
-			dispose();
+			else {
+				if (!m_attachment.delete( true )) {
+					FDialog.error(m_WindowNo, "Error al eliminar adjuntos. " + CLogger.retrieveErrorAsString() + ". Reintente o cancele.");
+					shouldDispose = false;		
+				}
+			}
+			if (shouldDispose)
+				dispose();
 		}
 	
 		//	Cancel
@@ -571,8 +583,11 @@ public class WAttachment extends Window implements EventListener
 	{
 		log.info("");
 		
-		if (FDialog.ask(m_WindowNo, this, "AttachmentDelete?"))
-			m_attachment.delete(true);
+		if (FDialog.ask(m_WindowNo, this, "AttachmentDelete?")) {
+			if (!m_attachment.delete( true )) {
+				FDialog.error(m_WindowNo, "Error al eliminar todos los adjuntos. " + CLogger.retrieveErrorAsString());
+			}
+		}
 	}	//	deleteAttachment
 
 	/**
