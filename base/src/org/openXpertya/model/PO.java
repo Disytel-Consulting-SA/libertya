@@ -3809,9 +3809,17 @@ public abstract class PO implements Serializable, Comparator, Evaluatee {
 	 *         encontrados, lista vacía en el caso de no encontrar registros.
 	 * @author Matías Cap - Disytel versión 1.0
 	 */
+	
 	public static List<PO> find(Properties ctx, String tableName,
 			String whereClause, Object[] whereParams, String[] orderByColumns,
 			String trxName) {
+		return find(ctx,tableName,whereClause,whereParams,orderByColumns,trxName,false);
+	}
+	
+	 /** Sobrecarga con parametro noConvert para evitar intentos de conversion de sentencias */
+	public static List<PO> find(Properties ctx, String tableName,
+			String whereClause, Object[] whereParams, String[] orderByColumns,
+			String trxName,boolean noConvert) {
 		M_Table table = M_Table.get(ctx, tableName);
 		// Armar la consulta sql
 		StringBuffer sql = new StringBuffer("SELECT * FROM ").append(tableName);
@@ -3839,7 +3847,7 @@ public abstract class PO implements Serializable, Comparator, Evaluatee {
 		try {
 			ps = DB.prepareStatement(sql.toString(),
 					ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_UPDATABLE,
-					trxName);
+					trxName,noConvert);
 			if (whereParams != null) {
 				int p = 1;
 				for (int i = 0; i < whereParams.length; i++) {

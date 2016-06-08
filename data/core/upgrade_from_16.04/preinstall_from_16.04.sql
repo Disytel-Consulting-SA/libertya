@@ -298,3 +298,85 @@ where p.docstatus NOT IN ('IP','DR') and not exists (select c_payment_id from c_
 
 ALTER TABLE c_lista_patagonia_notpayments 
   OWNER TO libertya;
+  
+  --20160608-1120 Funcionalidad de Cierre de Tarjetas
+CREATE TABLE C_CreditCard_Close
+(
+  C_CreditCard_Close_id integer NOT NULL,
+  ad_client_id integer NOT NULL,
+  ad_org_id integer NOT NULL,
+  isactive character(1) NOT NULL DEFAULT 'Y'::bpchar,
+  created timestamp without time zone NOT NULL DEFAULT ('now'::text)::timestamp(6) with time zone,
+  createdby integer NOT NULL,
+  updated timestamp without time zone NOT NULL DEFAULT ('now'::text)::timestamp(6) with time zone,
+  updatedby integer NOT NULL,
+  docaction character(2) NOT NULL,
+  docstatus character(2) NOT NULL,
+  processed character(1) NOT NULL DEFAULT 'N'::bpchar,
+  datetrx date NOT NULL,
+  updateCouponDetail character(1),
+  description character varying(255),
+  allowreopening character(1) NOT NULL DEFAULT 'N'::bpchar,
+  CONSTRAINT C_CreditCard_Close_pk PRIMARY KEY (C_CreditCard_Close_id ),
+  CONSTRAINT fk_client_CreditCard_Close FOREIGN KEY (ad_client_id)
+      REFERENCES ad_client (ad_client_id) MATCH SIMPLE
+      ON UPDATE NO ACTION ON DELETE NO ACTION,
+  CONSTRAINT fk_org_CreditCard_Close FOREIGN KEY (ad_org_id)
+      REFERENCES ad_org (ad_org_id) MATCH SIMPLE
+      ON UPDATE NO ACTION ON DELETE NO ACTION
+)
+WITH (
+  OIDS=TRUE
+);
+ALTER TABLE C_CreditCard_Close
+  OWNER TO libertya;
+
+CREATE OR REPLACE FUNCTION isnumeric(text) RETURNS BOOLEAN AS $$
+DECLARE x NUMERIC;
+BEGIN
+    x = $1::NUMERIC;
+    RETURN TRUE;
+EXCEPTION WHEN others THEN
+    RETURN FALSE;
+END;
+$$
+STRICT
+LANGUAGE plpgsql IMMUTABLE;
+
+CREATE TABLE C_CreditCard_CloseLine
+(
+  C_CreditCard_CloseLine_id integer NOT NULL,
+  ad_client_id integer NOT NULL,
+  ad_org_id integer NOT NULL,
+  isactive character(1) NOT NULL DEFAULT 'Y'::bpchar,
+  created timestamp without time zone NOT NULL DEFAULT ('now'::text)::timestamp(6) with time zone,
+  createdby integer NOT NULL,
+  updated timestamp without time zone NOT NULL DEFAULT ('now'::text)::timestamp(6) with time zone,
+  updatedby integer NOT NULL,
+  documentno character varying(30) NOT NULL,
+  m_entidadfinancieraplan_id integer,
+  couponnumber character varying(30),
+  couponbatchnumber character varying(30),
+  creditcardnumber character varying(20),
+  payamt numeric(20,2) NOT NULL DEFAULT 0,
+  description character varying(255),
+  datetrx timestamp without time zone NOT NULL,
+  c_posjournal_id integer,
+  c_creditcard_close_id integer,
+  c_payment_id integer NOT NULL,
+  CONSTRAINT C_CreditCard_CloseLine_key PRIMARY KEY (C_CreditCard_CloseLine_id ),
+  CONSTRAINT adorg_CCreditCardCloseLine FOREIGN KEY (ad_org_id)
+	REFERENCES ad_org (ad_org_id) MATCH SIMPLE
+	ON UPDATE NO ACTION ON DELETE NO ACTION,
+  CONSTRAINT CCreditCardClose_CCreditCardCloseLine FOREIGN KEY (C_CreditCard_Close_id)
+	REFERENCES C_CreditCard_Close (C_CreditCard_Close_id) MATCH SIMPLE
+	ON UPDATE NO ACTION ON DELETE CASCADE,
+  CONSTRAINT CPayment_CCreditCardCloseLine FOREIGN KEY (C_Payment_id)
+	REFERENCES C_Payment (C_Payment_id) MATCH SIMPLE
+	ON UPDATE NO ACTION ON DELETE NO ACTION
+)
+WITH (
+  OIDS=TRUE
+);
+ALTER TABLE C_CreditCard_CloseLine
+  OWNER TO libertya;
