@@ -48,6 +48,7 @@ import org.openXpertya.model.MBankTransfer;
 import org.openXpertya.model.MBoletaDeposito;
 import org.openXpertya.model.MBrochure;
 import org.openXpertya.model.MCashLine;
+import org.openXpertya.model.MCreditCardClose;
 import org.openXpertya.model.MInOut;
 import org.openXpertya.model.MInventory;
 import org.openXpertya.model.MInvoice;
@@ -478,6 +479,14 @@ public class VDocAction extends JDialog implements ActionListener {
                 options[ index++ ] = DocumentEngine.ACTION_ReActivate;
                 options[ index++ ] = DocumentEngine.ACTION_Void;
             }
+        } else if( m_AD_Table_ID == MCreditCardClose.Table_ID ) {
+        	
+            // Complete                    ..  CO
+
+            if( DocStatus.equals( DocumentEngine.STATUS_Completed )) {
+                options[ 0 ] = DocumentEngine.ACTION_ReActivate;
+            }
+            
         }
 
 		/*

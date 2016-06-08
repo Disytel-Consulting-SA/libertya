@@ -59,6 +59,7 @@ import org.openXpertya.db.CConnection;
 import org.openXpertya.model.MAttachment;
 import org.openXpertya.model.MAttachmentEntry;
 import org.openXpertya.model.MProcess;
+import org.openXpertya.model.MUser;
 import org.openXpertya.model.PrintInfo;
 import org.openXpertya.model.X_AD_PInstance_Para;
 import org.openXpertya.plugin.common.PluginProcessUtils;
@@ -529,7 +530,9 @@ public class ReportStarter implements ProcessCall // , ClientProcess
             params.put("AD_PINSTANCE_ID", new Integer( AD_PInstance_ID));
             
             addParameterClientInfo(params);
-            
+            params.put("AD_User_Login_ID", Env.getAD_User_ID(ctx));
+            MUser user = MUser.get(ctx, Env.getAD_User_ID(ctx));
+            params.put("Login_User_Name", user.getName());
             // Organización de login
             params.put("AD_Org_Login_ID", Env.getAD_Org_ID(ctx));
             
