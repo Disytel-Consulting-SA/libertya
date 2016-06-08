@@ -260,22 +260,27 @@ public class MAttachment extends X_AD_Attachment {
     @Override
     protected boolean beforeDelete() {
 
-    	// Eliminar todos los documentos externos
-        for (int i = 0; i < m_items.size(); i++) {
-        	if (m_items.get(i) == null || ((MAttachmentEntry)m_items.get(i)).getM_UID() == null) 
-        		continue;
-        	if (!((MAttachmentEntry)m_items.get(i)).getM_handler().deleteEntry(((MAttachmentEntry)m_items.get(i)).getM_UID())) {
-        		log.saveError("Error", "Error al eliminar el archivo adjunto remoto");
-    			return false;
-        	}
-        }
-    	
-    	// Si hay previas entradas marcadas para su eliminacion remota, eliminarlas
-    	for (MAttachmentEntry aRemoteEntry : remoteEntriesMarkedForDeletion) {
-    		if (!aRemoteEntry.getM_handler().deleteEntry(aRemoteEntry.getM_UID())) {
-    			log.saveError("Error", "Error al eliminar el archivo adjunto remoto");
-    			return false;
-    		}
+    	try {
+	    	// Eliminar todos los documentos externos
+	        for (int i = 0; i < m_items.size(); i++) {
+	        	if (m_items.get(i) == null || ((MAttachmentEntry)m_items.get(i)).getM_UID() == null) 
+	        		continue;
+	        	if (!((MAttachmentEntry)m_items.get(i)).getM_handler().deleteEntry(((MAttachmentEntry)m_items.get(i)).getM_UID())) {
+	        		log.saveError("Error", "Error al eliminar el archivo adjunto remoto");
+	    			return false;
+	        	}
+	        }
+	    	
+	    	// Si hay previas entradas marcadas para su eliminacion remota, eliminarlas
+	    	for (MAttachmentEntry aRemoteEntry : remoteEntriesMarkedForDeletion) {
+	    		if (!aRemoteEntry.getM_handler().deleteEntry(aRemoteEntry.getM_UID())) {
+	    			log.saveError("Error", "Error al eliminar el archivo adjunto remoto");
+	    			return false;
+	    		}
+	    	}
+    	} catch (Exception e) {
+    		log.saveError("Error", "Error al eliminar adjunto externo: " + e.getMessage());
+    		return false;
     	}
         
     	return super.beforeDelete();
@@ -512,7 +517,7 @@ public class MAttachment extends X_AD_Attachment {
                 // Si es una entrada externa todavía no existente, hay que: 1) Persistir remotamente y 2) localmente almacenar el UID
                 String extUID = null;
                 if (item.isExternalEntry() && item.getM_UID() == null) {
-                	extUID = item.getM_handler().insertEntry(data); 					// Interaccion con el manejador externo
+                	extUID = item.getM_handler().insertEntry(data, item.getName());		// Interaccion con el manejador externo
                 	item.setM_UID(extUID);												// Seteamos el UID recibido como respuesta
                 }
                 if (item.getM_UID() != null) {
@@ -539,6 +544,7 @@ public class MAttachment extends X_AD_Attachment {
 
         } catch (Exception e) {
             log.log(Level.SEVERE, "saveLOBData", e);
+            log.saveError("Error", e.getMessage());
         }
 
         setBinaryData(null);
