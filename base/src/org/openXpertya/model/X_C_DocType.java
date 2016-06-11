@@ -7,7 +7,7 @@ import java.math.*;
 import org.openXpertya.util.*;
 /** Modelo Generado por C_DocType
  *  @author Comunidad de Desarrollo Libertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
- *  @version  - 2016-05-23 10:59:35.432 */
+ *  @version  - 2016-06-10 21:54:52.17 */
 public class X_C_DocType extends org.openXpertya.model.PO
 {
 /** Constructor estándar */
@@ -52,6 +52,7 @@ setPOSEnableDue (false);
 setPOSEnableDueDays (0);
 setPrintName (null);
 setReserveStockManagment (false);
+setReuseDocumentNo (false);
 setsigno_issotrx (null);
 setUniqueDocumentno (false);
 setUseOrderWarehouse (true);	// Y
@@ -1251,6 +1252,22 @@ Manage qty reserved of orders and stock */
 public boolean isReserveStockManagment() 
 {
 Object oo = get_Value("ReserveStockManagment");
+if (oo != null) 
+{
+ if (oo instanceof Boolean) return ((Boolean)oo).booleanValue();
+ return "Y".equals(oo);
+}
+return false;
+}
+/** Set Reuse Document No. */
+public void setReuseDocumentNo (boolean ReuseDocumentNo)
+{
+set_Value ("ReuseDocumentNo", new Boolean(ReuseDocumentNo));
+}
+/** Get Reuse Document No. */
+public boolean isReuseDocumentNo() 
+{
+Object oo = get_Value("ReuseDocumentNo");
 if (oo != null) 
 {
  if (oo instanceof Boolean) return ((Boolean)oo).booleanValue();

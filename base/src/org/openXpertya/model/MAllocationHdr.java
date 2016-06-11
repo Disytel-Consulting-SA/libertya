@@ -22,6 +22,9 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Date;
+import java.util.GregorianCalendar;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -615,7 +618,13 @@ public class MAllocationHdr extends X_C_AllocationHdr implements DocAction {
         		setDocumentNo(MSequence.getDocumentNo(getC_DocType_ID(), get_TrxName()));
         	}
         	// Verificar que no exista el documentNo
-        	if (documentNoAlreadyExists(getC_AllocationHdr_ID(), getDocumentNo(), getC_DocType_ID(), getAllocTypes(docType), docType.isSOTrx(), getCtx())) {
+        	if (documentNoAlreadyExists(getC_AllocationHdr_ID(), getDocumentNo(), getDateAcct(), getC_DocType_ID(), getAllocTypes(docType), docType.isSOTrx(), docType.isReuseDocumentNo(), getCtx())) {
+        		// Si el Nro. de Documento existe, pero el tipo de documento permite la reutilización, consultamos la existencia de un recibo anulado pero fuera del período actual. 
+        		if (docType.isReuseDocumentNo() && documentNoAlreadyExistsInOtherPeriod(getC_AllocationHdr_ID(), getDocumentNo(), getDateAcct(), getC_DocType_ID(), getAllocTypes(docType), getCtx())) {
+        			m_processMsg = "El Nro. de Documento ingresado pertenece a un Recibo anulado pero no es posible reutilizarlo porque está fuera del período actual.";
+            		return DocAction.STATUS_Invalid;
+        		}
+        		
         		m_processMsg = "Número de documento ya existente";
         		return DocAction.STATUS_Invalid;
         	}
@@ -1417,20 +1426,24 @@ public class MAllocationHdr extends X_C_AllocationHdr implements DocAction {
 	/**
 	 * Valida si el numero de documento especificado ya existe.  En ese caso retorna true
 	 * @param currentAllocationHdrID si valida basado en un registro existente (el cual debe omitirse)
-	 * @param documentNo nùmero de documento de la allocation
+	 * @param documentNo Nro. de documento de la allocation
+	 * @param dateAcct Fecha Acct.
 	 * @param docTypeID tipo de documento de la allocation
 	 * @param allocTypes tipos de recibos/pagos a validar
 	 * @param isSOTrx transacciòn de compra o venta
+	 * @param isReuseDocumentNo indica si el Tipo de Documento permite reutilización de Nro. de Documento. 
 	 * @param ctx context
 	 * @return true en caso de número de documento repetido o false en caso contrario
 	 */
-	public static boolean documentNoAlreadyExists(Integer currentAllocationHdrID, String documentNo, int docTypeID, String allocTypes, boolean isSOTrx, Properties ctx)
+	public static boolean documentNoAlreadyExists(Integer currentAllocationHdrID, String documentNo, Date dateAcct, int docTypeID, String allocTypes, boolean isSOTrx, boolean isReuseDocumentNo, Properties ctx)
 	{
+        
 		// OP/RC Automaticas
 		int count = DB.getSQLValue(null, " SELECT count(1) FROM C_AllocationHdr " +
 											" WHERE documentNo = '" + documentNo + "'" +
 											" AND C_DocType_ID = " + docTypeID + 
 											" AND AD_Client_ID = " + Env.getAD_Client_ID(ctx) +
+											(isReuseDocumentNo ? getReuseDocNroFilter(dateAcct) : "") +
 											" AND allocationtype IN " + allocTypes +
 											(currentAllocationHdrID!=null?" AND C_AllocationHdr_ID != " + currentAllocationHdrID:""));
 
@@ -1451,7 +1464,57 @@ public class MAllocationHdr extends X_C_AllocationHdr implements DocAction {
 		
 		return count > 0;			
 	}
+	
+	/**
+	 * Valida si el numero de documento especificado ya existe como ANULADO/REVERTIDO y fuera del período actual. En ese caso retorna true
+	 * @param currentAllocationHdrID si valida basado en un registro existente (el cual debe omitirse)
+	 * @param documentNo Nro. de documento de la allocation
+	 * @param dateAcct Fecha Acct.
+	 * @param docTypeID tipo de documento de la allocation
+	 * @param allocTypes tipos de recibos/pagos a validar 
+	 * @param ctx context
+	 * @return true en caso de número de documento repetido o false en caso contrario
+	 */
+	public static boolean documentNoAlreadyExistsInOtherPeriod(Integer currentAllocationHdrID, String documentNo, Date dateAcct, int docTypeID, String allocTypes, Properties ctx) {
+		// OP/RC Automaticas
+		int count = DB.getSQLValue(null, " SELECT count(1) FROM C_AllocationHdr " +
+											" WHERE documentNo = '" + documentNo + "'" +
+											" AND C_DocType_ID = " + docTypeID + 
+											" AND AD_Client_ID = " + Env.getAD_Client_ID(ctx) +
+											getReuseDocNroFilterInOtherPeriod(dateAcct) +
+											" AND allocationtype IN " + allocTypes +
+											(currentAllocationHdrID!=null?" AND C_AllocationHdr_ID != " + currentAllocationHdrID:""));
 
+		return count > 0;	
+	}
+	
+	private static String getReuseDocNroFilter(Date dateAcct) {
+		// Se pueden reutilizar aquellos Recibos que se encuentran ANULADOS/REVERTIDOS y pertenezcan al mismo mes de emisión.
+        return " AND ((DocStatus NOT IN ('RE', 'VO')) OR " + getReuseDocNroFilterDate(dateAcct) + ")";
+	}
+	
+	private static String getReuseDocNroFilterInOtherPeriod(Date dateAcct) {
+		// Se valida la existencia de un Recibo ANULADO/REVERTIDO, fuera del período actual.
+		return " AND (DocStatus IN ('RE', 'VO') AND " + getReuseDocNroFilterDate(dateAcct) + ")";	
+	}
+	
+	private static String getReuseDocNroFilterDate(Date dateAcct) {
+		GregorianCalendar cal = new GregorianCalendar();
+        cal.setTime(dateAcct);
+        cal.set( Calendar.HOUR_OF_DAY,0 );
+        cal.set( Calendar.MINUTE,0 );
+        cal.set( Calendar.SECOND,0 );
+        cal.set( Calendar.MILLISECOND,0 );
+        cal.set( Calendar.DAY_OF_MONTH,1 );    // set to first of month
+        Timestamp p_DateAcct_From = new Timestamp( cal.getTimeInMillis());
+        cal.add( Calendar.MONTH,1 );
+        cal.add( Calendar.DAY_OF_YEAR,-1 );    // last of month
+        Timestamp p_DateAcct_To = new Timestamp( cal.getTimeInMillis());
+        
+		return " (DateAcct::date NOT BETWEEN " + DB.TO_DATE(p_DateAcct_From) + " AND " + DB.TO_DATE(p_DateAcct_To) + ")";
+	}
+	
+	
 
     /**
      * Devuelve el allocType en función del docType

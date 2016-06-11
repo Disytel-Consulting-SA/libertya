@@ -380,3 +380,6 @@ WITH (
 );
 ALTER TABLE C_CreditCard_CloseLine
   OWNER TO libertya;
+
+-- 20160610-2110 Nueva columna para permitir reutilizar Nro. de Documento en Recibos.
+update ad_system set dummy = (SELECT addcolumnifnotexists('C_Doctype','ReuseDocumentNo','character(1) default ''N''::bpchar'));
