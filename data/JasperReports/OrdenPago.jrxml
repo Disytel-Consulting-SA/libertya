@@ -228,6 +228,7 @@
 	<parameter name="DOCUMENTNO_5" isForPrompting="false" class="java.lang.String"/>
 	<parameter name="DOCUMENTNO_6" isForPrompting="false" class="java.lang.String"/>
 	<parameter name="DOCUMENTNO_7" isForPrompting="false" class="java.lang.String"/>
+	<parameter name="URL_IMAGE_TITLE" isForPrompting="false" class="java.lang.String"/>
 
 	<variable name="CITY" class="java.lang.String" resetType="Report" calculation="Nothing">
 		<variableExpression><![CDATA[$P{CITY_NAME} + ", "]]></variableExpression>
@@ -244,12 +245,12 @@
 				<textField isStretchWithOverflow="false" pattern="EEEEE dd MMMMM yyyy" isBlankWhenNull="false" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
 						x="236"
-						y="0"
+						y="18"
 						width="299"
 						height="18"
 						key="textField"/>
 					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
-					<textElement>
+					<textElement textAlignment="Right">
 						<font size="12"/>
 					</textElement>
 				<textFieldExpression   class="java.sql.Timestamp"><![CDATA[$P{OP_DATE}]]></textFieldExpression>
@@ -257,7 +258,7 @@
 				<textField isStretchWithOverflow="false" isBlankWhenNull="false" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
 						x="236"
-						y="25"
+						y="36"
 						width="299"
 						height="18"
 						key="textField"/>
@@ -282,17 +283,28 @@
 				</textField>
 				<textField isStretchWithOverflow="false" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
-						x="0"
+						x="236"
 						y="0"
-						width="236"
+						width="299"
 						height="18"
 						key="textField"/>
 					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
-					<textElement>
+					<textElement textAlignment="Right">
 						<font size="12"/>
 					</textElement>
 				<textFieldExpression   class="java.lang.String"><![CDATA[($P{CITY_NAME} == null?"":$P{CITY_NAME}) + ", "]]></textFieldExpression>
 				</textField>
+				<image  scaleImage="FillFrame" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
+					<reportElement
+						x="4"
+						y="5"
+						width="130"
+						height="37"
+						key="image-1"/>
+					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
+					<graphicElement stretchType="NoStretch"/>
+					<imageExpression class="java.lang.String"><![CDATA[$P{URL_IMAGE_TITLE}]]></imageExpression>
+				</image>
 			</band>
 		</title>
 		<pageHeader>

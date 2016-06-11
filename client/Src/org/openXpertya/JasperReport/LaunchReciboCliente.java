@@ -19,6 +19,20 @@ public class LaunchReciboCliente extends LaunchOrdenPago {
 		return new ReciboClienteDataSource(getAllocationHdrID());
 	}
 
+	/**
+	 * @return Retorna el MJasperReport del subreporte de otros pagos.
+	 */
+	protected MJasperReport getOtherPaymentsSubreport() throws Exception {
+		return getJasperReport("ReciboCliente-OtrosMedios");
+	}
+	
+	/**
+	 * @return Retorna el MJasperReport del subreporte de notas de crédito.
+	 */
+	protected MJasperReport getCreditNotesSubreport() throws Exception {
+		return getJasperReport("ReciboCliente-NotasDeCredito");
+	}
+
 	@Override
 	protected void loadReportParameters(MJasperReport jasperWrapper) {
 		// Parámetros de OP
@@ -58,5 +72,9 @@ public class LaunchReciboCliente extends LaunchOrdenPago {
 			e.printStackTrace();
 			return null;
 		}
+	}
+	
+	protected String getUrlImagePreferenceName(){
+		return "URL_IMAGE_RC";
 	}
 }
