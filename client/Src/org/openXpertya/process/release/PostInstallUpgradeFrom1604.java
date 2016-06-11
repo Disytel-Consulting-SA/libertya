@@ -38,6 +38,10 @@ public class PostInstallUpgradeFrom1604 extends PluginPostInstallProcess {
 	protected final static String CUSTOMER_RECEIPT_CREDITNOTES_JASPER_REPORT_UID = "CORE-AD_JasperReport-1010132";
 	protected final static String CUSTOMER_RECEIPT_CREDITNOTES_JASPER_REPORT_FILENAME = "ReciboCliente-NotasDeCredito.jasper";
 	
+	/** IVA Ventas General */
+	protected final static String IVA_VENTA_GENERAL_REPORT_UID = "CORE-AD_Process-1010324";
+	protected final static String IVA_VENTA_GENERAL_REPORT_FILENAME = "Iva_Ventas.jrxml";
+	
 	@Override
 	protected String doIt() throws Exception {
 		super.doIt();
@@ -156,15 +160,26 @@ public class PostInstallUpgradeFrom1604 extends PluginPostInstallProcess {
 									getBinaryFileURL(CUSTOMER_RECEIPT_OTHERPAYMENTS_JASPER_REPORT_FILENAME)));
 		
 		// Reporte de Recibos de cliente - Notas de Crédito
+		MJasperReport
+			.updateBinaryData(
+					get_TrxName(),
+					getCtx(),
+					CUSTOMER_RECEIPT_CREDITNOTES_JASPER_REPORT_UID,
+					JarHelper
+							.readBinaryFromJar(
+									jarFileURL,
+									getBinaryFileURL(CUSTOMER_RECEIPT_CREDITNOTES_JASPER_REPORT_FILENAME)));
+		
+		// Actualización del reporte Iva Ventas
 		MProcess.addAttachment(
 				get_TrxName(),
 				getCtx(),
-				CUSTOMER_RECEIPT_CREDITNOTES_JASPER_REPORT_UID,
-				CUSTOMER_RECEIPT_CREDITNOTES_JASPER_REPORT_FILENAME,
+				IVA_VENTA_GENERAL_REPORT_UID,
+				IVA_VENTA_GENERAL_REPORT_FILENAME,
 				JarHelper
 						.readBinaryFromJar(
 								jarFileURL,
-								getBinaryFileURL(CUSTOMER_RECEIPT_CREDITNOTES_JASPER_REPORT_FILENAME)));
+								getBinaryFileURL(IVA_VENTA_GENERAL_REPORT_FILENAME)));
 				
 		return " ";
 	}
