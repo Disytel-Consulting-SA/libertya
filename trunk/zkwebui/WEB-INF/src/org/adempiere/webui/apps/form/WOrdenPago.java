@@ -1042,6 +1042,10 @@ public class WOrdenPago extends ADForm implements ValueChangeListener, TableMode
     		case VOrdenPagoModel.PROCERROR_DOCUMENTNO_ALREADY_EXISTS:
     			showError("Número de documento ya existente");
     			return;
+    			
+    		case VOrdenPagoModel.PROCERROR_DOCUMENTNO_ALREADY_EXISTS_IN_OTHER_PERIOD:
+    			showError("El Nro. de Documento ingresado pertenece a un Recibo anulado pero no es posible reutilizarlo porque está fuera del período actual.");
+    			return;
     		
     		case VOrdenPagoModel.PROCERROR_DOCUMENTTYPE_NOT_SET:
     			showError("Debe indicar el tipo de documento");

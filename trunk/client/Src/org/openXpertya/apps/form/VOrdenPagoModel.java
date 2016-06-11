@@ -50,6 +50,7 @@ import org.openXpertya.model.POCRGenerator;
 import org.openXpertya.model.POCRGenerator.POCRType;
 import org.openXpertya.model.RetencionProcessor;
 import org.openXpertya.model.X_C_AllocationHdr;
+import org.openXpertya.model.X_C_DocType;
 import org.openXpertya.process.DocAction;
 import org.openXpertya.process.GeneratorRetenciones;
 import org.openXpertya.process.ProcessInfo;
@@ -75,6 +76,7 @@ public class VOrdenPagoModel {
 	public static final int PROCERROR_DOCUMENTTYPE_NOT_SET = 7;
 	public static final int PROCERROR_BOTH_EXCHANGE_INVOICES = 8;
 	public static final int PROCERROR_DOCUMENTNO_INVALID = 9;
+	public static final int PROCERROR_DOCUMENTNO_ALREADY_EXISTS_IN_OTHER_PERIOD = 10;
 	public static final int PROCERROR_UNKNOWN = -1;
 
 	protected static CLogger log = CLogger.getCLogger(VOrdenPagoModel.class);
@@ -1577,13 +1579,24 @@ public class VOrdenPagoModel {
 			return PROCERROR_DOCUMENTNO_NOT_SET;
 		}
 
-		if (MAllocationHdr.documentNoAlreadyExists(null, documentNo,
-				getDocumentType(), getAllocTypes(), isSOTrx(), m_ctx)) {
-			return PROCERROR_DOCUMENTNO_ALREADY_EXISTS;
-		}
-
 		if (documentType == null) {
 			return PROCERROR_DOCUMENTTYPE_NOT_SET;
+		}
+		
+		Boolean isReuseDocumentNo = false;
+		if (getDocumentType() > 0) {
+        	X_C_DocType docType = new X_C_DocType(getCtx(),getDocumentType(), getTrxName());
+        	isReuseDocumentNo = docType.isReuseDocumentNo();
+		}
+		
+		// Verificar que no exista el documentNo
+		if (MAllocationHdr.documentNoAlreadyExists(null, documentNo, m_fechaTrx, getDocumentType(), getAllocTypes(), isSOTrx(), isReuseDocumentNo, m_ctx)) {
+			// Si el Nro. de Documento existe, pero el tipo de documento permite la reutilización, consultamos la existencia de un recibo anulado pero fuera del período actual.
+			if (isReuseDocumentNo && MAllocationHdr.documentNoAlreadyExistsInOtherPeriod(null, documentNo, m_fechaTrx, getDocumentType(), getAllocTypes(), getCtx())) {
+    			return PROCERROR_DOCUMENTNO_ALREADY_EXISTS_IN_OTHER_PERIOD;
+    		}
+			
+			return PROCERROR_DOCUMENTNO_ALREADY_EXISTS;
 		}
 		
 		if (!MDocType.validateSequenceLength(documentType, documentNo, m_ctx, trxName)) {
