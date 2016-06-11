@@ -42,6 +42,9 @@
 	<parameter name="ORG_NAME" isForPrompting="false" class="java.lang.String"/>
 	<parameter name="BPARTNER_LOCATION" isForPrompting="false" class="java.lang.String"/>
 	<parameter name="CREDITO_AMOUNT" isForPrompting="false" class="java.math.BigDecimal"/>
+	<parameter name="COMPILED_SUBREPORT_CREDIT_NOTES" isForPrompting="false" class="java.io.InputStream"/>
+	<parameter name="SUBREPORT_CREDIT_NOTES_DATASOURCE" isForPrompting="false" class="net.sf.jasperreports.engine.JRDataSource"/>
+	<parameter name="URL_IMAGE_TITLE" isForPrompting="false" class="java.lang.String"/>
 
 	<variable name="CITY" class="java.lang.String" resetType="Report" calculation="Nothing">
 		<variableExpression><![CDATA[$P{CITY_NAME} + ", "]]></variableExpression>
@@ -58,7 +61,7 @@
 				<textField isStretchWithOverflow="false" pattern="EEEEE dd MMMMM yyyy" isBlankWhenNull="false" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
 						x="236"
-						y="0"
+						y="18"
 						width="299"
 						height="18"
 						key="textField"/>
@@ -71,7 +74,7 @@
 				<textField isStretchWithOverflow="false" isBlankWhenNull="false" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
 						x="236"
-						y="25"
+						y="36"
 						width="299"
 						height="18"
 						key="textField"/>
@@ -96,13 +99,13 @@
 				</textField>
 				<textField isStretchWithOverflow="false" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
-						x="0"
+						x="236"
 						y="0"
-						width="236"
+						width="299"
 						height="18"
 						key="textField"/>
 					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
-					<textElement>
+					<textElement textAlignment="Right">
 						<font size="12"/>
 					</textElement>
 				<textFieldExpression   class="java.lang.String"><![CDATA[($P{CITY_NAME} == null?"":$P{CITY_NAME}) + ", "]]></textFieldExpression>
@@ -120,6 +123,17 @@
 					</textElement>
 				<textFieldExpression   class="java.lang.String"><![CDATA["Domicilio: " + $P{BPARTNER_LOCATION}]]></textFieldExpression>
 				</textField>
+				<image  scaleImage="FillFrame" onErrorType="Blank" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
+					<reportElement
+						x="4"
+						y="5"
+						width="130"
+						height="37"
+						key="image-1"/>
+					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
+					<graphicElement stretchType="NoStretch"/>
+					<imageExpression class="java.lang.String"><![CDATA[$P{URL_IMAGE_TITLE}]]></imageExpression>
+				</image>
 			</band>
 		</title>
 		<pageHeader>
@@ -147,7 +161,7 @@
 				<staticText>
 					<reportElement
 						x="392"
-						y="379"
+						y="402"
 						width="131"
 						height="23"
 						key="staticText-4"
@@ -156,7 +170,7 @@
 					<textElement textAlignment="Right" verticalAlignment="Middle">
 						<font size="12"/>
 					</textElement>
-				<text><![CDATA[Firma del cliente]]></text>
+				<text><![CDATA[Firma]]></text>
 				</staticText>
 				<textField isStretchWithOverflow="false" isBlankWhenNull="false" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
@@ -175,7 +189,7 @@
 				<subreport  isUsingCache="true">
 					<reportElement
 						x="0"
-						y="206"
+						y="218"
 						width="535"
 						height="30"
 						key="subreport-1"
@@ -186,7 +200,7 @@
 				<subreport  isUsingCache="true">
 					<reportElement
 						x="0"
-						y="292"
+						y="275"
 						width="535"
 						height="30"
 						key="subreport-2"
@@ -278,28 +292,28 @@
 						x="0"
 						y="173"
 						width="535"
-						height="24"
+						height="18"
 						key="staticText-10"
 						positionType="Float"/>
 					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
 					<textElement>
-						<font size="12"/>
+						<font pdfFontName="Helvetica-Bold" size="12" isBold="true"/>
 					</textElement>
 				<text><![CDATA[Detalle de medios de pago:]]></text>
 				</staticText>
 				<staticText>
 					<reportElement
 						x="0"
-						y="259"
+						y="255"
 						width="535"
-						height="24"
+						height="18"
 						key="staticText-12"
 						positionType="Float"/>
 					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
 					<textElement>
 						<font size="12"/>
 					</textElement>
-				<text><![CDATA[Otros medios de pago / Imputaciones notas de crédito:]]></text>
+				<text><![CDATA[Otros medios de pago]]></text>
 				</staticText>
 				<line direction="TopDown">
 					<reportElement
@@ -328,7 +342,7 @@
 				<staticText>
 					<reportElement
 						x="392"
-						y="430"
+						y="453"
 						width="131"
 						height="23"
 						key="staticText-13"
@@ -356,7 +370,7 @@
 				<line direction="TopDown">
 					<reportElement
 						x="392"
-						y="379"
+						y="402"
 						width="131"
 						height="0"
 						forecolor="#666666"
@@ -367,7 +381,7 @@
 				<line direction="TopDown">
 					<reportElement
 						x="392"
-						y="430"
+						y="453"
 						width="131"
 						height="0"
 						forecolor="#666666"
@@ -414,6 +428,45 @@
 						positionType="Float"/>
 					<graphicElement stretchType="NoStretch" pen="Thin"/>
 				</line>
+				<staticText>
+					<reportElement
+						x="0"
+						y="198"
+						width="535"
+						height="18"
+						key="staticText-16"
+						positionType="Float"/>
+					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
+					<textElement>
+						<font size="12"/>
+					</textElement>
+				<text><![CDATA[Pagos en Cheque]]></text>
+				</staticText>
+				<subreport  isUsingCache="true">
+					<reportElement
+						x="0"
+						y="333"
+						width="535"
+						height="30"
+						key="subreport-4"
+						positionType="Float"/>
+					<dataSourceExpression><![CDATA[$P{SUBREPORT_CREDIT_NOTES_DATASOURCE}]]></dataSourceExpression>
+					<subreportExpression  class="java.io.InputStream"><![CDATA[$P{COMPILED_SUBREPORT_CREDIT_NOTES}]]></subreportExpression>
+				</subreport>
+				<staticText>
+					<reportElement
+						x="0"
+						y="312"
+						width="535"
+						height="18"
+						key="staticText-17"
+						positionType="Float"/>
+					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
+					<textElement>
+						<font size="12"/>
+					</textElement>
+				<text><![CDATA[Notas de Crédito]]></text>
+				</staticText>
 			</band>
 		</summary>
 </jasperReport>

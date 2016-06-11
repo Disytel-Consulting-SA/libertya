@@ -52,6 +52,12 @@ public class OrdenPagoDataSource {
 		ds.loadData();
 		return ds;
 	}
+	
+	public JRDataSource getCreditNotesDataSource() {
+		CreditNotesDataSource ds = new CreditNotesDataSource();
+		ds.loadData();
+		return ds;
+	}
 
 	/*
 	 * *********************************************************** /
@@ -311,6 +317,108 @@ public class OrdenPagoDataSource {
 			}
 		}
 	}
+	
+	/*
+	 * *********************************************************** /
+	 * CreditNotesDataSource: Clase que contiene el DataSource para el
+	 * subreporte de Notas de Crédito del reporte de Recibos de Cliente.
+	 * ***********************************************************
+	 */
+	class CreditNotesDataSource extends OPDataSource {
+
+		public Object getFieldValue(String name, Object record)
+				throws JRException {
+			M_CreditNote payment = (M_CreditNote) record;
+			if (name.toUpperCase().equals("PAYMENTTYPE")) {
+				return payment.paymentType;
+			} else if (name.toUpperCase().equals("DESCRIPTION")) {
+				return payment.description;
+			} else if (name.toUpperCase().equals("DOCUMENTNO")) {
+				return payment.documentNo;
+			} else if (name.toUpperCase().equals("DOCUMENTDATE")) {
+				return payment.documentDate;
+			} else if (name.toUpperCase().equals("AMOUNT")) {
+				return payment.amount;
+			} else if (name.toUpperCase().equals("CURRENCY")) {
+				return payment.currency;
+			}
+			return null;
+		}
+
+		@Override
+		protected Object createRecord(ResultSet rs) throws SQLException {
+			return new M_CreditNote(rs);
+		}
+
+		@Override
+		protected String getDataSQL() {
+			String sql = getCreditNotesQuery();
+			return sql;
+		}
+		
+		@Override
+		protected void setQueryParameters(PreparedStatement pstmt)
+				throws SQLException {
+			int i = 1;
+			pstmt.setInt(i++, p_C_AllocationHdr_ID);
+		}
+		
+		/**
+		 * POJO de Notas de Crédito.
+		 */
+		private class M_CreditNote {
+			protected String paymentType;
+			protected String description;
+			protected String documentNo;
+			protected Timestamp documentDate;
+			protected BigDecimal amount;
+			protected String currency;
+
+			public M_CreditNote(String paymentType, String description,
+					String documentNo, Timestamp documentDate, BigDecimal amount, String currency) {
+				super();
+				this.paymentType = paymentType;
+				this.description = description;
+				this.documentNo = documentNo;
+				this.documentDate = documentDate;
+				this.amount = amount;
+				this.currency = currency;
+			}
+
+			public M_CreditNote(ResultSet rs) throws SQLException {
+				this(rs.getString("PaymentType"), rs.getString("description"), rs
+						.getString("DocumentNo"),
+						rs.getTimestamp("DocumentDate"), (getPaymentOrder()
+								.isAdvanced() ? rs.getBigDecimal("PayAmt") : rs
+								.getBigDecimal("Amount")), rs
+								.getString("Currency"));
+			}
+		}
+	}
+	
+	/**
+	 * Query para retornar la nómina de invoices usadas como crédito
+	 * Utilizada también en el Launch para obtener el total de NC del Allocation! 
+	 */
+	public static String getCreditNotesQuery() {
+		return 
+			      " SELECT DISTINCT i.C_Invoice_ID, "
+				+ "		   'Crédito'::CHARACTER VARYING AS PaymentType, "
+				+ "		   dt.PrintName::CHARACTER VARYING AS Description, "
+				+ "		   i.DocumentNo::CHARACTER VARYING AS DocumentNo, "
+				+ "		   i.DateAcct AS DocumentDate, "
+				+ "		   sum(currencyconvert(al.amount, ah.c_currency_id, i.c_currency_id, i.DateAcct::TIMESTAMP WITH TIME zone, NULL::INTEGER, ah.ad_client_id, ah.ad_org_id)) AS Amount, "
+				+ "        i.grandtotal AS PayAmt, "
+				+ "        cu.iso_code AS Currency  "
+				+ " FROM    c_allocationhdr ah "
+				+ "	INNER JOIN c_allocationline al ON ah.c_allocationhdr_id = al.c_allocationhdr_id "
+				+ "	INNER JOIN c_invoice i ON al.c_invoice_credit_id = i.c_invoice_id "
+				+ " INNER JOIN c_currency cu ON i.C_Currency_ID = cu.C_Currency_ID "
+				+ " INNER JOIN c_doctype dt ON dt.c_doctype_id = i.c_doctype_id "
+				+ " WHERE  ah.C_AllocationHdr_ID   = ? AND dt.doctypekey NOT IN ('RTI', 'RTR', 'RCR', 'RCI')"
+				+ " GROUP BY i.C_Invoice_ID, PaymentType, dt.PrintName, i.DocumentNo, DocumentDate, PayAmt, Currency "
+				+ " ORDER BY i.DateAcct";
+	}
 
 	/*
 	 * *********************************************************** /
@@ -350,7 +458,7 @@ public class OrdenPagoDataSource {
 		protected String getDataSQL() {
 			String sql = ""
 					+ "(SELECT DISTINCT p.C_Payment_ID                  , "
-					+ "        (CASE WHEN tendertype = 'A' THEN 'TRANS' ELSE 'TARJ' END)::CHARACTER VARYING AS PaymentType, "
+					+ "        (CASE WHEN tendertype = 'A' THEN 'Transferencia' ELSE 'Tarjeta' END)::CHARACTER VARYING AS PaymentType, "
 					+ "        "
 					+ getCashNameDescription()
 					+ "     AS CashName   , "
@@ -393,7 +501,7 @@ public class OrdenPagoDataSource {
 					+ " "
 					+ "UNION ALL "
 					+ "        (SELECT DISTINCT ll.C_CashLine_ID                , "
-					+ "                'EFECT'::CHARACTER VARYING AS PaymentType, "
+					+ "                'Efectivo'::CHARACTER VARYING AS PaymentType, "
 					+ "                cb.name "
 					+ "                || ' - ' "
 					+ "                || c.name               AS CashName    , "
@@ -429,8 +537,40 @@ public class OrdenPagoDataSource {
 					+ "                CashName "
 					+ "        ) "
 					+ "UNION ALL "
-					+ getCreditNotesQuery();
+					+ getRetentionQuery();
 			return sql;
+		}
+		
+		/**
+		 * Query para retornar la nómina de invoices usadas como crédito
+		 * Utilizada también en el Launch para obtener el total de NC del Allocation! 
+		 */
+		public String getRetentionQuery() {
+			return 
+					" (SELECT DISTINCT i.C_Invoice_ID, "
+					+ "		 'Retención'::CHARACTER VARYING AS PaymentType, "
+					+ "  CASE "
+					+ "		WHEN ri.C_RetencionSchema_ID IS NOT NULL THEN rs.name "
+					+ "		ELSE (dt.PrintName)::CHARACTER VARYING "
+					+ "	END AS Description2, "
+					+ "		 NULL::CHARACTER VARYING AS BankAccount, "
+					+ "		 i.DocumentNo::CHARACTER VARYING AS RoutingNo, "
+					+ "		 i.DateAcct AS TransferDate, "
+					+ "		 sum(currencyconvert(al.amount, ah.c_currency_id, i.c_currency_id, i.DateAcct::TIMESTAMP WITH TIME zone, NULL::INTEGER, ah.ad_client_id, ah.ad_org_id)) AS Amount, "
+					+
+					"        i.grandtotal AS PayAmt, "
+					+ "        cu.iso_code AS Currency  "
+					+ " FROM    c_allocationhdr ah "
+					+ "	 INNER JOIN c_allocationline al ON ah.c_allocationhdr_id = al.c_allocationhdr_id "
+					+ "	 INNER JOIN c_invoice i ON al.c_invoice_credit_id = i.c_invoice_id "
+					+ "  	 INNER JOIN c_currency cu ON i.C_Currency_ID = cu.C_Currency_ID "
+					+ " 	 INNER JOIN c_doctype dt ON dt.c_doctype_id = i.c_doctype_id "
+					+ "    LEFT JOIN M_Retencion_Invoice ri ON i.c_invoice_id = ri.c_invoice_id "
+					+ "    LEFT JOIN C_RetencionSchema rs ON ri.c_retencionschema_ID = rs.c_retencionschema_id "
+					+ " WHERE  ah.C_AllocationHdr_ID   = ? AND dt.doctypekey IN ('RTI', 'RTR', 'RCR', 'RCI')"
+					+
+					" GROUP BY i.C_Invoice_ID, PaymentType, Description2, BankAccount, RoutingNo, TransferDate, PayAmt, Currency "
+					+ " ORDER BY Description2, i.DateAcct) ";
 		}
 		
 		@Override
@@ -487,56 +627,6 @@ public class OrdenPagoDataSource {
 	 */
 	public MAllocationHdr getPaymentOrder() {
 		return paymentOrder;
-	}
-
-	/**
-	 * Query para retornar la nómina de invoices usadas como crédito
-	 * Utilizada también en el Launch para obtener el total de NC del Allocation! 
-	 */
-	public static String getCreditNotesQuery() {
-		return 
-				" (SELECT DISTINCT i.C_Invoice_ID, "
-				+ "		 'CREDITO'::CHARACTER VARYING AS PaymentType, "
-				+
-				// "		 (dt.PrintName || ' ' || i.DocumentNo) ::CHARACTER VARYING AS Description, "
-				// +
-				"  CASE "
-				+ "		WHEN ri.C_RetencionSchema_ID IS NOT NULL THEN rs.name "
-				+ "		ELSE (dt.PrintName || ' ' || i.DocumentNo)::CHARACTER VARYING "
-				+ "	END AS Description2, "
-				+ "		 NULL::CHARACTER VARYING AS BankAccount, "
-				+ "		 NULL::CHARACTER VARYING AS RoutingNo, "
-				+ "		 i.DateAcct AS TransferDate, "
-				+ "		 sum(currencyconvert(al.amount, ah.c_currency_id, i.c_currency_id, i.DateAcct::TIMESTAMP WITH TIME zone, NULL::INTEGER, ah.ad_client_id, ah.ad_org_id)) AS Amount, "
-				+
-				// "		 SUM(al.amount) AS Amount,   " +
-				"        i.grandtotal AS PayAmt, "
-				+ "        cu.iso_code AS Currency  "
-				+ " FROM    c_allocationhdr ah "
-				+ "	 INNER JOIN c_allocationline al ON ah.c_allocationhdr_id = al.c_allocationhdr_id "
-				+ "	 INNER JOIN c_invoice i ON al.c_invoice_credit_id = i.c_invoice_id "
-				+ "  	 INNER JOIN c_currency cu ON i.C_Currency_ID = cu.C_Currency_ID "
-				+ " 	 INNER JOIN c_doctype dt ON dt.c_doctype_id = i.c_doctype_id "
-				+ "    LEFT JOIN M_Retencion_Invoice ri ON i.c_invoice_id = ri.c_invoice_id "
-				+ "    LEFT JOIN C_RetencionSchema rs ON ri.c_retencionschema_ID = rs.c_retencionschema_id "
-				+ " WHERE  ah.C_AllocationHdr_ID   = ? "
-				+
-				// Filtro facturas que se hayan utilizado como crédito, pero
-				// que sean retenciones
-				// dado que el reporte no debe mostrar el detalle de
-				// retenciones.
-				// UPDATE 20090219: SE VISUALIZAN A FIN DE MOSTRAR EL
-				// DESGLOSE, POR LO CUAL SE COMENTA
-				/*
-				 * "   AND  NOT EXISTS (SELECT c_invoice_retenc_id " +
-				 * "                    FROM M_Retencion_Invoice ri " +
-				 * "                    WHERE ri.C_AllocationHdr_ID = ah.C_AllocationHdr_ID "
-				 * +
-				 * "                      AND ri.C_Invoice_ID = i.C_Invoice_ID) "
-				 * +
-				 */
-				" GROUP BY i.C_Invoice_ID, PaymentType, Description2, BankAccount, RoutingNo, TransferDate, PayAmt, Currency "
-				+ " ORDER BY Description2, i.DateAcct) ";
 	}
 
 }

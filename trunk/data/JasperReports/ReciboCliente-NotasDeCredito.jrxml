@@ -2,7 +2,7 @@
 <!-- Created with iReport - A designer for JasperReports -->
 <!DOCTYPE jasperReport PUBLIC "//JasperReports//DTD Report Design//EN" "http://jasperreports.sourceforge.net/dtds/jasperreport.dtd">
 <jasperReport
-		 name="ReciboCliente_OtherPayments"
+		 name="ReciboCliente_NotasDeCredito"
 		 columnCount="1"
 		 printOrder="Vertical"
 		 orientation="Portrait"
@@ -25,10 +25,9 @@
 
 
 	<field name="PaymentType" class="java.lang.String"/>
-	<field name="CashName" class="java.lang.String"/>
-	<field name="BankAccount" class="java.lang.String"/>
-	<field name="RoutingNo" class="java.lang.String"/>
-	<field name="TransferDate" class="java.sql.Timestamp"/>
+	<field name="Description" class="java.lang.String"/>
+	<field name="DocumentNo" class="java.lang.String"/>
+	<field name="DocumentDate" class="java.sql.Timestamp"/>
 	<field name="Amount" class="java.math.BigDecimal"/>
 
 		<background>
@@ -136,7 +135,9 @@
 						y="0"
 						width="87"
 						height="17"
-						key="textField"/>
+						key="textField">
+							<printWhenExpression><![CDATA[new Boolean(($F{PaymentType}.compareTo( new String("Crédito") ) == 0))]]></printWhenExpression>
+						</reportElement>
 					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
 					<textElement textAlignment="Center" verticalAlignment="Middle">
 						<font/>
@@ -149,12 +150,14 @@
 						y="0"
 						width="212"
 						height="17"
-						key="textField"/>
+						key="textField">
+							<printWhenExpression><![CDATA[new Boolean(($F{PaymentType}.compareTo( new String("Crédito") ) == 0))]]></printWhenExpression>
+						</reportElement>
 					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
 					<textElement textAlignment="Center" verticalAlignment="Middle">
 						<font/>
 					</textElement>
-				<textFieldExpression   class="java.lang.String"><![CDATA[$F{CashName}]]></textFieldExpression>
+				<textFieldExpression   class="java.lang.String"><![CDATA[$F{Description}]]></textFieldExpression>
 				</textField>
 				<textField isStretchWithOverflow="false" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
@@ -162,12 +165,14 @@
 						y="0"
 						width="100"
 						height="17"
-						key="textField"/>
+						key="textField">
+							<printWhenExpression><![CDATA[new Boolean(($F{PaymentType}.compareTo( new String("Crédito") ) == 0))]]></printWhenExpression>
+						</reportElement>
 					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
 					<textElement textAlignment="Center" verticalAlignment="Middle">
 						<font/>
 					</textElement>
-				<textFieldExpression   class="java.lang.String"><![CDATA[$F{RoutingNo}]]></textFieldExpression>
+				<textFieldExpression   class="java.lang.String"><![CDATA[$F{DocumentNo}]]></textFieldExpression>
 				</textField>
 				<textField isStretchWithOverflow="false" pattern="dd/MM/yyyy" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
@@ -175,12 +180,14 @@
 						y="0"
 						width="74"
 						height="17"
-						key="textField"/>
+						key="textField">
+							<printWhenExpression><![CDATA[new Boolean(($F{PaymentType}.compareTo( new String("Crédito") ) == 0))]]></printWhenExpression>
+						</reportElement>
 					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
 					<textElement textAlignment="Center" verticalAlignment="Middle">
 						<font/>
 					</textElement>
-				<textFieldExpression   class="java.sql.Timestamp"><![CDATA[$F{TransferDate}]]></textFieldExpression>
+				<textFieldExpression   class="java.sql.Timestamp"><![CDATA[$F{DocumentDate}]]></textFieldExpression>
 				</textField>
 				<textField isStretchWithOverflow="false" pattern="##0.00" isBlankWhenNull="false" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
@@ -188,7 +195,9 @@
 						y="0"
 						width="60"
 						height="17"
-						key="textField"/>
+						key="textField">
+							<printWhenExpression><![CDATA[new Boolean(($F{PaymentType}.compareTo( new String("Crédito") ) == 0))]]></printWhenExpression>
+						</reportElement>
 					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
 					<textElement textAlignment="Right" verticalAlignment="Middle">
 						<font/>
@@ -202,7 +211,9 @@
 						width="534"
 						height="0"
 						forecolor="#CCCCCC"
-						key="line-1"/>
+						key="line-1">
+							<printWhenExpression><![CDATA[new Boolean(($F{PaymentType}.compareTo( new String("Crédito") ) == 0))]]></printWhenExpression>
+						</reportElement>
 					<graphicElement stretchType="NoStretch"/>
 				</line>
 			</band>

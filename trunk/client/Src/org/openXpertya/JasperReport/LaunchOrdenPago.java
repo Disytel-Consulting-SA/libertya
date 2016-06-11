@@ -23,6 +23,7 @@ import org.openXpertya.model.MInvoice;
 import org.openXpertya.model.MLocation;
 import org.openXpertya.model.MOrder;
 import org.openXpertya.model.MOrg;
+import org.openXpertya.model.MPreference;
 import org.openXpertya.model.MProcess;
 import org.openXpertya.model.MRegion;
 import org.openXpertya.model.MRetencionSchema;
@@ -115,6 +116,16 @@ public class LaunchOrdenPago extends SvrProcess {
 				opDataSource.getOtherPaymentsDataSource());
 
 		// /////////////////////////////////////
+		// Subreporte de Notas de Crédito.
+		MJasperReport creditNote = getCreditNotesSubreport();
+		// Se agrega el informe compilado como parámetro.
+		jasperWrapper.addParameter("COMPILED_SUBREPORT_CREDIT_NOTES",
+				new ByteArrayInputStream(creditNote.getBinaryData()));
+		// Se agrega el datasource del subreporte.
+		jasperWrapper.addParameter("SUBREPORT_CREDIT_NOTES_DATASOURCE",
+				opDataSource.getCreditNotesDataSource());
+				
+		// /////////////////////////////////////
 		// Subreporte de Comprobantes de retenciones.
 		MJasperReport comprobanteRetencion = getComprobanteRetencion();
 		// Se agrega el informe compilado como parámetro.
@@ -172,11 +183,18 @@ public class LaunchOrdenPago extends SvrProcess {
 	protected MJasperReport getOtherPaymentsSubreport() throws Exception {
 		return getJasperReport("OrdenPago-OtrosMedios");
 	}
+	
+	/**
+	 * @return Retorna el MJasperReport del subreporte de notas de crédito.
+	 */
+	protected MJasperReport getCreditNotesSubreport() throws Exception {
+		return getJasperReport("OrdenPago-NotasDeCredito");
+	}
 
 	/**
 	 * @return Retorna el MJasperReport con el nombre indicado.
 	 */
-	private MJasperReport getJasperReport(String name) throws Exception {
+	protected MJasperReport getJasperReport(String name) throws Exception {
 		Integer jasperReport_ID = (Integer) DB
 				.getSQLObject(
 						get_TrxName(),
@@ -224,11 +242,13 @@ public class LaunchOrdenPago extends SvrProcess {
 				op.getC_BPartner_ID());
 		// Monto de notas de crédito
 		BigDecimal ncAmount = getCreditsAmount(op);
+		// Monto de Retenciones
+		BigDecimal retencionesAmount = op.getRetencion_Amt();
+		
 		// El monto total debe incluir de manera discriminada las notas de
 		// crédito
 		BigDecimal opAmount = op.getGrandTotal().subtract(ncAmount);
-		BigDecimal retencionesAmount = op.getRetencion_Amt();
-
+		
 		// Se asignan los parámetros al wrapper.
 		jasperWrapper.addParameter("CLIENT_NAME", clientName);
 		jasperWrapper.addParameter("ORG_NAME", orgName);
@@ -239,6 +259,7 @@ public class LaunchOrdenPago extends SvrProcess {
 		jasperWrapper.addParameter("OP_AMOUNT", opAmount);
 		jasperWrapper.addParameter("CREDITO_AMOUNT", ncAmount);
 		jasperWrapper.addParameter("RETENCIONES_AMOUNT", retencionesAmount);
+		jasperWrapper.addParameter("URL_IMAGE_TITLE", this.getUrlReportImage(op.getAD_Client_ID(), op.getAD_Org_ID()));
 
 		String sql = "select c_invoice_id from m_retencion_invoice r where r.c_allocationhdr_id="
 				+ +getAllocationHdrID() + "group by c_invoice_id";
@@ -451,4 +472,31 @@ public class LaunchOrdenPago extends SvrProcess {
 		// notas de crédito
 		return BigDecimal.ZERO;
 	}
+	
+	protected String getUrlReportImage(int pAd_Client_ID, int pAd_Org_ID){
+		// Primero busco una preference por organización
+		String result = MPreference.GetCustomPreferenceValue(this.getUrlImagePreferenceName(), null, pAd_Org_ID, null, true);
+		if(Util.isEmpty(result)) {
+			// En el caso que no se haya encontrado ninguna preferencia a partir de la Organización se busca utilizando el valor de la Compañía.
+			result = MPreference.GetCustomPreferenceValue(this.getUrlImagePreferenceName(), pAd_Client_ID, null, null, true);
+			// En el caso que no se haya encontrado ninguna preferencia a partir de la Organización se busca utilizando el valor por defecto que es: URL_IMAGE_OP
+			if(Util.isEmpty(result)) {
+				result = MPreference.GetCustomPreferenceValue(this.getUrlImagePreferenceName(), null, null, null, true);
+			}
+		}
+		return this.parseUrlImage(result, pAd_Client_ID, pAd_Org_ID);	
+	}
+	
+	protected String getUrlImagePreferenceName(){
+		return "URL_IMAGE_OP";
+	}
+	
+	private String parseUrlImage(String urlImage, int pAd_Client_ID, int pAd_Org_ID){
+		// Se reemplazan las ocurrencias de $P{AD_CLIENT_ID}, por el ID de la Compañía. Esto permite utilizar una imagen diferente por cada Compañía.
+		urlImage = urlImage.replaceAll("AD_CLIENT_ID", Integer.toString(pAd_Client_ID));
+		// Se reemplazan las ocurrencias de $P{AD_ORG_ID}, por el ID de la Organización. Esto permite utilizar una imagen diferente por cada Organización.
+		urlImage = urlImage.replaceAll("AD_ORG_ID", Integer.toString(pAd_Org_ID));
+		return urlImage;
+	}
+	
 }
