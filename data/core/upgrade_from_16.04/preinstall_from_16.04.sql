@@ -221,7 +221,7 @@ CREATE TABLE c_bpartner_banklist (
   c_doctype_id integer NOT NULL,
   c_bpartner_id integer NOT NULL,
   nombre_retirante character varying(30),
-  c_bankaccount_id integer
+  c_bankaccount_id integer,
   CONSTRAINT c_bpartner_banklist_key PRIMARY KEY (c_bpartner_banklist_id)
 );
 ALTER TABLE c_bpartner_banklist
