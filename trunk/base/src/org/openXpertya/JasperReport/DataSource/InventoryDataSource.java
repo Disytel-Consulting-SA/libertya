@@ -72,10 +72,10 @@ public class InventoryDataSource extends QueryDataSource {
 				userID, true);
 		if(Util.isEmpty(priceListID_str, true)){
 			// 2) 
-			MPriceList priceList = MPriceList.getDefault(getCtx(), isSOPriceList ,true);
+			MPriceList priceList = MPriceList.getPriceList(getCtx(), orgID, isSOPriceList, null);
 			if(priceList == null){
 				// 3)
-				priceList = MPriceList.getDefault(getCtx(), isSOPriceList);
+				priceList = MPriceList.getPriceList(getCtx(), 0, isSOPriceList, null);
 			}
 			if(priceList != null){
 				priceListID = priceList.getID();
