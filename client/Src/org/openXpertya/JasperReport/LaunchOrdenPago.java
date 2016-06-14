@@ -118,12 +118,14 @@ public class LaunchOrdenPago extends SvrProcess {
 		// /////////////////////////////////////
 		// Subreporte de Notas de Crédito.
 		MJasperReport creditNote = getCreditNotesSubreport();
-		// Se agrega el informe compilado como parámetro.
-		jasperWrapper.addParameter("COMPILED_SUBREPORT_CREDIT_NOTES",
-				new ByteArrayInputStream(creditNote.getBinaryData()));
-		// Se agrega el datasource del subreporte.
-		jasperWrapper.addParameter("SUBREPORT_CREDIT_NOTES_DATASOURCE",
-				opDataSource.getCreditNotesDataSource());
+		if (creditNote != null) {
+			// Se agrega el informe compilado como parámetro.
+			jasperWrapper.addParameter("COMPILED_SUBREPORT_CREDIT_NOTES",
+					new ByteArrayInputStream(creditNote.getBinaryData()));
+			// Se agrega el datasource del subreporte.
+			jasperWrapper.addParameter("SUBREPORT_CREDIT_NOTES_DATASOURCE",
+					opDataSource.getCreditNotesDataSource());
+		}
 				
 		// /////////////////////////////////////
 		// Subreporte de Comprobantes de retenciones.
@@ -188,7 +190,7 @@ public class LaunchOrdenPago extends SvrProcess {
 	 * @return Retorna el MJasperReport del subreporte de notas de crédito.
 	 */
 	protected MJasperReport getCreditNotesSubreport() throws Exception {
-		return getJasperReport("OrdenPago-NotasDeCredito");
+		return null;
 	}
 
 	/**
