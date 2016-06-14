@@ -10,7 +10,7 @@ public class PostInstallUpgradeFrom1604 extends PluginPostInstallProcess {
 	/** Reporte de Cierre de Tarjetas */
 	protected final static String CREDITCARD_CLOSE_REPORT_UID = "CORE-AD_Process-1010444";
 	protected final static String DYNAMIC_CREDITCARD_CLOSE_REPORT_UID = "CORE-AD_Process-1010445";
-	protected final static String CREDITCARD_CLOSE_REPORT_FILENAME = "CreditCardCloseReport.jrxml";
+	protected final static String CREDITCARD_CLOSE_REPORT_FILENAME = "CreditCardClose.jrxml";
 	
 	/** Reporte de Cierre de Tarjetas - Subreporte de Cupones Duplicados */
 	protected final static String CREDITCARD_CLOSE_SB_DUPLICATEDCUPON_REPORT_FILENAME = "CreditCardReport-DuplicateSubreport.jrxml";
