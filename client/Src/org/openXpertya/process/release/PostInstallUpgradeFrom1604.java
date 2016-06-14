@@ -85,7 +85,7 @@ public class PostInstallUpgradeFrom1604 extends PluginPostInstallProcess {
 				JarHelper
 						.readBinaryFromJar(
 								jarFileURL,
-								getBinaryFileURL(CREDITCARD_CLOSE_REPORT_FILENAME)));
+								getBinaryFileURL(CREDITCARD_CLOSE_SB_DUPLICATEDCUPON_REPORT_FILENAME)));
 		
 		// Reporte de Cierre de Tarjetas - Subreporte de Cupones Duplicados
 		MProcess.addAttachment(
@@ -96,7 +96,7 @@ public class PostInstallUpgradeFrom1604 extends PluginPostInstallProcess {
 				JarHelper
 						.readBinaryFromJar(
 								jarFileURL,
-								getBinaryFileURL(CREDITCARD_CLOSE_REPORT_FILENAME)));
+								getBinaryFileURL(CREDITCARD_CLOSE_SB_DUPLICATEDCUPON_REPORT_FILENAME)));
 		
 		// Reporte de Cierre de Tarjetas - Subreporte de Cupones Inválidos
 		MProcess.addAttachment(
@@ -107,7 +107,7 @@ public class PostInstallUpgradeFrom1604 extends PluginPostInstallProcess {
 				JarHelper
 						.readBinaryFromJar(
 								jarFileURL,
-								getBinaryFileURL(CREDITCARD_CLOSE_REPORT_FILENAME)));
+								getBinaryFileURL(CREDITCARD_CLOSE_SB_INVALIDCUPON_REPORT_FILENAME)));
 		
 		// Reporte de Cierre de Tarjetas - Subreporte de Cupones Inválidos
 		MProcess.addAttachment(
@@ -118,7 +118,7 @@ public class PostInstallUpgradeFrom1604 extends PluginPostInstallProcess {
 				JarHelper
 						.readBinaryFromJar(
 								jarFileURL,
-								getBinaryFileURL(CREDITCARD_CLOSE_REPORT_FILENAME)));
+								getBinaryFileURL(CREDITCARD_CLOSE_SB_INVALIDCUPON_REPORT_FILENAME)));
 		
 		// Reporte de Auditoría de Cierre de Tarjetas
 		MProcess.addAttachment(
