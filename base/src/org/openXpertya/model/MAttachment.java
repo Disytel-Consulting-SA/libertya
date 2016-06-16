@@ -82,7 +82,9 @@ public class MAttachment extends X_AD_Attachment {
     
     /** Atributo que define si hay soporte de adjuntos externos habilitado*/
     public static final String EXTERNAL_ATTACHMENT_ENABLED = "ExternalAttachmentEnabled"; 
-    
+
+    /** Atributo que define si hay soporte de adjuntos locales habilitado*/
+    public static final String LOCAL_ATTACHMENT_ENABLED = "LocalAttachmentEnabled"; 
     
     /**
      *      Standard Constructor
@@ -799,9 +801,13 @@ public class MAttachment extends X_AD_Attachment {
 	    }
 	    return externalImpl;
     }
-    
 
-    /** Visualizar la botonera de adjuntos externos unicamente si no se está utilizando la clase mock */
+    /** Visualizar la botonera de adjuntos locales unicamente si la preferencia lo habilita (si no existe, habilitado por defecto) */
+    public static boolean isLocalAttachmentEnabled() {
+    	return !"N".equalsIgnoreCase(MPreference.GetCustomPreferenceValue(LOCAL_ATTACHMENT_ENABLED));  
+    }
+
+    /** Visualizar la botonera de adjuntos externos unicamente si la preferencia lo habilita (si no existe, deshabilitado por defecto) */
     public static boolean isExternalAttachmentEnabled() {
     	return "Y".equalsIgnoreCase(MPreference.GetCustomPreferenceValue(EXTERNAL_ATTACHMENT_ENABLED));  
     }
