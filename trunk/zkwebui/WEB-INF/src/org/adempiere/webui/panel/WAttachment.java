@@ -199,8 +199,10 @@ public class WAttachment extends Window implements EventListener
 		cbContent.setRows(0);
 		cbContent.addEventListener(Events.ON_SELECT, this);
 		
-		toolBar.appendChild(bLoad);
-		toolBar.appendChild(bDelete);
+		if (MAttachment.isLocalAttachmentEnabled()) {
+			toolBar.appendChild(bLoad);
+			toolBar.appendChild(bDelete);
+		}
 		toolBar.appendChild(bSave);
 		toolBar.appendChild(cbContent);
         if (MAttachment.isExternalAttachmentEnabled()) {

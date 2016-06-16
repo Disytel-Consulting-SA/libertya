@@ -232,8 +232,10 @@ public final class Attachment extends JDialog implements ActionListener {
         this.getContentPane().add( mainPanel );
         northPanel.setLayout( northLayout );
         northPanel.add( toolBar,BorderLayout.CENTER );
-        toolBar.add( bLoad );
-        toolBar.add( bDelete );
+        if (MAttachment.isLocalAttachmentEnabled()) {
+        	toolBar.add( bLoad );
+        	toolBar.add( bDelete );
+        }
         toolBar.add( bSave );
         toolBar.add( bOpen );
         toolBar.add( cbContent );
