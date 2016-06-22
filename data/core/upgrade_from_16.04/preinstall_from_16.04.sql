@@ -383,3 +383,14 @@ ALTER TABLE C_CreditCard_CloseLine
 
 -- 20160610-2110 Nueva columna para permitir reutilizar Nro. de Documento en Recibos.
 update ad_system set dummy = (SELECT addcolumnifnotexists('C_Doctype','ReuseDocumentNo','character(1) default ''N''::bpchar'));
+
+-- 20160622-1317 Cambiar el displayType a Search para las columnas Ref_Invoice_ID y Ref_InvoiceLine_ID en C_Invoice y C_InvoiceLine en lugar de Table a fin de mejorar los tiempos de apertura de la ventana de Facturas
+UPDATE AD_Column 
+SET 	AD_Reference_ID = (SELECT AD_Reference_ID FROM AD_Reference WHERE AD_ComponentObjectUID = 'CORE-AD_Reference-30')
+WHERE AD_ComponentObjectUID IN ('CORE-AD_Column-10788', 'CORE-AD_Column-10805');
+
+-- 20160622-1317 Cambiar el displayType a Search y definir la referencia hacia tabla C_Invoice para la columna C_Invoice_ID de las tablas invoiceline, invoicetax, invoicepayschedule y documentdiscount a fin de mejorar los tiempos de apertura de la ventana de Facturas
+UPDATE AD_Column
+SET 	AD_Reference_ID = (SELECT AD_Reference_ID FROM AD_Reference WHERE AD_ComponentObjectUID = 'CORE-AD_Reference-30'), 
+	AD_Reference_value_ID = (SELECT AD_Reference_ID FROM AD_Reference WHERE AD_ComponentObjectUID = 'CORE-AD_Reference-336') 
+WHERE AD_ComponentObjectUID IN ('CORE-AD_Column-3836', 'CORE-AD_Column-3851', 'CORE-AD_Column-8312', 'CORE-AD_Column-1014640');
