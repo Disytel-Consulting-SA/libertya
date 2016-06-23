@@ -1318,8 +1318,20 @@ public class AllocationGenerator {
 		invoiceLine.setC_Tax_ID(tax.getID());
 		invoiceLine.setLineNetAmt();
 		invoiceLine.setC_Project_ID(invoice.getC_Project_ID());
-		// Setear el artículo
-		String valueProduct = MPreference.GetCustomPreferenceValue("DIF_CAMBIO_ARTICULO");
+		
+		//SUR SOFTWARE -> Primero intento obtener de AD_Preference el tipo de artículo para diff de cambio crédito o débito diferenciado
+		String valueProduct = null;
+		if (isCredit)
+			valueProduct = MPreference.GetCustomPreferenceValue("DIF_CAMBIO_ARTICULO_CRED");
+		else
+			valueProduct = MPreference.GetCustomPreferenceValue("DIF_CAMBIO_ARTICULO_DEB");
+		
+		
+		//SUR SOFTWARE -> Si no están las preferencias diferenciadas para artículos, obtengo el artículo tal como se hacía anteriormente (por default)
+		if(Util.isEmpty(valueProduct,true)){
+			// Setear el artículo
+			valueProduct = MPreference.GetCustomPreferenceValue("DIF_CAMBIO_ARTICULO");
+		}
 
 		if(Util.isEmpty(valueProduct,true)){
 			throw new Exception(
