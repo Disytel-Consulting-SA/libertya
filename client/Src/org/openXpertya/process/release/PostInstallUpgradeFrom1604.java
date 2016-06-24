@@ -42,6 +42,10 @@ public class PostInstallUpgradeFrom1604 extends PluginPostInstallProcess {
 	protected final static String IVA_VENTA_GENERAL_REPORT_UID = "CORE-AD_Process-1010324";
 	protected final static String IVA_VENTA_GENERAL_REPORT_FILENAME = "Iva_Ventas.jrxml";
 	
+	/** UID del Listado de Cupones de Tarjeta */
+	protected final static String LISTADO_DE_CUPONES_DE_TARJETA_REPORT_UID = "CORE-AD_Process-1010405";
+	protected final static String LISTADO_DE_CUPONES_DE_TARJETA_REPORT_FILENAME = "ListadoCuponesTarjeta.jrxml";
+	
 	@Override
 	protected String doIt() throws Exception {
 		super.doIt();
@@ -180,6 +184,17 @@ public class PostInstallUpgradeFrom1604 extends PluginPostInstallProcess {
 						.readBinaryFromJar(
 								jarFileURL,
 								getBinaryFileURL(IVA_VENTA_GENERAL_REPORT_FILENAME)));
+		
+		// Listado de Cupones de Tarjeta
+		MProcess.addAttachment(
+				get_TrxName(),
+				getCtx(),
+				LISTADO_DE_CUPONES_DE_TARJETA_REPORT_UID,
+				LISTADO_DE_CUPONES_DE_TARJETA_REPORT_FILENAME,
+				JarHelper
+						.readBinaryFromJar(
+								jarFileURL,
+								getBinaryFileURL(LISTADO_DE_CUPONES_DE_TARJETA_REPORT_FILENAME)));
 				
 		return " ";
 	}
