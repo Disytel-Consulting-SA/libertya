@@ -36,6 +36,7 @@ inner join m_entidadfinancieraplan mefp on mefp.m_entidadfinancieraplan_id = p.m
 inner join m_entidadfinanciera mef on mef.m_entidadfinanciera_id = mefp.m_entidadfinanciera_id
 left join c_posjournal pj on pj.c_posjournal_id = p.c_posjournal_id
 left join c_pos pos on pos.c_pos_id = pj.c_pos_id
+inner join c_creditcard_closeline cccl on cccl.c_payment_id = p.c_payment_id
 where p.tendertype = 'C'
 	and p.c_posjournal_id is not null and p.isactive = 'Y'
 	AND (($P{FechaCierre}::date IS NULL) OR (p.datetrx::date = $P{FechaCierre}::date))
@@ -88,7 +89,7 @@ order by mef.name]]></queryString>
 					<reportElement
 						x="70"
 						y="44"
-						width="100"
+						width="290"
 						height="15"
 						key="textField"
 						isRemoveLineWhenBlank="true">
@@ -120,7 +121,7 @@ order by mef.name]]></queryString>
 					<reportElement
 						x="70"
 						y="29"
-						width="100"
+						width="290"
 						height="15"
 						key="textField-1"
 						isRemoveLineWhenBlank="true">
@@ -134,9 +135,9 @@ order by mef.name]]></queryString>
 				</textField>
 				<textField isStretchWithOverflow="false" pattern="dd/MM/yyyy" isBlankWhenNull="false" evaluationTime="Report" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
-						x="679"
+						x="666"
 						y="0"
-						width="61"
+						width="74"
 						height="15"
 						key="textField-2"/>
 					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
@@ -147,7 +148,7 @@ order by mef.name]]></queryString>
 				</textField>
 				<staticText>
 					<reportElement
-						x="643"
+						x="630"
 						y="0"
 						width="36"
 						height="15"
@@ -160,7 +161,7 @@ order by mef.name]]></queryString>
 				</staticText>
 				<staticText>
 					<reportElement
-						x="643"
+						x="630"
 						y="15"
 						width="36"
 						height="13"
@@ -173,9 +174,9 @@ order by mef.name]]></queryString>
 				</staticText>
 				<textField isStretchWithOverflow="false" pattern="HH:mm" isBlankWhenNull="false" evaluationTime="Report" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
-						x="679"
+						x="666"
 						y="15"
-						width="61"
+						width="74"
 						height="13"
 						key="textField-3"/>
 					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>

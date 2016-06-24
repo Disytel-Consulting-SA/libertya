@@ -64,7 +64,7 @@ WHERE (($P{DiasRetraso} IS NULL) OR (diasretraso >= $P{DiasRetraso}))]]></queryS
 					<reportElement
 						x="72"
 						y="15"
-						width="178"
+						width="168"
 						height="12"
 						key="textField-3"
 						isRemoveLineWhenBlank="true">
@@ -139,7 +139,7 @@ WHERE (($P{DiasRetraso} IS NULL) OR (diasretraso >= $P{DiasRetraso}))]]></queryS
 					<reportElement
 						x="72"
 						y="27"
-						width="178"
+						width="168"
 						height="12"
 						key="textField-77"
 						isRemoveLineWhenBlank="true">
@@ -199,7 +199,7 @@ WHERE (($P{DiasRetraso} IS NULL) OR (diasretraso >= $P{DiasRetraso}))]]></queryS
 				</staticText>
 				<staticText>
 					<reportElement
-						x="252"
+						x="240"
 						y="1"
 						width="36"
 						height="15"
@@ -212,7 +212,7 @@ WHERE (($P{DiasRetraso} IS NULL) OR (diasretraso >= $P{DiasRetraso}))]]></queryS
 				</staticText>
 				<staticText>
 					<reportElement
-						x="252"
+						x="240"
 						y="16"
 						width="36"
 						height="13"
@@ -225,9 +225,9 @@ WHERE (($P{DiasRetraso} IS NULL) OR (diasretraso >= $P{DiasRetraso}))]]></queryS
 				</staticText>
 				<textField isStretchWithOverflow="false" pattern="HH:mm" isBlankWhenNull="false" evaluationTime="Report" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
-						x="288"
+						x="276"
 						y="16"
-						width="61"
+						width="73"
 						height="13"
 						key="textField-90"/>
 					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
@@ -238,9 +238,9 @@ WHERE (($P{DiasRetraso} IS NULL) OR (diasretraso >= $P{DiasRetraso}))]]></queryS
 				</textField>
 				<textField isStretchWithOverflow="false" pattern="dd/MM/yyyy" isBlankWhenNull="false" evaluationTime="Report" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
-						x="288"
+						x="276"
 						y="1"
-						width="61"
+						width="73"
 						height="15"
 						key="textField-91"/>
 					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
