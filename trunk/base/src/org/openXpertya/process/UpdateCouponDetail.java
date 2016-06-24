@@ -43,6 +43,7 @@ public class UpdateCouponDetail extends SvrProcess {
 					line.setC_POSJournal_ID(cuponAux.getC_POSJournal_ID());
 					line.setC_CreditCard_Close_ID(creditcardclose.getC_CreditCard_Close_ID());
 					line.setC_Payment_ID(cuponAux.getC_Payment_ID());
+					line.set_ValueNoCheck("CreatedBy", cuponAux.getCreatedBy());
 					if (!line.save()){
 							throw new Exception(CLogger.retrieveErrorAsString());
 					}

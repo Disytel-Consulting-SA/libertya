@@ -75,7 +75,7 @@ public class MCreditCardClose extends X_C_CreditCard_Close implements DocAction 
 			}
 			
 			// Verificar que no haya cupones de tarjeta para la fecha de cierre y organización que no tengan asignada la Referencia al Cierre de Tarjetas
-			if(DB.getSQLValue(get_TrxName(), "SELECT COUNT(C_Payment_ID) FROM C_Payment p WHERE AD_Org_ID = ? AND p.DocStatus in ('CO','CL') AND datetrx::date = '" + getDateTrx() + "'::date AND not exists (select cccl.c_payment_id from c_creditcard_close ccc inner join c_creditcard_closeline cccl on cccl.c_creditcard_close_id = ccc.c_creditcard_close_id where cccl.c_payment_id = p.c_payment_id and ccc.datetrx::date = p.datetrx::date)", getAD_Org_ID(),true) > 0){
+			if(DB.getSQLValue(get_TrxName(), "SELECT COUNT(C_Payment_ID) FROM C_Payment p WHERE AD_Org_ID = ? AND p.DocStatus in ('CO','CL') AND datetrx::date = '" + getDateTrx() + "'::date AND tendertype='C' AND not exists (select cccl.c_payment_id from c_creditcard_close ccc inner join c_creditcard_closeline cccl on cccl.c_creditcard_close_id = ccc.c_creditcard_close_id where cccl.c_payment_id = p.c_payment_id and ccc.datetrx::date = p.datetrx::date)", getAD_Org_ID(),true) > 0){
 				m_processMsg = "@CouponsWithoutReference@";
 				return DocAction.STATUS_Invalid;
 			}
@@ -162,17 +162,15 @@ public class MCreditCardClose extends X_C_CreditCard_Close implements DocAction 
 	
 	@Override
 	protected boolean beforeSave(boolean newRecord) {
-		if (newRecord) {
-			// Verificar si hay un cierre para la fecha elegída
-			if (DB.getSQLValue(
-					get_TrxName(),
-					"SELECT COUNT(C_CreditCard_Close_ID) FROM C_CreditCard_Close WHERE DateTrx::date = '" +
-					getDateTrx() + "'::date AND Ad_Org_ID = ?", getAD_Org_ID()) > 0) {
-				// Hay una tupla para la misma fecha y almacén, por lo tanto no
-				// seguir
-				log.saveError("CreditCardCloseRepeated", "");
-				return false;
-			}
+		// Verificar si hay un cierre para la fecha elegída
+		if (DB.getSQLValue(
+				get_TrxName(),
+				"SELECT COUNT(C_CreditCard_Close_ID) FROM C_CreditCard_Close WHERE DateTrx::date = '" +
+				getDateTrx() + "'::date AND C_CreditCard_Close_ID <> " + getC_CreditCard_Close_ID() + " AND Ad_Org_ID = ?", getAD_Org_ID()) > 0) {
+			// Hay una tupla para la misma fecha y almacén, por lo tanto no
+			// seguir
+			log.saveError("CreditCardCloseRepeated", "");
+			return false;
 		}
 		return true;
 	}
