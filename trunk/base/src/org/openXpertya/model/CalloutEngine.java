@@ -283,6 +283,8 @@ public class CalloutEngine implements Callout {
 			{
 				retValue = ex.toString();
 			}
+			// En caso de excepción deberíamos garantizar el fin del callout
+			setCalloutActive(false);
 		}
 		finally
 		{
