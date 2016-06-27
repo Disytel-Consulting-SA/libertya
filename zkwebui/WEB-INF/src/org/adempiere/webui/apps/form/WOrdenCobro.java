@@ -283,7 +283,6 @@ public class WOrdenCobro extends WOrdenPago {
 		cboCashReceiptMedium = createPaymentMediumCombo(MPOSPaymentMedium.TENDERTYPE_Cash);
 		if (cboCashReceiptMedium.getItemCount() > 0)
 			cboCashReceiptMedium.setSelectedIndex(0);
-		cboCashReceiptMedium.setSelectedIndex(0);
 		cboCashReceiptMedium.addEventListener("onChange", getPaymentMediumItemListener());
 		tenderTypeIndexsCombos.put(TAB_INDEX_EFECTIVO, cboCashReceiptMedium);  
     	txtEfectivoImporte.setValue("0");
