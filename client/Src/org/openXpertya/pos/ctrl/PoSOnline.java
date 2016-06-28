@@ -202,6 +202,8 @@ public class PoSOnline extends PoSConnectionState {
 	
 	private int dolarCurrencyID = 0;
 	
+	private MDocType allocationDocType = null;
+	
 	public PoSOnline() {
 		super();
 		setCreatePOSPaymentValidations(new CreatePOSPaymentValidations());
@@ -213,6 +215,8 @@ public class PoSOnline extends PoSConnectionState {
 				MDocType.DOCTYPE_CustomerReceipt, null));
 		setTaxExento(MTax.getTaxExemptRate(ctx, null));
 		setRole(MRole.get(getCtx(), Env.getAD_Role_ID(getCtx())));
+		setAllocationDocType(MDocType.getDocType(ctx,
+				MDocType.DOCTYPE_POS, null));
 	}
 	
 	private static void throwIfFalse(boolean b, DocAction sourceDocActionPO, Class posExceptionClass) throws PosException {
@@ -1413,6 +1417,13 @@ public class PoSOnline extends PoSConnectionState {
 			inv.setC_POSPaymentMedium_Credit_ID(order.getCreditPOSPaymentMediumID());
 		}
 		
+		if(Util.isEmpty(sumaCreditPayments, true)){
+			inv.setPaymentRule(MInvoice.PAYMENTRULE_Cash);
+		}
+		else{
+			inv.setPaymentRule(MInvoice.PAYMENTRULE_OnCredit);
+		}
+		
 		throwIfFalse(inv.save(), inv, InvoiceCreateException.class);
 		
 		MOrderLine[] moLines = morder.getLines(true);
@@ -2091,6 +2102,10 @@ public class PoSOnline extends PoSConnectionState {
 		MAllocationHdr hdr = new MAllocationHdr(ctx, 0, getTrxName());
 		
 		hdr.setAllocationType(MAllocationHdr.ALLOCATIONTYPE_SalesTransaction);
+		
+		if(getAllocationDocType() != null){
+			hdr.setC_DocType_ID(getAllocationDocType().getID());
+		}
 
 		BigDecimal approvalAmt = sumaPagos;
 		
@@ -3911,5 +3926,13 @@ public class PoSOnline extends PoSConnectionState {
 			dolarCurrencyID = MCurrency.get(getCtx(), "USD").getID();
 		}
 		return dolarCurrencyID;
+	}
+
+	protected MDocType getAllocationDocType() {
+		return allocationDocType;
+	}
+
+	protected void setAllocationDocType(MDocType allocationDocType) {
+		this.allocationDocType = allocationDocType;
 	}
 }

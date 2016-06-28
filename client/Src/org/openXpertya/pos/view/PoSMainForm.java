@@ -2787,6 +2787,22 @@ public class PoSMainForm extends CPanel implements FormPanel, ASyncProcess, Disp
 				}
 				
 			});
+			
+			cCreditNoteSearch.addActionListener(new ActionListener() {
+				
+				@Override
+				public void actionPerformed(ActionEvent e) {
+					// Si no está permitido buscar las NC y si no ingresa nada,
+					// entonces seteo a null todo 
+					if (Util.isEmpty(cCreditNoteSearch.getM_text().getText(), true)
+							&& !cCreditNoteSearch.isShowInfo()) {
+						cCreditNoteSearch.setValue(null);
+						getCCreditNoteAvailableText().setValue(null);
+						updateCreditNoteBalance();
+					}
+				}
+				
+			});
 			cCreditNoteSearch.setMandatory(true);
 			FocusUtils.addFocusHighlight(cCreditNoteSearch);
 		}

@@ -7,7 +7,7 @@ import java.math.*;
 import org.openXpertya.util.*;
 /** Modelo Generado por C_POS
  *  @author Comunidad de Desarrollo Libertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
- *  @version  - 2014-07-24 00:27:22.844 */
+ *  @version  - 2016-06-28 15:41:21.988 */
 public class X_C_POS extends org.openXpertya.model.PO
 {
 /** Constructor estándar */
@@ -17,6 +17,7 @@ super (ctx, C_POS_ID, trxName);
 /** if (C_POS_ID == 0)
 {
 setAD_Role_ID (0);
+setAllowCreditNoteSearch (false);
 setAuthorizeGeneralManualDiscount (false);
 setC_BankAccount_ID (0);
 setC_BPartnerCashTrx_ID (0);
@@ -90,6 +91,22 @@ public int getAD_Role_ID()
 Integer ii = (Integer)get_Value("AD_Role_ID");
 if (ii == null) return 0;
 return ii.intValue();
+}
+/** Set Allow Credit Note Search */
+public void setAllowCreditNoteSearch (boolean AllowCreditNoteSearch)
+{
+set_Value ("AllowCreditNoteSearch", new Boolean(AllowCreditNoteSearch));
+}
+/** Get Allow Credit Note Search */
+public boolean isAllowCreditNoteSearch() 
+{
+Object oo = get_Value("AllowCreditNoteSearch");
+if (oo != null) 
+{
+ if (oo instanceof Boolean) return ((Boolean)oo).booleanValue();
+ return "Y".equals(oo);
+}
+return false;
 }
 /** Set Authorize General Manual Discount */
 public void setAuthorizeGeneralManualDiscount (boolean AuthorizeGeneralManualDiscount)

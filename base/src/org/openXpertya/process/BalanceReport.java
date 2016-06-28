@@ -5,7 +5,6 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.Timestamp;
 
-import org.openXpertya.cc.CurrentAccountQuery;
 import org.openXpertya.model.MPayment;
 import org.openXpertya.util.DB;
 import org.openXpertya.util.Env;
@@ -39,8 +38,8 @@ public class BalanceReport extends SvrProcess {
 	private String valueTo;
 	/** Sólo mostrar con crédito activado */
 	private boolean onlyCurentAccounts;
-	/** Sólo comprobantes en cuenta corriente */
-	private boolean onlyCurrentAccountDocuments;
+	/** Condición de los comprobantes: Efectivo, Cuenta Corriente, Todos */
+	private String condition;
 	
 	@Override
 	protected void prepare() {
@@ -69,8 +68,8 @@ public class BalanceReport extends SvrProcess {
         		valueFrom = (String)para[ i ].getParameter();
         	} else if( name.equalsIgnoreCase( "ValueTo" )) {
         		valueTo = (String)para[ i ].getParameter();
-        	} else if (name.equalsIgnoreCase("OnlyCurrentAccountDocuments")) {
-				setOnlyCurrentAccountDocuments("Y".equals((String) para[i].getParameter()));
+        	} else if (name.equalsIgnoreCase("Condition")) {
+				setCondition((String) para[i].getParameter());
 			}
         }
         
@@ -160,7 +159,7 @@ public class BalanceReport extends SvrProcess {
 		sqlDoc.append(" 		CASE WHEN d.signo_issotrx = ").append(credit_signo_issotrx).append(" THEN "); 
 		sqlDoc.append(" 			currencyconvert(d.amount, d.c_currency_id, ").append(client_Currency_ID).append(", ('"+ ((p_DateTrx_To != null) ? p_DateTrx_To + "'" : "now'::text") +")::timestamp(6) with time zone, COALESCE(c_conversiontype_id,0), d.ad_client_id, d.ad_org_id) "); 
 		sqlDoc.append(" 		ELSE 0.0 END AS Credit ");
-		sqlDoc.append(" 	FROM V_Documents_Org_filtered(-1, false) d "); 
+		sqlDoc.append(" 	FROM V_Documents_Org_filtered(-1, false, '"+getCondition()+"') d "); 
 		sqlDoc.append(" 	INNER JOIN c_bpartner bp on d.c_bpartner_id = bp.c_bpartner_id ");
 		sqlDoc.append(" 	WHERE d.DocStatus IN ('CO', 'CL', 'RE', 'VO') ");
 		if (p_AD_Org_ID > 0)			// filtrar comprobantes para una organizacion especifica (o no)
@@ -185,9 +184,6 @@ public class BalanceReport extends SvrProcess {
 		sqlDoc.append(p_AccountType.equalsIgnoreCase("C") ? " AND bp.iscustomer = 'Y' "
 				: " AND bp.isvendor = 'Y' ");
 		sqlDoc.append(onlyCurentAccounts?" AND d.socreditstatus <> 'X' ":"");
-		if(isOnlyCurrentAccountDocuments()){
-			sqlDoc.append(CurrentAccountQuery.getCurrentAccountWhereClause());
-		}
 		sqlDoc.append(" ) AS T ");
 		sqlDoc.append(" WHERE (1=1) ");
 		if(!Util.isEmpty(valueFrom, true)){
@@ -216,9 +212,6 @@ public class BalanceReport extends SvrProcess {
 		if(p_DateTrx_To != null){
 			pstmt.setTimestamp(i++, p_DateTrx_To);
 		}
-		if(isOnlyCurrentAccountDocuments()){
-			pstmt.setInt(i++, debit_signo_issotrx);
-		}
 		ResultSet rs = pstmt.executeQuery();
 		int subindice=0;
 		StringBuffer usql = new StringBuffer();
@@ -227,7 +220,7 @@ public class BalanceReport extends SvrProcess {
 			subindice++;
 			usql.append(" INSERT INTO T_BALANCEREPORT (ad_pinstance_id, ad_client_id, ad_org_id, subindice, c_bpartner_id, observaciones, ");
 			usql.append("								credit, debit, balance, date_oldest_open_invoice, date_newest_open_invoice, sortcriteria, scope, c_bp_group_id, truedatetrx, accounttype, ");
-			usql.append("								onlycurrentaccounts, valuefrom, valueto, duedebt, actualbalance, chequesencartera, generalbalance, onlycurrentaccountdocuments ) ");
+			usql.append("								onlycurrentaccounts, valuefrom, valueto, duedebt, actualbalance, chequesencartera, generalbalance, Condition ) ");
 			usql.append(" VALUES ( ")	.append(getAD_PInstance_ID()).append(",")
 										.append(getAD_Client_ID()).append(",")
 										.append(p_AD_Org_ID).append(",")
@@ -269,7 +262,7 @@ public class BalanceReport extends SvrProcess {
 			usql.append(rs.getBigDecimal("actualbalance").add(
 					rs.getBigDecimal("chequesencartera")));
 			usql.append(" , ");
-			usql.append(isOnlyCurrentAccountDocuments()?"'Y'":"'N'");
+			usql.append("'"+getCondition()+"'");
 			usql.append(" ); ");
 		}
 		
@@ -285,14 +278,13 @@ public class BalanceReport extends SvrProcess {
 		
 	}
 
-
-	protected boolean isOnlyCurrentAccountDocuments() {
-		return onlyCurrentAccountDocuments;
+	public String getCondition() {
+		return condition;
 	}
 
 
-	protected void setOnlyCurrentAccountDocuments(boolean onlyCurrentAccountDocuments) {
-		this.onlyCurrentAccountDocuments = onlyCurrentAccountDocuments;
+	public void setCondition(String condition) {
+		this.condition = condition;
 	}
 
 

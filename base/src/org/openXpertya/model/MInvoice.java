@@ -578,7 +578,9 @@ public class MInvoice extends X_C_Invoice implements DocAction,Authorization {
 				+ "		currencyconvert(invoiceopen(i.c_invoice_id, 0), i.c_currency_id, ?, ?::date, 0, ?, ?) as open"
 				+ "		FROM c_invoice as i "
 				+ "		INNER JOIN c_doctype as dt on dt.c_doctype_id = i.c_doctypetarget_id "
-				+ "		WHERE c_bpartner_id = ? " + "				AND dt.docbasetype = "
+				+ "		WHERE c_bpartner_id = ? "
+				+ "				AND i.paymentrule = '" + PAYMENTRULE_OnCredit + "' " 
+				+ "				AND dt.docbasetype = "
 				+ docBaseTypeDebit + "				AND dt.doctypekey NOT IN ("
 				+ docTypesOut + ") " + "				AND i.docstatus IN ('CO','CL') ");
 		// Si tenemos una factura original en el crédito, entonces tomo esa
@@ -616,7 +618,7 @@ public class MInvoice extends X_C_Invoice implements DocAction,Authorization {
 		// Crear la cabecera de allocation
 		MAllocationHdr hdr = new MAllocationHdr(creditInvoice.getCtx(), 0,
 				creditInvoice.get_TrxName());
-		hdr.setAllocationType(MAllocationHdr.ALLOCATIONTYPE_SalesTransaction);
+		hdr.setAllocationType(MAllocationHdr.ALLOCATIONTYPE_Manual);
 		hdr.setRetencion_Amt(BigDecimal.ZERO);
 
 		hdr.setC_BPartner_ID(creditInvoice.getC_BPartner_ID());
@@ -4179,6 +4181,7 @@ public class MInvoice extends X_C_Invoice implements DocAction,Authorization {
 		if (!isSkipAutomaticCreditAllocCreation()
 				&& bp.isAutomaticCreditNotes()
 				&& !isDebit
+				&& PAYMENTRULE_OnCredit.equals(getPaymentRule())
 				&& !automaticCreditDocTypesExcluded.contains(docType
 						.getDocTypeKey())) {
 			try {

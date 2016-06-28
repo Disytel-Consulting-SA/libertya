@@ -219,6 +219,8 @@ public class OnlinePoSComponentFactory extends PoSComponentFactory {
 				                 "WHERE C_Invoice.C_DocType_ID = dt.C_DocType_ID " +
 				                   "AND dt.Signo_IsSOTrx = -1)",
                    true, getPoSModel().addSecurityValidationToCN());
+		bankLookup.getM_button().setVisible(getPoSModel().getPoSConfig().isAllowCreditNoteSearch());
+		bankLookup.setShowInfo(getPoSModel().getPoSConfig().isAllowCreditNoteSearch());
 		return bankLookup;
 	}
 }

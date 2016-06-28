@@ -7,7 +7,7 @@ import java.math.*;
 import org.openXpertya.util.*;
 /** Modelo Generado por T_EstadoDeCuenta
  *  @author Comunidad de Desarrollo Libertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
- *  @version  - 2015-09-20 21:29:50.695 */
+ *  @version  - 2016-06-28 15:44:16.609 */
 public class X_T_EstadoDeCuenta extends org.openXpertya.model.PO
 {
 /** Constructor estándar */
@@ -155,6 +155,30 @@ public int getC_InvoicePaySchedule_ID()
 Integer ii = (Integer)get_Value("C_InvoicePaySchedule_ID");
 if (ii == null) return 0;
 return ii.intValue();
+}
+public static final int CONDITION_AD_Reference_ID = MReference.getReferenceID("Document Condition");
+/** Cash = B */
+public static final String CONDITION_Cash = "B";
+/** On Credit = P */
+public static final String CONDITION_OnCredit = "P";
+/** All = A */
+public static final String CONDITION_All = "A";
+/** Set Condition */
+public void setCondition (String Condition)
+{
+if (Condition == null || Condition.equals("B") || Condition.equals("P") || Condition.equals("A"));
+ else throw new IllegalArgumentException ("Condition Invalid value - Reference = CONDITION_AD_Reference_ID - B - P - A");
+if (Condition != null && Condition.length() > 1)
+{
+log.warning("Length > 1 - truncated");
+Condition = Condition.substring(0,1);
+}
+set_Value ("Condition", Condition);
+}
+/** Get Condition */
+public String getCondition() 
+{
+return (String)get_Value("Condition");
 }
 /** Set Conversion Rate */
 public void setConversionRate (BigDecimal ConversionRate)

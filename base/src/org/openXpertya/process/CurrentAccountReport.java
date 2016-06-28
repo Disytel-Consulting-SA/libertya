@@ -61,9 +61,9 @@ public class CurrentAccountReport extends SvrProcess {
 	
 	/** Generador de consultas de cuenta corriente */
 	private CurrentAccountQuery currentAccountQuery;
-
-	/** Sólo comprobantes en cuenta corriente */
-	private boolean onlyCurrentAccountDocuments;
+	
+	/** Condición de los comprobantes: Efectivo, Cuenta Corriente, Todos */
+	private String condition;
 	
 	/** Tipos de documento segun columna documenttable de v_documents */
 	protected static final String DOC_INVOICE = "C_Invoice";
@@ -102,8 +102,8 @@ public class CurrentAccountReport extends SvrProcess {
 			} else if (name.equalsIgnoreCase("C_DocType_ID")) {
 				BigDecimal tmp = (BigDecimal) para[i].getParameter();
 				p_C_DocType_ID = tmp == null ? null : tmp.intValue();
-			} else if (name.equalsIgnoreCase("OnlyCurrentAccountDocuments")) {
-				setOnlyCurrentAccountDocuments("Y".equals((String) para[i].getParameter()));
+			} else if (name.equalsIgnoreCase("Condition")) {
+				condition = (String) para[i].getParameter();
 			} else {
 				log.log(Level.SEVERE, "prepare - Unknown Parameter: " + name);
 			}
@@ -125,7 +125,7 @@ public class CurrentAccountReport extends SvrProcess {
 		// Generador de consulta de cuenta corriente
 		setCurrentAccountQuery(new CurrentAccountQuery(getCtx(), p_AD_Org_ID,
 				p_C_DocType_ID, p_ShowDetailedReceiptsPayments, p_DateTrx_From,
-				p_DateTrx_To, isOnlyCurrentAccountDocuments(), p_C_BPartnerID));
+				p_DateTrx_To, getCondition(), p_C_BPartnerID));
 	}
 
 	@Override
@@ -163,9 +163,6 @@ public class CurrentAccountReport extends SvrProcess {
 			pstmt.setInt(i++, client_Currency_ID);
 			pstmt.setInt(i++, getAD_Client_ID());
 			pstmt.setInt(i++, p_C_BPartnerID);
-			if(isOnlyCurrentAccountDocuments()){
-				pstmt.setInt(i++, debit_signo_issotrx);
-			}
 			i = pstmtSetParam(i, p_AD_Org_ID, pstmt);
 			i = pstmtSetParam(i, p_C_DocType_ID, pstmt);
 			// Parámetros para el filtro de fechas
@@ -183,7 +180,7 @@ public class CurrentAccountReport extends SvrProcess {
 				subIndice++;
 				// insert first row: before query balance period
 				// Field used for 'date field' in temporary table: DATETRX
-				usql.append(" INSERT INTO T_CUENTACORRIENTE (SUBINDICE, IncludeOpenOrders, ShowDetailedReceiptsPayments, AD_CLIENT_ID, AD_ORG_ID, AD_PINSTANCE_ID, ISO_CODE, AMOUNT, DEBE, HABER, SALDO, NUMEROCOMPROBANTE, C_BPARTNER_ID, ACCOUNTTYPE, DATETRX, C_DOCTYPE_ID, OnlyCurrentAccountDocuments) "
+				usql.append(" INSERT INTO T_CUENTACORRIENTE (SUBINDICE, IncludeOpenOrders, ShowDetailedReceiptsPayments, AD_CLIENT_ID, AD_ORG_ID, AD_PINSTANCE_ID, ISO_CODE, AMOUNT, DEBE, HABER, SALDO, NUMEROCOMPROBANTE, C_BPARTNER_ID, ACCOUNTTYPE, DATETRX, C_DOCTYPE_ID, Condition) "
 						+ " VALUES ("
 						+ subIndice
 						+ ", '"
@@ -212,7 +209,7 @@ public class CurrentAccountReport extends SvrProcess {
 						+ "', '"
 						+ p_DateTrx_From + "', NULL"
 						+ ", "
-						+ "'"+(isOnlyCurrentAccountDocuments()?"Y":"N")+"'"
+						+ "'"+getCondition()+"'"
 						+ ");");
 			}
 
@@ -270,7 +267,7 @@ public class CurrentAccountReport extends SvrProcess {
 					// ANTONIO: La cuenta es al reves acumBalance =
 					// acumBalance.add(credit.subtract(debit));
 					acumBalance = acumBalance.add(debit.subtract(credit));
-					usql.append(" INSERT INTO T_CUENTACORRIENTE (SUBINDICE, IncludeOpenOrders, ShowDetailedReceiptsPayments, AD_CLIENT_ID, AD_ORG_ID, AD_PINSTANCE_ID, ISO_CODE, AMOUNT, DEBE, HABER, SALDO, NUMEROCOMPROBANTE, C_BPARTNER_ID, ACCOUNTTYPE, DATETRX, C_DOCTYPE_ID, C_INVOICE_ID, C_PAYMENT_ID, C_CASHLINE_ID, C_ALLOCATIONHDR_ID, duedate, OnlyCurrentAccountDocuments) "
+					usql.append(" INSERT INTO T_CUENTACORRIENTE (SUBINDICE, IncludeOpenOrders, ShowDetailedReceiptsPayments, AD_CLIENT_ID, AD_ORG_ID, AD_PINSTANCE_ID, ISO_CODE, AMOUNT, DEBE, HABER, SALDO, NUMEROCOMPROBANTE, C_BPARTNER_ID, ACCOUNTTYPE, DATETRX, C_DOCTYPE_ID, C_INVOICE_ID, C_PAYMENT_ID, C_CASHLINE_ID, C_ALLOCATIONHDR_ID, duedate, Condition) "
 							+ " VALUES ("
 							+ subIndice
 							+ ", '"
@@ -333,7 +330,7 @@ public class CurrentAccountReport extends SvrProcess {
 					} else
 						usql.append("NULL");
 					
-					usql.append(" , '"+(isOnlyCurrentAccountDocuments()?"Y":"N")+"'");
+					usql.append(" , '"+(getCondition())+"'");
 					usql.append(" ); ");
 					documents.put(documentKey, trx_Org_ID);
 				}
@@ -375,9 +372,6 @@ public class CurrentAccountReport extends SvrProcess {
 			pstmt.setInt(i++, client_Currency_ID);
 			pstmt.setInt(i++, getAD_Client_ID());
 			pstmt.setInt(i++, p_C_BPartnerID);
-			if(isOnlyCurrentAccountDocuments()){
-				pstmt.setInt(i++, debit_signo_issotrx);
-			}
 			i = pstmtSetParam(i, p_AD_Org_ID, pstmt);
 			i = pstmtSetParam(i, p_C_DocType_ID, pstmt);
 			// Parámetros de sqlBalance
@@ -460,7 +454,7 @@ public class CurrentAccountReport extends SvrProcess {
 		StringBuffer usql = new StringBuffer();
 		while (rs.next()) {
 			subIndice++;
-			usql.append(" INSERT INTO T_CUENTACORRIENTE (SUBINDICE, IncludeOpenOrders, ShowDetailedReceiptsPayments, AD_CLIENT_ID, AD_ORG_ID, AD_PINSTANCE_ID, ISO_CODE, AMOUNT, DEBE, HABER, SALDO, NUMEROCOMPROBANTE, C_BPARTNER_ID, ACCOUNTTYPE, DATETRX, C_DOCTYPE_ID, C_INVOICE_ID, C_PAYMENT_ID, C_CASHLINE_ID, OnlyCurrentAccountDocuments) "
+			usql.append(" INSERT INTO T_CUENTACORRIENTE (SUBINDICE, IncludeOpenOrders, ShowDetailedReceiptsPayments, AD_CLIENT_ID, AD_ORG_ID, AD_PINSTANCE_ID, ISO_CODE, AMOUNT, DEBE, HABER, SALDO, NUMEROCOMPROBANTE, C_BPARTNER_ID, ACCOUNTTYPE, DATETRX, C_DOCTYPE_ID, C_INVOICE_ID, C_PAYMENT_ID, C_CASHLINE_ID, Condition) "
 					+ " VALUES ("
 					+ subIndice
 					+ ", '"
@@ -498,7 +492,7 @@ public class CurrentAccountReport extends SvrProcess {
 					+ "', "
 					+ rs.getInt("C_DocType_ID") + ", " + " null, null, null"
 					+ " , "
-					+ "'"+(isOnlyCurrentAccountDocuments()?"Y":"N")+"'"
+					+ "'"+getCondition()+"'"
 					+ "); ");
 		}
 
@@ -513,13 +507,12 @@ public class CurrentAccountReport extends SvrProcess {
 		this.currentAccountQuery = currentAccountQuery;
 	}
 
-	protected boolean isOnlyCurrentAccountDocuments() {
-		return onlyCurrentAccountDocuments;
+	public String getCondition() {
+		return condition;
 	}
 
-	protected void setOnlyCurrentAccountDocuments(
-			boolean onlyCurrentAccountDocuments) {
-		this.onlyCurrentAccountDocuments = onlyCurrentAccountDocuments;
+	public void setCondition(String condition) {
+		this.condition = condition;
 	}
 
 }

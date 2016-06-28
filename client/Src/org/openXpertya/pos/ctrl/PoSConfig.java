@@ -64,6 +64,7 @@ public class PoSConfig {
 	private Integer creditCardCashRetirementChargeID;
 	private Integer creditCardCashRetirementProductID;
 	private Integer creditCardCashRetirementDocTypeID;
+	private boolean allowCreditNoteSearch;
 	
 	// Del sistema
 	private int currencyID;
@@ -141,6 +142,8 @@ public class PoSConfig {
 			setCreditCardCashRetirementChargeID(pos.getCreditCardCashRetirement_Charge_ID());
 			setCreditCardCashRetirementDocTypeID(pos.getCreditCardCashRetirement_DocType_ID());
 			setCreditCardCashRetirementProductID(pos.getCreditCardCashRetirement_Product_ID());
+			
+			setAllowCreditNoteSearch(pos.isAllowCreditNoteSearch());
 		}	
 	}
 	
@@ -817,5 +820,13 @@ public class PoSConfig {
 
 	public void setCreditCardCashRetirementDocTypeID(Integer CreditCardCashRetirementDocTypeID) {
 		this.creditCardCashRetirementDocTypeID = CreditCardCashRetirementDocTypeID;
+	}
+
+	public boolean isAllowCreditNoteSearch() {
+		return allowCreditNoteSearch;
+	}
+
+	public void setAllowCreditNoteSearch(boolean allowCreditNoteSearch) {
+		this.allowCreditNoteSearch = allowCreditNoteSearch;
 	}
 }
