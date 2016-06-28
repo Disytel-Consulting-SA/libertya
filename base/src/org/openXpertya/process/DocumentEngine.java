@@ -25,8 +25,10 @@ import java.util.Vector;
 import java.util.logging.Logger;
 
 import org.openXpertya.model.MAllocationHdr;
+import org.openXpertya.model.MBankList;
 import org.openXpertya.model.MBankStatement;
 import org.openXpertya.model.MCash;
+import org.openXpertya.model.MCreditCardClose;
 import org.openXpertya.model.MInOut;
 import org.openXpertya.model.MInventory;
 import org.openXpertya.model.MInvoice;
@@ -1243,6 +1245,20 @@ public class DocumentEngine implements DocAction {
 //					options[index++] = DocumentEngine.ACTION_ReActivate;
 //				}
 //		}
+		else if(AD_Table_ID == MBankList.Table_ID){
+        	if( docStatus.equals( DocumentEngine.STATUS_Completed )) {
+                options[ index++ ] = DocumentEngine.ACTION_ReActivate;
+                options[ index++ ] = DocumentEngine.ACTION_Void;
+            }
+        } else if( AD_Table_ID == MCreditCardClose.Table_ID ) {
+        	
+            // Complete                    ..  CO
+
+            if( docStatus.equals( DocumentEngine.STATUS_Completed )) {
+                options[ 0 ] = DocumentEngine.ACTION_ReActivate;
+            }
+            
+        }
 		return index;
 	}
 	
