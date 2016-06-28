@@ -322,6 +322,29 @@ public class WSearchEditor extends WEditor implements ContextMenuListener, Value
 			actionButton(text);
 			return;
 		}
+		
+		// Hack temporal para evitar la visualizacion del InfoProductPanel incluso cuando se especifica un articulo de 
+		// 	manera inequívoca en el campo.
+		// El problema se origina en que el código actual dispara 2 veces el evento onEvent en WSearchEditor:
+		// 		La primera vez con el valor adecuado (ejemplo Standard), 
+		//		La segunda (que no debería ocurrir) con el valor ya inadecuado (Standard_Standard). 
+		// Esto obliga a abrir el InfoProduct incluso cuando no corresponde.  Lo que es peor, en dicha ventana se muestra 
+		// 	en el campo value: Standard_Standard, lo cual obliga a editar el contenido para obtener un resultado correcto. 
+		// Como solución temporal, se valida si el valor actual del campo.  Si se almacena un M_Product_ID se recupera su value 
+		// 	y luego verificamos si dicho value se encuentra contenido dentro del nuevo criterio de busqueda (Value_Name) a fin de 
+		// 	evitar abrir en este caso la ventana de búsqueda de artículos dado que el correcto ya se encuentra correctamente cargado
+		try {
+			// Validamos si el lookup apunta a M_Product_ID y comparamos los values (de la primera y segunda ejecucion)
+			if ("M_Product.M_Product_ID".equalsIgnoreCase(lookup.getColumnName()) && (Integer)value > 0 && text != null) {   
+				String prodValue = DB.getSQLValueString(null, "SELECT value FROM M_Product WHERE M_Product_ID = ?", value);
+				if (text.contains("_") && text.contains(prodValue)) {
+					return;
+				}
+			}
+		} catch (Exception e) {
+			// Nada que hacer...
+		}
+		
 		text = text.toUpperCase();
 		log.config(getColumnName() + " - " + text);
 
