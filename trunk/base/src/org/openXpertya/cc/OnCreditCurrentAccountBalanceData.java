@@ -3,6 +3,7 @@ package org.openXpertya.cc;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 
+import org.openXpertya.model.MInvoice;
 import org.openXpertya.util.DB;
 import org.openXpertya.util.Env;
 
@@ -17,7 +18,7 @@ public class OnCreditCurrentAccountBalanceData extends
 	@Override
 	public void loadBalanceData() {
 		CurrentAccountQuery caQuery = new CurrentAccountQuery(getBpartner()
-				.getCtx(), null, null, false, null, null, false, getBpartner().getID());
+				.getCtx(), null, null, false, null, null, MInvoice.PAYMENTRULE_OnCredit, getBpartner().getID());
 		
 		String sql = caQuery.getBalanceQuery();
 		

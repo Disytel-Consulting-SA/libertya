@@ -46,6 +46,10 @@ public class PostInstallUpgradeFrom1604 extends PluginPostInstallProcess {
 	protected final static String LISTADO_DE_CUPONES_DE_TARJETA_REPORT_UID = "CORE-AD_Process-1010405";
 	protected final static String LISTADO_DE_CUPONES_DE_TARJETA_REPORT_FILENAME = "ListadoCuponesTarjeta.jrxml";
 	
+	/** UID del Reporte de Deudas de Cuentas Corrientes */
+	protected final static String CURRENT_ACCOUNT_DEBTS_REPORT_UID = "CORE-AD_Process-1010394";
+	protected final static String CURRENT_ACCOUNT_DEBTS_REPORT_FILENAME = "CurrentAccountDebts.jrxml";
+	
 	@Override
 	protected String doIt() throws Exception {
 		super.doIt();
@@ -195,7 +199,18 @@ public class PostInstallUpgradeFrom1604 extends PluginPostInstallProcess {
 						.readBinaryFromJar(
 								jarFileURL,
 								getBinaryFileURL(LISTADO_DE_CUPONES_DE_TARJETA_REPORT_FILENAME)));
-				
+		
+		// Reporte de Deudas de Cuentas Corrientes
+		MProcess.addAttachment(
+				get_TrxName(),
+				getCtx(),
+				CURRENT_ACCOUNT_DEBTS_REPORT_UID,
+				CURRENT_ACCOUNT_DEBTS_REPORT_FILENAME,
+				JarHelper
+						.readBinaryFromJar(
+								jarFileURL,
+								getBinaryFileURL(CURRENT_ACCOUNT_DEBTS_REPORT_FILENAME)));
+		
 		return " ";
 	}
 	

@@ -53,16 +53,16 @@ public class CurrentAccountQuery {
 	/** Moneda de la compañía */
 	private Integer currencyID;
 	
-	/** Sólo comprobantes en cuenta corriente */
-	private boolean onlyCurrrentAccoundDocuments;
-	
 	/** Entidad Comercial */
 	private Integer bPartnerID;
-
+	
+	/** Condición de Comprobantes: Efectivo, Cta Cte, Todos */
+	private String condition;
+	
 	public CurrentAccountQuery(Properties ctx, Integer orgID,
 			Integer docTypeID, Boolean detailReceiptsPayments,
-			Timestamp dateFrom, Timestamp dateTo,
-			Boolean onlyCurrentAccountDocuments, Integer bPartnerID) {
+			Timestamp dateFrom, Timestamp dateTo, String condition, 
+			Integer bPartnerID) {
 		setCtx(ctx);
 		setOrgID(orgID);
 		setDocTypeID(docTypeID);
@@ -70,7 +70,7 @@ public class CurrentAccountQuery {
 		setDateFrom(dateFrom);
 		setDateTo(dateTo);
 		setCurrencyID(Env.getContextAsInt(getCtx(), "$C_Currency_ID"));
-		setOnlyCurrrentAccoundDocuments(onlyCurrentAccountDocuments);
+		setCondition(condition);
 		setbPartnerID(bPartnerID);
 	}
 
@@ -138,20 +138,17 @@ public class CurrentAccountQuery {
 			sqlDoc.append("  	d.documenttable, ");
 			sqlDoc.append("  	d.document_id, ");
 			sqlDoc.append(" 	d.c_invoicepayschedule_id ");
-			sqlDoc.append(" FROM V_Documents_Org_Filtered (" + (bPartnerID != null ? bPartnerID : -1) + ", false)  d ");
+			sqlDoc.append(" FROM V_Documents_Org_Filtered (" + (bPartnerID != null ? bPartnerID : -1) + ", false, '"+getCondition()+"')  d ");
 			sqlDoc.append(" WHERE d.DocStatus IN ('CO','CL', 'RE', 'VO') ");
 			sqlDoc.append("   AND d.AD_Client_ID = ? ");
 			sqlDoc.append("   AND d.C_Bpartner_ID = ? ");
-			if(onlyCurrrentAccoundDocuments){
-				sqlDoc.append(getCurrentAccountWhereClause());
-			}
 			sqlAppend("   AND d.AD_Org_ID = ? ", orgID, sqlDoc);
 			sqlAppend("   AND d.C_DocType_ID = ? ", docTypeID, sqlDoc);
 		} else {
 			sqlDoc.append("     SELECT distinct ");
 			sqlDoc.append("     	(CASE WHEN ((SELECT al.C_AllocationHdr_ID FROM C_AllocationLine al INNER JOIN C_AllocationHdr as ah ON ah.c_allocationhdr_id = al.c_allocationhdr_id WHERE ah.allocationtype <> 'MAN' AND ( ((d.documenttable = 'C_Payment') AND (al.C_Payment_ID = d.document_id)) OR ((d.documenttable = 'C_Invoice') AND (al.C_Invoice_Credit_ID = d.document_id)) OR ((d.documenttable = 'C_CashLine') AND (al.C_CashLine_ID = d.document_id)) ) LIMIT 1) IS NOT NULL) THEN (SELECT ah.dateacct::date FROM C_AllocationLine al INNER JOIN C_AllocationHdr as ah on ah.c_allocationhdr_id = al.c_allocationhdr_id WHERE ah.allocationtype <> 'MAN' AND ( ((d.documenttable = 'C_Payment') AND (al.C_Payment_ID = d.document_id))	OR ((d.documenttable = 'C_Invoice') AND (al.C_Invoice_Credit_ID = d.document_id)) OR ((d.documenttable = 'C_CashLine') AND (al.C_CashLine_ID = d.document_id)) ) LIMIT 1) ELSE d.Dateacct END)::date as DateTrx, ");
 			sqlDoc.append("     	d.Created as createdghost, ");
-			sqlDoc.append("     	(CASE WHEN ((SELECT al.C_AllocationHdr_ID FROM C_AllocationLine al INNER JOIN C_AllocationHdr as ah ON ah.c_allocationhdr_id = al.c_allocationhdr_id WHERE ah.allocationtype <> 'MAN' AND ( ((d.documenttable = 'C_Payment') AND (al.C_Payment_ID = d.document_id)) OR ((d.documenttable = 'C_Invoice') AND (al.C_Invoice_Credit_ID = d.document_id)) OR ((d.documenttable = 'C_CashLine') AND (al.C_CashLine_ID = d.document_id)) ) LIMIT 1) IS NOT NULL) THEN (SELECT coalesce(ah.c_doctype_id,(select dt.c_doctype_id from c_doctype as dt where ad_client_id = "+Env.getAD_Client_ID(getCtx())+" and (case when ah.allocationtype in ('OP','OPA') then dt.doctypekey = 'POSEC01' when ah.allocationtype in ('RC','RCA') then dt.doctypekey = 'CRSEC01' else dt.doctypekey = 'PAL' end) limit 1)) FROM C_AllocationLine al INNER JOIN C_AllocationHdr as ah on ah.c_allocationhdr_id = al.c_allocationhdr_id WHERE ah.allocationtype <> 'MAN' AND ( ((d.documenttable = 'C_Payment') AND (al.C_Payment_ID = d.document_id))	OR ((d.documenttable = 'C_Invoice') AND (al.C_Invoice_Credit_ID = d.document_id)) OR ((d.documenttable = 'C_CashLine') AND (al.C_CashLine_ID = d.document_id)) ) LIMIT 1) ELSE d.C_DocType_ID END) as C_DocType_ID, ");
+			sqlDoc.append("     	(CASE WHEN ((SELECT al.C_AllocationHdr_ID FROM C_AllocationLine al INNER JOIN C_AllocationHdr as ah ON ah.c_allocationhdr_id = al.c_allocationhdr_id WHERE ah.allocationtype <> 'MAN' AND ( ((d.documenttable = 'C_Payment') AND (al.C_Payment_ID = d.document_id)) OR ((d.documenttable = 'C_Invoice') AND (al.C_Invoice_Credit_ID = d.document_id)) OR ((d.documenttable = 'C_CashLine') AND (al.C_CashLine_ID = d.document_id)) ) LIMIT 1) IS NOT NULL) THEN (SELECT coalesce(ah.c_doctype_id,(select dt.c_doctype_id from c_doctype as dt where ad_client_id = "+Env.getAD_Client_ID(getCtx())+" and (case when ah.allocationtype in ('OP','OPA') then dt.doctypekey = 'POSEC01' when ah.allocationtype in ('RC','RCA') then dt.doctypekey = 'CRSEC01' WHEN ah.allocationtype = 'STX' THEN dt.doctypekey = 'POS' ELSE dt.doctypekey = 'PAL' end) limit 1)) FROM C_AllocationLine al INNER JOIN C_AllocationHdr as ah on ah.c_allocationhdr_id = al.c_allocationhdr_id WHERE ah.allocationtype <> 'MAN' AND ( ((d.documenttable = 'C_Payment') AND (al.C_Payment_ID = d.document_id))	OR ((d.documenttable = 'C_Invoice') AND (al.C_Invoice_Credit_ID = d.document_id)) OR ((d.documenttable = 'C_CashLine') AND (al.C_CashLine_ID = d.document_id)) ) LIMIT 1) ELSE d.C_DocType_ID END) as C_DocType_ID, ");
 			sqlDoc.append("     	COALESCE((SELECT a.documentno FROM C_AllocationHdr a WHERE (a.C_AllocationHdr_ID = (SELECT al.C_AllocationHdr_ID FROM C_AllocationLine al INNER JOIN C_AllocationHdr as ah ON ah.c_allocationhdr_id = al.c_allocationhdr_id WHERE ah.allocationtype <> 'MAN' AND  ( ((d.documenttable = 'C_Payment') AND (al.C_Payment_ID = d.document_id)) OR ((d.documenttable = 'C_Invoice') AND (al.C_Invoice_Credit_ID = d.document_id)) OR ((d.documenttable = 'C_CashLine') AND (al.C_CashLine_ID = d.document_id)) ) LIMIT 1))),DocumentNo) AS DocumentNo, ");
 			sqlDoc.append("     	ABS((CASE WHEN d.signo_issotrx = ? THEN ");
 			sqlDoc.append(" 		(SELECT CASE ");
@@ -194,13 +191,10 @@ public class CurrentAccountQuery {
 			sqlDoc.append(" 		(CASE WHEN ((SELECT al.C_AllocationHdr_ID FROM C_AllocationLine al INNER JOIN C_AllocationHdr as ah ON ah.c_allocationhdr_id = al.c_allocationhdr_id WHERE ah.allocationtype <> 'MAN' AND ( ((d.documenttable = 'C_Payment') AND (al.C_Payment_ID = d.document_id)) OR ((d.documenttable = 'C_Invoice') AND (al.C_Invoice_Credit_ID = d.document_id)) OR ((d.documenttable = 'C_CashLine') AND (al.C_CashLine_ID = d.document_id)) ) LIMIT 1) IS NOT NULL) THEN 'C_AllocationHdr' ELSE d.documenttable END) AS documenttable, ");
 			sqlDoc.append(" 		(CASE WHEN ((SELECT al.C_AllocationHdr_ID FROM C_AllocationLine al INNER JOIN C_AllocationHdr as ah ON ah.c_allocationhdr_id = al.c_allocationhdr_id WHERE ah.allocationtype <> 'MAN' AND ( ((d.documenttable = 'C_Payment') AND (al.C_Payment_ID = d.document_id)) OR ((d.documenttable = 'C_Invoice') AND (al.C_Invoice_Credit_ID = d.document_id)) OR ((d.documenttable = 'C_CashLine') AND (al.C_CashLine_ID = d.document_id)) ) LIMIT 1) IS NOT NULL) THEN (SELECT al.C_AllocationHdr_ID FROM C_AllocationLine al INNER JOIN C_AllocationHdr as ah ON ah.c_allocationhdr_id = al.c_allocationhdr_id WHERE ah.allocationtype <> 'MAN' AND ( ((d.documenttable = 'C_Payment') AND (al.C_Payment_ID = d.document_id)) OR ((d.documenttable = 'C_Invoice') AND (al.C_Invoice_Credit_ID = d.document_id)) OR ((d.documenttable = 'C_CashLine') AND (al.C_CashLine_ID = d.document_id)) ) LIMIT 1) ELSE d.document_id END) AS document_id, ");
 			sqlDoc.append(" 		(CASE WHEN ((SELECT al.C_AllocationHdr_ID FROM C_AllocationLine al INNER JOIN C_AllocationHdr as ah ON ah.c_allocationhdr_id = al.c_allocationhdr_id WHERE ah.allocationtype <> 'MAN' AND ( ((d.documenttable = 'C_Payment') AND (al.C_Payment_ID = d.document_id)) OR ((d.documenttable = 'C_Invoice') AND (al.C_Invoice_Credit_ID = d.document_id)) OR ((d.documenttable = 'C_CashLine') AND (al.C_CashLine_ID = d.document_id)) ) LIMIT 1) IS NOT NULL) THEN null ELSE d.c_invoicepayschedule_id END) as c_invoicepayschedule_id ");
-			sqlDoc.append(" 	FROM V_Documents_Org_Filtered (" + (bPartnerID != null ? bPartnerID : -1) + ", true)  d ");
+			sqlDoc.append(" 	FROM V_Documents_Org_Filtered (" + (bPartnerID != null ? bPartnerID : -1) + ", true, '"+getCondition()+"')  d ");
 			sqlDoc.append(" 	WHERE d.DocStatus IN ('CO','CL', 'RE', 'VO') ");
 			sqlDoc.append("     AND d.AD_Client_ID = ? ");
 			sqlDoc.append("   AND d.C_Bpartner_ID = ? ");
-			if(onlyCurrrentAccoundDocuments){
-				sqlDoc.append(getCurrentAccountWhereClause());
-			}
 			sqlAppend("   AND d.AD_Org_ID = ? ", orgID, sqlDoc);
 			sqlAppend("   AND d.C_DocType_ID = ? ", docTypeID, sqlDoc);
 		}
@@ -357,20 +351,20 @@ public class CurrentAccountQuery {
 		this.currencyID = currencyID;
 	}
 
-	public boolean isOnlyCurrrentAccoundDocuments() {
-		return onlyCurrrentAccoundDocuments;
-	}
-
-	public void setOnlyCurrrentAccoundDocuments(boolean onlyCurrrentAccoundDocuments) {
-		this.onlyCurrrentAccoundDocuments = onlyCurrrentAccoundDocuments;
-	}
-
 	public Integer getbPartnerID() {
 		return bPartnerID;
 	}
 
 	public void setbPartnerID(Integer bPartnerID) {
 		this.bPartnerID = bPartnerID;
+	}
+
+	public String getCondition() {
+		return condition;
+	}
+
+	public void setCondition(String condition) {
+		this.condition = condition;
 	}
 
 }

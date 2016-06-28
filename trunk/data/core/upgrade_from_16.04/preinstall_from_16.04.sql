@@ -394,3 +394,205 @@ UPDATE AD_Column
 SET 	AD_Reference_ID = (SELECT AD_Reference_ID FROM AD_Reference WHERE AD_ComponentObjectUID = 'CORE-AD_Reference-30'), 
 	AD_Reference_value_ID = (SELECT AD_Reference_ID FROM AD_Reference WHERE AD_ComponentObjectUID = 'CORE-AD_Reference-336') 
 WHERE AD_ComponentObjectUID IN ('CORE-AD_Column-3836', 'CORE-AD_Column-3851', 'CORE-AD_Column-8312', 'CORE-AD_Column-1014640');
+
+--20160628-1435 Mejoras a la funcionalidad de cuentas corrientes
+CREATE TYPE v_documents_org_type_condition AS (documenttable text, document_id int, ad_client_id int, ad_org_id int, 
+					isactive char(1), created timestamp, createdby integer, updated timestamp, 
+					updatedby int, c_bpartner_id int, c_doctype_id integer, signo_issotrx int, 
+					doctypename varchar(60), doctypeprintname varchar(60), documentno varchar(60), 
+					issotrx bpchar, docstatus character(2), datetrx timestamp, dateacct timestamp, 
+					c_currency_id int, c_conversiontype_id int, amount numeric, 
+					c_invoicepayschedule_id integer, duedate timestamp, truedatetrx timestamp, 
+					socreditstatus char(1), c_order_id integer);
+
+CREATE OR REPLACE FUNCTION v_documents_org_filtered(
+    bpartner integer,
+    summaryonly boolean,
+    condition character)
+  RETURNS SETOF v_documents_org_type_condition AS
+$BODY$
+declare
+    consulta varchar;
+    orderby1 varchar;
+    orderby2 varchar;
+    orderby3 varchar;
+    leftjoin1 varchar;
+    leftjoin2 varchar;
+    whereclause1 varchar;
+    whereclause2 varchar;
+    whereclause3 varchar;
+    advancedcondition varchar;
+    adocument v_documents_org_type_condition;
+   
+BEGIN
+    -- recuperar informacion minima indispensable si summaryonly es true.  en caso de ser false, debe joinearse/ordenarse, etc.
+    if summaryonly = false then
+
+        orderby1 = ' ORDER BY ''C_Invoice''::text, i.c_invoice_id, i.ad_client_id, i.ad_org_id, i.isactive, i.created, i.createdby, i.updated, i.updatedby, i.c_bpartner_id, i.c_doctype_id, dt.signo_issotrx, dt.name, dt.printname, i.documentno, i.issotrx, i.docstatus,
+                 CASE
+                     WHEN i.c_invoicepayschedule_id IS NOT NULL THEN ips.duedate
+                     ELSE i.dateinvoiced
+                 END, i.dateacct, i.c_currency_id, i.c_conversiontype_id, i.grandtotal, i.c_invoicepayschedule_id, ips.duedate, i.dateinvoiced, bp.socreditstatus ';
+
+        orderby2 = ' ORDER BY ''C_Payment''::text, p.c_payment_id, p.ad_client_id, COALESCE(il.ad_org_id, p.ad_org_id), p.isactive, p.created, p.createdby, p.updated, p.updatedby, p.c_bpartner_id, p.c_doctype_id, dt.signo_issotrx, dt.name, dt.printname, p.documentno, p.issotrx, p.docstatus, p.datetrx, p.dateacct, p.c_currency_id, p.c_conversiontype_id, p.payamt, NULL::integer, p.duedate, bp.socreditstatus ';
+
+        orderby3 = ' ORDER BY ''C_CashLine''::text, cl.c_cashline_id, cl.ad_client_id, COALESCE(il.ad_org_id, cl.ad_org_id), cl.isactive, cl.created, cl.createdby, cl.updated, cl.updatedby,
+                CASE
+                    WHEN cl.c_bpartner_id IS NOT NULL THEN cl.c_bpartner_id
+                    ELSE il.c_bpartner_id
+                END, dt.c_doctype_id,
+                CASE
+                    WHEN cl.amount < 0.0 THEN 1
+                    ELSE (-1)
+                END, dt.name, dt.printname, ''@line@''::text || cl.line::character varying::text,
+                CASE
+                    WHEN cl.amount < 0.0 THEN ''N''::bpchar
+                    ELSE ''Y''::bpchar
+                END, cl.docstatus, c.statementdate, c.dateacct, cl.c_currency_id, NULL::integer, abs(cl.amount), NULL::timestamp without time zone, COALESCE(bp.socreditstatus, bp2.socreditstatus) ';
+   
+    else
+        orderby1 = '';
+        orderby2 = '';
+        orderby3 = '';
+
+    end if;
+
+    --Si no se deben mostrar todos, entonces agregar la condicion por la forma de pago
+    if condition <> 'A' then
+	--Si se debe mostrar sólo efectivo, entonces no se debe mostrar los anticipos, si o si debe tener una factura asociada
+	advancedcondition = 'il.paymentrule is null OR ';
+	if condition = 'B' then
+		advancedcondition = '';
+	end if;
+	whereclause1 = ' (i.paymentrule = ''' || condition || ''') ';
+	whereclause2 = ' (' || advancedcondition || ' il.paymentrule = ''' || condition || ''') ';
+	whereclause3 = ' (' || advancedcondition || ' il.paymentrule = ''' || condition || ''') ';
+    else
+	whereclause1 = ' (1 = 1) ';
+	whereclause2 = ' (1 = 1) ';
+	whereclause3 = ' (1 = 1) ';
+    end if;
+
+    consulta = '
+
+        (        ( SELECT DISTINCT ''C_Invoice''::text AS documenttable, i.c_invoice_id AS document_id, i.ad_client_id, i.ad_org_id, i.isactive, i.created, i.createdby, i.updated, i.updatedby, i.c_bpartner_id, i.c_doctype_id, dt.signo_issotrx, dt.name AS doctypename, dt.printname AS doctypeprintname, i.documentno, i.issotrx, i.docstatus,
+                        CASE
+                            WHEN i.c_invoicepayschedule_id IS NOT NULL THEN ips.duedate
+                            ELSE i.dateinvoiced
+                        END AS datetrx, i.dateacct, i.c_currency_id, i.c_conversiontype_id, i.grandtotal AS amount, i.c_invoicepayschedule_id, ips.duedate, i.dateinvoiced AS truedatetrx, bp.socreditstatus, i.c_order_id
+                   FROM c_invoice_v i
+              JOIN c_doctype dt ON i.c_doctypetarget_id = dt.c_doctype_id
+         JOIN c_bpartner bp ON bp.c_bpartner_id = i.c_bpartner_id and (' || $1 || ' = -1  or bp.c_bpartner_id = ' || $1 || ')
+    LEFT JOIN c_invoicepayschedule ips ON i.c_invoicepayschedule_id = ips.c_invoicepayschedule_id
+    WHERE 
+
+' || whereclause1 || '
+' || orderby1 || '
+
+    )
+        UNION ALL
+                ( SELECT DISTINCT ''C_Payment''::text AS documenttable, p.c_payment_id AS document_id, p.ad_client_id, COALESCE(il.ad_org_id, p.ad_org_id) AS ad_org_id, p.isactive, p.created, p.createdby, p.updated, p.updatedby, p.c_bpartner_id, p.c_doctype_id, dt.signo_issotrx, dt.name AS doctypename, dt.printname AS doctypeprintname, p.documentno, p.issotrx, p.docstatus, p.datetrx, p.dateacct, p.c_currency_id, p.c_conversiontype_id, p.payamt AS amount, NULL::integer AS c_invoicepayschedule_id, p.duedate, p.datetrx AS truedatetrx, bp.socreditstatus, 0 as c_order_id
+                   FROM c_payment p
+              JOIN c_doctype dt ON p.c_doctype_id = dt.c_doctype_id
+         JOIN c_bpartner bp ON p.c_bpartner_id = bp.c_bpartner_id AND (' || $1 || ' = -1 or p.c_bpartner_id = ' || $1 || ')
+	LEFT JOIN c_allocationline al ON al.c_payment_id = p.c_payment_id
+	LEFT JOIN c_invoice il ON il.c_invoice_id = al.c_invoice_id
+  WHERE 
+CASE
+    WHEN il.ad_org_id IS NOT NULL AND il.ad_org_id <> p.ad_org_id THEN p.docstatus = ANY (ARRAY[''CO''::bpchar, ''CL''::bpchar])
+    ELSE 1 = 1
+END 
+
+AND ' || whereclause2 || '
+
+' || orderby2 || '
+
+
+))
+
+UNION ALL
+
+        ( SELECT DISTINCT ''C_CashLine''::text AS documenttable, cl.c_cashline_id AS document_id, cl.ad_client_id, COALESCE(il.ad_org_id, cl.ad_org_id) AS ad_org_id, cl.isactive, cl.created, cl.createdby, cl.updated, cl.updatedby,
+                CASE
+                    WHEN cl.c_bpartner_id IS NOT NULL THEN cl.c_bpartner_id
+                    ELSE il.c_bpartner_id
+                END AS c_bpartner_id, dt.c_doctype_id,
+                CASE
+                    WHEN cl.amount < 0.0 THEN 1
+                    ELSE (-1)
+                END AS signo_issotrx, dt.name AS doctypename, dt.printname AS doctypeprintname, ''@line@''::text || cl.line::character varying::text AS documentno,
+                CASE
+                    WHEN cl.amount < 0.0 THEN ''N''::bpchar
+                    ELSE ''Y''::bpchar
+                END AS issotrx, cl.docstatus, c.statementdate AS datetrx, c.dateacct, cl.c_currency_id, NULL::integer AS c_conversiontype_id, abs(cl.amount) AS amount, NULL::integer AS c_invoicepayschedule_id, NULL::timestamp without time zone AS duedate, c.statementdate AS truedatetrx, COALESCE(bp.socreditstatus, bp2.socreditstatus) AS socreditstatus, 0 as c_order_id
+           FROM c_cashline cl
+      JOIN c_cash c ON cl.c_cash_id = c.c_cash_id
+   LEFT JOIN c_bpartner bp ON cl.c_bpartner_id = bp.c_bpartner_id AND (' || $1 || ' = -1 or cl.c_bpartner_id = ' || $1 || ')
+   JOIN ( SELECT d.ad_client_id, d.c_doctype_id, d.name, d.printname
+         FROM c_doctype d
+        WHERE d.doctypekey::text = ''CMC''::text) dt ON cl.ad_client_id = dt.ad_client_id
+   LEFT JOIN c_allocationline al ON al.c_cashline_id = cl.c_cashline_id
+   LEFT JOIN c_invoice il ON il.c_invoice_id = al.c_invoice_id AND (' || $1 || ' = -1 or il.c_bpartner_id = ' || $1 || ')
+   LEFT JOIN c_bpartner bp2 ON il.c_bpartner_id = bp2.c_bpartner_id
+  WHERE (CASE WHEN cl.c_bpartner_id IS NOT NULL THEN (' || $1 || ' = -1 or cl.c_bpartner_id = ' || $1 || ')
+        WHEN il.c_bpartner_id IS NOT NULL THEN (' || $1 || ' = -1 or il.c_bpartner_id = ' || $1 || ')
+        ELSE 1 = 2 END)
+    AND (CASE WHEN il.ad_org_id IS NOT NULL AND il.ad_org_id <> cl.ad_org_id
+        THEN cl.docstatus = ANY (ARRAY[''CO''::bpchar, ''CL''::bpchar])
+        ELSE 1 = 1 END)
+
+    AND ' || whereclause3 || '
+
+' || orderby3 || '
+
+); ';
+
+-- raise notice '%', consulta;
+FOR adocument IN EXECUTE consulta LOOP
+	return next adocument;
+END LOOP;
+
+END
+$BODY$
+  LANGUAGE plpgsql VOLATILE
+  COST 100
+  ROWS 1000;
+ALTER FUNCTION v_documents_org_filtered(integer, boolean, character)
+  OWNER TO libertya;
+
+DROP VIEW rv_reportinvoices;
+
+CREATE OR REPLACE VIEW rv_reportinvoices AS 
+ SELECT cin.ad_client_id, cin.ad_org_id, cin.isactive, cin.created, cin.createdby, cin.updated, cin.updatedby, cin.c_bpartner_id, cbp.duns, cin.dateinvoiced, cin.issotrx, (((clc.letra::text || ' - '::text) || cin.puntodeventa::text) || ' - '::text) || cin.numerocomprobante::text AS nrodocument, cin.grandtotal, invoiceopen(cin.c_invoice_id, 0) AS saldo, cin.paymentrule
+   FROM c_invoice cin
+   LEFT JOIN c_letra_comprobante clc ON clc.c_letra_comprobante_id = cin.c_letra_comprobante_id
+   LEFT JOIN ( SELECT c_bpartner.c_bpartner_id, c_bpartner.duns
+      FROM c_bpartner) cbp ON cin.c_bpartner_id = cbp.c_bpartner_id;
+
+ALTER TABLE rv_reportinvoices
+  OWNER TO libertya;
+
+CREATE OR REPLACE VIEW c_invoice_allocation_v AS 
+SELECT ah.ad_client_id, ah.ad_org_id, ah.c_allocationhdr_id, ah.c_doctype_id, dt.name AS allocation_doc_name, ah.documentno, ah.datetrx, ah.isactive, ah.docstatus, i.c_invoice_id, i.documentno AS invoice_documentno, i.dateinvoiced, i.grandtotal, bp.c_bpartner_id, bp.value, bp.name, COALESCE(i.nombrecli, bp.name) AS customer, sum(al.amount) AS amount
+FROM c_allocationhdr ah
+LEFT JOIN c_doctype dt ON dt.c_doctype_id = ah.c_doctype_id
+JOIN c_allocationline al ON al.c_allocationhdr_id = ah.c_allocationhdr_id
+JOIN c_invoice i ON i.c_invoice_id = al.c_invoice_id
+JOIN c_bpartner bp ON bp.c_bpartner_id = i.c_bpartner_id
+GROUP BY ah.ad_client_id, ah.ad_org_id, ah.c_allocationhdr_id, ah.c_doctype_id, dt.name, ah.documentno, ah.datetrx, ah.isactive, ah.docstatus, i.c_invoice_id, i.documentno, i.dateinvoiced, i.grandtotal, bp.c_bpartner_id, bp.value, bp.name, COALESCE(i.nombrecli, bp.name)
+UNION
+SELECT ah.ad_client_id, ah.ad_org_id, ah.c_allocationhdr_id, ah.c_doctype_id, dt.name AS allocation_doc_name, ah.documentno, ah.datetrx, ah.isactive, ah.docstatus, i.c_invoice_id, i.documentno AS invoice_documentno, i.dateinvoiced, i.grandtotal, bp.c_bpartner_id, bp.value, bp.name, COALESCE(i.nombrecli, bp.name) AS customer, sum(al.amount) AS amount
+FROM c_allocationhdr ah
+LEFT JOIN c_doctype dt ON dt.c_doctype_id = ah.c_doctype_id
+JOIN c_allocationline al ON al.c_allocationhdr_id = ah.c_allocationhdr_id
+JOIN c_invoice i ON i.c_invoice_id = al.c_invoice_credit_id
+JOIN c_bpartner bp ON bp.c_bpartner_id = i.c_bpartner_id
+GROUP BY ah.ad_client_id, ah.ad_org_id, ah.c_allocationhdr_id, ah.c_doctype_id, dt.name, ah.documentno, ah.datetrx, ah.isactive, ah.docstatus, i.c_invoice_id, i.documentno, i.dateinvoiced, i.grandtotal, bp.c_bpartner_id, bp.value, bp.name, COALESCE(i.nombrecli, bp.name);
+
+ALTER TABLE c_invoice_allocation_v
+  OWNER TO libertya;
+
+update ad_system set dummy = (SELECT addcolumnifnotexists('C_POS','allowcreditnotesearch','character(1) NOT NULL DEFAULT ''Y''::bpchar'));
+update ad_system set dummy = (SELECT addcolumnifnotexists('T_EstadoDeCuenta','condition','character(1)'));
+alter table T_CuentaCorriente rename column onlycurrentaccountdocuments to condition;
+alter table T_BalanceReport rename column onlycurrentaccountdocuments to condition;

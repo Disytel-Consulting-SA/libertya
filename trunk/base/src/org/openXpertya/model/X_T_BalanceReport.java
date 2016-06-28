@@ -7,7 +7,7 @@ import java.math.*;
 import org.openXpertya.util.*;
 /** Modelo Generado por T_BalanceReport
  *  @author Comunidad de Desarrollo Libertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
- *  @version  - 2015-10-27 01:16:21.549 */
+ *  @version  - 2016-06-28 15:44:07.362 */
 public class X_T_BalanceReport extends org.openXpertya.model.PO
 {
 /** Constructor estándar */
@@ -17,8 +17,8 @@ super (ctx, T_BalanceReport_ID, trxName);
 /** if (T_BalanceReport_ID == 0)
 {
 setAD_PInstance_ID (0);
+setCondition (null);
 setDateCreated (new Timestamp(System.currentTimeMillis()));
-setOnlyCurrentAccountDocuments (false);
 setOnlyCurrentAccounts (false);
 }
  */
@@ -154,6 +154,31 @@ BigDecimal bd = (BigDecimal)get_Value("ChequesEnCartera");
 if (bd == null) return Env.ZERO;
 return bd;
 }
+public static final int CONDITION_AD_Reference_ID = MReference.getReferenceID("Document Condition");
+/** Cash = B */
+public static final String CONDITION_Cash = "B";
+/** On Credit = P */
+public static final String CONDITION_OnCredit = "P";
+/** All = A */
+public static final String CONDITION_All = "A";
+/** Set Condition */
+public void setCondition (String Condition)
+{
+if (Condition.equals("B") || Condition.equals("P") || Condition.equals("A"));
+ else throw new IllegalArgumentException ("Condition Invalid value - Reference = CONDITION_AD_Reference_ID - B - P - A");
+if (Condition == null) throw new IllegalArgumentException ("Condition is mandatory");
+if (Condition.length() > 1)
+{
+log.warning("Length > 1 - truncated");
+Condition = Condition.substring(0,1);
+}
+set_Value ("Condition", Condition);
+}
+/** Get Condition */
+public String getCondition() 
+{
+return (String)get_Value("Condition");
+}
 /** Set Credit */
 public void setCredit (BigDecimal Credit)
 {
@@ -247,22 +272,6 @@ set_Value ("Observaciones", Observaciones);
 public String getObservaciones() 
 {
 return (String)get_Value("Observaciones");
-}
-/** Set Only Current Account Documents */
-public void setOnlyCurrentAccountDocuments (boolean OnlyCurrentAccountDocuments)
-{
-set_Value ("OnlyCurrentAccountDocuments", new Boolean(OnlyCurrentAccountDocuments));
-}
-/** Get Only Current Account Documents */
-public boolean isOnlyCurrentAccountDocuments() 
-{
-Object oo = get_Value("OnlyCurrentAccountDocuments");
-if (oo != null) 
-{
- if (oo instanceof Boolean) return ((Boolean)oo).booleanValue();
- return "Y".equals(oo);
-}
-return false;
 }
 /** Set Only current accounts.
 Only business partner with current account activated */

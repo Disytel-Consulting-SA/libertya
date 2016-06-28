@@ -210,6 +210,9 @@ public class MDocType extends X_C_DocType {
     /** Lista Patagonia */
     public static final String DOCTYPE_Lista_Patagonia = "LP";
     
+    /** Cobro por TPV = POS */
+    public static final String DOCTYPE_POS = "POS";
+    
     /**
      *      Standard Constructor
      *      @param ctx context

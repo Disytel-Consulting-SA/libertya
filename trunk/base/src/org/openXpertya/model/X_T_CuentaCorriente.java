@@ -7,7 +7,7 @@ import java.math.*;
 import org.openXpertya.util.*;
 /** Modelo Generado por T_CuentaCorriente
  *  @author Comunidad de Desarrollo Libertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
- *  @version  - 2014-10-16 02:16:13.275 */
+ *  @version  - 2016-06-28 15:44:10.174 */
 public class X_T_CuentaCorriente extends org.openXpertya.model.PO
 {
 /** Constructor estándar */
@@ -17,10 +17,10 @@ super (ctx, T_CuentaCorriente_ID, trxName);
 /** if (T_CuentaCorriente_ID == 0)
 {
 setAD_PInstance_ID (0);
+setCondition (null);
 setDateAcct (new Timestamp(System.currentTimeMillis()));
 setDateCreated (new Timestamp(System.currentTimeMillis()));
 setDateTrx (new Timestamp(System.currentTimeMillis()));
-setOnlyCurrentAccountDocuments (false);
 }
  */
 }
@@ -183,6 +183,31 @@ public BigDecimal getC_Letracomprobante_ID()
 BigDecimal bd = (BigDecimal)get_Value("C_Letracomprobante_ID");
 if (bd == null) return Env.ZERO;
 return bd;
+}
+public static final int CONDITION_AD_Reference_ID = MReference.getReferenceID("Document Condition");
+/** Cash = B */
+public static final String CONDITION_Cash = "B";
+/** On Credit = P */
+public static final String CONDITION_OnCredit = "P";
+/** All = A */
+public static final String CONDITION_All = "A";
+/** Set Condition */
+public void setCondition (String Condition)
+{
+if (Condition.equals("B") || Condition.equals("P") || Condition.equals("A"));
+ else throw new IllegalArgumentException ("Condition Invalid value - Reference = CONDITION_AD_Reference_ID - B - P - A");
+if (Condition == null) throw new IllegalArgumentException ("Condition is mandatory");
+if (Condition.length() > 1)
+{
+log.warning("Length > 1 - truncated");
+Condition = Condition.substring(0,1);
+}
+set_Value ("Condition", Condition);
+}
+/** Get Condition */
+public String getCondition() 
+{
+return (String)get_Value("Condition");
 }
 /** Set Payment.
 Payment identifier */
@@ -355,22 +380,6 @@ set_Value ("NumeroComprobante", NumeroComprobante);
 public String getNumeroComprobante() 
 {
 return (String)get_Value("NumeroComprobante");
-}
-/** Set Only Current Account Documents */
-public void setOnlyCurrentAccountDocuments (boolean OnlyCurrentAccountDocuments)
-{
-set_Value ("OnlyCurrentAccountDocuments", new Boolean(OnlyCurrentAccountDocuments));
-}
-/** Get Only Current Account Documents */
-public boolean isOnlyCurrentAccountDocuments() 
-{
-Object oo = get_Value("OnlyCurrentAccountDocuments");
-if (oo != null) 
-{
- if (oo instanceof Boolean) return ((Boolean)oo).booleanValue();
- return "Y".equals(oo);
-}
-return false;
 }
 /** Set Saldo */
 public void setsaldo (BigDecimal saldo)

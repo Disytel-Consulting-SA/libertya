@@ -6,6 +6,8 @@ import java.util.Properties;
 
 import org.openXpertya.model.MBPGroup;
 import org.openXpertya.model.MOrg;
+import org.openXpertya.model.MRefList;
+import org.openXpertya.model.X_T_CuentaCorriente;
 import org.openXpertya.util.Util;
 
 public class DynamicCurrentAccountDebts extends DynamicJasperReport {
@@ -24,6 +26,9 @@ public class DynamicCurrentAccountDebts extends DynamicJasperReport {
 			params.put("ORG_VALUE", org.getValue());
 			params.put("ORG_NAME", org.getName());
 		}
+		String conditionValue = (String)params.get("Condition");
+		params.put("ConditionName",
+				MRefList.getListName(ctx, X_T_CuentaCorriente.CONDITION_AD_Reference_ID, conditionValue));
 	}
 
 }
