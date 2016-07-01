@@ -49,6 +49,10 @@ public class PostInstallUpgradeFrom1604 extends PluginPostInstallProcess {
 	/** UID del Reporte de Deudas de Cuentas Corrientes */
 	protected final static String CURRENT_ACCOUNT_DEBTS_REPORT_UID = "CORE-AD_Process-1010394";
 	protected final static String CURRENT_ACCOUNT_DEBTS_REPORT_FILENAME = "CurrentAccountDebts.jrxml";
+
+	/** UID del Reporte de Consulta de Comprobantes Elcetronicos Emitidos */
+	protected final static String WSFE_CONSULTA_COMPROBANTES_REPORT_UID = "CORE-AD_Process-1010440";
+	protected final static String WSFE_CONSULTA_COMPROBANTES_REPORT_FILENAME = "WSFEConsultaComprobante.jrxml";
 	
 	@Override
 	protected String doIt() throws Exception {
@@ -210,6 +214,17 @@ public class PostInstallUpgradeFrom1604 extends PluginPostInstallProcess {
 						.readBinaryFromJar(
 								jarFileURL,
 								getBinaryFileURL(CURRENT_ACCOUNT_DEBTS_REPORT_FILENAME)));
+
+		// Reporte de consulta de comprobantes electronicos emitidos
+		MProcess.addAttachment(
+				get_TrxName(),
+				getCtx(),
+				WSFE_CONSULTA_COMPROBANTES_REPORT_UID,
+				WSFE_CONSULTA_COMPROBANTES_REPORT_FILENAME,
+				JarHelper
+						.readBinaryFromJar(
+								jarFileURL,
+								getBinaryFileURL(WSFE_CONSULTA_COMPROBANTES_REPORT_FILENAME)));
 		
 		return " ";
 	}
