@@ -51,8 +51,8 @@ public class PostInstallUpgradeFrom1604 extends PluginPostInstallProcess {
 	protected final static String CURRENT_ACCOUNT_DEBTS_REPORT_FILENAME = "CurrentAccountDebts.jrxml";
 
 	/** UID del Reporte de Consulta de Comprobantes Elcetronicos Emitidos */
-	protected final static String WSFE_CONSULTA_COMPROBANTES_REPORT_UID = "CORE-AD_Process-1010440";
-	protected final static String WSFE_CONSULTA_COMPROBANTES_REPORT_FILENAME = "WSFEConsultaComprobante.jrxml";
+	protected final static String WSFE_CONSULTA_COMPROBANTES_JASPER_REPORT_UID = "CORE-AD_JasperReport-1010133";
+	protected final static String WSFE_CONSULTA_COMPROBANTES_JASPER_REPORT_FILENAME = "WSFEConsultaComprobante.jasper";
 	
 	@Override
 	protected String doIt() throws Exception {
@@ -216,15 +216,16 @@ public class PostInstallUpgradeFrom1604 extends PluginPostInstallProcess {
 								getBinaryFileURL(CURRENT_ACCOUNT_DEBTS_REPORT_FILENAME)));
 
 		// Reporte de consulta de comprobantes electronicos emitidos
-		MProcess.addAttachment(
+		MJasperReport
+		.updateBinaryData(
 				get_TrxName(),
 				getCtx(),
-				WSFE_CONSULTA_COMPROBANTES_REPORT_UID,
-				WSFE_CONSULTA_COMPROBANTES_REPORT_FILENAME,
+				WSFE_CONSULTA_COMPROBANTES_JASPER_REPORT_UID,
 				JarHelper
 						.readBinaryFromJar(
 								jarFileURL,
-								getBinaryFileURL(WSFE_CONSULTA_COMPROBANTES_REPORT_FILENAME)));
+								getBinaryFileURL(WSFE_CONSULTA_COMPROBANTES_JASPER_REPORT_FILENAME)));
+
 		
 		return " ";
 	}
