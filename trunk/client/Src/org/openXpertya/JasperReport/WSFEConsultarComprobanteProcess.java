@@ -9,6 +9,7 @@ import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 
 import org.openXpertya.JasperReport.DataSource.WSFEConsultarComprobanteDataSource;
+import org.openXpertya.model.MDocType;
 import org.openXpertya.model.MPreference;
 import org.openXpertya.model.MProcess;
 import org.openXpertya.model.X_C_DocType;
@@ -124,13 +125,15 @@ public class WSFEConsultarComprobanteProcess extends SvrProcess {
 
 			if (para[i].getParameter() == null)
 				;
-			else if (name.equalsIgnoreCase("PtoVta")) {
-				ptoVta = para[i].getParameterAsInt();
-			}
+// Comentado: el punto de venta se determina a partir del tipo de documento			
+//			else if (name.equalsIgnoreCase("PtoVta")) {
+//				ptoVta = para[i].getParameterAsInt();
+//			}
 			else if (name.equalsIgnoreCase("C_DocType_ID")) {
-				X_C_DocType aDocType = new X_C_DocType(getCtx(), para[i].getParameterAsInt(), get_TrxName());
+				MDocType aDocType = new MDocType(getCtx(), para[i].getParameterAsInt(), get_TrxName());
 				cbteTipo = getCbteTipo(aDocType);
 				cbteTipoNombre = aDocType.getName();
+				ptoVta = aDocType.getPosNumber(); 
 			}
 			else if (name.equalsIgnoreCase("NroCbte")) {
 				cbteNroFrom = ((BigDecimal)para[i].getParameter()).longValue();
@@ -180,7 +183,8 @@ public class WSFEConsultarComprobanteProcess extends SvrProcess {
 		try {
 			service = locator.getServiceSoap();
 		} catch (Exception e) {
-			retValues.put("Resultado", "ERROR DE ACCESO A WSFE: " + e.toString());
+			retValues.put("Resultado", "Error acceso WSFE: " + e.toString());
+			log.saveError("[WSFECC] Error acceso WSFE: ", e.toString());
 			return retValues;
 		}
 		
@@ -209,7 +213,8 @@ public class WSFEConsultarComprobanteProcess extends SvrProcess {
 				// Al capturar una excepción al RETRY_MAX intento, no continuar intentando
 				if (tryNo == RETRY_MAX) {
 					// Error al interactuar con WSFE de AFIP
-					retValues.put("Resultado", "ERROR DE CONEXION: " + e.toString());
+					retValues.put("Resultado", "Error de conexión: " + e.toString());
+					log.saveError("[WSFECC] Error de conexión: ", e.toString());
 					return retValues;
 				}
 			}
@@ -223,7 +228,8 @@ public class WSFEConsultarComprobanteProcess extends SvrProcess {
 				errorStr.append(error.getCode()).append(". ").append(error.getMsg());
 				completeErrorStr.append(errorStr);
 			}
-			retValues.put("Resultado", "ERROR RECIBIDO: " + completeErrorStr.toString());
+			retValues.put("Resultado", "Error: " + completeErrorStr.toString());
+			log.saveError("[WSFECC] Error para cbteNro " + cbteNro + ", cbteTipo " + cbteTipo + ", ptoVta " + ptoVta + ": ", completeErrorStr.toString());
 			return retValues;
 		}
 		
@@ -277,7 +283,7 @@ public class WSFEConsultarComprobanteProcess extends SvrProcess {
 	protected void checkPreconditions() throws Exception {
 		if (cbteNroFrom == -1 || cbteNroTo == -1 || cbteNroFrom > cbteNroTo)
 			throw new Exception("Rango de comprobantes indicado invalido");
-		if (cbteNroTo - cbteNroTo > 100 )
+		if (cbteNroTo - cbteNroFrom > MAX_DOCS )
 			throw new Exception("Rango de comprobantes a consultar muy extenso. Máximo por ejecución: " + MAX_DOCS);
 		if (ptoVta == -1)
 			throw new Exception("Punto de venta indicado invalido");
