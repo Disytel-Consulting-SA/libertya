@@ -7,7 +7,7 @@ import java.math.*;
 import org.openXpertya.util.*;
 /** Modelo Generado por C_POSCashStatement
  *  @author Comunidad de Desarrollo Libertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
- *  @version  - 2011-02-16 17:04:42.418 */
+ *  @version  - 2016-07-04 16:25:10.964 */
 public class X_C_POSCashStatement extends org.openXpertya.model.PO
 {
 /** Constructor estándar */
@@ -88,12 +88,16 @@ public static final String CASHVALUE_10Units = "U010";
 public static final String CASHVALUE_1Unit = "U001";
 /** 2 Units = U002 */
 public static final String CASHVALUE_2Units = "U002";
+/** 200 Units = U200 */
+public static final String CASHVALUE_200Units = "U200";
+/** 500 Units = U500 */
+public static final String CASHVALUE_500Units = "U500";
 /** Set Cash Value.
 Cash Value */
 public void setCashValue (String CashValue)
 {
-if (CashValue.equals("C005") || CashValue.equals("C010") || CashValue.equals("C025") || CashValue.equals("C050") || CashValue.equals("U005") || CashValue.equals("U020") || CashValue.equals("U050") || CashValue.equals("U100") || CashValue.equals("U010") || CashValue.equals("U001") || CashValue.equals("U002"));
- else throw new IllegalArgumentException ("CashValue Invalid value - Reference = CASHVALUE_AD_Reference_ID - C005 - C010 - C025 - C050 - U005 - U020 - U050 - U100 - U010 - U001 - U002");
+if (CashValue.equals("C005") || CashValue.equals("C010") || CashValue.equals("C025") || CashValue.equals("C050") || CashValue.equals("U005") || CashValue.equals("U020") || CashValue.equals("U050") || CashValue.equals("U100") || CashValue.equals("U010") || CashValue.equals("U001") || CashValue.equals("U002") || CashValue.equals("U200") || CashValue.equals("U500"));
+ else throw new IllegalArgumentException ("CashValue Invalid value - Reference = CASHVALUE_AD_Reference_ID - C005 - C010 - C025 - C050 - U005 - U020 - U050 - U100 - U010 - U001 - U002 - U200 - U500");
 if (CashValue == null) throw new IllegalArgumentException ("CashValue is mandatory");
 if (CashValue.length() > 4)
 {
