@@ -596,3 +596,19 @@ update ad_system set dummy = (SELECT addcolumnifnotexists('C_POS','allowcreditno
 update ad_system set dummy = (SELECT addcolumnifnotexists('T_EstadoDeCuenta','condition','character(1)'));
 alter table T_CuentaCorriente rename column onlycurrentaccountdocuments to condition;
 alter table T_BalanceReport rename column onlycurrentaccountdocuments to condition;
+
+--20160704-1640 Nuevas denominaciones de $200 y $500 (aquí se eliminan en caso de existir para evitar erorres de duplicacion al intentar insertarlas en metadatos durante la instalacion de install.xml)
+DELETE FROM AD_Ref_List_Trl WHERE AD_ComponentObjectUID = 'CORE-AD_Ref_List_Trl-es_PY-1010848';
+DELETE FROM AD_Ref_List_Trl WHERE AD_ComponentObjectUID = 'CORE-AD_Ref_List_Trl-es_MX-1010848';
+DELETE FROM AD_Ref_List_Trl WHERE AD_ComponentObjectUID = 'CORE-AD_Ref_List_Trl-es_AR-1010848';
+DELETE FROM AD_Ref_List_Trl WHERE AD_ComponentObjectUID = 'CORE-AD_Ref_List_Trl-es_ES-1010848';
+DELETE FROM AD_Ref_List_Trl WHERE AD_ComponentObjectUID = 'CORE-AD_Ref_List_Trl-es_PY-1010849';
+DELETE FROM AD_Ref_List_Trl WHERE AD_ComponentObjectUID = 'CORE-AD_Ref_List_Trl-es_MX-1010849';
+DELETE FROM AD_Ref_List_Trl WHERE AD_ComponentObjectUID = 'CORE-AD_Ref_List_Trl-es_AR-1010849';
+DELETE FROM AD_Ref_List_Trl WHERE AD_ComponentObjectUID = 'CORE-AD_Ref_List_Trl-es_ES-1010849';
+DELETE FROM AD_Ref_List WHERE AD_ComponentObjectUID = 'CORE-AD_Ref_List-1010848';
+DELETE FROM AD_Ref_List WHERE AD_ComponentObjectUID = 'CORE-AD_Ref_List-1010849';
+
+
+
+ 
