@@ -19,7 +19,7 @@ public class WSFEConsultarComprobanteDataSource implements OXPJasperDataSource {
 	
 	@Override
 	public Object getFieldValue(JRField arg0) throws JRException {
-		return documents.get(currentPos).get(arg0);
+		return documents.get(currentPos).get(arg0.getName());
 	}
 
 	@Override
