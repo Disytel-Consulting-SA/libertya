@@ -610,5 +610,104 @@ DELETE FROM AD_Ref_List WHERE AD_ComponentObjectUID = 'CORE-AD_Ref_List-1010848'
 DELETE FROM AD_Ref_List WHERE AD_ComponentObjectUID = 'CORE-AD_Ref_List-1010849';
 
 
+--20160707-1109 Mejoras en performance al resumen de ventas diarias 
+CREATE OR REPLACE FUNCTION v_dailysales_invoices_filtered(
+    orgid integer,
+    posid integer,
+    userid integer,
+    datefrom date,
+    dateto date,
+    invoicedatefrom date,
+    invoicedateto date,
+    addinvoicedate boolean)
+  RETURNS SETOF v_dailysales_type AS
+$BODY$
+declare
+	consulta varchar;
+	whereDateInvoices varchar;
+	whereInvoiceDate varchar;
+	wherePOSInvoices varchar;
+	whereUserInvoices varchar;
+	whereOrg varchar;
+	whereClauseStd varchar;
+	adocument v_dailysales_type;
+BEGIN
+	-- Armado de las condiciones en base a los parámetros
+	-- Organización
+	whereOrg = '';
+	if orgID is not null AND orgID > 0 THEN
+		whereOrg = ' AND i.ad_org_id = ' || orgID;
+	END IF;
+	
+	-- Fecha de factura
+	whereInvoiceDate = '';
+	if addInvoiceDate then
+		if invoiceDateFrom is not null then
+			whereInvoiceDate = ' AND date_trunc(''day'', i.dateacct) >= date_trunc(''day'', '''|| invoiceDateFrom || '''::date)';
+		end if;
+		if invoiceDateTo is not null then
+			whereInvoiceDate = whereInvoiceDate || ' AND date_trunc(''day'', i.dateacct) <= date_trunc(''day'', ''' || invoiceDateTo || '''::date) ';
+		end if;
+	end if;
 
- 
+	-- Fechas para allocations y facturas
+	whereDateInvoices = '';
+	if dateFrom is not null then
+		whereDateInvoices = ' AND date_trunc(''day''::text, i.dateinvoiced) >= date_trunc(''day'', ''' || dateFrom || '''::date)';
+	end if;
+
+	if dateTo is not null then
+		whereDateInvoices = whereDateInvoices || ' AND date_trunc(''day''::text, i.dateinvoiced) <= date_trunc(''day'', ''' || dateTo || '''::date) ';
+	end if;
+	
+	-- TPV
+	wherePOSInvoices = ' AND (' || posID || ' = -1 OR pj.c_pos_id = ' || posID || ')';
+
+	-- Usuario
+	whereUserInvoices = ' AND (' || userID || ' = -1 OR pj.ad_user_id = ' || userID || ')';
+
+	-- Condiciones básicas del reporte
+	whereClauseStd = ' ( i.issotrx = ''Y'' ' ||
+			 whereOrg || 
+			 ' AND (i.docstatus = ''CO'' or i.docstatus = ''CL'' or i.docstatus = ''RE'' or i.docstatus = ''VO'' OR i.docstatus = ''??'') ' ||
+			 ' AND dtc.isfiscaldocument = ''Y'' ' || 
+			 ' AND (dtc.isfiscal is null OR dtc.isfiscal = ''N'' OR (dtc.isfiscal = ''Y'' AND i.fiscalalreadyprinted = ''Y'')) ' ||
+			 ' AND dtc.doctypekey not in (''RTR'', ''RTI'', ''RCR'', ''RCI'') ' || 
+			 ' ) ';
+
+	-- Agregar las condiciones anteriores
+	whereClauseStd = whereClauseStd || whereInvoiceDate || whereDateInvoices || wherePOSInvoices || whereUserInvoices;
+
+	-- Armar la consulta
+	consulta = 'SELECT ''I''::character varying AS trxtype, i.ad_client_id, i.ad_org_id, i.c_invoice_id, date_trunc(''day''::text, i.dateinvoiced) AS datetrx, NULL::integer AS c_payment_id, NULL::integer AS c_cashline_id, NULL::integer AS c_invoice_credit_id, dtc.docbasetype AS tendertype, i.documentno, i.description, NULL::unknown AS info, i.grandtotal * dtc.signo_issotrx::numeric AS amount, bp.c_bpartner_id, bp.name, bp.c_bp_group_id, bpg.name AS groupname, bp.c_categoria_iva_id, ci.name AS categorianame, dtc.c_doctype_id AS c_pospaymentmedium_id, dtc.name AS pospaymentmediumname, NULL::integer AS m_entidadfinanciera_id, NULL::unknown AS entidadfinancieraname, NULL::unknown AS entidadfinancieravalue, NULL::integer AS m_entidadfinancieraplan_id, NULL::unknown AS planname, i.docstatus, i.issotrx, i.dateacct::date AS dateacct, i.dateacct::date AS invoicedateacct, pj.c_posjournal_id, pj.ad_user_id, pj.c_pos_id, dtc.isfiscal, i.fiscalalreadyprinted
+   FROM c_invoice i
+   LEFT JOIN c_posjournal pj ON pj.c_posjournal_id = i.c_posjournal_id
+   JOIN c_doctype dtc ON i.c_doctypetarget_id = dtc.c_doctype_id
+   JOIN c_bpartner bp ON bp.c_bpartner_id = i.c_bpartner_id
+   JOIN c_bp_group bpg ON bpg.c_bp_group_id = bp.c_bp_group_id
+   LEFT JOIN c_categoria_iva ci ON ci.c_categoria_iva_id = bp.c_categoria_iva_id
+  WHERE ' || whereClauseStd ||
+  ' AND NOT (
+  		EXISTS (
+			SELECT * FROM (
+				SELECT *
+				FROM c_allocationline al
+				WHERE i.c_invoice_id = al.c_invoice_id AND i.isvoidable = ''Y''::bpchar 
+			) as FOO
+			JOIN c_payment p ON p.c_payment_id = foo.c_payment_id
+			JOIN c_cashline cl ON cl.c_payment_id = p.c_payment_id
+		)
+	);';
+
+-- raise notice '%', consulta;
+FOR adocument IN EXECUTE consulta LOOP
+	return next adocument;
+END LOOP;
+
+END
+$BODY$
+  LANGUAGE plpgsql VOLATILE
+  COST 100
+  ROWS 1000;
+ALTER FUNCTION v_dailysales_invoices_filtered(integer, integer, integer, date, date, date, date, boolean)
+  OWNER TO libertya;
