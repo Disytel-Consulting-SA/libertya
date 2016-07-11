@@ -62,6 +62,10 @@ public class PostInstallUpgradeFrom1604 extends PluginPostInstallProcess {
 	protected final static String PURCHASE_ORDER_DUE_REPORT_UID = "CORE-AD_Process-1010432";
 	protected final static String PURCHASE_ORDER_DUE_REPORT_FILENAME = "ListOfPurchaseOrdersDue.jrxml";
 	
+	/** UID del Informe de Relacion OC-Remito-Factura */
+	protected final static String TRAZABILIDAD_DE_DOCUMENTOS_REPORT_UID = "CORE-AD_Process-1010430";
+	protected final static String TRAZABILIDAD_DE_DOCUMENTOS_REPORT_FILENAME = "TrazabilidadDeDocumentos.jrxml";
+	
 	@Override
 	protected String doIt() throws Exception {
 		super.doIt();
@@ -255,6 +259,17 @@ public class PostInstallUpgradeFrom1604 extends PluginPostInstallProcess {
 						.readBinaryFromJar(
 								jarFileURL,
 								getBinaryFileURL(PURCHASE_ORDER_DUE_REPORT_FILENAME)));
+		
+		// Informe de Relacion OC-Remito-Factura
+		MProcess.addAttachment(
+				get_TrxName(),
+				getCtx(),
+				TRAZABILIDAD_DE_DOCUMENTOS_REPORT_UID,
+				TRAZABILIDAD_DE_DOCUMENTOS_REPORT_FILENAME,
+				JarHelper
+						.readBinaryFromJar(
+								jarFileURL,
+								getBinaryFileURL(TRAZABILIDAD_DE_DOCUMENTOS_REPORT_FILENAME)));
 		
 		return " ";
 	}
