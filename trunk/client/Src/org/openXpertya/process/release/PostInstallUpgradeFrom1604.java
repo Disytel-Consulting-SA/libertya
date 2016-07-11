@@ -54,6 +54,10 @@ public class PostInstallUpgradeFrom1604 extends PluginPostInstallProcess {
 	protected final static String WSFE_CONSULTA_COMPROBANTES_JASPER_REPORT_UID = "CORE-AD_JasperReport-1010133";
 	protected final static String WSFE_CONSULTA_COMPROBANTES_JASPER_REPORT_FILENAME = "WSFEConsultaComprobante.jasper";
 	
+	/** UID del Reporte de Cheques Emitidos por Banco */
+	protected final static String CHECKS_ISSUED_BY_BANK_REPORT_UID = "CORE-AD_Process-1010415";
+	protected final static String CHECKS_ISSUED_BY_BANK_REPORT_FILENAME = "ChecksIssuedByBank.jrxml";
+	
 	@Override
 	protected String doIt() throws Exception {
 		super.doIt();
@@ -226,6 +230,16 @@ public class PostInstallUpgradeFrom1604 extends PluginPostInstallProcess {
 								jarFileURL,
 								getBinaryFileURL(WSFE_CONSULTA_COMPROBANTES_JASPER_REPORT_FILENAME)));
 
+		// Reporte de Cheques Emitidos por Banco
+		MProcess.addAttachment(
+				get_TrxName(),
+				getCtx(),
+				CHECKS_ISSUED_BY_BANK_REPORT_UID,
+				CHECKS_ISSUED_BY_BANK_REPORT_FILENAME,
+				JarHelper
+						.readBinaryFromJar(
+								jarFileURL,
+								getBinaryFileURL(CHECKS_ISSUED_BY_BANK_REPORT_FILENAME)));
 		
 		return " ";
 	}
