@@ -28,22 +28,27 @@
 	<parameter name="AD_CLIENT_ID" isForPrompting="false" class="java.lang.Integer"/>
 	<parameter name="FechaCierre" isForPrompting="false" class="java.util.Date"/>
 	<queryString><![CDATA[select p.datetrx::date as fecha, p.couponbatchnumber as nrolote, p.couponnumber as nrocupon, 	case when char_length(p.creditcardnumber)>4 then (substr(p.creditcardnumber,char_length(p.creditcardnumber)-3,char_length(p.creditcardnumber))) else p.creditcardnumber end as nrotarjeta,
-	pos.name as caja, mefp.name as entidadfinancieraplan, mef.name as entidadfinanciera, p.payamt as importe
-from c_payment p 
+	pos.name as caja, mefp.name as entidadfinancieraplan, mef.name as entidadfinanciera, p.payamt as importe,p.c_payment_id
+from c_creditcard_closeline cccl
+inner join c_payment p on p.c_payment_id = cccl.c_payment_id
 inner join m_entidadfinancieraplan mefp on mefp.m_entidadfinancieraplan_id = p.m_entidadfinancieraplan_id
 inner join m_entidadfinanciera mef on mef.m_entidadfinanciera_id = mefp.m_entidadfinanciera_id
 left join c_posjournal pj on pj.c_posjournal_id = p.c_posjournal_id
 left join c_pos pos on pos.c_pos_id = pj.c_pos_id
-left join c_payment d on p.ad_org_id = d.ad_org_id and p.couponnumber = d.couponnumber
-	and p.couponbatchnumber = d.couponbatchnumber and p.datetrx::date = d.datetrx::date
-	and p.c_payment_id <> d.c_payment_id
-inner join c_creditcard_closeline cccl on cccl.c_payment_id = p.c_payment_id
-left join c_creditcard_closeline ccccl on ccccl.c_payment_id = d.c_payment_id
 where  p.docstatus in ('CO','CL')
-	and d.docstatus in ('CO','CL')
 	AND (($P{AD_Org_ID} IS NULL) OR (0 = $P{AD_Org_ID}) OR (p.ad_org_id = $P{AD_Org_ID}))
 	AND (($P{FechaCierre}::date IS NULL) OR (p.datetrx::date = $P{FechaCierre}::date))
-	AND (($P{AD_CLIENT_ID} IS NULL) OR (p.ad_client_id = $P{AD_CLIENT_ID}))  
+	AND (($P{AD_CLIENT_ID} IS NULL) OR (p.ad_client_id = $P{AD_CLIENT_ID})) 
+group by p.datetrx, p.couponbatchnumber, p.couponnumber,nrotarjeta,
+		pos.name, mefp.name, mef.name, p.payamt,p.ad_org_id,p.c_payment_id,mef.c_bpartner_id
+HAVING (select COUNT(c_creditcard_closeline_id) 
+	from c_creditcard_closeline cl
+	inner join c_payment d on d.c_payment_id = cl.c_payment_id
+	inner join m_entidadfinancieraplan efp on efp.m_entidadfinancieraplan_id = d.m_entidadfinancieraplan_id
+	inner join m_entidadfinanciera ef on ef.m_entidadfinanciera_id = efp.m_entidadfinanciera_id
+	where p.ad_org_id = d.ad_org_id and p.couponnumber = d.couponnumber
+	and p.couponbatchnumber = d.couponbatchnumber and p.datetrx::date = d.datetrx::date
+	and ef.c_bpartner_id = mef.c_bpartner_id and p.c_payment_id <> d.c_payment_id) > 0
 order by p.datetrx::date, p.couponbatchnumber, p.couponnumber]]></queryString>
 
 	<field name="fecha" class="java.sql.Date"/>
