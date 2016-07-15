@@ -98,8 +98,14 @@ public class MCreditCardClose extends X_C_CreditCard_Close implements DocAction 
 				return DocAction.STATUS_Invalid;
 			}
 			
-			//Verifico que no haya cupones repetidos (Misma Organización, Nro Cupon, Nro de Lote, Fecha de Cupón)
-			String duplicados = "SELECT COUNT(*) FROM (select couponnumber, couponbatchnumber, COUNT(*) FROM C_CreditCard_CloseLine where c_creditcard_close_id = " +getC_CreditCard_Close_ID() + " GROUP BY couponnumber, couponbatchnumber HAVING COUNT(*) > 1) as duplicados";
+			//Verifico que no haya cupones repetidos (Misma Organización, Nro Cupon, Nro de Lote, Fecha de Cupón, EC asociada a la EF del cupón)
+			String duplicados = "SELECT COUNT(*) FROM ("
+								+ 	"select couponnumber, couponbatchnumber, ef.c_bpartner_id, COUNT(*) "
+								+ 	"FROM C_CreditCard_CloseLine cl "
+								+	"inner join m_entidadfinancieraplan efp on efp.m_entidadfinancieraplan_id = cl.m_entidadfinancieraplan_id "
+								+	"inner join m_entidadfinanciera ef on ef.m_entidadfinanciera_id = efp.m_entidadfinanciera_id "
+								+ 	"where c_creditcard_close_id = " +getC_CreditCard_Close_ID() + " "
+								+	"GROUP BY couponnumber, couponbatchnumber, ef.c_bpartner_id HAVING COUNT(*) > 1) as duplicados";
 			if (DB.getSQLValue(get_TrxName(), duplicados, true)>0){
 				m_processMsg = "@RepeatedCoupons@";
 				return DocAction.STATUS_Invalid;
