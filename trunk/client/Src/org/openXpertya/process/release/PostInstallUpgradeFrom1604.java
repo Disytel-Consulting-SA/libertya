@@ -66,6 +66,10 @@ public class PostInstallUpgradeFrom1604 extends PluginPostInstallProcess {
 	protected final static String TRAZABILIDAD_DE_DOCUMENTOS_REPORT_UID = "CORE-AD_Process-1010430";
 	protected final static String TRAZABILIDAD_DE_DOCUMENTOS_REPORT_FILENAME = "TrazabilidadDeDocumentos.jrxml";
 	
+	/** UID del Reporte de cheques sin Conciliar */
+	protected final static String CHEQUES_SIN_CONCILIAR_REPORT_UID = "CORE-AD_Process-1010424";
+	protected final static String CHEQUES_SIN_CONCILIAR_REPORT_FILENAME = "UnreconciledCheksReport.jrxml";
+	
 	@Override
 	protected String doIt() throws Exception {
 		super.doIt();
@@ -271,6 +275,17 @@ public class PostInstallUpgradeFrom1604 extends PluginPostInstallProcess {
 								jarFileURL,
 								getBinaryFileURL(TRAZABILIDAD_DE_DOCUMENTOS_REPORT_FILENAME)));
 		
+		// Reporte de cheques sin Conciliar
+		MProcess.addAttachment(
+				get_TrxName(),
+				getCtx(),
+				CHEQUES_SIN_CONCILIAR_REPORT_UID,
+				CHEQUES_SIN_CONCILIAR_REPORT_FILENAME,
+				JarHelper
+						.readBinaryFromJar(
+								jarFileURL,
+								getBinaryFileURL(CHEQUES_SIN_CONCILIAR_REPORT_FILENAME)));
+				
 		return " ";
 	}
 	
