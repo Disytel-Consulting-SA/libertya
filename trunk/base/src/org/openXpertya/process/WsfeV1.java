@@ -94,8 +94,9 @@ public class WsfeV1 extends Wsfe{
 			//*****CONVERSION
 			// Se debe convertir a la moneda del comprobante desde la moneda de la compañía
 			BigDecimal cotizacion = MCurrency.currencyConvert(Env.ONE,
-					Env.getContextAsInt(this.getM_ctx(), "$C_Currency_ID"),
-					this.getInvoice().getC_Currency_ID(), this.getInvoice().getDateInvoiced(), 0,
+					this.getInvoice().getC_Currency_ID(), 
+					Env.getContextAsInt(this.getM_ctx(), "$C_Currency_ID"), 
+					this.getInvoice().getDateAcct(), 0,
 					this.getM_ctx());
 			line.append(cotizacion+"\n");
 			
