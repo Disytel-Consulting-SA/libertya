@@ -162,7 +162,7 @@ public class MCreditCardClose extends X_C_CreditCard_Close implements DocAction 
 								+ (actualcreditcardID != 0 ? "AND C_CreditCard_Close_ID <> "
 										+ actualcreditcardID
 										: "")
-								+ " AND DocStatus not in ('CL','CO')"
+								//+ " AND DocStatus not in ('CL','CO')"
 								+ " AND AD_Org_ID = " + AD_Org_ID);
 	}
 	
@@ -176,6 +176,16 @@ public class MCreditCardClose extends X_C_CreditCard_Close implements DocAction 
 			// Hay una tupla para la misma fecha y almacén, por lo tanto no
 			// seguir
 			log.saveError("CreditCardCloseRepeated", "");
+			return false;
+		}
+		return true;
+	}
+	
+	@Override
+	protected boolean beforeDelete() {
+		// Sólo se puede borrar registros en estado "Borrador"
+		if (!getDocStatus().equals(DOCSTATUS_Drafted)){
+			log.saveError("CannotDeleteRecordInProcessState", "");
 			return false;
 		}
 		return true;
