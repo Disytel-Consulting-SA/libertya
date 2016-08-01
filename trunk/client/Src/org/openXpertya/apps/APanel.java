@@ -2074,7 +2074,18 @@ public final class APanel extends CPanel implements DataStatusListener,ChangeLis
             return;
         }
 
-        Attachment va = new Attachment( Env.getFrame( this ),m_curWindowNo,m_curTab.getAD_AttachmentID(),m_curTab.getAD_Table_ID(),record_ID,null );
+        /* Intentar utilizar Client y Org según el registro relacionado */
+        Integer recordClientID = null;
+        Integer recordOrgID = null;
+        try {
+        	recordClientID = (Integer)m_curTab.getField("AD_Client_ID").getValue();
+        	recordOrgID = (Integer)m_curTab.getField("AD_Org_ID").getValue();
+        } catch (Exception e) {
+        	recordClientID = null;
+        	recordOrgID = null;
+        }
+        
+        Attachment va = new Attachment( Env.getFrame( this ),m_curWindowNo,m_curTab.getAD_AttachmentID(),m_curTab.getAD_Table_ID(),record_ID,null, recordClientID, recordOrgID );
 
         //
 
