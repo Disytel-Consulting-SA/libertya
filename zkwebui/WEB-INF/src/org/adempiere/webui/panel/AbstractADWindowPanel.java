@@ -857,9 +857,21 @@ public abstract class AbstractADWindowPanel extends AbstractUIPart implements To
 			return;
 		}
 
+        /* Intentar utilizar Client y Org según el registro relacionado */
+        Integer recordClientID = null;
+        Integer recordOrgID = null;
+        try {
+        	recordClientID = (Integer)curTab.getField("AD_Client_ID").getValue();
+        	recordOrgID = (Integer)curTab.getField("AD_Org_ID").getValue();
+        } catch (Exception e) {
+        	recordClientID = null;
+        	recordOrgID = null;
+        }
+		
 		//	Attachment va =
 		new WAttachment (	curWindowNo, curTab.getAD_AttachmentID(),
-							curTab.getAD_Table_ID(), record_ID, null);
+							curTab.getAD_Table_ID(), record_ID, null,
+							recordClientID, recordOrgID);
 
 		curTab.loadAttachments();				//	reload
 		toolbar.getButton("Attachment").setPressed(curTab.hasAttachment());

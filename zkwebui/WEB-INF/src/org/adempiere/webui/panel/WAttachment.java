@@ -109,6 +109,11 @@ public class WAttachment extends Window implements EventListener
 	private Button externalDelete = new Button();
 
 
+	public WAttachment(	int WindowNo, int AD_Attachment_ID,
+			int AD_Table_ID, int Record_ID, String trxName) {
+		this(WindowNo, AD_Attachment_ID, AD_Table_ID, Record_ID, trxName, null, null);
+	}
+	
 	/**
 	 *	Constructor.
 	 *	loads Attachment, if ID <> 0
@@ -120,7 +125,8 @@ public class WAttachment extends Window implements EventListener
 	 */
 	
 	public WAttachment(	int WindowNo, int AD_Attachment_ID,
-						int AD_Table_ID, int Record_ID, String trxName)
+						int AD_Table_ID, int Record_ID, String trxName,
+						Integer recordClientID, Integer recordOrgID)
 	{
 		super();
 		
@@ -143,6 +149,10 @@ public class WAttachment extends Window implements EventListener
 			m_attachment = new MAttachment (Env.getCtx(), AD_Table_ID, Record_ID, trxName);
 		else
 			m_attachment = new MAttachment (Env.getCtx(), AD_Attachment_ID, trxName);
+		
+        // Utilizar client/org del registro asociado, si es que estan definidos
+        if (recordClientID != null && recordOrgID != null)
+        	m_attachment.setClientOrg(recordClientID, recordOrgID);
 		
 		loadAttachments();
 

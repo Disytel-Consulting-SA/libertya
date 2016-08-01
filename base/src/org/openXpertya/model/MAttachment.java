@@ -519,8 +519,8 @@ public class MAttachment extends X_AD_Attachment {
                 // Si es una entrada externa todavía no existente, hay que: 1) Persistir remotamente y 2) localmente almacenar el UID
                 String extUID = null;
                 if (item.isExternalEntry() && item.getM_UID() == null) {
-                	extUID = item.getM_handler().insertEntry(data, item.getName());		// Interaccion con el manejador externo
-                	item.setM_UID(extUID);												// Seteamos el UID recibido como respuesta
+                	extUID = item.getM_handler().insertEntry(data, item.getName(), getAD_Client_ID(), getAD_Org_ID());		// Interaccion con el manejador externo
+                	item.setM_UID(extUID);																					// Seteamos el UID recibido como respuesta
                 }
                 if (item.getM_UID() != null) {
                 	extUID = item.getM_UID();
