@@ -81,19 +81,19 @@ public class MCreditCardClose extends X_C_CreditCard_Close implements DocAction 
 			}
 			
 			//Verifico que no haya números de cupones erróneos
-			if (validarCampo("couponnumber") > 0) {
+			if ((validarCampo("couponnumber") > 0) || (validarNroCupon()> 0)) {
 				m_processMsg = "@CouponsInvalid@";
 				return DocAction.STATUS_Invalid;
 			}
 			
 			//Verifico que no haya números de tarjetas erróneos
-			if (validarCampo("creditcardnumber") > 0) {
+			if ((validarCampo("creditcardnumber") > 0) || (validarNroTarjeta()> 0)) {
 				m_processMsg = "@CreditCardsWithInvalidNumber@";
 				return DocAction.STATUS_Invalid;
 			}
 			
 			//Verifico que no haya números de lotes erróneos 
-			if (validarCampo("couponbatchnumber") > 0) {
+			if ((validarCampo("couponbatchnumber") > 0) || (validarNroLote()> 0)) {
 				m_processMsg = "@BatchNumberInvalid@";
 				return DocAction.STATUS_Invalid;
 			}
@@ -114,6 +114,21 @@ public class MCreditCardClose extends X_C_CreditCard_Close implements DocAction 
 			return DocAction.STATUS_InProgress;
 	}
 	
+	//El Número de Lote debe ser siempre de 3 dígitos, ni uno mas ni uno menos. 
+	private int validarNroLote() {
+		return DB.getSQLValue(get_TrxName(), "SELECT COALESCE(COUNT(C_Payment_ID),0) FROM C_CreditCard_CloseLine WHERE (length(couponbatchnumber) > 3 or length(couponbatchnumber) < 3 ) AND C_CreditCard_Close_ID = " + getC_CreditCard_Close_ID() + " AND AD_Org_ID = ? ", getAD_Org_ID(),true);
+	}
+	
+	//El Nro de Tarjeta debe tener que como mínimo 4 dígitos.
+	private int validarNroTarjeta() {
+		return DB.getSQLValue(get_TrxName(), "SELECT COALESCE(COUNT(C_Payment_ID),0) FROM C_CreditCard_CloseLine WHERE length(creditcardnumber) < 4  AND C_CreditCard_Close_ID = " + getC_CreditCard_Close_ID() + " AND AD_Org_ID = ? ", getAD_Org_ID(),true);
+	}
+	
+	//El Nro de Cupón debe ser siempre de 4 dígitos, ni uno mas ni uno menos.
+	private int validarNroCupon() {
+		return DB.getSQLValue(get_TrxName(), "SELECT COALESCE(COUNT(C_Payment_ID),0) FROM C_CreditCard_CloseLine WHERE (length(couponnumber) > 4 or length(couponnumber) < 4 ) AND C_CreditCard_Close_ID = " + getC_CreditCard_Close_ID() + " AND AD_Org_ID = ? ", getAD_Org_ID(),true);
+	}
+
 	//Verificar campo inválido o vacío
 	public int validarCampo(String campo){
 		return DB.getSQLValue(get_TrxName(), "SELECT COALESCE(COUNT(C_Payment_ID),0) FROM C_CreditCard_CloseLine WHERE (isnumeric("+campo+") = 'f' OR "+campo+" is null) AND C_CreditCard_Close_ID = " + getC_CreditCard_Close_ID() + " AND AD_Org_ID = ? ", getAD_Org_ID(),true);
