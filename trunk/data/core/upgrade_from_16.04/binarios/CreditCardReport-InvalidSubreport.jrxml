@@ -36,9 +36,9 @@ left join c_posjournal pj on pj.c_posjournal_id = p.c_posjournal_id
 left join c_pos pos on pos.c_pos_id = pj.c_pos_id
 where exists (select c_payment_id from c_creditcard_closeline where ad_org_id = p.ad_org_id and c_payment_id = p.c_payment_id)
 	and p.docstatus in ('CO','CL')
-	and  ((isnumeric(couponbatchnumber) = 'f' OR couponbatchnumber is null)
-		or  (isnumeric(couponnumber) = 'f' OR couponbatchnumber is null)
-		or  (isnumeric(creditcardnumber) = 'f' OR couponbatchnumber is null))
+	and  ((isnumeric(couponbatchnumber) = 'f' OR couponbatchnumber is null OR length(couponbatchnumber) > 3 OR length(couponbatchnumber) < 3)
+		or  (isnumeric(couponnumber) = 'f' OR couponnumber is null OR length(couponnumber) > 4 OR length(couponnumber) < 4)
+		or  (isnumeric(creditcardnumber) = 'f' OR creditcardnumber is null OR length(creditcardnumber) < 4))
 	AND (($P{AD_Org_ID} IS NULL) OR (0 = $P{AD_Org_ID}) OR (p.ad_org_id = $P{AD_Org_ID}))
 	AND (($P{FechaCierre}::date IS NULL) OR (p.datetrx::date = $P{FechaCierre}::date))
 	AND (($P{AD_CLIENT_ID} IS NULL) OR (p.ad_client_id = $P{AD_CLIENT_ID}))
