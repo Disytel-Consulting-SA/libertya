@@ -178,7 +178,11 @@ public class WSFEConsultarComprobanteProcess extends SvrProcess {
 		
 		// Recuperar el servicio
 		ServiceLocator locator = new ServiceLocator();
-		locator.setServiceSoapEndpointAddress("https://servicios1.afip.gov.ar/wsfev1/service.asmx");
+ 		// Se intenta recuperar preferencia indicando URL de consulta. En caso de no existir se toma valor por defecto (URL actual de producción)
+		String afipURL = MPreference.GetCustomPreferenceValue("WSFECC_URL", clientID);
+		if (afipURL == null || afipURL.length() == 0)
+			afipURL = "https://servicios1.afip.gov.ar/wsfev1/service.asmx";
+		locator.setServiceSoapEndpointAddress(afipURL);
 		ServiceSoap service = null;
 		try {
 			service = locator.getServiceSoap();
@@ -356,8 +360,28 @@ public class WSFEConsultarComprobanteProcess extends SvrProcess {
 	}
 	
 	
-	protected String getTAFileName() {
-		String pyafipwsLocation = MPreference.GetCustomPreferenceValue("WSFE_PV" + ptoVta, clientID);
+	protected String getTAFileName() throws Exception {
+
+		/* === RECUPERACION DE PREFERENCIA POR USUARIO (acorde a Wsfe.java)  === */
+		// Probar configuracion especifica para un pto vta dado
+		MPreference preference = MPreference.getUserPreference(Env.getCtx(), "WSFE_PV" + ptoVta, null);
+		if(preference == null){
+			// Probar configuracion PV general
+			preference = MPreference.getUserPreference(Env.getCtx(), "WSFE", null);
+		}
+		String pyafipwsLocation = null;
+		if (preference != null) {
+			pyafipwsLocation = preference.getValue();
+		} else {
+			/* === RECUPERACION DE PREFERENCIA POR COMPAÑÍA (sin especificación de usuario) === */
+			// Probar configuracion especifica para un pto vta dado
+			pyafipwsLocation = MPreference.GetCustomPreferenceValue("WSFE_PV" + ptoVta, clientID);
+			// Probar configuracion general
+			if (pyafipwsLocation == null || pyafipwsLocation.length() == 0)
+				pyafipwsLocation = MPreference.GetCustomPreferenceValue("WSFE", clientID);
+		}
+		if (pyafipwsLocation == null || pyafipwsLocation.length() == 0)
+			throw new Exception ("Preferencia WSFE_PV" + ptoVta + " o WSFE no encontradas en los valores predeterminados.");
 		return pyafipwsLocation + File.separator + TA_FILE_NAME;
 	}
 	
