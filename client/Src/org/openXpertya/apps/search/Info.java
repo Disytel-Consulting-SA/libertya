@@ -1588,13 +1588,13 @@ public abstract class Info extends CDialog implements ListSelectionListener {
         		 * a fin de identificar la ubicación del FROM en el query CON params.
         		 */
         		// Posicion donde inicia el FROM principal en la consulta SIN parametros seteados
-        		int fromPos = mainSelectSentence.length() + 1;
+        		int fromPos = mainSelectSentence.toString().replaceAll("  ", " ").length() + 1;
         		// Primer question mark a partir del FROM principal en la consulta SIN parametros seteados
-        		int firstQM = queryWihtoutParams.substring(mainSelectSentence.length()).indexOf('?') + fromPos;
+        		int firstQM = queryWihtoutParams.substring(mainSelectSentence.toString().replaceAll("  ", " ").length()).indexOf('?') + fromPos;
         		// si no hay un ?, tomar hasta el order by, y sino hasta el final
         		if (firstQM == fromPos-1)
         		{
-        			firstQM = queryWihtoutParams.substring(mainSelectSentence.length()).lastIndexOf("ORDER BY") + fromPos;
+        			firstQM = queryWihtoutParams.substring(mainSelectSentence.toString().replaceAll("  ", " ").length()).lastIndexOf("ORDER BY") + fromPos;
         			if (firstQM == fromPos-1)
         				firstQM = queryWihtoutParams.length()-1;
         		}
