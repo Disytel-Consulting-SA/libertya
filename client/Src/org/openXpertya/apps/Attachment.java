@@ -427,23 +427,24 @@ public final class Attachment extends JDialog implements ActionListener {
 
             if( entry.isPDF()) {
                 try {
-//                    graphPanel.getInsets();
-//
-//                    File f = entry.getFile();
-//
-//                    PdfPanel pdfpanel = PdfPanel.loadPdf( f,graphPanel,false,false,true,true,true,true );
-//
-//                    size = pdfpanel.getSize();
-//                    f.delete();
-                	
-					pdfViewer.loadPDF(entry.getInputStream());
-					pdfViewer.setScale(50);
-					size = pdfViewer.getPreferredSize();
-				//	size.width = Math.min(size.width, 400);
-				//	size.height = Math.min(size.height, 400);
-					//
-					graphPanel.add(pdfViewer, BorderLayout.CENTER);
-                    //
+                    graphPanel.getInsets();
+
+                    File f = entry.getFile();
+
+                    PdfPanel pdfpanel = PdfPanel.loadPdf( f,graphPanel,false,false,true,true,true,true );
+
+                    size = pdfpanel.getSize();
+                    f.deleteOnExit();
+
+// Temporalmente comentado por incompatibilidad en librerías. TODO: check manera de incorporarlo para evitar error al ejecutar desde Terminal                	
+//					pdfViewer.loadPDF(entry.getInputStream());
+//					pdfViewer.setScale(50);
+//					size = pdfViewer.getPreferredSize();
+//				//	size.width = Math.min(size.width, 400);
+//				//	size.height = Math.min(size.height, 400);
+//					//
+//					graphPanel.add(pdfViewer, BorderLayout.CENTER);
+//                    //
 
                 } catch( Exception e ) {
                     log.log( Level.SEVERE,"(is pdf):"+e.getMessage(),e );
