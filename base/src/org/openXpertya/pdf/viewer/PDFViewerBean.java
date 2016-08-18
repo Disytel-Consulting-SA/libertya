@@ -390,25 +390,25 @@ public class PDFViewerBean extends JPanel {
     protected void createToolBar() {
         final JToolBar bar = new JToolBar();
         
-        bar.add(createActionButton(printAction,
-                                   null,
-                                   "22x22/document-print.png",
-                                   "Print document"));
+//        bar.add(createActionButton(printAction,
+//                                   null,
+//                                   "22x22/document-print.png",
+//                                   "Print document"));
         bar.add(createActionButton(saveAction,
                                    null,
                                    "22x22/document-save.png",
-                                   "Save document"));
+                                   "Guardar"));
         
         //bar.addSeparator(new Dimension(10,0));
         
         bar.add(createActionButton(goFirstAction,
                                    null,
                                    "22x22/go-first.png",
-                                   "First page"));
+                                   "Primer pagina"));
         bar.add(createActionButton(goPreviousAction,
                                    null,
                                    "22x22/go-previous.png",
-                                   "Previos page"));
+                                   "Anterior"));
         final JPanel pagePanel = createToolbarItemPanel(pageField);
         
         bar.add(pagePanel);
@@ -417,35 +417,35 @@ public class PDFViewerBean extends JPanel {
         bar.add(createActionButton(goNextAction,
                                    null,
                                    "22x22/go-next.png",
-                                   "Next page"));
+                                   "Siguiente"));
         bar.add(createActionButton(goLastAction,
                                    null,
                                    "22x22/go-last.png",
-                                   "Last page"));
+                                   "Ultima pagina"));
         
         //bar.addSeparator(new Dimension(10,0));
         
         bar.add(createActionButton(zoomOutAction,
                                    null,
                                    "22x22/zoom-out.png",
-                                   "Next page"));
+                                   "Zoom Out"));
         bar.add(createToolbarItemPanel(zoomSelect));
         bar.add(createActionButton(zoomInAction,
                                    null,
                                    "22x22/zoom-in.png",
-                                   "Next page"));
+                                   "Zoom In"));
         
         //bar.addSeparator(new Dimension(10,0));
         
         bar.add(createActionButton(rotateCClockAction,
                                    null,
                                    "22x22/rotate-cclock.png",
-                                   "Next page"));
+                                   "Rotar Izq."));
         bar.add(createToolbarItemPanel(rotationSelect));
         bar.add(createActionButton(rotateClockAction,
                                    null,
                                    "22x22/rotate-clock.png",
-                                   "Next page"));
+                                   "Rotar Der."));
         
         bar.setFloatable(false);
         add(BorderLayout.NORTH, bar);

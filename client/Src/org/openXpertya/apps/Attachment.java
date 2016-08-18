@@ -219,6 +219,8 @@ public final class Attachment extends JDialog implements ActionListener {
 
     private CTextArea info = new CTextArea();
 
+    private org.openXpertya.pdf.viewer.PDFViewerBean pdfViewer = org.openXpertya.pdf.Document.getViewer();
+    
     /** Guardar adjunto en externo */
     private CButton externalUpload = new CButton();
     
@@ -343,6 +345,7 @@ public final class Attachment extends JDialog implements ActionListener {
      */
 
     public void dispose() {
+    	pdfViewer = null;    	
         super.dispose();
     }    // dispose
 
@@ -424,14 +427,22 @@ public final class Attachment extends JDialog implements ActionListener {
 
             if( entry.isPDF()) {
                 try {
-                    graphPanel.getInsets();
-
-                    File f = entry.getFile();
-
-                    PdfPanel pdfpanel = PdfPanel.loadPdf( f,graphPanel,false,false,true,true,true,true );
-
-                    size = pdfpanel.getSize();
-                    f.delete();
+//                    graphPanel.getInsets();
+//
+//                    File f = entry.getFile();
+//
+//                    PdfPanel pdfpanel = PdfPanel.loadPdf( f,graphPanel,false,false,true,true,true,true );
+//
+//                    size = pdfpanel.getSize();
+//                    f.delete();
+                	
+					pdfViewer.loadPDF(entry.getInputStream());
+					pdfViewer.setScale(50);
+					size = pdfViewer.getPreferredSize();
+				//	size.width = Math.min(size.width, 400);
+				//	size.height = Math.min(size.height, 400);
+					//
+					graphPanel.add(pdfViewer, BorderLayout.CENTER);
                     //
 
                 } catch( Exception e ) {
