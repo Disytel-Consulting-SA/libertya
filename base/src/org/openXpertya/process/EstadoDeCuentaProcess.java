@@ -517,6 +517,7 @@ public class EstadoDeCuentaProcess extends SvrProcess {
 			} else if (dateTrxFrom != null) {
 				ec.setDateDoc(dateTrxFrom);
 			} 
+			ec.setCondition(condition);
 			ec.save();
 		}
 
@@ -581,6 +582,7 @@ public class EstadoDeCuentaProcess extends SvrProcess {
 		} else if (dateTrxFrom != null) {
 			ec.setDateDoc(dateTrxFrom);
 		} 
+		ec.setCondition(condition);
 		ec.save();
 	}
 	
@@ -614,6 +616,7 @@ public class EstadoDeCuentaProcess extends SvrProcess {
 			} else if (dateTrxFrom != null) {
 				ec.setDateDoc(dateTrxFrom);
 			} 
+			ec.setCondition(condition);
 			ec.save();
 		}
 		
