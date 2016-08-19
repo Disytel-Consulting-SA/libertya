@@ -20,6 +20,7 @@ import org.openXpertya.model.MBPartner;
 import org.openXpertya.model.MBPartnerLocation;
 import org.openXpertya.model.MClient;
 import org.openXpertya.model.MClientInfo;
+import org.openXpertya.model.MCurrency;
 import org.openXpertya.model.MDocType;
 import org.openXpertya.model.MInvoice;
 import org.openXpertya.model.MInvoiceLine;
@@ -496,6 +497,12 @@ public class LaunchInvoice extends SvrProcess {
 			jasperwrapper.addParameter("SUBREPORT_PERCEPCIONES_DATASOURCE", perceptionDS);
 			jasperwrapper.addParameter("PERCEPCION_TOTAL_AMT", perceptionDS.getTotalAmt());
 		}
+		
+		// Importe Total en Moneda de Compañía
+		jasperwrapper.addParameter("CLIENT_CURRENCY_GRAND_TOTAL", getClientCurrencyGrandTotal(invoice));
+
+		// Tasa de Cambio
+		jasperwrapper.addParameter("CURRENCY_RATE", getCurrencyRate(invoice));
 	}
 	
 	
@@ -672,4 +679,30 @@ public class LaunchInvoice extends SvrProcess {
 		ds.loadData();
 		return ds;
 	}
-}
+	
+	/** 
+	 * Importe Total en Moneda de Compañía: es el importe Total de la Factura convertido a Moneda de la Compañía según la Tasa de Cambio configurada para la Fecha Contable de la factura
+	 */
+	protected BigDecimal getClientCurrencyGrandTotal(MInvoice invoice) {
+		return MCurrency.currencyConvert(
+				invoice.getGrandTotal(),
+				invoice.getC_Currency_ID(),
+				MClient.get(getCtx()).getC_Currency_ID(),
+				invoice.getDateAcct(),
+				invoice.getAD_Org_ID(),
+				getCtx());
+	}
+	
+	/**
+	 * Tasa de Cambio: es la tasa de cambio configurada para la moneda de la factura y la moneda de la Compañía, en la fecha Contable de la Factura.
+	 */
+	protected BigDecimal getCurrencyRate(MInvoice invoice) {
+		return MCurrency.currencyConvert(
+				BigDecimal.ONE,
+				invoice.getC_Currency_ID(),
+				MClient.get(getCtx()).getC_Currency_ID(),
+				invoice.getDateAcct(),
+				invoice.getAD_Org_ID(),
+				getCtx());	
+	}
+} 
