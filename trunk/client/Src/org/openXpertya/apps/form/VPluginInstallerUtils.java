@@ -124,7 +124,9 @@ public class VPluginInstallerUtils  {
 		/* Contemplar error al ejecutar el proceso de postInstall */
 		if (pi != null && pi.isError()) {
 			errorsOnPostInstall = true;
-			throw new Exception(" Excepcion al ejecutar postInstall - " + pi.getSummary());
+			String errStatus = " Error al ejecutar postInstall - " + pi.getSummary();
+			PluginUtils.appendStatus(errStatus, true, true, true, true);
+			PluginUtils.appendError(errStatus);
 		}
 
 		// Almacenar la longitud del log de errores luego de la post-instalacion
@@ -133,7 +135,7 @@ public class VPluginInstallerUtils  {
 
 		// Hubo errores en instalacion o en postinstalacion?
 		errorsOnInstall = installErrorsLength > 0;
-		errorsOnPostInstall = postInstallErrorsLength - installErrorsLength > 0; 
+		errorsOnPostInstall = errorsOnPostInstall || (postInstallErrorsLength - installErrorsLength > 0); 
 		errors = errorsOnInstall || errorsOnPostInstall;
 		
 		/* Si hubo errores, solo commitear si corresponde */
