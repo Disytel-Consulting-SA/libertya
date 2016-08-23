@@ -52,11 +52,11 @@ public class PluginPostInstallProcess extends SvrProcess {
 
 	
 	/**
-	 * Dado un fileName, retornar la ruta completa en conjunto con el directorio contenedor de binarios
+	 * Dado un recurso, retornar la ruta completa en conjunto con el directorio contenedor de binarios
 	 */
 	protected String getBinaryFileURL(String fileName)
 	{
-		return PluginConstants.POSTINSTALL_BINARIES_DIR + File.separator + fileName;
+		return PluginConstants.POSTINSTALL_BINARIES_DIR + "/" + fileName;
 	}
 
 }
