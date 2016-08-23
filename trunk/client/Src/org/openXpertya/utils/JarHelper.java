@@ -88,9 +88,9 @@ public class JarHelper {
 	       JarFile jarFile = new JarFile(jarURL);
 	       JarEntry entry = jarFile.getJarEntry(resource);
 	       
-	       /* Si no existe el archivo, retornar null */
+	       /* Si no existe el archivo, elevar la excepción */
 	       if (entry == null)
-	    	   return null;
+	    	   throw new Exception ("Recurso " + resource + " no encontrado en archivo " + jarURL);
 	       
 	       /* Obtener el contenido del archivo */
 	       InputStream input = jarFile.getInputStream(entry);
