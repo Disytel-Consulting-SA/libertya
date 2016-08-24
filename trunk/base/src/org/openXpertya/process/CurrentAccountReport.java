@@ -77,9 +77,7 @@ public class CurrentAccountReport extends SvrProcess {
 		for (int i = 0; i < para.length; i++) {
 			String name = para[i].getParameterName();
 
-			if (para[i].getParameter() == null)
-				;
-			else if (name.equalsIgnoreCase("C_BPartner_ID")) {
+			if (name.equalsIgnoreCase("C_BPartner_ID")) {
 				p_C_BPartnerID = ((BigDecimal) para[i].getParameter())
 						.intValue();
 			} else if (name.equalsIgnoreCase("IncludeOpenOrders")) {
