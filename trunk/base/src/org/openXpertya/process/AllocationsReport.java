@@ -89,8 +89,7 @@ public class AllocationsReport extends SvrProcess {
         for( int i = 0;i < para.length;i++ ) {
             String name = para[ i ].getParameterName();
 
-            if( para[ i ].getParameter() == null ) ;
-            else if( name.equalsIgnoreCase( "C_BPartner_ID" )) {
+            if( name.equalsIgnoreCase( "C_BPartner_ID" )) {
             	p_C_BPartnerID = ((BigDecimal)para[ i ].getParameter()).intValue();
             } else if( name.equalsIgnoreCase( "DateTrx" )) {
             	p_DateTrx_From = ( Timestamp )para[ i ].getParameter();
@@ -739,11 +738,11 @@ public class AllocationsReport extends SvrProcess {
 		// Consulta para obtener la cuotas de la factura con sus montos, ordenadas por la fecha
 		// de vencimiento.
 		StringBuffer sqlPaySched = new StringBuffer();
-		sqlPaySched.append(" SELECT d.DateTrx, d.C_InvoicePaySchedule_ID, d.DueDate, ");
-		sqlPaySched.append("        ABS(currencyconvert(d.amount, d.c_currency_id, ?, ('now'::text)::timestamp(6) with time zone, COALESCE(d.c_conversiontype_id,0), d.ad_client_id, d.ad_org_id)) AS Amount ");
-		sqlPaySched.append(" FROM V_Documents d  ");
-		sqlPaySched.append(" WHERE d.Document_ID = ? ");
-		sqlPaySched.append(" ORDER BY d.DateTrx ASC, d.Created ASC");
+		sqlPaySched.append(" SELECT d.DateInvoiced, d.C_InvoicePaySchedule_ID, d.DueDate, d.grandtotal, ");
+		sqlPaySched.append("        ABS(currencyconvert(d.grandtotal, d.c_currency_id, ?, ('now'::text)::timestamp(6) with time zone, COALESCE(d.c_conversiontype_id,0), d.ad_client_id, d.ad_org_id)) AS Amount ");
+		sqlPaySched.append(" FROM C_Invoice_V d  ");
+		sqlPaySched.append(" WHERE d.c_invoice_id = ? ");
+		sqlPaySched.append(" ORDER BY d.DueDate ASC ");
 		
 		PreparedStatement pstmt = null;
 		ResultSet rs = null;
@@ -759,7 +758,8 @@ public class AllocationsReport extends SvrProcess {
 			// calcular.
 			while(rs.next() && !calculated) {
 				int invoicePaySchedule_ID = rs.getInt("C_InvoicePaySchedule_ID");
-				BigDecimal amount = rs.getBigDecimal("Amount");
+				BigDecimal amount = rs.getBigDecimal("Amount") != null ? rs.getBigDecimal("Amount")
+						: rs.getBigDecimal("grandtotal");
 				
 				// La cuota actual no es la cuota de la que se quieren obtener los
 				// créditos. Se reducen los montos de los créditos aplicándolos
