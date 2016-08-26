@@ -7,7 +7,7 @@ import java.math.*;
 import org.openXpertya.util.*;
 /** Modelo Generado por C_Invoice
  *  @author Comunidad de Desarrollo Libertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
- *  @version  - 2015-12-21 14:32:19.302 */
+ *  @version  - 2016-08-26 14:50:38.879 */
 public class X_C_Invoice extends org.openXpertya.model.PO
 {
 /** Constructor estándar */
@@ -1322,6 +1322,21 @@ set_Value ("M_AuthorizationChain_ID", new Integer(M_AuthorizationChain_ID));
 public int getM_AuthorizationChain_ID() 
 {
 Integer ii = (Integer)get_Value("M_AuthorizationChain_ID");
+if (ii == null) return 0;
+return ii.intValue();
+}
+public static final int M_INOUTTRANSPORT_ID_AD_Reference_ID = MReference.getReferenceID("M_InOut");
+/** Set Transport In Out */
+public void setM_InOutTransport_ID (int M_InOutTransport_ID)
+{
+if (M_InOutTransport_ID <= 0) set_Value ("M_InOutTransport_ID", null);
+ else 
+set_Value ("M_InOutTransport_ID", new Integer(M_InOutTransport_ID));
+}
+/** Get Transport In Out */
+public int getM_InOutTransport_ID() 
+{
+Integer ii = (Integer)get_Value("M_InOutTransport_ID");
 if (ii == null) return 0;
 return ii.intValue();
 }

@@ -711,3 +711,8 @@ $BODY$
   ROWS 1000;
 ALTER FUNCTION v_dailysales_invoices_filtered(integer, integer, integer, date, date, date, date, boolean)
   OWNER TO libertya;
+
+--20160826-1455 Nuevo campo para indicar el remito asociado a factura de fletes o transporte
+UPDATE ad_system SET dummy = (SELECT addcolumnifnotexists('C_Invoice','M_InOutTransport_ID','integer'));
+
+  
