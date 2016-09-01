@@ -74,9 +74,10 @@ public abstract class PluginDocActionHandler extends PluginHandler {
 		/**
 		 * ===================== Action() =====================
 	     */	
+		//SUR SOFTWARE: Agrego control de null sobre pluginStatusDocAction, porque en las lineas de caja venía nulo y generaba un error.
 		String actualActionStatus = (nextStatus == MPluginStatus.STATE_TRUE_AND_SKIP && !Util
-				.isEmpty(pluginStatusDocAction.getDocStatus(), true)) ? pluginStatusDocAction
-				.getDocStatus() : DocAction.STATUS_Invalid;
+				.isEmpty(pluginStatusDocAction != null ? pluginStatusDocAction.getDocStatus() : null, true)) ? (pluginStatusDocAction != null ? pluginStatusDocAction 
+				.getDocStatus() : null) : DocAction.STATUS_Invalid;
 		if (nextStatus == MPluginStatus.STATE_TRUE_AND_CONTINUE)
 		{
 			// guardar el estado a fin de retornar al final del metodo si todo anda ok
