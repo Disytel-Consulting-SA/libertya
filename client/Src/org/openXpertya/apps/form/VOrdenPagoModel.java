@@ -2208,6 +2208,9 @@ public class VOrdenPagoModel {
 
 		while (rs.next()) {
 			MInvoice invoice = new MInvoice(m_ctx, rs.getInt(1), getTrxName());
+			//SUR SOFTWARE - MODIFICACION PARA CONTABILIZAR EL COMPROBANTE DE RETENCION CON LA FECHA DEL RECIBO // O.PAGO 
+			invoice.setDateAcct(this.m_fechaTrx);
+			invoice.save();
 			MedioPagoCreditoRetencion rc = new MedioPagoCreditoRetencion(
 					invoice);
 			Vector<MedioPago> mpe = new Vector<VOrdenPagoModel.MedioPago>();
