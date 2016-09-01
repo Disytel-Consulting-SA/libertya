@@ -187,6 +187,8 @@ public class InfoPayment extends Info {
         new Info_Column( Msg.translate( Env.getCtx(),"C_Currency_ID" ),"(SELECT ISO_Code FROM C_Currency c WHERE c.C_Currency_ID=p.C_Currency_ID)",String.class ),
         new Info_Column( Msg.translate( Env.getCtx(),"PayAmt" ),"p.PayAmt",BigDecimal.class ),
         new Info_Column( Msg.translate( Env.getCtx(),"ConvertedAmount" ),"currencyBase(p.PayAmt,p.C_Currency_ID,p.DateTrx, p.AD_Client_ID,p.AD_Org_ID)",BigDecimal.class ),
+        //SUR SOFTWARE: Agrego columna para mostrar el monto pendiente de asignación del pago en la ventana de búsqueda
+        new Info_Column( Msg.translate( Env.getCtx(),"OpenAmt" ),"paymentAvailable(p.C_Payment_ID)",BigDecimal.class ),
         new Info_Column( Msg.translate( Env.getCtx(),"DiscountAmt" ),"p.DiscountAmt",BigDecimal.class ),
         new Info_Column( Msg.translate( Env.getCtx(),"WriteOffAmt" ),"p.WriteOffAmt",BigDecimal.class ),
         new Info_Column( Msg.translate( Env.getCtx(),"IsAllocated" ),"p.IsAllocated",Boolean.class )
