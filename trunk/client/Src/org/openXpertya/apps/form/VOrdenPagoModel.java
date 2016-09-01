@@ -1173,7 +1173,8 @@ public class VOrdenPagoModel {
 				+ " AND EXISTS (SELECT C_DocType_ID FROM C_DocType dt WHERE C_Invoice.C_DocType_ID = dt.C_DocType_ID AND dt.Signo_IsSOTrx = "
 				+ (getSignoIsSOTrx() * -1) + ") "
 				+ " AND C_Invoice.C_BPartner_ID = @C_BPartner_ID@ "
-				+ " AND C_Invoice.C_Currency_ID = @C_Currency_ID@ ";
+				+ " AND C_Invoice.C_Currency_ID = @C_Currency_ID@ "
+				+ " AND invoiceOpen(C_Invoice.C_Invoice_ID, null) > 0 ";
 	}
 
 	public String getCurrencySqlValidation() {

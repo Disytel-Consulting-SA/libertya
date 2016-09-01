@@ -196,6 +196,8 @@ public class InfoCashLine extends Info {
         // "(SELECT ISO_Code FROM C_Currency c WHERE c.C_Currency_ID=cl.C_Currency_ID)", String.class),
 
         new Info_Column( Msg.translate( Env.getCtx(),"Amount" ),"cl.Amount",BigDecimal.class,true,true,null ),
+        //SUR SOFTWARE: Agrego columna para mostrar el monto pendiente de asignación del pago en la ventana de búsqueda
+        new Info_Column( Msg.translate( Env.getCtx(),"OpenAmt" ),"cashlineAvailable(cl.C_CashLine_ID)",BigDecimal.class ),
 
         //
 
