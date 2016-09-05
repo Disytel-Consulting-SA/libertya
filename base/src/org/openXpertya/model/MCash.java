@@ -513,16 +513,19 @@ public class MCash extends X_C_Cash implements DocAction {
             }
     	}
 
-    	// Si la moneda del documento es diferente a la de la compañia:
+    	// Modificación por Matias Cap
+		// Se elimina la condición de la moneda ya que siempre hay que realizar la
+		// validación de la modificación de fechas
  		// No es posible modificar las fechas estado de cuenta y/o aplicación si existen líneas de caja que ya fueron procesadas
-		if (getC_Currency_ID() != Env.getContextAsInt( Env.getCtx(), "$C_Currency_ID" )) {
-    		if (is_ValueChanged( "StatementDate" ) || is_ValueChanged( "DateAcct" )) {      
-                if(containsProcessedLines()) {
-                    log.saveError( "Error",Msg.translate(getCtx(), "CannotChangeDateStatementAcct"));
-                    return false;
-                }
+		if (!newRecord && (is_ValueChanged("StatementDate") || is_ValueChanged("DateAcct"))) {      
+            if(containsProcessedLines()) {
+                log.saveError( "Error",Msg.translate(getCtx(), "CannotChangeDateStatementAcct"));
+                return false;
             }
-    	}
+        }
+		
+		// Si existe al menos una línea completa, no se puede modificar ninguna fecha de la caja
+		
     	    	
     	// Calculate End Balance
     	
