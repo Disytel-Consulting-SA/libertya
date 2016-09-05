@@ -258,8 +258,9 @@ public class CurrentAccountReport extends SvrProcess {
 								client_Currency_ID);
 						log.severe("No Currency Conversion from " + fromISO
 								+ " to " + toISO);
-						throw new Exception("@NoCurrencyConversion@ (" + fromISO
-								+ "->" + toISO + ")");
+						throw new Exception(
+								"@" + (p_DateTrx_To != null ? "NoCurrencyConversionDateTo" : "NoCurrencyConversion")
+										+ "@" + " (" + fromISO + "->" + toISO + ")");
 					}
 					
 					// ANTONIO: La cuenta es al reves acumBalance =

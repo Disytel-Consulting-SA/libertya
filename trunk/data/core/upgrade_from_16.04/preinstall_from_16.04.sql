@@ -822,3 +822,767 @@ CREATE OR REPLACE VIEW reginfo_compras_importaciones_v AS
 
 ALTER TABLE reginfo_compras_importaciones_v
   OWNER TO libertya;
+
+--20160905-1920 Nuevas y modificaciones de funciones que dan soporte a las correcciones de cuenta corriente
+-- Función getallocatedamt(integer, integer, integer, integer, timestamp without time zone, integer)
+CREATE OR REPLACE FUNCTION getallocatedamt(
+    p_c_invoice_id integer,
+    p_c_currency_id integer,
+    p_c_conversiontype_id integer,
+    p_multiplierap integer,
+    p_fechacorte timestamp without time zone,
+    p_c_invoicepayschedule_id integer)
+  RETURNS numeric AS
+$BODY$ 
+DECLARE
+	v_MultiplierAP		NUMERIC := 1;
+	v_PaidAmt			NUMERIC := 0;
+	v_ConversionType_ID INTEGER := p_c_conversionType_ID;
+	v_Currency_ID       INTEGER := p_c_currency_id;
+	v_Temp     NUMERIC;
+	v_SchedulesAmt NUMERIC;
+	v_Diff NUMERIC;
+	ar			RECORD;
+	s			RECORD;
+	v_DateAcct timestamp without time zone;
+	schedule_founded boolean;
+BEGIN
+	--	Default
+	IF (p_MultiplierAP IS NOT NULL) THEN
+		v_MultiplierAP := p_MultiplierAP::numeric;
+	END IF;
+	
+	SELECT DateAcct
+	       INTO v_DateAcct
+	FROM C_Invoice 
+	WHERE C_Invoice_ID = p_c_invoice_id;
+
+	FOR ar IN 
+		SELECT	a.AD_Client_ID, a.AD_Org_ID,
+		al.Amount, al.DiscountAmt, al.WriteOffAmt,
+		a.C_Currency_ID, a.DateTrx , al.C_Invoice_Credit_ID
+		FROM	C_AllocationLine al
+		INNER JOIN C_AllocationHdr a ON (al.C_AllocationHdr_ID=a.C_AllocationHdr_ID)
+		WHERE	(al.C_Invoice_ID = p_C_Invoice_ID OR 
+				al.C_Invoice_Credit_ID = p_C_Invoice_ID ) -- condicion no en Adempiere
+          	AND   a.IsActive='Y'
+          	AND   (p_fechacorte is null OR a.dateacct::date <= p_fechacorte::date)
+	LOOP
+	    -- Agregado, para facturas como pago
+		IF (p_C_Invoice_ID = ar.C_Invoice_Credit_ID) THEN
+		   v_Temp := ar.Amount;
+		ELSE
+		   v_Temp := ar.Amount + ar.DisCountAmt + ar.WriteOffAmt;
+		END IF;
+		-- Se asume que este v_Temp es no negativo
+		v_PaidAmt := v_PaidAmt
+        -- Allocation
+			+ currencyConvert(v_Temp,
+				ar.C_Currency_ID, v_Currency_ID, v_DateAcct, v_ConversionType_ID, 
+				ar.AD_Client_ID, ar.AD_Org_ID);
+
+	--RAISE NOTICE ' C_Invoice_ID=% , PaidAmt=% , Allocation= % ',p_C_Invoice_ID, v_PaidAmt, v_Temp;
+	END LOOP;
+
+	--Si existe un payschedule del comprobante como parametro, entonces se devuelve el importe imputado de ese payschedule
+	IF (p_c_invoicepayschedule_id > 0) THEN 
+		v_SchedulesAmt := 0;
+		schedule_founded := false;        
+		FOR s IN  SELECT  ips.C_InvoicePaySchedule_ID, currencyConvert(ips.DueAmt, i.c_currency_id, v_Currency_ID, v_DateAcct, v_ConversionType_ID, i.AD_Client_ID, i.AD_Org_ID) as DueAmt 	        
+			FROM    C_InvoicePaySchedule ips 	        
+			INNER JOIN C_Invoice i on (ips.C_Invoice_ID = i.C_Invoice_ID) 		
+			WHERE	ips.C_Invoice_ID = p_c_invoice_id AND   ips.IsValid='Y'         	
+			ORDER BY ips.DueDate 
+		LOOP    
+			-- Acumulo los importes de cada schedule hasta llegar al c_invoicepayschedule_id parámetro
+			v_SchedulesAmt := v_SchedulesAmt + s.DueAmt;
+			schedule_founded := s.C_InvoicePaySchedule_ID = p_c_invoicepayschedule_id;
+			IF (schedule_founded) THEN
+				-- Si llegamos al parámetro, entonces se le resta el acumulado de schedules a lo imputado
+				v_Diff := v_PaidAmt - v_SchedulesAmt;
+				-- Si el importe resultante es:
+				-- 1) >= 0: Significa que imputado hay mas que el acumulado, entonces lo imputado es el total de la cuota
+				IF (v_Diff >= 0) THEN
+					v_PaidAmt := s.DueAmt;
+				ELSE
+					-- 2) < 0: Significa que hay imputado algo o nada de la cuota 
+					-- Al importe de la cuota, se le resta la diferencia anterior absoluta
+					v_PaidAmt := s.DueAmt - abs(v_Diff);
+					-- Si la diferencia es menor o igual a 0, significa que no hay nada imputado
+					-- Caso contrario, lo pagado es dicha diferencia
+					IF (v_PaidAmt <= 0) THEN
+						v_PaidAmt := 0;
+					END IF;
+				END IF;
+				EXIT;
+			END IF;
+		END LOOP;
+		-- Si no se encontró el schedule, entonces el imputado es 0
+		IF (NOT schedule_founded) THEN
+			v_PaidAmt := 0;
+		END IF;
+	END IF;
+	
+	RETURN	v_PaidAmt * v_MultiplierAP;
+END;
+$BODY$
+  LANGUAGE plpgsql VOLATILE
+  COST 100;
+ALTER FUNCTION getallocatedamt(integer, integer, integer, integer, timestamp without time zone, integer)
+  OWNER TO libertya;
+
+-- Función getallocatedamt(integer, integer, integer, integer, timestamp without time zone)
+CREATE OR REPLACE FUNCTION getallocatedamt(
+    p_c_invoice_id integer,
+    p_c_currency_id integer,
+    p_c_conversiontype_id integer,
+    p_multiplierap integer,
+    p_fechacorte timestamp without time zone)
+  RETURNS numeric AS
+$BODY$ 
+BEGIN
+	RETURN getallocatedamt(p_c_invoice_id, p_c_currency_id, p_c_conversiontype_id, p_multiplierap, p_fechacorte, 0);
+END;
+$BODY$
+  LANGUAGE plpgsql VOLATILE
+  COST 100;
+ALTER FUNCTION getallocatedamt(integer, integer, integer, integer, timestamp without time zone)
+  OWNER TO libertya;
+
+-- Función getallocatedamt(integer, integer, integer, integer)
+CREATE OR REPLACE FUNCTION getallocatedamt(
+    p_c_invoice_id integer,
+    p_c_currency_id integer,
+    p_c_conversiontype_id integer,
+    p_multiplierap integer)
+  RETURNS numeric AS
+$BODY$
+BEGIN
+	return getallocatedamt(p_c_invoice_id, p_c_currency_id, p_c_conversiontype_id, p_multiplierap, null::timestamp);
+END;
+
+$BODY$
+  LANGUAGE plpgsql VOLATILE
+  COST 100;
+ALTER FUNCTION getallocatedamt(integer, integer, integer, integer)
+  OWNER TO libertya;
+
+-- Función invoiceopen(integer, integer, integer, integer, timestamp)
+CREATE OR REPLACE FUNCTION invoiceopen(
+    p_c_invoice_id integer,
+    p_c_invoicepayschedule_id integer,
+    p_c_currency_id integer,
+    p_c_conversiontype_id integer,
+    p_dateto timestamp)
+  RETURNS numeric AS
+$BODY$ /*************************************************************************  * The contents of this file are subject to the Compiere License.  You may  * obtain a copy of the License at    http://www.compiere.org/license.html  * Software is on an  "AS IS" basis,  WITHOUT WARRANTY OF ANY KIND, either  * express or implied. See the License for details. Code: Compiere ERP+CRM  * Copyright (C) 1999-2001 Jorg Janke, ComPiere, Inc. All Rights Reserved.  *  * converted to postgreSQL by Karsten Thiemann (Schaeffer AG),   * kthiemann@adempiere.org  *************************************************************************  ***  * Title:	Calculate Open Item Amount in Invoice Currency  * Description:  *	Add up total amount open for C_Invoice_ID if no split payment.  *  Grand Total minus Sum of Allocations in Invoice Currency  *  *  For Split Payments:  *  Allocate Payments starting from first schedule.  *  Cannot be used for IsPaid as mutating  *  * Test:  * 	SELECT C_InvoicePaySchedule_ID, DueAmt FROM C_InvoicePaySchedule WHERE C_Invoice_ID=109 ORDER BY DueDate;  * 	SELECT invoiceOpen (109, null) FROM AD_System; - converted to default client currency  * 	SELECT invoiceOpen (109, 11) FROM AD_System; - converted to default client currency  * 	SELECT invoiceOpen (109, 102) FROM AD_System;  * 	SELECT invoiceOpen (109, 103) FROM AD_System;  ***  * Pasado a Libertya a partir de Adempiere 360LTS  * - ids son de tipo integer, no numeric  * - TODO : tema de las zonas en los timestamp  * - Excepciones en SELECT INTO requieren modificador STRICT bajo PostGreSQL o usar  * NOT FOUND  * - Por ahora, el "ignore rounding" se hace como en libertya (-0.01,0.01),  * en vez de usar la precisión de la moneda  * - Se toma el tipo de conversion de la factura, auqneu esto es dudosamente correcto  * ya que otras funciones , en particular currencyBase nunca tiene en cuenta  * este valor  * - Como en Libertya se tiene en cuenta tambien C_Invoice_Credit_ID para calcular  * la cantidad alocada a una factura (aunque esto es medio dudoso....)  * - No se soporta la fecha como 3er parametro (en realidad, tampoco se esta  * usando actualmente, y se deberia poder resolver de otra manera)  * - Libertya parece tener un bug al filtrar por C_InvoicePaySchedule_ID al calcular  * el granTotal (el granTotal SIEMPRE es el total de la factura, tomada directamente  * de C_Invoice.GranTotal o a partir de la suma de los DueAmt en C_InvoicePaySchedule);  * se usa la sentencia como esta en Adempeire (esto es, solo se filtra por C_Invoice_ID)  * - Nuevo enfoque: NO se usa ni la vista C_Invoice_V ni multiplicadores  * se asume todo positivo...  * - El resultado SIEMPRE deberia ser positivo y en el intervalo [0..GrandTotal]  * - 03 julio: se pasa a usar getAllocatedAmt para hacer esta funcion consistente  * con invoicePaid  * - 03 julio: se pasa de usar STRICT a NOT FOUND; es mas eficiente  ************************************************************************/ 
+DECLARE 	
+v_Currency_ID		INTEGER := p_c_currency_id; 	
+v_TotalOpenAmt  	NUMERIC := 0; 	
+v_PaidAmt  	        NUMERIC := 0; 	
+v_Remaining	        NUMERIC := 0;    	
+v_Precision            	NUMERIC := 0;    	
+v_Min            	NUMERIC := 0.01;     	
+s			RECORD; 	
+v_ConversionType_ID INTEGER := p_c_conversiontype_id;  	
+v_Date timestamp with time zone := ('now'::text)::timestamp(6);                
+
+BEGIN 	 	
+
+SELECT	currencyConvert(GrandTotal, I.c_currency_id, v_Currency_ID, v_Date, v_ConversionType_ID, I.AD_Client_ID, I.AD_Org_ID) as GrandTotal, 	
+	(SELECT StdPrecision FROM C_Currency C WHERE C.C_Currency_ID = I.C_Currency_ID) AS StdPrecision  	
+	INTO v_TotalOpenAmt, v_Precision 	
+FROM	C_Invoice I 
+WHERE	I.C_Invoice_ID = p_C_Invoice_ID; 	
+
+IF NOT FOUND THEN  
+	RAISE NOTICE 'Invoice no econtrada - %', p_C_Invoice_ID; 		
+	RETURN NULL; 	
+END IF; 	      	 	 	 	
+
+v_PaidAmt := getAllocatedAmt(p_C_Invoice_ID,v_Currency_ID,v_ConversionType_ID,1,p_dateto); 
+
+IF (p_C_InvoicePaySchedule_ID > 0) THEN 
+	v_Remaining := v_PaidAmt;         
+	FOR s IN  SELECT  ips.C_InvoicePaySchedule_ID, currencyConvert(ips.DueAmt, i.c_currency_id, v_Currency_ID, v_Date, v_ConversionType_ID, i.AD_Client_ID, i.AD_Org_ID) as DueAmt 	        
+		FROM    C_InvoicePaySchedule ips 	        
+		INNER JOIN C_Invoice i on (ips.C_Invoice_ID = i.C_Invoice_ID) 		
+		WHERE	ips.C_Invoice_ID = p_C_Invoice_ID AND   ips.IsValid='Y'         	
+		ORDER BY ips.DueDate         
+	LOOP             
+
+		IF (s.C_InvoicePaySchedule_ID = p_C_InvoicePaySchedule_ID) THEN                 
+			v_TotalOpenAmt := s.DueAmt - v_Remaining;                 
+			IF (v_TotalOpenAmt < 0) THEN                     
+				v_TotalOpenAmt := 0;                  
+			END IF; 				
+			EXIT;              
+		ELSE                  
+			v_Remaining := v_Remaining - s.DueAmt;                 
+			IF (v_Remaining < 0) THEN         
+				v_Remaining := 0;                 
+			END IF;             
+		END IF;         
+	END LOOP;     
+ELSE         
+	v_TotalOpenAmt := v_TotalOpenAmt - v_PaidAmt;     
+END IF; 	 	
+
+IF (v_TotalOpenAmt >= -v_Min AND v_TotalOpenAmt <= v_Min) THEN 		
+	v_TotalOpenAmt := 0; 	
+END IF; 	 	
+
+v_TotalOpenAmt := ROUND(COALESCE(v_TotalOpenAmt,0), v_Precision); 	
+
+RETURN	v_TotalOpenAmt; 
+
+END; 
+$BODY$
+
+  LANGUAGE plpgsql VOLATILE
+  COST 100;
+ALTER FUNCTION invoiceopen(integer, integer, integer, integer, timestamp)
+  OWNER TO libertya;
+
+-- Función invoiceopen(integer, integer, integer, integer)
+CREATE OR REPLACE FUNCTION invoiceopen(
+    p_c_invoice_id integer,
+    p_c_invoicepayschedule_id integer,
+    p_c_currency_id integer,
+    p_c_conversiontype_id integer)
+  RETURNS numeric AS
+$BODY$ 
+BEGIN 	 	
+	return invoiceopen(p_c_invoice_id, p_c_invoicepayschedule_id, p_c_currency_id, p_c_conversiontype_id, null::timestamp);
+END; 
+$BODY$
+  LANGUAGE plpgsql VOLATILE
+  COST 100;
+ALTER FUNCTION invoiceopen(integer, integer, integer, integer)
+  OWNER TO libertya;
+
+-- Función invoiceopen(integer, integer, timestamp)
+CREATE OR REPLACE FUNCTION invoiceopen(
+    p_c_invoice_id integer,
+    p_c_invoicepayschedule_id integer,
+    p_dateto timestamp)
+  RETURNS numeric AS
+$BODY$
+/*************************************************************************
+ * The contents of this file are subject to the Compiere License.  You may
+ * obtain a copy of the License at    http://www.compiere.org/license.html
+ * Software is on an  "AS IS" basis,  WITHOUT WARRANTY OF ANY KIND, either
+ * express or implied. See the License for details. Code: Compiere ERP+CRM
+ * Copyright (C) 1999-2001 Jorg Janke, ComPiere, Inc. All Rights Reserved.
+ *
+ * converted to postgreSQL by Karsten Thiemann (Schaeffer AG), 
+ * kthiemann@adempiere.org
+ *************************************************************************
+ ***
+ * Title:	Calculate Open Item Amount in Invoice Currency
+ * Description:
+ *	Add up total amount open for C_Invoice_ID if no split payment.
+ *  Grand Total minus Sum of Allocations in Invoice Currency
+ *
+ *  For Split Payments:
+ *  Allocate Payments starting from first schedule.
+ *  Cannot be used for IsPaid as mutating
+ *
+ * Test:
+ * 	SELECT C_InvoicePaySchedule_ID, DueAmt FROM C_InvoicePaySchedule WHERE C_Invoice_ID=109 ORDER BY DueDate;
+ * 	SELECT invoiceOpen (109, null) FROM AD_System; - converted to default client currency
+ * 	SELECT invoiceOpen (109, 11) FROM AD_System; - converted to default client currency
+ * 	SELECT invoiceOpen (109, 102) FROM AD_System;
+ * 	SELECT invoiceOpen (109, 103) FROM AD_System;
+ ***
+ * Pasado a Libertya a partir de Adempiere 360LTS
+ * - ids son de tipo integer, no numeric
+ * - TODO : tema de las zonas en los timestamp
+ * - Excepciones en SELECT INTO requieren modificador STRICT bajo PostGreSQL o usar
+ * NOT FOUND
+ * - Por ahora, el "ignore rounding" se hace como en libertya (-0.01,0.01),
+ * en vez de usar la precisión de la moneda
+ * - Se toma el tipo de conversion de la factura, auqneu esto es dudosamente correcto
+ * ya que otras funciones , en particular currencyBase nunca tiene en cuenta
+ * este valor
+ * - Como en Libertya se tiene en cuenta tambien C_Invoice_Credit_ID para calcular
+ * la cantidad alocada a una factura (aunque esto es medio dudoso....)
+ * - No se soporta la fecha como 3er parametro (en realidad, tampoco se esta
+ * usando actualmente, y se deberia poder resolver de otra manera)
+ * - Libertya parece tener un bug al filtrar por C_InvoicePaySchedule_ID al calcular
+ * el granTotal (el granTotal SIEMPRE es el total de la factura, tomada directamente
+ * de C_Invoice.GranTotal o a partir de la suma de los DueAmt en C_InvoicePaySchedule);
+ * se usa la sentencia como esta en Adempeire (esto es, solo se filtra por C_Invoice_ID)
+ * - Nuevo enfoque: NO se usa ni la vista C_Invoice_V ni multiplicadores
+ * se asume todo positivo...
+ * - El resultado SIEMPRE deberia ser positivo y en el intervalo [0..GrandTotal]
+ * - 03 julio: se pasa a usar getAllocatedAmt para hacer esta funcion consistente
+ * con invoicePaid
+ * - 03 julio: se pasa de usar STRICT a NOT FOUND; es mas eficiente
+ ************************************************************************/
+DECLARE
+	v_Currency_ID	    INTEGER;
+	v_ConversionType_ID INTEGER; -- NO en Adempiere
+
+BEGIN
+	--	Get Currency, ConversionType
+	SELECT	C_Currency_ID, C_ConversionType_ID
+		INTO v_Currency_ID, v_ConversionType_ID
+	FROM	C_Invoice I		--	NO se corrige por CM o SpliPayment; se usa directamente C_Inovoice y ningun multiplicador
+	WHERE	I.C_Invoice_ID = p_C_Invoice_ID;
+
+	IF NOT FOUND THEN
+       	RAISE NOTICE 'Invoice no econtrada - %', p_C_Invoice_ID;
+		RETURN NULL;
+	END IF;
+
+	RETURN	invoiceOpen(p_c_invoice_id, p_c_invoicepayschedule_id, v_Currency_ID, v_ConversionType_ID, p_dateto);
+END;
+
+$BODY$
+  LANGUAGE plpgsql VOLATILE
+  COST 100;
+ALTER FUNCTION invoiceopen(integer, integer, timestamp)
+  OWNER TO libertya;
+
+-- Función invoiceopen(integer, integer)
+CREATE OR REPLACE FUNCTION invoiceopen(
+    p_c_invoice_id integer,
+    p_c_invoicepayschedule_id integer)
+  RETURNS numeric AS
+$BODY$
+BEGIN
+	RETURN	invoiceOpen(p_c_invoice_id, p_c_invoicepayschedule_id, null::timestamp);
+END;
+
+$BODY$
+  LANGUAGE plpgsql VOLATILE
+  COST 100;
+ALTER FUNCTION invoiceopen(integer, integer)
+  OWNER TO libertya;
+
+-- Función cashlineavailable(integer, timestamp)
+CREATE OR REPLACE FUNCTION cashlineavailable(
+    p_c_cashline_id integer,
+    p_date_to timestamp)
+  RETURNS numeric AS
+$BODY$
+/*************************************************************************
+-Retorna NULL si parametro es null o si la linea no existe
+-Retorna la cantidad disponible de la linea para alocacion futuras usando el mismo signo 
+ que la linea, esto es, si C_CashLine.Amt <0 , se retorna 0 o un numero
+ negativo; si C_CashLine.amt >0 , se retrona cero o un numero positivo.
+-la cantidad disponible inicial de una linea de caja es C_CashLine.Amt
+ (esto es, no se tiene en cuenta ni C_CashLine.DiscountAmt ni 
+ C_CashLine.WriteoffAmt) 
+-asume que las alocaciones son no negativas y solo se consideran aquellas
+ lineas de alocacion que pertenecen a una cabecera de alocacion (C_AllocationHdr)
+ activa (esta es la unica condicion que se aplica)
+- se considera como monto de alocacion con respecto a la linea de caja 
+  a C_AllocationLine.Amount (esto es, no se tiene en cuenta C_AllocationLine.WriteOff ni
+  C_AllocationLine.Discount)
+  
+TEST: 
+-- montos de lienas, monto disponible, y alocaciones relacionadas cada una de las lineas de caja
+-- Availabe DEBE ser cero o tener el mismo signo que Amount,
+-- si se usa una sola moneda, entonces 
+-- (suma de AmountAllocatedInAlocLine en AH activas) + ABS(Available) debe ser iugal a  ABS(Amoumt) 
+select cl.c_cashLine_id,cl.amount, 
+cashLineAvailable(cl.c_cashLine_id) as Available
+,al.c_allocationLine_id ,
+al.amount as AmountAllocatedInAlocLine,
+cl.c_currency_id as currencyCashLine,
+ah.c_currency_id as currencyAlloc,
+ah.isActive as AHActive
+from 
+c_cashLine cl left join c_allocationLine al on
+  (al.c_cashLine_id = cl.c_cashLine_id)
+left join 
+C_AllocationHDR ah on (ah.C_allocationHdr_id = al.C_allocationHdr_id)
+
+order by cl.c_cashLine_id;
+  
+************************************************************************/
+DECLARE
+	v_Currency_ID		INTEGER;
+	v_Amt               NUMERIC;
+   	r   			RECORD;
+	v_ConversionType_ID INTEGER := 0; -- actuamente, tal como en PL/java se usa siempre 0, no se toma desde cashLine
+	v_allocation NUMERIC;
+	v_allocatedAmt NUMERIC;	-- candida alocada total convertida a la moneda de la linea 
+	v_AvailableAmt		NUMERIC := 0;
+	v_DateAcct timestamp without time zone;
+ 
+BEGIN
+	IF (p_C_Cashline_id IS NULL OR p_C_Cashline_id = 0) THEN
+		RETURN NULL;
+	END IF;
+	
+	--	Get Currency and Amount
+	SELECT	C_Currency_ID, Amount
+		INTO v_Currency_ID, v_Amt
+	FROM	C_CashLine    
+	WHERE	C_CashLine_ID  = p_C_Cashline_id;
+
+	SELECT DateAcct
+	       INTO v_DateAcct
+	FROM C_Cash c 
+	INNER JOIN C_CashLine cl ON c.C_Cash_ID = cl.C_Cash_ID 
+	WHERE C_CashLine_ID = p_C_Cashline_id;
+	
+	IF NOT FOUND THEN
+	  RETURN NULL;
+	END IF;
+	
+	-- Calculate Allocated Amount
+	-- input: p_C_Cashline_id,v_Currency_ID,v_ConversionType_ID
+	--output: v_allocatedAmt
+	v_allocatedAmt := 0.00;
+	FOR r IN
+		SELECT	a.AD_Client_ID, a.AD_Org_ID, al.Amount, a.C_Currency_ID, a.DateTrx
+		FROM	C_AllocationLine al
+	        INNER JOIN C_AllocationHdr a ON (al.C_AllocationHdr_ID=a.C_AllocationHdr_ID)
+		WHERE	al.C_CashLine_ID = p_C_Cashline_id
+          	AND   a.IsActive='Y'
+          	AND (p_date_to IS NULL OR a.dateacct::date <= p_date_to::date)
+	LOOP
+        v_allocation := currencyConvert(r.Amount, r.C_Currency_ID, v_Currency_ID, 
+				v_DateAcct, v_ConversionType_ID, r.AD_Client_ID, r.AD_Org_ID);
+	    v_allocatedAmt := v_allocatedAmt + v_allocation;
+	END LOOP;
+
+	-- esto supone que las alocaciones son siempre no negativas; si esto no pasa, se van a retornar valores que no van a tener sentido
+	v_AvailableAmt := ABS(v_Amt) - v_allocatedAmt;
+	-- v_AvailableAmt aca DEBE ser NO Negativo si admeas, las suma de las alocaciones nunca superan el monto de la linea
+	-- de cualquiera manera, por "seguridad", si el valor es negativo, se corrige a cero
+    IF (v_AvailableAmt < 0) THEN
+		RAISE NOTICE 'CashLine Available negative, correcting to zero - %',v_AvailableAmt ;
+		v_AvailableAmt := 0.00;
+    END IF;	
+	--  el resultado debe ser 0 o de lo contrario tener el mismo signo que la linea; 
+	IF (v_Amt < 0) THEN
+		v_AvailableAmt := v_AvailableAmt * -1::numeric;
+	END IF; 
+	-- redondeo de moneda
+	v_AvailableAmt :=  currencyRound(v_AvailableAmt,v_Currency_ID,NULL);
+	RETURN	v_AvailableAmt;
+END;
+$BODY$
+  LANGUAGE plpgsql VOLATILE
+  COST 100;
+ALTER FUNCTION cashlineavailable(integer, timestamp)
+  OWNER TO libertya;
+
+-- Función cashlineavailable(integer)
+CREATE OR REPLACE FUNCTION cashlineavailable(p_c_cashline_id integer)
+  RETURNS numeric AS
+$BODY$ 
+BEGIN
+	RETURN cashlineavailable(p_c_cashline_id, null::timestamp);
+END;
+$BODY$
+  LANGUAGE plpgsql VOLATILE
+  COST 100;
+ALTER FUNCTION cashlineavailable(integer)
+  OWNER TO libertya;
+
+-- Función paymentavailable(integer, timestamp)
+CREATE OR REPLACE FUNCTION paymentavailable(p_c_payment_id integer, dateTo timestamp)
+  RETURNS numeric AS
+$BODY$
+DECLARE
+	v_Currency_ID		INTEGER;
+	v_AvailableAmt		NUMERIC := 0;
+   	v_IsReceipt         CHARACTER(1);
+   	v_Amt               NUMERIC := 0;
+   	r   			RECORD;
+	v_Charge_ID INTEGER; 
+	v_ConversionType_ID INTEGER; 
+	
+	v_DateAcct timestamp without time zone;
+BEGIN
+	BEGIN
+	
+	SELECT	C_Currency_ID, PayAmt, IsReceipt, 
+			C_Charge_ID,C_ConversionType_ID, DateAcct
+	  INTO	STRICT 
+			v_Currency_ID, v_AvailableAmt, v_IsReceipt,
+			v_Charge_ID,v_ConversionType_ID, v_DateAcct
+	FROM	C_Payment     
+	WHERE	C_Payment_ID = p_C_Payment_ID;
+		EXCEPTION	
+		WHEN OTHERS THEN
+            	RAISE NOTICE 'PaymentAvailable - %', SQLERRM;
+			RETURN NULL;
+	END;
+	
+	IF (v_Charge_ID > 0 ) THEN 
+	   RETURN 0;
+	END IF;
+	
+	FOR r IN
+		SELECT	a.AD_Client_ID, a.AD_Org_ID, al.Amount, a.C_Currency_ID, a.DateTrx
+		FROM	C_AllocationLine al
+	        INNER JOIN C_AllocationHdr a ON (al.C_AllocationHdr_ID=a.C_AllocationHdr_ID)
+		WHERE	al.C_Payment_ID = p_C_Payment_ID
+          	AND   a.IsActive='Y'
+          	AND (dateTo IS NULL OR a.dateacct::date <= dateTo::date)
+	LOOP
+        v_Amt := currencyConvert(r.Amount, r.C_Currency_ID, v_Currency_ID, 
+				v_DateAcct, v_ConversionType_ID, r.AD_Client_ID, r.AD_Org_ID);
+	    v_AvailableAmt := v_AvailableAmt - v_Amt;
+	END LOOP;
+	
+	IF (v_AvailableAmt < 0) THEN
+		RAISE NOTICE 'Payment Available negative, correcting to zero - %',v_AvailableAmt ;
+		v_AvailableAmt := 0;
+	END IF;
+	
+	v_AvailableAmt :=  currencyRound(v_AvailableAmt,v_Currency_ID,NULL);
+	RETURN	v_AvailableAmt;
+END;
+$BODY$
+  LANGUAGE plpgsql VOLATILE
+  COST 100;
+ALTER FUNCTION paymentavailable(integer, timestamp)
+  OWNER TO libertya;
+
+-- Función paymentavailable(integer)
+CREATE OR REPLACE FUNCTION paymentavailable(p_c_payment_id integer)
+  RETURNS numeric AS
+$BODY$
+BEGIN
+	RETURN paymentavailable(p_c_payment_id, null::timestamp);
+END;
+$BODY$
+  LANGUAGE plpgsql VOLATILE
+  COST 100;
+ALTER FUNCTION paymentavailable(integer)
+  OWNER TO libertya;
+
+--DROP de función v_documents_org_filtered(integer, boolean, character) y tipo v_documents_org_type_condition 
+DROP FUNCTION v_documents_org_filtered(integer, boolean, character);
+DROP TYPE v_documents_org_type_condition;
+
+-- Tipo v_documents_org_type_condition
+CREATE TYPE v_documents_org_type_condition AS (documenttable text, document_id int, ad_client_id int, ad_org_id int, 
+					isactive char(1), created timestamp, createdby integer, updated timestamp, 
+					updatedby int, c_bpartner_id int, c_doctype_id integer, signo_issotrx int, 
+					doctypename varchar(60), doctypeprintname varchar(60), documentno varchar(60), 
+					issotrx bpchar, docstatus character(2), datetrx timestamp, dateacct timestamp, 
+					c_currency_id int, c_conversiontype_id int, amount numeric, 
+					c_invoicepayschedule_id integer, duedate timestamp, truedatetrx timestamp, 
+					socreditstatus char(1), c_order_id integer, c_allocationhdr_id integer);
+
+--Función v_documents_org_filtered(integer, boolean, character, timestamp without time zone)
+CREATE OR REPLACE FUNCTION v_documents_org_filtered(
+    bpartner integer,
+    summaryonly boolean,
+    condition character,
+    dateto timestamp without time zone)
+  RETURNS SETOF v_documents_org_type_condition AS
+$BODY$
+declare
+    consulta varchar;
+    orderby1 varchar;
+    orderby2 varchar;
+    orderby3 varchar;
+    leftjoin1 varchar;
+    leftjoin2 varchar;
+    advancedcondition varchar;
+    whereclauseConditionDebit varchar;
+    whereclauseConditionCredit varchar;
+    whereclauseDateTo varchar;
+    selectallocationNull varchar;
+    selectallocationPayment varchar;
+    selectallocationCashline varchar;
+    selectallocationCredit varchar;
+    selectAllocationReferencePayment varchar;
+    selectAllocationReferenceCashline varchar;
+    selectAllocationReferenceCredit varchar;
+    adocument v_documents_org_type_condition;
+   
+BEGIN
+    whereclauseDateTo = ' ( 1 = 1 ) ';
+    -- Armar la condición para fecha de corte
+    if dateTo is not null then 
+	whereclauseDateTo = ' dateacct::date <= ''' || dateTo || '''::date ';
+    end if;
+    
+    --Si no se deben mostrar todos, entonces agregar la condicion por la forma de pago
+    if condition <> 'A' then
+	--Si se debe mostrar sólo efectivo, entonces no se debe mostrar los anticipos, si o si debe tener una factura asociada
+	advancedcondition = 'il.paymentrule is null OR ';
+	if condition = 'B' then
+		advancedcondition = '';
+	end if;
+	whereclauseConditionDebit = ' (i.paymentrule = ''' || condition || ''') ';
+	whereclauseConditionCredit = ' (' || advancedcondition || ' il.paymentrule = ''' || condition || ''') ';
+    else
+	whereclauseConditionDebit = ' (1 = 1) ';
+	whereclauseConditionCredit = ' (1 = 1) ';
+    end if;    
+
+    -- recuperar informacion minima indispensable si summaryonly es true.  en caso de ser false, debe joinearse/ordenarse, etc.
+    if summaryonly = false then
+
+        orderby1 = ' ORDER BY ''C_Invoice''::text, i.c_invoice_id, i.ad_client_id, i.ad_org_id, i.isactive, i.created, i.createdby, i.updated, i.updatedby, i.c_bpartner_id, i.c_doctype_id, dt.signo_issotrx, dt.name, dt.printname, i.documentno, i.issotrx, i.docstatus,
+                 CASE
+                     WHEN i.c_invoicepayschedule_id IS NOT NULL THEN ips.duedate
+                     ELSE i.dateinvoiced
+                 END, i.dateacct, i.c_currency_id, i.c_conversiontype_id, i.grandtotal, i.c_invoicepayschedule_id, ips.duedate, i.dateinvoiced, bp.socreditstatus ';
+
+        orderby2 = ' ORDER BY ''C_Payment''::text, p.c_payment_id, p.ad_client_id, COALESCE(il.ad_org_id, p.ad_org_id), p.isactive, p.created, p.createdby, p.updated, p.updatedby, p.c_bpartner_id, p.c_doctype_id, dt.signo_issotrx, dt.name, dt.printname, p.documentno, p.issotrx, p.docstatus, p.datetrx, p.dateacct, p.c_currency_id, p.c_conversiontype_id, p.payamt, NULL::integer, p.duedate, bp.socreditstatus ';
+
+        orderby3 = ' ORDER BY ''C_CashLine''::text, cl.c_cashline_id, cl.ad_client_id, COALESCE(il.ad_org_id, cl.ad_org_id), cl.isactive, cl.created, cl.createdby, cl.updated, cl.updatedby,
+                CASE
+                    WHEN cl.c_bpartner_id IS NOT NULL THEN cl.c_bpartner_id
+                    ELSE il.c_bpartner_id
+                END, dt.c_doctype_id,
+                CASE
+                    WHEN cl.amount < 0.0 THEN 1
+                    ELSE (-1)
+                END, dt.name, dt.printname, ''@line@''::text || cl.line::character varying::text,
+                CASE
+                    WHEN cl.amount < 0.0 THEN ''N''::bpchar
+                    ELSE ''Y''::bpchar
+                END, cl.docstatus, c.statementdate, c.dateacct, cl.c_currency_id, NULL::integer, abs(cl.amount), NULL::timestamp without time zone, COALESCE(bp.socreditstatus, bp2.socreditstatus) ';
+	
+	selectallocationNull = ' NULL::integer ';
+	selectallocationPayment = selectallocationNull;
+	selectallocationCashline = selectallocationNull;
+	selectallocationCredit = selectallocationNull;
+	
+    else
+        orderby1 = '';
+        orderby2 = '';
+        orderby3 = '';
+
+	selectAllocationReferencePayment = ' al.c_payment_id = p.c_payment_id ';
+	selectAllocationReferenceCashline = ' al.c_cashline_id = cl.c_cashline_id ';
+	selectAllocationReferenceCredit = ' al.c_invoice_credit_id = i.c_invoice_id ';
+
+	selectallocationPayment = ' (SELECT ah.c_allocationhdr_id FROM c_allocationline al INNER JOIN c_allocationhdr ah on ah.c_allocationhdr_id = al.c_allocationhdr_id WHERE allocationtype <> ''MAN'' AND ah.dateacct::date = p.dateacct::date AND ' || selectAllocationReferencePayment || ' AND ' || whereclauseDateTo || ' ORDER BY ah.created LIMIT 1) as c_allocationhdr_id ';
+	selectallocationCashline = ' (SELECT ah.c_allocationhdr_id FROM c_allocationline al INNER JOIN c_allocationhdr ah on ah.c_allocationhdr_id = al.c_allocationhdr_id WHERE allocationtype <> ''MAN'' AND ah.dateacct::date = c.dateacct::date AND ' || selectAllocationReferenceCashline || ' AND ' || whereclauseDateTo || ' ORDER BY ah.created LIMIT 1) as c_allocationhdr_id ';
+	selectallocationCredit = ' (SELECT ah.c_allocationhdr_id FROM c_allocationline al INNER JOIN c_allocationhdr ah on ah.c_allocationhdr_id = al.c_allocationhdr_id WHERE allocationtype <> ''MAN'' AND ah.dateacct::date = i.dateacct::date AND ' || selectAllocationReferenceCredit || ' AND ' || whereclauseDateTo || ' ORDER BY ah.created LIMIT 1) as c_allocationhdr_id ';
+	
+    end if;    
+
+    consulta = ' SELECT * FROM 
+
+        (        ( SELECT DISTINCT ''C_Invoice''::text AS documenttable, i.c_invoice_id AS document_id, i.ad_client_id, i.ad_org_id, i.isactive, i.created, i.createdby, i.updated, i.updatedby, i.c_bpartner_id, i.c_doctype_id, dt.signo_issotrx, dt.name AS doctypename, dt.printname AS doctypeprintname, i.documentno, i.issotrx, i.docstatus,
+                        CASE
+                            WHEN i.c_invoicepayschedule_id IS NOT NULL THEN ips.duedate
+                            ELSE i.dateinvoiced
+                        END AS datetrx, i.dateacct, i.c_currency_id, i.c_conversiontype_id, i.grandtotal AS amount, i.c_invoicepayschedule_id, ips.duedate, i.dateinvoiced AS truedatetrx, bp.socreditstatus, i.c_order_id, '
+				|| selectallocationCredit || 
+               ' FROM c_invoice_v i
+              JOIN c_doctype dt ON i.c_doctypetarget_id = dt.c_doctype_id
+         JOIN c_bpartner bp ON bp.c_bpartner_id = i.c_bpartner_id and (' || $1 || ' = -1  or bp.c_bpartner_id = ' || $1 || ')
+    LEFT JOIN c_invoicepayschedule ips ON i.c_invoicepayschedule_id = ips.c_invoicepayschedule_id
+    WHERE 
+
+' || whereclauseConditionDebit || '
+' || orderby1 || '
+
+    )
+        UNION ALL
+                ( SELECT DISTINCT ''C_Payment''::text AS documenttable, p.c_payment_id AS document_id, p.ad_client_id, COALESCE(il.ad_org_id, p.ad_org_id) AS ad_org_id, p.isactive, p.created, p.createdby, p.updated, p.updatedby, p.c_bpartner_id, p.c_doctype_id, dt.signo_issotrx, dt.name AS doctypename, dt.printname AS doctypeprintname, p.documentno, p.issotrx, p.docstatus, p.datetrx, p.dateacct, p.c_currency_id, p.c_conversiontype_id, p.payamt AS amount, NULL::integer AS c_invoicepayschedule_id, p.duedate, p.datetrx AS truedatetrx, bp.socreditstatus, 0 as c_order_id, '
+		|| selectallocationPayment || 
+                  ' FROM c_payment p
+              JOIN c_doctype dt ON p.c_doctype_id = dt.c_doctype_id
+         JOIN c_bpartner bp ON p.c_bpartner_id = bp.c_bpartner_id AND (' || $1 || ' = -1 or p.c_bpartner_id = ' || $1 || ')
+	LEFT JOIN c_allocationline al ON al.c_payment_id = p.c_payment_id 
+	LEFT JOIN c_invoice il ON il.c_invoice_id = al.c_invoice_id
+	LEFT JOIN M_BoletaDepositoLine bdlr on bdlr.c_reverse_payment_id = p.c_payment_id
+	LEFT JOIN M_BoletaDeposito bdr on bdr.M_BoletaDeposito_ID = bdlr.M_BoletaDeposito_ID
+	LEFT JOIN M_BoletaDepositoLine bdle on bdle.c_depo_payment_id = p.c_payment_id
+	LEFT JOIN M_BoletaDeposito bde on bde.M_BoletaDeposito_ID = bdle.M_BoletaDeposito_ID
+	LEFT JOIN M_BoletaDeposito bddb on bddb.c_boleta_payment_id = p.c_payment_id
+  WHERE 
+CASE
+    WHEN il.ad_org_id IS NOT NULL AND il.ad_org_id <> p.ad_org_id THEN p.docstatus = ANY (ARRAY[''CO''::bpchar, ''CL''::bpchar])
+    ELSE 1 = 1
+END 
+
+AND (CASE WHEN bdr.M_BoletaDeposito_ID IS NOT NULL 
+		OR bde.M_BoletaDeposito_ID IS NOT NULL 
+		OR bddb.M_BoletaDeposito_ID IS NOT NULL THEN p.docstatus NOT IN (''CO'',''CL'') 
+	ELSE 1 = 1
+	END) 
+
+AND ' || whereclauseConditionCredit || '
+
+' || orderby2 || '
+
+
+)
+
+UNION ALL
+
+        ( SELECT DISTINCT ''C_CashLine''::text AS documenttable, cl.c_cashline_id AS document_id, cl.ad_client_id, COALESCE(il.ad_org_id, cl.ad_org_id) AS ad_org_id, cl.isactive, cl.created, cl.createdby, cl.updated, cl.updatedby,
+                CASE
+                    WHEN cl.c_bpartner_id IS NOT NULL THEN cl.c_bpartner_id
+                    ELSE il.c_bpartner_id
+                END AS c_bpartner_id, dt.c_doctype_id,
+                CASE
+                    WHEN cl.amount < 0.0 THEN 1
+                    ELSE (-1)
+                END AS signo_issotrx, dt.name AS doctypename, dt.printname AS doctypeprintname, ''@line@''::text || cl.line::character varying::text AS documentno,
+                CASE
+                    WHEN cl.amount < 0.0 THEN ''N''::bpchar
+                    ELSE ''Y''::bpchar
+                END AS issotrx, cl.docstatus, c.statementdate AS datetrx, c.dateacct, cl.c_currency_id, NULL::integer AS c_conversiontype_id, abs(cl.amount) AS amount, NULL::integer AS c_invoicepayschedule_id, NULL::timestamp without time zone AS duedate, c.statementdate AS truedatetrx, COALESCE(bp.socreditstatus, bp2.socreditstatus) AS socreditstatus, 0 as c_order_id, '
+                || selectallocationCashline || 
+       ' FROM c_cashline cl
+      JOIN c_cash c ON cl.c_cash_id = c.c_cash_id
+   LEFT JOIN c_bpartner bp ON cl.c_bpartner_id = bp.c_bpartner_id AND (' || $1 || ' = -1 or cl.c_bpartner_id = ' || $1 || ')
+   JOIN ( SELECT d.ad_client_id, d.c_doctype_id, d.name, d.printname
+         FROM c_doctype d
+        WHERE d.doctypekey::text = ''CMC''::text) dt ON cl.ad_client_id = dt.ad_client_id
+   LEFT JOIN c_allocationline al ON al.c_cashline_id = cl.c_cashline_id
+   LEFT JOIN c_invoice il ON il.c_invoice_id = al.c_invoice_id AND (' || $1 || ' = -1 or il.c_bpartner_id = ' || $1 || ')
+   LEFT JOIN c_bpartner bp2 ON il.c_bpartner_id = bp2.c_bpartner_id
+  WHERE (CASE WHEN cl.c_bpartner_id IS NOT NULL THEN (' || $1 || ' = -1 or cl.c_bpartner_id = ' || $1 || ')
+        WHEN il.c_bpartner_id IS NOT NULL THEN (' || $1 || ' = -1 or il.c_bpartner_id = ' || $1 || ')
+        ELSE 1 = 2 END)
+    AND (CASE WHEN il.ad_org_id IS NOT NULL AND il.ad_org_id <> cl.ad_org_id
+        THEN cl.docstatus = ANY (ARRAY[''CO''::bpchar, ''CL''::bpchar])
+        ELSE 1 = 1 END)
+
+    AND ' || whereclauseConditionCredit || '
+
+' || orderby3 || '
+
+)) AS d  
+WHERE ' || whereclauseDateTo || ' ; ';
+
+-- raise notice '%', consulta;
+FOR adocument IN EXECUTE consulta LOOP
+	return next adocument;
+END LOOP;
+
+END
+$BODY$
+  LANGUAGE plpgsql VOLATILE
+  COST 100
+  ROWS 1000;
+ALTER FUNCTION v_documents_org_filtered(integer, boolean, character, timestamp without time zone)
+  OWNER TO libertya;
+
+-- Función v_documents_org_filtered(integer, boolean, character)
+CREATE OR REPLACE FUNCTION v_documents_org_filtered(
+    bpartner integer,
+    summaryonly boolean,
+    condition character)
+  RETURNS SETOF v_documents_org_type_condition AS
+$BODY$
+BEGIN
+	return query select * from v_documents_org_filtered(bpartner, summaryonly, condition, null::timestamp);
+END
+$BODY$
+  LANGUAGE plpgsql VOLATILE
+  COST 100
+  ROWS 1000;
+ALTER FUNCTION v_documents_org_filtered(integer, boolean, character)
+  OWNER TO libertya;
