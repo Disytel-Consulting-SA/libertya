@@ -3,8 +3,10 @@ package org.openXpertya.process;
 import java.math.BigDecimal;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.sql.Timestamp;
 
+import org.openXpertya.cc.CurrentAccountQuery;
 import org.openXpertya.model.MPayment;
 import org.openXpertya.util.DB;
 import org.openXpertya.util.Env;
@@ -40,6 +42,8 @@ public class BalanceReport extends SvrProcess {
 	private boolean onlyCurentAccounts;
 	/** Condición de los comprobantes: Efectivo, Cuenta Corriente, Todos */
 	private String condition;
+	/** Consulta de cuenta corriente centralizada */
+	private CurrentAccountQuery currentAccountQuery;
 	
 	@Override
 	protected void prepare() {
@@ -85,6 +89,8 @@ public class BalanceReport extends SvrProcess {
         isSOtrx = p_AccountType.equalsIgnoreCase("C")?"'Y'":"'N'";
      // Moneda de la compañía utilizada para conversión de montos de documentos.
         client_Currency_ID = Env.getContextAsInt(getCtx(), "$C_Currency_ID");
+		setCurrentAccountQuery(
+				new CurrentAccountQuery(getCtx(), p_AD_Org_ID, null, true, null, p_DateTrx_To, getCondition(), null));
 	}
 
 	
@@ -101,11 +107,14 @@ public class BalanceReport extends SvrProcess {
 		sqlDoc.append(" SELECT T.C_BPARTNER_ID, T.NAME, C_BP_Group_ID, COALESCE(T.so_description,'') AS so_description, coalesce(T.totalopenbalance,0.00) as actualbalance, COALESCE(SUM(t.Credit),0.0) AS Credit, COALESCE(SUM(t.Debit),0.0) AS Debit, COALESCE(SUM(t.Debit),0.0) - COALESCE(SUM(t.Credit),0.0) AS balance,  ");
 		sqlDoc.append(" 	( SELECT dateacct FROM C_INVOICE WHERE issotrx = ")
 				.append(isSOtrx)
-				.append(" AND invoiceopen(c_invoice_id, 0) > 0	AND C_BPartner_id = t.c_bpartner_id ORDER BY DATEACCT asc LIMIT 1 ) as fecha_fact_antigua, ");
+				.append(" AND invoiceopen(c_invoice_id, 0, " + getCurrentAccountQuery().getDateToInlineQuery() + ") > 0	AND C_BPartner_id = t.c_bpartner_id ORDER BY DATEACCT asc LIMIT 1 ) as fecha_fact_antigua, ");
 		sqlDoc.append(" 	( SELECT dateacct FROM C_INVOICE WHERE issotrx = ")
-				.append(isSOtrx)
-				.append(" AND invoiceopen(c_invoice_id, 0) > 0	AND C_BPartner_id = t.c_bpartner_id ORDER BY DATEACCT desc LIMIT 1 ) as fecha_fact_reciente, ");
-		sqlDoc.append(" (select coalesce(sum(currencyconvert(invoiceopen(c_invoice_id, c_invoicepayschedule_id), c_currency_id, ").append(client_Currency_ID).append(", ('"+ ((p_DateTrx_To != null) ? p_DateTrx_To + "'" : "now'::text") +")::timestamp(6) with time zone, COALESCE(c_conversiontype_id,0), ad_client_id, ad_org_id)),0.00) as duedebt " +
+				.append(isSOtrx);
+		if (p_AD_Org_ID > 0){
+			sqlDoc.append(" AND AD_Org_ID = ").append(p_AD_Org_ID);
+		}
+		sqlDoc.append(" AND invoiceopen(c_invoice_id, 0, " + getCurrentAccountQuery().getDateToInlineQuery() + ") > 0	AND C_BPartner_id = t.c_bpartner_id ORDER BY DATEACCT desc LIMIT 1 ) as fecha_fact_reciente, ");
+		sqlDoc.append(" (select coalesce(sum(currencyconvert(invoiceopen(c_invoice_id, c_invoicepayschedule_id, " + getCurrentAccountQuery().getDateToInlineQuery() + "), c_currency_id, ").append(client_Currency_ID).append(", " + getCurrentAccountQuery().getDateToInlineQuery() + ", COALESCE(c_conversiontype_id,0), ad_client_id, ad_org_id)),0.00) as duedebt " +
 						"from c_invoice_v as i " +
 						"where i.duedate::date <= ?::date " +
 						"		and i.c_bpartner_id = T.c_bpartner_id " +
@@ -115,7 +124,7 @@ public class BalanceReport extends SvrProcess {
 		}
 		sqlDoc.append(" AND AD_Client_ID = ").append(Env.getAD_Client_ID(getCtx()));
 		sqlDoc.append(") as duedebt, ");
-		sqlDoc.append(" (select coalesce(sum(currencyconvert(paymentavailable(c_payment_id), c_currency_id, ").append(client_Currency_ID).append(", ('"+ ((p_DateTrx_To != null) ? p_DateTrx_To + "'" : "now'::text") +")::timestamp(6) with time zone, COALESCE(c_conversiontype_id,0), ad_client_id, ad_org_id)),0.00) as duedebt " +
+		sqlDoc.append(" (select coalesce(sum(currencyconvert(paymentavailable(c_payment_id), c_currency_id, ").append(client_Currency_ID).append(", " + getCurrentAccountQuery().getDateToInlineQuery() + ", COALESCE(c_conversiontype_id,0), ad_client_id, ad_org_id)),0.00) as duedebt " +
 						"from c_payment " +
 						"where duedate::date <= ?::date " +
 						"		and c_bpartner_id = T.c_bpartner_id " +
@@ -153,18 +162,14 @@ public class BalanceReport extends SvrProcess {
 		sqlDoc.append(" 		bp.C_BP_Group_ID, ");
 		sqlDoc.append(" 		bp.so_description, "); 
 		sqlDoc.append(" 		bp.totalopenbalance, ");
-		sqlDoc.append(" 		CASE WHEN d.signo_issotrx = ").append(debit_signo_issotrx).append(" THEN "); 
-		sqlDoc.append(" 			currencyconvert(d.amount, d.c_currency_id, ").append(client_Currency_ID).append(", ('"+ ((p_DateTrx_To != null) ? p_DateTrx_To + "'" : "now'::text") +")::timestamp(6) with time zone, COALESCE(c_conversiontype_id,0), d.ad_client_id, d.ad_org_id) "); 
-		sqlDoc.append(" 		ELSE 0.0 END AS Debit, "); 
-		sqlDoc.append(" 		CASE WHEN d.signo_issotrx = ").append(credit_signo_issotrx).append(" THEN "); 
-		sqlDoc.append(" 			currencyconvert(d.amount, d.c_currency_id, ").append(client_Currency_ID).append(", ('"+ ((p_DateTrx_To != null) ? p_DateTrx_To + "'" : "now'::text") +")::timestamp(6) with time zone, COALESCE(c_conversiontype_id,0), d.ad_client_id, d.ad_org_id) "); 
-		sqlDoc.append(" 		ELSE 0.0 END AS Credit ");
-		sqlDoc.append(" 	FROM V_Documents_Org_filtered(-1, false, '"+getCondition()+"') d "); 
+		sqlDoc.append(" 		d.debit, ");
+		sqlDoc.append(" 		d.credit ");
+		sqlDoc.append(" 	FROM ( ");
+		sqlDoc.append(getCurrentAccountQuery().getQuery());
+		sqlDoc.append(" 	) d ");
 		sqlDoc.append(" 	INNER JOIN c_bpartner bp on d.c_bpartner_id = bp.c_bpartner_id ");
-		sqlDoc.append(" 	WHERE d.DocStatus IN ('CO', 'CL', 'RE', 'VO') ");
-		if (p_AD_Org_ID > 0)			// filtrar comprobantes para una organizacion especifica (o no)
-			sqlDoc.append(" AND d.AD_Org_ID = ").append(p_AD_Org_ID);
-		if(p_C_BP_Group_ID > 0){		// filtrar comprobantes para un grupo de EC especifico (o no)
+		sqlDoc.append(" 	WHERE bp.isactive = 'Y' ");
+		if(p_C_BP_Group_ID > 0){
 			sqlDoc.append(" AND bp.C_BP_Group_ID = ").append(p_C_BP_Group_ID);
 		}
 		if ("OO".equals(p_Scope))		// filtrar E.C.: solo las que adeudan, o listar todas
@@ -172,14 +177,9 @@ public class BalanceReport extends SvrProcess {
 			sqlDoc.append(" AND bp.C_BPartner_ID IN (");
 			sqlDoc.append(" 	SELECT DISTINCT c_bpartner_id FROM c_invoice ");
 			sqlDoc.append(
-					" 	WHERE invoiceopen(c_invoice_id, 0) > 0 AND issotrx = ")
+					" 	WHERE invoiceopen(c_invoice_id, 0, " + getCurrentAccountQuery().getDateToInlineQuery() + ") > 0 AND issotrx = ")
 					.append(isSOtrx).append(" AND AD_Client_ID = ")
 					.append(getAD_Client_ID()).append(")");
-		}
-		sqlDoc.append(" 	AND d.AD_Client_ID = ").append(Env.getAD_Client_ID(getCtx())); 
-		sqlDoc.append(" 	AND bp.isactive = 'Y' ");
-		if(p_DateTrx_To != null){
-			sqlDoc.append(" 	AND d.truedatetrx::date <= ?::date");
 		}
 		sqlDoc.append(p_AccountType.equalsIgnoreCase("C") ? " AND bp.iscustomer = 'Y' "
 				: " AND bp.isvendor = 'Y' ");
@@ -201,80 +201,100 @@ public class BalanceReport extends SvrProcess {
 		if ("OI".equals(p_Sort_Criteria))
 			sqlDoc.append("fecha_fact_antigua");		
 		
-		// ejecutar la consulta y cargar la tabla temporal
-		PreparedStatement pstmt = DB.prepareStatement(sqlDoc.toString(), get_TrxName(), true);
-		int i = 1;
-		// Parámetros de sqlDoc
-		pstmt.setTimestamp(i++,
-				p_DateTrx_To != null ? p_DateTrx_To : Env.getDate());
-		pstmt.setTimestamp(i++,
-				p_DateTrx_To != null ? p_DateTrx_To : Env.getDate());
-		if(p_DateTrx_To != null){
-			pstmt.setTimestamp(i++, p_DateTrx_To);
-		}
-		ResultSet rs = pstmt.executeQuery();
-		int subindice=0;
-		StringBuffer usql = new StringBuffer();
-		while (rs.next())
-		{
-			subindice++;
-			usql.append(" INSERT INTO T_BALANCEREPORT (ad_pinstance_id, ad_client_id, ad_org_id, subindice, c_bpartner_id, observaciones, ");
-			usql.append("								credit, debit, balance, date_oldest_open_invoice, date_newest_open_invoice, sortcriteria, scope, c_bp_group_id, truedatetrx, accounttype, ");
-			usql.append("								onlycurrentaccounts, valuefrom, valueto, duedebt, actualbalance, chequesencartera, generalbalance, Condition ) ");
-			usql.append(" VALUES ( ")	.append(getAD_PInstance_ID()).append(",")
-										.append(getAD_Client_ID()).append(",")
-										.append(p_AD_Org_ID).append(",")
-										.append(subindice).append(",")
-										.append(rs.getInt("C_BPartner_ID")).append(", '")
-										.append(rs.getString("SO_DESCRIPTION")).append("', ")
-										.append(rs.getBigDecimal("Credit")).append(",")
-										.append(rs.getBigDecimal("Debit")).append(",")
-										.append(rs.getBigDecimal("Balance")).append(", ");
-			if (rs.getTimestamp("fecha_fact_antigua")!=null)
-				usql.append(" '").append(rs.getTimestamp("fecha_fact_antigua")).append("', ");
-			else
-				usql.append("null, ");
-			if (rs.getTimestamp("fecha_fact_reciente")!=null)
-				usql.append(" '").append(rs.getTimestamp("fecha_fact_reciente")).append("', ");
-			else
-				usql.append("null, ");
-			usql.append(" '").append(p_Sort_Criteria).append("', ")
-				.append(" '").append(p_Scope).append("', ")
-				.append(rs.getInt("C_BP_Group_ID")).append(", ");
-			if (p_DateTrx_To!=null)
-				usql.append(" '").append(p_DateTrx_To).append("'::timestamp, ");
-			else
-				usql.append("null, ");
-			usql.append("'").append(p_AccountType).append("'");
-			usql.append(" , ");
-			usql.append(onlyCurentAccounts?"'Y'":"'N'");
-			usql.append(" , ");
-			usql.append("'"+valueFrom+"'");
-			usql.append(" , ");
-			usql.append("'"+valueTo+"'");
-			usql.append(" , ");
-			usql.append(rs.getBigDecimal("duedebt"));
-			usql.append(" , ");
-			usql.append(rs.getBigDecimal("actualbalance"));
-			usql.append(" , ");
-			usql.append(rs.getBigDecimal("chequesencartera"));
-			usql.append(" , ");
-			usql.append(rs.getBigDecimal("actualbalance").add(
-					rs.getBigDecimal("chequesencartera")));
-			usql.append(" , ");
-			usql.append("'"+getCondition()+"'");
-			usql.append(" ); ");
-		}
+		PreparedStatement pstmt = null;
+		ResultSet rs = null;
 		
-		// si no hubo entradas directamente no se ejecuta sentencia de insercion alguna
-		if (subindice > 0){
-			int no = DB.executeUpdate(usql.toString(), get_TrxName());
-			if(no == 0){
-				throw new Exception("Error insertando datos en la tabla temporal");
+		try{
+			// ejecutar la consulta y cargar la tabla temporal
+			pstmt = DB.prepareStatement(sqlDoc.toString(), get_TrxName(), true);
+			int i = 1;
+			// Parámetros de sqlDoc
+			pstmt.setTimestamp(i++,
+					p_DateTrx_To != null ? p_DateTrx_To : Env.getDate());
+			pstmt.setTimestamp(i++,
+					p_DateTrx_To != null ? p_DateTrx_To : Env.getDate());
+			pstmt.setInt(i++, debit_signo_issotrx);
+			pstmt.setInt(i++, client_Currency_ID);
+			pstmt.setInt(i++, credit_signo_issotrx);
+			pstmt.setInt(i++, client_Currency_ID);
+			pstmt.setInt(i++, getAD_Client_ID());
+			i = pstmtSetParam(i, p_AD_Org_ID, pstmt);
+			// Parámetros para el filtro de fechas
+			i = pstmtSetParam(i, p_DateTrx_To, pstmt);
+
+			rs = pstmt.executeQuery();
+			int subindice=0;
+			StringBuffer usql = new StringBuffer();
+			while (rs.next())
+			{
+				subindice++;
+				usql.append(" INSERT INTO T_BALANCEREPORT (ad_pinstance_id, ad_client_id, ad_org_id, subindice, c_bpartner_id, observaciones, ");
+				usql.append("								credit, debit, balance, date_oldest_open_invoice, date_newest_open_invoice, sortcriteria, scope, c_bp_group_id, truedatetrx, accounttype, ");
+				usql.append("								onlycurrentaccounts, valuefrom, valueto, duedebt, actualbalance, chequesencartera, generalbalance, Condition ) ");
+				usql.append(" VALUES ( ")	.append(getAD_PInstance_ID()).append(",")
+											.append(getAD_Client_ID()).append(",")
+											.append(p_AD_Org_ID).append(",")
+											.append(subindice).append(",")
+											.append(rs.getInt("C_BPartner_ID")).append(", '")
+											.append(rs.getString("SO_DESCRIPTION")).append("', ")
+											.append(rs.getBigDecimal("Credit")).append(",")
+											.append(rs.getBigDecimal("Debit")).append(",")
+											.append(rs.getBigDecimal("Balance")).append(", ");
+				if (rs.getTimestamp("fecha_fact_antigua")!=null)
+					usql.append(" '").append(rs.getTimestamp("fecha_fact_antigua")).append("', ");
+				else
+					usql.append("null, ");
+				if (rs.getTimestamp("fecha_fact_reciente")!=null)
+					usql.append(" '").append(rs.getTimestamp("fecha_fact_reciente")).append("', ");
+				else
+					usql.append("null, ");
+				usql.append(" '").append(p_Sort_Criteria).append("', ")
+					.append(" '").append(p_Scope).append("', ")
+					.append(rs.getInt("C_BP_Group_ID")).append(", ");
+				if (p_DateTrx_To!=null)
+					usql.append(" '").append(p_DateTrx_To).append("'::timestamp, ");
+				else
+					usql.append("null, ");
+				usql.append("'").append(p_AccountType).append("'");
+				usql.append(" , ");
+				usql.append(onlyCurentAccounts?"'Y'":"'N'");
+				usql.append(" , ");
+				usql.append("'"+valueFrom+"'");
+				usql.append(" , ");
+				usql.append("'"+valueTo+"'");
+				usql.append(" , ");
+				usql.append(rs.getBigDecimal("duedebt"));
+				usql.append(" , ");
+				usql.append(rs.getBigDecimal("actualbalance"));
+				usql.append(" , ");
+				usql.append(rs.getBigDecimal("chequesencartera"));
+				usql.append(" , ");
+				usql.append(rs.getBigDecimal("actualbalance").add(
+						rs.getBigDecimal("chequesencartera")));
+				usql.append(" , ");
+				usql.append("'"+getCondition()+"'");
+				usql.append(" ); ");
 			}
-		}
+			
+			// si no hubo entradas directamente no se ejecuta sentencia de insercion alguna
+			if (subindice > 0){
+				int no = DB.executeUpdate(usql.toString(), get_TrxName());
+				if(no == 0){
+					throw new Exception("Error insertando datos en la tabla temporal");
+				}
+			}
+		} catch(Exception e){
+			throw e;
+		} finally {
+			try {
+				if(pstmt != null) pstmt.close();
+				if(rs != null) rs.close();
+			} catch (Exception e2) {
+				throw e2;
+			}
+		}		
 		
-		return "OK";
+		return "";
 		
 	}
 
@@ -287,5 +307,25 @@ public class BalanceReport extends SvrProcess {
 		this.condition = condition;
 	}
 
+	protected String getDateToInlineQuery(){
+		return " ('"+ ((p_DateTrx_To != null) ? p_DateTrx_To + "'" : "now'::text") + ")::timestamp(6) without time zone ";
+	}
 
+
+	protected CurrentAccountQuery getCurrentAccountQuery() {
+		return currentAccountQuery;
+	}
+
+
+	protected void setCurrentAccountQuery(CurrentAccountQuery currentAccountQuery) {
+		this.currentAccountQuery = currentAccountQuery;
+	}
+	
+	private int pstmtSetParam(int index, Object value, PreparedStatement pstmt)
+			throws SQLException {
+		int i = index;
+		if (value != null)
+			pstmt.setObject(i++, value);
+		return i;
+	}
 }
