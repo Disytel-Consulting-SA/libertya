@@ -95,6 +95,7 @@ import org.openXpertya.util.DB;
 import org.openXpertya.util.DisplayType;
 import org.openXpertya.util.Env;
 import org.openXpertya.util.Msg;
+import org.openXpertya.util.TimeUtil;
 import org.openXpertya.util.UserAuthConstants;
 import org.openXpertya.util.Util;
 
@@ -338,6 +339,7 @@ public class VOrdenPago extends CPanel implements FormPanel,ActionListener,Table
 					throws PropertyVetoException {
 				m_model.setFechaOP(dateTrx.getTimestamp());
 				m_model.actualizarFacturas();
+				Env.setContext(m_ctx, m_WindowNo, "Date", dateTrx.getTimestamp());
 			}
 		});
 		//dateTrx.setReadWrite(false);
@@ -1527,6 +1529,14 @@ public class VOrdenPago extends CPanel implements FormPanel,ActionListener,Table
 		if (mpe.importe.compareTo(new BigDecimal(0.0)) <= 0)
 			throw new Exception(lblEfectivoImporte.getText());
 
+		// La fecha de la caja debe ser del mismo día de la operación
+		if(!TimeUtil.isSameDay(mpe.getDateAcct(), getModel().m_fechaTrx)){
+			throw new Exception(Msg.parseTranslation(m_ctx,
+					"@NotAllowedCashWithDiferentDate@: \n - @DateTrx@ "
+							+ getModel().getSimpleDateFormat().format(getModel().m_fechaTrx) + " \n - @Date@ @C_Cash_ID@ "
+							+ getModel().getSimpleDateFormat().format(mpe.getDateAcct())));
+		}
+		
 		mpe.setCampaign(getC_Campaign_ID() == null?0:getC_Campaign_ID());
 		mpe.setProject(getC_Project_ID() == null?0:getC_Project_ID());
 		

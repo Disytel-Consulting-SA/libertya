@@ -6,8 +6,10 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
+import java.text.DateFormat;
 import java.text.NumberFormat;
 import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
@@ -61,6 +63,7 @@ import org.openXpertya.util.CPreparedStatement;
 import org.openXpertya.util.DB;
 import org.openXpertya.util.Env;
 import org.openXpertya.util.Msg;
+import org.openXpertya.util.TimeUtil;
 import org.openXpertya.util.Trx;
 import org.openXpertya.util.Util;
 
@@ -1088,6 +1091,8 @@ public class VOrdenPagoModel {
 	/** Perfil actual */
 	private MRole role;
 	
+	private DateFormat simpleDateFormat = new SimpleDateFormat("dd/MM/yyyy");
+	
 	public VOrdenPagoModel() {
 		getMsgMap().put("TenderType", "TenderType");
 		// initTrx(); <-- COMENTADO: La trx debe iniciarse al confirmar el pago
@@ -1155,8 +1160,9 @@ public class VOrdenPagoModel {
 
 	public String getEfectivoLibroCajaSqlValidation() {
 		// Se permite agregar efectivo de cualquier caja, sin importar la moneda
+		// Se agrega condición para agregar efectivo solo de cajas con misma fecha que la OP
 		//return " C_Cash.DocStatus = 'DR' AND (C_Cash.C_Cashbook_ID IN (SELECT C_Cashbook_ID FROM C_Cashbook cb WHERE cb.C_Currency_ID = @C_Currency_ID@ AND isactive = 'Y')) ";
-		return " C_Cash.DocStatus = 'DR' ";
+		return " C_Cash.DocStatus = 'DR' AND date_trunc('day', C_Cash.DateAcct) = date_trunc('day', '@Date@'::timestamp)";
 	}
 
 	public String getTransfCtaBancariaSqlValidation() {
@@ -1828,6 +1834,17 @@ public class VOrdenPagoModel {
 				// Hay que crear una linea de caja.
 
 				MCash cash = new MCash(m_ctx, mpe.libroCaja_ID, getTrxName());
+				
+				// La fecha de la caja debe ser la misma fecha que la operación
+				if(!TimeUtil.isSameDay(m_fechaTrx, cash.getDateAcct())){
+					errorNo = PROCERROR_PAYMENTS_GENERATION;
+					errorMsg = Msg.parseTranslation(m_ctx,
+							"@NotAllowedCashWithDiferentDate@: \n - @DateTrx@ "
+									+ getSimpleDateFormat().format(m_fechaTrx) + " \n - @C_Cash_ID@ " + cash.getName() + ". @Date@ "
+									+ getSimpleDateFormat().format(cash.getDateAcct()) + ". @Amt@ = " + mpe.getImporte());
+					throw new Exception(errorMsg);
+				}
+				
 				line = new MCashLine(cash);
 
 				line.setDescription(HdrDescription);
@@ -3700,5 +3717,13 @@ public class VOrdenPagoModel {
 
 	public boolean isAuthorizations() {
 		return (MOrgInfo.get(getCtx(), Env.getAD_Org_ID(getCtx()))).isAuthorizations();
+	}
+
+	public DateFormat getSimpleDateFormat() {
+		return simpleDateFormat;
+	}
+
+	public void setSimpleDateFormat(DateFormat simpleDateFormat) {
+		this.simpleDateFormat = simpleDateFormat;
 	}
 }
