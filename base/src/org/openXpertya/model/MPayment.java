@@ -95,6 +95,16 @@ public final class MPayment extends X_C_Payment implements DocAction,ProcessCall
 	 */
 	private boolean voidPOSJournalMustBeOpen = false;
 	
+	/**
+	 * ContraAllocations: Control que se agrega para saber si el Payment esta siendo anulado desde un MAllocationHdr
+	 */
+	private boolean isMAllocationHdrVoid = false;
+	
+	/**
+	 * ContraAllocations: Almacena el ID del payment creado al anular el pago.
+	 */
+	private Integer payVoidID = 0;
+	
     /**
      * Descripción de Método
      *
@@ -2696,6 +2706,10 @@ public final class MPayment extends X_C_Payment implements DocAction,ProcessCall
         }
 
         reversal.closeIt();
+        if (CounterAllocationManager.isCounterAllocationActive(getCtx())) {
+        	// Almaceno en la variable de instancia el ID del pago anulado
+        	this.setPayVoidID(reversal.getC_Payment_ID());
+        }
         // Me traigo el trabajo adicional de cuentas corrientes y lo confirmo
 		// después 
 		getAditionalWorkResult().put(reversal,
@@ -2763,46 +2777,51 @@ public final class MPayment extends X_C_Payment implements DocAction,ProcessCall
         setDocAction( DOCACTION_None );
         setProcessed( true );
 
-        // Create automatic Allocation
-        // 		El contradocumento tiene que contener la fecha actual y NO la del documento original 
-        MAllocationHdr alloc = new MAllocationHdr( getCtx(),false, Env.getDate(), getC_Currency_ID(),Msg.translate( getCtx(),"C_Payment_ID" ) + ": " + reversal.getDocumentNo(),get_TrxName());
-
-        if( !alloc.save( get_TrxName())) {
-            log.warning( "Automatic allocation - hdr not saved" );
-        } else {
-        	
-            // Original Allocation
-
-            MAllocationLine aLine = new MAllocationLine( alloc,getPayAmt(),Env.ZERO,Env.ZERO,Env.ZERO );
-
-            aLine.setDocInfo( getC_BPartner_ID(),0,0 );
-            aLine.setPaymentInfo( getC_Payment_ID(),0 );
-
-            if( !aLine.save( get_TrxName())) {
-                log.warning( "Automatic allocation - line not saved" );
-            }
-
-            // Reversal Allocation
-
-            aLine = new MAllocationLine( alloc,reversal.getPayAmt(),Env.ZERO,Env.ZERO,Env.ZERO );
-            aLine.setDocInfo( reversal.getC_BPartner_ID(),0,0 );
-            aLine.setPaymentInfo( reversal.getC_Payment_ID(),0 );
-
-            if( !aLine.save( get_TrxName())) {
-                log.warning( "Automatic allocation - reversal line not saved" );
-            }
-        }
-        alloc.setUpdateBPBalance(false);
-        alloc.processIt( DocAction.ACTION_Complete );
-        alloc.save( get_TrxName());
-
-        //
-
         StringBuffer info = new StringBuffer( reversal.getDocumentNo());
+        
+		// ContraAllocation:
+        // 	No se debe generar el ContraAllocation MAN del MPayment si la
+		// 	operación de anulado se originó por la anulación de un Recibo de
+		// 	Cliente u Orden de Pago.
+        // Si la logica de ContraAllocation no esta activa, debe ejecutarse normalmente
+		if (!CounterAllocationManager.isCounterAllocationActive(getCtx()) || !isMAllocationHdrVoid()) {
+        
+	        // Create automatic Allocation
+	        // 		El contradocumento tiene que contener la fecha actual y NO la del documento original 
+	        MAllocationHdr alloc = new MAllocationHdr( getCtx(),false, Env.getDate(), getC_Currency_ID(),Msg.translate( getCtx(),"C_Payment_ID" ) + ": " + reversal.getDocumentNo(),get_TrxName());
+	
+	        if( !alloc.save( get_TrxName())) {
+	            log.warning( "Automatic allocation - hdr not saved" );
+	        } else {
+	        	
+	            // Original Allocation
+	
+	            MAllocationLine aLine = new MAllocationLine( alloc,getPayAmt(),Env.ZERO,Env.ZERO,Env.ZERO );
+	
+	            aLine.setDocInfo( getC_BPartner_ID(),0,0 );
+	            aLine.setPaymentInfo( getC_Payment_ID(),0 );
+	
+	            if( !aLine.save( get_TrxName())) {
+	                log.warning( "Automatic allocation - line not saved" );
+	            }
+	
+	            // Reversal Allocation
+	
+	            aLine = new MAllocationLine( alloc,reversal.getPayAmt(),Env.ZERO,Env.ZERO,Env.ZERO );
+	            aLine.setDocInfo( reversal.getC_BPartner_ID(),0,0 );
+	            aLine.setPaymentInfo( reversal.getC_Payment_ID(),0 );
+	
+	            if( !aLine.save( get_TrxName())) {
+	                log.warning( "Automatic allocation - reversal line not saved" );
+	            }
+	        }
+	        alloc.setUpdateBPBalance(false);
+	        alloc.processIt( DocAction.ACTION_Complete );
+	        alloc.save( get_TrxName());
+	
+	        info.append( " - @C_AllocationHdr_ID@: " ).append( alloc.getDocumentNo());
 
-        info.append( " - @C_AllocationHdr_ID@: " ).append( alloc.getDocumentNo());
-
-        //
+		}
 
         m_processMsg = info.toString();
 
@@ -3133,6 +3152,22 @@ public final class MPayment extends X_C_Payment implements DocAction,ProcessCall
 
 	public boolean isVoidPOSJournalMustBeOpen() {
 		return voidPOSJournalMustBeOpen;
+	}
+	
+	public boolean isMAllocationHdrVoid() {
+		return isMAllocationHdrVoid;
+	}
+
+	public void setMAllocationHdrVoid(boolean isMAllocationHdrVoid) {
+		this.isMAllocationHdrVoid = isMAllocationHdrVoid;
+	}
+	
+	public Integer getPayVoidID() {
+		return payVoidID;
+	}
+
+	public void setPayVoidID(Integer payVoidID) {
+		this.payVoidID = payVoidID;
 	}
 	
 	/**

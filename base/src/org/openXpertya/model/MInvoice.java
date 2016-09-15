@@ -2662,7 +2662,15 @@ public class MInvoice extends X_C_Invoice implements DocAction,Authorization {
 						+ " INNER JOIN C_AllocationHdr ah ON (al.C_AllocationHdr_ID=ah.C_AllocationHdr_ID)"
 						+ " INNER JOIN C_Invoice i ON (al.C_Invoice_ID=i.C_Invoice_ID) "
 						+ "WHERE al.C_Invoice_ID=?"
-						+ " AND ah.IsActive='Y' AND al.IsActive='Y'");
+						+ (!CounterAllocationManager.isCounterAllocationActive(getCtx()) ?
+									" AND ah.IsActive='Y' AND al.IsActive='Y'" // Logica tradicional 
+								:
+									/* Validación de Allocation anulado. 
+									 * A partir de la generación del contra allocation el encabezado y las líneas no quedan en IsActive='N'. 
+									 * De todas formas es necesario mantener la condición para los allocation previos. */
+									" AND ((ah.IsActive='Y' AND al.IsActive='Y') AND (ah.docaction NOT IN ('VO', 'RE') AND ah.docstatus NOT IN ('VO', 'RE')))"		
+						)
+				);
 		boolean inAPaymentType = inCredit || inCash || inPayment;
 		sql.append(inAPaymentType ? " AND ( " : "");
 		StringBuffer inAPaymentWhereCondition = new StringBuffer();

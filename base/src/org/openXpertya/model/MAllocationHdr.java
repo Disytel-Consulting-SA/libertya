@@ -125,6 +125,14 @@ public class MAllocationHdr extends X_C_AllocationHdr implements DocAction {
 	/** Config de caja diaria de anulación desde el proceso de anulación */
 	private String voidPOSJournalConfig = null;
 	
+	/** ContraAllocation */
+	public static String REVERSE_INDICATOR = "^";
+	 
+	/** ContraAllocation: Esta HashMap almacena para cada ID de Payment, el ID del Payment anulado */
+	private	Map<Integer, Integer> paysVoid = new HashMap<Integer, Integer>();
+
+	
+	
 	/** Cuenta cuántos allocation hay creados con este pago
 	 * 
 	 * @param pay Pago
@@ -847,9 +855,73 @@ public class MAllocationHdr extends X_C_AllocationHdr implements DocAction {
 
         setDocAction( DOCACTION_None );
 
+        /** Logica para ContraAllocations */
+        if (CounterAllocationManager.isCounterAllocationActive(getCtx())) {
+        	retValue = retValue && createReverseAllocation();
+        }
+        
         return retValue;
     }    // voidIt
 
+    public boolean createReverseAllocation() {
+        log.info( toString());
+        MAllocationHdr reversal = new MAllocationHdr( getCtx(),0,get_TrxName());
+
+        copyValues( this,reversal );
+        reversal.setClientOrg( this );
+        reversal.setDocumentNo( getDocumentNo() + REVERSE_INDICATOR );    // indicate reversals
+        reversal.setDocStatus( DOCSTATUS_Drafted );
+        reversal.setDocAction( DOCACTION_Complete );
+        reversal.setGrandTotal(getGrandTotal().negate());
+        reversal.setRetencion_Amt(getRetencion_Amt().negate());
+        reversal.setIsApproved( true );
+        reversal.setProcessing( false );
+        reversal.setProcessed( true );
+        reversal.setPosted( false );
+        reversal.setDescription( getDescription());
+        reversal.addDescription( "{->" + getDocumentNo() + ")" );        
+        // El contradocumento tiene que contener la fecha actual y NO la del documento original
+        reversal.setDateAcct(Env.getDate());
+        reversal.setDateTrx(Env.getDate());       
+        reversal.save( get_TrxName());
+        // Se asigna la misma caja diaria del documento a anular
+        reversal.setVoidPOSJournalID(getVoidPOSJournalID());
+		reversal.setVoidPOSJournalMustBeOpen(isVoidPOSJournalMustBeOpen());
+		reversal.setC_POSJournal_ID(getC_POSJournal_ID());
+        reversal.closeIt();
+        reversal.setDocStatus( DOCSTATUS_Voided );
+        reversal.setDocAction( DOCACTION_None );
+        reversal.save( get_TrxName());
+
+        getLines( true );
+        for( int i = 0;i < m_lines.length;i++ ) {
+            MAllocationLine line = m_lines[ i ];
+            // Create Reversal
+            MAllocationLine reversalLine = new MAllocationLine( getCtx(),0,get_TrxName());
+            copyValues( line,reversalLine );
+            reversalLine.setC_AllocationHdr_ID(reversal.getC_AllocationHdr_ID());
+            reversalLine.setAmount(line.getAmount().negate());
+            if (reversalLine.getC_Payment_ID() != 0){
+            	reversalLine.setC_Payment_ID(this.getPaysVoid().get(reversalLine.getC_Payment_ID()));	
+            }
+            if (!reversalLine.save( get_TrxName())) {
+				m_processMsg = "@AllocationLineSaveError@: " + CLogger.retrieveErrorAsString();
+				return false;
+			}
+        }
+        return true;
+    }    // reverseCorrectionIt
+    
+    public void addDescription( String description ) {
+        String desc = getDescription();
+
+        if( desc == null ) {
+            setDescription( description );
+        } else {
+            setDescription( desc + " | " + description );
+        }
+    }    // addDescription
+    
     /**
      * Descripción de Método
      *
@@ -1013,16 +1085,23 @@ public class MAllocationHdr extends X_C_AllocationHdr implements DocAction {
 
         // Set Inactive
 
-        setIsActive( false );
-        setDocumentNo( getDocumentNo() + "^" );
+        // ContraAllocations
+        if (!CounterAllocationManager.isCounterAllocationActive(getCtx())) {
+        	setIsActive( false );
+        	setDocumentNo( getDocumentNo() + "^" );
+        }
         setDocStatus( DOCSTATUS_Reversed );    // for direct calls
 
-        if( !save() || isActive()) {
+        // ContraAllocations
+        if( !save() || (isActive() && !CounterAllocationManager.isCounterAllocationActive(getCtx())) ) {
             throw new IllegalStateException( "Cannot de-activate allocation" );
         }
 
         // Delete Posting
-        deletePosting();
+        // ContraAllocations
+        if (!CounterAllocationManager.isCounterAllocationActive(getCtx())) {
+        	deletePosting();
+        }
 
         // Unlink
 
@@ -1031,7 +1110,10 @@ public class MAllocationHdr extends X_C_AllocationHdr implements DocAction {
         for( int i = 0;i < m_lines.length;i++ ) {
             MAllocationLine line = m_lines[ i ];
 
-            line.setIsActive( false );
+            // ContraAllocations
+            if (!CounterAllocationManager.isCounterAllocationActive(getCtx())) {
+            	line.setIsActive( false );
+            }
             line.save( get_TrxName());
 
             if( !line.processIt( true )) {
@@ -1109,6 +1191,9 @@ public class MAllocationHdr extends X_C_AllocationHdr implements DocAction {
 							.equals(X_AD_ClientInfo.VOIDINGINVOICEPAYMENTSPOSJOURNALCONFIG_OriginalPayment) ? getC_POSJournal_ID()
 					: getVoidPOSJournalID());
     		paym.setVoidPOSJournalMustBeOpen(isVoidPOSJournalMustBeOpen());
+    		if (CounterAllocationManager.isCounterAllocationActive(getCtx())) {
+    			paym.setMAllocationHdrVoid(true);    			
+    		}
     		if (!paym.processIt( DocAction.ACTION_Void ))
     			errorMsg = paym.getProcessMsg();
     		if (!paym.save())
@@ -1118,6 +1203,11 @@ public class MAllocationHdr extends X_C_AllocationHdr implements DocAction {
     		// Registro de los trabajos adicionales al anular el payment
     		if(isUpdateBPBalance()){
     			getAditionalWorks().putAll(paym.getAditionalWorkResult());
+    		}
+    		
+    		// ContraAllocations
+    		if (CounterAllocationManager.isCounterAllocationActive(getCtx())) {
+    			this.getPaysVoid().put(paym.getC_Payment_ID(), paym.getPayVoidID());
     		}
 		}
         
@@ -1543,6 +1633,14 @@ public class MAllocationHdr extends X_C_AllocationHdr implements DocAction {
 
 	public void setVoidPOSJournalConfig(String voidPOSJournalConfig) {
 		this.voidPOSJournalConfig = voidPOSJournalConfig;
+	}
+
+	public Map<Integer, Integer> getPaysVoid() {
+		return paysVoid;
+	}
+
+	public void setPaysVoid(Map<Integer, Integer> paysVoid) {
+		this.paysVoid = paysVoid;
 	}
 	
 }    // MAllocation
