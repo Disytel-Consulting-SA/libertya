@@ -419,6 +419,8 @@ public class MInvoiceTax extends X_C_InvoiceTax {
     	if (this.getTax().isCategoriaManual())
     	{
     		MInvoice factura = new MInvoice(getCtx(), getC_Invoice_ID(), get_TrxName());
+    		factura.setSkipExtraValidations(true);
+    		factura.setSkipModelValidations(true);
     		factura.calculateTotal();
     		retValue = factura.save();
     	}

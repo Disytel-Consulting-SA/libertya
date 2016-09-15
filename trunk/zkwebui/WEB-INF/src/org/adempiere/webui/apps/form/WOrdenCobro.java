@@ -1906,6 +1906,13 @@ public class WOrdenCobro extends WOrdenPago {
     	row.appendChild(cboDocumentType.getComponent());
     	row.appendChild(new Space());
 
+    	row = rows.newRow();
+    	row.appendChild(dateTrx.getLabel().rightAlign());
+    	row.appendChild(dateTrx.getComponent());
+    	row.appendChild(new Space());
+    	row.appendChild(cboPaymentRule.getLabel().rightAlign());
+    	row.appendChild(cboPaymentRule.getComponent());
+    	row.appendChild(new Space());
     }
     
     

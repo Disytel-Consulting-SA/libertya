@@ -65,6 +65,9 @@ public abstract class AbstractRetencionProcessor implements RetencionProcessor {
 	 * han modificado algunas de sus configuraciones.
 	 */
 	private boolean recalculateAmount = true;
+	
+	/** Forma de Pago de los comprobantes a crear */
+	private String paymentRule;
 
 	public void setRetencionSchema(MRetencionSchema schema) {
 		this.m_Esquema = schema;
@@ -1304,5 +1307,15 @@ public abstract class AbstractRetencionProcessor implements RetencionProcessor {
 
 	public Integer getCampaignID() {
 		return campaignID;
+	}
+
+	@Override
+	public String getPaymentRule() {
+		return paymentRule;
+	}
+
+	@Override
+	public void setPaymentRule(String paymentRule) {
+		this.paymentRule = paymentRule;
 	}
 }

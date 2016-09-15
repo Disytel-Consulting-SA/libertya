@@ -87,7 +87,7 @@ public class CopyFromInvoice extends SvrProcess {
 
         //
 
-        int no = to.copyLinesFrom( from,false,false );
+        int no = to.copyLinesFrom( from,false,false,false );
 
         //
 

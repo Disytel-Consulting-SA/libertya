@@ -142,6 +142,16 @@ public class MInvoice extends X_C_Invoice implements DocAction,Authorization {
 	private boolean allowSetOrderPriceList = true;
 	
 	/**
+	 * Boolean que determina si se deben omitir validaciones soporte a extensiones
+	 */
+	private boolean skipExtraValidations = false;
+	
+	/**
+	 * Boolean que determina si se deben omitir las validaciones de modelo
+	 */
+	private boolean skipModelValidations = false;
+	
+	/**
 	 * Descripción de Método
 	 * 
 	 * 
@@ -211,9 +221,9 @@ public class MInvoice extends X_C_Invoice implements DocAction,Authorization {
 
 	public static MInvoice copyFrom(MInvoice from, Timestamp dateDoc,
 			int C_DocTypeTarget_ID, boolean isSOTrx, boolean counter,
-			String trxName, boolean setOrder) {
+			String trxName, boolean setOrder, boolean setInOut) {
 		return copyFrom(from, dateDoc, C_DocTypeTarget_ID, isSOTrx, counter,
-				trxName, setOrder, false, !isSOTrx);
+				trxName, setOrder, setInOut, false, !isSOTrx);
 	} // copyFrom
 
 	/**
@@ -230,8 +240,8 @@ public class MInvoice extends X_C_Invoice implements DocAction,Authorization {
 	 */
 	public static MInvoice copyFrom(MInvoice from, Timestamp dateDoc,
 			int C_DocTypeTarget_ID, boolean isSOTrx, boolean counter,
-			String trxName, boolean setOrder, boolean copyDocumentDiscounts,
-			boolean copyManualInvoiceTaxes) {
+			String trxName, boolean setOrder, boolean setInOut, 
+			boolean copyDocumentDiscounts, boolean copyManualInvoiceTaxes) {
 		MInvoice to = new MInvoice(from.getCtx(), 0, trxName);
 
 		PO.copyValues(from, to, from.getAD_Client_ID(), from.getAD_Org_ID());
@@ -256,7 +266,10 @@ public class MInvoice extends X_C_Invoice implements DocAction,Authorization {
 		to.setDateAcct(dateDoc);
 		to.setDatePrinted(null);
 		to.setIsPrinted(false);
-
+		to.setPaymentRule(from.getPaymentRule());
+		to.setCurrentAccountVerified(true);
+		to.setSkipExtraValidations(from.isSkipExtraValidations());
+		to.setSkipModelValidations(from.isSkipModelValidations());
 		//
 
 		to.setIsApproved(false);
@@ -314,7 +327,7 @@ public class MInvoice extends X_C_Invoice implements DocAction,Authorization {
 
 		// Lines
 
-		if (to.copyLinesFrom(from, counter, setOrder) == 0) {
+		if (to.copyLinesFrom(from, counter, setOrder, setInOut) == 0) {
 			throw new IllegalStateException("Could not create Invoice Lines");
 		}
 
@@ -1452,7 +1465,7 @@ public class MInvoice extends X_C_Invoice implements DocAction,Authorization {
 	 */
 
 	public int copyLinesFrom(MInvoice otherInvoice, boolean counter,
-			boolean setOrder) {
+			boolean setOrder, boolean setInOut) {
 		if (isProcessed() || isPosted() || (otherInvoice == null)) {
 			return 0;
 		}
@@ -1474,8 +1487,11 @@ public class MInvoice extends X_C_Invoice implements DocAction,Authorization {
 				line.setC_OrderLine_ID(0);
 			}
 
+			if(!setInOut){
+				line.setM_InOutLine_ID(0);
+			}
+			
 			line.setRef_InvoiceLine_ID(0);
-			line.setM_InOutLine_ID(0);
 			line.setA_Asset_ID(0);
 			line.setM_AttributeSetInstance_ID(0);
 			line.setS_ResourceAssignment_ID(0);
@@ -3009,6 +3025,7 @@ public class MInvoice extends X_C_Invoice implements DocAction,Authorization {
 		}
 
 		if (PAYMENTRULE_Cash.equals(getPaymentRule())
+				&& isCreateCashLine()
 				&& (MCashBook.get(getCtx(), getAD_Org_ID(), getC_Currency_ID(),
 						null) == null)) {
 			m_processMsg = "@NoCashBook@";
@@ -4421,7 +4438,7 @@ public class MInvoice extends X_C_Invoice implements DocAction,Authorization {
 		// Deep Copy
 
 		MInvoice counter = copyFrom(this, getDateInvoiced(),
-				C_DocTypeTarget_ID, !isSOTrx(), true, get_TrxName(), true);
+				C_DocTypeTarget_ID, !isSOTrx(), true, get_TrxName(), true, false);
 
 		//
 
@@ -4657,11 +4674,13 @@ public class MInvoice extends X_C_Invoice implements DocAction,Authorization {
 			reversalDocType = new MDocType(getCtx(),
 					docType.getC_ReverseDocType_ID(), get_TrxName());
 
+		setSkipExtraValidations(true);
+		
 		// Deep Copy
 
 		MInvoice reversal = copyFrom(this, Env.getDate(),
 				reversalDocType.getC_DocType_ID(), isSOTrx(), false,
-				get_TrxName(), true, true, !isSOTrx());
+				get_TrxName(), true, true, true, !isSOTrx());
 
 		if (reversal == null) {
 			m_processMsg = "Could not create Invoice Reversal";
@@ -6133,6 +6152,28 @@ public class MInvoice extends X_C_Invoice implements DocAction,Authorization {
 		return MInvoice.this.getC_DocTypeTarget_ID();
 	}
 
+	public boolean isSkipExtraValidations() {
+		return skipExtraValidations;
+	}
+
+	public void setSkipExtraValidations(boolean skipExtraValidations) {
+		this.skipExtraValidations = skipExtraValidations;
+	}
+
+	public boolean isSkipModelValidations() {
+		return skipModelValidations;
+	}
+
+	public void setSkipModelValidations(boolean skipModelValidations) {
+		this.skipModelValidations = skipModelValidations;
+	}
+
+	@Override
+	public void copyInstanceValues(PO to){
+		super.copyInstanceValues(to);
+		((MInvoice)to).setSkipExtraValidations(isSkipExtraValidations());
+		((MInvoice)to).setSkipModelValidations(isSkipModelValidations());
+	}
 } // MInvoice
 
 /*

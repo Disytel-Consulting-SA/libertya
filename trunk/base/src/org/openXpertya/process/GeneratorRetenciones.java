@@ -42,12 +42,13 @@ public class GeneratorRetenciones {
 	private Integer projectID = 0;
 	private Integer campaignID = 0;
 	private boolean pororigenydestino = false;
+	private String paymentRule;
 	/* Listado de retenciones */
 	
 	Vector<RetencionProcessor> lista_retenciones = new Vector<RetencionProcessor>();
 	
 	/* Constructores */
-	public GeneratorRetenciones(int C_BPartner_ID, Vector<Integer> m_factura, Vector<BigDecimal> m_facturaManualAmount,BigDecimal amttotal, boolean isSOTrx){	
+	public GeneratorRetenciones(int C_BPartner_ID, Vector<Integer> m_factura, Vector<BigDecimal> m_facturaManualAmount,BigDecimal amttotal, boolean isSOTrx, String paymentRule){	
 		// seteo de variables
 		this.setC_BPartner_ID(C_BPartner_ID);
 		this.m_facturas = m_factura;
@@ -59,8 +60,9 @@ public class GeneratorRetenciones {
 		MCurrency currency = new MCurrency(Env.getCtx(),C_Currency_ID,null);
 		this.setM_C_Currency_ID(currency);
 		this.setPago_anticipado(m_facturas.isEmpty());
+		setPaymentRule(paymentRule);
 	}
-	public GeneratorRetenciones(int C_BPartner_ID, Vector<Integer> m_factura, Vector<BigDecimal> m_facturaManualAmount,BigDecimal amttotal, boolean isSOTrx, Timestamp dateTrx){
+	public GeneratorRetenciones(int C_BPartner_ID, Vector<Integer> m_factura, Vector<BigDecimal> m_facturaManualAmount,BigDecimal amttotal, boolean isSOTrx, Timestamp dateTrx, String paymentRule){
 		// seteo de variables
 		this.setC_BPartner_ID(C_BPartner_ID);
 		this.m_facturas = m_factura;
@@ -73,6 +75,7 @@ public class GeneratorRetenciones {
 		this.setM_C_Currency_ID(currency);
 		this.setPago_anticipado(m_facturas.isEmpty());
 		this.vfechaPago = dateTrx;
+		setPaymentRule(paymentRule);
 	}
 	private void setM_C_Currency_ID(MCurrency currency) {	
 		m_C_Currency_ID = currency.getC_Currency_ID();
@@ -193,6 +196,7 @@ public class GeneratorRetenciones {
 			lista_retenciones.get(i).setTrxName(getTrxName());
 			lista_retenciones.get(i).setProjectID(getProjectID());
 			lista_retenciones.get(i).setCampaignID(getCampaignID());
+			lista_retenciones.get(i).setPaymentRule(getPaymentRule());
 			lista_retenciones.get(i).save(alloc);
 		}
 	}
@@ -273,5 +277,11 @@ public class GeneratorRetenciones {
 
 	public Integer getCampaignID() {
 		return campaignID;
+	}
+	public String getPaymentRule() {
+		return paymentRule;
+	}
+	public void setPaymentRule(String paymentRule) {
+		this.paymentRule = paymentRule;
 	}
 }

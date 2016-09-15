@@ -177,6 +177,7 @@ public class VOrdenCobroModel extends VOrdenPagoModel {
 		
 		retProcessor.setDateTrx(retencionDate);
 		retProcessor.setAmount(amount);
+		retProcessor.setPaymentRule(getPaymentRule());
 		retProcessor.setRetencionNumber(retencionNumber);
 		retProcessor.setProjectID(projectID == null?0:projectID);
 		retProcessor.setCampaignID(campaignID == null?0:campaignID);
@@ -472,10 +473,10 @@ public class VOrdenCobroModel extends VOrdenPagoModel {
 		
 		StringBuffer sql = new StringBuffer();
 		
-		sql.append(" SELECT c_invoice_id, c_invoicepayschedule_id, orgname, documentno, dateinvoiced, duedate, currencyIso, grandTotal, openTotal, convertedamt, openamt, isexchange, C_Currency_ID FROM ");
+		sql.append(" SELECT c_invoice_id, c_invoicepayschedule_id, orgname, documentno, dateinvoiced, duedate, currencyIso, grandTotal, openTotal, convertedamt, openamt, isexchange, C_Currency_ID, paymentrule FROM ");
 		sql.append("  (SELECT i.C_Invoice_ID, i.C_InvoicePaySchedule_ID, org.name as orgname, i.DocumentNo, dateinvoiced, coalesce(i.duedate,dateinvoiced) as DueDate, cu.iso_code as currencyIso, i.grandTotal, invoiceOpen(i.C_Invoice_ID, COALESCE(i.C_InvoicePaySchedule_ID, 0)) as openTotal, "); // ips.duedate
 		sql.append("    abs(currencyConvert( i.GrandTotal, i.C_Currency_ID, ?, '"+ m_fechaTrx +"'::date, null, i.AD_Client_ID, i.AD_Org_ID)) as ConvertedAmt, isexchange, ");
-		sql.append("    currencyConvert( invoiceOpen(i.C_Invoice_ID, COALESCE(i.C_InvoicePaySchedule_ID, 0)), i.C_Currency_ID, ?, '"+ m_fechaTrx +"'::date, null, i.AD_Client_ID, i.AD_Org_ID) AS openAmt, i.C_Currency_ID ");
+		sql.append("    currencyConvert( invoiceOpen(i.C_Invoice_ID, COALESCE(i.C_InvoicePaySchedule_ID, 0)), i.C_Currency_ID, ?, '"+ m_fechaTrx +"'::date, null, i.AD_Client_ID, i.AD_Org_ID) AS openAmt, i.C_Currency_ID, i.paymentrule ");
 		sql.append("  FROM c_invoice_v AS i ");
 		sql.append("  LEFT JOIN ad_org org ON (org.ad_org_id=i.ad_org_id) ");
 		sql.append("  LEFT JOIN c_invoicepayschedule AS ips ON (i.c_invoicepayschedule_id=ips.c_invoicepayschedule_id) ");
@@ -488,9 +489,11 @@ public class VOrdenCobroModel extends VOrdenPagoModel {
 		if (AD_Org_ID != 0) 
 			sql.append("  AND i.ad_org_id = ?  ");
 		
+		sql.append(" AND i.paymentRule = '").append(getPaymentRule()).append("' ");
+		
 		sql.append(" AND i.ispaid = 'N' ");
 		sql.append("  ) as openInvoices ");
-		sql.append(" GROUP BY c_invoice_id, c_invoicepayschedule_id, orgname, documentno, currencyIso, grandTotal, openTotal, dateinvoiced, duedate, convertedamt, openamt, isexchange, C_Currency_ID ");
+		sql.append(" GROUP BY c_invoice_id, c_invoicepayschedule_id, orgname, documentno, currencyIso, grandTotal, openTotal, dateinvoiced, duedate, convertedamt, openamt, isexchange, C_Currency_ID, paymentrule ");
 		sql.append(" HAVING opentotal > 0.0 ");
 		// Si agrupa no se puede filtrar por fecha de vencimiento, se deben traer todas
 		if (!m_allInvoices && !getBPartner().isGroupInvoices())
@@ -1043,6 +1046,9 @@ public class VOrdenCobroModel extends VOrdenPagoModel {
 		// la factura (esto soluciona el problema de líneas de caja duplicadas que 
 		// se había detectado).
 		invoice.setCreateCashLine(false);
+		
+		// La forma de pago es la del RC
+		invoice.setPaymentRule(getPaymentRule());
 		
 		invoice.setDocAction(MInvoice.DOCACTION_Complete);
 		invoice.setDocStatus(MInvoice.DOCSTATUS_Drafted);
