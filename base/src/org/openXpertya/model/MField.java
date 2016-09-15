@@ -40,6 +40,7 @@ import org.openXpertya.util.DisplayType;
 import org.openXpertya.util.Env;
 import org.openXpertya.util.Evaluatee;
 import org.openXpertya.util.Evaluator;
+import org.openXpertya.util.Util;
 
 /**
  * Descripción de Clase
@@ -413,6 +414,18 @@ public class MField implements Serializable,Evaluatee {
         return isDisplayed( checkContext );
     }    // isMandatory
 
+    /***
+	 * Verificar si el campo es editable en base a las condiciones que lo hacen
+	 * de r o rw
+	 * 
+	 * @param checkContext
+	 *            chequear valores del contexto
+	 * @return true si es editable, false caso contrario
+	 */
+    public boolean isEditable( boolean checkContext ) {
+    	return isEditable(checkContext,checkContext,checkContext);
+    }
+    
     /**
      * Descripción de Método
      *
@@ -422,7 +435,7 @@ public class MField implements Serializable,Evaluatee {
      * @return
      */
 
-    public boolean isEditable( boolean checkContext ) {
+    public boolean isEditable( boolean checkContextForAccess, boolean checkContextForReadOnlyLogic, boolean checkContextForDisplayLogic) {
         if( isVirtualColumn()) {
             return false;
         }
@@ -465,7 +478,7 @@ public class MField implements Serializable,Evaluatee {
 
         // Role Access & Column Access
 
-        if( checkContext ) {
+        if( checkContextForAccess ) {
             int AD_Client_ID = Env.getContextAsInt( m_vo.ctx,m_vo.WindowNo,m_vo.TabNo,"AD_Client_ID" );
             int AD_Org_ID = Env.getContextAsInt( m_vo.ctx,m_vo.WindowNo,m_vo.TabNo,"AD_Org_ID" );
             int AD_Table_ID = Env.getContextAsInt( m_vo.ctx,m_vo.WindowNo,m_vo.TabNo,"AD_Table_ID" );
@@ -481,7 +494,7 @@ public class MField implements Serializable,Evaluatee {
 
         // Do we have a readonly rule
 
-        if( checkContext && (m_vo.ReadOnlyLogic.length() > 0) ) {
+        if( checkContextForReadOnlyLogic && (m_vo.ReadOnlyLogic.length() > 0) ) {
             boolean retValue = !Evaluator.evaluateLogic( this,m_vo.ReadOnlyLogic );
 
             log.finest( m_vo.ColumnName + " R/O(" + m_vo.ReadOnlyLogic + ") => R/W-" + retValue );
@@ -493,13 +506,13 @@ public class MField implements Serializable,Evaluatee {
 
         // Always editable if Active
 
-        if( m_vo.ColumnName.equals( "Processing" ) || m_vo.ColumnName.equals( "PaymentRule" ) || m_vo.ColumnName.equals( "DocAction" ) || m_vo.ColumnName.equals( "GenerateTo" )) {
+        if( m_vo.ColumnName.equals( "Processing" ) || m_vo.ColumnName.equals( "DocAction" ) || m_vo.ColumnName.equals( "GenerateTo" )) {
             return true;
         }
 
         // Record is Processed ***
 
-        if( checkContext && Env.getContext( m_vo.ctx,m_vo.WindowNo,"Processed" ).equals( "Y" )) {
+        if( checkContextForReadOnlyLogic && Env.getContext( m_vo.ctx,m_vo.WindowNo,"Processed" ).equals( "Y" )) {
             return false;
         }
 
@@ -511,13 +524,14 @@ public class MField implements Serializable,Evaluatee {
 
         // Record is not Active
 
-        if( checkContext &&!Env.getContext( m_vo.ctx,m_vo.WindowNo,"IsActive" ).equals( "Y" )) {
+        String isActive = Env.getContext( m_vo.ctx,m_vo.WindowNo,"IsActive" );
+        if( checkContextForReadOnlyLogic && !Util.isEmpty(isActive) && isActive.equals( "N" )) {
             return false;
         }
 
         // ultimately visibily decides
 
-        return isDisplayed( checkContext );
+        return isDisplayed( checkContextForDisplayLogic );
     }    // isEditable
 
     /**

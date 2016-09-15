@@ -958,7 +958,7 @@ public class GridController extends CPanel implements DataStatusListener,ListSel
 
         // All Components in vPanel (Single Row)
         
-        updateComponents(vPanel.getComponents(), m_mTab.getMapFields(), true, true);
+        updateComponents(vPanel.getComponents(), m_mTab.getMapFields(), true, true, true);
         
         log.config( "(" + m_mTab.toString() + ") - fini - " + ( (col == 0)
                 ?"complete"
@@ -1203,7 +1203,7 @@ public class GridController extends CPanel implements DataStatusListener,ListSel
     }
     
     
-    public static void updateComponents(Component[] comp, Map<String, MField> fields, boolean checkContextForAccess, boolean checkContextForDisplayed){
+    public static void updateComponents(Component[] comp, Map<String, MField> fields, boolean checkContextForAccess, boolean checkContextForDisplayed, boolean checkContextForReadOnlyLogic){
     	
         for( int i = 0;i < comp.length;i++ ) {
             String columnName = comp[ i ].getName();
@@ -1220,7 +1220,7 @@ public class GridController extends CPanel implements DataStatusListener,ListSel
 
                         if( comp[ i ] instanceof VEditor ) {
                             VEditor ve = ( VEditor )comp[ i ];
-                            boolean rw = mField.isEditable( checkContextForAccess );    // r/w - check Context
+                            boolean rw = mField.isEditable( checkContextForAccess, checkContextForReadOnlyLogic, checkContextForDisplayed );    // r/w - check Context
 
                             ve.setReadWrite( rw );
 

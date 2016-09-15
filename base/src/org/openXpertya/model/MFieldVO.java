@@ -382,7 +382,6 @@ public class MFieldVO implements Serializable {
         voT.isProcess		= true;
         voT.IsDisplayed		= true;
         voT.IsDisplayedInGrid = true;
-        voT.IsReadOnly		= false;
         voT.IsUpdateable	= true;
 
         //
@@ -401,7 +400,11 @@ public class MFieldVO implements Serializable {
         voT.ValueMin		= voF.ValueMin;
         voT.ValueMax		= voF.ValueMax;
         voT.isRange		= voF.isRange;
-
+        voT.IsReadOnly		= voF.IsReadOnly;
+        voT.ReadOnlyLogic	= voF.ReadOnlyLogic;
+        voT.Callout		= voF.Callout;
+        voT.CalloutAlsoOnLoad	= voF.CalloutAlsoOnLoad;
+        
         // Eloy Gomez
         // Permitimos rangos de VLookup
         voT.AD_Reference_Value_ID 	= voF.AD_Reference_Value_ID;
@@ -427,7 +430,6 @@ public class MFieldVO implements Serializable {
         vo.isProcess	= true;
         vo.IsDisplayed	= true;
         vo.IsDisplayedInGrid = true;
-        vo.IsReadOnly	= false;
         vo.IsUpdateable	= true;
 
         try {
@@ -456,6 +458,12 @@ public class MFieldVO implements Serializable {
             vo.AD_Reference_Value_ID	= rs.getInt("AD_Reference_Value_ID");
             vo.ValidationCode		= rs.getString("ValidationCode");
 
+            vo.ReadOnlyLogic	= rs.getString("ReadOnlyLogic");
+            vo.IsReadOnly	= rs.getString("IsReadOnly").equals("Y");
+            
+            vo.Callout	= rs.getString("Callout");
+            vo.CalloutAlsoOnLoad	= "Y".equalsIgnoreCase(rs.getString("CalloutAlsoOnLoad"));
+            
         } catch (SQLException e) {
             CLogger.get().log(Level.SEVERE, "createParameter", e);
         }

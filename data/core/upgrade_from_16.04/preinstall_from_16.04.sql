@@ -1884,3 +1884,8 @@ END;
 $BODY$
 LANGUAGE plpgsql VOLATILE
 COST 100;  
+
+--20160915-1955 Incorporación de funcionalidad de sólo lectura, callout y callout al cargar en parámetros de proceso
+UPDATE ad_system SET dummy = (SELECT addcolumnifnotexists('AD_Process_Para','isreadonly','character(1) NOT NULL DEFAULT ''N''::bpchar'));
+UPDATE ad_system SET dummy = (SELECT addcolumnifnotexists('AD_Process_Para','callout','character varying(255)'));
+UPDATE ad_system SET dummy = (SELECT addcolumnifnotexists('AD_Process_Para','calloutalsoonload','character(1) NOT NULL DEFAULT ''N''::bpchar'));
