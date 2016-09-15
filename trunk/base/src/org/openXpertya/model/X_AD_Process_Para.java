@@ -7,7 +7,7 @@ import java.math.*;
 import org.openXpertya.util.*;
 /** Modelo Generado por AD_Process_Para
  *  @author Comunidad de Desarrollo Libertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
- *  @version  - 2014-07-24 12:28:45.166 */
+ *  @version  - 2016-09-15 20:10:00.445 */
 public class X_AD_Process_Para extends org.openXpertya.model.PO
 {
 /** Constructor estándar */
@@ -19,6 +19,7 @@ super (ctx, AD_Process_Para_ID, trxName);
 setAD_Process_ID (0);
 setAD_Process_Para_ID (0);
 setAD_Reference_ID (0);
+setCalloutAlsoOnLoad (false);
 setColumnName (null);
 setEntityType (null);	// U
 setFieldLength (0);
@@ -26,6 +27,7 @@ setIsCentrallyMaintained (true);	// Y
 setIsEncrypted (false);
 setIsMandatory (false);
 setIsRange (false);
+setIsReadOnly (false);
 setName (null);
 setSameLine (false);
 setSeqNo (0);	// @SQL=SELECT NVL(MAX(SeqNo),0)+10 AS DefaultValue FROM AD_Process_Para WHERE AD_Process_ID=@AD_Process_ID@
@@ -175,6 +177,39 @@ public int getAD_Val_Rule_ID()
 Integer ii = (Integer)get_Value("AD_Val_Rule_ID");
 if (ii == null) return 0;
 return ii.intValue();
+}
+/** Set Callout.
+Fully qualified class names and method - separated by semicolons */
+public void setCallout (String Callout)
+{
+if (Callout != null && Callout.length() > 255)
+{
+log.warning("Length > 255 - truncated");
+Callout = Callout.substring(0,255);
+}
+set_Value ("Callout", Callout);
+}
+/** Get Callout.
+Fully qualified class names and method - separated by semicolons */
+public String getCallout() 
+{
+return (String)get_Value("Callout");
+}
+/** Set CalloutAlsoOnLoad */
+public void setCalloutAlsoOnLoad (boolean CalloutAlsoOnLoad)
+{
+set_Value ("CalloutAlsoOnLoad", new Boolean(CalloutAlsoOnLoad));
+}
+/** Get CalloutAlsoOnLoad */
+public boolean isCalloutAlsoOnLoad() 
+{
+Object oo = get_Value("CalloutAlsoOnLoad");
+if (oo != null) 
+{
+ if (oo instanceof Boolean) return ((Boolean)oo).booleanValue();
+ return "Y".equals(oo);
+}
+return false;
 }
 /** Set DB Column Name.
 Name of the column in the database */
@@ -395,6 +430,24 @@ The parameter is a range of values */
 public boolean isRange() 
 {
 Object oo = get_Value("IsRange");
+if (oo != null) 
+{
+ if (oo instanceof Boolean) return ((Boolean)oo).booleanValue();
+ return "Y".equals(oo);
+}
+return false;
+}
+/** Set Read Only.
+Field is read only */
+public void setIsReadOnly (boolean IsReadOnly)
+{
+set_Value ("IsReadOnly", new Boolean(IsReadOnly));
+}
+/** Get Read Only.
+Field is read only */
+public boolean isReadOnly() 
+{
+Object oo = get_Value("IsReadOnly");
 if (oo != null) 
 {
  if (oo instanceof Boolean) return ((Boolean)oo).booleanValue();

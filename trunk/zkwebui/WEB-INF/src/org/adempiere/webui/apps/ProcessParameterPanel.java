@@ -22,6 +22,10 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Set;
+import java.util.StringTokenizer;
 import java.util.logging.Level;
 
 import org.adempiere.webui.component.Column;
@@ -40,6 +44,7 @@ import org.adempiere.webui.event.ValueChangeListener;
 import org.adempiere.webui.window.FDialog;
 import org.openXpertya.model.MField;
 import org.openXpertya.model.MFieldVO;
+import org.openXpertya.model.CalloutProcess;
 import org.openXpertya.model.IProcessParameter;
 import org.openXpertya.model.MClient;
 import org.openXpertya.model.MPInstancePara;
@@ -106,6 +111,7 @@ implements ValueChangeListener, IProcessParameter
 	    	col = new Column();
 	    	col.setWidth("5%");
 	    	columns.appendChild(col);
+
 		}
 
 		private int			m_WindowNo;
@@ -119,7 +125,9 @@ implements ValueChangeListener, IProcessParameter
 		private ArrayList<MField>	m_mFields = new ArrayList<MField>();
 		private ArrayList<MField>	m_mFields2 = new ArrayList<MField>();
 		private ArrayList<Label> m_separators = new ArrayList<Label>();
-		//
+		
+		private Map<String, MField> fields = new HashMap<String, MField>();//
+		
 		private Grid centerPanel = null;
 
 		/**
@@ -189,7 +197,8 @@ implements ValueChangeListener, IProcessParameter
 					+ "p.FieldLength, p.IsMandatory, p.IsRange, p.ColumnName, "
 					+ "p.DefaultValue, p.DefaultValue2, p.VFormat, p.ValueMin, p.ValueMax, "
 					+ "p.SeqNo, p.AD_Reference_Value_ID, vr.Code AS ValidationCode, "
-					+ "p.ReadOnlyLogic, p.sameline, p.DisplayLogic, p.isencrypted  "
+					+ "p.ReadOnlyLogic, p.sameline, p.DisplayLogic, p.isencrypted, p.isReadOnly, "
+					+ "p.Callout, p.CalloutAlsoOnLoad "
 					+ "FROM AD_Process_Para p"
 					+ " LEFT OUTER JOIN AD_Val_Rule vr ON (p.AD_Val_Rule_ID=vr.AD_Val_Rule_ID) "
 					+ "WHERE p.AD_Process_ID=?"		//	1
@@ -201,7 +210,8 @@ implements ValueChangeListener, IProcessParameter
 					+ "p.FieldLength, p.IsMandatory, p.IsRange, p.ColumnName, "
 					+ "p.DefaultValue, p.DefaultValue2, p.VFormat, p.ValueMin, p.ValueMax, "
 					+ "p.SeqNo, p.AD_Reference_Value_ID, vr.Code AS ValidationCode, "
-					+ "p.ReadOnlyLogic, p.sameline, p.DisplayLogic, p.isencrypted  "
+					+ "p.ReadOnlyLogic, p.sameline, p.DisplayLogic, p.isencrypted, p.isReadOnly, "
+					+ "p.Callout, p.CalloutAlsoOnLoad "
 					+ "FROM AD_Process_Para p"
 					+ " INNER JOIN AD_Process_Para_Trl t ON (p.AD_Process_Para_ID=t.AD_Process_Para_ID)"
 					+ " LEFT OUTER JOIN AD_Val_Rule vr ON (p.AD_Val_Rule_ID=vr.AD_Val_Rule_ID) "
@@ -241,6 +251,7 @@ implements ValueChangeListener, IProcessParameter
 			if (hasFields)
 			{
 				centerPanel.appendChild(rows);
+		    	processCallouts();
 				dynamicDisplay();
 			}
 			else
@@ -267,6 +278,8 @@ implements ValueChangeListener, IProcessParameter
 			MField mField = new MField (voF);
 			m_mFields.add(mField);                      //  add to Fields
 
+			fields.put(mField.getColumnName(), mField);
+			
 			Row row = new Row();
 			
 			//	The Editor
@@ -300,6 +313,7 @@ implements ValueChangeListener, IProcessParameter
 				MFieldVO voF2 = MFieldVO.createParameter(voF);
 				MField mField2 = new MField (voF2);
 				m_mFields2.add (mField2);
+				fields.put(mField2.getColumnName()+"_TO", mField2);
 				//	The Editor
 				WEditor editor2 = WebEditorFactory.getEditor(mField2, false);
 				//  New Field value to be updated to editor
@@ -504,8 +518,78 @@ implements ValueChangeListener, IProcessParameter
 			else
 				Env.setContext(Env.getCtx(), m_WindowNo, name, value.toString());
 
+			processCallout(fields.get(name), value);
 			dynamicDisplay();
 		}
+		
+		protected void processCallouts(){
+			Set<String> keys = fields.keySet();
+			for (String columnName : keys) {
+				MField field = fields.get(columnName);
+				if(field.isCalloutAlsoOnLoad()){
+					processCallout(fields.get(columnName), true, null);
+				}
+			}
+		}
+		
+		public String processCallout( MField field, Object newValue) {
+			return processCallout( field, false, newValue);
+		}
+		
+		public String processCallout( MField field, boolean onLoad, Object newValue) {
+	        String callout = field.getCallout();
+
+	        Object value    = onLoad?field.getValue():newValue;
+	        Object oldValue = field.getOldValue();
+
+	        StringTokenizer st = new StringTokenizer( callout,";",false );
+	        
+	        while( st.hasMoreTokens() )         // for each callout
+	        {
+	            String  cmd         = st.nextToken().trim();
+	            CalloutProcess call = null;
+	            String  method      = null;
+	            int     methodStart = cmd.lastIndexOf( "." );
+
+	            try {
+	                if( methodStart != -1 )    // no class
+	                {
+	                    Class cClass = Class.forName( cmd.substring( 0,methodStart ));
+
+	                    call   = ( CalloutProcess )cClass.newInstance();
+	                    method = cmd.substring( methodStart + 1 );
+	                }
+	            } catch( Exception e ) {
+	                log.log( Level.SEVERE,"class",e );
+
+	                return "Callout Invalid: " + cmd + " (" + e.toString() + ")";
+	            }
+
+	            if( (call == null) || (method == null) || (method.length() == 0) ) {
+	                return "Callout Invalid: " + method;
+	            }
+
+	            String retValue = "";
+
+	            try {
+	        			retValue = call.start( Env.getCtx(),m_WindowNo,method,field,value,oldValue,fields );
+	            } catch( Exception e ) {
+	                log.log( Level.SEVERE,"start",e );
+	                retValue = "Callout Invalid: " + e.toString();
+
+	                return retValue;
+	            }
+
+	            if( !retValue.equals( "" ))    // interrupt on first error
+	            {
+	                log.severe( retValue );
+
+	                return retValue;
+	            }
+	        }                                  // for each callout
+
+	        return "";
+	    }    // processCallout
 		
 		private void dynamicDisplay() {
 			for(int i = 0; i < m_wEditors.size(); i++) {
@@ -519,7 +603,7 @@ implements ValueChangeListener, IProcessParameter
 							m_wEditors2.get(i).setVisible(true);
 						}
 					}
-					boolean rw = mField.isEditablePara(true); // r/w - check if field is Editable
+					boolean rw = mField.isEditable(false, true, true); // r/w - check if field is Editable
 					editor.setReadWrite(rw);
 					editor.dynamicDisplay();
 					if (mField.getVO().isRange) {

@@ -36,6 +36,9 @@ import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Properties;
+import java.util.Set;
+import java.util.StringTokenizer;
 import java.util.logging.Level;
 
 import javax.swing.BorderFactory;
@@ -54,11 +57,17 @@ import org.openXpertya.grid.GridController;
 import org.openXpertya.grid.ed.VCheckBox;
 import org.openXpertya.grid.ed.VEditor;
 import org.openXpertya.grid.ed.VEditorFactory;
+import org.openXpertya.model.Callout;
+import org.openXpertya.model.CalloutProcess;
 import org.openXpertya.model.MField;
 import org.openXpertya.model.MFieldVO;
 import org.openXpertya.model.MPInstancePara;
 import org.openXpertya.model.MProcess;
 import org.openXpertya.model.MultiMap;
+import org.openXpertya.plugin.CalloutPluginEngine;
+import org.openXpertya.plugin.MPluginStatus;
+import org.openXpertya.plugin.MPluginStatusCallout;
+import org.openXpertya.plugin.common.PluginCalloutUtils;
 import org.openXpertya.plugin.common.PluginUtils;
 import org.openXpertya.process.ProcessInfo;
 import org.openXpertya.util.CLogger;
@@ -249,10 +258,10 @@ public class ProcessParameter extends CDialog implements ActionListener,Vetoable
         String sql = null;
 
         if( Env.isBaseLanguage( Env.getCtx(),"AD_Process_Para" )) {
-            sql = "SELECT p.Name, p.Description, p.Help, " + "p.AD_Reference_ID, p.AD_Process_Para_ID, " + "p.FieldLength, p.IsMandatory, p.IsRange, p.ColumnName, " + "p.DefaultValue, p.DefaultValue2, p.VFormat, p.ValueMin, p.ValueMax, " + "p.SeqNo, p.AD_Reference_Value_ID, vr.Code AS ValidationCode, p.sameline, p.displaylogic, p.isencrypted " + "FROM AD_Process_Para p" + " LEFT OUTER JOIN AD_Val_Rule vr ON (p.AD_Val_Rule_ID=vr.AD_Val_Rule_ID) " + "WHERE p.AD_Process_ID=?"    // 1
+            sql = "SELECT p.Name, p.Description, p.Help, " + "p.AD_Reference_ID, p.AD_Process_Para_ID, " + "p.FieldLength, p.IsMandatory, p.IsRange, p.ColumnName, " + "p.DefaultValue, p.DefaultValue2, p.VFormat, p.ValueMin, p.ValueMax, " + "p.SeqNo, p.AD_Reference_Value_ID, vr.Code AS ValidationCode, p.sameline, p.displaylogic, p.isencrypted, p.isreadonly, p.ReadOnlyLogic, p.Callout, p.CalloutAlsoOnLoad " + "FROM AD_Process_Para p" + " LEFT OUTER JOIN AD_Val_Rule vr ON (p.AD_Val_Rule_ID=vr.AD_Val_Rule_ID) " + "WHERE p.AD_Process_ID=?"    // 1
                   + " AND p.IsActive='Y' " + "ORDER BY SeqNo";
         } else {
-            sql = "SELECT t.Name, t.Description, t.Help, " + "p.AD_Reference_ID, p.AD_Process_Para_ID, " + "p.FieldLength, p.IsMandatory, p.IsRange, p.ColumnName, " + "p.DefaultValue, p.DefaultValue2, p.VFormat, p.ValueMin, p.ValueMax, " + "p.SeqNo, p.AD_Reference_Value_ID, vr.Code AS ValidationCode, p.sameline, p.displaylogic, p.isencrypted " + "FROM AD_Process_Para p" + " INNER JOIN AD_Process_Para_Trl t ON (p.AD_Process_Para_ID=t.AD_Process_Para_ID)" + " LEFT OUTER JOIN AD_Val_Rule vr ON (p.AD_Val_Rule_ID=vr.AD_Val_Rule_ID) " + "WHERE p.AD_Process_ID=?"    // 1
+            sql = "SELECT t.Name, t.Description, t.Help, " + "p.AD_Reference_ID, p.AD_Process_Para_ID, " + "p.FieldLength, p.IsMandatory, p.IsRange, p.ColumnName, " + "p.DefaultValue, p.DefaultValue2, p.VFormat, p.ValueMin, p.ValueMax, " + "p.SeqNo, p.AD_Reference_Value_ID, vr.Code AS ValidationCode, p.sameline, p.displaylogic, p.isencrypted, p.isreadonly, p.ReadOnlyLogic, p.Callout, p.CalloutAlsoOnLoad " + "FROM AD_Process_Para p" + " INNER JOIN AD_Process_Para_Trl t ON (p.AD_Process_Para_ID=t.AD_Process_Para_ID)" + " LEFT OUTER JOIN AD_Val_Rule vr ON (p.AD_Val_Rule_ID=vr.AD_Val_Rule_ID) " + "WHERE p.AD_Process_ID=?"    // 1
                   + " AND t.AD_Language='" + Env.getAD_Language( Env.getCtx()) + "'" + " AND p.IsActive='Y' " + "ORDER BY SeqNo";
         }
 
@@ -324,7 +333,8 @@ public class ProcessParameter extends CDialog implements ActionListener,Vetoable
             centerPanel.add( Box.createVerticalStrut( 10 ),gbc );      // bottom gap
             gbc.gridx = 3;
             centerPanel.add( Box.createHorizontalStrut( 12 ),gbc );    // right gap
-            updateComponents();
+            processCallouts();
+            updateComponents(true);
             AEnv.positionCenterWindow( m_frame,this );
         } else {
             dispose();
@@ -483,6 +493,7 @@ public class ProcessParameter extends CDialog implements ActionListener,Vetoable
             MField   mField2 = new MField( voF2 );
 
             m_mFields2.add( mField2 );
+            fields.put(mField.getColumnName()+"_TO", mField2);
             
             // The Editor
 
@@ -552,26 +563,25 @@ public class ProcessParameter extends CDialog implements ActionListener,Vetoable
 
     public void vetoableChange( PropertyChangeEvent evt ) throws PropertyVetoException {
 
-        // log.fine( "ProcessParameter.vetoableChange");
+		 String valueStr = (evt.getNewValue() == null)
+	            ?""
+	            :evt.getNewValue().toString();
+	 
+		 if (evt.getNewValue() instanceof Boolean) {
+			 valueStr = ((Boolean) evt.getNewValue() == false)
+		             ?"N"
+		             :"Y";
+		 }
 
-	 String value = (evt.getNewValue() == null)
-            ?""
-            :evt.getNewValue().toString();
- 
-	 if (evt.getNewValue() instanceof Boolean) {
-	 	value = ((Boolean) evt.getNewValue() == false)
-	             ?"N"
-	             :"Y";
-	 }
-
-        Env.setContext( Env.getCtx(),m_WindowNo,evt.getPropertyName(),value );
-        updateComponents();
+		 Env.setContext( Env.getCtx(),m_WindowNo,evt.getPropertyName(),valueStr );
+		 processCallout(fields.get(evt.getPropertyName()), evt.getNewValue());
+		 updateComponents(false);
     }    // vetoableChange
 
     
-    public void updateComponents(){
+    public void updateComponents(boolean init){
 		GridController.updateComponents(centerPanel.getComponents(), fields,
-				false, true);
+				false, true, true);
 		pack();
     }
     
@@ -792,6 +802,75 @@ public class ProcessParameter extends CDialog implements ActionListener,Vetoable
 	public String get_ValueAsString(String variableName) {
 		return Env.getContext( Env.getCtx(),m_WindowNo,variableName,true );
 	}
+	
+	protected void processCallouts(){
+		Set<String> keys = fields.keySet();
+		for (String columnName : keys) {
+			MField field = fields.get(columnName);
+			if(field.isCalloutAlsoOnLoad()){
+				processCallout(fields.get(columnName), true, null);
+			}
+		}
+	}
+	
+	public String processCallout( MField field, Object newValue) {
+		return processCallout( field, false, newValue);
+	}
+	
+	public String processCallout( MField field, boolean onLoad, Object newValue) {
+        String callout = field.getCallout();
+
+        Object value    = onLoad?field.getValue():newValue;
+        Object oldValue = field.getOldValue();
+
+        StringTokenizer st = new StringTokenizer( callout,";",false );
+        
+        while( st.hasMoreTokens() )         // for each callout
+        {
+            String  cmd         = st.nextToken().trim();
+            CalloutProcess call = null;
+            String  method      = null;
+            int     methodStart = cmd.lastIndexOf( "." );
+
+            try {
+                if( methodStart != -1 )    // no class
+                {
+                    Class cClass = Class.forName( cmd.substring( 0,methodStart ));
+
+                    call   = ( CalloutProcess )cClass.newInstance();
+                    method = cmd.substring( methodStart + 1 );
+                }
+            } catch( Exception e ) {
+                log.log( Level.SEVERE,"class",e );
+
+                return "Callout Invalid: " + cmd + " (" + e.toString() + ")";
+            }
+
+            if( (call == null) || (method == null) || (method.length() == 0) ) {
+                return "Callout Invalid: " + method;
+            }
+
+            String retValue = "";
+
+            try {
+        			retValue = call.start( Env.getCtx(),m_WindowNo,method,field,value,oldValue,fields );
+            } catch( Exception e ) {
+                log.log( Level.SEVERE,"start",e );
+                retValue = "Callout Invalid: " + e.toString();
+
+                return retValue;
+            }
+
+            if( !retValue.equals( "" ))    // interrupt on first error
+            {
+                log.severe( retValue );
+
+                return retValue;
+            }
+        }                                  // for each callout
+
+        return "";
+    }    // processCallout
 }    // ProcessParameter
 
 
