@@ -252,6 +252,7 @@ public class InvoiceGlobalVoiding extends SvrProcess {
 		// Se asigna la caja diaria a setear al comprobante de anulación en el
 		// caso que éste deba setearse  
 		invoice.setVoidPOSJournalID(getPosJournalCreditID());
+		invoice.setSkipExtraValidations(true);
 		// Anulo la factura
 		if (!DocumentEngine.processAndSave(invoice, MInvoice.DOCACTION_Void, false)) {
 			throw new Exception("@InvoiceVoidError@ # "

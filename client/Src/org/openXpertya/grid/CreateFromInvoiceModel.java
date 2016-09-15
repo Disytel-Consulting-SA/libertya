@@ -21,6 +21,9 @@ import org.openXpertya.util.Util;
 
 public class CreateFromInvoiceModel extends CreateFromModel {
 
+	/** Forma de pago para la factura */
+	private String paymentRule = null; 
+	
 	// =============================================================================================
 	// Logica en comun para la carga de envios
 	// =============================================================================================
@@ -111,6 +114,9 @@ public class CreateFromInvoiceModel extends CreateFromModel {
 				invoice.setSkipManualGeneralDiscountValidation(true);
 			}
 			invoice.setIsExchange(p_order.isExchange());
+			if(!Util.isEmpty(getPaymentRule(), true)){
+				invoice.setPaymentRule(getPaymentRule());
+			}
             if (!invoice.save()) {
             	String msg = CLogger.retrieveErrorAsString();
 				msg = Util.isEmpty(msg, true) ? Msg.parseTranslation(Env.getCtx(),
@@ -306,5 +312,13 @@ public class CreateFromInvoiceModel extends CreateFromModel {
 		);
 		return (count == null || count == 0);
 
+	}
+
+	public String getPaymentRule() {
+		return paymentRule;
+	}
+
+	public void setPaymentRule(String paymentRule) {
+		this.paymentRule = paymentRule;
 	}
 }

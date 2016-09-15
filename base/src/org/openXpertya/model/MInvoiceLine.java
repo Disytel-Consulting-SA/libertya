@@ -1142,10 +1142,12 @@ public class MInvoiceLine extends X_C_InvoiceLine {
         }
         
         if(shouldUpdateHeader){
+	        MInvoice invoice = getInvoice();
+	        invoice.setSkipExtraValidations(true);
+	        invoice.setSkipModelValidations(true);
         	if(!updateHeaderTax()){
         		return false;
         	}
-	        MInvoice invoice = getInvoice();
         	
 			// Si debe manejar los descuentos arrastrados de la factura,
 			// entonces actualizo el descuento de documento de la cabecera

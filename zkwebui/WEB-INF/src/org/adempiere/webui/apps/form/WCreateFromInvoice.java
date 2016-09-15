@@ -347,6 +347,7 @@ public class WCreateFromInvoice extends WCreateFrom {
 		shipmentField.setValue(null);
         if (invoiceID > 0) {
         	MInvoice invoice = new MInvoice(getCtx(), invoiceID, getTrxName());
+        	getHelper().setPaymentRule(invoice.getPaymentRule());
         	relatedOrderID = invoice.getC_Order_ID();
         }
         loadOrder(relatedOrderID, false, allowDeliveryReturned(), true);

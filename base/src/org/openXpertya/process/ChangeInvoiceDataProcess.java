@@ -67,6 +67,7 @@ public class ChangeInvoiceDataProcess extends AbstractSvrProcess {
 		Boolean setFiscalPrinted = ((String) getParametersValues().get(
 				"FISCALALREADYPRINTED")).equals("Y");
 		invoice.setFiscalAlreadyPrinted(setFiscalPrinted);
+		invoice.setSkipExtraValidations(true);
 		if(!invoice.save()){
 			throw new Exception(CLogger.retrieveErrorAsString());
 		}

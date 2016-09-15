@@ -251,7 +251,8 @@ public class RetencionGanancias extends AbstractRetencionProcessor {
 		recaudador_fac.setDocAction(MInvoice.DOCACTION_Complete);
 		recaudador_fac.setC_BPartner_Location_ID(locationID);
 		recaudador_fac.setCUIT(null);
-		recaudador_fac.setPaymentRule(MInvoice.PAYMENTRULE_Check);
+		recaudador_fac.setPaymentRule(getPaymentRule());
+		recaudador_fac.setCurrentAccountVerified(true);
 		recaudador_fac.setC_Project_ID(getProjectID());
 		recaudador_fac.setC_Campaign_ID(getCampaignID());
 		
@@ -330,7 +331,8 @@ public class RetencionGanancias extends AbstractRetencionProcessor {
 		credito_prov.setDocAction(MInvoice.DOCACTION_Complete);
 		credito_prov.setC_BPartner_Location_ID(locationID);
 		credito_prov.setCUIT(getBPartner().getTaxID());
-		credito_prov.setPaymentRule(MInvoice.PAYMENTRULE_Check);
+		credito_prov.setPaymentRule(getPaymentRule());
+		credito_prov.setCurrentAccountVerified(true);
 		credito_prov.setC_Project_ID(getProjectID());
 		credito_prov.setC_Campaign_ID(getCampaignID());
 

@@ -4,6 +4,8 @@
 
 package org.adempiere.webui.apps.form;
 
+import java.awt.event.ItemEvent;
+import java.awt.event.ItemListener;
 import java.math.BigDecimal;
 import java.sql.Timestamp;
 import java.text.ParseException;
@@ -11,6 +13,9 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.Date;
 import java.util.Enumeration;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.Properties;
 import java.util.logging.Level;
 
@@ -47,6 +52,7 @@ import org.adempiere.webui.event.ValueChangeEvent;
 import org.adempiere.webui.event.ValueChangeListener;
 import org.adempiere.webui.panel.ADForm;
 import org.adempiere.webui.window.FDialog;
+import org.compiere.swing.CComboBox;
 import org.openXpertya.apps.form.VComponentsFactory;
 import org.openXpertya.apps.form.VModelHelper;
 import org.openXpertya.apps.form.VOrdenPago;
@@ -60,6 +66,7 @@ import org.openXpertya.apps.form.VOrdenPagoModel.ResultItemFactura;
 import org.openXpertya.model.Lookup;
 import org.openXpertya.model.MBPartner;
 import org.openXpertya.model.MCurrency;
+import org.openXpertya.model.MInvoice;
 import org.openXpertya.model.MLookup;
 import org.openXpertya.model.MLookupFactory;
 import org.openXpertya.model.MLookupInfo;
@@ -75,6 +82,7 @@ import org.openXpertya.util.DB;
 import org.openXpertya.util.DisplayType;
 import org.openXpertya.util.Env;
 import org.openXpertya.util.Msg;
+import org.openXpertya.util.ValueNamePair;
 import org.zkoss.lang.Objects;
 import org.zkoss.zk.ui.event.Event;
 import org.zkoss.zk.ui.event.EventListener;
@@ -182,6 +190,19 @@ public class WOrdenPago extends ADForm implements ValueChangeListener, TableMode
 		cboOrg = new WTableDirEditor("AD_Org_ID", false, false, true, lookupOrg);
 		cboOrg.setValue(Env.getAD_Org_ID(Env.getCtx()));
 		addPopupMenu(cboOrg, true, true, false);
+		
+		try{
+			createPaymentRuleCombo();
+		} catch(Exception e){
+			log.severe("Error creating payment rule combo: "+e.getMessage());
+		}
+		
+		cboPaymentRule.addValueChangeListener(this);
+		
+		dateTrx = new WDateEditor();
+		dateTrx.setMandatory(true);
+		dateTrx.setValue(getModel().getFechaOP());
+		dateTrx.addValueChangeListener(this);
 		
         radPayTypeStd = new Radio();
         radPayTypeAdv = new Radio();
@@ -452,6 +473,13 @@ public class WOrdenPago extends ADForm implements ValueChangeListener, TableMode
     	row.appendChild(cboDocumentType.getComponent());
     	row.appendChild(new Space());
 
+    	row = rows.newRow();
+    	row.appendChild(dateTrx.getLabel().rightAlign());
+    	row.appendChild(dateTrx.getComponent());
+    	row.appendChild(new Space());
+    	row.appendChild(cboPaymentRule.getLabel().rightAlign());
+    	row.appendChild(cboPaymentRule.getComponent());
+    	row.appendChild(new Space());
     }
     
     
@@ -759,8 +787,6 @@ public class WOrdenPago extends ADForm implements ValueChangeListener, TableMode
 		mpc.banco = txtChequeBanco.getValue().toString().trim();
 		mpc.cuitLibrador = txtChequeCUITLibrador.getValue().toString().trim();
 		mpc.descripcion = txtChequeDescripcion.getValue().toString().trim();
-		Timestamp today = new Timestamp(System.currentTimeMillis());
-		mpc.dateTrx = mpc.fechaPago.before(today)?mpc.fechaPago:today;
 		// A La Orden: Campo no obligatorio
 		//
 		// if (mpc.aLaOrden.trim().equals(""))
@@ -1006,6 +1032,7 @@ public class WOrdenPago extends ADForm implements ValueChangeListener, TableMode
     		}
     		
     		m_model.setActualizarFacturasAuto(false);
+    		dateTrx.setReadWrite(false);
     		// Fuerzo la actualizacion de los valores de la interfaz
     		onTipoPagoChange(true);
     		m_model.setPagoNormal(radPayTypeStd.isSelected(), monto);
@@ -1182,6 +1209,10 @@ public class WOrdenPago extends ADForm implements ValueChangeListener, TableMode
     protected WTableDirEditor cboOrg;
     protected WTableDirEditor cboProject;
     protected WTableDirEditor cboCurrency;
+    protected WTableDirEditor cboPaymentRule;
+    protected WDateEditor dateTrx;
+    
+    protected Map<String, ValueNamePair> paymentRules;
     
     protected WSearchEditor chequeChequera;
     protected WDateEditor chequeFechaEmision;
@@ -1501,7 +1532,9 @@ public class WOrdenPago extends ADForm implements ValueChangeListener, TableMode
 		fldDocumentNo.getLabel().setText("Nro. Documento");
         cboOrg.getLabel().setText(Msg.translate(Env.getCtx(),"AD_Org_ID"));
         cboDocumentType.getLabel().setText(Msg.translate(Env.getCtx(),"C_DOCTYPE_ID"));
+        cboPaymentRule.getLabel().setText(Msg.translate(Env.getCtx(),"PaymentRule"));
         
+        dateTrx.getLabel().setText(Msg.getMsg(m_ctx, "Date"));
         
 		cboProject.getLabel().setText(Msg.translate(Env.getCtx(), "C_Project_ID"));
 		cboCurrency.getLabel().setText(Msg.translate(Env.getCtx(), "C_Currency_ID"));
@@ -1537,8 +1570,6 @@ public class WOrdenPago extends ADForm implements ValueChangeListener, TableMode
 	
 	protected void clearMediosPago() {
 		
-		Date d = new Date();
-		
 		// Efectivo
 		
 		efectivoLibroCaja.setValue(null);
@@ -1547,14 +1578,14 @@ public class WOrdenPago extends ADForm implements ValueChangeListener, TableMode
 		// Transferencia 
 		
 		transfCtaBancaria.setValue(null);
-		transFecha.setValue(d);
+		transFecha.setValue(dateTrx.getValue());
 		txtTransfImporte.setValue("");
 		txtTransfNroTransf.setValue("");
 		
 		// Cheque
 		
 		chequeChequera.setValue(null);
-		chequeFechaEmision.setValue(d);
+		chequeFechaEmision.setValue(dateTrx.getValue());
 		chequeFechaPago.setValue(null);
 		if (getModel().getBPartner() == null) 
 			txtChequeALaOrden.setValue("");
@@ -1752,6 +1783,12 @@ public class WOrdenPago extends ADForm implements ValueChangeListener, TableMode
 				fldDocumentNo.setValue(null);
 				m_model.setDocumentType(null);
 			}
+		} else if (e.getSource() == cboPaymentRule) {
+			updatePaymentRule();
+		} else if(e.getSource() == dateTrx){
+			m_model.setFechaOP((Timestamp)dateTrx.getValue());
+			m_model.actualizarFacturas();
+			Env.setContext(m_ctx, m_WindowNo, "Date", (Timestamp)dateTrx.getValue());
 		}
 	}
 
@@ -1775,6 +1812,8 @@ public class WOrdenPago extends ADForm implements ValueChangeListener, TableMode
 			cboOrg.setReadWrite(tabbox.getSelectedIndex() == 0);
 			cboDocumentType.setReadWrite(tabbox.getSelectedIndex() == 0);
 			fldDocumentNo.setReadWrite(tabbox.getSelectedIndex() == 0);
+			cboPaymentRule.setReadWrite(tabbox.getSelectedIndex() == 0);
+			dateTrx.setReadWrite(tabbox.getSelectedIndex() == 0);
 		} else if (arg0.getTarget().getParent().getParent() == mpTabbox) {
 			// TAB de medios de pago
 			updateContextValues();
@@ -2654,6 +2693,21 @@ public class WOrdenPago extends ADForm implements ValueChangeListener, TableMode
 		listModel = new FacturasModel(VModelHelper.HideColumnsTableModelFactory(m_model.m_facturasTableModel), m_WindowNo);
 		tblFacturas.setModel(listModel);
 		updateTotalAPagar1();
+	}
+	
+	protected void createPaymentRuleCombo() throws Exception{
+		MLookup lookupPaymentRule = MLookupFactory.get(m_ctx, m_WindowNo, 0, DisplayType.List, Env.getLanguage(m_ctx),
+				"PaymentRule", MInvoice.PAYMENTRULE_AD_Reference_ID, false, getModel().getPaymentRuleValidation());
+		cboPaymentRule = new WTableDirEditor("PaymentRule", true, false, true, lookupPaymentRule);
+		cboPaymentRule.setValue(getModel().getDefaultPaymentRule());
+		getModel().setPaymentRule(getModel().getDefaultPaymentRule());
+		Env.setContext(m_ctx, m_WindowNo, "PaymentRule", getModel().getDefaultPaymentRule());
+	}
+	
+	protected void updatePaymentRule(){
+		getModel().setPaymentRule((String)cboPaymentRule.getValue());
+		Env.setContext(m_ctx, m_WindowNo, "PaymentRule", (String)cboPaymentRule.getValue());
+		getModel().actualizarFacturas();
 	}
 	
 	/**

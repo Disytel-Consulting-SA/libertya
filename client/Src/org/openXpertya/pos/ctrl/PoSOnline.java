@@ -1918,8 +1918,8 @@ public class PoSOnline extends PoSConnectionState {
 		
 		MPayment pay = createOxpMPayment(MPayment.TENDERTYPE_Check, getClientCurrencyID(), p.getAmount(), null);
 		String sucursal = VModelHelper.getSQLValueString(null, " select AccountNo from c_bankaccount where c_bankaccount.c_bankaccount_id = ? ", p.getBankAccountID() );
-		pay.setDateAcct(p.getDateTrx()); 
-		pay.setDateTrx(p.getDateAcct()); 
+		pay.setDateAcct(invoice.getDateAcct()); 
+		pay.setDateTrx(p.getDateTrx()); 
 		pay.setDateEmissionCheck(p.getEmissionDate());
 		
 		pay.setC_BankAccount_ID(p.getBankAccountID());
@@ -2066,6 +2066,22 @@ public class PoSOnline extends PoSConnectionState {
 	}
 
 	private void createOxpCreditNotePayment(CreditNotePayment p) throws PosException {
+		// Validar que la NC tenga las mismas formas de pago que la factura
+		String creditNotePaymentRule = getPaymentRule(p.getInvoiceID());
+		if(!invoice.getPaymentRule().equals(creditNotePaymentRule)){
+			throw new PosException(Msg.getMsg(getCtx(), "NotAllowedAllocateCreditDiffPaymentRule",
+					new Object[] {
+							MRefList.getListName(getCtx(), MInvoice.PAYMENTRULE_AD_Reference_ID,
+									creditNotePaymentRule),
+							MRefList.getListName(getCtx(), MInvoice.PAYMENTRULE_AD_Reference_ID,
+									invoice.getPaymentRule()) }));
+		}
+		// Si la factura finaliza con forma de pago A Crédito, entonces las NC
+		// deben ser de la misma EC
+		if(invoice.getC_BPartner_ID() != getBPartnerID(p.getInvoiceID())){
+			throw new PosException(Msg.getMsg(getCtx(), "BPCreditNoteMustBeSameInvoiceCC", new Object[] {
+					MRefList.getListName(getCtx(), MInvoice.PAYMENTRULE_AD_Reference_ID, invoice.getPaymentRule()) }));
+		}
 		// No se debe crear ningún documento de pago ya que la nota de crédito ya
 		// existe en el sistema. Solo se hace la imputación contra la factura del pedido
 		createOxpMAllocationLine(p, p.getInvoiceID());
@@ -2087,7 +2103,7 @@ public class PoSOnline extends PoSConnectionState {
 		MPayment pay = createOxpMPayment(MPayment.TENDERTYPE_DirectDeposit, p.getCurrencyId(), p.getAmount(), null);
 		
 		pay.setDateTrx(p.getTransferDate());
-		pay.setDateAcct(p.getTransferDate());
+		pay.setDateAcct(invoice.getDateAcct());
 		pay.setC_BankAccount_ID(p.getBankAccountID());
 		pay.setCheckNo(p.getTransferNumber());
 		pay.setDescription(p.getDescription());
@@ -3934,5 +3950,13 @@ public class PoSOnline extends PoSConnectionState {
 
 	protected void setAllocationDocType(MDocType allocationDocType) {
 		this.allocationDocType = allocationDocType;
+	}
+	
+	protected String getPaymentRule(Integer invoiceID){
+		return DB.getSQLValueString(trxName, "SELECT paymentrule FROM c_invoice WHERE c_invoice_id = ?", invoiceID);
+	}
+	
+	protected int getBPartnerID(Integer invoiceID){
+		return DB.getSQLValue(trxName, "SELECT c_bpartner_id FROM c_invoice WHERE c_invoice_id = ?", invoiceID);
 	}
 }

@@ -153,4 +153,8 @@ public interface RetencionProcessor {
 	 * @return Setea la campaña
 	 */
 	public void setCampaignID(Integer campaignID);
+	
+	/** Payment Rule */
+	public String getPaymentRule();
+	public void setPaymentRule(String paymentRule);
 }

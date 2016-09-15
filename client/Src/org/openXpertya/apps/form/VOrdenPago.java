@@ -12,6 +12,8 @@ import java.awt.Cursor;
 import java.awt.Dimension;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.ItemEvent;
+import java.awt.event.ItemListener;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 import java.awt.event.MouseEvent;
@@ -25,6 +27,7 @@ import java.text.NumberFormat;
 import java.text.ParseException;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 
@@ -62,6 +65,7 @@ import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreeModel;
 import javax.swing.tree.TreePath;
 
+import org.compiere.swing.CComboBox;
 import org.compiere.swing.CPanel;
 import org.openXpertya.OpenXpertya;
 import org.openXpertya.apps.ADialog;
@@ -98,6 +102,7 @@ import org.openXpertya.util.Msg;
 import org.openXpertya.util.TimeUtil;
 import org.openXpertya.util.UserAuthConstants;
 import org.openXpertya.util.Util;
+import org.openXpertya.util.ValueNamePair;
 
 /**
  *
@@ -342,8 +347,17 @@ public class VOrdenPago extends CPanel implements FormPanel,ActionListener,Table
 				Env.setContext(m_ctx, m_WindowNo, "Date", dateTrx.getTimestamp());
 			}
 		});
-		//dateTrx.setReadWrite(false);
-	
+		
+		lblPaymentRule = new javax.swing.JLabel();
+		cboPaymentRule = createPaymentRuleCombo();
+		cboPaymentRule.addItemListener(new ItemListener() {
+			
+			@Override
+			public void itemStateChanged(ItemEvent e) {
+				updatePaymentRule();
+			}
+		});
+		
         tblFacturas = new javax.swing.JTable(getFacturasTableModel());
         txtTotalPagar1 = new JFormattedTextField();
         lblTotalPagar1 = new javax.swing.JLabel();
@@ -891,12 +905,14 @@ public class VOrdenPago extends CPanel implements FormPanel,ActionListener,Table
                 .add(jPanel10Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
                     .add(lblOrg)
                     .add(lblDocumentNo)
-                    .add(lblDocumentType))
+                    .add(lblDocumentType)
+                    .add(lblPaymentRule))
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                 .add(jPanel10Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.TRAILING)
                     .add(cboOrg, 0, 234, Short.MAX_VALUE)
                     .add(fldDocumentNo, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 234, Short.MAX_VALUE)
-                    .add(cboDocumentType, 0, 234, Short.MAX_VALUE))
+                    .add(cboDocumentType, 0, 234, Short.MAX_VALUE)
+                    .add(cboPaymentRule, 0, 234, Short.MAX_VALUE))
                 .addContainerGap())
         );
         jPanel10Layout.setVerticalGroup(
@@ -913,7 +929,11 @@ public class VOrdenPago extends CPanel implements FormPanel,ActionListener,Table
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                 .add(jPanel10Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
                     .add(lblDocumentType)
-                    .add(cboDocumentType, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                    .add(cboDocumentType, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
+                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                    .add(jPanel10Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
+                        .add(lblPaymentRule)
+                        .add(cboPaymentRule, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                     ))
         );
     }
@@ -940,7 +960,7 @@ public class VOrdenPago extends CPanel implements FormPanel,ActionListener,Table
                 .add(jPanel9Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.TRAILING)
                     .add(cboClient, 0, 234, Short.MAX_VALUE)
                     .add(BPartnerSel, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 234, Short.MAX_VALUE)
-                    .add(dateTrx, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 234, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                    .add(dateTrx, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 234, Short.MAX_VALUE)
                     .add(txtDescription,org.jdesktop.layout.GroupLayout.DEFAULT_SIZE,234,Short.MAX_VALUE)
                 		)
                 .addContainerGap())
@@ -1604,8 +1624,6 @@ public class VOrdenPago extends CPanel implements FormPanel,ActionListener,Table
 		mpc.banco = txtChequeBanco.getText().trim();
 		mpc.cuitLibrador = txtChequeCUITLibrador.getText().trim();
 		mpc.descripcion = txtChequeDescripcion.getText().trim();
-		Timestamp today = new Timestamp(System.currentTimeMillis());
-		mpc.dateTrx = mpc.fechaPago.before(today)?mpc.fechaPago:today;
 		// A La Orden: Campo no obligatorio
 		//
 		// if (mpc.aLaOrden.trim().equals(""))
@@ -1676,7 +1694,7 @@ public class VOrdenPago extends CPanel implements FormPanel,ActionListener,Table
 		try {
 			mpcm.setImporte(numberParse(txtCreditImporte.getText()));
 		} catch (Exception e) {
-			throw new Exception(lblCreditImporte.getText());
+			throw new InterruptedException(lblCreditImporte.getText());
 		}
 		
 		mpcm.validate();
@@ -2073,6 +2091,10 @@ public class VOrdenPago extends CPanel implements FormPanel,ActionListener,Table
     protected VLookup cboDocumentType;
     
     protected javax.swing.JLabel lblDateTrx;
+    
+    protected javax.swing.JLabel lblPaymentRule;
+    protected CComboBox cboPaymentRule;
+    protected Map<String, ValueNamePair> paymentRules;
     
     protected javax.swing.JLabel lblEfectivoImporte;
     protected javax.swing.JLabel lblEfectivoLibroCaja;
@@ -2524,6 +2546,7 @@ public class VOrdenPago extends CPanel implements FormPanel,ActionListener,Table
 		name = VModelHelper.GetReferenceValueTrlFromColumn("I_ReportLine", "AmountType", "BT", "name");
 		lblSaldo.setText(name != null ? name : "");
 		
+		lblPaymentRule.setText(Msg.getElement(m_ctx, "PaymentRule"));
 		//
 		
 		cmdCancel.setText(Msg.getMsg(m_ctx, "Close")+" "+KeyUtils.getKeyStr(getActionKeys().get(GOTO_EXIT)));
@@ -2620,8 +2643,6 @@ public class VOrdenPago extends CPanel implements FormPanel,ActionListener,Table
 	}
 	
 	protected void clearMediosPago() {
-		
-		Date d = new Date();
 		
 		// Efectivo
 		
@@ -2866,6 +2887,7 @@ public class VOrdenPago extends CPanel implements FormPanel,ActionListener,Table
 			cboDocumentType.setReadWrite(jTabbedPane1.getSelectedIndex() == 0);
 			fldDocumentNo.setReadWrite(jTabbedPane1.getSelectedIndex() == 0);
 			dateTrx.setReadWrite(jTabbedPane1.getSelectedIndex() == 0);
+			cboPaymentRule.setReadWrite(jTabbedPane1.getSelectedIndex() == 0);
 			
 		} else if (arg0.getSource() == jTabbedPane2) {
 			// TAB de medios de pago
@@ -3524,6 +3546,27 @@ public class VOrdenPago extends CPanel implements FormPanel,ActionListener,Table
 		for (ActionListener actionListener : listeners) {
 			actionListener.actionPerformed(event);
 		}
+	}
+	
+	protected CComboBox createPaymentRuleCombo(){
+		CComboBox paymentRuleCombo = new CComboBox();
+		paymentRules = new HashMap<String, ValueNamePair>();
+		List<ValueNamePair> list = getModel().getPaymentRulesList();
+		for (ValueNamePair paymentRule : list) {
+			paymentRuleCombo.addItem(paymentRule);
+			paymentRules.put(paymentRule.getValue(), paymentRule);
+		}
+		paymentRuleCombo.setMandatory(true);
+		paymentRuleCombo.setValue(paymentRules.get(getModel().getDefaultPaymentRule()));
+		getModel().setPaymentRule(getModel().getDefaultPaymentRule());
+		Env.setContext(m_ctx, m_WindowNo, "PaymentRule", getModel().getDefaultPaymentRule());
+		return paymentRuleCombo;
+	}
+	
+	protected void updatePaymentRule(){
+		getModel().setPaymentRule(((ValueNamePair)cboPaymentRule.getValue()).getValue());
+		Env.setContext(m_ctx, m_WindowNo, "PaymentRule", ((ValueNamePair) cboPaymentRule.getValue()).getValue());
+		getModel().actualizarFacturas();
 	}
 
 	/* === Contenido migrado de VOrdenPagoModel === */
