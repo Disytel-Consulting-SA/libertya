@@ -70,6 +70,8 @@ public class PluginHandler {
 			copy = (PO)cons.newInstance(args);	
 
 			PO.deepCopyValues(po, copy);
+			
+			po.copyInstanceValues(copy);
 		}
 		catch (Exception e)	{ 
 			// no existe clase correspondiente

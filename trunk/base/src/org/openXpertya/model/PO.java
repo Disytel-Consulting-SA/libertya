@@ -4871,5 +4871,14 @@ public abstract class PO implements Serializable, Comparator, Evaluatee {
 		return res;
 	}
 
+	/**
+	 * Método que permite copiar valores de instancia de un PO sobre otro.
+	 * Utilizado al copiar PO a Helpers de Componentes
+	 * 
+	 * @param copy el PO a copiar valores
+	 */
+	public void copyInstanceValues(PO to){
+		// Por ahora no se hace nada aca ya que no existen valores de instancia a copiar
+	}
 	
 } // PO
