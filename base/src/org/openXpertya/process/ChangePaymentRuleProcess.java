@@ -9,8 +9,6 @@ import org.openXpertya.model.MInvoice;
 import org.openXpertya.model.MPOS;
 import org.openXpertya.model.MPOSJournal;
 import org.openXpertya.model.MPOSLetter;
-import org.openXpertya.pos.exceptions.FiscalPrintException;
-import org.openXpertya.reflection.CallResult;
 import org.openXpertya.util.CLogger;
 import org.openXpertya.util.Env;
 import org.openXpertya.util.HTMLMsg;
