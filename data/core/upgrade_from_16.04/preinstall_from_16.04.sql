@@ -1889,3 +1889,53 @@ COST 100;
 UPDATE ad_system SET dummy = (SELECT addcolumnifnotexists('AD_Process_Para','isreadonly','character(1) NOT NULL DEFAULT ''N''::bpchar'));
 UPDATE ad_system SET dummy = (SELECT addcolumnifnotexists('AD_Process_Para','callout','character varying(255)'));
 UPDATE ad_system SET dummy = (SELECT addcolumnifnotexists('AD_Process_Para','calloutalsoonload','character(1) NOT NULL DEFAULT ''N''::bpchar'));
+
+--20160920-1428 Nueva función para obtener el pendiente de OP y RC
+CREATE OR REPLACE FUNCTION POCRAvailable(p_c_allocationhdr_id integer)
+  RETURNS numeric AS
+$BODY$
+/*************************************************************************
+ * The contents of this file are subject to the Compiere License.  You may
+ * obtain a copy of the License at    http://www.compiere.org/license.html
+ * Software is on an  "AS IS" basis,  WITHOUT WARRANTY OF ANY KIND, either
+ * express or implied. See the License for details. Code: Compiere ERP+CRM
+ * Copyright (C) 1999-2001 Jorg Janke, ComPiere, Inc. All Rights Reserved.
+ *
+ * converted to postgreSQL by Karsten Thiemann (Schaeffer AG), 
+ * kthiemann@adempiere.org
+ *************************************************************************
+ * Title:	Calculate Open Allocation Amount
+
+ ************************************************************************/
+DECLARE
+	v_OpenAmt		NUMERIC := 0;
+    	r   			RECORD;
+BEGIN   
+	--	Calculate Open Amount
+	FOR r IN
+		SELECT	al.AD_Client_ID, al.AD_Org_ID, al.C_Payment_ID, al.C_CashLine_ID, al.C_Invoice_Credit_ID
+			FROM	C_AllocationLine al
+	         INNER JOIN C_AllocationHdr a ON (al.C_AllocationHdr_ID=a.C_AllocationHdr_ID)
+			WHERE (a.IsActive='Y') AND (a.C_AllocationHdr_ID=p_c_allocationhdr_id)
+	LOOP
+		IF (r.C_Payment_ID IS NOT NULL) THEN
+			v_OpenAmt := v_OpenAmt + paymentavailable(r.C_Payment_ID);
+		ELSIF (r.C_CashLine_ID IS NOT NULL) THEN
+			v_OpenAmt := v_OpenAmt + abs(cashlineavailable(r.C_CashLine_ID));
+		ELSIF (r.C_Invoice_Credit_ID IS NOT NULL) THEN
+			v_OpenAmt := v_OpenAmt + invoiceopen(r.C_Invoice_Credit_ID, (SELECT ps.C_InvoicePaySchedule_ID FROM C_InvoicePaySchedule ps WHERE (r.C_Invoice_Credit_ID = ps.C_Invoice_ID) ORDER BY CREATED DESC LIMIT 1));
+		ELSE
+			v_OpenAmt := v_OpenAmt + 0; 
+		END IF;
+	END LOOP;
+	--  NO en libertya:	Round to penny
+	-- en vez se redondea usando la moneda
+	--v_OpenAmt := currencyRound(COALESCE(v_OpenAmt,0),118,NULL); 
+	RETURN	v_OpenAmt;
+END;
+
+$BODY$
+  LANGUAGE plpgsql VOLATILE
+  COST 100;
+ALTER FUNCTION POCRAvailable(integer)
+  OWNER TO libertya;
