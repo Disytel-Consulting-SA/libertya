@@ -60,6 +60,7 @@ import org.openXpertya.minigrid.MiniTable;
 import org.openXpertya.model.MPreference;
 import org.openXpertya.model.MQuery;
 import org.openXpertya.model.MRole;
+import org.openXpertya.model.X_C_AllocationHdr;
 import org.openXpertya.model.X_C_AllocationLine;
 import org.openXpertya.model.X_C_POSJournal;
 import org.openXpertya.model.X_M_EntidadFinancieraPlan;
@@ -75,6 +76,7 @@ import org.openXpertya.util.KeyNamePair;
 import org.openXpertya.util.MeasurableTask;
 import org.openXpertya.util.Msg;
 import org.openXpertya.util.TimeStatsLogger;
+
 /**
  * Descripción de Clase
  *
@@ -144,6 +146,8 @@ public abstract class Info extends CDialog implements ListSelectionListener {
         	info = new InfoAllocationLine(frame, modal, WindowNo, tableName, keyColumn, multiSelection, whereClause);
         } else if( tableName.equals( X_M_EntidadFinancieraPlan.Table_Name )) {
             info = new InfoEntidadFinancieraPlan( frame,modal,WindowNo,tableName,keyColumn,multiSelection,whereClause );
+        } else if( tableName.equals( X_C_AllocationHdr.Table_Name )) {
+            info = new InfoAllocationHdr( frame,modal,WindowNo,tableName,keyColumn,multiSelection,whereClause );
         } else {
         	// System.out.println("creando info otros..");
             info = new InfoGeneral( frame,modal,WindowNo,value,tableName,keyColumn,multiSelection,whereClause );

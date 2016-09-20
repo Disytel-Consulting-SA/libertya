@@ -129,6 +129,8 @@ public abstract class InfoPanel extends Window implements EventListener, WTableM
                 info = new InfoAssignmentPanel (WindowNo, value, multiSelection, whereClause);
             else if (tableName.equals("C_POSJournal"))
                 info = new InfoPOSJournalPanel(WindowNo, value, multiSelection, whereClause);
+            else if (tableName.equals("C_AllocationHdr"))
+            	info = new InfoAllocationHdrPanel(WindowNo,value,isSoTrx ,multiSelection, whereClause);
             else
                 info = new InfoGeneralPanel (value, WindowNo, tableName, keyColumn, multiSelection, whereClause);
             //
