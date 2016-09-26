@@ -7,7 +7,7 @@ import org.openXpertya.util.Env;
 public class CounterAllocationManager {
 
 	/** Atributo de la preferencia para determinar si hay que usar lógica de contra allocations */
-	protected static String PREFERENCE_COUNTER_ALLOCACTIONS_ACTIVE = "COUNTER_ALLOCACTIONS_ACTIVE";
+	protected static String PREFERENCE_COUNTER_ALLOCATIONS_ACTIVE = "COUNTER_ALLOCATIONS_ACTIVE";
 	
 	/** Flag de logica activa/no activa */
 	protected static Boolean isCounterAllocationActive = null;
@@ -15,7 +15,7 @@ public class CounterAllocationManager {
 	/** Recupera configuracion de contra allocations y devuelve true o false según como se encuentre configurado */
 	public static boolean isCounterAllocationActive(Properties ctx) {
 		if (isCounterAllocationActive == null)
-			isCounterAllocationActive = "Y".equalsIgnoreCase(MPreference.GetCustomPreferenceValue(PREFERENCE_COUNTER_ALLOCACTIONS_ACTIVE, Env.getAD_Client_ID(ctx)));
+			isCounterAllocationActive = "Y".equalsIgnoreCase(MPreference.GetCustomPreferenceValue(PREFERENCE_COUNTER_ALLOCATIONS_ACTIVE, Env.getAD_Client_ID(ctx)));
 		return isCounterAllocationActive;
 	}
 	
