@@ -79,34 +79,14 @@ public class GeneratorRetenciones {
 	}
 	
 	/* Constructores */
-	public GeneratorRetenciones(int C_BPartner_ID, Vector<Integer> m_factura, Vector<BigDecimal> m_facturaManualAmount,BigDecimal amttotal, boolean isSOTrx){	
-		// seteo de variables
-		this.setC_BPartner_ID(C_BPartner_ID);
-		this.m_facturas = m_factura;
-		this.m_facturasManualAmounts = m_facturaManualAmount;
-		this.pago_anticipado =(m_factura.isEmpty() | m_factura == null);
-		this.isSOTrx = isSOTrx;
-		this.setM_FacturasTotalPagar(amttotal);
-		int C_Currency_ID = Env.getContextAsInt(Env.getCtx(), "$C_Currency_ID"); //
-		MCurrency currency = new MCurrency(Env.getCtx(),C_Currency_ID,null);
-		this.setM_C_Currency_ID(currency);
-		this.setPago_anticipado(m_facturas.isEmpty());
-		setPaymentRule(MInvoice.PAYMENTRULE_OnCredit);
+	public GeneratorRetenciones(int C_BPartner_ID, Vector<Integer> m_factura, Vector<BigDecimal> m_facturaManualAmount,
+			BigDecimal amttotal, boolean isSOTrx) {	
+		this(C_BPartner_ID, m_factura, m_facturaManualAmount,amttotal, isSOTrx, MInvoice.PAYMENTRULE_OnCredit);
 	}
-	public GeneratorRetenciones(int C_BPartner_ID, Vector<Integer> m_factura, Vector<BigDecimal> m_facturaManualAmount,BigDecimal amttotal, boolean isSOTrx, Timestamp dateTrx){
-		// seteo de variables
-		this.setC_BPartner_ID(C_BPartner_ID);
-		this.m_facturas = m_factura;
-		this.m_facturasManualAmounts = m_facturaManualAmount;
-		this.pago_anticipado =(m_factura.isEmpty() | m_factura == null);
-		this.isSOTrx = isSOTrx;
-		this.setM_FacturasTotalPagar(amttotal);
-		int C_Currency_ID = Env.getContextAsInt(Env.getCtx(), "$C_Currency_ID"); //
-		MCurrency currency = new MCurrency(Env.getCtx(),C_Currency_ID,null);
-		this.setM_C_Currency_ID(currency);
-		this.setPago_anticipado(m_facturas.isEmpty());
-		this.vfechaPago = dateTrx;
-		setPaymentRule(MInvoice.PAYMENTRULE_OnCredit);
+
+	public GeneratorRetenciones(int C_BPartner_ID, Vector<Integer> m_factura, Vector<BigDecimal> m_facturaManualAmount,
+			BigDecimal amttotal, boolean isSOTrx, Timestamp dateTrx) {
+		this(C_BPartner_ID, m_factura, m_facturaManualAmount, amttotal, isSOTrx, dateTrx, MInvoice.PAYMENTRULE_OnCredit);
 	}
 	
 	private void setM_C_Currency_ID(MCurrency currency) {	
