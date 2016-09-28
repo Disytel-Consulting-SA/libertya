@@ -109,6 +109,8 @@ public class POCRGenerator extends AllocationGenerator {
 		this.type = type;
 		if(!Util.isEmpty(paymentRule, true)){
 			this.paymentRule = paymentRule;
+		} else {
+			this.paymentRule = MInvoice.PAYMENTRULE_OnCredit;
 		}
 	}
 	
