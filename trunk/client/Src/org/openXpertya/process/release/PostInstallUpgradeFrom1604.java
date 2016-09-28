@@ -70,6 +70,10 @@ public class PostInstallUpgradeFrom1604 extends PluginPostInstallProcess {
 	protected final static String CHEQUES_SIN_CONCILIAR_REPORT_UID = "CORE-AD_Process-1010424";
 	protected final static String CHEQUES_SIN_CONCILIAR_REPORT_FILENAME = "UnreconciledCheksReport.jrxml";
 	
+	/** UID del Listado de Control de Facturas sin Remitos */
+	protected final static String INVOICES_WITHOUT_INOUT_JASPER_REPORT_UID = "CORE-AD_JasperReport-1010125";
+	protected final static String INVOICES_WITHOUT_INOUT_JASPER_REPORT_FILENAME = "InvoicesWithoutInOut.jasper";
+	
 	@Override
 	protected String doIt() throws Exception {
 		super.doIt();
@@ -285,7 +289,18 @@ public class PostInstallUpgradeFrom1604 extends PluginPostInstallProcess {
 						.readBinaryFromJar(
 								jarFileURL,
 								getBinaryFileURL(CHEQUES_SIN_CONCILIAR_REPORT_FILENAME)));
-				
+		
+		// Informe de Control de Facturas Sin Remito
+		MJasperReport
+			.updateBinaryData(
+					get_TrxName(),
+					getCtx(),
+					INVOICES_WITHOUT_INOUT_JASPER_REPORT_UID,
+					JarHelper
+							.readBinaryFromJar(
+									jarFileURL,
+									getBinaryFileURL(INVOICES_WITHOUT_INOUT_JASPER_REPORT_FILENAME)));
+		
 		return " ";
 	}
 	

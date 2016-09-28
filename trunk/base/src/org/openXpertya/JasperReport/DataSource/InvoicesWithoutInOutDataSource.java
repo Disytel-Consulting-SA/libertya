@@ -59,11 +59,11 @@ public class InvoicesWithoutInOutDataSource extends QueryDataSource {
 		}
 		// En compras se debe restar lo remitido de las facturas en mmatchinv
 		else{
-			sqlIsSOTrx.append(" INNER JOIN (SELECT c_invoiceline_id, sum(qty) as qty " +
+			sqlIsSOTrx.append(" LEFT JOIN (SELECT c_invoiceline_id, sum(qty) as qty " +
 									"FROM m_matchinv as mi " +
 									"WHERE ad_client_id = "+Env.getAD_Client_ID(getCtx())+
 									" GROUP BY c_invoiceline_id) as mi ON mi.c_invoiceline_id = il.c_invoiceline_id ");
-			qtyColumnName = "il.qtyinvoiced - mi.qty";
+			qtyColumnName = "il.qtyinvoiced - coalesce(mi.qty,0)";
 		}
 		StringBuffer sql = new StringBuffer();
 		sql.append("SELECT i.c_invoice_id, o.value as org_value, o.name as org_name, dt.name as doctypename, i.dateinvoiced, i.documentno, bp.value as bp_value, bp.name as bp_name, il.line, p.value as product_value, p.name as product_name, "+qtyColumnName+" as qty, il.priceactual as price ");
@@ -86,6 +86,7 @@ public class InvoicesWithoutInOutDataSource extends QueryDataSource {
 		StringBuffer whereClause = new StringBuffer(" i.ad_client_id = ? ");
 		whereClause.append(" AND i.issotrx = '").append(getIsSOTrx().booleanValue()?"Y":"N").append("'");
 		whereClause.append(" AND dt.docbasetype IN ('API','ARI') ");
+		whereClause.append(" AND dt.doctypekey NOT IN ('RTR', 'RTI', 'RCR', 'RCI') ");
 		if(!Util.isEmpty(getOrgID(), true)){
 			whereClause.append(" AND i.ad_org_id = ? ");
 		}
