@@ -3788,5 +3788,6 @@ public class VOrdenPagoModel {
 
 	public void setPaymentRule(String paymentRule) {
 		this.paymentRule = paymentRule;
+		getPoGenerator().setPaymentRule(paymentRule);
 	}
 }
