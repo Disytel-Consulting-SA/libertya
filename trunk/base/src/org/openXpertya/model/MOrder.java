@@ -2009,6 +2009,18 @@ public class MOrder extends X_C_Order implements DocAction, Authorization  {
 
         explodeBOM();
 
+        
+        // Controlar las cantidades minimas pedidas
+        if (!isSOTrx()
+				&& dt.getDocTypeKey()
+						.equals(MDocType.DOCTYPE_PurchaseOrder)) {
+        	CallResult result = controlOrderMin();
+        	if(result.isError()){
+        		m_processMsg = result.getMsg();
+                return DocAction.STATUS_Invalid;
+        	}        
+        }
+        
         // instanciar recien ahora las lineas
         /*
         int[] lines = PO.getAllIDs("C_OrderLine", "C_Order_ID = " + getC_Order_ID() , get_TrxName() );
@@ -3331,26 +3343,6 @@ public class MOrder extends X_C_Order implements DocAction, Authorization  {
         
         for( int lineIndex = 0;lineIndex < lines.length;lineIndex++ ) {
             MOrderLine sLine   = lines[ lineIndex ];
-            
-			// Si es pedido de compra, entonces la cantidad no puede ser menor a
-			// la mínima de compra
-			if (!isSOTrx()
-					&& dt.getDocTypeKey()
-							.equals(MDocType.DOCTYPE_PurchaseOrder)) {
-				MProductPO po = MProductPO.get(getCtx(),
-						sLine.getM_Product_ID(), sLine.getC_BPartner_ID(),
-						get_TrxName());
-				if (po != null
-						&& sLine.getQtyEntered().compareTo(po.getOrder_Min()) < 0) {
-					MProduct prod = MProduct.get(getCtx(), sLine.getM_Product_ID());
-					m_processMsg = Msg.getMsg(
-							getCtx(),
-							"QtyEnteredLessThanOrderMinQty",
-							new Object[] { prod.getValue(), prod.getName(),
-									po.getOrder_Min(), sLine.getQtyEntered() });
-	            	return DocAction.STATUS_Invalid;
-            	}
-            }
 			
             // La cantidad pedida no puede ser menor a la cantidad entregada + la
     		// cantidad transferida
@@ -4953,6 +4945,46 @@ public class MOrder extends X_C_Order implements DocAction, Authorization  {
 		return MOrder.this.getC_DocTypeTarget_ID();
 	}
 
+	/**
+	 * Control realizado en las líneas contra las cantidades mínimas pedidas
+	 * configuradas en el proveedor
+	 * 
+	 * @return
+	 */
+	private CallResult controlOrderMin(){
+		CallResult result = new CallResult();
+		String sql = "select ol.line, p.value, p.name, ol.qtyentered, po.order_min "
+					+ "from c_orderline as ol "
+					+ "inner join m_product_po as po on (po.m_product_id = ol.m_product_id and ol.c_bpartner_id = po.c_bpartner_id and po.isactive = 'Y') "
+					+ "inner join m_product as p on p.m_product_id = ol.m_product_id "
+					+ "where ol.c_order_id = ? and ol.qtyentered < po.order_min "
+					+ "order by ol.line";
+		PreparedStatement ps = null;
+		ResultSet rs = null;
+		try {
+			ps = DB.prepareStatement(sql, get_TrxName());
+			ps.setInt(1, getID());
+			rs = ps.executeQuery();
+			if(rs.next()){
+				result.setMsg(Msg.getMsg(
+						getCtx(),
+						"QtyEnteredLessThanOrderMinQty",
+						new Object[] { rs.getString("value"), rs.getString("name"),
+								rs.getBigDecimal("order_min"), rs.getBigDecimal("qtyentered") }), true);
+			}
+		} catch (Exception e) {
+			result.setMsg(e.getMessage(), true);
+		} finally{
+			try {
+				if(rs != null) rs.close();
+				if(ps != null) ps.close();
+			} catch (Exception e2) {
+				result.setMsg(e2.getMessage(), true);
+			}
+		}
+		return result;
+	}
+	
 }    // MOrder
 
 
