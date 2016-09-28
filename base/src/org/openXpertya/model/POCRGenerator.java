@@ -3,6 +3,8 @@ package org.openXpertya.model;
 import java.math.BigDecimal;
 import java.util.Properties;
 
+import org.openXpertya.util.Util;
+
 /**
  * Generador de Ordenes de Pago & Recibos de Cliente. Esta clase es una especialización
  * de {@link AllocationGenerator} y contiene validaciones específicas de estos tipos
@@ -49,6 +51,9 @@ public class POCRGenerator extends AllocationGenerator {
 	/** Tipo de documento */
 	private POCRType type;
 	
+	/** Forma de Pago */
+	private String paymentRule;
+	
 //	/**
 //	 * Constructor del Generador de OP & RC.
 //	 * Crea un generador de OP & RC creando el encabezado de asignación 
@@ -82,8 +87,29 @@ public class POCRGenerator extends AllocationGenerator {
 	 * del encabezado de asignación de la OP/RC.
 	 */
 	public POCRGenerator(Properties ctx, POCRType type, String trxName){
+		this(ctx, type, MInvoice.PAYMENTRULE_OnCredit, trxName);
+	}
+	
+	/**
+	 * Constructor del Generador de OP & RC.
+	 * Crea un generador de OP & RC creando el encabezado de asignación 
+	 * accesible desde {@link #getAllocationHdr()}.
+	 * El tipo de documento indica si se debe generar una Orden de Pago o un
+	 * Recibo de Cliente. Luego a partir de las facturas y medios de pago se
+	 * determina si la orden o el recibo es adelantado.   
+	 * @param ctx Contexto para la creación de objetos
+	 * @param type Tipo de documento a crear
+	 * @param paymentRule Forma de Pago de los documentos
+	 * @param trxName Transacción de BD a utilizar por el generador
+	 * @throws AllocationGeneratorException cuando de produce un error en la creación
+	 * del encabezado de asignación de la OP/RC.
+	 */
+	public POCRGenerator(Properties ctx, POCRType type, String paymentRule, String trxName){
 		super(ctx, trxName);
 		this.type = type;
+		if(!Util.isEmpty(paymentRule, true)){
+			this.paymentRule = paymentRule;
+		}
 	}
 	
 	/**
@@ -264,6 +290,14 @@ public class POCRGenerator extends AllocationGenerator {
 			throw new AllocationGeneratorException(getMsg("CreditsOrDebitsRequiredError"));
 		}
 		super.generateLines();
+	}
+
+	public String getPaymentRule() {
+		return paymentRule;
+	}
+
+	public void setPaymentRule(String paymentRule) {
+		this.paymentRule = paymentRule;
 	}
 	
 	

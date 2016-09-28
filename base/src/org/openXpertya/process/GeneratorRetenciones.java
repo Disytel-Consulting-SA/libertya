@@ -78,17 +78,6 @@ public class GeneratorRetenciones {
 		setPaymentRule(paymentRule);
 	}
 	
-	/* Constructores */
-	public GeneratorRetenciones(int C_BPartner_ID, Vector<Integer> m_factura, Vector<BigDecimal> m_facturaManualAmount,
-			BigDecimal amttotal, boolean isSOTrx) {	
-		this(C_BPartner_ID, m_factura, m_facturaManualAmount,amttotal, isSOTrx, MInvoice.PAYMENTRULE_OnCredit);
-	}
-
-	public GeneratorRetenciones(int C_BPartner_ID, Vector<Integer> m_factura, Vector<BigDecimal> m_facturaManualAmount,
-			BigDecimal amttotal, boolean isSOTrx, Timestamp dateTrx) {
-		this(C_BPartner_ID, m_factura, m_facturaManualAmount, amttotal, isSOTrx, dateTrx, MInvoice.PAYMENTRULE_OnCredit);
-	}
-	
 	private void setM_C_Currency_ID(MCurrency currency) {	
 		m_C_Currency_ID = currency.getC_Currency_ID();
 		
