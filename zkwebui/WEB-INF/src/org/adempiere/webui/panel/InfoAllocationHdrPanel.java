@@ -56,7 +56,7 @@ public class InfoAllocationHdrPanel extends InfoPanel implements EventListener,V
         new ColumnInfo( Msg.translate( Env.getCtx(),"DateTrx" ),"C_AllocationHdr.DateTrx",Timestamp.class ),
         new ColumnInfo( Msg.translate( Env.getCtx(),"DateAcct" ),"C_AllocationHdr.DateAcct",Timestamp.class ),
         new ColumnInfo( Msg.translate( Env.getCtx(),"GrandTotal" ),"C_AllocationHdr.GrandTotal",BigDecimal.class ),
-		new ColumnInfo( Msg.translate( Env.getCtx(),"Pendiente" ),"(select case when C_AllocationHdr.allocationtype in ('OPA','OP','RC','RCA') then HTE_POCRAvailable(C_AllocationHdr.c_allocationhdr_id) else null end)",BigDecimal.class ),
+		new ColumnInfo( Msg.translate( Env.getCtx(),"Pendiente" ),"(select case when C_AllocationHdr.allocationtype in ('OPA','OP','RC','RCA') then POCRAvailable(C_AllocationHdr.c_allocationhdr_id) else null end)",BigDecimal.class ),
         new ColumnInfo( Msg.translate( Env.getCtx(),"Description" ),"C_AllocationHdr.Description",String.class ),
         new ColumnInfo( Msg.translate( Env.getCtx(),"Documentno" ),"C_AllocationHdr.Documentno",String.class ),
         new ColumnInfo( Msg.translate( Env.getCtx(),"Processed" ),"C_AllocationHdr.Processed",Boolean.class ),
