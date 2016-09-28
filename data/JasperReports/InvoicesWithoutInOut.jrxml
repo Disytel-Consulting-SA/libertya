@@ -17,7 +17,7 @@
 		 whenNoDataType="NoPages"
 		 isTitleNewPage="false"
 		 isSummaryNewPage="false">
-	<property name="ireport.scriptlethandling" value="2" />
+	<property name="ireport.scriptlethandling" value="0" />
 	<property name="ireport.encoding" value="UTF-8" />
 	<import value="java.util.*" />
 	<import value="net.sf.jasperreports.engine.*" />
@@ -55,7 +55,7 @@
 					<reportElement
 						x="0"
 						y="0"
-						width="140"
+						width="131"
 						height="15"
 						key="textField"
 						isPrintWhenDetailOverflows="true"/>
@@ -67,7 +67,7 @@
 				</textField>
 				<textField isStretchWithOverflow="true" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
-						x="140"
+						x="131"
 						y="0"
 						width="100"
 						height="15"
@@ -81,9 +81,9 @@
 				</textField>
 				<textField isStretchWithOverflow="true" pattern="dd/MM/yyyy" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
-						x="240"
+						x="231"
 						y="0"
-						width="50"
+						width="55"
 						height="15"
 						key="textField"
 						isPrintWhenDetailOverflows="true"/>
@@ -95,14 +95,14 @@
 				</textField>
 				<textField isStretchWithOverflow="true" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
-						x="290"
+						x="286"
 						y="0"
-						width="70"
+						width="74"
 						height="15"
 						key="textField"
 						isPrintWhenDetailOverflows="true"/>
 					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
-					<textElement verticalAlignment="Middle">
+					<textElement textAlignment="Center" verticalAlignment="Middle">
 						<font size="8"/>
 					</textElement>
 				<textFieldExpression   class="java.lang.String"><![CDATA[$F{documentno}]]></textFieldExpression>
@@ -383,14 +383,14 @@
 			</band>
 		</title>
 		<pageHeader>
-			<band height="21"  isSplitAllowed="true" >
+			<band height="16"  isSplitAllowed="true" >
 				<staticText>
 					<reportElement
 						mode="Opaque"
 						x="0"
-						y="1"
-						width="140"
-						height="20"
+						y="0"
+						width="131"
+						height="16"
 						backcolor="#F7F5F5"
 						key="staticText-9"/>
 					<box topBorder="Thin" topBorderColor="#000000" leftBorder="Thin" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="Thin" bottomBorderColor="#000000"/>
@@ -402,10 +402,10 @@
 				<staticText>
 					<reportElement
 						mode="Opaque"
-						x="140"
-						y="1"
+						x="131"
+						y="0"
 						width="100"
-						height="20"
+						height="16"
 						backcolor="#F7F5F5"
 						key="staticText-10"/>
 					<box topBorder="Thin" topBorderColor="#000000" leftBorder="Thin" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="Thin" bottomBorderColor="#000000"/>
@@ -417,10 +417,10 @@
 				<staticText>
 					<reportElement
 						mode="Opaque"
-						x="240"
-						y="1"
-						width="50"
-						height="20"
+						x="231"
+						y="0"
+						width="55"
+						height="16"
 						backcolor="#F7F5F5"
 						key="staticText-11"/>
 					<box topBorder="Thin" topBorderColor="#000000" leftBorder="Thin" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="Thin" bottomBorderColor="#000000"/>
@@ -432,10 +432,10 @@
 				<staticText>
 					<reportElement
 						mode="Opaque"
-						x="290"
-						y="1"
-						width="70"
-						height="20"
+						x="286"
+						y="0"
+						width="74"
+						height="16"
 						backcolor="#F7F5F5"
 						key="staticText-12"/>
 					<box topBorder="Thin" topBorderColor="#000000" leftBorder="Thin" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="Thin" bottomBorderColor="#000000"/>
@@ -448,9 +448,9 @@
 					<reportElement
 						mode="Opaque"
 						x="360"
-						y="1"
+						y="0"
 						width="170"
-						height="20"
+						height="16"
 						backcolor="#F7F5F5"
 						key="staticText-13"/>
 					<box topBorder="Thin" topBorderColor="#000000" leftBorder="Thin" leftBorderColor="#000000" rightBorder="Thin" rightBorderColor="#000000" bottomBorder="Thin" bottomBorderColor="#000000"/>
