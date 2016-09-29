@@ -60,6 +60,7 @@ import org.openXpertya.model.MPayment;
 import org.openXpertya.model.MProductChange;
 import org.openXpertya.model.MSplitting;
 import org.openXpertya.model.MTab;
+import org.openXpertya.model.MTransfer;
 import org.openXpertya.model.MWarehouseClose;
 import org.openXpertya.model.X_C_POSJournal;
 import org.openXpertya.process.DocumentEngine;
@@ -468,8 +469,12 @@ public class VDocAction extends JDialog implements ActionListener {
             if( DocStatus.equals( DocumentEngine.STATUS_Completed )) {
                 options[ index++ ] = DocumentEngine.ACTION_Void;
             }
-        	
-        } else if(m_AD_Table_ID == MBrochure.Table_ID){
+        // Anulación de Transferencia de Mercadería
+	    } else if( m_AD_Table_ID == MTransfer.Table_ID ) {
+	        if( DocStatus.equals( DocumentEngine.STATUS_Completed )) {
+	            options[ index++ ] = DocumentEngine.ACTION_Void;
+	        }
+	    } else if(m_AD_Table_ID == MBrochure.Table_ID){
         	if( DocStatus.equals( DocumentEngine.STATUS_Completed )) {
                 options[ index++ ] = DocumentEngine.ACTION_ReActivate;
                 options[ index++ ] = DocumentEngine.ACTION_Void;
