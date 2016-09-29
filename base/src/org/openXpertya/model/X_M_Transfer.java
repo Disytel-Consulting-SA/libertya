@@ -7,7 +7,7 @@ import java.math.*;
 import org.openXpertya.util.*;
 /** Modelo Generado por M_Transfer
  *  @author Comunidad de Desarrollo Libertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
- *  @version  - 2014-10-16 09:19:50.101 */
+ *  @version  - 2016-09-29 11:27:02.083 */
 public class X_M_Transfer extends org.openXpertya.model.PO
 {
 /** Constructor estándar */
@@ -99,6 +99,23 @@ public int getC_DocType_ID()
 Integer ii = (Integer)get_Value("C_DocType_ID");
 if (ii == null) return 0;
 return ii.intValue();
+}
+/** Set Copy From.
+Copy From Record */
+public void setCopyFrom (String CopyFrom)
+{
+if (CopyFrom != null && CopyFrom.length() > 1)
+{
+log.warning("Length > 1 - truncated");
+CopyFrom = CopyFrom.substring(0,1);
+}
+set_Value ("CopyFrom", CopyFrom);
+}
+/** Get Copy From.
+Copy From Record */
+public String getCopyFrom() 
+{
+return (String)get_Value("CopyFrom");
 }
 /** Set Order.
 Order */
