@@ -73,6 +73,15 @@ public class PostInstallUpgradeFrom1604 extends PluginPostInstallProcess {
 	/** UID del Listado de Control de Facturas sin Remitos */
 	protected final static String INVOICES_WITHOUT_INOUT_JASPER_REPORT_UID = "CORE-AD_JasperReport-1010125";
 	protected final static String INVOICES_WITHOUT_INOUT_JASPER_REPORT_FILENAME = "InvoicesWithoutInOut.jasper";
+
+	/** UID del Reporte de libro diario */
+	protected final static String LIBRO_DIARIO_REPORT_UID = "CORE-AD_Process-1010379";
+	protected final static String LIBRO_DIARIO_REPORT_FILENAME = "LibroDiario.jrxml";
+	
+	/** UID del Reporte de libro diario resumido */
+	protected final static String LIBRO_DIARIO_RESUMIDO_REPORT_UID = "CORE-AD_Process-1010428";
+	protected final static String LIBRO_DIARIO_RESUMIDO_REPORT_FILENAME = "LibroDiarioResumido.jrxml";
+
 	
 	@Override
 	protected String doIt() throws Exception {
@@ -300,6 +309,29 @@ public class PostInstallUpgradeFrom1604 extends PluginPostInstallProcess {
 							.readBinaryFromJar(
 									jarFileURL,
 									getBinaryFileURL(INVOICES_WITHOUT_INOUT_JASPER_REPORT_FILENAME)));
+
+		// Reporte de Libro Diario
+		MProcess.addAttachment(
+				get_TrxName(),
+				getCtx(),
+				LIBRO_DIARIO_REPORT_UID,
+				LIBRO_DIARIO_REPORT_FILENAME,
+				JarHelper
+						.readBinaryFromJar(
+								jarFileURL,
+								getBinaryFileURL(LIBRO_DIARIO_REPORT_FILENAME)));
+		
+		// Reporte de Libro Diario Resumido
+		MProcess.addAttachment(
+				get_TrxName(),
+				getCtx(),
+				LIBRO_DIARIO_RESUMIDO_REPORT_UID,
+				LIBRO_DIARIO_RESUMIDO_REPORT_FILENAME,
+				JarHelper
+						.readBinaryFromJar(
+								jarFileURL,
+								getBinaryFileURL(LIBRO_DIARIO_RESUMIDO_REPORT_FILENAME)));
+
 		
 		return " ";
 	}
