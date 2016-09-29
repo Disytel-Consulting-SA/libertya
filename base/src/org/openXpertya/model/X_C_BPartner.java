@@ -7,7 +7,7 @@ import java.math.*;
 import org.openXpertya.util.*;
 /** Modelo Generado por C_BPartner
  *  @author Comunidad de Desarrollo Libertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
- *  @version  - 2016-01-09 19:48:20.36 */
+ *  @version  - 2016-09-29 11:58:03.564 */
 public class X_C_BPartner extends org.openXpertya.model.PO
 {
 /** Constructor estándar */
@@ -352,6 +352,21 @@ Copy From Record */
 public String getCopyFrom() 
 {
 return (String)get_Value("CopyFrom");
+}
+/** Set Copy Vendor Products */
+public void setCopyVendorProducts (String CopyVendorProducts)
+{
+if (CopyVendorProducts != null && CopyVendorProducts.length() > 1)
+{
+log.warning("Length > 1 - truncated");
+CopyVendorProducts = CopyVendorProducts.substring(0,1);
+}
+set_Value ("CopyVendorProducts", CopyVendorProducts);
+}
+/** Get Copy Vendor Products */
+public String getCopyVendorProducts() 
+{
+return (String)get_Value("CopyVendorProducts");
 }
 /** Set Payment Term.
 The terms for Payment of this transaction */

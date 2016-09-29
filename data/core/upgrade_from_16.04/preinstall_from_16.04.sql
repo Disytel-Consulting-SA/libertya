@@ -1942,3 +1942,6 @@ ALTER FUNCTION POCRAvailable(integer)
   
 --20160929-1120 Incorporación de Copiar Desde en Transferencias de Mercadería. Merge de Revision 1571
 UPDATE ad_system SET dummy = (SELECT addcolumnifnotexists('M_Transfer','CopyFrom','character(1)'));
+
+--20160929-1155 Incorporación de copia de artículos entre proveedores. Merge de Revision 1571
+UPDATE ad_system SET dummy = (SELECT addcolumnifnotexists('C_BPartner','CopyVendorProducts','character(1)'));
