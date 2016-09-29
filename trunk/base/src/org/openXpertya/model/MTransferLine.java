@@ -70,15 +70,16 @@ public class MTransferLine extends X_M_TransferLine {
 //		}
 		
 		// Obtiene el número de línea si no ha sido asignado aún
-        if (getLine() == 0) {
-            String sql = " SELECT COALESCE(MAX(Line),0)+10 " +
-            		     " FROM M_TransferLine " +
-            		     " WHERE M_Transfer_ID=? ";
-            int ii = DB.getSQLValue( get_TrxName(),sql,getM_Transfer_ID());
+		if (getLine() == 0) {
+			StringBuffer sql = new StringBuffer();
+			sql.append("SELECT COALESCE(MAX(Line), 0)+10 ");
+			sql.append("FROM M_TransferLine ");
+			sql.append("WHERE M_Transfer_ID = ?");
 
-            setLine(ii);
-        }
+			int lineNo = DB.getSQLValue(get_TrxName(), sql.toString(), getM_Transfer_ID());
 
+			setLine(lineNo);
+		}
 		return true;
 	}
 	
