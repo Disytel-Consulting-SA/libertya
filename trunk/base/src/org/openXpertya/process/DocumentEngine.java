@@ -38,6 +38,7 @@ import org.openXpertya.model.MMovement;
 import org.openXpertya.model.MOrder;
 import org.openXpertya.model.MPayment;
 import org.openXpertya.model.MRole;
+import org.openXpertya.model.MTransfer;
 import org.openXpertya.model.PO;
 import org.openXpertya.plugin.MPluginDocAction;
 import org.openXpertya.plugin.MPluginPO;
@@ -1257,8 +1258,12 @@ public class DocumentEngine implements DocAction {
             if( docStatus.equals( DocumentEngine.STATUS_Completed )) {
                 options[ 0 ] = DocumentEngine.ACTION_ReActivate;
             }
-            
-        }
+		// Anulación de Transferencia de Mercadería
+	    } else if( AD_Table_ID == MTransfer.Table_ID ) {
+	        if( docStatus.equals( DocumentEngine.STATUS_Completed )) {
+	            options[ index++ ] = DocumentEngine.ACTION_Void;
+	        }
+	    }
 		return index;
 	}
 	
