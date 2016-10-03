@@ -219,7 +219,7 @@ public final class Attachment extends JDialog implements ActionListener {
 
     private CTextArea info = new CTextArea();
 
-    private org.openXpertya.pdf.viewer.PDFViewerBean pdfViewer = org.openXpertya.pdf.Document.getViewer();
+//    private org.openXpertya.pdf.viewer.PDFViewerBean pdfViewer = org.openXpertya.pdf.Document.getViewer();
     
     /** Guardar adjunto en externo */
     private CButton externalUpload = new CButton();
@@ -345,7 +345,7 @@ public final class Attachment extends JDialog implements ActionListener {
      */
 
     public void dispose() {
-    	pdfViewer = null;    	
+//    	pdfViewer = null;    	
         super.dispose();
     }    // dispose
 
