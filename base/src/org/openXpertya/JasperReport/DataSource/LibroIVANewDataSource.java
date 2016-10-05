@@ -374,7 +374,7 @@ public class LibroIVANewDataSource implements JRDataSource {
 				}
 				totalFacturado = totalFacturado
 						.add(total == null ? BigDecimal.ZERO : total);
-				
+				totalIVA = totalIVA.add(importe);
 				categoriaIVA = rs.getString("c_categoria_iva_name");
 				manualTax = ismanual.equals("Y");
 				addTaxLine(categoriaIVA, item, allByCategoriaIVA, allTotalsTaxBaseAmtByCategoriaIVA, neto, importe,
@@ -412,7 +412,15 @@ public class LibroIVANewDataSource implements JRDataSource {
 				groupedInvoicesByIVA.clear();
 			}
 			totalNeto = totalGravado.add(totalNoGravado);
-			totalIVA = totalIVA.add(totalFacturado.subtract(totalNeto));
+			// El total de IVA se va calculando con los datos reales y para que
+			// sean consistentes con los subtotales de iva 
+			//totalIVA = totalIVA.add(totalFacturado.subtract(totalNeto));
+			
+			// Por lo pronto, el total final se calcula con totalneto +
+			// impuestos, luego cuando se resuelva la diferencia de decimales
+			// entre neto + impuestos vs grandtotal, se deberá analizar si
+			// dejamos la suma de los grandtotal
+			totalFacturado = totalNeto.add(totalIVA);
 			total_lines = m_lines.size();
 			// Crear los data sources de los subreportes
 			// Tabla de Impuestos
