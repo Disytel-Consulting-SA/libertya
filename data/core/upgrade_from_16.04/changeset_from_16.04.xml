@@ -54,6 +54,9 @@ Ejemplos de cambios
 		<!-- 20160517-1010 Soporte para copia/pisado de cualquier tipo de archivos (no solo clases) en Configurar.sh para OXP.jar y OXPRoot.jar -->
 		<copy file="${SOURCE_DIR}/build.xml" todir="${TARGET_DIR}" overwrite="yes" />
     	
+    	<!-- 20161006-0931 Forzar encoding UTF8 -->
+    	<copy file="${SOURCE_DIR}/CallClass.xml" todir="${TARGET_DIR}/utils" overwrite="yes" />
+    	
     </target>
     
 </project>
