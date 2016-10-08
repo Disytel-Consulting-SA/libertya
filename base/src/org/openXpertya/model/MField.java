@@ -1342,6 +1342,10 @@ public class MField implements Serializable,Evaluatee {
         return m_vo;
     }
 
+    public boolean isExportRealValue(){
+    	return m_vo.exportRealValue;
+    }
+    
     /**
      * Descripción de Método
      *

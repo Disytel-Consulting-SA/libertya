@@ -187,6 +187,12 @@ extends AbstractExcelExporter
 		sheet.setMargin(HSSFSheet.BottomMargin, ((double)paper.getMarginBottom()) / 72);
 		//
 	}
+
+	@Override
+	public boolean isExportRealValue(int col) {
+		MPrintFormatItem item = m_printFormat.getItem(col);
+		return item.isExportRealValue();
+	}
 	
 	
 }

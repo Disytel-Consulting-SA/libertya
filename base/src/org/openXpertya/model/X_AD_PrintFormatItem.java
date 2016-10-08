@@ -7,7 +7,7 @@ import java.math.*;
 import org.openXpertya.util.*;
 /** Modelo Generado por AD_PrintFormatItem
  *  @author Comunidad de Desarrollo Libertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
- *  @version  - 2011-05-27 13:29:42.1 */
+ *  @version  - 2016-10-08 14:34:23.621 */
 public class X_AD_PrintFormatItem extends org.openXpertya.model.PO
 {
 /** Constructor estándar */
@@ -20,6 +20,7 @@ setAD_Column_ID (0);
 setAD_PrintFormatChild_ID (0);
 setAD_PrintFormat_ID (0);
 setAD_PrintFormatItem_ID (0);
+setExportRealValue (false);
 setFieldAlignmentType (null);	// D
 setImageIsAttached (false);
 setIsAveraged (false);
@@ -245,6 +246,22 @@ public int getBelowColumn()
 Integer ii = (Integer)get_Value("BelowColumn");
 if (ii == null) return 0;
 return ii.intValue();
+}
+/** Set Export Real Value */
+public void setExportRealValue (boolean ExportRealValue)
+{
+set_Value ("ExportRealValue", new Boolean(ExportRealValue));
+}
+/** Get Export Real Value */
+public boolean isExportRealValue() 
+{
+Object oo = get_Value("ExportRealValue");
+if (oo != null) 
+{
+ if (oo instanceof Boolean) return ((Boolean)oo).booleanValue();
+ return "Y".equals(oo);
+}
+return false;
 }
 public static final int FIELDALIGNMENTTYPE_AD_Reference_ID = MReference.getReferenceID("AD_Print Field Alignment");
 /** Default = D */

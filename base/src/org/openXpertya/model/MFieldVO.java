@@ -219,6 +219,8 @@ public class MFieldVO implements Serializable {
 
     /** Window No */
     public int	WindowNo;
+    
+    public boolean exportRealValue = false;
 
     /**
      *  protected constructor
@@ -348,6 +350,8 @@ public class MFieldVO implements Serializable {
                 }
 				else if (columnName.equalsIgnoreCase("Included_Tab_ID"))
 					vo.Included_Tab_ID = rs.getInt(i);
+				else if (columnName.equalsIgnoreCase("ExportRealValue")) 
+                    vo.exportRealValue	= "Y".equalsIgnoreCase(rs.getString(i)); 
             }
             // En el caso que la columna IsReadOnly tenga el valor true, se setea el valor de la columna IsAlwaysUpdateable en false
             // Si el campo IsReadOnly es true, no se puede actualizar el valor del campo, independientemente de si es Siempre Actualizable o no.
@@ -660,6 +664,7 @@ public class MFieldVO implements Serializable {
 		clone.ReadOnlyLogic = ReadOnlyLogic;
 		clone.MandatoryLogic = MandatoryLogic;
 		clone.ObscureType = ObscureType;
+		clone.exportRealValue = exportRealValue;
 		//	Lookup
 		clone.ValidationCode = ValidationCode;
 		clone.AD_Reference_Value_ID = AD_Reference_Value_ID;
