@@ -26,6 +26,7 @@ import javax.swing.JLabel;
 import javax.swing.KeyStroke;
 
 import org.compiere.swing.CCheckBox;
+import org.openXpertya.model.MField;
 import org.openXpertya.util.Env;
 import org.openXpertya.util.Msg;
 
@@ -102,6 +103,8 @@ public class VCheckBox extends CCheckBox implements VEditor,ActionListener {
     /** Descripción de Campos */
 
     private String m_columnName;
+    
+    private MField field;
 
     /**
      * Descripción de Método
@@ -182,7 +185,7 @@ public class VCheckBox extends CCheckBox implements VEditor,ActionListener {
                        ?"Y"
                        :"N";
 
-        return Msg.translate( Env.getCtx(),value );
+		return field != null && field.isExportRealValue() ? value : Msg.translate(Env.getCtx(), value);
     }    // getDisplay
 
     /**
@@ -216,7 +219,9 @@ public class VCheckBox extends CCheckBox implements VEditor,ActionListener {
      * @param mField
      */
 
-    public void setField( org.openXpertya.model.MField mField ) {}    // setField
+    public void setField( org.openXpertya.model.MField mField ) {
+    	field = mField;
+    }    // setField
     
     public void addAction(String actionName, KeyStroke keyStroke, Action action) {
     	getInputMap().put(keyStroke, actionName);

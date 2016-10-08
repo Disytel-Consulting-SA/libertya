@@ -7,7 +7,7 @@ import java.math.*;
 import org.openXpertya.util.*;
 /** Modelo Generado por AD_Field
  *  @author Comunidad de Desarrollo Libertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
- *  @version  - 2012-10-02 19:27:33.058 */
+ *  @version  - 2016-10-08 14:30:47.556 */
 public class X_AD_Field extends org.openXpertya.model.PO
 {
 /** Constructor estándar */
@@ -20,6 +20,7 @@ setAD_Column_ID (0);
 setAD_Field_ID (0);
 setAD_Tab_ID (0);
 setEntityType (null);	// U
+setExportRealValue (false);
 setIsCentrallyMaintained (true);	// Y
 setIsDisplayed (true);	// Y
 setisdisplayedingrid (false);
@@ -259,6 +260,22 @@ Dictionary Entity Type;
 public String getEntityType() 
 {
 return (String)get_Value("EntityType");
+}
+/** Set Export Real Value */
+public void setExportRealValue (boolean ExportRealValue)
+{
+set_Value ("ExportRealValue", new Boolean(ExportRealValue));
+}
+/** Get Export Real Value */
+public boolean isExportRealValue() 
+{
+Object oo = get_Value("ExportRealValue");
+if (oo != null) 
+{
+ if (oo instanceof Boolean) return ((Boolean)oo).booleanValue();
+ return "Y".equals(oo);
+}
+return false;
 }
 /** Set Comment/Help.
 Comment or Hint */

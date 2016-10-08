@@ -111,6 +111,14 @@ public abstract class AbstractExcelExporter
 	 * @return true if there is a page break
 	 */
 	public abstract boolean isPageBreak(int row, int col);
+	
+	/**
+	 * Determina si se debe exportar el valor real de la columna o su traducción
+	 * 
+	 * @param col índice de la columna
+	 * @return true si se debe exportar el dato real, false caso contrario
+	 */
+	public abstract boolean isExportRealValue(int col);
 
 	/** Logger */
 	protected final CLogger log = CLogger.getCLogger(getClass());
@@ -401,7 +409,8 @@ public abstract class AbstractExcelExporter
 							value = (Boolean)obj;
 						else
 							value = "Y".equals(obj);
-						cell.setCellValue(new HSSFRichTextString(Msg.getMsg(getLanguage(), value == true ? "Y" : "N")));
+						String valueStr = value?"Y":"N"; 
+						cell.setCellValue(new HSSFRichTextString(!isExportRealValue(col)?Msg.getMsg(getLanguage(), valueStr):valueStr));
 					}
 					else {
 						String value = fixString(obj.toString());	//	formatted
