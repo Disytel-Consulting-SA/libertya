@@ -7,7 +7,7 @@ import java.math.*;
 import org.openXpertya.util.*;
 /** Modelo Generado por C_DocType
  *  @author Comunidad de Desarrollo Libertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
- *  @version  - 2016-06-10 21:54:52.17 */
+ *  @version  - 2016-10-10 23:52:08.969 */
 public class X_C_DocType extends org.openXpertya.model.PO
 {
 /** Constructor estándar */
@@ -48,6 +48,7 @@ setIsSplitWhenDifference (false);	// N
 setIsWarehouseClosureControl (false);
 setLinesCountMax (0);
 setName (null);
+setOnlyVendorProducts (false);
 setPOSEnableDue (false);
 setPOSEnableDueDays (0);
 setPrintName (null);
@@ -1173,6 +1174,24 @@ return (String)get_Value("Name");
 public KeyNamePair getKeyNamePair() 
 {
 return new KeyNamePair(getID(), getName());
+}
+/** Set Only Vendor Products.
+Only is allowed vendor products */
+public void setOnlyVendorProducts (boolean OnlyVendorProducts)
+{
+set_Value ("OnlyVendorProducts", new Boolean(OnlyVendorProducts));
+}
+/** Get Only Vendor Products.
+Only is allowed vendor products */
+public boolean isOnlyVendorProducts() 
+{
+Object oo = get_Value("OnlyVendorProducts");
+if (oo != null) 
+{
+ if (oo instanceof Boolean) return ((Boolean)oo).booleanValue();
+ return "Y".equals(oo);
+}
+return false;
 }
 /** Set POS Enable Due.
 Document enable in POS with due days */

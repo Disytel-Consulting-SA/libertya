@@ -41,6 +41,7 @@ import org.openXpertya.util.CLogger;
 import org.openXpertya.util.DB;
 import org.openXpertya.util.Env;
 import org.openXpertya.util.HTMLMsg;
+import org.openXpertya.util.HTMLMsg.HTMLList;
 import org.openXpertya.util.MProductCache;
 import org.openXpertya.util.Msg;
 import org.openXpertya.util.StringUtil;
@@ -2018,7 +2019,16 @@ public class MOrder extends X_C_Order implements DocAction, Authorization  {
         	if(result.isError()){
         		m_processMsg = result.getMsg();
                 return DocAction.STATUS_Invalid;
-        	}        
+        	}
+        }
+        
+        // Si el tipo de documento está marcado que sólo permita artículos del proveedor
+        if(dt.isOnlyVendorProducts()){
+        	CallResult result = controlVendorProducts();
+        	if(result.isError()){
+        		setProcessMsg(result.getMsg());
+        		return DocAction.STATUS_Invalid; 
+        	}
         }
         
         // instanciar recien ahora las lineas
@@ -2030,6 +2040,24 @@ public class MOrder extends X_C_Order implements DocAction, Authorization  {
             return DocAction.STATUS_Invalid;
         }
         */
+        
+        // Validación de productos "Comprados" en las líneas del pedido si el documento
+        // es un pedido a proveedor.
+        if (dt.isDocType(MDocType.DOCTYPE_PurchaseOrder)) {
+        	List<String> notPurchasedProducts = getNotPurchasedProducts();
+        	if (!notPurchasedProducts.isEmpty()) {
+        		m_processMsg = "@NotPurchasedProductsError@ " + notPurchasedProducts.toString();
+        		return DocAction.STATUS_Invalid;
+        	}
+        	
+        	// Monto mínimo de compra
+        	if(getGrandTotal().compareTo(bpartner.getMinimumPurchasedAmt()) < 0){
+				m_processMsg = Msg.getMsg(getCtx(),
+						"GrandTotalNotSurpassMinimumPurchaseAmt",
+						new Object[] { bpartner.getMinimumPurchasedAmt() });
+        		return DocAction.STATUS_Invalid;
+        	}
+        }
         
         //Ader, Mejora II: reservación de stock mejorada
 		boolean isOrderTransferable = dt.getDocTypeKey().equalsIgnoreCase(
@@ -2047,24 +2075,6 @@ public class MOrder extends X_C_Order implements DocAction, Authorization  {
             m_processMsg = "@TaxCalculatingError@";
 
             return DocAction.STATUS_Invalid;
-        }
-
-        // Validación de productos "Comprados" en las líneas del pedido si el documento
-        // es un pedido a proveedor.
-        if (dt.isDocType(MDocType.DOCTYPE_PurchaseOrder)) {
-        	List<String> notPurchasedProducts = getNotPurchasedProducts();
-        	if (!notPurchasedProducts.isEmpty()) {
-        		m_processMsg = "@NotPurchasedProductsError@ " + notPurchasedProducts.toString();
-        		return DocAction.STATUS_Invalid;
-        	}
-        	
-        	// Monto mínimo de compra
-        	if(getGrandTotal().compareTo(bpartner.getMinimumPurchasedAmt()) < 0){
-				m_processMsg = Msg.getMsg(getCtx(),
-						"GrandTotalNotSurpassMinimumPurchaseAmt",
-						new Object[] { bpartner.getMinimumPurchasedAmt() });
-        		return DocAction.STATUS_Invalid;
-        	}
         }
         
         m_justPrepared = true;
@@ -4983,6 +4993,48 @@ public class MOrder extends X_C_Order implements DocAction, Authorization  {
 			}
 		}
 		return result;
+	}
+	
+	/**
+	 * Realiza el control de los artículos del proveedor
+	 * @return resultado
+	 */
+	private CallResult controlVendorProducts(){
+		String sqlVendor = "select ol.m_product_id, p.value, p.name "
+				+ "from c_orderline ol "
+				+ "inner join m_product p on p.m_product_id = ol.m_product_id "
+				+ "left join (select m_product_id "
+				+ "				from m_product_po "
+				+ "				where c_bpartner_id = ? and isactive = 'Y') po on ol.m_product_id = po.m_product_id "
+				+ "where ol.c_order_id = ? and po.m_product_id is null";
+    	PreparedStatement ps = null; 
+    	ResultSet rs = null;
+    	CallResult result = new CallResult();
+    	try {
+    		ps = DB.prepareStatement(sqlVendor, get_TrxName());
+    		ps.setInt(1, getC_BPartner_ID());
+        	ps.setInt(2, getID());
+        	rs = ps.executeQuery();
+        	HTMLMsg msg = new HTMLMsg();
+			HTMLList list = msg.createList("onlyvendorproducts", "ul", Msg.getMsg(getCtx(), "OnlyVendorProducts"));
+        	while(rs.next()){
+				msg.createAndAddListElement(rs.getString("value"),
+						rs.getString("value") + " - " + rs.getString("name"), list);
+				result.setError(true);
+        	}
+        	msg.addList(list);
+        	result.setMsg(msg.toString());
+		} catch (Exception e) {
+			result.setMsg(e.getMessage(), true);
+		} finally {
+			try {
+				if(rs != null)rs.close();
+				if(ps != null)ps.close();
+			} catch (Exception e2) {
+				result.setMsg(e2.getMessage(), true);
+			}
+		}
+    	return result;
 	}
 	
 }    // MOrder

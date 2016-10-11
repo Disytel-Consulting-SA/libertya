@@ -1997,3 +1997,6 @@ CREATE OR REPLACE VIEW ad_field_v AS
 
 ALTER TABLE ad_field_v
   OWNER TO libertya;
+
+--20161010-2350 Incorporación de check que permite restringir la compra sólo a los artículos del proveedor
+UPDATE ad_system SET dummy = (SELECT addcolumnifnotexists('C_DocType','onlyvendorproducts','character(1) NOT NULL DEFAULT ''N''::bpchar'));
