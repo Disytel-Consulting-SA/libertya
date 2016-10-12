@@ -47,6 +47,7 @@ public class OrderDataSource implements JRDataSource  {
 		methodMapper.put("UNIDAD", "getUOMName");
 		methodMapper.put("X12DE355", "getX12DE355");
 		methodMapper.put("UPC", "getProductUPC");
+		methodMapper.put("VENDOR_UPC", "getVendorUpc");
 		
 		methodMapper.put("CHARGE", "getChargeName");
 		methodMapper.put("TAX_RATE", "getTaxRate");
