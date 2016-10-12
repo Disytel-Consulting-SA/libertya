@@ -1127,12 +1127,29 @@ public class DocumentEngine implements DocAction {
 		 */
 		else if (AD_Table_ID == MAllocationHdr.Table_ID)
 		{
-			//	Complete                    ..  CO
-			if (docStatus.equals(DocumentEngine.STATUS_Completed))
-			{
-				options[index++] = DocumentEngine.ACTION_Void;
-				options[index++] = DocumentEngine.ACTION_Reverse_Correct;
-			}
+			// -------------------------------------------------------------------------------
+        	// Franco Bonafine - Disytel - 2009/03
+        	// Modificación de las opciones de acción para Allocations/OP/RC:
+        	// Se quita la acción de Inversa/Corrección y se agregan las acciones
+        	// específicas para Allocations.
+        	// Estas acciones están definidas en una Referencia diferente a la que
+        	// contiene todas las acciones de doumentos (referencia: Allocation_DocumentAction)
+        	            
+        	/* Se comenta el código antiguo -------------->
+        	if( DocStatus.equals( DocumentEngine.STATUS_Completed )) {
+                options[ index++ ] = DocumentEngine.ACTION_Reverse_Correct;
+                options[ index++ ] = DocumentEngine.ACTION_Void;
+            }
+            <--------------- Fin de código antiguo */
+
+        	// Complete                    ..  CO
+        	if( docStatus.equals( DocumentEngine.STATUS_Completed )) {
+                options[ index++ ] = MAllocationHdr.ALLOCATIONACTION_RevertAllocation;
+                options[ index++ ] = MAllocationHdr.ALLOCATIONACTION_VoidPayments;
+                options[ index++ ] = MAllocationHdr.ALLOCATIONACTION_VoidPaymentsRetentions;
+            }
+        	// Fin agregado FB 2009/03
+        	// -------------------------------------------------------------------------------
 		}
 		//[ 1782412 ]
 		/********************
