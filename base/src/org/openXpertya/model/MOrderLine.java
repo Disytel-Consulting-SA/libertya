@@ -682,6 +682,7 @@ public class MOrderLine extends X_C_OrderLine {
         // Get Defaults from Parent
 
         MOrder o = new MOrder( getCtx(),getC_Order_ID(),get_TrxName());
+        MDocType orderDocType = MDocType.get(getCtx(), o.getC_DocTypeTarget_ID());
         		
         // En caso de tener una preferencia en el campo m_warehouse_id de la cabecera, se setea incorrectamente
         // ese valor por más de que se haya especificado un valor diferente en dicho campo.  Por lo tanto se
@@ -896,6 +897,18 @@ public class MOrderLine extends X_C_OrderLine {
 					new Object[] { MUOM.get(getCtx(), getC_UOM_ID()).getName(),
 							getQtyEntered() }), "");
 			return false;
+        }
+        
+        // Controlar que la cantidad no sea menor a la mínima de compra
+        if(!o.isSOTrx()
+				&& orderDocType.getDocTypeKey().equals(MDocType.DOCTYPE_PurchaseOrder)){
+			MProductPO ppo = MProductPO.get(getCtx(), getM_Product_ID(), o.getC_BPartner_ID(), get_TrxName());
+			if (ppo != null && ppo.isActive() && ppo.getOrder_Min().compareTo(getQtyEntered()) > 0) {
+        		MProduct prod = MProduct.get(getCtx(), getM_Product_ID());
+				log.saveError("SaveError", Msg.getMsg(getCtx(), "QtyEnteredLessThanOrderMinQty",
+						new Object[] { prod.getValue(), prod.getName(), ppo.getOrder_Min(), getQtyEntered() }));
+				return false;
+        	}
         }
         
         return true;
