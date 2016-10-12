@@ -439,12 +439,15 @@ public class ProductPriceTemp extends SvrProcess {
     // Create de Selection for all discount schema line
 
     protected String getDiscountSchemaLinesQuery(){
-		StringBuffer sql = new StringBuffer("SELECT dsl.* "
-				+ "FROM M_DiscountSchemaLine dsl "
-				+ "INNER JOIN m_discountschemaline_org_application_v dsloav "
-				+ "on dsloav.m_discountschemaline_id = dsl.m_discountschemaline_id "
-				+ "WHERE dsloav.M_DiscountSchema_ID = " + m_DiscountSchema_ID
-				+ " and dsloav.ad_org_id = " + m_Org_ID + " ORDER BY dsl.SeqNo");
+		StringBuffer sql = new StringBuffer("SELECT distinct dsl.* FROM M_DiscountSchemaLine dsl ");
+		if(m_Org_ID > 0){
+			sql.append("INNER JOIN m_discountschemaline_org_application_v dsloav on dsloav.m_discountschemaline_id = dsl.m_discountschemaline_id ");
+		}
+		sql.append("WHERE dsl.M_DiscountSchema_ID = ").append(m_DiscountSchema_ID);
+		if(m_Org_ID > 0){
+			sql.append(" and dsloav.ad_org_id = ").append(m_Org_ID);
+		}
+		sql.append(" ORDER BY dsl.SeqNo ");
     	return sql.toString();
     }
     
