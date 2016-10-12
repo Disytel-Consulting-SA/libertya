@@ -375,8 +375,9 @@ public abstract class AbstractImportProcess extends SvrProcess {
 				importPO.set_ValueOfColumn(column_ErrorMsg_ID, importMsg);
 			}
 			// Se guardan los cambios en el registro de importación.
-			importPO.save();
-				
+			if(!importPO.save()){
+				throw new Exception(CLogger.retrieveErrorAsString());
+			}				
 		}
 	}
 	
