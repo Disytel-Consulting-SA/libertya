@@ -11,6 +11,8 @@ import java.util.Properties;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 
+import org.openXpertya.plugin.common.PluginUtils;
+
 public class JarHelper {
 
 	
@@ -89,8 +91,10 @@ public class JarHelper {
 	       JarEntry entry = jarFile.getJarEntry(resource);
 	       
 	       /* Si no existe el archivo, elevar la excepción */
-	       if (entry == null)
-	    	   throw new Exception ("Recurso " + resource + " no encontrado en archivo " + jarURL);
+	       if (entry == null) {
+	    	   PluginUtils.appendStatus("WARNING: Recurso " + resource + " no encontrado en archivo " + jarURL);
+	    	   return null;
+	       }
 	       
 	       /* Obtener el contenido del archivo */
 	       InputStream input = jarFile.getInputStream(entry);
