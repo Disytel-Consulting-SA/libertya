@@ -39,7 +39,7 @@ public class LaunchOrder extends SvrProcess {
 	private int AD_Table_ID;
 	
 	/** Record					*/
-	private int AD_Record_ID;	
+	protected int AD_Record_ID;	
 	
 	/** Total de líneas con impuestos */
 	private BigDecimal linesTotalAmt = BigDecimal.ZERO;
