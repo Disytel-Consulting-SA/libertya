@@ -899,16 +899,29 @@ public class MOrderLine extends X_C_OrderLine {
 			return false;
         }
         
-        // Controlar que la cantidad no sea menor a la mínima de compra
+		// Controlar que la cantidad no sea menor a la mínima de compra y que la
+		// cantidad sea múltiplo a ordenar 
         if(!o.isSOTrx()
 				&& orderDocType.getDocTypeKey().equals(MDocType.DOCTYPE_PurchaseOrder)){
 			MProductPO ppo = MProductPO.get(getCtx(), getM_Product_ID(), o.getC_BPartner_ID(), get_TrxName());
-			if (ppo != null && ppo.isActive() && ppo.getOrder_Min().compareTo(getQtyEntered()) > 0) {
-        		MProduct prod = MProduct.get(getCtx(), getM_Product_ID());
-				log.saveError("SaveError", Msg.getMsg(getCtx(), "QtyEnteredLessThanOrderMinQty",
-						new Object[] { prod.getValue(), prod.getName(), ppo.getOrder_Min(), getQtyEntered() }));
-				return false;
+			if (ppo != null && ppo.isActive()) {
+				// Cantidad mínima
+				if(ppo.getOrder_Min().compareTo(getQtyEntered()) > 0){
+	        		MProduct prod = MProduct.get(getCtx(), getM_Product_ID());
+					log.saveError("SaveError", Msg.getMsg(getCtx(), "QtyEnteredLessThanOrderMinQty",
+							new Object[] { prod.getValue(), prod.getName(), ppo.getOrder_Min(), getQtyEntered() }));
+					return false;
+				}
+				// Múltiplo a ordenar
+				if (!Util.isEmpty(ppo.getOrder_Pack(), true)
+						&& getQtyEntered().remainder(ppo.getOrder_Pack()).compareTo(BigDecimal.ZERO) != 0) {
+					MProduct prod = MProduct.get(getCtx(), getM_Product_ID());
+					log.saveError("SaveError", Msg.getMsg(getCtx(), "QtyEnteredMustBeMultipleOfOrderPack",
+							new Object[] { prod.getValue(), prod.getName(), ppo.getOrder_Pack(), getQtyEntered() }));
+					return false;
+				}
         	}
+			
         }
         
         return true;
