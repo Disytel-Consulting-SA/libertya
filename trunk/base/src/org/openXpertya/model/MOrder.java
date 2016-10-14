@@ -2015,7 +2015,7 @@ public class MOrder extends X_C_Order implements DocAction, Authorization  {
         if (!isSOTrx()
 				&& dt.getDocTypeKey()
 						.equals(MDocType.DOCTYPE_PurchaseOrder)) {
-        	CallResult result = controlOrderMin();
+        	CallResult result = controlOrderMinPack();
         	if(result.isError()){
         		m_processMsg = result.getMsg();
                 return DocAction.STATUS_Invalid;
@@ -4961,13 +4961,13 @@ public class MOrder extends X_C_Order implements DocAction, Authorization  {
 	 * 
 	 * @return
 	 */
-	private CallResult controlOrderMin(){
+	private CallResult controlOrderMinPack(){
 		CallResult result = new CallResult();
-		String sql = "select ol.line, p.value, p.name, ol.qtyentered, po.order_min "
+		String sql = "select ol.line, p.value, p.name, ol.qtyentered, po.order_min, po.order_pack "
 					+ "from c_orderline as ol "
 					+ "inner join m_product_po as po on (po.m_product_id = ol.m_product_id and ol.c_bpartner_id = po.c_bpartner_id and po.isactive = 'Y') "
 					+ "inner join m_product as p on p.m_product_id = ol.m_product_id "
-					+ "where ol.c_order_id = ? and ol.qtyentered < po.order_min "
+					+ "where ol.c_order_id = ? and (ol.qtyentered < po.order_min OR (ol.qtyentered % po.order_pack) <> 0)"
 					+ "order by ol.line";
 		PreparedStatement ps = null;
 		ResultSet rs = null;
@@ -4976,11 +4976,17 @@ public class MOrder extends X_C_Order implements DocAction, Authorization  {
 			ps.setInt(1, getID());
 			rs = ps.executeQuery();
 			if(rs.next()){
-				result.setMsg(Msg.getMsg(
-						getCtx(),
-						"QtyEnteredLessThanOrderMinQty",
-						new Object[] { rs.getString("value"), rs.getString("name"),
-								rs.getBigDecimal("order_min"), rs.getBigDecimal("qtyentered") }), true);
+				String columnNameOrder, msg;
+				if(rs.getBigDecimal("qtyentered").compareTo(rs.getBigDecimal("order_min")) < 0){
+					msg = "QtyEnteredLessThanOrderMinQty";
+					columnNameOrder = "order_min";
+				}
+				else{
+					msg = "QtyEnteredMustBeMultipleOfOrderPack";
+					columnNameOrder = "order_pack";
+				}
+				result.setMsg(Msg.getMsg(getCtx(), msg, new Object[] { rs.getString("value"), rs.getString("name"),
+						rs.getBigDecimal(columnNameOrder), rs.getBigDecimal("qtyentered") }), true);
 			}
 		} catch (Exception e) {
 			result.setMsg(e.getMessage(), true);
