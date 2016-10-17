@@ -462,8 +462,9 @@ public class ProcessParameter extends CDialog implements ActionListener,Vetoable
 
         Object defaultObject = mField.getDefault();
 
-        mField.setValue( defaultObject,true );
-
+        
+        mField.setValue( defaultObject, true, true );
+        
         //
 
         centerPanel.add(( Component )vEditor,gbc );
@@ -511,7 +512,7 @@ public class ProcessParameter extends CDialog implements ActionListener,Vetoable
 
             Object defaultObject2 = mField2.getDefault();
 
-            mField2.setValue( defaultObject2,true );
+            mField2.setValue( defaultObject2, true, true );
 
             //
 
