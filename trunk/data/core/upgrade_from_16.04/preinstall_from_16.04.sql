@@ -2000,3 +2000,55 @@ ALTER TABLE ad_field_v
 
 --20161010-2350 Incorporación de check que permite restringir la compra sólo a los artículos del proveedor
 UPDATE ad_system SET dummy = (SELECT addcolumnifnotexists('C_DocType','onlyvendorproducts','character(1) NOT NULL DEFAULT ''N''::bpchar'));
+
+--20161018-1630 Impresión de cheques. Merge Revisión 1583
+CREATE TABLE C_CheckPrinting(
+
+c_checkprinting_id integer NOT NULL ,
+ad_client_id integer NOT NULL ,
+ad_org_id integer NOT NULL ,
+isactive character(1) NOT NULL DEFAULT 'Y'::bpchar ,
+created timestamp without time zone NOT NULL DEFAULT ('now'::text)::timestamp(6) with time zone ,
+createdby integer NOT NULL ,
+updated timestamp without time zone NOT NULL DEFAULT ('now'::text)::timestamp(6) with time zone ,
+updatedby integer NOT NULL ,
+c_bankaccount_id integer NOT NULL ,
+c_doctype_id integer NOT NULL ,
+markprinted character(1) ,
+getlines character(1) ,
+CONSTRAINT c_checkprinting_pkey PRIMARY KEY (c_checkprinting_id) ,
+CONSTRAINT c_bankaccount_fk FOREIGN KEY (c_bankaccount_id) REFERENCES c_bankaccount (c_bankaccount_id) MATCH SIMPLE ON UPDATE NO ACTION ON DELETE NO ACTION  ,
+CONSTRAINT c_doctype_fk FOREIGN KEY (c_doctype_id) REFERENCES c_doctype (c_doctype_id) MATCH SIMPLE ON UPDATE NO ACTION ON DELETE NO ACTION  );
+ALTER TABLE C_CheckPrinting OWNER TO libertya;
+
+CREATE TABLE C_CheckPrintingLines(
+
+c_checkprintinglines_id integer NOT NULL ,
+ad_client_id integer NOT NULL ,
+ad_org_id integer NOT NULL ,
+isactive character(1) NOT NULL DEFAULT 'Y'::bpchar ,
+created timestamp without time zone NOT NULL DEFAULT ('now'::text)::timestamp(6) with time zone ,
+createdby integer NOT NULL ,
+updated timestamp without time zone NOT NULL DEFAULT ('now'::text)::timestamp(6) with time zone ,
+updatedby integer NOT NULL ,
+c_checkprinting_id integer NOT NULL ,
+c_bpartner_id integer NOT NULL ,
+c_currency_id integer NOT NULL ,
+c_payment_id integer NOT NULL ,
+print character(1) NOT NULL DEFAULT 'N'::bpchar ,
+printed character(1) NOT NULL DEFAULT 'N'::bpchar ,
+docstatus character(2) NOT NULL ,
+checkno character varying(20) ,
+description character varying(255) ,
+tendertype character(1) NOT NULL ,
+payamt numeric(20,2) NOT NULL DEFAULT 0 ,
+dateemissioncheck timestamp without time zone ,
+datetrx timestamp without time zone NOT NULL ,
+CONSTRAINT c_checkprintinglines_key PRIMARY KEY (c_checkprintinglines_id) ,
+CONSTRAINT adclient_fk FOREIGN KEY (ad_client_id) REFERENCES ad_client (ad_client_id) MATCH SIMPLE ON UPDATE NO ACTION ON DELETE NO ACTION  ,
+CONSTRAINT adorg_fk FOREIGN KEY (ad_org_id) REFERENCES ad_org (ad_org_id) MATCH SIMPLE ON UPDATE NO ACTION ON DELETE NO ACTION  ,
+CONSTRAINT cbpartner_fk FOREIGN KEY (c_bpartner_id) REFERENCES c_bpartner (c_bpartner_id) MATCH SIMPLE ON UPDATE NO ACTION ON DELETE CASCADE  ,
+CONSTRAINT ccheckprinting_fk FOREIGN KEY (c_checkprinting_id) REFERENCES c_checkprinting (c_checkprinting_id) MATCH SIMPLE ON UPDATE NO ACTION ON DELETE NO ACTION  ,
+CONSTRAINT ccurrency_fk FOREIGN KEY (c_currency_id) REFERENCES c_currency (c_currency_id) MATCH SIMPLE ON UPDATE NO ACTION ON DELETE NO ACTION  ,
+CONSTRAINT cpayment_fk FOREIGN KEY (c_payment_id) REFERENCES c_payment (c_payment_id) MATCH SIMPLE ON UPDATE NO ACTION ON DELETE NO ACTION  );
+ALTER TABLE C_CheckPrintingLines OWNER TO libertya;

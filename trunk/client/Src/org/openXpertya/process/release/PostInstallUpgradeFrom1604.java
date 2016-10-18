@@ -82,6 +82,9 @@ public class PostInstallUpgradeFrom1604 extends PluginPostInstallProcess {
 	protected final static String LIBRO_DIARIO_RESUMIDO_REPORT_UID = "CORE-AD_Process-1010428";
 	protected final static String LIBRO_DIARIO_RESUMIDO_REPORT_FILENAME = "LibroDiarioResumido.jrxml";
 
+	/** UID Impresión Cheques */
+	protected final static String CHECK_PRINTING_JASPER_REPORT_UID = "SSTE2CORE-AD_JasperReport-1010144-20161018155925";
+	protected final static String CHECK_PRINTING_JASPER_REPORT_FILENAME = "ChequesFrances.jasper";
 	
 	@Override
 	protected String doIt() throws Exception {
@@ -332,6 +335,16 @@ public class PostInstallUpgradeFrom1604 extends PluginPostInstallProcess {
 								jarFileURL,
 								getBinaryFileURL(LIBRO_DIARIO_RESUMIDO_REPORT_FILENAME)));
 
+		// Impresión de cheques - Francés
+		MJasperReport
+			.updateBinaryData(
+					get_TrxName(),
+					getCtx(),
+					CHECK_PRINTING_JASPER_REPORT_UID,
+					JarHelper
+							.readBinaryFromJar(
+									jarFileURL,
+									getBinaryFileURL(CHECK_PRINTING_JASPER_REPORT_FILENAME)));
 		
 		return " ";
 	}
