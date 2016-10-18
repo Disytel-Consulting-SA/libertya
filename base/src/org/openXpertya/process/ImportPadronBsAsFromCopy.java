@@ -91,39 +91,46 @@ public class ImportPadronBsAsFromCopy extends SvrProcess {
                 log.log( Level.SEVERE,"Unknown Table for: " + p_PadronType );
             }
     	
-            /** Se elimina el contenido de la tabla temporal */
-            sql = new StringBuffer();
-            sql.append("DELETE FROM " + table_aux );
-            DB.executeUpdate(sql.toString());
-                       
-            /** Se copia el contenido del padrón a la tabla temporal */
-            long time  = System.currentTimeMillis();
-            sql = new StringBuffer();
-            sql.append("COPY " + table_aux + " FROM '"+ getPath() + p_NameCsvFile + "' WITH DELIMITER '" + getSeparatorCharacterCSV() + "'");
-            DB.executeUpdate(sql.toString());
-            time = System.currentTimeMillis() - time;
-            log.info("Se importó el archivo " + p_NameCsvFile + " en " + time + " ms");
-                       
-            /** Se ejecuta el proceso de mantenimiento de padrón eliminando aquellos padrones que ya no se usan */
-            regDeleted = maintainPadronTable();
-            
-            /** Se insertan los registros a la tabla c_bpartner_padron_bsas */
-            time  = System.currentTimeMillis();             
-            actualizarPadron();
-            time = System.currentTimeMillis() - time;
-            log.info("Se actualizó el padrón en " + time + " ms");
-            
-            /** Se actualiza el campo c_bpartner_id de la tabla c_bpartner_padron_bsas*/
-            updateCBPartner();
-
-            log.log (Level.SEVERE,"doIt - Entidades Comerciales NO Encontradas =" + (regInserted - partnerFound));
-            
-            
-            addLog (0, null, new BigDecimal (regDeleted), "Registros eliminados por Mantenimiento de Padron");
-            addLog (0, null, new BigDecimal (partnerFound), "Entidades Comerciales Encontrados");
-            addLog (0, null, new BigDecimal (regInserted - partnerFound), "Entidades Comerciales No Encontrados");
-            addLog (0, null, new BigDecimal (regInserted), "Entidades Comerciales insertados");
-
+        	try {
+        	
+	            /** Se elimina el contenido de la tabla temporal */
+	            sql = new StringBuffer();
+	            sql.append("DELETE FROM " + table_aux );
+	            if (DB.executeUpdate(sql.toString()) == -1) 
+            		return "Error en sentencia SQL. Ver log de errores.";
+	                       
+	            /** Se copia el contenido del padrón a la tabla temporal */
+	            long time  = System.currentTimeMillis();
+	            sql = new StringBuffer();
+	            sql.append("COPY " + table_aux + " FROM '"+ getPath() + p_NameCsvFile + "' WITH DELIMITER '" + getSeparatorCharacterCSV() + "'");
+	            if (DB.executeUpdate(sql.toString()) == -1) 
+            		return "Error en sentencia SQL. Ver log de errores.";
+	            time = System.currentTimeMillis() - time;
+	            log.info("Se importó el archivo " + p_NameCsvFile + " en " + time + " ms");
+	                       
+	            /** Se ejecuta el proceso de mantenimiento de padrón eliminando aquellos padrones que ya no se usan */
+	            regDeleted = maintainPadronTable();
+	            
+	            /** Se insertan los registros a la tabla c_bpartner_padron_bsas */
+	            time  = System.currentTimeMillis();             
+	            actualizarPadron();
+	            time = System.currentTimeMillis() - time;
+	            log.info("Se actualizó el padrón en " + time + " ms");
+	            
+	            /** Se actualiza el campo c_bpartner_id de la tabla c_bpartner_padron_bsas*/
+	            updateCBPartner();
+	
+	            log.log (Level.SEVERE,"doIt - Entidades Comerciales NO Encontradas =" + (regInserted - partnerFound));
+	            
+	            
+	            addLog (0, null, new BigDecimal (regDeleted), "Registros eliminados por Mantenimiento de Padron");
+	            addLog (0, null, new BigDecimal (partnerFound), "Entidades Comerciales Encontrados");
+	            addLog (0, null, new BigDecimal (regInserted - partnerFound), "Entidades Comerciales No Encontrados");
+	            addLog (0, null, new BigDecimal (regInserted), "Entidades Comerciales insertados");
+        	} catch (Exception e) {
+        		return "Error en ejecución del proceso: " + e.getMessage();
+        	}
+	            
             return "Proceso finalizado satisfactoriamente";
         }
 
