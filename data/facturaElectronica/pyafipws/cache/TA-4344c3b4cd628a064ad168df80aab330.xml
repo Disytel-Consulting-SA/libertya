@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<loginTicketResponse version="1">
+    <header>
+        <source>CN=wsaa, O=AFIP, C=AR, SERIALNUMBER=CUIT 33693450239</source>
+        <destination>C=ar, O=sur software s.h. de luis ignacio aita y juan manuel cortez, SERIALNUMBER=CUIT 30711742332, CN=juan manuel cortez</destination>
+        <uniqueId>3570967455</uniqueId>
+        <generationTime>2016-10-14T17:44:24.125-03:00</generationTime>
+        <expirationTime>2016-10-15T05:44:24.125-03:00</expirationTime>
+    </header>
+    <credentials>
+        <token>PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iVVRGLTgiIHN0YW5kYWxvbmU9InllcyI/Pgo8c3NvIHZlcnNpb249IjIuMCI+CiAgICA8aWQgdW5pcXVlX2lkPSIzMjI0NjM4NzExIiBzcmM9IkNOPXdzYWEsIE89QUZJUCwgQz1BUiwgU0VSSUFMTlVNQkVSPUNVSVQgMzM2OTM0NTAyMzkiIGdlbl90aW1lPSIxNDc2NDc3ODA0IiBleHBfdGltZT0iMTQ3NjUyMTA2NCIgZHN0PSJDTj13c2ZlLCBPPUFGSVAsIEM9QVIiLz4KICAgIDxvcGVyYXRpb24gdmFsdWU9ImdyYW50ZWQiIHR5cGU9ImxvZ2luIj4KICAgICAgICA8bG9naW4gdWlkPSJDPWFyLCBPPXN1ciBzb2Z0d2FyZSBzLmguIGRlIGx1aXMgaWduYWNpbyBhaXRhIHkganVhbiBtYW51ZWwgY29ydGV6LCBTRVJJQUxOVU1CRVI9Q1VJVCAzMDcxMTc0MjMzMiwgQ049anVhbiBtYW51ZWwgY29ydGV6IiBzZXJ2aWNlPSJ3c2ZlIiByZWdtZXRob2Q9IjIyIiBlbnRpdHk9IjMzNjkzNDUwMjM5IiBhdXRobWV0aG9kPSJjbXMiPgogICAgICAgICAgICA8cmVsYXRpb25zPgogICAgICAgICAgICAgICAgPHJlbGF0aW9uIHJlbHR5cGU9IjQiIGtleT0iMzA3MTE3NDIzMzIiLz4KICAgICAgICAgICAgPC9yZWxhdGlvbnM+CiAgICAgICAgPC9sb2dpbj4KICAgIDwvb3BlcmF0aW9uPgo8L3Nzbz4KCg==</token>
+        <sign>ptUrZXQQUmjO90CiTPZa3d/BIlN5dsoh+6KG4jAFNW30m+yUJapU1YKSYmGxW1Km72byxZ1ah/k84g/zM4CinTXFVNCNOZxUrAKYWzXZ/3694/aCZTyP4QRGoWAIqjTsFJ6l5nXakQZiJnI8HzRztiDucR/UKiRDjddihGjQu+M=</sign>
+    </credentials>
+</loginTicketResponse>
+
