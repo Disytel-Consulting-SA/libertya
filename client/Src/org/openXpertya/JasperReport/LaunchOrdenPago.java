@@ -214,7 +214,7 @@ public class LaunchOrdenPago extends SvrProcess {
 	 * @return FactoryMethod: Retorna el data source del reporte.
 	 */
 	protected OrdenPagoDataSource getDataSource() {
-		return new OrdenPagoDataSource(p_C_AllocationHdr_ID);
+		return new OrdenPagoDataSource(p_C_AllocationHdr_ID, get_TrxName());
 	}
 
 	/**

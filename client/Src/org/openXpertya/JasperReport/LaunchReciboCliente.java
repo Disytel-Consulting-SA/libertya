@@ -16,7 +16,7 @@ public class LaunchReciboCliente extends LaunchOrdenPago {
 
 	@Override
 	protected OrdenPagoDataSource getDataSource() {
-		return new ReciboClienteDataSource(getAllocationHdrID());
+		return new ReciboClienteDataSource(getAllocationHdrID(),get_TrxName());
 	}
 
 	/**
