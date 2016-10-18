@@ -286,7 +286,7 @@ public class ExportArciba extends SvrProcess {
 		// 11 - Fecha de Reten/Percep - Fecha(10) - 10
 		sqlReal.append("To_char((SELECT inv.dateinvoiced FROM C_Invoice inv WHERE inv.C_Invoice_ID = i.C_Invoice_Orig_ID),'dd/MM/yyyy') AS FECHA_DE_RETEN_PERC, ");
 		// 12 - Ret/Percep Practicadas - Numero(13,2) - 16
-		sqlReal.append("replace(lpad(((i.grandtotal * it.rate / 100)::numeric(16,2))::text,16,'0'),'.',',') AS RET_PERCEP_PRACTICADAS, ");
+		sqlReal.append("replace(lpad((it.taxamt::numeric(16,2))::text,16,'0'),'.',',') AS RET_PERCEP_PRACTICADAS, ");
 		// 13 - Alícuota - Numero(2,2) - 5
 		sqlReal.append("lpad(substring(it.rate::text from 1 for position('.' in it.rate::text) - 1),2,'0')  || ',' || rpad(substring(it.rate::text from position('.' in it.rate::text) + 1 for 5),2,'0') AS ALICUOTA, ");			
 		// 99 - Fecha de Comprobante Origen - Utilizada para filtrar		
