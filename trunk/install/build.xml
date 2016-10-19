@@ -216,16 +216,21 @@
 	   includes="ServidorOXP/**" />
 
 	<!-- Comprimir en TAR		-->
+	<!-- Se comenta ya que al crecer de tamaño el ServidorOXP, el tar devuelve error por tamaño extenso a comprimir
 	<tar longfile="gnu" tarfile="${instalacion.dir}/ServidorOXP_${env.VERSION_OXP_FILE}.tar"
 	   basedir="${build.dir}"
 	   includes="ServidorOXP/**" />
 	<gzip zipfile="${instalacion.dir}/ServidorOXP_${env.VERSION_OXP_FILE}.tar.gz"
 		  src="${instalacion.dir}/ServidorOXP_${env.VERSION_OXP_FILE}.tar" />
 	<delete file="${instalacion.dir}/ServidorOXP_${env.VERSION_OXP_FILE}.tar" />
-
+	-->
+	
 	<!-- Creando sumas de comprobacion	-->
+<!-- Se comenta ya que al crecer de tamaño el ServidorOXP, el tar devuelve error por tamaño extenso a comprimir	
 	<checksum file="${instalacion.dir}/ServidorOXP_${env.VERSION_OXP_FILE}.tar.gz"/>
 	<concat destfile="${instalacion.dir}/ServidorOXP_${env.VERSION_OXP_FILE}.tar.gz.MD5" append="yes"> *ServidorOXP_${env.VERSION_OXP_FILE}.tar.gz</concat>
+	-->
+	
 	<!-- Test con md5sum -c oxp_v2.zip.MD5	-->
 	<checksum file="${instalacion.dir}/ServidorOXP_${env.VERSION_OXP_FILE}.zip"/>
 	<concat destfile="${instalacion.dir}/ServidorOXP_${env.VERSION_OXP_FILE}.zip.MD5" append="yes"> *ServidorOXP_${env.VERSION_OXP_FILE}.zip</concat>
