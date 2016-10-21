@@ -7,6 +7,7 @@ import java.sql.SQLException;
 import java.sql.Timestamp;
 
 import org.openXpertya.cc.CurrentAccountQuery;
+import org.openXpertya.model.MInvoice;
 import org.openXpertya.model.MPayment;
 import org.openXpertya.util.DB;
 import org.openXpertya.util.Env;
@@ -15,7 +16,7 @@ import org.openXpertya.util.Util;
 public class BalanceReport extends SvrProcess {
 
 	/** Organización de los comprobantes a consultar */
-	private int    p_AD_Org_ID;
+	private Integer    p_AD_Org_ID;
 	/** Visualizar solo clientes con facturas impagas o todos (AL (All), OO (Open invoices Only) */
 	private String     p_Scope; 
 	/** Criterio de ordenamiento (BP (BPartner), BL (Balance), OI (Oldest open Invoice) */
@@ -36,8 +37,10 @@ public class BalanceReport extends SvrProcess {
 	private int client_Currency_ID;
 	/** Clave de búsqueda desde */
 	private String valueFrom;
+	private String valueFromOrigin;
 	/** Clave de búsqueda hasta */
 	private String valueTo;
+	private String valueToOrigin;
 	/** Sólo mostrar con crédito activado */
 	private boolean onlyCurentAccounts;
 	/** Condición de los comprobantes: Efectivo, Cuenta Corriente, Todos */
@@ -69,9 +72,11 @@ public class BalanceReport extends SvrProcess {
         	} else if( name.equalsIgnoreCase( "OnlyCurrentAccounts" )) {
         		onlyCurentAccounts = ((String)para[ i ].getParameter()).equals("Y");
         	} else if( name.equalsIgnoreCase( "ValueFrom" )) {
-        		valueFrom = (String)para[ i ].getParameter();
+        		valueFromOrigin = (String)para[ i ].getParameter();
+        		valueFrom = valueFromOrigin.equals("%")?null:valueFromOrigin;
         	} else if( name.equalsIgnoreCase( "ValueTo" )) {
-        		valueTo = (String)para[ i ].getParameter();
+        		valueToOrigin = (String)para[ i ].getParameter();
+        		valueTo = valueToOrigin.equals("%")?null:valueToOrigin;
         	} else if (name.equalsIgnoreCase("Condition")) {
 				setCondition((String) para[i].getParameter());
 			}
@@ -110,7 +115,7 @@ public class BalanceReport extends SvrProcess {
 				.append(" AND invoiceopen(c_invoice_id, 0, " + getCurrentAccountQuery().getDateToInlineQuery() + ") > 0	AND C_BPartner_id = t.c_bpartner_id ORDER BY DATEACCT asc LIMIT 1 ) as fecha_fact_antigua, ");
 		sqlDoc.append(" 	( SELECT dateacct FROM C_INVOICE WHERE issotrx = ")
 				.append(isSOtrx);
-		if (p_AD_Org_ID > 0){
+		if (!Util.isEmpty(p_AD_Org_ID, true)){
 			sqlDoc.append(" AND AD_Org_ID = ").append(p_AD_Org_ID);
 		}
 		sqlDoc.append(" AND invoiceopen(c_invoice_id, 0, " + getCurrentAccountQuery().getDateToInlineQuery() + ") > 0	AND C_BPartner_id = t.c_bpartner_id ORDER BY DATEACCT desc LIMIT 1 ) as fecha_fact_reciente, ");
@@ -119,7 +124,7 @@ public class BalanceReport extends SvrProcess {
 						"where i.duedate::date <= ?::date " +
 						"		and i.c_bpartner_id = T.c_bpartner_id " +
 						"		and i.docstatus not in ('DR','IN')");
-		if (p_AD_Org_ID > 0){
+		if (!Util.isEmpty(p_AD_Org_ID, true)){
 			sqlDoc.append(" AND AD_Org_ID = ").append(p_AD_Org_ID);
 		}
 		sqlDoc.append(" AND AD_Client_ID = ").append(Env.getAD_Client_ID(getCtx()));
@@ -130,7 +135,7 @@ public class BalanceReport extends SvrProcess {
 						"		and c_bpartner_id = T.c_bpartner_id " +
 						"		and docstatus not in ('DR','IN') " +
 						"		and tendertype = '"+MPayment.TENDERTYPE_Check+"'");
-		if (p_AD_Org_ID > 0){
+		if (!Util.isEmpty(p_AD_Org_ID, true)){
 			sqlDoc.append(" AND AD_Org_ID = ").append(p_AD_Org_ID);
 		}
 		sqlDoc.append(" AND AD_Client_ID = ").append(Env.getAD_Client_ID(getCtx()));
@@ -233,7 +238,7 @@ public class BalanceReport extends SvrProcess {
 				usql.append("								onlycurrentaccounts, valuefrom, valueto, duedebt, actualbalance, chequesencartera, generalbalance, Condition ) ");
 				usql.append(" VALUES ( ")	.append(getAD_PInstance_ID()).append(",")
 											.append(getAD_Client_ID()).append(",")
-											.append(p_AD_Org_ID).append(",")
+											.append(p_AD_Org_ID == null?"0":p_AD_Org_ID).append(",")
 											.append(subindice).append(",")
 											.append(rs.getInt("C_BPartner_ID")).append(", '")
 											.append(rs.getString("SO_DESCRIPTION")).append("', ")
@@ -259,18 +264,18 @@ public class BalanceReport extends SvrProcess {
 				usql.append(" , ");
 				usql.append(onlyCurentAccounts?"'Y'":"'N'");
 				usql.append(" , ");
-				usql.append("'"+valueFrom+"'");
+				usql.append("'"+valueFromOrigin+"'");
 				usql.append(" , ");
-				usql.append("'"+valueTo+"'");
+				usql.append("'"+valueToOrigin+"'");
 				usql.append(" , ");
 				usql.append(rs.getBigDecimal("duedebt"));
 				usql.append(" , ");
-				usql.append(rs.getBigDecimal("actualbalance"));
+				usql.append(MInvoice.PAYMENTRULE_OnCredit.equals(getCondition())?rs.getBigDecimal("actualbalance"):"null::numeric");
 				usql.append(" , ");
 				usql.append(rs.getBigDecimal("chequesencartera"));
 				usql.append(" , ");
-				usql.append(rs.getBigDecimal("actualbalance").add(
-						rs.getBigDecimal("chequesencartera")));
+				usql.append(MInvoice.PAYMENTRULE_OnCredit.equals(getCondition())?rs.getBigDecimal("actualbalance").add(
+						rs.getBigDecimal("chequesencartera")):"null::numeric");
 				usql.append(" , ");
 				usql.append("'"+getCondition()+"'");
 				usql.append(" ); ");
