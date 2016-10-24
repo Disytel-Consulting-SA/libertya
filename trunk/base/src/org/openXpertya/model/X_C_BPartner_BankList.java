@@ -7,7 +7,7 @@ import java.math.*;
 import org.openXpertya.util.*;
 /** Modelo Generado por C_BPartner_BankList
  *  @author Comunidad de Desarrollo Libertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
- *  @version  - 2016-05-23 10:59:09.4 */
+ *  @version  - 2016-10-24 20:12:03.849 */
 public class X_C_BPartner_BankList extends org.openXpertya.model.PO
 {
 /** Constructor estándar */
@@ -19,6 +19,7 @@ super (ctx, C_BPartner_BankList_ID, trxName);
 setC_BPartner_BankList_ID (0);
 setC_BPartner_ID (0);
 setC_DocType_ID (0);
+setC_ElectronicPaymentBranch_ID (0);
 }
  */
 }
@@ -100,6 +101,19 @@ Document type or rules */
 public int getC_DocType_ID() 
 {
 Integer ii = (Integer)get_Value("C_DocType_ID");
+if (ii == null) return 0;
+return ii.intValue();
+}
+public static final int C_ELECTRONICPAYMENTBRANCH_ID_AD_Reference_ID = MReference.getReferenceID("C_ElectronicPaymentBranch");
+/** Set C_ElectronicPaymentBranch_ID */
+public void setC_ElectronicPaymentBranch_ID (int C_ElectronicPaymentBranch_ID)
+{
+set_Value ("C_ElectronicPaymentBranch_ID", new Integer(C_ElectronicPaymentBranch_ID));
+}
+/** Get C_ElectronicPaymentBranch_ID */
+public int getC_ElectronicPaymentBranch_ID() 
+{
+Integer ii = (Integer)get_Value("C_ElectronicPaymentBranch_ID");
 if (ii == null) return 0;
 return ii.intValue();
 }

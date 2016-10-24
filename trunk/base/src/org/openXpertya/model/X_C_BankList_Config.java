@@ -7,7 +7,7 @@ import java.math.*;
 import org.openXpertya.util.*;
 /** Modelo Generado por C_BankList_Config
  *  @author Comunidad de Desarrollo Libertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
- *  @version  - 2016-05-23 10:58:58.639 */
+ *  @version  - 2016-10-24 20:11:57.664 */
 public class X_C_BankList_Config extends org.openXpertya.model.PO
 {
 /** Constructor estándar */
@@ -16,8 +16,11 @@ public X_C_BankList_Config (Properties ctx, int C_BankList_Config_ID, String trx
 super (ctx, C_BankList_Config_ID, trxName);
 /** if (C_BankList_Config_ID == 0)
 {
+setC_BankAccount_ID (0);
+setC_Bank_ID (0);
 setC_BankList_Config_ID (0);
 setC_DocType_ID (0);
+setPaymentType (null);	// EC
 }
  */
 }
@@ -45,6 +48,34 @@ public String toString()
 {
 StringBuffer sb = new StringBuffer ("X_C_BankList_Config[").append(getID()).append("]");
 return sb.toString();
+}
+/** Set Bank Account.
+Account at the Bank */
+public void setC_BankAccount_ID (int C_BankAccount_ID)
+{
+set_Value ("C_BankAccount_ID", new Integer(C_BankAccount_ID));
+}
+/** Get Bank Account.
+Account at the Bank */
+public int getC_BankAccount_ID() 
+{
+Integer ii = (Integer)get_Value("C_BankAccount_ID");
+if (ii == null) return 0;
+return ii.intValue();
+}
+/** Set Bank.
+Bank */
+public void setC_Bank_ID (int C_Bank_ID)
+{
+set_Value ("C_Bank_ID", new Integer(C_Bank_ID));
+}
+/** Get Bank.
+Bank */
+public int getC_Bank_ID() 
+{
+Integer ii = (Integer)get_Value("C_Bank_ID");
+if (ii == null) return 0;
+return ii.intValue();
 }
 /** Set C_BankList_Config_ID */
 public void setC_BankList_Config_ID (int C_BankList_Config_ID)
@@ -101,6 +132,27 @@ set_Value ("ClientName", ClientName);
 public String getClientName() 
 {
 return (String)get_Value("ClientName");
+}
+public static final int PAYMENTTYPE_AD_Reference_ID = MReference.getReferenceID("Electronic Payment Types");
+/** Electronic Check = EC */
+public static final String PAYMENTTYPE_ElectronicCheck = "EC";
+/** Set PaymentType */
+public void setPaymentType (String PaymentType)
+{
+if (PaymentType.equals("EC"));
+ else throw new IllegalArgumentException ("PaymentType Invalid value - Reference = PAYMENTTYPE_AD_Reference_ID - EC");
+if (PaymentType == null) throw new IllegalArgumentException ("PaymentType is mandatory");
+if (PaymentType.length() > 2)
+{
+log.warning("Length > 2 - truncated");
+PaymentType = PaymentType.substring(0,2);
+}
+set_Value ("PaymentType", PaymentType);
+}
+/** Get PaymentType */
+public String getPaymentType() 
+{
+return (String)get_Value("PaymentType");
 }
 /** Set Register Number */
 public void setRegisterNumber (String RegisterNumber)

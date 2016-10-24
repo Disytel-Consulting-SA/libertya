@@ -4,129 +4,98 @@ import java.math.BigDecimal;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.Timestamp;
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Properties;
 
 import org.openXpertya.process.DocAction;
 import org.openXpertya.process.DocumentEngine;
+import org.openXpertya.util.CLogger;
 import org.openXpertya.util.DB;
 import org.openXpertya.util.Env;
-import org.openXpertya.util.HTMLMsg;
 import org.openXpertya.util.Msg;
 import org.openXpertya.util.Util;
 
 public class MBankList extends X_C_BankList implements DocAction {
+	private static final long serialVersionUID = 1L;
 
-	public static Integer getSeqNo(Properties ctx, Integer docTypeID, Timestamp date, String trxName){
+	public static Integer getSeqNo(Properties ctx, Integer docTypeID, Timestamp date, String trxName) {
 		Integer seqNo = 0;
-		String sql = "SELECT count(*)"
-					+ " FROM "+Table_Name
-					+ " WHERE ad_client_id = ?"
-					+ " 		AND docstatus IN ('CO','CL') "
-					+ " 		AND c_doctype_id = ?";
-		if(date != null){
-			sql += " AND datetrx::date = ?::date";
-		}
+
+		StringBuffer sql = new StringBuffer();
+
+		sql.append("SELECT ");
+		sql.append("	COUNT(*) ");
+		sql.append("FROM ");
+		sql.append("	" + Table_Name + " ");
+		sql.append("WHERE ");
+		sql.append("	ad_client_id = ? ");
+		sql.append("	AND docstatus IN ('CO','CL') ");
+		sql.append("	AND c_doctype_id = ? ");
+
+		sql.append((date != null) ? " AND datetrx::date = ?::date" : "");
+
 		PreparedStatement ps = null;
 		ResultSet rs = null;
 		try {
-			ps = DB.prepareStatement(sql, trxName, true);
+			ps = DB.prepareStatement(sql.toString(), trxName, true);
 			int i = 1;
 			ps.setInt(i++, Env.getAD_Client_ID(ctx));
 			ps.setInt(i++, docTypeID);
-			if(date != null){
+			if (date != null) {
 				ps.setTimestamp(i++, date);
 			}
 			rs = ps.executeQuery();
-			if(rs.next()){
+			if (rs.next()) {
 				seqNo = rs.getInt(1);
 			}
 		} catch (Exception e) {
 			e.printStackTrace();
 		} finally {
-			try{
-				if(ps != null) ps.close();
-				if(rs != null) rs.close();
+			try {
+				if (ps != null)
+					ps.close();
+				if (rs != null)
+					rs.close();
 			} catch (Exception e2) {
 				e2.printStackTrace();
 			}
 		}
 		return seqNo;
 	}
-	
+
 	public MBankList(Properties ctx, int C_BankList_ID, String trxName) {
 		super(ctx, C_BankList_ID, trxName);
-		// TODO Auto-generated constructor stub
 	}
 
 	public MBankList(Properties ctx, ResultSet rs, String trxName) {
 		super(ctx, rs, trxName);
-		// TODO Auto-generated constructor stub
 	}
-	
+
 	@Override
 	protected boolean beforeSave(boolean newRecord) {
-		// Actualizar el número de secuencia de las lista
-		/*try{
-			updateSeqNo();
-		} catch(Exception e){
-			setProcessMsg(e.getMessage());
-			return false;
-		}*/
-		// Número de documento de la lista galicia
 		MDocType docType = new MDocType(getCtx(), getC_DocType_ID(), get_TrxName());
-		if ((newRecord || is_ValueChanged("DateTrx"))
-				&& MDocType.DOCTYPE_Lista_Galicia.equals(docType.getDocTypeKey())) {
-			X_C_BankList_Config bankListConfig = (X_C_BankList_Config) PO.findFirst(getCtx(),
-					X_C_BankList_Config.Table_Name, "ad_client_id = ? and isactive = 'Y' and c_doctype_id = ?",
-					new Object[] { Env.getAD_Client_ID(getCtx()), getC_DocType_ID() }, null, get_TrxName());
-			String prefix = "";
-			if(bankListConfig != null){
-				prefix = Util.isEmpty(bankListConfig.getClientAcronym())?"":bankListConfig.getClientAcronym();
-			}
-			String sql = "SELECT max(documentno) documentno FROM c_banklist WHERE c_doctype_id = ? AND docstatus IN ('CO','CL') and ad_client_id = ? and extract('month' from datetrx) = extract('month' from ?::date) and extract('year' from datetrx) = extract('year' from ?::date)"
-					+ (newRecord ? "" : " and c_banklist_id <> " + getID());
-			DateFormat dateFormat_MMyyyy = new SimpleDateFormat("MMyyyy");
-			DateFormat dateFormat_yy = new SimpleDateFormat("yy");
-			PreparedStatement ps = null;
-			ResultSet rs = null;
-			String lastDocumentno = null;
-			String documentno;
-			Integer seq = Integer.parseInt(dateFormat_yy.format(getDateTrx()));
-			try{
-				ps = DB.prepareStatement(sql, get_TrxName(), true);
-				ps.setInt(1, getC_DocType_ID());
-				ps.setInt(2, getAD_Client_ID());
-				ps.setTimestamp(3, getDateTrx());
-				ps.setTimestamp(4, getDateTrx());
-				rs = ps.executeQuery();
-				if(rs.next()){
-					lastDocumentno = rs.getString("documentno");
-				}
-				if(!Util.isEmpty(lastDocumentno, true)){
-					seq = Integer.parseInt(
-							lastDocumentno.substring(lastDocumentno.length() - 3, lastDocumentno.length() - 1));
-					seq++;
-				}
-				documentno = prefix+dateFormat_MMyyyy.format(getDateTrx())+(seq < 10?"0":"")+seq;
-			} catch(Exception e){
+		if (newRecord) {
+			try {
+				//Para crear nueva lista, la anterior debe completarse o eliminarse.
+				  /*Como la especificación del banco requiere secuencialidad en las listas (ambos bancos)
+			        para chequeos que hacen ellos, no se permite generar más de una lista para el mismo banco
+				    en estado borrador (esto es para garantizar la secuencialidad de los nros.)*/
+				if (checkDraftList(docType)) {
+					log.saveError("SaveError", Msg.getMsg(getCtx(), "DraftListValidationError"));
+					return false;
+				};
+				
+				// Número de documento de la lista
+				setDocumentNo(getDocumentNumber(docType));
+			} catch (Exception e) { 
 				log.saveError("SaveError", e.getMessage());
 				return false;
-			} finally{
-				try {
-					if(ps != null) ps.close();
-					if(rs != null) rs.close();
-				} catch (Exception e2) {
-					log.saveError("SaveError", e2.getMessage());
-					return false;
-				}
 			}
-			setDocumentNo(documentno);
 		}
 		return true;
 	}
-	
+
 	@Override
 	public boolean processIt(String action) throws Exception {
 		m_processMsg = null;
@@ -137,108 +106,106 @@ public class MBankList extends X_C_BankList implements DocAction {
 
 	@Override
 	public boolean unlockIt() {
-		// TODO Auto-generated method stub
 		return false;
 	}
 
 	@Override
 	public boolean invalidateIt() {
-		// TODO Auto-generated method stub
 		return false;
 	}
 
-	private HTMLMsg checksInOtherBankList(){
-		String sql = "select distinct bl.line, bl.c_payment_id, p.documentno, p.checkno "
-					+ "from (select c_payment_id "
-					+ "			from c_banklistline "
-					+ "			where c_banklist_id = " + getID()
-					+ "			intersect "
-					+ "			select c_payment_id "
-					+ "			from c_banklistline bll "
-					+ "			inner join c_banklist bl on bl.c_banklist_id = bll.c_banklist_id "
-					+ "			where bl.c_banklist_id <> "+getID()+" and bl.docstatus in ('CO','CL') and bl.c_doctype_id = ?) as c "
-					+ "inner join c_banklistline as bl on c.c_payment_id = bl.c_payment_id "
-					+ "inner join c_payment as p on p.c_payment_id = c.c_payment_id "
-					+ "where bl.c_banklist_id = " + getID()
-					+ " order by bl.line ";
-		PreparedStatement ps = null;
-		ResultSet rs = null;
-		HTMLMsg msg = new HTMLMsg();
-		HTMLMsg.HTMLList checkList = msg.createList("checkList", "ul");
-		try {
-			ps = DB.prepareStatement(sql, get_TrxName(), true);
-			ps.setInt(1, getC_DocType_ID());
-			rs = ps.executeQuery();
-			while(rs.next()){
-				msg.createAndAddListElement(rs.getString("line"),
-						rs.getString("line") + " : " + rs.getString("documentno"), checkList);
-			}
-			if(checkList.getElements().size() > 0){
-				checkList.setMsg(
-						Msg.getMsg(getCtx(), "ChecksInOtherBankList", new Object[] { checkList.getElements().size() }));
-				msg.addList(checkList);
-			}
-		} catch (Exception e) {
-			e.printStackTrace();
-		} finally {
-			try {
-				if(ps != null)ps.close();
-				if(rs != null)rs.close();
-			} catch (Exception e2) {
-				e2.printStackTrace();
-			}
-		}
-		return msg;
-	}
-	
 	@Override
 	public String prepareIt() {
-		// Validar que los cheques que se encuentran en esta lista no estén en
-		// otra, en ese caso listar los cheques duplicados en otras listas del
-		// mismo tipo
-		HTMLMsg msg = checksInOtherBankList();
-		if(msg != null && msg.toString() != null && msg.toString().length() > 0){
-			setProcessMsg(msg.toString());
+		String ordersInOtherCompleteList = "";
+		
+		//Valido que la OP no esté en otra lista que ya fue completada, en caso de que esté muestro lista de OP
+		for (MBankListLine line : getBankListLines()) {
+			MAllocationHdr hdr = new MAllocationHdr(getCtx(), line.getC_AllocationHdr_ID(), get_TrxName());
+			if (hdr.getC_BankList_ID() != 0) {
+				ordersInOtherCompleteList += hdr.getDocumentNo() + " ";
+			}
+		}
+		if (!"".equals(ordersInOtherCompleteList)) {
+			setProcessMsg(Msg.getMsg(getCtx(), "AllocationsInOtherCompleteLists") + ": " + ordersInOtherCompleteList);
 			return DocAction.STATUS_Invalid;
 		}
+		
 		return DocAction.STATUS_InProgress;
 	}
 
 	@Override
 	public boolean approveIt() {
-		// TODO Auto-generated method stub
 		return false;
 	}
 
 	@Override
 	public boolean rejectIt() {
-		// TODO Auto-generated method stub
 		return false;
 	}
 
-	/**
-	 * Actualiza los nros de secuencia totales y diarios de las listas en Borrador
-	 * @throws Exception
-	 */
-	private void updateSeqNo() throws Exception{
-		BigDecimal totalSeqNo = new BigDecimal(
-				MBankList.getSeqNo(getCtx(), getC_DocType_ID(), null, get_TrxName()) + 1);
-		setTotalSeqNo(totalSeqNo);
-		setDailySeqNo(new BigDecimal(
-				MBankList.getSeqNo(getCtx(), getC_DocType_ID(), getDateTrx(), get_TrxName())+1));
-	}
-	
 	@Override
 	public String completeIt() {
+		try {
+		
+			//Actualizo Órdenes de Pago con la referencia a la lista
+			for (MBankListLine line : getBankListLines()) {
+				MAllocationHdr hdr = new MAllocationHdr(getCtx(), line.getC_AllocationHdr_ID(), get_TrxName());
+				hdr.setC_BankList_ID(getID());
+				if (!hdr.save()) {
+					throw new Exception("@AllocationSaveError@: "
+							+ CLogger.retrieveErrorAsString());
+				}
+			}
+		} catch (Exception e) {
+			m_processMsg = e.getMessage();
+			return STATUS_Invalid;
+		}
+		
 		setProcessed(true);
 		setDocAction(DOCACTION_Close);
 
 		return DocAction.STATUS_Completed;
 	}
+	
+	private List<MBankListLine> getBankListLines() {
+		List<MBankListLine> list = new ArrayList<MBankListLine>();
+		
+		StringBuffer sql = new StringBuffer();
+
+		sql.append("SELECT ");
+		sql.append("	* ");
+		sql.append("FROM ");
+		sql.append("	C_BankListLine ");
+		sql.append("WHERE ");
+		sql.append("	C_BankList_ID = ? ");
+
+		PreparedStatement ps = null;
+		ResultSet rs = null;
+		try {
+			ps = DB.prepareStatement(sql.toString(), get_TrxName(), true);
+			ps.setInt(1, getID());
+			rs = ps.executeQuery();
+			while (rs.next()) {
+				list.add(new MBankListLine(getCtx(), rs, get_TrxName()));
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
+		} finally {
+			try {
+				if (ps != null)
+					ps.close();
+				if (rs != null)
+					rs.close();
+			} catch (Exception e2) {
+				e2.printStackTrace();
+			}
+		}
+		
+		return list;
+	}
 
 	@Override
 	public boolean postIt() {
-		// TODO Auto-generated method stub
 		return false;
 	}
 
@@ -260,13 +227,11 @@ public class MBankList extends X_C_BankList implements DocAction {
 
 	@Override
 	public boolean reverseCorrectIt() {
-		// TODO Auto-generated method stub
 		return false;
 	}
 
 	@Override
 	public boolean reverseAccrualIt() {
-		// TODO Auto-generated method stub
 		return false;
 	}
 
@@ -278,17 +243,13 @@ public class MBankList extends X_C_BankList implements DocAction {
 
 	public void setProcessed(boolean processed) {
 		super.setProcessed(processed);
-
 		if (getID() == 0) {
 			return;
 		}
-
-		String set = "SET Processed='" + (processed ? "Y" : "N")
-				+ "' WHERE C_BankList_ID=" + getID();
-		int noLine = DB.executeUpdate("UPDATE C_BankListLine " + set,
-				get_TrxName());
+		String set = "SET Processed='" + (processed ? "Y" : "N") + "' WHERE C_BankList_ID=" + getID();
+		DB.executeUpdate("UPDATE C_BankListLine " + set, get_TrxName());
 	}
-	
+
 	@Override
 	public String getSummary() {
 		return getDocumentNo() + ". " + getDescription();
@@ -301,13 +262,98 @@ public class MBankList extends X_C_BankList implements DocAction {
 
 	@Override
 	public int getC_Currency_ID() {
-		// TODO Auto-generated method stub
 		return 0;
 	}
 
 	@Override
 	public BigDecimal getApprovalAmt() {
-		// TODO Auto-generated method stub
 		return null;
 	}
+	
+	private boolean checkDraftList(MDocType docType) {
+		StringBuffer sql = new StringBuffer();
+		sql.append("SELECT COUNT(*) ");
+		sql.append("FROM C_BankList ");
+		sql.append("WHERE C_DocType_ID = ? ");
+		sql.append(" AND DocStatus NOT IN ('CO', 'CL', 'VO')");
+
+		int linesCount = DB.getSQLValue(get_TrxName(), sql.toString(), docType.getID());
+		return linesCount > 0;
+	}
+	
+	private String getDocumentNumber(MDocType docType) throws Exception {
+		String whereClause = "AD_Client_Id = ? and isActive = 'Y' and C_DocType_Id = ?";
+		Object[] whereParams = new Object[] { Env.getAD_Client_ID(getCtx()), getC_DocType_ID() };
+		X_C_BankList_Config bankListConfig = (X_C_BankList_Config) PO.findFirst(getCtx(), X_C_BankList_Config.Table_Name, whereClause, whereParams, null, get_TrxName());
+		String prefix = "";
+		if (bankListConfig != null) {
+			prefix = Util.isEmpty(bankListConfig.getClientAcronym()) ? "" : bankListConfig.getClientAcronym();
+		}
+
+		StringBuffer sql = new StringBuffer();
+
+		sql.append("SELECT ");
+		sql.append("	MAX(documentno) documentno ");
+		sql.append("FROM ");
+		sql.append("	c_banklist ");
+		sql.append("WHERE ");
+		sql.append("	c_doctype_id = ? ");
+		sql.append("	AND docstatus IN ('CO','CL') ");
+		sql.append("	AND ad_client_id = ? ");
+
+		PreparedStatement ps = null;
+		ResultSet rs = null;
+		String lastDocumentno = null;
+		String documentno = "";
+		Integer seq = 1;
+		try {
+			ps = DB.prepareStatement(sql.toString(), get_TrxName(), true);
+			ps.setInt(1, getC_DocType_ID());
+			ps.setInt(2, getAD_Client_ID());
+			rs = ps.executeQuery();
+			if (rs.next()) {
+				lastDocumentno = rs.getString("documentno");
+			}
+			
+			//Nro. doc Galicia según especificación:
+			  /*EESSSSSS (EE: Sigla de la empresa, SSSSSS: Secuencial). 
+				No se debe repetir.
+				La sigla la suministrará el Banco al momento de alta en el servicio.
+				El secuencial deberá ser controlado por el cliente, deberá comenzar de 1 e incrementarse en 1 para cada lista enviada.
+		      */
+			if (MDocType.DOCTYPE_Lista_Galicia.equals(docType.getDocTypeKey())) {
+				if (!Util.isEmpty(lastDocumentno, true)) {
+					seq = Integer.parseInt(lastDocumentno.substring(lastDocumentno.length() - 5, lastDocumentno.length()));
+					seq++;
+				}
+				documentno = prefix + String.format("%06d", seq);
+			}
+			
+			//Nro. doc Patagonia según especificación
+			  /*Nro. secuencial permanente de 1 a N por cada envió que se haga de este tipo de archivo. 
+			   * Se usaría para control de correlatividad de envíos y recepciones.
+			   * Longitud: 7 
+			   */
+			if (MDocType.DOCTYPE_Lista_Patagonia.equals(docType.getDocTypeKey())) {
+				if (!Util.isEmpty(lastDocumentno, true)) {
+					seq = Integer.parseInt(lastDocumentno);
+					seq++;
+				}
+				documentno = String.format("%07d", seq);
+			}
+		} catch (Exception e) {
+			throw e;
+		} finally {
+			try {
+				if (ps != null)
+					ps.close();
+				if (rs != null)
+					rs.close();
+			} catch (Exception e2) {
+				throw e2;
+			}
+		}
+		return documentno;
+	}
+
 }

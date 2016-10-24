@@ -7,7 +7,7 @@ import java.math.*;
 import org.openXpertya.util.*;
 /** Modelo Generado por C_BankAccount
  *  @author Comunidad de Desarrollo Libertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
- *  @version  - 2016-05-23 10:58:56.788 */
+ *  @version  - 2016-10-24 20:11:56.082 */
 public class X_C_BankAccount extends org.openXpertya.model.PO
 {
 /** Constructor estándar */
@@ -24,7 +24,6 @@ setCC (null);
 setC_Currency_ID (0);
 setCreditLimit (Env.ZERO);
 setCurrentBalance (Env.ZERO);
-setDC (null);
 setDescription (null);
 setIsChequesEnCartera (false);
 setIsDefault (false);
@@ -241,8 +240,7 @@ return bd;
 DC */
 public void setDC (String DC)
 {
-if (DC == null) throw new IllegalArgumentException ("DC is mandatory");
-if (DC.length() > 2)
+if (DC != null && DC.length() > 2)
 {
 log.warning("Length > 2 - truncated");
 DC = DC.substring(0,2);
@@ -276,6 +274,22 @@ return (String)get_Value("Description");
 public KeyNamePair getKeyNamePair() 
 {
 return new KeyNamePair(getID(), getDescription());
+}
+/** Set ElectronicPaymentsAccount */
+public void setElectronicPaymentsAccount (boolean ElectronicPaymentsAccount)
+{
+set_Value ("ElectronicPaymentsAccount", new Boolean(ElectronicPaymentsAccount));
+}
+/** Get ElectronicPaymentsAccount */
+public boolean isElectronicPaymentsAccount() 
+{
+Object oo = get_Value("ElectronicPaymentsAccount");
+if (oo != null) 
+{
+ if (oo instanceof Boolean) return ((Boolean)oo).booleanValue();
+ return "Y".equals(oo);
+}
+return false;
 }
 /** Set IBAN.
 International Bank Account Number */

@@ -7,7 +7,7 @@ import java.math.*;
 import org.openXpertya.util.*;
 /** Modelo Generado por C_AllocationHdr
  *  @author Comunidad de Desarrollo Libertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
- *  @version  - 2012-07-09 20:10:37.745 */
+ *  @version  - 2016-10-24 20:39:51.878 */
 public class X_C_AllocationHdr extends org.openXpertya.model.PO
 {
 /** Constructor estándar */
@@ -157,6 +157,21 @@ Payment allocation */
 public int getC_AllocationHdr_ID() 
 {
 Integer ii = (Integer)get_Value("C_AllocationHdr_ID");
+if (ii == null) return 0;
+return ii.intValue();
+}
+public static final int C_BANKLIST_ID_AD_Reference_ID = MReference.getReferenceID("C_BankList");
+/** Set Bank List */
+public void setC_BankList_ID (int C_BankList_ID)
+{
+if (C_BankList_ID <= 0) set_Value ("C_BankList_ID", null);
+ else 
+set_Value ("C_BankList_ID", new Integer(C_BankList_ID));
+}
+/** Get Bank List */
+public int getC_BankList_ID() 
+{
+Integer ii = (Integer)get_Value("C_BankList_ID");
 if (ii == null) return 0;
 return ii.intValue();
 }

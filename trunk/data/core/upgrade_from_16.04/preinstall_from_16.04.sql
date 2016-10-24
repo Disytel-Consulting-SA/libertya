@@ -2140,3 +2140,145 @@ CONSTRAINT c_invoicepayschedule_cpaymentbatchpoinvoices FOREIGN KEY (c_invoicepa
 CONSTRAINT cinvoice_cpaymentbatchpodetail FOREIGN KEY (c_invoice_id) REFERENCES c_invoice (c_invoice_id) MATCH SIMPLE ON UPDATE NO ACTION ON DELETE NO ACTION  ,
 CONSTRAINT cpaymentbatchpodetail_cpaymentbatchpoinvoices FOREIGN KEY (c_paymentbatchpodetail_id) REFERENCES c_paymentbatchpodetail (c_paymentbatchpodetail_id) MATCH SIMPLE ON UPDATE NO ACTION ON DELETE CASCADE  );
 ALTER TABLE C_PaymentBatchPOInvoices OWNER TO libertya;
+
+--20161024-1930 Refactorización de pagos electrónicos - Merge de revision 1570
+CREATE TABLE C_ElectronicPaymentBranch(
+
+c_electronicpaymentbranch_id integer NOT NULL ,
+ad_client_id integer NOT NULL ,
+ad_org_id integer NOT NULL ,
+isactive character(1) NOT NULL DEFAULT 'Y'::bpchar ,
+created timestamp without time zone NOT NULL DEFAULT ('now'::text)::timestamp(6) with time zone ,
+createdby integer NOT NULL ,
+updated timestamp without time zone NOT NULL DEFAULT ('now'::text)::timestamp(6) with time zone ,
+updatedby integer NOT NULL ,
+value character varying(40) NOT NULL ,
+name character varying(60) NOT NULL ,
+c_bank_id integer ,
+c_location_id integer ,
+CONSTRAINT c_electronicpaymentbranch_key PRIMARY KEY (c_electronicpaymentbranch_id) ,
+CONSTRAINT adclient_electronicpaymentbranch FOREIGN KEY (ad_client_id) REFERENCES ad_client (ad_client_id) MATCH SIMPLE ON UPDATE NO ACTION ON DELETE NO ACTION  ,
+CONSTRAINT adorg_electronicpaymentbranch FOREIGN KEY (ad_org_id) REFERENCES ad_org (ad_org_id) MATCH SIMPLE ON UPDATE NO ACTION ON DELETE NO ACTION  );
+
+UPDATE ad_system SET dummy = (SELECT addcolumnifnotexists('c_bankaccount','electronicpaymentsaccount','character(1) DEFAULT ''N'''));
+UPDATE ad_system SET dummy = (SELECT addcolumnifnotexists('c_banklist_config','c_bank_id','integer'));
+UPDATE ad_system SET dummy = (SELECT addcolumnifnotexists('c_banklist_config','paymenttype','character varying(2)'));
+UPDATE ad_system SET dummy = (SELECT addcolumnifnotexists('c_bpartner_banklist','c_electronicpaymentbranch_id','integer'));
+UPDATE ad_system SET dummy = (SELECT addcolumnifnotexists('c_banklist','c_bankaccount_id','integer NOT NULL'));
+
+ALTER TABLE c_bpartner_banklist ALTER COLUMN c_doctype_id DROP NOT NULL;
+   
+ALTER TABLE c_banklistline
+  DROP CONSTRAINT banklistline_checklist;
+
+ALTER TABLE c_banklistline
+  ADD CONSTRAINT banklistline_checklist FOREIGN KEY (c_banklist_id)
+      REFERENCES c_banklist (c_banklist_id) MATCH SIMPLE
+      ON UPDATE NO ACTION ON DELETE CASCADE;
+
+CREATE OR REPLACE VIEW c_electronic_payments AS 
+ SELECT p.ad_client_id, p.ad_org_id, p.created, p.createdby, p.updated, p.updatedby, dt.c_doctype_id, p.c_payment_id, p.documentno, p.docstatus, p.datetrx, p.dateacct, p.c_bankaccount_id, p.checkno, p.c_currency_id, p.payamt, p.tendertype, p.c_bpartner_id, p.a_name, p.isreconciled, p.duedate, p.dateemissioncheck, p.checkstatus, p.rejecteddate, p.rejectedcomments, bl.c_banklist_id, bl.documentno AS banklist_documentno, bl.docstatus AS banklist_docstatus, ( SELECT ah.c_allocationhdr_id
+           FROM c_allocationhdr ah
+      JOIN c_allocationline al ON ah.c_allocationhdr_id = al.c_allocationhdr_id
+     WHERE ah.allocationtype::text = 'OP'::text AND al.c_payment_id = p.c_payment_id AND (ah.docstatus <> ALL (ARRAY['IP'::bpchar, 'DR'::bpchar]))
+    LIMIT 1) AS c_allocationhdr_id
+   FROM c_payment p
+   JOIN c_banklistline bll ON bll.c_payment_id = p.c_payment_id
+   JOIN c_banklist bl ON bl.c_banklist_id = bll.c_banklist_id
+   JOIN c_doctype dt ON dt.c_doctype_id = bl.c_doctype_id
+  WHERE dt.docbasetype::text = 'BLB'::text AND (bl.docstatus <> ALL (ARRAY['IP'::bpchar, 'DR'::bpchar])) AND (p.docstatus <> ALL (ARRAY['IP'::bpchar, 'DR'::bpchar]));
+
+CREATE OR REPLACE VIEW c_electronic_notpayments AS 
+ SELECT p.ad_client_id, p.ad_org_id, p.created, p.createdby, p.updated, p.updatedby, p.c_payment_id, p.documentno, p.docstatus, p.datetrx, p.dateacct, p.c_bankaccount_id, p.checkno, p.c_currency_id, p.payamt, p.tendertype, p.c_bpartner_id, p.a_name, p.isreconciled, p.duedate, p.dateemissioncheck, p.checkstatus, p.rejecteddate, p.rejectedcomments, NULL::unknown AS c_banklist_id, NULL::unknown AS banklist_documentno, NULL::unknown AS banklist_docstatus, ( SELECT ah.c_allocationhdr_id
+           FROM c_allocationhdr ah
+      JOIN c_allocationline al ON ah.c_allocationhdr_id = al.c_allocationhdr_id
+     WHERE ah.allocationtype::text = 'OP'::text AND al.c_payment_id = p.c_payment_id AND (ah.docstatus <> ALL (ARRAY['IP'::bpchar, 'DR'::bpchar]))
+    LIMIT 1) AS c_allocationhdr_id
+   FROM c_payment p
+  WHERE (p.docstatus <> ALL (ARRAY['IP'::bpchar, 'DR'::bpchar])) AND NOT (EXISTS ( SELECT lpp.c_payment_id
+           FROM c_electronic_payments lpp
+          WHERE lpp.c_payment_id = p.c_payment_id));
+
+DROP VIEW c_lista_galicia_notpayments;
+DROP VIEW c_lista_galicia_payments;
+DROP VIEW c_lista_patagonia_notpayments;
+DROP VIEW c_lista_patagonia_payments;
+
+--20161024-2030 Merge de revisiones 1604 y 1609
+UPDATE ad_system SET dummy = (SELECT addcolumnifnotexists('C_BankListLine','C_AllocationHdr_ID','integer'));
+UPDATE ad_system SET dummy = (SELECT addcolumnifnotexists('c_allocationhdr','c_banklist_id','integer'));
+
+CREATE OR REPLACE VIEW c_electronic_payments AS 
+SELECT
+   p.ad_client_id,
+   p.ad_org_id,
+   p.created,
+   p.createdby,
+   p.updated,
+   p.updatedby,
+   dt.c_doctype_id,
+   p.c_payment_id,
+   p.documentno,
+   p.docstatus,
+   p.datetrx,
+   p.dateacct,
+   p.c_bankaccount_id,
+   p.checkno,
+   p.c_currency_id,
+   p.payamt,
+   p.tendertype,
+   p.c_bpartner_id,
+   p.a_name,
+   p.isreconciled,
+   p.duedate,
+   p.dateemissioncheck,
+   p.checkstatus,
+   p.rejecteddate,
+   p.rejectedcomments,
+   bl.c_banklist_id,
+   bl.documentno AS banklist_documentno,
+   bl.docstatus AS banklist_docstatus,
+   ( SELECT
+      ah.c_allocationhdr_id             
+   FROM
+      c_allocationhdr ah        
+   JOIN
+      c_allocationline al 
+         ON ah.c_allocationhdr_id = al.c_allocationhdr_id       
+   WHERE
+      ah.allocationtype::text = 'OP'::text 
+      AND al.c_payment_id = p.c_payment_id 
+      AND (
+         ah.docstatus <> ALL (
+            ARRAY['IP'::bpchar, 'DR'::bpchar]
+         )
+      )      LIMIT 1) AS c_allocationhdr_id     
+FROM
+   c_payment p     
+JOIN 
+   c_allocationline al
+      ON al.c_payment_id = p.c_payment_id
+JOIN
+   c_banklistline bll 
+      ON bll.c_allocationhdr_id = al.c_allocationhdr_id
+JOIN
+   c_banklist bl 
+      ON bl.c_banklist_id = bll.c_banklist_id     
+JOIN
+   c_doctype dt 
+      ON dt.c_doctype_id = bl.c_doctype_id    
+WHERE
+   dt.docbasetype::text = 'BLB'::text 
+   AND (
+      bl.docstatus <> ALL (
+         ARRAY['IP'::bpchar, 'DR'::bpchar]
+      )
+   ) 
+   AND (
+      p.docstatus <> ALL (
+         ARRAY['IP'::bpchar, 'DR'::bpchar]
+      )
+   );
+   
+ALTER TABLE c_banklistline DROP COLUMN c_payment_id;
+ALTER TABLE c_banklist DROP COLUMN c_allocationhdr_id; 
