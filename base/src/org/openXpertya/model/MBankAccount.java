@@ -16,10 +16,12 @@
 
 package org.openXpertya.model;
 
+import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.util.Properties;
 
 import org.openXpertya.util.CCache;
+import org.openXpertya.util.DB;
 import org.openXpertya.util.Env;
 
 /**
@@ -148,6 +150,42 @@ public class MBankAccount extends X_C_BankAccount {
 			setIsChequesEnCartera(false);
 			
 		return true;
+	}
+	
+	protected X_C_BankAccountDoc getFirstBankAccountDoc() {
+		//Construyo la query
+		String sql = "SELECT * " + 
+					 "FROM C_BankAccountDoc " +
+					 "WHERE " + 
+					  "c_bankaccount_id = ? " +
+					  "ORDER BY " +
+					  "currentnext ASC " +
+					  "LIMIT 1";
+		
+		PreparedStatement ps = null;
+		ResultSet rs = null;
+		try {
+			ps = DB.prepareStatement(sql, null);
+			
+			//Parámetros
+			ps.setInt(1, this.getID());
+			rs = ps.executeQuery();
+			while (rs.next()) {
+				return new X_C_BankAccountDoc(getCtx(), rs, get_TrxName());
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
+		} finally {
+			try {
+				if (ps != null)
+					ps.close();
+				if (rs != null)
+					rs.close();
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
+		}
+		return null;
 	}
     
     
