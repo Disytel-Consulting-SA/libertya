@@ -169,12 +169,12 @@ public class RetencionIIBB extends AbstractRetencionProcessor {
 
 		return importeRetenido;
 	}
-
-	public boolean save(MAllocationHdr alloc) throws Exception {
+	
+	public X_M_Retencion_Invoice save(MAllocationHdr alloc, boolean save) throws Exception {
 		// Si el monto de retención es menor o igual que cero, no se debe guardar
 		// la retención ya que no se retuvo nada.
 		if (getAmount().compareTo(Env.ZERO) <= 0)
-			return false;
+			return null;
 		
 		// Se asigna el allocation header como el actual.
 		setAllocationHrd(alloc);
@@ -201,9 +201,17 @@ public class RetencionIIBB extends AbstractRetencionProcessor {
 		retencion.setimporte_determinado_amt(getImporteDeterminado());
 		retencion.setbaseimponible_amt(getBaseImponible());
 		retencion.setIsSOTrx(isSOTrx());
-		
-		return retencion.save();
+		if (save)
+			retencion.save();
+		return retencion;
+	}
 
+	public boolean save(MAllocationHdr alloc) throws Exception {
+		X_M_Retencion_Invoice retencion = save(alloc, false);
+		if (retencion == null)
+			return false;
+		else
+			return retencion.save();
 	} // save 
 	
 //	private BigDecimal porcentajeFromPadron(){

@@ -2052,3 +2052,91 @@ CONSTRAINT ccheckprinting_fk FOREIGN KEY (c_checkprinting_id) REFERENCES c_check
 CONSTRAINT ccurrency_fk FOREIGN KEY (c_currency_id) REFERENCES c_currency (c_currency_id) MATCH SIMPLE ON UPDATE NO ACTION ON DELETE NO ACTION  ,
 CONSTRAINT cpayment_fk FOREIGN KEY (c_payment_id) REFERENCES c_payment (c_payment_id) MATCH SIMPLE ON UPDATE NO ACTION ON DELETE NO ACTION  );
 ALTER TABLE C_CheckPrintingLines OWNER TO libertya;
+
+--20161024-1230 Generación automática de OP. Merge de Revision 1547, 1557
+UPDATE ad_system SET dummy = (SELECT addcolumnifnotexists('c_bpartner','batch_payment_rule','character(1)'));
+UPDATE ad_system SET dummy = (SELECT addcolumnifnotexists('c_bpartner','c_bankaccount_id','integer'));
+ALTER TABLE c_bpartner ADD CONSTRAINT bankaccount_cbpartner FOREIGN KEY (c_bankaccount_id) REFERENCES c_bankaccount (c_bankaccount_id) ON UPDATE NO ACTION ON DELETE NO ACTION;
+
+CREATE TABLE C_PaymentBatchPO(
+
+c_paymentbatchpo_id integer NOT NULL ,
+ad_client_id integer NOT NULL ,
+ad_org_id integer NOT NULL ,
+isactive character(1) NOT NULL DEFAULT 'Y'::bpchar ,
+created timestamp without time zone NOT NULL DEFAULT ('now'::text)::timestamp(6) with time zone ,
+createdby integer NOT NULL ,
+updated timestamp without time zone NOT NULL DEFAULT ('now'::text)::timestamp(6) with time zone ,
+updatedby integer NOT NULL ,
+c_doctype_id integer NOT NULL ,
+documentno character varying(30) NOT NULL ,
+batchdate timestamp without time zone NOT NULL ,
+description character varying(255) ,
+paymentdaterule character varying(1) ,
+adddays integer ,
+paymentdate timestamp without time zone ,
+grandtotal numeric(20,2) NOT NULL DEFAULT 0 ,
+generatepaymentproposal character(1) NOT NULL DEFAULT 'N'::bpchar ,
+removepaymentproposal character(1) ,
+docstatus character(2) NOT NULL ,
+docaction character(2) NOT NULL ,
+processed character(1) NOT NULL DEFAULT 'N'::bpchar ,
+generateelectronicpayments character(1) ,
+c_doctypealloctarget_id integer NOT NULL DEFAULT 1010569 ,
+CONSTRAINT c_paymentbatchpo_key PRIMARY KEY (c_paymentbatchpo_id) ,
+CONSTRAINT cdoctype_paymentbatchpo FOREIGN KEY (c_doctype_id) REFERENCES c_doctype (c_doctype_id) MATCH SIMPLE ON UPDATE NO ACTION ON DELETE NO ACTION  ,
+CONSTRAINT cdoctypetarget_paymentbatchpo FOREIGN KEY (c_doctypealloctarget_id) REFERENCES c_doctype (c_doctype_id) MATCH SIMPLE ON UPDATE NO ACTION ON DELETE NO ACTION  );
+ALTER TABLE C_PaymentBatchPO OWNER TO libertya;
+
+CREATE TABLE C_PaymentBatchPODetail(
+
+c_paymentbatchpodetail_id integer NOT NULL ,
+c_paymentbatchpo_id integer NOT NULL ,
+ad_client_id integer NOT NULL ,
+ad_org_id integer NOT NULL ,
+isactive character(1) NOT NULL DEFAULT 'Y'::bpchar ,
+created timestamp without time zone NOT NULL DEFAULT ('now'::text)::timestamp(6) with time zone ,
+createdby integer NOT NULL ,
+updated timestamp without time zone NOT NULL DEFAULT ('now'::text)::timestamp(6) with time zone ,
+updatedby integer NOT NULL ,
+c_bpartner_id integer NOT NULL ,
+batch_payment_rule character(1) ,
+c_bankaccount_id integer ,
+c_bank_id integer ,
+firstduedate timestamp without time zone ,
+lastduedate timestamp without time zone ,
+paymentdate timestamp without time zone ,
+paymentamount numeric(20,2) ,
+c_allocationhdr_id integer ,
+CONSTRAINT c_paymentbatchpodetail_key PRIMARY KEY (c_paymentbatchpodetail_id) ,
+CONSTRAINT bank_cpaymentbatchpodetail FOREIGN KEY (c_bank_id) REFERENCES c_bank (c_bank_id) MATCH SIMPLE ON UPDATE NO ACTION ON DELETE NO ACTION  ,
+CONSTRAINT bankaccount_cpaymentbatchpodetail FOREIGN KEY (c_bankaccount_id) REFERENCES c_bankaccount (c_bankaccount_id) MATCH SIMPLE ON UPDATE NO ACTION ON DELETE NO ACTION  ,
+CONSTRAINT callocation_cpaymentbatchpodetail FOREIGN KEY (c_allocationhdr_id) REFERENCES c_allocationhdr (c_allocationhdr_id) MATCH SIMPLE ON UPDATE NO ACTION ON DELETE NO ACTION  ,
+CONSTRAINT cbpartner_cpaymentbatchpodetail FOREIGN KEY (c_bpartner_id) REFERENCES c_bpartner (c_bpartner_id) MATCH SIMPLE ON UPDATE NO ACTION ON DELETE NO ACTION  ,
+CONSTRAINT cpaymentbatchpo_cpaymentbatchpodetail FOREIGN KEY (c_paymentbatchpo_id) REFERENCES c_paymentbatchpo (c_paymentbatchpo_id) MATCH SIMPLE ON UPDATE NO ACTION ON DELETE NO ACTION  );
+ALTER TABLE C_PaymentBatchPODetail OWNER TO libertya;
+
+CREATE TABLE C_PaymentBatchPOInvoices(
+
+c_paymentbatchpoinvoices_id integer NOT NULL ,
+c_paymentbatchpodetail_id integer NOT NULL ,
+ad_client_id integer NOT NULL ,
+ad_org_id integer NOT NULL ,
+isactive character(1) NOT NULL DEFAULT 'Y'::bpchar ,
+created timestamp without time zone NOT NULL DEFAULT ('now'::text)::timestamp(6) with time zone ,
+createdby integer NOT NULL ,
+updated timestamp without time zone NOT NULL DEFAULT ('now'::text)::timestamp(6) with time zone ,
+updatedby integer NOT NULL ,
+c_invoice_id integer NOT NULL ,
+documentno character varying(30) NOT NULL ,
+dateinvoiced timestamp without time zone NOT NULL ,
+duedate timestamp without time zone NOT NULL ,
+invoiceamount numeric(20,2) NOT NULL ,
+openamount numeric(20,2) NOT NULL ,
+paymentamount numeric(20,2) NOT NULL ,
+c_invoicepayschedule_id integer ,
+CONSTRAINT c_paymentbatchpoinvoices_key PRIMARY KEY (c_paymentbatchpoinvoices_id) ,
+CONSTRAINT c_invoicepayschedule_cpaymentbatchpoinvoices FOREIGN KEY (c_invoicepayschedule_id) REFERENCES c_invoicepayschedule (c_invoicepayschedule_id) MATCH SIMPLE ON UPDATE NO ACTION ON DELETE NO ACTION  ,
+CONSTRAINT cinvoice_cpaymentbatchpodetail FOREIGN KEY (c_invoice_id) REFERENCES c_invoice (c_invoice_id) MATCH SIMPLE ON UPDATE NO ACTION ON DELETE NO ACTION  ,
+CONSTRAINT cpaymentbatchpodetail_cpaymentbatchpoinvoices FOREIGN KEY (c_paymentbatchpodetail_id) REFERENCES c_paymentbatchpodetail (c_paymentbatchpodetail_id) MATCH SIMPLE ON UPDATE NO ACTION ON DELETE CASCADE  );
+ALTER TABLE C_PaymentBatchPOInvoices OWNER TO libertya;

@@ -22,14 +22,9 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.util.ArrayList;
-import java.util.Calendar;
 import java.util.Date;
-import java.util.GregorianCalendar;
 import java.util.Properties;
 import java.util.logging.Level;
-import java.sql.ResultSet;
-
-import javax.swing.JOptionPane;
 
 import org.openXpertya.util.CLogger;
 import org.openXpertya.util.DB;
@@ -664,6 +659,36 @@ public class MInvoicePaySchedule extends X_C_InvoicePaySchedule {
 
         return success;
     }    // afterSave
+    
+    public BigDecimal getOpenAmount() {
+    	MInvoice invoice = new MInvoice(getCtx(), getC_Invoice_ID(), get_TrxName()); 
+    	String sql = "SELECT invoiceopen(?, ?, ?, null) as openAmount";
+		PreparedStatement ps = null;
+		ResultSet rs = null;
+		BigDecimal openAmount = null;
+		try {
+			ps = DB.prepareStatement(sql, get_TrxName());
+			ps.setInt(1, getC_Invoice_ID());
+			ps.setInt(2, getID());
+			ps.setInt(3, invoice.getC_Currency_ID());
+			rs = ps.executeQuery();
+			while (rs.next()) {
+				openAmount = rs.getBigDecimal("openAmount");
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
+		} finally {
+			try {
+				if (ps != null)
+					ps.close();
+				if (rs != null)
+					rs.close();
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
+		}
+		return openAmount;
+    }
 }    // MInvoicePaySchedule
 
 

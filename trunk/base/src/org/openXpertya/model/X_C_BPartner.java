@@ -7,7 +7,7 @@ import java.math.*;
 import org.openXpertya.util.*;
 /** Modelo Generado por C_BPartner
  *  @author Comunidad de Desarrollo Libertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
- *  @version  - 2016-09-29 11:58:03.564 */
+ *  @version  - 2016-10-24 12:47:28.93 */
 public class X_C_BPartner extends org.openXpertya.model.PO
 {
 /** Constructor estándar */
@@ -197,6 +197,28 @@ if (oo != null)
 }
 return false;
 }
+public static final int BATCH_PAYMENT_RULE_AD_Reference_ID = MReference.getReferenceID("Batch Payment Rules");
+/** Check = C */
+public static final String BATCH_PAYMENT_RULE_Check = "C";
+/** Electronic Check = E */
+public static final String BATCH_PAYMENT_RULE_ElectronicCheck = "E";
+/** Set Batch Payment Rule */
+public void setBatch_Payment_Rule (String Batch_Payment_Rule)
+{
+if (Batch_Payment_Rule == null || Batch_Payment_Rule.equals("C") || Batch_Payment_Rule.equals("E"));
+ else throw new IllegalArgumentException ("Batch_Payment_Rule Invalid value - Reference = BATCH_PAYMENT_RULE_AD_Reference_ID - C - E");
+if (Batch_Payment_Rule != null && Batch_Payment_Rule.length() > 1)
+{
+log.warning("Length > 1 - truncated");
+Batch_Payment_Rule = Batch_Payment_Rule.substring(0,1);
+}
+set_Value ("Batch_Payment_Rule", Batch_Payment_Rule);
+}
+/** Get Batch Payment Rule */
+public String getBatch_Payment_Rule() 
+{
+return (String)get_Value("Batch_Payment_Rule");
+}
 public static final int BPARTNER_PARENT_ID_AD_Reference_ID = MReference.getReferenceID("C_BPartner (No Summary)");
 /** Set Partner Parent.
 Business Partner Parent */
@@ -211,6 +233,22 @@ Business Partner Parent */
 public int getBPartner_Parent_ID() 
 {
 Integer ii = (Integer)get_Value("BPartner_Parent_ID");
+if (ii == null) return 0;
+return ii.intValue();
+}
+/** Set Bank Account.
+Account at the Bank */
+public void setC_BankAccount_ID (int C_BankAccount_ID)
+{
+if (C_BankAccount_ID <= 0) set_Value ("C_BankAccount_ID", null);
+ else 
+set_Value ("C_BankAccount_ID", new Integer(C_BankAccount_ID));
+}
+/** Get Bank Account.
+Account at the Bank */
+public int getC_BankAccount_ID() 
+{
+Integer ii = (Integer)get_Value("C_BankAccount_ID");
 if (ii == null) return 0;
 return ii.intValue();
 }
@@ -1119,10 +1157,6 @@ public String getName()
 {
 return (String)get_Value("Name");
 }
-public KeyNamePair getKeyNamePair() 
-{
-return new KeyNamePair(getID(), getName());
-}
 /** Set Name 2.
 Additional Name */
 public void setName2 (String Name2)
@@ -1782,5 +1816,9 @@ Search key for the record in the format required - must be unique */
 public String getValue() 
 {
 return (String)get_Value("Value");
+}
+public KeyNamePair getKeyNamePair() 
+{
+return new KeyNamePair(getID(), getValue());
 }
 }

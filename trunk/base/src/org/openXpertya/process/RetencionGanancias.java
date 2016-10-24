@@ -178,13 +178,13 @@ public class RetencionGanancias extends AbstractRetencionProcessor {
 		return baseImponible.multiply(getPorcentajeRetencion()).divide(
 				Env.ONEHUNDRED, 2, BigDecimal.ROUND_HALF_EVEN);
 	}
-
-	public boolean save(MAllocationHdr alloc) throws Exception {
+	
+	public X_M_Retencion_Invoice save(MAllocationHdr alloc, boolean save) throws Exception {
 		// Si el monto de retención es menor o igual que cero, no se debe
 		// guardar
 		// la retención ya que no se retuvo nada.
 		if (getAmount().compareTo(Env.ZERO) <= 0)
-			return false;
+			return null;
 
 		// Se asigna el allocation header como el actual.
 		setAllocationHrd(alloc);
@@ -213,9 +213,18 @@ public class RetencionGanancias extends AbstractRetencionProcessor {
 		retencion.setimporte_determinado_amt(getImporteDeterminado());
 		retencion.setbaseimponible_amt(getBaseImponible());
 		retencion.setIsSOTrx(isSOTrx());
+		if (save)
+			retencion.save();
+		
+		return retencion;
+	}
 
-		return retencion.save();
-
+	public boolean save(MAllocationHdr alloc) throws Exception {
+		X_M_Retencion_Invoice retencion = save(alloc, false);
+		if (retencion == null)
+			return false;
+		else
+			return retencion.save();
 	} // save
 
 	private MInvoice crearFacturaRecaudador() throws Exception {

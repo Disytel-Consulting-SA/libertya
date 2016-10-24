@@ -71,6 +71,16 @@ public interface RetencionProcessor {
 	public boolean save(MAllocationHdr alloc) throws Exception;
 	
 	/**
+	 * Genera la retención aplicada junto con todos sus datos
+	 * @param alloc <code>MAllocationHdr</code> con la imputación de pagos.
+	 * @param save Indica si se persiste o no
+	 * @return
+	 * @throws Exception cuando se produce algún error en el guardado de los 
+	 * datos de la retención.
+	 */
+	public X_M_Retencion_Invoice save(MAllocationHdr alloc, boolean save) throws Exception;
+	
+	/**
 	 * Asigna la moneda en la que se guardan los montos de la retención.
 	 * @param currency <code>MCurrency</code> con la moneda a utilizar.
 	 */
