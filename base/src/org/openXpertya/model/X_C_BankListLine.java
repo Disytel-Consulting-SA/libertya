@@ -7,7 +7,7 @@ import java.math.*;
 import org.openXpertya.util.*;
 /** Modelo Generado por C_BankListLine
  *  @author Comunidad de Desarrollo Libertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
- *  @version  - 2016-05-23 10:58:59.491 */
+ *  @version  - 2016-10-24 20:39:55.302 */
 public class X_C_BankListLine extends org.openXpertya.model.PO
 {
 /** Constructor estándar */
@@ -16,10 +16,10 @@ public X_C_BankListLine (Properties ctx, int C_BankListLine_ID, String trxName)
 super (ctx, C_BankListLine_ID, trxName);
 /** if (C_BankListLine_ID == 0)
 {
+setC_AllocationHdr_ID (0);
 setC_BankList_ID (0);
 setC_BankListLine_ID (0);
-setC_Payment_ID (0);
-setLine (Env.ZERO);
+setLine (Env.ZERO);	// @SQL=SELECT COALESCE(MAX(Line),0)+10 AS DefaultValue FROM C_BankListLine WHERE C_BankList_ID=@C_BankList_ID@
 setProcessed (false);
 }
  */
@@ -49,12 +49,27 @@ public String toString()
 StringBuffer sb = new StringBuffer ("X_C_BankListLine[").append(getID()).append("]");
 return sb.toString();
 }
-/** Set C_BankList_ID */
+public static final int C_ALLOCATIONHDR_ID_AD_Reference_ID = MReference.getReferenceID("C_Allocation");
+/** Set Allocation.
+Payment allocation */
+public void setC_AllocationHdr_ID (int C_AllocationHdr_ID)
+{
+set_Value ("C_AllocationHdr_ID", new Integer(C_AllocationHdr_ID));
+}
+/** Get Allocation.
+Payment allocation */
+public int getC_AllocationHdr_ID() 
+{
+Integer ii = (Integer)get_Value("C_AllocationHdr_ID");
+if (ii == null) return 0;
+return ii.intValue();
+}
+/** Set Bank List */
 public void setC_BankList_ID (int C_BankList_ID)
 {
 set_Value ("C_BankList_ID", new Integer(C_BankList_ID));
 }
-/** Get C_BankList_ID */
+/** Get Bank List */
 public int getC_BankList_ID() 
 {
 Integer ii = (Integer)get_Value("C_BankList_ID");
@@ -70,20 +85,6 @@ set_ValueNoCheck ("C_BankListLine_ID", new Integer(C_BankListLine_ID));
 public int getC_BankListLine_ID() 
 {
 Integer ii = (Integer)get_Value("C_BankListLine_ID");
-if (ii == null) return 0;
-return ii.intValue();
-}
-/** Set Payment.
-Payment identifier */
-public void setC_Payment_ID (int C_Payment_ID)
-{
-set_Value ("C_Payment_ID", new Integer(C_Payment_ID));
-}
-/** Get Payment.
-Payment identifier */
-public int getC_Payment_ID() 
-{
-Integer ii = (Integer)get_Value("C_Payment_ID");
 if (ii == null) return 0;
 return ii.intValue();
 }

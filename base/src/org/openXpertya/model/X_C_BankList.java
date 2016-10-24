@@ -7,7 +7,7 @@ import java.math.*;
 import org.openXpertya.util.*;
 /** Modelo Generado por C_BankList
  *  @author Comunidad de Desarrollo Libertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
- *  @version  - 2016-05-23 10:58:57.88 */
+ *  @version  - 2016-10-24 20:39:54.459 */
 public class X_C_BankList extends org.openXpertya.model.PO
 {
 /** Constructor estándar */
@@ -16,6 +16,7 @@ public X_C_BankList (Properties ctx, int C_BankList_ID, String trxName)
 super (ctx, C_BankList_ID, trxName);
 /** if (C_BankList_ID == 0)
 {
+setC_BankAccount_ID (0);
 setC_BankList_ID (0);
 setC_DocType_ID (0);
 setDailySeqNo (Env.ZERO);
@@ -54,28 +55,26 @@ public String toString()
 StringBuffer sb = new StringBuffer ("X_C_BankList[").append(getID()).append("]");
 return sb.toString();
 }
-/** Set Allocation.
-Payment allocation */
-public void setC_AllocationHdr_ID (int C_AllocationHdr_ID)
+/** Set Bank Account.
+Account at the Bank */
+public void setC_BankAccount_ID (int C_BankAccount_ID)
 {
-if (C_AllocationHdr_ID <= 0) set_Value ("C_AllocationHdr_ID", null);
- else 
-set_Value ("C_AllocationHdr_ID", new Integer(C_AllocationHdr_ID));
+set_Value ("C_BankAccount_ID", new Integer(C_BankAccount_ID));
 }
-/** Get Allocation.
-Payment allocation */
-public int getC_AllocationHdr_ID() 
+/** Get Bank Account.
+Account at the Bank */
+public int getC_BankAccount_ID() 
 {
-Integer ii = (Integer)get_Value("C_AllocationHdr_ID");
+Integer ii = (Integer)get_Value("C_BankAccount_ID");
 if (ii == null) return 0;
 return ii.intValue();
 }
-/** Set C_BankList_ID */
+/** Set Bank List */
 public void setC_BankList_ID (int C_BankList_ID)
 {
 set_ValueNoCheck ("C_BankList_ID", new Integer(C_BankList_ID));
 }
-/** Get C_BankList_ID */
+/** Get Bank List */
 public int getC_BankList_ID() 
 {
 Integer ii = (Integer)get_Value("C_BankList_ID");
