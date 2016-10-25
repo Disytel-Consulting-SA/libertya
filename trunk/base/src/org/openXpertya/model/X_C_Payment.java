@@ -7,7 +7,7 @@ import java.math.*;
 import org.openXpertya.util.*;
 /** Modelo Generado por C_Payment
  *  @author Comunidad de Desarrollo Libertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
- *  @version  - 2014-10-04 02:00:38.326 */
+ *  @version  - 2016-10-25 15:19:07.465 */
 public class X_C_Payment extends org.openXpertya.model.PO
 {
 /** Constructor estándar */
@@ -318,6 +318,43 @@ public String getA_Zip()
 {
 return (String)get_Value("A_Zip");
 }
+/** Set Bank Payment Date */
+public void setBank_Payment_Date (Timestamp Bank_Payment_Date)
+{
+set_Value ("Bank_Payment_Date", Bank_Payment_Date);
+}
+/** Get Bank Payment Date */
+public Timestamp getBank_Payment_Date() 
+{
+return (Timestamp)get_Value("Bank_Payment_Date");
+}
+/** Set Bank Payment Document Number */
+public void setBank_Payment_DocumentNo (String Bank_Payment_DocumentNo)
+{
+if (Bank_Payment_DocumentNo != null && Bank_Payment_DocumentNo.length() > 25)
+{
+log.warning("Length > 25 - truncated");
+Bank_Payment_DocumentNo = Bank_Payment_DocumentNo.substring(0,25);
+}
+set_Value ("Bank_Payment_DocumentNo", Bank_Payment_DocumentNo);
+}
+/** Get Bank Payment Document Number */
+public String getBank_Payment_DocumentNo() 
+{
+return (String)get_Value("Bank_Payment_DocumentNo");
+}
+/** Set Bank Payment Status */
+public void setBank_Payment_Status (int Bank_Payment_Status)
+{
+set_Value ("Bank_Payment_Status", new Integer(Bank_Payment_Status));
+}
+/** Get Bank Payment Status */
+public int getBank_Payment_Status() 
+{
+Integer ii = (Integer)get_Value("Bank_Payment_Status");
+if (ii == null) return 0;
+return ii.intValue();
+}
 /** Set Activity.
 Business Activity */
 public void setC_Activity_ID (int C_Activity_ID)
@@ -361,6 +398,21 @@ Bank */
 public int getC_Bank_ID() 
 {
 Integer ii = (Integer)get_Value("C_Bank_ID");
+if (ii == null) return 0;
+return ii.intValue();
+}
+public static final int C_BANKPAYMENTSTATUS_ID_AD_Reference_ID = MReference.getReferenceID("C_BankPaymentStatus");
+/** Set C_Bankpaymentstatus_ID */
+public void setC_Bankpaymentstatus_ID (int C_Bankpaymentstatus_ID)
+{
+if (C_Bankpaymentstatus_ID <= 0) set_Value ("C_Bankpaymentstatus_ID", null);
+ else 
+set_Value ("C_Bankpaymentstatus_ID", new Integer(C_Bankpaymentstatus_ID));
+}
+/** Get C_Bankpaymentstatus_ID */
+public int getC_Bankpaymentstatus_ID() 
+{
+Integer ii = (Integer)get_Value("C_Bankpaymentstatus_ID");
 if (ii == null) return 0;
 return ii.intValue();
 }
