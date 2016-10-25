@@ -2282,3 +2282,67 @@ WHERE
    
 ALTER TABLE c_banklistline DROP COLUMN c_payment_id;
 ALTER TABLE c_banklist DROP COLUMN c_allocationhdr_id; 
+
+--20161025-1500 Merge de revision 1608
+CREATE TABLE I_PaymentBankNews(
+
+i_paymentbanknews_id integer NOT NULL ,
+ad_client_id integer ,
+ad_org_id integer ,
+isactive character(1) DEFAULT 'Y'::bpchar ,
+created timestamp without time zone DEFAULT ('now'::text)::timestamp(6) with time zone ,
+createdby integer ,
+updated timestamp without time zone DEFAULT ('now'::text)::timestamp(6) with time zone ,
+updatedby integer ,
+list_type character(1) ,
+list_value character varying(8) ,
+payment_status character(2) ,
+payment_status_msg character varying(60) ,
+receipt_number character varying(15) ,
+process_date timestamp without time zone ,
+payment_order character varying(25) ,
+c_bank_id integer ,
+i_isimported character(1) NOT NULL DEFAULT 'N'::bpchar ,
+i_errormsg character varying(2000) ,
+checkno character varying(20) ,
+processing character(1) ,
+processed character(1) DEFAULT 'N'::bpchar ,
+register_number character varying(15) ,
+CONSTRAINT i_paymentbanknews_key PRIMARY KEY (i_paymentbanknews_id) );
+
+CREATE TABLE C_BankPaymentStatus(
+
+c_bankpaymentstatus_id integer NOT NULL ,
+ad_client_id integer NOT NULL ,
+ad_org_id integer NOT NULL ,
+isactive character(1) NOT NULL DEFAULT 'Y'::bpchar ,
+created timestamp without time zone NOT NULL DEFAULT ('now'::text)::timestamp(6) with time zone ,
+createdby integer NOT NULL ,
+updated timestamp without time zone NOT NULL DEFAULT ('now'::text)::timestamp(6) with time zone ,
+updatedby integer NOT NULL ,
+value character varying(40) NOT NULL ,
+name character varying(60) NOT NULL ,
+CONSTRAINT c_bankpaymentstatus_key PRIMARY KEY (c_bankpaymentstatus_id) );
+
+CREATE TABLE C_BankPaymentStatusAssociation(
+
+c_bankpaymentstatusassociation_id integer NOT NULL ,
+ad_client_id integer NOT NULL ,
+ad_org_id integer NOT NULL ,
+isactive character(1) NOT NULL DEFAULT 'Y'::bpchar ,
+created timestamp without time zone NOT NULL DEFAULT ('now'::text)::timestamp(6) with time zone ,
+createdby integer NOT NULL ,
+updated timestamp without time zone NOT NULL DEFAULT ('now'::text)::timestamp(6) with time zone ,
+updatedby integer NOT NULL ,
+c_bank_id integer NOT NULL ,
+value character varying(40) NOT NULL ,
+name character varying(60) NOT NULL ,
+c_bankpaymentstatus_id integer NOT NULL ,
+CONSTRAINT c_bankpaymentstatusassociation_key PRIMARY KEY (c_bankpaymentstatusassociation_id) ,
+CONSTRAINT c_bank_fk FOREIGN KEY (c_bank_id) REFERENCES c_bank (c_bank_id) MATCH SIMPLE ON UPDATE NO ACTION ON DELETE NO ACTION  ,
+CONSTRAINT c_bankpaymentstatus_fk FOREIGN KEY (c_bankpaymentstatus_id) REFERENCES c_bankpaymentstatus (c_bankpaymentstatus_id) MATCH SIMPLE ON UPDATE NO ACTION ON DELETE NO ACTION  );
+
+UPDATE ad_system SET dummy = (SELECT addcolumnifnotexists('AD_ImpFormat','AD_Process_ID','integer'));
+UPDATE ad_system SET dummy = (SELECT addcolumnifnotexists('C_Payment','Bank_Payment_DocumentNo','character varying(25)'));
+UPDATE ad_system SET dummy = (SELECT addcolumnifnotexists('C_Payment','Bank_Payment_Date','timestamp without time zone'));
+UPDATE ad_system SET dummy = (SELECT addcolumnifnotexists('C_Payment','C_Bankpaymentstatus_ID','integer'));

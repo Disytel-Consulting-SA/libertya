@@ -1,13 +1,14 @@
-/** Modelo Generado - NO CAMBIAR MANUALMENTE - Copyright (C) 2006 FUNDESLE */
+/** Modelo Generado - NO CAMBIAR MANUALMENTE - Disytel */
 package org.openXpertya.model;
-import java.util.*;
+import java.util.logging.Level;
+ import java.util.*;
 import java.sql.*;
 import java.math.*;
 import org.openXpertya.util.*;
 /** Modelo Generado por AD_ImpFormat_Row
- *  @author Comunidad de Desarrollo openXpertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
- *  @version  - 2009-10-22 14:51:26.79 */
-public class X_AD_ImpFormat_Row extends PO
+ *  @author Comunidad de Desarrollo Libertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
+ *  @version  - 2016-10-25 15:17:08.978 */
+public class X_AD_ImpFormat_Row extends org.openXpertya.model.PO
 {
 /** Constructor estándar */
 public X_AD_ImpFormat_Row (Properties ctx, int AD_ImpFormat_Row_ID, String trxName)
@@ -31,13 +32,13 @@ public X_AD_ImpFormat_Row (Properties ctx, ResultSet rs, String trxName)
 {
 super (ctx, rs, trxName);
 }
-/** AD_Table_ID=382 */
-public static final int Table_ID=382;
+/** AD_Table_ID */
+public static final int Table_ID = M_Table.getTableID("AD_ImpFormat_Row");
 
 /** TableName=AD_ImpFormat_Row */
 public static final String Table_Name="AD_ImpFormat_Row";
 
-protected static KeyNamePair Model = new KeyNamePair(382,"AD_ImpFormat_Row");
+protected static KeyNamePair Model = new KeyNamePair(Table_ID,"AD_ImpFormat_Row");
 protected static BigDecimal AccessLevel = new BigDecimal(6);
 
 /** Load Meta Data */
@@ -169,7 +170,7 @@ public String getDataFormat()
 {
 return (String)get_Value("DataFormat");
 }
-public static final int DATATYPE_AD_Reference_ID=210;
+public static final int DATATYPE_AD_Reference_ID = MReference.getReferenceID("AD_ImpFormat_Row Type");
 /** String = S */
 public static final String DATATYPE_String = "S";
 /** Number = N */
@@ -183,7 +184,7 @@ Type of data */
 public void setDataType (String DataType)
 {
 if (DataType.equals("S") || DataType.equals("N") || DataType.equals("D") || DataType.equals("C"));
- else throw new IllegalArgumentException ("DataType Invalid value - Reference_ID=210 - S - N - D - C");
+ else throw new IllegalArgumentException ("DataType Invalid value - Reference = DATATYPE_AD_Reference_ID - S - N - D - C");
 if (DataType == null) throw new IllegalArgumentException ("DataType is mandatory");
 if (DataType.length() > 1)
 {

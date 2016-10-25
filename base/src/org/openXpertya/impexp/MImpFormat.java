@@ -12,8 +12,6 @@
  *     Más información en http://www.openxpertya.org/ayuda/Licencia.html
  */
 
-
-
 package org.openXpertya.impexp;
 
 import java.sql.PreparedStatement;
@@ -27,94 +25,81 @@ import org.openXpertya.util.DB;
 
 /**
  * Descripción de Clase
- *
- *
- * @version    2.2, 12.10.07
- * @author     Equipo de Desarrollo de openXpertya    
+ * @version 2.2, 12.10.07
+ * @author Equipo de Desarrollo de openXpertya
  */
-
 public class MImpFormat extends X_AD_ImpFormat {
+	private static final long serialVersionUID = 1L;
 
-    /**
-     * Constructor de la clase ...
-     *
-     *
-     * @param ctx
-     * @param AD_ImpFormat_ID
-     * @param trxName
-     */
+	/**
+	 * Constructor de la clase.
+	 * @param ctx
+	 * @param AD_ImpFormat_ID
+	 * @param trxName
+	 */
+	public MImpFormat(Properties ctx, int AD_ImpFormat_ID, String trxName) {
+		super(ctx, AD_ImpFormat_ID, trxName);
+	} // MImpFormat
 
-    public MImpFormat( Properties ctx,int AD_ImpFormat_ID,String trxName ) {
-        super( ctx,AD_ImpFormat_ID,trxName );
-    }    // MImpFormat
+	/**
+	 * Constructor de la clase.
+	 * @param ctx
+	 * @param rs
+	 * @param trxName
+	 */
+	public MImpFormat(Properties ctx, ResultSet rs, String trxName) {
+		super(ctx, rs, trxName);
+	} // MImpFormat
 
-    /**
-     * Constructor de la clase ...
-     *
-     *
-     * @param ctx
-     * @param rs
-     * @param trxName
-     */
+	/** @return Las filas que definen al formato. */
+	public MImpFormatRow[] getRows() {
+		ArrayList<MImpFormatRow> list = new ArrayList<MImpFormatRow>();
 
-    public MImpFormat( Properties ctx,ResultSet rs,String trxName ) {
-        super( ctx,rs,trxName );
-    }    // MImpFormat
+		StringBuffer sql = new StringBuffer();
+		sql.append("SELECT * FROM AD_ImpFormat_Row ");
+		sql.append("WHERE AD_ImpFormat_ID = ? ");
+		sql.append("ORDER BY SeqNo");
 
-    /**
-     * Descripción de Método
-     *
-     *
-     * @return
-     */
+		PreparedStatement pstmt = null;
 
-    public MImpFormatRow[] getRows() {
-        ArrayList list = new ArrayList();
-        String    sql  = "SELECT * FROM AD_ImpFormat_Row " + "WHERE AD_ImpFormat_ID=? " + "ORDER BY SeqNo";
-        PreparedStatement pstmt = null;
+		try {
+			pstmt = DB.prepareStatement(sql.toString());
+			pstmt.setInt(1, getAD_ImpFormat_ID());
 
-        try {
-            pstmt = DB.prepareStatement( sql );
-            pstmt.setInt( 1,getAD_ImpFormat_ID());
+			ResultSet rs = pstmt.executeQuery();
 
-            ResultSet rs = pstmt.executeQuery();
+			while (rs.next()) {
+				list.add(new MImpFormatRow(getCtx(), rs, get_TrxName()));
+			}
 
-            while( rs.next()) {
-                list.add( new MImpFormatRow( getCtx(),rs,get_TrxName()));
-            }
+			rs.close();
+			pstmt.close();
+			pstmt = null;
+		} catch (Exception e) {
+			log.log(Level.SEVERE, "getRows", e);
+		}
 
-            rs.close();
-            pstmt.close();
-            pstmt = null;
-        } catch( Exception e ) {
-            log.log( Level.SEVERE,"getRows",e );
-        }
+		try {
+			if (pstmt != null) {
+				pstmt.close();
+			}
 
-        try {
-            if( pstmt != null ) {
-                pstmt.close();
-            }
+			pstmt = null;
+		} catch (Exception e) {
+			pstmt = null;
+		}
 
-            pstmt = null;
-        } catch( Exception e ) {
-            pstmt = null;
-        }
+		MImpFormatRow[] retValue = new MImpFormatRow[list.size()];
 
-        MImpFormatRow[] retValue = new MImpFormatRow[ list.size()];
+		list.toArray(retValue);
 
-        list.toArray( retValue );
+		return retValue;
+	} // getRows
 
-        return retValue;
-    }    // getRows
-}    // MImpFormat
-
-
+} // MImpFormat
 
 /*
- *  @(#)MImpFormat.java   02.07.07
- * 
- *  Fin del fichero MImpFormat.java
- *  
- *  Versión 2.2
- *
+ * @(#)MImpFormat.java 02.07.07
+ * Fin del fichero MImpFormat.java
+ * Versión 2.2
  */
