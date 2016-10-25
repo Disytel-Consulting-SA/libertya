@@ -16,7 +16,6 @@ import org.openXpertya.model.MBankAccount;
 import org.openXpertya.model.MBankList;
 import org.openXpertya.model.MBankListLine;
 import org.openXpertya.model.MDocType;
-import org.openXpertya.model.MPayment;
 import org.openXpertya.model.MPaymentBatchPO;
 import org.openXpertya.model.MPaymentBatchPODetail;
 import org.openXpertya.util.DB;
@@ -96,59 +95,17 @@ public class GenerateElectronicPaymentsProcess extends SvrProcess {
 		//Lineas de la lista
 		BigDecimal lineNo = new BigDecimal(10); 
 		for (MPaymentBatchPODetail detail : details) {
-			//Recupero los pagos asociados a la Orden de Pago
-			for (MPayment payment : getPayments(detail.getC_AllocationHdr_ID())) {
-				MBankListLine line = new MBankListLine(getCtx(), 0, get_TrxName());
-				line.setC_BankList_ID(bankList.getID());
-				line.setLine(lineNo);
-				line.setDescription(Msg.getMsg(getCtx(), "PaymentBatchPOElectronicPaymentListDesc") + " " + paymentBatch.getDocumentNo());
-				line.setC_Payment_ID(payment.getID());
-				if (!line.save()) {
-					throw new Exception(Msg.getMsg(getCtx(), "PaymentBatchPOEPListGenerationError") + ": " + line.getProcessMsg());
-				}
+			MBankListLine line = new MBankListLine(getCtx(), 0, get_TrxName());
+			line.setC_BankList_ID(bankList.getID());
+			line.setLine(lineNo);
+			line.setDescription(Msg.getMsg(getCtx(), "PaymentBatchPOElectronicPaymentListDesc") + " " + paymentBatch.getDocumentNo());
+			line.setC_AllocationHdr_ID(detail.getC_AllocationHdr_ID());
+			if (!line.save()) {
+				throw new Exception(Msg.getMsg(getCtx(), "PaymentBatchPOEPListGenerationError") + ": " + line.getProcessMsg());
 			}
 		}
 		
 		return bankList;
-	}
-	
-	private List<MPayment> getPayments(Integer allocationHdrID) {
-		List<MPayment> payments = new ArrayList<MPayment>();
-		
-		//Construyo la query
-		String sql = "SELECT DISTINCT p.* "
-				   + "FROM C_Payment p "
-				   + "INNER JOIN C_AllocationLine al ON p.c_payment_id = al.c_payment_id "
-				   + "WHERE al.C_AllocationHdr_ID = ? "
-				   + "  AND p.c_payment_id NOT IN (SELECT c_payment_id FROM c_electronic_payments WHERE C_AllocationHdr_ID = ?)" ; //Que no estén en una lista
-		
-		PreparedStatement ps = null;
-		ResultSet rs = null;
-		try {
-			ps = DB.prepareStatement(sql, get_TrxName());
-			
-			//Parámetros
-			ps.setInt(1, allocationHdrID);
-			ps.setInt(2, allocationHdrID);
-			rs = ps.executeQuery();
-			while (rs.next()) {
-				payments.add(new MPayment(getCtx(), rs, get_TrxName()));
-			}
-		} catch (Exception e) {
-			e.printStackTrace();
-		} finally {
-			try {
-				if (ps != null)
-					ps.close();
-				if (rs != null)
-					rs.close();
-			} catch (Exception e) {
-				e.printStackTrace();
-			}
-		}
-				
-		
-		return payments;
 	}
 	
 	private Map<Integer, List<MPaymentBatchPODetail>> getDetails() {
