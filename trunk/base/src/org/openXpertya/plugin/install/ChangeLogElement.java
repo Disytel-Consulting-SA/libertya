@@ -57,7 +57,7 @@ public class ChangeLogElement {
 	// Varios
 	
 	private Object valueFromColumnType(String value, Integer displayType){
-		if(value == null || value.equals("NULL")){
+		if(value == null || value.equalsIgnoreCase("NULL")){
 			return null;
 		}
 		Object newValue = value;
