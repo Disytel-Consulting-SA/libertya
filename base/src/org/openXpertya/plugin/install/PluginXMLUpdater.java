@@ -1107,7 +1107,7 @@ public class PluginXMLUpdater {
 					{
 						String refKeyColumnName = getKeyColumnName(column.getRefTable());
 						int refRecordID = getReferenceRecordID(refKeyColumnName, column);
-						newValue = (refRecordID == -1 ? "null" : Integer.toString(refRecordID));
+						newValue = (refRecordID == -1 ? MChangeLog.NULL : Integer.toString(refRecordID));
 					}
 				}
 				// Instanciar y persistir en el changelog
