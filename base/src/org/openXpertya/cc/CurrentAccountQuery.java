@@ -146,8 +146,8 @@ public class CurrentAccountQuery {
 		sqlDoc.append("     ABS(CASE WHEN d.signo_issotrx = ? THEN ");
 		sqlDoc.append("     abs((SELECT CASE ");
 		sqlDoc.append("		WHEN d.documenttable = 'C_Invoice' THEN getallocatedamt(d.document_id, " + getCurrencyID() + ", COALESCE(c_conversiontype_id,0), 1, "+ getDateToInlineQuery() +", coalesce(d.c_invoicepayschedule_id,0)) ");
-		sqlDoc.append("     WHEN d.documenttable = 'C_CashLine' THEN (select (CASE WHEN SUM(al.amount) IS NULL THEN 0.0 ELSE SUM(al.amount) END) FROM C_AllocationLine al INNER JOIN C_AllocationHdr ah ON ah.c_allocationhdr_id = al.c_allocationhdr_id WHERE (al.c_cashline_id = d.document_id) AND (al.isactive = 'Y') AND (ah.dateacct::date = " + getDateToInlineQuery() + ")) ");
-		sqlDoc.append("     ELSE (select (CASE WHEN SUM(al.amount) IS NULL THEN 0.0 ELSE SUM(al.amount) END) FROM C_AllocationLine al INNER JOIN C_AllocationHdr ah ON ah.c_allocationhdr_id = al.c_allocationhdr_id WHERE (al.c_payment_id = d.document_id) AND (al.isactive = 'Y') AND (ah.dateacct::date = " + getDateToInlineQuery() + ")) END)) ");
+		sqlDoc.append("     WHEN d.documenttable = 'C_CashLine' THEN (select (CASE WHEN SUM(al.amount) IS NULL THEN 0.0 ELSE SUM(al.amount) END) FROM C_AllocationLine al INNER JOIN C_AllocationHdr ah ON ah.c_allocationhdr_id = al.c_allocationhdr_id WHERE (al.c_cashline_id = d.document_id) AND (al.isactive = 'Y') AND (ah.dateacct::date <= " + getDateToInlineQuery() + ")) ");
+		sqlDoc.append("     ELSE (select (CASE WHEN SUM(al.amount) IS NULL THEN 0.0 ELSE SUM(al.amount) END) FROM C_AllocationLine al INNER JOIN C_AllocationHdr ah ON ah.c_allocationhdr_id = al.c_allocationhdr_id WHERE (al.c_payment_id = d.document_id) AND (al.isactive = 'Y') AND (ah.dateacct::date <= " + getDateToInlineQuery() + ")) END)) ");
 		sqlDoc.append("     + ");
 		sqlDoc.append("     abs((SELECT currencyconvert ( CASE WHEN d.documenttable = 'C_Invoice' THEN ");
 		sqlDoc.append("     invoiceOpen(d.document_id, coalesce(d.c_invoicepayschedule_id,0), "+ getDateToInlineQuery() +") ");
@@ -158,8 +158,8 @@ public class CurrentAccountQuery {
 		sqlDoc.append("     ABS(CASE WHEN d.signo_issotrx = ? THEN ");
 		sqlDoc.append("     abs((SELECT CASE ");
 		sqlDoc.append("		WHEN d.documenttable = 'C_Invoice' THEN getallocatedamt(d.document_id, " + getCurrencyID() + ", COALESCE(c_conversiontype_id,0), 1, "+ getDateToInlineQuery() +", coalesce(d.c_invoicepayschedule_id,0)) ");
-		sqlDoc.append("     WHEN d.documenttable = 'C_CashLine' THEN (select (CASE WHEN SUM(al.amount) IS NULL THEN 0.0 ELSE SUM(al.amount) END) FROM C_AllocationLine al INNER JOIN C_AllocationHdr ah ON ah.c_allocationhdr_id = al.c_allocationhdr_id WHERE (al.c_cashline_id = d.document_id) AND (al.isactive = 'Y') AND (ah.dateacct::date = " + getDateToInlineQuery() + ")) ");
-		sqlDoc.append("     ELSE (select (CASE WHEN SUM(al.amount) IS NULL THEN 0.0 ELSE SUM(al.amount) END) FROM C_AllocationLine al INNER JOIN C_AllocationHdr ah ON ah.c_allocationhdr_id = al.c_allocationhdr_id WHERE (al.c_payment_id = d.document_id) AND (al.isactive = 'Y') AND (ah.dateacct::date = " + getDateToInlineQuery() + ")) END)) ");
+		sqlDoc.append("     WHEN d.documenttable = 'C_CashLine' THEN (select (CASE WHEN SUM(al.amount) IS NULL THEN 0.0 ELSE SUM(al.amount) END) FROM C_AllocationLine al INNER JOIN C_AllocationHdr ah ON ah.c_allocationhdr_id = al.c_allocationhdr_id WHERE (al.c_cashline_id = d.document_id) AND (al.isactive = 'Y') AND (ah.dateacct::date <= " + getDateToInlineQuery() + ")) ");
+		sqlDoc.append("     ELSE (select (CASE WHEN SUM(al.amount) IS NULL THEN 0.0 ELSE SUM(al.amount) END) FROM C_AllocationLine al INNER JOIN C_AllocationHdr ah ON ah.c_allocationhdr_id = al.c_allocationhdr_id WHERE (al.c_payment_id = d.document_id) AND (al.isactive = 'Y') AND (ah.dateacct::date <= " + getDateToInlineQuery() + ")) END)) ");
 		sqlDoc.append("     + ");
 		sqlDoc.append("     abs((SELECT currencyconvert ( CASE WHEN d.documenttable = 'C_Invoice' THEN ");
 		sqlDoc.append("     invoiceOpen(d.document_id, coalesce(d.c_invoicepayschedule_id,0), "+ getDateToInlineQuery() +") ");
