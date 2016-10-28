@@ -225,6 +225,39 @@ public class MAllocationLine extends X_C_AllocationLine {
     }    // getInvoice
 
     /**
+     * @return factura de crédito de la línea
+     */
+    public MInvoice getInvoiceCredit() {
+    	MInvoice invoice = null;
+    	if(!Util.isEmpty(getC_Invoice_Credit_ID(), true)){
+    		invoice = new MInvoice( getCtx(),getC_Invoice_Credit_ID(),get_TrxName());
+    	}
+        return invoice;
+    }
+    
+    /**
+     * @return payment de la línea
+     */
+    public MPayment getPayment(){
+    	MPayment payment = null;
+    	if(!Util.isEmpty(getC_Payment_ID(), true)){
+    		payment = new MPayment( getCtx(),getC_Payment_ID(),get_TrxName());
+    	}
+        return payment;
+    }
+    
+    /**
+     * @return línea de caja de la línea
+     */
+    public MCashLine getCashLine(){
+    	MCashLine cashline = null;
+    	if(!Util.isEmpty(getC_CashLine_ID(), true)){
+    		cashline = new MCashLine( getCtx(),getC_CashLine_ID(),get_TrxName());
+    	}
+        return cashline;
+    } 
+    
+    /**
      * Descripción de Método
      *
      *
@@ -598,6 +631,29 @@ public class MAllocationLine extends X_C_AllocationLine {
 	public void setPaymentInvoiceInfo(int debitDocumentId) {
 		setC_Invoice_Credit_ID(debitDocumentId);
 		
+	}
+	
+	/**
+	 * @return true si alguna de las transacciones de la línea es de ventas,
+	 *         false caso contrario
+	 */
+	public boolean isSOTrx(){
+		// Verifico las líneas y sus transacciones
+		if(getInvoice() != null){
+			return getInvoice().isSOTrx();
+		}
+		MInvoice invoiceCredit = getInvoiceCredit();
+		if(invoiceCredit != null){
+			return invoiceCredit.isSOTrx();
+		}
+		MPayment payment = getPayment();
+		if(payment != null){
+			return payment.isReceipt();
+		}
+		// Si la línea tiene sólo cashlines, se maneja de otra manera,
+		// directamente no se valida caja diaria
+		// La línea no tiene nada
+		return false;
 	}
 }    // MAllocationLine
 

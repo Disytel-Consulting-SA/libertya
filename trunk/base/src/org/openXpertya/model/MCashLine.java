@@ -620,7 +620,7 @@ public class MCashLine extends X_C_CashLine implements DocAction {
         
 		try {
 			// Caja Diaria y validaciones relacionadas
-			if(!isIgnorePOSJournal()){
+			if(!isIgnorePOSJournal() && getCash().isValidatePOSJournal()){
 				posJournalRelated();
 			}
 			

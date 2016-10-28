@@ -7,7 +7,7 @@ import java.math.*;
 import org.openXpertya.util.*;
 /** Modelo Generado por AD_ClientInfo
  *  @author Comunidad de Desarrollo Libertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
- *  @version  - 2015-08-23 17:43:18.473 */
+ *  @version  - 2016-10-28 17:00:56.322 */
 public class X_AD_ClientInfo extends org.openXpertya.model.PO
 {
 /** Constructor estándar */
@@ -693,6 +693,30 @@ if (oo != null)
  return "Y".equals(oo);
 }
 return false;
+}
+public static final int POSJOURNALAPPLICATION_AD_Reference_ID = MReference.getReferenceID("POS Journal Application");
+/** Sales = S */
+public static final String POSJOURNALAPPLICATION_Sales = "S";
+/** Purchases = P */
+public static final String POSJOURNALAPPLICATION_Purchases = "P";
+/** Both = B */
+public static final String POSJOURNALAPPLICATION_Both = "B";
+/** Set POS Journal Application */
+public void setPOSJournalApplication (String POSJournalApplication)
+{
+if (POSJournalApplication == null || POSJournalApplication.equals("S") || POSJournalApplication.equals("P") || POSJournalApplication.equals("B"));
+ else throw new IllegalArgumentException ("POSJournalApplication Invalid value - Reference = POSJOURNALAPPLICATION_AD_Reference_ID - S - P - B");
+if (POSJournalApplication != null && POSJournalApplication.length() > 1)
+{
+log.warning("Length > 1 - truncated");
+POSJournalApplication = POSJournalApplication.substring(0,1);
+}
+set_Value ("POSJournalApplication", POSJournalApplication);
+}
+/** Get POS Journal Application */
+public String getPOSJournalApplication() 
+{
+return (String)get_Value("POSJournalApplication");
 }
 /** Set Shipment Permit FE */
 public void setShipmentPermitFE (boolean ShipmentPermitFE)

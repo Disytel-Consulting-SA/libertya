@@ -7,7 +7,7 @@ import java.math.*;
 import org.openXpertya.util.*;
 /** Modelo Generado por C_Cash
  *  @author Comunidad de Desarrollo Libertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
- *  @version  - 2011-01-24 17:44:44.866 */
+ *  @version  - 2016-10-28 17:03:08.431 */
 public class X_C_Cash extends org.openXpertya.model.PO
 {
 /** Constructor estándar */
@@ -28,6 +28,7 @@ setName (null);	// @#Date@
 setPosted (false);	// N
 setProcessed (false);
 setStatementDate (new Timestamp(System.currentTimeMillis()));	// @#Date@
+setValidatePOSJournal (false);
 }
  */
 }
@@ -488,5 +489,21 @@ public int getUser2_ID()
 Integer ii = (Integer)get_Value("User2_ID");
 if (ii == null) return 0;
 return ii.intValue();
+}
+/** Set Validate POS Journal */
+public void setValidatePOSJournal (boolean ValidatePOSJournal)
+{
+set_Value ("ValidatePOSJournal", new Boolean(ValidatePOSJournal));
+}
+/** Get Validate POS Journal */
+public boolean isValidatePOSJournal() 
+{
+Object oo = get_Value("ValidatePOSJournal");
+if (oo != null) 
+{
+ if (oo instanceof Boolean) return ((Boolean)oo).booleanValue();
+ return "Y".equals(oo);
+}
+return false;
 }
 }

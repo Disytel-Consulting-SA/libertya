@@ -25,6 +25,7 @@ import org.openXpertya.util.CLogger;
 import org.openXpertya.util.DB;
 import org.openXpertya.util.Env;
 import org.openXpertya.util.Msg;
+import org.openXpertya.util.Util;
 
 //~--- Importaciones JDK ------------------------------------------------------
 
@@ -279,6 +280,17 @@ public class MClientInfo extends X_AD_ClientInfo {
 										checkLimitAllOrgs }));
 			}
     	}
+		
+		// Aplicación de Cajas diarias
+		if(!isPOSJournalActive()){
+			setPOSJournalApplication(null);
+		} 
+		else if(Util.isEmpty(getPOSJournalApplication())){
+			// Debe tener una configuración de aplicación
+			log.saveError("SaveError", Msg.getMsg(getCtx(), "NoPOSJournalApplication"));
+			return false;
+		}
+		
 		return true;
 	} 
 }	// MClientInfo

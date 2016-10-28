@@ -460,6 +460,13 @@ public class MCash extends X_C_Cash implements DocAction {
 
     protected boolean beforeSave( boolean newRecord ) {
 
+    	// Actualización del campo de validación de cajas diarias
+    	MClientInfo ci = MClient.get(getCtx()).getInfo();
+		setValidatePOSJournal(ci.isPOSJournalActive() &&
+				MCashBook.CASHBOOKTYPE_JournalCashBook.equals(getCashBookType()) && 
+				(!Util.isEmpty(getC_POSJournal_ID(), true))
+					|| (MClientInfo.POSJOURNALAPPLICATION_Both.equals(ci.getPOSJournalApplication())));
+    	
     	//Verifico que no haya un libro de caja abierto actualmente
     	
     	//Si es nuevo registro, realizo verificación
@@ -506,7 +513,7 @@ public class MCash extends X_C_Cash implements DocAction {
             
             if(getC_POSJournal_ID() == 0 && MCashBook.CASHBOOKTYPE_JournalCashBook.equals(getCashBookType())){
         		// Caja Diaria. Intenta registrar el libro de caja
-                if (!MPOSJournal.registerDocument(this)) {
+                if (isValidatePOSJournal() && !MPOSJournal.registerDocument(this)) {
         			log.saveError("SaveError", Msg.getMsg(getCtx(), "CashPOSJournalRequiredError"));
         			return false;
                 }	
