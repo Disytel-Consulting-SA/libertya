@@ -178,8 +178,14 @@ public class MPOSJournal extends X_C_POSJournal implements DocAction {
 	 *         registrar el documento.
 	 */
 	public static boolean registerDocument(PO document) {
+		return registerDocument(document, false, false);
+	}
+	
+	public static boolean registerDocument(PO document, boolean controlApplication, boolean isSOTrx) {
 		// Si no están activas las Cajas Diarias no hay nada que registrar
-		if (!isActivated()) {
+		// Si se debe controlar la aplicación dependiendo el signo, entonces se
+		// verifica si aplica para este caso
+		if (!isActivated() || (controlApplication && !applyPOSJournal(document.getCtx(), isSOTrx))) {
 			return true;
 		}
 		// Verifica si hay una caja diaria activa (usuario y fecha actual) para
@@ -268,6 +274,21 @@ public class MPOSJournal extends X_C_POSJournal implements DocAction {
 								+ DOCSTATUS_Opened
 								+ "','"
 								+ DOCSTATUS_Completed + "')", posJournalID) > 0;
+	}
+	
+	/**
+	 * Verificar si se aplica el control de cajas diarias basado en el issotrx
+	 * parámetro
+	 * 
+	 * @param isSOTrx
+	 *            true si es transacción de ventas, false caso contrario
+	 * @return true si aplica cajas diarias, false caso contrario
+	 */
+	public static boolean applyPOSJournal(Properties ctx, boolean isSOTrx){
+		MClientInfo ci = MClient.get(ctx).getInfo();
+		return MClientInfo.POSJOURNALAPPLICATION_Both.equals(ci.getPOSJournalApplication())
+				|| (isSOTrx ? MClientInfo.POSJOURNALAPPLICATION_Sales.equals(ci.getPOSJournalApplication())
+						: MClientInfo.POSJOURNALAPPLICATION_Purchases.equals(ci.getPOSJournalApplication()));
 	}
 	
 	/**

@@ -606,6 +606,7 @@ public class Login {
 		    // Info de Cajas Diarias activas
 			String isPOSJournalActive = clientInfo.isPOSJournalActive()?"Y":"N";
 			Env.setContext(m_ctx, "#IsPOSJournalActive", isPOSJournalActive);
+			Env.setContext(m_ctx, "#POSJournalApplication", clientInfo.getPOSJournalApplication());
 			Env.setContext(m_ctx, "#VoidingInvoicePOSJournalConfig",
 					clientInfo.getVoidingInvoicePOSJournalConfig());
 			Env.setContext(m_ctx, "#VoidingInvoicePaymentsPOSJournalConfig",

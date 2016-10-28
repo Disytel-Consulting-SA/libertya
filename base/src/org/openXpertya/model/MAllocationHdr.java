@@ -364,6 +364,10 @@ public class MAllocationHdr extends X_C_AllocationHdr implements DocAction {
      */
 
     public MAllocationLine[] getLines( boolean requery ) {
+        return getLines(requery, null);
+    }    // getLines
+
+    public MAllocationLine[] getLines( boolean requery, String orderBy ) {
         if( (m_lines != null) &&!requery ) {
             return m_lines;
         }
@@ -371,6 +375,9 @@ public class MAllocationHdr extends X_C_AllocationHdr implements DocAction {
         //
 
         String sql = "SELECT * FROM C_AllocationLine WHERE C_AllocationHdr_ID=?";
+        if(!Util.isEmpty(orderBy, true)){
+        	sql += " ORDER BY "+orderBy;
+        }
         ArrayList         list  = new ArrayList();
         PreparedStatement pstmt = null;
 
@@ -411,7 +418,7 @@ public class MAllocationHdr extends X_C_AllocationHdr implements DocAction {
 
         return m_lines;
     }    // getLines
-
+    
     /**
      * Descripción de Método
      *
@@ -790,7 +797,7 @@ public class MAllocationHdr extends X_C_AllocationHdr implements DocAction {
 		}
         
 		// Caja Diaria. Intenta registrar el documento
-		if (getC_POSJournal_ID() == 0 && !MPOSJournal.registerDocument(this)) {
+		if (getC_POSJournal_ID() == 0 && !MPOSJournal.registerDocument(this, validatePOSJournal(), isSOTrx())) {
 			m_processMsg = MPOSJournal.DOCUMENT_COMPLETE_ERROR_MSG;
 			return STATUS_Invalid;
 		}
@@ -1643,6 +1650,54 @@ public class MAllocationHdr extends X_C_AllocationHdr implements DocAction {
 		this.paysVoid = paysVoid;
 	}
 	
+	public boolean validatePOSJournal(){
+		MAllocationLine[] allocLines = getLines(true,
+				"c_invoice_id desc, c_invoice_credit_id desc, c_payment_id desc, c_cashline_id desc");
+		boolean onlyCash = allocLines.length > 0
+					&& Util.isEmpty(allocLines[0].getC_Invoice_ID(), true)
+					&& Util.isEmpty(allocLines[0].getC_Invoice_Credit_ID(), true)
+					&& Util.isEmpty(allocLines[0].getC_Payment_ID(), true)
+					&& !Util.isEmpty(allocLines[0].getC_CashLine_ID(), true);
+		return !onlyCash;
+	}
+	
+	/**
+	 * @return true si el allocation es de tipo ventas, false caso contrario. 
+	 * <ul>Un allocation es de tipo ventas cuando:
+	 * <li>El tipo de documento asociado está configurado como transacción de ventas.</li>
+	 * <li>El tipo es STX (Sales Transaction), RC (Recibo de Cliente) o RCA (Recibo de Cliente Adelantado).</li>
+	 * <li>Si no es de ningún tipo de los descritos, entonces se busca las facturas asociadas.</li>
+	 * <li>Si no posee facturas, cualquier cobro relacionado.</li>
+	 * </ul>
+	 */
+	public boolean isSOTrx(){
+		// 1) Tipo de documento
+		if(!Util.isEmpty(getC_DocType_ID(), true)){
+			MDocType allocDocType = MDocType.get(getCtx(), getC_DocType_ID());
+			return allocDocType.isSOTrx();
+		}
+		// 2) Tipo de transacción
+		if (getAllocationType().equals(ALLOCATIONTYPE_SalesTransaction)
+				|| getAllocationType().equals(ALLOCATIONTYPE_CustomerReceipt)
+				|| getAllocationType().equals(ALLOCATIONTYPE_AdvancedCustomerReceipt)) {
+			return true;
+		}
+		if (getAllocationType().equals(ALLOCATIONTYPE_PaymentOrder)
+				|| getAllocationType().equals(ALLOCATIONTYPE_AdvancedPaymentOrder)
+				|| getAllocationType().equals(ALLOCATIONTYPE_PaymentFromInvoice)) {
+			return false;
+		}
+		// Por aca llega cuando no tiene tipo de documento y el tipo de transacción es null o cualquier otro
+		// Verificar las operaciones de las líneas
+		MAllocationLine[] allocLines = getLines(true,
+				"c_invoice_id desc, c_invoice_credit_id desc, c_payment_id desc, c_cashline_id desc");
+		if(allocLines.length > 0){
+			return allocLines[0].isSOTrx();
+		}
+		
+		// No sabes que es o no tiene líneas
+		return false;
+	}
 }    // MAllocation
 
 

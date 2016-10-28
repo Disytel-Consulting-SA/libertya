@@ -4196,7 +4196,7 @@ public class MInvoice extends X_C_Invoice implements DocAction,Authorization {
 		}
 
 		// Caja Diaria. Intenta registrar la factura
-		if (getC_POSJournal_ID() == 0 && !MPOSJournal.registerDocument(this)) {
+		if (getC_POSJournal_ID() == 0 && !MPOSJournal.registerDocument(this, true, isSOTrx())) {
 			m_processMsg = MPOSJournal.DOCUMENT_COMPLETE_ERROR_MSG;
 			return STATUS_Invalid;
 		}

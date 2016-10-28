@@ -2495,3 +2495,15 @@ CREATE OR REPLACE VIEW reginfo_compras_alicuotas_v AS
 
 ALTER TABLE reginfo_compras_alicuotas_v
   OWNER TO libertya;
+  
+--20161028-1700 Funcionalidad para soporte de cajas diarias para compras, ventas o ambos
+UPDATE ad_system SET dummy = (SELECT addcolumnifnotexists('ad_clientinfo','posjournalapplication','character(1)'));
+UPDATE ad_system SET dummy = (SELECT addcolumnifnotexists('c_cash','validateposjournal','character(1) NOT NULL DEFAULT ''N''::bpchar'));
+
+UPDATE ad_clientinfo
+SET posjournalapplication = (CASE WHEN isposjournalactive = 'Y' THEN 'B' ELSE null END);
+
+UPDATE c_cash c
+SET validateposjournal = (CASE WHEN (SELECT posjournalapplication FROM ad_clientinfo ci WHERE ci.ad_client_id = c.ad_client_id) = 'B' 
+								AND EXISTS (SELECT c_cashbook_id FROM c_cashbook cb WHERE cb.c_cashbook_id = c.c_cashbook_id AND cashbooktype = 'J') THEN 'Y' 
+						ELSE 'N' END);
