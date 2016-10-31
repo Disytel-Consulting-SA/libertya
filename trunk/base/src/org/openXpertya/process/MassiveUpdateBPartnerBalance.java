@@ -142,13 +142,43 @@ public class MassiveUpdateBPartnerBalance extends SvrProcess {
 	  		System.exit(1);
 	  	}
 		
-		// Configuracion: Compañía la cual tiene configurado replicacion.  Si no hay configuración, no hay nada mas que hacer 
-	  	Env.setContext(Env.getCtx(), "#AD_Client_ID", DB.getSQLValue(null, " SELECT AD_Client_ID FROM AD_ReplicationHost WHERE thisHost = 'Y' "));
-	  	Env.setContext(Env.getCtx(), "#AD_Org_ID", DB.getSQLValue(null, " SELECT AD_Org_ID FROM AD_ReplicationHost WHERE thisHost = 'Y' "));
+		// Configuracion: Compañía la cual tiene configurado replicacion.  Si no hay configuración, no hay nada mas que hacer
+	  	Integer clientID = DB.getSQLValue(null, " SELECT AD_Client_ID FROM AD_ReplicationHost WHERE thisHost = 'Y' ");
+	  	Integer orgID = DB.getSQLValue(null, " SELECT AD_Org_ID FROM AD_ReplicationHost WHERE thisHost = 'Y' ");
+	  	Env.setContext(Env.getCtx(), "#AD_Client_ID", clientID);
+	  	Env.setContext(Env.getCtx(), "#AD_Org_ID", orgID);
+	  	
 	  	if (Env.getContext(Env.getCtx(), "#AD_Client_ID") == null || Env.getContext(Env.getCtx(), "#AD_Client_ID") == null ||
 	  	    Env.getContextAsInt(Env.getCtx(), "#AD_Client_ID") <= 0 || Env.getContextAsInt(Env.getCtx(), "#AD_Client_ID") <= 0) {
 	  		System.err.println("Configuracion faltante o incorrecta en AD_ReplicationHost");
 	  		return;
+	  	}
+	  	
+	  	
+	  	String sql = "SELECT * " + "FROM C_AcctSchema a, AD_ClientInfo c " + "WHERE a.C_AcctSchema_ID=c.C_AcctSchema1_ID " + "AND c.AD_Client_ID=?";
+	  	
+	  	PreparedStatement pstmt = DB.prepareStatement( sql );
+	  	ResultSet rs = null;
+	  	
+	  	try{
+		    pstmt.setInt( 1,clientID );
+		
+		    rs = pstmt.executeQuery();
+		    
+		    if(rs.next()){
+		    	Env.setContext( Env.getCtx(),"$C_Currency_ID",rs.getInt( "C_Currency_ID" ));
+		    }
+	  	} catch(Exception e){
+	  		e.printStackTrace();
+	  		return;
+	  	} finally{
+	  		try {
+				if(pstmt != null)pstmt.close();
+				if(rs != null)rs.close();
+			} catch (Exception e2) {
+				e2.printStackTrace();
+				return;
+			}
 	  	}
 
 	  	// Si no hay configuración de tablas de replicación, simplemente no hará nada
