@@ -38,7 +38,7 @@ public class MassiveUpdateBPartnerBalance extends SvrProcess {
 	protected String doIt() throws Exception {
 		String sql = getQuery();
 		PreparedStatement ps = DB.prepareStatement(sql, get_TrxName());
-		ps.setInt(1, getAD_Client_ID());
+		ps.setInt(1, Env.getAD_Client_ID(getCtx()));
 		ResultSet rs = ps.executeQuery();
 		UpdateBPartnerBalance bpartnerBalanceProcess = new UpdateBPartnerBalance(
 				getCtx(), get_TrxName());
@@ -154,7 +154,7 @@ public class MassiveUpdateBPartnerBalance extends SvrProcess {
 		try {
 			Trx.getTrx(trxName).start();
 			mubb.prepare();
-			mubb.doIt();
+			System.out.println(mubb.doIt());
 			Trx.getTrx(trxName).commit();
 			System.out.println("MassiveUpdateBPartnerBalance OK");
 		}
