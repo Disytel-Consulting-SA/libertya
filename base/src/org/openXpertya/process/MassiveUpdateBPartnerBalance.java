@@ -6,18 +6,28 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
 
-import org.omg.java.cwm.objectmodel.instance.Instance;
 import org.openXpertya.OpenXpertya;
 import org.openXpertya.model.MBPartner;
-import org.openXpertya.model.MProcess;
 import org.openXpertya.util.DB;
 import org.openXpertya.util.Env;
 import org.openXpertya.util.HTMLMsg;
 import org.openXpertya.util.Msg;
 import org.openXpertya.util.Trx;
+import org.openXpertya.util.Util;
 
 public class MassiveUpdateBPartnerBalance extends SvrProcess {
 
+	/** Contexto local */
+	private Properties localCtx;
+	
+	/** Trx local */
+	private String localTrxName;
+	
+	public MassiveUpdateBPartnerBalance(Properties ctx, String trxName) {
+		setLocalCtx(ctx);
+		setLocalTrxName(trxName);
+	}
+	
 	@Override
 	protected void prepare() {
 		// TODO Auto-generated method stub
@@ -140,7 +150,7 @@ public class MassiveUpdateBPartnerBalance extends SvrProcess {
 
 	  	// Si no hay configuración de tablas de replicación, simplemente no hará nada
 		String trxName = Trx.createTrxName();
-		MassiveUpdateBPartnerBalance mubb = new MassiveUpdateBPartnerBalance();
+		MassiveUpdateBPartnerBalance mubb = new MassiveUpdateBPartnerBalance(Env.getCtx(), trxName);
 		try {
 			Trx.getTrx(trxName).start();
 			mubb.prepare();
@@ -156,5 +166,39 @@ public class MassiveUpdateBPartnerBalance extends SvrProcess {
 		finally {
 			Trx.getTrx(trxName).close();			
 		}
+	}
+
+	protected Properties getLocalCtx() {
+		return localCtx;
+	}
+
+	protected void setLocalCtx(Properties localCtx) {
+		this.localCtx = localCtx;
+	}
+
+	protected String getLocalTrxName() {
+		return localTrxName;
+	}
+
+	protected void setLocalTrxName(String localTrxName) {
+		this.localTrxName = localTrxName;
+	}
+	
+	@Override
+	protected String get_TrxName(){
+		String trxName = getLocalTrxName();
+		if(Util.isEmpty(trxName, true)){
+			trxName = super.get_TrxName();
+		}
+		return trxName;
+	}
+	
+	@Override
+	public Properties getCtx(){
+		Properties ctx = getLocalCtx();
+		if(ctx == null){
+			ctx = super.getCtx();
+		}
+		return ctx;
 	}
 }
