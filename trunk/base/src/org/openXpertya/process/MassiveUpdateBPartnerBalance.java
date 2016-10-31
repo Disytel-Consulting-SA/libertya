@@ -56,6 +56,9 @@ public class MassiveUpdateBPartnerBalance extends SvrProcess {
 					bpartnerBalanceProcess.doIt();
 					updated++;
 					Trx.getTrx(get_TrxName()).commit();
+					if(updated % 100 == 0){
+						System.out.println(updated+" updated...");
+					}
 				} catch(Exception e1){
 					errors.put(bpartner.getValue(), bpartner.getValue()+": "+e1.getMessage());
 					Trx.getTrx(get_TrxName()).rollback();
