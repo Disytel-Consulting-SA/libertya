@@ -7,7 +7,7 @@ import java.math.*;
 import org.openXpertya.util.*;
 /** Modelo Generado por C_PaymentBatchPO
  *  @author Comunidad de Desarrollo Libertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
- *  @version  - 2016-10-24 12:48:11.773 */
+ *  @version  - 2016-11-01 17:59:46.24 */
 public class X_C_PaymentBatchPO extends org.openXpertya.model.PO
 {
 /** Constructor estándar */
@@ -17,9 +17,8 @@ super (ctx, C_PaymentBatchPO_ID, trxName);
 /** if (C_PaymentBatchPO_ID == 0)
 {
 setBatchDate (new Timestamp(System.currentTimeMillis()));	// @#Date@
-setC_DoctypeAllocTarget_ID (0);	// 1010569
+setC_DoctypeAllocTarget_ID (0);
 setC_DocType_ID (0);
-setC_DocTypeTarget_ID (0);	// 1010569
 setC_PaymentBatchPO_ID (0);
 setDocAction (null);	// CO
 setDocStatus (null);	// DR
@@ -102,21 +101,6 @@ Document type or rules */
 public int getC_DocType_ID() 
 {
 Integer ii = (Integer)get_Value("C_DocType_ID");
-if (ii == null) return 0;
-return ii.intValue();
-}
-public static final int C_DOCTYPETARGET_ID_AD_Reference_ID = MReference.getReferenceID("C_DocType");
-/** Set Target Document Type.
-Target document type for conversing documents */
-public void setC_DocTypeTarget_ID (int C_DocTypeTarget_ID)
-{
-set_Value ("C_DocTypeTarget_ID", new Integer(C_DocTypeTarget_ID));
-}
-/** Get Target Document Type.
-Target document type for conversing documents */
-public int getC_DocTypeTarget_ID() 
-{
-Integer ii = (Integer)get_Value("C_DocTypeTarget_ID");
 if (ii == null) return 0;
 return ii.intValue();
 }
