@@ -2507,3 +2507,38 @@ UPDATE c_cash c
 SET validateposjournal = (CASE WHEN (SELECT posjournalapplication FROM ad_clientinfo ci WHERE ci.ad_client_id = c.ad_client_id) = 'B' 
 								AND EXISTS (SELECT c_cashbook_id FROM c_cashbook cb WHERE cb.c_cashbook_id = c.c_cashbook_id AND cashbooktype = 'J') THEN 'Y' 
 						ELSE 'N' END);
+						
+--20161101-1605 Eliminaciones de metadatos que no se eliminaron vía copytochangelog
+delete from ad_field_trl
+where ad_componentobjectuid in ('CORE-AD_Field_Trl-1017995-es_AR','CORE-AD_Field_Trl-1017995-es_ES',
+				'CORE-AD_Field_Trl-1017995-es_MX','CORE-AD_Field_Trl-1017995-es_PY',
+				'CORE-AD_Field_Trl-1018046-es_AR','CORE-AD_Field_Trl-1018046-es_ES',
+				'CORE-AD_Field_Trl-1018046-es_MX','CORE-AD_Field_Trl-1018046-es_PY',
+				'CORE-AD_Field_Trl-1018019-es_AR','CORE-AD_Field_Trl-1018019-es_ES',
+				'CORE-AD_Field_Trl-1018019-es_MX','CORE-AD_Field_Trl-1018019-es_PY',
+				'CORE-AD_Field_Trl-1018024-es_AR','CORE-AD_Field_Trl-1018024-es_ES',
+				'CORE-AD_Field_Trl-1018024-es_MX','CORE-AD_Field_Trl-1018024-es_PY');
+
+delete from ad_field
+where ad_componentobjectuid in ('CORE-AD_Field-1018024','CORE-AD_Field-1017995', 'CORE-AD_Field-1018046',
+				'CORE-AD_Field-1018019','SSTE2CORE-AD_Field-1018390-20161025150911',
+				'SSTE2CORE-AD_Field-1018391-20161025150914');
+
+delete from ad_column_trl
+where ad_componentobjectuid in ('CORE-AD_Column_Trl-1017003-es_PY','CORE-AD_Column_Trl-1017003-es_ES',
+				'CORE-AD_Column_Trl-1017003-es_AR','CORE-AD_Column_Trl-1017003-es_MX');
+
+delete from ad_column
+where ad_componentobjectuid in ('CORE-AD_Column-1016989','SSTE2CORE-AD_Column-1017469-20161024200223',
+				'CORE-AD_Column-1017003','SSTE2CORE-AD_Column-1017314-20161025150429',
+				'SSTE2CORE-AD_Column-1017319-20161025150445','SSTE2CORE-AD_Column-1017322-20161025150455',
+				'SSTE2CORE-AD_Column-1017316-20161025150436');
+
+delete from ad_menu_trl
+where ad_componentobjectuid in ('CORE-AD_Menu_Trl-es_AR-1010568',
+				'CORE-AD_Menu_Trl-es_ES-1010568',
+				'CORE-AD_Menu_Trl-es_MX-1010568',
+				'CORE-AD_Menu_Trl-es_PY-1010568');
+
+delete from ad_menu
+where ad_componentobjectuid in ('CORE-AD_Menu-1010568','SSTE2CORE-AD_Menu-1010597-20161025150820');
