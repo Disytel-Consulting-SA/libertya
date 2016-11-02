@@ -1037,6 +1037,7 @@ def main():
     var_moneda = entrada.readline()
     var_cotizacion = entrada.readline()
     var_impuestos = entrada.readline().split(";")
+    var_imp_trib = entrada.readline().split(";")
     
     #FIN
 
@@ -1061,11 +1062,31 @@ def main():
         #imp_neto = "1.00"
         imp_neto = float(var_imp_neto)
         #imp_iva = "0.21"
-        imp_iva = float(var_imp_total) - float(var_imp_neto)
+        imp_iva = 0.0
+        imp_trib = 0.0
+        
+        i = 0
+        while i < len(var_impuestos):
+            datos = var_impuestos[i].split(":")
+            importe = datos[2]
+            imp_iva = imp_iva + float(importe)
+            i = i+1
+            
+        i = 0
+        
+        print var_imp_trib
+        while i < len(var_imp_trib):
+            if var_imp_trib[i] is not None and len(var_imp_trib[i].strip(' \t\n\r')) > 0:
+                datos = var_imp_trib[i].split(":")
+                importe = datos[2]
+                imp_trib = imp_trib + float(importe)
+            i = i+1
+        
         print "imp_total", imp_total
         print "imp_neto", imp_neto
         print "imp_iva", imp_iva
-        imp_trib = "0.00"
+        print "imp_otros_trib", imp_trib
+    
         imp_op_ex = "0.00"
         fecha_cbte = fecha; fecha_venc_pago = fecha
         # Fechas del período del servicio facturado (solo si concepto = 1?)
@@ -1092,7 +1113,13 @@ def main():
 #        alic = 1
 #        importe = 1
 #        wsfev1.AgregarTributo(id, desc, base_imp, alic, importe)
-
+        
+        #id = 5 # 21%
+        #base_imp = 1
+        #importe = 0.21
+        #wsfev1.AgregarIva(id, base_imp, importe)
+        
+        #Agregar IVAs
         i = 0
         while i < len(var_impuestos):
             datos = var_impuestos[i].split(":")
@@ -1101,11 +1128,19 @@ def main():
             importe = datos[2]
             wsfev1.AgregarIva(id, base_imp, importe)
             i = i+1
-        
-        #id = 5 # 21%
-        #base_imp = 1
-        #importe = 0.21
-        #wsfev1.AgregarIva(id, base_imp, importe)
+            
+        #Agregar otros tributos
+        if var_imp_trib:
+            i = 0
+            while i < len(var_imp_trib):
+                if var_imp_trib[i] is not None and len(var_imp_trib[i].strip(' \t\n\r')) > 0:
+                    datos = var_imp_trib[i].split(":")
+                    id = datos[0]
+                    base_imp = datos[1]
+                    importe = datos[2]
+                    alic = datos[3]
+                    wsfev1.AgregarTributo(id, "", base_imp, alic, importe)
+                i = i+1
         
         import time
         t0 = time.time()
