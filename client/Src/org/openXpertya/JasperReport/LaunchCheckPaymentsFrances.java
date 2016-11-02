@@ -13,6 +13,8 @@ import org.openXpertya.process.ProcessInfo;
 import org.openXpertya.process.SvrProcess;
 import org.openXpertya.report.NumeroCastellano;
 import org.openXpertya.util.Env;
+import org.openXpertya.util.Language;
+import org.openXpertya.util.StringUtil;
 
 /**
  * Reporte para impresión de cheques del Banco Frances.
@@ -25,9 +27,11 @@ public class LaunchCheckPaymentsFrances extends SvrProcess {
 	private final static String EMISION_DIA = "EMISION_DIA";
 	private final static String EMISION_MES = "EMISION_MES";
 	private final static String EMISION_ANIO = "EMISION_ANIO";
+	private final static String EMISION_MES_NAME = "EMISION_MES_NAME";
 	private final static String PAGO_DIA = "PAGO_DIA";
 	private final static String PAGO_MES = "PAGO_MES";
 	private final static String PAGO_ANIO = "PAGO_ANIO";
+	private final static String PAGO_MES_NAME = "PAGO_MES_NAME";
 	private final static String A_LA_ORDEN = "A_LA_ORDEN";
 	private final static String IMPORTE_EN_LETRAS = "IMPORTE_EN_LETRAS";
 	private final static String CENTAVOS = "CENTAVOS";
@@ -99,10 +103,14 @@ public class LaunchCheckPaymentsFrances extends SvrProcess {
 				jasperwrapper.addParameter(EMISION_DIA + group, String.valueOf(dateEmissionCheckCalendar.get(Calendar.DAY_OF_MONTH)));
 				jasperwrapper.addParameter(EMISION_MES + group, String.valueOf(dateEmissionCheckCalendar.get(Calendar.MONTH)));
 				jasperwrapper.addParameter(EMISION_ANIO + group, String.valueOf(dateEmissionCheckCalendar.get(Calendar.YEAR)));
+				jasperwrapper.addParameter(EMISION_MES_NAME + group, StringUtil.fuc(dateEmissionCheckCalendar
+						.getDisplayName(Calendar.MONTH, Calendar.LONG, Language.getLoginLanguage().getLocale())));
 			}
 			jasperwrapper.addParameter(PAGO_DIA + group, String.valueOf(dateTrxCalendar.get(Calendar.DAY_OF_MONTH)));
 			jasperwrapper.addParameter(PAGO_MES + group, String.valueOf(dateTrxCalendar.get(Calendar.MONTH)));
 			jasperwrapper.addParameter(PAGO_ANIO + group, String.valueOf(dateTrxCalendar.get(Calendar.YEAR)));
+			jasperwrapper.addParameter(PAGO_MES_NAME + group, StringUtil.fuc(dateTrxCalendar
+					.getDisplayName(Calendar.MONTH, Calendar.LONG, Language.getLoginLanguage().getLocale())));
 			// El nombre no es un campo obligatorio, por lo tanto se 
 			// puede dar el caso en el que este dato no esté presente.
 			if (line.getPayment().getA_Name() != null) {

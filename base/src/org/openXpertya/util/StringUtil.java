@@ -44,6 +44,22 @@ public final class StringUtil {
         }
     }
     
+    /**
+     * @param str
+     * @return string parámetro con la primer letra en mayúscula
+     */
+    public static String fuc(String str){
+    	String result = str;
+    	if(!Util.isEmpty(str, true)){
+        	char firstChar = str.charAt(0);
+        	if(Character.isLetter(firstChar)){
+        		String firstLetterStr = String.valueOf(firstChar);
+				result = result.replaceFirst(firstLetterStr, firstLetterStr.toUpperCase());
+        	}
+    	}
+    	return result;
+    }
+    
 	/**
 	 * Equivalente a implode("(",",",")"); de utilidad tiíica para generar clausulas
 	 * sql UNION a partir de una lista de enteros.
