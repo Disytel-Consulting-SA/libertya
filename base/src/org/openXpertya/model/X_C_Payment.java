@@ -7,7 +7,7 @@ import java.math.*;
 import org.openXpertya.util.*;
 /** Modelo Generado por C_Payment
  *  @author Comunidad de Desarrollo Libertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
- *  @version  - 2016-10-25 15:19:07.465 */
+ *  @version  - 2016-11-02 16:31:03.557 */
 public class X_C_Payment extends org.openXpertya.model.PO
 {
 /** Constructor estándar */
@@ -342,18 +342,6 @@ set_Value ("Bank_Payment_DocumentNo", Bank_Payment_DocumentNo);
 public String getBank_Payment_DocumentNo() 
 {
 return (String)get_Value("Bank_Payment_DocumentNo");
-}
-/** Set Bank Payment Status */
-public void setBank_Payment_Status (int Bank_Payment_Status)
-{
-set_Value ("Bank_Payment_Status", new Integer(Bank_Payment_Status));
-}
-/** Get Bank Payment Status */
-public int getBank_Payment_Status() 
-{
-Integer ii = (Integer)get_Value("Bank_Payment_Status");
-if (ii == null) return 0;
-return ii.intValue();
 }
 /** Set Activity.
 Business Activity */
