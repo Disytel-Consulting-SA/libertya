@@ -57,6 +57,12 @@ Ejemplos de cambios
     	<!-- 20161006-0931 Forzar encoding UTF8 -->
     	<copy file="${SOURCE_DIR}/CallClass.xml" todir="${TARGET_DIR}/utils" overwrite="yes" />
     	
+    	<!-- 20161102-1345 Nueva version de ReplicationClientProcess, acorde a revision r58 de lyws-->
+    	<copy file="${SOURCE_DIR}/repClient.jar" todir="${TARGET_DIR}/utils/replicacion/lib" overwrite="yes" />
+    	
+    	<!-- 20161102-1345 Path completo a fin de ubicar query.sh en eventual invocacion remota -->
+    	<copy file="${SOURCE_DIR}/showPendingRecords.sh" todir="${TARGET_DIR}/utils/replicacion" overwrite="yes" />
+    	
     </target>
     
 </project>
