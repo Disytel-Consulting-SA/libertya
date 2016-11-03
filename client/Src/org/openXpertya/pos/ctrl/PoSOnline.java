@@ -1758,10 +1758,10 @@ public class PoSOnline extends PoSConnectionState {
 	 * @throws PosException
 	 */
 	private MAllocationLine createOxpMAllocationLine(Integer debitInvoiceID, Payment p, MPayment pay, MCashLine cashLine, Integer creditInvoiceID) throws PosException {
-		return createOxpMAllocationLine(debitInvoiceID, p, pay, cashLine, creditInvoiceID, null);
+		return createOxpMAllocationLine(debitInvoiceID, p, pay, cashLine, creditInvoiceID, null, false);
 	}
 	
-	private MAllocationLine createOxpMAllocationLine(Integer debitInvoiceID, Payment p, MPayment pay, MCashLine cashLine, Integer creditInvoiceID, BigDecimal amount) throws PosException {
+	private MAllocationLine createOxpMAllocationLine(Integer debitInvoiceID, Payment p, MPayment pay, MCashLine cashLine, Integer creditInvoiceID, BigDecimal amount, boolean isReturn) throws PosException {
 		BigDecimal allocLineAmt = currencyConvert(amount == null ? p
 				.getAmount().abs() : amount.abs(), p.getCurrencyId(),
 				allocHdr.getC_Currency_ID());
@@ -1774,7 +1774,8 @@ public class PoSOnline extends PoSConnectionState {
 		}
 		
 		// Si el monto de la línea del allocation es distinto al total del payment, entonces va a writeoff
-		if((allocLineAmt.add(changeAmt)).compareTo(p.getConvertedAmount()) != 0){
+		if (!isReturn && p.getCurrencyId() != allocHdr.getC_Currency_ID()
+				&& (allocLineAmt.add(changeAmt)).compareTo(p.getConvertedAmount()) != 0) {
 			writeOffAmt = writeOffAmt.add(p.getConvertedAmount().subtract((allocLineAmt.add(changeAmt))));
 		}
 		
@@ -2039,7 +2040,7 @@ public class PoSOnline extends PoSConnectionState {
 				creditCardRetirementInvoice, InvoiceCreateException.class);
 		// Creo la línea del allocation
 		createOxpMAllocationLine(creditCardRetirementInvoice.getID(), p, pay,
-				null, null, p.getChangeAmt());
+				null, null, p.getChangeAmt(), true);
 		
 		// Crear la línea del efectivo para el retiro de la caja
 		CashPayment cashPayment = new CashPayment(p.getChangeAmt().negate());
@@ -2058,7 +2059,7 @@ public class PoSOnline extends PoSConnectionState {
 		cashLine.setC_Payment_ID(pay.getID());
 		throwIfFalse(cashLine.save(), cashLine);
 		// Agregar al allocation de manera unidireccional
-		createOxpMAllocationLine(0, cashPayment, null, cashLine, null);
+		createOxpMAllocationLine(0, cashPayment, null, cashLine, null, null, true);
 	}
 	
 	private void createOxpCreditPayment(CreditPayment p) throws PosException {
@@ -2095,7 +2096,7 @@ public class PoSOnline extends PoSConnectionState {
 			cashPayment.setAmount(p.getChangeAmt().negate());
 			cashPayment.setDescription(Msg.translate(getCtx(), "CNCashReturning"));
 			MCashLine cashLine = createOxpCashPayment(p.getInvoiceID(), cashPayment, false, false);
-			createOxpMAllocationLine(p.getInvoiceID(), cashPayment, null, cashLine, null);
+			createOxpMAllocationLine(p.getInvoiceID(), cashPayment, null, cashLine, null, null, true);
 		}
 	}
 
