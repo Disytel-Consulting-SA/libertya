@@ -34,17 +34,15 @@ import org.openXpertya.util.Util;
 public class ExportProcess extends SvrProcess {
 	
 	/** Separador de líneas */
-	private static final String ROW_SEPARATOR_UNIX = "\n";
-	private static final String ROW_SEPARATOR_WINDOWS = "\r\n";
-	
+	protected static final String ROW_SEPARATOR_UNIX = "\n";
+	protected static final String ROW_SEPARATOR_WINDOWS = "\r\n";
 	/** Codificación */
-	private static final String ENCODE_UTF8 = "UTF-8";
-	private static final String ENCODE_8859_1 = "8859_1";
+	protected static final String ENCODE_UTF8 = "UTF-8";
+	protected static final String ENCODE_8859_1 = "8859_1";
 
 	/** Extensión del archivo exportado */
-	private static final String FILE_EXTENSION_CSV = "csv";
-	private static final String FILE_EXTENSION_TXT = "txt";
-	
+	protected static final String FILE_EXTENSION_CSV = "csv";
+	protected static final String FILE_EXTENSION_TXT = "txt";
 	/** Formato de exportación */
 	private MExpFormat exportFormat;
 	/** Caracter separador de campos */

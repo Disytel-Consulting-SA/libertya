@@ -5,11 +5,20 @@ import java.util.Properties;
 
 import org.openXpertya.model.MBankList;
 import org.openXpertya.model.MExpFormatRow;
+import org.openXpertya.model.X_C_AllocationHdr;
+import org.openXpertya.model.X_C_AllocationLine;
+import org.openXpertya.model.X_C_BPartner;
+import org.openXpertya.model.X_C_BankAccount;
+import org.openXpertya.model.X_C_Currency;
+import org.openXpertya.model.X_C_DocType;
+import org.openXpertya.model.X_C_Invoice;
+import org.openXpertya.model.X_C_Payment;
 import org.openXpertya.util.Env;
 import org.openXpertya.util.Util;
 
 public class ExportListaPatagonia extends ExportBankList {
 
+	/** Importe acumulado (total) */
 	private Integer acumAmt = 0;
 
 	public ExportListaPatagonia(Properties ctx, MBankList bankList, String trxName) {
@@ -35,19 +44,32 @@ public class ExportListaPatagonia extends ExportBankList {
 
 	@Override
 	protected String getFileHeader() {
-		StringBuffer header = new StringBuffer("FHPO");
-		header.append(getBankListConfig().getRegisterNumber());
+		// Registro ID
+		StringBuffer header = new StringBuffer("FH");
+		// Id de Archivo
+		header.append("PO");
+		header.append(fillField(getBankListConfig().getRegisterNumber(), "0", MExpFormatRow.ALIGNMENT_Right, 7, null));
 		header.append(dateFormat_yyyyMMdd.format(getBankList().getDateTrx()));
 		header.append(fillField(String.valueOf(getBankList().getDailySeqNo().intValue()), "0", MExpFormatRow.ALIGNMENT_Right, 3, null));
+		// Hora de creación del archivo
 		header.append(dateFormat_HHmmss.format(getBankList().getDateTrx()));
+		// Nro. secuencial del archivo p/adherente
 		header.append(fillField(String.valueOf(getBankList().getTotalSeqNo().intValue()), "0", MExpFormatRow.ALIGNMENT_Right, 7, null));
+		// Identificación de archivo
 		header.append("ORDENDEPAGO");
-		header.append("0000000"); // Nro de convenio por default
+		// Nro.de Convenio
+		header.append("0000000"); // Nro. de convenio por default
+		// Fecha del lote
 		header.append(dateFormat_yyyyMMdd.format(getBankList().getDateTrx()));
+		// Ejecución inmediata. Actualmente sin uso.
 		header.append("S");
+		// Espacio en blanco
 		header.append(fillField(" ", " ", MExpFormatRow.ALIGNMENT_Right, 20, null));
+		// Informante. ‘ADH’ – Adherente
 		header.append("ADH");
-		header.append(getBankListConfig().getRegisterNumber());
+		// Nro de informante
+		header.append(fillField(getBankListConfig().getRegisterNumber(), "0", MExpFormatRow.ALIGNMENT_Right, 7, null));
+		// Espacio en blanco
 		header.append(fillField(" ", " ", MExpFormatRow.ALIGNMENT_Right, 80, null));
 		return header.toString();
 	}
@@ -90,38 +112,38 @@ public class ExportListaPatagonia extends ExportBankList {
 		sql.append("	) ret, ");
 		sql.append("	(SELECT ");
 		sql.append("		Array_agg( ");
-		sql.append("			Coalesce( ");
+		sql.append("			COALESCE( ");
 		sql.append("				CASE WHEN ddt.docbasetype = 'API' ");
 		sql.append("				THEN d.documentno ELSE c.documentno ");
 		sql.append("				END, '') ");
 		sql.append("			) AS documentno ");
 		sql.append("	FROM ");
-		sql.append("		c_allocationhdr ah ");
-		sql.append("		INNER JOIN c_allocationline AS al ");
+		sql.append("		" + X_C_AllocationHdr.Table_Name + " ah ");
+		sql.append("		INNER JOIN " + X_C_AllocationLine.Table_Name + " AS al ");
 		sql.append("			ON al.c_allocationhdr_id = ah.c_allocationhdr_id ");
-		sql.append("		LEFT JOIN c_invoice AS d ");
+		sql.append("		LEFT JOIN " + X_C_Invoice.Table_Name + " AS d ");
 		sql.append("			ON d.c_invoice_id = al.c_invoice_id ");
-		sql.append("		LEFT JOIN c_doctype AS ddt ");
+		sql.append("		LEFT JOIN " + X_C_DocType.Table_Name + " AS ddt ");
 		sql.append("			ON ddt.c_doctype_id = d.c_doctypetarget_id ");
-		sql.append("		LEFT JOIN c_invoice AS c ");
+		sql.append("		LEFT JOIN " + X_C_Invoice.Table_Name + " AS c ");
 		sql.append("			ON c.c_invoice_id = al.c_invoice_credit_id ");
-		sql.append("		LEFT JOIN c_doctype AS cdt ");
+		sql.append("		LEFT JOIN " + X_C_DocType.Table_Name + " AS cdt ");
 		sql.append("			ON cdt.c_doctype_id = c.c_doctypetarget_id ");
 		sql.append("	WHERE ");
 		sql.append("		ah.c_allocationhdr_id = ahb.c_allocationhdr_id ");
-		sql.append("	LIMIT  4 ");
+		sql.append("	LIMIT 4 ");
 		sql.append("	) invoices ");
 		sql.append("FROM ");
-		sql.append("	c_electronic_payments lpp ");
-		sql.append("	INNER JOIN c_allocationhdr AS ahb ");
+		sql.append("	c_electronic_payments lpp "); // Vista
+		sql.append("	INNER JOIN " + X_C_AllocationHdr.Table_Name + " AS ahb ");
 		sql.append("		ON ahb.c_allocationhdr_id = lpp.c_allocationhdr_id ");
-		sql.append("	INNER JOIN c_bpartner AS bp ");
+		sql.append("	INNER JOIN " + X_C_BPartner.Table_Name + " AS bp ");
 		sql.append("		ON bp.c_bpartner_id = lpp.c_bpartner_id ");
-		sql.append("	INNER JOIN c_payment AS p ");
+		sql.append("	INNER JOIN " + X_C_Payment.Table_Name + " AS p ");
 		sql.append("		ON p.c_payment_id = lpp.c_payment_id ");
-		sql.append("	INNER JOIN c_currency AS c ");
+		sql.append("	INNER JOIN " + X_C_Currency.Table_Name + " AS c ");
 		sql.append("		ON c.c_currency_id = p.c_currency_id ");
-		sql.append("	INNER JOIN c_bankaccount AS ba ");
+		sql.append("	INNER JOIN " + X_C_BankAccount.Table_Name + " AS ba ");
 		sql.append("		ON ba.c_bankaccount_id = p.c_bankaccount_id ");
 		sql.append("WHERE ");
 		sql.append("	lpp.c_banklist_id = ? ");
@@ -131,55 +153,107 @@ public class ExportListaPatagonia extends ExportBankList {
 
 	@Override
 	protected void writeRow(ResultSet rs) throws Exception {
-		StringBuffer row = new StringBuffer("PO");
 		Integer payAmt = rs.getBigDecimal("payamt").abs().multiply(Env.ONEHUNDRED).intValue();
-		row.append(fillField(rs.getString("documentno").replace(getOpPrefix(), "").replace(getOpSuffix(), ""), " ", MExpFormatRow.ALIGNMENT_Right, 25, null));
-		row.append(fillField("FACs:/" + rs.getString("invoices").replace("{", "").replace("}", "").replace(",", "/"), "0", MExpFormatRow.ALIGNMENT_Right, 105, null));
+		String documentno = rs.getString("documentno").replace(getOpPrefix(), "").replace(getOpSuffix(), "");
+		String invoices = "FACs:/" + rs.getString("invoices").replace("{", "").replace("}", "").replace(",", "/");
+		String cbu = Util.isEmpty(rs.getString("cbu"), true) ? "0" : rs.getString("cbu").trim();
+		String branch = Util.isEmpty(rs.getString("sucursal")) ? " " : rs.getString("sucursal");
+		
+		// Registro ID
+		StringBuffer row = new StringBuffer("PO");
+		// Referencia del cliente
+		row.append(fillField(documentno, " ", MExpFormatRow.ALIGNMENT_Right, 25, null));
+		// Motivo del pago
+		row.append(fillField(invoices, " ", MExpFormatRow.ALIGNMENT_Right, 105, null));
+		// Fecha de ejecución de la orden
 		row.append(dateFormat_yyyyMMdd.format(rs.getTimestamp("datetrx")));
+		// Tipo de pago o medio de ejecución para concretarlo
 		row.append("002");
+		// Importe a pagar
 		row.append(fillField(String.valueOf(payAmt), "0", MExpFormatRow.ALIGNMENT_Right, 15, null));
+		// Moneda del pago (Codigo ISO de la divisa)
 		row.append(rs.getString("iso_code"));
+		// Fecha de vencimiento de CHPD
 		row.append(dateFormat_yyyyMMdd.format(rs.getTimestamp("dateacct")));
+		// Requerir Recibo oficial del Beneficiario en pagos con cheques
 		row.append("S");
+		// Cláusula No a la Orden
 		row.append("N");
+		// Incluir firma en la impresión de cheques y CADJ
 		row.append("S");
+		// Acompañamiento de Comprobantes Adjuntos
 		row.append(rs.getInt("ret") > 0 ? "ICA" : "NEC");
+		// Texto referencial #1 asociado a la orden
 		row.append(fillField(" ", " ", MExpFormatRow.ALIGNMENT_Right, 80, null));
+		// Texto referencial #2 asociado a la orden
 		row.append(fillField(" ", " ", MExpFormatRow.ALIGNMENT_Right, 80, null));
+		// Texto referencial #3 asociado a la orden
 		row.append(fillField(" ", " ", MExpFormatRow.ALIGNMENT_Right, 80, null));
+		// Instrucciones para el Customer Service del Banco
 		row.append(fillField(" ", " ", MExpFormatRow.ALIGNMENT_Right, 160, null));
-		row.append(fillField(" ", " ", MExpFormatRow.ALIGNMENT_Right, 25, null));
+		// Nro. de Beneficiario
+		row.append(fillField("0", "0", MExpFormatRow.ALIGNMENT_Right, 24, null));
+		// Espacio en blanco
+		row.append(" ");
+		// Nombre del Beneficiario o proveedor
 		row.append(fillField(rs.getString("name"), " ", MExpFormatRow.ALIGNMENT_Left, 60, null));
+		// Tipo de documento del Beneficiario. 011 - CUIT
 		row.append("011");
+		// Nro. de CUIT/CUIL/CDI del Beneficiario, asignado por la AFIP
 		row.append(rs.getString("taxid"));
+		// Domicilio del Beneficiario. Actualmente no aplica.
 		row.append(fillField(" ", " ", MExpFormatRow.ALIGNMENT_Right, 120, null));
+		// Código postal del domicilio del Beneficiario. Actualmente no aplica.
 		row.append(fillField(" ", " ", MExpFormatRow.ALIGNMENT_Right, 15, null));
+		// Email del Beneficiario
 		row.append(fillField(rs.getString("email"), " ", MExpFormatRow.ALIGNMENT_Left, 70, null));
+		// Fax del Beneficiario
 		row.append(fillField(" ", " ", MExpFormatRow.ALIGNMENT_Right, 25, null));
-		row.append(fillField(" ", " ", MExpFormatRow.ALIGNMENT_Right, 25, null));
+		// Medios de comunicación con el beneficiario
 		row.append(Util.isEmpty(rs.getString("email")) ? "   " : "EML");
+		// Espacio en cero
 		row.append(fillField("0", "0", MExpFormatRow.ALIGNMENT_Right, 5, null));
+		// Espacio en blanco
 		row.append(fillField(" ", " ", MExpFormatRow.ALIGNMENT_Right, 35, null));
-		row.append(fillField((Util.isEmpty(rs.getString("cbu")) ? "0" : rs.getString("cbu")), "0", MExpFormatRow.ALIGNMENT_Right, 22, null));
+		// CBU de la cuenta del Beneficiario a acreditar
+		row.append(fillField(cbu, "0", MExpFormatRow.ALIGNMENT_Right, 22, null));
+		// Sistema de la cta. a acreditar
 		row.append(fillField(" ", " ", MExpFormatRow.ALIGNMENT_Right, 2, null));
+		// Moneda de la cuenta a acreditar en banco. (Codigo ISO de la divisa)
 		row.append(rs.getString("iso_code"));
+		// Espacio en blanco
 		row.append(fillField(" ", " ", MExpFormatRow.ALIGNMENT_Right, 35, null));
+		// Canal de entrega de pagos en cheques
 		row.append("BCO");
-		row.append(fillField(Util.isEmpty(rs.getString("sucursal")) ? " " : rs.getString("sucursal"), " ", MExpFormatRow.ALIGNMENT_Right, 8, null));
+		// Sucursal a la cual enviar cheque y sus comprobantes adjuntos
+		row.append(fillField(branch, " ", MExpFormatRow.ALIGNMENT_Left, 8, null));
+		// Espacio en cero
 		row.append(fillField("0", "0", MExpFormatRow.ALIGNMENT_Right, 5, null));
+		// CBU de la cuenta del adherente a ser debitada
 		row.append(fillField("0", "0", MExpFormatRow.ALIGNMENT_Right, 22, null));
+		// Sistema de la cta. a debitar
 		row.append(fillField(" ", " ", MExpFormatRow.ALIGNMENT_Right, 2, null));
+		// Moneda de la cuenta a debitar. (Codigo ISO de la divisa)
 		row.append(rs.getString("iso_code"));
+		// Espacio en blanco.
 		row.append(fillField(" ", " ", MExpFormatRow.ALIGNMENT_Right, 35, null));
+		
 		acumAmt += payAmt;
 		write(row.toString());
 	}
 
 	@Override
 	protected String getFileFooter() {
+		// Registro ID
 		StringBuffer footer = new StringBuffer("FT");
+		// Total de importes a pagar
 		footer.append(fillField(String.valueOf(acumAmt), "0", MExpFormatRow.ALIGNMENT_Right, 25, null));
+		// Total de registros del archivo
 		footer.append(fillField(String.valueOf(getExportedLines() + 2), "0", MExpFormatRow.ALIGNMENT_Right, 10, null));
+		// Clave Checksum
+		footer.append(fillField(" ", " ", MExpFormatRow.ALIGNMENT_Right, 8, null));
+		// Espacio en blanco
+		footer.append(fillField(" ", " ", MExpFormatRow.ALIGNMENT_Right, 40, null));
 		return footer.toString();
 	}
 

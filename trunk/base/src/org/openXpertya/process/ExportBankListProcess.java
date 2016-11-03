@@ -9,15 +9,16 @@ public class ExportBankListProcess extends AbstractSvrProcess {
 	protected String doIt() throws Exception {
 		MBankList bankList = new MBankList(getCtx(), getRecord_ID(), get_TrxName());
 		MDocType bankListDocType = MDocType.get(getCtx(), bankList.getC_DocType_ID());
-		ExportBankList bankListExporter = null;
-		if(MDocType.DOCTYPE_Lista_Galicia.equals(bankListDocType.getDocTypeKey())){
-			bankListExporter = new ExportListaGalicia(getCtx(), bankList, get_TrxName());
+		ExportBankList exporter = null;
+
+		if (MDocType.DOCTYPE_Lista_Galicia.equals(bankListDocType.getDocTypeKey())) {
+			exporter = new ExportListaGalicia(getCtx(), bankList, get_TrxName());
+		} else if (MDocType.DOCTYPE_Lista_Patagonia.equals(bankListDocType.getDocTypeKey())) {
+			exporter = new ExportRetentionsPatagonia(getCtx(), bankList, get_TrxName());
+			exporter.export();
+			exporter = new ExportListaPatagonia(getCtx(), bankList, get_TrxName());
 		}
-		else if(MDocType.DOCTYPE_Lista_Patagonia.equals(bankListDocType.getDocTypeKey())){
-			bankListExporter = new ExportListaPatagonia(getCtx(), bankList, get_TrxName());
-		}
-			
-		return bankListExporter.export();
+		return exporter.export();
 	}
 
 }
