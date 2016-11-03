@@ -14,12 +14,19 @@ import org.openXpertya.model.MBankList;
 import org.openXpertya.model.MExpFormatRow;
 import org.openXpertya.model.X_C_AllocationHdr;
 import org.openXpertya.model.X_C_AllocationLine;
+import org.openXpertya.model.X_C_BPartner;
 import org.openXpertya.model.X_C_BPartner_Location;
+import org.openXpertya.model.X_C_BankAccount;
+import org.openXpertya.model.X_C_BankList;
 import org.openXpertya.model.X_C_BankListLine;
 import org.openXpertya.model.X_C_DocType;
 import org.openXpertya.model.X_C_Invoice;
 import org.openXpertya.model.X_C_Location;
 import org.openXpertya.model.X_C_Payment;
+import org.openXpertya.model.X_C_Region;
+import org.openXpertya.model.X_C_RetencionSchema;
+import org.openXpertya.model.X_C_RetencionType;
+import org.openXpertya.model.X_M_Retencion_Invoice;
 import org.openXpertya.util.DB;
 import org.openXpertya.util.Env;
 import org.openXpertya.util.Util;
@@ -86,10 +93,11 @@ public class ExportListaGalicia extends ExportBankList {
 		}
 		calendarDateTrx.add(Calendar.DATE, deltaDate);
 		// Armar el string
-		StringBuffer header = new StringBuffer("PCD");
-		header.append(getBankList().getDocumentNo());
-		header.append(dateFormat_ddMMyyyy.format(getBankList().getDateTrx()));
-		header.append(getBankListConfig().getRegisterNumber());
+		StringBuffer header = new StringBuffer("PC"); // Código de registro.
+		header.append("D"); // Tipo de lista. Por el momento siempre es D.
+		header.append(getBankList().getDocumentNo()); // Identificación de la Lista.
+		header.append(dateFormat_ddMMyyyy.format(getBankList().getDateTrx())); // Fecha del proceso.
+		header.append(getBankListConfig().getRegisterNumber()); // Cantidad de Registros
 		header.append(fillField(getBankListConfig().getClientName(), " ", MExpFormatRow.ALIGNMENT_Right, 40, null));
 
 		StringBuffer sql = new StringBuffer();
@@ -107,7 +115,8 @@ public class ExportListaGalicia extends ExportBankList {
 		sql.append("	SUM(p.payamt) ");
 		sql.append("FROM ");
 		sql.append("	" + X_C_BankListLine.Table_Name + " AS bll ");
-		sql.append("	INNER JOIN C_AllocationLine AS al ON bll.C_AllocationHdr_ID = al.C_AllocationHdr_ID ");
+		sql.append("	INNER JOIN " + X_C_AllocationLine.Table_Name + " AS al ");
+		sql.append("		ON bll.C_AllocationHdr_ID = al.C_AllocationHdr_ID ");
 		sql.append("	INNER JOIN " + X_C_Payment.Table_Name + " AS p ");
 		sql.append("		ON p.c_payment_id = al.c_payment_id ");
 		sql.append("WHERE ");
@@ -139,7 +148,7 @@ public class ExportListaGalicia extends ExportBankList {
 		sql.append("	lgp.c_bpartner_id, ");
 		sql.append("	lgp.payamt, ");
 		sql.append("	COALESCE(p.a_name, bp.name) AS name, ");
-		sql.append("	Translate(COALESCE(p.a_cuit, bp.taxid), '-', '') AS cuit, ");
+		sql.append("	Translate(COALESCE(bp.taxid, p.a_cuit), '-', '') AS cuit, ");
 		sql.append("	(SELECT ");
 		sql.append("		l.address1 ");
 		sql.append("	FROM ");
@@ -184,16 +193,16 @@ public class ExportListaGalicia extends ExportBankList {
 		sql.append("	p.duedate, ");
 		sql.append("	ba.sucursal ");
 		sql.append("FROM ");
-		sql.append("	c_electronic_payments lgp");
-		sql.append("	INNER JOIN c_payment p ");
+		sql.append("	c_electronic_payments lgp"); // Vista
+		sql.append("	INNER JOIN " + X_C_Payment.Table_Name + " p ");
 		sql.append("		ON p.c_payment_id = lgp.c_payment_id ");
-		sql.append("	INNER JOIN c_bpartner bp ");
+		sql.append("	INNER JOIN " + X_C_BPartner.Table_Name + " bp ");
 		sql.append("		ON bp.c_bpartner_id = p.c_bpartner_id ");
-		sql.append("	INNER JOIN c_allocationhdr ah ");
+		sql.append("	INNER JOIN " + X_C_AllocationHdr.Table_Name + " ah ");
 		sql.append("		ON ah.c_allocationhdr_id = lgp.c_allocationhdr_id ");
-		sql.append("	INNER JOIN c_banklist bl ");
+		sql.append("	INNER JOIN " + X_C_BankList.Table_Name + " bl ");
 		sql.append("		ON bl.c_banklist_id = lgp.c_banklist_id ");
-		sql.append("	INNER JOIN c_bankaccount AS ba ");
+		sql.append("	INNER JOIN " + X_C_BankAccount.Table_Name + " AS ba ");
 		sql.append("		ON ba.c_bankaccount_id = bl.c_bankaccount_id ");
 		sql.append("WHERE ");
 		sql.append("	lgp.c_banklist_id = ? ");
@@ -218,36 +227,62 @@ public class ExportListaGalicia extends ExportBankList {
 	}
 
 	protected void writeCheckLine(ResultSet rs) throws Exception {
-		StringBuffer row = new StringBuffer("PD");
-		row.append(fillField(String.valueOf(checkCount), "0", MExpFormatRow.ALIGNMENT_Right, 6, null));
 		Integer payAmt = rs.getBigDecimal("payamt").abs().multiply(Env.ONEHUNDRED).intValue();
+		String address = Util.isEmpty(rs.getString("address"), true) ? "A" : rs.getString("address");
+		String city = Util.isEmpty(rs.getString("city"), true) ? "C" : rs.getString("city");
+		String postal = Util.isEmpty(rs.getString("postal"), true) ? "P" : rs.getString("postal");
+		String cuit = Util.isEmpty(rs.getString("cuit"), true) ? "" : rs.getString("cuit");
+
+		StringBuffer row = new StringBuffer("PD");
+		// Número del registro
+		row.append(fillField(String.valueOf(checkCount), "0", MExpFormatRow.ALIGNMENT_Right, 6, null));
+		// Importe del cheque
 		row.append(fillField(String.valueOf(payAmt), "0", MExpFormatRow.ALIGNMENT_Right, 17, null));
+		// Sucursal distribuidora
 		row.append(fillField(rs.getString("sucursal"), " ", MExpFormatRow.ALIGNMENT_Left, 3, null));
+		// Nombre/R. Social beneficiario
 		row.append(fillField(rs.getString("name"), " ", MExpFormatRow.ALIGNMENT_Left, 50, null));
-		row.append(fillField((Util.isEmpty(rs.getString("address")) ? "A" : rs.getString("address")), " ", MExpFormatRow.ALIGNMENT_Left, 30, null));
-		row.append(fillField((Util.isEmpty(rs.getString("city")) ? "C" : rs.getString("city")), " ", MExpFormatRow.ALIGNMENT_Left, 20, null));
-		row.append(fillField((Util.isEmpty(rs.getString("postal")) ? "P" : rs.getString("postal")), " ", MExpFormatRow.ALIGNMENT_Left, 6, null));
+		// Dirección beneficiario
+		row.append(fillField(address, " ", MExpFormatRow.ALIGNMENT_Left, 30, null));
+		// Localidad beneficiario
+		row.append(fillField(city, " ", MExpFormatRow.ALIGNMENT_Left, 20, null));
+		// Código postal beneficiario
+		row.append(fillField(postal, " ", MExpFormatRow.ALIGNMENT_Left, 6, null));
+		// Número recibo a requerir. Completar si se conoce.
 		row.append(fillField(" ", " ", MExpFormatRow.ALIGNMENT_Right, 15, null));
-		row.append(rs.getString("cuit"));
+		// CUIT del beneficiario
+		row.append(fillField(cuit, " ", MExpFormatRow.ALIGNMENT_Right, 10, null));
+		// Tipo de Documento a requerir
 		row.append("03");
+		// Teléfono del Beneficiario
 		row.append(fillField("0", "0", MExpFormatRow.ALIGNMENT_Right, 10, null));
+		// Nombre del Retirante
 		row.append(fillField(" ", " ", MExpFormatRow.ALIGNMENT_Right, 30, null));
+		// Tipo y Nro. de Documento del Retirante
 		row.append(fillField(" ", " ", MExpFormatRow.ALIGNMENT_Right, 11, null));
+		// Condición del cheque
 		row.append("2");
+		// Espacio en blanco
 		row.append(fillField(" ", " ", MExpFormatRow.ALIGNMENT_Right, 25, null));
+		// Código de Aviso
 		row.append("2");
+		// Código de Recibo
 		row.append("0");
+		// Espacio en blanco
 		row.append(fillField(" ", " ", MExpFormatRow.ALIGNMENT_Right, 16, null));
-		row.append(fillField(rs.getString("documentno"), " ", MExpFormatRow.ALIGNMENT_Left, 35, null));
+		// Orden de Pago
+		row.append(fillField(rs.getString("documentno"), " ", MExpFormatRow.ALIGNMENT_Right, 35, null));
+		// Moneda
 		row.append("001");
-		Date dueDate = rs.getDate("duedate");
-		if (dueDate.before(getBankList().getDateTrx())) {
-			dueDate = dateEmission;
-		}
+		// Fecha de disposición de fondos
 		row.append(dateFormat_ddMMyyyy.format(dateEmission));
+		// Código de Provincia del Beneficiario
 		row.append("01");
+		// Información Compra
 		row.append("0");
+		// Destino de Comprobantes, Marca de Autogestión, Espacio libre
 		row.append(fillField(" ", " ", MExpFormatRow.ALIGNMENT_Right, 14, null));
+
 		write(row.toString());
 	}
 
@@ -296,7 +331,7 @@ public class ExportListaGalicia extends ExportBankList {
 				op.append(fillField(String.valueOf(total), "0", MExpFormatRow.ALIGNMENT_Right, 17, null));
 				op.append("0");
 				op.append(fillField("OBS", " ", MExpFormatRow.ALIGNMENT_Right, 30, null));
-				op.append(fillField(" ", " ", MExpFormatRow.ALIGNMENT_Right, 209, null));
+				op.append(fillField("0", "0", MExpFormatRow.ALIGNMENT_Right, 209, null));
 				write(op.toString());
 				// Separador de filas
 				writeRowSeparator();
@@ -336,40 +371,40 @@ public class ExportListaGalicia extends ExportBankList {
 		sql.append("				 ELSE al.c_invoice_credit_id END as c_invoice_id, ");
 		sql.append("			ah.documentno ");
 		sql.append("		FROM ");
-		sql.append("			c_allocationhdr ah ");
-		sql.append("			INNER JOIN c_allocationline AS al ");
+		sql.append("			" + X_C_AllocationHdr.Table_Name + " ah ");
+		sql.append("			INNER JOIN " + X_C_AllocationLine.Table_Name + " AS al ");
 		sql.append("				ON al.c_allocationhdr_id = ah.c_allocationhdr_id ");
-		sql.append("			LEFT JOIN c_invoice AS d ");
+		sql.append("			LEFT JOIN " + X_C_Invoice.Table_Name + " AS d ");
 		sql.append("				ON d.c_invoice_id = al.c_invoice_id ");
-		sql.append("			LEFT JOIN c_doctype AS ddt ");
+		sql.append("			LEFT JOIN " + X_C_DocType.Table_Name + " AS ddt ");
 		sql.append("				ON ddt.c_doctype_id = d.c_doctypetarget_id ");
-		sql.append("			LEFT JOIN c_invoice AS c ");
+		sql.append("			LEFT JOIN " + X_C_Invoice.Table_Name + " AS c ");
 		sql.append("				ON c.c_invoice_id = al.c_invoice_credit_id ");
-		sql.append("			LEFT JOIN c_doctype as cdt ");
+		sql.append("			LEFT JOIN " + X_C_DocType.Table_Name + " AS cdt ");
 		sql.append("				ON cdt.c_doctype_id = c.c_doctypetarget_id ");
 		sql.append("		WHERE ");
 		sql.append("			ah.c_allocationhdr_id = ? ");
 		sql.append("	) AS ia ");
-		sql.append("	INNER JOIN c_invoice AS i ");
+		sql.append("	INNER JOIN " + X_C_Invoice.Table_Name + " AS i ");
 		sql.append("		ON i.c_invoice_id = ia.c_invoice_id ");
 		sql.append("	LEFT JOIN ( ");
 		sql.append("		SELECT DISTINCT ");
 		sql.append("			al.c_invoice_id, ");
-		sql.append("			0 as orden, ");
-		sql.append("			amt_retenc as amt, ");
-		sql.append("			retencion_percent as perc, ");
-		sql.append("			baseimponible_amt as base ");
+		sql.append("			0 AS orden, ");
+		sql.append("			amt_retenc AS amt, ");
+		sql.append("			retencion_percent AS perc, ");
+		sql.append("			baseimponible_amt AS base ");
 		sql.append("		FROM ");
-		sql.append("			m_retencion_invoice ri ");
-		sql.append("			INNER JOIN c_invoice i ");
+		sql.append("			" + X_M_Retencion_Invoice.Table_Name + " ri ");
+		sql.append("			INNER JOIN " + X_C_Invoice.Table_Name + " i ");
 		sql.append("				ON i.c_invoice_id = ri.c_invoice_id ");
-		sql.append("			INNER JOIN c_allocationline al ");
+		sql.append("			INNER JOIN " + X_C_AllocationLine.Table_Name + " al ");
 		sql.append("				ON al.c_invoice_credit_id = i.c_invoice_id ");
-		sql.append("			INNER JOIN c_retencionschema rs ");
+		sql.append("			INNER JOIN " + X_C_RetencionSchema.Table_Name + " rs ");
 		sql.append("				ON rs.c_retencionschema_id = ri.c_retencionschema_id ");
-		sql.append("			INNER JOIN c_retenciontype rt ");
+		sql.append("			INNER JOIN " + X_C_RetencionType.Table_Name + " rt ");
 		sql.append("				ON rt.c_retenciontype_id = rs.c_retenciontype_id ");
-		sql.append("			LEFT JOIN c_region r ");
+		sql.append("			LEFT JOIN " + X_C_Region.Table_Name + " r ");
 		sql.append("				ON r.c_region_id = rs.c_region_id ");
 		sql.append("		WHERE ");
 		sql.append("			ri.c_allocationhdr_id = ? ");
@@ -445,7 +480,7 @@ public class ExportListaGalicia extends ExportBankList {
 	protected void writeRetenciones(ResultSet rs) throws Exception {
 		StringBuffer sql = new StringBuffer();
 
-		sql.append("select distinct ");
+		sql.append("SELECT DISTINCT ");
 		sql.append("	CASE WHEN retentiontype = 'I' THEN '01' ");
 		sql.append("		WHEN retentiontype = 'G' THEN '02' ");
 		sql.append("		WHEN retentiontype = 'B' THEN '03' ");
@@ -467,16 +502,16 @@ public class ExportListaGalicia extends ExportBankList {
 		sql.append("	ri.importe_no_imponible_amt AS noimponible, ");
 		sql.append("	rs.name AS esquema ");
 		sql.append("FROM ");
-		sql.append("	m_retencion_invoice ri ");
-		sql.append("	INNER JOIN c_invoice i ");
+		sql.append("	" + X_M_Retencion_Invoice.Table_Name + " ri ");
+		sql.append("	INNER JOIN " + X_C_Invoice.Table_Name + " i ");
 		sql.append("		ON i.c_invoice_id = ri.c_invoice_id ");
-		sql.append("	INNER JOIN c_bpartner bp ");
+		sql.append("	INNER JOIN " + X_C_BPartner.Table_Name + " bp ");
 		sql.append("		ON bp.c_bpartner_id = i.c_bpartner_id ");
-		sql.append("	INNER JOIN c_retencionschema rs ");
+		sql.append("	INNER JOIN " + X_C_RetencionSchema.Table_Name + " rs ");
 		sql.append("		ON rs.c_retencionschema_id = ri.c_retencionschema_id ");
-		sql.append("	INNER JOIN c_retenciontype rt ");
+		sql.append("	INNER JOIN " + X_C_RetencionType.Table_Name + " rt ");
 		sql.append("		ON rt.c_retenciontype_id = rs.c_retenciontype_id ");
-		sql.append("	LEFT JOIN c_region r ");
+		sql.append("	LEFT JOIN " + X_C_Region.Table_Name + " r ");
 		sql.append("		ON r.c_region_id = rs.c_region_id ");
 		sql.append("WHERE ");
 		sql.append("	ri.c_allocationhdr_id = ? ");
