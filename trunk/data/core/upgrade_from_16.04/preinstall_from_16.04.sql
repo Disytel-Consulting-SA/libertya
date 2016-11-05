@@ -2578,3 +2578,14 @@ CREATE OR REPLACE VIEW rv_payment AS
 
 ALTER TABLE rv_payment
   OWNER TO libertya;
+
+--20161105-1910 Eliminación de entradas de menú que no se copiaron al changelog al realizar merge de requerimientos
+DELETE FROM AD_TreeNodeMM
+where ad_componentobjectuid IN ('SSTE2CORE-AD_TreeNodeMM-1010116-1010589-20161025151056',
+				'CORE-AD_TreeNodeMM-1010115-1010568',
+				'CORE-AD_TreeNodeMM-10-1010568',
+				'CORE-AD_TreeNodeMM-1010115-1010567',
+				'CORE-AD_TreeNodeMM-1010115-1010566',
+				'CORE-AD_TreeNodeMM-106-1010115',
+				'CORE-AD_TreeNodeMM-1010115-1010569',
+				'CORE-AD_TreeNodeMM-1010115-1010572');
