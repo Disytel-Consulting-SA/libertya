@@ -1098,7 +1098,7 @@ public abstract class AbstractADWindowPanel extends AbstractUIPart implements To
 	{
 		toolbar.enableChanges(curTab.isReadOnly());
 		toolbar.enabledNew(curTab.isInsertRecord());
-		toolbar.enableCopy(curTab.isInsertRecord());
+		toolbar.enableCopy(curTab.isAllowCopyRecord());
 
 		toolbar.enableTabNavigation(curTabIndex > 0,
 		        curTabIndex < (adTab.getTabCount() - 1));
@@ -1215,7 +1215,7 @@ public abstract class AbstractADWindowPanel extends AbstractUIPart implements To
         }
 //        toolbar.enabledNew(!changed && insertRecord && !curTab.isSortTab());
         toolbar.enabledNew(insertRecord && !curTab.isSortTab());
-        toolbar.enableCopy(!changed && insertRecord && !curTab.isSortTab());
+        toolbar.enableCopy(!changed && insertRecord && !curTab.isSortTab() && curTab.isAllowCopyRecord());
         toolbar.enableRefresh(!changed);
         toolbar.enableDelete(!changed && !readOnly && !curTab.isSortTab());
         toolbar.enableDeleteSelection(!changed && !readOnly && !curTab.isSortTab());
@@ -1393,9 +1393,9 @@ public abstract class AbstractADWindowPanel extends AbstractUIPart implements To
      */
     public void onCopy()
     {
-        if (!curTab.isInsertRecord())
+        if (!curTab.isAllowCopyRecord())
         {
-            logger.warning("Insert Record disabled for Tab");
+            logger.warning("Copy Record disabled for Tab");
             return;
         }
 

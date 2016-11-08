@@ -1069,7 +1069,7 @@ public final class APanel extends CPanel implements DataStatusListener,ChangeLis
         //
 
         aNew.setEnabled( !changed && insertRecord );
-        aCopy.setEnabled( !changed && insertRecord );
+        aCopy.setEnabled( !changed && insertRecord && m_curTab.isAllowCopyRecord());
         aDelete.setEnabled( !changed &&!readOnly );
         aRefresh.setEnabled( !changed );
 
@@ -1647,6 +1647,12 @@ public final class APanel extends CPanel implements DataStatusListener,ChangeLis
 
         if( !m_curTab.isInsertRecord()) {
             log.warning( "Insert Record disabled for Tab" );
+
+            return;
+        }
+        
+        if(copy && !m_curTab.isAllowCopyRecord()){
+            log.warning( "Copy Record disabled for Tab" );
 
             return;
         }
