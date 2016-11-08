@@ -7,7 +7,7 @@ import java.math.*;
 import org.openXpertya.util.*;
 /** Modelo Generado por AD_Tab
  *  @author Comunidad de Desarrollo Libertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
- *  @version  - 2013-09-20 17:25:36.304 */
+ *  @version  - 2016-11-08 15:10:30.834 */
 public class X_AD_Tab extends org.openXpertya.model.PO
 {
 /** Constructor estándar */
@@ -19,6 +19,7 @@ super (ctx, AD_Tab_ID, trxName);
 setAD_Tab_ID (0);
 setAD_Table_ID (0);
 setAD_Window_ID (0);
+setAllowCopyRecord (true);	// Y
 setEntityType (null);	// U
 setHasTree (false);
 setIsAdvancedTab (false);	// N
@@ -212,6 +213,22 @@ public int getAD_Window_ID()
 Integer ii = (Integer)get_Value("AD_Window_ID");
 if (ii == null) return 0;
 return ii.intValue();
+}
+/** Set Allow Copy Record */
+public void setAllowCopyRecord (boolean AllowCopyRecord)
+{
+set_Value ("AllowCopyRecord", new Boolean(AllowCopyRecord));
+}
+/** Get Allow Copy Record */
+public boolean isAllowCopyRecord() 
+{
+Object oo = get_Value("AllowCopyRecord");
+if (oo != null) 
+{
+ if (oo instanceof Boolean) return ((Boolean)oo).booleanValue();
+ return "Y".equals(oo);
+}
+return false;
 }
 /** Set Commit Warning.
 Warning displayed when saving */

@@ -176,8 +176,11 @@ public class MTabVO implements Evaluatee, Serializable {
     /** Mostrar mensajes processmsg en dialog */
     public boolean showDialogProcessMsg;
 
-    /** Descripción de Campo */
+    /** Pestaña Siempre actualizable */
     public boolean	IsAlwaysUpdateable	= false;
+    
+    /** Permite copia de registros */
+    private boolean isAllowCopyRecord = true;
     
     /**
      *  protected constructor - must use Factory
@@ -410,6 +413,8 @@ public class MTabVO implements Evaluatee, Serializable {
                 vo.IsAlwaysUpdateable = true;
             }
             
+            vo.setAllowCopyRecord(rs.getString("AllowCopyRecord").equals("Y"));
+            
             //
             vo.Description	= rs.getString("Description");
 
@@ -608,6 +613,7 @@ public class MTabVO implements Evaluatee, Serializable {
 		clone.IsReadOnly = IsReadOnly;
 		clone.IsInsertRecord = IsInsertRecord;
 		clone.IsAlwaysUpdateable = IsAlwaysUpdateable;
+		clone.isAllowCopyRecord = isAllowCopyRecord; 
 		clone.HasTree = HasTree;
 		clone.AD_Table_ID = AD_Table_ID;
 		clone.AD_Column_ID = AD_Column_ID;
@@ -663,6 +669,14 @@ public class MTabVO implements Evaluatee, Serializable {
 		ctx = Ctx;
 		WindowNo = windowNo;
 	}   //  MTabVO
+
+	public boolean isAllowCopyRecord() {
+		return isAllowCopyRecord;
+	}
+
+	public void setAllowCopyRecord(boolean isAllowCopyRecord) {
+		this.isAllowCopyRecord = isAllowCopyRecord;
+	}
 
 	
 }	// MTabVO

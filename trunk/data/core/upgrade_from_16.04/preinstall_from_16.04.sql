@@ -2589,3 +2589,29 @@ where ad_componentobjectuid IN ('SSTE2CORE-AD_TreeNodeMM-1010116-1010589-2016102
 				'CORE-AD_TreeNodeMM-106-1010115',
 				'CORE-AD_TreeNodeMM-1010115-1010569',
 				'CORE-AD_TreeNodeMM-1010115-1010572');
+
+--20161108-1500 Permitir copia de registros
+UPDATE ad_system SET dummy = (SELECT addcolumnifnotexists('AD_Tab','allowcopyrecord','character(1) NOT NULL DEFAULT ''Y''::bpchar'));
+
+DROP VIEW ad_tab_v;
+DROP VIEW ad_tab_vt;
+
+CREATE OR REPLACE VIEW ad_tab_v AS 
+ SELECT t.ad_tab_id, t.ad_window_id, t.ad_table_id, t.name, t.description, t.help, t.seqno, t.issinglerow, t.hastree, t.isinfotab, tbl.replicationtype, tbl.tablename, tbl.accesslevel, tbl.issecurityenabled, tbl.isdeleteable, tbl.ishighvolume, tbl.isview, 'N' AS hasassociation, t.istranslationtab, t.isreadonly, t.ad_image_id, t.tablevel, t.whereclause, t.orderbyclause, t.commitwarning, t.readonlylogic, t.displaylogic, t.ad_column_id, t.ad_process_id, t.issorttab, t.isinsertrecord, t.isadvancedtab, t.ad_columnsortorder_id, t.ad_columnsortyesno_id, t.included_tab_id, t.isprocessmsgshowdialog, t.isalwaysupdateable, t.allowcopyrecord
+   FROM ad_tab t
+   JOIN ad_table tbl ON t.ad_table_id = tbl.ad_table_id
+  WHERE t.isactive = 'Y'::bpchar AND tbl.isactive = 'Y'::bpchar;
+
+ALTER TABLE ad_tab_v
+  OWNER TO libertya;
+
+
+CREATE OR REPLACE VIEW ad_tab_vt AS 
+ SELECT trl.ad_language, t.ad_tab_id, t.ad_window_id, t.ad_table_id, trl.name, trl.description, trl.help, t.seqno, t.issinglerow, t.hastree, t.isinfotab, tbl.replicationtype, tbl.tablename, tbl.accesslevel, tbl.issecurityenabled, tbl.isdeleteable, tbl.ishighvolume, tbl.isview, 'N' AS hasassociation, t.istranslationtab, t.isreadonly, t.ad_image_id, t.tablevel, t.whereclause, t.orderbyclause, trl.commitwarning, t.readonlylogic, t.displaylogic, t.ad_column_id, t.ad_process_id, t.issorttab, t.isinsertrecord, t.isadvancedtab, t.ad_columnsortorder_id, t.ad_columnsortyesno_id, t.included_tab_id, t.isprocessmsgshowdialog, t.isalwaysupdateable, t.allowcopyrecord
+   FROM ad_tab t
+   JOIN ad_table tbl ON t.ad_table_id = tbl.ad_table_id
+   JOIN ad_tab_trl trl ON t.ad_tab_id = trl.ad_tab_id
+  WHERE t.isactive = 'Y'::bpchar AND tbl.isactive = 'Y'::bpchar;
+
+ALTER TABLE ad_tab_vt
+  OWNER TO libertya;

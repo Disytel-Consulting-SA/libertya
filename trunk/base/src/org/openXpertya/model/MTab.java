@@ -1655,6 +1655,18 @@ public class MTab implements DataStatusListener,Evaluatee,Serializable {
         return m_vo.IsAlwaysUpdateable;
     }
     
+    public boolean isAllowCopyRecord() {
+        if( isReadOnly()) {
+            return false;
+        }
+        
+        if(!isInsertRecord()){
+        	return false;
+        }
+
+        return m_vo.isAllowCopyRecord();
+    }
+    
     public boolean isInserting(){
     	return m_mTable.isInserting();
     }
