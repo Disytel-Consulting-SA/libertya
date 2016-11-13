@@ -1011,6 +1011,11 @@ public class CalloutInvoice extends CalloutEngine {
         }
    	 return amount;
         }  // totalTax
+    
+    
+    public String bPartnerLocation( Properties ctx,int WindowNo,MTab mTab,MField mField,Object value ) {
+    	return "";
+    }
 }    // CalloutInvoice
 
 
