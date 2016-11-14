@@ -7,7 +7,7 @@ import java.math.*;
 import org.openXpertya.util.*;
 /** Modelo Generado por M_AuthorizationChainLink
  *  @author Comunidad de Desarrollo Libertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
- *  @version  - 2015-10-19 15:08:50.733 */
+ *  @version  - 2016-11-14 17:15:29.492 */
 public class X_M_AuthorizationChainLink extends org.openXpertya.model.PO
 {
 /** Constructor estándar */
@@ -16,12 +16,11 @@ public X_M_AuthorizationChainLink (Properties ctx, int M_AuthorizationChainLink_
 super (ctx, M_AuthorizationChainLink_ID, trxName);
 /** if (M_AuthorizationChainLink_ID == 0)
 {
-setDescription (null);
-setLinkNumber (0);
+setLinkNumber (0);	// @SQL=SELECT NVL(MAX(LinkNumber),0)+1 AS DefaultValue FROM M_AuthorizationChainLink WHERE M_AuthorizationChain_ID=@M_AuthorizationChain_ID@
 setMandatory (false);
 setM_AuthorizationChain_ID (0);
 setM_AuthorizationChainLink_ID (0);
-setMinimumAmount (Env.ZERO);
+setValidateDocumentAmount (false);
 }
  */
 }
@@ -54,8 +53,7 @@ return sb.toString();
 Optional short description of the record */
 public void setDescription (String Description)
 {
-if (Description == null) throw new IllegalArgumentException ("Description is mandatory");
-if (Description.length() > 255)
+if (Description != null && Description.length() > 255)
 {
 log.warning("Length > 255 - truncated");
 Description = Description.substring(0,255);
@@ -72,12 +70,12 @@ public KeyNamePair getKeyNamePair()
 {
 return new KeyNamePair(getID(), getDescription());
 }
-/** Set Link Number */
+/** Set LinkNumber */
 public void setLinkNumber (int LinkNumber)
 {
 set_Value ("LinkNumber", new Integer(LinkNumber));
 }
-/** Get Link Number */
+/** Get LinkNumber */
 public int getLinkNumber() 
 {
 Integer ii = (Integer)get_Value("LinkNumber");
@@ -124,29 +122,44 @@ Integer ii = (Integer)get_Value("M_AuthorizationChainLink_ID");
 if (ii == null) return 0;
 return ii.intValue();
 }
-/** Set Maximum Amount */
+/** Set MaximumAmount */
 public void setMaximumAmount (BigDecimal MaximumAmount)
 {
 set_Value ("MaximumAmount", MaximumAmount);
 }
-/** Get Maximum Amount */
+/** Get MaximumAmount */
 public BigDecimal getMaximumAmount() 
 {
 BigDecimal bd = (BigDecimal)get_Value("MaximumAmount");
 if (bd == null) return Env.ZERO;
 return bd;
 }
-/** Set Minimum Amount */
+/** Set MinimumAmount */
 public void setMinimumAmount (BigDecimal MinimumAmount)
 {
-if (MinimumAmount == null) throw new IllegalArgumentException ("MinimumAmount is mandatory");
 set_Value ("MinimumAmount", MinimumAmount);
 }
-/** Get Minimum Amount */
+/** Get MinimumAmount */
 public BigDecimal getMinimumAmount() 
 {
 BigDecimal bd = (BigDecimal)get_Value("MinimumAmount");
 if (bd == null) return Env.ZERO;
 return bd;
+}
+/** Set Validate Document Amount */
+public void setValidateDocumentAmount (boolean ValidateDocumentAmount)
+{
+set_Value ("ValidateDocumentAmount", new Boolean(ValidateDocumentAmount));
+}
+/** Get Validate Document Amount */
+public boolean isValidateDocumentAmount() 
+{
+Object oo = get_Value("ValidateDocumentAmount");
+if (oo != null) 
+{
+ if (oo instanceof Boolean) return ((Boolean)oo).booleanValue();
+ return "Y".equals(oo);
+}
+return false;
 }
 }

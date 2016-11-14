@@ -66,16 +66,23 @@ public class MAuthorizationChain extends X_M_AuthorizationChain {
 	
 	@Override
 	protected boolean beforeSave(boolean newRecord) {
-		// Verificar que no exista una autorización para el mismo tipo de documento
-		if (DB.getSQLValue(
-				this.get_TrxName(),
-				"SELECT M_AuthorizationChain_ID FROM M_AuthorizationChain WHERE C_DocType_ID = "
-						+ this.getC_DocType_ID() 
-						+ " AND AD_Org_ID = " + getAD_Org_ID()
-						+ " AND AD_Client_ID = " + getAD_Client_ID() ) > 0) {
-			log.saveError(Msg.getMsg(getCtx(), "AlreadyExistsAnAuthorization"),"");
-			return false;
-		}
+		//Si se reactiva la autorización
+		if (!newRecord && is_ValueChanged("IsActive") && isActive())
+			//Verificar que no exista una autorización para el mismo tipo de documento y organización
+			if (DB.getSQLValue(
+					this.get_TrxName(),
+					"SELECT COUNT(M_AuthorizationChain_ID) " +
+					" FROM M_AuthorizationChainDocumentType autDoc " + 
+					" WHERE EXISTS(SELECT * FROM M_AuthorizationChainDocumentType acdt " +
+					"		INNER JOIN M_AuthorizationChain au ON au.M_AuthorizationChain_ID = acdt.M_AuthorizationChain_ID " +
+					"		WHERE acdt.C_DocType_ID = autDoc.C_DocType_ID " +
+					((getAD_Org_ID() != 0)? " AND (acdt.AD_Org_ID = " + getAD_Org_ID() + " OR acdt.AD_Org_ID = 0) " : "" ) +
+					"			AND acdt.M_AuthorizationChainDocumentType_ID <> autDoc.M_AuthorizationChainDocumentType_ID " +
+					"			AND au.isActive = 'Y') " +
+					" AND autDoc.M_AuthorizationChain_ID = " + getM_AuthorizationChain_ID()) > 0) {
+				log.saveError(Msg.getMsg(getCtx(), "AlreadyExistsAnAuthorization"),"");
+				return false;
+			}
 		return true;
 	}
 

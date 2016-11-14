@@ -52,17 +52,21 @@ public class AuthorizeChain extends SvrProcess {
 		String sql= "SELECT M_AuthorizationChainDocument_ID "
 		+ " FROM M_AuthorizationChainDocument acd "
 		+ " INNER JOIN "
-		+		 "(SELECT M_AuthorizationChainLink_ID,Mandatory,MaximumAmount,authc.C_Currency_ID FROM M_AuthorizationChainLink authcl"
+		+		 "(SELECT M_AuthorizationChainLink_ID,Mandatory,MaximumAmount,authc.C_Currency_ID, authcl.created FROM M_AuthorizationChainLink authcl"
 					+ " INNER JOIN M_AuthorizationChain authc ON (authc.M_AuthorizationChain_ID = authcl.M_AuthorizationChain_ID)"
 					+ " WHERE authcl.M_AuthorizationChain_ID = " + authChainLink.getM_AuthorizationChain_ID()
 				+ ") acl "
 		+ " ON (acl.M_AuthorizationChainLink_ID = acd.M_AuthorizationChainLink_ID) " 
 		+ " INNER JOIN "+ tableName + " d"
 		+ " ON (d." + tableName + "_ID = acd." + tableName + "_ID) "
-		+ " WHERE acd." + tableName + "_ID = " + getRecord_ID()
-		+ " AND acl.MaximumAmount <= CurrencyConvert("+ getMaximumAmount(authChainLink.getMaximumAmount()) +", d.C_Currency_ID,acl.C_Currency_ID, current_date, d.c_conversiontype_id, acd.ad_client_id, acd.ad_org_id) "
-		+ " AND acd.Status= '" + X_M_AuthorizationChainDocument.STATUS_Pending + "' " 
+		+ " WHERE acd." + tableName + "_ID = " + getRecord_ID();
+		if (authChainLink.isValidateDocumentAmount())
+			sql= sql + " AND acl.MaximumAmount <= CurrencyConvert("+ getMaximumAmount(authChainLink.getMaximumAmount()) +", d.C_Currency_ID,acl.C_Currency_ID, current_date, d.c_conversiontype_id, acd.ad_client_id, acd.ad_org_id) ";
+		else
+			sql = sql + " AND acl.created < '" + authChainLink.getCreated() + "' ";
+		sql = sql + " AND acd.Status= '" + X_M_AuthorizationChainDocument.STATUS_Pending + "' " 
 		+ " AND acl.Mandatory= 'Y' " 
+		+ " AND acl.M_AuthorizationChainLink_ID <> " + authChainLink.getM_AuthorizationChainLink_ID()
 		+ " AND NOT EXISTS (SELECT aclu.M_AuthorizationChainLink_ID " 
 				+ " FROM m_authorizationchainlinkuser aclu " 
 				+ " WHERE aclu.M_AuthorizationChainLink_ID = acl.M_AuthorizationChainLink_ID " 
@@ -77,7 +81,7 @@ public class AuthorizeChain extends SvrProcess {
 		StringBuffer sqlAuthorizationChainLink_ID = new StringBuffer(
 						  "SELECT acd.M_AuthorizationChainDocument_ID FROM M_AuthorizationChainDocument acd "
 						+ " INNER JOIN "
-							+ "(SELECT M_AuthorizationChainLink_ID,MinimumAmount,MaximumAmount,authc.C_Currency_ID FROM M_AuthorizationChainLink authcl"
+							+ "(SELECT M_AuthorizationChainLink_ID,MinimumAmount,MaximumAmount,authc.C_Currency_ID, authcl.created FROM M_AuthorizationChainLink authcl"
 								+ " INNER JOIN M_AuthorizationChain authc ON (authc.M_AuthorizationChain_ID = authcl.M_AuthorizationChain_ID)"
 								+ " WHERE authcl.M_AuthorizationChain_ID = ? "
 							+ ") acl "
@@ -85,17 +89,21 @@ public class AuthorizeChain extends SvrProcess {
 						+ " INNER JOIN "+ tableName + " d"
 						+ " ON (d." + tableName + "_ID = acd." + tableName + "_ID) "
 					    + " WHERE acd." + tableName + "_ID = ? "
-					    + " AND acl.MinimumAmount <= CurrencyConvert(d.GrandTotal, d.C_Currency_ID,acl.C_Currency_ID, current_date, d.c_conversiontype_id, acd.ad_client_id, acd.ad_org_id) "
-					    + " AND acl.MinimumAmount <= ? "
-						);
-
+					    + " AND status = 'P' ");
+					    if (authChainLink.isValidateDocumentAmount())
+					    	sqlAuthorizationChainLink_ID.append(" AND acl.MinimumAmount <= CurrencyConvert(d.GrandTotal, d.C_Currency_ID,acl.C_Currency_ID, current_date, d.c_conversiontype_id, acd.ad_client_id, acd.ad_org_id) "
+					    			+ " AND acl.MinimumAmount <= ? ");
+					    else
+					    	sqlAuthorizationChainLink_ID.append(" AND acl.created <= '" + authChainLink.getCreated() + "' ");
+						
 		PreparedStatement pstmt = null;
 
 		pstmt = DB.prepareStatement(sqlAuthorizationChainLink_ID.toString(),
 				get_TrxName());
 		pstmt.setInt(1, authChainLink.getM_AuthorizationChain_ID());
 		pstmt.setInt(2, getRecord_ID());
-		pstmt.setBigDecimal(3, getMaximumAmount(authChainLink.getMaximumAmount()));
+		if (authChainLink.isValidateDocumentAmount())
+			pstmt.setBigDecimal(3, getMaximumAmount(authChainLink.getMaximumAmount()));
 
 		ResultSet rs = pstmt.executeQuery();
 		
