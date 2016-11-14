@@ -138,6 +138,7 @@ public class ChangeLogGroupList {
 					group = new ChangeLogGroup(ad_table_id, ad_componentObjectUID, operationType, tableName);
 					group.setAd_componentObjectUID(ad_componentObjectUID);
 					group.setOperation(operationType);
+					group.setChangelogGroupID(changeLogGroupID);
 					getGroups().add(group);
 				}
 				// Crear el elemento y agregarlo al grupo

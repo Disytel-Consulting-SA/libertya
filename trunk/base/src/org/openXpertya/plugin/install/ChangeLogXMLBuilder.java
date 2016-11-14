@@ -115,6 +115,7 @@ public abstract class ChangeLogXMLBuilder extends PluginXMLBuilder {
 			setAttribute("tableName", group.getTableName(), groupNode);
 			setAttribute("uid", group.getAd_componentObjectUID(), groupNode);
 			setAttribute("operation", group.getOperation(), groupNode);
+			setAttribute("changelogGroupID", ""+group.getChangelogGroupID(), groupNode);
 			// Si es eliminación va un tag vacío, 
 			// sino se deben crear tags para cada columna  
 			if(!group.getOperation().equals(MChangeLog.OPERATIONTYPE_Deletion)){

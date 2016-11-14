@@ -21,6 +21,12 @@ public class ChangeLogGroup {
 	
 	protected String operation;
 	
+	
+	/** ChangelogGroupID en la BBDD de desarrollo */
+	
+	protected int changelogGroupID;
+	
+	
 	/** Elementos del grupo */
 	
 	protected List<ChangeLogElement> elements;
@@ -80,5 +86,13 @@ public class ChangeLogGroup {
 
 	public String getTableName() {
 		return tableName;
+	}
+
+	public int getChangelogGroupID() {
+		return changelogGroupID;
+	}
+
+	public void setChangelogGroupID(int changelogGroupID) {
+		this.changelogGroupID = changelogGroupID;
 	}
 }
