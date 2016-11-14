@@ -18,6 +18,7 @@ import org.openXpertya.JasperReport.DataSource.JasperReportsUtil;
 import org.openXpertya.apps.ADialog;
 import org.openXpertya.model.MDocType;
 import org.openXpertya.model.X_AD_JasperReport;
+import org.openXpertya.plugin.common.PluginUtils;
 import org.openXpertya.print.CPrinter;
 import org.openXpertya.process.ProcessInfo;
 import org.openXpertya.process.ProcessInfo.JasperReportDTO;
@@ -279,8 +280,12 @@ public class MJasperReport extends X_AD_JasperReport
     	
     	// recuperar un Jasper a partir de su UID
     	String getIDFromUID = " SELECT AD_JasperReport_ID FROM AD_JasperReport WHERE AD_ComponentObjectUID = ? ";
-		MJasperReport libroIvaJR = new MJasperReport(ctx, DB.getSQLValue(trxName, getIDFromUID, componentObjectUID), trxName);
-		
+    	int reportID = DB.getSQLValue(trxName, getIDFromUID, componentObjectUID);
+    	if (reportID <= 0) {
+    		PluginUtils.appendStatus("WARNING: Informe Jasper " + componentObjectUID + " no encontrado en BBDD.  Imposible actualizar. ");
+    		return;
+    	}
+		MJasperReport libroIvaJR = new MJasperReport(ctx, reportID, trxName);
 		
 		// Setear el contenido binario correspondiente
 		libroIvaJR.setBinaryData(data);
