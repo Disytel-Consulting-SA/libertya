@@ -2615,3 +2615,35 @@ CREATE OR REPLACE VIEW ad_tab_vt AS
 
 ALTER TABLE ad_tab_vt
   OWNER TO libertya;
+
+--20161114-1713 Redefinición de las cadenas de autorizaciones
+
+ALTER TABLE M_AuthorizationChain DROP CONSTRAINT cdoctype_mauthorizationchain;
+
+ALTER TABLE M_AuthorizationChain ALTER COLUMN C_DocType_ID DROP NOT NULL;
+
+ALTER TABLE M_AuthorizationChainLink ALTER COLUMN MinimumAmount DROP NOT NULL;
+
+UPDATE ad_system SET dummy = (SELECT addcolumnifnotexists('M_AuthorizationChainLink','ValidateDocumentAmount','character(1) NOT NULL default ''Y''::bpchar'));
+
+CREATE TABLE libertya.m_authorizationchaindocumenttype
+(
+  m_authorizationchaindocumenttype_id integer NOT NULL,
+  ad_client_id integer NOT NULL,
+  ad_org_id integer NOT NULL,
+  isactive character(1) NOT NULL DEFAULT 'Y'::bpchar,
+  created timestamp without time zone NOT NULL DEFAULT ('now'::text)::timestamp(6) with time zone,
+  createdby integer NOT NULL,
+  updated timestamp without time zone NOT NULL DEFAULT ('now'::text)::timestamp(6) with time zone,
+  updatedby integer NOT NULL,
+  m_authorizationchain_id integer NOT NULL,
+  C_DocType_ID integer NOT NULL,
+ CONSTRAINT m_authorizationchaindocumenttype_key PRIMARY KEY (m_authorizationchaindocumenttype_id),
+ CONSTRAINT mauthorizationchain_mauthorizationchaindocumenttype FOREIGN KEY (m_authorizationchain_id)
+      REFERENCES libertya.m_authorizationchain (m_authorizationchain_id) MATCH SIMPLE
+)
+WITH (
+  OIDS=TRUE
+);
+ALTER TABLE libertya.m_authorizationchaindocumenttype
+  OWNER TO libertya;

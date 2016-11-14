@@ -2290,7 +2290,19 @@ public class MInvoice extends X_C_Invoice implements DocAction,Authorization {
 			setDateInvoiced(new Timestamp(
 					dateInvoicedCalendar.getTimeInMillis()));
 		}
-
+		
+		//Se determina la cadena de autorización para la factura de proveedor
+		if (!isSOTrx())
+			setM_AuthorizationChain_ID(DB.getSQLValue(get_TrxName(), 
+					"SELECT audt.M_AuthorizationChain_ID FROM M_AuthorizationChainDocumentType audt "
+					+ " INNER JOIN M_AuthorizationChain au ON au.M_AuthorizationChain_ID = audt.M_AuthorizationChain_ID "
+					+ " WHERE audt.C_DocType_ID = ? "
+					+ ((getAD_Org_ID() != 0)? " AND (audt.AD_Org_ID = " + getAD_Org_ID() + " OR audt.AD_Org_ID = 0) " : "" ) 
+					+ " AND au.isActive = 'Y' "
+					+ " ORDER BY audt.AD_Org_ID desc LIMIT 1 ", 
+					((getC_DocTypeTarget_ID()!=0)?getC_DocTypeTarget_ID():getC_DocType_ID()), 
+					false));
+		
 		return true;
 	} // beforeSave
 
@@ -3591,7 +3603,7 @@ public class MInvoice extends X_C_Invoice implements DocAction,Authorization {
 				if (authorizationChainManager
 						.loadAuthorizationChain(reactiveInvoice())) {
 					m_processMsg = Msg.getMsg(getCtx(), "ExistsAuthorizationChainLink");
-					this.setProcessed(true);
+					//this.setProcessed(true);
 					return DOCSTATUS_WaitingConfirmation;
 				}
 			} catch (Exception e) {
