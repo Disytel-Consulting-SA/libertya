@@ -295,7 +295,7 @@ ORDER BY nropedido]]></queryString>
 					</textElement>
 				<text><![CDATA[Cantidad de Días:]]></text>
 				</staticText>
-				<textField isStretchWithOverflow="false" pattern="###0.00;-###0.00" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
+				<textField isStretchWithOverflow="false" pattern="###0" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
 						x="104"
 						y="63"
