@@ -635,7 +635,7 @@ WHERE (($P{Pendiente} IS NULL) OR (sub.pendiente = $P{Pendiente}))]]></queryStri
 					<textElement textAlignment="Left">
 						<font size="6"/>
 					</textElement>
-				<textFieldExpression   class="java.lang.String"><![CDATA[$F{pendiente}]]></textFieldExpression>
+				<textFieldExpression   class="java.lang.String"><![CDATA[($F{pendiente}.equals("Y") ? "Si" : "No")]]></textFieldExpression>
 				</textField>
 				<textField isStretchWithOverflow="true" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
