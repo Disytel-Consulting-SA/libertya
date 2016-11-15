@@ -141,7 +141,7 @@ ORDER BY ba.accountno, fecha]]></queryString>
 			</band>
 		</title>
 		<pageHeader>
-			<band height="65"  isSplitAllowed="true" >
+			<band height="78"  isSplitAllowed="true" >
 				<staticText>
 					<reportElement
 						x="0"
@@ -188,7 +188,7 @@ ORDER BY ba.accountno, fecha]]></queryString>
 					<reportElement
 						x="0"
 						y="40"
-						width="30"
+						width="70"
 						height="10"
 						key="staticText-4"
 						isRemoveLineWhenBlank="true">
@@ -198,12 +198,12 @@ ORDER BY ba.accountno, fecha]]></queryString>
 					<textElement textAlignment="Left" verticalAlignment="Middle">
 						<font size="8"/>
 					</textElement>
-				<text><![CDATA[Fecha:]]></text>
+				<text><![CDATA[Fecha Desde:]]></text>
 				</staticText>
 				<staticText>
 					<reportElement
 						x="0"
-						y="50"
+						y="60"
 						width="70"
 						height="10"
 						key="staticText-12"
@@ -234,9 +234,9 @@ ORDER BY ba.accountno, fecha]]></queryString>
 				</textField>
 				<textField isStretchWithOverflow="false" pattern="dd/MM/yyyy" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
-						x="30"
+						x="70"
 						y="40"
-						width="100"
+						width="190"
 						height="10"
 						key="textField-10"
 						isRemoveLineWhenBlank="true">
@@ -251,7 +251,7 @@ ORDER BY ba.accountno, fecha]]></queryString>
 				<textField isStretchWithOverflow="true" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
 						x="70"
-						y="50"
+						y="60"
 						width="190"
 						height="10"
 						key="textField-11"
@@ -266,24 +266,25 @@ ORDER BY ba.accountno, fecha]]></queryString>
 				</textField>
 				<staticText>
 					<reportElement
-						x="130"
-						y="40"
-						width="30"
+						x="0"
+						y="50"
+						width="70"
 						height="10"
-						key="staticText-13">
+						key="staticText-13"
+						isRemoveLineWhenBlank="true">
 							<printWhenExpression><![CDATA[new Boolean($P{Date_To} != null)]]></printWhenExpression>
 						</reportElement>
 					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
 					<textElement textAlignment="Left" verticalAlignment="Middle">
 						<font size="8"/>
 					</textElement>
-				<text><![CDATA[Fecha:]]></text>
+				<text><![CDATA[Fecha Hasta:]]></text>
 				</staticText>
 				<textField isStretchWithOverflow="false" pattern="dd/MM/yyyy" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
-						x="160"
-						y="40"
-						width="100"
+						x="70"
+						y="50"
+						width="190"
 						height="10"
 						key="textField-12"
 						isRemoveLineWhenBlank="true">
