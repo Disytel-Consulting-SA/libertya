@@ -412,6 +412,8 @@ public class LaunchInvoice extends SvrProcess {
 					JasperReportsUtil.getCategoriaIVAName(getCtx(),
 							client.getCategoriaIva(invoice.getAD_Org_ID()), get_TrxName()));
 		
+		jasperwrapper.addParameter("INGBRUTO_CLIENT", clientInfo.getIIBB());
+		
 		/* Codigo original
 		jasperwrapper.addParameter("CLIENT_CUIT",clientInfo.getCUIT());
 		jasperwrapper.addParameter(
