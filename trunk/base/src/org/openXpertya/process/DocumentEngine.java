@@ -22,12 +22,15 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Vector;
-import java.util.logging.Logger;
 
 import org.openXpertya.model.MAllocationHdr;
 import org.openXpertya.model.MBankList;
 import org.openXpertya.model.MBankStatement;
+import org.openXpertya.model.MBankTransfer;
+import org.openXpertya.model.MBoletaDeposito;
+import org.openXpertya.model.MBrochure;
 import org.openXpertya.model.MCash;
+import org.openXpertya.model.MCashLine;
 import org.openXpertya.model.MCreditCardClose;
 import org.openXpertya.model.MInOut;
 import org.openXpertya.model.MInventory;
@@ -36,12 +39,16 @@ import org.openXpertya.model.MJournal;
 import org.openXpertya.model.MJournalBatch;
 import org.openXpertya.model.MMovement;
 import org.openXpertya.model.MOrder;
+import org.openXpertya.model.MPOSJournal;
 import org.openXpertya.model.MPayment;
+import org.openXpertya.model.MProductChange;
 import org.openXpertya.model.MRole;
+import org.openXpertya.model.MSplitting;
 import org.openXpertya.model.MTransfer;
+import org.openXpertya.model.MWarehouseClose;
 import org.openXpertya.model.PO;
+import org.openXpertya.model.X_C_POSJournal;
 import org.openXpertya.plugin.MPluginDocAction;
-import org.openXpertya.plugin.MPluginPO;
 import org.openXpertya.plugin.common.PluginPOUtils;
 import org.openXpertya.plugin.handlersDocAction.PluginDocActionApproveItHandler;
 import org.openXpertya.plugin.handlersDocAction.PluginDocActionCloseItHandler;
@@ -56,7 +63,6 @@ import org.openXpertya.plugin.handlersDocAction.PluginDocActionReverseAccrualItH
 import org.openXpertya.plugin.handlersDocAction.PluginDocActionReverseCorrectItHandler;
 import org.openXpertya.plugin.handlersDocAction.PluginDocActionUnlockItHandler;
 import org.openXpertya.plugin.handlersDocAction.PluginDocActionVoidItHandler;
-import org.openXpertya.plugin.handlersPO.PluginPOHandler;
 import org.openXpertya.util.CLogger;
 import org.openXpertya.util.DB;
 import org.openXpertya.util.Env;
@@ -1055,7 +1061,8 @@ public class DocumentEngine implements DocAction {
 				|| docStatus.equals(DocumentEngine.STATUS_Invalid))
 			{
 				options[index++] = DocumentEngine.ACTION_Prepare;
-				options[index++] = DocumentEngine.ACTION_Close;
+// Comentado según definicion previa en VDocAction
+//				options[index++] = DocumentEngine.ACTION_Close;
 				//	Draft Sales Order Quote/Proposal - Process
 				if ("Y".equals(isSOTrx)
 					&& ("OB".equals(orderType) || "ON".equals(orderType)))
@@ -1067,11 +1074,12 @@ public class DocumentEngine implements DocAction {
 				options[index++] = DocumentEngine.ACTION_Void;
 				options[index++] = DocumentEngine.ACTION_ReActivate;
 			}
-			else if (docStatus.equals(DocumentEngine.STATUS_WaitingPayment))
-			{
-				options[index++] = DocumentEngine.ACTION_ReActivate;
-				options[index++] = DocumentEngine.ACTION_Close;
-			}
+// Comentado según definicion previa en VDocAction			
+//			else if (docStatus.equals(DocumentEngine.STATUS_WaitingPayment))
+//			{
+//				options[index++] = DocumentEngine.ACTION_ReActivate;
+//				options[index++] = DocumentEngine.ACTION_Close;
+//			}
 		}
 		/********************
 		 *  Shipment
@@ -1081,8 +1089,11 @@ public class DocumentEngine implements DocAction {
 			//	Complete                    ..  CO
 			if (docStatus.equals(DocumentEngine.STATUS_Completed))
 			{
-				options[index++] = DocumentEngine.ACTION_Void;
-				options[index++] = DocumentEngine.ACTION_Reverse_Correct;
+				// Comentado según definicion previa en VDocAction
+                // El cancelado hace las veces de revertido para facturas. No se
+                // despliega la opción ya que es lo mismo
+                // options[ index++ ] = DocumentEngine.ACTION_Reverse_Correct;
+                options[ index++ ] = DocumentEngine.ACTION_Void;
 			}
 		}
 		/********************
@@ -1174,11 +1185,69 @@ public class DocumentEngine implements DocAction {
 				options[index++] = DocumentEngine.ACTION_Void;
 			}
 		}
+		else if(AD_Table_ID == MBankTransfer.Table_ID){
+        
+			// Segun definicion previa en VDocAction
+			// Complete                    ..  CO
+			if( docStatus.equals( DocumentEngine.STATUS_Completed )) {
+        		options[ index++ ] = DocumentEngine.ACTION_Void;
+        	}
+    	}
+		// Segun definicion previa en VDocAction
+		else if( AD_Table_ID == MBoletaDeposito.Table_ID ) {
+			// Complete                    ..  CO
+			if( docStatus.equals( DocumentEngine.STATUS_Completed )) {
+				options[ index++ ] = DocumentEngine.ACTION_Void;
+			}
+		} else if( AD_Table_ID == MSplitting.Table_ID ) {
+
+			// Complete                    ..  CO
+			if( docStatus.equals( DocumentEngine.STATUS_Completed )) {
+				options[ index++ ] = DocumentEngine.ACTION_Void;
+			}
+		} else if( AD_Table_ID == MProductChange.Table_ID ) {
+			// Complete                    ..  CO
+			if( docStatus.equals( DocumentEngine.STATUS_Completed )) {
+				options[ index++ ] = DocumentEngine.ACTION_Void;
+			}
+		} else if ( AD_Table_ID == MPOSJournal.Table_ID ) {
+			// Si está en borrador solo se puede abrir la caja diaria
+			if( docStatus.equals( X_C_POSJournal.DOCSTATUS_Drafted )) {
+				options[ 0 ] = X_C_POSJournal.DOCACTION_Open;
+				// Si está abierta entonces se puede cerrar o completar la caja diaria
+			} else if ( docStatus.equals( X_C_POSJournal.DOCSTATUS_Opened )) {
+				options[ index++ ] = X_C_POSJournal.DOCACTION_Close;
+			}
+		} else if( AD_Table_ID == MCashLine.Table_ID ) {
+			// Complete                    ..  CO
+			if( docStatus.equals( DocumentEngine.STATUS_Completed )) {
+				options[ index++ ] = DocumentEngine.ACTION_Void;
+			}
+		} else if( AD_Table_ID == MWarehouseClose.Table_ID ) {
+			// Complete                    ..  CO
+			if( docStatus.equals( DocumentEngine.STATUS_Completed )) {
+				options[ index++ ] = DocumentEngine.ACTION_ReActivate;
+			}
+		// Anulación de inventario
+		} else if( AD_Table_ID == MInventory.Table_ID ) {
+			if( docStatus.equals( DocumentEngine.STATUS_Completed )) {
+				options[ index++ ] = DocumentEngine.ACTION_Void;
+			}
+		// Anulación de Transferencia de Mercadería
+		} else if( AD_Table_ID == MTransfer.Table_ID ) {
+			if( docStatus.equals( DocumentEngine.STATUS_Completed )) {
+				options[ index++ ] = DocumentEngine.ACTION_Void;
+			}
+		} else if(AD_Table_ID == MBrochure.Table_ID){
+			if( docStatus.equals( DocumentEngine.STATUS_Completed )) {
+				options[ index++ ] = DocumentEngine.ACTION_ReActivate;
+				options[ index++ ] = DocumentEngine.ACTION_Void;
+			}
+		}
 		/********************
 		 *  Inventory Movement, Physical Inventory
 		 */
-		else if (AD_Table_ID == MMovement.Table_ID
-			|| AD_Table_ID == MInventory.Table_ID)
+		else if (AD_Table_ID == MMovement.Table_ID)
 		{
 			//	Complete                    ..  CO
 			if (docStatus.equals(DocumentEngine.STATUS_Completed))
@@ -1187,82 +1256,6 @@ public class DocumentEngine implements DocAction {
 				options[index++] = DocumentEngine.ACTION_Reverse_Correct;
 			}
 		}
-		/********************
-		 *  Manufacturing Order
-		 */
-//		else if (AD_Table_ID == I_PP_Order.Table_ID)
-//		{
-//			if (docStatus.equals(DocumentEngine.STATUS_Drafted)
-//					|| docStatus.equals(DocumentEngine.STATUS_InProgress)
-//					|| docStatus.equals(DocumentEngine.STATUS_Invalid))
-//				{
-//					options[index++] = DocumentEngine.ACTION_Prepare;
-//					options[index++] = DocumentEngine.ACTION_Close;
-//				}
-//				//	Complete                    ..  CO
-//				else if (docStatus.equals(DocumentEngine.STATUS_Completed))
-//				{
-//					options[index++] = DocumentEngine.ACTION_Void;
-//					options[index++] = DocumentEngine.ACTION_ReActivate;
-//				}
-//		}
-		/********************
-		 *  Manufacturing Cost Collector
-		 */
-//		else if (AD_Table_ID == I_PP_Cost_Collector.Table_ID)
-//		{
-//			if (docStatus.equals(DocumentEngine.STATUS_Drafted)
-//					|| docStatus.equals(DocumentEngine.STATUS_InProgress)
-//					|| docStatus.equals(DocumentEngine.STATUS_Invalid))
-//				{
-//					options[index++] = DocumentEngine.ACTION_Prepare;
-//					options[index++] = DocumentEngine.ACTION_Close;
-//				}
-//				//	Complete                    ..  CO
-//				else if (docStatus.equals(DocumentEngine.STATUS_Completed))
-//				{
-//					options[index++] = DocumentEngine.ACTION_Void;
-//					options[index++] = DocumentEngine.ACTION_Reverse_Correct;
-//				}
-//		}
-		/********************
-		 *  Distribution Order
-		 */
-//		else if (AD_Table_ID == I_DD_Order.Table_ID)
-//		{
-//			if (docStatus.equals(DocumentEngine.STATUS_Drafted)
-//					|| docStatus.equals(DocumentEngine.STATUS_InProgress)
-//					|| docStatus.equals(DocumentEngine.STATUS_Invalid))
-//				{
-//					options[index++] = DocumentEngine.ACTION_Prepare;
-//					options[index++] = DocumentEngine.ACTION_Close;
-//				}
-//				//	Complete                    ..  CO
-//				else if (docStatus.equals(DocumentEngine.STATUS_Completed))
-//				{
-//					options[index++] = DocumentEngine.ACTION_Void;
-//					options[index++] = DocumentEngine.ACTION_ReActivate;
-//				}
-//		}
-		/********************
-		 *  Payroll Process
-		 */
-//		else if (AD_Table_ID == I_HR_Process.Table_ID)
-//		{
-//			if (docStatus.equals(DocumentEngine.STATUS_Drafted)
-//					|| docStatus.equals(DocumentEngine.STATUS_InProgress)
-//					|| docStatus.equals(DocumentEngine.STATUS_Invalid))
-//				{
-//					options[index++] = DocumentEngine.ACTION_Prepare;
-//					options[index++] = DocumentEngine.ACTION_Close;
-//				}
-//				//	Complete                    ..  CO
-//				else if (docStatus.equals(DocumentEngine.STATUS_Completed))
-//				{
-//					options[index++] = DocumentEngine.ACTION_Void;
-//					options[index++] = DocumentEngine.ACTION_ReActivate;
-//				}
-//		}
 		else if(AD_Table_ID == MBankList.Table_ID){
         	if( docStatus.equals( DocumentEngine.STATUS_Completed )) {
                 options[ index++ ] = DocumentEngine.ACTION_ReActivate;
@@ -1275,12 +1268,7 @@ public class DocumentEngine implements DocAction {
             if( docStatus.equals( DocumentEngine.STATUS_Completed )) {
                 options[ 0 ] = DocumentEngine.ACTION_ReActivate;
             }
-		// Anulación de Transferencia de Mercadería
-	    } else if( AD_Table_ID == MTransfer.Table_ID ) {
-	        if( docStatus.equals( DocumentEngine.STATUS_Completed )) {
-	            options[ index++ ] = DocumentEngine.ACTION_Void;
-	        }
-	    }
+	    } 
 		return index;
 	}
 	
