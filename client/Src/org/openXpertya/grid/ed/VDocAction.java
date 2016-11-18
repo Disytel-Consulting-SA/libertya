@@ -62,7 +62,12 @@ import org.openXpertya.model.MSplitting;
 import org.openXpertya.model.MTab;
 import org.openXpertya.model.MTransfer;
 import org.openXpertya.model.MWarehouseClose;
+import org.openXpertya.model.M_Table;
+import org.openXpertya.model.PO;
 import org.openXpertya.model.X_C_POSJournal;
+import org.openXpertya.plugin.MPluginPO;
+import org.openXpertya.plugin.common.PluginPOUtils;
+import org.openXpertya.process.DocOptions;
 import org.openXpertya.process.DocumentEngine;
 import org.openXpertya.util.CLogger;
 import org.openXpertya.util.DB;
@@ -271,305 +276,41 @@ public class VDocAction extends JDialog implements ActionListener {
             return;
         }
 
-        // Locked
+		/*******************
+		 *  General Actions
+		 */
+		String[] docActionHolder = new String[] {DocAction};
+		index = DocumentEngine.getValidActions(DocStatus, Processing, OrderType, IsSOTrx, m_AD_Table_ID, 
+				docActionHolder, options, Record_ID);
+        
+		M_Table table = M_Table.get(Env.getCtx(), m_AD_Table_ID);
+		PO po = table.getPO(Record_ID, null);
+		if (po instanceof DocOptions)
+			index = ((DocOptions) po).customizeValidActions(DocStatus, Processing, OrderType, IsSOTrx,
+					m_AD_Table_ID, docActionHolder, options, index);
 
-        if( Processing != null ) {
-            boolean locked = "Y".equals( Processing );
-
-            if( !locked && (Processing instanceof Boolean) ) {
-                locked = (( Boolean )Processing ).booleanValue();
-            }
-
-            if( locked ) {
-                options[ index++ ] = DocumentEngine.ACTION_Unlock;
-            }
-        }
-
-        // Approval required           ..  NA
-
-        if( DocStatus.equals( DocumentEngine.STATUS_NotApproved )) {
-            options[ index++ ] = DocumentEngine.ACTION_Prepare;
-            options[ index++ ] = DocumentEngine.ACTION_Void;
-        }
-
-        // Draft/Invalid                           ..  DR/IN
-
-        else if( DocStatus.equals( DocumentEngine.STATUS_Drafted ) || DocStatus.equals( DocumentEngine.STATUS_Invalid )) {
-            options[ index++ ] = DocumentEngine.ACTION_Complete;
-
-            // options[index++] = DocumentEngine.ACTION_Prepare;
-
-            options[ index++ ] = DocumentEngine.ACTION_Void;
-        }
-
-        // In Process                  ..  IP
-
-        else if( DocStatus.equals( DocumentEngine.STATUS_InProgress ) || DocStatus.equals( DocumentEngine.STATUS_Approved )) {
-            options[ index++ ] = DocumentEngine.ACTION_Complete;
-            options[ index++ ] = DocumentEngine.ACTION_Void;
-        }
-
-        // Complete                    ..  CO
-
-        else if( DocStatus.equals( DocumentEngine.STATUS_Completed )) {
-            options[ index++ ] = DocumentEngine.ACTION_Close;
-        }
-
-        // Waiting Payment
-
-        else if( DocStatus.equals( DocumentEngine.STATUS_WaitingPayment ) || DocStatus.equals( DocumentEngine.STATUS_WaitingConfirmation )) {
-        	options[ index++ ] = DocumentEngine.ACTION_Complete;
-            options[ index++ ] = DocumentEngine.ACTION_Void;
-            options[ index++ ] = DocumentEngine.ACTION_Prepare;
-        }
-
-        // Closed, Voided, REversed    ..  CL/VO/RE
-
-        else if( DocStatus.equals( DocumentEngine.STATUS_Closed ) || DocStatus.equals( DocumentEngine.STATUS_Voided ) || DocStatus.equals( DocumentEngine.STATUS_Reversed )) {
-            return;
-        }
-
-        if( m_AD_Table_ID == MOrder.Table_ID ) {
-
-            // Draft                       ..  DR/IP/IN
-
-            if( DocStatus.equals( DocumentEngine.STATUS_Drafted ) || DocStatus.equals( DocumentEngine.STATUS_InProgress ) || DocStatus.equals( DocumentEngine.STATUS_Invalid )) {
-                options[ index++ ] = DocumentEngine.ACTION_Prepare;
-
-                // Draft Sales Order Quote/Proposal - Process
-
-                if( "Y".equals( IsSOTrx ) && ( "OB".equals( OrderType ) || "ON".equals( OrderType ))) {
-                    DocAction = DocumentEngine.ACTION_Prepare;
-                }
-            }
-
-            // Complete                    ..  CO
-
-            else if( DocStatus.equals( DocumentEngine.STATUS_Completed )) {
-                options[ index++ ] = DocumentEngine.ACTION_ReActivate;
-                options[ index++ ] = DocumentEngine.ACTION_Void;
-            }
-        } else if( m_AD_Table_ID == MInOut.Table_ID ) {
-
-            // Complete                    ..  CO
-
-            if( DocStatus.equals( DocumentEngine.STATUS_Completed )) {
-                options[ index++ ] = DocumentEngine.ACTION_Reverse_Correct;
-                options[ index++ ] = DocumentEngine.ACTION_Void;
-            }
-        } else if( m_AD_Table_ID == MInvoice.Table_ID ) {
-
-            // Complete                    ..  CO
-
-            if( DocStatus.equals( DocumentEngine.STATUS_Completed )) {
-				// El cancelado hace las veces de revertido para facturas. No se
-				// despliega la opción ya que es lo mismo
-            	// options[ index++ ] = DocumentEngine.ACTION_Reverse_Correct;
-                options[ index++ ] = DocumentEngine.ACTION_Void;
-            }
-        } else if( m_AD_Table_ID == MPayment.Table_ID ) {
-
-            // Complete                    ..  CO
-
-            if( DocStatus.equals( DocumentEngine.STATUS_Completed )) {
-                options[ index++ ] = DocumentEngine.ACTION_Reverse_Correct;
-                options[ index++ ] = DocumentEngine.ACTION_Void;
-            }
-        } else if( (m_AD_Table_ID == MJournal.Table_ID) || (m_AD_Table_ID == MJournalBatch.Table_ID) ) {
-
-            // Complete                    ..  CO
-
-            if( DocStatus.equals( DocumentEngine.STATUS_Completed )) {
-                options[ index++ ] = DocumentEngine.ACTION_Reverse_Correct;
-                options[ index++ ] = DocumentEngine.ACTION_Reverse_Accrual;
-                options[ index++ ] = DocumentEngine.ACTION_Void;
-            }
-        } else if( m_AD_Table_ID == MAllocationHdr.Table_ID ) {
-        	// -------------------------------------------------------------------------------
-        	// Franco Bonafine - Disytel - 2009/03
-        	// Modificación de las opciones de acción para Allocations/OP/RC:
-        	// Se quita la acción de Inversa/Corrección y se agregan las acciones
-        	// específicas para Allocations.
-        	// Estas acciones están definidas en una Referencia diferente a la que
-        	// contiene todas las acciones de doumentos (referencia: Allocation_DocumentAction)
-        	            
-        	/* Se comenta el código antiguo -------------->
-        	if( DocStatus.equals( DocumentEngine.STATUS_Completed )) {
-                options[ index++ ] = DocumentEngine.ACTION_Reverse_Correct;
-                options[ index++ ] = DocumentEngine.ACTION_Void;
-            }
-            <--------------- Fin de código antiguo */
-
-        	// Complete                    ..  CO
-        	if( DocStatus.equals( DocumentEngine.STATUS_Completed )) {
-                options[ index++ ] = MAllocationHdr.ALLOCATIONACTION_RevertAllocation;
-                options[ index++ ] = MAllocationHdr.ALLOCATIONACTION_VoidPayments;      
-                options[ index++ ] = MAllocationHdr.ALLOCATIONACTION_VoidPaymentsRetentions;
-            }
-        	// Fin agregado FB 2009/03
-        	// -------------------------------------------------------------------------------
-        } else if( m_AD_Table_ID == MBankStatement.Table_ID ) {
-
-            // Complete                    ..  CO
-
-            if( DocStatus.equals( DocumentEngine.STATUS_Completed )) {
-                options[ index++ ] = DocumentEngine.ACTION_Void;
-            }
-        } else if(m_AD_Table_ID == MBankTransfer.Table_ID){
-        	
-        	// Complete                    ..  CO
-
-            if( DocStatus.equals( DocumentEngine.STATUS_Completed )) {
-                options[ index++ ] = DocumentEngine.ACTION_Void;
-            }
-        } else if( m_AD_Table_ID == MBoletaDeposito.Table_ID ) {
-
-            // Complete                    ..  CO
-            if( DocStatus.equals( DocumentEngine.STATUS_Completed )) {
-                options[ index++ ] = DocumentEngine.ACTION_Void;
-            }
-        } else if( m_AD_Table_ID == MSplitting.Table_ID ) {
-
-            // Complete                    ..  CO
-            if( DocStatus.equals( DocumentEngine.STATUS_Completed )) {
-                options[ index++ ] = DocumentEngine.ACTION_Void;
-            }
-        } else if( m_AD_Table_ID == MProductChange.Table_ID ) {
-
-            // Complete                    ..  CO
-            if( DocStatus.equals( DocumentEngine.STATUS_Completed )) {
-                options[ index++ ] = DocumentEngine.ACTION_Void;
-            }
-        } else if ( m_AD_Table_ID == MPOSJournal.Table_ID ) {
-            
-        	// Si está en borrador solo se puede abrir la caja diaria
-        	if( DocStatus.equals( X_C_POSJournal.DOCSTATUS_Drafted )) {
-                options[ 0 ] = X_C_POSJournal.DOCACTION_Open;
-            // Si está abierta entonces se puede cerrar o completar la caja diaria
-            } else if ( DocStatus.equals( X_C_POSJournal.DOCSTATUS_Opened )) {
-            	options[ index++ ] = X_C_POSJournal.DOCACTION_Close;
-            }
-        	
-        } else if( m_AD_Table_ID == MCashLine.Table_ID ) {
-
-            // Complete                    ..  CO
-
-            if( DocStatus.equals( DocumentEngine.STATUS_Completed )) {
-                options[ index++ ] = DocumentEngine.ACTION_Void;
-            }
-        } else if( m_AD_Table_ID == MWarehouseClose.Table_ID ) {
-
-            // Complete                    ..  CO
-
-            if( DocStatus.equals( DocumentEngine.STATUS_Completed )) {
-                options[ index++ ] = DocumentEngine.ACTION_ReActivate;
-            }
-        // Anulación de inventario
-        } else if( m_AD_Table_ID == MInventory.Table_ID ) {
-            if( DocStatus.equals( DocumentEngine.STATUS_Completed )) {
-                options[ index++ ] = DocumentEngine.ACTION_Void;
-            }
-        // Anulación de Transferencia de Mercadería
-	    } else if( m_AD_Table_ID == MTransfer.Table_ID ) {
-	        if( DocStatus.equals( DocumentEngine.STATUS_Completed )) {
-	            options[ index++ ] = DocumentEngine.ACTION_Void;
-	        }
-	    } else if(m_AD_Table_ID == MBrochure.Table_ID){
-        	if( DocStatus.equals( DocumentEngine.STATUS_Completed )) {
-                options[ index++ ] = DocumentEngine.ACTION_ReActivate;
-                options[ index++ ] = DocumentEngine.ACTION_Void;
-            }
-        } else if(m_AD_Table_ID == MBankList.Table_ID){
-        	if( DocStatus.equals( DocumentEngine.STATUS_Completed )) {
-                options[ index++ ] = DocumentEngine.ACTION_ReActivate;
-                options[ index++ ] = DocumentEngine.ACTION_Void;
-            }
-        } else if( m_AD_Table_ID == MCreditCardClose.Table_ID ) {
-        	
-            // Complete                    ..  CO
-
-            if( DocStatus.equals( DocumentEngine.STATUS_Completed )) {
-                options[ 0 ] = DocumentEngine.ACTION_ReActivate;
-            }
-            
-        }
-
-		/*
-		 * @ modificacion: 13-ago-2007
-		 * Quitar del array todas las acciones que figuren en las restriciones
-		 * */
-		String sql = "SELECT ALLDOCUMENTTYPES, C_DOCTYPE_ID, INV_DOCACTION, ALLROLES, AD_ROLE_ID, AD_ORG_ID" +
-				" FROM AD_ROLE_INVALID_ACTION WHERE " +
-				"AD_CLIENT_ID=? AND ISACTIVE='Y' " +
-				"AND AD_TABLE_ID=? ";
-				//AND AD_ORG_ID=?
-				//+ "AND AD_ROLE_ID=?";
-		boolean allDocs = true;
-		String[] opValidas= new String[options.length];
-		Vector opciones = new Vector();
-		boolean allRoles = false;
-		int role = 0;
-		int org = 0;
+		/** Logica de soporte de plugins sobre acciones del documento */
+		Vector<MPluginPO> plugins = PluginPOUtils.getPluginList(po);
+		for (MPluginPO aPlugin : plugins) {
+			if (aPlugin instanceof DocOptions) {
+				index = ((DocOptions) aPlugin).customizeValidActions(DocStatus, Processing, OrderType, IsSOTrx,
+						m_AD_Table_ID, docActionHolder, options, index);	
+			}
+		}
+		/** Fin Logica de soporte de plugins sobre acciones del documento */
 		
-		PreparedStatement pst = DB.prepareStatement(sql);
-		try{
-			pst.setInt(1,Env.getAD_Client_ID(Env.getCtx()));
-			//pst.setInt(2,Env.getAD_Org_ID(Env.getCtx()));
-			pst.setInt(2,m_AD_Table_ID);
-			//pst.setInt(4,Env.getAD_Role_ID(Env.getCtx()));
-			ResultSet rs = pst.executeQuery();
-			while(rs.next()){
-				allDocs = "Y".equals(rs.getString("ALLDOCUMENTTYPES"));
-				allRoles = "Y".equals(rs.getString("ALLROLES"));
-				role = rs.getInt("AD_ROLE_ID");
-				org = rs.getInt("AD_ORG_ID");
-				if(org == 0 || org == Env.getAD_Org_ID(Env.getCtx())){
-					if(allDocs && (allRoles || Env.getAD_Role_ID(Env.getCtx()) == role) )
-						opciones.addElement(rs.getString("INV_DOCACTION"));
-					else if(allRoles || Env.getAD_Role_ID(Env.getCtx()) == role){
-						//obtener tipo actual y si es el mismo agrego
-						int doctype=0;
-						doctype = Env.getContextAsInt(Env.getCtx(), m_WindowNo, "C_DocType_ID");
-						// 
-						int doctypeTarget = Env.getContextAsInt(Env.getCtx(), m_WindowNo, "C_DocTypeTarget_ID");
-						log.finer("C_DocType_ID="+doctype);
-						log.finer("C_DocTypeTarget_ID="+doctypeTarget);
-						if(doctype == 0)
-							doctype = doctypeTarget;
-						
-						if(doctype == rs.getInt("C_DOCTYPE_ID"))
-							opciones.addElement(rs.getString("INV_DOCACTION"));
-						
-					}
-				}
-			}
-			rs.close();
-			pst.close();
-			//sacar del array las acciones
-			int j = 0;
-			int i = 0;
-			for(i = 0; i < index; i++){
-				if(!estaEnarray(opciones,options[i])){
-					opValidas[j] = options[i];
-					j++;
-				}
-			}
-			if(opciones.size() > 0){ //encontro restricciones
-				//vacio options y lo lleno con las validas solamente
-				options = options = new String[s_value.length];
-				index = 0;//actualiza index
-				for(j = 0; j < opValidas.length;j++){
-					if(opValidas[j] != null)
-						options[index++] = opValidas[j];
-					else
-						break;//termina si encuentra null
-				}
-			}
-		}catch(SQLException e) {
-			e.printStackTrace();
-        }
+		Integer doctypeId = (Integer)m_mTab.getValue("C_DocType_ID");
+		if(doctypeId==null || doctypeId.intValue()==0){
+			doctypeId = (Integer)m_mTab.getValue("C_DocTypeTarget_ID");
+		}
+		log.fine("get doctype: " + doctypeId);
+		if (doctypeId != null) {
+			index = DocumentEngine.checkActionAccess(Env.getAD_Client_ID(Env.getCtx()),
+					Env.getAD_Role_ID(Env.getCtx()), 
+					doctypeId, options, index);
+		}
 
-		///////////////////////////FIN modif Disytel		
+		DocAction = docActionHolder[0];		
 
         for( int i = 0;i < index;i++ ) {
 
