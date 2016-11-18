@@ -31,4 +31,9 @@ public class AuditoriaCashDataSource extends AuditoriaDataSource {
 	protected String getTrxColumn() {
 		return "c_cashline_id";
 	}
+
+	@Override
+	protected String getFunViewName() {
+		return "c_posjournal_c_cash_v_filtered";
+	}
 }

@@ -38,7 +38,7 @@ public abstract class AuditoriaDataSource extends DeclaracionValoresDataSource {
 		sql.append(getStdQuery(true));
 		sql.append(" ) as dv ");
 		sql.append(" INNER JOIN ");
-		sql.append(getDSFunView("c_posjournalpayments_v_filtered"));
+		sql.append(getDSFunView(getFunViewName()));
 		sql.append(" as pjp ON pjp." + trxColumn + " = dv.doc_id ");
 		sql.append(" INNER JOIN c_invoice as i ON i.c_invoice_id = pjp.c_invoice_id ");
 		sql.append(" ORDER BY i.documentno ");
@@ -61,6 +61,11 @@ public abstract class AuditoriaDataSource extends DeclaracionValoresDataSource {
 	 *         c_posjournalpayments_v
 	 */
 	protected abstract String getTrxColumn();
+	
+	/**
+	 * @return el nombre de la funview para cada caso
+	 */
+	protected abstract String getFunViewName();
 
 	private void setCurrencyID(Integer currencyID) {
 		this.currencyID = currencyID;
