@@ -31,4 +31,9 @@ public class AuditoriaCuponDataSource extends AuditoriaDataSource {
 	protected String getTrxColumn() {
 		return "c_payment_id";
 	}
+
+	@Override
+	protected String getFunViewName() {
+		return "c_posjournal_c_payment_v_filtered";
+	}
 }
