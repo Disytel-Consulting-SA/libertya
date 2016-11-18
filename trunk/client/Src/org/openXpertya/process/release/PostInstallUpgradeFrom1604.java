@@ -98,6 +98,10 @@ public class PostInstallUpgradeFrom1604 extends PluginPostInstallProcess {
 	protected final static String PURCHASE_ORDER_REPORT_UID = "CORE-AD_Process-1010433";
 	protected final static String PURCHASE_ORDER_REPORT_FILENAME = "PurchaseOrderReport.jrxml";
 	
+	/** Reporte de Recepciones de Proveedor */
+	protected final static String RECEPTIONS_VENDOR_REPORT_UID = "CORE-AD_Process-1010431";
+	protected final static String RECEPTIONS_VENDOR_REPORT_FILENAME = "ReceptionsVendor.jrxml";
+	
 	@Override
 	protected String doIt() throws Exception {
 		super.doIt();
@@ -390,6 +394,17 @@ public class PostInstallUpgradeFrom1604 extends PluginPostInstallProcess {
 						.readBinaryFromJar(
 								jarFileURL,
 								getBinaryFileURL(PURCHASE_ORDER_REPORT_FILENAME)));
+		
+		// Reporte de Recepciones de Proveedor
+		MProcess.addAttachment(
+				get_TrxName(),
+				getCtx(),
+				RECEPTIONS_VENDOR_REPORT_UID,
+				RECEPTIONS_VENDOR_REPORT_FILENAME,
+				JarHelper
+						.readBinaryFromJar(
+								jarFileURL,
+								getBinaryFileURL(RECEPTIONS_VENDOR_REPORT_FILENAME)));
 		
 		return " ";
 	}
