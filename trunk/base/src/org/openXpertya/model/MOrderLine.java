@@ -1404,7 +1404,7 @@ public class MOrderLine extends X_C_OrderLine {
      *  NO MODIFICAR FIRMA, SE USA EN LA IMPRESIÓN DE LA FACTURA
      */
     public BigDecimal getPriceEnteredNet(){
-    	return amtByTax(getPriceEntered(), getTaxAmt(getPriceEntered()), isTaxIncluded(), false);
+    	return amtByTax(getPriceEntered(), getTaxAmt(getPriceEntered()), isTaxIncluded(), false).setScale(2, BigDecimal.ROUND_HALF_UP);
     }
     
     /**
