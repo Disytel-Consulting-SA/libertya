@@ -1001,69 +1001,71 @@ public class PoSOnline extends PoSConnectionState {
 	 * @throws InsufficientCreditException
 	 */
 	private void checkCredit(Order order) throws InsufficientCreditException, Exception {
-		currentAccountSalesConditions = new HashMap<String, BigDecimal>();
-		MBPartner bp = new MBPartner(getCtx(), order.getBusinessPartner().getId(), getTrxName());
-		MOrg org = new MOrg(getCtx(), Env.getAD_Org_ID(getCtx()), getTrxName());
-		// Obtengo el manager actual
-		CurrentAccountManager manager = CurrentAccountManagerFactory
-				.getManager();
-		// Seteo el estado actual del cliente y lo obtengo
-		CallResult result = manager.setCurrentAccountStatus(getCtx(), bp, org,
-				null);
-		// Si hubo error, obtengo el mensaje y tiro la excepción
-		if (result.isError()) {
-			throw new InsufficientCreditException(result.getMsg());
-		}
-		// Me guardo el estado de la entidad comercial
-		String creditStatus = (String)result.getResult(); 
-		// Determino los tipos de pago a verificar el estado de crédito
-		result = manager.getTenderTypesToControlStatus(getCtx(), org, bp,
-				getTrxName());
-		// Si hubo error, obtengo el mensaje y tiro la excepción
-		if (result.isError()) {
-			throw new Exception(result.getMsg());
-		}
-		// Me guardo la lista de tipos de pago a verificar
-		Set<String> tenderTypesAllowed = (Set<String>)result.getResult();
-		Map<String, BigDecimal> pays = new HashMap<String, BigDecimal>();
-		BigDecimal convertedPayAmt;
-		String paymentRule;
-		for (Payment pay : order.getPayments()) {
-			// Verificar por el manager de cuentas corrientes si debo verificar
-			// el estado de crédito en base a los tipos de pago obtenidos
-			paymentRule = CurrentAccountBalanceStrategy
-					.getPaymentRuleEquivalent(pay.getTenderType());
-			if(!Util.isEmpty(paymentRule, true)){
-				if (tenderTypesAllowed != null
-						&& tenderTypesAllowed.contains(pay.getTenderType())) {
-					shouldUpdateBPBalance = true;
-					// Verificar la situación de crédito de la entidad comercial
-					result = manager.validateCurrentAccountStatus(getCtx(), org, bp, 
-							creditStatus, getTrxName());
-					// Si hubo error, obtengo el mensaje y tiro la excepción
-					if (result.isError()) {
-						throw new InsufficientCreditException(result.getMsg());
-					}
-					currentAccountSalesConditions.put(paymentRule, BigDecimal.ZERO);
-				}
-				// Convierto el monto del pago a partir de su moneda
-				convertedPayAmt = MConversionRate.convertBase(getCtx(), pay
-						.getAmount(), pay.getCurrencyId(), order.getDate(), 0, Env
-						.getAD_Client_ID(getCtx()), Env.getAD_Org_ID(getCtx()));
-				pays.put(paymentRule, convertedPayAmt);
-				// Si existe el payment rule significa que se agregó porque es
-				// paymentrule de cuenta corriente, entonces actualizar su monto
-				if(currentAccountSalesConditions.get(paymentRule) != null){
-					currentAccountSalesConditions.put(paymentRule, convertedPayAmt);
-				}
+		if(MBPartner.PAYMENTRULE_OnCredit.equals(order.getPaymentRule())){
+			currentAccountSalesConditions = new HashMap<String, BigDecimal>();
+			MBPartner bp = new MBPartner(getCtx(), order.getBusinessPartner().getId(), getTrxName());
+			MOrg org = new MOrg(getCtx(), Env.getAD_Org_ID(getCtx()), getTrxName());
+			// Obtengo el manager actual
+			CurrentAccountManager manager = CurrentAccountManagerFactory
+					.getManager();
+			// Seteo el estado actual del cliente y lo obtengo
+			CallResult result = manager.setCurrentAccountStatus(getCtx(), bp, org,
+					null);
+			// Si hubo error, obtengo el mensaje y tiro la excepción
+			if (result.isError()) {
+				throw new InsufficientCreditException(result.getMsg());
 			}
-		}		
-		// Verificar el crédito con la factura
-		result = manager.checkInvoicePaymentRulesBalance(getCtx(), bp, org,
-				pays, getTrxName());
-		// Si hubo error, obtengo el mensaje y tiro la excepción
-		if (result.isError()) {
-			throw new InsufficientCreditException(result.getMsg());
+			// Me guardo el estado de la entidad comercial
+			String creditStatus = (String)result.getResult(); 
+			// Determino los tipos de pago a verificar el estado de crédito
+			result = manager.getTenderTypesToControlStatus(getCtx(), org, bp,
+					getTrxName());
+			// Si hubo error, obtengo el mensaje y tiro la excepción
+			if (result.isError()) {
+				throw new Exception(result.getMsg());
+			}
+			// Me guardo la lista de tipos de pago a verificar
+			Set<String> tenderTypesAllowed = (Set<String>)result.getResult();
+			Map<String, BigDecimal> pays = new HashMap<String, BigDecimal>();
+			BigDecimal convertedPayAmt;
+			String paymentRule;
+			for (Payment pay : order.getPayments()) {
+				// Verificar por el manager de cuentas corrientes si debo verificar
+				// el estado de crédito en base a los tipos de pago obtenidos
+				paymentRule = CurrentAccountBalanceStrategy
+						.getPaymentRuleEquivalent(pay.getTenderType());
+				if(!Util.isEmpty(paymentRule, true)){
+					if (tenderTypesAllowed != null
+							&& tenderTypesAllowed.contains(pay.getTenderType())) {
+						shouldUpdateBPBalance = true;
+						// Verificar la situación de crédito de la entidad comercial
+						result = manager.validateCurrentAccountStatus(getCtx(), org, bp, 
+								creditStatus, getTrxName());
+						// Si hubo error, obtengo el mensaje y tiro la excepción
+						if (result.isError()) {
+							throw new InsufficientCreditException(result.getMsg());
+						}
+						currentAccountSalesConditions.put(paymentRule, BigDecimal.ZERO);
+					}
+					// Convierto el monto del pago a partir de su moneda
+					convertedPayAmt = MConversionRate.convertBase(getCtx(), pay
+							.getAmount(), pay.getCurrencyId(), order.getDate(), 0, Env
+							.getAD_Client_ID(getCtx()), Env.getAD_Org_ID(getCtx()));
+					pays.put(paymentRule, convertedPayAmt);
+					// Si existe el payment rule significa que se agregó porque es
+					// paymentrule de cuenta corriente, entonces actualizar su monto
+					if(currentAccountSalesConditions.get(paymentRule) != null){
+						currentAccountSalesConditions.put(paymentRule, convertedPayAmt);
+					}
+				}
+			}		
+			// Verificar el crédito con la factura
+			result = manager.checkInvoicePaymentRulesBalance(getCtx(), bp, org,
+					pays, getTrxName());
+			// Si hubo error, obtengo el mensaje y tiro la excepción
+			if (result.isError()) {
+				throw new InsufficientCreditException(result.getMsg());
+			}
 		}
 	}
 
