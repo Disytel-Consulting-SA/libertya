@@ -30,6 +30,7 @@ public class Order  {
 	private BigDecimal totalBPartnerDiscount = BigDecimal.ZERO;
 	private BigDecimal totalManualGeneralDiscount = BigDecimal.ZERO;
 	private List<Tax> otherTaxes = new ArrayList<Tax>();
+	private String paymentRule;
 	
 	/** Precisión para importes */ 
 	private int stdPrecision = 2;
@@ -1161,5 +1162,13 @@ public class Order  {
 
 	public void setAllowSurpassCheckAmount(boolean allowSurpassCheckAmount) {
 		this.allowSurpassCheckAmount = allowSurpassCheckAmount;
+	}
+
+	public String getPaymentRule() {
+		return paymentRule;
+	}
+
+	public void setPaymentRule(String paymentRule) {
+		this.paymentRule = paymentRule;
 	}
 }

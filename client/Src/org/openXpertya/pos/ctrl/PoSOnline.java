@@ -836,6 +836,14 @@ public class PoSOnline extends PoSConnectionState {
 			cashChange = cashChange.subtract(changeAux); 
 		}
 		
+		// Forma de pago del pedido
+		if(Util.isEmpty(sumaCreditPayments, true)){
+			order.setPaymentRule(MInvoice.PAYMENTRULE_Cash);
+		}
+		else{
+			order.setPaymentRule(MInvoice.PAYMENTRULE_OnCredit);
+		}
+		
 		if (invalidPayment)
 			throw new InvalidPaymentException();
 	}
@@ -1250,6 +1258,8 @@ public class PoSOnline extends PoSConnectionState {
 		mo.setInvoice_Adress(order.getBusinessPartner().getCustomerAddress());
 		mo.setNroIdentificCliente(order.getBusinessPartner().getCustomerIdentification());
 		
+		mo.setPaymentRule(order.getPaymentRule());
+		
 		debug("Guardando el Pedido (Encabezado, sin líneas aún)");
 		throwIfFalse(mo.save(), mo);
 		
@@ -1417,12 +1427,7 @@ public class PoSOnline extends PoSConnectionState {
 			inv.setC_POSPaymentMedium_Credit_ID(order.getCreditPOSPaymentMediumID());
 		}
 		
-		if(Util.isEmpty(sumaCreditPayments, true)){
-			inv.setPaymentRule(MInvoice.PAYMENTRULE_Cash);
-		}
-		else{
-			inv.setPaymentRule(MInvoice.PAYMENTRULE_OnCredit);
-		}
+		inv.setPaymentRule(order.getPaymentRule());
 		
 		throwIfFalse(inv.save(), inv, InvoiceCreateException.class);
 		
@@ -1993,7 +1998,7 @@ public class PoSOnline extends PoSConnectionState {
 		creditCardRetirementInvoice.setNombreCli(order.getBusinessPartner().getCustomerName());
 		creditCardRetirementInvoice.setInvoice_Adress(order.getBusinessPartner().getCustomerAddress());
 		creditCardRetirementInvoice.setNroIdentificCliente(order.getBusinessPartner().getCustomerIdentification());
-		creditCardRetirementInvoice.setPaymentRule(MInvoice.PAYMENTRULE_CreditCard);
+		creditCardRetirementInvoice.setPaymentRule(invoice.getPaymentRule());
 		// Tipo de documento de retiro de efectivo de tarjeta de crédito de la
 		// config del tpv
 		creditCardRetirementInvoice.setC_DocTypeTarget_ID(getPoSCOnfig()
