@@ -51,6 +51,12 @@ public class ExportPlugin extends SvrProcess{
 	/** Proceso */
 	MProcess process = null;
 	
+	/** Checkear si la los metadatos en el changelog coincide los metadatos */
+	protected boolean validateChangelogConsistency = false;
+	
+	/** Deshabilitar las entradas del changelog inconsistentes con los metadatos */
+	protected boolean disableInconsistentChangelog = false;
+	
 	// Heredados
 	
 	@Override
@@ -77,6 +83,12 @@ public class ExportPlugin extends SvrProcess{
         	}
         	else if(name.equalsIgnoreCase("Patch")){
         		setPatch(String.valueOf(para[i].getParameter()).equalsIgnoreCase("Y"));
+        	}
+        	else if(name.equalsIgnoreCase("ValidateChangelogConsistency")){
+        		validateChangelogConsistency = String.valueOf(para[i].getParameter()).equalsIgnoreCase("Y");
+        	}
+        	else if(name.equalsIgnoreCase("DisableInconsistentChangelog")){
+        		disableInconsistentChangelog = String.valueOf(para[i].getParameter()).equalsIgnoreCase("Y");
         	}
         }
 	}
@@ -122,9 +134,9 @@ public class ExportPlugin extends SvrProcess{
 		// Preinstall - 0
 		builders.add(new PluginSQLBuilder(getDirectoryPath(), PluginConstants.FILENAME_PREINSTALL, getComponentVersionID(), getChangeLogIDFrom(), getChangeLogIDTo(), getUserID(), get_TrxName()));
 		// Install - 1
-		builders.add(new PluginInstallBuilder(getDirectoryPath(), PluginConstants.FILENAME_INSTALL, getComponentVersionID(), getChangeLogIDFrom(), getChangeLogIDTo(), getUserID(), get_TrxName()));
+		builders.add(new PluginInstallBuilder(getDirectoryPath(), PluginConstants.FILENAME_INSTALL, getComponentVersionID(), getChangeLogIDFrom(), getChangeLogIDTo(), getUserID(), get_TrxName(), validateChangelogConsistency, disableInconsistentChangelog));
 		// PostInstall - 2
-		builders.add(new PostInstallBuilder(getDirectoryPath(), PluginConstants.FILENAME_POSTINSTALL, getComponentVersionID(), getChangeLogIDFrom(), getChangeLogIDTo(), getUserID(), get_TrxName()));
+		builders.add(new PostInstallBuilder(getDirectoryPath(), PluginConstants.FILENAME_POSTINSTALL, getComponentVersionID(), getChangeLogIDFrom(), getChangeLogIDTo(), getUserID(), get_TrxName(), validateChangelogConsistency, disableInconsistentChangelog));
 		// Manifest - 3
 		builders.add(new PluginPropertiesBuilder(getDirectoryPath(), PluginConstants.PLUGIN_MANIFEST, getComponentVersionID(), process, isPatch(), get_TrxName()));		
 	}

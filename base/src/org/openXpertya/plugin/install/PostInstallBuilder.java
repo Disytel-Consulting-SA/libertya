@@ -14,8 +14,8 @@ public class PostInstallBuilder extends ChangeLogXMLBuilder {
 		super(path, fileName,componentVersionID, trxName);
 	}
 	
-	public PostInstallBuilder(String path, String fileName, Integer componentVersionID, Integer changeLogIDFrom, Integer changeLogIDTo, Integer userID, String trxName) {
-		super(path, fileName, componentVersionID, changeLogIDFrom, changeLogIDTo, userID, trxName);
+	public PostInstallBuilder(String path, String fileName, Integer componentVersionID, Integer changeLogIDFrom, Integer changeLogIDTo, Integer userID, String trxName, boolean validateChangelogConsistency, boolean disableInconsistentChangelog) {
+		super(path, fileName, componentVersionID, changeLogIDFrom, changeLogIDTo, userID, trxName, validateChangelogConsistency, disableInconsistentChangelog);
 	}
 
 
