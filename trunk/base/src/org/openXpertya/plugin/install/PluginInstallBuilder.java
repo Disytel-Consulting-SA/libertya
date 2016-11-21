@@ -12,8 +12,8 @@ public class PluginInstallBuilder extends ChangeLogXMLBuilder {
 		super(path, fileName, componentVersionID, trxName);
 	}
 	
-	public PluginInstallBuilder(String path, String fileName, Integer componentVersionID, Integer changeLogIDFrom, Integer changeLogIDTo, Integer userID, String trxName) {
-		super(path, fileName, componentVersionID, changeLogIDFrom, changeLogIDTo, userID, trxName);
+	public PluginInstallBuilder(String path, String fileName, Integer componentVersionID, Integer changeLogIDFrom, Integer changeLogIDTo, Integer userID, String trxName, boolean validateChangelogConsistency, boolean disableInconsistentChangelog) {
+		super(path, fileName, componentVersionID, changeLogIDFrom, changeLogIDTo, userID, trxName, validateChangelogConsistency, disableInconsistentChangelog);
 	}
 
 	// Heredados
