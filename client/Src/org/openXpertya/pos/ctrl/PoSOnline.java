@@ -1001,8 +1001,8 @@ public class PoSOnline extends PoSConnectionState {
 	 * @throws InsufficientCreditException
 	 */
 	private void checkCredit(Order order) throws InsufficientCreditException, Exception {
+		currentAccountSalesConditions = new HashMap<String, BigDecimal>();
 		if(MBPartner.PAYMENTRULE_OnCredit.equals(order.getPaymentRule())){
-			currentAccountSalesConditions = new HashMap<String, BigDecimal>();
 			MBPartner bp = new MBPartner(getCtx(), order.getBusinessPartner().getId(), getTrxName());
 			MOrg org = new MOrg(getCtx(), Env.getAD_Org_ID(getCtx()), getTrxName());
 			// Obtengo el manager actual
