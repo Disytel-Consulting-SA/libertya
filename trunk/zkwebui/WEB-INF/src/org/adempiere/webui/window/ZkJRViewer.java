@@ -16,7 +16,6 @@ import net.sf.jasperreports.engine.export.JRHtmlExporterParameter;
 import net.sf.jasperreports.engine.export.JRXlsExporter;
 import net.sf.jasperreports.engine.export.JRXlsExporterParameter;
 
-
 import org.adempiere.webui.component.Listbox;
 import org.adempiere.webui.component.Tabbox;
 import org.adempiere.webui.component.Tabpanel;
@@ -24,7 +23,10 @@ import org.adempiere.webui.component.Tabs;
 import org.adempiere.webui.component.Window;
 import org.adempiere.webui.panel.ITabOnCloseHandler;
 import org.adempiere.webui.session.SessionManager;
+import org.openXpertya.model.M_Window;
+import org.openXpertya.process.ProcessInfo;
 import org.openXpertya.util.CLogger;
+import org.openXpertya.util.Env;
 import org.zkoss.util.media.AMedia;
 import org.zkoss.zk.ui.Component;
 import org.zkoss.zk.ui.Executions;
@@ -34,6 +36,7 @@ import org.zkoss.zk.ui.event.Events;
 import org.zkoss.zkex.zul.Borderlayout;
 import org.zkoss.zkex.zul.Center;
 import org.zkoss.zkex.zul.North;
+import org.zkoss.zul.Button;
 import org.zkoss.zul.Iframe;
 import org.zkoss.zul.Listitem;
 import org.zkoss.zul.Tab;
@@ -47,6 +50,7 @@ public class ZkJRViewer extends Window implements EventListener, ITabOnCloseHand
 
 	private JasperPrint jasperPrint;
 	private Listbox previewType = new Listbox();
+	private Button btnMail = new Button();
 	private Iframe iframe;
 	private AMedia media;
 	/**	Logger			*/
@@ -55,12 +59,28 @@ public class ZkJRViewer extends Window implements EventListener, ITabOnCloseHand
 	/** Window No					*/
 	private int                 m_WindowNo = -1;
 	
-	public ZkJRViewer(JasperPrint jasperPrint, String title) {
-		super();
+	/** Manejador de los eventos del panel */
+	
+	private ZkJRModel model;
+	
+	private ProcessInfo pi;
+	
+	// Varios
+
+	public ZkJRViewer(JasperPrint jasperPrint, String title, ProcessInfo pi) {
+		super(); 
 		this.setTitle(title);
-		this.jasperPrint = jasperPrint;
+		this.jasperPrint = jasperPrint; 
 		m_WindowNo = SessionManager.getAppDesktop().registerWindow(this);
+		setPi(pi);
+		initModel(jasperPrint);
 		init();
+	}
+
+	private void initModel(JasperPrint arg0){
+		// Modelo
+		setModel(new ZkJRModel(Env.getCtx(),this,getPi()));
+		getModel().setPrint(arg0);			
 	}
 	
 	private void init() {
@@ -79,6 +99,11 @@ public class ZkJRViewer extends Window implements EventListener, ITabOnCloseHand
 		previewType.appendItem("CSV", "CSV");
 		toolbar.appendChild(previewType);
 		previewType.addEventListener(Events.ON_SELECT, this);
+		
+		btnMail.setImage("/images/SendMail24.png");
+		btnMail.addEventListener(Events.ON_CLICK, this);
+		
+		toolbar.appendChild(btnMail);
 		
 		North north = new North();
 		layout.appendChild(north);
@@ -121,6 +146,8 @@ public class ZkJRViewer extends Window implements EventListener, ITabOnCloseHand
 	 */
 	public void actionPerformed (Event e)
 	{
+		if (e.getTarget() == btnMail)
+			cmd_sendMail();
 		
 		if (e.getTarget() == previewType)
 			cmd_render();
@@ -133,6 +160,11 @@ public class ZkJRViewer extends Window implements EventListener, ITabOnCloseHand
 			throw new RuntimeException("Failed to render report", e);
 		}
 	}
+	
+	private void cmd_sendMail(){
+		getModel().cmd_sendMail();
+	}
+	
 	public void onEvent(Event event) throws Exception {	
 		if(event.getName().equals(Events.ON_CLICK) || event.getName().equals(Events.ON_SELECT))
 			actionPerformed(event);
@@ -254,5 +286,28 @@ public class ZkJRViewer extends Window implements EventListener, ITabOnCloseHand
 			m_WindowNo = -1;
 		}
 	}
+	
+	// Getters y Setters
+	
+	public void setModel(ZkJRModel model) {
+		this.model = model;
+	}
 
+	public ZkJRModel getModel() {
+		return model;
+	}
+
+	public int getAD_Table_ID(){
+		M_Window w = new M_Window(Env.getCtx(), m_WindowNo, null);
+		return w.get_Table_ID();
+	}
+
+	public ProcessInfo getPi() {
+		return pi;
+	}
+
+	public void setPi(ProcessInfo pi) {
+		this.pi = pi;
+	}
+	
 }

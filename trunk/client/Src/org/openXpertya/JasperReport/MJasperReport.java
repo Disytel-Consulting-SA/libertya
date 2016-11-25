@@ -203,7 +203,7 @@ public class MJasperReport extends X_AD_JasperReport
     	// Si es invocacion server-side, delegar a ViewerProvider
     	if (!Ini.isClient()) {
             JRViewerProvider viewerLauncher = ReportStarter.getReportViewerProvider();
-            viewerLauncher.openViewer(jPrint, pi.getTitle());
+            viewerLauncher.openViewer(jPrint, pi.getTitle(),pi);
             return;
     	}
     	if(JasperReportsUtil.isPrintPreview(ctx, pi)){
