@@ -175,6 +175,8 @@ public final class EMail implements Serializable {
 		String subject, String message, boolean html)
 	{
 		this (client.getCtx(), client.getSMTPHost(), from, to, subject, message, html);
+	    if (client.isUseSSL()) 
+	        	m_useSSL = true;
 	}	//	EMail
 	
 	
