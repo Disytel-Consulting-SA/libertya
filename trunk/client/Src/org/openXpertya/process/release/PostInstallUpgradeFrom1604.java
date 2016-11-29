@@ -106,6 +106,10 @@ public class PostInstallUpgradeFrom1604 extends PluginPostInstallProcess {
 	protected final static String CUSTOMER_DEBITS_CREDITS_REPORT_UID = "CORE-AD_Process-1010346";
 	protected final static String CUSTOMER_DEBITS_CREDITS_REPORT_FILENAME = "CustomerDebitsCredits.jrxml";
 	
+	/** UID del Informe DE Auditoría de Creación de Línea de Caja */
+	protected final static String CREATE_CASHLINE_AUDIT_REPORT_UID = "CORE-AD_Process-1010500";
+	protected final static String CREATE_CASHLINE_AUDIT_REPORT_FILENAME = "CreateCashLineAudit.jrxml";
+	
 	@Override
 	protected String doIt() throws Exception {
 		super.doIt();
@@ -420,6 +424,17 @@ public class PostInstallUpgradeFrom1604 extends PluginPostInstallProcess {
 						.readBinaryFromJar(
 								jarFileURL,
 								getBinaryFileURL(CUSTOMER_DEBITS_CREDITS_REPORT_FILENAME)));
+		
+		// Informe de Auditoría de Creación de Línea de Caja
+		MProcess.addAttachment(
+				get_TrxName(),
+				getCtx(),
+				CREATE_CASHLINE_AUDIT_REPORT_UID,
+				CREATE_CASHLINE_AUDIT_REPORT_FILENAME,
+				JarHelper
+						.readBinaryFromJar(
+								jarFileURL,
+								getBinaryFileURL(CREATE_CASHLINE_AUDIT_REPORT_FILENAME)));
 		
 		return " ";
 	}
