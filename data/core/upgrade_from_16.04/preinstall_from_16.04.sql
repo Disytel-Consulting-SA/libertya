@@ -2843,3 +2843,37 @@ CREATE OR REPLACE VIEW reginfo_compras_cbte_v AS
 
 ALTER TABLE reginfo_compras_cbte_v
   OWNER TO libertya;
+  
+
+--20161129-1047 Incorporacinoes Sur Software
+CREATE TABLE libertya.i_padron_caba_regimen_general
+(
+  fecha_publicacion character varying(10),
+  fecha_desde character varying(10),
+  fecha_hasta character varying(10),
+  cuit character varying(11),
+  tipo_contr_insc character(1),
+  alta_baja character(1),
+  cbio_alicuota character(1),
+  percepcion character varying(6),
+  retencion character varying(6),
+  nro_grupo_ret integer,
+  nro_grupo_per integer,
+  name_entidad_comercial character varying(255)
+)
+WITH (
+  OIDS=TRUE
+);
+ALTER TABLE libertya.i_padron_caba_regimen_general
+  OWNER TO libertya;
+GRANT ALL ON TABLE libertya.i_padron_caba_regimen_general TO libertya;
+
+CREATE INDEX i_padron_caba_regimen_general_cuit
+  ON libertya.i_padron_caba_regimen_general
+  USING btree
+  (cuit);
+  
+ALTER TABLE c_bpartner
+	ADD COLUMN builtcabajurisdiction character(1) NOT NULL DEFAULT 'N';
+
+ALTER TABLE AD_Org_Percepcion ADD COLUMN UseCABAJurisdiction character(1);
