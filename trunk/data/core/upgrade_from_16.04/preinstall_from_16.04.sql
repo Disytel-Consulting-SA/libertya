@@ -2876,7 +2876,7 @@ CREATE INDEX i_padron_caba_regimen_general_cuit
 ALTER TABLE c_bpartner
 	ADD COLUMN builtcabajurisdiction character(1) NOT NULL DEFAULT 'N';
 
-ALTER TABLE AD_Org_Percepcion ADD COLUMN UseCABAJurisdiction character(1);
+UPDATE ad_system SET dummy = (SELECT addcolumnifnotexists('AD_Org_Percepcion','UseCABAJurisdiction','character(1)'));
 
 --20161129-1100 Flag que determina líneas de caja generadas automáticamente
 UPDATE ad_system SET dummy = (SELECT addcolumnifnotexists('C_CashLine','automaticgenerated','character(1) NOT NULL DEFAULT ''N''::bpchar'));
