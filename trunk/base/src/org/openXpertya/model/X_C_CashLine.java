@@ -7,7 +7,7 @@ import java.math.*;
 import org.openXpertya.util.*;
 /** Modelo Generado por C_CashLine
  *  @author Comunidad de Desarrollo Libertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
- *  @version  - 2012-08-24 20:18:53.634 */
+ *  @version  - 2016-11-29 11:22:33.094 */
 public class X_C_CashLine extends org.openXpertya.model.PO
 {
 /** Constructor estándar */
@@ -17,6 +17,7 @@ super (ctx, C_CashLine_ID, trxName);
 /** if (C_CashLine_ID == 0)
 {
 setAmount (Env.ZERO);
+setAutomaticGenerated (false);
 setCashAmount (Env.ZERO);	// 0
 setCashType (null);	// E
 setC_Cash_ID (0);
@@ -94,6 +95,22 @@ set_Value ("AuthMatch", new Boolean(AuthMatch));
 public boolean isAuthMatch() 
 {
 Object oo = get_Value("AuthMatch");
+if (oo != null) 
+{
+ if (oo instanceof Boolean) return ((Boolean)oo).booleanValue();
+ return "Y".equals(oo);
+}
+return false;
+}
+/** Set Automatic Generated */
+public void setAutomaticGenerated (boolean AutomaticGenerated)
+{
+set_Value ("AutomaticGenerated", new Boolean(AutomaticGenerated));
+}
+/** Get Automatic Generated */
+public boolean isAutomaticGenerated() 
+{
+Object oo = get_Value("AutomaticGenerated");
 if (oo != null) 
 {
  if (oo instanceof Boolean) return ((Boolean)oo).booleanValue();
@@ -270,9 +287,9 @@ return ii.intValue();
 The Currency for this record */
 public void setC_Currency_ID (int C_Currency_ID)
 {
-if (C_Currency_ID <= 0) set_ValueNoCheck ("C_Currency_ID", null);
+if (C_Currency_ID <= 0) set_Value ("C_Currency_ID", null);
  else 
-set_ValueNoCheck ("C_Currency_ID", new Integer(C_Currency_ID));
+set_Value ("C_Currency_ID", new Integer(C_Currency_ID));
 }
 /** Get Currency.
 The Currency for this record */
