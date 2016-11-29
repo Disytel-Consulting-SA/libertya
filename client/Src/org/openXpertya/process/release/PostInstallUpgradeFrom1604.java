@@ -110,6 +110,10 @@ public class PostInstallUpgradeFrom1604 extends PluginPostInstallProcess {
 	protected final static String CREATE_CASHLINE_AUDIT_REPORT_UID = "CORE-AD_Process-1010500";
 	protected final static String CREATE_CASHLINE_AUDIT_REPORT_FILENAME = "CreateCashLineAudit.jrxml";
 	
+	/** UID del Informe de Cheques por Cuenta */
+	protected final static String CHECKS_BY_ACCOUNT_JASPER_REPORT_UID = "CORE-AD_JasperReport-1010104";
+	protected final static String CHECKS_BY_ACCOUNT_JASPER_REPORT_FILENAME = "ChecksByAccount.jasper";
+	
 	@Override
 	protected String doIt() throws Exception {
 		super.doIt();
@@ -435,6 +439,17 @@ public class PostInstallUpgradeFrom1604 extends PluginPostInstallProcess {
 						.readBinaryFromJar(
 								jarFileURL,
 								getBinaryFileURL(CREATE_CASHLINE_AUDIT_REPORT_FILENAME)));
+		
+		// Informe de Cheques por Cuenta
+		MJasperReport
+				.updateBinaryData(
+						get_TrxName(),
+						getCtx(),
+						CHECKS_BY_ACCOUNT_JASPER_REPORT_UID,
+						JarHelper
+								.readBinaryFromJar(
+										jarFileURL,
+										getBinaryFileURL(CHECKS_BY_ACCOUNT_JASPER_REPORT_FILENAME)));
 		
 		return " ";
 	}
