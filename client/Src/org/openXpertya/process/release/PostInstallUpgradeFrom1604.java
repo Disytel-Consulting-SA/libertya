@@ -114,6 +114,10 @@ public class PostInstallUpgradeFrom1604 extends PluginPostInstallProcess {
 	protected final static String CHECKS_BY_ACCOUNT_JASPER_REPORT_UID = "CORE-AD_JasperReport-1010104";
 	protected final static String CHECKS_BY_ACCOUNT_JASPER_REPORT_FILENAME = "ChecksByAccount.jasper";
 	
+	/** UID del Reporte de Remitos */
+	protected final static String IN_OUT_REPORT_UID = "CORE-AD_Process-1010422";
+	protected final static String IN_OUT_REPORT_FILENAME = "InOutReport.jrxml";
+	
 	@Override
 	protected String doIt() throws Exception {
 		super.doIt();
@@ -450,6 +454,17 @@ public class PostInstallUpgradeFrom1604 extends PluginPostInstallProcess {
 								.readBinaryFromJar(
 										jarFileURL,
 										getBinaryFileURL(CHECKS_BY_ACCOUNT_JASPER_REPORT_FILENAME)));
+		
+		// Reporte de Remitos
+		MProcess.addAttachment(
+				get_TrxName(),
+				getCtx(),
+				IN_OUT_REPORT_UID,
+				IN_OUT_REPORT_FILENAME,
+				JarHelper
+						.readBinaryFromJar(
+								jarFileURL,
+								getBinaryFileURL(IN_OUT_REPORT_FILENAME)));
 		
 		return " ";
 	}
