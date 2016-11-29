@@ -31,6 +31,7 @@ public class ImportPadronBsAsFromCopy extends SvrProcess {
         
         private static final String TABLA_PADRON_ALTO_RIESGO = "i_padron_caba_alto_riesgo";
         private static final String TABLA_PADRON_REGIMEN_SIMPLIFICADO = "i_padron_caba_regimen_simplificado";
+        private static final String TABLA_PADRON_REGIMENES_GENERALES = "i_padron_caba_regimen_general";
         private static final String TABLA_PADRON_BS_AS = "i_padron_bs_as";
         
         private int p_AD_Org_ID = 0;
@@ -86,7 +87,9 @@ public class ImportPadronBsAsFromCopy extends SvrProcess {
             } else if( p_PadronType.compareTo(X_C_BPartner_Padron_BsAs.PADRONTYPE_PadrónDeAltoRiesgoCABA) == 0 ) {
             	table_aux = ImportPadronBsAsFromCopy.TABLA_PADRON_ALTO_RIESGO;
             } else if( p_PadronType.compareTo(X_C_BPartner_Padron_BsAs.PADRONTYPE_RégimenSimplificadoCABA) == 0 ) {
-            	table_aux = ImportPadronBsAsFromCopy.TABLA_PADRON_REGIMEN_SIMPLIFICADO;
+				table_aux = ImportPadronBsAsFromCopy.TABLA_PADRON_REGIMEN_SIMPLIFICADO;
+			} else if (p_PadronType.compareTo(X_C_BPartner_Padron_BsAs.PADRONTYPE_PadrónDeRegímenesGenerales) == 0) {
+				table_aux = ImportPadronBsAsFromCopy.TABLA_PADRON_REGIMENES_GENERALES;
             } else {
                 log.log( Level.SEVERE,"Unknown Table for: " + p_PadronType );
             }

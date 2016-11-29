@@ -150,7 +150,10 @@ public class MInvoice extends X_C_Invoice implements DocAction,Authorization {
 	 * Boolean que determina si se deben omitir las validaciones de modelo
 	 */
 	private boolean skipModelValidations = false;
-	
+
+	/** Boolean que determina si se está ejecutando una anulación. */
+	private boolean voidProcess = false;
+
 	/**
 	 * Descripción de Método
 	 * 
@@ -2565,6 +2568,19 @@ public class MInvoice extends X_C_Invoice implements DocAction,Authorization {
 		return sb.toString();
 	} // toString
 
+	private String getDocTypeKey() {
+		StringBuffer sql = new StringBuffer();
+
+		sql.append("SELECT ");
+		sql.append("	docbasetype ");
+		sql.append("FROM ");
+		sql.append("	" + X_C_DocType.Table_Name + " ");
+		sql.append("WHERE ");
+		sql.append("	c_doctype_id = ? ");
+
+		return DB.getSQLValueString(get_TrxName(), sql.toString(), getC_DocTypeTarget_ID());
+	}
+
 	/**
 	 * Descripción de Método
 	 * 
@@ -4525,6 +4541,10 @@ public class MInvoice extends X_C_Invoice implements DocAction,Authorization {
 	public boolean voidIt() {
 		log.info(toString());
 
+		if (MPreference.GetCustomPreferenceValueBool("SinPercepcionNCManual")) {
+			voidProcess = true;
+		}
+
 		if (DOCSTATUS_Closed.equals(getDocStatus())
 				|| DOCSTATUS_Reversed.equals(getDocStatus())
 				|| DOCSTATUS_Voided.equals(getDocStatus())) {
@@ -4702,6 +4722,9 @@ public class MInvoice extends X_C_Invoice implements DocAction,Authorization {
 		// Se agregan los listeners de DocAction que tiene esta Invoice
 		// a la reversal.
 		reversal.copyDocActionStatusListeners(this);
+
+		// Seteo la bandera que indica si se trata de una anulación.
+		reversal.setVoidProcess(voidProcess);
 
 		// ////////////////////////////////////////////////////////////////
 		// LOCALIZACIÓN ARGENTINA
@@ -5819,9 +5842,10 @@ public class MInvoice extends X_C_Invoice implements DocAction,Authorization {
 
 	public void calculatePercepciones() throws Exception {
 		MDocType docType = MDocType.get(getCtx(), getC_DocTypeTarget_ID());
+
 		if (docType.isFiscalDocument()
 				&& MOrgPercepcion.existsOrgPercepcion(getCtx(), getAD_Org_ID(),
-						get_TrxName())) {
+						get_TrxName()) && (!getDocTypeKey().equals("ARC") || voidProcess)) {
 			GeneratorPercepciones generator = new GeneratorPercepciones(
 					getCtx(), getDiscountableWrapper(), get_TrxName());
 			generator.calculatePercepciones(this);
@@ -5832,7 +5856,7 @@ public class MInvoice extends X_C_Invoice implements DocAction,Authorization {
 		MDocType docType = MDocType.get(getCtx(), getC_DocTypeTarget_ID());
 		if (docType.isFiscalDocument()
 				&& MOrgPercepcion.existsOrgPercepcion(getCtx(), getAD_Org_ID(),
-						get_TrxName())) {
+						get_TrxName()) && (!getDocTypeKey().equals("ARC") || voidProcess)) {
 			GeneratorPercepciones generator = new GeneratorPercepciones(
 					getCtx(), getDiscountableWrapper(), get_TrxName());
 			generator.recalculatePercepciones(this);
@@ -6186,6 +6210,15 @@ public class MInvoice extends X_C_Invoice implements DocAction,Authorization {
 		((MInvoice)to).setSkipExtraValidations(isSkipExtraValidations());
 		((MInvoice)to).setSkipModelValidations(isSkipModelValidations());
 	}
+
+	public boolean isVoidProcess() {
+		return voidProcess;
+	}
+
+	public void setVoidProcess(boolean voidProcess) {
+		this.voidProcess = voidProcess;
+	}
+
 } // MInvoice
 
 /*

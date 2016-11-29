@@ -1,24 +1,20 @@
 /** Modelo Generado - NO CAMBIAR MANUALMENTE - Disytel */
 package org.openXpertya.model;
-import java.util.logging.Level;
- import java.util.*;
-import java.sql.*;
-import java.math.*;
-import org.openXpertya.util.*;
+import java.math.BigDecimal;
+import java.sql.ResultSet;
+import java.sql.Timestamp;
+import java.util.Properties;
+import org.openXpertya.util.Env;
+import org.openXpertya.util.KeyNamePair;
 /** Modelo Generado por C_BPartner_Padron_BsAs
  *  @author Comunidad de Desarrollo Libertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
- *  @version  - 2012-12-09 22:28:23.303 */
+ *  @version  - 2016-11-03 15:41:22.008 */
 public class X_C_BPartner_Padron_BsAs extends org.openXpertya.model.PO
 {
 /** Constructor estándar */
 public X_C_BPartner_Padron_BsAs (Properties ctx, int C_BPartner_Padron_BsAs_ID, String trxName)
 {
 super (ctx, C_BPartner_Padron_BsAs_ID, trxName);
-/** if (C_BPartner_Padron_BsAs_ID == 0)
-{
-setc_bpartner_padron_bsas_id (0);
-}
- */
 }
 /** Load Constructor */
 public X_C_BPartner_Padron_BsAs (Properties ctx, ResultSet rs, String trxName)
@@ -179,11 +175,13 @@ public static final String PADRONTYPE_PadrónBsAs = "B";
 public static final String PADRONTYPE_PadrónDeAltoRiesgoCABA = "A";
 /** Régimen Simplificado CABA = S */
 public static final String PADRONTYPE_RégimenSimplificadoCABA = "S";
+/** Padrón de Regímenes Generales = G */
+public static final String PADRONTYPE_PadrónDeRegímenesGenerales = "G";
 /** Set Padron Type */
 public void setPadronType (String PadronType)
 {
-if (PadronType == null || PadronType.equals("B") || PadronType.equals("A") || PadronType.equals("S"));
- else throw new IllegalArgumentException ("PadronType Invalid value - Reference = PADRONTYPE_AD_Reference_ID - B - A - S");
+if (PadronType == null || PadronType.equals("B") || PadronType.equals("A") || PadronType.equals("S") || PadronType.equals("G"));
+ else throw new IllegalArgumentException ("PadronType Invalid value - Reference = PADRONTYPE_AD_Reference_ID - B - A - S - G");
 if (PadronType != null && PadronType.length() > 1)
 {
 log.warning("Length > 1 - truncated");

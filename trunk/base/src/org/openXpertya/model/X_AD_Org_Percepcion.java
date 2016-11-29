@@ -1,13 +1,13 @@
 /** Modelo Generado - NO CAMBIAR MANUALMENTE - Disytel */
 package org.openXpertya.model;
-import java.util.logging.Level;
- import java.util.*;
-import java.sql.*;
-import java.math.*;
-import org.openXpertya.util.*;
+import java.math.BigDecimal;
+import java.sql.ResultSet;
+import java.util.Properties;
+import org.openXpertya.util.Env;
+import org.openXpertya.util.KeyNamePair;
 /** Modelo Generado por AD_Org_Percepcion
- *  @author Comunidad de Desarrollo Libertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
- *  @version  - 2014-08-26 17:21:37.613 */
+ *  @author Comunidad de Desarrollo Libertya Basado en Codigo Original Modificado, Revisado y Optimizado de: Jorg Janke 
+ *  @version  - 2016-11-24 16:20:43.46 */
 public class X_AD_Org_Percepcion extends org.openXpertya.model.PO
 {
 /** Constructor estándar */
@@ -23,8 +23,9 @@ setC_Tax_ID (0);
 setIsConvenioMultilateral (false);
 setMinimumNetAmount (Env.ZERO);
 setName (null);
+setUseCABAJurisdiction (false);
 }
- */
+*/
 }
 /** Load Constructor */
 public X_AD_Org_Percepcion (Properties ctx, ResultSet rs, String trxName)
@@ -171,5 +172,21 @@ return (String)get_Value("Name");
 public KeyNamePair getKeyNamePair() 
 {
 return new KeyNamePair(getID(), getName());
+}
+/** Set Use CABA Jurisdiction */
+public void setUseCABAJurisdiction (boolean UseCABAJurisdiction)
+{
+set_Value ("UseCABAJurisdiction", new Boolean(UseCABAJurisdiction));
+}
+/** Get Use CABA Jurisdiction */
+public boolean isUseCABAJurisdiction() 
+{
+Object oo = get_Value("UseCABAJurisdiction");
+if (oo != null) 
+{
+ if (oo instanceof Boolean) return ((Boolean)oo).booleanValue();
+ return "Y".equals(oo);
+}
+return false;
 }
 }
