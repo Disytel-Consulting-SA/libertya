@@ -7,7 +7,7 @@ import java.math.*;
 import org.openXpertya.util.*;
 /** Modelo Generado por C_BPartner
  *  @author Comunidad de Desarrollo Libertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
- *  @version  - 2016-10-24 12:47:28.93 */
+ *  @version  - 2016-11-14 15:01:33.54 */
 public class X_C_BPartner extends org.openXpertya.model.PO
 {
 /** Constructor estándar */
@@ -21,9 +21,9 @@ setAllowPartialPayment (false);
 setAutomaticCreditNotes (false);
 setC_BPartner_ID (0);
 setC_BP_Group_ID (0);
+setC_Categoria_Iva_ID (0);
 setCreditMinimumAmt (Env.ZERO);
 setDiscountContext (null);	// B
-setDUNS (null);
 setIsConvenioMultilateral (false);
 setIsCustomer (false);
 setIsEmployee (false);
@@ -236,6 +236,22 @@ Integer ii = (Integer)get_Value("BPartner_Parent_ID");
 if (ii == null) return 0;
 return ii.intValue();
 }
+/** Set BuiltCabaJurisdiction */
+public void setBuiltCabaJurisdiction (boolean BuiltCabaJurisdiction)
+{
+set_Value ("BuiltCabaJurisdiction", new Boolean(BuiltCabaJurisdiction));
+}
+/** Get BuiltCabaJurisdiction */
+public boolean isBuiltCabaJurisdiction() 
+{
+Object oo = get_Value("BuiltCabaJurisdiction");
+if (oo != null) 
+{
+ if (oo instanceof Boolean) return ((Boolean)oo).booleanValue();
+ return "Y".equals(oo);
+}
+return false;
+}
 /** Set Bank Account.
 Account at the Bank */
 public void setC_BankAccount_ID (int C_BankAccount_ID)
@@ -283,8 +299,6 @@ return ii.intValue();
 /** Set Categoría de IVA */
 public void setC_Categoria_Iva_ID (int C_Categoria_Iva_ID)
 {
-if (C_Categoria_Iva_ID <= 0) set_Value ("C_Categoria_Iva_ID", null);
- else 
 set_Value ("C_Categoria_Iva_ID", new Integer(C_Categoria_Iva_ID));
 }
 /** Get Categoría de IVA */
@@ -618,8 +632,7 @@ return ii.intValue();
 Dun & Bradstreet Number */
 public void setDUNS (String DUNS)
 {
-if (DUNS == null) throw new IllegalArgumentException ("DUNS is mandatory");
-if (DUNS.length() > 11)
+if (DUNS != null && DUNS.length() > 11)
 {
 log.warning("Length > 11 - truncated");
 DUNS = DUNS.substring(0,11);

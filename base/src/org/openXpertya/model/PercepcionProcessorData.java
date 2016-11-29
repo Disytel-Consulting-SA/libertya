@@ -8,24 +8,26 @@ public class PercepcionProcessorData {
 
 	/** Documento */
 	private IDocument document;
-	
+
 	/** Entidad Comercial */
 	private MBPartner bpartner;
-	
+
 	/** Categoría de Impuesto */
 	private MCategoriaIva categoriaIVA;
-	
+
 	/** Impuesto */
 	private MTax tax;
-	
+
 	/** Alicuota de la config de la percepción */
 	private BigDecimal alicuota;
-	
+
 	/** Es Convenio Multilateral */
 	private boolean isConvenioMultilateral;
-	
+
+	/** Utilizar Jurisdicción CABA. */
+	private boolean isUseCABAJurisdiction;
+
 	public PercepcionProcessorData() {
-		
 	}
 
 	public IDocument getDocument() {
@@ -74,6 +76,14 @@ public class PercepcionProcessorData {
 
 	public void setConvenioMultilateral(boolean isConvenioMultilateral) {
 		this.isConvenioMultilateral = isConvenioMultilateral;
+	}
+
+	public boolean isUseCABAJurisdiction() {
+		return isUseCABAJurisdiction;
+	}
+
+	public void setUseCABAJurisdiction(boolean isUseCABAJurisdiction) {
+		this.isUseCABAJurisdiction = isUseCABAJurisdiction;
 	}
 
 }
