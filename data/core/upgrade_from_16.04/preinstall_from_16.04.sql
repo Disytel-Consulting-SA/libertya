@@ -2880,3 +2880,268 @@ UPDATE ad_system SET dummy = (SELECT addcolumnifnotexists('AD_Org_Percepcion','U
 
 --20161129-1100 Flag que determina líneas de caja generadas automáticamente
 UPDATE ad_system SET dummy = (SELECT addcolumnifnotexists('C_CashLine','automaticgenerated','character(1) NOT NULL DEFAULT ''N''::bpchar'));
+
+--20161130-1345 Merge de Revision 1679 - Carga de Liquidaciones de Tarjetas
+CREATE TABLE C_CreditCardSettlement(
+
+c_creditcardsettlement_id integer NOT NULL ,
+ad_client_id integer NOT NULL ,
+ad_org_id integer NOT NULL ,
+isactive character(1) NOT NULL DEFAULT 'Y'::bpchar ,
+created timestamp without time zone NOT NULL DEFAULT ('now'::text)::timestamp(6) with time zone ,
+createdby integer NOT NULL ,
+updated timestamp without time zone NOT NULL DEFAULT ('now'::text)::timestamp(6) with time zone ,
+updatedby integer NOT NULL ,
+m_entidadfinanciera_id integer NOT NULL ,
+paymentdate timestamp without time zone ,
+payment character varying(256) ,
+amount numeric(24,2) ,
+netamount numeric(24,2) ,
+withholding numeric(24,2) ,
+perception numeric(24,2) ,
+expenses numeric(24,2) ,
+couponstotalamount numeric(24,2) ,
+docstatus character(2) NOT NULL ,
+isreconciled character(1) NOT NULL DEFAULT 'N'::bpchar ,
+posted character(1) ,
+docaction character(2) NOT NULL ,
+selectallcoupons character(1) ,
+unselectallcoupons character(1) ,
+c_currency_id integer ,
+settlementno character varying(24) ,
+ivaamount numeric(24,2) ,
+commissionamount numeric(24,2) ,
+reconcilecoupons character(1) ,
+CONSTRAINT creditcardsettlement_key PRIMARY KEY (c_creditcardsettlement_id) ,
+CONSTRAINT fkclient FOREIGN KEY (ad_client_id) REFERENCES ad_client (ad_client_id) MATCH SIMPLE ON UPDATE NO ACTION ON DELETE NO ACTION  ,
+CONSTRAINT fkcurrency FOREIGN KEY (c_currency_id) REFERENCES c_currency (c_currency_id) MATCH SIMPLE ON UPDATE NO ACTION ON DELETE NO ACTION  ,
+CONSTRAINT fkentidadfinanciera FOREIGN KEY (m_entidadfinanciera_id) REFERENCES m_entidadfinanciera (m_entidadfinanciera_id) MATCH SIMPLE ON UPDATE NO ACTION ON DELETE NO ACTION  ,
+CONSTRAINT fkorg FOREIGN KEY (ad_org_id) REFERENCES ad_org (ad_org_id) MATCH SIMPLE ON UPDATE NO ACTION ON DELETE NO ACTION  );
+ALTER TABLE C_CreditCardSettlement
+  OWNER TO libertya;
+
+CREATE TABLE C_ExpenseConcepts(
+
+c_expenseconcepts_id integer NOT NULL ,
+ad_client_id integer NOT NULL ,
+ad_org_id integer NOT NULL ,
+isactive character(1) NOT NULL DEFAULT 'Y'::bpchar ,
+created timestamp without time zone NOT NULL DEFAULT ('now'::text)::timestamp(6) with time zone ,
+createdby integer NOT NULL ,
+updated timestamp without time zone NOT NULL DEFAULT ('now'::text)::timestamp(6) with time zone ,
+updatedby integer NOT NULL ,
+concepttype character(1) ,
+amount numeric(24,2) ,
+c_creditcardsettlement_id integer NOT NULL ,
+CONSTRAINT expenseconcepts_key PRIMARY KEY (c_expenseconcepts_id) ,
+CONSTRAINT fkcreditcardsettlement FOREIGN KEY (c_creditcardsettlement_id) REFERENCES c_creditcardsettlement (c_creditcardsettlement_id) MATCH SIMPLE ON UPDATE NO ACTION ON DELETE NO ACTION  );
+ALTER TABLE C_ExpenseConcepts
+  OWNER TO libertya;
+
+CREATE TABLE C_CreditCardCouponFilter(
+
+c_creditcardcouponfilter_id integer NOT NULL ,
+ad_client_id integer NOT NULL ,
+ad_org_id integer NOT NULL ,
+isactive character(1) NOT NULL DEFAULT 'Y'::bpchar ,
+created timestamp without time zone NOT NULL DEFAULT ('now'::text)::timestamp(6) with time zone ,
+createdby integer NOT NULL ,
+updated timestamp without time zone NOT NULL DEFAULT ('now'::text)::timestamp(6) with time zone ,
+updatedby integer NOT NULL ,
+c_creditcardsettlement_id integer NOT NULL ,
+c_currency_id integer NOT NULL ,
+trxdatefrom timestamp without time zone ,
+trxdateto timestamp without time zone ,
+m_entidadfinanciera_id integer NOT NULL ,
+m_entidadfinancieraplan_id integer NOT NULL ,
+paymentbatch character varying(24) ,
+isprocessed character(1) NOT NULL DEFAULT 'N'::bpchar ,
+process character(1) ,
+CONSTRAINT creditcardcouponfilter_key PRIMARY KEY (c_creditcardcouponfilter_id) ,
+CONSTRAINT fkcreditcardsettlement FOREIGN KEY (c_creditcardsettlement_id) REFERENCES c_creditcardsettlement (c_creditcardsettlement_id) MATCH SIMPLE ON UPDATE NO ACTION ON DELETE NO ACTION  ,
+CONSTRAINT fkcurrency FOREIGN KEY (c_currency_id) REFERENCES c_currency (c_currency_id) MATCH SIMPLE ON UPDATE NO ACTION ON DELETE NO ACTION  ,
+CONSTRAINT fkentidadfinanciera FOREIGN KEY (m_entidadfinanciera_id) REFERENCES m_entidadfinanciera (m_entidadfinanciera_id) MATCH SIMPLE ON UPDATE NO ACTION ON DELETE NO ACTION  ,
+CONSTRAINT fkentidadfinancieraplan FOREIGN KEY (m_entidadfinancieraplan_id) REFERENCES m_entidadfinancieraplan (m_entidadfinancieraplan_id) MATCH SIMPLE ON UPDATE NO ACTION ON DELETE NO ACTION  );
+ALTER TABLE C_CreditCardCouponFilter
+  OWNER TO libertya;
+
+CREATE TABLE C_CouponsSettlements(
+
+c_couponssettlements_id integer NOT NULL ,
+ad_client_id integer NOT NULL ,
+ad_org_id integer NOT NULL ,
+isactive character(1) NOT NULL DEFAULT 'Y'::bpchar ,
+created timestamp without time zone NOT NULL DEFAULT ('now'::text)::timestamp(6) with time zone ,
+createdby integer NOT NULL ,
+updated timestamp without time zone NOT NULL DEFAULT ('now'::text)::timestamp(6) with time zone ,
+updatedby integer NOT NULL ,
+include character(1) NOT NULL DEFAULT 'N'::bpchar ,
+m_entidadfinanciera_id integer NOT NULL ,
+m_entidadfinancieraplan_id integer NOT NULL ,
+trxdate timestamp without time zone ,
+amount numeric(24,2) ,
+couponno character varying(24) ,
+creditcardno character varying(24) ,
+allocationnumber numeric(18) NOT NULL ,
+paymentbatch character varying(24) ,
+c_creditcardsettlement_id integer NOT NULL ,
+c_currency_id integer NOT NULL ,
+c_creditcardcouponfilter_id integer NOT NULL ,
+c_payment_id integer NOT NULL ,
+CONSTRAINT couponssettlements_key PRIMARY KEY (c_couponssettlements_id) ,
+CONSTRAINT fkcreditcardcouponfilter FOREIGN KEY (c_creditcardcouponfilter_id) REFERENCES c_creditcardcouponfilter (c_creditcardcouponfilter_id) MATCH SIMPLE ON UPDATE NO ACTION ON DELETE NO ACTION  ,
+CONSTRAINT fkcreditcardsettlement FOREIGN KEY (c_creditcardsettlement_id) REFERENCES c_creditcardsettlement (c_creditcardsettlement_id) MATCH SIMPLE ON UPDATE NO ACTION ON DELETE NO ACTION  ,
+CONSTRAINT fkcurrency FOREIGN KEY (c_currency_id) REFERENCES c_currency (c_currency_id) MATCH SIMPLE ON UPDATE NO ACTION ON DELETE NO ACTION  ,
+CONSTRAINT fkentidadfinanciera FOREIGN KEY (m_entidadfinanciera_id) REFERENCES m_entidadfinanciera (m_entidadfinanciera_id) MATCH SIMPLE ON UPDATE NO ACTION ON DELETE NO ACTION  ,
+CONSTRAINT fkentidadfinancieraplan FOREIGN KEY (m_entidadfinancieraplan_id) REFERENCES m_entidadfinancieraplan (m_entidadfinancieraplan_id) MATCH SIMPLE ON UPDATE NO ACTION ON DELETE NO ACTION  ,
+CONSTRAINT fkpayment FOREIGN KEY (c_payment_id) REFERENCES c_payment (c_payment_id) MATCH SIMPLE ON UPDATE NO ACTION ON DELETE NO ACTION  );
+ALTER TABLE C_CouponsSettlements
+  OWNER TO libertya;
+
+CREATE TABLE C_WithholdingSettlement(
+
+c_withholdingsettlement_id integer NOT NULL ,
+ad_client_id integer NOT NULL ,
+ad_org_id integer NOT NULL ,
+isactive character(1) NOT NULL DEFAULT 'Y'::bpchar ,
+created timestamp without time zone NOT NULL DEFAULT ('now'::text)::timestamp(6) with time zone ,
+createdby integer NOT NULL ,
+updated timestamp without time zone NOT NULL DEFAULT ('now'::text)::timestamp(6) with time zone ,
+updatedby integer NOT NULL ,
+c_retenciontype_id integer NOT NULL ,
+c_region_id integer ,
+amount numeric(24,2) ,
+c_creditcardsettlement_id integer NOT NULL ,
+CONSTRAINT withholdingsettlement_key PRIMARY KEY (c_withholdingsettlement_id) ,
+CONSTRAINT fkcreditcardsettlement FOREIGN KEY (c_creditcardsettlement_id) REFERENCES c_creditcardsettlement (c_creditcardsettlement_id) MATCH SIMPLE ON UPDATE NO ACTION ON DELETE NO ACTION  ,
+CONSTRAINT fkregion FOREIGN KEY (c_region_id) REFERENCES c_region (c_region_id) MATCH SIMPLE ON UPDATE NO ACTION ON DELETE NO ACTION  ,
+CONSTRAINT fkretenciontype FOREIGN KEY (c_retenciontype_id) REFERENCES c_retenciontype (c_retenciontype_id) MATCH SIMPLE ON UPDATE NO ACTION ON DELETE NO ACTION  );
+ALTER TABLE C_WithholdingSettlement
+  OWNER TO libertya;
+
+CREATE TABLE C_PerceptionsSettlement(
+
+c_perceptionssettlement_id integer NOT NULL ,
+ad_client_id integer NOT NULL ,
+ad_org_id integer NOT NULL ,
+isactive character(1) NOT NULL DEFAULT 'Y'::bpchar ,
+created timestamp without time zone NOT NULL DEFAULT ('now'::text)::timestamp(6) with time zone ,
+createdby integer NOT NULL ,
+updated timestamp without time zone NOT NULL DEFAULT ('now'::text)::timestamp(6) with time zone ,
+updatedby integer NOT NULL ,
+c_taxcategory_id integer NOT NULL ,
+c_creditcardsettlement_id integer NOT NULL ,
+internalno character varying(24) NOT NULL ,
+amount numeric(24,2) ,
+CONSTRAINT perceptionssettlement_key PRIMARY KEY (c_perceptionssettlement_id) ,
+CONSTRAINT perceptionssettlementclient FOREIGN KEY (ad_client_id) REFERENCES ad_client (ad_client_id) MATCH SIMPLE ON UPDATE NO ACTION ON DELETE NO ACTION  ,
+CONSTRAINT perceptionssettlementcreditcardsettlement FOREIGN KEY (c_creditcardsettlement_id) REFERENCES c_creditcardsettlement (c_creditcardsettlement_id) MATCH SIMPLE ON UPDATE NO ACTION ON DELETE NO ACTION  ,
+CONSTRAINT perceptionssettlementorg FOREIGN KEY (ad_org_id) REFERENCES ad_org (ad_org_id) MATCH SIMPLE ON UPDATE NO ACTION ON DELETE NO ACTION  ,
+CONSTRAINT perceptionssettlementtaxcategory FOREIGN KEY (c_taxcategory_id) REFERENCES c_taxcategory (c_taxcategory_id) MATCH SIMPLE ON UPDATE NO ACTION ON DELETE NO ACTION  );
+ALTER TABLE C_PerceptionsSettlement
+  OWNER TO libertya;
+
+UPDATE ad_system SET dummy = (SELECT addcolumnifnotexists('C_Payment','AuditStatus','character(2)'));
+
+CREATE OR REPLACE VIEW c_paymentcoupon_v AS
+SELECT
+	p.c_payment_id,
+	p.ad_client_id,
+	p.ad_org_id,
+	p.created,
+	p.createdby,
+	p.updated,
+	p.updatedby,
+	efp.m_entidadfinanciera_id,
+	p.m_entidadfinancieraplan_id,
+	ccs.settlementno,
+	p.c_invoice_id,
+	'Y'::character(1) AS isactive,
+	p.creditcardnumber,
+	p.couponnumber,
+	p.c_bpartner_id,
+	p.duedate,
+	p.dateacct,
+	p.datetrx,
+	p.couponbatchnumber,
+	p.payamt,
+	p.c_currency_id,
+	p.docstatus,
+	p.isreconciled,
+	ccs.paymentdate AS settlementdate,
+	efp.cuotaspago AS totalallocations,
+	p.auditstatus
+FROM
+	libertya.c_payment p
+	JOIN libertya.m_entidadfinancieraplan efp
+		ON p.m_entidadfinancieraplan_id = efp.m_entidadfinancieraplan_id
+	LEFT JOIN libertya.c_couponssettlements cs
+		ON p.c_payment_id = cs.c_payment_id
+	LEFT JOIN libertya.c_creditcardsettlement ccs
+		ON cs.c_creditcardsettlement_id = ccs.c_creditcardsettlement_id
+WHERE
+	p.tendertype = 'C'::bpchar;
+ALTER TABLE c_paymentcoupon_v
+  OWNER TO libertya;
+
+CREATE TABLE C_IVASettlements(
+
+c_ivasettlements_id integer NOT NULL ,
+ad_client_id integer NOT NULL ,
+ad_org_id integer NOT NULL ,
+isactive character(1) NOT NULL DEFAULT 'Y'::bpchar ,
+created timestamp without time zone NOT NULL DEFAULT ('now'::text)::timestamp(6) with time zone ,
+createdby integer NOT NULL ,
+updated timestamp without time zone NOT NULL DEFAULT ('now'::text)::timestamp(6) with time zone ,
+updatedby integer NOT NULL ,
+c_creditcardsettlement_id integer NOT NULL ,
+c_taxcategory_id integer NOT NULL ,
+amount numeric(24,2) ,
+CONSTRAINT ivasettlements_key PRIMARY KEY (c_ivasettlements_id) ,
+CONSTRAINT ivasettlementsclient FOREIGN KEY (ad_client_id) REFERENCES ad_client (ad_client_id) MATCH SIMPLE ON UPDATE NO ACTION ON DELETE NO ACTION  ,
+CONSTRAINT ivasettlementscreditcardsettlement FOREIGN KEY (c_creditcardsettlement_id) REFERENCES c_creditcardsettlement (c_creditcardsettlement_id) MATCH SIMPLE ON UPDATE NO ACTION ON DELETE NO ACTION  ,
+CONSTRAINT ivasettlementsorg FOREIGN KEY (ad_org_id) REFERENCES ad_org (ad_org_id) MATCH SIMPLE ON UPDATE NO ACTION ON DELETE NO ACTION  ,
+CONSTRAINT ivasettlementstaxcategory FOREIGN KEY (c_taxcategory_id) REFERENCES c_taxcategory (c_taxcategory_id) MATCH SIMPLE ON UPDATE NO ACTION ON DELETE NO ACTION  );
+ALTER TABLE C_IVASettlements
+  OWNER TO libertya;
+
+CREATE TABLE C_CardSettlementConcepts(
+
+c_cardsettlementconcepts_id integer NOT NULL ,
+ad_client_id integer NOT NULL ,
+ad_org_id integer NOT NULL ,
+isactive character(1) NOT NULL DEFAULT 'Y'::bpchar ,
+created timestamp without time zone NOT NULL DEFAULT ('now'::text)::timestamp(6) with time zone ,
+createdby integer NOT NULL ,
+updated timestamp without time zone NOT NULL DEFAULT ('now'::text)::timestamp(6) with time zone ,
+updatedby integer NOT NULL ,
+m_product_id integer NOT NULL ,
+value character varying(40) NOT NULL ,
+name character varying(255) NOT NULL ,
+type character(2) NOT NULL ,
+CONSTRAINT cardsettlementconcepts_key PRIMARY KEY (c_cardsettlementconcepts_id) ,
+CONSTRAINT cardsettlementconceptsclient FOREIGN KEY (ad_client_id) REFERENCES ad_client (ad_client_id) MATCH SIMPLE ON UPDATE NO ACTION ON DELETE NO ACTION  ,
+CONSTRAINT cardsettlementconceptsorg FOREIGN KEY (ad_org_id) REFERENCES ad_org (ad_org_id) MATCH SIMPLE ON UPDATE NO ACTION ON DELETE NO ACTION  ,
+CONSTRAINT cardsettlementconceptsproduct FOREIGN KEY (m_product_id) REFERENCES m_product (m_product_id) MATCH SIMPLE ON UPDATE NO ACTION ON DELETE NO ACTION  );
+ALTER TABLE C_CardSettlementConcepts
+  OWNER TO libertya;
+
+CREATE TABLE C_CommissionConcepts(
+
+c_commissionconcepts_id integer NOT NULL ,
+ad_client_id integer NOT NULL ,
+ad_org_id integer NOT NULL ,
+isactive character(1) NOT NULL DEFAULT 'Y'::bpchar ,
+created timestamp without time zone NOT NULL DEFAULT ('now'::text)::timestamp(6) with time zone ,
+createdby integer NOT NULL ,
+updated timestamp without time zone NOT NULL DEFAULT ('now'::text)::timestamp(6) with time zone ,
+updatedby integer NOT NULL ,
+concepttype character(1) ,
+amount numeric(24,2) ,
+c_creditcardsettlement_id integer NOT NULL ,
+CONSTRAINT commissionconcepts_key PRIMARY KEY (c_commissionconcepts_id) ,
+CONSTRAINT commissionconceptsclient FOREIGN KEY (ad_client_id) REFERENCES ad_client (ad_client_id) MATCH SIMPLE ON UPDATE NO ACTION ON DELETE NO ACTION  ,
+CONSTRAINT commissionconceptsorg FOREIGN KEY (ad_org_id) REFERENCES ad_org (ad_org_id) MATCH SIMPLE ON UPDATE NO ACTION ON DELETE NO ACTION  ,
+CONSTRAINT fkcreditcardsettlement FOREIGN KEY (c_creditcardsettlement_id) REFERENCES c_creditcardsettlement (c_creditcardsettlement_id) MATCH SIMPLE ON UPDATE NO ACTION ON DELETE NO ACTION  );
+ALTER TABLE C_CommissionConcepts
+  OWNER TO libertya;
