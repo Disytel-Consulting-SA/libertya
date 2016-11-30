@@ -2700,8 +2700,6 @@ ALTER TABLE reginfo_compras_alicuotas_v
   OWNER TO libertya;
 
 --20161123-1642 Correcciones a las vistas de exportación CITI
-CITI vs LIVA
-
 CREATE OR REPLACE FUNCTION getgrandtotal(
     invoiceid integer,
     netbased boolean)
