@@ -7,7 +7,7 @@ import java.math.*;
 import org.openXpertya.util.*;
 /** Modelo Generado por C_Payment
  *  @author Comunidad de Desarrollo Libertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
- *  @version  - 2016-11-02 16:31:03.557 */
+ *  @version  - 2016-11-30 14:28:46.846 */
 public class X_C_Payment extends org.openXpertya.model.PO
 {
 /** Constructor estándar */
@@ -269,6 +269,32 @@ Street address of the Credit Card or Account holder */
 public String getA_Street() 
 {
 return (String)get_Value("A_Street");
+}
+public static final int AUDITSTATUS_AD_Reference_ID = MReference.getReferenceID("Audit Status");
+/** Closure Pending = CP */
+public static final String AUDITSTATUS_ClosurePending = "CP";
+/** To Verify = TV */
+public static final String AUDITSTATUS_ToVerify = "TV";
+/** Paid = P */
+public static final String AUDITSTATUS_Paid = "P";
+/** Rejected = R */
+public static final String AUDITSTATUS_Rejected = "R";
+/** Set AuditStatus */
+public void setAuditStatus (String AuditStatus)
+{
+if (AuditStatus == null || AuditStatus.equals("CP") || AuditStatus.equals("TV") || AuditStatus.equals("P") || AuditStatus.equals("R"));
+ else throw new IllegalArgumentException ("AuditStatus Invalid value - Reference = AUDITSTATUS_AD_Reference_ID - CP - TV - P - R");
+if (AuditStatus != null && AuditStatus.length() > 2)
+{
+log.warning("Length > 2 - truncated");
+AuditStatus = AuditStatus.substring(0,2);
+}
+set_Value ("AuditStatus", AuditStatus);
+}
+/** Get AuditStatus */
+public String getAuditStatus() 
+{
+return (String)get_Value("AuditStatus");
 }
 /** Set Authorization Code */
 public void setAuthCode (String AuthCode)
