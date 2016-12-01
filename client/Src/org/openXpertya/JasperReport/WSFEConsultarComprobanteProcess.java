@@ -51,12 +51,19 @@ public class WSFEConsultarComprobanteProcess extends SvrProcess {
 	public static final int TIPO_COMPROBANTE_TIQUE_FACTURA_B 					= 82;
 	public static final int TIPO_COMPROBANTE_TIQUE 								= 83;
 
-	/** Archivo TA.xml conteniendo token y sign */ 
-	public static final String TA_FILE_NAME = "TA.xml";
 	/** Etiquta token dentro del archivo */
 	public static final String TA_TAG_TOKEN = "token";
 	/** Etiquta sign dentro del archivo */
 	public static final String TA_TAG_SIGN  = "sign";
+	/** Nombre del archivo TA para servicio WSFE */
+	public static final String TA_WSFE_FILENAME 		= "TA-wsfe.xml";
+	/** Nombre del archivo TA para servicio WSFEX */
+	public static final String TA_WSFEX_FILENAME 		= "TA-wsfex.xml";
+
+	/** Preferencia URL AFIP sobre la cual realizar la consulta */
+	public static final String PREFERENCE_WSFECC_URL 	= "WSFECC_URL";
+
+	
 	
 	/** Nomina de comprobantes recuperados.  En cada posicion de la lista hay una map con todos los datos, o bien ERROR_KEY si no se pudo recuperar */
 	protected ArrayList<HashMap<String, String>> retrievedDocuments = new ArrayList<HashMap<String, String>>();
@@ -113,6 +120,10 @@ public class WSFEConsultarComprobanteProcess extends SvrProcess {
 		docTypeMap.put("CIM", TIPO_COMPROBANTE_FACTURA_M);
 		docTypeMap.put("CDNM", TIPO_COMPROBANTE_NOTA_DEBITO_M);
 		docTypeMap.put("CCNM", TIPO_COMPROBANTE_NOTA_CREDITO_M);
+		// Comprobantes tipo E		
+		docTypeMap.put("CIE", TIPO_COMPROBANTE_FACTURA_EXPORTACION);
+		docTypeMap.put("CDNE", TIPO_COMPROBANTE_NOTA_DEBITO_EXPORTACION);
+		docTypeMap.put("CCNE", TIPO_COMPROBANTE_NOTA_CREDITO_EXPORTACION);
 	}
 	
 		
@@ -179,7 +190,7 @@ public class WSFEConsultarComprobanteProcess extends SvrProcess {
 		// Recuperar el servicio
 		ServiceLocator locator = new ServiceLocator();
  		// Se intenta recuperar preferencia indicando URL de consulta. En caso de no existir se toma valor por defecto (URL actual de producción)
-		String afipURL = MPreference.GetCustomPreferenceValue("WSFECC_URL", clientID);
+		String afipURL = MPreference.GetCustomPreferenceValue(PREFERENCE_WSFECC_URL, clientID);
 		if (afipURL == null || afipURL.length() == 0)
 			afipURL = "https://servicios1.afip.gov.ar/wsfev1/service.asmx";
 		locator.setServiceSoapEndpointAddress(afipURL);
@@ -359,7 +370,9 @@ public class WSFEConsultarComprobanteProcess extends SvrProcess {
 		}
 	}
 	
-	
+	/**
+	 * Retorna la ubicacion completa del archivo TA (path y nomrbe de archivo), basado en las preferencias y el tipo de documento
+	 */
 	protected String getTAFileName() throws Exception {
 
 		/* === RECUPERACION DE PREFERENCIA POR USUARIO (acorde a Wsfe.java)  === */
@@ -382,7 +395,28 @@ public class WSFEConsultarComprobanteProcess extends SvrProcess {
 		}
 		if (pyafipwsLocation == null || pyafipwsLocation.length() == 0)
 			throw new Exception ("Preferencia WSFE_PV" + ptoVta + " o WSFE no encontradas en los valores predeterminados.");
-		return pyafipwsLocation + File.separator + TA_FILE_NAME;
+		return pyafipwsLocation + File.separator + getSimpleTAFileName(cbteTipo);
 	}
+	
+	
+	/**
+	 * Retorna el nombre del archivo TA dependiendo si es una factura de exportacion o no
+	 */
+	protected String getSimpleTAFileName(int tipoCbte) {
+		return isExportacion(tipoCbte) ? TA_WSFEX_FILENAME : TA_WSFE_FILENAME;
+	}
+	
+	
+	/**
+	 * Retorna true si es un comprobante de exportacion a partir de un tipoCbte según denominacion de AFIP 
+	 */
+	protected boolean isExportacion(int tipoCbte) {
+		return (tipoCbte == TIPO_COMPROBANTE_FACTURA_EXPORTACION ||
+				tipoCbte == TIPO_COMPROBANTE_NOTA_DEBITO_EXPORTACION ||
+				tipoCbte == TIPO_COMPROBANTE_NOTA_CREDITO_EXPORTACION || 
+				tipoCbte == TIPO_COMPROBANTE_FACTURA_EXPORTACION_SIMPLIFICADO);
+	}	
+	 
+
 	
 }
