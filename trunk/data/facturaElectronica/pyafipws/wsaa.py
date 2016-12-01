@@ -300,11 +300,12 @@ class WSAA(BaseWS):
                 if not os.access(filename,os.R_OK):
                     raise RuntimeError("Imposible abrir %s\n" % filename)
             # creo el nombre para el archivo del TA (según credenciales y ws) 
-            fn = "TA-%s.xml" % hashlib.md5(service + crt + key).hexdigest()
+            # fn = "TA-%s.xml" % hashlib.md5(service + crt + key).hexdigest()
+            fn = "TA-%s.xml" % service
             if cache:
                 fn = os.path.join(cache, fn)
             else:
-                fn = os.path.join(self.InstallDir, "cache", fn)
+                fn = os.path.join(self.InstallDir, "", fn)
 
             # leer el ticket de acceso (si fue previamente solicitado)
             if not os.path.exists(fn) or os.path.getsize(fn) == 0 or \
@@ -428,7 +429,7 @@ if __name__=="__main__":
             os.startfile(pedido_cert + ".txt")
     else:
         
-		#PERSONALIZACION LIBERTYA 2011-06-30 -- LEER PROPERTIES.INI
+        #PERSONALIZACION LIBERTYA 2011-06-30 -- LEER PROPERTIES.INI
         try:
             properties = open("properties.ini")
         except:
@@ -464,7 +465,7 @@ if __name__=="__main__":
           sys.exit("Faltan parametros en el archivo properties.ini")
         #FIN LEER PROPERTIES   
 
-		
+        
         # Leer argumentos desde la linea de comando (si no viene tomar default)
         args = [arg for arg in sys.argv if arg.startswith("--")]
         #argv = [arg for arg in sys.argv if not arg.startswith("--")]
@@ -482,7 +483,7 @@ if __name__=="__main__":
         wrapper = None
 #        cacert = len(argv)>7 and argv[7] or CACERT
         cacert = CACERT
-		
+        
         DEBUG = "--debug" in args
 
         print >> sys.stderr, "Usando CRT=%s KEY=%s URL=%s SERVICE=%s TTL=%s" % (crt, key, url, service, ttl)

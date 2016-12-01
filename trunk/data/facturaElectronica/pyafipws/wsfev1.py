@@ -37,6 +37,32 @@ LANZAR_EXCEPCIONES = True      # valor por defecto: True
 WSDL = "https://wswhomo.afip.gov.ar/wsfev1/service.asmx?WSDL"
 #WSDL = "file:///home/reingart/tmp/service.asmx.xml"
 
+# ==========================================================================================================
+# =============== Funcionalidad de log para seguimiento en interaccion con WS de AFIP ======================
+# ==========================================================================================================
+# Usamos hora para identificar la sesion
+sessionID = -1;
+# Nombre del archivo donde se escribira el log
+if os.name == 'posix':
+    current_dir_name = os.getcwd().split('/')[-1]
+    path = '/var/log/libertya'
+    logfile = '%s/lywsfe_%s.log' %(path,current_dir_name)
+else:
+    logfile = 'lywsfe.log';
+# Log de seguimiento en la creacion de facturas
+def logaction(activity):
+    # Si la sesion no fue iniciada, la seteamos a partir de la hora
+    global sessionID;
+    if sessionID == -1:
+        sessionID = datetime.datetime.now().strftime("%H%M%S%f");
+
+    try:
+        f = open(logfile, 'a');
+        f.write('[' + datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S") + '] SID: ' + sessionID + ', ACT: ' + activity.replace(os.linesep, '') + os.linesep);
+        f.close;
+    except Exception:
+        print ('Error escribiendo en ' + logfile);
+# ==========================================================================================================
 
 class WSFEv1(BaseWS):
     "Interfaz para el WebService de Factura Electrónica Version 1 - 2.5"
@@ -920,12 +946,12 @@ def main():
 
     wsfev1 = WSFEv1()
     wsfev1.LanzarExcepciones = True
-	
-	#PERSONALIZACION LIBERTYA 2011-06-30 -- LEER PROPERTIES.INI
+    
+    #PERSONALIZACION LIBERTYA 2011-06-30 -- LEER PROPERTIES.INI
     try:
-    	properties = open("properties.ini")
+        properties = open("properties.ini")
     except:
-    	try:
+        try:
            open("properties_error.txt","w").write("No se puede abrir properties.ini")
         except:
            sys.exit("Error escribiendo properties_error.txt\n")
@@ -1017,7 +1043,7 @@ def main():
 
     #PERSONALIZACION LIBERTYA 2011-06-06
     try:
-    	entrada = open("entrada.txt")
+        entrada = open("entrada.txt")
     except:
         try:
            open("error.txt","w").write("Error abriendo entrada.txt")
@@ -1037,7 +1063,11 @@ def main():
     var_moneda = entrada.readline()
     var_cotizacion = entrada.readline()
     var_impuestos = entrada.readline().split(";")
-    var_imp_trib = entrada.readline().split(";")
+    var_percepciones = entrada.readline().split(";")
+    var_total_percepciones = entrada.readline()
+    var_invoiceid = entrada.readline()
+    
+    logaction('INICIO - C_Invoice_ID: ' + var_invoiceid )
     
     #FIN
 
@@ -1049,6 +1079,7 @@ def main():
         tipo_cbte = var_tipo_cbte
         punto_vta = var_punto_vta
         cbte_nro = long(wsfev1.CompUltimoAutorizado(tipo_cbte, punto_vta) or 0)
+        logaction('CompUltimoAutorizado: ' + str(cbte_nro) )
         print "ult_cbte_nro", cbte_nro
         fecha = datetime.datetime.now().strftime("%Y%m%d")
         concepto = 2
@@ -1062,26 +1093,9 @@ def main():
         #imp_neto = "1.00"
         imp_neto = float(var_imp_neto)
         #imp_iva = "0.21"
-        imp_iva = 0.0
-        imp_trib = 0.0
-        
-        i = 0
-        while i < len(var_impuestos):
-            datos = var_impuestos[i].split(":")
-            importe = datos[2]
-            imp_iva = imp_iva + float(importe)
-            i = i+1
-            
-        i = 0
-        
-        print var_imp_trib
-        while i < len(var_imp_trib):
-            if var_imp_trib[i] is not None and len(var_imp_trib[i].strip(' \t\n\r')) > 0:
-                datos = var_imp_trib[i].split(":")
-                importe = datos[2]
-                imp_trib = imp_trib + float(importe)
-            i = i+1
-        
+        imp_iva = float(var_imp_total) - float(var_imp_neto) - float(var_total_percepciones)
+        imp_trib = var_total_percepciones
+                
         print "imp_total", imp_total
         print "imp_neto", imp_neto
         print "imp_iva", imp_iva
@@ -1095,6 +1109,7 @@ def main():
         #moneda_ctz = '1.000'
         moneda_ctz = var_cotizacion
 
+        logaction('Invocacion a CrearFactura');
         wsfev1.CrearFactura(concepto, tipo_doc, nro_doc, tipo_cbte, punto_vta,
             cbt_desde, cbt_hasta, imp_total, imp_tot_conc, imp_neto,
             imp_iva, imp_trib, imp_op_ex, fecha_cbte, fecha_venc_pago, 
@@ -1126,30 +1141,32 @@ def main():
             id = datos[0]
             base_imp = datos[1]
             importe = datos[2]
+            logaction('Invocacion a AgregarIva');
             wsfev1.AgregarIva(id, base_imp, importe)
             i = i+1
             
         #Agregar otros tributos
-        if var_imp_trib:
+        if (float(var_total_percepciones) > 0):
             i = 0
-            while i < len(var_imp_trib):
-                if var_imp_trib[i] is not None and len(var_imp_trib[i].strip(' \t\n\r')) > 0:
-                    datos = var_imp_trib[i].split(":")
-                    id = datos[0]
-                    base_imp = datos[1]
-                    importe = datos[2]
-                    alic = datos[3]
-                    wsfev1.AgregarTributo(id, "", base_imp, alic, importe)
+            while i < len(var_percepciones):
+                datos = var_percepciones[i].split(":")
+                id = datos[0]
+                base_imp = datos[1]
+                importe = datos[2]
+                alic = datos[3]
+                wsfev1.AgregarTributo(id, "Tributo", base_imp, alic, importe)
                 i = i+1
         
         import time
         t0 = time.time()
+        logaction('Invocacion a CAESolicitar');
         wsfev1.CAESolicitar()
         t1 = time.time()
         
         print "Resultado", wsfev1.Resultado
         print "Reproceso", wsfev1.Reproceso
         print "CAE", wsfev1.CAE
+        logaction('Consultar CAE: ' + wsfev1.CAE )
         if DEBUG:
             print "t0", t0
             print "t1", t1
@@ -1170,6 +1187,7 @@ def main():
 
         try:
             salida = str(wsfev1.Resultado)+ ":" +str(wsfev1.CAE) + ":" + str(cbt_desde) +":" + var_msg + ":" + str(fecha_cbte)
+            logaction('FIN - InvoiceID: ' + var_invoiceid + ' - NroComp: ' + str(cbt_desde) + ' - CAE: ' + wsfev1.CAE + ' - Salida: ' + salida)
             print "salida: %s " %salida
             open("salida.txt","w").write(salida)
             print "El archivo salida.txt se ha generado correctamente."
