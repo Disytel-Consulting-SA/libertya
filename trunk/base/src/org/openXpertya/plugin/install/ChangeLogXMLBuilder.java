@@ -44,6 +44,10 @@ public abstract class ChangeLogXMLBuilder extends PluginXMLBuilder {
 	/** Usuario registrado en registros del changelog */
 	
 	private Integer userID = null;
+
+	/** First Changelog (primer changelog) */
+	
+	protected int firstChangelogID = -1;
 	
 	/** Last Changelog (ultimo changelog) */
 	
@@ -269,8 +273,17 @@ public abstract class ChangeLogXMLBuilder extends PluginXMLBuilder {
 			// Agrego el nodo de grupo dentro del nodo root
 			addNode(groupNode, getRootNode());
 		}
-		// Guardar ultimo changelog exportado
 		int groupListSize = groupList.getGroups().size();
+		// Guardar primer changelog exportado
+		if(groupListSize > 0){
+			ChangeLogGroup firstGroup = groupList.getGroups().get(0);
+			int elementSize = firstGroup.getElements().size();
+			if(elementSize > 0) {
+				ChangeLogElement firstElement = firstGroup.getElements().get(0); 
+				firstChangelogID = firstElement.getAD_Changelog_ID();
+			}
+		}
+		// Guardar ultimo changelog exportado
 		if(groupListSize > 0){
 			ChangeLogGroup lastGroup = groupList.getGroups().get(groupListSize - 1);
 			int elementSize = lastGroup.getElements().size();
@@ -418,5 +431,15 @@ public abstract class ChangeLogXMLBuilder extends PluginXMLBuilder {
 
 	public void setDisableInconsistentChangelog(boolean disableInconsistentChangelog) {
 		this.disableInconsistentChangelog = disableInconsistentChangelog;
+	}
+
+
+	public int getFirstChangelogID() {
+		return firstChangelogID;
+	}
+
+
+	public void setFirstChangelogID(int firstChangelogID) {
+		this.firstChangelogID = firstChangelogID;
 	}
 }

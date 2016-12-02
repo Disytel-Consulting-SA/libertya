@@ -106,8 +106,10 @@ public class ExportPlugin extends SvrProcess{
 		int i=0;
 		for (PluginDocumentBuilder docBuilder : getBuilders()) {
 			// Al builder del properties debo indicarle el changelog
-			if (++i == 4)
+			if (++i == 4) {
 				((PluginPropertiesBuilder)docBuilder).setChangelogIDTo(getLastChangelog());
+				((PluginPropertiesBuilder)docBuilder).setChangelogIDFrom(getFirstChangelog());
+			}
 			// Genero el documento
 			docBuilder.generateDocument();
 		}
@@ -152,6 +154,19 @@ public class ExportPlugin extends SvrProcess{
 		if (lastChangelogID_install >= lastChangelogID_postInstall)
 			return lastChangelogID_install;
 		return lastChangelogID_postInstall;
+	}
+	
+	/**
+	 * Determina el menor de los changelogs - cual es el primer changelog del export
+	 * @return
+	 */
+	protected int getFirstChangelog() 
+	{
+		int firstChangelogID_install = ((ChangeLogXMLBuilder)(builders.get(1))).getFirstChangelogID();
+		int firstChangelogID_postInstall = ((ChangeLogXMLBuilder)(builders.get(2))).getFirstChangelogID();
+		if (firstChangelogID_install <= firstChangelogID_postInstall)
+			return firstChangelogID_install;
+		return firstChangelogID_postInstall;
 	}
 	
 	/**
