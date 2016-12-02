@@ -15,9 +15,11 @@ public class LaunchProductLinesSales extends JasperReportLaunch {
 	@Override
 	protected void loadReportParameters() throws Exception {
 		addReportParameter("TITLE", getTitle());
-		MOrg org = MOrg.get(getCtx(), getOrgID());
-		addReportParameter("ORG_VALUE", org.getValue());
-		addReportParameter("ORG_NAME", org.getName());
+		if(!Util.isEmpty(getOrgID())){
+			MOrg org = MOrg.get(getCtx(), getOrgID());
+			addReportParameter("ORG_VALUE", org.getValue());
+			addReportParameter("ORG_NAME", org.getName());
+		}
 		if(!Util.isEmpty(getProductLineID(), true)){
 			MProductLines productLine = new MProductLines(getCtx(),
 					getProductLineID(), get_TrxName());
