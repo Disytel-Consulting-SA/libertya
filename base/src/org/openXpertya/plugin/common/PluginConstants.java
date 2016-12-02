@@ -106,6 +106,9 @@ public class PluginConstants {
 	/** Mapear el changelog copiado a un component version especifico (especificando su UID)  */
 	public static final String PROP_MAP_TO_COMPONENTVERSION_UID = "MAPTOCOMPONENTVERSIONUID";
 	
+	/** Primer changelog exportado */
+	public static final String PROP_FIRST_CHANGELOG = "FIRST_CHANGELOG";
+	
 	/** Ultimo changelog exportado */
 	public static final String PROP_LAST_CHANGELOG = "LAST_CHANGELOG";
 	

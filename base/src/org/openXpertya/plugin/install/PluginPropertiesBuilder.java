@@ -36,7 +36,11 @@ public class PluginPropertiesBuilder extends PluginDocumentBuilder {
 	
 	private boolean patch = false;
 	
-	/** Variable indicando ultimo changelog a exportar */
+/** Variable indicando primer changelog exportado */
+	
+	private int changelogIDFrom = -1;
+	
+	/** Variable indicando ultimo changelog exportado */
 	
 	private int changelogIDTo = -1;
 	
@@ -97,6 +101,7 @@ public class PluginPropertiesBuilder extends PluginDocumentBuilder {
 		setProperty(PluginConstants.PROP_CORELEVEL, String.valueOf(getComponent().getCoreLevel()));
 		if(isPatch())
 			setProperty(PluginConstants.PROP_PATCH, "Y");
+		setProperty(PluginConstants.PROP_FIRST_CHANGELOG, Integer.toString(changelogIDFrom));
 		setProperty(PluginConstants.PROP_LAST_CHANGELOG, Integer.toString(changelogIDTo));
 		setProperty(PluginConstants.PROP_EXPORT_TIMESTAMP, Env.getDateTime("yyyy/MM/dd-HH:mm:ss.SSS"));
 		
@@ -161,5 +166,13 @@ public class PluginPropertiesBuilder extends PluginDocumentBuilder {
 
 	public void setChangelogIDTo(int changelogIDTo) {
 		this.changelogIDTo = changelogIDTo;
+	}
+
+	public int getChangelogIDFrom() {
+		return changelogIDFrom;
+	}
+
+	public void setChangelogIDFrom(int changelogIDFrom) {
+		this.changelogIDFrom = changelogIDFrom;
 	}
 }
