@@ -41,7 +41,10 @@ public class SalesRankingDataSource extends ProductLinesSalesDataSource {
 		if(!Util.isEmpty(getVendorID(), true)){
 			sql.append(" inner join m_product_po as po on il.m_product_id = po.m_product_id ");
 		}
-		sql.append(" where i.docstatus IN ('CO','CL') AND i.ad_org_id = ? AND i.issotrx = 'Y' AND dt.docbasetype IN ('"+MDocType.DOCBASETYPE_ARInvoice+"','"+MDocType.DOCBASETYPE_ARCreditMemo+"') AND dt.doctypekey NOT IN ('RCI','RCR') AND date_trunc('day',dateinvoiced) >= date_trunc('day',?::date) AND date_trunc('day',dateinvoiced) <= date_trunc('day',?::date) AND i.isvoidable = 'N' ");
+		sql.append(" where i.docstatus IN ('CO','CL') AND i.issotrx = 'Y' AND dt.docbasetype IN ('"+MDocType.DOCBASETYPE_ARInvoice+"','"+MDocType.DOCBASETYPE_ARCreditMemo+"') AND dt.doctypekey NOT IN ('RCI','RCR') AND date_trunc('day',dateinvoiced) >= date_trunc('day',?::date) AND date_trunc('day',dateinvoiced) <= date_trunc('day',?::date) AND i.isvoidable = 'N' ");
+		if(!Util.isEmpty(getOrgID())){
+			sql.append(" AND i.ad_org_id = ").append(getOrgID());
+		}
 		if(!Util.isEmpty(getProductLinesID(), true)){
 			sql.append(" AND pl.m_product_lines_id = ").append(getProductLinesID());
 		}
@@ -56,7 +59,7 @@ public class SalesRankingDataSource extends ProductLinesSalesDataSource {
 
 	@Override
 	protected Object[] getParameters() {
-		return new Object[]{getOrgID(), getDateFrom(), getDateTo()};
+		return new Object[]{getDateFrom(), getDateTo()};
 	}
 	
 	/**
