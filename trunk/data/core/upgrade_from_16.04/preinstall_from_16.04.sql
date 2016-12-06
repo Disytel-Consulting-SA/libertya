@@ -3350,3 +3350,242 @@ $BODY$
   ROWS 1000;
 ALTER FUNCTION v_documents_org_filtered(integer, boolean, character, timestamp without time zone)
   OWNER TO libertya;
+  
+-- 20161206-0956 Aporte Sur Soft. Optimizacion en tiempo de respuesta de la vista
+CREATE OR REPLACE VIEW rv_c_invoice AS 
+SELECT DISTINCT 
+	ON(c_invoice_id,
+	ad_client_id,
+	ad_org_id,
+	isactive,
+	created,
+	createdby,
+	updated,
+	updatedby,
+	issotrx,
+	i.documentno,
+	docstatus,
+	docaction,
+	isprinted,
+	isdiscountprinted,
+	processing,
+	processed,
+	istransferred,
+	ispaid,
+	c_doctype_id,
+	c_doctypetarget_id,
+	c_order_id,
+	description,
+	isapproved,
+	salesrep_id,
+	dateinvoiced,
+	dateprinted,
+	dateacct,
+	c_bpartner_id,
+	c_bpartner_location_id,
+	ad_user_id,
+	c_bp_group_id,
+	poreference,
+	dateordered,
+	c_currency_id,
+	c_conversiontype_id,
+	paymentrule,
+	c_paymentterm_id,
+	m_pricelist_id,
+	c_campaign_id,
+	c_project_id,
+	c_activity_id,
+	ispayschedulevalid,
+	c_country_id,
+	c_region_id,
+	postal,
+	city,
+	c_charge_id,
+	chargeamt,
+	totallines,
+	grandtotal,
+	multiplier)
+	
+	i.c_invoice_id,
+	i.ad_client_id,
+	i.ad_org_id,
+	i.isactive,
+	i.created,
+	i.createdby,
+	i.updated,
+	i.updatedby,
+	i.issotrx,
+	i.documentno,
+	i.docstatus,
+	i.docaction,
+	i.isprinted,
+	i.isdiscountprinted,
+	i.processing,
+	i.processed,
+	i.istransferred,
+	i.ispaid,
+	i.c_doctype_id,
+	i.c_doctypetarget_id,
+	i.c_order_id,
+	i.description,
+	i.isapproved,
+	i.salesrep_id,
+	i.dateinvoiced,
+	i.dateprinted,
+	i.dateacct,
+	i.c_bpartner_id,
+	i.c_bpartner_location_id,
+	i.ad_user_id,
+	b.c_bp_group_id,
+	i.poreference,
+	i.dateordered,
+	i.c_currency_id,
+	i.c_conversiontype_id,
+	i.paymentrule,
+	i.c_paymentterm_id,
+	i.m_pricelist_id,
+	i.c_campaign_id,
+	i.c_project_id,
+	i.c_activity_id,
+	i.ispayschedulevalid,
+	loc.c_country_id,
+	loc.c_region_id,
+	loc.postal,
+	loc.city,
+	i.c_charge_id,
+	CASE
+		WHEN
+			charat(d.docbasetype::character varying, 3)::text = 'C'::text 
+		THEN
+			i.chargeamt * ( - 1::numeric) 
+		ELSE
+			i.chargeamt 
+	END
+	AS chargeamt, 
+	CASE
+		WHEN
+			charat(d.docbasetype::character varying, 3)::text = 'C'::text 
+		THEN
+			i.totallines * ( - 1::numeric) 
+		ELSE
+			i.totallines 
+	END
+	AS totallines, 
+	CASE
+		WHEN
+			charat(d.docbasetype::character varying, 3)::text = 'C'::text 
+		THEN
+			i.grandtotal * ( - 1::numeric) 
+		ELSE
+			i.grandtotal 
+	END
+	AS grandtotal, 
+	CASE
+		WHEN
+			charat(d.docbasetype::character varying, 3)::text = 'C'::text 
+		THEN
+( - 1) 
+		ELSE
+			1 
+	END
+	AS multiplier,
+	COALESCE(mio1.documentno, mio2.documentno, mio3.documentno) AS documentno_inout,
+	COALESCE(mio1.movementdate, mio2.movementdate, mio3.movementdate) AS movementdate_inout
+FROM
+	c_invoice i 
+	JOIN
+		c_doctype d 
+		ON i.c_doctype_id = d.c_doctype_id 
+	JOIN
+		c_bpartner b 
+		ON i.c_bpartner_id = b.c_bpartner_id 
+	JOIN
+		c_bpartner_location bpl 
+		ON i.c_bpartner_location_id = bpl.c_bpartner_location_id 
+	JOIN
+		c_location loc 
+		ON bpl.c_location_id = loc.c_location_id 
+	LEFT JOIN
+		c_invoiceline il
+		ON il.c_invoice_id = i.c_invoice_id
+	LEFT JOIN
+		m_inoutline miol1
+		ON miol1.c_orderline_id = il.c_orderline_id
+	LEFT JOIN
+		c_orderline ol1
+		ON ol1.c_orderline_id = il.c_orderline_id
+	LEFT JOIN
+		c_order o1
+		ON o1.c_order_id = ol1.c_order_id
+	LEFT JOIN
+		m_inout mio3
+		ON mio3.c_order_id = o1.c_order_id
+	LEFT JOIN
+		m_inout mio1
+		ON mio1.c_order_id = i.c_order_id
+	LEFT JOIN
+		m_inoutline miol2
+		ON miol2.m_inoutline_id = il.m_inoutline_id
+	LEFT JOIN
+		m_inout mio2
+		ON mio2.m_inout_id = miol2.m_inout_id
+WHERE
+	i.docstatus = ANY (ARRAY['CO'::bpchar, 'CL'::bpchar])
+ORDER BY c_invoice_id,
+	ad_client_id,
+	ad_org_id,
+	isactive,
+	created,
+	createdby,
+	updated,
+	updatedby,
+	issotrx,
+	i.documentno,
+	docstatus,
+	docaction,
+	isprinted,
+	isdiscountprinted,
+	processing,
+	processed,
+	istransferred,
+	ispaid,
+	c_doctype_id,
+	c_doctypetarget_id,
+	c_order_id,
+	description,
+	isapproved,
+	salesrep_id,
+	dateinvoiced,
+	dateprinted,
+	dateacct,
+	c_bpartner_id,
+	c_bpartner_location_id,
+	ad_user_id,
+	c_bp_group_id,
+	poreference,
+	dateordered,
+	c_currency_id,
+	c_conversiontype_id,
+	paymentrule,
+	c_paymentterm_id,
+	m_pricelist_id,
+	c_campaign_id,
+	c_project_id,
+	c_activity_id,
+	ispayschedulevalid,
+	c_country_id,
+	c_region_id,
+	postal,
+	city,
+	c_charge_id,
+	chargeamt,
+	totallines,
+	grandtotal,
+	multiplier, 
+	mio1.documentno DESC,
+	mio1.movementdate DESC,
+	mio2.documentno DESC,
+	mio2.movementdate DESC,
+	mio3.documentno DESC,
+	mio3.movementdate DESC;
+	
