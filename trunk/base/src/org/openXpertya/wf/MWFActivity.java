@@ -1058,7 +1058,8 @@ public class MWFActivity extends X_AD_WF_Activity implements Runnable {
             if( !m_po.save()) {
                 success    = false;
                 String error = CLogger.retrieveErrorAsString();
-                processMsg = Util.isEmpty(error, true)?"SaveError":error;
+				processMsg = Util.isEmpty(error, true)
+						? (Util.isEmpty(m_po.getProcessMsg(), true) ? "SaveError" : m_po.getProcessMsg()) : error;
             }
 
             if( !success ) {
