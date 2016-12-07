@@ -5,7 +5,6 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.Timestamp;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.Properties;
 
@@ -14,11 +13,10 @@ import org.openXpertya.apps.ProcessCtl;
 import org.openXpertya.apps.ProcessParameter;
 import org.openXpertya.model.MComponent;
 import org.openXpertya.model.MComponentVersion;
-import org.openXpertya.model.MField;
-import org.openXpertya.model.MFieldVO;
 import org.openXpertya.model.MProcess;
 import org.openXpertya.model.POInfo;
 import org.openXpertya.model.X_AD_Plugin;
+import org.openXpertya.model.X_AD_Plugin_Detail;
 import org.openXpertya.plugin.common.PluginConstants;
 import org.openXpertya.plugin.common.PluginUtils;
 import org.openXpertya.plugin.install.PluginXMLUpdater;
@@ -97,7 +95,7 @@ public class VPluginInstallerUtils  {
 
 		/* Información adicional del plugin */
 		PluginUtils.appendStatus(" === Registrando informacion adicional del componente === ");
-		setAditionalValues(m_ctx, m_component_props);
+		setAditionalValues(m_ctx, m_component_props, jarURL);
 		
 		/* PostInstalacion - Invocar proceso genérico o ad-hoc */
 		PluginUtils.appendStatus(" === Disparando proceso de postinstalación === ");
@@ -273,7 +271,7 @@ public class VPluginInstallerUtils  {
 	 * Incorpora información adicional a las entradas vacias de las tablas: AD_Plugin, AD_Component y AD_ComponentVersion
 	 * (esto lo realiza posterior a la ejecucion de preinstall e install a fin de contar con los posibles nuevos campos) 
 	 */
-	public static void setAditionalValues(Properties ctx, Properties m_component_props) throws Exception
+	public static void setAditionalValues(Properties ctx, Properties m_component_props, String jarURL) throws Exception
 	{
 		// Fecha de exportación del componente y ultimo changelog relacionado (lo vuelvo a instanciar para recuperar las nuevas columnas)
 		// Primeramente limpiar de la cache poinfo la estructura actual de ad_plugin
@@ -281,9 +279,28 @@ public class VPluginInstallerUtils  {
 		plugin = new X_AD_Plugin(ctx, plugin.getAD_Plugin_ID(), m_trx);
 		plugin.setComponent_Export_Date((String)m_component_props.get(PluginConstants.PROP_EXPORT_TIMESTAMP));
 		if (m_component_props.get(PluginConstants.PROP_LAST_CHANGELOG) != null && !"-1".equals((String)m_component_props.get(PluginConstants.PROP_LAST_CHANGELOG)))
-				plugin.setComponent_Last_Changelog((String)m_component_props.get(PluginConstants.PROP_LAST_CHANGELOG));
+			plugin.setComponent_Last_Changelog((String)m_component_props.get(PluginConstants.PROP_LAST_CHANGELOG));
 		if (!plugin.save())
 			throw new Exception(" - Error al intentar registrar información adicional del plugin ");
+
+		// Incorporacion del detalle de la instalacion (si se encuentra en una version con dicho soporte)
+		if (persistInstallationDetails()) {
+			X_AD_Plugin_Detail pluginDetail = new X_AD_Plugin_Detail(ctx, 0, m_trx);
+			pluginDetail.setAD_Plugin_ID(plugin.getAD_Plugin_ID());
+			pluginDetail.setComponent_First_Changelog((String)m_component_props.get(PluginConstants.PROP_FIRST_CHANGELOG));
+			pluginDetail.setComponent_Last_Changelog((String)m_component_props.get(PluginConstants.PROP_LAST_CHANGELOG));
+			pluginDetail.setVersion((String)m_component_props.get(PluginConstants.PROP_VERSION));
+			pluginDetail.setComponent_Export_Date((String)m_component_props.get(PluginConstants.PROP_EXPORT_TIMESTAMP));
+			pluginDetail.setInstall_Details("File: " + jarURL);
+			if (!pluginDetail.save())
+				throw new Exception(" - Error al intentar registrar información detallada del plugin ");
+		}
+		
+	}
+	
+	/** Backward compatibility: Verifica si estan dadas las condiciones para persistir en la tabla que registra de detalle de instalaciones */
+	protected static boolean persistInstallationDetails() {
+		return 1 == DB.getSQLValue(m_trx, "select count(1) from information_schema.tables where lower(table_name) = '"+X_AD_Plugin_Detail.Table_Name.toLowerCase()+"'");  
 	}
 	
 	/**
