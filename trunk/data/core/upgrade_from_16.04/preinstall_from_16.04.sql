@@ -3696,3 +3696,18 @@ CREATE OR REPLACE VIEW reginfo_compras_cbte_v AS
 
 ALTER TABLE reginfo_compras_cbte_v
   OWNER TO libertya;
+  
+--20161207-1338 Nuevas vistas para simplificar la recuperacion de informacion de plugins
+create view ad_plugin_v as
+select cv.name, cv.ad_componentobjectuid, cv.version, p.created, p.updated, p.createdby, p.updatedby, p.component_export_date, p.component_last_changelog
+from ad_componentversion cv
+inner join ad_plugin p on p.ad_componentversion_id = cv.ad_componentversion_id
+order by p.created asc;
+
+create view ad_plugin_detail_v as
+select cv.name, cv.ad_componentobjectuid, pd.version, pd.created, pd.createdby, pd.component_export_date, pd.component_first_changelog, pd.component_last_changelog, pd.install_details
+from ad_componentversion cv
+inner join ad_plugin p on p.ad_componentversion_id = cv.ad_componentversion_id
+left join ad_plugin_detail pd on p.ad_plugin_id = pd.ad_plugin_id
+order by pd.created asc;
+
