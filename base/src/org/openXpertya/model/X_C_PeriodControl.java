@@ -7,7 +7,7 @@ import java.math.*;
 import org.openXpertya.util.*;
 /** Modelo Generado por C_PeriodControl
  *  @author Comunidad de Desarrollo Libertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
- *  @version  - 2012-01-09 10:57:05.994 */
+ *  @version  - 2016-12-07 10:19:46.498 */
 public class X_C_PeriodControl extends org.openXpertya.model.PO
 {
 /** Constructor estándar */
@@ -141,12 +141,14 @@ public static final String DOCBASETYPE_ARCreditMemo = "ARC";
 public static final String DOCBASETYPE_ProjectIssue = "PJI";
 /** Amortization = AMO */
 public static final String DOCBASETYPE_Amortization = "AMO";
+/** Bank List = BLB */
+public static final String DOCBASETYPE_BankList = "BLB";
 /** Set Document BaseType.
 Logical type of document */
 public void setDocBaseType (String DocBaseType)
 {
-if (DocBaseType.equals("MMP") || DocBaseType.equals("MXI") || DocBaseType.equals("MXP") || DocBaseType.equals("ARF") || DocBaseType.equals("MMS") || DocBaseType.equals("MMR") || DocBaseType.equals("MMM") || DocBaseType.equals("POO") || DocBaseType.equals("POR") || DocBaseType.equals("MMI") || DocBaseType.equals("MOR") || DocBaseType.equals("MOU") || DocBaseType.equals("MOM") || DocBaseType.equals("MOV") || DocBaseType.equals("MOP") || DocBaseType.equals("MOF") || DocBaseType.equals("GLJ") || DocBaseType.equals("GLD") || DocBaseType.equals("API") || DocBaseType.equals("APP") || DocBaseType.equals("ARI") || DocBaseType.equals("ARR") || DocBaseType.equals("SOO") || DocBaseType.equals("MOI") || DocBaseType.equals("CMB") || DocBaseType.equals("CMC") || DocBaseType.equals("CMA") || DocBaseType.equals("APC") || DocBaseType.equals("ARC") || DocBaseType.equals("PJI") || DocBaseType.equals("AMO"));
- else throw new IllegalArgumentException ("DocBaseType Invalid value - Reference = DOCBASETYPE_AD_Reference_ID - MMP - MXI - MXP - ARF - MMS - MMR - MMM - POO - POR - MMI - MOR - MOU - MOM - MOV - MOP - MOF - GLJ - GLD - API - APP - ARI - ARR - SOO - MOI - CMB - CMC - CMA - APC - ARC - PJI - AMO");
+if (DocBaseType.equals("MMP") || DocBaseType.equals("MXI") || DocBaseType.equals("MXP") || DocBaseType.equals("ARF") || DocBaseType.equals("MMS") || DocBaseType.equals("MMR") || DocBaseType.equals("MMM") || DocBaseType.equals("POO") || DocBaseType.equals("POR") || DocBaseType.equals("MMI") || DocBaseType.equals("MOR") || DocBaseType.equals("MOU") || DocBaseType.equals("MOM") || DocBaseType.equals("MOV") || DocBaseType.equals("MOP") || DocBaseType.equals("MOF") || DocBaseType.equals("GLJ") || DocBaseType.equals("GLD") || DocBaseType.equals("API") || DocBaseType.equals("APP") || DocBaseType.equals("ARI") || DocBaseType.equals("ARR") || DocBaseType.equals("SOO") || DocBaseType.equals("MOI") || DocBaseType.equals("CMB") || DocBaseType.equals("CMC") || DocBaseType.equals("CMA") || DocBaseType.equals("APC") || DocBaseType.equals("ARC") || DocBaseType.equals("PJI") || DocBaseType.equals("AMO") || DocBaseType.equals("BLB"));
+ else throw new IllegalArgumentException ("DocBaseType Invalid value - Reference = DOCBASETYPE_AD_Reference_ID - MMP - MXI - MXP - ARF - MMS - MMR - MMM - POO - POR - MMI - MOR - MOU - MOM - MOV - MOP - MOF - GLJ - GLD - API - APP - ARI - ARR - SOO - MOI - CMB - CMC - CMA - APC - ARC - PJI - AMO - BLB");
 if (DocBaseType == null) throw new IllegalArgumentException ("DocBaseType is mandatory");
 if (DocBaseType.length() > 3)
 {
