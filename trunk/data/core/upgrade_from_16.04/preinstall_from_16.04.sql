@@ -3588,4 +3588,24 @@ ORDER BY c_invoice_id,
 	mio2.movementdate DESC,
 	mio3.documentno DESC,
 	mio3.movementdate DESC;
-	
+
+--20161207-1007 Nueva tabla para registrar detalles de instalacion de componentes
+create table ad_plugin_detail (
+ad_plugin_detail_id INTEGER NOT NULL,
+  ad_client_id INTEGER NOT NULL,
+  ad_org_id INTEGER NOT NULL,
+  isactive CHARACTER(1) NOT NULL DEFAULT 'Y'::bpchar,
+  created TIMESTAMP WITHOUT TIME zone NOT NULL DEFAULT ('now'::text)::TIMESTAMP(6) WITH TIME zone,
+  createdby INTEGER NOT NULL,
+  updated TIMESTAMP WITHOUT TIME zone NOT NULL DEFAULT ('now'::text)::TIMESTAMP(6) WITH TIME zone,
+  updatedby INTEGER NOT NULL,
+  ad_plugin_id integer NOT NULL,
+  version varchar(10),
+  component_export_date varchar(30),
+  component_first_changelog varchar(50),
+  component_last_changelog varchar(50),
+  install_details varchar,
+CONSTRAINT ad_plugin_detail_key PRIMARY KEY (ad_plugin_detail_id),
+CONSTRAINT plugindetail_plugin FOREIGN KEY (ad_plugin_id) REFERENCES ad_plugin (ad_plugin_id) MATCH SIMPLE ON UPDATE NO ACTION ON DELETE NO ACTION
+);
+
