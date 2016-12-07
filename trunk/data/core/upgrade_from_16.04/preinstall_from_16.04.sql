@@ -3609,3 +3609,90 @@ CONSTRAINT ad_plugin_detail_key PRIMARY KEY (ad_plugin_detail_id),
 CONSTRAINT plugindetail_plugin FOREIGN KEY (ad_plugin_id) REFERENCES ad_plugin (ad_plugin_id) MATCH SIMPLE ON UPDATE NO ACTION ON DELETE NO ACTION
 );
 
+--20161207-1207 Fix a la columna alicuotas de iva ya que no contemplaba operaciones exentas
+CREATE OR REPLACE VIEW reginfo_ventas_cbte_v AS 
+SELECT ad_client_id, ad_org_id, c_invoice_id, date, fechadecomprobante, tipodecomprobante, puntodeventa, nrocomprobante, nrocomprobantehasta, 
+	CASE
+            WHEN taxidtype = '99'::bpchar AND grandtotal > 1000::numeric THEN '96'::bpchar
+            ELSE taxidtype
+        END::character(2) AS codigodoccomprador, 
+        gettaxid(taxid, taxidtype, c_categoria_iva_id, nroidentificcliente, grandtotal)::character varying(20) AS nroidentificacioncomprador, 
+	nombrecomprador, 
+        currencyconvert(grandtotal, c_currency_id, 118, fechadecomprobante::timestamp with time zone, NULL::integer, ad_client_id, ad_org_id)::numeric(20,2) AS imptotal,
+        impconceptosnoneto,
+        imppercepnocategorizados,
+        impopeexentas,
+        imppercepopagosdeimpunac,
+        imppercepiibb,
+        imppercepimpumuni,
+        impimpuinternos,
+        codmoneda,
+        tipodecambio,
+        cantalicuotasiva,
+        codigooperacion,
+        impotrostributos,
+        fechavencimientopago
+FROM (SELECT i.ad_client_id, i.ad_org_id, i.c_invoice_id, date_trunc('day'::text, i.dateacct) AS date, 
+	date_trunc('day'::text, i.dateacct) AS fechadecomprobante, ei.codigo AS tipodecomprobante, i.puntodeventa, i.numerocomprobante AS nrocomprobante, 
+	i.numerocomprobante AS nrocomprobantehasta, 
+        bp.name AS nombrecomprador, 
+        bp.taxidtype,
+        bp.taxid,
+        bp.c_categoria_iva_id, i.nroidentificcliente,
+        i.c_currency_id, 
+	0::numeric(20,2) AS impconceptosnoneto, 
+	0::numeric(20,2) AS imppercepnocategorizados, 
+	getgrandtotal(i.c_invoice_id, true) as grandtotal,
+	currencyconvert(getimporteoperacionexentas(i.c_invoice_id), i.c_currency_id, 118, i.dateacct::timestamp with time zone, NULL::integer, i.ad_client_id, i.ad_org_id)::numeric(20,2) AS impopeexentas, 
+	currencyconvert(gettaxamountbyareatype(i.c_invoice_id, 'N'::bpchar), i.c_currency_id, 118, i.dateacct::timestamp with time zone, NULL::integer, i.ad_client_id, i.ad_org_id)::numeric(20,2) AS imppercepopagosdeimpunac, 
+	currencyconvert(gettaxamountbyperceptiontype(i.c_invoice_id, 'B'::bpchar), i.c_currency_id, 118, i.dateacct::timestamp with time zone, NULL::integer, i.ad_client_id, i.ad_org_id)::numeric(20,2) AS imppercepiibb, 
+	currencyconvert(gettaxamountbyareatype(i.c_invoice_id, 'M'::bpchar), i.c_currency_id, 118, i.dateacct::timestamp with time zone, NULL::integer, i.ad_client_id, i.ad_org_id)::numeric(20,2) AS imppercepimpumuni, 
+	currencyconvert(gettaxamountbyareatype(i.c_invoice_id, 'I'::bpchar), i.c_currency_id, 118, i.dateacct::timestamp with time zone, NULL::integer, i.ad_client_id, i.ad_org_id)::numeric(20,2) AS impimpuinternos, 
+	cu.wsfecode AS codmoneda, 
+	currencyrate(i.c_currency_id, 118, i.dateacct::timestamp with time zone, NULL::integer, i.ad_client_id, i.ad_org_id)::numeric(10,6) AS tipodecambio, 
+        getcantidadalicuotasiva(i.c_invoice_id) AS cantalicuotasiva, 
+        getcodigooperacion(i.c_invoice_id)::character varying(1) AS codigooperacion, 
+        currencyconvert(getimporteotrostributos(i.c_invoice_id), i.c_currency_id, 118, i.dateacct::timestamp with time zone, NULL::integer, i.ad_client_id, i.ad_org_id)::numeric(20,2) AS impotrostributos, 
+	NULL::timestamp without time zone AS fechavencimientopago
+   FROM c_invoice i
+   JOIN c_doctype dt ON dt.c_doctype_id = i.c_doctype_id
+   LEFT JOIN e_electronicinvoiceref ei ON dt.doctypekey::text ~~* (ei.clave_busqueda::text || '%'::text) AND ei.tabla_ref::text = 'TCOM'::text
+   JOIN c_bpartner bp ON bp.c_bpartner_id = i.c_bpartner_id
+   JOIN c_currency cu ON cu.c_currency_id = i.c_currency_id
+  WHERE (i.docstatus = ANY (ARRAY['CL'::bpchar, 'CO'::bpchar, 'VO'::bpchar, 'RE'::bpchar])) AND i.issotrx = 'Y'::bpchar AND i.isactive = 'Y'::bpchar AND (dt.doctypekey::text <> ALL (ARRAY['RTR'::character varying::text, 'RTI'::character varying::text, 'RCR'::character varying::text, 'RCI'::character varying::text])) AND dt.isfiscaldocument = 'Y'::bpchar AND (dt.isfiscal IS NULL OR dt.isfiscal = 'N'::bpchar OR (dt.isfiscal = 'Y'::bpchar AND i.fiscalalreadyprinted = 'Y'::bpchar))) as t;
+
+ALTER TABLE reginfo_ventas_cbte_v
+  OWNER TO libertya;
+
+
+CREATE OR REPLACE VIEW reginfo_compras_cbte_v AS 
+ SELECT i.ad_client_id, i.ad_org_id, i.c_invoice_id, date_trunc('day'::text, i.dateacct) AS date, date_trunc('day'::text, i.dateinvoiced) AS fechadecomprobante, gettipodecomprobante(dt.doctypekey, l.letra)::character varying(15) AS tipodecomprobante, 
+        CASE
+            WHEN gettipodecomprobante(dt.doctypekey, l.letra)::text = '66'::text THEN 0
+            ELSE i.puntodeventa
+        END AS puntodeventa, 
+        CASE
+            WHEN gettipodecomprobante(dt.doctypekey, l.letra)::text = '66'::text THEN 0
+            ELSE i.numerocomprobante
+        END AS nrocomprobante, 
+        CASE
+            WHEN gettipodecomprobante(dt.doctypekey, l.letra)::text = '66'::text THEN i.importclearance
+            ELSE NULL::character varying
+        END::character varying(30) AS despachoimportacion, bp.taxidtype AS codigodocvendedor, bp.taxid AS nroidentificacionvendedor, bp.name AS nombrevendedor, currencyconvert(getgrandtotal(i.c_invoice_id, true), i.c_currency_id, 118, i.dateacct::timestamp with time zone, NULL::integer, i.ad_client_id, i.ad_org_id)::numeric(20,2) AS imptotal, 0::numeric(20,2) AS impconceptosnoneto, 
+        CASE
+            WHEN (l.letra = ANY (ARRAY['B'::bpchar, 'C'::bpchar])) AND i.importclearance IS NULL THEN 0::numeric
+            ELSE currencyconvert(getimporteoperacionexentas(i.c_invoice_id), i.c_currency_id, 118, i.dateacct::timestamp with time zone, NULL::integer, i.ad_client_id, i.ad_org_id)
+        END::numeric(20,2) AS impopeexentas, currencyconvert(gettaxamountbyperceptiontype(i.c_invoice_id, 'I'::bpchar), i.c_currency_id, 118, i.dateacct::timestamp with time zone, NULL::integer, i.ad_client_id, i.ad_org_id)::numeric(20,2) AS imppercepopagosvaloragregado, currencyconvert(gettaxamountbyareatype(i.c_invoice_id, 'N'::bpchar), i.c_currency_id, 118, i.dateacct::timestamp with time zone, NULL::integer, i.ad_client_id, i.ad_org_id)::numeric(20,2) AS imppercepopagosdeimpunac, currencyconvert(gettaxamountbyperceptiontype(i.c_invoice_id, 'B'::bpchar), i.c_currency_id, 118, i.dateacct::timestamp with time zone, NULL::integer, i.ad_client_id, i.ad_org_id)::numeric(20,2) AS imppercepiibb, currencyconvert(gettaxamountbyareatype(i.c_invoice_id, 'M'::bpchar), i.c_currency_id, 118, i.dateacct::timestamp with time zone, NULL::integer, i.ad_client_id, i.ad_org_id)::numeric(20,2) AS imppercepimpumuni, currencyconvert(gettaxamountbyareatype(i.c_invoice_id, 'I'::bpchar), i.c_currency_id, 118, i.dateacct::timestamp with time zone, NULL::integer, i.ad_client_id, i.ad_org_id)::numeric(20,2) AS impimpuinternos, cu.wsfecode AS codmoneda, currencyrate(i.c_currency_id, 118, i.dateacct::timestamp with time zone, NULL::integer, i.ad_client_id, i.ad_org_id)::numeric(10,6) AS tipodecambio, 
+        CASE
+            WHEN (l.letra = ANY (ARRAY['B'::bpchar, 'C'::bpchar])) AND gettipodecomprobante(dt.doctypekey, l.letra)::text <> '66'::text THEN 0::numeric
+            ELSE getcantidadalicuotasiva(i.c_invoice_id)
+        END AS cantalicuotasiva, getcodigooperacion(i.c_invoice_id)::character varying(1) AS codigooperacion, currencyconvert(getcreditofiscalcomputable(i.c_invoice_id), i.c_currency_id, 118, i.dateacct::timestamp with time zone, NULL::integer, i.ad_client_id, i.ad_org_id)::numeric(20,2) AS impcreditofiscalcomputable, currencyconvert(getimporteotrostributos(i.c_invoice_id), i.c_currency_id, 118, i.dateacct::timestamp with time zone, NULL::integer, i.ad_client_id, i.ad_org_id)::numeric(20,2) AS impotrostributos, NULL::character varying(20) AS cuitemisorcorredor, NULL::character varying(60) AS denominacionemisorcorredor, 0::numeric(20,2) AS ivacomision
+   FROM c_invoice i
+   JOIN c_doctype dt ON dt.c_doctype_id = i.c_doctype_id
+   LEFT JOIN c_letra_comprobante l ON l.c_letra_comprobante_id = i.c_letra_comprobante_id
+   JOIN c_bpartner bp ON bp.c_bpartner_id = i.c_bpartner_id
+   JOIN c_currency cu ON cu.c_currency_id = i.c_currency_id
+  WHERE (i.docstatus = ANY (ARRAY['CL'::bpchar, 'CO'::bpchar, 'VO'::bpchar, 'RE'::bpchar])) AND i.issotrx = 'N'::bpchar AND i.isactive = 'Y'::bpchar AND (dt.doctypekey::text <> ALL (ARRAY['RTR'::character varying::text, 'RTI'::character varying::text, 'RCR'::character varying::text, 'RCI'::character varying::text])) AND dt.isfiscaldocument = 'Y'::bpchar AND (dt.isfiscal IS NULL OR dt.isfiscal = 'N'::bpchar OR dt.isfiscal = 'Y'::bpchar AND i.fiscalalreadyprinted = 'Y'::bpchar);
+
+ALTER TABLE reginfo_compras_cbte_v
+  OWNER TO libertya;
