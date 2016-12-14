@@ -252,7 +252,12 @@ public class MInvoice extends X_C_Invoice implements DocAction,Authorization {
 		to.set_ValueNoCheck("DocumentNo", null);
 		to.setIsCopy(true);
 
-		//
+		/*
+		* Ponger en null el cae y el vto cae del documento copiado para evitar errores
+		* en la emisión de facturas electrónicas por verificaciones en el cae
+		*/
+		to.setcae(null);
+		to.setvtocae(null);
 
 		to.setDocStatus(DOCSTATUS_Drafted); // Draft
 		to.setDocAction(DOCACTION_Complete);
