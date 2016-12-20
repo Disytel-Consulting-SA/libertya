@@ -18,7 +18,7 @@ public class DeclaracionValoresVentasReceiptDataSource extends
 	
 	@Override
 	protected String getQuery() {
-		StringBuffer sql = new StringBuffer("SELECT al.c_invoice_id, tipo, montosaldado, i.description, al.paydescription, i.datetrx, ingreso FROM ("); 
+		StringBuffer sql = new StringBuffer("SELECT al.c_invoice_id, tipo, montosaldado, i.description, al.paydescription, i.datetrx, ingreso, total FROM ("); 
 		sql.append(super.getQuery());
 		sql.append(" ) as i ");
 		sql.append(" INNER JOIN c_allocation_detail_v as al ON i.doc_id = al.c_invoice_id ");
