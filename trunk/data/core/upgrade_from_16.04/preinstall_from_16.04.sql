@@ -3711,3 +3711,32 @@ inner join ad_plugin p on p.ad_componentversion_id = cv.ad_componentversion_id
 left join ad_plugin_detail pd on p.ad_plugin_id = pd.ad_plugin_id
 order by pd.created asc;
 
+--20161220-1057 Nueva funcion para realizar un shifting sobre secuencias fisicas
+/**
+ * Incrementa shiftcount las secuencias fisicas que respeten el nombre criteria
+ */
+CREATE OR REPLACE FUNCTION shift_sequences(criteria varchar, shiftcount integer)
+  RETURNS integer AS
+$BODY$
+DECLARE
+	asequence varchar;
+	newvalue integer;
+	modifiedcount integer;
+BEGIN
+	IF (shiftcount <= 0) THEN
+		raise exception 'El desplazamiento debe ser mayor a cero';
+	END IF;
+	
+	modifiedcount := 0;
+	FOR asequence IN (SELECT c.relname FROM pg_class c WHERE c.relkind = 'S' AND c.relname ilike ''||criteria order by c.relname) LOOP
+		SELECT INTO newvalue nextval(asequence) + shiftcount;
+		EXECUTE 'ALTER SEQUENCE ' || asequence || ' RESTART WITH ' || newvalue;
+		modifiedcount := modifiedcount + 1;
+	END LOOP;
+	RETURN modifiedcount;
+END
+$BODY$
+  LANGUAGE plpgsql VOLATILE
+  COST 100;
+ALTER FUNCTION shift_sequences(criteria varchar, shiftcount integer)
+  OWNER TO libertya;
