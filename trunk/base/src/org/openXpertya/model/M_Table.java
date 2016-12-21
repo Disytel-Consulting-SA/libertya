@@ -263,6 +263,9 @@ public class M_Table extends X_AD_Table {
         } else if (className.startsWith("W_")) {
             className	= className.substring(2);
         }
+        else if (className.startsWith("I_")) {
+            className = className.substring(2);
+        }
 
         return Util.replace(className, "_", "");
     }
@@ -295,7 +298,7 @@ public class M_Table extends X_AD_Table {
           }
     		  
         // Import Tables (Name conflict)
-        if (tableName.startsWith("I_")) {
+  /*      if (tableName.startsWith("I_")) {
 
             Class	clazz	= getPOclass("org.openXpertya.model.X_" + tableName);
 
@@ -307,7 +310,7 @@ public class M_Table extends X_AD_Table {
 
             return null;
         }
-
+*/
         // Special Naming
         for (int i = 0; i < s_special.length; i++) {
 
