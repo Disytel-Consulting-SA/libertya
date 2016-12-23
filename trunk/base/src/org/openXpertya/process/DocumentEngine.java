@@ -32,6 +32,7 @@ import org.openXpertya.model.MBrochure;
 import org.openXpertya.model.MCash;
 import org.openXpertya.model.MCashLine;
 import org.openXpertya.model.MCreditCardClose;
+import org.openXpertya.model.MCreditCardSettlement;
 import org.openXpertya.model.MInOut;
 import org.openXpertya.model.MInventory;
 import org.openXpertya.model.MInvoice;
@@ -1268,7 +1269,13 @@ public class DocumentEngine implements DocAction {
             if( docStatus.equals( DocumentEngine.STATUS_Completed )) {
                 options[ 0 ] = DocumentEngine.ACTION_ReActivate;
             }
-	    } 
+	    } else if (AD_Table_ID == MCreditCardSettlement.Table_ID) {
+
+			// Complete                    ..  CO
+			if (docStatus.equals(DocumentEngine.STATUS_Completed)) {
+				options[index++] = DocumentEngine.ACTION_Void;
+			}
+	    }
 		return index;
 	}
 	
