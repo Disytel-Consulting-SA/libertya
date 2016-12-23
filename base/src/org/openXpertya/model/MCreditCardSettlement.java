@@ -19,6 +19,7 @@ import org.openXpertya.util.DB;
 public class MCreditCardSettlement extends X_C_CreditCardSettlement implements DocAction {
 	private static final long serialVersionUID = 1L;
 
+	private boolean m_justPrepared = false;
 	/**
 	 * Load contructor.
 	 * @param ctx
@@ -37,6 +38,35 @@ public class MCreditCardSettlement extends X_C_CreditCardSettlement implements D
 	 */
 	public MCreditCardSettlement(Properties ctx, int C_CreditCardSettlement_ID, String trxName) {
 		super(ctx, C_CreditCardSettlement_ID, trxName);
+		if (C_CreditCardSettlement_ID == 0) {
+			setDocAction(DOCACTION_Complete); // CO
+			setDocStatus(DOCSTATUS_Drafted); // DR
+
+			setIsApproved(false);
+			setPosted(false);
+			setProcessed(false);
+			setProcessing(false);
+		}
+	}
+
+	@Override
+	protected boolean beforeDelete() {
+		String trxName = get_TrxName();
+		if ((trxName == null) || (trxName.length() == 0)) {
+			log.warning("No transaction");
+		}
+		if (isPosted()) {
+			if (!MPeriod.isOpen(getCtx(), getPaymentDate(), MDocType.DOCBASETYPE_PaymentAllocation)) {
+				log.warning("Period Closed");
+				return false;
+			}
+			setPosted(false);
+			if (MFactAcct.delete(Table_ID, getID(), trxName) < 0) {
+				return false;
+			}
+		}
+		setIsActive(false);
+		return true;
 	}
 
 	/**
@@ -66,28 +96,53 @@ public class MCreditCardSettlement extends X_C_CreditCardSettlement implements D
 
 	@Override
 	public boolean unlockIt() {
-		return false;
+		log.info("unlockIt - " + toString());
+		setProcessing(false);
+		return true;
 	}
 
 	@Override
 	public boolean invalidateIt() {
+		log.info("invalidateIt - " + toString());
 		setDocAction(DOCACTION_Prepare);
 		return true;
 	}
 
 	@Override
 	public String prepareIt() {
+		log.info(toString());
+		m_processMsg = ModelValidationEngine.get().fireDocValidate(this, ModelValidator.TIMING_BEFORE_PREPARE);
+
+		if (m_processMsg != null) {
+			return DocAction.STATUS_Invalid;
+		}
+
+		if (!MPeriod.isOpen(getCtx(), getPaymentDate(), MDocType.DOCBASETYPE_PaymentAllocation)) {
+			m_processMsg = "@PeriodClosed@";
+
+			return DocAction.STATUS_Invalid;
+		}
+
+		m_justPrepared = true;
+
+		if (!DOCACTION_Complete.equals(getDocAction())) {
+			setDocAction(DOCACTION_Complete);
+		}
 		return DocAction.STATUS_InProgress;
 	}
 
 	@Override
 	public boolean approveIt() {
-		return false;
+		log.info("approveIt - " + toString());
+		setIsApproved(true);
+		return true;
 	}
 
 	@Override
 	public boolean rejectIt() {
-		return false;
+		log.info("rejectIt - " + toString());
+		setIsApproved(false);
+		return true;
 	}
 
 	private void changeCouponsAuditStatus(String status) {
@@ -137,6 +192,25 @@ public class MCreditCardSettlement extends X_C_CreditCardSettlement implements D
 
 	@Override
 	public String completeIt() {
+		// Re-Check
+		if (!m_justPrepared && !existsJustPreparedDoc()) {
+			String status = prepareIt();
+			if (!DocAction.STATUS_InProgress.equals(status)) {
+				return status;
+			}
+		}
+		// Implicit Approval
+		if (!isApproved()) {
+			approveIt();
+		}
+
+		// User Validation
+		String valid = ModelValidationEngine.get().fireDocValidate(this, ModelValidator.TIMING_AFTER_COMPLETE);
+
+		if (valid != null) {
+			m_processMsg = valid;
+			return DocAction.STATUS_Invalid;
+		}
 
 		changeCouponsAuditStatus(X_C_Payment.AUDITSTATUS_Paid);
 
@@ -181,9 +255,9 @@ public class MCreditCardSettlement extends X_C_CreditCardSettlement implements D
 
 		// Genera el campo de texto "Pago" con: Nro Transferencia, Importe, Fecha de Emisión, Fecha Contable.
 		// Ej: Nro Transf.: 965389 - Importe: $ 190.31 - F.Emisión: 25/05/1810 - F.Contable: 25/05/1810
-		setPayment("Nro Transf.: " + payment.getDocumentNo() + 
-				" - Importe: " + currency.getCurSymbol() + " " + payAmt + 
-				" - F.Emisión: " + payment.getDateTrx() + 
+		setPayment("Nro Transf.: " + payment.getDocumentNo() +
+				" - Importe: " + currency.getCurSymbol() + " " + payAmt +
+				" - F.Emisión: " + payment.getDateTrx() +
 				" - F.Contable: " + payment.getDateAcct());
 
 		if (!save()) {
@@ -191,12 +265,14 @@ public class MCreditCardSettlement extends X_C_CreditCardSettlement implements D
 			setDocAction(DOCACTION_Complete);
 			return DocAction.STATUS_Drafted;
 		}
+		setProcessed(true);
 		setDocAction(DOCACTION_Close);
 		return DocAction.STATUS_Completed;
 	}
 
 	@Override
 	public boolean postIt() {
+		log.info("postIt - " + toString());
 		return false;
 	}
 
@@ -210,6 +286,7 @@ public class MCreditCardSettlement extends X_C_CreditCardSettlement implements D
 
 	@Override
 	public boolean voidIt() {
+		log.info("voidIt - " + toString());
 		if (DOCSTATUS_Closed.equals(getDocStatus()) || 
 				DOCSTATUS_Reversed.equals(getDocStatus()) || 
 				DOCSTATUS_Voided.equals(getDocStatus())) {
@@ -261,12 +338,15 @@ public class MCreditCardSettlement extends X_C_CreditCardSettlement implements D
 
 		DB.executeUpdate(sql.toString(), get_TrxName());
 
+		setProcessed(true);
 		setDocAction(DOCACTION_None);
 		return true;
 	}
 
 	@Override
 	public boolean closeIt() {
+		log.info(toString());
+		setProcessed(true);
 		setDocAction(DOCACTION_None);
 		return true;
 	}
