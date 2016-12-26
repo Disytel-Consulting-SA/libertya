@@ -174,7 +174,14 @@ public class InfoInOut extends Info {
     /** Descripción de Campos */
 
     private static final Info_Column[] s_invoiceLayout = {
-        new Info_Column( " ","i.M_InOut_ID",IDColumn.class ),new Info_Column( Msg.translate( Env.getCtx(),"C_BPartner_ID" ),"(SELECT Name FROM C_BPartner bp WHERE bp.C_BPartner_ID=i.C_BPartner_ID)",String.class ),new Info_Column( Msg.translate( Env.getCtx(),"MovementDate" ),"i.MovementDate",Timestamp.class ),new Info_Column( Msg.translate( Env.getCtx(),"DocumentNo" ),"i.DocumentNo",String.class ),new Info_Column( Msg.translate( Env.getCtx(),"Description" ),"i.Description",String.class ),new Info_Column( Msg.translate( Env.getCtx(),"POReference" ),"i.POReference",String.class ),new Info_Column( Msg.translate( Env.getCtx(),"IsSOTrx" ),"i.IsSOTrx",Boolean.class )
+        new Info_Column( " ","i.M_InOut_ID",IDColumn.class ),
+        new Info_Column( Msg.translate( Env.getCtx(),"C_BPartner_ID" ),"(SELECT Name FROM C_BPartner bp WHERE bp.C_BPartner_ID=i.C_BPartner_ID)",String.class ),
+        new Info_Column( Msg.translate( Env.getCtx(),"MovementDate" ),"i.MovementDate",Timestamp.class ),
+        new Info_Column( Msg.translate( Env.getCtx(),"C_DocType_ID" ),"(SELECT PrintName FROM C_DocType dt WHERE dt.C_DocType_ID=i.C_DocType_ID)",String.class ),
+        new Info_Column( Msg.translate( Env.getCtx(),"DocumentNo" ),"i.DocumentNo",String.class ),
+        new Info_Column( Msg.translate( Env.getCtx(),"Description" ),"i.Description",String.class ),
+        new Info_Column( Msg.translate( Env.getCtx(),"POReference" ),"i.POReference",String.class ),
+        new Info_Column( Msg.translate( Env.getCtx(),"IsSOTrx" ),"i.IsSOTrx",Boolean.class )
     };
 
     /**
