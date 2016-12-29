@@ -62,7 +62,10 @@ Ejemplos de cambios
     	
     	<!-- 20161102-1345 Path completo a fin de ubicar query.sh en eventual invocacion remota -->
     	<copy file="${SOURCE_DIR}/showPendingRecords.sh" todir="${TARGET_DIR}/utils/replicacion" overwrite="yes" />
-    	
+
+    	<!-- 20161229-1355 Workaround para error en publicacion de entradas contables desde WebUI -->
+    	<copy file="${SOURCE_DIR}/build.xml" todir="${TARGET_DIR}" overwrite="yes" />
+    		
     </target>
     
 </project>
