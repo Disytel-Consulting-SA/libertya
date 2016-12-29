@@ -135,8 +135,33 @@ public class InfoBPartner extends Info {
     /** Descripción de Campos */
 
     private static Info_Column[] s_partnerLayout = {
-        new Info_Column( " ","C_BPartner.C_BPartner_ID",IDColumn.class ),new Info_Column( Msg.translate( Env.getCtx(),"Value" ),"C_BPartner.Value",String.class ),new Info_Column( Msg.translate( Env.getCtx(),"Name" ),"C_BPartner.Name",String.class ),new Info_Column( Msg.translate( Env.getCtx(),"Contact" ),"c.Name AS Contact",KeyNamePair.class,"c.AD_User_ID" ),new Info_Column( Msg.translate( Env.getCtx(),"SO_CreditAvailable" ),"C_BPartner.SO_CreditLimit-C_BPartner.SO_CreditUsed AS SO_CreditAvailable",BigDecimal.class,true,true,null ),new Info_Column( Msg.translate( Env.getCtx(),"SO_CreditUsed" ),"C_BPartner.SO_CreditUsed",BigDecimal.class ),new Info_Column( Msg.translate( Env.getCtx(),"Phone" ),"c.Phone",String.class ),new Info_Column( Msg.translate( Env.getCtx(),"Postal" ),"a.Postal",KeyNamePair.class,"l.C_BPartner_Location_ID" ),new Info_Column( Msg.translate( Env.getCtx(),"City" ),"a.City",String.class ),new Info_Column( Msg.translate( Env.getCtx(),"TotalOpenBalance" ),"C_BPartner.TotalOpenBalance",BigDecimal.class ),new Info_Column( Msg.translate( Env.getCtx(),"Revenue" ),"C_BPartner.ActualLifetimeValue",BigDecimal.class ), new Info_Column( Msg.translate( Env.getCtx(),"TaxID" ),"C_BPartner.TaxID",String.class ) 
-    };
+			new Info_Column(" ", "C_BPartner.C_BPartner_ID", IDColumn.class),
+			new Info_Column(Msg.translate(Env.getCtx(), "Value"),
+					"C_BPartner.Value", String.class),
+			new Info_Column(Msg.translate(Env.getCtx(), "BPartnerName2"),
+					"C_BPartner.Name2", String.class),
+			new Info_Column(Msg.translate(Env.getCtx(), "Name"),
+					"C_BPartner.Name", String.class),
+			new Info_Column(Msg.translate(Env.getCtx(), "Contact"),
+					"c.Name AS Contact", KeyNamePair.class, "c.AD_User_ID"),
+			new Info_Column(
+					Msg.translate(Env.getCtx(), "SO_CreditAvailable"),
+					"C_BPartner.SO_CreditLimit-C_BPartner.SO_CreditUsed AS SO_CreditAvailable",
+					BigDecimal.class, true, true, null),
+			new Info_Column(Msg.translate(Env.getCtx(), "SO_CreditUsed"),
+					"C_BPartner.SO_CreditUsed", BigDecimal.class),
+			new Info_Column(Msg.translate(Env.getCtx(), "Phone"), "c.Phone",
+					String.class),
+			new Info_Column(Msg.translate(Env.getCtx(), "Postal"), "a.Postal",
+					KeyNamePair.class, "l.C_BPartner_Location_ID"),
+			new Info_Column(Msg.translate(Env.getCtx(), "City"), "a.City",
+					String.class),
+			new Info_Column(Msg.translate(Env.getCtx(), "TotalOpenBalance"),
+					"C_BPartner.TotalOpenBalance", BigDecimal.class),
+			new Info_Column(Msg.translate(Env.getCtx(), "Revenue"),
+					"C_BPartner.ActualLifetimeValue", BigDecimal.class),
+			new Info_Column(Msg.translate(Env.getCtx(), "TaxID"),
+					"C_BPartner.TaxID", String.class)    };
 
     //
 
@@ -453,7 +478,7 @@ public class InfoBPartner extends Info {
         String name = fieldName.getText().toUpperCase();
 
         if( !( name.equals( "" ) || name.equals( "%" ))) {
-            list.add( "UPPER(C_BPartner.Name) LIKE ?" );
+            list.add( "(UPPER(C_BPartner.Name) LIKE ? OR UPPER(C_BPartner.Name2) LIKE ?)" );
         }
 
         // => Contact
@@ -582,7 +607,9 @@ public class InfoBPartner extends Info {
             }
 
             pstmt.setString( index++,name );
+            pstmt.setString( index++,name );
             log.fine( "Name: " + name );
+            log.fine( "Name2: " + name );
         }
 
         // => Contact
