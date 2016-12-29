@@ -287,6 +287,38 @@
 				<attribute name="Class-Path" value="OXP.jar OXPSLib.jar"/>
   	      </manifest>
 	</jar>
+
+	<!-- Workaround problema en publicacion de entradas contables desde WebUI.  Al intentar publicar entradas contables desde WebUI se presenta el error: 
+			loader constraint violation: loader (instance of org/jboss/mx/loading/UnifiedClassLoader3) previously initiated loading for a different type with name "org/openXpertya/model/MAcctSchema" 
+		 
+		 El problema se origina en que tanto webui.war como OXPRoot.ear contienen sendos OXP.jar, cada uno con la clase MAcctSchema.  
+		 Si bien dicha clase es exacta en ambos casos, para los ojos de la JVM no lo es.  El código de la publicación contable instancia un MAcctSchema (bajo webui.war), para
+		 luego pasarselo como argumento a la clase Doc perteneciente a OXPRoot.  Esto genera el problema previamente mencionado dado que considera que el primer MAcctSchema 
+		 cargado bajo webui tiene relacion con el que intenta utilizar serverRoot.
+		 
+		 Este mismo problema también se presenta para MAcctSchemaElement.  
+		 
+		 Si bien la solución pasaría por simplemente tener un único OXP.jar y que todas las webapps lo referencien, existe la necesidad de contar con independencia de contextos entre aplicaciones. 
+		 Por ejemplo: LYWS y LYWeb sufren inconsistencias en su ejecución en casos en donde se intentan acceder variables estáticas/cachés/etc.
+		 
+		 El workaround por lo tanto implica quitar estas clases de OXP.jar.  Para esto se genera entonces un OXP.jar especial a ser utilizado en webui.
+	-->
+	<mkdir dir="lib2" />
+	<delete file="nuevoOXP/org/openXpertya/model/MAcctSchema.class" failonerror="no" />
+	<delete file="nuevoOXP/org/openXpertya/model/MAcctSchemaElement.class" failonerror="no" />
+	<jar jarfile="lib2/OXP.jar" index="yes">
+	      	<fileset dir="nuevoOXP"/>
+	      	<manifest>
+		<attribute name="Specification-Title" value="Cliente_Libertya"/>
+		<attribute name="Specification-Version" value="${VERSION_PRINCIPAL_OXP}"/>
+		<attribute name="Specification-Vendor" value="(C) 2016 DISYTEL."/>
+		<attribute name="Implementation-Title" value="OXP ${VERSION_PRINCIPAL_OXP}"/>
+		<attribute name="Implementation-Version" value="${VERSION_PRINCIPAL_OXP} ${DSTAMP}-${TSTAMP}"/>
+		<attribute name="Implementation-Vendor" value="${env.CONSULTORA_OXP}"/>
+		<attribute name="Implementation-URL" value="http://www.libertya.org"/>
+	      	</manifest>
+	</jar>
+	
   	
 	<!-- Eliminar directorios temporales  -->
     <delete dir="nuevoOXP" failonerror="no"/>
@@ -316,7 +348,9 @@
       alias="${CODIGOALIASKEYSTORE_OXP}"
       storepass="${KEYSTOREPASS_OXP}" keystore="${KEYSTORE_OXP}" />
 
-
+    <signjar jar="lib2/OXP.jar"
+      alias="${CODIGOALIASKEYSTORE_OXP}"
+      storepass="${KEYSTOREPASS_OXP}" keystore="${KEYSTORE_OXP}" />
 
   	<delete dir="construirOXPLIB" />
   </target>
@@ -529,14 +563,15 @@
 	<copy file="${basedir}/lib/OXPRoot.ear" todir="${DEPLOY_APPS_OXP}"/>
 	<copy file="${basedir}/lib/OXPApps.ear" todir="${DEPLOY_APPS_OXP}"/>
 	
-	<!-- Incluir OXP.jar y OXPSLib.jar en LYWeb (si es que existe) para independencia del contexto. Archivo default: webui.war -->
+	<!-- Incluir OXP.jar especial y OXPSLib.jar en LYWeb (si es que existe) para independencia del contexto. Archivo default: webui.war -->
 	<war destfile="${basedir}/lib/webui.war" update="true" >
-		<lib dir="${basedir}/lib">
+		<lib dir="${basedir}/lib2">
 			<include name="OXP.jar"/>
 			<include name="OXPSLib.jar"/>
 		</lib>
    	</war>
 	<copy file="${basedir}/lib/webui.war" todir="${DEPLOY_APPS_OXP}"/>
+  	<delete dir="lib2" failonerror="no"/>
 
 	<!-- Incluir OXP.jar y OXPSLib.jar en LYWS (exista o no) para independencia del contexto.  Directorio default: axis.war -->
 	<copy file="${basedir}/lib/OXP.jar" todir="${DEPLOY_APPS_OXP}/axis.war/WEB-INF/lib" overwrite="yes" failonerror="no"/>
