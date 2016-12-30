@@ -87,6 +87,8 @@ public class CreateVendorProductsOrderLines extends SvrProcess {
             	ol.setM_Product_ID(m_Product_ID);
             	// El número de línea se asigna manualmente por cuestiones de eficiencia.
             	ol.setLine(lineNo);
+            	// Bypass para que no controle cantidades mínimas ni de empaquetado
+            	ol.setAllowAnyQty(true);
             	// Se crea el ProductPricing para obtener los precios del artículo.
             	pp = new MProductPricing( m_Product_ID, order.getC_BPartner_ID(), Env.ZERO, order.isSOTrx());
                 pp.setM_PriceList_ID(order.getM_PriceList_ID());

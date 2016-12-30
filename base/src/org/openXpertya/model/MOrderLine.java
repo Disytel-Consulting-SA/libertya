@@ -59,6 +59,9 @@ public class MOrderLine extends X_C_OrderLine {
 	/** Bypass para que no actualice el precio al guardar la línea */
 	private boolean updatePriceInSave = true;
 	
+	/** Bypass para no controlar las cantidades mínimas ni de empaquetado */
+	private boolean allowAnyQty = false;
+	
 	/**
 	 * Lugar de Retiro. Utilizado para evitar reserva de stock en pedidos que se
 	 * retiran por TPV. Por defecto el lugar de retiro es Almacén lo cual
@@ -901,7 +904,8 @@ public class MOrderLine extends X_C_OrderLine {
         
 		// Controlar que la cantidad no sea menor a la mínima de compra y que la
 		// cantidad sea múltiplo a ordenar 
-        if(!o.isSOTrx()
+        if(!isAllowAnyQty()
+        		&& !o.isSOTrx()
 				&& orderDocType.getDocTypeKey().equals(MDocType.DOCTYPE_PurchaseOrder)){
 			MProductPO ppo = MProductPO.get(getCtx(), getM_Product_ID(), o.getC_BPartner_ID(), get_TrxName());
 			if (ppo != null && ppo.isActive()) {
@@ -1835,6 +1839,14 @@ public class MOrderLine extends X_C_OrderLine {
 
 	public void setUpdatePriceInSave(boolean updatePriceInSave) {
 		this.updatePriceInSave = updatePriceInSave;
+	}
+
+	public boolean isAllowAnyQty() {
+		return allowAnyQty;
+	}
+
+	public void setAllowAnyQty(boolean allowAnyQty) {
+		this.allowAnyQty = allowAnyQty;
 	}
 }    // MOrderLine
 
