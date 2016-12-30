@@ -56,6 +56,7 @@ public class PriceChangingDataSource extends QueryDataSource {
 											"		p.value as product_value, " +
 											"		p.name as product_name, " +
 											"		pl.name as pricelist_name, " +
+											"		pp.updated::date as updated, " +
 											"		pp.pricestd as newprice, " +
 											"		pp.previouspricestd as oldprice, " +
 											"		abs(1 - coalesce(pp.variationpricestd,0.00)) * 100 as desviation_perc, " +
@@ -71,7 +72,7 @@ public class PriceChangingDataSource extends QueryDataSource {
 		}
 		sql.append(" where pp.ad_client_id = ? ");
 		sql.append(" and pricestd <> 0 ");
-		sql.append(" and previouspricestd <> 0 ");
+		sql.append(" and (previouspricestd is null OR previouspricestd <> 0) ");
 		sql.append(" and pp.updated::date >= ?::date ");
 		if(getDateTo() != null){
 			sql.append(" and pp.updated::date <= ?::date ");

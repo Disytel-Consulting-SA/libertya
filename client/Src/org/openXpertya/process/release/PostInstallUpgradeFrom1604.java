@@ -122,6 +122,11 @@ public class PostInstallUpgradeFrom1604 extends PluginPostInstallProcess {
 	protected final static String SALES_RANKING_JASPER_REPORT_UID = "CORE-AD_JasperReport-1010099";
 	protected final static String SALES_RANKING_JASPER_REPORT_FILENAME = "SalesRanking.jasper";
 	
+	/** UID del Informe de Cambio de Precios */
+	protected final static String PRICE_CHANGING_JASPER_REPORT_UID = "CORE-AD_JasperReport-1010121";
+	protected final static String PRICE_CHANGING_JASPER_REPORT_FILENAME = "PriceChanging.jasper";
+
+	
 	@Override
 	protected String doIt() throws Exception {
 		super.doIt();
@@ -480,6 +485,17 @@ public class PostInstallUpgradeFrom1604 extends PluginPostInstallProcess {
 							.readBinaryFromJar(
 									jarFileURL,
 									getBinaryFileURL(SALES_RANKING_JASPER_REPORT_FILENAME)));
+		
+		// Informe de Cambio de Precios
+		MJasperReport
+			.updateBinaryData(
+					get_TrxName(),
+					getCtx(),
+					PRICE_CHANGING_JASPER_REPORT_UID,
+					JarHelper
+							.readBinaryFromJar(
+									jarFileURL,
+									getBinaryFileURL(PRICE_CHANGING_JASPER_REPORT_FILENAME)));
 		
 		return " ";
 	}
