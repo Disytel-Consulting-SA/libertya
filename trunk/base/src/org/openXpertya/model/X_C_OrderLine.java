@@ -7,7 +7,7 @@ import java.math.*;
 import org.openXpertya.util.*;
 /** Modelo Generado por C_OrderLine
  *  @author Comunidad de Desarrollo Libertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
- *  @version  - 2012-10-08 01:03:56.578 */
+ *  @version  - 2016-12-30 19:16:05.542 */
 public class X_C_OrderLine extends org.openXpertya.model.PO
 {
 /** Constructor estándar */
@@ -513,6 +513,30 @@ set_Value ("OpenMatrix", OpenMatrix);
 public String getOpenMatrix() 
 {
 return (String)get_Value("OpenMatrix");
+}
+/** Set Order Min */
+public void setOrder_Min (BigDecimal Order_Min)
+{
+throw new IllegalArgumentException ("Order_Min is virtual column");
+}
+/** Get Order Min */
+public BigDecimal getOrder_Min() 
+{
+BigDecimal bd = (BigDecimal)get_Value("Order_Min");
+if (bd == null) return Env.ZERO;
+return bd;
+}
+/** Set Order Pack */
+public void setOrder_Pack (BigDecimal Order_Pack)
+{
+throw new IllegalArgumentException ("Order_Pack is virtual column");
+}
+/** Get Order Pack */
+public BigDecimal getOrder_Pack() 
+{
+BigDecimal bd = (BigDecimal)get_Value("Order_Pack");
+if (bd == null) return Env.ZERO;
+return bd;
 }
 /** Set Unit Price.
 Actual Price  */
