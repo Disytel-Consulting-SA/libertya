@@ -7,7 +7,7 @@ import java.math.*;
 import org.openXpertya.util.*;
 /** Modelo Generado por M_InOutLine
  *  @author Comunidad de Desarrollo Libertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
- *  @version  - 2011-12-14 12:26:09.353 */
+ *  @version  - 2016-12-30 19:21:30.944 */
 public class X_M_InOutLine extends org.openXpertya.model.PO
 {
 /** Constructor estándar */
@@ -24,7 +24,7 @@ setLine (0);	// @SQL=SELECT NVL(MAX(Line),0)+10 AS DefaultValue FROM M_InOutLine
 setM_AttributeSetInstance_ID (0);
 setM_InOut_ID (0);
 setM_InOutLine_ID (0);
-setM_Locator_ID (0);	// @M_Locator_ID@
+setM_Locator_ID (0);	// @SQL=SELECT m_locator_id FROM m_locator where m_warehouse_id = @M_Warehouse_ID@ order by isdefault desc limit 1
 setMovementQty (Env.ZERO);	// 1
 setM_Product_ID (0);
 setProcessed (false);
@@ -89,6 +89,7 @@ Integer ii = (Integer)get_Value("C_Country_ID");
 if (ii == null) return 0;
 return ii.intValue();
 }
+public static final int C_INVOICELINE_ID_AD_Reference_ID = MReference.getReferenceID("C_InvoiceLine");
 /** Set Invoice Line.
 Invoice Detail Line */
 public void setC_InvoiceLine_ID (int C_InvoiceLine_ID)

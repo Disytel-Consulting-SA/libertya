@@ -7,7 +7,7 @@ import java.math.*;
 import org.openXpertya.util.*;
 /** Modelo Generado por C_InvoiceLine
  *  @author Comunidad de Desarrollo Libertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
- *  @version  - 2012-12-09 21:11:50.3 */
+ *  @version  - 2016-12-30 19:15:36.8 */
 public class X_C_InvoiceLine extends org.openXpertya.model.PO
 {
 /** Constructor estándar */
@@ -114,6 +114,7 @@ Integer ii = (Integer)get_Value("C_Charge_ID");
 if (ii == null) return 0;
 return ii.intValue();
 }
+public static final int C_INVOICE_ID_AD_Reference_ID = MReference.getReferenceID("C_Invoice");
 /** Set Invoice.
 Invoice Identifier */
 public void setC_Invoice_ID (int C_Invoice_ID)
