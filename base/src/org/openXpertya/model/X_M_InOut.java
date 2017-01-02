@@ -1281,7 +1281,7 @@ try
 		 pstmt.setString(col++, isApproved()?"Y":"N");
 		 pstmt.setString(col++, isInDispute()?"Y":"N");
 		 pstmt.setString(col++, isInTransit()?"Y":"N");
-		 pstmt.setString(col++, isisintrastat()?"Y":"N");
+		 pstmt.setString(col++, isintrastat()?"Y":"N");
 		 pstmt.setString(col++, isPrinted()?"Y":"N");
 		 pstmt.setString(col++, isSOTrx()?"Y":"N");
 		 if (getm_incotermcode_id() != 0) pstmt.setInt(col++, getm_incotermcode_id());
