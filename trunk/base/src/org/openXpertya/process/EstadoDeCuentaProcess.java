@@ -151,9 +151,9 @@ public class EstadoDeCuentaProcess extends SvrProcess {
 			"	  JOIN c_paymentterm p ON i.c_paymentterm_id = p.c_paymentterm_id " +
 			"	  JOIN c_doctype dt on i.c_doctype_id = dt.c_doctype_id    " +
 			"	  JOIN c_bpartner bp on i.c_bpartner_id = bp.c_bpartner_id    " +
-			"	  WHERE i.ispayschedulevalid <> 'Y'::bpchar AND i.docstatus <> 'DR'::bpchar " +
+			"	  WHERE i.ispayschedulevalid <> 'Y'::bpchar AND i.docstatus NOT IN ('DR','IP') " +
 			"	  AND i.AD_Client_ID = " + getAD_Client_ID() +
-			"	  AND i.docstatus IN ('CO', 'CL', 'RE', 'VO') " +
+			"	  AND i.docstatus IN ('CO', 'CL', 'RE', 'VO', 'WC') " +
 			(condition.equals(X_T_EstadoDeCuenta.CONDITION_All)?
 					"":
 					" AND i.paymentrule = '"+condition+"' ") +
@@ -203,7 +203,7 @@ public class EstadoDeCuentaProcess extends SvrProcess {
 //			"	, getinoutsdocumentsnofrominvoice(i.c_invoice_id)::character varying(30) AS documentno_inout " + // Comentada funcion postgres.  No era requerida y consumia tiempo considerable
 			" FROM c_invoice i" +
 			" JOIN c_doctype d ON i.c_doctype_id = d.c_doctype_id " +
-			" WHERE i.docstatus = ANY (ARRAY['CO'::bpchar, 'CL'::bpchar]) " + 
+			" WHERE i.docstatus = ANY (ARRAY['CO'::bpchar, 'CL'::bpchar, 'WC'::bpchar]) " + 
 			(condition.equals(X_T_EstadoDeCuenta.CONDITION_All)?
 					"":
 					" AND i.paymentrule = '"+condition+"' ") +
@@ -254,7 +254,7 @@ public class EstadoDeCuentaProcess extends SvrProcess {
 					+ "				where ah.isactive = 'Y' and ah.docstatus in ('CO','CL')) as i on i.c_payment_id = p.c_payment_id ") +
 			"	  WHERE 1 = 1  " +
 			"	  AND p.AD_Client_ID = " + getAD_Client_ID() + 
-			"	  AND p.docstatus IN ('CO', 'CL', 'RE', 'VO') " +
+			"	  AND p.docstatus IN ('CO', 'CL', 'RE', 'VO', 'WC') " +
 			(condition.equals(X_T_EstadoDeCuenta.CONDITION_All)?
 					"":
 					" AND ("+ (condition.equals(X_T_EstadoDeCuenta.CONDITION_Cash)? 
@@ -340,7 +340,7 @@ public class EstadoDeCuentaProcess extends SvrProcess {
 			"	) as d " + 
 //			FIN INLINE DE V_DOCUMENTS			
 //			"	  JOIN c_bpartner bp on d.c_bpartner_id = bp.c_bpartner_id " +  
-			"	  WHERE docstatus IN ('CO','CL') " +
+			"	  WHERE docstatus IN ('CO','CL', 'WC') " +
 			"	  AND d.AD_Client_ID = " + getAD_Client_ID() + 
 			(isShowByDate() ?
 				(dateTrxFrom != null ? " AND d.dateacct::timestamp with time zone >= '" + dateTrxFrom + "'" : "" ) +
