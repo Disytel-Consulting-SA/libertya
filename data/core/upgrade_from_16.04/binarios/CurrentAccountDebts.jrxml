@@ -54,7 +54,7 @@ from (select i.ad_org_id,
 		and bp.socreditstatus <> 'X'
 		and ($P{C_BP_Group_ID} is null or bp.c_bp_group_id = $P{C_BP_Group_ID})
 		and ($P{AD_Org_ID} is null or $P{AD_Org_ID} = 0 or i.ad_org_id = $P{AD_Org_ID})
-		and i.docstatus IN ('CO','CL')
+		and i.docstatus IN ('CO','CL','WC')
 		and i.issotrx = 'Y' 
 		and docbasetype = 'ARI' 
 		and ($P{Condition} = 'A' or i.paymentrule = $P{Condition})
