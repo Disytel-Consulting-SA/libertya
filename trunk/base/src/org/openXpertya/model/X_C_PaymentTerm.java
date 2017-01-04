@@ -7,7 +7,7 @@ import java.math.*;
 import org.openXpertya.util.*;
 /** Modelo Generado por C_PaymentTerm
  *  @author Comunidad de Desarrollo Libertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
- *  @version  - 2014-10-11 02:57:25.222 */
+ *  @version  - 2017-01-04 09:20:50.035 */
 public class X_C_PaymentTerm extends org.openXpertya.model.PO
 {
 /** Constructor estándar */
@@ -17,6 +17,7 @@ super (ctx, C_PaymentTerm_ID, trxName);
 /** if (C_PaymentTerm_ID == 0)
 {
 setAfterDelivery (false);
+setApplicationContext (null);
 setApplicationDate (null);	// Y
 setC_PaymentTerm_ID (0);
 setDiscount (Env.ZERO);
@@ -90,6 +91,31 @@ if (oo != null)
  return "Y".equals(oo);
 }
 return false;
+}
+public static final int APPLICATIONCONTEXT_AD_Reference_ID = MReference.getReferenceID("Transactions Application");
+/** Sales = S */
+public static final String APPLICATIONCONTEXT_Sales = "S";
+/** Purchases = P */
+public static final String APPLICATIONCONTEXT_Purchases = "P";
+/** Both = B */
+public static final String APPLICATIONCONTEXT_Both = "B";
+/** Set Application Context */
+public void setApplicationContext (String ApplicationContext)
+{
+if (ApplicationContext.equals("S") || ApplicationContext.equals("P") || ApplicationContext.equals("B"));
+ else throw new IllegalArgumentException ("ApplicationContext Invalid value - Reference = APPLICATIONCONTEXT_AD_Reference_ID - S - P - B");
+if (ApplicationContext == null) throw new IllegalArgumentException ("ApplicationContext is mandatory");
+if (ApplicationContext.length() > 1)
+{
+log.warning("Length > 1 - truncated");
+ApplicationContext = ApplicationContext.substring(0,1);
+}
+set_Value ("ApplicationContext", ApplicationContext);
+}
+/** Get Application Context */
+public String getApplicationContext() 
+{
+return (String)get_Value("ApplicationContext");
 }
 public static final int APPLICATIONDATE_AD_Reference_ID = MReference.getReferenceID("Payment term application date");
 /** Invoice date = I */
