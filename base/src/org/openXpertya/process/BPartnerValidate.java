@@ -149,7 +149,7 @@ public class BPartnerValidate extends SvrProcess {
         checkInvoices( bp );
 
         //
-
+        bp.setCASOTrx(bp.isCustomer());
         bp.setTotalOpenBalance();
         bp.save();
         addLog( 0,null,null,bp.getName() + ":" );

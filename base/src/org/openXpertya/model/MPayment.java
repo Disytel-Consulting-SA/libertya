@@ -2141,7 +2141,7 @@ public final class MPayment extends X_C_Payment implements DocAction,ProcessCall
     		// Verifico si el gestor de cuentas corrientes debe realizar operaciones
     		// antes de completar y eventualmente disparar la impresión fiscal
     		// Obtengo el manager actual
-    		CurrentAccountManager manager = CurrentAccountManagerFactory.getManager();
+    		CurrentAccountManager manager = CurrentAccountManagerFactory.getManager(isReceipt());
     		// Actualizo el balance
     		CallResult result = new CallResult();
 			try{
@@ -2510,7 +2510,7 @@ public final class MPayment extends X_C_Payment implements DocAction,ProcessCall
             no = DB.executeUpdate( sql,get_TrxName());
             
             // Recalculo el crédito 
-            
+            bp.setCASOTrx(isReceipt());
             bp.setTotalOpenBalance();
             bp.save( get_TrxName());
             
@@ -2719,7 +2719,7 @@ public final class MPayment extends X_C_Payment implements DocAction,ProcessCall
 					get_TrxName());
     		// Verifico si el gestor de cuentas corrientes debe realizar operaciones
     		// antes de completar 
-    		CurrentAccountManager manager = CurrentAccountManagerFactory.getManager();
+    		CurrentAccountManager manager = CurrentAccountManagerFactory.getManager(isReceipt());
     		// Actualizo el balance
     		CallResult result = new CallResult();
 			try{
@@ -3064,7 +3064,7 @@ public final class MPayment extends X_C_Payment implements DocAction,ProcessCall
 			if(isUpdateBPBalance() && isConfirmAditionalWorks()){
 				MBPartner bp = new MBPartner(getCtx(), getC_BPartner_ID(), get_TrxName());
 				// Obtengo el manager actual
-				CurrentAccountManager manager = CurrentAccountManagerFactory.getManager();
+				CurrentAccountManager manager = CurrentAccountManagerFactory.getManager(isReceipt());
 				// Actualizo el balance
 				CallResult result = new CallResult();
 				try{

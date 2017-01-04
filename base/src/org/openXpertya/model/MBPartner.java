@@ -450,6 +450,9 @@ public class MBPartner extends X_C_BPartner {
 
     private boolean m_TotalOpenBalanceSet = false;
 
+    /** Tipo de transacción al realizar operaciones de cuentas corrientes */
+    private boolean isCASOTrx = false;
+    
     /**
      * Descripción de Método
      *
@@ -882,7 +885,7 @@ public class MBPartner extends X_C_BPartner {
     public void setTotalOpenBalance() {
     	// Obtengo el managaer actual
 		CurrentAccountManager manager = CurrentAccountManagerFactory
-				.getManager();
+				.getManager(isCASOTrx());
 		CallResult result = new CallResult();
 		try{
 			result = manager.updateBalance(getCtx(), new MOrg(
@@ -924,7 +927,7 @@ public class MBPartner extends X_C_BPartner {
     public void setSOCreditStatus() {
     	// Obtengo el managaer actual
 		CurrentAccountManager manager = CurrentAccountManagerFactory
-				.getManager();
+				.getManager(isCASOTrx());
     	// Seteo el estado actual del cliente y lo obtengo
 		CallResult result = new CallResult();
 		try{
@@ -1349,7 +1352,7 @@ public class MBPartner extends X_C_BPartner {
 				return false;
 			}
 			// Le consulto al manager actual
-			CurrentAccountManager manager = CurrentAccountManagerFactory.getManager();
+			CurrentAccountManager manager = CurrentAccountManagerFactory.getManager(isCustomer());
 			MOrg org = new MOrg(getCtx(), Env.getAD_Org_ID(getCtx()), get_TrxName());
 			CallResult result = new CallResult();
 			try{
@@ -1466,6 +1469,14 @@ public class MBPartner extends X_C_BPartner {
 
 		return initialIIBBInt >= IIBB_CONVENIO_MULTILATERAL_MINIMO
 				&& initialIIBBInt <= IIBB_CONVENIO_MULTILATERAL_MAXIMO;
+	}
+
+	public boolean isCASOTrx() {
+		return isCASOTrx;
+	}
+
+	public void setCASOTrx(boolean isCASOTrx) {
+		this.isCASOTrx = isCASOTrx;
 	}
 	
 

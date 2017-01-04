@@ -1316,7 +1316,7 @@ public class MCashLine extends X_C_CashLine implements DocAction {
 		// actualizar su saldo, realizo las tareas correspondientes
 		if (!Util.isEmpty(getC_BPartner_ID(), true) && isUpdateBPBalance()) {
 			MBPartner bp = new MBPartner(getCtx(), getC_BPartner_ID(),get_TrxName());
-			CurrentAccountManager manager = CurrentAccountManagerFactory.getManager();
+			CurrentAccountManager manager = CurrentAccountManagerFactory.getManager(bp.isCustomer());
 			// Actualizo el balance
 			CallResult result = manager.performAditionalWork(getCtx(), new MOrg(
 					getCtx(), Env.getAD_Org_ID(getCtx()), get_TrxName()), bp, this,
@@ -1355,7 +1355,7 @@ public class MCashLine extends X_C_CashLine implements DocAction {
 					&& isConfirmAditionalWorks()) {
 				MBPartner bp = new MBPartner(getCtx(), getC_BPartner_ID(), get_TrxName());
 				// Obtengo el manager actual
-				CurrentAccountManager manager = CurrentAccountManagerFactory.getManager();
+				CurrentAccountManager manager = CurrentAccountManagerFactory.getManager(bp.isCustomer());
 				// Actualizo el saldo
 				CallResult result = new CallResult();
 				try{

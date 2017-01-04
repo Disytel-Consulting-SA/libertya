@@ -141,7 +141,8 @@ public class MCentralAux extends X_C_CentralAux {
 	@Override
 	protected boolean afterSave(boolean newRecord, boolean success) {
 		if(getRegisterType().equals(MCentralAux.REGISTERTYPE_Offline)){
-			CurrentAccountManager manager = CurrentAccountManagerFactory.getManager();
+			CurrentAccountManager manager = CurrentAccountManagerFactory
+					.getManager(MCentralAux.TRANSACTIONTYPE_Customer.equals(getTransactionType()));
 			CallResult result = new CallResult();
 			try{
 				result = manager.updateBalanceAndStatus(getCtx(),

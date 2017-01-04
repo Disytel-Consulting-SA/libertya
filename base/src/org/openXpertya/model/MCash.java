@@ -1006,7 +1006,7 @@ public class MCash extends X_C_Cash implements DocAction {
     			aditionalResults = getCcBPUpdates().get(bpID);
 				MBPartner bp = new MBPartner(getCtx(), bpID, get_TrxName());
 				// Obtengo el manager actual
-				CurrentAccountManager manager = CurrentAccountManagerFactory.getManager();
+				CurrentAccountManager manager = CurrentAccountManagerFactory.getManager(bp.isCustomer());
 				// Actualizo el balance
 				CallResult result = new CallResult();
 				try{
