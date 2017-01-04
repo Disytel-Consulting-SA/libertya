@@ -61,7 +61,7 @@ public class UpdateBPartnerBalance extends SvrProcess {
 	protected String doIt() throws Exception {
 		// Obtengo el managaer actual
 		CurrentAccountManager manager = CurrentAccountManagerFactory
-				.getManager();
+				.getManager(getBpartner().isCustomer());
 		// Obtengo la organización
 		MOrg org = new MOrg(getCtx(),Env.getAD_Org_ID(getCtx()), get_TrxName());
 		if(isUpdateBalance() && isUpdateStatus()){

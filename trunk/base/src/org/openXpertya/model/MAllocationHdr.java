@@ -1369,7 +1369,7 @@ public class MAllocationHdr extends X_C_AllocationHdr implements DocAction {
 			if (!Util.isEmpty(getC_BPartner_ID(), true) && isUpdateBPBalance()) {
 				MBPartner bp = new MBPartner(getCtx(), getC_BPartner_ID(), get_TrxName());
 				// Obtengo el manager actual
-				CurrentAccountManager manager = CurrentAccountManagerFactory.getManager();
+				CurrentAccountManager manager = CurrentAccountManagerFactory.getManager(isSOTrx());
 				// Si es completar actualizar el saldo
 				if(getDocStatus().equals(MInvoice.DOCSTATUS_Completed)){
 					// Actualizo el balance

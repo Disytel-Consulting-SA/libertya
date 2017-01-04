@@ -24,9 +24,9 @@ public class CurrentAccountManagerFactory {
 	 *         los parámetro de la configuración del control de cuenta corriente
 	 *         centralizado
 	 */
-	public static CurrentAccountManager getManager(){
+	public static CurrentAccountManager getManager(boolean isSOTrx){
 		if(manager == null){
-			manager = createLocalManager();
+			manager = createLocalManager(isSOTrx);
 		}
 		return manager;
 	}
@@ -35,7 +35,7 @@ public class CurrentAccountManagerFactory {
 	 * Obtengo un manager de cuenta corriente con estrategias locales
 	 * @return un manager con configuraciones locales
 	 */
-	public static CurrentAccountManager createLocalManager(){
+	public static CurrentAccountManager createLocalManager(boolean isSOTrx){
 		return new CurrentAccountLocalManager();
 	}
 	

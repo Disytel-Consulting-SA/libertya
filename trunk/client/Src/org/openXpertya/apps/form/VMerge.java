@@ -598,7 +598,7 @@ public class VMerge extends CPanel implements FormPanel,ActionListener {
                         invoice.save();
                     }
                 }
-
+                bp.setCASOTrx(bp.isCustomer());
                 bp.setTotalOpenBalance();
                 bp.save();
             }

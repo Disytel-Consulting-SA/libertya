@@ -363,7 +363,7 @@ public class InvoiceGlobalVoiding extends SvrProcess {
 	 */
 	protected void confirmCurrentAccountAditionaWorks() throws Exception{
 		// Obtengo el manager actual
-		CurrentAccountManager manager = CurrentAccountManagerFactory.getManager();
+		CurrentAccountManager manager = CurrentAccountManagerFactory.getManager(getInvoice().isSOTrx());
 		// Confirmo las transacciones creadas
 		CallResult result = manager.afterProcessDocument(getCtx(), new MOrg(
 				getCtx(), Env.getAD_Org_ID(getCtx()), get_TrxName()),

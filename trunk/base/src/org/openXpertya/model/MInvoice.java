@@ -3105,7 +3105,7 @@ public class MInvoice extends X_C_Invoice implements DocAction,Authorization {
 				&& getPaymentRule().equals(MInvoice.PAYMENTRULE_OnCredit)) {
 			// Obtengo el manager actual
 			CurrentAccountManager manager = CurrentAccountManagerFactory
-					.getManager();
+					.getManager(isSOTrx());
 			// Seteo el estado actual del cliente y lo obtengo
 			CallResult result = new CallResult();
 			try {
@@ -3558,7 +3558,7 @@ public class MInvoice extends X_C_Invoice implements DocAction,Authorization {
 						get_TrxName());
 				// Obtengo el manager actual
 				CurrentAccountManager manager = CurrentAccountManagerFactory
-						.getManager();
+						.getManager(isSOTrx());
 				// Actualizo el balance
 				CallResult result = new CallResult();
 				try {
@@ -3913,7 +3913,7 @@ public class MInvoice extends X_C_Invoice implements DocAction,Authorization {
 				&& getPaymentRule().equals(PAYMENTRULE_OnCredit)) {
 			// Obtengo el manager actual
 			CurrentAccountManager manager = CurrentAccountManagerFactory
-					.getManager();
+					.getManager(isSOTrx());
 			// Verificar el crédito con la factura y pedido asociado
 			CallResult result = new CallResult();
 			try {
@@ -4255,7 +4255,7 @@ public class MInvoice extends X_C_Invoice implements DocAction,Authorization {
 		// Obtengo el manager actual
 		if (isUpdateBPBalance()) {
 			CurrentAccountManager manager = CurrentAccountManagerFactory
-					.getManager();
+					.getManager(isSOTrx());
 			// Actualizo el balance
 			CallResult result = new CallResult();
 			try {
@@ -4887,7 +4887,7 @@ public class MInvoice extends X_C_Invoice implements DocAction,Authorization {
 			MBPartner bp = new MBPartner(getCtx(), getC_BPartner_ID(),
 					get_TrxName());
 			CurrentAccountManager manager = CurrentAccountManagerFactory
-					.getManager();
+					.getManager(isSOTrx());
 			// Actualizo el balance
 			CallResult result = new CallResult();
 			try {

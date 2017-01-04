@@ -1007,7 +1007,7 @@ public class PoSOnline extends PoSConnectionState {
 			MOrg org = new MOrg(getCtx(), Env.getAD_Org_ID(getCtx()), getTrxName());
 			// Obtengo el manager actual
 			CurrentAccountManager manager = CurrentAccountManagerFactory
-					.getManager();
+					.getManager(true);
 			// Seteo el estado actual del cliente y lo obtengo
 			CallResult result = manager.setCurrentAccountStatus(getCtx(), bp, org,
 					null);
@@ -1137,7 +1137,7 @@ public class PoSOnline extends PoSConnectionState {
 		MOrg org = new MOrg(getCtx(), Env.getAD_Org_ID(getCtx()), getTrxName());
 		// Obtengo el manager actual
 		CurrentAccountManager manager = CurrentAccountManagerFactory
-				.getManager();
+				.getManager(true);
 		// Realizo las tareas adicionales necesarias
 		// Factura
 		if(invoice != null){
@@ -1202,7 +1202,7 @@ public class PoSOnline extends PoSConnectionState {
 		MOrg org = new MOrg(getCtx(), Env.getAD_Org_ID(getCtx()), getTrxName());
 		// Obtengo el manager actual
 		CurrentAccountManager manager = CurrentAccountManagerFactory
-				.getManager();
+				.getManager(true);
 		// Actualizo el crédito
 		CallResult result = new CallResult();
 		try{
