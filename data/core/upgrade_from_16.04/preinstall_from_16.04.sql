@@ -3891,3 +3891,11 @@ DROP VIEW C_PaymentCoupon_V;
 CREATE VIEW C_PaymentCoupon_V AS
 SELECT p.c_payment_id, p.ad_client_id, p.ad_org_id, p.created, p.createdby, p.updated, p.updatedby, efp.m_entidadfinanciera_id, p.m_entidadfinancieraplan_id, ccs.settlementno, p.c_invoice_id, 'Y'::character(1) AS isactive, p.creditcardnumber, p.couponnumber, p.c_bpartner_id, p.duedate, p.dateacct, p.datetrx, p.couponbatchnumber, p.payamt, p.c_currency_id, p.docstatus, p.isreconciled, ccs.paymentdate AS settlementdate, efp.cuotaspago AS totalallocations, p.auditstatus FROM (((c_payment p JOIN m_entidadfinancieraplan efp ON ((p.m_entidadfinancieraplan_id = efp.m_entidadfinancieraplan_id))) LEFT JOIN c_couponssettlements cs ON ((p.c_payment_id = cs.c_payment_id))) LEFT JOIN c_creditcardsettlement ccs ON ((cs.c_creditcardsettlement_id = ccs.c_creditcardsettlement_id))) WHERE (p.tendertype = 'C'::bpchar);
 ALTER TABLE C_PaymentCoupon_V OWNER TO libertya;
+
+--20160104-0900 Contexto de aplicación de esquemas de vencimientos (Ventas, Compras, Ambos)
+UPDATE ad_system SET dummy = (SELECT addcolumnifnotexists('C_PaymentTerm','applicationcontext','character(1)'));
+
+UPDATE C_PaymentTerm
+SET applicationcontext = 'B';
+
+ALTER TABLE C_PaymentTerm ALTER COLUMN applicationcontext SET NOT NULL;
