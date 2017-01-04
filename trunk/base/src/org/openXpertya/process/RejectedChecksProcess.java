@@ -19,6 +19,7 @@ import org.openXpertya.model.MPOS;
 import org.openXpertya.model.MPOSJournal;
 import org.openXpertya.model.MPOSLetter;
 import org.openXpertya.model.MPayment;
+import org.openXpertya.model.MPreference;
 import org.openXpertya.model.MTax;
 import org.openXpertya.model.PO;
 import org.openXpertya.model.X_C_Payment;
@@ -34,6 +35,12 @@ public class RejectedChecksProcess extends AbstractSvrProcess {
 
 	/** Locale AR activo? */
 	public final boolean LOCALE_AR_ACTIVE = CalloutInvoiceExt.ComprobantesFiscalesActivos();
+	
+	/**
+	 * Nombre de la Preference con la clave (doctypekey) del tipo de documento
+	 * del débito de cheque rechazado
+	 */
+	private final static String REJECTED_CHECK_DOCTYPEKEY_PREFERENCE_NAME = "RejectedCheckDocTypeKey";
 	
 	/** Cheque */
 	private MPayment check;
@@ -129,7 +136,7 @@ public class RejectedChecksProcess extends AbstractSvrProcess {
 	protected void initializeData() throws Exception{
 		// Cheque
 		Integer docTypeID = ((Integer) getParametersValues().get(
-				"C_DOCTYPE_ID")).intValue();
+				"C_DOCTYPE_ID"));
 		setDocTypeID(docTypeID);
 		// Obtengo la EC del cheque
 		MBPartner checkBP = new MBPartner(getCtx(), getCheck()
@@ -294,55 +301,64 @@ public class RejectedChecksProcess extends AbstractSvrProcess {
 		Integer docTypeID = getDocTypeID();
 		if(Util.isEmpty(docTypeID, true)){
 			MDocType documentType = null;
-			// Si es L_AR, buscamos el punto de venta
-			if(LOCALE_AR_ACTIVE){
-				String docTypeKey = MDocType.DOCTYPE_CustomerDebitNote;
-				// Letra
-				MLetraComprobante letra = getLetraComprobante();
-				invoice.setC_Letra_Comprobante_ID(letra.getID());
-				// Punto de Venta
-				// Se obtiene el tipo de documento a crear
-				// Obtener el punto de venta:
-				// 1) Desde la caja diaria, priorizando la personalización de
-				// punto de venta por letra de la config del tpv asociada a ella
-				// 2) Desde la config de TPV, si es que posee una sola,
-				// priorizando la personalización de punto de venta por letra
-				Integer ptoVenta = null;
-				// 1)
-				if(MPOSJournal.isActivated()){
-					ptoVenta = MPOSJournal.getCurrentPOSNumber(letra.getLetra());
-				}
-				// 2)
-				if(Util.isEmpty(ptoVenta, true)){
-					List<MPOS> pos = MPOS.get(getCtx(),
-							Env.getAD_Org_ID(getCtx()),
-							Env.getAD_User_ID(getCtx()), get_TrxName());
-					if(pos.size() == 1){
-						Map<String, Integer> letters = MPOSLetter
-								.getPOSLetters(pos.get(0).getID(),
-										get_TrxName());
-						ptoVenta = letters.get(letra) != null ? letters
-								.get(letra) : pos.get(0).getPOSNumber();
-					}
-				}
-				// Se obtiene el tipo de documento para la factura.
-				if(Util.isEmpty(ptoVenta, true)){
-					throw new Exception(Msg.getMsg(getCtx(), "CanGetPOSNumber"));
-				}
-				documentType = MDocType.getDocType(getCtx(),
-						invoice.getAD_Org_ID(), docTypeKey, letra.getLetra(),
-						ptoVenta, get_TrxName());
-				if (documentType == null) {
-					throw new Exception(Msg.getMsg(getCtx(),
-							"NonexistentPOSDocType", new Object[] { letra,
-							ptoVenta }));
-				}
-				invoice.setPuntoDeVenta(ptoVenta);
+			// Si existe la preference, buscamos ese doctype
+			String rejectedCheckDoctypekey = MPreference.searchCustomPreferenceValue(
+					REJECTED_CHECK_DOCTYPEKEY_PREFERENCE_NAME, invoice.getAD_Client_ID(), invoice.getAD_Org_ID(), null,
+					true);
+			if(!Util.isEmpty(rejectedCheckDoctypekey, true)){
+				documentType = MDocType.getDocType(getCtx(), rejectedCheckDoctypekey, get_TrxName());
 			}
-			else{
-				// Si no es L_AR 
-				documentType = MDocType.getDocType(getCtx(),
-						MDocType.DOCTYPE_CustomerInvoice, get_TrxName());
+			// Si es L_AR, buscamos el punto de venta
+			if(documentType == null){
+				if(LOCALE_AR_ACTIVE){
+					String docTypeKey = MDocType.DOCTYPE_CustomerDebitNote;
+					// Letra
+					MLetraComprobante letra = getLetraComprobante();
+					invoice.setC_Letra_Comprobante_ID(letra.getID());
+					// Punto de Venta
+					// Se obtiene el tipo de documento a crear
+					// Obtener el punto de venta:
+					// 1) Desde la caja diaria, priorizando la personalización de
+					// punto de venta por letra de la config del tpv asociada a ella
+					// 2) Desde la config de TPV, si es que posee una sola,
+					// priorizando la personalización de punto de venta por letra
+					Integer ptoVenta = null;
+					// 1)
+					if(MPOSJournal.isActivated()){
+						ptoVenta = MPOSJournal.getCurrentPOSNumber(letra.getLetra());
+					}
+					// 2)
+					if(Util.isEmpty(ptoVenta, true)){
+						List<MPOS> pos = MPOS.get(getCtx(),
+								Env.getAD_Org_ID(getCtx()),
+								Env.getAD_User_ID(getCtx()), get_TrxName());
+						if(pos.size() == 1){
+							Map<String, Integer> letters = MPOSLetter
+									.getPOSLetters(pos.get(0).getID(),
+											get_TrxName());
+							ptoVenta = letters.get(letra) != null ? letters
+									.get(letra) : pos.get(0).getPOSNumber();
+						}
+					}
+					// Se obtiene el tipo de documento para la factura.
+					if(Util.isEmpty(ptoVenta, true)){
+						throw new Exception(Msg.getMsg(getCtx(), "CanGetPOSNumber"));
+					}
+					documentType = MDocType.getDocType(getCtx(),
+							invoice.getAD_Org_ID(), docTypeKey, letra.getLetra(),
+							ptoVenta, get_TrxName());
+					if (documentType == null) {
+						throw new Exception(Msg.getMsg(getCtx(),
+								"NonexistentPOSDocType", new Object[] { letra,
+								ptoVenta }));
+					}
+					invoice.setPuntoDeVenta(ptoVenta);
+				}
+				else{
+					// Si no es L_AR 
+					documentType = MDocType.getDocType(getCtx(),
+							MDocType.DOCTYPE_CustomerInvoice, get_TrxName());
+				}
 			}
 			docTypeID = documentType.getID();
 		}
