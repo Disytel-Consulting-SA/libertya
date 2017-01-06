@@ -47,7 +47,7 @@ INNER JOIN AD_Org org ON (org.AD_Org_ID = p.AD_Org_ID)
 WHERE (tendertype = 'C') 
 	AND (($P{M_EntidadFinanciera_ID} IS NULL) OR (ef.M_EntidadFinanciera_ID = $P{M_EntidadFinanciera_ID})) 
 	AND (($P{AD_Org_ID} IS NULL) OR (0 = $P{AD_Org_ID}) OR (p.ad_org_id = $P{AD_Org_ID}))
-	AND (($P{Couponbatchnumber} IS NULL) OR (couponbatchnumber = ($P{Couponbatchnumber}::integer)::text)) 
+	AND (($P{Couponbatchnumber} IS NULL) OR ($P{Couponbatchnumber} = 0) OR (couponbatchnumber = ($P{Couponbatchnumber}::integer)::text)) 
 	AND (isreconciled = $P{Conciliado})
 	AND (($P{FechaDesde}::date IS NULL) OR (dateacct::date >= $P{FechaDesde}::date)) 
 	AND (($P{FechaHasta}::date IS NULL) OR (dateacct::date <= $P{FechaHasta}::date))
@@ -69,7 +69,7 @@ INNER JOIN m_entidadfinanciera ef ON (ef.M_EntidadFinanciera_ID = efp.M_EntidadF
 WHERE (tendertype = 'C') 
 	AND (($P{M_EntidadFinanciera_ID} IS NULL) OR (ef.M_EntidadFinanciera_ID = $P{M_EntidadFinanciera_ID})) 
 	AND (($P{AD_Org_ID} IS NULL) OR (0 = $P{AD_Org_ID}) OR (p.ad_org_id = $P{AD_Org_ID}))
-	AND (($P{Couponbatchnumber} IS NULL) OR (couponbatchnumber = ($P{Couponbatchnumber}::integer)::text)) 
+	AND (($P{Couponbatchnumber} IS NULL) OR ($P{Couponbatchnumber} = 0) OR (couponbatchnumber = ($P{Couponbatchnumber}::integer)::text)) 
 	AND (isreconciled = $P{Conciliado})
 	AND (($P{FechaDesde}::date IS NULL) OR (dateacct::date >= $P{FechaDesde}::date)) 
 	AND (($P{FechaHasta}::date IS NULL) OR (dateacct::date <= $P{FechaHasta}::date))
@@ -103,9 +103,9 @@ GROUP BY nrolote]]></queryString>
 				<staticText>
 					<reportElement
 						mode="Opaque"
-						x="454"
+						x="470"
 						y="95"
-						width="66"
+						width="50"
 						height="10"
 						backcolor="#F6F6F6"
 						key="staticText-69"/>
@@ -117,7 +117,7 @@ GROUP BY nrolote]]></queryString>
 				</staticText>
 				<textField isStretchWithOverflow="false" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
-						x="70"
+						x="97"
 						y="19"
 						width="150"
 						height="12"
@@ -138,17 +138,17 @@ GROUP BY nrolote]]></queryString>
 						width="200"
 						height="12"
 						key="staticText-2"/>
-					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
+					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="1Point" bottomBorderColor="#000000"/>
 					<textElement>
 						<font pdfFontName="Helvetica-Bold" size="8" isBold="true" isUnderline="false"/>
 					</textElement>
-				<text><![CDATA[Parámetros del Informe]]></text>
+				<text><![CDATA[Listado de Cupones de Tarjetas]]></text>
 				</staticText>
 				<staticText>
 					<reportElement
 						x="4"
 						y="19"
-						width="66"
+						width="93"
 						height="12"
 						key="staticText-4"
 						isRemoveLineWhenBlank="true">
@@ -158,7 +158,7 @@ GROUP BY nrolote]]></queryString>
 					<textElement>
 						<font pdfFontName="Helvetica" size="8" isBold="false"/>
 					</textElement>
-				<text><![CDATA[Organización =]]></text>
+				<text><![CDATA[Organización:]]></text>
 				</staticText>
 				<staticText>
 					<reportElement
@@ -180,7 +180,7 @@ GROUP BY nrolote]]></queryString>
 						mode="Opaque"
 						x="50"
 						y="95"
-						width="68"
+						width="56"
 						height="10"
 						backcolor="#F6F6F6"
 						key="staticText-16"/>
@@ -193,9 +193,9 @@ GROUP BY nrolote]]></queryString>
 				<staticText>
 					<reportElement
 						mode="Opaque"
-						x="118"
+						x="106"
 						y="95"
-						width="92"
+						width="62"
 						height="10"
 						backcolor="#F6F6F6"
 						key="staticText-17"/>
@@ -208,7 +208,7 @@ GROUP BY nrolote]]></queryString>
 				<staticText>
 					<reportElement
 						mode="Opaque"
-						x="210"
+						x="168"
 						y="95"
 						width="82"
 						height="10"
@@ -223,9 +223,9 @@ GROUP BY nrolote]]></queryString>
 				<staticText>
 					<reportElement
 						mode="Opaque"
-						x="292"
+						x="250"
 						y="95"
-						width="70"
+						width="160"
 						height="10"
 						backcolor="#F6F6F6"
 						key="staticText-67"/>
@@ -238,9 +238,9 @@ GROUP BY nrolote]]></queryString>
 				<staticText>
 					<reportElement
 						mode="Opaque"
-						x="362"
+						x="410"
 						y="95"
-						width="92"
+						width="60"
 						height="10"
 						backcolor="#F6F6F6"
 						key="staticText-68"/>
@@ -254,7 +254,7 @@ GROUP BY nrolote]]></queryString>
 					<reportElement
 						x="4"
 						y="31"
-						width="66"
+						width="93"
 						height="12"
 						key="staticText-71"
 						isRemoveLineWhenBlank="true">
@@ -264,11 +264,11 @@ GROUP BY nrolote]]></queryString>
 					<textElement>
 						<font pdfFontName="Helvetica" size="8" isBold="false"/>
 					</textElement>
-				<text><![CDATA[Desde =]]></text>
+				<text><![CDATA[Fecha desde:]]></text>
 				</staticText>
 				<textField isStretchWithOverflow="false" pattern="dd/MM/yyyy" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
-						x="70"
+						x="97"
 						y="31"
 						width="150"
 						height="12"
@@ -286,7 +286,7 @@ GROUP BY nrolote]]></queryString>
 					<reportElement
 						x="4"
 						y="43"
-						width="66"
+						width="93"
 						height="12"
 						key="staticText-72"
 						isRemoveLineWhenBlank="true">
@@ -296,11 +296,11 @@ GROUP BY nrolote]]></queryString>
 					<textElement>
 						<font pdfFontName="Helvetica" size="8" isBold="false"/>
 					</textElement>
-				<text><![CDATA[Hasta =]]></text>
+				<text><![CDATA[Fecha hasta:]]></text>
 				</staticText>
 				<textField isStretchWithOverflow="false" pattern="dd/MM/yyyy" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
-						x="70"
+						x="97"
 						y="43"
 						width="150"
 						height="12"
@@ -323,7 +323,7 @@ GROUP BY nrolote]]></queryString>
 						key="staticText-73"/>
 					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
 					<textElement verticalAlignment="Top">
-						<font/>
+						<font size="9"/>
 					</textElement>
 				<text><![CDATA[Fecha:]]></text>
 				</staticText>
@@ -336,7 +336,7 @@ GROUP BY nrolote]]></queryString>
 						key="staticText-74"/>
 					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
 					<textElement verticalAlignment="Top">
-						<font/>
+						<font size="9"/>
 					</textElement>
 				<text><![CDATA[Hora:]]></text>
 				</staticText>
@@ -349,7 +349,7 @@ GROUP BY nrolote]]></queryString>
 						key="textField-95"/>
 					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
 					<textElement verticalAlignment="Top">
-						<font/>
+						<font size="9"/>
 					</textElement>
 				<textFieldExpression   class="java.util.Date"><![CDATA[new java.util.Date()]]></textFieldExpression>
 				</textField>
@@ -362,7 +362,7 @@ GROUP BY nrolote]]></queryString>
 						key="textField-96"/>
 					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
 					<textElement verticalAlignment="Top">
-						<font/>
+						<font size="9"/>
 					</textElement>
 				<textFieldExpression   class="java.util.Date"><![CDATA[new java.util.Date()]]></textFieldExpression>
 				</textField>
@@ -370,7 +370,7 @@ GROUP BY nrolote]]></queryString>
 					<reportElement
 						x="4"
 						y="55"
-						width="66"
+						width="93"
 						height="12"
 						key="staticText-75"
 						isRemoveLineWhenBlank="true">
@@ -380,11 +380,11 @@ GROUP BY nrolote]]></queryString>
 					<textElement>
 						<font pdfFontName="Helvetica" size="8" isBold="false"/>
 					</textElement>
-				<text><![CDATA[Ent. Fin. =]]></text>
+				<text><![CDATA[Entidad Financiera:]]></text>
 				</staticText>
 				<textField isStretchWithOverflow="false" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
-						x="70"
+						x="97"
 						y="55"
 						width="150"
 						height="12"
@@ -402,7 +402,7 @@ GROUP BY nrolote]]></queryString>
 					<reportElement
 						x="4"
 						y="67"
-						width="66"
+						width="93"
 						height="12"
 						key="staticText-76"
 						isRemoveLineWhenBlank="true">
@@ -412,11 +412,11 @@ GROUP BY nrolote]]></queryString>
 					<textElement>
 						<font pdfFontName="Helvetica" size="8" isBold="false"/>
 					</textElement>
-				<text><![CDATA[Agrupación =]]></text>
+				<text><![CDATA[Agrupación por Lote:]]></text>
 				</staticText>
 				<textField isStretchWithOverflow="false" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
-						x="70"
+						x="97"
 						y="67"
 						width="150"
 						height="12"
@@ -434,7 +434,7 @@ GROUP BY nrolote]]></queryString>
 					<reportElement
 						x="4"
 						y="79"
-						width="66"
+						width="93"
 						height="12"
 						key="staticText-77"
 						isRemoveLineWhenBlank="true">
@@ -444,11 +444,11 @@ GROUP BY nrolote]]></queryString>
 					<textElement>
 						<font pdfFontName="Helvetica" size="8" isBold="false"/>
 					</textElement>
-				<text><![CDATA[Conciliado =]]></text>
+				<text><![CDATA[Conciliado:]]></text>
 				</staticText>
 				<textField isStretchWithOverflow="false" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
-						x="70"
+						x="97"
 						y="79"
 						width="150"
 						height="12"
@@ -484,7 +484,7 @@ GROUP BY nrolote]]></queryString>
 					<reportElement
 						x="50"
 						y="0"
-						width="68"
+						width="56"
 						height="10"
 						key="textField-11"
 						stretchType="RelativeToBandHeight"/>
@@ -496,9 +496,9 @@ GROUP BY nrolote]]></queryString>
 				</textField>
 				<textField isStretchWithOverflow="true" pattern="dd/MM/yyyy" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
-						x="118"
+						x="106"
 						y="0"
-						width="92"
+						width="62"
 						height="10"
 						key="textField-12"
 						stretchType="RelativeToBandHeight"/>
@@ -510,7 +510,7 @@ GROUP BY nrolote]]></queryString>
 				</textField>
 				<textField isStretchWithOverflow="true" pattern="dd/MM/yyyy" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
-						x="210"
+						x="168"
 						y="0"
 						width="82"
 						height="10"
@@ -524,9 +524,9 @@ GROUP BY nrolote]]></queryString>
 				</textField>
 				<textField isStretchWithOverflow="true" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
-						x="292"
+						x="250"
 						y="0"
-						width="70"
+						width="160"
 						height="10"
 						key="textField-89"
 						stretchType="RelativeToBandHeight"/>
@@ -538,9 +538,9 @@ GROUP BY nrolote]]></queryString>
 				</textField>
 				<textField isStretchWithOverflow="true" pattern="###0.00;-###0.00" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
-						x="362"
+						x="410"
 						y="0"
-						width="92"
+						width="60"
 						height="10"
 						key="textField-90"
 						stretchType="RelativeToBandHeight"/>
@@ -552,14 +552,14 @@ GROUP BY nrolote]]></queryString>
 				</textField>
 				<textField isStretchWithOverflow="true" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
-						x="454"
+						x="470"
 						y="0"
-						width="66"
+						width="50"
 						height="10"
 						key="textField-91"
 						stretchType="RelativeToBandHeight"/>
 					<box topBorder="None" topBorderColor="#000000" leftBorder="Thin" leftBorderColor="#000000" rightBorder="Thin" rightBorderColor="#000000" bottomBorder="Thin" bottomBorderColor="#000000"/>
-					<textElement textAlignment="Left" verticalAlignment="Middle">
+					<textElement textAlignment="Center" verticalAlignment="Middle">
 						<font size="6"/>
 					</textElement>
 				<textFieldExpression   class="java.lang.String"><![CDATA[$F{conciliado}.equals("N")? "No" : "Si"]]></textFieldExpression>
