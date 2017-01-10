@@ -3899,3 +3899,105 @@ UPDATE C_PaymentTerm
 SET applicationcontext = 'B';
 
 ALTER TABLE C_PaymentTerm ALTER COLUMN applicationcontext SET NOT NULL;
+
+--20170110 Incorporacion Sur Software.  Funcion faltante para la importacion de padrones 
+-- Función que copia los registros del nuevo padrón de Regímenes Generales de CABA
+-- desde la tabla i_padron_caba_regimen_general a la tabla c_bpartner_padron_bsas
+CREATE OR REPLACE FUNCTION update_padron_from_i_padron_caba_regimen_general(
+    p_ad_org_id integer,
+    p_ad_client_id integer,
+    p_ad_user_id integer,
+    p_padrontype character,
+    p_offset integer,
+    p_chunksize integer)
+  RETURNS void AS
+$BODY$
+DECLARE
+	aux RECORD;
+BEGIN
+
+	FOR AUX IN
+		SELECT * FROM i_padron_caba_regimen_general
+		ORDER BY cuit
+		OFFSET p_offset
+		LIMIT p_chunksize
+	LOOP
+		UPDATE
+			c_bpartner_padron_bsas padron
+		SET
+			FECHA_DESDE = to_timestamp(to_number(aux.FECHA_DESDE , '99999999999')::text, 'DDMMYYYY')
+			, FECHA_HASTA = to_timestamp(to_number(aux.FECHA_HASTA , '99999999999')::text, 'DDMMYYYY')
+			, TIPO_CONTR_INSC = aux.TIPO_CONTR_INSC 
+			, ALTA_BAJA = aux.ALTA_BAJA 
+			, CBIO_ALICUOTA = aux.CBIO_ALICUOTA 
+			, PERCEPCION = to_number(aux.PERCEPCION , '9999999D99') 
+			, RETENCION = to_number(aux.RETENCION , '9999999D99') 
+			, NRO_GRUPO_RET = aux.NRO_GRUPO_RET
+			, NRO_GRUPO_PER = aux.NRO_GRUPO_PER
+			, ISACTIVE = 'Y' 
+			, UPDATED = CURRENT_DATE 
+			, UPDATEDBY = p_ad_user_id
+		WHERE
+			padron.CUIT = aux.CUIT
+			AND padron.padrontype = p_padrontype   	
+			AND padron.FECHA_PUBLICACION = to_timestamp(aux.FECHA_PUBLICACION, 'DDMMYYYY')
+			AND AD_CLIENT_ID = p_ad_client_id
+			AND AD_ORG_ID = p_ad_org_id
+		;
+
+		IF FOUND = FALSE THEN
+			INSERT
+			INTO c_bpartner_padron_bsas
+			(      
+				c_bpartner_padron_bsas_ID
+				, FECHA_PUBLICACION        
+				, FECHA_DESDE              
+				, FECHA_HASTA              
+				, CUIT                     
+				, TIPO_CONTR_INSC          
+				, ALTA_BAJA                
+				, CBIO_ALICUOTA            
+				, PERCEPCION               
+				, RETENCION                
+				, NRO_GRUPO_RET            
+				, NRO_GRUPO_PER            
+				, AD_CLIENT_ID             
+				, AD_ORG_ID                
+				, ISACTIVE                 
+				, CREATED                  
+				, UPDATED                  
+				, CREATEDBY                
+				, UPDATEDBY                
+				, padrontype                 
+			) 
+			VALUES
+			( 
+				nextval('seq_c_bpartner_padron_bsas')     
+				, to_timestamp(to_number(aux.FECHA_PUBLICACION , '99999999999')::text, 'DDMMYYYY')
+				, to_timestamp(to_number(aux.FECHA_DESDE , '99999999999')::text, 'DDMMYYYY')      
+				, to_timestamp(to_number(aux.FECHA_HASTA , '99999999999')::text, 'DDMMYYYY')
+				, aux.CUIT
+				, aux.TIPO_CONTR_INSC                                 
+				, aux.ALTA_BAJA                                       
+				, aux.CBIO_ALICUOTA                                   
+				, to_number(aux.PERCEPCION , '9999999D99')       
+				, to_number(aux.RETENCION , '9999999D99')          
+				, aux.NRO_GRUPO_RET
+				, aux.NRO_GRUPO_PER
+				, p_ad_client_id
+				, p_ad_org_id
+				, 'Y'                                             
+				, CURRENT_DATE                                    
+				, CURRENT_DATE                                    
+				, p_ad_user_id
+				, p_ad_user_id
+				, p_padrontype
+			);
+		END IF;
+	END LOOP;
+END;
+$BODY$
+  LANGUAGE plpgsql VOLATILE
+  COST 100;
+ALTER FUNCTION update_padron_from_i_padron_caba_regimen_general(integer, integer, integer, character, integer, integer)
+  OWNER TO libertya;
