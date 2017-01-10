@@ -473,8 +473,11 @@ public class VOrdenCobroModel extends VOrdenPagoModel {
 		
 		StringBuffer sql = new StringBuffer();
 		
-		sql.append(" SELECT c_invoice_id, c_invoicepayschedule_id, orgname, documentno, dateinvoiced, duedate, currencyIso, grandTotal, openTotal, convertedamt, openamt, isexchange, C_Currency_ID, paymentrule FROM ");
-		sql.append("  (SELECT i.C_Invoice_ID, i.C_InvoicePaySchedule_ID, org.name as orgname, i.DocumentNo, dateinvoiced, coalesce(i.duedate,dateinvoiced) as DueDate, cu.iso_code as currencyIso, i.grandTotal, invoiceOpen(i.C_Invoice_ID, COALESCE(i.C_InvoicePaySchedule_ID, 0)) as openTotal, "); // ips.duedate
+		sql.append(" SELECT c_invoice_id, c_invoicepayschedule_id, orgname, documentno");
+		if (isSetDescriptionPreference())
+			sql.append(",COALESCE(description,'')");
+		sql.append(", dateinvoiced, duedate, currencyIso, grandTotal, openTotal, convertedamt, openamt, isexchange, C_Currency_ID, paymentrule FROM ");
+		sql.append("  (SELECT i.C_Invoice_ID, i.C_InvoicePaySchedule_ID, org.name as orgname, i.DocumentNo, i.description, dateinvoiced, coalesce(i.duedate,dateinvoiced) as DueDate, cu.iso_code as currencyIso, i.grandTotal, invoiceOpen(i.C_Invoice_ID, COALESCE(i.C_InvoicePaySchedule_ID, 0)) as openTotal, "); // ips.duedate
 		sql.append("    abs(currencyConvert( i.GrandTotal, i.C_Currency_ID, ?, '"+ m_fechaTrx +"'::date, null, i.AD_Client_ID, i.AD_Org_ID)) as ConvertedAmt, isexchange, ");
 		sql.append("    currencyConvert( invoiceOpen(i.C_Invoice_ID, COALESCE(i.C_InvoicePaySchedule_ID, 0)), i.C_Currency_ID, ?, '"+ m_fechaTrx +"'::date, null, i.AD_Client_ID, i.AD_Org_ID) AS openAmt, i.C_Currency_ID, i.paymentrule ");
 		sql.append("  FROM c_invoice_v AS i ");
@@ -493,7 +496,7 @@ public class VOrdenCobroModel extends VOrdenPagoModel {
 		
 		sql.append(" AND i.ispaid = 'N' ");
 		sql.append("  ) as openInvoices ");
-		sql.append(" GROUP BY c_invoice_id, c_invoicepayschedule_id, orgname, documentno, currencyIso, grandTotal, openTotal, dateinvoiced, duedate, convertedamt, openamt, isexchange, C_Currency_ID, paymentrule ");
+		sql.append(" GROUP BY c_invoice_id, c_invoicepayschedule_id, orgname, documentno, description, currencyIso, grandTotal, openTotal, dateinvoiced, duedate, convertedamt, openamt, isexchange, C_Currency_ID, paymentrule ");
 		sql.append(" HAVING opentotal > 0.0 ");
 		// Si agrupa no se puede filtrar por fecha de vencimiento, se deben traer todas
 		if (!m_allInvoices && !getBPartner().isGroupInvoices())
@@ -548,6 +551,12 @@ public class VOrdenCobroModel extends VOrdenPagoModel {
 		m_facturasTableModel.fireChanged(false);
 		
 	}
+	
+	private boolean isSetDescriptionPreference() {
+		String sql = "SELECT COUNT(AD_Preference_ID) FROM ad_preference WHERE attribute = 'DescriptionRC' AND isActive = 'Y'";
+		return (DB.getSQLValue(getTrxName(), sql)>0);
+	}
+
 
 	/**
 	 * Actualización del descuento/recargo de las facturas
@@ -1594,6 +1603,8 @@ public class VOrdenCobroModel extends VOrdenPagoModel {
             columnNames.add( "#$#" + Msg.getElement( Env.getCtx(),"C_InvoicePaySchedule_ID" ));
             columnNames.add( Msg.translate( Env.getCtx(),"AD_Org_ID" ));
             columnNames.add( Msg.getElement( Env.getCtx(),"DocumentNo" ));
+            if (isSetDescriptionPreference())
+            	columnNames.add(Msg.translate(Env.getCtx(), "Description"));
             columnNames.add( Msg.getElement( Env.getCtx(),"DateInvoiced" ));
             columnNames.add( Msg.translate( Env.getCtx(),"DueDate" ));
             columnNames.add( Msg.translate( Env.getCtx(),"Currency" ));
@@ -1608,21 +1619,29 @@ public class VOrdenCobroModel extends VOrdenPagoModel {
             // La columna toPayCurrency permite ingresar el monto en la moneda de la Compañia
             columnNames.add( Msg.translate( Env.getCtx(),"ToPay" ).concat(" ").concat(mCurency.getISO_Code()));
 		}
-		
+
 		public int getOpenAmtColIdx() {
-			return 8;
+            if (isSetDescriptionPreference())
+            	return 9;
+            return 8;
 		}
 		
 		public int getIsExchange() {
-			return 11;
+            if (isSetDescriptionPreference())
+            	return 12;
+            return 11;
 		}
 		
 		public int getCurrencyColIdx() {
-			return 12;
+            if (isSetDescriptionPreference())
+            	return 13;
+            return 12;
 		}
 		
 		public int getOpenCurrentAmtColIdx() {
-			return 10;
+            if (isSetDescriptionPreference())
+            	return 11;
+            return 10;
 		}
 		
 		public int getIdColIdx() {
@@ -1634,11 +1653,15 @@ public class VOrdenCobroModel extends VOrdenPagoModel {
 		}
 		
 		public int getDueDateColIdx() {
-			return 5;
+            if (isSetDescriptionPreference())
+            	return 6;
+            return 5;
 		}
 		
 		public int getDateInvoicedColIdx() {
-			return 4;
+            if (isSetDescriptionPreference())
+            	return 5;
+            return 4;
 		}
 		
 		@Override
