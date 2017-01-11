@@ -138,10 +138,10 @@ public class InfoBPartner extends Info {
 			new Info_Column(" ", "C_BPartner.C_BPartner_ID", IDColumn.class),
 			new Info_Column(Msg.translate(Env.getCtx(), "Value"),
 					"C_BPartner.Value", String.class),
-			new Info_Column(Msg.translate(Env.getCtx(), "BPartnerName2"),
-					"C_BPartner.Name2", String.class),
 			new Info_Column(Msg.translate(Env.getCtx(), "Name"),
 					"C_BPartner.Name", String.class),
+			new Info_Column(Msg.translate(Env.getCtx(), "BPartnerName2"),
+					"C_BPartner.Name2", String.class),
 			new Info_Column(Msg.translate(Env.getCtx(), "Contact"),
 					"c.Name AS Contact", KeyNamePair.class, "c.AD_User_ID"),
 			new Info_Column(
