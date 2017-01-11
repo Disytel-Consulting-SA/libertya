@@ -56,8 +56,16 @@ public class PercepcionCABA extends PercepcionStandard {
 		MBPartnerLocation bpLocation = new MBPartnerLocation(Env.getCtx(), BPartnerLocationID, null);
 		MLocation location = new MLocation(Env.getCtx(), bpLocation.getC_Location_ID(), null);
 		int c_Region_BP_ID = location.getC_Region_ID();
-
-		if (c_Region_Tax_ID == c_Region_BP_ID) {
+		
+		/*Utilizo la funcionalidad de Jurisdicción CABA solo si está activa en la configuración de percepciones
+		 * de la organización y el cliente tiene el Check activo 
+		 */		
+		boolean applyCABAJurisdiction = getPercepcionData().isUseCABAJurisdiction() && getPercepcionData().getBpartner().isBuiltCabaJurisdiction(); 
+		
+		/*
+		 * Aplico la percepciones si corresponde por la región, o si tiene aplica la Jurisdicción CABA
+		 */
+		if (c_Region_Tax_ID == c_Region_BP_ID || applyCABAJurisdiction) {
 			// PADRON DE ALTO RIESGO
 			percepcionPercToApply = getPerception(MBPartnerPadronBsAs.PADRONTYPE_PadrónDeAltoRiesgoCABA);
 			if (percepcionPercToApply == null) {
@@ -67,15 +75,9 @@ public class PercepcionCABA extends PercepcionStandard {
 					// PADRON DE REGIMEN SIMPLIFICADO
 					percepcionPercToApply = getPerception(MBPartnerPadronBsAs.PADRONTYPE_RégimenSimplificadoCABA);
 					if (percepcionPercToApply == null) {
-						// DEFAULT (si es de convenio multilateral).
-						boolean ApplyDefaultAllowed = !(
-								getPercepcionData().getBpartner().isBuiltCabaJurisdiction() && 
-								!getPercepcionData().isUseCABAJurisdiction());
-						if (ApplyDefaultAllowed) {
-							percepcionPercToApply = getPerception(null);
-							minimumNetAmount = super.getMinimumNetAmount();
-							arcibaNormCode = codigo_De_Norma_Estandar;
-						}
+						percepcionPercToApply = getPerception(null);
+						minimumNetAmount = super.getMinimumNetAmount();
+						arcibaNormCode = codigo_De_Norma_Estandar;
 					} else {
 						// PADRON DE REGIMEN SIMPLIFICADO
 						arcibaNormCode = codigo_De_Norma_Regimen_Simplificado;
