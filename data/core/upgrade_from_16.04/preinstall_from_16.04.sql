@@ -4001,3 +4001,8 @@ $BODY$
   COST 100;
 ALTER FUNCTION update_padron_from_i_padron_caba_regimen_general(integer, integer, integer, character, integer, integer)
   OWNER TO libertya;
+
+--20170111-1530 Creación de una clave para el tipo de documento Asiento ya que no tenía ninguno asociado  
+update c_doctype
+set doctypekey = 'JB'
+where ad_componentobjectuid = 'CORE-C_DocType-1010506';
