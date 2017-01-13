@@ -4006,3 +4006,115 @@ ALTER FUNCTION update_padron_from_i_padron_caba_regimen_general(integer, integer
 update c_doctype
 set doctypekey = 'JB'
 where ad_componentobjectuid = 'CORE-C_DocType-1010506';
+
+--20171213--1048 Nueva función para obtener el descuento/recargo para una factura tal como se hace en la ventana de Recibo de Clientes
+CREATE OR REPLACE FUNCTION getDiscount(C_Invoice_ID integer, C_PaySchedule_ID integer, invoiceDate Timestamp, dueDate Timestamp, compareDate Timestamp, baseAmt numeric)
+  RETURNS numeric AS
+$BODY$
+/***
+ Tomar la configuración de descuentos/recargos desde el esquema de
+ vencimientos o del esquema de pago
+**/
+DECLARE
+	fromPaySchedule record;
+	fromPaymentTerm record;
+	discountApplicationType varchar;
+	discountPerc numeric := 0.0;
+	toleranceDays integer := 0;
+	discountDays integer := 0;
+	discount numeric := 0;
+	diffToUse integer := 0;
+	diffInvoicedDays integer := 0;
+	diffDueDays integer := 0;
+	daysToBeat integer := 0;
+	dailyIncreaseDays integer := 0;
+	constApplicationType varchar;
+BEGIN
+	--Obtengo el value de la lista de referencia "Daily increase"
+	SELECT value 
+	   INTO constApplicationType
+	FROM AD_Ref_List
+	WHERE ad_componentobjectuid = 'CORE-AD_Ref_List-1010471';
+	
+	/* Días de diferencia entre la fecha de comparación y la fecha de
+	   facturación. Si es positivo la fecha de comparación es mayor a la de
+	   facturación, 0 es igual y negativo lo contrario */
+	diffDueDays =  compareDate::date - dueDate::date;
+	/* Días de diferencia entre la fecha de comparación y la fecha de
+	   vencimiento. Si es positivo la fecha de comparación es mayor a la de
+	   vencimiento, 0 es igual y negativo lo contrario */
+	diffInvoicedDays = compareDate::date - invoiceDate::date;
+	-- Lo tomo del esquema de pagos, sino del esquema de vencimientos
+	IF (C_PaySchedule_ID > 0) 
+	THEN 
+	    SELECT *
+	      INTO fromPaySchedule
+	    FROM C_PaySchedule vp
+	    WHERE  vp.C_PaySchedule_ID=C_PaySchedule_ID;
+
+	    IF (fromPaySchedule.c_payschedule_id IS NOT NULL)
+	    THEN
+		discountApplicationType = fromPaySchedule.discountApplicationType;
+		discountPerc = fromPaySchedule.Discount;
+		discountDays = fromPaySchedule.DiscountDays;
+		toleranceDays = fromPaySchedule.GraceDays;
+		diffToUse = diffDueDays;
+	    END IF;
+	ELSE
+		/* Tomar descuento 1 o 2? Eso se determina las fechas parámetro, si
+		   la fecha de comparación está después de la de vencimiento,
+		   significa que estoy vencido por lo que se debe tomar el descuento
+		   2, sino se toma descuento 1 */
+		SELECT discountApplicationType, discountApplicationType2, 
+			Discount, Discount2, DiscountDays, DiscountDays2, GraceDays, GraceDays2
+		INTO fromPaymentTerm
+		FROM C_Invoice i
+		INNER JOIN C_Paymentterm pt ON pt.C_Paymentterm_ID = i.C_Paymentterm_ID
+			WHERE  i.C_Invoice_ID=C_Invoice_ID;
+
+		IF (diffDueDays > 0)
+		THEN
+			discountApplicationType = fromPaymentTerm.discountApplicationType2;
+			discountPerc = fromPaymentTerm.Discount2;
+			discountDays = fromPaymentTerm.DiscountDays2;
+			toleranceDays = fromPaymentTerm.GraceDays2;
+			diffToUse = diffDueDays;
+		ELSIF (diffInvoicedDays > 0)
+		THEN
+			discountApplicationType = fromPaymentTerm.discountApplicationType;
+			discountPerc = fromPaymentTerm.Discount;
+			discountDays = fromPaymentTerm.DiscountDays;
+			toleranceDays = fromPaymentTerm.GraceDays;
+			diffToUse = diffInvoicedDays;
+		END IF;
+	END IF;
+	-- Si hay descuento aplicable entonces aplico
+	IF (discountApplicationType IS NOT NULL) 
+	THEN
+		/* Si es incremento diario se debe multiplicar por la cantidad de
+		   días de diferencia, sino es de una vez el descuento
+		   Primero verifico si lo puedo aplicar, dependiendo los días
+		   Si la diferencia de días es mayor a la cantidad de días de
+		   descuento + los días de tolerancia, entonces se aplica */
+		daysToBeat = discountDays + toleranceDays;
+		IF (diffToUse > daysToBeat)
+		THEN
+			IF (discountApplicationType = constApplicationType)
+			THEN
+				dailyIncreaseDays = diffToUse;
+			ELSE
+				dailyIncreaseDays = 1;
+			END IF;
+			/* Saco el monto de descuento/recargo, descuentos son positivos,
+			   recargos negativos */
+			discount = ((baseAmt*discountPerc)/100)*dailyIncreaseDays;
+		END IF;
+	END IF;
+	RETURN discount;
+END;
+
+$BODY$
+  LANGUAGE plpgsql VOLATILE
+  COST 100;
+ALTER FUNCTION getDiscount(C_Invoice_ID integer, C_PaySchedule_ID integer, invoiceDate Timestamp, dueDate Timestamp, compareDate Timestamp, baseAmt numeric)
+  OWNER TO libertya;
