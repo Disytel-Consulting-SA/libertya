@@ -131,6 +131,22 @@ public abstract class AbstractRetencionProcessor implements RetencionProcessor {
 	public List<BigDecimal> getAmountList() {
 		return m_List_Amount;
 	}
+	
+	/**
+	 * Setea la lista de facturas
+	 * @param invoices nueva lista de facturas
+	 */
+	public void setInvoiceList(List<MInvoice> invoices) {
+		m_List_Invoice = invoices;
+	}
+
+	/**
+	 * Setea la lista de importes 
+	 * @param amts nueva lista de importes
+	 */
+	public void setAmountList(List<BigDecimal> amts) {
+		m_List_Amount = amts;
+	}
 
 	/**
 	 * @return Returns the dateTrx.
