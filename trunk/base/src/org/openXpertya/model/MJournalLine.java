@@ -331,6 +331,13 @@ public class MJournalLine extends X_GL_JournalLine {
 
         setAmtAcctCr( amt );
 
+        if( getLine() == 0 ) {
+			String sql = "SELECT COALESCE(MAX(Line),0)+10 FROM " + Table_Name + " WHERE gl_journal_id=?";
+            int ii = DB.getSQLValue( get_TrxName(),sql,getGL_Journal_ID());
+
+            setLine( ii );
+        }
+        
         return true;
     }    // beforeSave
 
