@@ -4,6 +4,7 @@ import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.openXpertya.model.CalloutInvoiceExt;
 import org.openXpertya.model.MDocType;
 import org.openXpertya.util.Util;
 
@@ -47,6 +48,7 @@ public class ProductLinesSalesDataSource extends QueryDataSource {
 					 "inner join m_product_gamas as pg on pg.m_product_gamas_id = pc.m_product_gamas_id " +
 					 "inner join m_product_lines as pl on pl.m_product_lines_id = pg.m_product_lines_id " +
 					 "where il.ad_org_id = ? AND pl.isactive = 'Y' AND i.docstatus IN ('CO','CL') AND dt.doctypekey NOT IN ('RCI','RCR') AND dt.docbasetype IN ('"+MDocType.DOCBASETYPE_ARInvoice+"','"+MDocType.DOCBASETYPE_ARCreditMemo +"') AND dt.doctypekey NOT IN ('RCI','RCR') AND date_trunc('day',i.dateinvoiced) >= date_trunc('day',?::date) AND date_trunc('day',i.dateinvoiced) <= date_trunc('day',?::date) AND (dt.isfiscal is null OR dt.isfiscal = 'N' OR (dt.isfiscal = 'Y' AND i.fiscalalreadyprinted = 'Y')) ");
+		sql.append((CalloutInvoiceExt.ComprobantesFiscalesActivos()? " AND dt.isfiscaldocument = 'Y' " : ""));
 		if(!Util.isEmpty(getProductLinesID(), true)){
 			sql.append(" AND pl.m_product_lines_id = ? ");
 		}

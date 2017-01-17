@@ -2,6 +2,7 @@ package org.openXpertya.JasperReport.DataSource;
 
 import java.sql.Timestamp;
 
+import org.openXpertya.model.CalloutInvoiceExt;
 import org.openXpertya.model.MDocType;
 
 public class SalesByHourDataSource extends QueryDataSource {
@@ -43,8 +44,8 @@ public class SalesByHourDataSource extends QueryDataSource {
 					 "									extract('minute' from dateinvoiced)::integer as minute " +
 					 "						from c_invoice as i " +
 					 "						inner join c_doctype as dt on dt.c_doctype_id = i.c_doctypetarget_id " +
-					 "						where i.ad_org_id = ? AND i.docstatus IN ('CO','CL') AND dt.docbasetype IN ('"+MDocType.DOCBASETYPE_ARInvoice+"','"+MDocType.DOCBASETYPE_ARCreditMemo +"') AND dt.doctypekey NOT IN ('RCI','RCR') AND date_trunc('day',i.dateinvoiced) >= date_trunc('day',?::date) AND date_trunc('day',i.dateinvoiced) <= date_trunc('day',?::date) "
-					 		+ "						AND (dt.isfiscal is null OR dt.isfiscal = 'N' OR (dt.isfiscal = 'Y' AND i.fiscalalreadyprinted = 'Y'))) as i on i.hour = h.hour) as a, " +
+					 "						where i.ad_org_id = ? AND i.docstatus IN ('CO','CL') AND dt.docbasetype IN ('"+MDocType.DOCBASETYPE_ARInvoice+"','"+MDocType.DOCBASETYPE_ARCreditMemo +"') AND dt.doctypekey NOT IN ('RCI','RCR') AND date_trunc('day',i.dateinvoiced) >= date_trunc('day',?::date) AND date_trunc('day',i.dateinvoiced) <= date_trunc('day',?::date) " +
+				     "						" + (CalloutInvoiceExt.ComprobantesFiscalesActivos()?" AND dt.isfiscaldocument = 'Y' " : "") + " AND (dt.isfiscal is null OR dt.isfiscal = 'N' OR (dt.isfiscal = 'Y' AND i.fiscalalreadyprinted = 'Y'))) as i on i.hour = h.hour) as a, " +
 					 "			(select sum(total) as total " +
 					 "				from c_salesbyhour_hours as ht " +
 					 "				left join (select extract('hour' from dateinvoiced)::integer as hour, " +
@@ -53,7 +54,7 @@ public class SalesByHourDataSource extends QueryDataSource {
 					 "							from c_invoice as i " +
 					 "							inner join c_doctype as dt on dt.c_doctype_id = i.c_doctypetarget_id " +
 					 "							where i.ad_org_id = ? AND i.docstatus IN ('CO','CL') AND dt.docbasetype IN ('"+MDocType.DOCBASETYPE_ARInvoice+"','"+MDocType.DOCBASETYPE_ARCreditMemo +"') AND dt.doctypekey NOT IN ('RCI','RCR') AND date_trunc('day',i.dateinvoiced) >= date_trunc('day',?::date) AND date_trunc('day',i.dateinvoiced) <= date_trunc('day',?::date) " +
-					 "									AND (dt.isfiscal is null OR dt.isfiscal = 'N' OR (dt.isfiscal = 'Y' AND i.fiscalalreadyprinted = 'Y'))  " +
+					 "									" + (CalloutInvoiceExt.ComprobantesFiscalesActivos()?" AND dt.isfiscaldocument = 'Y' " : "") + " AND (dt.isfiscal is null OR dt.isfiscal = 'N' OR (dt.isfiscal = 'Y' AND i.fiscalalreadyprinted = 'Y'))  " +
 					 "							group by extract('hour' from dateinvoiced), extract('minute' from dateinvoiced)) as t on t.hour = ht.hour) as total) as todo " +
 					 "group by hour, total) as todo_total " +
 					 "order by hour";
