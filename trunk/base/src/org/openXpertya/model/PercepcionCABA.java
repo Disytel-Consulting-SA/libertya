@@ -62,37 +62,38 @@ public class PercepcionCABA extends PercepcionStandard {
 		 */		
 		boolean applyCABAJurisdiction = getPercepcionData().isUseCABAJurisdiction() && getPercepcionData().getBpartner().isBuiltCabaJurisdiction(); 
 		
-		/*
-		 * Aplico la percepciones si corresponde por la región, o si tiene aplica la Jurisdicción CABA
-		 */
-		if (c_Region_Tax_ID == c_Region_BP_ID || applyCABAJurisdiction) {
-			// PADRON DE ALTO RIESGO
-			percepcionPercToApply = getPerception(MBPartnerPadronBsAs.PADRONTYPE_PadrónDeAltoRiesgoCABA);
+		
+		// PADRON DE ALTO RIESGO
+		percepcionPercToApply = getPerception(MBPartnerPadronBsAs.PADRONTYPE_PadrónDeAltoRiesgoCABA);
+		if (percepcionPercToApply == null) {
+			// PADRON DE REGIMENES GENERALES
+			percepcionPercToApply = getPerception(MBPartnerPadronBsAs.PADRONTYPE_PadrónDeRegímenesGenerales);
 			if (percepcionPercToApply == null) {
-				// PADRON DE REGIMENES GENERALES
-				percepcionPercToApply = getPerception(MBPartnerPadronBsAs.PADRONTYPE_PadrónDeRegímenesGenerales);
+				// PADRON DE REGIMEN SIMPLIFICADO
+				percepcionPercToApply = getPerception(MBPartnerPadronBsAs.PADRONTYPE_RégimenSimplificadoCABA);
 				if (percepcionPercToApply == null) {
-					// PADRON DE REGIMEN SIMPLIFICADO
-					percepcionPercToApply = getPerception(MBPartnerPadronBsAs.PADRONTYPE_RégimenSimplificadoCABA);
-					if (percepcionPercToApply == null) {
+					/*
+					 * Aplico la percepciones si corresponde por la región, o si tiene aplica la Jurisdicción CABA
+					 */
+					if (c_Region_Tax_ID == c_Region_BP_ID || applyCABAJurisdiction) {
 						percepcionPercToApply = getPerception(null);
 						minimumNetAmount = super.getMinimumNetAmount();
 						arcibaNormCode = codigo_De_Norma_Estandar;
-					} else {
-						// PADRON DE REGIMEN SIMPLIFICADO
-						arcibaNormCode = codigo_De_Norma_Regimen_Simplificado;
-						minimumNetAmount = getRegisterMinimumNetAmount(MBPartnerPadronBsAs.PADRONTYPE_RégimenSimplificadoCABA);
 					}
 				} else {
-					// PADRON DE REGIMENES GENERALES
-					arcibaNormCode = codigo_De_Norma_Regimen_General;
-					minimumNetAmount = getRegisterMinimumNetAmount(MBPartnerPadronBsAs.PADRONTYPE_PadrónDeRegímenesGenerales);
+					// PADRON DE REGIMEN SIMPLIFICADO
+					arcibaNormCode = codigo_De_Norma_Regimen_Simplificado;
+					minimumNetAmount = getRegisterMinimumNetAmount(MBPartnerPadronBsAs.PADRONTYPE_RégimenSimplificadoCABA);
 				}
 			} else {
-				// PADRON DE ALTO RIESGO
-				arcibaNormCode = codigo_De_Norma_Padron_Alto_Riesgo;
-				minimumNetAmount = getRegisterMinimumNetAmount(MBPartnerPadronBsAs.PADRONTYPE_PadrónDeAltoRiesgoCABA);
+				// PADRON DE REGIMENES GENERALES
+				arcibaNormCode = codigo_De_Norma_Regimen_General;
+				minimumNetAmount = getRegisterMinimumNetAmount(MBPartnerPadronBsAs.PADRONTYPE_PadrónDeRegímenesGenerales);
 			}
+		} else {
+			// PADRON DE ALTO RIESGO
+			arcibaNormCode = codigo_De_Norma_Padron_Alto_Riesgo;
+			minimumNetAmount = getRegisterMinimumNetAmount(MBPartnerPadronBsAs.PADRONTYPE_PadrónDeAltoRiesgoCABA);
 		}
 	}
 
