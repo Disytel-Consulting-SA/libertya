@@ -1,6 +1,8 @@
 package org.openXpertya.process;
 
 import java.math.BigDecimal;
+import java.util.ArrayList;
+import java.util.List;
 
 import org.openXpertya.model.AbstractRetencionProcessor;
 import org.openXpertya.model.MAllocationHdr;
@@ -10,9 +12,11 @@ import org.openXpertya.model.MInvoiceLine;
 import org.openXpertya.model.MRetSchemaConfig;
 import org.openXpertya.model.MRetencionSchema;
 import org.openXpertya.model.X_M_Retencion_Invoice;
+import org.openXpertya.util.CLogger;
 import org.openXpertya.util.DB;
 import org.openXpertya.util.Env;
 import org.openXpertya.util.Msg;
+import org.openXpertya.util.Util;
 
 public class RetencionFacturasMIva extends AbstractRetencionProcessor {
 
@@ -35,6 +39,7 @@ public class RetencionFacturasMIva extends AbstractRetencionProcessor {
 	private BigDecimal importeDeterminado = Env.ZERO; 
 
 	private X_M_Retencion_Invoice retencion = null;
+	private List<X_M_Retencion_Invoice> retenciones = null;
 	
 	public void loadConfig(MRetencionSchema retSchema) {
 		// Se asigna el esquema de retención a utilizar.
@@ -137,7 +142,7 @@ public class RetencionFacturasMIva extends AbstractRetencionProcessor {
 		return importeRetenido;
 	}
 	
-	public X_M_Retencion_Invoice save(MAllocationHdr alloc, boolean save) throws Exception {
+	public List<X_M_Retencion_Invoice> save(MAllocationHdr alloc, boolean save) throws Exception {
 		// Si el monto de retención es menor o igual que cero, no se debe guardar
 		// la retención ya que no se retuvo nada.
 		if (getAmount().compareTo(Env.ZERO) <= 0)
@@ -170,15 +175,24 @@ public class RetencionFacturasMIva extends AbstractRetencionProcessor {
 		retencion.setIsSOTrx(isSOTrx());
 		if (save)
 			retencion.save();
-		return retencion; 
+		
+		retenciones = new ArrayList<X_M_Retencion_Invoice>();
+		retenciones.add(retencion);
+		
+		return retenciones;
 	}
 
 	public boolean save(MAllocationHdr alloc) throws Exception {
-		X_M_Retencion_Invoice retencion = save(alloc, false);
-		if (retencion == null)
+		List<X_M_Retencion_Invoice> retList = save(alloc, false);
+		if(Util.isEmpty(retList)){
 			return false;
-		else
-			return retencion.save();
+		}
+		for (X_M_Retencion_Invoice retInvoice : retList) {
+			if(!retInvoice.save()){
+				throw new Exception(CLogger.retrieveErrorAsString());
+			}
+		}
+		return true;
 	} // save 
 
 	private MInvoice crearFacturaRecaudador() throws Exception {

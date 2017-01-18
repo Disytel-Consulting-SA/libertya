@@ -12,14 +12,16 @@ import org.openXpertya.model.MInvoiceLine;
 import org.openXpertya.model.MRetSchemaConfig;
 import org.openXpertya.model.MRetencionSchema;
 import org.openXpertya.model.X_M_Retencion_Invoice;
+import org.openXpertya.util.CLogger;
 import org.openXpertya.util.DB;
 import org.openXpertya.util.Env;
 import org.openXpertya.util.Msg;
+import org.openXpertya.util.Util;
 
 public class RetencionIIBB extends AbstractRetencionProcessor {
 
 	/** ID de la tasa de impuesto exenta */
-	private static Integer taxExenc = 0;
+	protected static Integer taxExenc = 0;
 	
 	/** [INI] Importe No Imponible. */
 	private BigDecimal importeNoImponible = Env.ZERO;
@@ -40,7 +42,8 @@ public class RetencionIIBB extends AbstractRetencionProcessor {
 	/** [P] FromPadron. Lista de tipos de padrón ordenado por orden de aplicación */
 	private List<String> padrones = new ArrayList<String>();
 
-	private X_M_Retencion_Invoice retencion = null;
+	protected X_M_Retencion_Invoice retencion = null;
+	protected List<X_M_Retencion_Invoice> retenciones = null;
 	
 	public void loadConfig(MRetencionSchema retSchema) {
 		// Se asigna el esquema de retención a utilizar.
@@ -154,7 +157,9 @@ public class RetencionIIBB extends AbstractRetencionProcessor {
 //			porcentajeRetencion = this.
 		// Se calcula el importe determinado.
 		// ID = BI * T / 100
-		importeRetenido = baseImponible.multiply(porcentajeRetencion).divide(Env.ONEHUNDRED);
+		importeDeterminado = baseImponible.multiply(porcentajeRetencion).divide(Env.ONEHUNDRED);
+		
+		importeRetenido = importeDeterminado;
 		
 		// Una vez calculado el importe a retener, se compara con el importe mínimo de
 		// retención. Si el IR es menor que el mínimo de retención, entonces no se 
@@ -170,7 +175,7 @@ public class RetencionIIBB extends AbstractRetencionProcessor {
 		return importeRetenido;
 	}
 	
-	public X_M_Retencion_Invoice save(MAllocationHdr alloc, boolean save) throws Exception {
+	public List<X_M_Retencion_Invoice> save(MAllocationHdr alloc, boolean save) throws Exception {
 		// Si el monto de retención es menor o igual que cero, no se debe guardar
 		// la retención ya que no se retuvo nada.
 		if (getAmount().compareTo(Env.ZERO) <= 0)
@@ -203,15 +208,24 @@ public class RetencionIIBB extends AbstractRetencionProcessor {
 		retencion.setIsSOTrx(isSOTrx());
 		if (save)
 			retencion.save();
-		return retencion;
+		
+		retenciones = new ArrayList<X_M_Retencion_Invoice>();
+		retenciones.add(retencion);
+		
+		return retenciones;
 	}
 
 	public boolean save(MAllocationHdr alloc) throws Exception {
-		X_M_Retencion_Invoice retencion = save(alloc, false);
-		if (retencion == null)
+		List<X_M_Retencion_Invoice> retList = save(alloc, false);
+		if(Util.isEmpty(retList)){
 			return false;
-		else
-			return retencion.save();
+		}
+		for (X_M_Retencion_Invoice retInvoice : retList) {
+			if(!retInvoice.save()){
+				throw new Exception(CLogger.retrieveErrorAsString());
+			}
+		}
+		return true;
 	} // save 
 	
 //	private BigDecimal porcentajeFromPadron(){
