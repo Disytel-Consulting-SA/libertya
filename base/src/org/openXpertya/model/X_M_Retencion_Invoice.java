@@ -1,13 +1,14 @@
-/** Modelo Generado - NO CAMBIAR MANUALMENTE - Copyright (C) 2006 FUNDESLE */
+/** Modelo Generado - NO CAMBIAR MANUALMENTE - Disytel */
 package org.openXpertya.model;
-import java.util.*;
+import java.util.logging.Level;
+ import java.util.*;
 import java.sql.*;
 import java.math.*;
 import org.openXpertya.util.*;
 /** Modelo Generado por M_Retencion_Invoice
- *  @author Comunidad de Desarrollo openXpertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
- *  @version  - 2009-06-18 14:08:51.89 */
-public class X_M_Retencion_Invoice extends PO
+ *  @author Comunidad de Desarrollo Libertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
+ *  @version  - 2017-01-18 08:54:18.094 */
+public class X_M_Retencion_Invoice extends org.openXpertya.model.PO
 {
 /** Constructor estándar */
 public X_M_Retencion_Invoice (Properties ctx, int M_Retencion_Invoice_ID, String trxName)
@@ -29,13 +30,13 @@ public X_M_Retencion_Invoice (Properties ctx, ResultSet rs, String trxName)
 {
 super (ctx, rs, trxName);
 }
-/** AD_Table_ID=1000142 */
-public static final int Table_ID=1000142;
+/** AD_Table_ID */
+public static final int Table_ID = M_Table.getTableID("M_Retencion_Invoice");
 
 /** TableName=M_Retencion_Invoice */
 public static final String Table_Name="M_Retencion_Invoice";
 
-protected static KeyNamePair Model = new KeyNamePair(1000142,"M_Retencion_Invoice");
+protected static KeyNamePair Model = new KeyNamePair(Table_ID,"M_Retencion_Invoice");
 protected static BigDecimal AccessLevel = new BigDecimal(3);
 
 /** Load Meta Data */
@@ -143,7 +144,7 @@ Integer ii = (Integer)get_Value("C_InvoiceLine_ID");
 if (ii == null) return 0;
 return ii.intValue();
 }
-public static final int C_INVOICE_RETENC_ID_AD_Reference_ID=336;
+public static final int C_INVOICE_RETENC_ID_AD_Reference_ID = MReference.getReferenceID("C_Invoice");
 /** Set Retencion */
 public void setC_Invoice_Retenc_ID (int C_Invoice_Retenc_ID)
 {
@@ -153,6 +154,21 @@ set_Value ("C_Invoice_Retenc_ID", new Integer(C_Invoice_Retenc_ID));
 public int getC_Invoice_Retenc_ID() 
 {
 Integer ii = (Integer)get_Value("C_Invoice_Retenc_ID");
+if (ii == null) return 0;
+return ii.intValue();
+}
+public static final int C_INVOICE_SRC_ID_AD_Reference_ID = MReference.getReferenceID("C_Invoice");
+/** Set Source Invoice */
+public void setC_Invoice_Src_ID (int C_Invoice_Src_ID)
+{
+if (C_Invoice_Src_ID <= 0) set_Value ("C_Invoice_Src_ID", null);
+ else 
+set_Value ("C_Invoice_Src_ID", new Integer(C_Invoice_Src_ID));
+}
+/** Get Source Invoice */
+public int getC_Invoice_Src_ID() 
+{
+Integer ii = (Integer)get_Value("C_Invoice_Src_ID");
 if (ii == null) return 0;
 return ii.intValue();
 }

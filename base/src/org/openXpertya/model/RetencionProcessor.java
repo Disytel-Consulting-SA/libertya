@@ -2,6 +2,7 @@ package org.openXpertya.model;
 
 import java.math.BigDecimal;
 import java.sql.Timestamp;
+import java.util.List;
 
 /**
  * Descripción de Interface
@@ -78,7 +79,7 @@ public interface RetencionProcessor {
 	 * @throws Exception cuando se produce algún error en el guardado de los 
 	 * datos de la retención.
 	 */
-	public X_M_Retencion_Invoice save(MAllocationHdr alloc, boolean save) throws Exception;
+	public List<X_M_Retencion_Invoice> save(MAllocationHdr alloc, boolean save) throws Exception;
 	
 	/**
 	 * Asigna la moneda en la que se guardan los montos de la retención.

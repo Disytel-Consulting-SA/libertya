@@ -14,6 +14,12 @@ public class RetencionIIBBForRegion extends RetencionIIBB {
 	/** Por lugar de entrega de la factura */
 	private boolean forDeliveryRegion = false;
 	
+	/** Listado de facturas iniciales para que quede referencia */
+	private List<MInvoice> srcInvoices;
+	
+	/** Listado de importes iniciales para que quede referencia */
+	private List<BigDecimal> srcAmts;
+	
 	@Override
 	public void loadConfig(MRetencionSchema retSchema) {
 		super.loadConfig(retSchema);
@@ -45,8 +51,17 @@ public class RetencionIIBBForRegion extends RetencionIIBB {
 				sameRegionAmts.add(getAmountList().get(i));
 			}
 		}
+		setSrcInvoices(getInvoiceList());
+		setSrcAmts(getAmountList());
 		setInvoiceList(sameRegionInvoices);
 		setAmountList(sameRegionAmts);
+	}
+	
+	@Override
+	public boolean clearAll() {
+		getSrcAmts().clear();
+		getSrcInvoices().clear();
+		return super.clearAll();
 	}
 	
 	protected boolean isForDeliveryRegion() {
@@ -55,6 +70,22 @@ public class RetencionIIBBForRegion extends RetencionIIBB {
 
 	protected void setForDeliveryRegion(boolean forDeliveryRegion) {
 		this.forDeliveryRegion = forDeliveryRegion;
+	}
+
+	protected List<MInvoice> getSrcInvoices() {
+		return srcInvoices;
+	}
+
+	protected void setSrcInvoices(List<MInvoice> srcInvoices) {
+		this.srcInvoices = srcInvoices;
+	}
+
+	protected List<BigDecimal> getSrcAmts() {
+		return srcAmts;
+	}
+
+	protected void setSrcAmts(List<BigDecimal> srcAmts) {
+		this.srcAmts = srcAmts;
 	}
 
 }

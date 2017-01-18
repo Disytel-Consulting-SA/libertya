@@ -4118,3 +4118,6 @@ $BODY$
   COST 100;
 ALTER FUNCTION getDiscount(C_Invoice_ID integer, C_PaySchedule_ID integer, invoiceDate Timestamp, dueDate Timestamp, compareDate Timestamp, baseAmt numeric)
   OWNER TO libertya;
+  
+--20170118-0850 Nueva columna para determinar el comprobante original de cada retención realizada sobre cada comprobante
+UPDATE ad_system SET dummy = (SELECT addcolumnifnotexists('m_retencion_invoice','c_invoice_src_id','integer'));
