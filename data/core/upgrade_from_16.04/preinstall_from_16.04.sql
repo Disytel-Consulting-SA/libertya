@@ -4008,7 +4008,7 @@ set doctypekey = 'JB'
 where ad_componentobjectuid = 'CORE-C_DocType-1010506';
 
 --20171213--1048 Nueva función para obtener el descuento/recargo para una factura tal como se hace en la ventana de Recibo de Clientes
-CREATE OR REPLACE FUNCTION getDiscount(C_Invoice_ID integer, C_PaySchedule_ID integer, invoiceDate Timestamp, dueDate Timestamp, compareDate Timestamp, baseAmt numeric)
+CREATE OR REPLACE FUNCTION libertya.getDiscount(C_Invoice_ID integer, C_PaySchedule_ID integer, invoiceDate Timestamp, dueDate Timestamp, compareDate Timestamp, baseAmt numeric)
   RETURNS numeric AS
 $BODY$
 /***
@@ -4037,12 +4037,13 @@ BEGIN
 	WHERE ad_componentobjectuid = 'CORE-AD_Ref_List-1010471';
 	
 	/* Días de diferencia entre la fecha de comparación y la fecha de
-	   facturación. Si es positivo la fecha de comparación es mayor a la de
-	   facturación, 0 es igual y negativo lo contrario */
-	diffDueDays =  compareDate::date - dueDate::date;
-	/* Días de diferencia entre la fecha de comparación y la fecha de
 	   vencimiento. Si es positivo la fecha de comparación es mayor a la de
 	   vencimiento, 0 es igual y negativo lo contrario */
+	diffDueDays =  compareDate::date - dueDate::date;
+
+	/* Días de diferencia entre la fecha de comparación y la fecha de
+   	   facturación. Si es positivo la fecha de comparación es mayor a la de
+   	   facturación, 0 es igual y negativo lo contrario */
 	diffInvoicedDays = compareDate::date - invoiceDate::date;
 	-- Lo tomo del esquema de pagos, sino del esquema de vencimientos
 	IF (C_PaySchedule_ID > 0) 
@@ -4065,8 +4066,9 @@ BEGIN
 		   la fecha de comparación está después de la de vencimiento,
 		   significa que estoy vencido por lo que se debe tomar el descuento
 		   2, sino se toma descuento 1 */
-		SELECT discountApplicationType, discountApplicationType2, 
-			Discount, Discount2, DiscountDays, DiscountDays2, GraceDays, GraceDays2
+		SELECT discountApplicationType as dat, discountApplicationType2 as dat2, 
+			Discount as d, Discount2 as d2, DiscountDays as dd, DiscountDays2 as dd2, 
+			GraceDays as gd, GraceDays2 as gd2
 		INTO fromPaymentTerm
 		FROM C_Invoice i
 		INNER JOIN C_Paymentterm pt ON pt.C_Paymentterm_ID = i.C_Paymentterm_ID
@@ -4074,17 +4076,17 @@ BEGIN
 
 		IF (diffDueDays > 0)
 		THEN
-			discountApplicationType = fromPaymentTerm.discountApplicationType2;
-			discountPerc = fromPaymentTerm.Discount2;
-			discountDays = fromPaymentTerm.DiscountDays2;
-			toleranceDays = fromPaymentTerm.GraceDays2;
+			discountApplicationType = fromPaymentTerm.dat2;
+			discountPerc = fromPaymentTerm.d2;
+			discountDays = fromPaymentTerm.dd2;
+			toleranceDays = fromPaymentTerm.gd2;
 			diffToUse = diffDueDays;
 		ELSIF (diffInvoicedDays > 0)
 		THEN
-			discountApplicationType = fromPaymentTerm.discountApplicationType;
-			discountPerc = fromPaymentTerm.Discount;
-			discountDays = fromPaymentTerm.DiscountDays;
-			toleranceDays = fromPaymentTerm.GraceDays;
+			discountApplicationType = fromPaymentTerm.dat;
+			discountPerc = fromPaymentTerm.d;
+			discountDays = fromPaymentTerm.dd;
+			toleranceDays = fromPaymentTerm.gd;
 			diffToUse = diffInvoicedDays;
 		END IF;
 	END IF;
@@ -4116,7 +4118,7 @@ END;
 $BODY$
   LANGUAGE plpgsql VOLATILE
   COST 100;
-ALTER FUNCTION getDiscount(C_Invoice_ID integer, C_PaySchedule_ID integer, invoiceDate Timestamp, dueDate Timestamp, compareDate Timestamp, baseAmt numeric)
+ALTER FUNCTION libertya.getDiscount(C_Invoice_ID integer, C_PaySchedule_ID integer, invoiceDate Timestamp, dueDate Timestamp, compareDate Timestamp, baseAmt numeric)
   OWNER TO libertya;
   
 --20170118-0850 Nueva columna para determinar el comprobante original de cada retención realizada sobre cada comprobante
