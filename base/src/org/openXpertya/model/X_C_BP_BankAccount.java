@@ -1,13 +1,14 @@
-/** Modelo Generado - NO CAMBIAR MANUALMENTE - Copyright (C) 2006 FUNDESLE */
+/** Modelo Generado - NO CAMBIAR MANUALMENTE - Disytel */
 package org.openXpertya.model;
-import java.util.*;
+import java.util.logging.Level;
+ import java.util.*;
 import java.sql.*;
 import java.math.*;
 import org.openXpertya.util.*;
 /** Modelo Generado por C_BP_BankAccount
- *  @author Comunidad de Desarrollo openXpertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
- *  @version  - 2009-10-22 14:51:30.436 */
-public class X_C_BP_BankAccount extends PO
+ *  @author Comunidad de Desarrollo Libertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
+ *  @version  - 2017-01-19 14:00:44.371 */
+public class X_C_BP_BankAccount extends org.openXpertya.model.PO
 {
 /** Constructor estándar */
 public X_C_BP_BankAccount (Properties ctx, int C_BP_BankAccount_ID, String trxName)
@@ -26,13 +27,13 @@ public X_C_BP_BankAccount (Properties ctx, ResultSet rs, String trxName)
 {
 super (ctx, rs, trxName);
 }
-/** AD_Table_ID=298 */
-public static final int Table_ID=298;
+/** AD_Table_ID */
+public static final int Table_ID = M_Table.getTableID("C_BP_BankAccount");
 
 /** TableName=C_BP_BankAccount */
 public static final String Table_Name="C_BP_BankAccount";
 
-protected static KeyNamePair Model = new KeyNamePair(298,"C_BP_BankAccount");
+protected static KeyNamePair Model = new KeyNamePair(Table_ID,"C_BP_BankAccount");
 protected static BigDecimal AccessLevel = new BigDecimal(3);
 
 /** Load Meta Data */
@@ -50,10 +51,10 @@ return sb.toString();
 Account Number */
 public void setAccountNo (String AccountNo)
 {
-if (AccountNo != null && AccountNo.length() > 20)
+if (AccountNo != null && AccountNo.length() > 60)
 {
-log.warning("Length > 20 - truncated");
-AccountNo = AccountNo.substring(0,20);
+log.warning("Length > 60 - truncated");
+AccountNo = AccountNo.substring(0,60);
 }
 set_Value ("AccountNo", AccountNo);
 }
@@ -247,7 +248,7 @@ public String getA_Zip()
 {
 return (String)get_Value("A_Zip");
 }
-public static final int BANKACCOUNTTYPE_AD_Reference_ID=216;
+public static final int BANKACCOUNTTYPE_AD_Reference_ID = MReference.getReferenceID("C_Bank Account Type");
 /** Savings = S */
 public static final String BANKACCOUNTTYPE_Savings = "S";
 /** Checking = C */
@@ -257,7 +258,7 @@ Bank Account Type */
 public void setBankAccountType (String BankAccountType)
 {
 if (BankAccountType == null || BankAccountType.equals("S") || BankAccountType.equals("C"));
- else throw new IllegalArgumentException ("BankAccountType Invalid value - Reference_ID=216 - S - C");
+ else throw new IllegalArgumentException ("BankAccountType Invalid value - Reference = BANKACCOUNTTYPE_AD_Reference_ID - S - C");
 if (BankAccountType != null && BankAccountType.length() > 1)
 {
 log.warning("Length > 1 - truncated");
@@ -379,7 +380,7 @@ public String getCreditCardNumber()
 {
 return (String)get_Value("CreditCardNumber");
 }
-public static final int CREDITCARDTYPE_AD_Reference_ID=149;
+public static final int CREDITCARDTYPE_AD_Reference_ID = MReference.getReferenceID("C_Payment CreditCard Type");
 /** Diners = D */
 public static final String CREDITCARDTYPE_Diners = "D";
 /** ATM = C */
@@ -399,7 +400,7 @@ Credit Card (Visa, MC, AmEx) */
 public void setCreditCardType (String CreditCardType)
 {
 if (CreditCardType == null || CreditCardType.equals("D") || CreditCardType.equals("C") || CreditCardType.equals("P") || CreditCardType.equals("M") || CreditCardType.equals("V") || CreditCardType.equals("A") || CreditCardType.equals("N"));
- else throw new IllegalArgumentException ("CreditCardType Invalid value - Reference_ID=149 - D - C - P - M - V - A - N");
+ else throw new IllegalArgumentException ("CreditCardType Invalid value - Reference = CREDITCARDTYPE_AD_Reference_ID - D - C - P - M - V - A - N");
 if (CreditCardType != null && CreditCardType.length() > 1)
 {
 log.warning("Length > 1 - truncated");
@@ -478,7 +479,7 @@ public String getOficina()
 {
 return (String)get_Value("Oficina");
 }
-public static final int R_AVSADDR_AD_Reference_ID=213;
+public static final int R_AVSADDR_AD_Reference_ID = MReference.getReferenceID("C_Payment AVS");
 /** No Match = N */
 public static final String R_AVSADDR_NoMatch = "N";
 /** Unavailable = X */
@@ -490,7 +491,7 @@ This address has been verified */
 public void setR_AvsAddr (String R_AvsAddr)
 {
 if (R_AvsAddr == null || R_AvsAddr.equals("N") || R_AvsAddr.equals("X") || R_AvsAddr.equals("Y"));
- else throw new IllegalArgumentException ("R_AvsAddr Invalid value - Reference_ID=213 - N - X - Y");
+ else throw new IllegalArgumentException ("R_AvsAddr Invalid value - Reference = R_AVSADDR_AD_Reference_ID - N - X - Y");
 if (R_AvsAddr != null && R_AvsAddr.length() > 1)
 {
 log.warning("Length > 1 - truncated");
@@ -504,7 +505,7 @@ public String getR_AvsAddr()
 {
 return (String)get_Value("R_AvsAddr");
 }
-public static final int R_AVSZIP_AD_Reference_ID=213;
+public static final int R_AVSZIP_AD_Reference_ID = MReference.getReferenceID("C_Payment AVS");
 /** No Match = N */
 public static final String R_AVSZIP_NoMatch = "N";
 /** Unavailable = X */
@@ -516,7 +517,7 @@ The Zip Code has been verified */
 public void setR_AvsZip (String R_AvsZip)
 {
 if (R_AvsZip == null || R_AvsZip.equals("N") || R_AvsZip.equals("X") || R_AvsZip.equals("Y"));
- else throw new IllegalArgumentException ("R_AvsZip Invalid value - Reference_ID=213 - N - X - Y");
+ else throw new IllegalArgumentException ("R_AvsZip Invalid value - Reference = R_AVSZIP_AD_Reference_ID - N - X - Y");
 if (R_AvsZip != null && R_AvsZip.length() > 1)
 {
 log.warning("Length > 1 - truncated");

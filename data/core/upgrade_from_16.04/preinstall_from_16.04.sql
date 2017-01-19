@@ -4123,3 +4123,6 @@ ALTER FUNCTION libertya.getDiscount(C_Invoice_ID integer, C_PaySchedule_ID integ
   
 --20170118-0850 Nueva columna para determinar el comprobante original de cada retención realizada sobre cada comprobante
 UPDATE ad_system SET dummy = (SELECT addcolumnifnotexists('m_retencion_invoice','c_invoice_src_id','integer'));
+
+--20170119-1330 Incremento de tamaño para la columna Nro de cuenta de cuentas bancarias de la EC
+alter table c_bp_bankaccount ALTER COLUMN accountno TYPE character varying(60); 
