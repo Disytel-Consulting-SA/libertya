@@ -169,7 +169,7 @@ public class MQuery implements Serializable
                     {
                         if (P_Number == null)
                             query.addRestriction("TRUNC("+ParameterName+")", MQuery.LESS_EQUAL, 
-                                P_Number_To, Name, Info);
+                                P_Number_To, Name, Info_To);
                         else
                             query.addRangeRestriction(ParameterName, 
                                 P_Number, P_Number_To, Name, Info, Info_To);
@@ -191,7 +191,7 @@ public class MQuery implements Serializable
                     {
                         if (P_Date == null)
                             query.addRestriction("TRUNC("+ParameterName+")", MQuery.LESS_EQUAL, 
-                                P_Date_To, Name, Info);
+                                P_Date_To, Name, Info_To);
                         else
                             query.addRangeRestriction("TRUNC("+ParameterName+")", 
                                 P_Date, P_Date_To, Name, Info, Info_To);
