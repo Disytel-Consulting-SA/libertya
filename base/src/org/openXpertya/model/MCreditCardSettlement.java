@@ -4,6 +4,7 @@ import java.math.BigDecimal;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.text.SimpleDateFormat;
 import java.util.Properties;
 import java.util.logging.Level;
 
@@ -190,6 +191,12 @@ public class MCreditCardSettlement extends X_C_CreditCardSettlement implements D
 		}
 	}
 
+	public void setPayment(String documentNo, String currencySymbol, String amount, String dateTrx, String dateAcct) {
+		// Genera el campo de texto "Pago" con: Nro Transferencia, Importe, Fecha de Emisión, Fecha Contable.
+		// Ej: Nro Transf.: 965389 - Importe: $ 190.31 - F.Emisión: 25/05/1810 - F.Contable: 25/05/1810
+		setPayment("Nro Transf.: " + documentNo + " - Importe: " + currencySymbol + " " + amount +
+				" - F.Emisión: " + dateTrx + " - F.Contable: " + dateAcct);
+	}
 	@Override
 	public String completeIt() {
 		// Re-Check
@@ -253,12 +260,9 @@ public class MCreditCardSettlement extends X_C_CreditCardSettlement implements D
 
 		X_C_Currency currency = new X_C_Currency(getCtx(), getC_Currency_ID(), get_TrxName());
 
-		// Genera el campo de texto "Pago" con: Nro Transferencia, Importe, Fecha de Emisión, Fecha Contable.
-		// Ej: Nro Transf.: 965389 - Importe: $ 190.31 - F.Emisión: 25/05/1810 - F.Contable: 25/05/1810
-		setPayment("Nro Transf.: " + payment.getDocumentNo() +
-				" - Importe: " + currency.getCurSymbol() + " " + payAmt +
-				" - F.Emisión: " + payment.getDateTrx() +
-				" - F.Contable: " + payment.getDateAcct());
+		SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy");
+
+		setPayment(payment.getDocumentNo(), currency.getCurSymbol(), payAmt.toString(), sdf.format(payment.getDateTrx()), sdf.format(payment.getDateAcct()));
 
 		if (!save()) {
 			CLogger.retrieveErrorAsString();
