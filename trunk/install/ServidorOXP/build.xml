@@ -140,7 +140,17 @@
 	<unjar src="lib/PDFRenderer.jar" dest="construirOXPLIB" />
   	<unjar src="lib/itext_1.5.4.jar" dest="construirOXPLIB" />
   	<unjar src="lib/AxisJar.jar" dest="construirOXPLIB" />
-
+  	<unjar src="lib/jna-platform-4.1.0.jar" dest="construirOXPLIB" />
+  	<unjar src="lib/jna-4.1.0.jar" dest="construirOXPLIB" />
+  	<unjar src="lib/httpmime-4.5.2.jar" dest="construirOXPLIB" />
+  	<unjar src="lib/httpcore-4.4.4.jar" dest="construirOXPLIB" />
+  	<unjar src="lib/httpclient-cache-4.5.2.jar" dest="construirOXPLIB" />
+  	<unjar src="lib/httpclient-win-4.5.2.jar" dest="construirOXPLIB" />
+  	<unjar src="lib/httpclient-4.5.2.jar" dest="construirOXPLIB" />
+  	<unjar src="lib/gson-2.8.0.jar" dest="construirOXPLIB" />
+  	<unjar src="lib/fluent-hc-4.5.2.jar" dest="construirOXPLIB" />
+  	<unjar src="lib/commons-logging-1.2.jar" dest="construirOXPLIB" />
+  	<unjar src="lib/commons-codec-1.9.jar" dest="construirOXPLIB" />
 
     <!--fin cambios para PostgreSQL -->    
     <unjar src="lib/${TIPO_APPS_OXP}.jar" dest="construirOXPLIB" />
