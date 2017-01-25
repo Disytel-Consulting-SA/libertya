@@ -7,7 +7,7 @@ import java.math.*;
 import org.openXpertya.util.*;
 /** Modelo Generado por C_CreditCardSettlement
  *  @author Comunidad de Desarrollo Libertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
- *  @version  - 2016-12-23 09:53:01.694 */
+ *  @version  - 2017-01-25 13:37:01.85 */
 public class X_C_CreditCardSettlement extends org.openXpertya.model.PO
 {
 /** Constructor estándar */
@@ -117,6 +117,34 @@ public BigDecimal getCouponsTotalAmount()
 BigDecimal bd = (BigDecimal)get_Value("CouponsTotalAmount");
 if (bd == null) return Env.ZERO;
 return bd;
+}
+public static final int CREDITCARDTYPE_AD_Reference_ID = MReference.getReferenceID("CreditCardTypes");
+/** FIRSTDATA = FD */
+public static final String CREDITCARDTYPE_FIRSTDATA = "FD";
+/** AMEX = AM */
+public static final String CREDITCARDTYPE_AMEX = "AM";
+/** VISA = VI */
+public static final String CREDITCARDTYPE_VISA = "VI";
+/** NARANJA = NA */
+public static final String CREDITCARDTYPE_NARANJA = "NA";
+/** Set Credit Card.
+Credit Card (Visa, MC, AmEx) */
+public void setCreditCardType (String CreditCardType)
+{
+if (CreditCardType == null || CreditCardType.equals("FD") || CreditCardType.equals("AM") || CreditCardType.equals("VI") || CreditCardType.equals("NA"));
+ else throw new IllegalArgumentException ("CreditCardType Invalid value - Reference = CREDITCARDTYPE_AD_Reference_ID - FD - AM - VI - NA");
+if (CreditCardType != null && CreditCardType.length() > 2)
+{
+log.warning("Length > 2 - truncated");
+CreditCardType = CreditCardType.substring(0,2);
+}
+set_Value ("CreditCardType", CreditCardType);
+}
+/** Get Credit Card.
+Credit Card (Visa, MC, AmEx) */
+public String getCreditCardType() 
+{
+return (String)get_Value("CreditCardType");
 }
 public static final int DOCACTION_AD_Reference_ID = MReference.getReferenceID("_Document Action");
 /** Approve = AP */

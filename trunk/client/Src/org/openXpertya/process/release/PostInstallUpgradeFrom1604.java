@@ -126,6 +126,17 @@ public class PostInstallUpgradeFrom1604 extends PluginPostInstallProcess {
 	protected final static String PRICE_CHANGING_JASPER_REPORT_UID = "CORE-AD_JasperReport-1010121";
 	protected final static String PRICE_CHANGING_JASPER_REPORT_FILENAME = "PriceChanging.jasper";
 
+	/** UID del Listado de Cupones Totalizados por Estado */
+	protected final static String COUPON_LIST_BY_STATUS_JASPER_REPORT_UID = "RPRT2CORE-AD_JasperReport-1010181-20170125125731";
+	protected final static String COUPON_LIST_BY_STATUS_JASPER_REPORT_FILENAME = "CouponListByStatus.jasper";
+	
+	/** UID del Reporte de Control de Tarjetas */
+	protected final static String CARD_CONTROL_JASPER_REPORT_UID = "RPRT2CORE-AD_JasperReport-1010177-20170125125355";
+	protected final static String CARD_CONTROL_JASPER_REPORT_FILENAME = "CardControl.jasper";
+	
+	/** UID del Listado de Liquidaciones */
+	protected final static String SETTLEMENT_LIST_JASPER_REPORT_UID = "RPRT2CORE-AD_JasperReport-1010180-20170125125715";
+	protected final static String SETTLEMENT_LIST_JASPER_REPORT_FILENAME = "SettlementList.jasper";
 	
 	@Override
 	protected String doIt() throws Exception {
@@ -496,6 +507,39 @@ public class PostInstallUpgradeFrom1604 extends PluginPostInstallProcess {
 							.readBinaryFromJar(
 									jarFileURL,
 									getBinaryFileURL(PRICE_CHANGING_JASPER_REPORT_FILENAME)));
+		
+		// Listado de Cupones Totalizados por Estado
+		MJasperReport
+			.updateBinaryData(
+					get_TrxName(),
+					getCtx(),
+					COUPON_LIST_BY_STATUS_JASPER_REPORT_UID,
+					JarHelper
+							.readBinaryFromJar(
+									jarFileURL,
+									getBinaryFileURL(COUPON_LIST_BY_STATUS_JASPER_REPORT_FILENAME)));
+
+		// Reporte de Control de Tarjetas
+		MJasperReport
+			.updateBinaryData(
+					get_TrxName(),
+					getCtx(),
+					CARD_CONTROL_JASPER_REPORT_UID,
+					JarHelper
+							.readBinaryFromJar(
+									jarFileURL,
+									getBinaryFileURL(CARD_CONTROL_JASPER_REPORT_FILENAME)));
+		
+		// Listado de Liquidaciones
+		MJasperReport
+			.updateBinaryData(
+					get_TrxName(),
+					getCtx(),
+					SETTLEMENT_LIST_JASPER_REPORT_UID,
+					JarHelper
+							.readBinaryFromJar(
+									jarFileURL,
+									getBinaryFileURL(SETTLEMENT_LIST_JASPER_REPORT_FILENAME)));
 		
 		return " ";
 	}

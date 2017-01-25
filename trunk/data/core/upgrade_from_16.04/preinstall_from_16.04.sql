@@ -5031,3 +5031,51 @@ CREATE TABLE i_visapayments
 );
 
 UPDATE ad_system SET dummy = (SELECT addcolumnifnotexists('M_EntidadFinanciera','EstablishmentNumber','character varying(45)'));
+
+--20170125-1300 Merge de Revision 1749
+UPDATE ad_system SET dummy = (SELECT addcolumnifnotexists('C_CreditCardSettlement','CreditCardType','character(2)'));
+
+DROP VIEW libertya.c_paymentcoupon_v;
+
+CREATE OR REPLACE VIEW libertya.c_paymentcoupon_v AS
+SELECT
+	p.c_payment_id,
+	p.ad_client_id,
+	p.ad_org_id,
+	p.created,
+	p.createdby,
+	p.updated,
+	p.updatedby,
+	efp.m_entidadfinanciera_id,
+	p.m_entidadfinancieraplan_id,
+	ccs.settlementno,
+	p.c_invoice_id,
+	'Y'::character(1) AS isactive,
+	p.creditcardnumber,
+	p.couponnumber,
+	p.c_bpartner_id,
+	p.duedate,
+	p.dateacct,
+	p.datetrx,
+	p.couponbatchnumber,
+	p.payamt,
+	p.c_currency_id,
+	p.docstatus,
+	p.isreconciled,
+	ccs.paymentdate AS settlementdate,
+	efp.cuotaspago AS totalallocations,
+	p.auditstatus,
+	ah.documentno AS allocationnumber
+FROM
+	libertya.c_payment p
+	JOIN libertya.m_entidadfinancieraplan efp
+		ON p.m_entidadfinancieraplan_id = efp.m_entidadfinancieraplan_id
+	LEFT JOIN libertya.c_couponssettlements cs
+		ON p.c_payment_id = cs.c_payment_id
+	LEFT JOIN libertya.c_creditcardsettlement ccs
+		ON cs.c_creditcardsettlement_id = ccs.c_creditcardsettlement_id
+	LEFT JOIN libertya.c_allocationline al
+		ON p.c_payment_id = al.c_payment_id
+	LEFT JOIN libertya.c_allocationhdr ah
+		ON al.c_allocationhdr_id = ah.c_allocationhdr_id;
+ALTER TABLE c_paymentcoupon_v OWNER TO libertya;
