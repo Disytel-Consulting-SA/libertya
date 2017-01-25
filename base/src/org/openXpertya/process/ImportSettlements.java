@@ -199,6 +199,7 @@ public class ImportSettlements extends SvrProcess {
 
 			MCreditCardSettlement settlement = new MCreditCardSettlement(getCtx(), 0, get_TrxName());
 
+			settlement.setCreditCardType(CentralPosImport.FIRSTDATA);
 			settlement.setM_EntidadFinanciera_ID(getM_EntidadFinanciera_ID(rs.getString("comercio_participante")));
 			settlement.setPaymentDate(new Timestamp(date.getTime()));
 			settlement.setPayment(rs.getString("numero_liquidacion"), defaultCurrency.getCurSymbol(), amt.toString(), dateStr, dateStr);
@@ -298,6 +299,7 @@ public class ImportSettlements extends SvrProcess {
 				}
 				MCreditCardSettlement settlement = new MCreditCardSettlement(getCtx(), 0, get_TrxName());
 
+				settlement.setCreditCardType(CentralPosImport.NARANJA);
 				settlement.setM_EntidadFinanciera_ID(entidadFinancieraID);
 				settlement.setPaymentDate(new Timestamp(date.getTime()));
 				settlement.setPayment(settlementNo, defaultCurrency.getCurSymbol(), amt.toString(), dateStr, dateStr);
@@ -349,6 +351,7 @@ public class ImportSettlements extends SvrProcess {
 			}
 			MCreditCardSettlement settlement = new MCreditCardSettlement(getCtx(), 0, get_TrxName());
 
+			settlement.setCreditCardType(CentralPosImport.AMEX);
 			settlement.setM_EntidadFinanciera_ID(getM_EntidadFinanciera_ID(rs.getString("num_est")));
 			settlement.setPaymentDate(date != null ? new Timestamp(date.getTime()) : null);
 			settlement.setPayment(rs.getString("num_sec_pago"), defaultCurrency.getCurSymbol(), amt.toString(), dateStr, dateStr);
@@ -420,6 +423,7 @@ public class ImportSettlements extends SvrProcess {
 
 			MCreditCardSettlement settlement = new MCreditCardSettlement(getCtx(), 0, get_TrxName());
 
+			settlement.setCreditCardType(CentralPosImport.VISA);
 			settlement.setM_EntidadFinanciera_ID(getM_EntidadFinanciera_ID(rs.getString("num_est")));
 			settlement.setPaymentDate(new Timestamp(date.getTime()));
 			settlement.setPayment(rs.getString("nroliq"), defaultCurrency.getCurSymbol(), amt.toString(), dateStr, dateStr);

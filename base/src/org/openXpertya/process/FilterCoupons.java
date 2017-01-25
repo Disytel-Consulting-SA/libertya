@@ -55,12 +55,13 @@ public class FilterCoupons extends SvrProcess {
 		sql.append("	allocationnumber, ");
 		sql.append("	creditcardnumber, ");
 		sql.append("	couponbatchnumber, ");
-		sql.append("	c_currency_id ");
+		sql.append("	c_currency_id, ");
+		sql.append("	c_payment_id ");
 		sql.append("FROM ");
 		sql.append("	c_paymentcoupon_v "); // Vista
 		sql.append("WHERE ");
 		sql.append("	auditstatus = ? ");
-		sql.append("	isreconciled = 'N' ");
+		sql.append("	AND isreconciled = 'N' ");
 
 		if (filter.getTrxDateFrom() != null) {
 			sql.append("AND datetrx >= ? ");
@@ -91,6 +92,8 @@ public class FilterCoupons extends SvrProcess {
 				X_C_CouponsSettlements couponsSettlements = new X_C_CouponsSettlements(getCtx(), 0, get_TrxName());
 				couponsSettlements.setC_CreditCardSettlement_ID(filter.getC_CreditCardSettlement_ID());
 
+				couponsSettlements.setC_CreditCardCouponFilter_ID(filter.getC_CreditCardCouponFilter_ID());
+				
 				couponsSettlements.setM_EntidadFinanciera_ID(rs.getInt(1));
 				couponsSettlements.setM_EntidadFinancieraPlan_ID(rs.getInt(2));
 				couponsSettlements.setTrxDate(rs.getTimestamp(3));
@@ -100,6 +103,7 @@ public class FilterCoupons extends SvrProcess {
 				couponsSettlements.setCreditCardNo(rs.getString(7));
 				couponsSettlements.setPaymentBatch(rs.getString(8));
 				couponsSettlements.setC_Currency_ID(rs.getInt(9));
+				couponsSettlements.setC_Payment_ID(rs.getInt(10));
 
 				couponsSettlements.setInclude(false);
 
