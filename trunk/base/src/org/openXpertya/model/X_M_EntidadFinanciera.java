@@ -7,7 +7,7 @@ import java.math.*;
 import org.openXpertya.util.*;
 /** Modelo Generado por M_EntidadFinanciera
  *  @author Comunidad de Desarrollo Libertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
- *  @version  - 2014-08-18 23:30:03.83 */
+ *  @version  - 2017-01-25 11:09:04.768 */
 public class X_M_EntidadFinanciera extends org.openXpertya.model.PO
 {
 /** Constructor estándar */
@@ -176,6 +176,21 @@ Credit Card (Visa, MC, AmEx) */
 public String getCreditCardType() 
 {
 return (String)get_Value("CreditCardType");
+}
+/** Set Establishment Number */
+public void setEstablishmentNumber (String EstablishmentNumber)
+{
+if (EstablishmentNumber != null && EstablishmentNumber.length() > 45)
+{
+log.warning("Length > 45 - truncated");
+EstablishmentNumber = EstablishmentNumber.substring(0,45);
+}
+set_Value ("EstablishmentNumber", EstablishmentNumber);
+}
+/** Get Establishment Number */
+public String getEstablishmentNumber() 
+{
+return (String)get_Value("EstablishmentNumber");
 }
 /** Set Allow Credit Card Cash Retirement */
 public void setIsAllowCreditCardCashRetirement (boolean IsAllowCreditCardCashRetirement)

@@ -328,8 +328,19 @@
 	<classpathentry kind="lib" path="zkwebui/WEB-INF/lib/timelinez.jar"/>
 	<classpathentry kind="lib" path="zkwebui/WEB-INF/lib/fckez.jar"/>
 	<classpathentry kind="lib" path="zkwebui/WEB-INF/lib/keylistener.jar"/>
+	<classpathentry kind="lib" path="tools/lib/jpedal.jar"/>
 	<classpathentry kind="con" path="org.eclipse.jst.j2ee.internal.web.container"/>
 	<classpathentry kind="con" path="org.eclipse.jst.j2ee.internal.module.container"/>
-	<classpathentry kind="lib" path="tools/lib/jpedal.jar"/>
+	<classpathentry kind="lib" path="lib/commons-codec-1.9.jar"/>
+	<classpathentry kind="lib" path="lib/commons-logging-1.2.jar"/>
+	<classpathentry kind="lib" path="lib/fluent-hc-4.5.2.jar"/>
+	<classpathentry kind="lib" path="lib/gson-2.8.0.jar"/>
+	<classpathentry kind="lib" path="lib/httpclient-4.5.2.jar"/>
+	<classpathentry kind="lib" path="lib/httpclient-cache-4.5.2.jar"/>
+	<classpathentry kind="lib" path="lib/httpclient-win-4.5.2.jar"/>
+	<classpathentry kind="lib" path="lib/httpcore-4.4.4.jar"/>
+	<classpathentry kind="lib" path="lib/httpmime-4.5.2.jar"/>
+	<classpathentry kind="lib" path="lib/jna-4.1.0.jar"/>
+	<classpathentry kind="lib" path="lib/jna-platform-4.1.0.jar"/>
 	<classpathentry kind="output" path="tools/lib/local"/>
 </classpath>
