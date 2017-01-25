@@ -4636,6 +4636,8 @@ CREATE TABLE i_trailerparticipants
       REFERENCES ad_org (ad_org_id) MATCH SIMPLE
       ON UPDATE NO ACTION ON DELETE NO ACTION
 );
+ALTER TABLE i_trailerparticipants
+  OWNER TO libertya;
 
 CREATE SEQUENCE seq_i_amexpaymentsandtaxes
   INCREMENT 1
@@ -4695,6 +4697,8 @@ CREATE TABLE i_amexpaymentsandtaxes
       REFERENCES ad_org (ad_org_id) MATCH SIMPLE
       ON UPDATE NO ACTION ON DELETE NO ACTION
 );
+ALTER TABLE i_amexpaymentsandtaxes
+  OWNER TO libertya;
 
 CREATE SEQUENCE seq_i_naranjapayments
   INCREMENT 1
@@ -4866,7 +4870,8 @@ CREATE TABLE i_naranjapayments
       REFERENCES ad_org (ad_org_id) MATCH SIMPLE
       ON UPDATE NO ACTION ON DELETE NO ACTION
 );
-
+ALTER TABLE i_naranjapayments
+  OWNER TO libertya;
 
 CREATE SEQUENCE seq_i_visapayments
   INCREMENT 1
@@ -5029,6 +5034,8 @@ CREATE TABLE i_visapayments
       REFERENCES ad_org (ad_org_id) MATCH SIMPLE
       ON UPDATE NO ACTION ON DELETE NO ACTION
 );
+ALTER TABLE i_visapayments
+  OWNER TO libertya;
 
 UPDATE ad_system SET dummy = (SELECT addcolumnifnotexists('M_EntidadFinanciera','EstablishmentNumber','character varying(45)'));
 
