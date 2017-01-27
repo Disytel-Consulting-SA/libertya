@@ -403,7 +403,28 @@ public class ImportInvoice extends SvrProcess {
 		if( no != 0 ) {
 			log.log(Level.SEVERE,"doIt - Invalid Tax=" + no);
 		}
+		
+		// ----------------------------------------------------------------------------------
+		// - Cadena de Autorización
+		// ----------------------------------------------------------------------------------
 
+		sql = new StringBuffer( 
+				"UPDATE I_Invoice o " + 
+				"SET M_AuthorizationChain_ID=" +
+					"(SELECT M_AuthorizationChain_ID FROM M_AuthorizationChain t" + 
+					" WHERE t.value = o.AuthorizationChainValue AND o.AD_Client_ID=t.AD_Client_ID AND ROWNUM=1) " + 
+				"WHERE M_AuthorizationChain_ID is null AND I_IsImported<>'Y'" ).append( clientCheck );
+		no = DB.executeUpdate( sql.toString());
+		log.log(Level.FINE,"doIt - Set Authorization Chain =" + no);
+		
+		sql = new StringBuffer( "UPDATE I_Invoice " + "SET I_IsImported='E', I_ErrorMsg=I_ErrorMsg|| '"+getMsg("ImportInvInvalidAuthorizationChain")+". ' " + "WHERE M_AuthorizationChain_ID IS NULL AND AuthorizationChainValue IS NOT NULL" + " AND I_IsImported<>'Y'" ).append( clientCheck );
+		no = DB.executeUpdate( sql.toString());
+
+		if( no != 0 ) {
+			log.log(Level.SEVERE,"doIt - Invalid Authorization link =" + no);
+		}
+
+		
 		/* No se tiene en cuenta el caso de creación de BPartner por el momento.
 		// -- New BPartner ---------------------------------------------------
 
@@ -712,6 +733,10 @@ public class ImportInvoice extends SvrProcess {
 
 					if( imp.getC_Project_ID() != 0 ) {
 						invoice.setC_Project_ID( imp.getC_Project_ID());
+					}
+					
+					if( imp.getM_AuthorizationChain_ID() != 0 ) {
+						invoice.setM_AuthorizationChain_ID(imp.getM_AuthorizationChain_ID());
 					}
 
 					//

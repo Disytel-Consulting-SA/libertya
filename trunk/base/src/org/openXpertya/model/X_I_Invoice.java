@@ -7,7 +7,7 @@ import java.math.*;
 import org.openXpertya.util.*;
 /** Modelo Generado por I_Invoice
  *  @author Comunidad de Desarrollo Libertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
- *  @version  - 2014-11-17 11:34:19.974 */
+ *  @version  - 2017-01-27 14:18:29.075 */
 public class X_I_Invoice extends org.openXpertya.model.PO
 {
 /** Constructor estándar */
@@ -114,6 +114,21 @@ public int getAD_User_ID()
 Integer ii = (Integer)get_Value("AD_User_ID");
 if (ii == null) return 0;
 return ii.intValue();
+}
+/** Set Authorization Chain Value */
+public void setAuthorizationChainValue (String AuthorizationChainValue)
+{
+if (AuthorizationChainValue != null && AuthorizationChainValue.length() > 40)
+{
+log.warning("Length > 40 - truncated");
+AuthorizationChainValue = AuthorizationChainValue.substring(0,40);
+}
+set_Value ("AuthorizationChainValue", AuthorizationChainValue);
+}
+/** Get Authorization Chain Value */
+public String getAuthorizationChainValue() 
+{
+return (String)get_Value("AuthorizationChainValue");
 }
 /** Set Business Partner Key.
 Key of the Business Partner */
@@ -635,6 +650,20 @@ public String getLineDescription()
 {
 return (String)get_Value("LineDescription");
 }
+/** Set M_AuthorizationChain_ID */
+public void setM_AuthorizationChain_ID (int M_AuthorizationChain_ID)
+{
+if (M_AuthorizationChain_ID <= 0) set_Value ("M_AuthorizationChain_ID", null);
+ else 
+set_Value ("M_AuthorizationChain_ID", new Integer(M_AuthorizationChain_ID));
+}
+/** Get M_AuthorizationChain_ID */
+public int getM_AuthorizationChain_ID() 
+{
+Integer ii = (Integer)get_Value("M_AuthorizationChain_ID");
+if (ii == null) return 0;
+return ii.intValue();
+}
 /** Set Price List.
 Unique identifier of a Price List */
 public void setM_PriceList_ID (int M_PriceList_ID)
@@ -710,8 +739,6 @@ public static final String PAYMENTRULE_CreditCard = "K";
 public static final String PAYMENTRULE_Cash = "B";
 /** On Credit = P */
 public static final String PAYMENTRULE_OnCredit = "P";
-/** Check = S */
-public static final String PAYMENTRULE_Check = "S";
 /** Payment Check = PC */
 public static final String PAYMENTRULE_PaymentCheck = "PC";
 /** Direct Deposit = T */
@@ -720,12 +747,14 @@ public static final String PAYMENTRULE_DirectDeposit = "T";
 public static final String PAYMENTRULE_Confirming = "Cf";
 /** Direct Debit = D */
 public static final String PAYMENTRULE_DirectDebit = "D";
+/** Check = S */
+public static final String PAYMENTRULE_Check = "S";
 /** Set Payment Rule.
 How you pay the invoice */
 public void setPaymentRule (String PaymentRule)
 {
-if (PaymentRule == null || PaymentRule.equals("Tr") || PaymentRule.equals("K") || PaymentRule.equals("B") || PaymentRule.equals("P") || PaymentRule.equals("S") || PaymentRule.equals("PC") || PaymentRule.equals("T") || PaymentRule.equals("Cf") || PaymentRule.equals("D"));
- else throw new IllegalArgumentException ("PaymentRule Invalid value - Reference = PAYMENTRULE_AD_Reference_ID - Tr - K - B - P - S - PC - T - Cf - D");
+if (PaymentRule == null || PaymentRule.equals("Tr") || PaymentRule.equals("K") || PaymentRule.equals("B") || PaymentRule.equals("P") || PaymentRule.equals("PC") || PaymentRule.equals("T") || PaymentRule.equals("Cf") || PaymentRule.equals("D") || PaymentRule.equals("S"));
+ else throw new IllegalArgumentException ("PaymentRule Invalid value - Reference = PAYMENTRULE_AD_Reference_ID - Tr - K - B - P - PC - T - Cf - D - S");
 if (PaymentRule != null && PaymentRule.length() > 2)
 {
 log.warning("Length > 2 - truncated");
