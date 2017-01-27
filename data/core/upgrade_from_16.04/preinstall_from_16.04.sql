@@ -5086,3 +5086,7 @@ FROM
 	LEFT JOIN libertya.c_allocationhdr ah
 		ON al.c_allocationhdr_id = ah.c_allocationhdr_id;
 ALTER TABLE c_paymentcoupon_v OWNER TO libertya;
+
+--20170127-1430 Nuevas columnas para obtener cadenas de autorización al importar facturas
+UPDATE ad_system SET dummy = (SELECT addcolumnifnotexists('i_invoice','authorizationchainvalue','character varying(40)'));
+UPDATE ad_system SET dummy = (SELECT addcolumnifnotexists('i_invoice','m_authorizationchain_id','integer'));
