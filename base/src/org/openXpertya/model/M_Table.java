@@ -360,7 +360,8 @@ public class M_Table extends X_AD_Table {
 
             StringBuffer	name;
 
-            name	= new StringBuffer(packages[i]).append(".M").append(className);
+			name = new StringBuffer(packages[i]).append(".M").append((tableName.startsWith("I_") ? "I" : ""))
+					.append(className);
 
             /* Forzar o no la validacion de PO stricta segun sea un plugin o no (recibido packageName o no) */
             Class<?>	clazz	= getPOclass(name.toString(), packageName == null);
