@@ -5090,3 +5090,53 @@ ALTER TABLE c_paymentcoupon_v OWNER TO libertya;
 --20170127-1430 Nuevas columnas para obtener cadenas de autorización al importar facturas
 UPDATE ad_system SET dummy = (SELECT addcolumnifnotexists('i_invoice','authorizationchainvalue','character varying(40)'));
 UPDATE ad_system SET dummy = (SELECT addcolumnifnotexists('i_invoice','m_authorizationchain_id','integer'));
+
+--20170130-1600 Merge de Revisiones 1758 y 1760
+ALTER TABLE libertya.c_creditcardcouponfilter
+   ALTER COLUMN m_entidadfinanciera_id DROP NOT NULL;
+
+ALTER TABLE libertya.c_creditcardcouponfilter
+   ALTER COLUMN m_entidadfinancieraplan_id DROP NOT NULL;
+
+ALTER TABLE libertya.c_ivasettlements
+  DROP CONSTRAINT ivasettlementstaxcategory;
+
+ALTER TABLE libertya.c_ivasettlements RENAME c_taxcategory_id  TO c_tax_id;
+
+ALTER TABLE libertya.c_ivasettlements
+  ADD CONSTRAINT ivasettlementstax FOREIGN KEY (c_tax_id) REFERENCES libertya.c_tax (c_tax_id) ON UPDATE NO ACTION ON DELETE NO ACTION;
+
+ALTER TABLE libertya.c_couponssettlements
+   ALTER COLUMN c_payment_id DROP NOT NULL;
+
+ALTER TABLE libertya.c_perceptionssettlement
+  DROP CONSTRAINT perceptionssettlementtaxcategory;
+
+ALTER TABLE libertya.c_perceptionssettlement RENAME c_taxcategory_id  TO c_tax_id;
+
+ALTER TABLE libertya.c_perceptionssettlement
+  ADD CONSTRAINT perceptionstax FOREIGN KEY (c_tax_id) REFERENCES libertya.c_tax (c_tax_id) ON UPDATE NO ACTION ON DELETE NO ACTION;
+
+ALTER TABLE c_couponssettlements
+  DROP COLUMN allocationnumber;
+
+ALTER TABLE c_couponssettlements
+  ADD COLUMN allocationnumber character varying(30);
+
+ALTER TABLE libertya.c_commissionconcepts
+  DROP COLUMN concepttype;
+
+ALTER TABLE libertya.c_commissionconcepts
+  ADD COLUMN c_cardsettlementconcepts_id integer NOT NULL;
+
+ALTER TABLE libertya.c_commissionconcepts
+  ADD CONSTRAINT commisioncardsettlementconcepts FOREIGN KEY (c_cardsettlementconcepts_id) REFERENCES libertya.c_cardsettlementconcepts (c_cardsettlementconcepts_id) ON UPDATE NO ACTION ON DELETE NO ACTION;
+
+ALTER TABLE libertya.c_expenseconcepts
+  DROP COLUMN concepttype;
+
+ALTER TABLE libertya.c_expenseconcepts
+  ADD COLUMN c_cardsettlementconcepts_id integer NOT NULL;
+
+ALTER TABLE libertya.c_expenseconcepts
+  ADD CONSTRAINT dkcardsettlementconcepts FOREIGN KEY (c_cardsettlementconcepts_id) REFERENCES libertya.c_cardsettlementconcepts (c_cardsettlementconcepts_id) ON UPDATE NO ACTION ON DELETE NO ACTION;

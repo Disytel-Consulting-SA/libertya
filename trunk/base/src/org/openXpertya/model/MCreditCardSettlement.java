@@ -249,11 +249,24 @@ public class MCreditCardSettlement extends X_C_CreditCardSettlement implements D
 
 		payment.setC_BankAccount_ID(ef.getC_BankAccount_ID());
 
+		boolean saveOk = true;
+		
+		// Guarda el pago
 		if (!payment.save()) {
-			CLogger.retrieveErrorAsString();
-			setDocAction(DOCACTION_Complete);
-			return DocAction.STATUS_Drafted;
+			m_processMsg = CLogger.retrieveErrorAsString();
+			saveOk = false;
+			// Completa el pago
+		} else if (!payment.processIt(DocAction.ACTION_Complete)) {
+			m_processMsg = payment.getProcessMsg();
+			saveOk = false;
+			// Guarda los cambios del procesamiento
+		} else if (!payment.save()) {
+			m_processMsg = CLogger.retrieveErrorAsString();
+			saveOk = false;
 		}
+		
+		if (!saveOk)
+			return DocAction.STATUS_Invalid;
 
 		BigDecimal payAmt = payment.getPayAmt();
 		payAmt = payAmt.setScale(2, BigDecimal.ROUND_HALF_EVEN);

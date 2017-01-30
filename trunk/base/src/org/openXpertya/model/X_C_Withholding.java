@@ -1,13 +1,14 @@
-/** Modelo Generado - NO CAMBIAR MANUALMENTE - Copyright (C) 2006 FUNDESLE */
+/** Modelo Generado - NO CAMBIAR MANUALMENTE - Disytel */
 package org.openXpertya.model;
-import java.util.*;
+import java.util.logging.Level;
+ import java.util.*;
 import java.sql.*;
 import java.math.*;
 import org.openXpertya.util.*;
 /** Modelo Generado por C_Withholding
- *  @author Comunidad de Desarrollo openXpertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
- *  @version  - 2008-01-03 10:26:33.703 */
-public class X_C_Withholding extends PO
+ *  @author Comunidad de Desarrollo Libertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
+ *  @version  - 2017-01-30 16:12:04.211 */
+public class X_C_Withholding extends org.openXpertya.model.PO
 {
 /** Constructor estándar */
 public X_C_Withholding (Properties ctx, int C_Withholding_ID, String trxName)
@@ -31,13 +32,13 @@ public X_C_Withholding (Properties ctx, ResultSet rs, String trxName)
 {
 super (ctx, rs, trxName);
 }
-/** AD_Table_ID=304 */
-public static final int Table_ID=304;
+/** AD_Table_ID */
+public static final int Table_ID = M_Table.getTableID("C_Withholding");
 
 /** TableName=C_Withholding */
 public static final String Table_Name="C_Withholding";
 
-protected static KeyNamePair Model = new KeyNamePair(304,"C_Withholding");
+protected static KeyNamePair Model = new KeyNamePair(Table_ID,"C_Withholding");
 protected static BigDecimal AccessLevel = new BigDecimal(3);
 
 /** Load Meta Data */
@@ -51,7 +52,7 @@ public String toString()
 StringBuffer sb = new StringBuffer ("X_C_Withholding[").append(getID()).append("]");
 return sb.toString();
 }
-public static final int BENEFICIARY_AD_Reference_ID=138;
+public static final int BENEFICIARY_AD_Reference_ID = MReference.getReferenceID("C_BPartner (No Summary)");
 /** Set Beneficiary.
 Business Partner to whom payment is made */
 public void setBeneficiary (int Beneficiary)
@@ -101,7 +102,7 @@ public void setDescription (String Description)
 if (Description != null && Description.length() > 255)
 {
 log.warning("Length > 255 - truncated");
-Description = Description.substring(0,254);
+Description = Description.substring(0,255);
 }
 set_Value ("Description", Description);
 }
@@ -233,7 +234,7 @@ if (Name == null) throw new IllegalArgumentException ("Name is mandatory");
 if (Name.length() > 60)
 {
 log.warning("Length > 60 - truncated");
-Name = Name.substring(0,59);
+Name = Name.substring(0,60);
 }
 set_Value ("Name", Name);
 }

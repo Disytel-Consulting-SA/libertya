@@ -7,7 +7,7 @@ import java.math.*;
 import org.openXpertya.util.*;
 /** Modelo Generado por C_Payment
  *  @author Comunidad de Desarrollo Libertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
- *  @version  - 2016-11-30 14:28:46.846 */
+ *  @version  - 2017-01-30 16:11:27.832 */
 public class X_C_Payment extends org.openXpertya.model.PO
 {
 /** Constructor estándar */
@@ -275,15 +275,15 @@ public static final int AUDITSTATUS_AD_Reference_ID = MReference.getReferenceID(
 public static final String AUDITSTATUS_ClosurePending = "CP";
 /** To Verify = TV */
 public static final String AUDITSTATUS_ToVerify = "TV";
-/** Paid = P */
-public static final String AUDITSTATUS_Paid = "P";
-/** Rejected = R */
-public static final String AUDITSTATUS_Rejected = "R";
+/** Paid = PA */
+public static final String AUDITSTATUS_Paid = "PA";
+/** Rejected = RE */
+public static final String AUDITSTATUS_Rejected = "RE";
 /** Set AuditStatus */
 public void setAuditStatus (String AuditStatus)
 {
-if (AuditStatus == null || AuditStatus.equals("CP") || AuditStatus.equals("TV") || AuditStatus.equals("P") || AuditStatus.equals("R"));
- else throw new IllegalArgumentException ("AuditStatus Invalid value - Reference = AUDITSTATUS_AD_Reference_ID - CP - TV - P - R");
+if (AuditStatus == null || AuditStatus.equals("CP") || AuditStatus.equals("TV") || AuditStatus.equals("PA") || AuditStatus.equals("RE"));
+ else throw new IllegalArgumentException ("AuditStatus Invalid value - Reference = AUDITSTATUS_AD_Reference_ID - CP - TV - PA - RE");
 if (AuditStatus != null && AuditStatus.length() > 2)
 {
 log.warning("Length > 2 - truncated");
