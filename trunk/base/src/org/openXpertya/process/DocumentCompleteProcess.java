@@ -10,6 +10,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 
+import org.openXpertya.OpenXpertya;
 import org.openXpertya.model.MDocType;
 import org.openXpertya.model.MInvoice;
 import org.openXpertya.model.M_Table;
@@ -41,6 +42,36 @@ import org.openXpertya.util.Util;
 
 public class DocumentCompleteProcess extends SvrProcess {
 
+	// Variables estáticas para main process
+	
+	// Ayuda
+	static final String PARAM_HELP			 				=	"-h";
+	// Filtro por Organizacion
+	static final String PARAM_CLIENT_FILTER	 				=	"-c";
+	// Filtro por Organizacion
+	static final String PARAM_ORG_FILTER	 				=	"-o";
+	// Acción a realizar
+	static final String PARAM_DOCACTION_FILTER	 			=	"-a";
+	// Clave de Tipo de Documento a accionar
+	static final String PARAM_DOCTYPEKEY_FILTER	 			=	"-dk";
+	// Filtro por Fecha desde
+	static final String PARAM_DATE_FROM_FILTER				=	"-f";
+	// Filtro por Fecha hasta
+	static final String PARAM_DATE_TO_FILTER	 			=	"-t";
+	
+	/* Filtro por Compañía */
+	protected static int clientFilter = 0;
+	/* Filtro por organizacion */
+	protected static int orgFilter = 0;
+	/* Acción a realizar */
+	protected static String docActionFilter = DocAction.ACTION_Complete;
+	/* Clave de Tipo de Documento */
+	protected static String docTypeKeyFilter = null;
+	/* Filtro por Fecha de inicio */
+	protected static Timestamp dateFromFilter = null;
+	/* Filtro por Fecha de fin */
+	protected static Timestamp dateToFilter = null;
+	
 	/**
 	 * Tablas a verificar por tipo de documento. Tienen prioridad por sobre las
 	 * de tipo de documento base
@@ -271,13 +302,23 @@ public class DocumentCompleteProcess extends SvrProcess {
 	/** Nombre de transacción local */
 	private String localTrxName;
 	
+	/** Organización */
+	private Integer orgID;
+	
 	public DocumentCompleteProcess(){}
 	
 	public DocumentCompleteProcess(Properties ctx, MDocType docType,
 			String docAction, Timestamp dateFrom, Timestamp dateTo,
 			String aditionalWhereClause, String trxName) {
+		this(ctx, Env.getAD_Org_ID(ctx), docType, docAction, dateFrom, dateTo, aditionalWhereClause, trxName);
+	}
+	
+	public DocumentCompleteProcess(Properties ctx, Integer orgID, MDocType docType,
+			String docAction, Timestamp dateFrom, Timestamp dateTo,
+			String aditionalWhereClause, String trxName) {
 		this.localCtx = ctx;
 		this.localTrxName = trxName;
+		setOrgID(orgID);
 		setDocType(docType);
 		setDocAction(docAction);
 		setDateFrom(dateFrom);
@@ -299,6 +340,9 @@ public class DocumentCompleteProcess extends SvrProcess {
 			}
 			else if (name.equals("DocAction")){
 				setDocAction((String)para[i].getParameter());
+			}
+			else if (name.equals("AD_Org_ID")){
+				setOrgID(para[i].getParameterAsInt());
 			}
 		}
 	}
@@ -394,8 +438,11 @@ public class DocumentCompleteProcess extends SvrProcess {
 	protected String getDocumentSearchSQL(M_Table table, PO generalPO){
 		StringBuffer sql = new StringBuffer("SELECT * FROM ");
 		sql.append(table.getTableName());
-		sql.append(" WHERE ad_org_id = ? AND isactive = 'Y' AND docstatus IN "
+		sql.append(" WHERE isactive = 'Y' AND docstatus IN "
 				+ getDocStatusByDocActionSetWhereClause());
+		if(!Util.isEmpty(getOrgID(), true)){
+			sql.append(" AND ad_org_id = ").append(getOrgID());
+		}
 		if(table != null){
 			sql.append(getDocTypeCondition(table, generalPO));
 			sql.append(getDateCondition(table, generalPO));
@@ -466,7 +513,6 @@ public class DocumentCompleteProcess extends SvrProcess {
 			ps = DB.prepareStatement(getDocumentSearchSQL(table, generalPO),
 					get_TrxName(), true);
 			int i = 1;
-			ps.setInt(i++, Env.getAD_Org_ID(getCtx()));
 			if(getDateFrom() != null){
 				ps.setTimestamp(i++, getDateFrom());
 			}
@@ -501,6 +547,114 @@ public class DocumentCompleteProcess extends SvrProcess {
 		}
 		
 		return getMsg(completed, erroneous);
+	}
+	
+	/**
+	 * Entrada principal desde terminal
+	 */
+	public static void main(String[] args) 
+	{
+		for (String arg : args) {
+			if (arg.toLowerCase().startsWith(PARAM_HELP))
+				showHelp(" Ayuda: \n  " 
+							+ PARAM_CLIENT_FILTER 			+ " Filtra por compañía (Si no se especifica toma la compañía de la organización concreta. Obligatorio si no se ingresa una organización concreta.) \n "
+							+ PARAM_ORG_FILTER 				+ " Filtra por organizacion (Si no se especifica se toma 0 (*)) \n " 
+							+ PARAM_DOCACTION_FILTER 		+ " Acción a realizar sobre los comprobantes (si no se especifica se completan los comprobantes - Acción CO) \n "
+							+ PARAM_DOCTYPEKEY_FILTER		+ " Clave de Tipo de Documento (Obligatorio) \n "
+							+ PARAM_DATE_FROM_FILTER 		+ " Filtra por fecha de inicio del rango desde donde tomar los comprobantes (Formato yyyy-MM-dd) \n " 
+							+ PARAM_DATE_TO_FILTER	 		+ " Filtra por fecha de fin del rango desde donde tomar los comprobantes (Formato yyyy-MM-dd) \n ");
+			// Filtrado por compañía en particular?
+			else if (arg.toLowerCase().startsWith(PARAM_CLIENT_FILTER))
+				clientFilter = Integer.parseInt(arg.substring(PARAM_CLIENT_FILTER.length()));
+			// Filtrado por organizacion en particular?
+			else if (arg.toLowerCase().startsWith(PARAM_ORG_FILTER))
+				orgFilter = Integer.parseInt(arg.substring(PARAM_ORG_FILTER.length()));
+			// Acción a realizar
+			else if (arg.toLowerCase().startsWith(PARAM_DOCACTION_FILTER))
+				docActionFilter = arg.substring(PARAM_DOCACTION_FILTER.length());
+			// Clave de Tipo de Documento
+			else if (arg.toLowerCase().startsWith(PARAM_DOCTYPEKEY_FILTER))
+				docTypeKeyFilter = arg.substring(PARAM_DOCTYPEKEY_FILTER.length());			
+			else if (arg.toLowerCase().startsWith(PARAM_DATE_FROM_FILTER))
+				dateFromFilter = Timestamp.valueOf(arg.substring(PARAM_DATE_FROM_FILTER.length()));
+			else if (arg.toLowerCase().startsWith(PARAM_DATE_TO_FILTER))
+				dateToFilter = Timestamp.valueOf(arg.substring(PARAM_DATE_TO_FILTER.length()));
+			else 
+				System.out.println("WARNING: Argumento " + arg + " ignorado");
+		}
+		
+	  	// OXP_HOME seteada?
+	  	String oxpHomeDir = System.getenv("OXP_HOME"); 
+	  	if (oxpHomeDir == null) { 
+	  		System.err.println("ERROR: La variable de entorno OXP_HOME no está seteada ");
+	  		System.exit(1);
+	  	}
+	  	
+	  	// Cargar el entorno basico
+	  	System.setProperty("OXP_HOME", oxpHomeDir);
+	  	if (!OpenXpertya.startupEnvironment( false )) {
+	  		System.err.println("ERROR: Error al iniciar la configuracion... Postgres esta levantado?");
+	  		System.exit(1);
+	  	}
+		
+	  	// Compañía
+	  	if(Util.isEmpty(clientFilter, true) && !Util.isEmpty(orgFilter, true)){
+	  		clientFilter = DB.getSQLValue(null, "SELECT ad_client_id FROM ad_client WHERE ad_org_id = ?", orgFilter);
+	  	}
+	  	
+	  	// Configuracion
+	  	Env.setContext(Env.getCtx(), "#AD_Language", "es_AR");
+	  	Env.setContext(Env.getCtx(), "#AD_Client_ID", clientFilter);
+	  	Env.setContext(Env.getCtx(), "#AD_Org_ID", orgFilter);
+	  	if (Env.getContext(Env.getCtx(), "#AD_Client_ID") == null || Env.getContext(Env.getCtx(), "#AD_Client_ID") == null ||
+	  	    Env.getContextAsInt(Env.getCtx(), "#AD_Client_ID") <= 0 || Env.getContextAsInt(Env.getCtx(), "#AD_Client_ID") <= 0) {
+	  		System.err.println("Configuracion de Compañía faltante.");
+	  		return;
+	  	}
+
+	  	// Tipo de Documento por la clave
+	  	int docTypeID = 0;
+	  	if(Util.isEmpty(docTypeKeyFilter, true)){
+	  		showHelp("No se ha ingresado clave de tipo de documento para obtener los comprobantes.");
+	  	}
+	  	else{
+			docTypeID = DB.getSQLValue(null,
+					"SELECT c_doctype_id FROM c_doctype WHERE ad_client_id = ? and doctypekey = '" + docTypeKeyFilter
+							+ "'",
+					clientFilter);
+	  	}
+	  	
+	  	if(docTypeID <= 0){
+	  		showHelp("No se ha podido determinar el tipo de documento en base a los parámetros ingresados. Verificar Compañía y Clave de Tipo de Documento.");
+	  	}
+	  	
+	  	MDocType docType = MDocType.get(Env.getCtx(), docTypeID);
+	  	String result = "";
+		String trxName = Trx.createTrxName();
+		try {
+			Trx.getTrx(trxName).start();
+			// Disparar el proceso
+			// TODO PROBAR - Crear sh
+			DocumentCompleteProcess dcp = new DocumentCompleteProcess(Env.getCtx(), orgFilter, docType,
+					docActionFilter, dateFromFilter, dateToFilter, null, trxName);
+			result = dcp.start();
+			Trx.getTrx(trxName).commit();
+			System.out.println("DocumentCompleteProcess OK. "+result.toString());
+		}
+		catch (Exception e) {
+			Trx.getTrx(trxName).rollback();
+			System.out.println("DocumentCompleteProcess ERROR: " + e.toString());
+			System.exit(1);
+		}
+		finally {
+			Trx.getTrx(trxName).close();			
+		}
+
+	}
+	
+	protected static void showHelp(String message) {
+		System.out.println(message);
+		System.exit(1);
 	}
 
 	/**
@@ -570,5 +724,13 @@ public class DocumentCompleteProcess extends SvrProcess {
 		} else {
 			return super.get_TrxName();
 		}
+	}
+
+	public Integer getOrgID() {
+		return orgID;
+	}
+
+	public void setOrgID(Integer orgID) {
+		this.orgID = orgID;
 	}
 }
