@@ -3372,14 +3372,14 @@ public class MOrder extends X_C_Order implements DocAction, Authorization  {
 					sLine.getQtyTransferred());
 			if (!Util.isEmpty(qtyDeliveredTransferred, true)
 					&& sLine.getQtyOrdered().compareTo(qtyDeliveredTransferred) < 0) {
-				m_processMsg = "@LinesWithQtyOrderedMinorToQtyDelivered@";
+				m_processMsg = Msg.getMsg(getCtx(), "LinesWithQtyOrderedMinorToQtyDelivered");
             	return DocAction.STATUS_Invalid;
         	}
 			
 			// La cantidad pedida no puede ser menor a la cantidad facturada
 			if (!Util.isEmpty(sLine.getQtyInvoiced(), true)
 					&& sLine.getQtyOrdered().compareTo(sLine.getQtyInvoiced()) < 0) {
-				m_processMsg = "@LinesWithQtyOrderedMinorToQtyInvoiced@";
+				m_processMsg = Msg.getMsg(getCtx(), "LinesWithQtyOrderedMinorToQtyInvoiced");
             	return DocAction.STATUS_Invalid;
         	}
             
