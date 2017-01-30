@@ -7,7 +7,7 @@ import java.math.*;
 import org.openXpertya.util.*;
 /** Modelo Generado por C_CardSettlementConcepts
  *  @author Comunidad de Desarrollo Libertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
- *  @version  - 2016-11-30 14:28:11.369 */
+ *  @version  - 2017-01-30 16:10:29.186 */
 public class X_C_CardSettlementConcepts extends org.openXpertya.model.PO
 {
 /** Constructor estándar */
@@ -99,15 +99,15 @@ public KeyNamePair getKeyNamePair()
 return new KeyNamePair(getID(), getName());
 }
 public static final int TYPE_AD_Reference_ID = MReference.getReferenceID("Concept Type");
-/** Commission = C */
-public static final String TYPE_Commission = "C";
-/** Others = O */
-public static final String TYPE_Others = "O";
+/** Commission = CO */
+public static final String TYPE_Commission = "CO";
+/** Others = OT */
+public static final String TYPE_Others = "OT";
 /** Set Type */
 public void setType (String Type)
 {
-if (Type.equals("C") || Type.equals("O"));
- else throw new IllegalArgumentException ("Type Invalid value - Reference = TYPE_AD_Reference_ID - C - O");
+if (Type.equals("CO") || Type.equals("OT"));
+ else throw new IllegalArgumentException ("Type Invalid value - Reference = TYPE_AD_Reference_ID - CO - OT");
 if (Type == null) throw new IllegalArgumentException ("Type is mandatory");
 if (Type.length() > 2)
 {

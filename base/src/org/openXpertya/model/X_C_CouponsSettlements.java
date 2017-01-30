@@ -7,7 +7,7 @@ import java.math.*;
 import org.openXpertya.util.*;
 /** Modelo Generado por C_CouponsSettlements
  *  @author Comunidad de Desarrollo Libertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
- *  @version  - 2016-11-30 14:28:23.901 */
+ *  @version  - 2017-01-30 16:10:55.28 */
 public class X_C_CouponsSettlements extends org.openXpertya.model.PO
 {
 /** Constructor estándar */
@@ -16,10 +16,10 @@ public X_C_CouponsSettlements (Properties ctx, int C_CouponsSettlements_ID, Stri
 super (ctx, C_CouponsSettlements_ID, trxName);
 /** if (C_CouponsSettlements_ID == 0)
 {
-setAllocationNumber (Env.ZERO);
+setAllocationNumber (null);
 setC_CouponsSettlements_ID (0);
 setC_CreditCardCouponFilter_ID (0);
-setC_CreditCardSettlement_ID (0);
+setC_CreditCardSettlement_ID (0);	// @SQL=SELECT C_CreditCardSettlement_ID FROM C_CreditCardCouponFilter WHERE C_CreditCardCouponFilter_ID=@C_CreditCardCouponFilter_ID@
 setC_Currency_ID (0);
 setC_Payment_ID (0);
 setInclude (false);
@@ -54,17 +54,20 @@ StringBuffer sb = new StringBuffer ("X_C_CouponsSettlements[").append(getID()).a
 return sb.toString();
 }
 /** Set Allocation Number */
-public void setAllocationNumber (BigDecimal AllocationNumber)
+public void setAllocationNumber (String AllocationNumber)
 {
 if (AllocationNumber == null) throw new IllegalArgumentException ("AllocationNumber is mandatory");
+if (AllocationNumber.length() > 30)
+{
+log.warning("Length > 30 - truncated");
+AllocationNumber = AllocationNumber.substring(0,30);
+}
 set_Value ("AllocationNumber", AllocationNumber);
 }
 /** Get Allocation Number */
-public BigDecimal getAllocationNumber() 
+public String getAllocationNumber() 
 {
-BigDecimal bd = (BigDecimal)get_Value("AllocationNumber");
-if (bd == null) return Env.ZERO;
-return bd;
+return (String)get_Value("AllocationNumber");
 }
 /** Set Amount.
 Amount in a defined currency */
@@ -104,6 +107,7 @@ Integer ii = (Integer)get_Value("C_CreditCardCouponFilter_ID");
 if (ii == null) return 0;
 return ii.intValue();
 }
+public static final int C_CREDITCARDSETTLEMENT_ID_AD_Reference_ID = MReference.getReferenceID("Settlements (number)");
 /** Set Credit Card Settlement */
 public void setC_CreditCardSettlement_ID (int C_CreditCardSettlement_ID)
 {
@@ -130,7 +134,7 @@ Integer ii = (Integer)get_Value("C_Currency_ID");
 if (ii == null) return 0;
 return ii.intValue();
 }
-/** Set Coupon Number */
+/** Set CouponNo */
 public void setCouponNo (String CouponNo)
 {
 if (CouponNo != null && CouponNo.length() > 24)
@@ -140,7 +144,7 @@ CouponNo = CouponNo.substring(0,24);
 }
 set_Value ("CouponNo", CouponNo);
 }
-/** Get Coupon Number */
+/** Get CouponNo */
 public String getCouponNo() 
 {
 return (String)get_Value("CouponNo");
@@ -190,6 +194,7 @@ if (oo != null)
 }
 return false;
 }
+public static final int M_ENTIDADFINANCIERA_ID_AD_Reference_ID = MReference.getReferenceID("M_EntidadFinanciera");
 /** Set Entidad Financiera */
 public void setM_EntidadFinanciera_ID (int M_EntidadFinanciera_ID)
 {
@@ -202,6 +207,7 @@ Integer ii = (Integer)get_Value("M_EntidadFinanciera_ID");
 if (ii == null) return 0;
 return ii.intValue();
 }
+public static final int M_ENTIDADFINANCIERAPLAN_ID_AD_Reference_ID = MReference.getReferenceID("M_EntidadFinanciera Planes");
 /** Set Plan de Entidad Financiera.
 Plan de Entidad Financiera */
 public void setM_EntidadFinancieraPlan_ID (int M_EntidadFinancieraPlan_ID)
@@ -216,7 +222,7 @@ Integer ii = (Integer)get_Value("M_EntidadFinancieraPlan_ID");
 if (ii == null) return 0;
 return ii.intValue();
 }
-/** Set Payment Batch */
+/** Set PaymentBatch */
 public void setPaymentBatch (String PaymentBatch)
 {
 if (PaymentBatch != null && PaymentBatch.length() > 24)
@@ -226,7 +232,7 @@ PaymentBatch = PaymentBatch.substring(0,24);
 }
 set_Value ("PaymentBatch", PaymentBatch);
 }
-/** Get Payment Batch */
+/** Get PaymentBatch */
 public String getPaymentBatch() 
 {
 return (String)get_Value("PaymentBatch");

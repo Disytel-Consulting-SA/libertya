@@ -7,7 +7,7 @@ import java.math.*;
 import org.openXpertya.util.*;
 /** Modelo Generado por C_IVASettlements
  *  @author Comunidad de Desarrollo Libertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
- *  @version  - 2016-11-30 14:28:40.103 */
+ *  @version  - 2017-01-30 16:11:11.551 */
 public class X_C_IVASettlements extends org.openXpertya.model.PO
 {
 /** Constructor estándar */
@@ -18,7 +18,7 @@ super (ctx, C_IVASettlements_ID, trxName);
 {
 setC_CreditCardSettlement_ID (0);
 setC_IVASettlements_ID (0);
-setC_TaxCategory_ID (0);
+setC_Tax_ID (0);
 }
  */
 }
@@ -85,17 +85,17 @@ Integer ii = (Integer)get_Value("C_IVASettlements_ID");
 if (ii == null) return 0;
 return ii.intValue();
 }
-/** Set Tax Category.
-Tax Category */
-public void setC_TaxCategory_ID (int C_TaxCategory_ID)
+/** Set Tax.
+Tax identifier */
+public void setC_Tax_ID (int C_Tax_ID)
 {
-set_Value ("C_TaxCategory_ID", new Integer(C_TaxCategory_ID));
+set_Value ("C_Tax_ID", new Integer(C_Tax_ID));
 }
-/** Get Tax Category.
-Tax Category */
-public int getC_TaxCategory_ID() 
+/** Get Tax.
+Tax identifier */
+public int getC_Tax_ID() 
 {
-Integer ii = (Integer)get_Value("C_TaxCategory_ID");
+Integer ii = (Integer)get_Value("C_Tax_ID");
 if (ii == null) return 0;
 return ii.intValue();
 }

@@ -7,7 +7,7 @@ import java.math.*;
 import org.openXpertya.util.*;
 /** Modelo Generado por C_CreditCardCouponFilter
  *  @author Comunidad de Desarrollo Libertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
- *  @version  - 2016-11-30 14:28:24.765 */
+ *  @version  - 2017-01-30 16:10:56.381 */
 public class X_C_CreditCardCouponFilter extends org.openXpertya.model.PO
 {
 /** Constructor estándar */
@@ -59,6 +59,7 @@ Integer ii = (Integer)get_Value("C_CreditCardCouponFilter_ID");
 if (ii == null) return 0;
 return ii.intValue();
 }
+public static final int C_CREDITCARDSETTLEMENT_ID_AD_Reference_ID = MReference.getReferenceID("Settlements (number)");
 /** Set Credit Card Settlement */
 public void setC_CreditCardSettlement_ID (int C_CreditCardSettlement_ID)
 {
@@ -117,6 +118,7 @@ Integer ii = (Integer)get_Value("M_EntidadFinanciera_ID");
 if (ii == null) return 0;
 return ii.intValue();
 }
+public static final int M_ENTIDADFINANCIERAPLAN_ID_AD_Reference_ID = MReference.getReferenceID("M_EntidadFinanciera Planes");
 /** Set Plan de Entidad Financiera.
 Plan de Entidad Financiera */
 public void setM_EntidadFinancieraPlan_ID (int M_EntidadFinancieraPlan_ID)
@@ -133,7 +135,7 @@ Integer ii = (Integer)get_Value("M_EntidadFinancieraPlan_ID");
 if (ii == null) return 0;
 return ii.intValue();
 }
-/** Set Payment Batch */
+/** Set PaymentBatch */
 public void setPaymentBatch (String PaymentBatch)
 {
 if (PaymentBatch != null && PaymentBatch.length() > 24)
@@ -143,7 +145,7 @@ PaymentBatch = PaymentBatch.substring(0,24);
 }
 set_Value ("PaymentBatch", PaymentBatch);
 }
-/** Get Payment Batch */
+/** Get PaymentBatch */
 public String getPaymentBatch() 
 {
 return (String)get_Value("PaymentBatch");
