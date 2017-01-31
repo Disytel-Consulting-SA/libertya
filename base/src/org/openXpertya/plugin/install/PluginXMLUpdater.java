@@ -171,7 +171,7 @@ public class PluginXMLUpdater {
 				if (sentence != null && sentence.length() > 0)
 				{
 					/* Impactar la bitácora */
-					appendStatus("[" + iter + "]: " + sentence);
+					appendStatus("[" + iter + "." + changeGroup.getChangelogGroupID() + "]: " + sentence);
 					executeUpdate(sentence, m_trxName);
 					
 					/* Impactar en el changelog */ 
@@ -354,19 +354,19 @@ public class PluginXMLUpdater {
 	
 	/** Eleva una excepcion a fin de notificar que el intento de inserción no fue llevado a cabo dado que el registro en cuestion ya existía */
 	protected StringBuffer handleRecordExistsOnInsert(ChangeGroup changeGroup) throws Exception	{
-		raiseException(WARNING_UID_ALREADY_EXISTS + " Referencia: (" + getUniversalReference(changeGroup) + ") en tabla: " + changeGroup.getTableName() );
+		raiseException(WARNING_UID_ALREADY_EXISTS + " Referencia: (" + getUniversalReference(changeGroup) + ") en tabla: " + changeGroup.getTableName() + " - changelogGroupID:" + changeGroup.getChangelogGroupID());
 		return null;
 	}
 
 	/** Eleva una excepcion a fin de notificar que el intento de modificación no fue llevado a cabo dado que el registro en cuestion no existía */
 	protected StringBuffer handleRecordNotExistsOnModify(ChangeGroup changeGroup) throws Exception	{
-		raiseException(WARNING_UID_NOT_EXISTS_UPDATE + " Referencia: " + getUniversalReference(changeGroup) + ". Tabla:" + changeGroup.getTableName());
+		raiseException(WARNING_UID_NOT_EXISTS_UPDATE + " Referencia: " + getUniversalReference(changeGroup) + ". Tabla:" + changeGroup.getTableName() + " - changelogGroupID:" + changeGroup.getChangelogGroupID());
 		return null;
 	}
 	
 	/** Eleva una excepcion a fin de notificar que el intento de eliminaciòn no fue llevado a cabo dado que el registro en cuestion no existía */
 	protected StringBuffer handleRecordNotExistsOnDelete(ChangeGroup changeGroup) throws Exception	{
-		raiseException(WARNING_UID_NOT_EXISTS_DELETE + " Referencia: (" + getUniversalReference(changeGroup) + ") .Tabla: " + changeGroup.getTableName() );
+		raiseException(WARNING_UID_NOT_EXISTS_DELETE + " Referencia: (" + getUniversalReference(changeGroup) + ") .Tabla: " + changeGroup.getTableName() + " - changelogGroupID:" + changeGroup.getChangelogGroupID());
 		return null;
 	}
 	
@@ -388,7 +388,7 @@ public class PluginXMLUpdater {
 		
 		/* Si no existe la referenciaUniversal es imposible eliminar/modificar algo */
 		if (!validateUniversalReference(changeGroup)) { 
-			raiseException(WARNING_CHANGEGROUP_HAS_NO_UID + " Operacion: " + changeGroup.getOperation() + "  (valor en null) - tabla: " + tableName );
+			raiseException(WARNING_CHANGEGROUP_HAS_NO_UID + " Operacion: " + changeGroup.getOperation() + "  (valor en null) - tabla: " + tableName + " - changelogGroupID:" + changeGroup.getChangelogGroupID());
 			return false;
 		}
 		
@@ -397,7 +397,7 @@ public class PluginXMLUpdater {
 		
 		/* Si recordExists devuelve -1 entonces la tabla no contiene la estructura adecuada para el procesamiento */
 		if ( recordExists == -1 )
-			raiseException(WARNING_STRUCTURE_MISSING + " Operacion: " + changeGroup.getOperation() + " - tabla: " + tableName );
+			raiseException(WARNING_STRUCTURE_MISSING + " Operacion: " + changeGroup.getOperation() + " - tabla: " + tableName + " - changelogGroupID:" + changeGroup.getChangelogGroupID());
 		
 		/* Retornar true si al menos hay un registro con dicho UID */
 		return recordExists > 0;
@@ -507,7 +507,7 @@ public class PluginXMLUpdater {
 		}
 		catch (Exception e)
 		{
-			raiseException("ERROR: Error generando sentencia de inserción. " + e.getMessage() + " - tableName:" + tableName + " - column:" + column.getName() + " - columnValues: " + columnValues.toString() + " - columnNames:" + columnNames.toString());
+			raiseException("ERROR: Error generando sentencia de inserción. " + e.getMessage() + " - changelogGroupID:" + changeGroup.getChangelogGroupID() + " - tableName:" + tableName + " - column:" + column.getName() + " - columnValues: " + columnValues.toString() + " - columnNames:" + columnNames.toString());
 		}
 	}
 	
@@ -554,7 +554,7 @@ public class PluginXMLUpdater {
 		}
 		catch (Exception e)
 		{
-			raiseException("ERROR: Error generando sentencia de actualización. " + e.getMessage() + " - tableName:" + tableName + " - column:" + column.getName() + " - sql: " + sql.toString());
+			raiseException("ERROR: Error generando sentencia de actualización. " + e.getMessage() + " - changelogGroupID:" + changeGroup.getChangelogGroupID() + " - tableName:" + tableName + " - column:" + column.getName() + " - sql: " + sql.toString());
 		}
 		
 	}
@@ -866,17 +866,19 @@ public class PluginXMLUpdater {
 		private String tableName = null;
 		private String operation = null;
 		private String uid = null;
+		private int changelogGroupID = -1;
 		private boolean mapped = false;
 		private boolean processed = false;
 		
 		/* Constructor */
-		public ChangeGroup(String tableName, String operation, String uid, Vector<Column> columns)
+		public ChangeGroup(String tableName, String operation, String uid, int changelogGroupID, Vector<Column> columns)
 		{
 			this.uid = uid;
 			this.columns = columns;
 			this.tableName = tableName;
 			this.operation = operation;
 			this.processed = false;
+			this.changelogGroupID = changelogGroupID;
 		}
 		
 		/* Retorna una columna a partir del nombre la misma */
@@ -903,7 +905,8 @@ public class PluginXMLUpdater {
 		public void setMapped(boolean mapped) 			{			this.mapped = mapped;			}
 		public boolean isProcessed()					{			return processed;				}
 		public void setProcessed(boolean processed)		{			this.processed = processed;		}
-		
+		public int getChangelogGroupID()				{			return changelogGroupID;		}
+		public void setChangelogGroupID(int clgID)		{			this.changelogGroupID = clgID;	}
 	}
 	
 	
@@ -962,7 +965,11 @@ public class PluginXMLUpdater {
 				columns.add(fillColumns((Element)nodes.item(j)));
 		
 			// retornar el changeGroup completo
-			ChangeGroup changeGroup = new ChangeGroup(elem.getAttribute("tableName"), elem.getAttribute("operation"), elem.getAttribute("uid"), columns);
+			int changelogGroupID = -1;
+			try { 
+				changelogGroupID = Integer.parseInt(elem.getAttribute("changelogGroupID"));
+			} catch (Exception e) { }
+			ChangeGroup changeGroup = new ChangeGroup(elem.getAttribute("tableName"), elem.getAttribute("operation"), elem.getAttribute("uid"), changelogGroupID, columns);
 			return changeGroup;
 		}
 		
