@@ -2,7 +2,7 @@
 <!-- Created with iReport - A designer for JasperReports -->
 <!DOCTYPE jasperReport PUBLIC "//JasperReports//DTD Report Design//EN" "http://jasperreports.sourceforge.net/dtds/jasperreport.dtd">
 <jasperReport
-		 name="Untitled_report_1"
+		 name="CardControl"
 		 columnCount="1"
 		 printOrder="Vertical"
 		 orientation="Portrait"
@@ -26,6 +26,7 @@
 	<parameter name="AD_ORG_NAME" isForPrompting="false" class="java.lang.String"/>
 	<parameter name="DATE_FROM" isForPrompting="false" class="java.sql.Timestamp"/>
 	<parameter name="DATE_TO" isForPrompting="false" class="java.sql.Timestamp"/>
+	<parameter name="M_ENTIDADFINANCIERA_NAME" isForPrompting="false" class="java.lang.String"/>
 
 	<field name="entidad_financiera" class="java.lang.String"/>
 	<field name="saldo_inicial" class="java.math.BigDecimal"/>
@@ -42,7 +43,7 @@
 				<textField isStretchWithOverflow="false" pattern="dd/MM/yyyy" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
 						x="106"
-						y="41"
+						y="57"
 						width="148"
 						height="20"
 						key="textField-6"/>
@@ -55,7 +56,7 @@
 				<textField isStretchWithOverflow="false" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
 						x="106"
-						y="61"
+						y="37"
 						width="148"
 						height="20"
 						key="textField-7"/>
@@ -63,25 +64,25 @@
 					<textElement>
 						<font/>
 					</textElement>
-				<textFieldExpression   class="java.lang.String"><![CDATA[$P{AD_ORG_NAME}]]></textFieldExpression>
+				<textFieldExpression   class="java.lang.String"><![CDATA[$P{M_ENTIDADFINANCIERA_NAME}]]></textFieldExpression>
 				</textField>
 				<staticText>
 					<reportElement
-						x="106"
+						x="156"
 						y="0"
-						width="326"
-						height="34"
+						width="226"
+						height="25"
 						key="staticText-6"/>
 					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
 					<textElement textAlignment="Center" verticalAlignment="Top">
 						<font pdfFontName="Helvetica-Bold" size="14" isBold="true"/>
 					</textElement>
-				<text><![CDATA[REPORTE DE CONTROL DE TARJETAS]]></text>
+				<text><![CDATA[CONTROL DE TARJETAS]]></text>
 				</staticText>
 				<staticText>
 					<reportElement
 						x="0"
-						y="41"
+						y="57"
 						width="106"
 						height="20"
 						key="staticText-7"/>
@@ -94,7 +95,7 @@
 				<staticText>
 					<reportElement
 						x="0"
-						y="61"
+						y="37"
 						width="106"
 						height="20"
 						key="staticText-8"/>
@@ -102,12 +103,12 @@
 					<textElement>
 						<font pdfFontName="Helvetica-Bold" isBold="true"/>
 					</textElement>
-				<text><![CDATA[Organización]]></text>
+				<text><![CDATA[Ent. Financiera]]></text>
 				</staticText>
 				<staticText>
 					<reportElement
 						x="272"
-						y="41"
+						y="57"
 						width="106"
 						height="20"
 						key="staticText-9"/>
@@ -120,7 +121,7 @@
 				<textField isStretchWithOverflow="false" pattern="dd/MM/yyyy" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
 						x="378"
-						y="41"
+						y="57"
 						width="148"
 						height="20"
 						key="textField-8"/>
@@ -143,6 +144,32 @@
 					</textElement>
 				<textFieldExpression   class="java.lang.String"><![CDATA["Pagina " + $V{PAGE_NUMBER}]]></textFieldExpression>
 				</textField>
+				<staticText>
+					<reportElement
+						x="272"
+						y="37"
+						width="106"
+						height="20"
+						key="staticText-10"/>
+					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
+					<textElement>
+						<font pdfFontName="Helvetica-Bold" isBold="true"/>
+					</textElement>
+				<text><![CDATA[Organización]]></text>
+				</staticText>
+				<textField isStretchWithOverflow="false" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
+					<reportElement
+						x="378"
+						y="37"
+						width="148"
+						height="20"
+						key="textField-10"/>
+					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
+					<textElement>
+						<font/>
+					</textElement>
+				<textFieldExpression   class="java.lang.String"><![CDATA[$P{AD_ORG_NAME}]]></textFieldExpression>
+				</textField>
 			</band>
 		</title>
 		<pageHeader>
@@ -159,7 +186,7 @@
 						height="20"
 						key="staticText-1"/>
 					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
-					<textElement verticalAlignment="Top">
+					<textElement verticalAlignment="Middle">
 						<font pdfFontName="Helvetica-Bold" size="10" isBold="true"/>
 					</textElement>
 				<text><![CDATA[Entidad Financiera]]></text>
@@ -172,7 +199,7 @@
 						height="20"
 						key="staticText-2"/>
 					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
-					<textElement textAlignment="Right" verticalAlignment="Top">
+					<textElement textAlignment="Right" verticalAlignment="Middle">
 						<font pdfFontName="Helvetica-Bold" size="10" isBold="true"/>
 					</textElement>
 				<text><![CDATA[Saldo final]]></text>
@@ -185,7 +212,7 @@
 						height="20"
 						key="staticText-3"/>
 					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
-					<textElement textAlignment="Right" verticalAlignment="Top">
+					<textElement textAlignment="Right" verticalAlignment="Middle">
 						<font pdfFontName="Helvetica-Bold" size="10" isBold="true"/>
 					</textElement>
 				<text><![CDATA[Imp. cobrado]]></text>
@@ -198,7 +225,7 @@
 						height="20"
 						key="staticText-4"/>
 					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
-					<textElement textAlignment="Right" verticalAlignment="Top">
+					<textElement textAlignment="Right" verticalAlignment="Middle">
 						<font pdfFontName="Helvetica-Bold" size="10" isBold="true"/>
 					</textElement>
 				<text><![CDATA[Imp. liquidado]]></text>
@@ -211,11 +238,29 @@
 						height="20"
 						key="staticText-5"/>
 					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
-					<textElement textAlignment="Right" verticalAlignment="Top">
+					<textElement textAlignment="Right" verticalAlignment="Middle">
 						<font pdfFontName="Helvetica-Bold" size="10" isBold="true"/>
 					</textElement>
 				<text><![CDATA[Saldo Inicial]]></text>
 				</staticText>
+				<line direction="TopDown">
+					<reportElement
+						x="0"
+						y="21"
+						width="539"
+						height="0"
+						key="line-1"/>
+					<graphicElement stretchType="NoStretch"/>
+				</line>
+				<line direction="TopDown">
+					<reportElement
+						x="0"
+						y="1"
+						width="539"
+						height="0"
+						key="line-2"/>
+					<graphicElement stretchType="NoStretch"/>
+				</line>
 			</band>
 		</columnHeader>
 		<detail>

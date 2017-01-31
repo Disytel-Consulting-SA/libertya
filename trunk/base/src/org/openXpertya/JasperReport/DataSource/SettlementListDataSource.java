@@ -49,10 +49,10 @@ public class SettlementListDataSource extends QueryDataSource {
 			sql.append("	AND s.ad_org_id = " + ad_org_id + " ");
 		}
 		if (creditcardtype != null && !creditcardtype.trim().isEmpty()) {
-			sql.append("	AND s.creditcardtype = " + creditcardtype + " ");
+			sql.append("	AND s.creditcardtype = '" + creditcardtype + "' ");
 		}
 		if (docstatus != null && !docstatus.trim().isEmpty()) {
-			sql.append("	AND s.docstatus = " + docstatus + " ");
+			sql.append("	AND s.docstatus = '" + docstatus + "' ");
 		}
 		if (dateFrom != null && !dateFrom.trim().isEmpty()) {
 			sql.append("	AND s.paymentdate >= '" + dateFrom + "' ");
