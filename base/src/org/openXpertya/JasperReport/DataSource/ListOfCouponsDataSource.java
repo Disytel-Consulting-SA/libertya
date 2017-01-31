@@ -2,6 +2,13 @@ package org.openXpertya.JasperReport.DataSource;
 
 import java.util.Properties;
 
+import org.openXpertya.model.X_AD_Ref_List;
+import org.openXpertya.model.X_AD_Ref_List_Trl;
+import org.openXpertya.model.X_AD_Reference;
+import org.openXpertya.model.X_C_CouponsSettlements;
+import org.openXpertya.model.X_C_CreditCardSettlement;
+import org.openXpertya.model.X_C_Payment;
+import org.openXpertya.model.X_M_EntidadFinanciera;
 import org.openXpertya.util.Env;
 
 /**
@@ -35,18 +42,18 @@ public class ListOfCouponsDataSource extends QueryDataSource {
 		sql.append("	l.name AS auditstatus, ");
 		sql.append("	c.amount ");
 		sql.append("FROM ");
-		sql.append("	c_creditcardsettlement s ");
-		sql.append("	JOIN c_couponssettlements c ON s.c_creditcardsettlement_id = c.c_creditcardsettlement_id ");
-		sql.append("	JOIN c_payment p ON p.c_payment_id = c.c_payment_id ");
-		sql.append("	JOIN m_entidadfinanciera ef ON s.m_entidadfinanciera_id = ef.m_entidadfinanciera_id ");
+		sql.append("	" + X_C_CreditCardSettlement.Table_Name + " s ");
+		sql.append("	JOIN " + X_C_CouponsSettlements.Table_Name + " c ON s.c_creditcardsettlement_id = c.c_creditcardsettlement_id ");
+		sql.append("	JOIN " + X_C_Payment.Table_Name + " p ON p.c_payment_id = c.c_payment_id ");
+		sql.append("	JOIN " + X_M_EntidadFinanciera.Table_Name + " ef ON s.m_entidadfinanciera_id = ef.m_entidadfinanciera_id ");
 		sql.append("	LEFT JOIN ( ");
 		sql.append("		SELECT ");
 		sql.append("			r.value, ");
 		sql.append("			tr.name ");
 		sql.append("		FROM ");
-		sql.append("			ad_reference a ");
-		sql.append("			INNER JOIN ad_ref_list r ON a.ad_reference_id = r.ad_reference_id ");
-		sql.append("			INNER JOIN ad_ref_list_trl tr ON tr.ad_ref_list_id = r.ad_ref_list_id ");
+		sql.append("			" + X_AD_Reference.Table_Name + " a ");
+		sql.append("			INNER JOIN " + X_AD_Ref_List.Table_Name + " r ON a.ad_reference_id = r.ad_reference_id ");
+		sql.append("			INNER JOIN " + X_AD_Ref_List_Trl.Table_Name + " tr ON tr.ad_ref_list_id = r.ad_ref_list_id ");
 		sql.append("		WHERE ");
 		sql.append("			a.name = 'Audit Status' ");
 		sql.append("			AND tr.ad_language = '" + Env.getAD_Language(ctx) + "' ");
@@ -55,13 +62,13 @@ public class ListOfCouponsDataSource extends QueryDataSource {
 		sql.append("	COALESCE(s.settlementno, '') <> '' ");
 
 		if (M_EntidadFinanciera_ID > 0) {
-			sql.append("	AND e.m_entidadfinanciera_id = " + M_EntidadFinanciera_ID + " ");
+			sql.append("	AND s.m_entidadfinanciera_id = " + M_EntidadFinanciera_ID + " ");
 		}
 		if (AD_Org_ID > 0) {
 			sql.append("	AND s.ad_org_id = " + AD_Org_ID + " ");
 		}
 		if (auditState != null && !auditState.trim().isEmpty()) {
-			sql.append("	AND p.auditstatus = " + auditState + " ");
+			sql.append("	AND p.auditstatus = '" + auditState + "' ");
 		}
 		if (dateFrom != null && !dateFrom.trim().isEmpty()) {
 			sql.append("	AND s.paymentdate >= '" + dateFrom + "' ");

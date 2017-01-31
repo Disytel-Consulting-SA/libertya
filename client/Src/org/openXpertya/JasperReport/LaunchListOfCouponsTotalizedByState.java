@@ -11,8 +11,12 @@ import java.util.logging.Level;
 import org.openXpertya.JasperReport.DataSource.ListOfCouponsDataSource;
 import org.openXpertya.JasperReport.DataSource.OXPJasperDataSource;
 import org.openXpertya.model.X_AD_Org;
+import org.openXpertya.model.X_AD_Ref_List;
+import org.openXpertya.model.X_AD_Ref_List_Trl;
+import org.openXpertya.model.X_AD_Reference;
 import org.openXpertya.model.X_M_EntidadFinanciera;
 import org.openXpertya.util.DB;
+import org.openXpertya.util.Env;
 
 /**
  * Reporte para listado de cupones totalizados por estado.
@@ -29,8 +33,8 @@ public class LaunchListOfCouponsTotalizedByState extends JasperReportLaunch {
 	@Override
 	protected void loadReportParameters() throws Exception {
 		addReportParameter(ENTIDAD_FINANCIERA, getEntidadFinanciera());
+		addReportParameter(AUDIT_STATE, getAuditStateName());
 		addReportParameter(ORGANIZATION, getOrgName());
-		addReportParameter(AUDIT_STATE, getAuditState());
 		addReportParameter(DATE_TO, getDateTo());
 		addReportParameter(DATE, getDateFrom());
 	}
@@ -117,6 +121,47 @@ public class LaunchListOfCouponsTotalizedByState extends JasperReportLaunch {
 		return null;
 	}
 
+	private String getAuditStateName() {
+		if (getAuditState() == null) {
+			return null;
+		}
+		StringBuffer sql = new StringBuffer();
+
+		sql.append("SELECT ");
+		sql.append("	t.name ");
+		sql.append("FROM ");
+		sql.append("	" + X_AD_Reference.Table_Name + " r ");
+		sql.append("	INNER JOIN " + X_AD_Ref_List.Table_Name + " l ON l.ad_reference_id = r.ad_reference_id ");
+		sql.append("	INNER JOIN " + X_AD_Ref_List_Trl.Table_Name + " t ON t.ad_ref_list_id = l.ad_ref_list_id ");
+		sql.append("WHERE ");
+		sql.append("	r.NAME = 'CreditCardTypes' ");
+		sql.append("	AND l.value = ? ");
+		sql.append("	AND ad_language = ? ");
+
+		PreparedStatement ps = null;
+		ResultSet rs = null;
+
+		try {
+			ps = DB.prepareStatement(sql.toString());
+			ps.setString(1, getAuditState());
+			ps.setString(2, Env.getAD_Language(getCtx()));
+			rs = ps.executeQuery();
+
+			if (rs.next()) {
+				return rs.getString("name");
+			}
+		} catch (Exception e) {
+			log.log(Level.SEVERE, "getAuditStateName", e);
+		} finally {
+			try {
+				rs.close();
+				ps.close();
+			} catch (SQLException e) {
+				log.log(Level.SEVERE, "Cannot close statement or resultset");
+			}
+		}
+		return null;
+	}
 	// GETTERS:
 
 	public int getAD_Org_ID() {
@@ -148,7 +193,11 @@ public class LaunchListOfCouponsTotalizedByState extends JasperReportLaunch {
 	}
 
 	public String getAuditState() {
-		return (String) getParameterValue("AuditState");
+		Object param = getParameterValue("AuditState");
+		if (param != null) {
+			return (String) param;
+		}
+		return null;
 	}
 
 }

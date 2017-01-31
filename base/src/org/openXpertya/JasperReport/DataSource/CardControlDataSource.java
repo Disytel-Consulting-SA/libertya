@@ -4,6 +4,12 @@ import java.sql.Timestamp;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
+import org.openXpertya.model.X_C_CouponsSettlements;
+import org.openXpertya.model.X_C_CreditCardCouponFilter;
+import org.openXpertya.model.X_C_CreditCardSettlement;
+import org.openXpertya.model.X_C_Payment;
+import org.openXpertya.model.X_M_EntidadFinanciera;
+import org.openXpertya.model.X_M_EntidadFinancieraPlan;
 /**
  * Data Source para reporte de control de tarjetas.
  * @author Kevin Feuerschvenger - Sur Software S.H.
@@ -40,9 +46,9 @@ public class CardControlDataSource extends QueryDataSource {
 		sql.append("		p.DateAcct, ");
 		sql.append("		SUM(p.Payamt) AS imp_cobrado ");
 		sql.append("	FROM ");
-		sql.append("		C_Payment p ");
-		sql.append("		INNER JOIN M_EntidadFinancieraPlan efp ON efp.M_EntidadFinancieraPlan_ID = p.M_EntidadFinancieraPlan_ID ");
-		sql.append("		INNER JOIN M_EntidadFinanciera ef ON ef.M_EntidadFinanciera_ID = efp.M_EntidadFinanciera_ID ");
+		sql.append("		" + X_C_Payment.Table_Name + " p ");
+		sql.append("		INNER JOIN " + X_M_EntidadFinancieraPlan.Table_Name + " efp ON efp.M_EntidadFinancieraPlan_ID = p.M_EntidadFinancieraPlan_ID ");
+		sql.append("		INNER JOIN " + X_M_EntidadFinanciera.Table_Name + " ef ON ef.M_EntidadFinanciera_ID = efp.M_EntidadFinanciera_ID ");
 		sql.append("	GROUP BY ");
 		sql.append("		ef.M_EntidadFinanciera_ID, ");
 		sql.append("		ef.name, ");
@@ -56,11 +62,11 @@ public class CardControlDataSource extends QueryDataSource {
 		sql.append("		p.DateAcct, ");
 		sql.append("		SUM(p.Payamt) AS imp_liquidado ");
 		sql.append("	FROM ");
-		sql.append("		C_CreditCardSettlement ccs ");
-		sql.append("		INNER JOIN M_EntidadFinanciera ef ON ef.M_EntidadFinanciera_ID = ccs.M_EntidadFinanciera_ID ");
-		sql.append("		INNER JOIN C_CreditCardCouponFilter cf ON cf.C_CreditCardSettlement_ID = ccs.C_CreditCardSettlement_ID ");
-		sql.append("		INNER JOIN C_CouponsSettlements cs ON cs.C_CreditCardCouponFilter_ID = cf.C_CreditCardCouponFilter_ID ");
-		sql.append("		INNER JOIN C_Payment p ON p.C_Payment_ID = cs.C_Payment_ID ");
+		sql.append("		" + X_C_CreditCardSettlement.Table_Name + " ccs ");
+		sql.append("		INNER JOIN " + X_M_EntidadFinanciera.Table_Name + " ef ON ef.M_EntidadFinanciera_ID = ccs.M_EntidadFinanciera_ID ");
+		sql.append("		INNER JOIN " + X_C_CreditCardCouponFilter.Table_Name + " cf ON cf.C_CreditCardSettlement_ID = ccs.C_CreditCardSettlement_ID ");
+		sql.append("		INNER JOIN " + X_C_CouponsSettlements.Table_Name + " cs ON cs.C_CreditCardCouponFilter_ID = cf.C_CreditCardCouponFilter_ID ");
+		sql.append("		INNER JOIN " + X_C_Payment.Table_Name + " p ON p.C_Payment_ID = cs.C_Payment_ID ");
 		sql.append("	GROUP BY ");
 		sql.append("		ef.M_EntidadFinanciera_ID, ");
 		sql.append("		p.DateAcct ");
@@ -84,9 +90,9 @@ public class CardControlDataSource extends QueryDataSource {
 		sql.append("			p.DateAcct, ");
 		sql.append("			SUM(p.Payamt) AS imp_cobrado ");
 		sql.append("		FROM ");
-		sql.append("			C_Payment p ");
-		sql.append("			INNER JOIN M_EntidadFinancieraPlan efp ON efp.M_EntidadFinancieraPlan_ID = p.M_EntidadFinancieraPlan_ID ");
-		sql.append("			INNER JOIN M_EntidadFinanciera ef ON ef.M_EntidadFinanciera_ID = efp.M_EntidadFinanciera_ID ");
+		sql.append("			" + X_C_Payment.Table_Name + " p ");
+		sql.append("			INNER JOIN " + X_M_EntidadFinancieraPlan.Table_Name + " efp ON efp.M_EntidadFinancieraPlan_ID = p.M_EntidadFinancieraPlan_ID ");
+		sql.append("			INNER JOIN " + X_M_EntidadFinanciera.Table_Name + " ef ON ef.M_EntidadFinanciera_ID = efp.M_EntidadFinanciera_ID ");
 		sql.append("		GROUP BY ");
 		sql.append("			ef.M_EntidadFinanciera_ID, ");
 		sql.append("			ef.name, ");
@@ -100,11 +106,11 @@ public class CardControlDataSource extends QueryDataSource {
 		sql.append("			p.DateAcct, ");
 		sql.append("			SUM(p.Payamt) AS imp_liquidado ");
 		sql.append("		FROM ");
-		sql.append("			C_CreditCardSettlement ccs ");
-		sql.append("			INNER JOIN M_EntidadFinanciera ef ON ef.M_EntidadFinanciera_ID = ccs.M_EntidadFinanciera_ID ");
-		sql.append("			INNER JOIN C_CreditCardCouponFilter cf ON cf.C_CreditCardSettlement_ID = ccs.C_CreditCardSettlement_ID ");
-		sql.append("			INNER JOIN C_CouponsSettlements cs ON cs.C_CreditCardCouponFilter_ID = cf.C_CreditCardCouponFilter_ID ");
-		sql.append("			INNER JOIN C_Payment p ON p.C_Payment_ID = cs.C_Payment_ID ");
+		sql.append("			" + X_C_CreditCardSettlement.Table_Name + " ccs ");
+		sql.append("			INNER JOIN " + X_M_EntidadFinanciera.Table_Name + " ef ON ef.M_EntidadFinanciera_ID = ccs.M_EntidadFinanciera_ID ");
+		sql.append("			INNER JOIN " + X_C_CreditCardCouponFilter.Table_Name + " cf ON cf.C_CreditCardSettlement_ID = ccs.C_CreditCardSettlement_ID ");
+		sql.append("			INNER JOIN " + X_C_CouponsSettlements.Table_Name + " cs ON cs.C_CreditCardCouponFilter_ID = cf.C_CreditCardCouponFilter_ID ");
+		sql.append("			INNER JOIN " + X_C_Payment.Table_Name + " p ON p.C_Payment_ID = cs.C_Payment_ID ");
 		sql.append("		GROUP BY ");
 		sql.append("			ef.M_EntidadFinanciera_ID, ");
 		sql.append("			p.DateAcct ");
