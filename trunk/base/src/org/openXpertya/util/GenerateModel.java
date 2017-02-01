@@ -617,7 +617,9 @@ public class GenerateModel {
             pstmt = null;
         }
 
-        statement.append( ")" + "; " + "else " + "throw new IllegalArgumentException (\"" ).append( columnName ).append( " Invalid value - " ).append( values ).append( "\");" );
+		statement.append(")" + "; " + "else " + "throw new IllegalArgumentException (\"").append(columnName)
+				.append(" Invalid value - ").append("\"").append(" + ").append(columnName).append(" + ").append("\" - ")
+				.append(values).append("\");");
 
         //
 
