@@ -138,6 +138,10 @@ public class PostInstallUpgradeFrom1604 extends PluginPostInstallProcess {
 	protected final static String SETTLEMENT_LIST_JASPER_REPORT_UID = "RPRT2CORE-AD_JasperReport-1010180-20170125125715";
 	protected final static String SETTLEMENT_LIST_JASPER_REPORT_FILENAME = "SettlementList.jasper";
 	
+	/** UID del informe Reporte de Compras*/
+	protected final static String REPORTE_DE_COMPRAS_REPORT_UID = "CORE-AD_Process-1010342";
+	protected final static String REPORTE_DE_COMPRAS_REPORT_FILENAME = "ReporteDeCompras.jrxml";
+	
 	@Override
 	protected String doIt() throws Exception {
 		super.doIt();
@@ -540,6 +544,17 @@ public class PostInstallUpgradeFrom1604 extends PluginPostInstallProcess {
 							.readBinaryFromJar(
 									jarFileURL,
 									getBinaryFileURL(SETTLEMENT_LIST_JASPER_REPORT_FILENAME)));
+		
+		// Reporte de Compras
+		MProcess.addAttachment(
+				get_TrxName(),
+				getCtx(),
+				REPORTE_DE_COMPRAS_REPORT_UID,
+				REPORTE_DE_COMPRAS_REPORT_FILENAME,
+				JarHelper
+						.readBinaryFromJar(
+								jarFileURL,
+								getBinaryFileURL(REPORTE_DE_COMPRAS_REPORT_FILENAME)));
 		
 		return " ";
 	}

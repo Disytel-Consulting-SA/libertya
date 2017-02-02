@@ -5140,3 +5140,30 @@ ALTER TABLE libertya.c_expenseconcepts
 
 ALTER TABLE libertya.c_expenseconcepts
   ADD CONSTRAINT dkcardsettlementconcepts FOREIGN KEY (c_cardsettlementconcepts_id) REFERENCES libertya.c_cardsettlementconcepts (c_cardsettlementconcepts_id) ON UPDATE NO ACTION ON DELETE NO ACTION;
+
+--20170202-1415 Mejoras de performance al Reporte de Compras
+CREATE OR REPLACE FUNCTION get_bpartner_product_po(productID integer)
+  RETURNS integer AS
+  --Obtiene el proveedor actual del artículo parámetro
+$BODY$
+DECLARE
+  bpid integer := 0;
+BEGIN
+  -- Busco el proveedor activo ordenado por currentvendor y fecha de actualización en caso que ninguno esté marcado como proveedor actual
+  SELECT INTO bpid c_bpartner_id
+  FROM m_product_po po
+  WHERE po.m_product_id = productID AND po.isactive = 'Y'
+  ORDER BY po.iscurrentvendor desc, po.updated desc
+  LIMIT 1;
+
+  IF(bpid is null)
+  THEN bpid = 0;
+  END IF;
+
+  RETURN bpid;
+END;
+$BODY$
+  LANGUAGE plpgsql VOLATILE
+  COST 100;
+ALTER FUNCTION get_bpartner_product_po(integer)
+  OWNER TO libertya;
