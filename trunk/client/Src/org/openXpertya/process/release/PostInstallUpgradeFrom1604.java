@@ -142,6 +142,14 @@ public class PostInstallUpgradeFrom1604 extends PluginPostInstallProcess {
 	protected final static String REPORTE_DE_COMPRAS_REPORT_UID = "CORE-AD_Process-1010342";
 	protected final static String REPORTE_DE_COMPRAS_REPORT_FILENAME = "ReporteDeCompras.jrxml";
 	
+	/** UID del informe de Movimientos Valorizados */
+	protected final static String VALUED_MOVEMENTS_JASPER_REPORT_UID = "CORE-AD_JasperReport-1010102";
+	protected final static String VALUED_MOVEMENTS_JASPER_REPORT_FILENAME = "ValuedMovements.jasper";
+	
+	/** UID del informe de Movimientos Valorizados Detallado */
+	protected final static String VALUED_MOVEMENTS_DETAIL_JASPER_REPORT_UID = "CORE-AD_JasperReport-1010117";
+	protected final static String VALUED_MOVEMENTS_DETAIL_JASPER_REPORT_FILENAME = "ValuedMovementsDetail.jasper";
+	
 	@Override
 	protected String doIt() throws Exception {
 		super.doIt();
@@ -555,6 +563,28 @@ public class PostInstallUpgradeFrom1604 extends PluginPostInstallProcess {
 						.readBinaryFromJar(
 								jarFileURL,
 								getBinaryFileURL(REPORTE_DE_COMPRAS_REPORT_FILENAME)));
+		
+		// Reporte de Movimientos Valorizados
+		MJasperReport
+			.updateBinaryData(
+					get_TrxName(),
+					getCtx(),
+					VALUED_MOVEMENTS_JASPER_REPORT_UID,
+					JarHelper
+							.readBinaryFromJar(
+									jarFileURL,
+									getBinaryFileURL(VALUED_MOVEMENTS_JASPER_REPORT_FILENAME)));
+		
+		// Reporte de Movimientos Valorizados Detallado
+		MJasperReport
+			.updateBinaryData(
+					get_TrxName(),
+					getCtx(),
+					VALUED_MOVEMENTS_DETAIL_JASPER_REPORT_UID,
+					JarHelper
+							.readBinaryFromJar(
+									jarFileURL,
+									getBinaryFileURL(VALUED_MOVEMENTS_DETAIL_JASPER_REPORT_FILENAME)));
 		
 		return " ";
 	}

@@ -72,18 +72,11 @@ public class ProductMovementsDataSource extends QueryDataSource {
 									"				productname, " +
 									"				productvalue, " +
 									"				order_documentno " +
-									"FROM v_product_movements " +
+								    "FROM v_product_movements_filtered( " + (getOrgID() != null ? getOrgID() : "-1") + ", "
+												+ (getDateFrom() != null ? "'" + getDateFrom() + "'" : "null") + "::timestamp, "
+												+ (getDateTo() != null ? "'" + getDateTo() + "'" : "null") + "::timestamp, -1, -1) " +
 									"WHERE docstatus IN ('CL','CO') " +
 									"		AND ad_client_id = ? ");
-		if(getOrgID() != null){
-			sql.append(" AND ad_org_id = ? ");
-		}
-		if(getDateFrom() != null){
-			sql.append(" AND datetrx >= ?::date ");
-		}
-		if(getDateTo() != null){
-			sql.append(" AND datetrx <= ?::date ");
-		}
 		sql.append(" ORDER BY productvalue, orgvalue, datetrx ");
 		return sql.toString();
 	}
@@ -92,15 +85,6 @@ public class ProductMovementsDataSource extends QueryDataSource {
 	protected Object[] getParameters() {
 		List<Object> params = new ArrayList<Object>();
 		params.add(Env.getAD_Client_ID(getCtx()));
-		if(getOrgID() != null){
-			params.add(getOrgID());
-		}
-		if(getDateFrom() != null){
-			params.add(getDateFrom());
-		}
-		if(getDateTo() != null){
-			params.add(getDateTo());
-		}
 		return params.toArray();
 	}
 	
