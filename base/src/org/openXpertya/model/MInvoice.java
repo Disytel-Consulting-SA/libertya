@@ -3655,7 +3655,7 @@ public class MInvoice extends X_C_Invoice implements DocAction,Authorization {
 			try {
 				if (authorizationChainManager
 						.loadAuthorizationChain(reactiveInvoice())) {
-					m_processMsg = Msg.getMsg(getCtx(), "ExistsAuthorizationChainLink");
+					m_processMsg = Msg.getMsg(getCtx(), "AlreadyExistsAuthorizationChainLink");
 					//this.setProcessed(true);
 					return DOCSTATUS_WaitingConfirmation;
 				}
