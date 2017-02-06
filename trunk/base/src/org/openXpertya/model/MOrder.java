@@ -3343,7 +3343,7 @@ public class MOrder extends X_C_Order implements DocAction, Authorization  {
 			try {
 				if (authorizationChainManager
 						.loadAuthorizationChain(reactiveOrder())) {
-					m_processMsg = Msg.getMsg(getCtx(), "ExistsAuthorizationChainLink");
+					m_processMsg = Msg.getMsg(getCtx(), "AlreadyExistsAuthorizationChainLink");
 					//this.setProcessed(true);
 					return DOCSTATUS_WaitingConfirmation;
 				}
