@@ -1048,7 +1048,7 @@ public class VOrdenPagoModel {
 
 	// Main
 	public Timestamp m_fechaFacturas = null;
-	protected Timestamp m_fechaTrx = new Timestamp(new java.util.Date().getTime());
+	protected Timestamp m_fechaTrx = Env.getTimestamp();
 	public boolean m_allInvoices = true;
 	public int C_BPartner_ID = 0;
 	public int AD_Org_ID = 0;
