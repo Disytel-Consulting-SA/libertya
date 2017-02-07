@@ -2942,6 +2942,7 @@ public class PoSMainForm extends CPanel implements FormPanel, ASyncProcess, Disp
 		gridBagConstraints20.anchor = java.awt.GridBagConstraints.EAST;
 		gridBagConstraints20.gridx = 1;
 		cTransferParamsPanel.add(getCBankAccountCombo(), gridBagConstraints20);
+		getCBankAccountCombo().setReadWrite(true);
 		return cTransferParamsPanel;
 	}
 
@@ -3243,6 +3244,8 @@ public class PoSMainForm extends CPanel implements FormPanel, ASyncProcess, Disp
 		gridBagConstraints28.insets = new java.awt.Insets(0,10,0,0);
 		gridBagConstraints28.gridx = 1;
 		cCheckParamsPanel.add(getCBankAccountCombo(), gridBagConstraints28);
+		// Se deja como sólo lectura cuando es cheque
+		getCBankAccountCombo().setReadWrite(false);
 		// Idem Combo de Bancos (compartido con tarjetas)
 		GridBagConstraints gridBagConstraints36 = new GridBagConstraints();
 		gridBagConstraints36.gridx = 1;
