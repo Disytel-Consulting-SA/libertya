@@ -64,7 +64,7 @@ public class ChecksByAccountDataSource implements OXPJasperDataSource {
 	}
 	
 	protected String getQuery(String dateCompareOperator, boolean addDateTo) {
-		StringBuffer sql = new StringBuffer("SELECT p.datetrx, " +
+		StringBuffer sql = new StringBuffer("SELECT o.value orgvalue, o.name orgname, p.datetrx, " +
 					"	p.duedate, " +
 					"	p.documentno, " +
 					"	ba.description as bank_account, " +
@@ -74,6 +74,7 @@ public class ChecksByAccountDataSource implements OXPJasperDataSource {
 					"FROM c_payment as p " +
 					"INNER JOIN c_bankaccount as ba ON ba.c_bankaccount_id = p.c_bankaccount_id " +
 					"INNER JOIN c_bpartner as bp ON bp.c_bpartner_id = p.c_bpartner_id " +
+					"INNER JOIN ad_org as o ON o.ad_org_id = p.ad_org_id " +
 					"WHERE p.ad_client_id = ? AND p.tendertype = 'K' AND p.docstatus IN ('CO','CL') ");
 		sql.append(" AND ");
 		sql.append(getDateColumnName());
@@ -113,7 +114,9 @@ public class ChecksByAccountDataSource implements OXPJasperDataSource {
 			balanceAux = balanceAux.add(rs.getBigDecimal("inAmt").subtract(
 					rs.getBigDecimal("outAmt")));
 			getChecks()
-					.add(new CheckDTO(rs.getTimestamp("datetrx"), rs
+					.add(new CheckDTO(rs.getString("orgvalue"), rs
+							.getString("orgname"), rs
+							.getTimestamp("datetrx"), rs
 							.getTimestamp("duedate"), rs
 							.getString("documentno"), rs
 							.getString("bank_account"), rs
@@ -147,7 +150,7 @@ public class ChecksByAccountDataSource implements OXPJasperDataSource {
 			balance = rs.getBigDecimal("balance");
 		}
 		getChecks().add(
-				new CheckDTO(rs.getTimestamp("maxDate"), null, null, null,
+				new CheckDTO(null, null, rs.getTimestamp("maxDate"), null, null, null,
 						"Saldo inicial", BigDecimal.ZERO, BigDecimal.ZERO,
 						balance));
 		setInitialBalance(balance);
@@ -159,7 +162,13 @@ public class ChecksByAccountDataSource implements OXPJasperDataSource {
 	public Object getFieldValue(JRField arg0) throws JRException {
 		Object output = null;
 		String fieldName = arg0.getName();
-		if(fieldName.equalsIgnoreCase("DATETRX")){
+		if(fieldName.equalsIgnoreCase("ORGVALUE")){
+			output = getCurrentCheck().getOrgValue();
+		}
+		else if (fieldName.equalsIgnoreCase("ORGNAME")){
+			output = getCurrentCheck().getOrgName();
+		}
+		else if (fieldName.equalsIgnoreCase("DATETRX")){
 			output = getCurrentCheck().getDateTrx();
 		}
 		else if(fieldName.equalsIgnoreCase("DUEDATE")){
@@ -293,6 +302,8 @@ public class ChecksByAccountDataSource implements OXPJasperDataSource {
 	}
 
 	private class CheckDTO{
+		private String orgValue;
+		private String orgName;
 		private Timestamp dateTrx;
 		private Timestamp dueDate;
 		private String documentNo;
@@ -304,8 +315,11 @@ public class ChecksByAccountDataSource implements OXPJasperDataSource {
 		
 		public CheckDTO(){}
 		
-		public CheckDTO(Timestamp dateTrx, Timestamp dueDate, String documentNo, String bankAccount,
-				String description, BigDecimal outAmt, BigDecimal inAmt, BigDecimal balance) {
+		public CheckDTO(String orgValue, String orgName, Timestamp dateTrx, Timestamp dueDate, 
+				String documentNo, String bankAccount, String description, BigDecimal outAmt, 
+				BigDecimal inAmt, BigDecimal balance) {
+			this.setOrgValue(orgValue);
+			this.setOrgName(orgName);
 			this.setDateTrx(dateTrx);
 			this.setDueDate(dueDate);
 			this.setBankAccount(bankAccount);
@@ -378,6 +392,22 @@ public class ChecksByAccountDataSource implements OXPJasperDataSource {
 
 		public void setBalance(BigDecimal balance) {
 			this.balance = balance;
+		}
+
+		public String getOrgValue() {
+			return orgValue;
+		}
+
+		public void setOrgValue(String orgValue) {
+			this.orgValue = orgValue;
+		}
+
+		public String getOrgName() {
+			return orgName;
+		}
+
+		public void setOrgName(String orgName) {
+			this.orgName = orgName;
 		}
 	}
 
