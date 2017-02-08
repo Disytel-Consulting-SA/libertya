@@ -906,7 +906,8 @@ public class MOrderLine extends X_C_OrderLine {
 		// cantidad sea múltiplo a ordenar 
         if(!isAllowAnyQty()
         		&& !o.isSOTrx()
-				&& orderDocType.getDocTypeKey().equals(MDocType.DOCTYPE_PurchaseOrder)){
+				&& orderDocType.getDocTypeKey().equals(MDocType.DOCTYPE_PurchaseOrder)
+				&& o.getDocStatus().equals(MInOut.DOCSTATUS_Drafted)){
 			MProductPO ppo = MProductPO.get(getCtx(), getM_Product_ID(), o.getC_BPartner_ID(), get_TrxName());
 			if (ppo != null && ppo.isActive()) {
 				// Cantidad mínima

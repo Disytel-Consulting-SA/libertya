@@ -2026,7 +2026,8 @@ public class MOrder extends X_C_Order implements DocAction, Authorization  {
         // Controlar las cantidades minimas pedidas
         if (!isSOTrx()
 				&& dt.getDocTypeKey()
-						.equals(MDocType.DOCTYPE_PurchaseOrder)) {
+						.equals(MDocType.DOCTYPE_PurchaseOrder)
+				&& getDocStatus().equals(MInOut.DOCSTATUS_Drafted)) {
         	CallResult result = controlOrderMinPack();
         	if(result.isError()){
         		m_processMsg = result.getMsg();
