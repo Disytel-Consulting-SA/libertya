@@ -26,6 +26,10 @@ public class MWithholdingSettlement extends X_C_WithholdingSettlement {
 
 	@Override
 	public boolean doAfterSave(boolean newRecord, boolean success) {
+		return recalculate();
+	}
+		
+	private boolean recalculate() {
 		StringBuffer sql = new StringBuffer();
 
 		sql.append("SELECT ");
@@ -67,6 +71,10 @@ public class MWithholdingSettlement extends X_C_WithholdingSettlement {
 
 		}
 		return true;
+	}
+	
+	protected boolean afterDelete( boolean success ) {
+		return recalculate();
 	}
 
 }

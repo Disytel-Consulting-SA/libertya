@@ -7,6 +7,8 @@ import java.sql.SQLException;
 import java.util.logging.Level;
 
 import org.openXpertya.model.MCouponsSettlements;
+import org.openXpertya.model.MCreditCardSettlement;
+import org.openXpertya.model.MPayment;
 import org.openXpertya.model.X_C_AllocationHdr;
 import org.openXpertya.model.X_C_AllocationLine;
 import org.openXpertya.model.X_C_CreditCardCouponFilter;
@@ -63,23 +65,60 @@ public class FilterCoupons extends SvrProcess {
 		sql.append("	p.c_payment_id ");
 		sql.append("FROM ");
 		sql.append("	" + X_C_Payment.Table_Name + " p ");
-		sql.append("	JOIN " + X_M_EntidadFinancieraPlan.Table_Name + " efp ON p.m_entidadfinancieraplan_id = efp.m_entidadfinancieraplan_id ");
+		sql.append("	LEFT JOIN " + X_M_EntidadFinancieraPlan.Table_Name + " efp ON p.m_entidadfinancieraplan_id = efp.m_entidadfinancieraplan_id ");
+
+		if (filter.getM_EntidadFinanciera_ID() > 0 || filter.getC_BPartner_ID() > 0) {
+			sql.append("	LEFT JOIN " + X_M_EntidadFinanciera.Table_Name + " ef ON efp.m_entidadfinanciera_id = ef.m_entidadfinanciera_id ");
+		}
+
 		sql.append("	LEFT JOIN " + X_C_AllocationLine.Table_Name + " al ON p.c_payment_id = al.c_payment_id ");
 		sql.append("	LEFT JOIN " + X_C_AllocationHdr.Table_Name + " ah ON al.c_allocationhdr_id = ah.c_allocationhdr_id ");
 		sql.append("WHERE ");
+		// Filtro cupones que ya esten en una liquidación.
 		sql.append("	p.c_payment_id NOT IN ( ");
 		sql.append("		SELECT ");
 		sql.append("			c_payment_id ");
 		sql.append("		FROM ");
 		sql.append("			" + MCouponsSettlements.Table_Name + " ");
 		sql.append("	) ");
+		// Filtro cupones cuyo pago esté conciliado.
 		sql.append("	AND p.isreconciled = 'N' ");
+		// Filtro sólo pagos con tarjeta.
+		sql.append("	AND p.tendertype = '" + MPayment.TENDERTYPE_CreditCard + "' ");
+		// Filtro sólo pagos con estado de auditoría "A verificar"
+		sql.append("	AND p.auditstatus = '" + MPayment.AUDITSTATUS_ToVerify + "' ");
+		// Filtro por organización
+		sql.append("	AND p.ad_org_id = " + filter.getAD_Org_ID() + " ");
 
+		// FILTROS OPCIONALES
+
+		// Filtro opcional por fecha "desde"
 		if (filter.getTrxDateFrom() != null) {
 			sql.append("AND p.datetrx >= ? ");
 		}
+		// Filtro opcional por fecha "hasta"
 		if (filter.getTrxDateTo() != null) {
 			sql.append("AND p.datetrx <= ? ");
+		}
+		// Filtro opcional por moneda
+		if (filter.getC_Currency_ID() > 0) {
+			sql.append("AND p.C_Currency_ID = ? ");
+		}
+		// Filtro opcional por entidad comercial de la entidad financiera
+		if (filter.getC_BPartner_ID() > 0) {
+			sql.append("AND ef.C_BPartner_ID = ? ");
+		}
+		// Filtro opcional por entidad financiera
+		if (filter.getM_EntidadFinanciera_ID() > 0) {
+			sql.append("AND ef.M_EntidadFinanciera_ID = ? ");
+		}
+		// Filtro opcional por plan de entidad financiera
+		if (filter.getM_EntidadFinancieraPlan_ID() > 0) {
+			sql.append("AND p.M_EntidadFinancieraPlan_ID = ? ");
+		}
+		// Filtro opcional por plan de entidad financiera
+		if (filter.getPaymentBatch() != null && !filter.getPaymentBatch().trim().isEmpty()) {
+			sql.append("AND p.CouponBatchNumber = ? ");
 		}
 
 		PreparedStatement pstmt = null;
@@ -96,15 +135,35 @@ public class FilterCoupons extends SvrProcess {
 			}
 			if (filter.getTrxDateTo() != null) {
 				pstmt.setDate(aux, new Date(filter.getTrxDateTo().getTime()));
+				aux++;
+			}
+			if (filter.getC_Currency_ID() > 0) {
+				pstmt.setInt(aux, filter.getC_Currency_ID());
+				aux++;
+			}
+			if (filter.getC_BPartner_ID() > 0) {
+				pstmt.setInt(aux, filter.getC_BPartner_ID());
+				aux++;
+			}
+			if (filter.getM_EntidadFinanciera_ID() > 0) {
+				pstmt.setInt(aux, filter.getM_EntidadFinanciera_ID());
+				aux++;
+			}
+			if (filter.getM_EntidadFinancieraPlan_ID() > 0) {
+				pstmt.setInt(aux, filter.getM_EntidadFinancieraPlan_ID());
+				aux++;
+			}
+			if (filter.getPaymentBatch() != null && !filter.getPaymentBatch().trim().isEmpty()) {
+				pstmt.setString(aux, filter.getPaymentBatch());
+				aux++;
 			}
 
 			rs = pstmt.executeQuery();
 			while (rs.next()) {
 				MCouponsSettlements couponsSettlements = new MCouponsSettlements(getCtx(), 0, get_TrxName());
+				couponsSettlements.setAD_Org_ID(filter.getAD_Org_ID());
 				couponsSettlements.setC_CreditCardSettlement_ID(filter.getC_CreditCardSettlement_ID());
-
 				couponsSettlements.setC_CreditCardCouponFilter_ID(filter.getC_CreditCardCouponFilter_ID());
-				
 				couponsSettlements.setM_EntidadFinanciera_ID(rs.getInt(1));
 				couponsSettlements.setM_EntidadFinancieraPlan_ID(rs.getInt(2));
 				couponsSettlements.setTrxDate(rs.getTimestamp(3));
@@ -115,16 +174,18 @@ public class FilterCoupons extends SvrProcess {
 				couponsSettlements.setPaymentBatch(rs.getString(8));
 				couponsSettlements.setC_Currency_ID(rs.getInt(9));
 				couponsSettlements.setC_Payment_ID(rs.getInt(10));
-
 				couponsSettlements.setInclude(false);
 
 				if (!couponsSettlements.save()) {
 					throw new Exception(CLogger.retrieveErrorAsString());
 				} else {
-					couponsSettlements.calculateSettlementCouponsTotalAmount(get_TrxName());
 					saved++;
 				}
 			}
+
+			MCreditCardSettlement settlement = new MCreditCardSettlement(getCtx(), filter.getC_CreditCardSettlement_ID(), get_TrxName());
+			settlement.calculateSettlementCouponsTotalAmount(get_TrxName());
+
 			// Marco al filtro como procesado.
 			filter.setIsProcessed(true);
 			if (!filter.save()) {

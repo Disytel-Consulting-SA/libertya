@@ -36,7 +36,7 @@ public class ReconcileCoupons extends SvrProcess {
 		StringBuffer sql = new StringBuffer();
 
 		sql.append("SELECT DISTINCT ");
-		sql.append("	P.c_payment_id ");
+		sql.append("	p.c_payment_id ");
 		sql.append("FROM ");
 		sql.append("	" + X_C_CreditCardCouponFilter.Table_Name + " f ");
 		sql.append("	INNER JOIN " + X_C_CouponsSettlements.Table_Name + " c ");
@@ -45,8 +45,8 @@ public class ReconcileCoupons extends SvrProcess {
 		sql.append("		ON p.c_payment_id = c.c_payment_id ");
 		sql.append("WHERE ");
 		sql.append("	f.c_creditcardsettlement_id = ? ");
-		sql.append("	AND P.auditstatus = ? ");
-		sql.append("	AND include = 'Y' ");
+		sql.append("	AND p.auditstatus = ? ");
+		sql.append("	AND c.include = 'Y' ");
 
 		PreparedStatement ps = null;
 		ResultSet rs = null;
@@ -59,7 +59,7 @@ public class ReconcileCoupons extends SvrProcess {
 			ps.setInt(1, creditCardSettlement.getC_CreditCardSettlement_ID());
 			ps.setString(2, X_C_Payment.AUDITSTATUS_ToVerify);
 			rs = ps.executeQuery();
-			if (rs.next()) {
+			while (rs.next()) {
 				// Cambia el estado de auditoria de los cupones a "Pagado".
 				sql = new StringBuffer();
 				sql.append("UPDATE ");
@@ -101,6 +101,18 @@ public class ReconcileCoupons extends SvrProcess {
 		sql.append("	) ");
 
 		deleted += DB.executeUpdate(sql.toString());
+
+		// Finalmente marca los restantes como conciliados.
+		sql = new StringBuffer();
+
+		sql.append("UPDATE ");
+		sql.append("	" + X_C_CouponsSettlements.Table_Name + " ");
+		sql.append("SET ");
+		sql.append("	isReconciled = 'Y' ");
+		sql.append("WHERE ");
+		sql.append("	C_CreditCardSettlement_ID = " + creditCardSettlement.getC_CreditCardSettlement_ID() + " ");
+
+		DB.executeUpdate(sql.toString());
 
 		Object[] params = new Object[] { updated, deleted };
 		return Msg.getMsg(Env.getAD_Language(getCtx()), "ReconcileCouponsResult", params);

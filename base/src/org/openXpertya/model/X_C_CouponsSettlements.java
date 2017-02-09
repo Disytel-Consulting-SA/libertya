@@ -7,7 +7,7 @@ import java.math.*;
 import org.openXpertya.util.*;
 /** Modelo Generado por C_CouponsSettlements
  *  @author Comunidad de Desarrollo Libertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
- *  @version  - 2017-01-30 16:10:55.28 */
+ *  @version  - 2017-02-09 12:25:47.114 */
 public class X_C_CouponsSettlements extends org.openXpertya.model.PO
 {
 /** Constructor estándar */
@@ -23,6 +23,7 @@ setC_CreditCardSettlement_ID (0);	// @SQL=SELECT C_CreditCardSettlement_ID FROM 
 setC_Currency_ID (0);
 setC_Payment_ID (0);
 setInclude (false);
+setIsReconciled (false);
 setM_EntidadFinanciera_ID (0);
 setM_EntidadFinancieraPlan_ID (0);
 }
@@ -149,6 +150,7 @@ public String getCouponNo()
 {
 return (String)get_Value("CouponNo");
 }
+public static final int C_PAYMENT_ID_AD_Reference_ID = MReference.getReferenceID("C_Payment");
 /** Set Payment.
 Payment identifier */
 public void setC_Payment_ID (int C_Payment_ID)
@@ -187,6 +189,24 @@ set_Value ("Include", new Boolean(Include));
 public boolean isInclude() 
 {
 Object oo = get_Value("Include");
+if (oo != null) 
+{
+ if (oo instanceof Boolean) return ((Boolean)oo).booleanValue();
+ return "Y".equals(oo);
+}
+return false;
+}
+/** Set Reconciled.
+Payment is reconciled with bank statement */
+public void setIsReconciled (boolean IsReconciled)
+{
+set_Value ("IsReconciled", new Boolean(IsReconciled));
+}
+/** Get Reconciled.
+Payment is reconciled with bank statement */
+public boolean isReconciled() 
+{
+Object oo = get_Value("IsReconciled");
 if (oo != null) 
 {
  if (oo instanceof Boolean) return ((Boolean)oo).booleanValue();
