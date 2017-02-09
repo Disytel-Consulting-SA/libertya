@@ -7,7 +7,7 @@ import java.math.*;
 import org.openXpertya.util.*;
 /** Modelo Generado por C_CreditCardSettlement
  *  @author Comunidad de Desarrollo Libertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
- *  @version  - 2017-01-25 13:37:01.85 */
+ *  @version  - 2017-02-09 12:25:48.771 */
 public class X_C_CreditCardSettlement extends org.openXpertya.model.PO
 {
 /** Constructor estándar */
@@ -16,12 +16,12 @@ public X_C_CreditCardSettlement (Properties ctx, int C_CreditCardSettlement_ID, 
 super (ctx, C_CreditCardSettlement_ID, trxName);
 /** if (C_CreditCardSettlement_ID == 0)
 {
+setC_BPartner_ID (0);
 setC_CreditCardSettlement_ID (0);
 setDocAction (null);	// CO
 setDocStatus (null);	// DR
 setIsApproved (false);
 setIsReconciled (false);
-setM_EntidadFinanciera_ID (0);
 setPaymentDate (new Timestamp(System.currentTimeMillis()));
 setProcessed (false);
 }
@@ -65,6 +65,20 @@ public BigDecimal getAmount()
 BigDecimal bd = (BigDecimal)get_Value("Amount");
 if (bd == null) return Env.ZERO;
 return bd;
+}
+/** Set Business Partner .
+Identifies a Business Partner */
+public void setC_BPartner_ID (int C_BPartner_ID)
+{
+set_Value ("C_BPartner_ID", new Integer(C_BPartner_ID));
+}
+/** Get Business Partner .
+Identifies a Business Partner */
+public int getC_BPartner_ID() 
+{
+Integer ii = (Integer)get_Value("C_BPartner_ID");
+if (ii == null) return 0;
+return ii.intValue();
 }
 /** Set Credit Card Settlement ID */
 public void setC_CreditCardSettlement_ID (int C_CreditCardSettlement_ID)
@@ -118,21 +132,38 @@ BigDecimal bd = (BigDecimal)get_Value("CouponsTotalAmount");
 if (bd == null) return Env.ZERO;
 return bd;
 }
+public static final int C_PAYMENT_ID_AD_Reference_ID = MReference.getReferenceID("C_Payment");
+/** Set Payment.
+Payment identifier */
+public void setC_Payment_ID (int C_Payment_ID)
+{
+if (C_Payment_ID <= 0) set_Value ("C_Payment_ID", null);
+ else 
+set_Value ("C_Payment_ID", new Integer(C_Payment_ID));
+}
+/** Get Payment.
+Payment identifier */
+public int getC_Payment_ID() 
+{
+Integer ii = (Integer)get_Value("C_Payment_ID");
+if (ii == null) return 0;
+return ii.intValue();
+}
 public static final int CREDITCARDTYPE_AD_Reference_ID = MReference.getReferenceID("CreditCardTypes");
-/** FIRSTDATA = FD */
-public static final String CREDITCARDTYPE_FIRSTDATA = "FD";
 /** AMEX = AM */
 public static final String CREDITCARDTYPE_AMEX = "AM";
 /** VISA = VI */
 public static final String CREDITCARDTYPE_VISA = "VI";
 /** NARANJA = NA */
 public static final String CREDITCARDTYPE_NARANJA = "NA";
+/** FIRSTDATA = FD */
+public static final String CREDITCARDTYPE_FIRSTDATA = "FD";
 /** Set Credit Card.
 Credit Card (Visa, MC, AmEx) */
 public void setCreditCardType (String CreditCardType)
 {
-if (CreditCardType == null || CreditCardType.equals("FD") || CreditCardType.equals("AM") || CreditCardType.equals("VI") || CreditCardType.equals("NA"));
- else throw new IllegalArgumentException ("CreditCardType Invalid value - Reference = CREDITCARDTYPE_AD_Reference_ID - FD - AM - VI - NA");
+if (CreditCardType == null || CreditCardType.equals("AM") || CreditCardType.equals("VI") || CreditCardType.equals("NA") || CreditCardType.equals("FD"));
+ else throw new IllegalArgumentException ("CreditCardType Invalid value - " + CreditCardType + " - Reference = CREDITCARDTYPE_AD_Reference_ID - AM - VI - NA - FD");
 if (CreditCardType != null && CreditCardType.length() > 2)
 {
 log.warning("Length > 2 - truncated");
@@ -180,7 +211,7 @@ The targeted status of the document */
 public void setDocAction (String DocAction)
 {
 if (DocAction.equals("AP") || DocAction.equals("CL") || DocAction.equals("PR") || DocAction.equals("IN") || DocAction.equals("CO") || DocAction.equals("--") || DocAction.equals("RC") || DocAction.equals("RJ") || DocAction.equals("RA") || DocAction.equals("WC") || DocAction.equals("XL") || DocAction.equals("RE") || DocAction.equals("PO") || DocAction.equals("VO"));
- else throw new IllegalArgumentException ("DocAction Invalid value - Reference = DOCACTION_AD_Reference_ID - AP - CL - PR - IN - CO - -- - RC - RJ - RA - WC - XL - RE - PO - VO");
+ else throw new IllegalArgumentException ("DocAction Invalid value - " + DocAction + " - Reference = DOCACTION_AD_Reference_ID - AP - CL - PR - IN - CO - -- - RC - RJ - RA - WC - XL - RE - PO - VO");
 if (DocAction == null) throw new IllegalArgumentException ("DocAction is mandatory");
 if (DocAction.length() > 2)
 {
@@ -225,7 +256,7 @@ The current status of the document */
 public void setDocStatus (String DocStatus)
 {
 if (DocStatus.equals("VO") || DocStatus.equals("NA") || DocStatus.equals("IP") || DocStatus.equals("CO") || DocStatus.equals("AP") || DocStatus.equals("CL") || DocStatus.equals("WC") || DocStatus.equals("WP") || DocStatus.equals("??") || DocStatus.equals("DR") || DocStatus.equals("IN") || DocStatus.equals("RE"));
- else throw new IllegalArgumentException ("DocStatus Invalid value - Reference = DOCSTATUS_AD_Reference_ID - VO - NA - IP - CO - AP - CL - WC - WP - ?? - DR - IN - RE");
+ else throw new IllegalArgumentException ("DocStatus Invalid value - " + DocStatus + " - Reference = DOCSTATUS_AD_Reference_ID - VO - NA - IP - CO - AP - CL - WC - WP - ?? - DR - IN - RE");
 if (DocStatus == null) throw new IllegalArgumentException ("DocStatus is mandatory");
 if (DocStatus.length() > 2)
 {
@@ -299,18 +330,6 @@ public BigDecimal getIVAAmount()
 BigDecimal bd = (BigDecimal)get_Value("IVAAmount");
 if (bd == null) return Env.ZERO;
 return bd;
-}
-/** Set Entidad Financiera */
-public void setM_EntidadFinanciera_ID (int M_EntidadFinanciera_ID)
-{
-set_Value ("M_EntidadFinanciera_ID", new Integer(M_EntidadFinanciera_ID));
-}
-/** Get Entidad Financiera */
-public int getM_EntidadFinanciera_ID() 
-{
-Integer ii = (Integer)get_Value("M_EntidadFinanciera_ID");
-if (ii == null) return 0;
-return ii.intValue();
 }
 /** Set Net amount */
 public void setNetAmount (BigDecimal NetAmount)

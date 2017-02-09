@@ -7,7 +7,7 @@ import java.math.*;
 import org.openXpertya.util.*;
 /** Modelo Generado por C_CreditCardCouponFilter
  *  @author Comunidad de Desarrollo Libertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
- *  @version  - 2017-01-30 16:10:56.381 */
+ *  @version  - 2017-02-09 12:25:48.307 */
 public class X_C_CreditCardCouponFilter extends org.openXpertya.model.PO
 {
 /** Constructor estándar */
@@ -46,6 +46,22 @@ public String toString()
 {
 StringBuffer sb = new StringBuffer ("X_C_CreditCardCouponFilter[").append(getID()).append("]");
 return sb.toString();
+}
+/** Set Business Partner .
+Identifies a Business Partner */
+public void setC_BPartner_ID (int C_BPartner_ID)
+{
+if (C_BPartner_ID <= 0) set_Value ("C_BPartner_ID", null);
+ else 
+set_Value ("C_BPartner_ID", new Integer(C_BPartner_ID));
+}
+/** Get Business Partner .
+Identifies a Business Partner */
+public int getC_BPartner_ID() 
+{
+Integer ii = (Integer)get_Value("C_BPartner_ID");
+if (ii == null) return 0;
+return ii.intValue();
 }
 /** Set Credit Card Coupon Filter ID */
 public void setC_CreditCardCouponFilter_ID (int C_CreditCardCouponFilter_ID)
@@ -104,6 +120,7 @@ if (oo != null)
 }
 return false;
 }
+public static final int M_ENTIDADFINANCIERA_ID_AD_Reference_ID = MReference.getReferenceID("Entidad Financiera From BPartner");
 /** Set Entidad Financiera */
 public void setM_EntidadFinanciera_ID (int M_EntidadFinanciera_ID)
 {

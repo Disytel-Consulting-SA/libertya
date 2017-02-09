@@ -5505,3 +5505,214 @@ drop view v_product_movements;
 create or replace view v_product_movements as 
 select * 
 from v_product_movements_filtered(-1,null,null,-1,-1);
+
+--20170209-1214 Merge de Revisión 1778
+-- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -  -
+--  - - - Trigger que setea Estado Auditoría "Pendiente de Cierre" por    - - - -
+--  - - - a los pagos con tarjetas									      - - - -
+-- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -  -
+
+CREATE OR REPLACE FUNCTION setDefaultAuditStatus()
+  RETURNS trigger AS
+$BODY$
+BEGIN
+IF NEW.tendertype = 'C' THEN
+	NEW.auditstatus = 'CP';
+END IF;
+RETURN NEW;
+END
+$BODY$
+  LANGUAGE plpgsql VOLATILE
+  COST 100;
+ALTER FUNCTION setDefaultAuditStatus()
+  OWNER TO libertya;
+
+
+
+CREATE TRIGGER "setDefaultAuditStatusTrg" BEFORE INSERT
+   ON c_payment FOR EACH ROW
+   EXECUTE PROCEDURE libertya.setdefaultauditstatus();
+
+-- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -  -
+--  - - - Indice para referencia a pagos desde los cupones en liquidación - - - -
+-- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -  -
+
+CREATE INDEX paymentindex
+	ON libertya.c_couponssettlements (c_payment_id);
+
+-- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -  -
+--  - - - - - Se agrega referencia a C_payment para las liquidaciones - - - - - -
+-- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -  -
+
+ALTER TABLE libertya.c_creditcardsettlement
+  ADD COLUMN c_payment_id integer;
+
+ALTER TABLE libertya.c_creditcardsettlement
+  ADD CONSTRAINT fkpayment FOREIGN KEY (c_payment_id)
+  REFERENCES libertya.c_payment (c_payment_id)
+  ON UPDATE NO ACTION ON DELETE NO ACTION;
+
+-- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+-- - - - Se modifican todas las claves foráneas de las tablas de la ventana de -
+-- - - - liquidacion de tarjetas de crédito, a fin de permitir la eliminación  -
+-- - - - en cascada. - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+-- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+ALTER TABLE libertya.c_ivasettlements
+  DROP CONSTRAINT ivasettlementscreditcardsettlement;
+
+ALTER TABLE libertya.c_ivasettlements
+  ADD CONSTRAINT fkcreditcardsettlement FOREIGN KEY (c_creditcardsettlement_id) 
+  REFERENCES libertya.c_creditcardsettlement (c_creditcardsettlement_id)
+  ON UPDATE NO ACTION ON DELETE CASCADE;
+
+-- - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+ALTER TABLE libertya.c_commissionconcepts
+  DROP CONSTRAINT fkcreditcardsettlement;
+
+ALTER TABLE libertya.c_commissionconcepts
+  ADD CONSTRAINT fkcreditcardsettlement FOREIGN KEY (c_creditcardsettlement_id) 
+  REFERENCES libertya.c_creditcardsettlement (c_creditcardsettlement_id)
+  ON UPDATE NO ACTION ON DELETE CASCADE;
+
+-- - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+ALTER TABLE libertya.c_withholdingsettlement
+  DROP CONSTRAINT fkcreditcardsettlement;
+
+ALTER TABLE libertya.c_withholdingsettlement
+  ADD CONSTRAINT fkcreditcardsettlement FOREIGN KEY (c_creditcardsettlement_id) 
+  REFERENCES libertya.c_creditcardsettlement (c_creditcardsettlement_id)
+  ON UPDATE NO ACTION ON DELETE CASCADE;
+
+-- - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+ALTER TABLE libertya.c_perceptionssettlement
+  DROP CONSTRAINT perceptionssettlementcreditcardsettlement;
+
+ALTER TABLE libertya.c_perceptionssettlement
+  ADD CONSTRAINT fkcreditcardsettlement FOREIGN KEY (c_creditcardsettlement_id) 
+  REFERENCES libertya.c_creditcardsettlement (c_creditcardsettlement_id)
+  ON UPDATE NO ACTION ON DELETE CASCADE;
+
+-- - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+ALTER TABLE libertya.c_expenseconcepts
+  DROP CONSTRAINT fkcreditcardsettlement;
+
+ALTER TABLE libertya.c_expenseconcepts
+  ADD CONSTRAINT fkcreditcardsettlement FOREIGN KEY (c_creditcardsettlement_id) 
+  REFERENCES libertya.c_creditcardsettlement (c_creditcardsettlement_id)
+  ON UPDATE NO ACTION ON DELETE CASCADE;
+
+-- - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+ALTER TABLE libertya.c_creditcardcouponfilter
+  DROP CONSTRAINT fkcreditcardsettlement;
+
+ALTER TABLE libertya.c_creditcardcouponfilter
+  ADD CONSTRAINT fkcreditcardsettlement FOREIGN KEY (c_creditcardsettlement_id) 
+  REFERENCES libertya.c_creditcardsettlement (c_creditcardsettlement_id)
+  ON UPDATE NO ACTION ON DELETE CASCADE;
+
+-- - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+ALTER TABLE libertya.c_couponssettlements
+  DROP CONSTRAINT fkcreditcardcouponfilter;
+
+ALTER TABLE libertya.c_couponssettlements
+  ADD CONSTRAINT fkcreditcardcouponfilter FOREIGN KEY (c_creditcardcouponfilter_id)
+  REFERENCES libertya.c_creditcardcouponfilter (c_creditcardcouponfilter_id)
+  ON UPDATE NO ACTION ON DELETE CASCADE;
+
+-- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+-- - - - Se agrega un campo a la entidad financiera, para indicar el servicio  -
+-- - - - financiero (Visa, Amex, FirstData, etc) - - - - - - - - - - - - - - - -
+-- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+ALTER TABLE libertya.m_entidadfinanciera
+  ADD COLUMN financingservice character(2);
+
+-- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+-- - - - Se agrega un campo "Conciliado" al cupón dentro de la liquidación - - -
+-- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+ALTER TABLE libertya.c_couponssettlements
+  ADD COLUMN isreconciled character(1) NOT NULL DEFAULT 'N'::bpchar;
+
+-- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -  -
+-- - - - Se agrega un campo a la vista, para asignarlo a un boton, se quitaron  -
+-- - - - otros que no se utilizaban, permitiendo quitar joins, y se mejoró la - -
+-- - - - condición de match - - - - - - - - - - - - - - - - - - - - - - - - - - -
+-- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -  -
+
+DROP VIEW libertya.c_paymentcoupon_v;
+
+CREATE OR REPLACE VIEW libertya.c_paymentcoupon_v AS 
+	SELECT
+		p.c_payment_id,
+		p.ad_client_id,
+		p.ad_org_id,
+		p.created,
+		p.createdby,
+		p.updated,
+		p.updatedby,
+		'Y'::character(1) AS isactive,
+		efp.m_entidadfinanciera_id,
+		p.m_entidadfinancieraplan_id,
+		ccs.settlementno,
+		p.c_invoice_id,
+		p.creditcardnumber,
+		p.couponnumber,
+		p.c_bpartner_id,
+		p.datetrx,
+		p.couponbatchnumber,
+		p.payamt,
+		p.c_currency_id,
+		p.docstatus,
+		cs.isreconciled,
+		efp.cuotaspago AS totalallocations,
+		ccs.paymentdate AS settlementdate,
+		p.auditstatus,
+		''::character(1) AS reject
+	FROM
+		libertya.c_payment p
+		LEFT JOIN libertya.m_entidadfinancieraplan efp
+			ON p.m_entidadfinancieraplan_id = efp.m_entidadfinancieraplan_id
+		LEFT JOIN libertya.c_couponssettlements cs
+			ON p.c_payment_id = cs.c_payment_id
+		LEFT JOIN libertya.c_creditcardsettlement ccs
+			ON cs.c_creditcardsettlement_id = ccs.c_creditcardsettlement_id
+	WHERE
+		p.tendertype = 'C';
+
+-- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+-- - - Se cambia la referencia a Entidad Financiera, por Entidad Comercial - -
+-- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+ALTER TABLE libertya.c_creditcardsettlement
+  DROP CONSTRAINT fkentidadfinanciera;
+
+ALTER TABLE libertya.c_creditcardsettlement
+  DROP COLUMN m_entidadfinanciera_id;
+
+ALTER TABLE libertya.c_creditcardsettlement
+  ADD COLUMN c_bpartner_id integer NOT NULL;
+
+ALTER TABLE libertya.c_creditcardsettlement
+  ADD CONSTRAINT fkbpartner FOREIGN KEY (c_bpartner_id)
+  REFERENCES libertya.c_bpartner (c_bpartner_id)
+  ON UPDATE NO ACTION ON DELETE NO ACTION;
+
+-- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+-- - - - Se agrega a los filtros de la liquidación, la entidad comercial - - -
+-- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+ALTER TABLE libertya.c_creditcardcouponfilter
+  ADD COLUMN c_bpartner_id integer;
+
+ALTER TABLE libertya.c_creditcardcouponfilter
+  ADD CONSTRAINT fkbpartner FOREIGN KEY (c_bpartner_id)
+  REFERENCES libertya.c_bpartner (c_bpartner_id)
+  ON UPDATE NO ACTION ON DELETE NO ACTION;

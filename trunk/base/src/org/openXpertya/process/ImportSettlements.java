@@ -158,14 +158,14 @@ public class ImportSettlements extends SvrProcess {
 	 * @param value valor por el cual se filtrará la búsqueda de entidad financiera.
 	 * @return ID de la entidad financiera, caso contrario -1.
 	 */
-	private int getM_EntidadFinanciera_ID(String value) {
+	private int getC_BPartner_ID(String value) {
 		if (value == null || value.trim().isEmpty()) {
 			return -1;
 		}
 		StringBuffer sql = new StringBuffer();
 
 		sql.append("SELECT ");
-		sql.append("	M_EntidadFinanciera_ID ");
+		sql.append("	C_BPartner_ID ");
 		sql.append("FROM ");
 		sql.append("	" + X_M_EntidadFinanciera.Table_Name + " ");
 		sql.append("WHERE ");
@@ -200,7 +200,7 @@ public class ImportSettlements extends SvrProcess {
 			MCreditCardSettlement settlement = new MCreditCardSettlement(getCtx(), 0, get_TrxName());
 
 			settlement.setCreditCardType(CentralPosImport.FIRSTDATA);
-			settlement.setM_EntidadFinanciera_ID(getM_EntidadFinanciera_ID(rs.getString("comercio_participante")));
+			settlement.setC_BPartner_ID(getC_BPartner_ID(rs.getString("comercio_participante")));
 			settlement.setPaymentDate(new Timestamp(date.getTime()));
 			settlement.setPayment(rs.getString("numero_liquidacion"), defaultCurrency.getCurSymbol(), amt.toString(), dateStr, dateStr);
 			settlement.setAmount(amt);
@@ -290,7 +290,7 @@ public class ImportSettlements extends SvrProcess {
 				// System.err.println("NO SE PUDO CALCULAR EL IMPORTE NETO, UNO O MAS VALORES NULOS");
 			}
 
-			int entidadFinancieraID = getM_EntidadFinanciera_ID(rs.getString("comercio"));
+			int entidadFinancieraID = getC_BPartner_ID(rs.getString("comercio"));
 
 			if (entidadFinancieraID > 0) {
 				String settlementNo = rs.getString("nro_liquidacion");
@@ -300,7 +300,7 @@ public class ImportSettlements extends SvrProcess {
 				MCreditCardSettlement settlement = new MCreditCardSettlement(getCtx(), 0, get_TrxName());
 
 				settlement.setCreditCardType(CentralPosImport.NARANJA);
-				settlement.setM_EntidadFinanciera_ID(entidadFinancieraID);
+				settlement.setC_BPartner_ID(entidadFinancieraID);
 				settlement.setPaymentDate(new Timestamp(date.getTime()));
 				settlement.setPayment(settlementNo, defaultCurrency.getCurSymbol(), amt.toString(), dateStr, dateStr);
 				settlement.setAmount(amt);
@@ -352,7 +352,7 @@ public class ImportSettlements extends SvrProcess {
 			MCreditCardSettlement settlement = new MCreditCardSettlement(getCtx(), 0, get_TrxName());
 
 			settlement.setCreditCardType(CentralPosImport.AMEX);
-			settlement.setM_EntidadFinanciera_ID(getM_EntidadFinanciera_ID(rs.getString("num_est")));
+			settlement.setC_BPartner_ID(getC_BPartner_ID(rs.getString("num_est")));
 			settlement.setPaymentDate(date != null ? new Timestamp(date.getTime()) : null);
 			settlement.setPayment(rs.getString("num_sec_pago"), defaultCurrency.getCurSymbol(), amt.toString(), dateStr, dateStr);
 			settlement.setAmount(new BigDecimal(rs.getString("imp_bruto_est")));
@@ -424,7 +424,7 @@ public class ImportSettlements extends SvrProcess {
 			MCreditCardSettlement settlement = new MCreditCardSettlement(getCtx(), 0, get_TrxName());
 
 			settlement.setCreditCardType(CentralPosImport.VISA);
-			settlement.setM_EntidadFinanciera_ID(getM_EntidadFinanciera_ID(rs.getString("num_est")));
+			settlement.setC_BPartner_ID(getC_BPartner_ID(rs.getString("num_est")));
 			settlement.setPaymentDate(new Timestamp(date.getTime()));
 			settlement.setPayment(rs.getString("nroliq"), defaultCurrency.getCurSymbol(), amt.toString(), dateStr, dateStr);
 			settlement.setAmount(amt);

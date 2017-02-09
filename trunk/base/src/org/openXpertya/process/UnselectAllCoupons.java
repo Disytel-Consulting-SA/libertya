@@ -2,6 +2,7 @@ package org.openXpertya.process;
 
 import java.util.logging.Level;
 
+import org.openXpertya.model.MCreditCardSettlement;
 import org.openXpertya.model.X_C_CouponsSettlements;
 import org.openXpertya.util.DB;
 
@@ -45,9 +46,14 @@ public class UnselectAllCoupons extends SvrProcess {
 		sql.append("SET ");
 		sql.append("	include = 'N' ");
 		sql.append("WHERE ");
-		sql.append("	c_creditcardsettlement_id = " + m_C_CreditCardSettlement_ID);
+		sql.append("	 c_creditcardsettlement_id = " + m_C_CreditCardSettlement_ID);
+		sql.append(" AND isreconciled = 'N'");
 
 		DB.executeUpdate(sql.toString(), get_TrxName());
+
+		MCreditCardSettlement settlement = new MCreditCardSettlement(getCtx(), m_C_CreditCardSettlement_ID, get_TrxName());
+		settlement.calculateSettlementCouponsTotalAmount(get_TrxName());
+
 		return "";
 	}
 

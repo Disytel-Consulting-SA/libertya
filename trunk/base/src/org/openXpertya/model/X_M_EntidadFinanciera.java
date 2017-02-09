@@ -7,7 +7,7 @@ import java.math.*;
 import org.openXpertya.util.*;
 /** Modelo Generado por M_EntidadFinanciera
  *  @author Comunidad de Desarrollo Libertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
- *  @version  - 2017-01-25 11:09:04.768 */
+ *  @version  - 2017-02-09 12:27:18.94 */
 public class X_M_EntidadFinanciera extends org.openXpertya.model.PO
 {
 /** Constructor estándar */
@@ -162,7 +162,7 @@ Credit Card (Visa, MC, AmEx) */
 public void setCreditCardType (String CreditCardType)
 {
 if (CreditCardType.equals("D") || CreditCardType.equals("C") || CreditCardType.equals("P") || CreditCardType.equals("M") || CreditCardType.equals("V") || CreditCardType.equals("A") || CreditCardType.equals("N"));
- else throw new IllegalArgumentException ("CreditCardType Invalid value - Reference = CREDITCARDTYPE_AD_Reference_ID - D - C - P - M - V - A - N");
+ else throw new IllegalArgumentException ("CreditCardType Invalid value - " + CreditCardType + " - Reference = CREDITCARDTYPE_AD_Reference_ID - D - C - P - M - V - A - N");
 if (CreditCardType == null) throw new IllegalArgumentException ("CreditCardType is mandatory");
 if (CreditCardType.length() > 20)
 {
@@ -191,6 +191,32 @@ set_Value ("EstablishmentNumber", EstablishmentNumber);
 public String getEstablishmentNumber() 
 {
 return (String)get_Value("EstablishmentNumber");
+}
+public static final int FINANCINGSERVICE_AD_Reference_ID = MReference.getReferenceID("CreditCardTypes");
+/** AMEX = AM */
+public static final String FINANCINGSERVICE_AMEX = "AM";
+/** VISA = VI */
+public static final String FINANCINGSERVICE_VISA = "VI";
+/** NARANJA = NA */
+public static final String FINANCINGSERVICE_NARANJA = "NA";
+/** FIRSTDATA = FD */
+public static final String FINANCINGSERVICE_FIRSTDATA = "FD";
+/** Set Financing Service */
+public void setFinancingService (String FinancingService)
+{
+if (FinancingService == null || FinancingService.equals("AM") || FinancingService.equals("VI") || FinancingService.equals("NA") || FinancingService.equals("FD"));
+ else throw new IllegalArgumentException ("FinancingService Invalid value - " + FinancingService + " - Reference = FINANCINGSERVICE_AD_Reference_ID - AM - VI - NA - FD");
+if (FinancingService != null && FinancingService.length() > 2)
+{
+log.warning("Length > 2 - truncated");
+FinancingService = FinancingService.substring(0,2);
+}
+set_Value ("FinancingService", FinancingService);
+}
+/** Get Financing Service */
+public String getFinancingService() 
+{
+return (String)get_Value("FinancingService");
 }
 /** Set Allow Credit Card Cash Retirement */
 public void setIsAllowCreditCardCashRetirement (boolean IsAllowCreditCardCashRetirement)
