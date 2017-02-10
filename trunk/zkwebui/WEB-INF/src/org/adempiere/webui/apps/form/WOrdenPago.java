@@ -4,8 +4,6 @@
 
 package org.adempiere.webui.apps.form;
 
-import java.awt.event.ItemEvent;
-import java.awt.event.ItemListener;
 import java.math.BigDecimal;
 import java.sql.Timestamp;
 import java.text.ParseException;
@@ -13,8 +11,6 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.Date;
 import java.util.Enumeration;
-import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.logging.Level;
@@ -52,7 +48,6 @@ import org.adempiere.webui.event.ValueChangeEvent;
 import org.adempiere.webui.event.ValueChangeListener;
 import org.adempiere.webui.panel.ADForm;
 import org.adempiere.webui.window.FDialog;
-import org.compiere.swing.CComboBox;
 import org.openXpertya.apps.form.VComponentsFactory;
 import org.openXpertya.apps.form.VModelHelper;
 import org.openXpertya.apps.form.VOrdenPago;
@@ -1142,7 +1137,7 @@ public class WOrdenPago extends ADForm implements ValueChangeListener, TableMode
     				return;
     	        int proc_ID = DB.getSQLValue( null, "SELECT AD_Process_ID FROM AD_Process WHERE value='" + m_model.getReportValue()+ "' " );
     	        if( proc_ID > 0 ) {
-
+    	        	
     	        	MPInstance instance = new MPInstance( Env.getCtx(), proc_ID, 0, null );
     	            if( !instance.save()) {
     	            	log.log(Level.SEVERE, "Error at mostrarInforme: instance.save()");
@@ -1157,10 +1152,18 @@ public class WOrdenPago extends ADForm implements ValueChangeListener, TableMode
     	            ip = new MPInstancePara( instance, 10 );
     	            ip.setParameter( "C_AllocationHdr_ID",String.valueOf(m_model.m_newlyCreatedC_AllocationHeader_ID ));
     	            if( !ip.save()) {
-    	            	log.log(Level.SEVERE, "Error at mostrarInforme: ip.save()");
+    	            	log.log(Level.SEVERE, "Error al mostrar informe. ");
     	            	showError("Error al mostrar informe. " + CLogger.retrieveErrorAsString());
     	                return;
     	            }
+    	            
+    	            ip = new MPInstancePara(instance, 20);
+    				ip.setParameter("PrintRetentions", isPrintRetentions() ? "Y" : "N");
+    				if (!ip.save()) {
+    					log.log(Level.SEVERE, "Error al mostrar informe. ");
+    					showError("Error al mostrar informe. " + CLogger.retrieveErrorAsString());
+    					return;
+    				}
     	            
     	            MProcess process = new MProcess(Env.getCtx(), proc_ID, null);
     	            try {
@@ -1179,6 +1182,11 @@ public class WOrdenPago extends ADForm implements ValueChangeListener, TableMode
     protected String getReportName() {
     	return "Orden de Pago";
     }
+    
+    protected boolean isPrintRetentions(){
+		return m_model.getSumaRetenciones().compareTo(BigDecimal.ZERO) > 0
+				&& FDialog.ask(m_WindowNo, this, "PrintOPRetentions");
+	}
     
     /**
      * Metodo que determina el valor que se encuentra dentro de la entidad comercial.

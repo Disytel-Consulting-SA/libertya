@@ -22,7 +22,6 @@ import java.beans.PropertyChangeEvent;
 import java.beans.PropertyVetoException;
 import java.beans.VetoableChangeListener;
 import java.math.BigDecimal;
-import java.sql.Timestamp;
 import java.text.NumberFormat;
 import java.text.ParseException;
 import java.util.Date;
@@ -1990,7 +1989,7 @@ public class VOrdenPago extends CPanel implements FormPanel,ActionListener,Table
     		
     		if (status == VOrdenPagoModel.PROCERROR_OK)
     		{
-	    		m_model.mostrarInforme(this);
+	    		m_model.mostrarInforme(this, isPrintRetentions());
 	    		
 	    		// Reset	    		
 	    		reset();
@@ -2790,6 +2789,11 @@ public class VOrdenPago extends CPanel implements FormPanel,ActionListener,Table
 		m_frame.dispose();
 		m_frame = null;
 		
+	}
+	
+	protected boolean isPrintRetentions(){
+		return m_model.getSumaRetenciones().compareTo(BigDecimal.ZERO) > 0
+				&& ADialog.ask(m_WindowNo, this, "PrintOPRetentions");
 	}
 
 	public void actionPerformed(ActionEvent arg0) {}

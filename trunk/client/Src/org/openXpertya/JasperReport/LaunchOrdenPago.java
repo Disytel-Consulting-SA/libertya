@@ -9,8 +9,6 @@ import java.sql.Timestamp;
 import java.util.Properties;
 import java.util.logging.Level;
 
-import net.sf.jasperreports.engine.JREmptyDataSource;
-
 import org.openXpertya.JasperReport.DataSource.JasperReportsUtil;
 import org.openXpertya.JasperReport.DataSource.OrdenPagoDataSource;
 import org.openXpertya.model.MAllocationHdr;
@@ -36,6 +34,8 @@ import org.openXpertya.util.DB;
 import org.openXpertya.util.Env;
 import org.openXpertya.util.Util;
 
+import net.sf.jasperreports.engine.JREmptyDataSource;
+
 public class LaunchOrdenPago extends SvrProcess {
 
 	/** Contexto de la aplicación */
@@ -47,7 +47,9 @@ public class LaunchOrdenPago extends SvrProcess {
 
 	/** Instancia de la Orden de Pago: Allocation Header que representa la OP */
 	private MAllocationHdr mAllocationHdr;
-
+	/** Imprimir retenciones */
+	private String printRetentions = "N";
+	
 	@Override
 	protected void prepare() {
 		ProcessInfoParameter[] para = getParameter();
@@ -60,6 +62,8 @@ public class LaunchOrdenPago extends SvrProcess {
 
 				if (name.equalsIgnoreCase("C_AllocationHdr_ID")) {
 					p_C_AllocationHdr_ID = para[i].getParameterAsInt();
+				} else if(name.equalsIgnoreCase("PrintRetentions")){
+					printRetentions = (String)para[i].getParameter();
 				} else {
 					log.log(Level.SEVERE, "prepare - Unknown Parameter: "
 							+ name);
@@ -262,7 +266,8 @@ public class LaunchOrdenPago extends SvrProcess {
 		jasperWrapper.addParameter("CREDITO_AMOUNT", ncAmount);
 		jasperWrapper.addParameter("RETENCIONES_AMOUNT", retencionesAmount);
 		jasperWrapper.addParameter("URL_IMAGE_TITLE", this.getUrlReportImage(op.getAD_Client_ID(), op.getAD_Org_ID()));
-
+		jasperWrapper.addParameter("PRINT_RETENCIONES", printRetentions);
+		
 		String sql = "select c_invoice_id from m_retencion_invoice r where r.c_allocationhdr_id="
 				+ +getAllocationHdrID() + "group by c_invoice_id";
 
