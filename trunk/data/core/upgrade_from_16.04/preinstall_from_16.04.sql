@@ -5716,3 +5716,35 @@ ALTER TABLE libertya.c_creditcardcouponfilter
   ADD CONSTRAINT fkbpartner FOREIGN KEY (c_bpartner_id)
   REFERENCES libertya.c_bpartner (c_bpartner_id)
   ON UPDATE NO ACTION ON DELETE NO ACTION;
+  
+--20170210-1620 Nueva tabla para registrar los datos CAI de cada entidad comercial
+CREATE TABLE c_bpartner_cai
+(
+  c_bpartner_cai_id integer NOT NULL,
+  ad_client_id integer NOT NULL,
+  ad_org_id integer NOT NULL,
+  isactive character(1) NOT NULL DEFAULT 'Y'::bpchar,
+  created timestamp without time zone NOT NULL DEFAULT ('now'::text)::timestamp(6) with time zone,
+  createdby integer NOT NULL,
+  updated timestamp without time zone NOT NULL DEFAULT ('now'::text)::timestamp(6) with time zone,
+  updatedby integer NOT NULL,
+  c_bpartner_id integer NOT NULL,
+  cai character varying(14) NOT NULL,
+  datecai timestamp without time zone NOT NULL,
+  posnumber integer NOT NULL,
+  CONSTRAINT c_bpartner_cai_key PRIMARY KEY (c_bpartner_cai_id),
+  CONSTRAINT c_bpartner_cai_bpartner FOREIGN KEY (c_bpartner_id)
+  REFERENCES c_bpartner (c_bpartner_id) MATCH SIMPLE
+  ON UPDATE NO ACTION ON DELETE NO ACTION,
+  CONSTRAINT c_bpartner_cai_client FOREIGN KEY (ad_client_id)
+  REFERENCES ad_client (ad_client_id) MATCH SIMPLE
+  ON UPDATE NO ACTION ON DELETE NO ACTION,
+  CONSTRAINT c_bpartner_cai_org FOREIGN KEY (ad_org_id)
+  REFERENCES ad_org (ad_org_id) MATCH SIMPLE
+  ON UPDATE NO ACTION ON DELETE NO ACTION
+)
+WITH (
+  OIDS=FALSE
+);
+ALTER TABLE c_bpartner_cai
+  OWNER TO libertya;

@@ -919,9 +919,9 @@ public class CalloutInvoiceExt extends CalloutInvoice {
 			mTab.setValue("CAI",null);
 			mTab.setValue("DATECAI",null);
 			
-			String sql = "SELECT * FROM AD_CAI WHERE AD_CLIENT_ID = ? " +
-					"AND PUNTODEVENTA = ? AND C_BPARTNER_ID = ? " +
-					"ORDER BY FECHA_VENCIMIENTO ";
+			String sql = "SELECT * FROM C_BPartner_CAI WHERE AD_CLIENT_ID = ? " +
+					"AND posnumber = ? AND C_BPARTNER_ID = ? " +
+					"ORDER BY datecai ";
 			try
 			{
 				PreparedStatement pstmt = DB.prepareStatement(sql.toString());
@@ -933,10 +933,10 @@ public class CalloutInvoiceExt extends CalloutInvoice {
 				ResultSet rs = pstmt.executeQuery();
 				while (rs.next()){
 					//setear cai y fecha no vencido
-					fechaVencimiento = rs.getTimestamp("FECHA_VENCIMIENTO");
+					fechaVencimiento = rs.getTimestamp("datecai");
 					if(!fechaVencimiento.before(date)){
-						mTab.setValue("CAI",rs.getBigDecimal("CAI"));
-						mTab.setValue("DATECAI",rs.getTimestamp("FECHA_VENCIMIENTO"));
+						mTab.setValue("CAI",rs.getString("cai"));
+						mTab.setValue("DATECAI",rs.getTimestamp("datecai"));
 					}
 				}
 			}
@@ -944,10 +944,6 @@ public class CalloutInvoiceExt extends CalloutInvoice {
 			{
 				log.log(Level.SEVERE, "puntoVenta", e);
 				return e.getLocalizedMessage();
-			}
-			if(mTab.getValue("CAI") == null){
-				//mTab.setValue("PUNTODEVENTA",null);
-				return "Numero de CAI vencido o no encontrado";
 			}
 		}
 		return "";
@@ -1095,6 +1091,28 @@ public class CalloutInvoiceExt extends CalloutInvoice {
 		}
 		
 		return true;
+	}
+	
+	public String puntoVenta(Properties ctx, int WindowNo, MTab mTab, MField mField, Object value){
+		if(value == null){
+			return "";
+		}
+		int pto = ((Integer)value).intValue();
+		Integer partner = (Integer)mTab.getValue("C_BPartner_ID");
+		int AD_Org_ID = Env.getContextAsInt(ctx, WindowNo, "AD_Org_ID");
+		int AD_Client_ID = Env.getContextAsInt(ctx, WindowNo, "AD_Client_ID");
+		
+		X_C_Letra_Comprobante letra = null;
+		Integer letraId = (Integer)mTab.getValue("C_Letra_Comprobante_ID");
+		if( letraId != null)
+			 letra = new X_C_Letra_Comprobante(ctx,letraId.intValue(),null);
+		
+		
+		if(partner != null && (letra == null || !letra.getLetra().equals("C")))	{
+			return buscarCai(mTab, AD_Client_ID, AD_Org_ID,partner.intValue(),pto);
+		}
+		
+		return "";
 	}
 	
 }
