@@ -113,6 +113,10 @@ public class ConfigVMSun extends Config {
         
         
         final String	VERSION4	= "1.6.0";
+        
+        final String	VERSION5	= "1.7.0";
+        
+        final String	VERSION6	= "1.8.0";
 
         // begin vpj-cd e-evolution 01/28/2005 1.5
         pass	= false;
@@ -128,6 +132,14 @@ public class ConfigVMSun extends Config {
         }
 
         if (!pass && (jh.indexOf(VERSION4) != -1)) {	//
+            pass	= true;
+        }
+        
+        if (!pass && (jh.indexOf(VERSION5) != -1)) {	//
+            pass	= true;
+        }
+        
+        if (!pass && (jh.indexOf(VERSION6) != -1)) {	//
             pass	= true;
         }
 
@@ -152,7 +164,15 @@ public class ConfigVMSun extends Config {
             
             if (!pass && (thisJV.indexOf(VERSION4) != -1)) {
                 pass	= true;
-            }            
+            }       
+            
+            if (!pass && (thisJV.indexOf(VERSION5) != -1)) {
+                pass	= true;
+            } 
+            
+            if (!pass && (thisJV.indexOf(VERSION6) != -1)) {
+                pass	= true;
+            } 
 
             // end vpj-cd e-evolution 01/28/2005 1.5
             if (pass) {

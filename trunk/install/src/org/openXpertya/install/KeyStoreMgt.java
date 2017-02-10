@@ -25,7 +25,6 @@ import org.openXpertya.OpenXpertya;
 import org.openXpertya.util.CLogMgt;
 import org.openXpertya.util.CLogger;
 
-import sun.security.tools.KeyTool;
 
 //~--- Importaciones JDK ------------------------------------------------------
 
@@ -45,6 +44,8 @@ import java.util.StringTokenizer;
 import java.util.logging.Level;
 
 import javax.swing.JFrame;
+
+import java.lang.reflect.Method;
 
 /**
  * Descripción de Clase
@@ -246,7 +247,18 @@ public class KeyStoreMgt {
         // System.out.println(" args #" + args.length);
         try 
         {
-        	KeyTool.main(args);
+// En Java 8 cambia el nombre del package.  Solucion, ejecutar probando la instanciacion de manera dinamica        	
+//        	KeyTool.main(args);
+			Class<?> keyTool = null;
+			try{
+				// java 6, 7 
+				keyTool = Class.forName("sun.security.tools.KeyTool");
+			}catch (ClassNotFoundException ex){
+				// java 8 
+				keyTool = Class.forName("sun.security.tools.keytool.Main");
+			}
+			Method mainMethod = keyTool.getDeclaredMethod("main", String[].class);
+			mainMethod.invoke(null, new Object[]{args});
         }
         catch (Exception e)
         {

@@ -1095,6 +1095,18 @@ public class CStatement implements Statement {
 		// TODO Auto-generated method stub
 		return null;
 	}
+	
+//	@Override Descomentar bajo compilacion JDK 1.8 
+	public void closeOnCompletion() throws SQLException {
+		// TODO Auto-generated method stub
+		
+	}
+
+//	@Override Descomentar bajo compilacion JDK 1.8
+	public boolean isCloseOnCompletion() throws SQLException {
+		// TODO Auto-generated method stub
+		return false;
+	}
 }    // CStatement
 
 

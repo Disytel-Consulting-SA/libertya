@@ -302,7 +302,7 @@ public class ViewerDesign extends JFrame implements ActionListener,ChangeListene
      *
      */
 
-    private void revalidate() {
+    public void revalidate() {
         m_pageMax = m_viewDesignPanel.getPageCount();
 
         // scroll area (page size dependent)

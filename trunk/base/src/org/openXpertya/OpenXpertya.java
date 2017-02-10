@@ -488,8 +488,8 @@ public final class OpenXpertya {
      */
     public static synchronized boolean startup(boolean isClient) {
 
-        // Already started
-        if (log != null) {
+        // Already started (check log and db connection)
+        if (log != null && DB.getDatabase() != null) {
             return true;
         }
 
