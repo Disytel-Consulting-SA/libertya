@@ -75,6 +75,8 @@ Este Fichero sirve para compilar el subproyecto base independiente del proyecto 
     <!-- Compilar el codigo java de ${src} a ${build.dir} -->
     <javac srcdir="${src}" destdir="${build.dir}" deprecation="off" source="1.6" target="1.6" debug="on" encoding="UTF-8">
       <classpath refid="project.class.path"/>
+      <!-- Compilar referenciando a rt.jar: http://stackoverflow.com/questions/4065401/using-internal-sun-classes-with-javac/4070685#4070685 -->
+      <compilerarg line="-XDignore.symbol.file" />    	
     </javac>
     <!-- Copiar Todas las imagenes y archivos al directorio de compilacion -->
     <copy todir="${build.dir}">

@@ -513,7 +513,7 @@ public class Viewer extends CFrame implements ActionListener,ChangeListener,Wind
      *
      */
 
-    private void revalidate() {
+    public void revalidate() {
         m_pageMax = m_viewPanel.getPageCount();
         spinnerModel.setMaximum( new Integer( m_pageMax ));
 

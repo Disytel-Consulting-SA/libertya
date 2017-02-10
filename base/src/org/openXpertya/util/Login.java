@@ -124,7 +124,7 @@ public class Login {
 
         String jVersion = System.getProperty( "java.version" );
 
-        if( jVersion.startsWith( "1.6.0" ) || jVersion.startsWith( "1.5.0" ) || jVersion.startsWith( "1.4.2" )) {    // this release
+        if( jVersion.startsWith( "1.8.0" ) || jVersion.startsWith( "1.7.0" ) || jVersion.startsWith( "1.6.0" ) || jVersion.startsWith( "1.5.0" ) || jVersion.startsWith( "1.4.2" )) {    // this release
             return true;
         }
 
@@ -132,7 +132,7 @@ public class Login {
 
         boolean ok = false;
 
-        if( jVersion.startsWith( "1.6" ) || jVersion.startsWith( "1.4" ) || jVersion.startsWith( "1.5.1" )) {    // later/earlier release
+        if( jVersion.startsWith( "1.8" ) || jVersion.startsWith( "1.7" ) || jVersion.startsWith( "1.6" ) || jVersion.startsWith( "1.4" ) || jVersion.startsWith( "1.5.1" )) {    // later/earlier release
             ok = true;
         }
 
