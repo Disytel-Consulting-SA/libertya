@@ -23,7 +23,7 @@
 	<import value="net.sf.jasperreports.engine.*" />
 	<import value="net.sf.jasperreports.engine.data.*" />
 
-	<parameter name="Entidad_Financiera" isForPrompting="false" class="java.lang.String"/>
+	<parameter name="Card_Type" isForPrompting="false" class="java.lang.String"/>
 	<parameter name="Organization" isForPrompting="false" class="java.lang.String"/>
 	<parameter name="Date" isForPrompting="false" class="java.lang.String"/>
 	<parameter name="Date_To" isForPrompting="false" class="java.lang.String"/>
@@ -271,7 +271,7 @@
 					<textElement verticalAlignment="Middle">
 						<font/>
 					</textElement>
-				<text><![CDATA[Entidad Financiera]]></text>
+				<text><![CDATA[Tarjeta]]></text>
 				</staticText>
 				<staticText>
 					<reportElement
@@ -350,7 +350,7 @@
 					<textElement verticalAlignment="Middle">
 						<font/>
 					</textElement>
-				<textFieldExpression   class="java.lang.String"><![CDATA[$P{Entidad_Financiera}]]></textFieldExpression>
+				<textFieldExpression   class="java.lang.String"><![CDATA[$P{Card_Type}]]></textFieldExpression>
 				</textField>
 				<textField isStretchWithOverflow="false" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
