@@ -308,7 +308,7 @@ public class TableCreateColumns extends SvrProcess {
                 // SalesRep_ID (=User)
 
             } else if( columnName.equalsIgnoreCase( "SalesRep_ID" )) {
-                column.setAD_Reference_ID( DisplayType.Table );
+                column.setAD_Reference_ID( DisplayType.Search );
                 column.setAD_Reference_Value_ID( 190 );
             
             // Si es AD_Client_ID o AD_Org_ID los hago TaleDir
@@ -330,7 +330,7 @@ public class TableCreateColumns extends SvrProcess {
                 // CreatedBy/UpdatedBy (=User)
 
             } else if( columnName.equalsIgnoreCase( "CreatedBy" ) || columnName.equalsIgnoreCase( "UpdatedBy" )) {
-                column.setAD_Reference_ID( DisplayType.Table );
+                column.setAD_Reference_ID( DisplayType.Search );
                 column.setAD_Reference_Value_ID( 110 );
                 column.setIsUpdateable( false );
             }
