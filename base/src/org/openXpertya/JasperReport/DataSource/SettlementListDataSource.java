@@ -1,7 +1,7 @@
 package org.openXpertya.JasperReport.DataSource;
 
-import org.openXpertya.model.X_C_CreditCardSettlement;
-import org.openXpertya.model.X_M_EntidadFinanciera;
+import org.openXpertya.model.MBPartner;
+import org.openXpertya.model.MCreditCardSettlement;
 
 /**
  * Data Source para reporte de listado de liquidaciones.
@@ -9,13 +9,16 @@ import org.openXpertya.model.X_M_EntidadFinanciera;
  */
 public class SettlementListDataSource extends QueryDataSource {
 
-	private int m_entidadfinanciera_id;
-	private String creditcardtype;
+	private int c_bpartner_id;
 	private String docstatus;
 	private String dateFrom;
 	private String dateTo;
 	private int ad_org_id;
 
+	/**
+	 * Constructor.
+	 * @param trxName Transacción.
+	 */
 	public SettlementListDataSource(String trxName) {
 		super(trxName);
 	}
@@ -25,31 +28,28 @@ public class SettlementListDataSource extends QueryDataSource {
 		StringBuffer sql = new StringBuffer();
 
 		sql.append("SELECT ");
-		sql.append("	LPAD(s.settlementno, 8, '0') AS settlementno, ");
-		sql.append("	e.name AS creditcard, ");
-		sql.append("	COALESCE(amount, 0) AS amount, ");
-		sql.append("	COALESCE(couponstotalamount, 0) AS done, ");
-		sql.append("	COALESCE(ivaamount, 0) AS iva, ");
-		sql.append("	COALESCE(withholding, 0) AS retention, ");
-		sql.append("	COALESCE(expenses, 0) AS expenses, ");
-		sql.append("	COALESCE(commissionamount, 0) AS commission, ");
-		sql.append("	COALESCE(netamount, 0) AS netamount, ");
-		sql.append("	COALESCE(perception, 0) AS perception, ");
-		sql.append("	paymentdate AS date ");
+		sql.append("	LPAD(s.settlementno, 8, '0') AS settlementno, "); // Nro liquidación
+		sql.append("	bp.name AS creditcard, "); // Tarjeta
+		sql.append("	COALESCE(amount, 0) AS amount, "); // Importe bruto
+		sql.append("	COALESCE(netamount, 0) AS netamount, "); // Importe acreditado
+		sql.append("	COALESCE(couponstotalamount, 0) AS done, "); // Importe neto
+		sql.append("	COALESCE(ivaamount, 0) AS iva, "); // Total iva
+		sql.append("	COALESCE(withholding, 0) AS retention, "); // Total retenciones
+		sql.append("	COALESCE(expenses, 0) AS expenses, "); // Total otros gastos
+		sql.append("	COALESCE(commissionamount, 0) AS commission, "); // Total comisiones
+		sql.append("	COALESCE(perception, 0) AS perception, "); // Total percepciones
+		sql.append("	paymentdate AS date "); // Fecha
 		sql.append("FROM ");
-		sql.append("	" + X_C_CreditCardSettlement.Table_Name + " s ");
-		sql.append("	INNER JOIN " + X_M_EntidadFinanciera.Table_Name + " e ON s.m_entidadfinanciera_id = e.m_entidadfinanciera_id ");
+		sql.append("	" + MCreditCardSettlement.Table_Name + " s ");
+		sql.append("	INNER JOIN " + MBPartner.Table_Name + " bp ON s.c_bpartner_id = bp.c_bpartner_id ");
 		sql.append("WHERE ");
 		sql.append("	COALESCE(s.settlementno, '') <> '' ");
 
-		if (m_entidadfinanciera_id > 0) {
-			sql.append("	AND e.m_entidadfinanciera_id = " + m_entidadfinanciera_id + " ");
-		}
 		if (ad_org_id > 0) {
 			sql.append("	AND s.ad_org_id = " + ad_org_id + " ");
 		}
-		if (creditcardtype != null && !creditcardtype.trim().isEmpty()) {
-			sql.append("	AND s.creditcardtype = '" + creditcardtype + "' ");
+		if (c_bpartner_id > 0) {
+			sql.append("	AND s.c_bpartner_id = " + c_bpartner_id + " ");
 		}
 		if (docstatus != null && !docstatus.trim().isEmpty()) {
 			sql.append("	AND s.docstatus = '" + docstatus + "' ");
@@ -79,12 +79,8 @@ public class SettlementListDataSource extends QueryDataSource {
 
 	// SETTERS
 
-	public void setM_entidadfinanciera_id(int m_entidadfinanciera_id) {
-		this.m_entidadfinanciera_id = m_entidadfinanciera_id;
-	}
-
-	public void setCreditcardtype(String creditcardtype) {
-		this.creditcardtype = creditcardtype;
+	public void setC_bpartner_id(int c_bpartner_id) {
+		this.c_bpartner_id = c_bpartner_id;
 	}
 
 	public void setDocstatus(String docstatus) {
