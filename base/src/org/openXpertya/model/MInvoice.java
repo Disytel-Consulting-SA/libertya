@@ -51,6 +51,7 @@ import org.openXpertya.util.MeasurableTask;
 import org.openXpertya.util.Msg;
 import org.openXpertya.util.StringUtil;
 import org.openXpertya.util.TimeStatsLogger;
+import org.openXpertya.util.TimeUtil;
 import org.openXpertya.util.Util;
 
 /**
@@ -2179,7 +2180,8 @@ public class MInvoice extends X_C_Invoice implements DocAction,Authorization {
 
 			// Fecha del CAI > que fecha de facturacion
 			if (getDateCAI() != null
-					&& getDateInvoiced().compareTo(getDateCAI()) > 0) {
+					&& getDateInvoiced().compareTo(getDateCAI()) > 0 
+					&& !TimeUtil.isSameDay(getDateInvoiced(), getDateCAI())){
 				log.saveError("InvoicedDateAfterCAIDate", "");
 				return false;
 			}
