@@ -512,7 +512,7 @@ public class MField implements Serializable,Evaluatee {
 
         // Record is Processed ***
 
-        if( checkContextForReadOnlyLogic && Env.getContext( m_vo.ctx,m_vo.WindowNo,"Processed" ).equals( "Y" )) {
+        if( checkContextForReadOnlyLogic && Env.getContext( m_vo.ctx,m_vo.WindowNo,"Processed" ).equals( "Y" ) && !m_vo.isProcess) {
             return false;
         }
 
@@ -525,7 +525,7 @@ public class MField implements Serializable,Evaluatee {
         // Record is not Active
 
         String isActive = Env.getContext( m_vo.ctx,m_vo.WindowNo,"IsActive" );
-        if( checkContextForReadOnlyLogic && !Util.isEmpty(isActive) && isActive.equals( "N" )) {
+        if( checkContextForReadOnlyLogic && !Util.isEmpty(isActive) && isActive.equals( "N" ) && !m_vo.isProcess) {
             return false;
         }
 
