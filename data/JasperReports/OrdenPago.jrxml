@@ -229,6 +229,7 @@
 	<parameter name="DOCUMENTNO_6" isForPrompting="false" class="java.lang.String"/>
 	<parameter name="DOCUMENTNO_7" isForPrompting="false" class="java.lang.String"/>
 	<parameter name="URL_IMAGE_TITLE" isForPrompting="false" class="java.lang.String"/>
+	<parameter name="PRINT_RETENCIONES" isForPrompting="false" class="java.lang.String"/>
 
 	<variable name="CITY" class="java.lang.String" resetType="Report" calculation="Nothing">
 		<variableExpression><![CDATA[$P{CITY_NAME} + ", "]]></variableExpression>
@@ -573,7 +574,7 @@
 						height="0"
 						key="element-1"
 						isRemoveLineWhenBlank="true">
-							<printWhenExpression><![CDATA[new Boolean($P{SUBREPORT_COMPROBANTE_RETENCION_DATASOURCE_1}!=null)]]></printWhenExpression>
+							<printWhenExpression><![CDATA[new Boolean($P{SUBREPORT_COMPROBANTE_RETENCION_DATASOURCE_1}!=null && $P{PRINT_RETENCIONES}.equals("Y"))]]></printWhenExpression>
 						</reportElement>
 				</break>
 				<subreport  isUsingCache="true">
@@ -584,7 +585,7 @@
 						height="47"
 						key="subreport-4"
 						isRemoveLineWhenBlank="true">
-							<printWhenExpression><![CDATA[new Boolean($P{SUBREPORT_COMPROBANTE_RETENCION_DATASOURCE_1}!=null)]]></printWhenExpression>
+							<printWhenExpression><![CDATA[new Boolean($P{SUBREPORT_COMPROBANTE_RETENCION_DATASOURCE_1}!=null && $P{PRINT_RETENCIONES}.equals("Y"))]]></printWhenExpression>
 						</reportElement>
 					<subreportParameter  name="SUBREPORT_DIR">
 						<subreportParameterExpression><![CDATA[$P{SUBREPORT_DIR}]]></subreportParameterExpression>
@@ -709,7 +710,7 @@
 						height="47"
 						key="subreport-5"
 						isRemoveLineWhenBlank="true">
-							<printWhenExpression><![CDATA[new Boolean($P{SUBREPORT_COMPROBANTE_RETENCION_DATASOURCE_2}!=null)]]></printWhenExpression>
+							<printWhenExpression><![CDATA[new Boolean($P{SUBREPORT_COMPROBANTE_RETENCION_DATASOURCE_2}!=null && $P{PRINT_RETENCIONES}.equals("Y"))]]></printWhenExpression>
 						</reportElement>
 					<subreportParameter  name="SUBREPORT_DIR">
 						<subreportParameterExpression><![CDATA[$P{SUBREPORT_DIR}]]></subreportParameterExpression>
@@ -833,7 +834,7 @@
 						height="0"
 						key="element-2"
 						isRemoveLineWhenBlank="true">
-							<printWhenExpression><![CDATA[new Boolean($P{SUBREPORT_COMPROBANTE_RETENCION_DATASOURCE_2}!=null)]]></printWhenExpression>
+							<printWhenExpression><![CDATA[new Boolean($P{SUBREPORT_COMPROBANTE_RETENCION_DATASOURCE_2}!=null && $P{PRINT_RETENCIONES}.equals("Y"))]]></printWhenExpression>
 						</reportElement>
 				</break>
 				<break>
@@ -844,7 +845,7 @@
 						height="0"
 						key="element-3"
 						isRemoveLineWhenBlank="true">
-							<printWhenExpression><![CDATA[new Boolean($P{SUBREPORT_COMPROBANTE_RETENCION_DATASOURCE_3}!=null)]]></printWhenExpression>
+							<printWhenExpression><![CDATA[new Boolean($P{SUBREPORT_COMPROBANTE_RETENCION_DATASOURCE_3}!=null && $P{PRINT_RETENCIONES}.equals("Y"))]]></printWhenExpression>
 						</reportElement>
 				</break>
 				<subreport  isUsingCache="true">
@@ -855,7 +856,7 @@
 						height="47"
 						key="subreport-6"
 						isRemoveLineWhenBlank="true">
-							<printWhenExpression><![CDATA[new Boolean($P{SUBREPORT_COMPROBANTE_RETENCION_DATASOURCE_3}!=null)]]></printWhenExpression>
+							<printWhenExpression><![CDATA[new Boolean($P{SUBREPORT_COMPROBANTE_RETENCION_DATASOURCE_3}!=null && $P{PRINT_RETENCIONES}.equals("Y"))]]></printWhenExpression>
 						</reportElement>
 					<subreportParameter  name="SUBREPORT_DIR">
 						<subreportParameterExpression><![CDATA[$P{SUBREPORT_DIR}]]></subreportParameterExpression>
@@ -979,7 +980,7 @@
 						height="47"
 						key="subreport-7"
 						isRemoveLineWhenBlank="true">
-							<printWhenExpression><![CDATA[new Boolean($P{SUBREPORT_COMPROBANTE_RETENCION_DATASOURCE_5}!=null)]]></printWhenExpression>
+							<printWhenExpression><![CDATA[new Boolean($P{SUBREPORT_COMPROBANTE_RETENCION_DATASOURCE_5}!=null && $P{PRINT_RETENCIONES}.equals("Y"))]]></printWhenExpression>
 						</reportElement>
 					<subreportParameter  name="SUBREPORT_DIR">
 						<subreportParameterExpression><![CDATA[$P{SUBREPORT_DIR}]]></subreportParameterExpression>
@@ -1103,7 +1104,7 @@
 						height="0"
 						key="element-4"
 						isRemoveLineWhenBlank="true">
-							<printWhenExpression><![CDATA[new Boolean($P{SUBREPORT_COMPROBANTE_RETENCION_DATASOURCE_5}!=null)]]></printWhenExpression>
+							<printWhenExpression><![CDATA[new Boolean($P{SUBREPORT_COMPROBANTE_RETENCION_DATASOURCE_5}!=null && $P{PRINT_RETENCIONES}.equals("Y"))]]></printWhenExpression>
 						</reportElement>
 				</break>
 				<subreport  isUsingCache="true">
@@ -1238,7 +1239,7 @@
 						height="0"
 						key="element-5"
 						isRemoveLineWhenBlank="true">
-							<printWhenExpression><![CDATA[new Boolean($P{SUBREPORT_COMPROBANTE_RETENCION_DATASOURCE_4}!=null)]]></printWhenExpression>
+							<printWhenExpression><![CDATA[new Boolean($P{SUBREPORT_COMPROBANTE_RETENCION_DATASOURCE_4}!=null && $P{PRINT_RETENCIONES}.equals("Y"))]]></printWhenExpression>
 						</reportElement>
 				</break>
 				<subreport  isUsingCache="true">
@@ -1249,7 +1250,7 @@
 						height="47"
 						key="subreport-9"
 						isRemoveLineWhenBlank="true">
-							<printWhenExpression><![CDATA[new Boolean($P{SUBREPORT_COMPROBANTE_RETENCION_DATASOURCE_7} != null)]]></printWhenExpression>
+							<printWhenExpression><![CDATA[new Boolean($P{SUBREPORT_COMPROBANTE_RETENCION_DATASOURCE_7} != null && $P{PRINT_RETENCIONES}.equals("Y"))]]></printWhenExpression>
 						</reportElement>
 					<subreportParameter  name="SUBREPORT_DIR">
 						<subreportParameterExpression><![CDATA[$P{SUBREPORT_DIR}]]></subreportParameterExpression>
@@ -1373,7 +1374,7 @@
 						height="0"
 						key="element-6"
 						isRemoveLineWhenBlank="true">
-							<printWhenExpression><![CDATA[new Boolean($P{SUBREPORT_COMPROBANTE_RETENCION_DATASOURCE_7}!=null)]]></printWhenExpression>
+							<printWhenExpression><![CDATA[new Boolean($P{SUBREPORT_COMPROBANTE_RETENCION_DATASOURCE_7}!=null && $P{PRINT_RETENCIONES}.equals("Y"))]]></printWhenExpression>
 						</reportElement>
 				</break>
 				<subreport  isUsingCache="true">
@@ -1384,7 +1385,7 @@
 						height="47"
 						key="subreport-10"
 						isRemoveLineWhenBlank="true">
-							<printWhenExpression><![CDATA[new Boolean($P{SUBREPORT_COMPROBANTE_RETENCION_DATASOURCE_6}!=null)]]></printWhenExpression>
+							<printWhenExpression><![CDATA[new Boolean($P{SUBREPORT_COMPROBANTE_RETENCION_DATASOURCE_6}!=null && $P{PRINT_RETENCIONES}.equals("Y"))]]></printWhenExpression>
 						</reportElement>
 					<subreportParameter  name="SUBREPORT_DIR">
 						<subreportParameterExpression><![CDATA[$P{SUBREPORT_DIR}]]></subreportParameterExpression>
@@ -1508,7 +1509,7 @@
 						height="0"
 						key="element-7"
 						isRemoveLineWhenBlank="true">
-							<printWhenExpression><![CDATA[new Boolean($P{SUBREPORT_COMPROBANTE_RETENCION_DATASOURCE_6}!=null)]]></printWhenExpression>
+							<printWhenExpression><![CDATA[new Boolean($P{SUBREPORT_COMPROBANTE_RETENCION_DATASOURCE_6}!=null && $P{PRINT_RETENCIONES}.equals("Y"))]]></printWhenExpression>
 						</reportElement>
 				</break>
 			</band>

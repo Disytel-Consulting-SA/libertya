@@ -3149,5 +3149,10 @@ public class VOrdenCobro extends VOrdenPago {
     protected CallResult validateDebitNote() {
 		return new CallResult();
 	}
+	
+	@Override
+	protected boolean isPrintRetentions(){
+		return false;
+	}
 
 }

@@ -1995,4 +1995,9 @@ public class WOrdenCobro extends WOrdenPago {
     protected String getReportName() {
     	return "Recibo de Cliente";
     }
+    
+    @Override
+	protected boolean isPrintRetentions(){
+		return false;
+	}
 }

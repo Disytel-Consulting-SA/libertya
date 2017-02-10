@@ -2382,7 +2382,7 @@ public class VOrdenPagoModel {
 		// Por ahora no hace nada aquí
 	}
 
-	public void mostrarInforme(ASyncProcess asyncProc) {
+	public void mostrarInforme(ASyncProcess asyncProc, boolean printRetenciones) {
 
 		if (m_newlyCreatedC_AllocationHeader_ID <= 0)
 			return;
@@ -2417,10 +2417,17 @@ public class VOrdenPagoModel {
 			ip.setParameter("C_AllocationHdr_ID",
 					String.valueOf(m_newlyCreatedC_AllocationHeader_ID));
 			if (!ip.save()) {
-				log.log(Level.SEVERE, "Error at mostrarInforme: ip.save()");
+				log.log(Level.SEVERE, CLogger.retrieveErrorAsString());
 				return;
 			}
 
+			ip = new MPInstancePara(instance, 20);
+			ip.setParameter("PrintRetentions", printRetenciones ? "Y" : "N");
+			if (!ip.save()) {
+				log.log(Level.SEVERE, CLogger.retrieveErrorAsString());
+				return;
+			}
+			
 			ProcessCtl worker = new ProcessCtl(asyncProc, pi, null);
 			worker.start();
 		}
