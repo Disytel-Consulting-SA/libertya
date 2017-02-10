@@ -18,6 +18,7 @@ import org.openXpertya.model.MInvoicePaySchedule;
 import org.openXpertya.model.MLocation;
 import org.openXpertya.model.MOrder;
 import org.openXpertya.model.MOrderLine;
+import org.openXpertya.model.MOrg;
 import org.openXpertya.model.MProcess;
 import org.openXpertya.model.MRegion;
 import org.openXpertya.model.MTax;
@@ -162,6 +163,9 @@ public class LaunchInOut extends SvrProcess {
 				.getAD_Client_ID());
 		MClientInfo clientInfo = client.getInfo();
 
+		MOrg org = MOrg.get(getCtx(), Env.getAD_Org_ID(getCtx()));
+		MLocation orgLoc = new MLocation(getCtx(), org.getInfo().getC_Location_ID(), get_TrxName());
+		
 		jasperwrapper.addParameter("TIPOCOMPROBANTE", JasperReportsUtil
 				.getDocTypeName(getCtx(), getInout().getC_DocType_ID(),
 						"REMITO", get_TrxName()));
@@ -446,6 +450,16 @@ public class LaunchInOut extends SvrProcess {
 		jasperwrapper.addParameter("UPDATEDBY", JasperReportsUtil.getUserName(
 				getCtx(), getInout().getUpdatedBy(), get_TrxName()));
 
+		jasperwrapper.addParameter("ORG_REGION",
+				JasperReportsUtil.coalesce(orgLoc.getRegion().getName(), ""));
+		jasperwrapper.addParameter(
+				"ORG_CITY",
+				JasperReportsUtil.coalesce(orgLoc.getCountry(), "")
+						+ " - "
+						+ JasperReportsUtil.coalesce(orgLoc.getRegion()
+								.getName(), "") + ", "
+						+ JasperReportsUtil.coalesce(orgLoc.getAddress1(), ""));
+		
 	}
 
 	protected void initializeAmts(MOrder order, MInvoice invoice) {
