@@ -23,7 +23,6 @@
 	<import value="net.sf.jasperreports.engine.*" />
 	<import value="net.sf.jasperreports.engine.data.*" />
 
-	<parameter name="Entidad_Financiera" isForPrompting="false" class="java.lang.String"/>
 	<parameter name="Organization" isForPrompting="false" class="java.lang.String"/>
 	<parameter name="Card_Type" isForPrompting="false" class="java.lang.String"/>
 	<parameter name="Doc_Status" isForPrompting="false" class="java.lang.String"/>
@@ -55,7 +54,7 @@
 		<variableExpression><![CDATA[$F{perception}]]></variableExpression>
 	</variable>
 	<variable name="acreditado" class="java.math.BigDecimal" resetType="Report" calculation="Sum">
-		<variableExpression><![CDATA[$F{done}]]></variableExpression>
+		<variableExpression><![CDATA[$F{netamount}]]></variableExpression>
 	</variable>
 	<variable name="iva" class="java.math.BigDecimal" resetType="Report" calculation="Sum">
 		<variableExpression><![CDATA[$F{iva}]]></variableExpression>
@@ -64,7 +63,7 @@
 		<variableExpression><![CDATA[$F{expenses}]]></variableExpression>
 	</variable>
 	<variable name="netamount" class="java.math.BigDecimal" resetType="Report" calculation="Sum">
-		<variableExpression><![CDATA[$F{netamount}]]></variableExpression>
+		<variableExpression><![CDATA[$F{done}]]></variableExpression>
 	</variable>
 		<background>
 			<band height="0"  isSplitAllowed="true" >
@@ -101,25 +100,12 @@
 			</band>
 		</title>
 		<pageHeader>
-			<band height="62"  isSplitAllowed="true" >
+			<band height="74"  isSplitAllowed="true" >
 				<staticText>
 					<reportElement
 						x="1"
-						y="5"
-						width="114"
-						height="15"
-						key="staticText-1"/>
-					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
-					<textElement verticalAlignment="Bottom">
-						<font/>
-					</textElement>
-				<text><![CDATA[Entidad Financiera]]></text>
-				</staticText>
-				<staticText>
-					<reportElement
-						x="1"
-						y="21"
-						width="114"
+						y="37"
+						width="121"
 						height="15"
 						key="staticText-2"/>
 					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
@@ -130,7 +116,7 @@
 				</staticText>
 				<staticText>
 					<reportElement
-						x="271"
+						x="1"
 						y="5"
 						width="121"
 						height="15"
@@ -143,7 +129,7 @@
 				</staticText>
 				<staticText>
 					<reportElement
-						x="271"
+						x="1"
 						y="21"
 						width="121"
 						height="15"
@@ -157,8 +143,8 @@
 				<staticText>
 					<reportElement
 						x="1"
-						y="37"
-						width="114"
+						y="53"
+						width="121"
 						height="15"
 						key="staticText-5"/>
 					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
@@ -169,7 +155,7 @@
 				</staticText>
 				<staticText>
 					<reportElement
-						x="392"
+						x="122"
 						y="5"
 						width="11"
 						height="15"
@@ -182,7 +168,7 @@
 				</staticText>
 				<staticText>
 					<reportElement
-						x="392"
+						x="122"
 						y="21"
 						width="11"
 						height="15"
@@ -195,21 +181,8 @@
 				</staticText>
 				<staticText>
 					<reportElement
-						x="115"
-						y="5"
-						width="11"
-						height="15"
-						key="staticText-8"/>
-					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
-					<textElement textAlignment="Center" verticalAlignment="Bottom">
-						<font/>
-					</textElement>
-				<text><![CDATA[=]]></text>
-				</staticText>
-				<staticText>
-					<reportElement
-						x="115"
-						y="21"
+						x="122"
+						y="37"
 						width="11"
 						height="15"
 						key="staticText-9"/>
@@ -221,8 +194,8 @@
 				</staticText>
 				<staticText>
 					<reportElement
-						x="115"
-						y="37"
+						x="122"
+						y="53"
 						width="11"
 						height="15"
 						key="staticText-10"/>
@@ -234,23 +207,9 @@
 				</staticText>
 				<textField isStretchWithOverflow="false" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
-						x="126"
-						y="5"
-						width="144"
-						height="15"
-						forecolor="#5D5D5D"
-						key="textField-1"/>
-					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
-					<textElement verticalAlignment="Bottom">
-						<font/>
-					</textElement>
-				<textFieldExpression   class="java.lang.String"><![CDATA[$P{Entidad_Financiera}]]></textFieldExpression>
-				</textField>
-				<textField isStretchWithOverflow="false" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
-					<reportElement
-						x="126"
-						y="21"
-						width="144"
+						x="133"
+						y="37"
+						width="160"
 						height="15"
 						forecolor="#5D5D5D"
 						key="textField-2"/>
@@ -262,9 +221,9 @@
 				</textField>
 				<textField isStretchWithOverflow="false" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
-						x="126"
-						y="37"
-						width="412"
+						x="133"
+						y="53"
+						width="406"
 						height="15"
 						forecolor="#5D5D5D"
 						key="textField-3"/>
@@ -276,9 +235,9 @@
 				</textField>
 				<textField isStretchWithOverflow="false" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
-						x="403"
+						x="133"
 						y="5"
-						width="135"
+						width="160"
 						height="15"
 						forecolor="#5D5D5D"
 						key="textField-4"/>
@@ -290,9 +249,9 @@
 				</textField>
 				<textField isStretchWithOverflow="false" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
-						x="403"
+						x="133"
 						y="21"
-						width="135"
+						width="160"
 						height="15"
 						forecolor="#5D5D5D"
 						key="textField-5"/>
@@ -330,7 +289,7 @@
 					<textElement verticalAlignment="Middle">
 						<font pdfFontName="Helvetica-Bold" size="8" isBold="true"/>
 					</textElement>
-				<text><![CDATA[E. Financ.]]></text>
+				<text><![CDATA[Tarjeta]]></text>
 				</staticText>
 				<staticText>
 					<reportElement
@@ -521,7 +480,7 @@
 					<textElement textAlignment="Right" verticalAlignment="Middle">
 						<font pdfFontName="Helvetica" size="8" isBold="false"/>
 					</textElement>
-				<textFieldExpression   class="java.math.BigDecimal"><![CDATA[$F{done}]]></textFieldExpression>
+				<textFieldExpression   class="java.math.BigDecimal"><![CDATA[$F{netamount}]]></textFieldExpression>
 				</textField>
 				<textField isStretchWithOverflow="false" pattern="###0.00" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
@@ -586,7 +545,7 @@
 					<textElement textAlignment="Right" verticalAlignment="Middle">
 						<font pdfFontName="Helvetica" size="8" isBold="false"/>
 					</textElement>
-				<textFieldExpression   class="java.math.BigDecimal"><![CDATA[$F{netamount}]]></textFieldExpression>
+				<textFieldExpression   class="java.math.BigDecimal"><![CDATA[$F{done}]]></textFieldExpression>
 				</textField>
 				<textField isStretchWithOverflow="false" pattern="###0.00" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
