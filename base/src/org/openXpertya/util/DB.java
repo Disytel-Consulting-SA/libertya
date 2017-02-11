@@ -756,9 +756,13 @@ public final class DB {
     }    // prepareStatement
     
     
-    /** Sobrecarga con parametro noConvert para evitar intentos de conversion de sentencias */
     public static CPreparedStatement prepareStatement( String RO_SQL,String trxName, boolean noConvert) {
-    	return prepareStatement( RO_SQL,ResultSet.TYPE_FORWARD_ONLY,ResultSet.CONCUR_READ_ONLY,trxName, noConvert );
+    	return prepareStatement(RO_SQL, trxName, noConvert, false);
+    }
+    
+    /** Sobrecarga con parametro noConvert para evitar intentos de conversion de sentencias */
+    public static CPreparedStatement prepareStatement( String RO_SQL,String trxName, boolean noConvert, boolean rw) {
+    	return prepareStatement( RO_SQL,ResultSet.TYPE_FORWARD_ONLY,rw?ResultSet.CONCUR_UPDATABLE:ResultSet.CONCUR_READ_ONLY,trxName, noConvert );
     }
 
     /**
@@ -1168,13 +1172,27 @@ public final class DB {
     	return getSQLValue( trxName, sql, false );
     }
 
+    
+    public static int getSQLValueRW( String trxName,String sql ) {
+    	return getSQLValue( trxName, sql, false, true );
+    }
+    
+    
+    public static int getSQLValue( String trxName,String sql, boolean noConvert) {
+    	return getSQLValue (trxName, sql, noConvert, false);
+    }
+    
+    public static int getSQLValueRW( String trxName,String sql, boolean noConvert) {
+    	return getSQLValue (trxName, sql, noConvert, true);
+    }    
+    
     /** Sobrecarga con parametro noConvert para evitar intentos de conversion de sentencias */
-    public static int getSQLValue( String trxName,String sql, boolean noConvert ) {
+    public static int getSQLValue( String trxName,String sql, boolean noConvert, boolean rw ) {
         int               retValue = -1;
         PreparedStatement pstmt    = null;
 
         try {
-            pstmt = prepareStatement( sql,trxName, noConvert );
+            pstmt = prepareStatement( sql,trxName, noConvert, rw );
 
             ResultSet rs = pstmt.executeQuery();
 
