@@ -568,7 +568,7 @@ public class PluginXMLUpdater {
 	 */
 	protected void appendQuotedValue(StringBuffer sql, String value) throws Exception
 	{
-		value = value.replaceAll("'", "\\\\'");
+		value = value.replaceAll("'", "''");
 		value = value.replaceAll("\\\"", "\\\\\"");
 		sql.append( "'" + value + "'," );
 	}
