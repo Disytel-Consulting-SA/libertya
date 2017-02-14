@@ -1140,7 +1140,8 @@ public class MInvoice extends X_C_Invoice implements DocAction,Authorization {
 		}
 
 		if (getC_BPartner_Location_ID() == 0) {
-			log.log(Level.SEVERE, "Has no To Address: " + bp);
+			//log.log(Level.SEVERE, "Has no To Address: " + bp);
+			log.saveError("Error", Msg.getMsg(getCtx(), "NoBPartnerLocationError"));
 		}
 
 		// Set Contact
