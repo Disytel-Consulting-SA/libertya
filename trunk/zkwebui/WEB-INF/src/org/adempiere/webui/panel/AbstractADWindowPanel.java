@@ -1432,7 +1432,7 @@ public abstract class AbstractADWindowPanel extends AbstractUIPart implements To
         	return;
 
         //  Gets Fields from AD_Field_v
-        MField[] findFields = MField.createFields(ctx, curTab.getWindowNo(), 0,curTab.getAD_Tab_ID());
+        MField[] findFields = MField.createFields(ctx, curTab.getWindowNo(), 0,curTab.getAD_Tab_ID(),true);
         FindWindow find = new FindWindow (curTab.getWindowNo(), curTab.getName(),
             curTab.getAD_Table_ID(), curTab.getTableName(),
             curTab.getWhereExtended(), findFields, 1, curTab.getAD_Tab_ID());

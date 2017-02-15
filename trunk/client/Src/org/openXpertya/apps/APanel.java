@@ -2035,7 +2035,7 @@ public final class APanel extends CPanel implements DataStatusListener,ChangeLis
         MQuery query = null;
         int records=0;
     	do{
-    		MField[] findFields = MField.createFields( m_ctx,m_curWindowNo,0,m_curTab.getAD_Tab_ID());
+    		MField[] findFields = MField.createFields( m_ctx,m_curWindowNo,0,m_curTab.getAD_Tab_ID(),true);
     		find = new Find( Env.getFrame( this ),m_curWindowNo,m_curTab.getName(),m_curTab.getAD_Table_ID(),m_curTab.getTableName(),m_curTab.getWhereExtended(),findFields,1 );
     		query = find.getQuery();	
 			if (find.getQuery()!=null)
