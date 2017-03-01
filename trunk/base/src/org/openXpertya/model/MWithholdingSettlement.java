@@ -28,7 +28,12 @@ public class MWithholdingSettlement extends X_C_WithholdingSettlement {
 	public boolean doAfterSave(boolean newRecord, boolean success) {
 		return recalculate();
 	}
-		
+
+	@Override
+	protected boolean afterDelete(boolean success) {
+		return recalculate();
+	}
+
 	private boolean recalculate() {
 		StringBuffer sql = new StringBuffer();
 
@@ -53,14 +58,14 @@ public class MWithholdingSettlement extends X_C_WithholdingSettlement {
 				amt = amt.add(rs.getBigDecimal("amount"));
 			}
 
-			X_C_CreditCardSettlement settlement = new X_C_CreditCardSettlement(getCtx(), getC_CreditCardSettlement_ID(), get_TrxName());
+			MCreditCardSettlement settlement = new MCreditCardSettlement(getCtx(), getC_CreditCardSettlement_ID(), get_TrxName());
 			settlement.setWithholding(amt);
 			if (!settlement.save()) {
 				throw new Exception(CLogger.retrieveErrorAsString());
 			}
 
 		} catch (Exception e) {
-			log.log(Level.SEVERE, "doAfterSave", e);
+			log.log(Level.SEVERE, "recalculate", e);
 		} finally {
 			try {
 				rs.close();
@@ -68,13 +73,8 @@ public class MWithholdingSettlement extends X_C_WithholdingSettlement {
 			} catch (SQLException e) {
 				log.log(Level.SEVERE, "Cannot close statement or resultset");
 			}
-
 		}
 		return true;
-	}
-	
-	protected boolean afterDelete( boolean success ) {
-		return recalculate();
 	}
 
 }

@@ -2,23 +2,21 @@ package org.openXpertya.process.customImport.centralPos.jobs;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
+import java.util.Set;
 
-import org.openXpertya.process.customImport.centralPos.commons.CentralPosImport;
-import org.openXpertya.process.customImport.centralPos.commons.NaranjaImport;
 import org.openXpertya.process.customImport.centralPos.exceptions.SaveFromAPIException;
 import org.openXpertya.process.customImport.centralPos.http.Get;
-import org.openXpertya.process.customImport.centralPos.http.utils.DefaultResponse;
-import org.openXpertya.process.customImport.centralPos.pojos.NaranjaPayments;
-import org.openXpertya.process.customImport.centralPos.pojos.extras.NaranjaCoupons;
-import org.openXpertya.process.customImport.centralPos.pojos.extras.NaranjaHeaders;
-import org.openXpertya.process.customImport.centralPos.pojos.extras.NaranjaInvoicedConcepts;
-import org.openXpertya.util.Env;
-import org.openXpertya.util.Msg;
-
-import com.google.gson.internal.LinkedTreeMap;
+import org.openXpertya.process.customImport.centralPos.mapping.NaranjaPayments;
+import org.openXpertya.process.customImport.centralPos.mapping.extras.NaranjaCoupons;
+import org.openXpertya.process.customImport.centralPos.mapping.extras.NaranjaHeaders;
+import org.openXpertya.process.customImport.centralPos.mapping.extras.NaranjaInvoicedConcepts;
+import org.openXpertya.process.customImport.centralPos.pojos.naranja.conceptos.Conceptos;
+import org.openXpertya.process.customImport.centralPos.pojos.naranja.cupones.Detalle;
+import org.openXpertya.process.customImport.centralPos.pojos.naranja.headers.Headers;
 
 /**
  * Proceso de importación. Naranja.
@@ -27,8 +25,8 @@ import com.google.gson.internal.LinkedTreeMap;
  */
 public class ImportNaranja extends Import {
 
-	public ImportNaranja(Properties ctx, String trxName) {
-		super(new NaranjaImport(), ctx, trxName);
+	public ImportNaranja(Properties ctx, String trxName) throws Exception {
+		super(EXTERNAL_SERVICE_NARANJA, ctx, trxName);
 	}
 
 	@Override
@@ -37,7 +35,7 @@ public class ImportNaranja extends Import {
 	}
 
 	private String importNaranjaCoupons() throws SaveFromAPIException {
-		DefaultResponse response; // Respuesta.
+		Detalle response; // Respuesta.
 		int currentPage = 1; // Pagina actual.
 		int lastPage = 2; // Ultima pagina.
 		int areadyExists = 0; // Elementos omitidos.
@@ -46,8 +44,8 @@ public class ImportNaranja extends Import {
 
 		// Mientras resten páginas a importar
 		while (currentPage <= lastPage) {
-			get = centralPosImport.makeGetter("/cupones", token); // Metodo get para obtener detalle de cupones con vencimiento en el mes de pago.
-			get.addQueryParam("paginate", CentralPosImport.RESULTS_PER_PAGE); // Parametro de elem. por pagina.
+			get = makeGetter(); // Metodo get para obtener detalle de cupones con vencimiento en el mes de pago.
+			get.addQueryParam("paginate", resultsPerPage); // Parametro de elem. por pagina.
 			get.addQueryParam("page", currentPage); // Parametro de pagina a consultar.
 
 			// Si hay parámetros extra, los agrego.
@@ -63,37 +61,24 @@ public class ImportNaranja extends Import {
 				fields.deleteCharAt(fields.length() - 1);
 				get.addQueryParam("_fields", fields); // Campos a recuperar.
 			}
+			response = (Detalle) get.execute(Detalle.class); // Ejecuto la consulta.
 
-			response = new DefaultResponse(get.execute()); // Ejecuto la consulta.
+			currentPage = response.getCupones().getCurrentPage();
+			lastPage = response.getCupones().getLastPage();
 
-			if (response.get("err_msg") != null) {
-				throw new SaveFromAPIException(Msg.getMsg(Env.getAD_Language(ctx), "CentralPosUnexpectedError"));
-			}
-
-			@SuppressWarnings("unchecked")
-			LinkedTreeMap<String, Object> couponData = (LinkedTreeMap<String, Object>) response.get("cupones");
-
-			currentPage = ((Double) couponData.get("current_page")).intValue();
-			lastPage = ((Double) couponData.get("last_page")).intValue();
-
-			@SuppressWarnings("unchecked")
-			List<LinkedTreeMap<String, Object>> pageData = (List<LinkedTreeMap<String, Object>>) couponData.get("data");
-
-			List<Map<String, String>> matchingFields = new ArrayList<Map<String, String>>();
+			Set<Map<String, String>> matchingFields = new HashSet<Map<String, String>>();
 			List<NaranjaCoupons> coupons = new ArrayList<NaranjaCoupons>();
 
-			for (LinkedTreeMap<String, Object> itemResultMap : pageData) {
-				NaranjaCoupons coupon = new NaranjaCoupons(itemResultMap);
+			for (org.openXpertya.process.customImport.centralPos.pojos.naranja.cupones.Datum datum : response.getCupones().getData()) {
+				NaranjaCoupons coupon = new NaranjaCoupons(datum);
 
 				Map<String, String> leFields = new HashMap<String, String>();
 				leFields.put("comercio", (String) coupon.getValue("comercio"));
 				leFields.put("fecha_pago", (String) coupon.getValue("fecha_pago"));
 
 				matchingFields.add(leFields);
-
 				coupons.add(coupon);
 			}
-
 			List<NaranjaHeaders> headers = importNaranjaHeaders(matchingFields);
 			List<NaranjaInvoicedConcepts> invConcepts = importNaranjaInvoicedConcepts(matchingFields);
 			for (NaranjaCoupons coupon : coupons) {
@@ -130,8 +115,8 @@ public class ImportNaranja extends Import {
 		return msg(new Object[] { processed, areadyExists });
 	}
 
-	private List<NaranjaHeaders> importNaranjaHeaders(List<Map<String, String>> matchingFields) throws SaveFromAPIException {
-		DefaultResponse response; // Repuesta.
+	private List<NaranjaHeaders> importNaranjaHeaders(Set<Map<String, String>> matchingFields) throws SaveFromAPIException {
+		Headers response; // Repuesta.
 		int currentPage = 1; // Pagina actual.
 		int lastPage = 2; // Ultima pagina.
 		Get get; // Método get.
@@ -140,8 +125,8 @@ public class ImportNaranja extends Import {
 
 		// Mientras resten páginas a importar
 		while (currentPage <= lastPage) {
-			get = centralPosImport.makeGetter("/headers", token); // Metodo get para obtener headers.
-			get.addQueryParam("paginate", CentralPosImport.RESULTS_PER_PAGE); // Parametro de elem. por pagina.
+			get = makeGetter(externalService.getAttributeByName("URL Headers").getName()); // Metodo get para obtener headers.
+			get.addQueryParam("paginate", resultsPerPage); // Parametro de elem. por pagina.
 			get.addQueryParam("page", currentPage); // Parametro de pagina a consultar.
 
 			// Si hay parámetros extra, los agrego.
@@ -166,7 +151,6 @@ public class ImportNaranja extends Import {
 					get.addQueryParam(field + "-in", tmpStr);
 				}
 			}
-
 			StringBuffer fields = new StringBuffer();
 			for (String field : NaranjaHeaders.filteredFields) {
 				fields.append(field + ",");
@@ -175,24 +159,13 @@ public class ImportNaranja extends Import {
 				fields.deleteCharAt(fields.length() - 1);
 				get.addQueryParam("_fields", fields); // Campos a recuperar.
 			}
+			response = (Headers) get.execute(Headers.class); // Ejecuto la consulta.
 
-			response = new DefaultResponse(get.execute()); // Ejecuto la consulta.
+			currentPage = response.getHeaders().getCurrentPage();
+			lastPage = response.getHeaders().getLastPage();
 
-			if (response.get("err_msg") != null) {
-				throw new SaveFromAPIException(Msg.getMsg(Env.getAD_Language(ctx), "CentralPosUnexpectedError"));
-			}
-
-			@SuppressWarnings("unchecked")
-			LinkedTreeMap<String, Object> headerData = (LinkedTreeMap<String, Object>) response.get("headers");
-
-			currentPage = ((Double) headerData.get("current_page")).intValue();
-			lastPage = ((Double) headerData.get("last_page")).intValue();
-
-			@SuppressWarnings("unchecked")
-			List<LinkedTreeMap<String, Object>> pageData = (List<LinkedTreeMap<String, Object>>) headerData.get("data");
-
-			for (LinkedTreeMap<String, Object> itemResultMap : pageData) {
-				NaranjaHeaders header = new NaranjaHeaders(itemResultMap);
+			for (org.openXpertya.process.customImport.centralPos.pojos.naranja.headers.Datum datum : response.getHeaders().getData()) {
+				NaranjaHeaders header = new NaranjaHeaders(datum);
 				headers.add(header);
 			}
 			currentPage++;
@@ -200,8 +173,8 @@ public class ImportNaranja extends Import {
 		return headers;
 	}
 
-	private List<NaranjaInvoicedConcepts> importNaranjaInvoicedConcepts(List<Map<String, String>> matchingFields) throws SaveFromAPIException {
-		DefaultResponse response; // Repuesta.
+	private List<NaranjaInvoicedConcepts> importNaranjaInvoicedConcepts(Set<Map<String, String>> matchingFields) throws SaveFromAPIException {
+		Conceptos response; // Repuesta.
 		int currentPage = 1; // Pagina actual.
 		int lastPage = 2; // Ultima pagina.
 		Get get; // Método get.
@@ -210,8 +183,9 @@ public class ImportNaranja extends Import {
 
 		// Mientras resten páginas a importar
 		while (currentPage <= lastPage) {
-			get = centralPosImport.makeGetter("/conceptos-facturados-meses", token); // Metodo get para obtener conceptos facturados a descontar en el mes de pago.
-			get.addQueryParam("paginate", CentralPosImport.RESULTS_PER_PAGE); // Parametro de elem. por pagina.
+			// Metodo get para obtener conceptos facturados a descontar en el mes de pago.
+			get = makeGetter(externalService.getAttributeByName("URL Conceptos").getName());
+			get.addQueryParam("paginate", resultsPerPage); // Parametro de elem. por pagina.
 			get.addQueryParam("page", currentPage); // Parametro de pagina a consultar.
 
 			// Si hay parámetros extra, los agrego.
@@ -236,7 +210,6 @@ public class ImportNaranja extends Import {
 					get.addQueryParam(field + "-in", tmpStr);
 				}
 			}
-
 			StringBuffer fields = new StringBuffer();
 			for (String field : NaranjaInvoicedConcepts.filteredFields) {
 				fields.append(field + ",");
@@ -245,24 +218,13 @@ public class ImportNaranja extends Import {
 				fields.deleteCharAt(fields.length() - 1);
 				get.addQueryParam("_fields", fields); // Campos a recuperar.
 			}
+			response = (Conceptos) get.execute(Conceptos.class); // Ejecuto la consulta.
 
-			response = new DefaultResponse(get.execute()); // Ejecuto la consulta.
+			currentPage = response.getConceptosFacturadosMeses().getCurrentPage();
+			lastPage = response.getConceptosFacturadosMeses().getLastPage();
 
-			if (response.get("err_msg") != null) {
-				throw new SaveFromAPIException(Msg.getMsg(Env.getAD_Language(ctx), "CentralPosUnexpectedError"));
-			}
-
-			@SuppressWarnings("unchecked")
-			LinkedTreeMap<String, Object> conceptsData = (LinkedTreeMap<String, Object>) response.get("conceptos_facturados_meses");
-
-			currentPage = ((Double) conceptsData.get("current_page")).intValue();
-			lastPage = ((Double) conceptsData.get("last_page")).intValue();
-
-			@SuppressWarnings("unchecked")
-			List<LinkedTreeMap<String, Object>> pageData = (List<LinkedTreeMap<String, Object>>) conceptsData.get("data");
-
-			for (LinkedTreeMap<String, Object> itemResultMap : pageData) {
-				NaranjaInvoicedConcepts invoicedConcept = new NaranjaInvoicedConcepts(itemResultMap);
+			for (org.openXpertya.process.customImport.centralPos.pojos.naranja.conceptos.Datum datum : response.getConceptosFacturadosMeses().getData()) {
+				NaranjaInvoicedConcepts invoicedConcept = new NaranjaInvoicedConcepts(datum);
 				invoicedConcepts.add(invoicedConcept);
 			}
 			currentPage++;

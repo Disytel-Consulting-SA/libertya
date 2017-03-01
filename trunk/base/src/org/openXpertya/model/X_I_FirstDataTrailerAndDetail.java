@@ -5,34 +5,34 @@ import java.util.logging.Level;
 import java.sql.*;
 import java.math.*;
 import org.openXpertya.util.*;
-/** Modelo Generado por I_TrailerParticipants
+/** Modelo Generado por I_FirstDataTrailerAndDetail
  *  @author Comunidad de Desarrollo Libertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
- *  @version  - 2017-01-25 11:08:47.462 */
-public class X_I_TrailerParticipants extends org.openXpertya.model.PO
+ *  @version  - 2017-03-01 12:33:46.831 */
+public class X_I_FirstDataTrailerAndDetail extends org.openXpertya.model.PO
 {
 /** Constructor estándar */
-public X_I_TrailerParticipants (Properties ctx, int I_TrailerParticipants_ID, String trxName)
+public X_I_FirstDataTrailerAndDetail (Properties ctx, int I_FirstDataTrailerAndDetail_ID, String trxName)
 {
-super (ctx, I_TrailerParticipants_ID, trxName);
-/** if (I_TrailerParticipants_ID == 0)
+super (ctx, I_FirstDataTrailerAndDetail_ID, trxName);
+/** if (I_FirstDataTrailerAndDetail_ID == 0)
 {
+setI_Firstdatatraileranddetail_ID (0);
 setI_IsImported (false);
-setI_Trailerparticipants_ID (0);
 }
  */
 }
 /** Load Constructor */
-public X_I_TrailerParticipants (Properties ctx, ResultSet rs, String trxName)
+public X_I_FirstDataTrailerAndDetail (Properties ctx, ResultSet rs, String trxName)
 {
 super (ctx, rs, trxName);
 }
 /** AD_Table_ID */
-public static final int Table_ID = M_Table.getTableID("I_TrailerParticipants");
+public static final int Table_ID = M_Table.getTableID("I_FirstDataTrailerAndDetail");
 
-/** TableName=I_TrailerParticipants */
-public static final String Table_Name="I_TrailerParticipants";
+/** TableName=I_FirstDataTrailerAndDetail */
+public static final String Table_Name="I_FirstDataTrailerAndDetail";
 
-protected static KeyNamePair Model = new KeyNamePair(Table_ID,"I_TrailerParticipants");
+protected static KeyNamePair Model = new KeyNamePair(Table_ID,"I_FirstDataTrailerAndDetail");
 protected static BigDecimal AccessLevel = new BigDecimal(3);
 
 /** Load Meta Data */
@@ -43,8 +43,23 @@ return poi;
 }
 public String toString()
 {
-StringBuffer sb = new StringBuffer ("X_I_TrailerParticipants[").append(getID()).append("]");
+StringBuffer sb = new StringBuffer ("X_I_FirstDataTrailerAndDetail[").append(getID()).append("]");
 return sb.toString();
+}
+/** Set alicuota_iva_fo */
+public void setalicuota_iva_fo (String alicuota_iva_fo)
+{
+if (alicuota_iva_fo != null && alicuota_iva_fo.length() > 32)
+{
+log.warning("Length > 32 - truncated");
+alicuota_iva_fo = alicuota_iva_fo.substring(0,32);
+}
+set_Value ("alicuota_iva_fo", alicuota_iva_fo);
+}
+/** Get alicuota_iva_fo */
+public String getalicuota_iva_fo() 
+{
+return (String)get_Value("alicuota_iva_fo");
 }
 /** Set arancel */
 public void setarancel (String arancel)
@@ -121,6 +136,36 @@ public String getarchivo_id()
 {
 return (String)get_Value("archivo_id");
 }
+/** Set caja_nro_cinta_posnet */
+public void setcaja_nro_cinta_posnet (String caja_nro_cinta_posnet)
+{
+if (caja_nro_cinta_posnet != null && caja_nro_cinta_posnet.length() > 32)
+{
+log.warning("Length > 32 - truncated");
+caja_nro_cinta_posnet = caja_nro_cinta_posnet.substring(0,32);
+}
+set_Value ("caja_nro_cinta_posnet", caja_nro_cinta_posnet);
+}
+/** Get caja_nro_cinta_posnet */
+public String getcaja_nro_cinta_posnet() 
+{
+return (String)get_Value("caja_nro_cinta_posnet");
+}
+/** Set caratula_terminal_posnet */
+public void setcaratula_terminal_posnet (String caratula_terminal_posnet)
+{
+if (caratula_terminal_posnet != null && caratula_terminal_posnet.length() > 32)
+{
+log.warning("Length > 32 - truncated");
+caratula_terminal_posnet = caratula_terminal_posnet.substring(0,32);
+}
+set_Value ("caratula_terminal_posnet", caratula_terminal_posnet);
+}
+/** Get caratula_terminal_posnet */
+public String getcaratula_terminal_posnet() 
+{
+return (String)get_Value("caratula_terminal_posnet");
+}
 /** Set categoria_iva */
 public void setcategoria_iva (String categoria_iva)
 {
@@ -135,6 +180,51 @@ set_Value ("categoria_iva", categoria_iva);
 public String getcategoria_iva() 
 {
 return (String)get_Value("categoria_iva");
+}
+/** Set codigo_cargo_pago */
+public void setcodigo_cargo_pago (String codigo_cargo_pago)
+{
+if (codigo_cargo_pago != null && codigo_cargo_pago.length() > 32)
+{
+log.warning("Length > 32 - truncated");
+codigo_cargo_pago = codigo_cargo_pago.substring(0,32);
+}
+set_Value ("codigo_cargo_pago", codigo_cargo_pago);
+}
+/** Get codigo_cargo_pago */
+public String getcodigo_cargo_pago() 
+{
+return (String)get_Value("codigo_cargo_pago");
+}
+/** Set codigo_movimiento */
+public void setcodigo_movimiento (String codigo_movimiento)
+{
+if (codigo_movimiento != null && codigo_movimiento.length() > 32)
+{
+log.warning("Length > 32 - truncated");
+codigo_movimiento = codigo_movimiento.substring(0,32);
+}
+set_Value ("codigo_movimiento", codigo_movimiento);
+}
+/** Get codigo_movimiento */
+public String getcodigo_movimiento() 
+{
+return (String)get_Value("codigo_movimiento");
+}
+/** Set codigo_origen */
+public void setcodigo_origen (String codigo_origen)
+{
+if (codigo_origen != null && codigo_origen.length() > 32)
+{
+log.warning("Length > 32 - truncated");
+codigo_origen = codigo_origen.substring(0,32);
+}
+set_Value ("codigo_origen", codigo_origen);
+}
+/** Get codigo_origen */
+public String getcodigo_origen() 
+{
+return (String)get_Value("codigo_origen");
 }
 /** Set comercio_centralizador */
 public void setcomercio_centralizador (String comercio_centralizador)
@@ -196,6 +286,66 @@ public String getcosto_financiero_signo()
 {
 return (String)get_Value("costo_financiero_signo");
 }
+/** Set cuotas_plan */
+public void setcuotas_plan (String cuotas_plan)
+{
+if (cuotas_plan != null && cuotas_plan.length() > 32)
+{
+log.warning("Length > 32 - truncated");
+cuotas_plan = cuotas_plan.substring(0,32);
+}
+set_Value ("cuotas_plan", cuotas_plan);
+}
+/** Get cuotas_plan */
+public String getcuotas_plan() 
+{
+return (String)get_Value("cuotas_plan");
+}
+/** Set cuota_vigente */
+public void setcuota_vigente (String cuota_vigente)
+{
+if (cuota_vigente != null && cuota_vigente.length() > 32)
+{
+log.warning("Length > 32 - truncated");
+cuota_vigente = cuota_vigente.substring(0,32);
+}
+set_Value ("cuota_vigente", cuota_vigente);
+}
+/** Get cuota_vigente */
+public String getcuota_vigente() 
+{
+return (String)get_Value("cuota_vigente");
+}
+/** Set cupon_cupon_posnet */
+public void setcupon_cupon_posnet (String cupon_cupon_posnet)
+{
+if (cupon_cupon_posnet != null && cupon_cupon_posnet.length() > 32)
+{
+log.warning("Length > 32 - truncated");
+cupon_cupon_posnet = cupon_cupon_posnet.substring(0,32);
+}
+set_Value ("cupon_cupon_posnet", cupon_cupon_posnet);
+}
+/** Get cupon_cupon_posnet */
+public String getcupon_cupon_posnet() 
+{
+return (String)get_Value("cupon_cupon_posnet");
+}
+/** Set entidad_emisora */
+public void setentidad_emisora (String entidad_emisora)
+{
+if (entidad_emisora != null && entidad_emisora.length() > 32)
+{
+log.warning("Length > 32 - truncated");
+entidad_emisora = entidad_emisora.substring(0,32);
+}
+set_Value ("entidad_emisora", entidad_emisora);
+}
+/** Get entidad_emisora */
+public String getentidad_emisora() 
+{
+return (String)get_Value("entidad_emisora");
+}
 /** Set entidad_pagadora */
 public void setentidad_pagadora (String entidad_pagadora)
 {
@@ -211,6 +361,21 @@ public String getentidad_pagadora()
 {
 return (String)get_Value("entidad_pagadora");
 }
+/** Set fecha_operacion */
+public void setfecha_operacion (String fecha_operacion)
+{
+if (fecha_operacion != null && fecha_operacion.length() > 32)
+{
+log.warning("Length > 32 - truncated");
+fecha_operacion = fecha_operacion.substring(0,32);
+}
+set_Value ("fecha_operacion", fecha_operacion);
+}
+/** Get fecha_operacion */
+public String getfecha_operacion() 
+{
+return (String)get_Value("fecha_operacion");
+}
 /** Set fecha_presentacion */
 public void setfecha_presentacion (String fecha_presentacion)
 {
@@ -225,6 +390,21 @@ set_Value ("fecha_presentacion", fecha_presentacion);
 public String getfecha_presentacion() 
 {
 return (String)get_Value("fecha_presentacion");
+}
+/** Set fecha_present_original */
+public void setfecha_present_original (String fecha_present_original)
+{
+if (fecha_present_original != null && fecha_present_original.length() > 32)
+{
+log.warning("Length > 32 - truncated");
+fecha_present_original = fecha_present_original.substring(0,32);
+}
+set_Value ("fecha_present_original", fecha_present_original);
+}
+/** Get fecha_present_original */
+public String getfecha_present_original() 
+{
+return (String)get_Value("fecha_present_original");
 }
 /** Set fecha_vencimiento_clearing */
 public void setfecha_vencimiento_clearing (String fecha_vencimiento_clearing)
@@ -303,6 +483,18 @@ public String getI_ErrorMsg()
 {
 return (String)get_Value("I_ErrorMsg");
 }
+/** Set I_Firstdatatraileranddetail_ID */
+public void setI_Firstdatatraileranddetail_ID (int I_Firstdatatraileranddetail_ID)
+{
+set_ValueNoCheck ("I_Firstdatatraileranddetail_ID", new Integer(I_Firstdatatraileranddetail_ID));
+}
+/** Get I_Firstdatatraileranddetail_ID */
+public int getI_Firstdatatraileranddetail_ID() 
+{
+Integer ii = (Integer)get_Value("I_Firstdatatraileranddetail_ID");
+if (ii == null) return 0;
+return ii.intValue();
+}
 /** Set Imported.
 Has this import been processed */
 public void setI_IsImported (boolean I_IsImported)
@@ -320,6 +512,126 @@ if (oo != null)
  return "Y".equals(oo);
 }
 return false;
+}
+/** Set importe_arancel */
+public void setimporte_arancel (String importe_arancel)
+{
+if (importe_arancel != null && importe_arancel.length() > 32)
+{
+log.warning("Length > 32 - truncated");
+importe_arancel = importe_arancel.substring(0,32);
+}
+set_Value ("importe_arancel", importe_arancel);
+}
+/** Get importe_arancel */
+public String getimporte_arancel() 
+{
+return (String)get_Value("importe_arancel");
+}
+/** Set importe_arancel_signo */
+public void setimporte_arancel_signo (String importe_arancel_signo)
+{
+if (importe_arancel_signo != null && importe_arancel_signo.length() > 32)
+{
+log.warning("Length > 32 - truncated");
+importe_arancel_signo = importe_arancel_signo.substring(0,32);
+}
+set_Value ("importe_arancel_signo", importe_arancel_signo);
+}
+/** Get importe_arancel_signo */
+public String getimporte_arancel_signo() 
+{
+return (String)get_Value("importe_arancel_signo");
+}
+/** Set importe_costo_financiero */
+public void setimporte_costo_financiero (String importe_costo_financiero)
+{
+if (importe_costo_financiero != null && importe_costo_financiero.length() > 32)
+{
+log.warning("Length > 32 - truncated");
+importe_costo_financiero = importe_costo_financiero.substring(0,32);
+}
+set_Value ("importe_costo_financiero", importe_costo_financiero);
+}
+/** Get importe_costo_financiero */
+public String getimporte_costo_financiero() 
+{
+return (String)get_Value("importe_costo_financiero");
+}
+/** Set importe_costo_financiero_signo */
+public void setimporte_costo_financiero_signo (String importe_costo_financiero_signo)
+{
+if (importe_costo_financiero_signo != null && importe_costo_financiero_signo.length() > 32)
+{
+log.warning("Length > 32 - truncated");
+importe_costo_financiero_signo = importe_costo_financiero_signo.substring(0,32);
+}
+set_Value ("importe_costo_financiero_signo", importe_costo_financiero_signo);
+}
+/** Get importe_costo_financiero_signo */
+public String getimporte_costo_financiero_signo() 
+{
+return (String)get_Value("importe_costo_financiero_signo");
+}
+/** Set importe_costo_tasa_dta */
+public void setimporte_costo_tasa_dta (String importe_costo_tasa_dta)
+{
+if (importe_costo_tasa_dta != null && importe_costo_tasa_dta.length() > 32)
+{
+log.warning("Length > 32 - truncated");
+importe_costo_tasa_dta = importe_costo_tasa_dta.substring(0,32);
+}
+set_Value ("importe_costo_tasa_dta", importe_costo_tasa_dta);
+}
+/** Get importe_costo_tasa_dta */
+public String getimporte_costo_tasa_dta() 
+{
+return (String)get_Value("importe_costo_tasa_dta");
+}
+/** Set importe_costo_tasa_dta_signo */
+public void setimporte_costo_tasa_dta_signo (String importe_costo_tasa_dta_signo)
+{
+if (importe_costo_tasa_dta_signo != null && importe_costo_tasa_dta_signo.length() > 32)
+{
+log.warning("Length > 32 - truncated");
+importe_costo_tasa_dta_signo = importe_costo_tasa_dta_signo.substring(0,32);
+}
+set_Value ("importe_costo_tasa_dta_signo", importe_costo_tasa_dta_signo);
+}
+/** Get importe_costo_tasa_dta_signo */
+public String getimporte_costo_tasa_dta_signo() 
+{
+return (String)get_Value("importe_costo_tasa_dta_signo");
+}
+/** Set importe_total */
+public void setimporte_total (String importe_total)
+{
+if (importe_total != null && importe_total.length() > 32)
+{
+log.warning("Length > 32 - truncated");
+importe_total = importe_total.substring(0,32);
+}
+set_Value ("importe_total", importe_total);
+}
+/** Get importe_total */
+public String getimporte_total() 
+{
+return (String)get_Value("importe_total");
+}
+/** Set importe_total_signo */
+public void setimporte_total_signo (String importe_total_signo)
+{
+if (importe_total_signo != null && importe_total_signo.length() > 32)
+{
+log.warning("Length > 32 - truncated");
+importe_total_signo = importe_total_signo.substring(0,32);
+}
+set_Value ("importe_total_signo", importe_total_signo);
+}
+/** Get importe_total_signo */
+public String getimporte_total_signo() 
+{
+return (String)get_Value("importe_total_signo");
 }
 /** Set imp_sintereses_ley_25063 */
 public void setimp_sintereses_ley_25063 (String imp_sintereses_ley_25063)
@@ -381,17 +693,20 @@ public String getimpuesto_deb_cred_signo()
 {
 return (String)get_Value("impuesto_deb_cred_signo");
 }
-/** Set I_Trailerparticipants_ID */
-public void setI_Trailerparticipants_ID (int I_Trailerparticipants_ID)
+/** Set iva_arancel */
+public void setiva_arancel (String iva_arancel)
 {
-set_ValueNoCheck ("I_Trailerparticipants_ID", new Integer(I_Trailerparticipants_ID));
+if (iva_arancel != null && iva_arancel.length() > 32)
+{
+log.warning("Length > 32 - truncated");
+iva_arancel = iva_arancel.substring(0,32);
 }
-/** Get I_Trailerparticipants_ID */
-public int getI_Trailerparticipants_ID() 
+set_Value ("iva_arancel", iva_arancel);
+}
+/** Get iva_arancel */
+public String getiva_arancel() 
 {
-Integer ii = (Integer)get_Value("I_Trailerparticipants_ID");
-if (ii == null) return 0;
-return ii.intValue();
+return (String)get_Value("iva_arancel");
 }
 /** Set iva_aranceles_ri */
 public void setiva_aranceles_ri (String iva_aranceles_ri)
@@ -422,6 +737,81 @@ set_Value ("iva_aranceles_ri_signo", iva_aranceles_ri_signo);
 public String getiva_aranceles_ri_signo() 
 {
 return (String)get_Value("iva_aranceles_ri_signo");
+}
+/** Set iva_arancel_signo */
+public void setiva_arancel_signo (String iva_arancel_signo)
+{
+if (iva_arancel_signo != null && iva_arancel_signo.length() > 32)
+{
+log.warning("Length > 32 - truncated");
+iva_arancel_signo = iva_arancel_signo.substring(0,32);
+}
+set_Value ("iva_arancel_signo", iva_arancel_signo);
+}
+/** Get iva_arancel_signo */
+public String getiva_arancel_signo() 
+{
+return (String)get_Value("iva_arancel_signo");
+}
+/** Set iva_costo_financiero */
+public void setiva_costo_financiero (String iva_costo_financiero)
+{
+if (iva_costo_financiero != null && iva_costo_financiero.length() > 32)
+{
+log.warning("Length > 32 - truncated");
+iva_costo_financiero = iva_costo_financiero.substring(0,32);
+}
+set_Value ("iva_costo_financiero", iva_costo_financiero);
+}
+/** Get iva_costo_financiero */
+public String getiva_costo_financiero() 
+{
+return (String)get_Value("iva_costo_financiero");
+}
+/** Set iva_costo_financiero_signo */
+public void setiva_costo_financiero_signo (String iva_costo_financiero_signo)
+{
+if (iva_costo_financiero_signo != null && iva_costo_financiero_signo.length() > 32)
+{
+log.warning("Length > 32 - truncated");
+iva_costo_financiero_signo = iva_costo_financiero_signo.substring(0,32);
+}
+set_Value ("iva_costo_financiero_signo", iva_costo_financiero_signo);
+}
+/** Get iva_costo_financiero_signo */
+public String getiva_costo_financiero_signo() 
+{
+return (String)get_Value("iva_costo_financiero_signo");
+}
+/** Set iva_costo_tasa_dta */
+public void setiva_costo_tasa_dta (String iva_costo_tasa_dta)
+{
+if (iva_costo_tasa_dta != null && iva_costo_tasa_dta.length() > 32)
+{
+log.warning("Length > 32 - truncated");
+iva_costo_tasa_dta = iva_costo_tasa_dta.substring(0,32);
+}
+set_Value ("iva_costo_tasa_dta", iva_costo_tasa_dta);
+}
+/** Get iva_costo_tasa_dta */
+public String getiva_costo_tasa_dta() 
+{
+return (String)get_Value("iva_costo_tasa_dta");
+}
+/** Set iva_costo_tasa_dta_signo */
+public void setiva_costo_tasa_dta_signo (String iva_costo_tasa_dta_signo)
+{
+if (iva_costo_tasa_dta_signo != null && iva_costo_tasa_dta_signo.length() > 32)
+{
+log.warning("Length > 32 - truncated");
+iva_costo_tasa_dta_signo = iva_costo_tasa_dta_signo.substring(0,32);
+}
+set_Value ("iva_costo_tasa_dta_signo", iva_costo_tasa_dta_signo);
+}
+/** Get iva_costo_tasa_dta_signo */
+public String getiva_costo_tasa_dta_signo() 
+{
+return (String)get_Value("iva_costo_tasa_dta_signo");
 }
 /** Set iva_dto_pago_anticipado */
 public void setiva_dto_pago_anticipado (String iva_dto_pago_anticipado)
@@ -483,6 +873,51 @@ public String getiva_servicios_signo()
 {
 return (String)get_Value("iva_servicios_signo");
 }
+/** Set marca_campana */
+public void setmarca_campana (String marca_campana)
+{
+if (marca_campana != null && marca_campana.length() > 32)
+{
+log.warning("Length > 32 - truncated");
+marca_campana = marca_campana.substring(0,32);
+}
+set_Value ("marca_campana", marca_campana);
+}
+/** Get marca_campana */
+public String getmarca_campana() 
+{
+return (String)get_Value("marca_campana");
+}
+/** Set marca_cashback */
+public void setmarca_cashback (String marca_cashback)
+{
+if (marca_cashback != null && marca_cashback.length() > 32)
+{
+log.warning("Length > 32 - truncated");
+marca_cashback = marca_cashback.substring(0,32);
+}
+set_Value ("marca_cashback", marca_cashback);
+}
+/** Get marca_cashback */
+public String getmarca_cashback() 
+{
+return (String)get_Value("marca_cashback");
+}
+/** Set marca_error */
+public void setmarca_error (String marca_error)
+{
+if (marca_error != null && marca_error.length() > 32)
+{
+log.warning("Length > 32 - truncated");
+marca_error = marca_error.substring(0,32);
+}
+set_Value ("marca_error", marca_error);
+}
+/** Get marca_error */
+public String getmarca_error() 
+{
+return (String)get_Value("marca_error");
+}
 /** Set Moneda */
 public void setMoneda (String Moneda)
 {
@@ -528,6 +963,81 @@ public String getmonto_pend_cuotas_signo()
 {
 return (String)get_Value("monto_pend_cuotas_signo");
 }
+/** Set motivo_rechazo_1 */
+public void setmotivo_rechazo_1 (String motivo_rechazo_1)
+{
+if (motivo_rechazo_1 != null && motivo_rechazo_1.length() > 32)
+{
+log.warning("Length > 32 - truncated");
+motivo_rechazo_1 = motivo_rechazo_1.substring(0,32);
+}
+set_Value ("motivo_rechazo_1", motivo_rechazo_1);
+}
+/** Get motivo_rechazo_1 */
+public String getmotivo_rechazo_1() 
+{
+return (String)get_Value("motivo_rechazo_1");
+}
+/** Set motivo_rechazo_2 */
+public void setmotivo_rechazo_2 (String motivo_rechazo_2)
+{
+if (motivo_rechazo_2 != null && motivo_rechazo_2.length() > 32)
+{
+log.warning("Length > 32 - truncated");
+motivo_rechazo_2 = motivo_rechazo_2.substring(0,32);
+}
+set_Value ("motivo_rechazo_2", motivo_rechazo_2);
+}
+/** Get motivo_rechazo_2 */
+public String getmotivo_rechazo_2() 
+{
+return (String)get_Value("motivo_rechazo_2");
+}
+/** Set motivo_rechazo_3 */
+public void setmotivo_rechazo_3 (String motivo_rechazo_3)
+{
+if (motivo_rechazo_3 != null && motivo_rechazo_3.length() > 32)
+{
+log.warning("Length > 32 - truncated");
+motivo_rechazo_3 = motivo_rechazo_3.substring(0,32);
+}
+set_Value ("motivo_rechazo_3", motivo_rechazo_3);
+}
+/** Get motivo_rechazo_3 */
+public String getmotivo_rechazo_3() 
+{
+return (String)get_Value("motivo_rechazo_3");
+}
+/** Set motivo_rechazo_4 */
+public void setmotivo_rechazo_4 (String motivo_rechazo_4)
+{
+if (motivo_rechazo_4 != null && motivo_rechazo_4.length() > 32)
+{
+log.warning("Length > 32 - truncated");
+motivo_rechazo_4 = motivo_rechazo_4.substring(0,32);
+}
+set_Value ("motivo_rechazo_4", motivo_rechazo_4);
+}
+/** Get motivo_rechazo_4 */
+public String getmotivo_rechazo_4() 
+{
+return (String)get_Value("motivo_rechazo_4");
+}
+/** Set motivo_reversion */
+public void setmotivo_reversion (String motivo_reversion)
+{
+if (motivo_reversion != null && motivo_reversion.length() > 32)
+{
+log.warning("Length > 32 - truncated");
+motivo_reversion = motivo_reversion.substring(0,32);
+}
+set_Value ("motivo_reversion", motivo_reversion);
+}
+/** Get motivo_reversion */
+public String getmotivo_reversion() 
+{
+return (String)get_Value("motivo_reversion");
+}
 /** Set neto_comercios */
 public void setneto_comercios (String neto_comercios)
 {
@@ -572,6 +1082,36 @@ set_Value ("nombre_archivo", nombre_archivo);
 public String getnombre_archivo() 
 {
 return (String)get_Value("nombre_archivo");
+}
+/** Set nro_autoriz */
+public void setnro_autoriz (String nro_autoriz)
+{
+if (nro_autoriz != null && nro_autoriz.length() > 32)
+{
+log.warning("Length > 32 - truncated");
+nro_autoriz = nro_autoriz.substring(0,32);
+}
+set_Value ("nro_autoriz", nro_autoriz);
+}
+/** Get nro_autoriz */
+public String getnro_autoriz() 
+{
+return (String)get_Value("nro_autoriz");
+}
+/** Set nro_tarjeta */
+public void setnro_tarjeta (String nro_tarjeta)
+{
+if (nro_tarjeta != null && nro_tarjeta.length() > 32)
+{
+log.warning("Length > 32 - truncated");
+nro_tarjeta = nro_tarjeta.substring(0,32);
+}
+set_Value ("nro_tarjeta", nro_tarjeta);
+}
+/** Get nro_tarjeta */
+public String getnro_tarjeta() 
+{
+return (String)get_Value("nro_tarjeta");
 }
 /** Set numero_liquidacion */
 public void setnumero_liquidacion (String numero_liquidacion)
@@ -723,6 +1263,36 @@ public String getplazo_pago()
 {
 return (String)get_Value("plazo_pago");
 }
+/** Set porc_desc */
+public void setporc_desc (String porc_desc)
+{
+if (porc_desc != null && porc_desc.length() > 32)
+{
+log.warning("Length > 32 - truncated");
+porc_desc = porc_desc.substring(0,32);
+}
+set_Value ("porc_desc", porc_desc);
+}
+/** Get porc_desc */
+public String getporc_desc() 
+{
+return (String)get_Value("porc_desc");
+}
+/** Set porcentaje_tasa_directa */
+public void setporcentaje_tasa_directa (String porcentaje_tasa_directa)
+{
+if (porcentaje_tasa_directa != null && porcentaje_tasa_directa.length() > 32)
+{
+log.warning("Length > 32 - truncated");
+porcentaje_tasa_directa = porcentaje_tasa_directa.substring(0,32);
+}
+set_Value ("porcentaje_tasa_directa", porcentaje_tasa_directa);
+}
+/** Get porcentaje_tasa_directa */
+public String getporcentaje_tasa_directa() 
+{
+return (String)get_Value("porcentaje_tasa_directa");
+}
 /** Set Processed.
 The document has been processed */
 public void setProcessed (boolean Processed)
@@ -772,6 +1342,21 @@ public String getproducto()
 {
 return (String)get_Value("producto");
 }
+/** Set promocion_cuotas_alfa */
+public void setpromocion_cuotas_alfa (String promocion_cuotas_alfa)
+{
+if (promocion_cuotas_alfa != null && promocion_cuotas_alfa.length() > 32)
+{
+log.warning("Length > 32 - truncated");
+promocion_cuotas_alfa = promocion_cuotas_alfa.substring(0,32);
+}
+set_Value ("promocion_cuotas_alfa", promocion_cuotas_alfa);
+}
+/** Get promocion_cuotas_alfa */
+public String getpromocion_cuotas_alfa() 
+{
+return (String)get_Value("promocion_cuotas_alfa");
+}
 /** Set provincia_ing_brutos */
 public void setprovincia_ing_brutos (String provincia_ing_brutos)
 {
@@ -786,6 +1371,21 @@ set_Value ("provincia_ing_brutos", provincia_ing_brutos);
 public String getprovincia_ing_brutos() 
 {
 return (String)get_Value("provincia_ing_brutos");
+}
+/** Set resumen_lote_posnet */
+public void setresumen_lote_posnet (String resumen_lote_posnet)
+{
+if (resumen_lote_posnet != null && resumen_lote_posnet.length() > 32)
+{
+log.warning("Length > 32 - truncated");
+resumen_lote_posnet = resumen_lote_posnet.substring(0,32);
+}
+set_Value ("resumen_lote_posnet", resumen_lote_posnet);
+}
+/** Get resumen_lote_posnet */
+public String getresumen_lote_posnet() 
+{
+return (String)get_Value("resumen_lote_posnet");
 }
 /** Set retenciones_fiscales */
 public void setretenciones_fiscales (String retenciones_fiscales)
@@ -952,6 +1552,36 @@ public String getsucursal_pagadora()
 {
 return (String)get_Value("sucursal_pagadora");
 }
+/** Set tipo_operacion */
+public void settipo_operacion (String tipo_operacion)
+{
+if (tipo_operacion != null && tipo_operacion.length() > 32)
+{
+log.warning("Length > 32 - truncated");
+tipo_operacion = tipo_operacion.substring(0,32);
+}
+set_Value ("tipo_operacion", tipo_operacion);
+}
+/** Get tipo_operacion */
+public String gettipo_operacion() 
+{
+return (String)get_Value("tipo_operacion");
+}
+/** Set tipo_plan_cuotas */
+public void settipo_plan_cuotas (String tipo_plan_cuotas)
+{
+if (tipo_plan_cuotas != null && tipo_plan_cuotas.length() > 32)
+{
+log.warning("Length > 32 - truncated");
+tipo_plan_cuotas = tipo_plan_cuotas.substring(0,32);
+}
+set_Value ("tipo_plan_cuotas", tipo_plan_cuotas);
+}
+/** Get tipo_plan_cuotas */
+public String gettipo_plan_cuotas() 
+{
+return (String)get_Value("tipo_plan_cuotas");
+}
 /** Set tipo_plazo_pago */
 public void settipo_plazo_pago (String tipo_plazo_pago)
 {
@@ -981,6 +1611,21 @@ set_Value ("tipo_registro", tipo_registro);
 public String gettipo_registro() 
 {
 return (String)get_Value("tipo_registro");
+}
+/** Set tna */
+public void settna (String tna)
+{
+if (tna != null && tna.length() > 32)
+{
+log.warning("Length > 32 - truncated");
+tna = tna.substring(0,32);
+}
+set_Value ("tna", tna);
+}
+/** Get tna */
+public String gettna() 
+{
+return (String)get_Value("tna");
 }
 /** Set total_importe_final */
 public void settotal_importe_final (String total_importe_final)

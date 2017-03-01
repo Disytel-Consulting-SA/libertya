@@ -7,7 +7,7 @@ import java.math.*;
 import org.openXpertya.util.*;
 /** Modelo Generado por M_EntidadFinanciera
  *  @author Comunidad de Desarrollo Libertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
- *  @version  - 2017-02-09 12:27:18.94 */
+ *  @version  - 2017-03-01 12:34:23.997 */
 public class X_M_EntidadFinanciera extends org.openXpertya.model.PO
 {
 /** Constructor estándar */
@@ -176,6 +176,23 @@ Credit Card (Visa, MC, AmEx) */
 public String getCreditCardType() 
 {
 return (String)get_Value("CreditCardType");
+}
+public static final int C_REGION_ID_AD_Reference_ID = MReference.getReferenceID("C_Region");
+/** Set Region.
+Identifies a geographical Region */
+public void setC_Region_ID (int C_Region_ID)
+{
+if (C_Region_ID <= 0) set_Value ("C_Region_ID", null);
+ else 
+set_Value ("C_Region_ID", new Integer(C_Region_ID));
+}
+/** Get Region.
+Identifies a geographical Region */
+public int getC_Region_ID() 
+{
+Integer ii = (Integer)get_Value("C_Region_ID");
+if (ii == null) return 0;
+return ii.intValue();
 }
 /** Set Establishment Number */
 public void setEstablishmentNumber (String EstablishmentNumber)

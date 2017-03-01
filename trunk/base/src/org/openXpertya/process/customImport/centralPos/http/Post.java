@@ -4,7 +4,6 @@ import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 
 import org.apache.http.HttpResponse;
 import org.apache.http.NameValuePair;
@@ -15,9 +14,9 @@ import org.apache.http.client.methods.HttpPost;
 import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.message.BasicNameValuePair;
 import org.apache.http.util.EntityUtils;
+import org.openXpertya.process.customImport.centralPos.pojos.Pojo;
 
 import com.google.gson.Gson;
-import com.google.gson.reflect.TypeToken;
 
 /**
  * Metodo POST.
@@ -41,21 +40,17 @@ public class Post {
 		params.add(new BasicNameValuePair(key, value));
 	}
 
-	public Map<String, Object> execute() {
+	public Pojo execute(Class<? extends Pojo> cls) {
 		try {
 			postMethod.setEntity(new UrlEncodedFormEntity(params));
 			HttpResponse response = client.execute(postMethod);
-
-			return gsonUtil.fromJson(EntityUtils.toString(response.getEntity()), new TypeToken<Map<String, Object>>(){}.getType());
-
+			String responseStr = EntityUtils.toString(response.getEntity());
+			return gsonUtil.fromJson(responseStr, cls);
 		} catch (UnsupportedEncodingException e) {
-			e.printStackTrace();
 			return null;
 		} catch (ClientProtocolException e) {
-			e.printStackTrace();
 			return null;
 		} catch (IOException e) {
-			e.printStackTrace();
 			return null;
 		}
 	}

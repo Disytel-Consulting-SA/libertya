@@ -60,7 +60,7 @@ public class MCreditCardSettlement extends X_C_CreditCardSettlement implements D
 		}
 		return true;
 	}
-	
+
 	/**
 	 * Para una entidad comercial de tipo "tarjeta" (Las que están asociadas a alguna
 	 * E. Financiera), recupera la cuenta de banco de la E.Financiera más reciente 
@@ -73,14 +73,14 @@ public class MCreditCardSettlement extends X_C_CreditCardSettlement implements D
 		sql.append("SELECT  ");
 		sql.append("	ef.c_bankaccount_id ");
 		sql.append("FROM  ");
-		sql.append("	c_bpartner bp ");
-		sql.append("	INNER JOIN m_entidadfinanciera ef ON ef.c_bpartner_id = bp.c_bpartner_id ");
+		sql.append("	" + MBPartner.Table_Name + " bp ");
+		sql.append("	INNER JOIN " + MEntidadFinanciera.Table_Name + " ef ON ef.c_bpartner_id = bp.c_bpartner_id ");
 		sql.append("WHERE  ");
 		sql.append("	bp.c_bpartner_id = ? ");
 		sql.append("ORDER BY ");
 		sql.append("	ef.updated DESC ");
 		sql.append("LIMIT 1; ");
-		
+
 		PreparedStatement ps = null;
 		ResultSet rs = null;
 
@@ -102,7 +102,7 @@ public class MCreditCardSettlement extends X_C_CreditCardSettlement implements D
 				log.log(Level.SEVERE, "Cannot close statement or resultset");
 			}
 		}
-		
+
 		return null;
 	}
 
@@ -114,7 +114,7 @@ public class MCreditCardSettlement extends X_C_CreditCardSettlement implements D
 		sql.append("FROM ");
 		sql.append("	" + X_C_Tax.Table_Name + " ");
 		sql.append("WHERE ");
-		sql.append("	IsPercepcion = 'N' ");
+		sql.append("	IsPercepcion = 'N' "); // Impuestos que no sean percepción.
 		sql.append("	AND IsActive = 'Y' ");
 		sql.append("	AND Ad_Client_Id = " + Env.getAD_Client_ID(getCtx()));
 
@@ -158,7 +158,7 @@ public class MCreditCardSettlement extends X_C_CreditCardSettlement implements D
 		sql.append("FROM ");
 		sql.append("	" + X_C_Tax.Table_Name + " ");
 		sql.append("WHERE ");
-		sql.append("	IsPercepcion = 'Y' ");
+		sql.append("	IsPercepcion = 'Y' "); // Impuesto de tipo percepción.
 		sql.append("	AND IsActive = 'Y' ");
 		sql.append("	AND Ad_Client_Id = " + Env.getAD_Client_ID(getCtx()));
 
@@ -202,12 +202,15 @@ public class MCreditCardSettlement extends X_C_CreditCardSettlement implements D
 		StringBuffer sql = new StringBuffer();
 
 		sql.append("SELECT ");
-		sql.append("	C_RetencionType_ID ");
+		sql.append("	rt.C_RetencionType_ID ");
 		sql.append("FROM ");
-		sql.append("	" + X_C_RetencionType.Table_Name + " ");
+		sql.append("	" + X_C_RetencionType.Table_Name + " rt ");
+		sql.append("	INNER JOIN " + X_C_RetencionSchema.Table_Name + " rs ");
+		sql.append("		ON rs.C_RetencionType_ID = rs.C_RetencionType_ID ");
 		sql.append("WHERE ");
-		sql.append("	IsActive = 'Y' ");
-		sql.append("	AND Ad_Client_Id = " + Env.getAD_Client_ID(getCtx()));
+		sql.append("	rs.RetencionApplication = 'S' "); // Solo del tipo "Retencion Sufrida".
+		sql.append("	AND rt.IsActive = 'Y' "); // Filtro las activas.
+		sql.append("	AND rt.Ad_Client_Id = " + Env.getAD_Client_ID(getCtx()));
 
 		PreparedStatement ps = null;
 		ResultSet rs = null;
@@ -335,7 +338,7 @@ public class MCreditCardSettlement extends X_C_CreditCardSettlement implements D
 	 * los registros en estas pestañas para que el usuario luego cargue los valores, y
 	 * deje en Cero los que no corresponden.
 	 */
-	private void generateAllChildrens() {
+	public void generateAllChildrens() {
 		makeIva();
 		makePerceptions();
 		makeWithholdings();
@@ -347,12 +350,12 @@ public class MCreditCardSettlement extends X_C_CreditCardSettlement implements D
 	 * Al completar la Liquidación todos los
 	 * registros en cero se deben eliminar
 	 */
-	private void removeUnusedChildrens() {
+	public void removeUnusedChildrens() {
 
 		StringBuffer sql = new StringBuffer();
 
 		sql.append("DELETE FROM ");
-		sql.append("	C_IVASettlements ");
+		sql.append("	" + X_C_IVASettlements.Table_Name + " ");
 		sql.append("WHERE ");
 		sql.append("	C_CreditCardSettlement_ID = " + getC_CreditCardSettlement_ID());
 		sql.append("	AND Amount = 0 ");
@@ -362,7 +365,7 @@ public class MCreditCardSettlement extends X_C_CreditCardSettlement implements D
 		sql = new StringBuffer();
 
 		sql.append("DELETE FROM ");
-		sql.append("	C_PerceptionsSettlement ");
+		sql.append("	" + X_C_PerceptionsSettlement.Table_Name + " ");
 		sql.append("WHERE ");
 		sql.append("	C_CreditCardSettlement_ID = " + getC_CreditCardSettlement_ID());
 		sql.append("	AND Amount = 0 ");
@@ -372,7 +375,7 @@ public class MCreditCardSettlement extends X_C_CreditCardSettlement implements D
 		sql = new StringBuffer();
 
 		sql.append("DELETE FROM ");
-		sql.append("	C_WithholdingSettlement ");
+		sql.append("	" + X_C_WithholdingSettlement.Table_Name + " ");
 		sql.append("WHERE ");
 		sql.append("	C_CreditCardSettlement_ID = " + getC_CreditCardSettlement_ID());
 		sql.append("	AND Amount = 0 ");
@@ -382,7 +385,7 @@ public class MCreditCardSettlement extends X_C_CreditCardSettlement implements D
 		sql = new StringBuffer();
 
 		sql.append("DELETE FROM ");
-		sql.append("	C_CommissionConcepts ");
+		sql.append("	" + X_C_CommissionConcepts.Table_Name + " ");
 		sql.append("WHERE ");
 		sql.append("	C_CreditCardSettlement_ID = " + getC_CreditCardSettlement_ID());
 		sql.append("	AND Amount = 0 ");
@@ -392,7 +395,7 @@ public class MCreditCardSettlement extends X_C_CreditCardSettlement implements D
 		sql = new StringBuffer();
 
 		sql.append("DELETE FROM ");
-		sql.append("	C_ExpenseConcepts ");
+		sql.append("	" + X_C_ExpenseConcepts.Table_Name + " ");
 		sql.append("WHERE ");
 		sql.append("	C_CreditCardSettlement_ID = " + getC_CreditCardSettlement_ID());
 		sql.append("	AND Amount = 0 ");
@@ -698,6 +701,11 @@ public class MCreditCardSettlement extends X_C_CreditCardSettlement implements D
 		return false;
 	}
 
+	/**
+	 * Retorna el valor negado de un BigDecimal.
+	 * @param input número de entrada a negar.
+	 * @return Valor negado.
+	 */
 	private BigDecimal negativeValue(BigDecimal input) {
 		if (input == null || input.signum() == 0) {
 			return BigDecimal.ZERO;
@@ -712,8 +720,8 @@ public class MCreditCardSettlement extends X_C_CreditCardSettlement implements D
 	public boolean voidIt() {
 		log.info("voidIt - " + toString());
 		if (DOCSTATUS_Closed.equals(getDocStatus()) || 
-				DOCSTATUS_Reversed.equals(getDocStatus()) || 
-				DOCSTATUS_Voided.equals(getDocStatus())) {
+			DOCSTATUS_Reversed.equals(getDocStatus()) || 
+			DOCSTATUS_Voided.equals(getDocStatus())) {
 
 			m_processMsg = "Document Closed: " + getDocStatus();
 			setDocAction(DOCACTION_None);
@@ -825,7 +833,7 @@ public class MCreditCardSettlement extends X_C_CreditCardSettlement implements D
 
 				while (rs.next()) {
 					PO to = null;
-					
+
 					// IVA
 					if (tableName.equals(X_C_IVASettlements.Table_Name)) {
 						X_C_IVASettlements from = new X_C_IVASettlements(getCtx(), rs, get_TrxName());
@@ -875,7 +883,7 @@ public class MCreditCardSettlement extends X_C_CreditCardSettlement implements D
 						((X_C_ExpenseConcepts)to).setC_CreditCardSettlement_ID(copy.getC_CreditCardSettlement_ID());
 						((X_C_ExpenseConcepts)to).setAmount(negativeValue(from.getAmount()));
 					}
-					
+
 				}
 			} catch (Exception e) {
 				log.log(Level.SEVERE, "MCreditCardSettlement.voidIt", e);

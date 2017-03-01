@@ -28,7 +28,12 @@ public class MPerceptionsSettlement extends X_C_PerceptionsSettlement {
 	public boolean doAfterSave(boolean newRecord, boolean success) {
 		return recalculate();
 	}
-		
+
+	@Override
+	protected boolean afterDelete(boolean success) {
+		return recalculate();
+	}
+
 	private boolean recalculate() {
 		StringBuffer sql = new StringBuffer();
 
@@ -60,7 +65,7 @@ public class MPerceptionsSettlement extends X_C_PerceptionsSettlement {
 			}
 
 		} catch (Exception e) {
-			log.log(Level.SEVERE, "doAfterSave", e);
+			log.log(Level.SEVERE, "recalculate", e);
 		} finally {
 			try {
 				rs.close();
@@ -68,13 +73,8 @@ public class MPerceptionsSettlement extends X_C_PerceptionsSettlement {
 			} catch (SQLException e) {
 				log.log(Level.SEVERE, "Cannot close statement or resultset");
 			}
-
 		}
 		return true;
-	}
-	
-	protected boolean afterDelete( boolean success ) {
-		return recalculate();
 	}
 
 }

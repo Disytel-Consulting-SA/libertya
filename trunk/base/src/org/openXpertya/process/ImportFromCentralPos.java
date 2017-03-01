@@ -6,13 +6,14 @@ import java.util.Calendar;
 import java.util.Date;
 import java.util.logging.Level;
 
-import org.openXpertya.process.customImport.centralPos.commons.CentralPosImport;
+import org.openXpertya.model.MCreditCardSettlement;
 import org.openXpertya.process.customImport.centralPos.exceptions.SaveFromAPIException;
 import org.openXpertya.process.customImport.centralPos.jobs.Import;
 import org.openXpertya.process.customImport.centralPos.jobs.ImportAmex;
 import org.openXpertya.process.customImport.centralPos.jobs.ImportFirstData;
 import org.openXpertya.process.customImport.centralPos.jobs.ImportNaranja;
 import org.openXpertya.process.customImport.centralPos.jobs.ImportVisa;
+import org.openXpertya.util.CLogger;
 import org.openXpertya.util.Env;
 import org.openXpertya.util.Msg;
 
@@ -22,6 +23,8 @@ import org.openXpertya.util.Msg;
  * @version 1.0
  */
 public class ImportFromCentralPos extends SvrProcess {
+
+	private ImportSettlements createSettlementsProcess;
 
 	private int p_M_EntidadFinanciera_ID; // Entidad financiera.
 	private String p_CreditCardType; // Tipo de tarjeta.
@@ -49,6 +52,7 @@ public class ImportFromCentralPos extends SvrProcess {
 				log.log(Level.SEVERE, "ImportFromCentralPos.prepare - Unknown Parameter: " + name);
 			}
 		}
+		createSettlementsProcess = new ImportSettlements();
 	}
 
 	@Override
@@ -56,13 +60,13 @@ public class ImportFromCentralPos extends SvrProcess {
 		Import importJob = null;
 
 		if (p_CreditCardType != null) {
-			if (p_CreditCardType.equals(CentralPosImport.FIRSTDATA)) {
+			if (p_CreditCardType.equals(MCreditCardSettlement.CREDITCARDTYPE_FIRSTDATA)) {
 				importJob = new ImportFirstData(getCtx(), get_TrxName());
-			} else if (p_CreditCardType.equals(CentralPosImport.NARANJA)) {
+			} else if (p_CreditCardType.equals(MCreditCardSettlement.CREDITCARDTYPE_NARANJA)) {
 				importJob = new ImportNaranja(getCtx(), get_TrxName());
-			} else if (p_CreditCardType.equals(CentralPosImport.AMEX)) {
+			} else if (p_CreditCardType.equals(MCreditCardSettlement.CREDITCARDTYPE_AMEX)) {
 				importJob = new ImportAmex(getCtx(), get_TrxName());
-			} else if (p_CreditCardType.equals(CentralPosImport.VISA)) {
+			} else if (p_CreditCardType.equals(MCreditCardSettlement.CREDITCARDTYPE_VISA)) {
 				importJob = new ImportVisa(getCtx(), get_TrxName());
 			} else {
 				throw new Exception(Msg.getMsg(Env.getAD_Language(getCtx()), "UnknownCreditCardTypeParam"));
@@ -74,9 +78,8 @@ public class ImportFromCentralPos extends SvrProcess {
 		// Llegado a este punto, importJob no es null.
 		importJob.setCLogger(log);
 
-		// TODO definir qué fecha es la que se debe utilizar para cada caso,
-		// según el tipo de tarjeta. Actualmente asigné campos de fecha a mi
-		// criterio.
+		// TODO definir qué fecha es la que se debe utilizar para cada caso, según
+		// el tipo de tarjeta. Actualmente asigné campos de fecha a mi criterio.
 
 		SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
 
@@ -98,7 +101,7 @@ public class ImportFromCentralPos extends SvrProcess {
 
 		String msg = "";
 
-		if (p_CreditCardType.equals(CentralPosImport.FIRSTDATA)) {
+		if (p_CreditCardType.equals(MCreditCardSettlement.CREDITCARDTYPE_FIRSTDATA)) {
 
 			if (p_Date_From != null) {
 				importJob.addParam("fecha_presentacion-min", sdf.format(new Date(p_Date_From.getTime())));
@@ -111,22 +114,7 @@ public class ImportFromCentralPos extends SvrProcess {
 			} catch (SaveFromAPIException e) {
 				return e.getMessage();
 			}
-
-		} else if (p_CreditCardType.equals(CentralPosImport.NARANJA)) {
-
-			if (p_Date_From != null) {
-				importJob.addParam("fecha_pago-min", sdf.format(new Date(p_Date_From.getTime())));
-			}
-			if (p_Date_To != null) {
-				importJob.addParam("fecha_pago-max", sdf.format(new Date(p_Date_To.getTime())));
-			}
-			try {
-				msg = importJob.excecute();
-			} catch (SaveFromAPIException e) {
-				return e.getMessage();
-			}
-
-		} else if (p_CreditCardType.equals(CentralPosImport.AMEX)) {
+		} else if (p_CreditCardType.equals(MCreditCardSettlement.CREDITCARDTYPE_NARANJA)) {
 
 			if (p_Date_From != null) {
 				importJob.addParam("fecha_pago-min", sdf.format(new Date(p_Date_From.getTime())));
@@ -139,8 +127,20 @@ public class ImportFromCentralPos extends SvrProcess {
 			} catch (SaveFromAPIException e) {
 				return e.getMessage();
 			}
+		} else if (p_CreditCardType.equals(MCreditCardSettlement.CREDITCARDTYPE_AMEX)) {
 
-		} else if (p_CreditCardType.equals(CentralPosImport.VISA)) {
+			if (p_Date_From != null) {
+				importJob.addParam("fecha_pago-min", sdf.format(new Date(p_Date_From.getTime())));
+			}
+			if (p_Date_To != null) {
+				importJob.addParam("fecha_pago-max", sdf.format(new Date(p_Date_To.getTime())));
+			}
+			try {
+				msg = importJob.excecute();
+			} catch (SaveFromAPIException e) {
+				return e.getMessage();
+			}
+		} else if (p_CreditCardType.equals(MCreditCardSettlement.CREDITCARDTYPE_VISA)) {
 
 			if (p_Date_From != null) {
 				importJob.addParam("fpres-min", sdf.format(new Date(p_Date_From.getTime())));
@@ -153,7 +153,12 @@ public class ImportFromCentralPos extends SvrProcess {
 			} catch (SaveFromAPIException e) {
 				return e.getMessage();
 			}
+		}
 
+		boolean processSuccess = createSettlementsProcess.startProcess(getCtx(), getProcessInfo(), getTrx(get_TrxName()));
+
+		if (!processSuccess) {
+			throw new Exception(CLogger.retrieveErrorAsString());
 		}
 		return msg;
 	}
