@@ -7,7 +7,7 @@ import java.math.*;
 import org.openXpertya.util.*;
 /** Modelo Generado por C_CouponsSettlements
  *  @author Comunidad de Desarrollo Libertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
- *  @version  - 2017-02-09 12:25:47.114 */
+ *  @version  - 2017-03-01 10:18:24.288 */
 public class X_C_CouponsSettlements extends org.openXpertya.model.PO
 {
 /** Constructor estándar */
@@ -16,7 +16,6 @@ public X_C_CouponsSettlements (Properties ctx, int C_CouponsSettlements_ID, Stri
 super (ctx, C_CouponsSettlements_ID, trxName);
 /** if (C_CouponsSettlements_ID == 0)
 {
-setAllocationNumber (null);
 setC_CouponsSettlements_ID (0);
 setC_CreditCardCouponFilter_ID (0);
 setC_CreditCardSettlement_ID (0);	// @SQL=SELECT C_CreditCardSettlement_ID FROM C_CreditCardCouponFilter WHERE C_CreditCardCouponFilter_ID=@C_CreditCardCouponFilter_ID@
@@ -53,22 +52,6 @@ public String toString()
 {
 StringBuffer sb = new StringBuffer ("X_C_CouponsSettlements[").append(getID()).append("]");
 return sb.toString();
-}
-/** Set Allocation Number */
-public void setAllocationNumber (String AllocationNumber)
-{
-if (AllocationNumber == null) throw new IllegalArgumentException ("AllocationNumber is mandatory");
-if (AllocationNumber.length() > 30)
-{
-log.warning("Length > 30 - truncated");
-AllocationNumber = AllocationNumber.substring(0,30);
-}
-set_Value ("AllocationNumber", AllocationNumber);
-}
-/** Get Allocation Number */
-public String getAllocationNumber() 
-{
-return (String)get_Value("AllocationNumber");
 }
 /** Set Amount.
 Amount in a defined currency */

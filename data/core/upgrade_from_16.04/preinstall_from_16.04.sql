@@ -5748,3 +5748,6 @@ WITH (
 );
 ALTER TABLE c_bpartner_cai
   OWNER TO libertya;
+  
+--20170301-1015 Merge de Revisión 1797
+ALTER TABLE c_couponssettlements DROP COLUMN allocationnumber;
