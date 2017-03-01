@@ -58,7 +58,6 @@ public class FilterCoupons extends SvrProcess {
 		sql.append("	p.datetrx, ");
 		sql.append("	p.payamt, ");
 		sql.append("	p.couponnumber, ");
-		sql.append("	ah.documentno AS allocationnumber, ");
 		sql.append("	p.creditcardnumber, ");
 		sql.append("	p.couponbatchnumber, ");
 		sql.append("	p.c_currency_id, ");
@@ -169,11 +168,10 @@ public class FilterCoupons extends SvrProcess {
 				couponsSettlements.setTrxDate(rs.getTimestamp(3));
 				couponsSettlements.setAmount(rs.getBigDecimal(4));
 				couponsSettlements.setCouponNo(rs.getString(5));
-				couponsSettlements.setAllocationNumber(rs.getString(6));
-				couponsSettlements.setCreditCardNo(rs.getString(7));
-				couponsSettlements.setPaymentBatch(rs.getString(8));
-				couponsSettlements.setC_Currency_ID(rs.getInt(9));
-				couponsSettlements.setC_Payment_ID(rs.getInt(10));
+				couponsSettlements.setCreditCardNo(rs.getString(6));
+				couponsSettlements.setPaymentBatch(rs.getString(7));
+				couponsSettlements.setC_Currency_ID(rs.getInt(8));
+				couponsSettlements.setC_Payment_ID(rs.getInt(9));
 				couponsSettlements.setInclude(false);
 
 				if (!couponsSettlements.save()) {
