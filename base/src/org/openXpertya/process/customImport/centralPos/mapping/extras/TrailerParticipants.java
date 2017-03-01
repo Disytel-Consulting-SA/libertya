@@ -1,15 +1,15 @@
-package org.openXpertya.process.customImport.centralPos.pojos;
+package org.openXpertya.process.customImport.centralPos.mapping.extras;
 
-import org.openXpertya.model.X_I_TrailerParticipants;
-
-import com.google.gson.internal.LinkedTreeMap;
+import org.openXpertya.process.customImport.centralPos.mapping.GenericMap;
+import org.openXpertya.process.customImport.centralPos.pojos.GenericDatum;
+import org.openXpertya.process.customImport.centralPos.pojos.firstdata.trailer.Datum;
 
 /**
  * FirstData - Trailer de liquidación a comercio participante e impuestos
  * @author Kevin Feuerschvenger - Sur Software S.H.
  * @version 1.0
  */
-public class TrailerParticipant extends Pojo {
+public class TrailerParticipants extends GenericMap {
 
 	/** Campos a almacenar en la DB. */
 	public static String[] filteredFields = {
@@ -38,17 +38,13 @@ public class TrailerParticipant extends Pojo {
 			"costo_financiero_signo"
 	};
 
-	/**
-	 * Constructor.
-	 * @param values Conjunto de datos recuperados desde la API.
-	 */
-	public TrailerParticipant(LinkedTreeMap<String, Object> values) {
-		super(filteredFields, values, X_I_TrailerParticipants.Table_Name);
+	public TrailerParticipants(Datum values) {
+		super(filteredFields, values, null);
+		matchingFields = new String[] { "comercio_participante", "numero_liquidacion" };
 	}
 
-	/** Constructor. */
-	public TrailerParticipant() {
-		super(filteredFields, null, X_I_TrailerParticipants.Table_Name);
+	public String getSettlementNo() {
+		return GenericDatum.get("numero_liquidacion", values);
 	}
-	
+
 }

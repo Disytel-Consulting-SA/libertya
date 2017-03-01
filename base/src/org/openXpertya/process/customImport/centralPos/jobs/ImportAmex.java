@@ -4,18 +4,13 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Properties;
 
-import org.openXpertya.process.customImport.centralPos.commons.AmexImport;
-import org.openXpertya.process.customImport.centralPos.commons.CentralPosImport;
 import org.openXpertya.process.customImport.centralPos.exceptions.SaveFromAPIException;
 import org.openXpertya.process.customImport.centralPos.http.Get;
-import org.openXpertya.process.customImport.centralPos.http.utils.DefaultResponse;
-import org.openXpertya.process.customImport.centralPos.pojos.AmexPaymentsWithTaxes;
-import org.openXpertya.process.customImport.centralPos.pojos.extras.AmexPayments;
-import org.openXpertya.process.customImport.centralPos.pojos.extras.AmexTaxes;
-import org.openXpertya.util.Env;
-import org.openXpertya.util.Msg;
-
-import com.google.gson.internal.LinkedTreeMap;
+import org.openXpertya.process.customImport.centralPos.mapping.AmexPaymentsWithTaxes;
+import org.openXpertya.process.customImport.centralPos.mapping.extras.AmexPayments;
+import org.openXpertya.process.customImport.centralPos.mapping.extras.AmexTaxes;
+import org.openXpertya.process.customImport.centralPos.pojos.amex.impuestos.AmexImpuestos;
+import org.openXpertya.process.customImport.centralPos.pojos.amex.pagos.AmexPagos;
 
 /**
  * Proceso de importación. Amex.
@@ -24,17 +19,13 @@ import com.google.gson.internal.LinkedTreeMap;
  */
 public class ImportAmex extends Import {
 
-	public ImportAmex(Properties ctx, String trxName) {
-		super(new AmexImport(), ctx, trxName);
+	public ImportAmex(Properties ctx, String trxName) throws Exception {
+		super(EXTERNAL_SERVICE_AMEX, ctx, trxName);
 	}
 
 	@Override
 	public String excecute() throws SaveFromAPIException {
-		return importAmexPayments();
-	}
-
-	private String importAmexPayments() throws SaveFromAPIException {
-		DefaultResponse response; // Respuesta.
+		AmexPagos response; // Respuesta.
 		int currentPage = 1; // Pagina actual.
 		int lastPage = 2; // Ultima pagina.
 		int areadyExists = 0; // Elementos omitidos.
@@ -43,8 +34,8 @@ public class ImportAmex extends Import {
 
 		// Mientras resten páginas a importar
 		while (currentPage <= lastPage) {
-			get = centralPosImport.makeGetter("/pagos", token); // Metodo get para obtener pagos.
-			get.addQueryParam("paginate", CentralPosImport.RESULTS_PER_PAGE); // Parametro de elem. por pagina.
+			get = makeGetter(); // Metodo get para obtener pagos.
+			get.addQueryParam("paginate", resultsPerPage); // Parametro de elem. por pagina.
 			get.addQueryParam("page", currentPage); // Parametro de pagina a consultar.
 
 			// Si hay parámetros extra, los agrego.
@@ -60,28 +51,19 @@ public class ImportAmex extends Import {
 				fields.deleteCharAt(fields.length() - 1);
 				get.addQueryParam("_fields", fields); // Campos a recuperar.
 			}
+			response = (AmexPagos) get.execute(AmexPagos.class); // Ejecuto la consulta.
 
-			response = new DefaultResponse(get.execute()); // Ejecuto la consulta.
-
-			if (response.get("err_msg") != null) {
-				throw new SaveFromAPIException(Msg.getMsg(Env.getAD_Language(ctx), "CentralPosUnexpectedError"));
-			}
-
-			@SuppressWarnings("unchecked")
-			LinkedTreeMap<String, Object> paymentData = (LinkedTreeMap<String, Object>) response.get("pagos");
-
-			currentPage = ((Double) paymentData.get("current_page")).intValue();
-			lastPage = ((Double) paymentData.get("last_page")).intValue();
-
-			@SuppressWarnings("unchecked")
-			List<LinkedTreeMap<String, Object>> pageData = (List<LinkedTreeMap<String, Object>>) paymentData.get("data");
+			currentPage = response.getPagos().getCurrentPage();
+			lastPage = response.getPagos().getLastPage();
 
 			List<String> secNumbers = new ArrayList<String>();
 			List<AmexPayments> payments = new ArrayList<AmexPayments>();
 
 			// Por cada resultado, inserto en la tabla de importación.
-			for (LinkedTreeMap<String, Object> itemResultMap : pageData) {
-				AmexPayments payment = new AmexPayments(itemResultMap);
+			List<org.openXpertya.process.customImport.centralPos.pojos.amex.pagos.Datum> data = response.getPagos().getData();
+
+			for (org.openXpertya.process.customImport.centralPos.pojos.amex.pagos.Datum datum: data) {
+				AmexPayments payment = new AmexPayments(datum);
 				secNumbers.add(payment.getNumSecPago());
 				payments.add(payment);
 			}
@@ -116,7 +98,7 @@ public class ImportAmex extends Import {
 	}
 
 	private List<AmexTaxes> importAmexTaxes(List<String> secNumbers) throws SaveFromAPIException {
-		DefaultResponse response; // Repuesta.
+		AmexImpuestos response; // Repuesta.
 		int currentPage = 1; // Pagina actual.
 		int lastPage = 2; // Ultima pagina.
 		Get get; // Método get.
@@ -125,8 +107,8 @@ public class ImportAmex extends Import {
 
 		// Mientras resten páginas a importar
 		while (currentPage <= lastPage) {
-			get = centralPosImport.makeGetter("/impuestos", token); // Metodo get para obtener impuestos.
-			get.addQueryParam("paginate", CentralPosImport.RESULTS_PER_PAGE); // Parametro de elem. por pagina.
+			get = makeGetter(externalService.getAttributeByName("URL Impuestos").getName()); // Metodo get para obtener impuestos.
+			get.addQueryParam("paginate", resultsPerPage); // Parametro de elem. por pagina.
 			get.addQueryParam("page", currentPage); // Parametro de pagina a consultar.
 
 			// Si hay parámetros extra, los agrego.
@@ -152,24 +134,15 @@ public class ImportAmex extends Import {
 				fields.deleteCharAt(fields.length() - 1);
 				get.addQueryParam("_fields", fields); // Campos a recuperar.
 			}
+			response = (AmexImpuestos) get.execute(AmexImpuestos.class); // Ejecuto la consulta.
 
-			response = new DefaultResponse(get.execute()); // Ejecuto la consulta.
+			currentPage = response.getImpuestos().getCurrentPage();
+			lastPage = response.getImpuestos().getLastPage();
 
-			if (response.get("err_msg") != null) {
-				throw new SaveFromAPIException(Msg.getMsg(Env.getAD_Language(ctx), "CentralPosUnexpectedError"));
-			}
+			List<org.openXpertya.process.customImport.centralPos.pojos.amex.impuestos.Datum> data = response.getImpuestos().getData();
 
-			@SuppressWarnings("unchecked")
-			LinkedTreeMap<String, Object> taxData = (LinkedTreeMap<String, Object>) response.get("impuestos");
-
-			currentPage = ((Double) taxData.get("current_page")).intValue();
-			lastPage = ((Double) taxData.get("last_page")).intValue();
-
-			@SuppressWarnings("unchecked")
-			List<LinkedTreeMap<String, Object>> pageData = (List<LinkedTreeMap<String, Object>>) taxData.get("data");
-
-			for (LinkedTreeMap<String, Object> itemResultMap : pageData) {
-				AmexTaxes tax = new AmexTaxes(itemResultMap);
+			for (org.openXpertya.process.customImport.centralPos.pojos.amex.impuestos.Datum datum: data) {
+				AmexTaxes tax = new AmexTaxes(datum);
 				taxes.add(tax);
 			}
 			currentPage++;

@@ -1,17 +1,19 @@
-package org.openXpertya.process.customImport.centralPos.pojos;
+package org.openXpertya.process.customImport.centralPos.mapping;
 
-import java.util.HashSet;
+import java.util.ArrayList;
+import java.util.List;
 
 import org.openXpertya.model.X_I_AmexPaymentsAndTaxes;
-import org.openXpertya.process.customImport.centralPos.pojos.extras.AmexPayments;
-import org.openXpertya.process.customImport.centralPos.pojos.extras.AmexTaxes;
+import org.openXpertya.process.customImport.centralPos.mapping.extras.AmexPayments;
+import org.openXpertya.process.customImport.centralPos.mapping.extras.AmexTaxes;
+import org.openXpertya.process.customImport.centralPos.pojos.GenericDatum;
 
 /**
  * Amex - Pegos e Impuestos
  * @author Kevin Feuerschvenger - Sur Software S.H.
  * @version 1.0
  */
-public class AmexPaymentsWithTaxes extends Pojo {
+public class AmexPaymentsWithTaxes extends GenericMap {
 
 	/**
 	 * Constructor.
@@ -23,8 +25,11 @@ public class AmexPaymentsWithTaxes extends Pojo {
 
 		matchingFields = new String[] { "num_sec_pago" };
 
-		putAll(payment.getValues());
-		putAll(tax.getValues());
+		List<GenericDatum> data = new ArrayList<GenericDatum>();
+		data.add(payment.getValues());
+		data.add(tax.getValues());
+
+		setValuesList(data);
 	}
 
 	/**
@@ -33,28 +38,13 @@ public class AmexPaymentsWithTaxes extends Pojo {
 	 */
 	public AmexPaymentsWithTaxes(AmexPayments payment) {
 		super(joinArrays(AmexPayments.filteredFields, AmexTaxes.filteredFields), payment.getValues(), X_I_AmexPaymentsAndTaxes.Table_Name);
+		matchingFields = new String[] { "num_sec_pago" };
 	}
 
 	/** Constructor. */
 	public AmexPaymentsWithTaxes() {
 		super(joinArrays(AmexPayments.filteredFields, AmexTaxes.filteredFields), null, X_I_AmexPaymentsAndTaxes.Table_Name);
-	}
-
-	/**
-	 * A partir de la union de dos arrays, crea uno nuevo.
-	 * @param array1
-	 * @param array2
-	 * @return
-	 */
-	private static String[] joinArrays(String[] array1, String[] array2) {
-		HashSet<String> tmp = new HashSet<String>();
-		for (String str : array1) {
-			tmp.add(str);
-		}
-		for (String str : array2) {
-			tmp.add(str);
-		}
-		return (String[]) tmp.toArray(new String[0]);
+		matchingFields = new String[] { "num_sec_pago" };
 	}
 
 }

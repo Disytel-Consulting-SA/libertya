@@ -1,15 +1,14 @@
-package org.openXpertya.process.customImport.centralPos.pojos;
+package org.openXpertya.process.customImport.centralPos.mapping;
 
 import org.openXpertya.model.X_I_VisaPayments;
-
-import com.google.gson.internal.LinkedTreeMap;
+import org.openXpertya.process.customImport.centralPos.pojos.visa.pago.Datum;
 
 /**
  * Visa - Pagos
  * @author Kevin Feuerschvenger - Sur Software S.H.
  * @version 1.0
  */
-public class VisaPayments extends Pojo {
+public class VisaPayments extends GenericMap {
 
 	/** Campos a almacenar en la DB. */
 	public static String[] filteredFields = {
@@ -58,7 +57,7 @@ public class VisaPayments extends Pojo {
 	 * Constructor.
 	 * @param values valores a insertar en la tabla.
 	 */
-	public VisaPayments(LinkedTreeMap<String, Object> values) {
+	public VisaPayments(Datum values) {
 		super(filteredFields, values, X_I_VisaPayments.Table_Name);
 	}
 

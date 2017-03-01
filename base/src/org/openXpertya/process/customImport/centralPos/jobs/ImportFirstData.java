@@ -1,18 +1,16 @@
 package org.openXpertya.process.customImport.centralPos.jobs;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Properties;
 
-import org.openXpertya.process.customImport.centralPos.commons.CentralPosImport;
-import org.openXpertya.process.customImport.centralPos.commons.FirstDataImport;
 import org.openXpertya.process.customImport.centralPos.exceptions.SaveFromAPIException;
 import org.openXpertya.process.customImport.centralPos.http.Get;
-import org.openXpertya.process.customImport.centralPos.http.utils.DefaultResponse;
-import org.openXpertya.process.customImport.centralPos.pojos.TrailerParticipant;
-import org.openXpertya.util.Env;
-import org.openXpertya.util.Msg;
-
-import com.google.gson.internal.LinkedTreeMap;
+import org.openXpertya.process.customImport.centralPos.mapping.FirstDataTrailerAndDetail;
+import org.openXpertya.process.customImport.centralPos.mapping.extras.DetailParticipant;
+import org.openXpertya.process.customImport.centralPos.mapping.extras.TrailerParticipants;
+import org.openXpertya.process.customImport.centralPos.pojos.firstdata.detalle.Detalle;
+import org.openXpertya.process.customImport.centralPos.pojos.firstdata.trailer.Trailer;
 
 /**
  * Proceso de importación. FirstData.
@@ -21,8 +19,8 @@ import com.google.gson.internal.LinkedTreeMap;
  */
 public class ImportFirstData extends Import {
 
-	public ImportFirstData(Properties ctx, String trxName) {
-		super(new FirstDataImport(), ctx, trxName);
+	public ImportFirstData(Properties ctx, String trxName) throws Exception {
+		super(EXTERNAL_SERVICE_FIRSTDATA, ctx, trxName);
 	}
 
 	/**
@@ -31,7 +29,7 @@ public class ImportFirstData extends Import {
 	 * @throws SaveFromAPIException
 	 */
 	public String excecute() throws SaveFromAPIException {
-		DefaultResponse response; // Respuesta.
+		Trailer response; // Respuesta.
 		int currentPage = 1; // Pagina actual.
 		int lastPage = 2; // Ultima pagina.
 		int areadyExists = 0; // Elementos omitidos.
@@ -40,8 +38,8 @@ public class ImportFirstData extends Import {
 
 		// Mientras resten páginas a importar
 		while (currentPage <= lastPage) {
-			get = centralPosImport.makeGetter("/trailer-participantes", token); // Metodo get para obtener trailer de participantes.
-			get.addQueryParam("paginate", CentralPosImport.RESULTS_PER_PAGE); // Parametro de elem. por pagina.
+			get = makeGetter(); // Metodo get para obtener trailer de participantes.
+			get.addQueryParam("paginate", resultsPerPage); // Parametro de elem. por pagina.
 			get.addQueryParam("page", currentPage); // Parametro de pagina a consultar.
 
 			// Si hay parámetros extra, los agrego.
@@ -50,7 +48,89 @@ public class ImportFirstData extends Import {
 			}
 
 			StringBuffer fields = new StringBuffer();
-			for (String field : TrailerParticipant.filteredFields) {
+			for (String field : TrailerParticipants.filteredFields) {
+				fields.append(field + ",");
+			}
+			if (fields.length() > 0) {
+				fields.deleteCharAt(fields.length() - 1);
+				get.addQueryParam("_fields", fields); // Campos a recuperar.
+			}
+			response = (Trailer) get.execute(Trailer.class); // Ejecuto la consulta.
+
+			currentPage = response.getTrailerParticipantes().getCurrentPage();
+			lastPage = response.getTrailerParticipantes().getLastPage();
+
+			List<String> settlementNumbers = new ArrayList<String>();
+			List<TrailerParticipants> trailers = new ArrayList<TrailerParticipants>();
+
+			// Por cada resultado, inserto en la tabla de importación.
+			for (org.openXpertya.process.customImport.centralPos.pojos.firstdata.trailer.Datum itemResultMap : response.getTrailerParticipantes().getData()) {
+				TrailerParticipants tp = new TrailerParticipants(itemResultMap);
+				settlementNumbers.add(tp.getSettlementNo());
+				trailers.add(tp);
+			}
+
+			List<DetailParticipant> details = importFirstDataDetails(settlementNumbers);
+			for (TrailerParticipants trailer : trailers) {
+				if (trailer != null) {
+					FirstDataTrailerAndDetail fdtad = null;
+					for (DetailParticipant detail : details) {
+						if (detail != null) {
+							if (FirstDataTrailerAndDetail.match(trailer, detail)) {
+								fdtad = new FirstDataTrailerAndDetail(trailer, detail);
+								break;
+							}
+						}
+					}
+					if (fdtad == null) {
+						fdtad = new FirstDataTrailerAndDetail(trailer);
+					}
+					int no = fdtad.save(ctx, trxName);
+					if (no > 0) {
+						processed += no;
+					} else if (no < 0) {
+						areadyExists += (no * -1);
+					}
+				}
+			}
+			log.info("Procesados = " + processed + ", Preexistentes = " + areadyExists + ", Pagina = " + currentPage + "/" + lastPage);
+			currentPage++;
+		}
+		return msg(new Object[] { processed, areadyExists });
+	}
+
+	private List<DetailParticipant> importFirstDataDetails(List<String> settlementNumbers) throws SaveFromAPIException {
+		Detalle response; // Repuesta.
+		int currentPage = 1; // Pagina actual.
+		int lastPage = 2; // Ultima pagina.
+		Get get; // Método get.
+
+		List<DetailParticipant> taxes = new ArrayList<DetailParticipant>();
+
+		// Mientras resten páginas a importar
+		while (currentPage <= lastPage) {
+			// Metodo get para obtener detalles de liquidación.
+			get = makeGetter(externalService.getAttributeByName("URL detalle liq").getName());
+			get.addQueryParam("paginate", resultsPerPage); // Parametro de elem. por pagina.
+			get.addQueryParam("page", currentPage); // Parametro de pagina a consultar.
+
+			// Si hay parámetros extra, los agrego.
+			if (!extraParams.isEmpty()) {
+				get.addQueryParams(extraParams);
+			}
+
+			// Filtro por "número de liquidación".
+			StringBuffer settlementNoStr = new StringBuffer();
+			for (String s : settlementNumbers) {
+				settlementNoStr.append(s + ",");
+			}
+			if (settlementNoStr.length() > 0) {
+				settlementNoStr.deleteCharAt(settlementNoStr.length() - 1);
+				get.addQueryParam("numero_liquidacion-in", settlementNoStr);
+			}
+
+			StringBuffer fields = new StringBuffer();
+			for (String field : DetailParticipant.filteredFields) {
 				fields.append(field + ",");
 			}
 			if (fields.length() > 0) {
@@ -58,36 +138,18 @@ public class ImportFirstData extends Import {
 				get.addQueryParam("_fields", fields); // Campos a recuperar.
 			}
 
-			response = new DefaultResponse(get.execute()); // Ejecuto la consulta.
+			response = (Detalle) get.execute(Detalle.class); // Ejecuto la consulta.
 
-			if (response.get("err_msg") != null) {
-				throw new SaveFromAPIException(Msg.getMsg(Env.getAD_Language(ctx), "CentralPosUnexpectedError"));
+			lastPage = response.getLiquidacionParticipantes().getLastPage();
+			currentPage = response.getLiquidacionParticipantes().getCurrentPage();
+
+			for (org.openXpertya.process.customImport.centralPos.pojos.firstdata.detalle.Datum itemResultMap : response.getLiquidacionParticipantes().getData()) {
+				DetailParticipant tax = new DetailParticipant(itemResultMap);
+				taxes.add(tax);
 			}
-
-			@SuppressWarnings("unchecked")
-			LinkedTreeMap<String, Object> trailerData = (LinkedTreeMap<String, Object>) response.get("trailer_participantes");
-
-			currentPage = ((Double) trailerData.get("current_page")).intValue();
-			lastPage = ((Double) trailerData.get("last_page")).intValue();
-
-			@SuppressWarnings("unchecked")
-			List<LinkedTreeMap<String, Object>> pageData = (List<LinkedTreeMap<String, Object>>) trailerData.get("data");
-
-			// Por cada resultado, inserto en la tabla de importación.
-			for (LinkedTreeMap<String, Object> itemResultMap : pageData) {
-				TrailerParticipant trailerParticipant = new TrailerParticipant(itemResultMap);
-				int no = trailerParticipant.save(ctx, trxName);
-				if (no > 0) {
-					processed += no;
-				} else if (no < 0) {
-					areadyExists += (no * -1);
-				}
-			}
-			log.info("Procesados = " + processed + ", Preexistentes = " + areadyExists + ", Pagina = " + currentPage + "/" + lastPage);
-
 			currentPage++;
 		}
-		return msg(new Object[] { processed, areadyExists });
+		return taxes;
 	}
 
 }

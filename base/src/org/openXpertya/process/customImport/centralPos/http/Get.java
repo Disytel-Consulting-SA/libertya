@@ -2,7 +2,6 @@ package org.openXpertya.process.customImport.centralPos.http;
 
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
-import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
@@ -14,10 +13,10 @@ import org.apache.http.client.methods.HttpUriRequest;
 import org.apache.http.client.methods.RequestBuilder;
 import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.util.EntityUtils;
+import org.openXpertya.process.customImport.centralPos.pojos.Pojo;
 
 import com.google.gson.Gson;
 import com.google.gson.JsonSyntaxException;
-import com.google.gson.reflect.TypeToken;
 
 /**
  * Llamado GET.
@@ -62,28 +61,31 @@ public class Get {
 		return req.getURI().toString();
 	}
 
-	public Map<String, Object> execute() {
-		String responseStr = null;
+	public void explain() {
+		System.out.println("Método = GET");
+		System.out.println("URL = " + url);
+		System.out.println("Params =");
+		for (String key : params.keySet()) {
+			System.out.println("\t" + key + " = " + params.get(key));
+		}
+	}
+
+	public Pojo execute(Class<? extends Pojo> cls) {
 		try {
 			for (String key : params.keySet()) {
 				reqBuilder.addParameter(key, params.get(key));
 			}
 			request = reqBuilder.build();
 			HttpResponse response = client.execute(request);
-			responseStr = EntityUtils.toString(response.getEntity());
-			return gsonUtil.fromJson(responseStr, new TypeToken<Map<String, Object>>() {}.getType());
+			String responseStr = EntityUtils.toString(response.getEntity());
+			return gsonUtil.fromJson(responseStr, cls);
 		} catch (JsonSyntaxException e) {
-			Map<String, Object> result = new HashMap<String, Object>();
-			result.put("err_msg", responseStr);
-			return result;
+			return null;
 		} catch (UnsupportedEncodingException e) {
-			e.printStackTrace();
 			return null;
 		} catch (ClientProtocolException e) {
-			e.printStackTrace();
 			return null;
 		} catch (IOException e) {
-			e.printStackTrace();
 			return null;
 		}
 	}

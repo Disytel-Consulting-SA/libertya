@@ -5544,12 +5544,11 @@ CREATE INDEX paymentindex
 --  - - - - - Se agrega referencia a C_payment para las liquidaciones - - - - - -
 -- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -  -
 
-ALTER TABLE libertya.c_creditcardsettlement
-  ADD COLUMN c_payment_id integer;
+UPDATE ad_system SET dummy = (SELECT addcolumnifnotexists('c_creditcardsettlement','c_payment_id','integer'));
 
-ALTER TABLE libertya.c_creditcardsettlement
+ALTER TABLE c_creditcardsettlement
   ADD CONSTRAINT fkpayment FOREIGN KEY (c_payment_id)
-  REFERENCES libertya.c_payment (c_payment_id)
+  REFERENCES c_payment (c_payment_id)
   ON UPDATE NO ACTION ON DELETE NO ACTION;
 
 -- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -5631,16 +5630,14 @@ ALTER TABLE libertya.c_couponssettlements
 -- - - - financiero (Visa, Amex, FirstData, etc) - - - - - - - - - - - - - - - -
 -- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-ALTER TABLE libertya.m_entidadfinanciera
-  ADD COLUMN financingservice character(2);
+UPDATE ad_system SET dummy = (SELECT addcolumnifnotexists('m_entidadfinanciera','financingservice','character(2)'));
 
 -- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 -- - - - Se agrega un campo "Conciliado" al cupón dentro de la liquidación - - -
 -- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-ALTER TABLE libertya.c_couponssettlements
-  ADD COLUMN isreconciled character(1) NOT NULL DEFAULT 'N'::bpchar;
-
+UPDATE ad_system SET dummy = (SELECT addcolumnifnotexists('c_couponssettlements','isreconciled','character(1) NOT NULL DEFAULT ''N''::bpchar'));
+  
 -- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -  -
 -- - - - Se agrega un campo a la vista, para asignarlo a un boton, se quitaron  -
 -- - - - otros que no se utilizaban, permitiendo quitar joins, y se mejoró la - -
@@ -5697,8 +5694,7 @@ ALTER TABLE libertya.c_creditcardsettlement
 ALTER TABLE libertya.c_creditcardsettlement
   DROP COLUMN m_entidadfinanciera_id;
 
-ALTER TABLE libertya.c_creditcardsettlement
-  ADD COLUMN c_bpartner_id integer NOT NULL;
+UPDATE ad_system SET dummy = (SELECT addcolumnifnotexists('c_creditcardsettlement','c_bpartner_id','integer NOT NULL'));
 
 ALTER TABLE libertya.c_creditcardsettlement
   ADD CONSTRAINT fkbpartner FOREIGN KEY (c_bpartner_id)
@@ -5709,8 +5705,7 @@ ALTER TABLE libertya.c_creditcardsettlement
 -- - - - Se agrega a los filtros de la liquidación, la entidad comercial - - -
 -- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-ALTER TABLE libertya.c_creditcardcouponfilter
-  ADD COLUMN c_bpartner_id integer;
+UPDATE ad_system SET dummy = (SELECT addcolumnifnotexists('c_creditcardcouponfilter','c_bpartner_id','integer'));
 
 ALTER TABLE libertya.c_creditcardcouponfilter
   ADD CONSTRAINT fkbpartner FOREIGN KEY (c_bpartner_id)
@@ -5751,3 +5746,225 @@ ALTER TABLE c_bpartner_cai
   
 --20170301-1015 Merge de Revisión 1797
 ALTER TABLE c_couponssettlements DROP COLUMN allocationnumber;
+
+--20170301-1300 Merge de Revisión 1798
+CREATE TABLE c_externalserviceattributes
+(
+  c_externalserviceattributes_id integer NOT NULL,
+  ad_client_id integer NOT NULL,
+  ad_org_id integer NOT NULL,
+  isactive character(1) NOT NULL DEFAULT 'Y'::bpchar,
+  created timestamp without time zone NOT NULL DEFAULT ('now'::text)::timestamp(6) with time zone,
+  createdby integer NOT NULL,
+  updated timestamp without time zone NOT NULL DEFAULT ('now'::text)::timestamp(6) with time zone,
+  updatedby integer NOT NULL,
+  c_externalservice_id integer,
+  value character varying(128) NOT NULL,
+  name character varying(128),
+  description character varying(255),
+  CONSTRAINT externalserviceattributes_key PRIMARY KEY (c_externalserviceattributes_id),
+  CONSTRAINT externalserviceattributesclient FOREIGN KEY (ad_client_id)
+    REFERENCES libertya.ad_client (ad_client_id) MATCH SIMPLE ON UPDATE NO ACTION ON DELETE NO ACTION,
+  CONSTRAINT externalserviceattributesorg FOREIGN KEY (ad_org_id)
+    REFERENCES libertya.ad_org (ad_org_id) MATCH SIMPLE ON UPDATE NO ACTION ON DELETE NO ACTION,
+  CONSTRAINT externalserviceattributesexternalservice FOREIGN KEY (c_externalservice_id)
+    REFERENCES libertya.c_externalservice (c_externalservice_id) MATCH SIMPLE ON UPDATE NO ACTION ON DELETE CASCADE
+);
+ALTER TABLE c_externalserviceattributes
+  OWNER TO libertya;
+
+CREATE SEQUENCE libertya.seq_i_firstdatatraileranddetail
+  INCREMENT 1
+  MINVALUE 1
+  MAXVALUE 9223372036854775807
+  START 1000001
+  CACHE 1;
+
+CREATE TABLE i_firstdatatraileranddetail
+(
+  i_firstdatatraileranddetail_id integer NOT NULL DEFAULT nextval('libertya.seq_i_firstdatatraileranddetail'::regclass),
+  ad_client_id integer NOT NULL,
+  ad_org_id integer NOT NULL,
+  isactive character(1) NOT NULL DEFAULT 'Y'::bpchar,
+  created timestamp without time zone NOT NULL DEFAULT ('now'::text)::timestamp(6) with time zone,
+  createdby integer NOT NULL,
+  updated timestamp without time zone NOT NULL DEFAULT ('now'::text)::timestamp(6) with time zone,
+  updatedby integer NOT NULL,
+  i_errormsg character varying(2000),
+  i_isimported character(1) NOT NULL DEFAULT 'N'::bpchar,
+  processing character(1),
+  processed character(1) DEFAULT 'N'::bpchar,
+  
+  id character varying(32),
+  archivo_id character varying(32),
+  tipo_registro character varying(32),
+  nombre_archivo character varying(32),
+  comercio_centralizador character varying(32),
+  moneda character varying(32),
+  grupo_presentacion character varying(32),
+  plazo_pago character varying(32),
+  tipo_plazo_pago character varying(32),
+  fecha_presentacion character varying(32),
+  fecha_vencimiento_clearing character varying(32),
+  producto character varying(32),
+  comercio_participante character varying(32),
+  entidad_pagadora character varying(32),
+  sucursal_pagadora character varying(32),
+  numero_liquidacion character varying(32),
+  total_importe_total character varying(32),
+  total_importe_total_signo character varying(32),
+  total_importe_sin_dto character varying(32),
+  total_importe_sin_dto_signo character varying(32),
+  total_importe_final character varying(32),
+  total_importe_final_signo character varying(32),
+  aranceles_cto_fin character varying(32),
+  aranceles_cto_fin_signo character varying(32),
+  retenciones_fiscales character varying(32),
+  retenciones_fiscales_signo character varying(32),
+  otros_debitos character varying(32),
+  otros_debitos_signo character varying(32),
+  otros_creditos character varying(32),
+  otros_creditos_signo character varying(32),
+  neto_comercios character varying(32),
+  neto_comercios_signo character varying(32),
+  total_registros_detalle character varying(32),
+  monto_pend_cuotas character varying(32),
+  monto_pend_cuotas_signo character varying(32),
+  subtipo_registro character varying(32),
+  iva_aranceles_ri character varying(32),
+  iva_aranceles_ri_signo character varying(32),
+  impuesto_deb_cred character varying(32),
+  impuesto_deb_cred_signo character varying(32),
+  iva_dto_pago_anticipado character varying(32),
+  iva_dto_pago_anticipado_signo character varying(32),
+  ret_iva_ventas character varying(32),
+  ret_iva_ventas_signo character varying(32),
+  percepc_iva_r3337 character varying(32),
+  percepc_iva_r3337_signo character varying(32),
+  ret_imp_ganancias character varying(32),
+  ret_imp_ganancias_signo character varying(32),
+  ret_imp_ingresos_brutos character varying(32),
+  ret_imp_ingresos_brutos_signo character varying(32),
+  percep_ingr_brutos character varying(32),
+  percep_ingr_brutos_signo character varying(32),
+  iva_servicios character varying(32),
+  iva_servicios_signo character varying(32),
+  categoria_iva character varying(32),
+  imp_sintereses_ley_25063 character varying(32),
+  imp_sintereses_ley_25063_signo character varying(32),
+  arancel character varying(32),
+  arancel_signo character varying(32),
+  costo_financiero character varying(32),
+  costo_financiero_signo character varying(32),
+  revisado character varying(32),
+  hash_modelo character varying(32),
+  provincia_ing_brutos character varying(32),
+  fecha_operacion character varying(32),
+  codigo_movimiento character varying(32),
+  codigo_origen character varying(32),
+  caja_nro_cinta_posnet character varying(32),
+  caratula_terminal_posnet character varying(32),
+  resumen_lote_posnet character varying(32),
+  cupon_cupon_posnet character varying(32),
+  cuotas_plan character varying(32),
+  cuota_vigente character varying(32),
+  porc_desc character varying(32),
+  marca_error character varying(32),
+  tipo_plan_cuotas character varying(32),
+  nro_tarjeta character varying(32),
+  motivo_rechazo_1 character varying(32),
+  motivo_rechazo_2 character varying(32),
+  motivo_rechazo_3 character varying(32),
+  motivo_rechazo_4 character varying(32),
+  fecha_present_original character varying(32),
+  motivo_reversion character varying(32),
+  tipo_operacion character varying(32),
+  marca_campana character varying(32),
+  codigo_cargo_pago character varying(32),
+  entidad_emisora character varying(32),
+  importe_arancel character varying(32),
+  importe_arancel_signo character varying(32),
+  iva_arancel character varying(32),
+  iva_arancel_signo character varying(32),
+  promocion_cuotas_alfa character varying(32),
+  tna character varying(32),
+  importe_costo_financiero character varying(32),
+  importe_costo_financiero_signo character varying(32),
+  iva_costo_financiero character varying(32),
+  iva_costo_financiero_signo character varying(32),
+  porcentaje_tasa_directa character varying(32),
+  importe_costo_tasa_dta character varying(32),
+  importe_costo_tasa_dta_signo character varying(32),
+  iva_costo_tasa_dta character varying(32),
+  iva_costo_tasa_dta_signo character varying(32),
+  nro_autoriz character varying(32),
+  alicuota_iva_fo character varying(32),
+  marca_cashback character varying(32),
+  importe_total character varying(32),
+  importe_total_signo character varying(32),
+
+  CONSTRAINT firstdatatraileranddetail_key PRIMARY KEY (i_firstdatatraileranddetail_id),
+  CONSTRAINT firstdatatraileranddetailclient FOREIGN KEY (ad_client_id)
+    REFERENCES libertya.ad_client (ad_client_id) MATCH SIMPLE ON UPDATE NO ACTION ON DELETE NO ACTION,
+  CONSTRAINT firstdatatraileranddetailorg FOREIGN KEY (ad_org_id)
+    REFERENCES libertya.ad_org (ad_org_id) MATCH SIMPLE ON UPDATE NO ACTION ON DELETE NO ACTION
+);
+ALTER TABLE i_firstdatatraileranddetail
+  OWNER TO libertya;
+
+UPDATE ad_system SET dummy = (SELECT addcolumnifnotexists('m_entidadfinanciera','c_region_id','integer'));
+
+ALTER TABLE m_entidadfinanciera
+  ADD CONSTRAINT entidadfinancieraregion FOREIGN KEY (c_region_id) 
+  REFERENCES c_region (c_region_id)
+  ON UPDATE NO ACTION ON DELETE NO ACTION;
+
+----------------------------------------------------------------------
+---------- Modificación de tablas y/o vistas
+----------------------------------------------------------------------
+
+INSERT INTO c_externalservice (c_externalservice_id, ad_client_id, ad_org_id, isactive, created, createdby, updated, updatedby, name, description, ad_componentobjectuid, value, url, username, password, timeout, port) VALUES (1000001, 1010016, 0, 'Y', '2017-02-14 10:20:18.511889', 1010717, '2017-02-15 16:56:17.362804', 1010717, 'Central Pos - Visa', 'Configuración de Conexión con la API de Central Pos', 'ICCP-C_ExternalService-1000001', 'Central Pos - Visa', 'https://liquidacion.centralpos.com/api/v1/visa/pagos', 'gonzalom@hipertehuelche.com', '123456', 10000, 0);
+INSERT INTO c_externalservice (c_externalservice_id, ad_client_id, ad_org_id, isactive, created, createdby, updated, updatedby, name, description, ad_componentobjectuid, value, url, username, password, timeout, port) VALUES (1000004, 1010016, 0, 'Y', '2017-02-14 14:18:06.438737', 1010717, '2017-02-20 10:53:31.014661', 1010717, 'Central Pos - Amex', 'Configuración de Conexión con la API de Central Pos', 'ICCP-C_ExternalService-1000004', 'Central Pos - Amex', 'https://liquidacion.centralpos.com/api/v1/amex/pagos', 'gonzalom@hipertehuelche.com', '123456', 10000, 0);
+INSERT INTO c_externalservice (c_externalservice_id, ad_client_id, ad_org_id, isactive, created, createdby, updated, updatedby, name, description, ad_componentobjectuid, value, url, username, password, timeout, port) VALUES (1000005, 1010016, 0, 'Y', '2017-02-14 14:26:18.081836', 1010717, '2017-02-20 10:53:40.372518', 1010717, 'Central Pos - Naranja', 'Configuración de Conexión con la API de Central Pos', 'ICCP-C_ExternalService-1000005', 'Central Pos - Naranja', 'https://liquidacion.centralpos.com/api/v1/naranja/cupones', 'gonzalom@hipertehuelche.com', '123456', 10000, 0);
+INSERT INTO c_externalservice (c_externalservice_id, ad_client_id, ad_org_id, isactive, created, createdby, updated, updatedby, name, description, ad_componentobjectuid, value, url, username, password, timeout, port) VALUES (1000006, 1010016, 0, 'Y', '2017-02-14 14:27:42.255858', 1010717, '2017-02-20 10:53:45.245823', 1010717, 'Central Pos - FirstData', 'Configuración de Conexión con la API de Central Pos', 'ICCP-C_ExternalService-1000006', 'Central Pos - FirstData', 'https://liquidacion.centralpos.com/api/v1/firstdata/trailer-participantes', 'gonzalom@hipertehuelche.com', '123456', 10000, 0);
+
+INSERT INTO c_externalserviceattributes (c_externalserviceattributes_id, ad_client_id, ad_org_id, isactive, created, createdby, updated, updatedby, c_externalservice_id, name, value, description) VALUES (1000004, 1010016, 0, 'Y', '2017-02-14 14:51:59.6775', 1010717, '2017-02-15 12:23:48.530876', 1010717, 1000001, '100', 'Elementos por Página', NULL);
+INSERT INTO c_externalserviceattributes (c_externalserviceattributes_id, ad_client_id, ad_org_id, isactive, created, createdby, updated, updatedby, c_externalservice_id, name, value, description) VALUES (1000008, 1010016, 0, 'Y', '2017-02-14 14:53:01.801653', 1010717, '2017-02-15 12:23:55.227087', 1010717, 1000001, 'https://liquidacion.centralpos.com/api/v1/auth/login', 'URL Login', NULL);
+INSERT INTO c_externalserviceattributes (c_externalserviceattributes_id, ad_client_id, ad_org_id, isactive, created, createdby, updated, updatedby, c_externalservice_id, name, value, description) VALUES (1000005, 1010016, 0, 'Y', '2017-02-14 14:52:05.279296', 1010717, '2017-02-15 12:24:05.296348', 1010717, 1000004, '100', 'Elementos por Página', NULL);
+INSERT INTO c_externalserviceattributes (c_externalserviceattributes_id, ad_client_id, ad_org_id, isactive, created, createdby, updated, updatedby, c_externalservice_id, name, value, description) VALUES (1000009, 1010016, 0, 'Y', '2017-02-14 14:58:43.465863', 1010717, '2017-02-15 12:24:13.101356', 1010717, 1000004, 'https://liquidacion.centralpos.com/api/v1/auth/login', 'URL Login', NULL);
+INSERT INTO c_externalserviceattributes (c_externalserviceattributes_id, ad_client_id, ad_org_id, isactive, created, createdby, updated, updatedby, c_externalservice_id, name, value, description) VALUES (1000012, 1010016, 0, 'Y', '2017-02-14 17:04:30.44652', 1010717, '2017-02-15 12:24:20.553311', 1010717, 1000004, 'https://liquidacion.centralpos.com/api/v1/amex/impuestos', 'URL Impuestos', NULL);
+INSERT INTO c_externalserviceattributes (c_externalserviceattributes_id, ad_client_id, ad_org_id, isactive, created, createdby, updated, updatedby, c_externalservice_id, name, value, description) VALUES (1000006, 1010016, 0, 'Y', '2017-02-14 14:52:10.577212', 1010717, '2017-02-15 12:24:32.467882', 1010717, 1000005, '100', 'Elementos por Página', NULL);
+INSERT INTO c_externalserviceattributes (c_externalserviceattributes_id, ad_client_id, ad_org_id, isactive, created, createdby, updated, updatedby, c_externalservice_id, name, value, description) VALUES (1000010, 1010016, 0, 'Y', '2017-02-14 14:59:17.752203', 1010717, '2017-02-15 12:24:42.211211', 1010717, 1000005, 'https://liquidacion.centralpos.com/api/v1/auth/login', 'URL Login', NULL);
+INSERT INTO c_externalserviceattributes (c_externalserviceattributes_id, ad_client_id, ad_org_id, isactive, created, createdby, updated, updatedby, c_externalservice_id, name, value, description) VALUES (1000013, 1010016, 0, 'Y', '2017-02-14 17:06:40.636472', 1010717, '2017-02-15 12:24:52.204501', 1010717, 1000005, 'https://liquidacion.centralpos.com/api/v1/naranja/headers', 'URL Headers', NULL);
+INSERT INTO c_externalserviceattributes (c_externalserviceattributes_id, ad_client_id, ad_org_id, isactive, created, createdby, updated, updatedby, c_externalservice_id, name, value, description) VALUES (1000007, 1010016, 0, 'Y', '2017-02-14 14:52:16.544699', 1010717, '2017-02-15 12:25:13.287727', 1010717, 1000006, '100', 'Elementos por Página', NULL);
+INSERT INTO c_externalserviceattributes (c_externalserviceattributes_id, ad_client_id, ad_org_id, isactive, created, createdby, updated, updatedby, c_externalservice_id, name, value, description) VALUES (1000011, 1010016, 0, 'Y', '2017-02-14 14:59:26.766437', 1010717, '2017-02-15 12:25:20.703193', 1010717, 1000006, 'https://liquidacion.centralpos.com/api/v1/auth/login', 'URL Login', NULL);
+INSERT INTO c_externalserviceattributes (c_externalserviceattributes_id, ad_client_id, ad_org_id, isactive, created, createdby, updated, updatedby, c_externalservice_id, name, value, description) VALUES (1000025, 1010016, 0, 'Y', '2017-02-16 15:41:32.164247', 1010717, '2017-02-16 15:42:09.344558', 1010717, 1000001, NULL, 'IVA', 'Percepción');
+INSERT INTO c_externalserviceattributes (c_externalserviceattributes_id, ad_client_id, ad_org_id, isactive, created, createdby, updated, updatedby, c_externalservice_id, name, value, description) VALUES (1000023, 1010016, 0, 'Y', '2017-02-16 15:41:12.725329', 1010717, '2017-02-16 15:42:34.032986', 1010717, 1000001, NULL, 'IVA 10.5', 'Categ. de Impuesto');
+INSERT INTO c_externalserviceattributes (c_externalserviceattributes_id, ad_client_id, ad_org_id, isactive, created, createdby, updated, updatedby, c_externalservice_id, name, value, description) VALUES (1000024, 1010016, 0, 'Y', '2017-02-16 15:41:24.398294', 1010717, '2017-02-16 15:42:36.058575', 1010717, 1000001, NULL, 'IVA 21', 'Categ. de Impuesto');
+INSERT INTO c_externalserviceattributes (c_externalserviceattributes_id, ad_client_id, ad_org_id, isactive, created, createdby, updated, updatedby, c_externalservice_id, name, value, description) VALUES (1000022, 1010016, 0, 'Y', '2017-02-16 15:41:07.910172', 1010717, '2017-02-16 15:46:11.382262', 1010717, 1000001, NULL, 'Importe Arancel', 'Comisión');
+INSERT INTO c_externalserviceattributes (c_externalserviceattributes_id, ad_client_id, ad_org_id, isactive, created, createdby, updated, updatedby, c_externalservice_id, name, value, description) VALUES (1000021, 1010016, 0, 'Y', '2017-02-16 15:41:01.37173', 1010717, '2017-02-16 15:46:25.153487', 1010717, 1000001, NULL, 'Cargo adic por op internacionales', 'Otros Conceptos');
+INSERT INTO c_externalserviceattributes (c_externalserviceattributes_id, ad_client_id, ad_org_id, isactive, created, createdby, updated, updatedby, c_externalservice_id, name, value, description) VALUES (1000020, 1010016, 0, 'Y', '2017-02-16 15:40:56.216762', 1010717, '2017-02-16 15:46:46.799924', 1010717, 1000001, NULL, 'Cargo adic por planes cuotas', 'Otros Conceptos');
+INSERT INTO c_externalserviceattributes (c_externalserviceattributes_id, ad_client_id, ad_org_id, isactive, created, createdby, updated, updatedby, c_externalservice_id, name, value, description) VALUES (1000019, 1010016, 0, 'Y', '2017-02-16 15:40:54.100695', 1010717, '2017-02-16 15:47:05.200153', 1010717, 1000001, NULL, 'Costo plan acelerado cuotas', 'Otros Conceptos');
+INSERT INTO c_externalserviceattributes (c_externalserviceattributes_id, ad_client_id, ad_org_id, isactive, created, createdby, updated, updatedby, c_externalservice_id, name, value, description) VALUES (1000018, 1010016, 0, 'Y', '2017-02-16 15:40:45.952298', 1010717, '2017-02-16 15:47:07.431846', 1010717, 1000001, NULL, 'Dto por ventas de campañas', 'Otros Conceptos');
+INSERT INTO c_externalserviceattributes (c_externalserviceattributes_id, ad_client_id, ad_org_id, isactive, created, createdby, updated, updatedby, c_externalservice_id, name, value, description) VALUES (1000017, 1010016, 0, 'Y', '2017-02-16 15:40:39.909383', 1010717, '2017-02-16 15:47:24.577121', 1010717, 1000001, NULL, 'Ret Ganancias', 'Retención');
+INSERT INTO c_externalserviceattributes (c_externalserviceattributes_id, ad_client_id, ad_org_id, isactive, created, createdby, updated, updatedby, c_externalservice_id, name, value, description) VALUES (1000016, 1010016, 0, 'Y', '2017-02-16 15:40:34.865921', 1010717, '2017-02-16 15:47:26.711228', 1010717, 1000001, NULL, 'Ret IVA', 'Retención');
+INSERT INTO c_externalserviceattributes (c_externalserviceattributes_id, ad_client_id, ad_org_id, isactive, created, createdby, updated, updatedby, c_externalservice_id, name, value, description) VALUES (1000015, 1010016, 0, 'Y', '2017-02-16 15:40:26.51381', 1010717, '2017-02-16 15:47:28.335794', 1010717, 1000001, NULL, 'Ret IIBB', 'Retención');
+INSERT INTO c_externalserviceattributes (c_externalserviceattributes_id, ad_client_id, ad_org_id, isactive, created, createdby, updated, updatedby, c_externalservice_id, name, value, description) VALUES (1000026, 1010016, 0, 'Y', '2017-02-16 17:15:35.227653', 1010717, '2017-02-16 17:15:35.228817', 1010717, 1000004, NULL, 'Imp total desc aceleracion', 'Otros Conceptos');
+INSERT INTO c_externalserviceattributes (c_externalserviceattributes_id, ad_client_id, ad_org_id, isactive, created, createdby, updated, updatedby, c_externalservice_id, name, value, description) VALUES (1000027, 1010016, 0, 'Y', '2017-02-16 17:16:11.296722', 1010717, '2017-02-16 17:16:11.297652', 1010717, 1000004, NULL, 'Importe Descuento', 'Comisión');
+INSERT INTO c_externalserviceattributes (c_externalserviceattributes_id, ad_client_id, ad_org_id, isactive, created, createdby, updated, updatedby, c_externalservice_id, name, value, description) VALUES (1000029, 1010016, 0, 'Y', '2017-02-16 17:18:41.655438', 1010717, '2017-02-16 17:18:41.656098', 1010717, 1000004, NULL, 'Retencion Ganancias', 'Retención');
+INSERT INTO c_externalserviceattributes (c_externalserviceattributes_id, ad_client_id, ad_org_id, isactive, created, createdby, updated, updatedby, c_externalservice_id, name, value, description) VALUES (1000028, 1010016, 0, 'Y', '2017-02-16 17:18:26.644715', 1010717, '2017-02-16 17:18:44.159658', 1010717, 1000004, NULL, 'Retencion IVA', 'Retención');
+INSERT INTO c_externalserviceattributes (c_externalserviceattributes_id, ad_client_id, ad_org_id, isactive, created, createdby, updated, updatedby, c_externalservice_id, name, value, description) VALUES (1000030, 1010016, 0, 'Y', '2017-02-16 17:19:45.104485', 1010717, '2017-02-16 17:19:45.106767', 1010717, 1000004, NULL, 'Percepcion IVA', 'Percepción');
+INSERT INTO c_externalserviceattributes (c_externalserviceattributes_id, ad_client_id, ad_org_id, isactive, created, createdby, updated, updatedby, c_externalservice_id, name, value, description) VALUES (1000031, 1010016, 0, 'Y', '2017-02-16 17:20:59.278118', 1010717, '2017-02-16 17:20:59.279115', 1010717, 1000005, NULL, 'Retencion IVA', 'Retención');
+INSERT INTO c_externalserviceattributes (c_externalserviceattributes_id, ad_client_id, ad_org_id, isactive, created, createdby, updated, updatedby, c_externalservice_id, name, value, description) VALUES (1000032, 1010016, 0, 'Y', '2017-02-16 17:21:16.807992', 1010717, '2017-02-16 17:21:16.808615', 1010717, 1000005, NULL, 'Retencion IIBB', 'Retención');
+INSERT INTO c_externalserviceattributes (c_externalserviceattributes_id, ad_client_id, ad_org_id, isactive, created, createdby, updated, updatedby, c_externalservice_id, name, value, description) VALUES (1000033, 1010016, 0, 'Y', '2017-02-16 17:21:30.22005', 1010717, '2017-02-16 17:21:30.220799', 1010717, 1000005, NULL, 'Retencion Ganancias', 'Retención');
+INSERT INTO c_externalserviceattributes (c_externalserviceattributes_id, ad_client_id, ad_org_id, isactive, created, createdby, updated, updatedby, c_externalservice_id, name, value, description) VALUES (1000034, 1010016, 0, 'Y', '2017-02-16 17:24:56.857436', 1010717, '2017-02-16 17:24:56.858368', 1010717, 1000005, NULL, 'Comisiones - Conceptos fact a descontar mes pago', 'Comisión');
+INSERT INTO c_externalserviceattributes (c_externalserviceattributes_id, ad_client_id, ad_org_id, isactive, created, createdby, updated, updatedby, c_externalservice_id, name, value, description) VALUES (1000035, 1010016, 0, 'Y', '2017-02-16 17:25:09.43474', 1010717, '2017-02-16 17:25:09.435451', 1010717, 1000005, NULL, 'Gastos - Conceptos fact a descontar mes pago', 'Otros Conceptos');
+INSERT INTO c_externalserviceattributes (c_externalserviceattributes_id, ad_client_id, ad_org_id, isactive, created, createdby, updated, updatedby, c_externalservice_id, name, value, description) VALUES (1000036, 1010016, 0, 'Y', '2017-02-16 17:25:35.827578', 1010717, '2017-02-16 17:25:35.828324', 1010717, 1000005, NULL, 'IVA 21', 'Categoría de Impuesto');
+INSERT INTO c_externalserviceattributes (c_externalserviceattributes_id, ad_client_id, ad_org_id, isactive, created, createdby, updated, updatedby, c_externalservice_id, name, value, description) VALUES (1000037, 1010016, 0, 'Y', '2017-02-16 17:31:19.739017', 1010717, '2017-02-16 17:31:19.739868', 1010717, 1000006, NULL, 'Ret Ganancias e Ing Brutos', 'Retención');
+INSERT INTO c_externalserviceattributes (c_externalserviceattributes_id, ad_client_id, ad_org_id, isactive, created, createdby, updated, updatedby, c_externalservice_id, name, value, description) VALUES (1000038, 1010016, 0, 'Y', '2017-02-16 17:31:38.470488', 1010717, '2017-02-16 17:31:38.471302', 1010717, 1000006, NULL, 'Percepcion IVA', 'Percepción');
+INSERT INTO c_externalserviceattributes (c_externalserviceattributes_id, ad_client_id, ad_org_id, isactive, created, createdby, updated, updatedby, c_externalservice_id, name, value, description) VALUES (1000039, 1010016, 0, 'Y', '2017-02-16 17:31:58.540236', 1010717, '2017-02-16 17:31:58.540961', 1010717, 1000006, NULL, 'Arancel', 'Otros Conceptos');
+INSERT INTO c_externalserviceattributes (c_externalserviceattributes_id, ad_client_id, ad_org_id, isactive, created, createdby, updated, updatedby, c_externalservice_id, name, value, description) VALUES (1000040, 1010016, 0, 'Y', '2017-02-16 17:32:25.964729', 1010717, '2017-02-16 17:32:25.965447', 1010717, 1000006, NULL, 'Costo Financiero', 'Comisión');
+INSERT INTO c_externalserviceattributes (c_externalserviceattributes_id, ad_client_id, ad_org_id, isactive, created, createdby, updated, updatedby, c_externalservice_id, name, value, description) VALUES (1000041, 1010016, 0, 'Y', '2017-02-20 11:12:16.069595', 1010717, '2017-02-20 11:12:16.070473', 1010717, 1000004, NULL, 'IVA 21', 'Categoría de Impuesto');
+INSERT INTO c_externalserviceattributes (c_externalserviceattributes_id, ad_client_id, ad_org_id, isactive, created, createdby, updated, updatedby, c_externalservice_id, name, value, description) VALUES (1000042, 1010016, 0, 'Y', '2017-02-20 11:12:38.653004', 1010717, '2017-02-20 11:12:38.653779', 1010717, 1000006, NULL, 'IVA 21', 'Categoría de Impuesto');
+INSERT INTO c_externalserviceattributes (c_externalserviceattributes_id, ad_client_id, ad_org_id, isactive, created, createdby, updated, updatedby, c_externalservice_id, name, value, description) VALUES (1000043, 1010016, 0, 'Y', '2017-02-20 17:35:42.901619', 1010717, '2017-02-21 09:56:27.553305', 1010717, 1000006, 'https://liquidacion.centralpos.com/api/v1/firstdata/liquidacion-participantes', 'URL detalle liq', NULL);
+INSERT INTO c_externalserviceattributes (c_externalserviceattributes_id, ad_client_id, ad_org_id, isactive, created, createdby, updated, updatedby, c_externalservice_id, name, value, description) VALUES (1000014, 1010016, 0, 'Y', '2017-02-14 17:12:57.074976', 1010717, '2017-02-21 11:59:46.305476', 1010717, 1000005, 'https://liquidacion.centralpos.com/api/v1/naranja/conceptos-facturados-meses', 'URL Conceptos', NULL);
