@@ -28,7 +28,12 @@ public class MExpenseConcepts extends X_C_ExpenseConcepts {
 	public boolean doAfterSave(boolean newRecord, boolean success) {
 		return recalculate();
 	}
-		
+
+	@Override
+	protected boolean afterDelete( boolean success ) {
+		return recalculate();
+	}
+
 	private boolean recalculate() {
 		StringBuffer sql = new StringBuffer();
 
@@ -53,14 +58,14 @@ public class MExpenseConcepts extends X_C_ExpenseConcepts {
 				amt = amt.add(rs.getBigDecimal("amount"));
 			}
 
-			X_C_CreditCardSettlement settlement = new X_C_CreditCardSettlement(getCtx(), getC_CreditCardSettlement_ID(), get_TrxName());
+			MCreditCardSettlement settlement = new MCreditCardSettlement(getCtx(), getC_CreditCardSettlement_ID(), get_TrxName());
 			settlement.setExpenses(amt);
 			if (!settlement.save()) {
 				throw new Exception(CLogger.retrieveErrorAsString());
 			}
 
 		} catch (Exception e) {
-			log.log(Level.SEVERE, "doAfterSave", e);
+			log.log(Level.SEVERE, "recalculate", e);
 		} finally {
 			try {
 				rs.close();
@@ -71,10 +76,6 @@ public class MExpenseConcepts extends X_C_ExpenseConcepts {
 
 		}
 		return true;
-	}
-	
-	protected boolean afterDelete( boolean success ) {
-		return recalculate();
 	}
 
 }
