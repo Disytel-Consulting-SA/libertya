@@ -3715,10 +3715,15 @@ public class VOrdenPagoModel {
 	}
 
 	public boolean isAllowAdvancedPayment() {
+		boolean allowOPA = isAllowAdvanced();
 		if (BPartner != null) {
-			return BPartner.isAllowAdvancedPaymentReceipts();
+			allowOPA = allowOPA && BPartner.isAllowAdvancedPaymentReceipts();
 		} 
-		return true;
+		return allowOPA;
+	}
+	
+	public boolean isAllowAdvanced(){
+		return getRole().isAllowOPA();
 	}
 	
 	public boolean getPartialPayment() {
