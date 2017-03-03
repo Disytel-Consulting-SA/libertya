@@ -7,7 +7,7 @@ import java.math.*;
 import org.openXpertya.util.*;
 /** Modelo Generado por AD_Role
  *  @author Comunidad de Desarrollo Libertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
- *  @version  - 2015-05-15 00:47:12.911 */
+ *  @version  - 2017-03-03 10:14:23.978 */
 public class X_AD_Role extends org.openXpertya.model.PO
 {
 /** Constructor estándar */
@@ -37,6 +37,7 @@ setConfirmQueryRecords (0);
 setControlCUITLimit (Env.ZERO);
 setControlCUITLimitClient (Env.ZERO);
 setIsAccessAllOrgs (false);	// N
+setIsAllowOPA (false);
 setIsCanApproveOwnDoc (false);
 setIsCanExport (true);	// Y
 setIsCanReport (true);	// Y
@@ -496,6 +497,22 @@ if (oo != null)
 }
 return false;
 }
+/** Set Allow create Advanced Payment Order */
+public void setIsAllowOPA (boolean IsAllowOPA)
+{
+set_Value ("IsAllowOPA", new Boolean(IsAllowOPA));
+}
+/** Get Allow create Advanced Payment Order */
+public boolean isAllowOPA() 
+{
+Object oo = get_Value("IsAllowOPA");
+if (oo != null) 
+{
+ if (oo instanceof Boolean) return ((Boolean)oo).booleanValue();
+ return "Y".equals(oo);
+}
+return false;
+}
 /** Set Approve own Documents.
 Users with this role can approve their own documents */
 public void setIsCanApproveOwnDoc (boolean IsCanApproveOwnDoc)
@@ -902,7 +919,7 @@ Determines what preferences the user can set */
 public void setPreferenceType (String PreferenceType)
 {
 if (PreferenceType.equals("C") || PreferenceType.equals("O") || PreferenceType.equals("U") || PreferenceType.equals("N"));
- else throw new IllegalArgumentException ("PreferenceType Invalid value - Reference = PREFERENCETYPE_AD_Reference_ID - C - O - U - N");
+ else throw new IllegalArgumentException ("PreferenceType Invalid value - " + PreferenceType + " - Reference = PREFERENCETYPE_AD_Reference_ID - C - O - U - N");
 if (PreferenceType == null) throw new IllegalArgumentException ("PreferenceType is mandatory");
 if (PreferenceType.length() > 1)
 {
@@ -950,7 +967,7 @@ System Client Organization */
 public void setUserLevel (String UserLevel)
 {
 if (UserLevel == null || UserLevel.equals("SCO") || UserLevel.equals(" C ") || UserLevel.equals(" CO") || UserLevel.equals("  O") || UserLevel.equals("S  "));
- else throw new IllegalArgumentException ("UserLevel Invalid value - Reference = USERLEVEL_AD_Reference_ID - SCO -  C  -  CO -   O - S  ");
+ else throw new IllegalArgumentException ("UserLevel Invalid value - " + UserLevel + " - Reference = USERLEVEL_AD_Reference_ID - SCO -  C  -  CO -   O - S  ");
 if (UserLevel != null && UserLevel.length() > 3)
 {
 log.warning("Length > 3 - truncated");

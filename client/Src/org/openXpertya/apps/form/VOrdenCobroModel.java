@@ -1827,4 +1827,8 @@ public class VOrdenCobroModel extends VOrdenPagoModel {
 		setCashID(cashJournalID);
 	}
 
+	@Override
+	public boolean isAllowAdvanced(){
+		return true;
+	}
 }
