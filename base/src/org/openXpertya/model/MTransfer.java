@@ -27,6 +27,9 @@ public class MTransfer extends X_M_Transfer implements DocAction {
 
 	/** Cache de líneas de la transferencia */
 	private List<MTransferLine> lines = null;
+	
+	/** Boolean que determina si se debe anular la transferencia entrante */
+	private boolean voidIncomingTransfer = false;
 
 	// Métodos de clase
 
@@ -113,6 +116,47 @@ public class MTransfer extends X_M_Transfer implements DocAction {
 						selfEmpty ? transferParams1 : transferParams2);
 	}
 
+	
+	public static List<MTransfer> getTransfers(Properties ctx, Integer orgID, String documentNo, String movementType,
+			String trxName) throws Exception {
+		// Busco la Transferencia Entrante asociada al documento
+		List<MTransfer> incomingTransferList = new ArrayList<MTransfer>();
+
+		StringBuffer sql = new StringBuffer();
+		sql.append("SELECT * ");
+		sql.append("FROM M_Transfer ");
+		sql.append("WHERE DocumentNo = ? ");
+		sql.append("AND Ad_Client_Id = ? ");
+		sql.append("AND ad_org_id = ? ");
+		sql.append("AND movementtype = ? ");
+
+		PreparedStatement ps = null;
+		ResultSet rs = null;
+		try {
+			ps = DB.prepareStatement(sql.toString(), trxName);
+			ps.setString(1, documentNo);
+			ps.setInt(2, Env.getAD_Client_ID(ctx));
+			ps.setInt(3, orgID);
+			ps.setString(4, movementType);
+			rs = ps.executeQuery();
+			while (rs.next()) {
+				incomingTransferList.add(new MTransfer(ctx, rs, trxName));
+			}
+		} catch (Exception e) {
+			throw e;
+		} finally {
+			try {
+				if (ps != null)
+					ps.close();
+				if (rs != null)
+					rs.close();
+			} catch (Exception e2) {
+				throw e2;
+			}
+		}
+		return incomingTransferList;
+	}
+	
 	/**
 	 * Constructor de la clase.
 	 * 
@@ -649,7 +693,7 @@ public class MTransfer extends X_M_Transfer implements DocAction {
 		incomingTransfer.setDocStatus(DOCSTATUS_Drafted);
 		incomingTransfer.setDocAction(DOCACTION_Complete);
 		incomingTransfer.setM_Inventory_ID(0);
-		incomingTransfer.setDocumentNo(getDocumentNo() + "-I");
+		incomingTransfer.setDocumentNo(getDocumentNo() + "-" + MOVEMENTTYPE_Incoming);
 		// Intenta guardar la transferencia entrante, si no es posible
 		// se levanta una excepción.
 		if (!incomingTransfer.save()) {
@@ -763,10 +807,7 @@ public class MTransfer extends X_M_Transfer implements DocAction {
 	}
 
 	@Override
-	public boolean voidIt() {
-		// m_processMsg = "@MaterialTransferVoidNotAllowed@";
-		log.info(toString());
-
+	public boolean voidIt() {		
 		// Imposible anular si el status es: Cerrado, Revertido, Anulado
 		if (DOCSTATUS_Closed.equals(getDocStatus()) || DOCSTATUS_Reversed.equals(getDocStatus()) || DOCSTATUS_Voided.equals(getDocStatus())) {
 			m_processMsg = Msg.getMsg(getCtx(), "InvalidAction") + ", Document status: " + getDocStatus();
@@ -774,97 +815,50 @@ public class MTransfer extends X_M_Transfer implements DocAction {
 			return false;
 		}
 
-		// Si es una transferencia entrante, solo se puede anular si es
-		// borrador. Caso contrario, se debe hacer el proceso inverso
+		// Si es una transferencia entrante, no se puede anular, a menos que
+		// estemos anulado la saliente
 		if (getMovementType().equals(MOVEMENTTYPE_Incoming)) {
-			if (!DOCSTATUS_Drafted.equals(getDocStatus())) {
+			if (!isVoidIncomingTransfer()) {
 				m_processMsg = Msg.getMsg(getCtx(), "NotVoidInMaterialTransfer");
-				setDocAction(DOCACTION_None);
 				return false;
 			}
 		} else {
 
 			/******* TRANSFERENCIA SALIENTE *******/
-
-			// Busco la Transferencia Entrante asociada al documento
-			MTransfer incomingTransfer = null;
-			int resultCount = 0;
-
-			StringBuffer sql = new StringBuffer();
-			sql.append("SELECT * ");
-			sql.append("FROM M_Transfer ");
-			sql.append("WHERE DocumentNo = ? ");
-			sql.append("AND Ad_Client_Id = ? ");
-			sql.append("AND C_Bpartner_Id = ?");
-
-			PreparedStatement ps = null;
-			ResultSet rs = null;
-			try {
-				ps = DB.prepareStatement(sql.toString(), get_TrxName());
-				ps.setString(1, getDocumentNo() + "-I");
-				ps.setInt(2, getAD_Client_ID());
-				ps.setInt(3, getC_BPartner_ID());
-				rs = ps.executeQuery();
-				while (rs.next()) {
-					resultCount++;
-					incomingTransfer = new MTransfer(getCtx(), rs, get_TrxName());
-				}
-			} catch (Exception e) {
-				e.printStackTrace();
-			} finally {
-				try {
-					if (ps != null)
-						ps.close();
-					if (rs != null)
-						rs.close();
-				} catch (Exception e) {
-					e.printStackTrace();
-				}
+			
+			List<MTransfer> incomingTransfers = null;
+			try{
+				incomingTransfers = getTransfers(getCtx(), getWarehouseTo().getAD_Org_ID(),
+						getDocumentNo() + "-" + MOVEMENTTYPE_Incoming, MOVEMENTTYPE_Incoming,
+						get_TrxName());
+			} catch(Exception e){
+				setProcessMsg(e.getMessage());
+				return false;
 			}
+					
 			// Controlo que no se hayan recuperado múltiples transferencias entrantes asociadas
-			if (resultCount > 1) {
+			if (incomingTransfers.size() > 1) {
 				m_processMsg = Msg.getMsg(getCtx(), "MultipleInTransfersAssociated");
 				setDocAction(DOCACTION_None);
 				return false;
 			}
 
+			MTransfer incomingTransfer = incomingTransfers.size() > 0?incomingTransfers.get(0):null;
+			
 			if (incomingTransfer != null) {
-				// Si la transferencia entrante está anulada no hago nada
-				if (!incomingTransfer.getDocStatus().equals(DOCSTATUS_Voided)) {
-					// Controlo que la transferencia entrante esté en estado borrador
-					if (!incomingTransfer.getDocStatus().equals(DOCSTATUS_Drafted)) {
-						m_processMsg = Msg.getMsg(getCtx(), "AsociatedInMaterialTransferCompleted");
-						setDocAction(DOCACTION_None);
-						return false;
-					}
-					// Anulo la transferencia entrante
-					try {
-						if (!incomingTransfer.processIt(DOCACTION_Void)) {
-							m_processMsg = incomingTransfer.getProcessMsg();
-							return false;
-						}
-						if (!incomingTransfer.save()) {
-							log.saveError("SaveError", Msg.translate(getCtx(), "TransferVoidSaveError") + "."
-									+ CLogger.retrieveErrorAsString());
-							return false;
-						}
-					} catch (Exception e) {
-						e.printStackTrace();
-					}
+				// Anulo la transferencia entrante
+				incomingTransfer.setVoidIncomingTransfer(true);
+				if(!DocumentEngine.processAndSave(incomingTransfer, DOCACTION_Void, false)){
+					m_processMsg = incomingTransfer.getProcessMsg();
+					return false;
 				}
 			}
 		}
 		// Para revertir los movimientos de la transferencia, recupero el inventario generado y lo anulo.
 		if (getM_Inventory_ID() != 0) {
 			MInventory inventory = new MInventory(getCtx(), getM_Inventory_ID(), get_TrxName());
-			if (!inventory.processIt(DOCACTION_Void)) {
+			if(!DocumentEngine.processAndSave(inventory, DOCACTION_Void, false)){
 				m_processMsg = inventory.getProcessMsg();
-				setDocAction(DOCACTION_None);
-				return false;
-			}
-			if (!inventory.save()) {
-				log.saveError("SaveError", Msg.translate(getCtx(), "TransferVoidSaveError")+ "."
-						+ CLogger.retrieveErrorAsString());
 				return false;
 			}
 		}
@@ -978,4 +972,12 @@ public class MTransfer extends X_M_Transfer implements DocAction {
                                            :"N" ) + "' WHERE M_Transfer_ID=" + getID();
         DB.executeUpdate( "UPDATE M_TransferLine " + set,get_TrxName());
     }    // setProcessed
+
+	public boolean isVoidIncomingTransfer() {
+		return voidIncomingTransfer;
+	}
+
+	public void setVoidIncomingTransfer(boolean voidIncomingTransfer) {
+		this.voidIncomingTransfer = voidIncomingTransfer;
+	}
 }
