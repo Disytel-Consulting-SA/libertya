@@ -617,9 +617,13 @@ public class GenerateModel {
             pstmt = null;
         }
 
+        // Incorporar validacion dinamica de opciones en una referencia. Se apoya en refContainsValue de PO
+        // La implementacion generada valida primero las opciones estaticas predefinidas, y luego eventuales incorporaciones posteriores adicionales
+        statement.append(" || ( refContainsValue("+AD_Reference_ID+", "+columnName+") ) " );
+        
 		statement.append(")" + "; " + "else " + "throw new IllegalArgumentException (\"").append(columnName)
-				.append(" Invalid value - ").append("\"").append(" + ").append(columnName).append(" + ").append("\" - ")
-				.append(values).append("\");");
+				.append(" Invalid value: ").append("\"").append(" + ").append(columnName).append(" + \". Valid: \"").append(" + ")
+				.append(" refValidOptions(").append(AD_Reference_ID).append(") );");
 
         //
 

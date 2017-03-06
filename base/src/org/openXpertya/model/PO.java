@@ -29,11 +29,13 @@ import java.sql.Types;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
+import java.util.Set;
 import java.util.Vector;
 import java.util.logging.Level;
 
@@ -49,6 +51,7 @@ import org.openXpertya.process.DocAction;
 import org.openXpertya.process.DocActionStatusEvent;
 import org.openXpertya.process.DocActionStatusListener;
 import org.openXpertya.util.AuxiliarDTO;
+import org.openXpertya.util.CCache;
 import org.openXpertya.util.CLogMgt;
 import org.openXpertya.util.CLogger;
 import org.openXpertya.util.CPreparedStatement;
@@ -58,6 +61,7 @@ import org.openXpertya.util.DBException;
 import org.openXpertya.util.DisplayType;
 import org.openXpertya.util.Env;
 import org.openXpertya.util.Evaluatee;
+import org.openXpertya.util.KeyNamePair;
 import org.openXpertya.util.Msg;
 import org.openXpertya.util.Trace;
 import org.openXpertya.util.Util;
@@ -4879,6 +4883,36 @@ public abstract class PO implements Serializable, Comparator, Evaluatee {
 	 */
 	public void copyInstanceValues(PO to){
 		// Por ahora no se hace nada aca ya que no existen valores de instancia a copiar
+	}
+	
+	/** Cache de referencias */
+	protected static CCache<Integer, Set<String>> ref_cache = new CCache<Integer, Set<String>>("ref_cache", 50, 10);
+	
+	/** Dada una refID, obtener la lista de opciones */
+	protected static Set<String> getRefCache(int refID) {
+		// Si no existe en la cache, incorporarla
+		if (ref_cache.get(refID) == null) {
+			KeyNamePair[] options = DB.getKeyNamePairs("SELECT ad_ref_list_id, value from ad_ref_list where ad_reference_id =" + refID, false);
+			HashSet<String> aSet = new HashSet<String>();
+			for (KeyNamePair option : options) {
+				aSet.add(option.getName());
+			}
+			ref_cache.put(refID, aSet);
+		}
+		return ref_cache.get(refID);
+	}
+	
+	/** Dada una referencia, verificar si la opcion dada es valida */
+	public static boolean refContainsValue(int refID, String value) {
+		return getRefCache(refID).contains(value);
+	}
+	
+	/** Dada una referencia, retornar las opciones validas */
+	public static String refValidOptions(int refID) {
+		StringBuffer retValue = new StringBuffer();
+		for (String ref : getRefCache(refID))
+			retValue.append(" - ").append(ref).append(" ");
+		return retValue.toString();
 	}
 	
 } // PO
