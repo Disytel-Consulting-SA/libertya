@@ -1,7 +1,10 @@
 package org.openXpertya.util;
 
+import java.lang.reflect.Field;
 import java.util.HashMap;
 import java.util.Map;
+
+import org.openXpertya.plugin.common.PluginPOUtils;
 
 public class UserAuthConstants {
 
@@ -58,6 +61,26 @@ public class UserAuthConstants {
 	}
 	
 	public static String getProcessValue(String key){
+		String authConstantsClass;
+		String value = null;
+		for (String aPackage : PluginPOUtils.getActivePluginPackages()){
+			authConstantsClass = aPackage + ".util.UserAuthConstants";
+			try{
+				Class<?> clazz = Class.forName(authConstantsClass);
+				Field processValuesField = clazz.getField("processValues");
+				processValuesField.setAccessible(true);
+				Map<String, String> realField = (Map<String, String>)processValuesField.get(null);
+				value = realField.get(key);
+			} catch(Exception e){
+				continue;
+			}
+			if(!Util.isEmpty(value, true)){
+				break;
+			}
+		}
+		if(!Util.isEmpty(value, true)){
+			return value;
+		}
 		return processValues.get(key);
 	}
 	

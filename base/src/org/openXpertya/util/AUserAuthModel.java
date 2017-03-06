@@ -20,7 +20,7 @@ public abstract class AUserAuthModel {
 		// obtengo la clase para autorización con claves únicas, sino
 		// autorización por usuario y clave
 		Integer clientID = Env.getAD_Client_ID(Env.getCtx());
-		MClientInfo clientInfo = MClientInfo.get(null, clientID);
+		MClientInfo clientInfo = MClientInfo.get(Env.getCtx(), clientID);
 		AUserAuthModel userAuthModel = clientInfo.isUniqueKeyActive()?new AUKUserAuthModel():new AUPUserAuthModel();
 		return userAuthModel;
 	}
