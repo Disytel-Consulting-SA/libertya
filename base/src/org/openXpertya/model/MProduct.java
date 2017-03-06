@@ -33,6 +33,7 @@ import org.openXpertya.util.CLogger;
 import org.openXpertya.util.DB;
 import org.openXpertya.util.Env;
 import org.openXpertya.util.Msg;
+import org.openXpertya.util.Util;
 
 /**
  * Descripción de Clase
@@ -708,6 +709,19 @@ public class MProduct extends X_M_Product {
         // Quita espacios en blanco que pueden producir errores en la lectura del UPC
         if (getUPC() != null) {
         	setUPC(getUPC().trim());
+        }
+        
+		// Se valida unicidad de UPC aquí ya que sino devuelve error al guardar
+		// en el aftersave, pero guarda el artículo previamente
+        if(!Util.isEmpty(getUPC(), true)){
+	        int productID = MProductUPC.getProductIDFromUPC(getCtx(), getUPC(), getID(), null, get_TrxName());
+	        if(productID > 0){
+	        	MProduct product = MProduct.get(getCtx(), productID);
+				String productStr = "'" + product.getValue() + " " + product.getName() + "'";
+				log.saveError("SaveError", 
+						Msg.translate(getCtx(), "DuplicateUPCError") + " " + productStr);
+				return false;
+	        }
         }
         
         // Se valida que si el Articulo tiene movimientos de Stock no se pueda cambiar el Conjunto de atributos        
