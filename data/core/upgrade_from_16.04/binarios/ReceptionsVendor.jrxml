@@ -88,9 +88,9 @@ WHERE (case when ($P{Estado} = 'P') then porcentaje < 1 else (case when ($P{Esta
 			<band height="10"  isSplitAllowed="true" >
 				<textField isStretchWithOverflow="true" pattern="" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
-						x="0"
+						x="94"
 						y="0"
-						width="110"
+						width="52"
 						height="10"
 						key="textField-7"
 						stretchType="RelativeToBandHeight"/>
@@ -102,9 +102,9 @@ WHERE (case when ($P{Estado} = 'P') then porcentaje < 1 else (case when ($P{Esta
 				</textField>
 				<textField isStretchWithOverflow="true" pattern="dd/MM/yyyy" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
-						x="110"
+						x="146"
 						y="0"
-						width="56"
+						width="49"
 						height="10"
 						key="textField-12"
 						stretchType="RelativeToBandHeight"/>
@@ -116,9 +116,9 @@ WHERE (case when ($P{Estado} = 'P') then porcentaje < 1 else (case when ($P{Esta
 				</textField>
 				<textField isStretchWithOverflow="true" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
-						x="166"
+						x="195"
 						y="0"
-						width="84"
+						width="96"
 						height="10"
 						key="textField-81"
 						stretchType="RelativeToBandHeight"/>
@@ -130,7 +130,7 @@ WHERE (case when ($P{Estado} = 'P') then porcentaje < 1 else (case when ($P{Esta
 				</textField>
 				<textField isStretchWithOverflow="true" pattern="dd/MM/yyyy" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
-						x="250"
+						x="291"
 						y="0"
 						width="63"
 						height="10"
@@ -144,9 +144,9 @@ WHERE (case when ($P{Estado} = 'P') then porcentaje < 1 else (case when ($P{Esta
 				</textField>
 				<textField isStretchWithOverflow="true" pattern="###0.00;-###0.00" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
-						x="313"
+						x="354"
 						y="0"
-						width="58"
+						width="54"
 						height="10"
 						key="textField-100"
 						stretchType="RelativeToBandHeight"/>
@@ -158,7 +158,7 @@ WHERE (case when ($P{Estado} = 'P') then porcentaje < 1 else (case when ($P{Esta
 				</textField>
 				<textField isStretchWithOverflow="true" pattern="###0.00;-###0.00" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
-						x="371"
+						x="408"
 						y="0"
 						width="53"
 						height="10"
@@ -172,9 +172,9 @@ WHERE (case when ($P{Estado} = 'P') then porcentaje < 1 else (case when ($P{Esta
 				</textField>
 				<textField isStretchWithOverflow="true" pattern="#,##0.00 %" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
-						x="424"
+						x="461"
 						y="0"
-						width="53"
+						width="43"
 						height="10"
 						key="textField-103"
 						stretchType="RelativeToBandHeight"/>
@@ -183,6 +183,20 @@ WHERE (case when ($P{Estado} = 'P') then porcentaje < 1 else (case when ($P{Esta
 						<font size="6"/>
 					</textElement>
 				<textFieldExpression   class="java.lang.Number"><![CDATA[$F{porcentaje}]]></textFieldExpression>
+				</textField>
+				<textField isStretchWithOverflow="true" pattern="" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
+					<reportElement
+						x="0"
+						y="0"
+						width="94"
+						height="10"
+						key="textField-105"
+						stretchType="RelativeToBandHeight"/>
+					<box topBorder="Thin" topBorderColor="#000000" leftBorder="Thin" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="Thin" bottomBorderColor="#000000"/>
+					<textElement textAlignment="Left" verticalAlignment="Middle">
+						<font size="6"/>
+					</textElement>
+				<textFieldExpression   class="java.lang.String"><![CDATA[$F{organization}]]></textFieldExpression>
 				</textField>
 			</band>
 			</groupHeader>
@@ -207,7 +221,7 @@ WHERE (case when ($P{Estado} = 'P') then porcentaje < 1 else (case when ($P{Esta
 			<band height="106"  isSplitAllowed="true" >
 				<textField isStretchWithOverflow="false" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
-						x="104"
+						x="62"
 						y="15"
 						width="178"
 						height="12"
@@ -223,12 +237,12 @@ WHERE (case when ($P{Estado} = 'P') then porcentaje < 1 else (case when ($P{Esta
 				</textField>
 				<textField isStretchWithOverflow="false" isBlankWhenNull="false" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
-						x="4"
-						y="3"
-						width="465"
+						x="0"
+						y="0"
+						width="194"
 						height="12"
 						key="textField-97"/>
-					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
+					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="1Point" bottomBorderColor="#000000"/>
 					<textElement>
 						<font pdfFontName="Helvetica-Bold" size="8" isBold="true" isUnderline="false"/>
 					</textElement>
@@ -236,9 +250,9 @@ WHERE (case when ($P{Estado} = 'P') then porcentaje < 1 else (case when ($P{Esta
 				</textField>
 				<staticText>
 					<reportElement
-						x="4"
+						x="0"
 						y="15"
-						width="100"
+						width="62"
 						height="12"
 						key="staticText-4"
 						isRemoveLineWhenBlank="true">
@@ -253,11 +267,11 @@ WHERE (case when ($P{Estado} = 'P') then porcentaje < 1 else (case when ($P{Esta
 				<staticText>
 					<reportElement
 						mode="Opaque"
-						x="0"
+						x="94"
 						y="96"
-						width="110"
+						width="52"
 						height="10"
-						backcolor="#B9B9B9"
+						backcolor="#CCCCCC"
 						key="staticText-12"/>
 					<box topBorder="Thin" topBorderColor="#000000" leftBorder="Thin" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" rightPadding="1" bottomBorder="None" bottomBorderColor="#000000"/>
 					<textElement textAlignment="Left" verticalAlignment="Middle">
@@ -268,11 +282,11 @@ WHERE (case when ($P{Estado} = 'P') then porcentaje < 1 else (case when ($P{Esta
 				<staticText>
 					<reportElement
 						mode="Opaque"
-						x="110"
+						x="146"
 						y="96"
-						width="56"
+						width="49"
 						height="10"
-						backcolor="#B9B9B9"
+						backcolor="#CCCCCC"
 						key="staticText-17"/>
 					<box topBorder="Thin" topBorderColor="#000000" leftBorder="Thin" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" rightPadding="1" bottomBorder="None" bottomBorderColor="#000000"/>
 					<textElement textAlignment="Center" verticalAlignment="Middle">
@@ -283,11 +297,11 @@ WHERE (case when ($P{Estado} = 'P') then porcentaje < 1 else (case when ($P{Esta
 				<staticText>
 					<reportElement
 						mode="Opaque"
-						x="166"
+						x="195"
 						y="96"
-						width="84"
+						width="96"
 						height="10"
-						backcolor="#B9B9B9"
+						backcolor="#CCCCCC"
 						key="staticText-61"/>
 					<box topBorder="Thin" topBorderColor="#000000" leftBorder="Thin" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" rightPadding="1" bottomBorder="None" bottomBorderColor="#000000"/>
 					<textElement textAlignment="Left" verticalAlignment="Middle">
@@ -298,28 +312,28 @@ WHERE (case when ($P{Estado} = 'P') then porcentaje < 1 else (case when ($P{Esta
 				<staticText>
 					<reportElement
 						mode="Opaque"
-						x="477"
+						x="504"
 						y="96"
-						width="66"
+						width="51"
 						height="10"
-						backcolor="#B9B9B9"
+						backcolor="#CCCCCC"
 						key="staticText-67"/>
-					<box topBorder="Thin" topBorderColor="#000000" leftBorder="Thin" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" rightPadding="1" bottomBorder="Thin" bottomBorderColor="#000000"/>
+					<box topBorder="Thin" topBorderColor="#000000" leftBorder="Thin" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" rightPadding="1" bottomBorder="None" bottomBorderColor="#000000"/>
 					<textElement textAlignment="Center" verticalAlignment="Middle">
 						<font pdfFontName="Helvetica-Bold" size="6" isBold="true"/>
 					</textElement>
-				<text><![CDATA[Fecha del remito]]></text>
+				<text><![CDATA[Fecha Remito]]></text>
 				</staticText>
 				<staticText>
 					<reportElement
 						mode="Opaque"
-						x="543"
+						x="555"
 						y="96"
-						width="60"
+						width="48"
 						height="10"
-						backcolor="#B9B9B9"
+						backcolor="#CCCCCC"
 						key="staticText-68"/>
-					<box topBorder="Thin" topBorderColor="#000000" leftBorder="Thin" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" rightPadding="1" bottomBorder="Thin" bottomBorderColor="#000000"/>
+					<box topBorder="Thin" topBorderColor="#000000" leftBorder="Thin" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" rightPadding="1" bottomBorder="None" bottomBorderColor="#000000"/>
 					<textElement textAlignment="Left" verticalAlignment="Middle">
 						<font pdfFontName="Helvetica-Bold" size="6" isBold="true"/>
 					</textElement>
@@ -327,9 +341,9 @@ WHERE (case when ($P{Estado} = 'P') then porcentaje < 1 else (case when ($P{Esta
 				</staticText>
 				<staticText>
 					<reportElement
-						x="4"
+						x="0"
 						y="27"
-						width="100"
+						width="62"
 						height="12"
 						key="staticText-71"
 						isRemoveLineWhenBlank="true">
@@ -343,7 +357,7 @@ WHERE (case when ($P{Estado} = 'P') then porcentaje < 1 else (case when ($P{Esta
 				</staticText>
 				<textField isStretchWithOverflow="false" pattern="dd/MM/yyyy" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
-						x="104"
+						x="62"
 						y="27"
 						width="178"
 						height="12"
@@ -359,9 +373,9 @@ WHERE (case when ($P{Estado} = 'P') then porcentaje < 1 else (case when ($P{Esta
 				</textField>
 				<staticText>
 					<reportElement
-						x="4"
+						x="0"
 						y="39"
-						width="100"
+						width="62"
 						height="12"
 						key="staticText-72"
 						isRemoveLineWhenBlank="true">
@@ -375,7 +389,7 @@ WHERE (case when ($P{Estado} = 'P') then porcentaje < 1 else (case when ($P{Esta
 				</staticText>
 				<textField isStretchWithOverflow="false" pattern="dd/MM/yyyy" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
-						x="104"
+						x="62"
 						y="39"
 						width="178"
 						height="12"
@@ -391,9 +405,9 @@ WHERE (case when ($P{Estado} = 'P') then porcentaje < 1 else (case when ($P{Esta
 				</textField>
 				<staticText>
 					<reportElement
-						x="4"
+						x="0"
 						y="51"
-						width="100"
+						width="62"
 						height="12"
 						key="staticText-74"
 						isRemoveLineWhenBlank="true">
@@ -407,7 +421,7 @@ WHERE (case when ($P{Estado} = 'P') then porcentaje < 1 else (case when ($P{Esta
 				</staticText>
 				<textField isStretchWithOverflow="false" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
-						x="104"
+						x="62"
 						y="51"
 						width="178"
 						height="12"
@@ -423,9 +437,9 @@ WHERE (case when ($P{Estado} = 'P') then porcentaje < 1 else (case when ($P{Esta
 				</textField>
 				<staticText>
 					<reportElement
-						x="4"
+						x="0"
 						y="63"
-						width="100"
+						width="62"
 						height="12"
 						key="staticText-75"
 						isRemoveLineWhenBlank="true"/>
@@ -437,7 +451,7 @@ WHERE (case when ($P{Estado} = 'P') then porcentaje < 1 else (case when ($P{Esta
 				</staticText>
 				<textField isStretchWithOverflow="false" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
-						x="104"
+						x="62"
 						y="63"
 						width="178"
 						height="12"
@@ -452,11 +466,11 @@ WHERE (case when ($P{Estado} = 'P') then porcentaje < 1 else (case when ($P{Esta
 				<staticText>
 					<reportElement
 						mode="Opaque"
-						x="250"
+						x="291"
 						y="96"
 						width="63"
 						height="10"
-						backcolor="#B9B9B9"
+						backcolor="#CCCCCC"
 						key="staticText-76"/>
 					<box topBorder="Thin" topBorderColor="#000000" leftBorder="Thin" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" rightPadding="1" bottomBorder="None" bottomBorderColor="#000000"/>
 					<textElement textAlignment="Center" verticalAlignment="Middle">
@@ -467,11 +481,11 @@ WHERE (case when ($P{Estado} = 'P') then porcentaje < 1 else (case when ($P{Esta
 				<staticText>
 					<reportElement
 						mode="Opaque"
-						x="313"
+						x="354"
 						y="96"
-						width="58"
+						width="54"
 						height="10"
-						backcolor="#B9B9B9"
+						backcolor="#CCCCCC"
 						key="staticText-77"/>
 					<box topBorder="Thin" topBorderColor="#000000" leftBorder="Thin" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" rightPadding="1" bottomBorder="None" bottomBorderColor="#000000"/>
 					<textElement textAlignment="Right" verticalAlignment="Middle">
@@ -482,11 +496,11 @@ WHERE (case when ($P{Estado} = 'P') then porcentaje < 1 else (case when ($P{Esta
 				<staticText>
 					<reportElement
 						mode="Opaque"
-						x="371"
+						x="408"
 						y="96"
 						width="53"
 						height="10"
-						backcolor="#B9B9B9"
+						backcolor="#CCCCCC"
 						key="staticText-78"/>
 					<box topBorder="Thin" topBorderColor="#000000" leftBorder="Thin" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" rightPadding="1" bottomBorder="None" bottomBorderColor="#000000"/>
 					<textElement textAlignment="Right" verticalAlignment="Middle">
@@ -501,9 +515,9 @@ WHERE (case when ($P{Estado} = 'P') then porcentaje < 1 else (case when ($P{Esta
 						y="96"
 						width="53"
 						height="10"
-						backcolor="#B9B9B9"
+						backcolor="#CCCCCC"
 						key="staticText-79"/>
-					<box topBorder="Thin" topBorderColor="#000000" leftBorder="Thin" leftBorderColor="#000000" rightBorder="Thin" rightBorderColor="#000000" rightPadding="1" bottomBorder="Thin" bottomBorderColor="#000000"/>
+					<box topBorder="Thin" topBorderColor="#000000" leftBorder="Thin" leftBorderColor="#000000" rightBorder="Thin" rightBorderColor="#000000" rightPadding="1" bottomBorder="None" bottomBorderColor="#000000"/>
 					<textElement textAlignment="Right" verticalAlignment="Middle">
 						<font pdfFontName="Helvetica-Bold" size="6" isBold="true"/>
 					</textElement>
@@ -512,11 +526,11 @@ WHERE (case when ($P{Estado} = 'P') then porcentaje < 1 else (case when ($P{Esta
 				<staticText>
 					<reportElement
 						mode="Opaque"
-						x="424"
+						x="461"
 						y="96"
-						width="53"
+						width="43"
 						height="10"
-						backcolor="#B9B9B9"
+						backcolor="#CCCCCC"
 						key="staticText-80"/>
 					<box topBorder="Thin" topBorderColor="#000000" leftBorder="Thin" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" rightPadding="1" bottomBorder="None" bottomBorderColor="#000000"/>
 					<textElement textAlignment="Center" verticalAlignment="Middle">
@@ -526,9 +540,9 @@ WHERE (case when ($P{Estado} = 'P') then porcentaje < 1 else (case when ($P{Esta
 				</staticText>
 				<staticText>
 					<reportElement
-						x="4"
+						x="0"
 						y="75"
-						width="100"
+						width="62"
 						height="12"
 						key="staticText-81"
 						isRemoveLineWhenBlank="true">
@@ -542,7 +556,7 @@ WHERE (case when ($P{Estado} = 'P') then porcentaje < 1 else (case when ($P{Esta
 				</staticText>
 				<textField isStretchWithOverflow="false" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
-						x="104"
+						x="62"
 						y="75"
 						width="178"
 						height="12"
@@ -556,6 +570,21 @@ WHERE (case when ($P{Estado} = 'P') then porcentaje < 1 else (case when ($P{Esta
 					</textElement>
 				<textFieldExpression   class="java.lang.String"><![CDATA[$F{nropedido}]]></textFieldExpression>
 				</textField>
+				<staticText>
+					<reportElement
+						mode="Opaque"
+						x="0"
+						y="96"
+						width="94"
+						height="10"
+						backcolor="#CCCCCC"
+						key="staticText-82"/>
+					<box topBorder="Thin" topBorderColor="#000000" leftBorder="Thin" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" rightPadding="1" bottomBorder="None" bottomBorderColor="#000000"/>
+					<textElement textAlignment="Left" verticalAlignment="Middle">
+						<font pdfFontName="Helvetica-Bold" size="6" isBold="true"/>
+					</textElement>
+				<text><![CDATA[Organización]]></text>
+				</staticText>
 			</band>
 		</columnHeader>
 		<detail>
@@ -564,9 +593,9 @@ WHERE (case when ($P{Estado} = 'P') then porcentaje < 1 else (case when ($P{Esta
 				<textField isStretchWithOverflow="true" pattern="dd/MM/yyyy" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
 						mode="Transparent"
-						x="477"
+						x="504"
 						y="0"
-						width="66"
+						width="51"
 						height="10"
 						key="textField-89"
 						stretchType="RelativeToBandHeight"
@@ -579,9 +608,9 @@ WHERE (case when ($P{Estado} = 'P') then porcentaje < 1 else (case when ($P{Esta
 				</textField>
 				<textField isStretchWithOverflow="true" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
-						x="543"
+						x="555"
 						y="0"
-						width="60"
+						width="48"
 						height="10"
 						key="textField-90"
 						stretchType="RelativeToBandHeight"
