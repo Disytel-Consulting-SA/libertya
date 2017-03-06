@@ -242,7 +242,7 @@ public class ImportProduct extends SvrProcess {
 
         //
 
-        sql = new StringBuffer( "UPDATE I_Product i " + "SET C_UOM_ID = (SELECT C_UOM_ID FROM C_UOM u WHERE u.X12DE355 ilike i.X12DE355 AND u.AD_Client_ID IN (0,i.AD_Client_ID)) " + "WHERE C_UOM_ID IS NULL" + " AND I_IsImported<>'Y'" ).append( clientCheck );
+        sql = new StringBuffer( "UPDATE I_Product i " + "SET C_UOM_ID = (SELECT C_UOM_ID FROM C_UOM u WHERE u.X12DE355 = trim(i.X12DE355) AND u.AD_Client_ID IN (0,i.AD_Client_ID)) " + "WHERE C_UOM_ID IS NULL" + " AND I_IsImported<>'Y'" ).append( clientCheck );
         no = DB.executeUpdate( sql.toString());
         log.info( "Set UOM=" + no );
 
