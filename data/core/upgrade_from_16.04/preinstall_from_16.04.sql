@@ -6032,3 +6032,10 @@ CREATE OR REPLACE VIEW c_allocation_detail_v AS
 
 ALTER TABLE c_allocation_detail_v
   OWNER TO libertya;
+  
+--20170307-2018 Incorporación de tabla AD_Role en el changelog
+UPDATE ad_system SET dummy = (SELECT addcolumnifnotexists('ad_role','ad_componentversion_id','integer'));
+UPDATE ad_system SET dummy = (SELECT addcolumnifnotexists('ad_role','ad_componentobjectuid','character varying(100)'));
+
+update ad_role
+set ad_componentobjectuid = 'CORE-AD_Role-'||ad_role_id, ad_componentversion_id = (select ad_componentversion_id from ad_componentversion where ad_componentobjectuid = 'CORE-AD_ComponentVersion-1010064');
