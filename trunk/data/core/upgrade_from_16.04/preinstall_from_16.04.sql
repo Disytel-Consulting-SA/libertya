@@ -5773,6 +5773,13 @@ CREATE TABLE c_externalserviceattributes
 ALTER TABLE c_externalserviceattributes
   OWNER TO libertya;
 
+CREATE SEQUENCE libertya.seq_c_externalserviceattributes
+  INCREMENT 1
+  MINVALUE 1
+  MAXVALUE 9223372036854775807
+  START 1000001
+  CACHE 1;
+  
 CREATE SEQUENCE libertya.seq_i_firstdatatraileranddetail
   INCREMENT 1
   MINVALUE 1
