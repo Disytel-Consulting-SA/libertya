@@ -11,6 +11,7 @@ import org.openXpertya.model.MComponentVersion;
 import org.openXpertya.model.M_Table;
 import org.openXpertya.model.PO;
 import org.openXpertya.util.DB;
+import org.openXpertya.util.Util;
 
 public class ProcessMassiveComponents extends SvrProcess {
 
@@ -26,7 +27,7 @@ public class ProcessMassiveComponents extends SvrProcess {
 	
 	/** Tabla opcional */
 	
-	private M_Table tableOptional;
+	private Integer tableID;
 	
 	/** Componente */
 	
@@ -50,7 +51,7 @@ public class ProcessMassiveComponents extends SvrProcess {
             	setJustUID(((String)para[i].getParameter()).equalsIgnoreCase("Y"));
             }
             else if( name.equals( "AD_Table_ID" )) {
-
+            	setTableID(para[i].getParameterAsInt());
             }
             else {
                 log.log( Level.SEVERE,"Unknown Parameter: " + name );
@@ -74,9 +75,9 @@ public class ProcessMassiveComponents extends SvrProcess {
 			sql.append(" AND (c.columnname ilike 'AD_ComponentVersion_ID')");
 		}
 		// Si es solo una tabla
-//		if(){
-//			
-//		}
+		if(!Util.isEmpty(getTableID(), true)){
+			sql.append(" AND t.ad_table_id = ").append(getTableID());
+		}
 		PreparedStatement ps = null;
 		ResultSet rs = null;
 		String sqlTable;
@@ -185,5 +186,13 @@ public class ProcessMassiveComponents extends SvrProcess {
 
 	private boolean isJustUID() {
 		return justUID;
+	}
+
+	private Integer getTableID() {
+		return tableID;
+	}
+
+	private void setTableID(Integer tableID) {
+		this.tableID = tableID;
 	}
 }
