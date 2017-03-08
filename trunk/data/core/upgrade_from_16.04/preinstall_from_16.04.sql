@@ -6059,3 +6059,15 @@ begin
 end;$$;
 alter function bytea_import(text, out bytea)
 owner to libertya;
+
+--20170308-1806 Modificación de la traducción del tipo de documento Transferencia entre cuentas
+update c_doctype_trl
+set name = 'Transferencia Entre Cuentas', printname = 'Transferencia Entre Cuentas'
+where ad_componentobjectuid in ('CORE-C_DocType_Trl-1010516-es_ES',
+'CORE-C_DocType_Trl-1010516-es_AR',
+'CORE-C_DocType_Trl-1010516-es_MX',
+'CORE-C_DocType_Trl-1010516-es_PY');
+
+update ad_clientinfo
+set c_outgoingtransfer_dt_id = (select c_doctype_id from c_doctype where ad_componentobjectuid = 'CORE-C_DocType-1010516')
+where c_outgoingtransfer_dt_id = (select c_doctype_id from c_doctype where ad_componentobjectuid = 'CORE-C_DocType-1010515');
