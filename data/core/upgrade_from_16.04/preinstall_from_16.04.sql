@@ -6039,3 +6039,23 @@ UPDATE ad_system SET dummy = (SELECT addcolumnifnotexists('ad_role','ad_componen
 
 update ad_role
 set ad_componentobjectuid = 'CORE-AD_Role-'||ad_role_id, ad_componentversion_id = (select ad_componentversion_id from ad_componentversion where ad_componentobjectuid = 'CORE-AD_ComponentVersion-1010064');
+
+--20170307-2315 Función que permite cargar un binario a partir de un archivo
+create or replace function bytea_import(p_path text, p_result out bytea) 
+                   language plpgsql as $$
+declare
+  l_oid oid;
+  r record;
+begin
+  p_result := '';
+  select lo_import(p_path) into l_oid;
+  for r in ( select data 
+             from pg_largeobject 
+             where loid = l_oid 
+             order by pageno ) loop
+    p_result = p_result || r.data;
+  end loop;
+  perform lo_unlink(l_oid);
+end;$$;
+alter function bytea_import(text, out bytea)
+owner to libertya;
