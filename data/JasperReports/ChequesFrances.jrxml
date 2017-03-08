@@ -268,7 +268,7 @@
 					<textElement>
 						<font/>
 					</textElement>
-				<textFieldExpression   class="java.lang.String"><![CDATA[$P{IMPORTE_EN_LETRAS1} == null ? " " : $P{IMPORTE_EN_LETRAS1}+".............."]]></textFieldExpression>
+				<textFieldExpression   class="java.lang.String"><![CDATA[$P{IMPORTE_EN_LETRAS1} == null ? " " : $P{IMPORTE_EN_LETRAS1}.replaceAll(" PESOS","")+".............."]]></textFieldExpression>
 				</textField>
 				<textField isStretchWithOverflow="false" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
@@ -281,7 +281,7 @@
 					<textElement>
 						<font/>
 					</textElement>
-				<textFieldExpression   class="java.lang.String"><![CDATA[$P{CENTAVOS1} == null ? " " : "CON "+$P{CENTAVOS1}+".........."]]></textFieldExpression>
+				<textFieldExpression   class="java.lang.String"><![CDATA[$P{CENTAVOS1} == null ? " " : "CON "+$P{CENTAVOS1}+"/100.........."]]></textFieldExpression>
 				</textField>
 				<textField isStretchWithOverflow="false" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
@@ -398,7 +398,7 @@
 					<textElement>
 						<font/>
 					</textElement>
-				<textFieldExpression   class="java.lang.String"><![CDATA[$P{IMPORTE_EN_LETRAS2} == null ? " " : $P{IMPORTE_EN_LETRAS2}+".............."]]></textFieldExpression>
+				<textFieldExpression   class="java.lang.String"><![CDATA[$P{IMPORTE_EN_LETRAS2} == null ? " " : $P{IMPORTE_EN_LETRAS2}.replaceAll(" PESOS","")+".............."]]></textFieldExpression>
 				</textField>
 				<textField isStretchWithOverflow="false" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
@@ -411,7 +411,7 @@
 					<textElement>
 						<font/>
 					</textElement>
-				<textFieldExpression   class="java.lang.String"><![CDATA[$P{CENTAVOS2} == null ? " " : "CON "+$P{CENTAVOS2}+".........."]]></textFieldExpression>
+				<textFieldExpression   class="java.lang.String"><![CDATA[$P{CENTAVOS2} == null ? " " : "CON "+$P{CENTAVOS2}+"/100.........."]]></textFieldExpression>
 				</textField>
 				<textField isStretchWithOverflow="false" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
@@ -528,7 +528,7 @@
 					<textElement>
 						<font/>
 					</textElement>
-				<textFieldExpression   class="java.lang.String"><![CDATA[$P{IMPORTE_EN_LETRAS3} == null ? " " : $P{IMPORTE_EN_LETRAS3}+".............."]]></textFieldExpression>
+				<textFieldExpression   class="java.lang.String"><![CDATA[$P{IMPORTE_EN_LETRAS3} == null ? " " : $P{IMPORTE_EN_LETRAS3}.replaceAll(" PESOS","")+".............."]]></textFieldExpression>
 				</textField>
 				<textField isStretchWithOverflow="false" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
@@ -541,7 +541,7 @@
 					<textElement>
 						<font/>
 					</textElement>
-				<textFieldExpression   class="java.lang.String"><![CDATA[$P{CENTAVOS3} == null ? " " : "CON "+$P{CENTAVOS3}+".........."]]></textFieldExpression>
+				<textFieldExpression   class="java.lang.String"><![CDATA[$P{CENTAVOS3} == null ? " " : "CON "+$P{CENTAVOS3}+"/100.........."]]></textFieldExpression>
 				</textField>
 				<textField isStretchWithOverflow="false" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
@@ -658,7 +658,7 @@
 					<textElement>
 						<font/>
 					</textElement>
-				<textFieldExpression   class="java.lang.String"><![CDATA[$P{IMPORTE_EN_LETRAS4} == null ? " " : $P{IMPORTE_EN_LETRAS4}+".............."]]></textFieldExpression>
+				<textFieldExpression   class="java.lang.String"><![CDATA[$P{IMPORTE_EN_LETRAS4} == null ? " " : $P{IMPORTE_EN_LETRAS4}.replaceAll(" PESOS","")+".............."]]></textFieldExpression>
 				</textField>
 				<textField isStretchWithOverflow="false" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
@@ -671,7 +671,7 @@
 					<textElement>
 						<font/>
 					</textElement>
-				<textFieldExpression   class="java.lang.String"><![CDATA[$P{CENTAVOS4} == null ? " " : "CON "+$P{CENTAVOS4}+".........."]]></textFieldExpression>
+				<textFieldExpression   class="java.lang.String"><![CDATA[$P{CENTAVOS4} == null ? " " : "CON "+$P{CENTAVOS4}+"/100.........."]]></textFieldExpression>
 				</textField>
 			</band>
 		</columnHeader>
