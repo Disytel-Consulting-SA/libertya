@@ -6068,6 +6068,11 @@ where ad_componentobjectuid in ('CORE-C_DocType_Trl-1010516-es_ES',
 'CORE-C_DocType_Trl-1010516-es_MX',
 'CORE-C_DocType_Trl-1010516-es_PY');
 
+--Actualización del tipo de documento transferencia saliente por transferencia entre cuentas
 update ad_clientinfo
 set c_outgoingtransfer_dt_id = (select c_doctype_id from c_doctype where ad_componentobjectuid = 'CORE-C_DocType-1010516')
 where c_outgoingtransfer_dt_id = (select c_doctype_id from c_doctype where ad_componentobjectuid = 'CORE-C_DocType-1010515');
+
+update c_payment
+set c_doctype_id = (select c_doctype_id from c_doctype where ad_componentobjectuid = 'CORE-C_DocType-1010516')
+where c_doctype_id = (select c_doctype_id from c_doctype where ad_componentobjectuid = 'CORE-C_DocType-1010515');
