@@ -7,7 +7,7 @@ import java.math.*;
 import org.openXpertya.util.*;
 /** Modelo Generado por C_DocType
  *  @author Comunidad de Desarrollo Libertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
- *  @version  - 2016-12-07 10:11:44.573 */
+ *  @version  - 2017-03-10 10:06:23.255 */
 public class X_C_DocType extends org.openXpertya.model.PO
 {
 /** Constructor estándar */
@@ -439,8 +439,8 @@ public static final String DOCBASETYPE_APPaymentBatch = "APB";
 Logical type of document */
 public void setDocBaseType (String DocBaseType)
 {
-if (DocBaseType.equals("MMP") || DocBaseType.equals("MXI") || DocBaseType.equals("MXP") || DocBaseType.equals("ARF") || DocBaseType.equals("MMS") || DocBaseType.equals("MMR") || DocBaseType.equals("MMM") || DocBaseType.equals("POO") || DocBaseType.equals("POR") || DocBaseType.equals("MMI") || DocBaseType.equals("MOR") || DocBaseType.equals("MOU") || DocBaseType.equals("MOM") || DocBaseType.equals("MOV") || DocBaseType.equals("MOP") || DocBaseType.equals("MOF") || DocBaseType.equals("GLJ") || DocBaseType.equals("GLD") || DocBaseType.equals("API") || DocBaseType.equals("APP") || DocBaseType.equals("ARI") || DocBaseType.equals("ARR") || DocBaseType.equals("SOO") || DocBaseType.equals("MOI") || DocBaseType.equals("CMB") || DocBaseType.equals("CMC") || DocBaseType.equals("CMA") || DocBaseType.equals("APC") || DocBaseType.equals("ARC") || DocBaseType.equals("PJI") || DocBaseType.equals("AMO") || DocBaseType.equals("BLB") || DocBaseType.equals("CHP") || DocBaseType.equals("APB"));
- else throw new IllegalArgumentException ("DocBaseType Invalid value - Reference = DOCBASETYPE_AD_Reference_ID - MMP - MXI - MXP - ARF - MMS - MMR - MMM - POO - POR - MMI - MOR - MOU - MOM - MOV - MOP - MOF - GLJ - GLD - API - APP - ARI - ARR - SOO - MOI - CMB - CMC - CMA - APC - ARC - PJI - AMO - BLB - CHP - APB");
+if (DocBaseType.equals("MMP") || DocBaseType.equals("MXI") || DocBaseType.equals("MXP") || DocBaseType.equals("ARF") || DocBaseType.equals("MMS") || DocBaseType.equals("MMR") || DocBaseType.equals("MMM") || DocBaseType.equals("POO") || DocBaseType.equals("POR") || DocBaseType.equals("MMI") || DocBaseType.equals("MOR") || DocBaseType.equals("MOU") || DocBaseType.equals("MOM") || DocBaseType.equals("MOV") || DocBaseType.equals("MOP") || DocBaseType.equals("MOF") || DocBaseType.equals("GLJ") || DocBaseType.equals("GLD") || DocBaseType.equals("API") || DocBaseType.equals("APP") || DocBaseType.equals("ARI") || DocBaseType.equals("ARR") || DocBaseType.equals("SOO") || DocBaseType.equals("MOI") || DocBaseType.equals("CMB") || DocBaseType.equals("CMC") || DocBaseType.equals("CMA") || DocBaseType.equals("APC") || DocBaseType.equals("ARC") || DocBaseType.equals("PJI") || DocBaseType.equals("AMO") || DocBaseType.equals("BLB") || DocBaseType.equals("CHP") || DocBaseType.equals("APB") || ( refContainsValue("CORE-AD_Reference-183", DocBaseType) ) );
+ else throw new IllegalArgumentException ("DocBaseType Invalid value: " + DocBaseType + ".  Valid: " +  refValidOptions("CORE-AD_Reference-183") );
 if (DocBaseType == null) throw new IllegalArgumentException ("DocBaseType is mandatory");
 if (DocBaseType.length() > 3)
 {
@@ -512,8 +512,8 @@ public static final String DOCSUBTYPECAE_RecibosC = "15";
 /** Set docsubtypecae */
 public void setdocsubtypecae (String docsubtypecae)
 {
-if (docsubtypecae == null || docsubtypecae.equals("01") || docsubtypecae.equals("02") || docsubtypecae.equals("03") || docsubtypecae.equals("04") || docsubtypecae.equals("05") || docsubtypecae.equals("06") || docsubtypecae.equals("07") || docsubtypecae.equals("08") || docsubtypecae.equals("09") || docsubtypecae.equals("10") || docsubtypecae.equals("20") || docsubtypecae.equals("19") || docsubtypecae.equals("21") || docsubtypecae.equals("11") || docsubtypecae.equals("13") || docsubtypecae.equals("12") || docsubtypecae.equals("16") || docsubtypecae.equals("15"));
- else throw new IllegalArgumentException ("docsubtypecae Invalid value - Reference = DOCSUBTYPECAE_AD_Reference_ID - 01 - 02 - 03 - 04 - 05 - 06 - 07 - 08 - 09 - 10 - 20 - 19 - 21 - 11 - 13 - 12 - 16 - 15");
+if (docsubtypecae == null || docsubtypecae.equals("01") || docsubtypecae.equals("02") || docsubtypecae.equals("03") || docsubtypecae.equals("04") || docsubtypecae.equals("05") || docsubtypecae.equals("06") || docsubtypecae.equals("07") || docsubtypecae.equals("08") || docsubtypecae.equals("09") || docsubtypecae.equals("10") || docsubtypecae.equals("20") || docsubtypecae.equals("19") || docsubtypecae.equals("21") || docsubtypecae.equals("11") || docsubtypecae.equals("13") || docsubtypecae.equals("12") || docsubtypecae.equals("16") || docsubtypecae.equals("15") || ( refContainsValue("CORE-AD_Reference-1010096", docsubtypecae) ) );
+ else throw new IllegalArgumentException ("docsubtypecae Invalid value: " + docsubtypecae + ".  Valid: " +  refValidOptions("CORE-AD_Reference-1010096") );
 if (docsubtypecae != null && docsubtypecae.length() > 2)
 {
 log.warning("Length > 2 - truncated");
@@ -538,8 +538,8 @@ public static final String DOCSUBTYPEINV_Fiscal = "SF";
 /** Set docsubtypeinv */
 public void setdocsubtypeinv (String docsubtypeinv)
 {
-if (docsubtypeinv == null || docsubtypeinv.equals("EL") || docsubtypeinv.equals("IF") || docsubtypeinv.equals("NF") || docsubtypeinv.equals("SF"));
- else throw new IllegalArgumentException ("docsubtypeinv Invalid value - Reference = DOCSUBTYPEINV_AD_Reference_ID - EL - IF - NF - SF");
+if (docsubtypeinv == null || docsubtypeinv.equals("EL") || docsubtypeinv.equals("IF") || docsubtypeinv.equals("NF") || docsubtypeinv.equals("SF") || ( refContainsValue("CORE-AD_Reference-1010095", docsubtypeinv) ) );
+ else throw new IllegalArgumentException ("docsubtypeinv Invalid value: " + docsubtypeinv + ".  Valid: " +  refValidOptions("CORE-AD_Reference-1010095") );
 if (docsubtypeinv != null && docsubtypeinv.length() > 2)
 {
 log.warning("Length > 2 - truncated");
@@ -575,8 +575,8 @@ public static final String DOCSUBTYPESO_Tender = "TR";
 Sales Order Sub Type */
 public void setDocSubTypeSO (String DocSubTypeSO)
 {
-if (DocSubTypeSO == null || DocSubTypeSO.equals("WP") || DocSubTypeSO.equals("RM") || DocSubTypeSO.equals("WI") || DocSubTypeSO.equals("PR") || DocSubTypeSO.equals("OB") || DocSubTypeSO.equals("WR") || DocSubTypeSO.equals("SO") || DocSubTypeSO.equals("ON") || DocSubTypeSO.equals("TR"));
- else throw new IllegalArgumentException ("DocSubTypeSO Invalid value - Reference = DOCSUBTYPESO_AD_Reference_ID - WP - RM - WI - PR - OB - WR - SO - ON - TR");
+if (DocSubTypeSO == null || DocSubTypeSO.equals("WP") || DocSubTypeSO.equals("RM") || DocSubTypeSO.equals("WI") || DocSubTypeSO.equals("PR") || DocSubTypeSO.equals("OB") || DocSubTypeSO.equals("WR") || DocSubTypeSO.equals("SO") || DocSubTypeSO.equals("ON") || DocSubTypeSO.equals("TR") || ( refContainsValue("CORE-AD_Reference-148", DocSubTypeSO) ) );
+ else throw new IllegalArgumentException ("DocSubTypeSO Invalid value: " + DocSubTypeSO + ".  Valid: " +  refValidOptions("CORE-AD_Reference-148") );
 if (DocSubTypeSO != null && DocSubTypeSO.length() > 2)
 {
 log.warning("Length > 2 - truncated");
@@ -731,8 +731,8 @@ public static final String FISCALDOCUMENT_DebitNote = "D";
 /** Set Fiscal Document */
 public void setFiscalDocument (String FiscalDocument)
 {
-if (FiscalDocument.equals("I") || FiscalDocument.equals("C") || FiscalDocument.equals("D"));
- else throw new IllegalArgumentException ("FiscalDocument Invalid value - Reference = FISCALDOCUMENT_AD_Reference_ID - I - C - D");
+if (FiscalDocument.equals("I") || FiscalDocument.equals("C") || FiscalDocument.equals("D") || ( refContainsValue("CORE-AD_Reference-1000080", FiscalDocument) ) );
+ else throw new IllegalArgumentException ("FiscalDocument Invalid value: " + FiscalDocument + ".  Valid: " +  refValidOptions("CORE-AD_Reference-1000080") );
 if (FiscalDocument == null) throw new IllegalArgumentException ("FiscalDocument is mandatory");
 if (FiscalDocument.length() > 1)
 {
@@ -1306,8 +1306,8 @@ public static final String SIGNO_ISSOTRX_1 = "1";
 /** Set Signo IsSOTrx */
 public void setsigno_issotrx (String signo_issotrx)
 {
-if (signo_issotrx.equals("-1") || signo_issotrx.equals("1"));
- else throw new IllegalArgumentException ("signo_issotrx Invalid value - Reference = SIGNO_ISSOTRX_AD_Reference_ID - -1 - 1");
+if (signo_issotrx.equals("-1") || signo_issotrx.equals("1") || ( refContainsValue("CORE-AD_Reference-1000069", signo_issotrx) ) );
+ else throw new IllegalArgumentException ("signo_issotrx Invalid value: " + signo_issotrx + ".  Valid: " +  refValidOptions("CORE-AD_Reference-1000069") );
 if (signo_issotrx == null) throw new IllegalArgumentException ("signo_issotrx is mandatory");
 if (signo_issotrx.length() > 4)
 {

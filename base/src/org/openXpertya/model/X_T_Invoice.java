@@ -7,7 +7,7 @@ import java.math.*;
 import org.openXpertya.util.*;
 /** Modelo Generado por T_Invoice
  *  @author Comunidad de Desarrollo Libertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
- *  @version  - 2012-01-09 10:57:14.043 */
+ *  @version  - 2017-03-10 10:10:23.835 */
 public class X_T_Invoice extends org.openXpertya.model.PO
 {
 /** Constructor estándar */
@@ -575,8 +575,8 @@ public static final String DOCACTION_Void = "VO";
 The targeted status of the document */
 public void setDocAction (String DocAction)
 {
-if (DocAction.equals("AP") || DocAction.equals("CL") || DocAction.equals("PR") || DocAction.equals("IN") || DocAction.equals("CO") || DocAction.equals("--") || DocAction.equals("RC") || DocAction.equals("RJ") || DocAction.equals("RA") || DocAction.equals("WC") || DocAction.equals("XL") || DocAction.equals("RE") || DocAction.equals("PO") || DocAction.equals("VO"));
- else throw new IllegalArgumentException ("DocAction Invalid value - Reference = DOCACTION_AD_Reference_ID - AP - CL - PR - IN - CO - -- - RC - RJ - RA - WC - XL - RE - PO - VO");
+if (DocAction.equals("AP") || DocAction.equals("CL") || DocAction.equals("PR") || DocAction.equals("IN") || DocAction.equals("CO") || DocAction.equals("--") || DocAction.equals("RC") || DocAction.equals("RJ") || DocAction.equals("RA") || DocAction.equals("WC") || DocAction.equals("XL") || DocAction.equals("RE") || DocAction.equals("PO") || DocAction.equals("VO") || ( refContainsValue("CORE-AD_Reference-135", DocAction) ) );
+ else throw new IllegalArgumentException ("DocAction Invalid value: " + DocAction + ".  Valid: " +  refValidOptions("CORE-AD_Reference-135") );
 if (DocAction == null) throw new IllegalArgumentException ("DocAction is mandatory");
 if (DocAction.length() > 2)
 {
@@ -654,12 +654,18 @@ public static final String DOCBASETYPE_ARCreditMemo = "ARC";
 public static final String DOCBASETYPE_ProjectIssue = "PJI";
 /** Amortization = AMO */
 public static final String DOCBASETYPE_Amortization = "AMO";
+/** Bank List = BLB */
+public static final String DOCBASETYPE_BankList = "BLB";
+/** Check Printing = CHP */
+public static final String DOCBASETYPE_CheckPrinting = "CHP";
+/** AP Payment Batch = APB */
+public static final String DOCBASETYPE_APPaymentBatch = "APB";
 /** Set Document BaseType.
 Logical type of document */
 public void setDocBaseType (String DocBaseType)
 {
-if (DocBaseType == null || DocBaseType.equals("MMP") || DocBaseType.equals("MXI") || DocBaseType.equals("MXP") || DocBaseType.equals("ARF") || DocBaseType.equals("MMS") || DocBaseType.equals("MMR") || DocBaseType.equals("MMM") || DocBaseType.equals("POO") || DocBaseType.equals("POR") || DocBaseType.equals("MMI") || DocBaseType.equals("MOR") || DocBaseType.equals("MOU") || DocBaseType.equals("MOM") || DocBaseType.equals("MOV") || DocBaseType.equals("MOP") || DocBaseType.equals("MOF") || DocBaseType.equals("GLJ") || DocBaseType.equals("GLD") || DocBaseType.equals("API") || DocBaseType.equals("APP") || DocBaseType.equals("ARI") || DocBaseType.equals("ARR") || DocBaseType.equals("SOO") || DocBaseType.equals("MOI") || DocBaseType.equals("CMB") || DocBaseType.equals("CMC") || DocBaseType.equals("CMA") || DocBaseType.equals("APC") || DocBaseType.equals("ARC") || DocBaseType.equals("PJI") || DocBaseType.equals("AMO"));
- else throw new IllegalArgumentException ("DocBaseType Invalid value - Reference = DOCBASETYPE_AD_Reference_ID - MMP - MXI - MXP - ARF - MMS - MMR - MMM - POO - POR - MMI - MOR - MOU - MOM - MOV - MOP - MOF - GLJ - GLD - API - APP - ARI - ARR - SOO - MOI - CMB - CMC - CMA - APC - ARC - PJI - AMO");
+if (DocBaseType == null || DocBaseType.equals("MMP") || DocBaseType.equals("MXI") || DocBaseType.equals("MXP") || DocBaseType.equals("ARF") || DocBaseType.equals("MMS") || DocBaseType.equals("MMR") || DocBaseType.equals("MMM") || DocBaseType.equals("POO") || DocBaseType.equals("POR") || DocBaseType.equals("MMI") || DocBaseType.equals("MOR") || DocBaseType.equals("MOU") || DocBaseType.equals("MOM") || DocBaseType.equals("MOV") || DocBaseType.equals("MOP") || DocBaseType.equals("MOF") || DocBaseType.equals("GLJ") || DocBaseType.equals("GLD") || DocBaseType.equals("API") || DocBaseType.equals("APP") || DocBaseType.equals("ARI") || DocBaseType.equals("ARR") || DocBaseType.equals("SOO") || DocBaseType.equals("MOI") || DocBaseType.equals("CMB") || DocBaseType.equals("CMC") || DocBaseType.equals("CMA") || DocBaseType.equals("APC") || DocBaseType.equals("ARC") || DocBaseType.equals("PJI") || DocBaseType.equals("AMO") || DocBaseType.equals("BLB") || DocBaseType.equals("CHP") || DocBaseType.equals("APB") || ( refContainsValue("CORE-AD_Reference-183", DocBaseType) ) );
+ else throw new IllegalArgumentException ("DocBaseType Invalid value: " + DocBaseType + ".  Valid: " +  refValidOptions("CORE-AD_Reference-183") );
 if (DocBaseType != null && DocBaseType.length() > 3)
 {
 log.warning("Length > 3 - truncated");
@@ -702,8 +708,8 @@ public static final String DOCSTATUS_Reversed = "RE";
 The current status of the document */
 public void setDocStatus (String DocStatus)
 {
-if (DocStatus.equals("VO") || DocStatus.equals("NA") || DocStatus.equals("IP") || DocStatus.equals("CO") || DocStatus.equals("AP") || DocStatus.equals("CL") || DocStatus.equals("WC") || DocStatus.equals("WP") || DocStatus.equals("??") || DocStatus.equals("DR") || DocStatus.equals("IN") || DocStatus.equals("RE"));
- else throw new IllegalArgumentException ("DocStatus Invalid value - Reference = DOCSTATUS_AD_Reference_ID - VO - NA - IP - CO - AP - CL - WC - WP - ?? - DR - IN - RE");
+if (DocStatus.equals("VO") || DocStatus.equals("NA") || DocStatus.equals("IP") || DocStatus.equals("CO") || DocStatus.equals("AP") || DocStatus.equals("CL") || DocStatus.equals("WC") || DocStatus.equals("WP") || DocStatus.equals("??") || DocStatus.equals("DR") || DocStatus.equals("IN") || DocStatus.equals("RE") || ( refContainsValue("CORE-AD_Reference-131", DocStatus) ) );
+ else throw new IllegalArgumentException ("DocStatus Invalid value: " + DocStatus + ".  Valid: " +  refValidOptions("CORE-AD_Reference-131") );
 if (DocStatus == null) throw new IllegalArgumentException ("DocStatus is mandatory");
 if (DocStatus.length() > 2)
 {
@@ -1055,8 +1061,6 @@ public static final String PAYMENTRULE_CreditCard = "K";
 public static final String PAYMENTRULE_Cash = "B";
 /** On Credit = P */
 public static final String PAYMENTRULE_OnCredit = "P";
-/** Check = S */
-public static final String PAYMENTRULE_Check = "S";
 /** Payment Check = PC */
 public static final String PAYMENTRULE_PaymentCheck = "PC";
 /** Direct Deposit = T */
@@ -1065,12 +1069,14 @@ public static final String PAYMENTRULE_DirectDeposit = "T";
 public static final String PAYMENTRULE_Confirming = "Cf";
 /** Direct Debit = D */
 public static final String PAYMENTRULE_DirectDebit = "D";
+/** Check = S */
+public static final String PAYMENTRULE_Check = "S";
 /** Set Payment Rule.
 How you pay the invoice */
 public void setPaymentRule (String PaymentRule)
 {
-if (PaymentRule.equals("Tr") || PaymentRule.equals("K") || PaymentRule.equals("B") || PaymentRule.equals("P") || PaymentRule.equals("S") || PaymentRule.equals("PC") || PaymentRule.equals("T") || PaymentRule.equals("Cf") || PaymentRule.equals("D"));
- else throw new IllegalArgumentException ("PaymentRule Invalid value - Reference = PAYMENTRULE_AD_Reference_ID - Tr - K - B - P - S - PC - T - Cf - D");
+if (PaymentRule.equals("Tr") || PaymentRule.equals("K") || PaymentRule.equals("B") || PaymentRule.equals("P") || PaymentRule.equals("PC") || PaymentRule.equals("T") || PaymentRule.equals("Cf") || PaymentRule.equals("D") || PaymentRule.equals("S") || ( refContainsValue("CORE-AD_Reference-195", PaymentRule) ) );
+ else throw new IllegalArgumentException ("PaymentRule Invalid value: " + PaymentRule + ".  Valid: " +  refValidOptions("CORE-AD_Reference-195") );
 if (PaymentRule == null) throw new IllegalArgumentException ("PaymentRule is mandatory");
 if (PaymentRule.length() > 2)
 {
