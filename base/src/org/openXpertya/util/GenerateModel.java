@@ -517,6 +517,12 @@ public class GenerateModel {
     private String addListValidation( StringBuffer sb, int AD_Reference_ID, String  referenceName, String columnName,boolean nullable ) {
         StringBuffer retValue = new StringBuffer();
         
+        // Basar la referencia en el AD_ComponentObjectUID. Si por algun motivo la referencia no cuenta con este dato, no utilizar validacion dinámica
+        boolean dynValidation = true;
+        String referenceUID = DB.getSQLValueString(null, "SELECT AD_ComponentObjectUID FROM AD_Reference WHERE AD_Reference_ID = ? ", AD_Reference_ID);
+        if (referenceUID == null || referenceUID.length() == 0)
+        	dynValidation = false;
+        
         String aReferenceToken = columnName.toUpperCase() + "_AD_Reference_ID";
 
         retValue.append( "public static final int " + aReferenceToken + " = MReference.getReferenceID(\"" + referenceName + "\");" );
@@ -619,11 +625,16 @@ public class GenerateModel {
 
         // Incorporar validacion dinamica de opciones en una referencia. Se apoya en refContainsValue de PO
         // La implementacion generada valida primero las opciones estaticas predefinidas, y luego eventuales incorporaciones posteriores adicionales
-        statement.append(" || ( refContainsValue("+AD_Reference_ID+", "+columnName+") ) " );
+        if (dynValidation)
+        	statement.append(" || ( refContainsValue(\""+referenceUID+"\", "+columnName+") ) " );
         
 		statement.append(")" + "; " + "else " + "throw new IllegalArgumentException (\"").append(columnName)
-				.append(" Invalid value: ").append("\"").append(" + ").append(columnName).append(" + \". Valid: \"").append(" + ")
-				.append(" refValidOptions(").append(AD_Reference_ID).append(") );");
+				.append(" Invalid value: ").append("\"").append(" + ").append(columnName).append(" + \". ");
+		if (dynValidation)
+				statement.append(" Valid: \"").append(" + ").append(" refValidOptions(\"").append(referenceUID).append("\")");
+		else
+			statement.append(" \"");
+		statement.append(" );");
 
         //
 
