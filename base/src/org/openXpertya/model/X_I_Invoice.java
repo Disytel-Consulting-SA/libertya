@@ -7,7 +7,7 @@ import java.math.*;
 import org.openXpertya.util.*;
 /** Modelo Generado por I_Invoice
  *  @author Comunidad de Desarrollo Libertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
- *  @version  - 2017-01-27 14:18:29.075 */
+ *  @version  - 2017-03-10 16:48:23.691 */
 public class X_I_Invoice extends org.openXpertya.model.PO
 {
 /** Constructor estándar */
@@ -20,6 +20,7 @@ setCreateCashLine (false);
 setDocumentNoBySequence (false);
 setI_Invoice_ID (0);
 setI_IsImported (false);
+setIsPrinted (false);
 }
  */
 }
@@ -615,6 +616,24 @@ public String getISO_Code()
 {
 return (String)get_Value("ISO_Code");
 }
+/** Set Printed.
+Indicates if this document / line is printed */
+public void setIsPrinted (boolean IsPrinted)
+{
+set_Value ("IsPrinted", new Boolean(IsPrinted));
+}
+/** Get Printed.
+Indicates if this document / line is printed */
+public boolean isPrinted() 
+{
+Object oo = get_Value("IsPrinted");
+if (oo != null) 
+{
+ if (oo instanceof Boolean) return ((Boolean)oo).booleanValue();
+ return "Y".equals(oo);
+}
+return false;
+}
 /** Set Sales Transaction.
 This is a Sales Transaction */
 public void setIsSOTrx (boolean IsSOTrx)
@@ -753,8 +772,8 @@ public static final String PAYMENTRULE_Check = "S";
 How you pay the invoice */
 public void setPaymentRule (String PaymentRule)
 {
-if (PaymentRule == null || PaymentRule.equals("Tr") || PaymentRule.equals("K") || PaymentRule.equals("B") || PaymentRule.equals("P") || PaymentRule.equals("PC") || PaymentRule.equals("T") || PaymentRule.equals("Cf") || PaymentRule.equals("D") || PaymentRule.equals("S"));
- else throw new IllegalArgumentException ("PaymentRule Invalid value - Reference = PAYMENTRULE_AD_Reference_ID - Tr - K - B - P - PC - T - Cf - D - S");
+if (PaymentRule == null || PaymentRule.equals("Tr") || PaymentRule.equals("K") || PaymentRule.equals("B") || PaymentRule.equals("P") || PaymentRule.equals("PC") || PaymentRule.equals("T") || PaymentRule.equals("Cf") || PaymentRule.equals("D") || PaymentRule.equals("S") || ( refContainsValue("CORE-AD_Reference-195", PaymentRule) ) );
+ else throw new IllegalArgumentException ("PaymentRule Invalid value: " + PaymentRule + ".  Valid: " +  refValidOptions("CORE-AD_Reference-195") );
 if (PaymentRule != null && PaymentRule.length() > 2)
 {
 log.warning("Length > 2 - truncated");

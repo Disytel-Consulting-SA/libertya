@@ -758,7 +758,13 @@ public class ImportInvoice extends SvrProcess {
 					invoice.setProcessed(false);
 					invoice.setProcessing(false);
 
-					//
+					// Impreso fiscalmente
+					if(invoice.requireFiscalPrint()){
+						invoice.setFiscalAlreadyPrinted(imp.isPrinted());
+					}
+					else{
+						invoice.setIsPrinted(imp.isPrinted());
+					}					
 
 					if(invoice.save()){
 						noInsert++;
