@@ -155,6 +155,9 @@ public class MInvoice extends X_C_Invoice implements DocAction,Authorization {
 	/** Boolean que determina si se está ejecutando una anulación. */
 	private boolean voidProcess = false;
 
+	/** Boolean que determina si se debe controlar el último número impreso fiscalmente */
+	private boolean skipLastFiscalDocumentNoValidation = false;
+	
 	/**
 	 * Descripción de Método
 	 * 
@@ -5122,7 +5125,7 @@ public class MInvoice extends X_C_Invoice implements DocAction,Authorization {
 			// Valida que si el documento es manual y el tipo de documento se
 			// imprime fiscalmente entonces no sobrepase el último nro de
 			// comprobante impreso fiscalmente
-			if (requireFiscalPrint() && isManualDocumentNo()) {
+			if (!isSkipLastFiscalDocumentNoValidation() && requireFiscalPrint() && isManualDocumentNo()) {
 				// FIXME Se comenta por ahora porque no se usa el último
 				// comprobante
 				// impreso por una cuestión de performance
@@ -6257,6 +6260,14 @@ public class MInvoice extends X_C_Invoice implements DocAction,Authorization {
 
 	public void setVoidProcess(boolean voidProcess) {
 		this.voidProcess = voidProcess;
+	}
+
+	public boolean isSkipLastFiscalDocumentNoValidation() {
+		return skipLastFiscalDocumentNoValidation;
+	}
+
+	public void setSkipLastFiscalDocumentNoValidation(boolean skipLastFiscalDocumentNoValidation) {
+		this.skipLastFiscalDocumentNoValidation = skipLastFiscalDocumentNoValidation;
 	}
 
 } // MInvoice

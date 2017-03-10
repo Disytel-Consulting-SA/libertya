@@ -764,7 +764,9 @@ public class ImportInvoice extends SvrProcess {
 					}
 					else{
 						invoice.setIsPrinted(imp.isPrinted());
-					}					
+					}		
+					
+					invoice.setSkipLastFiscalDocumentNoValidation(true);
 
 					if(invoice.save()){
 						noInsert++;
