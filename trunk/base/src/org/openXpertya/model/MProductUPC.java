@@ -251,7 +251,7 @@ public class MProductUPC extends X_M_ProductUPC {
 			log.saveError("SaveError", 
 					Msg.translate(getCtx(), "DuplicateUPCError") + " " + productStr);
 		}
-		return productID == null || productID == 0;
+		return productID == null || productID <= 0;
 	}
 	
 	/**
