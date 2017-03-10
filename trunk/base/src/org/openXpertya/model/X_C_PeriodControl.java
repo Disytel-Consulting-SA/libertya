@@ -7,7 +7,7 @@ import java.math.*;
 import org.openXpertya.util.*;
 /** Modelo Generado por C_PeriodControl
  *  @author Comunidad de Desarrollo Libertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
- *  @version  - 2017-02-01 11:49:00.045 */
+ *  @version  - 2017-03-10 10:07:01.65 */
 public class X_C_PeriodControl extends org.openXpertya.model.PO
 {
 /** Constructor estándar */
@@ -151,8 +151,8 @@ public static final String DOCBASETYPE_APPaymentBatch = "APB";
 Logical type of document */
 public void setDocBaseType (String DocBaseType)
 {
-if (DocBaseType.equals("MMP") || DocBaseType.equals("MXI") || DocBaseType.equals("MXP") || DocBaseType.equals("ARF") || DocBaseType.equals("MMS") || DocBaseType.equals("MMR") || DocBaseType.equals("MMM") || DocBaseType.equals("POO") || DocBaseType.equals("POR") || DocBaseType.equals("MMI") || DocBaseType.equals("MOR") || DocBaseType.equals("MOU") || DocBaseType.equals("MOM") || DocBaseType.equals("MOV") || DocBaseType.equals("MOP") || DocBaseType.equals("MOF") || DocBaseType.equals("GLJ") || DocBaseType.equals("GLD") || DocBaseType.equals("API") || DocBaseType.equals("APP") || DocBaseType.equals("ARI") || DocBaseType.equals("ARR") || DocBaseType.equals("SOO") || DocBaseType.equals("MOI") || DocBaseType.equals("CMB") || DocBaseType.equals("CMC") || DocBaseType.equals("CMA") || DocBaseType.equals("APC") || DocBaseType.equals("ARC") || DocBaseType.equals("PJI") || DocBaseType.equals("AMO") || DocBaseType.equals("BLB") || DocBaseType.equals("CHP") || DocBaseType.equals("APB"));
- else throw new IllegalArgumentException ("DocBaseType Invalid value - " + DocBaseType + " - Reference = DOCBASETYPE_AD_Reference_ID - MMP - MXI - MXP - ARF - MMS - MMR - MMM - POO - POR - MMI - MOR - MOU - MOM - MOV - MOP - MOF - GLJ - GLD - API - APP - ARI - ARR - SOO - MOI - CMB - CMC - CMA - APC - ARC - PJI - AMO - BLB - CHP - APB");
+if (DocBaseType.equals("MMP") || DocBaseType.equals("MXI") || DocBaseType.equals("MXP") || DocBaseType.equals("ARF") || DocBaseType.equals("MMS") || DocBaseType.equals("MMR") || DocBaseType.equals("MMM") || DocBaseType.equals("POO") || DocBaseType.equals("POR") || DocBaseType.equals("MMI") || DocBaseType.equals("MOR") || DocBaseType.equals("MOU") || DocBaseType.equals("MOM") || DocBaseType.equals("MOV") || DocBaseType.equals("MOP") || DocBaseType.equals("MOF") || DocBaseType.equals("GLJ") || DocBaseType.equals("GLD") || DocBaseType.equals("API") || DocBaseType.equals("APP") || DocBaseType.equals("ARI") || DocBaseType.equals("ARR") || DocBaseType.equals("SOO") || DocBaseType.equals("MOI") || DocBaseType.equals("CMB") || DocBaseType.equals("CMC") || DocBaseType.equals("CMA") || DocBaseType.equals("APC") || DocBaseType.equals("ARC") || DocBaseType.equals("PJI") || DocBaseType.equals("AMO") || DocBaseType.equals("BLB") || DocBaseType.equals("CHP") || DocBaseType.equals("APB") || ( refContainsValue("CORE-AD_Reference-183", DocBaseType) ) );
+ else throw new IllegalArgumentException ("DocBaseType Invalid value: " + DocBaseType + ".  Valid: " +  refValidOptions("CORE-AD_Reference-183") );
 if (DocBaseType == null) throw new IllegalArgumentException ("DocBaseType is mandatory");
 if (DocBaseType.length() > 3)
 {
@@ -180,8 +180,8 @@ public static final String PERIODACTION_NoAction = "N";
 Action taken for this period */
 public void setPeriodAction (String PeriodAction)
 {
-if (PeriodAction.equals("O") || PeriodAction.equals("C") || PeriodAction.equals("P") || PeriodAction.equals("N"));
- else throw new IllegalArgumentException ("PeriodAction Invalid value - " + PeriodAction + " - Reference = PERIODACTION_AD_Reference_ID - O - C - P - N");
+if (PeriodAction.equals("O") || PeriodAction.equals("C") || PeriodAction.equals("P") || PeriodAction.equals("N") || ( refContainsValue("CORE-AD_Reference-176", PeriodAction) ) );
+ else throw new IllegalArgumentException ("PeriodAction Invalid value: " + PeriodAction + ".  Valid: " +  refValidOptions("CORE-AD_Reference-176") );
 if (PeriodAction == null) throw new IllegalArgumentException ("PeriodAction is mandatory");
 if (PeriodAction.length() > 1)
 {
@@ -209,8 +209,8 @@ public static final String PERIODSTATUS_NeverOpened = "N";
 Current state of this period */
 public void setPeriodStatus (String PeriodStatus)
 {
-if (PeriodStatus == null || PeriodStatus.equals("O") || PeriodStatus.equals("C") || PeriodStatus.equals("P") || PeriodStatus.equals("N"));
- else throw new IllegalArgumentException ("PeriodStatus Invalid value - " + PeriodStatus + " - Reference = PERIODSTATUS_AD_Reference_ID - O - C - P - N");
+if (PeriodStatus == null || PeriodStatus.equals("O") || PeriodStatus.equals("C") || PeriodStatus.equals("P") || PeriodStatus.equals("N") || ( refContainsValue("CORE-AD_Reference-177", PeriodStatus) ) );
+ else throw new IllegalArgumentException ("PeriodStatus Invalid value: " + PeriodStatus + ".  Valid: " +  refValidOptions("CORE-AD_Reference-177") );
 if (PeriodStatus != null && PeriodStatus.length() > 1)
 {
 log.warning("Length > 1 - truncated");

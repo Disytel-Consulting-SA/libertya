@@ -1,13 +1,14 @@
-/** Modelo Generado - NO CAMBIAR MANUALMENTE - Copyright (C) 2006 FUNDESLE */
+/** Modelo Generado - NO CAMBIAR MANUALMENTE - Disytel */
 package org.openXpertya.model;
-import java.util.*;
+import java.util.logging.Level;
+ import java.util.*;
 import java.sql.*;
 import java.math.*;
 import org.openXpertya.util.*;
 /** Modelo Generado por C_Project
- *  @author Comunidad de Desarrollo openXpertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
- *  @version  - 2008-01-03 10:26:31.906 */
-public class X_C_Project extends PO
+ *  @author Comunidad de Desarrollo Libertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
+ *  @version  - 2017-03-10 10:07:11.333 */
+public class X_C_Project extends org.openXpertya.model.PO
 {
 /** Constructor estándar */
 public X_C_Project (Properties ctx, int C_Project_ID, String trxName)
@@ -16,9 +17,9 @@ super (ctx, C_Project_ID, trxName);
 /** if (C_Project_ID == 0)
 {
 setC_Currency_ID (0);
-setC_Project_ID (0);
 setCommittedAmt (Env.ZERO);
 setCommittedQty (Env.ZERO);
+setC_Project_ID (0);
 setInvoicedAmt (Env.ZERO);
 setInvoicedQty (Env.ZERO);
 setIsCommitCeiling (false);
@@ -39,13 +40,13 @@ public X_C_Project (Properties ctx, ResultSet rs, String trxName)
 {
 super (ctx, rs, trxName);
 }
-/** AD_Table_ID=203 */
-public static final int Table_ID=203;
+/** AD_Table_ID */
+public static final int Table_ID = M_Table.getTableID("C_Project");
 
 /** TableName=C_Project */
 public static final String Table_Name="C_Project";
 
-protected static KeyNamePair Model = new KeyNamePair(203,"C_Project");
+protected static KeyNamePair Model = new KeyNamePair(Table_ID,"C_Project");
 protected static BigDecimal AccessLevel = new BigDecimal(3);
 
 /** Load Meta Data */
@@ -137,69 +138,6 @@ Integer ii = (Integer)get_Value("C_Currency_ID");
 if (ii == null) return 0;
 return ii.intValue();
 }
-/** Set Payment Term.
-The terms for Payment of this transaction */
-public void setC_PaymentTerm_ID (int C_PaymentTerm_ID)
-{
-if (C_PaymentTerm_ID <= 0) set_Value ("C_PaymentTerm_ID", null);
- else 
-set_Value ("C_PaymentTerm_ID", new Integer(C_PaymentTerm_ID));
-}
-/** Get Payment Term.
-The terms for Payment of this transaction */
-public int getC_PaymentTerm_ID() 
-{
-Integer ii = (Integer)get_Value("C_PaymentTerm_ID");
-if (ii == null) return 0;
-return ii.intValue();
-}
-/** Set Standard Phase.
-Standard Phase of the Project Type */
-public void setC_Phase_ID (int C_Phase_ID)
-{
-if (C_Phase_ID <= 0) set_Value ("C_Phase_ID", null);
- else 
-set_Value ("C_Phase_ID", new Integer(C_Phase_ID));
-}
-/** Get Standard Phase.
-Standard Phase of the Project Type */
-public int getC_Phase_ID() 
-{
-Integer ii = (Integer)get_Value("C_Phase_ID");
-if (ii == null) return 0;
-return ii.intValue();
-}
-/** Set Project Type.
-Type of the project */
-public void setC_ProjectType_ID (String C_ProjectType_ID)
-{
-if (C_ProjectType_ID != null && C_ProjectType_ID.length() > 22)
-{
-log.warning("Length > 22 - truncated");
-C_ProjectType_ID = C_ProjectType_ID.substring(0,21);
-}
-set_Value ("C_ProjectType_ID", C_ProjectType_ID);
-}
-/** Get Project Type.
-Type of the project */
-public String getC_ProjectType_ID() 
-{
-return (String)get_Value("C_ProjectType_ID");
-}
-/** Set Project.
-Financial Project */
-public void setC_Project_ID (int C_Project_ID)
-{
-set_ValueNoCheck ("C_Project_ID", new Integer(C_Project_ID));
-}
-/** Get Project.
-Financial Project */
-public int getC_Project_ID() 
-{
-Integer ii = (Integer)get_Value("C_Project_ID");
-if (ii == null) return 0;
-return ii.intValue();
-}
 /** Set Committed Amount.
 The (legal) commitment amount */
 public void setCommittedAmt (BigDecimal CommittedAmt)
@@ -237,7 +175,7 @@ public void setCopyFrom (String CopyFrom)
 if (CopyFrom != null && CopyFrom.length() > 1)
 {
 log.warning("Length > 1 - truncated");
-CopyFrom = CopyFrom.substring(0,0);
+CopyFrom = CopyFrom.substring(0,1);
 }
 set_Value ("CopyFrom", CopyFrom);
 }
@@ -247,19 +185,102 @@ public String getCopyFrom()
 {
 return (String)get_Value("CopyFrom");
 }
-public static final int CREATEDOCUMENT_AD_Reference_ID=183;
-/** Project Issue = PJI */
-public static final String CREATEDOCUMENT_ProjectIssue = "PJI";
-/** AP Credit Memo = APC */
-public static final String CREATEDOCUMENT_APCreditMemo = "APC";
-/** AR Credit Memo = ARC */
-public static final String CREATEDOCUMENT_ARCreditMemo = "ARC";
-/** Bank Statement = CMB */
-public static final String CREATEDOCUMENT_BankStatement = "CMB";
-/** Cash Journal = CMC */
-public static final String CREATEDOCUMENT_CashJournal = "CMC";
-/** Payment Allocation = CMA */
-public static final String CREATEDOCUMENT_PaymentAllocation = "CMA";
+/** Set Payment Term.
+The terms for Payment of this transaction */
+public void setC_PaymentTerm_ID (int C_PaymentTerm_ID)
+{
+if (C_PaymentTerm_ID <= 0) set_Value ("C_PaymentTerm_ID", null);
+ else 
+set_Value ("C_PaymentTerm_ID", new Integer(C_PaymentTerm_ID));
+}
+/** Get Payment Term.
+The terms for Payment of this transaction */
+public int getC_PaymentTerm_ID() 
+{
+Integer ii = (Integer)get_Value("C_PaymentTerm_ID");
+if (ii == null) return 0;
+return ii.intValue();
+}
+/** Set Standard Phase.
+Standard Phase of the Project Type */
+public void setC_Phase_ID (int C_Phase_ID)
+{
+if (C_Phase_ID <= 0) set_Value ("C_Phase_ID", null);
+ else 
+set_Value ("C_Phase_ID", new Integer(C_Phase_ID));
+}
+/** Get Standard Phase.
+Standard Phase of the Project Type */
+public int getC_Phase_ID() 
+{
+Integer ii = (Integer)get_Value("C_Phase_ID");
+if (ii == null) return 0;
+return ii.intValue();
+}
+/** Set Project.
+Financial Project */
+public void setC_Project_ID (int C_Project_ID)
+{
+set_ValueNoCheck ("C_Project_ID", new Integer(C_Project_ID));
+}
+/** Get Project.
+Financial Project */
+public int getC_Project_ID() 
+{
+Integer ii = (Integer)get_Value("C_Project_ID");
+if (ii == null) return 0;
+return ii.intValue();
+}
+/** Set Project Type.
+Type of the project */
+public void setC_ProjectType_ID (String C_ProjectType_ID)
+{
+if (C_ProjectType_ID != null && C_ProjectType_ID.length() > 22)
+{
+log.warning("Length > 22 - truncated");
+C_ProjectType_ID = C_ProjectType_ID.substring(0,22);
+}
+set_Value ("C_ProjectType_ID", C_ProjectType_ID);
+}
+/** Get Project Type.
+Type of the project */
+public String getC_ProjectType_ID() 
+{
+return (String)get_Value("C_ProjectType_ID");
+}
+public static final int CREATEDOCUMENT_AD_Reference_ID = MReference.getReferenceID("C_DocType DocBaseType");
+/** Material Production = MMP */
+public static final String CREATEDOCUMENT_MaterialProduction = "MMP";
+/** Match Invoice = MXI */
+public static final String CREATEDOCUMENT_MatchInvoice = "MXI";
+/** Match PO = MXP */
+public static final String CREATEDOCUMENT_MatchPO = "MXP";
+/** AR Pro Forma Invoice = ARF */
+public static final String CREATEDOCUMENT_ARProFormaInvoice = "ARF";
+/** Material Delivery = MMS */
+public static final String CREATEDOCUMENT_MaterialDelivery = "MMS";
+/** Material Receipt = MMR */
+public static final String CREATEDOCUMENT_MaterialReceipt = "MMR";
+/** Material Movement = MMM */
+public static final String CREATEDOCUMENT_MaterialMovement = "MMM";
+/** Purchase Order = POO */
+public static final String CREATEDOCUMENT_PurchaseOrder = "POO";
+/** Purchase Requisition = POR */
+public static final String CREATEDOCUMENT_PurchaseRequisition = "POR";
+/** Material Physical Inventory = MMI */
+public static final String CREATEDOCUMENT_MaterialPhysicalInventory = "MMI";
+/** Manufacturing Order Receipt = MOR */
+public static final String CREATEDOCUMENT_ManufacturingOrderReceipt = "MOR";
+/** Manufacturing Order Use Variation  = MOU */
+public static final String CREATEDOCUMENT_ManufacturingOrderUseVariation = "MOU";
+/** Manufacturing Order Method Variation  = MOM */
+public static final String CREATEDOCUMENT_ManufacturingOrderMethodVariation = "MOM";
+/** Manufacturing Order Rate Variation  = MOV */
+public static final String CREATEDOCUMENT_ManufacturingOrderRateVariation = "MOV";
+/** Manufacturing Order = MOP */
+public static final String CREATEDOCUMENT_ManufacturingOrder = "MOP";
+/** Maintenance Order = MOF */
+public static final String CREATEDOCUMENT_MaintenanceOrder = "MOF";
 /** GL Journal = GLJ */
 public static final String CREATEDOCUMENT_GLJournal = "GLJ";
 /** GL Document = GLD */
@@ -276,47 +297,35 @@ public static final String CREATEDOCUMENT_ARReceipt = "ARR";
 public static final String CREATEDOCUMENT_SalesOrder = "SOO";
 /** Manufacturing Order Issue = MOI */
 public static final String CREATEDOCUMENT_ManufacturingOrderIssue = "MOI";
-/** Manufacturing Order Receipt = MOR */
-public static final String CREATEDOCUMENT_ManufacturingOrderReceipt = "MOR";
-/** Manufacturing Order Use Variation  = MOU */
-public static final String CREATEDOCUMENT_ManufacturingOrderUseVariation = "MOU";
-/** Manufacturing Order Method Variation  = MOM */
-public static final String CREATEDOCUMENT_ManufacturingOrderMethodVariation = "MOM";
-/** Manufacturing Order Rate Variation  = MOV */
-public static final String CREATEDOCUMENT_ManufacturingOrderRateVariation = "MOV";
-/** Manufacturing Order = MOP */
-public static final String CREATEDOCUMENT_ManufacturingOrder = "MOP";
-/** Maintenance Order = MOF */
-public static final String CREATEDOCUMENT_MaintenanceOrder = "MOF";
-/** AR Pro Forma Invoice = ARF */
-public static final String CREATEDOCUMENT_ARProFormaInvoice = "ARF";
-/** Material Delivery = MMS */
-public static final String CREATEDOCUMENT_MaterialDelivery = "MMS";
-/** Material Receipt = MMR */
-public static final String CREATEDOCUMENT_MaterialReceipt = "MMR";
-/** Material Movement = MMM */
-public static final String CREATEDOCUMENT_MaterialMovement = "MMM";
-/** Purchase Order = POO */
-public static final String CREATEDOCUMENT_PurchaseOrder = "POO";
-/** Purchase Requisition = POR */
-public static final String CREATEDOCUMENT_PurchaseRequisition = "POR";
-/** Material Physical Inventory = MMI */
-public static final String CREATEDOCUMENT_MaterialPhysicalInventory = "MMI";
-/** Material Production = MMP */
-public static final String CREATEDOCUMENT_MaterialProduction = "MMP";
-/** Match Invoice = MXI */
-public static final String CREATEDOCUMENT_MatchInvoice = "MXI";
-/** Match PO = MXP */
-public static final String CREATEDOCUMENT_MatchPO = "MXP";
+/** Bank Statement = CMB */
+public static final String CREATEDOCUMENT_BankStatement = "CMB";
+/** Cash Journal = CMC */
+public static final String CREATEDOCUMENT_CashJournal = "CMC";
+/** Payment Allocation = CMA */
+public static final String CREATEDOCUMENT_PaymentAllocation = "CMA";
+/** AP Credit Memo = APC */
+public static final String CREATEDOCUMENT_APCreditMemo = "APC";
+/** AR Credit Memo = ARC */
+public static final String CREATEDOCUMENT_ARCreditMemo = "ARC";
+/** Project Issue = PJI */
+public static final String CREATEDOCUMENT_ProjectIssue = "PJI";
+/** Amortization = AMO */
+public static final String CREATEDOCUMENT_Amortization = "AMO";
+/** Bank List = BLB */
+public static final String CREATEDOCUMENT_BankList = "BLB";
+/** Check Printing = CHP */
+public static final String CREATEDOCUMENT_CheckPrinting = "CHP";
+/** AP Payment Batch = APB */
+public static final String CREATEDOCUMENT_APPaymentBatch = "APB";
 /** Set CreateDocument */
 public void setCreateDocument (String CreateDocument)
 {
-if (CreateDocument == null || CreateDocument.equals("PJI") || CreateDocument.equals("APC") || CreateDocument.equals("ARC") || CreateDocument.equals("CMB") || CreateDocument.equals("CMC") || CreateDocument.equals("CMA") || CreateDocument.equals("GLJ") || CreateDocument.equals("GLD") || CreateDocument.equals("API") || CreateDocument.equals("APP") || CreateDocument.equals("ARI") || CreateDocument.equals("ARR") || CreateDocument.equals("SOO") || CreateDocument.equals("MOI") || CreateDocument.equals("MOR") || CreateDocument.equals("MOU") || CreateDocument.equals("MOM") || CreateDocument.equals("MOV") || CreateDocument.equals("MOP") || CreateDocument.equals("MOF") || CreateDocument.equals("ARF") || CreateDocument.equals("MMS") || CreateDocument.equals("MMR") || CreateDocument.equals("MMM") || CreateDocument.equals("POO") || CreateDocument.equals("POR") || CreateDocument.equals("MMI") || CreateDocument.equals("MMP") || CreateDocument.equals("MXI") || CreateDocument.equals("MXP"));
- else throw new IllegalArgumentException ("CreateDocument Invalid value - Reference_ID=183 - PJI - APC - ARC - CMB - CMC - CMA - GLJ - GLD - API - APP - ARI - ARR - SOO - MOI - MOR - MOU - MOM - MOV - MOP - MOF - ARF - MMS - MMR - MMM - POO - POR - MMI - MMP - MXI - MXP");
+if (CreateDocument == null || CreateDocument.equals("MMP") || CreateDocument.equals("MXI") || CreateDocument.equals("MXP") || CreateDocument.equals("ARF") || CreateDocument.equals("MMS") || CreateDocument.equals("MMR") || CreateDocument.equals("MMM") || CreateDocument.equals("POO") || CreateDocument.equals("POR") || CreateDocument.equals("MMI") || CreateDocument.equals("MOR") || CreateDocument.equals("MOU") || CreateDocument.equals("MOM") || CreateDocument.equals("MOV") || CreateDocument.equals("MOP") || CreateDocument.equals("MOF") || CreateDocument.equals("GLJ") || CreateDocument.equals("GLD") || CreateDocument.equals("API") || CreateDocument.equals("APP") || CreateDocument.equals("ARI") || CreateDocument.equals("ARR") || CreateDocument.equals("SOO") || CreateDocument.equals("MOI") || CreateDocument.equals("CMB") || CreateDocument.equals("CMC") || CreateDocument.equals("CMA") || CreateDocument.equals("APC") || CreateDocument.equals("ARC") || CreateDocument.equals("PJI") || CreateDocument.equals("AMO") || CreateDocument.equals("BLB") || CreateDocument.equals("CHP") || CreateDocument.equals("APB") || ( refContainsValue("CORE-AD_Reference-183", CreateDocument) ) );
+ else throw new IllegalArgumentException ("CreateDocument Invalid value: " + CreateDocument + ".  Valid: " +  refValidOptions("CORE-AD_Reference-183") );
 if (CreateDocument != null && CreateDocument.length() > 1)
 {
 log.warning("Length > 1 - truncated");
-CreateDocument = CreateDocument.substring(0,0);
+CreateDocument = CreateDocument.substring(0,1);
 }
 set_Value ("CreateDocument", CreateDocument);
 }
@@ -356,7 +365,7 @@ public void setDescription (String Description)
 if (Description != null && Description.length() > 255)
 {
 log.warning("Length > 255 - truncated");
-Description = Description.substring(0,254);
+Description = Description.substring(0,255);
 }
 set_Value ("Description", Description);
 }
@@ -373,7 +382,7 @@ public void setGenerateTo (String GenerateTo)
 if (GenerateTo != null && GenerateTo.length() > 1)
 {
 log.warning("Length > 1 - truncated");
-GenerateTo = GenerateTo.substring(0,0);
+GenerateTo = GenerateTo.substring(0,1);
 }
 set_Value ("GenerateTo", GenerateTo);
 }
@@ -507,7 +516,7 @@ if (Name == null) throw new IllegalArgumentException ("Name is mandatory");
 if (Name.length() > 60)
 {
 log.warning("Length > 60 - truncated");
-Name = Name.substring(0,59);
+Name = Name.substring(0,60);
 }
 set_Value ("Name", Name);
 }
@@ -524,7 +533,7 @@ public void setNote (String Note)
 if (Note != null && Note.length() > 2000)
 {
 log.warning("Length > 2000 - truncated");
-Note = Note.substring(0,1999);
+Note = Note.substring(0,2000);
 }
 set_Value ("Note", Note);
 }
@@ -533,23 +542,6 @@ Optional additional user defined information */
 public String getNote() 
 {
 return (String)get_Value("Note");
-}
-/** Set Order Reference.
-Transaction Reference Number (Sales Order, Purchase Order) of your Business Partner */
-public void setPOReference (String POReference)
-{
-if (POReference != null && POReference.length() > 20)
-{
-log.warning("Length > 20 - truncated");
-POReference = POReference.substring(0,19);
-}
-set_Value ("POReference", POReference);
-}
-/** Get Order Reference.
-Transaction Reference Number (Sales Order, Purchase Order) of your Business Partner */
-public String getPOReference() 
-{
-return (String)get_Value("POReference");
 }
 /** Set Planned Amount.
 Planned amount for this project */
@@ -595,6 +587,23 @@ public BigDecimal getPlannedQty()
 BigDecimal bd = (BigDecimal)get_Value("PlannedQty");
 if (bd == null) return Env.ZERO;
 return bd;
+}
+/** Set Order Reference.
+Transaction Reference Number (Sales Order, Purchase Order) of your Business Partner */
+public void setPOReference (String POReference)
+{
+if (POReference != null && POReference.length() > 20)
+{
+log.warning("Length > 20 - truncated");
+POReference = POReference.substring(0,20);
+}
+set_Value ("POReference", POReference);
+}
+/** Get Order Reference.
+Transaction Reference Number (Sales Order, Purchase Order) of your Business Partner */
+public String getPOReference() 
+{
+return (String)get_Value("POReference");
 }
 /** Set Processed.
 The document has been processed */
@@ -645,25 +654,25 @@ BigDecimal bd = (BigDecimal)get_Value("ProjectBalanceAmt");
 if (bd == null) return Env.ZERO;
 return bd;
 }
-public static final int PROJECTCATEGORY_AD_Reference_ID=288;
-/** Service (Charge) Project = S */
-public static final String PROJECTCATEGORY_ServiceChargeProject = "S";
+public static final int PROJECTCATEGORY_AD_Reference_ID = MReference.getReferenceID("C_ProjectType Category");
 /** General = N */
 public static final String PROJECTCATEGORY_General = "N";
 /** Asset Project = A */
 public static final String PROJECTCATEGORY_AssetProject = "A";
 /** Work Order (Job) = W */
 public static final String PROJECTCATEGORY_WorkOrderJob = "W";
+/** Service (Charge) Project = S */
+public static final String PROJECTCATEGORY_ServiceChargeProject = "S";
 /** Set Project Category.
 Project Category */
 public void setProjectCategory (String ProjectCategory)
 {
-if (ProjectCategory == null || ProjectCategory.equals("S") || ProjectCategory.equals("N") || ProjectCategory.equals("A") || ProjectCategory.equals("W"));
- else throw new IllegalArgumentException ("ProjectCategory Invalid value - Reference_ID=288 - S - N - A - W");
+if (ProjectCategory == null || ProjectCategory.equals("N") || ProjectCategory.equals("A") || ProjectCategory.equals("W") || ProjectCategory.equals("S") || ( refContainsValue("CORE-AD_Reference-288", ProjectCategory) ) );
+ else throw new IllegalArgumentException ("ProjectCategory Invalid value: " + ProjectCategory + ".  Valid: " +  refValidOptions("CORE-AD_Reference-288") );
 if (ProjectCategory != null && ProjectCategory.length() > 1)
 {
 log.warning("Length > 1 - truncated");
-ProjectCategory = ProjectCategory.substring(0,0);
+ProjectCategory = ProjectCategory.substring(0,1);
 }
 set_Value ("ProjectCategory", ProjectCategory);
 }
@@ -673,7 +682,7 @@ public String getProjectCategory()
 {
 return (String)get_Value("ProjectCategory");
 }
-public static final int SALESREP_ID_AD_Reference_ID=190;
+public static final int SALESREP_ID_AD_Reference_ID = MReference.getReferenceID("AD_User - SalesRep");
 /** Set Sales Representative.
 Sales Representative or Company Agent */
 public void setSalesRep_ID (int SalesRep_ID)
@@ -698,7 +707,7 @@ if (Value == null) throw new IllegalArgumentException ("Value is mandatory");
 if (Value.length() > 40)
 {
 log.warning("Length > 40 - truncated");
-Value = Value.substring(0,39);
+Value = Value.substring(0,40);
 }
 set_Value ("Value", Value);
 }
