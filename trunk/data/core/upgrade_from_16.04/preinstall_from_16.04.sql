@@ -6076,3 +6076,6 @@ where c_outgoingtransfer_dt_id = (select c_doctype_id from c_doctype where ad_co
 update c_payment
 set c_doctype_id = (select c_doctype_id from c_doctype where ad_componentobjectuid = 'CORE-C_DocType-1010516')
 where c_doctype_id = (select c_doctype_id from c_doctype where ad_componentobjectuid = 'CORE-C_DocType-1010515');
+
+--20170310-1700 Incorporación de flag isprinted a la importación de facturas que permiteindicar facturas ya impresas fiscalmente
+UPDATE ad_system SET dummy = (SELECT addcolumnifnotexists('i_invoice','isprinted','character(1) NOT NULL DEFAULT ''N''::bpchar'));
