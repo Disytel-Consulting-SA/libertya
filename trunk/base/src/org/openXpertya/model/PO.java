@@ -4886,31 +4886,31 @@ public abstract class PO implements Serializable, Comparator, Evaluatee {
 	}
 	
 	/** Cache de referencias */
-	protected static CCache<Integer, Set<String>> ref_cache = new CCache<Integer, Set<String>>("ref_cache", 50, 10);
+	protected static CCache<String, Set<String>> ref_cache = new CCache<String, Set<String>>("ref_cache", 50, 10);
 	
 	/** Dada una refID, obtener la lista de opciones */
-	protected static Set<String> getRefCache(int refID) {
+	protected static Set<String> getRefCache(String refUID) {
 		// Si no existe en la cache, incorporarla
-		if (ref_cache.get(refID) == null) {
-			KeyNamePair[] options = DB.getKeyNamePairs("SELECT ad_ref_list_id, value from ad_ref_list where ad_reference_id =" + refID, false);
+		if (ref_cache.get(refUID) == null) {
+			KeyNamePair[] options = DB.getKeyNamePairs("SELECT ad_ref_list_id, value FROM ad_ref_list WHERE ad_reference_id = (SELECT AD_Reference_ID FROM AD_Reference WHERE AD_ComponentObjectUID = '" + refUID + "')", false);
 			HashSet<String> aSet = new HashSet<String>();
 			for (KeyNamePair option : options) {
 				aSet.add(option.getName());
 			}
-			ref_cache.put(refID, aSet);
+			ref_cache.put(refUID, aSet);
 		}
-		return ref_cache.get(refID);
+		return ref_cache.get(refUID);
 	}
 	
 	/** Dada una referencia, verificar si la opcion dada es valida */
-	public static boolean refContainsValue(int refID, String value) {
-		return getRefCache(refID).contains(value);
+	public static boolean refContainsValue(String refUID, String value) {
+		return getRefCache(refUID).contains(value);
 	}
 	
 	/** Dada una referencia, retornar las opciones validas */
-	public static String refValidOptions(int refID) {
+	public static String refValidOptions(String refUID) {
 		StringBuffer retValue = new StringBuffer();
-		for (String ref : getRefCache(refID))
+		for (String ref : getRefCache(refUID))
 			retValue.append(" - ").append(ref).append(" ");
 		return retValue.toString();
 	}
