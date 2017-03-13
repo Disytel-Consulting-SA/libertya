@@ -285,40 +285,54 @@ public class UserDataChange extends JDialog {
 		String newPassword = getCNewPasswordText().getDisplay();
 		String repeatPassword = getCRepeatPasswordText().getDisplay();
 		
+		String errorMsg = tryPasswordChange(currentPassword, newPassword, repeatPassword, ctx);
+		if (errorMsg != null) {
+			errorMsg(errorMsg);
+		} else {
+			ADialog.info(0, this, "PasswordChangedSuccessful");
+			setVisible(false);
+			fireUserDataListener(new UserDataChangeEvent(this, true));
+		}
+	
+	}
+	
+	/**
+	 * Intenta efectivizar el cambio de password
+	 * @param currentPassword contraseña actual
+	 * @param newPassword nueva contraseña
+	 * @param repeatPassword retipeo nueva contraseña
+	 * @param ctx contexto
+	 * @return un string con el mensaje de error, o null en caso de haber realizado el cambio con exito
+	 */
+	public static String tryPasswordChange(String currentPassword, String newPassword, String repeatPassword, Properties ctx) {
 		if (currentPassword == null || currentPassword.trim().length() == 0) {
-			errorMsg("CurrentPasswordBlankError");
-			return;
+			return "CurrentPasswordBlankError";
 		} else if(newPassword == null || newPassword.trim().length() == 0) {
-			errorMsg("NewPasswordBlankError");
-			return;
+			return "NewPasswordBlankError";
 		} else if(repeatPassword == null || repeatPassword.trim().length() == 0) {
-			errorMsg("RepeatPasswordBlankError");
-			return;
+			return "RepeatPasswordBlankError";
 		} else if (!newPassword.equals(repeatPassword)) {
-			errorMsg("NewPasswordNotMatchError");
-			return;
+			return "NewPasswordNotMatchError";
 		} else if (currentPassword.equals(newPassword)) {
-			errorMsg("EqualCurrentAndNewPassword");
-			return;
+			return "EqualCurrentAndNewPassword";
 		}
 
 		String currentUserPassword = MUser.getCurrentPassword(ctx, Env.getAD_User_ID(ctx), null);
 		if (!currentPassword.equals(currentUserPassword)) {
-			errorMsg("InvalidCurrentPasswordError");
-			return;
+			return "InvalidCurrentPasswordError";
 		}
 		
 		MUser.clearCache();
 		MUser currentUser = MUser.get(ctx);
 		currentUser.setPassword(newPassword);
 		if (!currentUser.save()) {
-			errorMsg("UserDataSaveError", CLogger.retrieveErrorAsString());
-		} else {
-			ADialog.info(0, this, "PasswordChangedSuccessful");
-			setVisible(false);
-			fireUserDataListener(new UserDataChangeEvent(this, true));
-		}
+			return("UserDataSaveError: " + CLogger.retrieveErrorAsString());
+		} 
+		
+		// Todo ok? Retornar null como mensaje de error
+		return null;
 	}
+	
 	
 	protected String getMsg(String name) {
 		return Msg.translate(Env.getCtx(), name);
