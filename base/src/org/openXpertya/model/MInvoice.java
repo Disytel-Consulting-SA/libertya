@@ -3078,7 +3078,7 @@ public class MInvoice extends X_C_Invoice implements DocAction,Authorization {
 
 		// Std Period open?
 
-		if (!MPeriod.isOpen(getCtx(), getDateAcct(), dt.getDocBaseType())) {
+		if (!MPeriod.isOpen(getCtx(), getDateAcct(), dt.getDocBaseType(), dt)) {
 			m_processMsg = "@PeriodClosed@";
 
 			return DocAction.STATUS_Invalid;

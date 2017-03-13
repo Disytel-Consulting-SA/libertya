@@ -240,4 +240,20 @@ if (oo != null)
 }
 return false;
 }
+/** Set DocTypeControl */
+public void setDocTypeControl (boolean DocTypeControl)
+{
+set_Value ("DocTypeControl", new Boolean(DocTypeControl));
+}
+/** Get DocTypeControl */
+public boolean isDocTypeControl() 
+{
+Object oo = get_Value("DocTypeControl");
+if (oo != null) 
+{
+ if (oo instanceof Boolean) return ((Boolean)oo).booleanValue();
+ return "Y".equals(oo);
+}
+return false;
+}
 }
