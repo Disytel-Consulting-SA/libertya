@@ -161,6 +161,24 @@ public class MPeriod extends X_C_Period implements ITime{
 
         return period.getC_Period_ID();
     }    // getC_Period_ID
+    
+    public static boolean isOpen( Properties ctx,Timestamp DateAcct,String DocBaseType, MDocType docType ) {
+    	//Obtengo período y Control de Período para el documento base
+    	MPeriod period = get( ctx,DateAcct );
+    	MPeriodControl periodControl = period.getPeriodControl(DocBaseType);
+    	
+    	//Verifico si el período está abierto 
+    	boolean open = isOpen(ctx, DateAcct, DocBaseType);
+    	   	
+    	//Solo hago el control por tipo de documento si el período está abierto para docbaseType
+    	//y el control de período tiene activa la marca "Control por tipo de documento" 
+    	if (open && periodControl.isDocTypeControl()) {
+    		X_C_PosPeriodControl posPeriodControl = periodControl.getByDoctype(docType.getC_DocType_ID());    	
+    		open = posPeriodControl != null && posPeriodControl.getPeriodStatus().equals(MPeriodControl.PERIODSTATUS_Open);
+    	}
+    	
+    	return open; 
+    }
 
     /**
      * Descripción de Método

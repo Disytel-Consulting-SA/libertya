@@ -25,6 +25,7 @@ import java.util.Properties;
 import java.util.logging.Level;
 
 import org.openXpertya.util.CLogger;
+import org.openXpertya.util.CacheMgt;
 import org.openXpertya.util.DB;
 import org.openXpertya.util.Env;
 
@@ -166,6 +167,41 @@ public class MPeriodControl extends X_C_PeriodControl {
 		
 		return list;
     }
+    
+    public X_C_PosPeriodControl getByDoctype(int c_DocType_ID) {
+    	String sql = "SELECT * FROM C_PosPeriodControl WHERE C_PeriodControl_ID = ? AND C_DocType_ID = ?";
+    	PreparedStatement pstmt = null;
+    	ResultSet rs = null;
+    	
+    	try {
+    		pstmt = DB.prepareStatement(sql, null);
+    		pstmt.setInt(1, getC_PeriodControl_ID());
+    		pstmt.setInt(2, c_DocType_ID);
+    		rs = pstmt.executeQuery();
+    		while (rs.next()) {
+    			X_C_PosPeriodControl posPeriodControl = new X_C_PosPeriodControl(Env.getCtx(), rs, null);
+    			return posPeriodControl;
+    		}
+    		
+    	} catch (SQLException e) {
+    		s_log.log(Level.SEVERE, "Error loading PosPeriodControls. C_PeriodControl_ID = " + getC_PeriodControl_ID(), e);
+		} finally {
+			try {
+				if (rs != null) rs.close();
+				if (pstmt != null) pstmt.close();
+			} catch (Exception e) {	}
+		}
+		
+		return null;
+    }
+    
+    protected boolean afterSave(boolean newRecord, boolean success) {
+    	 // Reset Cache
+
+        CacheMgt.get().reset( "C_PeriodControl", getC_PeriodControl_ID());
+        return true;
+    }
+    
 }    // MPeriodControl
 
 
