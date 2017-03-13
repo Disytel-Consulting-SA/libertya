@@ -13,6 +13,7 @@
  *****************************************************************************/
 package org.adempiere.webui.window;
 
+import org.adempiere.webui.apps.AEnv;
 import org.adempiere.webui.component.Label;
 import org.adempiere.webui.component.Listbox;
 import org.adempiere.webui.component.ListboxFactory;
@@ -44,6 +45,9 @@ public class WPreference extends Popup implements EventListener {
 	private WYesNoEditor tabCollapsible;
 	private Listbox tabPlacement;
 
+	ToolBarButton usrDataBtn;
+	ToolBarButton btn;
+	
 	public WPreference() {
 		super();
 		init();
@@ -98,13 +102,21 @@ public class WPreference extends Popup implements EventListener {
 		ToolBar toolbar = new ToolBar();
 		toolbar.setAlign("end");
 		this.appendChild(toolbar);
-		ToolBarButton btn = new ToolBarButton("");
+		
+        usrDataBtn = new ToolBarButton("");
+        usrDataBtn.setName("btnUserData");
+        usrDataBtn.setImage("/images/Preference24.png");
+        usrDataBtn.setTooltiptext(Msg.getMsg(Env.getCtx(),"ChangePassword"));
+        usrDataBtn.addEventListener(Events.ON_CLICK, this);
+        toolbar.appendChild(usrDataBtn);
+        
+		btn = new ToolBarButton("");
         btn.setName("btnSave");
         btn.setImage("/images/Save24.png");
         btn.setTooltiptext(Msg.getMsg(Env.getCtx(),"Save"));
         btn.addEventListener(Events.ON_CLICK, this);
         toolbar.appendChild(btn);
-
+        
 		UserPreference preference = SessionManager.getSessionApplication().getUserPreference();
 		autoCommit.setValue(preference.getProperty(UserPreference.P_AUTO_COMMIT));
 		autoNew.setValue(preference.getProperty(UserPreference.P_AUTO_NEW));
@@ -114,7 +126,12 @@ public class WPreference extends Popup implements EventListener {
 
 	public void onEvent(Event event) throws Exception {
 		if (Events.ON_CLICK.equals(event.getName())) {
-			onSave();
+			if (event.getTarget()==btn)	{	
+				onSave();
+			}
+			else if (event.getTarget()==usrDataBtn) {
+				onUserDataChange();
+			}
 		}
 	}
 
@@ -136,5 +153,10 @@ public class WPreference extends Popup implements EventListener {
 		Env.setAutoNew(Env.getCtx(), "y".equalsIgnoreCase(preference.getProperty(UserPreference.P_AUTO_NEW)));
 
 		this.detach();
+	}
+	
+	private void onUserDataChange() {
+		WUserDataChange dialog = new WUserDataChange();
+		AEnv.showWindow(dialog);
 	}
 }

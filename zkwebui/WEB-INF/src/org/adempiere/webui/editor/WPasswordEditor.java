@@ -33,5 +33,10 @@ public class WPasswordEditor extends WStringEditor
         super(mField);
         super.setTypePassword(true);
     }
+    
+    public WPasswordEditor()
+    {
+        super.setTypePassword(true);
+    }
 
 }
