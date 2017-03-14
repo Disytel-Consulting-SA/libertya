@@ -20,8 +20,10 @@ import java.math.BigDecimal;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.Timestamp;
+import java.util.HashMap;
 import java.util.logging.Level;
 
+import org.openXpertya.model.CalloutInvoiceExt;
 import org.openXpertya.model.MInvoice;
 import org.openXpertya.model.MInvoiceLine;
 import org.openXpertya.model.X_I_Invoice;
@@ -29,6 +31,7 @@ import org.openXpertya.util.CLogger;
 import org.openXpertya.util.DB;
 import org.openXpertya.util.Env;
 import org.openXpertya.util.Msg;
+import org.openXpertya.util.Util;
 
 /**
  * Descripción de Clase
@@ -767,6 +770,24 @@ public class ImportInvoice extends SvrProcess {
 					}		
 					
 					invoice.setSkipLastFiscalDocumentNoValidation(true);
+					
+					// Divido el nro de documento en letra, pto de venta y
+					// nro de comprobante si es que es posible
+					if(CalloutInvoiceExt.ComprobantesFiscalesActivos()){
+						HashMap<String, Object> div = CalloutInvoiceExt.DividirDocumentNo(imp.getAD_Client_ID(), imp.getDocumentNo());
+						// Letra
+						if(!Util.isEmpty((Integer)div.get("C_Letra_Comprobante_ID"), true)){
+							invoice.setC_Letra_Comprobante_ID((Integer)div.get("C_Letra_Comprobante_ID"));
+						}
+						// Punto de venta
+						if(!Util.isEmpty((Integer)div.get("PuntoDeVenta"), true)){
+							invoice.setPuntoDeVenta((Integer)div.get("PuntoDeVenta"));
+						}
+						// Nro de comprobante
+						if(!Util.isEmpty((Integer)div.get("NumeroComprobante"), true)){
+							invoice.setNumeroComprobante((Integer)div.get("NumeroComprobante"));
+						}
+					}
 
 					if(invoice.save()){
 						noInsert++;
