@@ -179,6 +179,13 @@ public class MProductUPC extends X_M_ProductUPC {
 			return false;
 		}
 		
+		// Gestión de predeterminado por artículo, sólo uno puede haber
+		if(isDefault()){
+			int no = DB.getSQLValue(get_TrxName(), "SELECT count(*) from " + Table_Name + " where isdefault = 'Y' and m_product_id = "+getM_Product_ID()
+					+ (newRecord ? "" : " and m_productupc_id <> " + getID()));
+			setIsDefault(no <= 0);
+		}
+		
 		// Si se desactiva el registro se le quita la marca de predeterminado.
 		// Un UPC inactivo no puede ser el predeterminado.
 		if (is_ValueChanged("IsActive") && !isActive()) {
