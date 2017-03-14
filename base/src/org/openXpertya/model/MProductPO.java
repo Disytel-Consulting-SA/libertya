@@ -21,6 +21,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Properties;
 import java.util.logging.Level;
 
@@ -93,6 +94,57 @@ public class MProductPO extends X_M_Product_PO {
         return retValue;
     }    // getOfProduct
 
+    
+    public static List<MProductPO> getOfBPartner(Properties ctx, Integer bPartnerID, String trxName) throws Exception{
+    	List<MProductPO> pos = new ArrayList<MProductPO>();
+    	String sql = "SELECT * FROM M_Product_PO " + "WHERE C_BPartner_ID=? AND IsActive='Y' ";
+    	PreparedStatement ps = null;
+    	ResultSet rs = null;
+    	try {
+			ps = DB.prepareStatement(sql, trxName);
+			ps.setInt(1, bPartnerID);
+			rs = ps.executeQuery();
+			while (rs.next()) {
+				pos.add(new MProductPO(ctx, rs, trxName));
+			}
+		} catch (Exception e) {
+			throw e;
+		} finally{
+			try {
+				if(ps != null)ps.close();
+				if(rs != null)rs.close();
+			} catch (Exception e2) {
+				throw e2;
+			}
+		}
+    	return pos;
+    }
+    
+    public static List<Integer> getProductIDsOfBPartner(Properties ctx, Integer bPartnerID, String trxName) {
+    	List<Integer> pos = new ArrayList<Integer>();
+    	String sql = "SELECT m_product_id FROM M_Product_PO " + "WHERE C_BPartner_ID=? AND IsActive='Y' ";
+    	PreparedStatement ps = null;
+    	ResultSet rs = null;
+    	try {
+			ps = DB.prepareStatement(sql, trxName);
+			ps.setInt(1, bPartnerID);
+			rs = ps.executeQuery();
+			while (rs.next()) {
+				pos.add(rs.getInt("m_product_id"));
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
+		} finally{
+			try {
+				if(ps != null)ps.close();
+				if(rs != null)rs.close();
+			} catch (Exception e2) {
+				e2.printStackTrace();
+			}
+		}
+    	return pos;
+    }
+    
     /**
 	 * @param productID
 	 *            id del artículo
