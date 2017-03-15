@@ -185,11 +185,11 @@ public class MProductPricing implements Serializable{
 		if(manageTax && deltaTax != 0){
 			BigDecimal costTaxAmt = MTax.calculateTax(costConverted, true,
 					percepcionIncluded, taxRate, 2);
-			costPrice = costConverted.add(costTaxAmt.multiply(new BigDecimal(
+			costConverted = costConverted.add(costTaxAmt.multiply(new BigDecimal(
 					deltaTax)));
 		}
 		
-		return costPrice;
+		return costConverted;
 	}
 	
 	/**
