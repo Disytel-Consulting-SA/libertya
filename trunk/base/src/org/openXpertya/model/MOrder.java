@@ -1366,6 +1366,10 @@ public class MOrder extends X_C_Order implements DocAction, Authorization  {
         if( getC_DocTypeTarget_ID() == 0 ) {
             setC_DocTypeTarget_ID( DocSubTypeSO_Standard );
         }
+        
+		if (Util.isEmpty(getC_DocType_ID(), true) && !Util.isEmpty(getC_DocTypeTarget_ID(), true)) {
+        	setC_DocType_ID(getC_DocTypeTarget_ID());
+        }
 
         // Default Payment Term
         if( getC_PaymentTerm_ID() == 0 ) {
@@ -4980,7 +4984,7 @@ public class MOrder extends X_C_Order implements DocAction, Authorization  {
 					+ "from c_orderline as ol "
 					+ "inner join m_product_po as po on (po.m_product_id = ol.m_product_id and ol.c_bpartner_id = po.c_bpartner_id and po.isactive = 'Y') "
 					+ "inner join m_product as p on p.m_product_id = ol.m_product_id "
-					+ "where ol.c_order_id = ? and (ol.qtyentered < po.order_min OR (ol.qtyentered % po.order_pack) <> 0)"
+					+ "where ol.c_order_id = ? and (ol.qtyentered < po.order_min OR (po.order_pack <> 0 and (ol.qtyentered % po.order_pack) <> 0)) "
 					+ "order by ol.line";
 		PreparedStatement ps = null;
 		ResultSet rs = null;
