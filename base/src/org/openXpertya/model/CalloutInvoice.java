@@ -173,13 +173,20 @@ public class CalloutInvoice extends CalloutEngine {
 
                 if( !rs.wasNull()) {
                     mTab.setValue( "M_PriceList_ID",ii );
-                } else {    // get default PriceList
+                } 
+                
+                /* Se comenta ya que el campo puede tener un valor por defecto 
+                 * en el campo de tarifa y estar como sólo lectura, 
+                 * este código modifica la tarifa
+                 * *******************************************************
+                else {    // get default PriceList
                     int i = Env.getContextAsInt( ctx,"#M_PriceList_ID" );
 
                     if( i != 0 ) {
                         mTab.setValue( "M_PriceList_ID",new Integer( i ));
                     }
                 }
+                ********************************************************/
 
                 // PaymentRule
 
