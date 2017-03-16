@@ -300,7 +300,7 @@ public class MChangeLog extends X_AD_ChangeLog {
     		/* Parametros para cada una de las entradas de registro */
     		int col = 1;
         	CPreparedStatement pstmt = new CPreparedStatement( ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_UPDATABLE, sql, get_TrxName() );
-        	pstmt.setInt(col++, DB.getSQLValueRW(get_TrxName(), "SELECT nextval('seq_ad_changelog')"));
+        	pstmt.setInt(col++, DB.getSQLValue(get_TrxName(), "SELECT nextval('seq_ad_changelog')"));
         	pstmt.setInt(col++, getAD_Client_ID());
         	pstmt.setInt(col++, getAD_Org_ID()); 
         	pstmt.setString(col++, isActive()?"Y":"N");
