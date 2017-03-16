@@ -223,25 +223,32 @@ public class ImportPriceList extends AbstractImportProcess {
 		// Se obtiene el ProductPrice, en caso de no exisitr se crea uno nuevo.
 		MProductPrice productPrice = getProductPrice(importPP);
 		
-		// Se modifican/crean los datos del precio del artículo.
-		productPrice.setIsActive(true);
-		productPrice.changeOrg(importPP.getAD_Org_ID());
-		productPrice.setPriceLimit(importPP.getPriceLimit());
-		productPrice.setPriceList(importPP.getPriceList());
-		productPrice.setPriceStd(importPP.getPriceStd());
+		// Si al menos uno de los importes es distinto al existente, entonces
+		// actualizo sino no
+		if(importPP.getPriceStd().compareTo(productPrice.getPriceStd()) != 0
+				|| importPP.getPriceList().compareTo(productPrice.getPriceList()) != 0
+				|| importPP.getPriceLimit().compareTo(productPrice.getPriceLimit()) != 0){
 		
-		// Se intentan guardar los cambios.
-		if(!productPrice.save ()) {
-			// Se obtiene un mensaje de error descriptivo en caso de que haya ocurrido
-			// algún problema en el guardado.
-			String errorTitle = updatingPrice ? "@ProductPriceUpdateError@" : "@ProductPriceInsertError@";
-			StringBuffer errorMsg = new StringBuffer(errorTitle);
-			String errorDesc = getErrorDescription();
-			if (errorDesc != null && errorDesc.length() > 0)
-				errorMsg.append("<br>- ").append(errorDesc);
+			// Se modifican/crean los datos del precio del artículo.
+			productPrice.setIsActive(true);
+			productPrice.changeOrg(importPP.getAD_Org_ID());
+			productPrice.setPriceLimit(importPP.getPriceLimit());
+			productPrice.setPriceList(importPP.getPriceList());
+			productPrice.setPriceStd(importPP.getPriceStd());
 			
-			// Se asigna el mensaje de error al campo de error del registro de importación.
-			return Msg.parseTranslation(getCtx(), errorMsg.toString());
+			// Se intentan guardar los cambios.
+			if(!productPrice.save ()) {
+				// Se obtiene un mensaje de error descriptivo en caso de que haya ocurrido
+				// algún problema en el guardado.
+				String errorTitle = updatingPrice ? "@ProductPriceUpdateError@" : "@ProductPriceInsertError@";
+				StringBuffer errorMsg = new StringBuffer(errorTitle);
+				String errorDesc = getErrorDescription();
+				if (errorDesc != null && errorDesc.length() > 0)
+					errorMsg.append("<br>- ").append(errorDesc);
+				
+				// Se asigna el mensaje de error al campo de error del registro de importación.
+				return Msg.parseTranslation(getCtx(), errorMsg.toString());
+			}
 		}
 		
 		// Retorna el resulado satisfactorio.
@@ -258,25 +265,32 @@ public class ImportPriceList extends AbstractImportProcess {
 		// Se obtiene el ProductPrice, en caso de no exisitr se crea uno nuevo.
 		MProductPriceInstance productPriceInstance = getProductPriceInstance(importPP);
 		
-		// Se modifican/crean los datos del precio del artículo.
-		productPriceInstance.setIsActive(true);
-		productPriceInstance.changeOrg(importPP.getAD_Org_ID());
-		productPriceInstance.setPriceLimit(importPP.getPriceLimit());
-		productPriceInstance.setPriceList(importPP.getPriceList());
-		productPriceInstance.setPriceStd(importPP.getPriceStd());
+		// Si al menos uno de los importes es distinto al existente, entonces
+		// actualizo sino no
+		if(importPP.getPriceStd().compareTo(productPriceInstance.getPriceStd()) != 0
+				|| importPP.getPriceList().compareTo(productPriceInstance.getPriceList()) != 0
+				|| importPP.getPriceLimit().compareTo(productPriceInstance.getPriceLimit()) != 0){
 		
-		// Se intentan guardar los cambios.
-		if(!productPriceInstance.save ()) {
-			// Se obtiene un mensaje de error descriptivo en caso de que haya ocurrido
-			// algún problema en el guardado.
-			String errorTitle = updatingPrice ? "@ProductPriceUpdateError@" : "@ProductPriceInsertError@";
-			StringBuffer errorMsg = new StringBuffer(errorTitle);
-			String errorDesc = getErrorDescription();
-			if (errorDesc != null && errorDesc.length() > 0)
-				errorMsg.append("<br>- ").append(errorDesc);
+			// Se modifican/crean los datos del precio del artículo.
+			productPriceInstance.setIsActive(true);
+			productPriceInstance.changeOrg(importPP.getAD_Org_ID());
+			productPriceInstance.setPriceLimit(importPP.getPriceLimit());
+			productPriceInstance.setPriceList(importPP.getPriceList());
+			productPriceInstance.setPriceStd(importPP.getPriceStd());
 			
-			// Se asigna el mensaje de error al campo de error del registro de importación.
-			return Msg.parseTranslation(getCtx(), errorMsg.toString());
+			// Se intentan guardar los cambios.
+			if(!productPriceInstance.save ()) {
+				// Se obtiene un mensaje de error descriptivo en caso de que haya ocurrido
+				// algún problema en el guardado.
+				String errorTitle = updatingPrice ? "@ProductPriceUpdateError@" : "@ProductPriceInsertError@";
+				StringBuffer errorMsg = new StringBuffer(errorTitle);
+				String errorDesc = getErrorDescription();
+				if (errorDesc != null && errorDesc.length() > 0)
+					errorMsg.append("<br>- ").append(errorDesc);
+				
+				// Se asigna el mensaje de error al campo de error del registro de importación.
+				return Msg.parseTranslation(getCtx(), errorMsg.toString());
+			}
 		}
 		
 		// Retorna el resulado satisfactorio.
