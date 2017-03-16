@@ -521,9 +521,15 @@ public class CalloutInvoiceExt extends CalloutInvoice {
 				if (priceListId != 0){
 					mTab.setValue("M_PriceList_ID", priceListId);
 				}
+				
+                /* Se comenta ya que el campo puede tener un valor por defecto 
+                 * en el campo de tarifa y estar como sólo lectura, 
+                 * este código modifica la tarifa
+                 * *******************************************************
 				else {
 					setPriceList(ctx, WindowNo, mTab, mField, value);
 				}
+				*******************************************************/
 				
 
 				// PaymentRule
