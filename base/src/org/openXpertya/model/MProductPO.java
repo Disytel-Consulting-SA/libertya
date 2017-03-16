@@ -27,6 +27,7 @@ import java.util.logging.Level;
 
 import org.openXpertya.util.CLogger;
 import org.openXpertya.util.DB;
+import org.openXpertya.util.Msg;
 import org.openXpertya.util.Util;
 
 /**
@@ -328,6 +329,27 @@ public class MProductPO extends X_M_Product_PO {
     			return false;
         	}
     	}
+        
+        // Mismo nro de artículo de proveedor para distinto artículo
+        if(newRecord || (is_ValueChanged("VendorProductNo") && !Util.isEmpty(getVendorProductNo(), true))){
+        	String newRecordWhereClause = newRecord?"":" AND m_product_id <> "+getM_Product_ID();
+			int countVendorProductNo = DB.getSQLValue(get_TrxName(),
+					"SELECT count(*) FROM " + get_TableName()
+							+ " WHERE c_bpartner_id = ? and trim(vendorproductno) = trim('" + getVendorProductNo()
+							+ "') " + newRecordWhereClause,
+					getC_BPartner_ID());
+			if(countVendorProductNo > 0){
+				log.saveError("SaveError",
+						Msg.getMsg(getCtx(), "NotUniqueVendorProductNo", new Object[] { getVendorProductNo() }));
+				return false;
+			}
+        }
+        
+        // Setear el UPC/EAN por el que posee el artículo
+        if(Util.isEmpty(getUPC(), true)){
+        	MProduct product = MProduct.get(getCtx(), getM_Product_ID());
+        	setUPC(product.getUPC());
+        }
   
         return true;
     }    // beforeSave
