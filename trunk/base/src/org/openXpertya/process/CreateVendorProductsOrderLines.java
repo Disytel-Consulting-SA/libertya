@@ -29,7 +29,8 @@ public class CreateVendorProductsOrderLines extends SvrProcess {
 	private static final String STR_SALES = Msg.translate(Env.getCtx(), "Sales");
 	private static final String STR_QTY_ORDERED = Msg.translate(Env.getCtx(), "QtyOrdered");
 	
-	private int p_C_Order_ID = 0;
+	protected int p_C_Order_ID = 0;
+	protected MOrder order;
 	private Properties ctx = Env.getCtx();
 		
 	@Override
@@ -48,7 +49,7 @@ public class CreateVendorProductsOrderLines extends SvrProcess {
 		int totalProducts = 0;
 		
 		// Se obtiene el pedido y la versión de la tarifa.
-		MOrder order = new MOrder(ctx, p_C_Order_ID, get_TrxName());
+		order = new MOrder(ctx, p_C_Order_ID, get_TrxName());
 		MPriceListVersion m_PriceList_Version = 
 			new MPriceList(ctx, order.getM_PriceList_ID(), get_TrxName()).getPriceListVersion(order.getDateOrdered());
 		int m_PriceList_Version_ID = 0;
@@ -57,12 +58,7 @@ public class CreateVendorProductsOrderLines extends SvrProcess {
 			m_PriceList_Version_ID = m_PriceList_Version.getM_PriceList_Version_ID();
 				
 		// Consulta para obtener los productos que tiene configurado el proveedor.
-		String sql = 
-			" SELECT po.AD_Client_ID, po.AD_Org_ID, po.M_Product_ID, po.pricelist, po.order_min, COALESCE(bomQtyOrdered(po.M_Product_ID,?,0)) AS QtyOrdered " + 
-			" FROM M_Product_PO po " + 
-			" INNER JOIN M_Product p ON (po.M_Product_ID = p.M_Product_ID) " +
-			" WHERE po.IsActive = 'Y' AND po.IsCurrentVendor = 'Y' AND p.IsActive = 'Y' AND po.C_BPartner_ID = ? " +
-			" ORDER BY p.name ASC ";
+		String sql = getQuery();
 		
         try {
             PreparedStatement pstmt = DB.prepareStatement(sql);
@@ -134,6 +130,14 @@ public class CreateVendorProductsOrderLines extends SvrProcess {
         	summary = summary + " (" + Msg.getMsg(ctx, "VendorProductsNotInPriceList", new Object[] { notInPriceList }) +  ")";
         
         return summary;
+	}
+	
+	protected String getQuery(){
+		return " SELECT po.AD_Client_ID, po.AD_Org_ID, po.M_Product_ID, po.pricelist, po.order_min, COALESCE(bomQtyOrdered(po.M_Product_ID,?,0)) AS QtyOrdered " + 
+				" FROM M_Product_PO po " + 
+				" INNER JOIN M_Product p ON (po.M_Product_ID = p.M_Product_ID) " +
+				" WHERE po.IsActive = 'Y' AND po.IsCurrentVendor = 'Y' AND p.IsActive = 'Y' AND po.C_BPartner_ID = ? " +
+				" ORDER BY p.name ASC ";
 	}
 	
 	private void setOrderLineDescription(MOrderLine ol, BigDecimal qtyOrdered) {
