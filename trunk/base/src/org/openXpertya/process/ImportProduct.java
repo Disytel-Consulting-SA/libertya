@@ -58,6 +58,8 @@ public class ImportProduct extends SvrProcess {
     /** Descripción de Campos */
 
     private Timestamp m_DateValue = null;
+    
+    private boolean findProductByUPC = true;
 
     /**
      * Descripción de Método
@@ -141,9 +143,11 @@ public class ImportProduct extends SvrProcess {
         // ****    Find Product
         // EAN/UPC
 
-        sql = new StringBuffer( "UPDATE I_Product i " + "SET M_Product_ID=(SELECT M_Product_ID FROM M_Product p" + " WHERE i.UPC=p.UPC AND i.AD_Client_ID=p.AD_Client_ID) " + "WHERE M_Product_ID IS NULL" + " AND I_IsImported='N'" ).append( clientCheck );
-        no = DB.executeUpdate( sql.toString());
-        log.info( "Product Existing UPC=" + no );
+        if(isFindProductByUPC()){
+	        sql = new StringBuffer( "UPDATE I_Product i " + "SET M_Product_ID=(SELECT M_Product_ID FROM M_Product p" + " WHERE i.UPC=p.UPC AND i.AD_Client_ID=p.AD_Client_ID) " + "WHERE M_Product_ID IS NULL" + " AND I_IsImported='N'" ).append( clientCheck );
+	        no = DB.executeUpdate( sql.toString());
+	        log.info( "Product Existing UPC=" + no );
+        }
 
         // Value
 
@@ -685,6 +689,14 @@ public class ImportProduct extends SvrProcess {
     protected String getMsg(String msg) {
     	return Msg.translate(getCtx(), msg);
     }
+
+	protected boolean isFindProductByUPC() {
+		return findProductByUPC;
+	}
+
+	protected void setFindProductByUPC(boolean findProductByUPC) {
+		this.findProductByUPC = findProductByUPC;
+	}
 }    // ImportProduct
 
 
