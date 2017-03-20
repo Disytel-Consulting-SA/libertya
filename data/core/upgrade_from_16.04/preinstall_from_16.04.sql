@@ -6135,11 +6135,4 @@ ALTER TABLE rv_payment
   OWNER TO libertya;
   
 --20170317-0725 Nuevo boton para disparar proceso que simule la instalacion de un componente en desarrollo
-ALTER TABLE AD_ComponentVersion ADD COLUMN simulatecvinstallation char(1); 
-
-
-
-
-
-
-
+UPDATE ad_system SET dummy = (SELECT addcolumnifnotexists('AD_ComponentVersion','simulatecvinstallation','char(1)'));
