@@ -68,6 +68,7 @@ import org.openXpertya.model.DataStatusEvent;
 import org.openXpertya.model.DataStatusListener;
 import org.openXpertya.model.MColumnAccess;
 import org.openXpertya.model.MField;
+import org.openXpertya.model.MPreference;
 import org.openXpertya.model.MQuery;
 import org.openXpertya.model.MRole;
 import org.openXpertya.model.M_Column;
@@ -76,6 +77,7 @@ import org.openXpertya.util.DB;
 import org.openXpertya.util.DisplayType;
 import org.openXpertya.util.Env;
 import org.openXpertya.util.Msg;
+import org.openXpertya.util.Util;
 import org.openXpertya.util.ValueNamePair;
 import org.openXpertya.model.X_AD_Search;
 
@@ -92,6 +94,16 @@ import org.openXpertya.model.X_AD_Search;
 
 public final class Find extends CDialog implements ActionListener,ChangeListener,DataStatusListener {
 
+	/**
+	 * Nombre de la preference que permite agregar comodin al final de los
+	 * campos Value, Name, Documento y Description
+	 */
+	
+	private static final String ADD_END_WILDCARD_VALUE_PREFERENCE_NAME = "FindAddEndWildcard_Value";
+	private static final String ADD_END_WILDCARD_NAME_PREFERENCE_NAME = "FindAddEndWildcard_Name";
+	private static final String ADD_END_WILDCARD_DOCUMENTNO_PREFERENCE_NAME = "FindAddEndWildcard_Documentno";
+	private static final String ADD_END_WILDCARD_DESCRIPTION_PREFERENCE_NAME = "FindAddEndWildcard_Description";
+	
     /**
      * Constructor de la clase ...
      *
@@ -995,12 +1007,33 @@ public final class Find extends CDialog implements ActionListener,ChangeListener
     }    // stateChanged
 
     /**
+     * @param preferenceName
+     * @return true si la preference contiene el valor Y, false caso contrario
+     */
+    public boolean getEndWildcardFor(String preferenceName){
+		String addValueWildcardStr = MPreference.searchCustomPreferenceValue(preferenceName,
+				Env.getAD_Client_ID(Env.getCtx()), Env.getAD_Org_ID(Env.getCtx()), Env.getAD_User_ID(Env.getCtx()),
+				true);
+		return !Util.isEmpty(addValueWildcardStr, true) && addValueWildcardStr.equalsIgnoreCase("Y");
+    }
+    
+    /**
      * Descripción de Método
      *
      */
 
     private void cmd_ok_Simple() {
 
+    	// Levantar las preference para las wildcard al final del string de los campos default
+    	// Value
+    	boolean addValueWildcard = getEndWildcardFor(ADD_END_WILDCARD_VALUE_PREFERENCE_NAME);
+    	// Name
+    	boolean addNameWildcard = getEndWildcardFor(ADD_END_WILDCARD_NAME_PREFERENCE_NAME);
+    	// Documentno
+    	boolean addDocumentnoWildcard = getEndWildcardFor(ADD_END_WILDCARD_DOCUMENTNO_PREFERENCE_NAME);
+    	// Description
+    	boolean addDescriptionWildcard = getEndWildcardFor(ADD_END_WILDCARD_DESCRIPTION_PREFERENCE_NAME);
+    	
         // Create Query String
 
         m_query = new MQuery( m_tableName );
@@ -1008,10 +1041,10 @@ public final class Find extends CDialog implements ActionListener,ChangeListener
         if( hasValue &&!valueField.getText().equals( "%" ) && (valueField.getText().length() != 0) ) {
             String value = valueField.getText().toUpperCase();
 
-         // Líneas comentadas para no poner por default el comodin del final del string
-//            if( !value.endsWith( "%" )) {
-//                value += "%";
-//            }
+            // Líneas comentadas para no poner por default el comodin del final del string
+            if( !value.endsWith( "%" ) && addValueWildcard) {
+                value += "%";
+            }
 
             m_query.addRestriction( "UPPER(Value)",MQuery.LIKE,value,valueLabel.getText(),value );
         }
@@ -1021,10 +1054,10 @@ public final class Find extends CDialog implements ActionListener,ChangeListener
         if( hasDocNo &&!docNoField.getText().equals( "%" ) && (docNoField.getText().length() != 0) ) {
             String value = docNoField.getText().toUpperCase();
 
-         // Líneas comentadas para no poner por default el comodin del final del string
-//            if( !value.endsWith( "%" )) {
-//                value += "%";
-//            }
+            // Líneas comentadas para no poner por default el comodin del final del string
+            if( !value.endsWith( "%" ) && addDocumentnoWildcard) {
+                value += "%";
+            }
 
             m_query.addRestriction( "UPPER(DocumentNo)",MQuery.LIKE,value,docNoLabel.getText(),value );
         }
@@ -1034,10 +1067,10 @@ public final class Find extends CDialog implements ActionListener,ChangeListener
         if(( hasName ) &&!nameField.getText().equals( "%" ) && (nameField.getText().length() != 0) ) {
             String value = nameField.getText().toUpperCase();
 
-         // Líneas comentadas para no poner por default el comodin del final del string
-//            if( !value.endsWith( "%" )) {
-//                value += "%";
-//            }
+            // Líneas comentadas para no poner por default el comodin del final del string
+            if( !value.endsWith( "%" ) && addNameWildcard) {
+                value += "%";
+            }
 
             m_query.addRestriction( "UPPER(Name)",MQuery.LIKE,value,nameLabel.getText(),value );
         }
@@ -1047,10 +1080,10 @@ public final class Find extends CDialog implements ActionListener,ChangeListener
         if( hasDescription &&!descriptionField.getText().equals( "%" ) && (descriptionField.getText().length() != 0) ) {
             String value = descriptionField.getText().toUpperCase();
 
-         // Líneas comentadas para no poner por default el comodin del final del string
-//            if( !value.endsWith( "%" )) {
-//                value += "%";
-//            }
+            // Líneas comentadas para no poner por default el comodin del final del string
+            if( !value.endsWith( "%" ) && addDescriptionWildcard) {
+                value += "%";
+            }
 
             m_query.addRestriction( "UPPER(Description)",MQuery.LIKE,value,descriptionLabel.getText(),value );
         }
