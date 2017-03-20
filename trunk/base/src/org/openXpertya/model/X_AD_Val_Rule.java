@@ -1,13 +1,14 @@
-/** Modelo Generado - NO CAMBIAR MANUALMENTE - Copyright (C) 2006 FUNDESLE */
+/** Modelo Generado - NO CAMBIAR MANUALMENTE - Disytel */
 package org.openXpertya.model;
-import java.util.*;
+import java.util.logging.Level;
+ import java.util.*;
 import java.sql.*;
 import java.math.*;
 import org.openXpertya.util.*;
 /** Modelo Generado por AD_Val_Rule
- *  @author Comunidad de Desarrollo openXpertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
- *  @version  - 2009-10-22 14:51:28.843 */
-public class X_AD_Val_Rule extends PO
+ *  @author Comunidad de Desarrollo Libertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
+ *  @version  - 2017-03-20 16:41:00.766 */
+public class X_AD_Val_Rule extends org.openXpertya.model.PO
 {
 /** Constructor estándar */
 public X_AD_Val_Rule (Properties ctx, int AD_Val_Rule_ID, String trxName)
@@ -28,13 +29,13 @@ public X_AD_Val_Rule (Properties ctx, ResultSet rs, String trxName)
 {
 super (ctx, rs, trxName);
 }
-/** AD_Table_ID=108 */
-public static final int Table_ID=108;
+/** AD_Table_ID */
+public static final int Table_ID = M_Table.getTableID("AD_Val_Rule");
 
 /** TableName=AD_Val_Rule */
 public static final String Table_Name="AD_Val_Rule";
 
-protected static KeyNamePair Model = new KeyNamePair(108,"AD_Val_Rule");
+protected static KeyNamePair Model = new KeyNamePair(Table_ID,"AD_Val_Rule");
 protected static BigDecimal AccessLevel = new BigDecimal(4);
 
 /** Load Meta Data */
@@ -125,7 +126,7 @@ public String getDescription()
 {
 return (String)get_Value("Description");
 }
-public static final int ENTITYTYPE_AD_Reference_ID=245;
+public static final int ENTITYTYPE_AD_Reference_ID = MReference.getReferenceID("_Entity Type");
 /** Applications Integrated with openXpertya = A */
 public static final String ENTITYTYPE_ApplicationsIntegratedWithOpenXpertya = "A";
 /** Country Version = C */
@@ -141,8 +142,8 @@ Dictionary Entity Type;
  Determines ownership and synchronization */
 public void setEntityType (String EntityType)
 {
-if (EntityType.equals("A") || EntityType.equals("C") || EntityType.equals("D") || EntityType.equals("U") || EntityType.equals("CUST"));
- else throw new IllegalArgumentException ("EntityType Invalid value - Reference_ID=245 - A - C - D - U - CUST");
+if (EntityType.equals("A") || EntityType.equals("C") || EntityType.equals("D") || EntityType.equals("U") || EntityType.equals("CUST") || ( refContainsValue("CORE-AD_Reference-245", EntityType) ) );
+ else throw new IllegalArgumentException ("EntityType Invalid value: " + EntityType + ".  Valid: " +  refValidOptions("CORE-AD_Reference-245") );
 if (EntityType == null) throw new IllegalArgumentException ("EntityType is mandatory");
 if (EntityType.length() > 4)
 {
@@ -180,19 +181,21 @@ public KeyNamePair getKeyNamePair()
 {
 return new KeyNamePair(getID(), getName());
 }
-public static final int TYPE_AD_Reference_ID=101;
+public static final int TYPE_AD_Reference_ID = MReference.getReferenceID("AD_Validation Rule Types");
 /** SQL = S */
 public static final String TYPE_SQL = "S";
 /** Java Language = J */
 public static final String TYPE_JavaLanguage = "J";
 /** Java Script = E */
 public static final String TYPE_JavaScript = "E";
+/** Context Logic = C */
+public static final String TYPE_ContextLogic = "C";
 /** Set Type.
 Type of Validation (SQL, Java Script, Java Language) */
 public void setType (String Type)
 {
-if (Type.equals("S") || Type.equals("J") || Type.equals("E"));
- else throw new IllegalArgumentException ("Type Invalid value - Reference_ID=101 - S - J - E");
+if (Type.equals("S") || Type.equals("J") || Type.equals("E") || Type.equals("C") || ( refContainsValue("CORE-AD_Reference-101", Type) ) );
+ else throw new IllegalArgumentException ("Type Invalid value: " + Type + ".  Valid: " +  refValidOptions("CORE-AD_Reference-101") );
 if (Type == null) throw new IllegalArgumentException ("Type is mandatory");
 if (Type.length() > 1)
 {
@@ -207,16 +210,18 @@ public String getType()
 {
 return (String)get_Value("Type");
 }
-public static final int USETYPE_AD_Reference_ID=1000085;
+public static final int USETYPE_AD_Reference_ID = MReference.getReferenceID("AD_Val_Rule Use Type");
 /** Table = T */
 public static final String USETYPE_Table = "T";
 /** Tab = B */
 public static final String USETYPE_Tab = "B";
+/** Field = F */
+public static final String USETYPE_Field = "F";
 /** Set Use Type */
 public void setUseType (String UseType)
 {
-if (UseType.equals("T") || UseType.equals("B"));
- else throw new IllegalArgumentException ("UseType Invalid value - Reference_ID=1000085 - T - B");
+if (UseType.equals("T") || UseType.equals("B") || UseType.equals("F") || ( refContainsValue("CORE-AD_Reference-1000085", UseType) ) );
+ else throw new IllegalArgumentException ("UseType Invalid value: " + UseType + ".  Valid: " +  refValidOptions("CORE-AD_Reference-1000085") );
 if (UseType == null) throw new IllegalArgumentException ("UseType is mandatory");
 if (UseType.length() > 1)
 {
