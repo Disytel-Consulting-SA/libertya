@@ -1,12 +1,13 @@
 /** Modelo Generado - NO CAMBIAR MANUALMENTE - Disytel */
 package org.openXpertya.model;
-import java.util.*;
+import java.util.logging.Level;
+ import java.util.*;
 import java.sql.*;
 import java.math.*;
 import org.openXpertya.util.*;
 /** Modelo Generado por AD_Field_Access
  *  @author Comunidad de Desarrollo Libertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
- *  @version  - 2010-05-19 11:07:29.884 */
+ *  @version  - 2017-03-20 16:34:05.837 */
 public class X_AD_Field_Access extends org.openXpertya.model.PO
 {
 /** Constructor estándar */
@@ -56,8 +57,8 @@ public static final String ACCESSTYPE_NotDisplayed = "D";
 /** Set Access Type */
 public void setAccessType (String AccessType)
 {
-if (AccessType.equals("R") || AccessType.equals("D"));
- else throw new IllegalArgumentException ("AccessType Invalid value - Reference = ACCESSTYPE_AD_Reference_ID - R - D");
+if (AccessType.equals("R") || AccessType.equals("D") || ( refContainsValue("CORE-AD_Reference-1000083", AccessType) ) );
+ else throw new IllegalArgumentException ("AccessType Invalid value: " + AccessType + ".  Valid: " +  refValidOptions("CORE-AD_Reference-1000083") );
 if (AccessType == null) throw new IllegalArgumentException ("AccessType is mandatory");
 if (AccessType.length() > 1)
 {
@@ -151,6 +152,22 @@ Tab within a Window */
 public int getAD_Tab_ID() 
 {
 Integer ii = (Integer)get_Value("AD_Tab_ID");
+if (ii == null) return 0;
+return ii.intValue();
+}
+/** Set Dynamic Validation.
+Dynamic Validation Rule */
+public void setAD_Val_Rule_ID (int AD_Val_Rule_ID)
+{
+if (AD_Val_Rule_ID <= 0) set_Value ("AD_Val_Rule_ID", null);
+ else 
+set_Value ("AD_Val_Rule_ID", new Integer(AD_Val_Rule_ID));
+}
+/** Get Dynamic Validation.
+Dynamic Validation Rule */
+public int getAD_Val_Rule_ID() 
+{
+Integer ii = (Integer)get_Value("AD_Val_Rule_ID");
 if (ii == null) return 0;
 return ii.intValue();
 }

@@ -1433,15 +1433,29 @@ public final class MRole extends X_AD_Role
 	 */
 	public String getFieldAccess (int field_ID) {
 		String access = ""; // Default, complete access ""
+		
+		// Obtengo el acceso al campo
+		MFieldAccess fieldAccess = getMFieldAccess(field_ID);
+
+		// Si existe un acceso configurado para el campo, se retorna el tipo de acceso.
+		if (fieldAccess != null) {
+			access = fieldAccess.getAccessType();
+		}
+		
+		return access;
+	}
+	
+	
+	public MFieldAccess getMFieldAccess(int field_ID){
+		MFieldAccess access = null;
 		// Se cargan los accesos en caso de no estar cargados aún.
 		if (m_fieldAccess == null)
 			loadFieldAccess(true);
 
 		// Si existe un acceso configurado para el campo, se retorna el tipo de acceso.
 		if (m_fieldAccess.containsKey(field_ID)) {
-			access = m_fieldAccess.get(field_ID).getAccessType();
+			access = m_fieldAccess.get(field_ID);
 		}
-		
 		return access;
 	}
 	

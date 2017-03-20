@@ -6136,3 +6136,6 @@ ALTER TABLE rv_payment
   
 --20170317-0725 Nuevo boton para disparar proceso que simule la instalacion de un componente en desarrollo
 UPDATE ad_system SET dummy = (SELECT addcolumnifnotexists('AD_ComponentVersion','simulatecvinstallation','char(1)'));
+
+--20170320-1640 Mejora al acceso de campos por perfil que permite tener configurado una validación para sólo lectura o visible
+UPDATE ad_system SET dummy = (SELECT addcolumnifnotexists('AD_Field_Access','ad_val_rule_id','integer'));
