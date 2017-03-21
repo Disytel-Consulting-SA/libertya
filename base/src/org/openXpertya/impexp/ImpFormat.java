@@ -172,8 +172,7 @@ public final class ImpFormat {
 			m_tableUniqueParent = "H_PartnrID"; // Makes it unique
 		} else if (m_AD_Table_ID == 532) // I_Product
 		{
-			m_tableUnique1 = "UPC"; // UPC = unique
-			m_tableUnique2 = "Value";
+			m_tableUnique1 = "Value";
 			m_tableUniqueChild = "VendorProductNo"; // Vendor No may not be unique !
 			m_tableUniqueParent = "BPartner_Value"; // Makes it unique
 			uniqueChildParentOperator = " AND ";
