@@ -2,6 +2,7 @@ package org.openXpertya.process;
 
 import java.util.Properties;
 
+import org.openXpertya.cc.CurrentAccountDocument;
 import org.openXpertya.cc.CurrentAccountManager;
 import org.openXpertya.cc.CurrentAccountManagerFactory;
 import org.openXpertya.model.MBPartner;
@@ -61,7 +62,18 @@ public class UpdateBPartnerBalance extends SvrProcess {
 	protected String doIt() throws Exception {
 		// Obtengo el managaer actual
 		CurrentAccountManager manager = CurrentAccountManagerFactory
-				.getManager(getBpartner().isCustomer());
+				.getManager(new CurrentAccountDocument() {
+					
+					@Override
+					public boolean isSkipCurrentAccount() {
+						return false;
+					}
+					
+					@Override
+					public boolean isSOTrx() {
+						return getBpartner() != null && getBpartner().isCustomer();
+					}
+				});
 		// Obtengo la organización
 		MOrg org = new MOrg(getCtx(),Env.getAD_Org_ID(getCtx()), get_TrxName());
 		if(isUpdateBalance() && isUpdateStatus()){

@@ -7,7 +7,7 @@ import java.math.*;
 import org.openXpertya.util.*;
 /** Modelo Generado por C_DocType
  *  @author Comunidad de Desarrollo Libertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
- *  @version  - 2017-03-10 10:06:23.255 */
+ *  @version  - 2017-03-21 19:34:07.993 */
 public class X_C_DocType extends org.openXpertya.model.PO
 {
 /** Constructor estándar */
@@ -55,6 +55,7 @@ setPrintName (null);
 setReserveStockManagment (false);
 setReuseDocumentNo (false);
 setsigno_issotrx (null);
+setSkipCurrentAccounts (false);
 setUniqueDocumentno (false);
 setUseOrderWarehouse (true);	// Y
 }
@@ -1320,6 +1321,22 @@ set_Value ("signo_issotrx", signo_issotrx);
 public String getsigno_issotrx() 
 {
 return (String)get_Value("signo_issotrx");
+}
+/** Set Skip Current Accounts */
+public void setSkipCurrentAccounts (boolean SkipCurrentAccounts)
+{
+set_Value ("SkipCurrentAccounts", new Boolean(SkipCurrentAccounts));
+}
+/** Get Skip Current Accounts */
+public boolean isSkipCurrentAccounts() 
+{
+Object oo = get_Value("SkipCurrentAccounts");
+if (oo != null) 
+{
+ if (oo instanceof Boolean) return ((Boolean)oo).booleanValue();
+ return "Y".equals(oo);
+}
+return false;
 }
 /** Set Unique Documentno */
 public void setUniqueDocumentno (boolean UniqueDocumentno)

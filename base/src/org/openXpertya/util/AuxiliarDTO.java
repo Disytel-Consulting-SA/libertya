@@ -5,6 +5,10 @@ import java.math.BigDecimal;
 import java.sql.Timestamp;
 import java.util.Properties;
 
+import org.openXpertya.cc.CurrentAccountDocument;
+import org.openXpertya.model.MCentralAux;
+import org.openXpertya.model.MDocType;
+
 /**
  * Clase definida y encargada de transportar la información local a la tabla
  * auxiliar remota
@@ -12,7 +16,7 @@ import java.util.Properties;
  * @author Equipo de Desarrollo Libertya.
  * 
  */
-public class AuxiliarDTO implements Serializable {
+public class AuxiliarDTO implements Serializable, CurrentAccountDocument {
 
 	// Constantes
 	
@@ -339,5 +343,16 @@ public class AuxiliarDTO implements Serializable {
 
 	public Integer getDocTypeID() {
 		return docTypeID;
+	}
+
+	@Override
+	public boolean isSOTrx() {
+		return MCentralAux.TRANSACTIONTYPE_Customer.equals(getTransactionType());
+	}
+
+	@Override
+	public boolean isSkipCurrentAccount() {
+		MDocType dt = MDocType.get(getCtx(), getDocTypeID());
+		return dt != null && dt.isSkipCurrentAccounts();
 	}
 }

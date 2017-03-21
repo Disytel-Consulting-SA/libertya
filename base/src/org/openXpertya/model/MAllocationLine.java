@@ -24,6 +24,7 @@ import java.text.SimpleDateFormat;
 import java.util.Properties;
 import java.util.logging.Level;
 
+import org.openXpertya.cc.CurrentAccountDocument;
 import org.openXpertya.util.CLogger;
 import org.openXpertya.util.DB;
 import org.openXpertya.util.DisplayUtil;
@@ -38,7 +39,7 @@ import org.openXpertya.util.Util;
  * @author     Equipo de Desarrollo de openXpertya    
  */
 
-public class MAllocationLine extends X_C_AllocationLine {
+public class MAllocationLine extends X_C_AllocationLine implements CurrentAccountDocument {
 
     /**
      * Constructor de la clase ...
@@ -648,11 +649,32 @@ public class MAllocationLine extends X_C_AllocationLine {
 		}
 		MPayment payment = getPayment();
 		if(payment != null){
-			return payment.isReceipt();
+			return payment.isSOTrx();
 		}
 		// Si la línea tiene sólo cashlines, se maneja de otra manera,
 		// directamente no se valida caja diaria
 		// La línea no tiene nada
+		return false;
+	}
+
+	@Override
+	public boolean isSkipCurrentAccount() {
+		// Verifico las líneas y sus transacciones
+		if(getInvoice() != null){
+			return getInvoice().isSkipCurrentAccount();
+		}
+		MInvoice invoiceCredit = getInvoiceCredit();
+		if(invoiceCredit != null){
+			return invoiceCredit.isSkipCurrentAccount();
+		}
+		MPayment payment = getPayment();
+		if(payment != null){
+			return payment.isSkipCurrentAccount();
+		}
+		MCashLine cashLine = getCashLine();
+		if(cashLine != null){
+			return cashLine.isSkipCurrentAccount();
+		}
 		return false;
 	}
 }    // MAllocationLine

@@ -30,6 +30,7 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.logging.Level;
 
+import org.openXpertya.cc.CurrentAccountDocument;
 import org.openXpertya.cc.CurrentAccountManager;
 import org.openXpertya.cc.CurrentAccountManagerFactory;
 import org.openXpertya.db.CConnection;
@@ -57,7 +58,7 @@ import org.openXpertya.util.ValueNamePair;
  * @author     Equipo de Desarrollo de openXpertya    
  */
 
-public final class MPayment extends X_C_Payment implements DocAction,ProcessCall {
+public final class MPayment extends X_C_Payment implements DocAction,ProcessCall, CurrentAccountDocument {
 
 	
 	// Variables de instancia
@@ -2141,7 +2142,7 @@ public final class MPayment extends X_C_Payment implements DocAction,ProcessCall
     		// Verifico si el gestor de cuentas corrientes debe realizar operaciones
     		// antes de completar y eventualmente disparar la impresión fiscal
     		// Obtengo el manager actual
-    		CurrentAccountManager manager = CurrentAccountManagerFactory.getManager(isReceipt());
+    		CurrentAccountManager manager = CurrentAccountManagerFactory.getManager(this);
     		// Actualizo el balance
     		CallResult result = new CallResult();
 			try{
@@ -2719,7 +2720,7 @@ public final class MPayment extends X_C_Payment implements DocAction,ProcessCall
 					get_TrxName());
     		// Verifico si el gestor de cuentas corrientes debe realizar operaciones
     		// antes de completar 
-    		CurrentAccountManager manager = CurrentAccountManagerFactory.getManager(isReceipt());
+    		CurrentAccountManager manager = CurrentAccountManagerFactory.getManager(this);
     		// Actualizo el balance
     		CallResult result = new CallResult();
 			try{
@@ -3064,7 +3065,7 @@ public final class MPayment extends X_C_Payment implements DocAction,ProcessCall
 			if(isUpdateBPBalance() && isConfirmAditionalWorks()){
 				MBPartner bp = new MBPartner(getCtx(), getC_BPartner_ID(), get_TrxName());
 				// Obtengo el manager actual
-				CurrentAccountManager manager = CurrentAccountManagerFactory.getManager(isReceipt());
+				CurrentAccountManager manager = CurrentAccountManagerFactory.getManager(this);
 				// Actualizo el balance
 				CallResult result = new CallResult();
 				try{
@@ -3218,6 +3219,11 @@ public final class MPayment extends X_C_Payment implements DocAction,ProcessCall
 		//
 		return true;
 	}   //  setBankCash
+
+	@Override
+	public boolean isSkipCurrentAccount() {
+		return MDocType.get(getCtx(), getC_DocType_ID()).isSkipCurrentAccounts();
+	}
 
 }   // MPayment
 

@@ -34,6 +34,7 @@ import java.util.Properties;
 import java.util.Set;
 import java.util.logging.Level;
 
+import org.openXpertya.cc.CurrentAccountDocument;
 import org.openXpertya.cc.CurrentAccountManager;
 import org.openXpertya.cc.CurrentAccountManagerFactory;
 import org.openXpertya.process.DocAction;
@@ -53,7 +54,7 @@ import org.openXpertya.util.Util;
  * @author     Equipo de Desarrollo de openXpertya    
  */
 
-public class MAllocationHdr extends X_C_AllocationHdr implements DocAction {
+public class MAllocationHdr extends X_C_AllocationHdr implements DocAction, CurrentAccountDocument {
 
 	// -------------------------------------------------------------------------------
 	// Matías Cap - Disytel - 2010/02 
@@ -1369,7 +1370,7 @@ public class MAllocationHdr extends X_C_AllocationHdr implements DocAction {
 			if (!Util.isEmpty(getC_BPartner_ID(), true) && isUpdateBPBalance()) {
 				MBPartner bp = new MBPartner(getCtx(), getC_BPartner_ID(), get_TrxName());
 				// Obtengo el manager actual
-				CurrentAccountManager manager = CurrentAccountManagerFactory.getManager(isSOTrx());
+				CurrentAccountManager manager = CurrentAccountManagerFactory.getManager(this);
 				// Si es completar actualizar el saldo
 				if(getDocStatus().equals(MInvoice.DOCSTATUS_Completed)){
 					// Actualizo el balance
@@ -1697,6 +1698,23 @@ public class MAllocationHdr extends X_C_AllocationHdr implements DocAction {
 		
 		// No sabes que es o no tiene líneas
 		return false;
+	}
+
+	@Override
+	public boolean isSkipCurrentAccount() {
+		boolean skip = false;
+		// Tipo de Documento
+		if(!Util.isEmpty(getC_DocType_ID(), true)){
+			MDocType allocDocType = MDocType.get(getCtx(), getC_DocType_ID());
+			skip = skip || allocDocType.isSkipCurrentAccounts();
+		}
+		// Sigo buscando skippear hasta que sea true
+		MAllocationLine[] allocLines = getLines(true,
+				"c_invoice_id desc, c_invoice_credit_id desc, c_payment_id desc, c_cashline_id desc");
+		for(int l = 0; l < allocLines.length && !skip; l++){
+			skip = skip || allocLines[l].isSkipCurrentAccount();
+		}
+		return skip;
 	}
 }    // MAllocation
 

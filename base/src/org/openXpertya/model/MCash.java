@@ -27,6 +27,7 @@ import java.util.Properties;
 import java.util.Set;
 import java.util.logging.Level;
 
+import org.openXpertya.cc.CurrentAccountDocument;
 import org.openXpertya.cc.CurrentAccountManager;
 import org.openXpertya.cc.CurrentAccountManagerFactory;
 import org.openXpertya.process.DocAction;
@@ -1006,7 +1007,26 @@ public class MCash extends X_C_Cash implements DocAction {
     			aditionalResults = getCcBPUpdates().get(bpID);
 				MBPartner bp = new MBPartner(getCtx(), bpID, get_TrxName());
 				// Obtengo el manager actual
-				CurrentAccountManager manager = CurrentAccountManagerFactory.getManager(bp.isCustomer());
+				CurrentAccountManager manager = CurrentAccountManagerFactory.getManager(new CurrentAccountDocument() {
+					
+					private MBPartner bpartner;
+					
+					public CurrentAccountDocument init(MBPartner bp){
+						bpartner = bp;
+						return this;
+					}
+					
+					@Override
+					public boolean isSkipCurrentAccount() {
+						MDocType cashDT = MDocType.getDocType(getCtx(), MDocType.DOCTYPE_CashJournal, get_TrxName());
+						return cashDT != null && cashDT.isSkipCurrentAccounts();
+					}
+					
+					@Override
+					public boolean isSOTrx() {
+						return bpartner.isCustomer();
+					}
+				}.init(bp));
 				// Actualizo el balance
 				CallResult result = new CallResult();
 				try{

@@ -43,6 +43,9 @@ public abstract class CurrentAccountManager {
 	/** Estrategia para la obtención de comprobantes */
 
 	private CurrentAccountObtainStrategy obtainStrategy;
+	
+	/** Omite las operaciones de cuenta corriente */
+	private boolean skipCurrentAccount = false;
 
 	/**
 	 * Obtengo el valor de la columna unívoca del registro parámetro. <br>
@@ -61,6 +64,10 @@ public abstract class CurrentAccountManager {
 				+ " FROM " + po.get_TableName() + " WHERE "
 				+ po.get_TableName() + "_id = ?", new Object[] { po.getID() });
 		return value;
+	}
+	
+	public boolean primaryValidations(){
+		return !isSkipCurrentAccount();
 	}
 	
 	/**
@@ -93,7 +100,7 @@ public abstract class CurrentAccountManager {
 	public CallResult invoiceWithinCreditLimit(Properties ctx, MOrg org,
 			MBPartner bpartner, BigDecimal invAmt, String trxName) throws Exception{
 		CallResult result = new CallResult();
-		if(basicValidation(bpartner)){
+		if(primaryValidations() && basicValidation(bpartner)){
 			result = getBalanceStrategy().checkInvoiceWithinCreditLimit(ctx,
 					getUIDColumnName(bpartner), getUIDColumnValue(bpartner),
 					getUIDColumnName(org), getUIDColumnValue(org), invAmt, trxName); 
@@ -117,7 +124,7 @@ public abstract class CurrentAccountManager {
 	public CallResult updateBalance(Properties ctx, MOrg org,
 			MBPartner bpartner, String trxName) throws Exception{
 		CallResult result = new CallResult();
-		if(basicValidation(bpartner)){
+		if(primaryValidations() && basicValidation(bpartner)){
 			result = getBalanceStrategy().updateBPBalance(ctx,
 					getUIDColumnName(bpartner), getUIDColumnValue(bpartner),
 					getUIDColumnName(org), getUIDColumnValue(org), trxName);
@@ -145,7 +152,7 @@ public abstract class CurrentAccountManager {
 			MBPartner bpartner, MOrg org, Map<String, BigDecimal> paymentRules,
 			String trxName) throws Exception{
 		CallResult result = new CallResult();
-		if(basicValidation(bpartner)){
+		if(primaryValidations() && basicValidation(bpartner)){
 			result = getBalanceStrategy().checkInvoicePaymentRulesBalance(ctx,
 					getUIDColumnName(bpartner), getUIDColumnValue(bpartner),
 					getUIDColumnName(org), getUIDColumnValue(org),
@@ -170,13 +177,15 @@ public abstract class CurrentAccountManager {
 	public CallResult setCurrentAccountStatus(Properties ctx,
 			MBPartner bpartner, MOrg org, String trxName) throws Exception{
 		CallResult result = new CallResult();
-		if(basicValidation(bpartner)){
-			result = getBalanceStrategy().setCurrentAccountStatus(ctx,
-					getUIDColumnName(bpartner), getUIDColumnValue(bpartner),
-					getUIDColumnName(org), getUIDColumnValue(org), trxName); 
-		}
-		else{
-			result.setResult(bpartner.getSOCreditStatus());
+		if(primaryValidations()){
+			if(basicValidation(bpartner)){
+				result = getBalanceStrategy().setCurrentAccountStatus(ctx,
+						getUIDColumnName(bpartner), getUIDColumnValue(bpartner),
+						getUIDColumnName(org), getUIDColumnValue(org), trxName); 
+			}
+			else{
+				result.setResult(bpartner.getSOCreditStatus());
+			}
 		}
 		return result;
 	}
@@ -203,7 +212,7 @@ public abstract class CurrentAccountManager {
 			MBPartner bpartner, PO document, Object aditionalWorkResult,
 			String trxName) throws Exception{
 		CallResult result = new CallResult();
-		if (basicValidation(bpartner)) {
+		if (primaryValidations() && basicValidation(bpartner)) {
 			result = getBalanceStrategy().afterProcessDocument(ctx,
 					getUIDColumnName(bpartner), getUIDColumnValue(bpartner),
 					getUIDColumnName(org), getUIDColumnValue(org),
@@ -238,7 +247,7 @@ public abstract class CurrentAccountManager {
 			String trxName) throws Exception{
 		// Realizar la llamada de 
 		CallResult result = new CallResult();
-		if (basicValidation(bpartner)) {
+		if (primaryValidations() && basicValidation(bpartner)) {
 			result = getBalanceStrategy().afterProcessDocument(ctx,
 					getUIDColumnName(bpartner), getUIDColumnValue(bpartner),
 					getUIDColumnName(org), getUIDColumnValue(org),
@@ -268,7 +277,7 @@ public abstract class CurrentAccountManager {
 	public CallResult performAditionalWork(Properties ctx, MOrg org,
 			MBPartner bpartner, PO document, boolean processed, String trxName) throws Exception{
 		CallResult result = new CallResult();
-		if (basicValidation(bpartner)) {
+		if (primaryValidations() && basicValidation(bpartner)) {
 			result = getBalanceStrategy().performAditionalWork(ctx,
 					getUIDColumnName(bpartner), getUIDColumnValue(bpartner),
 					getUIDColumnName(org), getUIDColumnValue(org),
@@ -296,7 +305,7 @@ public abstract class CurrentAccountManager {
 			MBPartner bpartner, String trxName) throws Exception{
 		CallResult result1 = new CallResult();
 		CallResult result2 = new CallResult();
-		if(basicValidation(bpartner)){
+		if(primaryValidations() && basicValidation(bpartner)){
 			// Actualizo el crédito
 			result1 = getBalanceStrategy().updateBPBalance(ctx,
 					getUIDColumnName(bpartner), getUIDColumnValue(bpartner),
@@ -328,15 +337,17 @@ public abstract class CurrentAccountManager {
 	public CallResult getTenderTypesToControlStatus(Properties ctx, MOrg org,
 			MBPartner bpartner, String trxName) throws Exception{
 		CallResult result = new CallResult();
-		if(basicValidation(bpartner)){
-			result = getBalanceStrategy().getTenderTypesToControlStatus(ctx,
-					getUIDColumnName(bpartner), getUIDColumnValue(bpartner),
-					getUIDColumnName(org), getUIDColumnValue(org), trxName);
-		}
-		else{
-			Set<String> tenderTypes = new HashSet<String>();
-			tenderTypes.add(MPOSPaymentMedium.TENDERTYPE_Credit);
-			result.setResult(tenderTypes);
+		if(primaryValidations()){
+			if(basicValidation(bpartner)){
+				result = getBalanceStrategy().getTenderTypesToControlStatus(ctx,
+						getUIDColumnName(bpartner), getUIDColumnValue(bpartner),
+						getUIDColumnName(org), getUIDColumnValue(org), trxName);
+			}
+			else{
+				Set<String> tenderTypes = new HashSet<String>();
+				tenderTypes.add(MPOSPaymentMedium.TENDERTYPE_Credit);
+				result.setResult(tenderTypes);
+			}
 		}
 		return result;
 	}
@@ -356,43 +367,45 @@ public abstract class CurrentAccountManager {
 			MBPartner bpartner, String creditStatus, String trxName)
 			throws Exception {
 		CallResult result = new CallResult();
-		// Validaciones principales del estado del crédito
-		// Error es cuando el estado no es NORMAL
-		boolean error = !creditStatus.equals(MBPartner.SOCREDITSTATUS_CreditOK);
-		String msg = null;
-		// Error directamente en la organización actual
-		if(error){
-			// Existe un mensaje por cada valor de la lista de estado de crédito. Si
-			// el valor de crédito parámetro (que corresponde con el value) es D,
-			// entonces el AD_Message es el prefijo predefinido + D, en el caso que
-			// no exista entonces se toma el default
-			String AD_Message = CREDIT_STATUS_MSG_PREFIX + creditStatus.trim();
-			msg = Msg.getMsg(ctx, AD_Message);
-			// Si el mensaje obtenido es igual al pasado como parámetro es porque no
-			// encontró ninguno con ese nombre, por lo tanto colocar un default
-			if (msg.equals(AD_Message)) {
-				// Obtener el nombre de la validación de lista para esa clave
-				String name = MRefList.getListName(ctx,
-						MBPartner.SOCREDITSTATUS_AD_Reference_ID, creditStatus);
-				// Obtengo el mensaje default como parámetro ese nombre de estado de
-				// crédito
-				msg = Msg.getMsg(ctx, CREDIT_STATUS_MSG_DEFAULT,
-						new Object[] { name });
+		if(primaryValidations()){
+			// Validaciones principales del estado del crédito
+			// Error es cuando el estado no es NORMAL
+			boolean error = !creditStatus.equals(MBPartner.SOCREDITSTATUS_CreditOK);
+			String msg = null;
+			// Error directamente en la organización actual
+			if(error){
+				// Existe un mensaje por cada valor de la lista de estado de crédito. Si
+				// el valor de crédito parámetro (que corresponde con el value) es D,
+				// entonces el AD_Message es el prefijo predefinido + D, en el caso que
+				// no exista entonces se toma el default
+				String AD_Message = CREDIT_STATUS_MSG_PREFIX + creditStatus.trim();
+				msg = Msg.getMsg(ctx, AD_Message);
+				// Si el mensaje obtenido es igual al pasado como parámetro es porque no
+				// encontró ninguno con ese nombre, por lo tanto colocar un default
+				if (msg.equals(AD_Message)) {
+					// Obtener el nombre de la validación de lista para esa clave
+					String name = MRefList.getListName(ctx,
+							MBPartner.SOCREDITSTATUS_AD_Reference_ID, creditStatus);
+					// Obtengo el mensaje default como parámetro ese nombre de estado de
+					// crédito
+					msg = Msg.getMsg(ctx, CREDIT_STATUS_MSG_DEFAULT,
+							new Object[] { name });
+				}
 			}
+			else{
+				// Verificar si la estrategia tiene otras formas de controlar por el estado
+				CallResult resultStrategy = getBalanceStrategy()
+						.validateCurrentAccountStatus(ctx,
+								getUIDColumnName(org),
+								getUIDColumnValue(org),
+								getUIDColumnName(bpartner),
+								getUIDColumnValue(bpartner), creditStatus, trxName);
+				msg = resultStrategy.getMsg();
+				error = resultStrategy.isError();
+			}
+			// Seteo el resultado
+			result.setMsg(msg, error);
 		}
-		else{
-			// Verificar si la estrategia tiene otras formas de controlar por el estado
-			CallResult resultStrategy = getBalanceStrategy()
-					.validateCurrentAccountStatus(ctx,
-							getUIDColumnName(org),
-							getUIDColumnValue(org),
-							getUIDColumnName(bpartner),
-							getUIDColumnValue(bpartner), creditStatus, trxName);
-			msg = resultStrategy.getMsg();
-			error = resultStrategy.isError();
-		}
-		// Seteo el resultado
-		result.setMsg(msg, error);
 		return result;
 	}
 
@@ -434,7 +447,7 @@ public abstract class CurrentAccountManager {
 	public CallResult getCreditLimit(Properties ctx, MOrg org, MBPartner bpartner, String paymentRule, String trxName) throws Exception{
 		CallResult result = new CallResult();
 		result.setResult(BigDecimal.ZERO);
-		if(basicValidation(bpartner)){
+		if(primaryValidations() && basicValidation(bpartner)){
 			result = getBalanceStrategy().getCreditLimit(ctx,
 					getUIDColumnName(bpartner), getUIDColumnValue(bpartner),
 					getUIDColumnName(org), getUIDColumnValue(org), paymentRule,
@@ -457,7 +470,7 @@ public abstract class CurrentAccountManager {
 	public CallResult getTotalOpenBalance(Properties ctx, MOrg org, MBPartner bpartner, String paymentRule, String trxName) throws Exception{
 		CallResult result = new CallResult();
 		result.setResult(BigDecimal.ZERO);
-		if(basicValidation(bpartner)){
+		if(primaryValidations() && basicValidation(bpartner)){
 			result = getBalanceStrategy().getTotalOpenBalance(ctx,
 					getUIDColumnName(bpartner), getUIDColumnValue(bpartner),
 					getUIDColumnName(org), getUIDColumnValue(org), paymentRule,
@@ -481,7 +494,7 @@ public abstract class CurrentAccountManager {
 	public CallResult getCreditStatus(Properties ctx, MOrg org, MBPartner bpartner, String paymentRule, String trxName) throws Exception{
 		CallResult result = new CallResult();
 		result.setResult(BigDecimal.ZERO);
-		if(basicValidation(bpartner)){
+		if(primaryValidations() && basicValidation(bpartner)){
 			result = getBalanceStrategy().getCreditStatus(ctx,
 					getUIDColumnName(bpartner), getUIDColumnValue(bpartner),
 					getUIDColumnName(org), getUIDColumnValue(org), paymentRule,
@@ -534,6 +547,14 @@ public abstract class CurrentAccountManager {
 	 * @return Nombre de la columna que identifica unívocamente al registro
 	 */
 	public abstract String getUIDColumnName(PO po) throws Exception;
+
+	public boolean isSkipCurrentAccount() {
+		return skipCurrentAccount;
+	}
+
+	public void setSkipCurrentAccount(boolean skipCurrentAccount) {
+		this.skipCurrentAccount = skipCurrentAccount;
+	}
 
 	// ******************************************************************
 

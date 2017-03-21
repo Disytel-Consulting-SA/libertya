@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.Set;
 
 import org.openXpertya.model.DiscountCalculator.IDocument;
+import org.openXpertya.cc.CurrentAccountDocument;
 import org.openXpertya.model.FiscalDocumentPrint;
 import org.openXpertya.model.FiscalDocumentPrintListener;
 import org.openXpertya.pos.exceptions.InsufficientBalanceException;
@@ -33,7 +34,7 @@ import org.openXpertya.process.DocActionStatusListener;
 import org.openXpertya.util.ASyncProcess;
 import org.openXpertya.util.CLogger;
 
-public abstract class PoSConnectionState {
+public abstract class PoSConnectionState implements CurrentAccountDocument {
 
 	private PoSConfig posConfig = null;
 	
@@ -112,6 +113,8 @@ public abstract class PoSConnectionState {
 	public abstract void voidDocuments() throws PosException;
 	
 	public abstract Integer getMaxOrderLineQty();
+	
+	public abstract Integer getActualDocTypeID();
 	
 	public abstract String getNextInvoiceDocumentNo();
 	

@@ -1007,7 +1007,7 @@ public class PoSOnline extends PoSConnectionState {
 			MOrg org = new MOrg(getCtx(), Env.getAD_Org_ID(getCtx()), getTrxName());
 			// Obtengo el manager actual
 			CurrentAccountManager manager = CurrentAccountManagerFactory
-					.getManager(true);
+					.getManager(this);
 			// Seteo el estado actual del cliente y lo obtengo
 			CallResult result = manager.setCurrentAccountStatus(getCtx(), bp, org,
 					null);
@@ -1137,7 +1137,7 @@ public class PoSOnline extends PoSConnectionState {
 		MOrg org = new MOrg(getCtx(), Env.getAD_Org_ID(getCtx()), getTrxName());
 		// Obtengo el manager actual
 		CurrentAccountManager manager = CurrentAccountManagerFactory
-				.getManager(true);
+				.getManager(this);
 		// Realizo las tareas adicionales necesarias
 		// Factura
 		if(invoice != null){
@@ -1202,7 +1202,7 @@ public class PoSOnline extends PoSConnectionState {
 		MOrg org = new MOrg(getCtx(), Env.getAD_Org_ID(getCtx()), getTrxName());
 		// Obtengo el manager actual
 		CurrentAccountManager manager = CurrentAccountManagerFactory
-				.getManager(true);
+				.getManager(this);
 		// Actualizo el crédito
 		CallResult result = new CallResult();
 		try{
@@ -3656,30 +3656,10 @@ public class PoSOnline extends PoSConnectionState {
 	@Override
 	public String getNextInvoiceDocumentNo() {
 		String documentNo = null;
-		Integer docTypeID = 0;
-		if(getShouldCreateInvoice()){
-			// Si locale ar está activo, entonces hay que obtenerlo desde la
-			// conjunción de la categoría de IVA de la entidad comercial y de la
-			// Compañía 
-			if(LOCAL_AR_ACTIVE){
-				MDocType docType = null;
-				try{
-					docType = getLocaleArDocType();
-					docTypeID = docType.getID();
-				} catch(PosException pose){
-					log.severe(Msg.getMsg(getCtx(), pose.getMessage()));
-				}
-			}
-			// Si no es L_AR, obtenerlo desde el tipo de doc de factura
-			// configurado dentro de la config del TPV
-			else{
-				docTypeID = getPoSCOnfig().getInvoiceDocTypeID();
-			}
-			
-			// Se obtiene el próximo nro de doc, si es que tengo tipo de doc
-			if(!Util.isEmpty(docTypeID, true)){
-				documentNo = CalloutInvoiceExt.getNextDocumentNo(getCtx(), docTypeID, getTrxName());
-			}
+		Integer docTypeID = getActualDocTypeID();
+		// Se obtiene el próximo nro de doc, si es que tengo tipo de doc
+		if(!Util.isEmpty(docTypeID, true)){
+			documentNo = CalloutInvoiceExt.getNextDocumentNo(getCtx(), docTypeID, getTrxName());
 		}
 		return documentNo;
 	}
@@ -3966,5 +3946,41 @@ public class PoSOnline extends PoSConnectionState {
 	
 	protected int getBPartnerID(Integer invoiceID){
 		return DB.getSQLValue(trxName, "SELECT c_bpartner_id FROM c_invoice WHERE c_invoice_id = ?", invoiceID);
+	}
+
+	@Override
+	public boolean isSOTrx() {
+		return true;
+	}
+
+	@Override
+	public boolean isSkipCurrentAccount() {
+		MDocType dt = MDocType.get(getCtx(), getActualDocTypeID());
+		return dt != null && dt.isSkipCurrentAccounts();
+	}
+
+	@Override
+	public Integer getActualDocTypeID() {
+		Integer docTypeID = 0;
+		if(getShouldCreateInvoice()){
+			// Si locale ar está activo, entonces hay que obtenerlo desde la
+			// conjunción de la categoría de IVA de la entidad comercial y de la
+			// Compañía 
+			if(LOCAL_AR_ACTIVE){
+				MDocType docType = null;
+				try{
+					docType = getLocaleArDocType();
+					docTypeID = docType.getID();
+				} catch(PosException pose){
+					log.severe(Msg.getMsg(getCtx(), pose.getMessage()));
+				}
+			}
+			// Si no es L_AR, obtenerlo desde el tipo de doc de factura
+			// configurado dentro de la config del TPV
+			else{
+				docTypeID = getPoSCOnfig().getInvoiceDocTypeID();
+			}	
+		}
+		return docTypeID;
 	}
 }

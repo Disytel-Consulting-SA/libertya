@@ -31,6 +31,7 @@ import java.util.Properties;
 import java.util.logging.Level;
 
 import org.openXpertya.cc.CurrentAccountBalanceStrategy;
+import org.openXpertya.cc.CurrentAccountDocument;
 import org.openXpertya.cc.CurrentAccountManager;
 import org.openXpertya.cc.CurrentAccountManagerFactory;
 import org.openXpertya.model.DiscountCalculator.ICreditDocument;
@@ -62,7 +63,7 @@ import org.openXpertya.util.Util;
  * @author Equipo de Desarrollo de openXpertya
  */
 
-public class MInvoice extends X_C_Invoice implements DocAction,Authorization {
+public class MInvoice extends X_C_Invoice implements DocAction,Authorization, CurrentAccountDocument {
 
 	/**
 	 * 
@@ -3157,7 +3158,7 @@ public class MInvoice extends X_C_Invoice implements DocAction,Authorization {
 				&& getPaymentRule().equals(MInvoice.PAYMENTRULE_OnCredit)) {
 			// Obtengo el manager actual
 			CurrentAccountManager manager = CurrentAccountManagerFactory
-					.getManager(isSOTrx());
+					.getManager(this);
 			// Seteo el estado actual del cliente y lo obtengo
 			CallResult result = new CallResult();
 			try {
@@ -3596,7 +3597,7 @@ public class MInvoice extends X_C_Invoice implements DocAction,Authorization {
 						get_TrxName());
 				// Obtengo el manager actual
 				CurrentAccountManager manager = CurrentAccountManagerFactory
-						.getManager(isSOTrx());
+						.getManager(this);
 				// Actualizo el balance
 				CallResult result = new CallResult();
 				try {
@@ -3951,7 +3952,7 @@ public class MInvoice extends X_C_Invoice implements DocAction,Authorization {
 				&& getPaymentRule().equals(PAYMENTRULE_OnCredit)) {
 			// Obtengo el manager actual
 			CurrentAccountManager manager = CurrentAccountManagerFactory
-					.getManager(isSOTrx());
+					.getManager(this);
 			// Verificar el crédito con la factura y pedido asociado
 			CallResult result = new CallResult();
 			try {
@@ -4293,7 +4294,7 @@ public class MInvoice extends X_C_Invoice implements DocAction,Authorization {
 		// Obtengo el manager actual
 		if (isUpdateBPBalance()) {
 			CurrentAccountManager manager = CurrentAccountManagerFactory
-					.getManager(isSOTrx());
+					.getManager(this);
 			// Actualizo el balance
 			CallResult result = new CallResult();
 			try {
@@ -4925,7 +4926,7 @@ public class MInvoice extends X_C_Invoice implements DocAction,Authorization {
 			MBPartner bp = new MBPartner(getCtx(), getC_BPartner_ID(),
 					get_TrxName());
 			CurrentAccountManager manager = CurrentAccountManagerFactory
-					.getManager(isSOTrx());
+					.getManager(this);
 			// Actualizo el balance
 			CallResult result = new CallResult();
 			try {
@@ -6268,6 +6269,11 @@ public class MInvoice extends X_C_Invoice implements DocAction,Authorization {
 
 	public void setSkipLastFiscalDocumentNoValidation(boolean skipLastFiscalDocumentNoValidation) {
 		this.skipLastFiscalDocumentNoValidation = skipLastFiscalDocumentNoValidation;
+	}
+
+	@Override
+	public boolean isSkipCurrentAccount() {
+		return MDocType.get(getCtx(), getC_DocTypeTarget_ID()).isSkipCurrentAccounts();
 	}
 
 } // MInvoice
