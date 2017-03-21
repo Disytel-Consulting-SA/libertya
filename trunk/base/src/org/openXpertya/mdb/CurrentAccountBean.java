@@ -270,7 +270,7 @@ public class CurrentAccountBean implements MessageDrivenBean, MessageListener {
 			}
 			// Actualizo el estado y saldo de la entidad comercial
 			CurrentAccountManager manager = CurrentAccountManagerFactory
-					.getManager(MCentralAux.TRANSACTIONTYPE_Customer.equals(auxiliar.getTransactionType()));
+					.getManager(auxiliar);
 			CallResult result = manager.updateBalanceAndStatus(auxiliarDTO
 					.getCtx(), new MOrg(auxiliarDTO.getCtx(), auxiliar
 					.getAD_Org_ID(), trxName), new MBPartner(
@@ -323,8 +323,7 @@ public class CurrentAccountBean implements MessageDrivenBean, MessageListener {
 				throw new Exception(CLogger.retrieveErrorAsString());
 			}
 			// Actualizo el estado y saldo de la entidad comercial
-			CurrentAccountManager manager = CurrentAccountManagerFactory
-					.getManager(MCentralAux.TRANSACTIONTYPE_Customer.equals(auxiliar.getTransactionType()));
+			CurrentAccountManager manager = CurrentAccountManagerFactory.getManager(auxiliar);
 			CallResult result = manager.updateBalanceAndStatus(auxiliarDTO
 					.getCtx(), new MOrg(auxiliarDTO.getCtx(), auxiliar
 					.getAD_Org_ID(), trxName), new MBPartner(

@@ -320,4 +320,22 @@ public class PoSOffline extends PoSConnectionState {
 		// TODO Auto-generated method stub
 		return 0;
 	}
+
+	@Override
+	public boolean isSOTrx() {
+		// TODO Auto-generated method stub
+		return true;
+	}
+
+	@Override
+	public boolean isSkipCurrentAccount() {
+		// TODO Auto-generated method stub
+		return false;
+	}
+
+	@Override
+	public Integer getActualDocTypeID() {
+		// TODO Auto-generated method stub
+		return null;
+	}
 }

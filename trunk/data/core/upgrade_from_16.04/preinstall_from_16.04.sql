@@ -6139,3 +6139,6 @@ UPDATE ad_system SET dummy = (SELECT addcolumnifnotexists('AD_ComponentVersion',
 
 --20170320-1640 Mejora al acceso de campos por perfil que permite tener configurado una validación para sólo lectura o visible
 UPDATE ad_system SET dummy = (SELECT addcolumnifnotexists('AD_Field_Access','ad_val_rule_id','integer'));
+
+--20170321-1930 Incorporación de configuración en tipo de documento para omitir todas las operaciones de cuentas corrientes
+UPDATE ad_system SET dummy = (SELECT addcolumnifnotexists('c_doctype','skipcurrentaccounts','character(1) NOT NULL DEFAULT ''N''::bpchar'));

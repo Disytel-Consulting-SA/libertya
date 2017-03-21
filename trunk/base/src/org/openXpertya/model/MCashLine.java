@@ -28,6 +28,7 @@ import java.util.Properties;
 import java.util.Set;
 import java.util.logging.Level;
 
+import org.openXpertya.cc.CurrentAccountDocument;
 import org.openXpertya.cc.CurrentAccountManager;
 import org.openXpertya.cc.CurrentAccountManagerFactory;
 import org.openXpertya.process.DocAction;
@@ -48,7 +49,7 @@ import org.openXpertya.util.Util;
  * @author     Equipo de Desarrollo de openXpertya    
  */
 
-public class MCashLine extends X_C_CashLine implements DocAction {
+public class MCashLine extends X_C_CashLine implements DocAction, CurrentAccountDocument {
 
 	/** Bypass para que el completeIt no cree el allocation ya que el cliente se encargará
 	 *  de crearlo. Si se usa esta opción quien cree y complete la línea será el responsable
@@ -1316,7 +1317,7 @@ public class MCashLine extends X_C_CashLine implements DocAction {
 		// actualizar su saldo, realizo las tareas correspondientes
 		if (!Util.isEmpty(getC_BPartner_ID(), true) && isUpdateBPBalance()) {
 			MBPartner bp = new MBPartner(getCtx(), getC_BPartner_ID(),get_TrxName());
-			CurrentAccountManager manager = CurrentAccountManagerFactory.getManager(bp.isCustomer());
+			CurrentAccountManager manager = CurrentAccountManagerFactory.getManager(this);
 			// Actualizo el balance
 			CallResult result = manager.performAditionalWork(getCtx(), new MOrg(
 					getCtx(), Env.getAD_Org_ID(getCtx()), get_TrxName()), bp, this,
@@ -1355,7 +1356,7 @@ public class MCashLine extends X_C_CashLine implements DocAction {
 					&& isConfirmAditionalWorks()) {
 				MBPartner bp = new MBPartner(getCtx(), getC_BPartner_ID(), get_TrxName());
 				// Obtengo el manager actual
-				CurrentAccountManager manager = CurrentAccountManagerFactory.getManager(bp.isCustomer());
+				CurrentAccountManager manager = CurrentAccountManagerFactory.getManager(this);
 				// Actualizo el saldo
 				CallResult result = new CallResult();
 				try{
@@ -1476,6 +1477,22 @@ public class MCashLine extends X_C_CashLine implements DocAction {
 	}	//	getCash
 	/** Parent					*/
 	private MCash			m_parent = null;
+
+	@Override
+	public boolean isSOTrx() {
+		boolean issotrx = false;
+		if(!Util.isEmpty(getC_BPartner_ID(), true)){
+			MBPartner bp = new MBPartner(getCtx(), getC_BPartner_ID(),get_TrxName());
+			issotrx = bp.isCustomer();
+		}
+		return issotrx;
+	}
+
+	@Override
+	public boolean isSkipCurrentAccount() {
+		MDocType cashDT = MDocType.getDocType(getCtx(), MDocType.DOCTYPE_CashJournal, get_TrxName());
+		return cashDT != null && cashDT.isSkipCurrentAccounts();
+	}
 
 	
 }    // MCashLine

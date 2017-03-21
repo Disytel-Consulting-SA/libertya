@@ -3,6 +3,7 @@ package org.openXpertya.model;
 import java.sql.ResultSet;
 import java.util.Properties;
 
+import org.openXpertya.cc.CurrentAccountDocument;
 import org.openXpertya.cc.CurrentAccountManager;
 import org.openXpertya.cc.CurrentAccountManagerFactory;
 import org.openXpertya.reflection.CallResult;
@@ -11,7 +12,7 @@ import org.openXpertya.util.DB;
 import org.openXpertya.util.Env;
 import org.openXpertya.util.Util;
 
-public class MCentralAux extends X_C_CentralAux {
+public class MCentralAux extends X_C_CentralAux implements CurrentAccountDocument {
 	
 	// Métodos estáticos
 	
@@ -142,7 +143,7 @@ public class MCentralAux extends X_C_CentralAux {
 	protected boolean afterSave(boolean newRecord, boolean success) {
 		if(getRegisterType().equals(MCentralAux.REGISTERTYPE_Offline)){
 			CurrentAccountManager manager = CurrentAccountManagerFactory
-					.getManager(MCentralAux.TRANSACTIONTYPE_Customer.equals(getTransactionType()));
+					.getManager(this);
 			CallResult result = new CallResult();
 			try{
 				result = manager.updateBalanceAndStatus(getCtx(),
@@ -178,6 +179,19 @@ public class MCentralAux extends X_C_CentralAux {
 		else{
 			set_ValueNoCheck("PaymentRule", null);
 		}
+	}
+
+
+	@Override
+	public boolean isSOTrx() {
+		return MCentralAux.TRANSACTIONTYPE_Customer.equals(getTransactionType());
+	}
+
+
+	@Override
+	public boolean isSkipCurrentAccount() {
+		MDocType dt = MDocType.get(getCtx(), getC_DocType_ID());
+		return dt != null && dt.isSkipCurrentAccounts();
 	}
 	
 	
