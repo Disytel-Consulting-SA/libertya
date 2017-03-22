@@ -1,13 +1,14 @@
-/** Modelo Generado - NO CAMBIAR MANUALMENTE - Copyright (C) 2006 FUNDESLE */
+/** Modelo Generado - NO CAMBIAR MANUALMENTE - Disytel */
 package org.openXpertya.model;
-import java.util.*;
+import java.util.logging.Level;
+ import java.util.*;
 import java.sql.*;
 import java.math.*;
 import org.openXpertya.util.*;
 /** Modelo Generado por AD_ComponentVersion
- *  @author Comunidad de Desarrollo openXpertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
- *  @version  - 2009-10-28 10:42:19.324 */
-public class X_AD_ComponentVersion extends PO
+ *  @author Comunidad de Desarrollo Libertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
+ *  @version  - 2017-03-22 16:37:50.591 */
+public class X_AD_ComponentVersion extends org.openXpertya.model.PO
 {
 /** Constructor estándar */
 public X_AD_ComponentVersion (Properties ctx, int AD_ComponentVersion_ID, String trxName)
@@ -27,13 +28,13 @@ public X_AD_ComponentVersion (Properties ctx, ResultSet rs, String trxName)
 {
 super (ctx, rs, trxName);
 }
-/** AD_Table_ID=1010191 */
-public static final int Table_ID=1010191;
+/** AD_Table_ID */
+public static final int Table_ID = M_Table.getTableID("AD_ComponentVersion");
 
 /** TableName=AD_ComponentVersion */
 public static final String Table_Name="AD_ComponentVersion";
 
-protected static KeyNamePair Model = new KeyNamePair(1010191,"AD_ComponentVersion");
+protected static KeyNamePair Model = new KeyNamePair(Table_ID,"AD_ComponentVersion");
 protected static BigDecimal AccessLevel = new BigDecimal(7);
 
 /** Load Meta Data */
@@ -153,7 +154,22 @@ public KeyNamePair getKeyNamePair()
 {
 return new KeyNamePair(getID(), getName());
 }
-public static final int STARTDEVELOPMENT_AD_Reference_ID=1010098;
+/** Set SimulateCVInstallation */
+public void setSimulateCVInstallation (String SimulateCVInstallation)
+{
+if (SimulateCVInstallation != null && SimulateCVInstallation.length() > 1)
+{
+log.warning("Length > 1 - truncated");
+SimulateCVInstallation = SimulateCVInstallation.substring(0,1);
+}
+set_Value ("SimulateCVInstallation", SimulateCVInstallation);
+}
+/** Get SimulateCVInstallation */
+public String getSimulateCVInstallation() 
+{
+return (String)get_Value("SimulateCVInstallation");
+}
+public static final int STARTDEVELOPMENT_AD_Reference_ID = MReference.getReferenceID("AD_ComponentVersion States");
 /** End Development = E */
 public static final String STARTDEVELOPMENT_EndDevelopment = "E";
 /** Start Development = S */
@@ -161,8 +177,8 @@ public static final String STARTDEVELOPMENT_StartDevelopment = "S";
 /** Set Start Development */
 public void setStartDevelopment (String StartDevelopment)
 {
-if (StartDevelopment == null || StartDevelopment.equals("E") || StartDevelopment.equals("S"));
- else throw new IllegalArgumentException ("StartDevelopment Invalid value - Reference_ID=1010098 - E - S");
+if (StartDevelopment == null || StartDevelopment.equals("E") || StartDevelopment.equals("S") || ( refContainsValue("CORE-AD_Reference-1010098", StartDevelopment) ) );
+ else throw new IllegalArgumentException ("StartDevelopment Invalid value: " + StartDevelopment + ".  Valid: " +  refValidOptions("CORE-AD_Reference-1010098") );
 if (StartDevelopment != null && StartDevelopment.length() > 1)
 {
 log.warning("Length > 1 - truncated");
