@@ -25,6 +25,7 @@ import java.sql.Timestamp;
 import java.util.logging.Level;
 
 import org.openXpertya.model.MProduct;
+import org.openXpertya.model.MProductPO;
 import org.openXpertya.model.PO;
 import org.openXpertya.model.X_I_Product;
 import org.openXpertya.model.X_M_Product;
@@ -420,83 +421,9 @@ public class ImportProduct extends SvrProcess {
 
         try {
 
-            /*
-             *       Insert Product from Import
-             * PreparedStatement pstmt_insertProduct = conn.prepareStatement
-             *       ("INSERT INTO M_Product (M_Product_ID,"
-             *       + "AD_Client_ID,AD_Org_ID,IsActive,Created,CreatedBy,Updated,UpdatedBy,"
-             *       + "Value,Name,Description,DocumentNote,Help,"
-             *       + "UPC,SKU,C_UOM_ID,IsSummary,M_Product_Category_ID,C_TaxCategory_ID,"
-             *       + "ProductType,ImageURL,DescriptionURL) "
-             *       + "SELECT ?,"
-             *       + "AD_Client_ID,AD_Org_ID,'Y',SysDate,CreatedBy,SysDate,UpdatedBy,"
-             *       + "Value,Name,Description,DocumentNote,Help,"
-             *       + "UPC,SKU,C_UOM_ID,'N',M_Product_Category_ID," + C_TaxCategory_ID + ","
-             *       + "ProductType,ImageURL,DescriptionURL "
-             *       + "FROM I_Product "
-             *       + "WHERE I_Product_ID=?");
-             */
-
-            // Update Product from Import
-        	//Anulada por ConSerTi, sintaxsis de updte no valido para postgres.
-            //PreparedStatement pstmt_updateProduct = conn.prepareStatement( "UPDATE M_PRODUCT " + "SET (Value,Name,Description,DocumentNote,Help," + "UPC,SKU,C_UOM_ID,M_Product_Category_ID,Classification,ProductType," + "Volume,Weight,ShelfWidth,ShelfHeight,ShelfDepth,UnitsPerPallet," + "Discontinued,DiscontinuedBy,Updated,UpdatedBy)= " + "(SELECT Value,Name,Description,DocumentNote,Help," + "UPC,SKU,C_UOM_ID,M_Product_Category_ID,Classification,ProductType," + "Volume,Weight,ShelfWidth,ShelfHeight,ShelfDepth,UnitsPerPallet," + "Discontinued,DiscontinuedBy,SysDate,UpdatedBy" + " FROM I_Product WHERE I_Product_ID=?) " + "WHERE M_Product_ID=?" );
-        	PreparedStatement pstmt_updateProduct = conn.prepareStatement("UPDATE M_PRODUCT " + "SET Value=aux.value"+
-		    ",Name=aux.Name"+
-		    ",Description=aux.Description"+
-		    ",DocumentNote=aux.DocumentNote"+
-		    ",Help=aux.Help"+
-		    ",UPC=aux.UPC"+
-		    ",SKU=aux.SKU"+
-		    ",C_UOM_ID=aux.C_UOM_ID"+
-		    ",M_Product_Category_ID=aux.M_Product_Category_ID"+
-		    ",Classification=aux.Classification"+
-		    ",ProductType=aux.ProductType"+
-		    ",Volume=aux.Volume"+
-		    ",Weight=aux.Weight"+
-		    ",ShelfWidth=aux.ShelfWidth"+
-		    ",ShelfHeight=aux.ShelfHeight"+
-		    ",ShelfDepth=aux.ShelfDepth"+
-		    ",UnitsPerPallet=aux.UnitsPerPallet"+
-		    ",Discontinued=aux.Discontinued"+
-		    ",DiscontinuedBy=aux.DiscontinuedBy"+
-		    ",Updated=current_timestamp"+
-		    ",UpdatedBy=aux.UpdatedBy" +
-		    ",AD_Org_ID=aux.AD_Org_ID" +
-" from (SELECT Value,Name,Description,DocumentNote,Help,UPC,SKU,C_UOM_ID,M_Product_Category_ID,Classification,ProductType,Volume,Weight,ShelfWidth,ShelfHeight,ShelfDepth,UnitsPerPallet,Discontinued,DiscontinuedBy,UpdatedBy,AD_Org_ID FROM I_Product WHERE I_Product_ID=?) as aux"
-+" WHERE M_Product_ID=?");
-
-            // Update Product_PO from Import
-
-            //PreparedStatement pstmt_updateProductPO = conn.prepareStatement( "UPDATE M_Product_PO " + "SET (IsCurrentVendor,C_UOM_ID,C_Currency_ID,UPC," + "PriceList,PricePO,RoyaltyAmt,PriceEffective," + "VendorProductNo,VendorCategory,Manufacturer," + "Discontinued,DiscontinuedBy,Order_Min,Order_Pack," + "CostPerOrder,DeliveryTime_Promised,Updated,UpdatedBy)= " + "(SELECT 'Y',C_UOM_ID,C_Currency_ID,UPC," + "PriceList,PricePO,RoyaltyAmt,PriceEffective," + "VendorProductNo,VendorCategory,Manufacturer," + "Discontinued,DiscontinuedBy,Order_Min,Order_Pack," + "CostPerOrder,DeliveryTime_Promised,SysDate,UpdatedBy" + " FROM I_Product" + " WHERE I_Product_ID=?) " + "WHERE M_Product_ID=? AND C_BPartner_ID=?" );
-        	PreparedStatement pstmt_updateProductPO = conn.prepareStatement("UPDATE M_Product_PO " + "SET IsCurrentVendor='Y'"+
-        		    ",C_UOM_ID=aux1.C_UOM_ID"+
-        		    ",C_Currency_ID=aux1.C_Currency_ID"+
-        		    ",UPC=aux1.UPC"+
-        		    ",PriceList=aux1.PriceList"+
-        		    ",PricePO=aux1.PricePO"+
-        		    ",RoyaltyAmt=aux1.RoyaltyAmt"+
-        		    ",PriceEffective=aux1.PriceEffective"+
-        		    ",VendorProductNo=aux1.VendorProductNo"+
-        		    ",VendorCategory=aux1.VendorCategory"+
-        		    ",Manufacturer=aux1.Manufacturer"+
-        		    ",Discontinued=aux1.Discontinued"+
-        		    ",Order_Min=aux1.Order_Min"+
-        		    ",Order_Pack=aux1.Order_Pack"+
-        		    ",CostPerOrder=aux1.CostPerOrder"+
-        		    ",DeliveryTime_Promised=aux1.DeliveryTime_Promised"+
-        		    ",Updated=current_timestamp"+
-        		    ",UpdatedBy=aux1.UpdatedBy"+
-        " from (SELECT 'Y',C_UOM_ID,C_Currency_ID,UPC,PriceList,PricePO,RoyaltyAmt,PriceEffective,VendorProductNo,VendorCategory,Manufacturer,Discontinued,DiscontinuedBy,Order_Min,Order_Pack,CostPerOrder,DeliveryTime_Promised,UpdatedBy FROM I_Product) as aux1"
-        +" WHERE M_Product_ID=? AND C_BPartner_ID=?");
-            
-
-            // Insert Product from Import
-
-            PreparedStatement pstmt_insertProductPO = conn.prepareStatement( "INSERT INTO M_Product_PO (M_Product_ID,C_BPartner_ID, " + "AD_Client_ID,AD_Org_ID,IsActive,Created,CreatedBy,Updated,UpdatedBy," + "IsCurrentVendor,C_UOM_ID,C_Currency_ID,UPC," + "PriceList,PricePO,RoyaltyAmt,PriceEffective," + "VendorProductNo,VendorCategory,Manufacturer," + "Discontinued,DiscontinuedBy,Order_Min,Order_Pack," + "CostPerOrder,DeliveryTime_Promised) " + "SELECT ?,?, " + "AD_Client_ID,AD_Org_ID,'Y',current_timestamp,CreatedBy,current_timestamp,UpdatedBy," + "'Y',C_UOM_ID,C_Currency_ID,UPC," + "PriceList,PricePO,RoyaltyAmt,PriceEffective," + "VendorProductNo,VendorCategory,Manufacturer," + "Discontinued,DiscontinuedBy,Order_Min,Order_Pack," + "CostPerOrder,DeliveryTime_Promised " + "FROM I_Product " + "WHERE I_Product_ID=?" );
-
-            // Set Imported = Y
-
-            PreparedStatement pstmt_setImported = conn.prepareStatement( "UPDATE I_Product SET I_IsImported='Y', M_Product_ID=?, " + "Updated=current_timestamp, Processed='Y' WHERE I_Product_ID=?" );
+			PreparedStatement pstmt_setImported = conn
+					.prepareStatement("UPDATE I_Product SET I_IsImported='Y', M_Product_ID=?, "
+							+ "Updated=current_timestamp, Processed='Y' WHERE I_Product_ID=?");
 
             //
             log.finer("sql.toString= "+sql.toString());
@@ -535,39 +462,61 @@ public class ImportProduct extends SvrProcess {
                 }
                 
                 // Product
-
+                X_I_Product impP = new X_I_Product( getCtx(),I_Product_ID,null );
+                MProduct p = newProduct?new MProduct( impP ):MProduct.get(getCtx(), M_Product_ID);
+                
                 if( newProduct )    // Insert new Product
                 {
-                	log.finer("es nuevo producto");
-                    X_I_Product iP = new X_I_Product( getCtx(),I_Product_ID,null );
-                    MProduct p = new MProduct( iP );
 
                     if( p.save()) {
                         M_Product_ID = p.getM_Product_ID();
                         log.finer( "Insert Product" );
                         noInsert++;
                     } else {
-                        sql = new StringBuffer( "UPDATE I_Product i " + "SET I_IsImported='Y', I_ErrorMsg=I_ErrorMsg||" ).append( DB.TO_STRING(getMsg("ImportProductSaveError") + ": " + CLogger.retrieveErrorAsString() )).append( "WHERE I_Product_ID=" ).append( I_Product_ID );
+                        sql = new StringBuffer( "UPDATE I_Product i " + "SET I_IsImported='E', I_ErrorMsg=I_ErrorMsg||" ).append( DB.TO_STRING(getMsg("ImportProductSaveError") + ": " + CLogger.retrieveErrorAsString() )).append( "WHERE I_Product_ID=" ).append( I_Product_ID );
                         DB.executeUpdate( sql.toString());
 
                         continue;
                     }
                 } else    // Update Product
                 {
+                	
+                	p.setValue( impP.getValue());
+                	p.setName( impP.getName());
+                	p.setDescription( impP.getDescription());
+                	p.setDocumentNote( impP.getDocumentNote());
+                	p.setHelp( impP.getHelp());
+                	p.setUPC( impP.getUPC());
+                	p.setSKU( impP.getSKU());
+                	p.setC_UOM_ID( impP.getC_UOM_ID());
+                	p.setM_Product_Category_ID( impP.getM_Product_Category_ID());
+                    
+                	p.setProductType( impP.getProductType());
+                	p.setImageURL( impP.getImageURL());
+                	p.setDescriptionURL( impP.getDescriptionURL());
+                	p.setC_TaxCategory_ID(impP.getC_TaxCategory_ID());
+                	p.setCheckoutPlace(impP.getCheckoutPlace());
+                	p.setIsSold(impP.isSold());
+                	p.setIsPurchased(impP.isPurchased());
+                	p.setIsBOM(impP.isBOM());
+                	p.setM_Product_Family_ID(impP.getM_Product_Family_ID());
+                	
+                	p.setClassification(impP.getClassification());
+                	p.setVolume(new BigDecimal(impP.getVolume()));
+                	p.setWeight(new BigDecimal(impP.getWeight()));
+                	p.setShelfDepth(impP.getShelfDepth());
+                	p.setShelfHeight(impP.getShelfHeight());
+                	p.setShelfWidth(impP.getShelfWidth());
+                	p.setUnitsPerPallet(impP.getUnitsPerPallet());
+                	p.setDiscontinued(impP.isDiscontinued());
+                	p.setDiscontinuedBy(impP.getDiscontinuedBy());
                 	log.finer("No es nuevo producto");
-                    pstmt_updateProduct.setInt( 1,I_Product_ID );
-                    pstmt_updateProduct.setInt( 2,M_Product_ID );
-                    log.finer("Vamos a ejecutar update product");
-
-                    try {
-                    	log.finer("ejecutando :"+ pstmt_updateProduct);
-                        no = pstmt_updateProduct.executeUpdate();
-                        log.finer( "Update Product == " + no );
+                	
+                    if( p.save()) {
+                        log.finer( "Update Product" );
                         noUpdate++;
-                        log.finer("noUpdate= "+ noUpdate);
-                    } catch( SQLException ex ) {
-                        log.warning( "Update Product -> " + ex.toString());
-                        sql = new StringBuffer( "UPDATE I_Product i " + "SET I_IsImported='Y', I_ErrorMsg=I_ErrorMsg||" ).append( DB.TO_STRING( "Update Product: " + ex.toString())).append( "WHERE I_Product_ID=" ).append( I_Product_ID );
+                    } else {
+                        sql = new StringBuffer( "UPDATE I_Product i " + "SET I_IsImported='E', I_ErrorMsg=I_ErrorMsg||" ).append( DB.TO_STRING(getMsg("ImportProductSaveError") + ": " + CLogger.retrieveErrorAsString() )).append( "WHERE I_Product_ID=" ).append( I_Product_ID );
                         DB.executeUpdate( sql.toString());
 
                         continue;
@@ -580,49 +529,43 @@ public class ImportProduct extends SvrProcess {
                     no = 0;
                     log.finer("C_bpartner_id es distinto de 0");
 
-                    // If Product existed, Try to Update first
-
-                    if( !newProduct ) {
-                        //pstmt_updateProductPO.setInt( 1,I_Product_ID );
-                        pstmt_updateProductPO.setInt( 1,M_Product_ID );
-                        pstmt_updateProductPO.setInt( 2,C_BPartner_ID );
-
-                        try {
-                            no = pstmt_updateProductPO.executeUpdate();
-                            log.finer( "Update Product_PO == " + no );
-                            noUpdatePO+= no;
-                            log.finer("noUpdatePo= "+ noUpdatePO);
-                        } catch( SQLException ex ) {
-                            log.warning( "Update Product_PO -- " + ex.toString());
-                            noUpdate--;
-                            conn.rollback();
-                            sql = new StringBuffer( "UPDATE I_Product i " + "SET I_IsImported='Y', I_ErrorMsg=I_ErrorMsg||" ).append( DB.TO_STRING( "Update Product_PO: " + ex.toString())).append( "WHERE I_Product_ID=" ).append( I_Product_ID );
-                            DB.executeUpdate( sql.toString());
-
-                            continue;
-                        }
+                    MProductPO ppo = MProductPO.get(getCtx(), M_Product_ID, C_BPartner_ID, null);
+                    boolean newPPO = false;
+                    
+                    if(ppo == null){
+                    	ppo = new MProductPO(getCtx(), 0, null);
+                    	ppo.setC_BPartner_ID(C_BPartner_ID);
+                    	ppo.setM_Product_ID(M_Product_ID);
+                    	newPPO = true;
                     }
-
-                    if( no == 0 )    // Insert PO
-                    {
-                    	log.finer("En si no == 0");
-                        pstmt_insertProductPO.setInt( 1,M_Product_ID );
-                        pstmt_insertProductPO.setInt( 2,C_BPartner_ID );
-                        pstmt_insertProductPO.setInt( 3,I_Product_ID );
-
-                        try {
-                            no = pstmt_insertProductPO.executeUpdate();
-                            log.finer( "Insert Product_PO = " + no );
-                            noInsertPO++;
-                        } catch( SQLException ex ) {
-                            log.warning( "Insert Product_PO - " + ex.toString());
-                            noInsert--;    // assume that product also did not exist
-                            conn.rollback();
-                            sql = new StringBuffer( "UPDATE I_Product i " + "SET I_IsImported='Y', I_ErrorMsg=I_ErrorMsg||" ).append( DB.TO_STRING( "Insert Product_PO: " + ex.toString())).append( "WHERE I_Product_ID=" ).append( I_Product_ID );
-                            DB.executeUpdate( sql.toString());
-
-                            continue;
-                        }
+                    
+                    ppo.setIsCurrentVendor(true);
+                    ppo.setVendorProductNo(impP.getVendorProductNo());
+                    ppo.setVendorCategory(impP.getVendorCategory());
+                    ppo.setC_UOM_ID(impP.getC_UOM_ID());
+                    ppo.setC_Currency_ID(impP.getC_Currency_ID());
+                    ppo.setUPC(impP.getUPC());
+                    ppo.setPriceList(impP.getPriceList());
+                    ppo.setPricePO(impP.getPricePO());
+                    ppo.setRoyaltyAmt(impP.getRoyaltyAmt());
+                    ppo.setPriceEffective(impP.getPriceEffective());
+                    ppo.setManufacturer(impP.getManufacturer());
+                    ppo.setDiscontinued(impP.isDiscontinued());
+                    ppo.setOrder_Min(new BigDecimal(impP.getOrder_Min()));
+                    ppo.setOrder_Pack(new BigDecimal(impP.getOrder_Pack()));
+                    ppo.setCostPerOrder(impP.getCostPerOrder());
+                    ppo.setDeliveryTime_Promised(impP.getDeliveryTime_Promised());
+                    
+                    if(ppo.save()){
+                    	noInsertPO += newPPO?1:0;
+                    	noUpdatePO += newPPO?0:1;
+                    }
+                    else{
+						sql = new StringBuffer("UPDATE I_Product i " + "SET I_IsImported='E', I_ErrorMsg=I_ErrorMsg||")
+								.append(DB.TO_STRING("Update Product_PO: " + CLogger.retrieveErrorAsString()))
+								.append("WHERE I_Product_ID=").append(I_Product_ID);
+                        DB.executeUpdate( sql.toString());
+                        continue;
                     }
                 }    // C_BPartner_ID != 0
 
@@ -639,13 +582,6 @@ public class ImportProduct extends SvrProcess {
 
             rs.close();
             pstmt.close();
-
-            //
-            // pstmt_insertProduct.close();
-
-            pstmt_updateProduct.close();
-            pstmt_insertProductPO.close();
-            pstmt_updateProductPO.close();
             pstmt_setImported.close();
 
             //
