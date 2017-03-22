@@ -25,10 +25,10 @@ public class CurrentAccountManagerFactory {
 	 *         centralizado
 	 */
 	public static CurrentAccountManager getManager(CurrentAccountDocument document){
-		clearCache();
 		if(manager == null){
 			manager = createLocalManager(document);
 		}
+		updateSkipCurrentAccount(document);
 		return manager;
 	}
 	
@@ -43,6 +43,15 @@ public class CurrentAccountManagerFactory {
 			cam.setBalanceStrategy(new BalanceLocalStrategySkipped()); 
 		}
 		return cam;
+	}
+	
+	public static void updateSkipCurrentAccount(CurrentAccountDocument document){
+		CurrentAccountBalanceStrategy balanceStrategy = new BalanceLocalStrategy();
+		manager.setSkipCurrentAccount(document.isSkipCurrentAccount());
+		if(document.isSkipCurrentAccount()){
+			manager.setBalanceStrategy(new BalanceLocalStrategySkipped()); 
+		}
+		manager.setBalanceStrategy(balanceStrategy);
 	}
 	
 	/**
