@@ -14,7 +14,6 @@ package org.openXpertya.model;
 
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
-import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -34,6 +33,7 @@ import org.openXpertya.util.Env;
 import org.openXpertya.util.Ini;
 import org.openXpertya.util.Msg;
 import org.openXpertya.util.Trace;
+import org.openXpertya.wf.MWorkflowAccess;
 
 /**
  *	Role Model.
@@ -292,43 +292,6 @@ public final class MRole extends X_AD_Role
 		if (isManual())
 			return "-";
 		
-		String roleClientOrgUser = getAD_Role_ID() + ","
-			+ getAD_Client_ID() + "," + getAD_Org_ID() + ",'Y', SysDate," 
-			+ getUpdatedBy() + ", SysDate," + getUpdatedBy() 
-			+ ",'Y' ";	//	IsReadWrite
-		
-		String sqlWindow = "INSERT INTO AD_Window_Access "
-			+ "(AD_Window_ID, AD_Role_ID,"
-			+ " AD_Client_ID,AD_Org_ID,IsActive,Created,CreatedBy,Updated,UpdatedBy,IsReadWrite) "
-			+ "SELECT DISTINCT w.AD_Window_ID, " + roleClientOrgUser
-			+ "FROM AD_Window w"
-			+ " INNER JOIN AD_Tab t ON (w.AD_Window_ID=t.AD_Window_ID)"
-			+ " INNER JOIN AD_Table tt ON (t.AD_Table_ID=tt.AD_Table_ID) "
-			+ "WHERE t.SeqNo=(SELECT MIN(SeqNo) FROM AD_Tab xt "	// only check first tab
-				+ "WHERE xt.AD_Window_ID=w.AD_Window_ID)"
-			+ "AND tt.AccessLevel IN ";
-		
-		String sqlProcess = "INSERT INTO AD_Process_Access "
-			+ "(AD_Process_ID, AD_Role_ID,"
-			+ " AD_Client_ID,AD_Org_ID,IsActive,Created,CreatedBy,Updated,UpdatedBy,IsReadWrite) "
-			+ "SELECT DISTINCT p.AD_Process_ID, " + roleClientOrgUser
-			+ "FROM AD_Process p "
-			+ "WHERE AccessLevel IN ";
-
-		String sqlForm = "INSERT INTO AD_Form_Access "
-			+ "(AD_Form_ID, AD_Role_ID," 
-			+ " AD_Client_ID,AD_Org_ID,IsActive,Created,CreatedBy,Updated,UpdatedBy,IsReadWrite) "
-			+ "SELECT f.AD_Form_ID, " + roleClientOrgUser
-			+ "FROM AD_Form f "
-			+ "WHERE AccessLevel IN ";
-
-		String sqlWorkflow = "INSERT INTO AD_WorkFlow_Access "
-			+ "(AD_WorkFlow_ID, AD_Role_ID,"
-			+ " AD_Client_ID,AD_Org_ID,IsActive,Created,CreatedBy,Updated,UpdatedBy,IsReadWrite) "
-			+ "SELECT w.AD_WorkFlow_ID, " + roleClientOrgUser
-			+ "FROM AD_WorkFlow w "
-			+ "WHERE AccessLevel IN ";
-
 		/**
 		 *	Fill AD_xx_Access
 		 *	---------------------------------------------------------------------------
@@ -343,6 +306,27 @@ public final class MRole extends X_AD_Role
 		 *		_CO		7,6,3,2,1
 		 *		__O		3,1,7
 		 */
+		
+		String sqlWindow = "SELECT DISTINCT w.AD_Window_ID "
+							+ "FROM AD_Window w"
+							+ " INNER JOIN AD_Tab t ON (w.AD_Window_ID=t.AD_Window_ID)"
+							+ " INNER JOIN AD_Table tt ON (t.AD_Table_ID=tt.AD_Table_ID) "
+							+ "WHERE t.SeqNo=(SELECT MIN(SeqNo) FROM AD_Tab xt "	// only check first tab
+								+ "WHERE xt.AD_Window_ID=w.AD_Window_ID)"
+							+ "AND tt.AccessLevel IN ";
+			
+		String sqlProcess = "SELECT DISTINCT p.AD_Process_ID "
+							+ "FROM AD_Process p "
+							+ "WHERE AccessLevel IN ";
+
+		String sqlForm = "SELECT f.AD_Form_ID " 
+						+ "FROM AD_Form f "
+						+ "WHERE AccessLevel IN ";
+
+		String sqlWorkflow = "SELECT w.AD_WorkFlow_ID "
+							+ "FROM AD_WorkFlow w "
+							+ "WHERE AccessLevel IN ";
+		
 		String accessLevel = null;
 		if (USERLEVEL_System.equals(getUserLevel()))
 			accessLevel = "('4','7','6')";
@@ -353,17 +337,29 @@ public final class MRole extends X_AD_Role
 		else //	if (USERLEVEL_Organization.equals(getUserLevel()))
 			accessLevel = "('3','1','7')";
 		//
-		String whereDel = " WHERE AD_Role_ID=" + getAD_Role_ID();
-		//
-		int winDel = DB.executeUpdate("DELETE AD_Window_Access" + whereDel, get_TrxName());
-		int win = DB.executeUpdate(sqlWindow + accessLevel, get_TrxName());
-		int procDel = DB.executeUpdate("DELETE AD_Process_Access" + whereDel, get_TrxName());
-		int proc = DB.executeUpdate(sqlProcess + accessLevel, get_TrxName());
-		int formDel = DB.executeUpdate("DELETE AD_Form_Access" + whereDel, get_TrxName());
-		int form = DB.executeUpdate(sqlForm + accessLevel, get_TrxName());
-		int wfDel = DB.executeUpdate("DELETE AD_WorkFlow_Access" + whereDel, get_TrxName());
-		int wf = DB.executeUpdate(sqlWorkflow + accessLevel, get_TrxName());
-
+		String whereDel = " WHERE ad_componentversion_id is null and AD_Role_ID=" + getAD_Role_ID();
+		int winDel, procDel, formDel, wfDel; 
+		int win, proc, form, wf;
+		winDel = procDel = formDel = wfDel = 0;
+		win = proc = form = wf = 0;
+		
+		try{
+			// Elimino todo lo que tenga el perfil
+			winDel = deleteAllWindowAccess(getAD_Role_ID(), whereDel);
+			procDel = deleteAllProcessAccess(getAD_Role_ID(), whereDel);
+			formDel = deleteAllFormAccess(getAD_Role_ID(), whereDel);
+			wfDel = deleteAllWorkFlowAccess(getAD_Role_ID(), whereDel);
+			
+			// Agrego todo
+			win = addWindowAccess(getAD_Role_ID(), sqlWindow + accessLevel);
+			proc = addProcessAccess(getAD_Role_ID(), sqlProcess + accessLevel);
+			form = addFormAccess(getAD_Role_ID(), sqlForm + accessLevel);
+			wf = addWorkFlowAccess(getAD_Role_ID(), sqlWorkflow + accessLevel);			
+		} catch (Exception e) {
+			log.severe(e.getMessage());
+			e.printStackTrace();
+		} 
+		
 		log.fine("AD_Window_ID=" + winDel + "+" + win 
 			+ ", AD_Process_ID=" + procDel + "+" + proc
 			+ ", AD_Form_ID=" + formDel + "+" + form
@@ -375,6 +371,287 @@ public final class MRole extends X_AD_Role
 			+ " -  @AD_Workflow_ID@ #" + wf;
 	}	//	createAccessRecords
 
+	
+	public int deleteAllWindowAccess(Integer roleID, String whereDel){
+		int del = DB.executeUpdate("DELETE FROM AD_Window_Access " + whereDel, get_TrxName());
+		MWindowAccess winPO;
+		PreparedStatement ps = null;
+		ResultSet rs = null;
+		try {
+			ps = DB.prepareStatement("SELECT * FROM AD_Window_Access WHERE ad_role_id = "+roleID, get_TrxName());
+			rs = ps.executeQuery();
+			if(rs.next()){
+				winPO = new MWindowAccess(getCtx(), rs, get_TrxName());
+				if(winPO.delete(true)){
+					del++;
+				}
+				else{
+					log.severe(CLogger.retrieveErrorAsString());
+				}
+			}
+		} catch (Exception e) {
+			log.severe(e.getMessage());
+			e.printStackTrace();
+		} finally{
+			try {
+				if(ps != null) ps.close();
+				if(rs != null) rs.close();
+			} catch (Exception e2) {
+				log.severe(e2.getMessage());
+				e2.printStackTrace();
+			}
+		}
+		 
+		return del;
+	}
+	
+	public int deleteAllProcessAccess(Integer roleID, String whereDel){
+		int del = DB.executeUpdate("DELETE FROM AD_Process_Access " + whereDel, get_TrxName());
+		MProcessAccess proPO;
+		PreparedStatement ps = null;
+		ResultSet rs = null;
+		try {
+			ps = DB.prepareStatement("SELECT * FROM AD_Process_Access WHERE ad_role_id = "+roleID, get_TrxName());
+			rs = ps.executeQuery();
+			if(rs.next()){
+				proPO = new MProcessAccess(getCtx(), rs, get_TrxName());
+				if(proPO.delete(true)){
+					del++;
+				}
+				else{
+					log.severe(CLogger.retrieveErrorAsString());
+				}
+			}
+		} catch (Exception e) {
+			log.severe(e.getMessage());
+			e.printStackTrace();
+		} finally{
+			try {
+				if(ps != null) ps.close();
+				if(rs != null) rs.close();
+			} catch (Exception e2) {
+				log.severe(e2.getMessage());
+				e2.printStackTrace();
+			}
+		}
+		 
+		return del;
+	}
+	
+	public int deleteAllFormAccess(Integer roleID, String whereDel){
+		int del = DB.executeUpdate("DELETE FROM AD_Form_Access " + whereDel, get_TrxName());
+		MFormAccess formPO;
+		PreparedStatement ps = null;
+		ResultSet rs = null;
+		try {
+			ps = DB.prepareStatement("SELECT * FROM AD_Form_Access WHERE ad_role_id = "+roleID, get_TrxName());
+			rs = ps.executeQuery();
+			if(rs.next()){
+				formPO = new MFormAccess(getCtx(), rs, get_TrxName());
+				if(formPO.delete(true)){
+					del++;
+				}
+				else{
+					log.severe(CLogger.retrieveErrorAsString());
+				}
+			}
+		} catch (Exception e) {
+			log.severe(e.getMessage());
+			e.printStackTrace();
+		} finally{
+			try {
+				if(ps != null) ps.close();
+				if(rs != null) rs.close();
+			} catch (Exception e2) {
+				log.severe(e2.getMessage());
+				e2.printStackTrace();
+			}
+		}
+		 
+		return del;
+	}
+	
+	public int deleteAllWorkFlowAccess(Integer roleID, String whereDel){
+		int del = DB.executeUpdate("DELETE FROM AD_WorkFlow_Access " + whereDel, get_TrxName());
+		MWorkflowAccess wfPO;
+		PreparedStatement ps = null;
+		ResultSet rs = null;
+		try {
+			ps = DB.prepareStatement("SELECT * FROM AD_WorkFlow_Access WHERE ad_role_id = "+roleID, get_TrxName());
+			rs = ps.executeQuery();
+			if(rs.next()){
+				wfPO = new MWorkflowAccess(getCtx(), rs, get_TrxName());
+				if(wfPO.delete(true)){
+					del++;
+				}
+				else{
+					log.severe(CLogger.retrieveErrorAsString());
+				}
+			}
+		} catch (Exception e) {
+			log.severe(e.getMessage());
+			e.printStackTrace();
+		} finally{
+			try {
+				if(ps != null) ps.close();
+				if(rs != null) rs.close();
+			} catch (Exception e2) {
+				log.severe(e2.getMessage());
+				e2.printStackTrace();
+			}
+		}
+		 
+		return del;
+	}
+	
+	public int addWindowAccess(Integer roleID, String sql){
+		// Agrego las ventanas
+		MWindowAccess wa;
+		int access = 0;
+		PreparedStatement ps = null;
+		ResultSet rs = null;
+		try {
+			ps = DB.prepareStatement(sql, get_TrxName());
+			rs = ps.executeQuery();
+			while (rs.next()) {
+				wa = new MWindowAccess(getCtx(), 0, get_TrxName());
+				wa.setClientOrg(getAD_Client_ID(), getAD_Org_ID());
+				wa.setAD_Role_ID(roleID);
+				wa.setAD_Window_ID(rs.getInt("ad_window_id"));
+				wa.setIsReadWrite(true);
+				if(wa.save()){
+					access++;
+				}
+				else{
+					log.severe(CLogger.retrieveErrorAsString());
+				}
+			} 
+		} catch (Exception e) {
+			log.severe(e.getMessage());
+			e.printStackTrace();
+		} finally{
+			try {
+				if(ps != null) ps.close();
+				if(rs != null) rs.close();
+			} catch (Exception e2) {
+				log.severe(e2.getMessage());
+				e2.printStackTrace();
+			}
+		}
+		return access;
+	}
+	
+	public int addProcessAccess(Integer roleID, String sql){
+		// Agrego las ventanas
+		MProcessAccess pa;
+		int access = 0;
+		PreparedStatement ps = null;
+		ResultSet rs = null;
+		try {
+			ps = DB.prepareStatement(sql, get_TrxName());
+			rs = ps.executeQuery();
+			while (rs.next()) {
+				pa = new MProcessAccess(getCtx(), 0, get_TrxName());
+				pa.setClientOrg(getAD_Client_ID(), getAD_Org_ID());
+				pa.setAD_Role_ID(roleID);
+				pa.setAD_Process_ID(rs.getInt("ad_process_id"));
+				pa.setIsReadWrite(true);
+				if(pa.save()){
+					access++;
+				}
+				else{
+					log.severe(CLogger.retrieveErrorAsString());
+				}
+			} 
+		} catch (Exception e) {
+			log.severe(e.getMessage());
+			e.printStackTrace();
+		} finally{
+			try {
+				if(ps != null) ps.close();
+				if(rs != null) rs.close();
+			} catch (Exception e2) {
+				log.severe(e2.getMessage());
+				e2.printStackTrace();
+			}
+		}
+		return access;
+	}
+	
+	public int addFormAccess(Integer roleID, String sql){
+		// Agrego las ventanas
+		MFormAccess fa;
+		int access = 0;
+		PreparedStatement ps = null;
+		ResultSet rs = null;
+		try {
+			ps = DB.prepareStatement(sql, get_TrxName());
+			rs = ps.executeQuery();
+			while (rs.next()) {
+				fa = new MFormAccess(getCtx(), 0, get_TrxName());
+				fa.setClientOrg(getAD_Client_ID(), getAD_Org_ID());
+				fa.setAD_Role_ID(roleID);
+				fa.setAD_Form_ID(rs.getInt("ad_form_id"));
+				fa.setIsReadWrite(true);
+				if(fa.save()){
+					access++;
+				}
+				else{
+					log.severe(CLogger.retrieveErrorAsString());
+				}
+			} 
+		} catch (Exception e) {
+			log.severe(e.getMessage());
+			e.printStackTrace();
+		} finally{
+			try {
+				if(ps != null) ps.close();
+				if(rs != null) rs.close();
+			} catch (Exception e2) {
+				log.severe(e2.getMessage());
+				e2.printStackTrace();
+			}
+		}
+		return access;
+	}
+	
+	public int addWorkFlowAccess(Integer roleID, String sql){
+		// Agrego las ventanas
+		MWorkflowAccess wa;
+		int access = 0;
+		PreparedStatement ps = null;
+		ResultSet rs = null;
+		try {
+			ps = DB.prepareStatement(sql, get_TrxName());
+			rs = ps.executeQuery();
+			while (rs.next()) {
+				wa = new MWorkflowAccess(getCtx(), 0, get_TrxName());
+				wa.setClientOrg(getAD_Client_ID(), getAD_Org_ID());
+				wa.setAD_Role_ID(roleID);
+				wa.setAD_Workflow_ID(rs.getInt("ad_workflow_id"));
+				wa.setIsReadWrite(true);
+				if(wa.save()){
+					access++;
+				}
+				else{
+					log.severe(CLogger.retrieveErrorAsString());
+				}
+			} 
+		} catch (Exception e) {
+			log.severe(e.getMessage());
+			e.printStackTrace();
+		} finally{
+			try {
+				if(ps != null) ps.close();
+				if(rs != null) rs.close();
+			} catch (Exception e2) {
+				log.severe(e2.getMessage());
+				e2.printStackTrace();
+			}
+		}
+		return access;
+	}
+	
 	
 	/**
 	 * 	String Representation
