@@ -1,0 +1,16 @@
+CERTIFICADO: hiperg_17abe98f029c75bf.crt
+ 
+KEY: tehuelche.key
+ 
+URL_WSFE: https://wsaa.afip.gov.ar/ws/services/LoginCms
+ 
+CUIT: 33504487119                             
+ 
+Usando CERT=hiperg_17abe98f029c75bf.crt PRIVATEKEY=tehuelche.key URL=https://wsaa.afip.gov.ar/ws/services/LoginCms SERVICE=wsfe TTL=36000
+Creando TRA...
+Frimando TRA...
+Conectando a WSAA
+wsaa.Version 2.04e 
+NO SE VERIFICA CERTIFICADO CA!
+Llamando WSAA...
+El archivo TA.xml se ha generado correctamente.

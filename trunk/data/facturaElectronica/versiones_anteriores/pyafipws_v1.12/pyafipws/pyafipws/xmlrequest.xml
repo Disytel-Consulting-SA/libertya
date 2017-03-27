@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?><soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+<soap:Body>
+    <FECAESolicitar xmlns="http://ar.gov.afip.dif.FEV1/">
+    <Auth><Token>PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iVVRGLTgiIHN0YW5kYWxvbmU9InllcyI/Pgo8c3NvIHZlcnNpb249IjIuMCI+CiAgICA8aWQgdW5pcXVlX2lkPSIyMTIyMzg2MyIgc3JjPSJDTj13c2FhLCBPPUFGSVAsIEM9QVIsIFNFUklBTE5VTUJFUj1DVUlUIDMzNjkzNDUwMjM5IiBnZW5fdGltZT0iMTMwOTQ3MzI4NyIgZXhwX3RpbWU9IjEzMDk1MTY1NDciIGRzdD0iQ049d3NmZSwgTz1BRklQLCBDPUFSIi8+CiAgICA8b3BlcmF0aW9uIHZhbHVlPSJncmFudGVkIiB0eXBlPSJsb2dpbiI+CiAgICAgICAgPGxvZ2luIHVpZD0iQz1hciwgTz1lbCB0ZWh1ZWxjaGUgc2FjaWNpLCBTRVJJQUxOVU1CRVI9Q1VJVCAzMzUwNDQ4NzExOSwgQ049dmljdG9yIHZlcmEiIHNlcnZpY2U9IndzZmUiIHJlZ21ldGhvZD0iMjIiIGVudGl0eT0iMzM2OTM0NTAyMzkiIGF1dGhtZXRob2Q9ImNtcyI+CiAgICAgICAgICAgIDxyZWxhdGlvbnM+CiAgICAgICAgICAgICAgICA8cmVsYXRpb24gcmVsdHlwZT0iNCIga2V5PSIzMzUwNDQ4NzExOSIvPgogICAgICAgICAgICA8L3JlbGF0aW9ucz4KICAgICAgICA8L2xvZ2luPgogICAgPC9vcGVyYXRpb24+Cjwvc3NvPgoK</Token><Sign>nXVbyKd8Nd3q6jSS7yu9EjuTyChz86GQ6qPiJ6YlcRnW5jVed2tIeLHX0htRYvcBCQDkk3j+IODIpUOb5PMJmJiVh/R3tZIAwOIoSEoNG0VxI9VIOxa5uQ2lE0Vqiokqe6zcTPPyY8wj77DZEj2q3LobzToyGSKNjpq8PMiZTbY=</Sign><Cuit>33504487110</Cuit></Auth><FeCAEReq><FeCabReq><CantReg>1</CantReg><PtoVta>271
+</PtoVta><CbteTipo>3
+</CbteTipo></FeCabReq><FeDetReq><FECAEDetRequest><Concepto>2</Concepto><DocTipo>80
+</DocTipo><DocNro>33708113889
+</DocNro><CbteDesde>1</CbteDesde><CbteHasta>1</CbteHasta><CbteFch>20110630</CbteFch><ImpTotal>1.21</ImpTotal><ImpTotConc>0.00</ImpTotConc><ImpNeto>1.0</ImpNeto><ImpOpEx>0.00</ImpOpEx><ImpTrib>0.00</ImpTrib><ImpIVA>0.21</ImpIVA><FchServDesde>20110630</FchServDesde><FchServHasta>20110630</FchServHasta><FchVtoPago>20110630</FchVtoPago><MonId>PES</MonId><MonCotiz>1
+</MonCotiz><Iva><AlicIva><Id>5</Id><BaseImp>1.00</BaseImp><Importe>0.21
+</Importe></AlicIva></Iva></FECAEDetRequest></FeDetReq></FeCAEReq></FECAESolicitar>
+</soap:Body>
+</soap:Envelope>

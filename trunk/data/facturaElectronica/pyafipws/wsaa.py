@@ -306,6 +306,7 @@ class WSAA(BaseWS):
                 fn = os.path.join(cache, fn)
             else:
                 fn = os.path.join(self.InstallDir, "", fn)
+            print "EN AUTENTICAR --- SERVICE: %s, crt: %s, KEY: %s, WSDL:%s, PROXY: %s, WRAPPER:%s, CACERT:%s, CACHE:%s, FN=%s" % (service, crt, key, wsdl, proxy, wrapper, cacert, cache, fn)
 
             # leer el ticket de acceso (si fue previamente solicitado)
             if not os.path.exists(fn) or os.path.getsize(fn) == 0 or \
@@ -449,7 +450,7 @@ if __name__=="__main__":
                  print "CUIT: %s " % splited[1]
               if name == 'URL_WSAA':
                  WSAAURL = splited[1].rstrip()
-                 print "URL_WSFE: %s " % splited[1]
+                 print "URL_WSAA: %s " % splited[1]
               if name == 'CERTIFICADO':
                  CERTIFICADO = splited[1].rstrip()
                  print "CERTIFICADO: %s " % splited[1]
@@ -506,6 +507,8 @@ if __name__=="__main__":
             print wsaa.Caducidad
             print wsaa.Emisor
             print wsaa.CertX509
+			
+        print >> sys.stderr, "Usando CRT=%s KEY=%s URL=%s SERVICE=%s TTL=%s PROXY=%s WRAPPER=%s CACERT=%s" % (crt, key, url, service, ttl, proxy, wrapper, cacert)
 
         ta = wsaa.Autenticar(service, crt, key, url, proxy, wrapper, cacert)
         if not ta:
