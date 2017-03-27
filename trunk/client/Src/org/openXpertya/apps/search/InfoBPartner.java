@@ -35,6 +35,7 @@ import org.openXpertya.apps.ALayoutConstraint;
 import org.openXpertya.grid.ed.VCheckBox;
 import org.openXpertya.minigrid.IDColumn;
 import org.openXpertya.model.CalloutInvoiceExt;
+import org.openXpertya.model.MPreference;
 import org.openXpertya.model.MQuery;
 import org.openXpertya.model.MRole;
 import org.openXpertya.plugin.common.PluginUtils;
@@ -53,6 +54,9 @@ import org.openXpertya.util.Msg;
 
 public class InfoBPartner extends Info {
 
+	private static final String ONLY_CUSTOMER_PREFERENCE_NAME = "OnlyCustomer";
+	private static final String ONLY_VENDOR_PREFERENCE_NAME = "OnlyVendor";
+	
     /**
      * Constructor de la clase ...
      *
@@ -74,7 +78,16 @@ public class InfoBPartner extends Info {
         m_isSOTrx = isSOTrx;
 
         //
+		String preferenceOC = Env.getPreference(Env.getCtx(), WindowNo, ONLY_CUSTOMER_PREFERENCE_NAME, false);
+        String preferenceOV = Env.getPreference(Env.getCtx(), WindowNo, ONLY_VENDOR_PREFERENCE_NAME, false);
 
+        if(preferenceOC != null && preferenceOC.equals("Y")){
+        	m_isSOTrx = true;
+        }
+        if(preferenceOV != null && preferenceOV.equals("Y")){
+        	m_isSOTrx = false;
+        }
+        
         statInit();
         initInfo( value,whereClause );
 
