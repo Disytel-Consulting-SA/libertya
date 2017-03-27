@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<loginTicketResponse version="1">
+    <header>
+        <source>CN=wsaa, O=AFIP, C=AR, SERIALNUMBER=CUIT 33693450239</source>
+        <destination>C=ar, O=el tehuelche sacici, SERIALNUMBER=CUIT 33504487119, CN=victor vera</destination>
+        <uniqueId>2180352519</uniqueId>
+        <generationTime>2011-06-30T19:44:50.907-03:00</generationTime>
+        <expirationTime>2011-07-01T07:44:50.907-03:00</expirationTime>
+    </header>
+    <credentials>
+        <token>PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iVVRGLTgiIHN0YW5kYWxvbmU9InllcyI/Pgo8c3NvIHZlcnNpb249IjIuMCI+CiAgICA8aWQgdW5pcXVlX2lkPSIzODExNjExMDgyIiBzcmM9IkNOPXdzYWEsIE89QUZJUCwgQz1BUiwgU0VSSUFMTlVNQkVSPUNVSVQgMzM2OTM0NTAyMzkiIGdlbl90aW1lPSIxMzA5NDczODMwIiBleHBfdGltZT0iMTMwOTUxNzA5MCIgZHN0PSJDTj13c2ZlLCBPPUFGSVAsIEM9QVIiLz4KICAgIDxvcGVyYXRpb24gdmFsdWU9ImdyYW50ZWQiIHR5cGU9ImxvZ2luIj4KICAgICAgICA8bG9naW4gdWlkPSJDPWFyLCBPPWVsIHRlaHVlbGNoZSBzYWNpY2ksIFNFUklBTE5VTUJFUj1DVUlUIDMzNTA0NDg3MTE5LCBDTj12aWN0b3IgdmVyYSIgc2VydmljZT0id3NmZSIgcmVnbWV0aG9kPSIyMiIgZW50aXR5PSIzMzY5MzQ1MDIzOSIgYXV0aG1ldGhvZD0iY21zIj4KICAgICAgICAgICAgPHJlbGF0aW9ucz4KICAgICAgICAgICAgICAgIDxyZWxhdGlvbiByZWx0eXBlPSI0IiBrZXk9IjMzNTA0NDg3MTE5Ii8+CiAgICAgICAgICAgIDwvcmVsYXRpb25zPgogICAgICAgIDwvbG9naW4+CiAgICA8L29wZXJhdGlvbj4KPC9zc28+Cgo=</token>
+        <sign>oKj7vTptLiBz8n2+FcMDdVb5GUxvk32h9rnOueINhUkHz5XTf6BwfW16qUBii6J69+xisAsZPk977gT33/rVmb42lYXYeJVX+hlU1FHo7FyYxSv4kqikpMuleXwn8QneT4HkPyvXBzOtu8Ak6cncJh+onhKIB8Cyw0Oo238mM6Y=</sign>
+    </credentials>
+</loginTicketResponse>
+

@@ -600,7 +600,7 @@ if __name__ == "__main__":
                     print "CUIT: %s " % splited[1]
                 if name == 'URL_WSAA':
                     WSAAURL = splited[1].rstrip()
-                    print "URL_WSFE: %s " % splited[1]
+                    print "URL_WSAA: %s " % splited[1]
                 if name == 'URL_WSFEX':
                     WSFEXURL = splited[1].rstrip()
                     print "URL_WSFEX: %s " % splited[1]

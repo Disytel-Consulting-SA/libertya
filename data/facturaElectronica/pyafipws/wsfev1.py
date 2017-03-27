@@ -965,6 +965,9 @@ def main():
           if name == 'CUIT':
              var_CUIT = splited[1].rstrip()
              print "CUIT: %s " % splited[1]
+          if name == 'URL_WSAA':
+             WSAAURL = splited[1].rstrip()
+             print "URL_WSAA: %s " % splited[1]
           if name == 'URL_WSFE':
              WSFEURL = splited[1].rstrip()
              print "URL_WSFE: %s " % splited[1]
@@ -987,8 +990,9 @@ def main():
     #wsdl = "https://wswhomo.afip.gov.ar/wsfev1/service.asmx?WSDL" HOMOLOGACION !!
     #wsdl = "https://servicios1.afip.gov.ar/wsfev1/service.asmx?WSDL" PRODUCCION !!
     wsdl = WSFEURL
-    proxy = ""
-    wrapper = "" #"pycurl"
+    wsaa = WSAAURL
+    proxy = None
+    wrapper = None #"pycurl"
     cacert = "conf/afip_ca_info.crt"
     #cacert = CERTIFICADO
 
@@ -1011,7 +1015,7 @@ def main():
 
     # obteniendo el TA
     from wsaa import WSAA
-    ta = WSAA().Autenticar("wsfe", CERTIFICADO, KEY, debug=True)
+    ta = WSAA().Autenticar("wsfe", CERTIFICADO, KEY, wsaa, proxy, wrapper, cacert, cache)
     wsfev1.SetTicketAcceso(ta)
     wsfev1.Cuit = var_CUIT
 
