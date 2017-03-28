@@ -35,9 +35,9 @@ import org.openXpertya.apps.ALayoutConstraint;
 import org.openXpertya.grid.ed.VCheckBox;
 import org.openXpertya.minigrid.IDColumn;
 import org.openXpertya.model.CalloutInvoiceExt;
-import org.openXpertya.model.MPreference;
 import org.openXpertya.model.MQuery;
 import org.openXpertya.model.MRole;
+import org.openXpertya.model.MWindowVO;
 import org.openXpertya.plugin.common.PluginUtils;
 import org.openXpertya.util.DB;
 import org.openXpertya.util.Env;
@@ -77,10 +77,10 @@ public class InfoBPartner extends Info {
         setTitle( Msg.getMsg( Env.getCtx(),"InfoBPartner" ));
         m_isSOTrx = isSOTrx;
 
-        //
-		String preferenceOC = Env.getPreference(Env.getCtx(), WindowNo, ONLY_CUSTOMER_PREFERENCE_NAME, false);
-        String preferenceOV = Env.getPreference(Env.getCtx(), WindowNo, ONLY_VENDOR_PREFERENCE_NAME, false);
-
+        Integer windowID = MWindowVO.windows.get(WindowNo);
+		String preferenceOC = windowID != null?Env.getPreference(Env.getCtx(), windowID, ONLY_CUSTOMER_PREFERENCE_NAME, false):null;
+        String preferenceOV = windowID != null?Env.getPreference(Env.getCtx(), windowID, ONLY_VENDOR_PREFERENCE_NAME, false):null;
+        
         if(preferenceOC != null && preferenceOC.equals("Y")){
         	m_isSOTrx = true;
         }

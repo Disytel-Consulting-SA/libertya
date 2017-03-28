@@ -35,6 +35,8 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Properties;
 import java.util.logging.Level;
 
@@ -60,6 +62,12 @@ public class MWindowVO implements Serializable {
     /** Descripción de Campo */
     public static final String	WINDOWTYPE_MMAINTAIN	= "M";
 
+    public static Map<Integer, Integer> windows; 
+    
+    static{
+    	windows = new HashMap<Integer, Integer>();
+    }
+    
     // Database fields
 
     /** Descripción de Campo */
@@ -280,6 +288,8 @@ public class MWindowVO implements Serializable {
             return null;
         }
 
+        windows.put(WindowNo, AD_Window_ID);
+        
         return vo;
 
     }		// create
