@@ -294,7 +294,7 @@ public abstract class PO implements Serializable, Comparator, Evaluatee {
 	protected String m_processMsg = "";
 	
 	private boolean isFromTab = false;
-
+	
 	/**
 	 * Initialize and return PO_Info
 	 * 
@@ -1210,6 +1210,7 @@ public abstract class PO implements Serializable, Comparator, Evaluatee {
 			to.m_newValues[toIdx] = from.m_newValues[i];
 			to.m_oldValues[toIdx] = from.m_oldValues[i];
 		}
+		from.copyInstanceValues(to);
 	} // copy
 
 	protected static boolean ignoreColumnOnCopyValues(String colName, PO p,
