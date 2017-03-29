@@ -7,7 +7,7 @@ import java.math.*;
 import org.openXpertya.util.*;
 /** Modelo Generado por M_DiscountSchemaLine
  *  @author Comunidad de Desarrollo Libertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
- *  @version  - 2014-08-21 23:53:33.88 */
+ *  @version  - 2017-03-29 11:30:04.599 */
 public class X_M_DiscountSchemaLine extends org.openXpertya.model.PO
 {
 /** Constructor estándar */
@@ -208,8 +208,8 @@ public static final String LIMIT_BASE_LimitPOPrice = "X";
 Base price for calculation of the new price */
 public void setLimit_Base (String Limit_Base)
 {
-if (Limit_Base.equals("F") || Limit_Base.equals("L") || Limit_Base.equals("S") || Limit_Base.equals("X"));
- else throw new IllegalArgumentException ("Limit_Base Invalid value - Reference = LIMIT_BASE_AD_Reference_ID - F - L - S - X");
+if (Limit_Base.equals("F") || Limit_Base.equals("L") || Limit_Base.equals("S") || Limit_Base.equals("X") || ( refContainsValue("CORE-AD_Reference-194", Limit_Base) ) );
+ else throw new IllegalArgumentException ("Limit_Base Invalid value: " + Limit_Base + ".  Valid: " +  refValidOptions("CORE-AD_Reference-194") );
 if (Limit_Base == null) throw new IllegalArgumentException ("Limit_Base is mandatory");
 if (Limit_Base.length() > 1)
 {
@@ -304,12 +304,14 @@ public static final String LIMIT_ROUNDING_Nickel051015 = "5";
 public static final String LIMIT_ROUNDING_Ten10002000 = "T";
 /** 0.90 round up = U */
 public static final String LIMIT_ROUNDING_090RoundUp = "U";
+/** Always 0.90 = 9 */
+public static final String LIMIT_ROUNDING_Always090 = "9";
 /** Set Limit price Rounding.
 Rounding of the final result */
 public void setLimit_Rounding (String Limit_Rounding)
 {
-if (Limit_Rounding.equals("C") || Limit_Rounding.equals("0") || Limit_Rounding.equals("N") || Limit_Rounding.equals("Q") || Limit_Rounding.equals("D") || Limit_Rounding.equals("5") || Limit_Rounding.equals("T") || Limit_Rounding.equals("U"));
- else throw new IllegalArgumentException ("Limit_Rounding Invalid value - Reference = LIMIT_ROUNDING_AD_Reference_ID - C - 0 - N - Q - D - 5 - T - U");
+if (Limit_Rounding.equals("C") || Limit_Rounding.equals("0") || Limit_Rounding.equals("N") || Limit_Rounding.equals("Q") || Limit_Rounding.equals("D") || Limit_Rounding.equals("5") || Limit_Rounding.equals("T") || Limit_Rounding.equals("U") || Limit_Rounding.equals("9") || ( refContainsValue("CORE-AD_Reference-155", Limit_Rounding) ) );
+ else throw new IllegalArgumentException ("Limit_Rounding Invalid value: " + Limit_Rounding + ".  Valid: " +  refValidOptions("CORE-AD_Reference-155") );
 if (Limit_Rounding == null) throw new IllegalArgumentException ("Limit_Rounding is mandatory");
 if (Limit_Rounding.length() > 1)
 {
@@ -370,8 +372,8 @@ public static final String LIST_BASE_LimitPOPrice = "X";
 Price used as the basis for price list calculations */
 public void setList_Base (String List_Base)
 {
-if (List_Base.equals("F") || List_Base.equals("L") || List_Base.equals("S") || List_Base.equals("X"));
- else throw new IllegalArgumentException ("List_Base Invalid value - Reference = LIST_BASE_AD_Reference_ID - F - L - S - X");
+if (List_Base.equals("F") || List_Base.equals("L") || List_Base.equals("S") || List_Base.equals("X") || ( refContainsValue("CORE-AD_Reference-194", List_Base) ) );
+ else throw new IllegalArgumentException ("List_Base Invalid value: " + List_Base + ".  Valid: " +  refValidOptions("CORE-AD_Reference-194") );
 if (List_Base == null) throw new IllegalArgumentException ("List_Base is mandatory");
 if (List_Base.length() > 1)
 {
@@ -462,12 +464,14 @@ public static final String LIST_ROUNDING_Nickel051015 = "5";
 public static final String LIST_ROUNDING_Ten10002000 = "T";
 /** 0.90 round up = U */
 public static final String LIST_ROUNDING_090RoundUp = "U";
+/** Always 0.90 = 9 */
+public static final String LIST_ROUNDING_Always090 = "9";
 /** Set List price Rounding.
 Rounding rule for final list price */
 public void setList_Rounding (String List_Rounding)
 {
-if (List_Rounding.equals("C") || List_Rounding.equals("0") || List_Rounding.equals("N") || List_Rounding.equals("Q") || List_Rounding.equals("D") || List_Rounding.equals("5") || List_Rounding.equals("T") || List_Rounding.equals("U"));
- else throw new IllegalArgumentException ("List_Rounding Invalid value - Reference = LIST_ROUNDING_AD_Reference_ID - C - 0 - N - Q - D - 5 - T - U");
+if (List_Rounding.equals("C") || List_Rounding.equals("0") || List_Rounding.equals("N") || List_Rounding.equals("Q") || List_Rounding.equals("D") || List_Rounding.equals("5") || List_Rounding.equals("T") || List_Rounding.equals("U") || List_Rounding.equals("9") || ( refContainsValue("CORE-AD_Reference-155", List_Rounding) ) );
+ else throw new IllegalArgumentException ("List_Rounding Invalid value: " + List_Rounding + ".  Valid: " +  refValidOptions("CORE-AD_Reference-155") );
 if (List_Rounding == null) throw new IllegalArgumentException ("List_Rounding is mandatory");
 if (List_Rounding.length() > 1)
 {
@@ -632,8 +636,8 @@ public static final String SOLDPURCHASEDOPTION_SoldAndPurchased = "B";
 /** Set Sold/Purchased option */
 public void setSoldPurchasedOption (String SoldPurchasedOption)
 {
-if (SoldPurchasedOption == null || SoldPurchasedOption.equals("S") || SoldPurchasedOption.equals("P") || SoldPurchasedOption.equals("B"));
- else throw new IllegalArgumentException ("SoldPurchasedOption Invalid value - Reference = SOLDPURCHASEDOPTION_AD_Reference_ID - S - P - B");
+if (SoldPurchasedOption == null || SoldPurchasedOption.equals("S") || SoldPurchasedOption.equals("P") || SoldPurchasedOption.equals("B") || ( refContainsValue("CORE-AD_Reference-1010233", SoldPurchasedOption) ) );
+ else throw new IllegalArgumentException ("SoldPurchasedOption Invalid value: " + SoldPurchasedOption + ".  Valid: " +  refValidOptions("CORE-AD_Reference-1010233") );
 if (SoldPurchasedOption != null && SoldPurchasedOption.length() > 1)
 {
 log.warning("Length > 1 - truncated");
@@ -692,8 +696,8 @@ public static final String STD_BASE_LimitPOPrice = "X";
 Base price for calculating new standard price */
 public void setStd_Base (String Std_Base)
 {
-if (Std_Base.equals("F") || Std_Base.equals("L") || Std_Base.equals("S") || Std_Base.equals("X"));
- else throw new IllegalArgumentException ("Std_Base Invalid value - Reference = STD_BASE_AD_Reference_ID - F - L - S - X");
+if (Std_Base.equals("F") || Std_Base.equals("L") || Std_Base.equals("S") || Std_Base.equals("X") || ( refContainsValue("CORE-AD_Reference-194", Std_Base) ) );
+ else throw new IllegalArgumentException ("Std_Base Invalid value: " + Std_Base + ".  Valid: " +  refValidOptions("CORE-AD_Reference-194") );
 if (Std_Base == null) throw new IllegalArgumentException ("Std_Base is mandatory");
 if (Std_Base.length() > 1)
 {
@@ -784,12 +788,14 @@ public static final String STD_ROUNDING_Nickel051015 = "5";
 public static final String STD_ROUNDING_Ten10002000 = "T";
 /** 0.90 round up = U */
 public static final String STD_ROUNDING_090RoundUp = "U";
+/** Always 0.90 = 9 */
+public static final String STD_ROUNDING_Always090 = "9";
 /** Set Standard price Rounding.
 Rounding rule for calculated price */
 public void setStd_Rounding (String Std_Rounding)
 {
-if (Std_Rounding.equals("C") || Std_Rounding.equals("0") || Std_Rounding.equals("N") || Std_Rounding.equals("Q") || Std_Rounding.equals("D") || Std_Rounding.equals("5") || Std_Rounding.equals("T") || Std_Rounding.equals("U"));
- else throw new IllegalArgumentException ("Std_Rounding Invalid value - Reference = STD_ROUNDING_AD_Reference_ID - C - 0 - N - Q - D - 5 - T - U");
+if (Std_Rounding.equals("C") || Std_Rounding.equals("0") || Std_Rounding.equals("N") || Std_Rounding.equals("Q") || Std_Rounding.equals("D") || Std_Rounding.equals("5") || Std_Rounding.equals("T") || Std_Rounding.equals("U") || Std_Rounding.equals("9") || ( refContainsValue("CORE-AD_Reference-155", Std_Rounding) ) );
+ else throw new IllegalArgumentException ("Std_Rounding Invalid value: " + Std_Rounding + ".  Valid: " +  refValidOptions("CORE-AD_Reference-155") );
 if (Std_Rounding == null) throw new IllegalArgumentException ("Std_Rounding is mandatory");
 if (Std_Rounding.length() > 1)
 {

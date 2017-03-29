@@ -1055,6 +1055,8 @@ public class ProductPriceTemp extends SvrProcess {
         } else if( roundingOption.equals(MDiscountSchemaLine.LIST_ROUNDING_090RoundUp) ) {
         	sql.append(" CASE WHEN trunc(?, 2) - trunc(?) >= 0.90 THEN trunc(?) + 1 " +
         					"ELSE ? END ");
+        } else if(roundingOption.equals(MDiscountSchemaLine.LIST_ROUNDING_Always090)){
+        	sql.append( "ROUND(?, 0) + 0.90" );
         } else {
             sql.append( "ROUND(?," + m_StdPrecision + ")" );
         }
