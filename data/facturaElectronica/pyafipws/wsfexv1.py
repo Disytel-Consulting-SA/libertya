@@ -26,10 +26,12 @@ import decimal
 import os
 import sys
 import codecs
+from shutil import copyfile
 from chardet.universaldetector import UniversalDetector
 from utils import inicializar_y_capturar_excepciones, BaseWS, get_install_dir
 
 detector = UniversalDetector()
+LOG_FOLDER="log"
 HOMO = True
 WSDL="https://wswhomo.afip.gov.ar/wsfexv1/service.asmx?WSDL"
 
@@ -563,7 +565,7 @@ def p_assert_eq(a,b):
 
 
 if __name__ == "__main__":
-
+    DEBUG = '--debug' in sys.argv
     if "--register" in sys.argv or "--unregister" in sys.argv:
         import win32com.server.register
         win32com.server.register.UseCommandLine(WSFEXv1)
@@ -732,6 +734,18 @@ if __name__ == "__main__":
                 print "IDIOMA DEL COMPROBANTE:", idioma_cbte
                 print "---------- FIN DATOS ENCABEZADO DE LA FACTURA ----------"
                 
+                #LOG: si no existe la carpeta de log, la creo				
+                try:
+                    os.stat(LOG_FOLDER)
+                except:
+                    os.mkdir(LOG_FOLDER) 
+                #LOG: creo carpeta dentro del LOG_FOLDER
+                log_folder_name = LOG_FOLDER + "/" + fecha_cbte + "_" + punto_vta.rstrip() + "_" + str(cbte_nro) + "_" + tipo_cbte.rstrip()
+                print log_folder_name
+                os.mkdir(log_folder_name.rstrip())
+                #LOG: copio entrada.txt
+                copyfile("entrada.txt", log_folder_name.rstrip() + "/" + "entrada.txt")
+                
                 # Creo una factura (internamente, no se llama al WebService):
                 ok = wsfexv1.CrearFactura(tipo_cbte, punto_vta, cbte_nro, fecha_cbte, 
                     imp_total, tipo_expo, permiso_existente, dst_cmp, 
@@ -779,6 +793,13 @@ if __name__ == "__main__":
                     print "Vencimiento", wsfexv1.Vencimiento
                     print "---------- FIN AUTORIZACION DE LA FACTURA ----------"
 
+                if DEBUG:
+                    open("xmlrequest.xml","wb").write(wsfexv1.XmlRequest)
+                    open("xmlresponse.xml","wb").write(wsfexv1.XmlResponse)	
+                    #LOG: copio request y response xml
+                    copyfile("xmlrequest.xml", log_folder_name.rstrip() + "/" + "xmlrequest.xml")
+                    copyfile("xmlresponse.xml", log_folder_name.rstrip() + "/" + "xmlresponse.xml")
+					
                 var_msg = str(wsfexv1.ObtenerTagXml('Obs',0,'Msg'))
                 if var_msg == "None":
                     var_msg = str(wsfexv1.ObtenerTagXml('Err',0,'Msg'))
@@ -791,6 +812,8 @@ if __name__ == "__main__":
                         
                         print "salida: %s " %salida
                         open("salida.txt","w").write(salida)
+                        #LOG: salida.txt
+                        copyfile("salida.txt", log_folder_name.rstrip() + "/" + "salida.txt")
                         print "El archivo salida.txt se ha generado correctamente."
                     except:
                         sys.exit("Error escribiendo salida.txt\n")
