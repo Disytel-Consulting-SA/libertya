@@ -1,7 +1,11 @@
 package org.openXpertya.process;
 
+import java.io.BufferedWriter;
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.FileWriter;
+import java.io.OutputStreamWriter;
+import java.io.Writer;
 import java.math.BigDecimal;
 import java.util.logging.Level;
 
@@ -195,11 +199,13 @@ public class WsfexV1 extends Wsfe{
 			//*****C_INVOICE_ID para seguimiento
 			line.append(this.getInvoice().getC_Invoice_ID()+"\n");
 			
-			File textFile = new File(getPath()+"entrada.txt");
-			FileWriter textOut;
-			textOut = new FileWriter(textFile);
-			textOut.write(line.toString());
-			textOut.close();
+			Writer out = new BufferedWriter(new OutputStreamWriter(
+			    new FileOutputStream(getPath()+"entrada.txt"), "UTF-8"));
+			try {
+			    out.write(line.toString());
+			} finally {
+			    out.close();
+			}
 		}catch (Exception ex) {
 			this.setMessageError(Msg.translate(this.getM_ctx(), "caeErrorCreateInputFile"));
 			log.log(Level.SEVERE, this.getMessageError(),ex);
