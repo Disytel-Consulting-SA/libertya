@@ -55,7 +55,7 @@ public class ProductPriceTempGlobal extends SvrProcess {
 		sql.append(" WHERE plv.ad_client_id = ? ");
 		List<Object> params = new ArrayList<Object>();
 		params.add(Env.getAD_Client_ID(getCtx()));
-		if(getOrgID() != null){
+		if(!Util.isEmpty(getOrgID(), true)){
 			sql.append(" AND plv.ad_org_id = ? ");
 			params.add(getOrgID());
 		}
