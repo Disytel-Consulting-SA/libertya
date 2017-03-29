@@ -27,8 +27,10 @@ import datetime
 import decimal
 import os
 import sys
+from shutil import copyfile
 from utils import verifica, inicializar_y_capturar_excepciones, BaseWS, get_install_dir
 
+LOG_FOLDER="log"
 HOMO = False                    # solo homologación
 TYPELIB = False                 # usar librería de tipos (TLB)
 LANZAR_EXCEPCIONES = True      # valor por defecto: True
@@ -1113,6 +1115,18 @@ def main():
         #moneda_ctz = '1.000'
         moneda_ctz = var_cotizacion
 
+        #LOG: si no existe la carpeta de log, la creo				
+        try:
+            os.stat(LOG_FOLDER)
+        except:
+            os.mkdir(LOG_FOLDER) 
+        #LOG: creo carpeta dentro del LOG_FOLDER
+        log_folder_name = LOG_FOLDER + "/" + fecha_cbte + "_" + punto_vta.rstrip() + "_" + str(cbte_nro) + "_" + tipo_cbte.rstrip()
+        print log_folder_name
+        os.mkdir(log_folder_name.rstrip())
+        #LOG: copio entrada.txt
+        copyfile("entrada.txt", log_folder_name.rstrip() + "/" + "entrada.txt")
+		
         logaction('Invocacion a CrearFactura');
         wsfev1.CrearFactura(concepto, tipo_doc, nro_doc, tipo_cbte, punto_vta,
             cbt_desde, cbt_hasta, imp_total, imp_tot_conc, imp_neto,
@@ -1177,6 +1191,9 @@ def main():
             print "lapso", t1-t0
             open("xmlrequest.xml","wb").write(wsfev1.XmlRequest)
             open("xmlresponse.xml","wb").write(wsfev1.XmlResponse)
+            #LOG: copio request y response xml
+            copyfile("xmlrequest.xml", log_folder_name.rstrip() + "/" + "xmlrequest.xml")
+            copyfile("xmlresponse.xml", log_folder_name.rstrip() + "/" + "xmlresponse.xml")
 
         wsfev1.AnalizarXml("XmlResponse")
         p_assert_eq(wsfev1.ObtenerTagXml('CAE'), str(wsfev1.CAE))
@@ -1194,6 +1211,8 @@ def main():
             logaction('FIN - InvoiceID: ' + var_invoiceid + ' - NroComp: ' + str(cbt_desde) + ' - CAE: ' + wsfev1.CAE + ' - Salida: ' + salida)
             print "salida: %s " %salida
             open("salida.txt","w").write(salida)
+            #LOG: salida.txt
+            copyfile("salida.txt", log_folder_name.rstrip() + "/" + "salida.txt")
             print "El archivo salida.txt se ha generado correctamente."
         except:
             sys.exit("Error escribiendo salida.txt\n")
