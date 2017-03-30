@@ -93,6 +93,8 @@ public class MDocType extends X_C_DocType {
     public static final String DOCTYPE_VendorInvoice = "VI";
     /** Vendor Credit Memo = VCM (Abono de Proveedor) */
     public static final String DOCTYPE_VendorCreditMemo = "VCM";
+    /** Vendor Debit Note = VCDN (Nota de Débito de Proveedor) */
+    public static final String DOCTYPE_VendorDebitNote = "VCDN";
     /** Match Invoice = MXI (Corresponder Factura) */
     public static final String DOCTYPE_MatchInvoice = "MXI";
     /** Customer Receipt = CR (Cobro a Cliente) */
