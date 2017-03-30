@@ -172,6 +172,10 @@ public class LaunchInvoice extends SvrProcess {
 		
 		// Descuentos aplicados totales
 		jasperwrapper.addParameter("NROCOMPROBANTE", invoice.getNumeroDeDocumento().replace("<", "").replace(">", ""));
+		jasperwrapper.addParameter("NROCOMPROBANTESMALL",
+				invoice.getPuntoDeVenta()
+						+ "00000000".substring(String.valueOf(invoice.getNumeroComprobante()).length())
+						+ invoice.getNumeroComprobante());
 		jasperwrapper.addParameter("TIPOCOMPROBANTE", JasperReportsUtil
 			.getDocTypeName(getCtx(), invoice.getC_DocTypeTarget_ID(),
 					"FACTURA", get_TrxName()));
@@ -180,6 +184,7 @@ public class LaunchInvoice extends SvrProcess {
 		jasperwrapper.addParameter("DOCTYPENOTES", docType.getDocumentNote());
 				
 		jasperwrapper.addParameter("FECHA", invoice.getDateInvoiced());
+		jasperwrapper.addParameter("FECHA_CONTABLE", invoice.getDateAcct());
 		Calendar c = Calendar.getInstance();
 		c.setTimeInMillis(invoice.getDateInvoiced().getTime());
 		jasperwrapper.addParameter("DIA", Integer.toString(c.get(Calendar.DATE)));

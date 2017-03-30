@@ -1,7 +1,6 @@
 package org.openXpertya.JasperReport.DataSource;
 
 import java.math.BigDecimal;
-import java.sql.PreparedStatement;
 import java.util.Properties;
 
 import org.openXpertya.util.DB;
@@ -36,7 +35,7 @@ public class InvoicePerceptionsDataSource extends QueryDataSource {
 			   "order by name";
 	}
 	
-	private String getTotalQuery(){
+	protected String getTotalQuery(){
 		return "select coalesce(sum(taxamt),0) as total from (" + getQuery() + ") as t";
 	}
 	
