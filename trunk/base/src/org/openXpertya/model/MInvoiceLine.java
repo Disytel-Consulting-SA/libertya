@@ -1314,6 +1314,18 @@ public class MInvoiceLine extends X_C_InvoiceLine {
 		}
 		return rate;
 	}
+    
+    /**
+     * @return nombre del impuesto asociado a la línea
+     */
+    public String getTaxName() {
+		String taxName = null;
+		if (getC_Tax_ID() > 0) {
+			MTax tax = MTax.get(getCtx(), getC_Tax_ID(), get_TrxName());
+			taxName = tax !=  null ? tax.getName() : taxName;
+		}
+		return taxName;
+	}
 
 	/**
 	 * @return Indica si esta línea ha sufrido bonificaciones de su precio

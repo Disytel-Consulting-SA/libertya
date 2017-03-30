@@ -6,12 +6,11 @@ import java.lang.reflect.Method;
 import java.util.HashMap;
 import java.util.Properties;
 
-import net.sf.jasperreports.engine.JRDataSource;
-import net.sf.jasperreports.engine.JRException;
-import net.sf.jasperreports.engine.JRField;
-
 import org.openXpertya.model.MInvoice;
 import org.openXpertya.model.MInvoiceLine;
+
+import net.sf.jasperreports.engine.JRException;
+import net.sf.jasperreports.engine.JRField;
 
 
 public class InvoiceDataSource implements OXPJasperDataSource  {
@@ -44,6 +43,7 @@ public class InvoiceDataSource implements OXPJasperDataSource  {
 		methodMapper.put("VENDOR", "getBPartnerVendorName");
 		methodMapper.put("CHARGE", "getChargeName");
 		methodMapper.put("TAX_RATE", "getTaxRate");
+		methodMapper.put("TAX_NAME", "getTaxName");
 		methodMapper.put("PROJECT", "getProjectName");
 		methodMapper.put("COST_PRICE", "getCostPrice");
 		methodMapper.put("TAX_AMT", "getTaxAmt");
