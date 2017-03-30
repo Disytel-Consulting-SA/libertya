@@ -3290,6 +3290,14 @@ public class MInvoice extends X_C_Invoice implements DocAction,Authorization, Cu
 			
 		}
 		
+		// Fecha del CAI > que fecha de facturacion
+		if (getDateCAI() != null
+				&& getDateInvoiced().compareTo(getDateCAI()) > 0 
+				&& !TimeUtil.isSameDay(getDateInvoiced(), getDateCAI())){
+			setProcessMsg("@InvoicedDateAfterCAIDate@");
+			return DocAction.STATUS_Invalid;
+		}
+		
 		return DocAction.STATUS_InProgress;
 	} // prepareIt
 

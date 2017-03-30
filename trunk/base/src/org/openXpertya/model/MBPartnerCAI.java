@@ -5,7 +5,9 @@ import java.sql.ResultSet;
 import java.util.Properties;
 
 import org.openXpertya.util.DB;
+import org.openXpertya.util.Env;
 import org.openXpertya.util.Msg;
+import org.openXpertya.util.TimeUtil;
 
 public class MBPartnerCAI extends X_C_BPartner_CAI {
 
@@ -52,6 +54,12 @@ public class MBPartnerCAI extends X_C_BPartner_CAI {
 				log.saveError("SaveError", e2.getMessage());
 				return false;
 			}
+		}
+		
+		// La fecha de vencimiento no puede ser menor a la fecha actual
+		if (getDateCAI().compareTo(Env.getDate()) < 0 && !TimeUtil.isSameDay(getDateCAI(), Env.getDate())) {
+			log.saveError("SaveError", Msg.getMsg(getCtx(), "InvalidDateCAIBeforeCurrentDate"));
+			return false;
 		}
 		
 		return true;
