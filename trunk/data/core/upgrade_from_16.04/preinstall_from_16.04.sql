@@ -6142,3 +6142,73 @@ UPDATE ad_system SET dummy = (SELECT addcolumnifnotexists('AD_Field_Access','ad_
 
 --20170321-1930 Incorporación de configuración en tipo de documento para omitir todas las operaciones de cuentas corrientes
 UPDATE ad_system SET dummy = (SELECT addcolumnifnotexists('c_doctype','skipcurrentaccounts','character(1) NOT NULL DEFAULT ''N''::bpchar'));
+
+--20170330-1200 Fun view c_invoice_allocation 
+CREATE TYPE c_invoice_allocations_type AS (ad_client_id integer, ad_org_id integer, c_allocationhdr_id integer, 
+c_doctype_id integer, allocation_doc_name character varying(60), documentno character varying(30), 
+allocationtype character varying(50), description character varying(255), datetrx timestamp without time zone, 
+isactive character(1), docstatus character(2), c_invoice_id integer, invoice_documentno character varying(30),
+dateinvoiced timestamp without time zone, grandtotal numeric(20,2), c_bpartner_id integer, 
+value character varying(40), name character varying(60), customer character varying(60), amount numeric(20,2));
+
+
+CREATE OR REPLACE FUNCTION c_invoice_allocations_filtered(invoiceID integer)
+  RETURNS SETOF c_invoice_allocations_type AS
+$BODY$
+declare
+	consulta varchar;
+	whereInvoice varchar;
+	whereStd varchar;
+	adocument c_invoice_allocations_type;
+BEGIN
+	whereStd = ' (1=1) ';
+	-- Armado de las condiciones en base a los parámetros
+	-- Invoice
+	whereInvoice = '';
+	if invoiceID is not null AND invoiceID > 0 THEN
+		whereInvoice = ' AND i.c_invoice_id = ' || invoiceID;
+	END IF;
+	
+	-- Armar la consulta
+	consulta = ' SELECT ah.ad_client_id, ah.ad_org_id, ah.c_allocationhdr_id, ah.c_doctype_id, dt.name AS allocation_doc_name,
+ah.documentno, ah.allocationtype, ah.description, ah.datetrx, ah.isactive, ah.docstatus, i.c_invoice_id, i.documentno AS invoice_documentno,
+i.dateinvoiced, i.grandtotal, bp.c_bpartner_id, bp.value, bp.name,
+COALESCE(i.nombrecli, bp.name)::character varying(60) AS customer, sum(al.amount) AS amount
+  FROM c_allocationhdr ah
+  LEFT JOIN c_doctype dt ON dt.c_doctype_id = ah.c_doctype_id
+  JOIN c_allocationline al ON al.c_allocationhdr_id = ah.c_allocationhdr_id
+  JOIN c_invoice i ON i.c_invoice_id = al.c_invoice_id
+  JOIN c_bpartner bp ON bp.c_bpartner_id = i.c_bpartner_id
+  WHERE ' || whereStd || whereInvoice || '
+  GROUP BY ah.ad_client_id, ah.ad_org_id, ah.c_allocationhdr_id, ah.c_doctype_id, dt.name, ah.documentno, ah.allocationtype, ah.description, ah.datetrx, ah.isactive, ah.docstatus, i.c_invoice_id, i.documentno, i.dateinvoiced, i.grandtotal, bp.c_bpartner_id, bp.value, bp.name, COALESCE(i.nombrecli, bp.name)
+UNION
+  SELECT ah.ad_client_id, ah.ad_org_id, ah.c_allocationhdr_id, ah.c_doctype_id, dt.name AS allocation_doc_name,
+ah.documentno, ah.allocationtype, ah.description, ah.datetrx, ah.isactive, ah.docstatus, i.c_invoice_id, i.documentno AS invoice_documentno,
+i.dateinvoiced, i.grandtotal, bp.c_bpartner_id, bp.value, bp.name,
+COALESCE(i.nombrecli, bp.name)::character varying(60)AS customer, sum(al.amount) AS amount
+  FROM c_allocationhdr ah
+  LEFT JOIN c_doctype dt ON dt.c_doctype_id = ah.c_doctype_id
+  JOIN c_allocationline al ON al.c_allocationhdr_id = ah.c_allocationhdr_id
+  JOIN c_invoice i ON i.c_invoice_id = al.c_invoice_credit_id
+  JOIN c_bpartner bp ON bp.c_bpartner_id = i.c_bpartner_id
+  WHERE ' || whereStd || whereInvoice || '
+  GROUP BY ah.ad_client_id, ah.ad_org_id, ah.c_allocationhdr_id, ah.c_doctype_id, dt.name, ah.documentno, ah.allocationtype, ah.description, ah.datetrx, ah.isactive, ah.docstatus, i.c_invoice_id, i.documentno, i.dateinvoiced, i.grandtotal, bp.c_bpartner_id, bp.value, bp.name, COALESCE(i.nombrecli, bp.name) ';
+
+-- raise notice '%', consulta;
+FOR adocument IN EXECUTE consulta LOOP
+	return next adocument;
+END LOOP;
+
+END
+$BODY$
+  LANGUAGE plpgsql VOLATILE
+  COST 100
+  ROWS 1000;
+ALTER FUNCTION c_invoice_allocations_filtered(integer)
+  OWNER TO libertya;
+
+drop view c_invoice_allocation_v;
+
+create or replace view c_invoice_allocation_v as 
+select * 
+from c_invoice_allocations_filtered(-1);
