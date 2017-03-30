@@ -350,6 +350,23 @@ public class MProductPO extends X_M_Product_PO {
         	MProduct product = MProduct.get(getCtx(), getM_Product_ID());
         	setUPC(product.getUPC());
         }
+        
+        // Mismo UPC para distinto artículo
+        if(newRecord || (is_ValueChanged("UPC") && !Util.isEmpty(getUPC(), true))){
+        	String newRecordWhereClause = newRecord?"":" AND m_product_id <> "+getM_Product_ID();
+			int productID = DB.getSQLValue(get_TrxName(),
+					"SELECT m_product_id FROM " + get_TableName()
+							+ " WHERE ad_client_id = ? and trim(upc) = trim('" + getUPC()
+							+ "') " + newRecordWhereClause, 
+							getAD_Client_ID());
+			if(productID > 0){
+	        	MProduct product = MProduct.get(getCtx(), productID);
+				String productStr = "'" + product.getValue() + " " + product.getName() + "'";
+				log.saveError("SaveError", 
+						Msg.translate(getCtx(), "DuplicateUPCError") + " " + productStr);
+				return false;
+			}
+        }
   
         return true;
     }    // beforeSave
