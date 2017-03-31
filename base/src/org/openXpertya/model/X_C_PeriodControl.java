@@ -7,7 +7,7 @@ import java.math.*;
 import org.openXpertya.util.*;
 /** Modelo Generado por C_PeriodControl
  *  @author Comunidad de Desarrollo Libertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
- *  @version  - 2017-03-10 10:07:01.65 */
+ *  @version  - 2017-03-31 11:05:26.279 */
 public class X_C_PeriodControl extends org.openXpertya.model.PO
 {
 /** Constructor estándar */
@@ -19,6 +19,7 @@ super (ctx, C_PeriodControl_ID, trxName);
 setC_PeriodControl_ID (0);
 setC_Period_ID (0);
 setDocBaseType (null);
+setDocTypeControl (false);
 setPeriodAction (null);	// N
 }
  */
@@ -167,6 +168,37 @@ public String getDocBaseType()
 {
 return (String)get_Value("DocBaseType");
 }
+/** Set DocTypeControl */
+public void setDocTypeControl (boolean DocTypeControl)
+{
+set_Value ("DocTypeControl", new Boolean(DocTypeControl));
+}
+/** Get DocTypeControl */
+public boolean isDocTypeControl() 
+{
+Object oo = get_Value("DocTypeControl");
+if (oo != null) 
+{
+ if (oo instanceof Boolean) return ((Boolean)oo).booleanValue();
+ return "Y".equals(oo);
+}
+return false;
+}
+/** Set DocTypeProcessing */
+public void setDocTypeProcessing (String DocTypeProcessing)
+{
+if (DocTypeProcessing != null && DocTypeProcessing.length() > 1)
+{
+log.warning("Length > 1 - truncated");
+DocTypeProcessing = DocTypeProcessing.substring(0,1);
+}
+set_Value ("DocTypeProcessing", DocTypeProcessing);
+}
+/** Get DocTypeProcessing */
+public String getDocTypeProcessing() 
+{
+return (String)get_Value("DocTypeProcessing");
+}
 public static final int PERIODACTION_AD_Reference_ID = MReference.getReferenceID("C_PeriodControl Action");
 /** Open Period = O */
 public static final String PERIODACTION_OpenPeriod = "O";
@@ -233,22 +265,6 @@ set_Value ("Processing", new Boolean(Processing));
 public boolean isProcessing() 
 {
 Object oo = get_Value("Processing");
-if (oo != null) 
-{
- if (oo instanceof Boolean) return ((Boolean)oo).booleanValue();
- return "Y".equals(oo);
-}
-return false;
-}
-/** Set DocTypeControl */
-public void setDocTypeControl (boolean DocTypeControl)
-{
-set_Value ("DocTypeControl", new Boolean(DocTypeControl));
-}
-/** Get DocTypeControl */
-public boolean isDocTypeControl() 
-{
-Object oo = get_Value("DocTypeControl");
 if (oo != null) 
 {
  if (oo instanceof Boolean) return ((Boolean)oo).booleanValue();

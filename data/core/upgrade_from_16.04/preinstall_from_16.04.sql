@@ -6212,3 +6212,34 @@ drop view c_invoice_allocation_v;
 create or replace view c_invoice_allocation_v as 
 select * 
 from c_invoice_allocations_filtered(-1);
+
+--20170331-1048 Nuevas tabla y columna para control de periodo por punto de venta. IMPORTANTE: Incorporaciones omitidas previamente, que corresponden a la revision r1831 del dia 20170313
+CREATE TABLE c_posperiodcontrol
+(
+  c_posperiodcontrol_id integer NOT NULL,
+  ad_client_id integer NOT NULL,
+  ad_org_id integer NOT NULL,
+  isactive character(1) NOT NULL DEFAULT 'Y'::bpchar,
+  created timestamp without time zone NOT NULL DEFAULT ('now'::text)::timestamp(6) with time zone,
+  createdby integer NOT NULL,
+  updated timestamp without time zone NOT NULL DEFAULT ('now'::text)::timestamp(6) with time zone,
+  updatedby integer NOT NULL,
+  c_periodcontrol_id integer,
+  c_doctype_id integer,
+  periodstatus character(1),
+  periodaction character(1) NOT NULL,
+  processing character(1),
+  CONSTRAINT posperiodcontrol_key PRIMARY KEY (c_posperiodcontrol_id),
+  CONSTRAINT posperiodcontrolclient FOREIGN KEY (ad_client_id)
+    REFERENCES libertya.ad_client (ad_client_id) MATCH SIMPLE ON UPDATE NO ACTION ON DELETE NO ACTION,
+  CONSTRAINT posperiodcontrolorg FOREIGN KEY (ad_org_id)
+    REFERENCES libertya.ad_org (ad_org_id) MATCH SIMPLE ON UPDATE NO ACTION ON DELETE NO ACTION,
+  CONSTRAINT posperiodcontrolperiodcontrol FOREIGN KEY (c_periodcontrol_id)
+    REFERENCES libertya.c_periodcontrol (c_periodcontrol_id) MATCH SIMPLE ON UPDATE NO ACTION ON DELETE NO ACTION,
+  CONSTRAINT posperiodcontroldoctype FOREIGN KEY (c_doctype_id)
+    REFERENCES libertya.c_doctype (c_doctype_id) MATCH SIMPLE ON UPDATE NO ACTION ON DELETE NO ACTION
+);
+
+update ad_system set dummy = (SELECT addcolumnifnotexists('c_periodcontrol','doctypecontrol','character(1) default ''N''::bpchar'));
+update ad_system set dummy = (SELECT addcolumnifnotexists('c_periodcontrol','doctypeprocessing','character(1)'));
+
