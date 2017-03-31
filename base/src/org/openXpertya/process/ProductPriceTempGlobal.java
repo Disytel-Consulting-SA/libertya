@@ -52,7 +52,7 @@ public class ProductPriceTempGlobal extends SvrProcess {
 		StringBuffer sql = new StringBuffer(" SELECT plv.* " +
 											" FROM m_pricelist_version plv " +
 											" INNER JOIN m_pricelist pl ON pl.m_pricelist_id = plv.m_pricelist_id ");
-		sql.append(" WHERE plv.ad_client_id = ? ");
+		sql.append(" WHERE plv.ad_client_id = ? AND plv.isactive = 'Y' AND pl.isactive = 'Y' ");
 		List<Object> params = new ArrayList<Object>();
 		params.add(Env.getAD_Client_ID(getCtx()));
 		if(!Util.isEmpty(getOrgID(), true)){
