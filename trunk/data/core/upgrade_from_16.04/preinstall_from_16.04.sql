@@ -6243,3 +6243,10 @@ CREATE TABLE c_posperiodcontrol
 update ad_system set dummy = (SELECT addcolumnifnotexists('c_periodcontrol','doctypecontrol','character(1) default ''N''::bpchar'));
 update ad_system set dummy = (SELECT addcolumnifnotexists('c_periodcontrol','doctypeprocessing','character(1)'));
 
+--20170331-1145 Columna faltante en tabla de detalle de lote de pagos
+update ad_system set dummy = (SELECT addcolumnifnotexists('C_PaymentBatchPODetail','c_order_id','integer'));
+
+--20170331-1155 Setear a null la configuración de forma de pago de lote de pagos cuando no posee cuenta bancaria
+update c_bpartner
+set Batch_Payment_Rule = null
+where Batch_Payment_Rule IS NOT NULL AND C_BankAccount_ID IS NULL;
