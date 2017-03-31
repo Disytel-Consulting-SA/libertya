@@ -19,6 +19,7 @@ import org.openXpertya.model.MInvoicePaySchedule;
 import org.openXpertya.model.MPaymentBatchPO;
 import org.openXpertya.model.MPaymentBatchPODetail;
 import org.openXpertya.model.MPaymentBatchPOInvoices;
+import org.openXpertya.util.CLogger;
 import org.openXpertya.util.DB;
 import org.openXpertya.util.Msg;
 
@@ -99,6 +100,7 @@ public class GeneratePaymentProposalProcess extends SvrProcess {
 					  "ps.duedate <= ? " +
 					  "AND i.docstatus IN ('CO', 'CL') " +  //Considerando autorizadas las facturas que están completas o cerradas
 					  "AND bp.batch_payment_rule IS NOT NULL " +
+					  "AND bp.C_BankAccount_ID IS NOT NULL " +
 					  "AND invoiceopen(i.C_Invoice_ID, ps.c_InvoicePaySchedule_ID) > 0 " +
 					  "AND ps.ad_org_id = ? ";
 		
@@ -150,8 +152,6 @@ public class GeneratePaymentProposalProcess extends SvrProcess {
 		//Proveedor
 		MBPartner vendor = new MBPartner(getCtx(), cBPartnerId, get_TrxName());
 		MBankAccount backAccount = new MBankAccount(getCtx(), vendor.getC_BankAccount_ID(), get_TrxName());
-		
-		
 		
 		//Campos calculados
 		Timestamp firstDueDate = null;
@@ -207,7 +207,7 @@ public class GeneratePaymentProposalProcess extends SvrProcess {
 			detail.setPaymentDate(paymentBatch.getBatchDate());
 		
 		if (!detail.save()) {
-			throw new IllegalArgumentException(Msg.getMsg(getCtx(), "PaymentBatchPODetailGenerationError") + ": " + detail.getProcessMsg());
+			throw new IllegalArgumentException(Msg.getMsg(getCtx(), "PaymentBatchPODetailGenerationError") + ": " + CLogger.retrieveErrorAsString());
 		}
 		
 		//Creo las "Facturas" asociadas al detalle de Pagos
@@ -239,7 +239,7 @@ public class GeneratePaymentProposalProcess extends SvrProcess {
 			detailInvoices.setPaymentAmount(convertedOpenAmt);
 			detailInvoices.setC_InvoicePaySchedule_ID(paySchedule.getID());
 			if (!detailInvoices.save()) {
-				throw new IllegalArgumentException(Msg.getMsg(getCtx(), "PaymentBatchPODetailGenerationError") + ": " + detailInvoices.getProcessMsg());
+				throw new IllegalArgumentException(Msg.getMsg(getCtx(), "PaymentBatchPODetailGenerationError") + ": " + CLogger.retrieveErrorAsString());
 			}
 		}
 	}

@@ -32,7 +32,7 @@ public class MPaymentBatchPODetail extends X_C_PaymentBatchPODetail {
 	protected boolean beforeSave(boolean newRecord) {
 		MBPartner bPartner = new MBPartner(getCtx(), getC_BPartner_ID(), get_TrxName());
 		if (bPartner.getBatch_Payment_Rule() == null) {
-			log.saveError("Error", Msg.getMsg(getCtx(), "BatchPaymentRuleNotSet"));
+			log.saveError("SaveError", Msg.getMsg(getCtx(), "BatchPaymentRuleNotSet"));
 			return false;
 		}
 			
