@@ -918,7 +918,7 @@ public class GenerateModel {
         String fileName = createHeader( AD_Table_ID,sb,mandatory,packageName, isPluginHeader, superClass ); 
 
         // append SaveDirect method (if corresponds)
-       	createInsertDirectMethod(AD_Table_ID, sb);
+       	createInsertDirectMethod(AD_Table_ID, sb, superClass, coreLevelZero, componentID);
         
         // Save it
         writeToFile( sb,directory + fileName + ".java" );
@@ -954,8 +954,11 @@ public class GenerateModel {
      * @param AD_Table_ID
      * @param sb
      */
-    protected void createInsertDirectMethod(int AD_Table_ID, StringBuffer sb)
+    protected void createInsertDirectMethod(int AD_Table_ID, StringBuffer sb, String superClass, boolean coreLevelZero, Integer ad_component_id)
     {
+    	// La clase que está siendo generada extiende de PO o de alguna subclase autogenerada?
+    	boolean extendsPO = "org.openXpertya.model.PO".equals(superClass);
+    	
     	StringBuffer columnNames = new StringBuffer();
     	StringBuffer columnSets = new StringBuffer();
     	StringBuffer columnMarks = new StringBuffer();
@@ -970,7 +973,12 @@ public class GenerateModel {
     	
     	try 
     	{
-	    	PreparedStatement pstmt = DB.prepareStatement(" SELECT columnname, AD_Reference_ID FROM AD_Column WHERE AD_Table_ID = " + AD_Table_ID + " AND ColumnSQL IS NULL ");
+	    	PreparedStatement pstmt = DB.prepareStatement(" SELECT c.columnname, c.AD_Reference_ID FROM AD_Column c " +
+                    										" INNER JOIN ad_componentversion cv on cv.ad_componentversion_id = c.ad_componentversion_id " +
+                    										" INNER JOIN ad_component co on co.ad_component_id = cv.ad_component_id " +
+	    													" WHERE c.AD_Table_ID = " + AD_Table_ID + " AND c.ColumnSQL IS NULL " + 
+	    													(coreLevelZero ? " AND co.corelevel = 0 " : " AND co.corelevel > 0 ") +
+	    													(ad_component_id == null ? "" : " AND co.ad_component_id = " + ad_component_id) );
 	    	ResultSet rs = pstmt.executeQuery();
 	    	while (rs.next())
 	    	{
@@ -1022,36 +1030,57 @@ public class GenerateModel {
 	            }
 	    		
 	    	}
-
+	    	
 	    	// quitar ultima coma
 	    	columnNames.deleteCharAt(columnNames.length()-1);
 	    	columnMarks.deleteCharAt(columnMarks.length()-1);
+	    	
+    		// Si esta clase extiende de PO directamente, entoces este metodo directo debe dar lugar a que las subclases amplien el insertDirect
+	    	StringBuffer methodBody = new StringBuffer();
+    		if (extendsPO) {
+    			columnNames.append("\" + getAdditionalParamNames() + \"");
+    			columnMarks.append("\" + getAdditionalParamMarks() + \"");
+    			columnNotNeeded.append("\t\t skipAdditionalNullValues(sql); \n");
+    			columnSets.append("\t\t col = setAdditionalInsertValues(col, pstmt); \n");
 	    	    	
-	    	// crear el metodo
-        	StringBuffer methodBody = new StringBuffer();
-        	methodBody.append("\n" );
-        	methodBody.append("public boolean insertDirect() { \n" );
-        	methodBody.append("try { \n " );
-        	// siguiente linea comentada: no es necesario obtener el valor de ID, dado que ya lo tiene seteado
-        	// methodBody.append("\t\t set" + tableName + "_ID(DB.getSQLValue(get_TrxName(), \"SELECT nextval('seq_" + tableName + "')\")); \n ");
-        	methodBody.append("\t\t String sql = \" INSERT INTO " + tableName + "(" + columnNames + ") VALUES (" + columnMarks + ") \";\n" );
-        	methodBody.append(columnNotNeeded + "\n ");
-        	methodBody.append("\t\t int col = 1; \n");
-        	methodBody.append("\t\t CPreparedStatement pstmt = new CPreparedStatement( ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_UPDATABLE, sql, get_TrxName(), true); \n");
-        	methodBody.append(columnSets + "\n");
-        	methodBody.append("\t\tpstmt.executeUpdate();\n");
-        	methodBody.append("\t\treturn true;\n");
-        	methodBody.append("\t}catch (SQLException e) {");
-        	methodBody.append("\tlog.log(Level.SEVERE, \"insertDirect\", e);" );
-        	methodBody.append("\tlog.saveError(\"Error\", DB.getErrorMsg(e) + \" - \" + e);" );
-        	methodBody.append("\treturn false;");
-        	methodBody.append("\t}catch (Exception e2) {");
-        	methodBody.append("\tlog.log(Level.SEVERE, \"insertDirect\", e2);" );
-        	methodBody.append("\treturn false;");
-        	methodBody.append("}\n");
-        	methodBody.append("}\n");
+		    	// crear el metodo
+	        	methodBody.append("\n" );
+	        	methodBody.append("public boolean insertDirect() { \n" );
+	        	methodBody.append("try { \n " );
+	        	// siguiente linea comentada: no es necesario obtener el valor de ID, dado que ya lo tiene seteado
+	        	// methodBody.append("\t\t set" + tableName + "_ID(DB.getSQLValue(get_TrxName(), \"SELECT nextval('seq_" + tableName + "')\")); \n ");
+	        	methodBody.append("\t\t String sql = \" INSERT INTO " + tableName + "(" + columnNames + ") VALUES (" + columnMarks + ") \";\n" );
+	        	methodBody.append(columnNotNeeded + "\n ");
+	        	methodBody.append("\t\t int col = 1; \n");
+	        	methodBody.append("\t\t CPreparedStatement pstmt = new CPreparedStatement( ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_UPDATABLE, sql, get_TrxName(), true); \n");
+	        	methodBody.append(columnSets + "\n");
+	        	methodBody.append("\t\tpstmt.executeUpdate();\n");
+	        	methodBody.append("\t\treturn true;\n");
+	        	methodBody.append("\t}catch (SQLException e) {");
+	        	methodBody.append("\tlog.log(Level.SEVERE, \"insertDirect\", e);" );
+	        	methodBody.append("\tlog.saveError(\"Error\", DB.getErrorMsg(e) + \" - \" + e);" );
+	        	methodBody.append("\treturn false;");
+	        	methodBody.append("\t}catch (Exception e2) {");
+	        	methodBody.append("\tlog.log(Level.SEVERE, \"insertDirect\", e2);" );
+	        	methodBody.append("\treturn false;");
+	        	methodBody.append("}\n");
+	        	methodBody.append("}\n");	        	
+	        	methodBody.append("protected String getAdditionalParamNames() { return \"\"; } \n");
+	        	methodBody.append("protected String getAdditionalParamMarks() { return \"\"; } \n");
+	        	methodBody.append("protected void skipAdditionalNullValues(String sql) {  } \n");
+	        	methodBody.append("protected int setAdditionalInsertValues(int col, PreparedStatement pstmt) throws Exception { return col; } \n");
 
-        	sb.insert(sb.lastIndexOf("}"), methodBody);
+	        	
+    		} else {
+    			// Si no extiende de PO directamente, entoces este metodo directo debe ampliar el insertDirect de la superclase
+    			methodBody.append("protected String getAdditionalParamNames() { return \","+columnNames+"\"; } \n");
+	        	methodBody.append("protected String getAdditionalParamMarks() { return \","+columnMarks+"\"; } \n");
+	        	methodBody.append("protected void skipAdditionalNullValues(String sql) { "+columnNotNeeded+" } \n");
+	        	methodBody.append("protected int setAdditionalInsertValues(int col, PreparedStatement pstmt) throws Exception { "+columnSets+" \n return col; } \n");
+    		}
+        	
+    		sb.insert(sb.lastIndexOf("}"), methodBody);
+        	
     	}
     	catch (Exception e)
     	{
