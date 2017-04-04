@@ -422,6 +422,10 @@ public class AllocationGenerator {
 		// No se permiten montos de imputación iguales a cero.
 		if (document.amount.compareTo(BigDecimal.ZERO) == 0)
 			throw new IllegalArgumentException("Allocation amount must be greather than zero");
+		// No debe estar pendiente de autorización
+		if(!document.isAuthorized())
+			throw new IllegalArgumentException(
+					Msg.getMsg(getCtx(), "OPRCNotAuthorizedDocument", new Object[] { document.type, document.amount }));
 		// Se busca si el documento existe en la lista.
 		if (list.contains(document)) {
 			// En ese caso se incrementa el monto a impuatar del documento existente.
@@ -880,6 +884,7 @@ public class AllocationGenerator {
 		public Timestamp date;
 		public Integer orgID;
 		private BigDecimal amountAllocated = BigDecimal.ZERO;
+		private boolean isAuthorized = true; 
 		
 		/**
 		 * @param id ID del documento
@@ -981,6 +986,14 @@ public class AllocationGenerator {
 		public BigDecimal getAvailableAmt(){
 			return getAmount().subtract(getAmountAllocated());
 		}
+
+		public boolean isAuthorized() {
+			return isAuthorized;
+		}
+
+		public void setAuthorized(boolean isAuthorized) {
+			this.isAuthorized = isAuthorized;
+		}
 	}
 	
 	/**
@@ -996,6 +1009,7 @@ public class AllocationGenerator {
 			super(id, AllocationDocumentType.INVOICE, amount);
 			this.currencyId = getSqlCurrencyId();
 			this.date = getSqlDate();
+			setAuthorized(getSqlAuthorized());
 		}
 		
 		/**
@@ -1013,6 +1027,12 @@ public class AllocationGenerator {
 			return DB.getSQLValueTimestamp(getTrxName(), "SELECT DateAcct FROM C_Invoice WHERE C_Invoice_ID = "+ id);
 		}
 
+		public boolean getSqlAuthorized(){
+			return DB.getSQLValue(getTrxName(),
+					"SELECT c_invoice_id FROM C_Invoice WHERE C_Invoice_ID = ? AND (authorizationchainstatus is null OR authorizationchainstatus = 'A')",
+					id) > 0;
+		}
+		
 		@Override
 		public void setAsCreditIn(MAllocationLine allocationLine) {
 			allocationLine.setC_Invoice_Credit_ID(id);			

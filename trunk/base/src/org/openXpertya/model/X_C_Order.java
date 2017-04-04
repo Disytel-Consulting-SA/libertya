@@ -7,7 +7,7 @@ import java.math.*;
 import org.openXpertya.util.*;
 /** Modelo Generado por C_Order
  *  @author Comunidad de Desarrollo Libertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
- *  @version  - 2016-12-30 19:15:59.183 */
+ *  @version  - 2017-04-04 13:47:52.821 */
 public class X_C_Order extends org.openXpertya.model.PO
 {
 /** Constructor estándar */
@@ -161,6 +161,28 @@ if (oo != null)
  return "Y".equals(oo);
 }
 return false;
+}
+public static final int AUTHORIZATIONCHAINSTATUS_AD_Reference_ID = MReference.getReferenceID("Authorization Status");
+/** Pending = P */
+public static final String AUTHORIZATIONCHAINSTATUS_Pending = "P";
+/** Authorized = A */
+public static final String AUTHORIZATIONCHAINSTATUS_Authorized = "A";
+/** Set Authorization Status */
+public void setAuthorizationChainStatus (String AuthorizationChainStatus)
+{
+if (AuthorizationChainStatus == null || AuthorizationChainStatus.equals("P") || AuthorizationChainStatus.equals("A") || ( refContainsValue("CORE-AD_Reference-1010261", AuthorizationChainStatus) ) );
+ else throw new IllegalArgumentException ("AuthorizationChainStatus Invalid value: " + AuthorizationChainStatus + ".  Valid: " +  refValidOptions("CORE-AD_Reference-1010261") );
+if (AuthorizationChainStatus != null && AuthorizationChainStatus.length() > 1)
+{
+log.warning("Length > 1 - truncated");
+AuthorizationChainStatus = AuthorizationChainStatus.substring(0,1);
+}
+set_Value ("AuthorizationChainStatus", AuthorizationChainStatus);
+}
+/** Get Authorization Status */
+public String getAuthorizationChainStatus() 
+{
+return (String)get_Value("AuthorizationChainStatus");
 }
 /** Set Authorize */
 public void setAuthorize (String Authorize)
@@ -620,8 +642,8 @@ public static final String DELIVERYRULE_Force_AfterInvoicing = "Z";
 Defines the timing of Delivery */
 public void setDeliveryRule (String DeliveryRule)
 {
-if (DeliveryRule.equals("A") || DeliveryRule.equals("O") || DeliveryRule.equals("R") || DeliveryRule.equals("L") || DeliveryRule.equals("F") || DeliveryRule.equals("I") || DeliveryRule.equals("Z"));
- else throw new IllegalArgumentException ("DeliveryRule Invalid value - Reference = DELIVERYRULE_AD_Reference_ID - A - O - R - L - F - I - Z");
+if (DeliveryRule.equals("A") || DeliveryRule.equals("O") || DeliveryRule.equals("R") || DeliveryRule.equals("L") || DeliveryRule.equals("F") || DeliveryRule.equals("I") || DeliveryRule.equals("Z") || ( refContainsValue("CORE-AD_Reference-151", DeliveryRule) ) );
+ else throw new IllegalArgumentException ("DeliveryRule Invalid value: " + DeliveryRule + ".  Valid: " +  refValidOptions("CORE-AD_Reference-151") );
 if (DeliveryRule == null) throw new IllegalArgumentException ("DeliveryRule is mandatory");
 if (DeliveryRule.length() > 1)
 {
@@ -647,8 +669,8 @@ public static final String DELIVERYVIARULE_Delivery = "D";
 How the order will be delivered */
 public void setDeliveryViaRule (String DeliveryViaRule)
 {
-if (DeliveryViaRule.equals("P") || DeliveryViaRule.equals("S") || DeliveryViaRule.equals("D"));
- else throw new IllegalArgumentException ("DeliveryViaRule Invalid value - Reference = DELIVERYVIARULE_AD_Reference_ID - P - S - D");
+if (DeliveryViaRule.equals("P") || DeliveryViaRule.equals("S") || DeliveryViaRule.equals("D") || ( refContainsValue("CORE-AD_Reference-152", DeliveryViaRule) ) );
+ else throw new IllegalArgumentException ("DeliveryViaRule Invalid value: " + DeliveryViaRule + ".  Valid: " +  refValidOptions("CORE-AD_Reference-152") );
 if (DeliveryViaRule == null) throw new IllegalArgumentException ("DeliveryViaRule is mandatory");
 if (DeliveryViaRule.length() > 1)
 {
@@ -713,8 +735,8 @@ public static final String DOCACTION_Void = "VO";
 The targeted status of the document */
 public void setDocAction (String DocAction)
 {
-if (DocAction.equals("AP") || DocAction.equals("CL") || DocAction.equals("PR") || DocAction.equals("IN") || DocAction.equals("CO") || DocAction.equals("--") || DocAction.equals("RC") || DocAction.equals("RJ") || DocAction.equals("RA") || DocAction.equals("WC") || DocAction.equals("XL") || DocAction.equals("RE") || DocAction.equals("PO") || DocAction.equals("VO"));
- else throw new IllegalArgumentException ("DocAction Invalid value - Reference = DOCACTION_AD_Reference_ID - AP - CL - PR - IN - CO - -- - RC - RJ - RA - WC - XL - RE - PO - VO");
+if (DocAction.equals("AP") || DocAction.equals("CL") || DocAction.equals("PR") || DocAction.equals("IN") || DocAction.equals("CO") || DocAction.equals("--") || DocAction.equals("RC") || DocAction.equals("RJ") || DocAction.equals("RA") || DocAction.equals("WC") || DocAction.equals("XL") || DocAction.equals("RE") || DocAction.equals("PO") || DocAction.equals("VO") || ( refContainsValue("CORE-AD_Reference-135", DocAction) ) );
+ else throw new IllegalArgumentException ("DocAction Invalid value: " + DocAction + ".  Valid: " +  refValidOptions("CORE-AD_Reference-135") );
 if (DocAction == null) throw new IllegalArgumentException ("DocAction is mandatory");
 if (DocAction.length() > 2)
 {
@@ -758,8 +780,8 @@ public static final String DOCSTATUS_Reversed = "RE";
 The current status of the document */
 public void setDocStatus (String DocStatus)
 {
-if (DocStatus.equals("VO") || DocStatus.equals("NA") || DocStatus.equals("IP") || DocStatus.equals("CO") || DocStatus.equals("AP") || DocStatus.equals("CL") || DocStatus.equals("WC") || DocStatus.equals("WP") || DocStatus.equals("??") || DocStatus.equals("DR") || DocStatus.equals("IN") || DocStatus.equals("RE"));
- else throw new IllegalArgumentException ("DocStatus Invalid value - Reference = DOCSTATUS_AD_Reference_ID - VO - NA - IP - CO - AP - CL - WC - WP - ?? - DR - IN - RE");
+if (DocStatus.equals("VO") || DocStatus.equals("NA") || DocStatus.equals("IP") || DocStatus.equals("CO") || DocStatus.equals("AP") || DocStatus.equals("CL") || DocStatus.equals("WC") || DocStatus.equals("WP") || DocStatus.equals("??") || DocStatus.equals("DR") || DocStatus.equals("IN") || DocStatus.equals("RE") || ( refContainsValue("CORE-AD_Reference-131", DocStatus) ) );
+ else throw new IllegalArgumentException ("DocStatus Invalid value: " + DocStatus + ".  Valid: " +  refValidOptions("CORE-AD_Reference-131") );
 if (DocStatus == null) throw new IllegalArgumentException ("DocStatus is mandatory");
 if (DocStatus.length() > 2)
 {
@@ -824,8 +846,8 @@ public static final String FREIGHTCOSTRULE_FreightIncluded = "I";
 Method for charging Freight */
 public void setFreightCostRule (String FreightCostRule)
 {
-if (FreightCostRule.equals("L") || FreightCostRule.equals("F") || FreightCostRule.equals("C") || FreightCostRule.equals("I"));
- else throw new IllegalArgumentException ("FreightCostRule Invalid value - Reference = FREIGHTCOSTRULE_AD_Reference_ID - L - F - C - I");
+if (FreightCostRule.equals("L") || FreightCostRule.equals("F") || FreightCostRule.equals("C") || FreightCostRule.equals("I") || ( refContainsValue("CORE-AD_Reference-153", FreightCostRule) ) );
+ else throw new IllegalArgumentException ("FreightCostRule Invalid value: " + FreightCostRule + ".  Valid: " +  refValidOptions("CORE-AD_Reference-153") );
 if (FreightCostRule == null) throw new IllegalArgumentException ("FreightCostRule is mandatory");
 if (FreightCostRule.length() > 1)
 {
@@ -883,8 +905,8 @@ public static final String INVOICERULE_CustomerScheduleAfterDelivery = "S";
 Frequency and method of invoicing  */
 public void setInvoiceRule (String InvoiceRule)
 {
-if (InvoiceRule.equals("D") || InvoiceRule.equals("O") || InvoiceRule.equals("I") || InvoiceRule.equals("S"));
- else throw new IllegalArgumentException ("InvoiceRule Invalid value - Reference = INVOICERULE_AD_Reference_ID - D - O - I - S");
+if (InvoiceRule.equals("D") || InvoiceRule.equals("O") || InvoiceRule.equals("I") || InvoiceRule.equals("S") || ( refContainsValue("CORE-AD_Reference-150", InvoiceRule) ) );
+ else throw new IllegalArgumentException ("InvoiceRule Invalid value: " + InvoiceRule + ".  Valid: " +  refValidOptions("CORE-AD_Reference-150") );
 if (InvoiceRule == null) throw new IllegalArgumentException ("InvoiceRule is mandatory");
 if (InvoiceRule.length() > 1)
 {
@@ -1315,8 +1337,8 @@ public static final String PAYMENTRULE_Check = "S";
 How you pay the invoice */
 public void setPaymentRule (String PaymentRule)
 {
-if (PaymentRule.equals("Tr") || PaymentRule.equals("K") || PaymentRule.equals("B") || PaymentRule.equals("P") || PaymentRule.equals("PC") || PaymentRule.equals("T") || PaymentRule.equals("Cf") || PaymentRule.equals("D") || PaymentRule.equals("S"));
- else throw new IllegalArgumentException ("PaymentRule Invalid value - Reference = PAYMENTRULE_AD_Reference_ID - Tr - K - B - P - PC - T - Cf - D - S");
+if (PaymentRule.equals("Tr") || PaymentRule.equals("K") || PaymentRule.equals("B") || PaymentRule.equals("P") || PaymentRule.equals("PC") || PaymentRule.equals("T") || PaymentRule.equals("Cf") || PaymentRule.equals("D") || PaymentRule.equals("S") || ( refContainsValue("CORE-AD_Reference-195", PaymentRule) ) );
+ else throw new IllegalArgumentException ("PaymentRule Invalid value: " + PaymentRule + ".  Valid: " +  refValidOptions("CORE-AD_Reference-195") );
 if (PaymentRule == null) throw new IllegalArgumentException ("PaymentRule is mandatory");
 if (PaymentRule.length() > 2)
 {
@@ -1381,8 +1403,8 @@ public static final String PRIORITYRULE_Minor = "9";
 Priority of a document */
 public void setPriorityRule (String PriorityRule)
 {
-if (PriorityRule.equals("5") || PriorityRule.equals("3") || PriorityRule.equals("7") || PriorityRule.equals("1") || PriorityRule.equals("9"));
- else throw new IllegalArgumentException ("PriorityRule Invalid value - Reference = PRIORITYRULE_AD_Reference_ID - 5 - 3 - 7 - 1 - 9");
+if (PriorityRule.equals("5") || PriorityRule.equals("3") || PriorityRule.equals("7") || PriorityRule.equals("1") || PriorityRule.equals("9") || ( refContainsValue("CORE-AD_Reference-154", PriorityRule) ) );
+ else throw new IllegalArgumentException ("PriorityRule Invalid value: " + PriorityRule + ".  Valid: " +  refValidOptions("CORE-AD_Reference-154") );
 if (PriorityRule == null) throw new IllegalArgumentException ("PriorityRule is mandatory");
 if (PriorityRule.length() > 1)
 {
@@ -1462,19 +1484,19 @@ if (ii == null) return 0;
 return ii.intValue();
 }
 public static final int REPAIR_PRIORITY_AD_Reference_ID = MReference.getReferenceID("repairpriority");
+/** Muy Urgente = Muy Urgente */
+public static final String REPAIR_PRIORITY_MuyUrgente = "Muy Urgente";
 /** Larga estancia = Larga estancia */
 public static final String REPAIR_PRIORITY_LargaEstancia = "Larga estancia";
 /** Normal = Normal */
 public static final String REPAIR_PRIORITY_Normal = "Normal";
 /** Urgente = Urgente */
 public static final String REPAIR_PRIORITY_Urgente = "Urgente";
-/** Muy Urgente = Muy Urgente */
-public static final String REPAIR_PRIORITY_MuyUrgente = "Muy Urgente";
 /** Set repair_priority */
 public void setrepair_priority (String repair_priority)
 {
-if (repair_priority == null || repair_priority.equals("Larga estancia") || repair_priority.equals("Normal") || repair_priority.equals("Urgente") || repair_priority.equals("Muy Urgente"));
- else throw new IllegalArgumentException ("repair_priority Invalid value - Reference = REPAIR_PRIORITY_AD_Reference_ID - Larga estancia - Normal - Urgente - Muy Urgente");
+if (repair_priority == null || repair_priority.equals("Muy Urgente") || repair_priority.equals("Larga estancia") || repair_priority.equals("Normal") || repair_priority.equals("Urgente") || ( refContainsValue("CORE-AD_Reference-1000048", repair_priority) ) );
+ else throw new IllegalArgumentException ("repair_priority Invalid value: " + repair_priority + ".  Valid: " +  refValidOptions("CORE-AD_Reference-1000048") );
 if (repair_priority != null && repair_priority.length() > 22)
 {
 log.warning("Length > 22 - truncated");
@@ -1499,8 +1521,8 @@ public static final String REPAIR_STATE_Terminado = "Terminado";
 /** Set repair_state */
 public void setrepair_state (String repair_state)
 {
-if (repair_state == null || repair_state.equals("No comenzado") || repair_state.equals("Previsto") || repair_state.equals("En proceso") || repair_state.equals("Terminado"));
- else throw new IllegalArgumentException ("repair_state Invalid value - Reference = REPAIR_STATE_AD_Reference_ID - No comenzado - Previsto - En proceso - Terminado");
+if (repair_state == null || repair_state.equals("No comenzado") || repair_state.equals("Previsto") || repair_state.equals("En proceso") || repair_state.equals("Terminado") || ( refContainsValue("CORE-AD_Reference-1000049", repair_state) ) );
+ else throw new IllegalArgumentException ("repair_state Invalid value: " + repair_state + ".  Valid: " +  refValidOptions("CORE-AD_Reference-1000049") );
 if (repair_state != null && repair_state.length() > 22)
 {
 log.warning("Length > 22 - truncated");
@@ -1614,9 +1636,19 @@ public boolean insertDirect()
 try 
 {
  
- 		 String sql = " INSERT INTO C_Order(Pay_BPartner_ID,Pay_Location_ID,IsDelivered,Processing,C_Payment_ID,IsSelected,AD_OrgTrx_ID,SendEMail,IsCreditApproved,IsInvoiced,C_Campaign_ID,IsTransferred,M_Warehouse_ID,IsApproved,FreightAmt,C_DocType_ID,TotalLines,GrandTotal,DeliveryViaRule,InvoiceRule,POReference,DateAcct,IsPrinted,Description,IsActive,C_Charge_ID,IsDropShip,C_Project_ID,DeliveryRule,AD_Org_ID,C_PaymentTerm_ID,Created,PriorityRule,AD_User_ID,Updated,ChargeAmt,FreightCostRule,C_CashLine_ID,C_Activity_ID,Posted,IsSOTrx,AD_Client_ID,IsDiscountPrinted,DatePrinted,C_Order_ID,IsTaxIncluded,C_Currency_ID,Processed,IsSelfService,CopyFrom,Bill_Location_ID,C_ConversionType_ID,Bill_BPartner_ID,DocAction,repair_priority,repair_state,dateprod,daterealprod,Acceptance,M_Shipper_ID,CreateVendorProductLines,PaymentRule,M_PriceList_ID,DateOrdered,DatePromised,DocStatus,C_BPartner_ID,ValidTo,IsExchange,NombreCli,NroIdentificCliente,Invoice_Adress,CUIT,M_Warehouse_Transfer_ID,AD_Org_Transfer_ID,DocumentNo,C_DocTypeTarget_ID,IsTpvUsed,program_invoice,C_BPartner_Location_ID,M_AuthorizationChain_ID,Authorize,OldGrandTotal,Ref_Order_ID,User2_ID,Bill_User_ID,CreatedBy,C_Repair_Order_ID,SalesRep_ID,UpdatedBy,User1_ID) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?) ";
+ 		 String sql = " INSERT INTO C_Order(ValidTo,M_AuthorizationChain_ID,OldGrandTotal,Authorize,IsExchange,NombreCli,NroIdentificCliente,Invoice_Adress,CUIT,M_Warehouse_Transfer_ID,AD_Org_Transfer_ID,IsTpvUsed,IsDelivered,Pay_BPartner_ID,Pay_Location_ID,Processing,C_Payment_ID,IsSelected,AD_OrgTrx_ID,SendEMail,IsCreditApproved,IsInvoiced,C_Campaign_ID,IsTransferred,M_Warehouse_ID,IsApproved,FreightAmt,C_DocType_ID,TotalLines,GrandTotal,DeliveryViaRule,InvoiceRule,POReference,DateAcct,IsPrinted,Description,IsActive,C_Charge_ID,IsDropShip,C_Project_ID,DeliveryRule,AD_Org_ID,C_PaymentTerm_ID,Created,PriorityRule,AD_User_ID,Updated,ChargeAmt,FreightCostRule,C_CashLine_ID,C_Activity_ID,Posted,IsSOTrx,AD_Client_ID,IsDiscountPrinted,DatePrinted,C_Order_ID,IsTaxIncluded,C_Currency_ID,Processed,IsSelfService,CopyFrom,Bill_Location_ID,C_ConversionType_ID,Bill_BPartner_ID,DocAction,repair_priority,repair_state,dateprod,daterealprod,Acceptance,M_Shipper_ID,CreateVendorProductLines,PaymentRule,M_PriceList_ID,DatePromised,DocStatus,C_BPartner_ID,DateOrdered,DocumentNo,C_DocTypeTarget_ID,program_invoice,C_BPartner_Location_ID,Ref_Order_ID,User2_ID,Bill_User_ID,CreatedBy,C_Repair_Order_ID,SalesRep_ID,UpdatedBy,User1_ID,AuthorizationChainStatus" + getAdditionalParamNames() + ") VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?" + getAdditionalParamMarks() + ") ";
 
-		 if (getPay_BPartner_ID() == 0) sql = sql.replaceFirst("Pay_BPartner_ID,","").replaceFirst("\\?,", "");
+		 if (getValidTo() == null) sql = sql.replaceFirst("ValidTo,","").replaceFirst("\\?,", "");
+ 		 if (getM_AuthorizationChain_ID() == 0) sql = sql.replaceFirst("M_AuthorizationChain_ID,","").replaceFirst("\\?,", "");
+ 		 if (getOldGrandTotal() == null) sql = sql.replaceFirst("OldGrandTotal,","").replaceFirst("\\?,", "");
+ 		 if (getAuthorize() == null) sql = sql.replaceFirst("Authorize,","").replaceFirst("\\?,", "");
+ 		 if (getNombreCli() == null) sql = sql.replaceFirst("NombreCli,","").replaceFirst("\\?,", "");
+ 		 if (getNroIdentificCliente() == null) sql = sql.replaceFirst("NroIdentificCliente,","").replaceFirst("\\?,", "");
+ 		 if (getInvoice_Adress() == null) sql = sql.replaceFirst("Invoice_Adress,","").replaceFirst("\\?,", "");
+ 		 if (getCUIT() == null) sql = sql.replaceFirst("CUIT,","").replaceFirst("\\?,", "");
+ 		 if (getM_Warehouse_Transfer_ID() == 0) sql = sql.replaceFirst("M_Warehouse_Transfer_ID,","").replaceFirst("\\?,", "");
+ 		 if (getAD_Org_Transfer_ID() == 0) sql = sql.replaceFirst("AD_Org_Transfer_ID,","").replaceFirst("\\?,", "");
+ 		 if (getPay_BPartner_ID() == 0) sql = sql.replaceFirst("Pay_BPartner_ID,","").replaceFirst("\\?,", "");
  		 if (getPay_Location_ID() == 0) sql = sql.replaceFirst("Pay_Location_ID,","").replaceFirst("\\?,", "");
  		 if (getC_Payment_ID() == 0) sql = sql.replaceFirst("C_Payment_ID,","").replaceFirst("\\?,", "");
  		 if (getAD_OrgTrx_ID() == 0) sql = sql.replaceFirst("AD_OrgTrx_ID,","").replaceFirst("\\?,", "");
@@ -1662,24 +1694,14 @@ try
  		 if (getCreateVendorProductLines() == null) sql = sql.replaceFirst("CreateVendorProductLines,","").replaceFirst("\\?,", "");
  		 if (getPaymentRule() == null) sql = sql.replaceFirst("PaymentRule,","").replaceFirst("\\?,", "");
  		 if (getM_PriceList_ID() == 0) sql = sql.replaceFirst("M_PriceList_ID,","").replaceFirst("\\?,", "");
- 		 if (getDateOrdered() == null) sql = sql.replaceFirst("DateOrdered,","").replaceFirst("\\?,", "");
  		 if (getDatePromised() == null) sql = sql.replaceFirst("DatePromised,","").replaceFirst("\\?,", "");
  		 if (getDocStatus() == null) sql = sql.replaceFirst("DocStatus,","").replaceFirst("\\?,", "");
  		 if (getC_BPartner_ID() == 0) sql = sql.replaceFirst("C_BPartner_ID,","").replaceFirst("\\?,", "");
- 		 if (getValidTo() == null) sql = sql.replaceFirst("ValidTo,","").replaceFirst("\\?,", "");
- 		 if (getNombreCli() == null) sql = sql.replaceFirst("NombreCli,","").replaceFirst("\\?,", "");
- 		 if (getNroIdentificCliente() == null) sql = sql.replaceFirst("NroIdentificCliente,","").replaceFirst("\\?,", "");
- 		 if (getInvoice_Adress() == null) sql = sql.replaceFirst("Invoice_Adress,","").replaceFirst("\\?,", "");
- 		 if (getCUIT() == null) sql = sql.replaceFirst("CUIT,","").replaceFirst("\\?,", "");
- 		 if (getM_Warehouse_Transfer_ID() == 0) sql = sql.replaceFirst("M_Warehouse_Transfer_ID,","").replaceFirst("\\?,", "");
- 		 if (getAD_Org_Transfer_ID() == 0) sql = sql.replaceFirst("AD_Org_Transfer_ID,","").replaceFirst("\\?,", "");
+ 		 if (getDateOrdered() == null) sql = sql.replaceFirst("DateOrdered,","").replaceFirst("\\?,", "");
  		 if (getDocumentNo() == null) sql = sql.replaceFirst("DocumentNo,","").replaceFirst("\\?,", "");
  		 if (getC_DocTypeTarget_ID() == 0) sql = sql.replaceFirst("C_DocTypeTarget_ID,","").replaceFirst("\\?,", "");
  		 if (getprogram_invoice() == 0) sql = sql.replaceFirst("program_invoice,","").replaceFirst("\\?,", "");
  		 if (getC_BPartner_Location_ID() == 0) sql = sql.replaceFirst("C_BPartner_Location_ID,","").replaceFirst("\\?,", "");
- 		 if (getM_AuthorizationChain_ID() == 0) sql = sql.replaceFirst("M_AuthorizationChain_ID,","").replaceFirst("\\?,", "");
- 		 if (getAuthorize() == null) sql = sql.replaceFirst("Authorize,","").replaceFirst("\\?,", "");
- 		 if (getOldGrandTotal() == null) sql = sql.replaceFirst("OldGrandTotal,","").replaceFirst("\\?,", "");
  		 if (getRef_Order_ID() == 0) sql = sql.replaceFirst("Ref_Order_ID,","").replaceFirst("\\?,", "");
  		 if (getUser2_ID() == 0) sql = sql.replaceFirst("User2_ID,","").replaceFirst("\\?,", "");
  		 if (getBill_User_ID() == 0) sql = sql.replaceFirst("Bill_User_ID,","").replaceFirst("\\?,", "");
@@ -1688,14 +1710,29 @@ try
  		 if (getSalesRep_ID() == 0) sql = sql.replaceFirst("SalesRep_ID,","").replaceFirst("\\?,", "");
  		 if (getUpdatedBy() == 0) sql = sql.replaceFirst("UpdatedBy,","").replaceFirst("\\?,", "");
  		 if (getUser1_ID() == 0) sql = sql.replaceFirst("User1_ID,","").replaceFirst("\\?,", "");
+ 		 if (getAuthorizationChainStatus() == null) sql = sql.replaceFirst("AuthorizationChainStatus,","").replaceFirst("\\?,", "");
+ 		 skipAdditionalNullValues(sql);
  
+
  		 int col = 1;
  
 		 CPreparedStatement pstmt = new CPreparedStatement( ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_UPDATABLE, sql, get_TrxName(), true);
  
+		 if (getValidTo() != null) pstmt.setTimestamp(col++, getValidTo());
+		 if (getM_AuthorizationChain_ID() != 0) pstmt.setInt(col++, getM_AuthorizationChain_ID());
+		 if (getOldGrandTotal() != null) pstmt.setBigDecimal(col++, getOldGrandTotal());
+		 if (getAuthorize() != null) pstmt.setString(col++, getAuthorize());
+		 pstmt.setString(col++, isExchange()?"Y":"N");
+		 if (getNombreCli() != null) pstmt.setString(col++, getNombreCli());
+		 if (getNroIdentificCliente() != null) pstmt.setString(col++, getNroIdentificCliente());
+		 if (getInvoice_Adress() != null) pstmt.setString(col++, getInvoice_Adress());
+		 if (getCUIT() != null) pstmt.setString(col++, getCUIT());
+		 if (getM_Warehouse_Transfer_ID() != 0) pstmt.setInt(col++, getM_Warehouse_Transfer_ID());
+		 if (getAD_Org_Transfer_ID() != 0) pstmt.setInt(col++, getAD_Org_Transfer_ID());
+		 pstmt.setString(col++, isTpvUsed()?"Y":"N");
+		 pstmt.setString(col++, isDelivered()?"Y":"N");
 		 if (getPay_BPartner_ID() != 0) pstmt.setInt(col++, getPay_BPartner_ID());
 		 if (getPay_Location_ID() != 0) pstmt.setInt(col++, getPay_Location_ID());
-		 pstmt.setString(col++, isDelivered()?"Y":"N");
 		 pstmt.setString(col++, isProcessing()?"Y":"N");
 		 if (getC_Payment_ID() != 0) pstmt.setInt(col++, getC_Payment_ID());
 		 pstmt.setString(col++, isSelected()?"Y":"N");
@@ -1756,26 +1793,14 @@ try
 		 if (getCreateVendorProductLines() != null) pstmt.setString(col++, getCreateVendorProductLines());
 		 if (getPaymentRule() != null) pstmt.setString(col++, getPaymentRule());
 		 if (getM_PriceList_ID() != 0) pstmt.setInt(col++, getM_PriceList_ID());
-		 if (getDateOrdered() != null) pstmt.setTimestamp(col++, getDateOrdered());
 		 if (getDatePromised() != null) pstmt.setTimestamp(col++, getDatePromised());
 		 if (getDocStatus() != null) pstmt.setString(col++, getDocStatus());
 		 if (getC_BPartner_ID() != 0) pstmt.setInt(col++, getC_BPartner_ID());
-		 if (getValidTo() != null) pstmt.setTimestamp(col++, getValidTo());
-		 pstmt.setString(col++, isExchange()?"Y":"N");
-		 if (getNombreCli() != null) pstmt.setString(col++, getNombreCli());
-		 if (getNroIdentificCliente() != null) pstmt.setString(col++, getNroIdentificCliente());
-		 if (getInvoice_Adress() != null) pstmt.setString(col++, getInvoice_Adress());
-		 if (getCUIT() != null) pstmt.setString(col++, getCUIT());
-		 if (getM_Warehouse_Transfer_ID() != 0) pstmt.setInt(col++, getM_Warehouse_Transfer_ID());
-		 if (getAD_Org_Transfer_ID() != 0) pstmt.setInt(col++, getAD_Org_Transfer_ID());
+		 if (getDateOrdered() != null) pstmt.setTimestamp(col++, getDateOrdered());
 		 if (getDocumentNo() != null) pstmt.setString(col++, getDocumentNo());
 		 if (getC_DocTypeTarget_ID() != 0) pstmt.setInt(col++, getC_DocTypeTarget_ID());
-		 pstmt.setString(col++, isTpvUsed()?"Y":"N");
 		 if (getprogram_invoice() != 0) pstmt.setInt(col++, getprogram_invoice());
 		 if (getC_BPartner_Location_ID() != 0) pstmt.setInt(col++, getC_BPartner_Location_ID());
-		 if (getM_AuthorizationChain_ID() != 0) pstmt.setInt(col++, getM_AuthorizationChain_ID());
-		 if (getAuthorize() != null) pstmt.setString(col++, getAuthorize());
-		 if (getOldGrandTotal() != null) pstmt.setBigDecimal(col++, getOldGrandTotal());
 		 if (getRef_Order_ID() != 0) pstmt.setInt(col++, getRef_Order_ID());
 		 if (getUser2_ID() != 0) pstmt.setInt(col++, getUser2_ID());
 		 if (getBill_User_ID() != 0) pstmt.setInt(col++, getBill_User_ID());
@@ -1784,6 +1809,9 @@ try
 		 if (getSalesRep_ID() != 0) pstmt.setInt(col++, getSalesRep_ID());
 		 if (getUpdatedBy() != 0) pstmt.setInt(col++, getUpdatedBy());
 		 if (getUser1_ID() != 0) pstmt.setInt(col++, getUser1_ID());
+		 if (getAuthorizationChainStatus() != null) pstmt.setString(col++, getAuthorizationChainStatus());
+		 col = setAdditionalInsertValues(col, pstmt);
+ 
 
 		pstmt.executeUpdate();
 
@@ -1804,4 +1832,23 @@ catch (Exception e2)
 
 }
 
+protected String getAdditionalParamNames() 
+{
+ return "";
+ }
+ 
+protected String getAdditionalParamMarks() 
+{
+ return "";
+ }
+ 
+protected void skipAdditionalNullValues(String sql) 
+{
+  }
+ 
+protected int setAdditionalInsertValues(int col, PreparedStatement pstmt) throws Exception 
+{
+ return col;
+ }
+ 
 }
