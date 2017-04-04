@@ -66,7 +66,7 @@ Ejemplos de cambios
     	<!-- 20161229-1355 Workaround para error en publicacion de entradas contables desde WebUI -->
     	<copy file="${SOURCE_DIR}/build.xml" todir="${TARGET_DIR}" overwrite="yes" />
 
-	<!-- 20170125-1555 Incorporación de nuevas librerías - Merge de revisión 1739 -->
+		<!-- 20170125-1555 Incorporación de nuevas librerías - Merge de revisión 1739 -->
     	<copy file="${SOURCE_DIR}/jna-platform-4.1.0.jar" todir="${TARGET_DIR}/lib" overwrite="yes" />
     	<copy file="${SOURCE_DIR}/jna-4.1.0.jar" todir="${TARGET_DIR}/lib" overwrite="yes" />
     	<copy file="${SOURCE_DIR}/httpmime-4.5.2.jar" todir="${TARGET_DIR}/lib" overwrite="yes" />
@@ -79,6 +79,9 @@ Ejemplos de cambios
     	<copy file="${SOURCE_DIR}/commons-codec-1.9.jar" todir="${TARGET_DIR}/lib" overwrite="yes" />
     	<copy file="${SOURCE_DIR}/build.xml" todir="${TARGET_DIR}" overwrite="yes" />
     		
+    	<!-- 20170404-1133 Omitir OXPApps.ear en el build final -->
+    	<copy file="${SOURCE_DIR}/build.xml" todir="${TARGET_DIR}" overwrite="yes" />
+    	
     </target>
     
 </project>
