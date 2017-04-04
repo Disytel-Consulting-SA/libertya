@@ -6270,6 +6270,15 @@ UPDATE C_Invoice
 SET authorizationchainstatus = 'A'
 WHERE authorizationchainstatus is null and m_authorizationchain_id is not null and docstatus IN ('CO','CL','RE','VO');
 
+UPDATE C_Order
+SET authorizationchainstatus = 'P'
+WHERE authorizationchainstatus is null and m_authorizationchain_id is not null and docstatus = 'WC';
+
+UPDATE C_Order
+SET authorizationchainstatus = 'A'
+WHERE authorizationchainstatus is null and m_authorizationchain_id is not null and docstatus IN ('CO','CL','RE','VO');
+
+
 DROP VIEW v_projectedpayments;
 DROP VIEW v_documents;
 DROP VIEW rv_bpartneropen;
