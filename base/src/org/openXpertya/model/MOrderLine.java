@@ -1119,6 +1119,15 @@ public class MOrderLine extends X_C_OrderLine {
     	return getDescription();
     }
     
+    public String getProductNameOnly()
+    {
+    	if (getM_Product_ID() > 0){
+    		MProduct prod = new MProduct(p_ctx, getM_Product_ID(), null); 
+    		return prod.getName();
+    	}
+    	return getDescription();
+    }
+    
     public String getProductValue()
     {
     	if (getProduct() != null)

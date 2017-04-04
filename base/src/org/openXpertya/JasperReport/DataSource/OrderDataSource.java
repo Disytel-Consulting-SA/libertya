@@ -37,6 +37,7 @@ public class OrderDataSource implements JRDataSource  {
 		methodMapper.put("CODARTICULO", "getProductValue");
 		methodMapper.put("CANTIDAD", "getQtyEntered");
 		methodMapper.put("DESCRIPCION", "getProductName");
+		methodMapper.put("PRODUCT_NAME", "getProductNameOnly");
 		methodMapper.put("INSTANCENAME", "getInstanceName");
 		methodMapper.put("PRECIO_UNITARIO", "getPriceEnteredNet");
 		methodMapper.put("DESCUENTO", "getDiscount");
