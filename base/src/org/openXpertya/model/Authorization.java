@@ -34,4 +34,8 @@ public interface Authorization {
 	public int getC_Currency_ID();
 	
 	public void setOldGrandTotal (BigDecimal OldGrandTotal);
+	
+	public String getAuthorizationChainStatus();
+	
+	public void setAuthorizationChainStatus (String AuthorizationChainStatus);
 }

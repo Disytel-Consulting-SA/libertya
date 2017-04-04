@@ -1401,6 +1401,10 @@ public class VOrdenPagoModel {
 		
 		sql.append(" AND i.paymentRule = '").append(getPaymentRule()).append("' ");
 
+		// Cadenas de autorización
+		sql.append(" AND (i.authorizationchainstatus is null OR i.authorizationchainstatus = '")
+				.append(MInvoice.AUTHORIZATIONCHAINSTATUS_Authorized).append("') ");
+		
 		sql.append("  ORDER BY org.name ASC, i.c_invoice_id, i.DocumentNo ASC, DueDate ASC ) as openInvoices ");
 		sql.append(" GROUP BY c_invoice_id, orgname, documentno, currencyIso, grandTotal, openTotal, c_invoicepayschedule_id, isexchange, C_Currency_ID, paymentrule ");
 		sql.append(" HAVING sum(opentotal) > 0.0 ");

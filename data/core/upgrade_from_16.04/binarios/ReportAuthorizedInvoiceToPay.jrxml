@@ -30,7 +30,7 @@
 	<parameter name="FechaHasta" isForPrompting="false" class="java.util.Date"/>
 	<parameter name="AD_User_ID" isForPrompting="false" class="java.math.BigDecimal"/>
 	<parameter name="StatusAuthorization" isForPrompting="false" class="java.lang.String"/>
-	<queryString><![CDATA[SELECT sub.organizacion,sub.fechaFactura, sub.documentno, sub.codprov, sub.bpartner,autorizada, sub.grandtotal, sub.netamount, sub.balance,
+	<queryString><![CDATA[SELECT sub.organizacion,sub.fechaFactura, sub.documentno, sub.codprov, sub.bpartner,sub.authorizationchainstatus, sub.grandtotal, sub.netamount, sub.balance,
 	sub.usuario, sub.proximousuario
 FROM
 (SELECT org.name as organizacion, 
@@ -40,9 +40,7 @@ invoiceopen(i.c_invoice_id,0) as balance,
 bp.value as codprov,
 bp.name bpartner, 
 i.c_invoice_id,
-(CASE WHEN (SELECT COUNT(*) 
-		FROM M_AuthorizationChainDocument acd 
-		WHERE acd.C_Invoice_ID = i.C_Invoice_ID AND Status = 'P') > 0 THEN 'N' ELSE 'Y' END) As Autorizada,
+i.authorizationchainstatus,
 i.grandtotal,
 i.netamount,
 (SELECT u.name FROM AD_User u
@@ -74,17 +72,17 @@ WHERE (($P{AD_Org_ID} IS NULL) OR (0 = $P{AD_Org_ID}) OR (i.ad_org_id = $P{AD_Or
 	AND i.docstatus in ('CL','CO','WC')
 	AND dt.DocBaseType IN ('API')
 	AND (($P{C_BPartner_ID} IS NULL) OR (bp.c_bpartner_id = $P{C_BPartner_ID}))
+	AND (($P{StatusAuthorization} IS NULL) OR ($P{StatusAuthorization} = '') OR ($P{StatusAuthorization} = i.authorizationchainstatus))
 	AND (($P{FechaDesde}::date IS NULL) OR (i.dateinvoiced::date >= $P{FechaDesde}::date)) 
 	AND (($P{FechaHasta}::date IS NULL) OR (i.dateinvoiced::date <= $P{FechaHasta}::date)) 
 	AND (($P{AD_User_ID} IS NULL) OR (select array_agg($P{AD_User_ID}::int) <@ acd.proximousuarioID))
-ORDER BY dateinvoiced DESC) as Sub
-WHERE (CASE WHEN $P{StatusAuthorization} = 'P' THEN Autorizada='N' ELSE Autorizada='Y' END)]]></queryString>
+ORDER BY dateinvoiced DESC) as Sub]]></queryString>
 
 	<field name="organizacion" class="java.lang.String"/>
 	<field name="fechafactura" class="java.sql.Timestamp"/>
 	<field name="documentno" class="java.lang.String"/>
 	<field name="bpartner" class="java.lang.String"/>
-	<field name="autorizada" class="java.lang.String"/>
+	<field name="authorizationchainstatus" class="java.lang.String"/>
 	<field name="grandtotal" class="java.math.BigDecimal"/>
 	<field name="netamount" class="java.math.BigDecimal"/>
 	<field name="usuario" class="java.lang.String"/>
@@ -608,7 +606,7 @@ WHERE (CASE WHEN $P{StatusAuthorization} = 'P' THEN Autorizada='N' ELSE Autoriza
 					<textElement textAlignment="Left">
 						<font size="6"/>
 					</textElement>
-				<textFieldExpression   class="java.lang.String"><![CDATA[$F{autorizada}.equals("Y")?"Si":"No"]]></textFieldExpression>
+				<textFieldExpression   class="java.lang.String"><![CDATA[$F{authorizationchainstatus} != null && $F{authorizationchainstatus}.trim().length() > 0?($F{authorizationchainstatus}.equals("A")?"Autorizada":"Pendiente"):null]]></textFieldExpression>
 				</textField>
 				<textField isStretchWithOverflow="true" pattern="###0.00;-###0.00" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement

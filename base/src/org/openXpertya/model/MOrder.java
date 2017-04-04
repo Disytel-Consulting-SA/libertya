@@ -337,6 +337,9 @@ public class MOrder extends X_C_Order implements DocAction, Authorization  {
  	/** Actualización del monto de descuento a nivel del documento */
  	private boolean updateChargeAmt = false;
  	
+	/** Bypass para no setear cadena de autorización */
+	private boolean skipAuthorizationChain = false;
+ 	
     /**
      * Descripción de Método
      *
@@ -1531,7 +1534,7 @@ public class MOrder extends X_C_Order implements DocAction, Authorization  {
 		}
 		
 		//Se determina la cadena de autorización para el pedido de proveedor
-		if (!isSOTrx())
+		if (!isSOTrx() && !isSkipAuthorizationChain())
 			setM_AuthorizationChain_ID(DB.getSQLValue(get_TrxName(), 
 					"SELECT audt.M_AuthorizationChain_ID FROM M_AuthorizationChainDocumentType audt "
 					+ " INNER JOIN M_AuthorizationChain au ON au.M_AuthorizationChain_ID = audt.M_AuthorizationChain_ID "
@@ -3342,15 +3345,15 @@ public class MOrder extends X_C_Order implements DocAction, Authorization  {
    
     public String completeIt() {
     	
-		if (!Util.isEmpty(this.getM_AuthorizationChain_ID(), true)) {
+		if (!Util.isEmpty(this.getM_AuthorizationChain_ID(), true) && !isSkipAuthorizationChain()) {
 			AuthorizationChainManager authorizationChainManager = new AuthorizationChainManager(
 					this, getCtx(), get_TrxName());
 			try {
-				if (authorizationChainManager
-						.loadAuthorizationChain(reactiveOrder())) {
+				String notAuthorizeDocStatus = authorizationChainManager.loadAuthorizationChain(reactiveOrder());
+				if (notAuthorizeDocStatus != null && !DOCSTATUS_Completed.equals(notAuthorizeDocStatus)) {
 					m_processMsg = Msg.getMsg(getCtx(), "AlreadyExistsAuthorizationChainLink");
-					//this.setProcessed(true);
-					return DOCSTATUS_WaitingConfirmation;
+					setProcessed(true);
+					return notAuthorizeDocStatus;
 				}
 			} catch (Exception e) {
 				m_processMsg = e.getMessage();
@@ -4076,6 +4079,14 @@ public class MOrder extends X_C_Order implements DocAction, Authorization  {
             return false;
         } 
 
+		setSkipAuthorizationChain(true);
+		
+        if (getAuthorizationChainStatus() != null
+				&& !getAuthorizationChainStatus().equals(AUTHORIZATIONCHAINSTATUS_Authorized)) {
+        	setM_AuthorizationChain_ID(0);
+        	setAuthorizationChainStatus(null);
+        }
+        
         setProcessed( true );
         setDocAction( DOCACTION_None );
 
@@ -5058,6 +5069,14 @@ public class MOrder extends X_C_Order implements DocAction, Authorization  {
 			}
 		}
     	return result;
+	}
+
+	public boolean isSkipAuthorizationChain() {
+		return skipAuthorizationChain;
+	}
+
+	public void setSkipAuthorizationChain(boolean skipAuthorizationChain) {
+		this.skipAuthorizationChain = skipAuthorizationChain;
 	}
 	
 }    // MOrder

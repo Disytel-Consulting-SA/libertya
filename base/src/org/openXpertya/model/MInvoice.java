@@ -109,6 +109,9 @@ public class MInvoice extends X_C_Invoice implements DocAction,Authorization, Cu
 	 * automáticas
 	 */
 	private boolean skipAutomaticCreditAllocCreation = false;
+	
+	/** Bypass para no setear cadena de autorización */
+	private boolean skipAuthorizationChain = false;
 
 	/**
 	 * Tipos de documento excluídos en la creación de nota de crédito automática
@@ -2307,7 +2310,7 @@ public class MInvoice extends X_C_Invoice implements DocAction,Authorization, Cu
 		}
 		
 		// Compras
-		if (!isSOTrx()){
+		if (!isSOTrx() && !isSkipAuthorizationChain()){
 			//Se determina la cadena de autorización para la factura de proveedor
 			setM_AuthorizationChain_ID(DB.getSQLValue(get_TrxName(), 
 					"SELECT audt.M_AuthorizationChain_ID FROM M_AuthorizationChainDocumentType audt "
@@ -2323,7 +2326,7 @@ public class MInvoice extends X_C_Invoice implements DocAction,Authorization, Cu
 				log.saveError("RepeatInvoice", getRepeatInvoiceMsg());
 				return false;
 			}
-		}
+		} 
 		
 		return true;
 	} // beforeSave
@@ -3663,16 +3666,16 @@ public class MInvoice extends X_C_Invoice implements DocAction,Authorization, Cu
 
 	public String completeIt() {
 
-		if (!Util.isEmpty(this.getM_AuthorizationChain_ID(), true)) {
+		if (!Util.isEmpty(this.getM_AuthorizationChain_ID(), true) && !isSkipAuthorizationChain()) {
 			AuthorizationChainManager authorizationChainManager = new AuthorizationChainManager(
 					this, getCtx(), get_TrxName());
 
 			try {
-				if (authorizationChainManager
-						.loadAuthorizationChain(reactiveInvoice())) {
+				String notAuthorizeDocStatus = authorizationChainManager.loadAuthorizationChain(reactiveInvoice());
+				if (notAuthorizeDocStatus != null && !DOCSTATUS_Completed.equals(notAuthorizeDocStatus)) {
 					m_processMsg = Msg.getMsg(getCtx(), "AlreadyExistsAuthorizationChainLink");
-					//this.setProcessed(true);
-					return DOCSTATUS_WaitingConfirmation;
+					setProcessed(true);
+					return notAuthorizeDocStatus;
 				}
 			} catch (Exception e) {
 				m_processMsg = e.getMessage();
@@ -4605,7 +4608,7 @@ public class MInvoice extends X_C_Invoice implements DocAction,Authorization, Cu
 
 			return false;
 		}
-
+		
 		// Not Processed
 
 		if (DOCSTATUS_Drafted.equals(getDocStatus())
@@ -4650,6 +4653,9 @@ public class MInvoice extends X_C_Invoice implements DocAction,Authorization, Cu
 			addDescription(Msg.getMsg(getCtx(), "Voided"));
 			setIsPaid(true);
 			setC_Payment_ID(0);
+			setM_AuthorizationChain_ID(0);
+			setAuthorizationChainStatus(null);
+			setSkipAuthorizationChain(true);		
 		} else {
 			return reverseCorrectIt();
 		}
@@ -4775,6 +4781,17 @@ public class MInvoice extends X_C_Invoice implements DocAction,Authorization, Cu
 		// a la reversal.
 		reversal.copyDocActionStatusListeners(this);
 
+		reversal.setSkipAuthorizationChain(true);
+		setSkipAuthorizationChain(true);		
+		
+		if (getAuthorizationChainStatus() != null
+				&& !getAuthorizationChainStatus().equals(AUTHORIZATIONCHAINSTATUS_Authorized)) {
+			setM_AuthorizationChain_ID(0);
+			setAuthorizationChainStatus(null);
+			reversal.setM_AuthorizationChain_ID(0);
+			reversal.setAuthorizationChainStatus(null);
+		}
+		
 		// Seteo la bandera que indica si se trata de una anulación.
 		reversal.setVoidProcess(voidProcess);
 
@@ -4980,7 +4997,7 @@ public class MInvoice extends X_C_Invoice implements DocAction,Authorization, Cu
 		 * <-----------------
 		 */
 		//
-
+		
 		m_processMsg = info.toString();
 		reversal.setC_Payment_ID(0);
 		reversal.setIsPaid(true);
@@ -6282,6 +6299,14 @@ public class MInvoice extends X_C_Invoice implements DocAction,Authorization, Cu
 	@Override
 	public boolean isSkipCurrentAccount() {
 		return MDocType.get(getCtx(), getC_DocTypeTarget_ID()).isSkipCurrentAccounts();
+	}
+
+	public boolean isSkipAuthorizationChain() {
+		return skipAuthorizationChain;
+	}
+
+	public void setSkipAuthorizationChain(boolean skipAuthorizationChain) {
+		this.skipAuthorizationChain = skipAuthorizationChain;
 	}
 
 } // MInvoice
