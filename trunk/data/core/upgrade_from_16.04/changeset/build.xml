@@ -571,7 +571,7 @@
 	<echo message="AppsDeployment= ${DEPLOY_APPS_OXP}"/>
   	
 	<copy file="${basedir}/lib/OXPRoot.ear" todir="${DEPLOY_APPS_OXP}"/>
-	<copy file="${basedir}/lib/OXPApps.ear" todir="${DEPLOY_APPS_OXP}"/>
+	<!-- <copy file="${basedir}/lib/OXPApps.ear" todir="${DEPLOY_APPS_OXP}"/> -->
 	
 	<!-- Incluir OXP.jar especial y OXPSLib.jar en LYWeb (si es que existe) para independencia del contexto. Archivo default: webui.war -->
 	<war destfile="${basedir}/lib/webui.war" update="true" >
