@@ -1592,7 +1592,7 @@ public class VLookup extends JComponent implements VEditor,ActionListener,FocusL
         	try
         	{
 	        	// si es tabledir, buscar pestaña y columna
-	        	if (m_lookup.getDisplayType() == DisplayType.TableDir)
+	        	if (m_lookup.getDisplayType() == DisplayType.TableDir && value != null)
 	        	{
 	        		// determinar el nombre de la tabla
 	        		String refColumName = (m_mField != null ? m_mField.getReferenceColumnName() : m_columnName);
