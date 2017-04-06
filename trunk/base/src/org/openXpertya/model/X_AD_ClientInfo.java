@@ -7,7 +7,7 @@ import java.math.*;
 import org.openXpertya.util.*;
 /** Modelo Generado por AD_ClientInfo
  *  @author Comunidad de Desarrollo Libertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
- *  @version  - 2016-10-28 17:00:56.322 */
+ *  @version  - 2017-04-06 14:25:34.578 */
 public class X_AD_ClientInfo extends org.openXpertya.model.PO
 {
 /** Constructor estándar */
@@ -493,8 +493,8 @@ public static final String EXPORTTYPEFE_Otros = "4";
 /** Set Export Type FE */
 public void setExportTypeFE (String ExportTypeFE)
 {
-if (ExportTypeFE == null || ExportTypeFE.equals("1") || ExportTypeFE.equals("2") || ExportTypeFE.equals("4"));
- else throw new IllegalArgumentException ("ExportTypeFE Invalid value - Reference = EXPORTTYPEFE_AD_Reference_ID - 1 - 2 - 4");
+if (ExportTypeFE == null || ExportTypeFE.equals("1") || ExportTypeFE.equals("2") || ExportTypeFE.equals("4") || ( refContainsValue("CORE-AD_Reference-1010258", ExportTypeFE) ) );
+ else throw new IllegalArgumentException ("ExportTypeFE Invalid value: " + ExportTypeFE + ".  Valid: " +  refValidOptions("CORE-AD_Reference-1010258") );
 if (ExportTypeFE != null && ExportTypeFE.length() > 1)
 {
 log.warning("Length > 1 - truncated");
@@ -521,6 +521,16 @@ set_Value ("IIBB", IIBB);
 public String getIIBB() 
 {
 return (String)get_Value("IIBB");
+}
+/** Set IIBB Initial Date */
+public void setIIBBDate (Timestamp IIBBDate)
+{
+set_Value ("IIBBDate", IIBBDate);
+}
+/** Get IIBB Initial Date */
+public Timestamp getIIBBDate() 
+{
+return (Timestamp)get_Value("IIBBDate");
 }
 /** Set Discount calculated from Line Amounts.
 Payment Discount calculation does not include Taxes and Charges */
@@ -694,7 +704,7 @@ if (oo != null)
 }
 return false;
 }
-public static final int POSJOURNALAPPLICATION_AD_Reference_ID = MReference.getReferenceID("POS Journal Application");
+public static final int POSJOURNALAPPLICATION_AD_Reference_ID = MReference.getReferenceID("Transactions Application");
 /** Sales = S */
 public static final String POSJOURNALAPPLICATION_Sales = "S";
 /** Purchases = P */
@@ -704,8 +714,8 @@ public static final String POSJOURNALAPPLICATION_Both = "B";
 /** Set POS Journal Application */
 public void setPOSJournalApplication (String POSJournalApplication)
 {
-if (POSJournalApplication == null || POSJournalApplication.equals("S") || POSJournalApplication.equals("P") || POSJournalApplication.equals("B"));
- else throw new IllegalArgumentException ("POSJournalApplication Invalid value - Reference = POSJOURNALAPPLICATION_AD_Reference_ID - S - P - B");
+if (POSJournalApplication == null || POSJournalApplication.equals("S") || POSJournalApplication.equals("P") || POSJournalApplication.equals("B") || ( refContainsValue("CORE-AD_Reference-1010304", POSJournalApplication) ) );
+ else throw new IllegalArgumentException ("POSJournalApplication Invalid value: " + POSJournalApplication + ".  Valid: " +  refValidOptions("CORE-AD_Reference-1010304") );
 if (POSJournalApplication != null && POSJournalApplication.length() > 1)
 {
 log.warning("Length > 1 - truncated");
@@ -771,17 +781,17 @@ return false;
 public static final int VOIDINGINVOICEPAYMENTSPOSJOURNALCONFIG_AD_Reference_ID = MReference.getReferenceID("Invoice Global Voiding POS Journal Options");
 /** Select = S */
 public static final String VOIDINGINVOICEPAYMENTSPOSJOURNALCONFIG_Select = "S";
-/** Original Payment = P */
-public static final String VOIDINGINVOICEPAYMENTSPOSJOURNALCONFIG_OriginalPayment = "P";
 /** Original Document = D */
 public static final String VOIDINGINVOICEPAYMENTSPOSJOURNALCONFIG_OriginalDocument = "D";
+/** Original Payment = P */
+public static final String VOIDINGINVOICEPAYMENTSPOSJOURNALCONFIG_OriginalPayment = "P";
 /** User = U */
 public static final String VOIDINGINVOICEPAYMENTSPOSJOURNALCONFIG_User = "U";
 /** Set Voiding Invoice Payments POS Journal Config */
 public void setVoidingInvoicePaymentsPOSJournalConfig (String VoidingInvoicePaymentsPOSJournalConfig)
 {
-if (VoidingInvoicePaymentsPOSJournalConfig == null || VoidingInvoicePaymentsPOSJournalConfig.equals("S") || VoidingInvoicePaymentsPOSJournalConfig.equals("P") || VoidingInvoicePaymentsPOSJournalConfig.equals("D") || VoidingInvoicePaymentsPOSJournalConfig.equals("U"));
- else throw new IllegalArgumentException ("VoidingInvoicePaymentsPOSJournalConfig Invalid value - Reference = VOIDINGINVOICEPAYMENTSPOSJOURNALCONFIG_AD_Reference_ID - S - P - D - U");
+if (VoidingInvoicePaymentsPOSJournalConfig == null || VoidingInvoicePaymentsPOSJournalConfig.equals("S") || VoidingInvoicePaymentsPOSJournalConfig.equals("D") || VoidingInvoicePaymentsPOSJournalConfig.equals("P") || VoidingInvoicePaymentsPOSJournalConfig.equals("U") || ( refContainsValue("CORE-AD_Reference-1010215", VoidingInvoicePaymentsPOSJournalConfig) ) );
+ else throw new IllegalArgumentException ("VoidingInvoicePaymentsPOSJournalConfig Invalid value: " + VoidingInvoicePaymentsPOSJournalConfig + ".  Valid: " +  refValidOptions("CORE-AD_Reference-1010215") );
 if (VoidingInvoicePaymentsPOSJournalConfig != null && VoidingInvoicePaymentsPOSJournalConfig.length() > 1)
 {
 log.warning("Length > 1 - truncated");
@@ -797,17 +807,17 @@ return (String)get_Value("VoidingInvoicePaymentsPOSJournalConfig");
 public static final int VOIDINGINVOICEPOSJOURNALCONFIG_AD_Reference_ID = MReference.getReferenceID("Invoice Global Voiding POS Journal Options");
 /** Select = S */
 public static final String VOIDINGINVOICEPOSJOURNALCONFIG_Select = "S";
-/** Original Payment = P */
-public static final String VOIDINGINVOICEPOSJOURNALCONFIG_OriginalPayment = "P";
 /** Original Document = D */
 public static final String VOIDINGINVOICEPOSJOURNALCONFIG_OriginalDocument = "D";
+/** Original Payment = P */
+public static final String VOIDINGINVOICEPOSJOURNALCONFIG_OriginalPayment = "P";
 /** User = U */
 public static final String VOIDINGINVOICEPOSJOURNALCONFIG_User = "U";
 /** Set Voiding Invoice POS Journal Config */
 public void setVoidingInvoicePOSJournalConfig (String VoidingInvoicePOSJournalConfig)
 {
-if (VoidingInvoicePOSJournalConfig == null || VoidingInvoicePOSJournalConfig.equals("S") || VoidingInvoicePOSJournalConfig.equals("P") || VoidingInvoicePOSJournalConfig.equals("D") || VoidingInvoicePOSJournalConfig.equals("U"));
- else throw new IllegalArgumentException ("VoidingInvoicePOSJournalConfig Invalid value - Reference = VOIDINGINVOICEPOSJOURNALCONFIG_AD_Reference_ID - S - P - D - U");
+if (VoidingInvoicePOSJournalConfig == null || VoidingInvoicePOSJournalConfig.equals("S") || VoidingInvoicePOSJournalConfig.equals("D") || VoidingInvoicePOSJournalConfig.equals("P") || VoidingInvoicePOSJournalConfig.equals("U") || ( refContainsValue("CORE-AD_Reference-1010215", VoidingInvoicePOSJournalConfig) ) );
+ else throw new IllegalArgumentException ("VoidingInvoicePOSJournalConfig Invalid value: " + VoidingInvoicePOSJournalConfig + ".  Valid: " +  refValidOptions("CORE-AD_Reference-1010215") );
 if (VoidingInvoicePOSJournalConfig != null && VoidingInvoicePOSJournalConfig.length() > 1)
 {
 log.warning("Length > 1 - truncated");

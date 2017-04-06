@@ -6436,3 +6436,6 @@ CREATE OR REPLACE VIEW rv_payment AS
 
 ALTER TABLE rv_payment
   OWNER TO libertya;
+  
+--20170406-1415 Fecha de inicio de actividades de IIBB
+update ad_system set dummy = (SELECT addcolumnifnotexists('ad_clientinfo','iibbdate','timestamp without time zone'));
