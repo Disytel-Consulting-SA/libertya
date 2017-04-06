@@ -418,6 +418,7 @@ public class LaunchInvoice extends SvrProcess {
 							client.getCategoriaIva(invoice.getAD_Org_ID()), get_TrxName()));
 		
 		jasperwrapper.addParameter("INGBRUTO_CLIENT", clientInfo.getIIBB());
+		jasperwrapper.addParameter("IIBB_DATE_CLIENT", clientInfo.getIIBBDate());
 		
 		/* Codigo original
 		jasperwrapper.addParameter("CLIENT_CUIT",clientInfo.getCUIT());

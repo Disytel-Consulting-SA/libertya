@@ -174,6 +174,7 @@
 	<parameter name="COMPILED_SUBREPORT_PERCEPCIONES" isForPrompting="false" class="java.io.InputStream"/>
 	<parameter name="SUBREPORT_PERCEPCIONES_DATASOURCE" isForPrompting="false" class="net.sf.jasperreports.engine.JRDataSource"/>
 	<parameter name="LOGO" isForPrompting="false" class="java.io.InputStream"/>
+	<parameter name="IIBB_DATE_CLIENT" isForPrompting="false" class="java.sql.Timestamp"/>
 
 	<field name="ITEM" class="java.lang.String"/>
 	<field name="CODARTICULO" class="java.lang.String"/>
@@ -389,7 +390,7 @@ $V{LETRA}.equals("A") && $P{TIPOCOMPROBANTE}.equalsIgnoreCase("NOTA DE CREDITO")
 				<staticText>
 					<reportElement
 						x="418"
-						y="87"
+						y="86"
 						width="57"
 						height="12"
 						key="staticText-28"/>
@@ -414,21 +415,8 @@ $V{LETRA}.equals("A") && $P{TIPOCOMPROBANTE}.equalsIgnoreCase("NOTA DE CREDITO")
 				</staticText>
 				<staticText>
 					<reportElement
-						x="475"
-						y="99"
-						width="62"
-						height="12"
-						key="staticText-32"/>
-					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
-					<textElement verticalAlignment="Middle">
-						<font fontName="Arial" size="8"/>
-					</textElement>
-				<text><![CDATA[DD/MM/AAAA]]></text>
-				</staticText>
-				<staticText>
-					<reportElement
 						x="286"
-						y="87"
+						y="86"
 						width="127"
 						height="13"
 						key="staticText-34"/>
@@ -503,7 +491,7 @@ $V{LETRA}.equals("A") && $P{TIPOCOMPROBANTE}.equalsIgnoreCase("NOTA DE CREDITO")
 				<textField isStretchWithOverflow="false" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
 						x="475"
-						y="87"
+						y="86"
 						width="62"
 						height="12"
 						key="textField"/>
@@ -512,6 +500,19 @@ $V{LETRA}.equals("A") && $P{TIPOCOMPROBANTE}.equalsIgnoreCase("NOTA DE CREDITO")
 						<font fontName="Arial" size="8"/>
 					</textElement>
 				<textFieldExpression   class="java.lang.String"><![CDATA[$P{INGBRUTO_CLIENT}]]></textFieldExpression>
+				</textField>
+				<textField isStretchWithOverflow="false" pattern="dd/MM/yyyy" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
+					<reportElement
+						x="475"
+						y="99"
+						width="62"
+						height="12"
+						key="textField"/>
+					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
+					<textElement verticalAlignment="Middle">
+						<font size="8"/>
+					</textElement>
+				<textFieldExpression   class="java.sql.Timestamp"><![CDATA[$P{IIBB_DATE_CLIENT}]]></textFieldExpression>
 				</textField>
 			</band>
 		</pageHeader>
@@ -850,7 +851,7 @@ $V{LETRA}.equals("A") && $P{TIPOCOMPROBANTE}.equalsIgnoreCase("NOTA DE CREDITO")
 					<textElement verticalAlignment="Top">
 						<font fontName="Arial" size="9"/>
 					</textElement>
-				<textFieldExpression   class="java.lang.String"><![CDATA[$P{DIRECCION}.replace("()", "").replace(". .", "")]]></textFieldExpression>
+				<textFieldExpression   class="java.lang.String"><![CDATA[$P{DIRECCION}.replaceAll("()", "").replaceAll(". .", "")]]></textFieldExpression>
 				</textField>
 				<textField isStretchWithOverflow="false" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
