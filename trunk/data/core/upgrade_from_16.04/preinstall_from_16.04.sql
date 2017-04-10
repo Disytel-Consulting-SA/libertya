@@ -6439,3 +6439,52 @@ ALTER TABLE rv_payment
   
 --20170406-1415 Fecha de inicio de actividades de IIBB
 update ad_system set dummy = (SELECT addcolumnifnotexists('ad_clientinfo','iibbdate','timestamp without time zone'));
+
+--20170410-1040 Incorporación de columnas relacionadas con el tipo de documento del payment
+DROP VIEW rv_payment;
+
+CREATE OR REPLACE VIEW rv_payment AS
+ SELECT c_payment.c_payment_id, c_payment.ad_client_id, c_payment.ad_org_id, c_payment.isactive, c_payment.created, c_payment.createdby, c_payment.updated, c_payment.updatedby, c_payment.documentno, c_payment.datetrx, c_payment.isreceipt, c_payment.c_doctype_id, c_payment.trxtype, c_payment.c_bankaccount_id, c_payment.c_bpartner_id, c_payment.c_invoice_id, c_payment.c_bp_bankaccount_id, c_payment.c_paymentbatch_id, c_payment.tendertype, c_payment.creditcardtype, c_payment.creditcardnumber, c_payment.creditcardvv, c_payment.creditcardexpmm, c_payment.creditcardexpyy, c_payment.micr, c_payment.routingno, c_payment.accountno, c_payment.checkno, c_payment.a_name, c_payment.a_street, c_payment.a_city, c_payment.a_state, c_payment.a_zip, c_payment.a_ident_dl, c_payment.a_ident_ssn, c_payment.a_email, c_payment.voiceauthcode, c_payment.orig_trxid, c_payment.ponum, c_payment.c_currency_id, c_payment.c_conversiontype_id,
+  CASE c_payment.isreceipt
+  WHEN 'Y'::bpchar THEN c_payment.payamt
+  ELSE c_payment.payamt * (- 1::numeric)
+  END AS payamt,
+  CASE c_payment.isreceipt
+  WHEN 'Y'::bpchar THEN c_payment.discountamt
+  ELSE c_payment.discountamt * (- 1::numeric)
+  END AS discountamt,
+  CASE c_payment.isreceipt
+  WHEN 'Y'::bpchar THEN c_payment.writeoffamt
+  ELSE c_payment.writeoffamt * (- 1::numeric)
+  END AS writeoffamt,
+  CASE c_payment.isreceipt
+  WHEN 'Y'::bpchar THEN c_payment.taxamt
+  ELSE c_payment.taxamt * (- 1::numeric)
+  END AS taxamt,
+  CASE c_payment.isreceipt
+  WHEN 'Y'::bpchar THEN c_payment.overunderamt
+  ELSE c_payment.overunderamt * (- 1::numeric)
+  END AS overunderamt,
+  CASE c_payment.isreceipt
+  WHEN 'Y'::bpchar THEN 1.0
+  ELSE (-1.0)
+  END AS multiplierap, paymentallocated(c_payment.c_payment_id::numeric, c_payment.c_currency_id::numeric) AS allocatedamt, paymentavailable(c_payment.c_payment_id::numeric) AS availableamt, c_payment.isoverunderpayment, c_payment.isapproved, c_payment.r_pnref, c_payment.r_result, c_payment.r_respmsg, c_payment.r_authcode, c_payment.r_avsaddr, c_payment.r_avszip, c_payment.r_info, c_payment.processing, c_payment.oprocessing, c_payment.docstatus, c_payment.docaction, c_payment.isprepayment, c_payment.c_charge_id, c_payment.isreconciled, c_payment.isallocated, c_payment.isonline, c_payment.processed, c_payment.posted, c_payment.dateacct, ( SELECT ah.c_allocationhdr_id
+  FROM c_allocationhdr ah
+  JOIN c_allocationline al ON al.c_allocationhdr_id = ah.c_allocationhdr_id
+  WHERE (ah.docstatus = ANY (ARRAY['CO'::bpchar, 'CL'::bpchar])) AND al.c_payment_id = c_payment.c_payment_id
+  ORDER BY ah.updated DESC
+  LIMIT 1) AS c_allocationhdr_id, b.name as bank, dt.doctypekey, dt.docbasetype
+  FROM c_payment
+  INNER JOIN C_DocType dt on dt.c_doctype_id = c_payment.c_doctype_id
+  INNER JOIN C_BankAccount ba on ba.c_bankaccount_id = c_payment.c_bankaccount_id
+  INNER JOIN C_Bank b on b.c_bank_id = ba.c_bank_id ;
+
+ALTER TABLE rv_payment
+  OWNER TO libertya;
+
+--Asignación de la vista RV_Payment Only Vendor Payments al formato de impresión del reporte de Detalle de Pagos para utilizar funciones por columna
+update ad_printformat
+set AD_ReportView_ID= (select AD_ReportView_ID
+from AD_ReportView
+where ad_componentobjectuid = 'CORE-AD_ReportView-156')
+where ad_componentobjectuid = 'CORE-AD_PrintFormat-1010891';
