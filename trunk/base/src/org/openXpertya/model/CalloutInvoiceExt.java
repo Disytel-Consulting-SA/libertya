@@ -408,6 +408,28 @@ public class CalloutInvoiceExt extends CalloutInvoice {
 		return letraId;
 	}
 	
+	public static MLetraAceptaIva darLetraAceptaIVA(Properties ctx, int categoriaIvaCustomer, int categoriaIvaVendor, String trxName) {
+		
+		MLetraAceptaIva letraAceptaIVA = null;
+		
+		String sq1 = "SELECT * FROM C_LETRA_ACEPTA_IVA "
+			+ "WHERE CATEGORIA_CUSTOMER = ? AND CATEGORIA_VENDOR = ?";
+
+		PreparedStatement pstmt = DB.prepareStatement(sq1);
+		try {
+			pstmt.setInt(1, categoriaIvaCustomer);
+			pstmt.setInt(2, categoriaIvaVendor);
+		
+			ResultSet rs = pstmt.executeQuery();
+			if (rs.next()) {
+				letraAceptaIVA = new MLetraAceptaIva(ctx, rs, trxName);
+			} 
+		} catch (SQLException e) {
+			return null;
+		}		
+		return letraAceptaIVA;
+	}
+	
 	// Sobrecargo metodos para guardar compatibilidad con codigo existente
 	public static Integer darCategoriaIvaClient(){
 		return darCategoriaIvaClient(0);
@@ -1004,19 +1026,19 @@ public class CalloutInvoiceExt extends CalloutInvoice {
 		 * */
 		int C_Tax_ID = 0;
 		int C_BPartner_ID = Env.getContextAsInt(ctx, WindowNo, "C_BPartner_ID");
-		MBPartner partner = new MBPartner(ctx,C_BPartner_ID,trxName);
-		X_C_Categoria_Iva categoria_Iva = new X_C_Categoria_Iva(ctx,partner.getC_Categoria_Iva_ID(),trxName);
-		if(partner.getC_Categoria_Iva_ID() > 0 && categoria_Iva.getCodigo() == 4){ // 4: Categoria "Exenta"
-			String sql ="SELECT t.C_TAX_ID FROM C_TAXCATEGORY tc INNER JOIN " +
-				"C_TAX t ON (tc.C_TAXCATEGORY_ID=t.C_TAXCATEGORY_ID) " +
-				"WHERE tc.NAME='Exento'";
-			C_Tax_ID = DB.getSQLValue(trxName, sql);
-					
-		}else /***************************************************/
-		//
+		boolean isSOTrx = Env.getContext(ctx, WindowNo, "IsSOTrx").equals("Y");
+		
+		// Obtengo el impuesto en base a la entidad comercial
+		MTax tax = getTax(ctx, isSOTrx, C_BPartner_ID, null);
+		if(tax != null){
+			C_Tax_ID = tax.getID();
+		}
+		
+		if(C_Tax_ID <= 0){
 			C_Tax_ID = Tax.get(ctx, M_Product_ID, C_Charge_ID, billDate, shipDate,
-			AD_Org_ID, M_Warehouse_ID, billC_BPartner_Location_ID, shipC_BPartner_Location_ID,
-			Env.getContext(ctx, WindowNo, "IsSOTrx").equals("Y"));
+					AD_Org_ID, M_Warehouse_ID, billC_BPartner_Location_ID, shipC_BPartner_Location_ID, isSOTrx);
+		}
+		
 		log.info("Tax ID=" + C_Tax_ID);
 		//
 		if (C_Tax_ID == 0)
@@ -1027,6 +1049,37 @@ public class CalloutInvoiceExt extends CalloutInvoice {
 		return amt (ctx, WindowNo, mTab, mField, value);
 	}	//	tax
 	
+	
+	public static MTax getTax(Properties ctx, boolean isSOTrx, Integer bPartnerID, String trxName){
+		MBPartner partner = new MBPartner(ctx,bPartnerID,trxName);
+		MTax tax = null;
+		int C_Tax_ID = 0;
+		if(partner.getC_Categoria_Iva_ID() > 0){
+			X_C_Categoria_Iva categoria_Iva = new X_C_Categoria_Iva(ctx, partner.getC_Categoria_Iva_ID(), trxName);
+			// 1) verificamos en letra acepta iva
+			Integer clientCatIVA = darCategoriaIvaClient(Env.getAD_Org_ID(ctx));
+			MLetraAceptaIva laiva = darLetraAceptaIVA(ctx, isSOTrx ? categoria_Iva.getID() : clientCatIVA,
+					isSOTrx ? clientCatIVA : categoria_Iva.getID(), trxName);
+			C_Tax_ID = laiva != null?laiva.getC_Tax_ID():0;
+			// 2) Exento
+			if(C_Tax_ID <= 0){
+				if(categoria_Iva.getCodigo() == MCategoriaIva.EXENTO){
+					String sql ="SELECT t.C_TAX_ID FROM C_TAXCATEGORY tc INNER JOIN " +
+						"C_TAX t ON (tc.C_TAXCATEGORY_ID=t.C_TAXCATEGORY_ID) " +
+						"WHERE tc.NAME='Exento'";
+					C_Tax_ID = DB.getSQLValue(trxName, sql);
+				}
+			}
+			// 3) el impuesto de la categoría de iva
+			if(C_Tax_ID <= 0){
+				C_Tax_ID = categoria_Iva.getC_Tax_ID();
+			}
+		}
+		if(C_Tax_ID > 0){
+			tax = new MTax(ctx, C_Tax_ID, trxName);
+		}
+		return tax;
+	}
 	
 	public String documentNo( Properties ctx,int WindowNo,MTab mTab,MField mField,Object value ) {
 		try {

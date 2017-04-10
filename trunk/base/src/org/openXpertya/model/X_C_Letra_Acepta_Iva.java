@@ -1,13 +1,14 @@
-/** Modelo Generado - NO CAMBIAR MANUALMENTE - Copyright (C) 2006 FUNDESLE */
+/** Modelo Generado - NO CAMBIAR MANUALMENTE - Disytel */
 package org.openXpertya.model;
-import java.util.*;
+import java.util.logging.Level;
+ import java.util.*;
 import java.sql.*;
 import java.math.*;
 import org.openXpertya.util.*;
 /** Modelo Generado por C_Letra_Acepta_Iva
- *  @author Comunidad de Desarrollo openXpertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
- *  @version  - 2009-10-22 14:51:31.825 */
-public class X_C_Letra_Acepta_Iva extends PO
+ *  @author Comunidad de Desarrollo Libertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
+ *  @version  - 2017-04-10 11:47:09.518 */
+public class X_C_Letra_Acepta_Iva extends org.openXpertya.model.PO
 {
 /** Constructor estándar */
 public X_C_Letra_Acepta_Iva (Properties ctx, int C_Letra_Acepta_Iva_ID, String trxName)
@@ -27,13 +28,13 @@ public X_C_Letra_Acepta_Iva (Properties ctx, ResultSet rs, String trxName)
 {
 super (ctx, rs, trxName);
 }
-/** AD_Table_ID=1000152 */
-public static final int Table_ID=1000152;
+/** AD_Table_ID */
+public static final int Table_ID = M_Table.getTableID("C_Letra_Acepta_Iva");
 
 /** TableName=C_Letra_Acepta_Iva */
 public static final String Table_Name="C_Letra_Acepta_Iva";
 
-protected static KeyNamePair Model = new KeyNamePair(1000152,"C_Letra_Acepta_Iva");
+protected static KeyNamePair Model = new KeyNamePair(Table_ID,"C_Letra_Acepta_Iva");
 protected static BigDecimal AccessLevel = new BigDecimal(3);
 
 /** Load Meta Data */
@@ -62,7 +63,7 @@ public String getAD_ComponentObjectUID()
 {
 return (String)get_Value("AD_ComponentObjectUID");
 }
-public static final int CATEGORIA_CUSTOMER_AD_Reference_ID=1000076;
+public static final int CATEGORIA_CUSTOMER_AD_Reference_ID = MReference.getReferenceID("C_Categoria_Iva");
 /** Set categoria_customer */
 public void setCategoria_Customer (int Categoria_Customer)
 {
@@ -75,7 +76,7 @@ Integer ii = (Integer)get_Value("Categoria_Customer");
 if (ii == null) return 0;
 return ii.intValue();
 }
-public static final int CATEGORIA_VENDOR_AD_Reference_ID=1000076;
+public static final int CATEGORIA_VENDOR_AD_Reference_ID = MReference.getReferenceID("C_Categoria_Iva");
 /** Set categoria_vendor */
 public void setCategoria_Vendor (int Categoria_Vendor)
 {
@@ -109,6 +110,22 @@ set_Value ("C_Letra_Comprobante_ID", new Integer(C_Letra_Comprobante_ID));
 public int getC_Letra_Comprobante_ID() 
 {
 Integer ii = (Integer)get_Value("C_Letra_Comprobante_ID");
+if (ii == null) return 0;
+return ii.intValue();
+}
+/** Set Tax.
+Tax identifier */
+public void setC_Tax_ID (int C_Tax_ID)
+{
+if (C_Tax_ID <= 0) set_Value ("C_Tax_ID", null);
+ else 
+set_Value ("C_Tax_ID", new Integer(C_Tax_ID));
+}
+/** Get Tax.
+Tax identifier */
+public int getC_Tax_ID() 
+{
+Integer ii = (Integer)get_Value("C_Tax_ID");
 if (ii == null) return 0;
 return ii.intValue();
 }

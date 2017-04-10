@@ -22,7 +22,9 @@ public class MLetraAceptaIva extends X_C_Letra_Acepta_Iva {
 		int x = DB.getSQLValue(this.get_TrxName(), " SELECT COUNT(*) FROM C_Letra_Acepta_Iva WHERE AD_Client_ID = " + this.getAD_Client_ID() + 
 				" AND CATEGORIA_VENDOR = " + this.getCategoria_Vendor() + 
 				" AND CATEGORIA_CUSTOMER = " + this.getCategoria_Customer() + 
-				" AND C_LETRA_COMPROBANTE_ID = ? ", this.getC_Letra_Comprobante_ID());
+				" AND C_LETRA_COMPROBANTE_ID = ? " +
+				(newRecord?"":" AND C_LETRA_ACEPTA_IVA_ID <> "+getID()), 
+				this.getC_Letra_Comprobante_ID());
 		if (x != 0) {
 			log.saveError("SQLErrorNotUnique", "");
 			return false;

@@ -6488,3 +6488,6 @@ set AD_ReportView_ID= (select AD_ReportView_ID
 from AD_ReportView
 where ad_componentobjectuid = 'CORE-AD_ReportView-156')
 where ad_componentobjectuid = 'CORE-AD_PrintFormat-1010891';
+
+--20170410-1145 Nuevo campo Impuesto en Letra Acepta IVA
+update ad_system set dummy = (SELECT addcolumnifnotexists('c_letra_acepta_iva','c_tax_id','integer'));

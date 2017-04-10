@@ -2225,10 +2225,9 @@ public class PoSOnline extends PoSConnectionState {
 			MCategoriaIva catIva = new MCategoriaIva(getCtx(), mBPartner.getC_Categoria_Iva_ID(), null);
 			codigoIVA = catIva.getCodigo();
 			isPercepcionLiable = catIva.isPercepcionLiable();
-			if(!Util.isEmpty(catIva.getC_Tax_ID(), true)){
-				MTax mTax = MTax.get(getCtx(), catIva.getC_Tax_ID(), null);
-				rBPartner.setTax(new Tax(mTax.getID(), mTax.getRate(), mTax
-						.isPercepcion()));
+			MTax mTax = CalloutInvoiceExt.getTax(getCtx(), true, mBPartner.getID(), getTrxName());
+			if(mTax != null){
+				rBPartner.setTax(new Tax(mTax.getID(), mTax.getRate(), mTax.isPercepcion()));
 			}
 		}
 		rBPartner.setIVACategory(codigoIVA);
@@ -3689,7 +3688,7 @@ public class PoSOnline extends PoSConnectionState {
 				MDocType.DOCTYPE_CustomerInvoice, mLetraComprobante.getLetra(), posNumber,
 				getTrxName());
 	}
-
+	
 	/**
 	 * Obtener la letra del comprobante para esta transacción de la localización
 	 * argentina
@@ -3700,7 +3699,7 @@ public class PoSOnline extends PoSConnectionState {
 	 *             en caso de error en la obtención
 	 */
 	public MLetraComprobante getLocaleArLetraComprobante() throws PosException{
-		Integer categoriaIVAclient = CalloutInvoiceExt.darCategoriaIvaClient();
+		Integer categoriaIVAclient = CalloutInvoiceExt.darCategoriaIvaClient(Env.getAD_Org_ID(ctx));
 		Integer categoriaIVACustomer = partner == null ? 0 : partner
 				.getC_Categoria_Iva_ID();
 		
