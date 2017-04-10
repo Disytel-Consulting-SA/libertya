@@ -121,7 +121,7 @@ public class VencimientoDeFacturasDataSource extends QueryDataSource {
 		var1.append("       0, ");
 		var1.append("       pi.dateacct, ");
 		var1.append("       NULL, ");
-		var1.append("       pi.availableamt *- 1 AS pago, ");
+		var1.append("       pi.availableamt *- 1 AS openamt, ");
 		var1.append("       pi.ad_org_id, ");
 		var1.append("       ''                   AS estado ");
 		var1.append("FROM   rv_payment pi ");
