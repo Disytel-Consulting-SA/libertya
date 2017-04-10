@@ -11,7 +11,7 @@ public class NumeroCastellano {
     { "", "millon","billon","trillon"  };
   
   private static String[] _unidades = 
-    { "","un","dos","tres","cuatro","cinco","seis","siete","ocho","nueve" };
+    { "","uno","dos","tres","cuatro","cinco","seis","siete","ocho","nueve" };
   
   private static String[] _decena1 = 
     { "","once","doce","trece","catorce","quince",
@@ -100,11 +100,21 @@ public class NumeroCastellano {
   
   public static String numeroACastellano( BigDecimal n  )
   {
+	  return numeroACastellano(n, true);
+  }
+  
+  public static String numeroACastellano( BigDecimal n , boolean withCents )
+  {
 	  StringBuffer retValue = new StringBuffer("");
 	  int intValue = n.intValue();
 	  int decValue = n.subtract(new BigDecimal(intValue)).multiply(new BigDecimal(100)).intValue();
 	  
-	  retValue.append(numeroACastellano(intValue).trim()).append(" pesos con ").append(decValue>0?numeroACastellano(decValue).trim():"cero").append( " centavos.");
+	  retValue.append(numeroACastellano(intValue).trim()).append(" pesos "); 
+	  
+	  if(withCents){
+			retValue.append(" con ").append(decValue > 0 ? numeroACastellano(decValue).trim() : "cero")
+					.append(" centavos.");
+	  }
 	  
 	  return retValue.toString().toUpperCase();
   }

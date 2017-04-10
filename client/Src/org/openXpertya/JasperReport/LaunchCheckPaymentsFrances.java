@@ -85,8 +85,9 @@ public class LaunchCheckPaymentsFrances extends SvrProcess {
 		// Indice de grupo de parámetros.
 		// Cada cheque de la hoja es un grupo diferente.
 		int group = 1;
+		long dueDateLong;
 		Calendar dateEmissionCheckCalendar = Calendar.getInstance();
-		Calendar dateTrxCalendar = Calendar.getInstance();
+		Calendar dueDateCalendar = Calendar.getInstance();
 		DateFormat formatter = new SimpleDateFormat("dd/MM/yyyy");
 
 		for (MCheckPrintingLines line : checkPrinting.getLines()) {
@@ -94,7 +95,12 @@ public class LaunchCheckPaymentsFrances extends SvrProcess {
 			if (line.getDateEmissionCheck() != null) {
 				dateEmissionCheckCalendar.setTimeInMillis(line.getDateEmissionCheck().getTime());
 			}
-			dateTrxCalendar.setTimeInMillis(line.getDateTrx().getTime());
+			
+			dueDateLong = line.getDateTrx().getTime();
+			if(line.getPayment().getDueDate() != null){
+				dueDateLong = line.getPayment().getDueDate().getTime();
+			}
+			dueDateCalendar.setTimeInMillis(dueDateLong);
 
 			jasperwrapper.addParameter(IMPORTE + group, String.valueOf(line.getPayAmt()));
 			// La fecha de emisión del cheque, no es un campo obligatorio, por 
@@ -106,17 +112,18 @@ public class LaunchCheckPaymentsFrances extends SvrProcess {
 				jasperwrapper.addParameter(EMISION_MES_NAME + group, StringUtil.fuc(dateEmissionCheckCalendar
 						.getDisplayName(Calendar.MONTH, Calendar.LONG, Language.getLoginLanguage().getLocale())));
 			}
-			jasperwrapper.addParameter(PAGO_DIA + group, String.valueOf(dateTrxCalendar.get(Calendar.DAY_OF_MONTH)));
-			jasperwrapper.addParameter(PAGO_MES + group, String.valueOf(dateTrxCalendar.get(Calendar.MONTH)));
-			jasperwrapper.addParameter(PAGO_ANIO + group, String.valueOf(dateTrxCalendar.get(Calendar.YEAR)));
-			jasperwrapper.addParameter(PAGO_MES_NAME + group, StringUtil.fuc(dateTrxCalendar
+			jasperwrapper.addParameter(PAGO_DIA + group, String.valueOf(dueDateCalendar.get(Calendar.DAY_OF_MONTH)));
+			jasperwrapper.addParameter(PAGO_MES + group, String.valueOf(dueDateCalendar.get(Calendar.MONTH)));
+			jasperwrapper.addParameter(PAGO_ANIO + group, String.valueOf(dueDateCalendar.get(Calendar.YEAR)));
+			jasperwrapper.addParameter(PAGO_MES_NAME + group, StringUtil.fuc(dueDateCalendar
 					.getDisplayName(Calendar.MONTH, Calendar.LONG, Language.getLoginLanguage().getLocale())));
 			// El nombre no es un campo obligatorio, por lo tanto se 
 			// puede dar el caso en el que este dato no esté presente.
 			if (line.getPayment().getA_Name() != null) {
 				jasperwrapper.addParameter(A_LA_ORDEN + group, String.valueOf(line.getPayment().getA_Name()));
 			}
-			jasperwrapper.addParameter(IMPORTE_EN_LETRAS + group, String.valueOf(NumeroCastellano.numeroACastellano(line.getPayAmt())));
+			jasperwrapper.addParameter(IMPORTE_EN_LETRAS + group,
+					String.valueOf(NumeroCastellano.numeroACastellano(line.getPayAmt(), false)));
 			jasperwrapper.addParameter(CENTAVOS + group, String.valueOf(line.getPayAmtCents()));
 			// La fecha de vencimiento del cheque, no es un campo obligatorio, por 
 			// lo tanto se puede dar el caso en el que este dato no esté presente.
