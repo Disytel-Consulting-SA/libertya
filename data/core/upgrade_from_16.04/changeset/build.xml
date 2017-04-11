@@ -316,6 +316,7 @@
 	<mkdir dir="lib2" />
 	<delete file="nuevoOXP/org/openXpertya/model/MAcctSchema.class" failonerror="no" />
 	<delete file="nuevoOXP/org/openXpertya/model/MAcctSchemaElement.class" failonerror="no" />
+	<delete file="nuevoOXP/org/openXpertya/model/MAccount.class" failonerror="no" />
 	<jar jarfile="lib2/OXP.jar" index="yes">
 	      	<fileset dir="nuevoOXP"/>
 	      	<manifest>
