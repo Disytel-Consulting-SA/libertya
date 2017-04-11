@@ -2072,10 +2072,8 @@ public abstract class AbstractADWindowPanel extends AbstractUIPart implements To
 			{
 				if (FDialog.ask(curWindowNo, null, "PostImmediate?"))
 				{
-					boolean force = ps != null && !ps.equals ("N");		//	force when problems
-
 					String error = AEnv.postImmediate (curWindowNo, Env.getAD_Client_ID(ctx),
-						tableId, recordId, force);
+						tableId, recordId, true);
 
 					if (error != null)
 						FDialog.error(curWindowNo, null, "PostingError-N", error);
