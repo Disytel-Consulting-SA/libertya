@@ -100,6 +100,18 @@ public final class StringUtil {
     	bs.append(end);
     	return bs.toString();
     }
+    
+    
+    public static String pad(String str, String filler, Integer length, boolean left){
+    	if(str.length() >= length){
+    		return str;
+    	}
+    	StringBuffer auxFiller = new StringBuffer();
+    	for (int i = length - str.length(); i > 0 ; i--) {
+			auxFiller.append(filler);
+		}
+    	return left?auxFiller.toString()+str:str+auxFiller.toString();
+    }
 }
 
 
