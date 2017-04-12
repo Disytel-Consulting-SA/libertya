@@ -102,18 +102,18 @@ public class LaunchCheckPaymentsFrances extends SvrProcess {
 			}
 			dueDateCalendar.setTimeInMillis(dueDateLong);
 
-			jasperwrapper.addParameter(IMPORTE + group, String.valueOf(line.getPayAmt()));
+			jasperwrapper.addParameter(IMPORTE + group, line.getPayAmt());
 			// La fecha de emisión del cheque, no es un campo obligatorio, por 
 			// lo tanto se puede dar el caso en el que este dato no esté presente.
 			if (line.getDateEmissionCheck() != null) {
-				jasperwrapper.addParameter(EMISION_DIA + group, String.valueOf(dateEmissionCheckCalendar.get(Calendar.DAY_OF_MONTH)));
-				jasperwrapper.addParameter(EMISION_MES + group, String.valueOf(dateEmissionCheckCalendar.get(Calendar.MONTH)));
+				jasperwrapper.addParameter(EMISION_DIA + group, StringUtil.pad(String.valueOf(dateEmissionCheckCalendar.get(Calendar.DAY_OF_MONTH)), "0", 2, true));
+				jasperwrapper.addParameter(EMISION_MES + group, StringUtil.pad(String.valueOf(dateEmissionCheckCalendar.get(Calendar.MONTH)), "0", 2, true));
 				jasperwrapper.addParameter(EMISION_ANIO + group, String.valueOf(dateEmissionCheckCalendar.get(Calendar.YEAR)));
 				jasperwrapper.addParameter(EMISION_MES_NAME + group, StringUtil.fuc(dateEmissionCheckCalendar
 						.getDisplayName(Calendar.MONTH, Calendar.LONG, Language.getLoginLanguage().getLocale())));
 			}
-			jasperwrapper.addParameter(PAGO_DIA + group, String.valueOf(dueDateCalendar.get(Calendar.DAY_OF_MONTH)));
-			jasperwrapper.addParameter(PAGO_MES + group, String.valueOf(dueDateCalendar.get(Calendar.MONTH)));
+			jasperwrapper.addParameter(PAGO_DIA + group, StringUtil.pad(String.valueOf(dueDateCalendar.get(Calendar.DAY_OF_MONTH)), "0", 2, true));
+			jasperwrapper.addParameter(PAGO_MES + group, StringUtil.pad(String.valueOf(dueDateCalendar.get(Calendar.MONTH)), "0", 2, true));
 			jasperwrapper.addParameter(PAGO_ANIO + group, String.valueOf(dueDateCalendar.get(Calendar.YEAR)));
 			jasperwrapper.addParameter(PAGO_MES_NAME + group, StringUtil.fuc(dueDateCalendar
 					.getDisplayName(Calendar.MONTH, Calendar.LONG, Language.getLoginLanguage().getLocale())));
