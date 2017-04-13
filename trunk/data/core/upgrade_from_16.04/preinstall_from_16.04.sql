@@ -6491,3 +6491,6 @@ where ad_componentobjectuid = 'CORE-AD_PrintFormat-1010891';
 
 --20170410-1145 Nuevo campo Impuesto en Letra Acepta IVA
 update ad_system set dummy = (SELECT addcolumnifnotexists('c_letra_acepta_iva','c_tax_id','integer'));
+
+--20170413-1345 Nuevo campo Total de lista de pago electrónico
+update ad_system set dummy = (SELECT addcolumnifnotexists('c_banklist','banklisttotal','numeric(20,2) NOT NULL DEFAULT 0'));

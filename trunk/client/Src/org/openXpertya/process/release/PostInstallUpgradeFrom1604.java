@@ -169,6 +169,9 @@ public class PostInstallUpgradeFrom1604 extends PluginPostInstallProcess {
 	protected final static String FE_SUBREPORT_REPORT_UID = "CORE-AD_JasperReport-1010130";
 	protected final static String FE_SUBREPORT_REPORT_FILENAME = "rpt_Factura_Electronica_Percepciones.jasper";
 	
+	/** UID de la impresión de Lista de Pago Electrónico */
+	protected final static String BANK_LIST_PRINT_JASPER_REPORT_UID = "CORE-AD_Process-1010549";
+	protected final static String BANK_LIST_PRINT_REPORT_FILENAME = "BankListPrint.jrxml";
 	
 	@Override
 	protected String doIt() throws Exception {
@@ -659,6 +662,17 @@ public class PostInstallUpgradeFrom1604 extends PluginPostInstallProcess {
 								.readBinaryFromJar(
 										jarFileURL,
 										getBinaryFileURL(FE_SUBREPORT_REPORT_FILENAME)));
+		
+		// Impresión de Lista de Pago Electrónico
+		MProcess.addAttachment(
+				get_TrxName(),
+				getCtx(),
+				BANK_LIST_PRINT_JASPER_REPORT_UID,
+				BANK_LIST_PRINT_REPORT_FILENAME,
+				JarHelper
+						.readBinaryFromJar(
+								jarFileURL,
+								getBinaryFileURL(BANK_LIST_PRINT_REPORT_FILENAME)));
 		
 		return " ";
 	}

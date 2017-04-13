@@ -62,4 +62,37 @@ public class MBankListLine extends X_C_BankListLine {
 		return linesCount > 0;
 	}
 
+	
+	protected boolean afterSave( boolean newRecord,boolean success ) {
+		if( !success ) {
+            return success;
+        }
+		// Actualiza el total de la lista
+		updateBankListTotal();
+		return success;
+	}
+	
+	protected boolean afterDelete( boolean success ) {
+		if( !success ) {
+            return success;
+        }
+		// Actualiza el total de la lista
+		updateBankListTotal();
+		return success;
+	}
+	
+	private void updateBankListTotal(){
+		String sql = "UPDATE "+MBankList.Table_Name
+					+ " SET banklisttotal = coalesce("
+					+ "(SELECT sum(grandtotal) "
+					+ "FROM "+Table_Name+" bll "
+					+ "INNER JOIN "+X_C_AllocationHdr.Table_Name+" ah on ah.c_allocationhdr_id = bll.c_allocationhdr_id "
+					+ "WHERE bll.C_BankList_ID = "+getC_BankList_ID()+"),0) "
+					+ "WHERE C_BankList_ID = "+getC_BankList_ID();
+		
+		int no = DB.executeUpdate(sql, get_TrxName());
+		if(no != 1){
+			log.severe(" Error updating bank list");
+		}
+	}
 }
