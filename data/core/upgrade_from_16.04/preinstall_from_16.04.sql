@@ -6494,3 +6494,179 @@ update ad_system set dummy = (SELECT addcolumnifnotexists('c_letra_acepta_iva','
 
 --20170413-1345 Nuevo campo Total de lista de pago electrónico
 update ad_system set dummy = (SELECT addcolumnifnotexists('c_banklist','banklisttotal','numeric(20,2) NOT NULL DEFAULT 0'));
+
+--20170417-1300 Nuevas columnas para el detalle de allocations y nueva view creada para los débitos
+DROP VIEW c_allocation_detail_v;
+
+CREATE OR REPLACE VIEW c_allocation_detail_v AS
+ SELECT ah.c_allocationhdr_id AS c_allocation_detail_v_id,
+ah.c_allocationhdr_id,
+ah.ad_client_id,
+ah.ad_org_id,
+ah.isactive,
+ah.created,
+ah.createdby,
+ah.updated,
+ah.updatedby,
+ah.datetrx AS fecha,
+i.documentno AS factura,
+COALESCE(i.c_currency_id, p.c_currency_id, cl.c_currency_id, credit.c_currency_id) AS c_currency_id,
+i.grandtotal AS montofactura,
+  CASE
+  WHEN p.documentno IS NOT NULL THEN p.documentno
+  ELSE
+  CASE
+  WHEN al.c_invoice_credit_id IS NOT NULL THEN ((dt.printname::text || ' :'::text) || credit.documentno::text)::character varying
+  ELSE NULL::character varying
+  END
+  END AS pagonro,
+  CASE
+  WHEN al.c_invoice_credit_id IS NOT NULL THEN 'N'::bpchar
+  WHEN p.tendertype IS NOT NULL THEN p.tendertype
+  WHEN p.tendertype IS NULL THEN 'CA'::bpchar
+  ELSE NULL::bpchar
+  END AS tipo,
+  CASE
+  WHEN cl.c_cashline_id IS NOT NULL THEN 'Y'::text
+  WHEN cl.c_cashline_id IS NULL THEN 'N'::text
+  ELSE NULL::text
+  END AS cash,
+  COALESCE(currencyconvert(al.amount + al.discountamt + al.writeoffamt, ah.c_currency_id, i.c_currency_id, NULL::timestamp with time zone, NULL::integer, ah.ad_client_id, ah.ad_org_id), 0::numeric(20,2)) AS montosaldado,
+  abs(COALESCE(p.payamt, cl.amount, credit.grandtotal, 0::numeric(20,2))) AS payamt,
+  al.c_allocationline_id,
+  i.c_invoice_id,
+  CASE
+  WHEN p.documentno IS NOT NULL THEN p.documentno
+  ELSE
+  CASE
+  WHEN al.c_invoice_credit_id IS NOT NULL THEN ((dt.printname::text || ' :'::text) || credit.documentno::text)::character varying
+  WHEN al.c_cashline_id IS NOT NULL THEN cl.description
+  ELSE NULL::character varying
+  END
+  END AS paydescription,
+  CASE
+  WHEN al.c_payment_id IS NOT NULL THEN pppm.name
+  WHEN al.c_cashline_id IS NOT NULL THEN cppm.name
+  WHEN al.c_invoice_credit_id IS NOT NULL THEN dt.name
+  ELSE NULL::character varying
+  END AS payment_medium_name,
+  COALESCE(p.c_currency_id, cl.c_currency_id, credit.c_currency_id) AS pay_currency_id,
+  p.c_bankaccount_id,
+  i.numerocomprobante,
+  i.puntodeventa,
+  i.c_letra_comprobante_id,
+  ddt.doctypekey,
+  ddt.name as doctypename,
+  i.paymentrule,
+  i.c_region_delivery_id,
+  i.netamount,
+  i.c_paymentterm_id,
+  i.dateinvoiced,
+  al.c_invoice_credit_id,
+  dt.doctypekey as credit_doctypekey,
+  dt.name as credit_doctypename,
+  credit.numerocomprobante as credit_numerocomprobante,
+  credit.puntodeventa as credit_puntodeventa,
+  credit.c_letra_comprobante_id as credit_letra_comprobante_id,
+  credit.netamount as credit_netamount,
+  al.c_cashline_id,
+  c.name as cashname,
+  al.c_payment_id,
+p.accountno,
+p.checkno,
+  p.a_name,
+  p.a_bank,
+  p.a_cuit,
+  p.duedate,
+  p.dateemissioncheck,
+  p.checkstatus,
+  p.creditcardnumber,
+p.couponbatchnumber,
+p.couponnumber,
+p.m_entidadfinancieraplan_id,
+efp.m_entidadfinanciera_id,
+p.posnet,
+p.micr,
+p.isreconciled,
+CASE
+  WHEN al.c_payment_id IS NOT NULL THEN p.datetrx
+  WHEN al.c_cashline_id IS NOT NULL THEN c.statementdate
+  WHEN al.c_invoice_credit_id IS NOT NULL THEN credit.dateinvoiced
+  ELSE null::timestamp
+  END AS creditdate,
+  CASE
+  WHEN al.c_payment_id IS NOT NULL THEN p.documentno
+  WHEN al.c_cashline_id IS NOT NULL THEN '# '||cl.line
+  WHEN al.c_invoice_credit_id IS NOT NULL THEN credit.documentno
+  ELSE null::character varying
+  END AS creditdocumentno
+  FROM c_allocationhdr ah
+  JOIN c_allocationline al ON ah.c_allocationhdr_id = al.c_allocationhdr_id
+  LEFT JOIN c_invoice i ON al.c_invoice_id = i.c_invoice_id
+  LEFT JOIN c_doctype ddt ON i.c_doctypetarget_id = ddt.c_doctype_id
+  LEFT JOIN c_payment p ON al.c_payment_id = p.c_payment_id
+  LEFT JOIN m_entidadfinancieraplan efp ON efp.m_entidadfinancieraplan_id = p.m_entidadfinancieraplan_id
+  LEFT JOIN c_cashline cl ON al.c_cashline_id = cl.c_cashline_id
+  LEFT JOIN c_cash c ON c.c_cash_id = cl.c_cash_id
+  LEFT JOIN c_invoice credit ON al.c_invoice_credit_id = credit.c_invoice_id
+  LEFT JOIN c_doctype dt ON credit.c_doctypetarget_id = dt.c_doctype_id
+  LEFT JOIN c_pospaymentmedium cppm ON cppm.c_pospaymentmedium_id = cl.c_pospaymentmedium_id
+  LEFT JOIN c_pospaymentmedium pppm ON pppm.c_pospaymentmedium_id = p.c_pospaymentmedium_id
+  ORDER BY ah.c_allocationhdr_id, al.c_allocationline_id;
+
+ALTER TABLE c_allocation_detail_v
+  OWNER TO libertya;
+
+CREATE OR REPLACE VIEW c_allocation_detail_debits_v AS
+SELECT ah.c_allocationhdr_id AS c_allocation_detail_debits_v_id,
+ah.c_allocationhdr_id,
+ah.ad_client_id,
+ah.ad_org_id,
+ah.isactive,
+ah.created,
+ah.createdby,
+ah.updated,
+ah.updatedby,
+al.c_invoice_id,
+i.documentno,
+i.c_currency_id,
+i.numerocomprobante,
+i.puntodeventa,
+i.c_letra_comprobante_id,
+dt.doctypekey,
+dt.name as doctypename,
+i.paymentrule,
+i.c_region_delivery_id,
+i.netamount,
+i.c_paymentterm_id,
+i.dateinvoiced,
+i.grandtotal,
+sum(al.amount) as montosaldado
+FROM c_allocationhdr ah
+INNER JOIN c_allocationline al ON ah.c_allocationhdr_id = al.c_allocationhdr_id
+INNER JOIN c_invoice i ON al.c_invoice_id = i.c_invoice_id
+INNER JOIN c_doctype dt ON i.c_doctypetarget_id = dt.c_doctype_id
+GROUP BY ah.c_allocationhdr_id,
+ah.ad_client_id,
+ah.ad_org_id,
+ah.isactive,
+ah.created,
+ah.createdby,
+ah.updated,
+ah.updatedby,
+al.c_invoice_id,
+i.documentno,
+i.c_currency_id,
+i.numerocomprobante,
+i.puntodeventa,
+i.c_letra_comprobante_id,
+dt.doctypekey,
+dt.name,
+i.paymentrule,
+i.c_region_delivery_id,
+i.netamount,
+i.c_paymentterm_id,
+i.dateinvoiced,
+i.grandtotal;
+ALTER TABLE c_allocation_detail_debits_v
+  OWNER TO libertya;
