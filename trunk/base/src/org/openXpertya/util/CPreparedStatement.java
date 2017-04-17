@@ -152,58 +152,47 @@ public class CPreparedStatement extends CStatement implements PreparedStatement 
      */
 
     public ResultSet executeQuery() throws SQLException {
-    	return(( PreparedStatement )p_stmt ).executeQuery(); 
-//    	log.fine("estamos p_stmt= "+ p_stmt);
-//        if( p_stmt != null ) {    // local
-//        	 //ResultSet rs;
-//            try{ 
-//              return(( PreparedStatement )p_stmt ).executeQuery(); //Original
-//            }
-//            catch(Exception e)
-//            {
-//            	log.fine("falla al ejecutar la consulta = "+ e);
-//            }
-//            //return executeQuery(p_vo.getSql());
-// 
-//            
-//        }
-//
-//        //
-//        // Client -> remote sever
-//
-//        log.finest( "server => " + p_vo + ", Remote=" + DB.isRemoteObjects());
-//
-//        try {
-//            if( DB.isRemoteObjects() && CConnection.get().isAppsServerOK( false )) {
-//                Server server = CConnection.get().getServer();
-//
-//                if( server != null ) {
-//                    ResultSet rs = server.pstmt_getRowSet( p_vo );
-//
-//                    p_vo.clearParameters();    // re-use of result set
-//
-//                    if( rs == null ) {
-//                        log.warning( "executeQuery - ResultSet is null - " + p_vo );
-//                    }
-//
-//                    return rs;
-//                }
-//
-//                log.log( Level.SEVERE,"executeQuery - AppsServer not found" );
-//            }
-//        } catch( Exception ex ) {
-//            log.log( Level.SEVERE,"executeQuery - AppsServer error",ex );
-//        }
-//
-//        // Try locally
-//
-//        // log.warning( "executeQuery - execute locally" );
-//
-//        PreparedStatement pstmt = local_getPreparedStatement( false,null );    // shared connection
-//
-//        p_vo.clearParameters();    // re-use of result set
-//
-//        return pstmt.executeQuery();
+    	log.fine("estamos p_stmt= "+ p_stmt);
+        if( p_stmt != null ) {    // local
+              return(( PreparedStatement )p_stmt ).executeQuery(); //Original
+        }
+
+        //
+        // Client -> remote sever
+
+        log.finest( "server => " + p_vo + ", Remote=" + DB.isRemoteObjects());
+
+        try {
+            if( DB.isRemoteObjects() && CConnection.get().isAppsServerOK( false )) {
+                Server server = CConnection.get().getServer();
+
+                if( server != null ) {
+                    ResultSet rs = server.pstmt_getRowSet( p_vo );
+
+                    p_vo.clearParameters();    // re-use of result set
+
+                    if( rs == null ) {
+                        log.warning( "executeQuery - ResultSet is null - " + p_vo );
+                    }
+
+                    return rs;
+                }
+
+                log.log( Level.SEVERE,"executeQuery - AppsServer not found" );
+            }
+        } catch( Exception ex ) {
+            log.log( Level.SEVERE,"executeQuery - AppsServer error",ex );
+        }
+
+        // Try locally
+
+        // log.warning( "executeQuery - execute locally" );
+
+        PreparedStatement pstmt = local_getPreparedStatement( false,null );    // shared connection
+
+        p_vo.clearParameters();    // re-use of result set
+
+        return pstmt.executeQuery();
     }    // executeQuery
 
     /**
@@ -242,43 +231,42 @@ public class CPreparedStatement extends CStatement implements PreparedStatement 
      */
 
     public int executeUpdate() throws SQLException {
-    	return(( PreparedStatement )p_stmt ).executeUpdate();
-//        if( p_stmt != null ) {
-//            return(( PreparedStatement )p_stmt ).executeUpdate();
-//        }
-//
-//        //
-//        // Client -> remote sever
-//
-//        log.finest( "server => " + p_vo + ", Remote=" + DB.isRemoteObjects());
-//
-//        try {
-//            if( DB.isRemoteObjects() && CConnection.get().isAppsServerOK( false )) {
-//                Server server = CConnection.get().getServer();
-//
-//                if( server != null ) {
-//                    int result = server.stmt_executeUpdate( p_vo );
-//
-//                    p_vo.clearParameters();    // re-use of result set
-//
-//                    return result;
-//                }
-//
-//                log.log( Level.SEVERE,"AppsServer not found" );
-//            }
-//        } catch( RemoteException ex ) {
-//            log.log( Level.SEVERE,"AppsServer error",ex );
-//        }
-//
-//        // Try locally
-//
-//        log.warning( "execute locally" );
-//
-//        PreparedStatement pstmt = local_getPreparedStatement( false,null );    // shared connection
-//
-//        p_vo.clearParameters();    // re-use of result set
-//
-//        return pstmt.executeUpdate();
+        if( p_stmt != null ) {
+            return(( PreparedStatement )p_stmt ).executeUpdate();
+        }
+
+        //
+        // Client -> remote sever
+
+        log.finest( "server => " + p_vo + ", Remote=" + DB.isRemoteObjects());
+
+        try {
+            if( DB.isRemoteObjects() && CConnection.get().isAppsServerOK( false )) {
+                Server server = CConnection.get().getServer();
+
+                if( server != null ) {
+                    int result = server.stmt_executeUpdate( p_vo );
+
+                    p_vo.clearParameters();    // re-use of result set
+
+                    return result;
+                }
+
+                log.log( Level.SEVERE,"AppsServer not found" );
+            }
+        } catch( RemoteException ex ) {
+            log.log( Level.SEVERE,"AppsServer error",ex );
+        }
+
+        // Try locally
+
+        log.warning( "execute locally" );
+
+        PreparedStatement pstmt = local_getPreparedStatement( false,null );    // shared connection
+
+        p_vo.clearParameters();    // re-use of result set
+
+        return pstmt.executeUpdate();
     }    // executeUpdate
 
     /**
