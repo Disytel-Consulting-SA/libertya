@@ -82,6 +82,8 @@ import org.openXpertya.grid.ed.VLookup;
 import org.openXpertya.images.ImageFactory;
 import org.openXpertya.model.MBPartner;
 import org.openXpertya.model.MCurrency;
+import org.openXpertya.model.MDocType;
+import org.openXpertya.model.MPreference;
 import org.openXpertya.model.MSequence;
 import org.openXpertya.model.MUser;
 import org.openXpertya.model.RetencionProcessor;
@@ -1638,6 +1640,18 @@ public class VOrdenPago extends CPanel implements FormPanel,ActionListener,Table
 			throw new Exception(getMsg("InvalidCheckDueDate"));
 		}
 		
+		// Realizar la comparación para que la diferencia de días sea mayor o
+		// igual al mínimo permitido
+		String diffDaysPreference = MPreference.searchCustomPreferenceValue(VOrdenPagoModel.MIN_CHECK_DIFF_DAYS_PREFERENCE_NAME,
+				Env.getAD_Client_ID(m_ctx), Env.getAD_Org_ID(m_ctx), Env.getAD_User_ID(m_ctx), true);
+		if(diffDaysPreference != null){
+			Integer diffDaysPreferenceInt = Integer.parseInt(diffDaysPreference);
+			if (TimeUtil.getDiffDays(mpc.fechaEm, mpc.fechaPago) < diffDaysPreferenceInt.intValue()) {
+				throw new Exception(
+						getModel().getMsg("InvalidCheckDiffDays", new Object[] { diffDaysPreferenceInt }));
+			}
+		}
+		
 		if (mpc.importe.compareTo(new BigDecimal(0.0)) <= 0)
 			throw new Exception(lblChequeImporte.getText());
 		
@@ -2220,6 +2234,8 @@ public class VOrdenPago extends CPanel implements FormPanel,ActionListener,Table
     
     private AuthorizationDialog authDialog = null;
     
+    protected Map<String, String> preferenceDefaultValues = new HashMap<String, String>();
+    
 	public void init(int WindowNo, FormFrame frame) {
         m_WindowNo = WindowNo;
         m_frame    = frame;
@@ -2241,6 +2257,7 @@ public class VOrdenPago extends CPanel implements FormPanel,ActionListener,Table
         initComponents();
         customInitComponents();
         initTranslations();
+        initDefaultValues();
         m_model.m_facturasTableModel.addTableModelListener(this);
         m_frame.pack();
         
@@ -2640,6 +2657,36 @@ public class VOrdenPago extends CPanel implements FormPanel,ActionListener,Table
 		// correspondientes en esta instancia
 		customUpdateCaptions();
 	}
+	
+	protected void initDefaultValues() {
+		// Organización
+		String preferenceOrg = MPreference.searchCustomPreferenceValue(
+				VOrdenPagoModel.ORG_DEFAULT_VALUE_PREFERENCE_NAME, Env.getAD_Client_ID(m_ctx), Env.getAD_Org_ID(m_ctx),
+				Env.getAD_User_ID(m_ctx), true);
+		if(!Util.isEmpty(preferenceOrg, true)){
+			Integer preferenceOrgInt = Integer.parseInt(preferenceOrg);
+			cboOrg.setValue(preferenceOrgInt);
+			updateOrg(preferenceOrgInt);
+		}
+		
+		// Tipo de Documento
+		String preferenceDocTypeKey = MPreference.searchCustomPreferenceValue(
+				VOrdenPagoModel.DOCTYPE_DEFAULT_VALUE_PREFERENCE_NAME, 
+				Env.getAD_Client_ID(m_ctx), Env.getAD_Org_ID(m_ctx),
+				Env.getAD_User_ID(m_ctx), true);
+		if(!Util.isEmpty(preferenceDocTypeKey, true)){
+			MDocType dt = MDocType.getDocType(m_ctx, preferenceDocTypeKey, m_trxName);
+			if(dt != null && cboDocumentType.getM_lookup().containsKey(dt.getID())){
+				
+				cboDocumentType.setValue(dt.getID());
+				try{
+					vetoableChange(new PropertyChangeEvent(cboDocumentType, "C_DocType_ID", null, dt.getID()));
+				} catch(Exception e){
+					e.printStackTrace();
+				}
+			}
+		}
+	}	
 	
 	protected void clearMediosPago() {
 		

@@ -29,8 +29,8 @@ import org.adempiere.webui.event.ContextMenuEvent;
 import org.adempiere.webui.event.ContextMenuListener;
 import org.adempiere.webui.event.ValueChangeEvent;
 import org.adempiere.webui.window.WFieldRecordInfo;
-import org.openXpertya.model.MField;
 import org.openXpertya.model.Lookup;
+import org.openXpertya.model.MField;
 import org.openXpertya.model.MRole;
 import org.openXpertya.util.CLogger;
 import org.openXpertya.util.DisplayType;
@@ -41,7 +41,6 @@ import org.openXpertya.util.ValueNamePair;
 import org.zkoss.zk.ui.event.Event;
 import org.zkoss.zk.ui.event.Events;
 import org.zkoss.zul.Comboitem;
-import org.zkoss.zul.Messagebox;
 
 /**
  *
@@ -428,6 +427,14 @@ ContextMenuListener, IZoomableEditor
 		if ((lookup != null) && (!lookup.isValidated() || !lookup.isLoaded()))
 			this.actionRefresh();
     }
+
+	public Lookup getLookup() {
+		return lookup;
+	}
+
+	protected void setLookup(Lookup lookup) {
+		this.lookup = lookup;
+	}
 	
 
 }

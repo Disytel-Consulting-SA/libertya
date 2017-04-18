@@ -61,12 +61,14 @@ import org.openXpertya.apps.form.VOrdenPagoModel.ResultItemFactura;
 import org.openXpertya.model.Lookup;
 import org.openXpertya.model.MBPartner;
 import org.openXpertya.model.MCurrency;
+import org.openXpertya.model.MDocType;
 import org.openXpertya.model.MInvoice;
 import org.openXpertya.model.MLookup;
 import org.openXpertya.model.MLookupFactory;
 import org.openXpertya.model.MLookupInfo;
 import org.openXpertya.model.MPInstance;
 import org.openXpertya.model.MPInstancePara;
+import org.openXpertya.model.MPreference;
 import org.openXpertya.model.MProcess;
 import org.openXpertya.model.MSequence;
 import org.openXpertya.model.RetencionProcessor;
@@ -77,6 +79,8 @@ import org.openXpertya.util.DB;
 import org.openXpertya.util.DisplayType;
 import org.openXpertya.util.Env;
 import org.openXpertya.util.Msg;
+import org.openXpertya.util.TimeUtil;
+import org.openXpertya.util.Util;
 import org.openXpertya.util.ValueNamePair;
 import org.zkoss.lang.Objects;
 import org.zkoss.zk.ui.event.Event;
@@ -795,6 +799,18 @@ public class WOrdenPago extends ADForm implements ValueChangeListener, TableMode
 		
 		if (mpc.fechaPago.compareTo(mpc.fechaEm) < 0) {
 			throw new Exception(getMsg("InvalidCheckDueDate"));
+		}
+		
+		// Realizar la comparación para que la diferencia de días sea mayor o
+		// igual al mínimo permitido
+		String diffDaysPreference = MPreference.searchCustomPreferenceValue(VOrdenPagoModel.MIN_CHECK_DIFF_DAYS_PREFERENCE_NAME,
+				Env.getAD_Client_ID(m_ctx), Env.getAD_Org_ID(m_ctx), Env.getAD_User_ID(m_ctx), true);
+		if(diffDaysPreference != null){
+			Integer diffDaysPreferenceInt = Integer.parseInt(diffDaysPreference);
+			if (TimeUtil.getDiffDays(mpc.fechaEm, mpc.fechaPago) < diffDaysPreferenceInt.intValue()) {
+				throw new Exception(
+						getModel().getMsg("InvalidCheckDiffDays", new Object[] { diffDaysPreferenceInt }));
+			}
 		}
 		
 		if (mpc.importe.compareTo(new BigDecimal(0.0)) <= 0)
@@ -2480,6 +2496,7 @@ public class WOrdenPago extends ADForm implements ValueChangeListener, TableMode
 			dynInit();
 			customInitComponents();
 			initTranslations();
+			initDefaultValues();
 			getModel().m_facturasTableModel.addTableModelListener(this);
 			
 			onTipoPagoChange(false);
@@ -2497,6 +2514,35 @@ public class WOrdenPago extends ADForm implements ValueChangeListener, TableMode
 		
 	}
 
+	protected void initDefaultValues() {
+		// Organización
+		String preferenceOrg = MPreference.searchCustomPreferenceValue(
+				VOrdenPagoModel.ORG_DEFAULT_VALUE_PREFERENCE_NAME, Env.getAD_Client_ID(m_ctx), Env.getAD_Org_ID(m_ctx),
+				Env.getAD_User_ID(m_ctx), true);
+		if(!Util.isEmpty(preferenceOrg, true)){
+			Integer preferenceOrgInt = Integer.parseInt(preferenceOrg);
+			cboOrg.setValue(preferenceOrgInt);
+			updateOrg(preferenceOrgInt);
+		}
+		
+		// Tipo de Documento
+		String preferenceDocTypeKey = MPreference.searchCustomPreferenceValue(
+				VOrdenPagoModel.DOCTYPE_DEFAULT_VALUE_PREFERENCE_NAME, 
+				Env.getAD_Client_ID(m_ctx), Env.getAD_Org_ID(m_ctx),
+				Env.getAD_User_ID(m_ctx), true);
+		if(!Util.isEmpty(preferenceDocTypeKey, true)){
+			MDocType dt = MDocType.getDocType(m_ctx, preferenceDocTypeKey, null);
+			if(dt != null && cboDocumentType.getLookup().containsKey(dt.getID())){
+				
+				cboDocumentType.setValue(dt.getID());
+				try{
+					valueChange(new ValueChangeEvent(cboDocumentType, "C_DocType_ID", null, dt.getID()));
+				} catch(Exception e){
+					e.printStackTrace();
+				}
+			}
+		}
+	}
 	
 	protected Panel agregarCampProy() {
 		
