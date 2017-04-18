@@ -805,7 +805,7 @@ public class WOrdenPago extends ADForm implements ValueChangeListener, TableMode
 		// igual al mínimo permitido
 		String diffDaysPreference = MPreference.searchCustomPreferenceValue(VOrdenPagoModel.MIN_CHECK_DIFF_DAYS_PREFERENCE_NAME,
 				Env.getAD_Client_ID(m_ctx), Env.getAD_Org_ID(m_ctx), Env.getAD_User_ID(m_ctx), true);
-		if(diffDaysPreference != null){
+		if(!Util.isEmpty(diffDaysPreference, true)){
 			Integer diffDaysPreferenceInt = Integer.parseInt(diffDaysPreference);
 			if (TimeUtil.getDiffDays(mpc.fechaEm, mpc.fechaPago) < diffDaysPreferenceInt.intValue()) {
 				throw new Exception(
