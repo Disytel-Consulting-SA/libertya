@@ -83,7 +83,12 @@ public class VOrdenPagoModel {
 	public static final int PROCERROR_DOCUMENTNO_INVALID = 9;
 	public static final int PROCERROR_DOCUMENTNO_ALREADY_EXISTS_IN_OTHER_PERIOD = 10;
 	public static final int PROCERROR_UNKNOWN = -1;
+	
+    public static final String MIN_CHECK_DIFF_DAYS_PREFERENCE_NAME = "OP_MinCheckDays";
 
+    public static final String ORG_DEFAULT_VALUE_PREFERENCE_NAME = "OP_AD_Org_ID";
+    public static final String DOCTYPE_DEFAULT_VALUE_PREFERENCE_NAME = "OP_DocTypeKey";
+    
 	protected static CLogger log = CLogger.getCLogger(VOrdenPagoModel.class);
 
 	public abstract class MedioPago {
@@ -2819,6 +2824,10 @@ public class VOrdenPagoModel {
 		if (msgName == null || msgName.length() == 0)
 			msgName = name;
 		return Msg.translate(getCtx(), msgName);
+	}
+	
+	public String getMsg(String name, Object[] params) {
+		return Msg.getMsg(getCtx(), name, params);
 	}
 
 	public class MedioPagoEfectivoAdelantado extends MedioPago {
