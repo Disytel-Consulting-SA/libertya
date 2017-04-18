@@ -12,6 +12,7 @@ import java.util.List;
 import java.util.Properties;
 
 import org.openXpertya.process.DocAction;
+import org.openXpertya.reflection.CallResult;
 import org.openXpertya.util.CLogger;
 import org.openXpertya.util.DB;
 import org.openXpertya.util.Env;
@@ -213,6 +214,7 @@ public class AllocationGenerator {
 	 * Crea un nuevo encabezado de asignación seteando la mayoría de sus atributos por defecto
 	 * a partir de los valores del contexto.
 	 * @param allocationType tipo de asignación del encabezado <code>X_C_AllocationHdr.ALLOCATIONTYPE_XXX</code>
+	 * @param orgID ID de la organización del allocation
 	 * @throws IllegalStateException si el generador fue instanciado mediante el constructor
 	 * que permite asociar un MAllocationHdr existente.
 	 * @throws AllocationGeneratorException cuando se produce un error al guardar el nuevo
@@ -220,7 +222,7 @@ public class AllocationGenerator {
 	 * @return el <code>MAllocationHdr</code> recientemente creado. (Accesible también
 	 * invocando el método {@link #getAllocationHdr()}.
 	 */
-	public MAllocationHdr createAllocationHdr(String allocationType) throws AllocationGeneratorException {
+	public MAllocationHdr createAllocationHdr(String allocationType, Integer orgID) throws AllocationGeneratorException {
 		MAllocationHdr newAllocationHdr = null;
 		// No se permite crear un nuevo encabezado si ya fue asignado uno mediante el
 		// constructor que permite asociar un Hdr a este generador.
@@ -232,6 +234,7 @@ public class AllocationGenerator {
 		Timestamp systemDate = Env.getContextAsDate(getCtx(), "#Date");         // Fecha actual
 		// Se asignan los valores por defecto requeridos al encabezado
 		newAllocationHdr = new MAllocationHdr(getCtx(), 0, getTrxName());
+		newAllocationHdr.setAD_Org_ID(orgID);
 		newAllocationHdr.setAllocationType(allocationType);
 		newAllocationHdr.setC_Currency_ID(clientCurrencyID);
 		newAllocationHdr.setDateAcct(systemDate);
@@ -240,6 +243,21 @@ public class AllocationGenerator {
 		saveAllocationHdr(newAllocationHdr);
 		setAllocationHdr(newAllocationHdr);
 		return newAllocationHdr;
+	}
+	
+	/**
+	 * Crea un nuevo encabezado de asignación seteando la mayoría de sus atributos por defecto
+	 * a partir de los valores del contexto.
+	 * @param allocationType tipo de asignación del encabezado <code>X_C_AllocationHdr.ALLOCATIONTYPE_XXX</code>
+	 * @throws IllegalStateException si el generador fue instanciado mediante el constructor
+	 * que permite asociar un MAllocationHdr existente.
+	 * @throws AllocationGeneratorException cuando se produce un error al guardar el nuevo
+	 * encabezado de asignación.
+	 * @return el <code>MAllocationHdr</code> recientemente creado. (Accesible también
+	 * invocando el método {@link #getAllocationHdr()}.
+	 */
+	public MAllocationHdr createAllocationHdr(String allocationType) throws AllocationGeneratorException {
+		return createAllocationHdr(allocationType, Env.getAD_Org_ID(getCtx()));
 	}
 	
 	/**
@@ -422,10 +440,11 @@ public class AllocationGenerator {
 		// No se permiten montos de imputación iguales a cero.
 		if (document.amount.compareTo(BigDecimal.ZERO) == 0)
 			throw new IllegalArgumentException("Allocation amount must be greather than zero");
-		// No debe estar pendiente de autorización
-		if(!document.isAuthorized())
-			throw new IllegalArgumentException(
-					Msg.getMsg(getCtx(), "OPRCNotAuthorizedDocument", new Object[] { document.type, document.amount }));
+		// Validaciones custom
+		CallResult result = customValidationsAddDocument(document); 
+		if(result.isError()){
+			throw new IllegalArgumentException(result.getMsg());
+		}
 		// Se busca si el documento existe en la lista.
 		if (list.contains(document)) {
 			// En ese caso se incrementa el monto a impuatar del documento existente.
@@ -1597,6 +1616,10 @@ public class AllocationGenerator {
 		return invoice;
 	}
 	
+	protected CallResult customValidationsAddDocument(Document document){
+		return new CallResult();
+	}
+
 	public class PaymentMediumInfo{
 		private BigDecimal amount;
 		private Integer currencyId;
