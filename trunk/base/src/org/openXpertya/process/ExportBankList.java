@@ -14,6 +14,7 @@ import org.openXpertya.model.MSequence;
 import org.openXpertya.model.PO;
 import org.openXpertya.model.X_C_BankList_Config;
 import org.openXpertya.util.Env;
+import org.openXpertya.util.Msg;
 import org.openXpertya.util.Util;
 
 public abstract class ExportBankList extends ExportProcess {
@@ -68,6 +69,8 @@ public abstract class ExportBankList extends ExportProcess {
 	protected abstract String getFileHeader();
 	
 	protected abstract String getFileFooter();
+	
+	protected abstract void validate() throws Exception;
 
 	protected MExpFormat getBankListExportFormat() {
 		String whereClause = "value = '" + getBankListExportFormatValue() + "'";
@@ -92,7 +95,18 @@ public abstract class ExportBankList extends ExportProcess {
 		write(getFileFooter());
 	}
 	
+	protected void doValidations() throws Exception{
+		if(getBankListConfig() == null){
+			throw new Exception(
+					Msg.getMsg(getCtx(), "BankListConfigNotExists", new Object[] { getDocType().getName() }));
+		}
+		validate();
+	}
+	
 	public String export() throws Exception {
+		// Validaciones 
+		doValidations();
+		// Exportar
 		return super.doIt();
 	}
 	

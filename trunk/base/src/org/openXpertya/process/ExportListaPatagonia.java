@@ -1,6 +1,7 @@
 package org.openXpertya.process;
 
 import java.sql.ResultSet;
+import java.util.ArrayList;
 import java.util.Properties;
 
 import org.openXpertya.model.MBankList;
@@ -255,6 +256,18 @@ public class ExportListaPatagonia extends ExportBankList {
 		// Espacio en blanco
 		footer.append(fillField(" ", " ", MExpFormatRow.ALIGNMENT_Right, 40, null));
 		return footer.toString();
+	}
+
+	@Override
+	protected void validate() throws Exception {
+		BankListConfigFieldsException blcfe = new BankListConfigFieldsException(getCtx(),
+				getBankList().getC_DocType_ID(), new ArrayList<String>());
+		if(Util.isEmpty(getBankListConfig().getRegisterNumber(), true)){
+			blcfe.addField("RegisterNumber");
+		}
+		if(blcfe.getFields().size() > 0){
+			throw blcfe;
+		}
 	}
 
 }
