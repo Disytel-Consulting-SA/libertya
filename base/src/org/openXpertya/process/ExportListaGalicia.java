@@ -3,6 +3,7 @@ package org.openXpertya.process;
 import java.math.BigDecimal;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
+import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.HashMap;
@@ -622,6 +623,24 @@ public class ExportListaGalicia extends ExportBankList {
 	@Override
 	protected String getFileFooter() {
 		return null;
+	}
+
+	@Override
+	protected void validate() throws Exception{
+		BankListConfigFieldsException blcfe = new BankListConfigFieldsException(getCtx(),
+				getBankList().getC_DocType_ID(), new ArrayList<String>());
+		if(Util.isEmpty(getBankListConfig().getRegisterNumber(), true)){
+			blcfe.addField("RegisterNumber");
+		}
+		if(Util.isEmpty(getBankListConfig().getClientName(), true)){
+			blcfe.addField("ClientName");
+		}
+		if(Util.isEmpty(getBankListConfig().getSucursalDefault(), true)){
+			blcfe.addField("SucursalDefault");
+		}
+		if(blcfe.getFields().size() > 0){
+			throw blcfe;
+		}
 	}
 
 }

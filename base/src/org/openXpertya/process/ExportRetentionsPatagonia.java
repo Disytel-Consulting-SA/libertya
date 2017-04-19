@@ -6,6 +6,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.Locale;
@@ -760,6 +761,18 @@ public class ExportRetentionsPatagonia extends ExportBankList {
 			}
 		}
 		return String.valueOf(chars);
+	}
+
+	@Override
+	protected void validate() throws Exception {
+		BankListConfigFieldsException blcfe = new BankListConfigFieldsException(getCtx(),
+				getBankList().getC_DocType_ID(), new ArrayList<String>());
+		if(Util.isEmpty(getBankListConfig().getSucursalDefault(), true)){
+			blcfe.addField("SucursalDefault");
+		}
+		if(blcfe.getFields().size() > 0){
+			throw blcfe;
+		}
 	}
 
 }
