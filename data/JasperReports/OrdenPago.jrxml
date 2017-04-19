@@ -230,6 +230,7 @@
 	<parameter name="DOCUMENTNO_7" isForPrompting="false" class="java.lang.String"/>
 	<parameter name="URL_IMAGE_TITLE" isForPrompting="false" class="java.lang.String"/>
 	<parameter name="PRINT_RETENCIONES" isForPrompting="false" class="java.lang.String"/>
+	<parameter name="BPARTNER_TAXID" isForPrompting="false" class="java.lang.String"/>
 
 	<variable name="CITY" class="java.lang.String" resetType="Report" calculation="Nothing">
 		<variableExpression><![CDATA[$P{CITY_NAME} + ", "]]></variableExpression>
@@ -242,7 +243,7 @@
 			</band>
 		</background>
 		<title>
-			<band height="87"  isSplitAllowed="true" >
+			<band height="97"  isSplitAllowed="true" >
 				<textField isStretchWithOverflow="false" pattern="EEEEE dd MMMMM yyyy" isBlankWhenNull="false" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
 						x="236"
@@ -306,6 +307,22 @@
 					<graphicElement stretchType="NoStretch"/>
 					<imageExpression class="java.lang.String"><![CDATA[$P{URL_IMAGE_TITLE}]]></imageExpression>
 				</image>
+				<textField isStretchWithOverflow="false" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
+					<reportElement
+						x="0"
+						y="74"
+						width="535"
+						height="18"
+						key="textField-6"
+						isRemoveLineWhenBlank="true">
+							<printWhenExpression><![CDATA[new Boolean($P{BPARTNER_TAXID} != null && $P{BPARTNER_TAXID}.trim().length() > 0)]]></printWhenExpression>
+						</reportElement>
+					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
+					<textElement>
+						<font size="12"/>
+					</textElement>
+				<textFieldExpression   class="java.lang.String"><![CDATA["CUIT: " + $P{BPARTNER_TAXID}]]></textFieldExpression>
+				</textField>
 			</band>
 		</title>
 		<pageHeader>
