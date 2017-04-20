@@ -312,7 +312,8 @@ public class MFieldVO implements Serializable {
                 } else if (columnName.equalsIgnoreCase("IsUpdateable")) {
                     vo.IsUpdateable	= "Y".equals(rs.getString(i));
                 } else if (columnName.equalsIgnoreCase("IsAlwaysUpdateable")) {
-                    vo.IsAlwaysUpdateable	= "Y".equals(rs.getString(i));
+					vo.IsAlwaysUpdateable = "Y".equals(rs.getString(i))
+							|| MFieldAccess.ACCESSTYPE_AlwaysUpdateable.equals(roleFieldAccess);
                 } else if (columnName.equalsIgnoreCase("IsHeading")) {
                     vo.IsHeading	= "Y".equals(rs.getString(i));
                 } else if (columnName.equalsIgnoreCase("IsFieldOnly")) {

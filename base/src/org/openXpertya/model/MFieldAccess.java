@@ -159,6 +159,11 @@ public class MFieldAccess extends X_AD_Field_Access {
 					new Object[] {Msg.translate(getCtx(),"Field")}));
 			return false;
 		}
+		
+		// Si es siempre actualizable, no debe tener configurado una validación
+		if(MFieldAccess.ACCESSTYPE_AlwaysUpdateable.equals(getAccessType())){
+			setAD_Val_Rule_ID(0);
+		}
 
 		return true;
 	}
