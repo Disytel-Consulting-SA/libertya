@@ -1529,7 +1529,7 @@ public class MSequence extends X_AD_Sequence {
     	boolean existeSeq = false;
     	if (sequences_cache.contains(secuencia))
     		existeSeq = true;
-    	else if (1 == DB.getSQLValue(trxName, "select count(1) from pg_class where relkind = 'S' and relname = '" + secuencia + "'"))
+    	else if (1 == DB.getSQLValue(trxName, "select count(1) from information_schema.sequences where sequence_schema = 'libertya' and sequence_name = '" + secuencia + "'"))
     	{
     		existeSeq = true;
     		sequences_cache.add(secuencia);	
