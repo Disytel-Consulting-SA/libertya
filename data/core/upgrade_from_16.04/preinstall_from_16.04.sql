@@ -6906,3 +6906,6 @@ ORDER BY c_allocationhdr_id, c_payment_id, c_cashline_id, c_invoice_credit_id;
 
 ALTER TABLE c_allocation_detail_credits_v
   OWNER TO libertya;
+
+--20170420-1400 Nueva columna en lista de banco para registrar el total de pagos electrónicos de la OP relacionada
+update ad_system set dummy = (SELECT addcolumnifnotexists('c_banklistline','electronicpaymenttotal','numeric(20,2) NOT NULL DEFAULT 0'));

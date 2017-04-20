@@ -7,7 +7,7 @@ import java.math.*;
 import org.openXpertya.util.*;
 /** Modelo Generado por C_BankListLine
  *  @author Comunidad de Desarrollo Libertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
- *  @version  - 2016-10-24 20:39:55.302 */
+ *  @version  - 2017-04-20 14:01:30.309 */
 public class X_C_BankListLine extends org.openXpertya.model.PO
 {
 /** Constructor estándar */
@@ -19,6 +19,7 @@ super (ctx, C_BankListLine_ID, trxName);
 setC_AllocationHdr_ID (0);
 setC_BankList_ID (0);
 setC_BankListLine_ID (0);
+setElectronicPaymentTotal (Env.ZERO);
 setLine (Env.ZERO);	// @SQL=SELECT COALESCE(MAX(Line),0)+10 AS DefaultValue FROM C_BankListLine WHERE C_BankList_ID=@C_BankList_ID@
 setProcessed (false);
 }
@@ -88,6 +89,18 @@ Integer ii = (Integer)get_Value("C_BankListLine_ID");
 if (ii == null) return 0;
 return ii.intValue();
 }
+/** Set Business Partner */
+public void setC_BPartner_ID (int C_BPartner_ID)
+{
+throw new IllegalArgumentException ("C_BPartner_ID is virtual column");
+}
+/** Get Business Partner */
+public int getC_BPartner_ID() 
+{
+Integer ii = (Integer)get_Value("C_BPartner_ID");
+if (ii == null) return 0;
+return ii.intValue();
+}
 /** Set Description.
 Optional short description of the record */
 public void setDescription (String Description)
@@ -104,6 +117,31 @@ Optional short description of the record */
 public String getDescription() 
 {
 return (String)get_Value("Description");
+}
+/** Set Electronic Payment Total */
+public void setElectronicPaymentTotal (BigDecimal ElectronicPaymentTotal)
+{
+if (ElectronicPaymentTotal == null) throw new IllegalArgumentException ("ElectronicPaymentTotal is mandatory");
+set_Value ("ElectronicPaymentTotal", ElectronicPaymentTotal);
+}
+/** Get Electronic Payment Total */
+public BigDecimal getElectronicPaymentTotal() 
+{
+BigDecimal bd = (BigDecimal)get_Value("ElectronicPaymentTotal");
+if (bd == null) return Env.ZERO;
+return bd;
+}
+/** Set Total */
+public void setGrandTotal (BigDecimal GrandTotal)
+{
+throw new IllegalArgumentException ("GrandTotal is virtual column");
+}
+/** Get Total */
+public BigDecimal getGrandTotal() 
+{
+BigDecimal bd = (BigDecimal)get_Value("GrandTotal");
+if (bd == null) return Env.ZERO;
+return bd;
 }
 /** Set Line No.
 Unique line for this document */
@@ -137,5 +175,15 @@ if (oo != null)
  return "Y".equals(oo);
 }
 return false;
+}
+/** Set Payment Order Date */
+public void setTrxDate (Timestamp TrxDate)
+{
+throw new IllegalArgumentException ("TrxDate is virtual column");
+}
+/** Get Payment Order Date */
+public Timestamp getTrxDate() 
+{
+return (Timestamp)get_Value("TrxDate");
 }
 }

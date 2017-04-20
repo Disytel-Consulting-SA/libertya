@@ -85,12 +85,12 @@ public class InfoAllocationHdr extends Info {
     }    // statInit
 	
 	private boolean initInfo() {
-		
-        String bp = Env.getContext( Env.getCtx(),p_WindowNo,"C_BPartner_ID" );
+		/*
+        String bp = Env.getContext( Env.getCtx(),p_WindowNo,"C_BPartner_ID", true );
 
         if( (bp != null) && (bp.length() != 0) ) {
             fBPartner.setValue( new Integer( bp ));
-        }
+        }*/
 
 		prepareTable(
 				s_allocationHdrLayout,
