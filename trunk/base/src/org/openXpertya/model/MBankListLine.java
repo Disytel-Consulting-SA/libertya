@@ -1,10 +1,12 @@
 package org.openXpertya.model;
 
+import java.math.BigDecimal;
 import java.sql.ResultSet;
 import java.util.Properties;
 
 import org.openXpertya.util.DB;
 import org.openXpertya.util.Msg;
+import org.openXpertya.util.Util;
 
 public class MBankListLine extends X_C_BankListLine {
 	private static final long serialVersionUID = 1L;
@@ -67,6 +69,8 @@ public class MBankListLine extends X_C_BankListLine {
 		if( !success ) {
             return success;
         }
+		// Actualizar el total de pagos electrónicos de la OP
+		updateElectronicPaymentTotal();
 		// Actualiza el total de la lista
 		updateBankListTotal();
 		return success;
@@ -81,12 +85,30 @@ public class MBankListLine extends X_C_BankListLine {
 		return success;
 	}
 	
+	/**
+	 * Actualiza el total de pago electrónico en base al total de pagos de la OP
+	 */
+	private void updateElectronicPaymentTotal(){
+		String sql = "UPDATE "+Table_Name
+				+ " SET electronicpaymenttotal = coalesce("
+				+ "(SELECT sum(abs(p.payamt)) "
+				+ "FROM "+X_C_AllocationHdr.Table_Name+" ah "
+				+ "INNER JOIN "+X_C_AllocationLine.Table_Name+" al ON ah.c_allocationhdr_id = al.c_allocationhdr_id "
+				+ "INNER JOIN "+X_C_Payment.Table_Name+" p ON p.c_payment_id = al.c_payment_id "
+				+ "WHERE ah.c_allocationhdr_id = "+getC_AllocationHdr_ID()+"),0) "
+				+ "WHERE C_BankListLine_ID = "+getID();
+	
+		int no = DB.executeUpdate(sql, get_TrxName());
+		if(no != 1){
+			log.severe(" Error updating bank list");
+		}
+	} 
+	
 	private void updateBankListTotal(){
 		String sql = "UPDATE "+MBankList.Table_Name
 					+ " SET banklisttotal = coalesce("
-					+ "(SELECT sum(grandtotal) "
+					+ "(SELECT sum(electronicpaymenttotal) "
 					+ "FROM "+Table_Name+" bll "
-					+ "INNER JOIN "+X_C_AllocationHdr.Table_Name+" ah on ah.c_allocationhdr_id = bll.c_allocationhdr_id "
 					+ "WHERE bll.C_BankList_ID = "+getC_BankList_ID()+"),0) "
 					+ "WHERE C_BankList_ID = "+getC_BankList_ID();
 		

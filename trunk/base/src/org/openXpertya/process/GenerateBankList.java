@@ -116,6 +116,9 @@ public class GenerateBankList extends AbstractSvrProcess {
 			// Actualizar la OP en la lista del banco y los nros de secuencia
 			bankList.setDailySeqNo(new BigDecimal(MBankList.getSeqNo(getCtx(), bankList.getC_DocType_ID(), bankList.getDateTrx(), get_TrxName()) + 1));
 			bankList.setTotalSeqNo(new BigDecimal(MBankList.getSeqNo(getCtx(), bankList.getC_DocType_ID(), null, get_TrxName()) + 1));
+			if(!bankList.save()){
+				throw new Exception(CLogger.retrieveErrorAsString());
+			}
 		} catch (Exception e) {
 			throw e;
 		} finally {

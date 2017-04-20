@@ -193,11 +193,12 @@ public class InfoAllocationHdrPanel extends InfoPanel implements EventListener,V
 	{
 		
 		//  Set Defaults
-		String bp = Env.getContext(Env.getCtx(), p_WindowNo, "C_BPartner_ID");
+		/*String bp = Env.getContext(Env.getCtx(), p_WindowNo, "C_BPartner_ID", true);
 	
 		if (bp != null && bp.length() != 0)
 			fBPartner.setValue(new Integer(bp));
-
+		*/
+		
 	   prepareTable(s_allocationHdrLayout,
 	            "C_AllocationHdr",
 				Util.isEmpty(p_whereClause, true)?"":p_whereClause, 
