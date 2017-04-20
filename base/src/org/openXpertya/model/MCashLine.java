@@ -1483,7 +1483,7 @@ public class MCashLine extends X_C_CashLine implements DocAction, CurrentAccount
 		boolean issotrx = false;
 		if(!Util.isEmpty(getC_BPartner_ID(), true)){
 			MBPartner bp = new MBPartner(getCtx(), getC_BPartner_ID(),get_TrxName());
-			issotrx = bp.isCustomer();
+			issotrx = bp.isCustomer() && !bp.isVendor();
 		}
 		return issotrx;
 	}
