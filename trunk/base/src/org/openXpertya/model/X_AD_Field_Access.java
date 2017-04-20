@@ -7,7 +7,7 @@ import java.math.*;
 import org.openXpertya.util.*;
 /** Modelo Generado por AD_Field_Access
  *  @author Comunidad de Desarrollo Libertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
- *  @version  - 2017-03-20 16:34:05.837 */
+ *  @version  - 2017-04-20 16:01:16.405 */
 public class X_AD_Field_Access extends org.openXpertya.model.PO
 {
 /** Constructor estándar */
@@ -54,10 +54,12 @@ public static final int ACCESSTYPE_AD_Reference_ID = MReference.getReferenceID("
 public static final String ACCESSTYPE_ReadOnly = "R";
 /** Not Displayed = D */
 public static final String ACCESSTYPE_NotDisplayed = "D";
+/** Always Updateable = A */
+public static final String ACCESSTYPE_AlwaysUpdateable = "A";
 /** Set Access Type */
 public void setAccessType (String AccessType)
 {
-if (AccessType.equals("R") || AccessType.equals("D") || ( refContainsValue("CORE-AD_Reference-1000083", AccessType) ) );
+if (AccessType.equals("R") || AccessType.equals("D") || AccessType.equals("A") || ( refContainsValue("CORE-AD_Reference-1000083", AccessType) ) );
  else throw new IllegalArgumentException ("AccessType Invalid value: " + AccessType + ".  Valid: " +  refValidOptions("CORE-AD_Reference-1000083") );
 if (AccessType == null) throw new IllegalArgumentException ("AccessType is mandatory");
 if (AccessType.length() > 1)
