@@ -56,11 +56,13 @@ public class MBPartnerCAI extends X_C_BPartner_CAI {
 			}
 		}
 		
-		// La fecha de vencimiento no puede ser menor a la fecha actual
+		// Por lo pronto se elimina esta validación
+		/* La fecha de vencimiento no puede ser menor a la fecha actual
 		if (getDateCAI().compareTo(Env.getDate()) < 0 && !TimeUtil.isSameDay(getDateCAI(), Env.getDate())) {
 			log.saveError("SaveError", Msg.getMsg(getCtx(), "InvalidDateCAIBeforeCurrentDate"));
 			return false;
 		}
+		*/
 		
 		return true;
 	}
