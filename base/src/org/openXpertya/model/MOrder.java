@@ -4234,7 +4234,10 @@ public class MOrder extends X_C_Order implements DocAction, Authorization  {
 	//            	Fin modificacion
 	            	// QtyEntered unchanged	
 	                line.addDescription( "Close (" + old + ")" );
-	                line.save( get_TrxName());
+	                if(!line.save( get_TrxName())){
+	                	m_processMsg = CLogger.retrieveErrorAsString();
+	    	            return false;
+	                }
 	            }
 	        }
 	
