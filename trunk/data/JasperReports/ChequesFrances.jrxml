@@ -46,7 +46,7 @@
 	<parameter name="A_LA_ORDEN1" isForPrompting="false" class="java.lang.String">
 		<defaultValueExpression ><![CDATA[" "]]></defaultValueExpression>
 	</parameter>
-	<parameter name="IMPORTE_EN_LETRAS1" isForPrompting="false" class="java.lang.String"/>
+	<parameter name="IMPORTE_EN_LETRAS_TOP1" isForPrompting="false" class="java.lang.String"/>
 	<parameter name="CENTAVOS1" isForPrompting="false" class="java.lang.String"/>
 	<parameter name="FECHA_VENCIMIENTO1" isForPrompting="false" class="java.lang.String">
 		<defaultValueExpression ><![CDATA[" "]]></defaultValueExpression>
@@ -72,7 +72,7 @@
 	<parameter name="A_LA_ORDEN2" isForPrompting="false" class="java.lang.String">
 		<defaultValueExpression ><![CDATA[" "]]></defaultValueExpression>
 	</parameter>
-	<parameter name="IMPORTE_EN_LETRAS2" isForPrompting="false" class="java.lang.String"/>
+	<parameter name="IMPORTE_EN_LETRAS_TOP2" isForPrompting="false" class="java.lang.String"/>
 	<parameter name="CENTAVOS2" isForPrompting="false" class="java.lang.String"/>
 	<parameter name="EMISION_DIA3" isForPrompting="false" class="java.lang.String">
 		<defaultValueExpression ><![CDATA[" "]]></defaultValueExpression>
@@ -96,7 +96,7 @@
 	<parameter name="A_LA_ORDEN3" isForPrompting="false" class="java.lang.String">
 		<defaultValueExpression ><![CDATA[" "]]></defaultValueExpression>
 	</parameter>
-	<parameter name="IMPORTE_EN_LETRAS3" isForPrompting="false" class="java.lang.String"/>
+	<parameter name="IMPORTE_EN_LETRAS_TOP3" isForPrompting="false" class="java.lang.String"/>
 	<parameter name="CENTAVOS3" isForPrompting="false" class="java.lang.String"/>
 	<parameter name="EMISION_DIA4" isForPrompting="false" class="java.lang.String">
 		<defaultValueExpression ><![CDATA[" "]]></defaultValueExpression>
@@ -120,7 +120,7 @@
 	<parameter name="A_LA_ORDEN4" isForPrompting="false" class="java.lang.String">
 		<defaultValueExpression ><![CDATA[" "]]></defaultValueExpression>
 	</parameter>
-	<parameter name="IMPORTE_EN_LETRAS4" isForPrompting="false" class="java.lang.String"/>
+	<parameter name="IMPORTE_EN_LETRAS_TOP4" isForPrompting="false" class="java.lang.String"/>
 	<parameter name="CENTAVOS4" isForPrompting="false" class="java.lang.String"/>
 	<parameter name="EMISION_MES_NAME1" isForPrompting="false" class="java.lang.String"/>
 	<parameter name="EMISION_MES_NAME2" isForPrompting="false" class="java.lang.String"/>
@@ -130,6 +130,10 @@
 	<parameter name="PAGO_MES_NAME2" isForPrompting="false" class="java.lang.String"/>
 	<parameter name="PAGO_MES_NAME3" isForPrompting="false" class="java.lang.String"/>
 	<parameter name="PAGO_MES_NAME4" isForPrompting="false" class="java.lang.String"/>
+	<parameter name="IMPORTE_EN_LETRAS_BOTTOM4" isForPrompting="false" class="java.lang.String"/>
+	<parameter name="IMPORTE_EN_LETRAS_BOTTOM3" isForPrompting="false" class="java.lang.String"/>
+	<parameter name="IMPORTE_EN_LETRAS_BOTTOM2" isForPrompting="false" class="java.lang.String"/>
+	<parameter name="IMPORTE_EN_LETRAS_BOTTOM1" isForPrompting="false" class="java.lang.String"/>
 
 		<background>
 			<band height="0"  isSplitAllowed="true" >
@@ -147,9 +151,9 @@
 			<band height="815"  isSplitAllowed="true" >
 				<textField isStretchWithOverflow="false" pattern="#,##0.00" isBlankWhenNull="false" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
-						x="400"
+						x="429"
 						y="11"
-						width="143"
+						width="135"
 						height="18"
 						key="textField"
 						positionType="Float"/>
@@ -161,7 +165,7 @@
 				</textField>
 				<textField isStretchWithOverflow="false" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
-						x="164"
+						x="207"
 						y="42"
 						width="35"
 						height="15"
@@ -175,7 +179,7 @@
 				</textField>
 				<textField isStretchWithOverflow="false" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
-						x="205"
+						x="248"
 						y="42"
 						width="88"
 						height="15"
@@ -189,7 +193,7 @@
 				</textField>
 				<textField isStretchWithOverflow="false" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
-						x="300"
+						x="343"
 						y="42"
 						width="119"
 						height="15"
@@ -203,7 +207,7 @@
 				</textField>
 				<textField isStretchWithOverflow="false" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
-						x="113"
+						x="156"
 						y="57"
 						width="35"
 						height="15"
@@ -217,7 +221,7 @@
 				</textField>
 				<textField isStretchWithOverflow="false" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
-						x="155"
+						x="198"
 						y="57"
 						width="88"
 						height="15"
@@ -231,7 +235,7 @@
 				</textField>
 				<textField isStretchWithOverflow="false" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
-						x="307"
+						x="350"
 						y="57"
 						width="93"
 						height="15"
@@ -245,7 +249,7 @@
 				</textField>
 				<textField isStretchWithOverflow="false" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
-						x="153"
+						x="196"
 						y="72"
 						width="277"
 						height="16"
@@ -259,10 +263,10 @@
 				</textField>
 				<textField isStretchWithOverflow="true" pattern="" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
-						x="185"
+						x="228"
 						y="88"
 						width="245"
-						height="32"
+						height="16"
 						key="textField"
 						positionType="Float"
 						isPrintWhenDetailOverflows="true"/>
@@ -270,13 +274,13 @@
 					<textElement verticalAlignment="Top" lineSpacing="1_1_2">
 						<font/>
 					</textElement>
-				<textFieldExpression   class="java.lang.String"><![CDATA[($P{IMPORTE_EN_LETRAS1} == null ? " " : $P{IMPORTE_EN_LETRAS1}.replaceAll(" PESOS",""))+($P{CENTAVOS1} == null ? " " : "CON "+$P{CENTAVOS1}+"/100......")]]></textFieldExpression>
+				<textFieldExpression   class="java.lang.String"><![CDATA[($P{IMPORTE_EN_LETRAS_TOP1} == null ? " " : $P{IMPORTE_EN_LETRAS_TOP1})+($P{IMPORTE_EN_LETRAS_BOTTOM1} != null && $P{IMPORTE_EN_LETRAS_BOTTOM1}.trim().length() > 0?"":($P{CENTAVOS1} == null ? " " : "CON "+$P{CENTAVOS1}+"/100 ......"))]]></textFieldExpression>
 				</textField>
 				<textField isStretchWithOverflow="false" pattern="#,##0.00" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
-						x="400"
-						y="239"
-						width="143"
+						x="429"
+						y="224"
+						width="135"
 						height="17"
 						key="textField"
 						positionType="Float"/>
@@ -288,8 +292,8 @@
 				</textField>
 				<textField isStretchWithOverflow="false" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
-						x="161"
-						y="270"
+						x="207"
+						y="255"
 						width="35"
 						height="15"
 						key="textField-1"
@@ -302,8 +306,8 @@
 				</textField>
 				<textField isStretchWithOverflow="false" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
-						x="205"
-						y="270"
+						x="248"
+						y="255"
 						width="88"
 						height="15"
 						key="textField-2"
@@ -316,8 +320,8 @@
 				</textField>
 				<textField isStretchWithOverflow="false" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
-						x="300"
-						y="270"
+						x="343"
+						y="255"
 						width="119"
 						height="15"
 						key="textField-3"
@@ -330,8 +334,8 @@
 				</textField>
 				<textField isStretchWithOverflow="false" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
-						x="113"
-						y="285"
+						x="156"
+						y="270"
 						width="35"
 						height="15"
 						key="textField-4"
@@ -344,8 +348,8 @@
 				</textField>
 				<textField isStretchWithOverflow="false" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
-						x="155"
-						y="285"
+						x="198"
+						y="270"
 						width="88"
 						height="15"
 						key="textField-5"
@@ -358,8 +362,8 @@
 				</textField>
 				<textField isStretchWithOverflow="false" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
-						x="307"
-						y="285"
+						x="350"
+						y="270"
 						width="118"
 						height="15"
 						key="textField-6"
@@ -372,8 +376,8 @@
 				</textField>
 				<textField isStretchWithOverflow="false" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
-						x="153"
-						y="300"
+						x="196"
+						y="285"
 						width="277"
 						height="16"
 						key="textField-7"
@@ -386,10 +390,10 @@
 				</textField>
 				<textField isStretchWithOverflow="true" pattern="" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
-						x="185"
-						y="316"
+						x="228"
+						y="301"
 						width="245"
-						height="32"
+						height="16"
 						key="textField-8"
 						positionType="Float"
 						isPrintWhenDetailOverflows="true"/>
@@ -397,13 +401,13 @@
 					<textElement verticalAlignment="Top" lineSpacing="1_1_2">
 						<font/>
 					</textElement>
-				<textFieldExpression   class="java.lang.String"><![CDATA[($P{IMPORTE_EN_LETRAS2} == null ? " " : $P{IMPORTE_EN_LETRAS2}.replaceAll(" PESOS",""))+($P{CENTAVOS2} == null ? " " : "CON "+$P{CENTAVOS2}+"/100......")]]></textFieldExpression>
+				<textFieldExpression   class="java.lang.String"><![CDATA[($P{IMPORTE_EN_LETRAS_TOP2} == null ? " " : $P{IMPORTE_EN_LETRAS_TOP2})+($P{IMPORTE_EN_LETRAS_BOTTOM2} != null && $P{IMPORTE_EN_LETRAS_BOTTOM2}.trim().length() > 0?"":($P{CENTAVOS2} == null ? " " : "CON "+$P{CENTAVOS2}+"/100 ......"))]]></textFieldExpression>
 				</textField>
 				<textField isStretchWithOverflow="false" pattern="#,##0.00" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
-						x="400"
-						y="462"
-						width="143"
+						x="429"
+						y="442"
+						width="135"
 						height="17"
 						key="textField-10"
 						positionType="Float"/>
@@ -415,8 +419,8 @@
 				</textField>
 				<textField isStretchWithOverflow="false" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
-						x="160"
-						y="495"
+						x="207"
+						y="475"
 						width="35"
 						height="15"
 						key="textField-11"
@@ -429,8 +433,8 @@
 				</textField>
 				<textField isStretchWithOverflow="false" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
-						x="205"
-						y="495"
+						x="248"
+						y="475"
 						width="88"
 						height="15"
 						key="textField-12"
@@ -443,8 +447,8 @@
 				</textField>
 				<textField isStretchWithOverflow="false" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
-						x="300"
-						y="495"
+						x="343"
+						y="475"
 						width="119"
 						height="15"
 						key="textField-13"
@@ -457,8 +461,8 @@
 				</textField>
 				<textField isStretchWithOverflow="false" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
-						x="113"
-						y="510"
+						x="156"
+						y="490"
 						width="35"
 						height="15"
 						key="textField-14"
@@ -471,8 +475,8 @@
 				</textField>
 				<textField isStretchWithOverflow="false" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
-						x="155"
-						y="510"
+						x="198"
+						y="490"
 						width="88"
 						height="15"
 						key="textField-15"
@@ -485,8 +489,8 @@
 				</textField>
 				<textField isStretchWithOverflow="false" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
-						x="306"
-						y="510"
+						x="350"
+						y="490"
 						width="118"
 						height="15"
 						key="textField-16"
@@ -499,8 +503,8 @@
 				</textField>
 				<textField isStretchWithOverflow="false" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
-						x="153"
-						y="525"
+						x="196"
+						y="505"
 						width="277"
 						height="16"
 						key="textField-17"
@@ -513,10 +517,10 @@
 				</textField>
 				<textField isStretchWithOverflow="true" pattern="" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
-						x="185"
-						y="541"
+						x="228"
+						y="521"
 						width="245"
-						height="32"
+						height="16"
 						key="textField-18"
 						positionType="Float"
 						isPrintWhenDetailOverflows="true"/>
@@ -524,13 +528,13 @@
 					<textElement verticalAlignment="Top" lineSpacing="1_1_2">
 						<font/>
 					</textElement>
-				<textFieldExpression   class="java.lang.String"><![CDATA[($P{IMPORTE_EN_LETRAS3} == null ? " " : $P{IMPORTE_EN_LETRAS3}.replaceAll(" PESOS",""))+($P{CENTAVOS3} == null ? " " : "CON "+$P{CENTAVOS3}+"/100......")]]></textFieldExpression>
+				<textFieldExpression   class="java.lang.String"><![CDATA[($P{IMPORTE_EN_LETRAS_TOP3} == null ? " " : $P{IMPORTE_EN_LETRAS_TOP3})+($P{IMPORTE_EN_LETRAS_BOTTOM3} != null && $P{IMPORTE_EN_LETRAS_BOTTOM3}.trim().length() > 0?"":($P{CENTAVOS3} == null ? " " : "CON "+$P{CENTAVOS3}+"/100 ......"))]]></textFieldExpression>
 				</textField>
 				<textField isStretchWithOverflow="false" pattern="#,##0.00" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
-						x="399"
-						y="688"
-						width="143"
+						x="429"
+						y="660"
+						width="135"
 						height="17"
 						key="textField-20"
 						positionType="Float"/>
@@ -542,8 +546,8 @@
 				</textField>
 				<textField isStretchWithOverflow="false" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
-						x="160"
-						y="721"
+						x="207"
+						y="693"
 						width="35"
 						height="15"
 						key="textField-21"
@@ -556,8 +560,8 @@
 				</textField>
 				<textField isStretchWithOverflow="false" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
-						x="205"
-						y="721"
+						x="248"
+						y="693"
 						width="88"
 						height="15"
 						key="textField-22"
@@ -570,8 +574,8 @@
 				</textField>
 				<textField isStretchWithOverflow="false" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
-						x="300"
-						y="721"
+						x="343"
+						y="693"
 						width="119"
 						height="15"
 						key="textField-23"
@@ -584,8 +588,8 @@
 				</textField>
 				<textField isStretchWithOverflow="false" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
-						x="113"
-						y="736"
+						x="156"
+						y="708"
 						width="35"
 						height="15"
 						key="textField-24"
@@ -598,8 +602,8 @@
 				</textField>
 				<textField isStretchWithOverflow="false" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
-						x="155"
-						y="736"
+						x="198"
+						y="708"
 						width="88"
 						height="15"
 						key="textField-25"
@@ -612,8 +616,8 @@
 				</textField>
 				<textField isStretchWithOverflow="false" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
-						x="306"
-						y="736"
+						x="350"
+						y="708"
 						width="118"
 						height="15"
 						key="textField-26"
@@ -626,8 +630,8 @@
 				</textField>
 				<textField isStretchWithOverflow="false" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
-						x="151"
-						y="751"
+						x="196"
+						y="723"
 						width="279"
 						height="16"
 						key="textField-27"
@@ -640,10 +644,10 @@
 				</textField>
 				<textField isStretchWithOverflow="true" pattern="" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
-						x="185"
-						y="767"
+						x="228"
+						y="739"
 						width="245"
-						height="32"
+						height="16"
 						key="textField-28"
 						positionType="Float"
 						isPrintWhenDetailOverflows="true"/>
@@ -651,7 +655,67 @@
 					<textElement verticalAlignment="Top" lineSpacing="1_1_2">
 						<font/>
 					</textElement>
-				<textFieldExpression   class="java.lang.String"><![CDATA[($P{IMPORTE_EN_LETRAS4} == null ? " " : $P{IMPORTE_EN_LETRAS4}.replaceAll(" PESOS",""))+($P{CENTAVOS4} == null ? " " : "CON "+$P{CENTAVOS4}+"/100......")]]></textFieldExpression>
+				<textFieldExpression   class="java.lang.String"><![CDATA[($P{IMPORTE_EN_LETRAS_TOP4} == null ? " " : $P{IMPORTE_EN_LETRAS_TOP4})+($P{IMPORTE_EN_LETRAS_BOTTOM4} != null && $P{IMPORTE_EN_LETRAS_BOTTOM4}.trim().length() > 0?"":($P{CENTAVOS4} == null ? " " : "CON "+$P{CENTAVOS4}+"/100 ......"))]]></textFieldExpression>
+				</textField>
+				<textField isStretchWithOverflow="true" pattern="" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
+					<reportElement
+						x="228"
+						y="104"
+						width="245"
+						height="16"
+						key="textField-29"
+						positionType="Float"
+						isPrintWhenDetailOverflows="true"/>
+					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
+					<textElement verticalAlignment="Top" lineSpacing="1_1_2">
+						<font/>
+					</textElement>
+				<textFieldExpression   class="java.lang.String"><![CDATA[($P{IMPORTE_EN_LETRAS_BOTTOM1} == null ? " " : $P{IMPORTE_EN_LETRAS_BOTTOM1})+($P{IMPORTE_EN_LETRAS_BOTTOM1} != null && $P{IMPORTE_EN_LETRAS_BOTTOM1}.trim().length() > 0?($P{CENTAVOS1} == null ? " " : "CON "+$P{CENTAVOS1}+"/100 ......"):"")]]></textFieldExpression>
+				</textField>
+				<textField isStretchWithOverflow="true" pattern="" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
+					<reportElement
+						x="228"
+						y="317"
+						width="245"
+						height="16"
+						key="textField-30"
+						positionType="Float"
+						isPrintWhenDetailOverflows="true"/>
+					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
+					<textElement verticalAlignment="Top" lineSpacing="1_1_2">
+						<font/>
+					</textElement>
+				<textFieldExpression   class="java.lang.String"><![CDATA[($P{IMPORTE_EN_LETRAS_BOTTOM2} == null ? " " : $P{IMPORTE_EN_LETRAS_BOTTOM2})+($P{IMPORTE_EN_LETRAS_BOTTOM2} != null && $P{IMPORTE_EN_LETRAS_BOTTOM2}.trim().length() > 0?($P{CENTAVOS2} == null ? " " : "CON "+$P{CENTAVOS2}+"/100 ......"):"")]]></textFieldExpression>
+				</textField>
+				<textField isStretchWithOverflow="true" pattern="" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
+					<reportElement
+						x="228"
+						y="537"
+						width="245"
+						height="16"
+						key="textField-31"
+						positionType="Float"
+						isPrintWhenDetailOverflows="true"/>
+					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
+					<textElement verticalAlignment="Top" lineSpacing="1_1_2">
+						<font/>
+					</textElement>
+				<textFieldExpression   class="java.lang.String"><![CDATA[($P{IMPORTE_EN_LETRAS_BOTTOM3} == null ? " " : $P{IMPORTE_EN_LETRAS_BOTTOM3})+($P{IMPORTE_EN_LETRAS_BOTTOM3} != null && $P{IMPORTE_EN_LETRAS_BOTTOM3}.trim().length() > 0?($P{CENTAVOS3} == null ? " " : "CON "+$P{CENTAVOS3}+"/100 ......"):"")]]></textFieldExpression>
+				</textField>
+				<textField isStretchWithOverflow="true" pattern="" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
+					<reportElement
+						x="228"
+						y="755"
+						width="245"
+						height="16"
+						key="textField-32"
+						positionType="Float"
+						isPrintWhenDetailOverflows="true"/>
+					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
+					<textElement verticalAlignment="Top" lineSpacing="1_1_2">
+						<font/>
+					</textElement>
+				<textFieldExpression   class="java.lang.String"><![CDATA[($P{IMPORTE_EN_LETRAS_BOTTOM4} == null ? " " : $P{IMPORTE_EN_LETRAS_BOTTOM4})+($P{IMPORTE_EN_LETRAS_BOTTOM4} != null && $P{IMPORTE_EN_LETRAS_BOTTOM4}.trim().length() > 0?($P{CENTAVOS4} == null ? " " : "CON "+$P{CENTAVOS4}+"/100 ......"):"")]]></textFieldExpression>
 				</textField>
 			</band>
 		</columnHeader>
