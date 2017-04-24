@@ -3,6 +3,7 @@ package org.openXpertya.JasperReport;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
+import java.util.StringTokenizer;
 
 import org.openXpertya.JasperReport.DataSource.CheckPaymentFrancesDataSource;
 import org.openXpertya.JasperReport.DataSource.OXPJasperDataSource;
@@ -33,7 +34,8 @@ public class LaunchCheckPaymentsFrances extends SvrProcess {
 	private final static String PAGO_ANIO = "PAGO_ANIO";
 	private final static String PAGO_MES_NAME = "PAGO_MES_NAME";
 	private final static String A_LA_ORDEN = "A_LA_ORDEN";
-	private final static String IMPORTE_EN_LETRAS = "IMPORTE_EN_LETRAS";
+	private final static String IMPORTE_EN_LETRAS_TOP = "IMPORTE_EN_LETRAS_TOP";
+	private final static String IMPORTE_EN_LETRAS_BOTTOM = "IMPORTE_EN_LETRAS_BOTTOM";
 	private final static String CENTAVOS = "CENTAVOS";
 	private final static String FECHA_VENCIMIENTO = "FECHA_VENCIMIENTO";
 
@@ -122,9 +124,27 @@ public class LaunchCheckPaymentsFrances extends SvrProcess {
 			if (line.getPayment().getA_Name() != null) {
 				jasperwrapper.addParameter(A_LA_ORDEN + group, String.valueOf(line.getPayment().getA_Name()));
 			}
-			jasperwrapper.addParameter(IMPORTE_EN_LETRAS + group,
-					String.valueOf(NumeroCastellano.numeroACastellano(line.getPayAmt(), false)));
-			jasperwrapper.addParameter(CENTAVOS + group, String.valueOf(line.getPayAmtCents()));
+			String numeroCastellano = NumeroCastellano.numeroACastellano(line.getPayAmt(), false);
+			numeroCastellano = numeroCastellano .replaceAll(" PESOS", "");
+			StringTokenizer tokens = new StringTokenizer(numeroCastellano, " ");
+			int longCastellano = 0;
+			String iniCastellano = "";
+			String endCastellano = "";
+			while(longCastellano < 30 && tokens.hasMoreTokens()){
+				iniCastellano = iniCastellano.concat(tokens.nextToken()).concat(" ");
+				endCastellano = numeroCastellano.substring(iniCastellano.length());
+				longCastellano = iniCastellano.length();
+			}
+			
+			String middleCastellano = longCastellano >= 30 && tokens.hasMoreTokens()?"...... ":"";
+			iniCastellano = iniCastellano+middleCastellano;
+			
+			String centavos = String.valueOf(line.getPayAmtCents());
+			
+			jasperwrapper.addParameter(IMPORTE_EN_LETRAS_TOP + group, iniCastellano);
+			jasperwrapper.addParameter(IMPORTE_EN_LETRAS_BOTTOM + group, endCastellano);
+			jasperwrapper.addParameter(CENTAVOS + group, centavos);
+			
 			// La fecha de vencimiento del cheque, no es un campo obligatorio, por 
 			// lo tanto se puede dar el caso en el que este dato no esté presente.
 			if (line.getPayment().getDueDate() != null) {
