@@ -142,15 +142,19 @@ public class MBankList extends X_C_BankList implements DocAction {
 	public boolean rejectIt() {
 		return false;
 	}
-
-	@Override
-	public String completeIt() {
+	
+	/**
+	 * ID de lista de banco
+	 * @param bankListID id de la lista de banco
+	 * @return true si pudo actualizar los allocations, false caso contrario
+	 */
+	protected boolean updateAllocations(Integer bankListID){
 		try {
-		
+			
 			//Actualizo Órdenes de Pago con la referencia a la lista
 			for (MBankListLine line : getBankListLines()) {
 				MAllocationHdr hdr = new MAllocationHdr(getCtx(), line.getC_AllocationHdr_ID(), get_TrxName());
-				hdr.setC_BankList_ID(getID());
+				hdr.setC_BankList_ID(bankListID);
 				if (!hdr.save()) {
 					throw new Exception("@AllocationSaveError@: "
 							+ CLogger.retrieveErrorAsString());
@@ -158,7 +162,15 @@ public class MBankList extends X_C_BankList implements DocAction {
 			}
 		} catch (Exception e) {
 			m_processMsg = e.getMessage();
-			return STATUS_Invalid;
+			return false;
+		}
+		return true;
+	}
+
+	@Override
+	public String completeIt() {
+		if(!updateAllocations(getID())){
+			return DOCSTATUS_Invalid;
 		}
 		
 		setProcessed(true);
@@ -211,6 +223,10 @@ public class MBankList extends X_C_BankList implements DocAction {
 
 	@Override
 	public boolean voidIt() {
+		if(!updateAllocations(0)){
+			return false;
+		}
+		
 		setProcessed(true);
 		setDocAction(DOCACTION_None);
 
@@ -298,7 +314,7 @@ public class MBankList extends X_C_BankList implements DocAction {
 		sql.append("	c_banklist ");
 		sql.append("WHERE ");
 		sql.append("	c_doctype_id = ? ");
-		sql.append("	AND docstatus IN ('CO','CL') ");
+		sql.append("	AND docstatus IN ('CO','CL','VO','RE') ");
 		sql.append("	AND ad_client_id = ? ");
 
 		PreparedStatement ps = null;

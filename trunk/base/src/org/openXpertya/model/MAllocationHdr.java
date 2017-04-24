@@ -819,7 +819,7 @@ public class MAllocationHdr extends X_C_AllocationHdr implements DocAction, Curr
 
         return false;
     }    // postIt
-
+    
     /**
      * Descripción de Método
      *
@@ -835,7 +835,15 @@ public class MAllocationHdr extends X_C_AllocationHdr implements DocAction, Curr
         // (el ProcessMsg lo setea el método en caso de error).
         if (!validateOwnerCashLine()) {
 			return false;
-        }        
+        }
+        
+        // No se puede anular una asignación si es parte de una lista de banco
+        if(!Util.isEmpty(getC_BankList_ID(), true)){
+        	MBankList bl = new MBankList(getCtx(), getC_BankList_ID(), get_TrxName());
+        	setProcessMsg(Msg.getMsg(getCtx(), "OPInBankList", new Object[]{bl.getDocumentNo()}));
+        	return false;
+        }
+        
         setAditionalWorks(new HashMap<PO, Object>());
         
         try {
@@ -1091,6 +1099,13 @@ public class MAllocationHdr extends X_C_AllocationHdr implements DocAction, Curr
             throw new IllegalStateException( "@PeriodClosed@" );
         }
 
+        // No se puede anular una asignación si es parte de una lista de banco
+        if(!Util.isEmpty(getC_BankList_ID(), true)){
+        	MBankList bl = new MBankList(getCtx(), getC_BankList_ID(), get_TrxName());
+        	setProcessMsg(Msg.getMsg(getCtx(), "OPInBankList", new Object[]{bl.getDocumentNo()}));
+        	return false;
+        }
+        
         // Set Inactive
 
         // ContraAllocations
