@@ -22,6 +22,7 @@ import org.openXpertya.model.MPaymentBatchPOInvoices;
 import org.openXpertya.util.CLogger;
 import org.openXpertya.util.DB;
 import org.openXpertya.util.Msg;
+import org.openXpertya.util.Util;
 
 public class GeneratePaymentProposalProcess extends SvrProcess {
 	
@@ -29,6 +30,9 @@ public class GeneratePaymentProposalProcess extends SvrProcess {
 	String batchPaymentRule = null;
 	
 	MPaymentBatchPO paymentBatch = null;
+	
+	/** Organización de los comprobantes a tomar */
+	private Integer orgID = null;
 
 	@Override
 	protected void prepare() {
@@ -43,7 +47,9 @@ public class GeneratePaymentProposalProcess extends SvrProcess {
 			} else if( name.equalsIgnoreCase( "dueDate" )) {
 				dueDate = (Timestamp)para[i].getParameter();
             } else if( name.equalsIgnoreCase( "batchPaymentRule" )) {
-            	batchPaymentRule = (String)para[ i ].getParameter();            	
+            	batchPaymentRule = (String)para[ i ].getParameter();
+            } else if( name.equalsIgnoreCase( "AD_Org_ID" )) {
+            	orgID = para[ i ].getParameterAsInt();            	
             } else {
                 log.log( Level.SEVERE,"prepare - Unknown Parameter: " + name );
             }
@@ -97,15 +103,20 @@ public class GeneratePaymentProposalProcess extends SvrProcess {
 					 "INNER JOIN C_Invoice i ON ps.C_Invoice_ID = i.C_Invoice_ID " +
 					 "INNER JOIN C_BPartner bp ON i.C_BPartner_ID = bp.C_BPartner_ID " +
 					 "WHERE " + 
-					  "ps.duedate <= ? " +
-					  "AND i.docstatus IN ('CO', 'CL') " +  //Considerando autorizadas las facturas que están completas o cerradas
-					  "AND bp.batch_payment_rule IS NOT NULL " +
-					  "AND bp.C_BankAccount_ID IS NOT NULL " +
-					  "AND invoiceopen(i.C_Invoice_ID, ps.c_InvoicePaySchedule_ID) > 0 " +
-					  "AND ps.ad_org_id = ? ";
+					  " ps.duedate <= ? " +
+					  " AND i.docstatus IN ('CO', 'CL') " +  //Considerando autorizadas las facturas que están completas o cerradas
+					  " AND (i.m_authorizationchain_id is null OR i.authorizationchainstatus = '"
+					  + MInvoice.AUTHORIZATIONCHAINSTATUS_Authorized + "') " +
+					  " AND bp.batch_payment_rule IS NOT NULL " +
+					  " AND bp.C_BankAccount_ID IS NOT NULL " +
+					  " AND invoiceopen(i.C_Invoice_ID, ps.c_InvoicePaySchedule_ID) > 0 ";
+		
+		if(!Util.isEmpty(getOrgID(), true)){
+			sql += " AND ps.ad_org_id = ? ";
+		}
 		
 		if (batchPaymentRule != null)
-			sql += "AND bp.batch_payment_rule = ? ";
+			sql += " AND bp.batch_payment_rule = ? ";
 		
 		sql += "ORDER BY ps.duedate ASC";
 				
@@ -115,10 +126,13 @@ public class GeneratePaymentProposalProcess extends SvrProcess {
 			ps = DB.prepareStatement(sql, get_TrxName());
 			
 			//Parámetros
-			ps.setTimestamp(1, dueDate);
-			ps.setInt(2, paymentBatch.getAD_Org_ID());
+			int p = 1;
+			ps.setTimestamp(p++, dueDate);
+			if(!Util.isEmpty(getOrgID(), true)){
+				ps.setInt(p++, getOrgID());
+			}
 			if (batchPaymentRule != null)
-				ps.setString(3, batchPaymentRule);
+				ps.setString(p++, batchPaymentRule);
 			
 			rs = ps.executeQuery();
 			while (rs.next()) {
@@ -242,6 +256,14 @@ public class GeneratePaymentProposalProcess extends SvrProcess {
 				throw new IllegalArgumentException(Msg.getMsg(getCtx(), "PaymentBatchPODetailGenerationError") + ": " + CLogger.retrieveErrorAsString());
 			}
 		}
+	}
+
+	protected Integer getOrgID() {
+		return orgID;
+	}
+
+	protected void setOrgID(Integer orgID) {
+		this.orgID = orgID;
 	}
 	
 }
