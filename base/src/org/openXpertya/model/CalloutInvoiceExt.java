@@ -782,7 +782,7 @@ public class CalloutInvoiceExt extends CalloutInvoice {
 			// Env.getContextAsDate(ctx, WindowNo, "DateInvoiced");
 			if (C_BPartner_ID != null
 					&& (letra == null || !letra.getLetra().equals("C")))
-				buscarCai(mTab, AD_Client_ID, AD_Org_ID, C_BPartner_ID
+				buscarCai(ctx, mTab, AD_Client_ID, AD_Org_ID, C_BPartner_ID
 						.intValue(), pto);
 		}
 
@@ -939,7 +939,7 @@ public class CalloutInvoiceExt extends CalloutInvoice {
 	 * @Parametros: 
 	 * @return:
 	 */
-	private String buscarCai(MTab mTab ,int AD_Client_ID, int AD_Org_ID, int part, int pto)
+	private String buscarCai(Properties ctx, MTab mTab ,int AD_Client_ID, int AD_Org_ID, int part, int pto)
 	{	
 		if(part != 0 && pto != 0){
 			Timestamp date = (Timestamp)mTab.getValue("DateInvoiced");
@@ -961,6 +961,10 @@ public class CalloutInvoiceExt extends CalloutInvoice {
 				if (rs.next()){
 					mTab.setValue("CAI",rs.getString("cai"));
 					mTab.setValue("DATECAI",rs.getTimestamp("datecai"));
+					mTab.setCurrentRecordWarning(null);
+				}
+				else{
+					mTab.setCurrentRecordWarning(Msg.getMsg(ctx, "CAINotFound"));
 				}
 			}
 			catch (SQLException e)
@@ -1163,7 +1167,7 @@ public class CalloutInvoiceExt extends CalloutInvoice {
 		
 		
 		if(partner != null && (letra == null || !letra.getLetra().equals("C")))	{
-			return buscarCai(mTab, AD_Client_ID, AD_Org_ID,partner.intValue(),pto);
+			return buscarCai(ctx, mTab, AD_Client_ID, AD_Org_ID,partner.intValue(),pto);
 		}
 		
 		return "";
