@@ -8,6 +8,7 @@ import java.util.logging.Level;
 import org.openXpertya.model.MCheckPrinting;
 import org.openXpertya.model.MCheckPrintingLines;
 import org.openXpertya.model.MPayment;
+import org.openXpertya.model.PO;
 import org.openXpertya.util.CLogger;
 import org.openXpertya.util.DB;
 import org.openXpertya.util.Msg;
@@ -40,6 +41,13 @@ public class CheckPrintingLinesGenerate extends SvrProcess {
 
 	@Override
 	protected String doIt() throws Exception {
+		// Si uno de los cheques ya generados en la impresión se encuentra
+		// impreso, entonces no se genera
+		if (PO.existRecordFor(getCtx(), MCheckPrintingLines.Table_Name, "c_checkprinting_id = ? and printed = 'Y'",
+				new Object[] { p_C_CheckPrinting_ID }, get_TrxName())) {
+			throw new Exception(Msg.getMsg(getCtx(), "CheckPrintingAlreadyPrinted"));
+		}
+		
 		MCheckPrinting checkPrinting = new MCheckPrinting(getCtx(), p_C_CheckPrinting_ID, get_TrxName());
 		StringBuffer sql = new StringBuffer();
 
