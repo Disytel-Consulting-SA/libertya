@@ -4596,9 +4596,7 @@ public class MInvoice extends X_C_Invoice implements DocAction,Authorization, Cu
 	public boolean voidIt() {
 		log.info(toString());
 
-		if (MPreference.GetCustomPreferenceValueBool("SinPercepcionNCManual")) {
-			voidProcess = true;
-		}
+		voidProcess = true;
 
 		if (DOCSTATUS_Closed.equals(getDocStatus())
 				|| DOCSTATUS_Reversed.equals(getDocStatus())
@@ -5914,7 +5912,8 @@ public class MInvoice extends X_C_Invoice implements DocAction,Authorization, Cu
 
 		if (docType.isFiscalDocument()
 				&& MOrgPercepcion.existsOrgPercepcion(getCtx(), getAD_Org_ID(),
-						get_TrxName()) && (!getDocTypeKey().equals("ARC") || voidProcess)) {
+						get_TrxName()) && 
+						((getDocTypeKey().equals("ARC") && !MPreference.GetCustomPreferenceValueBool("SinPercepcionNCManual")) || !getDocTypeKey().equals("ARC") || isVoidProcess())) {
 			GeneratorPercepciones generator = new GeneratorPercepciones(
 					getCtx(), getDiscountableWrapper(), get_TrxName());
 			generator.calculatePercepciones(this);
@@ -5925,7 +5924,8 @@ public class MInvoice extends X_C_Invoice implements DocAction,Authorization, Cu
 		MDocType docType = MDocType.get(getCtx(), getC_DocTypeTarget_ID());
 		if (docType.isFiscalDocument()
 				&& MOrgPercepcion.existsOrgPercepcion(getCtx(), getAD_Org_ID(),
-						get_TrxName()) && (!getDocTypeKey().equals("ARC") || voidProcess)) {
+						get_TrxName()) && 
+				((getDocTypeKey().equals("ARC") && !MPreference.GetCustomPreferenceValueBool("SinPercepcionNCManual")) || !getDocTypeKey().equals("ARC") || isVoidProcess())) {
 			GeneratorPercepciones generator = new GeneratorPercepciones(
 					getCtx(), getDiscountableWrapper(), get_TrxName());
 			generator.recalculatePercepciones(this);
