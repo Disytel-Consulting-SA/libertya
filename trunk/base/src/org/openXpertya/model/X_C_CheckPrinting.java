@@ -7,7 +7,7 @@ import java.math.*;
 import org.openXpertya.util.*;
 /** Modelo Generado por C_CheckPrinting
  *  @author Comunidad de Desarrollo Libertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
- *  @version  - 2016-10-18 16:18:10.059 */
+ *  @version  - 2017-04-26 14:45:44.988 */
 public class X_C_CheckPrinting extends org.openXpertya.model.PO
 {
 /** Constructor estándar */
@@ -19,6 +19,7 @@ super (ctx, C_CheckPrinting_ID, trxName);
 setC_BankAccount_ID (0);
 setC_Checkprinting_ID (0);
 setC_DocType_ID (0);
+setDateTrx (new Timestamp(System.currentTimeMillis()));	// @#Date@
 }
  */
 }
@@ -47,7 +48,6 @@ public String toString()
 StringBuffer sb = new StringBuffer ("X_C_CheckPrinting[").append(getID()).append("]");
 return sb.toString();
 }
-public static final int C_BANKACCOUNT_ID_AD_Reference_ID = MReference.getReferenceID("C_BankAccount");
 /** Set Bank Account.
 Account at the Bank */
 public void setC_BankAccount_ID (int C_BankAccount_ID)
@@ -88,6 +88,19 @@ public int getC_DocType_ID()
 Integer ii = (Integer)get_Value("C_DocType_ID");
 if (ii == null) return 0;
 return ii.intValue();
+}
+/** Set Transaction Date.
+Transaction Date */
+public void setDateTrx (Timestamp DateTrx)
+{
+if (DateTrx == null) throw new IllegalArgumentException ("DateTrx is mandatory");
+set_Value ("DateTrx", DateTrx);
+}
+/** Get Transaction Date.
+Transaction Date */
+public Timestamp getDateTrx() 
+{
+return (Timestamp)get_Value("DateTrx");
 }
 /** Set GetLines */
 public void setGetLines (String GetLines)

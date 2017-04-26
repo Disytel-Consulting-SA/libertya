@@ -6989,3 +6989,11 @@ $BODY$
   COST 100;
 ALTER FUNCTION update_ordered(integer, integer, integer)
   OWNER TO libertya;
+
+--20170426-1310 Nueva columna en impresión de cheques para registrar la fecha
+update ad_system set dummy = (SELECT addcolumnifnotexists('C_CheckPrinting','datetrx','timestamp without time zone'));
+
+update C_CheckPrinting
+set datetrx = created;
+
+ALTER TABLE C_CheckPrinting ALTER COLUMN datetrx SET NOT NULL;
