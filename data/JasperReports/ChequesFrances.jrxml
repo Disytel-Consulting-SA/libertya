@@ -152,7 +152,7 @@
 				<textField isStretchWithOverflow="false" pattern="#,##0.00" isBlankWhenNull="false" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
 						x="429"
-						y="11"
+						y="12"
 						width="135"
 						height="18"
 						key="textField"
@@ -166,13 +166,13 @@
 				<textField isStretchWithOverflow="false" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
 						x="207"
-						y="42"
+						y="43"
 						width="35"
 						height="15"
 						key="textField"
 						positionType="Float"/>
 					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
-					<textElement>
+					<textElement verticalAlignment="Top">
 						<font/>
 					</textElement>
 				<textFieldExpression   class="java.lang.String"><![CDATA[$P{EMISION_DIA1}]]></textFieldExpression>
@@ -180,27 +180,27 @@
 				<textField isStretchWithOverflow="false" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
 						x="248"
-						y="42"
+						y="43"
 						width="88"
 						height="15"
 						key="textField"
 						positionType="Float"/>
 					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
-					<textElement>
+					<textElement verticalAlignment="Top">
 						<font/>
 					</textElement>
 				<textFieldExpression   class="java.lang.String"><![CDATA[$P{EMISION_MES_NAME1}]]></textFieldExpression>
 				</textField>
 				<textField isStretchWithOverflow="false" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
-						x="343"
-						y="42"
+						x="342"
+						y="43"
 						width="119"
 						height="15"
 						key="textField"
 						positionType="Float"/>
 					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
-					<textElement>
+					<textElement verticalAlignment="Top">
 						<font/>
 					</textElement>
 				<textFieldExpression   class="java.lang.String"><![CDATA[$P{EMISION_ANIO1}]]></textFieldExpression>
@@ -208,13 +208,13 @@
 				<textField isStretchWithOverflow="false" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
 						x="156"
-						y="57"
+						y="58"
 						width="35"
 						height="15"
 						key="textField"
 						positionType="Float"/>
 					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
-					<textElement>
+					<textElement verticalAlignment="Top">
 						<font/>
 					</textElement>
 				<textFieldExpression   class="java.lang.String"><![CDATA[$P{PAGO_DIA1}]]></textFieldExpression>
@@ -222,27 +222,27 @@
 				<textField isStretchWithOverflow="false" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
 						x="198"
-						y="57"
+						y="58"
 						width="88"
 						height="15"
 						key="textField"
 						positionType="Float"/>
 					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
-					<textElement>
+					<textElement verticalAlignment="Top">
 						<font/>
 					</textElement>
 				<textFieldExpression   class="java.lang.String"><![CDATA[$P{PAGO_MES_NAME1}]]></textFieldExpression>
 				</textField>
 				<textField isStretchWithOverflow="false" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
-						x="350"
-						y="57"
+						x="342"
+						y="58"
 						width="93"
 						height="15"
 						key="textField"
 						positionType="Float"/>
 					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
-					<textElement>
+					<textElement verticalAlignment="Top">
 						<font/>
 					</textElement>
 				<textFieldExpression   class="java.lang.String"><![CDATA[$P{PAGO_ANIO1}]]></textFieldExpression>
@@ -250,13 +250,13 @@
 				<textField isStretchWithOverflow="false" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
 						x="196"
-						y="72"
+						y="73"
 						width="277"
-						height="16"
+						height="15"
 						key="textField"
 						positionType="Float"/>
 					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
-					<textElement>
+					<textElement verticalAlignment="Top">
 						<font/>
 					</textElement>
 				<textFieldExpression   class="java.lang.String"><![CDATA[$P{A_LA_ORDEN1}]]></textFieldExpression>
@@ -271,7 +271,7 @@
 						positionType="Float"
 						isPrintWhenDetailOverflows="true"/>
 					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
-					<textElement verticalAlignment="Top" lineSpacing="1_1_2">
+					<textElement verticalAlignment="Top" lineSpacing="Single">
 						<font/>
 					</textElement>
 				<textFieldExpression   class="java.lang.String"><![CDATA[($P{IMPORTE_EN_LETRAS_TOP1} == null ? " " : $P{IMPORTE_EN_LETRAS_TOP1})+($P{IMPORTE_EN_LETRAS_BOTTOM1} != null && $P{IMPORTE_EN_LETRAS_BOTTOM1}.trim().length() > 0?"":($P{CENTAVOS1} == null ? " " : "CON "+$P{CENTAVOS1}+"/100 ......"))]]></textFieldExpression>
@@ -279,7 +279,7 @@
 				<textField isStretchWithOverflow="false" pattern="#,##0.00" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
 						x="429"
-						y="224"
+						y="225"
 						width="135"
 						height="17"
 						key="textField"
@@ -293,7 +293,7 @@
 				<textField isStretchWithOverflow="false" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
 						x="207"
-						y="255"
+						y="256"
 						width="35"
 						height="15"
 						key="textField-1"
@@ -307,7 +307,7 @@
 				<textField isStretchWithOverflow="false" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
 						x="248"
-						y="255"
+						y="256"
 						width="88"
 						height="15"
 						key="textField-2"
@@ -321,7 +321,7 @@
 				<textField isStretchWithOverflow="false" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
 						x="343"
-						y="255"
+						y="256"
 						width="119"
 						height="15"
 						key="textField-3"
@@ -335,7 +335,7 @@
 				<textField isStretchWithOverflow="false" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
 						x="156"
-						y="270"
+						y="271"
 						width="35"
 						height="15"
 						key="textField-4"
@@ -349,7 +349,7 @@
 				<textField isStretchWithOverflow="false" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
 						x="198"
-						y="270"
+						y="271"
 						width="88"
 						height="15"
 						key="textField-5"
@@ -362,9 +362,9 @@
 				</textField>
 				<textField isStretchWithOverflow="false" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
-						x="350"
-						y="270"
-						width="118"
+						x="343"
+						y="271"
+						width="93"
 						height="15"
 						key="textField-6"
 						positionType="Float"/>
@@ -377,9 +377,9 @@
 				<textField isStretchWithOverflow="false" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
 						x="196"
-						y="285"
+						y="286"
 						width="277"
-						height="16"
+						height="15"
 						key="textField-7"
 						positionType="Float"/>
 					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
@@ -398,7 +398,7 @@
 						positionType="Float"
 						isPrintWhenDetailOverflows="true"/>
 					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
-					<textElement verticalAlignment="Top" lineSpacing="1_1_2">
+					<textElement verticalAlignment="Top" lineSpacing="Single">
 						<font/>
 					</textElement>
 				<textFieldExpression   class="java.lang.String"><![CDATA[($P{IMPORTE_EN_LETRAS_TOP2} == null ? " " : $P{IMPORTE_EN_LETRAS_TOP2})+($P{IMPORTE_EN_LETRAS_BOTTOM2} != null && $P{IMPORTE_EN_LETRAS_BOTTOM2}.trim().length() > 0?"":($P{CENTAVOS2} == null ? " " : "CON "+$P{CENTAVOS2}+"/100 ......"))]]></textFieldExpression>
@@ -426,7 +426,7 @@
 						key="textField-11"
 						positionType="Float"/>
 					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
-					<textElement>
+					<textElement verticalAlignment="Top" lineSpacing="Single">
 						<font/>
 					</textElement>
 				<textFieldExpression   class="java.lang.String"><![CDATA[$P{EMISION_DIA3}]]></textFieldExpression>
@@ -440,7 +440,7 @@
 						key="textField-12"
 						positionType="Float"/>
 					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
-					<textElement>
+					<textElement verticalAlignment="Top" lineSpacing="Single">
 						<font/>
 					</textElement>
 				<textFieldExpression   class="java.lang.String"><![CDATA[$P{EMISION_MES_NAME3}]]></textFieldExpression>
@@ -454,7 +454,7 @@
 						key="textField-13"
 						positionType="Float"/>
 					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
-					<textElement>
+					<textElement verticalAlignment="Top" lineSpacing="Single">
 						<font/>
 					</textElement>
 				<textFieldExpression   class="java.lang.String"><![CDATA[$P{EMISION_ANIO3}]]></textFieldExpression>
@@ -468,7 +468,7 @@
 						key="textField-14"
 						positionType="Float"/>
 					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
-					<textElement>
+					<textElement verticalAlignment="Top" lineSpacing="Single">
 						<font/>
 					</textElement>
 				<textFieldExpression   class="java.lang.String"><![CDATA[$P{PAGO_DIA3}]]></textFieldExpression>
@@ -482,21 +482,21 @@
 						key="textField-15"
 						positionType="Float"/>
 					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
-					<textElement>
+					<textElement verticalAlignment="Top" lineSpacing="Single">
 						<font/>
 					</textElement>
 				<textFieldExpression   class="java.lang.String"><![CDATA[$P{PAGO_MES_NAME3}]]></textFieldExpression>
 				</textField>
 				<textField isStretchWithOverflow="false" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
-						x="350"
+						x="343"
 						y="490"
-						width="118"
+						width="93"
 						height="15"
 						key="textField-16"
 						positionType="Float"/>
 					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
-					<textElement>
+					<textElement verticalAlignment="Top" lineSpacing="Single">
 						<font/>
 					</textElement>
 				<textFieldExpression   class="java.lang.String"><![CDATA[$P{PAGO_ANIO3}]]></textFieldExpression>
@@ -506,11 +506,11 @@
 						x="196"
 						y="505"
 						width="277"
-						height="16"
+						height="15"
 						key="textField-17"
 						positionType="Float"/>
 					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
-					<textElement>
+					<textElement verticalAlignment="Top" lineSpacing="Single">
 						<font/>
 					</textElement>
 				<textFieldExpression   class="java.lang.String"><![CDATA[$P{A_LA_ORDEN3}]]></textFieldExpression>
@@ -518,14 +518,14 @@
 				<textField isStretchWithOverflow="true" pattern="" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
 						x="228"
-						y="521"
+						y="520"
 						width="245"
 						height="16"
 						key="textField-18"
 						positionType="Float"
 						isPrintWhenDetailOverflows="true"/>
 					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
-					<textElement verticalAlignment="Top" lineSpacing="1_1_2">
+					<textElement verticalAlignment="Top" lineSpacing="Single">
 						<font/>
 					</textElement>
 				<textFieldExpression   class="java.lang.String"><![CDATA[($P{IMPORTE_EN_LETRAS_TOP3} == null ? " " : $P{IMPORTE_EN_LETRAS_TOP3})+($P{IMPORTE_EN_LETRAS_BOTTOM3} != null && $P{IMPORTE_EN_LETRAS_BOTTOM3}.trim().length() > 0?"":($P{CENTAVOS3} == null ? " " : "CON "+$P{CENTAVOS3}+"/100 ......"))]]></textFieldExpression>
@@ -533,7 +533,7 @@
 				<textField isStretchWithOverflow="false" pattern="#,##0.00" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
 						x="429"
-						y="660"
+						y="658"
 						width="135"
 						height="17"
 						key="textField-20"
@@ -547,13 +547,13 @@
 				<textField isStretchWithOverflow="false" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
 						x="207"
-						y="693"
+						y="692"
 						width="35"
 						height="15"
 						key="textField-21"
 						positionType="Float"/>
 					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
-					<textElement>
+					<textElement verticalAlignment="Top">
 						<font/>
 					</textElement>
 				<textFieldExpression   class="java.lang.String"><![CDATA[$P{EMISION_DIA4}]]></textFieldExpression>
@@ -561,13 +561,13 @@
 				<textField isStretchWithOverflow="false" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
 						x="248"
-						y="693"
+						y="692"
 						width="88"
 						height="15"
 						key="textField-22"
 						positionType="Float"/>
 					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
-					<textElement>
+					<textElement verticalAlignment="Top">
 						<font/>
 					</textElement>
 				<textFieldExpression   class="java.lang.String"><![CDATA[$P{EMISION_MES_NAME4}]]></textFieldExpression>
@@ -575,13 +575,13 @@
 				<textField isStretchWithOverflow="false" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
 						x="343"
-						y="693"
+						y="692"
 						width="119"
 						height="15"
 						key="textField-23"
 						positionType="Float"/>
 					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
-					<textElement>
+					<textElement verticalAlignment="Top">
 						<font/>
 					</textElement>
 				<textFieldExpression   class="java.lang.String"><![CDATA[$P{EMISION_ANIO4}]]></textFieldExpression>
@@ -589,13 +589,13 @@
 				<textField isStretchWithOverflow="false" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
 						x="156"
-						y="708"
+						y="707"
 						width="35"
 						height="15"
 						key="textField-24"
 						positionType="Float"/>
 					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
-					<textElement>
+					<textElement verticalAlignment="Top">
 						<font/>
 					</textElement>
 				<textFieldExpression   class="java.lang.String"><![CDATA[$P{PAGO_DIA4}]]></textFieldExpression>
@@ -603,27 +603,27 @@
 				<textField isStretchWithOverflow="false" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
 						x="198"
-						y="708"
+						y="707"
 						width="88"
 						height="15"
 						key="textField-25"
 						positionType="Float"/>
 					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
-					<textElement>
+					<textElement verticalAlignment="Top">
 						<font/>
 					</textElement>
 				<textFieldExpression   class="java.lang.String"><![CDATA[$P{PAGO_MES_NAME4}]]></textFieldExpression>
 				</textField>
 				<textField isStretchWithOverflow="false" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
-						x="350"
-						y="708"
-						width="118"
+						x="343"
+						y="707"
+						width="93"
 						height="15"
 						key="textField-26"
 						positionType="Float"/>
 					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
-					<textElement>
+					<textElement verticalAlignment="Top">
 						<font/>
 					</textElement>
 				<textFieldExpression   class="java.lang.String"><![CDATA[$P{PAGO_ANIO4}]]></textFieldExpression>
@@ -631,13 +631,13 @@
 				<textField isStretchWithOverflow="false" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
 						x="196"
-						y="723"
+						y="722"
 						width="279"
-						height="16"
+						height="15"
 						key="textField-27"
 						positionType="Float"/>
 					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
-					<textElement>
+					<textElement verticalAlignment="Top">
 						<font/>
 					</textElement>
 				<textFieldExpression   class="java.lang.String"><![CDATA[$P{A_LA_ORDEN4}]]></textFieldExpression>
@@ -645,14 +645,14 @@
 				<textField isStretchWithOverflow="true" pattern="" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
 						x="228"
-						y="739"
+						y="737"
 						width="245"
 						height="16"
 						key="textField-28"
 						positionType="Float"
 						isPrintWhenDetailOverflows="true"/>
 					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
-					<textElement verticalAlignment="Top" lineSpacing="1_1_2">
+					<textElement verticalAlignment="Top">
 						<font/>
 					</textElement>
 				<textFieldExpression   class="java.lang.String"><![CDATA[($P{IMPORTE_EN_LETRAS_TOP4} == null ? " " : $P{IMPORTE_EN_LETRAS_TOP4})+($P{IMPORTE_EN_LETRAS_BOTTOM4} != null && $P{IMPORTE_EN_LETRAS_BOTTOM4}.trim().length() > 0?"":($P{CENTAVOS4} == null ? " " : "CON "+$P{CENTAVOS4}+"/100 ......"))]]></textFieldExpression>
@@ -667,7 +667,7 @@
 						positionType="Float"
 						isPrintWhenDetailOverflows="true"/>
 					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
-					<textElement verticalAlignment="Top" lineSpacing="1_1_2">
+					<textElement verticalAlignment="Top" lineSpacing="Single">
 						<font/>
 					</textElement>
 				<textFieldExpression   class="java.lang.String"><![CDATA[($P{IMPORTE_EN_LETRAS_BOTTOM1} == null ? " " : $P{IMPORTE_EN_LETRAS_BOTTOM1})+($P{IMPORTE_EN_LETRAS_BOTTOM1} != null && $P{IMPORTE_EN_LETRAS_BOTTOM1}.trim().length() > 0?($P{CENTAVOS1} == null ? " " : "CON "+$P{CENTAVOS1}+"/100 ......"):"")]]></textFieldExpression>
@@ -682,7 +682,7 @@
 						positionType="Float"
 						isPrintWhenDetailOverflows="true"/>
 					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
-					<textElement verticalAlignment="Top" lineSpacing="1_1_2">
+					<textElement verticalAlignment="Top" lineSpacing="Single">
 						<font/>
 					</textElement>
 				<textFieldExpression   class="java.lang.String"><![CDATA[($P{IMPORTE_EN_LETRAS_BOTTOM2} == null ? " " : $P{IMPORTE_EN_LETRAS_BOTTOM2})+($P{IMPORTE_EN_LETRAS_BOTTOM2} != null && $P{IMPORTE_EN_LETRAS_BOTTOM2}.trim().length() > 0?($P{CENTAVOS2} == null ? " " : "CON "+$P{CENTAVOS2}+"/100 ......"):"")]]></textFieldExpression>
@@ -690,14 +690,14 @@
 				<textField isStretchWithOverflow="true" pattern="" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
 						x="228"
-						y="537"
+						y="536"
 						width="245"
 						height="16"
 						key="textField-31"
 						positionType="Float"
 						isPrintWhenDetailOverflows="true"/>
 					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
-					<textElement verticalAlignment="Top" lineSpacing="1_1_2">
+					<textElement verticalAlignment="Top" lineSpacing="Single">
 						<font/>
 					</textElement>
 				<textFieldExpression   class="java.lang.String"><![CDATA[($P{IMPORTE_EN_LETRAS_BOTTOM3} == null ? " " : $P{IMPORTE_EN_LETRAS_BOTTOM3})+($P{IMPORTE_EN_LETRAS_BOTTOM3} != null && $P{IMPORTE_EN_LETRAS_BOTTOM3}.trim().length() > 0?($P{CENTAVOS3} == null ? " " : "CON "+$P{CENTAVOS3}+"/100 ......"):"")]]></textFieldExpression>
@@ -705,14 +705,14 @@
 				<textField isStretchWithOverflow="true" pattern="" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
 						x="228"
-						y="755"
+						y="753"
 						width="245"
 						height="16"
 						key="textField-32"
 						positionType="Float"
 						isPrintWhenDetailOverflows="true"/>
 					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
-					<textElement verticalAlignment="Top" lineSpacing="1_1_2">
+					<textElement verticalAlignment="Top">
 						<font/>
 					</textElement>
 				<textFieldExpression   class="java.lang.String"><![CDATA[($P{IMPORTE_EN_LETRAS_BOTTOM4} == null ? " " : $P{IMPORTE_EN_LETRAS_BOTTOM4})+($P{IMPORTE_EN_LETRAS_BOTTOM4} != null && $P{IMPORTE_EN_LETRAS_BOTTOM4}.trim().length() > 0?($P{CENTAVOS4} == null ? " " : "CON "+$P{CENTAVOS4}+"/100 ......"):"")]]></textFieldExpression>
