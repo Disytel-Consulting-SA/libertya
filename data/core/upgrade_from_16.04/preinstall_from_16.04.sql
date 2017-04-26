@@ -6909,3 +6909,83 @@ ALTER TABLE c_allocation_detail_credits_v
 
 --20170420-1400 Nueva columna en lista de banco para registrar el total de pagos electrónicos de la OP relacionada
 update ad_system set dummy = (SELECT addcolumnifnotexists('c_banklistline','electronicpaymenttotal','numeric(20,2) NOT NULL DEFAULT 0'));
+
+--20170426-1200 Funciones para actualizar las cantidades pendientes en storage
+CREATE OR REPLACE FUNCTION update_reserved(
+    clientid integer,
+    orgid integer,
+    productid integer)
+  RETURNS void AS
+$BODY$
+/***********
+Actualiza la cantidad reservada de los depósitos de la compañía, organización y artículo parametro, 
+siempre y cuando existan los regitros en m_storage 
+y sólo sobre locators marcados como default ya que asi se realiza al procesar pedidos.
+Las cantidades reservadas se obtienen de pedidos procesados.
+*/
+BEGIN
+	update m_storage s
+	set qtyreserved = coalesce((select sum(ol.qtyordered - ol.qtydelivered) as qtypending
+					from c_orderline ol
+					inner join c_order o on o.c_order_id = ol.c_order_id
+					inner join m_warehouse w on w.m_warehouse_id = o.m_warehouse_id
+					inner join m_locator l on l.m_warehouse_id = w.m_warehouse_id
+					where ol.qtyordered <> ol.qtydelivered 
+						and o.processed = 'Y' 
+						and s.m_product_id = ol.m_product_id
+						and s.m_locator_id = l.m_locator_id
+						and o.issotrx = 'Y'),0)
+	where ad_client_id = clientid
+		and (orgid = 0 or ad_org_id = orgid)
+		and (productid = 0 or m_product_id = productid)
+		and s.m_locator_id IN (select defaultLocator 
+					from (select m_warehouse_id, max(m_locator_id) as defaultLocator
+						from m_locator l
+						where l.isdefault = 'Y' and l.isactive = 'Y'
+						GROUP by m_warehouse_id) as dl);
+END;
+$BODY$
+  LANGUAGE plpgsql VOLATILE
+  COST 100;
+ALTER FUNCTION update_reserved(integer, integer, integer)
+  OWNER TO libertya;
+
+
+CREATE OR REPLACE FUNCTION update_ordered(
+    clientid integer,
+    orgid integer,
+    productid integer)
+  RETURNS void AS
+$BODY$
+/***********
+Actualiza la cantidad pendiente pedida de los depósitos de la compañía, organización y artículo parametro, 
+siempre y cuando existan los regitros en m_storage 
+y sólo sobre locators marcados como default ya que asi se realiza al procesar pedidos.
+Las cantidades pendientes se obtienen de pedidos procesados.
+*/
+BEGIN
+	update m_storage s
+	set qtyordered = coalesce((select sum(ol.qtyordered - ol.qtydelivered) as qtypending
+					from c_orderline ol
+					inner join c_order o on o.c_order_id = ol.c_order_id
+					inner join m_warehouse w on w.m_warehouse_id = o.m_warehouse_id
+					inner join m_locator l on l.m_warehouse_id = w.m_warehouse_id
+					where ol.qtyordered <> ol.qtydelivered 
+						and o.processed = 'Y' 
+						and s.m_product_id = ol.m_product_id
+						and s.m_locator_id = l.m_locator_id
+						and o.issotrx = 'N'),0)
+	where ad_client_id = clientid
+		and (orgid = 0 or ad_org_id = orgid)
+		and (productid = 0 or m_product_id = productid)
+		and s.m_locator_id IN (select defaultLocator 
+					from (select m_warehouse_id, max(m_locator_id) as defaultLocator
+						from m_locator l
+						where l.isdefault = 'Y' and l.isactive = 'Y'
+						GROUP by m_warehouse_id) as dl);
+END;
+$BODY$
+  LANGUAGE plpgsql VOLATILE
+  COST 100;
+ALTER FUNCTION update_ordered(integer, integer, integer)
+  OWNER TO libertya;
