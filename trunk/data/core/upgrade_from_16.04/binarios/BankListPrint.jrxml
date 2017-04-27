@@ -42,12 +42,42 @@
 	rl.name tendertype_name,
 	(CASE WHEN tendertype = 'K' THEN p.dateemissioncheck ELSE p.datetrx END) emissiondate,
 	(CASE WHEN tendertype = 'K' THEN p.duedate ELSE null END) duedate,
-	p.payamt
+	(CASE WHEN ah.allocationtype = 'OPA' THEN p.payamt ELSE rp.payamt END) payamt
 from c_banklist bl
 inner join c_banklistline bll on bll.c_banklist_id = bl.c_banklist_id
 inner join c_allocationhdr ah on ah.c_allocationhdr_id = bll.c_allocationhdr_id
 inner join c_allocationline al on al.c_allocationhdr_id = ah.c_allocationhdr_id
 inner join c_payment p on p.c_payment_id = al.c_payment_id
+inner join (select c_payment_id, (CASE WHEN payamt > 0 OR allocatedamt >= amt THEN 0 ELSE amt - allocatedamt END) as payamt
+from (select cp.c_payment_id, cp.amt, sum(coalesce(payamt,0)) as payamt, sum(coalesce(allocatedamt,0)) as allocatedamt
+FROM (SELECT p.c_banklist_id as c_banklist_orig_id, p.c_payment_id, sum(abs((CASE WHEN allocationtype = 'OPA' THEN payamt ELSE allocatedamt END))) as amt 
+FROM (SELECT bll.c_banklist_id, ah.allocationtype, p.c_payment_id, p.payamt, sum(al.amount) as allocatedamt 
+	FROM c_banklistline bll 
+	INNER JOIN c_allocationhdr ah on ah.c_allocationhdr_id = bll.c_allocationhdr_id
+	INNER JOIN c_allocationline al ON ah.c_allocationhdr_id = al.c_allocationhdr_id
+	INNER JOIN c_payment p ON p.c_payment_id = al.c_payment_id
+	WHERE bll.c_banklist_id = $P{RECORD_ID}
+	GROUP BY bll.c_banklist_id, ah.allocationtype, p.c_payment_id, p.payamt) as p 
+group by p.c_banklist_id, p.c_payment_id) as cp
+left join (select bl.c_banklist_id,
+	p.c_payment_id, 
+	sum(CASE WHEN allocationtype = 'OPA' THEN p.payamt ELSE 0 END) as payamt, 
+	sum(alo.amount) as allocatedamt 
+from (select distinct c_banklist_id, c_payment_id 
+	from c_banklistline bll
+	inner join c_allocationline al on al.c_allocationhdr_id = bll.c_allocationhdr_id 
+	where bll.c_banklist_id = $P{RECORD_ID}) as bp 
+inner join c_banklist bl on bl.c_banklist_id = bp.c_banklist_id
+inner join c_payment p on p.c_payment_id = bp.c_payment_id 
+inner join c_allocationline alo on (alo.c_payment_id = p.c_payment_id) 
+inner join c_allocationhdr aho on aho.c_allocationhdr_id = alo.c_allocationhdr_id 
+inner join c_banklist bbl on bbl.c_banklist_id = aho.c_banklist_id
+where aho.c_banklist_id is not null 
+	AND aho.c_banklist_id <> $P{RECORD_ID}
+	AND aho.docstatus IN ('CO','CL') 
+	AND bbl.datetrx::date <= bl.datetrx::date
+group by bl.c_banklist_id, p.c_payment_id) as bp on bp.c_payment_id = cp.c_payment_id
+group by cp.c_payment_id, cp.amt) a) rp on rp.c_payment_id = p.c_payment_id
 inner join c_bpartner bp on bp.c_bpartner_id = p.c_bpartner_id
 inner join (select rl.value, (CASE WHEN $P{CURRENT_LANG} = 'es_ES' THEN rl.name ELSE rlt.name END) as name
 		from ad_reference r 
