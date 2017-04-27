@@ -67,7 +67,7 @@ public class GenerateBankList extends AbstractSvrProcess {
 		sql.append("	AND p.isreceipt = 'N' ");
 		sql.append("	AND p.docstatus IN ('CO','CL') ");
 		sql.append("	AND ah.docstatus IN ('CO','CL') ");
-		sql.append("	AND ah.allocationtype = 'OP' ");
+		sql.append("	AND ah.allocationtype IN ('OP','OPA') ");
 		sql.append("	AND p.c_bankaccount_id = ? ");
 		sql.append("    AND ah.c_banklist_id IS NULL ");
 		sql.append("	AND to_number(replace(replace(ah.documentno, ?, ''), ?, ''), ?) <= ");
