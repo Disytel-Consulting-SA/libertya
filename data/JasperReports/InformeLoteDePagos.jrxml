@@ -41,6 +41,7 @@
 	<field name="first_due_date" class="java.sql.Timestamp"/>
 	<field name="last_due_date" class="java.sql.Timestamp"/>
 	<field name="diff" class="java.lang.Double"/>
+	<field name="bank_account_name" class="java.lang.String"/>
 
 		<background>
 			<band height="0"  isSplitAllowed="true" >
@@ -279,7 +280,7 @@
 						mode="Opaque"
 						x="0"
 						y="0"
-						width="281"
+						width="248"
 						height="12"
 						backcolor="#CCCCCC"
 						key="staticText-9"/>
@@ -292,9 +293,9 @@
 				<staticText>
 					<reportElement
 						mode="Opaque"
-						x="681"
+						x="693"
 						y="0"
-						width="100"
+						width="88"
 						height="12"
 						backcolor="#CCCCCC"
 						key="staticText-10"/>
@@ -307,9 +308,9 @@
 				<staticText>
 					<reportElement
 						mode="Opaque"
-						x="581"
+						x="615"
 						y="0"
-						width="100"
+						width="78"
 						height="12"
 						backcolor="#CCCCCC"
 						key="staticText-11"/>
@@ -317,14 +318,14 @@
 					<textElement textAlignment="Center" verticalAlignment="Middle">
 						<font pdfFontName="Helvetica-Bold" size="8" isBold="true" isUnderline="false"/>
 					</textElement>
-				<text><![CDATA[Última Fecha Vto]]></text>
+				<text><![CDATA[Últ. Fecha Vto]]></text>
 				</staticText>
 				<staticText>
 					<reportElement
 						mode="Opaque"
-						x="481"
+						x="520"
 						y="0"
-						width="100"
+						width="95"
 						height="12"
 						backcolor="#CCCCCC"
 						key="staticText-12"/>
@@ -337,9 +338,9 @@
 				<staticText>
 					<reportElement
 						mode="Opaque"
-						x="281"
+						x="352"
 						y="0"
-						width="100"
+						width="78"
 						height="12"
 						backcolor="#CCCCCC"
 						key="staticText-13"/>
@@ -352,9 +353,9 @@
 				<staticText>
 					<reportElement
 						mode="Opaque"
-						x="381"
+						x="430"
 						y="0"
-						width="100"
+						width="90"
 						height="12"
 						backcolor="#CCCCCC"
 						key="staticText-14"/>
@@ -364,87 +365,115 @@
 					</textElement>
 				<text><![CDATA[Importe de Pago]]></text>
 				</staticText>
+				<staticText>
+					<reportElement
+						mode="Opaque"
+						x="248"
+						y="0"
+						width="104"
+						height="12"
+						backcolor="#CCCCCC"
+						key="staticText-27"/>
+					<box topBorder="1Point" topBorderColor="#000000" leftBorder="1Point" leftBorderColor="#000000" rightBorder="1Point" rightBorderColor="#000000" bottomBorder="1Point" bottomBorderColor="#000000"/>
+					<textElement textAlignment="Center" verticalAlignment="Middle">
+						<font pdfFontName="Helvetica-Bold" size="8" isBold="true" isUnderline="false"/>
+					</textElement>
+				<text><![CDATA[Cuenta Bancaria]]></text>
+				</staticText>
 			</band>
 		</columnHeader>
 		<detail>
 			<band height="22"  isSplitAllowed="true" >
-				<textField isStretchWithOverflow="false" isBlankWhenNull="false" evaluationTime="Band" hyperlinkType="None"  hyperlinkTarget="Self" >
+				<textField isStretchWithOverflow="false" isBlankWhenNull="true" evaluationTime="Band" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
 						x="0"
 						y="0"
-						width="281"
+						width="248"
 						height="13"
 						key="row-1"/>
 					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
-					<textElement verticalAlignment="Bottom">
+					<textElement verticalAlignment="Middle">
 						<font/>
 					</textElement>
 				<textFieldExpression   class="java.lang.String"><![CDATA[$F{provider_value} + " - " + $F{provider_name}]]></textFieldExpression>
 				</textField>
-				<textField isStretchWithOverflow="false" pattern="dd/MM/yyyy" isBlankWhenNull="false" evaluationTime="Band" hyperlinkType="None"  hyperlinkTarget="Self" >
+				<textField isStretchWithOverflow="false" pattern="dd/MM/yyyy" isBlankWhenNull="true" evaluationTime="Band" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
-						x="281"
+						x="352"
 						y="0"
-						width="100"
+						width="78"
 						height="13"
 						key="row-2"/>
 					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
-					<textElement textAlignment="Right" verticalAlignment="Bottom">
+					<textElement textAlignment="Right" verticalAlignment="Middle">
 						<font/>
 					</textElement>
 				<textFieldExpression   class="java.sql.Timestamp"><![CDATA[$F{payment_date}]]></textFieldExpression>
 				</textField>
-				<textField isStretchWithOverflow="false" pattern="¤ #,##0.00" isBlankWhenNull="false" evaluationTime="Band" hyperlinkType="None"  hyperlinkTarget="Self" >
+				<textField isStretchWithOverflow="false" pattern="¤ #,##0.00" isBlankWhenNull="true" evaluationTime="Band" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
-						x="381"
+						x="430"
 						y="0"
-						width="100"
+						width="90"
 						height="13"
 						key="row-3"/>
 					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
-					<textElement textAlignment="Right" verticalAlignment="Bottom">
+					<textElement textAlignment="Right" verticalAlignment="Middle">
 						<font/>
 					</textElement>
 				<textFieldExpression   class="java.math.BigDecimal"><![CDATA[$F{payment_amount}]]></textFieldExpression>
 				</textField>
-				<textField isStretchWithOverflow="false" pattern="dd/MM/yyyy" isBlankWhenNull="false" evaluationTime="Band" hyperlinkType="None"  hyperlinkTarget="Self" >
+				<textField isStretchWithOverflow="false" pattern="dd/MM/yyyy" isBlankWhenNull="true" evaluationTime="Band" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
-						x="481"
+						x="520"
 						y="0"
-						width="100"
+						width="95"
 						height="13"
 						key="row-4"/>
 					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
-					<textElement textAlignment="Right" verticalAlignment="Bottom">
+					<textElement textAlignment="Right" verticalAlignment="Middle">
 						<font/>
 					</textElement>
 				<textFieldExpression   class="java.sql.Timestamp"><![CDATA[$F{first_due_date}]]></textFieldExpression>
 				</textField>
-				<textField isStretchWithOverflow="false" pattern="dd/MM/yyyy" isBlankWhenNull="false" evaluationTime="Band" hyperlinkType="None"  hyperlinkTarget="Self" >
+				<textField isStretchWithOverflow="false" pattern="dd/MM/yyyy" isBlankWhenNull="true" evaluationTime="Band" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
-						x="581"
+						x="615"
 						y="0"
-						width="100"
+						width="78"
 						height="13"
 						key="row-5"/>
 					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
-					<textElement textAlignment="Right" verticalAlignment="Bottom">
+					<textElement textAlignment="Right" verticalAlignment="Middle">
 						<font/>
 					</textElement>
 				<textFieldExpression   class="java.sql.Timestamp"><![CDATA[$F{last_due_date}]]></textFieldExpression>
 				</textField>
-				<textField isStretchWithOverflow="false" pattern="###0" isBlankWhenNull="false" evaluationTime="Band" hyperlinkType="None"  hyperlinkTarget="Self" >
+				<textField isStretchWithOverflow="false" pattern="###0" isBlankWhenNull="true" evaluationTime="Band" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
-						x="681"
+						x="693"
 						y="0"
-						width="100"
+						width="88"
 						height="13"
 						key="row-6"/>
 					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
-					<textElement textAlignment="Right" verticalAlignment="Bottom">
+					<textElement textAlignment="Right" verticalAlignment="Middle">
 						<font/>
 					</textElement>
 				<textFieldExpression   class="java.lang.Double"><![CDATA[$F{diff}]]></textFieldExpression>
+				</textField>
+				<textField isStretchWithOverflow="false" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
+					<reportElement
+						x="248"
+						y="0"
+						width="104"
+						height="13"
+						key="textField"/>
+					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
+					<textElement textAlignment="Center" verticalAlignment="Middle">
+						<font/>
+					</textElement>
+				<textFieldExpression   class="java.lang.String"><![CDATA[$F{bank_account_name}]]></textFieldExpression>
 				</textField>
 			</band>
 		</detail>
