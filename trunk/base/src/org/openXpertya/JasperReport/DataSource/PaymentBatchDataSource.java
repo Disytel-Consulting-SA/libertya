@@ -163,10 +163,13 @@ public class PaymentBatchDataSource extends QueryDataSource {
 		sql.append("		pbd.paymentamount AS payment_amount, ");
 		sql.append("		pbd.firstduedate::date AS first_due_date, ");
 		sql.append("		pbd.lastduedate::date AS last_due_date, ");
-		sql.append("		EXTRACT(day FROM (pbd.lastduedate - pbd.firstduedate)) AS diff ");
+		sql.append("		EXTRACT(day FROM (pbd.lastduedate - pbd.firstduedate)) AS diff, ");
+		sql.append("		coalesce(ba.accountno, bap.accountno) AS bank_account_name ");
 		sql.append("	FROM ");
 		sql.append("		c_paymentbatchpodetail pbd ");
 		sql.append("		INNER JOIN c_bpartner bp ON bp.c_bpartner_id = pbd.c_bpartner_id ");
+		sql.append("		LEFT JOIN c_bankaccount ba ON ba.c_bankaccount_id = pbd.c_bankaccount_id ");
+		sql.append("		LEFT JOIN c_bankaccount bap ON bap.c_bankaccount_id = bp.c_bankaccount_id ");
 		sql.append("	ORDER BY ");
 		sql.append("		pbd.paymentdate ASC ");
 		sql.append(") AS b ");
