@@ -90,9 +90,7 @@ public class ImportListaPatagonia extends SvrProcess
 		int updatedPayments = 0;
 		String clientCheck = " AND AD_Client_ID=" + Env.getAD_Client_ID(getCtx());
 		
-		BigDecimal paymentId = Env.ZERO;
-		BigDecimal nroCheque = Env.ZERO;
-		String nombreProveedor = "";
+		String nroCheque;
 		Date fechaEmision;
 		Date fechaVto;
 		Integer C_Payment_ID, iListaPatagoniaID;
@@ -121,8 +119,7 @@ public class ImportListaPatagonia extends SvrProcess
 				+ "SET C_Payment_ID = ( SELECT p.C_Payment_ID " +
 										"FROM c_lista_patagonia_payments lpp " +
 										"INNER JOIN c_allocationhdr ah on ah.c_allocationhdr_id = lpp.c_allocationhdr_id " +
-									   "WHERE to_number(op_ref) = to_number(translate(translate(ah.documentno,'" + opPrefix + "',''), '" + opSuffix
-									   		+ "', ''),'999999999999999999') )");
+									   "WHERE op_ref = translate(translate(ah.documentno,'" + opPrefix + "',''), '" + opSuffix+ "', '') )");
 		int no = DB.executeUpdate (sql.toString ());
 			log.info ("doIt - Cheques Encontrados = " + no);
 			
@@ -133,7 +130,7 @@ public class ImportListaPatagonia extends SvrProcess
 				log.info ("doIt - Cheques No Encontrados = " + no);			
 			
 
-		sql = new StringBuffer ("SELECT I_LISTA_PATAGONIA_ID, TO_NUMBER(Op_Ref) as Op_Ref,TO_NUMBER(Nro_Chq_Usado) as Nro_Chq_Usado," +
+		sql = new StringBuffer ("SELECT I_LISTA_PATAGONIA_ID, Op_Ref, Nro_Chq_Usado," +
 				" Beneficiario, F_Emision, F_Vto_Cpd, C_Payment_ID "
 			+	" FROM I_LISTA_PATAGONIA "
 			+ "WHERE I_IsImported = 'N'").append (clientCheck);
@@ -146,9 +143,7 @@ public class ImportListaPatagonia extends SvrProcess
 			//
 			while (rs.next()) {
 				iListaPatagoniaID = rs.getInt("I_LISTA_PATAGONIA_ID");
-				paymentId = rs.getBigDecimal("Op_Ref");
-				nroCheque = rs.getBigDecimal("Nro_Chq_Usado");
-				nombreProveedor = rs.getString("Beneficiario");
+				nroCheque = rs.getString("Nro_Chq_Usado");
 				fechaEmision = rs.getDate("F_Emision");
 				fechaVto = rs.getDate("F_Vto_Cpd");
 				C_Payment_ID = rs.getInt("C_Payment_ID");
