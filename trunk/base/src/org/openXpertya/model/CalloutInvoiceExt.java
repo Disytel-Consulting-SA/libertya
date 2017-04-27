@@ -961,10 +961,6 @@ public class CalloutInvoiceExt extends CalloutInvoice {
 				if (rs.next()){
 					mTab.setValue("CAI",rs.getString("cai"));
 					mTab.setValue("DATECAI",rs.getTimestamp("datecai"));
-					mTab.setCurrentRecordWarning(null);
-				}
-				else{
-					mTab.setCurrentRecordWarning(Msg.getMsg(ctx, "CAINotFound"));
 				}
 			}
 			catch (SQLException e)
