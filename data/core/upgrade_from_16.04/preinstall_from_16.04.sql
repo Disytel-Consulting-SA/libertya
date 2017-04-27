@@ -6997,3 +6997,6 @@ update C_CheckPrinting
 set datetrx = created;
 
 ALTER TABLE C_CheckPrinting ALTER COLUMN datetrx SET NOT NULL;
+
+--20170427-1015 Nueva columna para validar CAI Obligatorio
+update ad_system set dummy = (SELECT addcolumnifnotexists('c_bpartner','ismandatorycai','character(1) NOT NULL DEFAULT ''N''::bpchar'));
