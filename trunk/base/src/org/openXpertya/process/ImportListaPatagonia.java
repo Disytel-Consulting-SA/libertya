@@ -104,6 +104,8 @@ public class ImportListaPatagonia extends SvrProcess
 			int no = DB.executeUpdate (sql.toString());
 		}
 		
+		MDocType lpdt = MDocType.getDocType(getCtx(), MDocType.DOCTYPE_Lista_Patagonia, get_TrxName());
+		
 		MDocType opDocType = MDocType.getDocType(getCtx(), MDocType.DOCTYPE_Orden_De_Pago, get_TrxName());
 		if(opDocType == null){
 			throw new Exception("No existe el tipo de documento Orden de Pago");
@@ -117,9 +119,10 @@ public class ImportListaPatagonia extends SvrProcess
 		
 		StringBuffer sql = new StringBuffer ("UPDATE I_LISTA_PATAGONIA "
 				+ "SET C_Payment_ID = ( SELECT p.C_Payment_ID " +
-										"FROM c_lista_patagonia_payments lpp " +
+										"FROM c_electronic_payments lpp " +
 										"INNER JOIN c_allocationhdr ah on ah.c_allocationhdr_id = lpp.c_allocationhdr_id " +
-									   "WHERE op_ref = translate(translate(ah.documentno,'" + opPrefix + "',''), '" + opSuffix+ "', '') )");
+									   "WHERE op_ref = translate(translate(ah.documentno,'" + opPrefix + "',''), '" + opSuffix+ "', '') ) "
+									   		+ " and lpp.c_doctype_id = "+lpdt.getID());
 		int no = DB.executeUpdate (sql.toString ());
 			log.info ("doIt - Cheques Encontrados = " + no);
 			
