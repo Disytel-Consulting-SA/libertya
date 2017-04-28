@@ -24,6 +24,7 @@ import org.openXpertya.model.MPayment;
 import org.openXpertya.model.MSequence;
 import org.openXpertya.util.DB;
 import org.openXpertya.util.Env;
+import org.openXpertya.util.Util;
 
 /**
  *	Import GL Journal Batch/JournalLine from I_Journal
@@ -118,11 +119,11 @@ public class ImportListaPatagonia extends SvrProcess
 		opSuffix = opSuffix == null?"":opSuffix;
 		
 		StringBuffer sql = new StringBuffer ("UPDATE I_LISTA_PATAGONIA "
-				+ "SET C_Payment_ID = ( SELECT p.C_Payment_ID " +
+				+ "SET C_Payment_ID = ( SELECT lpp.C_Payment_ID " +
 										"FROM c_electronic_payments lpp " +
 										"INNER JOIN c_allocationhdr ah on ah.c_allocationhdr_id = lpp.c_allocationhdr_id " +
-									   "WHERE op_ref = translate(translate(ah.documentno,'" + opPrefix + "',''), '" + opSuffix+ "', '') ) "
-									   		+ " and lpp.c_doctype_id = "+lpdt.getID());
+									   "WHERE op_ref = translate(translate(ah.documentno,'" + opPrefix + "',''), '" + opSuffix+ "', '') "
+									   		+ " and lpp.c_doctype_id = "+lpdt.getID()+")");
 		int no = DB.executeUpdate (sql.toString ());
 			log.info ("doIt - Cheques Encontrados = " + no);
 			
@@ -151,27 +152,34 @@ public class ImportListaPatagonia extends SvrProcess
 				fechaVto = rs.getDate("F_Vto_Cpd");
 				C_Payment_ID = rs.getInt("C_Payment_ID");
 				
-				MPayment payment = new MPayment(this.getCtx(),C_Payment_ID.intValue(), null);
-				payment.setDateTrx(new Timestamp(fechaEmision.getTime()));
-				payment.setDateEmissionCheck(new Timestamp(fechaEmision.getTime()));
-				payment.setDateAcct(new Timestamp(fechaVto.getTime()));
-				payment.setDueDate(new Timestamp(fechaVto.getTime()));
-				payment.setCheckNo(nroCheque.toString());
-				if(payment.save()){
-					updatedPayments++;
-					isImported = "Y";
-					errorMsg = "Nro. de cheque actualizado satisfactoriamente";
-				}else{
-					errors++;
-					isImported = "N";
-					errorMsg = "Procesado, pero el nro. de cheque no fue actualizado";
+				if(!Util.isEmpty(C_Payment_ID, true)){
+					MPayment payment = new MPayment(this.getCtx(),C_Payment_ID.intValue(), null);
+					if(fechaEmision != null){
+						payment.setDateTrx(new Timestamp(fechaEmision.getTime()));
+						payment.setDateEmissionCheck(new Timestamp(fechaEmision.getTime()));
+					}
+					if(fechaVto != null){
+						payment.setDateAcct(new Timestamp(fechaVto.getTime()));
+						payment.setDueDate(new Timestamp(fechaVto.getTime()));
+					}
+					if(!Util.isEmpty(nroCheque, true)){
+						payment.setCheckNo(nroCheque.toString());
+					}
+					if(payment.save()){
+						updatedPayments++;
+						isImported = "Y";
+						errorMsg = "Nro. de cheque actualizado satisfactoriamente";
+					}else{
+						errors++;
+						isImported = "N";
+						errorMsg = "Procesado, pero el nro. de cheque no fue actualizado";
+					}
+					sql = new StringBuffer ("UPDATE I_LISTA_PATAGONIA "
+							+ "SET I_IsImported = '"+isImported+"', I_ErrorMsg = '"+errorMsg+"' "
+							+ "WHERE I_LISTA_PATAGONIA_ID = "+iListaPatagoniaID);
+					
+					no = DB.executeUpdate (sql.toString ());
 				}
-				sql = new StringBuffer ("UPDATE I_LISTA_PATAGONIA "
-						+ "SET I_IsImported = '"+isImported+"', I_ErrorMsg = '"+errorMsg+"' "
-						+ "WHERE I_LISTA_PATAGONIA_ID = "+iListaPatagoniaID);
-				
-				no = DB.executeUpdate (sql.toString ());
-		
 			}
 		}
 		catch (Exception e)	{
