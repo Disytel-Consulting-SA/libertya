@@ -132,6 +132,8 @@ public class ImportListaGalicia extends SvrProcess
 		int chequesActualizados = 0;
 		int chequesNoEncontrados = 0;
 		
+		MDocType lgdt = MDocType.getDocType(getCtx(), MDocType.DOCTYPE_Lista_Galicia, get_TrxName());
+		
 		PreparedStatement pstmt = DB.prepareStatement(sql.toString());
 		ResultSet rs = pstmt.executeQuery();
 		while(rs.next())
@@ -167,7 +169,7 @@ public class ImportListaGalicia extends SvrProcess
 			// BUSCO EN LA TABLA C_PAYMENT LOS PAYMENTS QUE MATCHEEN CON LOS
 			// DATOS IMPORTADOS EN I_LISTA_GALICIA
 			sql = new StringBuffer("select p.C_Payment_ID, coalesce(p.c_banklist_id,0) as c_lista_galicia_id ");
-			sql.append("from c_lista_galicia_payments p ");
+			sql.append("from c_electronic_payments p ");
 			sql.append("inner join c_bpartner b on p.c_bpartner_id = b.c_bpartner_id ");
 			sql.append("inner join c_bankaccount ba on ba.c_bankaccount_id = p.c_bankaccount_id ");
 			sql.append("left join c_allocationhdr ah on ah.c_allocationhdr_id = p.c_allocationhdr_id ");
@@ -177,12 +179,14 @@ public class ImportListaGalicia extends SvrProcess
 			sql.append("and ba.accountno = ").append(cuentaEspecificaInt);
 			sql.append("and ba.IsActive = 'Y' ");
 			sql.append("and replace(b.taxid,'-','') = '").append(cuit).append("'");
+			sql.append(" and p.c_doctype_id = ? ");
 			
 			pstmt = DB.prepareStatement(sql.toString(), null, true);
 			try{
 				pstmt.setString(1,ordenDePago);
 				pstmt.setBigDecimal(2,monto);
 				pstmt.setTimestamp(3,fechaPago);
+				pstmt.setInt(4, lgdt.getID());
 				
 				ResultSet rsPayment = pstmt.executeQuery();
 				if(rsPayment.next()) {
