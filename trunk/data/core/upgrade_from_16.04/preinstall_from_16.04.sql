@@ -7000,3 +7000,6 @@ ALTER TABLE C_CheckPrinting ALTER COLUMN datetrx SET NOT NULL;
 
 --20170427-1015 Nueva columna para validar CAI Obligatorio
 update ad_system set dummy = (SELECT addcolumnifnotexists('c_bpartner','ismandatorycai','character(1) NOT NULL DEFAULT ''N''::bpchar'));
+
+--20170502-1400 Nueva columna para permitir lotes fuera de fecha, caso contrario se setea automáticamente la fecha actual 
+update ad_system set dummy = (SELECT addcolumnifnotexists('C_DocType','allowotherbatchpaymentdate','character(1) NOT NULL DEFAULT ''Y''::bpchar'));

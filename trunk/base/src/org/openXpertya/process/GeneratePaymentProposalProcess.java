@@ -5,6 +5,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.Timestamp;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -103,7 +104,7 @@ public class GeneratePaymentProposalProcess extends SvrProcess {
 					 "INNER JOIN C_Invoice i ON ps.C_Invoice_ID = i.C_Invoice_ID " +
 					 "INNER JOIN C_BPartner bp ON i.C_BPartner_ID = bp.C_BPartner_ID " +
 					 "WHERE " + 
-					  " ps.duedate <= ? " +
+					  " ps.duedate::date <= ?::date " +
 					  " AND i.docstatus IN ('CO', 'CL') " +  //Considerando autorizadas las facturas que están completas o cerradas
 					  " AND (i.m_authorizationchain_id is null OR i.authorizationchainstatus = '"
 					  + MInvoice.AUTHORIZATIONCHAINSTATUS_Authorized + "') " +
@@ -123,7 +124,7 @@ public class GeneratePaymentProposalProcess extends SvrProcess {
 		PreparedStatement ps = null;
 		ResultSet rs = null;
 		try {
-			ps = DB.prepareStatement(sql, get_TrxName());
+			ps = DB.prepareStatement(sql, get_TrxName(), true);
 			
 			//Parámetros
 			int p = 1;
@@ -174,6 +175,8 @@ public class GeneratePaymentProposalProcess extends SvrProcess {
 		Timestamp total = null;
 		Timestamp avg = null; 
 		
+		Integer addDays = Util.isEmpty(paymentBatch.getAddDays(), true)?1:paymentBatch.getAddDays();
+		
 		for (MInvoicePaySchedule paySchedule : payList) {
 			if (firstDueDate == null || firstDueDate.compareTo(paySchedule.getDueDate()) > 0)
 				firstDueDate = new Timestamp(paySchedule.getDueDate().getTime());
@@ -197,29 +200,37 @@ public class GeneratePaymentProposalProcess extends SvrProcess {
 		detail.setC_Bank_ID(backAccount.getC_Bank_ID());
 		detail.setFirstDueDate(firstDueDate);
 		detail.setLastDueDate(lastDueDate);
-		if (paymentBatch.getPaymentDateRule().equals("U")) {
+		if (paymentBatch.getPaymentDateRule().equals(MPaymentBatchPO.PAYMENTDATERULE_LastDueDate)) {
 			detail.setPaymentDate(
 					new Timestamp(
 							lastDueDate.getTime() + (
 									new Timestamp(
-											paymentBatch.getAddDays() * 24 * 60 * 60 * 1000
+											addDays * 24 * 60 * 60 * 1000
 									).getTime()
 							)
 					)
 			);
 		}
-		if (paymentBatch.getPaymentDateRule().equals("F")) {
+		if (paymentBatch.getPaymentDateRule().equals(MPaymentBatchPO.PAYMENTDATERULE_FixedDate)) {
 			detail.setPaymentDate(paymentBatch.getPaymentDate());
 		}
-		if (paymentBatch.getPaymentDateRule().equals("P")) {
+		if (paymentBatch.getPaymentDateRule().equals(MPaymentBatchPO.PAYMENTDATERULE_AverageDate)) {
 			detail.setPaymentDate(avg);
 		}
 		detail.setPaymentAmount(new BigDecimal(0));
 		
 		//Verifico que la fecha de pago no sea menor a la del lote
-		if (detail.getPaymentDate().compareTo(paymentBatch.getBatchDate()) < 0)
-			detail.setPaymentDate(paymentBatch.getBatchDate());
-		
+		if (detail.getPaymentDate().compareTo(paymentBatch.getBatchDate()) < 0){
+			Timestamp baseDate = paymentBatch.getBatchDate();
+			if(paymentBatch.getPaymentDateRule().equals(MPaymentBatchPO.PAYMENTDATERULE_LastDueDate)){
+				Calendar baseCalendar = Calendar.getInstance();
+				baseCalendar.setTimeInMillis(baseDate.getTime());
+				baseCalendar.add(Calendar.DATE, addDays);
+				baseDate = new Timestamp(baseCalendar.getTimeInMillis());
+			}
+			detail.setPaymentDate(baseDate);
+		}
+			
 		if (!detail.save()) {
 			throw new IllegalArgumentException(Msg.getMsg(getCtx(), "PaymentBatchPODetailGenerationError") + ": " + CLogger.retrieveErrorAsString());
 		}
