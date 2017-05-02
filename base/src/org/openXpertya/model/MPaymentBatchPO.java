@@ -3,7 +3,9 @@ package org.openXpertya.model;
 import java.math.BigDecimal;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
+import java.sql.Timestamp;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.List;
 import java.util.Properties;
 import java.util.Vector;
@@ -16,6 +18,8 @@ import org.openXpertya.util.CLogger;
 import org.openXpertya.util.DB;
 import org.openXpertya.util.Env;
 import org.openXpertya.util.Msg;
+import org.openXpertya.util.TimeUtil;
+import org.openXpertya.util.Util;
 
 public class MPaymentBatchPO extends X_C_PaymentBatchPO implements DocAction {
 	
@@ -52,7 +56,7 @@ public class MPaymentBatchPO extends X_C_PaymentBatchPO implements DocAction {
 				
 				//Genero OP y completo datos de cabecera
 				poGenerator.createAllocationHdr(X_C_AllocationHdr.ALLOCATIONTYPE_PaymentOrder);
-				poGenerator.getAllocationHdr().setDateTrx(this.getBatchDate());
+				poGenerator.getAllocationHdr().setDateTrx(getBatchDate());
 				poGenerator.getAllocationHdr().setDateAcct(getBatchDate());
 				poGenerator.getAllocationHdr().setDescription(Msg.getMsg(getCtx(), "PaymentBatchPOAllocationDescription") + " " + getDocumentNo());
 				poGenerator.getAllocationHdr().setIsManual(false);
@@ -239,6 +243,21 @@ public class MPaymentBatchPO extends X_C_PaymentBatchPO implements DocAction {
 	public String prepareIt() {
 		boolean isValid = true;
 		
+		// Si el tipo de documento no permite lotes fuera de fecha, se debe
+		// actualizar automáticamente la fecha del lote con la fecha actual
+		MDocType dt = MDocType.get(getCtx(), getC_DocType_ID());
+		if(!dt.isAllowOtherBatchPaymentDate()
+				&& getBatchDate().compareTo(Env.getDate()) != 0
+				&& !TimeUtil.isSameDay(getBatchDate(), Env.getDate())){
+			setBatchDate(Env.getDate());
+			try{
+				updateBatchPaymentDate();
+			} catch(Exception e){
+				setProcessMsg(e.getMessage());
+				return DocAction.STATUS_Invalid;
+			}
+		}		
+		
 		//Valido que no haya datalles sin facturas
 		for (MPaymentBatchPODetail detail : getBatchDetails()) {
 			MBPartner bPartner = new MBPartner(getCtx(), detail.getC_BPartner_ID(), get_TrxName()); 
@@ -295,6 +314,29 @@ public class MPaymentBatchPO extends X_C_PaymentBatchPO implements DocAction {
 		return DocAction.STATUS_InProgress;
 	}
 
+	private void updateBatchPaymentDate() throws Exception{
+		List<MPaymentBatchPODetail> details = getBatchDetails();
+		for (MPaymentBatchPODetail mPaymentBatchPODetail : details) {
+			if (mPaymentBatchPODetail.getPaymentDate().compareTo(getBatchDate()) < 0){
+				mPaymentBatchPODetail.setPaymentDate(getCalculatedPaymentDateRule(getBatchDate()));
+				if(!mPaymentBatchPODetail.save()){
+					throw new Exception(CLogger.retrieveErrorAsString());
+				}
+			}
+		}
+	}
+	
+	public Timestamp getCalculatedPaymentDateRule(Timestamp baseDate){
+		Timestamp calcDate = baseDate;
+		if(getPaymentDateRule().equals(MPaymentBatchPO.PAYMENTDATERULE_LastDueDate)){
+			Calendar baseCalendar = Calendar.getInstance();
+			baseCalendar.setTimeInMillis(baseDate.getTime());
+			baseCalendar.add(Calendar.DATE, Util.isEmpty(getAddDays(), true)?1:getAddDays());
+			calcDate = new Timestamp(baseCalendar.getTimeInMillis());
+		}
+		return calcDate;
+	}
+	
 	@Override
 	public boolean approveIt() {
 		return false;
