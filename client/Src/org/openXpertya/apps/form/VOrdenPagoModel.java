@@ -1397,8 +1397,9 @@ public class VOrdenPagoModel {
 		sql.append("  INNER JOIN C_DocType AS dt ON (dt.C_DocType_ID=i.C_DocType_ID) ");
 		sql.append("  LEFT JOIN C_Currency cu ON (cu.C_Currency_ID=i.C_Currency_ID) ");
 		sql.append("  WHERE i.IsActive = 'Y' AND i.DocStatus IN ('CO', 'CL') ");
-		sql.append("    AND i.IsSOTRx = '" + getIsSOTrx()
-				+ "' AND GrandTotal <> 0.0 AND C_BPartner_ID = ? ");
+		//sql.append("    AND i.IsSOTRx = '" + getIsSOTrx()+ "' ");
+		sql.append("	AND GrandTotal <> 0.0 ");
+		sql.append("	AND C_BPartner_ID = ? ");
 		sql.append("    AND dt.signo_issotrx = " + getSignoIsSOTrx());
 
 		if (AD_Org_ID != 0)

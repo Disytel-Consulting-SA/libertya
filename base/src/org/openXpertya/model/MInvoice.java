@@ -2316,7 +2316,7 @@ public class MInvoice extends X_C_Invoice implements DocAction,Authorization, Cu
 		}
 		
 		// Compras
-		if (!isSOTrx() && !isSkipAuthorizationChain()){
+		if (!isSkipAuthorizationChain()){
 			//Se determina la cadena de autorización para la factura de proveedor
 			setM_AuthorizationChain_ID(DB.getSQLValue(get_TrxName(), 
 					"SELECT audt.M_AuthorizationChain_ID FROM M_AuthorizationChainDocumentType audt "
