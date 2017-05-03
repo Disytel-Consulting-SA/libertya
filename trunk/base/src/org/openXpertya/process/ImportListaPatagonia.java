@@ -119,11 +119,12 @@ public class ImportListaPatagonia extends SvrProcess
 		opSuffix = opSuffix == null?"":opSuffix;
 		
 		StringBuffer sql = new StringBuffer ("UPDATE I_LISTA_PATAGONIA "
-				+ "SET C_Payment_ID = ( SELECT lpp.C_Payment_ID " +
+				+ "SET C_Payment_ID = ( SELECT distinct lpp.C_Payment_ID " +
 										"FROM c_electronic_payments lpp " +
 										"INNER JOIN c_allocationhdr ah on ah.c_allocationhdr_id = lpp.c_allocationhdr_id " +
 									   "WHERE op_ref = translate(translate(ah.documentno,'" + opPrefix + "',''), '" + opSuffix+ "', '') "
-									   		+ " and lpp.c_doctype_id = "+lpdt.getID()+")");
+									   		+ " and lpp.c_doctype_id = "+lpdt.getID()+""
+									   		+ " limit 1)");
 		int no = DB.executeUpdate (sql.toString ());
 			log.info ("doIt - Cheques Encontrados = " + no);
 			
