@@ -63,7 +63,7 @@ public class GenerateElectronicPaymentsProcess extends SvrProcess {
 			
 			// 3 - Según parámetro, completo las listas de pagos electrónicos
 			if (completeList) {
-				if (bankList.completeIt() != DocAction.STATUS_Completed) {
+				if (!DocumentEngine.processAndSave(bankList, MBankList.DOCACTION_Complete, false)) {
 					throw new Exception(Msg.getMsg(getCtx(), "PaymentBatchPOEPListGenerationError") + ": " + bankList.getProcessMsg());
 				}
 			}

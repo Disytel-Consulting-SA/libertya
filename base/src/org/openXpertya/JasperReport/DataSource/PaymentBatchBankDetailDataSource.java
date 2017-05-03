@@ -60,11 +60,11 @@ public class PaymentBatchBankDetailDataSource extends QueryDataSource {
 		sql.append("GROUP BY ");
 		sql.append("	b.name, ");
 		sql.append("	ba.accountno, ");
-		sql.append("	pbd.paymentdate ");
+		sql.append("	pbd.paymentdate::date ");
 		sql.append("ORDER BY ");
 		sql.append("	b.name, ");
 		sql.append("	ba.accountno, ");
-		sql.append("	pbd.paymentdate ");
+		sql.append("	pbd.paymentdate::date ");
 
 		return sql.toString();
 	}
@@ -80,6 +80,10 @@ public class PaymentBatchBankDetailDataSource extends QueryDataSource {
 		return params.toArray();
 	}
 
+	protected boolean isQueryNoConvert(){
+		return true;
+	}
+	
 	// Getters & Setters
 
 	public Integer getPaymentBatchpoID() {
