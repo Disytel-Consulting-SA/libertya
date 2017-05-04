@@ -43,7 +43,9 @@ public class PaymentBatchBankDetailDataSource extends QueryDataSource {
 		StringBuffer sql = new StringBuffer();
 
 		sql.append("SELECT ");
+		sql.append("	b.c_bank_id, ");
 		sql.append("	b.name AS bank_name, ");
+		sql.append("	ba.c_bankaccount_id, ");
 		sql.append("	ba.accountno AS account_number, ");
 		sql.append("	pbd.paymentdate::date AS bank_payment_date, ");
 		sql.append("	SUM(pbd.paymentamount) AS bank_total_amount ");
@@ -58,7 +60,9 @@ public class PaymentBatchBankDetailDataSource extends QueryDataSource {
 		}
 
 		sql.append("GROUP BY ");
+		sql.append("	b.c_bank_id, ");
 		sql.append("	b.name, ");
+		sql.append("	ba.c_bankaccount_id, ");
 		sql.append("	ba.accountno, ");
 		sql.append("	pbd.paymentdate::date ");
 		sql.append("ORDER BY ");
