@@ -39,11 +39,11 @@
 			<groupExpression><![CDATA[$F{c_bank_id}+"_"+$F{c_bankaccount_id}]]></groupExpression>
 			<groupHeader>
 			<band height="42"  isSplitAllowed="true" >
-				<textField isStretchWithOverflow="false" pattern="" isBlankWhenNull="false" evaluationTime="Group" evaluationGroup="bank"  hyperlinkType="None"  hyperlinkTarget="Self" >
+				<textField isStretchWithOverflow="false" pattern="" isBlankWhenNull="false" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
 						mode="Opaque"
 						x="145"
-						y="5"
+						y="9"
 						width="312"
 						height="16"
 						forecolor="#000000"
@@ -51,7 +51,7 @@
 						key="textField"/>
 					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="1Point" bottomBorderColor="#000000"/>
 					<textElement verticalAlignment="Middle">
-						<font fontName="Helvetica" size="12" isBold="true"/>
+						<font fontName="Helvetica" pdfFontName="Helvetica-Bold" size="10" isBold="true"/>
 					</textElement>
 				<textFieldExpression   class="java.lang.String"><![CDATA[$F{bank_name} + " - " + $F{account_number}]]></textFieldExpression>
 				</textField>
@@ -59,7 +59,7 @@
 					<reportElement
 						mode="Opaque"
 						x="457"
-						y="5"
+						y="9"
 						width="175"
 						height="16"
 						forecolor="#000000"
@@ -67,7 +67,7 @@
 						key="textField"/>
 					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="1Point" bottomBorderColor="#000000"/>
 					<textElement textAlignment="Right" verticalAlignment="Middle">
-						<font fontName="Helvetica" size="12" isBold="true"/>
+						<font fontName="Helvetica" pdfFontName="Helvetica-Bold" size="10" isBold="true"/>
 					</textElement>
 				<textFieldExpression   class="java.math.BigDecimal"><![CDATA[$V{bank_total}]]></textFieldExpression>
 				</textField>
@@ -78,7 +78,7 @@
 						y="30"
 						width="193"
 						height="12"
-						backcolor="#CCCCCC"
+						backcolor="#E8E8E8"
 						key="staticText-1"/>
 					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="Thin" bottomBorderColor="#000000"/>
 					<textElement textAlignment="Center" verticalAlignment="Middle">
@@ -93,7 +93,7 @@
 						y="30"
 						width="193"
 						height="12"
-						backcolor="#CCCCCC"
+						backcolor="#E8E8E8"
 						key="staticText-2"/>
 					<box topBorder="None" topBorderColor="#000000" leftBorder="Thin" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="Thin" bottomBorderColor="#000000"/>
 					<textElement textAlignment="Center" verticalAlignment="Middle">

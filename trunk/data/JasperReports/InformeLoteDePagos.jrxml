@@ -283,7 +283,7 @@
 						y="0"
 						width="205"
 						height="12"
-						backcolor="#CCCCCC"
+						backcolor="#E2E2E2"
 						key="staticText-9"/>
 					<box topBorder="1Point" topBorderColor="#000000" leftBorder="1Point" leftBorderColor="#000000" rightBorder="1Point" rightBorderColor="#000000" bottomBorder="1Point" bottomBorderColor="#000000"/>
 					<textElement textAlignment="Center" verticalAlignment="Middle">
@@ -298,7 +298,7 @@
 						y="0"
 						width="88"
 						height="12"
-						backcolor="#CCCCCC"
+						backcolor="#E2E2E2"
 						key="staticText-10"/>
 					<box topBorder="1Point" topBorderColor="#000000" leftBorder="1Point" leftBorderColor="#000000" rightBorder="1Point" rightBorderColor="#000000" bottomBorder="1Point" bottomBorderColor="#000000"/>
 					<textElement textAlignment="Center" verticalAlignment="Middle">
@@ -313,7 +313,7 @@
 						y="0"
 						width="78"
 						height="12"
-						backcolor="#CCCCCC"
+						backcolor="#E2E2E2"
 						key="staticText-11"/>
 					<box topBorder="1Point" topBorderColor="#000000" leftBorder="1Point" leftBorderColor="#000000" rightBorder="1Point" rightBorderColor="#000000" bottomBorder="1Point" bottomBorderColor="#000000"/>
 					<textElement textAlignment="Center" verticalAlignment="Middle">
@@ -328,7 +328,7 @@
 						y="0"
 						width="78"
 						height="12"
-						backcolor="#CCCCCC"
+						backcolor="#E2E2E2"
 						key="staticText-12"/>
 					<box topBorder="1Point" topBorderColor="#000000" leftBorder="1Point" leftBorderColor="#000000" rightBorder="1Point" rightBorderColor="#000000" bottomBorder="1Point" bottomBorderColor="#000000"/>
 					<textElement textAlignment="Center" verticalAlignment="Middle">
@@ -343,7 +343,7 @@
 						y="0"
 						width="78"
 						height="12"
-						backcolor="#CCCCCC"
+						backcolor="#E2E2E2"
 						key="staticText-13"/>
 					<box topBorder="1Point" topBorderColor="#000000" leftBorder="1Point" leftBorderColor="#000000" rightBorder="1Point" rightBorderColor="#000000" bottomBorder="1Point" bottomBorderColor="#000000"/>
 					<textElement textAlignment="Center" verticalAlignment="Middle">
@@ -358,7 +358,7 @@
 						y="0"
 						width="72"
 						height="12"
-						backcolor="#CCCCCC"
+						backcolor="#E2E2E2"
 						key="staticText-14"/>
 					<box topBorder="1Point" topBorderColor="#000000" leftBorder="1Point" leftBorderColor="#000000" rightBorder="1Point" rightBorderColor="#000000" bottomBorder="1Point" bottomBorderColor="#000000"/>
 					<textElement textAlignment="Center" verticalAlignment="Middle">
@@ -373,7 +373,7 @@
 						y="0"
 						width="104"
 						height="12"
-						backcolor="#CCCCCC"
+						backcolor="#E2E2E2"
 						key="staticText-27"/>
 					<box topBorder="1Point" topBorderColor="#000000" leftBorder="1Point" leftBorderColor="#000000" rightBorder="1Point" rightBorderColor="#000000" bottomBorder="1Point" bottomBorderColor="#000000"/>
 					<textElement textAlignment="Center" verticalAlignment="Middle">
@@ -388,7 +388,7 @@
 						y="0"
 						width="78"
 						height="12"
-						backcolor="#CCCCCC"
+						backcolor="#E2E2E2"
 						key="staticText-28"/>
 					<box topBorder="1Point" topBorderColor="#000000" leftBorder="1Point" leftBorderColor="#000000" rightBorder="1Point" rightBorderColor="#000000" bottomBorder="1Point" bottomBorderColor="#000000"/>
 					<textElement textAlignment="Center" verticalAlignment="Middle">
