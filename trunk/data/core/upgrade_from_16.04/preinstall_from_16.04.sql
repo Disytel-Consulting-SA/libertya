@@ -7003,3 +7003,23 @@ update ad_system set dummy = (SELECT addcolumnifnotexists('c_bpartner','ismandat
 
 --20170502-1400 Nueva columna para permitir lotes fuera de fecha, caso contrario se setea automáticamente la fecha actual 
 update ad_system set dummy = (SELECT addcolumnifnotexists('C_DocType','allowotherbatchpaymentdate','character(1) NOT NULL DEFAULT ''Y''::bpchar'));
+
+--20170508-1035 Nuevas columnas para registrar changelog sobre las tablas C_ExternalService y C_ExternalServiceAttributes
+update ad_system set dummy = (SELECT addcolumnifnotexists('C_ExternalService','ad_componentversion_id','integer'));
+
+update ad_system set dummy = (SELECT addcolumnifnotexists('C_ExternalServiceAttributes','ad_componentversion_id','integer'));
+update ad_system set dummy = (SELECT addcolumnifnotexists('C_ExternalServiceAttributes','ad_componentobjectuid','character varying(100)'));
+
+-- Nueva columna ID de Tipo de Documento
+DROP VIEW c_allocation_detail_debits_v;
+
+CREATE OR REPLACE VIEW c_allocation_detail_debits_v AS
+ SELECT ah.c_allocationhdr_id AS c_allocation_detail_debits_v_id, ah.c_allocationhdr_id, ah.ad_client_id, ah.ad_org_id, ah.isactive, ah.created, ah.createdby, ah.updated, ah.updatedby, al.c_invoice_id, i.documentno, i.c_currency_id, i.numerocomprobante, i.puntodeventa, i.c_letra_comprobante_id, dt.c_doctype_id, dt.doctypekey, dt.name AS doctypename, i.paymentrule, i.c_region_delivery_id, i.netamount, i.c_paymentterm_id, i.dateinvoiced, i.grandtotal, sum(currencyconvert(al.amount + al.discountamt + al.writeoffamt, ah.c_currency_id, i.c_currency_id, NULL::timestamp with time zone, NULL::integer, ah.ad_client_id, ah.ad_org_id)) AS montosaldado
+  FROM c_allocationhdr ah
+  JOIN c_allocationline al ON ah.c_allocationhdr_id = al.c_allocationhdr_id
+  JOIN c_invoice i ON al.c_invoice_id = i.c_invoice_id
+  JOIN c_doctype dt ON i.c_doctypetarget_id = dt.c_doctype_id
+  GROUP BY ah.c_allocationhdr_id, ah.ad_client_id, ah.ad_org_id, ah.isactive, ah.created, ah.createdby, ah.updated, ah.updatedby, al.c_invoice_id, i.documentno, i.c_currency_id, i.numerocomprobante, i.puntodeventa, i.c_letra_comprobante_id, dt.c_doctype_id, dt.doctypekey, dt.name, i.paymentrule, i.c_region_delivery_id, i.netamount, i.c_paymentterm_id, i.dateinvoiced, i.grandtotal;
+
+ALTER TABLE c_allocation_detail_debits_v
+  OWNER TO libertya;
