@@ -7,7 +7,7 @@ import java.math.*;
 import org.openXpertya.util.*;
 /** Modelo Generado por C_ExternalServiceAttributes
  *  @author Comunidad de Desarrollo Libertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
- *  @version  - 2017-03-01 12:32:39.589 */
+ *  @version  - 2017-05-08 11:04:30.871 */
 public class X_C_ExternalServiceAttributes extends org.openXpertya.model.PO
 {
 /** Constructor estándar */
@@ -45,6 +45,35 @@ public String toString()
 {
 StringBuffer sb = new StringBuffer ("X_C_ExternalServiceAttributes[").append(getID()).append("]");
 return sb.toString();
+}
+/** Set AD_ComponentObjectUID */
+public void setAD_ComponentObjectUID (String AD_ComponentObjectUID)
+{
+if (AD_ComponentObjectUID != null && AD_ComponentObjectUID.length() > 100)
+{
+log.warning("Length > 100 - truncated");
+AD_ComponentObjectUID = AD_ComponentObjectUID.substring(0,100);
+}
+set_Value ("AD_ComponentObjectUID", AD_ComponentObjectUID);
+}
+/** Get AD_ComponentObjectUID */
+public String getAD_ComponentObjectUID() 
+{
+return (String)get_Value("AD_ComponentObjectUID");
+}
+/** Set Component Version Identifier */
+public void setAD_ComponentVersion_ID (int AD_ComponentVersion_ID)
+{
+if (AD_ComponentVersion_ID <= 0) set_Value ("AD_ComponentVersion_ID", null);
+ else 
+set_Value ("AD_ComponentVersion_ID", new Integer(AD_ComponentVersion_ID));
+}
+/** Get Component Version Identifier */
+public int getAD_ComponentVersion_ID() 
+{
+Integer ii = (Integer)get_Value("AD_ComponentVersion_ID");
+if (ii == null) return 0;
+return ii.intValue();
 }
 /** Set C_Externalserviceattributes_ID */
 public void setC_Externalserviceattributes_ID (int C_Externalserviceattributes_ID)
