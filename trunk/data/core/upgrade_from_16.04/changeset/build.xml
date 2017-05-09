@@ -385,7 +385,6 @@
     <unjar src="lib/oracle.jar" dest="buildSLib" />
   	<unjar src="lib/sybase.jar" dest="buildSLib" />
   	<unjar src="lib/postgresql.jar" dest="buildSLib" />
-  	<unjar src="lib/mysql-connector-java-5.1.42-bin.jar" dest="buildSLib" />
     <!--Fin cambios para PostgreSQL -->     	
 
     <!-- Crea el fichero OXPSLib.jar 	-->
