@@ -272,7 +272,8 @@ public class ExportListaGalicia extends ExportBankList {
 		// Espacio en blanco
 		row.append(fillField(" ", " ", MExpFormatRow.ALIGNMENT_Right, 16, null));
 		// Orden de Pago
-		row.append(fillField(rs.getString("documentno"), " ", MExpFormatRow.ALIGNMENT_Right, 35, null));
+		row.append(fillField(rs.getString("documentno").replace(getOpPrefix(), "").replace(getOpSuffix(), ""), " ",
+				MExpFormatRow.ALIGNMENT_Right, 35, null));
 		// Moneda
 		row.append("001");
 		// Fecha de disposición de fondos
