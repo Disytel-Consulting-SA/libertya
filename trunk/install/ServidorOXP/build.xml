@@ -134,6 +134,7 @@
     <!--unjar src="lib/${TIPO_BD_OXP}.jar" dest="construirOXPLIB" /-->    
     <unjar src="lib/oracle.jar" dest="construirOXPLIB" />
   	<unjar src="lib/sybase.jar" dest="construirOXPLIB" />
+  	<unjar src="lib/mysql-connector-java-5.1.42-bin.jar" dest="construirOXPLIB" />
   	<unjar src="lib/postgresql.jar" dest="construirOXPLIB" />  	
 	<unjar src="lib/swing-layout-1.0.jar" dest="construirOXPLIB" />
 	<unjar src="lib/pdfviewer.jar" dest="construirOXPLIB" />
@@ -151,7 +152,6 @@
   	<unjar src="lib/fluent-hc-4.5.2.jar" dest="construirOXPLIB" />
   	<unjar src="lib/commons-logging-1.2.jar" dest="construirOXPLIB" />
   	<unjar src="lib/commons-codec-1.9.jar" dest="construirOXPLIB" />
-  	<unjar src="lib/mysql-connector-java-5.1.42-bin.jar" dest="construirOXPLIB" />
 
     <!--fin cambios para PostgreSQL -->    
     <unjar src="lib/${TIPO_APPS_OXP}.jar" dest="construirOXPLIB" />
@@ -384,6 +384,7 @@
     <!--unjar src="lib/${TIPO_BD_OXP}.jar" dest="buildSLib" /-->    
     <unjar src="lib/oracle.jar" dest="buildSLib" />
   	<unjar src="lib/sybase.jar" dest="buildSLib" />
+  	<unjar src="lib/mysql-connector-java-5.1.42-bin.jar" dest="buildSLib" />
   	<unjar src="lib/postgresql.jar" dest="buildSLib" />
     <!--Fin cambios para PostgreSQL -->     	
 
