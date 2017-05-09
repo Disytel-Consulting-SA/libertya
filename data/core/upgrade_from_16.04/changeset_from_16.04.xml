@@ -85,6 +85,9 @@ Ejemplos de cambios
 	<!-- 20170411-2012 Workaround para error en publicacion de entradas contables desde WebUI -->
     	<copy file="${SOURCE_DIR}/build.xml" todir="${TARGET_DIR}" overwrite="yes" />
   	
+	<!-- 20170509-1424 JDBC para MySQL -->
+    	<copy file="${SOURCE_DIR}/mysql-connector-java-5.1.42-bin.jar" todir="${TARGET_DIR}/lib" overwrite="yes" />
+    	<copy file="${SOURCE_DIR}/build.xml" todir="${TARGET_DIR}" overwrite="yes" />
 
     </target>
     
