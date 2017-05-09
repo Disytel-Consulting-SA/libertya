@@ -141,42 +141,9 @@ public class ExportRetentionsPatagonia extends ExportBankList {
 
 	@Override
 	protected String getFilePath() {
-
-		StringBuffer sql = new StringBuffer();
-
-		sql.append("SELECT ");
-		sql.append("	documentno ");
-		sql.append("FROM ");
-		sql.append("	" + X_C_BankList.Table_Name + " ");
-		sql.append("WHERE ");
-		sql.append("	c_banklist_id = ?");
-
-		PreparedStatement ps = null;
-		ResultSet rs = null;
-
-		String documentno = "";
-
-		try {
-			ps = DB.prepareStatement(sql.toString());
-			ps.setInt(1, getBankList().getC_BankList_ID());
-			rs = ps.executeQuery();
-			if (rs.next()) {
-				documentno = rs.getString(1);
-			}
-		} catch (Exception e) {
-			log.log(Level.SEVERE, "getFilePath", e);
-		} finally {
-			try {
-				rs.close();
-				ps.close();
-			} catch (SQLException e) {
-				log.log(Level.SEVERE, "Cannot close statement or resultset");
-			}
-		}
-
 		StringBuffer filepath = new StringBuffer(getExportFormat().getFileName());
 		filepath.append("PC"); // Constante.
-		filepath.append(zeroFill(documentno, 7)); // Nro. de adherente al servicio de pago a proveedores.
+		filepath.append(zeroFill(getBankListConfig().getRegisterNumber(), 7)); // Nro. de adherente al servicio de pago a proveedores.
 		filepath.append(zeroFill(dailySecNo, 3)); // Nro. de éste archivo, enviado en el día.
 		filepath.append(".");
 		filepath.append(getFileExtension());
@@ -276,7 +243,7 @@ public class ExportRetentionsPatagonia extends ExportBankList {
 		StringBuffer head = new StringBuffer();
 
 		head.append("FH"); // Registro ID.
-		head.append("PC").append(zeroFill(documentno, 7)).append(currentDate).append(zeroFill(dailySecNo, 3)); // Id de Archivo.
+		head.append("PC").append(zeroFill(getBankListConfig().getRegisterNumber(), 7)).append(currentDate).append(zeroFill(dailySecNo, 3)); // Id de Archivo.
 		head.append(currentTime); // Hora de creación del archivo.
 		head.append(zeroFill(totalseqno, 7)); // Nro. secuencial del archivo p/adherente.
 		head.append("COMPROBADJU"); // Identificación de archivo.
@@ -769,6 +736,9 @@ public class ExportRetentionsPatagonia extends ExportBankList {
 				getBankList().getC_DocType_ID(), new ArrayList<String>());
 		if(Util.isEmpty(getBankListConfig().getSucursalDefault(), true)){
 			blcfe.addField("SucursalDefault");
+		}
+		if(Util.isEmpty(getBankListConfig().getRegisterNumber(), true)){
+			blcfe.addField("RegisterNumber");
 		}
 		if(blcfe.getFields().size() > 0){
 			throw blcfe;
