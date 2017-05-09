@@ -7,7 +7,7 @@ import java.math.*;
 import org.openXpertya.util.*;
 /** Modelo Generado por C_ExternalService
  *  @author Comunidad de Desarrollo Libertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
- *  @version  - 2017-05-08 11:04:30.608 */
+ *  @version  - 2017-05-08 21:01:19.848 */
 public class X_C_ExternalService extends org.openXpertya.model.PO
 {
 /** Constructor estándar */
@@ -137,13 +137,13 @@ if (Password != null && Password.length() > 60)
 log.warning("Length > 60 - truncated");
 Password = Password.substring(0,60);
 }
-set_ValueE ("Password", Password);
+set_Value ("Password", Password);
 }
 /** Get Password.
 Password of any length (case sensitive) */
 public String getPassword() 
 {
-return (String)get_ValueE("Password");
+return (String)get_Value("Password");
 }
 /** Set Port */
 public void setPort (int Port)
