@@ -54,7 +54,7 @@ public class DocumentsDataSource extends OPDataSource {
 				+ "  JOIN c_allocationline al ON ah.c_allocationhdr_id = al.c_allocationhdr_id "
 				+ "  JOIN c_invoice i ON i.C_Invoice_ID = al.C_Invoice_ID "
 				+ "  JOIN c_currency cu ON i.C_Currency_ID = cu.C_Currency_ID "
-				+ "  JOIN C_DocType dt ON dt.C_DocType_ID = i.C_DocType_ID "
+				+ "  JOIN C_DocType dt ON dt.C_DocType_ID = i.C_DocTypetarget_ID "
 				+ "WHERE ah.C_AllocationHdr_ID = ? "
 				+ "GROUP BY al.C_Invoice_ID, i.DocumentNo, dt.DocBaseType, GrandTotalAmt, OpenAmt, Currency ";
 		return sql;
