@@ -342,6 +342,6 @@
 	<classpathentry kind="lib" path="lib/httpmime-4.5.2.jar"/>
 	<classpathentry kind="lib" path="lib/jna-4.1.0.jar"/>
 	<classpathentry kind="lib" path="lib/jna-platform-4.1.0.jar"/>
-	<classpathentry kind="lib" path="/libertya_sf/lib/mysql-connector-java-5.1.42-bin.jar"/>
+	<classpathentry kind="lib" path="lib/mysql-connector-java-5.1.42-bin.jar"/>
 	<classpathentry kind="output" path="tools/lib/local"/>
 </classpath>
