@@ -987,7 +987,7 @@ public class MInvoiceLine extends X_C_InvoiceLine {
         // Calculo TaxAmt y LineTotalAmt
         // Recupero el impuesto aplicado a la línea
         setTaxAmt();
-        setLineTotalAmt(getLineNetAmt().add(getTaxAmt()));
+        setLineTotalAmt(getLineNetAmount().add(getTaxAmt()));
         
     	// Controlar cantidades por unidad de medida
         if(!MUOM.isAllowedQty(getCtx(), getC_UOM_ID(), getQtyEntered(), get_TrxName())){
