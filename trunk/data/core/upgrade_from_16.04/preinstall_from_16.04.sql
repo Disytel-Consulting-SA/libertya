@@ -7023,3 +7023,7 @@ CREATE OR REPLACE VIEW c_allocation_detail_debits_v AS
 
 ALTER TABLE c_allocation_detail_debits_v
   OWNER TO libertya;
+
+-- 20170511-1526 Ampliacion de los decimales en tasas de conversion para mayor precision  
+alter table c_conversion_rate alter column multiplyrate type numeric(24,15);
+alter table c_conversion_rate alter column dividerate type numeric(24,15);
