@@ -321,9 +321,11 @@ public class ExportListaGalicia extends ExportBankList {
 			ps = DB.prepareStatement(sql.toString(), get_TrxName(), true);
 			ps.setInt(1, rs.getInt("c_allocationhdr_id"));
 			rsop = ps.executeQuery();
+			String documentno;
 			while (rsop.next()) {
 				StringBuffer op = new StringBuffer("O1");
-				op.append(fillField(rsop.getString("documentno"), "0", MExpFormatRow.ALIGNMENT_Right, 10, null));
+				documentno = rsop.getString("documentno").replace(getOpPrefix(), "").replace(getOpSuffix(), "");
+				op.append(fillField(documentno, "0", MExpFormatRow.ALIGNMENT_Right, 10, null));
 				Integer debitos = rsop.getBigDecimal("debitos").abs().multiply(Env.ONEHUNDRED).intValue();
 				Integer creditos = rsop.getBigDecimal("creditos").abs().multiply(Env.ONEHUNDRED).intValue();
 				Integer total = rsop.getBigDecimal("total").abs().multiply(Env.ONEHUNDRED).intValue();
