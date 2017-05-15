@@ -37,8 +37,22 @@ public final class StringUtil {
      */
 
     public static String trim( String s,int length ) {
+    	if(s == null){
+    		return null;
+    	}
         if( s.length() >= length ) {
             return s.substring( 0,length - 1 );
+        } else {
+            return s;
+        }
+    }
+    
+    public static String trimStrict( String s,int length ) {
+    	if(s == null){
+    		return null;
+    	}
+        if( s.length() > length ) {
+            return s.substring( 0,length );
         } else {
             return s;
         }
