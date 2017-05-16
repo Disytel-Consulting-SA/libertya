@@ -7,6 +7,7 @@ import java.util.Properties;
 
 import org.openXpertya.util.DB;
 import org.openXpertya.util.Msg;
+import org.openXpertya.util.Util;
 
 public class MPaymentBatchPOInvoices extends X_C_PaymentBatchPOInvoices {
 	
@@ -34,7 +35,9 @@ public class MPaymentBatchPOInvoices extends X_C_PaymentBatchPOInvoices {
 		//Valido que PaySchedule tenga si o si un valor (cuando no se ejecuta la función de la ventana no puedo saberlo
 		//y no puede ser obligatorio porque es un campo recuperado por un callout desde la ventana info y el contexto
 		if (getC_InvoicePaySchedule_ID() == 0) {
-			m_processMsg = Msg.getMsg(getCtx(), "InvoicePayScheduleMandatory");
+			String msg = Msg.getMsg(getCtx(), "InvoicePayScheduleMandatory");
+			m_processMsg = msg;
+			log.saveError(msg, "");
             return false;
 		}
 		
@@ -47,20 +50,26 @@ public class MPaymentBatchPOInvoices extends X_C_PaymentBatchPOInvoices {
 		//Verifico que la factura elegida sea del proveedor seleccionado en el detalle 
 	    //(por defecto la ventana info para búsqueda filtra por proveedor)
 		if (invoice.getC_BPartner_ID() != detail.getC_BPartner_ID()) {
-			m_processMsg = Msg.getMsg(getCtx(), "VendorDifferent");
+			String msg = Msg.getMsg(getCtx(), "VendorDifferent");
+			m_processMsg = msg;
+			log.saveError(msg, "");
             return false;
 		}
 			
 		
 		//Verifico que la factura elegida no esté ya incorporada en el detalle
-		if (invoiceInDetail(getC_Invoice_ID(), getC_PaymentBatchpoDetail_ID())) {
-			m_processMsg = Msg.getMsg(getCtx(), "InvoiceAlreadyInDetail"); 
+		if (invoiceInDetail(getC_Invoice_ID(), getC_PaymentBatchpoDetail_ID(), getID())) {
+			String msg = Msg.getMsg(getCtx(), "InvoiceAlreadyInDetail");
+			m_processMsg =  msg;
+			log.saveError(msg, "");
 			return false;
 		}
 		
 		//Verifico que tenga importes pendientes y que esté CO o CL
 		if (!invoiceIsOk(getC_Invoice_ID(), getC_InvoicePaySchedule_ID())) {
-			m_processMsg = Msg.getMsg(getCtx(), "InvoiceWithoutOpenAmountOrNotAuthorized"); 
+			String msg = Msg.getMsg(getCtx(), "InvoiceWithoutOpenAmountOrNotAuthorized");
+			m_processMsg = msg;
+			log.saveError(msg, "");
 			return false;
 		}
 		
@@ -76,7 +85,9 @@ public class MPaymentBatchPOInvoices extends X_C_PaymentBatchPOInvoices {
 				paymentBatch.getC_Currency_ID(), paymentBatch.getBatchDate(), invoice.getAD_Org_ID(),
 				getCtx());
 		if (convertedOpenAmt == null || convertedAmt == null) {
-			m_processMsg = Msg.getMsg(getCtx(), "ConvertionRateInvalid"); 
+			String msg = Msg.getMsg(getCtx(), "ConvertionRateInvalid");
+			m_processMsg = msg; 
+			log.saveError(msg, "");
 			return false;
 		}
 		
@@ -130,13 +141,15 @@ public class MPaymentBatchPOInvoices extends X_C_PaymentBatchPOInvoices {
 		return false;
 	}
 	
-	public static boolean invoiceInDetail(Integer invoiceId, Integer detailId) {
+	public static boolean invoiceInDetail(Integer invoiceId, Integer detailId, Integer excludePOInvoicesID) {
 		//Construyo la query
 		String sql = "SELECT count(*) " + 
 					 "FROM C_PaymentBatchPOInvoices " +
 					 "WHERE " + 
 					  "c_invoice_id = ? " +
-					  "AND c_paymentbatchpodetail_id = ?";
+					  "AND c_paymentbatchpodetail_id = ?" +
+					 (Util.isEmpty(excludePOInvoicesID, true) ? ""
+											: " AND C_PaymentBatchPOInvoices_ID <> " + excludePOInvoicesID);
 		
 		PreparedStatement ps = null;
 		ResultSet rs = null;

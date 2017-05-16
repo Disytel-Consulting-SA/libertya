@@ -1615,13 +1615,20 @@ public class VOrdenPagoModel {
 		if (C_BPartner_ID == 0) {
 			return PROCERROR_NOT_SELECTED_BPARTNER;
 		}
-
-		if (documentNo.length() == 0) {
-			return PROCERROR_DOCUMENTNO_NOT_SET;
-		}
-
+		
 		if (documentType == null) {
 			return PROCERROR_DOCUMENTTYPE_NOT_SET;
+		}
+
+		if (documentNo.length() == 0) {
+			try{
+				documentNo = getPoGenerator().getDocumentNo();
+			} catch(Exception e){
+				return PROCERROR_DOCUMENTNO_NOT_SET;
+			}
+			if(documentNo.length() == 0){
+				return PROCERROR_DOCUMENTNO_NOT_SET;
+			}
 		}
 		
 		Boolean isReuseDocumentNo = false;
@@ -2219,15 +2226,15 @@ public class VOrdenPagoModel {
 				agregarRetencionesComoMediosPagos(pagos, hdr);
 				// Agrego los medios de pagos al generador
 				for (MedioPago pago : pagos) {
-					pago.addToGenerator(poGenerator);
+					pago.addToGenerator(getPoGenerator());
 				}
 
 				// Se crean las líneas de imputación entre las facturas y los
 				// pagos
-				poGenerator.generateLines();
+				getPoGenerator().generateLines();
 
 				// 99. Completar HDR
-				poGenerator.completeAllocation();
+				getPoGenerator().completeAllocation();
 
 				// Realizar las tareas de cuenta corriente previas a terminar el
 				// procesamiento
@@ -2251,7 +2258,7 @@ public class VOrdenPagoModel {
 		}
 
 		if (!saveOk || errorNo != PROCERROR_OK) {
-			poGenerator.reset();
+			getPoGenerator().reset();
 			retencionIncludedInMedioPago = false;
 			trx.rollback();
 		}
@@ -2318,7 +2325,7 @@ public class VOrdenPagoModel {
 
 			// 2. Se crea el generador de orden de pago.
 			getPoGenerator().setTrxName(getTrxName());
-			hdr = poGenerator.createAllocationHdr();
+			hdr = getPoGenerator().createAllocationHdr();
 
 			// Se setean las propiedades del encabezado
 			updateAllocationHdr(hdr);
@@ -2341,7 +2348,7 @@ public class VOrdenPagoModel {
 				processOnlineAllocationLines(hdr, pays, true);
 
 				// 98. Completar HDR
-				poGenerator.completeAllocation();
+				getPoGenerator().completeAllocation();
 
 				// 99. Realizar operaciones custom al final del procesamiento
 				doPostProcesarNormalCustom();
@@ -2364,7 +2371,7 @@ public class VOrdenPagoModel {
 		}
 
 		if (!saveOk) {
-			poGenerator.reset();
+			getPoGenerator().reset();
 			retencionIncludedInMedioPago = false;
 			trx.rollback();
 			trx.close();
@@ -2767,9 +2774,7 @@ public class VOrdenPagoModel {
 
 		hdr.setDescription(HdrDescription);
 		hdr.setIsManual(false);
-
-		hdr.setDocumentNo(documentNo);
-		hdr.setC_DocType_ID(documentType);
+		
 		// Detalle es una variable String inicializada en vacio que nunca se
 		// modifica.
 		// hdr.setdetalle(detalle);
@@ -3064,7 +3069,7 @@ public class VOrdenPagoModel {
 		MOrg org = new MOrg(getCtx(), Env.getAD_Org_ID(getCtx()), getTrxName());
 		// Obtengo el manager actual
 		CurrentAccountManager manager = CurrentAccountManagerFactory
-				.getManager(poGenerator.getAllocationHdr());
+				.getManager(getPoGenerator().getAllocationHdr());
 		// Realizo las tareas adicionales necesarias
 		// Payments
 		for (MPayment pay : mpayments.values()) {
@@ -3143,7 +3148,7 @@ public class VOrdenPagoModel {
 		MOrg org = new MOrg(getCtx(), Env.getAD_Org_ID(getCtx()), getTrxName());
 		// Obtengo el manager actual
 		CurrentAccountManager manager = CurrentAccountManagerFactory
-				.getManager(poGenerator.getAllocationHdr());
+				.getManager(getPoGenerator().getAllocationHdr());
 		// Actualizo el crédito
 		CallResult result = new CallResult();
 		try {
@@ -3393,14 +3398,14 @@ public class VOrdenPagoModel {
 			int invoiceID = ((Integer) f.getItem(facIdColIdx));
 			// Es el importe en la moneda original (no el de la Compañia)
 			BigDecimal payAmount = f.getManualAmount();
-			poGenerator.addInvoice(invoiceID, payAmount);
+			getPoGenerator().addInvoice(invoiceID, payAmount);
 		}
 		// Agrego los medios de pagos al generador
 		for (MedioPago pago : pagos) {
-			pago.addToGenerator(poGenerator);
+			pago.addToGenerator(getPoGenerator());
 		}
 		// Se crean las líneas de imputación entre las facturas y los pagos
-		poGenerator.generateLines();
+		getPoGenerator().generateLines();
 	}
 
 	/**
@@ -3611,6 +3616,11 @@ public class VOrdenPagoModel {
 
 	public void setDocumentNo(String documentNo) {
 		this.documentNo = documentNo;
+		getPoGenerator().setDocumentNo(documentNo);
+	}
+	
+	public String getDocumentNo(){
+		return this.documentNo;
 	}
 
 	public void setDescription(String description) {
@@ -3627,6 +3637,7 @@ public class VOrdenPagoModel {
 
 	public void setDocumentType(Integer documentType) {
 		this.documentType = documentType;
+		getPoGenerator().setDocType(documentType);
 	}
 
 	protected String getAllocTypes() {
@@ -3815,5 +3826,15 @@ public class VOrdenPagoModel {
 	public void setPaymentRule(String paymentRule) {
 		this.paymentRule = paymentRule;
 		getPoGenerator().setPaymentRule(paymentRule);
+	}
+	
+	/**
+	 * @return el próximo número de documento de la secuencia del tipo de
+	 *         documento
+	 * @throws Exception
+	 *             en caso de error
+	 */
+	public String nextDocumentNo() throws Exception{
+		return getPoGenerator().getDocumentNo();
 	}
 }

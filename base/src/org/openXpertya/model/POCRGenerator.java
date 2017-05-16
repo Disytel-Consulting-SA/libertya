@@ -280,6 +280,7 @@ public class POCRGenerator extends AllocationGenerator {
 		getDebits().clear();
 		getCredits().clear();
 		setAllocationHdr(null);
+		setDocumentNo(null);
 	}
 	
 	/**

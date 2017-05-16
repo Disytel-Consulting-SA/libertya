@@ -1108,6 +1108,7 @@ public class WOrdenPago extends ADForm implements ValueChangeListener, TableMode
     		// Avanza a la siguiente tab
     		m_cambioTab = true;
     		tabbox.setSelectedIndex(1);
+    		fldDocumentNo.setValue(getModel().getDocumentNo());
 //    		m_cambioTab = false;  // <- diferencias con Swing en los tiempos de eventos. Se pone a false en el evento 
     		
     		updatePaymentsTabsState();
@@ -1315,7 +1316,6 @@ public class WOrdenPago extends ADForm implements ValueChangeListener, TableMode
 
     protected static final int PAGO_ADELANTADO_TYPE_PAYMENT_INDEX = 0;
     protected static final int PAGO_ADELANTADO_TYPE_CASH_INDEX = 1;
-    protected MSequence seq;
     
     private int m_chequeTerceroTabIndex = -1;
     
@@ -1799,9 +1799,16 @@ public class WOrdenPago extends ADForm implements ValueChangeListener, TableMode
 		
 		} else if (e.getSource() == cboDocumentType) {
 			if(e.getNewValue() != null){
-				m_model.setDocumentType((Integer)e.getNewValue());
-				seq = MSequence.get(m_ctx, getSeqName(), false, Env.getAD_Client_ID(m_ctx));
-				fldDocumentNo.setValue((seq.getPrefix()!=null?seq.getPrefix():"") + seq.getCurrentNext().toString() + (seq.getSuffix()!=null?seq.getSuffix():""));
+				getModel().setDocumentType((Integer)e.getNewValue());
+				String documentNo = null;
+				try {
+					documentNo = getModel().nextDocumentNo();
+				} catch (Exception e2) {
+					m_model.setDocumentType(null);
+					fldDocumentNo.setValue(null);
+					showInfo(e2.getMessage());
+				}
+				fldDocumentNo.setValue(documentNo);
 			}
 			else{
 				fldDocumentNo.setValue(null);
@@ -2459,24 +2466,21 @@ public class WOrdenPago extends ADForm implements ValueChangeListener, TableMode
 		txtDescription.getComponent().setText("");
 		m_model.setDescription("");
 		checkPayAll.setSelected(false);
-		// actualizar secuencia
-		seq.setCurrentNext(seq.getCurrentNext().add(BigDecimal.ONE));
-		seq.save();
-		fldDocumentNo.setValue((seq.getPrefix()!=null?seq.getPrefix():"") + seq.getCurrentNext().toString() + (seq.getSuffix()!=null?seq.getSuffix():""));
-				
-		m_model.setDocumentNo("");
+		String documentNo = null;
+		try {
+			documentNo = getModel().nextDocumentNo();
+		} catch (Exception e) {
+			m_model.setDocumentType(null);
+			cboDocumentType.setValue(null);
+			documentNo = null;
+		}
+		
+		fldDocumentNo.setValue(documentNo);
+		m_model.setDocumentNo(documentNo);
+		
 		getModel().reset();
 		updateTreeModel();
 		pagosTree.setModel(getMediosPagoTreeModel());
-	}
-	
-	protected String getSeqName()
-	{
-		if (m_model.getDocumentType() != null){
-			return DB.getSQLValueString( null,"SELECT s.name FROM AD_Sequence s INNER JOIN C_DocType d ON (s.AD_Sequence_ID = d.docnosequence_ID) WHERE C_DocType_ID =?",m_model.getDocumentType());
-		}
-		return null;
-		
 	}
     
 	@Override

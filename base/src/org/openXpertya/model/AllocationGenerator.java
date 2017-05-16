@@ -57,9 +57,16 @@ public class AllocationGenerator {
 	private List<Document> debits;
 	/** Lista de créditos de la Asignación */
 	private List<Document> credits;
-
 	/** Encabezado de la Asignación */
 	private MAllocationHdr allocationHdr;
+	/** Tipo de documento del allocation */
+	private MDocType docType;
+	/** Secuencia del allocation */
+	private MSequence docTypeSeq;
+	/** Número de Documento */
+	private String documentNo;
+	/** Bloqueo actual */
+	private MSequenceLock currentSeqLock;
 	
 	/** Locale AR activo? */
 	public final boolean LOCALE_AR_ACTIVE = CalloutInvoiceExt.ComprobantesFiscalesActivos();
@@ -239,6 +246,14 @@ public class AllocationGenerator {
 		newAllocationHdr.setC_Currency_ID(clientCurrencyID);
 		newAllocationHdr.setDateAcct(systemDate);
 		newAllocationHdr.setDateTrx(systemDate);
+		if(getDocType() != null){
+			newAllocationHdr.setC_DocType_ID(getDocType().getID());
+			try{
+				newAllocationHdr.setDocumentNo(getDocumentNo());
+			} catch(Exception e){
+				throw new AllocationGeneratorException(e.getMessage());
+			}
+		}
 		// Se guarda el nuevo encabezado.
 		saveAllocationHdr(newAllocationHdr);
 		setAllocationHdr(newAllocationHdr);
@@ -867,7 +882,15 @@ public class AllocationGenerator {
 	 * @return Devuelve un mensaje traducido.
 	 */
 	protected String getMsg(String name) {
-		return Msg.translate(Env.getCtx(), name);
+		return Msg.translate(getCtx(), name);
+	}
+	
+	/**
+	 * @param params parámetros del mesaje
+	 * @return Devuelve un mensaje traducido.
+	 */
+	protected String getMsg(String adMessage, Object[] params) {
+		return Msg.getMsg(getCtx(), adMessage, params);
 	}
 	
 	/**
@@ -1618,6 +1641,77 @@ public class AllocationGenerator {
 	
 	protected CallResult customValidationsAddDocument(Document document){
 		return new CallResult();
+	}
+
+	public MDocType getDocType() {
+		return docType;
+	}
+
+	public void setDocType(MDocType docType) {
+		this.docType = docType;
+		MSequence seq = null;
+		if(docType != null && !Util.isEmpty(docType.getDocNoSequence_ID(), true)){
+			seq = new MSequence(getCtx(), docType.getDocNoSequence_ID(), getTrxName());
+		}
+		setDocTypeSeq(seq);
+	}
+
+	public MSequence getDocTypeSeq() {
+		return docTypeSeq;
+	}
+
+	public void setDocTypeSeq(MSequence docTypeSeq) {
+		this.docTypeSeq = docTypeSeq;
+	}
+	
+	public void setDocType(Integer docTypeID){
+		setDocType(Util.isEmpty(docTypeID, true) ? null : MDocType.get(getCtx(), docTypeID));
+	}
+	
+	public String getDocumentNo() throws Exception{
+		String documentNo = this.documentNo;
+		
+		if(getDocType() != null){
+			if (getDocTypeSeq() == null && !Util.isEmpty(getDocType().getDocNoSequence_ID(), true)) {
+				setDocTypeSeq(new MSequence(getCtx(), getDocType().getDocNoSequence_ID(), getTrxName()));
+			}
+			if(getDocTypeSeq() != null && Util.isEmpty(this.documentNo, true)){
+				// Realizar las validaciones de la secuencia
+				validateSeq();
+
+				// Obtener el siguiente número de secuencia
+				documentNo = !Util.isEmpty(this.documentNo, true) ? this.documentNo
+						: MSequence.getDocumentNo(getDocType().getID(), getTrxName());
+			}
+		}
+		
+		setDocumentNo(documentNo);
+		
+		return documentNo;
+	}	
+
+	public void validateSeq() throws Exception{
+		// No debe existir un bloqueo en la secuencia
+		if (getDocType() != null && getDocType().isLockSeq() && getDocTypeSeq() != null) {
+			MSequenceLock seqLock = MSequence.getCurrentLock(getCtx(), getDocType().getID(),
+					(getCurrentSeqLock() != null ? getCurrentSeqLock().getID() : 0), getTrxName());
+			if(seqLock != null){
+				setDocumentNo(null);
+				throw new Exception(getMsg("SequenceLocked", new Object[] { seqLock.getDescription() }));
+			}
+		}
+	}
+	
+	public void setDocumentNo(String documentNo) {
+		this.documentNo = documentNo;
+	}
+
+	public MSequenceLock getCurrentSeqLock() {
+		return currentSeqLock;
+	}
+
+	public void setCurrentSeqLock(MSequenceLock currentSeqLock) {
+		this.currentSeqLock = currentSeqLock;
 	}
 
 	public class PaymentMediumInfo{

@@ -40,6 +40,7 @@ import org.openXpertya.util.DB;
 import org.openXpertya.util.Env;
 import org.openXpertya.util.Ini;
 import org.openXpertya.util.Trx;
+import org.openXpertya.util.Util;
 
 /**
  *      Sequence Model.
@@ -1719,7 +1720,36 @@ public class MSequence extends X_AD_Sequence {
     	sequences_cache = new HashSet<String>();
     }
     
-    
+    /**
+	 * Obtiene el actual bloqueo para la secuencia parámetro
+	 * 
+	 * @param ctx
+	 *            contexto
+	 * @param docID
+	 *            id del tipo de documento
+	 * @param excludeCurrentLockID
+	 *            id de secuencia de bloqueo a excluir
+	 * @param trxName
+	 *            nombre de la transacción actual
+	 * @return actual bloqueo para la secuencia parámetro o null en caso que no
+	 *         exista ninguno activo
+	 */
+    public static MSequenceLock getCurrentLock(Properties ctx, Integer docID, Integer excludeCurrentLockID, String trxName){
+    	MSequenceLock seqLock = null;
+    	String sql = "SELECT ad_sequence_lock_id "
+				+ " FROM "+MSequenceLock.Table_Name
+				+ " WHERE c_doctype_id = ? and isactive = 'Y' "
+				+ (Util.isEmpty(excludeCurrentLockID, true) ? ""
+										: " AND ad_sequence_lock_id <> " + excludeCurrentLockID)
+				+ " LIMIT 1";
+    	
+    	Integer seqLockID = DB.getSQLValue(trxName, sql, docID);
+    	if(seqLockID != null && seqLockID > 0){
+    		seqLock = new MSequenceLock(ctx, seqLockID, trxName);
+    	}
+    	
+    	return seqLock;
+    }
 }		// MSequence
 
 

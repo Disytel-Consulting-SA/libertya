@@ -896,15 +896,15 @@ public class VOrdenCobroModel extends VOrdenPagoModel {
 		for (Invoice f : debits) {
 			int invoiceID = f.getInvoiceID();
 			BigDecimal payAmount = f.getManualAmtOriginal().add(f.getTotalPaymentTermDiscountOriginalCurrency());
-			poGenerator.addInvoice(invoiceID, payAmount);
+			getPoGenerator().addInvoice(invoiceID, payAmount);
 		}	
 		
 		// Agrego los medios de pagos al generador	
 		for (MedioPago pago : credits) {
-			pago.addToGenerator(poGenerator);
+			pago.addToGenerator(getPoGenerator());
 		}
 		// Se crean las líneas de imputación entre las facturas y los pagos
-		poGenerator.generateLines();
+		getPoGenerator().generateLines();
 	}
 	
 	@Override

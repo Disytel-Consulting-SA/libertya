@@ -84,7 +84,6 @@ import org.openXpertya.model.MBPartner;
 import org.openXpertya.model.MCurrency;
 import org.openXpertya.model.MDocType;
 import org.openXpertya.model.MPreference;
-import org.openXpertya.model.MSequence;
 import org.openXpertya.model.MUser;
 import org.openXpertya.model.RetencionProcessor;
 import org.openXpertya.model.X_C_BankAccountDoc;
@@ -96,7 +95,6 @@ import org.openXpertya.process.ProcessInfo;
 import org.openXpertya.reflection.CallResult;
 import org.openXpertya.util.ASyncProcess;
 import org.openXpertya.util.CLogger;
-import org.openXpertya.util.DB;
 import org.openXpertya.util.DisplayType;
 import org.openXpertya.util.Env;
 import org.openXpertya.util.Msg;
@@ -1951,6 +1949,7 @@ public class VOrdenPago extends CPanel implements FormPanel,ActionListener,Table
 			// pestaña
     		updateComponentsPreProcesar();
     		dateTrx.setReadWrite(false);
+    		fldDocumentNo.setValue(getModel().getDocumentNo());
     		// Avanza a la siguiente tab
     		m_cambioTab = true;
     		jTabbedPane1.setSelectedIndex(1);
@@ -2174,8 +2173,6 @@ public class VOrdenPago extends CPanel implements FormPanel,ActionListener,Table
     
     protected static final int PAGO_ADELANTADO_TYPE_PAYMENT_INDEX = 0;
     protected static final int PAGO_ADELANTADO_TYPE_CASH_INDEX = 1;
-        
-    protected MSequence seq;
     
     private int m_PagoAdelantadoTabIndex = -1;
     private int m_chequeTerceroTabIndex = -1;
@@ -2909,9 +2906,16 @@ public class VOrdenPago extends CPanel implements FormPanel,ActionListener,Table
 		
 		} else if (e.getSource() == cboDocumentType) {
 			if(e.getNewValue() != null){
-				m_model.setDocumentType((Integer)e.getNewValue());
-				seq = MSequence.get(m_ctx, getSeqName(), false, Env.getAD_Client_ID(m_ctx));
-				fldDocumentNo.setValue((seq.getPrefix()!=null?seq.getPrefix():"")+seq.getCurrentNext()+(seq.getSuffix()!=null?seq.getSuffix():""));
+				getModel().setDocumentType((Integer)e.getNewValue());
+				String documentNo = null;
+				try {
+					documentNo = getModel().nextDocumentNo();
+				} catch (Exception e2) {
+					m_model.setDocumentType(null);
+					fldDocumentNo.setValue(null);
+					showInfo(e2.getMessage());
+				}
+				fldDocumentNo.setValue(documentNo);
 			}
 			else{
 				fldDocumentNo.setValue(null);
@@ -3530,24 +3534,22 @@ public class VOrdenPago extends CPanel implements FormPanel,ActionListener,Table
 		m_model.setDescription("");
 		checkPayAll.setSelected(false);
 		cboChequeBancoID.setValue(null);
-		// actualizar secuencia
-		seq.setCurrentNext(seq.getCurrentNext().add(BigDecimal.ONE));
-		seq.save();
-		fldDocumentNo.setValue((seq.getPrefix()!=null?seq.getPrefix():"") + seq.getCurrentNext() + (seq.getSuffix()!=null?seq.getSuffix():""));
+		
+		String documentNo = null;
+		try {
+			documentNo = getModel().nextDocumentNo();
+		} catch (Exception e) {
+			m_model.setDocumentType(null);
+			cboDocumentType.setValue(null);
+			documentNo = null;
+		}
+		
+		fldDocumentNo.setValue(documentNo);
+		m_model.setDocumentNo(documentNo);
 		
 		getAuthDialog().markAuthorized(UserAuthConstants.OPRC_FINISH_MOMENT, true);
 		
-		m_model.setDocumentNo("");
 		getModel().reset();
-	}
-	
-	protected String getSeqName()
-	{
-		if (m_model.getDocumentType() != null){
-			return DB.getSQLValueString( null,"SELECT s.name FROM AD_Sequence s INNER JOIN C_DocType d ON (s.AD_Sequence_ID = d.docnosequence_ID) WHERE C_DocType_ID =?",m_model.getDocumentType());
-		}
-		return null;
-		
 	}
 
 	protected void setActionKeys(Map<String, KeyStroke> actionKeys) {
