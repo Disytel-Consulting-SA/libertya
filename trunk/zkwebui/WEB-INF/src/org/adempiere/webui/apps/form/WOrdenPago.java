@@ -2466,15 +2466,19 @@ public class WOrdenPago extends ADForm implements ValueChangeListener, TableMode
 		txtDescription.getComponent().setText("");
 		m_model.setDescription("");
 		checkPayAll.setSelected(false);
+		
+		
 		String documentNo = null;
+		Integer docTypeID = (Integer)cboDocumentType.getValue();
 		try {
 			documentNo = getModel().nextDocumentNo();
 		} catch (Exception e) {
-			m_model.setDocumentType(null);
-			cboDocumentType.setValue(null);
 			documentNo = null;
+			docTypeID = null;
 		}
 		
+		m_model.setDocumentType(docTypeID);
+		cboDocumentType.setValue(docTypeID);
 		fldDocumentNo.setValue(documentNo);
 		m_model.setDocumentNo(documentNo);
 		
