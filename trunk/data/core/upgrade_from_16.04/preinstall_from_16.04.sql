@@ -7027,3 +7027,44 @@ ALTER TABLE c_allocation_detail_debits_v
 -- 20170511-1526 Ampliacion de los decimales en tasas de conversion para mayor precision  
 alter table c_conversion_rate alter column multiplyrate type numeric(24,15);
 alter table c_conversion_rate alter column dividerate type numeric(24,15);
+
+--20170516-1151 Bloqueos de Secuencias de Tipo de Documento
+update ad_system set dummy = (SELECT addcolumnifnotexists('C_DocType','lockseq','character(1) NOT NULL DEFAULT ''N''::bpchar'));
+
+CREATE TABLE ad_sequence_lock
+(
+  ad_sequence_lock_id integer NOT NULL,
+  ad_client_id integer NOT NULL,
+  ad_org_id integer NOT NULL,
+  isactive character(1) NOT NULL DEFAULT 'Y'::bpchar,
+  created timestamp without time zone NOT NULL DEFAULT ('now'::text)::timestamp(6) with time zone,
+  createdby integer NOT NULL,
+  updated timestamp without time zone NOT NULL DEFAULT ('now'::text)::timestamp(6) with time zone,
+  updatedby integer NOT NULL,
+  ad_sequence_id integer NOT NULL,
+  c_doctype_id integer,
+  ad_table_id integer,
+  record_id numeric(18,0),
+  description character varying(255),
+  CONSTRAINT ad_sequence_lock_key PRIMARY KEY (ad_sequence_lock_id),
+  CONSTRAINT ad_sequence_lock_seq FOREIGN KEY (ad_sequence_id)
+  REFERENCES ad_sequence (ad_sequence_id) MATCH SIMPLE
+  ON UPDATE NO ACTION ON DELETE NO ACTION,
+  CONSTRAINT ad_sequence_lock_table FOREIGN KEY (ad_table_id)
+  REFERENCES ad_table (ad_table_id) MATCH SIMPLE
+  ON UPDATE NO ACTION ON DELETE NO ACTION,
+  CONSTRAINT ad_sequence_lock_doctype FOREIGN KEY (c_doctype_id)
+  REFERENCES c_doctype (c_doctype_id) MATCH SIMPLE
+  ON UPDATE NO ACTION ON DELETE NO ACTION,
+  CONSTRAINT ad_sequence_lock_client FOREIGN KEY (ad_client_id)
+  REFERENCES ad_client (ad_client_id) MATCH SIMPLE
+  ON UPDATE NO ACTION ON DELETE NO ACTION,
+  CONSTRAINT ad_sequence_lock_org FOREIGN KEY (ad_org_id)
+  REFERENCES ad_org (ad_org_id) MATCH SIMPLE
+  ON UPDATE NO ACTION ON DELETE NO ACTION
+)
+WITH (
+  OIDS=TRUE
+);
+ALTER TABLE ad_sequence_lock
+  OWNER TO libertya;

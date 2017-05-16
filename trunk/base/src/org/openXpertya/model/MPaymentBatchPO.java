@@ -40,9 +40,25 @@ public class MPaymentBatchPO extends X_C_PaymentBatchPO implements DocAction {
 
 	public String completeIt() {
 		POCRGenerator poGenerator = new POCRGenerator(getCtx(), POCRType.PAYMENT_ORDER,get_TrxName());
+		// Lockear la secuencia si es que está marcada asi
+		MDocType allocTargetDocType = MDocType.get(getCtx(), getC_DoctypeAllocTarget_ID());
+		MSequence allocTargetSeq = new MSequence(getCtx(), allocTargetDocType.getDocNoSequence_ID(), get_TrxName());
+		MSequenceLock seqLock = null;
+		if (allocTargetDocType != null && allocTargetDocType.isLockSeq() && allocTargetSeq != null) {
+			seqLock = new MSequenceLock(getCtx(), 0, null);
+			seqLock.setAD_Sequence_ID(allocTargetSeq.getID());
+			seqLock.setC_DocType_ID(allocTargetDocType.getID());
+			seqLock.setAD_Table_ID(get_Table_ID());
+			seqLock.setRecord_ID(getID());
+			if(!seqLock.save()){
+				setProcessMsg(CLogger.retrieveErrorAsString());
+				return DocAction.STATUS_Invalid;
+			}
+		}
 		try {
+			poGenerator.setDocType(getC_DoctypeAllocTarget_ID());
+			poGenerator.setCurrentSeqLock(seqLock);
 			for (MPaymentBatchPODetail detail : getBatchDetails()) {
-				boolean saveOk = true;
 				
 				//Proveedor
 				MBPartner bPartner = new MBPartner(getCtx(), detail.getC_BPartner_ID(), get_TrxName());
@@ -61,8 +77,6 @@ public class MPaymentBatchPO extends X_C_PaymentBatchPO implements DocAction {
 				poGenerator.getAllocationHdr().setDescription(Msg.getMsg(getCtx(), "PaymentBatchPOAllocationDescription") + " " + getDocumentNo());
 				poGenerator.getAllocationHdr().setIsManual(false);
 				poGenerator.getAllocationHdr().setC_BPartner_ID(detail.getC_BPartner_ID());
-				poGenerator.getAllocationHdr().setC_DocType_ID(getC_DoctypeAllocTarget_ID());
-				poGenerator.getAllocationHdr().setDocumentNo(MSequence.getDocumentNo(getC_DoctypeAllocTarget_ID(), get_TrxName()));
 								
 				//Arrays para cáculo de retenciones
 				Vector<Integer> facturasProcesar = new Vector<Integer>();
@@ -130,20 +144,14 @@ public class MPaymentBatchPO extends X_C_PaymentBatchPO implements DocAction {
 				
 				// Guarda el pago
 				if (!pay.save()) {
-					m_processMsg = CLogger.retrieveErrorAsString();
-					saveOk = false;
+					throw new Exception(CLogger.retrieveErrorAsString());
 					// Completa el pago
 				} else if (!pay.processIt(DocAction.ACTION_Complete)) {
-					m_processMsg = pay.getProcessMsg();
-					saveOk = false;
+					throw new Exception(pay.getProcessMsg());
 					// Guarda los cambios del procesamiento
 				} else if (!pay.save()) {
-					m_processMsg = CLogger.retrieveErrorAsString();
-					saveOk = false;
+					throw new Exception(CLogger.retrieveErrorAsString());
 				}
-				
-				if (!saveOk)
-					return DocAction.STATUS_Invalid;
 				
 				//Agrego el pago generado
 				poGenerator.addCreditPayment(pay.getID(), pay.getPayAmt());
@@ -152,22 +160,19 @@ public class MPaymentBatchPO extends X_C_PaymentBatchPO implements DocAction {
 				poGenerator.generateLines();
 				poGenerator.getAllocationHdr().updateTotalByLines();
 				if(!poGenerator.getAllocationHdr().save()){
-					m_processMsg = Msg.getMsg(getCtx(), "AllocationSaveError");
-					return DocAction.STATUS_Invalid;
+					throw new Exception(CLogger.retrieveErrorAsString());
 				}
 				poGenerator.completeAllocation();
 				detail.setC_AllocationHdr_ID(poGenerator.getAllocationHdr().getC_AllocationHdr_ID());
 				if (!detail.save()) {
-					m_processMsg = Msg.getMsg(getCtx(), "AllocationSaveError");
-					return DocAction.STATUS_Invalid;
+					throw new Exception(CLogger.retrieveErrorAsString());
 				}
 				poGenerator.reset();
 				
 				//Actualizo el siguien número de la chequera
 				chequera.setCurrentNext(chequera.getCurrentNext() + 1);
 				if (!chequera.save()) {
-					m_processMsg = Msg.getMsg(getCtx(), "AllocationSaveError");
-					return DocAction.STATUS_Invalid;
+					throw new Exception(CLogger.retrieveErrorAsString());
 				}
 			}
 		} catch (AllocationGeneratorException e) {
@@ -180,8 +185,18 @@ public class MPaymentBatchPO extends X_C_PaymentBatchPO implements DocAction {
 			e.printStackTrace();
 			m_processMsg = e.getMessage();
 			return DocAction.STATUS_Invalid;
+		} finally{
+			// Desactivo el bloqueo de secuencia
+			poGenerator.setCurrentSeqLock(null);
+			if(seqLock != null){
+				seqLock.setIsActive(false);
+				if(!seqLock.save()){
+					setProcessMsg(CLogger.retrieveErrorAsString());
+					return DocAction.STATUS_Invalid;
+				}
+			}
 		}
-		
+				
 		// Finaliza correctamente la acción
 		setProcessed(true);
 		setDocAction(DOCACTION_Close);

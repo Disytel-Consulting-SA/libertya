@@ -15,6 +15,7 @@ public class CalloutPaymentBatchPOInvoices extends CalloutEngine {
 				
 		//Recupero datos 
 		Integer detailId = (Integer)mTab.getValue("C_PaymentBatchpoDetail_ID");
+		Integer batchPOInvoicesId = (Integer)mTab.getValue("C_PaymentBatchPOInvoices_ID");
 		MPaymentBatchPODetail detail = new MPaymentBatchPODetail(ctx, detailId, null);
 		MPaymentBatchPO paymentBatch = new MPaymentBatchPO(ctx, detail.getC_PaymentBatchPO_ID(), null);
 		Integer invoiceId = (Integer) value;
@@ -34,7 +35,7 @@ public class CalloutPaymentBatchPOInvoices extends CalloutEngine {
 			
 		
 		//Verifico que la factura elegida no esté ya incorporada en el detalle
-		if (MPaymentBatchPOInvoices.invoiceInDetail(invoiceId, detailId)) {
+		if (MPaymentBatchPOInvoices.invoiceInDetail(invoiceId, detailId, batchPOInvoicesId)) {
 			mField.setError(true);
 			return Msg.getMsg(ctx, "InvoiceAlreadyInDetail");
 		}
