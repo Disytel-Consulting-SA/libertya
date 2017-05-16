@@ -1681,7 +1681,7 @@ public class AllocationGenerator {
 
 				// Obtener el siguiente número de secuencia
 				documentNo = !Util.isEmpty(this.documentNo, true) ? this.documentNo
-						: MSequence.getDocumentNo(getDocType().getID(), getTrxName());
+						: MSequence.getDocumentNo(getDocType().getID(), null);
 			}
 		}
 		
