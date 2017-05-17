@@ -177,6 +177,10 @@ public class PostInstallUpgradeFrom1604 extends PluginPostInstallProcess {
 	protected final static String ORDEN_PAGO_DOCUMENTS_JASPER_REPORT_UID = "CORE-AD_JasperReport-1000013";
 	protected final static String ORDEN_PAGO_DOCUMENTS_JASPER_REPORT_FILENAME = "OrdenPago_Documents.jasper";
 	
+	/** UID del Reporte de Imputaciones Adelantadas */
+	protected final static String DYNAMIC_ADVANCED_ALLOCATIONS_JASPER_REPORT_UID = "CORE-AD_Process-1010550";
+	protected final static String DYNAMIC_ADVANCED_ALLOCATIONS_JASPER_REPORT_FILENAME = "AdvancedAllocationsReport.jrxml";
+	
 	@Override
 	protected String doIt() throws Exception {
 		super.doIt();
@@ -688,6 +692,17 @@ public class PostInstallUpgradeFrom1604 extends PluginPostInstallProcess {
 							.readBinaryFromJar(
 									jarFileURL,
 									getBinaryFileURL(ORDEN_PAGO_DOCUMENTS_JASPER_REPORT_FILENAME)));
+		
+		// Reporte de Imputaciones Adelantadas
+		MProcess.addAttachment(
+				get_TrxName(),
+				getCtx(),
+				DYNAMIC_ADVANCED_ALLOCATIONS_JASPER_REPORT_UID,
+				DYNAMIC_ADVANCED_ALLOCATIONS_JASPER_REPORT_FILENAME,
+				JarHelper
+						.readBinaryFromJar(
+								jarFileURL,
+								getBinaryFileURL(DYNAMIC_ADVANCED_ALLOCATIONS_JASPER_REPORT_FILENAME)));
 		
 		return " ";
 	}
