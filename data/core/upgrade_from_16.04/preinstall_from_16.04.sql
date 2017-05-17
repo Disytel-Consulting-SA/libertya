@@ -7068,3 +7068,52 @@ WITH (
 );
 ALTER TABLE ad_sequence_lock
   OWNER TO libertya;
+  
+--20170517-1255 Merge de ajustes a ventana cupones de tarjetas
+DROP VIEW c_paymentcoupon_v;
+
+CREATE 
+OR REPLACE VIEW libertya.c_paymentcoupon_v AS 
+SELECT
+   p.c_payment_id,
+   p.ad_client_id,
+   p.ad_org_id,
+   p.created,
+   p.createdby,
+   p.updated,
+   p.updatedby,
+   'Y'::character(1) AS isactive,
+   efp.m_entidadfinanciera_id,
+   p.m_entidadfinancieraplan_id,
+   ccs.settlementno,
+   p.c_invoice_id,
+   p.creditcardnumber,
+   p.couponnumber,
+   p.c_bpartner_id,
+   coalesce(p.a_name, bp.name) as a_name,
+   p.datetrx,
+   p.couponbatchnumber,
+   p.payamt,
+   p.c_currency_id,
+   p.docstatus,
+   cs.isreconciled,
+   efp.cuotaspago AS totalallocations,
+   ccs.paymentdate AS settlementdate,
+   p.auditstatus,
+   ''::character(1) AS reject 
+FROM
+   c_payment p 
+   INNER JOIN
+	c_bpartner bp 
+	ON p.c_bpartner_id = bp.c_bpartner_id
+   LEFT JOIN
+      m_entidadfinancieraplan efp 
+      ON p.m_entidadfinancieraplan_id = efp.m_entidadfinancieraplan_id 
+   LEFT JOIN
+      c_couponssettlements cs 
+      ON p.c_payment_id = cs.c_payment_id 
+   LEFT JOIN
+      c_creditcardsettlement ccs 
+      ON cs.c_creditcardsettlement_id = ccs.c_creditcardsettlement_id 
+WHERE
+   p.tendertype = 'C'::bpchar;
