@@ -429,7 +429,7 @@ UNION (
 					<textElement textAlignment="Center" verticalAlignment="Middle">
 						<font size="9"/>
 					</textElement>
-				<text><![CDATA[Entidad Financiera]]></text>
+				<text><![CDATA[Tarjeta]]></text>
 				</staticText>
 				<staticText>
 					<reportElement
