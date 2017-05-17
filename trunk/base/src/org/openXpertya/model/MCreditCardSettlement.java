@@ -61,6 +61,39 @@ public class MCreditCardSettlement extends X_C_CreditCardSettlement implements D
 		return true;
 	}
 
+	@Override
+	protected boolean beforeSave(boolean newRecord) {
+		int found = 0;
+
+		// Validación de unicidad mediante Entidad Comercial y número de liquidación.
+		if (newRecord) {
+			StringBuffer sql = new StringBuffer();
+	
+			sql.append("SELECT ");
+			sql.append("	COUNT(C_CreditCardSettlement_ID) ");
+			sql.append("FROM ");
+			sql.append("	" + Table_Name + " ");
+			sql.append("WHERE ");
+			sql.append("	C_BPartner_ID = ? ");
+			sql.append("	AND SettlementNo = ? ");
+	
+			found = DB.getSQLValue(get_TrxName(), sql.toString(), getC_BPartner_ID(), getSettlementNo());
+	
+			if (found != 0) {
+				log.saveError("SaveError", Msg.getMsg(getCtx(), "CreditCardSettlementDuplicated"));
+			}
+			
+		}
+		
+		//Validación para que el número de liquidación solo pueda ser numérico
+		if (!getSettlementNo().matches("\\^?\\d*\\^?")) {
+			log.saveError("SaveError", Msg.getMsg(getCtx(), "SettlementNumberMustBeNumeric"));
+			found = 1;
+		}
+		
+		return found == 0;
+	}
+
 	/**
 	 * Para una entidad comercial de tipo "tarjeta" (Las que están asociadas a alguna
 	 * E. Financiera), recupera la cuenta de banco de la E.Financiera más reciente 
