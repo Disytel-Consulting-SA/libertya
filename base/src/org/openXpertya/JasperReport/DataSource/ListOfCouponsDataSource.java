@@ -73,10 +73,10 @@ public class ListOfCouponsDataSource extends QueryDataSource {
 		sql.append("	p.TenderType = '" + MPayment.TENDERTYPE_CreditCard + "' ");
 
 		if (C_BPartner_ID > 0) {
-			sql.append("	AND s.c_bpartner_id = " + C_BPartner_ID + " ");
+			sql.append("	AND ef.c_bpartner_id = " + C_BPartner_ID + " ");
 		}
 		if (AD_Org_ID > 0) {
-			sql.append("	AND s.ad_org_id = " + AD_Org_ID + " ");
+			sql.append("	AND p.ad_org_id = " + AD_Org_ID + " ");
 		}
 		if (auditState != null && !auditState.trim().isEmpty()) {
 			sql.append("	AND p.auditstatus = '" + auditState + "' ");

@@ -62,7 +62,7 @@
 					<textElement verticalAlignment="Middle">
 						<font pdfFontName="Helvetica-Bold" size="8" isBold="true"/>
 					</textElement>
-				<text><![CDATA[Entidad Financiera]]></text>
+				<text><![CDATA[Tarjeta]]></text>
 				</staticText>
 				<staticText>
 					<reportElement
