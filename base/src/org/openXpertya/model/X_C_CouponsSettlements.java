@@ -7,7 +7,7 @@ import java.math.*;
 import org.openXpertya.util.*;
 /** Modelo Generado por C_CouponsSettlements
  *  @author Comunidad de Desarrollo Libertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
- *  @version  - 2017-03-01 10:18:24.288 */
+ *  @version  - 2017-05-18 13:12:31.457 */
 public class X_C_CouponsSettlements extends org.openXpertya.model.PO
 {
 /** Constructor estándar */
@@ -66,6 +66,23 @@ public BigDecimal getAmount()
 BigDecimal bd = (BigDecimal)get_Value("Amount");
 if (bd == null) return Env.ZERO;
 return bd;
+}
+/** Set Account Name.
+Name on Credit Card or Account holder */
+public void setA_Name (String A_Name)
+{
+if (A_Name != null && A_Name.length() > 60)
+{
+log.warning("Length > 60 - truncated");
+A_Name = A_Name.substring(0,60);
+}
+set_Value ("A_Name", A_Name);
+}
+/** Get Account Name.
+Name on Credit Card or Account holder */
+public String getA_Name() 
+{
+return (String)get_Value("A_Name");
 }
 /** Set Coupons Settlements ID */
 public void setC_CouponsSettlements_ID (int C_CouponsSettlements_ID)
