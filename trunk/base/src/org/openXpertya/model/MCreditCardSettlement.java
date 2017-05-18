@@ -648,6 +648,27 @@ public class MCreditCardSettlement extends X_C_CreditCardSettlement implements D
 			return DocAction.STATUS_Invalid;
 		}
 
+		// Validación de diferencias.
+		// El importe bruto debe ser igual al importe acreditado mas todos los descuentos.
+
+		// Importe bruto
+		BigDecimal amt1 = getAmount();
+		amt1.setScale(2, BigDecimal.ROUND_HALF_UP);
+
+		// Importe acreditado
+		BigDecimal amt2 = getNetAmount();
+		amt2 = amt2.add(getIVAAmount());
+		amt2 = amt2.add(getPerception());
+		amt2 = amt2.add(getWithholding());
+		amt2 = amt2.add(getCommissionAmount());
+		amt2 = amt2.add(getExpenses());
+		amt2.setScale(2, BigDecimal.ROUND_HALF_UP);
+
+		boolean validSettlement = amt1.equals(amt2);
+		if (!validSettlement) {
+			m_processMsg = Msg.getMsg(Env.getAD_Language(getCtx()), "CreditCardSettlementAmountsMismatch");
+			return DocAction.STATUS_Invalid;
+		}
 		removeUnusedChildrens();
 
 		// Genera el pago correspondiente.
