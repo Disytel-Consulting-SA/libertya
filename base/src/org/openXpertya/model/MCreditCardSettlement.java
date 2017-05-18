@@ -259,7 +259,22 @@ public class MCreditCardSettlement extends X_C_CreditCardSettlement implements D
 				children.setAD_Org_ID(getAD_Org_ID());
 				children.setC_CreditCardSettlement_ID(getC_CreditCardSettlement_ID());
 				children.setC_RetencionType_ID(rs.getInt(1));
-				children.setC_Region_ID(0);
+
+				// Carga región por defecto
+				StringBuffer rsql = new StringBuffer();
+
+				rsql.append("SELECT ");
+				rsql.append("	C_Region_ID ");
+				rsql.append("FROM ");
+				rsql.append("	" + MRegion.Table_Name + " ");
+				rsql.append("WHERE ");
+				rsql.append("	isActive = 'Y' ");
+				rsql.append("	AND isDefault = 'Y' ");
+				rsql.append("	AND C_Country_ID = " + getCtx().getProperty("#C_Country_ID"));
+
+				int C_Region_ID = DB.getSQLValue(get_TrxName(), rsql.toString());
+
+				children.setC_Region_ID(C_Region_ID);
 				children.setAmount(BigDecimal.ZERO);
 
 				if (!children.save()) {
