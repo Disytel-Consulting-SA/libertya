@@ -42,7 +42,8 @@ public class CalloutCouponsSettlement extends CalloutEngine {
 			sql.append("	efp.M_EntidadFinanciera_ID, ");
 			sql.append("	p.M_EntidadFinancieraPlan_ID, ");
 			sql.append("	p.CouponBatchNumber, ");
-			sql.append("	p.DateTrx ");
+			sql.append("	p.DateTrx, ");
+			sql.append("	COALESCE(p.a_name, bp.name) as a_name ");
 			sql.append("FROM ");
 			sql.append("	" + X_C_Payment.Table_Name + " p ");
 			sql.append("	LEFT JOIN " + X_M_EntidadFinancieraPlan.Table_Name + " efp ");
@@ -51,6 +52,8 @@ public class CalloutCouponsSettlement extends CalloutEngine {
 			sql.append("		ON p.c_payment_id = al.c_payment_id ");
 			sql.append("	LEFT JOIN " + X_C_AllocationHdr.Table_Name + " ah ");
 			sql.append("		ON al.c_allocationhdr_id = ah.c_allocationhdr_id ");
+			sql.append("	INNER JOIN " + X_C_BPartner.Table_Name + " bp ");
+			sql.append("		ON p.c_bpartner_id = bp.c_bpartner_id ");
 			sql.append("WHERE ");
 			sql.append("	p.C_Payment_ID = ? ");
 
@@ -72,6 +75,7 @@ public class CalloutCouponsSettlement extends CalloutEngine {
 					mTab.setValue("M_EntidadFinancieraPlan_ID", rs.getInt(7));
 					mTab.setValue("PaymentBatch", rs.getString(8));
 					mTab.setValue("TrxDate", rs.getTimestamp(9));
+					mTab.setValue("A_Name", rs.getString(10));
 				}
 			} catch (SQLException e) {
 				log.log(Level.SEVERE, sql.toString(), e);

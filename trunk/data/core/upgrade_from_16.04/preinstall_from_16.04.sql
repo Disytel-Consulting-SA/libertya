@@ -7167,3 +7167,6 @@ FROM
       ON cs.c_creditcardsettlement_id = ccs.c_creditcardsettlement_id 
 WHERE
    p.tendertype = 'C'::bpchar;
+
+--20170518-1250 Merge de revision 1951
+update ad_system set dummy = (SELECT addcolumnifnotexists('c_couponssettlements','a_name','character varying(60)'));

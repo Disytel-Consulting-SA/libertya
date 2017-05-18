@@ -303,6 +303,7 @@ public class MCreditCardSettlement extends X_C_CreditCardSettlement implements D
 		sql.append("WHERE ");
 		sql.append("	Type = ? ");
 		sql.append("	AND Ad_Client_Id = " + Env.getAD_Client_ID(getCtx()));
+		sql.append("	AND IsActive = 'Y'");
 
 		PreparedStatement ps = null;
 		ResultSet rs = null;
@@ -347,6 +348,7 @@ public class MCreditCardSettlement extends X_C_CreditCardSettlement implements D
 		sql.append("WHERE ");
 		sql.append("	Type = ? ");
 		sql.append("	AND Ad_Client_Id = " + Env.getAD_Client_ID(getCtx()));
+		sql.append("	AND IsActive = 'Y'");
 
 		PreparedStatement ps = null;
 		ResultSet rs = null;

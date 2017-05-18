@@ -11,6 +11,7 @@ import org.openXpertya.model.MCreditCardSettlement;
 import org.openXpertya.model.MPayment;
 import org.openXpertya.model.X_C_AllocationHdr;
 import org.openXpertya.model.X_C_AllocationLine;
+import org.openXpertya.model.X_C_BPartner;
 import org.openXpertya.model.X_C_CreditCardCouponFilter;
 import org.openXpertya.model.X_C_Payment;
 import org.openXpertya.model.X_M_EntidadFinanciera;
@@ -61,9 +62,12 @@ public class FilterCoupons extends SvrProcess {
 		sql.append("	p.creditcardnumber, ");
 		sql.append("	p.couponbatchnumber, ");
 		sql.append("	p.c_currency_id, ");
-		sql.append("	p.c_payment_id ");
+		sql.append("	p.c_payment_id, ");
+		sql.append("	COALESCE(p.a_name, bp.name) as a_name ");
 		sql.append("FROM ");
 		sql.append("	" + X_C_Payment.Table_Name + " p ");
+		sql.append("	INNER JOIN " + X_C_BPartner.Table_Name + " bp ");
+		sql.append("		ON p.c_bpartner_id = bp.c_bpartner_id ");
 		sql.append("	LEFT JOIN " + X_M_EntidadFinancieraPlan.Table_Name + " efp ON p.m_entidadfinancieraplan_id = efp.m_entidadfinancieraplan_id ");
 
 		if (filter.getM_EntidadFinanciera_ID() > 0 || filter.getC_BPartner_ID() > 0) {
@@ -173,6 +177,7 @@ public class FilterCoupons extends SvrProcess {
 				couponsSettlements.setC_Currency_ID(rs.getInt(8));
 				couponsSettlements.setC_Payment_ID(rs.getInt(9));
 				couponsSettlements.setInclude(false);
+				couponsSettlements.setA_Name(rs.getString(10));
 
 				if (!couponsSettlements.save()) {
 					throw new Exception(CLogger.retrieveErrorAsString());
