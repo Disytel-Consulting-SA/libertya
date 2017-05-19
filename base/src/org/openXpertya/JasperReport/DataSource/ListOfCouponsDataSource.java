@@ -36,7 +36,7 @@ public class ListOfCouponsDataSource extends QueryDataSource {
 		StringBuffer sql = new StringBuffer();
 
 		sql.append("SELECT ");
-		sql.append("	bp.name, ");
+		sql.append("	bp.value || '-' || bp.name as name, ");
 		sql.append("	p.couponbatchnumber, ");
 		sql.append("	COALESCE(s.settlementno, '') AS settlementno, ");
 		sql.append("	p.couponnumber AS couponno, ");
@@ -71,6 +71,7 @@ public class ListOfCouponsDataSource extends QueryDataSource {
 		sql.append("	) l ON l.value = p.auditstatus ");
 		sql.append("WHERE ");
 		sql.append("	p.TenderType = '" + MPayment.TENDERTYPE_CreditCard + "' ");
+		sql.append("	AND p.DocStatus IN ('CO', 'CL') ");
 
 		if (C_BPartner_ID > 0) {
 			sql.append("	AND ef.c_bpartner_id = " + C_BPartner_ID + " ");

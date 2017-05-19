@@ -37,7 +37,7 @@
 	<field name="auditstatus" class="java.lang.String"/>
 	<field name="amount" class="java.math.BigDecimal"/>
 
-	<variable name="amount" class="java.math.BigDecimal" resetType="Column" calculation="Sum">
+	<variable name="amount" class="java.math.BigDecimal" resetType="Report" calculation="Sum">
 		<variableExpression><![CDATA[$F{amount}]]></variableExpression>
 	</variable>
 	<variable name="auditstatusSubtotal" class="java.math.BigDecimal" resetType="Group" resetGroup="auditstatus" calculation="Sum">
@@ -221,6 +221,19 @@
 						key="line-9"/>
 					<graphicElement stretchType="NoStretch"/>
 				</line>
+				<textField isStretchWithOverflow="false" isBlankWhenNull="false" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
+					<reportElement
+						x="2"
+						y="3"
+						width="131"
+						height="12"
+						key="textField-25"/>
+					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
+					<textElement>
+						<font pdfFontName="Helvetica-Bold" size="8" isBold="true"/>
+					</textElement>
+				<textFieldExpression   class="java.lang.String"><![CDATA["Suma Σ " + $F{auditstatus}]]></textFieldExpression>
+				</textField>
 			</band>
 			</groupFooter>
 		</group>
@@ -266,7 +279,10 @@
 						y="7"
 						width="114"
 						height="15"
-						key="staticText-1"/>
+						key="staticText-1"
+						isRemoveLineWhenBlank="true">
+							<printWhenExpression><![CDATA[new Boolean($P{Card_Type} != null)]]></printWhenExpression>
+						</reportElement>
 					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
 					<textElement verticalAlignment="Middle">
 						<font/>
@@ -276,10 +292,11 @@
 				<staticText>
 					<reportElement
 						x="1"
-						y="23"
+						y="22"
 						width="114"
 						height="15"
-						key="staticText-3"/>
+						key="staticText-3"
+						isRemoveLineWhenBlank="true"/>
 					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
 					<textElement verticalAlignment="Middle">
 						<font/>
@@ -289,10 +306,13 @@
 				<staticText>
 					<reportElement
 						x="1"
-						y="55"
+						y="52"
 						width="114"
 						height="15"
-						key="staticText-5"/>
+						key="staticText-5"
+						isRemoveLineWhenBlank="true">
+							<printWhenExpression><![CDATA[new Boolean($P{Date} != null || $P{Date_To} != null)]]></printWhenExpression>
+						</reportElement>
 					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
 					<textElement verticalAlignment="Middle">
 						<font/>
@@ -302,10 +322,11 @@
 				<staticText>
 					<reportElement
 						x="115"
-						y="23"
+						y="22"
 						width="11"
 						height="15"
-						key="staticText-6"/>
+						key="staticText-6"
+						isRemoveLineWhenBlank="true"/>
 					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
 					<textElement textAlignment="Center" verticalAlignment="Middle">
 						<font/>
@@ -318,7 +339,10 @@
 						y="7"
 						width="11"
 						height="15"
-						key="staticText-8"/>
+						key="staticText-8"
+						isRemoveLineWhenBlank="true">
+							<printWhenExpression><![CDATA[new Boolean($P{Card_Type} != null)]]></printWhenExpression>
+						</reportElement>
 					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
 					<textElement textAlignment="Center" verticalAlignment="Middle">
 						<font/>
@@ -328,10 +352,13 @@
 				<staticText>
 					<reportElement
 						x="115"
-						y="55"
+						y="52"
 						width="11"
 						height="15"
-						key="staticText-10"/>
+						key="staticText-10"
+						isRemoveLineWhenBlank="true">
+							<printWhenExpression><![CDATA[new Boolean($P{Date} != null || $P{Date_To} != null)]]></printWhenExpression>
+						</reportElement>
 					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
 					<textElement textAlignment="Center" verticalAlignment="Middle">
 						<font/>
@@ -345,7 +372,10 @@
 						width="412"
 						height="15"
 						forecolor="#5D5D5D"
-						key="textField-1"/>
+						key="textField-1"
+						isRemoveLineWhenBlank="true">
+							<printWhenExpression><![CDATA[new Boolean($P{Card_Type} != null)]]></printWhenExpression>
+						</reportElement>
 					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
 					<textElement verticalAlignment="Middle">
 						<font/>
@@ -355,11 +385,14 @@
 				<textField isStretchWithOverflow="false" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
 						x="126"
-						y="55"
+						y="52"
 						width="412"
 						height="15"
 						forecolor="#5D5D5D"
-						key="textField-3"/>
+						key="textField-3"
+						isRemoveLineWhenBlank="true">
+							<printWhenExpression><![CDATA[new Boolean($P{Date} != null || $P{Date_To} != null)]]></printWhenExpression>
+						</reportElement>
 					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
 					<textElement verticalAlignment="Middle">
 						<font/>
@@ -369,11 +402,14 @@
 				<textField isStretchWithOverflow="false" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
 						x="126"
-						y="23"
+						y="22"
 						width="412"
 						height="15"
 						forecolor="#5D5D5D"
-						key="textField-4"/>
+						key="textField-4"
+						isRemoveLineWhenBlank="true">
+							<printWhenExpression><![CDATA[new Boolean($P{Organization} != null)]]></printWhenExpression>
+						</reportElement>
 					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
 					<textElement verticalAlignment="Middle">
 						<font/>
@@ -383,10 +419,13 @@
 				<staticText>
 					<reportElement
 						x="1"
-						y="39"
+						y="37"
 						width="114"
 						height="15"
-						key="staticText-24"/>
+						key="staticText-24"
+						isRemoveLineWhenBlank="true">
+							<printWhenExpression><![CDATA[new Boolean($P{Audit_State} != null)]]></printWhenExpression>
+						</reportElement>
 					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
 					<textElement verticalAlignment="Middle">
 						<font/>
@@ -396,10 +435,13 @@
 				<staticText>
 					<reportElement
 						x="115"
-						y="39"
+						y="37"
 						width="11"
 						height="15"
-						key="staticText-25"/>
+						key="staticText-25"
+						isRemoveLineWhenBlank="true">
+							<printWhenExpression><![CDATA[new Boolean($P{Audit_State} != null)]]></printWhenExpression>
+						</reportElement>
 					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
 					<textElement textAlignment="Center" verticalAlignment="Middle">
 						<font/>
@@ -409,11 +451,14 @@
 				<textField isStretchWithOverflow="false" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
 						x="126"
-						y="39"
+						y="37"
 						width="412"
 						height="15"
 						forecolor="#5D5D5D"
-						key="textField-23"/>
+						key="textField-23"
+						isRemoveLineWhenBlank="true">
+							<printWhenExpression><![CDATA[new Boolean($P{Audit_State} != null)]]></printWhenExpression>
+						</reportElement>
 					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
 					<textElement verticalAlignment="Middle">
 						<font/>
@@ -522,24 +567,32 @@
 			</band>
 		</detail>
 		<columnFooter>
-			<band height="14"  isSplitAllowed="false" >
+			<band height="0"  isSplitAllowed="true" >
+			</band>
+		</columnFooter>
+		<pageFooter>
+			<band height="0"  isSplitAllowed="true" >
+			</band>
+		</pageFooter>
+		<lastPageFooter>
+			<band height="16"  isSplitAllowed="true" >
 				<staticText>
 					<reportElement
-						x="0"
+						x="2"
 						y="0"
-						width="56"
+						width="89"
 						height="14"
 						key="staticText-22"/>
 					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
 					<textElement verticalAlignment="Middle">
 						<font pdfFontName="Helvetica-Bold" size="8" isBold="true"/>
 					</textElement>
-				<text><![CDATA[TOTAL]]></text>
+				<text><![CDATA[TOTAL GENERAL]]></text>
 				</staticText>
 				<textField isStretchWithOverflow="false" pattern="###0.00" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
 						x="483"
-						y="0"
+						y="1"
 						width="56"
 						height="14"
 						key="textField-20"/>
@@ -552,7 +605,7 @@
 				<line direction="BottomUp">
 					<reportElement
 						x="0"
-						y="13"
+						y="14"
 						width="539"
 						height="1"
 						key="line-4"/>
@@ -568,11 +621,7 @@
 					<graphicElement stretchType="NoStretch"/>
 				</line>
 			</band>
-		</columnFooter>
-		<pageFooter>
-			<band height="0"  isSplitAllowed="true" >
-			</band>
-		</pageFooter>
+		</lastPageFooter>
 		<summary>
 			<band height="0"  isSplitAllowed="true" >
 			</band>
