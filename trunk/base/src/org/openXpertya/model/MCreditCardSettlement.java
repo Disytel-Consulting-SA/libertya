@@ -846,20 +846,16 @@ public class MCreditCardSettlement extends X_C_CreditCardSettlement implements D
 		changeCouponsAuditStatus(X_C_Payment.AUDITSTATUS_ToVerify);
 
 		MCreditCardSettlement copy = new MCreditCardSettlement(getCtx(), 0, get_TrxName());
+		PO.copyValues(this, copy);
 
-		copy.setC_BPartner_ID(getC_BPartner_ID());
-		copy.setPaymentDate(getPaymentDate());
-		copy.setPayment(getPayment());
+		copy.setAD_Org_ID(getAD_Org_ID());
 		copy.setAmount(negativeValue(getAmount()));
 		copy.setNetAmount(negativeValue(getNetAmount()));
 		copy.setWithholding(negativeValue(getWithholding()));
 		copy.setPerception(negativeValue(getPerception()));
 		copy.setExpenses(negativeValue(getExpenses()));
 		copy.setCouponsTotalAmount(negativeValue(getCouponsTotalAmount()));
-		copy.setIsReconciled(isReconciled());
-		copy.setPosted(isPosted());
-		copy.setC_Currency_ID(getC_Currency_ID());
-		copy.setSettlementNo(getSettlementNo());
+		copy.setSettlementNo(getSettlementNo()+"^");
 		copy.setIVAAmount(negativeValue(getIVAAmount()));
 		copy.setCommissionAmount(negativeValue(getCommissionAmount()));
 		copy.setC_Payment_ID(getC_Payment_ID());
