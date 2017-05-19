@@ -18,6 +18,7 @@ import org.openXpertya.model.X_M_EntidadFinanciera;
 import org.openXpertya.model.X_M_EntidadFinancieraPlan;
 import org.openXpertya.util.CLogger;
 import org.openXpertya.util.DB;
+import org.openXpertya.util.Msg;
 
 /**
  * Proceso que genera liquidaciones de cupones a partir de un filtro.
@@ -51,6 +52,12 @@ public class FilterCoupons extends SvrProcess {
 		}
 
 		X_C_CreditCardCouponFilter filter = new X_C_CreditCardCouponFilter(getCtx(), m_C_CreditCardCouponFilter_ID, get_TrxName());
+		MCreditCardSettlement settlement = new MCreditCardSettlement(getCtx(), filter.getC_CreditCardSettlement_ID(), get_TrxName());
+		
+		if (settlement.isReconciled()) {
+			throw new IllegalArgumentException(Msg.translate(getCtx(),
+					"ReconciledSettlement"));
+		}
 
 		StringBuffer sql = new StringBuffer();
 		sql.append("SELECT ");
@@ -186,7 +193,6 @@ public class FilterCoupons extends SvrProcess {
 				}
 			}
 
-			MCreditCardSettlement settlement = new MCreditCardSettlement(getCtx(), filter.getC_CreditCardSettlement_ID(), get_TrxName());
 			settlement.calculateSettlementCouponsTotalAmount(get_TrxName());
 
 			// Marco al filtro como procesado.
