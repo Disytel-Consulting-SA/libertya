@@ -29,7 +29,7 @@ public class SettlementListDataSource extends QueryDataSource {
 
 		sql.append("SELECT ");
 		sql.append("	LPAD(s.settlementno, 8, '0') AS settlementno, "); // Nro liquidación
-		sql.append("	bp.name AS creditcard, "); // Tarjeta
+		sql.append("	bp.value || '-' || bp.name AS creditcard, "); // Tarjeta
 		sql.append("	COALESCE(amount, 0) AS amount, "); // Importe bruto
 		sql.append("	COALESCE(netamount, 0) AS netamount, "); // Importe acreditado
 		sql.append("	COALESCE(couponstotalamount, 0) AS done, "); // Importe neto
