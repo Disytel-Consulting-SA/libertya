@@ -7246,3 +7246,6 @@ WHERE
 update ad_system set dummy = (SELECT addcolumnifnotexists('c_withholdingsettlement','c_retencionschema_id','integer'));
 
 ALTER TABLE c_withholdingsettlement DROP COLUMN c_retenciontype_id;
+
+--20170519-1650 Merge de Revisión 1847
+ALTER TABLE libertya.c_creditcardsettlement ADD CONSTRAINT uniquecreditcardsettlement UNIQUE (settlementno, c_bpartner_id);
