@@ -5,10 +5,10 @@
 		 name="SettlementList"
 		 columnCount="1"
 		 printOrder="Vertical"
-		 orientation="Portrait"
-		 pageWidth="595"
-		 pageHeight="842"
-		 columnWidth="539"
+		 orientation="Landscape"
+		 pageWidth="842"
+		 pageHeight="595"
+		 columnWidth="786"
 		 columnSpacing="0"
 		 leftMargin="28"
 		 rightMargin="28"
@@ -107,7 +107,10 @@
 						y="37"
 						width="121"
 						height="15"
-						key="staticText-2"/>
+						key="staticText-2"
+						isRemoveLineWhenBlank="true">
+							<printWhenExpression><![CDATA[new Boolean($P{Card_Type} != null)]]></printWhenExpression>
+						</reportElement>
 					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
 					<textElement verticalAlignment="Bottom">
 						<font/>
@@ -120,7 +123,10 @@
 						y="5"
 						width="121"
 						height="15"
-						key="staticText-3"/>
+						key="staticText-3"
+						isRemoveLineWhenBlank="true">
+							<printWhenExpression><![CDATA[new Boolean($P{Organization} != null)]]></printWhenExpression>
+						</reportElement>
 					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
 					<textElement verticalAlignment="Bottom">
 						<font/>
@@ -133,7 +139,10 @@
 						y="21"
 						width="121"
 						height="15"
-						key="staticText-4"/>
+						key="staticText-4"
+						isRemoveLineWhenBlank="true">
+							<printWhenExpression><![CDATA[new Boolean($P{Doc_Status} != null)]]></printWhenExpression>
+						</reportElement>
 					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
 					<textElement verticalAlignment="Bottom">
 						<font/>
@@ -146,7 +155,8 @@
 						y="53"
 						width="121"
 						height="15"
-						key="staticText-5"/>
+						key="staticText-5"
+						isRemoveLineWhenBlank="true"/>
 					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
 					<textElement verticalAlignment="Bottom">
 						<font/>
@@ -159,7 +169,10 @@
 						y="5"
 						width="11"
 						height="15"
-						key="staticText-6"/>
+						key="staticText-6"
+						isRemoveLineWhenBlank="true">
+							<printWhenExpression><![CDATA[new Boolean($P{Organization} != null)]]></printWhenExpression>
+						</reportElement>
 					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
 					<textElement textAlignment="Center" verticalAlignment="Bottom">
 						<font/>
@@ -172,7 +185,10 @@
 						y="21"
 						width="11"
 						height="15"
-						key="staticText-7"/>
+						key="staticText-7"
+						isRemoveLineWhenBlank="true">
+							<printWhenExpression><![CDATA[new Boolean($P{Doc_Status} != null)]]></printWhenExpression>
+						</reportElement>
 					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
 					<textElement textAlignment="Center" verticalAlignment="Bottom">
 						<font/>
@@ -185,7 +201,10 @@
 						y="37"
 						width="11"
 						height="15"
-						key="staticText-9"/>
+						key="staticText-9"
+						isRemoveLineWhenBlank="true">
+							<printWhenExpression><![CDATA[new Boolean($P{Card_Type} != null)]]></printWhenExpression>
+						</reportElement>
 					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
 					<textElement textAlignment="Center" verticalAlignment="Bottom">
 						<font/>
@@ -198,7 +217,8 @@
 						y="53"
 						width="11"
 						height="15"
-						key="staticText-10"/>
+						key="staticText-10"
+						isRemoveLineWhenBlank="true"/>
 					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
 					<textElement textAlignment="Center" verticalAlignment="Bottom">
 						<font/>
@@ -212,7 +232,10 @@
 						width="160"
 						height="15"
 						forecolor="#5D5D5D"
-						key="textField-2"/>
+						key="textField-2"
+						isRemoveLineWhenBlank="true">
+							<printWhenExpression><![CDATA[new Boolean($P{Card_Type} != null)]]></printWhenExpression>
+						</reportElement>
 					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
 					<textElement verticalAlignment="Bottom">
 						<font/>
@@ -226,7 +249,8 @@
 						width="406"
 						height="15"
 						forecolor="#5D5D5D"
-						key="textField-3"/>
+						key="textField-3"
+						isRemoveLineWhenBlank="true"/>
 					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
 					<textElement verticalAlignment="Bottom">
 						<font/>
@@ -240,7 +264,10 @@
 						width="160"
 						height="15"
 						forecolor="#5D5D5D"
-						key="textField-4"/>
+						key="textField-4"
+						isRemoveLineWhenBlank="true">
+							<printWhenExpression><![CDATA[new Boolean($P{Organization} != null)]]></printWhenExpression>
+						</reportElement>
 					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
 					<textElement verticalAlignment="Bottom">
 						<font/>
@@ -254,7 +281,10 @@
 						width="160"
 						height="15"
 						forecolor="#5D5D5D"
-						key="textField-5"/>
+						key="textField-5"
+						isRemoveLineWhenBlank="true">
+							<printWhenExpression><![CDATA[new Boolean($P{Doc_Status} != null)]]></printWhenExpression>
+						</reportElement>
 					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
 					<textElement verticalAlignment="Bottom">
 						<font/>
@@ -269,7 +299,7 @@
 					<reportElement
 						x="0"
 						y="0"
-						width="56"
+						width="106"
 						height="14"
 						key="staticText-11"/>
 					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
@@ -280,9 +310,9 @@
 				</staticText>
 				<staticText>
 					<reportElement
-						x="56"
+						x="106"
 						y="0"
-						width="50"
+						width="246"
 						height="14"
 						key="staticText-12"/>
 					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
@@ -293,7 +323,7 @@
 				</staticText>
 				<staticText>
 					<reportElement
-						x="106"
+						x="353"
 						y="0"
 						width="52"
 						height="14"
@@ -306,7 +336,7 @@
 				</staticText>
 				<staticText>
 					<reportElement
-						x="158"
+						x="405"
 						y="0"
 						width="55"
 						height="14"
@@ -319,7 +349,7 @@
 				</staticText>
 				<staticText>
 					<reportElement
-						x="213"
+						x="460"
 						y="0"
 						width="42"
 						height="14"
@@ -332,7 +362,7 @@
 				</staticText>
 				<staticText>
 					<reportElement
-						x="255"
+						x="502"
 						y="0"
 						width="42"
 						height="14"
@@ -345,7 +375,7 @@
 				</staticText>
 				<staticText>
 					<reportElement
-						x="297"
+						x="544"
 						y="0"
 						width="42"
 						height="14"
@@ -358,7 +388,7 @@
 				</staticText>
 				<staticText>
 					<reportElement
-						x="339"
+						x="586"
 						y="0"
 						width="48"
 						height="14"
@@ -371,7 +401,7 @@
 				</staticText>
 				<staticText>
 					<reportElement
-						x="387"
+						x="634"
 						y="0"
 						width="48"
 						height="14"
@@ -384,7 +414,7 @@
 				</staticText>
 				<staticText>
 					<reportElement
-						x="435"
+						x="682"
 						y="0"
 						width="48"
 						height="14"
@@ -397,7 +427,7 @@
 				</staticText>
 				<staticText>
 					<reportElement
-						x="483"
+						x="730"
 						y="0"
 						width="56"
 						height="14"
@@ -412,7 +442,7 @@
 					<reportElement
 						x="0"
 						y="13"
-						width="539"
+						width="785"
 						height="1"
 						key="line-1"/>
 					<graphicElement stretchType="NoStretch"/>
@@ -421,7 +451,7 @@
 					<reportElement
 						x="0"
 						y="0"
-						width="539"
+						width="785"
 						height="1"
 						key="line-2"/>
 					<graphicElement stretchType="NoStretch"/>
@@ -434,7 +464,7 @@
 					<reportElement
 						x="0"
 						y="0"
-						width="56"
+						width="106"
 						height="14"
 						key="textField-6"/>
 					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
@@ -445,9 +475,9 @@
 				</textField>
 				<textField isStretchWithOverflow="false" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
-						x="56"
+						x="106"
 						y="0"
-						width="50"
+						width="246"
 						height="14"
 						key="textField-7"/>
 					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
@@ -458,7 +488,7 @@
 				</textField>
 				<textField isStretchWithOverflow="false" pattern="###0.00" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
-						x="106"
+						x="353"
 						y="0"
 						width="52"
 						height="14"
@@ -471,7 +501,7 @@
 				</textField>
 				<textField isStretchWithOverflow="false" pattern="###0.00" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
-						x="158"
+						x="405"
 						y="0"
 						width="55"
 						height="14"
@@ -484,7 +514,7 @@
 				</textField>
 				<textField isStretchWithOverflow="false" pattern="###0.00" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
-						x="213"
+						x="460"
 						y="0"
 						width="42"
 						height="14"
@@ -497,7 +527,7 @@
 				</textField>
 				<textField isStretchWithOverflow="false" pattern="###0.00" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
-						x="255"
+						x="502"
 						y="0"
 						width="42"
 						height="14"
@@ -510,7 +540,7 @@
 				</textField>
 				<textField isStretchWithOverflow="false" pattern="###0.00" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
-						x="297"
+						x="544"
 						y="0"
 						width="42"
 						height="14"
@@ -523,7 +553,7 @@
 				</textField>
 				<textField isStretchWithOverflow="false" pattern="###0.00" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
-						x="339"
+						x="586"
 						y="0"
 						width="48"
 						height="14"
@@ -536,7 +566,7 @@
 				</textField>
 				<textField isStretchWithOverflow="false" pattern="###0.00" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
-						x="387"
+						x="634"
 						y="0"
 						width="48"
 						height="14"
@@ -549,7 +579,7 @@
 				</textField>
 				<textField isStretchWithOverflow="false" pattern="###0.00" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
-						x="435"
+						x="682"
 						y="0"
 						width="48"
 						height="14"
@@ -562,7 +592,7 @@
 				</textField>
 				<textField isStretchWithOverflow="false" pattern="dd/MM/yyyy" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
-						x="483"
+						x="730"
 						y="0"
 						width="56"
 						height="14"
@@ -592,7 +622,7 @@
 				</staticText>
 				<textField isStretchWithOverflow="false" pattern="###0.00" isBlankWhenNull="false" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
-						x="106"
+						x="353"
 						y="0"
 						width="52"
 						height="14"
@@ -605,7 +635,7 @@
 				</textField>
 				<textField isStretchWithOverflow="false" pattern="###0.00" isBlankWhenNull="false" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
-						x="255"
+						x="502"
 						y="0"
 						width="42"
 						height="14"
@@ -618,7 +648,7 @@
 				</textField>
 				<textField isStretchWithOverflow="false" pattern="###0.00" isBlankWhenNull="false" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
-						x="339"
+						x="586"
 						y="0"
 						width="48"
 						height="14"
@@ -631,7 +661,7 @@
 				</textField>
 				<textField isStretchWithOverflow="false" pattern="###0.00" isBlankWhenNull="false" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
-						x="435"
+						x="682"
 						y="0"
 						width="48"
 						height="14"
@@ -646,7 +676,7 @@
 					<reportElement
 						x="0"
 						y="0"
-						width="539"
+						width="785"
 						height="1"
 						key="line-3"/>
 					<graphicElement stretchType="NoStretch"/>
@@ -655,14 +685,14 @@
 					<reportElement
 						x="0"
 						y="13"
-						width="539"
+						width="785"
 						height="1"
 						key="line-4"/>
 					<graphicElement stretchType="NoStretch"/>
 				</line>
 				<textField isStretchWithOverflow="false" pattern="###0.00" isBlankWhenNull="false" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
-						x="159"
+						x="406"
 						y="0"
 						width="55"
 						height="14"
@@ -675,7 +705,7 @@
 				</textField>
 				<textField isStretchWithOverflow="false" pattern="###0.00" isBlankWhenNull="false" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
-						x="213"
+						x="460"
 						y="0"
 						width="42"
 						height="14"
@@ -688,7 +718,7 @@
 				</textField>
 				<textField isStretchWithOverflow="false" pattern="###0.00" isBlankWhenNull="false" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
-						x="297"
+						x="544"
 						y="0"
 						width="42"
 						height="14"
@@ -701,7 +731,7 @@
 				</textField>
 				<textField isStretchWithOverflow="false" pattern="###0.00" isBlankWhenNull="false" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
-						x="387"
+						x="634"
 						y="0"
 						width="48"
 						height="14"
