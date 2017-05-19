@@ -278,15 +278,13 @@ public class MCreditCardSettlement extends X_C_CreditCardSettlement implements D
 		StringBuffer sql = new StringBuffer();
 
 		sql.append("SELECT ");
-		sql.append("	rt.C_RetencionType_ID ");
+		sql.append("	* ");
 		sql.append("FROM ");
-		sql.append("	" + X_C_RetencionType.Table_Name + " rt ");
-		sql.append("	INNER JOIN " + X_C_RetencionSchema.Table_Name + " rs ");
-		sql.append("		ON rs.C_RetencionType_ID = rs.C_RetencionType_ID ");
-		sql.append("WHERE ");
-		sql.append("	rs.RetencionApplication = 'S' "); // Solo del tipo "Retencion Sufrida".
-		sql.append("	AND rt.IsActive = 'Y' "); // Filtro las activas.
-		sql.append("	AND rt.Ad_Client_Id = " + Env.getAD_Client_ID(getCtx()));
+		sql.append("	" + X_C_RetencionSchema.Table_Name);
+		sql.append(" WHERE ");
+		sql.append("	RetencionApplication = 'S' "); // Solo del tipo "Retencion Sufrida".
+		sql.append("	AND IsActive = 'Y' "); // Filtro los esquemas activos.
+		sql.append("	AND Ad_Client_Id = " + Env.getAD_Client_ID(getCtx()));
 
 		PreparedStatement ps = null;
 		ResultSet rs = null;
@@ -301,23 +299,9 @@ public class MCreditCardSettlement extends X_C_CreditCardSettlement implements D
 				children.setAD_Client_ID(getAD_Client_ID());
 				children.setAD_Org_ID(getAD_Org_ID());
 				children.setC_CreditCardSettlement_ID(getC_CreditCardSettlement_ID());
-				children.setC_RetencionType_ID(rs.getInt(1));
-
-				// Carga región por defecto
-				StringBuffer rsql = new StringBuffer();
-
-				rsql.append("SELECT ");
-				rsql.append("	C_Region_ID ");
-				rsql.append("FROM ");
-				rsql.append("	" + MRegion.Table_Name + " ");
-				rsql.append("WHERE ");
-				rsql.append("	isActive = 'Y' ");
-				rsql.append("	AND isDefault = 'Y' ");
-				rsql.append("	AND C_Country_ID = " + getCtx().getProperty("#C_Country_ID"));
-
-				int C_Region_ID = DB.getSQLValue(get_TrxName(), rsql.toString());
-
-				children.setC_Region_ID(C_Region_ID);
+				MRetencionSchema retSchema = new MRetencionSchema(getCtx(), rs, get_TrxName()); 
+				children.setC_RetencionSchema_ID(retSchema.getID());
+				children.setC_Region_ID(retSchema.getC_Region_ID());
 				children.setAmount(BigDecimal.ZERO);
 
 				if (!children.save()) {
@@ -805,7 +789,7 @@ public class MCreditCardSettlement extends X_C_CreditCardSettlement implements D
 			return DocAction.STATUS_Drafted;
 		}
 		setProcessed(true);
-		setDocAction(DOCACTION_Close);
+		setDocAction(DOCACTION_Void);
 		return DocAction.STATUS_Completed;
 	}
 
