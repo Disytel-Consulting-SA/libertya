@@ -7170,3 +7170,19 @@ WHERE
 
 --20170518-1250 Merge de revision 1951
 update ad_system set dummy = (SELECT addcolumnifnotexists('c_couponssettlements','a_name','character varying(60)'));
+
+
+--20170519-1122 Nuevas tablas a ser bitacoreadas
+-- Configuración de medios de cobro
+update ad_system set dummy = (SELECT addcolumnifnotexists('C_POSPaymentMedium','AD_ComponentObjectUID','varchar(100)'));
+update ad_system set dummy = (SELECT addcolumnifnotexists('C_POSPaymentMedium','AD_ComponentVersion_ID','integer'));
+-- Lista de Precio
+update ad_system set dummy = (SELECT addcolumnifnotexists('M_PriceList','AD_ComponentObjectUID','varchar(100)'));
+update ad_system set dummy = (SELECT addcolumnifnotexists('M_PriceList','AD_ComponentVersion_ID','integer'));
+-- Version de Lista de Precio
+update ad_system set dummy = (SELECT addcolumnifnotexists('M_PriceList_Version','AD_ComponentObjectUID','varchar(100)'));
+update ad_system set dummy = (SELECT addcolumnifnotexists('M_PriceList_Version','AD_ComponentVersion_ID','integer'));
+-- Configuracion de Descuentos
+update ad_system set dummy = (SELECT addcolumnifnotexists('M_DiscountConfig','AD_ComponentObjectUID','varchar(100)'));
+update ad_system set dummy = (SELECT addcolumnifnotexists('M_DiscountConfig','AD_ComponentVersion_ID','integer'));
+
