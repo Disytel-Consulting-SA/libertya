@@ -2,7 +2,7 @@
 <!-- Created with iReport - A designer for JasperReports -->
 <!DOCTYPE jasperReport PUBLIC "//JasperReports//DTD Report Design//EN" "http://jasperreports.sourceforge.net/dtds/jasperreport.dtd">
 <jasperReport
-		 name="CreditCardCloseReport"
+		 name="CreditCardClose"
 		 columnCount="1"
 		 printOrder="Vertical"
 		 orientation="Portrait"
@@ -38,7 +38,9 @@ left join c_posjournal pj on pj.c_posjournal_id = p.c_posjournal_id
 left join c_pos pos on pos.c_pos_id = pj.c_pos_id
 inner join c_creditcard_closeline cccl on cccl.c_payment_id = p.c_payment_id
 where p.tendertype = 'C'
-	and p.c_posjournal_id is not null and p.isactive = 'Y'
+	and p.docstatus IN ('CO','CL')
+	and p.c_posjournal_id is not null 
+	and p.isactive = 'Y'
 	AND (($P{FechaCierre}::date IS NULL) OR (p.datetrx::date = $P{FechaCierre}::date))
 	AND (($P{AD_Org_ID} IS NULL) OR (0 = $P{AD_Org_ID}) OR (p.ad_org_id = $P{AD_Org_ID}))
 	AND (($P{AD_CLIENT_ID} IS NULL) OR (p.ad_client_id = $P{AD_CLIENT_ID}))  
