@@ -1273,7 +1273,7 @@ public class DocumentEngine implements DocAction {
 
 			// Complete                    ..  CO
 			if (docStatus.equals(DocumentEngine.STATUS_Completed)) {
-				options[index++] = DocumentEngine.ACTION_Void;
+				options[ 0 ] = DocumentEngine.ACTION_Void;
 			}
 	    }
 		return index;

@@ -7241,3 +7241,8 @@ FROM
       ON cs.c_creditcardsettlement_id = ccs.c_creditcardsettlement_id 
 WHERE
    p.tendertype = 'C'::bpchar;
+   
+--20170519-1600 Merge de Revisiones 1916 y 1929
+update ad_system set dummy = (SELECT addcolumnifnotexists('c_withholdingsettlement','c_retencionschema_id','integer'));
+
+ALTER TABLE c_withholdingsettlement DROP COLUMN c_retenciontype_id;
