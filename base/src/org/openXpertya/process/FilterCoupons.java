@@ -97,8 +97,8 @@ public class FilterCoupons extends SvrProcess {
 		sql.append("	AND p.tendertype = '" + MPayment.TENDERTYPE_CreditCard + "' ");
 		// Filtro sólo pagos con estado de auditoría "A verificar"
 		sql.append("	AND p.auditstatus = '" + MPayment.AUDITSTATUS_ToVerify + "' ");
-		// Filtro por organización
-		sql.append("	AND p.ad_org_id = " + filter.getAD_Org_ID() + " ");
+		// Filtro por organización  (QUITADO R3.5 AJustes en Filtro de Cupones)
+		//sql.append("	AND p.ad_org_id = " + filter.getAD_Org_ID() + " ");
 
 		// FILTROS OPCIONALES
 
