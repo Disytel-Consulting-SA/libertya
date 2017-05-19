@@ -1,6 +1,9 @@
 package org.openXpertya.JasperReport;
 
 import java.math.BigDecimal;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -69,7 +72,31 @@ public class LaunchSettlementListDetailed extends DynamicJasperReport {
 		sql.append("	AND rl.value = ? ");
 		sql.append("	AND ad_language = ? ");
 
-		return DB.getSQLValueString("", sql.toString(), refName, value, Env.getAD_Language(Env.getCtx()));
+		PreparedStatement ps = null;
+		ResultSet rs = null;
+
+		try {
+			ps = DB.prepareStatement(sql.toString(), null);
+			ps.setString(1, refName);
+			ps.setString(2, value);
+			ps.setString(3, Env.getAD_Language(Env.getCtx()));
+			rs = ps.executeQuery();
+
+			while (rs.next()) {
+				return rs.getString(1);
+			}
+
+		} catch (Exception e) {
+			return null;
+		} finally {
+			try {
+				rs.close();
+				ps.close();
+			} catch (SQLException e) {
+				return null;
+			}
+		}
+		return null;
 	}
 
 	private String getOrgName(BigDecimal id) {
@@ -81,8 +108,30 @@ public class LaunchSettlementListDetailed extends DynamicJasperReport {
 		sql.append("	" + MOrg.Table_Name + " ");
 		sql.append("WHERE ");
 		sql.append("	AD_Org_ID = ?");
+		
+		PreparedStatement ps = null;
+		ResultSet rs = null;
 
-		return DB.getSQLValueString("", sql.toString(), id.intValue());
+		try {
+			ps = DB.prepareStatement(sql.toString(), null);
+			ps.setInt(1, id.intValue());
+			rs = ps.executeQuery();
+
+			while (rs.next()) {
+				return rs.getString(1);
+			}
+
+		} catch (Exception e) {
+			return null;
+		} finally {
+			try {
+				rs.close();
+				ps.close();
+			} catch (SQLException e) {
+				return null;
+			}
+		}
+		return null;
 	}
 
 	private String getBPartnerName(BigDecimal id) {
@@ -95,7 +144,29 @@ public class LaunchSettlementListDetailed extends DynamicJasperReport {
 		sql.append("WHERE ");
 		sql.append("	C_BPartner_ID = ?");
 
-		return DB.getSQLValueString("", sql.toString(), id.intValue());
+		PreparedStatement ps = null;
+		ResultSet rs = null;
+
+		try {
+			ps = DB.prepareStatement(sql.toString(), null);
+			ps.setInt(1, id.intValue());
+			rs = ps.executeQuery();
+
+			while (rs.next()) {
+				return rs.getString(1);
+			}
+
+		} catch (Exception e) {
+			return null;
+		} finally {
+			try {
+				rs.close();
+				ps.close();
+			} catch (SQLException e) {
+				return null;
+			}
+		}
+		return null;
 	}
 
 }
