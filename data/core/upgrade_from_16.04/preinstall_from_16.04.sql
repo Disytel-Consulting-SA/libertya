@@ -7186,3 +7186,5 @@ update ad_system set dummy = (SELECT addcolumnifnotexists('M_PriceList_Version',
 update ad_system set dummy = (SELECT addcolumnifnotexists('M_DiscountConfig','AD_ComponentObjectUID','varchar(100)'));
 update ad_system set dummy = (SELECT addcolumnifnotexists('M_DiscountConfig','AD_ComponentVersion_ID','integer'));
 
+--20170519-1145 Merge de revision 1953
+update ad_system set dummy = (SELECT addcolumnifnotexists('c_couponssettlements','processed','character(1) NOT NULL DEFAULT ''N'''));

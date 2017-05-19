@@ -7,7 +7,7 @@ import java.math.*;
 import org.openXpertya.util.*;
 /** Modelo Generado por C_CouponsSettlements
  *  @author Comunidad de Desarrollo Libertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
- *  @version  - 2017-05-18 13:12:31.457 */
+ *  @version  - 2017-05-19 11:53:14.956 */
 public class X_C_CouponsSettlements extends org.openXpertya.model.PO
 {
 /** Constructor estándar */
@@ -25,6 +25,7 @@ setInclude (false);
 setIsReconciled (false);
 setM_EntidadFinanciera_ID (0);
 setM_EntidadFinancieraPlan_ID (0);
+setProcessed (false);	// N
 }
  */
 }
@@ -256,6 +257,24 @@ set_Value ("PaymentBatch", PaymentBatch);
 public String getPaymentBatch() 
 {
 return (String)get_Value("PaymentBatch");
+}
+/** Set Processed.
+The document has been processed */
+public void setProcessed (boolean Processed)
+{
+set_Value ("Processed", new Boolean(Processed));
+}
+/** Get Processed.
+The document has been processed */
+public boolean isProcessed() 
+{
+Object oo = get_Value("Processed");
+if (oo != null) 
+{
+ if (oo instanceof Boolean) return ((Boolean)oo).booleanValue();
+ return "Y".equals(oo);
+}
+return false;
 }
 /** Set Trx Date */
 public void setTrxDate (Timestamp TrxDate)

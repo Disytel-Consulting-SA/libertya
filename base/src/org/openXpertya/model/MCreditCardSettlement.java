@@ -58,7 +58,50 @@ public class MCreditCardSettlement extends X_C_CreditCardSettlement implements D
 		if (newRecord && !getDocStatus().equals(DOCSTATUS_Voided)) {
 			generateAllChildrens();
 		}
+		//Si marco la liquidación como conciliada, pongo los cupones como procesados
+		//para que ya no puedan utilizarse el "incluir", caso contrario lo pongo "no procesados"
+		setCouponsProcessed(isReconciled());
 		return true;
+	}
+	
+	private void setCouponsProcessed(boolean procesed) {
+		StringBuffer sql = new StringBuffer();
+
+		sql.append("SELECT ");
+		sql.append("	* ");
+		sql.append("FROM ");
+		sql.append("	" + MCouponsSettlements.Table_Name + " ");
+		sql.append("WHERE ");
+		sql.append("	C_CreditCardSettlement_ID = ?");
+		sql.append("	AND include = 'Y'");
+
+		PreparedStatement ps = null;
+		ResultSet rs = null;
+
+		try {
+			ps = DB.prepareStatement(sql.toString(), get_TrxName());
+			ps.setInt(1, getC_CreditCardSettlement_ID());
+			rs = ps.executeQuery();
+
+			while (rs.next()) {
+				MCouponsSettlements coupon = new MCouponsSettlements(getCtx(), rs, get_TrxName());
+				coupon.setProcessed(procesed);
+				coupon.setReconciledFlag(true);
+				if (!coupon.save()) {
+					throw new Exception(CLogger.retrieveErrorAsString());
+				}
+			}
+
+		} catch (Exception e) {
+			log.log(Level.SEVERE, "reconciledSettlementError", e);
+		} finally {
+			try {
+				rs.close();
+				ps.close();
+			} catch (SQLException e) {
+				log.log(Level.SEVERE, "Cannot close statement or resultset");
+			}
+		}
 	}
 
 	@Override
