@@ -1666,16 +1666,27 @@ public class VOrdenPago extends CPanel implements FormPanel,ActionListener,Table
 				int nroCheque = Integer.parseInt(nroChequeStr);
 				// El numero de cheque es numérico.
 				int C_BankAccountDoc_ID = mpc.chequera_ID;
-				// Se incrementa en 1 el numero de cheque;
-				nroCheque++;
 				// Se guarda el siguiente numero de cheque en la chequera.
 				X_C_BankAccountDoc bankAccountDoc = new X_C_BankAccountDoc(Env.getCtx(),C_BankAccountDoc_ID,null);
+				// Controlo que el número de cheque esté dentro del rango de numeración de inicio y fin
+				if (bankAccountDoc.getStartNo() > nroCheque
+						|| (bankAccountDoc.getEndNo() > 0 && bankAccountDoc.getEndNo() < nroCheque)) {
+					throw new Exception(getModel().getMsg("CheckNoOutOfRange",
+							new Object[] { bankAccountDoc.getStartNo(), bankAccountDoc.getEndNo(), nroCheque }));
+				}
+				// Se incrementa en 1 el numero de cheque;
+				nroCheque++;
 				bankAccountDoc.setCurrentNext(nroCheque);
-				bankAccountDoc.save();
+				if(!bankAccountDoc.save()){
+					throw new Exception(CLogger.retrieveErrorAsString());
+				}
 				bankAccountDoc = null;
-			} catch (Exception e) {
+			} catch (NumberFormatException nfe) {
 				// El usuario modifico el numero de cheque agregandole caracteres que no son numericos.
 				// En este caso no se actualiza la secuencia de la chequera.
+			} catch (Exception e) {
+				// Para cualquier otro error, se propaga
+				throw e;
 			}
 		}
 		

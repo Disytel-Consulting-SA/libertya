@@ -828,10 +828,16 @@ public class WOrdenPago extends ADForm implements ValueChangeListener, TableMode
 				int nroCheque = Integer.parseInt(nroChequeStr);
 				// El numero de cheque es numérico.
 				int C_BankAccountDoc_ID = mpc.chequera_ID;
-				// Se incrementa en 1 el numero de cheque;
-				nroCheque++;
 				// Se guarda el siguiente numero de cheque en la chequera.
 				X_C_BankAccountDoc bankAccountDoc = new X_C_BankAccountDoc(Env.getCtx(),C_BankAccountDoc_ID,null);
+				// Controlo que el número de cheque esté dentro del rango de numeración de inicio y fin
+				if (bankAccountDoc.getStartNo() > nroCheque
+						|| (bankAccountDoc.getEndNo() > 0 && bankAccountDoc.getEndNo() < nroCheque)) {
+					throw new Exception(getModel().getMsg("CheckNoOutOfRange",
+							new Object[] { bankAccountDoc.getStartNo(), bankAccountDoc.getEndNo(), nroCheque }));
+				}
+				// Se incrementa en 1 el numero de cheque;
+				nroCheque++;
 				bankAccountDoc.setCurrentNext(nroCheque);
 				bankAccountDoc.save();
 				bankAccountDoc = null;
