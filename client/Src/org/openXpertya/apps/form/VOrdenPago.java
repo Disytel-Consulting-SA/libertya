@@ -1876,8 +1876,8 @@ public class VOrdenPago extends CPanel implements FormPanel,ActionListener,Table
     		BigDecimal monto = null;
     		
     		try {
-    			monto = numberParse(txtTotalPagar1.getText());
-    		} catch (ParseException e) {
+    			monto = (BigDecimal)txtTotalPagar1.getValue();
+    		} catch (Exception e) {
     			showError("@SaveErrorNotUnique@ \n\n" + lblTotalPagar1.getText());
     			
         		txtTotalPagar1.requestFocusInWindow();
@@ -2276,6 +2276,7 @@ public class VOrdenPago extends CPanel implements FormPanel,ActionListener,Table
 		
 		//
 		
+		txtTotalPagar1.setValue(null);
 		txtTotalPagar1.setText("");
 		lblDateTrx.setText(getModel().isSOTrx()?"Fecha del recibo:":"Fecha de la O/P:");		
 		txtSaldo.setText("");
@@ -3417,7 +3418,10 @@ public class VOrdenPago extends CPanel implements FormPanel,ActionListener,Table
 	 * Actualizar el total a pagar de la primer pestaña
 	 */
 	protected void updateTotalAPagar1(){
-		txtTotalPagar1.setText(numberFormat(m_model.getSumaTotalPagarFacturas()));
+		BigDecimal total = m_model.getSumaTotalPagarFacturas();
+		String n = numberFormat(total);
+		txtTotalPagar1.setValue(total);
+		txtTotalPagar1.setText(n);
 	}
 	
 	/**

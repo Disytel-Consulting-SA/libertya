@@ -2784,6 +2784,7 @@ public class VOrdenCobro extends VOrdenPago {
 		// Actualizo el cargo de la organización para facturas vencidas
 		updateOverdueInvoicesCharge();
 		BigDecimal total = getModel().getSumaTotalPagarFacturas();
+		txtTotalPagar1.setValue(numberFormat(total));
 		txtTotalPagar1.setText(numberFormat(total));
 	}
 
