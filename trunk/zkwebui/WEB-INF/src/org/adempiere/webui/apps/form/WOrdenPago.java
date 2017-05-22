@@ -70,7 +70,6 @@ import org.openXpertya.model.MPInstance;
 import org.openXpertya.model.MPInstancePara;
 import org.openXpertya.model.MPreference;
 import org.openXpertya.model.MProcess;
-import org.openXpertya.model.MSequence;
 import org.openXpertya.model.RetencionProcessor;
 import org.openXpertya.model.X_C_BankAccountDoc;
 import org.openXpertya.process.ProcessInfo;
@@ -1031,8 +1030,8 @@ public class WOrdenPago extends ADForm implements ValueChangeListener, TableMode
     		BigDecimal monto = null;
     		
     		try {
-    			monto = numberParse(txtTotalPagar1.getValue().toString());
-    		} catch (ParseException e) {
+    			monto = (BigDecimal)txtTotalPagar1.getValue();
+    		} catch (Exception e) {
     			showError("@SaveErrorNotUnique@ \n\n" + txtTotalPagar1.getLabel().getValue());
     			
         		txtTotalPagar1.getComponent().setFocus(true); // .requestFocusInWindow();
@@ -1370,6 +1369,7 @@ public class WOrdenPago extends ADForm implements ValueChangeListener, TableMode
 		
 		//
 		
+		txtTotalPagar1.setValue(null);
 		txtTotalPagar1.getLabel().setText("");
 		
 		txtSaldo.getLabel().setText("");
