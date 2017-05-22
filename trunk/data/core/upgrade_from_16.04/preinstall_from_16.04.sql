@@ -7249,3 +7249,7 @@ ALTER TABLE c_withholdingsettlement DROP COLUMN c_retenciontype_id;
 
 --20170519-1650 Merge de Revisión 1847
 ALTER TABLE libertya.c_creditcardsettlement ADD CONSTRAINT uniquecreditcardsettlement UNIQUE (settlementno, c_bpartner_id);
+
+--20170522-2000 Incorporación de rango de numeración de cheques en chequeras
+update ad_system set dummy = (SELECT addcolumnifnotexists('c_bankaccountdoc','startno','numeric(18,0)'));
+update ad_system set dummy = (SELECT addcolumnifnotexists('c_bankaccountdoc','endno','numeric(18,0)'));
