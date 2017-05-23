@@ -153,11 +153,19 @@ public class MBankAccount extends X_C_BankAccount {
 	}
 	
 	protected X_C_BankAccountDoc getFirstBankAccountDoc() {
+		X_C_BankAccountDoc bad = null;
 		//Construyo la query
 		String sql = "SELECT * " + 
-					 "FROM C_BankAccountDoc " +
+					 "FROM C_BankAccountDoc bad " +
 					 "WHERE " + 
 					  "c_bankaccount_id = ? " +
+					 " AND bad.isactive = 'Y' " +
+					 " AND (startno <= currentnext AND (endno = 0 OR endno >= currentnext)) " +
+					 " AND (bad.IsUserAssigned = 'N' OR (EXISTS (SELECT C_BankAccountDocUser_ID "
+												+ "					FROM C_BankAccountDocUser bau "
+												+ "					WHERE bau.C_BankAccountDoc_ID = C_BankAccountDoc.C_BankAccountDoc_ID "
+												+ "						AND bau.IsActive = 'Y'"
+												+ "						AND bau.AD_User_ID = ?))) " + 
 					  "ORDER BY " +
 					  "currentnext ASC " +
 					  "LIMIT 1";
@@ -169,9 +177,10 @@ public class MBankAccount extends X_C_BankAccount {
 			
 			//Parámetros
 			ps.setInt(1, this.getID());
+			ps.setInt(2, Env.getAD_User_ID(getCtx()));
 			rs = ps.executeQuery();
 			while (rs.next()) {
-				return new X_C_BankAccountDoc(getCtx(), rs, get_TrxName());
+				bad = new X_C_BankAccountDoc(getCtx(), rs, get_TrxName());
 			}
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -185,7 +194,7 @@ public class MBankAccount extends X_C_BankAccount {
 				e.printStackTrace();
 			}
 		}
-		return null;
+		return bad;
 	}
     
     
