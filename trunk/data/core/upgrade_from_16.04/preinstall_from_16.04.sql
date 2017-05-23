@@ -5747,6 +5747,36 @@ ALTER TABLE c_bpartner_cai
 --20170301-1015 Merge de Revisión 1797
 ALTER TABLE c_couponssettlements DROP COLUMN allocationnumber;
 
+--20170523-1328 PATCH necesario por potencial secuencia inexistente (postgres 8.4 no soporta IF NOT EXISTS)
+CREATE OR REPLACE FUNCTION addsequenceifnotexists (
+    sequencename character varying,
+    sequenceprops character varying)
+  RETURNS numeric AS
+$BODY$
+DECLARE
+	existe integer;
+BEGIN
+	SELECT into existe COUNT(1) 
+	FROM information_schema.sequences
+	WHERE lower(sequence_name) = lower(sequencename);
+	
+	IF (existe = 0) THEN
+		EXECUTE 'CREATE SEQUENCE ' || sequencename || ' ' || sequenceprops;
+		RETURN 1;
+	END IF;
+
+	RETURN 0;
+END;
+$BODY$
+  LANGUAGE plpgsql VOLATILE
+  COST 100;
+ALTER FUNCTION addsequenceifnotexists(character varying, character varying)
+  OWNER TO libertya;
+  
+update ad_system set dummy = (SELECT addsequenceifnotexists('seq_c_externalservice', 'INCREMENT 1 MINVALUE 1 MAXVALUE 9223372036854775807 START 1010001 CACHE 1'));
+--FIN PATCH
+
+
 --20170301-1300 Merge de Revisión 1798
 CREATE TABLE c_externalserviceattributes
 (
@@ -7282,3 +7312,7 @@ WITH (
 );
 ALTER TABLE c_bankaccountdocuser
   OWNER TO libertya;
+  
+ --20170524-1148 Versionado de BBDD para release
+ UPDATE ad_system SET version = '23-05-2017' WHERE ad_system_id = 0;
+ 
