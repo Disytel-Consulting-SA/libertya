@@ -117,6 +117,12 @@ public class MPaymentBatchPO extends X_C_PaymentBatchPO implements DocAction {
 				//Genero el pago
 				MBankAccount bankAccount = new MBankAccount(getCtx(), bPartner.getC_BankAccount_ID(), get_TrxName());
 				X_C_BankAccountDoc chequera = bankAccount.getFirstBankAccountDoc();
+				// Si no existe chequera, significa que no hay alguna o no está
+				// asociada al usuario actual
+				if(chequera == null){
+					throw new Exception(Msg.getMsg(getCtx(), "PaymentBatchPOBankAccountDocNotFound"));
+				}
+				
 				BigDecimal importe = detail.getPaymentAmount().subtract(totalRetenciones);
 				
 				//Generar y completar el payment Cheque

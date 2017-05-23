@@ -1192,7 +1192,18 @@ public class VOrdenPagoModel {
 	}
 
 	public String getChequeChequeraSqlValidation() {
-		return " EXISTS (SELECT * FROM C_BankAccount ba55 WHERE ba55.BankAccountType = 'C' AND ba55.C_Currency_ID = @C_Currency_ID@ AND ba55.C_BankAccount_ID = C_BankAccountDoc.C_BankAccount_ID) AND C_BankAccountDoc.PaymentRule = 'S' ";
+		return " EXISTS (SELECT * "
+				+ "			FROM C_BankAccount ba55 "
+				+ "			WHERE ba55.BankAccountType = 'C' "
+				+ "				AND ba55.C_Currency_ID = @C_Currency_ID@ "
+				+ "				AND ba55.C_BankAccount_ID = C_BankAccountDoc.C_BankAccount_ID) "
+				+ "AND C_BankAccountDoc.PaymentRule = 'S' "
+				+ "AND (C_BankAccountDoc.IsUserAssigned = 'N'"
+				+ "		OR (EXISTS (SELECT C_BankAccountDocUser_ID "
+				+ "					FROM C_BankAccountDocUser bau "
+				+ "					WHERE bau.C_BankAccountDoc_ID = C_BankAccountDoc.C_BankAccountDoc_ID "
+				+ "						AND bau.IsActive = 'Y'"
+				+ "						AND bau.AD_User_ID = @#AD_User_ID@))) ";
 	}
 
 	public String getCreditSqlValidation() {

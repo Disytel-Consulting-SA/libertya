@@ -7,7 +7,7 @@ import java.math.*;
 import org.openXpertya.util.*;
 /** Modelo Generado por C_BankAccountDoc
  *  @author Comunidad de Desarrollo Libertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
- *  @version  - 2017-05-22 20:12:33.116 */
+ *  @version  - 2017-05-23 11:16:35.416 */
 public class X_C_BankAccountDoc extends org.openXpertya.model.PO
 {
 /** Constructor estándar */
@@ -19,6 +19,7 @@ super (ctx, C_BankAccountDoc_ID, trxName);
 setC_BankAccountDoc_ID (0);
 setC_BankAccount_ID (0);
 setCurrentNext (0);
+setIsUserAssigned (false);
 setName (null);
 setPaymentRule (null);
 }
@@ -151,6 +152,24 @@ public int getEndNo()
 Integer ii = (Integer)get_Value("EndNo");
 if (ii == null) return 0;
 return ii.intValue();
+}
+/** Set User Assigned.
+Bank account doc assigned by user */
+public void setIsUserAssigned (boolean IsUserAssigned)
+{
+set_Value ("IsUserAssigned", new Boolean(IsUserAssigned));
+}
+/** Get User Assigned.
+Bank account doc assigned by user */
+public boolean isUserAssigned() 
+{
+Object oo = get_Value("IsUserAssigned");
+if (oo != null) 
+{
+ if (oo instanceof Boolean) return ((Boolean)oo).booleanValue();
+ return "Y".equals(oo);
+}
+return false;
 }
 /** Set Name.
 Alphanumeric identifier of the entity */

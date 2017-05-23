@@ -7253,3 +7253,32 @@ ALTER TABLE libertya.c_creditcardsettlement ADD CONSTRAINT uniquecreditcardsettl
 --20170522-2000 Incorporación de rango de numeración de cheques en chequeras
 update ad_system set dummy = (SELECT addcolumnifnotexists('c_bankaccountdoc','startno','numeric(18,0)'));
 update ad_system set dummy = (SELECT addcolumnifnotexists('c_bankaccountdoc','endno','numeric(18,0)'));
+
+--20170523-1115 Chequeras por usuario
+update ad_system set dummy = (SELECT addcolumnifnotexists('c_bankaccountdoc','isuserassigned','character(1) NOT NULL DEFAULT ''N''::bpchar'));
+
+CREATE TABLE c_bankaccountdocuser
+(
+  c_bankaccountdocuser_id integer NOT NULL,
+  ad_client_id integer NOT NULL,
+  ad_org_id integer NOT NULL,
+  isactive character(1) NOT NULL DEFAULT 'Y'::bpchar,
+  created timestamp without time zone NOT NULL DEFAULT ('now'::text)::timestamp(6) with time zone,
+  createdby integer NOT NULL,
+  updated timestamp without time zone NOT NULL DEFAULT ('now'::text)::timestamp(6) with time zone,
+  updatedby integer NOT NULL,
+  c_bankaccountdoc_id integer NOT NULL,
+  ad_user_id integer NOT NULL,
+  CONSTRAINT c_bankaccountdocuser_pkey PRIMARY KEY (c_bankaccountdocuser_id),
+  CONSTRAINT c_bankaccountdocuser_c_bankaccountdoc FOREIGN KEY (c_bankaccountdoc_id)
+      REFERENCES c_bankaccountdoc (c_bankaccountdoc_id) MATCH SIMPLE
+      ON UPDATE NO ACTION ON DELETE CASCADE,
+  CONSTRAINT c_bankaccountdocuser_ad_user FOREIGN KEY (ad_user_id)
+      REFERENCES ad_user (ad_user_id) MATCH SIMPLE
+      ON UPDATE NO ACTION ON DELETE CASCADE
+)
+WITH (
+  OIDS=TRUE
+);
+ALTER TABLE c_bankaccountdocuser
+  OWNER TO libertya;
