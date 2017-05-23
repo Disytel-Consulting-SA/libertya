@@ -68,18 +68,17 @@ public class PluginXMLUpdater {
 	protected final static String savePointName = "installSavePoint";
 	
 	/** Indicador de actividad. Version optimizada para disfrutar la instalacion. */
-	protected String[] animation = {"__________", "_________I", "________I_", "_______I__", "______I___", "_____I____", "____I_____", "___I______", "__I_______", "_I________", 
-									"I_________", "I________N", "I_______N_", "I______N__", "I_____N___", "I____N____", "I___N_____", "I__N______", "I_N_______",  
-									"IN________", "IN_______S", "IN______S_", "IN_____S__", "IN____S___", "IN___S____", "IN__S_____", "IN_S______", 
-									"INS_______", "INS______T", "INS_____T_", "INS____T__", "INS___T___", "INS__T____", "INS_T_____", 
-									"INST______", "INST_____A", "INST____A_", "INST___A__", "INST__A___", "INST_A____", 
-									"INSTA_____", "INSTA____L", "INSTA___L_", "INSTA__L__", "INSTA_L___", 
-									"INSTAL____", "INSTAL___L", "INSTAL__L_", "INSTAL_L__", 
-									"INSTALL___", "INSTALL__I", "INSTALL_I_", 
-									"INSTALLI__", "INSTALLI_N",
-									"INSTALLIN_", 
-									"INSTALLING", "INSTALLING", "INSTALLING", "INSTALLING", "INSTALLING",
-									"NSTALLING_", "STALLING__", "TALLING___", "ALLING____", "LLING_____", "LING______", "ING_______", "NG________", "G_________", "__________" }; // {"-", "\\", "|", "/"};
+	protected String[] animation = {
+									"__________", "__________", "_____L____", "_____L____", "_N___L____", "_N___L____", "_N___L___G", "_N___L___G",
+									"_N_T_L___G", "_N_T_L___G", "IN_T_L___G", "IN_T_L___G", "IN_T_L_I_G", "IN_T_L_I_G", "IN_TAL_I_G", "IN_TAL_I_G",
+									"IN_TALLI_G", "IN_TALLI_G", "IN_TALLING", "IN_TALLING", "INSTALLING", "INSTALLING", "INSTALLING", "INSTALLING",
+									"*NSTALLING", "I*STALLING", "IN*TALLING", "INS*ALLING", "INST*LLING", "INSTA*LING", "INSTAL*ING", "INSTALL*NG",
+									"INSTALLI*G", "INSTALLIN*", "INSTALLI*G", "INSTALL*NG", "INSTAL*ING", "INSTA*LING", "INST*LLING", "INS*ALLING",
+									"IN*TALLING", "I*STALLING", "*NSTALLING", "INSTALLING", "INSTALLING", "INSTALLING", "INSTALLING", "INSTALLING",
+									"INSTALLING", "I_STALLING", "I_STALLING", "I_STALL_NG", "I_STALL_NG", "I_ST_LL_NG", "I_ST_LL_NG",
+									"I_ST_LL_N_", "I_ST_LL_N_", "I__T_LL_NG", "I__T_LL_NG", "I__T_LL_N_", "I__T_LL_N_", "I__T__L_N_", "I__T__L_N_",
+									"I__T__L___", "I__T__L___", "I_____L___", "I_____L___", "______L___", "______L___", "__________", "__________",   
+									};
 	
 	/** Si esta activado, la instalacion de un componente implicará no solo impactar en las tablas, sino que tambien copiará 
 	 *  la instalación en el changelog, quedando la base de datos destino como lista a exportar dicho componente */

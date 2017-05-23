@@ -60,13 +60,13 @@ public final class OpenXpertya {
     static public final String	ID	= "$Id: OpenXpertya.java,v 2.2 $";
 
     /** Descripción de Campo */
-    static public final String	MAIN_VERSION	= "Versi\u00f3n 16.04";
+    static public final String	MAIN_VERSION	= "Versi\u00f3n 17.05";
 
     /** Descripción de Campo */
-    static public final String	DATE_VERSION	= "09-05-2016";
+    static public final String	DATE_VERSION	= "23-05-2017";
 
     /** Descripción de Campo */
-    static public final String	DB_VERSION	= "09-05-2016";
+    static public final String	DB_VERSION	= "23-05-2017";
 
     /** Descripción de Campo */
     static public final String	NAME	= "Libertya \u00AE";
@@ -97,7 +97,7 @@ public final class OpenXpertya {
     static public final String	OXP_R	= "Libertya\u00AE";
 
     /** Descripción de Campo */
-    static public final String	COPYRIGHT	= "\u00A9 2016 DISYTEL";
+    static public final String	COPYRIGHT	= "\u00A9 2017 DISYTEL";
 
     /** Descripción de Campo */
     static private String	s_ImplementationVersion	= null;
