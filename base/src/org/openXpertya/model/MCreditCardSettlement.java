@@ -624,13 +624,11 @@ public class MCreditCardSettlement extends X_C_CreditCardSettlement implements D
 		StringBuffer sql = new StringBuffer();
 
 		sql.append("SELECT DISTINCT ");
-		sql.append("	p.c_payment_id ");
+		sql.append("	c.c_payment_id ");
 		sql.append("FROM ");
 		sql.append("	" + X_C_CreditCardCouponFilter.Table_Name + " f ");
 		sql.append("	INNER JOIN " + X_C_CouponsSettlements.Table_Name + " c ");
 		sql.append("		ON c.c_creditcardcouponfilter_id = f.c_creditcardcouponfilter_id ");
-		sql.append("	INNER JOIN " + X_C_Payment.Table_Name + " p ");
-		sql.append("		ON p.c_payment_id = c.c_payment_id ");
 		sql.append("WHERE ");
 		sql.append("	f.c_creditcardsettlement_id = ?");
 
@@ -638,7 +636,7 @@ public class MCreditCardSettlement extends X_C_CreditCardSettlement implements D
 		ResultSet rs = null;
 
 		try {
-			ps = DB.prepareStatement(sql.toString());
+			ps = DB.prepareStatement(sql.toString(), get_TrxName());
 			ps.setInt(1, getC_CreditCardSettlement_ID());
 			rs = ps.executeQuery();
 			while (rs.next()) {
@@ -651,7 +649,7 @@ public class MCreditCardSettlement extends X_C_CreditCardSettlement implements D
 				sql.append("WHERE ");
 				sql.append("	c_payment_id = " + rs.getInt(1));
 
-				DB.executeUpdate(sql.toString());
+				DB.executeUpdate(sql.toString(), get_TrxName());
 			}
 		} catch (Exception e) {
 			log.log(Level.SEVERE, "MCreditCardSettlement.changeCouponsAuditStatus", e);
