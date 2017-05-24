@@ -14,6 +14,7 @@ import org.openXpertya.util.CLogger;
 import org.openXpertya.util.DB;
 import org.openXpertya.util.Env;
 import org.openXpertya.util.Msg;
+import org.openXpertya.util.Util;
 
 /**
  * Liquidacion de tarjetas.
@@ -129,7 +130,7 @@ public class MCreditCardSettlement extends X_C_CreditCardSettlement implements D
 		}
 		
 		//Validación para que el número de liquidación solo pueda ser numérico
-		if (!getSettlementNo().matches("\\^?\\d*\\^?")) {
+		if (!Util.isEmpty(getSettlementNo(), true) && !getSettlementNo().matches("\\^?\\d*\\^?")) {
 			log.saveError("SaveError", Msg.getMsg(getCtx(), "SettlementNumberMustBeNumeric"));
 			found = 1;
 		}
@@ -715,79 +716,83 @@ public class MCreditCardSettlement extends X_C_CreditCardSettlement implements D
 		}
 		removeUnusedChildrens();
 
-		// Genera el pago correspondiente.
-		MPayment payment = new MPayment(getCtx(), 0, get_TrxName());
+		// Si el acreditado es 0, entonces no se debe generar un payment
+		if(!Util.isEmpty(getNetAmount(), true)){
+			// Genera el pago correspondiente.
+			MPayment payment = new MPayment(getCtx(), 0, get_TrxName());
 
-		payment.setAD_Client_ID(getAD_Client_ID());
-		payment.setAD_Org_ID(getAD_Org_ID());
+			payment.setAD_Client_ID(getAD_Client_ID());
+			payment.setAD_Org_ID(getAD_Org_ID());
 
-		// Monto = Importe acreditado.
-		payment.setAmount(getC_Currency_ID(), getNetAmount());
+			// Monto = Importe acreditado.
+			payment.setAmount(getC_Currency_ID(), getNetAmount());
 
-		// Fecha del pago es la misma que la liquidación.
-		payment.setDateAcct(getPaymentDate());
-		payment.setDateTrx(getPaymentDate());
+			// Fecha del pago es la misma que la liquidación.
+			payment.setDateAcct(getPaymentDate());
+			payment.setDateTrx(getPaymentDate());
 
-		MBPartner bpartner = new MBPartner(getCtx(), getC_BPartner_ID(), get_TrxName());
+			MBPartner bpartner = new MBPartner(getCtx(), getC_BPartner_ID(), get_TrxName());
 
-		payment.setC_BPartner_ID(bpartner.getC_BPartner_ID());
+			payment.setC_BPartner_ID(bpartner.getC_BPartner_ID());
 
-		// Obtengo el tipo de documento "Cobro a Cliente".
-		StringBuffer sql = new StringBuffer();
+			// Obtengo el tipo de documento "Cobro a Cliente".
+			StringBuffer sql = new StringBuffer();
 
-		sql.append("SELECT ");
-		sql.append("	C_DocType_ID ");
-		sql.append("FROM ");
-		sql.append("	" + MDocType.Table_Name + " ");
-		sql.append("WHERE ");
-		sql.append("	AD_Client_ID = " + getAD_Client_ID() + " ");
-		sql.append("	AND DocTypeKey = '" + MDocType.DOCTYPE_CustomerReceipt + "'");
+			sql.append("SELECT ");
+			sql.append("	C_DocType_ID ");
+			sql.append("FROM ");
+			sql.append("	" + MDocType.Table_Name + " ");
+			sql.append("WHERE ");
+			sql.append("	AD_Client_ID = " + getAD_Client_ID() + " ");
+			sql.append("	AND DocTypeKey = '" + MDocType.DOCTYPE_CustomerReceipt + "'");
 
-		int C_DocType_ID = DB.getSQLValue(get_TrxName(), sql.toString());
-		payment.setC_DocType_ID(C_DocType_ID);
+			int C_DocType_ID = DB.getSQLValue(get_TrxName(), sql.toString());
+			payment.setC_DocType_ID(C_DocType_ID);
 
-		// Tipo de Pago: Transferencia
-		payment.setTenderType(MPayment.TENDERTYPE_DirectDeposit);
+			// Tipo de Pago: Transferencia
+			payment.setTenderType(MPayment.TENDERTYPE_DirectDeposit);
 
-		payment.setC_BankAccount_ID(getBankAccountId(bpartner));
+			payment.setC_BankAccount_ID(getBankAccountId(bpartner));
 
-		boolean saveOk = true;
+			boolean saveOk = true;
 
-		// Guarda el pago
-		if (!payment.save()) {
-			m_processMsg = Msg.getMsg(Env.getAD_Language(getCtx()), "CreditCardSettlementPaymentGenerationErr");
-			saveOk = false;
-			// Completa el pago
-		} else if (!payment.processIt(DocAction.ACTION_Complete)) {
-			m_processMsg = payment.getProcessMsg();
-			saveOk = false;
-			// Guarda los cambios del procesamiento
-		} else if (!payment.save()) {
-			m_processMsg = CLogger.retrieveErrorAsString();
-			saveOk = false;
+			// Guarda el pago
+			if (!payment.save()) {
+				m_processMsg = CLogger.retrieveErrorAsString();
+				saveOk = false;
+				// Completa el pago
+			} else if (!payment.processIt(DocAction.ACTION_Complete)) {
+				m_processMsg = payment.getProcessMsg();
+				saveOk = false;
+				// Guarda los cambios del procesamiento
+			} else if (!payment.save()) {
+				m_processMsg = CLogger.retrieveErrorAsString();
+				saveOk = false;
+			}
+
+			if (!saveOk) {
+				return DocAction.STATUS_Invalid;
+			}
+
+			BigDecimal payAmt = payment.getPayAmt();
+			payAmt = payAmt.setScale(2, BigDecimal.ROUND_HALF_EVEN);
+
+			X_C_Currency currency = new X_C_Currency(getCtx(), getC_Currency_ID(), get_TrxName());
+
+			SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy");
+
+			// Asigno el pago a la liquidación.
+			setC_Payment_ID(payment.getC_Payment_ID());
+			// Genero la descripción del pago.
+			setPayment(payment.getDocumentNo(), currency.getCurSymbol(), payAmt.toString(), sdf.format(payment.getDateTrx()), sdf.format(payment.getDateAcct()));
+
+			if (!save()) {
+				CLogger.retrieveErrorAsString();
+				setDocAction(DOCACTION_Complete);
+				return DocAction.STATUS_Drafted;
+			}
 		}
-
-		if (!saveOk) {
-			return DocAction.STATUS_Invalid;
-		}
-
-		BigDecimal payAmt = payment.getPayAmt();
-		payAmt = payAmt.setScale(2, BigDecimal.ROUND_HALF_EVEN);
-
-		X_C_Currency currency = new X_C_Currency(getCtx(), getC_Currency_ID(), get_TrxName());
-
-		SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy");
-
-		// Asigno el pago a la liquidación.
-		setC_Payment_ID(payment.getC_Payment_ID());
-		// Genero la descripción del pago.
-		setPayment(payment.getDocumentNo(), currency.getCurSymbol(), payAmt.toString(), sdf.format(payment.getDateTrx()), sdf.format(payment.getDateAcct()));
-
-		if (!save()) {
-			CLogger.retrieveErrorAsString();
-			setDocAction(DOCACTION_Complete);
-			return DocAction.STATUS_Drafted;
-		}
+		
 		setProcessed(true);
 		setDocAction(DOCACTION_Void);
 		return DocAction.STATUS_Completed;
@@ -855,34 +860,35 @@ public class MCreditCardSettlement extends X_C_CreditCardSettlement implements D
 				saveOk = false;
 			}
 		} catch (Exception e) {
+			m_processMsg = e.getMessage();
 			saveOk = false;
 		}
 
 		if (!saveOk) {
-			CLogger.retrieveErrorAsString();
 			return false;
 		}
 
-		//Anula el pago generado por la liquidación
-		MPayment payment = new MPayment(getCtx(), getC_Payment_ID(), get_TrxName());
+		//Anula el pago generado por la liquidación si es que existe
+		if(!Util.isEmpty(getC_Payment_ID(), true)){
+			MPayment payment = new MPayment(getCtx(), getC_Payment_ID(), get_TrxName());
 
-		if (!payment.processIt(DocAction.ACTION_Void)) {
-			m_processMsg = payment.getProcessMsg();
-			saveOk = false;
-			// Guarda los cambios del procesamiento
-		} else if (!payment.save()) {
-			m_processMsg = CLogger.retrieveErrorAsString();
-			saveOk = false;
-		}
+			if (!payment.processIt(DocAction.ACTION_Void)) {
+				m_processMsg = payment.getProcessMsg();
+				saveOk = false;
+				// Guarda los cambios del procesamiento
+			} else if (!payment.save()) {
+				m_processMsg = CLogger.retrieveErrorAsString();
+				saveOk = false;
+			}
 
-		if (!saveOk) {
-			CLogger.retrieveErrorAsString();
-			return false;
+			if (!saveOk) {
+				return false;
+			}
 		}
 
 		setSettlementNo("^" + getSettlementNo());
 		if (!save()) {
-			CLogger.retrieveErrorAsString();
+			m_processMsg = CLogger.retrieveErrorAsString();
 			return false;
 		}
 
