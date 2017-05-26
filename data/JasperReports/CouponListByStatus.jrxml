@@ -30,7 +30,7 @@
 	<parameter name="Audit_State" isForPrompting="false" class="java.lang.String"/>
 
 	<field name="name" class="java.lang.String"/>
-	<field name="paymentbatch" class="java.lang.String"/>
+	<field name="couponbatchnumber" class="java.lang.String"/>
 	<field name="couponno" class="java.lang.String"/>
 	<field name="settlementno" class="java.lang.String"/>
 	<field name="trxdate" class="java.sql.Timestamp"/>
@@ -242,7 +242,7 @@
 			</band>
 		</background>
 		<title>
-			<band height="23"  isSplitAllowed="true" >
+			<band height="88"  isSplitAllowed="true" >
 				<staticText>
 					<reportElement
 						x="114"
@@ -269,14 +269,10 @@
 					</textElement>
 				<textFieldExpression   class="java.lang.String"><![CDATA["Pagina " + $V{PAGE_NUMBER}]]></textFieldExpression>
 				</textField>
-			</band>
-		</title>
-		<pageHeader>
-			<band height="78"  isSplitAllowed="true" >
 				<staticText>
 					<reportElement
-						x="1"
-						y="7"
+						x="0"
+						y="23"
 						width="114"
 						height="15"
 						key="staticText-1"
@@ -291,8 +287,8 @@
 				</staticText>
 				<staticText>
 					<reportElement
-						x="1"
-						y="22"
+						x="0"
+						y="38"
 						width="114"
 						height="15"
 						key="staticText-3"
@@ -305,8 +301,8 @@
 				</staticText>
 				<staticText>
 					<reportElement
-						x="1"
-						y="52"
+						x="0"
+						y="68"
 						width="114"
 						height="15"
 						key="staticText-5"
@@ -321,8 +317,8 @@
 				</staticText>
 				<staticText>
 					<reportElement
-						x="115"
-						y="22"
+						x="114"
+						y="38"
 						width="11"
 						height="15"
 						key="staticText-6"
@@ -335,8 +331,8 @@
 				</staticText>
 				<staticText>
 					<reportElement
-						x="115"
-						y="7"
+						x="114"
+						y="23"
 						width="11"
 						height="15"
 						key="staticText-8"
@@ -351,8 +347,24 @@
 				</staticText>
 				<staticText>
 					<reportElement
-						x="115"
-						y="52"
+						x="114"
+						y="23"
+						width="11"
+						height="15"
+						key="staticText-8"
+						isRemoveLineWhenBlank="true">
+							<printWhenExpression><![CDATA[new Boolean($P{Card_Type} != null)]]></printWhenExpression>
+						</reportElement>
+					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
+					<textElement textAlignment="Center" verticalAlignment="Middle">
+						<font/>
+					</textElement>
+				<text><![CDATA[=]]></text>
+				</staticText>
+				<staticText>
+					<reportElement
+						x="114"
+						y="68"
 						width="11"
 						height="15"
 						key="staticText-10"
@@ -367,8 +379,8 @@
 				</staticText>
 				<textField isStretchWithOverflow="false" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
-						x="126"
-						y="7"
+						x="125"
+						y="23"
 						width="412"
 						height="15"
 						forecolor="#5D5D5D"
@@ -384,8 +396,8 @@
 				</textField>
 				<textField isStretchWithOverflow="false" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
-						x="126"
-						y="52"
+						x="125"
+						y="68"
 						width="412"
 						height="15"
 						forecolor="#5D5D5D"
@@ -401,8 +413,8 @@
 				</textField>
 				<textField isStretchWithOverflow="false" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
-						x="126"
-						y="22"
+						x="125"
+						y="38"
 						width="412"
 						height="15"
 						forecolor="#5D5D5D"
@@ -418,8 +430,8 @@
 				</textField>
 				<staticText>
 					<reportElement
-						x="1"
-						y="37"
+						x="0"
+						y="53"
 						width="114"
 						height="15"
 						key="staticText-24"
@@ -434,8 +446,8 @@
 				</staticText>
 				<staticText>
 					<reportElement
-						x="115"
-						y="37"
+						x="114"
+						y="53"
 						width="11"
 						height="15"
 						key="staticText-25"
@@ -450,8 +462,8 @@
 				</staticText>
 				<textField isStretchWithOverflow="false" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
-						x="126"
-						y="37"
+						x="125"
+						y="53"
 						width="412"
 						height="15"
 						forecolor="#5D5D5D"
@@ -465,6 +477,10 @@
 					</textElement>
 				<textFieldExpression   class="java.lang.String"><![CDATA[$P{Audit_State}]]></textFieldExpression>
 				</textField>
+			</band>
+		</title>
+		<pageHeader>
+			<band height="0"  isSplitAllowed="true" >
 			</band>
 		</pageHeader>
 		<columnHeader>
@@ -497,7 +513,7 @@
 					<textElement textAlignment="Left" verticalAlignment="Middle">
 						<font pdfFontName="Helvetica" size="8" isBold="false"/>
 					</textElement>
-				<textFieldExpression   class="java.lang.String"><![CDATA[$F{paymentbatch}]]></textFieldExpression>
+				<textFieldExpression   class="java.lang.String"><![CDATA[$F{couponbatchnumber}]]></textFieldExpression>
 				</textField>
 				<textField isStretchWithOverflow="false" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
