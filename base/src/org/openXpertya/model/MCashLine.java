@@ -786,9 +786,9 @@ public class MCashLine extends X_C_CashLine implements DocAction, CurrentAccount
         // por lo que no se puede ver en ninguna ventana este payment.
         // Ver en qué ventana o creando una nueva mostrar este payment
         pay.set_Value( "TrxType","X" );    // Transfer
-        pay.set_Value( "TenderType","X" );
 
         //
+        pay.setTenderType(MPayment.TENDERTYPE_DirectDeposit);
         pay.setC_BPartner_ID(getC_BPartner_ID());
         pay.setC_BankAccount_ID(getC_BankAccount_ID());
         pay.setC_DocType_ID(true);                                  // Receipt
