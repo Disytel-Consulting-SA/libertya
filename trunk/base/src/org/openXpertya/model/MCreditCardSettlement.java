@@ -129,6 +129,27 @@ public class MCreditCardSettlement extends X_C_CreditCardSettlement implements D
 			
 		}
 		
+		// Si se marca conciliado, todos los cupones deben estar incluídos y
+		// conciliados
+		if(!newRecord && is_ValueChanged("IsReconciled") && isReconciled()){
+			StringBuffer sql = new StringBuffer();
+
+			sql.append("SELECT ");
+			sql.append("	count(*) ");
+			sql.append("FROM ");
+			sql.append("	" + MCouponsSettlements.Table_Name + " ");
+			sql.append("WHERE ");
+			sql.append("	C_CreditCardSettlement_ID = ? ");
+			sql.append("	AND include = 'Y' ");
+			sql.append("	AND isreconciled = 'N' ");
+			
+			int no = DB.getSQLValue(get_TrxName(), sql.toString(), getID());
+			if(no > 0){
+				log.saveError("SaveError", Msg.getMsg(getCtx(), "ExistsNotReconciledIncludedCoupons"));
+				return false;
+			}
+		}
+		
 		//Validación para que el número de liquidación solo pueda ser numérico
 		if (!Util.isEmpty(getSettlementNo(), true) && !getSettlementNo().matches("\\^?\\d*\\^?")) {
 			log.saveError("SaveError", Msg.getMsg(getCtx(), "SettlementNumberMustBeNumeric"));
@@ -841,7 +862,7 @@ public class MCreditCardSettlement extends X_C_CreditCardSettlement implements D
 		copy.setWithholding(negativeValue(getWithholding()));
 		copy.setPerception(negativeValue(getPerception()));
 		copy.setExpenses(negativeValue(getExpenses()));
-		copy.setCouponsTotalAmount(negativeValue(getCouponsTotalAmount()));
+		copy.setCouponsTotalAmount(BigDecimal.ZERO);
 		copy.setSettlementNo(getSettlementNo()+"^");
 		copy.setIVAAmount(negativeValue(getIVAAmount()));
 		copy.setCommissionAmount(negativeValue(getCommissionAmount()));
@@ -884,12 +905,6 @@ public class MCreditCardSettlement extends X_C_CreditCardSettlement implements D
 			}
 		}
 
-		setSettlementNo("^" + getSettlementNo());
-		if (!save()) {
-			m_processMsg = CLogger.retrieveErrorAsString();
-			return false;
-		}
-
 		// Desvincula los cupones
 		StringBuffer sql = new StringBuffer();
 
@@ -900,6 +915,13 @@ public class MCreditCardSettlement extends X_C_CreditCardSettlement implements D
 
 		DB.executeUpdate(sql.toString(), get_TrxName());
 
+		setSettlementNo("^" + getSettlementNo());
+		setCouponsTotalAmount(BigDecimal.ZERO);
+		if (!save()) {
+			m_processMsg = CLogger.retrieveErrorAsString();
+			return false;
+		}
+		
 		// Se replican todos los registros de las pestañas adicionales
 		// (Iva, comisiones, retenciones, percepciones, otros conceptos)
 
