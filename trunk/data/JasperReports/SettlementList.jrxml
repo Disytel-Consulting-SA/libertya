@@ -100,7 +100,7 @@
 			</band>
 		</title>
 		<pageHeader>
-			<band height="74"  isSplitAllowed="true" >
+			<band height="92"  isSplitAllowed="true" >
 				<staticText>
 					<reportElement
 						x="1"
@@ -291,14 +291,10 @@
 					</textElement>
 				<textFieldExpression   class="java.lang.String"><![CDATA[$P{Doc_Status}]]></textFieldExpression>
 				</textField>
-			</band>
-		</pageHeader>
-		<columnHeader>
-			<band height="14"  isSplitAllowed="true" >
 				<staticText>
 					<reportElement
 						x="0"
-						y="0"
+						y="76"
 						width="106"
 						height="14"
 						key="staticText-11"/>
@@ -311,8 +307,8 @@
 				<staticText>
 					<reportElement
 						x="106"
-						y="0"
-						width="246"
+						y="76"
+						width="236"
 						height="14"
 						key="staticText-12"/>
 					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
@@ -323,9 +319,9 @@
 				</staticText>
 				<staticText>
 					<reportElement
-						x="353"
-						y="0"
-						width="52"
+						x="342"
+						y="76"
+						width="63"
 						height="14"
 						key="staticText-13"/>
 					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
@@ -337,7 +333,7 @@
 				<staticText>
 					<reportElement
 						x="405"
-						y="0"
+						y="76"
 						width="55"
 						height="14"
 						key="staticText-14"/>
@@ -350,7 +346,7 @@
 				<staticText>
 					<reportElement
 						x="460"
-						y="0"
+						y="76"
 						width="42"
 						height="14"
 						key="staticText-15"/>
@@ -363,7 +359,7 @@
 				<staticText>
 					<reportElement
 						x="502"
-						y="0"
+						y="76"
 						width="42"
 						height="14"
 						key="staticText-16"/>
@@ -376,7 +372,7 @@
 				<staticText>
 					<reportElement
 						x="544"
-						y="0"
+						y="76"
 						width="42"
 						height="14"
 						key="staticText-17"/>
@@ -389,7 +385,7 @@
 				<staticText>
 					<reportElement
 						x="586"
-						y="0"
+						y="76"
 						width="48"
 						height="14"
 						key="staticText-18"/>
@@ -402,7 +398,7 @@
 				<staticText>
 					<reportElement
 						x="634"
-						y="0"
+						y="76"
 						width="48"
 						height="14"
 						key="staticText-19"/>
@@ -415,7 +411,7 @@
 				<staticText>
 					<reportElement
 						x="682"
-						y="0"
+						y="76"
 						width="48"
 						height="14"
 						key="staticText-20"/>
@@ -428,7 +424,7 @@
 				<staticText>
 					<reportElement
 						x="730"
-						y="0"
+						y="76"
 						width="56"
 						height="14"
 						key="staticText-21"/>
@@ -440,8 +436,8 @@
 				</staticText>
 				<line direction="BottomUp">
 					<reportElement
-						x="0"
-						y="13"
+						x="1"
+						y="90"
 						width="785"
 						height="1"
 						key="line-1"/>
@@ -449,17 +445,21 @@
 				</line>
 				<line direction="BottomUp">
 					<reportElement
-						x="0"
-						y="0"
+						x="1"
+						y="75"
 						width="785"
 						height="1"
 						key="line-2"/>
 					<graphicElement stretchType="NoStretch"/>
 				</line>
 			</band>
+		</pageHeader>
+		<columnHeader>
+			<band height="0"  isSplitAllowed="true" >
+			</band>
 		</columnHeader>
 		<detail>
-			<band height="15"  isSplitAllowed="false" >
+			<band height="14"  isSplitAllowed="false" >
 				<textField isStretchWithOverflow="false" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
 						x="0"
@@ -477,7 +477,7 @@
 					<reportElement
 						x="106"
 						y="0"
-						width="246"
+						width="236"
 						height="14"
 						key="textField-7"/>
 					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
@@ -488,9 +488,9 @@
 				</textField>
 				<textField isStretchWithOverflow="false" pattern="###0.00" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
-						x="353"
+						x="342"
 						y="0"
-						width="52"
+						width="63"
 						height="14"
 						key="textField-8"/>
 					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
@@ -606,11 +606,19 @@
 			</band>
 		</detail>
 		<columnFooter>
-			<band height="14"  isSplitAllowed="true" >
+			<band height="0"  isSplitAllowed="true" >
+			</band>
+		</columnFooter>
+		<pageFooter>
+			<band height="0"  isSplitAllowed="true" >
+			</band>
+		</pageFooter>
+		<summary>
+			<band height="18"  isSplitAllowed="true" >
 				<staticText>
 					<reportElement
 						x="0"
-						y="0"
+						y="2"
 						width="56"
 						height="14"
 						key="staticText-22"/>
@@ -622,9 +630,9 @@
 				</staticText>
 				<textField isStretchWithOverflow="false" pattern="###0.00" isBlankWhenNull="false" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
-						x="353"
-						y="0"
-						width="52"
+						x="342"
+						y="2"
+						width="63"
 						height="14"
 						key="textField-18"/>
 					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
@@ -636,7 +644,7 @@
 				<textField isStretchWithOverflow="false" pattern="###0.00" isBlankWhenNull="false" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
 						x="502"
-						y="0"
+						y="2"
 						width="42"
 						height="14"
 						key="textField-19"/>
@@ -649,7 +657,7 @@
 				<textField isStretchWithOverflow="false" pattern="###0.00" isBlankWhenNull="false" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
 						x="586"
-						y="0"
+						y="2"
 						width="48"
 						height="14"
 						key="textField-20"/>
@@ -662,7 +670,7 @@
 				<textField isStretchWithOverflow="false" pattern="###0.00" isBlankWhenNull="false" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
 						x="682"
-						y="0"
+						y="2"
 						width="48"
 						height="14"
 						key="textField-21"/>
@@ -683,8 +691,8 @@
 				</line>
 				<line direction="BottomUp">
 					<reportElement
-						x="0"
-						y="13"
+						x="1"
+						y="16"
 						width="785"
 						height="1"
 						key="line-4"/>
@@ -692,8 +700,8 @@
 				</line>
 				<textField isStretchWithOverflow="false" pattern="###0.00" isBlankWhenNull="false" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
-						x="406"
-						y="0"
+						x="405"
+						y="2"
 						width="55"
 						height="14"
 						key="textField"/>
@@ -706,7 +714,7 @@
 				<textField isStretchWithOverflow="false" pattern="###0.00" isBlankWhenNull="false" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
 						x="460"
-						y="0"
+						y="2"
 						width="42"
 						height="14"
 						key="textField"/>
@@ -719,7 +727,7 @@
 				<textField isStretchWithOverflow="false" pattern="###0.00" isBlankWhenNull="false" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
 						x="544"
-						y="0"
+						y="2"
 						width="42"
 						height="14"
 						key="textField"/>
@@ -732,7 +740,7 @@
 				<textField isStretchWithOverflow="false" pattern="###0.00" isBlankWhenNull="false" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
 						x="634"
-						y="0"
+						y="2"
 						width="48"
 						height="14"
 						key="textField"/>
@@ -742,14 +750,6 @@
 					</textElement>
 				<textFieldExpression   class="java.math.BigDecimal"><![CDATA[$V{netamount}]]></textFieldExpression>
 				</textField>
-			</band>
-		</columnFooter>
-		<pageFooter>
-			<band height="0"  isSplitAllowed="true" >
-			</band>
-		</pageFooter>
-		<summary>
-			<band height="0"  isSplitAllowed="true" >
 			</band>
 		</summary>
 </jasperReport>
