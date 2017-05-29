@@ -2135,7 +2135,17 @@ public final class MPayment extends X_C_Payment implements DocAction,ProcessCall
 			return STATUS_Invalid;
 		}
         
-        //
+        // Si es manual, se genera el allocation unilateral
+		if(isManual()){
+			try{
+				createOneWayAllocation();
+			} catch(Exception e){
+				setProcessMsg(e.getMessage());
+				return STATUS_Invalid;
+			}
+		}
+		
+		
         MBPartner bp = new MBPartner(getCtx(), getC_BPartner_ID(),
 				get_TrxName());
         if(isUpdateBPBalance()){
@@ -2167,6 +2177,29 @@ public final class MPayment extends X_C_Payment implements DocAction,ProcessCall
         return DocAction.STATUS_Completed;
     }    // completeIt
 
+    
+    /**
+     * Crear el allocation unilateral para este payment
+     */
+    private void createOneWayAllocation() throws Exception{
+    	// Creación del generador de allocations
+    	AllocationGenerator ag = new AllocationGenerator(getCtx(), get_TrxName());
+    	// Creación del allocation y setear datos
+		MAllocationHdr owa = ag.createAllocationHdr(MAllocationHdr.ALLOCATIONTYPE_Manual, getAD_Org_ID(),
+				getC_BPartner_ID());
+		owa.setDescription(Msg.getMsg(getCtx(), "OneWayAllocationDescription") + " " + getDocumentNo());
+		if(!owa.save()){
+			throw new Exception(CLogger.retrieveErrorAsString());
+		}
+		// Agregar el payment manual
+		ag.addCreditPayment(getID(), getPayAmt());
+		// Generar líneas del allocation, en este caso va a ser una ya que es un
+		// allocation unilateral
+    	ag.generateLines();
+    	// Completar el allocation
+    	ag.completeAllocation();
+    } 
+    
     /**
      * Descripción de Método
      *
