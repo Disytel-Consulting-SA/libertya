@@ -7,7 +7,7 @@ import java.math.*;
 import org.openXpertya.util.*;
 /** Modelo Generado por C_Payment
  *  @author Comunidad de Desarrollo Libertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
- *  @version  - 2017-01-30 16:11:27.832 */
+ *  @version  - 2017-05-29 10:53:09.826 */
 public class X_C_Payment extends org.openXpertya.model.PO
 {
 /** Constructor estándar */
@@ -30,6 +30,7 @@ setDocumentNo (null);
 setIsAllocated (false);
 setIsApproved (false);	// N
 setIsDelayedCapture (false);
+setIsManual (false);
 setIsOnline (false);
 setIsOverUnderPayment (false);	// N
 setIsPrepayment (false);
@@ -282,8 +283,8 @@ public static final String AUDITSTATUS_Rejected = "RE";
 /** Set AuditStatus */
 public void setAuditStatus (String AuditStatus)
 {
-if (AuditStatus == null || AuditStatus.equals("CP") || AuditStatus.equals("TV") || AuditStatus.equals("PA") || AuditStatus.equals("RE"));
- else throw new IllegalArgumentException ("AuditStatus Invalid value - Reference = AUDITSTATUS_AD_Reference_ID - CP - TV - PA - RE");
+if (AuditStatus == null || AuditStatus.equals("CP") || AuditStatus.equals("TV") || AuditStatus.equals("PA") || AuditStatus.equals("RE") || ( refContainsValue("SSTE2CORE-AD_Reference-1010279-20161130135946", AuditStatus) ) );
+ else throw new IllegalArgumentException ("AuditStatus Invalid value: " + AuditStatus + ".  Valid: " +  refValidOptions("SSTE2CORE-AD_Reference-1010279-20161130135946") );
 if (AuditStatus != null && AuditStatus.length() > 2)
 {
 log.warning("Length > 2 - truncated");
@@ -595,8 +596,8 @@ public static final String CHECKSTATUS_ToSalesDebtors = "D";
 /** Set Check Status */
 public void setCheckStatus (String CheckStatus)
 {
-if (CheckStatus == null || CheckStatus.equals("R") || CheckStatus.equals("C") || CheckStatus.equals("M") || CheckStatus.equals("D"));
- else throw new IllegalArgumentException ("CheckStatus Invalid value - Reference = CHECKSTATUS_AD_Reference_ID - R - C - M - D");
+if (CheckStatus == null || CheckStatus.equals("R") || CheckStatus.equals("C") || CheckStatus.equals("M") || CheckStatus.equals("D") || ( refContainsValue("CORE-AD_Reference-1010249", CheckStatus) ) );
+ else throw new IllegalArgumentException ("CheckStatus Invalid value: " + CheckStatus + ".  Valid: " +  refValidOptions("CORE-AD_Reference-1010249") );
 if (CheckStatus != null && CheckStatus.length() > 1)
 {
 log.warning("Length > 1 - truncated");
@@ -815,8 +816,8 @@ public static final String CREDITCARDTYPE_Discover = "N";
 Credit Card (Visa, MC, AmEx) */
 public void setCreditCardType (String CreditCardType)
 {
-if (CreditCardType == null || CreditCardType.equals("D") || CreditCardType.equals("C") || CreditCardType.equals("P") || CreditCardType.equals("M") || CreditCardType.equals("V") || CreditCardType.equals("A") || CreditCardType.equals("N"));
- else throw new IllegalArgumentException ("CreditCardType Invalid value - Reference = CREDITCARDTYPE_AD_Reference_ID - D - C - P - M - V - A - N");
+if (CreditCardType == null || CreditCardType.equals("D") || CreditCardType.equals("C") || CreditCardType.equals("P") || CreditCardType.equals("M") || CreditCardType.equals("V") || CreditCardType.equals("A") || CreditCardType.equals("N") || ( refContainsValue("CORE-AD_Reference-149", CreditCardType) ) );
+ else throw new IllegalArgumentException ("CreditCardType Invalid value: " + CreditCardType + ".  Valid: " +  refValidOptions("CORE-AD_Reference-149") );
 if (CreditCardType != null && CreditCardType.length() > 1)
 {
 log.warning("Length > 1 - truncated");
@@ -947,8 +948,8 @@ public static final String DOCACTION_Void = "VO";
 The targeted status of the document */
 public void setDocAction (String DocAction)
 {
-if (DocAction.equals("AP") || DocAction.equals("CL") || DocAction.equals("PR") || DocAction.equals("IN") || DocAction.equals("CO") || DocAction.equals("--") || DocAction.equals("RC") || DocAction.equals("RJ") || DocAction.equals("RA") || DocAction.equals("WC") || DocAction.equals("XL") || DocAction.equals("RE") || DocAction.equals("PO") || DocAction.equals("VO"));
- else throw new IllegalArgumentException ("DocAction Invalid value - Reference = DOCACTION_AD_Reference_ID - AP - CL - PR - IN - CO - -- - RC - RJ - RA - WC - XL - RE - PO - VO");
+if (DocAction.equals("AP") || DocAction.equals("CL") || DocAction.equals("PR") || DocAction.equals("IN") || DocAction.equals("CO") || DocAction.equals("--") || DocAction.equals("RC") || DocAction.equals("RJ") || DocAction.equals("RA") || DocAction.equals("WC") || DocAction.equals("XL") || DocAction.equals("RE") || DocAction.equals("PO") || DocAction.equals("VO") || ( refContainsValue("CORE-AD_Reference-135", DocAction) ) );
+ else throw new IllegalArgumentException ("DocAction Invalid value: " + DocAction + ".  Valid: " +  refValidOptions("CORE-AD_Reference-135") );
 if (DocAction == null) throw new IllegalArgumentException ("DocAction is mandatory");
 if (DocAction.length() > 2)
 {
@@ -992,8 +993,8 @@ public static final String DOCSTATUS_Reversed = "RE";
 The current status of the document */
 public void setDocStatus (String DocStatus)
 {
-if (DocStatus.equals("VO") || DocStatus.equals("NA") || DocStatus.equals("IP") || DocStatus.equals("CO") || DocStatus.equals("AP") || DocStatus.equals("CL") || DocStatus.equals("WC") || DocStatus.equals("WP") || DocStatus.equals("??") || DocStatus.equals("DR") || DocStatus.equals("IN") || DocStatus.equals("RE"));
- else throw new IllegalArgumentException ("DocStatus Invalid value - Reference = DOCSTATUS_AD_Reference_ID - VO - NA - IP - CO - AP - CL - WC - WP - ?? - DR - IN - RE");
+if (DocStatus.equals("VO") || DocStatus.equals("NA") || DocStatus.equals("IP") || DocStatus.equals("CO") || DocStatus.equals("AP") || DocStatus.equals("CL") || DocStatus.equals("WC") || DocStatus.equals("WP") || DocStatus.equals("??") || DocStatus.equals("DR") || DocStatus.equals("IN") || DocStatus.equals("RE") || ( refContainsValue("CORE-AD_Reference-131", DocStatus) ) );
+ else throw new IllegalArgumentException ("DocStatus Invalid value: " + DocStatus + ".  Valid: " +  refValidOptions("CORE-AD_Reference-131") );
 if (DocStatus == null) throw new IllegalArgumentException ("DocStatus is mandatory");
 if (DocStatus.length() > 2)
 {
@@ -1096,6 +1097,24 @@ if (oo != null)
 }
 return false;
 }
+/** Set Manual.
+This is a manual process */
+public void setIsManual (boolean IsManual)
+{
+set_Value ("IsManual", new Boolean(IsManual));
+}
+/** Get Manual.
+This is a manual process */
+public boolean isManual() 
+{
+Object oo = get_Value("IsManual");
+if (oo != null) 
+{
+ if (oo instanceof Boolean) return ((Boolean)oo).booleanValue();
+ return "Y".equals(oo);
+}
+return false;
+}
 /** Set Online Access.
 Can be accessed online  */
 public void setIsOnline (boolean IsOnline)
@@ -1159,8 +1178,8 @@ public static final String ISRECEIPT_Ingreso = "Y";
 This is a sales transaction (receipt) */
 public void setIsReceipt (String IsReceipt)
 {
-if (IsReceipt.equals("N") || IsReceipt.equals("Y"));
- else throw new IllegalArgumentException ("IsReceipt Invalid value - Reference = ISRECEIPT_AD_Reference_ID - N - Y");
+if (IsReceipt.equals("N") || IsReceipt.equals("Y") || ( refContainsValue("CORE-AD_Reference-1000084", IsReceipt) ) );
+ else throw new IllegalArgumentException ("IsReceipt Invalid value: " + IsReceipt + ".  Valid: " +  refValidOptions("CORE-AD_Reference-1000084") );
 if (IsReceipt == null) throw new IllegalArgumentException ("IsReceipt is mandatory");
 if (IsReceipt.length() > 1)
 {
@@ -1483,8 +1502,8 @@ public static final String R_AVSADDR_Match = "Y";
 This address has been verified */
 public void setR_AvsAddr (String R_AvsAddr)
 {
-if (R_AvsAddr == null || R_AvsAddr.equals("N") || R_AvsAddr.equals("X") || R_AvsAddr.equals("Y"));
- else throw new IllegalArgumentException ("R_AvsAddr Invalid value - Reference = R_AVSADDR_AD_Reference_ID - N - X - Y");
+if (R_AvsAddr == null || R_AvsAddr.equals("N") || R_AvsAddr.equals("X") || R_AvsAddr.equals("Y") || ( refContainsValue("CORE-AD_Reference-213", R_AvsAddr) ) );
+ else throw new IllegalArgumentException ("R_AvsAddr Invalid value: " + R_AvsAddr + ".  Valid: " +  refValidOptions("CORE-AD_Reference-213") );
 if (R_AvsAddr != null && R_AvsAddr.length() > 1)
 {
 log.warning("Length > 1 - truncated");
@@ -1509,8 +1528,8 @@ public static final String R_AVSZIP_Match = "Y";
 The Zip Code has been verified */
 public void setR_AvsZip (String R_AvsZip)
 {
-if (R_AvsZip == null || R_AvsZip.equals("N") || R_AvsZip.equals("X") || R_AvsZip.equals("Y"));
- else throw new IllegalArgumentException ("R_AvsZip Invalid value - Reference = R_AVSZIP_AD_Reference_ID - N - X - Y");
+if (R_AvsZip == null || R_AvsZip.equals("N") || R_AvsZip.equals("X") || R_AvsZip.equals("Y") || ( refContainsValue("CORE-AD_Reference-213", R_AvsZip) ) );
+ else throw new IllegalArgumentException ("R_AvsZip Invalid value: " + R_AvsZip + ".  Valid: " +  refValidOptions("CORE-AD_Reference-213") );
 if (R_AvsZip != null && R_AvsZip.length() > 1)
 {
 log.warning("Length > 1 - truncated");
@@ -1730,8 +1749,8 @@ public static final String TENDERTYPE_Cash = "CA";
 Method of Payment */
 public void setTenderType (String TenderType)
 {
-if (TenderType.equals("K") || TenderType.equals("D") || TenderType.equals("A") || TenderType.equals("C") || TenderType.equals("CA"));
- else throw new IllegalArgumentException ("TenderType Invalid value - Reference = TENDERTYPE_AD_Reference_ID - K - D - A - C - CA");
+if (TenderType.equals("K") || TenderType.equals("D") || TenderType.equals("A") || TenderType.equals("C") || TenderType.equals("CA") || ( refContainsValue("CORE-AD_Reference-214", TenderType) ) );
+ else throw new IllegalArgumentException ("TenderType Invalid value: " + TenderType + ".  Valid: " +  refValidOptions("CORE-AD_Reference-214") );
 if (TenderType == null) throw new IllegalArgumentException ("TenderType is mandatory");
 if (TenderType.length() > 1)
 {
@@ -1763,8 +1782,8 @@ public static final String TRXTYPE_Void = "V";
 Type of credit card transaction */
 public void setTrxType (String TrxType)
 {
-if (TrxType.equals("S") || TrxType.equals("D") || TrxType.equals("C") || TrxType.equals("F") || TrxType.equals("A") || TrxType.equals("V"));
- else throw new IllegalArgumentException ("TrxType Invalid value - Reference = TRXTYPE_AD_Reference_ID - S - D - C - F - A - V");
+if (TrxType.equals("S") || TrxType.equals("D") || TrxType.equals("C") || TrxType.equals("F") || TrxType.equals("A") || TrxType.equals("V") || ( refContainsValue("CORE-AD_Reference-215", TrxType) ) );
+ else throw new IllegalArgumentException ("TrxType Invalid value: " + TrxType + ".  Valid: " +  refValidOptions("CORE-AD_Reference-215") );
 if (TrxType == null) throw new IllegalArgumentException ("TrxType is mandatory");
 if (TrxType.length() > 1)
 {

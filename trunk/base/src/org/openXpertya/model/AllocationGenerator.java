@@ -222,6 +222,7 @@ public class AllocationGenerator {
 	 * a partir de los valores del contexto.
 	 * @param allocationType tipo de asignación del encabezado <code>X_C_AllocationHdr.ALLOCATIONTYPE_XXX</code>
 	 * @param orgID ID de la organización del allocation
+	 * @param bPartnerID ID de la Entidad Comercial
 	 * @throws IllegalStateException si el generador fue instanciado mediante el constructor
 	 * que permite asociar un MAllocationHdr existente.
 	 * @throws AllocationGeneratorException cuando se produce un error al guardar el nuevo
@@ -229,7 +230,7 @@ public class AllocationGenerator {
 	 * @return el <code>MAllocationHdr</code> recientemente creado. (Accesible también
 	 * invocando el método {@link #getAllocationHdr()}.
 	 */
-	public MAllocationHdr createAllocationHdr(String allocationType, Integer orgID) throws AllocationGeneratorException {
+	public MAllocationHdr createAllocationHdr(String allocationType, Integer orgID, Integer bPartnerID) throws AllocationGeneratorException {
 		MAllocationHdr newAllocationHdr = null;
 		// No se permite crear un nuevo encabezado si ya fue asignado uno mediante el
 		// constructor que permite asociar un Hdr a este generador.
@@ -242,6 +243,9 @@ public class AllocationGenerator {
 		// Se asignan los valores por defecto requeridos al encabezado
 		newAllocationHdr = new MAllocationHdr(getCtx(), 0, getTrxName());
 		newAllocationHdr.setAD_Org_ID(orgID);
+		if(!Util.isEmpty(bPartnerID, true)){
+			newAllocationHdr.setC_BPartner_ID(bPartnerID);
+		}
 		newAllocationHdr.setAllocationType(allocationType);
 		newAllocationHdr.setC_Currency_ID(clientCurrencyID);
 		newAllocationHdr.setDateAcct(systemDate);
@@ -258,6 +262,22 @@ public class AllocationGenerator {
 		saveAllocationHdr(newAllocationHdr);
 		setAllocationHdr(newAllocationHdr);
 		return newAllocationHdr;
+	}
+	
+	/**
+	 * Crea un nuevo encabezado de asignación seteando la mayoría de sus atributos por defecto
+	 * a partir de los valores del contexto.
+	 * @param allocationType tipo de asignación del encabezado <code>X_C_AllocationHdr.ALLOCATIONTYPE_XXX</code>
+	 * @param orgID ID de la organización del allocation
+	 * @throws IllegalStateException si el generador fue instanciado mediante el constructor
+	 * que permite asociar un MAllocationHdr existente.
+	 * @throws AllocationGeneratorException cuando se produce un error al guardar el nuevo
+	 * encabezado de asignación.
+	 * @return el <code>MAllocationHdr</code> recientemente creado. (Accesible también
+	 * invocando el método {@link #getAllocationHdr()}.
+	 */
+	public MAllocationHdr createAllocationHdr(String allocationType, Integer orgID) throws AllocationGeneratorException {
+		return createAllocationHdr(allocationType, orgID, null);
 	}
 	
 	/**
