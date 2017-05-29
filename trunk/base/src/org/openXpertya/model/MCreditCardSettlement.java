@@ -129,8 +129,7 @@ public class MCreditCardSettlement extends X_C_CreditCardSettlement implements D
 			
 		}
 		
-		// Si se marca conciliado, todos los cupones deben estar incluídos y
-		// conciliados
+		// Si se marca conciliado, todos los cupones deben estar conciliados
 		if(!newRecord && is_ValueChanged("IsReconciled") && isReconciled()){
 			StringBuffer sql = new StringBuffer();
 
@@ -140,12 +139,11 @@ public class MCreditCardSettlement extends X_C_CreditCardSettlement implements D
 			sql.append("	" + MCouponsSettlements.Table_Name + " ");
 			sql.append("WHERE ");
 			sql.append("	C_CreditCardSettlement_ID = ? ");
-			sql.append("	AND include = 'Y' ");
 			sql.append("	AND isreconciled = 'N' ");
 			
 			int no = DB.getSQLValue(get_TrxName(), sql.toString(), getID());
 			if(no > 0){
-				log.saveError("SaveError", Msg.getMsg(getCtx(), "ExistsNotReconciledIncludedCoupons"));
+				log.saveError("SaveError", Msg.getMsg(getCtx(), "ExistsNotReconciledSettlementCoupons"));
 				return false;
 			}
 		}
