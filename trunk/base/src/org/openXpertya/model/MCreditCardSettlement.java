@@ -250,13 +250,14 @@ public class MCreditCardSettlement extends X_C_CreditCardSettlement implements D
 		StringBuffer sql = new StringBuffer();
 
 		sql.append("SELECT ");
-		sql.append("	C_Tax_ID ");
+		sql.append("	C_Tax_ID, name ");
 		sql.append("FROM ");
 		sql.append("	" + X_C_Tax.Table_Name + " ");
 		sql.append("WHERE ");
 		sql.append("	IsPercepcion = 'Y' "); // Impuesto de tipo percepción.
 		sql.append("	AND IsActive = 'Y' ");
 		sql.append("	AND Ad_Client_Id = " + Env.getAD_Client_ID(getCtx()));
+		sql.append(" ORDER BY name ");
 
 		PreparedStatement ps = null;
 		ResultSet rs = null;
