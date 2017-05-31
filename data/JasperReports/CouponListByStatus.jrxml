@@ -548,20 +548,7 @@
 			</band>
 		</columnFooter>
 		<pageFooter>
-			<band height="15"  isSplitAllowed="true" >
-				<textField isStretchWithOverflow="false" pattern="" isBlankWhenNull="false" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
-					<reportElement
-						x="483"
-						y="0"
-						width="56"
-						height="15"
-						key="textField-22"/>
-					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
-					<textElement textAlignment="Right">
-						<font fontName="Helvetica" size="10"/>
-					</textElement>
-				<textFieldExpression   class="java.lang.String"><![CDATA["Pagina " + $V{PAGE_NUMBER}]]></textFieldExpression>
-				</textField>
+			<band height="0"  isSplitAllowed="true" >
 			</band>
 		</pageFooter>
 		<lastPageFooter>
