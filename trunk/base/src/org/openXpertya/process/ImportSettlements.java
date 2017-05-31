@@ -151,14 +151,14 @@ public class ImportSettlements extends SvrProcess {
 				errMessages = validateForFirstData(attributes);
 
 				if (!errMessages.isEmpty()) {
-					Object[] params = new Object[] {"FirstData", 0, 0, errMessages.size()};
+					Object[] params = new Object[] { "FirstData", 0, 0, errMessages.size() };
 					resultMsg = Msg.getMsg(Env.getAD_Language(getCtx()), "SettlementGenerationResult", params);
 				}
 				while (rs.next()) {
 					someResults = true;
 					resultMsg = createFromFirstData(rs, importClass.getTableName(), attributes);
 					result.put(resultMsg, result.get(resultMsg) + 1);
-					Object[] params = new Object[] {"FirstData", result.get(SAVED), result.get(IGNORED), result.get(ERROR)};
+					Object[] params = new Object[] { "FirstData", result.get(SAVED), result.get(IGNORED), result.get(ERROR) };
 					resultMsg = Msg.getMsg(Env.getAD_Language(getCtx()), "SettlementGenerationResult", params);
 				}
 			} // Importacion elegida = Naranja
@@ -171,14 +171,14 @@ public class ImportSettlements extends SvrProcess {
 				errMessages = validateForNaranja(attributes);
 
 				if (!errMessages.isEmpty()) {
-					Object[] params = new Object[] {"Naranja", 0, 0, errMessages.size()};
+					Object[] params = new Object[] { "Naranja", 0, 0, errMessages.size() };
 					resultMsg = Msg.getMsg(Env.getAD_Language(getCtx()), "SettlementGenerationResult", params);
 				}
 				while (rs.next()) {
 					someResults = true;
 					resultMsg = createFromNaranja(rs, importClass.getTableName(), attributes);
 					result.put(resultMsg, result.get(resultMsg) + 1);
-					Object[] params = new Object[] {"Naranja", result.get(SAVED), result.get(IGNORED), result.get(ERROR)};
+					Object[] params = new Object[] { "Naranja", result.get(SAVED), result.get(IGNORED), result.get(ERROR) };
 					resultMsg = Msg.getMsg(Env.getAD_Language(getCtx()), "SettlementGenerationResult", params);
 				}
 			} // Importacion elegida = American Express
@@ -191,14 +191,14 @@ public class ImportSettlements extends SvrProcess {
 				errMessages = validateForAmex(attributes, rs);
 
 				if (!errMessages.isEmpty()) {
-					Object[] params = new Object[] {"Amex", 0, 0, errMessages.size()};
+					Object[] params = new Object[] { "Amex", 0, 0, errMessages.size() };
 					resultMsg = Msg.getMsg(Env.getAD_Language(getCtx()), "SettlementGenerationResult", params);
 				}
 				while (rs.next()) {
 					someResults = true;
 					resultMsg = createFromAmex(rs, importClass.getTableName(), attributes);
 					result.put(resultMsg, result.get(resultMsg) + 1);
-					Object[] params = new Object[] {"Amex", result.get(SAVED), result.get(IGNORED), result.get(ERROR)};
+					Object[] params = new Object[] { "Amex", result.get(SAVED), result.get(IGNORED), result.get(ERROR) };
 					resultMsg = Msg.getMsg(Env.getAD_Language(getCtx()), "SettlementGenerationResult", params);
 				}
 			} // Importacion elegida = Visa
@@ -211,14 +211,14 @@ public class ImportSettlements extends SvrProcess {
 				errMessages = validateForVisa(attributes);
 
 				if (!errMessages.isEmpty()) {
-					Object[] params = new Object[] {"Visa", 0, 0, errMessages.size()};
+					Object[] params = new Object[] { "Visa", 0, 0, errMessages.size() };
 					resultMsg = Msg.getMsg(Env.getAD_Language(getCtx()), "SettlementGenerationResult", params);
 				}
 				while (rs.next()) {
 					someResults = true;
 					resultMsg = createFromVisa(rs, importClass.getTableName(), attributes);
 					result.put(resultMsg, result.get(resultMsg) + 1);
-					Object[] params = new Object[] {"Visa", result.get(SAVED), result.get(IGNORED), result.get(ERROR)};
+					Object[] params = new Object[] { "Visa", result.get(SAVED), result.get(IGNORED), result.get(ERROR) };
 					resultMsg = Msg.getMsg(Env.getAD_Language(getCtx()), "SettlementGenerationResult", params);
 				}
 			}
@@ -257,7 +257,7 @@ public class ImportSettlements extends SvrProcess {
 	}
 
 	/**
-	 * Obtiene el ID de una Entidad Comercial vinculada a Entidades 
+	 * Obtiene el ID de una Entidad Comercial vinculada a Entidades
 	 * Financieras a travéz del Número de Comercio.
 	 * @param establishmentNumber Número de Comercio.
 	 * @return ID de la Entidad Comercial, si se encontró, caso contrario -1.
@@ -359,52 +359,60 @@ public class ImportSettlements extends SvrProcess {
 					markAsImported(tableName, rs.getInt(tableName + "_ID"));
 				}
 				/* -- -- -- */
-				{
+				try {
 					String name = "Arancel";
 					int C_CardSettlementConcept_ID = getCardSettlementConceptIDByValue(attributes.get(name).getName());
 					BigDecimal expense = safeMultiply(rs.getString("arancel"), rs.getString("arancel_signo"));
 					MExpenseConcepts ec = getExpenseConceptsByTypeAndSettlement(settlement.getC_CreditCardSettlement_ID(), C_CardSettlementConcept_ID);
 					ec.setAmount(expense);
 					ec.save();
+				} catch (NullPointerException e) {
+					e.printStackTrace();
 				}
 				/* -- -- -- */
-				{
+				try {
 					String name = "IVA 21";
 					int C_Tax_ID = getTaxIDByName(attributes.get(name).getName());
-					BigDecimal iva = safeMultiply(rs.getString("iva_aranceles_ri"), rs.getString("iva_aranceles_ri_signo"))
-							.add(safeMultiply(rs.getString("iva_dto_pago_anticipado"), rs.getString("iva_dto_pago_anticipado_signo")));
+					BigDecimal iva = safeMultiply(rs.getString("iva_aranceles_ri"), rs.getString("iva_aranceles_ri_signo")).add(safeMultiply(rs.getString("iva_dto_pago_anticipado"), rs.getString("iva_dto_pago_anticipado_signo")));
 					MIVASettlements iv = getIVASettlementsByTypeAndSettlement(settlement.getC_CreditCardSettlement_ID(), C_Tax_ID);
 					iv.setAmount(iva);
 					iv.save();
+				} catch (NullPointerException e) {
+					e.printStackTrace();
 				}
 				/* -- -- -- */
-				{
+				try {
 					String name = "Costo Financiero";
 					int C_CardSettlementConcepts_ID = getCardSettlementConceptIDByValue(attributes.get(name).getName());
 					BigDecimal commission = safeMultiply(rs.getString("costo_financiero"), rs.getString("costo_financiero_signo"));
 					MCommissionConcepts cc = getCommissionConceptsByTypeAndSettlement(settlement.getC_CreditCardSettlement_ID(), C_CardSettlementConcepts_ID);
 					cc.setAmount(commission);
 					cc.save();
+				} catch (NullPointerException e) {
+					e.printStackTrace();
 				}
 				/* -- -- -- */
-				{
+				try {
 					String name = "Percepcion IVA";
 					int C_Tax_ID = getTaxIDByName(attributes.get(name).getName());
 					BigDecimal perception = safeMultiply(rs.getString("percepc_iva_r3337"), rs.getString("percepc_iva_r3337_signo"));
 					MPerceptionsSettlement ps = getPerceptionsSettlementByTypeAndSettlement(settlement.getC_CreditCardSettlement_ID(), C_Tax_ID);
 					ps.setAmount(perception);
 					ps.save();
+				} catch (NullPointerException e) {
+					e.printStackTrace();
 				}
 				/* -- -- -- */
-				{
+				try {
 					String name = "Ret Ganancias e Ing Brutos";
 					int C_RetencionType_ID = getCardSettlementConceptIDByValue(attributes.get(name).getName());
-					BigDecimal withholding = safeMultiply(rs.getString("ret_imp_ganancias"), rs.getString("ret_imp_ganancias_signo"))
-							.add(safeMultiply(rs.getString("ret_imp_ingresos_brutos"), rs.getString("ret_imp_ingresos_brutos_signo")))
+					BigDecimal withholding = safeMultiply(rs.getString("ret_imp_ganancias"), rs.getString("ret_imp_ganancias_signo")).add(safeMultiply(rs.getString("ret_imp_ingresos_brutos"), rs.getString("ret_imp_ingresos_brutos_signo")))
 							.add(safeMultiply(rs.getString("ret_iva_ventas"), rs.getString("ret_iva_ventas_signo")));
 					MWithholdingSettlement ws = getWithholdingSettlementByTypeAndSettlement(settlement.getC_CreditCardSettlement_ID(), C_RetencionType_ID);
 					ws.setAmount(withholding);
 					ws.save();
+				} catch (NullPointerException e) {
+					e.printStackTrace();
 				}
 				/* -- -- -- */
 			} else {
@@ -498,75 +506,78 @@ public class ImportSettlements extends SvrProcess {
 					markAsImported(tableName, rs.getInt(tableName + "_ID"));
 				}
 				/* -- -- -- */
-				{
+				try {
 					String name = "Retencion IIBB";
 					int C_RetencionType_ID = getCardSettlementConceptIDByValue(attributes.get(name).getName());
 					BigDecimal withholding = safeMultiply(rs.getString("ret_ingresos_brutos"), rs.getString("signo_ret_ing_brutos"));
 					MWithholdingSettlement ws = getWithholdingSettlementByTypeAndSettlement(settlement.getC_CreditCardSettlement_ID(), C_RetencionType_ID);
 					ws.setAmount(withholding);
 					ws.save();
+				} catch (NullPointerException e) {
+					e.printStackTrace();
 				}
 				/* -- -- -- */
-				{
+				try {
 					String name = "Retencion IVA";
 					int C_RetencionType_ID = getCardSettlementConceptIDByValue(attributes.get(name).getName());
 					BigDecimal withholding = safeMultiply(rs.getString("retencion_iva_140"), rs.getString("signo_ret_iva_140"));
 					MWithholdingSettlement ws = getWithholdingSettlementByTypeAndSettlement(settlement.getC_CreditCardSettlement_ID(), C_RetencionType_ID);
 					ws.setAmount(withholding);
 					ws.save();
+				} catch (NullPointerException e) {
+					e.printStackTrace();
 				}
 				/* -- -- -- */
-				{
+				try {
 					String name = "Retencion Ganancias";
 					int C_RetencionType_ID = getCardSettlementConceptIDByValue(attributes.get(name).getName());
 					BigDecimal withholding = safeMultiply(rs.getString("retencion_ganancias"), rs.getString("signo_ret_ganancias"));
 					MWithholdingSettlement ws = getWithholdingSettlementByTypeAndSettlement(settlement.getC_CreditCardSettlement_ID(), C_RetencionType_ID);
 					ws.setAmount(withholding);
 					ws.save();
+				} catch (NullPointerException e) {
+					e.printStackTrace();
 				}
 				/* -- -- -- */
-				{
+				try {
 					String name = "Comisiones - Conceptos fact a descontar mes pago";
 					int C_CardSettlementConcepts_ID = getCardSettlementConceptIDByValue(attributes.get(name).getName());
-					BigDecimal commission = safeMultiply(rs.getString("importe_ara_vto"), rs.getString("signo_ara_vto"))
-							.add(safeMultiply(rs.getString("importe_ara_facturado_30"), rs.getString("signo_ara_facturado_30")))
-							.add(safeMultiply(rs.getString("importe_ara_facturado_60"), rs.getString("signo_ara_facturado_60")))
-							.add(safeMultiply(rs.getString("importe_ara_facturado_90"), rs.getString("signo_ara_facturado_90")))
+					BigDecimal commission = safeMultiply(rs.getString("importe_ara_vto"), rs.getString("signo_ara_vto")).add(safeMultiply(rs.getString("importe_ara_facturado_30"), rs.getString("signo_ara_facturado_30")))
+							.add(safeMultiply(rs.getString("importe_ara_facturado_60"), rs.getString("signo_ara_facturado_60"))).add(safeMultiply(rs.getString("importe_ara_facturado_90"), rs.getString("signo_ara_facturado_90")))
 							.add(safeMultiply(rs.getString("importe_ara_facturado_120"), rs.getString("signo_ara_facturado_120")));
 					MCommissionConcepts cc = getCommissionConceptsByTypeAndSettlement(settlement.getC_CreditCardSettlement_ID(), C_CardSettlementConcepts_ID);
 					cc.setAmount(commission);
 					cc.save();
+				} catch (NullPointerException e) {
+					e.printStackTrace();
 				}
 				/* -- -- -- */
-				{
+				try {
 					String name = "IVA 21";
 					int C_Tax_ID = getTaxIDByName(attributes.get(name).getName());
-					BigDecimal iva = safeMultiply(rs.getString("imp_iva_21_vto"), rs.getString("sig_iva_21_vto"))
-							.add(safeMultiply(rs.getString("imp_iva_21_facturado_30"), rs.getString("imp_iva_21_facturado_30")))
-							.add(safeMultiply(rs.getString("imp_iva_21_facturado_60"), rs.getString("imp_iva_21_facturado_60")))
-							.add(safeMultiply(rs.getString("imp_iva_21_facturado_90"), rs.getString("imp_iva_21_facturado_90")))
+					BigDecimal iva = safeMultiply(rs.getString("imp_iva_21_vto"), rs.getString("sig_iva_21_vto")).add(safeMultiply(rs.getString("imp_iva_21_facturado_30"), rs.getString("imp_iva_21_facturado_30")))
+							.add(safeMultiply(rs.getString("imp_iva_21_facturado_60"), rs.getString("imp_iva_21_facturado_60"))).add(safeMultiply(rs.getString("imp_iva_21_facturado_90"), rs.getString("imp_iva_21_facturado_90")))
 							.add(safeMultiply(rs.getString("imp_iva_21_facturado_120"), rs.getString("imp_iva_21_facturado_120")));
 					MIVASettlements iv = getIVASettlementsByTypeAndSettlement(settlement.getC_CreditCardSettlement_ID(), C_Tax_ID);
 					iv.setAmount(iva);
 					iv.save();
+				} catch (NullPointerException e) {
+					e.printStackTrace();
 				}
 				/* -- -- -- */
-				{
+				try {
 					String name = "Gastos - Conceptos fact a descontar mes pago";
 					int C_CardSettlementConcept_ID = getCardSettlementConceptIDByValue(attributes.get(name).getName());
-					BigDecimal expense = safeMultiply(rs.getString("imp_acre_liq_ant_vto"), rs.getString("sig_acre_liq_ant_vto"))
-							.add(safeMultiply(rs.getString("imp_acre_liq_ant_facturado_30"), rs.getString("sig_acre_liq_ant_facturado_30")))
-							.add(safeMultiply(rs.getString("imp_acre_liq_ant_facturado_60"), rs.getString("sig_acre_liq_ant_facturado_60")))
-							.add(safeMultiply(rs.getString("imp_acre_liq_ant_facturado_90"), rs.getString("sig_acre_liq_ant_facturado_90")))
-							.add(safeMultiply(rs.getString("imp_acre_liq_ant_facturado_120"), rs.getString("sig_acre_liq_ant_facturado_120")))
-							.add(safeMultiply(rs.getString("imp_int_plan_esp_vto"), rs.getString("sig_int_plan_esp_vto")))
-							.add(safeMultiply(rs.getString("imp_int_plan_esp_facturado_30"), rs.getString("sig_int_plan_esp_facturado_30")))
-							.add(safeMultiply(rs.getString("imp_int_plan_esp_facturado_60"), rs.getString("sig_int_plan_esp_facturado_60")))
-							.add(safeMultiply(rs.getString("imp_int_plan_esp_facturado_90"), rs.getString("sig_int_plan_esp_facturado_90")))
-							.add(safeMultiply(rs.getString("imp_int_plan_esp_facturado_120"), rs.getString("sig_int_plan_esp_facturado_120")));
+					BigDecimal expense = safeMultiply(rs.getString("imp_acre_liq_ant_vto"), rs.getString("sig_acre_liq_ant_vto")).add(safeMultiply(rs.getString("imp_acre_liq_ant_facturado_30"), rs.getString("sig_acre_liq_ant_facturado_30")))
+							.add(safeMultiply(rs.getString("imp_acre_liq_ant_facturado_60"), rs.getString("sig_acre_liq_ant_facturado_60"))).add(safeMultiply(rs.getString("imp_acre_liq_ant_facturado_90"), rs.getString("sig_acre_liq_ant_facturado_90")))
+							.add(safeMultiply(rs.getString("imp_acre_liq_ant_facturado_120"), rs.getString("sig_acre_liq_ant_facturado_120"))).add(safeMultiply(rs.getString("imp_int_plan_esp_vto"), rs.getString("sig_int_plan_esp_vto")))
+							.add(safeMultiply(rs.getString("imp_int_plan_esp_facturado_30"), rs.getString("sig_int_plan_esp_facturado_30"))).add(safeMultiply(rs.getString("imp_int_plan_esp_facturado_60"), rs.getString("sig_int_plan_esp_facturado_60")))
+							.add(safeMultiply(rs.getString("imp_int_plan_esp_facturado_90"), rs.getString("sig_int_plan_esp_facturado_90"))).add(safeMultiply(rs.getString("imp_int_plan_esp_facturado_120"), rs.getString("sig_int_plan_esp_facturado_120")));
 					MExpenseConcepts ec = getExpenseConceptsByTypeAndSettlement(settlement.getC_CreditCardSettlement_ID(), C_CardSettlementConcept_ID);
 					ec.setAmount(expense);
 					ec.save();
+				} catch (NullPointerException e) {
+					e.printStackTrace();
 				}
 				/* -- -- -- */
 			} else {
@@ -617,7 +628,7 @@ public class ImportSettlements extends SvrProcess {
 
 		Set<String> en = new HashSet<String>();
 		try {
-			while(rs.next()) {
+			while (rs.next()) {
 				en.add(rs.getString("num_est"));
 			}
 		} catch (SQLException e1) {
@@ -627,7 +638,7 @@ public class ImportSettlements extends SvrProcess {
 		for (String s : en) {
 			ens += s + ",";
 		}
-		ens = ens.substring(ens.length()-1);
+		ens = ens.substring(ens.length() - 1);
 
 		StringBuffer sql = new StringBuffer();
 
@@ -714,104 +725,112 @@ public class ImportSettlements extends SvrProcess {
 					markAsImported(tableName, rs.getInt(tableName + "_ID"));
 				}
 				/* -- -- -- */
-				{
+				try {
 					String name = "Imp total desc aceleracion";
 					int C_CardSettlementConcepts_ID = getCardSettlementConceptIDByValue(attributes.get(name).getName());
 					BigDecimal expense = safeNumber(rs.getString("imp_tot_desc_acel"));
 					MExpenseConcepts ec = getExpenseConceptsByTypeAndSettlement(settlement.getC_CreditCardSettlement_ID(), C_CardSettlementConcepts_ID);
 					ec.setAmount(expense);
 					ec.save();
+				} catch (NullPointerException e) {
+					e.printStackTrace();
 				}
 				/* -- -- -- */
-				{
+				try {
 					String name = "Importe Descuento";
 					int C_CardSettlementConcepts_ID = getCardSettlementConceptIDByValue(attributes.get(name).getName());
 					BigDecimal commission = safeNumber(rs.getString("imp_desc_pago"));
 					MCommissionConcepts cc = getCommissionConceptsByTypeAndSettlement(settlement.getC_CreditCardSettlement_ID(), C_CardSettlementConcepts_ID);
 					cc.setAmount(commission);
 					cc.save();
+				} catch (NullPointerException e) {
+					e.printStackTrace();
 				}
 				/* -- -- -- */
-				if (codImp.equals("01")) {
-					String name = "IVA 21";
-					int C_Tax_ID = getTaxIDByName(attributes.get(name).getName());
-					BigDecimal perception = safeNumber(rs.getString("importe_imp"));
-					MPerceptionsSettlement ps = getPerceptionsSettlementByTypeAndSettlement(settlement.getC_CreditCardSettlement_ID(), C_Tax_ID);
-					ps.setAmount(perception);
-					ps.save();
-				}
-				if (codImp.equals("02")) {
-					String name = "Percepcion IVA";
-					int C_Tax_ID = getTaxIDByName(attributes.get(name).getName());
-					BigDecimal perception = safeNumber(rs.getString("importe_imp"));
-					MPerceptionsSettlement ps = getPerceptionsSettlementByTypeAndSettlement(settlement.getC_CreditCardSettlement_ID(), C_Tax_ID);
-					ps.setAmount(perception);
-					ps.save();
-				}
-				if (codImp.equals("04")) {
-					String name = "Retencion IVA";
-					int C_RetencionType_ID = getCardSettlementConceptIDByValue(attributes.get(name).getName());
-					BigDecimal withholding = safeNumber(rs.getString("importe_imp"));
-					MWithholdingSettlement ws = getWithholdingSettlementByTypeAndSettlement(settlement.getC_CreditCardSettlement_ID(), C_RetencionType_ID);
-					ws.setAmount(withholding);
-					ws.save();
-				}
-				if (codImp.equals("05")) {
-					String name = "Retencion Ganancias";
-					int C_RetencionType_ID = getCardSettlementConceptIDByValue(attributes.get(name).getName());
-					BigDecimal withholding = safeNumber(rs.getString("importe_imp"));
-					MWithholdingSettlement ws = getWithholdingSettlementByTypeAndSettlement(settlement.getC_CreditCardSettlement_ID(), C_RetencionType_ID);
-					ws.setAmount(withholding);
-					ws.save();
-				}
-				if (codImp.equals("06") || codImp.equals("09")) { // IIBB o IIBB Bs.As.
-					StringBuffer sql = new StringBuffer();
-
-					sql.append("SELECT ");
-					sql.append("	rt.C_RetencionType_ID, ");
-					sql.append("	ef.C_Region_ID ");
-					sql.append("FROM ");
-					sql.append("	" + X_C_RetencionSchema.Table_Name + " rs ");
-					sql.append("	INNER JOIN " + MEntidadFinanciera.Table_Name + " ef ");
-					sql.append("		ON ef.C_Region_ID = rs.C_Region_ID ");
-					sql.append("	INNER JOIN " + X_C_RetencionType.Table_Name + " rt ");
-					sql.append("		ON rs.C_RetencionType_ID = rs.C_RetencionType_ID ");
-					sql.append("WHERE ");
-					sql.append("	rs.RetencionApplication = 'S' ");
-					sql.append("	AND rt.RetentionType = 'B' ");
-					sql.append("	AND rt.IsActive = 'Y' ");
-					sql.append("	AND ef.EstablishmentNumber = ? ");
-
-					PreparedStatement ps = null;
-					ResultSet rst = null;
-
-					int C_RetencionType_ID = -1;
-					int C_Region_ID = -1;
-
-					try {
-						ps = DB.prepareStatement(sql.toString());
-						ps.setString(1, rs.getString("num_est"));
-						rst = ps.executeQuery();
-
-						if (rst.next()) {
-							C_RetencionType_ID = rst.getInt(1);
-							C_Region_ID = rst.getInt(2);
-						}
-					} catch (Exception e) {
-						log.log(Level.SEVERE, "createFromAmex", e);
-					} finally {
-						try {
-							rst.close();
-							ps.close();
-						} catch (SQLException e) {
-							log.log(Level.SEVERE, "Cannot close statement or resultset");
-						}
+				try {
+					if (codImp.equals("01")) {
+						String name = "IVA 21";
+						int C_Tax_ID = getTaxIDByName(attributes.get(name).getName());
+						BigDecimal perception = safeNumber(rs.getString("importe_imp"));
+						MPerceptionsSettlement ps = getPerceptionsSettlementByTypeAndSettlement(settlement.getC_CreditCardSettlement_ID(), C_Tax_ID);
+						ps.setAmount(perception);
+						ps.save();
 					}
-					BigDecimal withholding = safeNumber(rs.getString("importe_imp"));
-					MWithholdingSettlement ws = getWithholdingSettlementByTypeAndSettlement(settlement.getC_CreditCardSettlement_ID(), C_RetencionType_ID);
-					ws.setC_Region_ID(C_Region_ID);
-					ws.setAmount(withholding);
-					ws.save();
+					if (codImp.equals("02")) {
+						String name = "Percepcion IVA";
+						int C_Tax_ID = getTaxIDByName(attributes.get(name).getName());
+						BigDecimal perception = safeNumber(rs.getString("importe_imp"));
+						MPerceptionsSettlement ps = getPerceptionsSettlementByTypeAndSettlement(settlement.getC_CreditCardSettlement_ID(), C_Tax_ID);
+						ps.setAmount(perception);
+						ps.save();
+					}
+					if (codImp.equals("04")) {
+						String name = "Retencion IVA";
+						int C_RetencionType_ID = getCardSettlementConceptIDByValue(attributes.get(name).getName());
+						BigDecimal withholding = safeNumber(rs.getString("importe_imp"));
+						MWithholdingSettlement ws = getWithholdingSettlementByTypeAndSettlement(settlement.getC_CreditCardSettlement_ID(), C_RetencionType_ID);
+						ws.setAmount(withholding);
+						ws.save();
+					}
+					if (codImp.equals("05")) {
+						String name = "Retencion Ganancias";
+						int C_RetencionType_ID = getCardSettlementConceptIDByValue(attributes.get(name).getName());
+						BigDecimal withholding = safeNumber(rs.getString("importe_imp"));
+						MWithholdingSettlement ws = getWithholdingSettlementByTypeAndSettlement(settlement.getC_CreditCardSettlement_ID(), C_RetencionType_ID);
+						ws.setAmount(withholding);
+						ws.save();
+					}
+					if (codImp.equals("06") || codImp.equals("09")) { // IIBB o IIBB Bs.As.
+						StringBuffer sql = new StringBuffer();
+
+						sql.append("SELECT ");
+						sql.append("	rt.C_RetencionType_ID, ");
+						sql.append("	ef.C_Region_ID ");
+						sql.append("FROM ");
+						sql.append("	" + X_C_RetencionSchema.Table_Name + " rs ");
+						sql.append("	INNER JOIN " + MEntidadFinanciera.Table_Name + " ef ");
+						sql.append("		ON ef.C_Region_ID = rs.C_Region_ID ");
+						sql.append("	INNER JOIN " + X_C_RetencionType.Table_Name + " rt ");
+						sql.append("		ON rs.C_RetencionType_ID = rs.C_RetencionType_ID ");
+						sql.append("WHERE ");
+						sql.append("	rs.RetencionApplication = 'S' ");
+						sql.append("	AND rt.RetentionType = 'B' ");
+						sql.append("	AND rt.IsActive = 'Y' ");
+						sql.append("	AND ef.EstablishmentNumber = ? ");
+
+						PreparedStatement ps = null;
+						ResultSet rst = null;
+
+						int C_RetencionType_ID = -1;
+						int C_Region_ID = -1;
+
+						try {
+							ps = DB.prepareStatement(sql.toString());
+							ps.setString(1, rs.getString("num_est"));
+							rst = ps.executeQuery();
+
+							if (rst.next()) {
+								C_RetencionType_ID = rst.getInt(1);
+								C_Region_ID = rst.getInt(2);
+							}
+						} catch (Exception e) {
+							log.log(Level.SEVERE, "createFromAmex", e);
+						} finally {
+							try {
+								rst.close();
+								ps.close();
+							} catch (SQLException e) {
+								log.log(Level.SEVERE, "Cannot close statement or resultset");
+							}
+						}
+						BigDecimal withholding = safeNumber(rs.getString("importe_imp"));
+						MWithholdingSettlement ws = getWithholdingSettlementByTypeAndSettlement(settlement.getC_CreditCardSettlement_ID(), C_RetencionType_ID);
+						ws.setC_Region_ID(C_Region_ID);
+						ws.setAmount(withholding);
+						ws.save();
+					}
+				} catch (NullPointerException e) {
+					e.printStackTrace();
 				}
 				/* -- -- -- */
 			} else {
@@ -921,105 +940,126 @@ public class ImportSettlements extends SvrProcess {
 					markAsImported(tableName, rs.getInt(tableName + "_ID"));
 				}
 				/* -- -- -- */
-				{
+				try {
 					String name = "Ret IIBB";
 					int C_RetencionType_ID = getCardSettlementConceptIDByValue(attributes.get(name).getName());
 					BigDecimal withholding = safeMultiply(rs.getString("ret_ingbru"), rs.getString("signo_32"));
 					MWithholdingSettlement ws = getWithholdingSettlementByTypeAndSettlement(settlement.getC_CreditCardSettlement_ID(), C_RetencionType_ID);
 					ws.setAmount(withholding);
 					ws.save();
+				} catch (NullPointerException e) {
+					e.printStackTrace();
 				}
 				/* -- -- -- */
-				{
+				try {
 					String name = "Ret IVA";
 					int C_RetencionType_ID = getCardSettlementConceptIDByValue(attributes.get(name).getName());
 					BigDecimal withholding = safeMultiply(rs.getString("ret_iva"), rs.getString("signo_30"));
 					MWithholdingSettlement ws = getWithholdingSettlementByTypeAndSettlement(settlement.getC_CreditCardSettlement_ID(), C_RetencionType_ID);
 					ws.setAmount(withholding);
 					ws.save();
+				} catch (NullPointerException e) {
+					e.printStackTrace();
 				}
 				/* -- -- -- */
-				{
+				try {
 					String name = "Ret Ganancias";
 					int C_RetencionType_ID = getCardSettlementConceptIDByValue(attributes.get(name).getName());
 					BigDecimal withholding = safeMultiply(rs.getString("ret_gcias"), rs.getString("signo_31"));
 					MWithholdingSettlement ws = getWithholdingSettlementByTypeAndSettlement(settlement.getC_CreditCardSettlement_ID(), C_RetencionType_ID);
 					ws.setAmount(withholding);
 					ws.save();
+				} catch (NullPointerException e) {
+					e.printStackTrace();
 				}
 				/* -- -- -- */
-				{
+				try {
 					String name = "Dto por ventas de campañas";
 					int C_Cardsettlementconcepts_ID = getCardSettlementConceptIDByValue(attributes.get(name).getName());
 					BigDecimal expense = safeMultiply(rs.getString("dto_campania"), rs.getString("signo_04_3"));
 					MExpenseConcepts ec = getExpenseConceptsByTypeAndSettlement(settlement.getC_CreditCardSettlement_ID(), C_Cardsettlementconcepts_ID);
 					ec.setAmount(expense);
 					ec.save();
+				} catch (NullPointerException e) {
+					e.printStackTrace();
 				}
 				/* -- -- -- */
-				{
+				try {
 					String name = "Costo plan acelerado cuotas";
 					int C_Cardsettlementconcepts_ID = getCardSettlementConceptIDByValue(attributes.get(name).getName());
 					BigDecimal expense = safeMultiply(rs.getString("costo_cuoemi"), rs.getString("signo_12"));
 					MExpenseConcepts ec = getExpenseConceptsByTypeAndSettlement(settlement.getC_CreditCardSettlement_ID(), C_Cardsettlementconcepts_ID);
 					ec.setAmount(expense);
 					ec.save();
+				} catch (NullPointerException e) {
+					e.printStackTrace();
 				}
 				/* -- -- -- */
-				{
+				try {
 					String name = "Cargo adic por planes cuotas";
 					int C_Cardsettlementconcepts_ID = getCardSettlementConceptIDByValue(attributes.get(name).getName());
 					BigDecimal expense = safeMultiply(rs.getString("adic_plancuo"), rs.getString("signo_04_15"));
 					MExpenseConcepts ec = getExpenseConceptsByTypeAndSettlement(settlement.getC_CreditCardSettlement_ID(), C_Cardsettlementconcepts_ID);
 					ec.setAmount(expense);
 					ec.save();
+				} catch (NullPointerException e) {
+					e.printStackTrace();
 				}
 				/* -- -- -- */
-				{
+				try {
 					String name = "Cargo adic por op internacionales";
 					int C_Cardsettlementconcepts_ID = getCardSettlementConceptIDByValue(attributes.get(name).getName());
 					BigDecimal expense = safeMultiply(rs.getString("adic_opinter"), rs.getString("signo_04_17"));
 					MExpenseConcepts ec = getExpenseConceptsByTypeAndSettlement(settlement.getC_CreditCardSettlement_ID(), C_Cardsettlementconcepts_ID);
 					ec.setAmount(expense);
 					ec.save();
+				} catch (NullPointerException e) {
+					e.printStackTrace();
 				}
 				/* -- -- -- */
-				{
+				try {
 					String name = "Importe Arancel";
 					int C_Cardsettlementconcepts_ID = getCardSettlementConceptIDByValue(attributes.get(name).getName());
 					BigDecimal commission = safeMultiply(rs.getString("impret"), rs.getString("signo_2"));
 					MCommissionConcepts cc = getCommissionConceptsByTypeAndSettlement(settlement.getC_CreditCardSettlement_ID(), C_Cardsettlementconcepts_ID);
 					cc.setAmount(commission);
 					cc.save();
+				} catch (NullPointerException e) {
+					e.printStackTrace();
 				}
 				/* -- -- -- */
-				{
+				try {
 					String name = "IVA 10.5";
 					int C_Tax_ID = getTaxIDByName(attributes.get(name).getName());
 					BigDecimal iva = safeMultiply(rs.getString("retiva_cuo1"), rs.getString("signo_13"));
 					MIVASettlements iv = getIVASettlementsByTypeAndSettlement(settlement.getC_CreditCardSettlement_ID(), C_Tax_ID);
 					iv.setAmount(iva);
 					iv.save();
+				} catch (NullPointerException e) {
+					e.printStackTrace();
 				}
 				/* -- -- -- */
-				{
+				try {
 					String name = "IVA 21";
 					int C_Tax_ID = getTaxIDByName(attributes.get(name).getName());
-					BigDecimal iva = safeMultiply(rs.getString("retiva_d1"), rs.getString("signo_7"))
-							.add(safeMultiply(rs.getString("iva1_ad_plancuo"), rs.getString("signo_04_16")))
+					BigDecimal iva = safeMultiply(rs.getString("retiva_d1"), rs.getString("signo_7")).add(safeMultiply(rs.getString("iva1_ad_plancuo"), rs.getString("signo_04_16")))
 							.add(safeMultiply(rs.getString("iva1_ad_opinter"), rs.getString("signo_04_18")));
 					MIVASettlements iv = getIVASettlementsByTypeAndSettlement(settlement.getC_CreditCardSettlement_ID(), C_Tax_ID);
 					iv.setAmount(iva);
 					iv.save();
+				} catch (NullPointerException e) {
+					e.printStackTrace();
 				}
 				/* -- -- -- */
-				{
+				try {
 					String name = "IVA";
 					int C_Tax_ID = getTaxIDByName(attributes.get(name).getName());
 					BigDecimal perceptionAmt = safeMultiply(rs.getString("retiva_esp"), rs.getString("signo_5"));
 					MPerceptionsSettlement ps = getPerceptionsSettlementByTypeAndSettlement(settlement.getC_CreditCardSettlement_ID(), C_Tax_ID);
 					ps.setAmount(perceptionAmt);
 					ps.save();
+				} catch (NullPointerException e) {
+					e.printStackTrace();
 				}
 				/* -- -- -- */
 			} else {
@@ -1054,10 +1094,7 @@ public class ImportSettlements extends SvrProcess {
 		} catch (NumberFormatException e) {
 			return BigDecimal.ZERO;
 		}
-		String[] negatives = new String[] {
-				"-",
-				"Negativo"
-		};
+		String[] negatives = new String[] { "-", "Negativo" };
 		for (String s : negatives) {
 			if (op2.equalsIgnoreCase(s)) {
 				return negativeValue(num1);
@@ -1075,7 +1112,7 @@ public class ImportSettlements extends SvrProcess {
 	/**
 	 * A partir de un String, intenta generar un BigDecimal.
 	 * @param number String a ser convertido.
-	 * @return BigDecimal, en caso de que el String sea nulo, 
+	 * @return BigDecimal, en caso de que el String sea nulo,
 	 * vacío, o inválido, devolverá 0.
 	 */
 	private BigDecimal safeNumber(String number) {
