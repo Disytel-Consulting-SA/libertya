@@ -1,7 +1,13 @@
 package org.openXpertya.JasperReport.DataSource;
 
+import java.util.Properties;
+
 import org.openXpertya.model.MBPartner;
 import org.openXpertya.model.MCreditCardSettlement;
+import org.openXpertya.model.MRefList;
+
+import net.sf.jasperreports.engine.JRException;
+import net.sf.jasperreports.engine.JRField;
 
 /**
  * Data Source para reporte de listado de liquidaciones.
@@ -9,6 +15,7 @@ import org.openXpertya.model.MCreditCardSettlement;
  */
 public class SettlementListDataSource extends QueryDataSource {
 
+	private Properties ctx;
 	private int c_bpartner_id;
 	private String docstatus;
 	private String dateFrom;
@@ -19,8 +26,9 @@ public class SettlementListDataSource extends QueryDataSource {
 	 * Constructor.
 	 * @param trxName Transacción.
 	 */
-	public SettlementListDataSource(String trxName) {
+	public SettlementListDataSource(Properties ctx, String trxName) {
 		super(trxName);
+		setCtx(ctx);
 	}
 
 	@Override
@@ -29,6 +37,7 @@ public class SettlementListDataSource extends QueryDataSource {
 
 		sql.append("SELECT ");
 		sql.append("	s.settlementno, "); // Nro liquidación
+		sql.append("	s.docstatus, "); 
 		sql.append("	bp.value || '-' || bp.name AS creditcard, "); // Tarjeta
 		sql.append("	COALESCE(amount, 0) AS amount, "); // Importe bruto
 		sql.append("	COALESCE(netamount, 0) AS netamount, "); // Importe acreditado
@@ -76,6 +85,16 @@ public class SettlementListDataSource extends QueryDataSource {
 	protected boolean isQueryNoConvert() {
 		return true;
 	}
+	
+	@Override
+	public Object getFieldValue(JRField field) throws JRException {
+		Object value = getCurrentRecord().get(field.getName().toUpperCase());
+		if(field.getName().equalsIgnoreCase("docstatus")){
+			value = MRefList.getListName(getCtx(), MCreditCardSettlement.DOCSTATUS_AD_Reference_ID,
+					(String) getCurrentRecord().get(field.getName().toUpperCase()));
+		}
+		return value;
+	}
 
 	// SETTERS
 
@@ -97,6 +116,14 @@ public class SettlementListDataSource extends QueryDataSource {
 
 	public void setAd_org_id(int ad_org_id) {
 		this.ad_org_id = ad_org_id;
+	}
+
+	public Properties getCtx() {
+		return ctx;
+	}
+
+	public void setCtx(Properties ctx) {
+		this.ctx = ctx;
 	}
 
 }

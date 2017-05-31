@@ -33,7 +33,7 @@ public class LaunchSettlementList extends JasperReportLaunch {
 
 	@Override
 	protected OXPJasperDataSource createReportDataSource() {
-		SettlementListDataSource dataSource = new SettlementListDataSource(get_TrxName());
+		SettlementListDataSource dataSource = new SettlementListDataSource(getCtx(), get_TrxName());
 
 		dataSource.setC_bpartner_id(getC_BPartner_ID());
 		dataSource.setDocstatus(getDocStatus());
