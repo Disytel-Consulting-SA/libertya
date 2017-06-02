@@ -2234,16 +2234,16 @@ public class PoSOnline extends PoSConnectionState {
 		rBPartner.setPercepcionLiable(isPercepcionLiable);
 		rBPartner.setAutomaticCreditNote(mBPartner.isAutomaticCreditNotes());
 		
+		// Los datos pueden modificarse si la EC es CF y es distinta a la que está en la config
 		rBPartner.setCustomerName(mBPartner.getName());
-		// Si no es la misma EC que la por defecto en la config, se cargan los datos
-		// de la EC como datos del comprador (DNI y Dirección).
-		if (bPartnerID != getPoSCOnfig().getBPartnerCashTrxID()) {
-			rBPartner.setCustomerAddress(getBPartnerLocations(bPartnerID).get(0).toString());
-			rBPartner.setCustomerIdentification(mBPartner.getTaxID());
-			// Indica que los datos del comprador se deben mantener sincronizados
-			// con los datos de la EC.
-			rBPartner.setCustomerSynchronized(true);
-		}
+		rBPartner.setCustomerIdentification(mBPartner.getTaxID());
+		rBPartner.setCustomerAddress(getBPartnerLocations(bPartnerID).get(0).toString());
+		
+		// Indica que los datos del comprador se deben mantener sincronizados
+		// con los datos de la EC.
+		rBPartner.setCustomerSynchronized(bPartnerID != getPoSCOnfig().getBPartnerCashTrxID()
+				&& (codigoIVA <= 0 || (codigoIVA > 0 && MCategoriaIva.CONSUMIDOR_FINAL != codigoIVA)));
+		
 		return rBPartner;
 	}
 
