@@ -35,6 +35,7 @@ import org.openXpertya.grid.ed.VNumber;
 import org.openXpertya.minigrid.IDColumn;
 import org.openXpertya.model.MAllocationLine;
 import org.openXpertya.model.MLookupFactory;
+import org.openXpertya.model.MPayment;
 import org.openXpertya.model.MQuery;
 import org.openXpertya.util.DisplayType;
 import org.openXpertya.util.Env;
@@ -183,6 +184,12 @@ public class InfoPayment extends Info {
         new Info_Column( Msg.translate( Env.getCtx(),"DateTrx" ),"p.DateTrx",Timestamp.class ),
         new Info_Column( Msg.translate( Env.getCtx(),"DueDateShort" ),"p.DueDate",Timestamp.class ),
         new Info_Column( Msg.translate( Env.getCtx(),"DocumentNo" ),"p.DocumentNo",String.class ),
+        new Info_Column( Msg.translate( Env.getCtx(),"TenderType" ),"(SELECT trl.name as TenderType "
+        															+ "FROM ad_ref_list rl "
+        															+ "INNER JOIN ad_ref_list_trl trl ON rl.ad_ref_list_id = trl.ad_ref_list_id "
+        															+ "WHERE rl.ad_reference_id = " + MPayment.TENDERTYPE_AD_Reference_ID 
+        															+ "		AND p.TenderType = rl.value "
+        															+ "		AND trl.ad_language = '"+Env.getAD_Language(Env.getCtx())+"')",String.class ),
         new Info_Column( Msg.translate( Env.getCtx(),"IsReceipt" ),"p.IsReceipt",Boolean.class ),
         new Info_Column( Msg.translate( Env.getCtx(),"C_Currency_ID" ),"(SELECT ISO_Code FROM C_Currency c WHERE c.C_Currency_ID=p.C_Currency_ID)",String.class ),
         new Info_Column( Msg.translate( Env.getCtx(),"PayAmt" ),"p.PayAmt",BigDecimal.class ),
