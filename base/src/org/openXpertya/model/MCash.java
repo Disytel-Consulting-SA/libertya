@@ -63,6 +63,9 @@ public class MCash extends X_C_Cash implements DocAction {
 	/** Booleano que determina que estamos ante una caja de una caja diaria */
 	private boolean isPOSJournalCash = false;
 	
+	/** ID del libro de caja reverso */
+	private int reverseCashID = 0;
+	
     /**
      * Descripción de Método
      *
@@ -472,7 +475,7 @@ public class MCash extends X_C_Cash implements DocAction {
     	
     	//Si es nuevo registro, realizo verificación
     	
-    	if(newRecord){
+    	if(newRecord && Util.isEmpty(getReverseCashID(), true)){
 			// La verificación solo se hace para los Libros que son Cajas
 			// Generales.
 			// Para los libros de Cajas Diarias es posible crear varios libros
@@ -828,10 +831,51 @@ public class MCash extends X_C_Cash implements DocAction {
      */
 
     public boolean voidIt() {
-        log.info( "voidIt - " + toString());
+        // Si el libro de caja pertenece a una caja diaria, no es posible anular
+		if (PO.findFirst(getCtx(), X_C_POSJournal.Table_Name, "c_cash_id = ?", new Object[] { getID() }, null,
+				get_TrxName()) != null) {
+    		setProcessMsg(Msg.getMsg(getCtx(), "CanNotVoidPOSJournalCash"));
+    		return false;
+    	}
+    	
+		// Crear el libro de caja reverso
+		MCash reverseCash = new MCash(getCtx(), 0, get_TrxName());
+		PO.copyValues(this, reverseCash);
+		reverseCash.setStatementDate(Env.getDate());
+		reverseCash.setDateAcct(reverseCash.getStatementDate());
+		reverseCash.setDescription(getName()+"^");
+		reverseCash.setBeginningBalance(getBeginningBalance().negate());
+		reverseCash.setStatementDifference(BigDecimal.ZERO);
+		reverseCash.setReverseCashID(getID());
+		if(!reverseCash.save()){
+			setProcessMsg(CLogger.retrieveErrorAsString());
+			return false;
+		}
+		
+		// Anular cada línea de caja
+		setReverseCashID(reverseCash.getID());
+		for (MCashLine mCashLine : getLines(true)) {
+			mCashLine.setReverseCashID(getReverseCashID());
+			if(!DocumentEngine.processAndSave(mCashLine, DOCACTION_Void, false)){
+				setProcessMsg("@CashLineProcessError@ #" + mCashLine.getLine() + ": " + mCashLine.getProcessMsg());
+				return false;
+			}
+		}
+		
+		// Recargar la caja reversa por actualización de importes de cada línea
+		reverseCash = new MCash(getCtx(), reverseCash.getID(), get_TrxName());
+		reverseCash.setDocStatus( DOCSTATUS_Voided );
+		reverseCash.setDocAction( DOCACTION_None );
+		if(!reverseCash.save()){
+			setProcessMsg(CLogger.retrieveErrorAsString());
+			return false;
+		}
+		
+		setDescription("^"+reverseCash.getName());		
+		setDocStatus( DOCSTATUS_Voided );
         setDocAction( DOCACTION_None );
 
-        return false;
+        return true;
     }    // voidIt
 
     /**
@@ -1117,6 +1161,14 @@ public class MCash extends X_C_Cash implements DocAction {
 
         return no == 1;
     }    // updateHeader
+
+	public int getReverseCashID() {
+		return reverseCashID;
+	}
+
+	public void setReverseCashID(int reverseCashID) {
+		this.reverseCashID = reverseCashID;
+	}
 }    // MCash
 
 
