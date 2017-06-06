@@ -136,7 +136,8 @@ public class WNumberEditor extends WEditor implements ContextMenuListener
 	        if (oldValue == null && newValue == null) {
 	        	return;
 	        }
-	        ValueChangeEvent changeEvent = new ValueChangeEvent(this, this.getColumnName(), oldValue, newValue);
+	    	// Compatibilidad con Callouts: en caso de almacenar un dato entero, debe retornarse este tipo, y no un BigDecimal
+	        ValueChangeEvent changeEvent = new ValueChangeEvent(this, this.getColumnName(), oldValue, (displayType==DisplayType.Integer && newValue!=null ? newValue.intValue() : newValue));
 	        super.fireValueChange(changeEvent);
 	        oldValue = newValue;
     	}
@@ -166,6 +167,10 @@ public class WNumberEditor extends WEditor implements ContextMenuListener
     @Override
     public Object getValue()
     {
+    	// Compatibilidad con Callouts: en caso de almacenar un dato entero, debe retornarse este tipo, y no un BigDecimal
+    	if (displayType==DisplayType.Integer && getComponent()!=null && getComponent().getValue()!=null) {
+    		return ((BigDecimal)(getComponent().getValue())).intValue();
+    	}
         return getComponent().getValue();
     }
 
