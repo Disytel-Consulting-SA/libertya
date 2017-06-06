@@ -104,6 +104,9 @@ public class MCashLine extends X_C_CashLine implements DocAction, CurrentAccount
 	 * entonces esa caja diaria debe estar abierta, sino error
 	 */
 	private boolean voidPOSJournalMustBeOpen = false; 
+	
+	/** Libro de caja a asignar a líneas de caja reversas */
+	private int reverseCashID = 0;
     
     /**
      * Constructor de la clase ...
@@ -881,7 +884,7 @@ public class MCashLine extends X_C_CashLine implements DocAction, CurrentAccount
 		}
 		
 		// No se pueden anular líneas de una caja completada
-		if (getCash().isProcessed()) {
+		if (Util.isEmpty(getReverseCashID()) && getCash().isProcessed()) {
 			m_processMsg = "@CannotVoidLineOfProcessedCash@";
 			return false;
 		}
@@ -911,9 +914,9 @@ public class MCashLine extends X_C_CashLine implements DocAction, CurrentAccount
 			// contabilidad del libro de caja al cual pertenece esta línea.
 			// Si la anulación contiene la caja diaria a la cual asociarse,
 			// entonces el libro de caja de esta línea es la de la caja diaria
-			reversalCashLine = createReversal(getVoidPOSJournalID() == 0 ? getC_Cash_ID()
-					: MPOSJournal.getCashID(getCtx(), getVoidPOSJournalID(),
-							get_TrxName()));
+			reversalCashLine = createReversal(getReverseCashID() > 0 ? getReverseCashID()
+					: (getVoidPOSJournalID() == 0 ? getC_Cash_ID()
+							: MPOSJournal.getCashID(getCtx(), getVoidPOSJournalID(), get_TrxName())));
 			
 			// Setea una descripción a la línea inversa generada.
 			reversalCashLine.setDescription(Msg.parseTranslation(getCtx(),
@@ -1492,6 +1495,14 @@ public class MCashLine extends X_C_CashLine implements DocAction, CurrentAccount
 	public boolean isSkipCurrentAccount() {
 		MDocType cashDT = MDocType.getDocType(getCtx(), MDocType.DOCTYPE_CashJournal, get_TrxName());
 		return cashDT != null && cashDT.isSkipCurrentAccounts();
+	}
+
+	public int getReverseCashID() {
+		return reverseCashID;
+	}
+
+	public void setReverseCashID(int reverseCashID) {
+		this.reverseCashID = reverseCashID;
 	}
 
 	
