@@ -61,8 +61,9 @@ public class Waiting extends CDialog implements ActionListener {
      * @param timer
      */
 
-    public Waiting( Frame owner,String text,boolean canNotWait,int timer ) {
+    public Waiting( Frame owner,String text,boolean canNotWait,int timer, ProcessCtl ctlOwner ) {
         super( owner,Msg.getMsg( Env.getCtx(),"Processing" ));
+        this.ctlOwner = ctlOwner; 
         init( text,canNotWait,timer );
     }    // Waiting
 
@@ -159,6 +160,10 @@ public class Waiting extends CDialog implements ActionListener {
     /** Descripción de Campos */
 
     private JProgressBar progressBar = new JProgressBar();
+    
+    private CButton cancel = new CButton(Msg.getMsg(Env.getCtx(), "Cancel"));
+    
+    private ProcessCtl ctlOwner;
 
     /**
      * Descripción de Método
@@ -188,6 +193,11 @@ public class Waiting extends CDialog implements ActionListener {
         infoLabel.setIconTextGap( 10 );
         mainPanel.add( infoLabel,BorderLayout.NORTH );
         mainPanel.add( progressBar,BorderLayout.CENTER );
+        
+        cancel.addActionListener(this);
+       	mainPanel.add( cancel,BorderLayout.SOUTH);
+
+        
 
         //
 //              bDoNotWait.setText(Msg.getMsg(Env.getCtx(), "DoNotWait"));
@@ -218,6 +228,10 @@ public class Waiting extends CDialog implements ActionListener {
      */
 
     public void actionPerformed( ActionEvent e ) {
+    	if (e.getSource() == cancel) {
+    		ctlOwner.getProcessCallInstance().cancelProcess();
+    	}
+    	
         if( e.getSource() == bDoNotWait ) {
             doNotWait();
         }
@@ -230,7 +244,7 @@ public class Waiting extends CDialog implements ActionListener {
             m_timervalue = progressBar.getMinimum();
         }
 
-        // progressBar.setString(progressBar.getPercentComplete());
+
 
     }    // actionPerformed
 
@@ -267,6 +281,11 @@ public class Waiting extends CDialog implements ActionListener {
         m_timer = null;
         super.dispose();
     }    // dispose
+    
+    public void setCancelable(boolean cancelable) {
+    	cancel.setVisible(cancelable);
+		pack();
+    }
 }    // Waiting
 
 

@@ -1337,5 +1337,12 @@ public class ReportStarter implements ProcessCall // , ClientProcess
 	        	log.severe(" Error in instantiation: "+pluginDynamicJasperReportClassName);
 	        }
         }
-    } 
+    }
+    
+    @Override
+    public boolean isCancelable() {
+    	return false;
+    }
+    
+    public void cancelProcess() {};
 }

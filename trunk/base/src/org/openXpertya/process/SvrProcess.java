@@ -40,6 +40,7 @@ import org.openXpertya.util.Ini;
 import org.openXpertya.util.Msg;
 import org.openXpertya.util.Trx;
 import org.openXpertya.util.Util;
+import org.postgresql.util.PSQLException;
 
 /**
  * Descripción de Clase
@@ -92,6 +93,12 @@ public abstract class SvrProcess implements ProcessCall {
 
     /** Nómina de procesos en ejecución definidos con limitacion de acceso concurrente por cliente LY */
     protected static HashSet<Integer> processCurrentlyExecuting = new HashSet<Integer>();
+    
+    /** Codigo de error Postgres por cancelacion de un statement */
+    public static final String PSQL_ERROR_CODE_QUERY_CANCELED = "57014";
+    
+    /** La ejecución del proceso fue cancelado manualmente? */
+    boolean processCancelled = false; 
     
     /**
      * Validación de ejecución concurrente según la configuración del proceso 
@@ -238,6 +245,14 @@ public abstract class SvrProcess implements ProcessCall {
         } catch( Exception e ) {
             msg = e.getMessage();
 
+            if (e instanceof org.postgresql.util.PSQLException) {
+            	String errCode = ((org.postgresql.util.PSQLException)e).getSQLState();
+            	if (errCode!=null && errCode.contains(PSQL_ERROR_CODE_QUERY_CANCELED)) {
+            		msg = Msg.getMsg(m_ctx, "ProcessCancelled");
+            		processCancelled = true;
+            	}
+            }
+            
             if( msg == null ) {
                 msg = e.toString();
             }
@@ -559,7 +574,7 @@ public abstract class SvrProcess implements ProcessCall {
      */
 
     private void unlock() {
-        MPInstance mpi = new MPInstance( getCtx(),m_pi.getAD_PInstance_ID(), get_TrxName() );
+        MPInstance mpi = new MPInstance( getCtx(),m_pi.getAD_PInstance_ID(), processCancelled ? null : get_TrxName() );
 
         if( mpi.getID() == 0 ) {
             log.log( Level.SEVERE,"Did not find PInstance " + m_pi.getAD_PInstance_ID());
@@ -665,6 +680,16 @@ public abstract class SvrProcess implements ProcessCall {
 			DB.executeUpdate("DELETE FROM " + temporalTableName
 					+ " WHERE AD_PInstance_ID = " + pInstanceID, trxName);
 		}
+	}
+	
+	@Override
+	public boolean isCancelable() {
+		return false;
+	}
+	
+	@Override
+	public void cancelProcess() {
+			
 	}
 	
 }    // SvrProcess
