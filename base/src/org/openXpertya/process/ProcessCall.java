@@ -42,6 +42,10 @@ public interface ProcessCall {
      */
 
     public boolean startProcess( Properties ctx,ProcessInfo pi,Trx trx );
+    
+    public boolean isCancelable( );
+    
+    public void cancelProcess( );
 }    // ProcessCall
 
 

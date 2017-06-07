@@ -2364,6 +2364,20 @@ public final class DB {
 	public static Timestamp getDBTimestamp(String trxName){
 		return getSQLValueTimestamp(trxName, "SELECT now()");
 	}
+	
+	/** Cancela la ejecución de un Statement */
+	public static boolean cancelStatement(Statement stmt) {
+		try {
+			if (stmt!=null && !stmt.isClosed()) {
+				stmt.cancel();
+				stmt.close();
+			}
+			return true;
+		} catch (Exception e) {
+			log.log( Level.SEVERE, e.getMessage());
+			return false;
+		}
+	}
 }    // DB
 
 

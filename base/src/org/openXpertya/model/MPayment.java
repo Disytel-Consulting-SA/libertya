@@ -3258,6 +3258,16 @@ public final class MPayment extends X_C_Payment implements DocAction,ProcessCall
 		return MDocType.get(getCtx(), getC_DocType_ID()).isSkipCurrentAccounts();
 	}
 
+	@Override
+	public boolean isCancelable() {
+		return false;
+	}
+	
+	@Override
+	public void cancelProcess() {
+		
+	}
+	
 }   // MPayment
 
 

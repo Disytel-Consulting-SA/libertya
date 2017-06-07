@@ -46,6 +46,8 @@ public class EstadoDeCuentaProcess extends SvrProcess {
 	private HashMap<Integer, BigDecimal> saldosMultimoneda = new HashMap<Integer, BigDecimal>();
 	private HashMap<Integer, BigDecimal> saldosGeneralMultimoneda = new HashMap<Integer, BigDecimal>();
 	
+	PreparedStatement pstmt = null;
+	
 	@Override
 	protected void prepare() {
 		
@@ -364,7 +366,7 @@ public class EstadoDeCuentaProcess extends SvrProcess {
 			")":"") +
 			"	ORDER BY bpartner, dateacct  ");
 		
-		PreparedStatement pstmt = DB.prepareStatement(query.toString(), get_TrxName(), true);			
+		pstmt = DB.prepareStatement(query.toString(), get_TrxName(), true);			
 		ResultSet rs = pstmt.executeQuery();
 		
 		int bPartner = -1;
@@ -650,6 +652,16 @@ public class EstadoDeCuentaProcess extends SvrProcess {
 	
 	protected boolean isShowByDate() {
 		return SHOW_DOCUMENTS_BY_DATE.equals(showDocuments);
+	}
+	
+	@Override
+	public boolean isCancelable() {
+		return true;
+	}
+	
+	@Override
+	public void cancelProcess() {
+		DB.cancelStatement(pstmt);
 	}
 	
 }
