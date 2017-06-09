@@ -1,6 +1,7 @@
 package org.openXpertya.process.release;
 
 import org.openXpertya.JasperReport.MJasperReport;
+import org.openXpertya.model.MProcess;
 import org.openXpertya.process.PluginPostInstallProcess;
 import org.openXpertya.utils.JarHelper;
 
@@ -13,6 +14,10 @@ public class PostInstallUpgradeFrom1705 extends PluginPostInstallProcess {
 	/** UID del Listado de Liquidaciones */
 	protected final static String SETTLEMENT_LIST_JASPER_REPORT_UID = "RPRT2CORE-AD_JasperReport-1010180-20170125125715";
 	protected final static String SETTLEMENT_LIST_JASPER_REPORT_FILENAME = "SettlementList.jasper";
+	
+	/** UID del Listado de Cheques en Boletas de Depósito */
+	protected final static String BOLETADEPOSITOCHECKS_JASPER_REPORT_UID = "CORE-AD_Process-1010575";
+	protected final static String BOLETADEPOSITOCHECKS_JASPER_REPORT_FILENAME = "BoletaDepositoChecks.jrxml";
 	
 	@Override
 	protected String doIt() throws Exception {
@@ -47,6 +52,17 @@ public class PostInstallUpgradeFrom1705 extends PluginPostInstallProcess {
 							.readBinaryFromJar(
 									jarFileURL,
 									getBinaryFileURL(SETTLEMENT_LIST_JASPER_REPORT_FILENAME)));
+		
+		// Listado de Cheques en Boletas de Depósito
+		MProcess.addAttachment(
+				get_TrxName(),
+				getCtx(),
+				BOLETADEPOSITOCHECKS_JASPER_REPORT_UID,
+				BOLETADEPOSITOCHECKS_JASPER_REPORT_FILENAME,
+				JarHelper
+						.readBinaryFromJar(
+								jarFileURL,
+								getBinaryFileURL(BOLETADEPOSITOCHECKS_JASPER_REPORT_FILENAME)));
 		
 		return " ";
 	}
