@@ -17,6 +17,7 @@ import org.adempiere.webui.event.ValueChangeEvent;
 import org.adempiere.webui.event.ValueChangeListener;
 import org.openXpertya.apps.form.VComponentsFactory;
 import org.openXpertya.grid.CreateFromInvoiceModel;
+import org.openXpertya.grid.CreateFromModel;
 import org.openXpertya.grid.CreateFromModel.CreateFromSaveException;
 import org.openXpertya.grid.CreateFromModel.InOutLine;
 import org.openXpertya.grid.CreateFromModel.ListedSourceEntityInterface;
@@ -45,7 +46,12 @@ public class WCreateFromInvoice extends WCreateFrom {
         log.info( mTab.toString());
 		p_WindowNo = mTab.getWindowNo();
 		AEnv.showWindow(window);
-    }    
+    }
+    
+    @Override
+   	protected CreateFromModel createHelper(){
+       	return new CreateFromInvoiceModel();
+    }
 	
     /** Descripción de Campos */
     private MInOut m_inout = null;
@@ -60,17 +66,6 @@ public class WCreateFromInvoice extends WCreateFrom {
     
     /** Tipo de Documento a crear */
     private MDocType docType;
-
-    /** Helper para centralizar lógica de modelo */
-	protected CreateFromInvoiceModel helper = null;
-	
-	protected CreateFromInvoiceModel getHelper() {
-		if (helper == null)
-			helper = new CreateFromInvoiceModel();
-		return helper;
-	}
-
-   
     
     /**
      * Descripción de Método
@@ -182,7 +177,7 @@ public class WCreateFromInvoice extends WCreateFrom {
         }
 
         //
-        StringBuffer sql = getHelper().loadShipmentQuery();
+        StringBuffer sql = ((CreateFromInvoiceModel)getHelper()).loadShipmentQuery();
         List<SourceEntity> data = new ArrayList<SourceEntity>();
         PreparedStatement pstmt = null;
         ResultSet rs = null;
@@ -193,7 +188,7 @@ public class WCreateFromInvoice extends WCreateFrom {
 
             while( rs.next()) {
                 InOutLineListImpl docLine = new InOutLineListImpl();
-                getHelper().loadShipmentLine(docLine, rs);
+                ((CreateFromInvoiceModel)getHelper()).loadShipmentLine(docLine, rs);
                 // Agrega la línea a la lista
                 data.add(docLine);
             }
@@ -218,7 +213,7 @@ public class WCreateFromInvoice extends WCreateFrom {
      */
 
     protected void save() throws CreateFromSaveException {
-    	getHelper().save(p_order, getInvoice(), m_inout, getDocType(), getSelectedSourceEntities(), getTrxName(), this);
+    	((CreateFromInvoiceModel)getHelper()).save(p_order, getInvoice(), m_inout, getDocType(), getSelectedSourceEntities(), getTrxName(), this);
     }    // saveInvoice
 
 
@@ -347,7 +342,7 @@ public class WCreateFromInvoice extends WCreateFrom {
 		shipmentField.setValue(null);
         if (invoiceID > 0) {
         	MInvoice invoice = new MInvoice(getCtx(), invoiceID, getTrxName());
-        	getHelper().setPaymentRule(invoice.getPaymentRule());
+        	((CreateFromInvoiceModel)getHelper()).setPaymentRule(invoice.getPaymentRule());
         	relatedOrderID = invoice.getC_Order_ID();
         }
         loadOrder(relatedOrderID, false, allowDeliveryReturned(), true);

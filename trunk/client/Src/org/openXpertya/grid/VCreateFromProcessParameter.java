@@ -1,9 +1,5 @@
 package org.openXpertya.grid;
 
-import java.awt.BorderLayout;
-import java.awt.GridBagConstraints;
-import java.awt.GridBagLayout;
-import java.awt.Insets;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyVetoException;
 import java.beans.VetoableChangeListener;
@@ -16,13 +12,10 @@ import java.util.logging.Level;
 
 import javax.swing.JLabel;
 
-import org.compiere.swing.CLabel;
-import org.compiere.swing.CPanel;
 import org.openXpertya.apps.ADialog;
 import org.openXpertya.apps.form.VComponentsFactory;
 import org.openXpertya.grid.CreateFromModel.CreateFromSaveException;
 import org.openXpertya.grid.CreateFromModel.ProcessParameter;
-import org.openXpertya.grid.ed.VLookup;
 import org.openXpertya.model.MTab;
 import org.openXpertya.model.PO;
 import org.openXpertya.model.X_AD_Process;
@@ -30,18 +23,13 @@ import org.openXpertya.util.DB;
 import org.openXpertya.util.DisplayType;
 import org.openXpertya.util.Env;
 import org.openXpertya.util.Msg;
-import org.openXpertya.util.Util;
 
 public class VCreateFromProcessParameter extends VCreateFrom implements VetoableChangeListener {
 
-	/** Helper para centralizar lógica de modelo */
-	protected CreateFromProcessParameterModel helper = new CreateFromProcessParameterModel();
-	
-	protected CreateFromProcessParameterModel getHelper() {
-		if (helper==null)
-			helper = new CreateFromProcessParameterModel();
-		return helper;
-	}
+	@Override
+	protected CreateFromModel createHelper(){
+    	return new CreateFromProcessParameterModel();
+    }
 	
 	public VCreateFromProcessParameter(MTab mTab) {
 		super(mTab);
@@ -95,7 +83,7 @@ public class VCreateFromProcessParameter extends VCreateFrom implements Vetoable
 	@Override
 	void save() throws CreateFromSaveException {
 		int processID = (( Integer )p_mTab.getValue( "AD_Process_ID" )).intValue();
-    	getHelper().save(processID, getTrxName(), getSelectedSourceEntities(), this);
+    	((CreateFromProcessParameterModel)getHelper()).save(processID, getTrxName(), getSelectedSourceEntities(), this);
 	}
 
 	@Override
@@ -122,7 +110,7 @@ public class VCreateFromProcessParameter extends VCreateFrom implements Vetoable
 
 	protected void loadProcess(Integer processID){
         List<ProcessParameter> data = new ArrayList<ProcessParameter>();
-        StringBuffer sql = getHelper().getProcessParameterQuery();
+        StringBuffer sql = ((CreateFromProcessParameterModel)getHelper()).getProcessParameterQuery();
 
     	PreparedStatement pstmt = null;
     	ResultSet rs 			= null;
@@ -134,7 +122,7 @@ public class VCreateFromProcessParameter extends VCreateFrom implements Vetoable
             ProcessParameter processPara;
             while( rs.next()) {
                 processPara = new ProcessParameter();
-                getHelper().loadProcessParameter(processPara, rs);
+                ((CreateFromProcessParameterModel)getHelper()).loadProcessParameter(processPara, rs);
                 data.add(processPara);
             }
 

@@ -86,14 +86,10 @@ public class WCreateFromShipment extends WCreateFrom {
     /** Tipo de Documento a crear */
     private MDocType docType;
     
-    /** Helper para centralizar lógica de modelo */
-	protected CreateFromShipmentModel helper = null;
-
-	protected CreateFromShipmentModel getHelper() {
-		if (helper == null)
-			helper = new CreateFromShipmentModel();
-		return helper;
-	}
+    @Override
+	protected CreateFromModel createHelper(){
+    	return new CreateFromShipmentModel();
+    }
     
 	/**
 	 * Descripción de Método
@@ -264,7 +260,7 @@ public class WCreateFromShipment extends WCreateFrom {
 		
 		p_order = null;
 		List<InvoiceLine> data = new ArrayList<InvoiceLine>();
-		StringBuffer sql = getHelper().loadInvoiceQuery();
+		StringBuffer sql = ((CreateFromShipmentModel)getHelper()).loadInvoiceQuery();
 		PreparedStatement pstmt = null;
 		ResultSet rs = null;
 
@@ -275,7 +271,7 @@ public class WCreateFromShipment extends WCreateFrom {
 
 			while (rs.next()) {
 				InvoiceLineListImpl invoiceLine = new InvoiceLineListImpl();
-				getHelper().loadInvoiceLine(invoiceLine, rs);
+				((CreateFromShipmentModel)getHelper()).loadInvoiceLine(invoiceLine, rs);
 				// Agrega la línea a la lista solo si tiene cantidad pendiente
 				if (invoiceLine.remainingQty.compareTo(BigDecimal.ZERO) > 0 || invoiceLine.productType.equals("E")) {
 					data.add(invoiceLine);
@@ -310,7 +306,7 @@ public class WCreateFromShipment extends WCreateFrom {
 	
 	@Override
 	public String getRemainingQtySQLLine(boolean forInvoice, boolean allowDeliveryReturns){
-		return getHelper().getRemainingQtySQLLine(getInOut(), forInvoice, allowDeliveryReturns);
+		return ((CreateFromShipmentModel)getHelper()).getRemainingQtySQLLine(getInOut(), forInvoice, allowDeliveryReturns);
 	}
 	
 
@@ -331,7 +327,7 @@ public class WCreateFromShipment extends WCreateFrom {
 
 	protected void save() throws CreateFromSaveException {
 		Integer locatorID = (Integer) locatorField.getValue();
-		getHelper().save(locatorID, getInOut(), p_order, m_invoice, getSelectedSourceEntities(), getTrxName(), isSOTrx(), this); 
+		((CreateFromShipmentModel)getHelper()).save(locatorID, getInOut(), p_order, m_invoice, getSelectedSourceEntities(), getTrxName(), isSOTrx(), this); 
 	} // save
 
 	@Override
@@ -397,7 +393,7 @@ public class WCreateFromShipment extends WCreateFrom {
 
 	@Override
 	protected boolean beforeAddOrderLine(OrderLine orderLine) {
-		return getHelper().beforeAddOrderLine(orderLine, getInOut(), isSOTrx());	}
+		return ((CreateFromShipmentModel)getHelper()).beforeAddOrderLine(orderLine, getInOut(), isSOTrx());	}
 
 	/**
 	 * Inicializa el lookup de facturas

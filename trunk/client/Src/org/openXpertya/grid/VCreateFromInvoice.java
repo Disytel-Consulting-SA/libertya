@@ -84,15 +84,11 @@ public class VCreateFromInvoice extends VCreateFrom {
     
     /** Tipo de Documento a crear */
     private MDocType docType;
-
-    /** Helper para centralizar lógica de modelo */
-	protected CreateFromInvoiceModel helper = null;
     
-	protected CreateFromInvoiceModel getHelper() {
-		if (helper == null)
-			helper = new CreateFromInvoiceModel();
-		return helper;
-	}
+	@Override
+	protected CreateFromModel createHelper(){
+    	return new CreateFromInvoiceModel();
+    }
 
 	
     /**
@@ -208,7 +204,7 @@ public class VCreateFromInvoice extends VCreateFrom {
         }
 
         //
-        StringBuffer sql = getHelper().loadShipmentQuery();
+        StringBuffer sql = ((CreateFromInvoiceModel)getHelper()).loadShipmentQuery();
         List<SourceEntity> data = new ArrayList<SourceEntity>();
         PreparedStatement pstmt = null;
         ResultSet rs = null;
@@ -219,7 +215,7 @@ public class VCreateFromInvoice extends VCreateFrom {
 
             while( rs.next()) {
                 InOutLine docLine = new InOutLine();
-                getHelper().loadShipmentLine(docLine, rs);
+                ((CreateFromInvoiceModel)getHelper()).loadShipmentLine(docLine, rs);
                 // Agrega la línea a la lista
                 data.add(docLine);
             }
@@ -258,7 +254,7 @@ public class VCreateFromInvoice extends VCreateFrom {
      */
 
     protected void save() throws CreateFromSaveException {
-    	getHelper().save(p_order, getInvoice(), m_inout, getDocType(), getSelectedSourceEntities(), getTrxName(), this);
+    	((CreateFromInvoiceModel)getHelper()).save(p_order, getInvoice(), m_inout, getDocType(), getSelectedSourceEntities(), getTrxName(), this);
     }    // saveInvoice
 
     @Override
@@ -383,7 +379,7 @@ public class VCreateFromInvoice extends VCreateFrom {
 		shipmentField.setValue(null);
         if (invoiceID > 0) {
         	MInvoice invoice = new MInvoice(getCtx(), invoiceID, getTrxName());
-        	getHelper().setPaymentRule(invoice.getPaymentRule());
+        	((CreateFromInvoiceModel)getHelper()).setPaymentRule(invoice.getPaymentRule());
         	relatedOrderID = invoice.getC_Order_ID();
         }
         loadOrder(relatedOrderID, false, allowDeliveryReturned(), true);

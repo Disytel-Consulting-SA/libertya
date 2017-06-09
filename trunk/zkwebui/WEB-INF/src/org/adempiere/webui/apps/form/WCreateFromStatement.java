@@ -1,15 +1,12 @@
 package org.adempiere.webui.apps.form;
 
 import java.math.BigDecimal;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.logging.Level;
 
 import org.adempiere.webui.apps.AEnv;
+import org.adempiere.webui.component.Combobox;
 import org.adempiere.webui.component.Grid;
 import org.adempiere.webui.component.GridFactory;
 import org.adempiere.webui.component.Row;
@@ -18,30 +15,35 @@ import org.adempiere.webui.editor.WSearchEditor;
 import org.adempiere.webui.event.ValueChangeEvent;
 import org.adempiere.webui.event.ValueChangeListener;
 import org.adempiere.webui.window.FDialog;
+import org.openXpertya.grid.CreateFromModel;
 import org.openXpertya.grid.CreateFromModel.CreateFromSaveException;
 import org.openXpertya.grid.CreateFromModel.ListedSourceEntityInterface;
 import org.openXpertya.grid.CreateFromModel.Payment;
+import org.openXpertya.grid.CreateFromStatementAll;
+import org.openXpertya.grid.CreateFromStatementBoletasDeposito;
+import org.openXpertya.grid.CreateFromStatementData;
+import org.openXpertya.grid.CreateFromStatementGeneralValues;
 import org.openXpertya.grid.CreateFromStatementModel;
+import org.openXpertya.grid.CreateFromStatementSettlements;
 import org.openXpertya.model.MLookup;
 import org.openXpertya.model.MLookupFactory;
 import org.openXpertya.model.MTab;
 import org.openXpertya.model.PO;
-import org.openXpertya.util.DB;
 import org.openXpertya.util.DisplayType;
 import org.openXpertya.util.Env;
 import org.openXpertya.util.KeyNamePair;
 import org.openXpertya.util.Msg;
+import org.openXpertya.util.ValueNamePair;
+import org.zkoss.zk.ui.event.Event;
+import org.zkoss.zk.ui.event.EventListener;
+import org.zkoss.zk.ui.event.Events;
 
 public class WCreateFromStatement  extends WCreateFrom {
-
-    /** Helper para centralizar lógica de modelo */
-	protected CreateFromStatementModel helper = null;
-
-	protected CreateFromStatementModel getHelper() {
-		if (helper==null)
-			helper = new CreateFromStatementModel();
-		return helper;
-	}
+	
+	@Override
+	protected CreateFromModel createHelper(){
+    	return new CreateFromStatementModel();
+    }
 	
     /**
      * Constructor de la clase ...
@@ -77,6 +79,8 @@ public class WCreateFromStatement  extends WCreateFrom {
         int     AD_Column_ID = 4917;    // C_BankStatement.C_BankAccount_ID
         MLookup lookup       = MLookupFactory.get( Env.getCtx(),p_WindowNo,0,AD_Column_ID,DisplayType.TableDir );
 
+        initSource();
+        
         bankAccountField = new WSearchEditor( "C_BankAccount_ID",true,true,true,lookup );
         bankAccountField.addValueChangeListener(new ValueChangeListener() {
 			
@@ -86,6 +90,8 @@ public class WCreateFromStatement  extends WCreateFrom {
 		        // BankAccount
 		        if( e.getPropertyName() == "C_BankAccount_ID" ) {
 		            int C_BankAccount_ID = (( Integer )e.getNewValue()).intValue();
+		            ((CreateFromStatementModel)getHelper()).setBankAccount(C_BankAccount_ID);
+		            loadData();
 		        }
 		        window.tableChanged( null );
 			}
@@ -97,13 +103,44 @@ public class WCreateFromStatement  extends WCreateFrom {
 
         bankAccountField.setValue( new Integer( C_BankAccount_ID ));
 
+        ((CreateFromStatementModel)getHelper()).setBankAccount(C_BankAccount_ID);
+        
         // initial Loading
 
-        loadBankAccount( C_BankAccount_ID );
+        loadData();
 
         return true;
     }    // dynInit
 
+    
+    protected void initSource(){
+    	jbSourceTable = new Combobox();
+    	jbSourceTable.appendItem(new CreateFromStatementAll());
+    	jbSourceTable.appendItem(new CreateFromStatementGeneralValues());
+		jbSourceTable.appendItem(new CreateFromStatementBoletasDeposito());
+		jbSourceTable.appendItem(new CreateFromStatementSettlements());
+		jbSourceTable.setSelectedIndex(0);
+		((CreateFromStatementModel) getHelper())
+				.setCreateFromData((CreateFromStatementData) jbSourceTable.getSelectedItem().getValue());
+		jbSourceTable.addEventListener(Events.ON_SELECT, new EventListener() {
+			
+			@Override
+			public void onEvent(Event arg0) throws Exception {
+				((CreateFromStatementModel) getHelper())
+						.setCreateFromData((CreateFromStatementData) jbSourceTable.getSelectedItem().getValue());
+				updateVisibleComponents();
+				loadData();
+			}
+		});
+		addOtherSources();
+    }
+    
+    /**
+     * Este método permite a las subclases incorporar nuevas fuentes de datos
+     */
+    protected void addOtherSources(){}
+    
+    
     /**
      * Descripción de Método
      *
@@ -114,85 +151,28 @@ public class WCreateFromStatement  extends WCreateFrom {
     protected void initBPDetails( int C_BPartner_ID ) {}    // initDetails
 
     /**
-     * Descripción de Método
-     *
-     *
-     * @param e
-     */
-
+	 * Actualiza la visibilidad de los componentes en base al origen de datos 
+	 */
+	protected void updateVisibleComponents(){
+		grouped.setVisible(((CreateFromStatementModel)getHelper()).isAllowGrouped());
+		nroLote.getLabel().setVisible(((CreateFromStatementModel)getHelper()).isAllowCouponBatchNoFilter());
+		nroLote.setVisible(((CreateFromStatementModel)getHelper()).isAllowCouponBatchNoFilter());
+	}
+    
     /**
-     * Descripción de Método
-     *
-     *
-     * @param C_BankAccount_ID
-     */
-
-    private void loadBankAccount( int C_BankAccount_ID ) {
-        log.config( "C_BankAccount_ID=" + C_BankAccount_ID );
-
-   //     List<Payment> data = new ArrayList<Payment>();
-  
-       StringBuffer sql = getHelper().loadBankAccountQuery();
-       loadBank(sql, C_BankAccount_ID, null);
-
-        // Get StatementDate
-  /*      Timestamp ts = ( Timestamp )p_mTab.getValue( "StatementDate" );
-
-        if( ts == null ) {
-            ts = new Timestamp( System.currentTimeMillis());
-        }
-    	PreparedStatement pstmt = null;
-    	ResultSet rs 			= null;
-
-        try {
-            pstmt = DB.prepareStatement( sql.toString());
-            pstmt.setTimestamp( 1,ts );
-            pstmt.setInt( 2,C_BankAccount_ID );
-            rs = pstmt.executeQuery();
-
-            while( rs.next()) {
-                PaymentListImpl payment = new PaymentListImpl();
-                getHelper().loadPayment(payment, rs);
-                data.add(payment);
-            }
-
-            rs.close();
-            pstmt.close();
-        } catch( SQLException e ) {
-            log.log( Level.SEVERE,sql.toString(),e );
-    	} finally {
-    		try {
-	    		if (rs != null) rs.close();
-	    		if (pstmt != null) pstmt.close();
-    		}	catch (Exception e) {}
-    	}
-
-    	loadTable(data);*/
-    }    // loadBankAccount
-
-    /**
-     * Descripción de Método
-     *
-     */
-
-
-    /**
-     * Descripción de Método
-     *
-     *
-     * @return
+     * Guardar la selección
      */
 
     protected void save() throws CreateFromSaveException {
     	int C_BankStatement_ID = (( Integer )p_mTab.getValue( "C_BankStatement_ID" )).intValue();
-    	getHelper().save(C_BankStatement_ID, getTrxName(), getSelectedSourceEntities(), this, getNroLote());
+    	((CreateFromStatementModel)getHelper()).save(C_BankStatement_ID, getTrxName(), getSelectedSourceEntities(), this);
     }    // save
 
 	@Override
 	protected CreateFromTableModel createTableModelInstance() {
 		return new PaymentTableModel();
 	}
-
+    
 	/**
      * Entidad Oríden: Pagos
      */
@@ -201,7 +181,7 @@ public class WCreateFromStatement  extends WCreateFrom {
     	@Override
     	public ArrayList<Object> toList() {
 			ArrayList<Object> result = new ArrayList<Object>();
-			CreateFromTableModel model = (CreateFromTableModel)window.getDataTable().getModel();
+			CreateFromTableModel model = getDataTableModel();
 			for (int i=0; i < model.getColumnCount(); i++ ) {
 				Object value = null;
 				switch (i) {
@@ -217,8 +197,16 @@ public class WCreateFromStatement  extends WCreateFrom {
 						value = new KeyNamePair(currencyID, currencyISO) ; break;
 					case PaymentTableModel.COL_IDX_AMT:
 						value = payAmt; break;
+					case PaymentTableModel.COL_IDX_TENDERTYPE:
+						value = new ValueNamePair(tenderType, tenderTypeDescription); break;
 					case PaymentTableModel.COL_IDX_CONVAMT:
 						value = convertedAmt; break;
+					case PaymentTableModel.COL_IDX_DUEDATE:
+						value = dueDate; break;
+					case PaymentTableModel.COL_IDX_BOLETADEPOSITO:
+						value = new KeyNamePair(boletaDepositoID, boletaDepositoDocumentNo); break;
+					case PaymentTableModel.COL_IDX_CREDITCARDSETTLEMENT:
+						value = new KeyNamePair(creditCardSettlementID, creditCardSettlementDocumentNo); break;
 					default:
 						value = null; break;
 				}
@@ -227,41 +215,55 @@ public class WCreateFromStatement  extends WCreateFrom {
 			return result;
 		}
     }
-    
+	
     /**
      * Modelo de tabla para presentación de los pagos de una cuenta bancaria.
      */
-    protected class PaymentTableModel extends DocumentLineTableModel {
+    public class PaymentTableModel extends DocumentLineTableModel {
 
-		// Constantes de índices de las columnas en la grilla.
-    	public static final int COL_IDX_DATETRX    = 1;
-    	public static final int COL_IDX_DOCUMENTNO = 2;
-    	public static final int COL_IDX_BPARTNER   = 3;
-    	public static final int COL_IDX_CURRENCY   = 4;
-    	public static final int COL_IDX_AMT        = 5;
-    	public static final int COL_IDX_CONVAMT    = 6;
-    	public static final int COL_IDX_DUEDATE    = 7;
-    	    	
+    	// Constantes de índices de las columnas en la grilla.
+    	public static final int COL_IDX_DATETRX    				= 1;
+    	public static final int COL_IDX_TENDERTYPE 				= 2;
+    	public static final int COL_IDX_DOCUMENTNO 				= 3;
+    	public static final int COL_IDX_BPARTNER   				= 4;
+    	public static final int COL_IDX_CURRENCY   				= 5;
+    	public static final int COL_IDX_AMT        				= 6;
+    	public static final int COL_IDX_CONVAMT    				= 7;
+    	public static final int COL_IDX_DUEDATE    				= 8;
+    	public static final int COL_IDX_BOLETADEPOSITO 			= 9;
+    	public static final int COL_IDX_CREDITCARDSETTLEMENT	= 10;
+    	
+    	@Override
+    	public int getColumnCount() {
+			return getColumnNames().size();
+		}
+    	
 		@Override
 		protected void setColumnClasses() {
-	        setColumnClass(COL_IDX_DATETRX, Timestamp.class);
+			setColumnClass(COL_IDX_DATETRX, Timestamp.class);
+	        setColumnClass(COL_IDX_TENDERTYPE, String.class);
 	        setColumnClass(COL_IDX_DOCUMENTNO, String.class);
 	        setColumnClass(COL_IDX_BPARTNER, String.class);
 	        setColumnClass(COL_IDX_CURRENCY, String.class);
 	        setColumnClass(COL_IDX_AMT, BigDecimal.class);
 	        setColumnClass(COL_IDX_CONVAMT, BigDecimal.class);
 	        setColumnClass(COL_IDX_DUEDATE, Timestamp.class);
+	        setColumnClass(COL_IDX_BOLETADEPOSITO, String.class);
+	        setColumnClass(COL_IDX_CREDITCARDSETTLEMENT, String.class);
 		}
 
 		@Override
 		protected void setColumnNames() {
-	        setColumnName(COL_IDX_DATETRX, Msg.translate( Env.getCtx(),"Date" ));
+			setColumnName(COL_IDX_DATETRX, Msg.translate( Env.getCtx(),"Date" ));
+	        setColumnName(COL_IDX_TENDERTYPE, Msg.getElement( Env.getCtx(),"TenderType" ));
 	        setColumnName(COL_IDX_DOCUMENTNO, Msg.getElement( Env.getCtx(),"C_Payment_ID" ));
 	        setColumnName(COL_IDX_BPARTNER, Msg.translate( Env.getCtx(),"C_BPartner_ID" ));
 	        setColumnName(COL_IDX_CURRENCY, Msg.translate( Env.getCtx(),"C_Currency_ID" ));
 	        setColumnName(COL_IDX_AMT, Msg.translate( Env.getCtx(),"Amount" ));
 	        setColumnName(COL_IDX_CONVAMT, Msg.translate( Env.getCtx(),"ConvertedAmount" ));
 	        setColumnName(COL_IDX_DUEDATE, Msg.translate(Env.getCtx(), "DueDate"));
+	        setColumnName(COL_IDX_BOLETADEPOSITO, Msg.translate(Env.getCtx(), "M_BoletaDeposito_ID"));
+	        setColumnName(COL_IDX_CREDITCARDSETTLEMENT, Msg.translate(Env.getCtx(), "C_CreditCardSettlement_ID"));
 		}
 
 		@Override
@@ -271,6 +273,8 @@ public class WCreateFromStatement  extends WCreateFrom {
 			switch (colIndex) {
 				case COL_IDX_DATETRX:
 					value = payment.dateTrx; break;
+				case COL_IDX_TENDERTYPE:
+					value = payment.tenderTypeDescription; break;
 				case COL_IDX_DOCUMENTNO:
 					value = payment.documentNo; break;
 				case COL_IDX_BPARTNER:
@@ -283,6 +287,10 @@ public class WCreateFromStatement  extends WCreateFrom {
 					value = payment.convertedAmt; break;
 				case COL_IDX_DUEDATE:
 					value=payment.dueDate; break;
+				case COL_IDX_BOLETADEPOSITO:
+					value=payment.boletaDepositoDocumentNo; break;
+				case COL_IDX_CREDITCARDSETTLEMENT:
+					value=payment.creditCardSettlementDocumentNo; break;
 				default:
 					value = super.getValueAt(rowIndex, colIndex); break;
 			}
@@ -305,7 +313,6 @@ public class WCreateFromStatement  extends WCreateFrom {
 
 	@Override
 	protected void customizarPanel() {
-		
 		orderLabel.setVisible(false);
 		orderField.setVisible(false);
 		locatorLabel.setVisible(false);
@@ -315,11 +322,12 @@ public class WCreateFromStatement  extends WCreateFrom {
 		Row row = rows.newRow();
 		row.appendChild(bankAccountLabel.rightAlign());
 		row.appendChild(bankAccountField.getComponent());
+		row.appendChild(jlTipo.rightAlign());
+		row.appendChild(jbSourceTable);
 		row.appendChild(nroLote.getLabel().rightAlign());
 		row.appendChild(nroLote.getComponent());
-		row.appendChild(agrupacionporcupones);
+		row.appendChild(grouped);
 		window.getParameterPanel().appendChild(parameterStdLayout);
-
 	}
 	
 	@Override
@@ -345,85 +353,30 @@ public class WCreateFromStatement  extends WCreateFrom {
 	}
 	
 	protected void filtrar() {
-		int C_BankAccount_ID = Env.getContextAsInt(Env.getCtx(), p_WindowNo,
-				"C_BankAccount_ID");
-		Integer numeroLote = getNroLote();
-		if (numeroLote == null) {
-			if (agrupacionporcupones.isChecked())
-				loadBankAccountGrouped(C_BankAccount_ID);
-			else
-				loadBankAccount(C_BankAccount_ID);
-		} else {
-			if (agrupacionporcupones.isChecked())
-				loadBankAccountWithFilterGrouped(C_BankAccount_ID, numeroLote);
-			else
-				loadBankAccountWithFilter(C_BankAccount_ID, numeroLote);
-		}
-	}
-
-	private void loadBankAccountGrouped(int C_BankAccount_ID) {
-		StringBuffer sql = getHelper().loadBankAccountGrouped();
-		loadBank(sql,C_BankAccount_ID,null);
-	}
-	
-	private void loadBankAccountWithFilterGrouped(int C_BankAccount_ID,
-			Integer numerolote) {
-		StringBuffer sql = getHelper().loadBankAccountWithFilterGrouped();
-		loadBank(sql,C_BankAccount_ID,numerolote);
-	}
-	
-	private void loadBankAccountWithFilter(int C_BankAccount_ID, Integer nrolote) {
-		StringBuffer sql = getHelper().loadBankAccountQueryWithFilter();
-		loadBank(sql,C_BankAccount_ID,nrolote);
+		loadData();
 	}
     
-	private void loadBank(StringBuffer sql, int C_BankAccount_ID, Integer nrolote) {
-		List<Payment> data = new ArrayList<Payment>();
+	protected void loadData() {
 		// Get StatementDate
 		Timestamp ts = (Timestamp) p_mTab.getValue("StatementDate");
 		if (ts == null) {
-			ts = new Timestamp(System.currentTimeMillis());
+			ts = Env.getDate();
 		}
-		PreparedStatement pstmt = null;
-		ResultSet rs = null;
-
-		try {
-			pstmt = DB.prepareStatement(sql.toString());
-			pstmt.setTimestamp(1, ts);
-			pstmt.setInt(2, C_BankAccount_ID);
-			if (nrolote != null)
-				pstmt.setString(3, nrolote.toString());
-			rs = pstmt.executeQuery();
-
-			while (rs.next()) {
-				PaymentListImpl payment = new PaymentListImpl();
-				getHelper().loadPayment(payment, rs);
-				data.add(payment);
-			}
-
-			rs.close();
-			pstmt.close();
-		} catch (SQLException e) {
-			log.log(Level.SEVERE, sql.toString(), e);
-		} finally {
-			try {
-				if (rs != null)
-					rs.close();
-				if (pstmt != null)
-					pstmt.close();
-			} catch (Exception e) {
-			}
+		int C_BankAccount_ID = Env.getContextAsInt(Env.getCtx(), p_WindowNo,
+				"C_BankAccount_ID");
+		((CreateFromStatementModel)getHelper()).setBankAccount(C_BankAccount_ID);
+		((CreateFromStatementModel)getHelper()).setStatementDate(ts);
+		((CreateFromStatementModel)getHelper()).setCouponBatchNo((String)nroLote.getValue());
+		((CreateFromStatementModel)getHelper()).setGrouped(grouped.isChecked());
+		
+		List<Payment> pays = ((CreateFromStatementModel)getHelper()).getData();
+		List<PaymentListImpl> paysWrapped = new ArrayList<WCreateFromStatement.PaymentListImpl>();
+		for (Payment payment : pays) {
+			PaymentListImpl pli = new PaymentListImpl();
+			payment.copyValues(pli);
+			paysWrapped.add(pli);
 		}
-
-		loadTable(data);
+		
+		loadTable(paysWrapped);
 	}
-	
-	private Integer getNroLote() {
-		if ((nroLote.getValue() == null)
-				|| ("".equals(nroLote.getValue().toString()))) 
-			return null;
-		else 
-			return Integer.parseInt((String)nroLote.getValue());
-	}
-
 }

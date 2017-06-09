@@ -438,7 +438,35 @@ public class CreateFromModel {
     	/** Fecha de vencimiento */
     	public Timestamp dueDate=null;
     	/** Tipo del Pago */
-    	protected String tenderType = null;
+    	public String tenderType = null;
+    	/** Descripción del Tipo del Pago */
+    	public String tenderTypeDescription = null;
+    	/** ID de Boleta de Depósito relacionada */
+    	public Integer boletaDepositoID;
+    	/** Número de documento de Boleta de Depósito relacionada */
+    	public String boletaDepositoDocumentNo;
+    	/** ID de Liquidación de tarjeta relacionada */
+    	public Integer creditCardSettlementID;
+    	/** Número de documento de Liquidación de tarjeta relacionada */
+    	public String creditCardSettlementDocumentNo;
+    	
+    	public void copyValues(Payment to){
+    		to.paymentID = this.paymentID;
+    		to.documentNo = this.documentNo;
+    		to.dateTrx = this.dateTrx;
+    		to.bPartnerName = this.bPartnerName;
+    		to.currencyID = this.currencyID;
+    		to.currencyISO = this.currencyISO;
+    		to.payAmt = this.payAmt;
+    		to.convertedAmt = this.convertedAmt;
+    		to.dueDate= this.dueDate;
+    		to.tenderType = this.tenderType;
+    		to.tenderTypeDescription = this.tenderTypeDescription;
+    		to.boletaDepositoID = this.boletaDepositoID;
+    		to.boletaDepositoDocumentNo = this.boletaDepositoDocumentNo;
+    		to.creditCardSettlementID = this.creditCardSettlementID;
+    		to.creditCardSettlementDocumentNo = this.creditCardSettlementDocumentNo;
+    	}
     }
     
     /**
