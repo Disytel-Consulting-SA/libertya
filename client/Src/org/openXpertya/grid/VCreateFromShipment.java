@@ -30,12 +30,9 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.logging.Level;
 
-import org.compiere.plaf.CompierePLAF;
 import org.compiere.swing.CCheckBox;
 import org.openXpertya.apps.form.VComponentsFactory;
-import org.openXpertya.grid.CreateFromModel.CreateFromPluginInterface;
 import org.openXpertya.grid.CreateFromModel.CreateFromSaveException;
-import org.openXpertya.grid.CreateFromModel.DocumentLine;
 import org.openXpertya.grid.CreateFromModel.InvoiceLine;
 import org.openXpertya.grid.CreateFromModel.OrderLine;
 import org.openXpertya.grid.CreateFromModel.SourceEntity;
@@ -43,18 +40,12 @@ import org.openXpertya.grid.ed.VLocator;
 import org.openXpertya.model.MBPartner;
 import org.openXpertya.model.MDocType;
 import org.openXpertya.model.MInOut;
-import org.openXpertya.model.MInOutLine;
 import org.openXpertya.model.MInvoice;
-import org.openXpertya.model.MInvoiceLine;
 import org.openXpertya.model.MLocator;
 import org.openXpertya.model.MLocatorLookup;
-import org.openXpertya.model.MOrder;
-import org.openXpertya.model.MOrderLine;
-import org.openXpertya.model.MProduct;
 import org.openXpertya.model.MTab;
 import org.openXpertya.model.MWarehouse;
 import org.openXpertya.model.PO;
-import org.openXpertya.util.CLogger;
 import org.openXpertya.util.DB;
 import org.openXpertya.util.DisplayType;
 import org.openXpertya.util.Env;
@@ -85,6 +76,11 @@ public class VCreateFromShipment extends VCreateFrom {
 
 	} // VCreateFromShipment
 
+	@Override
+	protected CreateFromModel createHelper(){
+    	return new CreateFromShipmentModel();
+    }
+	
 	protected CCheckBox allInOut;
 
 	/** Descripción de Campos */
@@ -103,15 +99,6 @@ public class VCreateFromShipment extends VCreateFrom {
     
     /** Tipo de Documento a crear */
     private MDocType docType;
-    
-    /** Helper para centralizar lógica de modelo */
-	protected CreateFromShipmentModel helper = new CreateFromShipmentModel();
-
-	protected CreateFromShipmentModel getHelper() {
-		if (helper == null)
-			helper = new CreateFromShipmentModel();
-		return helper;
-	}
     
 	/**
 	 * Descripción de Método
@@ -333,7 +320,7 @@ public class VCreateFromShipment extends VCreateFrom {
 		
 		p_order = null;
 		List<InvoiceLine> data = new ArrayList<InvoiceLine>();
-		StringBuffer sql = getHelper().loadInvoiceQuery();
+		StringBuffer sql = ((CreateFromShipmentModel)getHelper()).loadInvoiceQuery();
 		PreparedStatement pstmt = null;
 		ResultSet rs = null;
 		try {
@@ -343,7 +330,7 @@ public class VCreateFromShipment extends VCreateFrom {
 
 			while (rs.next()) {
 				InvoiceLine invoiceLine = new InvoiceLine();
-				getHelper().loadInvoiceLine(invoiceLine, rs);
+				((CreateFromShipmentModel)getHelper()).loadInvoiceLine(invoiceLine, rs);
 				// Agrega la línea a la lista solo si tiene cantidad pendiente
 				if (invoiceLine.remainingQty.compareTo(BigDecimal.ZERO) > 0 || invoiceLine.productType.equals("E")) {
 					data.add(invoiceLine);
@@ -378,7 +365,7 @@ public class VCreateFromShipment extends VCreateFrom {
 	
 	@Override
 	public String getRemainingQtySQLLine(boolean forInvoice, boolean allowDeliveryReturns){
-		return getHelper().getRemainingQtySQLLine(getInOut(), forInvoice, allowDeliveryReturns);
+		return ((CreateFromShipmentModel)getHelper()).getRemainingQtySQLLine(getInOut(), forInvoice, allowDeliveryReturns);
 	}
 	
 	/**
@@ -413,7 +400,7 @@ public class VCreateFromShipment extends VCreateFrom {
 
 	protected void save() throws CreateFromSaveException {
 		Integer locatorID = (Integer) locatorField.getValue();
-		getHelper().save(locatorID, getInOut(), p_order, m_invoice, getSelectedSourceEntities(), getTrxName(), isSOTrx(), this); 
+		((CreateFromShipmentModel)getHelper()).save(locatorID, getInOut(), p_order, m_invoice, getSelectedSourceEntities(), getTrxName(), isSOTrx(), this); 
 	} // save
 
 	@Override
@@ -479,7 +466,7 @@ public class VCreateFromShipment extends VCreateFrom {
 
 	@Override
 	protected boolean beforeAddOrderLine(OrderLine orderLine) {
-		return getHelper().beforeAddOrderLine(orderLine, getInOut(), isSOTrx());
+		return ((CreateFromShipmentModel)getHelper()).beforeAddOrderLine(orderLine, getInOut(), isSOTrx());
 	}
 
 	/**

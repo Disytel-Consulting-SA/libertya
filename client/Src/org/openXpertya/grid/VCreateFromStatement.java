@@ -16,29 +16,24 @@
 
 package org.openXpertya.grid;
 
+import java.awt.event.ActionEvent;
 import java.beans.PropertyChangeEvent;
 import java.beans.VetoableChangeListener;
 import java.math.BigDecimal;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.text.DecimalFormat;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.logging.Level;
 
+import org.compiere.swing.CComboBox;
 import org.openXpertya.apps.ADialog;
 import org.openXpertya.grid.CreateFromModel.CreateFromSaveException;
 import org.openXpertya.grid.CreateFromModel.Payment;
 import org.openXpertya.grid.CreateFromModel.SourceEntity;
 import org.openXpertya.grid.ed.VLookup;
-import org.openXpertya.grid.ed.VNumber;
+import org.openXpertya.grid.ed.VString;
 import org.openXpertya.model.MLookup;
 import org.openXpertya.model.MLookupFactory;
 import org.openXpertya.model.MTab;
 import org.openXpertya.model.PO;
-import org.openXpertya.util.DB;
 import org.openXpertya.util.DisplayType;
 import org.openXpertya.util.Env;
 import org.openXpertya.util.Msg;
@@ -53,14 +48,10 @@ import org.openXpertya.util.Msg;
 
 public class VCreateFromStatement extends VCreateFrom implements VetoableChangeListener {
 
-    /** Helper para centralizar lógica de modelo */
-	protected CreateFromStatementModel helper = new CreateFromStatementModel();
-
-	protected CreateFromStatementModel getHelper() {
-		if (helper==null)
-			helper = new CreateFromStatementModel();
-		return helper;
-	}
+	@Override
+	protected CreateFromModel createHelper(){
+    	return new CreateFromStatementModel();
+    }
 
 	
     /**
@@ -100,15 +91,19 @@ public class VCreateFromStatement extends VCreateFrom implements VetoableChangeL
         bankAccountField = new VLookup( "C_BankAccount_ID",true,true,true,lookup );
         bankAccountField.addVetoableChangeListener( this );
 
+        initSource();
+        
         // Set Default
 
         int C_BankAccount_ID = Env.getContextAsInt( Env.getCtx(),p_WindowNo,"C_BankAccount_ID" );
 
         bankAccountField.setValue( new Integer( C_BankAccount_ID ));
-
+        
+        ((CreateFromStatementModel)getHelper()).setBankAccount(C_BankAccount_ID);
+        
         // initial Loading
-
-        loadBankAccount( C_BankAccount_ID );
+        
+        loadData();
 
         return true;
     }    // dynInit
@@ -122,6 +117,25 @@ public class VCreateFromStatement extends VCreateFrom implements VetoableChangeL
 
     protected void initBPDetails( int C_BPartner_ID ) {}    // initDetails
 
+    
+    protected void initSource(){
+    	jbSourceTable = new CComboBox();
+    	jbSourceTable.addItem(new CreateFromStatementAll());
+    	jbSourceTable.addItem(new CreateFromStatementGeneralValues());
+		jbSourceTable.addItem(new CreateFromStatementBoletasDeposito());
+		jbSourceTable.addItem(new CreateFromStatementSettlements());
+		jbSourceTable.setMandatory(true);
+		jbSourceTable.setSelectedIndex(0);
+		((CreateFromStatementModel)getHelper()).setCreateFromData((CreateFromStatementData)jbSourceTable.getValue());
+		jbSourceTable.addActionListener(this);
+		addOtherSources();
+    }
+    
+    /**
+     * Este método permite a las subclases incorporar nuevas fuentes de datos
+     */
+    protected void addOtherSources(){}
+    
     /**
      * Descripción de Método
      *
@@ -136,61 +150,12 @@ public class VCreateFromStatement extends VCreateFrom implements VetoableChangeL
 
         if( e.getPropertyName() == "C_BankAccount_ID" ) {
             int C_BankAccount_ID = (( Integer )e.getNewValue()).intValue();
-
-            loadBankAccount( C_BankAccount_ID );
+            ((CreateFromStatementModel)getHelper()).setBankAccount(C_BankAccount_ID);
+            loadData();
         }
 
         tableChanged( null );
     }    // vetoableChange
-
-    /**
-     * Descripción de Método
-     *
-     *
-     * @param C_BankAccount_ID
-     */
-
-    private void loadBankAccount( int C_BankAccount_ID ) {
-        log.config( "C_BankAccount_ID=" + C_BankAccount_ID );
-
-    //    List<Payment> data = new ArrayList<Payment>();
-        StringBuffer sql = getHelper().loadBankAccountQuery(); 
-        loadBank(sql, C_BankAccount_ID, null);
-
-        // Get StatementDate
-    /*    Timestamp ts = ( Timestamp )p_mTab.getValue( "StatementDate" );
-
-        if( ts == null ) {
-            ts = new Timestamp( System.currentTimeMillis());
-        }
-    	PreparedStatement pstmt = null;
-    	ResultSet rs 			= null;
-
-        try {
-            pstmt = DB.prepareStatement( sql.toString());
-            pstmt.setTimestamp( 1,ts );
-            pstmt.setInt( 2,C_BankAccount_ID );
-            rs = pstmt.executeQuery();
-
-            while( rs.next()) {
-                Payment payment = new Payment();
-                getHelper().loadPayment(payment, rs);
-                data.add(payment);
-            }
-
-            rs.close();
-            pstmt.close();
-        } catch( SQLException e ) {
-            log.log( Level.SEVERE,sql.toString(),e );
-    	} finally {
-    		try {
-	    		if (rs != null) rs.close();
-	    		if (pstmt != null) pstmt.close();
-    		}	catch (Exception e) {}
-    	}
-
-    	loadTable(data);*/
-    }    // loadBankAccount
 
     /**
      * Descripción de Método
@@ -219,7 +184,7 @@ public class VCreateFromStatement extends VCreateFrom implements VetoableChangeL
 
     protected void save() throws CreateFromSaveException {
     	int C_BankStatement_ID = (( Integer )p_mTab.getValue( "C_BankStatement_ID" )).intValue();
-    	getHelper().save(C_BankStatement_ID, getTrxName(), getSelectedSourceEntities(), this, (Integer) nroLote.getValue());
+    	((CreateFromStatementModel)getHelper()).save(C_BankStatement_ID, getTrxName(), getSelectedSourceEntities(), this);
     }    // save
     
 	@Override
@@ -227,42 +192,69 @@ public class VCreateFromStatement extends VCreateFrom implements VetoableChangeL
 		return new PaymentTableModel();
 	}
 
+	public void actionPerformed( ActionEvent e ) {
+		if (e.getSource().equals(jbSourceTable)){
+			((CreateFromStatementModel)getHelper()).setCreateFromData((CreateFromStatementData)jbSourceTable.getSelectedItem());
+			updateVisibleComponents();
+			loadData();
+		}
+		else{
+			super.actionPerformed(e);
+		}
+	}
 
-    
+	/**
+	 * Actualiza la visibilidad de los componentes en base al origen de datos 
+	 */
+	protected void updateVisibleComponents(){
+		grouped.setVisible(((CreateFromStatementModel)getHelper()).isAllowGrouped());
+		nroLoteLabel.setVisible(((CreateFromStatementModel)getHelper()).isAllowCouponBatchNoFilter());
+		nroLote.setVisible(((CreateFromStatementModel)getHelper()).isAllowCouponBatchNoFilter());
+	}
+	
     /**
      * Modelo de tabla para presentación de los pagos de una cuenta bancaria.
      */
     protected class PaymentTableModel extends CreateFromTableModel {
 
 		// Constantes de índices de las columnas en la grilla.
-    	public static final int COL_IDX_DATETRX    = 1;
-    	public static final int COL_IDX_DOCUMENTNO = 2;
-    	public static final int COL_IDX_BPARTNER   = 3;
-    	public static final int COL_IDX_CURRENCY   = 4;
-    	public static final int COL_IDX_AMT        = 5;
-    	public static final int COL_IDX_CONVAMT    = 6;
-    	public static final int COL_IDX_DUEDATE    = 7;
+    	public static final int COL_IDX_DATETRX    				= 1;
+    	public static final int COL_IDX_TENDERTYPE 				= 2;
+    	public static final int COL_IDX_DOCUMENTNO 				= 3;
+    	public static final int COL_IDX_BPARTNER   				= 4;
+    	public static final int COL_IDX_CURRENCY   				= 5;
+    	public static final int COL_IDX_AMT        				= 6;
+    	public static final int COL_IDX_CONVAMT    				= 7;
+    	public static final int COL_IDX_DUEDATE    				= 8;
+    	public static final int COL_IDX_BOLETADEPOSITO 			= 9;
+    	public static final int COL_IDX_CREDITCARDSETTLEMENT	= 10;
     	    	
 		@Override
 		protected void setColumnClasses() {
 	        setColumnClass(COL_IDX_DATETRX, Timestamp.class);
+	        setColumnClass(COL_IDX_TENDERTYPE, String.class);
 	        setColumnClass(COL_IDX_DOCUMENTNO, String.class);
 	        setColumnClass(COL_IDX_BPARTNER, String.class);
 	        setColumnClass(COL_IDX_CURRENCY, String.class);
 	        setColumnClass(COL_IDX_AMT, BigDecimal.class);
 	        setColumnClass(COL_IDX_CONVAMT, BigDecimal.class);
 	        setColumnClass(COL_IDX_DUEDATE, Timestamp.class);
+	        setColumnClass(COL_IDX_BOLETADEPOSITO, String.class);
+	        setColumnClass(COL_IDX_CREDITCARDSETTLEMENT, String.class);
 		}
 
 		@Override
 		protected void setColumnNames() {
 	        setColumnName(COL_IDX_DATETRX, Msg.translate( Env.getCtx(),"Date" ));
+	        setColumnName(COL_IDX_TENDERTYPE, Msg.getElement( Env.getCtx(),"TenderType" ));
 	        setColumnName(COL_IDX_DOCUMENTNO, Msg.getElement( Env.getCtx(),"C_Payment_ID" ));
 	        setColumnName(COL_IDX_BPARTNER, Msg.translate( Env.getCtx(),"C_BPartner_ID" ));
 	        setColumnName(COL_IDX_CURRENCY, Msg.translate( Env.getCtx(),"C_Currency_ID" ));
 	        setColumnName(COL_IDX_AMT, Msg.translate( Env.getCtx(),"Amount" ));
 	        setColumnName(COL_IDX_CONVAMT, Msg.translate( Env.getCtx(),"ConvertedAmount" ));
 	        setColumnName(COL_IDX_DUEDATE, Msg.translate(Env.getCtx(), "DueDate"));
+	        setColumnName(COL_IDX_BOLETADEPOSITO, Msg.translate(Env.getCtx(), "M_BoletaDeposito_ID"));
+	        setColumnName(COL_IDX_CREDITCARDSETTLEMENT, Msg.translate(Env.getCtx(), "C_CreditCardSettlement_ID"));
 		}
 
 		@Override
@@ -272,6 +264,8 @@ public class VCreateFromStatement extends VCreateFrom implements VetoableChangeL
 			switch (colIndex) {
 				case COL_IDX_DATETRX:
 					value = payment.dateTrx; break;
+				case COL_IDX_TENDERTYPE:
+					value = payment.tenderTypeDescription; break;
 				case COL_IDX_DOCUMENTNO:
 					value = payment.documentNo; break;
 				case COL_IDX_BPARTNER:
@@ -284,6 +278,10 @@ public class VCreateFromStatement extends VCreateFrom implements VetoableChangeL
 					value = payment.convertedAmt; break;
 				case COL_IDX_DUEDATE:
 					value=payment.dueDate; break;
+				case COL_IDX_BOLETADEPOSITO:
+					value=payment.boletaDepositoDocumentNo; break;
+				case COL_IDX_CREDITCARDSETTLEMENT:
+					value=payment.creditCardSettlementDocumentNo; break;
 				default:
 					value = super.getValueAt(rowIndex, colIndex); break;
 			}
@@ -325,85 +323,24 @@ public class VCreateFromStatement extends VCreateFrom implements VetoableChangeL
 		return true;
 	}
 
-	protected void filtrar(VNumber numeroLote, Boolean agrupacioncupones) {
-		int C_BankAccount_ID = Env.getContextAsInt(Env.getCtx(), p_WindowNo,
-				"C_BankAccount_ID");
-	 	if (numeroLote.getValue() == null){
-	 		if (agrupacioncupones){
-	 			loadBankAccountGrouped(C_BankAccount_ID);
-	 		}
-	 		else
-	 			loadBankAccount(C_BankAccount_ID);
-	 	}
-	 	else {
-	 		if (agrupacioncupones)
-	 			loadBankAccountWithFilterGrouped(C_BankAccount_ID,(Integer)numeroLote.getValue());
-	 		else
-	 			loadBankAccountWithFilter(C_BankAccount_ID,(Integer)numeroLote.getValue());
-	 	}
-	}
-
-	private void loadBankAccountWithFilterGrouped(int C_BankAccount_ID,
-			Integer numerolote) {
-		StringBuffer sql = getHelper().loadBankAccountWithFilterGrouped();
-		loadBank(sql,C_BankAccount_ID,numerolote);
-	}
-
-	private void loadBankAccountGrouped(int C_BankAccount_ID) {
-		StringBuffer sql = getHelper().loadBankAccountGrouped();
-		loadBank(sql,C_BankAccount_ID,null);
-	}
-
-	private void loadBankAccountWithFilter(int C_BankAccount_ID, Integer nrolote) {
-		StringBuffer sql = getHelper().loadBankAccountQueryWithFilter();
-		loadBank(sql,C_BankAccount_ID,nrolote);
+	@Override
+	protected void filtrar(VString numeroLote, Boolean agrupacioncupones) {
+		loadData();
 	}
 	
-	private void loadBank(StringBuffer sql, int C_BankAccount_ID, Integer nrolote) {
-		List<Payment> data = new ArrayList<Payment>();
+	protected void loadData() {
 		// Get StatementDate
 		Timestamp ts = (Timestamp) p_mTab.getValue("StatementDate");
-
 		if (ts == null) {
-			ts = new Timestamp(System.currentTimeMillis());
+			ts = Env.getDate();
 		}
-		PreparedStatement pstmt = null;
-		ResultSet rs = null;
-
-		try {
-			pstmt = DB.prepareStatement(sql.toString());
-			pstmt.setTimestamp(1, ts);
-			pstmt.setInt(2, C_BankAccount_ID);
-			if (nrolote != null)
-				pstmt.setString(3, nrolote.toString());
-			rs = pstmt.executeQuery();
-
-			while (rs.next()) {
-				Payment payment = new Payment();
-				getHelper().loadPayment(payment, rs);
-				data.add(payment);
-			}
-
-			rs.close();
-			pstmt.close();
-		} catch (SQLException e) {
-			log.log(Level.SEVERE, sql.toString(), e);
-		} finally {
-			try {
-				if (rs != null)
-					rs.close();
-				if (pstmt != null)
-					pstmt.close();
-			} catch (Exception e) {
-			}
-		}
-
-		loadTable(data);
-	}
-
-	@Override
-	protected void agruparPorCupones() {
-		
+		int C_BankAccount_ID = Env.getContextAsInt(Env.getCtx(), p_WindowNo,
+				"C_BankAccount_ID");
+		((CreateFromStatementModel)getHelper()).setBankAccount(C_BankAccount_ID);
+		((CreateFromStatementModel)getHelper()).setStatementDate(ts);
+		((CreateFromStatementModel)getHelper()).setCouponBatchNo((String)nroLote.getValue());
+		((CreateFromStatementModel)getHelper()).setGrouped(grouped.isSelected());
+		loadTable(((CreateFromStatementModel)getHelper()).getData());
 	}
 	
 }    // VCreateFromStatement

@@ -20,7 +20,6 @@ package org.adempiere.webui.component;
 import java.util.List;
 
 import org.zkoss.zul.Comboitem;
-import org.zkoss.zul.Messagebox;
 
 /**
  *
@@ -95,6 +94,13 @@ public class Combobox extends org.zkoss.zul.Combobox
 		if (name==null || name.equals(""))
 			name = " ";
 		ComboItem item = new ComboItem(name, value);
+		this.appendChild(item);
+	}
+	
+	public void appendItem(Object value) {
+		if (value==null || value.equals("") )
+			value = -1;
+		ComboItem item = new ComboItem(value.toString(), value);
 		this.appendChild(item);
 	}
 	

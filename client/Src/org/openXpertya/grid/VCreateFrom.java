@@ -45,6 +45,7 @@ import javax.swing.table.AbstractTableModel;
 
 import org.compiere.plaf.CompiereColor;
 import org.compiere.swing.CCheckBox;
+import org.compiere.swing.CComboBox;
 import org.compiere.swing.CPanel;
 import org.openXpertya.apps.ADialog;
 import org.openXpertya.apps.AEnv;
@@ -58,10 +59,9 @@ import org.openXpertya.grid.CreateFromModel.OrderLine;
 import org.openXpertya.grid.CreateFromModel.SourceEntity;
 import org.openXpertya.grid.VCreateFromInvoice.DocumentLineTableModelFromInvoice;
 import org.openXpertya.grid.VCreateFromShipment.DocumentLineTableModelFromShipment;
-import org.openXpertya.grid.ed.VComboBox;
 import org.openXpertya.grid.ed.VLocator;
 import org.openXpertya.grid.ed.VLookup;
-import org.openXpertya.grid.ed.VNumber;
+import org.openXpertya.grid.ed.VString;
 import org.openXpertya.minigrid.MiniTable;
 import org.openXpertya.model.MLookup;
 import org.openXpertya.model.MLookupFactory;
@@ -136,6 +136,7 @@ public abstract class VCreateFrom extends JDialog implements ActionListener,Tabl
 
     protected VCreateFrom( MTab mTab ) {
         super( Env.getWindow( mTab.getWindowNo()),true );
+        getHelper();
         log.info( mTab.toString());
         p_WindowNo = mTab.getWindowNo();
         p_mTab     = mTab;
@@ -172,6 +173,18 @@ public abstract class VCreateFrom extends JDialog implements ActionListener,Tabl
         AEnv.positionCenterWindow( Env.getWindow( p_WindowNo ),this );
     }    // VCreateFrom
 
+    
+    protected CreateFromModel createHelper(){
+    	return new CreateFromModel();
+    }
+    
+    protected CreateFromModel getHelper() {
+    	if (helper == null){ 
+    		helper = createHelper();
+    	}
+		return helper;	
+    }
+    
 	/** Descripción de Campos */
 
     protected int p_WindowNo;
@@ -210,9 +223,9 @@ public abstract class VCreateFrom extends JDialog implements ActionListener,Tabl
 
     private JLabel bankAccountLabel = new JLabel();
 
-    private JLabel nroLoteLabel = new JLabel();
+    protected JLabel nroLoteLabel = new JLabel();
     
-    protected VNumber nroLote = new VNumber();
+    protected VString nroLote = new VString();
     
     /** Descripción de Campos */
 
@@ -226,7 +239,7 @@ public abstract class VCreateFrom extends JDialog implements ActionListener,Tabl
 
     protected VLookup bankAccountField;
     
-    protected CCheckBox agrupacionporcupones = new CCheckBox();
+    protected CCheckBox grouped = new CCheckBox();
 
     protected CCheckBox automatico = new CCheckBox();
     
@@ -304,11 +317,15 @@ public abstract class VCreateFrom extends JDialog implements ActionListener,Tabl
 
     protected VLocator locatorField = new VLocator();
     
+    /** Tipo de origen para Create From Statement */
+    protected CComboBox jbSourceTable;
+	protected JLabel jlTipo = new JLabel();
+    
     /** Nombre de la transacción para hacer el save */
     private String trxName = null;
 
     /** Helper para centralizar lógica de modelo */
-    protected CreateFromModel helper = new CreateFromModel();
+    private CreateFromModel helper;
     
     /** Perfil actual */
 	private MRole role;
@@ -337,12 +354,10 @@ public abstract class VCreateFrom extends JDialog implements ActionListener,Tabl
         //
 
         bankAccountLabel.setText( Msg.translate( Env.getCtx(),"C_BankAccount_ID" ));
-        nroLoteLabel.setText("Nro de Lote");
- //       nroLote.setColumns(3); 
-        nroLote.setDisplayType(DisplayType.Integer);
+        nroLoteLabel.setText(Msg.translate( Env.getCtx(),"CouponBatchNumber" ));
         nroLote.addActionListener(this);
-        agrupacionporcupones.setText("Agrupación por cupones");
-        agrupacionporcupones.addActionListener(this);
+        grouped.setText(Msg.getMsg(getCtx(), "DoGroup"));
+        grouped.addActionListener(this);
         bPartnerLabel.setText( Msg.getElement( Env.getCtx(),"C_BPartner_ID" ));
         orderLabel.setText( Msg.getElement( Env.getCtx(),"C_Order_ID",false ));
         invoiceLabel.setText( Msg.getElement( Env.getCtx(),"C_Invoice_ID",false ));
@@ -354,17 +369,24 @@ public abstract class VCreateFrom extends JDialog implements ActionListener,Tabl
 		invoiceOrderLabel.setText(Msg.translate(getCtx(), "InvoiceOrder"));
         	
 		//
-
+		jlTipo.setText(Msg.getMsg(getCtx(),"Source"));
+		
         this.getContentPane().add( parameterPanel,BorderLayout.NORTH );
         parameterPanel.add( parameterBankPanel,BorderLayout.NORTH );
-        parameterBankPanel.add( bankAccountLabel,new GridBagConstraints( 0,0,1,1,0.0,0.0,GridBagConstraints.EAST,GridBagConstraints.NONE,new Insets( 5,5,5,5 ),0,0 ));
-        parameterBankPanel.add( nroLoteLabel,new GridBagConstraints( 3,0,1,1,0.0,0.0,GridBagConstraints.EAST,GridBagConstraints.NONE,new Insets( 5,5,5,5 ),0,0 ));
-        parameterBankPanel.add( nroLote, new GridBagConstraints( 4,0,1,1,0.0,0.0,GridBagConstraints.EAST,GridBagConstraints.NONE,new Insets( 5,5,5,5 ),0,0 ));
-        parameterBankPanel.add( agrupacionporcupones, new GridBagConstraints(5, 0, 1, 1, 0.0, 0.0
-    			,GridBagConstraints.EAST, GridBagConstraints.NONE, new Insets(5, 5, 5, 5), 0, 0));
+        int l = 0;
+        parameterBankPanel.add( bankAccountLabel,new GridBagConstraints( l++,0,1,1,0.0,0.0,GridBagConstraints.EAST,GridBagConstraints.NONE,new Insets( 5,5,5,5 ),0,0 ));
         if( bankAccountField != null ) {
-            parameterBankPanel.add( bankAccountField,new GridBagConstraints( 1,0,1,1,0.0,0.0,GridBagConstraints.WEST,GridBagConstraints.HORIZONTAL,new Insets( 5,0,5,5 ),0,0 ));
+            parameterBankPanel.add( bankAccountField,new GridBagConstraints( l++,0,1,1,0.0,0.0,GridBagConstraints.WEST,GridBagConstraints.HORIZONTAL,new Insets( 5,0,5,5 ),0,0 ));
         }
+        if(jbSourceTable != null){
+            parameterBankPanel.add( jlTipo,new GridBagConstraints( l++,0,1,1,0.0,0.0,GridBagConstraints.EAST,GridBagConstraints.NONE,new Insets( 5,5,5,5 ),0,0 ));
+            parameterBankPanel.add( jbSourceTable,new GridBagConstraints( l++,0,1,1,0.0,0.0,GridBagConstraints.EAST,GridBagConstraints.NONE,new Insets( 5,5,5,5 ),0,0 ));
+        }
+        parameterBankPanel.add( nroLoteLabel,new GridBagConstraints( l++,0,1,1,0.0,0.0,GridBagConstraints.EAST,GridBagConstraints.NONE,new Insets( 5,5,5,5 ),0,0 ));
+        parameterBankPanel.add( nroLote, new GridBagConstraints( l++,0,1,1,0.0,0.0,GridBagConstraints.EAST,GridBagConstraints.NONE,new Insets( 5,5,5,5 ),0,0 ));
+        parameterBankPanel.add( grouped, new GridBagConstraints(l++, 0, 1, 1, 0.0, 0.0
+    			,GridBagConstraints.EAST, GridBagConstraints.NONE, new Insets(5, 5, 5, 5), 0, 0));
+
 
         parameterPanel.add( parameterStdPanel,BorderLayout.CENTER );
         parameterStdPanel.add( bPartnerLabel,new GridBagConstraints( 0,0,1,1,0.0,0.0,GridBagConstraints.EAST,GridBagConstraints.NONE,new Insets( 5,5,5,5 ),0,0 ));
@@ -490,23 +512,17 @@ public abstract class VCreateFrom extends JDialog implements ActionListener,Tabl
     public void actionPerformed( ActionEvent e ) {
         log.config( "Action=" + e.getActionCommand());
 
-        // if (m_action)
-        // return;
-        // m_action = true;
-
-        // OK - Save
-
 		if (e.getSource().equals(automatico))
-					selectall();
-		//  OK - Save
+			selectall();
 		
-		if (e.getSource().equals(agrupacionporcupones))
-			filtrar(nroLote, (Boolean)agrupacionporcupones.getValue());
+		if (e.getSource().equals(grouped))
+			filtrar(nroLote, (Boolean)grouped.getValue());
 		
 		if (e.getSource().equals(nroLote))
-		//	filtrarPorNroDeLote((Integer)nroLote.getValue());
-			filtrar(nroLote, (Boolean)agrupacionporcupones.getValue());
+			filtrar(nroLote, (Boolean)grouped.getValue());
 
+		// OK
+		
         if( e.getActionCommand().equals( ConfirmPanel.A_OK )) {
         	doSave();
         }
@@ -521,17 +537,9 @@ public abstract class VCreateFrom extends JDialog implements ActionListener,Tabl
 
     }    // actionPerformed
 
-    protected void filtrar(VNumber nroLote2, Boolean agrupacionporcupones2) {
+    protected void filtrar(VString nroLote2, Boolean agrupacionporcupones2) {
     	//Acá filtra
 	};
-
-	protected void filtrarPorNroDeLote(Integer nrolote){
-    	//Acá filtra por número de lote
-    };
-
-    protected void agruparPorCupones(){
-    	//Acá agrupa por cupones
-    };
 
 	/**
      * Descripción de Método
@@ -703,7 +711,7 @@ public abstract class VCreateFrom extends JDialog implements ActionListener,Tabl
     	// directamente desde las cantidades de la línea (QtyOrdered, QtyDelivered, QtyInvoiced).
     	// Se quitó la diferenciación entre IsSOTrx Y o N debido a que MMatchPO actualiza
     	// las cantidades en las líneas de pedido tal como se hace para IsSOTrx = Y.
-		StringBuffer sql = helper.loadOrderQuery(getRemainingQtySQLLine(forInvoice, allowDeliveryReturns));
+		StringBuffer sql = getHelper().loadOrderQuery(getRemainingQtySQLLine(forInvoice, allowDeliveryReturns));
 
     	log.finer( sql.toString());
 
@@ -717,7 +725,7 @@ public abstract class VCreateFrom extends JDialog implements ActionListener,Tabl
 
     		while( rs.next()) {
     			OrderLine orderLine = new OrderLine();
-    			helper.loadOrderLine(p_order, orderLine, rs);
+    			getHelper().loadOrderLine(p_order, orderLine, rs);
     			// Agrega la línea a la lista solo si tiene cantidad pendiente o tiene asociado un producto de tipo Gasto.
     			if (beforeAddOrderLine(orderLine) 
     					&& (orderLine.remainingQty.compareTo(BigDecimal.ZERO) > 0 || orderLine.productType.equals("E"))) {
@@ -754,7 +762,7 @@ public abstract class VCreateFrom extends JDialog implements ActionListener,Tabl
 	 * @return la línea del sql que determina la cantidad a facturar
 	 */
     protected String getRemainingQtySQLLine(boolean forInvoice, boolean allowDeliveryReturns){
-    	return helper.getRemainingQtySQLLine(forInvoice, allowDeliveryReturns);
+    	return getHelper().getRemainingQtySQLLine(forInvoice, allowDeliveryReturns);
     }
     
     /**
@@ -870,7 +878,7 @@ public abstract class VCreateFrom extends JDialog implements ActionListener,Tabl
      * el filtro según sea necesario.
      */
     protected String getOrderFilter() {
-    	return helper.getOrderFilter(isForInvoice(), getIsSOTrx());
+    	return getHelper().getOrderFilter(isForInvoice(), getIsSOTrx());
     }
     
     /**

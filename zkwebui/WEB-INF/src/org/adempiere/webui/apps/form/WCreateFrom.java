@@ -15,6 +15,7 @@ import java.util.logging.Level;
 
 import org.adempiere.webui.apps.form.WCreateFromShipment.DocumentLineTableModelFromShipment;
 import org.adempiere.webui.component.Checkbox;
+import org.adempiere.webui.component.Combobox;
 import org.adempiere.webui.component.Grid;
 import org.adempiere.webui.component.GridFactory;
 import org.adempiere.webui.component.Label;
@@ -113,6 +114,7 @@ public abstract class WCreateFrom extends ADForm implements EventListener, Creat
 
     protected WCreateFrom( MTab mTab ) {
         log.info( mTab.toString());
+        getHelper();
         p_WindowNo = mTab.getWindowNo();
         p_mTab     = mTab;
 		window = new WCreateFromWindow(this, mTab.getWindowNo());
@@ -168,8 +170,12 @@ public abstract class WCreateFrom extends ADForm implements EventListener, Creat
     
     protected WStringEditor nroLote = new WStringEditor();
     
-    protected Checkbox agrupacionporcupones = new Checkbox();
+    protected Checkbox grouped = new Checkbox();
 
+    /** Tipo de origen para Create From Statement */
+    protected Combobox jbSourceTable;
+	protected Label jlTipo = new Label();
+    
     /** Descripción de Campos */
 
     private Label bPartnerLabel = new Label();
@@ -232,7 +238,18 @@ public abstract class WCreateFrom extends ADForm implements EventListener, Creat
 	protected Checkbox allInOut;
 	
     /** Helper para centralizar lógica de modelo */
-	protected CreateFromModel helper = new CreateFromModel();
+	private CreateFromModel helper;
+	
+	protected CreateFromModel createHelper(){
+    	return new CreateFromModel();
+    }
+    
+    protected CreateFromModel getHelper() {
+    	if (helper == null){ 
+    		helper = createHelper();
+    	}
+		return helper;	
+    }
 	
 	/** Perfil actual */
 	private MRole role;
@@ -254,7 +271,7 @@ public abstract class WCreateFrom extends ADForm implements EventListener, Creat
 
     private void zkInit() throws Exception {
         bankAccountLabel.setText( Msg.translate( Env.getCtx(),"C_BankAccount_ID" ));
-        nroLote.getLabel().setText("Nro de Lote");
+        nroLote.getLabel().setText(Msg.translate( Env.getCtx(),"CouponBatchNumber" ));
         nroLote.setValue("");
         nroLote.addValueChangeListener(new ValueChangeListener() {
 			@Override
@@ -262,13 +279,14 @@ public abstract class WCreateFrom extends ADForm implements EventListener, Creat
 				filtrar();
 			}
 		});
-        agrupacionporcupones.setText("Agrupación por cupones");
-        agrupacionporcupones.addActionListener(new EventListener() {
+        grouped.setText(Msg.getMsg(getCtx(), "DoGroup"));
+        grouped.addActionListener(new EventListener() {
 			@Override
 			public void onEvent(Event arg0) throws Exception {
 				filtrar();
 			}
         });
+        jlTipo.setText(Msg.getMsg(getCtx(),"Source"));
         bPartnerLabel.setText( Msg.getElement( Env.getCtx(),"C_BPartner_ID" ));
         orderLabel.setText( Msg.getElement( Env.getCtx(),"C_Order_ID",false ));
         invoiceLabel.setText( Msg.getElement( Env.getCtx(),"C_Invoice_ID",false ));

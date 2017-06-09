@@ -12,6 +12,7 @@ import java.util.logging.Level;
 import org.openXpertya.model.MBankStatement;
 import org.openXpertya.model.MBankStatementLine;
 import org.openXpertya.model.MPayment;
+import org.openXpertya.model.MRefList;
 import org.openXpertya.util.CLogger;
 import org.openXpertya.util.DB;
 import org.openXpertya.util.Env;
@@ -23,40 +24,7 @@ public class CreateFromStatementModel extends CreateFromModel {
 	// Logica en comun para la carga de cuentas
 	// =============================================================================================
 
-	/**
-	 * Consulta para carga de cuentas
-	 */
-	public StringBuffer loadBankAccountQuery() {
-        StringBuffer sql = new StringBuffer(); 
-        sql.append("SELECT ")
-           .append(   "p.DateTrx, ")
-           .append(   "p.C_Payment_ID, ")
-           .append(	  "p.DocumentNo, ")
-           .append(   "p.C_Currency_ID, ")
-           .append(   "c.ISO_Code, ")
-           .append(   "p.PayAmt, ")
-           .append(   "p.duedate, ")
-           .append(   "cp.tendertype, ")
-           .append(   "currencyConvert(p.PayAmt,p.C_Currency_ID,ba.C_Currency_ID,?,null,p.AD_Client_ID,p.AD_Org_ID) AS ConvertedAmt, ")
-           .append(   "bp.Name AS BPartnerName ")
-           
-           .append("FROM C_BankAccount ba ")
-           .append("INNER JOIN C_Payment_v p ON (p.C_BankAccount_ID=ba.C_BankAccount_ID) ")
-           .append("INNER JOIN C_Currency c ON (p.C_Currency_ID=c.C_Currency_ID) ")
-           .append("INNER JOIN C_BPartner bp ON (p.C_BPartner_ID=bp.C_BPartner_ID) ")
-           .append("INNER JOIN C_Payment cp ON (p.C_Payment_ID=cp.C_Payment_ID) ")
-           
-           .append("WHERE p.Processed='Y' ")
-           .append(  "AND p.IsReconciled='N' ")
-           .append(  "AND p.DocStatus IN ('CO','CL','RE') ")
-           .append(  "AND p.PayAmt<>0 ")
-           .append(  "AND p.C_BankAccount_ID=? ")
-           .append(  "AND NOT EXISTS ")
-           .append(      "(SELECT * FROM C_BankStatementLine l ")
-           // Voided Bank Statements have 0 StmtAmt
-           .append(       "WHERE p.C_Payment_ID=l.C_Payment_ID AND l.StmtAmt <> 0)");
-        return sql;
-	}
+	private CreateFromStatementData createFromData;
 	
 	
 	public void loadPayment(Payment payment, ResultSet rs) throws SQLException {
@@ -70,21 +38,24 @@ public class CreateFromStatementModel extends CreateFromModel {
         payment.convertedAmt = rs.getBigDecimal("ConvertedAmt");
         payment.bPartnerName = rs.getString("BPartnerName");
         payment.tenderType = rs.getString("tendertype");
+		payment.tenderTypeDescription = MRefList.getListName(ctx, MPayment.TENDERTYPE_AD_Reference_ID,
+				payment.tenderType);
 		if (!Util.isEmpty(payment.tenderType)
 				&& MPayment.TENDERTYPE_Check.equals(payment.tenderType)) {
 	        payment.dueDate=rs.getTimestamp("duedate");
 		}
+		payment.boletaDepositoID = rs.getInt("m_boletadeposito_id");
+		payment.boletaDepositoDocumentNo = rs.getString("boletadeposito_documentno");
+		payment.creditCardSettlementID = rs.getInt("c_creditcardsettlement_id");
+		payment.creditCardSettlementDocumentNo = rs.getString("creditcardsettlement_documentno");
 	}
 	
 	
-    public void save(int C_BankStatement_ID, String trxName, List<? extends SourceEntity> selectedSourceEntities, CreateFromPluginInterface handler, Integer nroLote) throws CreateFromSaveException {
-        log.config( "" );
-
-        // fixed values
+    public void save(int C_BankStatement_ID, String trxName, List<? extends SourceEntity> selectedSourceEntities, CreateFromPluginInterface handler) throws CreateFromSaveException {
+    	// fixed values
         MBankStatement bs = new MBankStatement( Env.getCtx(),C_BankStatement_ID, trxName);
-        log.config( bs.toString());
         
-        selectedSourceEntities= ungroup(selectedSourceEntities,trxName,C_BankStatement_ID,nroLote,bs.getStatementDate(),bs.getC_BankAccount_ID());
+        selectedSourceEntities= ungroup(selectedSourceEntities);
 
         // Lines
         for (SourceEntity sourceEntity : selectedSourceEntities) {
@@ -118,169 +89,111 @@ public class CreateFromStatementModel extends CreateFromModel {
         }        // for all rows
     }    // save
 
-	/**
-	 * Consulta para carga de cuentas
-	 */
-	public StringBuffer loadBankAccountQueryWithFilter() {
-        StringBuffer sql = new StringBuffer(); 
-        sql.append("SELECT ")
-           .append(   "p.DateTrx, ")
-           .append(   "p.C_Payment_ID, ")
-           .append(	  "p.DocumentNo, ")
-           .append(   "p.C_Currency_ID, ")
-           .append(   "c.ISO_Code, ")
-           .append(   "p.PayAmt, ")
-           .append(   "p.duedate, ")
-           .append(   "cp.tendertype, ")
-           .append(   "currencyConvert(p.PayAmt,p.C_Currency_ID,ba.C_Currency_ID,?,null,p.AD_Client_ID,p.AD_Org_ID) AS ConvertedAmt, ")
-           .append(   "bp.Name AS BPartnerName ")
-           
-           .append("FROM C_BankAccount ba ")
-           .append("INNER JOIN C_Payment p ON (p.C_BankAccount_ID=ba.C_BankAccount_ID) ")
-           .append("INNER JOIN C_Currency c ON (p.C_Currency_ID=c.C_Currency_ID) ")
-           .append("INNER JOIN C_BPartner bp ON (p.C_BPartner_ID=bp.C_BPartner_ID) ")
-           .append("INNER JOIN C_Payment cp ON (p.C_Payment_ID=cp.C_Payment_ID) ")
-        		   
-           .append("WHERE p.Processed='Y' ")
-           .append(  "AND p.IsReconciled='N' ")
-           .append(  "AND p.DocStatus IN ('CO','CL','RE') ")
-           .append(  "AND p.PayAmt<>0 ")
-           .append(  "AND p.C_BankAccount_ID=? ")
-           .append(  "AND p.couponbatchnumber=? ")
-           .append(  "AND NOT EXISTS ")
-           .append(      "(SELECT * FROM C_BankStatementLine l ")
-           // Voided Bank Statements have 0 StmtAmt
-           .append(       "WHERE p.C_Payment_ID=l.C_Payment_ID AND l.StmtAmt <> 0)");
-        return sql;
-	}
-	
-	/**
-	 * Consulta para carga de cuentas
-	 */
-	public StringBuffer loadBankAccountGrouped() {
-        StringBuffer sql = new StringBuffer(); 
-        sql.append("SELECT ")
-           .append(   "p.DateTrx, ")
-           .append(   "NULL AS C_Payment_ID, ")
-           .append(	  "NULL AS DocumentNo, ")
-           .append(   "p.C_Currency_ID, ")
-           .append(   "c.ISO_Code, ")
-           .append(   "p.duedate, ")
-           .append(   "cp.tendertype, ")
-           .append(   "SUM(p.PayAmt) as PayAmt , ")
-           .append(   "SUM(currencyConvert(p.PayAmt,p.C_Currency_ID,ba.C_Currency_ID,?,null,p.AD_Client_ID,p.AD_Org_ID)) AS ConvertedAmt, ")
-           .append(   "bp.Name AS BPartnerName ")
-           
-           .append("FROM C_BankAccount ba ")
-           .append("INNER JOIN C_Payment p ON (p.C_BankAccount_ID=ba.C_BankAccount_ID) ")
-           .append("INNER JOIN C_Currency c ON (p.C_Currency_ID=c.C_Currency_ID) ")
-           .append("INNER JOIN C_BPartner bp ON (p.C_BPartner_ID=bp.C_BPartner_ID) ")
-           .append("INNER JOIN C_Payment cp ON (p.C_Payment_ID=cp.C_Payment_ID) ")
-           
-           .append("WHERE p.Processed='Y' ")
-           .append(  "AND p.IsReconciled='N' ")
-           .append(  "AND p.DocStatus IN ('CO','CL','RE') ")
-           .append(  "AND p.PayAmt<>0 ")
-           .append(  "AND p.C_BankAccount_ID=? ")
-           .append(  "AND NOT EXISTS ")
-           .append(      "(SELECT * FROM C_BankStatementLine l ")
-           // Voided Bank Statements have 0 StmtAmt
-           .append(       "WHERE p.C_Payment_ID=l.C_Payment_ID AND l.StmtAmt <> 0) ")
-           .append(  "GROUP BY p.DateTrx,p.C_Currency_ID,ISO_Code,p.duedate, cp.tendertype, BPartnerName ");
-        return sql;
-	}
+    /**
+     * Datos en base al origen y los parámetros 
+     * @return lista de payments filtrados
+     */
+	public List<Payment> getData(){
+		List<Payment> data = new ArrayList<CreateFromModel.Payment>();
+		PreparedStatement pstmt = null;
+		ResultSet rs = null;
+		String sql = getCreateFromData().getQuery();
 
-	/**
-	 * Consulta para carga de cuentas
-	 */
-	public StringBuffer loadBankAccountWithFilterGrouped() {
-        StringBuffer sql = new StringBuffer(); 
-        sql.append("SELECT ")
-           .append(   "p.DateTrx, ")
-           .append(   "NULL AS C_Payment_ID, ")
-           .append(	  "NULL AS DocumentNo, ")
-           .append(   "p.C_Currency_ID, ")
-           .append(   "c.ISO_Code, ")
-           .append(   "p.duedate, ")
-           .append(   "cp.tendertype, ")
-           .append(   "SUM(p.PayAmt) as PayAmt , ")
-           .append(   "SUM(currencyConvert(p.PayAmt,p.C_Currency_ID,ba.C_Currency_ID,?,null,p.AD_Client_ID,p.AD_Org_ID)) AS ConvertedAmt, ")
-           .append(   "bp.Name AS BPartnerName ")
-           
-           .append("FROM C_BankAccount ba ")
-           .append("INNER JOIN C_Payment p ON (p.C_BankAccount_ID=ba.C_BankAccount_ID) ")
-           .append("INNER JOIN C_Currency c ON (p.C_Currency_ID=c.C_Currency_ID) ")
-           .append("INNER JOIN C_BPartner bp ON (p.C_BPartner_ID=bp.C_BPartner_ID) ")
-           .append("INNER JOIN C_Payment cp ON (p.C_Payment_ID=cp.C_Payment_ID) ")
-           
-           .append("WHERE p.Processed='Y' ")
-           .append(  "AND p.IsReconciled='N' ")
-           .append(  "AND p.DocStatus IN ('CO','CL','RE') ")
-           .append(  "AND p.PayAmt<>0 ")
-           .append(  "AND p.C_BankAccount_ID=? ")
-           .append(  "AND p.couponbatchnumber=? ")
-           .append(  "AND NOT EXISTS ")
-           .append(      "(SELECT * FROM C_BankStatementLine l ")
-           // Voided Bank Statements have 0 StmtAmt
-           .append(       "WHERE p.C_Payment_ID=l.C_Payment_ID AND l.StmtAmt <> 0)")
-           .append(  "GROUP BY p.DateTrx,p.C_Currency_ID,ISO_Code,p.duedate, cp.tendertype, BPartnerName ");
-        return sql;
+		try {
+			pstmt = DB.prepareStatement(sql, null, true);
+			int p = 1;
+			for (Object param : getCreateFromData().getSQLParams()) {
+				pstmt.setObject(p++, param);
+			}
+			rs = pstmt.executeQuery();
+
+			while (rs.next()) {
+				Payment payment = new Payment();
+				loadPayment(payment, rs);
+				data.add(payment);
+			}
+			
+		} catch (SQLException e) {
+			log.log(Level.SEVERE, sql.toString(), e);
+		} finally {
+			try {
+				if (rs != null)	rs.close();
+				if (pstmt != null) pstmt.close();
+			} catch (Exception e2) {
+				log.log(Level.SEVERE, sql.toString(), e2);
+			}
+		}
+		return data;
 	}
 	
+	public void setBankAccount(Integer bankAccountID){
+		getCreateFromData().setBankAccountID(bankAccountID);
+	}
+	
+	public void setCouponBatchNo(String couponBatchNo){
+		getCreateFromData().setCouponBatchNo(couponBatchNo);
+	}
+	
+	public void setGrouped(boolean grouped){
+		getCreateFromData().setGrouped(grouped);
+	}
+	
+	public void setStatementDate(Timestamp statementDate){
+		getCreateFromData().setStatementDate(statementDate);
+	}
+	
+	public boolean isAllowGrouped(){
+		return getCreateFromData().isAllowGrouped();
+	}
+	
+	public boolean isAllowCouponBatchNoFilter(){
+		return getCreateFromData().isAllowCouponBatchNoFilter();
+	}
     
-	private List<? extends SourceEntity> ungroup(
-			List<? extends SourceEntity> selectedSourceEntities, String trxName, int c_BankStatement_ID, Integer nroLote, Timestamp ts, int C_BanckAccount_ID)
-			{
-
+	private List<? extends SourceEntity> ungroup(List<? extends SourceEntity> selectedSourceEntities){
 		List<SourceEntity> selectedSourceEntitiesReturn = new ArrayList<SourceEntity>();
-		
-		for (SourceEntity sourceEntity : selectedSourceEntities) {
-			Payment payment = (Payment) sourceEntity;
-			if (payment.paymentID == 0) {
-				StringBuffer sql = null;
-				if (nroLote == null)
-					sql = loadBankAccountQuery();
-				else
-					sql = loadBankAccountQueryWithFilter();
-				sql.append(" AND p.datetrx = '" + payment.dateTrx +"'");
-				if (ts == null) {
-					ts = new Timestamp(System.currentTimeMillis());
+
+		// Se debe desagrupar cuando está agrupado
+		if(getCreateFromData().isAllowGrouped() && getCreateFromData().isGrouped()){
+			Timestamp minDateTrx = null, maxDateTrx = null;
+			
+			for (SourceEntity sourceEntity : selectedSourceEntities) {
+				Payment payment = (Payment) sourceEntity;
+				// Tomar los payments de las fechas seleccionadas
+				if(minDateTrx == null || minDateTrx.after(payment.dateTrx)){
+					minDateTrx = payment.dateTrx;
 				}
-
-				PreparedStatement pstmt = null;
-				ResultSet rs = null;
-
-				try {
-					pstmt = DB.prepareStatement(sql.toString());
-					pstmt.setTimestamp(1, ts);
-					pstmt.setInt(2, C_BanckAccount_ID);
-					if (nroLote != null)
-						pstmt.setString(3, nroLote.toString());
-					rs = pstmt.executeQuery();
-
-					while (rs.next()) {
-						Payment pay = new Payment();
-						loadPayment(pay, rs);
-						selectedSourceEntitiesReturn.add(pay);
-					}
-
-					rs.close();
-					pstmt.close();
-				} catch (SQLException e) {
-					log.log(Level.SEVERE, sql.toString(), e);
-				} finally {
-					try {
-						if (rs != null)
-							rs.close();
-						if (pstmt != null)
-							pstmt.close();
-					} catch (Exception e) {
-					}
+				if(maxDateTrx == null || maxDateTrx.before(payment.dateTrx)){
+					maxDateTrx = payment.dateTrx;
 				}
-			}else
-				selectedSourceEntitiesReturn.add(sourceEntity);
+			}
+			// Si hay fechas entonces hay datos seleccionados
+			if(minDateTrx != null || maxDateTrx != null){
+				// Se setea a false para que no agrupe
+				getCreateFromData().setGrouped(false);
+				getCreateFromData().setDateTrxFrom(minDateTrx);
+				getCreateFromData().setDateTrxTo(maxDateTrx);
+				selectedSourceEntitiesReturn.addAll(getData());
+			}
+			getCreateFromData().setGrouped(true);
+			getCreateFromData().setDateTrxFrom(null);
+			getCreateFromData().setDateTrxTo(null);
+		}
+		// Ya está desagrupado
+		else{
+			selectedSourceEntitiesReturn = (List<CreateFromModel.SourceEntity>)selectedSourceEntities;
 		}
 		return selectedSourceEntitiesReturn;
+	}
+
+
+	public CreateFromStatementData getCreateFromData() {
+		return createFromData;
+	}
+
+
+	public void setCreateFromData(CreateFromStatementData createFromData) {
+		this.createFromData = createFromData;
 	}
 
 }
