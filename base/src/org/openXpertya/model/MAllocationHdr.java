@@ -1351,10 +1351,6 @@ public class MAllocationHdr extends X_C_AllocationHdr implements DocAction, Curr
 			errorMsg = CLogger.retrieveErrorAsString();
 		if (errorMsg != null) 
 			throw new Exception("@VoidRetentionError@ (" + invoice.getDocumentNo() + "): " + errorMsg);
-		// Registro de los trabajos adicionales al anular el payment
-		if(isUpdateBPBalance()){
-			getAditionalWorks().putAll(invoice.getAditionalWorkResult());
-		}
     }
     
     
