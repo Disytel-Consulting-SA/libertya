@@ -167,7 +167,7 @@ public class MCreditCardSettlement extends X_C_CreditCardSettlement implements D
 		StringBuffer sql = new StringBuffer();
 
 		sql.append("SELECT  ");
-		sql.append("	ef.c_bankaccount_id ");
+		sql.append("	ef.C_BankAccount_Settlement_ID ");
 		sql.append("FROM  ");
 		sql.append("	" + MBPartner.Table_Name + " bp ");
 		sql.append("	INNER JOIN " + MEntidadFinanciera.Table_Name + " ef ON ef.c_bpartner_id = bp.c_bpartner_id ");
@@ -770,7 +770,13 @@ public class MCreditCardSettlement extends X_C_CreditCardSettlement implements D
 			// Tipo de Pago: Transferencia
 			payment.setTenderType(MPayment.TENDERTYPE_DirectDeposit);
 
-			payment.setC_BankAccount_ID(getBankAccountId(bpartner));
+			Integer bankAccountID = getBankAccountId(bpartner);
+			if(Util.isEmpty(bankAccountID, true)){
+				m_processMsg = Msg.getMsg(getCtx(), "SettlementBankAccountNotConfigured");
+				return DocAction.STATUS_Invalid;
+			}
+			
+			payment.setC_BankAccount_ID(bankAccountID);
 
 			boolean saveOk = true;
 
