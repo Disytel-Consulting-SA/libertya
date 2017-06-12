@@ -7,7 +7,7 @@ import java.math.*;
 import org.openXpertya.util.*;
 /** Modelo Generado por M_EntidadFinanciera
  *  @author Comunidad de Desarrollo Libertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
- *  @version  - 2017-03-01 12:34:23.997 */
+ *  @version  - 2017-06-12 12:10:21.254 */
 public class X_M_EntidadFinanciera extends org.openXpertya.model.PO
 {
 /** Constructor estándar */
@@ -96,6 +96,21 @@ Integer ii = (Integer)get_Value("C_BankAccount_ID");
 if (ii == null) return 0;
 return ii.intValue();
 }
+public static final int C_BANKACCOUNT_SETTLEMENT_ID_AD_Reference_ID = MReference.getReferenceID("C_BankAccount");
+/** Set Bank Account Settlement */
+public void setC_BankAccount_Settlement_ID (int C_BankAccount_Settlement_ID)
+{
+if (C_BankAccount_Settlement_ID <= 0) set_Value ("C_BankAccount_Settlement_ID", null);
+ else 
+set_Value ("C_BankAccount_Settlement_ID", new Integer(C_BankAccount_Settlement_ID));
+}
+/** Get Bank Account Settlement */
+public int getC_BankAccount_Settlement_ID() 
+{
+Integer ii = (Integer)get_Value("C_BankAccount_Settlement_ID");
+if (ii == null) return 0;
+return ii.intValue();
+}
 public static final int C_BPARTNER_ID_AD_Reference_ID = MReference.getReferenceID("C_BPartner (No Summary)");
 /** Set Business Partner .
 Identifies a Business Partner */
@@ -161,8 +176,8 @@ public static final String CREDITCARDTYPE_Discover = "N";
 Credit Card (Visa, MC, AmEx) */
 public void setCreditCardType (String CreditCardType)
 {
-if (CreditCardType.equals("D") || CreditCardType.equals("C") || CreditCardType.equals("P") || CreditCardType.equals("M") || CreditCardType.equals("V") || CreditCardType.equals("A") || CreditCardType.equals("N"));
- else throw new IllegalArgumentException ("CreditCardType Invalid value - " + CreditCardType + " - Reference = CREDITCARDTYPE_AD_Reference_ID - D - C - P - M - V - A - N");
+if (CreditCardType.equals("D") || CreditCardType.equals("C") || CreditCardType.equals("P") || CreditCardType.equals("M") || CreditCardType.equals("V") || CreditCardType.equals("A") || CreditCardType.equals("N") || ( refContainsValue("CORE-AD_Reference-149", CreditCardType) ) );
+ else throw new IllegalArgumentException ("CreditCardType Invalid value: " + CreditCardType + ".  Valid: " +  refValidOptions("CORE-AD_Reference-149") );
 if (CreditCardType == null) throw new IllegalArgumentException ("CreditCardType is mandatory");
 if (CreditCardType.length() > 20)
 {
@@ -221,8 +236,8 @@ public static final String FINANCINGSERVICE_FIRSTDATA = "FD";
 /** Set Financing Service */
 public void setFinancingService (String FinancingService)
 {
-if (FinancingService == null || FinancingService.equals("AM") || FinancingService.equals("VI") || FinancingService.equals("NA") || FinancingService.equals("FD"));
- else throw new IllegalArgumentException ("FinancingService Invalid value - " + FinancingService + " - Reference = FINANCINGSERVICE_AD_Reference_ID - AM - VI - NA - FD");
+if (FinancingService == null || FinancingService.equals("AM") || FinancingService.equals("VI") || FinancingService.equals("NA") || FinancingService.equals("FD") || ( refContainsValue("SAPI2CORE-AD_Reference-1010321-20170125094655", FinancingService) ) );
+ else throw new IllegalArgumentException ("FinancingService Invalid value: " + FinancingService + ".  Valid: " +  refValidOptions("SAPI2CORE-AD_Reference-1010321-20170125094655") );
 if (FinancingService != null && FinancingService.length() > 2)
 {
 log.warning("Length > 2 - truncated");

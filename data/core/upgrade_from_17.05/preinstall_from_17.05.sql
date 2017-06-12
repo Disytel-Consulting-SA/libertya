@@ -76,3 +76,6 @@ $BODY$
   COST 100;
 ALTER FUNCTION paymentavailable(integer, timestamp without time zone)
   OWNER TO libertya;
+
+--20170612-1200 Nueva columna para configurar la cuenta bancaria utilizada en el payment generado por liquidaciones
+update ad_system set dummy = (SELECT addcolumnifnotexists('m_entidadfinanciera','C_BankAccount_Settlement_ID','integer'));
