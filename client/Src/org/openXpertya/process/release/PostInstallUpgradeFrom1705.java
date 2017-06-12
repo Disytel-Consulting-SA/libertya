@@ -19,6 +19,10 @@ public class PostInstallUpgradeFrom1705 extends PluginPostInstallProcess {
 	protected final static String BOLETADEPOSITOCHECKS_JASPER_REPORT_UID = "CORE-AD_Process-1010575";
 	protected final static String BOLETADEPOSITOCHECKS_JASPER_REPORT_FILENAME = "BoletaDepositoChecks.jrxml";
 	
+	/** UID del Listado de Extractos Bancarios */
+	protected final static String BANKSTATEMENTLIST_JASPER_REPORT_UID = "CORE-AD_Process-1010576";
+	protected final static String BANKSTATEMENTLIST_JASPER_REPORT_FILENAME = "BankStatementReport.jrxml";
+	
 	@Override
 	protected String doIt() throws Exception {
 		super.doIt();
@@ -63,6 +67,17 @@ public class PostInstallUpgradeFrom1705 extends PluginPostInstallProcess {
 						.readBinaryFromJar(
 								jarFileURL,
 								getBinaryFileURL(BOLETADEPOSITOCHECKS_JASPER_REPORT_FILENAME)));
+		
+		// Listado de Extractos Bancarios
+		MProcess.addAttachment(
+				get_TrxName(),
+				getCtx(),
+				BANKSTATEMENTLIST_JASPER_REPORT_UID,
+				BANKSTATEMENTLIST_JASPER_REPORT_FILENAME,
+				JarHelper
+						.readBinaryFromJar(
+								jarFileURL,
+								getBinaryFileURL(BANKSTATEMENTLIST_JASPER_REPORT_FILENAME)));
 		
 		return " ";
 	}
