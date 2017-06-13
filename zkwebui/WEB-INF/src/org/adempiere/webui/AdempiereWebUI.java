@@ -43,6 +43,7 @@ import org.openXpertya.model.MUser;
 import org.openXpertya.util.CLogger;
 import org.openXpertya.util.Env;
 import org.openXpertya.util.Language;
+import org.openXpertya.util.PGStatementUtils;
 import org.zkoss.zk.au.Command;
 import org.zkoss.zk.ui.Component;
 import org.zkoss.zk.ui.Executions;
@@ -301,6 +302,7 @@ public class AdempiereWebUI extends Window implements EventListener, IWebClient
 
     	MSession mSession = MSession.get(Env.getCtx(), false);
     	if (mSession != null) {
+    		PGStatementUtils.getInstance().removeAllStatements(mSession.getAD_Session_ID());    		
     		mSession.logout();
     	}
 

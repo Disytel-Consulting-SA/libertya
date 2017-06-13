@@ -4,6 +4,13 @@
 <![CDATA[
 	import org.openXpertya.util.Msg;
 	import org.openXpertya.util.Env;
+	import org.openXpertya.model.MSession;
+	import org.openXpertya.util.PGStatementUtils;
+	
+	MSession mSession = MSession.get(Env.getCtx(), false);
+	if (mSession != null) {
+		PGStatementUtils.getInstance().removeAllStatements(mSession.getAD_Session_ID());
+	}
 	
 	var continueText = Msg.getMsg(Env.getCtx(),"continue");
 ]]>

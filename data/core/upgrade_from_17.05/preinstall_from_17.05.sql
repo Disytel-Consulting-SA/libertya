@@ -79,3 +79,7 @@ ALTER FUNCTION paymentavailable(integer, timestamp without time zone)
 
 --20170612-1200 Nueva columna para configurar la cuenta bancaria utilizada en el payment generado por liquidaciones
 update ad_system set dummy = (SELECT addcolumnifnotexists('m_entidadfinanciera','C_BankAccount_Settlement_ID','integer'));
+
+--20170613-1519 Creacion de tabla de bajo nivel para seguimiento de eventuales queries/conexiones relacioandas con informes canditadas a ser canceladas en caso de quedar "huerfanas" del cliente o servidor LY 
+create table ad_keepalive (ad_session_id int, pid int, created timestamp, updated timestamp);
+
