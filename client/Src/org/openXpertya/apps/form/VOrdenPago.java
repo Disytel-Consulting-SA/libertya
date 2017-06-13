@@ -3738,7 +3738,7 @@ public class VOrdenPago extends CPanel implements FormPanel,ActionListener,Table
 			m_nodoRetenciones.removeAllChildren();
 			
 			for (RetencionProcessor r : m_model.m_retenciones)
-				m_nodoRetenciones.add(new MyTreeNode(r.getRetencionTypeName() + ": " + numberFormat( r.getAmount() ), r, true));
+				m_nodoRetenciones.add(new MyTreeNode(r.getRetencionSchemaName() + ": " + numberFormat( r.getAmount() ), r, true));
 		}
 		
 		// Agrego los medios de pago

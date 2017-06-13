@@ -3075,7 +3075,7 @@ public class WOrdenPago extends ADForm implements ValueChangeListener, TableMode
 			m_nodoRetenciones.removeAllChildren();
 			
 			for (RetencionProcessor r : m_model.m_retenciones)
-				m_nodoRetenciones.add(new MyTreeNode(r.getRetencionTypeName() + ": " + numberFormat( r.getAmount() ), r, true));
+				m_nodoRetenciones.add(new MyTreeNode(r.getRetencionSchemaName() + ": " + numberFormat( r.getAmount() ), r, true));
 		}
 		
 		// Agrego los medios de pago
