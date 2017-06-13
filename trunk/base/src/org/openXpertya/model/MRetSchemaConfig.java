@@ -78,6 +78,7 @@ public class MRetSchemaConfig extends X_C_RetSchema_Config {
 		// que solo tienen un valor.
 		if(Util.isEmpty(getParamType())){
 			setParamType(PARAMTYPE_Valor);
+			this.setIs_Range(false);
 			setValor("");
 		}
 		if(getParamType().equals(PARAMTYPE_Rango)) {
