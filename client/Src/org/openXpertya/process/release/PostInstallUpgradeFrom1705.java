@@ -23,6 +23,10 @@ public class PostInstallUpgradeFrom1705 extends PluginPostInstallProcess {
 	protected final static String BANKSTATEMENTLIST_JASPER_REPORT_UID = "CORE-AD_Process-1010576";
 	protected final static String BANKSTATEMENTLIST_JASPER_REPORT_FILENAME = "BankStatementReport.jrxml";
 	
+	/** UID del Reporte de Detalle de Cobros/Pagos sin Conciliar */
+	protected final static String UNRECONCILEDPAYMENTSDETAILED_JASPER_REPORT_UID = "CORE-AD_Process-1010577";
+	protected final static String UNRECONCILEDPAYMENTSDETAILED_JASPER_REPORT_FILENAME = "BankStatementReport.jrxml";
+	
 	@Override
 	protected String doIt() throws Exception {
 		super.doIt();
@@ -78,6 +82,17 @@ public class PostInstallUpgradeFrom1705 extends PluginPostInstallProcess {
 						.readBinaryFromJar(
 								jarFileURL,
 								getBinaryFileURL(BANKSTATEMENTLIST_JASPER_REPORT_FILENAME)));
+		
+		// Reporte de Detalle de Cobros/Pagos sin Conciliar
+		MProcess.addAttachment(
+				get_TrxName(),
+				getCtx(),
+				UNRECONCILEDPAYMENTSDETAILED_JASPER_REPORT_UID,
+				UNRECONCILEDPAYMENTSDETAILED_JASPER_REPORT_FILENAME,
+				JarHelper
+						.readBinaryFromJar(
+								jarFileURL,
+								getBinaryFileURL(UNRECONCILEDPAYMENTSDETAILED_JASPER_REPORT_FILENAME)));
 		
 		return " ";
 	}
