@@ -14,6 +14,7 @@ import org.openXpertya.model.MClientInfo;
 import org.openXpertya.model.MConversionRate;
 import org.openXpertya.model.MCurrency;
 import org.openXpertya.model.X_T_EstadoDeCuenta;
+import org.openXpertya.util.CPreparedStatement;
 import org.openXpertya.util.DB;
 import org.openXpertya.util.Env;
 
@@ -366,7 +367,8 @@ public class EstadoDeCuentaProcess extends SvrProcess {
 			")":"") +
 			"	ORDER BY bpartner, dateacct  ");
 		
-		pstmt = DB.prepareStatement(query.toString(), get_TrxName(), true);			
+		pstmt = DB.prepareStatement(query.toString(), get_TrxName(), true);
+		((CPreparedStatement)pstmt).setUseKeepAlive(true);
 		ResultSet rs = pstmt.executeQuery();
 		
 		int bPartner = -1;

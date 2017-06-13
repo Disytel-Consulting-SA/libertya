@@ -40,6 +40,7 @@ import org.adempiere.webui.util.ServerPushTemplate;
 import org.adempiere.webui.util.UserPreference;
 import org.openXpertya.model.MGoal;
 import org.openXpertya.model.MMenu;
+import org.openXpertya.model.MSession;
 import org.openXpertya.model.M_Column;
 import org.openXpertya.model.X_AD_Menu;
 import org.openXpertya.model.X_PA_DashboardContent;
@@ -47,6 +48,7 @@ import org.openXpertya.util.CLogger;
 import org.openXpertya.util.DB;
 import org.openXpertya.util.Env;
 import org.openXpertya.util.Msg;
+import org.openXpertya.util.PGStatementUtils;
 import org.zkoss.zk.au.out.AuScript;
 import org.zkoss.zk.ui.Component;
 import org.zkoss.zk.ui.Executions;
@@ -423,6 +425,16 @@ public class DefaultDesktop extends TabbedDesktop implements MenuListener, Seria
 	}
 
 	public void updateUI() {
+		/* 	Este metodo se ejecuta periódicamente para refrescar la UI del desktop.  Dado que actualmente la ejecucion de informes es 
+		 *  sincronica, si el usuario cierra la pestaña del navegador durante la ejecucion de un informe y posteriormente la vuelve  
+		 *  a abrir, todas las conexiones relacionadas con el informe de la sesión que lo disparó deben finalizar.  Esto evita dejar  
+		 *  ejecutando queries pesadas en el servidor de base de datos que ya no son necesarias.
+		 */
+		MSession mSession = MSession.get(Env.getCtx(), false);
+    	if (mSession != null) {
+    		PGStatementUtils.getInstance().removeAllStatements(mSession.getAD_Session_ID());
+    	}
+    	
 		int total = noOfNotice + noOfRequest + noOfWorkflow;
 		windowContainer.setTabTitle(0, Msg.getMsg(Env.getCtx(), "Home").replaceAll("&", "")
 				+ " (" + total + ")",

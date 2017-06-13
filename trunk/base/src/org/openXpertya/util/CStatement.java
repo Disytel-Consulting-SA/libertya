@@ -33,6 +33,7 @@ import javax.sql.RowSet;
 import org.openXpertya.db.BaseDatosOXP;
 import org.openXpertya.db.CConnection;
 import org.openXpertya.interfaces.Server;
+import org.openXpertya.model.MSession;
 
 /**
  * Descripción de Clase
@@ -44,6 +45,11 @@ import org.openXpertya.interfaces.Server;
 
 public class CStatement implements Statement {
 
+	/**
+	 * Flag para especificar si el statement debe ser mantenido en la tabla de conexiones keepalive
+	 */
+	protected boolean useKeepAlive = false;
+	
     /**
      * Constructor de la clase ...
      *
@@ -137,8 +143,16 @@ public class CStatement implements Statement {
 
         p_vo.setSql( DB.getDatabase().convertStatement( sql0 ));
 
+        
         if( p_stmt != null ) {    // local
-            return p_stmt.executeQuery( p_vo.getSql());
+        	try {
+        		if (useKeepAlive)
+        			PGStatementUtils.getInstance().addStatement(MSession.get(Env.getCtx(), false).getAD_Session_ID(), p_stmt);
+            	return p_stmt.executeQuery( p_vo.getSql());
+        	} finally {
+        		if (useKeepAlive)
+        			PGStatementUtils.getInstance().removeStatement(MSession.get(Env.getCtx(), false).getAD_Session_ID(), p_stmt);
+        	}
         }
 
         // Client -> remote sever
@@ -170,8 +184,14 @@ public class CStatement implements Statement {
         log.warning( "execute locally" );
 
         Statement stmt = local_getStatement( false,null );    // shared connection
-
-        return stmt.executeQuery( p_vo.getSql());
+        try {
+        	if (useKeepAlive)
+    			PGStatementUtils.getInstance().addStatement(MSession.get(Env.getCtx(), false).getAD_Session_ID(), stmt);
+        	return stmt.executeQuery( p_vo.getSql());
+        } finally {
+        	if (useKeepAlive)
+    			PGStatementUtils.getInstance().removeStatement(MSession.get(Env.getCtx(), false).getAD_Session_ID(), stmt);
+        }
     }    // executeQuery
 
     /**
@@ -1106,6 +1126,14 @@ public class CStatement implements Statement {
 	public boolean isCloseOnCompletion() throws SQLException {
 		// TODO Auto-generated method stub
 		return false;
+	}
+
+	public boolean isUseKeepAlive() {
+		return useKeepAlive;
+	}
+
+	public void setUseKeepAlive(boolean useKeepAlive) {
+		this.useKeepAlive = useKeepAlive;
 	}
 }    // CStatement
 
