@@ -448,6 +448,11 @@ public class LaunchOrdenPago extends SvrProcess {
 	 * recibo recibido por parámetro.
 	 */
 	private String get_Retencion_Invoices(MAllocationHdr allocation) {
+		// Si es OPA o RCA no posee comprobantes
+		if(allocation.getAllocationType().equals(MAllocationHdr.ALLOCATIONTYPE_AdvancedCustomerReceipt) 
+				|| allocation.getAllocationType().equals(MAllocationHdr.ALLOCATIONTYPE_AdvancedPaymentOrder)){
+			return null;
+		}
 		try {
 			PreparedStatement stmt = DB
 					.prepareStatement("SELECT DISTINCT factura FROM C_Allocation_Detail_V WHERE C_AllocationHdr_ID = ? ORDER BY factura DESC");

@@ -6,13 +6,13 @@
 		 columnCount="1"
 		 printOrder="Vertical"
 		 orientation="Portrait"
-		 pageWidth="680"
-		 pageHeight="2000"
-		 columnWidth="620"
+		 pageWidth="595"
+		 pageHeight="842"
+		 columnWidth="535"
 		 columnSpacing="0"
 		 leftMargin="30"
 		 rightMargin="30"
-		 topMargin="39"
+		 topMargin="20"
 		 bottomMargin="20"
 		 whenNoDataType="NoPages"
 		 isTitleNewPage="false"
@@ -346,13 +346,13 @@
 			</band>
 		</pageFooter>
 		<summary>
-			<band height="939"  isSplitAllowed="true" >
+			<band height="616"  isSplitAllowed="true" >
 				<staticText>
 					<reportElement
 						x="0"
-						y="425"
+						y="354"
 						width="535"
-						height="29"
+						height="21"
 						key="staticText-4"
 						positionType="Float"/>
 					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
@@ -364,7 +364,7 @@
 				<textField isStretchWithOverflow="false" isBlankWhenNull="false" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
 						x="0"
-						y="454"
+						y="376"
 						width="535"
 						height="18"
 						key="textField"
@@ -378,9 +378,9 @@
 				<subreport  isUsingCache="true">
 					<reportElement
 						x="0"
-						y="294"
+						y="260"
 						width="535"
-						height="30"
+						height="22"
 						key="subreport-1"
 						positionType="Float"/>
 					<dataSourceExpression><![CDATA[$P{SUBREPORT_CHECKS_DATASOURCE}]]></dataSourceExpression>
@@ -389,9 +389,9 @@
 				<subreport  isUsingCache="true">
 					<reportElement
 						x="0"
-						y="372"
+						y="313"
 						width="535"
-						height="34"
+						height="22"
 						key="subreport-2"
 						positionType="Float"/>
 					<dataSourceExpression><![CDATA[$P{SUBREPORT_OTHER_PAYMENTS_DATASOURCE}]]></dataSourceExpression>
@@ -401,7 +401,7 @@
 					<reportElement
 						mode="Transparent"
 						x="0"
-						y="58"
+						y="53"
 						width="535"
 						height="30"
 						key="subreport-3"
@@ -435,8 +435,8 @@
 				<elementGroup><!--  Start: 1 !-->
 				<textField isStretchWithOverflow="false" isBlankWhenNull="false" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
-						x="86"
-						y="99"
+						x="104"
+						y="94"
 						width="214"
 						height="24"
 						key="textField-2"
@@ -449,8 +449,8 @@
 				</textField>
 				<textField isStretchWithOverflow="false" pattern="##0.00" isBlankWhenNull="false" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
-						x="300"
-						y="99"
+						x="318"
+						y="94"
 						width="85"
 						height="24"
 						key="textField-3"
@@ -463,8 +463,8 @@
 				</textField>
 				<staticText>
 					<reportElement
-						x="86"
-						y="123"
+						x="104"
+						y="118"
 						width="214"
 						height="24"
 						key="staticText-8"
@@ -477,8 +477,8 @@
 				</staticText>
 				<textField isStretchWithOverflow="false" pattern="##0.00" isBlankWhenNull="false" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
-						x="300"
-						y="123"
+						x="318"
+						y="118"
 						width="85"
 						height="24"
 						key="textField-4"
@@ -491,8 +491,8 @@
 				</textField>
 				<staticText>
 					<reportElement
-						x="86"
-						y="147"
+						x="104"
+						y="142"
 						width="214"
 						height="24"
 						key="staticText-9"
@@ -505,8 +505,8 @@
 				</staticText>
 				<textField isStretchWithOverflow="false" pattern="##0.00" isBlankWhenNull="false" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
-						x="300"
-						y="147"
+						x="318"
+						y="142"
 						width="84"
 						height="24"
 						key="textField-5"
@@ -521,9 +521,9 @@
 				<staticText>
 					<reportElement
 						x="0"
-						y="192"
+						y="174"
 						width="535"
-						height="24"
+						height="17"
 						key="staticText-10"
 						positionType="Float"/>
 					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
@@ -535,9 +535,9 @@
 				<staticText>
 					<reportElement
 						x="0"
-						y="216"
+						y="191"
 						width="535"
-						height="73"
+						height="65"
 						key="staticText-11"
 						positionType="Float"/>
 					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
@@ -549,9 +549,9 @@
 				<staticText>
 					<reportElement
 						x="0"
-						y="343"
+						y="288"
 						width="535"
-						height="24"
+						height="19"
 						key="staticText-12"
 						positionType="Float"/>
 					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
@@ -562,8 +562,8 @@
 				</staticText>
 				<line direction="TopDown">
 					<reportElement
-						x="86"
-						y="147"
+						x="104"
+						y="142"
 						width="299"
 						height="0"
 						forecolor="#CCCCCC"
@@ -573,8 +573,8 @@
 				</line>
 				<line direction="TopDown">
 					<reportElement
-						x="86"
-						y="149"
+						x="104"
+						y="144"
 						width="299"
 						height="0"
 						forecolor="#CCCCCC"
@@ -586,8 +586,8 @@
 					<reportElement
 						mode="Opaque"
 						x="0"
-						y="470"
-						width="620"
+						y="401"
+						width="535"
 						height="0"
 						key="element-1"
 						isRemoveLineWhenBlank="true">
@@ -597,9 +597,9 @@
 				<subreport  isUsingCache="true">
 					<reportElement
 						x="0"
-						y="472"
-						width="595"
-						height="47"
+						y="404"
+						width="535"
+						height="22"
 						key="subreport-4"
 						isRemoveLineWhenBlank="true">
 							<printWhenExpression><![CDATA[new Boolean($P{SUBREPORT_COMPROBANTE_RETENCION_DATASOURCE_1}!=null && $P{PRINT_RETENCIONES}.equals("Y"))]]></printWhenExpression>
@@ -722,9 +722,9 @@
 					<reportElement
 						mode="Transparent"
 						x="0"
-						y="535"
-						width="595"
-						height="47"
+						y="433"
+						width="535"
+						height="22"
 						key="subreport-5"
 						isRemoveLineWhenBlank="true">
 							<printWhenExpression><![CDATA[new Boolean($P{SUBREPORT_COMPROBANTE_RETENCION_DATASOURCE_2}!=null && $P{PRINT_RETENCIONES}.equals("Y"))]]></printWhenExpression>
@@ -846,8 +846,8 @@
 				<break>
 					<reportElement
 						x="0"
-						y="528"
-						width="620"
+						y="430"
+						width="535"
 						height="0"
 						key="element-2"
 						isRemoveLineWhenBlank="true">
@@ -857,8 +857,8 @@
 				<break>
 					<reportElement
 						x="0"
-						y="590"
-						width="620"
+						y="459"
+						width="535"
 						height="0"
 						key="element-3"
 						isRemoveLineWhenBlank="true">
@@ -868,9 +868,9 @@
 				<subreport  isUsingCache="true">
 					<reportElement
 						x="0"
-						y="598"
-						width="595"
-						height="47"
+						y="463"
+						width="535"
+						height="22"
 						key="subreport-6"
 						isRemoveLineWhenBlank="true">
 							<printWhenExpression><![CDATA[new Boolean($P{SUBREPORT_COMPROBANTE_RETENCION_DATASOURCE_3}!=null && $P{PRINT_RETENCIONES}.equals("Y"))]]></printWhenExpression>
@@ -992,9 +992,9 @@
 				<subreport  isUsingCache="true">
 					<reportElement
 						x="0"
-						y="726"
-						width="595"
-						height="47"
+						y="527"
+						width="535"
+						height="22"
 						key="subreport-7"
 						isRemoveLineWhenBlank="true">
 							<printWhenExpression><![CDATA[new Boolean($P{SUBREPORT_COMPROBANTE_RETENCION_DATASOURCE_5}!=null && $P{PRINT_RETENCIONES}.equals("Y"))]]></printWhenExpression>
@@ -1116,8 +1116,8 @@
 				<break>
 					<reportElement
 						x="0"
-						y="718"
-						width="620"
+						y="521"
+						width="535"
 						height="0"
 						key="element-4"
 						isRemoveLineWhenBlank="true">
@@ -1127,9 +1127,9 @@
 				<subreport  isUsingCache="true">
 					<reportElement
 						x="0"
-						y="663"
-						width="595"
-						height="47"
+						y="495"
+						width="535"
+						height="22"
 						key="subreport-8"
 						isRemoveLineWhenBlank="true">
 							<printWhenExpression><![CDATA[new Boolean($P{SUBREPORT_COMPROBANTE_RETENCION_DATASOURCE_4}!=null)]]></printWhenExpression>
@@ -1251,8 +1251,8 @@
 				<break>
 					<reportElement
 						x="0"
-						y="656"
-						width="620"
+						y="490"
+						width="535"
 						height="0"
 						key="element-5"
 						isRemoveLineWhenBlank="true">
@@ -1262,9 +1262,9 @@
 				<subreport  isUsingCache="true">
 					<reportElement
 						x="0"
-						y="847"
-						width="595"
-						height="47"
+						y="592"
+						width="535"
+						height="22"
 						key="subreport-9"
 						isRemoveLineWhenBlank="true">
 							<printWhenExpression><![CDATA[new Boolean($P{SUBREPORT_COMPROBANTE_RETENCION_DATASOURCE_7} != null && $P{PRINT_RETENCIONES}.equals("Y"))]]></printWhenExpression>
@@ -1386,8 +1386,8 @@
 				<break>
 					<reportElement
 						x="0"
-						y="839"
-						width="620"
+						y="586"
+						width="535"
 						height="0"
 						key="element-6"
 						isRemoveLineWhenBlank="true">
@@ -1397,9 +1397,9 @@
 				<subreport  isUsingCache="true">
 					<reportElement
 						x="0"
-						y="784"
-						width="595"
-						height="47"
+						y="559"
+						width="535"
+						height="22"
 						key="subreport-10"
 						isRemoveLineWhenBlank="true">
 							<printWhenExpression><![CDATA[new Boolean($P{SUBREPORT_COMPROBANTE_RETENCION_DATASOURCE_6}!=null && $P{PRINT_RETENCIONES}.equals("Y"))]]></printWhenExpression>
@@ -1521,8 +1521,8 @@
 				<break>
 					<reportElement
 						x="0"
-						y="777"
-						width="620"
+						y="554"
+						width="535"
 						height="0"
 						key="element-7"
 						isRemoveLineWhenBlank="true">
