@@ -196,6 +196,7 @@ public class Waiting extends CDialog implements ActionListener {
         
         cancel.addActionListener(this);
        	mainPanel.add( cancel,BorderLayout.SOUTH);
+       	cancel.setVisible(false);
 
         
 
