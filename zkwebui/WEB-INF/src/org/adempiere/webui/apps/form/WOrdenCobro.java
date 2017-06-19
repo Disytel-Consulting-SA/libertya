@@ -1494,7 +1494,8 @@ public class WOrdenCobro extends WOrdenPago {
 		// Actualizo el cargo de la organización para facturas vencidas
 		updateOverdueInvoicesCharge();
 		BigDecimal total = getModel().getSumaTotalPagarFacturas();
-		txtTotalPagar1.setValue(numberFormat(total));
+		txtTotalPagar1.setValue(total);
+		txtTotalPagar1.getComponent().setText(numberFormat(total));
 	}
 
     protected void updateCustomPaymentsTabsState(){
