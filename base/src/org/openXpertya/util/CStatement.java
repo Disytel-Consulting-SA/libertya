@@ -26,6 +26,7 @@ import java.sql.SQLWarning;
 import java.sql.Statement;
 import java.sql.Timestamp;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.logging.Level;
 
 import javax.sql.RowSet;
@@ -33,7 +34,9 @@ import javax.sql.RowSet;
 import org.openXpertya.db.BaseDatosOXP;
 import org.openXpertya.db.CConnection;
 import org.openXpertya.interfaces.Server;
+import org.openXpertya.model.MPreference;
 import org.openXpertya.model.MSession;
+import org.openXpertya.plugin.common.PluginUtils;
 
 /**
  * Descripción de Clase
@@ -45,10 +48,14 @@ import org.openXpertya.model.MSession;
 
 public class CStatement implements Statement {
 
+	public static final String STATEMENT_KEEP_ALIVE_ACTIVE_PREFERENCE_KEY = "STATEMENT_KEEP_ALIVE_ACTIVE";
+	
 	/**
-	 * Flag para especificar si el statement debe ser mantenido en la tabla de conexiones keepalive
+	 * Flag para especificar si el statement debe ser mantenido en la tabla de conexiones keepalive.  Todo informe (Jasper o del reporteador interno)
+	 * nace desde ProcessCtl.run, con lo cual se consideran estos casos como los necesarios para seguimiento de KeepAlive. Adicionalmente es posible
+	 * forzar el flag a true o false segun se considere necesario.
 	 */
-	protected boolean useKeepAlive = false;
+	protected boolean useKeepAlive = !PluginUtils.isInstallingPlugin() && Arrays.toString(Thread.currentThread().getStackTrace()).contains("org.openXpertya.apps.ProcessCtl.run") && "Y".equals(MPreference.GetCustomPreferenceValue(STATEMENT_KEEP_ALIVE_ACTIVE_PREFERENCE_KEY));
 	
     /**
      * Constructor de la clase ...
