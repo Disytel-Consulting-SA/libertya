@@ -50,8 +50,9 @@ public abstract class QueryDataSource implements OXPJasperDataSource {
 	 */
 	protected abstract Object[] getParameters();
 	
+	protected PreparedStatement pstmt = null;
+	
 	public void loadData() throws Exception {
-		PreparedStatement pstmt = null;
 		ResultSet rs = null;
 		try{
 			// Se crea la consulta y se asignan los parámetros.
@@ -139,4 +140,10 @@ public abstract class QueryDataSource implements OXPJasperDataSource {
 	protected boolean isQueryNoConvert(){
 		return false;
 	}
+
+	public PreparedStatement getPstmt() {
+		return pstmt;
+	}
+	
+	
 }

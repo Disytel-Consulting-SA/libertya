@@ -820,6 +820,8 @@ public class DataEngine {
         return tr;
     }    // getTableReference
 
+
+    PreparedStatement pstmt;
     /**
      * Descripción de Método
      *
@@ -827,7 +829,6 @@ public class DataEngine {
      * @param pd
      * @param format
      */
-
     private void loadPrintData( PrintData pd,MPrintFormat format ) {
 
         // Translate Spool Output
@@ -852,7 +853,7 @@ public class DataEngine {
         try {
         	log.info("SQL: " + pd.getSQL());
         	
-            PreparedStatement pstmt = DB.prepareStatement( pd.getSQL());
+            pstmt = DB.prepareStatement(pd.getSQL());
             ResultSet         rs    = pstmt.executeQuery();
 
             // Row Loop

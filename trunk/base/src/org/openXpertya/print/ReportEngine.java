@@ -92,6 +92,10 @@ import org.openXpertya.util.Util;
 
 public class ReportEngine implements PrintServiceAttributeListener {
 
+	public ReportEngine( Properties ctx,MPrintFormat pf,MQuery query,PrintInfo info ) {
+		this(ctx, pf, query, info, true);
+	}
+	
     /**
      * Constructor de la clase ...
      *
@@ -102,7 +106,7 @@ public class ReportEngine implements PrintServiceAttributeListener {
      * @param info
      */
 
-    public ReportEngine( Properties ctx,MPrintFormat pf,MQuery query,PrintInfo info ) {
+    public ReportEngine( Properties ctx,MPrintFormat pf,MQuery query,PrintInfo info, boolean setQuery) {
         if( pf == null ) {
             throw new IllegalArgumentException( "ReportEngine - no PrintFormat" );
         }
@@ -114,7 +118,9 @@ public class ReportEngine implements PrintServiceAttributeListener {
 
         m_printFormat = pf;
         m_info        = info;
-        setQuery( query );    // loads Data
+        m_query		  = query;
+        if (setQuery)
+        	setQuery( m_query );    // loads Data
     }                         // ReportEngine
 
     /** Descripción de Campos */
@@ -177,6 +183,10 @@ public class ReportEngine implements PrintServiceAttributeListener {
         }
     }    // setPrintFormat
 
+    public void setQuery() {
+    	setQuery(null);
+    }
+    
     /**
      * Descripción de Método
      *
@@ -185,9 +195,10 @@ public class ReportEngine implements PrintServiceAttributeListener {
      */
 
     public void setQuery( MQuery query ) {
-        m_query = query;
+    	if (query!=null)
+    		m_query = query;
 
-        if( query == null ) {
+        if( m_query == null ) {
             return;
         }
 
@@ -215,6 +226,8 @@ public class ReportEngine implements PrintServiceAttributeListener {
         return m_query;
     }    // getQuery
 
+    
+    public DataEngine de;
     /**
      * Descripción de Método
      *
@@ -225,7 +238,7 @@ public class ReportEngine implements PrintServiceAttributeListener {
             return;
         }
 
-        DataEngine de = new DataEngine( m_printFormat.getLanguage());
+        de = new DataEngine( m_printFormat.getLanguage());
 
         setPrintData( de.getPrintData( m_ctx,m_printFormat,m_query ));
 
@@ -1373,6 +1386,11 @@ public class ReportEngine implements PrintServiceAttributeListener {
         return false;
     }    // createPS
 
+    
+    static public ReportEngine get( Properties ctx,ProcessInfo pi ) {
+    	return get(ctx, pi, true);
+    }
+    
     /**
      * Descripción de Método
      *
@@ -1383,7 +1401,7 @@ public class ReportEngine implements PrintServiceAttributeListener {
      * @return
      */
 
-    static public ReportEngine get( Properties ctx,ProcessInfo pi ) {
+    static public ReportEngine get( Properties ctx,ProcessInfo pi, boolean setQuery) {
         int AD_Client_ID = Env.getAD_Client_ID( ctx );
 
         //
@@ -1526,7 +1544,7 @@ public class ReportEngine implements PrintServiceAttributeListener {
 
         info.setAD_Table_ID( AD_Table_ID );
 
-        return new ReportEngine( ctx,format,query,info );
+        return new ReportEngine( ctx,format,query,info, setQuery);
     }    // get
 
 	/** Order = 0				*/

@@ -31,9 +31,11 @@ public class LaunchCardControl extends JasperReportLaunch {
 		addReportParameter(DATE_TO, getDateTo());
 	}
 
+	protected CardControlDataSource dataSource;
+	
 	@Override
 	protected OXPJasperDataSource createReportDataSource() {
-		CardControlDataSource dataSource = new CardControlDataSource(get_TrxName());
+		dataSource = new CardControlDataSource(get_TrxName());
 
 		dataSource.setM_EntidadFinanciera_ID(getM_EntidadFinanciera_ID());
 		dataSource.setAD_Org_ID(getAD_Org_ID());
@@ -129,4 +131,15 @@ public class LaunchCardControl extends JasperReportLaunch {
 		return (Integer) getParameterValue("M_EntidadFinanciera_ID");
 	}
 
+	@Override
+	public boolean isCancelable() {
+		return true;
+	}
+	
+	@Override
+	public void cancelProcess() {
+		if (dataSource!=null)
+			DB.cancelStatement(dataSource.getPstmt());
+	}
+	
 }
