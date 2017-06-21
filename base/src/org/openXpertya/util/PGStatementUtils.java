@@ -33,8 +33,8 @@ public class PGStatementUtils  implements Runnable {
 	public void addStatement(int sessionID, Statement stmt) {
 		int pid = 0;
 		try {
-			log.info("KA+ " + sessionID + "-" + pid);
 			pid = ((PGConnection)stmt.getConnection()).getBackendPID();
+			log.info("KA+ " + sessionID + "-" + pid);
 			synchronized (pidsBySession) {
 				if (pidsBySession.get(sessionID) == null)
 					pidsBySession.put(sessionID, new HashSet<Integer>());
@@ -51,9 +51,9 @@ public class PGStatementUtils  implements Runnable {
 	public void removeStatement(int sessionID, Statement stmt) {
 		int pid = 0;
 		try {
-			log.info("KA- " + sessionID + "-" + pid);
 			synchronized (pidsBySession) {
 				pid = ((PGConnection)stmt.getConnection()).getBackendPID();
+				log.info("KA- " + sessionID + "-" + pid);
 				if (pidsBySession.get(sessionID) != null) {
 					pidsBySession.get(sessionID).remove(pid);
 					if (pidsBySession.get(sessionID).size()==0) {
