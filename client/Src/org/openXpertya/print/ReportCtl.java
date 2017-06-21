@@ -27,8 +27,10 @@ import org.openXpertya.model.MProcess;
 import org.openXpertya.model.MTable;
 import org.openXpertya.print.MPrintFormat;
 import org.openXpertya.print.ReportEngine;
+import org.openXpertya.process.ProcessCall;
 import org.openXpertya.process.ProcessInfoParameter;
 import org.openXpertya.util.ASyncProcess;
+import org.openXpertya.util.DB;
 import org.openXpertya.util.Ini;
 import org.openXpertya.util.Trx;
 import org.openXpertya.apps.ADialog;
@@ -166,6 +168,8 @@ public class ReportCtl {
 		return startStandardReport(pi);
 	}
 	
+	static ReportEngine re = null;
+	
 	/**************************************************************************
 	 *	Start Standard Report.
 	 *  - Get Table Info & submit.<br>
@@ -180,7 +184,6 @@ public class ReportCtl {
 	 */
 	static public boolean startStandardReport (ProcessInfo pi)
 	{
-		ReportEngine re = null;
 		//
 		// Create Report Engine by using attached MPrintFormat (if any)
 		Object o = pi.getTransientObject();
@@ -199,7 +202,8 @@ public class ReportCtl {
 		//
 		// Create Report Engine normally
 		else {
-			re = ReportEngine.get(Env.getCtx(), pi);
+			re = ReportEngine.get(Env.getCtx(), pi, false);
+			re.setQuery();
 			if (re == null)
 			{
 				pi.setSummary("No ReportEngine");
@@ -211,6 +215,11 @@ public class ReportCtl {
 		return true;
 	}	//	startStandardReport
 
+	static public void cancelReport () {
+		if (re!=null && re.de!=null && re.de.pstmt!=null)
+			DB.cancelStatement(re.de.pstmt);
+	}
+	
 	/**
 	 *	Start Financial Report.
 	 *  @param pi Process Info
@@ -450,6 +459,7 @@ public class ReportCtl {
 	{
 		return viewerProvider;
 	}
+
 
 }    // ReportCtl
 

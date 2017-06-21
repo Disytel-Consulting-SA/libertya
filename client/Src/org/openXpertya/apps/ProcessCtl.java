@@ -24,6 +24,7 @@ import java.sql.CallableStatement;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.Properties;
 import java.util.logging.Level;
 
 import javax.swing.JFrame;
@@ -64,7 +65,7 @@ import org.openXpertya.wf.MWorkflow;
  * @author     Equipo de Desarrollo de openXpertya    
  */
 
-public class ProcessCtl extends Thread {
+public class ProcessCtl extends Thread implements ProcessCall {
 
 	public static final String DYNAMIC_JASPER_CLASSNAME = "org.openXpertya.JasperReport.ReportStarter";
     /**
@@ -327,7 +328,8 @@ public class ProcessCtl extends Thread {
         if( IsReport ) {
 
             // Optional Pre-Report Process
-
+        	if (m_pi.getClassName() == null) 
+        		processCallInstance = this;
             if( ProcedureName.length() > 0 ) {
                 if( !startDBProcess( ProcedureName )) {
                     unlock();
@@ -817,6 +819,23 @@ public class ProcessCtl extends Thread {
 	
 	public ProcessCall getProcessCallInstance() {
 		return processCallInstance;
+	}
+
+	@Override
+	public boolean startProcess(Properties ctx, ProcessInfo pi, Trx trx) {
+		// NO SE UTILIZA
+		return false;
+	}
+
+	@Override
+	public boolean isCancelable() {
+		// Unicamente si tiene definida una instancia y si no es la impresión de un registro
+		return processCallInstance != null && m_pi.getRecord_ID() <= 0;
+	}
+
+	@Override
+	public void cancelProcess() {
+		ReportCtl.cancelReport();
 	}
 
 	
