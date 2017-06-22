@@ -124,7 +124,7 @@ public class CPreparedStatement extends CStatement implements PreparedStatement 
                 }
 
                 p_stmt = conn.prepareStatement( p_vo.getSql(),resultSetType,resultSetConcurrency );
-                
+                p_stmt.setQueryTimeout(getQueryTimeOutPreference());
 
                 return;
             } catch( Exception e ) {
@@ -995,7 +995,7 @@ public class CPreparedStatement extends CStatement implements PreparedStatement 
 
         try {
             pstmt = conn.prepareStatement( p_vo.getSql(),p_vo.getResultSetType(),p_vo.getResultSetConcurrency());
-
+            pstmt.setQueryTimeout(getQueryTimeOutPreference());
             // Set Parameters
 
             ArrayList parameters = p_vo.getParameters();
@@ -1038,7 +1038,8 @@ public class CPreparedStatement extends CStatement implements PreparedStatement 
             } catch( SQLException ex1 ) {
             }
         }
-
+        
+        
         return pstmt;
     }    // local_getPreparedStatement
 
