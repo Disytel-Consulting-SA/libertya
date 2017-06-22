@@ -48,7 +48,11 @@ import org.openXpertya.plugin.common.PluginUtils;
 
 public class CStatement implements Statement {
 
+	/** Nombre de clave de la preferencia para la activación del KeepAlive */
 	public static final String STATEMENT_KEEP_ALIVE_ACTIVE_PREFERENCE_KEY = "STATEMENT_KEEP_ALIVE_ACTIVE";
+	
+	/** Nombre de clave de la preferencia para la definicion del query timeout */
+	public static final String STATEMENT_QUERY_TIMEOUT_PREFERENCE_KEY = "STATEMENT_QUERY_TIMEOUT_SECONDS";
 	
 	/**
 	 * Flag para especificar si el statement debe ser mantenido en la tabla de conexiones keepalive.  Todo informe (Jasper o del reporteador interno)
@@ -93,7 +97,7 @@ public class CStatement implements Statement {
                 }
 
                 p_stmt = conn.createStatement( resultSetType,resultSetConcurrency );
-
+                p_stmt.setQueryTimeout(getQueryTimeOutPreference());
                 return;
             } catch( SQLException e ) {
                 log.log( Level.SEVERE,"CStatement",e );
@@ -133,6 +137,10 @@ public class CStatement implements Statement {
 
     protected CStatementVO p_vo = null;
 
+    /** Query Time Out definido en las preferencias */
+    
+    protected static Integer queryTimeOutPreference = null;
+    
     /**
      * Descripción de Método
      *
@@ -971,6 +979,7 @@ public class CStatement implements Statement {
 
         try {
             stmt = conn.createStatement( p_vo.getResultSetType(),p_vo.getResultSetConcurrency());
+            stmt.setQueryTimeout(getQueryTimeOutPreference());
         } catch( SQLException ex ) {
             log.log( Level.SEVERE,"local",ex );
 
@@ -1141,6 +1150,48 @@ public class CStatement implements Statement {
 
 	public void setUseKeepAlive(boolean useKeepAlive) {
 		this.useKeepAlive = useKeepAlive;
+	}
+	
+	/**
+	 * Obtiene el queryTimeOutDefinido por defecto.  
+	 * No se utiliza MPreference que las invocaciones cruzadas generarían un stackoverflow.  
+	 */
+	protected int getQueryTimeOutPreference() {
+		// Ya se encuentra definida la preferencia?
+		if (queryTimeOutPreference != null)
+			return queryTimeOutPreference;
+		
+		Connection conn = DB.getConnectionRO();
+		PreparedStatement pstmt = null;
+		ResultSet rs = null;
+		try {
+			pstmt = conn.prepareStatement("SELECT Value FROM AD_Preference WHERE attribute = '" + STATEMENT_QUERY_TIMEOUT_PREFERENCE_KEY + "'");
+			rs = pstmt.executeQuery();
+			if (rs.next()) {
+				queryTimeOutPreference = Integer.parseInt(rs.getString("value"));
+			} else {
+				queryTimeOutPreference = 0;
+			}
+			return queryTimeOutPreference;
+		} catch (Exception e) {
+			// En caso de error se considera que no hay query timeout
+			log.severe(e.getMessage());
+			queryTimeOutPreference = 0;
+			return queryTimeOutPreference;
+		} finally {
+			try {
+				if (rs!=null)
+					rs.close();
+				if (pstmt!=null)
+					pstmt.close();
+			} catch (Exception ex) {	
+				
+			}
+			finally {
+				rs=null;
+				pstmt=null;
+			}
+		}
 	}
 }    // CStatement
 
