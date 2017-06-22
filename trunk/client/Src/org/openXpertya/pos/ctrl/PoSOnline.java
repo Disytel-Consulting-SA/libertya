@@ -3266,12 +3266,15 @@ public class PoSOnline extends PoSConnectionState {
 			// la entidad financiera y se cargan los planes de tarjeta disponibles
 			// para la misma
 			if (paymentMedium.isCreditCard()) {
-				paymentMedium
-						.setEntidadFinanciera(getEntidadFinanciera(mposPaymentMedium
-								.getM_EntidadFinanciera_ID()));
-				paymentMedium
-						.setCreditCardPlans(getCreditCardPlans(paymentMedium
-								.getEntidadFinanciera().getId()));
+				EntidadFinanciera ef = getEntidadFinanciera(mposPaymentMedium.getM_EntidadFinanciera_ID());
+				if(ef != null){
+					paymentMedium.setEntidadFinanciera(ef);
+					List<EntidadFinancieraPlan> planes = getCreditCardPlans(paymentMedium
+							.getEntidadFinanciera().getId());
+					if(planes != null){
+						paymentMedium.setCreditCardPlans(planes);
+					}
+				}				
 			}
 			
 			// Si es un medio de pago de tipo Cheque se guarda el plazo de cobro
