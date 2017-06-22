@@ -34,7 +34,7 @@ public class PGStatementUtils  implements Runnable {
 		int pid = 0;
 		try {
 			pid = ((PGConnection)stmt.getConnection()).getBackendPID();
-			log.info("KA+ " + sessionID + "-" + pid);
+			log.fine("KA+ " + sessionID + "-" + pid);
 			synchronized (pidsBySession) {
 				if (pidsBySession.get(sessionID) == null)
 					pidsBySession.put(sessionID, new HashSet<Integer>());
@@ -53,7 +53,7 @@ public class PGStatementUtils  implements Runnable {
 		try {
 			synchronized (pidsBySession) {
 				pid = ((PGConnection)stmt.getConnection()).getBackendPID();
-				log.info("KA- " + sessionID + "-" + pid);
+				log.fine("KA- " + sessionID + "-" + pid);
 				if (pidsBySession.get(sessionID) != null) {
 					pidsBySession.get(sessionID).remove(pid);
 					if (pidsBySession.get(sessionID).size()==0) {
@@ -68,7 +68,7 @@ public class PGStatementUtils  implements Runnable {
 	}
 	
 	public void removeAllStatements(int sessionID) {
-		log.info("KA- " + sessionID);
+		log.fine("KA- " + sessionID);
 		synchronized (pidsBySession) {
 			pidsBySession.remove(sessionID);
 		}
@@ -92,7 +92,7 @@ public class PGStatementUtils  implements Runnable {
 								query.append("'").append(sessionID).append("-").append((Integer)pid).append("',");
 							}
 						}
-						log.info("KA* " + query);
+						log.fine("KA* " + query);
 						DB.executeUpdate("UPDATE AD_KeepAlive SET updated = now() WHERE ad_session_id::varchar || '-' || pid::varchar IN (" + query.toString() + "'')");
 					}
 				}

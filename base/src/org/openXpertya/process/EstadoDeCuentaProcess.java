@@ -368,7 +368,6 @@ public class EstadoDeCuentaProcess extends SvrProcess {
 			"	ORDER BY bpartner, dateacct  ");
 		
 		pstmt = DB.prepareStatement(query.toString(), get_TrxName(), true);
-		((CPreparedStatement)pstmt).setUseKeepAlive(true);
 		ResultSet rs = pstmt.executeQuery();
 		
 		int bPartner = -1;
