@@ -25,7 +25,7 @@ public class PostInstallUpgradeFrom1705 extends PluginPostInstallProcess {
 	
 	/** UID del Reporte de Detalle de Cobros/Pagos sin Conciliar */
 	protected final static String UNRECONCILEDPAYMENTSDETAILED_JASPER_REPORT_UID = "CORE-AD_Process-1010577";
-	protected final static String UNRECONCILEDPAYMENTSDETAILED_JASPER_REPORT_FILENAME = "BankStatementReport.jrxml";
+	protected final static String UNRECONCILEDPAYMENTSDETAILED_JASPER_REPORT_FILENAME = "UnreconciledPaymentsDetailed.jrxml";
 	
 	/** UID del reporte del Orden de Pago*/
 	protected final static String ORDEN_PAGO_JASPER_REPORT_UID = "CORE-AD_JasperReport-1000012";
