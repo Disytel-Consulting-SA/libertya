@@ -923,6 +923,10 @@ public final class Env {
         return Env.getContextAsInt( ctx,"C_PaymentTerm_ID" );
     }    // getC_PaymentTerm_ID
 
+    
+    public static int getC_Currency_ID( Properties ctx ) {
+    	return Env.getContextAsInt(ctx, "$C_Currency_ID");
+    }
    
     /**
      * Descripción de Método
