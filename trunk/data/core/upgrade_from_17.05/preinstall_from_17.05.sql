@@ -83,3 +83,26 @@ update ad_system set dummy = (SELECT addcolumnifnotexists('m_entidadfinanciera',
 --20170613-1519 Creacion de tabla de bajo nivel para seguimiento de eventuales queries/conexiones relacioandas con informes canditadas a ser canceladas en caso de quedar "huerfanas" del cliente o servidor LY 
 create table ad_keepalive (ad_session_id int, pid int, created timestamp, updated timestamp);
 
+--20170626-2030 Creación de tabla que permite configurar datos necesarios para procesos de Corrección de Cobranzas
+CREATE TABLE c_payment_recovery_config
+(
+  c_payment_recovery_config_id integer NOT NULL,
+  ad_client_id integer NOT NULL,
+  ad_org_id integer NOT NULL,
+  isactive character(1) NOT NULL DEFAULT 'Y'::bpchar,
+  created timestamp without time zone NOT NULL DEFAULT ('now'::text)::timestamp(6) with time zone,
+  createdby integer NOT NULL,
+  updated timestamp without time zone NOT NULL DEFAULT ('now'::text)::timestamp(6) with time zone,
+  updatedby integer NOT NULL,
+  c_doctype_recovery_id integer NOT NULL,
+  c_doctype_credit_recovery_id integer NOT NULL,
+  m_product_recovery_id integer NOT NULL,
+  c_doctype_rejected_id integer NOT NULL,
+  c_doctype_credit_rejected_id integer NOT NULL,
+  m_product_rejected_id integer NOT NULL,
+  CONSTRAINT c_payment_recovery_config_key PRIMARY KEY (c_payment_recovery_config_id)
+)
+WITH (
+  OIDS=FALSE
+);
+ALTER TABLE c_payment_recovery_config OWNER TO libertya;

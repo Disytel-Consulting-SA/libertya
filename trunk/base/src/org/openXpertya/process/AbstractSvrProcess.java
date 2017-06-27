@@ -42,6 +42,10 @@ public abstract class AbstractSvrProcess extends SvrProcess {
 			}
 		}
 	}
+	
+	protected Integer getParamValueAsInt(String paramValue){
+		return (Integer) getParametersValues().get(paramValue);
+	}
 
 	protected Map<String, String> getParametersInfo() {
 		return parametersInfo;

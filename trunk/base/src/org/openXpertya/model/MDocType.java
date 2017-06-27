@@ -99,8 +99,12 @@ public class MDocType extends X_C_DocType {
     public static final String DOCTYPE_MatchInvoice = "MXI";
     /** Customer Receipt = CR (Cobro a Cliente) */
     public static final String DOCTYPE_CustomerReceipt = "CR";
+    /** Customer Receipt Return = CRR (Devolución de Cobro a Cliente) */
+    public static final String DOCTYPE_CustomerReceiptReturn = "CRR";
     /** Vendor Payment = VP (Pago a Proveedor) */
     public static final String DOCTYPE_VendorPayment = "VP";
+    /** Vendor Payment Return = VPR (Devolución de Pago a Proveedor) */
+    public static final String DOCTYPE_VendorPaymentReturn = "VPR";
     /** Payment Allocation = PAL (Asignacíon) */
     public static final String DOCTYPE_PaymentAllocation = "PAL";
     /** Material Delivery: MMS (Albarán de Salida) */

@@ -193,7 +193,7 @@ public class MTax extends X_C_Tax {
     public static MTax getTaxExemptRate(Properties ctx, String trxName){
 		String sql = "SELECT * " +
 					 "FROM c_tax " +
-					 "WHERE (istaxexempt = 'Y' OR rate = 0) AND (ad_client_id = ?) " +
+					 "WHERE (istaxexempt = 'Y' OR rate = 0) AND (ad_client_id = ?) AND (isactive = 'Y') " +
 					 "ORDER BY istaxexempt desc";
 		PreparedStatement ps = null;
 		ResultSet rs = null;

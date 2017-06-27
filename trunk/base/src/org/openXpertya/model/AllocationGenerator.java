@@ -442,7 +442,7 @@ public class AllocationGenerator {
 	/**
 	 * @param allocationHdr the allocationHdr to set
 	 */
-	protected void setAllocationHdr(MAllocationHdr allocationHdr) {
+	public void setAllocationHdr(MAllocationHdr allocationHdr) {
 		this.allocationHdr = allocationHdr;
 	}
 
