@@ -548,10 +548,9 @@ public class MPeriod extends X_C_Period implements ITime{
 //
 //        return pc.isOpen();
     }    // isOpen
-
     
     public boolean isOpen( String DocBaseType, Integer dayOfMonth, Integer warehouseID ) {
-    	return isOpen(DocBaseType, dayOfMonth, warehouseID, false);
+    	return isOpen(DocBaseType, dayOfMonth, warehouseID, warehouseID == 0);
     }    // isOpen
     
 

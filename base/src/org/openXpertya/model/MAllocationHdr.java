@@ -646,7 +646,7 @@ public class MAllocationHdr extends X_C_AllocationHdr implements DocAction, Curr
         	}
         }
         
-        getLines( false );
+        getLines( true );
 
         if( m_lines.length == 0 ) {
             m_processMsg = "@NoLines@";

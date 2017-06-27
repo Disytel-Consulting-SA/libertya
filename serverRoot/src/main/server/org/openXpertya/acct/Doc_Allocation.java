@@ -222,7 +222,7 @@ public class Doc_Allocation extends Doc implements DocProjectSplitterInterface  
             MInvoice invoice = null;
 
             if( line.getC_Invoice_ID() != 0 ) {
-                invoice = new MInvoice( getCtx(),line.getC_Invoice_ID(),null );
+                invoice = new MInvoice( getCtx(),line.getC_Invoice_ID(),m_trxName );
             }
 
             //
