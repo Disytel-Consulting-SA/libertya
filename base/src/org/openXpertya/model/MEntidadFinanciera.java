@@ -53,8 +53,10 @@ public class MEntidadFinanciera extends X_M_EntidadFinanciera {
 			sql.append("	" + Table_Name + " ");
 			sql.append("WHERE ");
 			sql.append("	C_BPartner_ID = ? ");
+			sql.append("	AND M_EntidadFinanciera_ID != ? ");
+			
 
-			String en = DB.getSQLValueString(get_TrxName(), sql.toString(), getC_BPartner_ID());
+			String en = DB.getSQLValueString(get_TrxName(), sql.toString(), getC_BPartner_ID(), getID());
 
 			return ((en == null || en.trim().isEmpty()) || en.equals(getEstablishmentNumber()));
 		}
@@ -76,8 +78,9 @@ public class MEntidadFinanciera extends X_M_EntidadFinanciera {
 			sql.append("	" + Table_Name + " ");
 			sql.append("WHERE ");
 			sql.append("	C_BPartner_ID = ? ");
+			sql.append("	AND M_EntidadFinanciera_ID != ? ");
 
-			int C_BankAccount_ID = DB.getSQLValue(get_TrxName(), sql.toString(), getC_BPartner_ID());
+			int C_BankAccount_ID = DB.getSQLValue(get_TrxName(), sql.toString(), getC_BPartner_ID(), getID());
 
 			return (C_BankAccount_ID <= 0 || C_BankAccount_ID == getC_BankAccount_ID());
 		}
@@ -99,8 +102,9 @@ public class MEntidadFinanciera extends X_M_EntidadFinanciera {
 			sql.append("	" + Table_Name + " ");
 			sql.append("WHERE ");
 			sql.append("	C_BPartner_ID = ? ");
+			sql.append("	AND M_EntidadFinanciera_ID != ? ");
 
-			int C_Region_ID = DB.getSQLValue(get_TrxName(), sql.toString(), getC_BPartner_ID());
+			int C_Region_ID = DB.getSQLValue(get_TrxName(), sql.toString(), getC_BPartner_ID(), getID());
 
 			return (C_Region_ID <= 0 || C_Region_ID == getC_Region_ID());
 		}

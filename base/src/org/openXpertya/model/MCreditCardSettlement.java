@@ -24,6 +24,10 @@ public class MCreditCardSettlement extends X_C_CreditCardSettlement implements D
 	private static final long serialVersionUID = 1L;
 
 	private boolean m_justPrepared = false;
+	
+	/*Bandera para evitar la creción de impuestos, tasas, comisiones y conceptos cuando
+	se utiliza la clase desde el proceso de importación de Liquidaciones*/
+	private boolean generateChildrens = true;
 
 	/**
 	 * Load contructor.
@@ -56,7 +60,7 @@ public class MCreditCardSettlement extends X_C_CreditCardSettlement implements D
 
 	@Override
 	public boolean doAfterSave(boolean newRecord, boolean success) {
-		if (newRecord && !getDocStatus().equals(DOCSTATUS_Voided)) {
+		if (newRecord && generateChildrens && !getDocStatus().equals(DOCSTATUS_Voided)) {
 			generateAllChildrens();
 		}
 		//Si marco la liquidación como conciliada, pongo los cupones como procesados
@@ -1064,5 +1068,10 @@ public class MCreditCardSettlement extends X_C_CreditCardSettlement implements D
 	public BigDecimal getApprovalAmt() {
 		return getNetAmount();
 	}
+	public void setGenerateChildrens(boolean generateChildrens) {
+		this.generateChildrens = generateChildrens;
+	}
+	
+	
 
 }

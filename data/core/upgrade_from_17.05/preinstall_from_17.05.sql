@@ -106,3 +106,6 @@ WITH (
   OIDS=FALSE
 );
 ALTER TABLE c_payment_recovery_config OWNER TO libertya;
+
+--20170628-1400 Merge de revisión 2047
+ALTER TABLE c_perceptionssettlement ALTER COLUMN internalno DROP NOT NULL;
